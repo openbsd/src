@@ -1,4 +1,5 @@
-/*	$NetBSD: cpu.h,v 1.21 1996/03/31 22:17:14 pk Exp $ */
+/*	$OpenBSD: cpu.h,v 1.3 1997/08/08 08:26:11 downsj Exp $	*/
+/*	$NetBSD: cpu.h,v 1.24 1997/03/15 22:25:15 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,8 +45,8 @@
  *	@(#)cpu.h	8.4 (Berkeley) 1/5/94
  */
 
-#ifndef _CPU_H_
-#define _CPU_H_
+#ifndef _SPARC_CPU_H_
+#define _SPARC_CPU_H_
 
 /*
  * CTL_MACHDEP definitions.
@@ -200,7 +201,7 @@ void	copywords __P((const void *, void *, size_t));
 void	qcopy __P((const void *, void *, size_t));
 void	qzero __P((void *, size_t));
 /* locore2.c */
-void	remrq __P((struct proc *));
+void	remrunqueue __P((struct proc *));
 /* trap.c */
 void	kill_user_windows __P((struct proc *));
 int	rwindow_save __P((struct proc *));
@@ -229,6 +230,10 @@ void cpu_set_kpc __P((struct proc *, void (*)(struct proc *)));
 /* iommu.c */
 void	iommu_enter __P((u_int, u_int));
 void	iommu_remove __P((u_int, u_int));
+/* emul.c */
+struct trapframe;
+int fixalign __P((struct proc *, struct trapframe *));
+int emulinstr __P((int, struct trapframe *));
 
 /*
  *
@@ -253,4 +258,4 @@ extern void wzero __P((void *, u_int));
 extern void wcopy __P((const void *, void *, u_int));
 
 #endif /* _KERNEL */
-#endif /* _CPU_H_ */
+#endif /* _SPARC_CPU_H_ */

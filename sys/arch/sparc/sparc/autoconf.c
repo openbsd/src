@@ -1,4 +1,5 @@
-/*	$NetBSD: autoconf.c,v 1.58.2.2 1996/07/02 23:49:54 jtc Exp $ */
+/*	$OpenBSD: autoconf.c,v 1.22 1997/08/08 08:27:01 downsj Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.73 1997/07/29 09:41:53 fair Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -79,6 +80,7 @@
 #include <machine/ctlreg.h>
 #include <machine/pmap.h>
 #include <sparc/sparc/asm.h>
+#include <sparc/sparc/cpuvar.h>
 #include <sparc/sparc/timerreg.h>
 
 #ifdef DDB
@@ -187,9 +189,6 @@ str2hex(str, vp)
 #ifdef SUN4
 struct promvec promvecdat;
 struct om_vector *oldpvec = (struct om_vector *)PROM_BASE;
-
-struct idprom idprom;
-void	getidprom __P((struct idprom *, int size));
 #endif
 
 /*
@@ -200,7 +199,6 @@ void	getidprom __P((struct idprom *, int size));
 void
 bootstrap()
 {
-	int nregion = 0, nsegment = 0, ncontext = 0;
 	extern int msgbufmapped;
 
 #if defined(SUN4)
@@ -242,77 +240,16 @@ bootstrap()
 		 */
 		if (oldpvec->romvecVersion >= 2)
 			*oldpvec->vector_cmd = oldmon_w_cmd;
-		getidprom(&idprom, sizeof(idprom));
-		switch (cpumod = idprom.id_machine) {
-		case SUN4_100:
-			nsegment = 256;
-			ncontext = 8;
-			break;
-		case SUN4_200:
-			nsegment = 512;
-			ncontext = 16;
-			break;
-		case SUN4_300:
-			nsegment = 256;
-			ncontext = 16;
-			break;
-		case SUN4_400:
-			nsegment = 1024;
-			ncontext = 64;
-			nregion = 256;
-			mmu_3l = 1;
-			break;
-		default:
-			printf("bootstrap: sun4 machine type %2x unknown!\n",
-			    idprom.id_machine);
-			callrom();
-		}
 	}
 #endif /* SUN4 */
 
-#if defined(SUN4C)
-	if (CPU_ISSUN4C) {
-		register int node = findroot();
-		nsegment = getpropint(node, "mmu-npmg", 128);
-		ncontext = getpropint(node, "mmu-nctx", 8);
-	}
-#endif /* SUN4C */
+	bzero(&cpuinfo, sizeof(struct cpu_softc));
+	cpuinfo.master = 1;
+	getcpuinfo(&cpuinfo, 0);
 
-#if defined (SUN4M)
-	if (CPU_ISSUN4M) {
-		nsegment = 0;
-		cpumod = (u_int) getpsr() >> 24;
-		mmumod = (u_int) lda(SRMMU_PCR, ASI_SRMMU) >> 28;
-		/*
-		 * We use the max. number of contexts on the micro and
-		 * hyper SPARCs. The SuperSPARC would let us use up to 65536
-		 * contexts (by powers of 2), but we keep it at 4096 since
-		 * the table must be aligned to #context*4. With 4K contexts,
-		 * we waste at most 16K of memory. Note that the context
-		 * table is *always* page-aligned, so there can always be
-		 * 1024 contexts without sacrificing memory space (given
-		 * that the chip supports 1024 contexts).
-		 *
-		 * Currently known limits: MS2=256, HS=4096, SS=65536
-		 * 	some old SS's=4096
-		 *
-		 * XXX Should this be a tuneable parameter?
-		 */
-		switch (mmumod) {
-		case SUN4M_MMU_MS1:
-			ncontext = 64;
-			break;
-		case SUN4M_MMU_MS:
-			ncontext = 256;
-			break;
-		default:
-			ncontext = 4096;
-			break;
-		}
-	}
-#endif /* SUN4M */
-
-	pmap_bootstrap(ncontext, nregion, nsegment);
+	pmap_bootstrap(cpuinfo.mmu_ncontext,
+		       cpuinfo.mmu_nregion,
+		       cpuinfo.mmu_nsegment);
 	msgbufmapped = 1;	/* enable message buffer */
 #ifdef KGDB
 	zs_kgdb_init();		/* XXX */
@@ -418,6 +355,15 @@ bootstrap()
 		timerreg_4m = (struct timer_4m *)ra.ra_vaddrs[ra.ra_nvaddrs-1];
 	}
 #endif /* SUN4M */
+
+	if (CPU_ISSUN4OR4C) {
+		/* Map Interrupt Enable Register */
+		pmap_enter(pmap_kernel(), INTRREG_VA,
+			   INT_ENABLE_REG_PHYSADR | PMAP_NC | PMAP_OBIO,
+			   VM_PROT_READ | VM_PROT_WRITE, 1);
+		/* Disable all interrupts */
+		*((unsigned char *)INTRREG_VA) = 0;
+	}
 }
 
 /*
@@ -617,23 +563,23 @@ bootpath_fake(bp, cp)
 
 			int  target, lun;
 
-			switch (cpumod) {
-			case SUN4_200:
-			case SUN4_400:
+			switch (cpuinfo.cpu_type) {
+			case CPUTYP_4_200:
+			case CPUTYP_4_400:
 				BP_APPEND(bp, "vmes", -1, 0, 0);
 				BP_APPEND(bp, "si", -1, v0val[0], 0);
 				break;
-			case SUN4_100:
+			case CPUTYP_4_100:
 				BP_APPEND(bp, "obio", -1, 0, 0);
 				BP_APPEND(bp, "sw", -1, v0val[0], 0);
 				break;
-			case SUN4_300:
+			case CPUTYP_4_300:
 				BP_APPEND(bp, "obio", -1, 0, 0);
 				BP_APPEND(bp, "esp", -1, v0val[0], 0);
 				break;
 			default:
-				panic("bootpath_fake: unknown cpumod %d",
-				      cpumod);
+				panic("bootpath_fake: unknown system type %d",
+				      cpuinfo.cpu_type);
 			}
 			/*
 			 * Deal with target/lun encodings.
@@ -715,6 +661,8 @@ bootpath_fake(bp, cp)
 
 /*
  * print out the bootpath
+ * the %x isn't 0x%x because the Sun EPROMs do it this way, and
+ * consistency with the EPROMs is probably better here.
  */
 
 static void
@@ -873,21 +821,23 @@ configure()
 			 * must be 0xZYYYYYYY, where (Z != 0)
 			 * make sure we get the correct memreg cfdriver!
 			 */
-			if (cpumod==SUN4_100 && (cf->cf_loc[0] & 0xf0000000))
+			if (cpuinfo.cpu_type == CPUTYP_4_100 &&
+			    (cf->cf_loc[0] & 0xf0000000))
 				continue;
-			if (cpumod!=SUN4_100 && !(cf->cf_loc[0] & 0xf0000000))
+			if (cpuinfo.cpu_type != CPUTYP_4_100 &&
+			    !(cf->cf_loc[0] & 0xf0000000))
 				continue;
 			for (p = cf->cf_parents; memregcf==NULL && *p >= 0; p++)
 				if (cfdata[*p].cf_driver == &obio_cd)
 					memregcf = cf;
 		}
-		if (memregcf==NULL)
+		if (memregcf == NULL)
 			panic("configure: no memreg found!");
 
-		rr.rr_iospace = BUS_OBIO;
+		rr.rr_iospace = PMAP_OBIO;
 		rr.rr_paddr = (void *)memregcf->cf_loc[0];
 		rr.rr_len = NBPG;
-		par_err_reg = (u_int *)bus_map(&rr, NBPG, BUS_OBIO);
+		par_err_reg = (u_int *)bus_map(&rr, NBPG);
 		if (par_err_reg == NULL)
 			panic("configure: ROM hasn't mapped memreg!");
 	}
@@ -911,6 +861,16 @@ configure()
 	oca.ca_ra.ra_name = cp = "mainbus";
 	if (config_rootfound(cp, (void *)&oca) == NULL)
 		panic("mainbus not configured");
+
+	/* Enable device interrupts */
+#if defined(SUN4M)
+	if (CPU_ISSUN4M)
+		ienab_bic(SINTR_MA);
+#endif
+#if defined(SUN4) || defined(SUN4C)
+	if (CPU_ISSUN4OR4C)
+		ienab_bis(IE_ALLIE);
+#endif
 	(void)spl0();
 
 	/*
@@ -1067,17 +1027,6 @@ romprop(rp, cp, node)
 #endif
 
 	}
-#if defined(SUN4M)
-	if (CPU_ISSUN4M) {
-		len = getprop(node, "ranges", (void *)&rp->ra_range,
-			      sizeof rp->ra_range);
-		if (len == -1)
-			len = 0;
-		rp->ra_nrange = len / sizeof(struct rom_range);
-	} else
-#endif
-		rp->ra_nrange = 0;
-
 	return (1);
 }
 
@@ -1110,8 +1059,8 @@ mainbus_attach(parent, dev, aux)
 {
 	struct confargs oca;
 	register const char *const *ssp, *sp = NULL;
-#if defined(SUN4C) || defined(SUN4M)
 	struct confargs *ca = aux;
+#if defined(SUN4C) || defined(SUN4M)
 	register int node0, node;
 	const char *const *openboot_special;
 #define L1A_HACK		/* XXX hack to allow L1-A during autoconf */
@@ -1176,8 +1125,10 @@ mainbus_attach(parent, dev, aux)
 #endif
 
 #if defined(SUN4M)
-	if (CPU_ISSUN4M)
-		printf(": %s", getpropstring(ca->ca_ra.ra_node, "name"));
+	if (CPU_ISSUN4)
+		printf(": SUN-4/%d series\n", cpuinfo.classlvl);
+	else
+		printf(": %s\n", getpropstring(ca->ca_ra.ra_node, "name"));
 #endif
 	printf("\n");
 
@@ -1225,26 +1176,29 @@ mainbus_attach(parent, dev, aux)
 	node = ca->ca_ra.ra_node;	/* i.e., the root node */
 
 	/* the first early device to be configured is the cpu */
-#if defined(SUN4M)
 	if (CPU_ISSUN4M) {
 		/* XXX - what to do on multiprocessor machines? */
 		register const char *cp;
 
 		for (node = firstchild(node); node; node = nextsibling(node)) {
 			cp = getpropstring(node, "device_type");
-			if (strcmp(cp, "cpu") == 0)
-				break;
+			if (strcmp(cp, "cpu") == 0) {
+				bzero(&oca, sizeof(oca));
+				oca.ca_ra.ra_node = node;
+				oca.ca_ra.ra_name = "cpu";
+				oca.ca_ra.ra_paddr = 0;
+				oca.ca_ra.ra_nreg = 0;
+				config_found(dev, (void *)&oca, mbprint);
+			}
 		}
-		if (node == 0)
-			panic("None of the CPUs found\n");
+	} else if (CPU_ISSUN4C) {
+		bzero(&oca, sizeof(oca));
+		oca.ca_ra.ra_node = node;
+		oca.ca_ra.ra_name = "cpu";
+		oca.ca_ra.ra_paddr = 0;
+		oca.ca_ra.ra_nreg = 0;
+		config_found(dev, (void *)&oca, mbprint);
 	}
-#endif
-
-	oca.ca_ra.ra_node = node;
-	oca.ca_ra.ra_name = "cpu";
-	oca.ca_ra.ra_paddr = 0;
-	oca.ca_ra.ra_nreg = 0;
-	config_found(dev, (void *)&oca, mbprint);
 
 	node = ca->ca_ra.ra_node;	/* re-init root node */
 
@@ -1303,12 +1257,6 @@ mainbus_attach(parent, dev, aux)
 			(void) config_found(dev, (void *)&oca, mbprint);
 		}
 	}
-#if defined(SUN4M)
-	if (CPU_ISSUN4M) {
-		/* Enable device interrupts */
-		ienab_bic(SINTR_MA);
-	}
-#endif
 #endif /* SUN4C || SUN4M */
 }
 
@@ -1355,9 +1303,9 @@ findzs(zs)
 			panic("findzs: unknown zs device %d", zs);
 		}
 
-		rr.rr_iospace = BUS_OBIO;
+		rr.rr_iospace = PMAP_OBIO;
 		rr.rr_len = NBPG;
-		vaddr = bus_map(&rr, NBPG, BUS_OBIO);
+		vaddr = bus_map(&rr, NBPG);
 		if (vaddr)
 			return (vaddr);
 	}
@@ -1537,7 +1485,7 @@ getprop(node, name, buf, bufsiz)
 	no = promvec->pv_nodeops;
 	len = no->no_proplen(node, name);
 	if (len > bufsiz) {
-		printf("node %x property %s length %d > %d\n",
+		printf("node 0x%x property %s length %d > %d\n",
 		    node, name, len, bufsiz);
 #ifdef DEBUG
 		panic("getprop");
@@ -1548,6 +1496,19 @@ getprop(node, name, buf, bufsiz)
 	no->no_getprop(node, name, buf);
 	return (len);
 #endif
+}
+
+/*
+ * Internal form of proplen().  Returns the property length.
+ */
+int
+getproplen(node, name)
+	int node;
+	char *name;
+{
+	register struct nodeops *no = promvec->pv_nodeops;
+
+	return (no->no_proplen(node, name));
 }
 
 /*
@@ -1609,7 +1570,6 @@ nextsibling(node)
 	return (promvec->pv_nodeops->no_nextnode(node));
 }
 
-char    *strchr __P((const char *, int));
 u_int      hexatoi __P((const char *));
 
 /* The following recursively searches a PROM tree for a given node */
@@ -1698,7 +1658,7 @@ romgetcursoraddr(rowp, colp)
 	 * and in some newer proms.  They are local in version 2.9.  The
 	 * correct cutoff point is unknown, as yet; we use 2.9 here.
 	 */
-	if (promvec->pv_romvec_vers < 2 || promvec->pv_printrev < 0x00020007)
+	if (promvec->pv_romvec_vers < 2 || promvec->pv_printrev < 0x00020009)
 		sprintf(buf,
 		    "' line# >body >user %lx ! ' column# >body >user %lx !",
 		    (u_long)rowp, (u_long)colp);
@@ -1708,8 +1668,6 @@ romgetcursoraddr(rowp, colp)
 		    (u_long)rowp, (u_long)colp);
 	*rowp = *colp = NULL;
 	rominterpret(buf);
-	if (*rowp == *colp && *rowp != NULL)
-		panic("romgetcursor prom version");
 	return (*rowp == NULL || *colp == NULL);
 }
 #endif
@@ -2163,25 +2121,6 @@ getdevunit(name, unit)
 	return dev;
 }
 
-
-/*
- * The $#!@$&%# kernel library doesn't have strchr or atoi. Ugh. We duplicate
- * here.
- */
-
-char *
-strchr(p, ch)			/* cribbed from libc */
-	register const char *p, ch;
-{
-	for (;; ++p) {
-		if (*p == ch)
-			return((char *)p);
-		if (!*p)
-			return((char *)NULL);
-	}
-	/* NOTREACHED */
-}
-
 u_int
 hexatoi(nptr)			/* atoi assuming hex, no 0x */
 	const char *nptr;
@@ -2190,4 +2129,3 @@ hexatoi(nptr)			/* atoi assuming hex, no 0x */
 	str2hex((char *)nptr, &retval);
 	return retval;
 }
-

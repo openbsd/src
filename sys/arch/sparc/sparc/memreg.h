@@ -1,3 +1,4 @@
+/*	$OpenBSD: memreg.h,v 1.3 1997/08/08 08:27:33 downsj Exp $	*/
 /*	$NetBSD: memreg.h,v 1.4 1996/03/31 22:52:13 pk Exp $ */
 
 /*

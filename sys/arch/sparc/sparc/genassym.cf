@@ -1,5 +1,8 @@
-#	$OpenBSD: genassym.cf,v 1.1 1997/06/25 14:47:12 downsj Exp $
+#	$OpenBSD: genassym.cf,v 1.2 1997/08/08 08:27:14 downsj Exp $
+#	$NetBSD: genassym.cf,v 1.2 1997/06/28 19:59:04 pk Exp $
+
 #
+# Copyright (c) 1997 Christos Zoulas.  All rights reserved.
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
 #
@@ -62,10 +65,13 @@ include <machine/cpu.h>
 include <machine/oldmon.h>
 include <machine/bsd_openprom.h>
 
+include <sparc/sparc/cpuvar.h>
+
 ifdef notyet
 include <sparc/dev/zsreg.h>
 include <sparc/dev/zsvar.h>
 endif
+
 include <dev/ic/am7930reg.h>
 include <sparc/dev/amd7930var.h>
 
@@ -86,14 +92,17 @@ define	P_VMSPACE	offsetof(struct proc, p_vmspace)
 define	SRUN		SRUN
 
 # VM structure fields
-define	VM_PMAP		offsetof(struct vmspace, vm_pmap)
-define	VM_PMAP_CTX	offsetof(struct vmspace, vm_pmap.pm_ctx)
-define	VM_PMAP_CTXNUM	offsetof(struct vmspace, vm_pmap.pm_ctxnum)
+define	VM_PMAP		offsetof(struct vmspace, vm_map.pmap)
+define	PMAP_CTX	offsetof(struct pmap, pm_ctx)
+define	PMAP_CTXNUM	offsetof(struct pmap, pm_ctxnum)
 
 # interrupt/fault metering
 define	V_SWTCH		offsetof(struct vmmeter, v_swtch)
 define	V_INTR		offsetof(struct vmmeter, v_intr)
 define	V_FAULTS	offsetof(struct vmmeter, v_faults)
+
+# CPU info structure
+define	CPUINFO_FAULTSTATUS	offsetof(struct cpu_softc, get_faultstatus)
 
 # PTE bits and related information
 define	PG_W		PG_W
@@ -101,7 +110,7 @@ define	PG_VSHIFT	PG_VSHIFT
 define	PG_PROTSHIFT	PG_PROTSHIFT
 define	PG_PROTUREAD	PG_PROTUREAD
 define	PG_PROTUWRITE	PG_PROTUWRITE
-ifdef SUN4M
+if defined(SUN4M)
 define	SRMMU_TETYPE	SRMMU_TETYPE
 define	SRMMU_TEPTE	SRMMU_TEPTE
 define	SRMMU_PROT_MASK	SRMMU_PROT_MASK
@@ -138,13 +147,13 @@ define	PCB_UW		offsetof(struct pcb, pcb_uw)
 define	PCB_WIM		offsetof(struct pcb, pcb_wim)
 
 # interrupt enable register PTE
-define	IE_REG_PTE_PG	PG_V | PG_W | PG_S | PG_NC | PG_OBIO
+define	IE_REG_PTE_PG	(PG_V | PG_W | PG_S | PG_NC | PG_OBIO)
 
 ifdef notyet
 # ZSCC interrupt fields
 define	ZSC_A		offsetof(struct zs_softc, sc_a)
 define	ZSC_B		offsetof(struct zs_softc, sc_b)
-# define	ZL_WREG		offsetof(struct zs_line, zl_wreg)
+define	ZL_WREG		offsetof(struct zs_line, zl_wreg)
 define	ZL_TBC		offsetof(struct zs_line, zl_tbc)
 define	ZL_TBA		offsetof(struct zs_line, zl_tba)
 define	ZL_RBPUT	offsetof(struct zs_line, zl_rbput)

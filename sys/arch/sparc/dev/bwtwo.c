@@ -1,5 +1,5 @@
-/*	$OpenBSD: bwtwo.c,v 1.13 1996/08/13 08:05:18 downsj Exp $	*/
-/*	$NetBSD: bwtwo.c,v 1.26 1996/04/01 17:30:15 christos Exp $ */
+/*	$OpenBSD: bwtwo.c,v 1.14 1997/08/08 08:24:43 downsj Exp $	*/
+/*	$NetBSD: bwtwo.c,v 1.33 1997/05/24 20:16:02 pk Exp $ */
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -105,13 +105,12 @@ struct bwtwo_softc {
 /* autoconfiguration driver */
 static void	bwtwoattach __P((struct device *, struct device *, void *));
 static int	bwtwomatch __P((struct device *, void *, void *));
-int		bwtwoopen __P((dev_t, int, int, struct proc *));
-int		bwtwoclose __P((dev_t, int, int, struct proc *));
-int		bwtwoioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-int		bwtwommap __P((dev_t, int, int));
 static void	bwtwounblank __P((struct device *));
 static void	bwtwo_set_video __P((struct bwtwo_softc *, int));
 static int	bwtwo_get_video __P((struct bwtwo_softc *));
+
+/* cdevsw prototypes */
+cdev_decl(bwtwo);
 
 struct cfattach bwtwo_ca = {
 	sizeof(struct bwtwo_softc), bwtwomatch, bwtwoattach
@@ -212,14 +211,13 @@ bwtwoattach(parent, self, args)
 	 * Map the control register.
 	 */
 	if (fb->fb_flags & FB_PFOUR) {
-		fb->fb_pfour =
-		    (volatile u_int32_t *)mapiodev(ca->ca_ra.ra_reg, 0,
-		    sizeof(u_int32_t), ca->ca_bustype);
+		fb->fb_pfour = (volatile u_int32_t *)
+		    mapiodev(ca->ca_ra.ra_reg, 0, sizeof(u_int32_t));
 		sc->sc_reg = NULL;
 	} else {
-		sc->sc_reg =
-		    (volatile struct fbcontrol *)mapiodev(ca->ca_ra.ra_reg,
-		    BWREG_REG, sizeof(struct fbcontrol), ca->ca_bustype);
+		sc->sc_reg = (volatile struct fbcontrol *)
+		    mapiodev(ca->ca_ra.ra_reg, BWREG_REG,
+			     sizeof(struct fbcontrol));
 		fb->fb_pfour = NULL;
 	}
 
@@ -291,13 +289,13 @@ bwtwoattach(parent, self, args)
 #if defined(SUN4)
 	if (CPU_ISSUN4) {
 		struct eeprom *eep = (struct eeprom *)eeprom_va;
-		int constype = (fb->fb_flags & FB_PFOUR) ? EED_CONS_P4 :
-		    EED_CONS_BW;
+		int constype = (fb->fb_flags & FB_PFOUR) ? EE_CONS_P4OPT :
+		    EE_CONS_BW;
 		/*
 		 * Assume this is the console if there's no eeprom info
 		 * to be found.
 		 */
-		if (eep == NULL || eep->ee_diag.eed_console == constype)
+		if (eep == NULL || eep->eeConsole == constype)
 			isconsole = (fbconstty != NULL);
 		else
 			isconsole = 0;
@@ -316,8 +314,7 @@ bwtwoattach(parent, self, args)
 	if ((fb->fb_pixels = ca->ca_ra.ra_vaddr) == NULL && isconsole) {
 		/* this probably cannot happen (on sun4c), but what the heck */
 		fb->fb_pixels =
-		    mapiodev(ca->ca_ra.ra_reg, sc->sc_pixeloffset,
-		    ramsize, ca->ca_bustype);
+		    mapiodev(ca->ca_ra.ra_reg, sc->sc_pixeloffset, ramsize);
 	}
 
 	/* Insure video is enabled */
@@ -326,7 +323,16 @@ bwtwoattach(parent, self, args)
 	if (isconsole) {
 		printf(" (console)\n");
 #ifdef RASTERCONSOLE
-		fbrcons_init(fb);
+#if defined(SUN4)
+		/*
+		 * XXX rcons doesn't seem to work properly on the overlay
+		 * XXX plane.  This is a temporary kludge until someone
+		 * XXX fixes it.
+		 */
+		if ((fb->fb_flags & FB_PFOUR) == 0 ||
+		    (sc->sc_ovtype == BWO_NONE))
+#endif
+			fbrcons_init(fb);
 #endif
 	} else
 		printf("\n");
@@ -456,8 +462,7 @@ bwtwommap(dev, off, prot)
 	 * I turned on PMAP_NC here to disable the cache as I was
 	 * getting horribly broken behaviour with it on.
 	 */
-	return (REG2PHYS(&sc->sc_phys, sc->sc_pixeloffset + off,
-	    sc->sc_bustype) | PMAP_NC);
+	return (REG2PHYS(&sc->sc_phys, sc->sc_pixeloffset + off) | PMAP_NC);
 }
 
 static int

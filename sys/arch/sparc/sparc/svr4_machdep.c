@@ -1,4 +1,5 @@
-/*	$NetBSD: svr4_machdep.c,v 1.17.4.1 1996/06/11 01:46:42 jtc Exp $	 */
+/*	$OpenBSD: svr4_machdep.c,v 1.9 1997/08/08 08:27:42 downsj Exp $	*/
+/*	$NetBSD: svr4_machdep.c,v 1.24 1997/07/29 10:04:45 fair Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -40,6 +41,7 @@
 #include <sys/signalvar.h>
 #include <sys/malloc.h>
 #include <sys/buf.h>
+#include <sys/exec.h>
 
 #include <sys/syscallargs.h>
 #include <compat/svr4/svr4_types.h>
@@ -77,31 +79,31 @@ svr4_printcontext(fun, uc)
 	printf("%s at %p\n", fun, uc);
 
 	printf("Regs: ");
-	printf("PSR = %x ", r[SVR4_SPARC_PSR]);
-	printf("PC = %x ",  r[SVR4_SPARC_PC]);
-	printf("nPC = %x ", r[SVR4_SPARC_nPC]);
-	printf("Y = %x ",   r[SVR4_SPARC_Y]);
-	printf("G1 = %x ",  r[SVR4_SPARC_G1]);
-	printf("G2 = %x ",  r[SVR4_SPARC_G2]);
-	printf("G3 = %x ",  r[SVR4_SPARC_G3]);
-	printf("G4 = %x ",  r[SVR4_SPARC_G4]);
-	printf("G5 = %x ",  r[SVR4_SPARC_G5]);
-	printf("G6 = %x ",  r[SVR4_SPARC_G6]);
-	printf("G7 = %x ",  r[SVR4_SPARC_G7]);
-	printf("O0 = %x ",  r[SVR4_SPARC_O0]);
-	printf("O1 = %x ",  r[SVR4_SPARC_O1]);
-	printf("O2 = %x ",  r[SVR4_SPARC_O2]);
-	printf("O3 = %x ",  r[SVR4_SPARC_O3]);
-	printf("O4 = %x ",  r[SVR4_SPARC_O4]);
-	printf("O5 = %x ",  r[SVR4_SPARC_O5]);
-	printf("O6 = %x ",  r[SVR4_SPARC_O6]);
-	printf("O7 = %x ",  r[SVR4_SPARC_O7]);
+	printf("PSR = 0x%x ", r[SVR4_SPARC_PSR]);
+	printf("PC = 0x%x ",  r[SVR4_SPARC_PC]);
+	printf("nPC = 0x%x ", r[SVR4_SPARC_nPC]);
+	printf("Y = 0x%x ",   r[SVR4_SPARC_Y]);
+	printf("G1 = 0x%x ",  r[SVR4_SPARC_G1]);
+	printf("G2 = 0x%x ",  r[SVR4_SPARC_G2]);
+	printf("G3 = 0x%x ",  r[SVR4_SPARC_G3]);
+	printf("G4 = 0x%x ",  r[SVR4_SPARC_G4]);
+	printf("G5 = 0x%x ",  r[SVR4_SPARC_G5]);
+	printf("G6 = 0x%x ",  r[SVR4_SPARC_G6]);
+	printf("G7 = 0x%x ",  r[SVR4_SPARC_G7]);
+	printf("O0 = 0x%x ",  r[SVR4_SPARC_O0]);
+	printf("O1 = 0x%x ",  r[SVR4_SPARC_O1]);
+	printf("O2 = 0x%x ",  r[SVR4_SPARC_O2]);
+	printf("O3 = 0x%x ",  r[SVR4_SPARC_O3]);
+	printf("O4 = 0x%x ",  r[SVR4_SPARC_O4]);
+	printf("O5 = 0x%x ",  r[SVR4_SPARC_O5]);
+	printf("O6 = 0x%x ",  r[SVR4_SPARC_O6]);
+	printf("O7 = 0x%x ",  r[SVR4_SPARC_O7]);
 	printf("\n");
 
-	printf("Signal Stack: sp %p, size %d, flags %x\n",
-	       s->ss_sp, s->ss_size, s->ss_flags);
+	printf("Signal Stack: sp %p, size %d, flags 0x%x\n",
+	    s->ss_sp, s->ss_size, s->ss_flags);
 
-	printf("Flags: %lx\n", uc->uc_flags);
+	printf("Flags: 0x%lx\n", uc->uc_flags);
 }
 #endif
 
@@ -167,7 +169,7 @@ svr4_getcontext(p, uc, mask, oonstack)
 		if (copyout(fps->fs_queue, f->fp_q, sz) != 0) {
 #ifdef DIAGNOSTIC
 			printf("getcontext: copy of fp_queue failed %d\n",
-			       error);
+			    error);
 #endif
 			return;
 		}

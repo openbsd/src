@@ -1,3 +1,4 @@
+/*	$OpenBSD: svr4_machdep.h,v 1.6 1997/08/08 08:26:50 downsj Exp $	*/
 /*	$NetBSD: svr4_machdep.h,v 1.4 1996/03/31 22:21:45 pk Exp $	 */
 
 /*

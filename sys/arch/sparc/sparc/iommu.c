@@ -1,4 +1,5 @@
-/*	$NetBSD: iommu.c,v 1.4 1996/05/21 07:25:07 pk Exp $ */
+/*	$OpenBSD: iommu.c,v 1.3 1997/08/08 08:27:20 downsj Exp $	*/
+/*	$NetBSD: iommu.c,v 1.13 1997/07/29 09:42:04 fair Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -45,6 +46,7 @@
 #include <machine/ctlreg.h>
 #include <sparc/sparc/asm.h>
 #include <sparc/sparc/vaddrs.h>
+#include <sparc/sparc/cpuvar.h>
 #include <sparc/sparc/iommureg.h>
 
 struct iommu_softc {
@@ -96,7 +98,7 @@ iommu_match(parent, vcf, aux)
 	struct device *parent;
 	void *vcf, *aux;
 {
-	struct cfdata *cf = vcf;
+	register struct cfdata *cf = vcf;
 	register struct confargs *ca = aux;
 	register struct romaux *ra = &ca->ca_ra;
 
@@ -121,12 +123,12 @@ iommu_attach(parent, self, aux)
 	register int node;
 	register char *name;
 	register u_int pbase, pa;
-	register int i, mmupcrsav, s, wierdviking = 0;
+	register int i, mmupcrsave, s;
 	register iopte_t *tpte_p;
 	extern u_int *kernel_iopte_table;
 	extern u_int kernel_iopte_table_pa;
 
-/*XXX-GCC!*/mmupcrsav=0;
+/*XXX-GCC!*/mmupcrsave=0;
 	iommu_sc = sc;
 	/*
 	 * XXX there is only one iommu, for now -- do not know how to
@@ -151,10 +153,12 @@ iommu_attach(parent, self, aux)
 	 *     other fields for?
 	 */
 	sc->sc_reg = (struct iommureg *)
-		mapdev(ra->ra_reg, 0, 0, ra->ra_len, ra->ra_iospace);
+		mapiodev(ra->ra_reg, 0, ra->ra_len);
 #endif
 
 	sc->sc_hasiocache = node_has_property(node, "cache-coherence?");
+	if (CACHEINFO.c_enabled == 0) /* XXX - is this correct? */
+		sc->sc_hasiocache = 0;
 	has_iocache = sc->sc_hasiocache; /* Set global flag */
 
 	sc->sc_pagesize = getpropint(node, "page-size", NBPG),
@@ -191,10 +195,10 @@ iommu_attach(parent, self, aux)
 	 *
 	 * XXX: PGOFSET, NBPG assume same page size as SRMMU
 	 */
-	if ((getpsr() & 0x40000000) && (!(lda(SRMMU_PCR,ASI_SRMMU) & 0x800))) {
-		wierdviking = 1;
-		sta(SRMMU_PCR, ASI_SRMMU, 	/* set MMU AC bit */
-		    ((mmupcrsav = lda(SRMMU_PCR,ASI_SRMMU)) | SRMMU_PCR_AC));
+	if (cpuinfo.cpu_vers == 4 && cpuinfo.mxcc) {
+		/* set MMU AC bit */
+		sta(SRMMU_PCR, ASI_SRMMU,
+		    ((mmupcrsave = lda(SRMMU_PCR, ASI_SRMMU)) | VIKING_PCR_AC));
 	}
 
 	for (tpte_p = &sc->sc_ptes[((0 - DVMA4M_BASE)/NBPG) - 1],
@@ -207,8 +211,9 @@ iommu_attach(parent, self, aux)
 			        (tpte_p - &sc->sc_ptes[0])*NBPG + DVMA4M_BASE);
 		*tpte_p = lda(pa, ASI_BYPASS);
 	}
-	if (wierdviking) {	/* restore mmu after bug-avoidance */
-		sta(SRMMU_PCR, ASI_SRMMU, mmupcrsav);
+	if (cpuinfo.cpu_vers == 4 && cpuinfo.mxcc) {
+		/* restore mmu after bug-avoidance */
+		sta(SRMMU_PCR, ASI_SRMMU, mmupcrsave);
 	}
 
 	/*
@@ -232,7 +237,7 @@ iommu_attach(parent, self, aux)
 	IOMMU_FLUSHALL(sc);
 	splx(s);
 
-	printf(": version %x/%x, page-size %d, range %dMB\n",
+	printf(": version 0x%x/0x%x, page-size %d, range %dMB\n",
 		(sc->sc_reg->io_cr & IOMMU_CTL_VER) >> 24,
 		(sc->sc_reg->io_cr & IOMMU_CTL_IMPL) >> 28,
 		sc->sc_pagesize,
@@ -299,7 +304,6 @@ iommu_remove(va, len)
 #endif
 #endif
 		sc->sc_ptes[atop(va - sc->sc_dvmabase)] = 0;
-		sta(sc->sc_ptes + atop(va - sc->sc_dvmabase), ASI_BYPASS, 0);
 		IOMMU_FLUSHPAGE(sc, va);
 		len -= sc->sc_pagesize;
 		va += sc->sc_pagesize;
@@ -313,8 +317,8 @@ iommu_error()
 	struct iommu_softc *sc = X;
 	struct iommureg *iop = sc->sc_reg;
 
-	printf("iommu: afsr %x, afar %x\n", iop->io_afsr, iop->io_afar);
-	printf("iommu: mfsr %x, mfar %x\n", iop->io_mfsr, iop->io_mfar);
+	printf("iommu: afsr 0x%x, afar 0x%x\n", iop->io_afsr, iop->io_afar);
+	printf("iommu: mfsr 0x%x, mfar 0x%x\n", iop->io_mfsr, iop->io_mfar);
 }
 int
 iommu_alloc(va, len)

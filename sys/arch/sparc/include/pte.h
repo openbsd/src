@@ -1,4 +1,5 @@
-/*	$NetBSD: pte.h,v 1.17 1996/05/16 15:57:03 abrown Exp $ */
+/*	$OpenBSD: pte.h,v 1.3 1997/08/08 08:26:42 downsj Exp $	*/
+/*	$NetBSD: pte.h,v 1.18 1997/05/15 22:25:45 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -176,12 +177,8 @@ typedef u_char smeg_t;		/* 8 bits needed per Sun-4 regmap entry */
  *	physadr = ((pte & PG_PFNUM) << PGSHIFT) | va.va_off;
  */
 
-#if defined(MMU_3L) && !defined(SUN4)
+#if defined(SUN4_MMU3L) && !defined(SUN4)
 #error "configuration error"
-#endif
-
-#if defined(MMU_3L)
-extern int mmu_3l;
 #endif
 
 #define	NBPRG	(1 << 24)	/* bytes per region */
@@ -224,30 +221,12 @@ extern int nptesg;
 #define	VA_ROUNDDOWNTOSEG(va)	((int)(va) & ~SGOFSET)
 
 /* virtual segment to virtual address (must sign extend on holy MMUs!) */
-#if defined(SUN4M) && !(defined(SUN4C) || defined(SUN4))
-#define VRTOVA(vr)	((int)(vr) << RGSHIFT)
-#define VSTOVA(vr,vs)	(((int)(vr) << RGSHIFT) + ((int)(vs) << SGSHIFT))
-#else
-#if defined(MMU_3L) || defined(SUN4M)	/* hairy.. */
-#if !defined(MMU_3L)
-#define _PTE_HAIRY_3L_TEST	(cputyp==CPU_SUN4M)
-#elif !defined(SUN4M)
-#define _PTE_HAIRY_3L_TEST	(mmu_3l)
-#else
-#define _PTE_HAIRY_3L_TEST	(mmu_3l || cputyp==CPU_SUN4M)
-#endif
-#define	VRTOVA(vr)	(_PTE_HAIRY_3L_TEST	\
-	? ((int)(vr) << RGSHIFT)		\
+#define	VRTOVA(vr)	((CPU_ISSUN4M || HASSUN4_MMU3L)	\
+	? ((int)(vr) << RGSHIFT)			\
 	: (((int)(vr) << (RGSHIFT+2)) >> 2))
-#define	VSTOVA(vr,vs)	(_PTE_HAIRY_3L_TEST	\
+#define	VSTOVA(vr,vs)	((CPU_ISSUN4M || HASSUN4_MMU3L)	\
 	? (((int)(vr) << RGSHIFT) + ((int)(vs) << SGSHIFT))	\
 	: ((((int)(vr) << (RGSHIFT+2)) >> 2) + ((int)(vs) << SGSHIFT)))
-#else
-#define	VRTOVA(vr)	(((int)(vr) << (RGSHIFT+2)) >> 2)
-#define	VSTOVA(vr,vs)	((((int)(vr) << (RGSHIFT+2)) >> 2) + \
-			 ((int)(vs) << SGSHIFT))
-#endif
-#endif
 
 extern int mmu_has_hole;
 #define VA_INHOLE(va)	(mmu_has_hole \

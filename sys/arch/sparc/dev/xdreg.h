@@ -1,3 +1,4 @@
+/*	$OpenBSD: xdreg.h,v 1.3 1997/08/08 08:25:36 downsj Exp $	*/
 /*	$NetBSD: xdreg.h,v 1.3 1996/03/31 22:38:54 pk Exp $	*/
 
 /*

@@ -1,5 +1,5 @@
-/*	$NetBSD: conf.h,v 1.1 1996/03/30 21:17:55 christos Exp $	*/
-/*	$OpenBSD: conf.h,v 1.4 1997/05/06 19:07:36 kstailey Exp $	*/
+/*	$OpenBSD: conf.h,v 1.5 1997/08/08 08:26:10 downsj Exp $	*/
+/*	$NetBSD: conf.h,v 1.8 1996/12/31 07:12:43 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -62,6 +62,8 @@ cdev_decl(kbd);
 
 cdev_decl(bwtwo);
 
+cdev_decl(cgtwo);
+
 cdev_decl(cgthree);
 
 cdev_decl(cgfour);
@@ -69,6 +71,10 @@ cdev_decl(cgfour);
 cdev_decl(cgsix);
 
 cdev_decl(cgeight);
+
+cdev_decl(tcx);
+
+cdev_decl(cgfourteen);
 
 cdev_decl(ipl);
 #ifdef IPFILTER
@@ -85,3 +91,6 @@ cdev_decl(xy);
 
 bdev_decl(sw);
 cdev_decl(sw);
+
+bdev_decl(rd);
+cdev_decl(rd);

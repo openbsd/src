@@ -1,4 +1,5 @@
-/*	$OpenBSD: if_en_sbus.c,v 1.2 1996/06/21 21:37:37 chuck Exp $	*/
+/*	$OpenBSD: if_en_sbus.c,v 1.3 1997/08/08 08:25:08 downsj Exp $	*/
+/*	$NetBSD: if_en_sbus.c,v 1.4 1997/05/24 20:16:22 pk Exp $	*/
 
 /*
  *
@@ -138,8 +139,7 @@ void *aux;
     return;
   }
 
-  sc->en_base = (caddr_t) mapiodev(ca->ca_ra.ra_reg, 0, 4*1024*1024,
-        ca->ca_bustype);
+  sc->en_base = (caddr_t) mapiodev(ca->ca_ra.ra_reg, 0, 4*1024*1024);
 
   if (ca->ca_ra.ra_nintr == 1) {
     sc->ipl = ca->ca_ra.ra_intr[0].int_pri;

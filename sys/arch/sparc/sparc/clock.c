@@ -1,4 +1,5 @@
-/*	$NetBSD: clock.c,v 1.44 1996/05/16 15:57:12 abrown Exp $ */
+/*	$OpenBSD: clock.c,v 1.8 1997/08/08 08:27:05 downsj Exp $	*/
+/*	$NetBSD: clock.c,v 1.52 1997/05/24 20:16:05 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,10 +78,10 @@
 #include <machine/cpu.h>
 
 #include <sparc/sparc/vaddrs.h>
+#include <sparc/sparc/cpuvar.h>
 #include <sparc/sparc/clockreg.h>
 #include <sparc/sparc/intreg.h>
 #include <sparc/sparc/timerreg.h>
-#include <sparc/sparc/cache.h>
 
 /*
  * Statistics clock interval and variance, in usec.  Variance must be a
@@ -95,7 +96,8 @@ int statvar = 8192;
 int statmin;			/* statclock interval - 1/2*variance */
 int timerok;
 
-#include <sparc/sparc/intersil7170.h>
+#include <dev/ic/intersil7170.h>
+
 extern struct idprom idprom;
 
 #define intersil_command(run, interrupt) \
@@ -120,11 +122,11 @@ static int oldclk = 0;
 struct intersil7170 *i7;
 
 static long oclk_get_secs __P((void));
-static void oclk_get_dt __P((struct date_time *));
-static void dt_to_gmt __P((struct date_time *, long *));
-static void oclk_set_dt __P((struct date_time *));
+static void oclk_get_dt __P((struct intersil_dt *));
+static void dt_to_gmt __P((struct intersil_dt *, long *));
+static void oclk_set_dt __P((struct intersil_dt *));
 static void oclk_set_secs __P((long));
-static void gmt_to_dt __P((long *, struct date_time *));
+static void gmt_to_dt __P((long *, struct intersil_dt *));
 #endif
 
 static int oclockmatch __P((struct device *, void *, void *));
@@ -208,12 +210,14 @@ int timerblurb = 10; /* Guess a value; used before clock is attached */
 static int
 oclockmatch(parent, vcf, aux)
 	struct device *parent;
-	void *aux, *vcf;
+	void *vcf, *aux;
 {
 	register struct confargs *ca = aux;
 
 	/* Only these sun4s have oclock */
-	if (!CPU_ISSUN4 || (cpumod != SUN4_100 && cpumod != SUN4_200))
+	if (!CPU_ISSUN4 ||
+	    (cpuinfo.cpu_type != CPUTYP_4_100 &&
+	     cpuinfo.cpu_type != CPUTYP_4_200))
 		return (0);
 
 	/* Check configuration name */
@@ -241,8 +245,7 @@ oclockattach(parent, self, aux)
 
 	oldclk = 1;  /* we've got an oldie! */
 
-	i7 = (struct intersil7170 *)
-		mapiodev(ra->ra_reg, 0, sizeof(*i7), ca->ca_bustype);
+	i7 = (struct intersil7170 *) mapiodev(ra->ra_reg, 0, sizeof(*i7));
 
 	idp = &idprom;
 	h = idp->id_machine << 24;
@@ -287,7 +290,7 @@ oclockattach(parent, self, aux)
 static int
 eeprom_match(parent, vcf, aux)
 	struct device *parent;
-	void *aux, *vcf;
+	void *vcf, *aux;
 {
 	struct cfdata *cf = vcf;
 	struct confargs *ca = aux;
@@ -298,7 +301,8 @@ eeprom_match(parent, vcf, aux)
 	if (cf->cf_unit != 0)
 		return (0);
 
-	if (cpumod != SUN4_100 && cpumod != SUN4_200)
+	if (cpuinfo.cpu_type != CPUTYP_4_100 &&
+	    cpuinfo.cpu_type != CPUTYP_4_200)
 		return (0);
 
 	if (strcmp(eeprom_cd.cd_name, ca->ca_ra.ra_name) != 0)
@@ -327,7 +331,7 @@ eeprom_attach(parent, self, aux)
 
 	printf("\n");
 
-	eeprom_va = (char *)mapiodev(ra->ra_reg, 0, EEPROM_SIZE, ca->ca_bustype);
+	eeprom_va = (char *)mapiodev(ra->ra_reg, 0, EEPROM_SIZE);
 
 	eeprom_nvram = 0;
 #endif /* SUN4 */
@@ -340,13 +344,14 @@ eeprom_attach(parent, self, aux)
 static int
 clockmatch(parent, vcf, aux)
 	struct device *parent;
-	void *aux, *vcf;
+	void *vcf, *aux;
 {
 	register struct confargs *ca = aux;
 
 	if (CPU_ISSUN4) {
 		/* Only these sun4s have "clock" (others have "oclock") */
-		if (cpumod != SUN4_300 && cpumod != SUN4_400)
+		if (cpuinfo.cpu_type != CPUTYP_4_300 &&
+		    cpuinfo.cpu_type != CPUTYP_4_400)
 			return (0);
 
 		if (strcmp(clock_cd.cd_name, ca->ca_ra.ra_name) != 0)
@@ -399,8 +404,7 @@ clockattach(parent, self, aux)
 		/*
 		 * the MK48T08 is 8K
 		 */
-		cl = (struct clockreg *)mapiodev(ra->ra_reg, 0, 8192,
-						 ca->ca_bustype);
+		cl = (struct clockreg *)mapiodev(ra->ra_reg, 0, 8192);
 		pmap_changeprot(pmap_kernel(), (vm_offset_t)cl, VM_PROT_READ, 1);
 		pmap_changeprot(pmap_kernel(), (vm_offset_t)cl + 4096,
 				VM_PROT_READ, 1);
@@ -410,8 +414,7 @@ clockattach(parent, self, aux)
 		 * the MK48T02 is 2K
 		 */
 		cl = (struct clockreg *)mapiodev(ra->ra_reg, 0,
-						 sizeof *clockreg,
-						 ca->ca_bustype);
+						 sizeof *clockreg);
 		pmap_changeprot(pmap_kernel(), (vm_offset_t)cl, VM_PROT_READ, 1);
 	}
 	idp = &cl->cl_idprom;
@@ -420,7 +423,8 @@ clockattach(parent, self, aux)
 	if (CPU_ISSUN4) {
 		idp = &idprom;
 
-		if (cpumod == SUN4_300 || cpumod == SUN4_400) {
+		if (cpuinfo.cpu_type == CPUTYP_4_300 ||
+		    cpuinfo.cpu_type == CPUTYP_4_400) {
 			eeprom_va = (char *)cl->cl_nvram;
 			eeprom_nvram = 1;
 		}
@@ -441,12 +445,13 @@ clockattach(parent, self, aux)
 static int
 timermatch(parent, vcf, aux)
 	struct device *parent;
-	void *aux, *vcf;
+	void *vcf, *aux;
 {
 	register struct confargs *ca = aux;
 
 	if (CPU_ISSUN4) {
-		if (cpumod != SUN4_300 && cpumod != SUN4_400)
+		if (cpuinfo.cpu_type != CPUTYP_4_300 &&
+		    cpuinfo.cpu_type != CPUTYP_4_400)
 			return (0);
 
 		if (strcmp("timer", ca->ca_ra.ra_name) != 0)
@@ -483,9 +488,9 @@ timerattach(parent, self, aux)
 
 	if (CPU_ISSUN4M) {
 		(void)mapdev(&ra->ra_reg[ra->ra_nreg-1], TIMERREG_VA, 0,
-			     sizeof(struct timer_4m), ca->ca_bustype);
+			     sizeof(struct timer_4m));
 		(void)mapdev(&ra->ra_reg[0], COUNTERREG_VA, 0,
-			     sizeof(struct counter_4m), ca->ca_bustype);
+			     sizeof(struct counter_4m));
 		timerreg_4m = (struct timer_4m *)TIMERREG_VA;
 		counterreg_4m = (struct counter_4m *)COUNTERREG_VA;
 
@@ -503,7 +508,7 @@ timerattach(parent, self, aux)
 		 * microtime() faster (in SUN4/SUN4C kernel only).
 		 */
 		(void)mapdev(ra->ra_reg, TIMERREG_VA, 0,
-			     sizeof(struct timerreg_4), ca->ca_bustype);
+			     sizeof(struct timerreg_4));
 
 		cnt = &timerreg4->t_c14.t_counter;
 		lim = &timerreg4->t_c14.t_limit;
@@ -641,8 +646,8 @@ cpu_initclocks()
 		statvar >>= 1;
 
 	if (CPU_ISSUN4M) {
-		timerreg_4m->t_limit = tmr_ustolim(tick);
-		counterreg_4m->t_limit = tmr_ustolim(statint);
+		timerreg_4m->t_limit = tmr_ustolim4m(tick);
+		counterreg_4m->t_limit = tmr_ustolim4m(statint);
 	}
 
 	if (CPU_ISSUN4OR4C) {
@@ -768,7 +773,7 @@ statintr(cap)
 	newint = statmin + r;
 
 	if (CPU_ISSUN4M) {
-		counterreg_4m->t_limit = tmr_ustolim(newint);
+		counterreg_4m->t_limit = tmr_ustolim4m(newint);
 	}
 
 	if (CPU_ISSUN4OR4C) {
@@ -990,7 +995,7 @@ resettodr()
 static long
 oclk_get_secs()
 {
-        struct date_time dt;
+        struct intersil_dt dt;
         long gmt;
 
         oclk_get_dt(&dt);
@@ -1002,7 +1007,7 @@ static void
 oclk_set_secs(secs)
 	long secs;
 {
-        struct date_time dt;
+        struct intersil_dt dt;
         long gmt;
 
         gmt = secs;
@@ -1017,7 +1022,7 @@ oclk_set_secs(secs)
  */
 static void
 oclk_get_dt(dt)
-	struct date_time *dt;
+	struct intersil_dt *dt;
 {
         int s;
         register volatile char *src, *dst;
@@ -1041,7 +1046,7 @@ oclk_get_dt(dt)
 
 static void
 oclk_set_dt(dt)
-	struct date_time *dt;
+	struct intersil_dt *dt;
 {
         int s;
         register volatile char *src, *dst;
@@ -1085,7 +1090,7 @@ static int month_days[12] = {
 static void
 gmt_to_dt(tp, dt)
 	long *tp;
-	struct date_time *dt;
+	struct intersil_dt *dt;
 {
         register int i;
         register long days, secs;
@@ -1126,7 +1131,7 @@ gmt_to_dt(tp, dt)
 
 static void
 dt_to_gmt(dt, tp)
-	struct date_time *dt;
+	struct intersil_dt *dt;
 	long *tp;
 {
         register int i;

@@ -1,5 +1,5 @@
-/*	$OpenBSD: cgeight.c,v 1.7 1996/08/13 08:05:20 downsj Exp $	*/
-/*	$NetBSD: cgeight.c,v 1.7 1996/04/01 17:29:57 christos Exp $	*/
+/*	$OpenBSD: cgeight.c,v 1.8 1997/08/08 08:24:44 downsj Exp $	*/
+/*	$NetBSD: cgeight.c,v 1.13 1997/05/24 20:16:04 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -91,13 +91,12 @@ struct cgeight_softc {
 /* autoconfiguration driver */
 static void	cgeightattach(struct device *, struct device *, void *);
 static int	cgeightmatch(struct device *, void *, void *);
-int		cgeightopen __P((dev_t, int, int, struct proc *));
-int		cgeightclose __P((dev_t, int, int, struct proc *));
-int		cgeightioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-int		cgeightmmap __P((dev_t, int, int));
 #if defined(SUN4)
 static void	cgeightunblank __P((struct device *));
 #endif
+
+/* cdevsw prototypes */
+cdev_decl(cgeight);
 
 struct cfattach cgeight_ca = {
 	sizeof(struct cgeight_softc), cgeightmatch, cgeightattach
@@ -203,8 +202,8 @@ cgeightattach(parent, self, args)
 	}
 
 	/* Map the pfour register. */
-	fb->fb_pfour = (volatile u_int32_t *)mapiodev(ca->ca_ra.ra_reg, 0,
-	    sizeof(u_int32_t), ca->ca_bustype);
+	fb->fb_pfour = (volatile u_int32_t *)
+	    mapiodev(ca->ca_ra.ra_reg, 0, sizeof(u_int32_t));
 
 	ramsize = PFOUR_COLOR_OFF_END - PFOUR_COLOR_OFF_OVERLAY;
 
@@ -225,7 +224,7 @@ cgeightattach(parent, self, args)
 		 * Assume this is the console if there's no eeprom info
 		 * to be found.
 		 */
-		if (eep == NULL || eep->ee_diag.eed_console == EED_CONS_P4)
+		if (eep == NULL || eep->eeConsole == EE_CONS_P4OPT)
 			isconsole = (fbconstty != NULL);
 	}
 
@@ -248,13 +247,14 @@ cgeightattach(parent, self, args)
 	if (isconsole) {
 		/* XXX this is kind of a waste */
 		fb->fb_pixels = mapiodev(ca->ca_ra.ra_reg,
-		    PFOUR_COLOR_OFF_OVERLAY, ramsize, ca->ca_bustype);
+					 PFOUR_COLOR_OFF_OVERLAY, ramsize);
 	}
 #endif
 
 	/* Map the Brooktree. */
-	sc->sc_fbc = (volatile struct fbcontrol *)mapiodev(ca->ca_ra.ra_reg,
-	    PFOUR_COLOR_OFF_CMAP, sizeof(struct fbcontrol), ca->ca_bustype);
+	sc->sc_fbc = (volatile struct fbcontrol *)
+	    mapiodev(ca->ca_ra.ra_reg,
+		     PFOUR_COLOR_OFF_CMAP, sizeof(struct fbcontrol));
 
 	sc->sc_phys = ca->ca_ra.ra_reg[0];
 	sc->sc_bustype = ca->ca_bustype;
@@ -405,7 +405,7 @@ cgeightmmap(dev, off, prot)
 		panic("cgeightmap");
 
 	if ((u_int)off >= NOOVERLAY) {
-		off =- NOOVERLAY;
+		off -= NOOVERLAY;
 
 		/*
 		 * X11 maps a huge chunk of the frame buffer; far more than
@@ -426,7 +426,7 @@ cgeightmmap(dev, off, prot)
 		 * in enable plane
 		 */
 		poff = (off - START_ENABLE) + PFOUR_COLOR_OFF_ENABLE;
-	} else if ((u_int)off < END_COLOR) {
+	} else if ((u_int)off < sc->sc_fb.fb_type.fb_size) {
 		/*
 		 * in colour plane
 		 */
@@ -458,7 +458,7 @@ cgeightmmap(dev, off, prot)
 	 * I turned on PMAP_NC here to disable the cache as I was
 	 * getting horribly broken behaviour with it on.
 	 */
-	return (REG2PHYS(&sc->sc_phys, poff, sc->sc_bustype) | PMAP_NC);
+	return (REG2PHYS(&sc->sc_phys, poff) | PMAP_NC);
 }
 
 #if defined(SUN4)

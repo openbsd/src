@@ -1,4 +1,5 @@
-/*	$NetBSD: fbvar.h,v 1.7 1996/02/27 22:09:39 thorpej Exp $ */
+/*	$OpenBSD: fbvar.h,v 1.3 1997/08/08 08:26:18 downsj Exp $	*/
+/*	$NetBSD: fbvar.h,v 1.9 1997/07/07 23:31:30 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +94,10 @@ void	fb_attach __P((struct fbdevice *, int));
 void	fb_setsize __P((struct fbdevice *, int, int, int, int, int));
 #ifdef RASTERCONSOLE
 void	fbrcons_init __P((struct fbdevice *));
+int	fbrcons_rows __P((void));
+int	fbrcons_cols __P((void));
 #endif
+
 #if defined(SUN4)
 int	fb_pfour_id __P((void *));
 int	fb_pfour_get_video __P((struct fbdevice *));

@@ -1,4 +1,5 @@
-/*	$NetBSD: dma.c,v 1.28.2.2 1996/07/02 23:46:29 jtc Exp $ */
+/*	$OpenBSD: dma.c,v 1.8 1997/08/08 08:24:57 downsj Exp $	*/
+/*	$NetBSD: dma.c,v 1.45 1997/07/29 09:58:06 fair Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg.  All rights reserved.
@@ -45,19 +46,25 @@
 #include <sparc/autoconf.h>
 #include <sparc/cpu.h>
 
+#include <sparc/sparc/cpuvar.h>
+
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
+
+#include <dev/ic/ncr53c9xreg.h>
+#include <dev/ic/ncr53c9xvar.h>
 
 #include <sparc/dev/sbusvar.h>
 #include <sparc/dev/dmareg.h>
 #include <sparc/dev/dmavar.h>
-#include <sparc/dev/espreg.h>
 #include <sparc/dev/espvar.h>
 
 int dmaprint		__P((void *, const char *));
 void dmaattach		__P((struct device *, struct device *, void *));
 int dmamatch		__P((struct device *, void *, void *));
-void dma_reset		__P((struct dma_softc *));
+void dma_reset		__P((struct dma_softc *, int));
+void espdma_reset	__P((struct dma_softc *));
+void ledma_reset	__P((struct dma_softc *));
 void dma_enintr		__P((struct dma_softc *));
 int dma_isintr		__P((struct dma_softc *));
 int espdmaintr		__P((struct dma_softc *));
@@ -100,7 +107,7 @@ dmamatch(parent, vcf, aux)
 	struct device *parent;
 	void *vcf, *aux;
 {
-	struct cfdata *cf = vcf;
+	register struct cfdata *cf = vcf;
 	register struct confargs *ca = aux;
 	register struct romaux *ra = &ca->ca_ra;
 
@@ -131,8 +138,7 @@ dmaattach(parent, self, aux)
 
 	if (ca->ca_ra.ra_vaddr == NULL || ca->ca_ra.ra_nvaddrs == 0)
 		ca->ca_ra.ra_vaddr =
-		    mapiodev(ca->ca_ra.ra_reg, 0, ca->ca_ra.ra_len,
-			     ca->ca_bustype);
+		    mapiodev(ca->ca_ra.ra_reg, 0, ca->ca_ra.ra_len);
 
 	sc->sc_regs = (struct dma_regs *) ca->ca_ra.ra_vaddr;
 
@@ -156,35 +162,24 @@ dmaattach(parent, self, aux)
 		}
 		delay(20000);	/* manual says we need 20ms delay */
 	}
-	
+
 	/*
-	 * Get transfer burst size from PROM and plug it into the controller
-	 * registers. This is needed on the Sun4m; do others need it too?
-	 * XXX
+	 * Get transfer burst size from PROM and plug it into the
+	 * controller registers. This is needed on the Sun4m; do
+	 * others need it too?
 	 */
 	if (CPU_ISSUN4M) {
+		int sbusburst = ((struct sbus_softc *)parent)->sc_burst;
+		if (sbusburst == 0)
+			sbusburst = SBUS_BURST_32 - 1; /* 1->16 */
+
 		sc->sc_burst = getpropint(ca->ca_ra.ra_node,"burst-sizes", -1);
-		if (sc->sc_burst == -1) {
-			/* check parent SBus for burst sizes */
-			if (((struct sbus_softc *)parent)->sc_burst == 0)
-				sc->sc_burst = SBUS_BURST_32 - 1; /* 1->16 */
-			else
-				sc->sc_burst = 
-					((struct sbus_softc *)parent)->sc_burst;
-		}
-		sc->sc_regs->csr &= ~D_BURST_SIZE; /* must clear first */
-		if (sc->sc_burst & SBUS_BURST_32) {
-			sc->sc_regs->csr |= D_BURST_32;
-		} else if (sc->sc_burst & SBUS_BURST_16) {
-			sc->sc_regs->csr |= D_BURST_16;
-		} else if (strcmp(ca->ca_ra.ra_name,"espdma") == 0) {
-			/* only espdma supports non-burst */
-			sc->sc_regs->csr |= D_BURST_0;
-#ifdef DIAGNOSTIC
-		} else {
-			printf(" <unknown burst size 0x%x>", sc->sc_burst);
-#endif
-		}
+		if (sc->sc_burst == -1)
+			/* take SBus burst sizes */
+			sc->sc_burst = sbusburst;
+
+		/* Clamp at parent's burst sizes */
+		sc->sc_burst &= sbusburst;
 	}
 
 	printf(": rev ");
@@ -192,6 +187,9 @@ dmaattach(parent, self, aux)
 	switch (sc->sc_rev) {
 	case DMAREV_0:
 		printf("0");
+		break;
+	case DMAREV_ESC:
+		printf("esc");
 		break;
 	case DMAREV_1:
 		printf("1");
@@ -203,19 +201,20 @@ dmaattach(parent, self, aux)
 		printf("2");
 		break;
 	default:
-		printf("unknown");
+		printf("unknown (0x%x)", sc->sc_rev);
 	}
 	printf("\n");
 
 	/* indirect functions */
 	if (sc->sc_dev.dv_cfdata->cf_attach == &dma_ca) {
+		sc->reset = espdma_reset;
 		sc->intr = espdmaintr;
 	} else {
+		sc->reset = ledma_reset;
 		sc->intr = ledmaintr;
 	}
 	sc->enintr = dma_enintr;
 	sc->isintr = dma_isintr;
-	sc->reset = dma_reset;
 	sc->setup = dma_setup;
 	sc->go = dma_go;
 
@@ -272,24 +271,94 @@ espsearch:
 	}
 }
 
+#define DMAWAIT(SC, COND, MSG, DONTPANIC) do if (COND) {		\
+	int count = 500000;						\
+	while ((COND) && --count > 0) DELAY(1);				\
+	if (count == 0) {						\
+		printf("%s: line %d: CSR = 0x%lx\n", __FILE__, __LINE__, \
+			(SC)->sc_regs->csr);				\
+		if (DONTPANIC)						\
+			printf(MSG);					\
+		else							\
+			panic(MSG);					\
+	}								\
+} while (0)
+
+#define DMA_DRAIN(sc, dontpanic) do {					\
+	/*								\
+	 * DMA rev0 & rev1: we are not allowed to touch the DMA "flush"	\
+	 *     and "drain" bits while it is still thinking about a	\
+	 *     request.							\
+	 * other revs: D_R_PEND bit reads as 0				\
+	 */								\
+	DMAWAIT(sc, sc->sc_regs->csr & D_R_PEND, "R_PEND", dontpanic);	\
+	/*								\
+	 * Select drain bit based on revision				\
+	 * also clears errors and D_TC flag				\
+	 */								\
+	if (sc->sc_rev == DMAREV_1 || sc->sc_rev == DMAREV_0)		\
+		DMACSR(sc) |= D_DRAIN;					\
+	else								\
+		DMACSR(sc) |= D_INVALIDATE;				\
+	/*								\
+	 * Wait for draining to finish					\
+	 *  rev0 & rev1 call this PACKCNT				\
+	 */								\
+	DMAWAIT(sc, sc->sc_regs->csr & D_DRAINING, "DRAINING", dontpanic);\
+} while(0)
+
 void
-dma_reset(sc)
+dma_reset(sc, isledma)
 	struct dma_softc *sc;
+	int isledma;
 {
-	DMAWAIT(sc);
-	DMA_DRAIN(sc);				/* Drain (DMA rev 1) */
+	DMA_DRAIN(sc, 1);
 	DMACSR(sc) &= ~D_EN_DMA;		/* Stop DMA */
-	DMAWAIT1(sc);				/* let things drain */
 	DMACSR(sc) |= D_RESET;			/* reset DMA */
 	DELAY(200);				/* what should this be ? */
-	DMAWAIT1(sc);
+	/*DMAWAIT1(sc); why was this here? */
 	DMACSR(sc) &= ~D_RESET;			/* de-assert reset line */
 	DMACSR(sc) |= D_INT_EN;			/* enable interrupts */
-	if (sc->sc_rev > DMAREV_1)
+	if (sc->sc_rev > DMAREV_1 && isledma == 0)
 		DMACSR(sc) |= D_FASTER;
+
+	switch (sc->sc_rev) {
+	case DMAREV_2:
+		sc->sc_regs->csr &= ~D_BURST_SIZE; /* must clear first */
+		if (sc->sc_burst & SBUS_BURST_32) {
+			DMACSR(sc) |= D_BURST_32;
+		} else if (sc->sc_burst & SBUS_BURST_16) {
+			DMACSR(sc) |= D_BURST_16;
+		} else {
+			DMACSR(sc) |= D_BURST_0;
+		}
+		break;
+	case DMAREV_ESC:
+		DMACSR(sc) |= D_AUTODRAIN;	/* Auto-drain */
+		if (sc->sc_burst & SBUS_BURST_32) {
+			DMACSR(sc) &= ~0x800;
+		} else
+			DMACSR(sc) |= 0x800;
+		break;
+	default:
+	}
+
 	sc->sc_active = 0;			/* and of course we aren't */
 }
 
+void
+espdma_reset(sc)
+	struct dma_softc *sc;
+{
+	dma_reset(sc, 0);
+}
+
+void
+ledma_reset(sc)
+	struct dma_softc *sc;
+{
+	dma_reset(sc, 1);
+}
 
 void
 dma_enintr(sc)
@@ -321,12 +390,7 @@ dma_setup(sc, addr, len, datain, dmasize)
 {
 	u_long csr;
 
-	/* clear errors and D_TC flag */
-	DMAWAIT(sc);
-	DMA_DRAIN(sc);		/* ? */
-	DMAWAIT1(sc);
-	DMACSR(sc) |= D_INVALIDATE;
-	DMAWAIT1(sc);
+	DMA_DRAIN(sc, 0);
 
 #if 0
 	DMACSR(sc) &= ~D_INT_EN;
@@ -334,7 +398,7 @@ dma_setup(sc, addr, len, datain, dmasize)
 	sc->sc_dmaaddr = addr;
 	sc->sc_dmalen = len;
 
-	ESP_DMA(("%s: start %d@%p,%d\n", sc->sc_dev.dv_xname,
+	NCR_DMA(("%s: start %d@%p,%d\n", sc->sc_dev.dv_xname,
 		*sc->sc_dmalen, *sc->sc_dmaaddr, datain ? 1 : 0));
 
 	/*
@@ -345,7 +409,7 @@ dma_setup(sc, addr, len, datain, dmasize)
 	*dmasize = sc->sc_dmasize =
 		min(*dmasize, DMAMAX((size_t) *sc->sc_dmaaddr));
 
-	ESP_DMA(("dma_setup: dmasize = %d\n", sc->sc_dmasize));
+	NCR_DMA(("dma_setup: dmasize = %d\n", sc->sc_dmasize));
 
 	/* Program the DMA address */
 	if (CPU_ISSUN4M && sc->sc_dmasize) {
@@ -361,6 +425,14 @@ dma_setup(sc, addr, len, datain, dmasize)
 	} else
 		DMADDR(sc) = *sc->sc_dmaaddr;
 
+	if (sc->sc_rev == DMAREV_ESC) {
+		/* DMA ESC chip bug work-around */
+		register long bcnt = sc->sc_dmasize;
+		register long eaddr = bcnt + (long)*sc->sc_dmaaddr;
+		if ((eaddr & PGOFSET) != 0)
+			bcnt = roundup(bcnt, NBPG);
+		DMACNT(sc) = bcnt;
+	}
 	/* Setup DMA control register */
 	csr = DMACSR(sc);
 	if (datain)
@@ -394,11 +466,12 @@ int
 espdmaintr(sc)
 	struct dma_softc *sc;
 {
+	struct ncr53c9x_softc *nsc = &sc->sc_esp->sc_ncr53c9x;
 	int trans, resid;
 	u_long csr;
 	csr = DMACSR(sc);
 
-	ESP_DMA(("%s: intr: addr %p, csr %b\n", sc->sc_dev.dv_xname,
+	NCR_DMA(("%s: intr: addr %p, csr %b\n", sc->sc_dev.dv_xname,
 		 DMADDR(sc), csr, DMACSRBITS));
 
 	if (csr & D_ERR_PEND) {
@@ -406,19 +479,14 @@ espdmaintr(sc)
 		DMACSR(sc) |= D_INVALIDATE;
 		printf("%s: error: csr=%b\n", sc->sc_dev.dv_xname,
 			csr, DMACSRBITS);
-		return 0;
+		return -1;
 	}
 
 	/* This is an "assertion" :) */
 	if (sc->sc_active == 0)
 		panic("dmaintr: DMA wasn't active");
 
-	/* clear errors and D_TC flag */
-	DMAWAIT(sc);
-	DMA_DRAIN(sc);		/* ? */
-	DMAWAIT1(sc);
-	DMACSR(sc) |= D_INVALIDATE;
-	DMAWAIT1(sc);
+	DMA_DRAIN(sc, 0);
 
 	/* DMA has stopped */
 	DMACSR(sc) &= ~D_EN_DMA;
@@ -426,11 +494,11 @@ espdmaintr(sc)
 
 	if (sc->sc_dmasize == 0) {
 		/* A "Transfer Pad" operation completed */
-		ESP_DMA(("dmaintr: discarded %d bytes (tcl=%d, tcm=%d)\n",
-			ESP_READ_REG(sc->sc_esp, ESP_TCL) |
-				(ESP_READ_REG(sc->sc_esp, ESP_TCM) << 8),
-			ESP_READ_REG(sc->sc_esp, ESP_TCL),
-			ESP_READ_REG(sc->sc_esp, ESP_TCM)));
+		NCR_DMA(("dmaintr: discarded %d bytes (tcl=%d, tcm=%d)\n",
+			NCR_READ_REG(nsc, NCR_TCL) |
+				(NCR_READ_REG(nsc, NCR_TCM) << 8),
+			NCR_READ_REG(nsc, NCR_TCL),
+			NCR_READ_REG(nsc, NCR_TCM)));
 		return 0;
 	}
 
@@ -442,44 +510,50 @@ espdmaintr(sc)
 	 * bytes are clocked into the FIFO.
 	 */
 	if (!(csr & D_WRITE) &&
-	    (resid = (ESP_READ_REG(sc->sc_esp, ESP_FFLAG) & ESPFIFO_FF)) != 0) {
-		ESP_DMA(("dmaintr: empty esp FIFO of %d ", resid));
-		ESPCMD(sc->sc_esp, ESPCMD_FLUSH);
+	    (resid = (NCR_READ_REG(nsc, NCR_FFLAG) & NCRFIFO_FF)) != 0) {
+		NCR_DMA(("dmaintr: empty esp FIFO of %d ", resid));
 	}
 
-	if ((sc->sc_esp->sc_espstat & ESPSTAT_TC) == 0) {
+	if ((nsc->sc_espstat & NCRSTAT_TC) == 0) {
 		/*
 		 * `Terminal count' is off, so read the residue
 		 * out of the ESP counter registers.
 		 */
-		resid += ( ESP_READ_REG(sc->sc_esp, ESP_TCL) |
-			  (ESP_READ_REG(sc->sc_esp, ESP_TCM) << 8) |
-			   ((sc->sc_esp->sc_cfg2 & ESPCFG2_FE)
-				? (ESP_READ_REG(sc->sc_esp, ESP_TCH) << 16)
+		resid += (NCR_READ_REG(nsc, NCR_TCL) |
+			  (NCR_READ_REG(nsc, NCR_TCM) << 8) |
+			   ((nsc->sc_cfg2 & NCRCFG2_FE)
+				? (NCR_READ_REG(nsc, NCR_TCH) << 16)
 				: 0));
 
 		if (resid == 0 && sc->sc_dmasize == 65536 &&
-		    (sc->sc_esp->sc_cfg2 & ESPCFG2_FE) == 0)
+		    (nsc->sc_cfg2 & NCRCFG2_FE) == 0)
 			/* A transfer of 64K is encoded as `TCL=TCM=0' */
 			resid = 65536;
 	}
 
 	trans = sc->sc_dmasize - resid;
 	if (trans < 0) {			/* transferred < 0 ? */
+#if 0
+		/*
+		 * This situation can happen in perfectly normal operation
+		 * if the ESP is reselected while using DMA to select
+		 * another target.  As such, don't print the warning.
+		 */
 		printf("%s: xfer (%d) > req (%d)\n",
 		    sc->sc_dev.dv_xname, trans, sc->sc_dmasize);
+#endif
 		trans = sc->sc_dmasize;
 	}
 
-	ESP_DMA(("dmaintr: tcl=%d, tcm=%d, tch=%d; trans=%d, resid=%d\n",
-		ESP_READ_REG(sc->sc_esp, ESP_TCL),
-		ESP_READ_REG(sc->sc_esp, ESP_TCM),
-		(sc->sc_esp->sc_cfg2 & ESPCFG2_FE)
-			? ESP_READ_REG(sc->sc_esp, ESP_TCH) : 0,
+	NCR_DMA(("dmaintr: tcl=%d, tcm=%d, tch=%d; trans=%d, resid=%d\n",
+		NCR_READ_REG(nsc, NCR_TCL),
+		NCR_READ_REG(nsc, NCR_TCM),
+		(nsc->sc_cfg2 & NCRCFG2_FE)
+			? NCR_READ_REG(nsc, NCR_TCH) : 0,
 		trans, resid));
 
 	if (csr & D_WRITE)
-		cache_flush(*sc->sc_dmaaddr, trans);
+		cpuinfo.cache_flush(*sc->sc_dmaaddr, trans);
 
 	if (CPU_ISSUN4M && sc->sc_dvmakaddr)
 		dvma_mapout((vm_offset_t)sc->sc_dvmakaddr,
@@ -490,7 +564,7 @@ espdmaintr(sc)
 
 #if 0	/* this is not normal operation just yet */
 	if (*sc->sc_dmalen == 0 ||
-	    sc->sc_esp->sc_phase != sc->sc_esp->sc_prevphase)
+	    nsc->sc_phase != nsc->sc_prevphase)
 		return 0;
 
 	/* and again */
@@ -515,11 +589,11 @@ ledmaintr(sc)
 	csr = DMACSR(sc);
 
 	if (csr & D_ERR_PEND) {
-		printf("Lance DMA error, see your doctor!\n");
 		DMACSR(sc) &= ~D_EN_DMA;	/* Stop DMA */
 		DMACSR(sc) |= D_INVALIDATE;
 		printf("%s: error: csr=%b\n", sc->sc_dev.dv_xname,
-			(u_int)csr, DMACSRBITS);
+			csr, DMACSRBITS);
+		DMA_RESET(sc);
 	}
 	return 1;
 }

@@ -1,5 +1,5 @@
-/*	$OpenBSD: kbd.c,v 1.5 1996/08/11 23:34:01 downsj Exp $	*/
-/*	$NetBSD: kbd.c,v 1.23 1996/04/01 17:34:34 christos Exp $ */
+/*	$OpenBSD: kbd.c,v 1.6 1997/08/08 08:25:16 downsj Exp $	*/
+/*	$NetBSD: kbd.c,v 1.27 1996/10/13 03:00:01 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -66,7 +66,7 @@
 #include <machine/conf.h>
 
 #include <machine/vuid_event.h>
-#include <sparc/dev/event_var.h>
+#include <dev/sun/event_var.h>
 #include <machine/kbd.h>
 #include <machine/kbio.h>
 
@@ -326,7 +326,6 @@ kbd_reset(ks)
 		break;
 	default:
 		printf("Unknown keyboard type %d\n", ks->kbd_id);
-		break;
 	}
 
 	ks->kbd_leds = 0;
@@ -719,6 +718,7 @@ kbdioctl(dev, cmd, data, flag, p)
 	case KIOCGLED:
 		*(char *)data = k->k_state.kbd_leds;
 		return (0);
+
 
 	case FIONBIO:		/* we will remove this someday (soon???) */
 		return (0);

@@ -1,4 +1,5 @@
-/*	$NetBSD: db_trace.c,v 1.8 1996/04/04 23:25:35 pk Exp $ */
+/*	$OpenBSD: db_trace.c,v 1.3 1997/08/08 08:27:13 downsj Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.9 1997/07/29 09:42:00 fair Exp $ */
 
 /*
  * Mach Operating System
@@ -90,8 +91,8 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 		 * actual arguments somewhat...
 		 */
 		for (i=0; i < 5; i++)
-			db_printf("%x, ", frame->fr_arg[i]);
-		db_printf("%x) at ", frame->fr_arg[i]);
+			db_printf("0x%x, ", frame->fr_arg[i]);
+		db_printf("0x%x) at ", frame->fr_arg[i]);
 		db_printsym(pc, DB_STGY_PROC);
 		db_printf("\n");
 

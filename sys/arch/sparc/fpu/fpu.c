@@ -1,4 +1,5 @@
-/*	$NetBSD: fpu.c,v 1.3 1996/03/14 19:41:49 christos Exp $ */
+/*	$OpenBSD: fpu.c,v 1.7 1997/08/08 08:25:46 downsj Exp $	*/
+/*	$NetBSD: fpu.c,v 1.6 1997/07/29 10:09:51 fair Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -143,7 +144,7 @@ fpu_cleanup(p, fs)
 		goto out;
 
 	default:
-		printf("fsr=%x\n", fsr);
+		printf("fsr=0x%x\n", fsr);
 		panic("fpu error");
 	}
 

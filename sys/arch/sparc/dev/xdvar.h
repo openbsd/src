@@ -1,3 +1,4 @@
+/*	$OpenBSD: xdvar.h,v 1.4 1997/08/08 08:25:37 downsj Exp $	*/
 /*	$NetBSD: xdvar.h,v 1.5 1996/03/31 22:38:56 pk Exp $	*/
 
 /*

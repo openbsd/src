@@ -1,4 +1,5 @@
-/*	$NetBSD: fbio.h,v 1.4 1996/03/31 22:21:31 pk Exp $ */
+/*	$OpenBSD: fbio.h,v 1.3 1997/08/08 08:26:17 downsj Exp $	*/
+/*	$NetBSD: fbio.h,v 1.5 1996/09/30 23:45:11 abrown Exp $ */
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -66,10 +67,12 @@
 #define	FBTYPE_RESERVED5	15	/* reserved, do not use */
 #define	FBTYPE_RESERVED4	16	/* reserved, do not use */
 #define	FBTYPE_RESERVED3	17	/* reserved, do not use */
-#define	FBTYPE_RESERVED2	18	/* reserved, do not use */
-#define	FBTYPE_RESERVED1	19	/* reserved, do not use */
+#define FBTYPE_SUNGP3           17      /* cg12 running gpsi microcode */
+#define FBTYPE_SUNGT            18      /* gt graphics accelerator */
+#define FBTYPE_SUNLEO           19      /* zx graphics accelerator */
+#define FBTYPE_MDICOLOR         20      /* cgfourteen framebuffer */
 
-#define	FBTYPE_LASTPLUSONE	20	/* max number of fbs (change as add) */
+#define	FBTYPE_LASTPLUSONE	21	/* max number of fbs (change as add) */
 
 /*
  * Frame buffer descriptor as returned by FBIOGTYPE.

@@ -1,4 +1,5 @@
-/*	$NetBSD: stdarg.h,v 1.9 1995/12/29 18:53:01 mycroft Exp $ */
+/*	$OpenBSD: stdarg.h,v 1.4 1997/08/08 08:26:50 downsj Exp $	*/
+/*	$NetBSD: stdarg.h,v 1.10 1996/12/27 20:55:28 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -48,6 +49,11 @@
 #define	_SPARC_STDARG_H_
 
 #include <machine/ansi.h>
+
+#ifdef __lint__
+#define	__extension__(x)		(0)
+#define	__builtin_classify_type(t)	(0)
+#endif
 
 typedef _BSD_VA_LIST_	va_list;
 

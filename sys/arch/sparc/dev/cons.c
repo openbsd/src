@@ -1,5 +1,5 @@
-/*	$OpenBSD: cons.c,v 1.5 1996/08/13 08:05:24 downsj Exp $	*/
-/*	$NetBSD: cons.c,v 1.23.4.1 1996/06/02 09:07:53 mrg Exp $ */
+/*	$OpenBSD: cons.c,v 1.6 1997/08/08 08:24:56 downsj Exp $	*/
+/*	$NetBSD: cons.c,v 1.30 1997/07/07 23:30:23 pk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -69,6 +69,11 @@
 #endif
 #include <machine/autoconf.h>
 #include <machine/conf.h>
+
+#ifdef RASTERCONSOLE
+#include <machine/fbio.h>
+#include <machine/fbvar.h>
+#endif
 
 #include "zs.h"
 
@@ -286,20 +291,30 @@ cnopen(dev, flag, mode, p)
 		/* output queue doesn't need quoting */
 		clalloc(&tp->t_outq, 1024, 0);
 		tty_attach(tp);
+
 		/*
 		 * get the console struct winsize.
 		 */
+#ifdef RASTERCONSOLE
+		if (fbconstty) {
+			rows = fbrcons_rows();
+			cols = fbrcons_cols();
+		}
+#endif
+
 		if (CPU_ISSUN4COR4M) {
 			int i;
 			char *prop;
 
-			if ((prop = getpropstring(optionsnode, "screen-#rows"))) {
+			if (rows == 0 &&
+			    (prop = getpropstring(optionsnode, "screen-#rows"))) {
 				i = 0;
 				while (*prop != '\0')
 					i = i * 10 + *prop++ - '0';
 				rows = (unsigned short)i;
 			}
-			if ((prop = getpropstring(optionsnode, "screen-#columns"))) {
+			if (cols == 0 &&
+			    (prop = getpropstring(optionsnode, "screen-#columns"))) {
 				i = 0;
 				while (*prop != '\0')
 					i = i * 10 + *prop++ - '0';
@@ -310,8 +325,10 @@ cnopen(dev, flag, mode, p)
 			struct eeprom *ep = (struct eeprom *)eeprom_va;
 
 			if (ep) {
-				rows = (u_short)ep->ee_diag.eed_rowsize;
-				cols = (u_short)ep->ee_diag.eed_colsize;
+				if (rows == 0)
+					rows = (u_short)ep->eeTtyRows;
+				if (cols == 0)
+					cols = (u_short)ep->eeTtyCols;
 			}
 		}
 		firstopen = 0;

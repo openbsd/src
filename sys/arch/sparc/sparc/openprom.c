@@ -1,3 +1,4 @@
+/*	$OpenBSD: openprom.c,v 1.3 1997/08/08 08:27:34 downsj Exp $	*/
 /*	$NetBSD: openprom.c,v 1.8 1996/03/31 23:45:34 pk Exp $ */
 
 /*

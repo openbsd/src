@@ -1,4 +1,5 @@
-/*	$NetBSD: cgthree.c,v 1.27 1996/04/01 17:30:03 christos Exp $ */
+/*	$OpenBSD: cgthree.c,v 1.6 1997/08/08 08:24:53 downsj Exp $	*/
+/*	$NetBSD: cgthree.c,v 1.33 1997/05/24 20:16:11 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -90,11 +91,10 @@ struct cgthree_softc {
 /* autoconfiguration driver */
 static void	cgthreeattach(struct device *, struct device *, void *);
 static int	cgthreematch(struct device *, void *, void *);
-int		cgthreeopen __P((dev_t, int, int, struct proc *));
-int		cgthreeclose __P((dev_t, int, int, struct proc *));
-int		cgthreeioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-int		cgthreemmap __P((dev_t, int, int));
 static void	cgthreeunblank(struct device *);
+
+/* cdevsw prototypes */
+cdev_decl(cgthree);
 
 struct cfattach cgthree_ca = {
 	sizeof(struct cgthree_softc), cgthreematch, cgthreeattach
@@ -115,6 +115,20 @@ extern struct tty *fbconstty;
 static void cgthreeloadcmap __P((struct cgthree_softc *, int, int));
 static void cgthree_set_video __P((struct cgthree_softc *, int));
 static int cgthree_get_video __P((struct cgthree_softc *));
+
+/* Video control parameters */
+struct cg3_videoctrl {
+	unsigned char	sense;		/* Monitor sense value */
+	unsigned char	vctrl[12];
+} cg3_videoctrl[] = {
+/* Missing entries: sense 0x10, 0x30, 0x50 */
+	{ 0x40, /* this happens to be my 19'' 1152x900 gray-scale monitor */
+	   {0xbb, 0x2b, 0x3, 0xb, 0xb3, 0x3, 0xaf, 0x2b, 0x2, 0xa, 0xff, 0x1}
+	},
+	{ 0x00, /* default? must be last */
+	   {0xbb, 0x2b, 0x3, 0xb, 0xb3, 0x3, 0xaf, 0x2b, 0x2, 0xa, 0xff, 0x1}
+	}
+};
 
 /*
  * Match a cgthree.
@@ -206,11 +220,28 @@ cgthreeattach(parent, self, args)
 	if ((sc->sc_fb.fb_pixels = ca->ca_ra.ra_vaddr) == NULL && isconsole) {
 		/* this probably cannot happen, but what the heck */
 		sc->sc_fb.fb_pixels = mapiodev(ca->ca_ra.ra_reg, CG3REG_MEM,
-						ramsize, ca->ca_bustype);
+					       ramsize);
 	}
 	sc->sc_fbc = (volatile struct fbcontrol *)
 	    mapiodev(ca->ca_ra.ra_reg, CG3REG_REG,
-		     sizeof(struct fbcontrol), ca->ca_bustype);
+		     sizeof(struct fbcontrol));
+
+	/* Transfer video magic to board, if it's not running */
+	if ((sc->sc_fbc->fbc_ctrl & FBC_TIMING) == 0)
+		for (i = 0; i < sizeof(cg3_videoctrl)/sizeof(cg3_videoctrl[0]);
+		     i++) {
+			volatile struct fbcontrol *fbc = sc->sc_fbc;
+			if ((fbc->fbc_status & FBS_MSENSE) ==
+			     cg3_videoctrl[i].sense) {
+				int j;
+				printf(" setting video ctrl");
+				for (j = 0; j < 12; j++)
+					fbc->fbc_vcontrol[j] =
+						cg3_videoctrl[i].vctrl[j];
+				fbc->fbc_ctrl |= FBC_TIMING;
+				break;
+			}
+		}
 
 	sc->sc_phys = ca->ca_ra.ra_reg[0];
 	sc->sc_bustype = ca->ca_bustype;
@@ -408,5 +439,5 @@ cgthreemmap(dev, off, prot)
 	 * I turned on PMAP_NC here to disable the cache as I was
 	 * getting horribly broken behaviour with it on.
 	 */
-	return (REG2PHYS(&sc->sc_phys, CG3REG_MEM+off, sc->sc_bustype) | PMAP_NC);
+	return (REG2PHYS(&sc->sc_phys, CG3REG_MEM+off) | PMAP_NC);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.13 1996/03/31 23:35:20 pk Exp $ */
+/*	$NetBSD: intr.c,v 1.20 1997/07/29 09:42:03 fair Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,8 +44,6 @@
  *	@(#)intr.c	8.3 (Berkeley) 11/11/93
  */
 
-#include "ppp.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -68,15 +66,15 @@
 #include <netinet/if_ether.h>
 #include <netinet/ip_var.h>
 #endif
-#ifdef NETATALK
-#include <netatalk/at_extern.h>
-#endif
 #ifdef NS
 #include <netns/ns_var.h>
 #endif
 #ifdef ISO
 #include <netiso/iso.h>
 #include <netiso/clnp.h>
+#endif
+#ifdef NETATALK
+#include <netatalk/at_extern.h>
 #endif
 #include "ppp.h"
 #if NPPP > 0
@@ -98,7 +96,7 @@ strayintr(fp)
 	static int straytime, nstray;
 	int timesince;
 
-	printf("stray interrupt ipl %x pc=%x npc=%x psr=%b\n",
+	printf("stray interrupt ipl 0x%x pc=0x%x npc=0x%x psr=%b\n",
 		fp->ipl, fp->pc, fp->npc, fp->psr, PSR_BITS);
 	timesince = time.tv_sec - straytime;
 	if (timesince <= 10) {
@@ -159,6 +157,10 @@ soft01intr(fp)
 #ifdef ISO
 			if (n & (1 << NETISR_ISO))
 				clnlintr();
+#endif
+#ifdef NATM
+			if (n & (1 << NETISR_NATM))
+				natmintr();
 #endif
 #if NPPP > 0
 			if (n & (1 << NETISR_PPP))
@@ -236,7 +238,7 @@ intr_establish(level, ih)
 		if (tv->tv_instr[0] != I_MOVi(I_L3, level) ||
 		    tv->tv_instr[1] != I_BA(0, displ) ||
 		    tv->tv_instr[2] != I_RDPSR(I_L0))
-			panic("intr_establish(%d, %p)\n%x %x %x != %x %x %x",
+			panic("intr_establish(%d, %p)\n0x%x 0x%x 0x%x != 0x%x 0x%x 0x%x",
 			    level, ih,
 			    tv->tv_instr[0], tv->tv_instr[1], tv->tv_instr[2],
 			    I_MOVi(I_L3, level), I_BA(0, displ), I_RDPSR(I_L0));
@@ -285,7 +287,7 @@ intr_fasttrap(level, vec)
 	if (tv->tv_instr[0] != I_MOVi(I_L3, level) ||
 	    tv->tv_instr[1] != I_BA(0, displ) ||
 	    tv->tv_instr[2] != I_RDPSR(I_L0))
-		panic("intr_fasttrap(%d, %p)\n%x %x %x != %x %x %x",
+		panic("intr_fasttrap(%d, %p)\n0x%x 0x%x 0x%x != 0x%x 0x%x 0x%x",
 		    level, vec,
 		    tv->tv_instr[0], tv->tv_instr[1], tv->tv_instr[2],
 		    I_MOVi(I_L3, level), I_BA(0, displ), I_RDPSR(I_L0));

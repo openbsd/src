@@ -1,3 +1,4 @@
+/*	$OpenBSD: process_machdep.c,v 1.3 1997/08/08 08:27:39 downsj Exp $	*/
 /*	$NetBSD: process_machdep.c,v 1.6 1996/03/14 21:09:26 christos Exp $ */
 
 /*

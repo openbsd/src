@@ -1,4 +1,5 @@
-/*	$NetBSD: vaddrs.h,v 1.7 1996/05/16 15:57:28 abrown Exp $ */
+/*	$OpenBSD: vaddrs.h,v 1.4 1997/08/08 08:27:47 downsj Exp $	*/
+/*	$NetBSD: vaddrs.h,v 1.8 1997/03/10 23:54:41 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -68,15 +69,11 @@
  * use one of the two `wasted' pages at KERNBASE+_MAXNBPG (see locore.s).
  */
 
-
 #ifndef IODEV_0
 #define	IODEV_0	0xfe000000	/* must match VM_MAX_KERNEL_ADDRESS */
 
 #define _MAXNBPG	8192	/* fixed VAs, independent of actual NBPG */
 #define _MAXNCPU	4	/* fixed VA allocation allows 4 CPUs */
-
-/* [4c:] interrupt register as described above */
-#define	INTRREG_VA	(    KERNBASE + _MAXNBPG)		/* [4c] */
 
 /* [4m:] interrupt and counter registers take (1 + NCPU) pages. */
 
@@ -87,6 +84,7 @@
 #define	AUXREG_VA	(       ZS1_VA + _MAXNBPG)
 #define	TMPMAP_VA	(    AUXREG_VA + _MAXNBPG)
 #define	MSGBUF_VA	(    TMPMAP_VA + _MAXNBPG)
+#define INTRREG_VA	(    MSGBUF_VA + _MAXNBPG)		/* [4/4c] */
 #define PI_INTR_VA	(    MSGBUF_VA + _MAXNBPG)		/* [4m] */
 #define SI_INTR_VA	(   PI_INTR_VA + _MAXNBPG*_MAXNCPU)	/* [4m] */
 #define	IODEV_BASE	(   SI_INTR_VA + _MAXNBPG)
@@ -118,5 +116,10 @@
 #define DVMA4M_TOP	0xffffffff 	/* do not modify */
 #define DVMA4M_START	0xfd000000	/* 16M of DVMA */
 #define DVMA4M_END	0xfe000000	/* XXX is this enough? */
+
+/*
+ * Virtual address of the per cpu `cpu_softc' structure.
+ */
+#define CPUINFO_VA	(KERNBASE+8192)
 
 #endif /* IODEV_0 */

@@ -1,4 +1,5 @@
-/*	$NetBSD: asm.h,v 1.3 1994/11/20 20:52:51 deraadt Exp $ */
+/*	$OpenBSD: asm.h,v 1.2 1997/08/08 08:26:02 downsj Exp $	*/
+/*	$NetBSD: asm.h,v 1.5 1997/07/16 15:16:43 christos Exp $ */
 
 /*
  * Copyright (c) 1994 Allen Briggs
@@ -83,7 +84,7 @@
 #define	_ENTRY(name) \
 	.align 4; .globl name; .proc 1; FTYPE(name); name:
 
-#ifdef PROF
+#ifdef GPROF
 #define _PROF_PROLOGUE \
 	.data; .align 4; 1: .long 0; \
 	.text; save %sp,-96,%sp; sethi %hi(1b),%o0; call mcount; \
@@ -98,5 +99,7 @@
 
 
 #define ASMSTR			.asciz
+
+#define RCSID(name)		.asciz name
 
 #endif /* _ASM_H_ */

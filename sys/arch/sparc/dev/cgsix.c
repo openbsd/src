@@ -1,5 +1,5 @@
-/*	$OpenBSD: cgsix.c,v 1.7 1996/08/13 08:05:22 downsj Exp $	*/
-/*	$NetBSD: cgsix.c,v 1.25 1996/04/01 17:30:00 christos Exp $ */
+/*	$OpenBSD: cgsix.c,v 1.8 1997/08/08 08:24:51 downsj Exp $	*/
+/*	$NetBSD: cgsix.c,v 1.32 1997/07/29 09:58:04 fair Exp $ */
 
 /*
  * Copyright (c) 1993
@@ -122,11 +122,10 @@ struct cgsix_softc {
 /* autoconfiguration driver */
 static void	cgsixattach __P((struct device *, struct device *, void *));
 static int	cgsixmatch __P((struct device *, void *, void *));
-int		cgsixopen __P((dev_t, int, int, struct proc *));
-int		cgsixclose __P((dev_t, int, int, struct proc *));
-int		cgsixioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-int		cgsixmmap __P((dev_t, int, int));
 static void	cg6_unblank __P((struct device *));
+
+/* cdevsw prototypes */
+cdev_decl(cgsix);
 
 struct cfattach cgsix_ca = {
 	sizeof(struct cgsix_softc), cgsixmatch, cgsixattach
@@ -186,7 +185,8 @@ cgsixmatch(parent, vcf, aux)
 		 * differently on the cgsix than other pfour framebuffers.
 		 */
 		bus_untmp();
-		tmp = bus_tmp(ra->ra_paddr + CGSIX_FHC_OFFSET, ca->ca_bustype);
+		tmp = (caddr_t)mapdev(ra->ra_reg, TMPMAP_VA, CGSIX_FHC_OFFSET,
+				      NBPG);
 		if (probeget(tmp, 4) == -1)
 			return (0);
 
@@ -231,17 +231,13 @@ cgsixattach(parent, self, args)
 	sc->sc_physadr = ca->ca_ra.ra_reg[0];
 	sc->sc_bustype = ca->ca_bustype;
 	sc->sc_bt = bt = (volatile struct bt_regs *)
-	    mapiodev(ca->ca_ra.ra_reg, O(cg6_bt_un.un_btregs),
-		     sizeof *sc->sc_bt, ca->ca_bustype);
+	   mapiodev(ca->ca_ra.ra_reg, O(cg6_bt_un.un_btregs),sizeof *sc->sc_bt);
 	sc->sc_fhc = (volatile int *)
-	    mapiodev(ca->ca_ra.ra_reg, O(cg6_fhc_un.un_fhc),
-		     sizeof *sc->sc_fhc, ca->ca_bustype);
+	   mapiodev(ca->ca_ra.ra_reg, O(cg6_fhc_un.un_fhc), sizeof *sc->sc_fhc);
 	sc->sc_thc = (volatile struct cg6_thc *)
-	    mapiodev(ca->ca_ra.ra_reg, O(cg6_thc_un.un_thc),
-		     sizeof *sc->sc_thc, ca->ca_bustype);
+	   mapiodev(ca->ca_ra.ra_reg, O(cg6_thc_un.un_thc), sizeof *sc->sc_thc);
 	sc->sc_tec = (volatile struct cg6_tec_xxx *)
-	    mapiodev(ca->ca_ra.ra_reg, O(cg6_tec_un.un_tec),
-		     sizeof *sc->sc_tec, ca->ca_bustype);
+	   mapiodev(ca->ca_ra.ra_reg, O(cg6_tec_un.un_tec), sizeof *sc->sc_tec);
 
 	switch (ca->ca_bustype) {
 	case BUS_OBIO:
@@ -292,13 +288,13 @@ cgsixattach(parent, self, args)
 #if defined(SUN4)
 	if (CPU_ISSUN4) {
 		struct eeprom *eep = (struct eeprom *)eeprom_va;
-		int constype = (fb->fb_flags & FB_PFOUR) ? EED_CONS_P4 :
-		    EED_CONS_COLOR;
+		int constype = (fb->fb_flags & FB_PFOUR) ? EE_CONS_P4OPT :
+		    EE_CONS_COLOR;
 		/*
 		 * Assume this is the console if there's no eeprom info
 		 * to be found.
 		 */
-		if (eep == NULL || eep->ee_diag.eed_console == constype)
+		if (eep == NULL || eep->eeConsole == constype)
 			isconsole = (fbconstty != NULL);
 		else
 			isconsole = 0;
@@ -329,8 +325,7 @@ cgsixattach(parent, self, args)
 		printf(" (console)\n");
 #ifdef RASTERCONSOLE
 		sc->sc_fb.fb_pixels = (caddr_t)
-			mapiodev(ca->ca_ra.ra_reg, O(cg6_ram[0]),
-				 ramsize, ca->ca_bustype);
+			mapiodev(ca->ca_ra.ra_reg, O(cg6_ram[0]), ramsize);
 		fbrcons_init(&sc->sc_fb);
 #endif
 	} else
@@ -535,7 +530,7 @@ cgsixioctl(dev, cmd, data, flags, p)
 
 	default:
 #ifdef DEBUG
-		log(LOG_NOTICE, "cgsixioctl(%lx) (%s[%d])\n", cmd,
+		log(LOG_NOTICE, "cgsixioctl(0x%lx) (%s[%d])\n", cmd,
 		    p->p_comm, p->p_pid);
 #endif
 		return (ENOTTY);
@@ -752,13 +747,14 @@ cgsixmmap(dev, off, prot)
 		u = off - mo->mo_uaddr;
 		sz = mo->mo_size ? mo->mo_size : sc->sc_fb.fb_type.fb_size;
 		if (u < sz)
-			return (REG2PHYS(&sc->sc_physadr, u + mo->mo_physoff,
-					 sc->sc_bustype) | PMAP_NC);
+			return (REG2PHYS(&sc->sc_physadr, u + mo->mo_physoff) |
+				PMAP_NC);
 	}
 #ifdef DEBUG
 	{
 	  register struct proc *p = curproc;	/* XXX */
-	  log(LOG_NOTICE, "cgsixmmap(%x) (%s[%d])\n", off, p->p_comm, p->p_pid);
+	  log(LOG_NOTICE, "cgsixmmap(0x%x) (%s[%d])\n",
+		off, p->p_comm, p->p_pid);
 	}
 #endif
 	return (-1);	/* not a user-map offset */

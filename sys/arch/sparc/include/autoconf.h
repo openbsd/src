@@ -1,4 +1,5 @@
-/*	$NetBSD: autoconf.h,v 1.16 1996/04/10 20:33:38 pk Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.5 1997/08/08 08:26:03 downsj Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.20 1997/05/24 20:03:03 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -60,7 +61,6 @@
 #define	RA_MAXVADDR	8		/* max (virtual) addresses per device */
 #define	RA_MAXREG	16		/* max # of register banks per device */
 #define	RA_MAXINTR	8		/* max interrupts per device */
-#define RA_MAXRANGE	10		/* max # of bus translations */
 
 struct romaux {
 	const char *ra_name;		/* name from FORTH PROM */
@@ -85,16 +85,15 @@ struct romaux {
 	} ra_intr[RA_MAXINTR];
 	int	ra_nintr;		/* number of interrupt info elements */
 
-	struct rom_range {		/* Only used on v3 PROMs */
-		u_int32_t	cspace;		/* Client space */
-		u_int32_t	coffset;	/* Client offset */
-		u_int32_t	pspace;		/* Parent space */
-		u_int32_t	poffset;	/* Parent offset */
-		u_int32_t	size;		/* Size in bytes of this range */
-	} ra_range[RA_MAXRANGE];
-	int	ra_nrange;
-
 	struct	bootpath *ra_bp;	/* used for locating boot device */
+};
+
+struct rom_range {		/* Only used on v3 PROMs */
+	u_int32_t	cspace;		/* Client space */
+	u_int32_t	coffset;	/* Client offset */
+	u_int32_t	pspace;		/* Parent space */
+	u_int32_t	poffset;	/* Parent offset */
+	u_int32_t	size;		/* Size in bytes of this range */
 };
 
 
@@ -110,8 +109,6 @@ struct confargs {
 #define BUS_VME32	3
 #define BUS_SBUS	4
 
-extern int bt2pmt[];
-
 /*
  * mapiodev maps an I/O device to a virtual address, returning the address.
  * mapdev does the real work: you can supply a special virtual address and
@@ -119,22 +116,17 @@ extern int bt2pmt[];
  * you get it from ../sparc/vaddrs.h.
  */
 void	*mapdev __P((struct rom_reg *pa, int va,
-		     int offset, int size, int bustype));
-#define	mapiodev(pa, offset, size, bustype) \
-	mapdev(pa, 0, offset, size, bustype)
+		     int offset, int size));
+#define	mapiodev(pa, offset, size) \
+	mapdev(pa, 0, offset, size)
 /*
  * REG2PHYS is provided for drivers with a `d_mmap' function.
  */
-#define REG2PHYS(rr, offset, bt)				\
-	(((u_int)(rr)->rr_paddr + (offset)) |			\
-		((CPU_ISSUN4M)					\
-			? ((rr)->rr_iospace << PMAP_SHFT4M)	\
-			: bt2pmt[bt])				\
-	)
+#define REG2PHYS(rr, offset) \
+	(((u_int)(rr)->rr_paddr + (offset)) | PMAP_IOENC((rr)->rr_iospace) )
 
 /* For VME and sun4/obio busses */
-void	*bus_map __P((struct rom_reg *, int, int));
-void	*bus_tmp __P((void *, int));
+void	*bus_map __P((struct rom_reg *, int));
 void	bus_untmp __P((void));
 
 /*
@@ -142,6 +134,7 @@ void	bus_untmp __P((void));
  * getprop() obtains a property as a byte-sequence, and returns its
  * length; the others convert or make some other guarantee.
  */
+int	getproplen __P((int node, char *name));
 int	getprop __P((int node, char *name, void *buf, int bufsiz));
 char	*getpropstring __P((int node, char *name));
 int	getpropint __P((int node, char *name, int deflt));
@@ -163,6 +156,7 @@ int	romprop __P((struct romaux *ra, const char *name, int node));
  * a romaux structure suffices, for instance).
  */
 struct device;
+struct cfdata;
 int	matchbyname __P((struct device *, void *cf, void *aux));
 
 /*

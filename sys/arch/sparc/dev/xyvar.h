@@ -1,3 +1,4 @@
+/*	$OpenBSD: xyvar.h,v 1.4 1997/08/08 08:25:41 downsj Exp $	*/
 /*	$NetBSD: xyvar.h,v 1.4 1996/03/31 22:39:04 pk Exp $	*/
 
 /*

@@ -1,4 +1,5 @@
-/*	$NetBSD: xy.c,v 1.17 1996/04/22 02:42:04 christos Exp $	*/
+/*	$OpenBSD: xy.c,v 1.9 1997/08/08 08:25:39 downsj Exp $	*/
+/*	$NetBSD: xy.c,v 1.26 1997/07/19 21:43:56 pk Exp $	*/
 
 /*
  *
@@ -36,7 +37,7 @@
  * x y . c   x y l o g i c s   4 5 0 / 4 5 1   s m d   d r i v e r
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
- * id: $NetBSD: xy.c,v 1.17 1996/04/22 02:42:04 christos Exp $
+ * id: $NetBSD: xy.c,v 1.26 1997/07/19 21:43:56 pk Exp $
  * started: 14-Sep-95
  * references: [1] Xylogics Model 753 User's Manual
  *                 part number: 166-753-001, Revision B, May 21, 1988.
@@ -287,11 +288,11 @@ xygetdisklabel(xy, b)
  * soft reset to detect the xyc.
  */
 
-int xycmatch(parent, match, aux)
+int xycmatch(parent, vcf, aux)
 	struct device *parent;
-	void   *match, *aux;
+	void *vcf, *aux;
 {
-	struct cfdata *cf = match;
+	struct cfdata *cf = vcf;
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
 	struct xyc *xyc;
@@ -299,14 +300,20 @@ int xycmatch(parent, match, aux)
 	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
 		return (0);
 
-	if (CPU_ISSUN4) {
+	switch (ca->ca_bustype) {
+	case BUS_OBIO:
+	case BUS_SBUS:
+	case BUS_VME32:
+	default:
+		return (0);
+	case BUS_VME16:
 		xyc = (struct xyc *) ra->ra_vaddr;
 		if (probeget((caddr_t) &xyc->xyc_rsetup, 1) == -1)
 			return (0);
 		if (xyc_unbusy(xyc, XYC_RESETUSEC) == XY_ERR_FAIL)
 			return(0);
+		return (1);
 	}
-	return (1);
 }
 
 /*
@@ -329,8 +336,7 @@ xycattach(parent, self, aux)
 	/* get addressing and intr level stuff from autoconfig and load it
 	 * into our xyc_softc. */
 
-	ca->ca_ra.ra_vaddr = mapiodev(ca->ca_ra.ra_reg, 0,
-	    sizeof(struct xyc), ca->ca_bustype);
+	ca->ca_ra.ra_vaddr = mapiodev(ca->ca_ra.ra_reg, 0, sizeof(struct xyc));
 
 	xyc->xyc = (struct xyc *) ca->ca_ra.ra_vaddr;
 	pri = ca->ca_ra.ra_intr[0].int_pri;
@@ -458,12 +464,11 @@ xycattach(parent, self, aux)
  * call xyattach!).
  */
 int
-xymatch(parent, match, aux)
+xymatch(parent, vcf, aux)
 	struct device *parent;
-	void   *match, *aux;
-
+	void *vcf, *aux;
 {
-	struct cfdata *cf = match;
+	struct cfdata *cf = vcf;
 	struct xyc_attach_args *xa = aux;
 
 	/* looking for autoconf wildcard or exact match */
@@ -951,24 +956,28 @@ xysize(dev)
 
 {
 	struct xy_softc *xysc;
-	int     part, size;
+	int     unit, part, size, omask;
 
-	/* valid unit?  try an open */
+	/* valid unit? */
+	unit = DISKUNIT(dev);
+	if (unit >= xy_cd.cd_ndevs || (xysc = xy_cd.cd_devs[unit]) == NULL)
+		return (-1);
 
-	if (xyopen(dev, 0, S_IFBLK, NULL) != 0)
+	part = DISKPART(dev);
+	omask = xysc->sc_dk.dk_openmask & (1 << part);
+
+	if (omask == 0 && xyopen(dev, 0, S_IFBLK, NULL) != 0)
 		return (-1);
 
 	/* do it */
-
-	xysc = xy_cd.cd_devs[DISKUNIT(dev)];
-	part = DISKPART(dev);
 	if (xysc->sc_dk.dk_label->d_partitions[part].p_fstype != FS_SWAP)
 		size = -1;	/* only give valid size for swap partitions */
 	else
-		size = xysc->sc_dk.dk_label->d_partitions[part].p_size;
-	if (xyclose(dev, 0, S_IFBLK, NULL) != 0)
-		return -1;
-	return size;
+		size = xysc->sc_dk.dk_label->d_partitions[part].p_size *
+		    (xysc->sc_dk.dk_label->d_secsize / DEV_BSIZE);
+	if (omask == 0 && xyclose(dev, 0, S_IFBLK, NULL) != 0)
+		return (-1);
+	return (size);
 }
 
 /*

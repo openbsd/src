@@ -1,4 +1,5 @@
-/*	$NetBSD: xd.c,v 1.25 1996/04/22 02:42:06 christos Exp $	*/
+/*	$OpenBSD: xd.c,v 1.10 1997/08/08 08:25:35 downsj Exp $	*/
+/*	$NetBSD: xd.c,v 1.37 1997/07/29 09:58:16 fair Exp $	*/
 
 /*
  *
@@ -36,7 +37,7 @@
  * x d . c   x y l o g i c s   7 5 3 / 7 0 5 3   v m e / s m d   d r i v e r
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
- * id: $NetBSD: xd.c,v 1.25 1996/04/22 02:42:06 christos Exp $
+ * id: $NetBSD: xd.c,v 1.37 1997/07/29 09:58:16 fair Exp $
  * started: 27-Feb-95
  * references: [1] Xylogics Model 753 User's Manual
  *                 part number: 166-753-001, Revision B, May 21, 1988.
@@ -85,6 +86,7 @@
 #include <sparc/dev/xdvar.h>
 #include <sparc/dev/xio.h>
 #include <sparc/sparc/vaddrs.h>
+#include <sparc/sparc/cpuvar.h>
 
 /*
  * macros
@@ -346,11 +348,11 @@ xdgetdisklabel(xd, b)
  * soft reset to detect the xdc.
  */
 
-int xdcmatch(parent, match, aux)
+int xdcmatch(parent, vcf, aux)
 	struct device *parent;
-	void   *match, *aux;
+	void *vcf, *aux;
 {
-	struct cfdata *cf = match;
+	struct cfdata *cf = vcf;
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
 	struct xdc *xdc;
@@ -359,7 +361,13 @@ int xdcmatch(parent, match, aux)
 	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
 		return (0);
 
-	if (CPU_ISSUN4) {
+	switch (ca->ca_bustype) {
+	case BUS_OBIO:
+	case BUS_SBUS:
+	case BUS_VME16:
+	default:
+		return (0);
+	case BUS_VME32:
 		xdc = (struct xdc *) ra->ra_vaddr;
 		if (probeget((caddr_t) &xdc->xdc_csr, 1) == -1)
 			return (0);
@@ -367,8 +375,8 @@ int xdcmatch(parent, match, aux)
 		XDC_WAIT(xdc, del, XDC_RESETUSEC, XDC_RESET);
 		if (del <= 0)
 			return (0);
+		return (1);
 	}
-	return (1);
 }
 
 /*
@@ -389,8 +397,7 @@ xdcattach(parent, self, aux)
 	/* get addressing and intr level stuff from autoconfig and load it
 	 * into our xdc_softc. */
 
-	ca->ca_ra.ra_vaddr = mapiodev(ca->ca_ra.ra_reg, 0,
-	    sizeof(struct xdc), ca->ca_bustype);
+	ca->ca_ra.ra_vaddr = mapiodev(ca->ca_ra.ra_reg, 0, sizeof(struct xdc));
 
 	xdc->xdc = (struct xdc *) ca->ca_ra.ra_vaddr;
 	pri = ca->ca_ra.ra_intr[0].int_pri;
@@ -463,7 +470,7 @@ xdcattach(parent, self, aux)
 		XDC_DONE(xdc, rqno, err);
 		return;
 	}
-	printf(": Xylogics 753/7053, PROM=%x.%02x.%02x\n",
+	printf(": Xylogics 753/7053, PROM=0x%x.%02x.%02x\n",
 	    ctl->eprom_partno, ctl->eprom_lvl, ctl->eprom_rev);
 	XDC_DONE(xdc, rqno, err);
 
@@ -514,12 +521,11 @@ xdcattach(parent, self, aux)
  * call xdattach!).
  */
 int
-xdmatch(parent, match, aux)
+xdmatch(parent, vcf, aux)
 	struct device *parent;
-	void   *match, *aux;
-
+	void *vcf, *aux;
 {
-	struct cfdata *cf = match;
+	struct cfdata *cf = vcf;
 	struct xdc_attach_args *xa = aux;
 
 	/* looking for autoconf wildcard or exact match */
@@ -987,24 +993,28 @@ xdsize(dev)
 
 {
 	struct xd_softc *xdsc;
-	int     part, size;
+	int     unit, part, size, omask;
 
-	/* valid unit?  try an open */
+	/* valid unit? */
+	unit = DISKUNIT(dev);
+	if (unit >= xd_cd.cd_ndevs || (xdsc = xd_cd.cd_devs[unit]) == NULL)
+		return (-1);
 
-	if (xdopen(dev, 0, S_IFBLK, NULL) != 0)
+	part = DISKPART(dev);
+	omask = xdsc->sc_dk.dk_openmask & (1 << part);
+
+	if (omask == 0 && xdopen(dev, 0, S_IFBLK, NULL) != 0)
 		return (-1);
 
 	/* do it */
-
-	xdsc = xd_cd.cd_devs[DISKUNIT(dev)];
-	part = DISKPART(dev);
 	if (xdsc->sc_dk.dk_label->d_partitions[part].p_fstype != FS_SWAP)
 		size = -1;	/* only give valid size for swap partitions */
 	else
-		size = xdsc->sc_dk.dk_label->d_partitions[part].p_size;
-	if (xdclose(dev, 0, S_IFBLK, NULL) != 0)
-		return -1;
-	return size;
+		size = xdsc->sc_dk.dk_label->d_partitions[part].p_size *
+		    (xdsc->sc_dk.dk_label->d_secsize / DEV_BSIZE);
+	if (omask == 0 && xdclose(dev, 0, S_IFBLK, NULL) != 0)
+		return (-1);
+	return (size);
 }
 /*
  * xdstrategy: buffering system interface to xd.
@@ -1221,7 +1231,7 @@ xdc_rqtopb(iorq, iopb, cmd, subfun)
 					XDPC_RBC | XDPC_ECC2;
 			ctrl->throttle = XDC_THROTTLE;
 #ifdef sparc
-			if (CPU_ISSUN4 && cpumod == SUN4_300)
+			if (CPU_ISSUN4 && cpuinfo.cpu_type == CPUTYP_4_300)
 				ctrl->delay = XDC_DELAY_4_300;
 			else
 				ctrl->delay = XDC_DELAY_SPARC;

@@ -1,3 +1,4 @@
+/*	$OpenBSD: sbusreg.h,v 1.2 1997/08/08 08:25:27 downsj Exp $	*/
 /*	$NetBSD: sbusreg.h,v 1.2 1994/11/20 20:52:26 deraadt Exp $ */
 
 /*

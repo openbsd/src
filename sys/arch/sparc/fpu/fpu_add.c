@@ -1,3 +1,4 @@
+/*	$OpenBSD: fpu_add.c,v 1.3 1997/08/08 08:25:47 downsj Exp $	*/
 /*	$NetBSD: fpu_add.c,v 1.3 1996/03/14 19:41:52 christos Exp $ */
 
 /*

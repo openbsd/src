@@ -1,4 +1,5 @@
-/*	$NetBSD: idprom.h,v 1.4 1995/02/01 12:37:45 pk Exp $ */
+/*	$OpenBSD: idprom.h,v 1.2 1997/08/08 08:26:22 downsj Exp $	*/
+/*	$NetBSD: idprom.h,v 1.5 1997/03/10 22:47:52 pk Exp $ */
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -47,5 +48,10 @@ struct idprom {
 	u_char	id_checksum;		/* xor of everything else */
 	char	id_undef[16];		/* undefined */
 };
+
+#define ID_SUN4_100	0x22
+#define ID_SUN4_200	0x21
+#define ID_SUN4_300	0x23
+#define ID_SUN4_400	0x24
 
 #define IDPROM_VERSION 1

@@ -1,4 +1,5 @@
-/*	$NetBSD: trap.c,v 1.42.4.2 1996/07/03 00:06:40 jtc Exp $ */
+/*	$OpenBSD: trap.c,v 1.11 1997/08/08 08:27:46 downsj Exp $	*/
+/*	$NetBSD: trap.c,v 1.57 1997/07/29 09:42:15 fair Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -84,6 +85,7 @@
 
 #include <sparc/fpu/fpu_extern.h>
 #include <sparc/sparc/memreg.h>
+#include <sparc/sparc/cpuvar.h>
 
 #define	offsetof(s, f) ((int)&((s *)0)->f)
 
@@ -200,6 +202,8 @@ static __inline void share_fpu __P((struct proc *, struct trapframe *));
 void mem_access_fault __P((unsigned, int, u_int, int, int, struct trapframe *));
 void mem_access_fault4m __P((unsigned, u_int, u_int, u_int, u_int, struct trapframe *));
 void syscall __P((register_t, struct trapframe *, register_t));
+
+int ignore_bogus_traps = 0;
 
 /*
  * Define the code needed before returning to user mode, for
@@ -318,7 +322,11 @@ trap(type, psr, pc, tf)
 			ADVANCE;
 			return;
 		}
-		goto dopanic;
+	dopanic:
+		printf("trap type 0x%x: pc=0x%x npc=0x%x psr=%b\n",
+		       type, pc, tf->tf_npc, psr, PSR_BITS);
+		panic(type < N_TRAP_TYPES ? trap_type[type] : T);
+		/* NOTREACHED */
 	}
 	if ((p = curproc) == NULL)
 		p = &proc0;
@@ -329,25 +337,21 @@ trap(type, psr, pc, tf)
 	switch (type) {
 
 	default:
-#if defined(SUN4M)
-		if (type == 0x29)
-			/* Mysterious trap 29.. for now print&signal process */
-			goto badtrap;
-#endif
 		if (type < 0x80) {
-dopanic:
-			printf("trap type 0x%x: pc=%x npc=%x psr=%b\n",
+			if (!ignore_bogus_traps)
+				goto dopanic;
+			printf("trap type 0x%x: pc=0x%x npc=0x%x psr=%b\n",
 			       type, pc, tf->tf_npc, psr, PSR_BITS);
-			panic(type < N_TRAP_TYPES ? trap_type[type] : T);
-			/* NOTREACHED */
+			trapsignal(p, SIGILL, type, ILL_ILLOPC, (caddr_t)pc);
+			break;
 		}
-#if defined(COMPAT_SVR4) || defined(SUN4M)
+#if defined(COMPAT_SVR4)
 badtrap:
 #endif
 		/* the following message is gratuitous */
 		/* ... but leave it in until we find anything */
 		printf("%s[%d]: unimplemented software trap 0x%x\n",
-		    p->p_comm, p->p_pid, type);
+			p->p_comm, p->p_pid, type);
 		trapsignal(p, SIGILL, type, ILL_ILLOPC, (caddr_t)pc);
 		break;
 
@@ -368,6 +372,10 @@ badtrap:
 		break;	/* the work is all in userret() */
 
 	case T_ILLINST:
+		if ((n = emulinstr(pc, tf)) == 0) {
+			ADVANCE;
+			break;
+		}
 		trapsignal(p, SIGILL, 0, ILL_ILLOPC, (caddr_t)pc);
 		break;
 
@@ -435,7 +443,7 @@ badtrap:
 			panic("trap T_RWRET 1");
 #ifdef DEBUG
 		if (rwindow_debug)
-			printf("%s[%d]: rwindow: pcb<-stack: %x\n",
+			printf("%s[%d]: rwindow: pcb<-stack: 0x%x\n",
 				p->p_comm, p->p_pid, tf->tf_out[6]);
 #endif
 		if (read_rw(tf->tf_out[6], &pcb->pcb_rw[0]))
@@ -457,7 +465,7 @@ badtrap:
 		 */
 #ifdef DEBUG
 		if (rwindow_debug)
-			printf("%s[%d]: rwindow: T_WINUF 0: pcb<-stack: %x\n",
+			printf("%s[%d]: rwindow: T_WINUF 0: pcb<-stack: 0x%x\n",
 				p->p_comm, p->p_pid, tf->tf_out[6]);
 #endif
 		write_user_windows();
@@ -465,7 +473,7 @@ badtrap:
 			sigexit(p, SIGILL);
 #ifdef DEBUG
 		if (rwindow_debug)
-			printf("%s[%d]: rwindow: T_WINUF 1: pcb<-stack: %x\n",
+			printf("%s[%d]: rwindow: T_WINUF 1: pcb<-stack: 0x%x\n",
 				p->p_comm, p->p_pid, pcb->pcb_rw[0].rw_in[6]);
 #endif
 		if (read_rw(pcb->pcb_rw[0].rw_in[6], &pcb->pcb_rw[1]))
@@ -476,6 +484,11 @@ badtrap:
 		break;
 
 	case T_ALIGN:
+		if ((p->p_md.md_flags & MDP_FIXALIGN) != 0 && 
+		    fixalign(p, tf) == 0) {
+			ADVANCE;
+			break;
+		}
 		trapsignal(p, SIGBUS, 0, BUS_ADRALN, (caddr_t)pc);
 		break;
 
@@ -514,6 +527,7 @@ badtrap:
 		break;
 
 	case T_DIV0:
+	case T_IDIV0:
 		ADVANCE;
 		trapsignal(p, SIGFPE, 0, FPE_INTDIV, (caddr_t)pc);
 		break;
@@ -539,7 +553,11 @@ badtrap:
 		break;
 
 	case T_FIXALIGN:
-		uprintf("T_FIXALIGN\n");	/* XXX */
+#ifdef DEBUG_ALIGN
+		uprintf("T_FIXALIGN\n");
+#endif
+		/* User wants us to fix alignment faults */
+		p->p_md.md_flags |= MDP_FIXALIGN;
 		ADVANCE;
 		break;
 
@@ -585,7 +603,7 @@ rwindow_save(p)
 	do {
 #ifdef DEBUG
 		if (rwindow_debug)
-			printf(" %x", rw[1].rw_in[6]);
+			printf(" 0x%x", rw[1].rw_in[6]);
 #endif
 		if (copyout((caddr_t)rw, (caddr_t)rw[1].rw_in[6],
 		    sizeof *rw))
@@ -666,8 +684,8 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 		extern char Lfsbail[];
 		if (type == T_TEXTFAULT) {
 			(void) splhigh();
-			printf("text fault: pc=%x ser=%b\n", pc,
-				ser, SER_BITS);
+			printf("text fault: pc=0x%x ser=%b\n", pc,
+			       ser, SER_BITS);
 			panic("kernel fault");
 			/* NOTREACHED */
 		}
@@ -699,7 +717,7 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 	 * that got bumped out via LRU replacement.
 	 */
 	vm = p->p_vmspace;
-	rv = mmu_pagein(&vm->vm_pmap, va,
+	rv = mmu_pagein(vm->vm_map.pmap, va,
 			ser & SER_WRITE ? VM_PROT_WRITE : VM_PROT_READ);
 	if (rv < 0)
 		goto fault;
@@ -731,7 +749,7 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 		 * entries for `wired' pages).  Instead, we call
 		 * mmu_pagein here to make sure the new PTE gets installed.
 		 */
-		(void) mmu_pagein(&vm->vm_pmap, va, VM_PROT_NONE);
+		(void) mmu_pagein(vm->vm_map.pmap, va, VM_PROT_NONE);
 	} else {
 		/*
 		 * Pagein failed.  If doing copyin/out, return to onfault
@@ -745,8 +763,8 @@ kfault:
 			    (int)p->p_addr->u_pcb.pcb_onfault : 0;
 			if (!onfault) {
 				(void) splhigh();
-				printf("data fault: pc=%x addr=%x ser=%b\n",
-					pc, v, ser, SER_BITS);
+				printf("data fault: pc=0x%x addr=0x%x ser=%b\n",
+				       pc, v, ser, SER_BITS);
 				panic("kernel fault");
 				/* NOTREACHED */
 			}
@@ -790,9 +808,6 @@ mem_access_fault4m(type, sfsr, sfva, afsr, afva, tf)
 	vm_prot_t ftype, vftype;
 	int onfault;
 	u_quad_t sticks;
-#if DEBUG
-static int lastdouble;
-#endif
 
 	cnt.v_trap++;
 	if ((p = curproc) == NULL)	/* safety check */
@@ -819,7 +834,7 @@ static int lastdouble;
 		memerr4m(type, sfsr, sfva, afsr, afva, tf);
 		/*
 		 * If we get here, exit the trap handler and wait for the
-		 * trap to reoccur
+		 * trap to re-occur.
 		 */
 		goto out;
 	}
@@ -849,26 +864,12 @@ static int lastdouble;
 		goto out;	/* No fault. Why were we called? */
 
 	/*
-	 * This next section is a mess since some chips use sfva, and others
-	 * don't on text faults. We want to use sfva where possible, since
-	 * we _could_ be dealing with an ASI 0x8,0x9 data access to text space,
-	 * which would trap as a text fault, at least on a HyperSPARC. Ugh.
-	 * XXX: Find out about MicroSPARCs.
+	 * NOTE: the per-CPU fault status register readers (in locore)
+	 * may already have decided to pass `pc' in `sfva', so we avoid
+	 * testing CPU types here.
+	 * Q: test SFSR_FAV in the locore stubs too?
 	 */
-
-	if (type == T_TEXTFAULT && mmumod == SUN4M_MMU_SS &&
-	    (cpumod & 0xf0) == (SUN4M_SS) && (sfsr & SFSR_FAV)) {
-		sfva = pc;	/* can't trust fav on supersparc/text fault */
-	} else if (type == T_TEXTFAULT && mmumod != SUN4M_MMU_HS) {
-		sfva = pc;
-	} else if (!(sfsr & SFSR_FAV)) {
-#ifdef DEBUG
-		if (type != T_TEXTFAULT)
-		    printf("mem_access_fault: got fault without valid SFVA\n");
-		if (mmumod == SUN4M_MMU_HS)
-		    printf("mem_access_fault: got fault without valid SFVA on "
-			   "HyperSPARC!\n");
-#endif
+	if ((sfsr & SFSR_FAV) == 0) {
 		if (type == T_TEXTFAULT)
 			sfva = pc;
 		else
@@ -877,7 +878,7 @@ static int lastdouble;
 
 	if ((sfsr & SFSR_FT) == SFSR_FT_TRANSERR) {
 		/* Translation errors are always fatal, as they indicate
-		 * a corrupt translation (page) table heirarchy.
+		 * a corrupt translation (page) table hierarchy.
 		 */
 		if (tfaultaddr == sfva)	/* Prevent infinite loops w/a static */
 			goto fault;
@@ -890,41 +891,17 @@ static int lastdouble;
 
 	va = trunc_page(sfva);
 
-#ifdef DEBUG
-	if (lastdouble) {
-		printf("stacked tfault @ %x (pc %x); sfsr %x", sfva, pc, sfsr);
-		lastdouble = 0;
-		if (curproc == NULL)
-			printf("NULL proc\n");
-		else
-			printf("pid %d(%s); sigmask %x, sigcatch %x\n",
-				curproc->p_pid, curproc->p_comm,
-				curproc->p_sigmask, curproc->p_sigcatch);
-	}
-#endif
 	if (((sfsr & SFSR_AT_TEXT) || type == T_TEXTFAULT) &&
 	    !(sfsr & SFSR_AT_STORE) && (sfsr & SFSR_OW)) {
 		if (psr & PSR_PS)	/* never allow in kernel */
 			goto kfault;
+#if 0
 		/*
 		 * Double text fault. The evil "case 5" from the HS manual...
 		 * Attempt to handle early fault. Ignores ASI 8,9 issue...may
 		 * do a useless VM read.
 		 * XXX: Is this really necessary?
 		 */
-#ifdef DEBUG
-		if (dfdebug) {
-			lastdouble = 1;
-			printf("mem_access_fault: double text fault @ %x (pc %x); sfsr %x",
-				sfva, pc, sfsr);
-			if (curproc == NULL)
-				printf("NULL proc\n");
-			else
-				printf(" pid %d(%s); sigmask %x, sigcatch %x\n",
-					curproc->p_pid, curproc->p_comm,
-					curproc->p_sigmask, curproc->p_sigcatch);
-		}
-#endif
 		if (mmumod == SUN4M_MMU_HS) { /* On HS, we have va for both */
 			if (vm_fault(kernel_map, trunc_page(pc),
 				     VM_PROT_READ, 0) != KERN_SUCCESS)
@@ -934,6 +911,7 @@ static int lastdouble;
 #endif
 				;
 		}
+#endif
 	}
 
 	/* Now munch on protections... */
@@ -944,7 +922,7 @@ static int lastdouble;
 		extern char Lfsbail[];
 		if (sfsr & SFSR_AT_TEXT || type == T_TEXTFAULT) {
 			(void) splhigh();
-			printf("text fault: pc=%x sfsr=%b sfva=%x\n", pc,
+			printf("text fault: pc=0x%x sfsr=%b sfva=0x%x\n", pc,
 			       sfsr, SFSR_BITS, sfva);
 			panic("kernel fault");
 			/* NOTREACHED */
@@ -972,21 +950,6 @@ static int lastdouble;
 		p->p_md.md_tf = tf;
 
 	vm = p->p_vmspace;
-#ifdef DEBUG
-	/*
-	 * mmu_pagein returns -1 if the page is already valid, in which
-	 * case we have a hard fault.. now why would *that* happen?
-	 * But it happens sporadically, and vm_fault() seems to clear it..
-	 */
-	rv = mmu_pagein4m(&vm->vm_pmap, va,
-			sfsr & SFSR_AT_STORE ? VM_PROT_WRITE : VM_PROT_READ);
-	if (rv < 0)
-		printf(" sfsr=%x(FT=%x,AT=%x,LVL=%x), sfva=%x, pc=%x, psr=%x\n",
-		       sfsr, (sfsr >> 2) & 7, (sfsr >> 5) & 7, (sfsr >> 8) & 3,
-		       sfva, pc, psr);
-	if (rv > 0)
-		panic("mmu_pagein4m returns %d", rv);
-#endif
 
 	/* alas! must call the horrible vm code */
 	rv = vm_fault(&vm->vm_map, (vm_offset_t)va, ftype, FALSE);
@@ -1019,8 +982,8 @@ kfault:
 			    (int)p->p_addr->u_pcb.pcb_onfault : 0;
 			if (!onfault) {
 				(void) splhigh();
-				printf("data fault: pc=%x addr=%x sfsr=%b\n",
-				    pc, sfva, sfsr, SFSR_BITS);
+				printf("data fault: pc=0x%x addr=0x%x sfsr=%b\n",
+				       pc, sfva, sfsr, SFSR_BITS);
 				panic("kernel fault");
 				/* NOTREACHED */
 			}

@@ -1,4 +1,5 @@
-/*	$NetBSD: types.h,v 1.9 1996/03/14 00:48:30 pk Exp $ */
+/*	$OpenBSD: types.h,v 1.5 1997/08/08 08:26:52 downsj Exp $	*/
+/*	$NetBSD: types.h,v 1.11 1996/12/10 23:19:38 pk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

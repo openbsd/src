@@ -1,5 +1,5 @@
-/*	$OpenBSD: machdep.c,v 1.26 1997/07/01 21:32:02 grr Exp $ */
-/*	$NetBSD: machdep.c,v 1.64 1996/05/19 04:12:56 mrg Exp $ */
+/*	$OpenBSD: machdep.c,v 1.27 1997/08/08 08:27:30 downsj Exp $	*/
+/*	$NetBSD: machdep.c,v 1.83 1997/07/29 10:04:44 fair Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -280,6 +280,14 @@ cpu_startup()
 	configure();
 
 	/*
+	 * Re-zero proc0's user area, to nullify the effect of the
+	 * stack running into it during auto-configuration.
+	 * XXX - should fix stack usage.
+	 * XXX - there's a race here, as interrupts are enabled
+	 */
+	bzero(proc0paddr, sizeof(struct user));
+
+	/*
 	 * fix message buffer mapping, note phys addr of msgbuf is 0
 	 */
 
@@ -383,6 +391,9 @@ setregs(p, pack, stack, retval)
 	register struct trapframe *tf = p->p_md.md_tf;
 	register struct fpstate *fs;
 	register int psr;
+
+	/* Don't allow misaligned code by default */
+	p->p_md.md_flags &= ~MDP_FIXALIGN;
 
 	/*
 	 * The syscall will ``return'' to npc or %g7 or %g2; set them all.
@@ -662,13 +673,11 @@ boot(howto)
 	fb_unblank();
 	boothowto = howto;
 	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
-#if 1
 		extern struct proc proc0;
 
-		/* protect against curproc->p_stats.foo refs in sync()   XXX */
+		/* XXX protect against curproc->p_stats.foo refs in sync() */
 		if (curproc == NULL)
 			curproc = &proc0;
-#endif
 		waittime = 0;
 		vfs_shutdown();
 
@@ -732,7 +741,7 @@ dumpconf()
 		/* No usable dump device */
 		return;
 
-		nblks = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
+	nblks = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
 
 	dumpblks = ctod(physmem) + ctod(pmap_dumpsize());
 	if (dumpblks > (nblks - ctod(1)))
@@ -746,7 +755,7 @@ dumpconf()
 	/* Put the dump at the end of the partition */
 	dumplo = nblks - dumpblks;
 
-		/*
+	/*
 	 * savecore(8) expects dumpsize to be the number of pages
 	 * of actual core dumped (i.e. excluding the MMU stuff).
 	 */
@@ -799,7 +808,7 @@ dumpsys()
 	if (dumplo <= 0)
 		return;
 	printf("\ndumping to dev(%d,%d), at offset %ld blocks\n",
-		major(dumpdev), minor(dumpdev), dumplo);
+	    major(dumpdev), minor(dumpdev), dumplo);
 
 	psize = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
 	printf("dump ");
@@ -891,7 +900,7 @@ stackdump()
 	printf("Frame pointer is at %p\n", fp);
 	printf("Call traceback:\n");
 	while (fp && ((u_long)fp >> PGSHIFT) == ((u_long)sfp >> PGSHIFT)) {
-		printf("  pc = %x  args = (%x, %x, %x, %x, %x, %x, %x) fp = %p\n",
+		printf("  pc = 0x%x  args = (0x%x, 0x%x, 0x%x, 0x%x, 0x%x, 0x%x, 0x%x) fp = %p\n",
 		    fp->fr_pc, fp->fr_arg[0], fp->fr_arg[1], fp->fr_arg[2],
 		    fp->fr_arg[3], fp->fr_arg[4], fp->fr_arg[5], fp->fr_arg[6],
 		    fp->fr_fp);
@@ -899,27 +908,18 @@ stackdump()
 	}
 }
 
-int bt2pmt[] = {
-	PMAP_OBIO,
-	PMAP_OBIO,
-	PMAP_VME16,
-	PMAP_VME32,
-	PMAP_OBIO
-};
-
 /*
  * Map an I/O device given physical address and size in bytes, e.g.,
  *
  *	mydev = (struct mydev *)mapdev(myioaddr, 0,
- *				       0, sizeof(struct mydev), pmtype);
+ *				       0, sizeof(struct mydev));
  *
  * See also machine/autoconf.h.
  */
 void *
-mapdev(phys, virt, offset, size, bustype)
+mapdev(phys, virt, offset, size)
 	register struct rom_reg *phys;
 	register int offset, virt, size;
-	register int bustype;
 {
 	register vm_offset_t v;
 	register vm_offset_t pa;
@@ -945,9 +945,7 @@ mapdev(phys, virt, offset, size, bustype)
 			/* note: preserve page offset */
 
 	pa = trunc_page(phys->rr_paddr + offset);
-	pmtype = (CPU_ISSUN4M)
-			? (phys->rr_iospace << PMAP_SHFT4M)
-			: bt2pmt[bustype];
+	pmtype = PMAP_IOENC(phys->rr_iospace);
 
 	do {
 		pmap_enter(pmap_kernel(), v, pa | pmtype | PMAP_NC,
@@ -993,12 +991,12 @@ oldmon_w_trace(va)
 
 #define round_up(x) (( (x) + (NBPG-1) ) & (~(NBPG-1)) )
 
-	printf("\nstack trace with sp = %lx\n", va);
+	printf("\nstack trace with sp = 0x%lx\n", va);
 	stop = round_up(va);
-	printf("stop at %lx\n", stop);
+	printf("stop at 0x%lx\n", stop);
 	fp = (struct frame *) va;
 	while (round_up((u_long) fp) == stop) {
-		printf("  %x(%x, %x, %x, %x, %x, %x, %x) fp %p\n", fp->fr_pc,
+		printf("  0x%x(0x%x, 0x%x, 0x%x, 0x%x, 0x%x, 0x%x, 0x%x) fp %p\n", fp->fr_pc,
 		    fp->fr_arg[0], fp->fr_arg[1], fp->fr_arg[2], fp->fr_arg[3],
 		    fp->fr_arg[4], fp->fr_arg[5], fp->fr_arg[6], fp->fr_fp);
 		fp = fp->fr_fp;

@@ -1,4 +1,5 @@
-/*	$NetBSD: if_ie.c,v 1.24 1996/05/07 01:28:28 thorpej Exp $	*/
+/*	$OpenBSD: if_ie.c,v 1.7 1997/08/08 08:25:09 downsj Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.33 1997/07/29 17:55:38 fair Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -413,23 +414,22 @@ iematch(parent, vcf, aux)
 
 	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))	/* correct name? */
 		return (0);
-	if (ca->ca_bustype == BUS_SBUS)
+
+	switch (ca->ca_bustype) {
+	case BUS_SBUS:
+	default:
 		return (0);
-
-	if (CPU_ISSUN4) {
-		/*
-		 * XXX need better probe here so we can figure out what we've got
-		 */
-		if (ca->ca_bustype == BUS_OBIO) {
-			if (probeget(ra->ra_vaddr, 1) == -1)
-				return (0);
-			return(1);
-		}
-		if (probeget(ra->ra_vaddr, 2) == -1)
-			return (0);
-
+	case BUS_OBIO:
+		if (probeget(ra->ra_vaddr, 1) != -1)
+			return (1);
+		break;
+	case BUS_VME16:
+	case BUS_VME32:
+		if (probeget(ra->ra_vaddr, 2) != -1)
+			return (1);
+		break;
 	}
-	return (1);
+	return (0);
 }
 
 /*
@@ -530,8 +530,7 @@ ieattach(parent, self, aux)
 		sc->memcopy = bcopy;
 		sc->memzero = bzero;
 		sc->sc_msize = 65536; /* XXX */
-		sc->sc_reg = mapiodev(ca->ca_ra.ra_reg, 0, sizeof(struct ieob),
-		    ca->ca_bustype);
+		sc->sc_reg = mapiodev(ca->ca_ra.ra_reg, 0, sizeof(struct ieob));
 		ieo = (volatile struct ieob *) sc->sc_reg;
 
 		/*
@@ -594,8 +593,8 @@ ieattach(parent, self, aux)
 		sc->memcopy = wcopy;
 		sc->memzero = wzero;
 		sc->sc_msize = 65536;	/* XXX */
-		sc->sc_reg = mapiodev(ca->ca_ra.ra_reg, 0, sizeof(struct ievme),
-		    ca->ca_bustype);
+		sc->sc_reg = mapiodev(ca->ca_ra.ra_reg, 0,
+				      sizeof(struct ievme));
 		iev = (volatile struct ievme *) sc->sc_reg;
 		/* top 12 bits */
 		rampaddr = (u_long)ca->ca_ra.ra_paddr & 0xfff00000;
@@ -603,7 +602,7 @@ ieattach(parent, self, aux)
 		rampaddr = rampaddr | ((iev->status & IEVME_HADDR) << 16);
 		rampaddr -= (u_long)ca->ca_ra.ra_paddr;
 		sc->sc_maddr = mapiodev(ca->ca_ra.ra_reg, rampaddr,
-					sc->sc_msize, ca->ca_bustype);
+					sc->sc_msize);
 		sc->sc_iobase = sc->sc_maddr;
 		iev->pectrl = iev->pectrl | IEVME_PARACK; /* clear to start */
 
@@ -731,7 +730,7 @@ void *v;
                 volatile struct ievme *iev = (volatile struct ievme *)sc->sc_reg
 ;
                 if (iev->status & IEVME_PERR) {
-                        printf("%s: parity error (ctrl %x @ %02x%04x)\n",
+                        printf("%s: parity error (ctrl 0x%x @ 0x%02x%04x)\n",
                                sc->sc_dev.dv_xname, iev->pectrl,
 			       iev->pectrl & IEVME_HADDR, iev->peaddr);
                         iev->pectrl = iev->pectrl | IEVME_PARACK;
@@ -1317,7 +1316,8 @@ ie_readframe(sc, num)
 
 #ifdef IEDEBUG
 	if (sc->sc_debug & IED_READFRAME)
-		printf("%s: frame from ether %s type %x\n", sc->sc_dev.dv_xname,
+		printf("%s: frame from ether %s type 0x%x\n",
+		    sc->sc_dev.dv_xname,
 		    ether_sprintf(eh.ether_shost), (u_int)eh.ether_type);
 #endif
 
@@ -1654,7 +1654,7 @@ run_tdr(sc, cmd)
 		printf("%s: TDR detected a short %d clocks away\n",
 		    sc->sc_dev.dv_xname, result & IE_TDR_TIME);
 	else
-		printf("%s: TDR returned unknown status %x\n",
+		printf("%s: TDR returned unknown status 0x%x\n",
 		    sc->sc_dev.dv_xname, result);
 }
 

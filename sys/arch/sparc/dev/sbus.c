@@ -1,4 +1,5 @@
-/*	$NetBSD: sbus.c,v 1.10 1996/04/22 02:35:03 abrown Exp $ */
+/*	$OpenBSD: sbus.c,v 1.5 1997/08/08 08:25:27 downsj Exp $	*/
+/*	$NetBSD: sbus.c,v 1.17 1997/06/01 22:10:39 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,8 +50,10 @@
  */
 
 #include <sys/param.h>
+#include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <vm/vm.h>
 
 #include <machine/autoconf.h>
 
@@ -96,7 +99,7 @@ sbus_match(parent, vcf, aux)
 	struct device *parent;
 	void *vcf, *aux;
 {
-	struct cfdata *cf = vcf;
+	register struct cfdata *cf = vcf;
 	register struct confargs *ca = aux;
 	register struct romaux *ra = &ca->ca_ra;
 
@@ -121,6 +124,7 @@ sbus_attach(parent, self, aux)
 	register int node;
 	register char *name;
 	struct confargs oca;
+	int rlen;
 
 	/*
 	 * XXX there is only one Sbus, for now -- do not know how to
@@ -149,8 +153,15 @@ sbus_attach(parent, self, aux)
 	else
 		oca.ca_ra.ra_bp = NULL;
 
-	sc->sc_range = ra->ra_range;
-	sc->sc_nrange = ra->ra_nrange;
+	rlen = getproplen(node, "ranges");
+	if (rlen > 0) {
+		sc->sc_nrange = rlen / sizeof(struct rom_range);
+		sc->sc_range =
+			(struct rom_range *)malloc(rlen, M_DEVBUF, M_NOWAIT);
+		if (sc->sc_range == 0)
+			panic("sbus: PROM ranges too large: %d", rlen);
+		(void)getprop(node, "ranges", sc->sc_range, rlen);
+	}
 
 	/*
 	 * Loop through ROM children, fixing any relative addresses
@@ -183,15 +194,19 @@ sbus_translate(dev, ca)
 			ca->ca_slot = SBUS_ABS_TO_SLOT(base);
 			ca->ca_offset = SBUS_ABS_TO_OFFSET(base);
 		} else {
+			if (!CPU_ISSUN4C)
+				panic("relative sbus addressing not supported");
 			ca->ca_slot = slot = ca->ca_ra.ra_iospace;
 			ca->ca_offset = base;
-			ca->ca_ra.ra_paddr =
-				(void *)SBUS_ADDR(slot, base);
+			ca->ca_ra.ra_paddr = (void *)SBUS_ADDR(slot, base);
+			ca->ca_ra.ra_iospace = PMAP_OBIO;
+
 			/* Fix any remaining register banks */
 			for (i = 1; i < ca->ca_ra.ra_nreg; i++) {
 				base = (int)ca->ca_ra.ra_reg[i].rr_paddr;
 				ca->ca_ra.ra_reg[i].rr_paddr =
 					(void *)SBUS_ADDR(slot, base);
+				ca->ca_ra.ra_reg[i].rr_iospace = PMAP_OBIO;
 			}
 		}
 
@@ -237,12 +252,13 @@ sbus_establish(sd, dev)
 	 */
 	for (curdev = dev->dv_parent; ; curdev = curdev->dv_parent) {
 		if (!curdev || !curdev->dv_xname)
-		    panic("sbus_establish: can't find sbus parent for %s",
-			  (sd->sd_dev->dv_xname ? sd->sd_dev->dv_xname :
-			   "<unknown>"));
+			panic("sbus_establish: can't find sbus parent for %s",
+			      sd->sd_dev->dv_xname
+					? sd->sd_dev->dv_xname
+					: "<unknown>" );
 
 		if (strncmp(curdev->dv_xname, "sbus", 4) == 0)
-		    break;
+			break;
 	}
 	sc = (struct sbus_softc *) curdev;
 

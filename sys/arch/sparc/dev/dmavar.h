@@ -1,4 +1,5 @@
-/*	$NetBSD: dmavar.h,v 1.8 1996/04/22 02:35:00 abrown Exp $ */
+/*	$OpenBSD: dmavar.h,v 1.4 1997/08/08 08:24:59 downsj Exp $	*/
+/*	$NetBSD: dmavar.h,v 1.11 1996/11/27 21:49:53 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -35,7 +36,7 @@ struct dma_softc {
 	struct le_softc *sc_le;			/* my ethernet */
 	struct dma_regs *sc_regs;		/* the registers */
 	int	sc_active;			/* DMA active ? */
-	int	sc_rev;				/* revision */
+	u_int	sc_rev;				/* revision */
 	int	sc_node;			/* PROM node ID */
 	int	sc_burst;			/* DVMA burst size in effect */
 	caddr_t	sc_dvmakaddr;			/* DVMA cookies */
@@ -53,32 +54,7 @@ struct dma_softc {
 
 #define DMACSR(sc)	(sc->sc_regs->csr)
 #define DMADDR(sc)	(sc->sc_regs->addr)
-
-/*
- * We are not allowed to touch the DMA "flush" and "drain" bits
- * while it is still thinking about a request (DMA_RP).
- */
-
-/*
- * TIME WAIT (to debug hanging machine problem)
- */
-
-#define TIME_WAIT(COND, MSG, SC) { int count = 500000; \
-				while (--count > 0 && (COND)) DELAY(1); \
-				if (count == 0) { \
-					printf("CSR = %lx\n",\
-					    SC->sc_regs->csr);\
-					panic(MSG); } \
-			     }
-
-#define DMAWAIT(sc)  TIME_WAIT((sc->sc_regs->csr & D_R_PEND), "DMAWAIT", sc)
-#define DMAWAIT1(sc) TIME_WAIT((sc->sc_regs->csr & D_DRAINING), "DMAWAIT1", sc)
-#define DMAREADY(sc) TIME_WAIT((!(sc->sc_regs->csr & D_DMA_ON)), "DMAREADY", sc)
-
-#define DMA_DRAIN(sc)	if (sc->sc_rev < DMAREV_2) { \
-				DMACSR(sc) |= D_DRAIN; \
-				DMAWAIT1(sc); \
-			}
+#define DMACNT(sc)	(sc->sc_regs->bcnt)
 
 /* DMA engine functions */
 #define DMA_ENINTR(r)		(((r)->enintr)(r))

@@ -1,5 +1,5 @@
-/*	$OpenBSD: zsvar.h,v 1.9 1996/08/12 03:14:50 downsj Exp $	*/
-/*	$NetBSD: zsvar.h,v 1.8 1996/03/31 22:39:08 pk Exp $ */
+/*	$OpenBSD: zsvar.h,v 1.10 1997/08/08 08:25:44 downsj Exp $	*/
+/*	$NetBSD: zsvar.h,v 1.10 1997/04/14 21:26:28 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -91,9 +91,12 @@ struct zsdevice {
 #define	ZRING_VALUE(x)	((x) >> 8)
 #define	ZRING_MAKE(t, v)	((t) | (v) << 8)
 
+/* forard decl */
+struct zs_softc;
+
 struct zs_chanstate {
-	struct zs_chanstate *cs_next;	/* linked list for zshard() */
-	struct zs_softc *cs_sc;		/* points to my softc */
+	struct	zs_chanstate *cs_next;	/* linked list for zshard() */
+	struct	zs_softc *cs_sc;	/* pointer to softc */
 	volatile struct zschan *cs_zc;	/* points to hardware regs */
 	int	cs_unit;		/* unit number */
 	struct	tty *cs_ttyp;		/* ### */
@@ -123,6 +126,7 @@ struct zs_chanstate {
 	char	cs_kgdb;		/* enter debugger on frame char */
 	char	cs_consio;		/* port does /dev/console I/O */
 	char	cs_xxx;			/* (spare) */
+	char	cs_deferred_cc;		/* deferred zscnputc() output */
 	int	cs_speed;		/* default baud rate (from ROM) */
 
 	/*

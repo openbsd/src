@@ -1,10 +1,12 @@
-/*	$NetBSD: si.c,v 1.24 1996/05/13 01:53:45 thorpej Exp $	*/
+/*	$OpenBSD: si.c,v 1.10 1997/08/08 08:25:29 downsj Exp $	*/
+/*	$NetBSD: si.c,v 1.37 1997/07/29 09:58:13 fair Exp $	*/
 
-/*
- * Copyright (c) 1995 Jason R. Thorpe
- * Copyright (c) 1995 David Jones, Gordon W. Ross
- * Copyright (c) 1994 Adam Glass
+/*-
+ * Copyright (c) 1996 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Adam Glass, David Jones, Gordon W. Ross, and Jason R. Thorpe.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -14,23 +16,25 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the authors may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- * 4. All advertising materials mentioning features or use of this software
+ * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by
- *      Adam Glass, David Jones, Gordon Ross, and Jason R. Thorpe
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 /*
@@ -108,6 +112,7 @@
 #include <machine/pmap.h>
 
 #include <sparc/sparc/vaddrs.h>
+#include <sparc/sparc/cpuvar.h>
 
 #ifndef DDB
 #define	Debugger()
@@ -190,7 +195,7 @@ struct si_softc {
 #define	SI_DO_RESELECT	0x04	/* Allow disconnect/reselect */
 #define	SI_OPTIONS_MASK	(SI_ENABLE_DMA|SI_DMA_INTR|SI_DO_RESELECT)
 #define SI_OPTIONS_BITS	"\10\3RESELECT\2DMA_INTR\1DMA"
-int si_options = 0;		/* XXX SI_ENABLE_DMA when dma works */
+int si_options = SI_ENABLE_DMA;
 int sw_options = SI_ENABLE_DMA;
 
 /* How long to wait for DMA before declaring an error. */
@@ -201,7 +206,6 @@ static void	si_attach __P((struct device *, struct device *, void *));
 static int	si_intr __P((void *));
 static void	si_reset_adapter __P((struct ncr5380_softc *));
 static void	si_minphys __P((struct buf *));
-static int	si_print __P((void *, const char *));
 
 void si_dma_alloc __P((struct ncr5380_softc *));
 void si_dma_free __P((struct ncr5380_softc *));
@@ -259,22 +263,12 @@ struct cfdriver sw_cd = {
 };
 
 static int
-si_print(aux, name)
-	void *aux;
-	const char *name;
-{
-	if (name != NULL)
-		printf("%s: scsibus ", name);
-	return UNCONF;
-}
-
-static int
-si_match(parent, vcf, args)
+si_match(parent, vcf, aux)
 	struct device	*parent;
-	void		*vcf, *args;
+	void *vcf, *aux;
 {
-	struct cfdata	*cf = vcf;
-	struct confargs *ca = args;
+	struct cfdata *cf = vcf;
+	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
 
 	/* Are we looking for the right thing? */
@@ -296,13 +290,15 @@ si_match(parent, vcf, args)
 	switch (ca->ca_bustype) {
 	case BUS_VME16:
 		/* AFAIK, the `si' can only exist on the vmes. */
-		if (strcmp(ra->ra_name, "si") || cpumod == SUN4_100)
+		if (strcmp(ra->ra_name, "si") ||
+		    cpuinfo.cpu_type == CPUTYP_4_100)
 			return (0);
 		break;
 
 	case BUS_OBIO:
 		/* AFAIK, an `sw' can only exist on the obio. */
-		if (strcmp(ra->ra_name, "sw") || cpumod != SUN4_100)
+		if (strcmp(ra->ra_name, "sw") ||
+		    cpuinfo.cpu_type != CPUTYP_4_100)
 			return (0);
 		break;
 
@@ -341,17 +337,20 @@ si_attach(parent, self, args)
 	struct bootpath *bp;
 	int i;
 
-	/* Pull in the options flags. */
-	if (ca->ca_bustype == BUS_OBIO)
-		sc->sc_options = sw_options;
+	/*
+	 * Pull in the options flags.  Allow the user to completely
+	 * override the default values.
+	 */
+	if ((ncr_sc->sc_dev.dv_cfdata->cf_flags & SI_OPTIONS_MASK) != 0)
+		sc->sc_options =
+		    (ncr_sc->sc_dev.dv_cfdata->cf_flags & SI_OPTIONS_MASK);
 	else
-		sc->sc_options = si_options;
-	sc->sc_options |=
-	    (ncr_sc->sc_dev.dv_cfdata->cf_flags & SI_OPTIONS_MASK);
+		sc->sc_options =
+		    (ca->ca_bustype == BUS_OBIO) ? sw_options : si_options;
 
 	/* Map the controller registers. */
-	regs = (struct si_regs *)mapiodev(ra->ra_reg, 0,
-	    sizeof(struct si_regs), ca->ca_bustype);
+	regs = (struct si_regs *)
+		mapiodev(ra->ra_reg, 0, sizeof(struct si_regs));
 
 	/*
 	 * Fill in the prototype scsi_link.
@@ -413,7 +412,7 @@ si_attach(parent, self, args)
 	}
 
 	ncr_sc->sc_flags = 0;
-	if (sc->sc_options & SI_DO_RESELECT)
+	if ((sc->sc_options & SI_DO_RESELECT) == 0)
 		ncr_sc->sc_flags |= NCR5380_PERMIT_RESELECT;
 	if ((sc->sc_options & SI_DMA_INTR) == 0)
 		ncr_sc->sc_flags |= NCR5380_FORCE_POLLING;
@@ -494,7 +493,7 @@ si_attach(parent, self, args)
 		bootpath_store(1, bp + 1);
 
 	/* Configure sub-devices */
-	config_found(self, &(ncr_sc->sc_link), si_print);
+	config_found(self, &(ncr_sc->sc_link), scsiprint);
 
 	bootpath_store(1, NULL);
 }
@@ -505,7 +504,7 @@ si_minphys(struct buf *bp)
 	if (bp->b_bcount > MAX_DMA_LEN) {
 #ifdef DEBUG
 		if (si_debug) {
-			printf("si_minphys len = %x.\n", MAX_DMA_LEN);
+			printf("si_minphys len = 0x%x.\n", MAX_DMA_LEN);
 			Debugger();
 		}
 #endif
@@ -658,21 +657,6 @@ si_dma_alloc(ncr_sc)
 	if (xlen < MIN_DMA_LEN)
 		panic("si_dma_alloc: xlen=0x%x\n", xlen);
 
-	/*
-	 * XXX SUN4 doesn't have this limitation?
-	 * Never attempt single transfers of more than 63k, because
-	 * our count register may be only 16 bits (an OBIO adapter).
-	 * This should never happen since already bounded by minphys().
-	 * XXX - Should just segment these...
-	 */
-	if (xlen > MAX_DMA_LEN) {
-		printf("si_dma_alloc: excessive xlen=0x%x\n", xlen);
-#ifdef DEBUG
-		Debugger();
-#endif
-		ncr_sc->sc_datalen = xlen = MAX_DMA_LEN;
-	}
-
 	/* Find free DMA handle.  Guaranteed to find one since we have
 	   as many DMA handles as the driver has processes. */
 	for (i = 0; i < SCI_OPENINGS; i++) {
@@ -701,7 +685,7 @@ found:
 	dh->dh_dvma = (long)kdvma_mapin((caddr_t)addr, xlen, 0);
 	if (dh->dh_dvma == 0) {
 		/* Can't remap segment */
-		printf("si_dma_alloc: can't remap %p/%x, doing PIO\n",
+		printf("si_dma_alloc: can't remap %p/0x%x, doing PIO\n",
 			dh->dh_addr, dh->dh_maplen);
 		dh->dh_flags = 0;
 		return;

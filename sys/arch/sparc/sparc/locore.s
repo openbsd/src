@@ -1,3 +1,6 @@
+/*	$OpenBSD: locore.s,v 1.17 1997/08/08 08:27:27 downsj Exp $	*/
+/*	$NetBSD: locore.s,v 1.72 1997/07/07 20:06:42 pk Exp $	*/
+
 /*
  * Copyright (c) 1996 Paul Kranenburg
  * Copyright (c) 1996
@@ -63,7 +66,6 @@
 #ifdef COMPAT_SVR4
 #include <compat/svr4/svr4_syscall.h>
 #endif
-
 
 /*
  * GNU assembler does not understand `.empty' directive; Sun assembler
@@ -268,19 +270,6 @@ sun4_notsup:
  */
 	.globl _msgbuf
 _msgbuf = KERNBASE
-
-/*
- * We need to map the interrupt enable register very early on in the
- * boot process, so that we can handle NMIs (parity errors) halfway
- * sensibly during boot.  We use virtual address f8002000 (`page 2')
- * for this, wasting a page of physical memory.
- *
- * This doesn't work for the Sun4M, which can have 5 or more pages of
- * registers, a system register and one for each processor.  Thus we use
- * a reserved piece of the virtual address space, set up in bootstrap().
- */
-
-IE_reg_addr = INTRREG_VA	! KERNBASE + 8192 - points to IEreg
 
 /*
  * Each trap has room for four instructions, of which one perforce must
@@ -1156,7 +1145,7 @@ trapbase_sun4m:
  * need to .skip 4096 to pad to page size iff. the number of trap tables
  * defined above is odd.
  */
-#if defined(SUN4) + defined(SUN4C) + defined(SUN4M) - 2 == 0
+#if (defined(SUN4) + defined(SUN4C) + defined(SUN4M)) % 2 == 1
 	.skip	4096
 #endif
 
@@ -1294,47 +1283,44 @@ Lpanic_red:
 #endif /* 4m */
 
 #if defined(SUN4M) && !(defined(SUN4C) || defined(SUN4))
-#define PTE_OF_ADDR			PTE_OF_ADDR4M
-#define CMP_PTE_USER_WRITE(pte,tmp)	CMP_PTE_USER_WRITE4M(pte)
-#define CMP_PTE_USER_READ(pte,tmp)	CMP_PTE_USER_READ4M(pte)
+
+#define PTE_OF_ADDR(addr, pte, bad, page_offset, label) \
+	PTE_OF_ADDR4M(addr, pte, bad, page_offset)
+#define CMP_PTE_USER_WRITE(pte, tmp, label)	CMP_PTE_USER_WRITE4M(pte)
+#define CMP_PTE_USER_READ(pte, tmp, label)	CMP_PTE_USER_READ4M(pte)
+
 #elif (defined(SUN4C) || defined(SUN4)) && !defined(SUN4M)
-#define PTE_OF_ADDR			PTE_OF_ADDR4_4C
-#define CMP_PTE_USER_WRITE(pte,tmp)	CMP_PTE_USER_WRITE4_4C(pte)
-#define CMP_PTE_USER_READ(pte,tmp)	CMP_PTE_USER_READ4_4C(pte)
+
+#define PTE_OF_ADDR(addr, pte, bad, page_offset,label) \
+	PTE_OF_ADDR4_4C(addr, pte, bad, page_offset)
+#define CMP_PTE_USER_WRITE(pte, tmp, label)	CMP_PTE_USER_WRITE4_4C(pte)
+#define CMP_PTE_USER_READ(pte, tmp, label)	CMP_PTE_USER_READ4_4C(pte)
+
 #else /* both defined, ugh */
-#define	PTE_OF_ADDR(addr, pte, bad, page_offset) \
-	sethi	%hi(_cputyp), pte; \
-	ld	[pte + %lo(_cputyp)], pte; \
-	cmp	pte, CPU_SUN4M; \
-	bne	2f; nop; \
+
+#define	PTE_OF_ADDR(addr, pte, bad, page_offset, label) \
+label:	b,a	2f; \
 	PTE_OF_ADDR4M(addr, pte, bad, page_offset); \
 	b,a	3f; \
 2: \
 	PTE_OF_ADDR4_4C(addr, pte, bad, page_offset); \
 3:
 
-#define CMP_PTE_USER_READ(pte, tmp) \
-	sethi	%hi(_cputyp), tmp; \
-	ld	[tmp + %lo(_cputyp)], tmp; \
-	cmp	tmp, CPU_SUN4M; \
-	bne	1f; nop; \
+#define CMP_PTE_USER_READ(pte, tmp, label) \
+label:	b,a	1f; \
 	CMP_PTE_USER_READ4M(pte); \
 	b,a	2f; \
 1: \
 	CMP_PTE_USER_READ4_4C(pte); \
 2:
 
-#define CMP_PTE_USER_WRITE(pte, tmp) \
-	sethi	%hi(_cputyp), tmp; \
-	ld	[tmp + %lo(_cputyp)], tmp; \
-	cmp	tmp, CPU_SUN4M; \
-	bne	1f; nop; \
+#define CMP_PTE_USER_WRITE(pte, tmp, label) \
+label:	b,a	1f; \
 	CMP_PTE_USER_WRITE4M(pte); \
 	b,a	2f; \
 1: \
 	CMP_PTE_USER_WRITE4_4C(pte); \
 2:
-
 #endif
 
 
@@ -1605,8 +1591,8 @@ ctw_user:
 
 	sethi	%hi(_pgofset), %g6	! trash %g6=curpcb
 	ld	[%g6 + %lo(_pgofset)], %g6
-	PTE_OF_ADDR(%sp, %g7, ctw_invalid, %g6)
-	CMP_PTE_USER_WRITE(%g7, %g5)		! likewise if not writable
+	PTE_OF_ADDR(%sp, %g7, ctw_invalid, %g6, NOP_ON_4M_1)
+	CMP_PTE_USER_WRITE(%g7, %g5, NOP_ON_4M_2) ! likewise if not writable
 	bne	ctw_invalid
 	 EMPTY
 	/* Note side-effect of SLT_IF_1PAGE_RW: decrements %g6 by 62 */
@@ -1615,8 +1601,8 @@ ctw_user:
 	 std	%l0, [%sp]
 	add	%sp, 7*8, %g5		! check last addr too
 	add	%g6, 62, %g6		! restore %g6 to `pgofset'
-	PTE_OF_ADDR(%g5, %g7, ctw_invalid, %g6)
-	CMP_PTE_USER_WRITE(%g7, %g6)
+	PTE_OF_ADDR(%g5, %g7, ctw_invalid, %g6, NOP_ON_4M_3)
+	CMP_PTE_USER_WRITE(%g7, %g6, NOP_ON_4M_4)
 	be,a	ctw_merge		! all ok: store <l0,l1> and merge
 	 std	%l0, [%sp]
 
@@ -1828,10 +1814,10 @@ memfault_sun4c:
 	 * This code is essentially the same as that at `nmi' below,
 	 * but the register usage is different and we cannot merge.
 	 */
-	sethi	%hi(IE_reg_addr), %l5	! ienab_bic(IE_ALLIE);
-	ldub	[%l5 + %lo(IE_reg_addr)], %o0
+	sethi	%hi(INTRREG_VA), %l5	! ienab_bic(IE_ALLIE);
+	ldub	[%l5 + %lo(INTRREG_VA)], %o0
 	andn	%o0, IE_ALLIE, %o0
-	stb	%o0, [%l5 + %lo(IE_reg_addr)]
+	stb	%o0, [%l5 + %lo(INTRREG_VA)]
 
 	/*
 	 * Now reenable traps and call C code.
@@ -1848,9 +1834,9 @@ memfault_sun4c:
 	ldd	[%sp + CCFSZ + 32], %g4
 	ldd	[%sp + CCFSZ + 40], %g6
 	/* now safe to set IE_ALLIE again */
-	ldub	[%l5 + %lo(IE_reg_addr)], %o1
+	ldub	[%l5 + %lo(INTRREG_VA)], %o1
 	or	%o1, IE_ALLIE, %o1
-	stb	%o1, [%l5 + %lo(IE_reg_addr)]
+	stb	%o1, [%l5 + %lo(INTRREG_VA)]
 	b	return_from_trap
 	 wr	%l4, 0, %y		! restore y
 
@@ -1880,29 +1866,15 @@ memfault_sun4m:
 	st	%g1, [%sp + CCFSZ + 20]	! save g1
 	rd	%y, %l4			! save y
 
-	set	SRMMU_SFADDR, %o0
 	std	%g2, [%sp + CCFSZ + 24]	! save g2, g3
-	lda	[%o0] ASI_SRMMU, %o2	! sync virt addr; must be read first
-	set	SRMMU_SFSTAT, %o0
-	lda	[%o0] ASI_SRMMU, %o1	! get sync fault status register
-	std	%g4, [%sp + CCFSZ + 32]	! (sneak g4,g5 in here)
+	std	%g4, [%sp + CCFSZ + 32]	! save g4, g5
 
-	/* Now test for a HyperSPARC. If we have one, get the async status */
-	sethi	%hi(_mmumod), %o3	! get MMU model
-	ld	[%o3 + %lo(_mmumod)], %o3
-	cmp	%o3, SUN4M_MMU_HS	! is it hypersparc?
-	std	%g6, [%sp + CCFSZ + 40]	! sneak in g6, g7
-	be	1f			! yup, skip ahead
+	! get fault status/address
+	set	CPUINFO_VA+CPUINFO_FAULTSTATUS, %o0
+	ld	[%o0], %o0
+	jmpl	%o0, %o7
+	 std	%g6, [%sp + CCFSZ + 40]	! sneak in g6, g7
 
-	 clr	%o3			! clear %o3 and %o4, not hypersparc
-	b	2f
-	 clr	%o4
-1:
-	set	SRMMU_AFSTAT, %o3	! must read status before fault on HS
-	lda	[%o3] ASI_SRMMU, %o3	! get async fault status
-	set	SRMMU_AFADDR, %o4
-	lda	[%o4] ASI_SRMMU, %o4	! get async fault address
-2:
 	wr	%l0, PSR_ET, %psr	! reenable traps
 
 	/* Finish stackframe, call C trap handler */
@@ -2329,10 +2301,10 @@ return_from_syscall:
  */
 	.comm	_intrhand, 15 * 8	! intrhand[0..14]; 0 => error
 softintr_sun44c:
-	sethi	%hi(IE_reg_addr), %l6
-	ldub	[%l6 + %lo(IE_reg_addr)], %l5
+	sethi	%hi(INTRREG_VA), %l6
+	ldub	[%l6 + %lo(INTRREG_VA)], %l5
 	andn	%l5, %l4, %l5
-	stb	%l5, [%l6 + %lo(IE_reg_addr)]
+	stb	%l5, [%l6 + %lo(INTRREG_VA)]
 
 softintr_common:
 	INTR_SETUP(-CCFSZ-80)
@@ -2498,10 +2470,10 @@ nmi_sun4:
 	 * Level 15 interrupts are nonmaskable, so with traps off,
 	 * disable all interrupts to prevent recursion.
 	 */
-	sethi	%hi(IE_reg_addr), %o0
-	ldub	[%o0 + %lo(IE_reg_addr)], %o1
+	sethi	%hi(INTRREG_VA), %o0
+	ldub	[%o0 + %lo(INTRREG_VA)], %o1
 	andn	%o0, IE_ALLIE, %o1
-	stb	%o1, [%o0 + %lo(IE_reg_addr)]
+	stb	%o1, [%o0 + %lo(INTRREG_VA)]
 	wr	%l0, PSR_ET, %psr	! okay, turn traps on again
 
 	std	%g2, [%sp + CCFSZ + 0]	! save g2, g3
@@ -2524,10 +2496,10 @@ nmi_sun4c:
 	 * Level 15 interrupts are nonmaskable, so with traps off,
 	 * disable all interrupts to prevent recursion.
 	 */
-	sethi	%hi(IE_reg_addr), %o0
-	ldub	[%o0 + %lo(IE_reg_addr)], %o1
+	sethi	%hi(INTRREG_VA), %o0
+	ldub	[%o0 + %lo(INTRREG_VA)], %o1
 	andn	%o0, IE_ALLIE, %o1
-	stb	%o1, [%o0 + %lo(IE_reg_addr)]
+	stb	%o1, [%o0 + %lo(INTRREG_VA)]
 	wr	%l0, PSR_ET, %psr	! okay, turn traps on again
 
 	std	%g2, [%sp + CCFSZ + 0]	! save g2, g3
@@ -2564,10 +2536,10 @@ nmi_common:
 	mov	%l7, %g7
 
 	! set IE_ALLIE again (safe, we disabled traps again above)
-	sethi	%hi(IE_reg_addr), %o0
-	ldub	[%o0 + %lo(IE_reg_addr)], %o1
+	sethi	%hi(INTRREG_VA), %o0
+	ldub	[%o0 + %lo(INTRREG_VA)], %o1
 	or	%o1, IE_ALLIE, %o1
-	stb	%o1, [%o0 + %lo(IE_reg_addr)]
+	stb	%o1, [%o0 + %lo(INTRREG_VA)]
 	b	return_from_trap
 	 wr	%l4, 0, %y		! restore y
 
@@ -2595,28 +2567,11 @@ nmi_sun4m:
 	rd	%y, %l4			! save y
 
 	! now read sync error registers
-	set	SRMMU_SFADDR, %o0
-	lda	[%o0] ASI_SRMMU, %o2	! sync virt addr
-	set	SRMMU_SFSTAT, %o0
-	lda	[%o0] ASI_SRMMU, %o1	! sync err reg
-	std	%g4, [%sp + CCFSZ + 8]	! save g4,g5
+	set	CPUINFO_VA+CPUINFO_FAULTSTATUS, %o0
+	ld	[%o0], %o0
+	jmpl	%o0, %o7
+	 std	%g4, [%sp + CCFSZ + 8]	! save g4,g5
 
-	/* Now test for a HyperSPARC. If we have one, get the async status */
-
-	sethi	%hi(_mmumod), %o3	! get MMU model
-	ld	[%o3 + %lo(_mmumod)], %o3
-	cmp	%o3, SUN4M_MMU_HS	! is it hypersparc?
-	be	1f			! yup, skip ahead
-
-	 clr	%o3			! clear %o3 and %o4, not hypersparc
-	b	2f
-	 clr	%o4
-1:
-	set	SRMMU_AFSTAT, %o3	! read status first on hypersparc
-	lda	[%o3] ASI_SRMMU, %o3	! get async fault status
-	set	SRMMU_AFADDR, %o4
-	lda	[%o4] ASI_SRMMU, %o4	! get async fault address
-2:
 	/* Finish stackframe, call C trap handler */
 	mov	%g1, %l5		! save g1,g6,g7
 	mov	%g6, %l6
@@ -2822,8 +2777,8 @@ winuf_user:
 
 	sethi	%hi(_pgofset), %l4
 	ld	[%l4 + %lo(_pgofset)], %l4
-	PTE_OF_ADDR(%sp, %l7, winuf_invalid, %l4)
-	CMP_PTE_USER_READ(%l7, %l5)	! if first page not readable,
+	PTE_OF_ADDR(%sp, %l7, winuf_invalid, %l4, NOP_ON_4M_5)
+	CMP_PTE_USER_READ(%l7, %l5, NOP_ON_4M_6) ! if first page not readable,
 	bne	winuf_invalid		! it is invalid
 	 EMPTY
 	SLT_IF_1PAGE_RW(%sp, %l7, %l4)	! first page is readable
@@ -2831,8 +2786,8 @@ winuf_user:
 	 restore %g0, 1, %l1		! and goto ok, & set %l1 to 1
 	add	%sp, 7*8, %l5
 	add     %l4, 62, %l4
-	PTE_OF_ADDR(%l5, %l7, winuf_invalid, %l4)
-	CMP_PTE_USER_READ(%l7, %l5)	! check second page too
+	PTE_OF_ADDR(%l5, %l7, winuf_invalid, %l4, NOP_ON_4M_7)
+	CMP_PTE_USER_READ(%l7, %l5, NOP_ON_4M_8) ! check second page too
 	be,a	winuf_ok		! enter window X and goto ok
 	 restore %g0, 1, %l1		! (and then set %l1 to 1)
 
@@ -3046,8 +3001,8 @@ rft_user:
 
 	sethi	%hi(_pgofset), %l3
 	ld	[%l3 + %lo(_pgofset)], %l3
-	PTE_OF_ADDR(%fp, %l7, rft_invalid, %l3)
-	CMP_PTE_USER_READ(%l7, %l5)	! try first page
+	PTE_OF_ADDR(%fp, %l7, rft_invalid, %l3, NOP_ON_4M_9)
+	CMP_PTE_USER_READ(%l7, %l5, NOP_ON_4M_10)	! try first page
 	bne	rft_invalid		! no good
 	 EMPTY
 	SLT_IF_1PAGE_RW(%fp, %l7, %l3)
@@ -3055,8 +3010,8 @@ rft_user:
 	 wr	%g0, 0, %wim
 	add	%fp, 7*8, %l5
 	add	%l3, 62, %l3
-	PTE_OF_ADDR(%l5, %l7, rft_invalid, %l3)
-	CMP_PTE_USER_READ(%l7, %l5)	! check 2nd page too
+	PTE_OF_ADDR(%l5, %l7, rft_invalid, %l3, NOP_ON_4M_11)
+	CMP_PTE_USER_READ(%l7, %l5, NOP_ON_4M_12)	! check 2nd page too
 	be,a	rft_user_ok
 	 wr	%g0, 0, %wim
 
@@ -3446,6 +3401,7 @@ start_havetype:
 	blu	0b			! no, loop
 	 add	%l3, %l0, %l0		! (and lowva += segsz)
 
+#if 0 /* moved to autoconf */
 	/*
 	 * Now map the interrupt enable register and clear any interrupts,
 	 * enabling NMIs.  Note that we will not take NMIs until we change
@@ -3462,6 +3418,7 @@ start_havetype:
 	mov	IE_ALLIE, %l1
 	nop; nop			! paranoia
 	stb	%l1, [%l0]
+#endif
 	b	startmap_done
 	 nop
 1:
@@ -3493,6 +3450,7 @@ no_3mmu:
 
 remap_done:
 
+#if 0 /* moved to autoconf */
 	/*
 	 * Now map the interrupt enable register and clear any interrupts,
 	 * enabling NMIs.  Note that we will not take NMIs until we change
@@ -3509,6 +3467,7 @@ remap_done:
 	mov	IE_ALLIE, %l1
 	nop; nop			! paranoia
 	stb	%l1, [%l0]
+#endif
 	b,a	startmap_done
 2:
 #endif /* SUN4 */
@@ -3682,6 +3641,50 @@ noplab:	 nop
 1:
 #endif
 
+#if ((defined(SUN4) || defined(SUN4C)) && defined(SUN4M))
+
+	/*
+	 * Patch instructions at specified labels that start
+	 * per-architecture code-paths.
+	 */
+Lgandul:	nop
+
+#define MUNGE(label) \
+	sethi	%hi(label), %o0; \
+	st	%l0, [%o0 + %lo(label)]
+
+	sethi	%hi(Lgandul), %o0
+	ld	[%o0 + %lo(Lgandul)], %l0	! %l0 = NOP
+
+	cmp	%g4, CPU_SUN4M
+	bne,a	1f
+	 nop
+
+	! this should be automated!
+	MUNGE(NOP_ON_4M_1)
+	MUNGE(NOP_ON_4M_2)
+	MUNGE(NOP_ON_4M_3)
+	MUNGE(NOP_ON_4M_4)
+	MUNGE(NOP_ON_4M_5)
+	MUNGE(NOP_ON_4M_6)
+	MUNGE(NOP_ON_4M_7)
+	MUNGE(NOP_ON_4M_8)
+	MUNGE(NOP_ON_4M_9)
+	MUNGE(NOP_ON_4M_10)
+	MUNGE(NOP_ON_4M_11)
+	MUNGE(NOP_ON_4M_12)
+	MUNGE(NOP_ON_4M_13)
+	MUNGE(NOP_ON_4M_14)
+	b,a	2f
+
+1:
+	MUNGE(NOP_ON_4_4C_1)
+
+2:
+
+#undef MUNGE
+#endif
+
 	/*
 	 * Step 4: change the trap base register, now that our trap handlers
 	 * will function (they need the tables we just set up).
@@ -3704,6 +3707,7 @@ noplab:	 nop
 	call	_main
 	 clr	%o0			! our frame arg is ignored
 	/*NOTREACHED*/
+
 
 /*
  * The following code is copied to the top of the user stack when each
@@ -3974,6 +3978,13 @@ _svr4_esigcode:
 #define	ENTRY(x)	.globl _/**/x; _/**/x:
 #endif
 #define	ALTENTRY(x)	.globl _/**/x; _/**/x:
+
+/*
+ * General-purpose NULL routine.
+ */
+ENTRY(sparc_noop)
+	retl
+	 nop
 
 /*
  * getfp() - get stack frame pointer
@@ -4576,15 +4587,17 @@ Lsw_load:
 	 * zero so it is safe to have interrupts going here.)
 	 */
 	ld	[%g3 + P_VMSPACE], %o3	! vm = p->p_vmspace;
-	ld	[%o3 + VM_PMAP_CTX], %o0! if (vm->vm_pmap.pm_ctx != NULL)
+	ld	[%o3 + VM_PMAP], %o3	! pm = vm->vm_map.vm_pmap;
+	ld	[%o3 + PMAP_CTX], %o0	! if (pm->pm_ctx != NULL)
 	tst	%o0
 	bnz,a	Lsw_havectx		!	goto havecontext;
-	 ld	[%o3 + VM_PMAP_CTXNUM], %o0	! load context number
+	 ld	[%o3 + PMAP_CTXNUM], %o0	! load context number
 
 	/* p does not have a context: call ctx_alloc to get one */
 	save	%sp, -CCFSZ, %sp
-	call	_ctx_alloc		! ctx_alloc(&vm->vm_pmap);
-	 add	%i3, VM_PMAP, %o0
+	call	_ctx_alloc		! ctx_alloc(pm);
+	 mov	%i3, %o0
+
 	ret
 	 restore
 
@@ -4626,7 +4639,7 @@ Lsw_sameproc:
  * Only used just before a crash dump.
  */
 ENTRY(snapshot)
-	st	%o6, [%o0 + PCB_SP]	! save sp
+	std	%o6, [%o0 + PCB_SP]	! save sp
 	rd	%psr, %o1		! save psr
 	st	%o1, [%o0 + PCB_PSR]
 
@@ -5408,20 +5421,14 @@ ENTRY(loadfpstate)
 
 #if defined(SUN4M) && (defined(SUN4) || defined(SUN4C))
 ENTRY(ienab_bis)
-	sethi	%hi(_cputyp), %o1
-	ld	[%o1 + %lo(_cputyp)], %o1
-	cmp	%o1, CPU_SUN4M
-	be,a	_ienab_bis_4m
-	 nop
-	b,a	_ienab_bis_4c
+NOP_ON_4M_13:
+	b,a	_ienab_bis_4_4c
+	b,a	_ienab_bis_4m
 
 ENTRY(ienab_bic)
-	sethi	%hi(_cputyp), %o1
-	ld	[%o1 + %lo(_cputyp)], %o1
-	cmp	%o1, CPU_SUN4M
-	be,a	_ienab_bic_4m
-	 nop
-	b,a	_ienab_bic_4c
+NOP_ON_4M_14:
+	b,a	_ienab_bic_4_4c
+	b,a	_ienab_bic_4m
 #endif
 
 #if defined(SUN4) || defined(SUN4C)
@@ -5430,7 +5437,7 @@ ENTRY(ienab_bic)
  * and one of the interrupts is nonmaskable, we must disable traps.
  */
 #if defined(SUN4M)
-ENTRY(ienab_bis_4c)
+ENTRY(ienab_bis_4_4c)
 #else
 ENTRY(ienab_bis)
 #endif
@@ -5438,17 +5445,17 @@ ENTRY(ienab_bis)
 	rd	%psr, %o2
 	wr	%o2, PSR_ET, %psr	! disable traps
 	nop; nop			! 3-instr delay until ET turns off
-	sethi	%hi(IE_reg_addr), %o3
-	ldub	[%o3 + %lo(IE_reg_addr)], %o4
-	or	%o4, %o0, %o4		! *IE_reg_addr |= bis;
-	stb	%o4, [%o3 + %lo(IE_reg_addr)]
+	sethi	%hi(INTRREG_VA), %o3
+	ldub	[%o3 + %lo(INTRREG_VA)], %o4
+	or	%o4, %o0, %o4		! *INTRREG_VA |= bis;
+	stb	%o4, [%o3 + %lo(INTRREG_VA)]
 	wr	%o2, 0, %psr		! reenable traps
 	nop
 	retl
 	 nop
 
 #if defined(SUN4M)
-ENTRY(ienab_bic_4c)
+ENTRY(ienab_bic_4_4c)
 #else
 ENTRY(ienab_bic)
 #endif
@@ -5456,10 +5463,10 @@ ENTRY(ienab_bic)
 	rd	%psr, %o2
 	wr	%o2, PSR_ET, %psr	! disable traps
 	nop; nop
-	sethi	%hi(IE_reg_addr), %o3
-	ldub	[%o3 + %lo(IE_reg_addr)], %o4
-	andn	%o4, %o0, %o4		! *IE_reg_addr &=~ bic;
-	stb	%o4, [%o3 + %lo(IE_reg_addr)]
+	sethi	%hi(INTRREG_VA), %o3
+	ldub	[%o3 + %lo(INTRREG_VA)], %o4
+	andn	%o4, %o0, %o4		! *INTRREG_VA &=~ bic;
+	stb	%o4, [%o3 + %lo(INTRREG_VA)]
 	wr	%o2, 0, %psr		! reenable traps
 	nop
 	retl
@@ -5503,6 +5510,84 @@ ENTRY(raise)
 	 add	%o1, %o3, %o1
 	retl
 	 st	%o2, [%o1]
+
+
+/*
+ * Read Fault Status registers.
+ * On entry: %l1 == PC, %l3 == fault type
+ * On exit: %o1 == sync fault status, %o2 == sync fault address
+ *	    %o3 == async fault status, %o4 == async fault address
+ */
+ALTENTRY(srmmu_get_fltstatus)
+	set	SRMMU_SFADDR, %o2
+	lda	[%o2] ASI_SRMMU, %o2	! sync virt addr; must be read first
+	set	SRMMU_SFSTAT, %o1
+	lda	[%o1] ASI_SRMMU, %o1	! get sync fault status register
+
+	 clr	%o3			! clear %o3 and %o4
+	retl
+	 clr	%o4
+
+ALTENTRY(viking_get_fltstatus)
+	cmp	%l3, T_TEXTFAULT
+	be,a	1f
+	 mov	%l1, %o2		! use PC if type == T_TEXTFAULT
+
+	set	SRMMU_SFADDR, %o2
+	lda	[%o2] ASI_SRMMU, %o2	! sync virt addr; must be read first
+1:
+	set	SRMMU_SFSTAT, %o1
+	lda	[%o1] ASI_SRMMU, %o1	! get sync fault status register
+
+	 clr	%o3			! clear %o3 and %o4
+	retl
+	 clr	%o4
+
+ALTENTRY(ms1_get_fltstatus)
+ALTENTRY(swift_get_fltstatus)
+ALTENTRY(turbosparc_get_fltstatus)
+	cmp	%l3, T_TEXTFAULT
+	be,a	1f
+	 mov	%l1, %o2		! use PC if type == T_TEXTFAULT
+
+	set	SRMMU_SFADDR, %o2
+	lda	[%o2] ASI_SRMMU, %o2	! sync virt addr; must be read first
+1:
+	set	SRMMU_SFSTAT, %o1
+	lda	[%o1] ASI_SRMMU, %o1	! get sync fault status register
+
+	 clr	%o3			! clear %o3 and %o4
+	retl
+	 clr	%o4
+
+ALTENTRY(cypress_get_fltstatus)
+	cmp	%l3, T_TEXTFAULT
+	be,a	1f
+	 mov	%l1, %o2		! use PC if type == T_TEXTFAULT
+
+	set	SRMMU_SFADDR, %o2
+	lda	[%o2] ASI_SRMMU, %o2	! sync virt addr; must be read first
+1:
+	set	SRMMU_SFSTAT, %o1
+	lda	[%o1] ASI_SRMMU, %o1	! get sync fault status register
+
+	set	SRMMU_AFSTAT, %o3	! must read status before fault on HS
+	lda	[%o3] ASI_SRMMU, %o3	! get async fault status
+	set	SRMMU_AFADDR, %o4
+	retl
+	 lda	[%o4] ASI_SRMMU, %o4	! get async fault address
+
+ALTENTRY(hypersparc_get_fltstatus)
+	set	SRMMU_SFADDR, %o2
+	lda	[%o2] ASI_SRMMU, %o2	! sync virt addr; must be read first
+	set	SRMMU_SFSTAT, %o1
+	lda	[%o1] ASI_SRMMU, %o1	! get sync fault status register
+
+	set	SRMMU_AFSTAT, %o3	! must read status before fault on HS
+	lda	[%o3] ASI_SRMMU, %o3	! get async fault status
+	set	SRMMU_AFADDR, %o4
+	retl
+	 lda	[%o4] ASI_SRMMU, %o4	! get async fault address
 
 #endif /* SUN4M */
 
@@ -5644,26 +5729,23 @@ ENTRY(lo_microtime)
 ENTRY(microtime)
 #endif
 	sethi	%hi(_time), %g2
-	sethi	%hi(TIMERREG_VA), %g3
 
-/* blech, sun4m has microsecond counter at a different location */
-#if (defined(SUN4) || defined(SUN4C)) && !defined(SUN4M)
-#define r_aardvark	%lo(TIMERREG_VA)
-#elif !(defined(SUN4) || defined(SUN4C)) && defined(SUN4M)
-#define r_aardvark	%lo(TIMERREG_VA) + 4
-#else
-	sethi	%hi(_cputyp), %g4
-	ld	[%g4 + %lo(_cputyp)], %g4
+#if defined(SUN4M) && !(defined(SUN4C) || defined(SUN4))
+	sethi	%hi(TIMERREG_VA+4), %g3
+	or	%g3, %lo(TIMERREG_VA+4), %g3
+#elif (defined(SUN4C) || defined(SUN4)) && !defined(SUN4M)
+	sethi	%hi(TIMERREG_VA), %g3
 	or	%g3, %lo(TIMERREG_VA), %g3
-	cmp	%g4, CPU_SUN4M
-	be,a	1f
+#else
+	sethi	%hi(TIMERREG_VA), %g3
+	or	%g3, %lo(TIMERREG_VA), %g3
+NOP_ON_4_4C_1:
 	 add	%g3, 4, %g3
-1:
-#define r_aardvark	0
 #endif
+
 2:
 	ldd	[%g2+%lo(_time)], %o2		! time.tv_sec & time.tv_usec
-	ld	[%g3+r_aardvark], %o4		! usec counter
+	ld	[%g3], %o4			! usec counter
 	ldd	[%g2+%lo(_time)], %g4		! see if time values changed
 	cmp	%g4, %o2
 	bne	2b				! if time.tv_sec changed

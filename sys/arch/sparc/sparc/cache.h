@@ -1,4 +1,5 @@
-/*	$NetBSD: cache.h,v 1.7.4.1 1996/06/12 20:41:22 pk Exp $ */
+/*	$OpenBSD: cache.h,v 1.3 1997/08/08 08:27:04 downsj Exp $	*/
+/*	$NetBSD: cache.h,v 1.16 1997/07/06 21:15:14 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -43,6 +44,9 @@
  *	@(#)cache.h	8.1 (Berkeley) 6/11/93
  */
 
+#ifndef SPARC_CACHE_H
+#define SPARC_CACHE_H
+
 /*
  * Sun-4 and Sun-4c virtual address cache.
  *
@@ -50,14 +54,8 @@
  * and write-back (Sun-4).  The write-back caches are much faster
  * but require a bit more care.
  *
- * VAC_NONE is not actually used now, but if someone builds a physical
- * cache Sun-4 (or, more likely, a virtual index/physical tag cache)
- * everything will work (after pulling out the #ifdef notdef's: grep
- * for VAC_NONE to find them).
  */
-enum vactype { VAC_NONE, VAC_WRITETHROUGH, VAC_WRITEBACK };
-
-extern enum vactype vactype;	/* XXX  move into cacheinfo struct */
+enum vactype { VAC_UNKNOWN, VAC_NONE, VAC_WRITETHROUGH, VAC_WRITEBACK };
 
 /*
  * Cache tags can be written in control space, and must be set to 0
@@ -120,35 +118,29 @@ extern enum vactype vactype;	/* XXX  move into cacheinfo struct */
 #define CACHE_ALIAS_DIST_HS256k		0x40000
 #define CACHE_ALIAS_BITS_HS256k		0x3f000
 
-#define CACHE_ALIAS_DIST_SS		0x0
-#define CACHE_ALIAS_BITS_SS		0x0
-
-#define CACHE_ALIAS_DIST_MS		GUESS_CACHE_ALIAS_DIST /* fix! */
-#define CACHE_ALIAS_BITS_MS		GUESS_CACHE_ALIAS_BITS /* %%%  */
-
 /*
  * Assuming a tag format where the least significant bits are the byte offset
  * into the cache line, and the next-most significant bits are the line id,
  * we can calculate the appropriate aliasing constants. We also assume that
  * the linesize and total cache size are powers of 2.
  */
-#define GUESS_CACHE_ALIAS_BITS		((cacheinfo.c_totalsize - 1) & ~PGOFSET)
-#define GUESS_CACHE_ALIAS_DIST		(cacheinfo.c_totalsize)
+#define GUESS_CACHE_ALIAS_BITS		((cpuinfo.cacheinfo.c_totalsize - 1) & ~PGOFSET)
+#define GUESS_CACHE_ALIAS_DIST		(cpuinfo.cacheinfo.c_totalsize)
 
-extern int cache_alias_dist;		/* If `guessed' */
+extern int cache_alias_dist;		/* */
 extern int cache_alias_bits;
 
-#define	CACHE_ALIAS_DIST	(CPU_ISSUN4M				 \
-					? cache_alias_dist		 \
-					: (CPU_ISSUN4C			 \
-						? CACHE_ALIAS_DIST_SUN4C \
-						: CACHE_ALIAS_DIST_SUN4))
-
-#define	CACHE_ALIAS_BITS	(CPU_ISSUN4M				 \
-					? cache_alias_bits		 \
-					: (CPU_ISSUN4C			 \
-						? CACHE_ALIAS_BITS_SUN4C \
-						: CACHE_ALIAS_BITS_SUN4))
+/* Optimize cache alias macros on single architecture kernels */
+#if defined(SUN4) && !defined(SUN4C) && !defined(SUN4M)
+#define	CACHE_ALIAS_DIST	CACHE_ALIAS_DIST_SUN4
+#define	CACHE_ALIAS_BITS	CACHE_ALIAS_BITS_SUN4
+#elif !defined(SUN4) && defined(SUN4C) && !defined(SUN4M)
+#define	CACHE_ALIAS_DIST	CACHE_ALIAS_DIST_SUN4C
+#define	CACHE_ALIAS_BITS	CACHE_ALIAS_BITS_SUN4C
+#else
+#define	CACHE_ALIAS_DIST	cache_alias_dist
+#define	CACHE_ALIAS_BITS	cache_alias_bits
+#endif
 
 /*
  * True iff a1 and a2 are `bad' aliases (will cause cache duplication).
@@ -158,12 +150,51 @@ extern int cache_alias_bits;
 /*
  * Routines for dealing with the cache.
  */
-void	cache_enable __P((void));		/* turn it on */
-void	cache_flush_context __P((void));	/* flush current context */
-void	cache_flush_region __P((int));		/* flush region in cur ctx */
-void	cache_flush_segment __P((int, int));	/* flush seg in cur ctx */
-void	cache_flush_page __P((int va));		/* flush page in cur ctx */
-void	cache_flush __P((caddr_t, u_int));	/* flush region */
+void	sun4_cache_enable __P((void));		/* turn it on */
+void	ms1_cache_enable __P((void));		/* turn it on */
+void	viking_cache_enable __P((void));	/* turn it on */
+void	hypersparc_cache_enable __P((void));	/* turn it on */
+void	swift_cache_enable __P((void));		/* turn it on */
+void	cypress_cache_enable __P((void));	/* turn it on */
+void	turbosparc_cache_enable __P((void));	/* turn it on */
+
+void	sun4_vcache_flush_context __P((void));	/* flush current context */
+void	sun4_vcache_flush_region __P((int));	/* flush region in cur ctx */
+void	sun4_vcache_flush_segment __P((int, int));/* flush seg in cur ctx */
+void	sun4_vcache_flush_page __P((int va));	/* flush page in cur ctx */
+void	sun4_cache_flush __P((caddr_t, u_int));/* flush region */
+
+void	srmmu_vcache_flush_context __P((void));	/* flush current context */
+void	srmmu_vcache_flush_region __P((int));	/* flush region in cur ctx */
+void	srmmu_vcache_flush_segment __P((int, int));/* flush seg in cur ctx */
+void	srmmu_vcache_flush_page __P((int va));	/* flush page in cur ctx */
+void	srmmu_cache_flush __P((caddr_t, u_int));/* flush region */
+
+void	ms1_cache_flush __P((caddr_t, u_int));
+void	viking_cache_flush __P((caddr_t, u_int));
+void	viking_pcache_flush_line __P((int, int));
+void	srmmu_pcache_flush_line __P((int, int));
+
+extern void sparc_noop __P((void));
+
+#define noop_vcache_flush_context \
+	(void (*)__P((void))) sparc_noop
+#define noop_vcache_flush_region \
+	(void (*)__P((int))) sparc_noop
+#define noop_vcache_flush_segment \
+	(void (*)__P((int,int))) sparc_noop
+#define noop_vcache_flush_page \
+	(void (*)__P((int))) sparc_noop
+#define noop_cache_flush \
+	(void (*)__P((caddr_t, u_int))) sparc_noop
+#define noop_pcache_flush_line \
+	(void (*)__P((int, int))) sparc_noop
+
+
+#define cache_flush_page(va)		cpuinfo.vcache_flush_page(va)
+#define cache_flush_segment(vr,vs)	cpuinfo.vcache_flush_segment(vr,vs)
+#define cache_flush_region(vr)		cpuinfo.vcache_flush_region(vr)
+#define cache_flush_context()		cpuinfo.vcache_flush_context()
 
 /*
  * Cache control information.
@@ -175,22 +206,37 @@ struct cacheinfo {
 	int	c_hwflush;		/* true => have hardware flush */
 	int	c_linesize;		/* line size, in bytes */
 	int	c_l2linesize;		/* log2(linesize) */
-	int	c_physical;		/* true => cache is physical */
+	int	c_nlines;		/* number of cache lines */
+	int	c_physical;		/* true => cache has physical
+						   address tags */
+	int 	c_associativity;	/* # of "buckets" in cache line */
 	int 	c_split;		/* true => cache is split */
+
 	int 	ic_totalsize;		/* instruction cache */
 	int 	ic_enabled;
 	int 	ic_linesize;
 	int 	ic_l2linesize;
+	int 	ic_nlines;
+	int 	ic_associativity;
+
 	int 	dc_totalsize;		/* data cache */
 	int 	dc_enabled;
 	int 	dc_linesize;
 	int 	dc_l2linesize;
+	int 	dc_nlines;
+	int 	dc_associativity;
+
 	int	ec_totalsize;		/* external cache info */
 	int 	ec_enabled;
 	int	ec_linesize;
 	int	ec_l2linesize;
+	int 	ec_nlines;
+	int 	ec_associativity;
+
+	enum vactype	c_vactype;
 };
-extern struct cacheinfo cacheinfo;
+
+#define CACHEINFO cpuinfo.cacheinfo
 
 /*
  * Cache control statistics.
@@ -205,3 +251,4 @@ struct cachestats {
 	int	cs_ra[65];		/* pages/range */
 #endif
 };
+#endif /* SPARC_CACHE_H */

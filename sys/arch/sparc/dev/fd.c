@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.19 1997/06/25 13:04:20 downsj Exp $	*/
+/*	$OpenBSD: fd.c,v 1.20 1997/08/08 08:25:06 downsj Exp $	*/
 /*	$NetBSD: fd.c,v 1.51 1997/05/24 20:16:19 pk Exp $	*/
 
 /*-
@@ -369,8 +369,7 @@ fdcattach(parent, self, aux)
 		fdc->sc_reg = (caddr_t)ca->ca_ra.ra_vaddr;
 	else
 		fdc->sc_reg = (caddr_t)mapiodev(ca->ca_ra.ra_reg, 0,
-						ca->ca_ra.ra_len,
-						ca->ca_bustype);
+						ca->ca_ra.ra_len);
 
 	fdc->sc_state = DEVIDLE;
 	fdc->sc_istate = ISTATE_IDLE;

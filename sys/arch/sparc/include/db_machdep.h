@@ -1,4 +1,5 @@
-/*	$NetBSD: db_machdep.h,v 1.7 1996/03/31 22:21:28 pk Exp $ */
+/*	$OpenBSD: db_machdep.h,v 1.4 1997/08/08 08:26:13 downsj Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.9 1997/06/26 01:27:00 thorpej Exp $ */
 
 /*
  * Mach Operating System
@@ -43,7 +44,7 @@
 /* end of mangling */
 
 typedef	vm_offset_t	db_addr_t;	/* address - unsigned */
-typedef	int		db_expr_t;	/* expression - signed */
+typedef	long		db_expr_t;	/* expression - signed */
 
 typedef struct {
 	struct trapframe ddb_tf;
@@ -55,7 +56,11 @@ db_regs_t		ddb_regs;	/* register state */
 #define	DDB_TF		(&ddb_regs.ddb_tf)
 #define	DDB_FR		(&ddb_regs.ddb_fr)
 
+#if defined(lint)
+#define	PC_REGS(regs)	((regs)->ddb_tf.tf_pc)
+#else
 #define	PC_REGS(regs)	((db_addr_t)(regs)->ddb_tf.tf_pc)
+#endif
 
 #define	BKPT_INST	0x91d02001	/* breakpoint instruction */
 #define	BKPT_SIZE	(4)		/* size of breakpoint inst */
@@ -78,5 +83,9 @@ db_regs_t		ddb_regs;	/* register state */
 void db_machine_init __P((void));
 int kdb_trap __P((int, struct trapframe *));
 
+/*
+ * We use a.out symbols in DDB.
+ */
+#define	DB_AOUT_SYMBOLS
 
 #endif	/* _SPARC_DB_MACHDEP_H_ */

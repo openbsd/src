@@ -1,5 +1,5 @@
-/*	$OpenBSD: zs.c,v 1.14 1997/06/25 13:01:00 downsj Exp $	*/
-/*	$NetBSD: zs.c,v 1.37.4.1 1996/06/02 09:07:55 mrg Exp $ */
+/*	$OpenBSD: zs.c,v 1.15 1997/08/08 08:25:43 downsj Exp $	*/
+/*	$NetBSD: zs.c,v 1.48 1997/07/29 09:58:18 fair Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -72,21 +72,18 @@
 #include <machine/autoconf.h>
 #include <machine/conf.h>
 #include <machine/cpu.h>
+#include <machine/kbd.h>
 
 #include <sparc/sparc/vaddrs.h>
 #include <sparc/sparc/auxreg.h>
-
-
-#include <machine/kbd.h>
 #include <dev/ic/z8530reg.h>
-
 #include <sparc/dev/zsvar.h>
 
 #ifdef KGDB
 #include <machine/remote-sl.h>
 #endif
 
-#define	ZSMAJOR		12	/* XXX */
+#define	ZSMAJOR	12		/* XXX */
 
 #define	ZS_KBD		2	/* XXX */
 #define	ZS_MOUSE	3	/* XXX */
@@ -113,8 +110,8 @@
 struct zs_softc {
 	struct	device sc_dev;			/* base device */
 	volatile struct zsdevice *sc_zs;	/* chip registers */
-	struct	evcnt sc_intrcnt;
-	struct	zs_chanstate sc_cs[2];		/* channel A/B software state */
+	struct	evcnt sc_intrcnt;		/* count interrupts */
+	struct	zs_chanstate sc_cs[2];		/* chan A/B software state */
 };
 
 /* Definition of the driver for autoconfig. */
@@ -154,10 +151,11 @@ static void	zs_loadchannelregs __P((volatile struct zschan *, u_char *));
 /* Console stuff. */
 static struct tty *zs_ctty;	/* console `struct tty *' */
 static int zs_consin = -1, zs_consout = -1;
+static struct zs_chanstate *zs_conscs = NULL; /*console channel state */
 static void zscnputc __P((int));	/* console putc function */
 static volatile struct zschan *zs_conschan;
 static struct tty *zs_checkcons __P((struct zs_softc *, int,
-				     struct zs_chanstate *));
+    struct zs_chanstate *));
 
 #ifdef KGDB
 /* KGDB stuff.  Must reboot to change zs_kgdbunit. */
@@ -176,7 +174,6 @@ static int zssint __P((struct zs_chanstate *, volatile struct zschan *));
 void zsabort __P((void));
 static void zsoverrun __P((int, long *, char *));
 
-extern void *findzs __P((int));
 static volatile struct zsdevice *zsaddr[NZS];	/* XXX, but saves work */
 
 /*
@@ -272,7 +269,7 @@ zsattach(parent, dev, aux)
 
 	if ((addr = zsaddr[zs]) == NULL)
 		addr = zsaddr[zs] = (volatile struct zsdevice *)findzs(zs);
-	if (ca->ca_bustype == BUS_MAIN)
+	if (ca->ca_bustype==BUS_MAIN)
 		if ((void *)addr != ra->ra_vaddr)
 			panic("zsattach");
 	if (ra->ra_nintr != 1) {
@@ -311,11 +308,12 @@ zsattach(parent, dev, aux)
 		tp->t_dev = makedev(ZSMAJOR, unit);
 		tp->t_oproc = zsstart;
 		tp->t_param = zsparam;
-#ifdef KGDB
-		zs_checkkgdb(unit, cs, tp);
-#endif
 	}
 	cs->cs_ttyp = tp;
+#ifdef KGDB
+	if (ctp == NULL)
+		zs_checkkgdb(unit, cs, tp);
+#endif
 	if (unit == ZS_KBD) {
 		/*
 		 * Keyboard: tell /dev/kbd driver how to talk to us.
@@ -329,14 +327,15 @@ zsattach(parent, dev, aux)
 		if (tp != ctp)
 			tty_attach(tp);
 		ringsize = 4096;
+		if (unit == zs_consout)
+			zs_conscs = cs;
 	}
-
 	cs->cs_ringmask = ringsize - 1;
 	cs->cs_rbuf = malloc((u_long)ringsize * sizeof(*cs->cs_rbuf),
 			      M_DEVBUF, M_NOWAIT);
+
 	unit++;
 	cs++;
-
 	cs->cs_unit = unit;
 	cs->cs_speed = zs_getspeed(&addr->zs_chan[ZS_CHAN_B]);
 	cs->cs_zc = &addr->zs_chan[ZS_CHAN_B];
@@ -347,11 +346,12 @@ zsattach(parent, dev, aux)
 		tp->t_dev = makedev(ZSMAJOR, unit);
 		tp->t_oproc = zsstart;
 		tp->t_param = zsparam;
-#ifdef KGDB
-		zs_checkkgdb(unit, cs, tp);
-#endif
 	}
 	cs->cs_ttyp = tp;
+#ifdef KGDB
+	if (ctp == NULL)
+		zs_checkkgdb(unit, cs, tp);
+#endif
 	if (unit == ZS_MOUSE) {
 		/*
 		 * Mouse: tell /dev/mouse driver how to talk to us.
@@ -364,6 +364,8 @@ zsattach(parent, dev, aux)
 		if (tp != ctp)
 			tty_attach(tp);
 		ringsize = 4096;
+		if (unit == zs_consout)
+			zs_conscs = cs;
 	}
 	cs->cs_ringmask = ringsize - 1;
 	cs->cs_rbuf = malloc((u_long)ringsize * sizeof(*cs->cs_rbuf),
@@ -439,7 +441,7 @@ zsconsole(tp, unit, out, fnstop)
 		v_putc = zscnputc;
 	} else
 		zs_consin = unit;
-	if(fnstop)
+	if (fnstop)
 		*fnstop = &zsstop;
 	zs_ctty = tp;
 }
@@ -465,6 +467,24 @@ zscnputc(c)
 		(void) splzs();
 	while ((zc->zc_csr & ZSRR0_TX_READY) == 0)
 		ZS_DELAY();
+	/*
+	 * If transmitter was busy doing regular tty I/O (ZSWR1_TIE on),
+	 * defer our output until the transmit interrupt runs. We still
+	 * sync with TX_READY so we can get by with a single-char "queue".
+	 */
+	if (zs_conscs != NULL && (zs_conscs->cs_creg[1] & ZSWR1_TIE)) {
+		/*
+		 * If previous not yet done, send it now; zsxint()
+		 * will field the interrupt for our char, but doesn't
+		 * care. We're running at sufficiently high spl for
+		 * this to work.
+		 */
+		if (zs_conscs->cs_deferred_cc != 0)
+			zc->zc_data = zs_conscs->cs_deferred_cc;
+		zs_conscs->cs_deferred_cc = c;
+		splx(s);
+		return;
+	}
 	zc->zc_data = c;
 	ZS_DELAY();
 	splx(s);
@@ -483,7 +503,7 @@ zs_checkcons(sc, unit, cs)
 	register struct tty *tp;
 	char *i, *o;
 
-	if ((tp = zs_ctty) == NULL)
+	if ((tp = zs_ctty) == NULL) /* XXX */
 		return (0);
 	i = zs_consin == unit ? "input" : NULL;
 	o = zs_consout == unit ? "output" : NULL;
@@ -623,7 +643,7 @@ zsopen(dev, flags, mode, p)
 		return (EBUSY);
 	}
 	error = 0;
-	while (1) {
+	for (;;) {
 		register int rr0;
 
 		/* loop, turning on the device, until carrier present */
@@ -720,6 +740,7 @@ zsread(dev, uio, flags)
 	tp = cs->cs_ttyp;
 
 	return (linesw[tp->t_line].l_read(tp, uio, flags));
+
 }
 
 int
@@ -850,7 +871,7 @@ zshard(intrarg)
 			raise(0, PIL_TTY);
 		else
 #endif
-			ienab_bis(IE_ZSSOFT);
+		ienab_bis(IE_ZSSOFT);
 	}
 	return (intflags & ZSHARD_WAS_SERVICED);
 }
@@ -860,11 +881,9 @@ zsrint(cs, zc)
 	register struct zs_chanstate *cs;
 	register volatile struct zschan *zc;
 {
-	register u_int c;
+	register u_int c = zc->zc_data;
 
-	c = zc->zc_data;
 	ZS_DELAY();
-
 	if (cs->cs_conk) {
 		register struct conk_state *conk = &zsconk_state;
 
@@ -922,6 +941,15 @@ zsxint(cs, zc)
 {
 	register int i = cs->cs_tbc;
 
+	if (cs->cs_deferred_cc != 0) {
+		/* Handle deferred zscnputc() output first */
+		zc->zc_data = cs->cs_deferred_cc;
+		cs->cs_deferred_cc = 0;
+		ZS_DELAY();
+		zc->zc_csr = ZSWR0_CLR_INTR;
+		ZS_DELAY();
+		return (0);
+	}
 	if (i == 0) {
 		zc->zc_csr = ZSWR0_RESET_TXINT;
 		ZS_DELAY();
@@ -1145,7 +1173,7 @@ again:
 				break;
 
 			default:
-				log(LOG_ERR, "zs%d%c: bad ZRING_TYPE (%x)\n",
+				log(LOG_ERR, "zs%d%c: bad ZRING_TYPE (0x%x)\n",
 				    unit >> 1, (unit & 1) + 'a', c);
 				break;
 			}
@@ -1166,9 +1194,9 @@ zsioctl(dev, cmd, data, flag, p)
 {
 	int unit = minor(dev);
 	struct zs_softc *sc = zs_cd.cd_devs[unit >> 1];
-	register struct tty *tp = sc->sc_cs[unit & 1].cs_ttyp;
-	register int error, s;
 	register struct zs_chanstate *cs = &sc->sc_cs[unit & 1];
+	register struct tty *tp = cs->cs_ttyp;
+	register int error, s;
 
 	error = linesw[tp->t_line].l_ioctl(tp, cmd, data, flag, p);
 	if (error >= 0)
@@ -1262,14 +1290,8 @@ zsioctl(dev, cmd, data, flag, p)
 	case TIOCCDTR:
 		zs_modem(cs, 0);
 		break;
-	case TIOCMGET:
-		/* XXX: fixme */
-		*(int *)data = TIOCM_CAR | TIOCM_CTS | TIOCM_DTR | TIOCM_RTS;
-		return (0);
 	case TIOCMSET:
-		/* XXX: fixme */
-		zs_modem(cs, *(int *)data & (TIOCM_DTR|TIOCM_RTS));
-		return (0);
+	case TIOCMGET:
 	case TIOCMBIS:
 	case TIOCMBIC:
 	default:
@@ -1396,7 +1418,11 @@ zsparam(tp, t)
 		return (0);
 	}
 	tmp = BPS_TO_TCONST(PCLK / 16, tmp);
-	if (tmp < 2)
+#ifdef ALLOW_TC_EQUAL_ZERO
+	if (tmp < 0)
+#else
+	if (tmp < 1)
+#endif
 		return (EINVAL);
 
 	cflag = t->c_cflag;

@@ -1,5 +1,5 @@
-/*	$OpenBSD: endian.h,v 1.6 1997/06/25 12:41:42 grr Exp $ */
-/*	$NetBSD: endian.h,v 1.3 1996/02/13 17:04:58 christos Exp $ */
+/*	$OpenBSD: endian.h,v 1.7 1997/08/08 08:26:15 downsj Exp $ */
+/*	$NetBSD: endian.h,v 1.6 1996/10/11 00:43:00 christos Exp $ */
 
 /*
  * Copyright (c) 1987, 1991 Regents of the University of California.
@@ -87,10 +87,10 @@ __END_DECLS
 
 #else
 
-#define	NTOHL(x)	(x) = ntohl((u_int32_t)x)
-#define	NTOHS(x)	(x) = ntohs((u_int16_t)x)
-#define	HTONL(x)	(x) = htonl((u_int32_t)x)
-#define	HTONS(x)	(x) = htons((u_int16_t)x)
+#define	NTOHL(x)	(x) = ntohl((in_addr_t)x)
+#define	NTOHS(x)	(x) = ntohs((in_port_t)x)
+#define	HTONL(x)	(x) = htonl((in_addr_t)x)
+#define	HTONS(x)	(x) = htons((in_port_t)x)
 #endif
 
 #endif /* _MACHINE_ENDIAN_H_ */

@@ -1,9 +1,9 @@
-/*	$NetBSD: in_cksum.c,v 1.3 1995/04/26 13:30:03 pk Exp $ */
+/*	$OpenBSD: in_cksum.c,v 1.8 1997/08/08 08:27:15 downsj Exp $	*/
+/*	$NetBSD: in_cksum.c,v 1.7 1996/10/05 23:44:34 mrg Exp $ */
 
 /*
  * Copyright (c) 1995 Zubin Dittia.
- * Copyright (c) 1995 Theo de Raadt.
- * Copyright (c) 1995 Matthew Green.
+ * Copyright (c) 1995 Matthew R. Green.
  * Copyright (c) 1994 Charles Hannum.
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -46,7 +46,6 @@
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
-
 #include <netinet/in.h>
 
 /*
@@ -74,8 +73,8 @@
  * Another possible optimization is to replace a pair of 32-bit loads
  * with a single 64-bit load (ldd) instruction, but I found that although
  * this improves performance somewhat on Sun4c machines, it actually
- * reduces performance considerably on Sun4m machines (because of their
- * superscaler architecture).  So I chose to leave it out.
+ * reduces performance considerably on Sun4m machines (I don't know why).
+ * So I chose to leave it out.
  *
  * Zubin Dittia (zubin@dworkin.wustl.edu)
  */
@@ -150,7 +149,8 @@ in_cksum(m, len)
 	 * allow the compiler to pick which specific machine registers to
 	 * use, instead of hard-coding this in the asm code above.
 	 */
-	register u_int tmp1, tmp2;
+	/* XXX - initialized because of gcc's `-Wuninitialized' ! */
+	register u_int tmp1 = 0, tmp2 = 0;
 
 	for (; m && len; m = m->m_next) {
 		if (m->m_len == 0)
@@ -160,7 +160,7 @@ in_cksum(m, len)
 		if (len < mlen)
 			mlen = len;
 		len -= mlen;
-									 
+
 		/*
 		 * Ensure that we're aligned on a word boundary here so
 		 * that we can do 32 bit operations below.

@@ -1,5 +1,5 @@
-/*	$OpenBSD: fb.c,v 1.9 1996/08/13 08:05:25 downsj Exp $	*/
-/*	$NetBSD: fb.c,v 1.18 1996/04/01 17:29:54 christos Exp $ */
+/*	$OpenBSD: fb.c,v 1.10 1997/08/08 08:25:04 downsj Exp $	*/
+/*	$NetBSD: fb.c,v 1.23 1997/07/07 23:30:22 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -299,23 +299,23 @@ fb_setsize(fb, depth, def_width, def_height, node, bustype)
 					break;
 				}
 			} else if (eep != NULL) {
-				switch (eep->ee_diag.eed_scrsize) {
-				case EED_SCR_1152X900:
+				switch (eep->eeScreenSize) {
+				case EE_SCR_1152X900:
 					fb->fb_type.fb_width = 1152;
 					fb->fb_type.fb_height = 900;
 					break;
 
-				case EED_SCR_1024X1024:
+				case EE_SCR_1024X1024:
 					fb->fb_type.fb_width = 1024;
 					fb->fb_type.fb_height = 1024;
 					break;
 
-				case EED_SCR_1600X1280:
+				case EE_SCR_1600X1280:
 					fb->fb_type.fb_width = 1600;
 					fb->fb_type.fb_height = 1280;
 					break;
 
-				case EED_SCR_1440X1440:
+				case EE_SCR_1440X1440:
 					fb->fb_type.fb_width = 1440;
 					fb->fb_type.fb_height = 1440;
 					break;
@@ -354,11 +354,14 @@ fb_setsize(fb, depth, def_width, def_height, node, bustype)
 	}
 }
 
+
 #ifdef RASTERCONSOLE
 #include <machine/kbd.h>
 
-static int a2int __P((char *, int));
 static void fb_bell __P((int));
+
+#if !(defined(RASTERCONS_FULLSCREEN) || defined(RASTERCONS_SMALLFONT))
+static int a2int __P((char *, int));
 
 static int
 a2int(cp, deflt)
@@ -373,6 +376,7 @@ a2int(cp, deflt)
 		i = i * 10 + *cp++ - '0';
 	return (i);
 }
+#endif
 
 static void
 fb_bell(on)
@@ -413,8 +417,8 @@ fbrcons_init(fb)
 			rc->rc_maxcol = 80;
 			rc->rc_maxrow = 34;
 		} else {
-			rc->rc_maxcol = eep->ee_diag.eed_colsize;
-			rc->rc_maxrow = eep->ee_diag.eed_rowsize;
+			rc->rc_maxcol = eep->eeTtyCols;
+			rc->rc_maxrow = eep->eeTtyRows;
 		}
 	}
 #endif /* SUN4 */
@@ -439,7 +443,19 @@ fbrcons_init(fb)
 	/* Hook up virtual console */
 	v_putc = rcons_cnputc;
 }
-#endif
+
+int
+fbrcons_rows()
+{
+	return (devfb ? devfb->fb_rcons.rc_maxrow : 0);
+}
+
+int
+fbrcons_cols()
+{
+	return (devfb ? devfb->fb_rcons.rc_maxcol : 0);
+}
+#endif /* RASTERCONSOLE */
 
 #if defined(SUN4)
 /*

@@ -1,5 +1,5 @@
-/*	$OpenBSD: cgfour.c,v 1.7 1996/08/13 08:05:21 downsj Exp $	*/
-/*	$NetBSD: cgfour.c,v 1.7 1996/04/01 17:29:58 christos Exp $	*/
+/*	$OpenBSD: cgfour.c,v 1.8 1997/08/08 08:24:46 downsj Exp $	*/
+/*	$NetBSD: cgfour.c,v 1.13 1997/05/24 20:16:06 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -95,13 +95,12 @@ struct cgfour_softc {
 /* autoconfiguration driver */
 static void	cgfourattach __P((struct device *, struct device *, void *));
 static int	cgfourmatch __P((struct device *, void *, void *));
-int		cgfouropen __P((dev_t, int, int, struct proc *));
-int		cgfourclose __P((dev_t, int, int, struct proc *));
-int		cgfourioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-int		cgfourmmap __P((dev_t, int, int));
 #if defined(SUN4)
 static void	cgfourunblank __P((struct device *));
 #endif
+
+/* cdevsw prototypes */
+cdev_decl(cgfour);
 
 struct cfattach cgfour_ca = {
 	sizeof(struct cgfour_softc), cgfourmatch, cgfourattach
@@ -207,8 +206,8 @@ cgfourattach(parent, self, args)
 	}
 
 	/* Map the pfour register. */
-	fb->fb_pfour = (volatile u_int32_t *)mapiodev(ca->ca_ra.ra_reg, 0,
-	    sizeof(u_int32_t), ca->ca_bustype);
+	fb->fb_pfour = (volatile u_int32_t *)
+		mapiodev(ca->ca_ra.ra_reg, 0, sizeof(u_int32_t));
 
 	ramsize = PFOUR_COLOR_OFF_END - PFOUR_COLOR_OFF_OVERLAY;
 
@@ -229,7 +228,7 @@ cgfourattach(parent, self, args)
 		 * Assume this is the console if there's no eeprom info
 		 * to be found.
 		 */
-		if (eep == NULL || eep->ee_diag.eed_console == EED_CONS_P4)
+		if (eep == NULL || eep->eeConsole == EE_CONS_P4OPT)
 			isconsole = (fbconstty != NULL);
 	}
 
@@ -252,13 +251,14 @@ cgfourattach(parent, self, args)
 	if (isconsole) {
 		/* XXX this is kind of a waste */
 		fb->fb_pixels = mapiodev(ca->ca_ra.ra_reg,
-		    PFOUR_COLOR_OFF_OVERLAY, ramsize, ca->ca_bustype);
+					 PFOUR_COLOR_OFF_OVERLAY, ramsize);
 	}
 #endif
 
 	/* Map the Brooktree. */
-	sc->sc_fbc = (volatile struct fbcontrol *)mapiodev(ca->ca_ra.ra_reg,
-	    PFOUR_COLOR_OFF_CMAP, sizeof(struct fbcontrol), ca->ca_bustype);
+	sc->sc_fbc = (volatile struct fbcontrol *)
+		mapiodev(ca->ca_ra.ra_reg,
+			 PFOUR_COLOR_OFF_CMAP, sizeof(struct fbcontrol));
 
 	sc->sc_phys = ca->ca_ra.ra_reg[0];
 	sc->sc_bustype = ca->ca_bustype;
@@ -403,7 +403,7 @@ cgfourmmap(dev, off, prot)
 		panic("cgfourmap");
 
 	if ((u_int)off >= NOOVERLAY) {
-		off =- NOOVERLAY;
+		off -= NOOVERLAY;
 
 		/*
 		 * X11 maps a huge chunk of the frame buffer; far more than
@@ -424,7 +424,7 @@ cgfourmmap(dev, off, prot)
 		 * in enable plane
 		 */
 		poff = (off - START_ENABLE) + PFOUR_COLOR_OFF_ENABLE;
-	} else if ((u_int)off < END_COLOR) {
+	} else if ((u_int)off < sc->sc_fb.fb_type.fb_size) {
 		/*
 		 * in colour plane
 		 */
@@ -432,7 +432,7 @@ cgfourmmap(dev, off, prot)
 	} else
 		return (-1);
 
-	return (REG2PHYS(&sc->sc_phys, poff, sc->sc_bustype) | PMAP_NC);
+	return (REG2PHYS(&sc->sc_phys, poff) | PMAP_NC);
 }
 
 #if defined(SUN4)

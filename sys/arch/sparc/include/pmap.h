@@ -1,4 +1,5 @@
-/*	$NetBSD: pmap.h,v 1.22.4.1 1996/06/12 20:29:01 pk Exp $ */
+/*	$OpenBSD: pmap.h,v 1.5 1997/08/08 08:26:38 downsj Exp $	*/
+/*	$NetBSD: pmap.h,v 1.29 1997/07/06 23:57:16 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -138,7 +139,7 @@ TAILQ_HEAD(mmuhd,mmuentry);
 struct pmap {
 	union	ctxinfo *pm_ctx;	/* current context, if any */
 	int	pm_ctxnum;		/* current context's number */
-#if NCPUS > 1
+#if 0
 	simple_lock_data_t pm_lock;	/* spinlock */
 #endif
 	int	pm_refcount;		/* just what it says */
@@ -203,14 +204,27 @@ extern vm_offset_t	vm_first_phys, vm_num_phys;
 #define	PMAP_VME16	2		/* etc */
 #define	PMAP_VME32	3		/* etc */
 #define	PMAP_NC		4		/* tells pmap_enter to set PG_NC */
+#define	PMAP_TNC_4	7		/* mask to get PG_TYPE & PG_NC */
 
-#define PMAP_TYPE4M	0x78		/* mask to get 4m page type */
-#define PMAP_PTESHFT4M	25		/* right shift to put type in pte */
-#define PMAP_SHFT4M	0x3		/* left shift to extract type */
-#define	PMAP_TNC	\
-	(CPU_ISSUN4M?127:7)		/* mask to get PG_TYPE & PG_NC */
+#define PMAP_T2PTE_4(x)		(((x) & PMAP_TNC_4) << PG_TNC_SHIFT)
+#define PMAP_IOENC_4(io)	(io)
+
+/*
+ * On a SRMMU machine, the iospace is encoded in bits [3-6] of the
+ * physical address passed to pmap_enter().
+ */
+#define PMAP_TYPE_SRMMU		0x78	/* mask to get 4m page type */
+#define PMAP_PTESHFT_SRMMU	25	/* right shift to put type in pte */
+#define PMAP_SHFT_SRMMU		3	/* left shift to extract iospace */
+#define	PMAP_TNC_SRMMU		127	/* mask to get PG_TYPE & PG_NC */
+
 /*#define PMAP_IOC      0x00800000      -* IO cacheable, NOT shifted */
 
+#define PMAP_T2PTE_SRMMU(x)	(((x) & PMAP_TYPE_SRMMU) << PMAP_PTESHFT_SRMMU)
+#define PMAP_IOENC_SRMMU(io)	((io) << PMAP_SHFT_SRMMU)
+
+/* Encode IO space for pmap_enter() */
+#define PMAP_IOENC(io)	(CPU_ISSUN4M ? PMAP_IOENC_SRMMU(io) : PMAP_IOENC_4(io))
 
 #if xxx
 void		pmap_bootstrap __P((int nmmu, int nctx, int nregion));
@@ -264,9 +278,9 @@ void		pmap_redzone __P((void));
 void		kvm_uncache __P((caddr_t, int));
 struct user;
 void		switchexit __P((vm_map_t, struct user *, int));
-int		mmu_pagein __P((struct pmap *pm, vm_offset_t, int));
+int		mmu_pagein __P((struct pmap *pm, int, int));
 #ifdef DEBUG
-int		mmu_pagein4m __P((struct pmap *pm, vm_offset_t, int));
+int		mmu_pagein4m __P((struct pmap *pm, int, int));
 #endif
 
 

@@ -1,4 +1,5 @@
-/*	$NetBSD: memreg.c,v 1.13 1996/03/31 22:52:08 pk Exp $ */
+/*	$OpenBSD: memreg.c,v 1.5 1997/08/08 08:27:32 downsj Exp $	*/
+/*	$NetBSD: memreg.c,v 1.21 1997/07/29 09:42:08 fair Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,6 +57,7 @@
 #include <sparc/sparc/memreg.h>
 #include <sparc/sparc/vaddrs.h>
 #include <sparc/sparc/asm.h>
+#include <sparc/sparc/cpuvar.h>
 
 #include <machine/reg.h>	/* for trapframe */
 #include <machine/trap.h>	/* for trap types */
@@ -82,9 +84,9 @@ static void hardmemerr4m __P((int, u_int, u_int));
 static int
 memregmatch(parent, vcf, aux)
 	struct device *parent;
-	void *aux, *vcf;
+	void *vcf, *aux;
 {
-	struct cfdata *cf = vcf;
+	register struct cfdata *cf;
 	register struct confargs *ca = aux;
 
 	if (CPU_ISSUN4) {
@@ -111,8 +113,7 @@ memregattach(parent, self, aux)
 		ra->ra_vaddr = (caddr_t)par_err_reg;
 	} else {
 		par_err_reg = ra->ra_vaddr ? (volatile u_int *)ra->ra_vaddr :
-		    (volatile u_int *)mapiodev(ra->ra_reg, 0, sizeof(int),
-					     ca->ca_bustype);
+		    (volatile u_int *)mapiodev(ra->ra_reg, 0, sizeof(int));
 	}
 	printf("\n");
 }
@@ -129,13 +130,13 @@ memerr(issync, ser, sva, aer, ava)
 	int issync;
 	u_int ser, sva, aer, ava;
 {
-
 	/* XXX Ugh! Clean up this switch and all the ifdefs! */
 	switch (cputyp) {
 #if defined(SUN4)
 	case CPU_SUN4:
 		if (par_err_reg) {
-			printf("mem err: ser=%b sva=%x\n", ser, SER_BITS, sva);
+			printf("mem err: ser=%b sva=0x%x\n",
+				ser, SER_BITS, sva);
 			printf("parity error register = %b\n",
 				*par_err_reg, PER_BITS);
 		} else {
@@ -152,12 +153,12 @@ memerr(issync, ser, sva, aer, ava)
 
 #if defined(SUN4C)
 	case CPU_SUN4C:
-		printf("%ssync mem err: ser=%b sva=%x aer=%b ava=%x\n",
-		       issync ? "" : "a", ser, SER_BITS,
-		       sva, aer & 0xff, AER_BITS, ava);
+		printf("%ssync mem arr: ser=%b sva=0x%x ",
+		    issync ? "" : "a", ser, SER_BITS, sva);
+		printf("aer=%b ava=0x%x\n", aer & 0xff, AER_BITS, ava);
 		if (par_err_reg)
 			printf("parity error register = %b\n",
-				*par_err_reg, PER_BITS);
+			    *par_err_reg, PER_BITS);
 #ifdef DEBUG
 		callrom();
 #else
@@ -196,22 +197,24 @@ hardmemerr4m(issync, fsr, faddr)
 	    case 1:
 		if ((fsr & SFSR_FT) == SFSR_FT_NONE)
 		    return;
-		panic("mem err: sfsr=%b sfaddr=%x", fsr, SFSR_BITS, faddr);
+		printf("mem err: sfsr=%b sfaddr=0x%x\n", fsr, SFSR_BITS, faddr);
 		break;
 	    case 0:
 		if (!(fsr & AFSR_AFO))
 		    return;
-		panic("async (HS) mem err: afsr=%b afaddr=%x physaddr=%x%x",
+		printf("async (HS) mem err: afsr=%b afaddr=0x%x physaddr=0x%x%x\n",
 		       fsr, AFSR_BITS, faddr,
 		       (fsr & AFSR_AFA) >> AFSR_AFA_RSHIFT, faddr);
 		break;
 	    default:	/* unknown; print both decodings*/
-		panic("Unknown mem err: if sync, fsr=%b fva=%x; if async, fsr"
-		      "=%b fa=%x pa=%x%x", fsr, SFSR_BITS, faddr, fsr,
-		      AFSR_BITS, faddr, (fsr & AFSR_AFA) >> AFSR_AFA_RSHIFT,
-		      faddr);
+		printf("unknown mem err: if sync, fsr=%b fva=0x%x; ",
+		       fsr, SFSR_BITS, faddr);
+		printf("if async, fsr=%b fa=0x%x pa=0x%x%x", fsr,
+		       AFSR_BITS, faddr, (fsr & AFSR_AFA) >> AFSR_AFA_RSHIFT,
+		       faddr);
 		break;
 	}
+	panic("hard memory error");
 }
 
 /*
@@ -248,9 +251,12 @@ memerr4m(type, sfsr, sfva, afsr, afva, tf)
 		addrold = afva;
 		addroldtop = afsr & AFSR_AFA;
 
-	} else if (type == T_STOREBUFFAULT) {
-		/* We try to reenable the store buffers to force a retry */
+	} else if (type == T_STOREBUFFAULT && cpuinfo.cpu_vers == 4) {
 
+		/*
+		 * On Supersparc, we try to reenable the store buffers
+		 * to force a retry.
+		 */
 		printf("store buffer copy-back failure at 0x%x. Retrying...\n",
 		       sfva);
 
@@ -261,8 +267,9 @@ memerr4m(type, sfsr, sfva, afsr, afva, tf)
 		oldtype = T_STOREBUFFAULT;
 		addrold = sfva;
 
-		sta(SRMMU_PCR, ASI_SRMMU, lda(SRMMU_PCR, ASI_SRMMU) |
-			SRMMU_PCR_SB);	/* reenable store buffer */
+		/* reenable store buffer */
+		sta(SRMMU_PCR, ASI_SRMMU,
+		    lda(SRMMU_PCR, ASI_SRMMU) | VIKING_PCR_SB);
 
 	} else if (type == T_DATAFAULT && !(sfsr & SFSR_FAV)) { /* bizarre */
 		/* XXX: Should handle better. See SuperSPARC manual pg. 9-35 */
@@ -276,9 +283,10 @@ memerr4m(type, sfsr, sfva, afsr, afva, tf)
 
 		oldtype = T_DATAFAULT;
 	} else if (type == 0) {	/* NMI */
-		printf("ERROR: got NMI with sfsr=0x%b, sfva=0x%x, afsr=0x%b, "
-		       "afaddr=0x%x. Retrying...\n",
-			sfsr,SFSR_BITS,sfva,afsr, AFSR_BITS,afva);
+		printf("ERROR: got NMI with sfsr=0x%b, sfva=0x%x, ",
+		       sfsr, SFSR_BITS, sfva);
+		printf("afsr=0x%b, afaddr=0x%x. Retrying...\n",
+		       afsr, AFSR_BITS, afva);
 		if (oldtype == 0 || addrold == sfva)
 			hardmemerr4m(1, sfsr, sfva);	/* XXX: async? */
 			/* NOTREACHED */
@@ -286,9 +294,10 @@ memerr4m(type, sfsr, sfva, afsr, afva, tf)
 		oldtype = 0;
 		addrold = sfva;
 	} else 	/* something we don't know about?!? */ {
-		panic("memerr4m: unknown fatal memory error. type=%d, sfsr=%b,"
-		      " sfva=%x, afsr=%b, afaddr=%x",
-		      type, sfsr, SFSR_BITS, sfva, afsr, AFSR_BITS, afva);
+		printf("unknown fatal memory error, type=%d, sfsr=%b, sfva=0x%x",
+		       type, sfsr, SFSR_BITS, sfva);
+		printf(", afsr=%b, afaddr=0x%x\n", afsr, AFSR_BITS, afva);
+		panic("memerr4m");
 	}
 
 	return;

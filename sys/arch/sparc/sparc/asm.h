@@ -1,4 +1,5 @@
-/*	$NetBSD: asm.h,v 1.3 1994/11/20 20:53:55 deraadt Exp $ */
+/*	$OpenBSD: asm.h,v 1.2 1997/08/08 08:26:58 downsj Exp $	*/
+/*	$NetBSD: asm.h,v 1.4 1996/07/01 18:01:26 abrown Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -101,4 +102,18 @@
 #define	sta(loc, asi, value) ({ \
 	__asm __volatile("sta %0,[%1]%2" : : \
 	    "r" ((int)(value)), "r" ((int)(loc)), "n" (asi)); \
+})
+
+/* load 64-bit int from alternate address space */
+#define	ldda(loc, asi) ({ \
+	register long long _lda_v; \
+	__asm __volatile("ldda [%1]%2,%0" : "=r" (_lda_v) : \
+	    "r" ((int)(loc)), "n" (asi)); \
+	_lda_v; \
+})
+
+/* store 64-bit int to alternate address space */
+#define	stda(loc, asi, value) ({ \
+	__asm __volatile("stda %0,[%1]%2" : : \
+	    "r" ((long long)(value)), "r" ((int)(loc)), "n" (asi)); \
 })

@@ -1,3 +1,4 @@
+/*	$OpenBSD: fsr.h,v 1.2 1997/08/08 08:26:21 downsj Exp $	*/
 /*	$NetBSD: fsr.h,v 1.2 1994/11/20 20:53:08 deraadt Exp $ */
 
 /*

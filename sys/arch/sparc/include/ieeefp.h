@@ -1,3 +1,5 @@
+/*	$OpenBSD: ieeefp.h,v 1.3 1997/08/08 08:26:25 downsj Exp $	*/
+
 /*
  * Written by J.T. Conklin, Apr 6, 1995
  * Public domain.

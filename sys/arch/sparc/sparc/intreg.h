@@ -1,4 +1,5 @@
-/*	$NetBSD: intreg.h,v 1.5 1996/03/31 23:03:39 pk Exp $ */
+/*	$OpenBSD: intreg.h,v 1.3 1997/08/08 08:27:19 downsj Exp $	*/
+/*	$NetBSD: intreg.h,v 1.6 1997/07/22 20:19:10 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -121,18 +122,20 @@ void	ienab_bic __P((int bic));	/* clear given bits */
 #define SINTR_ME		0x40000000	/* Module Error (async) */
 #define SINTR_I			0x20000000	/* MSI (MBus-SBus) */
 #define SINTR_M			0x10000000	/* ECC Memory controller */
-#define SINTR_RSVD2		0x0f800000
+#define SINTR_V			0x08000000	/* VME Async error */
+#define SINTR_RSVD2		0x07800000
 #define SINTR_F			0x00400000	/* Floppy */
-#define SINTR_RSVD3		0x00200000
-#define SINTR_V			0x00100000	/* Video (Supersparc only) */
+#define SINTR_MI		0x00200000	/* Module interrupt */
+#define SINTR_VI		0x00100000	/* Video (Supersparc only) */
 #define SINTR_T			0x00080000	/* Level 10 counter */
 #define SINTR_SC		0x00040000	/* SCSI */
-#define SINTR_RSVD4		0x00020000
+#define SINTR_A			0x00020000	/* Audio/ISDN */
 #define SINTR_E			0x00010000	/* Ethernet */
 #define SINTR_S			0x00008000	/* Serial port */
 #define SINTR_K			0x00004000	/* Keyboard/mouse */
 #define SINTR_SBUSMASK		0x00003f80	/* SBus */
-#define SINTR_SBUS(n)		(((n) << 7) & 0x00003f80)
-#define SINTR_RSVD5		0x0000007f
+#define SINTR_SBUS(n)		(1 << (7+(n)-1))
+#define SINTR_VMEMASK		0x0000007f	/* VME */
+#define SINTR_VME(n)		(1 << ((n)-1))
 
 #endif

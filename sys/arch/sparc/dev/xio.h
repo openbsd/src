@@ -1,3 +1,4 @@
+/*	$OpenBSD: xio.h,v 1.3 1997/08/08 08:25:37 downsj Exp $	*/
 /* $NetBSD: xio.h,v 1.2 1996/03/31 22:38:58 pk Exp $ */
 
 /*

@@ -1,4 +1,5 @@
-/*	$NetBSD: vm_machdep.c,v 1.27.4.1 1996/08/02 21:35:20 jtc Exp $ */
+/*	$OpenBSD: vm_machdep.c,v 1.5 1997/08/08 08:27:48 downsj Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.30 1997/03/10 23:55:40 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -66,7 +67,7 @@
 #include <machine/frame.h>
 #include <machine/trap.h>
 
-#include <sparc/sparc/cache.h>
+#include <sparc/sparc/cpuvar.h>
 
 /*
  * Move pages from one kernel virtual address to another.
@@ -114,11 +115,19 @@ dvma_malloc(len, kaddr, flags)
 {
 	vm_offset_t	kva;
 	vm_offset_t	dva;
+#if defined(SUN4M)
+	extern int has_iocache;
+#endif
 
 	len = round_page(len);
 	kva = (vm_offset_t)malloc(len, M_DEVBUF, flags);
 	if (kva == NULL)
 		return (NULL);
+
+#if defined(SUN4M)
+	if (!has_iocache)
+#endif
+		kvm_uncache((caddr_t)kva, len >> PGSHIFT);
 
 	*(vm_offset_t *)kaddr = kva;
 	dva = dvma_mapin(kernel_map, kva, len, (flags & M_NOWAIT) ? 0 : 1);
@@ -155,19 +164,16 @@ dvma_mapin(map, va, len, canwait)
 	register int npf, s;
 	register vm_offset_t pa;
 	long off, pn;
-#if defined(SUN4M)
-	extern int has_iocache;
-#endif
+	vm_offset_t	ova;
+	int		olen;
+
+	ova = va;
+	olen = len;
 
 	off = (int)va & PGOFSET;
 	va -= off;
 	len = round_page(len + off);
 	npf = btoc(len);
-
-#if defined(SUN4M)
-	if (!has_iocache)
-	    kvm_uncache((caddr_t)va, len >> PGSHIFT);
-#endif
 
 	s = splimp();
 	for (;;) {
@@ -194,7 +200,7 @@ dvma_mapin(map, va, len, canwait)
 		pa = trunc_page(pa);
 
 #if defined(SUN4M)
-		if (cputyp == CPU_SUN4M) {
+		if (CPU_ISSUN4M) {
 			iommu_enter(tva, pa);
 		} else
 #endif
@@ -217,6 +223,13 @@ dvma_mapin(map, va, len, canwait)
 		tva += PAGE_SIZE;
 		va += PAGE_SIZE;
 	}
+
+	/*
+	 * XXX Only have to do this on write.
+	 */
+	if (CACHEINFO.c_vactype == VAC_WRITEBACK)	/* XXX */
+		cpuinfo.cache_flush((caddr_t)ova, olen);	/* XXX */
+
 	return kva + off;
 }
 
@@ -246,8 +259,8 @@ dvma_mapout(kva, va, len)
 	wakeup(dvmamap);
 	splx(s);
 
-	if (vactype != VAC_NONE)
-		cache_flush((caddr_t)va, len);
+	if (CACHEINFO.c_vactype != VAC_NONE)
+		cpuinfo.cache_flush((caddr_t)va, len);
 }
 
 /*
@@ -316,8 +329,8 @@ vunmapbuf(bp, sz)
 	kmem_free_wakeup(kernel_map, trunc_page(kva), size);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;
-	if (vactype != VAC_NONE)
-		cache_flush(bp->b_un.b_addr, bp->b_bcount - bp->b_resid);
+	if (CACHEINFO.c_vactype != VAC_NONE)
+		cpuinfo.cache_flush(bp->b_un.b_addr, bp->b_bcount - bp->b_resid);
 }
 
 

@@ -41,6 +41,7 @@ sbus0	at iommu0				# sun4m
 
 audio0	at mainbus0				# sun4c
 audio0	at obio0				# sun4m
+audio0	at sbus0 slot ? offset ?		# sun4m
 
 auxreg0	at mainbus0				# sun4c
 auxreg0	at obio0				# sun4m
@@ -119,9 +120,11 @@ esp*	at dma? flags 0xff0f				# depending on model
 ledma0	at sbus0 slot ? offset ?			# sun4m on-board
 le0	at ledma0					#
 
-# Additional SBus LANCE devices - glued on by lebuffer (not yet implemented)
-#lebuffer*	at sbus0 slot ? offset ?		# sun4m SBus
-#le*	at lebuffer?					#
+# Additional SBus LANCE devices - glued on by lebuffer
+lebuffer0	at sbus0 slot ? offset ?		# sun4m SBus
+lebuffer*	at sbus? slot ? offset ?		# sun4m SBus
+le0	at lebuffer0					#
+le*	at lebuffer?					#
 
 # sun4/300 and sun4c Ethernet - an AMD 7990 LANCE
 le0	at sbus0 slot ? offset ?			# sun4c on-board
@@ -209,9 +212,17 @@ cgsix0	at obio0 addr 0x0b000000 level 4	# sun4/100 P4
 cgeight0 at obio0 addr 0xfb300000 level 4	# sun4/300 P4
 cgeight0 at obio0 addr 0x0b300000 level 4	# sun4/100 P4
 
+# Sun "tcx" accelerated color framebuffer.
+tcx0	at sbus? slot ? offset ?
+tcx*	at sbus? slot ? offset ?
+
+# Sun "cgfourteen" accelerated 24-bit framebuffer.
+cgfourteen0	at obio0			# sun4m
+
 # SCSI bus layer.  SCSI devices attach to the SCSI bus, which attaches
 # to the underlying hardware controller.
 scsibus* at esp?
+#scsibus* at isp?
 scsibus* at si?
 scsibus* at sw?
 

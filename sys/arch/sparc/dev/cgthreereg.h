@@ -1,3 +1,4 @@
+/*	$OpenBSD: cgthreereg.h,v 1.3 1997/08/08 08:24:54 downsj Exp $	*/
 /*	$NetBSD: cgthreereg.h,v 1.5 1996/02/27 00:14:17 pk Exp $ */
 
 /*

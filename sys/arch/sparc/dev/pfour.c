@@ -1,4 +1,4 @@
-/*	$Id: pfour.c,v 1.5 1995/12/15 13:56:26 deraadt Exp $ */
+/*	$OpenBSD: pfour.c,v 1.6 1997/08/08 08:25:20 downsj Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt

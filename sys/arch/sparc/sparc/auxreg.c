@@ -120,7 +120,7 @@ auxregattach(parent, self, aux)
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
 
-	(void)mapdev(ra->ra_reg, AUXREG_VA, 0, sizeof(long), ca->ca_bustype);
+	(void)mapdev(ra->ra_reg, AUXREG_VA, 0, sizeof(long));
 	if (CPU_ISSUN4M) {
 		auxio_reg = AUXIO4M_REG;
 		auxio_regval = *AUXIO4M_REG | AUXIO4M_MB1;

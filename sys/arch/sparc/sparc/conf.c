@@ -1,3 +1,4 @@
+/*	$OpenBSD: conf.c,v 1.14 1997/08/08 08:27:08 downsj Exp $	*/
 /*	$NetBSD: conf.c,v 1.40 1996/04/11 19:20:03 thorpej Exp $ */
 
 /*
@@ -71,10 +72,13 @@
 #include "zs.h"
 #include "fdc.h"		/* has NFDC and NFD; see files.sparc */
 #include "bwtwo.h"
+#include "cgtwo.h"
 #include "cgthree.h"
 #include "cgfour.h"
 #include "cgsix.h"
 #include "cgeight.h"
+#include "tcx.h"
+#include "cgfourteen.h"
 #include "xd.h"
 #include "xy.h"
 
@@ -141,7 +145,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 28 */
 	cdev_gen_init(1,kbd),		/* 29: /dev/kbd */
 	cdev_notdef(),			/* 30 */
-	cdev_notdef(),			/* 31: should be /dev/cgtwo */
+	cdev_fb_init(NCGTWO,cgtwo),	/* 31: /dev/cgtwo */
 	cdev_notdef(),			/* 32: should be /dev/gpone */
 	cdev_notdef(),			/* 33 */
 	cdev_notdef(),			/* 34 */
@@ -209,7 +213,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 96 */
 	cdev_notdef(),			/* 97 */
 	cdev_notdef(),			/* 98 */
-	cdev_notdef(),			/* 99 */
+	cdev_fb_init(NCGFOURTEEN,cgfourteen), /* 99: /dev/cgfourteen */
 	cdev_notdef(),			/* 100 */
 	cdev_notdef(),			/* 101 */
 	cdev_notdef(),			/* 102 */
@@ -219,7 +223,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NRD,rd),		/* 106: ram disk driver */
 	cdev_notdef(),			/* 107 */
 	cdev_notdef(),			/* 108 */
-	cdev_notdef(),			/* 109 */
+	cdev_fb_init(NTCX,tcx),		/* 109: /dev/tcx */
 	cdev_disk_init(NVND,vnd),	/* 110: vnode disk driver */
 	cdev_bpftun_init(NTUN,tun),	/* 111: network tunnel */
 	cdev_lkm_init(NLKM,lkm),	/* 112: loadable module driver */

@@ -1,4 +1,5 @@
-/*	$NetBSD: kgdb_stub.c,v 1.8 1996/05/16 15:57:20 abrown Exp $ */
+/*	$OpenBSD: kgdb_stub.c,v 1.3 1997/08/08 08:27:24 downsj Exp $	*/
+/*	$NetBSD: kgdb_stub.c,v 1.10 1996/10/13 03:00:36 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
