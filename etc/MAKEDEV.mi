@@ -1,6 +1,6 @@
 include(MAKEDEV.sub)dnl
 dnl
-vers(a,{-$OpenBSD: MAKEDEV.mi,v 1.2 2002/01/04 15:59:16 todd Exp $-})dnl
+vers(a,{-$OpenBSD: MAKEDEV.mi,v 1.3 2002/01/04 16:58:41 todd Exp $-})dnl
 dnl
 divert(1)dnl
 {-#-}
@@ -322,9 +322,19 @@ __devitem(wscons,ttyC0,wscons screen 0)dnl
 _mkdev({-wscons-},{-wscons-},{-dnl
 _dl(dnl
 {-wscons-},{-ttyCcfg-},
+{-wsdisp-},{-ttyC0 ttyC1 ttyC2 ttyC3 ttyC4 ttyC5 ttyC6 ttyC7 ttyC8 ttyC9-},
+{-wsdisp-},{-ttyCa ttyCb-},
 {-wsmux-},{-wsmux-},
 {-wskbd-},{-wskbd0 wskbd1 wskbd2 wskbd3-},
 {-wsmouse-},{-wsmouse0 wsmouse1 wsmouse2 wsmouse3-})-})dnl
+__devitem(wsdisp,ttyC*,wscons virtual consoles)dnl
+_mkdev({-wsdisp-},ttyC*,{-U=${i##ttyC}
+	case $U in
+	[0-9a-f]) M ttyC$U c major_wsdisp_c {-$(( 16#$U ))-} 600 ;;
+	cfg) M ttyCcfg c major_wsdisp_c 255 ;;
+	*) echo bad unit $U for $i; exit 1;;
+	esac
+ -})dnl
 __devitem(wskbd,wskbd*,wscons keyboards)dnl
 _mkdev(wskbd,wskbd*,{-M wskbd$U c major_wskbd_c $U 600-})dnl
 __devitem(wsmux,wsmux,wscons keyboard/mouse mux devices)dnl
@@ -569,7 +579,7 @@ divert(0)dnl
 #
 show_vers()dnl <-- now that all files are included, show versions
 #
-#	$OpenBSD: MAKEDEV.mi,v 1.2 2002/01/04 15:59:16 todd Exp $
+#	$OpenBSD: MAKEDEV.mi,v 1.3 2002/01/04 16:58:41 todd Exp $
 dnl
 divert(2)dnl
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
