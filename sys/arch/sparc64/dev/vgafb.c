@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.2 2001/12/14 19:17:02 jason Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.3 2002/01/03 16:26:27 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -32,12 +32,15 @@
  */
 
 #include <sys/param.h>
+#include <sys/buf.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/errno.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/malloc.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -54,11 +57,16 @@ struct vgafb_softc {
 	struct device sc_dev;
 	struct sbusdev sc_sd;
 	int sc_nscreens;
-	int sc_width, sc_height, sc_depth, sc_linebytes, sc_node;
+	int sc_width, sc_height, sc_depth, sc_linebytes;
+	int sc_node, sc_ofhandle;
 	bus_space_tag_t sc_bt;
 	bus_space_handle_t sc_bh;
 	struct rcons sc_rcons;
 	struct raster sc_raster;
+	int sc_console;
+	u_int8_t sc_cmap_red[256];
+	u_int8_t sc_cmap_green[256];
+	u_int8_t sc_cmap_blue[256];
 };
 
 struct wsdisplay_emulops vgafb_emulops = {
@@ -73,11 +81,11 @@ struct wsdisplay_emulops vgafb_emulops = {
 };
 
 struct wsscreen_descr vgafb_stdscreen = {
-	"std",
+	"sun",
 	0, 0,	/* will be filled in -- XXX shouldn't, it's global. */
-	0,
+	NULL,
 	0, 0,
-	WSSCREEN_REVERSE
+	WSSCREEN_REVERSE | WSSCREEN_WSCOLORS
 };
 
 const struct wsscreen_descr *vgafb_scrlist[] = {
@@ -97,6 +105,10 @@ int vgafb_show_screen __P((void *, void *, int,
     void (*cb) __P((void *, int, int)), void *));
 paddr_t vgafb_mmap __P((void *, off_t, int));
 int vgafb_is_console __P((int));
+int vgafb_getcmap __P((struct vgafb_softc *, struct wsdisplay_cmap *));
+int vgafb_putcmap __P((struct vgafb_softc *, struct wsdisplay_cmap *));
+void vgafb_setcolor __P((struct vgafb_softc *, unsigned int,
+    u_int8_t, u_int8_t, u_int8_t));
 
 static int a2int __P((char *, int));
 
@@ -152,7 +164,6 @@ vgafbattach(parent, self, aux)
 	struct wsemuldisplaydev_attach_args waa;
 	bus_size_t memsize;
 	long defattr;
-	int console;
 	bus_addr_t membase;
 
 	sc->sc_node = PCITAG_NODE(pa->pa_tag);
@@ -173,7 +184,7 @@ vgafbattach(parent, self, aux)
 	if (sc->sc_width == -1)
 		sc->sc_width = 1152;
 
-	console = vgafb_is_console(sc->sc_node);
+	sc->sc_console = vgafb_is_console(sc->sc_node);
 
 	if (pci_mem_find(pa->pa_pc, pa->pa_tag, 0x10,
 	    &membase, &memsize, NULL)) {
@@ -194,7 +205,7 @@ vgafbattach(parent, self, aux)
 	sc->sc_raster.linelongs = sc->sc_linebytes / 4;
 	sc->sc_raster.pixels = (void *)sc->sc_bh;
 
-	if (console == 0 ||
+	if (sc->sc_console == 0 ||
 	    romgetcursoraddr(&sc->sc_rcons.rc_crowp, &sc->sc_rcons.rc_ccolp)) {
 		sc->sc_rcons.rc_crow = sc->sc_rcons.rc_ccol = -1;
 		sc->sc_rcons.rc_crowp = &sc->sc_rcons.rc_crow;
@@ -216,11 +227,22 @@ vgafbattach(parent, self, aux)
 
 	printf("\n");
 
-	if (console)
+	if (sc->sc_console) {
+		sc->sc_ofhandle = OF_stdout();
+		vgafb_setcolor(sc, WSCOL_BLACK, 0, 0, 0);
+		vgafb_setcolor(sc, 255, 255, 255, 255);
+		vgafb_setcolor(sc, WSCOL_RED, 255, 0, 0);
+		vgafb_setcolor(sc, WSCOL_GREEN, 0, 255, 0);
+		vgafb_setcolor(sc, WSCOL_BROWN, 154, 85, 46);
+		vgafb_setcolor(sc, WSCOL_BLUE, 0, 0, 255);
+		vgafb_setcolor(sc, WSCOL_MAGENTA, 255, 255, 0);
+		vgafb_setcolor(sc, WSCOL_CYAN, 0, 255, 255);
+		vgafb_setcolor(sc, WSCOL_WHITE, 255, 255, 255);
 		wsdisplay_cnattach(&vgafb_stdscreen, &sc->sc_rcons,
 		    *sc->sc_rcons.rc_ccolp, *sc->sc_rcons.rc_crowp, defattr);
+	}
 
-	waa.console = console;
+	waa.console = sc->sc_console;
 	waa.scrdata = &vgafb_screenlist;
 	waa.accessops = &vgafb_accessops;
 	waa.accesscookie = sc;
@@ -256,12 +278,14 @@ vgafb_ioctl(v, cmd, data, flags, p)
 		*(u_int *)data = sc->sc_linebytes;
 		break;
 
-#if 0
 	case WSDISPLAYIO_GETCMAP:
-		return vgafb_getcmap(vc, (struct wsdisplay_cmap *)data);
+		if (sc->sc_console == 0)
+			return (EINVAL);
+		return vgafb_getcmap(sc, (struct wsdisplay_cmap *)data);
 	case WSDISPLAYIO_PUTCMAP:
-		return vgafb_putcmap(vc, (struct wsdisplay_cmap *)data);
-#endif
+		if (sc->sc_console == 0)
+			return (EINVAL);
+		return vgafb_putcmap(sc, (struct wsdisplay_cmap *)data);
 
 	case WSDISPLAYIO_SVIDEO:
 	case WSDISPLAYIO_GVIDEO:
@@ -275,6 +299,68 @@ vgafb_ioctl(v, cmd, data, flags, p)
         }
 
 	return (0);
+}
+
+int
+vgafb_getcmap(sc, cm)
+	struct vgafb_softc *sc;
+	struct wsdisplay_cmap *cm;
+{
+	u_int index = cm->index;
+	u_int count = cm->count;
+	int error;
+
+	error = copyout(&sc->sc_cmap_red[index], cm->red, count);
+	if (error)
+		return (error);
+	error = copyout(&sc->sc_cmap_green[index], cm->green, count);
+	if (error)
+		return (error);
+	error = copyout(&sc->sc_cmap_blue[index], cm->blue, count);
+	if (error)
+		return (error);
+	return (0);
+}
+
+int
+vgafb_putcmap(sc, cm)
+	struct vgafb_softc *sc;
+	struct wsdisplay_cmap *cm;
+{
+	int index = cm->index;
+	int count = cm->count;
+	int i;
+	u_char *r, *g, *b;
+
+	if (cm->index >= 256 || cm->count > 256 ||
+	    (cm->index + cm->count) > 256)
+		return (EINVAL);
+	if (!uvm_useracc(cm->red, cm->count, B_READ) ||
+	    !uvm_useracc(cm->green, cm->count, B_READ) ||
+	    !uvm_useracc(cm->blue, cm->count, B_READ))
+		return (EFAULT);
+	copyin(cm->red, &sc->sc_cmap_red[index], count);
+	copyin(cm->green, &sc->sc_cmap_green[index], count);
+	copyin(cm->blue, &sc->sc_cmap_blue[index], count);
+
+	r = &sc->sc_cmap_red[index];
+	g = &sc->sc_cmap_green[index];
+	b = &sc->sc_cmap_blue[index];
+
+	for (i = 0; i < count; i++) {
+		vgafb_setcolor(sc, index, *r, *g, *b);
+		r++, g++, b++, index++;
+	}
+	return (0);
+}
+
+void
+vgafb_setcolor(sc, index, r, g, b)
+	struct vgafb_softc *sc;
+	unsigned int index;
+	u_int8_t r, g, b;
+{
+	OF_call_method("color!", sc->sc_ofhandle, 4, 0, r, g, b, index);
 }
 
 int
