@@ -1,4 +1,4 @@
-/*	$OpenBSD: safe.c,v 1.4 2003/08/14 15:26:03 jason Exp $	*/
+/*	$OpenBSD: safe.c,v 1.5 2003/08/14 15:44:08 jason Exp $	*/
 
 /*-
  * Copyright (c) 2003 Sam Leffler, Errno Consulting
@@ -1027,9 +1027,9 @@ safe_init_board(struct safe_softc *sc)
 	WRITE_REG(sc, SAFE_PE_DMACFG, v);
 
 #if BYTE_ORDER == LITTLE_ENDIAN
-	WRITE_REG(sc, SAFE_ENDIAN, 0x00e400e4);
+	WRITE_REG(sc, SAFE_ENDIAN, SAFE_ENDIAN_TGT_PASS|SAFE_ENDIAN_DMA_PASS);
 #elif BYTE_ORDER == BIG_ENDIAN
-	WRITE_REG(sc, SAFE_ENDIAN, 0x00e4001b);
+	WRITE_REG(sc, SAFE_ENDIAN, SAFE_ENDIAN_TGT_PASS|SAFE_ENDIAN_DMA_SWAB);
 #endif
 
 	if (sc->sc_chiprev == SAFE_REV(1,0)) {
