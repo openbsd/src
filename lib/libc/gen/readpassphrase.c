@@ -1,4 +1,4 @@
-/*	$OpenBSD: readpassphrase.c,v 1.8 2001/12/06 05:20:50 millert Exp $	*/
+/*	$OpenBSD: readpassphrase.c,v 1.9 2001/12/06 07:04:17 millert Exp $	*/
 
 /*
  * Copyright (c) 2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$OpenBSD: readpassphrase.c,v 1.8 2001/12/06 05:20:50 millert Exp $";
+static const char rcsid[] = "$OpenBSD: readpassphrase.c,v 1.9 2001/12/06 07:04:17 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <ctype.h>
@@ -159,7 +159,7 @@ static void handler(int signo)
 
 	/* Restore tty modes */
 	if (memcmp(&term, &oterm, sizeof(term)) != 0)
-		(void)tcsetattr(input, TCSANOW|TCSASOFT, &oterm);
+		(void)tcsetattr(input, TCSAFLUSH|TCSASOFT, &oterm);
 
 	/*
 	 * Save old handler and set to original value.
@@ -193,7 +193,7 @@ static void handler(int signo)
 
 	/* Put tty modes back */
 	if (memcmp(&term, &oterm, sizeof(term)) != 0)
-		(void)tcsetattr(input, TCSANOW|TCSASOFT, &term);
+		(void)tcsetattr(input, TCSAFLUSH|TCSASOFT, &term);
 
 	errno = save_errno;
 }
