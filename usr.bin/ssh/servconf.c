@@ -10,7 +10,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: servconf.c,v 1.60 2001/01/19 15:55:11 markus Exp $");
+RCSID("$OpenBSD: servconf.c,v 1.61 2001/01/20 23:00:56 djm Exp $");
 
 #include "ssh.h"
 #include "servconf.h"
@@ -333,7 +333,7 @@ read_server_config(ServerOptions *options, const char *filename)
 		/* Ignore leading whitespace */
 		if (*arg == '\0')
 			arg = strdelim(&cp);
-		if (!*arg || *arg == '#')
+		if (!arg || !*arg || *arg == '#')
 			continue;
 		intptr = NULL;
 		charptr = NULL;
