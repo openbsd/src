@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.20 2001/07/02 02:36:14 angelos Exp $
+#	$OpenBSD: changelist,v 1.21 2001/08/24 19:21:00 mickey Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -83,6 +83,7 @@
 /etc/ttys
 /etc/weekly
 /etc/weekly.local
+/etc/wsconsctl.conf
 /etc/mail/aliases
 /etc/mail/sendmail.cf
 /etc/mail/local-host-names
