@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.21 2002/02/07 05:43:51 mickey Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.22 2002/02/11 21:12:59 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -206,8 +206,8 @@ mbus_map(void *v, bus_addr_t bpa, bus_size_t size,
 void
 mbus_unmap(void *v, bus_space_handle_t bsh, bus_size_t size)
 {
-	register u_long sva, eva;
-	register bus_addr_t bpa;
+	u_long sva, eva;
+	paddr_t bpa;
 
 	sva = hppa_trunc_page(bsh);
 	eva = hppa_round_page(bsh + size);
@@ -217,8 +217,7 @@ mbus_unmap(void *v, bus_space_handle_t bsh, bus_size_t size)
 		panic("bus_space_unmap: overflow");
 #endif
 
-	bpa = kvtop((caddr_t)bsh);
-	if (bpa != bsh)
+	if (pmap_extract(pmap_kernel(), bsh, &bpa) && bpa != bsh)
 		uvm_km_free(kernel_map, sva, eva - sva);
 
 	if (extent_free(hppa_ex, bpa, size, EX_NOWAIT)) {
