@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmcia.c,v 1.30 2001/08/17 21:52:16 deraadt Exp $	*/
+/*	$OpenBSD: pcmcia.c,v 1.31 2002/01/11 01:31:21 nordin Exp $	*/
 /*	$NetBSD: pcmcia.c,v 1.9 1998/08/13 02:10:55 eeh Exp $	*/
 
 /*
@@ -201,6 +201,8 @@ pcmcia_card_attach(dev)
 	 */
 	if (SIMPLEQ_FIRST(&sc->card.pf_head) == NULL) {
 		pf = malloc(sizeof *pf, M_DEVBUF, M_NOWAIT);
+		if (pf == NULL)
+			panic("pcmcia_card_attach");
 		bzero(pf, sizeof *pf);
 		pf->number = 0;
 		pf->pf_flags = PFF_FAKE;

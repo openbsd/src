@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_pci.c,v 1.22 2001/12/13 17:43:03 nate Exp $	*/
+/*	$OpenBSD: if_dc_pci.c,v 1.23 2002/01/11 01:31:21 nordin Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -372,6 +372,8 @@ void dc_pci_attach(parent, self, aux)
 			sc->dc_flags |= DC_PNIC_RX_BUG_WAR;
 			sc->dc_pnic_rx_buf = malloc(DC_RXLEN * 5, M_DEVBUF,
 			    M_NOWAIT);
+			if (sc->dc_pnic_rx_buf == NULL)
+				panic("dc_pci_attach");
 			if (revision < DC_REVISION_82C169)
 				sc->dc_pmode = DC_PMODE_SYM;
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.4 2001/12/24 18:30:43 mickey Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.5 2002/01/11 01:31:21 nordin Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -300,6 +300,8 @@ bge_vpd_read(sc)
 
 	pos += sizeof(res);
 	sc->bge_vpd_prodname = malloc(res.vr_len + 1, M_DEVBUF, M_NOWAIT);
+	if (sc->bge_vpd_prodname == NULL)
+		panic("bge_vpd_read");
 	for (i = 0; i < res.vr_len; i++)
 		sc->bge_vpd_prodname[i] = bge_vpd_readbyte(sc, i + pos);
 	sc->bge_vpd_prodname[i] = '\0';
@@ -315,6 +317,8 @@ bge_vpd_read(sc)
 
 	pos += sizeof(res);
 	sc->bge_vpd_readonly = malloc(res.vr_len, M_DEVBUF, M_NOWAIT);
+	if (sc->bge_vpd_readonly == NULL)
+		panic("bge_vpd_read");
 	for (i = 0; i < res.vr_len + 1; i++)
 		sc->bge_vpd_readonly[i] = bge_vpd_readbyte(sc, i + pos);
 }

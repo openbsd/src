@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.19 2001/11/06 19:53:19 miod Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.20 2002/01/11 01:31:21 nordin Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -304,6 +304,8 @@ void sk_vpd_read(sc)
 
 	pos += sizeof(res);
 	sc->sk_vpd_prodname = malloc(res.vr_len + 1, M_DEVBUF, M_NOWAIT);
+	if (sc->sk_vpd_prodname == NULL)
+		panic("sk_vpd_read");
 	for (i = 0; i < res.vr_len; i++)
 		sc->sk_vpd_prodname[i] = sk_vpd_readbyte(sc, i + pos);
 	sc->sk_vpd_prodname[i] = '\0';
@@ -319,6 +321,8 @@ void sk_vpd_read(sc)
 
 	pos += sizeof(res);
 	sc->sk_vpd_readonly = malloc(res.vr_len, M_DEVBUF, M_NOWAIT);
+	if (sc->sk_vpd_readonly == NULL)
+		panic("sk_vpd_read");
 	for (i = 0; i < res.vr_len + 1; i++)
 		sc->sk_vpd_readonly[i] = sk_vpd_readbyte(sc, i + pos);
 
