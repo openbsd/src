@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_comp.c,v 1.4 1997/03/13 19:07:35 downsj Exp $	*/
+/*	$OpenBSD: res_comp.c,v 1.5 1997/03/27 20:45:33 deraadt Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1993
@@ -60,7 +60,7 @@
 static char sccsid[] = "@(#)res_comp.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$From: res_comp.c,v 8.11 1996/12/02 09:17:22 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: res_comp.c,v 1.4 1997/03/13 19:07:35 downsj Exp $";
+static char rcsid[] = "$OpenBSD: res_comp.c,v 1.5 1997/03/27 20:45:33 deraadt Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -100,7 +100,7 @@ dn_expand(msg, eomorig, comp_dn, exp_dn, length)
 
 	dn = exp_dn;
 	cp = comp_dn;
-	eom = exp_dn + length;
+	eom = exp_dn + (length > MAXDNAME ? MAXDNAME : length);
 	/*
 	 * fetch next label in domain name
 	 */
@@ -372,7 +372,7 @@ res_hnok(dn)
 		int nch = *dn++;
 
 		if (periodchar(ch)) {
-			NULL;
+			;
 		} else if (periodchar(pch)) {
 			if (!borderchar(ch))
 				return (0);
