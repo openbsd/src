@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.23 1997/06/05 10:15:24 deraadt Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.24 1997/07/28 09:13:17 deraadt Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -111,7 +111,7 @@ struct	filedesc0 filedesc0;
 struct	plimit limit0;
 struct	vmspace vmspace0;
 struct	proc *curproc = &proc0;
-struct	proc *initproc, *pageproc;
+struct	proc *initproc;
 
 int	cmask = CMASK;
 extern	struct user *proc0paddr;
@@ -568,7 +568,6 @@ start_pagedaemon(p)
 	/*
 	 * Now in process 2.
 	 */
-	pageproc = p;
 	p->p_flag |= P_INMEM | P_SYSTEM;	/* XXX */
 	bcopy("pagedaemon", curproc->p_comm, sizeof ("pagedaemon"));
 	vm_pageout();
@@ -583,7 +582,6 @@ start_update(p)
 	/*
 	 * Now in process 3.
 	 */
-	pageproc = p;
 	p->p_flag |= P_INMEM | P_SYSTEM;	/* XXX */
 	bcopy("update", curproc->p_comm, sizeof ("update"));
 	vn_update();

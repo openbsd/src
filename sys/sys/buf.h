@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.6 1997/04/14 04:23:21 tholo Exp $	*/
+/*	$OpenBSD: buf.h,v 1.7 1997/07/28 09:13:14 deraadt Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -160,7 +160,6 @@ int	bufpages;		/* Number of memory pages in the buffer pool. */
 struct	buf *swbuf;		/* Swap I/O buffer headers. */
 int	nswbuf;			/* Number of swap I/O buffer headers. */
 struct	buf bswlist;		/* Head of swap I/O buffer headers free list. */
-struct	buf *bclnlist;		/* Head of cleaned page list. */
 TAILQ_HEAD(, buf) bdirties;	/* Dirty buffer list for update daemon */
 
 __BEGIN_DECLS

@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.14 1997/06/05 10:15:22 deraadt Exp $	*/
+/*	$OpenBSD: proc.h,v 1.15 1997/07/28 09:13:15 deraadt Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -288,7 +288,7 @@ extern int randompid;			/* fork() should create random pid's */
 LIST_HEAD(proclist, proc);
 extern struct proclist allproc;		/* List of all processes. */
 extern struct proclist zombproc;	/* List of zombie processes. */
-struct proc *initproc, *pageproc;	/* Process slots for init, pager. */
+struct proc *initproc;			/* Process slots for init, pager. */
 
 #define	NQS	32			/* 32 run queues. */
 int	whichqs;			/* Bit mask summary of non-empty Q's. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.6 1997/01/19 03:56:46 briggs Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.7 1997/07/28 09:13:17 deraadt Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -223,8 +223,6 @@ schedcpu(arg)
 		splx(s);
 	}
 	vmmeter();
-	if (bclnlist != NULL)
-		wakeup((caddr_t)pageproc);
 	timeout(schedcpu, (void *)0, hz);
 }
 
