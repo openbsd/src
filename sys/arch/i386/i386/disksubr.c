@@ -1,7 +1,8 @@
-/*	$OpenBSD: disksubr.c,v 1.14 1996/12/09 07:19:22 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.15 1996/12/09 15:54:57 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
+ * Copyright (c) 1996 Theo de Raadt
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
  * All rights reserved.
  *
