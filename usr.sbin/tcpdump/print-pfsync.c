@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-pfsync.c,v 1.26 2004/03/22 08:13:10 mcbride Exp $	*/
+/*	$OpenBSD: print-pfsync.c,v 1.27 2004/07/07 23:48:40 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -28,7 +28,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-pfsync.c,v 1.26 2004/03/22 08:13:10 mcbride Exp $";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-pfsync.c,v 1.27 2004/07/07 23:48:40 mcbride Exp $";
 #endif
 
 #include <sys/param.h>
@@ -120,7 +120,7 @@ pfsync_print(struct pfsync_header *hdr, int len)
 	u_int64_t id;
 
 	if (eflag)
-		printf("version %d count %d: ",
+		printf("PFSYNCv%d count %d: ",
 		    hdr->version, hdr->count);
 
 	if (hdr->action < PFSYNC_ACT_MAX)
