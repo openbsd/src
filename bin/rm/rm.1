@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rm.1,v 1.23 2003/06/02 23:32:09 millert Exp $
+.\"	$OpenBSD: rm.1,v 1.24 2003/11/21 21:04:36 jmc Exp $
 .\"	$NetBSD: rm.1,v 1.8 1995/07/25 19:37:30 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
@@ -135,18 +135,18 @@ If an error occurs,
 .Nm
 exits with a value >0.
 .Sh EXAMPLES
-.Li $ rm -rf foobar
-.Pp
 Recursively remove all files contained within the
 .Pa foobar
-directory hierarchy.
+directory hierarchy:
 .Pp
-.Li $ rm -- -f
-.br
-.Li $ rm ./-f
+.Dl $ rm -rf foobar
 .Pp
 Either of these commands will remove the file
-.Pa -f .
+.Pa -f :
+.Bd -literal -offset indent
+$ rm -- -f
+$ rm ./-f
+.Ed
 .Sh SEE ALSO
 .Xr rmdir 1 ,
 .\" .Xr undelete 2 ,
@@ -201,6 +201,6 @@ The
 .Fl P
 option assumes that the underlying file system is a fixed-block file
 system.
-UFS is a fixed-block file system, LFS is not.
+UFS is a fixed-block file system; LFS is not.
 In addition, only regular files are overwritten, other types of files
 are not.
