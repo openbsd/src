@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_fcntl.c,v 1.3 1996/08/02 20:20:32 niklas Exp $	 */
+/*	$OpenBSD: svr4_fcntl.c,v 1.4 1997/01/08 13:04:57 niklas Exp $	 */
 /*	$NetBSD: svr4_fcntl.c,v 1.14 1995/10/14 20:24:24 christos Exp $	 */
 
 /*
@@ -47,6 +47,10 @@
 #include <compat/svr4/svr4_syscallargs.h>
 #include <compat/svr4/svr4_util.h>
 #include <compat/svr4/svr4_fcntl.h>
+
+#include <compat/ibcs2/ibcs2_types.h>
+#include <compat/ibcs2/ibcs2_signal.h>
+#include <compat/ibcs2/ibcs2_syscallargs.h>
 
 static u_long svr4_to_bsd_cmd __P((u_long));
 static int svr4_to_bsd_flags __P((int));
@@ -261,6 +265,9 @@ svr4_sys_fcntl(p, v, retval)
 	struct svr4_sys_fcntl_args	*uap = v;
 	int				error;
 	struct sys_fcntl_args		fa;
+
+	if (SCARG(uap, cmd) == SVR4_F_GETLK_SVR3)
+		return ibcs2_sys_fcntl(p, v, retval);
 
 	SCARG(&fa, fd) = SCARG(uap, fd);
 	SCARG(&fa, cmd) = svr4_to_bsd_cmd(SCARG(uap, cmd));
