@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dc.4,v 1.2 2000/01/10 08:14:11 deraadt Exp $
+.\"	$OpenBSD: dc.4,v 1.3 2000/01/10 08:15:36 deraadt Exp $
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ee.columbia.edu>. All rights reserved.
 .\"
@@ -292,7 +292,7 @@ is to work around problems with some NIC/PCI bus combinations where
 the PNIC can transmit corrupt frames when operating at 100Mbps,
 probably due to PCI DMA burst transfer errors.
 .Pp
-The 82c168 abd 82c169 PNIC chips also have a receiver bug that
+The 82c168 and 82c169 PNIC chips also have a receiver bug that
 sometimes manifests during periods of heavy receive and transmit
 activity, where the chip will improperly DMA received frames to
 the host. The chips appear to upload several kilobytes of garbage
