@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.10 2000/06/13 06:11:13 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.11 2000/06/13 06:32:16 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -318,7 +318,7 @@ int
 ubsec_process(crp)
 	struct cryptop *crp;
 {
-	struct ubsec_q *q = NULL;
+	struct ubsec_q *q;
 	int card, err, i, j, s;
 	struct ubsec_softc *sc;
 	struct cryptodesc *crd1, *crd2, *maccrd, *enccrd;
@@ -335,14 +335,6 @@ ubsec_process(crp)
 	}
 
 	sc = ubsec_cd.cd_devs[card];
-
-	s = splnet();
-	if (sc->sc_nqueue == UBS_MAX_NQUEUE) {
-		splx(s);
-		err = ENOMEM;
-		goto errout;
-	}
-	splx(s);
 
 	q = (struct ubsec_q *)malloc(sizeof(struct ubsec_q),
 	    M_DEVBUF, M_NOWAIT);
