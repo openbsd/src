@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx_usrreq.c,v 1.4 1996/12/23 08:47:04 mickey Exp $	*/
+/*	$OpenBSD: ipx_usrreq.c,v 1.5 1997/01/18 17:53:54 mickey Exp $	*/
 
 /*-
  *
@@ -93,7 +93,7 @@ ipx_input(m, va_alist)
 	register struct ipxpcb *ipxp;
 	register struct ipx *ipx = mtod(m, struct ipx *);
 	struct ifnet *ifp = m->m_pkthdr.rcvif;
-	struct sockaddr_ipx ipx_ipx = { sizeof(ipx_ipx), AF_IPX };
+	struct sockaddr_ipx ipx_ipx;
 	va_list	ap;
 
 	va_start(ap, m);
@@ -106,6 +106,9 @@ ipx_input(m, va_alist)
 	 * Construct sockaddr format source address.
 	 * Stuff source address and datagram in user buffer.
 	 */
+	bzero(&ipx_ipx, sizeof(ipx_ipx));
+	ipx_ipx.sipx_len = sizeof(ipx_ipx);
+	ipx_ipx.sipx_family = AF_IPX;
 	ipx_ipx.sipx_addr = ipx->ipx_sna;
 	if (ipx_neteqnn(ipx->ipx_sna.ipx_net, ipx_zeronet) && ifp) {
 		register struct ifaddr *ifa;
