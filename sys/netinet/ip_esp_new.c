@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp_new.c,v 1.2 1997/08/26 12:02:49 provos Exp $	*/
+/*	$OpenBSD: ip_esp_new.c,v 1.3 1997/09/23 21:42:21 angelos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -225,6 +225,10 @@ esp_new_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
     xd->edx_wnd = txd.edx_wnd;
     xd->edx_flags = txd.edx_flags;
     xd->edx_hash_algorithm = txd.edx_hash_algorithm;
+    xd->edx_bitmap = 0;
+
+    /* Replay counters are mandatory, even without auth */
+    xd->edx_rpl = AH_HMAC_INITIAL_RPL;
 
     /* Copy the IV */
     m_copydata(m, EMT_SETSPI_FLEN + ESP_NEW_XENCAP_LEN, xd->edx_ivlen,
@@ -233,111 +237,111 @@ esp_new_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
     switch (xd->edx_enc_algorithm)
     {
 	case ALG_ENC_DES:
-	     /* Copy the key material */
-	     m_copydata(m, EMT_SETSPI_FLEN + ESP_NEW_XENCAP_LEN + xd->edx_ivlen,
-			enc_keylen, (caddr_t) rk);
+	    /* Copy the key material */
+	    m_copydata(m, EMT_SETSPI_FLEN + ESP_NEW_XENCAP_LEN + xd->edx_ivlen,
+		       enc_keylen, (caddr_t) rk);
 
-	     des_set_key((caddr_t) rk, (caddr_t) (xd->edx_eks[0]));
-	     break;
+	    des_set_key((caddr_t) rk, (caddr_t) (xd->edx_eks[0]));
+	    break;
 
 	case ALG_ENC_3DES:
-	     /* Copy the key material */
-	     m_copydata(m, EMT_SETSPI_FLEN + ESP_NEW_XENCAP_LEN + xd->edx_ivlen,
-			enc_keylen, (caddr_t) rk);
+	    /* Copy the key material */
+	    m_copydata(m, EMT_SETSPI_FLEN + ESP_NEW_XENCAP_LEN + xd->edx_ivlen,
+		       enc_keylen, (caddr_t) rk);
 
-	     des_set_key((caddr_t) rk, (caddr_t) (xd->edx_eks[0]));
-	     des_set_key((caddr_t) rk + 2, (caddr_t) (xd->edx_eks[1]));
-	     des_set_key((caddr_t) rk + 4, (caddr_t) (xd->edx_eks[2]));
-	     break;
+	    des_set_key((caddr_t) rk, (caddr_t) (xd->edx_eks[0]));
+	    des_set_key((caddr_t) rk + 2, (caddr_t) (xd->edx_eks[1]));
+	    des_set_key((caddr_t) rk + 4, (caddr_t) (xd->edx_eks[2]));
+	    break;
     }
-
-    /* Replay counters are mandatory, even without auth */
-    xd->edx_rpl = AH_HMAC_INITIAL_RPL;
-    xd->edx_wnd = txd.edx_wnd;
-    xd->edx_bitmap = 0;
 
     if (txd.edx_flags & ESP_NEW_FLAG_AUTH)
     {
-	 auth_keylen = txd.edx_keylen - xd->edx_ivlen - enc_keylen;
+	auth_keylen = txd.edx_keylen - enc_keylen;
 
-	 /* Or larger ? XXX */
-	 MALLOC(buffer, caddr_t, 
-		auth_keylen < blocklen ? blocklen : auth_keylen,
-		M_TEMP, M_WAITOK);
-	 if (buffer == NULL)
-	 {
 #ifdef ENCDEBUG
-	      if (encdebug)
-		   printf("esp_new_init(): MALLOC() failed\n");
+	if (encdebug)
+	  printf("esp_new_init(): using %d bytes of authentication key\n",
+		 auth_keylen);
+#endif
+
+	MALLOC(buffer, caddr_t, 
+	       auth_keylen < blocklen ? blocklen : auth_keylen,
+	       M_TEMP, M_WAITOK);
+	if (buffer == NULL)
+	{
+#ifdef ENCDEBUG
+	    if (encdebug)
+	      printf("esp_new_init(): MALLOC() failed\n");
 #endif /* ENCDEBUG */
-	      free(tdbp->tdb_xdata, M_XDATA);
-	      return ENOBUFS;
-	 }
+	    free(tdbp->tdb_xdata, M_XDATA);
+	    return ENOBUFS;
+	}
 
-	 bzero(buffer, auth_keylen < blocklen ? blocklen : auth_keylen);
+	bzero(buffer, auth_keylen < blocklen ? blocklen : auth_keylen);
 
-	 /* Copy the key to the buffer */
-	 m_copydata(m, EMT_SETSPI_FLEN + ESP_NEW_XENCAP_LEN + xd->edx_ivlen +
-		    enc_keylen, auth_keylen, buffer);
+	/* Copy the key to the buffer */
+	m_copydata(m, EMT_SETSPI_FLEN + ESP_NEW_XENCAP_LEN + xd->edx_ivlen +
+		   enc_keylen, auth_keylen, buffer);
 
-	 /* Shorten the key if necessary */
-	 if (auth_keylen > blocklen)
-	 {
-	      switch (xd->edx_hash_algorithm)
-	      {
-	      case ALG_AUTH_MD5:
-		   MD5Init(&(xd->edx_md5_ictx));
-		   MD5Update(&(xd->edx_md5_ictx), buffer, auth_keylen);
-		   bzero(buffer, 
-			 auth_keylen < blocklen ? blocklen : auth_keylen);
-		   MD5Final(buffer, &(xd->edx_md5_ictx));
-		   break;
+	/* Shorten the key if necessary */
+	if (auth_keylen > blocklen)
+	{
+	    switch (xd->edx_hash_algorithm)
+	    {
+		case ALG_AUTH_MD5:
+		    MD5Init(&(xd->edx_md5_ictx));
+		    MD5Update(&(xd->edx_md5_ictx), buffer, auth_keylen);
+		    bzero(buffer, 
+			  auth_keylen < blocklen ? blocklen : auth_keylen);
+		    MD5Final(buffer, &(xd->edx_md5_ictx));
+		    break;
 
-	      case ALG_AUTH_SHA1:
-		   SHA1Init(&(xd->edx_sha1_ictx));
-		   SHA1Update(&(xd->edx_sha1_ictx), buffer, auth_keylen);
-		   bzero(buffer,
-			 auth_keylen < blocklen ? blocklen : auth_keylen);
-		   SHA1Final(buffer, &(xd->edx_sha1_ictx));
-		   break;
-	      }
-	 }
+		case ALG_AUTH_SHA1:
+		    SHA1Init(&(xd->edx_sha1_ictx));
+		    SHA1Update(&(xd->edx_sha1_ictx), buffer, auth_keylen);
+		    bzero(buffer,
+			  auth_keylen < blocklen ? blocklen : auth_keylen);
+		    SHA1Final(buffer, &(xd->edx_sha1_ictx));
+		    break;
+	    }
+	}
 
-	 /* Precompute the I and O pads of the HMAC */
-	 for (i = 0; i < blocklen; i++)
-	      buffer[i] ^= HMAC_IPAD_VAL;
+	/* Precompute the I and O pads of the HMAC */
+	for (i = 0; i < blocklen; i++)
+	  buffer[i] ^= HMAC_IPAD_VAL;
 
-	 switch (xd->edx_hash_algorithm)
-	 {
-	 case ALG_AUTH_MD5:
-	      MD5Init(&(xd->edx_md5_ictx));
-	      MD5Update(&(xd->edx_md5_ictx), buffer, blocklen);
-	      break;
+	switch (xd->edx_hash_algorithm)
+	{
+	    case ALG_AUTH_MD5:
+		MD5Init(&(xd->edx_md5_ictx));
+		MD5Update(&(xd->edx_md5_ictx), buffer, blocklen);
+		break;
 
-	 case ALG_AUTH_SHA1:
-	      SHA1Init(&(xd->edx_sha1_ictx));
-	      SHA1Update(&(xd->edx_sha1_ictx), buffer, blocklen);
-	      break;
-	 }
+	    case ALG_AUTH_SHA1:
+		SHA1Init(&(xd->edx_sha1_ictx));
+		SHA1Update(&(xd->edx_sha1_ictx), buffer, blocklen);
+		break;
+	}
 	 
-	 for (i = 0; i < blocklen; i++)
-	      buffer[i] ^= (HMAC_IPAD_VAL ^ HMAC_OPAD_VAL);
+	for (i = 0; i < blocklen; i++)
+	  buffer[i] ^= (HMAC_IPAD_VAL ^ HMAC_OPAD_VAL);
 
-	 switch (xd->edx_hash_algorithm)
-	 {
-	 case ALG_AUTH_MD5:
-	      MD5Init(&(xd->edx_md5_octx));
-	      MD5Update(&(xd->edx_md5_octx), buffer, blocklen);
-	      break;
+	switch (xd->edx_hash_algorithm)
+	{
+	    case ALG_AUTH_MD5:
+		MD5Init(&(xd->edx_md5_octx));
+		MD5Update(&(xd->edx_md5_octx), buffer, blocklen);
+		break;
 
-	 case ALG_AUTH_SHA1:
-	      SHA1Init(&(xd->edx_sha1_octx));
-	      SHA1Update(&(xd->edx_sha1_octx), buffer, blocklen);
-	      break;
-	 }
+	    case ALG_AUTH_SHA1:
+		SHA1Init(&(xd->edx_sha1_octx));
+		SHA1Update(&(xd->edx_sha1_octx), buffer, blocklen);
+		break;
+	}
 
-	 bzero(buffer, blocklen);
-	 free(buffer, M_TEMP);
+	bzero(buffer, blocklen);
+	free(buffer, M_TEMP);
     }
 
     bzero(rk, 6 * sizeof(u_int32_t));		/* paranoid */
@@ -397,23 +401,24 @@ esp_new_input(struct mbuf *m, struct tdb *tdb)
 
     if (xd->edx_flags & ESP_NEW_FLAG_AUTH)
     { 
-	 switch (xd->edx_hash_algorithm)
-	 {
-	 case ALG_AUTH_MD5:
-	 case ALG_AUTH_SHA1:
-	      alen = AH_HMAC_HASHLEN;
-	      break;
+	switch (xd->edx_hash_algorithm)
+	{
+	    case ALG_AUTH_MD5:
+	    case ALG_AUTH_SHA1:
+		alen = AH_HMAC_HASHLEN;
+		break;
 
-	 default:
-	      log(LOG_ALERT,
-		  "esp_new_input(): unsupported algorithm %d in SA %x/%08x",
-		  xd->edx_hash_algorithm, tdb->tdb_dst, ntohl(tdb->tdb_spi));
-	      m_freem(m);
-	      return NULL;
-	 }
-    } else
-	 alen = 0;
-    
+	    default:
+		log(LOG_ALERT,
+		    "esp_new_input(): unsupported algorithm %d in SA %x/%08x",
+		    xd->edx_hash_algorithm, tdb->tdb_dst, 
+		    ntohl(tdb->tdb_spi));
+		m_freem(m);
+		return NULL;
+	}
+    } 
+    else
+      alen = 0;
 
     rcvif = m->m_pkthdr.rcvif;
     if (rcvif == NULL)
@@ -488,7 +493,7 @@ esp_new_input(struct mbuf *m, struct tdb *tdb)
     }
 
     /* Skip the IP header, IP options, SPI, SN and IV and minus Auth Data*/
-    plen = m->m_pkthdr.len - (ip->ip_hl << 2) - 2*sizeof (u_int32_t) - 
+    plen = m->m_pkthdr.len - (ip->ip_hl << 2) - 2 * sizeof (u_int32_t) - 
 	   xd->edx_ivlen - alen;
     if (plen & (blks -1))
     {
@@ -503,116 +508,120 @@ esp_new_input(struct mbuf *m, struct tdb *tdb)
 
     if (xd->edx_flags & ESP_NEW_FLAG_AUTH) 
     {
-	 switch (xd->edx_hash_algorithm)
-	 {
-	 case ALG_AUTH_MD5:
-	      md5ctx = xd->edx_md5_ictx;;
-	      break;
+	switch (xd->edx_hash_algorithm)
+	{
+	    case ALG_AUTH_MD5:
+		md5ctx = xd->edx_md5_ictx;;
+		break;
 	      
-	 case ALG_AUTH_SHA1:
-	      sha1ctx = xd->edx_sha1_ictx;
-	      break;
-	 }
+	    case ALG_AUTH_SHA1:
+		sha1ctx = xd->edx_sha1_ictx;
+		break;
+	}
 
-         /* Auth covers SPI + SN + IV*/
-	 oplen = plen + 2*sizeof(u_int32_t) + xd->edx_ivlen; 
-	 off = (ip->ip_hl << 2);
+	/* Auth covers SPI + SN + IV*/
+	oplen = plen + 2 * sizeof(u_int32_t) + xd->edx_ivlen; 
+	off = (ip->ip_hl << 2);
 
-	 mo = m;
-	 while (oplen > 0)
-	 {
-	      if (mo == 0)
-		   panic("esp_new_input(): m_copydata (copy)");
+	mo = m;
+	while (oplen > 0)
+	{
+	    if (mo == 0)
+	      panic("esp_new_input(): m_copydata (copy)");
 
-	      count = min(mo->m_len - off, oplen);
+	    count = min(mo->m_len - off, oplen);
 
-	      switch (xd->edx_hash_algorithm)
-	      {
-	      case ALG_AUTH_MD5:
-		   MD5Update(&md5ctx, mtod(mo, unsigned char *) + off, count);
-		   break;
+	    switch (xd->edx_hash_algorithm)
+	    {
+		case ALG_AUTH_MD5:
+		    MD5Update(&md5ctx, mtod(mo, unsigned char *) + off, 
+			      count);
+		    break;
 
-	      case ALG_AUTH_SHA1:
-		   SHA1Update(&sha1ctx, mtod(mo, unsigned char *) + off, count);
-		   break;
-	      }
+		case ALG_AUTH_SHA1:
+		    SHA1Update(&sha1ctx, mtod(mo, unsigned char *) + off, 
+			       count);
+		    break;
+	    }
 
-	      oplen -= count;
-	      if (oplen == 0) 
-	      {
-		   /* Get the authentication data */
-		   if (mo->m_len - off - count >= alen)
-			bcopy(mtod(mo, unsigned char *) + off + count, buf, alen);
-		   else 
-		   {
-			int olen = alen, tmp = 0;
-
-			mi = mo;
-			off += count;
-
-			while (mi != NULL && olen > 0) {
-			     count = min(mi->m_len - off, olen);
-			     bcopy(mtod(mi, unsigned char *) + off, buf + tmp, count);
-
-			     off = 0;
-			     tmp += count;
-			     olen -= count;
-			     mi = mi->m_next;
-			}
-		   }
-	      }
+	    oplen -= count;
+	    if (oplen == 0) 
+	    {
+		/* Get the authentication data */
+		if (mo->m_len - off - count >= alen)
+		  bcopy(mtod(mo, unsigned char *) + off + count, buf, alen);
+		else 
+		{
+		    int olen = alen, tmp = 0;
+		      
+		    mi = mo;
+		    off += count;
+		      
+		    while (mi != NULL && olen > 0) 
+		    {
+			count = min(mi->m_len - off, olen);
+			bcopy(mtod(mi, unsigned char *) + off, buf + tmp,
+			      count);
+			  
+			off = 0;
+			tmp += count;
+			olen -= count;
+			mi = mi->m_next;
+		    }
+		}
+	    }
 		   
-	      off = 0;
-	      mo = mo->m_next;
-	 }
+	    off = 0;
+	    mo = mo->m_next;
+	}
 
-	 switch (xd->edx_hash_algorithm)
-	 {
-	 case ALG_AUTH_MD5:
-	      MD5Final(buf2, &md5ctx);
-	      md5ctx = xd->edx_md5_octx;
-	      MD5Update(&md5ctx, buf2, AH_MD5_ALEN);
-	      MD5Final(buf2, &md5ctx);
-	      break;
+	switch (xd->edx_hash_algorithm)
+	{
+	    case ALG_AUTH_MD5:
+		MD5Final(buf2, &md5ctx);
+		md5ctx = xd->edx_md5_octx;
+		MD5Update(&md5ctx, buf2, AH_MD5_ALEN);
+		MD5Final(buf2, &md5ctx);
+		break;
 
-	 case ALG_AUTH_SHA1:
-	      SHA1Final(buf2, &sha1ctx);
-	      sha1ctx = xd->edx_sha1_octx;
-	      SHA1Update(&sha1ctx, buf2, AH_SHA1_ALEN);
-	      SHA1Final(buf2, &sha1ctx);
-	      break;
-	 }
+	    case ALG_AUTH_SHA1:
+		SHA1Final(buf2, &sha1ctx);
+		sha1ctx = xd->edx_sha1_octx;
+		SHA1Update(&sha1ctx, buf2, AH_SHA1_ALEN);
+		SHA1Final(buf2, &sha1ctx);
+		break;
+	}
 
 
-	 if (bcmp(buf2, buf, AH_HMAC_HASHLEN))
-	 {
-	      log(LOG_ALERT,
-		  "esp_new_input(): authentication failed for packet from %x to %x, spi %08x", ip->ip_src, ip->ip_dst, ntohl(esp->esp_spi));
-	      espstat.esps_badauth++;
-	      m_freem(m);
-	      return NULL;
-	 }
+	if (bcmp(buf2, buf, AH_HMAC_HASHLEN))
+	{
+	    log(LOG_ALERT,
+		"esp_new_input(): authentication failed for packet from %x to %x, spi %08x", ip->ip_src, ip->ip_dst, ntohl(esp->esp_spi));
+	    espstat.esps_badauth++;
+	    m_freem(m);
+	    return NULL;
+	}
     }
 
     oplen = plen;
-    ilen = m->m_len - (ip->ip_hl << 2) - 2*sizeof(u_int32_t);
-    idat = mtod(m, unsigned char *) + (ip->ip_hl << 2) + 2*sizeof(u_int32_t);
+    ilen = m->m_len - (ip->ip_hl << 2) - 2 * sizeof(u_int32_t);
+    idat = mtod(m, unsigned char *) + (ip->ip_hl << 2) + 2 * sizeof(u_int32_t);
 
     if (xd->edx_ivlen == 0)		/* Derived IV in use */
     {
-	 bcopy((u_char *)&esp->esp_rpl, iv, sizeof(esp->esp_rpl));
-	 iv[4] = ~iv[0];
-	 iv[5] = ~iv[1];
-	 iv[6] = ~iv[2];
-	 iv[7] = ~iv[3];
+	bcopy((u_char *) &esp->esp_rpl, iv, sizeof(esp->esp_rpl));
+	iv[4] = ~iv[0];
+	iv[5] = ~iv[1];
+	iv[6] = ~iv[2];
+	iv[7] = ~iv[3];
     }
     else
     {
-	 bcopy(idat, iv, xd->edx_ivlen);
-	 ilen -= xd->edx_ivlen;
-	 idat += xd->edx_ivlen;
+	bcopy(idat, iv, xd->edx_ivlen);
+	ilen -= xd->edx_ivlen;
+	idat += xd->edx_ivlen;
     }
-
+    
     olen = ilen;
     odat = idat;
     mi = mo = m;
@@ -645,7 +654,7 @@ esp_new_input(struct mbuf *m, struct tdb *tdb)
 	      panic("esp_new_input(): bad chain (i)\n");
 
 	    ilen = mi->m_len;
-	    idat = (u_char *)mi->m_data;
+	    idat = (u_char *) mi->m_data;
 	}
 
 	blk[i] = niv[i] = *idat++;
@@ -692,7 +701,6 @@ esp_new_input(struct mbuf *m, struct tdb *tdb)
 	plen--;
     }
 
-
     /* Save the options */
     m_copydata(m, sizeof(struct ip), (ipo.ip_hl << 2) - sizeof(struct ip),
 	       (caddr_t) opts);
@@ -705,7 +713,7 @@ esp_new_input(struct mbuf *m, struct tdb *tdb)
      */
 
     m_adj(m, - blk[6] - 2 - alen);
-    m_adj(m, 2*sizeof(u_int32_t) + xd->edx_ivlen);
+    m_adj(m, 2 * sizeof(u_int32_t) + xd->edx_ivlen);
 
     if (m->m_len < (ipo.ip_hl << 2))
     {
@@ -724,7 +732,7 @@ esp_new_input(struct mbuf *m, struct tdb *tdb)
     ipo.ip_p = blk[7];
     ipo.ip_id = htons(ipo.ip_id);
     ipo.ip_off = 0;
-    ipo.ip_len += (ipo.ip_hl << 2) -  2*sizeof(u_int32_t) - xd->edx_ivlen -
+    ipo.ip_len += (ipo.ip_hl << 2) -  2 * sizeof(u_int32_t) - xd->edx_ivlen -
 		  blk[6] - 2 - alen;
     ipo.ip_len = htons(ipo.ip_len);
     ipo.ip_sum = 0;
@@ -777,7 +785,7 @@ esp_new_input(struct mbuf *m, struct tdb *tdb)
 
 int
 esp_new_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
-		 struct mbuf **mp)
+	       struct mbuf **mp)
 {
     struct esp_new_xdata *xd;
     struct ip *ip, ipo;
@@ -812,27 +820,28 @@ esp_new_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
 
     if (xd->edx_flags & ESP_NEW_FLAG_AUTH)
     {
-	 switch (xd->edx_hash_algorithm)
-	 {
-	 case ALG_AUTH_MD5:
-	 case ALG_AUTH_SHA1:
-	      alen = AH_HMAC_HASHLEN;
+	switch (xd->edx_hash_algorithm)
+	{
+	    case ALG_AUTH_MD5:
+	    case ALG_AUTH_SHA1:
+		alen = AH_HMAC_HASHLEN;
 #ifdef ENCDEBUG
-	      if (encdebug)
-		   printf("esp_new_output(): using hash algorithm %d\n",
-			  xd->edx_hash_algorithm);
+		if (encdebug)
+		  printf("esp_new_output(): using hash algorithm %d\n",
+			 xd->edx_hash_algorithm);
 #endif /* ENCDEBUG */
-	      break;
+		break;
 
-	 default:
-	      log(LOG_ALERT,
-		  "esp_new_output(): unsupported algorithm %d in SA %x/%08x",
-		  xd->edx_hash_algorithm, tdb->tdb_dst, ntohl(tdb->tdb_spi));
-	      m_freem(m);
-	      return NULL;
-	 }
-    } else
-	 alen = 0;
+	    default:
+		log(LOG_ALERT,
+		    "esp_new_output(): unsupported algorithm %d in SA %x/%08x",
+		    xd->edx_hash_algorithm, tdb->tdb_dst, ntohl(tdb->tdb_spi));
+		m_freem(m);
+		return NULL;
+	}
+    } 
+    else
+      alen = 0;
 
     espstat.esps_output++;
 
@@ -840,11 +849,11 @@ esp_new_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
     if (m == NULL)
     {
 #ifdef ENCDEBUG
-	 if (encdebug)
-	      printf("esp_new_output(): m_pullup() failed, SA %x/%08x\n",
-		     tdb->tdb_dst, ntohl(tdb->tdb_spi));
+	if (encdebug)
+	  printf("esp_new_output(): m_pullup() failed, SA %x/%08x\n",
+		 tdb->tdb_dst, ntohl(tdb->tdb_spi));
 #endif /* ENCDEBUG */
-	 return ENOBUFS;
+	return ENOBUFS;
     }
 
     if (xd->edx_rpl == 0)
@@ -871,11 +880,11 @@ esp_new_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
 	if (m == NULL)
 	{
 #ifdef ENCDEBUG
-	     if (encdebug)
-		  printf("esp_new_input(): m_pullup() failed for SA %x/%08x\n",
-			 tdb->tdb_dst, ntohl(tdb->tdb_spi));
+	    if (encdebug)
+	      printf("esp_new_input(): m_pullup() failed for SA %x/%08x\n",
+		     tdb->tdb_dst, ntohl(tdb->tdb_spi));
 #endif /* ENCDEBUG */
-	     return ENOBUFS;
+	    return ENOBUFS;
 	}
 
 	ip = mtod(m, struct ip *);
@@ -886,7 +895,7 @@ esp_new_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
     }
 
     ilen = ntohs(ip->ip_len);    /* Size of the packet */
-    ohlen = 2*sizeof (u_int32_t) + xd->edx_ivlen;
+    ohlen = 2 * sizeof(u_int32_t) + xd->edx_ivlen;
 
     ipo = *ip;
     nh = ipo.ip_p;
@@ -917,33 +926,34 @@ esp_new_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
 
     if (xd->edx_ivlen == 0)
     {
-	 bcopy((u_char *)&espo.esp_rpl, iv, 4);
-	 iv[4] = ~iv[0];
-	 iv[5] = ~iv[1];
-	 iv[6] = ~iv[2];
-	 iv[7] = ~iv[3];
-    } else
+	bcopy((u_char *) &espo.esp_rpl, iv, 4);
+	iv[4] = ~iv[0];
+	iv[5] = ~iv[1];
+	iv[6] = ~iv[2];
+	iv[7] = ~iv[3];
+    } 
+    else
     {
-	 bcopy(xd->edx_iv, iv, xd->edx_ivlen);
-	 bcopy(xd->edx_iv, espo.esp_iv, xd->edx_ivlen);
+	bcopy(xd->edx_iv, iv, xd->edx_ivlen);
+	bcopy(xd->edx_iv, espo.esp_iv, xd->edx_ivlen);
     }
 
     /* Authenticate the esp header */
     if (xd->edx_flags & ESP_NEW_FLAG_AUTH)
     {
-	 switch (xd->edx_hash_algorithm)
-	 {
-	 case ALG_AUTH_MD5:
-	      md5ctx = xd->edx_md5_ictx;
-	      MD5Update(&md5ctx, (unsigned char *)&espo, 
-			2*sizeof(u_int32_t) + xd->edx_ivlen);
-	      break;
-	 case ALG_AUTH_SHA1:
-	      sha1ctx = xd->edx_sha1_ictx;
-	      SHA1Update(&sha1ctx, (unsigned char *)&espo, 
-			 2*sizeof(u_int32_t) + xd->edx_ivlen);
-	      break;
-	 }
+	switch (xd->edx_hash_algorithm)
+	{
+	    case ALG_AUTH_MD5:
+		md5ctx = xd->edx_md5_ictx;
+		MD5Update(&md5ctx, (unsigned char *) &espo, 
+			  2 * sizeof(u_int32_t) + xd->edx_ivlen);
+		break;
+	    case ALG_AUTH_SHA1:
+		sha1ctx = xd->edx_sha1_ictx;
+		SHA1Update(&sha1ctx, (unsigned char *) &espo, 
+			   2 * sizeof(u_int32_t) + xd->edx_ivlen);
+		break;
+	}
     }
 
     /* Encrypt the payload */
@@ -957,7 +967,7 @@ esp_new_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
 	      panic("esp_new_output(): bad chain (i)\n");
 
 	    ilen = mi->m_len;
-	    idat = (u_char *)mi->m_data;
+	    idat = (u_char *) mi->m_data;
 	}
 
 	blk[i] = *idat++ ^ iv[i];
@@ -981,15 +991,16 @@ esp_new_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
 	    }
 
 	    if (xd->edx_flags & ESP_NEW_FLAG_AUTH)
-		 switch (xd->edx_hash_algorithm)
-		 {
-		 case ALG_AUTH_MD5:
+	      switch (xd->edx_hash_algorithm)
+	      {
+		  case ALG_AUTH_MD5:
 		      MD5Update(&md5ctx, blk, blks);
 		      break;
-		 case ALG_AUTH_SHA1:
+
+		  case ALG_AUTH_SHA1:
 		      SHA1Update(&sha1ctx, blk, blks);
 		      break;
-		 }
+	      }
 
 	    for (i = 0; i < blks; i++)
 	    {
@@ -1016,23 +1027,25 @@ esp_new_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
     /* Put in authentication data */
     if (xd->edx_flags & ESP_NEW_FLAG_AUTH)
     {
-	 switch (xd->edx_hash_algorithm)
-	 {
-	 case ALG_AUTH_MD5:
-	      MD5Final(auth, &md5ctx);
-	      md5ctx = xd->edx_md5_octx;
-	      MD5Update(&md5ctx, auth, AH_MD5_ALEN);
-	      MD5Final(auth, &md5ctx);
-	      break;
-	 case ALG_AUTH_SHA1:
-	      SHA1Final(auth, &sha1ctx);
-	      sha1ctx = xd->edx_sha1_octx;
-	      SHA1Update(&sha1ctx, auth, AH_SHA1_ALEN);
-	      SHA1Final(auth, &sha1ctx);
-	      break;
-	 }
-	 /* Copy the final authenticator */
-	 bcopy(auth, pad+padding, alen);
+	switch (xd->edx_hash_algorithm)
+	{
+	    case ALG_AUTH_MD5:
+		MD5Final(auth, &md5ctx);
+		md5ctx = xd->edx_md5_octx;
+		MD5Update(&md5ctx, auth, AH_MD5_ALEN);
+		MD5Final(auth, &md5ctx);
+		break;
+
+	    case ALG_AUTH_SHA1:
+		SHA1Final(auth, &sha1ctx);
+		sha1ctx = xd->edx_sha1_octx;
+		SHA1Update(&sha1ctx, auth, AH_SHA1_ALEN);
+		SHA1Final(auth, &sha1ctx);
+		break;
+	}
+
+	/* Copy the final authenticator */
+	bcopy(auth, pad + padding, alen);
     }
 
     /*
@@ -1145,6 +1158,7 @@ checkreplaywindow32(u_int32_t seq, u_int32_t initial, u_int32_t *lastseq, u_int3
 	*lastseq = seq + initial;
 	return 0;
     }
+
     diff = *lastseq - initial - seq;
     if (diff >= window)
     {
@@ -1156,6 +1170,7 @@ checkreplaywindow32(u_int32_t seq, u_int32_t initial, u_int32_t *lastseq, u_int3
 	espstat.esps_replay++;
 	return 3;
     }
+
     *bitmap |= (((u_int32_t) 1) << diff);
     return 0;
 }

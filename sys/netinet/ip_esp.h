@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.h,v 1.10 1997/08/26 12:02:49 provos Exp $	*/
+/*	$OpenBSD: ip_esp.h,v 1.11 1997/09/23 21:42:20 angelos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -118,7 +118,7 @@ struct esp_new_xencap
     u_int32_t   edx_hash_algorithm;
     u_int32_t	edx_ivlen;	/* 0 or 8 */
     u_int32_t	edx_keylen;
-    u_int32_t	edx_wnd;
+    int32_t	edx_wnd;
     u_int32_t   edx_flags;
     u_int8_t	edx_data[1];	/* IV + key material */
 };
@@ -132,7 +132,7 @@ struct esp_new_xdata
     u_int32_t   edx_hash_algorithm;
     u_int32_t   edx_ivlen;      /* 0 or 8 */
     u_int32_t   edx_rpl;	/* Replay counter */
-    u_int32_t   edx_wnd;	/* Replay window */
+    int32_t   edx_wnd;		/* Replay window */
     u_int32_t   edx_bitmap;
     u_int32_t   edx_flags;
     u_int32_t   edx_initial;	/* initial replay value */

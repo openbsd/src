@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.18 1997/07/28 18:55:33 provos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.19 1997/09/23 21:42:21 angelos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -588,16 +588,28 @@ ipsp_kern(int off, char **bufp, int len)
 			   tdb->tdb_soft_timeout - time.tv_sec);
 	    
 	    if (tdb->tdb_flags & TDBF_BYTES)
-	      l += sprintf(buffer + l, "\t\tHard expiration after %qd bytes (currently %qd bytes processed)\n", tdb->tdb_exp_bytes, tdb->tdb_cur_bytes);
+	      l += sprintf(buffer + l, "\t\tHard expiration after %qd bytes\n",
+			   tdb->tdb_exp_bytes);
 	    
 	    if (tdb->tdb_flags & TDBF_SOFT_BYTES)
-	      l += sprintf(buffer + l, "\t\tSoft expiration after %qd bytes (currently %qd bytes processed)\n", tdb->tdb_soft_bytes, tdb->tdb_cur_bytes);
+	      l += sprintf(buffer + l, "\t\tSoft expiration after %qd bytes\n",
+			   tdb->tdb_soft_bytes);
+
+	    l += sprintf(buffer + l, "\t\tCurrently %qd bytes processed\n",
+			 tdb->tdb_cur_bytes);
 	    
 	    if (tdb->tdb_flags & TDBF_PACKETS)
-	      l += sprintf(buffer + l, "\t\tHard expiration after %qd packets (currently %qd packets processed)\n", tdb->tdb_exp_packets, tdb->tdb_cur_packets);
+	      l += sprintf(buffer + l,
+			   "\t\tHard expiration after %qd packets\n",
+			   tdb->tdb_exp_packets);
 	    
 	    if (tdb->tdb_flags & TDBF_SOFT_PACKETS)
-	      l += sprintf(buffer + l, "\t\tSoft expiration after %qd packets (currently %qd packets processed)\n", tdb->tdb_soft_packets, tdb->tdb_cur_packets);
+	      l += sprintf(buffer + l,
+			   "\t\tSoft expiration after %qd packets\n",
+			   tdb->tdb_soft_packets);
+
+	    l += sprintf(buffer + l, "\t\tCurrently %qd packets processed\n",
+			 tdb->tdb_cur_packets);
 	    
 	    if (tdb->tdb_flags & TDBF_FIRSTUSE)
 	      l += sprintf(buffer + l, "\t\tHard expiration(2) in %d seconds\n",

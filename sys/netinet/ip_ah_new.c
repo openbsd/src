@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah_new.c,v 1.7 1997/08/26 12:02:48 provos Exp $	*/
+/*	$OpenBSD: ip_ah_new.c,v 1.8 1997/09/23 21:42:20 angelos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -340,7 +340,7 @@ ah_new_input(struct mbuf *m, struct tdb *tdb)
     else
       ah = (struct ah_new *) (ip + 1);
 
-    if (ah->ah_hl * sizeof(u_int32_t) != AH_HMAC_HASHLEN)
+    if (ah->ah_hl * sizeof(u_int32_t) != AH_HMAC_HASHLEN + AH_HMAC_RPLENGTH)
     {
 #ifdef ENCDEBUG
 	if (encdebug)
@@ -382,7 +382,7 @@ ah_new_input(struct mbuf *m, struct tdb *tdb)
     ipo.ip_len += (ip->ip_hl << 2);     /* adjusted in ip_intr() */
     HTONS(ipo.ip_len);
     HTONS(ipo.ip_id);
-    ipo.ip_off = htons(ipo.ip_off & IP_DF);     /* XXX -- and the C bit? */
+    ipo.ip_off = 0;
     ipo.ip_ttl = 0;
     ipo.ip_sum = 0;
 
@@ -400,7 +400,7 @@ ah_new_input(struct mbuf *m, struct tdb *tdb)
     }
 
     /* Options */
-    if ((ip->ip_hl << 2 > sizeof(struct ip)))
+    if ((ip->ip_hl << 2) > sizeof(struct ip))
       for (off = sizeof(struct ip); off < (ip->ip_hl << 2);)
       {
 	  optval = ((u_int8_t *) ip)[off];
@@ -489,7 +489,6 @@ ah_new_input(struct mbuf *m, struct tdb *tdb)
 	    break;
     }
 
-
     /*
      * Code shamelessly stolen from m_copydata
      */
@@ -551,11 +550,24 @@ ah_new_input(struct mbuf *m, struct tdb *tdb)
 	    break;
     }
 
-
     if (bcmp(aho->ah_data, ah->ah_data, AH_HMAC_HASHLEN))
     {
 	log(LOG_ALERT,
 	    "ah_new_input(): authentication failed for packet from %x to %x, spi %08x", ip->ip_src, ip->ip_dst, ntohl(ah->ah_spi));
+#ifdef ENCDEBUG
+	if (encdebug)
+	{
+	    printf("Received authenticator: ");
+	    for (off = 0; off < AH_HMAC_HASHLEN; off++)
+	      printf("%02x ", ah->ah_data[off]);
+	    printf("\n");
+
+	    printf("Computed authenticator: ");
+	    for (off = 0; off < AH_HMAC_HASHLEN; off++)
+	      printf("%02x ", aho->ah_data[off]);
+	    printf("\n");
+	}
+#endif
 	ahstat.ahs_badauth++;
 	m_freem(m);
 	return NULL;
@@ -702,7 +714,7 @@ ah_new_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
     ipo.ip_tos = 0;
     ipo.ip_len = htons(ohlen + ilen);
     ipo.ip_id = ip->ip_id;
-    ipo.ip_off = htons(ntohs(ip->ip_off) & IP_DF);
+    ipo.ip_off = 0;
     ipo.ip_ttl = 0;
     ipo.ip_p = IPPROTO_AH;
     ipo.ip_sum = 0;
@@ -712,7 +724,7 @@ ah_new_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
     bzero(&aho, sizeof(struct ah_new));
 
     aho.ah_nh = ip->ip_p;
-    aho.ah_hl = (AH_HMAC_HASHLEN >> 2);
+    aho.ah_hl = ((AH_HMAC_RPLENGTH + AH_HMAC_HASHLEN) >> 2);
     aho.ah_rv = 0;
     aho.ah_spi = tdb->tdb_spi;
 
