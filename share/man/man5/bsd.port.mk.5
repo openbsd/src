@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.74 2002/08/29 07:34:31 wcobb Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.75 2002/10/14 09:58:01 pvalchev Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -1099,6 +1099,10 @@ The
 .Sq any
 setting creates an extra flavor choice of 
 .Sq lesstif .
+.It Ev USE_X11
+Set to
+.Sq Yes
+if port requires X11 to work.
 .It Ev VMEM_WARNING
 Set to 
 .Sq Yes 
