@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncheck_ffs.c,v 1.20 2003/08/25 23:28:15 tedu Exp $	*/
+/*	$OpenBSD: ncheck_ffs.c,v 1.21 2003/09/25 07:50:22 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -26,7 +26,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: ncheck_ffs.c,v 1.20 2003/08/25 23:28:15 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: ncheck_ffs.c,v 1.21 2003/09/25 07:50:22 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -122,12 +122,16 @@ matchcache(const void *key, const void *val)
 void
 cacheino(ino_t ino, struct ufs1_dinode *ip)
 {
-	if (nicache)
-		icache = realloc(icache, (nicache + 1) * sizeof(struct icache_s));
-	else
-		icache = malloc(sizeof(struct icache_s));
-	if (icache == NULL)
+	struct icache_s *newicache;
+
+	newicache = realloc(icache, (nicache + 1) * sizeof(struct icache_s));
+	if (newicache == NULL) {
+		if (icache)
+			free(icache);
+		icache = NULL;
 		errx(1, "malloc");
+	}
+	icache = newicache;
 	icache[nicache].ino = ino;
 	icache[nicache++].di = *ip;
 }
@@ -264,12 +268,16 @@ loop:
 void
 addinode(ino_t ino)
 {
-	if (ninodes)
-		ilist = realloc(ilist, sizeof(ino_t) * (ninodes + 1));
-	else
-		ilist = malloc(sizeof(ino_t));
-	if (ilist == NULL)
+	ino_t *newilist;
+
+	newilist = realloc(ilist, sizeof(ino_t) * (ninodes + 1));
+	if (newilist == NULL) {
+		if (ilist)
+			free(ilist);
+		ilist = NULL;
 		errx(4, "not enough memory to allocate tables");
+	}
+	ilist = newilist;
 	ilist[ninodes] = ino;
 	ninodes++;
 }
@@ -512,8 +520,8 @@ format_entry(const char *path, struct direct *dp)
 {
 	static size_t size;
 	static char *buf;
-	size_t len;
-	char *src, *dst;
+	size_t len, nsize;
+	char *src, *dst, *newbuf;
 
 	if (buf == NULL) {
 		if ((buf = malloc(LINE_MAX)) == NULL)
@@ -525,9 +533,12 @@ format_entry(const char *path, struct direct *dp)
 		/* Need room for at least one character in buf. */
 		if (size <= dst - buf) {
 		    expand_buf:
-			size <<= 1;
-			if ((buf = realloc(buf, size)) == NULL)
+			nsize = size << 1;
+			
+			if ((newbuf = realloc(buf, nsize)) == NULL)
 				err(1, "realloc");
+			buf = newbuf;
+			size = nsize;
 		}
 		if (src[0] =='\\') {
 			switch (src[1]) {
