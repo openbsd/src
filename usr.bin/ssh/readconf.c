@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: readconf.c,v 1.28 2000/04/26 22:43:14 markus Exp $");
+RCSID("$Id: readconf.c,v 1.29 2000/05/02 22:18:04 markus Exp $");
 
 #include "ssh.h"
 #include "cipher.h"
@@ -745,14 +745,12 @@ fill_default_options(Options * options)
 		sprintf(options->identity_files[0], "~/%.100s", SSH_CLIENT_IDENTITY);
 		options->num_identity_files = 1;
 	}
-#if 0
 	if (options->num_identity_files2 == 0) {
 		options->identity_files2[0] =
-			xmalloc(2 + strlen(SSH2_CLIENT_IDENTITY) + 1);
-		sprintf(options->identity_files2[0], "~/%.100s", SSH2_CLIENT_IDENTITY);
+			xmalloc(2 + strlen(SSH_CLIENT_ID_DSA) + 1);
+		sprintf(options->identity_files2[0], "~/%.100s", SSH_CLIENT_ID_DSA);
 		options->num_identity_files2 = 1;
 	}
-#endif
 	if (options->escape_char == -1)
 		options->escape_char = '~';
 	if (options->system_hostfile == NULL)

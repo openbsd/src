@@ -13,7 +13,7 @@
  *
  */
 
-/* RCSID("$Id: ssh.h,v 1.41 2000/04/26 22:38:16 deraadt Exp $"); */
+/* RCSID("$Id: ssh.h,v 1.42 2000/05/02 22:18:04 markus Exp $"); */
 
 #ifndef SSH_H
 #define SSH_H
@@ -109,6 +109,7 @@
  * file should only be readable by the user him/herself.
  */
 #define SSH_CLIENT_IDENTITY	".ssh/identity"
+#define SSH_CLIENT_ID_DSA	".ssh/id_dsa"
 
 /*
  * Configuration file in user\'s home directory.  This file need not be
