@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getnameinfo.3,v 1.30 2004/12/20 22:15:29 millert Exp $
+.\"	$OpenBSD: getnameinfo.3,v 1.31 2004/12/20 22:20:43 millert Exp $
 .\"
 .\" Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (C) 2000, 2001  Internet Software Consortium.
@@ -110,11 +110,48 @@ for
 .Tn UDP
 and
 .Tn TCP .
+.El
+.Pp
+This implementation allows experimental numeric IPv6 address notation with
+scope identifier.
+IPv6 link-local address will appear as a string like
+.Dq Li fe80::1%ne0 .
+Refer to
+.Xr getaddrinfo 3
+for more information.
 .Sh RETURN VALUES
 .Fn getnameinfo
 returns zero on success or one of the error codes listed in
 .Xr gai_strerror 3
 if an error occurs.
+.Sh EXAMPLES
+The following code tries to get a numeric host name, and service name,
+for a given socket address.
+Observe that there is no hardcoded reference to a particular address family.
+.Bd -literal -offset indent
+struct sockaddr *sa;	/* input */
+char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
+
+if (getnameinfo(sa, sa->sa_len, hbuf, sizeof(hbuf), sbuf,
+    sizeof(sbuf), NI_NUMERICHOST | NI_NUMERICSERV)) {
+	errx(1, "could not get numeric hostname");
+	/*NOTREACHED*/
+}
+printf("host=%s, serv=%s\en", hbuf, sbuf);
+.Ed
+.Pp
+The following version checks if the socket address has a reverse address mapping:
+.Bd -literal -offset indent
+struct sockaddr *sa;	/* input */
+char hbuf[NI_MAXHOST];
+
+if (getnameinfo(sa, sa->sa_len, hbuf, sizeof(hbuf), NULL, 0,
+    NI_NAMEREQD)) {
+	errx(1, "could not resolve hostname");
+	/*NOTREACHED*/
+}
+printf("host=%s\en", hbuf);
+.Ed
 .Sh SEE ALSO
 .Xr inet_ntop 3 ,
 .Xr gai_strerror 3 ,
