@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.5 2002/05/27 20:07:06 deraadt Exp $	*/
+/*	$OpenBSD: util.h,v 1.6 2002/05/28 00:23:57 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -41,6 +41,7 @@ void *_dl_malloc(const int size);
 void _dl_free(void *);
 char *_dl_strdup(const char *);
 void _dl_printf(const char *fmt, ...);
+void _dl_show_objects(void);
 
 /*
  *	The following functions are declared inline so they can

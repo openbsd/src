@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.16 2002/05/24 04:17:00 deraadt Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.17 2002/05/28 00:23:57 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -45,16 +45,13 @@
 
 int _dl_errno;
 
-void _dl_show_objects(void);
-
 static int _dl_real_close(void *handle);
 static void _dl_unload_deps(elf_object_t *object);
 
 void *
 dlopen(const char *libname, int how)
 {
-	elf_object_t	*object;
-	elf_object_t	*dynobj;
+	elf_object_t *object, *dynobj;
 	Elf_Dyn	*dynp;
 
 	if (libname == NULL)
@@ -141,13 +138,6 @@ int
 dlctl(void *handle, int command, void *data)
 {
 	switch (command) {
-
-#ifdef __mips__
-	case DL_DUMP_MAP:
-		_dl_show_objects();
-		return(0);
-#endif /* __mips__ */
-
 	default:
 		_dl_errno = DL_INVALID_CTL;
 		break;
