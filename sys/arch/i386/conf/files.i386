@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.126 2004/07/14 05:34:14 tedu Exp $
+#	$OpenBSD: files.i386,v 1.127 2004/09/15 20:28:53 grange Exp $
 #
 # new style config file for i386 architecture
 #
@@ -122,6 +122,11 @@ file	arch/i386/pci/elan520.c		elansc
 device	geodesc
 attach	geodesc at pci
 file	arch/i386/pci/geodesc.c		geodesc
+
+# National Semiconductor Geode SC1100 SMI/ACPI module
+device	gscpm
+attach	gscpm at pci
+file	arch/i386/pci/gscpm.c		gscpm
 
 # PCI-ISA bridge chipsets
 device	pcib: isabus
