@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldconfig.c,v 1.11 2002/05/24 19:00:17 drahn Exp $	*/
+/*	$OpenBSD: ldconfig.c,v 1.12 2002/07/30 22:25:27 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1993,1995 Paul Kranenburg
@@ -86,12 +86,10 @@ static int	readhints(void);
 static void	listhints(void);
 
 int
-main(argc, argv)
-int	argc;
-char	*argv[];
+main(int argc, char *argv[])
 {
-	int		i, c;
-	int		rval = 0;
+	int i, c;
+	int rval = 0;
 
 	while ((c = getopt(argc, argv, "RUmrsv")) != -1) {
 		switch (c) {
@@ -160,6 +158,7 @@ char	*argv[];
 
 	for (i = 0; i < n_search_dirs; i++) {
 		char *cp = concat(dir_list, *dir_list?":":"", search_dirs[i]);
+
 		free(dir_list);
 		dir_list = cp;
 		rval |= dodir(search_dirs[i], 0);
@@ -171,9 +170,7 @@ char	*argv[];
 }
 
 int
-dodir(dir, silent)
-char	*dir;
-int	silent;
+dodir(char *dir, int silent)
 {
 	DIR		*dd;
 	struct dirent	*dp;
@@ -225,9 +222,7 @@ int	silent;
 }
 
 static void
-enter(dir, file, name, dewey, ndewey)
-char	*dir, *file, *name;
-int	dewey[], ndewey;
+enter(char *dir, char *file, char *name, int dewey[], int ndewey)
 {
 	struct shlib_list	*shp;
 
@@ -281,9 +276,7 @@ int	dewey[], ndewey;
 #endif
 
 int
-hinthash(cp, vmajor, vminor)
-char	*cp;
-int	vmajor, vminor;
+hinthash(char *cp, int vmajor, int vminor)
 {
 	int	k = 0;
 
@@ -299,7 +292,7 @@ int	vmajor, vminor;
 }
 
 int
-buildhints()
+buildhints(void)
 {
 	struct hints_header	hdr;
 	struct hints_bucket	*blist;
@@ -402,7 +395,7 @@ buildhints()
 		return -1;
 	}
 	if (write(fd, blist, hdr.hh_nbucket * sizeof(struct hints_bucket)) !=
-		  hdr.hh_nbucket * sizeof(struct hints_bucket)) {
+	    hdr.hh_nbucket * sizeof(struct hints_bucket)) {
 		warn("%s", _PATH_LD_HINTS);
 		return -1;
 	}
@@ -430,16 +423,15 @@ buildhints()
 }
 
 static int
-readhints()
+readhints(void)
 {
-	int			fd;
+	int			fd, i;
 	caddr_t			addr;
 	long			msize;
 	struct hints_header	*hdr;
 	struct hints_bucket	*blist;
 	char			*strtab;
 	struct shlib_list	*shp;
-	int			i;
 
 	if ((fd = open(_PATH_LD_HINTS, O_RDONLY, 0)) == -1) {
 		warn("%s", _PATH_LD_HINTS);
@@ -457,7 +449,7 @@ readhints()
 	hdr = (struct hints_header *)addr;
 	if (HH_BADMAG(*hdr)) {
 		warnx("%s: Bad magic: %lo",
-			_PATH_LD_HINTS, hdr->hh_magic);
+		    _PATH_LD_HINTS, hdr->hh_magic);
 		return -1;
 	}
 
@@ -468,8 +460,8 @@ readhints()
 
 	if (hdr->hh_ehints > msize) {
 		if (mmap(addr+msize, hdr->hh_ehints - msize,
-				PROT_READ, MAP_PRIVATE|MAP_FIXED,
-				fd, msize) != (caddr_t)(addr+msize)) {
+		    PROT_READ, MAP_PRIVATE|MAP_FIXED,
+		    fd, msize) != (caddr_t)(addr+msize)) {
 
 			warn("%s", _PATH_LD_HINTS);
 			return -1;
@@ -509,12 +501,11 @@ readhints()
 		*shlib_tail = shp;
 		shlib_tail = &shp->next;
 	}
-
 	return 0;
 }
 
 static void
-listhints()
+listhints(void)
 {
 	struct shlib_list	*shp;
 	int			i;
@@ -525,6 +516,4 @@ listhints()
 	for (i = 0, shp = shlib_head; shp; i++, shp = shp->next)
 		printf("\t%d:-l%s.%d.%d => %s\n",
 		    i, shp->name, shp->major, shp->minor, shp->path);
-
-	return;
 }

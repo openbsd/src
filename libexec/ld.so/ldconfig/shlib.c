@@ -1,4 +1,4 @@
-/*	$OpenBSD: shlib.c,v 1.6 2002/05/24 04:17:00 deraadt Exp $	*/
+/*	$OpenBSD: shlib.c,v 1.7 2002/07/30 22:25:27 deraadt Exp $	*/
 /*	$NetBSD: shlib.c,v 1.13 1998/04/04 01:00:29 fvdl Exp $	*/
 
 /*
@@ -31,11 +31,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-
-#ifdef sun
-char	*strsep();
-int	isdigit();
-#endif
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -72,10 +67,8 @@ char	*standard_search_dirs[] = {
 	STANDARD_SEARCH_DIRS
 };
 
-
 void
-add_search_dir(name)
-	char	*name;
+add_search_dir(char *name)
 {
 	int i, len;
 
@@ -86,18 +79,17 @@ add_search_dir(name)
 
 	for (i = 0; i < n_search_dirs; i++)
 		if (strlen(search_dirs[i]) == len &&
-			!strncmp(search_dirs[i], name, len))
+		    !strncmp(search_dirs[i], name, len))
 				return;
 	n_search_dirs++;
 	search_dirs = (char **)
-		xrealloc(search_dirs, n_search_dirs * sizeof search_dirs[0]);
+	    xrealloc(search_dirs, n_search_dirs * sizeof search_dirs[0]);
 	search_dirs[n_search_dirs - 1] = xmalloc(++len);
 	(void)strlcpy(search_dirs[n_search_dirs - 1], name, len);
 }
 
 void
-remove_search_dir(name)
-	char	*name;
+remove_search_dir(char *name)
 {
 	int	i, len;
 
@@ -116,14 +108,13 @@ remove_search_dir(name)
 			    (n_search_dirs - i - 1) * sizeof search_dirs[0]);
 		n_search_dirs--;
 		search_dirs = (char **)xrealloc(search_dirs,
-			n_search_dirs * sizeof search_dirs[0]);
+		    n_search_dirs * sizeof search_dirs[0]);
 		break;
 	}
 }
 
 void
-add_search_path(path)
-char	*path;
+add_search_path(char *path)
 {
 	char	*cp, *dup;
 
@@ -138,8 +129,7 @@ char	*path;
 }
 
 void
-remove_search_path(path)
-char	*path;
+remove_search_path(char *path)
 {
 	char	*cp, *dup;
 
@@ -171,9 +161,7 @@ std_search_path(void)
  */
 
 int
-getdewey(dewey, cp)
-	int	dewey[];
-	char	*cp;
+getdewey(int dewey[], char *cp)
 {
 	int	i, n;
 
@@ -191,7 +179,6 @@ getdewey(dewey, cp)
 
 		dewey[n++] = strtol(cp, &cp, 10);
 	}
-
 	return n;
 }
 
@@ -202,9 +189,7 @@ getdewey(dewey, cp)
  * Return  0 if equal.
  */
 int
-cmpndewey(d1, n1, d2, n2)
-int	d1[], d2[];
-int	n1, n2;
+cmpndewey(int d1[], int n1, int d2[], int n2)
 {
 	int	i;
 
@@ -214,16 +199,12 @@ int	n1, n2;
 		if (d1[i] > d2[i])
 			return 1;
 	}
-
 	if (n1 == n2)
 		return 0;
-
 	if (i == n1)
 		return -1;
-
 	if (i == n2)
 		return 1;
-
 	errx(1, "cmpndewey: cant happen");
 	return 0;
 }
@@ -243,31 +224,24 @@ int	n1, n2;
 #undef minor
 
 char *
-findshlib(name, majorp, minorp, do_dot_a)
-char	*name;
-int	*majorp, *minorp;
-int	do_dot_a;
+findshlib(char *name, int *majorp, int *minorp, int do_dot_a)
 {
-	int		dewey[MAXDEWEY];
-	int		ndewey;
-	int		tmp[MAXDEWEY];
-	int		i;
-	int		len;
-	char		*lname;
-	int		major = *majorp, minor = *minorp;
+	int major = *majorp, minor = *minorp, ndewey, i, len;
+	int dewey[MAXDEWEY], tmp[MAXDEWEY];
+	char *lname;
 
-	len = strlen(name);
-	lname = (char *)alloca(len + sizeof("lib"));
-	sprintf(lname, "lib%s", name);
-	len += 3;
+	len = strlen(name) + sizeof("lib");
+	lname = (char *)alloca(len);
+	snprintf(lname, len, "lib%s", name);
 
 	ndewey = 0;
 
 	for (i = 0; i < n_search_dirs; i++) {
-		DIR		*dd = opendir(search_dirs[i]);
-		struct dirent	*dp;
-		char		*path = NULL;
+		struct dirent *dp;
+		char *path = NULL;
+		DIR *dd;
 
+		dd = opendir(search_dirs[i]);
 		if (dd == NULL)
 			continue;
 
@@ -313,12 +287,9 @@ int	do_dot_a;
 		}
 		closedir(dd);
 
+		/* There's a lib in this dir; take it. */
 		if (path != NULL)
-			/*
-			 * There's a lib in this dir; take it.
-			 */
 			return path;
 	}
-
 	return NULL;
 }
