@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.105 2000/01/05 20:16:36 angelos Exp $
+#	$OpenBSD: Makefile,v 1.106 2000/01/11 13:50:03 peter Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -206,7 +206,7 @@ distribution-etc-root-var: distrib-dirs
 	(cd ../lib/libssl; ${MAKE} -f Makefile.bsd-wrapper distribution)
 	(cd ../gnu/usr.bin/lynx; ${MAKE} -f Makefile.bsd-wrapper distribution)
 	(cd ../usr.bin/mail; ${MAKE} distribution)
-	/usr/sbin/sendmail -C${DESTDIR}/etc/sendmail.cf -bi -O AliasFile=${DESTDIR}/etc/aliases
+	/usr/libexec/sendmail/sendmail -C${DESTDIR}/etc/sendmail.cf -bi -O AliasFile=${DESTDIR}/etc/aliases
 	${INSTALL} -c -o root -g wheel -m 600 root/root.mail \
 		${DESTDIR}/var/mail/root
 
