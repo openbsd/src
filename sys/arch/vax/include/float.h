@@ -1,4 +1,4 @@
-/*	$OpenBSD: float.h,v 1.2 1997/05/29 00:04:39 niklas Exp $	*/
+/*	$OpenBSD: float.h,v 1.3 1997/08/01 21:35:35 deraadt Exp $	*/
 /*	$NetBSD: float.h,v 1.2 1994/10/26 08:02:08 cgd Exp $	*/
 
 /*
@@ -35,6 +35,12 @@
  *
  *      @(#)float.h     7.2 (Berkeley) 6/28/90
  */
+
+#include <sys/cdefs.h>
+
+__BEGIN_DECLS
+int __flt_rounds __P((void));
+__END_DECLS
 
 #define FLT_RADIX       2               /* b */
 #define FLT_ROUNDS      1               /* FP addition rounds to nearest */

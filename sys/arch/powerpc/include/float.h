@@ -1,4 +1,4 @@
-/*	$OpenBSD: float.h,v 1.2 1996/12/28 06:25:07 rahnds Exp $	*/
+/*	$OpenBSD: float.h,v 1.3 1997/08/01 21:35:33 deraadt Exp $	*/
 /*	$NetBSD: float.h,v 1.1 1996/09/30 16:34:24 ws Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-extern int __flt_rounds();
+int __flt_rounds __P((void));
 __END_DECLS
 
 #define FLT_RADIX	2		/* b */
