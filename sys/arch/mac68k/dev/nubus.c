@@ -1,4 +1,4 @@
-/*	$OpenBSD: nubus.c,v 1.10 1997/04/08 04:14:46 briggs Exp $	*/
+/*	$OpenBSD: nubus.c,v 1.11 1997/04/23 13:38:35 briggs Exp $	*/
 /*	$NetBSD: nubus.c,v 1.32 1997/02/28 07:54:02 scottr Exp $	*/
 
 /*
@@ -202,6 +202,8 @@ nubus_attach(parent, self, aux)
 						(caddr_t) &slottype,
 						sizeof(nubus_type)) <= 0)
 					continue;
+
+				rsrcid = r;
 			}
 		}
 
