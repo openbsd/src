@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka670.c,v 1.5 2002/03/14 03:16:02 millert Exp $	*/
+/*	$OpenBSD: ka670.c,v 1.6 2002/09/28 06:25:11 hugh Exp $	*/
 /*	$NetBSD: ka670.c,v 1.4 2000/03/13 23:52:35 soren Exp $	*/
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
@@ -57,8 +57,6 @@ static	void ka670_conf(void);
 static	int ka670_mchk(caddr_t);
 static	void ka670_memerr(void);
 static	int ka670_cache_init(void);	/* "int mapen" as argument? */
-static	void ka670_halt(void);
-static	void ka670_reboot(int);
 
 struct	cpu_dep ka670_calls = {
 	0,
@@ -69,8 +67,8 @@ struct	cpu_dep ka670_calls = {
 	generic_clkwrite,
 	8,	/* 8 VUP */
 	2,	/* SCB pages */
-	ka670_halt,
-	ka670_reboot,
+	generic_halt,
+	generic_reboot,
 	0,
 };
 
@@ -203,18 +201,6 @@ ka670_conf()
 	 * init/reset the caches.
 	 */
 	ka670_cache_init();
-}
 
-static void
-ka670_halt()
-{
-	asm("halt");
+	cpmbx = (struct cpmbx *)vax_map_physmem(0x20140400, 1);
 }
-
-static void
-ka670_reboot(arg)
-	int arg;
-{
-	asm("halt");
-}
-
