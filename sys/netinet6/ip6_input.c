@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.54 2003/10/14 06:39:32 itojun Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.55 2003/10/14 08:22:31 itojun Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -650,47 +650,6 @@ ip6_input(m)
 			in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_truncated);
 			goto bad;
 		}
-
-#ifdef IPSEC
-		/*
-		 * IPsec policy check for local-delivery packets. Look at the
-		 * inner-most SA that protected the packet. This is in fact
-		 * a bit too restrictive (it could end up causing packets to
-		 * be dropped that semantically follow the policy, e.g., in
-		 * certain SA-bundle configurations); but the alternative is
-		 * very complicated (and requires keeping track of what
-		 * kinds of tunneling headers have been seen in-between the
-		 * IPsec headers), and I don't think we lose much functionality
-		 * that's needed in the real world (who uses bundles anyway ?).
-		 */
-		if ((inet6sw[ip6_protox[nxt]].pr_flags & PR_LASTHDR) != 0) {
-			struct m_tag *mtag;
-			struct tdb *tdb;
-			struct tdb_ident *tdbi;
-			int error;
-			int s;
-
-			mtag = m_tag_find(m, PACKET_TAG_IPSEC_IN_DONE, NULL);
-			s = splnet();
-			if (mtag) {
-				tdbi = (struct tdb_ident *)(mtag + 1);
-				tdb = gettdb(tdbi->spi, &tdbi->dst,
-				    tdbi->proto);
-			} else
-				tdb = NULL;
-			ipsp_spd_lookup(m, AF_INET6, off, &error,
-			    IPSP_DIRECTION_IN, tdb, NULL);
-			splx(s);
-
-			/* Error or otherwise drop-packet indication. */
-			if (error) {
-				ip6stat.ip6s_cantforward++;
-				in6_ifstat_inc(m->m_pkthdr.rcvif,
-				    ifs6_in_discard);
-				goto bad;
-			}
-		}
-#endif
 
 		nxt = (*inet6sw[ip6_protox[nxt]].pr_input)(&m, &off, nxt);
 	}
