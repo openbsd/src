@@ -1,4 +1,4 @@
-.\" $OpenBSD: wscons.4,v 1.4 2001/03/06 19:56:50 brad Exp $
+.\" $OpenBSD: wscons.4,v 1.5 2001/04/16 02:17:52 fgsch Exp $
 .\" $NetBSD: wscons.4,v 1.11 2000/04/13 11:14:42 is Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -244,10 +244,11 @@ device like
 and
 .Dq WS_KERNEL_BG
 set the foreground / background used on color displays.
+.Pp
 The
 .Dq WSCOL_XXX
 arguments are colors as defined in
-.Pa /usr/include/wscons/wsdisplayvar.h .
+.Pa /usr/include/dev/wscons/wsdisplayvar.h .
 .Dq WS_KERNEL_COLATTR
 and
 .Dq WS_KERNEL_MONOATTR
