@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.30 1999/12/08 06:50:24 itojun Exp $	*/
+/*	$OpenBSD: socket.h,v 1.31 2000/02/18 05:21:01 itojun Exp $	*/
 /*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
@@ -342,11 +342,13 @@ struct cmsghdr {
 };
 
 /* given pointer to struct cmsghdr, return pointer to data */
-#define	CMSG_DATA(cmsg)		((u_char *)((cmsg) + 1))
+#define	CMSG_DATA(cmsg) \
+	((u_char *)(cmsg) + CMSG_ALIGN(sizeof(struct cmsghdr)))
 
 /* given pointer to struct cmsghdr, return pointer to next cmsghdr */
 #define	CMSG_NXTHDR(mhdr, cmsg)	\
-	(((caddr_t)(cmsg) + (cmsg)->cmsg_len + sizeof(struct cmsghdr) > \
+	(((caddr_t)(cmsg) + CMSG_ALIGN((cmsg)->cmsg_len) + \
+			    CMSG_ALIGN(sizeof(struct cmsghdr)) > \
 	    (mhdr)->msg_control + (mhdr)->msg_controllen) ? \
 	    (struct cmsghdr *)NULL : \
 	    (struct cmsghdr *)((caddr_t)(cmsg) + CMSG_ALIGN((cmsg)->cmsg_len)))

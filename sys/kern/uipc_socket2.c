@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.12 2000/02/04 20:32:04 angelos Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.13 2000/02/18 05:21:01 itojun Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -792,14 +792,14 @@ sbcreatecontrol(p, size, type, level)
 	register struct cmsghdr *cp;
 	struct mbuf *m;
 
-	if (size + sizeof(*cp) > MCLBYTES) {
+	if (CMSG_LEN(size) > MCLBYTES) {
 		printf("sbcreatecontrol: message too large %d\n", size);
 		return NULL;
 	}
 
 	if ((m = m_get(M_DONTWAIT, MT_CONTROL)) == NULL)
 		return ((struct mbuf *) NULL);
-	if (size + sizeof(*cp) > MLEN) {
+	if (CMSG_LEN(size) > MLEN) {
 		MCLGET(m, M_DONTWAIT);
 		if ((m->m_flags & M_EXT) == 0) {
 			m_free(m);
@@ -808,7 +808,7 @@ sbcreatecontrol(p, size, type, level)
 	}
 	cp = mtod(m, struct cmsghdr *);
 	bcopy(p, CMSG_DATA(cp), size);
-	size += sizeof(*cp);
+	size = CMSG_LEN(size);
 	m->m_len = size;
 	cp->cmsg_len = size;
 	cp->cmsg_level = level;
