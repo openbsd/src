@@ -1,4 +1,4 @@
-/*	$OpenBSD: isabus.c,v 1.5 1998/08/25 02:36:05 rahnds Exp $	*/
+/*	$OpenBSD: isabus.c,v 1.6 1998/08/25 02:58:21 rahnds Exp $	*/
 /*	$NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp $	*/
 
 /*-
@@ -447,6 +447,7 @@ static int processing;
 	hwpend &= ((1L << ICU_LEN) - 1);
 	imen &= ~hwpend;
 	while(hwpend) {
+		evirq[ICU_LEN].ev_count++;
 		vector = ffs(hwpend) - 1;
 		hwpend &= ~(1L << vector);
 		ih = intrhand[vector];
@@ -455,6 +456,7 @@ static int processing;
 			(*ih->ih_fun)(ih->ih_arg);
 			ih = ih->ih_next;
 		}
+		ipending &= ~(1L << vector);
 	}
 	if((ipending & SINT_CLOCK)& ~pcpl) {
 		ipending &= ~SINT_CLOCK;
@@ -467,7 +469,6 @@ static int processing;
 		ipending &= ~SINT_NET;
 		softnet(pisr);
 	}
-	ipending &= ~hwpend;
 	cpl = pcpl;	/* Don't use splx... we are here already! */
 	__asm__ volatile("mtmsr %0" :: "r"(emsr));
 	processing = 0;
