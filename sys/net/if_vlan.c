@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.14 2001/03/26 23:07:38 jason Exp $ */
+/*	$OpenBSD: if_vlan.c,v 1.15 2001/03/28 00:16:28 jason Exp $ */
 /*
  * Copyright 1998 Massachusetts Institute of Technology
  *
@@ -181,7 +181,7 @@ vlan_start(struct ifnet *ifp)
 	struct ifvlan *ifv;
 	struct ifnet *p;
 	struct ether_vlan_header *evl;
-	struct mbuf *m;
+	struct mbuf *m, *m0;
 
 	ifv = ifp->if_softc;
 	p = ifv->ifv_p;
@@ -228,42 +228,44 @@ vlan_start(struct ifnet *ifp)
 			m->m_pkthdr.rcvif = ifp;
 			m->m_flags |= M_PROTO1;
 		} else {
-			m->m_flags &= ~M_PROTO1;
-			M_PREPEND(m, EVL_ENCAPLEN, M_DONTWAIT);
-			if (m == NULL) {
-#ifdef DEBUG
-				printf("%s: M_PREPEND failed\n",
-				    ifv->ifv_p->if_xname);
-#endif
-				ifp->if_ierrors++;
-				continue;
-			}
-			/* M_PREPEND takes care of m_len, m_pkthdr.len for us */
-
-			m = m_pullup(m, ETHER_HDR_LEN + EVL_ENCAPLEN);
-			if (m == NULL) {
-#ifdef DEBUG
-				printf("%s: m_pullup failed\n",
-				    ifv->ifv_p->if_xname);
-#endif
+			if (m->m_len < sizeof(struct ether_header) &&
+			    (m = m_pullup(m, sizeof(struct ether_header)))
+			    == NULL) {
 				ifp->if_ierrors++;
 				continue;
 			}
 
-			/*
-			 * Transform the Ethernet header into an Ethernet header
-			 * with 802.1Q encapsulation.
-			 */
-			bcopy(mtod(m, char *) + EVL_ENCAPLEN, mtod(m, char *),
-			      sizeof(struct ether_header));
-			evl = mtod(m, struct ether_vlan_header *);
+			if (m->m_flags & M_PKTHDR) {
+				MGETHDR(m0, MT_DATA, M_DONTWAIT);
+			} else {
+				MGET(m0, MT_DATA, M_DONTWAIT);
+			}
+
+			if (m0 == NULL) {
+				ifp->if_ierrors++;
+				m_freem(m);
+				continue;
+			}
+
+			if (m0->m_flags & M_PKTHDR) {
+				M_COPY_PKTHDR(m0, m);
+				m->m_flags &= ~M_PKTHDR;
+			}
+			m0->m_flags &= ~M_PROTO1;
+			m0->m_next = m;
+			m0->m_len = sizeof(struct ether_vlan_header);
+
+			evl = mtod(m0, struct ether_vlan_header *);
+			bcopy(mtod(m, char *),
+			    evl, sizeof(struct ether_header));
 			evl->evl_proto = evl->evl_encap_proto;
 			evl->evl_encap_proto = htons(ETHERTYPE_8021Q);
 			evl->evl_tag = htons(ifv->ifv_tag);
-#ifdef DEBUG
-			printf("vlan_start: %*D\n", sizeof *evl,
-			    (char *)evl, ":");
-#endif
+
+			m->m_len -= sizeof(struct ether_header);
+			m->m_data += sizeof(struct ether_header);
+
+			m = m0;
 		}
 
 		/*
@@ -371,7 +373,9 @@ vlan_input(eh, m)
 	 */
 	m->m_pkthdr.rcvif = &ifv->ifv_if;
 	eh->ether_type = mtod(m, u_int16_t *)[1];
-	m_adj(m, EVL_ENCAPLEN);
+	m->m_len -= EVL_ENCAPLEN;
+	m->m_data += EVL_ENCAPLEN;
+	m->m_pkthdr.len -= EVL_ENCAPLEN;
 
 #if NBPFILTER > 0
 	if (ifv->ifv_if.if_bpf) {
