@@ -1,4 +1,4 @@
-/* *	$OpenBSD: extern.h,v 1.2 1996/06/26 05:37:52 deraadt Exp $*/
+/* *	$OpenBSD: extern.h,v 1.3 1997/04/23 08:08:30 grr Exp $*/
 /*-
  * Copyright (c) 1991 Keith Muller.
  * Copyright (c) 1993
@@ -45,7 +45,7 @@ void	 addnum __P((char *, int, int));
 int	 egetopt __P((int, char * const *, const char *));
 void	 flsh_errs __P((void));
 int	 horzcol __P((int, char **));
-int	 inln __P((FILE *, char *, int, int *, int, int *));
+int	 inln __P((FILE *, char *, int, int *, int *, int, int *));
 int	 inskip __P((FILE *, int, int));
 void	 mfail __P((void));
 int	 mulfile __P((int, char **));

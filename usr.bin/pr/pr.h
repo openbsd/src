@@ -1,4 +1,4 @@
-/* *	$OpenBSD: pr.h,v 1.2 1996/06/26 05:37:55 deraadt Exp $*/
+/* *	$OpenBSD: pr.h,v 1.3 1997/04/23 08:08:29 grr Exp $*/
 /*-
  * Copyright (c) 1991 Keith Muller.
  * Copyright (c) 1993
@@ -63,6 +63,15 @@
 #define	FNAME		""
 #define	LBUF		8192
 #define	HDBUF		512
+#define INFF		'\f'
+#define OUTFF		'\f'
+
+/*
+ * termination return code from inln (also returns a byte count)
+ */
+#define END		-1
+#define FORM		1
+#define NORMAL		0
 
 /*
  * structure for vertical columns. Used to balance cols on last page
