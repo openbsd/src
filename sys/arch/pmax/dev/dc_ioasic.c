@@ -91,7 +91,7 @@ dc_ioasic_attach(parent, self, aux)
 	caddr_t dcaddr;
 
 	dcaddr = (caddr_t)d->iada_addr;
-	printf("address 0x%p\n", dcaddr);
+	printf(" address %p", dcaddr);
 	(void) dcattach(sc, (void*)MACH_PHYS_TO_UNCACHED(dcaddr),
 	/* dtr/dsr mask */	  (1<< DCPRINTER_PORT) + (1 << DCCOMM_PORT),
 #ifdef HW_FLOW_CONTROL
