@@ -1,4 +1,4 @@
-#	$OpenBSD: sys.mk,v 1.27 2001/09/11 13:11:18 deraadt Exp $
+#	$OpenBSD: sys.mk,v 1.28 2002/02/23 18:34:50 deraadt Exp $
 #	$NetBSD: sys.mk,v 1.27 1996/04/10 05:47:19 mycroft Exp $
 #	@(#)sys.mk	5.11 (Berkeley) 3/13/91
 
@@ -32,7 +32,7 @@ LINK.S?=	${CC} ${AFLAGS} ${CPPFLAGS} ${LDFLAGS}
 
 CC?=		cc
 
-.if (${MACHINE_ARCH} == "m88k") || (${MACHINE_ARCH} == "vax")
+.if (${MACHINE_ARCH} == "m88k")
 CFLAGS?=	-O0 ${PIPE} ${DEBUG}
 .else
 CFLAGS?=	-O2 ${PIPE} ${DEBUG}
