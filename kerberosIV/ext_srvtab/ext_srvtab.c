@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext_srvtab.c,v 1.3 1997/11/21 04:23:43 art Exp $	*/
+/*	$OpenBSD: ext_srvtab.c,v 1.4 1997/12/17 09:59:44 art Exp $	*/
 /*      $KTH: ext_srvtab.c,v 1.13 1997/05/02 14:27:33 assar Exp $       */
 
 /*-
@@ -16,11 +16,6 @@
  * M.I.T. and the M.I.T. S.I.P.B. make no representations about
  * the suitability of this software for any purpose.  It is
  * provided "as is" without express or implied warranty.
- */
-
-/*
- * This whole program is obsolete and should be replaced by ksrvutil
- * It's only kept as backwards-compatibilty.
  */
 
 #include <sys/param.h>
@@ -72,7 +67,7 @@ main(int argc, char **argv)
     memset(realm, 0, sizeof(realm));
 
     if (atexit(StampOutSecrets))
-	errx(1, "Out of resurces");
+	errx(1, "Out of resources");
     
     /* Parse commandline arguments */
     if (argc < 2)
@@ -98,7 +93,6 @@ main(int argc, char **argv)
 		usage();
 	    else
 		if (!k_isinst(argv[i])) {
-		    StampOutSecrets();
 		    warnx("bad instance name: %s", argv[i]);
 		    usage();
 		}
