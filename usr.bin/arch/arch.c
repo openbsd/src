@@ -24,7 +24,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: arch.c,v 1.9 2003/07/10 00:06:50 david Exp $";
+static char rcsid[] = "$OpenBSD: arch.c,v 1.10 2004/03/08 19:02:00 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -62,18 +62,18 @@ main(int argc, char *argv[])
 	}
 	while ((c = getopt(argc, argv, opts)) != -1)
 		switch (c) {
-			case 'a':
-				arch = MACHINE_ARCH;
-				break;
-			case 'k':
-				arch = MACHINE;
-				break;
-			case 's':
-				short_form++;
-				break;
-			default:
-				usage();
-				/* NOTREACHED */
+		case 'a':
+			arch = MACHINE_ARCH;
+			break;
+		case 'k':
+			arch = MACHINE;
+			break;
+		case 's':
+			short_form++;
+			break;
+		default:
+			usage();
+			/* NOTREACHED */
 		}
 	if (optind != argc) {
 		usage();
