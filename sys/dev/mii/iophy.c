@@ -1,4 +1,4 @@
-/*	$OpenBSD: iophy.c,v 1.2 1999/10/12 17:08:56 deraadt Exp $	*/
+/*	$OpenBSD: iophy.c,v 1.3 1999/10/13 19:32:49 jason Exp $	*/
 /*	$NetBSD: iophy.c,v 1.1 1999/09/05 00:40:27 soren Exp $	*/
 
 /*
@@ -150,6 +150,8 @@ iophyattach(parent, self, aux)
 		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_NONE, 0, sc->mii_inst),
 		    BMCR_ISO);
 
+	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_AUTO, 0, sc->mii_inst),
+	    BMCR_ISO);
 #if 0
 	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_TX, IFM_LOOP, sc->mii_inst),
 	    BMCR_LOOP|BMCR_S100);
