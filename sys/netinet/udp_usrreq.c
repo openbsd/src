@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.100 2004/04/14 05:34:15 itojun Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.101 2004/06/14 05:24:04 mcbride Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -834,7 +834,7 @@ udp6_ctlinput(cmd, sa, d)
 			/*
 			 * Depending on the value of "valid" and routing table
 			 * size (mtudisc_{hi,lo}wat), we will:
-			 * - recalcurate the new MTU and create the
+			 * - recalculate the new MTU and create the
 			 *   corresponding routing entry, or
 			 * - ignore the MTU change notification.
 			 */
