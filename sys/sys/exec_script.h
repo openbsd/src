@@ -33,6 +33,8 @@
 #define	EXEC_SCRIPT_MAGIC	"#!"
 #define	EXEC_SCRIPT_MAGICLEN	2
 
+#define	SETUIDSCRIPTS		/* they are secure, so enable them */
+
 #ifdef _KERNEL
 
 /* the shell script handler's entry in the exec switch */
