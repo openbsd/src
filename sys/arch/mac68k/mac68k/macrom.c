@@ -1,4 +1,4 @@
-/*	$OpenBSD: macrom.c,v 1.23 2002/03/14 01:26:36 millert Exp $	*/
+/*	$OpenBSD: macrom.c,v 1.24 2003/06/04 07:17:24 miod Exp $	*/
 /*	$NetBSD: macrom.c,v 1.31 1997/03/01 17:20:34 scottr Exp $	*/
 
 /*-
@@ -950,7 +950,7 @@ mrg_init()
   	if(ROMBase == 0)
 		panic("ROMBase not set in mrg_init()!");
 
-	strcpy(&FinderName[1], findername);
+	strlcpy(FinderName + 1, findername, sizeof FinderName - 1);
 	FinderName[0] = (u_char) strlen(findername);
 #if defined(MRG_DEBUG)
 	printf("After setting globals\n");
