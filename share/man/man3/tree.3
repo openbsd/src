@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tree.3,v 1.9 2003/05/20 09:13:38 jmc Exp $
+.\"	$OpenBSD: tree.3,v 1.10 2003/11/05 19:41:33 jmc Exp $
 .\"/*
 .\" * Copyright 2002 Niels Provos <provos@citi.umich.edu>
 .\" * All rights reserved.
@@ -263,7 +263,7 @@ macro can be used to find a particular element in the tree.
 .Bd -literal -offset indent
 struct TYPE find, *res;
 find.key = 30;
-res = SPLAY_FIND(NAME, head, &find);
+res = SPLAY_FIND(NAME, &head, &find);
 .Ed
 .Pp
 The
@@ -281,7 +281,7 @@ Or, for simplicity, one can use the
 .Fn SPLAY_FOREACH
 macro:
 .Bd -literal -offset indent
-SPLAY_FOREACH(np, NAME, head)
+SPLAY_FOREACH(np, NAME, &head)
 .Ed
 .Pp
 The
@@ -291,6 +291,7 @@ macro should be used to check whether a splay tree is empty.
 A red-black tree is a binary search tree with the node color as an
 extra attribute.
 It fulfills a set of conditions:
+.Pp
 .Bl -enum -compact -offset indent
 .It
 every search path from the root to a leaf consists of the same number of
@@ -391,7 +392,7 @@ macro can be used to find a particular element in the tree.
 .Bd -literal -offset indent
 struct TYPE find, *res;
 find.key = 30;
-res = RB_FIND(NAME, head, &find);
+res = RB_FIND(NAME, &head, &find);
 .Ed
 .Pp
 The
@@ -409,7 +410,7 @@ Or, for simplicity, one can use the
 .Fn RB_FOREACH
 macro:
 .Bd -literal -offset indent
-RB_FOREACH(np, NAME, head)
+RB_FOREACH(np, NAME, &head)
 .Ed
 .Pp
 The
@@ -418,8 +419,8 @@ macro should be used to check whether a splay tree is empty.
 .Sh NOTES
 Trying to free a tree in the following way is a common error:
 .Bd -literal -offset indent
-SPLAY_FOREACH(var, NAME, head) {
-	SPLAY_REMOVE(NAME, head, var);
+SPLAY_FOREACH(var, NAME, &head) {
+	SPLAY_REMOVE(NAME, &head, var);
 	free(var);
 }
 free(head);
@@ -432,9 +433,9 @@ is free'd, the
 macro refers to a pointer that may have been reallocated already.
 Proper code needs a second variable.
 .Bd -literal -offset indent
-for (var = SPLAY_MIN(NAME, head); var != NULL; var = nxt) {
-	nxt = SPLAY_NEXT(NAME, head, var);
-	SPLAY_REMOVE(NAME, head, var);
+for (var = SPLAY_MIN(NAME, &head); var != NULL; var = nxt) {
+	nxt = SPLAY_NEXT(NAME, &head, var);
+	SPLAY_REMOVE(NAME, &head, var);
 	free(var);
 }
 .Ed
