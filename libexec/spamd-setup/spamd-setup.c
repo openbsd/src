@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd-setup.c,v 1.6 2003/03/10 19:35:21 deraadt Exp $ */
+/*	$OpenBSD: spamd-setup.c,v 1.7 2003/03/10 19:36:13 deraadt Exp $ */
 /*
  * Copyright (c) 2003 Bob Beck.  All rights reserved.
  *
@@ -117,7 +117,7 @@ range2cidrlist(u_int32_t start, u_int32_t end)
 
 			tmp = realloc(list, (cs + 32) * sizeof(struct cidr));
 			if (tmp == NULL)
-				errx(1, "Malloc failed");
+				errx(1, "malloc failed");
 			list = tmp;
 			cs += 32;
 		}
@@ -274,7 +274,7 @@ open_file(char *method, char *file)
 		len = strlen(file);
 		argv = malloc(len * sizeof(char *));
 		if (argv == NULL)
-			errx(1, "Malloc failed");
+			errx(1, "malloc failed");
 		for (ap = argv; ap < &argv[len - 1] &&
 		    (*ap = strsep(&file, " \t")) != NULL;) {
 			if (**ap != '\0')
@@ -337,7 +337,7 @@ fix_quoted_colons(char *buf)
 			nbs += 128;
 			tmp = realloc(newbuf, nbs);
 			if (tmp == NULL)
-				errx(1, "Malloc failed");
+				errx(1, "malloc failed");
 			newbuf = tmp;
 		}
 	}
@@ -374,7 +374,7 @@ do_message(FILE *sdc, char *msg)
 
 				tmp = realloc(buf, bs + 8192);
 				if (tmp == NULL)
-					errx(1, "Malloc failed");
+					errx(1, "malloc failed");
 				bs += 8192;
 				buf = tmp;
 			}
@@ -658,7 +658,7 @@ getlist(char ** db_array, char *name, struct blacklist *blist,
 			errx(1, "No msg for blacklist \"%s\"", name);
 		break;
 	case -2:
-		errx(1, "Malloc failed");
+		errx(1, "malloc failed");
 	}
 
 	switch (cgetstr(buf, "method", &method)) {
@@ -666,7 +666,7 @@ getlist(char ** db_array, char *name, struct blacklist *blist,
 		method = NULL;
 		break;
 	case -2:
-		errx(1, "Malloc failed");
+		errx(1, "malloc failed");
 	}
 
 	switch (cgetstr(buf, "file", &file)) {
@@ -674,7 +674,7 @@ getlist(char ** db_array, char *name, struct blacklist *blist,
 		errx(1, "No file given for %slist %s", black?"black":"white",
 		    name);
 	case -2:
-		errx(1, "Malloc failed");
+		errx(1, "malloc failed");
 	default:
 		fd = open_file(method, file);
 		if (fd == -1)
@@ -723,7 +723,7 @@ main(int argc, char *argv[])
 	dbc = 0;
 	db_array = calloc(dbs, sizeof(char *));
 	if (db_array == NULL)
-		errx(1, "Malloc failed");
+		errx(1, "malloc failed");
 
 	db_array[dbc]= PATH_SPAMD_CONF;
 	dbc++;
@@ -745,7 +745,7 @@ main(int argc, char *argv[])
 				tmp = realloc(blists,
 				    bls * sizeof(struct blacklist));
 				if (tmp == NULL)
-					errx(1, "Malloc failed");
+					errx(1, "malloc failed");
 				blists = tmp;
 			}
 			if (blc == 0)
@@ -763,7 +763,7 @@ main(int argc, char *argv[])
 		struct cidr **cidrs, **tmp;
 		cidrs = collapse_blacklist(blists[i].bl, blists[i].blc);
 		if (cidrs == NULL)
-			errx(1, "Malloc failed");
+			errx(1, "malloc failed");
 		if (configure_spamd(ent->s_port, blists[i].name,
 		    blists[i].message, cidrs) == -1)
 			err(1, "Can't connect to spamd on port %d",
