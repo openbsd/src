@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfs_vnops.c,v 1.7 1997/11/06 05:59:24 csapuntz Exp $	*/
+/*	$OpenBSD: mfs_vnops.c,v 1.8 1999/01/10 21:12:08 art Exp $	*/
 /*	$NetBSD: mfs_vnops.c,v 1.8 1996/03/17 02:16:32 christos Exp $	*/
 
 /*
@@ -125,10 +125,12 @@ mfs_open(v)
 		struct proc *a_p;
 	} */ *ap = v;
 
+#ifdef DIAGNOSTIC
 	if (ap->a_vp->v_type != VBLK) {
-		panic("mfs_ioctl not VBLK");
+		panic("mfs_open not VBLK");
 		/* NOTREACHED */
 	}
+#endif
 	return (0);
 }
 
@@ -169,8 +171,10 @@ mfs_strategy(v)
 	struct vnode *vp;
 	struct proc *p = curproc;		/* XXX */
 
+#ifdef DIAGNOSTIC
 	if (!vfinddev(bp->b_dev, VBLK, &vp) || vp->v_usecount == 0)
 		panic("mfs_strategy: bad dev");
+#endif
 	mfsp = VTOMFS(vp);
 	/* check for mini-root access */
 	if (mfsp->mfs_pid == 0) {
@@ -272,14 +276,18 @@ mfs_close(v)
 	 */
 	if ((error = vinvalbuf(vp, 1, ap->a_cred, ap->a_p, 0, 0)) != 0)
 		return (error);
+#ifdef DIAGNOSTIC
 	/*
 	 * There should be no way to have any more uses of this
 	 * vnode, so if we find any other uses, it is a panic.
 	 */
 	if (vp->v_usecount > 1)
 		printf("mfs_close: ref count %d > 1\n", vp->v_usecount);
+	if (mfsp->mfs_buflist)
+		printf("mfs_close: dirty buffers\n");
 	if (vp->v_usecount > 1 || mfsp->mfs_buflist)
 		panic("mfs_close");
+#endif
 	/*
 	 * Send a request to the filesystem server to exit.
 	 */
@@ -302,9 +310,11 @@ mfs_inactive(v)
 	} */ *ap = v;
 	register struct mfsnode *mfsp = VTOMFS(ap->a_vp);
 
+#ifdef DIAGNOSTIC
 	if (mfsp->mfs_buflist && mfsp->mfs_buflist != (struct buf *)(-1))
 		panic("mfs_inactive: not inactive (mfs_buflist %p)",
 			mfsp->mfs_buflist);
+#endif
 	VOP_UNLOCK(ap->a_vp, 0, ap->a_p);
 	return (0);
 }
