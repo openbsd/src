@@ -45,7 +45,7 @@ v=`cat version` u=${USER-root} d=`pwd` h=`hostname` t=`date`
 id=`basename ${d}`
 
 ost="OpenBSD"
-osr="1.2"
+osr="2.0"
 
 echo "char ostype[] = \"${ost}\";" > vers.c
 echo "char osrelease[] = \"${osr}\";" >> vers.c
