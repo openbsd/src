@@ -1,4 +1,4 @@
-/*	$OpenBSD: siginfo.h,v 1.5 1997/02/03 03:49:57 deraadt Exp $	*/
+/*	$OpenBSD: siginfo.h,v 1.6 1997/02/03 04:34:33 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Theo de Raadt
@@ -129,6 +129,8 @@ union sigval {
 
 #define SI_MAXSZ	128
 #define SI_PAD		((SI_MAXSZ / sizeof (int)) - 3)
+
+#include <sys/time.h>
 
 typedef struct {
 	int	si_signo;			/* signal from signal.h */
