@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.113 2004/04/09 19:30:41 frantzen Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.114 2004/04/26 00:12:28 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -84,6 +84,11 @@ struct pf_pool		*pf_get_pool(char *, char *, u_int32_t,
 			    u_int8_t, u_int8_t, u_int8_t, u_int8_t, u_int8_t);
 int			 pf_get_ruleset_number(u_int8_t);
 void			 pf_init_ruleset(struct pf_ruleset *);
+struct pf_anchor	*pf_find_or_create_anchor(char[PF_ANCHOR_NAME_SIZE]);
+void			 pf_remove_if_empty_anchor(struct pf_anchor *);
+int			 pf_anchor_setup(struct pf_ruleset *, struct pf_rule *);
+void			 pf_anchor_remove(struct pf_rule *);
+
 void			 pf_mv_pool(struct pf_palist *, struct pf_palist *);
 void			 pf_empty_pool(struct pf_palist *);
 int			 pfioctl(dev_t, u_long, caddr_t, int, struct proc *);
@@ -326,15 +331,44 @@ struct pf_ruleset *
 pf_find_or_create_ruleset(char anchorname[PF_ANCHOR_NAME_SIZE],
     char rulesetname[PF_RULESET_NAME_SIZE])
 {
-	struct pf_anchor	*anchor, *a;
+	struct pf_anchor	*anchor;
 	struct pf_ruleset	*ruleset, *r;
 
 	if (!anchorname[0] && !rulesetname[0])
 		return (&pf_main_ruleset);
 	if (!anchorname[0] || !rulesetname[0])
 		return (NULL);
-	anchorname[PF_ANCHOR_NAME_SIZE-1] = 0;
 	rulesetname[PF_RULESET_NAME_SIZE-1] = 0;
+	anchor = pf_find_or_create_anchor(anchorname);
+	if (anchor == NULL)
+		return (NULL);
+	r = TAILQ_FIRST(&anchor->rulesets);
+	while (r != NULL && strcmp(r->name, rulesetname) < 0)
+		r = TAILQ_NEXT(r, entries);
+	if (r != NULL && !strcmp(r->name, rulesetname))
+		return (r);
+	ruleset = (struct pf_ruleset *)malloc(sizeof(struct pf_ruleset),
+	    M_TEMP, M_NOWAIT);
+	if (ruleset != NULL) {
+		pf_init_ruleset(ruleset);
+		bcopy(rulesetname, ruleset->name, sizeof(ruleset->name));
+		ruleset->anchor = anchor;
+		if (r != NULL)
+			TAILQ_INSERT_BEFORE(r, ruleset, entries);
+		else
+			TAILQ_INSERT_TAIL(&anchor->rulesets, ruleset, entries);
+	}
+	return (ruleset);
+}
+
+struct pf_anchor *
+pf_find_or_create_anchor(char anchorname[PF_ANCHOR_NAME_SIZE])
+{
+	struct pf_anchor	*anchor, *a;
+
+	if (!anchorname[0])
+		return (NULL);
+	anchorname[PF_ANCHOR_NAME_SIZE-1] = 0;
 	a = TAILQ_FIRST(&pf_anchors);
 	while (a != NULL && strcmp(a->name, anchorname) < 0)
 		a = TAILQ_NEXT(a, entries);
@@ -353,23 +387,7 @@ pf_find_or_create_ruleset(char anchorname[PF_ANCHOR_NAME_SIZE],
 		else
 			TAILQ_INSERT_TAIL(&pf_anchors, anchor, entries);
 	}
-	r = TAILQ_FIRST(&anchor->rulesets);
-	while (r != NULL && strcmp(r->name, rulesetname) < 0)
-		r = TAILQ_NEXT(r, entries);
-	if (r != NULL && !strcmp(r->name, rulesetname))
-		return (r);
-	ruleset = (struct pf_ruleset *)malloc(sizeof(struct pf_ruleset),
-	    M_TEMP, M_NOWAIT);
-	if (ruleset != NULL) {
-		pf_init_ruleset(ruleset);
-		bcopy(rulesetname, ruleset->name, sizeof(ruleset->name));
-		ruleset->anchor = anchor;
-		if (r != NULL)
-			TAILQ_INSERT_BEFORE(r, ruleset, entries);
-		else
-			TAILQ_INSERT_TAIL(&anchor->rulesets, ruleset, entries);
-	}
-	return (ruleset);
+	return (anchor);
 }
 
 void
@@ -391,11 +409,48 @@ pf_remove_if_empty_ruleset(struct pf_ruleset *ruleset)
 	TAILQ_REMOVE(&anchor->rulesets, ruleset, entries);
 	free(ruleset, M_TEMP);
 
+	pf_remove_if_empty_anchor(anchor);
+}
+
+void
+pf_remove_if_empty_anchor(struct pf_anchor *anchor)
+{
+	if (anchor->refcnt > 0)
+		return;
 	if (TAILQ_EMPTY(&anchor->rulesets)) {
 		TAILQ_REMOVE(&pf_anchors, anchor, entries);
 		free(anchor, M_TEMP);
-		pf_update_anchor_rules();
 	}
+}
+
+int
+pf_anchor_setup(struct pf_ruleset *rs, struct pf_rule *r)
+{
+	r->anchor = NULL;
+	if (rs != &pf_main_ruleset && *r->anchorname)
+		return (1);	/* anchors are not recursive */
+	if (!*r->anchorname)
+		return (0);	/* no anchor, nothing to do */
+	r->anchor = pf_find_or_create_anchor(r->anchorname);
+	if (r->anchor == NULL)
+		return (1);	/* memory? */
+	r->anchor->refcnt++;
+	return (0);
+}
+
+void
+pf_anchor_remove(struct pf_rule *r)
+{
+	if (r->anchor == NULL)
+		return;
+	if (r->anchor->refcnt <= 0) {
+		printf("pf_anchor_remove: broken refcount");
+		r->anchor = NULL;
+		return;
+	}
+	if (!--r->anchor->refcnt)
+		pf_remove_if_empty_anchor(r->anchor);
+	r->anchor = NULL;
 }
 
 void
@@ -458,6 +513,7 @@ pf_rm_rule(struct pf_rulequeue *rulequeue, struct pf_rule *rule)
 		pf_tbladdr_remove(&rule->dst.addr);
 	}
 	pfi_detach_rule(rule->kif);
+	pf_anchor_remove(rule);
 	pf_empty_pool(&rule->rpool.list);
 	pool_put(&pf_rule_pl, rule);
 }
@@ -738,7 +794,6 @@ pf_commit_rules(u_int32_t ticket, int rs_num, char *anchor, char *ruleset)
 		pf_rm_rule(old_rules, rule);
 	rs->rules[rs_num].inactive.open = 0;
 	pf_remove_if_empty_ruleset(rs);
-	pf_update_anchor_rules();
 	splx(s);
 	return (0);
 }
@@ -987,6 +1042,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			error = EINVAL;
 		if (pf_tbladdr_setup(ruleset, &rule->dst.addr))
 			error = EINVAL;
+		if (pf_anchor_setup(ruleset, rule))
+			error = EINVAL;
 		TAILQ_FOREACH(pa, &pf_pabuf, entries)
 			if (pf_tbladdr_setup(ruleset, &pa->addr))
 				error = EINVAL;
@@ -1202,6 +1259,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				error = EINVAL;
 			if (pf_tbladdr_setup(ruleset, &newrule->dst.addr))
 				error = EINVAL;
+			if (pf_anchor_setup(ruleset, newrule))
+				error = EINVAL;
 
 			pf_mv_pool(&pf_pabuf, &newrule->rpool.list);
 			if (((((newrule->action == PF_NAT) ||
@@ -1266,7 +1325,6 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 		pf_calc_skip_steps(ruleset->rules[rs_num].active.ptr);
 		pf_remove_if_empty_ruleset(ruleset);
-		pf_update_anchor_rules();
 
 		ruleset->rules[rs_num].active.ticket++;
 		splx(s);
