@@ -857,6 +857,8 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/apcdmareg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/ar5210reg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/ar5210var.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/ar5211reg.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/ar5211var.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/ar5212reg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/ar5212var.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/ar5xxx.ph

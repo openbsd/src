@@ -910,6 +910,14 @@
 ./usr/share/man/cat3p/O.0
 ./usr/share/man/cat3p/ODBM_File.0
 ./usr/share/man/cat3p/Opcode.0
+./usr/share/man/cat3p/OpenBSD::IdCache.0
+./usr/share/man/cat3p/OpenBSD::Mtree.0
+./usr/share/man/cat3p/OpenBSD::PackingElement.0
+./usr/share/man/cat3p/OpenBSD::PackingList.0
+./usr/share/man/cat3p/OpenBSD::PkgCfl.0
+./usr/share/man/cat3p/OpenBSD::PkgSpec.0
+./usr/share/man/cat3p/OpenBSD::Ustar.0
+./usr/share/man/cat3p/OpenBSD::Vstat.0
 ./usr/share/man/cat3p/POSIX.0
 ./usr/share/man/cat3p/PerlIO.0
 ./usr/share/man/cat3p/PerlIO::encoding.0
@@ -1311,6 +1319,7 @@
 ./usr/share/man/cat4/mac68k/mc.0
 ./usr/share/man/cat4/mac68k/mem.0
 ./usr/share/man/cat4/mac68k/ncrscsi.0
+./usr/share/man/cat4/mac68k/nubus.0
 ./usr/share/man/cat4/mac68k/obio.0
 ./usr/share/man/cat4/mac68k/sbc.0
 ./usr/share/man/cat4/mac68k/sn.0

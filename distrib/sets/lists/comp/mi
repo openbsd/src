@@ -177,6 +177,8 @@
 ./usr/include/dev/ic/apcdmareg.h
 ./usr/include/dev/ic/ar5210reg.h
 ./usr/include/dev/ic/ar5210var.h
+./usr/include/dev/ic/ar5211reg.h
+./usr/include/dev/ic/ar5211var.h
 ./usr/include/dev/ic/ar5212reg.h
 ./usr/include/dev/ic/ar5212var.h
 ./usr/include/dev/ic/ar5xxx.h
@@ -5111,6 +5113,11 @@
 ./usr/share/man/cat9/hook_establish.0
 ./usr/share/man/cat9/hz.0
 ./usr/share/man/cat9/hzto.0
+./usr/share/man/cat9/ieee80211_rssadapt_choose.0
+./usr/share/man/cat9/ieee80211_rssadapt_input.0
+./usr/share/man/cat9/ieee80211_rssadapt_lower_rate.0
+./usr/share/man/cat9/ieee80211_rssadapt_raise_rate.0
+./usr/share/man/cat9/ieee80211_rssadapt_updatestats.0
 ./usr/share/man/cat9/iic.0
 ./usr/share/man/cat9/imax.0
 ./usr/share/man/cat9/imin.0
@@ -5245,6 +5252,7 @@
 ./usr/share/man/cat9/readdisklabel.0
 ./usr/share/man/cat9/relookup.0
 ./usr/share/man/cat9/resettodr.0
+./usr/share/man/cat9/rssadapt.0
 ./usr/share/man/cat9/runtime.0
 ./usr/share/man/cat9/scanc.0
 ./usr/share/man/cat9/setdisklabel.0
