@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.30 2002/04/21 22:27:56 mickey Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.31 2002/04/21 22:54:10 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -746,7 +746,7 @@ mbus_dmamem_alloc(void *v, bus_size_t size, bus_size_t alignment,
 
 		pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg), UVM_PROT_RW);
 		/* XXX for now */
-		pmap_changebit(pg, PTE_PROT(TLB_UNCACHEABLE), 0);
+		pmap_changebit(pg, PTE_PROT(TLB_UNCACHABLE), 0);
 		va += PAGE_SIZE;
 	}
 	pmap_update(pmap_kernel());
