@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.263 2000/05/31 07:07:43 deraadt Exp $
+	$OpenBSD: pcidevs,v 1.264 2000/05/31 22:12:57 chris Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1258,6 +1258,8 @@ product OLICOM OC2326		0x0014	OC2326
 /* Opti products */
 product OPTI 82C557		0xc557	82C557 Host
 product OPTI 82C558		0xc558	82C558 PCI-ISA
+product OPTI 82C568		0xc568	82C568 IDE
+product	OPTI 82D568		0xd568	82D568 IDE
 product OPTI 82C621		0xc621	82C621 IDE
 product OPTI 82C700		0xc700	82C700
 product OPTI 82C701		0xc701	82C701
