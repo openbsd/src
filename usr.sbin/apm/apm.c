@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.8 2003/06/11 23:33:25 deraadt Exp $	*/
+/*	$OpenBSD: apm.c,v 1.9 2003/07/30 21:44:32 deraadt Exp $	*/
 
 /*
  *  Copyright (c) 1996 John T. Kohl
@@ -58,17 +58,17 @@ int send_command(int fd, struct apm_command *cmd, struct apm_reply *reply);
 void
 usage(void)
 {
-    fprintf(stderr,"usage: %s [-v] [-z | -S] [-slbam] [-f socket]\n",
+	fprintf(stderr,"usage: %s [-v] [-z | -S] [-slbam] [-f socket]\n",
 	    __progname);
-    exit(1);
+	exit(1);
 }
 
 void
 zzusage(void)
 {
-    fprintf(stderr,"usage: %s [-z | -S] [-f socket]\n",
+	fprintf(stderr,"usage: %s [-z | -S] [-f socket]\n",
 	    __progname);
-    exit(1);
+	exit(1);
 }
 
 int
@@ -80,11 +80,11 @@ send_command(int fd, struct apm_command *cmd, struct apm_reply *reply)
 	if (send(fd, cmd, sizeof(*cmd), 0) == sizeof(*cmd)) {
 		if (recv(fd, reply, sizeof(*reply), 0) != sizeof(*reply)) {
 			warn("invalid reply from APM daemon");
-		return 1;
+		return (1);
 		}
 	} else {
 		warn("invalid send to APM daemon");
-		return 1;
+		return (1);
 	}
 
 	return 0;
@@ -150,8 +150,8 @@ main(int argc, char *argv[])
 	struct apm_command command;
 	struct apm_reply reply;
 
-	while ((ch = getopt(argc, argv, "lmbvasSzf:")) != -1)
-		switch(ch) {
+	while ((ch = getopt(argc, argv, "lmbvasSzf:")) != -1) {
+		switch (ch) {
 		case 'v':
 			verbose = TRUE;
 			break;
@@ -202,94 +202,99 @@ main(int argc, char *argv[])
 		default:
 			usage();
 		}
+	}
 
-		fd = open_socket(sockname);
+	fd = open_socket(sockname);
 
-		if (!strcmp(__progname, "zzz"))
-			return (do_zzz(fd, action));
+	if (!strcmp(__progname, "zzz"))
+		return (do_zzz(fd, action));
 
-		switch (action) {
-		case NONE:
-			action = GETSTATUS;
-			verbose = doac = dopct = dobstate = dostatus = domin =
-			    TRUE;
-			/* fallthrough */
-		case GETSTATUS:
-			if (fd == -1) {
-				/* open the device directly and get status */
-				fd = open(_PATH_APM_NORMAL, O_RDONLY);
-				if (ioctl(fd, APM_IOC_GETPOWER,
-				    &reply.batterystate) == 0)
-					goto printval;
-			}
-		case SUSPEND:
-		case STANDBY:
-			command.action = action;
-			break;
-		default:
-			usage();
+	switch (action) {
+	case NONE:
+		action = GETSTATUS;
+		verbose = doac = dopct = dobstate = dostatus = domin = TRUE;
+		/* fallthrough */
+	case GETSTATUS:
+		if (fd == -1) {
+			/* open the device directly and get status */
+			fd = open(_PATH_APM_NORMAL, O_RDONLY);
+			if (ioctl(fd, APM_IOC_GETPOWER,
+			    &reply.batterystate) == 0)
+				goto printval;
 		}
+		/* fallthrough */
+	case SUSPEND:
+	case STANDBY:
+		command.action = action;
+		break;
+	default:
+		usage();
+	}
 
-		if ((rval = send_command(fd, &command, &reply)) == 0) {
-			switch (action) {
-			case GETSTATUS:
-			printval:
-				if (verbose) {
-					if (dobstate)
-						printf("Battery state: %s\n",
-						    battstate(reply.batterystate.battery_state));
-					if (dopct)
-						printf("Battery remaining: %d percent\n",
-						    reply.batterystate.battery_life);
-					if (domin) {
-#ifdef __powerpc__
-						if (reply.batterystate.battery_state == APM_BATT_CHARGING)
-							printf("Remaining battery recharge time estimate: %d minutes\n",
-							    reply.batterystate.minutes_left);
-						else if (reply.batterystate.minutes_left == 0 &&
-						    reply.batterystate.battery_life > 10)
-							printf("Battery life estimate: not available\n");
-						else
-#endif
-						printf("Battery life estimate: %d minutes\n",
-						    reply.batterystate.minutes_left);
-					}
-					if (doac)
-						printf("A/C adapter state: %s\n",
-						    ac_state(reply.batterystate.ac_state));
-					if (dostatus)
-						printf("Power management enabled\n");
-				} else {
-					if (dobstate)
-						printf("%d\n",
-						    reply.batterystate.battery_state);
-					if (dopct)
-						printf("%d\n",
-						    reply.batterystate.battery_life);
-					if (domin)
-						printf("%d\n",
-						    reply.batterystate.minutes_left);
-					if (doac)
-						printf("%d\n",
-						    reply.batterystate.ac_state);
-					if (dostatus)
-						printf("1\n");
-				}
-				break;
-			default:
-				break;
-		}
-		switch (reply.newstate) {
-		case SUSPEND:
-			printf("System will enter suspend mode momentarily.\n");
-			break;
-		case STANDBY:
-			printf("System will enter standby mode momentarily.\n");
-			break;
-		default:
-			break;
-		}
-	} else
+	if ((rval = send_command(fd, &command, &reply)) != 0)
 		errx(rval, "cannot get reply from APM daemon");
+
+	switch (action) {
+	case GETSTATUS:
+	printval:
+		if (!verbose) {
+			if (dobstate)
+				printf("%d\n",
+				    reply.batterystate.battery_state);
+			if (dopct)
+				printf("%d\n",
+				    reply.batterystate.battery_life);
+			if (domin)
+				printf("%d\n",
+				    reply.batterystate.minutes_left);
+			if (doac)
+				printf("%d\n",
+				    reply.batterystate.ac_state);
+			if (dostatus)
+				printf("1\n");
+			break;
+		}
+		if (dobstate)
+			printf("Battery state: %s\n",
+			    battstate(reply.batterystate.battery_state));
+		if (dopct)
+			printf("Battery remaining: %d percent\n",
+			    reply.batterystate.battery_life);
+		if (domin) {
+#ifdef __powerpc__
+			if (reply.batterystate.battery_state ==
+			    APM_BATT_CHARGING)
+				printf("Remaining battery recharge "
+				    "time estimate: %d minutes\n",
+				    reply.batterystate.minutes_left);
+			else if (reply.batterystate.minutes_left == 0 &&
+			    reply.batterystate.battery_life > 10)
+				printf("Battery life estimate: "
+				    "not available\n");
+			else
+#endif
+			printf("Battery life estimate: %d minutes\n",
+			    reply.batterystate.minutes_left);
+		}
+		if (doac)
+			printf("A/C adapter state: %s\n",
+			    ac_state(reply.batterystate.ac_state));
+		if (dostatus)
+			printf("Power management enabled\n");
+		break;
+	default:
+		break;
+	}
+
+	switch (reply.newstate) {
+	case SUSPEND:
+		printf("System will enter suspend mode momentarily.\n");
+		break;
+	case STANDBY:
+		printf("System will enter standby mode momentarily.\n");
+		break;
+	default:
+		break;
+	}
 	return (0);
 }
