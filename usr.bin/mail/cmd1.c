@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd1.c,v 1.12 1997/11/14 00:23:42 millert Exp $	*/
+/*	$OpenBSD: cmd1.c,v 1.13 1998/05/11 04:15:24 millert Exp $	*/
 /*	$NetBSD: cmd1.c,v 1.9 1997/07/09 05:29:48 mikel Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd1.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: cmd1.c,v 1.12 1997/11/14 00:23:42 millert Exp $";
+static char rcsid[] = "$OpenBSD: cmd1.c,v 1.13 1998/05/11 04:15:24 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -104,29 +104,28 @@ scroll(v)
 	void *v;
 {
 	char *arg = v;
-	int s, size;
+	int size, maxscreen;
 	int cur[1];
 
 	cur[0] = 0;
 	size = screensize();
-	s = screen;
+	maxscreen = (msgCount - 1) / size;
 	switch (*arg) {
 	case 0:
 	case '+':
-		s++;
-		if (s * size > msgCount) {
+		if (screen >= maxscreen) {
 			puts("On last screenful of messages");
 			return(0);
 		}
-		screen = s;
+		screen++;
 		break;
 
 	case '-':
-		if (--s < 0) {
+		if (screen <= 0) {
 			puts("On first screenful of messages");
 			return(0);
 		}
-		screen = s;
+		screen--;
 		break;
 
 	default:
