@@ -1,4 +1,4 @@
-/*	$OpenBSD: awacs.c,v 1.12 2003/05/11 19:41:10 deraadt Exp $	*/
+/*	$OpenBSD: awacs.c,v 1.13 2003/06/14 04:43:20 jason Exp $	*/
 /*	$NetBSD: awacs.c,v 1.4 2001/02/26 21:07:51 wiz Exp $	*/
 
 /*-
@@ -122,7 +122,10 @@ void awacs_write_codec(struct awacs_softc *, int);
 void awacs_set_speaker_volume(struct awacs_softc *, int, int);
 void awacs_set_ext_volume(struct awacs_softc *, int, int);
 int awacs_set_rate(struct awacs_softc *, int);
-void awacs_mono16_to_stereo16(void *v, u_char *p, int cc);
+void awacs_mono16_to_stereo16(void *, u_char *, int);
+void awacs_swap_bytes_mono16_to_stereo16(void *, u_char *, int);
+void awacs_cvt_ulinear_mono_16_be(void *, u_char *, int);
+void awacs_cvt_ulinear_mono_16_le(void *, u_char *, int);
 
 struct cfattach awacs_ca = {
 	sizeof(struct awacs_softc), awacs_match, awacs_attach
@@ -507,41 +510,57 @@ awacs_query_encoding(h, ae)
 		ae->encoding = AUDIO_ENCODING_SLINEAR;
 		ae->precision = 16;
 		ae->flags = 0;
-		return 0;
+		break;
 	case 1:
 		strlcpy(ae->name, AudioEslinear_be, sizeof ae->name);
 		ae->encoding = AUDIO_ENCODING_SLINEAR_BE;
 		ae->precision = 16;
 		ae->flags = 0;
-		return 0;
+		break;
 	case 2:
 		strlcpy(ae->name, AudioEslinear_le, sizeof ae->name);
 		ae->encoding = AUDIO_ENCODING_SLINEAR_LE;
 		ae->precision = 16;
 		ae->flags = 0;
-		return 0;
+		break;
 	case 3:
 		strlcpy(ae->name, AudioEmulaw, sizeof ae->name);
 		ae->encoding = AUDIO_ENCODING_ULAW;
 		ae->precision = 8;
 		ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return 0;
+		break;
 	case 4:
 		strlcpy(ae->name, AudioEalaw, sizeof ae->name);
 		ae->encoding = AUDIO_ENCODING_ALAW;
 		ae->precision = 8;
 		ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return 0;
+		break;
+	case 5:
+		strlcpy(ae->name, AudioEulinear, sizeof ae->name);
+		ae->encoding = AUDIO_ENCODING_ULINEAR;
+		ae->precision = 16;
+		ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
+		break;
+	case 6:
+		strlcpy(ae->name, AudioEulinear_le, sizeof ae->name);
+		ae->encoding = AUDIO_ENCODING_ULINEAR_LE;
+		ae->precision = 16;
+		ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
+		break;
+	case 7:
+		strlcpy(ae->name, AudioEulinear_be, sizeof ae->name);
+		ae->encoding = AUDIO_ENCODING_ULINEAR_BE;
+		ae->precision = 16;
+		ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
+		break;
 	default:
-		return EINVAL;
+		return (EINVAL);
 	}
+	return (0);
 }
 
 void
-awacs_mono16_to_stereo16(v, p, cc)
-	void *v;
-	u_char *p;
-	int cc;
+awacs_mono16_to_stereo16(void *v, u_char *p, int cc)
 {
 	int x;
 	int16_t *src, *dst;
@@ -554,6 +573,27 @@ awacs_mono16_to_stereo16(v, p, cc)
 		*--dst = x;
 		cc -= 2;
 	}
+}
+
+void
+awacs_swap_bytes_mono16_to_stereo16(void *v, u_char *p, int cc)
+{
+	swap_bytes(v, p, cc);
+	awacs_mono16_to_stereo16(v, p, cc);
+}
+
+void
+awacs_cvt_ulinear_mono_16_le(void *v, u_char *p, int cc)
+{
+	swap_bytes_change_sign16_be(v, p, cc);
+	awacs_mono16_to_stereo16(v, p, cc);
+}
+
+void
+awacs_cvt_ulinear_mono_16_be(void *v, u_char *p, int cc)
+{
+	change_sign16_be(v, p, cc);
+	awacs_mono16_to_stereo16(v, p, cc);
 }
 
 int
@@ -594,51 +634,71 @@ awacs_set_params(h, setmode, usemode, play, rec)
 			return EINVAL;
 
 		p->factor = 1;
-		p->sw_code = 0;
+		p->sw_code = NULL;
 		awacs_write_reg(sc, AWACS_BYTE_SWAP, 0);
 
 		switch (p->encoding) {
 
 		case AUDIO_ENCODING_SLINEAR_LE:
-			awacs_write_reg(sc, AWACS_BYTE_SWAP, 1);
+			if (p->channels == 2 && p->precision == 16) {
+				p->sw_code = swap_bytes;
+				break;
+			}
+			if (p->channels == 1 && p->precision == 16) {
+				p->factor = 2;
+				p->sw_code =
+				    awacs_swap_bytes_mono16_to_stereo16;
+				break;
+			}
+			return (EINVAL);
 		case AUDIO_ENCODING_SLINEAR_BE:
-			if (p->channels == 1) {
+			if (p->channels == 2 && p->precision == 16)
+				break;
+			if (p->channels == 1 && p->precision == 16) {
 				p->factor = 2;
 				p->sw_code = awacs_mono16_to_stereo16;
 				break;
 			}
-			if (p->precision != 16)
-				return EINVAL;
-				/* p->sw_code = change_sign8; */
-			break;
-
+			return (EINVAL);
 		case AUDIO_ENCODING_ULINEAR_LE:
-			awacs_write_reg(sc, AWACS_BYTE_SWAP, 1);
+			if (p->channels == 2 && p->precision == 16) {
+				p->sw_code = swap_bytes_change_sign16_be;
+				break;
+			}
+			if (p->channels == 1 && p->precision == 16) {
+				p->factor = 2;
+				p->sw_code = awacs_cvt_ulinear_mono_16_le;
+				break;
+			}
+			return (EINVAL);
 		case AUDIO_ENCODING_ULINEAR_BE:
-			if (p->precision == 16)
+			if (p->channels == 2 && p->precision == 16) {
 				p->sw_code = change_sign16_be;
-			else
-				return EINVAL;
-			break;
-
+				break;
+			}
+			if (p->channels == 1 && p->precision == 16) {
+				p->factor = 2;
+				p->sw_code = awacs_cvt_ulinear_mono_16_be;
+				break;
+			}
+			return (EINVAL);
 		case AUDIO_ENCODING_ULAW:
 			if (mode == AUMODE_PLAY) {
 				p->factor = 2;
 				p->sw_code = mulaw_to_slinear16_be;
+				break;
 			} else
-				p->sw_code = ulinear8_to_mulaw;
-			break;
-
+				break;	/* XXX */
+			return (EINVAL);
 		case AUDIO_ENCODING_ALAW:
 			if (mode == AUMODE_PLAY) {
 				p->factor = 2;
 				p->sw_code = alaw_to_slinear16_be;
-			} else
-				p->sw_code = ulinear8_to_alaw;
-			break;
-
+				break;
+			}
+			return (EINVAL);
 		default:
-			return EINVAL;
+			return (EINVAL);
 		}
 	}
 
