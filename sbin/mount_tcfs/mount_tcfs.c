@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_tcfs.c,v 1.5 1997/09/16 12:31:02 lukem Exp $	*/
+/*	$OpenBSD: mount_tcfs.c,v 1.3 2000/06/18 01:31:49 provos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
