@@ -1,4 +1,4 @@
-/*	$OpenBSD: prom.h,v 1.6 1996/05/16 02:14:02 chuck Exp $ */
+/*	$OpenBSD: prom.h,v 1.7 1996/05/19 20:05:11 chuck Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -185,3 +185,8 @@ struct mvmeprom_args {
 #define MVMEPROM_REG_NBARGEND	"a4"
 #define MVMEPROM_REG_ARGSTART	"a5"
 #define MVMEPROM_REG_ARGEND	"a6"
+
+#ifndef RB_NOSYM
+#define RB_NOSYM 0x400
+#endif
+
