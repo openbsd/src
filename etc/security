@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: security,v 1.30 1998/08/17 16:43:47 millert Exp $
+#	$OpenBSD: security,v 1.31 1998/11/22 22:15:42 deraadt Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -84,7 +84,7 @@ fi
 # that because this file has encrypted passwords in it.
 if [ ! -d /var/backups ] ; then
 	mkdir /var/backups
-	chmod 755 /var/backups
+	chmod 700 /var/backups
 fi
 CUR=/var/backups/`basename $MP`.current
 BACK=/var/backups/`basename $MP`.backup
