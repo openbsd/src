@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.30 2002/01/27 02:08:08 frantzen Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.31 2002/02/15 00:29:56 dhartmei Exp $
 .\"
 .\" Copyright (c) 2001, Daniel Hartmeier
 .\" All rights reserved.
@@ -70,7 +70,7 @@ host       = [ "!" ] address [ "/" mask-bits ] .
 host-list  = host [ "," host-list ] .
 port       = "port" ( unary-op | binary-op | "{" port-list "}" ) .
 port-list  = ( unary-op | binary-op ) [ "," port-list ] .
-unary-op   = ( "=" | "!=" | "<" | "<=" | ">" | ">=" )
+unary-op   = [ "=" | "!=" | "<" | "<=" | ">" | ">=" ]
              ( port-name | port-number ) .
 binary-op  = port-number ( "<>" | "><" ) port-number .
 
