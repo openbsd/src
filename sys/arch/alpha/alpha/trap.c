@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.10 1997/02/09 14:18:42 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.11 1997/02/12 14:57:02 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.19 1996/11/27 01:28:30 cgd Exp $	*/
 
 /*
@@ -408,7 +408,7 @@ panic("foo");
 				}
 				goto dopanic;
 			}
-			v = a0;
+			v = (caddr_t)a0;
 			ucode = ftype;
 			i = SIGSEGV;
 			typ = SEGV_MAPERR;
