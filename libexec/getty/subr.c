@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)subr.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$Id: subr.c,v 1.9 2000/09/08 04:30:19 aaron Exp $";
+static char rcsid[] = "$Id: subr.c,v 1.10 2000/10/06 22:51:42 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -694,22 +694,22 @@ portselector()
 char *
 autobaud()
 {
-	int rfds;
+	fd_set rfds;
 	struct timeval timeout;
 	char c, *type = "9600-baud";
 
 	(void)tcflush(0, TCIOFLUSH);
-	rfds = 1 << 0;
+	FD_ZERO(&rfds);
+	FD_SET(0, &rfds);
 	timeout.tv_sec = 5;
 	timeout.tv_usec = 0;
-	if (select(32, (fd_set *)&rfds, (fd_set *)NULL,
-	    (fd_set *)NULL, &timeout) <= 0)
+	if (select(1, &rfds, (fd_set *)NULL, (fd_set *)NULL, &timeout) <= 0)
 		return (type);
 	if (read(STDIN_FILENO, &c, sizeof(char)) != sizeof(char))
 		return (type);
 	timeout.tv_sec = 0;
 	timeout.tv_usec = 20;
-	(void) select(32, (fd_set *)NULL, (fd_set *)NULL,
+	(void) select(0, (fd_set *)NULL, (fd_set *)NULL,
 	    (fd_set *)NULL, &timeout);
 	(void)tcflush(0, TCIOFLUSH);
 	switch (c & 0377) {
