@@ -4,4 +4,12 @@
 PROG=	nfsd
 MAN=	nfsd.8
 
+.include <bsd.own.mk>	# For KERBEROS
+
+.if defined(KERBEROS)
+CFLAGS+=-DKERBEROS
+LDADD+=	-lkrb -ldes
+DPADD+=	${LIBKRB} ${LIBDES}
+.endif
+
 .include <bsd.prog.mk>

@@ -41,7 +41,6 @@ static char rcsid[] = "$NetBSD: des_rw.c,v 1.2 1995/03/21 07:58:30 cgd Exp $";
 #endif
 #endif /* not lint */
 
-#ifdef CRYPT
 #ifdef KERBEROS
 #include <sys/param.h>
 
@@ -53,9 +52,9 @@ static char rcsid[] = "$NetBSD: des_rw.c,v 1.2 1995/03/21 07:58:30 cgd Exp $";
 #include <time.h>
 #include <unistd.h>
 
-static unsigned char	des_inbuf[10240], storage[10240], *store_ptr;
-static bit_64		*key;
-static u_char		*key_schedule;
+static des_cblock	des_inbuf[10240], storage[10240], *store_ptr;
+static des_cblock	*key;
+static des_key_schedule	key_schedule;
 
 /* XXX these should be in a kerberos include file */
 int	krb_net_read __P((int, char *, int));
@@ -80,13 +79,15 @@ int	des_pcbc_encrypt __P((des_cblock *, des_cblock *, long,
  * and the insched is the DES Key unwrapped for faster decryption
  */
 
-void
+int
 des_set_key(inkey, insched)
-	bit_64		*inkey;
-	u_char		*insched;
+	des_cblock		*inkey;
+	des_key_schedule	insched;
 {
 	key = inkey;
-	key_schedule = insched;
+	bcopy(insched, key_schedule, sizeof(key_schedule));
+
+	return 0;
 }
 
 void
@@ -166,7 +167,7 @@ des_read(fd, buf, len)
 	return(nreturned);
 }
 
-static	unsigned char des_outbuf[10240];	/* > longest write */
+static	des_cblock des_outbuf[10240];	/* > longest write */
 
 int
 des_write(fd, buf, len)
@@ -175,7 +176,7 @@ des_write(fd, buf, len)
 	int len;
 {
 	static	int	seeded = 0;
-	static	char	garbage_buf[8];
+	static	des_cblock	garbage_buf[8];
 	long net_len, garbage;
 
 	if(len < 8) {
@@ -191,7 +192,7 @@ des_write(fd, buf, len)
 	}
 	/* pcbc_encrypt outputs in 8-byte (64 bit) increments */
 
-	(void) des_pcbc_encrypt((len < 8) ? garbage_buf : buf,
+	(void) des_pcbc_encrypt((len < 8) ? garbage_buf : (des_cblock *)buf,
 			    des_outbuf,
 			    (len < 8) ? 8 : len,
 			    key_schedule,	/* DES key */
@@ -206,4 +207,3 @@ des_write(fd, buf, len)
 	return(len);
 }
 #endif /* KERBEROS */
-#endif /* CRYPT */

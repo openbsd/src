@@ -52,9 +52,7 @@ static char rcsid[] = "$NetBSD: krcmd.c,v 1.2 1995/03/21 07:58:36 cgd Exp $";
 
 #ifdef KERBEROS
 #include <sys/types.h>
-#ifdef CRYPT
 #include <sys/socket.h>
-#endif
 
 #include <netinet/in.h>
 
@@ -115,7 +113,6 @@ krcmd(ahost, rport, remuser, cmd, fd2p, realm)
 	return(sock);
 }
 
-#ifdef CRYPT
 int
 krcmd_mutual(ahost, rport, remuser, cmd, fd2p, realm, cred, sched)
 	char		**ahost;
@@ -160,5 +157,4 @@ krcmd_mutual(ahost, rport, remuser, cmd, fd2p, realm, cred, sched)
 		return (-1);
 	return(sock);
 }
-#endif /* CRYPT */
 #endif /* KERBEROS */

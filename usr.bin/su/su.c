@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)su.c	5.26 (Berkeley) 7/6/91";*/
-static char rcsid[] = "$Id: su.c,v 1.1.1.1 1995/10/18 08:46:10 deraadt Exp $";
+static char rcsid[] = "$Id: su.c,v 1.2 1995/12/16 22:20:38 tholo Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -311,7 +311,6 @@ kerberos(username, user, uid)
 	char *username, *user;
 	int uid;
 {
-	extern char *krb_err_txt[];
 	KTEXT_ST ticket;
 	AUTH_DAT authdata;
 	struct hostent *hp;

@@ -3,20 +3,27 @@
 
 PROG=	login
 SRCS=	login.c
-DPADD=	${LIBUTIL} ${LIBCRYPT} ${LIBSKEY}
-LDADD=	-lutil -lcrypt -lskey
-CFLAGS+= -DSKEY
+LDADD=	-lutil -lcrypt
+DPADD=	${LIBUTIL} ${LIBCRYPT}
+
+.include <bsd.own.mk>	# For SKEY, KERBEROS and KERBEROS5
+
+.if defined(SKEY)
+CFLAGS+=-DSKEY
+LDADD+=	-lskey
+DPADD+=	${LIBSKEY}
+.endif
 
 .if defined(KERBEROS5)
-SRCS+=	k5login.c
-DPADD+=	${LIBKRB5} ${LIBCRYPTO}
-LDADD+=	-lkrb5 -lcrypto
 CFLAGS+= -DKERBEROS5
+SRCS+=	k5login.c
+LDADD+=	-lkrb5 -lcrypto
+DPADD+=	${LIBKRB5} ${LIBCRYPTO}
 .elif defined(KERBEROS)
-SRCS+=	klogin.c
-DPADD+=	${LIBKRB} ${LIBDES}
-LDADD+=	-lkrb -ldes
 CFLAGS+= -DKERBEROS
+SRCS+=	klogin.c
+LDADD+=	-lkrb -ldes
+DPADD+=	${LIBKRB} ${LIBDES}
 .endif
 
 BINOWN=	root

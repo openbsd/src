@@ -64,8 +64,6 @@ static char rcsid[] = "$NetBSD: kcmd.c,v 1.2 1995/03/21 07:58:32 cgd Exp $";
 #include <string.h>
 #include <unistd.h>
 
-#include "krb.h"
-
 #ifndef MAXHOSTNAMELEN
 #define MAXHOSTNAMELEN 64
 #endif

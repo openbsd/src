@@ -82,12 +82,8 @@ int	use_kerberos = 1;
 CREDENTIALS 	cred;
 Key_schedule	schedule;
 extern	char	*krb_realmofhost();
-#ifdef CRYPT
 int	doencrypt = 0;
 #define	OPTIONS	"dfKk:prtx"
-#else
-#define	OPTIONS	"dfKk:prt"
-#endif
 #else
 #define	OPTIONS "dfprt"
 #endif
@@ -135,12 +131,10 @@ main(argc, argv)
 			dest_realm = dst_realm_buf;
 			(void)strncpy(dst_realm_buf, optarg, REALM_SZ);
 			break;
-#ifdef CRYPT
 		case 'x':
 			doencrypt = 1;
 			/* des_set_key(cred.session, schedule); */
 			break;
-#endif
 #endif
 		case 'p':
 			pflag = 1;
@@ -169,11 +163,7 @@ main(argc, argv)
 
 #ifdef KERBEROS
 	if (use_kerberos) {
-#ifdef CRYPT
 		shell = doencrypt ? "ekshell" : "kshell";
-#else
-		shell = "kshell";
-#endif
 		if ((sp = getservbyname(shell, "tcp")) == NULL) {
 			use_kerberos = 0;
 			oldw("can't get entry for %s/tcp service", shell);
@@ -216,11 +206,7 @@ main(argc, argv)
 #ifdef	KERBEROS
 	(void)snprintf(cmd, sizeof(cmd),
 	    "rcp%s%s%s%s", iamrecursive ? " -r" : "",
-#ifdef CRYPT
 	    (doencrypt && use_kerberos ? " -x" : ""),
-#else
-	    "",
-#endif
 	    pflag ? " -p" : "", targetshouldbedirectory ? " -d" : "");
 #else
 	(void)snprintf(cmd, sizeof(cmd), "rcp%s%s%s",
@@ -785,11 +771,9 @@ again:
 		if (dest_realm == NULL)
 			dest_realm = krb_realmofhost(*host);
 		rem = 
-#ifdef CRYPT
 		    doencrypt ? 
 			krcmd_mutual(host,
 			    port, user, bp, 0, dest_realm, &cred, schedule) :
-#endif
 			krcmd(host, port, user, bp, 0, dest_realm);
 
 		if (rem < 0) {
@@ -804,11 +788,9 @@ again:
 			goto again;
 		}
 	} else {
-#ifdef CRYPT
 		if (doencrypt)
 			errx(1,
 			   "the -x option requires Kerberos authentication");
-#endif
 		rem = rcmd(host, port, locuser, user, bp, 0);
 	}
 	return (rem);
@@ -852,15 +834,9 @@ void
 usage()
 {
 #ifdef KERBEROS
-#ifdef CRYPT
 	(void)fprintf(stderr, "%s\n\t%s\n",
 	    "usage: rcp [-Kpx] [-k realm] f1 f2",
 	    "or: rcp [-Kprx] [-k realm] f1 ... fn directory");
-#else
-	(void)fprintf(stderr, "%s\n\t%s\n",
-	    "usage: rcp [-Kp] [-k realm] f1 f2",
-	    "or: rcp [-Kpr] [-k realm] f1 ... fn directory");
-#endif
 #else
 	(void)fprintf(stderr,
 	    "usage: rcp [-p] f1 f2; or: rcp [-pr] f1 ... fn directory\n");

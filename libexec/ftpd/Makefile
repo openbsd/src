@@ -2,20 +2,29 @@
 #	@(#)Makefile	8.2 (Berkeley) 4/4/94
 
 PROG=	ftpd
-CFLAGS+=-DHASSETPROCTITLE -DSKEY
+CFLAGS+=-DHASSETPROCTITLE
 SRCS=	ftpd.c ftpcmd.c logwtmp.c popen.c
 MAN=	ftpd.8
 CLEANFILES+=ftpcmd.c y.tab.h
-.PATH:	${.CURDIR}/../../usr.bin/ftp ${.CURDIR}/../../usr.bin/login
+.PATH:	${.CURDIR}/../../usr.bin/ftp
 
-LDADD+= -lcrypt -lskey
-DPADD+= ${LIBCRYPT} ${LIBSKEY}
+LDADD+= -lcrypt
+DPADD+= ${LIBCRYPT}
+
+.include <bsd.own.mk>
+
+.if defined(SKEY)
+CFLAGS+=-DSKEY
+LDADD+= -lskey
+DPADD+= ${LIBSKEY}
+.endif
 
 .if defined(KERBEROS)
 SRCS+= klogin.c
+.PATH:	${.CURDIR}/../../usr.bin/login
 CFLAGS+= -DKERBEROS
 LDADD+= -lkrb -ldes
-DPADD+= ${LIBKRB} ${LIBDES}
+DPADD+= ${LIBKRB} ${LIBKRB}
 .endif
 
 .include <bsd.prog.mk>

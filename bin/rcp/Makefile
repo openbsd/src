@@ -7,10 +7,12 @@ BINOWN=	root
 BINMODE=4555
 #INSTALLFLAGS=-fschg
 
+.include <bsd.own.mk>	# For KERBEROS
+
 .if defined(KERBEROS)
 .PATH:	${.CURDIR}/../../usr.bin/rlogin
 SRCS+=	krcmd.c kcmd.c
-CFLAGS+=-DKERBEROS -DCRYPT
+CFLAGS+=-DKERBEROS
 LDADD+=	-lkrb -ldes
 DPADD+=	${LIBKRB} ${LIBDES}
 .endif

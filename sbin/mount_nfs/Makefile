@@ -9,6 +9,8 @@ MOUNT=	${.CURDIR}/../mount
 CFLAGS+= -DNFS -I${MOUNT}
 .PATH:	${MOUNT}
 
+.include <bsd.own.mk>	# For KERBEROS
+
 .if defined(KERBEROS)
 CFLAGS+=-DKERBEROS
 DPADD+=	${LIBKRB} ${LIBDES}
