@@ -94,3 +94,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* We're not ELF yet */
 #undef HAS_INIT_SECTION
+
+/* can't use dwarf2-style exception handling as we're not elf... */
+#undef DWARF2_UNWIND_INFO
+#define DWARF2_UNWIND_INFO 0
