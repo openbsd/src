@@ -1,6 +1,6 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
-#	$OpenBSD: bsd.port.mk,v 1.54 1998/12/16 19:59:48 marc Exp $
+#	$OpenBSD: bsd.port.mk,v 1.55 1998/12/17 18:25:06 espie Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -27,6 +27,30 @@
 FreeBSD_MAINTAINER=	asami@FreeBSD.ORG
 OpenBSD_MAINTAINER=	marc@OpenBSD.ORG
 NetBSD_MAINTAINER=	agc@netbsd.org
+
+# NEED_VERSION: we need at least this version of bsd.port.mk for this 
+# port  to build
+
+FULL_REVISION=$$OpenBSD: bsd.port.mk,v 1.55 1998/12/17 18:25:06 espie Exp $$
+.if defined(NEED_VERSION)
+VERSION_REVISION=${FULL_REVISION:M[0-9]*.*}
+
+VERSION=${VERSION_REVISION:C/\..*//}
+REVISION=${VERSION_REVISION:C/.*\.//}
+
+VERSION_NEEDED=${NEED_VERSION:C/\..*//}
+REVISION_NEEDED=${NEED_VERSION:C/.*\.//}
+
+.BEGIN:
+	@if [ ${VERSION_NEEDED} -gt ${VERSION} -o \
+			${VERSION_NEEDED} -eq ${VERSION} -a \
+				${REVISION_NEEDED} -gt ${REVISION} ]; \
+	then \
+		${ECHO} "Need version ${NEED_VERSION} of bsd.port.mk"; \
+		${FALSE}; \
+    fi; 
+
+.endif
 
 # Supported Variables and their behaviors:
 #
