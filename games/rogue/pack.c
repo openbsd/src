@@ -1,4 +1,4 @@
-/*	$OpenBSD: pack.c,v 1.3 1998/08/22 08:55:38 pjanzen Exp $	*/
+/*	$OpenBSD: pack.c,v 1.4 2000/04/07 04:34:16 pjanzen Exp $	*/
 /*	$NetBSD: pack.c,v 1.3 1995/04/22 10:27:54 cgd Exp $	*/
 
 /*
@@ -346,7 +346,7 @@ wear()
 	char desc[DCOLS];
 
 	if (rogue.armor) {
-		message("your already wearing some", 0);
+		message("you're already wearing some", 0);
 		return;
 	}
 	ch = pack_letter("wear what?", ARMOR);
