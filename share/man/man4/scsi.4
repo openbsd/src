@@ -1,4 +1,4 @@
-.\"	$OpenBSD: scsi.4,v 1.18 2004/09/30 19:59:25 mickey Exp $
+.\"	$OpenBSD: scsi.4,v 1.19 2005/01/04 11:39:01 miod Exp $
 .\"
 .\" Copyright (c) 1996
 .\"	Julian Elischer <julian@freebsd.org>.  All rights reserved.
@@ -91,7 +91,7 @@ When there is a mixture of wired down and counted devices then the
 counting begins with the first non-wired down unit for a particular
 type.
 That is, if a disk is wired down as
-.Cd "disk sd1 at scsibus?" ,
+.Cd "sd1 at scsibus?" ,
 then the first non-wired disk shall come on line as
 .Em sd2 .
 .Sh IOCTLS
