@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2000/03/01 22:10:09 todd Exp $
+#	$OpenBSD: Makefile,v 1.4 2001/06/25 07:40:45 art Exp $
 
 .include <bsd.own.mk>
 
@@ -6,11 +6,14 @@
 .PATH:  ${.CURDIR}/../../../usr.sbin/dhcp/common
 
 COPTS+=-Os
-CPPFLAGS+= -I${.CURDIR}/../../../usr.sbin/dhcp -I${.CURDIR}/../../../usr.sbin/dhcp/includes
+CLIENT_PATH='"PATH=/usr/bin:/usr/sbin:/bin:/sbin"'
+CPPFLAGS+= -I${.CURDIR}/../../../usr.sbin/dhcp \
+	-I${.CURDIR}/../../../usr.sbin/dhcp/includes \
+	-DCLIENT_PATH=${CLIENT_PATH}
 SRCS=	dhclient.c clparse.c \
-        raw.c parse.c nit.c icmp.c dispatch.c conflex.c upf.c bpf.c socket.c \
-        packet.c memory.c print.c options.c inet.c convert.c sysconf.c \
-        tree.c tables.c hash.c alloc.c errwarn.c inet_addr.c dns.c resolv.c
+	alloc.c dispatch.c hash.c memory.c print.c bpf.c icmp.c options.c \
+	tree.c conflex.c errwarn.c inet.c packet.c socket.c convert.c \
+	ethernet.c parse.c tables.c
 PROG=	dhclient
 MAN=
 
