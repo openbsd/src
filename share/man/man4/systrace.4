@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systrace.4,v 1.1 2002/06/01 08:01:59 wcobb Exp $
+.\"	$OpenBSD: systrace.4,v 1.2 2002/06/03 15:44:17 mpech Exp $
 .\"
 .\" Copyright (c) 2002 CubeSoft Communications, Inc.
 .\" All rights reserved.
@@ -62,7 +62,7 @@ Immediately return an error code.
 A
 .Xr read 2
 operation on the
-.Nm systrace
+.Nm
 pseudo-device will block if there are no pending messages, or
 return the following structure:
 .Bd -literal
@@ -98,7 +98,6 @@ struct str_msg_child {
 };
 .Ed
 .Sh IOCTL INTERFACE
-
 .Bl -tag -width "xxxxxx"
 .It Dv SYSTR_CLONE Fa "int"
 Return a
