@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.34 2001/01/16 02:59:46 deraadt Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.35 2001/01/17 19:27:11 deraadt Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -218,7 +218,8 @@ int opt_flags;
 
 int debug = 0;
 
-volatile int gothup;
+sig_atomic_t gothup;
+sig_atomic_t gotterm;
 
 /*
  * Mountd server for NFS mount protocol as described in:
@@ -357,6 +358,12 @@ mountd_svc_run()
 		if (gothup) {
 			get_exportlist();
 			gothup = 0;
+		}
+		if (gotterm) {
+			(void) clnt_broadcast(RPCPROG_MNT, RPCMNT_VER1,
+			    RPCMNT_UMNTALL, xdr_void, (caddr_t)0, xdr_void,
+			    (caddr_t)0, umntall_each);
+			exit(0);
 		}
 	}
 }
@@ -2020,9 +2027,7 @@ add_mlist(hostp, dirp)
 void
 send_umntall()
 {
-	(void) clnt_broadcast(RPCPROG_MNT, RPCMNT_VER1, RPCMNT_UMNTALL,
-		xdr_void, (caddr_t)0, xdr_void, (caddr_t)0, umntall_each);
-	exit(0);
+	gotterm = 1;
 }
 
 int
