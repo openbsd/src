@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.34 2003/02/01 00:14:40 chris Exp $ */
+/*	$OpenBSD: if_vlan.c,v 1.35 2003/03/24 17:59:48 jason Exp $ */
 /*
  * Copyright 1998 Massachusetts Institute of Technology
  *
@@ -241,6 +241,7 @@ vlan_input_tag(struct mbuf *m, u_int16_t t)
 	struct ifvlan *ifv;
 	struct ether_vlan_header vh;
 
+	t = EVL_VLANOFTAG(t);
 	for (i = 0; i < nifvlan; i++) {
 		ifv = &ifv_softc[i];
 		if (m->m_pkthdr.rcvif == ifv->ifv_p && t == ifv->ifv_tag)
@@ -248,14 +249,21 @@ vlan_input_tag(struct mbuf *m, u_int16_t t)
 	}
 
 	if (i >= nifvlan) {
-		if (m->m_pkthdr.len < sizeof(struct ether_header))
+		if (m->m_pkthdr.len < sizeof(struct ether_header)) {
+			m_freem(m);
 			return (-1);
+		}
 		m_copydata(m, 0, sizeof(struct ether_header), (caddr_t)&vh);
 		vh.evl_proto = vh.evl_encap_proto;
 		vh.evl_tag = htons(t);
 		vh.evl_encap_proto = htons(ETHERTYPE_8021Q);
-		M_PREPEND(m, EVL_ENCAPLEN, M_DONTWAIT);
+		m_adj(m, sizeof(struct ether_header));
+		m = m_prepend(m, sizeof(struct ether_vlan_header), M_DONTWAIT);
 		if (m == NULL)
+			return (-1);
+		m->m_pkthdr.len += sizeof(struct ether_vlan_header);
+		if (m->m_len < sizeof(struct ether_vlan_header) &&
+		    (m = m_pullup(m, sizeof(struct ether_vlan_header))) == NULL)
 			return (-1);
 		m_copyback(m, 0, sizeof(struct ether_vlan_header), (caddr_t)&vh);
 		ether_input_mbuf(m->m_pkthdr.rcvif, m);
