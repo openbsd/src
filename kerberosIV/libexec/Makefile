@@ -1,8 +1,8 @@
-# $OpenBSD: Makefile,v 1.3 2001/06/25 18:17:22 angelos Exp $
+# $OpenBSD: Makefile,v 1.4 2003/03/21 09:46:37 hin Exp $
 
 .include <bsd.own.mk> # for KERBEROS5
 
-SUBDIR=	kauthd kerberos kpropd
+SUBDIR=	kauthd kpropd
 
 .if (${KERBEROS5:L} != "yes")
 SUBDIR+=kadmind
