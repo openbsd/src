@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.112 2002/05/29 07:54:59 itojun Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.113 2002/05/31 04:43:25 angelos Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -761,31 +761,18 @@ findpcb:
 			  bcopy(inp->inp_seclevel, newinp->inp_seclevel,
 				sizeof(inp->inp_seclevel));
 			  newinp->inp_secrequire = inp->inp_secrequire;
-			  if (inp->inp_ipsec_localid != NULL) {
-			  	newinp->inp_ipsec_localid = inp->inp_ipsec_localid;
-				inp->inp_ipsec_localid->ref_count++;
-			  }
-			  if (inp->inp_ipsec_remoteid != NULL) {
-			  	newinp->inp_ipsec_remoteid = inp->inp_ipsec_remoteid;
-				inp->inp_ipsec_remoteid->ref_count++;
-			  }
-			  if (inp->inp_ipsec_localcred != NULL) {
-			  	newinp->inp_ipsec_localcred = inp->inp_ipsec_localcred;
-				inp->inp_ipsec_localcred->ref_count++;
+			  if (inp->inp_ipo != NULL) {
+				  newinp->inp_ipo = inp->inp_ipo;
+				  inp->inp_ipo->ipo_ref_count++;
 			  }
 			  if (inp->inp_ipsec_remotecred != NULL) {
-			  	newinp->inp_ipsec_remotecred = inp->inp_ipsec_remotecred;
-				inp->inp_ipsec_remotecred->ref_count++;
-			  }
-			  if (inp->inp_ipsec_localauth != NULL) {
-			  	newinp->inp_ipsec_localauth
-				  = inp->inp_ipsec_localauth;
-				inp->inp_ipsec_localauth->ref_count++;
+				  newinp->inp_ipsec_remotecred = inp->inp_ipsec_remotecred;
+				  inp->inp_ipsec_remotecred->ref_count++;
 			  }
 			  if (inp->inp_ipsec_remoteauth != NULL) {
-			  	newinp->inp_ipsec_remoteauth
-				  = inp->inp_ipsec_remoteauth;
-				inp->inp_ipsec_remoteauth->ref_count++;
+				  newinp->inp_ipsec_remoteauth
+				      = inp->inp_ipsec_remoteauth;
+				  inp->inp_ipsec_remoteauth->ref_count++;
 			  }
 			}
 #endif /* IPSEC */
@@ -856,14 +843,26 @@ findpcb:
 		tdb = NULL;
 	ipsp_spd_lookup(m, af, iphlen, &error, IPSP_DIRECTION_IN,
 	    tdb, inp);
+	if (error) {
+		splx(s);
+		goto drop;
+	}
 
 	/* Latch SA */
 	if (inp->inp_tdb_in != tdb) {
 		if (tdb) {
 		        tdb_add_inp(tdb, inp, 1);
-			if (inp->inp_ipsec_remoteid == NULL &&
+			if (inp->inp_ipo == NULL) {
+				inp->inp_ipo = ipsec_add_policy(inp, af,
+				    IPSP_DIRECTION_OUT);
+				if (inp->inp_ipo == NULL) {
+					splx(s);
+					goto drop;
+				}
+			}
+			if (inp->inp_ipo->ipo_dstid == NULL &&
 			    tdb->tdb_srcid != NULL) {
-				inp->inp_ipsec_remoteid = tdb->tdb_srcid;
+				inp->inp_ipo->ipo_dstid = tdb->tdb_srcid;
 				tdb->tdb_srcid->ref_count++;
 			}
 			if (inp->inp_ipsec_remotecred == NULL &&
@@ -885,10 +884,6 @@ findpcb:
 		}
 	}
         splx(s);
-
-	/* Error or otherwise drop-packet indication */
-	if (error)
-		goto drop;
 #endif /* IPSEC */
 
 	/*

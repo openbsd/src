@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.76 2002/03/15 18:19:53 millert Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.77 2002/05/31 04:43:26 angelos Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -538,15 +538,27 @@ udp_input(struct mbuf *m, ...)
 		tdb = NULL;
 	ipsp_spd_lookup(m, srcsa.sa.sa_family, iphlen, &error,
 	    IPSP_DIRECTION_IN, tdb, inp);
+	if (error) {
+		splx(s);
+		goto bad;
+	}
 
 	/* Latch SA only if the socket is connected */
 	if (inp->inp_tdb_in != tdb &&
 	    (inp->inp_socket->so_state & SS_ISCONNECTED)) {
 		if (tdb) {
 		        tdb_add_inp(tdb, inp, 1);
-			if (inp->inp_ipsec_remoteid == NULL &&
+			if (inp->inp_ipo == NULL) {
+				inp->inp_ipo = ipsec_add_policy(inp,
+				    srcsa.sa.sa_family, IPSP_DIRECTION_OUT);
+				if (inp->inp_ipo == NULL) {
+					splx(s);
+					goto bad;
+				}
+			}
+			if (inp->inp_ipo->ipo_dstid == NULL &&
 			    tdb->tdb_srcid != NULL) {
-				inp->inp_ipsec_remoteid = tdb->tdb_srcid;
+				inp->inp_ipo->ipo_dstid = tdb->tdb_srcid;
 				tdb->tdb_srcid->ref_count++;
 			}
 			if (inp->inp_ipsec_remotecred == NULL &&
@@ -568,10 +580,6 @@ udp_input(struct mbuf *m, ...)
 		}
 	}
         splx(s);
-
-	/* Error or otherwise drop-packet indication. */
-	if (error)
-		goto bad;
 #endif /*IPSEC */
 
 	opts = NULL;
