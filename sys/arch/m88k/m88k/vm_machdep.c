@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.2 2004/08/02 08:35:00 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.3 2004/10/01 19:00:48 miod Exp $	*/
 
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -65,6 +65,10 @@
 
 extern struct extent *iomap_extent;
 extern struct vm_map *iomap_map;
+
+extern void proc_do_uret(struct proc *);
+extern void savectx(struct pcb *);
+extern void switch_exit(struct proc *);
 
 vaddr_t iomap_mapin(paddr_t, psize_t, boolean_t);
 void iomap_mapout(vaddr_t, vsize_t);

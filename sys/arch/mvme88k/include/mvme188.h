@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvme188.h,v 1.19 2004/08/02 08:35:00 miod Exp $ */
+/*	$OpenBSD: mvme188.h,v 1.20 2004/10/01 19:00:51 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -362,15 +362,6 @@
 #define VME_CMMU_D1	0xfff5f000
 #define VME_CMMU_D2	0xfff3f000
 #define VME_CMMU_D3	0xfff7f000
-
-#ifndef _LOCORE
-
-extern unsigned int m188_curspl[MAX_CPUS];
-extern unsigned int int_mask_val[INT_LEVEL];
-extern unsigned int int_mask_shadow[MAX_CPUS];
-extern unsigned int *volatile int_mask_reg[MAX_CPUS];
-
-#endif
 
 #define M188_IACK		0xFFF85000
 #define M188_IVEC		0x40	/* vector returned upon MVME188 int */
