@@ -1,5 +1,5 @@
-/*	$OpenBSD: vm_param.h,v 1.25 2001/08/11 10:57:22 art Exp $	*/
-/*	$NetBSD: vm_param.h,v 1.25 2000/03/26 20:42:45 kleink Exp $	*/
+/*	$OpenBSD: uvm_param.h,v 1.1 2001/11/06 00:30:38 art Exp $	*/
+/*	$NetBSD: uvm_param.h,v 1.1 2000/06/26 14:59:04 mrg Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -77,7 +77,7 @@
 /*
  * This belongs in types.h, but breaks too many existing programs.
  */
-typedef	int	boolean_t;
+typedef int	boolean_t;
 #ifndef TRUE
 #define	TRUE	1
 #endif
@@ -91,24 +91,15 @@ typedef	int	boolean_t;
  */
 #define	DEFAULT_PAGE_SIZE	4096
 
-#ifdef _KERNEL
+#if defined(_KERNEL) && !defined(PAGE_SIZE)
 /*
  *	All references to the size of a page should be done with PAGE_SIZE
- *	or PAGE_SHIFT.
- *	We allow them to be constants in MD code, but when necessary
- *      (especially in LKMs) they will still be variables.
+ *	or PAGE_SHIFT.  The fact they are variables is hidden here so that
+ *	we can easily make them constant if we so desire.
  */
-#if !defined(PAGE_SIZE) || defined(_LKM)
-/*
- * We undef those here to avoid problmes with LKMs.
- */
-#undef PAGE_SIZE
-#undef PAGE_MASK
-#undef PAGE_SHIFT
 #define	PAGE_SIZE	uvmexp.pagesize		/* size of page */
 #define	PAGE_MASK	uvmexp.pagemask		/* size of page - 1 */
 #define	PAGE_SHIFT	uvmexp.pageshift	/* bits to shift for pages */
-#endif /* !PAGE_SIZE */
 #endif /* _KERNEL */
 
 /*
@@ -159,14 +150,17 @@ struct _ps_strings {
  */
 #ifdef _KERNEL
 #define	atop(x)		(((unsigned long)(x)) >> PAGE_SHIFT)
-#define	ptoa(x)		((vaddr_t)((x) << PAGE_SHIFT))
+#define	ptoa(x)		((vaddr_t)((vaddr_t)(x) << PAGE_SHIFT))
 
 /*
  * Round off or truncate to the nearest page.  These will work
  * for either addresses or counts (i.e., 1 byte rounds to 1 page).
  */
-#define	round_page(x) (((x) + PAGE_MASK) & ~PAGE_MASK)
-#define	trunc_page(x) ((x) & ~PAGE_MASK)
+#define	round_page(x)	(((x) + PAGE_MASK) & ~PAGE_MASK)
+#define	trunc_page(x)	((x) & ~PAGE_MASK)
+
+extern psize_t		mem_size;	/* size of physical memory (bytes) */
+
 #else
 /* out-of-kernel versions of round_page and trunc_page */
 #define	round_page(x) \

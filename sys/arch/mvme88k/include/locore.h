@@ -1,9 +1,9 @@
-/*	$OpenBSD: locore.h,v 1.10 2001/08/26 14:31:07 miod Exp $	*/
+/*	$OpenBSD: locore.h,v 1.11 2001/11/06 00:30:38 art Exp $	*/
 
 #ifndef _MACHINE_LOCORE_H_
 #define _MACHINE_LOCORE_H_
 
-#include <vm/vm_param.h>
+#include <uvm/uvm_param.h>
 
 /*
  * C prototypes for various routines defined in locore_* and friends

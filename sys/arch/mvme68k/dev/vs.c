@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.5 2001/06/26 21:35:38 miod Exp $ */
+/*	$OpenBSD: vs.c,v 1.6 2001/11/06 00:30:38 art Exp $ */
 
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -52,10 +52,10 @@
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
 
-#include <vm/vm_param.h>
-
 #include <machine/autoconf.h>
 #include <machine/param.h>
+
+#include <uvm/uvm_param.h>
 
 #ifdef mvme88k
 #include <mvme88k/dev/vsreg.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvram.c,v 1.12 2001/11/01 12:13:46 art Exp $ */
+/*	$OpenBSD: nvram.c,v 1.13 2001/11/06 00:30:38 art Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -51,7 +51,7 @@
 #include <machine/mioctl.h>
 #include <machine/vmparam.h>
 
-#include <vm/vm_param.h>
+#include <uvm/uvm_param.h>
 
 #include <mvme88k/dev/memdevs.h>
 #include <mvme88k/dev/nvramreg.h>

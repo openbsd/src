@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.13 2001/08/31 01:06:29 miod Exp $ */
+/*	$OpenBSD: db_machdep.h,v 1.14 2001/11/06 00:30:38 art Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -40,7 +40,7 @@
 #include <machine/psl.h>
 #include <machine/trap.h>
 
-#include <vm/vm_param.h>
+#include <uvm/uvm_param.h>
 
 #define BKPT_SIZE	(4)		/* number of bytes in bkpt inst. */
 #define BKPT_INST	(0xF000D082U)	/* tb0, 0,r0, vector 132 */
