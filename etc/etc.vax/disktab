@@ -1,4 +1,4 @@
-#	$OpenBSD: disktab,v 1.5 2001/12/07 03:10:09 hugh Exp $
+#	$OpenBSD: disktab,v 1.6 2002/04/05 03:10:04 deraadt Exp $
 #	$NetBSD: disktab,v 1.2 1996/03/05 12:01:53 ragge Exp $
 #
 #	@(#)disktab	8.1 (Berkeley) 6/9/93
@@ -505,9 +505,9 @@ miniroot|fake-type used when installation:\
 	:pc#4096:oc#0:bc#4096:fc#512:
 
 rdroot:\
-	:ty=ramdisk:se#512:nt#2:rm#300:ns#8:nc#1024:\
-	:pa#8192:oa#0:ta=4.2BSD:ba#8192:fa#1024: \
-	:pc#8192:oc#0:
+	:ty=ramdisk:se#512:nt#2:rm#300:ns#8:nc#192:\
+	:pa#3072:oa#0:ta=4.2BSD:ba#3072:fa#1024: \
+	:pc#3072:oc#0:
 
 floppy|floppy3|3in|3.5in High Density Floppy:\
 	:ty=floppy:se#512:nt#2:rm#300:ns#18:nc#80:\
