@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_axppci_33.c,v 1.9 1997/01/24 19:57:48 niklas Exp $	*/
+/*	$OpenBSD: pci_axppci_33.c,v 1.10 1998/07/01 05:32:38 angelos Exp $	*/
 /*	$NetBSD: pci_axppci_33.c,v 1.10 1996/11/13 21:13:29 cgd Exp $	*/
 
 /*
@@ -84,8 +84,11 @@ pci_axppci_33_pickintr(lcp)
 	pc->pc_intr_establish = dec_axppci_33_intr_establish;
 	pc->pc_intr_disestablish = dec_axppci_33_intr_disestablish;
 
+        /* Not supported on AXPpci33. */
+        pc->pc_pciide_compat_intr_establish = NULL;
+
 #if NSIO
-	sio_intr_setup(iot);
+	sio_intr_setup(pc, iot);
 	set_iointr(&sio_iointr);
 #else
 	panic("pci_axppci_33_pickintr: no I/O interrupt handler (no sio)");

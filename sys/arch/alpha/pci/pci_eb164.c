@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_eb164.c,v 1.1 1997/01/24 19:57:48 niklas Exp $	*/
+/*	$OpenBSD: pci_eb164.c,v 1.2 1998/07/01 05:32:40 angelos Exp $	*/
 /*	$NetBSD: pci_eb164.c,v 1.4 1996/11/25 03:47:05 cgd Exp $	*/
 
 /*
@@ -40,6 +40,7 @@
 #include <vm/vm.h>
 
 #include <machine/autoconf.h>
+#include <machine/rpb.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -48,6 +49,9 @@
 #include <alpha/pci/ciavar.h>
 
 #include <alpha/pci/pci_eb164.h>
+
+#include <dev/pci/pciidereg.h>
+#include <dev/pci/pciidevar.h>
 
 #ifndef EVCNT_COUNTERS
 #include <machine/intrcnt.h>
@@ -65,6 +69,9 @@ void	*dec_eb164_intr_establish __P((void *, pci_intr_handle_t,
 	    int, int (*)(void *), void *, char *));
 void	dec_eb164_intr_disestablish __P((void *, void *));
 
+void    *dec_eb164_pciide_compat_intr_establish __P((void *, struct device *,
+            struct pci_attach_args *, int, int (*)(void *), void *));
+ 
 #define	EB164_SIO_IRQ	4  
 #define	EB164_MAX_IRQ	24
 #define	PCI_STRAY_MAX	5
@@ -95,6 +102,9 @@ pci_eb164_pickintr(ccp)
         pc->pc_intr_establish = dec_eb164_intr_establish;
         pc->pc_intr_disestablish = dec_eb164_intr_disestablish;
 
+        pc->pc_pciide_compat_intr_establish =
+            dec_eb164_pciide_compat_intr_establish;
+
 	eb164_intrgate_iot = iot;
 	if (bus_space_map(eb164_intrgate_iot, 0x804, 3, 0,
 	    &eb164_intrgate_ioh) != 0)
@@ -108,7 +118,7 @@ pci_eb164_pickintr(ccp)
 			PCI_STRAY_MAX);
 
 #if NSIO
-	sio_intr_setup(iot);
+	sio_intr_setup(pc, iot);
 	eb164_intr_enable(EB164_SIO_IRQ);
 #endif
 
@@ -124,75 +134,69 @@ dec_eb164_intr_map(ccv, bustag, buspin, line, ihp)
 {
 	struct cia_config *ccp = ccv;
 	pci_chipset_tag_t pc = &ccp->cc_pc;
-	int device;
-	int eb164_irq, pinbase, pinoff;
+	int bus, device, function;
+	u_int64_t variation;
 
         if (buspin == 0) {
                 /* No IRQ used. */
                 return 1;
         }
         if (buspin > 4) {
-                printf("pci_map_int: bad interrupt pin %d\n", buspin);
+                printf("dec_eb164_intr_map: bad interrupt pin %d\n", buspin);
                 return 1;
         }
 
-	pci_decompose_tag(pc, bustag, NULL, &device, NULL);
-	switch (device) {
-#if 0	/* THIS CODE SHOULD NEVER BE CALLED FOR THE SIO */
-	case 8: 					/* SIO */
-		eb164_irq = 4;
-		break;
-#endif
+	alpha_pci_decompose_tag(pc, bustag, &bus, &device, &function);
 
-	case 11:
-		eb164_irq = 5;				/* IDE */
-		break;
+	variation = hwrpb->rpb_variation & SV_ST_MASK;
 
-	case 5:
-	case 6:
-	case 7:
-	case 9:
-		switch (buspin) {
-		case 1:
-			pinbase = 0;
-			break;
-		case 2:
-		case 3:
-		case 4:
-			pinbase = (buspin * 4) - 1;
-			break;
-#ifdef DIAGNOSTIC
-		default:
-			panic("dec_eb164_intr_map: slot buspin switch");
-#endif
-		};
-		switch (device) {
-		case 5:
-			pinoff = 2;
-			break;
+        /*
+         *
+         * The AlphaPC 164 and AlphaPC 164LX have a CMD PCI IDE controller
+         * at bus 0 device 11.  These are wired to compatibility mode,
+         * so do not map their interrupts.
+         * 
+         * The AlphaPC 164SX has PCI IDE on functions 1 and 2 of the
+         * Cypress PCI-ISA bridge at bus 0 device 8.  These, too, are
+         * wired to compatibility mode.
+         * 
+         * Real EB164s have ISA IDE on the Super I/O chip.
+         */
+        if (bus == 0) {
+                if (variation >= SV_ST_ALPHAPC164_366 &&
+                    variation <= SV_ST_ALPHAPC164LX_600) {
+                        if (device == 8)
+                                panic("dec_eb164_intr_map: SIO device");
+                        if (device == 11)
+                                return (1);
+                } else if (variation >= SV_ST_ALPHAPC164SX_400 &&
+                           variation <= SV_ST_ALPHAPC164SX_600) {
+                        if (device == 8) {
+                                if (function == 0)
+                                        panic("dec_eb164_intr_map: SIO device");
+                                return (1);
+                        }
+                } else { 
+                        if (device == 8)
+                                panic("dec_eb164_intr_map: SIO device");
+                }
+        }
 
-		case 6:
-		case 7:
-		case 9:
-			pinoff = device - 6;
-			break;
-#ifdef DIAGNOSTIC
-		default:
-			panic("dec_eb164_intr_map: slot device switch");
-#endif
-		}
-		eb164_irq = pinoff + pinbase;
-		break;
-	default:
-		panic("pci_eb164_map_int: invalid device number %d\n",
-		    device);
-	}
+        /*
+         * The console places the interrupt mapping in the "line" value.
+         * A value of (char)-1 indicates there is no mapping.
+         */
+        if (line == 0xff) {
+                printf("dec_eb164_intr_map: no mapping for %d/%d/%d\n",
+                    bus, device, function);
+                return (1);
+        }
+         
+	if (line > EB164_MAX_IRQ)
+		panic("dec_eb164_map_int: eb164_irq too large (%d)\n",
+		    line);
 
-	if (eb164_irq > EB164_MAX_IRQ)
-		panic("pci_eb164_map_int: eb164_irq too large (%d)\n",
-		    eb164_irq);
-
-	*ihp = eb164_irq;
+	*ihp = line;
 	return (0);
 }
 
@@ -244,6 +248,35 @@ dec_eb164_intr_disestablish(ccv, cookie)
 	panic("dec_eb164_intr_disestablish not implemented"); /* XXX */
 }
 
+void *      
+dec_eb164_pciide_compat_intr_establish(v, dev, pa, chan, func, arg)
+        void *v;
+        struct device *dev;
+        struct pci_attach_args *pa;
+        int chan;
+        int (*func) __P((void *));
+        void *arg;
+{       
+        pci_chipset_tag_t pc = pa->pa_pc;
+        void *cookie = NULL;
+        int bus, irq;
+            
+        alpha_pci_decompose_tag(pc, pa->pa_tag, &bus, NULL, NULL);
+        
+        /*
+         * If this isn't PCI bus #0, all bets are off.
+         */
+        if (bus != 0)
+                return (NULL);
+                
+        irq = PCIIDE_COMPAT_IRQ(chan);
+#if NSIO
+        cookie = sio_intr_establish(NULL /*XXX*/, irq, IST_EDGE, IPL_BIO,
+            func, arg, "eb164 irq");
+#endif
+        return (cookie);
+}
+
 void
 eb164_iointr(framep, vec)
 	void *framep;
@@ -268,7 +301,8 @@ eb164_iointr(framep, vec)
 			alpha_shared_intr_stray(eb164_pci_intr, irq,
 			    "eb164 irq");
 			if (eb164_pci_intr[irq].intr_nstrays ==
-			    eb164_pci_intr[irq].intr_maxstrays)
+			    eb164_pci_intr[irq].intr_maxstrays
+			    && TAILQ_FIRST(&eb164_pci_intr[irq].intr_q) == NULL)
 				eb164_intr_disable(irq);
 		}
 		return;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cia.c,v 1.7 1997/01/24 19:57:36 niklas Exp $	*/
+/*	$OpenBSD: cia.c,v 1.8 1998/07/01 05:32:35 angelos Exp $	*/
 /*	$NetBSD: cia.c,v 1.15 1996/12/05 01:39:35 cgd Exp $	*/
 
 /*
@@ -111,6 +111,24 @@ cia_init(ccp, mallocsafe)
 
 	ccp->cc_hae_mem = REGVAL(CIA_CSR_HAE_MEM);
 	ccp->cc_hae_io = REGVAL(CIA_CSR_HAE_IO);
+
+        /*
+         * Determine if we have a Pyxis.  Only two systypes can
+         * have this: the EB164 systype (AlphaPC164LX and AlphaPC164SX)
+         * and the DEC_550 systype (Miata).
+         */
+        if ((hwrpb->rpb_type == ST_EB164 &&
+             (hwrpb->rpb_variation & SV_ST_MASK) >= SV_ST_ALPHAPC164LX_400) ||
+            hwrpb->rpb_type == ST_DEC_550)
+                ccp->cc_flags |= CCF_ISPYXIS;
+
+        /*      
+         * ALCOR/ALCOR2 Revisions >= 2 and Pyxis have the CNFG register.
+         */
+        if (ccp->cc_rev >= 2 || (ccp->cc_flags & CCF_ISPYXIS) != 0)
+                ccp->cc_cnfg = REGVAL(CIA_CSR_CNFG);
+        else
+                ccp->cc_cnfg = 0;
 
 	if (!ccp->cc_initted) {
 		/* don't do these twice since they set up extents */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio_pic.c,v 1.11 1998/06/29 05:32:55 downsj Exp $	*/
+/*	$OpenBSD: sio_pic.c,v 1.12 1998/07/01 05:32:42 angelos Exp $	*/
 /*	$NetBSD: sio_pic.c,v 1.16 1996/11/17 02:05:26 cgd Exp $	*/
 
 /*
@@ -37,6 +37,10 @@
 #include <machine/intr.h>
 #include <machine/bus.h>
 
+#include <dev/pci/pcireg.h>
+#include <dev/pci/pcivar.h>
+#include <dev/pci/pcidevs.h>
+
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 #include <alpha/pci/siovar.h>
@@ -63,6 +67,7 @@
  * Private functions and variables.
  */
 bus_space_tag_t sio_iot;
+pci_chipset_tag_t sio_pc;
 bus_space_handle_t sio_ioh_icu1, sio_ioh_icu2, sio_ioh_elcr;
 
 #define	ICU_LEN		16		/* number of ISA IRQs */
@@ -104,6 +109,156 @@ void sio_setirqstat __P((int, int, int));
 
 void	sio_setirqstat __P((int, int, int));
 
+u_int8_t	(*sio_read_elcr) __P((int));
+void		(*sio_write_elcr) __P((int, u_int8_t));
+
+/******************** i82378 SIO ELCR functions ********************/
+
+int		i82378_setup_elcr __P((void));
+u_int8_t	i82378_read_elcr __P((int));
+void		i82378_write_elcr __P((int, u_int8_t));
+
+int
+i82378_setup_elcr()
+{
+	int rv;
+
+	/*
+	 * We could probe configuration space to see that there's
+	 * actually an SIO present, but we are using this as a
+	 * fall-back in case nothing else matches.
+	 */
+
+	rv = bus_space_map(sio_iot, 0x4d0, 2, 0, &sio_ioh_elcr);
+
+	if (rv == 0) {
+		sio_read_elcr = i82378_read_elcr;
+		sio_write_elcr = i82378_write_elcr;
+	}
+
+	return (rv);
+}
+
+u_int8_t
+i82378_read_elcr(elcr)
+	int elcr;
+{
+
+	return (bus_space_read_1(sio_iot, sio_ioh_elcr, elcr));
+}
+
+void
+i82378_write_elcr(elcr, val)
+	int elcr;
+	u_int8_t val;
+{
+
+	bus_space_write_1(sio_iot, sio_ioh_elcr, elcr, val);
+}
+
+/******************** Cypress CY82C693 ELCR functions ********************/
+
+int		cy82c693_setup_elcr __P((void));
+u_int8_t	cy82c693_read_elcr __P((int));
+void		cy82c693_write_elcr __P((int, u_int8_t));
+
+int
+cy82c693_setup_elcr()
+{
+	int device, maxndevs;
+	pcireg_t id;
+
+	/*
+	 * Search PCI configuration space for a Cypress CY82C693.
+	 *
+	 * Note we can make some assumptions about our bus number
+	 * here, because:
+	 *
+	 *	(1) there can be at most one ISA/EISA bridge per PCI bus, and
+	 *
+	 *	(2) any ISA/EISA bridges must be attached to primary PCI
+	 *	    busses (i.e. bus zero).
+	 */
+
+	maxndevs = pci_bus_maxdevs(sio_pc, 0);
+
+	for (device = 0; device < maxndevs; device++) {
+		id = pci_conf_read(sio_pc, pci_make_tag(sio_pc, 0, device, 0),
+				   PCI_ID_REG);
+
+		/* Invalid vendor ID value? */
+		if (PCI_VENDOR(id) == PCI_VENDOR_INVALID)
+			continue;
+		/* XXX Not invalid, but we've done this ~forever. */
+		if (PCI_VENDOR(id) == 0)
+			continue;
+
+		if (PCI_VENDOR(id) != PCI_VENDOR_CONTAQ ||
+		    PCI_PRODUCT(id) != PCI_PRODUCT_CONTAQ_SIO)
+			continue;
+
+		/*
+		 * Found one!
+		 */
+
+#if 0
+		printf("cy82c693_setup_elcr: found 82C693 at device %d\n",
+		       device);
+#endif
+
+		/*
+		 * The CY82C693's ELCR registers are accessed indirectly
+		 * via (IO_ICU1 + 2) (address) and (IO_ICU1 + 3) (data).
+		 */
+		sio_ioh_elcr = sio_ioh_icu1;
+
+		sio_read_elcr = cy82c693_read_elcr;
+		sio_write_elcr = cy82c693_write_elcr;
+
+		return (0);
+	}
+
+	/*
+	 * Didn't find a CY82C693.
+	 */
+	return (ENODEV);
+}
+
+u_int8_t
+cy82c693_read_elcr(elcr)
+	int elcr;
+{
+
+	bus_space_write_1(sio_iot, sio_ioh_elcr, 0x02, 0x03 + elcr);
+	return (bus_space_read_1(sio_iot, sio_ioh_elcr, 0x03));
+}
+
+void
+cy82c693_write_elcr(elcr, val)
+	int elcr;
+	u_int8_t val;
+{
+
+	bus_space_write_1(sio_iot, sio_ioh_elcr, 0x02, 0x03 + elcr);
+	bus_space_write_1(sio_iot, sio_ioh_elcr, 0x03, val);
+}
+
+/******************** ELCR access function configuration ********************/
+
+/*
+ * Put the Intel SIO at the end, so we fall back on it if we don't
+ * find anything else.  If any of the non-Intel functions find a
+ * matching device, but are unable to map it for whatever reason,
+ * they should panic.
+ */
+
+int (*sio_elcr_setup_funcs[]) __P((void)) = {
+	cy82c693_setup_elcr,
+	i82378_setup_elcr,
+	NULL,
+};
+
+/******************** Shared SIO/Cypress functions ********************/
 void
 sio_setirqstat(irq, enabled, type)
 	int irq, enabled;
@@ -122,8 +277,8 @@ sio_setirqstat(irq, enabled, type)
 
 	ocw1[0] = bus_space_read_1(sio_iot, sio_ioh_icu1, 1);
 	ocw1[1] = bus_space_read_1(sio_iot, sio_ioh_icu2, 1);
-	elcr[0] = bus_space_read_1(sio_iot, sio_ioh_elcr, 0);	/* XXX */
-	elcr[1] = bus_space_read_1(sio_iot, sio_ioh_elcr, 1);	/* XXX */
+        elcr[0] = (*sio_read_elcr)(0);                          /* XXX */
+        elcr[1] = (*sio_read_elcr)(1);                          /* XXX */
 
 	/*
 	 * interrupt enable: set bit to mask (disable) interrupt.
@@ -169,22 +324,29 @@ sio_setirqstat(irq, enabled, type)
 
 	bus_space_write_1(sio_iot, sio_ioh_icu1, 1, ocw1[0]);
 	bus_space_write_1(sio_iot, sio_ioh_icu2, 1, ocw1[1]);
-	bus_space_write_1(sio_iot, sio_ioh_elcr, 0, elcr[0]);	/* XXX */
-	bus_space_write_1(sio_iot, sio_ioh_elcr, 1, elcr[1]);	/* XXX */
+        (*sio_write_elcr)(0, elcr[0]);                          /* XXX */
+        (*sio_write_elcr)(1, elcr[1]);                          /* XXX */
 }
 
 void
-sio_intr_setup(iot)
+sio_intr_setup(pc, iot)
+        pci_chipset_tag_t pc;
 	bus_space_tag_t iot;
 {
 	int i;
 
 	sio_iot = iot;
-
+	sio_pc = pc;
+	
 	if (bus_space_map(sio_iot, IO_ICU1, IO_ICUSIZE, 0, &sio_ioh_icu1) ||
-	    bus_space_map(sio_iot, IO_ICU2, IO_ICUSIZE, 0, &sio_ioh_icu2) ||
-	    bus_space_map(sio_iot, 0x4d0, 2, 0, &sio_ioh_elcr))
+	    bus_space_map(sio_iot, IO_ICU2, IO_ICUSIZE, 0, &sio_ioh_icu2))
 		panic("sio_intr_setup: can't map I/O ports");
+
+        for (i = 0; sio_elcr_setup_funcs[i] != NULL; i++)
+                if ((*sio_elcr_setup_funcs[i])() == 0)
+                        break;
+        if (sio_elcr_setup_funcs[i] == NULL)
+                panic("sio_intr_setup: can't map ELCR");
 
 #ifdef BROKEN_PROM_CONSOLE
 	/*
@@ -192,8 +354,8 @@ sio_intr_setup(iot)
 	 */
 	initial_ocw1[0] = bus_space_read_1(sio_iot, sio_ioh_icu1, 1);
 	initial_ocw1[1] = bus_space_read_1(sio_iot, sio_ioh_icu2, 1);
-	initial_elcr[0] = bus_space_read_1(sio_iot, sio_ioh_elcr, 0); /* XXX */
-	initial_elcr[1] = bus_space_read_1(sio_iot, sio_ioh_elcr, 1); /* XXX */
+        initial_elcr[0] = (*sio_read_elcr)(0);                  /* XXX */
+        initial_elcr[1] = (*sio_read_elcr)(1);                  /* XXX */
 #if 0
 	printf("initial_ocw1[0] = 0x%x\n", initial_ocw1[0]);
 	printf("initial_ocw1[1] = 0x%x\n", initial_ocw1[1]);
@@ -275,10 +437,10 @@ sio_intr_check(v, irq, type)
 	void *v;
 	int irq, type;
 {
-	if (irq > ICU_LEN || type == IST_NONE)
+      if (irq > ICU_LEN || type == IST_NONE)
 		return (0);
-
-	return (alpha_shared_intr_check(sio_intr, irq, type));
+ 
+       return (alpha_shared_intr_check(sio_intr, irq, type));
 }
 
 void *

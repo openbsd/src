@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_kn20aa.c,v 1.9 1997/01/24 19:57:51 niklas Exp $	*/
+/*	$OpenBSD: pci_kn20aa.c,v 1.10 1998/07/01 05:32:41 angelos Exp $	*/
 /*	$NetBSD: pci_kn20aa.c,v 1.21 1996/11/17 02:05:27 cgd Exp $	*/
 
 /*
@@ -92,13 +92,16 @@ pci_kn20aa_pickintr(ccp)
         pc->pc_intr_establish = dec_kn20aa_intr_establish;
         pc->pc_intr_disestablish = dec_kn20aa_intr_disestablish;
 
+        /* Not supported on KN20AA. */
+        pc->pc_pciide_compat_intr_establish = NULL;
+
 	kn20aa_pci_intr = alpha_shared_intr_alloc(KN20AA_MAX_IRQ);
 	for (i = 0; i < KN20AA_MAX_IRQ; i++)
 		alpha_shared_intr_set_maxstrays(kn20aa_pci_intr, i,
 		    PCI_STRAY_MAX);
 
 #if NSIO
-	sio_intr_setup(iot);
+	sio_intr_setup(pc, iot);
 	kn20aa_enable_intr(KN20AA_PCEB_IRQ);
 #endif
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_2100_a50.c,v 1.10 1997/01/24 19:57:47 niklas Exp $	*/
+/*	$OpenBSD: pci_2100_a50.c,v 1.11 1998/07/01 05:32:37 angelos Exp $	*/
 /*	$NetBSD: pci_2100_a50.c,v 1.12 1996/11/13 21:13:29 cgd Exp $	*/
 
 /*
@@ -83,8 +83,11 @@ pci_2100_a50_pickintr(acp)
 	pc->pc_intr_establish = dec_2100_a50_intr_establish;
 	pc->pc_intr_disestablish = dec_2100_a50_intr_disestablish;
 
+	/* Not supported on 2100 A50. */
+	pc->pc_pciide_compat_intr_establish = NULL;
+
 #if NSIO
-        sio_intr_setup(iot);
+        sio_intr_setup(pc, iot);
 	set_iointr(&sio_iointr);
 #else
 	panic("pci_2100_a50_pickintr: no I/O interrupt handler (no sio)");
