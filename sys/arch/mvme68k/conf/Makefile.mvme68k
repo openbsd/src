@@ -1,4 +1,4 @@
-#	$Id: Makefile.mvme68k,v 1.5 1996/03/26 15:09:47 mickey Exp $
+#	$OpenBSD: Makefile.mvme68k,v 1.6 1996/04/28 11:23:19 deraadt Exp $
 
 # This makefile is constructed from a machine description:
 #	config machineid
@@ -16,23 +16,24 @@
 # -DTRACE	compile in kernel tracing hooks
 # -DQUOTA	compile in file system quotas
 
-
 # DEBUG is set to -g by config if debugging is requested (config -g).
 # PROF is set to -pg by config if profiling is requested (config -p).
-AS=     as
-CC=     cc ${DEBUG}
-CPP=    cpp
-LD=     ld
-TOUCH=	touch -f -c
-AWK=	awk
+
+AS?=	as
+CC?=	cc
+CPP?=	cpp
+LD?=	ld
+STRIP?=	strip -d
+TOUCH?=	touch -f -c
 
 # source tree is located via $S relative to the compilation directory
 S=	../../../..
-MVME68K=	../..
+MVME68K=../..
 
-INCLUDES= -I. -I$S/arch -I$S -I$S/sys
-COPTS=	${INCLUDES} ${IDENT} -D_KERNEL -Dmvme68k
-CFLAGS=	-O ${COPTS}
+INCLUDES=	 -I. -I$S/arch -I$S
+CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -Dmvme68k
+CFLAGS=		${DEBUG} -O2 -Werror
+AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 
 ### find out what to use for libkern
 .include "$S/lib/libkern/Makefile.inc"
@@ -58,23 +59,20 @@ LIBCOMPAT=	${COMPATLIB_PROF}
 # capitalized (e.g. C for a .c file), and CONFIG_DEP is _C if the file
 # is marked as config-dependent.
 
-NORMAL_C=	${CC} -c ${CFLAGS} ${PROF} $<
-NORMAL_C_C=	${CC} -c ${CFLAGS} ${PROF} ${PARAM} $<
+NORMAL_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
+NORMAL_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
 
-DRIVER_C=	${CC} -c ${CFLAGS} ${PROF} $<
-DRIVER_C_C=	${CC} -c ${CFLAGS} ${PROF} ${PARAM} $<
+DRIVER_C=	${CC} -c ${CFLAGS} ${CPPFLAGS} ${PROF} $<
+DRIVER_C_C=	${CC} -c ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} $<
 
-PROFILE_C=	${CC} -S -c ${COPTS} $<; \
-		sed -e s/_mcount/mcount/ -e s/subrmcount/subr_mcount/ <$*.s | \
-		${AS} -o $@; \
-		rm -f $*.s
-
-NORMAL_S=	${CPP} ${COPTS} $< | ${AS} -o $@
-NORMAL_S_C=	${CPP} ${COPTS} ${PARAM} $< | ${AS} -o $@
+NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
+NORMAL_S_C=	${CC} ${AFLAGS} ${CPPFLAGS} ${PARAM} -c $<
 
 %OBJS
 
 %CFILES
+
+%SFILES
 
 # load lines for config "xxx" will be emitted as:
 # xxx: ${SYSTEM_DEP} swapxxx.o
@@ -97,11 +95,29 @@ SYSTEM_LD_TAIL=	@echo rearranging symbols; size $@; chmod 755 $@
 
 %LOAD
 
-newvers: vers.o
+assym.h: genassym
+	./genassym >assym.h
 
-vers.o: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
+genassym: genassym.o
+	${CC} -o $@ genassym.o
+
+genassym.o: ${MVME68K}/mvme68k/genassym.c
+	${NORMAL_C_C}
+
+param.c: $S/conf/param.c
+	rm -f param.c
+	cp $S/conf/param.c .
+
+param.o: param.c Makefile
+	${NORMAL_C_C}
+
+ioconf.o: ioconf.c
+	${NORMAL_C}
+
+newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 	sh $S/conf/newvers.sh
-	${CC} ${CFLAGS} -c vers.c
+	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
+
 
 clean::
 	rm -f eddep bsd bsd.gdb tags *.o locore.i \
@@ -114,24 +130,8 @@ lint: /tmp param.c
 	    grep -v 'struct/union .* never defined' | \
 	    grep -v 'possible pointer alignment problem'
 
-locore.o: assym.s ${MVME68K}/mvme68k/vectors.s ${MVME68K}/mvme68k/locore.s 
-locore.o: ${MVME68K}/include/trap.h ${MVME68K}/include/psl.h ${MVME68K}/include/pte.h
-locore.o: ${MVME68K}/include/cpu.h
-	${CPP} -DLOCORE ${COPTS} ${MVME68K}/mvme68k/locore.s | ${AS} -o locore.o
-
-# depend on maxusers
-assym.s: Makefile
-
-assym.s: genassym
-	./genassym > assym.s
-
-genassym: ${MVME68K}/mvme68k/genassym.c Makefile
-	cc ${INCLUDES} ${IDENT} ${PARAM} -Dmc68020 -Dmvme68k -o genassym \
-	    ${MVME68K}/mvme68k/genassym.c
-
-depend: assym.s param.c
-	mkdep ${COPTS} ${CFILES} ioconf.c param.c
-	mkdep -a -p ${INCLUDES} ${IDENT} ${PARAM} ${MVME68K}/mvme68k/genassym.c
+tags:
+	@echo "see $S/kern/Makefile for tags"
 
 links:
 	egrep '#if' ${CFILES} | sed -f $S/conf/defines | \
@@ -141,17 +141,31 @@ links:
 	  sed 's,../.*/\(.*.o\),rm -f \1;ln -s ../GENERIC/\1 \1,' > makelinks
 	sh makelinks && rm -f dontlink
 
-tags:
-	@echo "see $S/kern/Makefile for tags"
+SRCS=	${MVME68K}/mvme68k/locore.s \
+	param.c ioconf.c ${CFILES} ${SFILES}
+depend: .depend
+.depend: ${SRCS} assym.h param.c
+	mkdep ${AFLAGS} ${CPPFLAGS} ${MVME68K}/mvme68k/locore.s
+	mkdep -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
+	mkdep -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
+	mkdep -a ${CFLAGS} ${CPPFLAGS} ${PARAM} ${MVME68K}/mvme68k/genassym.c
 
-ioconf.o: ioconf.c
-	${CC} -c ${CFLAGS} ioconf.c
 
-param.c: $S/conf/param.c
-	rm -f param.c
-	cp $S/conf/param.c .
+# depend on root or device configuration
+autoconf.o conf.o: Makefile
+ 
+# depend on network or filesystem configuration 
+uipc_domain.o uipc_proto.o vfs_conf.o: Makefile 
+if_tun.o if_loop.o if_ethersubr.o: Makefile
+in_proto.o: Makefile
 
-param.o: param.c Makefile
-	${CC} -c ${CFLAGS} ${PARAM} param.c
+# depend on maxusers
+genassym.o machdep.o: Makefile
+
+# depend on CPU configuration 
+locore.o machdep.o: Makefile
+
+locore.o: ${MVME68K}/mvme68k/locore.s assym.h
+	${NORMAL_S}
 
 %RULES
