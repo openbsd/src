@@ -1,4 +1,4 @@
-/*	$OpenBSD: patch.c,v 1.22 2003/07/21 21:01:45 otto Exp $	*/
+/*	$OpenBSD: patch.c,v 1.23 2003/07/22 17:18:49 otto Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -27,8 +27,17 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: patch.c,v 1.22 2003/07/21 21:01:45 otto Exp $";
+static const char rcsid[] = "$OpenBSD: patch.c,v 1.23 2003/07/22 17:18:49 otto Exp $";
 #endif /* not lint */
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
+#include <assert.h>
+#include <ctype.h>
+#include <string.h>
+#include <stdlib.h>
 
 #include "INTERN.h"
 #include "common.h"
@@ -38,22 +47,21 @@ static char rcsid[] = "$OpenBSD: patch.c,v 1.22 2003/07/21 21:01:45 otto Exp $";
 #include "inp.h"
 #include "backupfile.h"
 
-void	reinitialize_almost_everything(void);
-void	get_some_switches(void);
-LINENUM	locate_hunk(LINENUM);
-void	abort_hunk(void);
-void	apply_hunk(LINENUM);
-void	init_output(char *);
-void	init_reject(char *);
-void	copy_till(LINENUM);
-void	spew_output(void);
-void	dump_line(LINENUM);
-bool	patch_match(LINENUM, LINENUM, LINENUM);
-bool	similar(char *, char *, int);
-void	re_input(void);
-void	my_exit(int) __attribute__((noreturn));
-int	optcmp(const void *, const void *);
-char	decode_long_option(char *);
+
+static void	reinitialize_almost_everything(void);
+static void	get_some_switches(void);
+static LINENUM	locate_hunk(LINENUM);
+static void	abort_hunk(void);
+static void	apply_hunk(LINENUM);
+static void	init_output(char *);
+static void	init_reject(char *);
+static void	copy_till(LINENUM);
+static void	spew_output(void);
+static void	dump_line(LINENUM);
+static bool	patch_match(LINENUM, LINENUM, LINENUM);
+static bool	similar(char *, char *, int);
+static int	optcmp(const void *, const void *);
+static char	decode_long_option(char *);
 
 /* TRUE if -E was specified on command line.  */
 static int	remove_empty_files = FALSE;
@@ -61,8 +69,8 @@ static int	remove_empty_files = FALSE;
 /* TRUE if -R was specified on command line.  */
 static int	reverse_flag_specified = FALSE;
 
-/* TRUE if -C was specified on command line.  */
-bool	check_only = FALSE;
+ /* buffer for stderr */
+static char	serrbuf[BUFSIZ];
 
 /* Apply a set of diffs as appropriate. */
 
@@ -75,7 +83,7 @@ main(int argc, char *argv[])
 
 	setbuf(stderr, serrbuf);
 	for (i = 0; i < MAXFILEC; i++)
-		filearg[i] = Nullch;
+		filearg[i] = NULL;
 
 	myuid = getuid();
 
@@ -131,7 +139,7 @@ main(int argc, char *argv[])
 
 		patch_seen = TRUE;
 
-		if (outname == Nullch)
+		if (outname == NULL)
 			outname = savestr(filearg[0]);
 
 		/* for ed script just up and do it and exit */
@@ -159,24 +167,24 @@ main(int argc, char *argv[])
 		out_of_mem = FALSE;
 		while (another_hunk()) {
 			hunk++;
-			fuzz = Nulline;
+			fuzz = NULL;
 			mymaxfuzz = pch_context();
 			if (maxfuzz < mymaxfuzz)
 				mymaxfuzz = maxfuzz;
 			if (!skip_rest_of_patch) {
 				do {
 					where = locate_hunk(fuzz);
-					if (hunk == 1 && where == Nulline && !force) {
+					if (hunk == 1 && where == NULL && !force) {
 						/* dwim for reversed patch? */
 						if (!pch_swap()) {
-							if (fuzz == Nulline)
+							if (fuzz == NULL)
 								say("Not enough memory to try swapped hunk!  Assuming unswapped.\n");
 							continue;
 						}
 						reverse = !reverse;
 						/* try again */
 						where = locate_hunk(fuzz);
-						if (where == Nulline) {
+						if (where == NULL) {
 							/* didn't find it swapped */
 							if (!pch_swap())
 								/* put it back to normal */
@@ -202,7 +210,7 @@ main(int argc, char *argv[])
 								ask("Apply anyway? [n] ");
 								if (*buf != 'y')
 									skip_rest_of_patch = TRUE;
-								where = Nulline;
+								where = NULL;
 								reverse = !reverse;
 								if (!pch_swap())
 									/* put it back to normal */
@@ -210,12 +218,12 @@ main(int argc, char *argv[])
 							}
 						}
 					}
-				} while (!skip_rest_of_patch && where == Nulline &&
+				} while (!skip_rest_of_patch && where == NULL &&
 					 ++fuzz <= mymaxfuzz);
 
 				if (skip_rest_of_patch) {	/* just got decided */
 					fclose(ofp);
-					ofp = Nullfp;
+					ofp = NULL;
 				}
 			}
 			newwhere = pch_newfirst() + last_offset;
@@ -225,7 +233,7 @@ main(int argc, char *argv[])
 				if (verbose)
 					say("Hunk #%d ignored at %ld.\n",
 					    hunk, newwhere);
-			} else if (where == Nulline) {
+			} else if (where == NULL) {
 				abort_hunk();
 				failed++;
 				if (verbose)
@@ -253,10 +261,10 @@ main(int argc, char *argv[])
 			say("\n\nRan out of memory using Plan A--trying again...\n\n");
 			if (ofp)
 				fclose(ofp);
-			ofp = Nullfp;
+			ofp = NULL;
 			if (rejfp)
 				fclose(rejfp);
-			rejfp = Nullfp;
+			rejfp = NULL;
 			continue;
 		}
 		assert(hunk);
@@ -290,7 +298,7 @@ main(int argc, char *argv[])
 			}
 		}
 		fclose(rejfp);
-		rejfp = Nullfp;
+		rejfp = NULL;
 		if (failed) {
 			failtotal += failed;
 			if (!*rejname) {
@@ -321,7 +329,7 @@ main(int argc, char *argv[])
 
 /* Prepare to find the next patch to do in the patch file. */
 
-void
+static void
 reinitialize_almost_everything(void)
 {
 	re_patch();
@@ -331,21 +339,21 @@ reinitialize_almost_everything(void)
 	last_frozen_line = 0;
 
 	filec = 0;
-	if (filearg[0] != Nullch && !out_of_mem) {
+	if (filearg[0] != NULL && !out_of_mem) {
 		free(filearg[0]);
-		filearg[0] = Nullch;
+		filearg[0] = NULL;
 	}
-	if (outname != Nullch) {
+	if (outname != NULL) {
 		free(outname);
-		outname = Nullch;
+		outname = NULL;
 	}
 	last_offset = 0;
 
 	diff_type = 0;
 
-	if (revision != Nullch) {
+	if (revision != NULL) {
 		free(revision);
-		revision = Nullch;
+		revision = NULL;
 	}
 	reverse = reverse_flag_specified;
 	skip_rest_of_patch = FALSE;
@@ -371,7 +379,7 @@ struct option {
 	char	short_opt;
 };
 
-int
+static int
 optcmp(const void *v1, const void *v2)
 {
 	const struct option *a = v1, *b = v2;
@@ -381,7 +389,7 @@ optcmp(const void *v1, const void *v2)
 
 /* Decode Long options beginning with "--" to their short equivalents.  */
 
-char
+static char
 decode_long_option(char *opt)
 {
 	/*
@@ -426,7 +434,7 @@ decode_long_option(char *opt)
 
 /* Process switches and filenames up to next '+' or end of list. */
 
-void
+static void
 get_some_switches(void)
 {
 	char	*s;
@@ -572,7 +580,7 @@ Options:\n\
 /*
  * Attempt to find the right place to apply this hunk of patch.
  */
-LINENUM
+static LINENUM
 locate_hunk(LINENUM fuzz)
 {
 	LINENUM	first_guess = pch_first() + last_offset;
@@ -585,7 +593,7 @@ locate_hunk(LINENUM fuzz)
 		return first_guess;
 	if (max_neg_offset >= first_guess)	/* do not try lines < 0 */
 		max_neg_offset = first_guess - 1;
-	if (first_guess <= input_lines && patch_match(first_guess, Nulline, fuzz))
+	if (first_guess <= input_lines && patch_match(first_guess, NULL, fuzz))
 		return first_guess;
 	for (offset = 1; ; offset++) {
 		bool	check_after = (offset <= max_pos_offset);
@@ -608,13 +616,13 @@ locate_hunk(LINENUM fuzz)
 			last_offset = -offset;
 			return first_guess - offset;
 		} else if (!check_before && !check_after)
-			return Nulline;
+			return NULL;
 	}
 }
 
 /* We did not find the pattern, dump out the hunk so they can handle it. */
 
-void
+static void
 abort_hunk(void)
 {
 	LINENUM	i;
@@ -668,7 +676,7 @@ abort_hunk(void)
 
 /* We found where to apply it (we hope), so do it. */
 
-void
+static void
 apply_hunk(LINENUM where)
 {
 	LINENUM	old = 1;
@@ -780,29 +788,29 @@ apply_hunk(LINENUM where)
 /*
  * Open the new file.
  */
-void
+static void
 init_output(char *name)
 {
 	ofp = fopen(name, "w");
-	if (ofp == Nullfp)
+	if (ofp == NULL)
 		pfatal("can't create %s", name);
 }
 
 /*
  * Open a file to put hunks we can't locate.
  */
-void
+static void
 init_reject(char *name)
 {
 	rejfp = fopen(name, "w");
-	if (rejfp == Nullfp)
+	if (rejfp == NULL)
 		pfatal("can't create %s", name);
 }
 
 /*
  * Copy input file to output, up to wherever hunk is to be applied.
  */
-void
+static void
 copy_till(LINENUM lastline)
 {
 	LINENUM	R_last_frozen_line = last_frozen_line;
@@ -817,7 +825,7 @@ copy_till(LINENUM lastline)
 /*
  * Finish copying the input file to the output file.
  */
-void
+static void
 spew_output(void)
 {
 #ifdef DEBUGGING
@@ -827,13 +835,13 @@ spew_output(void)
 	if (input_lines)
 		copy_till(input_lines);	/* dump remainder of file */
 	fclose(ofp);
-	ofp = Nullfp;
+	ofp = NULL;
 }
 
 /*
  * Copy one line from input to output.
  */
-void
+static void
 dump_line(LINENUM line)
 {
 	char	*s, R_newline = '\n';
@@ -846,7 +854,7 @@ dump_line(LINENUM line)
 /*
  * Does the patch pattern match at line base+offset?
  */
-bool
+static bool
 patch_match(LINENUM base, LINENUM offset, LINENUM fuzz)
 {
 	LINENUM	pline = 1 + fuzz;
@@ -868,7 +876,7 @@ patch_match(LINENUM base, LINENUM offset, LINENUM fuzz)
 /*
  * Do two lines match with canonicalized white space?
  */
-bool
+static bool
 similar(char *a, char *b, int len)
 {
 	while (len) {
@@ -888,19 +896,4 @@ similar(char *a, char *b, int len)
 	}
 	return TRUE;		/* actually, this is not reached */
 	/* since there is always a \n */
-}
-
-/*
- * Exit with cleanup.
- */
-void
-my_exit(int status)
-{
-	unlink(TMPINNAME);
-	if (!toutkeep)
-		unlink(TMPOUTNAME);
-	if (!trejkeep)
-		unlink(TMPREJNAME);
-	unlink(TMPPATNAME);
-	exit(status);
 }

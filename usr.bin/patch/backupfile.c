@@ -1,4 +1,4 @@
-/*	$OpenBSD: backupfile.c,v 1.12 2003/07/21 14:32:21 deraadt Exp $	*/
+/*	$OpenBSD: backupfile.c,v 1.13 2003/07/22 17:18:49 otto Exp $	*/
 
 /*
  * backupfile.c -- make Emacs style backup file names Copyright (C) 1990 Free
@@ -17,17 +17,22 @@
  */
 
 #ifndef lint
-static char     rcsid[] = "$OpenBSD: backupfile.c,v 1.12 2003/07/21 14:32:21 deraadt Exp $";
+static const char     rcsid[] = "$OpenBSD: backupfile.c,v 1.13 2003/07/22 17:18:49 otto Exp $";
 #endif				/* not lint */
 
+#include <ctype.h>
+#include <libgen.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
-#include <libgen.h>
-#include <sys/types.h>
+
 #include "backupfile.h"
-#include "config.h"
+
+/*
+ * DIRHEADER: This definition indicates which directory library header to
+ * use.
+ */
+#define DIRENT
 
 #ifdef DIRENT
 #include <dirent.h>
@@ -64,7 +69,6 @@ enum backup_type backup_type = none;
 char           *simple_backup_suffix = "~";
 
 static char    *concat(char *, char *);
-char           *find_backup_file_name(char *);
 static char    *make_version_name(char *, int);
 static int      max_backup_version(char *, char *);
 static int      version_number(char *, char *, int);
@@ -86,11 +90,11 @@ find_backup_file_name(char *file)
 		return concat(file, simple_backup_suffix);
 	base_versions = concat(basename(file), ".~");
 	if (base_versions == 0)
-		return 0;
+		return NULL;
 	dir = dirname(file);
 	if (dir == 0) {
 		free(base_versions);
-		return 0;
+		return NULL;
 	}
 	highest_backup = max_backup_version(base_versions, dir);
 	free(base_versions);
@@ -141,7 +145,7 @@ make_version_name(char *file, int version)
 	char	*backup_name;
 
 	if (asprintf(&backup_name, "%s.~%d~", file, version) == -1)
-		return 0;
+		return NULL;
 	return backup_name;
 }
 
@@ -176,7 +180,7 @@ concat(char *str1, char *str2)
 	char	*newstr;
 
 	if (asprintf(&newstr, "%s%s", str1, str2) == -1)
-		return 0;
+		return NULL;
 	return newstr;
 }
 
@@ -186,7 +190,7 @@ concat(char *str1, char *str2)
  * does not match any element or -2 if it is ambiguous (is a prefix of more
  * than one element).
  */
-int
+static int
 argmatch(char *arg, char **optlist)
 {
 	int	i;	/* Temporary index in OPTLIST. */
@@ -221,7 +225,7 @@ argmatch(char *arg, char **optlist)
  * that was being matched. VALUE is the invalid value that was given. PROBLEM
  * is the return value from argmatch.
  */
-void
+static void
 invalid_arg(char *kind, char *value, int problem)
 {
 	fprintf(stderr, "patch: ");

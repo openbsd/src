@@ -1,8 +1,21 @@
-/*	$OpenBSD: util.c,v 1.15 2003/07/21 14:32:21 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.16 2003/07/22 17:18:49 otto Exp $	*/
 
 #ifndef lint
-static char     rcsid[] = "$OpenBSD: util.c,v 1.15 2003/07/21 14:32:21 deraadt Exp $";
+static const char     rcsid[] = "$OpenBSD: util.c,v 1.16 2003/07/22 17:18:49 otto Exp $";
 #endif				/* not lint */
+
+#include <sys/param.h>
+#include <sys/stat.h>
+
+#include <ctype.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <libgen.h>
+#include <paths.h>
+#include <stdarg.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #include "EXTERN.h"
 #include "common.h"
@@ -10,7 +23,6 @@ static char     rcsid[] = "$OpenBSD: util.c,v 1.15 2003/07/21 14:32:21 deraadt E
 #include "util.h"
 #include "backupfile.h"
 
-void            my_exit(int) __attribute__((noreturn));
 
 /* Rename a file, copying it if necessary. */
 
@@ -31,7 +43,7 @@ move_file(char *from, char *to)
 		if (fromfd < 0)
 			pfatal("internal error, can't reopen %s", from);
 		while ((i = read(fromfd, buf, sizeof buf)) > 0)
-			if (write(1, buf, i) != 1)
+			if (write(STDOUT_FILENO, buf, i) != i)
 				pfatal("write failed");
 		close(fromfd);
 		return 0;
@@ -167,7 +179,7 @@ savestr(char *s)
 	while (*t++)
 		;
 	rv = malloc((size_t) (t - s));
-	if (rv == Nullch) {
+	if (rv == NULL) {
 		if (using_plan_a)
 			out_of_mem = TRUE;
 		else
@@ -275,7 +287,6 @@ ask(char *fmt, ...)
 void
 set_signals(int reset)
 {
-#ifndef lint
 	static sig_t	hupval, intval;
 
 	if (!reset) {
@@ -288,7 +299,6 @@ set_signals(int reset)
 	}
 	signal(SIGHUP, hupval);
 	signal(SIGINT, intval);
-#endif
 }
 
 /*
@@ -297,10 +307,8 @@ set_signals(int reset)
 void
 ignore_signals(void)
 {
-#ifndef lint
 	signal(SIGHUP, SIG_IGN);
 	signal(SIGINT, SIG_IGN);
-#endif
 }
 
 /*
@@ -340,7 +348,7 @@ fetchname(char *at, int strip_leading, int assume_exists)
 	int	sleading = strip_leading;
 
 	if (!at || *at == '\0')
-		return Nullch;
+		return NULL;
 	while (isspace(*at))
 		at++;
 #ifdef DEBUGGING
@@ -348,7 +356,7 @@ fetchname(char *at, int strip_leading, int assume_exists)
 		say("fetchname %s %d %d\n", at, strip_leading, assume_exists);
 #endif
 	if (strnEQ(at, "/dev/null", 9))	/* so files can be created by diffing */
-		return Nullch;	/* against /dev/null. */
+		return NULL;	/* against /dev/null. */
 	name = fullname = t = savestr(at);
 
 	/* Strip off up to `sleading' leading slashes and null terminate.  */
@@ -387,7 +395,7 @@ fetchname(char *at, int strip_leading, int assume_exists)
 		    try("%s/%s%s", filedir, SCCSPREFIX, filebase))
 			return name;
 		free(name);
-		name = Nullch;
+		name = NULL;
 	}
 	return name;
 }
@@ -397,4 +405,19 @@ version(void)
 {
 	fprintf(stderr, "Patch version 2.0-12u8-OpenBSD\n");
 	my_exit(0);
+}
+
+/*
+ * Exit with cleanup.
+ */
+void
+my_exit(int status)
+{
+	unlink(TMPINNAME);
+	if (!toutkeep)
+		unlink(TMPOUTNAME);
+	if (!trejkeep)
+		unlink(TMPREJNAME);
+	unlink(TMPPATNAME);
+	exit(status);
 }

@@ -1,8 +1,19 @@
-/*	$OpenBSD: inp.c,v 1.15 2003/07/21 21:01:45 otto Exp $	*/
+/*	$OpenBSD: inp.c,v 1.16 2003/07/22 17:18:49 otto Exp $	*/
 
 #ifndef lint
-static char     rcsid[] = "$OpenBSD: inp.c,v 1.15 2003/07/21 21:01:45 otto Exp $";
+static const char     rcsid[] = "$OpenBSD: inp.c,v 1.16 2003/07/22 17:18:49 otto Exp $";
 #endif				/* not lint */
+
+#include <sys/types.h>
+#include <sys/file.h>
+#include <sys/stat.h>
+
+#include <ctype.h>
+#include <libgen.h>
+#include <limits.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #include "EXTERN.h"
 #include "common.h"
@@ -11,7 +22,6 @@ static char     rcsid[] = "$OpenBSD: inp.c,v 1.15 2003/07/21 21:01:45 otto Exp $
 #include "INTERN.h"
 #include "inp.h"
 
-extern bool     check_only;
 
 /* Input-file-with-indexable-lines abstract type */
 
@@ -25,7 +35,9 @@ static LINENUM	tiline[2] = {-1, -1};	/* 1st line in each buffer */
 static LINENUM	lines_per_buf;	/* how many lines per buffer */
 static int	tireclen;	/* length of records in tmp file */
 
-void		re_input(void);
+static bool	rev_in_string(char *);
+static bool	plan_a(char *);	/* returns false if insufficient memory */
+static void	plan_b(char *);
 
 /* New patch--prepare to edit another file. */
 
@@ -34,21 +46,17 @@ re_input(void)
 {
 	if (using_plan_a) {
 		i_size = 0;
-#ifndef lint
-		if (i_ptr != Null(char **))
-			free((char *) i_ptr);
-#endif
-		if (i_womp != Nullch)
-			free(i_womp);
-		i_womp = Nullch;
-		i_ptr = Null(char **);
+		free(i_ptr);
+		free(i_womp);
+		i_womp = NULL;
+		i_ptr = NULL;
 	} else {
 		using_plan_a = TRUE;	/* maybe the next one is smaller */
 		close(tifd);
 		tifd = -1;
 		free(tibuf[0]);
 		free(tibuf[1]);
-		tibuf[0] = tibuf[1] = Nullch;
+		tibuf[0] = tibuf[1] = NULL;
 		tiline[0] = tiline[1] = -1;
 		tireclen = 0;
 	}
@@ -69,7 +77,7 @@ scan_input(char *filename)
 
 /* Try keeping everything in memory. */
 
-bool
+static bool
 plan_a(char *filename)
 {
 	int	ifd, statfailed;
@@ -103,7 +111,7 @@ plan_a(char *filename)
 	    (filestat.st_mode & 0222) == 0 ||
 	    /* I can't write to it.  */
 	    ((filestat.st_mode & 0022) == 0 && filestat.st_uid != myuid)) {
-		char	*cs = Nullch, *filebase, *filedir;
+		char	*cs = NULL, *filebase, *filedir;
 		struct stat	cstat;
 
 		filebase = basename(filename);
@@ -170,18 +178,20 @@ plan_a(char *filename)
 		out_of_mem = FALSE;
 		return FALSE;	/* force plan b because plan a bombed */
 	}
-	i_womp = malloc(i_size + 2);
-	if (i_womp == Nullch)
+	if (i_size > SIZE_MAX - 2)
+		fatal("block too large to allocate");
+	i_womp = malloc((size_t)(i_size + 2));
+	if (i_womp == NULL)
 		return FALSE;
 	if ((ifd = open(filename, O_RDONLY)) < 0)
 		pfatal("can't open file %s", filename);
-#ifndef lint
+
 	if (read(ifd, i_womp, (size_t) i_size) != i_size) {
 		close(ifd);	/* probably means i_size > 15 or 16 bits worth */
 		free(i_womp);	/* at this point it doesn't matter if i_womp was */
 		return FALSE;	/* undersized. */
 	}
-#endif
+
 	close(ifd);
 	if (i_size && i_womp[i_size - 1] != '\n')
 		i_womp[i_size++] = '\n';
@@ -194,12 +204,10 @@ plan_a(char *filename)
 		if (*s == '\n')
 			iline++;
 	}
-#ifdef lint
-	i_ptr = Null(char **);
-#else
+
 	i_ptr = (char **) malloc((iline + 2) * sizeof(char *));
-#endif
-	if (i_ptr == Null(char **)) {	/* shucks, it was a near thing */
+
+	if (i_ptr == NULL) {	/* shucks, it was a near thing */
 		free((char *) i_womp);
 		return FALSE;
 	}
@@ -216,7 +224,7 @@ plan_a(char *filename)
 
 	/* now check for revision, if any */
 
-	if (revision != Nullch) {
+	if (revision != NULL) {
 		if (!rev_in_string(i_womp)) {
 			if (force) {
 				if (verbose)
@@ -243,26 +251,26 @@ plan_a(char *filename)
 
 /* Keep (virtually) nothing in memory. */
 
-void
+static void
 plan_b(char *filename)
 {
 	FILE	*ifp;
 	int	i = 0, maxlen = 1;
-	bool	found_revision = (revision == Nullch);
+	bool	found_revision = (revision == NULL);
 
 	using_plan_a = FALSE;
-	if ((ifp = fopen(filename, "r")) == Nullfp)
+	if ((ifp = fopen(filename, "r")) == NULL)
 		pfatal("can't open file %s", filename);
 	(void) unlink(TMPINNAME);
 	if ((tifd = open(TMPINNAME, O_EXCL | O_CREAT | O_WRONLY, 0666)) < 0)
 		pfatal("can't open file %s", TMPINNAME);
-	while (fgets(buf, sizeof buf, ifp) != Nullch) {
-		if (revision != Nullch && !found_revision && rev_in_string(buf))
+	while (fgets(buf, sizeof buf, ifp) != NULL) {
+		if (revision != NULL && !found_revision && rev_in_string(buf))
 			found_revision = TRUE;
 		if ((i = strlen(buf)) > maxlen)
 			maxlen = i;	/* find longest line */
 	}
-	if (revision != Nullch) {
+	if (revision != NULL) {
 		if (!found_revision) {
 			if (force) {
 				if (verbose)
@@ -284,21 +292,21 @@ plan_b(char *filename)
 			say("Good.  This file appears to be the %s version.\n",
 			    revision);
 	}
-	fseek(ifp, 0L, 0);	/* rewind file */
+	fseek(ifp, 0L, SEEK_SET);	/* rewind file */
 	lines_per_buf = BUFFERSIZE / maxlen;
 	tireclen = maxlen;
 	tibuf[0] = malloc(BUFFERSIZE + 1);
-	if (tibuf[0] == Nullch)
+	if (tibuf[0] == NULL)
 		fatal("out of memory\n");
 	tibuf[1] = malloc(BUFFERSIZE + 1);
-	if (tibuf[1] == Nullch)
+	if (tibuf[1] == NULL)
 		fatal("out of memory\n");
 	for (i = 1;; i++) {
 		if (!(i % lines_per_buf))	/* new block */
 			if (write(tifd, tibuf[0], BUFFERSIZE) < BUFFERSIZE)
 				pfatal("can't write temp file");
 		if (fgets(tibuf[0] + maxlen * (i % lines_per_buf),
-		    maxlen + 1, ifp) == Nullch) {
+		    maxlen + 1, ifp) == NULL) {
 			input_lines = i - 1;
 			if (i % lines_per_buf)
 				if (write(tifd, tibuf[0], BUFFERSIZE) < BUFFERSIZE)
@@ -334,10 +342,10 @@ ifetch(LINENUM line, int whichbuf)
 			whichbuf = 1;
 		else {
 			tiline[whichbuf] = baseline;
-#ifndef lint			/* complains of long accuracy */
+
 			lseek(tifd, (off_t) (baseline / lines_per_buf *
-			    BUFFERSIZE), 0);
-#endif
+			    BUFFERSIZE), SEEK_SET);
+
 			if (read(tifd, tibuf[whichbuf], BUFFERSIZE) < 0)
 				pfatal("error reading tmp file %s", TMPINNAME);
 		}
@@ -348,13 +356,13 @@ ifetch(LINENUM line, int whichbuf)
 /*
  * True if the string argument contains the revision number we want.
  */
-bool
+static bool
 rev_in_string(char *string)
 {
 	char	*s;
 	int	patlen;
 
-	if (revision == Nullch)
+	if (revision == NULL)
 		return TRUE;
 	patlen = strlen(revision);
 	if (strnEQ(string, revision, patlen) && isspace(string[patlen]))

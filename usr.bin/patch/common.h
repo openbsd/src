@@ -1,26 +1,8 @@
-/*	$OpenBSD: common.h,v 1.16 2003/07/21 14:32:21 deraadt Exp $	*/
+/*	$OpenBSD: common.h,v 1.17 2003/07/22 17:18:49 otto Exp $	*/
 
 #define DEBUGGING
 
-#include "config.h"
-
-/* shut lint up about the following when return value ignored */
-
 #include <stdio.h>
-#include <string.h>
-#include <assert.h>
-#include <sys/types.h>
-#include <sys/file.h>
-#include <sys/stat.h>
-#include <sys/param.h>
-#include <ctype.h>
-#include <paths.h>
-#include <signal.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <stdarg.h>
-#include <libgen.h>
-#include <errno.h>
 
 /* constants */
 
@@ -45,13 +27,6 @@
 
 /* handy definitions */
 
-#define Null(t) ((t)0)
-#define Nullch Null(char *)
-#define Nullfp Null(FILE *)
-#define Nulline Null(LINENUM)
-
-#define Ctl(ch) ((ch) & 037)
-
 #define strNE(s1,s2) (strcmp(s1, s2))
 #define strEQ(s1,s2) (!strcmp(s1, s2))
 #define strnNE(s1,s2,l) (strncmp(s1, s2, l))
@@ -73,8 +48,8 @@ EXT struct stat filestat;	/* file statistics area */
 EXT int filemode INIT(0644);
 
 EXT char        buf[MAXLINELEN];/* general purpose buffer */
-EXT FILE       *ofp INIT(Nullfp);	/* output file pointer */
-EXT FILE       *rejfp INIT(Nullfp);	/* reject file pointer */
+EXT FILE       *ofp INIT(NULL);	/* output file pointer */
+EXT FILE       *rejfp INIT(NULL);	/* reject file pointer */
 
 EXT int         myuid;		/* cache getuid return value */
 
@@ -85,12 +60,12 @@ EXT bool out_of_mem INIT(FALSE);/* ran out of memory in plan a */
 EXT int filec   INIT(0);	/* how many file arguments? */
 EXT char       *filearg[MAXFILEC];
 EXT bool ok_to_create_file INIT(FALSE);
-EXT char       *bestguess INIT(Nullch);	/* guess at correct filename */
+EXT char       *bestguess INIT(NULL);	/* guess at correct filename */
 
-EXT char       *outname INIT(Nullch);
+EXT char       *outname INIT(NULL);
 EXT char        rejname[128];
 
-EXT char       *origprae INIT(Nullch);
+EXT char       *origprae INIT(NULL);
 
 EXT char       *TMPOUTNAME;
 EXT char       *TMPINNAME;
@@ -112,6 +87,9 @@ EXT bool noreverse INIT(FALSE);
 EXT bool skip_rest_of_patch INIT(FALSE);
 EXT int strippath INIT(957);
 EXT bool canonicalize INIT(FALSE);
+/* TRUE if -C was specified on command line.  */
+EXT bool check_only  INIT(FALSE);
+
 
 #define CONTEXT_DIFF 1
 #define NORMAL_DIFF 2
@@ -126,4 +104,4 @@ EXT char        not_defined[128];	/* #ifndef xyzzy */
 EXT char        else_defined[] INIT("#else\n");	/* #else */
 EXT char        end_defined[128];	/* #endif xyzzy */
 
-EXT char       *revision INIT(Nullch);	/* prerequisite revision, if any */
+EXT char       *revision INIT(NULL);	/* prerequisite revision, if any */
