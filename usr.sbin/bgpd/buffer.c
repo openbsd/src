@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.25 2004/09/16 01:33:53 henning Exp $ */
+/*	$OpenBSD: buffer.c,v 1.26 2005/02/01 21:36:02 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -33,7 +33,7 @@ void	buf_enqueue(struct msgbuf *, struct buf *);
 void	buf_dequeue(struct msgbuf *, struct buf *);
 
 struct buf *
-buf_open(ssize_t len)
+buf_open(size_t len)
 {
 	struct buf	*buf;
 
@@ -50,7 +50,7 @@ buf_open(ssize_t len)
 }
 
 int
-buf_add(struct buf *buf, void *data, ssize_t len)
+buf_add(struct buf *buf, void *data, size_t len)
 {
 	if (buf->wpos + len > buf->size)
 		return (-1);
@@ -61,7 +61,7 @@ buf_add(struct buf *buf, void *data, ssize_t len)
 }
 
 void *
-buf_reserve(struct buf *buf, ssize_t len)
+buf_reserve(struct buf *buf, size_t len)
 {
 	void	*b;
 
@@ -98,7 +98,7 @@ buf_write(int sock, struct buf *buf)
 		return (-2);
 	}
 
-	if (n < buf->size - buf->rpos) {	/* not all data written yet */
+	if (buf->rpos + n < buf->size) {	/* not all data written yet */
 		buf->rpos += n;
 		return (0);
 	} else
@@ -186,7 +186,7 @@ msgbuf_write(struct msgbuf *msgbuf)
 	for (buf = TAILQ_FIRST(&msgbuf->bufs); buf != NULL && n > 0;
 	    buf = next) {
 		next = TAILQ_NEXT(buf, entry);
-		if (n >= buf->size - buf->rpos) {
+		if (buf->rpos + n >= buf->size) {
 			n -= buf->size - buf->rpos;
 			buf_dequeue(msgbuf, buf);
 		} else {

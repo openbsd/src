@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.154 2004/12/23 17:26:51 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.155 2005/02/01 21:36:01 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -84,9 +84,9 @@ enum reconf_action {
 struct buf {
 	TAILQ_ENTRY(buf)	 entry;
 	u_char			*buf;
-	ssize_t			 size;
-	ssize_t			 wpos;
-	ssize_t			 rpos;
+	size_t			 size;
+	size_t			 wpos;
+	size_t			 rpos;
 	int			 fd;
 };
 
@@ -584,9 +584,9 @@ void		 send_nexthop_update(struct kroute_nexthop *);
 void		 send_imsg_session(int, pid_t, void *, u_int16_t);
 
 /* buffer.c */
-struct buf	*buf_open(ssize_t);
-int		 buf_add(struct buf *, void *, ssize_t);
-void		*buf_reserve(struct buf *, ssize_t);
+struct buf	*buf_open(size_t);
+int		 buf_add(struct buf *, void *, size_t);
+void		*buf_reserve(struct buf *, size_t);
 int		 buf_close(struct msgbuf *, struct buf *);
 int		 buf_write(int, struct buf *);
 void		 buf_free(struct buf *);
