@@ -1,5 +1,5 @@
-/*	$OpenBSD: udp.c,v 1.15 1999/06/05 23:11:19 niklas Exp $	*/
-/*	$EOM: udp.c,v 1.41 1999/06/05 23:08:53 niklas Exp $	*/
+/*	$OpenBSD: udp.c,v 1.16 1999/10/01 14:08:05 niklas Exp $	*/
+/*	$EOM: udp.c,v 1.42 1999/09/30 12:59:27 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -35,7 +35,9 @@
  */
 
 #include <sys/types.h>
+#include <sys/ioctl.h>
 #include <sys/socket.h>
+#include <sys/sockio.h>
 #include <net/if.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -249,9 +251,11 @@ udp_bind_if (struct ifreq *ifrp, void *arg)
   struct conf_list_node *address;
   struct in_addr addr;
   struct transport *t;
+  struct ifreq flags_ifr;
+  int s;
 
   /*
-   * Well UDP is an internet protocol after all so drop other ifreqs.
+   * Well, UDP is an internet protocol after all so drop other ifreqs.
    * XXX IPv6 support is missing.
    */
 #ifdef USE_OLD_SOCKADDR
@@ -260,6 +264,32 @@ udp_bind_if (struct ifreq *ifrp, void *arg)
   if (ifrp->ifr_addr.sa_family != AF_INET
       || ifrp->ifr_addr.sa_len != sizeof (struct sockaddr_in))
 #endif
+    return;
+
+  /*
+   * These special addresses are not useable as they have special meaning
+   * in the IP stack.
+   */
+  if (((struct sockaddr_in *)&ifrp->ifr_addr)->sin_addr.s_addr == INADDR_ANY
+      || (((struct sockaddr_in *)&ifrp->ifr_addr)->sin_addr.s_addr
+	  == INADDR_NONE))
+    return;
+
+  /* Don't bother with interfaces that are down.  */
+  s = socket (AF_INET, SOCK_DGRAM, 0);
+  if (s == -1)
+    {
+      log_error ("udp_bind_if: socket (AF_INET, SOCK_DGRAM, 0) failed");
+      return;
+    }
+  strncpy (flags_ifr.ifr_name, ifrp->ifr_name, sizeof flags_ifr.ifr_name - 1);
+  if (ioctl (s, SIOCGIFFLAGS, (caddr_t)&flags_ifr) == -1)
+    {
+      log_error ("udp_bind_if: ioctl (%d, SIOCGIFFLAGS, ...) failed", s);
+      return;
+    }
+  close (s);
+  if (!(flags_ifr.ifr_flags & IFF_UP))
     return;
 
   /*
@@ -351,7 +381,15 @@ udp_create (char *name)
   if (!addr_str)
     addr_str = conf_get_str ("General", "Listen-on");
   if (!addr_str)
-    return udp_clone ((struct udp_transport *)default_transport, &dst);
+    {
+      if (!default_transport)
+	{
+	  log_print ("udp_create: no default transport");
+	  return 0;
+	}
+      else
+	return udp_clone ((struct udp_transport *)default_transport, &dst);
+    }
 
   addr = inet_addr (addr_str);
   if (addr == INADDR_NONE)
