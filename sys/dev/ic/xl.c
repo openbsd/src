@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.1 2000/04/08 05:50:50 aaron Exp $	*/
+/*	$OpenBSD: xl.c,v 1.2 2000/04/18 14:32:49 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -56,6 +56,8 @@
  * 3Com 3c450-TX	10/100Mbps/RJ-45 (Tornado ASIC)
  * 3Com 3c980-TX	10/100Mbps server adapter (Hurricane ASIC)
  * 3Com 3c980C-TX	10/100Mbps server adapter (Tornado ASIC)
+ * 3Com 3C575TX		10/100Mbps LAN CardBus PC Card
+ * 3Com 3C575BTX	10/100Mbps LAN CardBus PC Card
  * 3Com 3CCFE575CT	10/100Mbps LAN CardBus PC Card
  * 3Com 3cSOHO100-TX	10/100Mbps/RJ-45 (Hurricane ASIC)
  * Dell Optiplex GX1 on-board 3c918 10/100Mbps/RJ-45
@@ -980,6 +982,8 @@ void xl_choose_xcvr(sc, verbose)
 			printf("xl%d: guessing 10/100 plus BNC/AUI\n",
 			    sc->xl_unit);
 		break;
+	case TC_DEVICEID_3CCFE575_CARDBUS:
+	case TC_DEVICEID_3CCFE575BT_CARDBUS:
 	case TC_DEVICEID_3CCFE575CT_CARDBUS:
 		sc->xl_media = XL_MEDIAOPT_MII;
 		sc->xl_xcvr = XL_XCVR_MII;
