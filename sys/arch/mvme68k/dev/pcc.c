@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcc.c,v 1.7 2002/03/14 01:26:37 millert Exp $ */
+/*	$OpenBSD: pcc.c,v 1.8 2002/04/21 23:44:29 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -233,7 +233,7 @@ pccspeed(pcc)
 	printf("pccspeed cnt=%d\n", cnt);
 
 	/*
-	 * Imperically determined. Unfortunately, because of various
+	 * Empirically determined. Unfortunately, because of various
 	 * memory board effects and such, it is rather unlikely that
 	 * we will find a nice formula.
 	 */
