@@ -1,4 +1,4 @@
-/* $OpenBSD: http_main.c,v 1.19 2002/07/20 10:38:25 henning Exp $ */
+/* $OpenBSD: http_main.c,v 1.20 2002/07/22 18:25:31 henning Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -5189,7 +5189,7 @@ static void standalone_main(int argc, char **argv)
 	ap_init_modules(pconf, server_conf);
 	version_locked++;	/* no more changes to server_version */
 
-	if(!is_graceful)
+	if(!is_graceful && !is_chrooted)
 	    if (ap_server_chroot) {
 		if (geteuid()) {
 		    ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_EMERG, 
