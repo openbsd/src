@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucom.c,v 1.24 2005/01/28 22:36:46 djm Exp $ */
+/*	$OpenBSD: ucom.c,v 1.25 2005/01/28 22:38:39 djm Exp $ */
 /*	$NetBSD: ucom.c,v 1.49 2003/01/01 00:10:25 thorpej Exp $	*/
 
 /*
@@ -777,9 +777,13 @@ ucom_dtr(struct ucom_softc *sc, int onoff)
 {
 	DPRINTF(("ucom_dtr: onoff=%d\n", onoff));
 
-	if (sc->sc_methods->ucom_set != NULL)
+	if (sc->sc_methods->ucom_set != NULL) {
 		sc->sc_methods->ucom_set(sc->sc_parent, sc->sc_portno,
 		    UCOM_SET_DTR, onoff);
+		/* When not using CRTSCTS, RTS follows DTR. */
+		if (!(sc->sc_swflags & TIOCFLAG_CRTSCTS))
+			ucom_rts(sc, onoff);
+	}
 }
 
 Static void
