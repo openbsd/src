@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.276 2002/12/18 18:35:30 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.277 2002/12/18 19:40:41 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -477,6 +477,8 @@ pf_purge_expired_states(void)
 #endif
 			if (cur->state->rule.ptr != NULL)
 				cur->state->rule.ptr->states--;
+			if (cur->state->nat_rule != NULL)
+				cur->state->nat_rule->states--;
 			pool_put(&pf_state_pl, cur->state);
 			pool_put(&pf_tree_pl, cur);
 			pool_put(&pf_tree_pl, peer);
@@ -1928,6 +1930,12 @@ pf_test_tcp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 			rs->states++;
 
 		s->rule.ptr = rs;
+		if (nat != NULL)
+			s->nat_rule = nat;
+		else if (rdr != NULL)
+			s->nat_rule = rdr;
+		if (s->nat_rule != NULL)
+			s->nat_rule->states++;
 		s->allow_opts = *rm && (*rm)->allow_opts;
 		s->log = *rm && ((*rm)->log & 2);
 		s->proto = IPPROTO_TCP;
@@ -2167,6 +2175,12 @@ pf_test_udp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 			rs->states++;
 
 		s->rule.ptr = rs;
+		if (nat != NULL)
+			s->nat_rule = nat;
+		else if (rdr != NULL)
+			s->nat_rule = rdr;
+		if (s->nat_rule != NULL)
+			s->nat_rule->states++;
 		s->allow_opts = *rm && (*rm)->allow_opts;
 		s->log = *rm && ((*rm)->log & 2);
 		s->proto = IPPROTO_UDP;
@@ -2407,6 +2421,12 @@ pf_test_icmp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 			rs->states++;
 
 		s->rule.ptr = rs;
+		if (nat != NULL)
+			s->nat_rule = nat;
+		else if (rdr != NULL)
+			s->nat_rule = rdr;
+		if (s->nat_rule != NULL)
+			s->nat_rule->states++;
 		s->allow_opts = *rm && (*rm)->allow_opts;
 		s->log = *rm && ((*rm)->log & 2);
 		s->proto = pd->proto;
@@ -2594,6 +2614,12 @@ pf_test_other(struct pf_rule **rm, int direction, struct ifnet *ifp,
 			rs->states++;
 
 		s->rule.ptr = rs;
+		if (nat != NULL)
+			s->nat_rule = nat;
+		else if (rdr != NULL)
+			s->nat_rule = rdr;
+		if (s->nat_rule != NULL)
+			s->nat_rule->states++;
 		s->allow_opts = *rm && (*rm)->allow_opts;
 		s->log = *rm && ((*rm)->log & 2);
 		s->proto = pd->proto;
@@ -3007,6 +3033,10 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 		(*state)->rule.ptr->packets++;
 		(*state)->rule.ptr->bytes += pd->tot_len;
 	}
+	if ((*state)->nat_rule != NULL) {
+		(*state)->nat_rule->packets++;
+		(*state)->nat_rule->bytes += pd->tot_len;
+	}
 	return (PF_PASS);
 }
 
@@ -3073,6 +3103,10 @@ pf_test_state_udp(struct pf_state **state, int direction, struct ifnet *ifp,
 	if ((*state)->rule.ptr != NULL) {
 		(*state)->rule.ptr->packets++;
 		(*state)->rule.ptr->bytes += pd->tot_len;
+	}
+	if ((*state)->nat_rule != NULL) {
+		(*state)->nat_rule->packets++;
+		(*state)->nat_rule->bytes += pd->tot_len;
 	}
 	return (PF_PASS);
 }
@@ -3649,6 +3683,10 @@ pf_test_state_other(struct pf_state **state, int direction, struct ifnet *ifp,
 	if ((*state)->rule.ptr != NULL) {
 		(*state)->rule.ptr->packets++;
 		(*state)->rule.ptr->bytes += pd->tot_len;
+	}
+	if ((*state)->nat_rule != NULL) {
+		(*state)->nat_rule->packets++;
+		(*state)->nat_rule->bytes += pd->tot_len;
 	}
 	return (PF_PASS);
 }

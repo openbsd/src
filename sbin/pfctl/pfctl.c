@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.108 2002/12/18 16:28:40 dhartmei Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.109 2002/12/18 19:40:41 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -65,8 +65,9 @@ int	 pfctl_clear_states(int, int);
 int	 pfctl_kill_states(int, int);
 int	 pfctl_get_pool(int, struct pf_pool *, u_int32_t, u_int32_t, int);
 void	 pfctl_clear_pool(struct pf_pool *);
+void	 pfctl_print_rule_counters(struct pf_rule *, int);
 int	 pfctl_show_rules(int, int, int);
-int	 pfctl_show_nat(int);
+int	 pfctl_show_nat(int, int);
 int	 pfctl_show_altq(int);
 int	 pfctl_show_states(int, u_int8_t, int);
 int	 pfctl_show_status(int);
@@ -453,6 +454,33 @@ pfctl_clear_pool(struct pf_pool *pool)
 	}
 }
 
+void
+pfctl_print_rule_counters(struct pf_rule *rule, int opts)
+{
+	if (opts & PF_OPT_VERBOSE2) {
+		const char *t[PF_SKIP_COUNT] = { "a", "i", "d", "f",
+		    "p", "sa", "sp", "da", "dp" };
+		int i;
+
+		printf("[ Skip steps: ");
+		for (i = 0; i < PF_SKIP_COUNT; ++i) {
+			if (rule->skip[i].nr == rule->nr + 1)
+				continue;
+			printf("%s=", t[i]);
+			if (rule->skip[i].nr == -1)
+				printf("end ");
+			else if (rule->skip[i].nr != rule->nr + 1)
+				printf("%u ", rule->skip[i].nr);
+		}
+		printf("]\n");
+	}
+	if (opts & PF_OPT_VERBOSE)
+		printf("[ Evaluations: %-8llu  Packets: %-8llu  "
+			    "Bytes: %-10llu  States: %-6u]\n\n",
+			    rule->evaluations, rule->packets,
+			    rule->bytes, rule->states);
+}
+
 int
 pfctl_show_rules(int dev, int opts, int format)
 {
@@ -494,32 +522,7 @@ pfctl_show_rules(int dev, int opts, int format)
 			break;
 		default:
 			print_rule(&pr.rule, opts & PF_OPT_VERBOSE2);
-			if (opts & PF_OPT_VERBOSE2) {
-				const char *t[PF_SKIP_COUNT] = { "a",
-				    "i", "d", "f", "p", "sa", "sp",
-				    "da", "dp" };
-				int i;
-
-				printf("[ Skip steps: ");
-				for (i = 0; i < PF_SKIP_COUNT; ++i) {
-					if (pr.rule.skip[i].nr ==
-					    pr.rule.nr + 1)
-						continue;
-					printf("%s=", t[i]);
-					if (pr.rule.skip[i].nr == -1)
-						printf("end ");
-					else if (pr.rule.skip[i].nr !=
-					    pr.rule.nr + 1)
-						printf("%u ",
-						    pr.rule.skip[i].nr);
-				}
-				printf("]\n");
-			}
-			if (opts & PF_OPT_VERBOSE)
-				printf("[ Evaluations: %-8llu  Packets: %-8llu  "
-				    "Bytes: %-10llu  States: %-6u]\n\n",
-				    pr.rule.evaluations, pr.rule.packets,
-				    pr.rule.bytes, pr.rule.states);
+			pfctl_print_rule_counters(&pr.rule, opts);
 		}
 		pfctl_clear_pool(&pr.rule.rpool);
 	}
@@ -557,7 +560,7 @@ pfctl_show_altq(int dev)
 }
 
 int
-pfctl_show_nat(int dev)
+pfctl_show_nat(int dev, int opts)
 {
 	struct pfioc_rule pr;
 	u_int32_t mnr, nr;
@@ -580,7 +583,8 @@ pfctl_show_nat(int dev)
 		if (pfctl_get_pool(dev, &pr.rule.rpool, nr,
 		    pr.ticket, PF_NAT) != 0)
 			return (-1);
-		print_nat(&pr.rule);
+		print_nat(&pr.rule, opts & PF_OPT_VERBOSE2);
+		pfctl_print_rule_counters(&pr.rule, opts);
 		pfctl_clear_pool(&pr.rule.rpool);
 	}
 	pr.rule.action = PF_RDR;
@@ -598,7 +602,8 @@ pfctl_show_nat(int dev)
 		if (pfctl_get_pool(dev, &pr.rule.rpool, nr,
 		    pr.ticket, PF_RDR) != 0)
 			return (-1);
-		print_rdr(&pr.rule);
+		print_rdr(&pr.rule, opts & PF_OPT_VERBOSE2);
+		pfctl_print_rule_counters(&pr.rule, opts);
 		pfctl_clear_pool(&pr.rule.rpool);
 	}
 	pr.rule.action = PF_BINAT;
@@ -613,7 +618,8 @@ pfctl_show_nat(int dev)
 			warn("DIOCGETRULE");
 			return (-1);
 		}
-		print_binat(&pr.rule);
+		print_binat(&pr.rule, opts & PF_OPT_VERBOSE2);
+		pfctl_print_rule_counters(&pr.rule, opts);
 	}
 	return (0);
 }
@@ -1298,7 +1304,7 @@ main(int argc, char *argv[])
 			pfctl_show_rules(dev, opts, 1);
 			break;
 		case 'n':
-			pfctl_show_nat(dev);
+			pfctl_show_nat(dev, opts);
 			break;
 		case 'q':
 			pfctl_show_altq(dev);
@@ -1317,7 +1323,7 @@ main(int argc, char *argv[])
 			break;
 		case 'a':
 			pfctl_show_rules(dev, opts, 0);
-			pfctl_show_nat(dev);
+			pfctl_show_nat(dev, opts);
 			pfctl_show_altq(dev);
 			pfctl_show_states(dev, 0, opts);
 			pfctl_show_status(dev);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.h,v 1.35 2002/12/18 14:14:09 mcbride Exp $ */
+/*	$OpenBSD: pfctl_parser.h,v 1.36 2002/12/18 19:40:41 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -78,9 +78,9 @@ int	parse_flags(char *);
 void	print_filter(struct pf_rule *, int);
 void	print_pool(struct pf_pool *, u_int16_t, u_int16_t, sa_family_t, int);
 void	print_rule(struct pf_rule *, int);
-void	print_nat(struct pf_rule *);
-void	print_binat(struct pf_rule *);
-void	print_rdr(struct pf_rule *);
+void	print_nat(struct pf_rule *, int);
+void	print_binat(struct pf_rule *, int);
+void	print_rdr(struct pf_rule *, int);
 void	print_status(struct pf_status *);
 
 struct icmptypeent {

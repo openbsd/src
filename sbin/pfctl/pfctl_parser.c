@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.122 2002/12/17 12:36:59 mcbride Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.123 2002/12/18 19:40:41 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -401,15 +401,15 @@ print_rule(struct pf_rule *r, int verbose)
 	switch (r->action) {
 	case PF_NAT:
 	case PF_NONAT:
-		print_nat(r);
+		print_nat(r, verbose);
 		break;
 	case PF_BINAT:
 	case PF_NOBINAT:
-		print_binat(r);
+		print_binat(r, verbose);
 		break;
 	case PF_RDR:
 	case PF_NORDR:
-		print_rdr(r);
+		print_rdr(r, verbose);
 		break;
 	default:
 	case PF_PASS:
@@ -496,8 +496,10 @@ print_pool(struct pf_pool *pool, u_int16_t p1, u_int16_t p2,
 }
 
 void
-print_nat(struct pf_rule *n)
+print_nat(struct pf_rule *n, int verbose)
 {
+	if (verbose)
+		printf("@%d ", n->nr);
 	if (n->anchorname[0])
 		printf("nat-anchor %s ", n->anchorname);
 	else {
@@ -535,8 +537,10 @@ print_nat(struct pf_rule *n)
 }
 
 void
-print_binat(struct pf_rule *b)
+print_binat(struct pf_rule *b, int verbose)
 {
+	if (verbose)
+		printf("@%d ", b->nr);
 	if (b->anchorname[0])
 		printf("binat-anchor %s ", b->anchorname);
 	else {
@@ -586,8 +590,10 @@ print_binat(struct pf_rule *b)
 }
 
 void
-print_rdr(struct pf_rule *r)
+print_rdr(struct pf_rule *r, int verbose)
 {
+	if (verbose)
+		printf("@%d ", r->nr);
 	if (r->anchorname[0])
 		printf("rdr-anchor %s ", r->anchorname);
 	else {
