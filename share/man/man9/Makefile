@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.70 2003/04/17 13:41:30 mickey Exp $
+#	$OpenBSD: Makefile,v 1.71 2003/06/11 17:34:35 deraadt Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -149,8 +149,8 @@ MLINKS+=pool.9 pool_init.9 pool.9 pool_destroy.9 pool.9 pool_get.9 \
 	pool.9 pool_put.9 pool.9 pool_prime.9 pool.9 pool_sethiwat.9 \
 	pool.9 pool_setlowat.9
 MLINKS+=powerhook_establish.9 powerhook_disestablish.9
-MLINKS+=printf.9 sprintf.9 printf.9 vprintf.9 printf.9 uprintf.9 \
-	printf.9 ttyprintf.9 printf.9 db_printf.9
+MLINKS+=printf.9 snprintf.9 printf.9 vsnprintf.9 printf.9 vprintf.9 \
+	printf.9 uprintf.9 printf.9 ttyprintf.9 printf.9 db_printf.9
 MLINKS+=psignal.9 pgsignal.9 psignal.9 gsignal.9
 MLINKS+=shutdownhook_establish.9 shutdownhook_disestablish.9
 MLINKS+=sleep.9 tsleep.9 sleep.9 wakeup.9
@@ -194,8 +194,7 @@ MLINKS+=kern.9 imax.9 kern.9 imin.9 kern.9 lmax.9 kern.9 lmin.9 \
 	kern.9 assert.9 kern.9 KASSERT.9 kern.9 KDASSERT.9 \
 	kern.9 locc.9 kern.9 skpc.9 kern.9 scanc.9 kern.9 bcmp.9 \
 	kern.9 memchr.9 kern.9 memcmp.9 kern.9 ffs.9 \
-	kern.9 strlen.9 kern.9 strcat.9 kern.9 strcpy.9 \
-	kern.9 strncpy.9 kern.9 strlcpy.9 kern.9 strlcat.9 \
+	kern.9 strlen.9 kern.9 strncpy.9 kern.9 strlcpy.9 kern.9 strlcat.9 \
 	kern.9 strcmp.9 kern.9 strncmp.9 kern.9 strncasecmp.9 \
 	kern.9 srandom.9 kern.9 getsn.9
 
