@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.117 2004/06/20 18:35:12 henning Exp $ */
+/*	$OpenBSD: rde.c,v 1.118 2004/06/22 20:28:58 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -290,7 +290,7 @@ rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 				break;
 			}
 			pid = imsg.hdr.pid;
-			pt_dump(network_dump_upcall, &pid);
+			pt_dump(network_dump_upcall, &pid, AF_UNSPEC);
 			imsg_compose_pid(&ibuf_se, IMSG_CTL_END, pid, NULL, 0);
 			break;
 		case IMSG_CTL_SHOW_RIB:
@@ -299,7 +299,7 @@ rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 				break;
 			}
 			pid = imsg.hdr.pid;
-			pt_dump(rde_dump_upcall, &pid);
+			pt_dump(rde_dump_upcall, &pid, AF_UNSPEC);
 			imsg_compose_pid(&ibuf_se, IMSG_CTL_END, pid, NULL, 0);
 			break;
 		case IMSG_CTL_SHOW_RIB_AS:
@@ -404,7 +404,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			mrt.ibuf = &ibuf_main;
 			if (mrt.type == MRT_TABLE_DUMP) {
 				mrt_clear_seq();
-				pt_dump(mrt_dump_upcall, &mrt);
+				pt_dump(mrt_dump_upcall, &mrt, AF_UNSPEC);
 				if (imsg_compose(&ibuf_main, IMSG_MRT_END,
 				    mrt.id, NULL, 0) == -1)
 					fatalx("imsg_compose error");
@@ -741,7 +741,7 @@ rde_dump_rib_as(struct prefix *p, pid_t pid)
 	rib.active_cnt = p->aspath->active_cnt;
 	memcpy(&rib.nexthop, &p->aspath->nexthop->true_nexthop,
 	    sizeof(rib.nexthop));
-	memcpy(&rib.prefix, &p->prefix->prefix, sizeof(rib.prefix));
+	pt_getaddr(p->prefix, &rib.prefix);
 	rib.prefixlen = p->prefix->prefixlen;
 	rib.origin = p->aspath->flags.origin;
 	rib.flags = 0;
@@ -772,7 +772,7 @@ rde_dump_rib_prefix(struct prefix *p, pid_t pid)
 	struct ctl_show_rib_prefix	 prefix;
 
 	prefix.lastchange = p->lastchange;
-	memcpy(&prefix.prefix, &p->prefix->prefix, sizeof(prefix.prefix));
+	pt_getaddr(p->prefix, &prefix.prefix);
 	prefix.prefixlen = p->prefix->prefixlen;
 	prefix.flags = 0;
 	if (p->aspath->nexthop->state == NEXTHOP_REACH)
@@ -829,14 +829,16 @@ rde_dump_prefix_upcall(struct pt_entry *pt, void *ptr)
 	struct {
 		pid_t				 pid;
 		struct ctl_show_rib_prefix	*pref;
-	}		*ctl = ptr;
-	struct prefix	*p;
-	in_addr_t	 mask;
+	}			*ctl = ptr;
+	struct prefix		*p;
+	struct bgpd_addr	 addr;
 
-	mask = htonl(0xffffffff << (32 - ctl->pref->prefixlen));
-	if (ctl->pref->prefixlen <= pt->prefixlen &&
-	    (ctl->pref->prefix.v4.s_addr & mask) ==
-	    (pt->prefix.v4.s_addr & mask))
+	pt_getaddr(pt, &addr);
+	if (addr.af != ctl->pref->prefix.af)
+		return;
+	if (ctl->pref->prefixlen > pt->prefixlen)
+		return;
+	if (prefix_equal(&ctl->pref->prefix, &addr, ctl->pref->prefixlen))
 		LIST_FOREACH(p, &pt->prefix_h, prefix_l)
 			rde_dump_rib_as(p, ctl->pid);
 }
@@ -856,7 +858,7 @@ rde_dump_prefix(struct ctl_show_rib_prefix *pref, pid_t pid)
 	} else if (pref->flags & F_LONGER) {
 		ctl.pid = pid;
 		ctl.pref = pref;
-		pt_dump(rde_dump_prefix_upcall, &ctl);
+		pt_dump(rde_dump_prefix_upcall, &ctl, AF_UNSPEC);
 	} else {
 		if ((pt = pt_get(&pref->prefix, pref->prefixlen)) != NULL)
 			rde_dump_upcall(pt, &pid);
@@ -869,7 +871,8 @@ rde_dump_prefix(struct ctl_show_rib_prefix *pref, pid_t pid)
 void
 rde_send_kroute(struct prefix *new, struct prefix *old)
 {
-	struct kroute	 kr;
+	struct kroute		kr;
+	struct bgpd_addr	addr;
 	struct prefix	*p;
 	enum imsg_type	 type;
 
@@ -897,7 +900,8 @@ rde_send_kroute(struct prefix *new, struct prefix *old)
 		kr.nexthop.s_addr = p->aspath->nexthop->true_nexthop.v4.s_addr;
 	}
 
-	kr.prefix.s_addr = p->prefix->prefix.v4.s_addr;
+	pt_getaddr(p->prefix, &addr);
+	kr.prefix.s_addr = addr.v4.s_addr;
 	kr.prefixlen = p->prefix->prefixlen;
 
 	if (imsg_compose(&ibuf_main, type, 0, &kr, sizeof(kr)) == -1)
@@ -1207,7 +1211,7 @@ peer_dump(u_int32_t id, u_int16_t afi, u_int8_t safi)
 	if (afi == AFI_ALL || afi == AFI_IPv4)
 		if (safi == SAFI_ALL || safi == SAFI_UNICAST ||
 		    safi == SAFI_BOTH) {
-			pt_dump(up_dump_upcall, peer);
+			pt_dump(up_dump_upcall, peer, AF_INET);
 			return;
 		}
 
@@ -1280,6 +1284,7 @@ network_dump_upcall(struct pt_entry *pt, void *ptr)
 {
 	struct prefix		*p;
 	struct kroute		 k;
+	struct bgpd_addr	 addr;
 	pid_t			 pid;
 
 	memcpy(&pid, ptr, sizeof(pid));
@@ -1287,8 +1292,8 @@ network_dump_upcall(struct pt_entry *pt, void *ptr)
 	LIST_FOREACH(p, &pt->prefix_h, prefix_l)
 	    if (p->aspath->nexthop->flags & NEXTHOP_ANNOUNCE) {
 		    bzero(&k, sizeof(k));
-		    memcpy(&k.prefix, &p->prefix->prefix.v4.s_addr,
-			sizeof(k.prefix));
+		    pt_getaddr(p->prefix, &addr);
+		    k.prefix = addr.v4;
 		    k.prefixlen = p->prefix->prefixlen;
 		    if (p->peer == &peerself)
 			    k.flags = F_KERNEL;

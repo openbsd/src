@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.31 2004/06/20 18:35:12 henning Exp $ */
+/*	$OpenBSD: mrt.c,v 1.32 2004/06/22 20:28:58 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -237,10 +237,12 @@ mrt_dump_entry(struct mrt_config *mrt, struct prefix *p, u_int16_t snum,
 {
 	struct buf	*buf;
 	void		*bptr;
+	struct bgpd_addr addr;
 	u_int16_t	 len, attr_len;
 
 	attr_len = mrt_attr_length(&p->aspath->flags);
 	len = MRT_DUMP_HEADER_SIZE + attr_len;
+	pt_getaddr(p->prefix, &addr);
 
 	if ((buf = imsg_create(mrt->ibuf, IMSG_MRT_MSG, mrt->id,
 	    len + MRT_HEADER_SIZE)) == NULL) {
@@ -255,7 +257,7 @@ mrt_dump_entry(struct mrt_config *mrt, struct prefix *p, u_int16_t snum,
 
 	DUMP_SHORT(buf, 0);
 	DUMP_SHORT(buf, snum);
-	DUMP_NLONG(buf, p->prefix->prefix.v4.s_addr);
+	DUMP_NLONG(buf, addr.v4.s_addr);
 	DUMP_BYTE(buf, p->prefix->prefixlen);
 	DUMP_BYTE(buf, 1);		/* state */
 	DUMP_LONG(buf, p->lastchange);	/* originated */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.41 2004/06/20 18:35:12 henning Exp $ */
+/*	$OpenBSD: rde.h,v 1.42 2004/06/22 20:28:58 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -179,18 +179,36 @@ struct rde_aspath {
 	struct attr_flags		 flags;
 };
 
+/* generic entry without address specific part */
 struct pt_entry {
-	LIST_ENTRY(pt_entry)		 pt_l;	/* currently we are using a
-						   hash list for prefixes */
-	struct bgpd_addr		 prefix;
+	RB_ENTRY(pt_entry)		 pt_e;
+	sa_family_t			 af;
 	u_int8_t			 prefixlen;
 	struct prefix_head		 prefix_h;
 	struct prefix			*active; /* for fast access */
+};
+
+struct pt_entry4 {
+	RB_ENTRY(pt_entry)		 pt_e;
+	sa_family_t			 af;
+	u_int8_t			 prefixlen;
+	struct prefix_head		 prefix_h;
+	struct prefix			*active; /* for fast access */
+	struct in_addr			 prefix4;
 	/*
 	 * Route Flap Damping structures
 	 * Currently I think they belong into the prefix but for the moment
 	 * we just ignore the dampening at all.
 	 */
+};
+
+struct pt_entry6 {
+	RB_ENTRY(pt_entry)		 pt_e;
+	sa_family_t			 af;
+	u_int8_t			 prefixlen;
+	struct prefix_head		 prefix_h;
+	struct prefix			*active; /* for fast access */
+	struct in6_addr			 prefix6;
 };
 
 struct prefix {
@@ -297,11 +315,13 @@ void		 up_dump_upcall(struct pt_entry *, void *);
 void		 pt_init(void);
 void		 pt_shutdown(void);
 int		 pt_empty(struct pt_entry *);
+void		 pt_getaddr(struct pt_entry *, struct bgpd_addr *);
 struct pt_entry	*pt_get(struct bgpd_addr *, int);
 struct pt_entry *pt_add(struct bgpd_addr *, int);
 void		 pt_remove(struct pt_entry *);
 struct pt_entry	*pt_lookup(struct bgpd_addr *);
-void		 pt_dump(void (*)(struct pt_entry *, void *), void *);
+void		 pt_dump(void (*)(struct pt_entry *, void *), void *,
+		     sa_family_t);
 
 /* rde_filter.c */
 enum filter_actions rde_filter(struct rde_peer *, struct attr_flags *,

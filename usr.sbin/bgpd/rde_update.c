@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.19 2004/06/20 18:35:12 henning Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.20 2004/06/22 20:28:58 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -213,6 +213,7 @@ up_generate_updates(struct rde_peer *peer,
 	struct update_prefix		*p;
 	struct attr			*atr;
 	struct attr_flags		 attrs;
+	struct bgpd_addr		 addr;
 
 	ENSURE(peer->state == PEER_UP);
 	/*
@@ -302,7 +303,8 @@ up_generate_updates(struct rde_peer *peer,
 		/* copy attributes for output filter */
 		attr_copy(&attrs, &old->aspath->flags);
 
-		if (rde_filter(peer, &attrs, &old->prefix->prefix,
+		pt_getaddr(old->prefix, &addr);
+		if (rde_filter(peer, &attrs, &addr,
 		    old->prefix->prefixlen, DIR_OUT) == ACTION_DENY) {
 			attr_free(&attrs);
 			return;
@@ -314,7 +316,7 @@ up_generate_updates(struct rde_peer *peer,
 		if (p == NULL)
 			fatal("up_queue_update");
 
-		p->prefix = old->prefix->prefix;
+		p->prefix = addr;
 		p->prefixlen = old->prefix->prefixlen;
 		if (up_add(peer, p, NULL) == -1)
 			log_warnx("queuing withdraw failed.");
@@ -395,7 +397,8 @@ up_generate_updates(struct rde_peer *peer,
 		/* copy attributes for output filter */
 		attr_copy(&attrs, &new->aspath->flags);
 
-		if (rde_filter(peer, &attrs, &new->prefix->prefix,
+		pt_getaddr(new->prefix, &addr);
+		if (rde_filter(peer, &attrs, &addr,
 		    new->prefix->prefixlen, DIR_OUT) == ACTION_DENY) {
 			attr_free(&attrs);
 			up_generate_updates(peer, NULL, old);
@@ -439,7 +442,7 @@ up_generate_updates(struct rde_peer *peer,
 		 * but currently I don't care.
 		 */
 		a->attr_hash = aspath_hash(attrs.aspath);
-		p->prefix = new->prefix->prefix;
+		p->prefix = addr;
 		p->prefixlen = new->prefix->prefixlen;
 
 		/* no longer needed */

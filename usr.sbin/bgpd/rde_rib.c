@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.47 2004/06/22 07:22:31 henning Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.48 2004/06/22 20:28:58 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -178,13 +178,15 @@ void
 path_remove(struct rde_aspath *asp)
 {
 	struct prefix	*p;
+	struct bgpd_addr addr;
 
 	RIB_STAT(path_remove);
 
 	while ((p = LIST_FIRST(&asp->prefix_h)) != NULL) {
 		/* Commit is done in peer_down() */
+		pt_getaddr(p->prefix, &addr);
 		rde_send_pftable(p->aspath->flags.pftable,
-		    &p->prefix->prefix, p->prefix->prefixlen, 1);
+		    &addr, p->prefix->prefixlen, 1);
 
 		prefix_destroy(p);
 	}
@@ -305,14 +307,17 @@ struct prefix *
 prefix_get(struct rde_aspath *asp, struct bgpd_addr *prefix, int prefixlen)
 {
 	struct prefix	*p;
+	struct bgpd_addr addr;
 
 	RIB_STAT(prefix_get);
 	ENSURE(asp != NULL);
 
 	LIST_FOREACH(p, &asp->prefix_h, path_l) {
 		ENSURE(p->prefix != NULL);
-		if (p->prefix->prefixlen == prefixlen &&
-		    p->prefix->prefix.v4.s_addr == prefix->v4.s_addr) {
+		if (p->prefix->prefixlen != prefixlen)
+			continue;
+		pt_getaddr(p->prefix, &addr);
+		if (prefix_equal(&addr, prefix, prefixlen)) {
 			ENSURE(p->aspath == asp);
 			return p;
 		}

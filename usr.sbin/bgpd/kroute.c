@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.97 2004/06/22 07:22:31 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.98 2004/06/22 20:28:58 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -98,7 +98,6 @@ void			 kroute_detach_nexthop(struct knexthop_node *);
 int		protect_lo(void);
 u_int8_t	prefixlen_classful(in_addr_t);
 u_int8_t	mask2prefixlen(in_addr_t);
-in_addr_t	prefixlen2mask(u_int8_t);
 void		get_rtaddrs(int, struct sockaddr *, struct sockaddr **);
 void		if_change(u_short, int, struct if_data *);
 void		if_announce(void *);
@@ -815,6 +814,60 @@ in_addr_t
 prefixlen2mask(u_int8_t prefixlen)
 {
 	return (0xffffffff << (32 - prefixlen));
+}
+
+int
+prefix_equal(const struct bgpd_addr *a, const struct bgpd_addr *b,
+    int prefixlen)
+{
+	in_addr_t	mask;
+	int		i;
+	u_int8_t	m;
+	
+	if (a->af != b->af)
+		return 0;
+	switch (a->af) {
+	case AF_INET:
+		if (prefixlen > 32)
+			fatalx("prefix_cmp: bad IPv4 prefixlen");
+		mask = htonl(prefixlen2mask(prefixlen));
+		if ((a->v4.s_addr & mask) == (b->v4.s_addr & mask))
+			return (1);
+		else
+			return (0);
+	case AF_INET6:
+		for (i = 0; i < prefixlen / 8; i++)
+			if (a->v6.s6_addr[i] != b->v6.s6_addr[i])
+				return (0);
+		i = prefixlen % 8;
+		if (i) {
+			m = 0xff00 >> i;
+			if ((a->v6.s6_addr[prefixlen / 8] & m) != 
+			    (b->v6.s6_addr[prefixlen / 8] & m))
+				return (0);
+		}
+		return (1);
+	default:
+		fatalx("prefix_cmp: unknown af");
+	}
+	return (0);
+}
+
+void
+inet6applymask(struct in6_addr *dest, const struct in6_addr *src, int prefixlen)
+{
+	struct in6_addr	mask;
+	int		i;
+
+	bzero(&mask, sizeof(mask));
+	for (i = 0; i < prefixlen / 8; i++)
+		mask.s6_addr[i] = 0xff;
+	i = prefixlen % 8;
+	if (i)
+		mask.s6_addr[prefixlen / 8] = 0xff00 >> i;
+
+	for (i = 0; i < 16; i++)
+		dest->s6_addr[i] = src->s6_addr[i] & mask.s6_addr[i];
 }
 
 #define	ROUNDUP(a, size)	\
