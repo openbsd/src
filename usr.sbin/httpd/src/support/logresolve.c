@@ -49,6 +49,7 @@
 static void cgethost(struct in_addr ipnum, char *string, int check);
 static int getline(char *s, int n);
 static void stats(FILE *output);
+static void usage(void);
 
 
 /* maximum line length */
@@ -253,31 +254,39 @@ static int getline (char *s, int n)
     return (1);
 }
 
+static void usage(void)
+{
+    fprintf(stderr, "Usage: logresolve [-s statfile] [-c]");
+    fprintf(stderr, " < input > output\n");
+    exit(1);
+}
+
 int main (int argc, char *argv[])
 {
     struct in_addr ipnum;
     char *bar, hoststring[MAXDNAME + 1], line[MAXLINE], *statfile;
     int i, check;
+    int ch;
 
     check = 0;
     statfile = NULL;
-    for (i = 1; i < argc; i++) {
-	if (strcmp(argv[i], "-c") == 0)
-	    check = 1;
-	else if (strcmp(argv[i], "-s") == 0) {
-	    if (i == argc - 1) {
-		fprintf(stderr, "logresolve: missing filename to -s\n");
-		exit(1);
-	    }
-	    i++;
-	    statfile = argv[i];
-	}
-	else {
-	    fprintf(stderr, "Usage: logresolve [-s statfile] [-c] < input > output\n");
-	    exit(0);
-	}
+    while ((ch = getopt(argc, argv, "s:c")) != -1) {
+            switch (ch) {
+            case 'c':
+                    check = 1;
+                    break;
+            case 's':
+                    statfile = optarg;
+                    break;
+            default:
+                   usage();
+            }
     }
 
+    argc -= optind;
+    argv += optind;
+    if (argc > 0)
+        usage();
 
     for (i = 0; i < BUCKETS; i++)
 	nscache[i] = NULL;
