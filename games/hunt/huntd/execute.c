@@ -1,4 +1,4 @@
-/*	$OpenBSD: execute.c,v 1.4 1999/02/01 06:53:56 d Exp $	*/
+/*	$OpenBSD: execute.c,v 1.5 1999/08/30 23:29:46 d Exp $	*/
 /*	$NetBSD: execute.c,v 1.2 1997/10/10 16:33:13 lukem Exp $	*/
 /*
  *  Hunt
@@ -45,6 +45,7 @@ mon_execute(pp)
 		break;
 	  default:
 		/* Ignore everything else */
+		;
 	}
 }
 
