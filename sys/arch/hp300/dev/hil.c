@@ -1,4 +1,4 @@
-/*	$OpenBSD: hil.c,v 1.16 2002/12/09 00:45:37 millert Exp $	*/
+/*	$OpenBSD: hil.c,v 1.17 2003/02/02 02:56:26 miod Exp $	*/
 /*	$NetBSD: hil.c,v 1.34 1997/04/02 22:37:32 scottr Exp $	*/
 
 /*
@@ -254,7 +254,7 @@ hilopen(dev, flags, mode, p)
 	if (flags & FNONBLOCK)
 		dptr->hd_flags |= HIL_NOBLOCK;
 	/*
-	 * It is safe to flush the read buffer as we are guarenteed
+	 * It is safe to flush the read buffer as we are guaranteed
 	 * that no one else is using it.
 	 */
 	if ((dptr->hd_flags & HIL_OPENED) == 0) {
@@ -1260,7 +1260,7 @@ kbdcninit()
 /* End of HIL console keyboard code. */
 
 /*
- * Recoginize and clear keyboard generated NMIs.
+ * Recognize and clear keyboard generated NMIs.
  * Returns 1 if it was ours, 0 otherwise.  Note that we cannot use
  * send_hil_cmd() to issue the clear NMI command as that would actually
  * lower the priority to splimp() and it doesn't wait for the completion

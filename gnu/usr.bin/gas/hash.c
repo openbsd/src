@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash.c,v 1.3 1998/04/25 06:48:37 niklas Exp $	*/
+/*	$OpenBSD: hash.c,v 1.4 2003/02/02 02:56:26 miod Exp $	*/
 
 /* hash.c - hash table lookup strings -
    Copyright (C) 1987, 1990, 1991, 1992 Free Software Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hash.c,v 1.3 1998/04/25 06:48:37 niklas Exp $";
+static char rcsid[] = "$OpenBSD: hash.c,v 1.4 2003/02/02 02:56:26 miod Exp $";
 #endif
 
 #ifndef FALSE
@@ -140,7 +140,7 @@ static char rcsid[] = "$OpenBSD: hash.c,v 1.3 1998/04/25 06:48:37 niklas Exp $";
 
 #define error	as_fatal
 
-#define DELETED     ((char *)1)	/* guarenteed invalid address */
+#define DELETED     ((char *)1)	/* guaranteed invalid address */
 #define START_POWER    (11)	/* power of two: size of new hash table *//* JF was 6 */
 /* JF These next two aren't used any more. */
 /* #define START_SIZE    (64)	/ * 2 ** START_POWER */

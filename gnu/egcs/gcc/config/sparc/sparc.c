@@ -4816,7 +4816,7 @@ sparc_splitdi_legitimate (reg, mem)
 }
 
 /* Return 1 if x and y are some kind of REG and they refer to
-   different hard registers.  This test is guarenteed to be
+   different hard registers.  This test is guaranteed to be
    run after reload.  */
 
 int
