@@ -21,7 +21,7 @@
 # along with GNU GNATS; see the file COPYING.  If not, write to
 # the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-#	$OpenBSD: sendbug.sh,v 1.12 2001/11/07 16:02:51 millert Exp $
+#	$OpenBSD: sendbug.sh,v 1.13 2003/02/28 01:35:07 millert Exp $
 
 # The version of this sendbug.
 VERSION=3.97
@@ -165,7 +165,7 @@ fi
 # If they don't have a preferred editor set, then use
 if [ -z "$VISUAL" ]; then
   if [ -z "$EDITOR" ]; then
-    EDIT=vi
+    EDIT=/usr/bin/vi
   else
     EDIT="$EDITOR"
   fi
@@ -280,7 +280,6 @@ esac
 
 ORIGINATOR_C='<name of the PR author (one line)>'
 ORGANIZATION_C='<organization of PR author (multiple lines)>'
-CONFIDENTIAL_C='<[ yes | no ] (one line)>'
 SYNOPSIS_C='<synopsis of the problem (one line)>'
 if [ -z "$SEVERITY_C" ]; then
   SEVERITY_C='<[ non-critical | serious | critical ] (one line)>'
@@ -367,7 +366,6 @@ X-sendbug-version: $VERSION
 >Originator:	$ORIGINATOR
 >Organization:
 ${ORGANIZATION-	$ORGANIZATION_C}
->Confidential:	$CONFIDENTIAL_C
 >Synopsis:	$SYNOPSIS_C
 >Severity:	$SEVERITY_C
 >Priority:	$PRIORITY_C
@@ -432,16 +430,8 @@ q
 while [ -z "$REQUEST_ID" ]; do
   CNT=0
 
-  # 1) Confidential
   #
-  PATTERN=">Confidential:"
-  CONFIDENTIAL=`eval sed -n -e "\"$SED_CMD\"" $TEMP`
-  case "$CONFIDENTIAL" in
-    ""|yes|no) CNT=`expr $CNT + 1` ;;
-    *) echo "$COMMAND: \`$CONFIDENTIAL' is not a valid value for \`Confidential'." ;;
-  esac
-  #
-  # 2) Severity
+  # 1) Severity
   #
   PATTERN=">Severity:"
   SEVERITY=`eval sed -n -e "\"$SED_CMD\"" $TEMP`
@@ -450,7 +440,7 @@ while [ -z "$REQUEST_ID" ]; do
     *)  echo "$COMMAND: \`$SEVERITY' is not a valid value for \`Severity'."
   esac
   #
-  # 3) Priority
+  # 2) Priority
   #
   PATTERN=">Priority:"
   PRIORITY=`eval sed -n -e "\"$SED_CMD\"" $TEMP`
@@ -459,7 +449,7 @@ while [ -z "$REQUEST_ID" ]; do
     *)  echo "$COMMAND: \`$PRIORITY' is not a valid value for \`Priority'."
   esac
   #
-  # 4) Category
+  # 3) Category
   #
   PATTERN=">Category:"
   CATEGORY=`eval sed -n -e "\"$SED_CMD\"" $TEMP`
@@ -478,7 +468,7 @@ while [ -z "$REQUEST_ID" ]; do
     fi
   fi
   #
-  # 5) Class
+  # 4) Class
   #
   PATTERN=">Class:"
   CLASS=`eval sed -n -e "\"$SED_CMD\"" $TEMP`
@@ -530,7 +520,6 @@ done
 sed  -e "
 /^SENDBUG:/d
 /^>Organization:/,/^>[A-Za-z-]*:/s;$ORGANIZATION_C;;
-/^>Confidential:/s;<.*>;;
 /^>Synopsis:/s;$SYNOPSIS_C;;
 /^>Severity:/s;<.*>;;
 /^>Priority:/s;<.*>;;
