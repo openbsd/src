@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.134 1999/05/03 21:34:20 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.135 1999/05/05 06:15:18 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -2621,73 +2621,73 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_TGUI_9320,
 	    0,
-	    "Trident Microsystems",
+	    "Trident",
 	    "TGUI 9320",
 	},
 	{
 	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_TGUI_9350,
 	    0,
-	    "Trident Microsystems",
+	    "Trident",
 	    "TGUI 9350",
 	},
 	{
 	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_TGUI_9360,
 	    0,
-	    "Trident Microsystems",
+	    "Trident",
 	    "TGUI 9360",
 	},
 	{
 	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_TGUI_9388,
 	    0,
-	    "Trident Microsystems",
+	    "Trident",
 	    "TGUI 9388",
 	},
 	{
 	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_CYBER_9397,
 	    0,
-	    "Trident Microsystems",
+	    "Trident",
 	    "CYBER 9397",
 	},
 	{
 	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_TGUI_9420,
 	    0,
-	    "Trident Microsystems",
+	    "Trident",
 	    "TGUI 9420",
 	},
 	{
 	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_TGUI_9440,
 	    0,
-	    "Trident Microsystems",
+	    "Trident",
 	    "TGUI 9440",
 	},
 	{
 	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_TGUI_9660,
 	    0,
-	    "Trident Microsystems",
+	    "Trident",
 	    "TGUI 9660",
 	},
 	{
 	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_TGUI_9680,
 	    0,
-	    "Trident Microsystems",
+	    "Trident",
 	    "TGUI 9680",
 	},
 	{
 	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_TGUI_9682,
 	    0,
-	    "Trident Microsystems",
+	    "Trident",
 	    "TGUI 9682",
 	},
 	{
 	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_TGUI_9750,
 	    0,
-	    "Trident Microsystems",
+	    "Trident",
 	    "TGUI 9750 (3D Image)",
 	},
 	{
 	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_TGUI_9850,
 	    0,
-	    "Trident Microsystems",
+	    "Trident",
 	    "TGUI 9850",
 	},
 	{
@@ -3365,7 +3365,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_TRIDENT, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Trident Microsystems",
+	    "Trident",
 	    NULL,
 	},
 	{
