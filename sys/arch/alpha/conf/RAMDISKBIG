@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKBIG,v 1.29 2002/06/28 16:50:38 art Exp $
+#	$OpenBSD: RAMDISKBIG,v 1.30 2002/06/28 16:53:16 art Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
@@ -25,8 +25,6 @@ option		NO_IEEE		# Disable IEEE math
 
 # Standard system options
 maxusers	8			# estimated number of users
-
-option		DDB
 
 # File system options
 option		FFS		# Fast file system
