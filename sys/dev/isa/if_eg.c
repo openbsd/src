@@ -530,6 +530,7 @@ loop:
 		dprintf(("egwritePCB in egstart failed\n"));
 		ifp->if_oerrors++;
 		ifp->if_flags &= ~IFF_OACTIVE;
+		m_freem(m0);
 		goto loop;
 	}
 
@@ -556,10 +557,12 @@ egintr(arg)
 	void *arg;
 {
 	register struct eg_softc *sc = arg;
+	int ret = 0;
 	int i, len;
 	u_short *ptr;
 
 	while (inb(sc->eg_stat) & EG_STAT_ACRF) {
+		ret = 1;
 		egreadPCB(sc);
 		switch (sc->eg_pcb[0]) {
 		case EG_RSP_RECVPACKET:
@@ -612,7 +615,7 @@ egintr(arg)
 		}
 	}
 
-	return 0;
+	return ret;
 }
 
 /*
