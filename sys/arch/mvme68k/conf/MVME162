@@ -1,4 +1,4 @@
-#	$OpenBSD: MVME162,v 1.13 2001/02/18 17:41:02 deraadt Exp $
+#	$OpenBSD: MVME162,v 1.14 2001/05/16 05:07:49 millert Exp $
 
 machine		mvme68k m68k
 
@@ -37,7 +37,6 @@ option		GATEWAY		# IP packet forwarding
 #option		ISO		# OSI networking
 #option		TPIP
 #option		EON
-#option		COMPAT_09, COMPAT_10
 
 config		bsd	swap generic
 

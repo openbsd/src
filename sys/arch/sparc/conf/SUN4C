@@ -1,4 +1,4 @@
-# 	$OpenBSD: SUN4C,v 1.29 2001/05/10 10:34:41 art Exp $
+# 	$OpenBSD: SUN4C,v 1.30 2001/05/16 05:07:49 millert Exp $
 # 	$NetBSD: GENERIC,v 1.19 1995/10/08 11:45:39 pk Exp $
 
 machine		sparc
@@ -16,7 +16,6 @@ option		KTRACE			# system call tracing support
 #option		KGDBDEV=0xc01, KGDBRATE=38400	# device & baud rate
 option		RASTERCONSOLE		# fast rasterop console
 option		SYSVMSG,SYSVSEM,SYSVSHM
-option		COMPAT_09, COMPAT_10
 
 option		UVM		# use the UVM virtual memory system ; required
 

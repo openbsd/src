@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_ext.c,v 1.29 2001/01/22 18:48:43 deraadt Exp $	*/
+/*	$OpenBSD: pcvt_ext.c,v 1.30 2001/05/16 05:07:48 millert Exp $	*/
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
  *
@@ -2756,14 +2756,14 @@ usl_vt_ioctl(Dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		 */
 	{
 
-#if defined(COMPAT_10) || defined(COMPAT_11) || defined(COMPAT_LINUX)
+#ifdef COMPAT_LINUX
 		struct trapframe *fp = (struct trapframe *)p->p_md.md_regs;
 #endif
 
 		if (suser(p->p_ucred, &p->p_acflag) || securelevel > 1)
 			return (EPERM);
 
-#if defined(COMPAT_10) || defined(COMPAT_11) || defined(COMPAT_LINUX)
+#ifdef COMPAT_LINUX
 		/* This is done by i386_iopl(3) now. */
 		fp->tf_eflags |= PSL_IOPL;
 #endif
@@ -2775,7 +2775,7 @@ usl_vt_ioctl(Dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		/* abandon IO access permission */
 	{
 
-#if defined(COMPAT_10) || defined(COMPAT_11) || defined(COMPAT_LINUX)
+#ifdef COMPAT_LINUX
 		/* This is done by i386_iopl(3) now. */
 		struct trapframe *fp = (struct trapframe *)p->p_md.md_regs;
 		fp->tf_eflags &= ~PSL_IOPL;

@@ -1,4 +1,4 @@
-#	$OpenBSD: DS5000_240,v 1.8 2000/11/10 01:07:04 miod Exp $
+#	$OpenBSD: DS5000_240,v 1.9 2001/05/16 05:07:50 millert Exp $
 #
 # DECstation 5000/240 kernel config
 #
@@ -62,10 +62,6 @@ option		KTRACE			# ktrace(1) support
 #option		ISO			# osi networking
 #option		TPIP
 #option		EON
-# i think this is not required for us - NetBSD backwards compatibility
-#option		COMPAT_10		# NetBSD 1.0
-#option		COMPAT_11		# NetBSD 1.1
-#option		COMPAT_12		# Netbsd 1.2
 # compat stuff
 #option		COMPAT_ULTRIX		# ultrix compatibility
 

@@ -1,5 +1,5 @@
 /*	$NetBSD: mem.c,v 1.31 1996/05/03 19:42:19 christos Exp $	*/
-/*	$OpenBSD: mem.c,v 1.17 2001/05/05 23:25:39 art Exp $ */
+/*	$OpenBSD: mem.c,v 1.18 2001/05/16 05:07:48 millert Exp $ */
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -94,16 +94,6 @@ mmopen(dev, flag, mode, p)
 	case 2:
 	case 12:
 		break;
-#ifdef COMPAT_10
-	/* This is done by i386_iopl(3) now. */
-	case 14:
-		if (securelevel <= 0 && (flag & FWRITE)) {
-			struct trapframe *fp;
-			fp = curproc->p_md.md_regs;
-			fp->tf_eflags |= PSL_IOPL;
-		}
-		break;
-#endif
 #ifdef APERTURE
 	case 4:
 	        if (suser(p->p_ucred, &p->p_acflag) != 0 || !allowaperture)

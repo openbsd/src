@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.42 2001/04/02 21:43:12 niklas Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.43 2001/05/16 05:07:52 millert Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -558,10 +558,6 @@ sys_kill(cp, v, retval)
 	} */ *uap = v;
 	register struct proc *p;
 	register struct pcred *pc = cp->p_cred;
-
-#ifdef COMPAT_09
-	SCARG(uap, pid) = (short) SCARG(uap, pid);
-#endif
 
 	if ((u_int)SCARG(uap, signum) >= NSIG)
 		return (EINVAL);

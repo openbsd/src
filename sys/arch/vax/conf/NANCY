@@ -1,4 +1,4 @@
-#	$OpenBSD: NANCY,v 1.5 1997/10/02 19:55:17 niklas Exp $
+#	$OpenBSD: NANCY,v 1.6 2001/05/16 05:07:50 millert Exp $
 #
 # NANCY MV3600 configuration file.
 #
@@ -60,10 +60,6 @@ option		FIFO
 # 4.3BSD Reno programs and get Ultrix compatibility instead.
 # (They cannot coexist).
 #option		COMPAT_43
-#option		COMPAT_09
-#option		COMPAT_10
-option		COMPAT_11
-option		COMPAT_12
 #option		COMPAT_ULTRIX
 #option		TCP_COMPAT_42
 

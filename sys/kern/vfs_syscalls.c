@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.73 2001/05/14 15:11:15 art Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.74 2001/05/16 05:07:52 millert Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -106,7 +106,7 @@ sys_mount(p, v, retval)
 	register struct vnode *vp;
 	register struct mount *mp;
 	int error, flag = 0;
-#if defined(COMPAT_09) || defined(COMPAT_43)
+#ifdef COMPAT_43
 	u_long fstypenum = 0;
 #endif
 	char fstypename[MFSNAMELEN];
@@ -195,7 +195,7 @@ sys_mount(p, v, retval)
 	}
 	error = copyinstr(SCARG(uap, type), fstypename, MFSNAMELEN, NULL);
 	if (error) {
-#if defined(COMPAT_09) || defined(COMPAT_43)
+#ifdef COMPAT_43
 		/*
 		 * Historically filesystem types were identified by number.
 		 * If we get an integer for the filesystem type instead of a
@@ -218,12 +218,6 @@ sys_mount(p, v, retval)
 		return (error);
 #endif
 	}
-#ifdef	COMPAT_10
-	/* Accept "ufs" as an alias for "ffs" */
-	if (!strncmp(fstypename, "ufs", MFSNAMELEN)) {
-		strncpy( fstypename, "ffs", MFSNAMELEN);
-	}
-#endif
 	for (vfsp = vfsconf; vfsp; vfsp = vfsp->vfc_next) {
 		if (!strcmp(vfsp->vfc_name, fstypename))
 			break;
@@ -231,7 +225,7 @@ sys_mount(p, v, retval)
 
 	if (vfsp == NULL) {
 		vput(vp);
-		return EOPNOTSUPP;
+		return (EOPNOTSUPP);
 	}
 
 	if (vp->v_mountedhere != NULL) {
@@ -2646,7 +2640,7 @@ statfs_to_ostatfs(p, mp, sp, osp)
 	struct statfs *sp;
 	struct ostatfs *osp;
 {
-#if defined(COMPAT_09) || defined(COMPAT_43)
+#ifdef COMPAT_43
 	osp->f_type = mp->mnt_vfc->vfc_typenum;
 #else
 	osp->f_type = 0;
