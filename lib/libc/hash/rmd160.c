@@ -32,7 +32,7 @@
 #include <rmd160.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: rmd160.c,v 1.15 2004/05/03 17:30:15 millert Exp $";
+static char rcsid[] = "$OpenBSD: rmd160.c,v 1.16 2004/05/03 18:07:07 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #define PUT_64BIT_LE(cp, value) do {                                    \
@@ -86,7 +86,7 @@ static char rcsid[] = "$OpenBSD: rmd160.c,v 1.15 2004/05/03 17:30:15 millert Exp
 
 #define X(i)	x[i]
 
-static u_char PADDING[RMD160_BLOCK_LENGTH] = {
+static u_int8_t PADDING[RMD160_BLOCK_LENGTH] = {
 	0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
@@ -104,7 +104,7 @@ RMD160Init(RMD160_CTX *ctx)
 }
 
 void
-RMD160Update(RMD160_CTX *ctx, const u_char *input, size_t len)
+RMD160Update(RMD160_CTX *ctx, const u_int8_t *input, size_t len)
 {
 	size_t have, off, need;
 
@@ -150,7 +150,7 @@ RMD160Pad(RMD160_CTX *ctx)
 }
 
 void
-RMD160Final(u_char digest[RMD160_DIGEST_LENGTH], RMD160_CTX *ctx)
+RMD160Final(u_int8_t digest[RMD160_DIGEST_LENGTH], RMD160_CTX *ctx)
 {
 	int i;
 
@@ -163,7 +163,7 @@ RMD160Final(u_char digest[RMD160_DIGEST_LENGTH], RMD160_CTX *ctx)
 }
 
 void
-RMD160Transform(u_int32_t state[5], const u_char block[RMD160_BLOCK_LENGTH])
+RMD160Transform(u_int32_t state[5], const u_int8_t block[RMD160_BLOCK_LENGTH])
 {
 	u_int32_t a, b, c, d, e, aa, bb, cc, dd, ee, t, x[16];
 
