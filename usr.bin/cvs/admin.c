@@ -1,4 +1,4 @@
-/*	$OpenBSD: admin.c,v 1.6 2005/03/26 08:09:54 tedu Exp $	*/
+/*	$OpenBSD: admin.c,v 1.7 2005/03/30 17:43:04 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
@@ -41,8 +41,6 @@
 #include "proto.h"
 
 
-int cvs_admin_file (CVSFILE *, void *);
-
 #define LOCK_SET	0x01
 #define LOCK_REMOVE	0x02
 
@@ -51,32 +49,38 @@ int cvs_admin_file (CVSFILE *, void *);
 #define FLAG_INTERACTIVE	0x04
 #define FLAG_QUIET		0x08
 
-/*
- * cvs_admin()
- *
- * Handler for the `cvs admin' command.
- * Returns 0 on success, or one of the known exit codes on error.
- */
+int cvs_admin_options(char *, int, char **, int *);
+int cvs_admin_sendflags(struct cvsroot *);
+int cvs_admin_file(CVSFILE *, void *);
+
+struct cvs_cmd_info cvs_admin = {
+	cvs_admin_options,
+	cvs_admin_sendflags,
+	cvs_admin_file,
+	NULL, NULL,
+	CF_SORT | CF_IGNORE | CF_RECURSE,
+	CVS_REQ_ADMIN,
+	CVS_CMD_ALLOWSPEC | CVS_CMD_SENDDIR | CVS_CMD_SENDARGS2
+};
+
+static char *q, *Ntag, *ntag, *comment, *replace_msg;
+static char *alist, *subst, *lockrev_arg, *unlockrev_arg;
+static char *state, *userfile, *branch_arg, *elist, *range;
+static int runflags, kflag, lockrev, strictlock;
+
 int
-cvs_admin(int argc, char **argv)
+cvs_admin_options(char *opt, int argc, char **argv, int *arg)
 {
-	int i, ch, flags;
-	int runflags, kflag, lockrev, strictlock;
-	char *q, *Ntag, *ntag, *comment, *replace_msg;
-	char *alist, *subst, *lockrev_arg, *unlockrev_arg;
-	char *state, *userfile, *branch_arg, *elist, *range;
-	struct cvsroot *root;
+	int ch;
 	RCSNUM *rcs;
 
 	runflags = strictlock = lockrev = 0;
 	Ntag = ntag = comment = replace_msg = NULL;
 	state = alist = subst = elist = lockrev_arg = NULL;
 	range = userfile = branch_arg = unlockrev_arg = NULL;
-	flags = CF_SORT|CF_IGNORE|CF_RECURSE;
 
 	/* option-o-rama ! */
-	while ((ch = getopt(argc, argv, "a:A:b::c:e::Ik:l::Lm:n:N:o:qs:t:u::U"))
-	    != -1) {
+	while ((ch = getopt(argc, argv, opt)) != -1) {
 		switch (ch) {
 		case 'a':
 			alist = optarg;
@@ -193,124 +197,96 @@ cvs_admin(int argc, char **argv)
 		*q = ':';
 	}
 
-	if (argc == 0) {
-		cvs_files = cvs_file_get(".", flags);
-	} else {
-		cvs_files = cvs_file_getspec(argv, argc, 0);
-	}
-	if (cvs_files == NULL)
-		return (EX_DATAERR);
-
-	root = CVS_DIR_ROOT(cvs_files);
-	if (root == NULL) {
-		cvs_log(LP_ERR,
-		    "No CVSROOT specified!  Please use the `-d' option");
-		cvs_log(LP_ERR,
-		    "or set the CVSROOT environment variable.");
-		return (EX_USAGE);
-	}
-
-	if (root->cr_method != CVS_METHOD_LOCAL) {
-		if (cvs_connect(root) < 0)
-			return (EX_PROTOCOL);
-
-		if ((alist != NULL) && ((cvs_sendarg(root, "-a", 0) < 0) || 
-		    (cvs_sendarg(root, alist, 0) < 0)))
-			return (EX_PROTOCOL);
-
-		if ((userfile != NULL) && ((cvs_sendarg(root, "-A", 0) < 0) ||
-		    (cvs_sendarg(root, userfile, 0) < 0)))
-			return (EX_PROTOCOL);
-
-		if (runflags & FLAG_BRANCH) {
-			if (cvs_sendarg(root, "-b", 0) < 0)
-				return (EX_PROTOCOL);
-			if ((branch_arg != NULL) &&
-			    (cvs_sendarg(root, branch_arg, 0) < 0))
-				return (EX_PROTOCOL);
-		}
-
-		if ((comment != NULL) && ((cvs_sendarg(root, "-c", 0) < 0) ||
-		    (cvs_sendarg(root, comment, 0) < 0)))
-			return (EX_PROTOCOL);
-
-		if (runflags & FLAG_DELUSER)  {
-			if (cvs_sendarg(root, "-e", 0) < 0)
-				return (EX_PROTOCOL);
-			if ((elist != NULL) &&
-			    (cvs_sendarg(root, elist, 0) < 0))
-				return (EX_PROTOCOL);
-		}
-
-		if (runflags & FLAG_INTERACTIVE) {
-			if (cvs_sendarg(root, "-I", 0) < 0)
-				return (EX_PROTOCOL);
-		}
-
-		if ((subst != NULL) && ((cvs_sendarg(root, "-k", 0) < 0) ||
-		    (cvs_sendarg(root, subst, 0) < 0)))
-			return (EX_PROTOCOL);
-
-		if (lockrev & LOCK_SET) {
-			if (cvs_sendarg(root, "-l", 0) < 0)
-				return (EX_PROTOCOL);
-			if ((lockrev_arg != NULL) &&
-			    (cvs_sendarg(root, lockrev_arg, 0) < 0))
-				return (0);
-		}
-
-		if ((strictlock & LOCK_SET) &&
-		    (cvs_sendarg(root, "-L", 0) < 0))
-			return (EX_PROTOCOL);
-
-		if ((replace_msg != NULL) && ((cvs_sendarg(root, "-m", 0) < 0)
-		    || (cvs_sendarg(root, replace_msg, 0) < 0)))
-			return (EX_PROTOCOL);
-
-		if ((ntag != NULL) && ((cvs_sendarg(root, "-n", 0) < 0) ||
-		    (cvs_sendarg(root, ntag, 0) < 0)))
-			return (EX_PROTOCOL);
-
-		if ((Ntag != NULL) && ((cvs_sendarg(root, "-N", 0) < 0) ||
-		    (cvs_sendarg(root, Ntag, 0) < 0)))
-			return (EX_PROTOCOL);
-
-		if ((range != NULL) && ((cvs_sendarg(root, "-o", 0) < 0) ||
-		    (cvs_sendarg(root, range, 0) < 0)))
-			return (EX_PROTOCOL);
-
-		if ((state != NULL) && ((cvs_sendarg(root, "-s", 0) < 0) ||
-		    (cvs_sendarg(root, state, 0) < 0)))
-			return (EX_PROTOCOL);
-
-		if (lockrev & LOCK_REMOVE) {
-			if (cvs_sendarg(root, "-u", 0) < 0)
-				return (EX_PROTOCOL);
-			if ((unlockrev_arg != NULL) &&
-			    (cvs_sendarg(root, unlockrev_arg, 0) < 0))
-				return (EX_PROTOCOL);
-		}
-
-		if ((strictlock & LOCK_REMOVE) &&
-		    (cvs_sendarg(root, "-U", 0) < 0))
-			return (EX_PROTOCOL);
-	}
-
-	cvs_file_examine(cvs_files, cvs_admin_file, NULL);
-
-	if (root->cr_method != CVS_METHOD_LOCAL) {
-		if (cvs_senddir(root, cvs_files) < 0)
-			return (EX_PROTOCOL);
-		for (i = 0; i < argc; i++)
-			if (cvs_sendarg(root, argv[i], 0) < 0)
-				return (EX_PROTOCOL);
-		if (cvs_sendreq(root, CVS_REQ_ADMIN, NULL) < 0)
-			return (EX_PROTOCOL);
-	}
-
+	*arg = optind;
 	return (0);
 }
 
+int
+cvs_admin_sendflags(struct cvsroot *root)
+{
+	if ((alist != NULL) && ((cvs_sendarg(root, "-a", 0) < 0) || 
+	    (cvs_sendarg(root, alist, 0) < 0)))
+		return (EX_PROTOCOL);
+
+	if ((userfile != NULL) && ((cvs_sendarg(root, "-A", 0) < 0) ||
+	    (cvs_sendarg(root, userfile, 0) < 0)))
+		return (EX_PROTOCOL);
+
+	if (runflags & FLAG_BRANCH) {
+		if (cvs_sendarg(root, "-b", 0) < 0)
+			return (EX_PROTOCOL);
+		if ((branch_arg != NULL) &&
+		    (cvs_sendarg(root, branch_arg, 0) < 0))
+			return (EX_PROTOCOL);
+	}
+
+	if ((comment != NULL) && ((cvs_sendarg(root, "-c", 0) < 0) ||
+	    (cvs_sendarg(root, comment, 0) < 0)))
+		return (EX_PROTOCOL);
+
+	if (runflags & FLAG_DELUSER)  {
+		if (cvs_sendarg(root, "-e", 0) < 0)
+			return (EX_PROTOCOL);
+		if ((elist != NULL) &&
+		    (cvs_sendarg(root, elist, 0) < 0))
+			return (EX_PROTOCOL);
+	}
+
+	if (runflags & FLAG_INTERACTIVE) {
+		if (cvs_sendarg(root, "-I", 0) < 0)
+			return (EX_PROTOCOL);
+	}
+
+	if ((subst != NULL) && ((cvs_sendarg(root, "-k", 0) < 0) ||
+	    (cvs_sendarg(root, subst, 0) < 0)))
+		return (EX_PROTOCOL);
+
+	if (lockrev & LOCK_SET) {
+		if (cvs_sendarg(root, "-l", 0) < 0)
+			return (EX_PROTOCOL);
+		if ((lockrev_arg != NULL) &&
+		    (cvs_sendarg(root, lockrev_arg, 0) < 0))
+			return (0);
+	}
+
+	if ((strictlock & LOCK_SET) &&
+	    (cvs_sendarg(root, "-L", 0) < 0))
+		return (EX_PROTOCOL);
+
+	if ((replace_msg != NULL) && ((cvs_sendarg(root, "-m", 0) < 0)
+	    || (cvs_sendarg(root, replace_msg, 0) < 0)))
+		return (EX_PROTOCOL);
+
+	if ((ntag != NULL) && ((cvs_sendarg(root, "-n", 0) < 0) ||
+	    (cvs_sendarg(root, ntag, 0) < 0)))
+		return (EX_PROTOCOL);
+
+	if ((Ntag != NULL) && ((cvs_sendarg(root, "-N", 0) < 0) ||
+	    (cvs_sendarg(root, Ntag, 0) < 0)))
+		return (EX_PROTOCOL);
+
+	if ((range != NULL) && ((cvs_sendarg(root, "-o", 0) < 0) ||
+	    (cvs_sendarg(root, range, 0) < 0)))
+		return (EX_PROTOCOL);
+
+	if ((state != NULL) && ((cvs_sendarg(root, "-s", 0) < 0) ||
+	    (cvs_sendarg(root, state, 0) < 0)))
+		return (EX_PROTOCOL);
+
+	if (lockrev & LOCK_REMOVE) {
+		if (cvs_sendarg(root, "-u", 0) < 0)
+			return (EX_PROTOCOL);
+		if ((unlockrev_arg != NULL) &&
+		    (cvs_sendarg(root, unlockrev_arg, 0) < 0))
+			return (EX_PROTOCOL);
+	}
+
+	if ((strictlock & LOCK_REMOVE) &&
+	    (cvs_sendarg(root, "-U", 0) < 0))
+		return (EX_PROTOCOL);
+
+	return (0);
+}
 
 /*
  * cvs_admin_file()

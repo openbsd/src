@@ -1,4 +1,4 @@
-/*	$OpenBSD: tag.c,v 1.6 2005/03/26 08:09:54 tedu Exp $	*/
+/*	$OpenBSD: tag.c,v 1.7 2005/03/30 17:43:04 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2004 Joris Vink <joris@openbsd.org>
@@ -41,28 +41,32 @@
 #include "proto.h"
 
 
-int cvs_tag_file (CVSFILE *, void *);
+int cvs_tag_file(CVSFILE *, void *);
+int cvs_tag_options(char *, int, char **, int *);
+int cvs_tag_sendflags(struct cvsroot *);
 
+static char *tag, *old_tag, *date;
+static int branch, delete;
 
-/*
- * cvs_tag()
- *
- * Handler for the `cvs tag' command.
- * Returns 0 on success, or one of the known exit codes on error.
- */
+struct cvs_cmd_info cvs_tag = {
+	cvs_tag_options,
+	cvs_tag_sendflags,
+	cvs_tag_file,	
+	NULL, NULL,
+	CF_SORT | CF_IGNORE | CF_RECURSE,
+	CVS_REQ_TAG,
+	CVS_CMD_ALLOWSPEC
+};
+
 int
-cvs_tag(int argc, char **argv)
+cvs_tag_options(char *opt, int argc, char **argv, int *arg)
 {
-	int ch, flags;
-	struct cvsroot *root;
-	char *tag, *old_tag, *date;
-	int branch, delete;
+	int ch;
 
 	date = old_tag = NULL;
 	branch = delete = 0;
-	flags = CF_SORT|CF_IGNORE|CF_RECURSE;
 
-	while ((ch = getopt(argc, argv, "bdD:lr:")) != -1) {
+	while ((ch = getopt(argc, argv, opt)) != -1) {
 		switch (ch) {
 		case 'b':
 			branch = 1;
@@ -74,7 +78,7 @@ cvs_tag(int argc, char **argv)
 			date = optarg;
 			break;
 		case 'l':
-			flags &= ~CF_RECURSE;
+			cvs_tag.file_flags &= ~CF_RECURSE;
 			break;
 		case 'r':
 			old_tag = optarg;
@@ -84,6 +88,7 @@ cvs_tag(int argc, char **argv)
 		}
 	}
 
+	*arg = optind;
 	argc -= optind;
 	argv += optind;
 
@@ -93,6 +98,7 @@ cvs_tag(int argc, char **argv)
 		tag = argv[0];
 		argc--;
 		argv++;
+		*arg += 1;
 	}
 
 	if (branch && delete) {
@@ -111,51 +117,32 @@ cvs_tag(int argc, char **argv)
 		return (-1);
 	}
 
-	if (argc == 0)
-		cvs_files = cvs_file_get(".", flags);
-	else
-		cvs_files = cvs_file_getspec(argv, argc, 0);
-	if (cvs_files == NULL)
-		return (EX_DATAERR);
+	return (0);
+}
 
-	root = CVS_DIR_ROOT(cvs_files);
-	if (root == NULL) {
-		cvs_log(LP_ERR,
-		    "No CVSROOT specified!  Please use the `-d' option");
-		cvs_log(LP_ERR,
-		    "or set the CVSROOT environment variable.");
-		return (EX_USAGE);
-	}
+int
+cvs_tag_sendflags(struct cvsroot *root)
+{
+	if (branch && (cvs_sendarg(root, "-b", 0) < 0))
+		return (EX_PROTOCOL);
 
-	if (root->cr_method != CVS_METHOD_LOCAL) {
-		if (cvs_connect(root) < 0)
-			return (EX_PROTOCOL);
-		if (branch && (cvs_sendarg(root, "-b", 0) < 0))
-			return (EX_PROTOCOL);
-		if (delete && (cvs_sendarg(root, "-d", 0) < 0))
-			return (EX_PROTOCOL);
-		if (old_tag) {
-			if ((cvs_sendarg(root, "-r", 0) < 0) ||
-			    (cvs_sendarg(root, old_tag, 0) < 0))
-				return (EX_PROTOCOL);
-		}
-		if (date) {
-			if ((cvs_sendarg(root, "-D", 0) < 0) ||
-			    (cvs_sendarg(root, date, 0) < 0))
-				return (EX_PROTOCOL);
-		}
-		if (cvs_sendarg(root, tag, 0) < 0)
+	if (delete && (cvs_sendarg(root, "-d", 0) < 0))
+		return (EX_PROTOCOL);
+
+	if (old_tag) {
+		if ((cvs_sendarg(root, "-r", 0) < 0) ||
+		    (cvs_sendarg(root, old_tag, 0) < 0))
 			return (EX_PROTOCOL);
 	}
 
-	cvs_file_examine(cvs_files, cvs_tag_file, NULL);
-
-	if (root->cr_method != CVS_METHOD_LOCAL) {
-		if (cvs_senddir(root, cvs_files) < 0)
-			return (EX_PROTOCOL);
-		if (cvs_sendreq(root, CVS_REQ_TAG, NULL) < 0)
+	if (date) {
+		if ((cvs_sendarg(root, "-D", 0) < 0) ||
+		    (cvs_sendarg(root, date, 0) < 0))
 			return (EX_PROTOCOL);
 	}
+
+	if (cvs_sendarg(root, tag, 0) < 0)
+		return (EX_PROTOCOL);
 
 	return (0);
 }

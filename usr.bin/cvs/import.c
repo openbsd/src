@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.6 2005/03/05 18:43:55 joris Exp $	*/
+/*	$OpenBSD: import.c,v 1.7 2005/03/30 17:43:04 joris Exp $	*/
 /*
  * Copyright (c) 2004 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -44,28 +44,29 @@
 
 #define CVS_IMPORT_DEFBRANCH    "1.1.1"
 
-
-
+int cvs_import_options(char *, int, char **, int *);
+int cvs_import_sendflags(struct cvsroot *);
 int cvs_import_file(CVSFILE *, void *);
-char repo[MAXPATHLEN];
 
-/*
- * cvs_import()
- *
- * Handler for the `cvs import' command.
- */
+static RCSNUM *bnum;
+static char *branch, *module, *vendor, *release;
+
+struct cvs_cmd_info cvs_import = {
+	cvs_import_options,
+	cvs_import_sendflags,
+	cvs_import_file,
+	NULL, NULL,
+	CF_RECURSE | CF_IGNORE | CF_NOSYMS,
+	CVS_REQ_IMPORT,
+	CVS_CMD_SENDDIR
+};
+
 int
-cvs_import(int argc, char **argv)
+cvs_import_options(char *opt, int argc, char **argv, int *arg)
 {
-	int ch, flags;
-	char *branch;
-	struct cvsroot *root;
-	RCSNUM *bnum;
+	int ch;
 
-	branch = CVS_IMPORT_DEFBRANCH;
-	flags = CF_RECURSE | CF_IGNORE | CF_NOSYMS;
-
-	while ((ch = getopt(argc, argv, "b:dI:k:m:")) != -1) {
+	while ((ch = getopt(argc, argv, opt)) != -1) {
 		switch (ch) {
 		case 'b':
 			branch = optarg;
@@ -101,45 +102,33 @@ cvs_import(int argc, char **argv)
 
 	argc -= optind;
 	argv += optind;
+	*arg = optind;
+
 	if (argc > 4)
 		return (EX_USAGE);
 
-	cvs_files = cvs_file_get(".", flags);
-	if (cvs_files == NULL)
-		return (EX_DATAERR);
-
-	root = CVS_DIR_ROOT(cvs_files);
-	if (root == NULL) {
-		cvs_log(LP_ERR,
-		    "No CVSROOT specified!  Please use the `-d' option");
-		cvs_log(LP_ERR,
-		    "or set the CVSROOT environment variable.");
-		return (EX_USAGE);
-	}
+	module = argv[0];
+	vendor = argv[1];
+	release = argv[2];
 
 	if ((cvs_msg == NULL) &&
 	    (cvs_msg = cvs_logmsg_get(NULL, NULL, NULL, NULL)) == NULL)
 		return (-1);
 
-	if (root->cr_method != CVS_METHOD_LOCAL) {
-		if ((cvs_connect(root) < 0) ||
-		    (cvs_sendarg(root, "-b", 0) < 0) ||
-		    (cvs_sendarg(root, branch, 0) < 0) ||
-		    (cvs_logmsg_send(root, cvs_msg) < 0) ||
-		    (cvs_sendarg(root, argv[0], 0) < 0) ||
-		    (cvs_sendarg(root, argv[1], 0) < 0) ||
-		    (cvs_sendarg(root, argv[2], 0) < 0))
-			return (EX_PROTOCOL);
-	}
+	return (0);
+}
 
-	snprintf(repo, sizeof(repo), "%s/%s", root->cr_dir, argv[0]);
-	cvs_file_examine(cvs_files, cvs_import_file, NULL);
-
-	if (root->cr_method != CVS_METHOD_LOCAL) {
-		if (cvs_senddir(root, cvs_files) < 0 ||
-		    cvs_sendreq(root, CVS_REQ_IMPORT, NULL) < 0)
-			return (EX_PROTOCOL);
-	}
+int
+cvs_import_sendflags(struct cvsroot *root)
+{
+	if ((cvs_connect(root) < 0) ||
+	    (cvs_sendarg(root, "-b", 0) < 0) ||
+	    (cvs_sendarg(root, branch, 0) < 0) ||
+	    (cvs_logmsg_send(root, cvs_msg) < 0) ||
+	    (cvs_sendarg(root, module, 0) < 0) ||
+	    (cvs_sendarg(root, vendor, 0) < 0) ||
+	    (cvs_sendarg(root, release, 0) < 0))
+		return (EX_PROTOCOL);
 
 	return (0);
 }
@@ -155,8 +144,10 @@ cvs_import_file(CVSFILE *cfp, void *arg)
 	int ret;
 	struct cvsroot *root;
 	char fpath[MAXPATHLEN], repodir[MAXPATHLEN];
+	char repo[MAXPATHLEN];
 
 	root = CVS_DIR_ROOT(cfp);
+	snprintf(repo, sizeof(repo), "%s/%s", root->cr_dir, module);
 
 	cvs_file_getpath(cfp, fpath, sizeof(fpath));
 	printf("Importing %s\n", fpath);

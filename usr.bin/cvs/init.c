@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.11 2005/03/01 21:14:21 jfb Exp $	*/
+/*	$OpenBSD: init.c,v 1.12 2005/03/30 17:43:04 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -66,45 +66,29 @@ struct cvsroot_file {
 	{ CVS_PATH_VERIFYMSG,   CFT_FILE, (S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH) },
 };
 
+int cvs_init_local(struct cvsroot *);
+
+struct cvs_cmd_info cvs_init = {
+	NULL,
+	NULL, NULL, NULL, NULL,
+	0,
+	CVS_REQ_INIT,
+	0
+};
 
 /*
- * cvs_init()
+ * cvs_init_local()
  *
- * Handler for the `cvs init' command which is used to initialize a CVS
- * repository.
+ * Local handler for the "cvs init" command.
  * Returns 0 on success, or the appropriate exit status on failure.
  */
 int
-cvs_init(int argc, char **argv)
+cvs_init_local(struct cvsroot *root)
 {
 	int fd;
 	u_int i;
 	char path[MAXPATHLEN];
 	RCSFILE *rfp;
-	struct cvsroot *root;
-
-	if (argc != 1)
-		return (EX_USAGE);
-
-	root = cvsroot_get(".");
-	if (root == NULL) {
-		cvs_log(LP_ERR,
-		    "No CVSROOT specified!  Please use the `-d' option");
-		cvs_log(LP_ERR,
-		    "or set the CVSROOT environment variable.");
-		return (EX_USAGE);
-	}
-
-	if (root->cr_method != CVS_METHOD_LOCAL) {
-		if (cvs_connect(root) < 0)
-			return (EX_DATAERR);
-
-		if (cvs_sendreq(root, CVS_REQ_INIT, root->cr_dir) < 0)
-			return (EX_DATAERR);
-
-		cvs_disconnect(root);
-		return (0);
-	}
 
 	for (i = 0; i < sizeof(cvsroot_files)/sizeof(cvsroot_files[i]); i++) {
 		snprintf(path, sizeof(path), "%s/%s", root->cr_dir,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: remove.c,v 1.3 2005/03/09 15:24:36 xsa Exp $	*/
+/*	$OpenBSD: remove.c,v 1.4 2005/03/30 17:43:04 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2004 Xavier Santolaria <xsa@openbsd.org>
@@ -44,23 +44,27 @@
 extern char *__progname;
 
 
-int  cvs_remove_file (CVSFILE *, void *);
+int cvs_remove_file(CVSFILE *, void *);
+int cvs_remove_options(char *, int, char **, int *);
 
-int	force_remove = 0;	/* -f option */
+static int	force_remove = 0;	/* -f option */
 
-/*
- * cvs_remove()
- *
- * Handler for the `cvs remove' command.
- * Returns 0 on success, or one of the known system exit codes on failure.
- */
+struct cvs_cmd_info cvs_remove = {
+	cvs_remove_options,
+	NULL,
+	cvs_remove_file,
+	NULL, NULL,
+	0,
+	CVS_REQ_REMOVE,
+	CVS_CMD_SENDDIR | CVS_CMD_SENDARGS2 | CVS_CMD_ALLOWSPEC
+};
+
 int
-cvs_remove(int argc, char **argv)
+cvs_remove_options(char *opt, int argc, char **argv, int *arg)
 {
-	int i, ch;
-	struct cvsroot *root;
+	int ch;
 
-	while ((ch = getopt(argc, argv, "flR")) != -1) {
+	while ((ch = getopt(argc, argv, opt)) != -1) {
 		switch (ch) {
 		case 'f':
 			force_remove = 1;
@@ -80,36 +84,7 @@ cvs_remove(int argc, char **argv)
 	if (argc == 0)
 		return (EX_USAGE);
 
-	cvs_files = cvs_file_getspec(argv, argc, 0);
-	if (cvs_files == NULL)
-		return (EX_DATAERR);
-
-	root = CVS_DIR_ROOT(cvs_files);
-	if (root == NULL) {
-		cvs_log(LP_ERR,
-		    "No CVSROOT specified!  Please use the `-d' option");
-		cvs_log(LP_ERR,
-		    "or set the CVSROOT environment variable.");
-		return (EX_USAGE);
-	}
-
-	if ((root->cr_method != CVS_METHOD_LOCAL) && (cvs_connect(root) < 0))
-		return (EX_PROTOCOL);
-
-	cvs_file_examine(cvs_files, cvs_remove_file, NULL);
-
-	if (root->cr_method != CVS_METHOD_LOCAL) {
-		if (cvs_senddir(root, cvs_files) < 0)
-			return (EX_PROTOCOL);
-
-		for (i = 0; i < argc; i++)
-			if (cvs_sendarg(root, argv[i], 0) < 0)
-				return (EX_PROTOCOL);
-
-		if (cvs_sendreq(root, CVS_REQ_REMOVE, NULL) < 0)
-			return (EX_PROTOCOL);
-	}
-
+	*arg = optind;
 	return (0);
 }
 

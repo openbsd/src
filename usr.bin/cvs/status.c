@@ -1,4 +1,4 @@
-/*	$OpenBSD: status.c,v 1.9 2005/03/26 08:09:54 tedu Exp $	*/
+/*	$OpenBSD: status.c,v 1.10 2005/03/30 17:43:04 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -51,31 +51,34 @@ const char *cvs_statstr[] = {
 };
 
 
-int cvs_status_file (CVSFILE *, void *);
+int cvs_status_file(CVSFILE *, void *);
+int cvs_status_options(char *, int, char **, int *);
+int cvs_status_sendflags(struct cvsroot *);
 
+struct cvs_cmd_info cvs_status = {
+	cvs_status_options,
+	cvs_status_sendflags,
+	cvs_status_file,
+	NULL, NULL,
+	CF_SORT | CF_IGNORE | CF_RECURSE,
+	CVS_REQ_STATUS,
+	CVS_CMD_ALLOWSPEC | CVS_CMD_SENDDIR | CVS_CMD_SENDARGS2
+};
 
-/*
- * cvs_status()
- *
- * Handler for the `cvs status' command.
- * Returns 0 on success, or one of the known exit codes on error.
- */
+static int verbose = 0;
+
 int
-cvs_status(int argc, char **argv)
+cvs_status_options(char *opt, int argc, char **argv, int *arg)
 {
-	int i, ch, flags, verbose;
-	struct cvsroot *root;
+	int ch;
 
-	verbose = 0;
-	flags = CF_SORT|CF_IGNORE|CF_RECURSE;
-
-	while ((ch = getopt(argc, argv, "lRv")) != -1) {
+	while ((ch = getopt(argc, argv, opt)) != -1) {
 		switch (ch) {
 		case 'l':
-			flags &= ~CF_RECURSE;
+			cvs_status.file_flags &= ~CF_RECURSE;
 			break;
 		case 'R':
-			flags |= CF_RECURSE;
+			cvs_status.file_flags |= CF_RECURSE;
 			break;
 		case 'v':
 			verbose = 1;
@@ -85,48 +88,17 @@ cvs_status(int argc, char **argv)
 		}
 	}
 
-	argc -= optind;
-	argv += optind;
-
-	if (argc == 0) {
-		cvs_files = cvs_file_get(".", flags);
-	} else {
-		cvs_files = cvs_file_getspec(argv, argc, 0);
-	}
-	if (cvs_files == NULL)
-		return (EX_DATAERR);
-
-	root = CVS_DIR_ROOT(cvs_files);
-	if (root == NULL) {
-		cvs_log(LP_ERR,
-		    "No CVSROOT specified!  Please use the `-d' option");
-		cvs_log(LP_ERR,
-		    "or set the CVSROOT environment variable.");
-		return (EX_USAGE);
-	}
-
-	if (root->cr_method != CVS_METHOD_LOCAL) {
-		if (cvs_connect(root) < 0)
-			return (EX_PROTOCOL);
-		if (verbose && (cvs_sendarg(root, "-v", 0) < 0))
-			return (EX_PROTOCOL);
-	}
-
-	cvs_file_examine(cvs_files, cvs_status_file, NULL);
-
-	if (root->cr_method != CVS_METHOD_LOCAL) {
-		if (cvs_senddir(root, cvs_files) < 0)
-			return (EX_PROTOCOL);
-		for (i = 0; i < argc; i++)
-			if (cvs_sendarg(root, argv[i], 0) < 0)
-				return (EX_PROTOCOL);
-		if (cvs_sendreq(root, CVS_REQ_STATUS, NULL) < 0)
-			return (EX_PROTOCOL);
-	}
-
+	*arg = optind;
 	return (0);
 }
 
+int
+cvs_status_sendflags(struct cvsroot *root)
+{
+	if (verbose && (cvs_sendarg(root, "-v", 0) < 0))
+		return (EX_PROTOCOL);
+	return (0);
+}
 
 /*
  * cvs_status_file()

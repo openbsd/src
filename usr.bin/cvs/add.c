@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.14 2005/01/24 18:30:25 jfb Exp $	*/
+/*	$OpenBSD: add.c,v 1.15 2005/03/30 17:43:04 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -41,26 +41,31 @@
 extern char *__progname;
 
 
-int  cvs_add_file (CVSFILE *, void *);
+int cvs_add_file(CVSFILE *, void *);
+int cvs_add_options(char *, int, char **, int *);
+int cvs_add_sendflags(struct cvsroot *);
 
+struct cvs_cmd_info cvs_add = {
+	cvs_add_options,
+	cvs_add_sendflags,
+	cvs_add_file,
+	NULL, NULL,
+	0,
+	CVS_REQ_ADD,
+	CVS_CMD_ALLOWSPEC | CVS_CMD_SENDDIR | CVS_CMD_SENDARGS2
+};
 
-/*
- * cvs_add()
- *
- * Handler for the `cvs add' command.
- * Returns 0 on success, or one of the known system exit codes on failure.
- */
+static int kflag = RCS_KWEXP_DEFAULT;
+static char *koptstr;
+
 int
-cvs_add(int argc, char **argv)
+cvs_add_options(char *opt, int argc, char **argv, int *arg)
 {
-	int i, ch, kflag;
-	char buf[16], *koptstr;
-	struct cvsroot *root;
+	int ch;
 
-	kflag = RCS_KWEXP_DEFAULT;
 	cvs_msg = NULL;
 
-	while ((ch = getopt(argc, argv, "k:m:")) != -1) {
+	while ((ch = getopt(argc, argv, opt)) != -1) {
 		switch (ch) {
 		case 'k':
 			koptstr = optarg;
@@ -83,51 +88,24 @@ cvs_add(int argc, char **argv)
 		}
 	}
 
-	argc -= optind;
-	argv += optind;
-	if (argc == 0)
-		return (EX_USAGE);
+	*arg = optind;
+	return (0);
+}
 
-	cvs_files = cvs_file_getspec(argv, argc, 0);
-	if (cvs_files == NULL)
-		return (EX_DATAERR);
+int
+cvs_add_sendflags(struct cvsroot *root)
+{
+	char buf[16];
 
-	root = CVS_DIR_ROOT(cvs_files);
-	if (root == NULL) {
-		cvs_log(LP_ERR,
-		    "No CVSROOT specified!  Please use the `-d' option");
-		cvs_log(LP_ERR,
-		    "or set the CVSROOT environment variable.");
-		return (EX_USAGE);
-	}
-	if (root->cr_method != CVS_METHOD_LOCAL) {
-		if (cvs_connect(root) < 0)
-			return (EX_PROTOCOL);
-		if (kflag != RCS_KWEXP_DEFAULT) {
-			strlcpy(buf, "-k", sizeof(buf));
-			strlcat(buf, koptstr, sizeof(buf));
-			if (cvs_sendarg(root, buf, 0) < 0)
-				return (EX_PROTOCOL);
-		}
-	}
-
-	cvs_file_examine(cvs_files, cvs_add_file, NULL);
-
-	if (root->cr_method != CVS_METHOD_LOCAL) {
-		if (cvs_senddir(root, cvs_files) < 0)
-			return (EX_PROTOCOL);
-
-		for (i = 0; i < argc; i++)
-			if (cvs_sendarg(root, argv[i], 0) < 0)
-				return (EX_PROTOCOL);
-
-		if (cvs_sendreq(root, CVS_REQ_ADD, NULL) < 0)
+	if (kflag != RCS_KWEXP_DEFAULT) {
+		strlcpy(buf, "-k", sizeof(buf));
+		strlcat(buf, koptstr, sizeof(buf));
+		if (cvs_sendarg(root, buf, 0) < 0)
 			return (EX_PROTOCOL);
 	}
 
 	return (0);
 }
-
 
 int
 cvs_add_file(CVSFILE *cf, void *arg)

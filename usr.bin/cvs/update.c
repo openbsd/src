@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.17 2005/02/27 00:22:08 jfb Exp $	*/
+/*	$OpenBSD: update.c,v 1.18 2005/03/30 17:43:04 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -41,25 +41,26 @@
 #include "proto.h"
 
 
-int  cvs_update_file  (CVSFILE *, void *);
-int  cvs_update_prune (CVSFILE *, void *);
+int cvs_update_file(CVSFILE *, void *);
+int cvs_update_prune(CVSFILE *, void *);
+int cvs_update_options(char *, int, char **, int *);
 
+struct cvs_cmd_info cvs_update = {
+	cvs_update_options,
+	NULL,
+	cvs_update_file,
+	NULL, NULL,
+	CF_SORT | CF_RECURSE | CF_IGNORE | CF_KNOWN | CF_NOSYMS,
+	CVS_REQ_UPDATE,
+	CVS_CMD_ALLOWSPEC | CVS_CMD_SENDARGS2 | CVS_CMD_SENDDIR
+};
 
-/*
- * cvs_update()
- *
- * Handle the `cvs update' command.
- * Returns 0 on success, or the appropriate exit code on error.
- */
 int
-cvs_update(int argc, char **argv)
+cvs_update_options(char *opt, int argc, char **argv, int *arg)
 {
-	int i, ch, flags;
-	struct cvsroot *root;
+	int ch;
 
-	flags = CF_SORT|CF_RECURSE|CF_IGNORE|CF_KNOWN|CF_NOSYMS;
-
-	while ((ch = getopt(argc, argv, "ACD:dflPpQqRr:")) != -1) {
+	while ((ch = getopt(argc, argv, opt)) != -1) {
 		switch (ch) {
 		case 'A':
 		case 'C':
@@ -68,7 +69,7 @@ cvs_update(int argc, char **argv)
 		case 'f':
 			break;
 		case 'l':
-			flags &= ~CF_RECURSE;
+			cvs_update.file_flags &= ~CF_RECURSE;
 			break;
 		case 'P':
 		case 'p':
@@ -76,7 +77,7 @@ cvs_update(int argc, char **argv)
 		case 'q':
 			break;
 		case 'R':
-			flags |= CF_RECURSE;
+			cvs_update.file_flags |= CF_RECURSE;
 			break;
 		case 'r':
 			break;
@@ -85,43 +86,7 @@ cvs_update(int argc, char **argv)
 		}
 	}
 
-	argc -= optind;
-	argv += optind;
-
-	if (argc == 0)
-		cvs_files = cvs_file_get(".", flags);
-	else {
-		/* don't perform ignore on explicitly listed files */
-		flags &= ~(CF_IGNORE | CF_RECURSE | CF_SORT);
-		cvs_files = cvs_file_getspec(argv, argc, flags);
-	}
-	if (cvs_files == NULL)
-		return (EX_DATAERR);
-
-	root = CVS_DIR_ROOT(cvs_files);
-	if (root == NULL) {
-		cvs_log(LP_ERR,
-		    "No CVSROOT specified!  Please use the `-d' option");
-		cvs_log(LP_ERR,
-		    "or set the CVSROOT environment variable.");
-		return (EX_USAGE);
-	}
-	if ((root->cr_method != CVS_METHOD_LOCAL) && (cvs_connect(root) < 0))
-		return (EX_PROTOCOL);
-
-	cvs_file_examine(cvs_files, cvs_update_file, NULL);
-
-	if (root->cr_method != CVS_METHOD_LOCAL) {
-		if (cvs_senddir(root, cvs_files) < 0)
-			return (EX_PROTOCOL);
-
-		for (i = 0; i < argc; i++)
-			if (cvs_sendarg(root, argv[i], 0) < 0)
-				return (EX_PROTOCOL);
-		if (cvs_sendreq(root, CVS_REQ_UPDATE, NULL) < 0)
-			return (EX_PROTOCOL);
-	}
-
+	*arg = optind;
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.17 2005/03/29 15:06:01 joris Exp $	*/
+/*	$OpenBSD: commit.c,v 1.18 2005/03/30 17:43:04 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -42,41 +42,40 @@
 #include "proto.h"
 
 
+static int cvs_commit_prepare(CVSFILE *, void *);
+int cvs_commit_file(CVSFILE *, void *);
+int cvs_commit_options(char *, int, char **, int *);
+int cvs_commit_helper(void);
 
+struct cvs_cmd_info cvs_commit = {
+	cvs_commit_options,
+	NULL,
+	cvs_commit_file,
+	NULL,
+	cvs_commit_helper,
+	CF_RECURSE | CF_IGNORE | CF_SORT,
+	CVS_REQ_CI,
+	CVS_CMD_NEEDLOG | CVS_CMD_SENDDIR | CVS_CMD_SENDARGS2
+};
 
-int    cvs_commit_prepare  (CVSFILE *, void *);
-int    cvs_commit_file     (CVSFILE *, void *);
+static char *mfile = NULL;
 
-
-/*
- * cvs_commit()
- *
- * Handler for the `cvs commit' command.
- */
 int
-cvs_commit(int argc, char **argv)
+cvs_commit_options(char *opt, int argc, char **argv, int *arg)
 {
-	int i, ch, flags;
-	char *mfile;
-	struct cvs_flist cl;
-	CVSFILE *cfp;
-	struct cvsroot *root;
+	int ch;
 
-	flags = CF_RECURSE|CF_IGNORE|CF_SORT;
-	mfile = NULL;
-	TAILQ_INIT(&cl);
-
-	while ((ch = getopt(argc, argv, "F:flm:Rr:")) != -1) {
+	while ((ch = getopt(argc, argv, opt)) != -1) {
 		switch (ch) {
 		case 'F':
 			mfile = optarg;
 			break;
 		case 'f':
 			/* XXX half-implemented */
-			flags &= ~CF_RECURSE;
+			cvs_commit.file_flags &= ~CF_RECURSE;
 			break;
 		case 'l':
-			flags &= ~CF_RECURSE;
+			cvs_commit.file_flags &= ~CF_RECURSE;
 			break;
 		case 'm':
 			cvs_msg = strdup(optarg);
@@ -86,7 +85,7 @@ cvs_commit(int argc, char **argv)
 			}
 			break;
 		case 'R':
-			flags |= CF_RECURSE;
+			cvs_commit.file_flags |= CF_RECURSE;
 			break;
 		default:
 			return (EX_USAGE);
@@ -101,17 +100,17 @@ cvs_commit(int argc, char **argv)
 	if ((mfile != NULL) && (cvs_msg = cvs_logmsg_open(mfile)) == NULL)
 		return (EX_DATAERR);
 
-	argc -= optind;
-	argv += optind;
+	*arg = optind;
+	return (0);
+}
 
-	if (argc == 0) {
-		cvs_files = cvs_file_get(".", flags);
-	} else {
-		cvs_files = cvs_file_getspec(argv, argc, flags);
-	}
-	if (cvs_files == NULL)
-		return (EX_DATAERR);
+int
+cvs_commit_helper(void)
+{
+	struct cvs_flist cl;
+	CVSFILE *cfp;
 
+	TAILQ_INIT(&cl);
 	cvs_file_examine(cvs_files, cvs_commit_prepare, &cl);
 	if (TAILQ_EMPTY(&cl))
 		return (0);
@@ -129,33 +128,8 @@ cvs_commit(int argc, char **argv)
 	if (cvs_msg == NULL)
 		return (1);
 
-	root = CVS_DIR_ROOT(cvs_files);
-	if (root == NULL) {
-		cvs_log(LP_ERR,
-		    "No CVSROOT specified!  Please use the `-d' option");
-		cvs_log(LP_ERR,
-		    "or set the CVSROOT environment variable.");
-		return (EX_USAGE);
-	}
-	if ((root->cr_method != CVS_METHOD_LOCAL) &&
-	    ((cvs_connect(root) < 0) || (cvs_logmsg_send(root, cvs_msg) < 0)))
-		return (EX_PROTOCOL);
-
-	cvs_file_examine(cvs_files, cvs_commit_file, &cl);
-
-	if (root->cr_method != CVS_METHOD_LOCAL) {
-		if (cvs_senddir(root, cvs_files) < 0)
-			return (EX_PROTOCOL);
-		for (i = 0; i < argc; i++)
-			if (cvs_sendarg(root, argv[i], 0) < 0)
-				return (EX_PROTOCOL);
-		if (cvs_sendreq(root, CVS_REQ_CI, NULL) < 0)
-			return (EX_PROTOCOL);
-	}
-
 	return (0);
 }
-
 
 /*
  * cvs_commit_prepare()

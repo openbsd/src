@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.13 2005/02/22 22:12:00 jfb Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.14 2005/03/30 17:43:04 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -42,26 +42,31 @@
 #define CVS_LISTMOD    1
 #define CVS_STATMOD    2
 
+int cvs_checkout_options(char *, int, char **, int *);
+int cvs_checkout_sendflags(struct cvsroot *);
 
-/*
- * cvs_checkout()
- *
- * Handler for the `cvs checkout' command.
- * Returns 0 on success, or one of the known system exit codes on failure.
- */
+struct cvs_cmd_info cvs_checkout = {
+	cvs_checkout_options,
+	cvs_checkout_sendflags,
+	NULL, NULL, NULL,
+	0,
+	CVS_REQ_CO,
+	CVS_CMD_SENDDIR | CVS_CMD_SENDARGS1 | CVS_CMD_SENDARGS2
+};
+
+static char *date, *rev, *koptstr, *tgtdir, *rcsid;
+static int statmod = 0;
+static int kflag = RCS_KWEXP_DEFAULT;
+
 int
-cvs_checkout(int argc, char **argv)
+cvs_checkout_options(char *opt, int argc, char **argv, int *arg)
 {
-	int i, ch, statmod, kflag;
-	char *date, *rev, *koptstr, *tgtdir, *rcsid;
-	struct cvsroot *root;
+	int ch;
 
-	statmod = 0;
-	rcsid = NULL;
-	tgtdir = NULL;
+	date = rev = koptstr = tgtdir = rcsid = NULL;
 	kflag = RCS_KWEXP_DEFAULT;
 
-	while ((ch = getopt(argc, argv, "AcD:d:fj:k:lNnPRr:st:")) != -1) {
+	while ((ch = getopt(argc, argv, opt)) != -1) {
 		switch (ch) {
 		case 'A':
 			break;
@@ -116,53 +121,29 @@ cvs_checkout(int argc, char **argv)
 		return (EX_USAGE);
 	}
 
-	if ((cvs_files = cvs_file_get(".", 0)) == NULL)
-		return (EX_USAGE);
+	*arg = optind;
+	return (0);
+}
 
-	root = CVS_DIR_ROOT(cvs_files);
-	if (root == NULL) {
-		cvs_log(LP_ERR,
-		    "No CVSROOT specified!  Please use the `-d' option");
-		cvs_log(LP_ERR,
-		    "or set the CVSROOT environment variable.");
-		return (EX_USAGE);
-	}
-	if (root->cr_method != CVS_METHOD_LOCAL) {
-		if (cvs_connect(root) < 0)
-			return (EX_DATAERR);
+int
+cvs_checkout_sendflags(struct cvsroot *root)
+{
+	if (cvs_senddir(root, cvs_files) < 0)
+		return (EX_PROTOCOL);
+	if (cvs_sendreq(root, CVS_REQ_XPANDMOD, NULL) < 0)
+		cvs_log(LP_ERR, "failed to expand module");
 
-		/* first send the expand modules command */
-		for (i = 0; i < argc; i++)
-			if (cvs_sendarg(root, argv[i], 0) < 0)
-				break;
+	/* XXX not too sure why we have to send this arg */
+	if (cvs_sendarg(root, "-N", 0) < 0)
+		return (EX_PROTOCOL);
 
-		if (cvs_senddir(root, cvs_files) < 0)
-			return (EX_PROTOCOL);
-		if (cvs_sendreq(root, CVS_REQ_XPANDMOD, NULL) < 0)
-			cvs_log(LP_ERR, "failed to expand module");
+	if ((statmod == CVS_LISTMOD) &&
+	    (cvs_sendarg(root, "-c", 0) < 0))
+		return (EX_PROTOCOL);
 
-		/* XXX not too sure why we have to send this arg */
-		if (cvs_sendarg(root, "-N", 0) < 0)
-			return (EX_PROTOCOL);
-
-		if ((statmod == CVS_LISTMOD) &&
-		    (cvs_sendarg(root, "-c", 0) < 0))
-			return (EX_PROTOCOL);
-
-		if ((statmod == CVS_STATMOD) &&
-		    (cvs_sendarg(root, "-s", 0) < 0))
-			return (EX_PROTOCOL);
-
-		for (i = 0; i < argc; i++)
-			if (cvs_sendarg(root, argv[i], 0) < 0)
-				return (EX_PROTOCOL);
-
-		if ((cvs_senddir(root, cvs_files) < 0) ||
-		    (cvs_sendreq(root, CVS_REQ_CO, NULL) < 0)) {
-			cvs_log(LP_ERR, "failed to checkout");
-			return (EX_PROTOCOL);
-		}
-	}
+	if ((statmod == CVS_STATMOD) &&
+	    (cvs_sendarg(root, "-s", 0) < 0))
+		return (EX_PROTOCOL);
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: annotate.c,v 1.4 2005/01/13 16:32:46 jfb Exp $	*/
+/*	$OpenBSD: annotate.c,v 1.5 2005/03/30 17:43:04 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -41,27 +41,32 @@
 #include "proto.h"
 
 
-int  cvs_annotate_file  (CVSFILE *, void *);
-int  cvs_annotate_prune (CVSFILE *, void *);
+int cvs_annotate_file(CVSFILE *, void *);
+int cvs_annotate_prune(CVSFILE *, void *);
+int cvs_annotate_options(char *, int, char **, int *);
+int cvs_annotate_sendflags(struct cvsroot *);
 
+struct cvs_cmd_info cvs_annotate = {
+	cvs_annotate_options,
+	cvs_annotate_sendflags,
+	cvs_annotate_file,
+	NULL, NULL,
+	CF_SORT | CF_RECURSE | CF_IGNORE | CF_NOSYMS,
+	CVS_REQ_ANNOTATE,
+	CVS_CMD_ALLOWSPEC | CVS_CMD_SENDDIR | CVS_CMD_SENDARGS2
+};	
 
-/*
- * cvs_annotate()
- *
- * Handle the `cvs annotate' command.
- * Returns 0 on success, or the appropriate exit code on error.
- */
+static char *date, *rev;
+static int usehead;
+
 int
-cvs_annotate(int argc, char **argv)
+cvs_annotate_options(char *opt, int argc, char **argv, int *arg)
 {
-	int i, ch, flags, usehead;
-	char *date, *rev;
-	struct cvsroot *root;
+	int ch;
 
 	usehead = 0;
 	date = NULL;
 	rev = NULL;
-	flags = CF_SORT|CF_RECURSE|CF_IGNORE|CF_NOSYMS;
 
 	while ((ch = getopt(argc, argv, "D:flRr:")) != -1) {
 		switch (ch) {
@@ -72,10 +77,10 @@ cvs_annotate(int argc, char **argv)
 			usehead = 1;
 			break;
 		case 'l':
-			flags &= ~CF_RECURSE;
+			cvs_annotate.file_flags &= ~CF_RECURSE;
 			break;
 		case 'R':
-			flags |= CF_RECURSE;
+			cvs_annotate.file_flags |= CF_RECURSE;
 			break;
 		case 'r':
 			rev = optarg;
@@ -91,61 +96,30 @@ cvs_annotate(int argc, char **argv)
 		return (EX_USAGE);
 	}
 
-	argc -= optind;
-	argv += optind;
+	*arg = optind;
+	return (0);
+}
 
-	if (argc == 0) {
-		cvs_files = cvs_file_get(".", flags);
-	} else {
-		/* don't perform ignore on explicitly listed files */
-		flags &= ~(CF_IGNORE | CF_RECURSE | CF_SORT);
-		cvs_files = cvs_file_getspec(argv, argc, flags);
-	}
-	if (cvs_files == NULL)
-		return (EX_DATAERR);
+int
+cvs_annotate_sendflags(struct cvsroot *root)
+{
+	if (usehead && (cvs_sendarg(root, "-f", 0) < 0))
+		return (EX_PROTOCOL);
 
-	root = CVS_DIR_ROOT(cvs_files);
-	if (root == NULL) {
-		cvs_log(LP_ERR,
-		    "No CVSROOT specified!  Please use the `-d' option");
-		cvs_log(LP_ERR,
-		    "or set the CVSROOT environment variable.");
-		return (EX_USAGE);
+	if (rev != NULL) {
+		if ((cvs_sendarg(root, "-r", 0) < 0) ||
+		    (cvs_sendarg(root, rev, 0) < 0))
+			return (EX_PROTOCOL);
 	}
 
-	if (root->cr_method != CVS_METHOD_LOCAL) {
-		if (cvs_connect(root) < 0)
-			return (EX_PROTOCOL);
-		if (usehead && (cvs_sendarg(root, "-f", 0) < 0))
-			return (EX_PROTOCOL);
-		if (rev != NULL) {
-			if ((cvs_sendarg(root, "-r", 0) < 0) ||
-			    (cvs_sendarg(root, rev, 0) < 0))
-				return (EX_PROTOCOL);
-		}
-		if (date != NULL) {
-			if ((cvs_sendarg(root, "-D", 0) < 0) ||
-			    (cvs_sendarg(root, date, 0) < 0))
-				return (EX_PROTOCOL);
-		}
-	}
-
-	cvs_file_examine(cvs_files, cvs_annotate_file, NULL);
-
-
-	if (root->cr_method != CVS_METHOD_LOCAL) {
-		if (cvs_senddir(root, cvs_files) < 0)
-			return (EX_PROTOCOL);
-		for (i = 0; i < argc; i++)
-			if (cvs_sendarg(root, argv[i], 0) < 0)
-				return (EX_PROTOCOL);
-		if (cvs_sendreq(root, CVS_REQ_ANNOTATE, NULL) < 0)
+	if (date != NULL) {
+		if ((cvs_sendarg(root, "-D", 0) < 0) ||
+		    (cvs_sendarg(root, date, 0) < 0))
 			return (EX_PROTOCOL);
 	}
 
 	return (0);
 }
-
 
 /*
  * cvs_annotate_file()

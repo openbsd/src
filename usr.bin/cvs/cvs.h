@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.46 2005/03/24 01:03:41 joris Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.47 2005/03/30 17:43:04 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -165,12 +165,11 @@ struct cvs_cmd {
 	int cmd_op;
 	char cmd_name[CVS_CMD_MAXNAMELEN];
 	char cmd_alias[CVS_CMD_MAXALIAS][CVS_CMD_MAXNAMELEN];
-	int (*cmd_hdlr)(int, char **);
+	struct cvs_cmd_info *cmd_info;
 	char *cmd_synopsis;
 	char *cmd_opts;
 	char cmd_descr[CVS_CMD_MAXDESCRLEN];
 	char *cmd_defargs;
-	struct cvs_cmd_info *cmd_info;
 };
 
 struct cvs_file;
@@ -318,23 +317,24 @@ extern CVSFILE *cvs_files;
 
 
 /* client command handlers */
+extern struct cvs_cmd_info cvs_add;
+extern struct cvs_cmd_info cvs_admin;
+extern struct cvs_cmd_info cvs_annotate;
+extern struct cvs_cmd_info cvs_checkout;
+extern struct cvs_cmd_info cvs_commit;
+extern struct cvs_cmd_info cvs_diff;
+extern struct cvs_cmd_info cvs_getlog;
+extern struct cvs_cmd_info cvs_history;
+extern struct cvs_cmd_info cvs_import;
+extern struct cvs_cmd_info cvs_init;
+extern struct cvs_cmd_info cvs_remove;
+extern struct cvs_cmd_info cvs_status;
+extern struct cvs_cmd_info cvs_tag;
+extern struct cvs_cmd_info cvs_update;
+extern struct cvs_cmd_info cvs_version;
+
 int  cvs_startcmd (struct cvs_cmd *, int, char **);
-int  cvs_add      (int, char **);
-int  cvs_admin    (int, char **);
-int  cvs_annotate (int, char **);
-int  cvs_checkout (int, char **);
-int  cvs_commit   (int, char **);
-int  cvs_diff     (int, char **);
-int  cvs_getlog   (int, char **);
-int  cvs_history  (int, char **);
-int  cvs_import   (int, char **);
-int  cvs_init     (int, char **);
-int  cvs_remove   (int, char **);
 int  cvs_server   (int, char **);
-int  cvs_status   (int, char **);
-int  cvs_tag      (int, char **);
-int  cvs_update   (int, char **);
-int  cvs_version  (int, char **);
 
 
 int         cvs_var_set   (const char *, const char *);

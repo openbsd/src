@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.8 2005/02/28 20:45:07 joris Exp $	*/
+/*	$OpenBSD: history.c,v 1.9 2005/03/30 17:43:04 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -55,35 +55,36 @@
 #define CVS_HF_EXCL (CVS_HF_C|CVS_HF_E|CVS_HF_M|CVS_HF_O|CVS_HF_T|CVS_HF_X)
 
 static void  cvs_history_print  (struct cvs_hent *);
-
+int cvs_history_options(char *, int, char **, int *);
+int cvs_history_sendflags(struct cvsroot *);
 
 extern char *__progname;
 
+struct cvs_cmd_info cvs_history = {
+	cvs_history_options,
+	cvs_history_sendflags,
+	NULL,
+	NULL,
+	NULL,
+	0,
+	CVS_REQ_HISTORY,
+	CVS_CMD_SENDDIR
+};
 
-/*
- * cvs_history()
- *
- * Handle the `cvs history' command.
- */
+static int flags = 0;
+static char *user = NULL;
+static char *zone = "+0000";
+static char *tag = NULL;
+static u_int nbmod = 0;
+static u_int rep = 0;
+static char *modules[CVS_HISTORY_MAXMOD];
+
 int
-cvs_history(int argc, char **argv)
+cvs_history_options(char *opt, int argc, char **argv, int *arg)
 {
-	int ch, flags;
-	u_int nbmod, rep;
-	char *user, *zone, *tag, *cp;
-	char *modules[CVS_HISTORY_MAXMOD], histpath[MAXPATHLEN];
-	struct cvsroot *root;
-	struct cvs_hent *hent;
-	CVSHIST *hp;
+	int ch;
 
-	tag = NULL;
-	user = NULL;
-	zone = "+0000";
-	nbmod = 0;
-	flags = 0;
-	rep = 0;
-
-	while ((ch = getopt(argc, argv, "acelm:oTt:u:wx:z:")) != -1) {
+	while ((ch = getopt(argc, argv, opt)) != -1) {
 		switch (ch) {
 		case 'a':
 			flags |= CVS_HF_A;
@@ -127,8 +128,6 @@ cvs_history(int argc, char **argv)
 			break;
 		case 'x':
 			rep++;
-			for (cp = optarg; *cp != '\0'; cp++) {
-			}
 			break;
 		case 'z':
 			zone = optarg;
@@ -145,54 +144,35 @@ cvs_history(int argc, char **argv)
 	} else if (rep == 0)
 		flags |= CVS_HF_O;    /* use -o as default */
 
-	root = cvsroot_get(".");
-	if (root == NULL) {
-		cvs_log(LP_ERR,
-		    "No CVSROOT specified!  Please use the `-d' option");
-		cvs_log(LP_ERR,
-		    "or set the CVSROOT environment variable.");
-		return (EX_USAGE);
-	}
-	if (root->cr_method == CVS_METHOD_LOCAL) {
-		snprintf(histpath, sizeof(histpath), "%s/%s", root->cr_dir,
-		    CVS_PATH_HISTORY);
-		hp = cvs_hist_open(histpath);
-		if (hp == NULL) {
-			return (EX_UNAVAILABLE);
-		}
+	*arg = optind;
+	return (0);
+}
 
-		while ((hent = cvs_hist_getnext(hp)) != NULL) {
-			cvs_history_print(hent);
-		}
-		cvs_hist_close(hp);
-	} else {
-		if (cvs_connect(root) < 0)
-			return (EX_PROTOCOL);
+int
+cvs_history_sendflags(struct cvsroot *root)
+{
 
-		if ((flags & CVS_HF_C) && (cvs_sendarg(root, "-c", 0) < 0))
-			return (EX_PROTOCOL);
+	if ((flags & CVS_HF_C) && (cvs_sendarg(root, "-c", 0) < 0))
+		return (EX_PROTOCOL);
 
-		if ((flags & CVS_HF_O) && (cvs_sendarg(root, "-o", 0) < 0))
-			return (EX_PROTOCOL);
+	if ((flags & CVS_HF_O) && (cvs_sendarg(root, "-o", 0) < 0))
+		return (EX_PROTOCOL);
 
-		if (tag != NULL) {
-			if ((cvs_sendarg(root, "-t", 0) < 0) ||
-			    (cvs_sendarg(root, tag, 0) < 0))
-				return (EX_PROTOCOL);
-		}
-		if (user != NULL) {
-			if ((cvs_sendarg(root, "-u", 0) < 0) ||
-			    (cvs_sendarg(root, user, 0) < 0))
-				return (EX_PROTOCOL);
-		}
-
-		if ((cvs_sendarg(root, "-z", 0) < 0) ||
-		    (cvs_sendarg(root, zone, 0) < 0))
-			return (EX_PROTOCOL);
-
-		if (cvs_sendreq(root, CVS_REQ_HISTORY, NULL) < 0)
+	if (tag != NULL) {
+		if ((cvs_sendarg(root, "-t", 0) < 0) ||
+		    (cvs_sendarg(root, tag, 0) < 0))
 			return (EX_PROTOCOL);
 	}
+
+	if (user != NULL) {
+		if ((cvs_sendarg(root, "-u", 0) < 0) ||
+		    (cvs_sendarg(root, user, 0) < 0))
+			return (EX_PROTOCOL);
+	}
+
+	if ((cvs_sendarg(root, "-z", 0) < 0) ||
+	    (cvs_sendarg(root, zone, 0) < 0))
+		return (EX_PROTOCOL);
 
 	return (0);
 }

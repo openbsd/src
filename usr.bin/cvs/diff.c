@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.22 2005/02/27 00:22:08 jfb Exp $	*/
+/*	$OpenBSD: diff.c,v 1.23 2005/03/30 17:43:04 joris Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -213,9 +213,12 @@ struct excludes {
 
 
 char	*splice(char *, char *);
+int  cvs_diff_options(char *, int, char **, int *);
 int  cvs_diffreg(const char *, const char *);
 int  cvs_diff_file(struct cvs_file *, void *);
-int  cvs_diff_sendflags(struct cvsroot *, struct diff_arg *);
+int  cvs_diff_sendflags(struct cvsroot *);
+int  cvs_diff_cleanup(void);
+
 static void output(const char *, FILE *, const char *, FILE *);
 static void check(FILE *, FILE *);
 static void range(int, int, char *);
@@ -337,40 +340,43 @@ u_char cup2low[256] = {
 	0xfd, 0xfe, 0xff
 };
 
+struct cvs_cmd_info cvs_diff = {
+	cvs_diff_options,
+	cvs_diff_sendflags,
+	cvs_diff_file,
+	cvs_diff_cleanup,	
+	NULL,
+	CF_RECURSE | CF_IGNORE | CF_SORT | CF_KNOWN,
+	CVS_REQ_DIFF,
+	CVS_CMD_SENDDIR
+};
 
-/*
- * cvs_diff()
- *
- * Handler for the `cvs diff' command.
- *
- * SYNOPSIS: cvs [args] diff [-clipu] [-D date] [-r rev]
- */
+static struct diff_arg *dap = NULL;
+static int recurse;
+
 int
-cvs_diff(int argc, char **argv)
+cvs_diff_options(char *opt, int argc, char **argv, int *arg)
 {
-	int ch, recurse, flags;
-	struct diff_arg darg;
-	struct cvsroot *root;
+	int ch;
 
-	context = CVS_DIFF_DEFCTX;
-	flags = CF_RECURSE|CF_IGNORE|CF_SORT|CF_KNOWN;
-	recurse = 1;
-
-	memset(&darg, 0, sizeof(darg));
+	dap = (struct diff_arg *)malloc(sizeof(*dap));
+	if (dap == NULL)
+		return (EX_DATAERR);
+	dap->date1 = dap->date2 = dap->rev1 = dap->rev2 = NULL;
 	strlcpy(diffargs, argv[0], sizeof(diffargs));
 
-	while ((ch = getopt(argc, argv, "cD:liNpr:u")) != -1) {
+	while ((ch = getopt(argc, argv, opt)) != -1) {
 		switch (ch) {
 		case 'c':
 			strlcat(diffargs, " -c", sizeof(diffargs));
 			format = D_CONTEXT;
 			break;
 		case 'D':
-			if (darg.date1 == NULL && darg.rev1 == NULL)
-				darg.date1 = optarg;
-			else if (darg.date2 == NULL && darg.rev2 == NULL)
-				darg.date2 = optarg;
-			else {
+			if (dap->date1 == NULL && dap->rev1 == NULL) {
+				dap->date1 = optarg;
+			} else if (dap->date2 == NULL && dap->rev2 == NULL) {
+				dap->date2 = optarg;
+			} else {
 				cvs_log(LP_ERR,
 				    "no more than two revisions/dates can "
 				    "be specified");
@@ -379,7 +385,7 @@ cvs_diff(int argc, char **argv)
 		case 'l':
 			strlcat(diffargs, " -l", sizeof(diffargs));
 			recurse = 0;
-			flags &= ~CF_RECURSE;
+			cvs_diff.file_flags &= ~CF_RECURSE;
 			break;
 		case 'i':
 			strlcat(diffargs, " -i", sizeof(diffargs));
@@ -394,11 +400,12 @@ cvs_diff(int argc, char **argv)
 			pflag = 1;
 			break;
 		case 'r':
-			if ((darg.rev1 == NULL) && (darg.date1 == NULL))
-				darg.rev1 = optarg;
-			else if ((darg.rev2 == NULL) && (darg.date2 == NULL))
-				darg.rev2 = optarg;
-			else {
+			if ((dap->rev1 == NULL) && (dap->date1 == NULL)) {
+				dap->rev1 = optarg;
+			} else if ((dap->rev2 == NULL) &&
+			    (dap->date2 == NULL)) {
+				dap->rev2 = optarg;
+			} else {
 				cvs_log(LP_ERR,
 				    "no more than two revisions/dates can "
 				    "be specified");
@@ -414,34 +421,24 @@ cvs_diff(int argc, char **argv)
 		}
 	}
 
-	argc -= optind;
-	argv += optind;
-
-	if (argc == 0) {
-		cvs_files = cvs_file_get(".", flags);
-	} else
-		cvs_files = cvs_file_getspec(argv, argc, 0);
-	if (cvs_files == NULL)
-		return (EX_DATAERR);
-
-	cvs_file_examine(cvs_files, cvs_diff_file, &darg);
-
-	root = cvs_files->cf_ddat->cd_root;
-	if (root->cr_method != CVS_METHOD_LOCAL) {
-		cvs_senddir(root, cvs_files);
-		cvs_sendreq(root, CVS_REQ_DIFF, NULL);
-	}
-
+	*arg = optind;
 	return (0);
 }
 
+int
+cvs_diff_cleanup(void)
+{
+	if (dap != NULL)
+		free(dap);
+	return (0);
+}
 
 /*
  * cvs_diff_sendflags()
  *
  */
 int
-cvs_diff_sendflags(struct cvsroot *root, struct diff_arg *dap)
+cvs_diff_sendflags(struct cvsroot *root)
 {
 	/* send the flags */
 	if (Nflag && (cvs_sendarg(root, "-N", 0) < 0))
@@ -487,11 +484,8 @@ cvs_diff_file(struct cvs_file *cfp, void *arg)
 	BUF *b1, *b2;
 	RCSNUM *r1, *r2;
 	RCSFILE *rf;
-	struct diff_arg *dap;
 	struct cvs_ent *entp;
 	struct cvsroot *root;
-
-	dap = (struct diff_arg *)arg;
 
 	if (cfp->cf_type == DT_DIR) {
 		if (cfp->cf_cvstat == CVS_FST_UNKNOWN) {
@@ -500,11 +494,13 @@ cvs_diff_file(struct cvs_file *cfp, void *arg)
 			    CVS_FILE_NAME(cfp));
 		} else {
 			root = cfp->cf_ddat->cd_root;
+#if 0
 			if ((cfp->cf_parent == NULL) ||
 			    (root != cfp->cf_parent->cf_ddat->cd_root)) {
 				cvs_connect(root);
-				cvs_diff_sendflags(root, dap);
+				cvs_diff_sendflags(root);
 			}
+#endif
 
 			cvs_senddir(root, cfp);
 		}

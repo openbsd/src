@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.44 2005/03/24 01:21:49 jfb Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.45 2005/03/30 17:43:04 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -87,90 +87,90 @@ static TAILQ_HEAD(, cvs_var) cvs_variables;
  */
 struct cvs_cmd cvs_cdt[] = {
 	{
-		CVS_OP_ADD, "add",      { "ad",  "new" }, cvs_add,
+		CVS_OP_ADD, "add",      { "ad",  "new" }, &cvs_add, 
 		"[-k opt] [-m msg] file ...",
 		"k:m:",
 		"Add a new file/directory to the repository",
-		NULL, NULL
+		NULL
 	},
 	{
-		CVS_OP_ADMIN, "admin",    { "adm", "rcs" }, cvs_admin,
+		CVS_OP_ADMIN, "admin",    { "adm", "rcs" }, &cvs_admin,
 		"",
-		"",
+		"a:A:b::c:e::Ik:l::Lm:n:N:o:qs:t:u::U",
 		"Administration front end for rcs",
-		NULL, NULL
+		NULL
 	},
 	{
-		CVS_OP_ANNOTATE, "annotate", { "ann"        }, cvs_annotate,
+		CVS_OP_ANNOTATE, "annotate", { "ann"        }, &cvs_annotate,
 		"[-flR] [-D date | -r rev] ...",
 		"D:flRr:",
 		"Show last revision where each line was modified",
-		NULL, NULL
+		NULL
 	},
 	{
-		CVS_OP_CHECKOUT, "checkout", { "co",  "get" }, cvs_checkout,
+		CVS_OP_CHECKOUT, "checkout", { "co",  "get" }, &cvs_checkout,
 		"[-AcflNnPpRs] [-D date | -r rev] [-d dir] [-j rev] [-k mode] "
 		"[-t id] module ...",
 		"AcD:d:fj:k:lNnPRr:st:",
 		"Checkout sources for editing",
-		NULL, NULL
+		NULL
 	},
 	{
-		CVS_OP_COMMIT, "commit",   { "ci",  "com" }, cvs_commit,
+		CVS_OP_COMMIT, "commit",   { "ci",  "com" }, &cvs_commit,
 		"[-flR] [-F logfile | -m msg] [-r rev] ...",
 		"F:flm:Rr:",
 		"Check files into the repository",
-		NULL, NULL
+		NULL
 	},
 	{
-		CVS_OP_DIFF, "diff",     { "di",  "dif" }, cvs_diff,
+		CVS_OP_DIFF, "diff",     { "di",  "dif" }, &cvs_diff,
 		"[-cilNpu] [-D date] [-r rev] ...",
 		"cD:ilNpr:u",
 		"Show differences between revisions",
-		NULL, NULL
+		NULL
 	},
 	{
 		CVS_OP_EDIT, "edit",     {              }, NULL,
 		"",
 		"",
 		"Get ready to edit a watched file",
-		NULL, NULL
+		NULL
 	},
 	{
 		CVS_OP_EDITORS, "editors",  {              }, NULL,
 		"",
 		"",
 		"See who is editing a watched file",
-		NULL, NULL
+		NULL
 	},
 	{
 		CVS_OP_EXPORT, "export",   { "ex",  "exp" }, NULL,
 		"",
 		"",
 		"Export sources from CVS, similar to checkout",
-		NULL, NULL
+		NULL
 	},
 	{
-		CVS_OP_HISTORY, "history",  { "hi",  "his" }, cvs_history,
+		CVS_OP_HISTORY, "history",  { "hi",  "his" }, &cvs_history,
 		"",
-		"",
+		"acelm:oTt:u:wx:z:",
 		"Show repository access history",
-		NULL, NULL
+		NULL
 	},
 	{
-		CVS_OP_IMPORT, "import",   { "im",  "imp" }, cvs_import,
+		CVS_OP_IMPORT, "import",   { "im",  "imp" }, &cvs_import,
 		"[-d] [-b branch] [-I ign] [-k subst] [-m msg] "
 		"repository vendor-tag release-tags ...",
 		"b:dI:k:m:",
 		"Import sources into CVS, using vendor branches",
-		NULL, NULL
+		NULL
 	},
 	{
-		CVS_OP_INIT, "init",     {              }, cvs_init,
+		CVS_OP_INIT, "init",     {              }, &cvs_init,
 		"",
 		"",
 		"Create a CVS repository if it doesn't exist",
-		NULL, NULL
+		NULL
 	},
 #if defined(HAVE_KERBEROS)
 	{
@@ -178,120 +178,120 @@ struct cvs_cmd cvs_cdt[] = {
 		"",
 		"",
 		"Start a Kerberos authentication CVS server",
-		NULL, NULL
+		NULL
 	},
 #endif
 	{
-		CVS_OP_LOG, "log",      { "lo"         }, cvs_getlog,
+		CVS_OP_LOG, "log",      { "lo"         }, &cvs_getlog,
 		"[-bhlNRt] [-d dates] [-r revisions] [-s states] [-w logins]",
-		"",
+		"d:hlRr:",
 		"Print out history information for files",
-		NULL, NULL
+		NULL
 	},
 	{
 		-1, "login",    {}, NULL,
 		"",
 		"",
 		"Prompt for password for authenticating server",
-		NULL, NULL
+		NULL
 	},
 	{
 		-1, "logout",   {}, NULL,
 		"",
 		"",
 		"Removes entry in .cvspass for remote repository",
-		NULL, NULL
+		NULL
 	},
 	{
 		CVS_OP_RDIFF, "rdiff",    {}, NULL,
 		"",
 		"",
 		"Create 'patch' format diffs between releases",
-		NULL, NULL
+		NULL
 	},
 	{
 		CVS_OP_RELEASE, "release",  {}, NULL,
 		"[-d]",
 		"d",
 		"Indicate that a Module is no longer in use",
-		NULL, NULL
+		NULL
 	},
 	{
-		CVS_OP_REMOVE, "remove",   { "rm", "delete" }, cvs_remove,
+		CVS_OP_REMOVE, "remove",   { "rm", "delete" }, &cvs_remove,
 		"[-flR] file ...",
 		"flR",
 		"Remove an entry from the repository",
-		NULL, NULL
+		NULL
 	},
 	{
 		CVS_OP_RLOG, "rlog",     {}, NULL,
 		"",
 		"",
 		"Print out history information for a module",
-		NULL, NULL
+		NULL
 	},
 	{
 		CVS_OP_RTAG, "rtag",     {}, NULL,
 		"",
 		"",
 		"Add a symbolic tag to a module",
-		NULL, NULL
+		NULL
 	},
 	{
-		CVS_OP_SERVER, "server",   {}, cvs_server,
+		CVS_OP_SERVER, "server",   {}, NULL,
 		"",
 		"",
 		"Server mode",
-		NULL, NULL
+		NULL
 	},
 	{
-		CVS_OP_STATUS, "status",   { "st", "stat" }, cvs_status,
+		CVS_OP_STATUS, "status",   { "st", "stat" }, &cvs_status,
 		"[-lRv]",
 		"lRv",
 		"Display status information on checked out files",
-		NULL, NULL
+		NULL
 	},
 	{
-		CVS_OP_TAG, "tag",      { "ta", "freeze" }, cvs_tag,
+		CVS_OP_TAG, "tag",      { "ta", "freeze" }, &cvs_tag,
 		"[-bcdFflR] [-D date | -r rev] tagname",
 		"bcD:dFflRr:",
 		"Add a symbolic tag to checked out version of files",
-		NULL, NULL
+		NULL
 	},
 	{
 		CVS_OP_UNEDIT, "unedit",   {}, NULL,
 		"",
 		"",
 		"Undo an edit command",
-		NULL, NULL
+		NULL
 	},
 	{
-		CVS_OP_UPDATE, "update",   { "up", "upd" }, cvs_update,
+		CVS_OP_UPDATE, "update",   { "up", "upd" }, &cvs_update,
 		"[-ACdflPpR] [-D date | -r rev] [-I ign] [-j rev] [-k mode] "
 		"[-t id] ...",
-		"",
+		"ACD:dflPpQqRr:",
 		"Bring work tree in sync with repository",
-		NULL, NULL
+		NULL
 	},
 	{
-		CVS_OP_VERSION, "version",  { "ve", "ver" }, cvs_version,
+		CVS_OP_VERSION, "version",  { "ve", "ver" }, &cvs_version, 
 		"", "",
 		"Show current CVS version(s)",
-		NULL, NULL
+		NULL
 	},
 	{
 		CVS_OP_WATCH, "watch",    {}, NULL,
 		"",
 		"",
 		"Set watches",
-		NULL, NULL
+		NULL
 	},
 	{
 		CVS_OP_WATCHERS, "watchers", {}, NULL,
 		"",
 		"",
 		"See who is watching a file",
-		NULL, NULL
+		NULL
 	},
 };
 
@@ -398,7 +398,7 @@ main(int argc, char **argv)
 		exit(EX_USAGE);
 	}
 
-	if (cmdp->cmd_hdlr == NULL) {
+	if (cmdp->cmd_info == NULL) {
 		cvs_log(LP_ERR, "command `%s' not implemented", cvs_command);
 		exit(1);
 	}
@@ -423,12 +423,14 @@ main(int argc, char **argv)
 	for (ret = 1; ret < argc; ret++)
 		cmd_argv[cmd_argc++] = argv[ret];
 
-	ret = (*cmdp->cmd_hdlr)(cmd_argc, cmd_argv);
+	ret = cvs_startcmd(cmdp, cmd_argc, cmd_argv);
 	if (ret == EX_USAGE) {
 		fprintf(stderr, "Usage: %s %s %s\n", __progname, cvs_command,
 		    cmdp->cmd_synopsis);
 	}
 
+	if (cmdp->cmd_info->cmd_cleanup != NULL)
+		cmdp->cmd_info->cmd_cleanup();
 	if (cvs_files != NULL)
 		cvs_file_free(cvs_files);
 	if (cvs_msg != NULL)

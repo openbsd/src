@@ -1,4 +1,4 @@
-/*	$OpenBSD: getlog.c,v 1.15 2005/03/26 08:09:54 tedu Exp $	*/
+/*	$OpenBSD: getlog.c,v 1.16 2005/03/30 17:43:04 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -53,32 +53,35 @@ static void cvs_getlog_print   (const char *, RCSFILE *, u_int);
 #endif
 static int  cvs_getlog_file    (CVSFILE *, void *);
 
+int cvs_getlog_options(char *, int, char **, int *);
 
+struct cvs_cmd_info cvs_getlog = {
+	cvs_getlog_options,
+	NULL,
+	cvs_getlog_file,
+	NULL, NULL,
+	CF_RECURSE,
+	CVS_REQ_LOG,
+	CVS_CMD_SENDDIR | CVS_CMD_ALLOWSPEC | CVS_CMD_SENDARGS2
+};
 
-/*
- * cvs_getlog()
- *
- * Implement the `cvs log' command.
- */
+static int rfonly = 0;
+static int honly = 0;
+
 int
-cvs_getlog(int argc, char **argv)
+cvs_getlog_options(char *opt, int argc, char **argv, int *arg)
 {
-	int i, rfonly, honly, flags;
-	struct cvsroot *root;
+	int ch;
 
-	flags = CF_RECURSE;
-	rfonly = 0;
-	honly = 0;
-
-	while ((i = getopt(argc, argv, "d:hlRr:")) != -1) {
-		switch (i) {
+	while ((ch = getopt(argc, argv, opt)) != -1) {
+		switch (ch) {
 		case 'd':
 			break;
 		case 'h':
 			honly = 1;
 			break;
 		case 'l':
-			flags &= ~CF_RECURSE;
+			cvs_getlog.file_flags &= ~CF_RECURSE;
 			break;
 		case 'R':
 			rfonly = 1;
@@ -90,39 +93,7 @@ cvs_getlog(int argc, char **argv)
 		}
 	}
 
-	argc -= optind;
-	argv += optind;
-
-	if (argc == 0)
-		cvs_files = cvs_file_get(".", flags);
-	else
-		cvs_files = cvs_file_getspec(argv, argc, flags);
-	if (cvs_files == NULL)
-		return (EX_DATAERR);
-
-	root = CVS_DIR_ROOT(cvs_files);
-	if (root == NULL) {
-		cvs_log(LP_ERR,
-		    "No CVSROOT specified!  Please use the `-d' option");
-		cvs_log(LP_ERR,
-		    "or set the CVSROOT environment variable.");
-		return (EX_USAGE);
-	}
-
-	if ((root->cr_method != CVS_METHOD_LOCAL) && (cvs_connect(root) < 0))
-		return (EX_PROTOCOL);
-
-	cvs_file_examine(cvs_files, cvs_getlog_file, NULL);
-
-	if (root->cr_method != CVS_METHOD_LOCAL) {
-		cvs_senddir(root, cvs_files);
-		if (argc > 0) {
-			for (i = 0; i < argc; i++)
-				cvs_sendarg(root, argv[i], 0);
-		}
-		cvs_sendreq(root, CVS_REQ_LOG, NULL);
-	}
-
+	*arg = optind;
 	return (0);
 }
 
