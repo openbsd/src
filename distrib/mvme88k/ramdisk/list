@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.10 2002/02/09 17:02:14 deraadt Exp $
+#	$OpenBSD: list,v 1.11 2002/04/21 17:14:17 deraadt Exp $
 
 COPY	${OBJDIR}/raminst		raminst
 LINK	raminst			bin/cat
@@ -41,10 +41,7 @@ LINK	raminst			sbin/mount_mfs
 LINK	raminst			sbin/newfs
 LINK	raminst			sbin/reboot
 LINK	raminst			sbin/route
-LINK	raminst			sbin/slattach
 LINK	raminst			sbin/umount
-LINK	raminst			usr/bin/awk
-LINK	raminst			usr/bin/cut
 LINK	raminst			usr/bin/ftp
 LINK	raminst			usr/bin/egrep
 LINK	raminst			usr/bin/grep
@@ -52,18 +49,18 @@ LINK	raminst			usr/bin/gzip
 LINK	raminst			usr/bin/more
 LINK	raminst			usr/bin/less
 LINK	raminst			usr/bin/sed
-LINK	raminst			usr/bin/sort
 LINK	raminst			usr/bin/tar
 LINK	raminst			usr/bin/pax
-LINK	raminst			usr/bin/tip
 SPECIAL	/bin/rm raminst
 
 # copy the MAKEDEV script and make some devices
-COPY	${DESTDIR}/dev/MAKEDEV	dev/MAKEDEV
+SPECIAL sed -e '/^[ 	]*#[ 	].*$/d' -e '/^[ 	]*#$/d' < ${DESTDIR}/dev/MAKEDEV	 > dev/MAKEDEV
 SPECIAL	cd dev; sh MAKEDEV ramdisk
 
-# we need the contents of /usr/mdec (XXX)
-# COPY	${DESTDIR}/usr/mdec/*	usr/mdec
+# mdec
+COPY    ${DESTDIR}/usr/mdec/installboot usr/mdec
+COPY    ${DESTDIR}/usr/mdec/bootxx 	usr/mdec
+COPY    ${DESTDIR}/usr/mdec/bootsd 	usr/mdec
 
 # various files that we need in /etc for the install
 COPY	${DESTDIR}/etc/group		etc
@@ -75,22 +72,16 @@ COPY	${DESTDIR}/etc/services		etc
 COPY	${DESTDIR}/etc/spwd.db		etc
 
 # and the common installation tools
-COPY	${TOPDIR}/common/dot.commonutils	.commonutils
 COPY	${TOPDIR}/common/termcap.vt	usr/share/misc/termcap
 
 # the disktab explanation file
 COPY	disktab.preinstall		etc
 
 # and the installation tools
-LINK    sbin/init                 	usr/bin/vi
 COPY	dot.profile			.profile
-COPY	dot.instutils			.instutils
 COPY	install.sh			install
 SPECIAL sed -e '/^[ 	]*#[ 	].*$/d' -e '/^[ 	]*#$/d' -e "s/^ARCH=ARCH$/ARCH=`arch -ks`/" < ${CURDIR}/install.md > install.md
 COPY	install.sub			install.sub
 COPY	disktab.shadow			etc/disktab.shadow
-COPY    ${DESTDIR}/usr/mdec/installboot usr/mdec
-COPY    ${DESTDIR}/usr/mdec/bootxx 	usr/mdec
-COPY    ${DESTDIR}/usr/mdec/bootsd 	usr/mdec
 
 SPECIAL	chmod 755 install
