@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.64 2000/02/11 14:51:50 jason Exp $
+#	$OpenBSD: files.pci,v 1.65 2000/03/16 20:33:48 deraadt Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -178,10 +178,10 @@ file	dev/pci/if_ti.c			ti
 attach	ne at pci with ne_pci: rtl80x9
 file	dev/pci/if_ne_pci.c		ne_pci
 
-# Invertix AEON
-device	aeon: crypto
-attach	aeon at pci
-file	dev/pci/aeon.c			aeon
+# Hi/fn 7751 
+device	hifn: crypto
+attach	hifn at pci
+file	dev/pci/hifn7751.c		hifn
 
 # Winbond W89C840F ethernet
 device	wb: ether, ifnet, mii, ifmedia

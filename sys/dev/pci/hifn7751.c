@@ -1,7 +1,7 @@
-/*	$OpenBSD: hifn7751.c,v 1.9 2000/03/15 14:55:51 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.10 2000/03/16 20:33:47 deraadt Exp $	*/
 
 /*
- * Invertex AEON driver
+ * Invertex AEON / Hi/fn 7751 driver
  * Copyright (c) 1999 Invertex Inc. All rights reserved.
  * Copyright (c) 1999 Theo de Raadt
  *
@@ -50,47 +50,47 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
-#include <dev/pci/aeonvar.h>
-#include <dev/pci/aeonreg.h>
+#include <dev/pci/hifn7751var.h>
+#include <dev/pci/hifn7751reg.h>
 
-#undef AEON_DEBUG
+#undef HIFN_DEBUG
 
 /*
  * Prototypes and count for the pci_device structure
  */
-int aeon_probe		__P((struct device *, void *, void *));
-void aeon_attach	__P((struct device *, struct device *, void *));
+int hifn_probe		__P((struct device *, void *, void *));
+void hifn_attach	__P((struct device *, struct device *, void *));
 
-struct cfattach aeon_ca = {
-	sizeof(struct aeon_softc), aeon_probe, aeon_attach,
+struct cfattach hifn_ca = {
+	sizeof(struct hifn_softc), hifn_probe, hifn_attach,
 };
 
-struct cfdriver aeon_cd = {
-	0, "aeon", DV_DULL
+struct cfdriver hifn_cd = {
+	0, "hifn", DV_DULL
 };
 
-void	aeon_reset_board	__P((struct aeon_softc *));
-int	aeon_enable_crypto	__P((struct aeon_softc *, pcireg_t));
-void	aeon_init_dma	__P((struct aeon_softc *));
-void	aeon_init_pci_registers __P((struct aeon_softc *));
-int	aeon_checkram __P((struct aeon_softc *));
-int	aeon_intr		__P((void *));
-u_int	aeon_write_command __P((const struct aeon_command_buf_data *,
+void	hifn_reset_board	__P((struct hifn_softc *));
+int	hifn_enable_crypto	__P((struct hifn_softc *, pcireg_t));
+void	hifn_init_dma	__P((struct hifn_softc *));
+void	hifn_init_pci_registers __P((struct hifn_softc *));
+int	hifn_checkram __P((struct hifn_softc *));
+int	hifn_intr		__P((void *));
+u_int	hifn_write_command __P((const struct hifn_command_buf_data *,
 	    u_int8_t *));
-int	aeon_build_command __P((const struct aeon_command * cmd,
-	    struct aeon_command_buf_data *));
-int	aeon_mbuf __P((struct mbuf *, int *np, long *pp, int *lp, int maxp,
+int	hifn_build_command __P((const struct hifn_command * cmd,
+	    struct hifn_command_buf_data *));
+int	hifn_mbuf __P((struct mbuf *, int *np, long *pp, int *lp, int maxp,
 	    int *nicealign));
-u_int32_t aeon_next_signature __P((u_int a, u_int cnt));
+u_int32_t hifn_next_signature __P((u_int a, u_int cnt));
 
 /*
  * Used for round robin crypto requests
  */
-int aeon_num_devices = 0;
-struct aeon_softc *aeon_devices[AEON_MAX_DEVICES];
+int hifn_num_devices = 0;
+struct hifn_softc *hifn_devices[HIFN_MAX_DEVICES];
 
 int
-aeon_probe(parent, match, aux)
+hifn_probe(parent, match, aux)
 	struct device *parent;
 	void *match;
 	void *aux;
@@ -107,11 +107,11 @@ aeon_probe(parent, match, aux)
 }
 
 void 
-aeon_attach(parent, self, aux)
+hifn_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct aeon_softc *sc = (struct aeon_softc *)self;
+	struct hifn_softc *sc = (struct hifn_softc *)self;
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
@@ -135,7 +135,7 @@ aeon_attach(parent, self, aux)
 		return;
 	}
 
-	if (pci_mem_find(pc, pa->pa_tag, AEON_BAR0, &iobase, &iosize, NULL)) {
+	if (pci_mem_find(pc, pa->pa_tag, HIFN_BAR0, &iobase, &iosize, NULL)) {
 		printf(": can't find mem space\n");
 		return;
 	}
@@ -145,7 +145,7 @@ aeon_attach(parent, self, aux)
 	}
 	sc->sc_st0 = pa->pa_memt;
 
-	if (pci_mem_find(pc, pa->pa_tag, AEON_BAR1, &iobase, &iosize, NULL)) {
+	if (pci_mem_find(pc, pa->pa_tag, HIFN_BAR1, &iobase, &iosize, NULL)) {
 		printf(": can't find mem space\n");
 		return;
 	}
@@ -154,7 +154,7 @@ aeon_attach(parent, self, aux)
 		return;
 	}
 	sc->sc_st1 = pa->pa_memt;
-#ifdef AEON_DEBUG
+#ifdef HIFN_DEBUG
 	printf(" mem %x %x", sc->sc_sh0, sc->sc_sh1);
 #endif
 
@@ -186,20 +186,20 @@ aeon_attach(parent, self, aux)
                 bus_dmamem_free(sc->sc_dmat, &seg, rseg);
                 return;
         }
-        sc->sc_dma = (struct aeon_dma *)kva;
+        sc->sc_dma = (struct hifn_dma *)kva;
 	bzero(sc->sc_dma, sizeof(*sc->sc_dma));
 
-	aeon_reset_board(sc);
+	hifn_reset_board(sc);
 
-	if (aeon_enable_crypto(sc, pa->pa_id) != 0) {
+	if (hifn_enable_crypto(sc, pa->pa_id) != 0) {
 		printf("%s: crypto enabling failed\n", sc->sc_dv.dv_xname);
 		return;
 	}
 
-	aeon_init_dma(sc);
-	aeon_init_pci_registers(sc);
+	hifn_init_dma(sc);
+	hifn_init_pci_registers(sc);
 
-	if (aeon_checkram(sc) != 0)
+	if (hifn_checkram(sc) != 0)
 		sc->sc_drammodel = 1;
 
 	/*
@@ -207,9 +207,9 @@ aeon_attach(parent, self, aux)
 	 * pointers and may have changed the value we send to the RAM Config
 	 * Register.
 	 */
-	aeon_reset_board(sc);
-	aeon_init_dma(sc);
-	aeon_init_pci_registers(sc);
+	hifn_reset_board(sc);
+	hifn_init_dma(sc);
+	hifn_init_pci_registers(sc);
 
 	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
 	    pa->pa_intrline, &ih)) {
@@ -217,7 +217,7 @@ aeon_attach(parent, self, aux)
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
-	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, aeon_intr, sc,
+	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, hifn_intr, sc,
 	    self->dv_xname);
 	if (sc->sc_ih == NULL) {
 		printf(": couldn't establish interrupt\n");
@@ -227,8 +227,8 @@ aeon_attach(parent, self, aux)
 		return;
 	}
 
-	aeon_devices[aeon_num_devices] = sc;
-	aeon_num_devices++;
+	hifn_devices[hifn_num_devices] = sc;
+	hifn_num_devices++;
 
 	printf(", %s\n", intrstr);
 }
@@ -238,15 +238,15 @@ aeon_attach(parent, self, aux)
  * from the reset (i.e. initial values are assigned elsewhere).
  */
 void
-aeon_reset_board(sc)
-	struct aeon_softc *sc;
+hifn_reset_board(sc)
+	struct hifn_softc *sc;
 {
 	/*
 	 * Set polling in the DMA configuration register to zero.  0x7 avoids
 	 * resetting the board and zeros out the other fields.
 	 */
-	WRITE_REG_1(sc, AEON_1_DMA_CNFG, AEON_DMACNFG_MSTRESET |
-	    AEON_DMACNFG_DMARESET | AEON_DMACNFG_MODE);
+	WRITE_REG_1(sc, HIFN_1_DMA_CNFG, HIFN_DMACNFG_MSTRESET |
+	    HIFN_DMACNFG_DMARESET | HIFN_DMACNFG_MODE);
 
 	/*
 	 * Now that polling has been disabled, we have to wait 1 ms
@@ -258,7 +258,7 @@ aeon_reset_board(sc)
 	 * field, the BRD reset field, and the manditory 1 at position 2.
 	 * Every other field is set to zero.
 	 */
-	WRITE_REG_1(sc, AEON_1_DMA_CNFG, AEON_DMACNFG_MODE);
+	WRITE_REG_1(sc, HIFN_1_DMA_CNFG, HIFN_DMACNFG_MODE);
 
 	/*
 	 * Wait another millisecond for the board to reset.
@@ -268,12 +268,12 @@ aeon_reset_board(sc)
 	/*
 	 * Turn off the reset!  (No joke.)
 	 */
-	WRITE_REG_1(sc, AEON_1_DMA_CNFG, AEON_DMACNFG_MSTRESET |
-	    AEON_DMACNFG_DMARESET | AEON_DMACNFG_MODE);
+	WRITE_REG_1(sc, HIFN_1_DMA_CNFG, HIFN_DMACNFG_MSTRESET |
+	    HIFN_DMACNFG_DMARESET | HIFN_DMACNFG_MODE);
 }
 
 u_int32_t
-aeon_next_signature(a, cnt)
+hifn_next_signature(a, cnt)
 	u_int a, cnt;
 {
 	int i, v;
@@ -314,12 +314,12 @@ struct pci2id {
 
 /*
  * Checks to see if crypto is already enabled.  If crypto isn't enable,
- * "aeon_enable_crypto" is called to enable it.  The check is important,
+ * "hifn_enable_crypto" is called to enable it.  The check is important,
  * as enabling crypto twice will lock the board.
  */
 int 
-aeon_enable_crypto(sc, pciid)
-	struct aeon_softc *sc;
+hifn_enable_crypto(sc, pciid)
+	struct hifn_softc *sc;
 	pcireg_t pciid;
 {
 	u_int32_t dmacfg, ramcfg, encl, addr, i;
@@ -334,68 +334,68 @@ aeon_enable_crypto(sc, pciid)
 	}
 
 	if (offtbl == NULL) {
-#ifdef AEON_DEBUG
+#ifdef HIFN_DEBUG
 		printf("%s: Unknown card!\n", sc->sc_dv.dv_xname);
 #endif
 		return (1);
 	}
 
-	ramcfg = READ_REG_0(sc, AEON_0_PUCNFG);
-	dmacfg = READ_REG_1(sc, AEON_1_DMA_CNFG);
+	ramcfg = READ_REG_0(sc, HIFN_0_PUCNFG);
+	dmacfg = READ_REG_1(sc, HIFN_1_DMA_CNFG);
 
 	/*
 	 * The RAM config register's encrypt level bit needs to be set before
 	 * every read performed on the encryption level register.
 	 */
-	WRITE_REG_0(sc, AEON_0_PUCNFG, ramcfg | AEON_PUCNFG_CHIPID);
+	WRITE_REG_0(sc, HIFN_0_PUCNFG, ramcfg | HIFN_PUCNFG_CHIPID);
 
-	encl = READ_REG_0(sc, AEON_0_PUSTAT);
+	encl = READ_REG_0(sc, HIFN_0_PUSTAT);
 
 	/*
 	 * Make sure we don't re-unlock.  Two unlocks kills chip until the
 	 * next reboot.
 	 */
 	if (encl == 0x1020 || encl == 0x1120) {
-#ifdef AEON_DEBUG
+#ifdef HIFN_DEBUG
 		printf("%s: Strong Crypto already enabled!\n",
 		    sc->sc_dv.dv_xname);
 #endif
-		WRITE_REG_0(sc, AEON_0_PUCNFG, ramcfg);
-		WRITE_REG_1(sc, AEON_1_DMA_CNFG, dmacfg);
+		WRITE_REG_0(sc, HIFN_0_PUCNFG, ramcfg);
+		WRITE_REG_1(sc, HIFN_1_DMA_CNFG, dmacfg);
 		return 0;	/* success */
 	}
 
 	if (encl != 0 && encl != 0x3020) {
-#ifdef AEON_DEBUG
+#ifdef HIFN_DEBUG
 		printf("%: Unknown encryption level\n",  sc->sc_dv.dv_xname);
 #endif
 		return 1;
 	}
 
-	WRITE_REG_1(sc, AEON_1_DMA_CNFG, AEON_DMACNFG_UNLOCK |
-	    AEON_DMACNFG_MSTRESET | AEON_DMACNFG_DMARESET | AEON_DMACNFG_MODE);
-	addr = READ_REG_1(sc, AEON_UNLOCK_SECRET1);
-	WRITE_REG_1(sc, AEON_UNLOCK_SECRET2, 0);
+	WRITE_REG_1(sc, HIFN_1_DMA_CNFG, HIFN_DMACNFG_UNLOCK |
+	    HIFN_DMACNFG_MSTRESET | HIFN_DMACNFG_DMARESET | HIFN_DMACNFG_MODE);
+	addr = READ_REG_1(sc, HIFN_UNLOCK_SECRET1);
+	WRITE_REG_1(sc, HIFN_UNLOCK_SECRET2, 0);
 
 	for (i = 0; i <= 12; i++) {
-		addr = aeon_next_signature(addr, offtbl[i] + 0x101);
-		WRITE_REG_1(sc, AEON_UNLOCK_SECRET2, addr);
+		addr = hifn_next_signature(addr, offtbl[i] + 0x101);
+		WRITE_REG_1(sc, HIFN_UNLOCK_SECRET2, addr);
 
 		DELAY(1000);
 	}
 
-	WRITE_REG_0(sc, AEON_0_PUCNFG, ramcfg | AEON_PUCNFG_CHIPID);
-	encl = READ_REG_0(sc, AEON_0_PUSTAT);
+	WRITE_REG_0(sc, HIFN_0_PUCNFG, ramcfg | HIFN_PUCNFG_CHIPID);
+	encl = READ_REG_0(sc, HIFN_0_PUSTAT);
 
-#ifdef AEON_DEBUG
+#ifdef HIFN_DEBUG
 	if (encl != 0x1020 && encl != 0x1120)
 		printf("Encryption engine is permanently locked until next system reset.");
 	else
 		printf("Encryption engine enabled successfully!");
 #endif
 
-	WRITE_REG_0(sc, AEON_0_PUCNFG, ramcfg);
-	WRITE_REG_1(sc, AEON_1_DMA_CNFG, dmacfg);
+	WRITE_REG_0(sc, HIFN_0_PUCNFG, ramcfg);
+	WRITE_REG_1(sc, HIFN_1_DMA_CNFG, dmacfg);
 
 	switch(encl) {
 	case 0x3020:
@@ -417,49 +417,49 @@ aeon_enable_crypto(sc, pciid)
 
 /*
  * Give initial values to the registers listed in the "Register Space"
- * section of the AEON Software Development reference manual.
+ * section of the HIFN Software Development reference manual.
  */
 void 
-aeon_init_pci_registers(sc)
-	struct aeon_softc *sc;
+hifn_init_pci_registers(sc)
+	struct hifn_softc *sc;
 {
 	/* write fixed values needed by the Initialization registers */
-	WRITE_REG_0(sc, AEON_0_PUCTRL, AEON_PUCTRL_DMAENA);
-	WRITE_REG_0(sc, AEON_0_FIFOCNFG, AEON_FIFOCNFG_THRESHOLD);
-	WRITE_REG_0(sc, AEON_0_PUIER, AEON_PUIER_DSTOVER);
+	WRITE_REG_0(sc, HIFN_0_PUCTRL, HIFN_PUCTRL_DMAENA);
+	WRITE_REG_0(sc, HIFN_0_FIFOCNFG, HIFN_FIFOCNFG_THRESHOLD);
+	WRITE_REG_0(sc, HIFN_0_PUIER, HIFN_PUIER_DSTOVER);
 
 	/* write all 4 ring address registers */
-	WRITE_REG_1(sc, AEON_1_DMA_CRAR, vtophys(sc->sc_dma->cmdr));
-	WRITE_REG_1(sc, AEON_1_DMA_SRAR, vtophys(sc->sc_dma->srcr));
-	WRITE_REG_1(sc, AEON_1_DMA_DRAR, vtophys(sc->sc_dma->dstr));
-	WRITE_REG_1(sc, AEON_1_DMA_RRAR, vtophys(sc->sc_dma->resr));
+	WRITE_REG_1(sc, HIFN_1_DMA_CRAR, vtophys(sc->sc_dma->cmdr));
+	WRITE_REG_1(sc, HIFN_1_DMA_SRAR, vtophys(sc->sc_dma->srcr));
+	WRITE_REG_1(sc, HIFN_1_DMA_DRAR, vtophys(sc->sc_dma->dstr));
+	WRITE_REG_1(sc, HIFN_1_DMA_RRAR, vtophys(sc->sc_dma->resr));
 
 	/* write status register */
-	WRITE_REG_1(sc, AEON_1_DMA_CSR, AEON_DMACSR_D_CTRL_ENA |
-	    AEON_DMACSR_R_CTRL_ENA | AEON_DMACSR_S_CTRL_ENA |
-	    AEON_DMACSR_C_CTRL_ENA);
-	WRITE_REG_1(sc, AEON_1_DMA_IER, AEON_DMAIER_R_DONE);
+	WRITE_REG_1(sc, HIFN_1_DMA_CSR, HIFN_DMACSR_D_CTRL_ENA |
+	    HIFN_DMACSR_R_CTRL_ENA | HIFN_DMACSR_S_CTRL_ENA |
+	    HIFN_DMACSR_C_CTRL_ENA);
+	WRITE_REG_1(sc, HIFN_1_DMA_IER, HIFN_DMAIER_R_DONE);
 
 #if 0
 #if BYTE_ORDER == BIG_ENDIAN
 	    (0x1 << 7) |
 #endif
 #endif
-	WRITE_REG_0(sc, AEON_0_PUCNFG, AEON_PUCNFG_COMPSING |
-	    AEON_PUCNFG_DRFR_128 | AEON_PUCNFG_TCALLPHASES |
-	    AEON_PUCNFG_TCDRVTOTEM | AEON_PUCNFG_BUS32 |
-	    (sc->sc_drammodel ? AEON_PUCNFG_DRAM : AEON_PUCNFG_SRAM));
+	WRITE_REG_0(sc, HIFN_0_PUCNFG, HIFN_PUCNFG_COMPSING |
+	    HIFN_PUCNFG_DRFR_128 | HIFN_PUCNFG_TCALLPHASES |
+	    HIFN_PUCNFG_TCDRVTOTEM | HIFN_PUCNFG_BUS32 |
+	    (sc->sc_drammodel ? HIFN_PUCNFG_DRAM : HIFN_PUCNFG_SRAM));
 
-	WRITE_REG_0(sc, AEON_0_PUISR, AEON_PUISR_DSTOVER);
-	WRITE_REG_1(sc, AEON_1_DMA_CNFG, AEON_DMACNFG_MSTRESET |
-	    AEON_DMACNFG_DMARESET | AEON_DMACNFG_MODE |
-	    AEON_DMACNFG_LAST |
-	    ((AEON_POLL_FREQUENCY << 16 ) & AEON_DMACNFG_POLLFREQ) |
-	    ((AEON_POLL_SCALAR << 8) & AEON_DMACNFG_POLLINVAL));
+	WRITE_REG_0(sc, HIFN_0_PUISR, HIFN_PUISR_DSTOVER);
+	WRITE_REG_1(sc, HIFN_1_DMA_CNFG, HIFN_DMACNFG_MSTRESET |
+	    HIFN_DMACNFG_DMARESET | HIFN_DMACNFG_MODE |
+	    HIFN_DMACNFG_LAST |
+	    ((HIFN_POLL_FREQUENCY << 16 ) & HIFN_DMACNFG_POLLFREQ) |
+	    ((HIFN_POLL_SCALAR << 8) & HIFN_DMACNFG_POLLINVAL));
 }
 
 /*
- * There are both DRAM and SRAM models of the aeon board.
+ * There are both DRAM and SRAM models of the hifn board.
  * A bit in the "ram configuration register" needs to be
  * set according to the model.  The driver will guess one
  * way or the other -- and then call this routine to verify.
@@ -467,18 +467,18 @@ aeon_init_pci_registers(sc)
  * 0: RAM setting okay,  -1: Current RAM setting in error
  */
 int 
-aeon_checkram(sc)
-	struct aeon_softc *sc;
+hifn_checkram(sc)
+	struct hifn_softc *sc;
 {
-	aeon_base_command_t write_command = {(0x3 << 13), 0, 8, 0};
-	aeon_base_command_t read_command = {(0x2 << 13), 0, 0, 8};
+	hifn_base_command_t write_command = {(0x3 << 13), 0, 8, 0};
+	hifn_base_command_t read_command = {(0x2 << 13), 0, 0, 8};
 	u_int8_t data[8] = {'1', '2', '3', '4', '5', '6', '7', '8'};
 	u_int8_t *source_buf, *dest_buf;
-	struct aeon_dma *dma = sc->sc_dma;
-	const u_int32_t masks = AEON_D_VALID | AEON_D_LAST |
-	    AEON_D_MASKDONEIRQ;
+	struct hifn_dma *dma = sc->sc_dma;
+	const u_int32_t masks = HIFN_D_VALID | HIFN_D_LAST |
+	    HIFN_D_MASKDONEIRQ;
 
-#if (AEON_D_RSIZE < 3)
+#if (HIFN_D_RSIZE < 3)
 #error "descriptor ring size too small DRAM/SRAM check"
 #endif
 
@@ -490,7 +490,7 @@ aeon_checkram(sc)
 	dest_buf = sc->sc_dma->result_bufs[2];
 
 	/* build write command */
-	*(aeon_base_command_t *) sc->sc_dma->command_bufs[0] = write_command;
+	*(hifn_base_command_t *) sc->sc_dma->command_bufs[0] = write_command;
 	bcopy(data, source_buf, sizeof(data));
 
 	dma->srcr[0].p = vtophys(source_buf);
@@ -499,25 +499,25 @@ aeon_checkram(sc)
 	dma->cmdr[0].l = 16 | masks;
 	dma->srcr[0].l = 8 | masks;
 	dma->dstr[0].l = 8 | masks;
-	dma->resr[0].l = AEON_MAX_RESULT | masks;
+	dma->resr[0].l = HIFN_MAX_RESULT | masks;
 
 	DELAY(1000);	/* let write command execute */
-	if (dma->resr[0].l & AEON_D_VALID)
+	if (dma->resr[0].l & HIFN_D_VALID)
 		printf("%s: SRAM/DRAM detection error -- result[0] valid still set\n",
 		    sc->sc_dv.dv_xname);
 
 	/* Build read command */
-	*(aeon_base_command_t *) sc->sc_dma->command_bufs[1] = read_command;
+	*(hifn_base_command_t *) sc->sc_dma->command_bufs[1] = read_command;
 
 	dma->srcr[1].p = vtophys(source_buf);
 	dma->dstr[1].p = vtophys(dest_buf);
 	dma->cmdr[1].l = 16 | masks;
 	dma->srcr[1].l = 8 | masks;
 	dma->dstr[1].l = 8 | masks;
-	dma->resr[1].l = AEON_MAX_RESULT | masks;
+	dma->resr[1].l = HIFN_MAX_RESULT | masks;
 
 	DELAY(1000);	/* let read command execute */
-	if (dma->resr[1].l & AEON_D_VALID)
+	if (dma->resr[1].l & HIFN_D_VALID)
 		printf("%s: SRAM/DRAM detection error -- result[1] valid still set\n",
 		    sc->sc_dv.dv_xname);
 	return (memcmp(dest_buf, data, sizeof(data)) == 0) ? 0 : -1;
@@ -527,22 +527,22 @@ aeon_checkram(sc)
  * Initialize the descriptor rings.
  */
 void 
-aeon_init_dma(sc)
-	struct aeon_softc *sc;
+hifn_init_dma(sc)
+	struct hifn_softc *sc;
 {
-	struct aeon_dma *dma = sc->sc_dma;
+	struct hifn_dma *dma = sc->sc_dma;
 	int i;
 
 	/* initialize static pointer values */
-	for (i = 0; i < AEON_D_CMD_RSIZE; i++)
+	for (i = 0; i < HIFN_D_CMD_RSIZE; i++)
 		dma->cmdr[i].p = vtophys(dma->command_bufs[i]);
-	for (i = 0; i < AEON_D_RES_RSIZE; i++)
+	for (i = 0; i < HIFN_D_RES_RSIZE; i++)
 		dma->resr[i].p = vtophys(dma->result_bufs[i]);
 
-	dma->cmdr[AEON_D_CMD_RSIZE].p = vtophys(dma->cmdr);
-	dma->srcr[AEON_D_SRC_RSIZE].p = vtophys(dma->srcr);
-	dma->dstr[AEON_D_DST_RSIZE].p = vtophys(dma->dstr);
-	dma->resr[AEON_D_RES_RSIZE].p = vtophys(dma->resr);
+	dma->cmdr[HIFN_D_CMD_RSIZE].p = vtophys(dma->cmdr);
+	dma->srcr[HIFN_D_SRC_RSIZE].p = vtophys(dma->srcr);
+	dma->dstr[HIFN_D_DST_RSIZE].p = vtophys(dma->dstr);
+	dma->resr[HIFN_D_RES_RSIZE].p = vtophys(dma->resr);
 }
 
 /*
@@ -550,64 +550,64 @@ aeon_init_dma(sc)
  * command buffer size.
  */
 u_int
-aeon_write_command(const struct aeon_command_buf_data *cmd_data,
+hifn_write_command(const struct hifn_command_buf_data *cmd_data,
     u_int8_t *command_buf)
 {
 	u_int8_t *command_buf_pos = command_buf;
-	const aeon_base_command_t *base_cmd = &cmd_data->base_cmd;
-	const aeon_mac_command_t *mac_cmd = &cmd_data->mac_cmd;
-	const aeon_crypt_command_t *crypt_cmd = &cmd_data->crypt_cmd;
-	int     using_mac = base_cmd->masks & AEON_BASE_CMD_MAC;
-	int     using_crypt = base_cmd->masks & AEON_BASE_CMD_CRYPT;
+	const hifn_base_command_t *base_cmd = &cmd_data->base_cmd;
+	const hifn_mac_command_t *mac_cmd = &cmd_data->mac_cmd;
+	const hifn_crypt_command_t *crypt_cmd = &cmd_data->crypt_cmd;
+	int     using_mac = base_cmd->masks & HIFN_BASE_CMD_MAC;
+	int     using_crypt = base_cmd->masks & HIFN_BASE_CMD_CRYPT;
 
 	/* write base command structure */
-	*((aeon_base_command_t *) command_buf_pos) = *base_cmd;
-	command_buf_pos += sizeof(aeon_base_command_t);
+	*((hifn_base_command_t *) command_buf_pos) = *base_cmd;
+	command_buf_pos += sizeof(hifn_base_command_t);
 
 	/* Write MAC command structure */
 	if (using_mac) {
-		*((aeon_mac_command_t *) command_buf_pos) = *mac_cmd;
-		command_buf_pos += sizeof(aeon_mac_command_t);
+		*((hifn_mac_command_t *) command_buf_pos) = *mac_cmd;
+		command_buf_pos += sizeof(hifn_mac_command_t);
 	}
 
 	/* Write encryption command structure */
 	if (using_crypt) {
-		*((aeon_crypt_command_t *) command_buf_pos) = *crypt_cmd;
-		command_buf_pos += sizeof(aeon_crypt_command_t);
+		*((hifn_crypt_command_t *) command_buf_pos) = *crypt_cmd;
+		command_buf_pos += sizeof(hifn_crypt_command_t);
 	}
 
 	/* write MAC key */
-	if (mac_cmd->masks & AEON_MAC_NEW_KEY) {
-		bcopy(cmd_data->mac, command_buf_pos, AEON_MAC_KEY_LENGTH);
-		command_buf_pos += AEON_MAC_KEY_LENGTH;
+	if (mac_cmd->masks & HIFN_MAC_NEW_KEY) {
+		bcopy(cmd_data->mac, command_buf_pos, HIFN_MAC_KEY_LENGTH);
+		command_buf_pos += HIFN_MAC_KEY_LENGTH;
 	}
 
 	/* Write crypto key */
-	if (crypt_cmd->masks & AEON_CRYPT_CMD_NEW_KEY) {
-		u_int32_t alg = crypt_cmd->masks & AEON_CRYPT_CMD_ALG_MASK;
-		u_int32_t key_len = (alg == AEON_CRYPT_CMD_ALG_DES) ?
-		AEON_DES_KEY_LENGTH : AEON_3DES_KEY_LENGTH;
+	if (crypt_cmd->masks & HIFN_CRYPT_CMD_NEW_KEY) {
+		u_int32_t alg = crypt_cmd->masks & HIFN_CRYPT_CMD_ALG_MASK;
+		u_int32_t key_len = (alg == HIFN_CRYPT_CMD_ALG_DES) ?
+		HIFN_DES_KEY_LENGTH : HIFN_3DES_KEY_LENGTH;
 		bcopy(cmd_data->ck, command_buf_pos, key_len);
 		command_buf_pos += key_len;
 	}
 
 	/* Write crypto iv */
-	if (crypt_cmd->masks & AEON_CRYPT_CMD_NEW_IV) {
-		bcopy(cmd_data->iv, command_buf_pos, AEON_IV_LENGTH);
-		command_buf_pos += AEON_IV_LENGTH;
+	if (crypt_cmd->masks & HIFN_CRYPT_CMD_NEW_IV) {
+		bcopy(cmd_data->iv, command_buf_pos, HIFN_IV_LENGTH);
+		command_buf_pos += HIFN_IV_LENGTH;
 	}
 
 	/* Write 8 zero bytes we're not sending crypt or MAC structures */
-	if (!(base_cmd->masks & AEON_BASE_CMD_MAC) &&
-	    !(base_cmd->masks & AEON_BASE_CMD_CRYPT)) {
+	if (!(base_cmd->masks & HIFN_BASE_CMD_MAC) &&
+	    !(base_cmd->masks & HIFN_BASE_CMD_CRYPT)) {
 		*((u_int32_t *) command_buf_pos) = 0;
 		command_buf_pos += 4;
 		*((u_int32_t *) command_buf_pos) = 0;
 		command_buf_pos += 4;
 	}
 
-	if ((command_buf_pos - command_buf) > AEON_MAX_COMMAND)
-		printf("aeon: Internal Error -- Command buffer overflow.\n");
+	if ((command_buf_pos - command_buf) > HIFN_MAX_COMMAND)
+		printf("hifn: Internal Error -- Command buffer overflow.\n");
 	return command_buf_pos - command_buf;
 }
 
@@ -617,33 +617,33 @@ aeon_write_command(const struct aeon_command_buf_data *cmd_data,
  * -1 if given bad command input was given.
  */
 int 
-aeon_build_command(const struct aeon_command *cmd,
-    struct aeon_command_buf_data * cmd_buf_data)
+hifn_build_command(const struct hifn_command *cmd,
+    struct hifn_command_buf_data * cmd_buf_data)
 {
-#define AEON_COMMAND_CHECKING
+#define HIFN_COMMAND_CHECKING
 
 	u_int32_t flags = cmd->flags;
-	aeon_base_command_t *base_cmd = &cmd_buf_data->base_cmd;
-	aeon_mac_command_t *mac_cmd = &cmd_buf_data->mac_cmd;
-	aeon_crypt_command_t *crypt_cmd = &cmd_buf_data->crypt_cmd;
+	hifn_base_command_t *base_cmd = &cmd_buf_data->base_cmd;
+	hifn_mac_command_t *mac_cmd = &cmd_buf_data->mac_cmd;
+	hifn_crypt_command_t *crypt_cmd = &cmd_buf_data->crypt_cmd;
 	u_int   mac_length;
-#ifdef AEON_COMMAND_CHECKING
+#ifdef HIFN_COMMAND_CHECKING
 	int     dest_diff;
 #endif
 
-	bzero(cmd_buf_data, sizeof(struct aeon_command_buf_data));
+	bzero(cmd_buf_data, sizeof(struct hifn_command_buf_data));
 
-#ifdef AEON_COMMAND_CHECKING
-	if (!(!!(flags & AEON_DECODE) ^ !!(flags & AEON_ENCODE))) {
-		printf("aeon: encode/decode setting error\n");
+#ifdef HIFN_COMMAND_CHECKING
+	if (!(!!(flags & HIFN_DECODE) ^ !!(flags & HIFN_ENCODE))) {
+		printf("hifn: encode/decode setting error\n");
 		return -1;
 	}
-	if ((flags & AEON_CRYPT_DES) && (flags & AEON_CRYPT_3DES)) {
-		printf("aeon: Too many crypto algorithms set in command\n");
+	if ((flags & HIFN_CRYPT_DES) && (flags & HIFN_CRYPT_3DES)) {
+		printf("hifn: Too many crypto algorithms set in command\n");
 		return -1;
 	}
-	if ((flags & AEON_MAC_SHA1) && (flags & AEON_MAC_MD5)) {
-		printf("aeon: Too many MAC algorithms set in command\n");
+	if ((flags & HIFN_MAC_SHA1) && (flags & HIFN_MAC_MD5)) {
+		printf("hifn: Too many MAC algorithms set in command\n");
 		return -1;
 	}
 #endif
@@ -653,11 +653,11 @@ aeon_build_command(const struct aeon_command *cmd,
 	 * Compute the mac value length -- leave at zero if not MAC'ing
 	 */
 	mac_length = 0;
-	if (AEON_USING_MAC(flags)) {
-		mac_length = (flags & AEON_MAC_TRUNC) ? AEON_MAC_TRUNC_LENGTH :
-		    ((flags & AEON_MAC_MD5) ? AEON_MD5_LENGTH : AEON_SHA1_LENGTH);
+	if (HIFN_USING_MAC(flags)) {
+		mac_length = (flags & HIFN_MAC_TRUNC) ? HIFN_MAC_TRUNC_LENGTH :
+		    ((flags & HIFN_MAC_MD5) ? HIFN_MD5_LENGTH : HIFN_SHA1_LENGTH);
 	}
-#ifdef AEON_COMMAND_CHECKING
+#ifdef HIFN_COMMAND_CHECKING
 	/*
 	 * Check for valid src/dest buf sizes
 	 */
@@ -668,12 +668,12 @@ aeon_build_command(const struct aeon_command *cmd,
 	 */
 
 	if (cmd->src_npa <= mac_length) {
-		printf("aeon:  command source buffer has no data\n");
+		printf("hifn:  command source buffer has no data\n");
 		return -1;
 	}
-	dest_diff = (flags & AEON_ENCODE) ? mac_length : -mac_length;
+	dest_diff = (flags & HIFN_ENCODE) ? mac_length : -mac_length;
 	if (cmd->dst_npa < cmd->dst_npa + dest_diff) {
-		printf("aeon:  command dest length %u too short -- needed %u\n",
+		printf("hifn:  command dest length %u too short -- needed %u\n",
 		    cmd->dst_npa, cmd->dst_npa + dest_diff);
 		return -1;
 	}
@@ -682,18 +682,18 @@ aeon_build_command(const struct aeon_command *cmd,
 	/*
 	 * Set MAC bit
 	 */
-	if (AEON_USING_MAC(flags))
-		base_cmd->masks |= AEON_BASE_CMD_MAC;
+	if (HIFN_USING_MAC(flags))
+		base_cmd->masks |= HIFN_BASE_CMD_MAC;
 
 	/* Set Encrypt bit */
-	if (AEON_USING_CRYPT(flags))
-		base_cmd->masks |= AEON_BASE_CMD_CRYPT;
+	if (HIFN_USING_CRYPT(flags))
+		base_cmd->masks |= HIFN_BASE_CMD_CRYPT;
 
 	/*
 	 * Set Decode bit
 	 */
-	if (flags & AEON_DECODE)
-		base_cmd->masks |= AEON_BASE_CMD_DECODE;
+	if (flags & HIFN_DECODE)
+		base_cmd->masks |= HIFN_BASE_CMD_DECODE;
 
 	/*
 	 * Set total source and dest counts.  These values are the same as the
@@ -711,15 +711,15 @@ aeon_build_command(const struct aeon_command *cmd,
 	 **  Building up mac command
 	 **
 	 **/
-	if (AEON_USING_MAC(flags)) {
+	if (HIFN_USING_MAC(flags)) {
 
 		/*
 		 * Set the MAC algorithm and trunc setting
 		 */
-		mac_cmd->masks |= (flags & AEON_MAC_MD5) ?
-		    AEON_MAC_CMD_ALG_MD5 : AEON_MAC_CMD_ALG_SHA1;
-		if (flags & AEON_MAC_TRUNC)
-			mac_cmd->masks |= AEON_MAC_CMD_TRUNC;
+		mac_cmd->masks |= (flags & HIFN_MAC_MD5) ?
+		    HIFN_MAC_CMD_ALG_MD5 : HIFN_MAC_CMD_ALG_SHA1;
+		if (flags & HIFN_MAC_TRUNC)
+			mac_cmd->masks |= HIFN_MAC_CMD_TRUNC;
 
 		/*
 	         * We always use HMAC mode, assume MAC values are appended to the
@@ -727,14 +727,14 @@ aeon_build_command(const struct aeon_command *cmd,
 	         * on encodes, and order auth/encryption engines as needed by
 	         * IPSEC
 	         */
-		mac_cmd->masks |= AEON_MAC_CMD_MODE_HMAC | AEON_MAC_CMD_APPEND |
-		    AEON_MAC_CMD_POS_IPSEC;
+		mac_cmd->masks |= HIFN_MAC_CMD_MODE_HMAC | HIFN_MAC_CMD_APPEND |
+		    HIFN_MAC_CMD_POS_IPSEC;
 
 		/*
 	         * Setup to send new MAC key if needed.
 	         */
-		if (flags & AEON_MAC_NEW_KEY) {
-			mac_cmd->masks |= AEON_MAC_CMD_NEW_KEY;
+		if (flags & HIFN_MAC_NEW_KEY) {
+			mac_cmd->masks |= HIFN_MAC_CMD_NEW_KEY;
 			cmd_buf_data->mac = cmd->mac;
 		}
 		/*
@@ -742,26 +742,26 @@ aeon_build_command(const struct aeon_command *cmd,
 	         */
 		mac_cmd->header_skip = cmd->mac_header_skip;
 		mac_cmd->source_count = cmd->src_npa - cmd->mac_header_skip;
-		if (flags & AEON_DECODE)
+		if (flags & HIFN_DECODE)
 			mac_cmd->source_count -= mac_length;
 	}
 
-	if (AEON_USING_CRYPT(flags)) {
+	if (HIFN_USING_CRYPT(flags)) {
 		/*
 	         * Set the encryption algorithm bits.
 	         */
-		crypt_cmd->masks |= (flags & AEON_CRYPT_DES) ?
-		    AEON_CRYPT_CMD_ALG_DES : AEON_CRYPT_CMD_ALG_3DES;
+		crypt_cmd->masks |= (flags & HIFN_CRYPT_DES) ?
+		    HIFN_CRYPT_CMD_ALG_DES : HIFN_CRYPT_CMD_ALG_3DES;
 
 		/* We always use CBC mode and send a new IV (as needed by
 		 * IPSec). */
-		crypt_cmd->masks |= AEON_CRYPT_CMD_MODE_CBC | AEON_CRYPT_CMD_NEW_IV;
+		crypt_cmd->masks |= HIFN_CRYPT_CMD_MODE_CBC | HIFN_CRYPT_CMD_NEW_IV;
 
 		/*
 	         * Setup to send new encrypt key if needed.
 	         */
-		if (flags & AEON_CRYPT_CMD_NEW_KEY) {
-			crypt_cmd->masks |= AEON_CRYPT_CMD_NEW_KEY;
+		if (flags & HIFN_CRYPT_CMD_NEW_KEY) {
+			crypt_cmd->masks |= HIFN_CRYPT_CMD_NEW_KEY;
 			cmd_buf_data->ck = cmd->ck;
 		}
 		/*
@@ -769,13 +769,13 @@ aeon_build_command(const struct aeon_command *cmd,
 	         */
 		crypt_cmd->header_skip = cmd->crypt_header_skip;
 		crypt_cmd->source_count = cmd->src_npa - cmd->crypt_header_skip;
-		if (flags & AEON_DECODE)
+		if (flags & HIFN_DECODE)
 			crypt_cmd->source_count -= mac_length;
 
 
-#ifdef AEON_COMMAND_CHECKING
+#ifdef HIFN_COMMAND_CHECKING
 		if (crypt_cmd->source_count % 8 != 0) {
-			printf("aeon:  Error -- encryption source %u not a multiple of 8!\n",
+			printf("hifn:  Error -- encryption source %u not a multiple of 8!\n",
 			    crypt_cmd->source_count);
 			return -1;
 		}
@@ -785,7 +785,7 @@ aeon_build_command(const struct aeon_command *cmd,
 
 
 #if 1
-	printf("aeon: command parameters"
+	printf("hifn: command parameters"
 	    " -- session num %u"
 	    " -- base t.s.c: %u"
 	    " -- base t.d.c: %u"
@@ -801,7 +801,7 @@ aeon_build_command(const struct aeon_command *cmd,
 }
 
 int
-aeon_mbuf(m, np, pp, lp, maxp, nicep)
+hifn_mbuf(m, np, pp, lp, maxp, nicep)
 	struct mbuf *m;
 	int *np;
 	long *pp;
@@ -864,25 +864,25 @@ aeon_mbuf(m, np, pp, lp, maxp, nicep)
 }
 
 int 
-aeon_crypto(struct aeon_command *cmd)
+hifn_crypto(struct hifn_command *cmd)
 {
 	u_int32_t cmdlen;
 	static u_int32_t current_device = 0;
-	struct	aeon_softc *sc;
-	struct	aeon_dma *dma;
-	struct	aeon_command_buf_data cmd_buf_data;
+	struct	hifn_softc *sc;
+	struct	hifn_dma *dma;
+	struct	hifn_command_buf_data cmd_buf_data;
 	int	cmdi, srci, dsti, resi, nicealign = 0;
 	int     error, s, i;
 
-	/* Pick the aeon board to send the data to.  Right now we use a round
+	/* Pick the hifn board to send the data to.  Right now we use a round
 	 * robin approach. */
-	sc = aeon_devices[current_device++];
-	if (current_device == aeon_num_devices)
+	sc = hifn_devices[current_device++];
+	if (current_device == hifn_num_devices)
 		current_device = 0;
 	dma = sc->sc_dma;
 
 	if (cmd->src_npa == 0 && cmd->src_m)
-		cmd->src_l = aeon_mbuf(cmd->src_m, &cmd->src_npa,
+		cmd->src_l = hifn_mbuf(cmd->src_m, &cmd->src_npa,
 		    cmd->src_packp, cmd->src_packl, MAX_SCATTER, &nicealign);
 	if (cmd->src_l == 0)
 		return (-1);
@@ -902,17 +902,17 @@ aeon_crypto(struct aeon_command *cmd)
 	} else
 		cmd->dst_m = cmd->src_m;
 
-	cmd->dst_l = aeon_mbuf(cmd->dst_m, &cmd->dst_npa,
+	cmd->dst_l = hifn_mbuf(cmd->dst_m, &cmd->dst_npa,
 	    cmd->dst_packp, cmd->dst_packl, MAX_SCATTER, NULL);
 	if (cmd->dst_l == 0)
 		return (-1);
 
-	if (aeon_build_command(cmd, &cmd_buf_data) != 0)
-		return AEON_CRYPTO_BAD_INPUT;
+	if (hifn_build_command(cmd, &cmd_buf_data) != 0)
+		return HIFN_CRYPTO_BAD_INPUT;
 
 	printf("%s: Entering cmd: stat %8x ien %8x u %d/%d/%d/%d n %d/%d\n",
 	    sc->sc_dv.dv_xname,
-	    READ_REG_1(sc, AEON_1_DMA_CSR), READ_REG_1(sc, AEON_1_DMA_IER),
+	    READ_REG_1(sc, HIFN_1_DMA_CSR), READ_REG_1(sc, HIFN_1_DMA_IER),
 	    dma->cmdu, dma->srcu, dma->dstu, dma->resu, cmd->src_npa,
 	    cmd->dst_npa);
 
@@ -922,68 +922,68 @@ aeon_crypto(struct aeon_command *cmd)
 	 * need 1 cmd, and 1 res
 	 * need N src, and N dst
 	 */
-	while (dma->cmdu+1 > AEON_D_CMD_RSIZE ||
-	    dma->srcu+cmd->src_npa > AEON_D_SRC_RSIZE ||
-	    dma->dstu+cmd->dst_npa > AEON_D_DST_RSIZE ||
-	    dma->resu+1 > AEON_D_RES_RSIZE) {
-		if (cmd->flags & AEON_DMA_FULL_NOBLOCK) {
+	while (dma->cmdu+1 > HIFN_D_CMD_RSIZE ||
+	    dma->srcu+cmd->src_npa > HIFN_D_SRC_RSIZE ||
+	    dma->dstu+cmd->dst_npa > HIFN_D_DST_RSIZE ||
+	    dma->resu+1 > HIFN_D_RES_RSIZE) {
+		if (cmd->flags & HIFN_DMA_FULL_NOBLOCK) {
 			splx(s);
-			return (AEON_CRYPTO_RINGS_FULL);
+			return (HIFN_CRYPTO_RINGS_FULL);
 		}
-		tsleep((caddr_t) dma, PZERO, "aeonring", 1);
+		tsleep((caddr_t) dma, PZERO, "hifnring", 1);
 	}
 
-	if (dma->cmdi == AEON_D_CMD_RSIZE) {
+	if (dma->cmdi == HIFN_D_CMD_RSIZE) {
 		cmdi = 0, dma->cmdi = 1;
-		dma->cmdr[AEON_D_CMD_RSIZE].l = AEON_D_VALID | AEON_D_LAST |
-		    AEON_D_MASKDONEIRQ | AEON_D_JUMP;
+		dma->cmdr[HIFN_D_CMD_RSIZE].l = HIFN_D_VALID | HIFN_D_LAST |
+		    HIFN_D_MASKDONEIRQ | HIFN_D_JUMP;
 	} else
 		cmdi = dma->cmdi++;
 
-	if (dma->resi == AEON_D_RES_RSIZE) {
+	if (dma->resi == HIFN_D_RES_RSIZE) {
 		resi = 0, dma->resi = 1;
-		dma->resr[AEON_D_RES_RSIZE].l = AEON_D_VALID | AEON_D_LAST |
-		    AEON_D_MASKDONEIRQ | AEON_D_JUMP;
+		dma->resr[HIFN_D_RES_RSIZE].l = HIFN_D_VALID | HIFN_D_LAST |
+		    HIFN_D_MASKDONEIRQ | HIFN_D_JUMP;
 	} else
 		resi = dma->resi++;
 
-	cmdlen = aeon_write_command(&cmd_buf_data, dma->command_bufs[cmdi]);
-	dma->aeon_commands[cmdi] = cmd;
+	cmdlen = hifn_write_command(&cmd_buf_data, dma->command_bufs[cmdi]);
+	dma->hifn_commands[cmdi] = cmd;
 	/* .p for command/result already set */
-	dma->cmdr[cmdi].l = cmdlen | AEON_D_VALID | AEON_D_LAST |
-	    AEON_D_MASKDONEIRQ;
+	dma->cmdr[cmdi].l = cmdlen | HIFN_D_VALID | HIFN_D_LAST |
+	    HIFN_D_MASKDONEIRQ;
 	dma->cmdu += 1;
 
 	for (i = 0; i < cmd->src_npa; i++) {
 		int last = 0;
 
 		if (i == cmd->src_npa-1)
-			last = AEON_D_LAST;
+			last = HIFN_D_LAST;
 
-		if (dma->srci == AEON_D_SRC_RSIZE) {
+		if (dma->srci == HIFN_D_SRC_RSIZE) {
 			srci = 0, dma->srci = 1;
-			dma->srcr[AEON_D_SRC_RSIZE].l = AEON_D_VALID |
-			    AEON_D_MASKDONEIRQ | AEON_D_JUMP;
+			dma->srcr[HIFN_D_SRC_RSIZE].l = HIFN_D_VALID |
+			    HIFN_D_MASKDONEIRQ | HIFN_D_JUMP;
 		} else
 			srci = dma->srci++;
 		dma->srcr[srci].p = vtophys(cmd->src_packp[i]);
-		dma->srcr[srci].l = cmd->src_packl[i] | AEON_D_VALID |
-		    AEON_D_MASKDONEIRQ | last;
+		dma->srcr[srci].l = cmd->src_packl[i] | HIFN_D_VALID |
+		    HIFN_D_MASKDONEIRQ | last;
 	}
 	dma->srcu += cmd->src_npa;
 
 	for (i = 0; i < cmd->dst_npa; i++) {
 		int last = 0;
 
-		if (dma->dsti == AEON_D_DST_RSIZE) {
+		if (dma->dsti == HIFN_D_DST_RSIZE) {
 			dsti = 0, dma->dsti = 1;
-			dma->dstr[AEON_D_DST_RSIZE].l = AEON_D_VALID |
-			    AEON_D_MASKDONEIRQ | AEON_D_JUMP;
+			dma->dstr[HIFN_D_DST_RSIZE].l = HIFN_D_VALID |
+			    HIFN_D_MASKDONEIRQ | HIFN_D_JUMP;
 		} else
 			dsti = dma->dsti++;
 		dma->dstr[dsti].p = vtophys(cmd->dst_packp[i]);
-		dma->dstr[dsti].l = cmd->dst_packl[i] | AEON_D_VALID |
-		    AEON_D_MASKDONEIRQ | last;
+		dma->dstr[dsti].l = cmd->dst_packl[i] | HIFN_D_VALID |
+		    HIFN_D_MASKDONEIRQ | last;
 	}
 	dma->dstu += cmd->dst_npa;
 
@@ -991,7 +991,7 @@ aeon_crypto(struct aeon_command *cmd)
 	 * Unlike other descriptors, we don't mask done interrupt from
 	 * result descriptor.
 	 */
-	dma->resr[resi].l = AEON_MAX_RESULT | AEON_D_VALID | AEON_D_LAST;
+	dma->resr[resi].l = HIFN_MAX_RESULT | HIFN_D_VALID | HIFN_D_LAST;
 	dma->resu += 1;
 
 	/*
@@ -1000,8 +1000,8 @@ aeon_crypto(struct aeon_command *cmd)
 	 * than one command in the queue.
 	 */
 	if (dma->slots_in_use > 1) {
-		WRITE_REG_1(sc, AEON_1_DMA_IER,
-		    AEON_DMAIER_R_DONE | AEON_DMAIER_C_WAIT);
+		WRITE_REG_1(sc, HIFN_1_DMA_IER,
+		    HIFN_DMAIER_R_DONE | HIFN_DMAIER_C_WAIT);
 	}
 
 	/*
@@ -1021,55 +1021,55 @@ aeon_crypto(struct aeon_command *cmd)
 
 	printf("%s: command: stat %8x ier %8x\n",
 	    sc->sc_dv.dv_xname,
-	    READ_REG_1(sc, AEON_1_DMA_CSR), READ_REG_1(sc, AEON_1_DMA_IER));
+	    READ_REG_1(sc, HIFN_1_DMA_CSR), READ_REG_1(sc, HIFN_1_DMA_IER));
 
 	splx(s);
 	return 0;		/* success */
 }
 
 int 
-aeon_intr(arg)
+hifn_intr(arg)
 	void *arg;
 {
-	struct aeon_softc *sc = arg;
-	struct aeon_dma *dma = sc->sc_dma;
+	struct hifn_softc *sc = arg;
+	struct hifn_dma *dma = sc->sc_dma;
 	u_int32_t dmacsr;
 
-	dmacsr = READ_REG_1(sc, AEON_1_DMA_CSR);
+	dmacsr = READ_REG_1(sc, HIFN_1_DMA_CSR);
 
 	printf("%s: irq: stat %8x ien %8x u %d/%d/%d/%d\n",
 	    sc->sc_dv.dv_xname,
-	    dmacsr, READ_REG_1(sc, AEON_1_DMA_IER),
+	    dmacsr, READ_REG_1(sc, HIFN_1_DMA_IER),
 	    dma->cmdu, dma->srcu, dma->dstu, dma->resu);
 
-	if ((dmacsr & (AEON_DMACSR_C_WAIT|AEON_DMACSR_R_DONE)) == 0)
+	if ((dmacsr & (HIFN_DMACSR_C_WAIT|HIFN_DMACSR_R_DONE)) == 0)
 		return (0);
 
-	if ((dma->slots_in_use == 0) && (dmacsr & AEON_DMACSR_C_WAIT)) {
+	if ((dma->slots_in_use == 0) && (dmacsr & HIFN_DMACSR_C_WAIT)) {
 		/*
 		 * If no slots to process and we received a "waiting on
 		 * result" interrupt, we disable the "waiting on result"
 		 * (by clearing it).
 		 */
-		WRITE_REG_1(sc, AEON_1_DMA_IER, AEON_DMAIER_R_DONE);
+		WRITE_REG_1(sc, HIFN_1_DMA_IER, HIFN_DMAIER_R_DONE);
 	} else {
-		if (dma->slots_in_use > AEON_D_RSIZE)
+		if (dma->slots_in_use > HIFN_D_RSIZE)
 			printf("%s: Internal Error -- ring overflow\n",
 			    sc->sc_dv.dv_xname);
 
 		while (dma->slots_in_use > 0) {
 			u_int32_t wake_pos = dma->wakeup_rpos;
-			struct aeon_command *cmd = dma->aeon_commands[wake_pos];
+			struct hifn_command *cmd = dma->hifn_commands[wake_pos];
 	
 			/* if still valid, stop processing */
-			if (dma->resr[wake_pos].l & AEON_D_VALID)
+			if (dma->resr[wake_pos].l & HIFN_D_VALID)
 				break;
 	
-			if (AEON_USING_MAC(cmd->flags) && (cmd->flags & AEON_DECODE)) {
+			if (HIFN_USING_MAC(cmd->flags) && (cmd->flags & HIFN_DECODE)) {
 				u_int8_t *result_buf = dma->result_bufs[wake_pos];
 	
 				cmd->result_status = (result_buf[8] & 0x2) ?
-				    AEON_MAC_BAD : 0;
+				    HIFN_MAC_BAD : 0;
 				printf("%s: byte index 8 of result 0x%02x\n",
 				    sc->sc_dv.dv_xname, (u_int32_t) result_buf[8]);
 			}
@@ -1080,7 +1080,7 @@ aeon_intr(arg)
 			else
 				cmd->dest_ready_callback(cmd);
 	
-			if (++dma->wakeup_rpos == AEON_D_RSIZE)
+			if (++dma->wakeup_rpos == HIFN_D_RSIZE)
 				dma->wakeup_rpos = 0;
 			dma->slots_in_use--;
 		}
@@ -1091,6 +1091,6 @@ aeon_intr(arg)
 	 * register.  If we still have slots to process and we received a
 	 * waiting interrupt, this will interupt us again.
 	 */
-	WRITE_REG_1(sc, AEON_1_DMA_CSR, AEON_DMACSR_R_DONE|AEON_DMACSR_C_WAIT);
+	WRITE_REG_1(sc, HIFN_1_DMA_CSR, HIFN_DMACSR_R_DONE|HIFN_DMACSR_C_WAIT);
 	return (1);
 }

@@ -1,7 +1,7 @@
-/*	$OpenBSD: hifn7751var.h,v 1.3 1999/02/24 06:09:45 deraadt Exp $	*/
+/*	$OpenBSD: hifn7751var.h,v 1.4 2000/03/16 20:33:48 deraadt Exp $	*/
 
 /*
- *  Invertex AEON driver
+ *  Invertex AEON / Hi/fn 7751 driver
  *  Copyright (c) 1999 Invertex Inc. All rights reserved.
  *
  *  Please send any comments, feedback, bug-fixes, or feature requests to
@@ -33,58 +33,58 @@
  *
  */
 
-#ifndef __AEON_EXPORT_H__
-#define __AEON_EXPORT_H__
+#ifndef __HIFN_EXPORT_H__
+#define __HIFN_EXPORT_H__
 
 /*
  *  Length values for cryptography
  */
-#define AEON_DES_KEY_LENGTH         8
-#define AEON_3DES_KEY_LENGTH       24
-#define AEON_MAX_CRYPT_KEY_LENGTH  AEON_3DES_KEY_LENGTH
-#define AEON_IV_LENGTH              8
+#define HIFN_DES_KEY_LENGTH         8
+#define HIFN_3DES_KEY_LENGTH       24
+#define HIFN_MAX_CRYPT_KEY_LENGTH  HIFN_3DES_KEY_LENGTH
+#define HIFN_IV_LENGTH              8
 
 /*
  *  Length values for authentication
  */
-#define AEON_MAC_KEY_LENGTH   64
-#define AEON_MD5_LENGTH       16
-#define AEON_SHA1_LENGTH      20
-#define AEON_MAC_TRUNC_LENGTH 12
+#define HIFN_MAC_KEY_LENGTH   64
+#define HIFN_MD5_LENGTH       16
+#define HIFN_SHA1_LENGTH      20
+#define HIFN_MAC_TRUNC_LENGTH 12
 
 #define MAX_SCATTER 10
 
 /*
- *  aeon_command_t
+ *  hifn_command_t
  *
- *  This is the control structure used to pass commands to aeon_encrypt().
+ *  This is the control structure used to pass commands to hifn_encrypt().
  *
  *  flags
  *  -----
  *  Flags is the bitwise "or" values for command configuration.  A single
  *  encrypt direction needs to be set:
  *
- *      AEON_ENCODE or AEON_DECODE
+ *      HIFN_ENCODE or HIFN_DECODE
  *
  *  To use cryptography, a single crypto algorithm must be included:
  *
- *      AEON_CRYPT_3DES or AEON_CRYPT_DES
+ *      HIFN_CRYPT_3DES or HIFN_CRYPT_DES
  *
  *  To use authentication is used, a single MAC algorithm must be included:
  *
- *      AEON_MAC_MD5 or AEON_MAC_SHA1
+ *      HIFN_MAC_MD5 or HIFN_MAC_SHA1
  *
  *  By default MD5 uses a 16 byte hash and SHA-1 uses a 20 byte hash.
  *  If the value below is set, hash values are truncated or assumed
  *  truncated to 12 bytes:
  *
- *      AEON_MAC_TRUNC
+ *      HIFN_MAC_TRUNC
  *
  *  Keys for encryption and authentication can be sent as part of a command,
  *  or the last key value used with a particular session can be retrieved
  *  and used again if either of these flags are not specified.
  *
- *  AEON_CRYPT_NEW_KEY, AEON_MAC_NEW_KEY
+ *  HIFN_CRYPT_NEW_KEY, HIFN_MAC_NEW_KEY
  *
  *  Whether we block or not waiting for the dest data to be ready is
  *  determined by whether a callback function is given.  The other
@@ -92,20 +92,20 @@
  *  it is not okay to block while waiting for an open slot in the
  *  rings, include in the following value:
  *
- *      AEON_DMA_FULL_NOBLOCK
+ *      HIFN_DMA_FULL_NOBLOCK
  *
  *  result_flags
  *  ------------
  *  result_flags is a bitwise "or" of result values.  The result_flags
  *  values should not be considered valid until:
  *
- *       callback routine NULL:  aeon_crypto() returns
+ *       callback routine NULL:  hifn_crypto() returns
  *       callback routine set:   callback routine called
  *
- *  Right now there is only one result flag:  AEON_MAC_BAD
+ *  Right now there is only one result flag:  HIFN_MAC_BAD
  *  It's bit is set on decode operations using authentication when a
  *  hash result does not match the input hash value.
- *  The AEON_MAC_OK(r) macro can be used to help inspect this flag.
+ *  The HIFN_MAC_OK(r) macro can be used to help inspect this flag.
  *
  *  session_num
  *  -----------
@@ -165,12 +165,12 @@
  *
  *  dest_ready_callback
  *  -------------------
- *  Callback routine called from AEON's interrupt handler.  The routine
+ *  Callback routine called from HIFN's interrupt handler.  The routine
  *  must be quick and non-blocking.  The callback routine is passed a
- *  pointer to the same aeon_command_t structure used to initiate the
+ *  pointer to the same hifn_command_t structure used to initiate the
  *  command.
  *
- *  If this value is null, the aeon_crypto() routine will block until the
+ *  If this value is null, the hifn_crypto() routine will block until the
  *  dest data is ready.
  *
  *  private_data
@@ -178,7 +178,7 @@
  *  An unsigned long quantity (i.e. large enough to hold a pointer), that
  *  can be used by the callback routine if desired.
  */
-typedef struct aeon_command {
+typedef struct hifn_command {
 	u_int	flags;
 	volatile u_int result_status;
 
@@ -202,62 +202,62 @@ typedef struct aeon_command {
 	u_short mac_header_skip;
 	u_short crypt_header_skip;
 
-	void (*dest_ready_callback)(struct aeon_command *);
+	void (*dest_ready_callback)(struct hifn_command *);
 	u_long private_data;
-} aeon_command_t;
+} hifn_command_t;
 
 /*
- *  Return values for aeon_crypto()
+ *  Return values for hifn_crypto()
  */
-#define AEON_CRYPTO_SUCCESS      0
-#define AEON_CRYPTO_BAD_INPUT   -1
-#define AEON_CRYPTO_RINGS_FULL  -2
+#define HIFN_CRYPTO_SUCCESS      0
+#define HIFN_CRYPTO_BAD_INPUT   -1
+#define HIFN_CRYPTO_RINGS_FULL  -2
 
 
 /*
- *  Defines for the "config" parameter of aeon_command_t
+ *  Defines for the "config" parameter of hifn_command_t
  */
-#define AEON_ENCODE           1
-#define AEON_DECODE           2
-#define AEON_CRYPT_3DES       4
-#define AEON_CRYPT_DES        8
-#define AEON_MAC_MD5          16
-#define AEON_MAC_SHA1         32
-#define AEON_MAC_TRUNC        64
-#define AEON_CRYPT_NEW_KEY    128
-#define AEON_MAC_NEW_KEY      256
-#define AEON_DMA_FULL_NOBLOCK 512
+#define HIFN_ENCODE           1
+#define HIFN_DECODE           2
+#define HIFN_CRYPT_3DES       4
+#define HIFN_CRYPT_DES        8
+#define HIFN_MAC_MD5          16
+#define HIFN_MAC_SHA1         32
+#define HIFN_MAC_TRUNC        64
+#define HIFN_CRYPT_NEW_KEY    128
+#define HIFN_MAC_NEW_KEY      256
+#define HIFN_DMA_FULL_NOBLOCK 512
 
-#define AEON_USING_CRYPT(f) ((f) & (AEON_CRYPT_3DES|AEON_CRYPT_DES))
-#define AEON_USING_MAC(f)   ((f) & (AEON_MAC_MD5|AEON_MAC_SHA1))
+#define HIFN_USING_CRYPT(f) ((f) & (HIFN_CRYPT_3DES|HIFN_CRYPT_DES))
+#define HIFN_USING_MAC(f)   ((f) & (HIFN_MAC_MD5|HIFN_MAC_SHA1))
 
 /*
- *  Defines for the "result_status" parameter of aeon_command_t.
+ *  Defines for the "result_status" parameter of hifn_command_t.
  */
-#define AEON_MAC_BAD       1
-#define AEON_MAC_OK(r)     !((r) & AEON_MAC_BAD)
+#define HIFN_MAC_BAD       1
+#define HIFN_MAC_OK(r)     !((r) & HIFN_MAC_BAD)
 
 #ifdef _KERNEL
 
 /**************************************************************************
  *
- *  Function:  aeon_crypto
+ *  Function:  hifn_crypto
  *
  *  Purpose:   Called by external drivers to begin an encryption on the
- *             AEON board.
+ *             HIFN board.
  *
  *  Blocking/Non-blocking Issues
  *  ============================
- *  If the dest_ready_callback field of the aeon_command structure
- *  is NULL, aeon_encrypt will block until the dest_data is ready --
- *  otherwise aeon_encrypt() will return immediately and the 
+ *  If the dest_ready_callback field of the hifn_command structure
+ *  is NULL, hifn_encrypt will block until the dest_data is ready --
+ *  otherwise hifn_encrypt() will return immediately and the 
  *  dest_ready_callback routine will be called when the dest data is
  *  ready.
  *
  *  The routine can also block when waiting for an open slot when all
  *  DMA rings are full.  You can avoid this behaviour by sending the
- *  AEON_DMA_FULL_NOBLOCK as part of the command flags.  This will
- *  make aeon_crypt() return immediately when the rings are full.
+ *  HIFN_DMA_FULL_NOBLOCK as part of the command flags.  This will
+ *  make hifn_crypt() return immediately when the rings are full.
  *
  *  Return Values
  *  =============
@@ -265,13 +265,13 @@ typedef struct aeon_command {
  *
  *  Defines for negative error codes are:
  *  
- *    AEON_CRYPTO_BAD_INPUT  :  The passed in command had invalid settings.
- *    AEON_CRYPTO_RINGS_FULL :  All DMA rings were full and non-blocking
+ *    HIFN_CRYPTO_BAD_INPUT  :  The passed in command had invalid settings.
+ *    HIFN_CRYPTO_RINGS_FULL :  All DMA rings were full and non-blocking
  *                              behaviour was requested.
  *
  *************************************************************************/
-int aeon_crypto __P((aeon_command_t *command));
+int hifn_crypto __P((hifn_command_t *command));
 
 #endif /* _KERNEL */
 
-#endif /* __AEON_EXPORT_H__ */
+#endif /* __HIFN_EXPORT_H__ */
