@@ -1,4 +1,4 @@
-/*	$OpenBSD: msgs.c,v 1.22 2002/08/08 10:37:41 ho Exp $	*/
+/*	$OpenBSD: msgs.c,v 1.23 2002/08/08 11:55:07 ho Exp $	*/
 /*	$NetBSD: msgs.c,v 1.7 1995/09/28 06:57:40 tls Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)msgs.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: msgs.c,v 1.22 2002/08/08 10:37:41 ho Exp $";
+static char rcsid[] = "$OpenBSD: msgs.c,v 1.23 2002/08/08 11:55:07 ho Exp $";
 #endif
 #endif /* not lint */
 
@@ -794,7 +794,7 @@ ask(prompt)
 			in = nxtfld(inbuf);
 			if (*in) {
 				for (n=0;
-				     in[n] > ' ' && n < sizeof *fname - 1;
+				     in[n] > ' ' && n < sizeof fname - 1;
 				     n++) {
 					fname[n] = in[n];
 				}
