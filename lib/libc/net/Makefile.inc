@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.30 2000/02/23 15:39:53 itojun Exp $
+#	$OpenBSD: Makefile.inc,v 1.31 2001/08/06 14:40:47 jakob Exp $
 
 # net sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/net ${LIBCSRCDIR}/net
@@ -8,8 +8,8 @@ CFLAGS+=-DRESOLVSORT
 SRCS+=	base64.c freeaddrinfo.c gai_strerror.c getaddrinfo.c gethostnamadr.c \
 	getifaddrs.c getnameinfo.c getnetbyaddr.c getnetbyname.c getnetent.c \
 	getnetnamadr.c getproto.c getprotoent.c getprotoname.c \
-	getservbyname.c getservbyport.c getservent.c herror.c \
-	if_indextoname.c if_nameindex.c if_nametoindex.c inet_addr.c \
+	getservbyname.c getservbyport.c getservent.c getrrsetbyname.c \
+	herror.c if_indextoname.c if_nameindex.c if_nametoindex.c inet_addr.c \
 	inet_lnaof.c inet_makeaddr.c inet_neta.c inet_netof.c inet_network.c \
 	inet_net_ntop.c inet_net_pton.c inet_ntoa.c inet_ntop.c inet_pton.c \
 	ipx_addr.c ipx_ntoa.c iso_addr.c linkaddr.c ns_addr.c ns_ntoa.c \
@@ -32,8 +32,8 @@ MAN+=	byteorder.3 ethers.3 getaddrinfo.3 gethostbyname.3 getifaddrs.3 \
 	getnameinfo.3 getnetent.3 getprotoent.3 getservent.3 inet.3 \
 	if_indextoname.3 inet_net.3 iso_addr.3 link_addr.3 ns.3 ipx.3 \
 	rcmd.3 rcmdsh.3 resolver.3 net_addrcmp.3 \
-	inet6_option_space.3 inet6_rthdr_space.3
-
+	inet6_option_space.3 inet6_rthdr_space.3 \
+	getrrsetbyname.3
 
 MLINKS+=byteorder.3 htonl.3 byteorder.3 htons.3 byteorder.3 ntohl.3 \
 	byteorder.3 ntohs.3 byteorder.3 htobe16.3 byteorder.3 htobe32.3 \
@@ -82,3 +82,4 @@ MLINKS+=inet6_rthdr_space.3 inet6_rthdr_init.3 \
 	inet6_rthdr_space.3 inet6_rthdr_segments.3 \
 	inet6_rthdr_space.3 inet6_rthdr_getaddr.3 \
 	inet6_rthdr_space.3 inet6_rthdr_getflags.3
+MLINKS+=getrrsetbyname.3 freerrset.3

@@ -1,4 +1,4 @@
-/*	$OpenBSD: netdb.h,v 1.13 2001/06/05 02:38:05 deraadt Exp $	*/
+/*	$OpenBSD: netdb.h,v 1.14 2001/08/06 14:40:47 jakob Exp $	*/
 
 /*
  * ++Copyright++ 1980, 1983, 1988, 1993
@@ -204,6 +204,41 @@ struct addrinfo {
 	struct addrinfo *ai_next; /* pointer to next in list */
 };
 
+/*
+ * Flags for getrrsetbyname()
+ */
+#define RRSET_VALIDATED		1
+
+/*
+ * Return codes for getrrsetbyname()
+ */
+#define ERRSET_SUCCESS		0
+#define ERRSET_NOMEMORY		1
+#define ERRSET_FAIL		2
+#define ERRSET_INVAL		3
+#define ERRSET_NONAME		4
+#define ERRSET_NODATA		5
+
+/*
+ * Structures used by getrrsetbyname() and freerrset()
+ */
+struct rdatainfo {
+	unsigned int		rdi_length;	/* length of data */
+	unsigned char		*rdi_data;	/* record data */
+};
+
+struct rrsetinfo {
+	unsigned int		rri_flags;	/* RRSET_VALIDATED ... */
+	unsigned int		rri_rdclass;	/* class number */
+	unsigned int		rri_rdtype;	/* RR type number */
+	unsigned int		rri_ttl;	/* time to live */
+	unsigned int		rri_nrdatas;	/* size of rdatas array */
+	unsigned int		rri_nsigs;	/* size of sigs array */
+	char			*rri_name;	/* canonical name */
+	struct rdatainfo	*rri_rdatas;	/* individual records */
+	struct rdatainfo	*rri_sigs;	/* individual signatures */
+};
+
 __BEGIN_DECLS
 void		endhostent __P((void));
 void		endnetent __P((void));
@@ -238,6 +273,8 @@ int		getnameinfo __P((const struct sockaddr *, socklen_t,
 		    int));
 char		*gai_strerror __P((int));
 int		net_addrcmp __P((struct sockaddr *, struct sockaddr *));
+int		getrrsetbyname(const char *, unsigned int, unsigned int, unsigned int, struct rrsetinfo **);
+void		freerrset(struct rrsetinfo *);
 __END_DECLS
 
 /* This is nec'y to make this include file properly replace the sun version. */
