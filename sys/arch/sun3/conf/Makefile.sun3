@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sun3,v 1.24 2000/11/09 02:10:21 miod Exp $
+#	$OpenBSD: Makefile.sun3,v 1.25 2001/01/04 22:39:12 miod Exp $
 #	$NetBSD: Makefile.sun3,v 1.51 1996/09/09 21:07:08 mycroft Exp $
 
 # Makefile for OpenBSD
@@ -34,16 +34,18 @@ S!=	cd ../../../..; pwd
 SUN3=	$S/arch/sun3
 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
-CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
-		-Dmc68020 -Dsun3
-CWARNFLAGS= 	-Werror -Wall -Wstrict-prototypes \
-		-Wno-format -Wno-uninitialized -Wno-main
-CFLAGS= 	${DEBUG} ${COPTS} ${CWARNFLAGS} -msoft-float -fno-defer-pop
-AFLAGS=		-m68020 -x assembler-with-cpp -traditional-cpp -D_LOCORE
+CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dmc68020 -Dsun3
+CWARNFLAGS= 	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
+		-Wno-uninitialized -Wno-format -Wno-main
+CMACHFLAGS=	-m68020 -msoft-float
+COPTS?=		-O2
+
+CFLAGS= 	${DEBUG} ${CWARNFLAGS} ${CMACHFLAGS} ${COPTS}
+AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE ${CMACHFLAGS}
 LINKFLAGS=	-N -Ttext 0E004000 -e start
 STRIPFLAGS=	-d
 
-HOSTED_CC=	${CC}
+HOSTCC?=	${CC}
 HOSTED_CPPFLAGS=${CPPFLAGS:S/^-nostdinc$//}
 HOSTED_CFLAGS=	${CFLAGS}
 
@@ -68,8 +70,6 @@ LIBCOMPAT=	${COMPATLIB_PROF}
 
 NORMAL_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
 NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
-
-HOSTED_C=	${HOSTED_CC} ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} -c $<
 
 %OBJS
 
@@ -102,17 +102,10 @@ LINKFLAGS+=	-S
 
 %LOAD
 
-assym.h: genassym
-	./genassym >assym.h
-
-# Doing a cross-build of this is very tricky, and very dependent
-# on compatibility of things like structure member alignment in
-# the compiler used as HOSTED_CC (must match the native compiler).
-# Often this is not possible at all, and you just have to build
-# the assym.h file by hand on some other machine. -gwr
-genassym: ${SUN3}/sun3/genassym.c
-	${CC} ${CPPFLAGS} -E $< > $@.i
-	${HOSTED_CC} -o $@ $@.i
+assym.h: $S/kern/genassym.sh ${SUN3}/sun3/genassym.cf
+	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} \
+	    ${PARAM} < ${SUN3}/sun3/genassym.cf > assym.h.tmp && \
+	    mv -f assym.h.tmp assym.h
 
 param.c: $S/conf/param.c
 	rm -f param.c
@@ -128,10 +121,9 @@ newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 	sh $S/conf/newvers.sh
 	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
 
-
 clean::
 	rm -f eddep *bsd bsd.gdb tags *.[io] [a-z]*.s \
-	    [Ee]rrs linterrs makelinks genassym genassym.o assym.h
+	    [Ee]rrs linterrs makelinks assym.h
 
 lint:
 	@lint -hbxncez -DGENERIC -Dvolatile= ${CPPFLAGS} -UKGDB \
@@ -151,22 +143,12 @@ links:
 
 SRCS=	${SUN3}/sun3/locore.s \
 	param.c ioconf.c ${CFILES} ${SFILES}
+
 depend:: .depend
 .depend: ${SRCS} assym.h param.c
-	${MKDEP} ${AFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
-	${MKDEP} -a ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} \
-	    ${SUN3}/sun3/genassym.c
-
-# XXX - see below
-#	${MKDEP} -a ${APPFLAGS} ${SUN3}/sun3/locore.s
-#	${MKDEP} -a ${APPFLAGS} ${SFILES}
-#
-# For cross-compilation, the "gcc -M" mkdep script is convenient,
-# but that does not correctly make rules from *.s files.  The
-# easiest compromise is to just list those dependencies here.
-locore.o: assym.h machine/trap.h m68k/trap.h
-copy.o:   assym.h $S/sys/errno.h
-
+	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${SUN3}/sun3/locore.s
+	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
+	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
 
 # depend on root or device configuration
 autoconf.o conf.o: Makefile
@@ -175,11 +157,10 @@ autoconf.o conf.o: Makefile
 uipc_proto.o vfs_conf.o: Makefile 
 
 # depend on maxusers
-genassym.o machdep.o: Makefile
+assym.h machdep.o: Makefile
 
 # depend on CPU configuration 
 db_machdep.o dvma.o machdep.o pmap.o sun3_startup.o vm_machdep.o: Makefile
-
 
 locore.o: ${SUN3}/sun3/locore.s assym.h
 	${NORMAL_S}
