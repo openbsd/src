@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.43 2001/06/25 06:14:18 angelos Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.44 2001/06/25 17:16:27 angelos Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -224,6 +224,8 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 #endif
 			tdbi = (struct tdb_ident *)(mtag + 1);
 			tdb = gettdb(tdbi->spi, &tdbi->dst, tdbi->proto);
+			if (tdb == NULL)
+				error = -EINVAL;
 			m_tag_delete(m, mtag);
 		}
 		else
