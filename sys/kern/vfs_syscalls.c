@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.89 2002/02/08 13:53:28 art Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.90 2002/02/08 18:58:51 art Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -2646,15 +2646,14 @@ sys_pread(p, v, retval)
 	if ((fp->f_flag & FREAD) == 0)
 		return (EBADF);
 
-	FREF(fp);
-
 	vp = (struct vnode *)fp->f_data;
 	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO) {
-		FRELE(fp);
 		return (ESPIPE);
 	}
 
 	offset = SCARG(uap, offset);
+
+	FREF(fp);
 
 	/* dofileread() will unuse the descriptor for us */
 	return (dofileread(p, fd, fp, SCARG(uap, buf), SCARG(uap, nbyte),
