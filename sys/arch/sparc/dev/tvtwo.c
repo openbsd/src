@@ -1,4 +1,4 @@
-/*	$OpenBSD: tvtwo.c,v 1.7 2005/03/07 21:21:03 miod Exp $	*/
+/*	$OpenBSD: tvtwo.c,v 1.8 2005/03/23 17:16:34 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -126,16 +126,9 @@ struct tvtwo_softc {
 	struct	rom_reg sc_phys;
 
 	volatile u_int8_t *sc_regs;
-
-	int	sc_nscreens;
 };
 
 int	tvtwo_ioctl(void *, u_long, caddr_t, int, struct proc *);
-int	tvtwo_alloc_screen(void *, const struct wsscreen_descr *, void **,
-	    int *, int *, long *);
-void	tvtwo_free_screen(void *, void *);
-int	tvtwo_show_screen(void *, void *, int, void (*cb)(void *, int, int),
-	    void *);
 paddr_t	tvtwo_mmap(void *, off_t, int);
 void	tvtwo_burner(void *, u_int, u_int);
 
@@ -146,13 +139,14 @@ void	tvtwo_initcmap(struct tvtwo_softc *);
 struct wsdisplay_accessops tvtwo_accessops = {
 	tvtwo_ioctl,
 	tvtwo_mmap,
-	tvtwo_alloc_screen,
-	tvtwo_free_screen,
-	tvtwo_show_screen,
+	NULL,	/* alloc_screen */
+	NULL,	/* free_screen */
+	NULL,	/* show_screen */
 	NULL,	/* load_font */
 	NULL,	/* scrollback */
 	NULL,	/* getchar */
 	tvtwo_burner,
+	NULL	/* pollc */
 };
 
 int	tvtwomatch(struct device *, void *, void *);
@@ -189,9 +183,6 @@ tvtwomatch(struct device *parent, void *vcf, void *aux)
 	return (0);
 }
 
-/*
- * Attach a display.
- */
 void
 tvtwoattach(struct device *parent, struct device *self, void *args)
 {
@@ -302,10 +293,6 @@ tvtwo_ioctl(void *dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 	return (0);
 }
 
-/*
- * Return the address that would map the given device at the given
- * offset, allowing for the given protection, or return -1 for error.
- */
 paddr_t
 tvtwo_mmap(void *v, off_t offset, int prot)
 {
@@ -321,39 +308,6 @@ tvtwo_mmap(void *v, off_t offset, int prot)
 	}
 
 	return (-1);
-}
-
-int
-tvtwo_alloc_screen(void *v, const struct wsscreen_descr *type,
-    void **cookiep, int *curxp, int *curyp, long *attrp)
-{
-	struct tvtwo_softc *sc = v;
-
-	if (sc->sc_nscreens > 0)
-		return (ENOMEM);
-
-	*cookiep = &sc->sc_sunfb.sf_ro;
-	*curyp = 0;
-	*curxp = 0;
-	sc->sc_sunfb.sf_ro.ri_ops.alloc_attr(&sc->sc_sunfb.sf_ro,
-	     0, 0, 0, attrp);
-	sc->sc_nscreens++;
-	return (0);
-}
-
-void
-tvtwo_free_screen(void *v, void *cookie)
-{
-	struct tvtwo_softc *sc = v;
-
-	sc->sc_nscreens--;
-}
-
-int
-tvtwo_show_screen(void *v, void *cookie, int waitok,
-    void (*cb)(void *, int, int), void *cbarg)
-{
-	return (0);
 }
 
 /*

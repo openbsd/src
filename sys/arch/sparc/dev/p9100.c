@@ -1,4 +1,4 @@
-/*	$OpenBSD: p9100.c,v 1.34 2005/03/23 17:15:44 miod Exp $	*/
+/*	$OpenBSD: p9100.c,v 1.35 2005/03/23 17:16:34 miod Exp $	*/
 
 /*
  * Copyright (c) 2003, Miodrag Vallat.
@@ -52,7 +52,6 @@
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
-#include <dev/wscons/wscons_raster.h>
 #include <dev/rasops/rasops.h>
 #include <machine/fbvar.h>
 
@@ -76,42 +75,37 @@ struct p9100_softc {
 	volatile u_int8_t *sc_ctl;	/* control registers (draw engine) */
 	union	bt_cmap sc_cmap;	/* Brooktree color map */
 	struct	intrhand sc_ih;
-	int	sc_nscreens;
 	u_int32_t	sc_junk;	/* throwaway value */
 };
 
-int	p9100_ioctl(void *, u_long, caddr_t, int, struct proc *);
-int	p9100_alloc_screen(void *, const struct wsscreen_descr *, void **,
-	    int *, int *, long *);
-void	p9100_free_screen(void *, void *);
-int	p9100_show_screen(void *, void *, int, void (*cb)(void *, int, int),
-	    void *);
-paddr_t	p9100_mmap(void *, off_t, int);
-static __inline__ void p9100_loadcmap_deferred(struct p9100_softc *,
-    u_int, u_int);
-void	p9100_loadcmap_immediate(struct p9100_softc *, u_int, u_int);
-void	p9100_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
 void	p9100_burner(void *, u_int, u_int);
 int	p9100_intr(void *);
+int	p9100_ioctl(void *, u_long, caddr_t, int, struct proc *);
+static __inline__
+void	p9100_loadcmap_deferred(struct p9100_softc *, u_int, u_int);
+void	p9100_loadcmap_immediate(struct p9100_softc *, u_int, u_int);
+paddr_t	p9100_mmap(void *, off_t, int);
+void	p9100_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
 
 struct wsdisplay_accessops p9100_accessops = {
 	p9100_ioctl,
 	p9100_mmap,
-	p9100_alloc_screen,
-	p9100_free_screen,
-	p9100_show_screen,
+	NULL,	/* alloc_screen */
+	NULL,	/* free_screen */
+	NULL,	/* show_screen */
 	NULL,	/* load_font */
 	NULL,	/* scrollback */
 	NULL,	/* getchar */
 	p9100_burner,
+	NULL	/* pollc */
 };
 
-void	p9100_ras_init(struct p9100_softc *);
 void	p9100_ras_copycols(void *, int, int, int, int);
 void	p9100_ras_copyrows(void *, int, int, int);
 void	p9100_ras_do_cursor(struct rasops_info *);
 void	p9100_ras_erasecols(void *, int, int, int, long int);
 void	p9100_ras_eraserows(void *, int, int, long int);
+void	p9100_ras_init(struct p9100_softc *);
 
 int	p9100match(struct device *, void *, void *);
 void	p9100attach(struct device *, struct device *, void *);
@@ -434,48 +428,6 @@ p9100_ioctl(void *v, u_long cmd, caddr_t data, int flags, struct proc *p)
 	return (0);
 }
 
-int
-p9100_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
-    int *curxp, int *curyp, long *attrp)
-{
-	struct p9100_softc *sc = v;
-
-	if (sc->sc_nscreens > 0)
-		return (ENOMEM);
-
-	*cookiep = &sc->sc_sunfb.sf_ro;
-	*curyp = 0;
-	*curxp = 0;
-	if (sc->sc_sunfb.sf_depth == 8) {
-		sc->sc_sunfb.sf_ro.ri_ops.alloc_attr(&sc->sc_sunfb.sf_ro,
-		    WSCOL_BLACK, WSCOL_WHITE, WSATTR_WSCOLORS, attrp);
-	} else {
-		sc->sc_sunfb.sf_ro.ri_ops.alloc_attr(&sc->sc_sunfb.sf_ro,
-		    0, 0, 0, attrp);
-	}
-	sc->sc_nscreens++;
-	return (0);
-}
-
-void
-p9100_free_screen(void *v, void *cookie)
-{
-	struct p9100_softc *sc = v;
-
-	sc->sc_nscreens--;
-}
-
-int
-p9100_show_screen(void *v, void *cookie, int waitok,
-    void (*cb)(void *, int, int), void *cbarg)
-{
-	return (0);
-}
-
-/*
- * Return the address that would map the given device at the given
- * offset, allowing for the given protection, or return -1 for error.
- */
 paddr_t
 p9100_mmap(void *v, off_t offset, int prot)
 {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgeight.c,v 1.24 2005/03/07 16:44:50 miod Exp $	*/
+/*	$OpenBSD: cgeight.c,v 1.25 2005/03/23 17:16:34 miod Exp $	*/
 /*	$NetBSD: cgeight.c,v 1.13 1997/05/24 20:16:04 pk Exp $	*/
 
 /*
@@ -71,7 +71,6 @@
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
-#include <dev/wscons/wscons_raster.h>
 #include <dev/rasops/rasops.h>
 #include <machine/fbvar.h>
 
@@ -85,29 +84,23 @@ struct cgeight_softc {
 	struct	rom_reg	sc_phys;	/* display RAM (phys addr) */
 	volatile struct fbcontrol *sc_fbc;	/* Brooktree registers */
 	union	bt_cmap sc_cmap;	/* Brooktree color map */
-	int	sc_nscreens;
 };
 
-int cgeight_ioctl(void *, u_long, caddr_t, int, struct proc *);
-int cgeight_alloc_screen(void *, const struct wsscreen_descr *, void **,
-    int *, int *, long *);
-void cgeight_free_screen(void *, void *);
-int cgeight_show_screen(void *, void *, int, void (*cb)(void *, int, int),
-    void *);
-paddr_t cgeight_mmap(void *, off_t, int);
-void cgeight_reset(struct cgeight_softc *);
-void cgeight_burner(void *, u_int, u_int);
+int	cgeight_ioctl(void *, u_long, caddr_t, int, struct proc *);
+paddr_t	cgeight_mmap(void *, off_t, int);
+void	cgeight_reset(struct cgeight_softc *);
 
 struct wsdisplay_accessops cgeight_accessops = {
 	cgeight_ioctl,
 	cgeight_mmap,
-	cgeight_alloc_screen,
-	cgeight_free_screen,
-	cgeight_show_screen,
+	NULL,	/* alloc_screen */
+	NULL,	/* free_screen */
+	NULL,	/* show_screen */
 	NULL,	/* load_font */
 	NULL,	/* scrollback */
 	NULL,	/* getchar */
-	cgeight_burner,
+	fb_pfour_burner,
+	NULL	/* pollc */
 };
 
 void	cgeightattach(struct device *, struct device *, void *);
@@ -121,13 +114,8 @@ struct cfdriver cgeight_cd = {
 	NULL, "cgeight", DV_DULL
 };
 
-/*
- * Match a cgeight.
- */
 int
-cgeightmatch(parent, vcf, aux)
-	struct device *parent;
-	void *vcf, *aux;
+cgeightmatch(struct device *parent, void *vcf, void *aux)
 {
 	struct cfdata *cf = vcf;
 	struct confargs *ca = aux;
@@ -161,13 +149,8 @@ cgeightmatch(parent, vcf, aux)
 	return (0);
 }
 
-/*
- * Attach a display.
- */
 void
-cgeightattach(parent, self, args)
-	struct device *parent, *self;
-	void *args;
+cgeightattach(struct device *parent, struct device *self, void *args)
 {
 	struct cgeight_softc *sc = (struct cgeight_softc *)self;
 	struct confargs *ca = args;
@@ -206,7 +189,7 @@ cgeightattach(parent, self, args)
 		sc->sc_cmap.cm_chip[i] = bt->bt_cmap;
 
 	/* enable video */
-	cgeight_burner(sc, 1, 0);
+	fb_pfour_burner(sc, 1, 0);
 	BT_INIT(bt, 0);
 
 	fb_setsize(&sc->sc_sunfb, 24, 1152, 900, node, ca->ca_bustype);
@@ -226,12 +209,7 @@ cgeightattach(parent, self, args)
 }
 
 int
-cgeight_ioctl(v, cmd, data, flags, p)
-	void *v;
-	u_long cmd;
-	caddr_t data;
-	int flags;
-	struct proc *p;
+cgeight_ioctl(void *v, u_long cmd, caddr_t data, int flags, struct proc *p)
 {
 	struct cgeight_softc *sc = v;
 	struct wsdisplay_cmap *cm;
@@ -281,58 +259,8 @@ cgeight_ioctl(v, cmd, data, flags, p)
 	return (0);
 }
 
-int
-cgeight_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
-	void *v;
-	const struct wsscreen_descr *type;
-	void **cookiep;
-	int *curxp, *curyp;
-	long *attrp;
-{
-	struct cgeight_softc *sc = v;
-
-	if (sc->sc_nscreens > 0)
-		return (ENOMEM);
-
-	*cookiep = &sc->sc_sunfb.sf_ro;
-	*curyp = 0;
-	*curxp = 0;
-	sc->sc_sunfb.sf_ro.ri_ops.alloc_attr(&sc->sc_sunfb.sf_ro,
-	    0, 0, 0, attrp);
-	sc->sc_nscreens++;
-	return (0);
-}
-
-void
-cgeight_free_screen(v, cookie)
-	void *v;
-	void *cookie;
-{
-	struct cgeight_softc *sc = v;
-
-	sc->sc_nscreens--;
-}
-
-int
-cgeight_show_screen(v, cookie, waitok, cb, cbarg)
-	void *v;
-	void *cookie;
-	int waitok;
-	void (*cb)(void *, int, int);
-	void *cbarg;
-{
-	return (0);
-}
-
-/*
- * Return the address that would map the given device at the given
- * offset, allowing for the given protection, or return -1 for error.
- */
 paddr_t
-cgeight_mmap(v, offset, prot)
-	void *v;
-	off_t offset;
-	int prot;
+cgeight_mmap(void *v, off_t offset, int prot)
 {
 	struct cgeight_softc *sc = v;
 
@@ -345,15 +273,5 @@ cgeight_mmap(v, offset, prot)
 		    PFOUR_COLOR_OFF_OVERLAY) | PMAP_NC);
 	}
 
-	return (-1);	/* not a user-map offset */
-}
-
-void
-cgeight_burner(v, on, flags)
-	void *v;
-	u_int on, flags;
-{
-	struct cgeight_softc *sc = v;
-
-	fb_pfour_set_video(&sc->sc_sunfb, on);
+	return (-1);
 }

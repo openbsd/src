@@ -1,4 +1,4 @@
-/*	$OpenBSD: mgx.c,v 1.9 2005/03/13 23:05:22 miod Exp $	*/
+/*	$OpenBSD: mgx.c,v 1.10 2005/03/23 17:16:34 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -54,7 +54,6 @@
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
-#include <dev/wscons/wscons_raster.h>
 #include <dev/rasops/rasops.h>
 #include <machine/fbvar.h>
 
@@ -85,37 +84,31 @@ struct mgx_softc {
 	struct	rom_reg sc_phys;
 	u_int8_t	sc_cmap[256 * 3];	/* shadow colormap */
 	volatile u_int8_t *sc_vidc;	/* ramdac registers */
-
-	int	sc_nscreens;
 };
 
-int mgx_ioctl(void *, u_long, caddr_t, int, struct proc *);
-int mgx_alloc_screen(void *, const struct wsscreen_descr *, void **,
-    int *, int *, long *);
-void mgx_free_screen(void *, void *);
-int mgx_show_screen(void *, void *, int, void (*cb)(void *, int, int),
-    void *);
-paddr_t mgx_mmap(void *, off_t, int);
-void mgx_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
-int mgx_getcmap(u_int8_t *, struct wsdisplay_cmap *);
-int mgx_putcmap(u_int8_t *, struct wsdisplay_cmap *);
-void mgx_loadcmap(struct mgx_softc *, int, int);
-void mgx_burner(void *, u_int ,u_int);
+void	mgx_burner(void *, u_int ,u_int);
+int	mgx_getcmap(u_int8_t *, struct wsdisplay_cmap *);
+int	mgx_ioctl(void *, u_long, caddr_t, int, struct proc *);
+void	mgx_loadcmap(struct mgx_softc *, int, int);
+paddr_t	mgx_mmap(void *, off_t, int);
+int	mgx_putcmap(u_int8_t *, struct wsdisplay_cmap *);
+void	mgx_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
 
 struct wsdisplay_accessops mgx_accessops = {
 	mgx_ioctl,
 	mgx_mmap,
-	mgx_alloc_screen,
-	mgx_free_screen,
-	mgx_show_screen,
+	NULL,	/* alloc_screen */
+	NULL,	/* free_screen */
+	NULL,	/* show_screen */
 	NULL,	/* load_font */
 	NULL,	/* scrollback */
 	NULL,	/* getchar */
-	mgx_burner
+	mgx_burner,
+	NULL	/* pollc */
 };
 
-int mgxmatch(struct device *, void *, void *);
-void mgxattach(struct device *, struct device *, void *);
+int	mgxmatch(struct device *, void *, void *);
+void	mgxattach(struct device *, struct device *, void *);
 
 struct cfattach mgx_ca = {
 	sizeof(struct mgx_softc), mgxmatch, mgxattach
@@ -273,39 +266,6 @@ mgx_mmap(void *v, off_t offset, int prot)
 	}
 
 	return (-1);
-}
-
-int
-mgx_alloc_screen(void *v, const struct wsscreen_descr *type,
-    void **cookiep, int *curxp, int *curyp, long *attrp)
-{
-	struct mgx_softc *sc = v;
-
-	if (sc->sc_nscreens > 0)
-		return (ENOMEM);
-
-	*cookiep = &sc->sc_sunfb.sf_ro;
-	*curyp = 0;
-	*curxp = 0;
-	sc->sc_sunfb.sf_ro.ri_ops.alloc_attr(&sc->sc_sunfb.sf_ro,
-	     0, 0, 0, attrp);
-	sc->sc_nscreens++;
-	return (0);
-}
-
-void
-mgx_free_screen(void *v, void *cookie)
-{
-	struct mgx_softc *sc = v;
-
-	sc->sc_nscreens--;
-}
-
-int
-mgx_show_screen(void *v, void *cookie, int waitok,
-    void (*cb)(void *, int, int), void *cbarg)
-{
-	return (0);
 }
 
 void

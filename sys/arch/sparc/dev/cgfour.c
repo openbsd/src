@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgfour.c,v 1.24 2005/03/07 16:44:50 miod Exp $	*/
+/*	$OpenBSD: cgfour.c,v 1.25 2005/03/23 17:16:34 miod Exp $	*/
 /*	$NetBSD: cgfour.c,v 1.13 1997/05/24 20:16:06 pk Exp $	*/
 
 /*
@@ -71,7 +71,6 @@
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
-#include <dev/wscons/wscons_raster.h>
 #include <dev/rasops/rasops.h>
 #include <machine/fbvar.h>
 
@@ -85,29 +84,23 @@ struct cgfour_softc {
 	struct rom_reg	sc_phys;	/* display RAM (phys addr) */
 	volatile struct fbcontrol *sc_fbc;	/* Brooktree registers */
 	union	bt_cmap sc_cmap;	/* Brooktree color map */
-	int	sc_nscreens;
 };
 
-int cgfour_ioctl(void *, u_long, caddr_t, int, struct proc *);
-int cgfour_alloc_screen(void *, const struct wsscreen_descr *, void **,
-    int *, int *, long *);
-void cgfour_free_screen(void *, void *);
-int cgfour_show_screen(void *, void *, int, void (*cb)(void *, int, int),
-    void *);
-paddr_t cgfour_mmap(void *, off_t, int);
-void cgfour_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
-void cgfour_burner(void *, u_int, u_int);
+int	cgfour_ioctl(void *, u_long, caddr_t, int, struct proc *);
+paddr_t	cgfour_mmap(void *, off_t, int);
+void	cgfour_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
 
 struct wsdisplay_accessops cgfour_accessops = {
 	cgfour_ioctl,
 	cgfour_mmap,
-	cgfour_alloc_screen,
-	cgfour_free_screen,
-	cgfour_show_screen,
+	NULL,	/* alloc_screen */
+	NULL,	/* free_screen */
+	NULL,	/* show_screen */
 	NULL,	/* load_font */
 	NULL,	/* scrollback */
 	NULL,	/* getchar */
-	cgfour_burner,
+	fb_pfour_burner,
+	NULL	/* pollc */
 };
 
 void	cgfourattach(struct device *, struct device *, void *);
@@ -121,13 +114,8 @@ struct cfdriver cgfour_cd = {
 	NULL, "cgfour", DV_DULL
 };
 
-/*
- * Match a cgfour.
- */
 int
-cgfourmatch(parent, vcf, aux)
-	struct device *parent;
-	void *vcf, *aux;
+cgfourmatch(struct device *parent, void *vcf, void *aux)
 {
 	struct cfdata *cf = vcf;
 	struct confargs *ca = aux;
@@ -158,13 +146,8 @@ cgfourmatch(parent, vcf, aux)
 	return (0);
 }
 
-/*
- * Attach a display.
- */
 void
-cgfourattach(parent, self, args)
-	struct device *parent, *self;
-	void *args;
+cgfourattach(struct device *parent, struct device *self, void *args)
 {
 	struct cgfour_softc *sc = (struct cgfour_softc *)self;
 	struct confargs *ca = args;
@@ -207,7 +190,7 @@ cgfourattach(parent, self, args)
 		((char *)&sc->sc_cmap)[i] = bt->bt_cmap >> 24;
 
 	/* enable video */
-	cgfour_burner(sc, 1, 0);
+	fb_pfour_burner(sc, 1, 0);
 	BT_INIT(bt, 24);
 
 	/*
@@ -236,12 +219,7 @@ cgfourattach(parent, self, args)
 }
 
 int
-cgfour_ioctl(v, cmd, data, flags, p)
-	void *v;
-	u_long cmd;
-	caddr_t data;
-	int flags;
-	struct proc *p;
+cgfour_ioctl(void *v, u_long cmd, caddr_t data, int flags, struct proc *p)
 {
 	struct cgfour_softc *sc = v;
 	struct wsdisplay_fbinfo *wdf;
@@ -295,59 +273,8 @@ cgfour_ioctl(v, cmd, data, flags, p)
 	return (0);
 }
 
-int
-cgfour_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
-	void *v;
-	const struct wsscreen_descr *type;
-	void **cookiep;
-	int *curxp, *curyp;
-	long *attrp;
-{
-	struct cgfour_softc *sc = v;
-
-	if (sc->sc_nscreens > 0)
-		return (ENOMEM);
-
-	*cookiep = &sc->sc_sunfb.sf_ro;
-	*curyp = 0;
-	*curxp = 0;
-	sc->sc_sunfb.sf_ro.ri_ops.alloc_attr(&sc->sc_sunfb.sf_ro,
-	    WSCOL_BLACK, WSCOL_WHITE, WSATTR_WSCOLORS, attrp);
-	sc->sc_nscreens++;
-	return (0);
-}
-
-void
-cgfour_free_screen(v, cookie)
-	void *v;
-	void *cookie;
-{
-	struct cgfour_softc *sc = v;
-
-	sc->sc_nscreens--;
-}
-
-int
-cgfour_show_screen(v, cookie, waitok, cb, cbarg)
-	void *v;
-	void *cookie;
-	int waitok;
-	void (*cb)(void *, int, int);
-	void *cbarg;
-{
-	return (0);
-}
-
-
-/*
- * Return the address that would map the given device at the given
- * offset, allowing for the given protection, or return -1 for error.
- */
 paddr_t
-cgfour_mmap(v, offset, prot)
-	void *v;
-	off_t offset;
-	int prot;
+cgfour_mmap(void *v, off_t offset, int prot)
 {
 	struct cgfour_softc *sc = v;
 
@@ -363,22 +290,9 @@ cgfour_mmap(v, offset, prot)
 }
 
 void
-cgfour_setcolor(v, index, r, g, b)
-	void *v;
-	u_int index;
-	u_int8_t r, g, b;
+cgfour_setcolor(void *v, u_int index, u_int8_t r, u_int8_t g, u_int8_t b)
 {
 	struct cgfour_softc *sc = v;
 
 	bt_setcolor(&sc->sc_cmap, &sc->sc_fbc->fbc_dac, index, r, g, b, 1);
-}
-
-void
-cgfour_burner(v, on, flags)
-	void *v;
-	u_int on, flags;
-{
-	struct cgfour_softc *sc = v;
-
-	fb_pfour_set_video(&sc->sc_sunfb, on);
 }

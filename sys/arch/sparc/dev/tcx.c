@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcx.c,v 1.24 2005/03/13 23:05:22 miod Exp $	*/
+/*	$OpenBSD: tcx.c,v 1.25 2005/03/23 17:16:34 miod Exp $	*/
 /*	$NetBSD: tcx.c,v 1.8 1997/07/29 09:58:14 fair Exp $ */
 
 /*
@@ -84,7 +84,6 @@
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
-#include <dev/wscons/wscons_raster.h>
 #include <dev/rasops/rasops.h>
 #include <machine/fbvar.h>
 
@@ -107,37 +106,33 @@ struct tcx_softc {
 	volatile u_int32_t *sc_cplane;		/* S24 control plane */
 	union	bt_cmap sc_cmap;		/* Brooktree color map */
 	struct	intrhand sc_ih;
-	int	sc_nscreens;
 };
 
-int tcx_ioctl(void *, u_long, caddr_t, int, struct proc *);
-int tcx_alloc_screen(void *, const struct wsscreen_descr *, void **,
-    int *, int *, long *);
-void tcx_free_screen(void *, void *);
-int tcx_show_screen(void *, void *, int, void (*cb)(void *, int, int),
-    void *);
-paddr_t tcx_mmap(void *, off_t, int);
-void tcx_reset(struct tcx_softc *, int);
-void tcx_burner(void *, u_int, u_int);
-void tcx_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
-static __inline__ void tcx_loadcmap_deferred(struct tcx_softc *, u_int, u_int);
-int tcx_intr(void *);
-void tcx_prom(void *);
+void	tcx_burner(void *, u_int, u_int);
+int	tcx_intr(void *);
+int	tcx_ioctl(void *, u_long, caddr_t, int, struct proc *);
+static __inline__
+void	tcx_loadcmap_deferred(struct tcx_softc *, u_int, u_int);
+paddr_t	tcx_mmap(void *, off_t, int);
+void	tcx_reset(struct tcx_softc *, int);
+void	tcx_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
+void	tcx_prom(void *);
 
 struct wsdisplay_accessops tcx_accessops = {
 	tcx_ioctl,
 	tcx_mmap,
-	tcx_alloc_screen,
-	tcx_free_screen,
-	tcx_show_screen,
+	NULL,	/* alloc_screen */
+	NULL,	/* free_screen */
+	NULL,	/* show_screen */
 	NULL,   /* load_font */
 	NULL,   /* scrollback */
 	NULL,   /* getchar */
 	tcx_burner,
+	NULL	/* pollc */
 };
 
-int tcxmatch(struct device *, void *, void *);
-void tcxattach(struct device *, struct device *, void *);
+int	tcxmatch(struct device *, void *, void *);
+void	tcxattach(struct device *, struct device *, void *);
 
 struct cfattach tcx_ca = {
 	sizeof(struct tcx_softc), tcxmatch, tcxattach
@@ -165,13 +160,8 @@ struct cfdriver tcx_cd = {
 #define	TCX_CTL_24_LEVEL	0x03000000	/* 24 bits, true color */
 #define	TCX_CTL_PIXELMASK	0x00ffffff	/* mask for index/level */
 
-/*
- * Match a tcx.
- */
 int
-tcxmatch(parent, vcf, aux)
-	struct device *parent;
-	void *vcf, *aux;
+tcxmatch(struct device *parent, void *vcf, void *aux)
 {
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
@@ -182,13 +172,8 @@ tcxmatch(parent, vcf, aux)
 	return (1);
 }
 
-/*
- * Attach a display.
- */
 void
-tcxattach(parent, self, args)
-	struct device *parent, *self;
-	void *args;
+tcxattach(struct device *parent, struct device *self, void *args)
 {
 	struct tcx_softc *sc = (struct tcx_softc *)self;
 	struct confargs *ca = args;
@@ -277,12 +262,7 @@ tcxattach(parent, self, args)
 }
 
 int
-tcx_ioctl(dev, cmd, data, flags, p)
-	void *dev;
-	u_long cmd;
-	caddr_t data;
-	int flags;
-	struct proc *p;
+tcx_ioctl(void *dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 {
 	struct tcx_softc *sc = dev;
 	struct wsdisplay_cmap *cm;
@@ -355,13 +335,8 @@ tcx_ioctl(dev, cmd, data, flags, p)
 	return (0);
 }
 
-/*
- * Clean up hardware state (e.g., after bootup or after X crashes).
- */
 void
-tcx_reset(sc, depth)
-	struct tcx_softc *sc;
-	int depth;
+tcx_reset(struct tcx_softc *sc, int depth)
 {
 	volatile struct bt_regs *bt;
 
@@ -405,30 +380,27 @@ tcx_reset(sc, depth)
 }
 
 void
-tcx_prom(v)
-	void *v;
+tcx_prom(void *v)
 {
 	struct tcx_softc *sc = v;
 	extern struct consdev consdev_prom;
 
 	if (sc->sc_sunfb.sf_depth != 8) {
 		/*
-	 	* Select 8-bit mode.
-	 	*/
+	 	 * Select 8-bit mode.
+	 	 */
 		tcx_reset(sc, 8);
 
 		/*
-	 	* Go back to prom output for the last few messages, so they
-	 	* will be displayed correctly.
-	 	*/
+	 	 * Go back to prom output for the last few messages, so they
+	 	 * will be displayed correctly.
+	 	 */
 		cn_tab = &consdev_prom;
 	}
 }
 
 void
-tcx_burner(v, on, flags)
-	void *v;
-	u_int on, flags;
+tcx_burner(void *v, u_int on, u_int flags)
 {
 	struct tcx_softc *sc = v;
 	int s;
@@ -448,15 +420,8 @@ tcx_burner(v, on, flags)
 	splx(s);
 }
 
-/*
- * Return the address that would map the given device at the given
- * offset, allowing for the given protection, or return -1 for error.
- */
 paddr_t
-tcx_mmap(v, offset, prot)
-	void *v;
-	off_t offset;
-	int prot;
+tcx_mmap(void *v, off_t offset, int prot)
 {
 	struct tcx_softc *sc = v;
 
@@ -471,61 +436,15 @@ tcx_mmap(v, offset, prot)
 		return (REG2PHYS(&sc->sc_phys[TCX_REG_DFB24], offset) |
 		    PMAP_NC);
 
-	return (-1);	/* not a user-map offset */
+	return (-1);
 }
 
 void
-tcx_setcolor(v, index, r, g, b)
-	void *v;
-	u_int index;
-	u_int8_t r, g, b;
+tcx_setcolor(void *v, u_int index, u_int8_t r, u_int8_t g, u_int8_t b)
 {
 	struct tcx_softc *sc = v;
 
 	bt_setcolor(&sc->sc_cmap, sc->sc_bt, index, r, g, b, 1);
-}
-
-int
-tcx_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
-	void *v;
-	const struct wsscreen_descr *type;
-	void **cookiep;
-	int *curxp, *curyp;
-	long *attrp;
-{
-	struct tcx_softc *sc = v;
-
-	if (sc->sc_nscreens > 0)
-		return (ENOMEM);
-
-	*cookiep = &sc->sc_sunfb.sf_ro;
-	*curyp = 0;
-	*curxp = 0;
-	sc->sc_sunfb.sf_ro.ri_ops.alloc_attr(&sc->sc_sunfb.sf_ro,
-	    WSCOL_BLACK, WSCOL_WHITE, WSATTR_WSCOLORS, attrp);
-	sc->sc_nscreens++;
-	return (0);
-}
-
-void
-tcx_free_screen(v, cookie)
-	void *v;
-	void *cookie;
-{
-	struct tcx_softc *sc = v;
-
-	sc->sc_nscreens--;
-}
-
-int
-tcx_show_screen(v, cookie, waitok, cb, cbarg)
-	void *v;
-	void *cookie;
-	int waitok;
-	void (*cb)(void *, int, int);
-	void *cbarg;
-{
-	return (0);
 }
 
 static __inline__ void
@@ -539,8 +458,7 @@ tcx_loadcmap_deferred(struct tcx_softc *sc, u_int start, u_int ncolors)
 }
 
 int
-tcx_intr(v)
-	void *v;
+tcx_intr(void *v)
 {
 	struct tcx_softc *sc = v;
 	u_int32_t thcm;

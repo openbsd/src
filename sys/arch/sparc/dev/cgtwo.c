@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgtwo.c,v 1.32 2005/03/07 16:44:50 miod Exp $	*/
+/*	$OpenBSD: cgtwo.c,v 1.33 2005/03/23 17:16:34 miod Exp $	*/
 /*	$NetBSD: cgtwo.c,v 1.22 1997/05/24 20:16:12 pk Exp $ */
 
 /*
@@ -96,7 +96,6 @@
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
-#include <dev/wscons/wscons_raster.h>
 #include <dev/rasops/rasops.h>
 #include <machine/fbvar.h>
 
@@ -110,34 +109,30 @@ struct cgtwo_softc {
 #define sc_redmap(cmap)		((u_short *)(cmap))
 #define sc_greenmap(cmap)	((u_short *)(cmap) + CG2_CMSIZE)
 #define sc_bluemap(cmap)	((u_short *)(cmap) + 2 * CG2_CMSIZE)
-	int	sc_nscreens;
 };
 
-int cgtwo_ioctl(void *, u_long, caddr_t, int, struct proc *);
-int cgtwo_alloc_screen(void *, const struct wsscreen_descr *, void **,
-    int *, int *, long *);
-void cgtwo_free_screen(void *, void *);
-int cgtwo_show_screen(void *, void *, int, void (*)(void *, int, int), void *);
-paddr_t cgtwo_mmap(void *, off_t, int);
-int cgtwo_putcmap(volatile u_short *, struct wsdisplay_cmap *);
-int cgtwo_getcmap(volatile u_short *, struct wsdisplay_cmap *);
-void cgtwo_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
-void cgtwo_burner(void *, u_int, u_int);
+void	cgtwo_burner(void *, u_int, u_int);
+int	cgtwo_getcmap(volatile u_short *, struct wsdisplay_cmap *);
+int	cgtwo_ioctl(void *, u_long, caddr_t, int, struct proc *);
+paddr_t	cgtwo_mmap(void *, off_t, int);
+int	cgtwo_putcmap(volatile u_short *, struct wsdisplay_cmap *);
+void	cgtwo_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
 
 struct wsdisplay_accessops cgtwo_accessops = {
 	cgtwo_ioctl,
 	cgtwo_mmap,
-	cgtwo_alloc_screen,
-	cgtwo_free_screen,
-	cgtwo_show_screen,
+	NULL,	/* alloc_screen */
+	NULL,	/* free_screen */
+	NULL,	/* show_screen */
 	NULL,	/* load_font */
 	NULL,	/* scrollback */
 	NULL,	/* getchar */
 	cgtwo_burner,
+	NULL	/* pollc */
 };
 
-int cgtwomatch(struct device *, void *, void *);
-void cgtwoattach(struct device *, struct device *, void *);
+int	cgtwomatch(struct device *, void *, void *);
+void	cgtwoattach(struct device *, struct device *, void *);
 
 struct cfattach cgtwo_ca = {
 	sizeof(struct cgtwo_softc), cgtwomatch, cgtwoattach
@@ -147,13 +142,8 @@ struct cfdriver cgtwo_cd = {
 	NULL, "cgtwo", DV_DULL
 };
 
-/*
- * Match a cgtwo.
- */
 int
-cgtwomatch(parent, vcf, aux)
-	struct device *parent;
-	void *vcf, *aux;
+cgtwomatch(struct device *parent, void *vcf, void *aux)
 {
 	struct cfdata *cf = vcf;
 	struct confargs *ca = aux;
@@ -175,13 +165,8 @@ cgtwomatch(parent, vcf, aux)
 	return (0);
 }
 
-/*
- * Attach a display.
- */
 void
-cgtwoattach(parent, self, args)
-	struct device *parent, *self;
-	void *args;
+cgtwoattach(struct device *parent, struct device *self, void *args)
 {
 	struct cgtwo_softc *sc = (struct cgtwo_softc *)self;
 	struct confargs *ca = args;
@@ -251,12 +236,7 @@ cgtwoattach(parent, self, args)
 }
 
 int
-cgtwo_ioctl(v, cmd, data, flags, p)
-	void *v;
-	u_long cmd;
-	caddr_t data;
-	int flags;
-	struct proc *p;
+cgtwo_ioctl(void *v, u_long cmd, caddr_t data, int flags, struct proc *p)
 {
 	struct cgtwo_softc *sc = v;
 	struct wsdisplay_fbinfo *wdf;
@@ -308,54 +288,8 @@ cgtwo_ioctl(v, cmd, data, flags, p)
 	return (0);
 }
 
-int
-cgtwo_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
-	void *v;
-	const struct wsscreen_descr *type;
-	void **cookiep;
-	int *curxp, *curyp;
-	long *attrp;
-{
-	struct cgtwo_softc *sc = v;
-
-	if (sc->sc_nscreens > 0)
-		return (ENOMEM);
-
-	*cookiep = &sc->sc_sunfb.sf_ro;
-	*curyp = 0;
-	*curxp = 0;
-	sc->sc_sunfb.sf_ro.ri_ops.alloc_attr(&sc->sc_sunfb.sf_ro,
-	    WSCOL_BLACK, WSCOL_WHITE, WSATTR_WSCOLORS, attrp);
-	sc->sc_nscreens++;
-	return (0);
-}
-
-void
-cgtwo_free_screen(v, cookie)
-	void *v;
-	void *cookie;
-{
-	struct cgtwo_softc *sc = v;
-
-	sc->sc_nscreens--;
-}
-
-int
-cgtwo_show_screen(v, cookie, waitok, cb, cbarg)
-	void *v;
-	void *cookie;
-	int waitok;
-	void (*cb)(void *, int, int);
-	void *cbarg;
-{
-	return (0);
-}
-
 paddr_t
-cgtwo_mmap(v, offset, prot)
-	void *v;
-	off_t offset;
-	int prot;
+cgtwo_mmap(void *v, off_t offset, int prot)
 {
 	struct cgtwo_softc *sc = v;
 
@@ -371,9 +305,7 @@ cgtwo_mmap(v, offset, prot)
 }
 
 void
-cgtwo_burner(v, on, flags)
-	void *v;
-	u_int on, flags;
+cgtwo_burner(void *v, u_int on, u_int flags)
 {
 	struct cgtwo_softc *sc = v;
 	int s;
@@ -387,9 +319,7 @@ cgtwo_burner(v, on, flags)
 }
 
 int
-cgtwo_getcmap(hwcmap, cmap)
-	volatile u_short *hwcmap;
-	struct wsdisplay_cmap *cmap;
+cgtwo_getcmap(volatile u_short *hwcmap, struct wsdisplay_cmap *cmap)
 {
 	u_int index = cmap->index, count = cmap->count, i;
 	u_char red[CG2_CMSIZE], green[CG2_CMSIZE], blue[CG2_CMSIZE];
@@ -425,9 +355,7 @@ cgtwo_getcmap(hwcmap, cmap)
 }
 
 int
-cgtwo_putcmap(hwcmap, cmap)
-	volatile u_short *hwcmap;
-	struct wsdisplay_cmap *cmap;
+cgtwo_putcmap(volatile u_short *hwcmap, struct wsdisplay_cmap *cmap)
 {
 	u_int index = cmap->index, count = cmap->count, i;
 	u_char red[CG2_CMSIZE], green[CG2_CMSIZE], blue[CG2_CMSIZE];
@@ -462,28 +390,12 @@ cgtwo_putcmap(hwcmap, cmap)
 }
 
 void
-cgtwo_setcolor(v, index, r, g, b)
-	void *v;
-	u_int index;
-	u_int8_t r, g, b;
+cgtwo_setcolor(void *v, u_int index, u_int8_t r, u_int8_t g, u_int8_t b)
 {
 	struct cgtwo_softc *sc = v;
-#if 0
-	struct wsdisplay_cmap cm;
-
-	cm.red = &r;
-	cm.green = &g;
-	cm.blue = &b;
-	cm.index = index;
-	cm.count = 1;
-
-	cgtwo_putcmap(sc->sc_cmap, &cm);
-#else
 
 	/* XXX - Wait for retrace? */
-
 	sc_redmap(sc->sc_cmap)[index] = r;
 	sc_greenmap(sc->sc_cmap)[index] = g;
 	sc_bluemap(sc->sc_cmap)[index] = b;
-#endif
 }

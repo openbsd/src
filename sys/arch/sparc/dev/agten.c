@@ -1,4 +1,4 @@
-/*	$OpenBSD: agten.c,v 1.8 2005/03/07 16:44:50 miod Exp $	*/
+/*	$OpenBSD: agten.c,v 1.9 2005/03/23 17:16:34 miod Exp $	*/
 /*
  * Copyright (c) 2002, 2003, Miodrag Vallat.
  * All rights reserved.
@@ -74,7 +74,6 @@
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
-#include <dev/wscons/wscons_raster.h>
 #include <dev/rasops/rasops.h>
 #include <machine/fbvar.h>
 
@@ -101,39 +100,34 @@ struct agten_softc {
 	struct agten_cmap sc_cmap;		/* shadow color map */
 
 	volatile u_int32_t *sc_i128_fb;
-
-	int	sc_nscreens;
 };
 
-int agten_ioctl(void *, u_long, caddr_t, int, struct proc *);
-int agten_alloc_screen(void *, const struct wsscreen_descr *, void **,
-    int *, int *, long *);
-void agten_free_screen(void *, void *);
-int agten_show_screen(void *, void *, int, void (*cb)(void *, int, int),
-    void *);
-paddr_t agten_mmap(void *, off_t, int);
-void agten_reset(struct agten_softc *);
-void agten_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
+int	agten_ioctl(void *, u_long, caddr_t, int, struct proc *);
+paddr_t	agten_mmap(void *, off_t, int);
+void	agten_reset(struct agten_softc *);
+void	agten_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
 
-static __inline__ void ibm561_write(struct agten_softc *, u_int32_t, u_int32_t);
-int agten_getcmap(struct agten_cmap *, struct wsdisplay_cmap *);
-int agten_putcmap(struct agten_cmap *, struct wsdisplay_cmap *);
-void agten_loadcmap(struct agten_softc *, u_int, u_int);
+static __inline__
+void	ibm561_write(struct agten_softc *, u_int32_t, u_int32_t);
+int	agten_getcmap(struct agten_cmap *, struct wsdisplay_cmap *);
+int	agten_putcmap(struct agten_cmap *, struct wsdisplay_cmap *);
+void	agten_loadcmap(struct agten_softc *, u_int, u_int);
 
 struct wsdisplay_accessops agten_accessops = {
 	agten_ioctl,
 	agten_mmap,
-	agten_alloc_screen,
-	agten_free_screen,
-	agten_show_screen,
+	NULL,	/* alloc_screen */
+	NULL,	/* free_screen */
+	NULL,	/* show_screen */
 	NULL,   /* load_font */
 	NULL,   /* scrollback */
 	NULL,   /* getchar */
 	NULL,	/* burner */
+	NULL	/* pollc */
 };
 
-int agtenmatch(struct device *, void *, void *);
-void agtenattach(struct device *, struct device *, void *);
+int	agtenmatch(struct device *, void *, void *);
+void	agtenattach(struct device *, struct device *, void *);
 
 struct cfattach agten_ca = {
 	sizeof(struct agten_softc), agtenmatch, agtenattach
@@ -224,12 +218,7 @@ agtenattach(struct device *parent, struct device *self, void *args)
 }
 
 int
-agten_ioctl(dev, cmd, data, flags, p)
-	void *dev;
-	u_long cmd;
-	caddr_t data;
-	int flags;
-	struct proc *p;
+agten_ioctl(void *dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 {
 	struct agten_softc *sc = dev;
 	struct wsdisplay_cmap *cm;
@@ -285,15 +274,8 @@ agten_ioctl(dev, cmd, data, flags, p)
 	return (0);
 }
 
-/*
- * Return the address that would map the given device at the given
- * offset, allowing for the given protection, or return -1 for error.
- */
 paddr_t
-agten_mmap(v, offset, prot)
-	void *v;
-	off_t offset;
-	int prot;
+agten_mmap(void *v, off_t offset, int prot)
 {
 	struct agten_softc *sc = v;
 
@@ -306,14 +288,11 @@ agten_mmap(v, offset, prot)
 		    PMAP_NC);
 	}
 
-	return (-1);	/* not a user-map offset */
+	return (-1);
 }
 
 void
-agten_setcolor(v, index, r, g, b)
-	void *v;
-	u_int index;
-	u_int8_t r, g, b;
+agten_setcolor(void *v, u_int index, u_int8_t r, u_int8_t g, u_int8_t b)
 {
 	struct agten_softc *sc = v;
 
@@ -322,54 +301,6 @@ agten_setcolor(v, index, r, g, b)
 	sc->sc_cmap.cm_blue[index] = b;
 
 	agten_loadcmap(sc, index, 1);
-}
-
-int
-agten_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
-	void *v;
-	const struct wsscreen_descr *type;
-	void **cookiep;
-	int *curxp, *curyp;
-	long *attrp;
-{
-	struct agten_softc *sc = v;
-
-	if (sc->sc_nscreens > 0)
-		return (ENOMEM);
-
-	*cookiep = &sc->sc_sunfb.sf_ro;
-	*curyp = 0;
-	*curxp = 0;
-	if (sc->sc_sunfb.sf_depth == 8) {
-		sc->sc_sunfb.sf_ro.ri_ops.alloc_attr(&sc->sc_sunfb.sf_ro,
-		    WSCOL_BLACK, WSCOL_WHITE, WSATTR_WSCOLORS, attrp);
-	} else {
-		sc->sc_sunfb.sf_ro.ri_ops.alloc_attr(&sc->sc_sunfb.sf_ro,
-		    0, 0, 0, attrp);
-	}
-	sc->sc_nscreens++;
-	return (0);
-}
-
-void
-agten_free_screen(v, cookie)
-	void *v;
-	void *cookie;
-{
-	struct agten_softc *sc = v;
-
-	sc->sc_nscreens--;
-}
-
-int
-agten_show_screen(v, cookie, waitok, cb, cbarg)
-	void *v;
-	void *cookie;
-	int waitok;
-	void (*cb)(void *, int, int);
-	void *cbarg;
-{
-	return (0);
 }
 
 int

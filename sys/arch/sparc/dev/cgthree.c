@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgthree.c,v 1.28 2005/03/07 16:44:50 miod Exp $	*/
+/*	$OpenBSD: cgthree.c,v 1.29 2005/03/23 17:16:34 miod Exp $	*/
 /*	$NetBSD: cgthree.c,v 1.33 1997/05/24 20:16:11 pk Exp $ */
 
 /*
@@ -96,7 +96,6 @@
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
-#include <dev/wscons/wscons_raster.h>
 #include <dev/rasops/rasops.h>
 #include <machine/fbvar.h>
 
@@ -113,32 +112,27 @@ struct cgthree_softc {
 	volatile struct fbcontrol *sc_fbc;	/* Brooktree registers */
 	union	bt_cmap sc_cmap;	/* Brooktree color map */
 	struct intrhand sc_ih;
-	int	sc_nscreens;
 };
 
-int cgthree_ioctl(void *, u_long, caddr_t, int, struct proc *);
-int cgthree_alloc_screen(void *, const struct wsscreen_descr *, void **,
-    int *, int *, long *);
-void cgthree_free_screen(void *, void *);
-int cgthree_show_screen(void *, void *, int, void (*cb)(void *, int, int),
-    void *);
-paddr_t cgthree_mmap(void *, off_t, int);
-void cgthree_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
-static __inline__ void cgthree_loadcmap_deferred(struct cgthree_softc *,
-    u_int, u_int);
-void cgthree_burner(void *, u_int, u_int);
-int cgthree_intr(void *);
+void	cgthree_burner(void *, u_int, u_int);
+int	cgthree_intr(void *);
+int	cgthree_ioctl(void *, u_long, caddr_t, int, struct proc *);
+static __inline__
+void	cgthree_loadcmap_deferred(struct cgthree_softc *, u_int, u_int);
+paddr_t	cgthree_mmap(void *, off_t, int);
+void	cgthree_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
 
 struct wsdisplay_accessops cgthree_accessops = {
 	cgthree_ioctl,
 	cgthree_mmap,
-	cgthree_alloc_screen,
-	cgthree_free_screen,
-	cgthree_show_screen,
+	NULL,	/* alloc_screen */
+	NULL,	/* free_screen */
+	NULL,	/* show_screen */
 	NULL,	/* load_font */
 	NULL,	/* scrollback */
 	NULL,	/* getchar */
 	cgthree_burner,
+	NULL	/* pollc */
 };
 
 int	cgthreematch(struct device *, void *, void *);
@@ -174,13 +168,8 @@ struct cg3_videoctrl {
 	},
 };
 
-/*
- * Match a cgthree.
- */
 int
-cgthreematch(parent, vcf, aux)
-	struct device *parent;
-	void *vcf, *aux;
+cgthreematch(struct device *parent, void *vcf, void *aux)
 {
 	struct cfdata *cf = vcf;
 	struct confargs *ca = aux;
@@ -197,13 +186,8 @@ cgthreematch(parent, vcf, aux)
 	return (probeget(ra->ra_vaddr, 4) != -1);
 }
 
-/*
- * Attach a display.
- */
 void
-cgthreeattach(parent, self, args)
-	struct device *parent, *self;
-	void *args;
+cgthreeattach(struct device *parent, struct device *self, void *args)
 {
 	struct cgthree_softc *sc = (struct cgthree_softc *)self;
 	struct confargs *ca = args;
@@ -323,12 +307,7 @@ cgthreeattach(parent, self, args)
 }
 
 int
-cgthree_ioctl(v, cmd, data, flags, p)
-	void *v;
-	u_long cmd;
-	caddr_t data;
-	int flags;
-	struct proc *p;
+cgthree_ioctl(void *v, u_long cmd, caddr_t data, int flags, struct proc *p)
 {
 	struct cgthree_softc *sc = v;
 	struct wsdisplay_fbinfo *wdf;
@@ -381,58 +360,8 @@ cgthree_ioctl(v, cmd, data, flags, p)
 	return (0);
 }
 
-int
-cgthree_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
-	void *v;
-	const struct wsscreen_descr *type;
-	void **cookiep;
-	int *curxp, *curyp;
-	long *attrp;
-{
-	struct cgthree_softc *sc = v;
-
-	if (sc->sc_nscreens > 0)
-		return (ENOMEM);
-
-	*cookiep = &sc->sc_sunfb.sf_ro;
-	*curyp = 0;
-	*curxp = 0;
-	sc->sc_sunfb.sf_ro.ri_ops.alloc_attr(&sc->sc_sunfb.sf_ro,
-	    WSCOL_BLACK, WSCOL_WHITE, WSATTR_WSCOLORS, attrp);
-	sc->sc_nscreens++;
-	return (0);
-}
-
-void
-cgthree_free_screen(v, cookie)
-	void *v;
-	void *cookie;
-{
-	struct cgthree_softc *sc = v;
-
-	sc->sc_nscreens--;
-}
-
-int
-cgthree_show_screen(v, cookie, waitok, cb, cbarg)
-	void *v;
-	void *cookie;
-	int waitok;
-	void (*cb)(void *, int, int);
-	void *cbarg;
-{
-	return (0);
-}
-
-/*
- * Return the address that would map the given device at the given
- * offset, allowing for the given protection, or return -1 for error.
- */
 paddr_t
-cgthree_mmap(v, offset, prot)
-	void *v;
-	off_t offset;
-	int prot;
+cgthree_mmap(void *v, off_t offset, int prot)
 {
 	struct cgthree_softc *sc = v;
 
@@ -448,10 +377,7 @@ cgthree_mmap(v, offset, prot)
 }
 
 void
-cgthree_setcolor(v, index, r, g, b)
-	void *v;
-	u_int index;
-	u_int8_t r, g, b;
+cgthree_setcolor(void *v, u_int index, u_int8_t r, u_int8_t g, u_int8_t b)
 {
 	struct cgthree_softc *sc = v;
 
@@ -466,9 +392,7 @@ cgthree_loadcmap_deferred(struct cgthree_softc *sc, u_int start, u_int ncolors)
 }
 
 void
-cgthree_burner(v, on, flags)
-	void *v;
-	u_int on, flags;
+cgthree_burner(void *v, u_int on, u_int flags)
 {
 	struct cgthree_softc *sc = v;
 	int s;
@@ -485,8 +409,7 @@ cgthree_burner(v, on, flags)
 }
 
 int
-cgthree_intr(v)
-	void *v;
+cgthree_intr(void *v)
 {
 	struct cgthree_softc *sc = v;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgfourteen.c,v 1.30 2005/03/15 18:50:43 miod Exp $	*/
+/*	$OpenBSD: cgfourteen.c,v 1.31 2005/03/23 17:16:34 miod Exp $	*/
 /*	$NetBSD: cgfourteen.c,v 1.7 1997/05/24 20:16:08 pk Exp $ */
 
 /*
@@ -101,7 +101,6 @@
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
-#include <dev/wscons/wscons_raster.h>
 #include <dev/rasops/rasops.h>
 #include <machine/fbvar.h>
 
@@ -140,15 +139,9 @@ struct cgfourteen_softc {
 	size_t	sc_vramsize;		/* total video memory size */
 
 	struct	intrhand sc_ih;
-	int	sc_nscreens;
 };
 
 int	cgfourteen_ioctl(void *, u_long, caddr_t, int, struct proc *);
-int	cgfourteen_alloc_screen(void *, const struct wsscreen_descr *, void **,
-	    int *, int *, long *);
-void	cgfourteen_free_screen(void *, void *);
-int	cgfourteen_show_screen(void *, void *, int, void (*)(void *, int, int),
-	    void *);
 paddr_t	cgfourteen_mmap(void *, off_t, int);
 void	cgfourteen_reset(struct cgfourteen_softc *, int);
 void	cgfourteen_burner(void *, u_int, u_int);
@@ -164,13 +157,14 @@ void	cgfourteen_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
 struct wsdisplay_accessops cgfourteen_accessops = {
 	cgfourteen_ioctl,
 	cgfourteen_mmap,
-	cgfourteen_alloc_screen,
-	cgfourteen_free_screen,
-	cgfourteen_show_screen,
+	NULL,	/* alloc_screen */
+	NULL,	/* free_screen */
+	NULL,	/* show_screen */
 	NULL,	/* load_font */
 	NULL,	/* scrollback */
 	NULL,	/* getchar */
 	cgfourteen_burner,
+	NULL	/* pollc */
 };
 
 void	cgfourteenattach(struct device *, struct device *, void *);
@@ -408,39 +402,6 @@ cgfourteen_ioctl(void *dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 	default:
 		return (-1);	/* not supported yet */
 	}
-	return (0);
-}
-
-int
-cgfourteen_alloc_screen(void *v, const struct wsscreen_descr *type,
-    void **cookiep, int *curxp, int *curyp, long *attrp)
-{
-	struct cgfourteen_softc *sc = v;
-
-	if (sc->sc_nscreens > 0)
-		return (ENOMEM);
-
-	*cookiep = &sc->sc_sunfb.sf_ro;
-	*curyp = 0;
-	*curxp = 0;
-	sc->sc_sunfb.sf_ro.ri_ops.alloc_attr(&sc->sc_sunfb.sf_ro,
-	    WSCOL_BLACK, WSCOL_WHITE, WSATTR_WSCOLORS, attrp);
-	sc->sc_nscreens++;
-	return (0);
-}
-
-void
-cgfourteen_free_screen(void *v, void *cookie)
-{
-	struct cgfourteen_softc *sc = v;
-
-	sc->sc_nscreens--;
-}
-
-int
-cgfourteen_show_screen(void *v, void *cookie, int waitok,
-    void (*cb)(void *, int, int), void *cbarg)
-{
 	return (0);
 }
 

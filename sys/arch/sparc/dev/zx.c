@@ -1,4 +1,4 @@
-/*	$OpenBSD: zx.c,v 1.11 2005/03/13 23:05:22 miod Exp $	*/
+/*	$OpenBSD: zx.c,v 1.12 2005/03/23 17:16:34 miod Exp $	*/
 /*	$NetBSD: zx.c,v 1.5 2002/10/02 16:52:46 thorpej Exp $	*/
 
 /*
@@ -88,7 +88,6 @@
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
-#include <dev/wscons/wscons_raster.h>
 #include <dev/rasops/rasops.h>
 #include <machine/fbvar.h>
 
@@ -123,29 +122,25 @@ struct zx_softc {
 	volatile struct zx_draw_ss1 *sc_zd_ss1;
 	volatile struct zx_cursor *sc_zcu;
 
-	int	sc_nscreens;
 };
 
-int zx_ioctl(void *, u_long, caddr_t, int, struct proc *);
-int zx_alloc_screen(void *, const struct wsscreen_descr *, void **,
-    int *, int *, long *);
-void zx_free_screen(void *, void *);
-int zx_show_screen(void *, void *, int, void (*)(void *, int, int), void *);
-paddr_t zx_mmap(void *, off_t, int);
-void zx_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
-void zx_reset(struct zx_softc *, u_int);
-void zx_burner(void *, u_int, u_int);
+void	zx_burner(void *, u_int, u_int);
+int	zx_ioctl(void *, u_long, caddr_t, int, struct proc *);
+paddr_t	zx_mmap(void *v, off_t offset, int prot);
+void	zx_reset(struct zx_softc *, u_int);
+void	zx_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
 
 struct wsdisplay_accessops zx_accessops = {
 	zx_ioctl,
 	zx_mmap,
-	zx_alloc_screen,
-	zx_free_screen,
-	zx_show_screen,
+	NULL,	/* alloc_screen */
+	NULL,	/* free_screen */
+	NULL,	/* show_screen */
 	NULL,	/* load_font */
 	NULL,	/* scrollback */
 	NULL,	/* getchar */
-	zx_burner
+	zx_burner,
+	NULL	/* pollc */
 };
 
 /* Force 32-bit writes. */
@@ -162,20 +157,19 @@ struct wsdisplay_accessops zx_accessops = {
 void	zx_attach(struct device *, struct device *, void *);
 int	zx_match(struct device *, void *, void *);
 
-int	zx_putcmap(struct zx_softc *);
 void	zx_copyrect(struct rasops_info *, int, int, int, int, int, int);
 int	zx_cross_loadwid(struct zx_softc *, u_int, u_int, u_int);
 int	zx_cross_wait(struct zx_softc *);
 void	zx_fillrect(struct rasops_info *, int, int, int, int, long, int);
 int	zx_intr(void *);
-void	zx_prom(void *);
+int	zx_putcmap(struct zx_softc *);
 
-void	zx_putchar(void *, int, int, u_int, long);
 void	zx_copycols(void *, int, int, int, int);
-void	zx_erasecols(void *, int, int, int, long);
 void	zx_copyrows(void *, int, int, int);
-void	zx_eraserows(void *, int, int, long);
 void	zx_do_cursor(struct rasops_info *);
+void	zx_erasecols(void *, int, int, int, long);
+void	zx_eraserows(void *, int, int, long);
+void	zx_putchar(void *, int, int, u_int, long);
 
 struct cfattach zx_ca = {
 	sizeof(struct zx_softc), zx_match, zx_attach
@@ -259,11 +253,11 @@ zx_attach(struct device *parent, struct device *self, void *args)
 
 	/*
 	 * Watch out! rasops_init() invoked via fbwscons_init() would
-	 * not compute ri_bits correctly, if it had been tricked with the
-	 * low depth value. So masquerade as 32 bits for the call. This
-	 * will invoke rasops32_init() instead of rasops8_init(), but this
-	 * doesn't matter as we will override all the rasops functions
-	 * below.
+	 * not compute ri_bits correctly when centering the display, if
+	 * it had been tricked with the low depth value. So masquerade as
+	 * 32 bits for the call. This will invoke rasops32_init() instead
+	 * of rasops8_init(), but this doesn't matter as we will override
+	 * all the rasops functions below.
 	 */
 	sc->sc_sunfb.sf_depth = 32;
 	fbwscons_init(&sc->sc_sunfb, isconsole ? 0 : RI_CLEAR);
@@ -282,6 +276,7 @@ zx_attach(struct device *parent, struct device *self, void *args)
 	}
 
 	/* reset cursor & frame buffer controls */
+	sc->sc_mode = ~WSDISPLAYIO_MODE_EMUL;	/* force action */
 	zx_reset(sc, WSDISPLAYIO_MODE_EMUL);
 
 	/* enable video */
@@ -337,39 +332,6 @@ zx_ioctl(void *dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 	return (0);
 }
 
-int
-zx_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
-    int *curxp, int *curyp, long *attrp)
-{
-	struct zx_softc *sc = v;
-
-	if (sc->sc_nscreens > 0)
-		return (ENOMEM);
-
-	*cookiep = &sc->sc_sunfb.sf_ro;
-	*curyp = 0;
-	*curxp = 0;
-	sc->sc_sunfb.sf_ro.ri_ops.alloc_attr(&sc->sc_sunfb.sf_ro,
-	    WSCOL_BLACK, WSCOL_WHITE, WSATTR_WSCOLORS, attrp);
-	sc->sc_nscreens++;
-	return (0);
-}
-
-void
-zx_free_screen(void *v, void *cookie)
-{
-	struct zx_softc *sc = v;
-
-	sc->sc_nscreens--;
-}
-
-int
-zx_show_screen(void *v, void *cookie, int waitok, void (*cb)(void *, int, int),
-    void *cbarg)
-{
-	return (0);
-}
-
 /*
  * Return the address that would map the given device at the given
  * offset, allowing for the given protection, or return -1 for error.
@@ -408,6 +370,9 @@ zx_reset(struct zx_softc *sc, u_int mode)
 	u_int32_t i;
 	const u_char *color;
 	u_int8_t *r, *g, *b;
+
+	if (mode == sc->sc_mode)
+		return;
 
 	zd = sc->sc_zd_ss0;
 	zc = sc->sc_zc;
@@ -478,6 +443,8 @@ zx_reset(struct zx_softc *sc, u_int mode)
 		SETREG(zd->zd_rop, ZX_ATTR_RGBE_ENABLE |
 		    ZX_ROP_NEW /* | ZX_ATTR_FORCE_WID */);
 	}
+
+	sc->sc_mode = mode;
 }
 
 int
@@ -576,7 +543,7 @@ zx_burner(void *v, u_int on, u_int flags)
 
 void
 zx_fillrect(struct rasops_info *ri, int x, int y, int w, int h, long attr,
-	    int rop)
+    int rop)
 {
 	struct zx_softc *sc;
 	volatile struct zx_command *zc;
@@ -604,7 +571,7 @@ zx_fillrect(struct rasops_info *ri, int x, int y, int w, int h, long attr,
 
 void
 zx_copyrect(struct rasops_info *ri, int sx, int sy, int dx, int dy, int w,
-	    int h)
+    int h)
 {
 	struct zx_softc *sc;
 	volatile struct zx_command *zc;

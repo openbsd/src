@@ -1,4 +1,4 @@
-/*	$OpenBSD: vigra.c,v 1.14 2005/03/07 16:44:50 miod Exp $	*/
+/*	$OpenBSD: vigra.c,v 1.15 2005/03/23 17:16:34 miod Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, Miodrag Vallat.
@@ -55,7 +55,6 @@
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
-#include <dev/wscons/wscons_raster.h>
 #include <dev/rasops/rasops.h>
 #include <machine/fbvar.h>
 
@@ -181,35 +180,30 @@ struct vigra_softc {
 	union	vigracmap sc_cmap;	/* current colormap */
 	int	sc_g300;
 	struct	intrhand sc_ih;
-	int	sc_nscreens;
 };
 
-int vigra_ioctl(void *, u_long, caddr_t, int, struct proc *);
-int vigra_alloc_screen(void *, const struct wsscreen_descr *, void **,
-    int *, int *, long *);
-void vigra_free_screen(void *, void *);
-int vigra_show_screen(void *, void *, int, void (*cb)(void *, int, int),
-    void *);
-paddr_t vigra_mmap(void *, off_t, int);
-void vigra_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
-int vigra_getcmap(union vigracmap *, struct wsdisplay_cmap *, int);
-int vigra_putcmap(union vigracmap *, struct wsdisplay_cmap *, int);
-void vigra_loadcmap_immediate(struct vigra_softc *, int, int);
-static __inline__ void vigra_loadcmap_deferred(struct vigra_softc *,
-    u_int, u_int);
-void vigra_burner(void *, u_int, u_int);
-int vigra_intr(void *);
+void	vigra_burner(void *, u_int, u_int);
+int	vigra_getcmap(union vigracmap *, struct wsdisplay_cmap *, int);
+int	vigra_intr(void *);
+int	vigra_ioctl(void *, u_long, caddr_t, int, struct proc *);
+static __inline__
+void	vigra_loadcmap_deferred(struct vigra_softc *, u_int, u_int);
+void	vigra_loadcmap_immediate(struct vigra_softc *, int, int);
+paddr_t	vigra_mmap(void *, off_t, int);
+int	vigra_putcmap(union vigracmap *, struct wsdisplay_cmap *, int);
+void	vigra_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
 
 struct wsdisplay_accessops vigra_accessops = {
 	vigra_ioctl,
 	vigra_mmap,
-	vigra_alloc_screen,
-	vigra_free_screen,
-	vigra_show_screen,
+	NULL,	/* alloc_screen */
+	NULL,	/* free_screen */
+	NULL,	/* show_screen */
 	NULL,	/* load_font */
 	NULL,	/* scrollback */
 	NULL,	/* getchar */
 	vigra_burner,
+	NULL	/* pollc */
 };
 
 int	vigramatch(struct device *, void *, void *);
@@ -386,43 +380,6 @@ vigra_ioctl(void *v, u_long cmd, caddr_t data, int flags, struct proc *p)
 	return (0);
 }
 
-int
-vigra_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
-    int *curxp, int *curyp, long *attrp)
-{
-	struct vigra_softc *sc = v;
-
-	if (sc->sc_nscreens > 0)
-		return (ENOMEM);
-
-	*cookiep = &sc->sc_sunfb.sf_ro;
-	*curyp = 0;
-	*curxp = 0;
-	sc->sc_sunfb.sf_ro.ri_ops.alloc_attr(&sc->sc_sunfb.sf_ro,
-	    WSCOL_BLACK, WSCOL_WHITE, WSATTR_WSCOLORS, attrp);
-	sc->sc_nscreens++;
-	return (0);
-}
-
-void
-vigra_free_screen(void *v, void *cookie)
-{
-	struct vigra_softc *sc = v;
-
-	sc->sc_nscreens--;
-}
-
-int
-vigra_show_screen(void *v, void *cookie, int waitok,
-    void (*cb)(void *, int, int), void *cbarg)
-{
-	return (0);
-}
-
-/*
- * Return the address that would map the given device at the given
- * offset, allowing for the given protection, or return -1 for error.
- */
 paddr_t
 vigra_mmap(void *v, off_t offset, int prot)
 {

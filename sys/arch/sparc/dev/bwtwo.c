@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwtwo.c,v 1.31 2005/03/07 16:44:50 miod Exp $	*/
+/*	$OpenBSD: bwtwo.c,v 1.32 2005/03/23 17:16:34 miod Exp $	*/
 /*	$NetBSD: bwtwo.c,v 1.33 1997/05/24 20:16:02 pk Exp $ */
 
 /*
@@ -76,7 +76,6 @@
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
-#include <dev/wscons/wscons_raster.h>
 #include <dev/rasops/rasops.h>
 #include <machine/fbvar.h>
 
@@ -90,29 +89,24 @@ struct bwtwo_softc {
 	struct rom_reg	sc_phys;	/* phys address description */
 	int	sc_bustype;		/* type of bus we live on */
 	int	sc_pixeloffset;		/* offset to framebuffer */
-	int	sc_nscreens;
 };
 
-int bwtwo_ioctl(void *, u_long, caddr_t, int, struct proc *);
-int bwtwo_alloc_screen(void *, const struct wsscreen_descr *, void **,
-    int *, int *, long *);
-void bwtwo_free_screen(void *, void *);
-int bwtwo_show_screen(void *, void *, int, void (*cb)(void *, int, int),
-    void *);
-paddr_t bwtwo_mmap(void *, off_t, int);
-void bwtwo_burner(void *, u_int, u_int);
-int bwtwo_intr(void *);
+void	bwtwo_burner(void *, u_int, u_int);
+int	bwtwo_intr(void *);
+int	bwtwo_ioctl(void *, u_long, caddr_t, int, struct proc *);
+paddr_t	bwtwo_mmap(void *, off_t, int);
 
 struct wsdisplay_accessops bwtwo_accessops = {
 	bwtwo_ioctl,
 	bwtwo_mmap,
-	bwtwo_alloc_screen,
-	bwtwo_free_screen,
-	bwtwo_show_screen,
+	NULL,	/* alloc_screen */
+	NULL,	/* free_screen */
+	NULL,	/* show_screen */
 	NULL,	/* load_font */
 	NULL,	/* scrollback */
 	NULL,	/* getchar */
 	bwtwo_burner,
+	NULL	/* pollc */
 };
 
 
@@ -128,13 +122,8 @@ struct cfdriver bwtwo_cd = {
 	NULL, "bwtwo", DV_DULL
 };
 
-/*
- * Match a bwtwo.
- */
 int
-bwtwomatch(parent, vcf, aux)
-	struct device *parent;
-	void *vcf, *aux;
+bwtwomatch(struct device *parent, void *vcf, void *aux)
 {
 	struct cfdata *cf = vcf;
 	struct confargs *ca = aux;
@@ -185,13 +174,8 @@ bwtwomatch(parent, vcf, aux)
 	return (0);
 }
 
-/*
- * Attach a display.
- */
 void
-bwtwoattach(parent, self, args)
-	struct device *parent, *self;
-	void *args;
+bwtwoattach(struct device *parent, struct device *self, void *args)
 {
 	struct bwtwo_softc *sc = (struct bwtwo_softc *)self;
 	struct confargs *ca = args;
@@ -307,12 +291,7 @@ obp_name:
 }
 
 int
-bwtwo_ioctl(v, cmd, data, flags, p)
-	void *v;
-	u_long cmd;
-	caddr_t data;
-	int flags;
-	struct proc *p;
+bwtwo_ioctl(void *v, u_long cmd, caddr_t data, int flags, struct proc *p)
 {
 	struct bwtwo_softc *sc = v;
 	struct wsdisplay_fbinfo *wdf;
@@ -352,15 +331,8 @@ bwtwo_ioctl(v, cmd, data, flags, p)
 	return (0);
 }
 
-/*
- * Return the address that would map the given device at the given
- * offset, allowing for the given protection, or return -1 for error.
- */
 paddr_t
-bwtwo_mmap(v, offset, prot)
-	void *v;
-	off_t offset;
-	int prot;
+bwtwo_mmap(void *v, off_t offset, int prot)
 {
 	struct bwtwo_softc *sc = v;
 
@@ -376,9 +348,7 @@ bwtwo_mmap(v, offset, prot)
 }
 
 void
-bwtwo_burner(v, on, flags)
-	void *v;
-	u_int on, flags;
+bwtwo_burner(void *v, u_int on, u_int flags)
 {
 	struct bwtwo_softc *sc = v;
 	int s;
@@ -386,7 +356,7 @@ bwtwo_burner(v, on, flags)
 #if defined(SUN4)
 	if (CPU_ISSUN4 && (sc->sc_bustype == BUS_OBIO)) {
 		if (ISSET(sc->sc_sunfb.sf_flags, FB_PFOUR)) {
-			fb_pfour_set_video(&sc->sc_sunfb, on);
+			fb_pfour_burner(v, on, flags);
 			return;
 		}
 		if (on)
@@ -409,47 +379,4 @@ bwtwo_burner(v, on, flags)
 			sc->sc_reg->fbc_ctrl &= ~FBC_TIMING;
 	}
 	splx(s);
-}
-
-int
-bwtwo_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
-	void *v;
-	const struct wsscreen_descr *type;
-	void **cookiep;
-	int *curxp, *curyp;
-	long *attrp;
-{
-	struct bwtwo_softc *sc = v;
-
-	if (sc->sc_nscreens > 0)
-		return (ENOMEM);
-
-	*cookiep = &sc->sc_sunfb.sf_ro;
-	*curyp = 0;
-	*curxp = 0;
-	sc->sc_sunfb.sf_ro.ri_ops.alloc_attr(&sc->sc_sunfb.sf_ro,
-	    0, 0, 0, attrp);
-	sc->sc_nscreens++;
-	return (0);
-}
-
-void
-bwtwo_free_screen(v, cookie)
-	void *v;
-	void *cookie;
-{
-	struct bwtwo_softc *sc = v;
-
-	sc->sc_nscreens--;
-}
-
-int
-bwtwo_show_screen(v, cookie, waitok, cb, cbarg)
-	void *v;
-	void *cookie;
-	int waitok;
-	void (*cb)(void *, int, int);
-	void *cbarg;
-{
-	return (0);
 }

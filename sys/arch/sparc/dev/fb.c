@@ -1,4 +1,4 @@
-/*	$OpenBSD: fb.c,v 1.33 2005/03/15 18:40:12 miod Exp $	*/
+/*	$OpenBSD: fb.c,v 1.34 2005/03/23 17:16:34 miod Exp $	*/
 /*	$NetBSD: fb.c,v 1.23 1997/07/07 23:30:22 pk Exp $ */
 
 /*
@@ -111,6 +111,11 @@ static int a2int(char *, int);
 #endif
 static void fb_initwsd(struct sunfb *);
 static void fb_updatecursor(struct rasops_info *);
+int	fb_alloc_screen(void *, const struct wsscreen_descr *, void **,
+	    int *, int *, long *);
+void	fb_free_screen(void *, void *);
+int	fb_show_screen(void *, void *, int, void (*)(void *, int, int),
+	    void *);
 
 void
 fb_setsize(struct sunfb *sf, int def_depth, int def_width, int def_height,
@@ -470,6 +475,13 @@ fbwscons_attach(struct sunfb *sf, struct wsdisplay_accessops *op, int isconsole)
 		fb_cookie = sf;
 	}
 
+	/* plug common wsdisplay_accessops if necessary */
+	if (op->alloc_screen == NULL) {
+		op->alloc_screen = fb_alloc_screen;
+		op->free_screen = fb_free_screen;
+		op->show_screen = fb_show_screen;
+	}
+
 	scrlist[0] = &sf->sf_wsd;
 	screenlist.nscreens = 1;
 	screenlist.screens = (const struct wsscreen_descr **)scrlist;
@@ -481,18 +493,57 @@ fbwscons_attach(struct sunfb *sf, struct wsdisplay_accessops *op, int isconsole)
 	config_found(&sf->sf_dev, &waa, wsemuldisplaydevprint);
 }
 
-#if defined(SUN4)
 /*
- * Support routines for pfour framebuffers.
+ * Common wsdisplay_accessops routines.
+ */
+int
+fb_alloc_screen(void *v, const struct wsscreen_descr *type,
+    void **cookiep, int *curxp, int *curyp, long *attrp)
+{
+	struct sunfb *sf = v;
+
+	if (sf->sf_nscreens > 0)
+		return (ENOMEM);
+
+	*cookiep = &sf->sf_ro;
+	*curyp = 0;
+	*curxp = 0;
+	if (sf->sf_depth == 8) {
+		sf->sf_ro.ri_ops.alloc_attr(&sf->sf_ro,
+		    WSCOL_BLACK, WSCOL_WHITE, WSATTR_WSCOLORS, attrp);
+	} else {
+		sf->sf_ro.ri_ops.alloc_attr(&sf->sf_ro,
+		    0, 0, 0, attrp);
+	}
+	sf->sf_nscreens++;
+	return (0);
+}
+
+void
+fb_free_screen(void *v, void *cookie)
+{
+	struct sunfb *sf = v;
+
+	sf->sf_nscreens--;
+}
+
+int
+fb_show_screen(void *v, void *cookie, int waitok, void (*cb)(void *, int, int),
+    void *cbarg)
+{
+	return (0);
+}
+
+#if defined(SUN4)
+
+/*
+ * Support routines for P4 framebuffers.
  */
 
 /*
- * Probe for a pfour framebuffer.  Return values:
- *
- *	PFOUR_NOTPFOUR		framebuffer is not a pfour
- *				framebuffer
- *
- *	otherwise returns pfour ID
+ * Probe for a P4 framebuffer.  Return values:
+ *	PFOUR_NOTPFOUR		framebuffer is not a P4 framebuffer
+ *	otherwise returns P4 ID
  */
 int
 fb_pfour_id(void *va)
@@ -517,23 +568,13 @@ fb_pfour_id(void *va)
 	return (PFOUR_ID(val));
 }
 
-
 /*
- * Return the status of the video enable.
- */
-int
-fb_pfour_get_video(struct sunfb *sf)
-{
-
-	return ((*sf->sf_pfour & PFOUR_REG_VIDEO) != 0);
-}
-
-/*
- * Enable or disable the framebuffer.
+ * Screen burner routine for P4
  */
 void
-fb_pfour_set_video(struct sunfb *sf, int enable)
+fb_pfour_burner(void *v, u_int enable, u_int flags)
 {
+	struct sunfb *sf = (struct sunfb *)v;
 	volatile u_int32_t pfour;
 
 	pfour = *sf->sf_pfour & ~(PFOUR_REG_INTCLR | PFOUR_REG_VIDEO);
