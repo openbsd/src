@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_sym.c,v 1.23 2001/08/19 16:41:07 art Exp $	*/
+/*	$OpenBSD: db_sym.c,v 1.24 2001/08/19 17:49:00 frantzen Exp $	*/
 /*	$NetBSD: db_sym.c,v 1.24 2000/08/11 22:50:47 tv Exp $	*/
 
 /* 
@@ -138,7 +138,7 @@ ddb_init()
 #ifdef __sparc64__
 	xssym = ssym;
 #else
-	xssym = &end;
+	xssym = (char *)&end;
 #endif
 	/*
 	 * Do this check now for the master symbol table to avoid printing
