@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb_pci.c,v 1.11 2002/09/17 02:59:34 drahn Exp $	*/
+/*	$OpenBSD: vgafb_pci.c,v 1.12 2003/06/16 21:59:15 drahn Exp $	*/
 /*	$NetBSD: vga_pci.c,v 1.4 1996/12/05 01:39:38 cgd Exp $	*/
 
 /*
@@ -137,29 +137,43 @@ vgafb_pci_probe(pa, id, ioaddr, iosize, memaddr, memsize, cacheable, mmioaddr, m
 			if (retval) {
 				return 0;
 			}
-			if (size == 0) {
+			if (size == 0 || addr == 0) {
 				/* ignore this entry */
-			} else if (size <= (1024 * 1024)) {
-#ifdef DEBUG_VGAFB
-	printf("vgafb_pci_probe: mem %x addr %x size %x iosize %x\n",
-		i, addr, size, *iosize);
-#endif
-				if (*mmiosize == 0) {
-					/* this is mmio, not memory */
+			} else if (*memsize == 0) {
+				/*
+				 * first memory slot found goes into memory,
+				 * this is for the case of no mmio
+				 */
+				*memaddr = addr;
+				*memsize = size;
+				*cacheable = tcacheable;
+			} else {
+				/*
+				 * Oh, we have a second 'memory' 
+				 * region, is this region the vga memory
+				 * or mmio, we guess that memory is
+				 * the larger of the two.
+				 */ 
+				 if (*memaddr > size) {
+					/* this is the mmio */
 					*mmioaddr = addr;
+					/* ATI driver maps 0x80000 mmio, grr */
 					if (size < 0x80000) {
-						/* ATI driver maps 0x80000, grr */
 						size = 0x80000;
 					}
 					*mmiosize = size;
-					/* need skew in here for io memspace */
-				}
-			} else {
-				if (*memsize == 0) {
+				 } else {
+					/* this is the memory */
+					*mmioaddr = *memaddr;
 					*memaddr = addr;
+					*mmiosize = *memsize;
 					*memsize = size;
 					*cacheable = tcacheable;
-				}
+					/* ATI driver maps 0x80000 mmio, grr */
+					if (*mmiosize < 0x80000) {
+						*mmiosize = 0x80000;
+					}
+				 }
 			}
 		}
 	}
