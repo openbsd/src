@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.13 1999/02/01 16:33:01 pefo Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.14 1999/02/10 08:07:20 deraadt Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -55,6 +55,7 @@ typedef u_int16_t	Elf32_Half;	/* Unsigned medium integer */
 #define EI_DATA		5		/* data encoding */
 #define EI_VERSION	6		/* ELF header version */
 #define EI_PAD		7		/* start of pad bytes */
+#define EI_BRAND	8		/* brand */ 
 #define EI_NIDENT	16		/* Size of e_ident[] */
 
 /* e_ident[] magic number */
@@ -392,6 +393,7 @@ int exec_elf_makecmds __P((struct proc *, struct exec_package *));
 void *elf_copyargs __P((struct exec_package *, struct ps_strings *,
         void *, void *));
 int exec_elf_fixup __P((struct proc *, struct exec_package *));
+char *elf_check_brand __P((Elf32_Ehdr *));
 
 #endif /* _KERNEL */
 

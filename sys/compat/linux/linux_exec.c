@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_exec.c,v 1.9 1999/01/11 05:12:12 millert Exp $	*/
+/*	$OpenBSD: linux_exec.c,v 1.10 1999/02/10 08:07:20 deraadt Exp $	*/
 /*	$NetBSD: linux_exec.c,v 1.13 1996/04/05 00:01:10 christos Exp $	*/
 
 /*
@@ -374,10 +374,14 @@ linux_elf_probe(p, epp, itp, pos, os)
 	u_long *pos;
 	u_int8_t *os;
 {
-	char *bp;
+	Elf32_Ehdr *eh = epp->ep_hdr;
+	char *bp, *brand;
 	int error;
 	size_t len;
 
+	brand = elf_check_brand(eh);
+	if (brand && strcmp(brand, "Linux"))
+		return (EINVAL);
 	if (itp[0]) {
 		if ((error = emul_find(p, NULL, linux_emul_path, itp, &bp, 0)))
 			return (error);

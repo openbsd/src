@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.23 1999/01/11 05:12:22 millert Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.24 1999/02/10 08:07:20 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -67,18 +67,25 @@
 #include <compat/svr4/svr4_exec.h>
 #endif
 
+#ifdef COMPAT_FREEBSD
+#include <compat/freebsd/freebsd_exec.h>
+#endif
+
 struct elf_probe_entry {
 	int (*func) __P((struct proc *, struct exec_package *, char *,
 	    u_long *, u_int8_t *));
 	int os_mask;
 } elf_probes[] = {
+#ifdef COMPAT_FREEBSD
+	{ freebsd_elf_probe, OOS_FREEBSD },
+#endif
+#ifdef COMPAT_LINUX
+	{ linux_elf_probe, OOS_LINUX },
+#endif
 #ifdef COMPAT_SVR4
 	{ svr4_elf_probe,
 	    1 << OOS_SVR4 | 1 << OOS_ESIX | 1 << OOS_SOLARIS | 1 << OOS_SCO |
 	    1 << OOS_DELL | 1 << OOS_NCR },
-#endif
-#ifdef COMPAT_LINUX
-	{ linux_elf_probe, OOS_LINUX },
 #endif
 	{ 0, OOS_OPENBSD }
 };
@@ -734,4 +741,14 @@ exec_elf_fixup(p, epp)
 	free((char *)interp, M_TEMP);
 	return (error);
 }
+
+char *
+elf_check_brand(eh)
+	Elf32_Ehdr *eh;
+{
+	if (eh->e_ident[EI_BRAND] == '\0')
+		return (NULL);
+	return (&eh->e_ident[EI_BRAND]);
+}
+
 #endif /* _KERN_DO_ELF */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.27 1998/08/20 19:46:35 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.28 1999/02/10 08:07:20 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 #undef DEBUG
@@ -82,7 +82,7 @@ extern struct emul emul_ibcs2;
 extern struct emul emul_linux_aout, emul_linux_elf;
 #endif
 #ifdef COMPAT_FREEBSD
-extern struct emul emul_freebsd;
+extern struct emul emul_aout_freebsd, emul_elf_freebsd;
 #endif
 #ifdef COMPAT_BSDOS
 extern struct emul emul_bsdos;
@@ -604,7 +604,8 @@ syscall(frame)
 		 */
 		if (callp != sysent
 #ifdef COMPAT_FREEBSD
-		    && p->p_emul != &emul_freebsd
+		    && p->p_emul != &emul_aout_freebsd
+		    && p->p_emul != &emul_elf_freebsd
 #endif
 #ifdef COMPAT_BSDOS
 		    && p->p_emul != &emul_bsdos
