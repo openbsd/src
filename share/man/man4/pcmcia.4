@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pcmcia.4,v 1.32 2003/06/19 20:29:51 deraadt Exp $
+.\"	$OpenBSD: pcmcia.4,v 1.33 2003/06/23 09:34:50 miod Exp $
 .\"	$NetBSD: pcmcia.4,v 1.4 1998/06/07 09:10:30 enami Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -51,7 +51,11 @@
 .Cd "tcic0   at isa? port 0x240 iomem 0xd0000 iosiz 0x10000"
 .Cd "pcmcia* at tcic? controller ? socket ?"
 .Pp
-.Cd "# sparc64"
+.Cd "# sparc"
+.Cd "tslot*  at sbus? slot ? offset ?"
+.Cd "pcmcia* at tslot? socket ?"
+.Pp
+.Cd "# sparc/sparc64"
 .Cd "stp*    at sbus? slot ? offset ?"
 .Cd "pcmcia* at stp? socket ?"
 .Pp
@@ -163,6 +167,7 @@ device may need to be decreased to avoid a conflict.
 .Xr an 4 ,
 .Xr awi 4 ,
 .Xr cardbus 4 ,
+.Xr cbb 4 ,
 .Xr cnw 4 ,
 .Xr com 4 ,
 .Xr eisa 4 ,
@@ -173,10 +178,14 @@ device may need to be decreased to avoid a conflict.
 .Xr isapnp 4 ,
 .Xr ne 4 ,
 .Xr pci 4 ,
+.Xr pcic 4 ,
 .Xr ray 4 ,
 .Xr rln 4 ,
 .Xr sbus 4 ,
 .Xr sm 4 ,
+.Xr stp 4 ,
+.Xr tcic 4 ,
+.Xr tslot 4 ,
 .Xr usb 4 ,
 .Xr wdc 4 ,
 .Xr wi 4 ,
