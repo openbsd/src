@@ -1,4 +1,4 @@
-/*      $OpenBSD: ftp.c,v 1.7 1996/11/09 19:57:46 kstailey Exp $      */
+/*      $OpenBSD: ftp.c,v 1.8 1996/12/16 15:51:28 deraadt Exp $      */
 /*      $NetBSD: ftp.c,v 1.13 1995/09/16 22:32:59 pk Exp $      */
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-static char rcsid[] = "$OpenBSD: ftp.c,v 1.7 1996/11/09 19:57:46 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: ftp.c,v 1.8 1996/12/16 15:51:28 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -211,8 +211,9 @@ login(host)
 	}
 	if (anonftp) {
 		user = getlogin();
-		strncpy(anonpass, user, sizeof anonpass);
-		strncat(anonpass, "@", sizeof anonpass);
+		strncpy(anonpass, user, sizeof anonpass-1);
+		anonpass[sizeof anonpass-1] = '\0';
+		strncat(anonpass, "@", sizeof anonpass-sizeof(anonpass));
 		pass = anonpass;
 		user = "anonymous";
 	}
