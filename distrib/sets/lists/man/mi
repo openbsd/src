@@ -566,7 +566,6 @@
 ./usr/share/man/cat1/source.0
 ./usr/share/man/cat1/sparc
 ./usr/share/man/cat1/sparc/fdformat.0
-./usr/share/man/cat1/sparc/screenblank.0
 ./usr/share/man/cat1/sparc64
 ./usr/share/man/cat1/spell.0
 ./usr/share/man/cat1/splain.0
@@ -1207,13 +1206,11 @@
 ./usr/share/man/cat4/sparc/hme.0
 ./usr/share/man/cat4/sparc/ie.0
 ./usr/share/man/cat4/sparc/intro.0
-./usr/share/man/cat4/sparc/kbd.0
 ./usr/share/man/cat4/sparc/kmem.0
 ./usr/share/man/cat4/sparc/le.0
 ./usr/share/man/cat4/sparc/led.0
 ./usr/share/man/cat4/sparc/magma.0
 ./usr/share/man/cat4/sparc/mem.0
-./usr/share/man/cat4/sparc/ms.0
 ./usr/share/man/cat4/sparc/openprom.0
 ./usr/share/man/cat4/sparc/pnozz.0
 ./usr/share/man/cat4/sparc/qe.0
@@ -2176,3 +2173,10 @@
 ./usr/share/texinfo
 ./usr/share/texinfo/texinfo.dtd
 ./usr/share/texinfo/texinfo.xsl
+./usr/share/man/cat4/sparc/cgtwelve.0
+./usr/share/man/cat4/sparc/lebuffer.0
+./usr/share/man/cat4/sparc/zskbd.0
+./usr/share/man/cat4/sparc/zstty.0
+./usr/share/man/cat4/sparc64/bwtwo.0
+./usr/share/man/cat8/sparc/wsconscfg.0
+./usr/share/man/cat8/sparc/wsconsctl.0
