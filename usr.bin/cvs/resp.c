@@ -1,4 +1,4 @@
-/*	$OpenBSD: resp.c,v 1.11 2004/12/06 21:03:12 deraadt Exp $	*/
+/*	$OpenBSD: resp.c,v 1.12 2004/12/07 16:48:55 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -124,7 +124,7 @@ struct cvs_resphdlr {
 static char *cvs_mt_stack[CVS_MTSTK_MAXDEPTH];
 static u_int cvs_mtstk_depth = 0;
 
-static time_t cvs_modtime = 0;
+static time_t cvs_modtime = CVS_DATE_DMSEC;
 
 
 /* last checksum received */
@@ -519,6 +519,7 @@ cvs_resp_updated(struct cvsroot *root, int type, char *line)
 	char path[MAXPATHLEN], cksum_buf[CVS_CKSUM_LEN];
 	BUF *fbuf;
 	CVSFILE *cf;
+	CVSENTRIES *entfile;
 	struct cvs_ent *ep;
 	struct timeval tv[2];
 
@@ -543,12 +544,23 @@ cvs_resp_updated(struct cvsroot *root, int type, char *line)
 		return (-1);
 	snprintf(path, sizeof(path), "%s/%s", line, ep->ce_name);
 
+	entfile = cvs_ent_open(line, O_WRONLY);
+	if (entfile == NULL) {
+		cvs_ent_free(ep);
+		return (-1);
+	}
+
 	if (type == CVS_RESP_CREATED) {
 		/* set the timestamp as the last one received from Mod-time */
 		ep->ce_mtime = cvs_modtime;
-		cvs_ent_add(cf->cf_ddat->cd_ent, ep);
-	} else if (type == CVS_RESP_UPDEXIST) {
-	} else if (type == CVS_RESP_UPDATED) {
+		cvs_ent_add(entfile, ep);
+	} else if ((type == CVS_RESP_UPDEXIST) || (type == CVS_RESP_UPDATED)) {
+		if (cvs_ent_remove(entfile, ep->ce_name) < 0)
+			cvs_log(LP_WARN, "failed to remove entry for `%s'",
+			    ep->ce_name);
+
+		cvs_ent_add(entfile, ep);
+	} else if (type == CVS_RESP_MERGED) {
 	}
 
 	fbuf = cvs_recvfile(root, &fmode);
@@ -557,12 +569,14 @@ cvs_resp_updated(struct cvsroot *root, int type, char *line)
 
 	cvs_buf_write(fbuf, path, fmode);
 
-	tv[0].tv_sec = (long)cvs_modtime;
-	tv[0].tv_usec = 0;
-	tv[1].tv_sec = (long)cvs_modtime;
-	tv[1].tv_usec = 0;
-	if (utimes(path, tv) == -1)
-		cvs_log(LP_ERRNO, "failed to set file timestamps");
+	if (cvs_modtime != CVS_DATE_DMSEC) {
+		tv[0].tv_sec = (long)cvs_modtime;
+		tv[0].tv_usec = 0;
+		tv[1].tv_sec = (long)cvs_modtime;
+		tv[1].tv_usec = 0;
+		if (utimes(path, tv) == -1)
+			cvs_log(LP_ERRNO, "failed to set file timestamps");
+	}
 
 	/* now see if there is a checksum */
 	if (cvs_fcksum != NULL) {
@@ -627,6 +641,7 @@ static int
 cvs_resp_mode(struct cvsroot *root, int type, char *line)
 {
 	if (cvs_strtomode(line, &cvs_lastmode) < 0) {
+		cvs_log(LP_ERR, "error handling Mode response");
 		return (-1);
 	}
 	return (0);
