@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.61 2000/01/09 22:53:16 angelos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.62 2000/01/10 04:29:29 angelos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -98,8 +98,6 @@ int (*fr_checkp) __P((struct ip *, int, struct ifnet *, int, struct mbuf **));
 extern int ipsec_auth_default_level;
 extern int ipsec_esp_trans_default_level;
 extern int ipsec_esp_network_default_level;
-
-extern int pfkeyv2_acquire(struct tdb *, int);
 #endif
 
 /*
