@@ -1,4 +1,4 @@
-.\"	$NetBSD: size.1,v 1.5 1994/12/21 08:07:20 jtc Exp $
+.\"	$NetBSD: size.1,v 1.6 1996/01/14 23:07:11 pk Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,19 +41,31 @@
 .Nd display object file segment sizes (text, data and bss)
 .Sh SYNOPSIS
 .Nm size
-.Op Ar object_file ...
+.Op Fl w
+.Ar
 .Sh DESCRIPTION
 .Nm Size
 displays the text, data and bss segment sizes of the specified
-.Ar object_file
+.Ar file(s)
 in bytes (in decimal), and the sum of the three segments (in
 decimal and hexadecimal).
+If a library (archive) is given,
+.Nm
+displays the segment sizes for each object archive member.
 If no
-.Ar object_file
+.Ar file
 is specified
 .Nm
 attempts to report on the file
 .Pa a.out .
+.Bl -tag -width flag
+.It Fl w
+Warn about non-object archive members.
+Normally,
+.Nm
+will silently ignore all archive members which are not
+object files.
+.El
 .Sh SEE ALSO
 .Xr a.out 5
 .Sh HISTORY
