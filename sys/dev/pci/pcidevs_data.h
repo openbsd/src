@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.333 2000/10/17 17:54:42 millert Exp 
+ *		OpenBSD: pcidevs,v 1.335 2000/10/19 01:52:48 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -2181,6 +2181,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "Pro/1000",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_HUB,
+	    0,
+	    "Intel",
+	    "82815 Hub",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_GRAPHICS,
+	    0,
+	    "Intel",
+	    "82815 Graphics",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82559ER,
 	    0,
 	    "Intel",
@@ -2397,10 +2409,46 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "82801AB Hub-to-PCI",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_LPC,
+	    0,
+	    "Intel",
+	    "82801BA LPC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_USB,
+	    0,
+	    "Intel",
+	    "82801BA USB",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_SMBUS,
+	    0,
+	    "Intel",
+	    "82801BA SMBus",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_USB2,
+	    0,
+	    "Intel",
+	    "82801BA USB2",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82562,
 	    0,
 	    "Intel",
 	    "82562",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_IDE,
+	    0,
+	    "Intel",
+	    "82801BA IDE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_AGP,
+	    0,
+	    "Intel",
+	    "82801BA AGP",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82820_MCH,
