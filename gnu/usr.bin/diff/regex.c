@@ -5200,15 +5200,7 @@ regerror (errcode, preg, errbuf, errbuf_size)
   msg_size = strlen (msg) + 1; /* Includes the null.  */
   
   if (errbuf_size != 0)
-    {
-      if (msg_size > errbuf_size)
-        {
-          strncpy (errbuf, msg, errbuf_size - 1);
-          errbuf[errbuf_size - 1] = 0;
-        }
-      else
-        strcpy (errbuf, msg);
-    }
+      strlcpy (errbuf, msg, errbuf_size);
 
   return msg_size;
 }

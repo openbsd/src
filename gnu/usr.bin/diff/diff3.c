@@ -1152,7 +1152,8 @@ read_diff (filea, fileb, output_placement)
   *ap++ = diff_program;
   if (always_text)
     *ap++ = "-a";
-  sprintf (horizon_arg, "--horizon-lines=%d", horizon_lines);
+  snprintf (horizon_arg, sizeof horizon_arg, "--horizon-lines=%d",
+    horizon_lines);
   *ap++ = horizon_arg;
   *ap++ = "--";
   *ap++ = filea;
@@ -1188,10 +1189,11 @@ read_diff (filea, fileb, output_placement)
 #else /* ! HAVE_FORK */
 
   FILE *fpipe;
-  char *command = xmalloc (sizeof (diff_program) + 30 + INT_STRLEN_BOUND (int)
-			   + 4 * (strlen (filea) + strlen (fileb)));
+  size_t len = sizeof (diff_program) + 30 + INT_STRLEN_BOUND (int)
+			   + 4 * (strlen (filea) + strlen (fileb));
+  char *command = xmalloc (len);
   char *p;
-  sprintf (command, "%s -a --horizon-lines=%d -- ",
+  snprintf (command, len, "%s -a --horizon-lines=%d -- ",
 	   diff_program, horizon_lines);
   p = command + strlen (command);
   SYSTEM_QUOTE_ARG (p, filea);

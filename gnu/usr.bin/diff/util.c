@@ -169,18 +169,21 @@ void
 begin_output ()
 {
   char *name;
+  size_t len;
 
   if (outfile != 0)
     return;
 
   /* Construct the header of this piece of diff.  */
-  name = xmalloc (strlen (current_name0) + strlen (current_name1)
-		  + strlen (switch_string) + 7);
+  len = strlen (current_name0) + strlen (current_name1)
+		  + strlen (switch_string) + 7;
+  name = xmalloc (len);
   /* Posix.2 section 4.17.6.1.1 specifies this format.  But there is a
      bug in the first printing (IEEE Std 1003.2-1992 p 251 l 3304):
      it says that we must print only the last component of the pathnames.
      This requirement is silly and does not match historical practice.  */
-  sprintf (name, "diff%s %s %s", switch_string, current_name0, current_name1);
+  snprintf (name, len, "diff%s %s %s", switch_string, current_name0,
+    current_name1);
 
   if (paginate_flag)
     {
@@ -219,10 +222,11 @@ begin_output ()
 	    pfatal_with_name ("fdopen");
 	}
 #else /* ! HAVE_FORK */
-      char *command = xmalloc (4 * strlen (name) + strlen (PR_PROGRAM) + 10);
+      size_t len = 4 * strlen (name) + strlen (PR_PROGRAM) + 10;
+      char *command = xmalloc (len);
       char *p;
       char const *a = name;
-      sprintf (command, "%s -F -h ", PR_PROGRAM);
+      snprintf (command, len, "%s -F -h ", PR_PROGRAM);
       p = command + strlen (command);
       SYSTEM_QUOTE_ARG (p, a);
       *p = 0;
@@ -725,9 +729,9 @@ char *
 concat (s1, s2, s3)
      char const *s1, *s2, *s3;
 {
-  size_t len = strlen (s1) + strlen (s2) + strlen (s3);
-  char *new = xmalloc (len + 1);
-  sprintf (new, "%s%s%s", s1, s2, s3);
+  size_t len = strlen (s1) + strlen (s2) + strlen (s3) + 1;
+  char *new = xmalloc (len);
+  snprintf (new, len, "%s%s%s", s1, s2, s3);
   return new;
 }
 

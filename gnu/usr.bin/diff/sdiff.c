@@ -973,8 +973,9 @@ edit (left, lenl, right, lenr, outfile)
 	    {
 	      int wstatus;
 #if ! HAVE_FORK
-	      char *command = xmalloc (strlen (edbin) + strlen (tmpname) + 2);
-	      sprintf (command, "%s %s", edbin, tmpname);
+	      size_t len = strlen (edbin) + strlen (tmpname) + 2;
+	      char *command = xmalloc (len);
+	      snprintf (command, len, "%s %s", edbin, tmpname);
 	      wstatus = system (command);
 	      free (command);
 #else /* HAVE_FORK */
@@ -1145,7 +1146,7 @@ private_tempnam ()
 {
   char const *dir = getenv (TMPDIR_ENV);
   static char const tmpdir[] = PVT_tmpdir;
-  size_t index;
+  size_t index, len;
   char *buf;
   pid_t pid = getpid ();
   size_t dlen;
@@ -1159,9 +1160,10 @@ private_tempnam ()
   while (dlen && dir[dlen - 1] == '/')
     --dlen;
 
-  buf = xmalloc (dlen + 1 + 3 + 5 + 1 + 3 + 1);
+  len = dlen + 1 + 3 + 5 + 1 + 3 + 1;
+  buf = xmalloc (len);
 
-  sprintf (buf, "%.*s/.", (int) dlen, dir);
+  snprintf (buf, len, "%.*s/.", (int) dlen, dir);
   if (diraccess (buf))
     {
       for (index = 0;
@@ -1174,7 +1176,7 @@ private_tempnam ()
 	     We use a single counter in INDEX to cycle each of three
 	     character positions through each of 62 possible letters.  */
 
-	  sprintf (buf, "%.*s/dif%.5lu.%c%c%c", (int) dlen, dir,
+	  snprintf (buf, len, "%.*s/dif%.5lu.%c%c%c", (int) dlen, dir,
 		   (unsigned long) pid % 100000,
 		   letters[index % (sizeof (letters) - 1)],
 		   letters[(index / (sizeof (letters) - 1))

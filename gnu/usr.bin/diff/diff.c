@@ -86,8 +86,8 @@ option_list (optionvec, count)
 
   for (i = 0; i < count; i++)
     {
-      strcat (result, " ");
-      strcat (result, optionvec[i]);
+      strlcat (result, " ", length + 1);
+      strlcat (result, optionvec[i], length + 1);
     }
 
   return result;
@@ -319,10 +319,11 @@ main (argc, argv)
 	    int i, err = 0;
 	    static char const C_ifdef_group_formats[] =
 	      "#ifndef %s\n%%<#endif /* not %s */\n%c#ifdef %s\n%%>#endif /* %s */\n%c%%=%c#ifndef %s\n%%<#else /* %s */\n%%>#endif /* %s */\n";
-	    char *b = xmalloc (sizeof (C_ifdef_group_formats)
+	    size_t len = sizeof (C_ifdef_group_formats)
 			       + 7 * strlen(optarg) - 14 /* 7*"%s" */
-			       - 8 /* 5*"%%" + 3*"%c" */);
-	    sprintf (b, C_ifdef_group_formats,
+			       - 8 /* 5*"%%" + 3*"%c" */;
+	    char *b = xmalloc (len);
+	    snprintf (b, len, C_ifdef_group_formats,
 		     optarg, optarg, 0,
 		     optarg, optarg, 0, 0,
 		     optarg, optarg, optarg);
