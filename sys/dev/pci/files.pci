@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.105 2001/04/13 00:27:57 mjacob Exp $
+#	$OpenBSD: files.pci,v 1.106 2001/06/06 18:53:50 millert Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -345,6 +345,11 @@ device	puc { port = -1 }
 attach	puc at pci
 file	dev/pci/puc.c			puc
 file	dev/pci/pucdata.c		puc
+
+# WaveLAN/PrismII card behind a PLX 805x dumb bridge
+# device declaration in sys/conf/files
+attach	wi at pci with wi_pci
+file	dev/pci/if_wi_pci.c		wi_pci
 
 # Aironet 4500/4800 802.11 DS WLAN
 # device declaration in sys/conf/files

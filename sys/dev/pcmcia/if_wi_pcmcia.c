@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_pcmcia.c,v 1.2 2001/05/22 11:04:50 fgsch Exp $	*/
+/*	$OpenBSD: if_wi_pcmcia.c,v 1.3 2001/06/06 18:53:49 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -312,6 +312,10 @@ wi_pcmcia_attach(parent, self, aux)
 		    sc->sc_dev.dv_xname);
 		goto bad;
 	}
+
+	/* Make sure interrupts are disabled. */
+	CSR_WRITE_2(sc, WI_INT_EN, 0);
+	CSR_WRITE_2(sc, WI_EVENT_ACK, 0xffff);
 
 	wi_attach(sc);
 	return;
