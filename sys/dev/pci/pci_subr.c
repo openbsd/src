@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_subr.c,v 1.5 1998/01/05 13:35:23 deraadt Exp $	*/
+/*	$OpenBSD: pci_subr.c,v 1.6 1998/01/06 02:36:43 deraadt Exp $	*/
 /*	$NetBSD: pci_subr.c,v 1.19 1996/10/13 01:38:29 christos Exp $	*/
 
 /*
@@ -238,5 +238,5 @@ pci_devinfo(id_reg, class_reg, showclass, cp)
 #endif
 		cp += sprintf(cp, ", rev 0x%02x)", revision);
 	} else
-		cp += sprintf(cp, " (rev 0x%02x)", revision);
+		cp += sprintf(cp, " rev 0x%02x", revision);
 }
