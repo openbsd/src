@@ -5162,7 +5162,9 @@ force_operand (value, target)
 	  && GET_CODE (XEXP (value, 0)) == PLUS
 	  && GET_CODE (XEXP (XEXP (value, 0), 0)) == REG
 	  && REGNO (XEXP (XEXP (value, 0), 0)) >= FIRST_VIRTUAL_REGISTER
-	  && REGNO (XEXP (XEXP (value, 0), 0)) <= LAST_VIRTUAL_REGISTER)
+	  && REGNO (XEXP (XEXP (value, 0), 0)) <= LAST_VIRTUAL_REGISTER
+	  && (!flag_propolice_protection
+	      || XEXP (XEXP (value, 0), 0) != virtual_stack_vars_rtx))
 	{
 	  rtx temp = expand_binop (GET_MODE (value), binoptab,
 				   XEXP (XEXP (value, 0), 0), op2,
