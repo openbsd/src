@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.29 2000/04/10 13:34:54 jason Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.30 2000/05/25 00:30:27 jason Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1093,24 +1093,21 @@ bridge_input(ifp, eh, m)
 	/*
 	 * Unicast, make sure it's not for us.
 	 */
-	ifl = LIST_FIRST(&sc->sc_iflist);
-	while (ifl != NULL) {
-		if (ifl->ifp->if_type == IFT_ETHER) {
-			ac = (struct arpcom *)ifl->ifp;
-			if (bcmp(ac->ac_enaddr, eh->ether_dhost,
-			    ETHER_ADDR_LEN) == 0) {
+	for (ifl = LIST_FIRST(&sc->sc_iflist);ifl; ifl = LIST_NEXT(ifl,next)) {
+		if (ifl->ifp->if_type != IFT_ETHER)
+			continue;
+		ac = (struct arpcom *)ifl->ifp;
+		if (bcmp(ac->ac_enaddr, eh->ether_dhost, ETHER_ADDR_LEN) == 0) {
+			if (ifl->bif_flags & IFBIF_LEARNING)
 				bridge_rtupdate(sc,
-				    (struct ether_addr *)&eh->ether_dhost[0],
+				    (struct ether_addr *)&eh->ether_dhost,
 				    ifp, 0, IFBAF_DYNAMIC);
-				return (m);
-			}
-			if (bcmp(ac->ac_enaddr, eh->ether_shost,
-			    ETHER_ADDR_LEN) == 0) {
-				m_freem(m);
-				return (NULL);
-			}
+			return (m);
 		}
-		ifl = LIST_NEXT(ifl, next);
+		if (bcmp(ac->ac_enaddr, eh->ether_shost, ETHER_ADDR_LEN) == 0) {
+			m_freem(m);
+			return (NULL);
+		}
 	}
 	M_PREPEND(m, sizeof(struct ether_header), M_DONTWAIT);
 	if (m == NULL)
@@ -1166,9 +1163,8 @@ bridge_broadcast(sc, ifp, eh, m)
 
 		if (SIMPLEQ_FIRST(&p->bif_brlout) &&
 		    bridge_filterrule(SIMPLEQ_FIRST(&p->bif_brlout), eh) ==
-		    BRL_ACTION_BLOCK) {
+		    BRL_ACTION_BLOCK)
 			continue;
-		}
 
 		/* If last one, reuse the passed-in mbuf */
 		if (LIST_NEXT(p, next) == NULL) {
