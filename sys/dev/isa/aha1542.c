@@ -71,9 +71,10 @@
 #define Debugger() panic("should call debugger here (aha1542.c)")
 #endif /* ! DDB */
 
-/* XXX fixme: */
-/* on i386 at least xfers from/to user memory */
-/* cannot be serviced at interrupt time. */
+/* XXX fixme:
+ * on i386 at least, xfers to/from user memory
+ * cannot be serviced at interrupt time.
+ */
 #ifdef i386
 #include <machine/vmparam.h>
 #define VOLATILE_XS(xs) \
@@ -1329,9 +1330,10 @@ aha_scsi_cmd(xs)
 	SC_DEBUG(sc_link, SDEV_DB3, ("cmd_sent\n"));
 
 	if (VOLATILE_XS(xs)) {
-		if (tsleep(ccb, PRIBIO, "ahawait", (xs->timeout * hz) / 1000)) {
-			aha_timeout(ccb);
-			tsleep(ccb, PRIBIO, "ahawait1", 2000);
+		timeout(aha_timeout, ccb, (xs->timeout * hz) / 1000);
+		while ((ccb->xs->flags & ITSDONE) == 0) {
+			tsleep(ccb, PRIBIO, "ahawait",
+			    (xs->timeout * hz) / 1000);
 		}
 		splx(s);
 		if (ccb->data_nseg) {
