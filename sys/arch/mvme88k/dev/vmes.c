@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmes.c,v 1.6 2001/11/01 12:13:46 art Exp $ */
+/*	$OpenBSD: vmes.c,v 1.7 2001/11/07 22:31:57 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -171,7 +171,7 @@ vmesmmap(dev, off, prot)
 	struct vmessoftc *sc = (struct vmessoftc *) vmes_cd.cd_devs[unit];
 	void * pa;
 
-	pa = vmepmap(sc->sc_vme, (void *)off, NBPG, BUS_VMES);
+	pa = vmepmap(sc->sc_vme, off, NBPG, BUS_VMES);
 	printf("vmes %x pa %x\n", off, pa);
 	if (pa == NULL)
 		return (-1);

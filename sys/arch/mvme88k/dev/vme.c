@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.c,v 1.15 2001/11/06 19:53:15 miod Exp $ */
+/*	$OpenBSD: vme.c,v 1.16 2001/11/07 22:31:57 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1995 Theo de Raadt
@@ -65,7 +65,6 @@ void vme2chip_init __P((struct vmesoftc *));
 u_long vme2chip_map __P((u_long, int, int));
 int vme2abort __P((void *));
 int sysconabort __P((void *));
-void * vmemap __P((struct vmesoftc *, void *, int, int));
 void vmeunmap __P((void *, int));
 int vmeprint __P((void *, const char *));
 
@@ -122,7 +121,7 @@ vmematch(parent, cf, args)
 void *
 vmepmap(sc, vmeaddr, len, bustype)
 	struct vmesoftc *sc;
-	void *vmeaddr;
+	off_t vmeaddr;
 	int len;
 	int bustype;
 {
@@ -164,7 +163,7 @@ vmepmap(sc, vmeaddr, len, bustype)
 void *
 vmemap(sc, vmeaddr, len, bustype)
 	struct vmesoftc *sc;
-	void *vmeaddr;
+	off_t vmeaddr;
 	int len;
 	int bustype;
 {
@@ -214,7 +213,7 @@ vmerw(sc, uio, flags, bus)
 			c = NBPG - (v & PGOFSET);
 		if (c == 0)
 			return (0);
-		vme = vmemap(sc, (void *)(v & ~PGOFSET),
+		vme = vmemap(sc, v & ~PGOFSET,
 		    NBPG, BUS_VMES);
 		if (vme == NULL) {
 			error = EFAULT;	/* XXX? */
@@ -269,7 +268,8 @@ vmescan(parent, child, args, bustype)
 		oca.ca_len = 4096;
 
 	oca.ca_offset = (u_int)oca.ca_paddr;
-	oca.ca_vaddr = vmemap(sc, oca.ca_paddr, oca.ca_len, oca.ca_bustype);
+	oca.ca_vaddr = vmemap(sc, (vm_offset_t)oca.ca_paddr, oca.ca_len,
+	    oca.ca_bustype);
 	if (!oca.ca_vaddr)
 		oca.ca_vaddr = (void *)-1;
 	oca.ca_master = (void *)sc;
