@@ -511,6 +511,8 @@ CRT0STUFF_T_CFLAGS =
 # "t" or nothing, for building multilibbed versions of, say, crtbegin.o.
 T =
 
+# the normal name of libiberty
+LIBIBERTY=../libiberty/libiberty.a
 # End of variables for you to override.
 
 # Definition of `all' is here so that new rules inserted by sed
@@ -572,7 +574,7 @@ HOST_LIBDEPS= $(HOST_PREFIX)$(HOST_INTLLIBS) $(HOST_PREFIX)$(HOST_OBSTACK) $(HOS
 
 # How to link with both our special library facilities
 # and the system's installed libraries.
-LIBS = $(OBSTACK) $(USE_ALLOCA) $(MALLOC) $(INTLLIBS) @LIBS@ $(VFPRINTF) $(DOPRINT) $(CLIB) ../libiberty/libiberty.a
+LIBS = $(OBSTACK) $(USE_ALLOCA) $(MALLOC) $(INTLLIBS) @LIBS@ $(VFPRINTF) $(DOPRINT) $(CLIB) $(LIBIBERTY)
 
 # Likewise, for use in the tools that must run on this machine
 # even if we are cross-building GCC.
