@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2003/04/10 22:42:29 millert Exp $
+#	$OpenBSD: Makefile,v 1.10 2003/08/01 07:42:33 miod Exp $
 
 SIZE?=	size
 STRIP?= strip
@@ -20,15 +20,15 @@ SRCS=   boot.c conf.c version.c devopen.c dev_net.c
 SRCS+=	if_ie.c 
 #SRCS+=  if_le.c
 OBJS=  ${SRCS:S/.c/.o/g}
-LIBS= ${LIBSA} ${LIBBUG} ${LIBZ} ${LIBGCC}
+LIBS= ${LIBSA} ${LIBBUG} ${LIBZ}
 LDFLAGS+= -s -N -T ${STAGE2_RELOC} 
 #LDFLAGS+= -nostdlib -s -N -Ttext ${RELOC}
 
 all:	netboot.bin
 
 netboot: ${OBJS} ${SINGLE} ${LIBS}
-	${LD} ${LDFLAGS} \
-		${SINGLE} ${OBJS} ${LIBS} -o $@
+	${LD} ${LDFLAGS} -o $@ \
+		${SINGLE} ${OBJS} ${LIBS} `${CC} -print-libgcc-file-name`
 #	@${SIZE} $@
 
 netboot.bin: netboot

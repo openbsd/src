@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/10/93
-#	$OpenBSD: Makefile,v 1.6 2001/01/13 05:19:01 smurph Exp $
+#	$OpenBSD: Makefile,v 1.7 2003/08/01 07:42:33 miod Exp $
 
 S=	${.CURDIR}/../../../..
 DEFS=-DSTAGE2_RELOC=${STAGE2_RELOC} 
@@ -15,7 +15,7 @@ CLEANFILES+=bootxx
 
 SRCS=   bootxx.c conf.c version.c
 
-LIBS=	${LIBSA} ${LIBBUG} ${LIBZ} ${LIBGCC}
+LIBS=	${LIBSA} ${LIBBUG} ${LIBZ}
 
 OBJS= ${SRCS:N*.h:R:S/$/.o/g}
 
@@ -25,7 +25,8 @@ ALL=	${BOOTS}
 all: ${ALL}
 
 bootxx: ${OBJS} ${STAGE1} ${LIBS}
-	${LD} -N -T ${STAGE1_RELOC} ${STAGE1} ${OBJS} ${LIBS} -o $@
+	${LD} -N -T ${STAGE1_RELOC} ${STAGE1} -o $@ \
+	    ${OBJS} ${LIBS} `${CC} -print-libgcc-file-name`
 
 install:
 	install -c -m 555 -g bin -o bin ${BOOTS} ${DESTDIR}${MDEC_DIR}
