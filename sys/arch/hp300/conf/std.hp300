@@ -1,7 +1,0 @@
-#	$OpenBSD: std.hp300,v 1.4 2001/10/10 23:43:42 millert Exp $
-#	$NetBSD: std.hp300,v 1.2 1997/01/30 09:55:45 thorpej Exp $
-#
-# Options/devices that all hp300s should have
-#
-
-machine hp300 m68k
