@@ -176,9 +176,10 @@ in_cksum48:	popl	%edi			# restore %edi
 		popl	%ebp			# restore %ebp
 		ret				# return %eax
 
-in_cksum49:	pushl	$panic			# push panic string
-		call	_panic			# panic()
-		leal	4(%esp), %esp		#
+in_cksum49:	pushl	%edi			# len - bytes checksummed
+		pushl	$warning		# push warning string
+		call	_printf			# printf()
+		leal	8(%esp), %esp		#
 		jmp	in_cksum48		#
 
 		.data
@@ -228,4 +229,4 @@ table3:		.long	in_cksum1		# next mbuf
 		.long	in_cksum44		# checksum 2 bytes
 		.long	in_cksum45		# checksum 3 bytes
 
-panic:		.asciz	"in_cksum: mp == NULL"
+warning:	.asciz	"in_cksum: out of data at %u\n"
