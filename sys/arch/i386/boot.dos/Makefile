@@ -1,4 +1,5 @@
-#     $NetBSD: Makefile,v 1.18 1995/03/23 19:46:45 jtc Exp $
+#	$OpenBSD: Makefile,v 1.2 1996/12/26 10:50:47 mickey Exp $
+#	$NetBSD: Makefile,v 1.18 1995/03/23 19:46:45 jtc Exp $
 #
 # Ported to boot 386BSD by Julian Elischer (julian@tfs.com)
 # September 1992
@@ -24,19 +25,14 @@
 # the rights to redistribute these changes.
 #
 
-S=    ${.CURDIR}/../../..
+PROG=	boot.com
+NOMAN=	noman
 
-machine-links:
-	-rm -f machine && ln -s ${.CURDIR}/../include machine
-	-rm -f ${MACHINE_ARCH} && ln -s ${.CURDIR}/../include ${MACHINE_ARCH}
+S=	${.CURDIR}/../../..
 
-all: machine-links boot.com
-
-NOPROG=       noprog
-NOMAN=        noman
-
-CFLAGS=	-O6 -DKERNEL -D_KERNEL -DI386_CPU -DI486_CPU -DI586_CPU
-CFLAGS+=-DDO_BAD144 -I. -I${.CURDIR} -I$S -I${.CURDIR}/../.. -I${.CURDIR}/../boot
+CFLAGS+=-O2 -D_KERNEL -I${.CURDIR}/../stand/libsa -I${S}/lib/libsa
+CFLAGS+=-DDO_BAD144 -I. -I$S -I${.CURDIR}/../.. -I${.CURDIR}/../boot
+LDFLAGS=-Bstatic -e start -Wl,-N,-T100
 
 # Uncomment this to make the boot block talk to a serial port.
 #CPPFLAGS+=-DSERIAL
@@ -44,8 +40,17 @@ CFLAGS+=-DDO_BAD144 -I. -I${.CURDIR} -I$S -I${.CURDIR}/../.. -I${.CURDIR}/../boo
 CPPFLAGS+= -DDOSREAD -DDEBUG
 
 # start.o should be first
-OBJS= start.o table.o boot.o asm.o bios.o dossys.o io.o disk.o sys.o version.o
-VPATH=        ${.CURDIR}/../boot
+SRCS+= start.S table.c boot.c disk.c io.c serial.S sys.c bios.S asm.S
+SRCS+= dossys.c version.c
+BINDIR=	${DESTDIR}/usr/mdec
+
+.PATH: ${.CURDIR}/../boot
+
+all: machine-links
+
+machine-links:
+	-rm -f machine && ln -s ${.CURDIR}/../include machine
+	-rm -f ${MACHINE_ARCH} && ln -s ${.CURDIR}/../include ${MACHINE_ARCH}
 
 boot.com: ${OBJS}
 	${LD} -Bstatic -e start -N -T 0x100 -o dosboot ${OBJS}
@@ -55,10 +60,6 @@ boot.com: ${OBJS}
 	@mv -f dosboot.tmp boot.com
 	@ls -l boot.com
 
-install: boot.com
-	cp boot.com ${DESTDIR}/usr/mdec/boot.com
-
-
-CLEANFILES+=boot.com dosboot dosboot.sym machine ${MACHINE_ARCH}
+CLEANFILES+=dosboot dosboot.sym machine ${MACHINE_ARCH}
 
 .include <bsd.prog.mk>

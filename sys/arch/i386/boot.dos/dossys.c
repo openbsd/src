@@ -1,13 +1,14 @@
 #ifdef DOSREAD
 
-#include "boot.h"
+#include <sys/param.h>
+
 short doserrno;
 short doshandle = -1;
 void bcopy(), pcpy();
 
 void _read();
 
-char iobuf[MAXBSIZE];
+char iobuf[DEV_BSIZE];
 
 char *doserrors[] ={
   /* 00 */ "no error",
@@ -120,8 +121,8 @@ void __dosread(buffer, count, copy)
   while (count) {
     size=count;
 
-    if (size>MAXBSIZE)
-      size=MAXBSIZE;
+    if (size>DEV_BSIZE)
+      size=DEV_BSIZE;
 
     size=dosread(doshandle,iobuf,size);
     twiddle();
