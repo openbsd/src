@@ -1,13 +1,14 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.3 1996/08/29 02:11:14 millert Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.4 1996/09/16 14:47:01 millert Exp $
 
 MAN=	man/ci.1 man/co.1 man/ident.1 man/merge.1 man/rcs.1 man/rcsclean.1 \
         man/rcsdiff.1 man/rcsfile.5 man/rcsfreeze.1 man/rcsintro.1 \
         man/rcsmerge.1 man/rlog.1
-GNUCFLAGS=	CFLAGS="${CFLAGS}"
 CLEANFILES=	man/rcsfile.5 src/conf.h
+LDFLAGS+=	-s ${LDSTATIC}
+GNUCFLAGS=	CFLAGS="${CFLAGS}" LDFLAGS="${LDFLAGS}"
 
 all:	config.status rcsfile.5
-	${MAKE} ${GNUCFLAGS} LDFLAGS=${LDSTATIC}
+	${MAKE} ${GNUCFLAGS}
 
 .FORCE:	.IGNORE
 
