@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.13 2004/03/14 19:26:55 miod Exp $
+dnl	$OpenBSD: hardware,v 1.14 2004/08/07 13:10:02 mickey Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of HP9000 machines:
 dnl - PA7000-based
 dnl	705, 710, 720, 730, 750
@@ -50,6 +50,106 @@ Supported devices {:-include-:}:
 - Input devices:
 	PS/2 keyboard (gsckbd) and mouse (pms)
 	HIL keyboard (hilkbd), mouse and tablets (hilms)
+- Wireless Ethernet Adapters
+	PCMCIA Adapters
+	    3Com AirConnect 3CRWE737A PCMCIA
+	    ACTIONTEC HWC01170 PCMCIA
+	    Addtron AWP-100 PCMCIA
+	    Agere Orinoco PCMCIA
+	    Aironet 4500/4800 802.11DS ISA PnP, PCMCIA and PCI
+	    BUFFALO AirStation PCMCIA
+	    Cabletron RoamAbout PCMCIA
+	    Cisco 340/350 802.11DS PCMCIA and PCI
+	    Compaq Agency NC5004 PCMCIA
+	    Contec FLEXLAN/FX-DS110-PCC PCMCIA
+	    Corega PCC-11 PCMCIA
+	    Corega PCCA-11 PCMCIA
+	    Corega PCCB-11 PCMCIA
+	    Corega CGWLPCIA11 PCMCIA
+	    Dlink DWL650 PCMCIA
+	    ELSA XI300 PCMCIA
+	    ELSA XI325 PCMCIA
+	    ELSA XI325H PCMCIA
+	    EMTAC A2424i PCMCIA
+	    Ericsson Wireless LAN CARD C11 PCMCIA
+	    Gemtek WL-311 PCMCIA
+	    Hawking Technology WE110P PCMCIA
+	    I-O DATA WN-B11/PCM PCMCIA
+	    Intel PRO/Wireless 2011 PCMCIA
+	    Intersil Prism II PCMCIA
+	    Linksys Instant Wireless WPC11 PCMCIA
+	    Linksys Instant Wireless WPC11 2.5 PCMCIA
+	    Linksys Instant Wireless WPC11 3.0 PCMCIA
+	    Lucent WaveLAN PCMCIA
+	    NANOSPEED ROOT-RZ2000 PCMCIA
+	    NEC CMZ-RT-WP PCMCIA
+	    Netgear MA401 PCMCIA
+	    Netgear MA401RA PCMCIA
+	    Nokia C020 Wireless LAN PCMCIA
+	    Nokia C110/C111 Wireless LAN PCMCIA
+	    NTT-ME 11Mbps Wireless LAN PCMCIA
+	    Proxim Harmony PCMCIA
+	    Proxim RangeLAN-DS PCMCIA
+	    RayLink Aviator2.4/Pro 802.11FH PCMCIA
+	    Samsung MagicLAN SWL-2000N PCMCIA
+	    SMC 2632 EZ Connect PCMCIA
+	    Symbol Spectrum24 PCMCIA
+	    TDK LAK-CD011WL PCMCIA
+	    US Robotics 2410 PCMCIA
+	    US Robotics 2445 PCMCIA
+- PC Cards (PCMCIA and CardBus)
+	ATA cards, including:
+	    ATA/IDE card drives
+	    ATA/IDE CD-ROM adapters
+	    CF/ATA flash cards and disk drives
+	Ethernet adapters, including:
+	    NE2000-based, including:
+		Accton EN2212, EN2216
+		Allied Telesis LA-PCM
+		AmbiCom AMB8002T
+		Arowana FE
+		Belkin F5D5020
+		Billionton Systems LNT-10TN
+		CNet NE2000
+		Compex Linkport ENET-B
+		Corega PCC-T, PCC-TD, EtherII PCC-T,
+		Corega FastEther PCC-T, FastEther PCC-TX
+		Corega FastEther PCC-TXD, FastEther PCC-TXF
+		D-Link DE-650, DE-660, DE-660+, DFE-670TXD
+		Dayna CommuniCard E
+		Digital DEPCM-XX
+		Dual NE2000
+		Edimax NE2000
+		Genius ME 3000II SE
+		Grey Cell GCS2000 Gold II
+		GVC NIC-2000p, NP0335
+		Hawking PN650TX
+		I-O DATA PCLA, PCLA/TE
+		IC-Card
+		Kingston KNE-PC2
+		Linksys PCMPC100, EC2T Combo, EthernetCard
+		Linksys Combo EthernetCard, Trust Combo EthernetCard
+		Linksys Etherfast 10/100
+		MACNICA ME1 for JEIDA
+		Melco LPC3-TX
+		National Semiconductor InfoMover
+		NDC Instant-Link
+		Netgear FA410TX, FA410TXC, FA411
+		Network Everywhere NP10T
+		New Media LiveWire 10/100
+		Planet SmartCom 2000
+		Planex FNW-3600-T, FNW-3700-T
+		Premax PE-200
+		RPTI EP-400, EP-401
+		Seiko Epson EN10B
+		SMC EZCard, 8041
+		Socket Communications LP-CF, LP-E
+		SVEC PN650TX, ComboCard, LANCard
+		Synergy S21810
+		Tamarack NE2000
+		Telecom Device TCD-HPC100
+		Wisecom T210CT, iPort
+		Xircom CFE-10
 - Miscellaneous devices:
 	battery-backed real time clock
 	``soft'' power button as available on some models (power)
