@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.h,v 1.16 1997/08/12 21:40:50 mickey Exp $	*/
+/*	$OpenBSD: biosdev.h,v 1.17 1997/08/13 03:35:08 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -53,7 +53,3 @@ void com_init __P((struct consdev *));
 int com_getc __P((dev_t));
 void com_putc __P((dev_t, int));
 void com_pollc __P((dev_t, int));
-
-/* time.c */
-void time_print __P((void));
-time_t getsecs __P((void));
