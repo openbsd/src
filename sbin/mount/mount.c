@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.c,v 1.35 2004/03/16 21:27:47 otto Exp $	*/
+/*	$OpenBSD: mount.c,v 1.36 2004/09/15 15:15:16 otto Exp $	*/
 /*	$NetBSD: mount.c,v 1.24 1995/11/18 03:34:29 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount.c	8.19 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$OpenBSD: mount.c,v 1.35 2004/03/16 21:27:47 otto Exp $";
+static char rcsid[] = "$OpenBSD: mount.c,v 1.36 2004/09/15 15:15:16 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -537,6 +537,16 @@ prmount(struct statfs *sf)
 		if (verbose || nfs_args->readahead != NFS_DEFRAHEAD)
 			(void)printf("%s%s=%d", !f++ ? " (" : ", ",
 			    "readahead", nfs_args->readahead);
+		if (verbose) {
+			(void)printf("%s%s=%d", !f++ ? " (" : ", ",
+			    "acregmin", nfs_args->acregmin);
+			(void)printf(", %s=%d",
+			    "acregmax", nfs_args->acregmax);
+			(void)printf(", %s=%d",
+			    "acdirmin", nfs_args->acdirmin);
+			(void)printf(", %s=%d",
+			    "acdirmax", nfs_args->acdirmax);
+		}
 	} else if (strcmp(sf->f_fstypename, MOUNT_MFS) == 0) {
 		int headerlen;
 		long blocksize;
