@@ -1,4 +1,4 @@
-/*	$OpenBSD: pckbc_ebus.c,v 1.6 2003/12/16 15:08:50 jason Exp $	*/
+/*	$OpenBSD: pckbc_ebus.c,v 1.7 2004/11/02 21:17:39 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -97,9 +97,25 @@ pckbc_ebus_attach(parent, self, aux)
 	struct pckbc_internal *t = NULL;
 	int console;
 
-	sc->sc_iot = ea->ea_iotag;
 	sc->sc_node = ea->ea_node;
 	console = pckbc_ebus_is_console(sc);
+
+	/* Use prom address if available, otherwise map it. */
+	if (ea->ea_nvaddrs && bus_space_map(ea->ea_iotag, ea->ea_vaddrs[0], 0,
+	    0, &sc->sc_ioh) == 0) {
+		sc->sc_iot = ea->ea_iotag;
+	} else if (ebus_bus_map(ea->ea_iotag, 0,
+	    EBUS_PADDR_FROM_REG(&ea->ea_regs[0]), ea->ea_regs[0].size,
+	    0, 0, &sc->sc_ioh) == 0) {
+		sc->sc_iot = ea->ea_iotag;
+	} else if (ebus_bus_map(ea->ea_memtag, 0,
+	    EBUS_PADDR_FROM_REG(&ea->ea_regs[0]), ea->ea_regs[0].size,
+	    0, 0, &sc->sc_ioh) == 0) {
+		sc->sc_iot = ea->ea_memtag;
+	} else {
+		printf(": can't map register space\n");
+		return;
+	}
 
 	if (console) {
 		if (pckbc_cnattach(sc->sc_iot,
@@ -114,17 +130,6 @@ pckbc_ebus_attach(parent, self, aux)
 	}
 
 	if (console == 0) {
-		/* Use prom address if available, otherwise map it. */
-		if (ea->ea_nvaddrs)
-			bus_space_map(sc->sc_iot, ea->ea_vaddrs[0], 0, 0,
-			    &sc->sc_ioh);
-		else if (ebus_bus_map(sc->sc_iot, 0,
-		    EBUS_PADDR_FROM_REG(&ea->ea_regs[0]), ea->ea_regs[0].size,
-		    0, 0, &sc->sc_ioh) != 0) {
-			printf(": can't map register space\n");
-			return;
-		}
-
 		if (bus_space_subregion(sc->sc_iot, sc->sc_ioh,
 		    KBCMDP, sizeof(u_int32_t), &sc->sc_ioh_c) != 0) {
 			printf(": couldn't get cmd subregion\n");
@@ -142,14 +147,14 @@ pckbc_ebus_attach(parent, self, aux)
 
 	psc->intr_establish = pckbc_ebus_intr_establish;
 
-	sc->sc_irq[0] = bus_intr_establish(ea->ea_iotag, ea->ea_intrs[0],
+	sc->sc_irq[0] = bus_intr_establish(sc->sc_iot, ea->ea_intrs[0],
 	    IPL_TTY, 0, pckbcintr, psc, self->dv_xname);
 	if (sc->sc_irq[0] == NULL) {
 		printf(": couldn't get intr0\n");
 		return;
 	}
 
-	sc->sc_irq[1] = bus_intr_establish(ea->ea_iotag, ea->ea_intrs[1],
+	sc->sc_irq[1] = bus_intr_establish(sc->sc_iot, ea->ea_intrs[1],
 	    IPL_TTY, 0, pckbcintr, psc, self->dv_xname);
 	if (sc->sc_irq[1] == NULL) {
 		printf(": couldn't get intr1\n");
