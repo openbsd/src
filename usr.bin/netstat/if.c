@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.24 2001/07/18 17:17:39 pvalchev Exp $	*/
+/*	$OpenBSD: if.c,v 1.25 2001/08/26 09:42:04 brian Exp $	*/
 /*	$NetBSD: if.c,v 1.16.4.2 1996/06/07 21:46:46 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-static char *rcsid = "$OpenBSD: if.c,v 1.24 2001/07/18 17:17:39 pvalchev Exp $";
+static char *rcsid = "$OpenBSD: if.c,v 1.25 2001/08/26 09:42:04 brian Exp $";
 #endif
 #endif /* not lint */
 
@@ -95,6 +95,7 @@ intpr(interval, ifnetaddr)
 		struct ipx_ifaddr ipx;
 		struct iso_ifaddr iso;
 	} ifaddr;
+	u_long total;
 	u_long ifaddraddr;
 	struct sockaddr *sa;
 	struct ifnet_head ifhead;	/* TAILQ_HEAD */
@@ -153,6 +154,22 @@ intpr(interval, ifnetaddr)
 			*cp = '\0';
 			ifaddraddr = (u_long)ifnet.if_addrlist.tqh_first;
 		}
+
+		if (qflag) {
+			total = ifnet.if_ibytes + ifnet.if_obytes +
+			    ifnet.if_ipackets + ifnet.if_ierrors +
+			    ifnet.if_opackets + ifnet.if_oerrors +
+			    ifnet.if_collisions;
+			if (tflag)
+				total += ifnet.if_timer;
+			if (dflag)
+				total += ifnet.if_snd.ifq_drops;
+			if (total == 0) {
+				ifaddraddr = 0;
+				continue;
+			}
+		}
+
 		printf("%-7.7s %-5ld ", name, ifnet.if_mtu);
 		if (ifaddraddr == 0) {
 			printf("%-11.11s ", "none");

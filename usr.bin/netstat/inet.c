@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.52 2001/07/05 08:54:41 angelos Exp $	*/
+/*	$OpenBSD: inet.c,v 1.53 2001/08/26 09:42:04 brian Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: inet.c,v 1.52 2001/07/05 08:54:41 angelos Exp $";
+static char *rcsid = "$OpenBSD: inet.c,v 1.53 2001/08/26 09:42:04 brian Exp $";
 #endif
 #endif /* not lint */
 
@@ -750,13 +750,13 @@ etherip_stats(off, name)
     printf(m, etheripstat.f, plural(etheripstat.f))
 
 
-        p(etherip_hdrops, "\t%u packet%s shorter than header shows\n");
-        p(etherip_qfull, "\t%u packet%s were dropped due to full output queue\n");
+	p(etherip_hdrops, "\t%u packet%s shorter than header shows\n");
+	p(etherip_qfull, "\t%u packet%s were dropped due to full output queue\n");
 	p(etherip_noifdrops, "\t%u packet%s were dropped because of no interface/bridge information\n");
-        p(etherip_pdrops, "\t%u packet%s dropped due to policy\n");
-        p(etherip_adrops, "\t%u packet%s dropped for other reasons\n");
-	p(etherip_ipackets, "\t%u input ethernet-in-IP packets\n");
-	p(etherip_opackets, "\t%u output ethernet-in-IP packets\n");
+	p(etherip_pdrops, "\t%u packet%s dropped due to policy\n");
+	p(etherip_adrops, "\t%u packet%s dropped for other reasons\n");
+	p(etherip_ipackets, "\t%u input ethernet-in-IP packet%s\n");
+	p(etherip_opackets, "\t%u output ethernet-in-IP packet%s\n");
 	p(etherip_ibytes, "\t%qu input byte%s\n");
 	p(etherip_obytes, "\t%qu output byte%s\n");
 #undef p
