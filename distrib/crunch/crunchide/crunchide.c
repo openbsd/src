@@ -257,7 +257,7 @@ void hide_syms(char *filename)
 		return;
 	}
 
-
+#if !defined(__mips__) || !defined(__OpenBSD__)
     /*
      * Read the entire file into memory.  XXX - Really, we only need to
      * read the header and from TRELOFF to the end of the file.
@@ -336,9 +336,10 @@ void hide_syms(char *filename)
     }
 
     close(inf);
+#endif
 }
 
-
+#if !defined(__mips__) || !defined(__OpenBSD__)
 void check_reloc(char *filename, struct relocation_info *relp)
 {
     /* bail out if we zapped a symbol that is needed */
@@ -349,3 +350,4 @@ void check_reloc(char *filename, struct relocation_info *relp)
 	exit(1);
     }
 }
+#endif
