@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.19 2002/06/08 21:51:08 itojun Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.20 2002/06/09 00:59:29 itojun Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -1136,10 +1136,7 @@ prelist_update(new, dr, m)
 		 * Authenticity for NA consists authentication for
 		 * both IP header and IP datagrams, doesn't it ?
 		 */
-#if defined(M_AUTHIPHDR) && defined(M_AUTHIPDGM)
-		auth = (m->m_flags & M_AUTHIPHDR
-		     && m->m_flags & M_AUTHIPDGM) ? 1 : 0;
-#endif
+		auth = ((m->m_flags & M_AUTH_AH) && (m->m_flags & M_AUTH));
 	}
 
 	if ((pr = nd6_prefix_lookup(new)) != NULL) {
