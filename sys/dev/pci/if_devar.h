@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_devar.h,v 1.7 1998/08/28 06:31:25 rahnds Exp $	*/
+/*	$OpenBSD: if_devar.h,v 1.8 1998/10/08 05:51:19 jason Exp $	*/
 /*	$NetBSD: if_devar.h,v 1.13 1997/06/08 18:46:36 thorpej Exp $	*/
 
 /*-
@@ -140,6 +140,9 @@ typedef struct {
     tulip_csrptr_t csr_13;			/* CSR13 */
     tulip_csrptr_t csr_14;			/* CSR14 */
     tulip_csrptr_t csr_15;			/* CSR15 */
+    tulip_csrptr_t csr_19;			/* CSR19 - PNIC */
+    tulip_csrptr_t csr_20;			/* CSR20 - PNIC */
+    tulip_csrptr_t csr_23;			/* CSR23 - PNIC */
 } tulip_regfile_t;
 
 #define	csr_enetrom		csr_9	/* 21040 */
@@ -223,6 +226,7 @@ typedef enum {
     TULIP_21041,
     TULIP_21140, TULIP_21140A, TULIP_21142,
     TULIP_21143,
+    TULIP_LC82C168,
     TULIP_CHIPID_UNKNOWN
 } tulip_chipid_t;
 
@@ -731,6 +735,7 @@ static const char * const tulip_chipdescs[] = {
     "21140A [10-100Mb/s]",
     "21142 [10-100Mb/s]",
     "21143 [10-100Mb/s]",
+    "82C168 [10-100Mb/s]",
 };
 
 static const char * const tulip_mediums[] = {

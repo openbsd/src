@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.34 1998/09/09 04:05:36 rahnds Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.35 1998/10/08 05:51:18 jason Exp $	*/
 /*	$NetBSD: if_de.c,v 1.45 1997/06/09 00:34:18 thorpej Exp $	*/
 
 /*-
@@ -140,6 +140,7 @@
 #endif
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
+#include <dev/pci/pcidevs.h>
 #include <dev/ic/dc21040reg.h>
 #define	DEVAR_INCLUDE	"dev/pci/if_devar.h"
 #endif /* __NetBSD__ */
@@ -193,6 +194,9 @@ static int tulip_ifmedia_change(struct ifnet * const ifp);
 static void tulip_ifmedia_status(struct ifnet * const ifp, struct ifmediareq *req);
 #endif
 /* static void tulip_21140_map_media(tulip_softc_t *sc); */
+static void tulip_pnic_media_probe(tulip_softc_t * const);
+static void tulip_identify_pnic_nic(tulip_softc_t * const);
+static void tulip_pnic_media_preset(tulip_softc_t * const);
 
 static void
 tulip_timeout_callback(
@@ -720,7 +724,8 @@ tulip_media_poll(
      * If we really transmitted a packet, then that's the media we'll use.
      */
     if (event == TULIP_MEDIAPOLL_TXPROBE_OK || event == TULIP_MEDIAPOLL_LINKPASS) {
-	if (event == TULIP_MEDIAPOLL_LINKPASS)
+	if (event == TULIP_MEDIAPOLL_LINKPASS &&
+		sc->tulip_chipid != TULIP_LC82C168)
 	    sc->tulip_probe_media = TULIP_MEDIA_10BASET;
 #if defined(TULIP_DEBUG)
 	else
@@ -1279,6 +1284,17 @@ static const tulip_phy_attr_t tulip_mii_phy_attrlist[] = {
       },
 #if defined(TULIP_DEBUG)
       "ICS 1890"
+#endif 
+    },
+    { 0x78100000, 0,		/* 00-A0-CC */
+      {
+	{ 0x14, 0x0800, 0x0000 },	/* 10TX */
+	{ 0x14, 0x0800, 0x0800 },	/* 100TX */
+	{ },				/* 100T4 */
+	{ 0x14, 0x1000, 0x1000 },	/* FULL_DUPLEX */
+      },
+#if defined(TULIP_DEBUG)
+      "LEVEL1 LXT970"
 #endif 
     },
     { 0 }
@@ -1871,6 +1887,31 @@ static const tulip_boardsw_t tulip_2114x_isv_boardsw = {
     tulip_2114x_media_preset,
 };
 
+static void
+tulip_pnic_media_probe(sc)
+	tulip_softc_t * const sc;
+{
+	/* Media probe is actually handled by tulip_identify_pnic_nic */
+	sc->tulip_media = TULIP_MEDIA_UNKNOWN;
+}
+
+static void
+tulip_pnic_media_preset(sc)
+	tulip_softc_t * const sc;
+{
+	TULIP_CSR_WRITE(sc, csr_command,
+		sc->tulip_cmdmode | TULIP_CMD_PORTSELECT);
+	DELAY(10);
+}
+
+static const tulip_boardsw_t tulip_pnic_boardsw = {
+    TULIP_21040,
+    tulip_pnic_media_probe,
+    tulip_media_select,
+    tulip_media_poll,
+    tulip_pnic_media_preset,
+};
+
 /*
  * ******** END of chip-specific handlers. ***********
  */
@@ -2033,6 +2074,21 @@ tulip_mii_readreg(
     unsigned csr = TULIP_CSR_READ(sc, csr_srom_mii) & (MII_RD|MII_DOUT|MII_CLK);
     unsigned data;
 
+    if (sc->tulip_chipid == TULIP_LC82C168) {
+	u_int32_t v;
+	int tmout = 1000;
+
+	TULIP_CSR_WRITE(sc, csr_20, (MII_RDCMD << 28) |
+				    (devaddr << 23) |
+				    (regno << 18));
+	do {
+	    if (!((v = TULIP_CSR_READ(sc, csr_20)) & 0x80000000))
+		return (v & 0xffff);
+	} while (--tmout);
+	printf("Timeout reading from PHY\n");
+	return 0xffff;
+    }
+
     csr &= ~(MII_RD|MII_CLK); MII_EMIT;
     tulip_mii_writebits(sc, MII_PREAMBLE, 32);
     tulip_mii_writebits(sc, MII_RDCMD, 8);
@@ -2055,7 +2111,21 @@ tulip_mii_writereg(
     unsigned regno,
     unsigned data)
 {
-    unsigned csr = TULIP_CSR_READ(sc, csr_srom_mii) & (MII_RD|MII_DOUT|MII_CLK);
+    unsigned csr;
+
+    if (sc->tulip_chipid == TULIP_LC82C168) {
+	int tmout = 1000;
+
+	TULIP_CSR_WRITE(sc, csr_20, (MII_WRCMD << 28) |
+				    (devaddr << 23) | (regno << 18) | data);
+	do {
+	    if (! (TULIP_CSR_READ(sc, csr_20) & 0x80000000))
+		return;
+	} while (--tmout);
+	return;
+    }
+
+    csr = TULIP_CSR_READ(sc, csr_srom_mii) & (MII_RD|MII_DOUT|MII_CLK);
     csr &= ~(MII_RD|MII_CLK); MII_EMIT;
     tulip_mii_writebits(sc, MII_PREAMBLE, 32);
     tulip_mii_writebits(sc, MII_WRCMD, 8);
@@ -2308,6 +2378,49 @@ tulip_identify_accton_nic(
             sc->tulip_boardsw = &tulip_2114x_isv_boardsw;
             break;
     }
+}
+
+static void
+tulip_identify_pnic_nic(
+    tulip_softc_t * const sc)
+{
+    tulip_media_info_t *mi = sc->tulip_mediainfo;
+    int idx;
+
+    strcpy(sc->tulip_boardid, "Lite-On ");
+    mi->mi_type = TULIP_MEDIAINFO_MII;
+    mi->mi_gpr_length = 0;
+    mi->mi_gpr_offset = 0;
+    mi->mi_reset_length = 0;
+    mi->mi_reset_offset = 0;;
+    mi->mi_phyaddr = TULIP_MII_NOPHY;
+    for (idx = 20; idx > 0 && mi->mi_phyaddr == TULIP_MII_NOPHY; idx--) {
+	DELAY(10000);
+	mi->mi_phyaddr = tulip_mii_get_phyaddr(sc, 0);
+    }
+    if (mi->mi_phyaddr == TULIP_MII_NOPHY) {
+	printf(TULIP_PRINTF_FMT ": can't find phy 0\n", TULIP_PRINTF_ARGS);
+	return;
+    }
+
+    sc->tulip_features |= TULIP_HAVE_MII | TULIP_HAVE_POWERMGMT;
+    mi->mi_capabilities  = PHYSTS_10BASET | PHYSTS_10BASET_FD |
+			   PHYSTS_100BASETX | PHYSTS_100BASETX_FD;
+    mi->mi_advertisement = PHYSTS_10BASET | PHYSTS_10BASET_FD |
+			   PHYSTS_100BASETX | PHYSTS_100BASETX_FD;
+    mi->mi_full_duplex   = PHYSTS_10BASET_FD | PHYSTS_100BASETX_FD;
+    mi->mi_tx_threshold  = PHYSTS_10BASET | PHYSTS_10BASET_FD;
+    TULIP_MEDIAINFO_ADD_CAPABILITY(sc, mi, 100BASETX_FD);
+    TULIP_MEDIAINFO_ADD_CAPABILITY(sc, mi, 100BASETX);
+    TULIP_MEDIAINFO_ADD_CAPABILITY(sc, mi, 10BASET_FD);
+    TULIP_MEDIAINFO_ADD_CAPABILITY(sc, mi, 10BASET);
+    mi->mi_phyid = (tulip_mii_readreg(sc, mi->mi_phyaddr, PHYREG_IDLOW) << 16) |
+	    tulip_mii_readreg(sc, mi->mi_phyaddr, PHYREG_IDHIGH);
+
+    TULIP_CSR_WRITE(sc, csr_15, 0x00000001);
+    TULIP_CSR_WRITE(sc, csr_12, 0x00000032);
+    TULIP_CSR_WRITE(sc, csr_23, 0x0201b07a);
+    sc->tulip_cmdmode = 0x812C0000;
 }
 
 static void
@@ -2732,6 +2845,7 @@ static const struct {
     { tulip_identify_cogent_nic,	{ 0x00, 0x00, 0x92 } },
     { tulip_identify_asante_nic,	{ 0x00, 0x00, 0x94 } },
     { tulip_identify_accton_nic,	{ 0x00, 0x00, 0xE8 } },
+    { tulip_identify_pnic_nic,		{ 0x00, 0xA0, 0xCC } },
     { NULL }
 };
 
@@ -2773,6 +2887,21 @@ tulip_read_macaddr(
 	    sc->tulip_rombuf[idx] = TULIP_CSR_READBYTE(sc, csr_enetrom);
 	sc->tulip_boardsw = &tulip_21040_boardsw;
 #endif /* TULIP_EISA */
+    } else if (sc->tulip_chipid == TULIP_LC82C168) {
+	for (idx = 0; idx < 3; idx++) {
+	    int tmout = 10000;
+	    TULIP_CSR_WRITE(sc, csr_19, 0x600 | idx);
+	    while ((csr = TULIP_CSR_READ(sc, csr_9)) & 0x80000000 && --tmout);
+	    if (!tmout)
+		return -1;
+	    sc->tulip_rombuf[idx * 2] = (csr >> 8) & 0xff;
+	    sc->tulip_enaddr[idx * 2] = (csr >> 8) & 0xff;
+	    sc->tulip_rombuf[(idx * 2) + 1] = csr & 0xff;
+	    sc->tulip_enaddr[(idx * 2) + 1] = csr & 0xff;
+	}
+	sc->tulip_boardsw = &tulip_pnic_boardsw;
+	sc->tulip_features |= TULIP_HAVE_OKROM;
+	goto check_oui;
     } else {
 	if (sc->tulip_chipid == TULIP_21041) {
 	    /*
@@ -4825,6 +4954,9 @@ tulip_initcsrs(
     sc->tulip_csrs.csr_13		= csr_base + 13 * csr_size;
     sc->tulip_csrs.csr_14		= csr_base + 14 * csr_size;
     sc->tulip_csrs.csr_15		= csr_base + 15 * csr_size;
+    sc->tulip_csrs.csr_19		= csr_base + 19 * csr_size; /* PNIC */
+    sc->tulip_csrs.csr_20		= csr_base + 20 * csr_size; /* PNIC */
+    sc->tulip_csrs.csr_23		= csr_base + 23 * csr_size; /* PNIC */
 #if defined(TULIP_EISA)
     sc->tulip_csrs.csr_enetrom		= csr_base + DE425_ENETROM_OFFSET;
 #endif
@@ -5124,6 +5256,12 @@ tulip_pci_probe(
 {
     struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 
+    if (PCI_VENDORID(pa->pa_id) == PCI_VENDOR_LITEON) {
+	if (PCI_CHIPID(pa->pa_id) == PCI_PRODUCT_LITEON_PNIC)
+	    return 1;
+	return 0;
+    }
+
     if (PCI_VENDORID(pa->pa_id) != DEC_VENDORID)
 	return 0;
     if (PCI_CHIPID(pa->pa_id) == CHIPID_21040
@@ -5250,6 +5388,9 @@ tulip_pci_attach(
 	else if (PCI_CHIPID(id) == CHIPID_21041) chipid = TULIP_21041;
 	else if (PCI_CHIPID(id) == CHIPID_21142) chipid = TULIP_21142;
     }
+    else if (PCI_VENDOR(id) == PCI_VENDOR_LITEON &&
+		PCI_CHIPID(id) == PCI_PRODUCT_LITEON_PNIC)
+	chipid = TULIP_LC82C168;
     if (chipid == TULIP_CHIPID_UNKNOWN)
 	return;
 
@@ -5296,6 +5437,8 @@ tulip_pci_attach(
 	if (chipid != TULIP_21041 && sc->tulip_revinfo >= 0x20)
 	    sc->tulip_features |= TULIP_HAVE_SIA100;
     }
+    if (chipid == TULIP_LC82C168)
+	    sc->tulip_features |= TULIP_HAVE_POWERMGMT;
 
     if (sc->tulip_features & TULIP_HAVE_POWERMGMT
 	    && (cfdainfo & (TULIP_CFDA_SLEEP|TULIP_CFDA_SNOOZE))) {
