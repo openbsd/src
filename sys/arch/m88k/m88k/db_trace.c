@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.1 2004/06/19 18:28:37 miod Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.2 2004/07/28 12:33:55 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -1105,18 +1105,17 @@ db_stack_trace_print(db_expr_t addr,
 				}
 
 				/*
-				 * The value we've just read will be either another frame pointer,
-				 * or the start of another exception frame.
+				 * The value we've just read will be either
+				 * another frame pointer, or the start of
+				 * another exception frame.
 				 */
-				if (
-#ifdef JEFF_DEBUG
-				   val2 == 0
-#else
-				   val2 == 0x12345678
-#endif
-				   && db_trace_get_val(val1-4, &val2) && val2 == val1
-				   && db_trace_get_val(val1-8, &val2) && val2 == val1) {
-					/* we've found a frame, so the stack must have been good */
+				if (val2 == 0x12345678 &&
+				    db_trace_get_val(val1 - 4, &val2) &&
+				    val2 == val1 &&
+				    db_trace_get_val(val1 - 8, &val2) &&
+				    val2 == val1) {
+					/* we've found a frame, so the stack
+					   must have been good */
 					(*pr)("%x looks like a frame, accepting %x\n",val1,ptr);
 					break;
 				}
