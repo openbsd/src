@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.19 1997/12/29 14:31:16 deraadt Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.20 1998/01/21 21:59:38 deraadt Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.45 1997/10/24 18:14:25 chuck Exp $	*/
 
 /*-
@@ -168,17 +168,21 @@ panic(fmt, va_alist)
 	va_dcl
 #endif
 {
+	static char panicbuf[512];
 	int bootopt;
 	va_list ap;
 
 	bootopt = RB_AUTOBOOT | RB_DUMP;
+	va_start(ap, fmt);
 	if (panicstr)
 		bootopt |= RB_NOSYNC;
-	else
-		panicstr = fmt;
+	else {
+		vsprintf(panicbuf, fmt, ap);
+		panicstr = panicbuf;
+	}
 
-	va_start(ap, fmt);
 	printf("panic: ");
+	va_start(ap, fmt);
 	vprintf(fmt, ap);
 	printf("\n");
 	va_end(ap);
@@ -550,6 +554,28 @@ sprintf(buf, fmt, va_alist)
 	va_end(ap);
 	*(buf + retval) = 0;	/* null terminate */
 	return(retval);
+}
+
+/*
+ * vprintf: print a message to the console and the log [already have
+ *	va_alist]
+ */
+
+int
+vsprintf(buf, fmt, ap)
+	char *buf;
+	const char *fmt;
+	va_list ap;
+{
+	int savintr;
+
+	savintr = consintr;		/* disable interrupts */
+	consintr = 0;
+	kprintf(fmt, TOBUFONLY, NULL, NULL, ap);
+	if (!panicstr)
+		logwakeup();
+	consintr = savintr;		/* reenable interrupts */
+	return (0);
 }
 
 /*
