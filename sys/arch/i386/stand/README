@@ -1,4 +1,4 @@
-$OpenBSD: README,v 1.3 1997/04/07 01:20:08 weingart Exp $
+$OpenBSD: README,v 1.4 1997/04/11 19:21:50 weingart Exp $
 
 
 Ok, just a couple quick pointers to people hacking on this stuff.  These
@@ -72,4 +72,18 @@ be able to read the register dump.
 
 Note, currently gzipped kernel do not work.  Do not know the reason, we are
 working on resolving that.
+
+
+Fri Apr 11 14:18:41 CDT 1997
+----------------------------
+
+Ok, yeah, the .gz kernel gets to the probe (and then cacks later due to
+no swap).  Things should start working nicer from now on.  The problem
+was with -DSAVE_MEMORY, I believe that the stuff in libsa/cread.c was
+not (and still is not with the define) being done right.  I suspect
+the inflateInit2(), which had a parameter changed from -15 to -11.
+The problem manifested itself by loading a corrupted kernel.  On the
+other hand, it checksumed ok though, so there might be a small bug in
+the libz stuff.  Also, I don't understand libz, but I do know that
+things work withouth -DSAVE_MEMORY, and don't with it defined.
 
