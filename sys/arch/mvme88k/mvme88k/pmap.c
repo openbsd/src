@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.77 2003/09/26 22:27:26 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.78 2003/09/27 13:05:30 miod Exp $	*/
 /*
  * Copyright (c) 2001, 2002, 2003 Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -487,8 +487,10 @@ pmap_map(vaddr_t virt, paddr_t start, paddr_t end, vm_prot_t prot, u_int cmode)
 #endif
 
 #ifdef DIAGNOSTIC
-	if (start > end)
+	/* Check for zero if we map the very end of the address space... */
+	if (start > end && end != 0) {
 		panic("pmap_map: start greater than end address");
+	}
 #endif
 
 	template = m88k_protection(kernel_pmap, prot) | cmode | PG_V;
