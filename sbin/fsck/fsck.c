@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsck.c,v 1.11 2002/07/03 22:32:32 deraadt Exp $	*/
+/*	$OpenBSD: fsck.c,v 1.12 2002/10/17 13:15:21 brad Exp $	*/
 /*	$NetBSD: fsck.c,v 1.7 1996/10/03 20:06:30 christos Exp $	*/
 
 /*
@@ -464,9 +464,9 @@ usage(void)
 {
 	extern char *__progname;
 	static const char common[] =
-	    "[-dpvlyn] [-T fstype:fsoptions] [-t fstype]";
+	    "[-dvpfny] [-l maxparallel] [-t fstype] [-T fstype:fsoptions]";
 
-	(void)fprintf(stderr, "Usage: %s %s [special|node]...\n",
+	(void)fprintf(stderr, "Usage: %s %s special | node ...\n",
 	    __progname, common);
 	exit(1);
 }
