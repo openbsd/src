@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: server.c,v 1.9 2001/01/26 01:41:04 brian Exp $
+ *	$OpenBSD: server.c,v 1.10 2001/01/29 01:34:38 brian Exp $
  */
 
 #include <sys/param.h>
@@ -185,6 +185,7 @@ enum server_stat
 server_Reopen(struct bundle *bundle)
 {
   char name[sizeof server.cfg.sockname];
+  struct stat st;
   u_short port;
   mode_t mask;
   enum server_stat ret;
@@ -193,9 +194,9 @@ server_Reopen(struct bundle *bundle)
     strcpy(name, server.cfg.sockname);
     mask = server.cfg.mask;
     server_Close(bundle);
-    if (server.cfg.sockname[0] != '\0')
-      /* blow it away - and hope nobody else is using it */
-      unlink(server.cfg.sockname);
+    if (server.cfg.sockname[0] != '\0' && stat(server.cfg.sockname, &st) == 0)
+      if (!(st.st_mode & S_IFSOCK) || unlink(server.cfg.sockname) != 0)
+        return SERVER_FAILED;
     ret = server_LocalOpen(bundle, name, mask);
   } else if (server.cfg.port != 0) {
     port = server.cfg.port;

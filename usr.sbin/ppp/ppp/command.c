@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $OpenBSD: command.c,v 1.55 2001/01/26 01:41:03 brian Exp $
+ * $OpenBSD: command.c,v 1.56 2001/01/29 01:34:38 brian Exp $
  *
  */
 #include <sys/param.h>
@@ -1286,7 +1286,9 @@ SetServer(struct cmdargs const *arg)
                    arg->argv[arg->argn - 2], arg->argv[arg->argn - 1], mask);
         return -1;
       }
-    } else if (strcasecmp(port, "none") == 0) {
+    } else if (arg->argc != arg->argn + 1)
+      return -1;
+    else if (strcasecmp(port, "none") == 0) {
       if (server_Clear(arg->bundle))
         log_Printf(LogPHASE, "Disabled server socket\n");
       return 0;
@@ -1295,10 +1297,10 @@ SetServer(struct cmdargs const *arg)
         case SERVER_OK:
           return 0;
         case SERVER_FAILED:
-          log_Printf(LogPHASE, "Failed to reopen server port\n");
+          log_Printf(LogWARN, "Failed to reopen server port\n");
           return 1;
         case SERVER_UNSET:
-          log_Printf(LogPHASE, "Cannot reopen unset server socket\n");
+          log_Printf(LogWARN, "Cannot reopen unset server socket\n");
           return 1;
         default:
           break;
