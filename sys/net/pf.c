@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.217 2002/06/07 21:25:35 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.218 2002/06/07 21:46:08 jasoni Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -5052,17 +5052,20 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir)
 	if (ifp == NULL)
 		goto bad;
 
-	mtag = m_tag_find(m0, PACKET_TAG_PF_ROUTED, NULL);
-	if (mtag == NULL) {
-		if (pf_test(PF_OUT, ifp, &m0) != PF_PASS)
-			goto bad;
-		else if (m0 == NULL)
-			goto done;
-		else {
-			mtag = m_tag_get(PACKET_TAG_PF_ROUTED, 0, M_NOWAIT);
-			if (mtag == NULL)
+	if (r->ifp != ifp) {
+		mtag = m_tag_find(m0, PACKET_TAG_PF_ROUTED, NULL);
+		if (mtag == NULL) {
+			if (pf_test(PF_OUT, ifp, &m0) != PF_PASS)
 				goto bad;
-			m_tag_prepend(m0, mtag);
+			else if (m0 == NULL)
+				goto done;
+			else {
+				mtag = m_tag_get(PACKET_TAG_PF_ROUTED, 0,
+				    M_NOWAIT);
+				if (mtag == NULL)
+					goto bad;
+				m_tag_prepend(m0, mtag);
+			}
 		}
 	}
 
@@ -5179,17 +5182,20 @@ pf_route6(struct mbuf **m, struct pf_rule *r, int dir)
 	if (ifp == NULL)
 		goto bad;
 
-	mtag = m_tag_find(m0, PACKET_TAG_PF_ROUTED, NULL);
-	if (mtag == NULL) {
-		if (pf_test(PF_OUT, ifp, &m0) != PF_PASS)
-			goto bad;
-		else if (m0 == NULL)
-			goto done;
-		else {
-			mtag = m_tag_get(PACKET_TAG_PF_ROUTED, 0, M_NOWAIT);
-			if (mtag == NULL)
+	if (r->ifp != ifp) {
+		mtag = m_tag_find(m0, PACKET_TAG_PF_ROUTED, NULL);
+		if (mtag == NULL) {
+			if (pf_test(PF_OUT, ifp, &m0) != PF_PASS)
 				goto bad;
-			m_tag_prepend(m0, mtag);
+			else if (m0 == NULL)
+				goto done;
+			else {
+				mtag = m_tag_get(PACKET_TAG_PF_ROUTED, 0,
+				    M_NOWAIT);
+				if (mtag == NULL)
+					goto bad;
+				m_tag_prepend(m0, mtag);
+			}
 		}
 	}
 
