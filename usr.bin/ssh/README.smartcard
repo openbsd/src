@@ -31,7 +31,7 @@ need to:
 	with the current version of sectok/ssh-keygen
 	the private key file is still readable
 
-	$ ssh-keygen -f /path/to/rsakey -u 1
+	$ ssh-keygen -f /path/to/rsakey -U 1
 	(where 1 is the reader number, you can also try 0)
 
 	In spite of the name, this does not generate a key.
