@@ -1,17 +1,15 @@
-#	$OpenBSD: Makefile,v 1.7 1999/03/13 01:52:06 rahnds Exp $
+#	$OpenBSD: Makefile,v 1.8 2000/01/24 03:46:55 rahnds Exp $
 
 TOP=		${.CURDIR}/..
 
 .include "${TOP}/Makefile.inc"
 BSD_RD=		bsd.rd
-BSDOFW_RD=	bsdofw.rd
-BSDMIX_RD=	bsdmix.rd
 IMAGE=		mr.fs
 CBIN?=		instbin
 LISTS=		${.CURDIR}/list
 UTILS?=		${.CURDIR}/../../miniroot
 
-MOUNT_POINT=	/mnt
+MOUNT_POINT=	/mnt2
 MTREE=		${.CURDIR}/mtree.conf
 
 VND?=		svnd0
@@ -33,37 +31,22 @@ all ${IMAGE}:
 .else
 
 # mix config is not needed.
-all:	${BSD_RD} ${BSDOFW_RD}
+all:	${BSD_RD}
 
 ${BSD_RD}: ${CBIN} ${IMAGE} bsd rdsetroot
 	cp bsd ${BSD_RD}
 	${.OBJDIR}/rdsetroot ${BSD_RD} < ${IMAGE}
 
-${BSDOFW_RD}: ${CBIN} ${IMAGE} bsdofw rdsetroot
-	cp bsdofw ${BSDOFW_RD}
-	${.OBJDIR}/rdsetroot ${BSDOFW_RD} < ${IMAGE}
 
 ${IMAGE}: rd_setup do_files rd_teardown
 
 .endif
 
 bsd:
-	cd ${.TOP}/../../sys/arch/powerpc/conf && config RAMDISK
-	cd ${.TOP}/../../sys/arch/powerpc/compile/RAMDISK && \
+	cd ${TOP}/../../sys/arch/powerpc/conf && config RAMDISKMAC
+	cd ${TOP}/../../sys/arch/powerpc/compile/RAMDISKMAC && \
 	    make clean && make
-	cp ${.TOP}/../../sys/arch/powerpc/compile/RAMDISK/bsd bsd
-
-bsdofw:
-	cd ${.TOP}/../../sys/arch/powerpc/conf && config RAMDISKOFW
-	cd ${.TOP}/../../sys/arch/powerpc/compile/RAMDISKOFW && \
-	    make clean && make
-	cp ${.TOP}/../../sys/arch/powerpc/compile/RAMDISKOFW/bsd bsdofw
-
-bsdmix:
-	cd ${.TOP}/../../sys/arch/powerpc/conf && config RAMDISKMIX
-	cd ${.TOP}/../../sys/arch/powerpc/compile/RAMDISKMIX && \
-	    make clean && make
-	cp ${.TOP}/../../sys/arch/powerpc/compile/RAMDISKMIX/bsd bsdmix
+	cp ${TOP}/../../sys/arch/powerpc/compile/RAMDISKMAC/bsd bsd
 
 rd_setup: 
 	dd if=/dev/zero of=${IMAGE} bs=512 count=${NBLKS}
@@ -89,7 +72,6 @@ unconfig:
 
 install:
 	cp ${BSD_RD} ${DESTDIR}/snapshot/${BSD_RD}
-	cp ${BSDOFW_RD} ${DESTDIR}/snapshot/${BSDOFW_RD}
 
 ${CBIN}.conf: ${LISTS}
 	awk -f ${UTILS}/makeconf.awk CBIN=${CBIN} ${LISTS} > ${CBIN}.conf
@@ -107,7 +89,7 @@ do_files:
 
 clean cleandir:
 	/bin/rm -f core ${IMAGE} ${CBIN} ${CBIN}.conf ${CBIN}.mk ${CBIN}.cache \
-	*.o *.lo *.c bsd bsdmix bsdofw ${BSD_RD} ${BSDOFW_RD} ${BSDMIX_RD} \
+	*.o *.lo *.c bsd ${BSD_RD} \
 	rdsetroot
 
 beforeinstall:
