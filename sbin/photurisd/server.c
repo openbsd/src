@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: server.c,v 1.4 2000/12/11 21:21:18 provos Exp $";
+static char rcsid[] = "$Id: server.c,v 1.5 2000/12/12 01:53:42 provos Exp $";
 #endif
 
 #define _SERVER_C_
@@ -80,7 +80,7 @@ init_server(void)
      int sock, d, i, ip, on = 1; 
      struct ifconf ifconf; 
      void *newbuf;
-     char buf[1024];
+     char buf[4096];
 
      readfds = normfds = NULL;
 
@@ -111,7 +111,7 @@ init_server(void)
 
      /* get the local addresses */ 
  
-     ifconf.ifc_len = 1024; 
+     ifconf.ifc_len = sizeof(buf); 
      ifconf.ifc_buf = buf; 
      bzero(buf, 1024); 
  
@@ -154,7 +154,7 @@ init_server(void)
      i = 1;                  /* One interface already */
 
 #ifdef IPSEC
-     /* We also listen on PF_ENCAP for notify messages */
+     /* We also listen on pfkeyv2 for notify messages */
      newbuf = realloc(addresses, (i + 2) * sizeof(char *)); 
      if (newbuf == NULL) {
 	  if (addresses != NULL)

@@ -39,7 +39,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: kernel.c,v 1.11 2000/12/11 21:37:46 provos Exp $";
+static char rcsid[] = "$Id: kernel.c,v 1.12 2000/12/12 01:53:41 provos Exp $";
 #endif
 
 #include <time.h>
@@ -240,6 +240,20 @@ kernel_set_socket_policy(int sd)
      if (setsockopt(sd, IPPROTO_IP, IP_ESP_NETWORK_LEVEL,
 		    (char *)&level, sizeof (int)) == -1)
 	  log_fatal("setsockopt: can not bypass ipsec esp network policy");
+}
+
+struct sadb_ext *
+pfkey_find_extension(struct sadb_ext *start, void *end, u_int16_t type)
+{
+	struct sadb_ext *p = start;
+
+	while ((void *)p < end) {
+		if (p->sadb_ext_type == type)
+			return (p);
+		p = (struct sadb_ext *)((u_char *)p + p->sadb_ext_len * 8);
+	}
+	
+	return (NULL);
 }
 
 int
@@ -1001,6 +1015,7 @@ void
 kernel_handle_notify(int sd)
 {
      struct sadb_msg *sres = (struct sadb_msg *)buffer;
+     size_t len;
 
      if (!kernel_xf_read(regsd, buffer, BUFFER_SIZE, 0))
 	  return;
@@ -1013,13 +1028,59 @@ kernel_handle_notify(int sd)
 	  log_print("PFKEYV2 SA Expiration - not yet supported.");
 	  return;
      case SADB_ACQUIRE:
-	  LOG_DBG((LOG_KERNEL, 60, "Got Notify SA Request (SADB_ACQUIRE)"));
-	  kernel_request_sa(sres);
+	  LOG_DBG((LOG_KERNEL, 60, "Got Notify SA Request (SADB_ACQUIRE): %d",
+		   sres->sadb_msg_len * 8));
+	  LOG_DBG_BUF((LOG_KERNEL, 60, "acquire buf",
+		       (u_char *)sres, sres->sadb_msg_len * 8));
+	  
+	  len = sres->sadb_msg_len * 8;
+	  sres = malloc(len);
+	  if (sres) {
+		  memcpy(sres, buffer, len);
+		  kernel_request_sa(sres);
+		  free(sres);
+	  }
 	  break;
      default:
 	  /* discard silently */
 	  return; 
 	  }
+}
+
+struct sadb_msg *
+pfkey_askpolicy(int seq)
+{
+	struct sadb_msg smsg;
+	struct sadb_policy policy;
+	struct iovec iov[2];
+	int cnt = 0;
+
+	bzero(&smsg, sizeof(smsg));
+
+	/* Ask the kernel for the matching policy */
+	smsg.sadb_msg_len = sizeof(smsg) / 8;
+	smsg.sadb_msg_version = PF_KEY_V2;
+	smsg.sadb_msg_seq = pfkey_seq++;
+	smsg.sadb_msg_pid = pfkey_pid;
+	smsg.sadb_msg_type = SADB_X_ASKPOLICY;
+	iov[cnt].iov_base = &smsg;
+	iov[cnt++].iov_len = sizeof(smsg);
+
+	memset(&policy, 0, sizeof(policy));
+	policy.sadb_policy_exttype = SADB_X_EXT_POLICY;
+	policy.sadb_policy_len = sizeof(policy) / 8;
+	policy.sadb_policy_seq = seq;
+	iov[cnt].iov_base = &policy;
+	iov[cnt++].iov_len = sizeof(policy);
+	smsg.sadb_msg_len += sizeof(policy) / 8;
+
+	if (!kernel_xf_set(regsd, buffer, BUFFER_SIZE, iov, cnt,
+			   smsg.sadb_msg_len*8)) {
+		log_error(__FUNCTION__": kernel_xf_set");
+		return (NULL);
+	}
+
+	return ((struct sadb_msg *)buffer);
 }
 
 /*
@@ -1028,61 +1089,94 @@ kernel_handle_notify(int sd)
  */
 
 int
-kernel_request_sa(void *em /*struct encap_msghdr *em*/) 
+kernel_request_sa(struct sadb_msg *sadb) 
 {
-/*     struct stateob *st;
-     time_t tm;
-     char *address = inet_ntoa(em->em_not_dst);
+	struct stateob *st;
+	time_t tm;
+	struct sadb_msg *res;
+	struct sadb_address *dst, *src;
+	struct sockaddr *dstaddr, *srcaddr;
+	struct sadb_ext *ext = (struct sadb_ext *)(sadb + 1);
+	char srcbuf[NI_MAXHOST], dstbuf[NI_MAXHOST];
+	void *end;
 
-     /#* Try to find an already established exchange which is still valid *#/
-     st = state_find(address);
+	memset(srcbuf, 0, sizeof(srcbuf));
+	memset(dstbuf, 0, sizeof(dstbuf));
 
-     tm = time(NULL);
-     while (st != NULL && (st->lifetime <= tm || st->phase >= SPI_UPDATE))
-	  st = state_find_next(st, address);
+	end = (struct sadb_ext *)((u_char *)sadb + sadb->sadb_msg_len * 8);
 
-     if (st == NULL) {
-	  /#* No established exchange found, start a new one *#/
-	  if ((st = state_new()) == NULL) {
-	       log_print("state_new() failed in kernel_request_sa() for remote ip %s",
-			 address);
-	       return (-1);
-	  }
-	  /#* Set up the state information *#/
-	  strncpy(st->address, address, sizeof(st->address)-1);
-	  st->port = global_port;
-	  st->sport = em->em_not_sport;
-	  st->dport = em->em_not_dport;
-	  st->protocol = em->em_not_protocol;
+	dst = (struct sadb_address *)pfkey_find_extension(ext, end,
+							  SADB_EXT_ADDRESS_DST);
+	src = (struct sadb_address *)pfkey_find_extension(ext, end,
+							  SADB_EXT_ADDRESS_SRC);
 
-	  /#*
-	   * For states which were created by kernel notifies we wont
-	   * set up routes since other keying daemons might habe beaten
-	   * us in establishing SAs. The kernel has to decide which SA
-	   * will actually be routed.
-	   *#/
-	  st->flags = IPSEC_NOTIFY;
-	  if (em->em_not_satype & NOTIFY_SATYPE_CONF)
-	       st->flags |= IPSEC_OPT_ENC;
-	  if (em->em_not_satype & NOTIFY_SATYPE_AUTH)
-	       st->flags |= IPSEC_OPT_AUTH;
-	  /#* XXX - handling of tunnel requests missing *#/
-	  if (start_exchange(global_socket, st, st->address, st->port) == -1) {
-	       log_print("start_exchange() in kernel_request_sa() - informing kernel of failure");
-	       /#* Inform kernel of our failure *#/
-	       kernel_notify_result(st, NULL, 0);
-	       state_value_reset(st);
-	       free(st);
-	       return (-1);
-	  } else
-	       state_insert(st);
-     } else {
-	  /#* 
-	   * We need different attributes for this exchange, send
-	   * an SPI_NEEDED message.
-	   *#/
-     }
-*/
+	if (dst) {
+		dstaddr = (struct sockaddr *)(dst + 1);
+		switch (dstaddr->sa_family) {
+		case AF_INET:
+			if (inet_ntop (AF_INET, &((struct sockaddr_in *)dstaddr)->sin_addr,
+				       dstbuf, sizeof(dstbuf)) == NULL) {
+				log_error (__FUNCTION__": inet_ntop failed");
+				return (-1);
+			}
+			break;
+		default:
+			log_error(__FUNCTION__
+				  ": unsupported address family %d", 
+				  dstaddr->sa_family);
+			return (-1);
+		}
+
+		LOG_DBG((LOG_KERNEL, 20, __FUNCTION__": dst: %s", dstbuf));
+	} else
+		return (-1);
+
+	/* Try to find an already established exchange which is still valid */
+	st = state_find(dstbuf);
+
+	tm = time(NULL);
+	while (st != NULL && (st->lifetime <= tm || st->phase >= SPI_UPDATE))
+		st = state_find_next(st, dstbuf);
+
+	if (st == NULL) {
+		/* No established exchange found, start a new one */
+		if ((st = state_new()) == NULL) {
+			log_print("state_new() failed in kernel_request_sa() for remote ip %s",
+				  dstbuf);
+			return (-1);
+		}
+		/* Set up the state information */
+		strncpy(st->address, dstbuf, sizeof(st->address) - 1);
+		st->port = global_port;
+		st->sport = 0;
+		st->dport = 0;
+		st->protocol = 0;
+
+		st->flags = IPSEC_NOTIFY;
+		st->flags |= IPSEC_OPT_ENC;
+
+		/* XXX - maybe see if we needs this
+		if (em->em_not_satype & NOTIFY_SATYPE_AUTH)
+			st->flags |= IPSEC_OPT_AUTH;
+		*/
+
+		/* XXX - handling of tunnel requests missing */
+		if (start_exchange(global_socket, st, st->address,
+				   st->port) == -1) {
+			log_print(__FUNCTION__": start_exchange() - informing kernel of failure");
+			/* Inform kernel of our failure */
+			kernel_notify_result(st, NULL, 0);
+			state_value_reset(st);
+			free(st);
+			return (-1);
+		} else
+			state_insert(st);
+	} else {
+		/* 
+		 * We need different attributes for this exchange, send
+		 * an SPI_NEEDED message.
+		 */
+	}
 }
 
 /*
