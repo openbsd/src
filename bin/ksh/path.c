@@ -1,4 +1,4 @@
-/*	$OpenBSD: path.c,v 1.8 2003/02/28 09:45:09 jmc Exp $	*/
+/*	$OpenBSD: path.c,v 1.9 2003/10/22 07:40:38 jmc Exp $	*/
 
 #include "sh.h"
 #include "ksh_stat.h"
@@ -29,7 +29,7 @@ static char	*do_phys_path ARGS((XString *xsp, char *xp, const char *path));
  *	- cdpathp is set to the start of the next element in cdpathp (or NULL
  *	  if there are no more elements.
  *	The return value indicates whether a non-null element from cdpathp
- *	was appened to result.
+ *	was appended to result.
  */
 int
 make_path(cwd, file, cdpathp, xsp, phys_pathp)

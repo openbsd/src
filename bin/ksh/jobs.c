@@ -1,4 +1,4 @@
-/*	$OpenBSD: jobs.c,v 1.19 2003/03/13 09:03:07 deraadt Exp $	*/
+/*	$OpenBSD: jobs.c,v 1.20 2003/10/22 07:40:38 jmc Exp $	*/
 
 /*
  * Process and job control
@@ -15,7 +15,7 @@
  *
  * Notes regarding the copious ifdefs:
  *	- JOB_SIGS is independent of JOBS - it is defined if there are modern
- *	  signal and wait routines available.  This is prefered, even when
+ *	  signal and wait routines available.  This is preferred, even when
  *	  JOBS is not defined, since the shell will not otherwise notice when
  *	  background jobs die until the shell waits for a foreground process
  *	  to die.
@@ -123,7 +123,7 @@ struct proc {
 #define JF_CHANGED	0x040	/* process has changed state */
 #define JF_KNOWN	0x080	/* $! referenced */
 #define JF_ZOMBIE	0x100	/* known, unwaited process */
-#define JF_REMOVE	0x200	/* flaged for removal (j_jobs()/j_noityf()) */
+#define JF_REMOVE	0x200	/* flagged for removal (j_jobs()/j_noityf()) */
 #define JF_USETTYMODE	0x400	/* tty mode saved if process exits normally */
 #define JF_SAVEDTTYPGRP	0x800	/* j->saved_ttypgrp is valid */
 
@@ -1435,7 +1435,7 @@ check_job(j)
 	 */
 	if (j->state == PEXITED || j->state == PSIGNALLED) {
 		/* No need to keep co-process input any more
-		 * (at leasst, this is what ksh93d thinks)
+		 * (at least, this is what ksh93d thinks)
 		 */
 		if (coproc.job == j) {
 			coproc.job = (void *) 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_ksh.c,v 1.16 2003/02/28 09:45:09 jmc Exp $	*/
+/*	$OpenBSD: c_ksh.c,v 1.17 2003/10/22 07:40:38 jmc Exp $	*/
 
 /*
  * built-in Korn commands: c_*
@@ -75,7 +75,7 @@ c_cd(wp)
 			bi_errorf("don't know current directory");
 			return 1;
 		}
-		/* substitue arg1 for arg2 in current path.
+		/* substitute arg1 for arg2 in current path.
 		 * if the first substitution fails because the cd fails
 		 * we could try to find another substitution. For now
 		 * we don't
@@ -652,7 +652,7 @@ c_typeset(wp)
 			flag = LCASEV;
 			break;
 		  case 'p': /* posix export/readonly -p flag.
-			     * typset -p is the same as typeset (in pdksh);
+			     * typeset -p is the same as typeset (in pdksh);
 			     * here for compatibility with ksh93.
 			     */
 			pflag = 1;

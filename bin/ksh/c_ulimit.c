@@ -1,10 +1,10 @@
-/*	$OpenBSD: c_ulimit.c,v 1.9 2002/06/09 05:47:27 todd Exp $	*/
+/*	$OpenBSD: c_ulimit.c,v 1.10 2003/10/22 07:40:38 jmc Exp $	*/
 
 /*
 	ulimit -- handle "ulimit" builtin
 
 	Reworked to use getrusage() and ulimit() at once (as needed on
-	some schizophenic systems, eg, HP-UX 9.01), made argument parsing
+	some schizophrenic systems, eg, HP-UX 9.01), made argument parsing
 	conform to at&t ksh, added autoconf support.  Michael Rendell, May, '94
 
 	Eric Gisin, September 1988

@@ -1,4 +1,4 @@
-$OpenBSD: BUG-REPORTS,v 1.14 2003/02/28 09:45:09 jmc Exp $
+$OpenBSD: BUG-REPORTS,v 1.15 2003/10/22 07:40:38 jmc Exp $
 
 List of reported problems (problems reported and fixed before 5.0.4 not
 included).  Unresolved problems (may or may not still exist) marked by *,
@@ -182,7 +182,7 @@ x pdksh 5.0.5, - (reported by Sean Hogan): repeated history commands were being
 x pdksh 5.0.5, -: wait with no arguments would hang forever.
   [fixed in 5.0.6 - only wait for running jobs in waitfor()]
 
-x pdksh 5.0.2, HP-UX 9.01 (reported by Sean Hogan): scipts occasionally get
+x pdksh 5.0.2, HP-UX 9.01 (reported by Sean Hogan): scripts occasionally get
   stopped with SIGTTIN
   [from Mail.1:68]:
     I noticed another small problem today, which is that occasionally
@@ -1201,7 +1201,7 @@ x pdksh 5.2.12, - (reported by Gabor Zahemszky): MAILCHECK and MAIL
 
 x pdksh 5.2.12, - (reported by Gabor Zahemszky): memory gets badly fragmented
   when reversing a (large) file using a simple while read loop and variable
-  contatenation.
+  concatenation.
   [see Mail.XXX]
   [fixed in 5.2.13: alloc.c changed to allow malloc() to deal with large
    blocks.]
@@ -1332,7 +1332,7 @@ x pdksh 5.2.13, (reported by Mark Funkenhauser): eval "$(false)" does not
   result in $? being set to 1 (is 0).
   [fixed in 5.2.14: c_sh.c(c_eval): set exstat to subst_exstat before shell()]
 
-x pdksh 5.2.13, (reported with fix by Kevin Schoedel): word boardaries in
+x pdksh 5.2.13, (reported with fix by Kevin Schoedel): word boundaries in
   file completion are only spaces - at&t ksh uses ()<>&| and spaces.
   [fixed in 5.2.14: edit.c(IS_WORDC): changed macro to be LEX1 + quotes]
 

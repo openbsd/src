@@ -57,7 +57,7 @@ Version 5.2.13
     * editing: completion after "cmd " now completes files (was command).
 
 
-$OpenBSD: NEWS,v 1.12 2003/02/28 09:45:09 jmc Exp $
+$OpenBSD: NEWS,v 1.13 2003/10/22 07:40:38 jmc Exp $
 
 Version 5.2.12
 
@@ -438,7 +438,7 @@ Version 5.0.10
     * configuration: look for clock_t in sys/times.h.
     * configuration: use _SIGMAX, if available, for # of signals.
     * SIGHUP now causes builtin read command to exit.
-    * wait builtin now returns whenever a traped signal occurs as per POSIX.
+    * wait builtin now returns whenever a trapped signal occurs as per POSIX.
 
 * v command now works in vi; anchored searches now work in vi mode (/^ptrn);
   multi-line commands displayed correctly by history.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.27 2003/02/28 09:45:09 jmc Exp $	*/
+/*	$OpenBSD: exec.c,v 1.28 2003/10/22 07:40:38 jmc Exp $	*/
 
 /*
  * execute command tree
@@ -461,7 +461,7 @@ comexec(t, tp, ap, flags)
 #ifdef KSH
 	/* snag the last argument for $_ XXX not the same as at&t ksh,
 	 * which only seems to set $_ after a newline (but not in
-	 * functions/dot scripts, but in interactive and scipt) -
+	 * functions/dot scripts, but in interactive and script) -
 	 * perhaps save last arg here and set it in shell()?.
 	 */
 	if (!Flag(FSH) && Flag(FTALKING) && *(lastp = ap)) {

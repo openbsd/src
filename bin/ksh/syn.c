@@ -1,4 +1,4 @@
-/*	$OpenBSD: syn.c,v 1.13 2002/06/09 05:47:27 todd Exp $	*/
+/*	$OpenBSD: syn.c,v 1.14 2003/10/22 07:40:38 jmc Exp $	*/
 
 /*
  * shell parser (C version)
@@ -571,7 +571,7 @@ function_body(name, ksh_func)
 		/*
 		 * Probably something like foo() followed by eof or ;.
 		 * This is accepted by sh and ksh88.
-		 * To make "typset -f foo" work reliably (so its output can
+		 * To make "typeset -f foo" work reliably (so its output can
 		 * be used as input), we pretend there is a colon here.
 		 */
 		t->left = newtp(TCOM);

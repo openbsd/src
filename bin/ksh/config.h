@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.h,v 1.8 2003/05/16 18:49:46 jsyn Exp $	*/
+/*	$OpenBSD: config.h,v 1.9 2003/10/22 07:40:38 jmc Exp $	*/
 
 /* config.h.  NOT generated automatically. */
 
@@ -76,7 +76,7 @@
 /* Define if the closedir function returns void instead of int.  */
 /* #undef VOID_CLOSEDIR */
 
-/* Define if your kernal doesn't handle scripts starting with #! */
+/* Define if your kernel doesn't handle scripts starting with #! */
 /* #undef SHARPBANG */
 
 /* Define if dup2() preserves the close-on-exec flag (ultrix does this) */

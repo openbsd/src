@@ -1,4 +1,4 @@
-/*	$OpenBSD: expr.c,v 1.8 2003/02/28 09:45:09 jmc Exp $	*/
+/*	$OpenBSD: expr.c,v 1.9 2003/10/22 07:40:38 jmc Exp $	*/
 
 /*
  * Korn expression evaluation
@@ -140,7 +140,7 @@ static struct tbl *tempvar  ARGS((void));
 static struct tbl *intvar   ARGS((Expr_state *es, struct tbl *vp));
 
 /*
- * parse and evalute expression
+ * parse and evaluate expression
  */
 int
 evaluate(expr, rval, error_ok)
@@ -159,7 +159,7 @@ evaluate(expr, rval, error_ok)
 }
 
 /*
- * parse and evalute expression, storing result in vp.
+ * parse and evaluate expression, storing result in vp.
  */
 int
 v_evaluate(vp, expr, error_ok)
@@ -208,7 +208,7 @@ v_evaluate(vp, expr, error_ok)
 	if (vp->flag & INTEGER)
 		setint_v(vp, v);
 	else
-		/* can fail if readony */
+		/* can fail if readonly */
 		setstr(vp, str_val(v), error_ok);
 
 	quitenv();
