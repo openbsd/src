@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.16 2002/06/12 22:14:51 provos Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.17 2002/06/18 23:28:29 deraadt Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -40,6 +40,7 @@
 #include <fcntl.h>
 #include <signal.h>
 #include <syslog.h>
+#include <string.h>
 #include <err.h>
 #include <errno.h>
 
