@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctl_transact.c,v 1.6 1999/03/03 20:43:30 millert Exp $	*/
+/*	$OpenBSD: ctl_transact.c,v 1.7 2001/09/05 00:29:20 deraadt Exp $	*/
 /*	$NetBSD: ctl_transact.c,v 1.3 1994/12/09 02:14:12 jtc Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ctl_transact.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: ctl_transact.c,v 1.6 1999/03/03 20:43:30 millert Exp $";
+static char rcsid[] = "$OpenBSD: ctl_transact.c,v 1.7 2001/09/05 00:29:20 deraadt Exp $";
 #endif /* not lint */
 
 #include "talk.h"
@@ -89,7 +89,7 @@ ctl_transact(target, msg, type, rp)
 				quit("Error on write to talk daemon", 1);
 			}
 			read_mask = ctl_mask;
-			nready = select(32, &read_mask, 0, 0, &wait);
+			nready = select(ctl_sockt + 1, &read_mask, 0, 0, &wait);
 			if (nready < 0) {
 				if (errno == EINTR)
 					continue;
@@ -111,7 +111,7 @@ ctl_transact(target, msg, type, rp)
 			read_mask = ctl_mask;
 			/* an immediate poll */
 			timerclear(&wait);
-			nready = select(32, &read_mask, 0, 0, &wait);
+			nready = select(ctl_sockt + 1, &read_mask, 0, 0, &wait);
 		} while (nready > 0 && (rp->vers != TALK_VERSION ||
 		    rp->type != type));
 	} while (rp->vers != TALK_VERSION || rp->type != type);

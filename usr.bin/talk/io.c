@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.9 1999/03/03 20:43:30 millert Exp $	*/
+/*	$OpenBSD: io.c,v 1.10 2001/09/05 00:29:20 deraadt Exp $	*/
 /*	$NetBSD: io.c,v 1.4 1994/12/09 02:14:20 jtc Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: io.c,v 1.9 1999/03/03 20:43:30 millert Exp $";
+static char rcsid[] = "$OpenBSD: io.c,v 1.10 2001/09/05 00:29:20 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -66,6 +66,7 @@ talk()
 	int nb;
 	char buf[BUFSIZ];
 	struct timeval wait;
+	int maxfd = 0;
 
 #if defined(NCURSES_VERSION) || defined(beep)
 	message("Connection established");
@@ -82,13 +83,17 @@ talk()
 	 * standard input ( STDIN_MASK )
 	 */
 	FD_ZERO(&read_template);
-	FD_SET(sockt, &read_template);
 	FD_SET(fileno(stdin), &read_template);
+	if (fileno(stdin) > maxfd)
+		maxfd = fileno(stdin);
+	FD_SET(sockt, &read_template);
+	if (sockt > maxfd)
+		maxfd = sockt;
 	for (;;) {
 		read_set = read_template;
 		wait.tv_sec = A_LONG_TIME;
 		wait.tv_usec = 0;
-		nb = select(32, &read_set, 0, 0, &wait);
+		nb = select(maxfd + 1, &read_set, 0, 0, &wait);
 		if (nb <= 0) {
 			if (errno == EINTR) {
 				read_set = read_template;
