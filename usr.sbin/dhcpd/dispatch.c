@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.14 2004/09/21 04:07:04 david Exp $ */
+/*	$OpenBSD: dispatch.c,v 1.15 2004/10/31 10:43:38 canacar Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -57,8 +57,6 @@ void (*bootp_packet_handler)(struct interface_info *,
     struct dhcp_packet *, int, unsigned int, struct iaddr, struct hardware *);
 
 static int interface_status(struct interface_info *ifinfo);
-
-int quiet_interface_discovery;
 
 /* Use getifaddrs() to get a list of all the attached interfaces.
    For each interface that's of type INET and not the loopback interface,

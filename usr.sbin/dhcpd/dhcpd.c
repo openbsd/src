@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.c,v 1.21 2004/09/16 18:35:43 deraadt Exp $ */
+/*	$OpenBSD: dhcpd.c,v 1.22 2004/10/31 10:43:38 canacar Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -51,14 +51,14 @@ u_int16_t server_port;
 u_int16_t client_port;
 
 int log_priority;
-int log_perror = 1;
+int log_perror = 0;
 char *path_dhcpd_conf = _PATH_DHCPD_CONF;
 char *path_dhcpd_db = _PATH_DHCPD_DB;
 
 int
 main(int argc, char *argv[])
 {
-	int ch, cftest = 0, quiet = 0, daemonize = 1;
+	int ch, cftest = 0, daemonize = 1;
 	struct passwd	*pw;
 	extern char *__progname;
 
@@ -66,7 +66,7 @@ main(int argc, char *argv[])
 	openlog(__progname, LOG_NDELAY, DHCPD_LOG_FACILITY);
 	setlogmask(LOG_UPTO(LOG_INFO));
 
-	while ((ch = getopt(argc, argv, "c:dfl:tq")) != -1)
+	while ((ch = getopt(argc, argv, "c:dfl:nq")) != -1)
 		switch (ch) {
 		case 'c':
 			path_dhcpd_conf = optarg;
@@ -81,14 +81,12 @@ main(int argc, char *argv[])
 		case 'l':
 			path_dhcpd_db = optarg;
 			break;
-		case 'q':
-			quiet = 1;
-			quiet_interface_discovery = 1;
-			break;
-		case 't':
+		case 'n':
 			daemonize = 0;
 			cftest = 1;
 			log_perror = -1;
+			break;
+		case 'q':
 			break;
 		default:
 			usage();
@@ -108,9 +106,6 @@ main(int argc, char *argv[])
 		argc--;
 		argv++;
 	}
-
-	if (quiet)
-		log_perror = 0;
 
 	/* Default DHCP/BOOTP ports. */
 	server_port = htons(SERVER_PORT);
@@ -132,7 +127,6 @@ main(int argc, char *argv[])
 	if ((pw = getpwnam("_dhcp")) == NULL)
 		error("user \"_dhcp\" not found");
 
-	log_perror = 0;
 	if (daemonize)
 		daemon(0, 0);
 
@@ -158,9 +152,9 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-df] [-c config-file] [-l lease-file]",
+	fprintf(stderr, "usage: %s [-dfn] [-c config-file] [-l lease-file]",
 	    __progname);
-	fprintf(stderr, " [-p port] [if0 [...ifN]]\n");
+	fprintf(stderr, " [if0 [...ifN]]\n");
 	exit(1);
 }
 

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcpd.8,v 1.6 2004/08/23 19:38:20 pvalchev Exp $
+.\"	$OpenBSD: dhcpd.8,v 1.7 2004/10/31 10:43:38 canacar Exp $
 .\"
 .\" Copyright (c) 1995, 1996 The Internet Software Consortium.
 .\" All rights reserved.
@@ -44,7 +44,7 @@
 .Nd Dynamic Host Configuration Protocol Server
 .Sh SYNOPSIS
 .Nm dhcpd
-.Op Fl df
+.Op Fl dfn
 .Op Fl c Ar config-file
 .Op Fl l Ar lease-file
 .Op Ar if0 Op Ar ... ifN
@@ -185,6 +185,9 @@ running
 in production, this option should be used
 .Em only
 for testing lease files in a non-production environment.
+.It Fl n
+Only test configuration, do not run
+.Nm .
 .El
 .Sh CONFIGURATION
 The syntax of the
