@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.444 2004/02/24 20:35:18 mcbride Exp $	*/
+/*	$OpenBSD: parse.y,v 1.445 2004/03/01 17:40:54 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -572,7 +572,7 @@ varset		: STRING '=' string		{
 		}
 		;
 
-anchorrule	: ANCHOR string	dir interface af proto fromto {
+anchorrule	: ANCHOR string	dir interface af proto fromto filter_opts {
 			struct pf_rule	r;
 
 			if (check_rulestate(PFCTL_STATE_FILTER))
@@ -581,6 +581,15 @@ anchorrule	: ANCHOR string	dir interface af proto fromto {
 			PREPARE_ANCHOR_RULE(r, $2);
 			r.direction = $3;
 			r.af = $5;
+
+			if ($8.match_tag)
+				if (strlcpy(r.match_tagname, $8.match_tag,
+				    PF_TAG_NAME_SIZE) >= PF_TAG_NAME_SIZE) {
+					yyerror("tag too long, max %u chars",
+					    PF_TAG_NAME_SIZE - 1);
+					YYERROR;
+				}
+			r.match_tag_not = $8.match_tag_not;
 
 			decide_address_family($7.src.host, &r.af);
 			decide_address_family($7.dst.host, &r.af);
@@ -3416,7 +3425,7 @@ filter_consistent(struct pf_rule *r)
 		problems++;
 	}
 	if ((r->tagname[0] || r->match_tagname[0]) && !r->keep_state &&
-	    r->action == PF_PASS) {
+	    r->action == PF_PASS && !r->anchorname[0]) {
 		yyerror("tags cannot be used without keep state");
 		problems++;
 	}
