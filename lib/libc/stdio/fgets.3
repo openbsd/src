@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fgets.3,v 1.12 2002/03/05 16:53:59 millert Exp $
+.\"	$OpenBSD: fgets.3,v 1.13 2002/04/05 01:44:38 aaron Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -133,7 +133,7 @@ string is too long if it does not contain a newline:
 			exit(1);
 		}
 		*p = '\e0';
-		printf("%s\en", p);
+		printf("%s\en", buf);
 	}
 .Ed
 .Pp
