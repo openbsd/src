@@ -217,7 +217,7 @@ char *
 bus_mapin(bustype, paddr, sz)
 	int bustype, paddr, sz;
 {
-	int off, pa, pmt;
+	int off, pa, pmt = 0;
 	vm_offset_t va, retval;
 
 	if (bustype != BUS_NUBUS)

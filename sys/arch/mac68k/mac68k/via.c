@@ -1,4 +1,4 @@
-/*	$OpenBSD: via.c,v 1.8 1996/06/23 15:43:22 briggs Exp $	*/
+/*	$OpenBSD: via.c,v 1.9 1996/10/21 01:50:45 briggs Exp $	*/
 /*	$NetBSD: via.c,v 1.48 1996/06/21 06:12:45 scottr Exp $	*/
 
 /*-
@@ -289,7 +289,7 @@ add_nubus_intr(slot, func, client_data)
 	void (*func) __P((void *, int));
 	void *client_data;
 {
-	int	s = splhigh();
+	int	s;
 
 	/*
 	 * Map Nubus slot 0 to "slot" 15; see note on Nubus slot
@@ -299,6 +299,8 @@ add_nubus_intr(slot, func, client_data)
 		slot = 15;
 	if (slot < 9 || slot > 15)
 		return 0;
+
+	s = splhigh();
 
 	slotitab[slot-9] = func;
 	slotptab[slot-9] = client_data;
@@ -313,6 +315,7 @@ add_nubus_intr(slot, func, client_data)
 /*	enable_nubus_intr();	*/
 
 	splx(s);
+
 	return 1;
 }
 
