@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.82 2001/07/06 17:40:35 angelos Exp $
+#	$OpenBSD: GENERIC,v 1.83 2001/08/08 15:15:28 jjbg Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -75,7 +75,6 @@ option		IPSEC		# IPsec
 option		PPP_BSDCOMP	# PPP BSD compression
 option		PPP_DEFLATE
 #option		MROUTING	# Multicast router
-#option		IPCOMP		# IPComp, requires IPsec
 
 pseudo-device	pf	1	# packet filter
 pseudo-device	pflog	1	# pf log if
