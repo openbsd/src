@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_mvme.c,v 1.6 2004/01/24 22:15:34 miod Exp $	*/
+/*	$OpenBSD: exec_mvme.c,v 1.7 2004/01/28 23:46:40 miod Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -74,7 +74,7 @@ exec_mvme(file, flag)
 		esym = (void *)marks[MARK_END];
 
 		printf("Start @ 0x%x\n", (unsigned int)entry);
-		printf("Controler Address 0x%x\n", bugargs.ctrl_addr);
+		printf("Controller Address 0x%x\n", bugargs.ctrl_addr);
 		if (flag & RB_HALT)
 			mvmeprom_return();
 
