@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_glue.c,v 1.29 1998/03/01 00:38:05 niklas Exp $    */
+/*	$OpenBSD: vm_glue.c,v 1.30 1999/02/01 16:29:48 pefo Exp $    */
 /*	$NetBSD: vm_glue.c,v 1.55.4.1 1996/06/13 17:25:45 cgd Exp $	*/
 
 /* 
@@ -236,7 +236,7 @@ vm_fork(p1, p2)
 	/*
 	 * Allocate a wired-down (for now) pcb and kernel stack for the process
 	 */
-#if defined(arc) || defined(pica)
+#if defined(arc) || defined(mips_cachealias)
 	addr = kmem_alloc_upage(kernel_map, USPACE);
 #else
 	addr = kmem_alloc_pageable(kernel_map, USPACE);
