@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.283 2000/07/19 15:28:52 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.285 2000/07/19 21:14:12 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -997,6 +997,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Avance Logic(2)",
 	    "ALG2302",
+	},
+	{
+	    PCI_VENDOR_AVANCE2, PCI_PRODUCT_AVANCE2_ALG4000,
+	    0,
+	    "Avance Logic(2)",
+	    "ALG4000",
 	},
 	{
 	    PCI_VENDOR_BIT3, PCI_PRODUCT_BIT3_PCIVME617,
