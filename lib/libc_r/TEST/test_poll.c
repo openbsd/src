@@ -1,3 +1,4 @@
+/*	$OpenBSD: test_poll.c,v 1.2 2000/01/06 06:55:37 d Exp $	*/
 #include <pthread.h>
 #include <fcntl.h>
 #include <poll.h>
@@ -26,8 +27,7 @@ print_pollfd(p)
 	);
 }
 
-static
-void *
+static void *
 writer(arg)
 	void *arg;
 {
@@ -38,8 +38,7 @@ writer(arg)
 	return NULL;
 }
 
-static
-void *
+static void *
 reader(arg)
 	void *arg;
 {
