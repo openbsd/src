@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.128 2001/08/19 18:19:08 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.129 2001/08/19 19:03:58 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -823,7 +823,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			}
 		} else
 			rule->ifp = NULL;
-		rule->packets = rule->evaluations = 0;
+		rule->evaluations = rule->packets = rule->bytes = 0;
 		TAILQ_INSERT_TAIL(pf_rules_inactive, rule, entries);
 		break;
 	}
@@ -926,7 +926,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 					break;
 				}
 			}
-			newrule->packets = newrule->evaluations = 0;
+			newrule->evaluations = newrule->packets = 0;
+			newrule->bytes = 0;
 		}
 
 		s = splsoftnet();
@@ -1839,6 +1840,7 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf *m,
 
 	if (rm != NULL) {
 		rm->packets++;
+		rm->bytes += h->ip_len - off - (th->th_off << 2);
 		REASON_SET(&reason, PFRES_MATCH);
 
 		/* XXX will log packet before rewrite */
@@ -2020,6 +2022,7 @@ pf_test_udp(int direction, struct ifnet *ifp, struct mbuf *m,
 
 	if (rm != NULL) {
 		rm->packets++;
+		rm->bytes += h->ip_len - off - sizeof(*uh);
 		REASON_SET(&reason, PFRES_MATCH);
 
 		/* XXX will log packet before rewrite */
@@ -2163,6 +2166,7 @@ pf_test_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 
 	if (rm != NULL) {
 		rm->packets++;
+		rm->bytes +=  h->ip_len - off - ICMP_MINLEN;
 		REASON_SET(&reason, PFRES_MATCH);
 
 		/* XXX will log packet before rewrite */
@@ -2261,6 +2265,7 @@ pf_test_other(int direction, struct ifnet *ifp, struct mbuf *m, struct ip *h)
 		u_short reason;
 
 		rm->packets++;
+		rm->bytes += h->ip_len;
 		REASON_SET(&reason, PFRES_MATCH);
 		if (rm->log)
 			PFLOG_PACKET(h, m, AF_INET, direction, reason, rm);
@@ -2483,6 +2488,10 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 			    (*state)->lan.port);
 		m_copyback(m, off, sizeof(*th), (caddr_t)th);
 	}
+	if ((*state)->rule != NULL) {
+		(*state)->rule->packets++;
+		(*state)->rule->bytes += len;
+	}
 	return (PF_PASS);
 }
 
@@ -2543,6 +2552,10 @@ pf_test_state_udp(struct pf_state **state, int direction, struct ifnet *ifp,
 		m_copyback(m, off, sizeof(*uh), (caddr_t)uh);
 	}
 
+	if ((*state)->rule != NULL) {
+		(*state)->rule->packets++;
+		(*state)->rule->bytes += len;
+	}
 	return (PF_PASS);
 }
 
@@ -2923,6 +2936,10 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 		action = pf_test_state_icmp(&s, dir, ifp, m, 0, off, h, &ih);
 		if (action == PF_PASS) {
 			r = s->rule;
+			if (r != NULL) {
+				r->packets++;
+				r->bytes += h->ip_len - off - sizeof(ih);
+			}
 			log = s->log;
 		} else if (s == NULL)
 			action = pf_test_icmp(dir, ifp, m, 0, off, h, &ih);
@@ -2938,8 +2955,6 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 		pf_status.bcounters[dir] += h->ip_len;
 		pf_status.pcounters[dir][action]++;
 	}
-	if (r != NULL)
-		r->packets++;
 
 done:
 	if (log) {

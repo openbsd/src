@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.34 2001/08/19 18:20:46 dhartmei Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.35 2001/08/19 19:03:58 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -186,8 +186,9 @@ pfctl_show_rules(int dev, int opts)
 			err(1, "DIOCGETRULE");
 		print_rule(&pr.rule);
 		if (opts & PF_OPT_VERBOSE)
-			printf("[ Evaluations: %-10llu  Packets: %-10llu ]\n\n",
-			    pr.rule.evaluations, pr.rule.packets);
+			printf("[ Evaluations: %-10llu  Packets: %-10llu  "
+			    "Bytes: %-10llu ]\n\n", pr.rule.evaluations,
+			    pr.rule.packets, pr.rule.bytes);
 	}
 	return (0);
 }
