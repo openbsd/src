@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.22 1997/06/25 10:28:48 downsj Exp $
+#	$OpenBSD: GENERIC,v 1.23 1997/07/01 23:13:16 provos Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -71,7 +71,7 @@ pseudo-device	bpfilter 8	# packet filter
 pseudo-device	sl	2	# CSLIP
 pseudo-device	ppp	2	# PPP
 pseudo-device	tun	2	# network tunneling over tty
-pseudo-device	enc	4	# encryption device
+pseudo-device	enc	1	# encryption device
 pseudo-device	strip	1	# Starmode Radio IP interface
 
 pseudo-device	pty	64	# pseudo-terminals
