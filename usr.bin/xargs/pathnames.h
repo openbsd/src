@@ -32,14 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
-<<<<<<< pathnames.h
- *	from: @(#)pathnames.h	5.1 (Berkeley) 4/17/90
- *	$Id: pathnames.h,v 1.1.1.1 1995/10/18 08:47:00 deraadt Exp $
-||||||| 1.1.1.2
- *	@(#)pathnames.h	5.1 (Berkeley) 4/17/90
-=======
  *	@(#)pathnames.h	8.1 (Berkeley) 6/6/93
->>>>>>> /var/tmp/T4001951
  */
 
 #define	_PATH_ECHO	"/bin/echo"
