@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.27 2003/04/16 07:31:38 mickey Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.28 2004/01/25 01:53:12 millert Exp $	*/
 
 /* 
  * Copyright (c) 1988-1994, The University of Utah and
@@ -65,7 +65,7 @@
  * This is basically slop for kmempt which we actually allocate (malloc) from.
  */
 #ifndef SHMMAXPGS
-#define SHMMAXPGS	((1024*1024*10)/NBPG)	/* 10mb */
+#define SHMMAXPGS	8192	/* 32mb */
 #endif
 
 /*
