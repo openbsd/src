@@ -1,4 +1,4 @@
-/*	$OpenBSD: wicontrol.c,v 1.51 2004/07/15 16:38:57 millert Exp $	*/
+/*	$OpenBSD: wicontrol.c,v 1.52 2004/07/15 16:56:18 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -68,7 +68,7 @@
 static const char copyright[] = "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.";
 static const char rcsid[] =
-	"@(#) $OpenBSD: wicontrol.c,v 1.51 2004/07/15 16:38:57 millert Exp $";
+	"@(#) $OpenBSD: wicontrol.c,v 1.52 2004/07/15 16:56:18 millert Exp $";
 #endif
 
 int  wi_getval(char *, struct wi_req *);
@@ -105,20 +105,23 @@ int
 wi_getval(char *iface, struct wi_req *wreq)
 {
 	struct ifreq		ifr;
-	int			error, s;
-
-	bzero((char *)&ifr, sizeof(ifr));
-
-	strlcpy(ifr.ifr_name, iface, sizeof(ifr.ifr_name));
-	ifr.ifr_data = (caddr_t)wreq;
+	int			error = 0, i, s;
 
 	s = socket(AF_INET, SOCK_DGRAM, 0);
 	if (s == -1)
 		err(1, "socket");
 
-	if ((error = ioctl(s, SIOCGWAVELAN, &ifr)) == -1)
-		warn("SIOCGWAVELAN (0x%x)", wreq->wi_type);
+	for (i = 10; --i; sleep(1)) {
+		bzero((char *)&ifr, sizeof(ifr));
+		strlcpy(ifr.ifr_name, iface, sizeof(ifr.ifr_name));
+		ifr.ifr_data = (caddr_t)wreq;
+		error = ioctl(s, SIOCGWAVELAN, &ifr);
+		if (error != -1 || errno != EINPROGRESS)
+			break;
+	}
 
+	if (error == -1)
+		warn("SIOCGWAVELAN (0x%x)", wreq->wi_type);
 	close(s);
 	return (error);
 }
