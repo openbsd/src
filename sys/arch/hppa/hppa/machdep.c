@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.127 2004/04/08 17:10:18 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.128 2004/05/05 00:32:17 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -539,6 +539,12 @@ cpuid()
 	} else if ((p->type == hpcxl || p->type == hpcxl2) && !fpu_enable)
 		/* we know PCXL and PCXL2 do not exist w/o FPU */
 		fpu_enable = 0xc0;
+
+	/*
+	 * TODO: HPT on 7200 is not currently supported
+	 */
+	if (pmap_hptsize && p->type != hpcxl && p->type != hpcxl2)
+		pmap_hptsize = 0;
 
 	cpu_type = p->type;
 	cpu_typename = p->name;
