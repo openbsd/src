@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.45 1999/10/29 02:10:02 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.46 1999/10/29 05:20:46 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -285,6 +285,7 @@ struct tdb				/* tunnel descriptor block */
     u_int16_t         tdb_srcid_type;
     u_int16_t         tdb_dstid_type;
 
+    caddr_t           tdb_interface;
     struct flow	     *tdb_flow; 	/* Which flows use this SA */
 
     struct tdb       *tdb_bind_out;	/* Outgoing SA to use */

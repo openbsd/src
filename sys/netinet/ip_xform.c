@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_xform.c,v 1.3 1999/07/02 23:37:33 deraadt Exp $	*/
+/*	$OpenBSD: ip_xform.c,v 1.4 1999/10/29 05:20:46 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -57,7 +57,6 @@
 #include <net/route.h>
 #include <net/netisr.h>
 #include <net/bpf.h>
-#include <net/if_enc.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -73,6 +72,7 @@
 #include <netinet/ip_ipsp.h>
 #include <netinet/ip_esp.h>
 #include <net/pfkeyv2.h>
+#include <net/if_enc.h>
 
 extern void des_ecb3_encrypt(caddr_t, caddr_t, caddr_t, caddr_t, caddr_t, int);
 extern void des_ecb_encrypt(caddr_t, caddr_t, caddr_t, int);
