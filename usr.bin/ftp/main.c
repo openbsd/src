@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.26 1997/04/01 21:19:05 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.27 1997/04/05 19:53:10 kstailey Exp $	*/
 /*	$NetBSD: main.c,v 1.20 1997/03/16 14:24:21 lukem Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.26 1997/04/01 21:19:05 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.27 1997/04/05 19:53:10 kstailey Exp $";
 #endif
 #endif /* not lint */
 
@@ -74,6 +74,7 @@ main(argc, argv)
 	int ch, top, port, rval;
 	struct passwd *pw = NULL;
 	char *cp, homedir[MAXPATHLEN];
+	int from_emacs;
 
 	sp = getservbyname("ftp", "tcp");
 	if (sp == 0)
@@ -103,14 +104,16 @@ main(argc, argv)
 	if (strcmp(cp, "pftp") == 0)
 		passivemode = 1;
 
+	from_emacs = !strcmp(getenv("TERM"), "dumb");
 	fromatty = isatty(fileno(stdin));
 	if (fromatty) {
 		verbose = 1;		/* verbose if from a tty */
 #ifndef SMALL
-		editing = 1;		/* editing mode on if from a tty */
+		if (!from_emacs)
+			editing = 1;	/* editing mode on if from a tty */
 #endif
 	}
-	if (isatty(fileno(stdout)))
+	if (isatty(fileno(stdout)) && !from_emacs)
 		progress = 1;		/* progress bar on if going to a tty */
 
 	while ((ch = getopt(argc, argv, "adeginpPr:tvV")) != -1) {
@@ -124,8 +127,8 @@ main(argc, argv)
 			debug++;
 			break;
 
-		case 'e':
-#ifndef SMALL
+		case 'e':	/* XXX should TERM=dumb be the only way to */
+#ifndef SMALL			/* turn off editing or not? */
 			editing = 0;
 #endif
 			break;
