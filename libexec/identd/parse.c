@@ -1,6 +1,7 @@
 /*
  * This program is in the public domain and may be used freely by anyone
  * who wants to.
+ *
  * Please send bug fixes/bug reports to: Peter Eriksson <pen@lysator.liu.se>
  */
 
