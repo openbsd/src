@@ -173,21 +173,8 @@ int main (argc, argv)
 	bootp_packet_handler = relay;
 
 	/* Become a daemon... */
-	if (!no_daemon) {
-		int pid;
-
-		log_perror = 0;
-
-		if ((pid = fork()) < 0)
-			error ("can't fork daemon: %m");
-		else if (pid)
-			exit (0);
-
-		close (0);
-		close (1);
-		close (2);
-		pid = setsid ();
-	}
+	if (!no_daemon)
+		daemon(0, 0);
 
 	/* Start dispatching packets and timeouts... */
 	dispatch ();
