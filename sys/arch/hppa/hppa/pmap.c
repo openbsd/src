@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.113 2004/06/30 18:11:48 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.114 2004/08/01 07:13:49 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -374,7 +374,7 @@ pmap_pv_alloc(void)
 
 	simple_lock(&pvalloc_lock);
 
-	pv = pool_get(&pmap_pv_pool, 0);
+	pv = pool_get(&pmap_pv_pool, PR_NOWAIT);
 
 	simple_unlock(&pvalloc_lock);
 
