@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtual.c,v 1.8 2004/08/10 19:21:01 deraadt Exp $	*/
+/*	$OpenBSD: virtual.c,v 1.9 2004/09/20 21:36:50 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2004 Håkan Olsson.  All rights reserved.
@@ -251,7 +251,7 @@ virtual_bind(const struct sockaddr *addr)
 	 */
 	port = udp_default_port ? udp_default_port : UDP_DEFAULT_PORT_STR;
 	lport = strtol(port, &ep, 10);
-	if (*ep != '\0' || lport < 0 || lport > USHRT_MAX) {
+	if (*ep != '\0' || lport < 0 || lport > (long)USHRT_MAX) {
 		log_print("virtual_bind: "
 		    "port string \"%s\" not convertible to in_port_t", port);
 		free(v);
@@ -276,7 +276,7 @@ virtual_bind(const struct sockaddr *addr)
 	port = udp_encap_default_port
 	    ? udp_encap_default_port : UDP_ENCAP_DEFAULT_PORT_STR;
 	lport = strtol(port, &ep, 10);
-	if (*ep != '\0' || lport < 0 || lport > USHRT_MAX) {
+	if (*ep != '\0' || lport < 0 || lport > (long)USHRT_MAX) {
 		log_print("virtual_bind: "
 		    "port string \"%s\" not convertible to in_port_t", port);
 		v->main->vtbl->remove(v->main);
