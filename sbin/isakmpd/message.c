@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.52 2002/06/06 02:15:27 ho Exp $	*/
+/*	$OpenBSD: message.c,v 1.53 2002/06/06 02:42:29 ho Exp $	*/
 /*	$EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	*/
 
 /*
@@ -248,8 +248,8 @@ message_parse_payloads (struct message *msg, struct payload *p, u_int8_t next,
   do
     {
       LOG_DBG ((LOG_MESSAGE, 50,
-		"message_parse_payloads: offset %d payload %s",
-		buf - (u_int8_t *)msg->iov[0].iov_base,
+		"message_parse_payloads: offset %ld payload %s",
+		(long)(buf - (u_int8_t *)msg->iov[0].iov_base),
 		constant_name (isakmp_payload_cst, next)));
 
       /* Does this payload's header fit?  */
