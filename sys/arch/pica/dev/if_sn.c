@@ -3,6 +3,9 @@
  * Copyright (c) 1991   Algorithmics Ltd (http://www.algor.co.uk)
  * You may use, copy, and modify this program so long as you retain the
  * copyright line.
+ *
+ * This driver has been substantially modified since Algorithmics donated
+ * it.
  */
 
 #include "sn.h"
@@ -96,7 +99,7 @@ struct sn_softc {
 #define	sc_if		sc_ac.ac_if	/* network visible interface */
 #define	sc_enaddr	sc_ac.ac_enaddr	/* hardware ethernet address */
 
-	struct	sonic_reg *sc_csr;	/* hardware pointer */
+	struct sonic_reg *sc_csr;	/* hardware pointer */
 	dma_softc_t	__dma;		/* stupid macro ... */
 	dma_softc_t	*dma;		/* dma mapper control */
 	int	sc_rxmark;		/* position in rx ring for reading buffs */
@@ -105,7 +108,7 @@ struct sn_softc {
 
 	int	sc_txhead;		/* index of first TDA passed to chip  */
 	int	sc_missed;		/* missed packet counter */
-	struct	RXpkt *	sc_lrxp;	/* last RDA available to chip */
+	struct	RXpkt *sc_lrxp;		/* last RDA available to chip */
 	struct	sn_stats sc_sum;
 	short	sc_iflags;
 } sn_softc;
@@ -262,6 +265,8 @@ int sninit __P((int unit));
 int snstop __P((int unit));
 int sonicput __P((struct sn_softc *sc, struct mbuf *m0));
 
+void camdump __P((struct sn_softc *sc));
+
 int
 snmatch(parent, match, aux)
 	struct device *parent;
@@ -338,6 +343,9 @@ snattach(parent, self, aux)
 
 	DMA_MAP(sc->dma, (caddr_t)SONICBUF, p - SONICBUF, SONICBUF - pp);
 
+#if 0
+	camdump(sc);
+#endif
 	sngetaddr(sc);
 	printf(" address %s\n", ether_sprintf(sc->sc_enaddr));
 
@@ -770,28 +778,33 @@ sngetaddr(sc)
 	unsigned i, x, y;
 	char   *cp, *ea;
 
-#if 0
+#if 1
 	sc->sc_csr->s_cr = CR_RST;
+	wbflush();
 	sc->sc_csr->s_cep = 0;
 	i = sc->sc_csr->s_cap2;
+	wbflush();
 	sc->sc_enaddr[5] = i >> 8;
 	sc->sc_enaddr[4] = i;
 	i = sc->sc_csr->s_cap1;
+	wbflush();
 	sc->sc_enaddr[3] = i >> 8;
 	sc->sc_enaddr[2] = i;
 	i = sc->sc_csr->s_cap0;
+	wbflush();
 	sc->sc_enaddr[1] = i >> 8;
 	sc->sc_enaddr[0] = i;
 
 	sc->sc_csr->s_cr = 0;
-#endif
+	wbflush();
+#else
 	sc->sc_enaddr[0] = 0x08;
 	sc->sc_enaddr[1] = 0x00;
 	sc->sc_enaddr[2] = 0x20;
 	sc->sc_enaddr[3] = 0xa0;
 	sc->sc_enaddr[4] = 0x66;
 	sc->sc_enaddr[5] = 0x54;
-	
+#endif	
 	return (0);
 }
 
@@ -877,10 +890,14 @@ camprogram(sc)
 		printf("sonic: CAM initialisation without interrupt\n");
 }
 
-#ifdef notdef
+#if 0
 void 
-camdump()
+camdump(sc)
+	struct sn_softc *sc;
 {
+	struct sonic_reg *csr = sc->sc_csr;
+	int i;
+
 	printf("CAM entries:\n");
 	csr->s_cr = CR_RST;
 	wbflush();
