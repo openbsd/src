@@ -1,4 +1,4 @@
-.\"	$OpenBSD: inet6_rthdr_space.3,v 1.12 2003/06/02 20:18:35 millert Exp $
+.\"	$OpenBSD: inet6_rthdr_space.3,v 1.13 2003/08/08 09:26:02 jmc Exp $
 .\"	$KAME: inet6_rthdr_space.3,v 1.8 2000/05/17 14:30:15 itojun Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993
@@ -63,7 +63,7 @@
 .Fn inet6_rthdr_getflags "const struct cmsghdr *cmsg" "int index"
 .\"
 .Sh DESCRIPTION
-RFC2292 IPv6 advanced API defines eight
+RFC 2292 IPv6 advanced API defines eight
 functions that the application calls to build and examine a Routing
 header.
 Four functions build a Routing header:
@@ -258,10 +258,10 @@ or
 Upon an error the return value of the function is -1.
 .Pp
 Note: Addresses are indexed starting at 1, and flags starting at 0,
-to maintain consistency with the terminology and figures in RFC2460.
+to maintain consistency with the terminology and figures in RFC 2460.
 .\"
 .Sh EXAMPLES
-RFC2292 gives comprehensive examples in chapter 8.
+RFC 2292 gives comprehensive examples in chapter 8.
 .\"
 .Sh DIAGNOSTICS
 .Fn inet6_rthdr_space
@@ -290,14 +290,14 @@ return -1 on error.
 .%A W. Stevens
 .%A M. Thomas
 .%T "Advanced Sockets API for IPv6"
-.%N RFC2292
+.%N RFC 2292
 .%D February 1998
 .Re
 .Rs
 .%A S. Deering
 .%A R. Hinden
 .%T "Internet Protocol, Version 6 (IPv6) Specification"
-.%N RFC2460
+.%N RFC 2460
 .%D December 1998
 .Re
 .\"
@@ -305,13 +305,13 @@ return -1 on error.
 The functions
 are documented in
 .Dq Advanced Sockets API for IPv6
-.Pq RFC2292 .
+.Pq RFC 2292 .
 .\"
 .Sh HISTORY
 The implementation first appeared in KAME advanced networking kit.
 .\"
 .Sh BUGS
-The text was shamelessly copied from RFC2292.
+The text was shamelessly copied from RFC 2292.
 .Pp
 .Fn inet6_rthdr_reverse
 is not implemented yet.

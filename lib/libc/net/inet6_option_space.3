@@ -1,4 +1,4 @@
-.\"	$OpenBSD: inet6_option_space.3,v 1.12 2003/06/02 20:18:35 millert Exp $
+.\"	$OpenBSD: inet6_option_space.3,v 1.13 2003/08/08 09:26:02 jmc Exp $
 .\"	$KAME: inet6_option_space.3,v 1.7 2000/05/17 14:32:13 itojun Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993
@@ -61,7 +61,7 @@
 Building and parsing the Hop-by-Hop and Destination options is
 complicated due to alignment constraints, padding and
 ancillary data manipulation.
-RFC2292 defines a set of functions to help the application.
+RFC 2292 defines a set of functions to help the application.
 The function prototypes for
 these functions are all in the
 .Aq Pa netinet/in.h
@@ -99,7 +99,7 @@ is the number of options to be stored in the object.
 This is of little consequence, since it is assumed that most
 Hop-by-Hop option headers and Destination option headers carry only
 one option
-.Pq appendix B of [RFC-2460] .
+.Pq appendix B of [RFC 2460] .
 .\"
 .Ss inet6_option_init
 .Fn inet6_option_init
@@ -386,7 +386,7 @@ is not
 .Dv NULL .
 .\"
 .Sh EXAMPLES
-RFC2292 gives comprehensive examples in chapter 6.
+RFC 2292 gives comprehensive examples in chapter 6.
 .\"
 .Sh DIAGNOSTICS
 .Fn inet6_option_init
@@ -420,14 +420,14 @@ value.
 .%A W. Stevens
 .%A M. Thomas
 .%T "Advanced Sockets API for IPv6"
-.%N RFC2292
+.%N RFC 2292
 .%D February 1998
 .Re
 .Rs
 .%A S. Deering
 .%A R. Hinden
 .%T "Internet Protocol, Version 6 (IPv6) Specification"
-.%N RFC2460
+.%N RFC 2460
 .%D December 1998
 .Re
 .\"
@@ -435,10 +435,10 @@ value.
 The functions
 are documented in
 .Dq Advanced Sockets API for IPv6
-.Pq RFC2292 .
+.Pq RFC 2292 .
 .\"
 .Sh HISTORY
 The implementation first appeared in KAME advanced networking kit.
 .\"
 .Sh BUGS
-The text was shamelessly copied from RFC2292.
+The text was shamelessly copied from RFC 2292.

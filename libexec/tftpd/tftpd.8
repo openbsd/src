@@ -1,4 +1,4 @@
-.\"   $OpenBSD: tftpd.8,v 1.13 2003/06/02 19:38:25 millert Exp $
+.\"   $OpenBSD: tftpd.8,v 1.14 2003/08/08 09:26:03 jmc Exp $
 .\"
 .\" Copyright (c) 1983, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)tftpd.8	6.7 (Berkeley) 5/13/91
-.\"	$OpenBSD: tftpd.8,v 1.13 2003/06/02 19:38:25 millert Exp $
+.\"	$OpenBSD: tftpd.8,v 1.14 2003/08/08 09:26:03 jmc Exp $
 .\"
 .Dd June 11, 1997
 .Dt TFTPD 8
@@ -122,6 +122,6 @@ flag was added in
 .Ox 2.1 .
 .Sh BUGS
 Files larger than 33488896 octets (65535 blocks) cannot be transferred
-without client and server supporting blocksize negotiation (RFC1783).
+without client and server supporting blocksize negotiation (RFC 1783).
 .Pp
 Many tftp clients will not transfer files over 16744448 octets (32767 blocks).

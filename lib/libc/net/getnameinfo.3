@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getnameinfo.3,v 1.21 2003/06/02 20:18:35 millert Exp $
+.\"	$OpenBSD: getnameinfo.3,v 1.22 2003/08/08 09:26:02 jmc Exp $
 .\"	$KAME: getnameinfo.3,v 1.20 2001/01/05 13:37:37 itojun Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993
@@ -253,7 +253,7 @@ The error code can be found in errno.
 .%A J. Bound
 .%A W. Stevens
 .%T Basic Socket Interface Extensions for IPv6
-.%R RFC2553
+.%R RFC 2553
 .%D March 1999
 .Re
 .Rs
@@ -277,7 +277,7 @@ The
 function is defined in IEEE POSIX 1003.1g draft specification,
 and documented in
 .Dq Basic Socket Interface Extensions for IPv6
-.Pq RFC2553 .
+.Pq RFC 2553 .
 .\"
 .Sh HISTORY
 The implementation first appeared in WIDE Hydrangea IPv6 protocol stack kit.
@@ -285,9 +285,9 @@ The implementation first appeared in WIDE Hydrangea IPv6 protocol stack kit.
 .Sh BUGS
 The current implementation is not thread-safe.
 .Pp
-The text was shamelessly copied from RFC2553.
+The text was shamelessly copied from RFC 2553.
 .Pp
 .Ox
 intentionally uses a different
 .Dv NI_MAXHOST
-value from what RFC2553 suggests, to avoid buffer length handling mistakes.
+value from what RFC 2553 suggests, to avoid buffer length handling mistakes.
