@@ -1,5 +1,5 @@
-/*	$OpenBSD: umap_vnops.c,v 1.5 1996/03/30 01:40:50 mickey Exp $	*/
-/*	$NetBSD: umap_vnops.c,v 1.5 1996/02/09 22:41:06 christos Exp $	*/
+/*	$OpenBSD: umap_vnops.c,v 1.6 1996/05/29 07:12:10 deraadt Exp $	*/
+/*	$NetBSD: umap_vnops.c,v 1.5.4.1 1996/05/25 22:13:35 jtc Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -453,8 +453,8 @@ umap_print(v)
 		struct vnode *a_vp;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
-	printf("\ttag VT_UMAPFS, vp=%x, lowervp=%x\n", 
-	       (unsigned int) vp, (unsigned int) UMAPVPTOLOWERVP(vp));
+	printf("\ttag VT_UMAPFS, vp=%p, lowervp=%p\n", vp,
+	    UMAPVPTOLOWERVP(vp));
 	return (0);
 }
 
