@@ -1,5 +1,4 @@
-/*	$OpenBSD: pcvt_ext.c,v 1.27 2000/09/01 05:46:01 aaron Exp $	*/
-
+/*	$OpenBSD: pcvt_ext.c,v 1.28 2000/10/07 03:12:45 aaron Exp $	*/
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
  *
@@ -2417,11 +2416,10 @@ vgapage(int new_screen)
 {
 	int x;
 
-	if (IS_SEL_EXISTS(vsp)) {
+	if (IS_SEL_EXISTS(vsp)) 
 		/* hides a potential selection */
 		remove_selection();
-		vsp->mouse_flags &= ~SEL_EXISTS;
-	}
+	
 	mouse_hide(); /* hides a potential mouse cursor */
 	
 	if(new_screen < 0 || new_screen >= totalscreens)
@@ -2630,7 +2628,7 @@ usl_vt_ioctl(Dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 					 * if the new vt is also in process
 					 * mode, we have to wait until its
 					 * controlling process acknowledged
-					 * the switch
+					 * the switch 
 					 */
 					vsp->vt_status
 						|= VT_WAIT_ACK;
@@ -2643,6 +2641,14 @@ usl_vt_ioctl(Dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 					/* we are committed */
 					vt_switch_pending = 0;
 				}
+				/*
+				 *  We send here a USR2 signal to the mouse 
+				 *  daemon (moused(8))
+				 *  to tell him he can reuse the mouse device.
+				 */      
+				if (moused_proc)
+					psignal(moused_proc, SIGUSR2);
+
 				return 0;
 			}
 			break;
@@ -2653,6 +2659,13 @@ usl_vt_ioctl(Dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			{
 				vt_switch_pending = 0;
 				vsp->vt_status &= ~VT_WAIT_ACK;
+				/*
+				 *  We send a USR1 signal to the mouse 
+				 *  daemon (moused(8))
+				 *  to ask him to free the mouse device.
+				 */
+				if (moused_proc)
+					psignal(moused_proc, SIGUSR1);
 
 				return 0;
 			}
@@ -2769,8 +2782,17 @@ usl_vt_ioctl(Dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		case KD_TEXT:
 			haschanged = (vsx->vt_status & VT_GRAFX) != 0;
 			vsx->vt_status &= ~VT_GRAFX;
-			if(haschanged && vsx == vsp)
+			if (haschanged && vsx == vsp)
 				switch_screen(current_video_screen, 1, 0);
+			
+			/*
+			 *  We send here a USR2 signal to the mouse
+			 *  daemon (moused(8))
+			 *  to tell him he can reuse the mouse device.
+			 */                                
+			if (moused_proc)
+				psignal(moused_proc, SIGUSR2);
+
 			return 0;
 
 		case KD_GRAPHICS:
@@ -2781,6 +2803,15 @@ usl_vt_ioctl(Dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			vsx->vt_status |= VT_GRAFX;
 			if(haschanged && vsx == vsp)
 				switch_screen(current_video_screen, 0, 1);
+
+			/*
+			 *  We send a USR1 signal to the mouse
+			 *  daemon (moused(8))
+			 *  to ask him to free the mouse device.
+			 */                                    
+			if (moused_proc)
+				psignal(moused_proc, SIGUSR1);
+			
 			return 0;
 
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_kbd.c,v 1.36 2000/09/01 05:46:02 aaron Exp $	*/
+/*	$OpenBSD: pcvt_kbd.c,v 1.37 2000/10/07 03:12:46 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -1107,11 +1107,9 @@ regular:
 	if ((key == 85) && shift_down &&
 	    (kbd_lastkey != 85 || !kbd_status.breakseen)) {
 		/* removing of visual regions for mouse console support */
-		if (IS_SEL_EXISTS(vsp)) {
+		if (IS_SEL_EXISTS(vsp)) 
 			remove_selection(); /* remove current selection before 
 					       leaving this screen */
-			vsp->mouse_flags &= ~SEL_EXISTS;
-		}
 		if (IS_MOUSE_VISIBLE(vsp)) {
 			mouse_hide();
 			vsp->mouse_flags &= ~MOUSE_VISIBLE;
@@ -1156,11 +1154,9 @@ regular:
 		(kbd_lastkey != 86 || !kbd_status.breakseen)) {
 scroll_reset:
 		/* removing of visual regions for mouse console support */
-		if (IS_SEL_EXISTS(vsp)) {
+		if (IS_SEL_EXISTS(vsp)) 
 			remove_selection(); /* remove current selection before 
 					       leaving this screen */
-			vsp->mouse_flags &= ~SEL_EXISTS;
-		}
 		if (IS_MOUSE_VISIBLE(vsp)) {
 			mouse_hide();
 			vsp->mouse_flags &= ~MOUSE_VISIBLE;

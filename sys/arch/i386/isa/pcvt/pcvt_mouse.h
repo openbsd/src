@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_mouse.h,v 1.1 2000/09/01 05:46:02 aaron Exp $ */
+/*	$OpenBSD: pcvt_mouse.h,v 1.2 2000/10/07 03:12:47 aaron Exp $ */
 
 /*
  * Copyright (c) 2000 Jean-Baptiste Marchand, Julien Montagne and Jerome Verdon
@@ -87,10 +87,14 @@ typedef struct mouse_info {
 #define MOUSE_HIDE		(1 << 1) /* Hide the cursor */
 #define MOUSE_MOTION_EVENT	(1 << 2) /* Motion event */
 #define MOUSE_BUTTON_EVENT	(1 << 3) /* Button event */
+#define MOUSED_ON               1
+#define MOUSED_OFF              0
 	
 	union {
 		struct mouse_data data;
 		struct mouse_event event;
 	}u;
 } mouse_info_t;
+
+struct proc *moused_proc;
 

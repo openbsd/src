@@ -52,7 +52,7 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/tty.h>
-#include <machine/pcvt_ioctl.h> 
+#include <machine/pcvt_ioctl.h>
 
 #include <ctype.h>
 #include <err.h>
@@ -399,8 +399,21 @@ mouse_fill_mousemode(void)
 	}
 }
 
+
 static void
-hup(int sig)
+freedev(int sig)
+{ 
+  /* 
+   *  close the device, when a USR1 signal is received.
+   *  Tipically used by an X server so it can open the device for it's 
+   *  own purpose. 
+   */
+  close(mouse.mfd);
+  sigpause(0);
+}
+
+static void
+opendev(int sig)
 {
     longjmp(env, 1);
 }
@@ -408,6 +421,9 @@ hup(int sig)
 static void 
 cleanup(int sig)
 {
+    char moused_flag = MOUSED_OFF;
+  
+    ioctl(mouse.cfd, PCVT_MOUSED, &moused_flag);
     exit(0);
 }
 
@@ -908,7 +924,7 @@ mouse_init(void)
      **
      ** The following lines take care of the Logitech MouseMan protocols.
      **
-     ** NOTE: There are different versions of both MouseMan and TrackMan!
+     ** NOTE: There are diffrent versions of both MouseMan and TrackMan!
      **       Hence I add another protocol P_LOGIMAN, which the user can
      **       specify as MouseMan in his XF86Config file. This entry was
      **       formerly handled as a special case of P_MS. However, people
@@ -1054,10 +1070,10 @@ mouse_init(void)
     
     case P_PS2:
 	
-	/* now sets the resolution and rate for PS/2 mice */
+  /* now sets the resolution and rate for PS/2 mice */
 	
 	/* always sets resolution, to a default value if no value is given */
-
+	
 	c = PS2_SET_RES;
 	write(mouse.mfd, &c, 1);
 	c = mouse.mode.resolution;
@@ -1101,25 +1117,20 @@ mouse_identify(void)
 	if (mouse.proto != P_UNKNOWN)
 		bcopy(proto[mouse.proto], cur_proto, sizeof(cur_proto));
 	
-	if ((mouse.mode.protocol == P_UNKNOWN)
-		|| (mouse.mode.protocol >= sizeof(proto)/sizeof(proto[0]))) {
-		logwarn("unknown mouse protocol (%d)", mouse.mode.protocol);
-		return P_UNKNOWN;
-	} else {
-		/* INPORT and BUS are the same... */
-		if (mouse.mode.protocol == P_INPORT)
-			mouse.mode.protocol = P_BM;
-		if (mouse.mode.protocol != mouse.proto) {
-			/* Hmm, the driver doesn't agree with the user... */
-			if (mouse.proto != P_UNKNOWN)
-				logwarn("mouse type mismatch (%s != %s), %s is assumed",
+	/* INPORT and BUS are the same... */
+	if (mouse.mode.protocol == P_INPORT)
+		mouse.mode.protocol = P_BM;
+	if (mouse.mode.protocol != mouse.proto) {
+		/* Hmm, the driver doesn't agree with the user... */
+		if (mouse.proto != P_UNKNOWN)
+			logwarn("mouse type mismatch (%s != %s), %s is assumed",
 					mouse_name(mouse.mode.protocol), 
 					mouse_name(mouse.proto),
 					mouse_name(mouse.mode.protocol));
-			mouse.proto = mouse.mode.protocol;
-			bcopy(proto[mouse.proto], cur_proto, sizeof(cur_proto));
-		}
+		mouse.proto = mouse.mode.protocol;
+		bcopy(proto[mouse.proto], cur_proto, sizeof(cur_proto));
 	}
+	
 	cur_proto[4] = mouse.mode.packetsize;
 	cur_proto[0] = mouse.mode.syncmask[0];	/* header byte bit mask */
 	cur_proto[1] = mouse.mode.syncmask[1];	/* header bit pattern */
@@ -1738,6 +1749,7 @@ moused(void)
     fd_set fds;
     u_char b;
     FILE *fp;
+    char moused_flag;
 
     if ((mouse.cfd = open("/dev/pcvtctl", O_RDWR, 0)) == -1)
 	logerr(1, "cannot open /dev/pcvtctl");
@@ -1746,7 +1758,7 @@ moused(void)
 	if (daemon(0, 0)) {
 	    logerr(1, "failed to become a daemon");
 	} else {
-	    background = TRUE;
+	  background = TRUE;
 	    fp = fopen(pidfile, "w");
 	    if (fp != NULL) {
 		fprintf(fp, "%d\n", getpid());
@@ -1756,9 +1768,11 @@ moused(void)
     }
 	
     /* display initial cursor */
-   
     mouse_infos.operation = MOUSE_INIT;
-    ioctl(mouse.cfd,PCVT_MOUSECTL,&mouse_infos);
+
+    moused_flag = MOUSED_ON;
+    ioctl(mouse.cfd, PCVT_MOUSED, &moused_flag);
+    ioctl(mouse.cfd, PCVT_MOUSECTL, &mouse_infos);
     
     /* clear mouse data */
     bzero(&action, sizeof(action));
@@ -1779,8 +1793,8 @@ moused(void)
 	read(mouse.mfd, &b, 1);
 	if (mouse_protocol(b, &action)) {	/* handler detected action */
 	    mouse_map(&action, &action2);
-#if 0	    
-	    printf("activity : buttons 0x%08x  dx %d  dy %d  dz %d\n",
+#if 0
+	    fprintf("activity : buttons 0x%08x  dx %d  dy %d  dz %d\n",
 		action2.button, action2.dx, action2.dy, action2.dz);
 #endif
 	    mouse_click(&action2);
@@ -2025,10 +2039,12 @@ main(int argc, char **argv)
 	
 	for (;;) {
 		if (setjmp(env) == 0) {
-			signal(SIGHUP, hup);
+			signal(SIGUSR1, freedev);
+			signal(SIGUSR2, opendev);
 			signal(SIGINT , cleanup);
 			signal(SIGQUIT, cleanup);
 			signal(SIGTERM, cleanup);
+			signal(SIGKILL, cleanup);
 			if ((mouse.mfd = open(mouse.portname, 
 					      O_RDWR | O_NONBLOCK, 0)) == -1) 
 				logerr(1, "unable to open %s", mouse.portname);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_hdr.h,v 1.40 2000/09/28 17:45:42 aaron Exp $	*/
+/*	$OpenBSD: pcvt_hdr.h,v 1.41 2000/10/07 03:12:46 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -705,21 +705,29 @@ typedef struct video_state {
 	int	kbd_state;		/* keyboard raw or translated */
 	
 	unsigned short mouse; 		/* mouse cursor position */
+	unsigned short cursor;		/* selection cursor position ( if 
+					different from mouse cursor pos) */
 	unsigned short cpy_start; 	/* position of the copy start mark*/
 	unsigned short cpy_end;		/* position of the copy end mark */
-	unsigned short cpy_orig;	/* original copy position */
+	unsigned short orig_start;	/* position of the original sel. start*/
+	unsigned short orig_end;	/* position of the original sel. end */
 #define MOUSE_VISIBLE 	(1 << 0)	/* flag, the mouse cursor is visible */
 #define SEL_EXISTS 	(1 << 1)	/* flag, a selection exists */
 #define SEL_IN_PROGRESS (1 << 2)	/* flag, a selection is in progress */
-#define BLANK_TO_EOL	(1 << 3)	/* flag, there are only blanks
+#define SEL_EXT_AFTER 	(1 << 3)	/* flag, selection is extended after */
+#define BLANK_TO_EOL	(1 << 4)	/* flag, there are only blanks
 					   characters to eol */
-#define IN_SELECTION	(1 << 4)	/* flag, the cursor is currently in
-					   the selection */
+#define SEL_BY_CHAR	(1 << 5)	/* flag, select character by character*/
+#define SEL_BY_WORD	(1 << 6)	/* flag, select word by word */
+#define SEL_BY_LINE	(1 << 7)	/* flag, select line by line */
 #define IS_MOUSE_VISIBLE(vsp) ((vsp)->mouse_flags & MOUSE_VISIBLE)
 #define IS_SEL_EXISTS(vsp) ((vsp)->mouse_flags & SEL_EXISTS)
 #define IS_SEL_IN_PROGRESS(vsp) ((vsp)->mouse_flags & SEL_IN_PROGRESS)
+#define IS_SEL_EXT_AFTER(vsp) ((vsp)->mouse_flags & SEL_EXT_AFTER)
 #define IS_BLANK_TO_EOL(vsp) ((vsp)->mouse_flags & BLANK_TO_EOL)
-#define IS_IN_SELECTION(vsp) ((vsp)->mouse_flags & IN_SELECTION)
+#define IS_SEL_BY_CHAR(vsp) ((vsp)->mouse_flags & SEL_BY_CHAR)
+#define IS_SEL_BY_WORD(vsp) ((vsp)->mouse_flags & SEL_BY_WORD)
+#define IS_SEL_BY_LINE(vsp) ((vsp)->mouse_flags & SEL_BY_LINE)
 	unsigned char mouse_flags;	/* flags, status of the mouse */
 } video_state;
 
