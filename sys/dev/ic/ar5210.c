@@ -1,4 +1,4 @@
-/*     $OpenBSD: ar5210.c,v 1.11 2005/02/17 22:32:48 reyk Exp $        */
+/*     $OpenBSD: ar5210.c,v 1.12 2005/02/17 23:21:49 reyk Exp $        */
 
 /*
  * Copyright (c) 2004 Reyk Floeter <reyk@vantronix.net>.
@@ -253,8 +253,9 @@ ar5k_ar5210_nic_reset(hal, val)
 	/*
 	 * Reset configuration register
 	 */
-	if ((val & AR5K_AR5210_RC_MAC) == 0)
+	if ((val & AR5K_AR5210_RC_MAC) == 0) {
 		AR5K_REG_WRITE(AR5K_AR5210_CFG, AR5K_AR5210_INIT_CFG);
+	}
 
 	return (ret);
 }
@@ -428,10 +429,11 @@ ar5k_ar5210_reset(hal, op_mode, channel, change_channel, status)
 	 */
 	if (AR5K_EEPROM_HDR_RFKILL(hal->ah_capabilities.cap_eeprom.ee_header)) {
 		ar5k_ar5210_gpioCfgInput(hal, 0);
-		if ((hal->ah_gpio[0] = ar5k_ar5210_gpioGet(hal, 0)) == 0)
+		if ((hal->ah_gpio[0] = ar5k_ar5210_gpioGet(hal, 0)) == 0) {
 			ar5k_ar5210_gpioSetIntr(hal, 0, 1);
-		else
+		} else {
 			ar5k_ar5210_gpioSetIntr(hal, 0, 0);
+		}
 	}
 
 	/*
@@ -509,14 +511,14 @@ ar5k_ar5210_perCalibration(hal, channel)
 	u_int32_t phy_sig, phy_agc, phy_sat, beacon;
 
 #define AGC_DISABLE	{						\
-        AR5K_REG_ENABLE_BITS(AR5K_AR5210_PHY_AGC,			\
-            AR5K_AR5210_PHY_AGC_DISABLE);				\
-        AR5K_DELAY(10);							\
+	AR5K_REG_ENABLE_BITS(AR5K_AR5210_PHY_AGC,			\
+	    AR5K_AR5210_PHY_AGC_DISABLE);				\
+	AR5K_DELAY(10);							\
 }
 
 #define AGC_ENABLE	{						\
-        AR5K_REG_DISABLE_BITS(AR5K_AR5210_PHY_AGC,			\
-            AR5K_AR5210_PHY_AGC_DISABLE);				\
+	AR5K_REG_DISABLE_BITS(AR5K_AR5210_PHY_AGC,			\
+	    AR5K_AR5210_PHY_AGC_DISABLE);				\
 }
 
 	/*
@@ -690,9 +692,10 @@ ar5k_ar5210_updateTxTrigLevel(hal, increase)
 	if (increase == AH_FALSE) {
 		if (--trigger_level < AR5K_TUNE_MIN_TX_FIFO_THRES)
 			goto done;
-	} else
+	} else {
 		trigger_level +=
 		    ((AR5K_TUNE_MAX_TX_FIFO_THRES - trigger_level) / 2);
+	}
 
 	/*
 	 * Update trigger level on success
@@ -1257,14 +1260,15 @@ ar5k_ar5210_setMulticastFilterIndex(hal, index)
 	struct ath_hal *hal;
 	u_int32_t index;
 {
-	if (index >= 64)
+	if (index >= 64) {
 		return (AH_FALSE);
-	else if (index >= 32)
+	} else if (index >= 32) {
 		AR5K_REG_ENABLE_BITS(AR5K_AR5210_MCAST_FIL1,
 		    (1 << (index - 32)));
-	else
+	} else {
 		AR5K_REG_ENABLE_BITS(AR5K_AR5210_MCAST_FIL0,
 		    (1 << index));
+	}
 
 	return (AH_TRUE);
 }
@@ -1274,14 +1278,15 @@ ar5k_ar5210_clrMulticastFilterIndex(hal, index)
 	struct ath_hal *hal;
 	u_int32_t index;
 {
-	if (index >= 64)
+	if (index >= 64) {
 		return (AH_FALSE);
-	else if (index >= 32)
+	} else if (index >= 32) {
 		AR5K_REG_DISABLE_BITS(AR5K_AR5210_MCAST_FIL1,
 		    (1 << (index - 32)));
-	else
+	} else {
 		AR5K_REG_DISABLE_BITS(AR5K_AR5210_MCAST_FIL0,
 		    (1 << index));
+	}
 
 	return (AH_TRUE);
 }
@@ -1369,10 +1374,11 @@ ar5k_ar5210_procRxDesc(hal, desc, phys_addr, next)
 	/*
 	 * Key table status
 	 */
-	if (!rx_status->key_index_valid)
+	if (!rx_status->key_index_valid) {
 		desc->ds_us.rx.rs_keyix = HAL_RXKEYIX_INVALID;
-	else
+	} else {
 		desc->ds_us.rx.rs_keyix = rx_status->key_index;
+	}
 
 	/*
 	 * Receive/descriptor errors
@@ -1417,7 +1423,7 @@ ar5k_ar5210_dumpState(hal)
 {
 #ifdef AR5K_DEBUG
 #define AR5K_PRINT_REGISTER(_x)						\
-        printf("(%s: %08x) ", #_x, AR5K_REG_READ(AR5K_AR5210_##_x));
+	printf("(%s: %08x) ", #_x, AR5K_REG_READ(AR5K_AR5210_##_x));
 
 	printf("DMA registers:\n");
 	AR5K_PRINT_REGISTER(TXDP0);
@@ -1832,7 +1838,7 @@ ar5k_ar5210_getAckTimeout(hal)
 	struct ath_hal *hal;
 {
 	return (ar5k_clocktoh(AR5K_REG_MS(AR5K_REG_READ(AR5K_AR5210_TIME_OUT),
-				  AR5K_AR5210_TIME_OUT_ACK), hal->ah_turbo));
+	    AR5K_AR5210_TIME_OUT_ACK), hal->ah_turbo));
 }
 
 HAL_BOOL
@@ -1841,7 +1847,7 @@ ar5k_ar5210_setCTSTimeout(hal, timeout)
 	u_int timeout;
 {
 	if (ar5k_clocktoh(AR5K_REG_MS(0xffffffff, AR5K_AR5210_TIME_OUT_CTS),
-		hal->ah_turbo) <= timeout)
+	    hal->ah_turbo) <= timeout)
 		return (AH_FALSE);
 
 	AR5K_REG_WRITE_BITS(AR5K_AR5210_TIME_OUT, AR5K_AR5210_TIME_OUT_CTS,
@@ -1855,7 +1861,7 @@ ar5k_ar5210_getCTSTimeout(hal)
 	struct ath_hal *hal;
 {
 	return (ar5k_clocktoh(AR5K_REG_MS(AR5K_REG_READ(AR5K_AR5210_TIME_OUT),
-				  AR5K_AR5210_TIME_OUT_CTS), hal->ah_turbo));
+	    AR5K_AR5210_TIME_OUT_CTS), hal->ah_turbo));
 }
 
 /*
@@ -1973,7 +1979,8 @@ ar5k_ar5210_setKeyCacheEntry(hal, entry, keyval, mac, xor_notused)
 		}
 
 		/* Write value */
-		AR5K_REG_WRITE(AR5K_AR5210_KEYTABLE(entry) + (i << 2), key_v[i]);
+		AR5K_REG_WRITE(AR5K_AR5210_KEYTABLE(entry) + (i << 2),
+		    key_v[i]);
 	}
 
 	return (ar5k_ar5210_setKeyCacheEntryMac(hal, entry, mac));
@@ -2026,15 +2033,17 @@ ar5k_ar5210_setPowerMode(hal, mode, set_chip, sleep_duration)
 
 	switch (mode) {
 	case HAL_PM_AUTO:
-		if (set_chip == AH_TRUE)
+		if (set_chip == AH_TRUE) {
 			AR5K_REG_WRITE(AR5K_AR5210_SCR,
 			    AR5K_AR5210_SCR_SLE | sleep_duration);
+		}
 		break;
 
 	case HAL_PM_FULL_SLEEP:
-		if (set_chip == AH_TRUE)
+		if (set_chip == AH_TRUE) {
 			AR5K_REG_WRITE(AR5K_AR5210_SCR,
 			    AR5K_AR5210_SCR_SLE_SLP);
+		}
 		break;
 
 	case HAL_PM_AWAKE:
@@ -2228,9 +2237,10 @@ ar5k_ar5210_setStationBeaconTimers(hal, state, tsf, dtim_count, cfp_count)
 	 * Write new beacon miss threshold, if it appears to be valid
 	 */
 	if (state->bs_bmiss_threshold <=
-	    (AR5K_AR5210_RSSI_THR_BM_THR >> AR5K_AR5210_RSSI_THR_BM_THR_S))
+	    (AR5K_AR5210_RSSI_THR_BM_THR >> AR5K_AR5210_RSSI_THR_BM_THR_S)) {
 		AR5K_REG_WRITE_BITS(AR5K_AR5210_RSSI_THR,
 		    AR5K_AR5210_RSSI_THR_BM_THR, state->bs_bmiss_threshold);
+	}
 }
 
 void
@@ -2373,8 +2383,9 @@ ar5k_ar5210_setInterrupts(hal, new_mask)
 	hal->ah_imr = new_mask;
 
 	/* ..re-enable interrupts */
-	if (int_mask)
+	if (int_mask) {
 		AR5K_REG_WRITE(AR5K_AR5210_IER, AR5K_AR5210_IER_ENABLE);
+	}
 
 	return (old_mask);
 }
@@ -2419,12 +2430,13 @@ ar5k_ar5210_radar_alert(hal, enable)
 	 */
 	AR5K_REG_WRITE(AR5K_AR5210_IER, AR5K_AR5210_IER_DISABLE);
 
-	if (enable == AH_TRUE)
+	if (enable == AH_TRUE) {
 		AR5K_REG_ENABLE_BITS(AR5K_AR5210_IMR,
 		    AR5K_AR5210_IMR_RXPHY);
-	else
+	} else {
 		AR5K_REG_DISABLE_BITS(AR5K_AR5210_IMR,
 		    AR5K_AR5210_IMR_RXPHY);
+	}
 
 	AR5K_REG_WRITE(AR5K_AR5210_IER, AR5K_AR5210_IER_ENABLE);
 }

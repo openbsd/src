@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.c,v 1.10 2005/02/17 22:32:48 reyk Exp $	*/
+/*	$OpenBSD: ar5xxx.c,v 1.11 2005/02/17 23:21:49 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004 Reyk Floeter <reyk@vantronix.net>.
@@ -55,35 +55,35 @@ static const struct {
 	 * From pcidevs_data.h
 	 */
 	{ PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5210,
-	  ar5k_ar5210_attach },
+	    ar5k_ar5210_attach },
 	{ PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5210_AP,
-	  ar5k_ar5210_attach },
+	    ar5k_ar5210_attach },
 	{ PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5210_DEFAULT,
-	  ar5k_ar5210_attach },
+	    ar5k_ar5210_attach },
 
 #ifdef notyet
 	{ PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5211,
-	  ar5k_ar5211_attach },
+	    ar5k_ar5211_attach },
 	{ PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5211_DEFAULT,
-	  ar5k_ar5211_attach },
+	    ar5k_ar5211_attach },
 	{ PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5311,
-	  ar5k_ar5211_attach },
+	    ar5k_ar5211_attach },
 	{ PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5211_FPGA11B,
-	  ar5k_ar5211_attach },
+	    ar5k_ar5211_attach },
 	{ PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5211_LEGACY,
-	  ar5k_ar5211_attach },
+	    ar5k_ar5211_attach },
 	{ PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5212,
-	  ar5k_ar5212_attach },
+	    ar5k_ar5212_attach },
 	{ PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5212_DEFAULT,
-	  ar5k_ar5212_attach },
+	    ar5k_ar5212_attach },
 	{ PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5212_FPGA,
-	  ar5k_ar5212_attach },
+	    ar5k_ar5212_attach },
 	{ PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5212_IBM,
-	  ar5k_ar5212_attach },
+	    ar5k_ar5212_attach },
 	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CRDAG675,
-	  ar5k_ar5212_attach },
+	    ar5k_ar5212_attach },
 	{ PCI_VENDOR_3COM2, PCI_PRODUCT_3COM2_3CRPAG175,
-	  ar5k_ar5212_attach },
+	    ar5k_ar5212_attach },
 #endif
 
 };
@@ -92,11 +92,11 @@ int		 ar5k_eeprom_read_ants(struct ath_hal *, u_int32_t *, u_int);
 int		 ar5k_eeprom_read_modes(struct ath_hal *, u_int32_t *, u_int);
 u_int16_t	 ar5k_eeprom_bin2freq(struct ath_hal *, u_int16_t, u_int);
 
-HAL_BOOL 	 ar5k_ar5110_channel(struct ath_hal *, HAL_CHANNEL *);
+HAL_BOOL	 ar5k_ar5110_channel(struct ath_hal *, HAL_CHANNEL *);
 u_int32_t	 ar5k_ar5110_chan2athchan(HAL_CHANNEL *);
-HAL_BOOL 	 ar5k_ar5111_channel(struct ath_hal *, HAL_CHANNEL *);
+HAL_BOOL	 ar5k_ar5111_channel(struct ath_hal *, HAL_CHANNEL *);
 HAL_BOOL	 ar5k_ar5111_chan2athchan(u_int, struct ar5k_athchan_2ghz *);
-HAL_BOOL 	 ar5k_ar5112_channel(struct ath_hal *, HAL_CHANNEL *);
+HAL_BOOL	 ar5k_ar5112_channel(struct ath_hal *, HAL_CHANNEL *);
 
 HAL_BOOL	 ar5k_ar5111_rfregs(struct ath_hal *, HAL_CHANNEL *, u_int);
 HAL_BOOL	 ar5k_ar5112_rfregs(struct ath_hal *, HAL_CHANNEL *, u_int);
@@ -172,7 +172,7 @@ ath_hal_attach(device, sc, st, sh, status)
 		return (NULL);
 	}
 
-        if ((hal = malloc(sizeof(struct ath_hal),
+	if ((hal = malloc(sizeof(struct ath_hal),
 		 M_DEVBUF, M_NOWAIT)) == NULL) {
 		*status = ENOMEM;
 		AR5K_PRINT("out of memory\n");
@@ -212,10 +212,10 @@ ath_hal_attach(device, sc, st, sh, status)
 	 * Get card capabilities, values, ...
 	 */
 
- 	if (ar5k_eeprom_init(hal) != 0) {
- 		AR5K_PRINT("unable to init EEPROM\n");
- 		goto failed;
- 	}
+	if (ar5k_eeprom_init(hal) != 0) {
+		AR5K_PRINT("unable to init EEPROM\n");
+		goto failed;
+	}
 
 	/* Set regulation domain */
 	if ((regdomain =
@@ -227,7 +227,7 @@ ath_hal_attach(device, sc, st, sh, status)
 		    hal->ah_capabilities.cap_regdomain.reg_current;
 
 		/* Try to write default regulation domain to EEPROM */
- 		ar5k_eeprom_regulation_domain(hal, AH_TRUE, &ieee_regdomain);
+		ar5k_eeprom_regulation_domain(hal, AH_TRUE, &ieee_regdomain);
 	}
 
 	hal->ah_capabilities.cap_regdomain.reg_hw = ieee_regdomain;
@@ -479,7 +479,7 @@ ar5k_regdomain_from_ieee(ieee)
 	if (regdomain & 0xf0000000)
 		return ((u_int16_t)AR5K_TUNE_REGDOMAIN);
 
-        return (regdomain & 0xff);
+	return (regdomain & 0xff);
 }
 
 ieee80211_regdomain_t
@@ -516,7 +516,7 @@ ar5k_get_regdomain(hal)
 	 * the settings found in the EEPROM.
 	 */
 	u_int16_t code;
-	
+
 	code = ieee80211_name2countrycode(COUNTRYCODE);
 	return (ieee80211_countrycode2regdomain(code));
 #endif
@@ -588,7 +588,7 @@ ar5k_register_timeout(hal, reg, flag, val, is_set)
 
 	return (AH_TRUE);
 }
-	
+
 /*
  * Common ar5xx EEPROM access functions
  */
@@ -603,7 +603,7 @@ ar5k_eeprom_bin2freq(hal, bin, mode)
 
 	if (bin == AR5K_EEPROM_CHANNEL_DIS)
 		return (bin);
-	
+
 	if (mode == AR5K_EEPROM_MODE_11A) {
 		if (hal->ah_ee_version > AR5K_EEPROM_VERSION_3_2)
 			val = (5 * bin) + 4800;
@@ -740,7 +740,7 @@ ar5k_eeprom_read_modes(hal, offset, mode)
 		ee->ee_cck_ofdm_power_delta = AR5K_EEPROM_CCK_OFDM_DELTA;
 	} else {
 		ee->ee_i_gain[mode] = (val >> 13) & 0x7;
-		
+
 		AR5K_EEPROM_READ(o++, val);
 		ee->ee_i_gain[mode] |= (val << 3) & 0x38;
 
@@ -755,7 +755,7 @@ ar5k_eeprom_read_modes(hal, offset, mode)
 	}
 
 	if (hal->ah_ee_version >= AR5K_EEPROM_VERSION_4_6 &&
-	    mode == AR5K_EEPROM_MODE_11G) 
+	    mode == AR5K_EEPROM_MODE_11G)
 		ee->ee_scaled_cck_delta = (val >> 11) & 0x1f;
 
 	/* return new offset */
@@ -796,7 +796,8 @@ ar5k_eeprom_init(hal)
 	if (hal->ah_ee_version < AR5K_EEPROM_VERSION_3_0)
 		return (0);
 
-	AR5K_EEPROM_READ_HDR(AR5K_EEPROM_ANT_GAIN(hal->ah_ee_version), ee_ant_gain);
+	AR5K_EEPROM_READ_HDR(AR5K_EEPROM_ANT_GAIN(hal->ah_ee_version),
+	    ee_ant_gain);
 
 	if (hal->ah_ee_version >= AR5K_EEPROM_VERSION_4_0) {
 		AR5K_EEPROM_READ_HDR(AR5K_EEPROM_MISC0, ee_misc0);
@@ -1004,7 +1005,7 @@ ar5k_eeprom_regulation_domain(hal, write, regdomain)
 		return (AH_FALSE);
 
 	if (hal->ah_eeprom_write(hal, AR5K_EEPROM_REG_DOMAIN,
-		hal->ah_capabilities.cap_eeprom.ee_regdomain) != 0) 
+	    hal->ah_capabilities.cap_eeprom.ee_regdomain) != 0)
 		return (AH_FALSE);
 
 	hal->ah_capabilities.cap_eeprom.ee_regdomain =
@@ -1072,8 +1073,8 @@ ar5k_ar5110_chan2athchan(channel)
 	 * different RF/PHY part.
 	 */
 	athchan = (ar5k_bitswap((ieee80211_mhz2ieee(channel->c_channel,
-				     channel->c_channel_flags) - 24)
-		       / 2, 5) << 1) | (1 << 6) | 0x1;
+	    channel->c_channel_flags) - 24) / 2, 5) << 1) |
+	    (1 << 6) | 0x1;
 
 	return (athchan);
 }
@@ -1132,7 +1133,7 @@ ar5k_ar5111_channel(hal, channel)
 	u_int ieee_channel, ath_channel;
 	u_int32_t data0, data1, clock;
 	struct ar5k_athchan_2ghz ath_channel_2ghz;
-	
+
 	/*
 	 * Set the channel on the AR5111 radio
 	 */
@@ -1149,7 +1150,7 @@ ar5k_ar5111_channel(hal, channel)
 		ath_channel = ath_channel_2ghz.a2_athchan;
 		data0 = ((ar5k_bitswap(ath_channel_2ghz.a2_flags, 8) & 0xff)
 		    << 5) | (1 << 4);
-	} 
+	}
 
 	if (ath_channel < 145 || !(ath_channel & 1)) {
 		clock = 1;
@@ -1174,7 +1175,7 @@ ar5k_ar5112_channel(hal, channel)
 {
 	u_int32_t data, data0, data1, data2;
 	u_int16_t c;
-	
+
 	c = channel->c_channel;
 
 	/*
@@ -1189,7 +1190,7 @@ ar5k_ar5112_channel(hal, channel)
 			data1 = 0;
 		} else
 			return (AH_FALSE);
-		
+
 		data0 = ar5k_bitswap((data0 << 2) & 0xff, 8);
 	} else {
 		if (!(c % 20) && c >= 5120) {
@@ -1298,7 +1299,7 @@ ar5k_ar5111_rfregs(hal, channel, mode)
 		if (ar5k_rfregs_set(rf, offset[0],
 			ee->ee_ob[ee_mode][obdb], 3, 119, 0) < 0)
 			return (AH_FALSE);
-		
+
 		if (ar5k_rfregs_set(rf, offset[0],
 			ee->ee_ob[ee_mode][obdb], 3, 122, 0) < 0)
 			return (AH_FALSE);
@@ -1319,7 +1320,7 @@ ar5k_ar5111_rfregs(hal, channel, mode)
 		if (ar5k_rfregs_set(rf, offset[6],
 			ee->ee_pwd_90, 1, 45, 3) < 0)
 			return (AH_FALSE);
-	}	
+	}
 
 	if (ar5k_rfregs_set(rf, offset[6],
 		!ee->ee_xpd[ee_mode], 1, 95, 0) < 0)
@@ -1394,7 +1395,7 @@ ar5k_ar5112_rfregs(hal, channel, mode)
 		if (ar5k_rfregs_set(rf, offset[6],
 			ee->ee_ob[ee_mode][obdb], 3, 287, 0) < 0)
 			return (AH_FALSE);
-		
+
 		if (ar5k_rfregs_set(rf, offset[6],
 			ee->ee_ob[ee_mode][obdb], 3, 290, 0) < 0)
 			return (AH_FALSE);
@@ -1413,7 +1414,7 @@ ar5k_ar5112_rfregs(hal, channel, mode)
 		if (ar5k_rfregs_set(rf, offset[6],
 			ee->ee_ob[ee_mode][obdb], 3, 282, 0) < 0)
 			return (AH_FALSE);
-	}	
+	}
 
 #ifdef notyet
 	ar5k_rfregs_set(rf, offset[6], ee->ee_x_gain[ee_mode], 2, 270, 0);

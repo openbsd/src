@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.h,v 1.9 2005/02/17 22:32:48 reyk Exp $	*/
+/*	$OpenBSD: ar5xxx.h,v 1.10 2005/02/17 23:21:49 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004 Reyk Floeter <reyk@vantronix.net>.
@@ -195,12 +195,12 @@ typedef enum {
 #define AR5K_CCK_PLCP_BITS		48
 #define AR5K_CCK_NUM_BITS(_frmlen) (_frmlen << 3)
 #define AR5K_CCK_PHY_TIME(_sp) (_sp ?					\
-        ((AR5K_CCK_PREAMBLE_BITS + AR5K_CCK_PLCP_BITS) >> 1) :		\
-        (AR5K_CCK_PREAMBLE_BITS + AR5K_CCK_PLCP_BITS))
+	((AR5K_CCK_PREAMBLE_BITS + AR5K_CCK_PLCP_BITS) >> 1) :		\
+	(AR5K_CCK_PREAMBLE_BITS + AR5K_CCK_PLCP_BITS))
 #define AR5K_CCK_TX_TIME(_kbps, _frmlen, _sp)				\
-        AR5K_CCK_PHY_TIME(_sp) +					\
-        ((AR5K_CCK_NUM_BITS(_frmlen) * 1000) / _kbps) +			\
-        AR5K_CCK_SIFS_TIME
+	AR5K_CCK_PHY_TIME(_sp) +					\
+	((AR5K_CCK_NUM_BITS(_frmlen) * 1000) / _kbps) +			\
+	AR5K_CCK_SIFS_TIME
 
 #define AR5K_OFDM_SIFS_TIME		16
 #define AR5K_OFDM_PREAMBLE_TIME	20
@@ -208,13 +208,13 @@ typedef enum {
 #define AR5K_OFDM_SYMBOL_TIME		4
 #define AR5K_OFDM_NUM_BITS(_frmlen) (AR5K_OFDM_PLCP_BITS + (_frmlen << 3))
 #define AR5K_OFDM_NUM_BITS_PER_SYM(_kbps) ((_kbps *			\
-        AR5K_OFDM_SYMBOL_TIME) / 1000)
+	AR5K_OFDM_SYMBOL_TIME) / 1000)
 #define AR5K_OFDM_NUM_BITS(_frmlen) (AR5K_OFDM_PLCP_BITS + (_frmlen << 3))
 #define AR5K_OFDM_NUM_SYMBOLS(_kbps, _frmlen)				\
-        howmany(AR5K_OFDM_NUM_BITS(_frmlen), AR5K_OFDM_NUM_BITS_PER_SYM(_kbps))
+	howmany(AR5K_OFDM_NUM_BITS(_frmlen), AR5K_OFDM_NUM_BITS_PER_SYM(_kbps))
 #define AR5K_OFDM_TX_TIME(_kbps, _frmlen)				\
-        AR5K_OFDM_PREAMBLE_TIME + AR5K_OFDM_SIFS_TIME +			\
-        (AR5K_OFDM_NUM_SYMBOLS(_kbps, _frmlen) * AR5K_OFDM_SYMBOL_TIME)
+	AR5K_OFDM_PREAMBLE_TIME + AR5K_OFDM_SIFS_TIME +			\
+	(AR5K_OFDM_NUM_SYMBOLS(_kbps, _frmlen) * AR5K_OFDM_SYMBOL_TIME)
 
 #define AR5K_TURBO_SIFS_TIME		8
 #define AR5K_TURBO_PREAMBLE_TIME	14
@@ -222,27 +222,27 @@ typedef enum {
 #define AR5K_TURBO_SYMBOL_TIME		4
 #define AR5K_TURBO_NUM_BITS(_frmlen) (AR5K_TURBO_PLCP_BITS + (_frmlen << 3))
 #define AR5K_TURBO_NUM_BITS_PER_SYM(_kbps) (((_kbps << 1) *		\
-        AR5K_TURBO_SYMBOL_TIME) / 1000)
+	AR5K_TURBO_SYMBOL_TIME) / 1000)
 #define AR5K_TURBO_NUM_BITS(_frmlen) (AR5K_TURBO_PLCP_BITS + (_frmlen << 3))
 #define AR5K_TURBO_NUM_SYMBOLS(_kbps, _frmlen)				\
-        howmany(AR5K_TURBO_NUM_BITS(_frmlen),				\
-        AR5K_TURBO_NUM_BITS_PER_SYM(_kbps))
+	howmany(AR5K_TURBO_NUM_BITS(_frmlen),				\
+	AR5K_TURBO_NUM_BITS_PER_SYM(_kbps))
 #define AR5K_TURBO_TX_TIME(_kbps, _frmlen)				\
-        AR5K_TURBO_PREAMBLE_TIME + AR5K_TURBO_SIFS_TIME +		\
-        (AR5K_TURBO_NUM_SYMBOLS(_kbps, _frmlen) * AR5K_TURBO_SYMBOL_TIME)
+	AR5K_TURBO_PREAMBLE_TIME + AR5K_TURBO_SIFS_TIME +		\
+	(AR5K_TURBO_NUM_SYMBOLS(_kbps, _frmlen) * AR5K_TURBO_SYMBOL_TIME)
 
 #define AR5K_XR_SIFS_TIME		16
 #define AR5K_XR_PLCP_BITS		22
 #define AR5K_XR_SYMBOL_TIME		4
 #define AR5K_XR_PREAMBLE_TIME(_kbps) (((_kbps) < 1000) ? 173 : 76)
 #define AR5K_XR_NUM_BITS_PER_SYM(_kbps) ((_kbps *			\
-        AR5K_XR_SYMBOL_TIME) / 1000)
+	AR5K_XR_SYMBOL_TIME) / 1000)
 #define AR5K_XR_NUM_BITS(_frmlen) (AR5K_XR_PLCP_BITS + (_frmlen << 3))
 #define AR5K_XR_NUM_SYMBOLS(_kbps, _frmlen)				\
-        howmany(AR5K_XR_NUM_BITS(_frmlen), AR5K_XR_NUM_BITS_PER_SYM(_kbps))
+	howmany(AR5K_XR_NUM_BITS(_frmlen), AR5K_XR_NUM_BITS_PER_SYM(_kbps))
 #define AR5K_XR_TX_TIME(_kbps, _frmlen)					\
-        AR5K_XR_PREAMBLE_TIME(_kbps) + AR5K_XR_SIFS_TIME +		\
-        (AR5K_XR_NUM_SYMBOLS(_kbps, _frmlen) * AR5K_XR_SYMBOL_TIME)
+	AR5K_XR_PREAMBLE_TIME(_kbps) + AR5K_XR_SIFS_TIME +		\
+	(AR5K_XR_NUM_SYMBOLS(_kbps, _frmlen) * AR5K_XR_SYMBOL_TIME)
 
 /*
  * RX definitions
@@ -325,8 +325,8 @@ typedef struct {
 } HAL_KEYVAL;
 
 #define AR5K_ASSERT_ENTRY(_e, _s) do {					\
-        if (_e >= _s)							\
-                return (AH_FALSE);					\
+	if (_e >= _s)							\
+		return (AH_FALSE);					\
 } while (0)
 
 /*
@@ -365,47 +365,47 @@ typedef struct {
 } HAL_RATE_TABLE;
 
 #define AR5K_RATES_11A { 8, { 0 }, {					\
-        { 1, IEEE80211_T_OFDM, 6000, 11, 0, 140, 0 },			\
-        { 1, IEEE80211_T_OFDM, 9000, 15, 0, 18, 0 },			\
-        { 1, IEEE80211_T_OFDM, 12000, 10, 0, 152, 2 },			\
-        { 1, IEEE80211_T_OFDM, 18000, 14, 0, 36, 2 },			\
-        { 1, IEEE80211_T_OFDM, 24000, 9, 0, 176, 4 },			\
-        { 1, IEEE80211_T_OFDM, 36000, 13, 0, 72, 4 },			\
-        { 1, IEEE80211_T_OFDM, 48000, 8, 0, 96, 4 },			\
-        { 1, IEEE80211_T_OFDM, 54000, 12, 0, 108, 4 } }			\
+	{ 1, IEEE80211_T_OFDM, 6000, 11, 0, 140, 0 },			\
+	{ 1, IEEE80211_T_OFDM, 9000, 15, 0, 18, 0 },			\
+	{ 1, IEEE80211_T_OFDM, 12000, 10, 0, 152, 2 },			\
+	{ 1, IEEE80211_T_OFDM, 18000, 14, 0, 36, 2 },			\
+	{ 1, IEEE80211_T_OFDM, 24000, 9, 0, 176, 4 },			\
+	{ 1, IEEE80211_T_OFDM, 36000, 13, 0, 72, 4 },			\
+	{ 1, IEEE80211_T_OFDM, 48000, 8, 0, 96, 4 },			\
+	{ 1, IEEE80211_T_OFDM, 54000, 12, 0, 108, 4 } }			\
 }
 
 #define AR5K_RATES_11B { 4, { 0 }, {					\
-        { 1, IEEE80211_T_CCK, 1000, 27, 0x00, 130, 0 },			\
-        { 1, IEEE80211_T_CCK, 2000, 26, 0x00, 132, 1 },			\
-        { 1, IEEE80211_T_CCK, 5500, 25, 0x00, 139, 1 },			\
-        { 1, IEEE80211_T_CCK, 11000, 24, 0x00, 150, 1 } }		\
+	{ 1, IEEE80211_T_CCK, 1000, 27, 0x00, 130, 0 },			\
+	{ 1, IEEE80211_T_CCK, 2000, 26, 0x00, 132, 1 },			\
+	{ 1, IEEE80211_T_CCK, 5500, 25, 0x00, 139, 1 },			\
+	{ 1, IEEE80211_T_CCK, 11000, 24, 0x00, 150, 1 } }		\
 }
 
 #define AR5K_RATES_11G { 12, { 0 }, {					\
-        { 1, IEEE80211_T_CCK, 1000, 27, 0x00, 130, 0 },			\
-        { 1, IEEE80211_T_CCK, 2000, 26, 0x00, 132, 1 },			\
-        { 1, IEEE80211_T_CCK, 5500, 25, 0x00, 139, 1 },			\
-        { 1, IEEE80211_T_CCK, 11000, 24, 0x00, 150, 1 },		\
-        { 0, IEEE80211_T_OFDM, 6000, 11, 0, 12, 4 },			\
-        { 0, IEEE80211_T_OFDM, 9000, 15, 0, 18, 4 },			\
-        { 1, IEEE80211_T_OFDM, 12000, 10, 0, 24, 6 },			\
-        { 1, IEEE80211_T_OFDM, 18000, 14, 0, 36, 6 },			\
-        { 1, IEEE80211_T_OFDM, 24000, 9, 0, 48, 8 },			\
-        { 1, IEEE80211_T_OFDM, 36000, 13, 0, 72, 8 },			\
-        { 1, IEEE80211_T_OFDM, 48000, 8, 0, 96, 8 },			\
-        { 1, IEEE80211_T_OFDM, 54000, 12, 0, 108, 8 } }			\
+	{ 1, IEEE80211_T_CCK, 1000, 27, 0x00, 130, 0 },			\
+	{ 1, IEEE80211_T_CCK, 2000, 26, 0x00, 132, 1 },			\
+	{ 1, IEEE80211_T_CCK, 5500, 25, 0x00, 139, 1 },			\
+	{ 1, IEEE80211_T_CCK, 11000, 24, 0x00, 150, 1 },		\
+	{ 0, IEEE80211_T_OFDM, 6000, 11, 0, 12, 4 },			\
+	{ 0, IEEE80211_T_OFDM, 9000, 15, 0, 18, 4 },			\
+	{ 1, IEEE80211_T_OFDM, 12000, 10, 0, 24, 6 },			\
+	{ 1, IEEE80211_T_OFDM, 18000, 14, 0, 36, 6 },			\
+	{ 1, IEEE80211_T_OFDM, 24000, 9, 0, 48, 8 },			\
+	{ 1, IEEE80211_T_OFDM, 36000, 13, 0, 72, 8 },			\
+	{ 1, IEEE80211_T_OFDM, 48000, 8, 0, 96, 8 },			\
+	{ 1, IEEE80211_T_OFDM, 54000, 12, 0, 108, 8 } }			\
 }
 
 #define AR5K_RATES_TURBO { 8, { 0 }, {					\
-        { 1, IEEE80211_T_TURBO, 6000, 11, 0, 140, 0 },			\
-        { 1, IEEE80211_T_TURBO, 9000, 15, 0, 18, 0 },			\
-        { 1, IEEE80211_T_TURBO, 12000, 10, 0, 152, 2 },			\
-        { 1, IEEE80211_T_TURBO, 18000, 14, 0, 36, 2 },			\
-        { 1, IEEE80211_T_TURBO, 24000, 9, 0, 176, 4 },			\
-        { 1, IEEE80211_T_TURBO, 36000, 13, 0, 72, 4 },			\
-        { 1, IEEE80211_T_TURBO, 48000, 8, 0, 96, 4 },			\
-        { 1, IEEE80211_T_TURBO, 54000, 12, 0, 108, 4 } }		\
+	{ 1, IEEE80211_T_TURBO, 6000, 11, 0, 140, 0 },			\
+	{ 1, IEEE80211_T_TURBO, 9000, 15, 0, 18, 0 },			\
+	{ 1, IEEE80211_T_TURBO, 12000, 10, 0, 152, 2 },			\
+	{ 1, IEEE80211_T_TURBO, 18000, 14, 0, 36, 2 },			\
+	{ 1, IEEE80211_T_TURBO, 24000, 9, 0, 176, 4 },			\
+	{ 1, IEEE80211_T_TURBO, 36000, 13, 0, 72, 4 },			\
+	{ 1, IEEE80211_T_TURBO, 48000, 8, 0, 96, 4 },			\
+	{ 1, IEEE80211_T_TURBO, 54000, 12, 0, 108, 4 } }		\
 }
 
 typedef enum {
@@ -479,7 +479,7 @@ typedef enum ieee80211_countrycode HAL_CTRY_CODE;
 #define HAL_INT_GLOBAL	0x80000000
 #define HAL_INT_NOCARD	0xffffffff
 #define HAL_INT_COMMON	(						\
-        HAL_INT_RXNOFRM | HAL_INT_RXDESC | HAL_INT_RXEOL |		\
+	HAL_INT_RXNOFRM | HAL_INT_RXDESC | HAL_INT_RXEOL |		\
 	HAL_INT_RXORN | HAL_INT_TXURN | HAL_INT_TXDESC |		\
 	HAL_INT_MIB | HAL_INT_RXPHY | HAL_INT_RXKCM |			\
 	HAL_INT_SWBA | HAL_INT_BMISS | HAL_INT_GPIO			\
@@ -525,7 +525,7 @@ typedef enum ieee80211_state HAL_LED_STATE;
 #define AR5K_EEPROM_REG_DOMAIN		0x00bf
 #define AR5K_EEPROM_INFO_BASE		0x00c0
 #define AR5K_EEPROM_INFO_MAX						\
-        (0x400 - AR5K_EEPROM_INFO_BASE)
+	(0x400 - AR5K_EEPROM_INFO_BASE)
 #define AR5K_EEPROM_INFO(_n)		(AR5K_EEPROM_INFO_BASE + (_n))
 
 #define AR5K_EEPROM_VERSION		AR5K_EEPROM_INFO(1)
@@ -561,8 +561,8 @@ typedef enum ieee80211_state HAL_LED_STATE;
 #define AR5K_EEPROM_RFKILL_POLARITY_S	1
 
 /* Newer EEPROMs are using a different offset */
-#define AR5K_EEPROM_OFF(_v, _v3_0, _v3_3) 				\
-        (((_v) >= AR5K_EEPROM_VERSION_3_3) ? _v3_3 : _v3_0)
+#define AR5K_EEPROM_OFF(_v, _v3_0, _v3_3)					\
+	(((_v) >= AR5K_EEPROM_VERSION_3_3) ? _v3_3 : _v3_0)
 
 #define AR5K_EEPROM_ANT_GAIN(_v)	AR5K_EEPROM_OFF(_v, 0x00c4, 0x00c3)
 #define AR5K_EEPROM_ANT_GAIN_5GHZ(_v)	((int8_t)(((_v) >> 8) & 0xff))
@@ -667,7 +667,7 @@ struct ar5k_eeprom_info {
 
 	u_int16_t	ee_ctls;
 	u_int16_t	ee_ctl[AR5K_EEPROM_MAX_CTLS];
-	
+
 	int16_t		ee_noise_floor_thr[AR5K_EEPROM_N_MODES];
 	int8_t		ee_adc_desired_size[AR5K_EEPROM_N_MODES];
 	int8_t		ee_pga_desired_size[AR5K_EEPROM_N_MODES];
@@ -708,7 +708,7 @@ typedef struct {
 	 * Values stored in the EEPROM (some of them...)
 	 */
 	struct ar5k_eeprom_info	cap_eeprom;
-	
+
 	/*
 	 * Queue information
 	 */
@@ -722,12 +722,12 @@ typedef struct {
  */
 
 #define AR5K_TXPOWER_OFDM(_r, _v)	(				\
-        ((0 & 1) << ((_v) + 6)) | 					\
-        (((hal->ah_txpower.txp_rates[(_r)]) & 0x3f) << (_v))		\
+	((0 & 1) << ((_v) + 6)) |					\
+	(((hal->ah_txpower.txp_rates[(_r)]) & 0x3f) << (_v))		\
 )
 
 #define AR5K_TXPOWER_CCK(_r, _v)	(				\
-        (hal->ah_txpower.txp_rates[(_r)] & 0x3f) << (_v)		\
+	(hal->ah_txpower.txp_rates[(_r)] & 0x3f) << (_v)		\
 )
 
 /*
@@ -827,41 +827,41 @@ struct ath_desc {
 	_t const HAL_RATE_TABLE *(_a _n##_getRateTable)(struct ath_hal *, \
 	    u_int mode); \
 	_t void (_a _n##_detach)(struct ath_hal *); \
-        /* Reset functions */ \
+	/* Reset functions */ \
 	_t HAL_BOOL (_a _n##_reset)(struct ath_hal *, HAL_OPMODE, \
-            HAL_CHANNEL *, HAL_BOOL change_channel, HAL_STATUS *status); \
+	    HAL_CHANNEL *, HAL_BOOL change_channel, HAL_STATUS *status); \
 	_t void (_a _n##_setPCUConfig)(struct ath_hal *); \
 	_t HAL_BOOL (_a _n##_perCalibration)(struct ath_hal*, \
-            HAL_CHANNEL *); \
+	    HAL_CHANNEL *); \
 	/* Transmit functions */ \
 	_t HAL_BOOL (_a _n##_updateTxTrigLevel)(struct ath_hal*, \
-            HAL_BOOL level); \
+	    HAL_BOOL level); \
 	_t int (_a _n##_setupTxQueue)(struct ath_hal *, HAL_TX_QUEUE, \
-            const HAL_TXQ_INFO *); \
+	    const HAL_TXQ_INFO *); \
 	_t HAL_BOOL (_a _n##_setTxQueueProps)(struct ath_hal *, int queue, \
-            const HAL_TXQ_INFO *); \
+	    const HAL_TXQ_INFO *); \
 	_t HAL_BOOL (_a _n##_releaseTxQueue)(struct ath_hal *, u_int queue); \
 	_t HAL_BOOL (_a _n##_resetTxQueue)(struct ath_hal *, u_int queue); \
 	_t u_int32_t (_a _n##_getTxDP)(struct ath_hal *, u_int queue); \
 	_t HAL_BOOL (_a _n##_setTxDP)(struct ath_hal *, u_int, \
-            u_int32_t phys_addr); \
+	    u_int32_t phys_addr); \
 	_t HAL_BOOL (_a _n##_startTxDma)(struct ath_hal *, u_int queue); \
 	_t HAL_BOOL (_a _n##_stopTxDma)(struct ath_hal *, u_int queue); \
 	_t HAL_BOOL (_a _n##_setupTxDesc)(struct ath_hal *, \
-            struct ath_desc *, \
-            u_int packet_length, u_int header_length, HAL_PKT_TYPE type, \
-            u_int txPower, u_int tx_rate0, u_int tx_tries0, u_int key_index, \
-            u_int antenna_mode, u_int flags, u_int rtscts_rate, \
-            u_int rtscts_duration); \
+	    struct ath_desc *, \
+	    u_int packet_length, u_int header_length, HAL_PKT_TYPE type, \
+	    u_int txPower, u_int tx_rate0, u_int tx_tries0, u_int key_index, \
+	    u_int antenna_mode, u_int flags, u_int rtscts_rate, \
+	    u_int rtscts_duration); \
 	_t HAL_BOOL (_a _n##_setupXTxDesc)(struct ath_hal *, \
-            struct ath_desc *, \
-            u_int tx_rate1, u_int tx_tries1, u_int tx_rate2, u_int tx_tries2, \
-            u_int tx_rate3, u_int tx_tries3); \
+	    struct ath_desc *, \
+	    u_int tx_rate1, u_int tx_tries1, u_int tx_rate2, u_int tx_tries2, \
+	    u_int tx_rate3, u_int tx_tries3); \
 	_t HAL_BOOL (_a _n##_fillTxDesc)(struct ath_hal *, \
-            struct ath_desc *, \
-            u_int segLen, HAL_BOOL firstSeg, HAL_BOOL lastSeg); \
+	    struct ath_desc *, \
+	    u_int segLen, HAL_BOOL firstSeg, HAL_BOOL lastSeg); \
 	_t HAL_STATUS (_a _n##_procTxDesc)(struct ath_hal *, \
-            struct ath_desc *); \
+	    struct ath_desc *); \
 	_t HAL_BOOL (_a _n##_hasVEOL)(struct ath_hal *); \
 	/* Receive Functions */ \
 	_t u_int32_t (_a _n##_getRxDP)(struct ath_hal*); \
@@ -871,36 +871,37 @@ struct ath_desc {
 	_t void (_a _n##_startPcuReceive)(struct ath_hal*); \
 	_t void (_a _n##_stopPcuReceive)(struct ath_hal*); \
 	_t void (_a _n##_setMulticastFilter)(struct ath_hal*, \
-            u_int32_t filter0, u_int32_t filter1); \
+	    u_int32_t filter0, u_int32_t filter1); \
 	_t HAL_BOOL (_a _n##_setMulticastFilterIndex)(struct ath_hal*, \
-            u_int32_t index); \
+	    u_int32_t index); \
 	_t HAL_BOOL (_a _n##_clrMulticastFilterIndex)(struct ath_hal*, \
-            u_int32_t index); \
+	    u_int32_t index); \
 	_t u_int32_t (_a _n##_getRxFilter)(struct ath_hal*); \
 	_t void (_a _n##_setRxFilter)(struct ath_hal*, u_int32_t); \
 	_t HAL_BOOL (_a _n##_setupRxDesc)(struct ath_hal *, \
-            struct ath_desc *, u_int32_t size, u_int flags); \
+	    struct ath_desc *, u_int32_t size, u_int flags); \
 	_t HAL_STATUS (_a _n##_procRxDesc)(struct ath_hal *, \
-            struct ath_desc *, u_int32_t phyAddr, struct ath_desc *next); \
+	    struct ath_desc *, u_int32_t phyAddr, struct ath_desc *next); \
 	_t void (_a _n##_rxMonitor)(struct ath_hal *); \
 	/* Misc Functions */ \
 	_t void (_a _n##_dumpState)(struct ath_hal *); \
 	_t HAL_BOOL (_a _n##_getDiagState)(struct ath_hal *, int, void **, \
-            u_int *); \
+	    u_int *); \
 	_t void (_a _n##_getMacAddress)(struct ath_hal *, u_int8_t *); \
-	_t HAL_BOOL (_a _n##_setMacAddress)(struct ath_hal *, const u_int8_t*); \
+	_t HAL_BOOL (_a _n##_setMacAddress)(struct ath_hal *, \
+	    const u_int8_t*); \
 	_t HAL_BOOL (_a _n##_setRegulatoryDomain)(struct ath_hal*, \
-            u_int16_t, HAL_STATUS *); \
+	    u_int16_t, HAL_STATUS *); \
 	_t void (_a _n##_setLedState)(struct ath_hal*, HAL_LED_STATE); \
 	_t void (_a _n##_writeAssocid)(struct ath_hal*, \
-            const u_int8_t *bssid, u_int16_t assocId, u_int16_t timOffset); \
+	    const u_int8_t *bssid, u_int16_t assocId, u_int16_t timOffset); \
 	_t HAL_BOOL (_a _n##_gpioCfgOutput)(struct ath_hal *, \
-            u_int32_t gpio); \
+	    u_int32_t gpio); \
 	_t HAL_BOOL (_a _n##_gpioCfgInput)(struct ath_hal *, \
-            u_int32_t gpio); \
+	    u_int32_t gpio); \
 	_t u_int32_t (_a _n##_gpioGet)(struct ath_hal *, u_int32_t gpio); \
 	_t HAL_BOOL (_a _n##_gpioSet)(struct ath_hal *, u_int32_t gpio, \
-            u_int32_t val); \
+	    u_int32_t val); \
 	_t void (_a _n##_gpioSetIntr)(struct ath_hal*, u_int, u_int32_t); \
 	_t u_int32_t (_a _n##_getTsf32)(struct ath_hal*); \
 	_t u_int64_t (_a _n##_getTsf64)(struct ath_hal*); \
@@ -908,15 +909,15 @@ struct ath_desc {
 	_t u_int16_t (_a _n##_getRegDomain)(struct ath_hal*); \
 	_t HAL_BOOL (_a _n##_detectCardPresent)(struct ath_hal*); \
 	_t void (_a _n##_updateMibCounters)(struct ath_hal*, \
-           HAL_MIB_STATS*); \
+	    HAL_MIB_STATS*); \
 	_t HAL_BOOL (_a _n##_isHwCipherSupported)(struct ath_hal*, \
-           HAL_CIPHER); \
+	    HAL_CIPHER); \
 	_t HAL_RFGAIN (_a _n##_getRfGain)(struct ath_hal*); \
 	/*								\
-            u_int32_t (_a _n##_getCurRssi)(struct ath_hal*);		\
-            u_int32_t (_a _n##_getDefAntenna)(struct ath_hal*);	\
-            void (_a _n##_setDefAntenna)(struct ath_hal*, u_int32_t ant); \
-        */								\
+	    u_int32_t (_a _n##_getCurRssi)(struct ath_hal*);		\
+	    u_int32_t (_a _n##_getDefAntenna)(struct ath_hal*);	\
+	    void (_a _n##_setDefAntenna)(struct ath_hal*, u_int32_t ant); \
+	*/								\
 	_t HAL_BOOL (_a _n##_setSlotTime)(struct ath_hal*, u_int);	\
 	_t u_int (_a _n##_getSlotTime)(struct ath_hal*);		\
 	_t HAL_BOOL (_a _n##_setAckTimeout)(struct ath_hal *, u_int); \
@@ -926,36 +927,36 @@ struct ath_desc {
 	/* Key Cache Functions */ \
 	_t u_int32_t (_a _n##_getKeyCacheSize)(struct ath_hal*); \
 	_t HAL_BOOL (_a _n##_resetKeyCacheEntry)(struct ath_hal*, \
-           u_int16_t); \
+	    u_int16_t); \
 	_t HAL_BOOL (_a _n##_isKeyCacheEntryValid)(struct ath_hal *, \
-           u_int16_t); \
+	    u_int16_t); \
 	_t HAL_BOOL (_a _n##_setKeyCacheEntry)(struct ath_hal*, u_int16_t, \
-            const HAL_KEYVAL *, const u_int8_t *, int);	\
+	    const HAL_KEYVAL *, const u_int8_t *, int);	\
 	_t HAL_BOOL (_a _n##_setKeyCacheEntryMac)(struct ath_hal*, \
-            u_int16_t, const u_int8_t *); \
+	    u_int16_t, const u_int8_t *); \
 	/* Power Management Functions */ \
 	_t HAL_BOOL (_a _n##_setPowerMode)(struct ath_hal*, \
-            HAL_POWER_MODE mode, \
-            HAL_BOOL set_chip, u_int16_t sleep_duration); \
+	    HAL_POWER_MODE mode, \
+	    HAL_BOOL set_chip, u_int16_t sleep_duration); \
 	_t HAL_POWER_MODE (_a _n##_getPowerMode)(struct ath_hal*); \
 	_t HAL_BOOL (_a _n##_queryPSPollSupport)(struct ath_hal*); \
 	_t HAL_BOOL (_a _n##_initPSPoll)(struct ath_hal*); \
 	_t HAL_BOOL (_a _n##_enablePSPoll)(struct ath_hal *, u_int8_t *, \
-            u_int16_t); \
+	    u_int16_t); \
 	_t HAL_BOOL (_a _n##_disablePSPoll)(struct ath_hal *); \
 	/* Beacon Management Functions */ \
 	_t void (_a _n##_beaconInit)(struct ath_hal *, u_int32_t nexttbtt, \
-            u_int32_t intval); \
+	    u_int32_t intval); \
 	_t void (_a _n##_setStationBeaconTimers)(struct ath_hal *, \
-            const HAL_BEACON_STATE *, u_int32_t tsf, u_int32_t dtimCount, \
-            u_int32_t cfpCcount); \
+	    const HAL_BEACON_STATE *, u_int32_t tsf, u_int32_t dtimCount, \
+	    u_int32_t cfpCcount); \
 	_t void (_a _n##_resetStationBeaconTimers)(struct ath_hal *); \
 	_t HAL_BOOL (_a _n##_waitForBeaconDone)(struct ath_hal *, \
-            bus_addr_t); \
+	    bus_addr_t); \
 	/* Interrupt functions */ \
 	_t HAL_BOOL (_a _n##_isInterruptPending)(struct ath_hal *); \
 	_t HAL_BOOL (_a _n##_getPendingInterrupts)(struct ath_hal *, \
-            u_int32_t *); \
+	    u_int32_t *); \
 	_t u_int32_t (_a _n##_getInterrupts)(struct ath_hal *); \
 	_t HAL_INT (_a _n##_setInterrupts)(struct ath_hal *, HAL_INT); \
 	/* Chipset functions (ar5k-specific, non-HAL) */ \
@@ -963,9 +964,9 @@ struct ath_desc {
 	_t void (_a _n##_radar_alert)(struct ath_hal *, HAL_BOOL enable); \
 	_t HAL_BOOL (_a _n##_eeprom_is_busy)(struct ath_hal *); \
 	_t int (_a _n##_eeprom_read)(struct ath_hal *, u_int32_t offset, \
-            u_int16_t *data); \
+	    u_int16_t *data); \
 	_t int (_a _n##_eeprom_write)(struct ath_hal *, u_int32_t offset, \
-            u_int16_t data);
+	    u_int16_t data);
 
 #define AR5K_MAX_GPIO	10
 
@@ -1037,7 +1038,7 @@ struct ath_hal {
 	ar5k_capabilities_t	ah_capabilities;
 
 	HAL_TXQ_INFO		ah_txq[HAL_NUM_TX_QUEUES];
-	u_int32_t               ah_txq_interrupts;
+	u_int32_t	       ah_txq_interrupts;
 
 	struct {
 		u_int16_t	txp_pcdac[AR5K_EEPROM_POWER_TABLE_SIZE];
@@ -1096,7 +1097,7 @@ struct ath_hal {
 #else
 #define AR5K_TRACE
 #endif
-#define AR5K_DELAY(_n) 		delay(_n)
+#define AR5K_DELAY(_n)		delay(_n)
 #define AR5K_ELEMENTS(_array)	(sizeof(_array) / sizeof(_array[0]))
 
 typedef struct ath_hal*(ar5k_attach_t)
@@ -1139,7 +1140,7 @@ typedef struct ath_hal*(ar5k_attach_t)
  */
 
 #define AR5K_INIT_MODE				(			\
-        IEEE80211_CHAN_5GHZ | IEEE80211_CHAN_OFDM			\
+	IEEE80211_CHAN_5GHZ | IEEE80211_CHAN_OFDM			\
 )
 #define AR5K_INIT_TX_LATENCY			502
 #define AR5K_INIT_USEC				39
@@ -1170,24 +1171,24 @@ typedef struct ath_hal*(ar5k_attach_t)
 #define AR5K_INIT_BEACON_EN			0
 #define AR5K_INIT_RESET_TSF			0
 #define AR5K_INIT_TRANSMIT_LATENCY		(			\
-        (AR5K_INIT_TX_LATENCY << 14) | (AR5K_INIT_USEC_32 << 7) |	\
-        (AR5K_INIT_USEC)						\
+	(AR5K_INIT_TX_LATENCY << 14) | (AR5K_INIT_USEC_32 << 7) |	\
+	(AR5K_INIT_USEC)						\
 )
 #define AR5K_INIT_TRANSMIT_LATENCY_TURBO	(			\
-        (AR5K_INIT_TX_LATENCY << 14) | (AR5K_INIT_USEC_32 << 7) |	\
-        (AR5K_INIT_USEC_TURBO)						\
+	(AR5K_INIT_TX_LATENCY << 14) | (AR5K_INIT_USEC_32 << 7) |	\
+	(AR5K_INIT_USEC_TURBO)						\
 )
 #define AR5K_INIT_PROTO_TIME_CNTRL		(			\
-        (AR5K_INIT_CARR_SENSE_EN << 26) | (AR5K_INIT_EIFS << 12) |	\
-        (AR5K_INIT_PROG_IFS)						\
+	(AR5K_INIT_CARR_SENSE_EN << 26) | (AR5K_INIT_EIFS << 12) |	\
+	(AR5K_INIT_PROG_IFS)						\
 )
 #define AR5K_INIT_PROTO_TIME_CNTRL_TURBO	(			\
-        (AR5K_INIT_CARR_SENSE_EN << 26) | (AR5K_INIT_EIFS_TURBO << 12) |\
-        (AR5K_INIT_PROG_IFS_TURBO)					\
+	(AR5K_INIT_CARR_SENSE_EN << 26) | (AR5K_INIT_EIFS_TURBO << 12) |\
+	(AR5K_INIT_PROG_IFS_TURBO)					\
 )
 #define AR5K_INIT_BEACON_CONTROL		(			\
-        (AR5K_INIT_RESET_TSF << 24) | (AR5K_INIT_BEACON_EN << 23) |	\
-        (AR5K_INIT_TIM_OFFSET << 16) | (AR5K_INIT_BEACON_PERIOD)	\
+	(AR5K_INIT_RESET_TSF << 24) | (AR5K_INIT_BEACON_EN << 23) |	\
+	(AR5K_INIT_TIM_OFFSET << 16) | (AR5K_INIT_BEACON_PERIOD)	\
 )
 
 /*
@@ -1195,36 +1196,36 @@ typedef struct ath_hal*(ar5k_attach_t)
  */
 
 #define AR5K_REG_WRITE(_reg, _val)					\
-        bus_space_write_4(hal->ah_st, hal->ah_sh, (_reg), (_val))
+	bus_space_write_4(hal->ah_st, hal->ah_sh, (_reg), (_val))
 #define AR5K_REG_READ(_reg)						\
-        ((u_int32_t)bus_space_read_4(hal->ah_st, hal->ah_sh, (_reg)))
+	((u_int32_t)bus_space_read_4(hal->ah_st, hal->ah_sh, (_reg)))
 
 #define AR5K_REG_SM(_val, _flags)					\
-        (((_val) << _flags##_S) & (_flags))
+	(((_val) << _flags##_S) & (_flags))
 #define AR5K_REG_MS(_val, _flags)					\
-        (((_val) & (_flags)) >> _flags##_S)
+	(((_val) & (_flags)) >> _flags##_S)
 #define AR5K_REG_WRITE_BITS(_reg, _flags, _val)				\
-        AR5K_REG_WRITE(_reg, (AR5K_REG_READ(_reg) &~ (_flags)) |	\
-            (((_val) << _flags##_S) & (_flags)))
+	AR5K_REG_WRITE(_reg, (AR5K_REG_READ(_reg) &~ (_flags)) |	\
+	    (((_val) << _flags##_S) & (_flags)))
 #define AR5K_REG_MASKED_BITS(_reg, _flags, _mask)			\
-        AR5K_REG_WRITE(_reg, (AR5K_REG_READ(_reg) & (_mask)) | (_flags))
+	AR5K_REG_WRITE(_reg, (AR5K_REG_READ(_reg) & (_mask)) | (_flags))
 #define AR5K_REG_ENABLE_BITS(_reg, _flags)				\
-        AR5K_REG_WRITE(_reg, AR5K_REG_READ(_reg) | (_flags))
+	AR5K_REG_WRITE(_reg, AR5K_REG_READ(_reg) | (_flags))
 #define AR5K_REG_DISABLE_BITS(_reg, _flags)				\
-        AR5K_REG_WRITE(_reg, AR5K_REG_READ(_reg) &~ (_flags))
+	AR5K_REG_WRITE(_reg, AR5K_REG_READ(_reg) &~ (_flags))
 
 #define AR5K_PHY_WRITE(_reg, _val)					\
-        AR5K_REG_WRITE(hal->ah_phy + ((_reg) << 2), _val)
+	AR5K_REG_WRITE(hal->ah_phy + ((_reg) << 2), _val)
 #define AR5K_PHY_READ(_reg)						\
-        AR5K_REG_READ(hal->ah_phy + ((_reg) << 2))
+	AR5K_REG_READ(hal->ah_phy + ((_reg) << 2))
 
 #define AR5K_EEPROM_READ(_o, _v)	{				\
 	if ((ret = hal->ah_eeprom_read(hal, (_o),			\
 		 &(_v))) != 0)						\
 		return (ret);						\
-}			
+}
 #define AR5K_EEPROM_READ_HDR(_o, _v)					\
-        AR5K_EEPROM_READ(_o, hal->ah_capabilities.cap_eeprom._v);	\
+	AR5K_EEPROM_READ(_o, hal->ah_capabilities.cap_eeprom._v);	\
 
 /* Read status of selected queue */
 #define AR5K_REG_READ_Q(_reg, _queue)					\
@@ -1233,12 +1234,12 @@ typedef struct ath_hal*(ar5k_attach_t)
 #define AR5K_REG_WRITE_Q(_reg, _queue)					\
 	AR5K_REG_WRITE(_reg, (1 << _queue))
 
-#define AR5K_Q_ENABLE_BITS(_reg, _queue) do {                           \
-        _reg |= 1 << _queue;                                            \
+#define AR5K_Q_ENABLE_BITS(_reg, _queue) do {				\
+	_reg |= 1 << _queue;						\
 } while (0)
 
-#define AR5K_Q_DISABLE_BITS(_reg, _queue) do {                          \
-        _reg &= ~(1 << _queue);                                         \
+#define AR5K_Q_DISABLE_BITS(_reg, _queue) do {				\
+	_reg &= ~(1 << _queue);						\
 } while (0)
 
 /*
@@ -1246,18 +1247,20 @@ typedef struct ath_hal*(ar5k_attach_t)
  */
 
 #define AR5K_LE_READ_2(_p)						\
-        (((const u_int8_t *)(_p))[0] | (((const u_int8_t *)(_p))[1] << 8))
+	(((const u_int8_t *)(_p))[0] | (((const u_int8_t *)(_p))[1] << 8))
 #define AR5K_LE_READ_4(_p) \
-        (((const u_int8_t *)(_p))[0] | (((const u_int8_t *)(_p))[1] << 8) |	\
-        (((const u_int8_t *)(_p))[2] << 16) | (((const u_int8_t *)(_p))[3] << 24))
+	(((const u_int8_t *)(_p))[0] |					\
+	(((const u_int8_t *)(_p))[1] << 8) |				\
+	(((const u_int8_t *)(_p))[2] << 16) |				\
+	(((const u_int8_t *)(_p))[3] << 24))
 #define AR5K_LE_WRITE_2(_p, _val) \
-        ((((u_int8_t *)(_p))[0] = ((u_int32_t)(_val) & 0xff)),		\
-        (((u_int8_t *)(_p))[1] = (((u_int32_t)(_val) >> 8) & 0xff)))
+	((((u_int8_t *)(_p))[0] = ((u_int32_t)(_val) & 0xff)),		\
+	(((u_int8_t *)(_p))[1] = (((u_int32_t)(_val) >> 8) & 0xff)))
 #define AR5K_LE_WRITE_4(_p, _val)					\
-        ((((u_int8_t *)(_p))[0] = ((u_int32_t)(_val) & 0xff)),		\
-        (((u_int8_t *)(_p))[1] = (((u_int32_t)(_val) >> 8) & 0xff)),	\
-        (((u_int8_t *)(_p))[2] = (((u_int32_t)(_val) >> 16) & 0xff)),	\
-        (((u_int8_t *)(_p))[3] = (((u_int32_t)(_val) >> 24) & 0xff)))
+	((((u_int8_t *)(_p))[0] = ((u_int32_t)(_val) & 0xff)),		\
+	(((u_int8_t *)(_p))[1] = (((u_int32_t)(_val) >> 8) & 0xff)),	\
+	(((u_int8_t *)(_p))[2] = (((u_int32_t)(_val) >> 16) & 0xff)),	\
+	(((u_int8_t *)(_p))[3] = (((u_int32_t)(_val) >> 24) & 0xff)))
 
 /*
  * Initial register values
@@ -1290,111 +1293,212 @@ struct ar5k_ini_rf {
 	u_int32_t	rf_value[5];
 };
 
-#define AR5K_AR5111_INI_RF	{							\
-	{ 0, 0x989c, { 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000 } },	\
-	{ 0, 0x989c, { 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000 } },	\
-	{ 0, 0x989c, { 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000 } },	\
-	{ 0, 0x989c, { 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000 } },	\
-	{ 0, 0x989c, { 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000 } },	\
-	{ 0, 0x989c, { 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000 } },	\
-	{ 0, 0x989c, { 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000 } },	\
-	{ 0, 0x989c, { 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000 } },	\
-	{ 0, 0x989c, { 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000 } },	\
-	{ 0, 0x989c, { 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000 } },	\
-	{ 0, 0x989c, { 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000 } },	\
-	{ 0, 0x989c, { 0x00380000, 0x00380000, 0x00380000, 0x00380000, 0x00380000 } },	\
-	{ 0, 0x989c, { 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000 } },	\
-	{ 0, 0x989c, { 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000 } },	\
-	{ 0, 0x989c, { 0x00000000, 0x00000000, 0x000000c0, 0x00000080, 0x00000080 } },	\
-	{ 0, 0x989c, { 0x000400f9, 0x000400f9, 0x000400ff, 0x000400fd, 0x000400fd } },	\
-	{ 0, 0x98d4, { 0x00000000, 0x00000000, 0x00000004, 0x00000004, 0x00000004 } },	\
-        { 1, 0x98d4, { 0x00000020, 0x00000020, 0x00000020, 0x00000020, 0x00000020 } },	\
-        { 2, 0x98d4, { 0x00000010, 0x00000014, 0x00000010, 0x00000010, 0x00000014 } },	\
-        { 3, 0x98d8, { 0x00601068, 0x00601068, 0x00601068, 0x00601068, 0x00601068 } },	\
-        { 6, 0x989c, { 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000 } },	\
-        { 6, 0x989c, { 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000 } },	\
-        { 6, 0x989c, { 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000 } },	\
-        { 6, 0x989c, { 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000 } },	\
-        { 6, 0x989c, { 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000 } },	\
-        { 6, 0x989c, { 0x10000000, 0x10000000, 0x10000000, 0x10000000, 0x10000000 } },	\
-        { 6, 0x989c, { 0x04000000, 0x04000000, 0x04000000, 0x04000000, 0x04000000 } },	\
-        { 6, 0x989c, { 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000 } },	\
-        { 6, 0x989c, { 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000 } },	\
-        { 6, 0x989c, { 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000 } },	\
-        { 6, 0x989c, { 0x00000000, 0x00000000, 0x0a000000, 0x00000000, 0x00000000 } },	\
-        { 6, 0x989c, { 0x003800c0, 0x00380080, 0x023800c0, 0x003800c0, 0x003800c0 } },	\
-        { 6, 0x989c, { 0x00020006, 0x00020006, 0x00000006, 0x00020006, 0x00020006 } },	\
-        { 6, 0x989c, { 0x00000089, 0x00000089, 0x00000089, 0x00000089, 0x00000089 } },	\
-        { 6, 0x989c, { 0x000000a0, 0x000000a0, 0x000000a0, 0x000000a0, 0x000000a0 } },	\
-        { 6, 0x989c, { 0x00040007, 0x00040007, 0x00040007, 0x00040007, 0x00040007 } },	\
-        { 6, 0x98d4, { 0x0000001a, 0x0000001a, 0x0000001a, 0x0000001a, 0x0000001a } },	\
-        { 7, 0x989c, { 0x00000040, 0x00000048, 0x00000040, 0x00000040, 0x00000040 } },	\
-        { 7, 0x989c, { 0x00000010, 0x00000010, 0x00000010, 0x00000010, 0x00000010 } },	\
-        { 7, 0x989c, { 0x00000008, 0x00000008, 0x00000008, 0x00000008, 0x00000008 } },	\
-        { 7, 0x989c, { 0x0000004f, 0x0000004f, 0x0000004f, 0x0000004f, 0x0000004f } },	\
-        { 7, 0x989c, { 0x000000f1, 0x000000f1, 0x00000061, 0x000000f1, 0x000000f1 } },	\
-        { 7, 0x989c, { 0x0000904f, 0x0000904f, 0x0000904c, 0x0000904f, 0x0000904f } },	\
-        { 7, 0x989c, { 0x0000125a, 0x0000125a, 0x0000129a, 0x0000125a, 0x0000125a } },	\
-        { 7, 0x98cc, { 0x0000000e, 0x0000000e, 0x0000000f, 0x0000000e, 0x0000000e } },	\
+#define AR5K_AR5111_INI_RF	{						\
+	{ 0, 0x989c,								\
+	    { 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000 } },	\
+	{ 0, 0x989c,								\
+	    { 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000 } },	\
+	{ 0, 0x989c,								\
+	    { 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000 } },	\
+	{ 0, 0x989c,								\
+	    { 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000 } },	\
+	{ 0, 0x989c,								\
+	    { 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000 } },	\
+	{ 0, 0x989c,								\
+	    { 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000 } },	\
+	{ 0, 0x989c,								\
+	    { 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000 } },	\
+	{ 0, 0x989c,								\
+	    { 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000 } },	\
+	{ 0, 0x989c,								\
+	    { 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000 } },	\
+	{ 0, 0x989c,								\
+	    { 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000 } },	\
+	{ 0, 0x989c,								\
+	    { 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000 } },	\
+	{ 0, 0x989c,								\
+	    { 0x00380000, 0x00380000, 0x00380000, 0x00380000, 0x00380000 } },	\
+	{ 0, 0x989c,								\
+	    { 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000 } },	\
+	{ 0, 0x989c,								\
+	    { 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000 } },	\
+	{ 0, 0x989c,								\
+	    { 0x00000000, 0x00000000, 0x000000c0, 0x00000080, 0x00000080 } },	\
+	{ 0, 0x989c,								\
+	    { 0x000400f9, 0x000400f9, 0x000400ff, 0x000400fd, 0x000400fd } },	\
+	{ 0, 0x98d4,								\
+	    { 0x00000000, 0x00000000, 0x00000004, 0x00000004, 0x00000004 } },	\
+	{ 1, 0x98d4,								\
+	    { 0x00000020, 0x00000020, 0x00000020, 0x00000020, 0x00000020 } },	\
+	{ 2, 0x98d4,								\
+	    { 0x00000010, 0x00000014, 0x00000010, 0x00000010, 0x00000014 } },	\
+	{ 3, 0x98d8,								\
+	    { 0x00601068, 0x00601068, 0x00601068, 0x00601068, 0x00601068 } },	\
+	{ 6, 0x989c,								\
+	    { 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000 } },	\
+	{ 6, 0x989c,								\
+	    { 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000 } },	\
+	{ 6, 0x989c,								\
+	    { 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000 } },	\
+	{ 6, 0x989c,								\
+	    { 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000 } },	\
+	{ 6, 0x989c,								\
+	    { 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000 } },	\
+	{ 6, 0x989c,								\
+	    { 0x10000000, 0x10000000, 0x10000000, 0x10000000, 0x10000000 } },	\
+	{ 6, 0x989c,								\
+	    { 0x04000000, 0x04000000, 0x04000000, 0x04000000, 0x04000000 } },	\
+	{ 6, 0x989c,								\
+	    { 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000 } },	\
+	{ 6, 0x989c,								\
+	    { 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000 } },	\
+	{ 6, 0x989c,								\
+	    { 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000 } },	\
+	{ 6, 0x989c,								\
+	    { 0x00000000, 0x00000000, 0x0a000000, 0x00000000, 0x00000000 } },	\
+	{ 6, 0x989c,								\
+	    { 0x003800c0, 0x00380080, 0x023800c0, 0x003800c0, 0x003800c0 } },	\
+	{ 6, 0x989c,								\
+	    { 0x00020006, 0x00020006, 0x00000006, 0x00020006, 0x00020006 } },	\
+	{ 6, 0x989c,								\
+	    { 0x00000089, 0x00000089, 0x00000089, 0x00000089, 0x00000089 } },	\
+	{ 6, 0x989c,								\
+	    { 0x000000a0, 0x000000a0, 0x000000a0, 0x000000a0, 0x000000a0 } },	\
+	{ 6, 0x989c,								\
+	    { 0x00040007, 0x00040007, 0x00040007, 0x00040007, 0x00040007 } },	\
+	{ 6, 0x98d4,								\
+	    { 0x0000001a, 0x0000001a, 0x0000001a, 0x0000001a, 0x0000001a } },	\
+	{ 7, 0x989c,								\
+	    { 0x00000040, 0x00000048, 0x00000040, 0x00000040, 0x00000040 } },	\
+	{ 7, 0x989c,								\
+	    { 0x00000010, 0x00000010, 0x00000010, 0x00000010, 0x00000010 } },	\
+	{ 7, 0x989c,								\
+	    { 0x00000008, 0x00000008, 0x00000008, 0x00000008, 0x00000008 } },	\
+	{ 7, 0x989c,								\
+	    { 0x0000004f, 0x0000004f, 0x0000004f, 0x0000004f, 0x0000004f } },	\
+	{ 7, 0x989c,								\
+	    { 0x000000f1, 0x000000f1, 0x00000061, 0x000000f1, 0x000000f1 } },	\
+	{ 7, 0x989c,								\
+	    { 0x0000904f, 0x0000904f, 0x0000904c, 0x0000904f, 0x0000904f } },	\
+	{ 7, 0x989c,								\
+	    { 0x0000125a, 0x0000125a, 0x0000129a, 0x0000125a, 0x0000125a } },	\
+	{ 7, 0x98cc,								\
+	    { 0x0000000e, 0x0000000e, 0x0000000f, 0x0000000e, 0x0000000e } },	\
 }
 
 #define AR5K_AR5112_INI_RF	{							\
-        { 1, 0x98d4, { 0x00000020, 0x00000020, 0x00000020, 0x00000020, 0x00000020 } },	\
-        { 2, 0x98d0, { 0x03060408, 0x03070408, 0x03060408, 0x03060408, 0x03070408 } },	\
-        { 3, 0x98dc, { 0x00a0c0c0, 0x00a0c0c0, 0x00e0c0c0, 0x00e0c0c0, 0x00e0c0c0 } },	\
-        { 6, 0x989c, { 0x0f000000, 0x0f000000, 0x0f000000, 0x0f000000, 0x0f000000 } },	\
-        { 6, 0x989c, { 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000 } },	\
-        { 6, 0x989c, { 0x00800000, 0x00800000, 0x00800000, 0x00800000, 0x00800000 } },	\
-        { 6, 0x989c, { 0x002a0000, 0x002a0000, 0x002a0000, 0x002a0000, 0x002a0000 } },	\
-        { 6, 0x989c, { 0x00010000, 0x00010000, 0x00010000, 0x00010000, 0x00010000 } },	\
-        { 6, 0x989c, { 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000 } },	\
-        { 6, 0x989c, { 0x00180000, 0x00180000, 0x00180000, 0x00180000, 0x00180000 } },	\
-        { 6, 0x989c, { 0x00600000, 0x00600000, 0x006e0000, 0x006e0000, 0x006e0000 } },	\
-        { 6, 0x989c, { 0x00c70000, 0x00c70000, 0x00c70000, 0x00c70000, 0x00c70000 } },	\
-        { 6, 0x989c, { 0x004b0000, 0x004b0000, 0x004b0000, 0x004b0000, 0x004b0000 } },	\
-        { 6, 0x989c, { 0x04480000, 0x04480000, 0x04480000, 0x04480000, 0x04480000 } },	\
-        { 6, 0x989c, { 0x00220000, 0x00220000, 0x00220000, 0x00220000, 0x00220000 } },	\
-        { 6, 0x989c, { 0x00e40000, 0x00e40000, 0x00e40000, 0x00e40000, 0x00e40000 } },	\
-        { 6, 0x989c, { 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000 } },	\
-        { 6, 0x989c, { 0x00fc0000, 0x00fc0000, 0x00fc0000, 0x00fc0000, 0x00fc0000 } },	\
-        { 6, 0x989c, { 0x00ff0000, 0x00ff0000, 0x00ff0000, 0x00ff0000, 0x00ff0000 } },	\
-        { 6, 0x989c, { 0x043f0000, 0x043f0000, 0x043f0000, 0x043f0000, 0x043f0000 } },	\
-        { 6, 0x989c, { 0x000c0000, 0x000c0000, 0x000c0000, 0x000c0000, 0x000c0000 } },	\
-        { 6, 0x989c, { 0x02190000, 0x02190000, 0x02190000, 0x02190000, 0x02190000 } },	\
-        { 6, 0x989c, { 0x00240000, 0x00240000, 0x00240000, 0x00240000, 0x00240000 } },	\
-        { 6, 0x989c, { 0x00b40000, 0x00b40000, 0x00b40000, 0x00b40000, 0x00b40000 } },	\
-        { 6, 0x989c, { 0x00990000, 0x00990000, 0x00990000, 0x00990000, 0x00990000 } },	\
-        { 6, 0x989c, { 0x00500000, 0x00500000, 0x00500000, 0x00500000, 0x00500000 } },	\
-        { 6, 0x989c, { 0x002a0000, 0x002a0000, 0x002a0000, 0x002a0000, 0x002a0000 } },	\
-        { 6, 0x989c, { 0x00120000, 0x00120000, 0x00120000, 0x00120000, 0x00120000 } },	\
-        { 6, 0x989c, { 0xc0320000, 0xc0320000, 0xc0320000, 0xc0320000, 0xc0320000 } },	\
-        { 6, 0x989c, { 0x01740000, 0x01740000, 0x01740000, 0x01740000, 0x01740000 } },	\
-        { 6, 0x989c, { 0x00110000, 0x00110000, 0x00110000, 0x00110000, 0x00110000 } },	\
-        { 6, 0x989c, { 0x86280000, 0x86280000, 0x86280000, 0x86280000, 0x86280000 } },	\
-        { 6, 0x989c, { 0x31840000, 0x31840000, 0x31840000, 0x31840000, 0x31840000 } },	\
-        { 6, 0x989c, { 0x00f20080, 0x00f20080, 0x00f20080, 0x00f20080, 0x00f20080 } },	\
-        { 6, 0x989c, { 0x00070019, 0x00070019, 0x00070019, 0x00070019, 0x00070019 } },	\
-        { 6, 0x989c, { 0x00000003, 0x00000003, 0x00000003, 0x00000003, 0x00000003 } },	\
-        { 6, 0x989c, { 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000 } },	\
-        { 6, 0x989c, { 0x000000b2, 0x000000b2, 0x000000b2, 0x000000b2, 0x000000b2 } },	\
-        { 6, 0x989c, { 0x00b02084, 0x00b02084, 0x00b02084, 0x00b02084, 0x00b02084 } },	\
-        { 6, 0x989c, { 0x004125a4, 0x004125a4, 0x004125a4, 0x004125a4, 0x004125a4 } },	\
-        { 6, 0x989c, { 0x00119220, 0x00119220, 0x00119220, 0x00119220, 0x00119220 } },	\
-        { 6, 0x989c, { 0x001a4800, 0x001a4800, 0x001a4800, 0x001a4800, 0x001a4800 } },	\
-        { 6, 0x98d8, { 0x000b0230, 0x000b0230, 0x000b0230, 0x000b0230, 0x000b0230 } },	\
-        { 7, 0x989c, { 0x00000094, 0x00000094, 0x00000094, 0x00000094, 0x00000094 } },	\
-        { 7, 0x989c, { 0x00000091, 0x00000091, 0x00000091, 0x00000091, 0x00000091 } },	\
-        { 7, 0x989c, { 0x00000012, 0x00000012, 0x00000012, 0x00000012, 0x00000012 } },	\
-        { 7, 0x989c, { 0x00000080, 0x00000080, 0x00000080, 0x00000080, 0x00000080 } },	\
-        { 7, 0x989c, { 0x000000d9, 0x000000d9, 0x000000d9, 0x000000d9, 0x000000d9 } },	\
-        { 7, 0x989c, { 0x00000060, 0x00000060, 0x00000060, 0x00000060, 0x00000060 } },	\
-        { 7, 0x989c, { 0x000000f0, 0x000000f0, 0x000000f0, 0x000000f0, 0x000000f0 } },	\
-        { 7, 0x989c, { 0x000000a2, 0x000000a2, 0x000000a2, 0x000000a2, 0x000000a2 } },	\
-        { 7, 0x989c, { 0x00000052, 0x00000052, 0x00000052, 0x00000052, 0x00000052 } },	\
-        { 7, 0x989c, { 0x000000d4, 0x000000d4, 0x000000d4, 0x000000d4, 0x000000d4 } },	\
-        { 7, 0x989c, { 0x000014cc, 0x000014cc, 0x000014cc, 0x000014cc, 0x000014cc } },	\
-        { 7, 0x989c, { 0x0000048c, 0x0000048c, 0x0000048c, 0x0000048c, 0x0000048c } },	\
-        { 7, 0x98c4, { 0x00000003, 0x00000003, 0x00000003, 0x00000003, 0x00000003 } },	\
+	{ 1, 0x98d4,								\
+	    { 0x00000020, 0x00000020, 0x00000020, 0x00000020, 0x00000020 } },	\
+	{ 2, 0x98d0,								\
+	    { 0x03060408, 0x03070408, 0x03060408, 0x03060408, 0x03070408 } },	\
+	{ 3, 0x98dc,								\
+	    { 0x00a0c0c0, 0x00a0c0c0, 0x00e0c0c0, 0x00e0c0c0, 0x00e0c0c0 } },	\
+	{ 6, 0x989c,								\
+	    { 0x0f000000, 0x0f000000, 0x0f000000, 0x0f000000, 0x0f000000 } },	\
+	{ 6, 0x989c,								\
+	    { 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000 } },	\
+	{ 6, 0x989c,								\
+	    { 0x00800000, 0x00800000, 0x00800000, 0x00800000, 0x00800000 } },	\
+	{ 6, 0x989c,								\
+	    { 0x002a0000, 0x002a0000, 0x002a0000, 0x002a0000, 0x002a0000 } },	\
+	{ 6, 0x989c,								\
+	    { 0x00010000, 0x00010000, 0x00010000, 0x00010000, 0x00010000 } },	\
+	{ 6, 0x989c,								\
+	    { 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000 } },	\
+	{ 6, 0x989c,								\
+	    { 0x00180000, 0x00180000, 0x00180000, 0x00180000, 0x00180000 } },	\
+	{ 6, 0x989c,								\
+	    { 0x00600000, 0x00600000, 0x006e0000, 0x006e0000, 0x006e0000 } },	\
+	{ 6, 0x989c,								\
+	    { 0x00c70000, 0x00c70000, 0x00c70000, 0x00c70000, 0x00c70000 } },	\
+	{ 6, 0x989c,								\
+	    { 0x004b0000, 0x004b0000, 0x004b0000, 0x004b0000, 0x004b0000 } },	\
+	{ 6, 0x989c,								\
+	    { 0x04480000, 0x04480000, 0x04480000, 0x04480000, 0x04480000 } },	\
+	{ 6, 0x989c,								\
+	    { 0x00220000, 0x00220000, 0x00220000, 0x00220000, 0x00220000 } },	\
+	{ 6, 0x989c,								\
+	    { 0x00e40000, 0x00e40000, 0x00e40000, 0x00e40000, 0x00e40000 } },	\
+	{ 6, 0x989c,								\
+	    { 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000 } },	\
+	{ 6, 0x989c,								\
+	    { 0x00fc0000, 0x00fc0000, 0x00fc0000, 0x00fc0000, 0x00fc0000 } },	\
+	{ 6, 0x989c,								\
+	    { 0x00ff0000, 0x00ff0000, 0x00ff0000, 0x00ff0000, 0x00ff0000 } },	\
+	{ 6, 0x989c,								\
+	    { 0x043f0000, 0x043f0000, 0x043f0000, 0x043f0000, 0x043f0000 } },	\
+	{ 6, 0x989c,								\
+	    { 0x000c0000, 0x000c0000, 0x000c0000, 0x000c0000, 0x000c0000 } },	\
+	{ 6, 0x989c,								\
+	    { 0x02190000, 0x02190000, 0x02190000, 0x02190000, 0x02190000 } },	\
+	{ 6, 0x989c,								\
+	    { 0x00240000, 0x00240000, 0x00240000, 0x00240000, 0x00240000 } },	\
+	{ 6, 0x989c,								\
+	    { 0x00b40000, 0x00b40000, 0x00b40000, 0x00b40000, 0x00b40000 } },	\
+	{ 6, 0x989c,								\
+	    { 0x00990000, 0x00990000, 0x00990000, 0x00990000, 0x00990000 } },	\
+	{ 6, 0x989c,								\
+	    { 0x00500000, 0x00500000, 0x00500000, 0x00500000, 0x00500000 } },	\
+	{ 6, 0x989c,								\
+	    { 0x002a0000, 0x002a0000, 0x002a0000, 0x002a0000, 0x002a0000 } },	\
+	{ 6, 0x989c,								\
+	    { 0x00120000, 0x00120000, 0x00120000, 0x00120000, 0x00120000 } },	\
+	{ 6, 0x989c,								\
+	    { 0xc0320000, 0xc0320000, 0xc0320000, 0xc0320000, 0xc0320000 } },	\
+	{ 6, 0x989c,								\
+	    { 0x01740000, 0x01740000, 0x01740000, 0x01740000, 0x01740000 } },	\
+	{ 6, 0x989c,								\
+	    { 0x00110000, 0x00110000, 0x00110000, 0x00110000, 0x00110000 } },	\
+	{ 6, 0x989c,								\
+	    { 0x86280000, 0x86280000, 0x86280000, 0x86280000, 0x86280000 } },	\
+	{ 6, 0x989c,								\
+	    { 0x31840000, 0x31840000, 0x31840000, 0x31840000, 0x31840000 } },	\
+	{ 6, 0x989c,								\
+	    { 0x00f20080, 0x00f20080, 0x00f20080, 0x00f20080, 0x00f20080 } },	\
+	{ 6, 0x989c,								\
+	    { 0x00070019, 0x00070019, 0x00070019, 0x00070019, 0x00070019 } },	\
+	{ 6, 0x989c,								\
+	    { 0x00000003, 0x00000003, 0x00000003, 0x00000003, 0x00000003 } },	\
+	{ 6, 0x989c,								\
+	    { 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000 } },	\
+	{ 6, 0x989c,								\
+	    { 0x000000b2, 0x000000b2, 0x000000b2, 0x000000b2, 0x000000b2 } },	\
+	{ 6, 0x989c,								\
+	    { 0x00b02084, 0x00b02084, 0x00b02084, 0x00b02084, 0x00b02084 } },	\
+	{ 6, 0x989c,								\
+	    { 0x004125a4, 0x004125a4, 0x004125a4, 0x004125a4, 0x004125a4 } },	\
+	{ 6, 0x989c,								\
+	    { 0x00119220, 0x00119220, 0x00119220, 0x00119220, 0x00119220 } },	\
+	{ 6, 0x989c,								\
+	    { 0x001a4800, 0x001a4800, 0x001a4800, 0x001a4800, 0x001a4800 } },	\
+	{ 6, 0x98d8,								\
+	    { 0x000b0230, 0x000b0230, 0x000b0230, 0x000b0230, 0x000b0230 } },	\
+	{ 7, 0x989c,								\
+	    { 0x00000094, 0x00000094, 0x00000094, 0x00000094, 0x00000094 } },	\
+	{ 7, 0x989c,								\
+	    { 0x00000091, 0x00000091, 0x00000091, 0x00000091, 0x00000091 } },	\
+	{ 7, 0x989c,								\
+	    { 0x00000012, 0x00000012, 0x00000012, 0x00000012, 0x00000012 } },	\
+	{ 7, 0x989c,								\
+	    { 0x00000080, 0x00000080, 0x00000080, 0x00000080, 0x00000080 } },	\
+	{ 7, 0x989c,								\
+	    { 0x000000d9, 0x000000d9, 0x000000d9, 0x000000d9, 0x000000d9 } },	\
+	{ 7, 0x989c,								\
+	    { 0x00000060, 0x00000060, 0x00000060, 0x00000060, 0x00000060 } },	\
+	{ 7, 0x989c,								\
+	    { 0x000000f0, 0x000000f0, 0x000000f0, 0x000000f0, 0x000000f0 } },	\
+	{ 7, 0x989c,								\
+	    { 0x000000a2, 0x000000a2, 0x000000a2, 0x000000a2, 0x000000a2 } },	\
+	{ 7, 0x989c,								\
+	    { 0x00000052, 0x00000052, 0x00000052, 0x00000052, 0x00000052 } },	\
+	{ 7, 0x989c,								\
+	    { 0x000000d4, 0x000000d4, 0x000000d4, 0x000000d4, 0x000000d4 } },	\
+	{ 7, 0x989c,								\
+	    { 0x000014cc, 0x000014cc, 0x000014cc, 0x000014cc, 0x000014cc } },	\
+	{ 7, 0x989c,								\
+	    { 0x0000048c, 0x0000048c, 0x0000048c, 0x0000048c, 0x0000048c } },	\
+	{ 7, 0x98c4,								\
+	    { 0x00000003, 0x00000003, 0x00000003, 0x00000003, 0x00000003 } },	\
 }
 
 /*

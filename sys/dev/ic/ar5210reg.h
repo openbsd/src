@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5210reg.h,v 1.5 2004/12/31 01:00:23 reyk Exp $	*/
+/*	$OpenBSD: ar5210reg.h,v 1.6 2005/02/17 23:21:49 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004 Reyk Floeter <reyk@vantronix.net>.
@@ -103,8 +103,8 @@
 #define AR5K_AR5210_ISR_DPERR	0x00400000
 #define AR5K_AR5210_ISR_GPIO	0x01000000
 #define	AR5K_AR5210_ISR_FATAL	(					\
-        AR5K_AR5210_ISR_MCABT | AR5K_AR5210_ISR_SSERR |			\
-        AR5K_AR5210_ISR_DPERR | AR5K_AR5210_ISR_RXORN			\
+	AR5K_AR5210_ISR_MCABT | AR5K_AR5210_ISR_SSERR |			\
+	AR5K_AR5210_ISR_DPERR | AR5K_AR5210_ISR_RXORN			\
 )
 
 /*
@@ -251,7 +251,7 @@ typedef enum {
 #define AR5K_AR5210_RC_PCI		0x00000010
 #define AR5K_AR5210_RC_CHIP		(				\
 	AR5K_AR5210_RC_PCU | AR5K_AR5210_RC_DMA |			\
-        AR5K_AR5210_RC_MAC | AR5K_AR5210_RC_PHY				\
+	AR5K_AR5210_RC_MAC | AR5K_AR5210_RC_PHY				\
 )
 
 /*

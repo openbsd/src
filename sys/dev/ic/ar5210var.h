@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5210var.h,v 1.5 2004/12/31 01:00:23 reyk Exp $	*/
+/*	$OpenBSD: ar5210var.h,v 1.6 2005/02/17 23:21:49 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004 Reyk Floeter <reyk@vantronix.net>.
@@ -45,8 +45,8 @@
 #if BYTE_ORDER == BIG_ENDIAN
 #define AR5K_AR5210_INIT_CFG	(					\
 	AR5K_AR5210_CFG_SWTD | AR5K_AR5210_CFG_SWTB |			\
-        AR5K_AR5210_CFG_SWRD | AR5K_AR5210_CFG_SWRB |			\
-        AR5K_AR5210_CFG_SWRG						\
+	AR5K_AR5210_CFG_SWRD | AR5K_AR5210_CFG_SWRB |			\
+	AR5K_AR5210_CFG_SWRG						\
 )
 #else
 #define AR5K_AR5210_INIT_CFG	0x00000000
@@ -181,43 +181,41 @@ extern ar5k_attach_t ar5k_ar5210_attach;
  */
 
 #define AR5K_AR5210_INI_MODE(_aifs) {					\
-        { AR5K_AR5210_SLOT_TIME,					\
-          AR5K_INIT_SLOT_TIME,						\
-          AR5K_INIT_SLOT_TIME_TURBO },					\
-        { AR5K_AR5210_SLOT_TIME,					\
-          AR5K_INIT_ACK_CTS_TIMEOUT,					\
-          AR5K_INIT_ACK_CTS_TIMEOUT_TURBO },				\
-        { AR5K_AR5210_USEC,						\
-          AR5K_INIT_TRANSMIT_LATENCY,					\
-          AR5K_INIT_TRANSMIT_LATENCY_TURBO},				\
-        { AR5K_AR5210_IFS0,						\
-          ((AR5K_INIT_SIFS + (_aifs) * AR5K_INIT_SLOT_TIME)		\
-              << AR5K_AR5210_IFS0_DIFS_S) | AR5K_INIT_SIFS,		\
-          ((AR5K_INIT_SIFS_TURBO + (_aifs) * AR5K_INIT_SLOT_TIME_TURBO) \
-              << AR5K_AR5210_IFS0_DIFS_S) | AR5K_INIT_SIFS_TURBO },	\
-        { AR5K_AR5210_IFS1,						\
-          AR5K_INIT_PROTO_TIME_CNTRL,					\
-          AR5K_INIT_PROTO_TIME_CNTRL_TURBO },				\
-        { AR5K_AR5210_PHY(17),						\
-          (AR5K_REG_READ(AR5K_AR5210_PHY(17)) & ~0x7F) | 0x1C,		\
-          (AR5K_REG_READ(AR5K_AR5210_PHY(17)) & ~0x7F) | 0x38 },	\
-        { AR5K_AR5210_PHY_FC,						\
-                                                                        \
-          AR5K_AR5210_PHY_FC_SERVICE_ERR |				\
-          AR5K_AR5210_PHY_FC_TXURN_ERR |				\
-          AR5K_AR5210_PHY_FC_ILLLEN_ERR |				\
-          AR5K_AR5210_PHY_FC_ILLRATE_ERR |				\
-          AR5K_AR5210_PHY_FC_PARITY_ERR |				\
-          AR5K_AR5210_PHY_FC_TIMING_ERR | 0x1020,			\
-	                                                                \
-          AR5K_AR5210_PHY_FC_SERVICE_ERR |				\
-          AR5K_AR5210_PHY_FC_TXURN_ERR |				\
-          AR5K_AR5210_PHY_FC_ILLLEN_ERR |				\
-          AR5K_AR5210_PHY_FC_ILLRATE_ERR |				\
-          AR5K_AR5210_PHY_FC_PARITY_ERR |				\
-          AR5K_AR5210_PHY_FC_TURBO_MODE |				\
-          AR5K_AR5210_PHY_FC_TURBO_SHORT |				\
-          AR5K_AR5210_PHY_FC_TIMING_ERR | 0x2020 },			\
+	{ AR5K_AR5210_SLOT_TIME,					\
+	    AR5K_INIT_SLOT_TIME,					\
+	    AR5K_INIT_SLOT_TIME_TURBO },				\
+	{ AR5K_AR5210_SLOT_TIME,					\
+	    AR5K_INIT_ACK_CTS_TIMEOUT,					\
+	    AR5K_INIT_ACK_CTS_TIMEOUT_TURBO },				\
+	{ AR5K_AR5210_USEC,						\
+	    AR5K_INIT_TRANSMIT_LATENCY,					\
+	    AR5K_INIT_TRANSMIT_LATENCY_TURBO},				\
+	{ AR5K_AR5210_IFS0,						\
+	    ((AR5K_INIT_SIFS + (_aifs) * AR5K_INIT_SLOT_TIME)		\
+	    << AR5K_AR5210_IFS0_DIFS_S) | AR5K_INIT_SIFS,		\
+	    ((AR5K_INIT_SIFS_TURBO + (_aifs) * AR5K_INIT_SLOT_TIME_TURBO) \
+	    << AR5K_AR5210_IFS0_DIFS_S) | AR5K_INIT_SIFS_TURBO },	\
+	{ AR5K_AR5210_IFS1,						\
+	    AR5K_INIT_PROTO_TIME_CNTRL,					\
+	    AR5K_INIT_PROTO_TIME_CNTRL_TURBO },				\
+	{ AR5K_AR5210_PHY(17),						\
+	    (AR5K_REG_READ(AR5K_AR5210_PHY(17)) & ~0x7F) | 0x1C,	\
+	    (AR5K_REG_READ(AR5K_AR5210_PHY(17)) & ~0x7F) | 0x38 },	\
+	{ AR5K_AR5210_PHY_FC,						\
+	    AR5K_AR5210_PHY_FC_SERVICE_ERR |				\
+	    AR5K_AR5210_PHY_FC_TXURN_ERR |				\
+	    AR5K_AR5210_PHY_FC_ILLLEN_ERR |				\
+	    AR5K_AR5210_PHY_FC_ILLRATE_ERR |				\
+	    AR5K_AR5210_PHY_FC_PARITY_ERR |				\
+	    AR5K_AR5210_PHY_FC_TIMING_ERR | 0x1020,			\
+	    AR5K_AR5210_PHY_FC_SERVICE_ERR |				\
+	    AR5K_AR5210_PHY_FC_TXURN_ERR |				\
+	    AR5K_AR5210_PHY_FC_ILLLEN_ERR |				\
+	    AR5K_AR5210_PHY_FC_ILLRATE_ERR |				\
+	    AR5K_AR5210_PHY_FC_PARITY_ERR |				\
+	    AR5K_AR5210_PHY_FC_TURBO_MODE |				\
+	    AR5K_AR5210_PHY_FC_TURBO_SHORT |				\
+	    AR5K_AR5210_PHY_FC_TIMING_ERR | 0x2020 },			\
 }
 
 /*
@@ -226,7 +224,7 @@ extern ar5k_attach_t ar5k_ar5210_attach;
  */
 
 #define AR5K_AR5210_INI {						\
-        /* PCU and MAC registers */					\
+	/* PCU and MAC registers */					\
 	{ AR5K_AR5210_TXDP0, 0 },					\
 	{ AR5K_AR5210_TXDP1, 0 },					\
 	{ AR5K_AR5210_RXDP, 0 },					\
@@ -261,7 +259,7 @@ extern ar5k_attach_t ar5k_ar5210_attach;
 	{ AR5K_AR5210_TIMER3, 1 },					\
 	{ AR5K_AR5210_CFP_DUR, 0 },					\
 	{ AR5K_AR5210_CFP_PERIOD, 0 },					\
-        /* PHY registers */						\
+	/* PHY registers */						\
 	{ AR5K_AR5210_PHY(0), 0x00000047 },				\
 	{ AR5K_AR5210_PHY_AGC, 0x00000000 },				\
 	{ AR5K_AR5210_PHY(3), 0x09848ea6 },				\
@@ -296,8 +294,8 @@ extern ar5k_attach_t ar5k_ar5210_attach;
 	{ AR5K_AR5210_PHY(66), 0x00000000 },				\
 	{ AR5K_AR5210_PHY(67), 0x00800000 },				\
 	{ AR5K_AR5210_PHY(68), 0x00000003 },				\
-        /* BB gain table (64bytes) */					\
-        { AR5K_AR5210_BB_GAIN(0), 0x00000000 },				\
+	/* BB gain table (64bytes) */					\
+	{ AR5K_AR5210_BB_GAIN(0), 0x00000000 },				\
 	{ AR5K_AR5210_BB_GAIN(0x01), 0x00000020 },			\
 	{ AR5K_AR5210_BB_GAIN(0x02), 0x00000010 },			\
 	{ AR5K_AR5210_BB_GAIN(0x03), 0x00000030 },			\
@@ -361,7 +359,7 @@ extern ar5k_attach_t ar5k_ar5210_attach;
 	{ AR5K_AR5210_BB_GAIN(0x3d), 0x0000002f },			\
 	{ AR5K_AR5210_BB_GAIN(0x3e), 0x0000002f },			\
 	{ AR5K_AR5210_BB_GAIN(0x3f), 0x0000002f },			\
-        /* RF gain table (64bytes) */					\
+	/* RF gain table (64bytes) */					\
 	{ AR5K_AR5210_RF_GAIN(0), 0x0000001d },				\
 	{ AR5K_AR5210_RF_GAIN(0x01), 0x0000005d },			\
 	{ AR5K_AR5210_RF_GAIN(0x02), 0x0000009d },			\
@@ -426,7 +424,7 @@ extern ar5k_attach_t ar5k_ar5210_attach;
 	{ AR5K_AR5210_RF_GAIN(0x3d), 0x00000006 },			\
 	{ AR5K_AR5210_RF_GAIN(0x3e), 0x00000006 },			\
 	{ AR5K_AR5210_RF_GAIN(0x3f), 0x00000006 },			\
-        /* PHY activation */						\
+	/* PHY activation */						\
 	{ AR5K_AR5210_PHY(53), 0x00000020 },				\
 	{ AR5K_AR5210_PHY(51), 0x00000004 },				\
 	{ AR5K_AR5210_PHY(50), 0x00060106 },				\
