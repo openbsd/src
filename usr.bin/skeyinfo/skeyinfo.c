@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyinfo.c,v 1.5 1998/06/21 22:14:03 millert Exp $	*/
+/*	$OpenBSD: skeyinfo.c,v 1.6 2001/02/05 16:58:11 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -49,7 +49,7 @@ main(argc, argv)
 	struct passwd *pw;
 	struct skey key;
 	char *name = NULL;
-	int errs, ch, verbose = 0;
+	int error, ch, verbose = 0;
 
 	if (geteuid() != 0)
 		errx(1, "must be setuid root");
@@ -74,8 +74,6 @@ main(argc, argv)
 		errx(1, "only root may specify an alternate user");
 
 	if (name) {
-		if (strlen(name) > PASS_MAX)
-			errx(1, "username too long (%d chars max)", PASS_MAX);
 		if ((pw = getpwnam(name)) == NULL)
 			errx(1, "no passwd entry for %s", name);
 	} else {
@@ -85,24 +83,23 @@ main(argc, argv)
 
 	if ((name = strdup(pw->pw_name)) == NULL)
 		err(1, "cannot allocate memory");
-	sevenbit(name);
 
-	errs = skeylookup(&key, name);
-	switch (errs) {
+	error = skeylookup(&key, name);
+	switch (error) {
 		case 0:		/* Success! */
 			if (verbose)
 				(void)printf("otp-%s ", skey_get_algorithm());
 			(void)printf("%d %s\n", key.n - 1, key.seed);
 			break;
 		case -1:	/* File error */
-			warnx("cannot open %s", _PATH_SKEYKEYS);
+			warn("cannot open %s", _PATH_SKEYKEYS);
 			break;
 		case 1:		/* Unknown user */
 			warnx("%s is not listed in %s", name, _PATH_SKEYKEYS);
 	}
 	(void)fclose(key.keyfile);
 
-	exit(errs);
+	exit(error ? 1 : 0);
 }
 
 void
