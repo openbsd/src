@@ -1,5 +1,5 @@
-/*	$OpenBSD: sa.c,v 1.12 1999/04/02 01:08:51 niklas Exp $	*/
-/*	$EOM: sa.c,v 1.74 1999/04/02 00:39:59 niklas Exp $	*/
+/*	$OpenBSD: sa.c,v 1.13 1999/04/05 20:59:05 niklas Exp $	*/
+/*	$EOM: sa.c,v 1.76 1999/04/05 18:32:11 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -352,6 +352,9 @@ proto_free (struct proto *proto)
 	sa->doi->free_proto_data (proto->data);
       free (proto->data);
     }
+
+  log_debug (LOG_MISC, 90, "proto_free: freeing %p", proto);
+
   free (proto);
 }
 
@@ -407,6 +410,8 @@ sa_release (struct sa *sa)
     }
   if (sa->name)
     free (sa->name);
+  if (sa->keystate)
+    free (sa->keystate);
   free (sa);
 }
 
@@ -444,7 +449,11 @@ sa_add_transform (struct sa *sa, struct payload *xf, int initiator,
 
   *protop = 0;
   if (!initiator)
-    proto = calloc (1, sizeof *proto);
+    {
+      proto = calloc (1, sizeof *proto);
+      if (!proto)
+	log_error ("sa_add_transform: calloc (1, %d) failed", sizeof *proto);
+    }
   else
     /* Find the protection suite that were chosen.  */
     for (proto = TAILQ_FIRST (&sa->protos);
@@ -460,7 +469,11 @@ sa_add_transform (struct sa *sa, struct payload *xf, int initiator,
     {
       proto->data = calloc (1, sa->doi->proto_size);
       if (!proto->data)
-	goto cleanup;
+	{
+	  log_error ("sa_add_transform: calloc (1, %d) failed",
+		     sa->doi->proto_size);
+	  goto cleanup;
+	}
     }
 
   proto->no = GET_ISAKMP_PROP_NO (prop->p);
@@ -479,10 +492,15 @@ sa_add_transform (struct sa *sa, struct payload *xf, int initiator,
   if (!initiator)
     TAILQ_INSERT_TAIL (&sa->protos, proto, link);
 
-  /* Let the DOI get at proto for initializing its own data. */
+  /* Let the DOI get at proto for initializing its own data.  */
   if (sa->doi->proto_init)
     sa->doi->proto_init (proto, 0);
 
+  log_debug (LOG_MISC, 80,
+	     "sa_add_transform: proto %p no %d proto %d chosen %p sa %p id %d",
+	     proto, proto->no, proto->proto, proto->chosen, proto->sa,
+	     proto->id);
+	     
   return 0;
 
  cleanup:
@@ -544,8 +562,8 @@ sa_soft_expire (struct sa *sa)
       if (!exchange_lookup_by_name (sa->name, 1))
 	{
 	  sa_reference (sa);
-	  exchange_establish (sa->name, (void (*) (void *))sa_mark_replaced,
-			      sa);
+	  exchange_establish (sa->name,
+			      (void (*) (void *, int))sa_mark_replaced, sa);
 	}
     }
   else
@@ -571,8 +589,8 @@ sa_hard_expire (struct sa *sa)
       if (!exchange_lookup_by_name (sa->name, 1))
 	{
 	  sa_reference (sa);
-	  exchange_establish (sa->name, (void (*) (void *))sa_mark_replaced,
-			      sa);
+	  exchange_establish (sa->name,
+			      (void (*) (void *, int))sa_mark_replaced, sa);
 	}
     }
 
@@ -601,14 +619,14 @@ sa_flag (char *attr)
   return 0;
 }
 
-/*
- * Mark SA as replaced.  As SA has potentially disappeared before we get
- * called, check if it still exists before marking.
- */
+/* Mark SA as replaced.  */
 void
-sa_mark_replaced (struct sa *sa)
+sa_mark_replaced (struct sa *sa, int fail)
 {
-  log_debug (LOG_MISC, 90, "SA %p marked as replaced", sa);
-  sa->flags |= SA_FLAG_REPLACED;
+  if (!fail)
+    {
+      log_debug (LOG_MISC, 90, "SA %p marked as replaced", sa);
+      sa->flags |= SA_FLAG_REPLACED;
+    }
   sa_release (sa);
 }
