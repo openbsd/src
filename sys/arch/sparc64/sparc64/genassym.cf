@@ -155,7 +155,7 @@ member	pm_segs
 member	PM_PHYS		pm_physaddr
 
 # interrupt/fault metering
-struct	uwmexp		V_
+struct	uvmexp		V_
 member	swtch
 member	INTR		intrs
 member	faults
