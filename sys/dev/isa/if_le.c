@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.12 1997/12/26 08:07:32 deraadt Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.13 1997/12/26 23:44:20 deraadt Exp $	*/
 /*	$NetBSD: if_le_isa.c,v 1.2 1996/05/12 23:52:56 mycroft Exp $	*/
 
 /*-
@@ -61,19 +61,17 @@
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
-#include <machine/pio.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
-#include <i386/isa/isa_machdep.h>
 
 #include <dev/ic/am7990reg.h>
 #include <dev/ic/am7990var.h>
 
 #include <dev/isa/if_levar.h>
 
-hide void
+void
 le_isa_wrcsr(sc, port, val)
 	struct am7990_softc *sc;
 	u_int16_t port, val;
@@ -86,7 +84,7 @@ le_isa_wrcsr(sc, port, val)
 	bus_space_write_2(iot, ioh, lesc->sc_rdp, val);
 }
 
-hide u_int16_t
+u_int16_t
 le_isa_rdcsr(sc, port)
 	struct am7990_softc *sc;
 	u_int16_t port;

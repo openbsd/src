@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_isapnp.c,v 1.3 1997/12/26 09:35:37 deraadt Exp $	*/
+/*	$OpenBSD: if_le_isapnp.c,v 1.4 1997/12/26 23:44:22 deraadt Exp $	*/
 /*	$NetBSD: if_le_isa.c,v 1.2 1996/05/12 23:52:56 mycroft Exp $	*/
 
 /*-
@@ -61,12 +61,10 @@
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
-#include <machine/pio.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
-#include <i386/isa/isa_machdep.h>
 
 #include <dev/ic/am7990reg.h>
 #include <dev/ic/am7990var.h>
