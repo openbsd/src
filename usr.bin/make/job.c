@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.c,v 1.46 2001/11/11 12:35:02 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.47 2001/11/17 19:37:46 deraadt Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -375,6 +375,7 @@ static void
 JobPassSig(signo)
     int     signo;	/* The signal number we've received */
 {
+    int save_errno = errno;
     sigset_t nmask, omask;
     struct sigaction act;
 
@@ -434,6 +435,7 @@ JobPassSig(signo)
     sigprocmask(SIG_SETMASK, &omask, NULL);
     act.sa_handler = JobPassSig;
     sigaction(signo, &act, NULL);
+    errno = save_errno;
 }
 
 /*-
