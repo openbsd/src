@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.110 2002/07/01 10:07:40 espie Exp $	*/
+/*	$OpenBSD: parse.y,v 1.111 2002/07/05 16:48:44 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -349,6 +349,11 @@ pfrule		: action dir log quick interface route af proto fromto
 			r.log = $3;
 			r.quick = $4;
 
+			if ($5->not) {
+				yyerror("'pass/block on ! $interface' isn't "
+				    "supported.");
+				YYERROR;
+			}
 
 			r.af = $7;
 			r.flags = $12.b1;
