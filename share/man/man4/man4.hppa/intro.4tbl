@@ -199,42 +199,39 @@ the system.  Devices are indicated by their functional interface.
 Not all supported devices are listed.
 .Pp
 .Bl -tag -width le/lebuffer
-.It asp
+.It Xr asp 4
 The ASP bus/IO controller; found in most of the older machines which
 don't have LASI or WAX.
 Includes GSC-bus controller, to which most of the devices are attached.
 Most of IO is still on external chips though.
-.It com
+.It Xr com 4
 The RS-232 ports.
-.It cpu
+.It Xr cpu 4
 The Central Processor itself, makes sure the machine does something useful.
-.It hil
+.It Xr hil 4
 Human Interface Loop, sporting several input devices,
 e.g. keyboards, mice, tablets and such.
-.It ie
+.It Xr ie 4
 i82C5[89]6 LAN-processor. Found in every s700, either included in MBA or on
 external chip on mainboard.
-.It lasi
+.It Xr lasi 4
 LSI?, found in s712. Integrates most of the bus and IO functions into one chip.
-.It leds
-All s700 except s712  have at least 9 leds somewhere at the front which
-will give you info about the systems status, e.g. NET IO, SCSI IO ...
-.It lpt
+.It Xr lpt 4
 The Centronics printer port.
-.It mongoose
+.It Xr mongoose 4
 The
 .Xr eisa 4
 bus controller on most of the s700 machines.
-.It pdc
+.It Xr pdc 4
 The PROM interface, allows to call the routines in the machine's
 PROM for things like intial console output and such.
-.It siop
+.It Xr siop 4
 The
 .Tn SCSI
 I/O Procesor.
-.It sti
+.It Xr sti 4
 The system graphics driver.
-.It wax
+.It Xr wax 4
 The other reincarnation of
 .Xr lasi 4
 used for cheap
