@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.34 1999/11/12 05:56:33 angelos Exp $	*/
+/*	$OpenBSD: systm.h,v 1.35 1999/11/12 05:58:54 angelos Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -154,7 +154,6 @@ void	panic __P((const char *, ...))
 #else
     __attribute__((__noreturn__));
 #endif
-char    *bitmask_snprintf __P((u_quad_t, const char *, char *, size_t));
 void	__assert __P((const char *, const char *, int, const char *))
     __attribute__((__noreturn__));
 int	printf __P((const char *, ...))
