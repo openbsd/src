@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux.h,v 1.9 2003/06/02 23:28:00 millert Exp $	*/
+/*	$OpenBSD: hpux.h,v 1.10 2004/07/01 20:35:35 mickey Exp $	*/
 /*	$NetBSD: hpux.h,v 1.11 1997/04/01 19:58:58 scottr Exp $	*/
 
 /*
@@ -302,6 +302,7 @@ struct hpux_sigaction {
 #define HPUX_SYSCONF_CPUM040	0x20E
 #define HPUX_SYSCONF_CPUPA10	0x20B
 #define HPUX_SYSCONF_CPUPA11	0x210
+#define HPUX_SYSCONF_CPUPA20	0x214
 
 /* mmap stuff */
 #define HPUXMAP_FIXED	0x04
