@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_table.c,v 1.7 2003/01/03 22:54:29 deraadt Exp $ */
+/*	$OpenBSD: pfctl_table.c,v 1.8 2003/01/03 22:57:02 deraadt Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -106,9 +106,12 @@ static char	*stats_text[PFR_DIR_MAX][PFR_OP_TABLE_MAX] = {
 
 
 #define DUMMY ((flags & PFR_FLAG_DUMMY)?" (dummy)":"")
-#define RVTEST(fct)					\
-	do { int rv = fct; if (rv)			\
-		{ radix_perror(); return (1); }		\
+#define RVTEST(fct) do {				\
+		int rv = fct;				\
+		if (rv) {				\
+			radix_perror();			\
+			return (1);			\
+		}					\
 	} while (0)
 
 int
