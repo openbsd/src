@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.113 2002/11/28 12:14:25 mcbride Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.114 2002/11/28 13:18:09 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -456,7 +456,7 @@ print_pool(struct pf_pool *pool, u_int16_t p1, u_int16_t p2,
 		printf(" random");
 		break;
 	case PF_POOL_SRCHASH:
-		printf(" source-hash 0x%08X%08X%08X%08X",
+		printf(" source-hash 0x%08x%08x%08x%08x",
 		    pool->key.key32[0], pool->key.key32[1],
 		    pool->key.key32[2], pool->key.key32[3]);
 		break;
@@ -594,9 +594,10 @@ print_rdr(struct pf_rdr *r)
 		printf("port %u", ntohs(r->dport));
 		if (r->opts & PF_DPORT_RANGE)
 			printf(":%u", ntohs(r->dport2));
+		printf(" ");
 	}
 	if (!r->no) {
-		printf(" -> ");
+		printf("-> ");
 		print_pool(&r->rpool, r->rport, r->opts, r->af, PF_POOL_RDR_R);
 	}
 	printf("\n");
