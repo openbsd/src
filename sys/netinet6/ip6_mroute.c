@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_mroute.c,v 1.32 2003/05/07 02:12:09 deraadt Exp $	*/
+/*	$OpenBSD: ip6_mroute.c,v 1.33 2003/05/14 14:24:44 itojun Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.45 2001/03/25 08:38:51 itojun Exp $	*/
 
 /*
@@ -1681,20 +1681,11 @@ pim6_input(mp, offp, proto)
 	 * Make sure that the IP6 and PIM headers in contiguous memory, and
 	 * possibly the PIM REGISTER header
 	 */
-#ifndef PULLDOWN_TEST
-	IP6_EXTHDR_CHECK(m, off, minlen, IPPROTO_DONE);
-	/* adjust pointer */
-	ip6 = mtod(m, struct ip6_hdr *);
-
-	/* adjust mbuf to point to the PIM header */
-	pim = (struct pim *)((caddr_t)ip6 + off);
-#else
 	IP6_EXTHDR_GET(pim, struct pim *, m, off, minlen);
 	if (pim == NULL) {
 		pim6stat.pim6s_rcv_tooshort++;
 		return IPPROTO_DONE;
 	}
-#endif
 
 #define PIM6_CHECKSUM
 #ifdef PIM6_CHECKSUM

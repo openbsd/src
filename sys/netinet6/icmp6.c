@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.66 2003/04/01 01:09:37 itojun Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.67 2003/05/14 14:24:44 itojun Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -288,15 +288,11 @@ icmp6_error(m, type, code, param)
 	/* count per-type-code statistics */
 	icmp6_errcount(&icmp6stat.icp6s_outerrhist, type, code);
 
-#ifndef PULLDOWN_TEST
-	IP6_EXTHDR_CHECK(m, 0, sizeof(struct ip6_hdr), );
-#else
 	if (m->m_len < sizeof(struct ip6_hdr)) {
 		m = m_pullup(m, sizeof(struct ip6_hdr));
 		if (m == NULL)
 			return;
 	}
-#endif
 	oip6 = mtod(m, struct ip6_hdr *);
 
 	/*
@@ -334,17 +330,12 @@ icmp6_error(m, type, code, param)
 	if (off >= 0 && nxt == IPPROTO_ICMPV6) {
 		struct icmp6_hdr *icp;
 
-#ifndef PULLDOWN_TEST
-		IP6_EXTHDR_CHECK(m, 0, off + sizeof(struct icmp6_hdr), );
-		icp = (struct icmp6_hdr *)(mtod(m, caddr_t) + off);
-#else
 		IP6_EXTHDR_GET(icp, struct icmp6_hdr *, m, off,
 			sizeof(*icp));
 		if (icp == NULL) {
 			icmp6stat.icp6s_tooshort++;
 			return;
 		}
-#endif
 		if (icp->icmp6_type < ICMP6_ECHO_REQUEST ||
 		    icp->icmp6_type == ND_REDIRECT) {
 			/*
@@ -438,11 +429,6 @@ icmp6_input(mp, offp, proto)
 
 	icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_msg);
 
-#ifndef PULLDOWN_TEST
-	IP6_EXTHDR_CHECK(m, off, sizeof(struct icmp6_hdr), IPPROTO_DONE);
-	/* m might change if M_LOOP.  So, call mtod after this */
-#endif
-
 	/*
 	 * Locate icmp6 structure in mbuf, and check
 	 * that not corrupted and of at least minimum length
@@ -458,16 +444,12 @@ icmp6_input(mp, offp, proto)
 	/*
 	 * calculate the checksum
 	 */
-#ifndef PULLDOWN_TEST
-	icmp6 = (struct icmp6_hdr *)((caddr_t)ip6 + off);
-#else
 	IP6_EXTHDR_GET(icmp6, struct icmp6_hdr *, m, off, sizeof(*icmp6));
 	if (icmp6 == NULL) {
 		icmp6stat.icp6s_tooshort++;
 		icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_error);
 		return IPPROTO_DONE;
 	}
-#endif
 	code = icmp6->icmp6_code;
 
 	if ((sum = in6_cksum(m, IPPROTO_ICMPV6, off, icmp6len)) != 0) {
@@ -713,10 +695,6 @@ icmp6_input(mp, offp, proto)
 			goto badlen;
 
 		if (mode == FQDN) {
-#ifndef PULLDOWN_TEST
-			IP6_EXTHDR_CHECK(m, off, sizeof(struct icmp6_nodeinfo),
-					 IPPROTO_DONE);
-#endif
 			n = m_copym(m, 0, M_COPYALL, M_DONTWAIT);
 			if (n)
 				n = ni6_input(n, off);
@@ -926,19 +904,12 @@ icmp6_notify_error(m, off, icmp6len, code)
 		icmp6stat.icp6s_tooshort++;
 		goto freeit;
 	}
-#ifndef PULLDOWN_TEST
-	IP6_EXTHDR_CHECK(m, off,
-			 sizeof(struct icmp6_hdr) + sizeof(struct ip6_hdr),
-			 -1);
-	icmp6 = (struct icmp6_hdr *)(mtod(m, caddr_t) + off);
-#else
 	IP6_EXTHDR_GET(icmp6, struct icmp6_hdr *, m, off,
 		       sizeof(*icmp6) + sizeof(struct ip6_hdr));
 	if (icmp6 == NULL) {
 		icmp6stat.icp6s_tooshort++;
 		return (-1);
 	}
-#endif
 	eip6 = (struct ip6_hdr *)(icmp6 + 1);
 
 	/* Detect the upper level protocol */
@@ -962,20 +933,12 @@ icmp6_notify_error(m, off, icmp6len, code)
 			case IPPROTO_HOPOPTS:
 			case IPPROTO_DSTOPTS:
 			case IPPROTO_AH:
-#ifndef PULLDOWN_TEST
-				IP6_EXTHDR_CHECK(m, 0, eoff +
-						 sizeof(struct ip6_ext),
-						 -1);
-				eh = (struct ip6_ext *)(mtod(m, caddr_t)
-							+ eoff);
-#else
 				IP6_EXTHDR_GET(eh, struct ip6_ext *, m,
 					       eoff, sizeof(*eh));
 				if (eh == NULL) {
 					icmp6stat.icp6s_tooshort++;
 					return (-1);
 				}
-#endif
 
 				if (nxt == IPPROTO_AH)
 					eoff += (eh->ip6e_len + 2) << 2;
@@ -992,19 +955,12 @@ icmp6_notify_error(m, off, icmp6len, code)
 				 * information that depends on the final
 				 * destination (e.g. path MTU).
 				 */
-#ifndef PULLDOWN_TEST
-				IP6_EXTHDR_CHECK(m, 0, eoff + sizeof(*rth),
-						 -1);
-				rth = (struct ip6_rthdr *)(mtod(m, caddr_t)
-							   + eoff);
-#else
 				IP6_EXTHDR_GET(rth, struct ip6_rthdr *, m,
 					       eoff, sizeof(*rth));
 				if (rth == NULL) {
 					icmp6stat.icp6s_tooshort++;
 					return (-1);
 				}
-#endif
 				rthlen = (rth->ip6r_len + 1) << 3;
 				/*
 				 * XXX: currently there is no
@@ -1018,11 +974,6 @@ icmp6_notify_error(m, off, icmp6len, code)
 				    rth->ip6r_type == IPV6_RTHDR_TYPE_0) {
 					int hops;
 
-#ifndef PULLDOWN_TEST
-					IP6_EXTHDR_CHECK(m, 0, eoff + rthlen,
-							 -1);
-					rth0 = (struct ip6_rthdr0 *)(mtod(m, caddr_t) + eoff);
-#else
 					IP6_EXTHDR_GET(rth0,
 						       struct ip6_rthdr0 *, m,
 						       eoff, rthlen);
@@ -1030,7 +981,6 @@ icmp6_notify_error(m, off, icmp6len, code)
 						icmp6stat.icp6s_tooshort++;
 						return (-1);
 					}
-#endif
 					/* just ignore a bogus header */
 					if ((rth0->ip6r0_len % 2) == 0 &&
 					    (hops = rth0->ip6r0_len/2))
@@ -1040,20 +990,12 @@ icmp6_notify_error(m, off, icmp6len, code)
 				nxt = rth->ip6r_nxt;
 				break;
 			case IPPROTO_FRAGMENT:
-#ifndef PULLDOWN_TEST
-				IP6_EXTHDR_CHECK(m, 0, eoff +
-						 sizeof(struct ip6_frag),
-						 -1);
-				fh = (struct ip6_frag *)(mtod(m, caddr_t)
-							 + eoff);
-#else
 				IP6_EXTHDR_GET(fh, struct ip6_frag *, m,
 					       eoff, sizeof(*fh));
 				if (fh == NULL) {
 					icmp6stat.icp6s_tooshort++;
 					return (-1);
 				}
-#endif
 				/*
 				 * Data after a fragment header is meaningless
 				 * unless it is the first fragment, but
@@ -1079,16 +1021,12 @@ icmp6_notify_error(m, off, icmp6len, code)
 			}
 		}
 	  notify:
-#ifndef PULLDOWN_TEST
-		icmp6 = (struct icmp6_hdr *)(mtod(m, caddr_t) + off);
-#else
 		IP6_EXTHDR_GET(icmp6, struct icmp6_hdr *, m, off,
 			       sizeof(*icmp6) + sizeof(struct ip6_hdr));
 		if (icmp6 == NULL) {
 			icmp6stat.icp6s_tooshort++;
 			return (-1);
 		}
-#endif
 
 		eip6 = (struct ip6_hdr *)(icmp6 + 1);
 		bzero(&icmp6dst, sizeof(icmp6dst));
@@ -1260,15 +1198,11 @@ ni6_input(m, off)
 	char *subj = NULL;
 
 	ip6 = mtod(m, struct ip6_hdr *);
-#ifndef PULLDOWN_TEST
-	ni6 = (struct icmp6_nodeinfo *)(mtod(m, caddr_t) + off);
-#else
 	IP6_EXTHDR_GET(ni6, struct icmp6_nodeinfo *, m, off, sizeof(*ni6));
 	if (ni6 == NULL) {
 		/* m is already reclaimed */
 		return NULL;
 	}
-#endif
 
 	/*
 	 * Validate IPv6 destination address.
@@ -1970,16 +1904,11 @@ icmp6_rip6_input(mp, off)
 	struct icmp6_hdr *icmp6;
 	struct mbuf *opts = NULL;
 
-#ifndef PULLDOWN_TEST
-	/* this is assumed to be safe. */
-	icmp6 = (struct icmp6_hdr *)((caddr_t)ip6 + off);
-#else
 	IP6_EXTHDR_GET(icmp6, struct icmp6_hdr *, m, off, sizeof(*icmp6));
 	if (icmp6 == NULL) {
 		/* m is already reclaimed */
 		return IPPROTO_DONE;
 	}
-#endif
 
 	bzero(&rip6src, sizeof(rip6src));
 	rip6src.sin6_len = sizeof(struct sockaddr_in6);
@@ -2278,16 +2207,11 @@ icmp6_redirect_input(m, off)
 	if (!icmp6_rediraccept)
 		goto freeit;
 
-#ifndef PULLDOWN_TEST
-	IP6_EXTHDR_CHECK(m, off, icmp6len,);
-	nd_rd = (struct nd_redirect *)((caddr_t)ip6 + off);
-#else
 	IP6_EXTHDR_GET(nd_rd, struct nd_redirect *, m, off, icmp6len);
 	if (nd_rd == NULL) {
 		icmp6stat.icp6s_tooshort++;
 		return;
 	}
-#endif
 	redtgt6 = nd_rd->nd_rd_target;
 	reddst6 = nd_rd->nd_rd_dst;
 

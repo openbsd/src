@@ -1,4 +1,4 @@
-/*	$OpenBSD: mld6.c,v 1.16 2002/06/09 14:38:39 itojun Exp $	*/
+/*	$OpenBSD: mld6.c,v 1.17 2003/05/14 14:24:44 itojun Exp $	*/
 /*	$KAME: mld6.c,v 1.26 2001/02/16 14:50:35 itojun Exp $	*/
 
 /*
@@ -188,16 +188,11 @@ mld6_input(m, off)
 	struct in6_ifaddr *ia;
 	int timer;		/* timer value in the MLD query header */
 
-#ifndef PULLDOWN_TEST
-	IP6_EXTHDR_CHECK(m, off, sizeof(*mldh),);
-	mldh = (struct mld6_hdr *)(mtod(m, caddr_t) + off);
-#else
 	IP6_EXTHDR_GET(mldh, struct mld6_hdr *, m, off, sizeof(*mldh));
 	if (mldh == NULL) {
 		icmp6stat.icp6s_tooshort++;
 		return;
 	}
-#endif
 
 	/* source address validation */
 	ip6 = mtod(m, struct ip6_hdr *);/* in case mpullup */
