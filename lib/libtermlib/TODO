@@ -1,7 +1,0 @@
-Make mvcur() work on terminals without cursor_address - look in curses
-color support in vidputs() - look in ncurses
-
-Code to read from compiled terminfo files
-Code to read from terminfo source?
-
-Manual pages
