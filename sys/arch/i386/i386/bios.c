@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.19 1997/10/26 09:32:47 niklas Exp $	*/
+/*	$OpenBSD: bios.c,v 1.20 1997/11/10 16:09:55 flipk Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -115,8 +115,10 @@ biosattach(parent, self, aux)
 	void *aux;
 {
 	struct bios_softc *sc = (void *) self;
-#if NAPM > 0 || defined(DEBUG)
+#if NAPM > 0
 	struct bios_attach_args *bia = aux;
+#endif
+#if NAPM > 0 || defined(DEBUG)
 	bios_apminfo_t *apm = NULL;
 #endif
 	u_int8_t *va = ISA_HOLE_VADDR(0xffff0);
