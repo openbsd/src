@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.1.1.1 2000/06/18 07:30:41 jason Exp $	*/
+/*	$OpenBSD: client.c,v 1.2 2000/06/20 04:55:25 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Network Security Technologies, Inc. http://www.netsec.net
@@ -141,7 +141,6 @@ client_mode(bfd, sysname, srvname, myea)
 
 	if (pppfd >= 0) {
 		send_padt(bfd, myea, &rmea, client_sessionid);
-		close(pppfd);
 		pppfd = -1;
 	}
 	return (r);
@@ -363,7 +362,6 @@ getpackets(bfd, srv, sysname, myea, rmea)
 				    len, mpkt);
 				break;
 			default:
-				recv_debug(bfd, myea, &eh, &ph, len, mpkt);
 				r = 0;
 			}
 			if (r < 0)
@@ -427,6 +425,8 @@ recv_pado(bfd, srv, myea, rmea, eh, ph, len, pkt)
 	r = 0;
 	slen = (srv == NULL) ? 0 : strlen(srv);
 	while ((n = tag_lookup(&tl, PPPOE_TAG_SERVICE_NAME, r)) != NULL) {
+		if (slen == 0)
+			break;
 		if (slen == 0 || n->len == 0)
 			break;
 		if (n->len == slen && !strncmp(srv, n->val, slen))
