@@ -1,4 +1,4 @@
 major=34
-minor=1
+minor=2
 # note: If changes were made to include/thread_private.h or if system
 # calls were added/changed then libpthread must also be updated.
