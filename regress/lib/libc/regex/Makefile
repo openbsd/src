@@ -1,10 +1,11 @@
-#	$OpenBSD: Makefile,v 1.5 2002/09/02 20:01:43 avsm Exp $
+#	$OpenBSD: Makefile,v 1.6 2004/08/13 14:54:12 millert Exp $
 #	$NetBSD: Makefile,v 1.2 1995/02/16 19:38:45 cgd Exp $
 
 PROG=	re
-SRCS=	main.c split.c debug.c
+SRCS=	main.c split.c debug.c regcomp.c regerror.c regexec.c regfree.c
+.PATH: ${.CURDIR}/../../../../lib/libc/regex
 
-CFLAGS+= -I${.CURDIR}/../../../../lib/libc/regex
+CFLAGS+= -I${.CURDIR}/../../../../lib/libc/regex -DREDEBUG -DPOSIX_MISTAKE
 
 TESTS=	${.CURDIR}/tests
 
