@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_cache.c,v 1.4 2001/04/29 20:58:37 art Exp $	*/
+/*	$OpenBSD: vfs_cache.c,v 1.5 2001/05/02 05:55:13 fgsch Exp $	*/
 /*	$NetBSD: vfs_cache.c,v 1.13 1996/02/04 02:18:09 christos Exp $	*/
 
 /*
@@ -231,7 +231,7 @@ nchinit()
 	TAILQ_INIT(&nclruhead);
 	nchashtbl = hashinit(desiredvnodes, M_CACHE, M_WAITOK, &nchash);
 	pool_init(&nch_pool, sizeof(struct namecache), 0, 0, 0, "nchpl",
-		0, pool_page_alloc_nointr, pool_page_free_nointr, M_PROC);
+		0, pool_page_alloc_nointr, pool_page_free_nointr, M_CACHE);
 }
 
 /*
