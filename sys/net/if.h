@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.37 2002/05/27 13:42:16 itojun Exp $	*/
+/*	$OpenBSD: if.h,v 1.38 2002/06/23 23:55:04 itojun Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -172,7 +172,6 @@ struct ifnet {				/* and the entries */
 					/* timer routine */
 	void	(*if_watchdog)(struct ifnet *);
 	struct	ifaltq if_snd;		/* output queue (includes altq) */
-	struct ifprefix *if_prefixlist; /* linked list of prefixes per if */
 
 	void	*if_afdata[AF_MAX];
 };
@@ -305,20 +304,6 @@ struct ifaddr {
 	int	ifa_metric;		/* cost of going out this interface */
 };
 #define	IFA_ROUTE	RTF_UP		/* route installed */
-
-/*
- * The prefix structure contains information about one prefix
- * of an interface.  They are maintained by the different address families,
- * are allocated and attached when an prefix or an address is set,
- * and are linked together so all prfefixes for an interface can be located.
- */
-struct ifprefix {
-	struct	sockaddr *ifpr_prefix;	/* prefix of interface */
-	struct	ifnet *ifpr_ifp;	/* back-pointer to interface */
-	struct ifprefix *ifpr_next;
-	u_char	ifpr_plen;		/* prefix length in bits */
-	u_char	ifpr_type;		/* protocol dependent prefix type */
-};
 
 /*
  * Message format for use in obtaining information about interfaces
