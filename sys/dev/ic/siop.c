@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.13 2001/08/26 02:39:05 krw Exp $ */
+/*	$OpenBSD: siop.c,v 1.14 2001/10/08 01:25:06 krw Exp $ */
 /*	$NetBSD: siop.c,v 1.39 2001/02/11 18:04:49 bouyer Exp $	*/
 
 /*
@@ -1376,9 +1376,16 @@ siop_scsicmd(xs)
 			siop_intr(sc);
 			if (xs->flags & ITSDONE) {
 				if ((xs->cmd->opcode == INQUIRY)
-				    && (xs->error == XS_NOERROR)
-				    && (sc->targets[target]->status == TARST_PROBING))
-					sc->targets[target]->status = TARST_ASYNC;
+				    && (xs->error == XS_NOERROR)) {
+					error = ((struct scsi_inquiry_data *)xs->data)->device & SID_QUAL;
+					if (error != SID_QUAL_BAD_LU) {
+						if (sc->targets[target]->status == TARST_PROBING)
+							sc->targets[target]->status = TARST_ASYNC;
+						/* Can't do lun 0 here, because flags not set yet */
+						if (lun > 0)
+							siop_add_dev(sc, target, lun);
+					}
+				}
 				break;
 			}
 			delay(1000);
