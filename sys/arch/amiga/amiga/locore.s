@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.25 1999/01/20 12:04:01 niklas Exp $	*/
+/*	$OpenBSD: locore.s,v 1.26 2000/05/27 19:48:36 art Exp $	*/
 /*	$NetBSD: locore.s,v 1.89 1997/07/17 16:22:54 is Exp $	*/
 
 /*
@@ -465,7 +465,11 @@ _trace:
 
 _spurintr:
 	addql	#1,_intrcnt+0
+#ifdef UVM
+	addql	#1,_uvmexp+UVMEXP_INTRS
+#else
 	addql	#1,_cnt+V_INTR
+#endif
 	jra	rei
 
 #ifdef DRACO
@@ -493,7 +497,11 @@ _DraCoLev2intr:
 
 Ldraciaend:
 	moveml	sp@+,#0x0303
+#ifdef UVM
+	addql	#1,_uvmexp+UVMEXP_INTRS
+#else
 	addql	#1,_cnt+V_INTR
+#endif
 	jra	rei
 
 /* XXX on the DraCo rev. 4 or later, lev 1 is vectored here. */
@@ -527,7 +535,11 @@ Ldrclockretry:
 	clrb	a0@(9)		| reset timer irq
 
 	moveml	sp@+,#0x0303
+#ifdef UVM
+	addql	#1,_uvmexp+UVMEXP_INTRS
+#else
 	addql	#1,_cnt+V_INTR
+#endif
 	jra	rei
 
 /* XXX on the DraCo, lev 1, 3, 4, 5 and 6 are vectored here by initcpu() */
@@ -544,7 +556,11 @@ Ldrintrcommon:
 	jbsr	_intrhand		| handle interrupt
 	addql	#4,sp			| pop SR
 	moveml	sp@+,#0x0303
+#ifdef UVM
+	addql	#1,_uvmexp+UVMEXP_INTRS
+#else
 	addql	#1,_cnt+V_INTR
+#endif
 	jra	rei
 #endif
 	
@@ -559,7 +575,11 @@ _lev5intr:
 #endif
 	moveml	sp@+,d0/d1/a0/a1
 	addql	#1,_intrcnt+20
+#ifdef UVM
+	addql	#1,_uvmexp+UVMEXP_INTRS
+#else
 	addql	#1,_cnt+V_INTR
+#endif
 	jra	rei
 
 _lev1intr:
@@ -579,7 +599,11 @@ Lintrcommon:
 	jbsr	_intrhand		| handle interrupt
 	addql	#4,sp			| pop SR
 	moveml	sp@+,d0-d1/a0-a1
+#ifdef UVM
+	addql	#1,_uvmexp+UVMEXP_INTRS
+#else
 	addql	#1,_cnt+V_INTR
+#endif
 	jra	rei
 
 | Both IPL_REMAP_1 and IPL_REMAP_2 are experimental interruptsystems from
@@ -665,7 +689,11 @@ Lskipciab:
 | other ciab interrupts?
 Llev6done:
 	moveml	sp@+,d0-d1/a0-a1	| restore scratch regs
-	addql	#1,_cnt+V_INTR		| chalk up another interrupt
+#ifdef UVM
+	addql	#1,_uvmexp+UVMEXP_INTRS
+#else
+	addql	#1,_cnt+V_INTR
+#endif
 	jra	rei			| all done [can we do rte here?]
 Lchkexter:
 | check to see if EXTER request is really set?
@@ -720,7 +748,11 @@ Lexter:
 	addql	#8,sp
 	addql	#1,_intrcnt+24		| add another exter interrupt
 	moveml	sp@+,d0-d1/a0-a1	| restore scratch regs
-	addql	#1,_cnt+V_INTR		| chalk up another interrupt
+#ifdef UVM
+	addql	#1,_uvmexp+UVMEXP_INTRS
+#else
+	addql	#1,_cnt+V_INTR
+#endif
 	jra	Lastchk			| all done [can we do rte here?]
 #endif
 	
@@ -1157,7 +1189,7 @@ ENTRY(qsetjmp)
 	rts
 #endif
 	
-	.globl	_whichqs,_qs,_cnt,_panic
+	.globl	_whichqs,_qs,_panic
 	.globl	_curproc
 	.comm	_want_resched,4
 
@@ -1195,7 +1227,11 @@ ENTRY(switch_exit)
 	movl	#USPACE,sp@-		| size of u-area
 	movl	a0@(P_ADDR),sp@-	| address u-area of process
 	movl	_kernel_map,sp@-	| map it was allocated in
+#if defined(UVM)
+	jbsr	_uvm_km_free		! deallocate it
+#else
 	jbsr	_kmem_free		| deallocate it
+#endif
 	lea	sp@(12),sp		| pop args
 
 	jra	_cpu_switch
