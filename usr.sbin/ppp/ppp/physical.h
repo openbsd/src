@@ -16,7 +16,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- *  $OpenBSD: physical.h,v 1.16 2000/02/27 01:38:27 brian Exp $
+ *  $OpenBSD: physical.h,v 1.17 2000/09/14 22:02:50 brian Exp $
  *
  */
 
@@ -35,6 +35,7 @@ struct cmdargs;
 #define UDP_DEVICE	4
 #define ETHER_DEVICE	5
 #define EXEC_DEVICE	6
+#define ATM_DEVICE	7
 
 /* Returns from awaitcarrier() */
 #define CARRIER_PENDING	1

@@ -16,7 +16,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- *  $OpenBSD: physical.c,v 1.25 2000/08/18 00:02:11 brian Exp $
+ *  $OpenBSD: physical.c,v 1.26 2000/09/14 22:02:50 brian Exp $
  *
  */
 
@@ -96,7 +96,9 @@
 #ifndef NONETGRAPH
 #include "ether.h"
 #endif
-
+#ifndef NOATM
+#include "atm.h"
+#endif
 
 #define PPPOTCPLINE "ppp"
 
@@ -122,6 +124,10 @@ struct {
 #ifndef NONETGRAPH
   /* This must come before ``udp'' & ``tcp'' */
   { ether_Create, ether_iov2device, ether_DeviceSize },
+#endif
+#ifndef NOATM
+  /* and so must this */
+  { atm_Create, atm_iov2device, atm_DeviceSize },
 #endif
   { tcp_Create, tcp_iov2device, tcp_DeviceSize },
   { udp_Create, udp_iov2device, udp_DeviceSize },
