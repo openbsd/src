@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcscp.c,v 1.1 2001/02/14 05:10:18 fgsch Exp $	*/
+/*	$OpenBSD: pcscp.c,v 1.2 2001/02/14 06:37:01 fgsch Exp $	*/
 /*	$NetBSD: pcscp.c,v 1.11 2000/11/14 18:42:58 thorpej Exp $	*/
 
 /*-
@@ -209,7 +209,6 @@ pcscp_attach(parent, self, aux)
 		printf(": unable to map registers\n");
 		return;
 	}
-	printf("\n");
 
 	sc->sc_glue = &pcscp_glue;
 
@@ -271,7 +270,7 @@ pcscp_attach(parent, self, aux)
 	/* map and establish interrupt */
 	if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
 	    pa->pa_intrline, &ih)) {
-		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
+		printf(": couldn't map interrupt\n");
 		return;
 	}
 
@@ -279,15 +278,14 @@ pcscp_attach(parent, self, aux)
 	esc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO, 
 	    ncr53c9x_intr, esc, sc->sc_dev.dv_xname);
 	if (esc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt", sc->sc_dev.dv_xname);
+		printf(": couldn't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
 		return;
 	}
 	if (intrstr != NULL)
-		printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname,
-		    intrstr);
+		printf(": %s\n", intrstr);
 
 	/*
 	 * Create the DMA maps for the data transfers.
