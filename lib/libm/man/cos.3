@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cos.3,v 1.6 2000/03/02 00:29:49 todd Exp $
+.\"	$OpenBSD: cos.3,v 1.7 2003/02/27 00:27:47 jason Exp $
 .\" Copyright (c) 1991 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -48,11 +48,13 @@
 .Sh DESCRIPTION
 The
 .Fn cos
-and
-.Fn cosf
-functions compute the cosine of
+function compute the cosine of
 .Fa x
 (measured in radians).
+The
+.Fn cosf
+function is a single precision version of
+.Fn cos .
 A large magnitude argument may yield a result with little or no
 significance.
 For a discussion of error due to roundoff, see

@@ -1,8 +1,7 @@
-.\"	$OpenBSD: sin.3,v 1.5 2000/03/02 00:29:50 todd Exp $
+.\"	$OpenBSD: sin.3,v 1.6 2003/02/27 00:27:47 jason Exp $
 .\" Copyright (c) 1991 The Regents of the University of California.
 .\" All rights reserved.
 .\"
-.\"	@(#)sin.3	6.7 (Berkeley) 4/19/91
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
 .\" are met:
@@ -31,10 +30,10 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     from: @(#)sin.3	6.7 (Berkeley) 4/19/91
+.\"     from: @(#)cos.3	5.1 (Berkeley) 5/2/91
 .\"
-.Dd April 19, 1991
-.Dt SIN 3
+.Dd May 2, 1991
+.Dt COS 3
 .Os
 .Sh NAME
 .Nm sin ,
@@ -49,11 +48,17 @@
 .Sh DESCRIPTION
 The
 .Fn sin
-function computes the sine of
+function compute the sine of
 .Fa x
 (measured in radians).
-A large magnitude argument may yield a result with little
-or no significance.
+The    
+.Fn sinf
+function is a single precision version of
+.Fn sin .
+A large magnitude argument may yield a result with little or no
+significance.
+For a discussion of error due to roundoff, see
+.Xr math 3 .
 .Sh RETURN VALUES
 The
 .Fn sin
@@ -63,9 +68,9 @@ function returns the sine value.
 .Xr asin 3 ,
 .Xr atan 3 ,
 .Xr atan2 3 ,
-.Xr cos 3 ,
 .Xr cosh 3 ,
 .Xr math 3 ,
+.Xr sin 3 ,
 .Xr sinh 3 ,
 .Xr tan 3 ,
 .Xr tanh 3
