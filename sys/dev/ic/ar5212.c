@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5212.c,v 1.7 2005/03/18 20:46:32 reyk Exp $	*/
+/*	$OpenBSD: ar5212.c,v 1.8 2005/03/19 17:27:46 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -410,6 +410,9 @@ void
 ar5k_ar5212_detach(hal)
 	struct ath_hal *hal;
 {
+	if (hal->ah_rf_banks != NULL)
+		free(hal, M_DEVBUF);
+
 	/*
 	 * Free HAL structure, assume interrupts are down
 	 */
@@ -446,7 +449,8 @@ ar5k_ar5212_reset(hal, op_mode, channel, change_channel, status)
 	s_led[1] = AR5K_REG_READ(AR5K_AR5212_GPIOCR);
 	s_led[2] = AR5K_REG_READ(AR5K_AR5212_GPIODO);
 
-	ar5k_ar5212_getRfGain(hal);
+	if (change_channel == AH_TRUE && hal->ah_rf_banks != NULL)
+		ar5k_ar5212_getRfGain(hal);
 
 	if (ar5k_ar5212_nic_wakeup(hal, channel->c_channel_flags) == AH_FALSE)
 		return (AH_FALSE);
@@ -455,6 +459,15 @@ ar5k_ar5212_reset(hal, op_mode, channel, change_channel, status)
 	 * Initialize operating mode
 	 */
 	hal->ah_op_mode = op_mode;
+
+	if (hal->ah_radio == AR5K_AR5111) {
+		phy = AR5K_INI_PHY_5111;
+	} else if (hal->ah_radio == AR5K_AR5112) {
+		phy = AR5K_INI_PHY_5112;
+	} else {
+		AR5K_PRINTF("invalid phy radio: %u\n", hal->ah_radio);
+		return (AH_FALSE);
+	}
 
 	if (channel->c_channel_flags & IEEE80211_CHAN_A) {
 		mode = AR5K_INI_VAL_11A;
@@ -489,27 +502,6 @@ ar5k_ar5212_reset(hal, op_mode, channel, change_channel, status)
 	AR5K_REG_WRITE(AR5K_AR5212_PHY(0), AR5K_AR5212_PHY_SHIFT_5GHZ);
 
 	/*
-	 * Write initial register settings
-	 */
-	for (i = 0; i < AR5K_ELEMENTS(ar5212_ini); i++) {
-		if (change_channel == AH_TRUE &&
-		    ar5212_ini[i].ini_register >= AR5K_AR5212_PCU_MIN &&
-		    ar5212_ini[i].ini_register <= AR5K_AR5212_PCU_MAX)
-			continue;
-
-		if (hal->ah_radio == AR5K_AR5112) {
-			if (!(ar5212_mode[i].mode_flags & AR5K_INI_FLAG_5112))
-				continue;
-		} else {
-			if (!(ar5212_mode[i].mode_flags & AR5K_INI_FLAG_5111))
-				continue;
-		}
-
-		AR5K_REG_WRITE((u_int32_t)ar5212_ini[i].ini_register,
-		    ar5212_ini[i].ini_value);
-	}
-
-	/*
 	 * Write initial mode settings
 	 */
 	for (i = 0; i < AR5K_ELEMENTS(ar5212_mode); i++) {
@@ -524,9 +516,37 @@ ar5k_ar5212_reset(hal, op_mode, channel, change_channel, status)
 		else
 			continue;
 
+		AR5K_REG_WAIT(i);
 		AR5K_REG_WRITE((u_int32_t)ar5212_mode[i].mode_register,
 		    ar5212_mode[i].mode_value[phy][mode]);
 	}
+
+	/*
+	 * Write initial register settings
+	 */
+	for (i = 0; i < AR5K_ELEMENTS(ar5212_ini); i++) {
+		if (change_channel == AH_TRUE &&
+		    ar5212_ini[i].ini_register >= AR5K_AR5212_PCU_MIN &&
+		    ar5212_ini[i].ini_register <= AR5K_AR5212_PCU_MAX)
+			continue;
+
+		if ((hal->ah_radio == AR5K_AR5111 &&
+		    ar5212_ini[i].ini_flags & AR5K_INI_FLAG_5111) ||
+		    (hal->ah_radio == AR5K_AR5112 &&
+		    ar5212_ini[i].ini_flags & AR5K_INI_FLAG_5112)) {
+			AR5K_REG_WAIT(i);
+			AR5K_REG_WRITE((u_int32_t)ar5212_ini[i].ini_register,
+			    ar5212_ini[i].ini_value);
+		}
+	}
+
+	/*
+	 * Write initial RF gain settings
+	 */
+	if (ar5k_rfgain(hal, phy, freq) == AH_FALSE)
+		return (AH_FALSE);
+
+	AR5K_DELAY(1000);
 
 	/*
 	 * Set rate duration table
@@ -558,20 +578,10 @@ ar5k_ar5212_reset(hal, op_mode, channel, change_channel, status)
 	}
 
 	/*
-	 * Write initial RF gain settings
-	 */
-	phy = hal->ah_radio == AR5K_AR5112 ?
-	    AR5K_INI_PHY_5112 : AR5K_INI_PHY_5111;
-	if (ar5k_rfgain(hal, phy, freq) == AH_FALSE)
-		return (AH_FALSE);
-
-	AR5K_DELAY(1000);
-
-	/*
-	 * Set TX power
+	 * Set TX power (XXX use txpower from net80211)
 	 */
 	if (ar5k_ar5212_txpower(hal, channel,
-		hal->ah_txpower.txp_max) == AH_FALSE)
+		AR5K_TUNE_DEFAULT_TXPOWER) == AH_FALSE)
 		return (AH_FALSE);
 
 	/*
@@ -841,6 +851,15 @@ ar5k_ar5212_perCalibration(hal, channel)
 	/* Start noise floor calibration */
 	AR5K_REG_ENABLE_BITS(AR5K_AR5212_PHY_AGCCTL,
 	    AR5K_AR5212_PHY_AGCCTL_NF);
+
+	/* Request RF gain */
+	if (channel->c_channel_flags & IEEE80211_CHAN_5GHZ) {
+		AR5K_REG_WRITE(AR5K_AR5212_PHY_PAPD_PROBE,
+		    AR5K_REG_SM(hal->ah_txpower.txp_max,
+		    AR5K_AR5212_PHY_PAPD_PROBE_TXPOWER) |
+		    AR5K_AR5212_PHY_PAPD_PROBE_TX_NEXT);
+		hal->ah_rf_gain = HAL_RFGAIN_READ_REQUESTED;
+	}
 
 	return (AH_TRUE);
 }
@@ -1541,8 +1560,8 @@ ar5k_ar5212_getRxFilter(hal)
 
 	if (data & AR5K_AR5212_PHY_ERR_FIL_RADAR)
 		filter |= HAL_RX_FILTER_PHYRADAR;
-	if (data & (AR5K_AR5212_PHY_ERR_FIL_OFDM|
-		AR5K_AR5212_PHY_ERR_FIL_CCK))
+	if (data & (AR5K_AR5212_PHY_ERR_FIL_OFDM |
+	    AR5K_AR5212_PHY_ERR_FIL_CCK))
 		filter |= HAL_RX_FILTER_PHYERR;
 
 	return (filter);
@@ -2082,7 +2101,7 @@ ar5k_ar5212_getRfGain(hal)
 {
 	u_int32_t data, type;
 
-	if (!hal->ah_gain.g_active)
+	if ((hal->ah_rf_banks == NULL) || (!hal->ah_gain.g_active))
 		return (HAL_RFGAIN_INACTIVE);
 
 	if (hal->ah_rf_gain != HAL_RFGAIN_READ_REQUESTED)
@@ -2911,14 +2930,26 @@ ar5k_ar5212_txpower(hal, channel, txpower)
 	HAL_CHANNEL *channel;
 	u_int txpower;
 {
+	HAL_BOOL tpc = hal->ah_txpower.txp_tpc;
+	int i;
+
 	if (txpower > AR5K_TUNE_MAX_TXPOWER) {
 		AR5K_PRINTF("invalid tx power: %u\n", txpower);
 		return (AH_FALSE);
 	}
 
-#ifdef notyet
+	/* Reset TX power values */
+	bzero(&hal->ah_txpower, sizeof(hal->ah_txpower));
+	hal->ah_txpower.txp_tpc = tpc;
+
+	/* Initialize TX power table */
+	ar5k_txpower_table(hal, channel, txpower);
+
+	/* 
+	 * Write TX power values
+	 */
 	for (i = 0; i < (AR5K_EEPROM_POWER_TABLE_SIZE / 2); i++) {
-		AR5K_REG_WRITE(ah, AR5K_AR5212_PHY_PCDAC_TXPOWER(i),
+		AR5K_REG_WRITE(AR5K_AR5212_PHY_PCDAC_TXPOWER(i),
 		    ((((hal->ah_txpower.txp_pcdac[(i << 1) + 1] << 8) | 0xff) &
 		    0xffff) << 16) | (((hal->ah_txpower.txp_pcdac[i << 1] << 8)
 		    | 0xff) & 0xffff));
@@ -2939,7 +2970,6 @@ ar5k_ar5212_txpower(hal, channel, txpower)
 	AR5K_REG_WRITE(AR5K_AR5212_PHY_TXPOWER_RATE4,
 	    AR5K_TXPOWER_CCK(14, 24) | AR5K_TXPOWER_CCK(13, 16)
 	    | AR5K_TXPOWER_CCK(12, 8) | AR5K_TXPOWER_CCK(11, 0));
-#endif
 
 	if (hal->ah_txpower.txp_tpc == AH_TRUE) {
 		AR5K_REG_WRITE(AR5K_AR5212_PHY_TXPOWER_RATE_MAX,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5211.c,v 1.4 2005/03/13 18:32:21 reyk Exp $	*/
+/*	$OpenBSD: ar5211.c,v 1.5 2005/03/19 17:27:46 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -398,6 +398,9 @@ void
 ar5k_ar5211_detach(hal)
 	struct ath_hal *hal;
 {
+	if (hal->ah_rf_banks != NULL)
+		free(hal, M_DEVBUF);
+
 	/*
 	 * Free HAL structure, assume interrupts are down
 	 */
@@ -414,8 +417,24 @@ ar5k_ar5211_reset(hal, op_mode, channel, change_channel, status)
 {
 	struct ar5k_eeprom_info *ee = &hal->ah_capabilities.cap_eeprom;
 	u_int8_t mac[IEEE80211_ADDR_LEN];
-	u_int32_t data;
+	u_int32_t data, s_seq, s_ant, s_led[3];
 	u_int i, mode, freq, ee_mode, ant[2];
+
+	/*
+	 * Save some registers before a reset
+	 */
+	if (change_channel == AH_TRUE) {
+		s_seq = AR5K_REG_READ(AR5K_AR5211_DCU_SEQNUM(0));
+		s_ant = AR5K_REG_READ(AR5K_AR5211_DEFAULT_ANTENNA);
+	} else {
+		s_seq = 0;
+		s_ant = 1;
+	}
+
+	s_led[0] = AR5K_REG_READ(AR5K_AR5211_PCICFG) &
+	    AR5K_AR5211_PCICFG_LEDSTATE;
+	s_led[1] = AR5K_REG_READ(AR5K_AR5211_GPIOCR);
+	s_led[2] = AR5K_REG_READ(AR5K_AR5211_GPIODO);
 
 	if (ar5k_ar5211_nic_wakeup(hal, channel->c_channel_flags) == AH_FALSE)
 		return (AH_FALSE);
@@ -450,6 +469,15 @@ ar5k_ar5211_reset(hal, op_mode, channel, change_channel, status)
 	AR5K_REG_WRITE(AR5K_AR5211_PHY(0), AR5K_AR5211_PHY_SHIFT_5GHZ);
 
 	/*
+	 * Write initial mode settings
+	 */
+	for (i = 0; i < AR5K_ELEMENTS(ar5211_mode); i++) {
+		AR5K_REG_WAIT(i);
+		AR5K_REG_WRITE((u_int32_t)ar5211_mode[i].mode_register,
+		    ar5211_mode[i].mode_value[mode]);
+	}
+
+	/*
 	 * Write initial register settings
 	 */
 	for (i = 0; i < AR5K_ELEMENTS(ar5211_ini); i++) {
@@ -458,16 +486,9 @@ ar5k_ar5211_reset(hal, op_mode, channel, change_channel, status)
 		    ar5211_ini[i].ini_register <= AR5K_AR5211_PCU_MAX)
 			continue;
 
+		AR5K_REG_WAIT(i);
 		AR5K_REG_WRITE((u_int32_t)ar5211_ini[i].ini_register,
 		    ar5211_ini[i].ini_value);
-	}
-
-	/*
-	 * Write initial mode settings
-	 */
-	for (i = 0; i < AR5K_ELEMENTS(ar5211_mode); i++) {
-		AR5K_REG_WRITE((u_int32_t)ar5211_mode[i].mode_register,
-		    ar5211_mode[i].mode_value[mode]);
 	}
 
 	/*
@@ -533,7 +554,18 @@ ar5k_ar5211_reset(hal, op_mode, channel, change_channel, status)
 	    (ee->ee_i_cal[ee_mode] << AR5K_AR5211_PHY_IQ_CORR_Q_I_COFF_S) |
 	    ee->ee_q_cal[ee_mode]);
 
-	/* Misc */
+	/*
+	 * Restore saved values
+	 */
+	AR5K_REG_WRITE(AR5K_AR5211_DCU_SEQNUM(0), s_seq);
+	AR5K_REG_WRITE(AR5K_AR5211_DEFAULT_ANTENNA, s_ant);
+	AR5K_REG_ENABLE_BITS(AR5K_AR5211_PCICFG, s_led[0]);
+	AR5K_REG_WRITE(AR5K_AR5211_GPIOCR, s_led[1]);
+	AR5K_REG_WRITE(AR5K_AR5211_GPIODO, s_led[2]);
+
+	/*
+	 * Misc
+	 */
 	bcopy(etherbroadcastaddr, mac, IEEE80211_ADDR_LEN);
 	ar5k_ar5211_writeAssocid(hal, mac, 0, 0);
 	ar5k_ar5211_setPCUConfig(hal);

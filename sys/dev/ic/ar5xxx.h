@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.h,v 1.13 2005/03/18 20:46:32 reyk Exp $	*/
+/*	$OpenBSD: ar5xxx.h,v 1.14 2005/03/19 17:27:46 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -773,8 +773,6 @@ struct ar5k_eeprom_info {
 	int16_t		ee_noise_floor_thr[AR5K_EEPROM_N_MODES];
 	int8_t		ee_adc_desired_size[AR5K_EEPROM_N_MODES];
 	int8_t		ee_pga_desired_size[AR5K_EEPROM_N_MODES];
-
-
 };
 
 /*
@@ -1145,6 +1143,8 @@ struct ath_hal {
 	HAL_TXQ_INFO		ah_txq[HAL_NUM_TX_QUEUES];
 	u_int32_t		ah_txq_interrupts;
 
+	u_int32_t		*ah_rf_banks;
+	size_t			ah_rf_banks_size;
 	struct ar5k_gain	ah_gain;
 	u_int32_t		ah_offset[AR5K_MAX_RF_BANKS];
 
@@ -1153,6 +1153,7 @@ struct ath_hal {
 		u_int16_t	txp_rates[AR5K_MAX_RATES];
 		int16_t		txp_min, txp_max;
 		HAL_BOOL	txp_tpc;
+		int16_t		txp_ofdm;
 	} ah_txpower;
 
 	struct {
@@ -1208,8 +1209,10 @@ struct ath_hal {
 #define AR5K_DELAY(_n)		delay(_n)
 #define AR5K_ELEMENTS(_array)	(sizeof(_array) / sizeof(_array[0]))
 
-typedef struct ath_hal*(ar5k_attach_t)
+typedef struct ath_hal * (ar5k_attach_t)
 	(u_int16_t, void *, bus_space_tag_t, bus_space_handle_t, HAL_STATUS *);
+typedef HAL_BOOL (ar5k_rfgain_t)
+	(struct ath_hal *, HAL_CHANNEL *, u_int);
 
 /*
  * Some tuneable values (these should be changeable by the user)
@@ -1236,7 +1239,8 @@ typedef struct ath_hal*(ar5k_attach_t)
 #define AR5K_TUNE_CWMAX_XR			7
 #define AR5K_TUNE_NOISE_FLOOR			-72
 #define AR5K_TUNE_MAX_TXPOWER			60
-#define AR5K_TUNE_TPC_TXPOWER			AH_FALSE
+#define AR5K_TUNE_DEFAULT_TXPOWER		30
+#define AR5K_TUNE_TPC_TXPOWER			AH_TRUE
 #define AR5K_TUNE_ANT_DIVERSITY			AH_TRUE
 
 /* Default regulation domain if stored value EEPROM value is invalid */
@@ -1326,6 +1330,10 @@ typedef struct ath_hal*(ar5k_attach_t)
 	AR5K_REG_WRITE(hal->ah_phy + ((_reg) << 2), _val)
 #define AR5K_PHY_READ(_reg)						\
 	AR5K_REG_READ(hal->ah_phy + ((_reg) << 2))
+
+#define AR5K_REG_WAIT(_i)						\
+	if (_i % 64)							\
+		AR5K_DELAY(1);
 
 #define AR5K_EEPROM_READ(_o, _v)	{				\
 	if ((ret = hal->ah_eeprom_read(hal, (_o),			\
@@ -1796,6 +1804,9 @@ u_int32_t		 ar5k_rfregs_gainf_corr(struct ath_hal *);
 HAL_BOOL		 ar5k_rfregs_gain_readback(struct ath_hal *);
 int32_t			 ar5k_rfregs_gain_adjust(struct ath_hal *);
 HAL_BOOL		 ar5k_rfgain(struct ath_hal *, u_int, u_int);
+
+void			 ar5k_txpower_table(struct ath_hal *, HAL_CHANNEL *,
+    int16_t);
 
 __END_DECLS
 

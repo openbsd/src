@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.15 2005/03/18 21:37:56 reyk Exp $  */
+/*      $OpenBSD: ath.c,v 1.16 2005/03/19 17:27:46 reyk Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -2988,8 +2988,9 @@ ath_getchannels(struct ath_softc *sc, u_int cc, HAL_BOOL outdoor,
 	free(chans, M_TEMP);
 	
 	if (sc->sc_nchan < 1) {
-		if_printf(ifp, "no valid channels for regdomain %s\n",
-		    ieee80211_regdomain2name(ath_regdomain));
+		if_printf(ifp, "no valid channels for regdomain %s(%u)\n",
+		    ieee80211_regdomain2name(ath_regdomain),
+		    sc->sc_ah->ah_capabilities.cap_eeprom.ee_regdomain);
 		return ENOENT;
 	}
 

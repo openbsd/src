@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.c,v 1.18 2005/03/18 20:46:32 reyk Exp $	*/
+/*	$OpenBSD: ar5xxx.c,v 1.19 2005/03/19 17:27:46 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -80,7 +80,7 @@ HAL_BOOL	 ar5k_check_channel(struct ath_hal *, u_int16_t, u_int flags);
 
 HAL_BOOL	 ar5k_ar5111_rfregs(struct ath_hal *, HAL_CHANNEL *, u_int);
 HAL_BOOL	 ar5k_ar5112_rfregs(struct ath_hal *, HAL_CHANNEL *, u_int);
-int		 ar5k_rfregs_op(u_int32_t *, u_int32_t, u_int32_t, u_int32_t,
+u_int		 ar5k_rfregs_op(u_int32_t *, u_int32_t, u_int32_t, u_int32_t,
     u_int32_t, u_int32_t, HAL_BOOL);
 
 /*
@@ -206,7 +206,7 @@ ath_hal_attach(device, sc, st, sh, status)
 	hal->ah_software_retry = AH_FALSE;
 	hal->ah_ant_diversity = AR5K_TUNE_ANT_DIVERSITY;
 
-	if (attach(device, hal, st, sh, status) == NULL)
+	if ((attach)(device, hal, st, sh, status) == NULL)
 		goto failed;
 
 #ifdef AR5K_DEBUG
@@ -1297,7 +1297,7 @@ ar5k_ar5112_channel(hal, channel)
 	return (AH_TRUE);
 }
 
-int
+u_int
 ar5k_rfregs_op(rf, offset, reg, bits, first, col, set)
 	u_int32_t *rf;
 	u_int32_t offset, reg, bits, first, col;
@@ -1306,6 +1306,11 @@ ar5k_rfregs_op(rf, offset, reg, bits, first, col, set)
 	u_int32_t mask, entry, last, data, shift, position;
 	int32_t left;
 	int i;
+
+	if (rf == NULL) {
+		/* should not happen */
+		return (0);
+	}
 
 	if (!(col <= 3 && bits <= 32 && first + bits <= 319)) {
 		AR5K_PRINTF("invalid values at offset %u\n", offset);
@@ -1346,13 +1351,18 @@ ar5k_rfregs_gainf_corr(hal)
 	struct ath_hal *hal;
 {
 	u_int32_t mix, step;
+	u_int32_t *rf;
 
-	hal->ah_gain.g_f_corr = 0;
-
-	if (ar5k_rfregs_op(NULL, hal->ah_offset[7], 0, 1, 36, 0, AH_FALSE) != 1)
+	if (hal->ah_rf_banks == NULL)
 		return (0);
 
-	step = ar5k_rfregs_op(NULL, hal->ah_offset[7], 0, 4, 32, 0, AH_FALSE);
+	rf = hal->ah_rf_banks;
+	hal->ah_gain.g_f_corr = 0;
+
+	if (ar5k_rfregs_op(rf, hal->ah_offset[7], 0, 1, 36, 0, AH_FALSE) != 1)
+		return (0);
+
+	step = ar5k_rfregs_op(rf, hal->ah_offset[7], 0, 4, 32, 0, AH_FALSE);
 	mix = hal->ah_gain.g_step->gos_param[0];
 
 	switch (mix) {
@@ -1378,9 +1388,15 @@ ar5k_rfregs_gain_readback(hal)
 	struct ath_hal *hal;
 {
 	u_int32_t step, mix, level[4];
+	u_int32_t *rf;
+
+	if (hal->ah_rf_banks == NULL)
+		return (0);
+
+	rf = hal->ah_rf_banks;
 
 	if (hal->ah_radio == AR5K_AR5111) {
-		step = ar5k_rfregs_op(NULL, hal->ah_offset[7],
+		step = ar5k_rfregs_op(rf, hal->ah_offset[7],
 		    0, 6, 37, 0, AH_FALSE);
 		level[0] = 0;
 		level[1] = (step == 0x3f) ? 0x32 : step + 4;
@@ -1392,7 +1408,7 @@ ar5k_rfregs_gain_readback(hal)
 		hal->ah_gain.g_low = level[0] +
 		    (step == 0x3f ? AR5K_GAIN_DYN_ADJUST_LO_MARGIN : 0);
 	} else {
-		mix = ar5k_rfregs_op(NULL, hal->ah_offset[7],
+		mix = ar5k_rfregs_op(rf, hal->ah_offset[7],
 		    0, 1, 36, 0, AH_FALSE);
 		level[0] = level[2] = 0;
 
@@ -1474,15 +1490,28 @@ ar5k_rfregs(hal, channel, mode)
 	HAL_CHANNEL *channel;
 	u_int mode;
 {
+	ar5k_rfgain_t *func = NULL;
 	HAL_BOOL ret;
 
-	if (hal->ah_radio < AR5K_AR5111)
+	if (hal->ah_radio == AR5K_AR5111) {
+		hal->ah_rf_banks_size = sizeof(ar5111_rf);
+		func = ar5k_ar5111_rfregs;
+	} else if (hal->ah_radio == AR5K_AR5112) {		
+		hal->ah_rf_banks_size = sizeof(ar5112_rf);
+		func = ar5k_ar5112_rfregs;
+	} else
 		return (AH_FALSE);
 
-	if (hal->ah_radio == AR5K_AR5111)
-		ret = ar5k_ar5111_rfregs(hal, channel, mode);
-	else
-		ret = ar5k_ar5112_rfregs(hal, channel, mode);
+	if (hal->ah_rf_banks == NULL) {
+		/* XXX do extra checks? */
+		if ((hal->ah_rf_banks =
+		    malloc(hal->ah_rf_banks_size, M_DEVBUF, M_NOWAIT)) == NULL) {
+			AR5K_PRINT("out of memory\n");
+			return (AH_FALSE);
+		}
+	}
+
+	ret = (func)(hal, channel, mode);
 
 	if (ret == AH_TRUE)
 		hal->ah_rf_gain = HAL_RFGAIN_INACTIVE;
@@ -1498,11 +1527,13 @@ ar5k_ar5111_rfregs(hal, channel, mode)
 {
 	struct ar5k_eeprom_info *ee = &hal->ah_capabilities.cap_eeprom;
 	const u_int rf_size = AR5K_ELEMENTS(ar5111_rf);
-	u_int32_t rf[rf_size];
+	u_int32_t *rf;
 	int i, obdb = -1, bank = -1;
 	u_int32_t ee_mode;
 
 	AR5K_ASSERT_ENTRY(mode, AR5K_INI_VAL_MAX);
+
+	rf = hal->ah_rf_banks;
 
 	/* Copy values to modify them */
 	for (i = 0; i < rf_size; i++) {
@@ -1579,8 +1610,8 @@ ar5k_ar5111_rfregs(hal, channel, mode)
 
 	/* Write RF values */
 	for (i = 0; i < rf_size; i++) {
+		AR5K_REG_WAIT(i);
 		AR5K_REG_WRITE(ar5111_rf[i].rf_register, rf[i]);
-		AR5K_DELAY(1);
 	}
 
 	return (AH_TRUE);
@@ -1594,11 +1625,13 @@ ar5k_ar5112_rfregs(hal, channel, mode)
 {
 	struct ar5k_eeprom_info *ee = &hal->ah_capabilities.cap_eeprom;
 	const u_int rf_size = AR5K_ELEMENTS(ar5112_rf);
-	u_int32_t rf[rf_size];
+	u_int32_t *rf;
 	int i, obdb = -1, bank = -1;
 	u_int32_t ee_mode;
 
 	AR5K_ASSERT_ENTRY(mode, AR5K_INI_VAL_MAX);
+
+	rf = hal->ah_rf_banks;
 
 	/* Copy values to modify them */
 	for (i = 0; i < rf_size; i++) {
@@ -1695,9 +1728,43 @@ ar5k_rfgain(hal, phy, freq)
 	}
 
 	for (i = 0; i < AR5K_ELEMENTS(ar5k_rfg); i++) {
+		AR5K_REG_WAIT(i);
 		AR5K_REG_WRITE((u_int32_t)ar5k_rfg[i].rfg_register,
 		    ar5k_rfg[i].rfg_value[phy][freq]);
 	}
 
 	return (AH_TRUE);
+}
+
+/*
+ * Common TX power setup
+ */
+void
+ar5k_txpower_table(hal, channel, max_power)
+	struct ath_hal *hal;
+	HAL_CHANNEL *channel;
+	int16_t max_power;
+{
+	u_int16_t txpower, *rates;
+	int i;
+	
+	rates = hal->ah_txpower.txp_rates;
+
+	txpower = AR5K_TUNE_DEFAULT_TXPOWER * 2;
+	if (max_power > txpower) {
+		txpower = max_power > AR5K_TUNE_MAX_TXPOWER ?
+		    AR5K_TUNE_MAX_TXPOWER : max_power;
+	}
+
+	for (i = 0; i < AR5K_MAX_RATES; i++)
+		rates[i] = txpower;
+
+	/* XXX setup target powers by rate */
+
+	hal->ah_txpower.txp_min = rates[7];
+	hal->ah_txpower.txp_max = rates[0];
+	hal->ah_txpower.txp_ofdm = rates[0];
+
+	for (i = 0; i < AR5K_ELEMENTS(hal->ah_txpower.txp_pcdac); i++)
+		hal->ah_txpower.txp_pcdac[i] = AR5K_EEPROM_PCDAC_START;
 }
