@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.210 2004/12/22 17:17:55 dhartmei Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.211 2005/01/05 18:09:54 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -72,6 +72,27 @@ enum	{ PFTM_TCP_FIRST_PACKET, PFTM_TCP_OPENING, PFTM_TCP_ESTABLISHED,
 	  PFTM_OTHER_MULTIPLE, PFTM_FRAG, PFTM_INTERVAL,
 	  PFTM_ADAPTIVE_START, PFTM_ADAPTIVE_END, PFTM_SRC_NODE,
 	  PFTM_TS_DIFF, PFTM_MAX, PFTM_PURGE, PFTM_UNTIL_PACKET };
+
+/* PFTM default values */
+#define PFTM_TCP_FIRST_PACKET_VAL	120	/* First TCP packet */
+#define PFTM_TCP_OPENING_VAL		30	/* No response yet */
+#define PFTM_TCP_ESTABLISHED_VAL	24*60*60/* Established */
+#define PFTM_TCP_CLOSING_VAL		15 * 60	/* Half closed */
+#define PFTM_TCP_FIN_WAIT_VAL		45	/* Got both FINs */
+#define PFTM_TCP_CLOSED_VAL		90	/* Got a RST */
+#define PFTM_UDP_FIRST_PACKET_VAL	60	/* First UDP packet */
+#define PFTM_UDP_SINGLE_VAL		30	/* Unidirectional */
+#define PFTM_UDP_MULTIPLE_VAL		60	/* Bidirectional */
+#define PFTM_ICMP_FIRST_PACKET_VAL	20	/* First ICMP packet */
+#define PFTM_ICMP_ERROR_REPLY_VAL	10	/* Got error response */
+#define PFTM_OTHER_FIRST_PACKET_VAL	60	/* First packet */
+#define PFTM_OTHER_SINGLE_VAL		30	/* Unidirectional */
+#define PFTM_OTHER_MULTIPLE_VAL		60	/* Bidirectional */
+#define PFTM_FRAG_VAL			30	/* Fragment expire */
+#define PFTM_INTERVAL_VAL		10	/* Expire interval */
+#define PFTM_SRC_NODE_VAL		0	/* Source tracking */
+#define PFTM_TS_DIFF_VAL		30	/* Allowed TS diff */
+
 enum	{ PF_NOPFROUTE, PF_FASTROUTE, PF_ROUTETO, PF_DUPTO, PF_REPLYTO };
 enum	{ PF_LIMIT_STATES, PF_LIMIT_SRC_NODES, PF_LIMIT_FRAGS, PF_LIMIT_MAX };
 #define PF_POOL_IDMASK		0x0f
