@@ -1,4 +1,4 @@
-/*	$OpenBSD: pr.c,v 1.6 1999/05/23 17:37:41 millert Exp $	*/
+/*	$OpenBSD: pr.c,v 1.7 1999/12/03 23:43:02 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1991 Keith Muller.
@@ -45,7 +45,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)pr.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$OpenBSD: pr.c,v 1.6 1999/05/23 17:37:41 millert Exp $";
+static char *rcsid = "$OpenBSD: pr.c,v 1.7 1999/12/03 23:43:02 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1872,12 +1872,13 @@ setup(argc, argv)
 	    ++sflag;
 	    if (eoptarg == NULL)
 		schar = SCHAR;
-	    else
+	    else {
 		schar = *eoptarg++;
-	    if (*eoptarg != '\0') {
-		(void)fprintf(err,
-		      "pr: invalid value for -s %s\n", eoptarg);
-		return(1);
+		if (*eoptarg != '\0') {
+		    (void)fprintf(err,
+		        "pr: invalid value for -s %s\n", eoptarg);
+		    return(1);
+		}
 	    }
 	    break;
 	case 't':
