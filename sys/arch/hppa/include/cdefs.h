@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdefs.h,v 1.4 2002/08/03 03:05:11 fgsch Exp $	*/
+/*	$OpenBSD: cdefs.h,v 1.5 2002/08/03 18:54:26 mickey Exp $	*/
 /*	$NetBSD: cdefs.h,v 1.5 1996/10/12 18:08:12 cgd Exp $	*/
 
 /*
@@ -30,8 +30,6 @@
 
 #ifndef _MACHINE_CDEFS_H_
 #define	_MACHINE_CDEFS_H_
-
-#define	_C_LABEL(x)	_STRING(x)
 
 #define	__weak_alias(alias,sym)						\
     __asm__(".weak " __STRING(alias) " ; " __STRING(alias) " = " __STRING(sym))
