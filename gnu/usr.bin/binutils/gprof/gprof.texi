@@ -1066,6 +1066,7 @@ The blurbs, field widths, and output formats are different.  @sc{gnu}
 @code{gprof} prints blurbs after the tables, so that you can see the
 tables without skipping the blurbs.
 
+@end itemize
 @contents
 @bye
 
