@@ -1,4 +1,4 @@
-/*      $OpenBSD: ata.c,v 1.17 2003/04/09 00:38:07 ho Exp $      */
+/*      $OpenBSD: ata.c,v 1.18 2003/04/12 10:58:45 grange Exp $      */
 /*      $NetBSD: ata.c,v 1.9 1999/04/15 09:41:09 bouyer Exp $      */
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -81,12 +81,12 @@ ata_get_params(drvp, flags, prms)
 	if (drvp->drive_flags & DRIVE_ATA) {
 		wdc_c.r_command = WDCC_IDENTIFY;
 		wdc_c.r_st_bmask = WDCS_DRDY;
-		wdc_c.r_st_pmask = WDCS_DRQ;
+		wdc_c.r_st_pmask = 0;
 		wdc_c.timeout = 3000; /* 3s */
 	} else if (drvp->drive_flags & DRIVE_ATAPI) {
 		wdc_c.r_command = ATAPI_IDENTIFY_DEVICE;
 		wdc_c.r_st_bmask = 0;
-		wdc_c.r_st_pmask = WDCS_DRQ;
+		wdc_c.r_st_pmask = 0;
 		wdc_c.timeout = 10000; /* 10s */
 	} else {
 		return CMD_ERR;
