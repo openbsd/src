@@ -1372,6 +1372,12 @@ main (argc, argv)
 		  strip_flag = 1;
 		  ld1--;
 		}
+	      else if (!strcmp (arg, "-soname"))
+	        {
+		  /* soname is special, pass it out */
+		  arg = *++argv;
+		  *ld1++ = *ld2++ = arg;
+		}
 	      break;
 	    case 't':
 	      if (!strcmp(arg, "-trace-ctors-dtors"))
