@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.47 2000/06/26 18:56:50 deraadt Exp $
+.\"	$OpenBSD: sysctl.3,v 1.48 2000/06/26 19:26:48 provos Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1138,7 +1138,9 @@ information available for the third level is detailed below.
 .It Dv SWPENC_ENABLE
 Set to 1 to enable swap encryption for all processes.
 A 0 disables swap encryption.
-Pages still on swap receive a grandfather clause.
+Pages still on swap receive a grandfather clause.  Turning this 
+option on does not affect legacy swap data already on the disk,
+but all newly written data will be encrypted.
 When swap encryption is turned on, automatic
 .Xr crash 8
 dumps are disabled.
