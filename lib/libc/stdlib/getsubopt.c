@@ -1,6 +1,8 @@
+/*	$OpenBSD: getsubopt.c,v 1.1 1997/08/20 04:02:17 millert Exp $	*/
+
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,9 +33,13 @@
  * SUCH DAMAGE.
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getsubopt.c,v 1.2 1996/08/19 08:24:06 tholo Exp $";
-#endif /* LIBC_SCCS and not lint */
+#ifndef lint
+#if 0
+static char sccsid[] = "@(#)getsubopt.c	8.1 (Berkeley) 6/4/93";
+#else
+static char rcsid[] = "$OpenBSD: getsubopt.c,v 1.1 1997/08/20 04:02:17 millert Exp $";
+#endif
+#endif /* not lint */
 
 #include <unistd.h>
 #include <stdlib.h>

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.12 1997/08/17 21:31:19 millert Exp $
+#	$OpenBSD: Makefile.inc,v 1.13 1997/08/20 04:02:15 millert Exp $
 
 # gen sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/gen ${.CURDIR}/gen
@@ -8,7 +8,7 @@ SRCS+=	alarm.c assert.c basename.c clock.c closedir.c confstr.c ctermid.c \
 	errx.c errlist.c errno.c exec.c fnmatch.c fstab.c ftok.c fts.c \
 	getbsize.c getcap.c getcwd.c getdomainname.c getgrent.c \
 	getgrouplist.c gethostname.c getloadavg.c getlogin.c getmntinfo.c \
-	getnetgrent.c getpagesize.c getpass.c getpwent.c getsubopt.c \
+	getnetgrent.c getpagesize.c getpass.c getpwent.c \
 	getttyent.c getusershell.c glob.c initgroups.c isatty.c isctype.c \
 	nice.c nlist.c opendir.c pause.c popen.c psignal.c pwcache.c raise.c \
 	readdir.c rewinddir.c scandir.c seekdir.c setdomainname.c \
@@ -47,7 +47,7 @@ MAN+=	alarm.3 basename.3 clock.3 confstr.3 ctermid.3 ctype.3 daemon.3 \
 	getbsize.3 getcap.3 getcwd.3 getdomainname.3 getdiskbyname.3 \
 	getfsent.3 getgrent.3 getgrouplist.3 gethostname.3 getloadavg.3 \
 	getmntinfo.3 getnetgrent.3 getpagesize.3 getpass.3 getpwent.3 \
-	getsubopt.3 getttyent.3 getusershell.3 glob.3 initgroups.3 isalnum.3 \
+	getttyent.3 getusershell.3 glob.3 initgroups.3 isalnum.3 \
 	isalpha.3 isascii.3 isblank.3 iscntrl.3 isdigit.3 isgraph.3 isinf.3 \
 	islower.3 isprint.3 ispunct.3 isspace.3 isupper.3 isxdigit.3 \
 	ldexp.3 modf.3 nice.3 nlist.3 pause.3 popen.3 psignal.3 pwcache.3 \
