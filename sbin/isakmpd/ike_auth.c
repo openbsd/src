@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_auth.c,v 1.44 2001/06/05 10:04:46 angelos Exp $	*/
+/*	$OpenBSD: ike_auth.c,v 1.45 2001/06/06 22:22:12 angelos Exp $	*/
 /*	$EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	*/
 
 /*
@@ -391,7 +391,7 @@ pre_shared_gen_skeyid (struct exchange *exchange, size_t *sz)
     return 0;
 
   /* Store the secret key for later policy processing.  */
-  exchange->recv_key = malloc (keylen);
+  exchange->recv_key = calloc (keylen + 1, sizeof (char));
   exchange->recv_keytype = ISAKMP_KEY_PASSPHRASE;
   if (!exchange->recv_key)
     {
