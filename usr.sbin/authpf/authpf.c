@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.18 2002/06/07 08:51:44 beck Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.19 2002/06/08 04:57:34 beck Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -76,7 +76,7 @@ char luser[MAXLOGNAME];		/* username */
 char ipsrc[256];		/* ip as a string */
 char pidfile[MAXPATHLEN];	/* we save pid in this file. */
 
-struct timeval Tstart, Tend;		/* start and end times of session */
+struct timeval Tstart, Tend;	/* start and end times of session */
 
 int	pfctl_add_rule(struct pfctl *, struct pf_rule *);
 int	pfctl_add_nat(struct pfctl *, struct pf_nat *);
@@ -401,7 +401,7 @@ allowed_luser(char *luser)
 	if ((f = fopen(PATH_ALLOWFILE, "r")) == NULL) {
 		if (errno == ENOENT) {
 			/*
-			 * allowfile doesn't exist, this this gateway
+			 * allowfile doesn't exist, thus this gateway
 			 * isn't restricted to certain users...
 			 */
 			return(1);
@@ -568,11 +568,11 @@ changefilter(int add, char *luser, char *ipsrc)
 
 	if (snprintf(rulesfile, sizeof rulesfile, "%s/%s/authpf.rules",
 	    PATH_USER_DIR, luser) >= sizeof rulesfile) {
-		syslog(LOG_ERR, "homedir path too long, exiting");
+		syslog(LOG_ERR, "user path too long, exiting");
 		goto error;
 	}
 	if ((from_fd = open(rulesfile, O_RDONLY, 0)) == -1) {
-		/* if home dir rules do not exist, we try PATH_PFRULES */
+		/* if user dir rules do not exist, we try PATH_PFRULES */
 		if (errno != ENOENT) {
 			syslog(LOG_ERR, "can't open %s (%m)", rulesfile);
 			if (unlink(template) == -1)
@@ -640,7 +640,7 @@ changefilter(int add, char *luser, char *ipsrc)
 
 	if (snprintf(natfile, sizeof natfile, "%s/%s/authpf.nat",
 	    PATH_USER_DIR, luser) >= sizeof natfile) {
-		syslog(LOG_ERR, "homedir path too long, exiting");
+		syslog(LOG_ERR, "user dir path too long, exiting");
 		goto error;
 	}
 	if ((from_fd = open(natfile, O_RDONLY, 0)) == -1) {
