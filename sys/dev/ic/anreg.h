@@ -1,4 +1,4 @@
-/*	$OpenBSD: anreg.h,v 1.4 2001/02/26 06:19:33 tholo Exp $	*/
+/*	$OpenBSD: anreg.h,v 1.5 2001/02/27 06:41:11 tholo Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -322,7 +322,6 @@ struct an_ltv_genconfig {
 #define AN_AUTHTYPE_NONE			0x0000
 #define AN_AUTHTYPE_OPEN			0x0001
 #define AN_AUTHTYPE_SHAREDKEY			0x0002
-#define AN_AUTHTYPE_EXCLUDE_UNENCRYPTED		0x0004
 #define AN_AUTHTYPE_PRIVACY_IN_USE		0x0100
 #define AN_AUTHTYPE_ALLOW_UNENCRYPTED		0x0200
 
@@ -527,7 +526,7 @@ struct an_ltv_status {
 	u_int16_t		an_max_noise_prev_sec;	/* 0x7A */
 	u_int16_t		an_avg_noise_prev_min;	/* 0x7C */
 	u_int16_t		an_max_noise_prev_min;	/* 0x7E */
-	u_int16_t		an_rsvd0[2];		/* 0x80 */
+	u_int16_t		an_rsvd0[3];		/* 0x80 */
 };
 
 #define AN_STATUS_OPMODE_CONFIGURED		0x0001
