@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.104 2003/06/02 23:28:07 millert Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.105 2003/07/18 16:43:32 tedu Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -631,6 +631,10 @@ sys_fstatfs(p, v, retval)
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
 	mp = ((struct vnode *)fp->f_data)->v_mount;
+	if (!mp) {
+		FRELE(fp);
+		return (ENOENT);
+	}
 	sp = &mp->mnt_stat;
 	error = VFS_STATFS(mp, sp, p);
 	FRELE(fp);
@@ -1831,7 +1835,7 @@ sys_fchflags(p, v, retval)
 	vp = (struct vnode *)fp->f_data;
 	VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
-	if (vp->v_mount->mnt_flag & MNT_RDONLY)
+	if (vp->v_mount && vp->v_mount->mnt_flag & MNT_RDONLY)
 		error = EROFS;
 	else if (SCARG(uap, flags) == VNOVAL)
 		error = EINVAL;
@@ -1921,7 +1925,7 @@ sys_fchmod(p, v, retval)
 	vp = (struct vnode *)fp->f_data;
 	VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
-	if (vp->v_mount->mnt_flag & MNT_RDONLY)
+	if (vp->v_mount && vp->v_mount->mnt_flag & MNT_RDONLY)
 		error = EROFS;
 	else {
 		VATTR_NULL(&vattr);
@@ -2185,7 +2189,7 @@ sys_futimes(p, v, retval)
 	vp = (struct vnode *)fp->f_data;
 	VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
-	if (vp->v_mount->mnt_flag & MNT_RDONLY)
+	if (vp->v_mount && vp->v_mount->mnt_flag & MNT_RDONLY)
 		error = EROFS;
 	else {
 		vattr.va_atime.tv_sec = tv[0].tv_sec;
