@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.397 2001/05/15 12:24:41 deraadt Exp $
+	$OpenBSD: pcidevs,v 1.398 2001/05/25 10:04:55 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -598,8 +598,10 @@ product 3COM 3C980TX		0x9800	3c980 100Base-TX
 product 3COM 3C980CTX		0x9805	3c980C 100Base-TX
 product 3COM 3CR990TX95		0x9902	3cr990-TX-95
 product 3COM 3CR990TX97		0x9903	3cr990-TX-97
+product 3COM 3C990BTXM		0x9904	3c990b-TX-M
 product 3COM 3CR990SVR95	0x9908	3cr990SVR95
 product 3COM 3CR990SVR97	0x9909	3cr990SVR97
+product 3COM 3C990BSVR		0x990a	3c990BSVR
 
 /* 3DFX Interactive */
 product 3DFX VOODOO		0x0001	Voodoo

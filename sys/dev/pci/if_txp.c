@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.32 2001/05/16 14:34:29 fgsch Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.33 2001/05/25 10:04:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -154,6 +154,8 @@ txp_probe(parent, match, aux)
 	case PCI_PRODUCT_3COM_3CR990TX97:
 	case PCI_PRODUCT_3COM_3CR990SVR95:
 	case PCI_PRODUCT_3COM_3CR990SVR97:
+	case PCI_PRODUCT_3COM_3C990BTXM:
+	case PCI_PRODUCT_3COM_3C990BSVR:
 		return (1);
 	}
 
