@@ -1,4 +1,4 @@
-/*	$OpenBSD: touch.c,v 1.4 2000/09/20 13:26:55 pjanzen Exp $	*/
+/*	$OpenBSD: touch.c,v 1.5 2000/09/20 22:25:26 pjanzen Exp $	*/
 /*	$NetBSD: touch.c,v 1.11 1995/08/31 22:10:06 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)touch.c	8.2 (Berkeley) 4/28/95";
 #endif
-static char rcsid[] = "$OpenBSD: touch.c,v 1.4 2000/09/20 13:26:55 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: touch.c,v 1.5 2000/09/20 22:25:26 pjanzen Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -59,6 +59,7 @@ static char rcsid[] = "$OpenBSD: touch.c,v 1.4 2000/09/20 13:26:55 pjanzen Exp $
 #include <string.h>
 #include <locale.h>
 #include <time.h>
+#include <tzfile.h>
 #include <unistd.h>
 
 int	rw __P((char *, struct stat *, int));
@@ -226,11 +227,10 @@ stime_arg1(arg, tvp)
 		} else {
 			yearset = ATOI2(arg);
 			if (yearset < 69)
-				t->tm_year = yearset + 2000;
+				t->tm_year = yearset + 2000 - TM_YEAR_BASE;
 			else
-				t->tm_year = yearset + 1900;
+				t->tm_year = yearset + 1900 - TM_YEAR_BASE;
 		}
-		t->tm_year -= 1900;	/* Convert to UNIX time. */
 		/* FALLTHROUGH */
 	case 8:				/* MMDDhhmm */
 		t->tm_mon = ATOI2(arg);
@@ -271,10 +271,13 @@ stime_arg2(arg, year, tvp)
 	t->tm_hour = ATOI2(arg);
 	t->tm_min = ATOI2(arg);
 	if (year) {
-		t->tm_year = ATOI2(arg);
-		if (t->tm_year < 69)
-			t->tm_year += 100;
+		year = ATOI2(arg);
+		if (year < 69)
+			t->tm_year = year + 2000 - TM_YEAR_BASE;
+		else
+			t->tm_year = year + 1900 - TM_YEAR_BASE;
 	}
+	t->tm_sec = 0;
 
 	t->tm_isdst = -1;		/* Figure out DST. */
 	tvp[0].tv_sec = tvp[1].tv_sec = mktime(t);
