@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $OpenBSD: command.c,v 1.46 2000/08/15 10:08:48 brian Exp $
+ * $OpenBSD: command.c,v 1.47 2000/08/15 10:26:35 brian Exp $
  *
  */
 #include <sys/param.h>
@@ -153,7 +153,7 @@
 #define NEG_SHORTSEQ	52
 #define NEG_VJCOMP	53
 
-const char Version[] = "2.26";
+const char Version[] = "2.27";
 
 static int ShowCommand(struct cmdargs const *);
 static int TerminalCommand(struct cmdargs const *);

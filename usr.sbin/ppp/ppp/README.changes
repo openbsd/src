@@ -1,4 +1,4 @@
-$OpenBSD: README.changes,v 1.17 2000/08/09 19:31:25 brian Exp $
+$OpenBSD: README.changes,v 1.18 2000/08/15 10:26:32 brian Exp $
 
 This file summarises changes made to ppp that effect
 its configuration.
@@ -104,3 +104,5 @@ o Environment variables and ~ are expanded on in commands
 o ``nat pptp'' is no longer necessary as this is now done transparently
 o The ``!'' at the start of chat scripts and authkey can be made literal
   (rather than meaning execute) by doubling it to ``!!''.
+o MP autoload throughput measurements are now based on the maximum of input
+  and output averages rather than on the total.

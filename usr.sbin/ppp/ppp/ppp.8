@@ -1,4 +1,4 @@
-.\" $OpenBSD: ppp.8,v 1.92 2000/08/10 13:26:58 brian Exp $
+.\" $OpenBSD: ppp.8,v 1.93 2000/08/15 10:26:37 brian Exp $
 .Dd 20 September 1995
 .nr XX \w'\fC00'
 .Dt PPP 8
@@ -3860,9 +3860,10 @@ percent or less of the total bundle bandwidth for
 .Ar period
 seconds, a
 .Ar demand-dial
-link will be brought down as long as it's not the last active
-.Ar demand-dial
-link.
+link will be brought down as long as it's not the last active link.
+.Pp
+Bundle throughput is measured as the maximum of inbound and outbound
+traffic.
 .Pp
 The default values cause
 .Ar demand-dial

@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: mp.c,v 1.18 2000/08/15 10:08:51 brian Exp $
+ *	$OpenBSD: mp.c,v 1.19 2000/08/15 10:26:37 brian Exp $
  */
 
 #include <sys/param.h>
@@ -189,7 +189,9 @@ mp_UpDown(void *v)
   struct mp *mp = (struct mp *)v;
   int percent;
 
-  percent = mp->link.stats.total.OctetsPerSecond * 800 / mp->bundle->bandwidth;
+  percent = MAX(mp->link.stats.total.in.OctetsPerSecond,
+                mp->link.stats.total.out.OctetsPerSecond) * 800 /
+            mp->bundle->bandwidth;
   if (percent >= mp->cfg.autoload.max) {
     log_Printf(LogDEBUG, "%d%% saturation - bring a link up ?\n", percent);
     bundle_AutoAdjust(mp->bundle, percent, AUTO_UP);
