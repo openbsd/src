@@ -256,10 +256,12 @@ So here's what you have to do after going into single user mode:
 
 	# fsck /dev/rrz0a		; check the filesystem
 	# mount /dev/rz0a /		; mount / read write
+	# mount -t kernfs /kern /kern
 	# ./install
 
 - network boot
 
+	# mount -t kernfs /kern /kern
 	# ./install
 
 This script should bring you to a completely installed OpenBSD/pmax
