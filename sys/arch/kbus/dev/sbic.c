@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbic.c,v 1.2 1999/01/11 05:11:27 millert Exp $	*/
+/*	$OpenBSD: sbic.c,v 1.3 2000/01/10 03:55:36 millert Exp $	*/
 /*	$NetBSD: sbic.c,v 1.28 1996/10/13 03:07:29 christos Exp $	*/
 
 /*
@@ -2352,7 +2352,7 @@ sbicnextstate(dev, csr, asr)
 			wait = sbic_data_wait;
 			if( sbicxfstart(regs,
 					acb->sc_kv.dc_count,
-					SBIC_PHASE(csr), wait))
+					SBIC_PHASE(csr), wait)) {
 				if( SBIC_PHASE(csr) == DATA_IN_PHASE )
 					/* data in? */
 					i=sbicxfin(regs,
@@ -2363,6 +2363,7 @@ sbicnextstate(dev, csr, asr)
 						    acb->sc_kv.dc_count,
 						    acb->sc_kv.dc_addr,
 						    SBIC_PHASE(csr));
+			}
 			acb->sc_kv.dc_addr +=
 				(acb->sc_kv.dc_count - i);
 			acb->sc_kv.dc_count = i;

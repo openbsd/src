@@ -1537,7 +1537,7 @@ xdc_submit_iorq(xdcsc, iorqno, type)
 int
 xdc_piodriver(xdcsc, iorqno, freeone)
 	struct xdc_softc *xdcsc;
-	char    iorqno;
+	int     iorqno;
 	int     freeone;
 
 {

@@ -94,7 +94,7 @@ cpu_fork(p1, p2, stack, stacksize)
 	for (i=0; i < UPAGES; i++)
 	  pmap_enter(&p2->p_vmspace->vm_pmap, USRSTACK+i*NBPG,
 	     pmap_extract(pmap_kernel(), ((int)p2->p_addr)+i*NBPG),
-	     VM_PROT_READ, TRUE);
+	     VM_PROT_READ, TRUE, 0);
 
 	pmap_activate(&p2->p_vmspace->vm_pmap, &up->u_pcb);
 
@@ -169,7 +169,8 @@ pagemove(from, to, size)
 		pmap_remove(pmap_kernel(),
 		    (vm_offset_t)from, (vm_offset_t)from + PAGE_SIZE);
 		pmap_enter(pmap_kernel(),
-		    (vm_offset_t)to, pa, VM_PROT_READ|VM_PROT_WRITE, 1);
+		    (vm_offset_t)to, pa, VM_PROT_READ | VM_PROT_WRITE, 1,
+		    VM_PROT_READ | VM_PROT_WRITE);
 		from += PAGE_SIZE;
 		to += PAGE_SIZE;
 		size -= PAGE_SIZE;
@@ -212,9 +213,8 @@ vmapbuf(bp, sz)
 		 * pmap_enter distributes this mapping to all
 		 * contexts... maybe we should avoid this extra work
 		 */
-		pmap_enter(pmap_kernel(), kva,
-			   pa,
-			   VM_PROT_READ|VM_PROT_WRITE, 1);
+		pmap_enter(pmap_kernel(), kva, pa,
+			   VM_PROT_READ | VM_PROT_WRITE, 1, 0);
 
 		addr += PAGE_SIZE;
 		kva += PAGE_SIZE;

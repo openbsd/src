@@ -269,6 +269,9 @@ trap(type, psr, pc, tf)
 	register struct pcb *pcb;
 	register int n;
 	u_quad_t sticks;
+	union sigval sv;
+
+	sv.sival_int = pc; /* XXX fix for parm five of trapsignal() */
 
 	/* This steps the PC over the trap. */
 #define	ADVANCE (n = tf->tf_npc, tf->tf_pc = n, tf->tf_npc = n + 4)
@@ -335,7 +338,7 @@ badtrap:
 		/* ... but leave it in until we find anything */
 		printf("%s[%d]: unimplemented software trap 0x%x\n",
 		    p->p_comm, p->p_pid, type);
-		trapsignal(p, SIGILL, type, ILL_ILLOPC, (caddr_t)pc);
+		trapsignal(p, SIGILL, type, ILL_ILLOPC, sv);
 		break;
 
 #ifdef COMPAT_SVR4
@@ -355,11 +358,11 @@ badtrap:
 		break;	/* the work is all in userret() */
 
 	case T_ILLINST:
-		trapsignal(p, SIGILL, 0, ILL_ILLOPC, (caddr_t)pc);
+		trapsignal(p, SIGILL, 0, ILL_ILLOPC, sv);
 		break;
 
 	case T_PRIVINST:
-		trapsignal(p, SIGILL, 0, ILL_PRVOPC, (caddr_t)pc);
+		trapsignal(p, SIGILL, 0, ILL_PRVOPC, sv);
 		break;
 
 	case T_FPDISABLED: {
@@ -451,7 +454,7 @@ badtrap:
 		break;
 
 	case T_ALIGN:
-		trapsignal(p, SIGBUS, 0, BUS_ADRALN, (caddr_t)pc);
+		trapsignal(p, SIGBUS, 0, BUS_ADRALN, sv);
 		break;
 
 	case T_FPE:
@@ -476,21 +479,21 @@ badtrap:
 		break;
 
 	case T_TAGOF:
-		trapsignal(p, SIGEMT, 0, EMT_TAGOVF, (caddr_t)pc);
+		trapsignal(p, SIGEMT, 0, EMT_TAGOVF, sv);
 		break;
 
 	case T_CPDISABLED:
 		uprintf("coprocessor instruction\n");	/* XXX */
-		trapsignal(p, SIGILL, 0, FPE_FLTINV, (caddr_t)pc);
+		trapsignal(p, SIGILL, 0, FPE_FLTINV, sv);
 		break;
 
 	case T_BREAKPOINT:
-		trapsignal(p, SIGTRAP, 0, TRAP_BRKPT, (caddr_t)pc);
+		trapsignal(p, SIGTRAP, 0, TRAP_BRKPT, sv);
 		break;
 
 	case T_DIV0:
 		ADVANCE;
-		trapsignal(p, SIGFPE, 0, FPE_INTDIV, (caddr_t)pc);
+		trapsignal(p, SIGFPE, 0, FPE_INTDIV, sv);
 		break;
 
 	case T_FLUSHWIN:
@@ -510,7 +513,7 @@ badtrap:
 	case T_RANGECHECK:
 		uprintf("T_RANGECHECK\n");	/* XXX */
 		ADVANCE;
-		trapsignal(p, SIGILL, 0, ILL_ILLOPN, (caddr_t)pc);
+		trapsignal(p, SIGILL, 0, ILL_ILLOPN, sv);
 		break;
 
 	case T_FIXALIGN:
@@ -521,7 +524,7 @@ badtrap:
 	case T_INTOF:
 		uprintf("T_INTOF\n");		/* XXX */
 		ADVANCE;
-		trapsignal(p, SIGFPE, FPE_INTOVF_TRAP, FPE_INTOVF, (caddr_t)pc);
+		trapsignal(p, SIGFPE, FPE_INTOVF_TRAP, FPE_INTOVF, sv);
 		break;
 	case 0xff:				/* Temporary hack... */
 		zs_hack ();
@@ -621,6 +624,7 @@ mem_access_fault(type, fcr, fvar, pc, psr, tf)
 	vm_prot_t ftype;
 	int onfault;
 	u_quad_t sticks;
+	union sigval sv;
 	int otype;
 
 	/* During autoconfig.  */
@@ -828,7 +832,8 @@ kfault:
 			tf->tf_npc = onfault + 4;
 			return;
 		}
-		trapsignal(p, SIGSEGV, ftype, SEGV_MAPERR, (caddr_t)fvar);
+		sv.sival_int = fvar;
+		trapsignal(p, SIGSEGV, ftype, SEGV_MAPERR, sv);
 	}
 /* out: */
 	if ((psr & PSR_PS) == 0) {

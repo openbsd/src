@@ -67,7 +67,9 @@
 #include <machine/vmparam.h>
 #include <machine/kbus.h>
 
-void swapconf __P((void));
+void	setroot __P((void));
+void	swapconf __P((void));
+
 /*
  * The following several variables are related to
  * the configuration process, and are used in initializing
@@ -89,19 +91,19 @@ configure()
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic ("No mainbus found!");
 
-	spl0();
+	(void)spl0();
 
-	setconf ();
-	swapconf ();
-#if 0
 	/*
 	 * Configure swap area and related system
 	 * parameter based on device(s) used.
 	 */
-	dumpconf();
+#if 0 /* XXX */
+	setroot();
 #endif
+	swapconf();
 	cold = 0;
-	printf ("******* COLD = 0 ********\n");
+
+	printf ("******* COLD = 0 ********\n"); /* XXX */
 }
 
 /*
@@ -357,7 +359,8 @@ bus_mapin(bustype, paddr, size)
 
 	do {
 		pmap_enter(pmap_kernel(), v, pa | PG_IO,
-			   VM_PROT_READ | VM_PROT_WRITE, 1);
+			   VM_PROT_READ | VM_PROT_WRITE, 1,
+			   VM_PROT_READ | VM_PROT_WRITE);
 		v += PAGE_SIZE;
 		pa += PAGE_SIZE;
 	} while ((size -= PAGE_SIZE) > 0);
@@ -397,7 +400,8 @@ int bus_peek(bustype, paddr, sz)
 	off = paddr & PGOFSET;
 
 	pmap_enter (pmap_kernel(), peek_addr, (paddr & PG_FRAME) | PG_IO,
-		    VM_PROT_READ | VM_PROT_WRITE, 1);
+		    VM_PROT_READ | VM_PROT_WRITE, 1,
+		    VM_PROT_READ | VM_PROT_WRITE);
 
 	return probeget ((caddr_t)peek_addr + off, sz);
 }
