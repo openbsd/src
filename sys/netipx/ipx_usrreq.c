@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx_usrreq.c,v 1.2 1996/10/26 09:34:55 mickey Exp $	*/
+/*	$OpenBSD: ipx_usrreq.c,v 1.3 1996/11/25 08:20:01 mickey Exp $	*/
 
 /*-
  *
@@ -43,6 +43,7 @@
 #include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/protosw.h>
@@ -50,6 +51,9 @@
 #include <sys/socketvar.h>
 #include <sys/errno.h>
 #include <sys/stat.h>
+#include <sys/proc.h>
+#include <vm/vm.h>
+#include <sys/sysctl.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -70,6 +74,9 @@
  */
 
 int noipxRoute;
+
+int ipxsendspace = IPXSNDQ;
+int ipxrecvspace = IPXRCVQ;
 
 /*
  *  This may also be called for raw listeners.
@@ -291,7 +298,8 @@ ipx_output(m0, va_alist)
 	}
 	ipxp->ipxp_lastdst = ipx->ipx_dna;
 #endif /* ancient_history */
-	if (noipxRoute) ro = 0;
+	if (noipxRoute)
+		ro = 0;
 	return (ipx_outputfl(m, ro, so->so_options & SO_BROADCAST));
 }
 
@@ -442,7 +450,7 @@ ipx_usrreq(so, req, m, nam, control)
 		error = ipx_pcballoc(so, &ipxcbtable);
 		if (error)
 			break;
-		error = soreserve(so, (u_long) 2048, (u_long) 2048);
+		error = soreserve(so, ipxsendspace, ipxrecvspace);
 		if (error)
 			break;
 		break;
@@ -574,6 +582,7 @@ release:
 		m_freem(m);
 	return (error);
 }
+
 /*ARGSUSED*/
 int
 ipx_raw_usrreq(so, req, m, nam, control)
@@ -596,7 +605,7 @@ ipx_raw_usrreq(so, req, m, nam, control)
 		error = ipx_pcballoc(so, &ipxrawcbtable);
 		if (error)
 			break;
-		error = soreserve(so, (u_long) 2048, (u_long) 2048);
+		error = soreserve(so, ipxsendspace, ipxrecvspace);
 		if (error)
 			break;
 		ipxp = sotoipxpcb(so);
@@ -609,3 +618,28 @@ ipx_raw_usrreq(so, req, m, nam, control)
 	return (error);
 }
 
+int
+ipx_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
+	int *name;
+	u_int namelen;
+	void *oldp;
+	size_t *oldlenp;
+	void *newp;
+	size_t newlen;
+{
+	/* All sysctl names at this level are terminal. */
+	if (namelen != 1)
+		return (ENOTDIR);
+
+	switch (name[0]) {
+	case IPXCTL_RECVSPACE:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+			&ipxrecvspace));
+	case IPXCTL_SENDSPACE:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+			&ipxsendspace));
+	default:
+		return (ENOPROTOOPT);
+	}
+	/* NOT REACHED */
+}

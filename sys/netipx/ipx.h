@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx.h,v 1.3 1996/10/26 09:40:30 mickey Exp $	*/
+/*	$OpenBSD: ipx.h,v 1.4 1996/11/25 08:19:58 mickey Exp $	*/
 
 /*-
  *
@@ -168,6 +168,23 @@ struct ipx {
 #define ipx_wildhost(x) (((x).ipx_host.s_host[0]==0xffff) && \
 	((x).ipx_host.s_host[1]==0xffff) && ((x).ipx_host.s_host[2]==0xffff))
 
+/*
+ * Definitions for inet sysctl operations.
+ *
+ * Third level is protocol number.
+ * Fourth level is desired variable within that protocol.
+ */
+#define IPXPROTO_MAXID	(IPXPROTO_SPX + 1)	/* don't list to IPPROTO_MAX */
+
+#define CTL_IPXPROTO_NAMES { \
+	{ "ipx", CTLTYPE_NODE }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ "spx", CTLTYPE_NODE }, \
+};
+
 #ifdef _KERNEL
 
 #define	satosipx(a)	((struct sockaddr_ipx *)(a))
@@ -212,6 +229,7 @@ void	ipx_undo_route __P((struct route *ro));
 int	ipx_usrreq __P((struct socket *so, int req, struct mbuf *m,
 			struct mbuf *nam, struct mbuf *control));
 void	ipx_watch_output __P((struct mbuf *m, struct ifnet *ifp));
+int	ipx_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
 
 #ifdef	IPXDEBUG
 struct ipx_addr	ipx_addr __P((const char *));

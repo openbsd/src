@@ -1,4 +1,4 @@
-/*	$OpenBSD: spx_var.h,v 1.2 1996/10/26 09:34:58 mickey Exp $	*/
+/*	$OpenBSD: spx_var.h,v 1.3 1996/11/25 08:20:03 mickey Exp $	*/
 
 /*-
  *
@@ -133,5 +133,16 @@ extern u_short spx_iss;
 #define	SSEQ_LEQ(a,b)	(((short)((a)-(b))) <= 0)
 #define	SSEQ_GT(a,b)	(((short)((a)-(b))) > 0)
 #define	SSEQ_GEQ(a,b)	(((short)((a)-(b))) >= 0)
+
+/*
+ * Names for SPX sysctl objects.
+ */
+
+#define SPXCTL_MAXID            1
+
+#define SPXCTL_NAMES { \
+	{ 0, 0}, \
+}
+
 
 #endif

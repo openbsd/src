@@ -1,4 +1,4 @@
-/*	$OpenBSD: spx.h,v 1.2 1996/10/26 09:34:55 mickey Exp $	*/
+/*	$OpenBSD: spx.h,v 1.3 1996/11/25 08:20:02 mickey Exp $	*/
 
 /*-
  *
@@ -201,6 +201,7 @@ int	spx_usrreq __P((struct socket *so, int req, struct mbuf *m,
 			struct mbuf *nam, struct mbuf *controlp));
 int	spx_usrreq_sp __P((struct socket *so, int req, struct mbuf *m,
 			   struct mbuf *nam, struct mbuf *controlp));
+int	spx_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
 
 #endif /* _KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx_proto.c,v 1.2 1996/10/26 09:34:54 mickey Exp $	*/
+/*	$OpenBSD: ipx_proto.c,v 1.3 1996/11/25 08:20:00 mickey Exp $	*/
 
 /*-
  *
@@ -60,38 +60,38 @@ struct protosw ipxsw[] = {
 { 0,		&ipxdomain,	0,		0,
   0,		ipx_output,	0,		0,
   0,
-  ipx_init,	0,		0,		0
+  ipx_init,	0,		0,		0,	ipx_sysctl
 },
 { SOCK_DGRAM,	&ipxdomain,	0,		PR_ATOMIC|PR_ADDR,
   0,		0,		ipx_ctlinput,	ipx_ctloutput,
   ipx_usrreq,
-  0,		0,		0,		0
+  0,		0,		0,		0,	ipx_sysctl
 },
 { SOCK_STREAM,	&ipxdomain,	IPXPROTO_SPX,	PR_CONNREQUIRED|PR_WANTRCVD,
   spx_input,	0,		spx_ctlinput,	spx_ctloutput,
   spx_usrreq,
-  spx_init,	spx_fasttimo,	spx_slowtimo,	0
+  spx_init,	spx_fasttimo,	spx_slowtimo,	0,	spx_sysctl
 },
 { SOCK_SEQPACKET,&ipxdomain,	IPXPROTO_SPX,	PR_CONNREQUIRED|PR_WANTRCVD|PR_ATOMIC,
   spx_input,	0,		spx_ctlinput,	spx_ctloutput,
   spx_usrreq_sp,
-  0,		0,		0,		0
+  0,		0,		0,		0,	spx_sysctl
 },
 { SOCK_RAW,	&ipxdomain,	IPXPROTO_RAW,	PR_ATOMIC|PR_ADDR,
   ipx_input,	ipx_output,	0,		ipx_ctloutput,
   ipx_raw_usrreq,
-  0,		0,		0,		0
+  0,		0,		0,		0,	ipx_sysctl
 },
 { SOCK_RAW,	&ipxdomain,	IPXPROTO_ERROR,	PR_ATOMIC|PR_ADDR,
   0,		ipx_output,	ipx_ctlinput,		ipx_ctloutput,
   ipx_raw_usrreq,
-  0,		0,		0,		0
+  0,		0,		0,		0,	ipx_sysctl
 },
 #ifdef IPTUNNEL
 { SOCK_RAW,	&ipxdomain,	IPPROTO_IPX,	PR_ATOMIC|PR_ADDR,
   iptun_input,	rip_output,	iptun_ctlinput,	0,
   rip_usrreq,
-  0,		0,		0,		0,
+  0,		0,		0,		0,	ipx_sysctl,
 },
 #endif
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx_pcb.h,v 1.2 1996/10/26 09:34:53 mickey Exp $	*/
+/*	$OpenBSD: ipx_pcb.h,v 1.3 1996/11/25 08:20:00 mickey Exp $	*/
 
 /*-
  *
@@ -85,8 +85,8 @@ struct ipxpcbtable {
 /*
  * Nominal space allocated to a IPX socket.
  */
-#define	IPXSNDQ		2048
-#define	IPXRCVQ		2048
+#define	IPXSNDQ		16384
+#define	IPXRCVQ		40960
 
 #ifdef _KERNEL
 extern struct ipxpcbtable ipxcbtable, ipxrawcbtable;	/* head of list */

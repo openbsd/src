@@ -1,4 +1,4 @@
-/*	$OpenBSD: spx_usrreq.c,v 1.3 1996/10/26 09:34:57 mickey Exp $	*/
+/*	$OpenBSD: spx_usrreq.c,v 1.4 1996/11/25 08:20:03 mickey Exp $	*/
 
 /*-
  *
@@ -1842,4 +1842,24 @@ spx_timers(cb, timer)
 		break;
 	}
 	return (cb);
+}
+
+int
+spx_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
+	int *name;
+	u_int namelen;
+	void *oldp;
+	size_t *oldlenp;
+	void *newp;
+	size_t newlen;
+{
+	/* All sysctl names at this level are terminal. */
+	if (namelen != 1)
+		return (ENOTDIR);
+
+	switch (name[0]) {
+	default:
+		return (ENOPROTOOPT);
+	}
+	/* NOT REACHED */
 }
