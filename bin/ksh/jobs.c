@@ -1,4 +1,4 @@
-/*	$OpenBSD: jobs.c,v 1.8 1998/10/29 04:09:20 millert Exp $	*/
+/*	$OpenBSD: jobs.c,v 1.9 1998/11/19 19:54:34 millert Exp $	*/
 
 /*
  * Process and job control
@@ -782,7 +782,8 @@ waitfor(cp, sigp)
 	}
 
 	/* at&t ksh will wait for stopped jobs - we don't */
-	rv = j_waitj(j, flags, "jw:waitfor");
+	if (j)
+		rv = j_waitj(j, flags, "jw:waitfor");
 
 #ifdef JOB_SIGS
 	sigprocmask(SIG_SETMASK, &omask, (sigset_t *) 0);
