@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.12 1997/03/30 20:13:04 mickey Exp $	*/
+/*	$OpenBSD: exec.c,v 1.13 1997/03/31 04:20:08 weingart Exp $	*/
 /*	$NetBSD: exec.c,v 1.15 1996/10/13 02:29:01 christos Exp $	*/
 
 /*-
@@ -53,13 +53,13 @@ exec(path, loadaddr, howto)
 	void *loadaddr;
 	int howto;
 {
-	register int io;
+	int io;
 #ifndef INSECURE
 	struct stat sb;
 #endif
 	struct exec x;
 	int i;
-	register char *addr;
+	char *addr;
 #ifdef EXEC_DEBUG
 	char *daddr, *etxt;
 #endif
@@ -127,28 +127,33 @@ exec(path, loadaddr, howto)
 		*addr++ = 0;
 
         /* Symbols */
-	ssym = addr;
-	bcopy(&x.a_syms, addr, sizeof(x.a_syms));
-	addr += sizeof(x.a_syms);
-	printf("+[%ld", x.a_syms);
-	if (read(io, addr, x.a_syms) != x.a_syms)
-		goto shread;
-	addr += x.a_syms;
+	if(x.a_syms){
+		ssym = addr;
+		bcopy(&x.a_syms, addr, sizeof(x.a_syms));
+		addr += sizeof(x.a_syms);
+		printf("+[%ld", x.a_syms);
+		if (read(io, addr, x.a_syms) != x.a_syms)
+			goto shread;
+		addr += x.a_syms;
 
-	if (read(io, &i, sizeof(int)) != sizeof(int))
-		goto shread;
+		if (read(io, &i, sizeof(int)) != sizeof(int))
+			goto shread;
 
-	bcopy(&i, addr, sizeof(int));
-	if (i) {
-		i -= sizeof(int);
-		addr += sizeof(int);
-		if (read(io, addr, i) != i)
+		bcopy(&i, addr, sizeof(int));
+		if (i) {
+			i -= sizeof(int);
+			addr += sizeof(int);
+			if (read(io, addr, i) != i)
                 	goto shread;
-		addr += i;
-	}
+			addr += i;
+		}
 
-	/* and that many bytes of string table */
-	printf("+%d]", i);
+		/* and that many bytes of string table */
+		printf("+%d]", i);
+	}else{
+		ssym = 0;
+		esym = 0;
+	}
 
 	close(io);
 
