@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365_isasubr.c,v 1.18 2004/01/09 21:32:24 brad Exp $	*/
+/*	$OpenBSD: i82365_isasubr.c,v 1.19 2005/01/27 17:01:31 millert Exp $	*/
 /*	$NetBSD: i82365_isasubr.c,v 1.1 1998/06/07 18:28:31 sommerfe Exp $  */
 
 /*
@@ -194,7 +194,6 @@ pcic_isa_chip_intr_establish(pch, pf, ipl, fct, arg, xname)
 	struct pcic_softc *sc = (struct pcic_softc *)(h->ph_parent);
 	isa_chipset_tag_t ic = sc->intr_est;
 	int irq, ist, reg;
-	void *ih;
 
 	if (pf->cfe->flags & PCMCIA_CFE_IRQLEVEL)
 		ist = IST_LEVEL;
@@ -212,17 +211,8 @@ pcic_isa_chip_intr_establish(pch, pf, ipl, fct, arg, xname)
 	reg &= ~(PCIC_INTR_IRQ_MASK | PCIC_INTR_ENABLE);
 	pcic_write(h, PCIC_INTR, reg | irq);
 
-	ih = isa_intr_establish(ic, irq, ist, ipl, fct, arg,
+	return isa_intr_establish(ic, irq, ist, ipl, fct, arg,
 	    h->pcmcia->dv_xname);
-	if (!ih)
-		return (NULL);
-
-	if (xname) {
-		printf("%s: irq %d", xname, irq);
-		if (*xname)
-			printf("\n");
-	}
-	return (ih);
 }
 
 void 
