@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_mquery.c,v 1.5 2003/04/25 20:32:07 drahn Exp $ */
+/*	$OpenBSD: library_mquery.c,v 1.6 2003/04/28 21:32:08 drahn Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -445,7 +445,6 @@ retry:
 	for (ld = lowld; ld != NULL; ld = ld->next) {
 		off_t foff;
 		int fd, flags;
-		int error;
 
 		/*
 		 * We don't want to provide the fd/off hint for anything
@@ -473,13 +472,13 @@ retry:
 		 * adjust the base mapping address to match this free mapping
 		 * and restart the process again.
 		 */
-		error = _dl_mquery(flags, &ld->start, ROUND_PG(ld->size), fd,
-		    foff);
-		if (_dl_check_error(error)) {
+		ld->start = _dl_mquery(ld->start, ROUND_PG(ld->size), ld->prot,
+		    flags, fd, foff);
+		if (_dl_check_error(ld->start)) {
 			ld->start = (void *)(LOFF + ld->moff);
-			error = _dl_mquery(0, &ld->start, ROUND_PG(ld->size),
-			    fd, foff);
-			if (_dl_check_error(error))
+			ld->start = _dl_mquery(ld->start, ROUND_PG(ld->size),
+			    ld->prot, flags & ~MAP_FIXED, fd, foff);
+			if (_dl_check_error(ld->start))
 				goto fail;
 		}
 
