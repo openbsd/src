@@ -67,7 +67,7 @@
 ./usr/lib/gcc-lib/m68k-unknown-openbsd2.1/2.7.2.1/include/f2c.h
 ./usr/lib/gcc-lib/m68k-unknown-openbsd2.1/2.7.2.1/include/float.h
 ./usr/lib/gcc-lib/m68k-unknown-openbsd2.1/2.7.2.1/include/limits.h
-.-usr/lib/gcc-lib/m68k-unknown-openbsd2.1/2.7.2.1/include/objc/NXConstStr.h
+./usr/lib/gcc-lib/m68k-unknown-openbsd2.1/2.7.2.1/include/objc/NXConstStr.h
 ./usr/lib/gcc-lib/m68k-unknown-openbsd2.1/2.7.2.1/include/objc/Object.h
 ./usr/lib/gcc-lib/m68k-unknown-openbsd2.1/2.7.2.1/include/objc/Protocol.h
 ./usr/lib/gcc-lib/m68k-unknown-openbsd2.1/2.7.2.1/include/objc/encoding.h
@@ -112,7 +112,6 @@
 ./usr/lib/libwrap_pic.a
 ./usr/lib/libz_pic.a
 ./usr/lib/scrt0.o
-./usr/sbin/config.old
 ./usr/share/man/cat3/dlfcn.0
 ./usr/share/man/cat3/dlopen.0
 ./usr/share/man/cat3/dlclose.0
