@@ -1,4 +1,4 @@
-.\"	$OpenBSD: reboot.8,v 1.7 1997/09/16 19:30:25 weingart Exp $
+.\"	$OpenBSD: reboot.8,v 1.8 1997/10/02 14:39:46 downsj Exp $
 .\"	$NetBSD: reboot.8,v 1.3 1995/10/05 05:36:21 mycroft Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -89,7 +89,8 @@ capturing the state of a corrupted or misbehaving system.
 The
 .Fl p
 option causes the system to power down, if it is being halted, and the
-hardware supports automatic power down.
+hardware supports automatic power down.  (Currently supported on some
+i386 and sparc platforms.)
 .El
 .Pp
 Normally, the
