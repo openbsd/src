@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.40 2004/01/29 12:02:13 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.41 2004/02/24 13:12:24 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -218,8 +218,8 @@ main(int argc, char *argv[])
 void
 show_summary_head(void)
 {
-	printf("%-15s %-5s %-10s %-10s %-8s %s\n", "Neighbor", "AS", "MsgRcvd",
-	    "MsgSent", "Up/Down", "State");
+	printf("%-15s %-5s %-10s %-10s %-5s %-8s %s\n", "Neighbor", "AS", "MsgRcvd",
+	    "MsgSent", "OutQ", "Up/Down", "State");
 }
 
 int
@@ -230,13 +230,14 @@ show_summary_msg(struct imsg *imsg)
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_SHOW_NEIGHBOR:
 		p = imsg->data;
-		printf("%-15s %5u %10llu %10llu %-8s %s\n",
+		printf("%-15s %5u %10llu %10llu %5u %-8s %s\n",
 		    log_addr(&p->conf.remote_addr),
 		    p->conf.remote_as,
 		    p->stats.msg_rcvd_open + p->stats.msg_rcvd_notification +
 		    p->stats.msg_rcvd_update + p->stats.msg_rcvd_keepalive,
 		    p->stats.msg_sent_open + p->stats.msg_sent_notification +
 		    p->stats.msg_sent_update + p->stats.msg_sent_keepalive,
+		    p->wbuf.queued,
 		    fmt_timeframe(p->stats.last_updown),
 		    statenames[p->state]);
 		break;
