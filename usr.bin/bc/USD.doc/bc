@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bc,v 1.8 2004/04/06 10:00:31 jmc Exp $
+.\"	$OpenBSD: bc,v 1.9 2004/07/09 10:23:05 jmc Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -997,7 +997,7 @@ The additive operators bind left to right.
 .PP
 The result is the sum of the two expressions.
 The scale of the result is
-the maximun of the scales of the expressions.
+the maximum of the scales of the expressions.
 .NH 3
 \fIexpression\fP \- \fIexpression\fP
 .PP
