@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.32 2001/07/13 00:06:30 miod Exp $
+#	$OpenBSD: MAKEDEV,v 1.33 2001/12/07 03:08:51 hugh Exp $
 #	$NetBSD: MAKEDEV,v 1.30 2000/01/21 12:28:29 tsutsui Exp $
 #
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
@@ -86,7 +86,7 @@ floppy)
 
 ramdisk)
 	sh $0 std random
-	sh $0 sd0 sd1 sd2 sd3 rd0 cd0 st0 st1
+	sh $0 rd0 sd0 sd1 sd2 sd3 ra0 ra1 ra2 rx0 cd0 st0 st1
 	sh $0 bpf0
 	;;
 
