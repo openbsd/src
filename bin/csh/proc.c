@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.11 1998/12/21 05:53:26 deraadt Exp $	*/
+/*	$OpenBSD: proc.c,v 1.12 2000/06/28 19:41:10 millert Exp $	*/
 /*	$NetBSD: proc.c,v 1.9 1995/04/29 23:21:33 mycroft Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)proc.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: proc.c,v 1.11 1998/12/21 05:53:26 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: proc.c,v 1.12 2000/06/28 19:41:10 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -1105,7 +1105,15 @@ pkill(v, signum)
 	else if (!(Isdigit(*cp) || *cp == '-'))
 	    stderror(ERR_NAME | ERR_JOBARGS);
 	else {
-	    pid = atoi(short2str(cp));
+	    char *ep;
+	    char *pidnam = short2str(cp);
+
+	    pid = strtol(pidnam, &ep, 10);
+	    if (!*pidnam || *ep) {
+		(void) fprintf(csherr, "%s: illegal process id\n", pidnam);
+		err1++;
+		goto cont;
+	    }
 	    if (kill((pid_t) pid, signum) < 0) {
 		(void) fprintf(csherr, "%d: %s\n", pid, strerror(errno));
 		err1++;
