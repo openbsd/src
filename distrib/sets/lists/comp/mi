@@ -299,6 +299,8 @@
 ./usr/include/dev/pci/if_wxreg.h
 ./usr/include/dev/pci/if_wxvar.h
 ./usr/include/dev/pci/ncrreg.h
+./usr/include/dev/pci/neo-coeff.h
+./usr/include/dev/pci/neoreg.h
 ./usr/include/dev/pci/pccbbreg.h
 ./usr/include/dev/pci/pccbbvar.h
 ./usr/include/dev/pci/pcidevs.h

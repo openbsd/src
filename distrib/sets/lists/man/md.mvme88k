@@ -2,7 +2,7 @@
 ./usr/share/man/cat1/ldd.0
 ./usr/share/man/cat5/ar.0
 ./usr/share/man/cat5/ranlib.0
-./usr/share/man/cat8/ldconfig.0
 ./usr/share/man/cat8/installboot.0
+./usr/share/man/cat8/ldconfig.0
 ./usr/share/man/cat8/rc.local.0
 ./usr/share/man/cat8/rc.securelevel.0

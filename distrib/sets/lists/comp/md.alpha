@@ -46,6 +46,7 @@
 ./usr/include/alpha/kbio.h
 ./usr/include/alpha/kcore.h
 ./usr/include/alpha/limits.h
+./usr/include/alpha/netbsd_machdep.h
 ./usr/include/alpha/param.h
 ./usr/include/alpha/pcb.h
 ./usr/include/alpha/pmap.h
@@ -141,4 +142,3 @@
 ./usr/share/man/cat3/kvm_dump_inval.0
 ./usr/share/man/cat3/kvm_dump_mkheader.0
 ./usr/share/man/cat3/kvm_dump_wrtheader.0
-./usr/include/alpha/netbsd_machdep.h

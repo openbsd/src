@@ -11,6 +11,7 @@
 ./usr/include/sparc/ansi.h
 ./usr/include/sparc/asm.h
 ./usr/include/sparc/autoconf.h
+./usr/include/sparc/bppioctl.h
 ./usr/include/sparc/bsd_audioio.h
 ./usr/include/sparc/bsd_openprom.h
 ./usr/include/sparc/cdefs.h
@@ -25,6 +26,7 @@
 ./usr/include/sparc/exec.h
 ./usr/include/sparc/fbio.h
 ./usr/include/sparc/fbvar.h
+./usr/include/sparc/fgaio.h
 ./usr/include/sparc/float.h
 ./usr/include/sparc/frame.h
 ./usr/include/sparc/fsr.h
@@ -50,6 +52,7 @@
 ./usr/include/sparc/reg.h
 ./usr/include/sparc/reloc.h
 ./usr/include/sparc/remote-sl.h
+./usr/include/sparc/scfio.h
 ./usr/include/sparc/setjmp.h
 ./usr/include/sparc/signal.h
 ./usr/include/sparc/spinlock.h
@@ -106,6 +109,7 @@
 ./usr/lib/libotermcap_pic.a
 ./usr/lib/libpanel_pic.a
 ./usr/lib/libpcap_pic.a
+./usr/lib/libperl_pic.a
 ./usr/lib/libreadline.a
 ./usr/lib/libskey_pic.a
 ./usr/lib/libssl_pic.a
@@ -124,10 +128,6 @@
 ./usr/share/man/cat3/dlfcn.0
 ./usr/share/man/cat3/dlopen.0
 ./usr/share/man/cat3/dlsym.0
-./usr/include/sparc/bppioctl.h
-./usr/include/sparc/fgaio.h
-./usr/include/sparc/scfio.h
-./usr/lib/libperl_pic.a
 ./usr/share/man/cat3/kvm_dump.0
 ./usr/share/man/cat3/kvm_dump_inval.0
 ./usr/share/man/cat3/kvm_dump_mkheader.0

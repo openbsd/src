@@ -44,6 +44,10 @@
 ./etc/lynx.cfg
 ./etc/magic
 ./etc/mail.rc
+./etc/mail/aliases
+./etc/mail/aliases.db
+./etc/mail/helpfile
+./etc/mail/sendmail.cf
 ./etc/mailer.conf
 ./etc/man.conf
 ./etc/master.passwd
@@ -91,7 +95,6 @@
 ./etc/rpc
 ./etc/rtadvd.conf
 ./etc/security
-./etc/mail/sendmail.cf
 ./etc/services
 ./etc/shells
 ./etc/skeykeys
@@ -146,6 +149,3 @@
 ./var/www/conf/httpd.conf
 ./var/www/conf/mime.types
 ./var/www/conf/srm.conf
-./etc/mail/aliases
-./etc/mail/aliases.db
-./etc/mail/helpfile
