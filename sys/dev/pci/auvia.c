@@ -1,4 +1,4 @@
-/*	$OpenBSD: auvia.c,v 1.26 2003/10/19 20:33:28 grange Exp $ */
+/*	$OpenBSD: auvia.c,v 1.27 2004/01/09 21:32:24 brad Exp $ */
 /*	$NetBSD: auvia.c,v 1.7 2000/11/15 21:06:33 jdolecek Exp $	*/
 
 /*-
@@ -52,8 +52,6 @@
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/audioio.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcivar.h>

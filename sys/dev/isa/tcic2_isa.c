@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcic2_isa.c,v 1.5 2002/03/14 03:16:05 millert Exp $	*/
+/*	$OpenBSD: tcic2_isa.c,v 1.6 2004/01/09 21:32:24 brad Exp $	*/
 /*	$NetBSD: tcic2_isa.c,v 1.2 1999/04/08 16:14:29 bad Exp $	*/
 
 #undef	TCICISADEBUG
@@ -41,8 +41,6 @@
 #include <sys/device.h>
 #include <sys/extent.h>
 #include <sys/malloc.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>

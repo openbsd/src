@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365_isasubr.c,v 1.17 2002/03/14 01:26:56 millert Exp $	*/
+/*	$OpenBSD: i82365_isasubr.c,v 1.18 2004/01/09 21:32:24 brad Exp $	*/
 /*	$NetBSD: i82365_isasubr.c,v 1.1 1998/06/07 18:28:31 sommerfe Exp $  */
 
 /*
@@ -38,8 +38,6 @@
 #include <sys/device.h>
 #include <sys/extent.h>
 #include <sys/malloc.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>

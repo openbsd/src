@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fea.c,v 1.15 2002/06/09 03:14:18 todd Exp $	*/
+/*	$OpenBSD: if_fea.c,v 1.16 2004/01/09 21:32:23 brad Exp $	*/
 /*	$NetBSD: if_fea.c,v 1.9 1996/10/21 22:31:05 thorpej Exp $	*/
 
 /*-
@@ -64,8 +64,6 @@
 #endif
 
 #include <net/if_fddi.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
 #include <machine/bus.h>

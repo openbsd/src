@@ -1,4 +1,4 @@
-/*	$OpenBSD: cac.c,v 1.16 2003/06/02 19:24:22 mickey Exp $	*/
+/*	$OpenBSD: cac.c,v 1.17 2004/01/09 21:32:23 brad Exp $	*/
 /*	$NetBSD: cac.c,v 1.15 2000/11/08 19:20:35 ad Exp $	*/
 
 /*
@@ -81,8 +81,6 @@
 #include <sys/endian.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 

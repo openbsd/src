@@ -1,4 +1,4 @@
-/*	$OpenBSD: adv.c,v 1.12 2002/03/14 01:26:53 millert Exp $	*/
+/*	$OpenBSD: adv.c,v 1.13 2004/01/09 21:32:23 brad Exp $	*/
 /*	$NetBSD: adv.c,v 1.6 1998/10/28 20:39:45 dante Exp $	*/
 
 /*
@@ -52,8 +52,6 @@
 
 #include <machine/bus.h>
 #include <machine/intr.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>

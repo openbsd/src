@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccd.c,v 1.53 2003/06/02 23:28:01 millert Exp $	*/
+/*	$OpenBSD: ccd.c,v 1.54 2004/01/09 21:32:23 brad Exp $	*/
 /*	$NetBSD: ccd.c,v 1.33 1996/05/05 04:21:14 thorpej Exp $	*/
 
 /*-
@@ -111,8 +111,6 @@
 #include <sys/conf.h>
 
 #include <dev/ccdvar.h>
-
-#include <uvm/uvm_extern.h>
 
 #ifdef __GNUC__
 #define INLINE static __inline

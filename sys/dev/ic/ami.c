@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.23 2003/06/28 23:55:50 avsm Exp $	*/
+/*	$OpenBSD: ami.c,v 1.24 2004/01/09 21:32:23 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -54,8 +54,6 @@
 #include <sys/malloc.h>
 
 #include <machine/bus.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsi_disk.h>

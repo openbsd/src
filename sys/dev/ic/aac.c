@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac.c,v 1.16 2003/09/02 21:20:40 fgsch Exp $	*/
+/*	$OpenBSD: aac.c,v 1.17 2004/01/09 21:32:23 brad Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -50,8 +50,6 @@
 #include <sys/malloc.h>
 
 #include <machine/bus.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsi_disk.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: noct.c,v 1.13 2003/06/02 19:08:58 jason Exp $	*/
+/*	$OpenBSD: noct.c,v 1.14 2004/01/09 21:32:24 brad Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -45,8 +45,6 @@
 #include <sys/device.h>
 #include <sys/extent.h>
 #include <sys/kthread.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <crypto/cryptodev.h>
 #include <dev/rndvar.h>

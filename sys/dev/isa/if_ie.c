@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.26 2003/04/10 10:11:24 miod Exp $	*/
+/*	$OpenBSD: if_ie.c,v 1.27 2004/01/09 21:32:24 brad Exp $	*/
 /*	$NetBSD: if_ie.c,v 1.51 1996/05/12 23:52:48 mycroft Exp $	*/
 
 /*-
@@ -138,8 +138,6 @@ iomem, and to make 16-pointers, we subtract sc_maddr and and with 0xffff.
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
 #endif
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
 #include <machine/bus.h>

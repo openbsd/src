@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.131 2003/09/03 15:55:41 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.132 2004/01/09 21:32:24 brad Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -47,8 +47,6 @@
 #include <sys/mbuf.h>
 #include <sys/device.h>
 #include <sys/queue.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <crypto/cryptodev.h>
 #include <crypto/cryptosoft.h>

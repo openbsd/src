@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.152 2003/12/20 08:03:54 grange Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.153 2004/01/09 21:32:24 brad Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -95,8 +95,6 @@ int wdcdebug_pciide_mask = WDCDEBUG_PCIIDE_MASK;
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/endian.h>
 
