@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec.c,v 1.34 2001/01/10 21:29:04 angelos Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.35 2001/01/11 00:46:28 angelos Exp $	*/
 /*	$EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	*/
 
 /*
@@ -1355,6 +1355,13 @@ ipsec_handle_leftover_payload (struct message *msg, u_int8_t type,
 		      "DELETE made us delete SA %p (%d references)",
 		      sa, sa->refcnt));
 
+	    /*
+	     * This SA is still referenced by the software timeout.
+	     * However, sa_free will clean up all timeouts and
+	     * decrement reference counters.  We need to reference it
+	     * so that sa_release() works.
+	     */
+	    sa_reference(sa);
 	    sa_free(sa);
 	}
 
