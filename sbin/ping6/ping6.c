@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.47 2002/05/30 21:32:45 itojun Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.48 2002/05/31 01:11:31 itojun Exp $	*/
 /*	$KAME: ping6.c,v 1.155 2002/05/26 13:18:25 itojun Exp $	*/
 
 /*
@@ -2165,7 +2165,7 @@ summary()
 		(void)printf("+%ld duplicates, ", nrepeats);
 	if (ntransmitted) {
 		if (nreceived > ntransmitted)
-			(void)printf("-- somebody's printing up packets!");
+			(void)printf("-- somebody's duplicating packets!");
 		else
 			(void)printf("%d%% packet loss",
 			    (int) (((ntransmitted - nreceived) * 100) /
