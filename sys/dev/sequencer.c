@@ -1,4 +1,4 @@
-/*	$OpenBSD: sequencer.c,v 1.9 2003/09/23 16:51:12 millert Exp $	*/
+/*	$OpenBSD: sequencer.c,v 1.10 2004/10/10 07:13:16 jsg Exp $	*/
 /*	$NetBSD: sequencer.c,v 1.13 1998/11/25 22:17:07 augustss Exp $	*/
 
 /*
@@ -176,7 +176,7 @@ sequenceropen(dev, flags, ifmt, p)
 	sc = &seqdevs[unit];
 	if (sc->isopen)
 		return (EBUSY);
-	if (SEQ_IS_OLD(unit))
+	if (SEQ_IS_OLD(dev))
 		sc->mode = SEQ_OLD;
 	else
 		sc->mode = SEQ_NEW;
