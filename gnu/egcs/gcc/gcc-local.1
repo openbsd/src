@@ -1,6 +1,7 @@
-.\" $OpenBSD: gcc-local.1,v 1.11 2003/06/14 05:13:18 jmc Exp $
+.\" $OpenBSD: gcc-local.1,v 1.12 2003/06/26 18:32:12 avsm Exp $
 .\"
 .\" Copyright (c) 2002 Marc Espie
+.\" Copyright (c) 2003 Anil Madhavapeddy
 .\"
 .\" All rights reserved.
 .\"
@@ -142,8 +143,128 @@ Stand-alone programs not linked against libc must either provide their own
 support bits, or use the
 .Fl fno-stack-protector
 option.
+.It
+.Nm gcc
+recognizes a new flag,
+.Fl Wbounded ,
+to perform basic checks on functions which accept buffers and sizes.
+An extra attribute,
+.Dv __bounded__ ,
+has been added to mark functions that can be
+checked this way.
 .El
+.Sh ATTRIBUTES
+The
+.Dv __bounded__
+attribute is used to type-check functions whose parameters pass fixed-length
+buffers and their sizes.
+The syntax for normal buffers is:
+.Pp
+.Li __attribute__ ((__bounded__ (
+.Dv __buffer__ ,
+.Va buffer ,
+.Va length
+.Li )))
+.Pp
+where
+.Fa buffer
+contains the parameter number (starting from 1) of the pointer to the buffer,
+and
+.Fa length
+contains the parameter number of the buffer length argument.
+.Pp
+.Nm gcc
+will emit a warning if the length argument is a constant larger than the
+actual size of the buffer.
+If the buffer is not a statically declared array of fixed length, no warnings
+will be generated.
+Refer to
+.Xr memcpy 3
+for an example of a function with this check.
+.Pp
+For checking strings, just use
+.Dv __string__
+instead of
+.Dv __buffer__ :
+.Pp
+.Li __attribute__ ((__bounded__ (
+.Dv __string__ ,
+.Va buffer ,
+.Va length
+.Li )))
+.Pp
+In addition to the checks described above, this also tests if the
+.Va length
+argument was wrongly derived from a
+.Fn sizeof "void *"
+operation.
+.Xr strlcpy 3
+is a good example of a string function with this check.
+.Pp
+Some functions specify the length as two arguments:
+the number of elements and the size of each element.
+In this case, use the
+.Dv __size__
+attribute:
+.Pp
+.Li __attribute__ ((__bounded__ (
+.Dv __size__ ,
+.Va buffer ,
+.Va nmemb ,
+.Va size
+.Li )))
+.Pp
+where
+.Va buffer
+contains the parameter number of the pointer to the buffer,
+.Va nmemb
+contains the parameter number of the number of members, and
+.Va size
+has the parameter number of the size of each element.
+The type checks performed by
+.Dv __size__
+are the same as the
+.Dv __buffer__
+attribute.
+See
+.Xr fread 3
+for an example of this type of function.
+.Pp
+If a function accepts a buffer parameter and specifies that it has to be of a
+minimum length, the __minbytes__ attribute can be used:
+.Pp
+.Li __attribute__ ((__bounded__ (
+.Dv __minbytes__ ,
+.Va buffer ,
+.Va minsize
+.Li )))
+.Pp
+where 
+.Va buffer
+contains the parameter number of the pointer to the buffer, and
+.Va minsize
+specifies the minimum number of bytes that the buffer should be.
+.Xr ctime_r 3
+is an example of this type of function.
+.Pp
+If
+.Fl Wbounded
+is specified with
+.Fl Wformat ,
+additional checks are performed on
+.Xr sscanf 3
+format strings.
+The 
+.Ql %s
+fields are checked for incorrect bound lengths by checking the size of the
+buffer associated with the format argument.
 .Sh SEE ALSO
 .Xr gcc 1
 .Pp
 .Pa http://www.trl.ibm.com/projects/security/ssp
+.Sh BUGS
+The
+.Fl Wbounded
+flag only works with statically allocated fixed-size buffers.
+Since it is applied at compile-time, dynamically allocated memory buffers
+and non-constant arguments are ignored.
