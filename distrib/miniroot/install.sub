@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.19 1997/05/10 22:19:36 millert Exp $
+#	$OpenBSD: install.sub,v 1.20 1997/05/13 03:51:27 millert Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -89,6 +89,8 @@ getresp() {
 
 isin() {
 # test the first argument against the remaining ones, return succes on a match
+	local	_a
+
 	_a=$1; shift
 	while [ $# != 0 ]; do
 		if [ "$_a" = "$1" ]; then return 0; fi
@@ -176,11 +178,11 @@ dir_has_sets() {
 	_dir=$1; shift
 	for _file in $*
 	do
-		if [ -f $_dir/${_file}.tar.gz ]; then
+		if [ -f $_dir/${_file}${VERSION}.tar.gz ]; then
 			return 0
 		fi
 		# Try for stupid msdos convention
-		if [ -f $_dir/${_file}.tgz ]; then
+		if [ -f $_dir/${_file}${VERSION}.tgz ]; then
 			return 0
 		fi
 		# Special check for kernel
@@ -530,11 +532,11 @@ enable_network() {
 	echo	""
 
 	if [ "X${_resolver_enabled}" = X"TRUE" ]; then
-		netstat -r
+		route show
 		echo	""
 		echo	"Resolver enabled."
 	else
-		netstat -rn
+		route -n show
 		echo	""
 		echo	"Resolver not enabled."
 	fi
