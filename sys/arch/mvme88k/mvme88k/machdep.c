@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.124 2004/01/02 17:08:57 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.125 2004/01/02 23:40:57 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -1862,6 +1862,7 @@ m197_ext_int(u_int v, struct m88100_saved_state *eframe)
 		level = *md.intr_ipl & 0x07;
 	}
 
+#ifdef DIAGNOSTIC
 	/*
 	 * Interrupting level cannot be 0--0 doesn't produce an interrupt.
 	 * Weird! XXX nivas
@@ -1870,11 +1871,7 @@ m197_ext_int(u_int v, struct m88100_saved_state *eframe)
 	if (level == 0) {
 		panic("Bogons... level %x and mask %x", level, mask);
 	}
-
-	/* and block interrupts at level or lower */
-	setipl(level);
-	/* and stash it away in the trap frame */
-	eframe->mask = mask;
+#endif
 
 	uvmexp.intrs++;
 
@@ -1889,6 +1886,9 @@ m197_ext_int(u_int v, struct m88100_saved_state *eframe)
 		flush_pipeline();
 	}
 
+	/* block interrupts at level or lower */
+	setipl(level);
+
 	enable_interrupt();
 
 	if ((intr = intr_handlers[vec]) == NULL) {
@@ -1897,17 +1897,20 @@ m197_ext_int(u_int v, struct m88100_saved_state *eframe)
 		printf("Spurious interrupt (level %x and vec %x)\n",
 		       level, vec);
 	} else {
+#ifdef DIAGNOSTIC
 		if (intr && intr->ih_ipl != level) {
 			panic("Handler ipl %x not the same as level %x. "
 			    "vec = 0x%x",
 			    intr->ih_ipl, level, vec);
 		}
+#endif
 
 		/*
 		 * Walk through all interrupt handlers in the chain for the
 		 * given vector, calling each handler in turn, till some handler
 		 * returns a value != 0.
 		 */
+
 		for (ret = 0; intr; intr = intr->ih_next) {
 			if (intr->ih_wantframe != 0)
 				ret = (*intr->ih_fn)((void *)eframe);
@@ -1932,9 +1935,9 @@ m197_ext_int(u_int v, struct m88100_saved_state *eframe)
 	 * Restore the mask level to what it was when the interrupt
 	 * was taken.
 	 */
-	setipl(eframe->mask);
+	setipl(mask);
 }
-#endif
+#endif	/* MVME197 */
 
 int
 cpu_exec_aout_makecmds(p, epp)
