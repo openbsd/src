@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.35 2004/05/20 16:42:54 miod Exp $ */
+/*	$OpenBSD: vs.c,v 1.36 2004/05/20 21:16:48 miod Exp $ */
 
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -411,7 +411,8 @@ vs_chksense(xs)
 	M328_IOPB *miopb = (M328_IOPB *)&sc->sc_vsreg->sh_MCE_IOPB;
 
 	/* ack and clear the error */
-	CRB_CLR_ER(CRSW);
+	if (CRSW & M_CRSW_ER)
+		CRB_CLR_ER(CRSW);
 	CRB_CLR_DONE(CRSW);
 	xs->status = 0;
 
@@ -495,8 +496,7 @@ vs_initialize(sc)
 	M328_MCSB *mcsb = (M328_MCSB *)&sc->sc_vsreg->sh_MCSB;
 	M328_IOPB *iopb;
 	M328_WQCF *wiopb = (M328_WQCF *)&sc->sc_vsreg->sh_MCE_IOPB;
-	u_short i, crsw;
-	int failed = 0;
+	int i;
 
 	CRB_CLR_DONE(CRSW);
 	d16_bzero(cib, sizeof(M328_CIB));
@@ -542,7 +542,6 @@ vs_initialize(sc)
 	mc->cqe_QECR = M_QECR_GO;
 	/* poll for the command to complete */
 	do_vspoll(sc, 0, 1);
-	CRB_CLR_DONE(CRSW);
 
 	/* initialize work queues */
 	for (i = 1; i < 8; i++) {
@@ -564,35 +563,28 @@ vs_initialize(sc)
 		mc->cqe_QECR = M_QECR_GO;
 		/* poll for the command to complete */
 		do_vspoll(sc, 0, 1);
-		if (CRSW & M_CRSW_ER) {
-			/*printf("\nerror: queue %d status = 0x%x\n", i, riopb->iopb_STATUS);*/
-			/*failed = 1;*/
+		if (CRSW & M_CRSW_ER)
 			CRB_CLR_ER(CRSW);
-		}
 		CRB_CLR_DONE(CRSW);
 		delay(500);
 	}
 	/* start queue mode */
-	CRSW = 0;
 	mcsb->mcsb_MCR |= M_MCR_SQM;
-	crsw = CRSW;
+
 	do_vspoll(sc, 0, 1);
 	if (CRSW & M_CRSW_ER) {
 		printf("error: status = 0x%x\n", riopb->iopb_STATUS);
-		CRB_CLR_ER(CRSW);
+		CRB_CLR_DONE(CRSW);
+		return (1);
 	}
 	CRB_CLR_DONE(CRSW);
 
-	if (failed) {
-		printf(": failed!\n");
-		return (1);
-	}
 	/* reset SCSI bus */
 	vs_reset(sc);
 	/* sync all devices */
 	vs_resync(sc);
 	printf(": target %d\n", sc->sc_link.adapter_target);
-	return (0); /* success */
+	return (0);
 }
 
 void
@@ -601,8 +593,9 @@ vs_resync(sc)
 {
 	M328_CQE *mc = (M328_CQE*)&sc->sc_vsreg->sh_MCE;
 	M328_DRCF *devreset = (M328_DRCF *)&sc->sc_vsreg->sh_MCE_IOPB;
-	u_short i;
-	for (i=0; i<7; i++) {
+	int i;
+
+	for (i = 0; i < 7; i++) {
 		d16_bzero(devreset, sizeof(M328_DRCF));
 		devreset->drcf_CMD = CNTR_DEV_REINIT;
 		devreset->drcf_OPTION = 0x00;	    /* no interrupts yet... */
@@ -618,9 +611,8 @@ vs_resync(sc)
 		mc->cqe_QECR = M_QECR_GO;
 		/* poll for the command to complete */
 		do_vspoll(sc, 0, 0);
-		if (CRSW & M_CRSW_ER) {
+		if (CRSW & M_CRSW_ER)
 			CRB_CLR_ER(CRSW);
-		}
 		CRB_CLR_DONE(CRSW);
 	}
 }
@@ -653,7 +645,6 @@ vs_reset(sc)
 		do_vspoll(sc, 0, 0);
 		/* ack & clear scsi error condition cause by reset */
 		if (CRSW & M_CRSW_ER) {
-			CRB_CLR_ER(CRSW);
 			CRB_CLR_DONE(CRSW);
 			riopb->iopb_STATUS = 0;
 			break;
@@ -677,34 +668,22 @@ vs_checkintr(sc, xs, status)
 	struct scsi_xfer *xs;
 	int   *status;
 {
-	int   target = -1;
-	int   lun = -1;
 	M328_IOPB *riopb = (M328_IOPB *)&sc->sc_vsreg->sh_RET_IOPB;
-	struct scsi_generic *cmd;
-	u_long buf;
 	u_long len;
-	u_char error;
+	int error;
 
-	target = xs->sc_link->target;
-	lun = xs->sc_link->lun;
-	cmd = (struct scsi_generic *)&riopb->iopb_SCSI[0];
-
-	VL(buf, riopb->iopb_BUFF);
 	VL(len, riopb->iopb_LENGTH);
-	*status = riopb->iopb_STATUS >> 8;
-	error = riopb->iopb_STATUS & 0xFF;
+	error = riopb->iopb_STATUS;
+	*status = error >> 8;
 
-	if (len != xs->datalen) {
-		xs->resid = xs->datalen - len;
-	} else {
-		xs->resid = 0;
-	}
+	xs->resid = xs->datalen - len;
 
-	if (error == SCSI_SELECTION_TO) {
+	if ((error & 0xff) == SCSI_SELECTION_TO) {
 		xs->error = XS_SELTIMEOUT;
 		xs->status = -1;
 		*status = -1;
 	}
+
 	return 1;
 }
 
