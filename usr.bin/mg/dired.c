@@ -146,7 +146,7 @@ int f, n;
 		    }
 		    break;
 		case TRUE:
-		    if(unlinkdir(fname) < 0) {
+		    if(rmdir(fname) < 0) {
 			ewprintf("Could not delete directory '%s'", fname);
 			return FALSE;
 		    }

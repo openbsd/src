@@ -27,7 +27,6 @@ typedef short	KCHAR;			/* Type for internal keystrokes	*/
 #define MALLOCROUND(m)	(m+=7,m&=~7)	/* round up to 8 byte boundry	*/
 
 #define	fncmp		strcmp		/* file name comparison		*/
-#define	unlinkdir(fn)	rmdir(fn)	/* unlink directory		*/
 #define	gettermtype()	getenv("TERM")	/* determine terminal type	*/
 
 struct fileinfo {
