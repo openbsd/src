@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.h,v 1.21 2003/05/30 20:08:34 henning Exp $	*/
+/*	$OpenBSD: if_bridge.h,v 1.22 2003/05/30 21:15:41 henning Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -54,7 +54,7 @@ struct ifbreq {
 /* SIOCBRDGIFFLGS, SIOCBRDGIFFLGS */
 #define	IFBIF_LEARNING		0x0001	/* ifs can learn */
 #define	IFBIF_DISCOVER		0x0002	/* ifs sends packets w/unknown dest */
-#define	IFBIF_BLOCKNONIP 	0x0004	/* ifs blocks non-IP/ARP in/out */
+#define	IFBIF_BLOCKNONIP	0x0004	/* ifs blocks non-IP/ARP in/out */
 #define	IFBIF_STP		0x0008	/* ifs participates in spanning tree */
 #define	IFBIF_SPAN		0x0100	/* ifs is a span port (ro) */
 #define	IFBIF_RO_MASK		0xff00	/* read only bits */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.116 2003/05/30 20:08:34 henning Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.117 2003/05/30 21:15:41 henning Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -181,8 +181,7 @@ int bridge_ipsec(int, int, int, struct mbuf *);
 	 (a)->ether_addr_octet[2] == 0x5e)
 
 void
-bridgeattach(n)
-	int n;
+bridgeattach(int n)
 {
 	struct bridge_softc *sc;
 	struct ifnet *ifp;
@@ -225,10 +224,7 @@ bridgeattach(n)
 }
 
 int
-bridge_ioctl(ifp, cmd, data)
-	struct ifnet *ifp;
-	u_long cmd;
-	caddr_t	data;
+bridge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct proc *prc = curproc;		/* XXX */
 	struct ifnet *ifs;
@@ -265,10 +261,10 @@ bridge_ioctl(ifp, cmd, data)
 		}
 
 		/* If it's in the span list, it can't be a member. */
-		LIST_FOREACH(p, &sc->sc_spanlist, next) {
+		LIST_FOREACH(p, &sc->sc_spanlist, next)
 			if (p->ifp == ifs)
 				break;
-		}
+
 		if (p != LIST_END(&sc->sc_spanlist)) {
 			error = EBUSY;
 			break;
@@ -657,13 +653,12 @@ bridge_ioctl(ifp, cmd, data)
 
 /* Detach an interface from a bridge.  */
 void
-bridge_ifdetach(ifp)
-	struct ifnet *ifp;
+bridge_ifdetach(struct ifnet *ifp)
 {
 	struct bridge_softc *sc = (struct bridge_softc *)ifp->if_bridge;
 	struct bridge_iflist *bif;
 
-	LIST_FOREACH(bif, &sc->sc_iflist, next) {
+	LIST_FOREACH(bif, &sc->sc_iflist, next)
 		if (bif->ifp == ifp) {
 			LIST_REMOVE(bif, next);
 			bridge_rtdelete(sc, ifp, 0);
@@ -672,25 +667,22 @@ bridge_ifdetach(ifp)
 			ifp->if_bridge = NULL;
 			break;
 		}
-	}
 }
 
 int
-bridge_bifconf(sc, bifc)
-	struct bridge_softc *sc;
-	struct ifbifconf *bifc;
+bridge_bifconf(struct bridge_softc *sc, struct ifbifconf *bifc)
 {
 	struct bridge_iflist *p;
 	u_int32_t total = 0, i = 0;
 	int error = 0;
 	struct ifbreq breq;
 
-	LIST_FOREACH(p, &sc->sc_iflist, next) {
+	LIST_FOREACH(p, &sc->sc_iflist, next)
 		total++;
-	}
-	LIST_FOREACH(p, &sc->sc_spanlist, next) {
+
+	LIST_FOREACH(p, &sc->sc_spanlist, next)
 		total++;
-	}
+
 	if (bifc->ifbic_len == 0) {
 		i = total;
 		goto done;
@@ -737,9 +729,7 @@ done:
 }
 
 int
-bridge_brlconf(sc, bc)
-	struct bridge_softc *sc;
-	struct ifbrlconf *bc;
+bridge_brlconf(struct bridge_softc *sc, struct ifbrlconf *bc)
 {
 	struct ifnet *ifp;
 	struct bridge_iflist *ifl;
@@ -812,8 +802,7 @@ done:
 }
 
 void
-bridge_init(sc)
-	struct bridge_softc *sc;
+bridge_init(struct bridge_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_if;
 	int i;
@@ -842,8 +831,7 @@ bridge_init(sc)
  * Stop the bridge and deallocate the routing table.
  */
 void
-bridge_stop(sc)
-	struct bridge_softc *sc;
+bridge_stop(struct bridge_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_if;
 
@@ -865,11 +853,8 @@ bridge_stop(sc)
  * already attached.  We must enqueue or free the mbuf before exiting.
  */
 int
-bridge_output(ifp, m, sa, rt)
-	struct ifnet *ifp;
-	struct mbuf *m;
-	struct sockaddr *sa;
-	struct rtentry *rt;
+bridge_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
+    struct rtentry *rt)
 {
 	struct ether_header *eh;
 	struct ifnet *dst_if;
@@ -1024,8 +1009,7 @@ sendunicast:
  * Start output on the bridge.  This function should never be called.
  */
 void
-bridge_start(ifp)
-	struct ifnet *ifp;
+bridge_start(struct ifnet *ifp)
 {
 }
 
@@ -1056,9 +1040,7 @@ bridgeintr(void)
  * Process a single frame.  Frame must be freed or queued before returning.
  */
 void
-bridgeintr_frame(sc, m)
-	struct bridge_softc *sc;
-	struct mbuf *m;
+bridgeintr_frame(struct bridge_softc *sc, struct mbuf *m)
 {
 	int s, len;
 	struct ifnet *src_if, *dst_if;
@@ -1081,10 +1063,10 @@ bridgeintr_frame(sc, m)
 	sc->sc_if.if_ipackets++;
 	sc->sc_if.if_ibytes += m->m_pkthdr.len;
 
-	LIST_FOREACH(ifl, &sc->sc_iflist, next) {
+	LIST_FOREACH(ifl, &sc->sc_iflist, next)
 		if (ifl->ifp == src_if)
 			break;
-	}
+
 	if (ifl == LIST_END(&sc->sc_iflist)) {
 		m_freem(m);
 		return;
@@ -1244,10 +1226,7 @@ bridgeintr_frame(sc, m)
  * not for us, and schedule an interrupt.
  */
 struct mbuf *
-bridge_input(ifp, eh, m)
-	struct ifnet *ifp;
-	struct ether_header *eh;
-	struct mbuf *m;
+bridge_input(struct ifnet *ifp, struct ether_header *eh, struct mbuf *m)
 {
 	struct bridge_softc *sc;
 	int s;
@@ -1392,11 +1371,8 @@ bridge_input(ifp, eh, m)
  * running at splnet or higher.
  */
 void
-bridge_broadcast(sc, ifp, eh, m)
-	struct bridge_softc *sc;
-	struct ifnet *ifp;
-	struct ether_header *eh;
-	struct mbuf *m;
+bridge_broadcast(struct bridge_softc *sc, struct ifnet *ifp,
+    struct ether_header *eh, struct mbuf *m)
 {
 	struct bridge_iflist *p;
 	struct mbuf *mc;
@@ -1495,10 +1471,8 @@ bridge_broadcast(sc, ifp, eh, m)
 }
 
 void
-bridge_span(sc, eh, morig)
-	struct bridge_softc *sc;
-	struct ether_header *eh;
-	struct mbuf *morig;
+bridge_span(struct bridge_softc *sc, struct ether_header *eh,
+    struct mbuf *morig)
 {
 	struct bridge_iflist *p;
 	struct ifnet *ifp;
@@ -1547,12 +1521,8 @@ bridge_span(sc, eh, morig)
 }
 
 struct ifnet *
-bridge_rtupdate(sc, ea, ifp, setflags, flags)
-	struct bridge_softc *sc;
-	struct ether_addr *ea;
-	struct ifnet *ifp;
-	int setflags;
-	u_int8_t flags;
+bridge_rtupdate(struct bridge_softc *sc, struct ether_addr *ea,
+    struct ifnet *ifp, int setflags, u_int8_t flags)
 {
 	struct bridge_rtnode *p, *q;
 	u_int32_t h;
@@ -1666,9 +1636,7 @@ want:
 }
 
 struct ifnet *
-bridge_rtlookup(sc, ea)
-	struct bridge_softc *sc;
-	struct ether_addr *ea;
+bridge_rtlookup(struct bridge_softc *sc, struct ether_addr *ea)
 {
 	struct bridge_rtnode *p;
 	u_int32_t h;
@@ -1709,9 +1677,7 @@ fail:
 	} while (0)
 
 u_int32_t
-bridge_hash(sc, addr)
-	struct bridge_softc *sc;
-	struct ether_addr *addr;
+bridge_hash(struct bridge_softc *sc, struct ether_addr *addr)
 {
 	u_int32_t a = 0x9e3779b9, b = 0x9e3779b9, c = sc->sc_hashkey;
 
@@ -1731,8 +1697,7 @@ bridge_hash(sc, addr)
  * less than or equal to the maximum.
  */
 void
-bridge_rttrim(sc)
-	struct bridge_softc *sc;
+bridge_rttrim(struct bridge_softc *sc)
 {
 	struct bridge_rtnode *n, *p;
 	int i;
@@ -1778,8 +1743,7 @@ done:
 }
 
 void
-bridge_timer(vsc)
-	void *vsc;
+bridge_timer(void *vsc)
 {
 	struct bridge_softc *sc = vsc;
 	int s;
@@ -1793,8 +1757,7 @@ bridge_timer(vsc)
  * Perform an aging cycle
  */
 void
-bridge_rtage(sc)
-	struct bridge_softc *sc;
+bridge_rtage(struct bridge_softc *sc)
 {
 	struct bridge_rtnode *n, *p;
 	int i;
@@ -1831,9 +1794,7 @@ bridge_rtage(sc)
  * Remove all dynamic addresses from the cache
  */
 int
-bridge_rtflush(sc, full)
-	struct bridge_softc *sc;
-	int full;
+bridge_rtflush(struct bridge_softc *sc, int full)
 {
 	int i;
 	struct bridge_rtnode *p, *n;
@@ -1868,9 +1829,7 @@ bridge_rtflush(sc, full)
  * Remove an address from the cache
  */
 int
-bridge_rtdaddr(sc, ea)
-	struct bridge_softc *sc;
-	struct ether_addr *ea;
+bridge_rtdaddr(struct bridge_softc *sc, struct ether_addr *ea)
 {
 	int h;
 	struct bridge_rtnode *p;
@@ -1899,10 +1858,7 @@ bridge_rtdaddr(sc, ea)
  * Delete routes to a specific interface member.
  */
 void
-bridge_rtdelete(sc, ifp, dynonly)
-	struct bridge_softc *sc;
-	struct ifnet *ifp;
-	int dynonly;
+bridge_rtdelete(struct bridge_softc *sc, struct ifnet *ifp, int dynonly)
 {
 	int i;
 	struct bridge_rtnode *n, *p;
@@ -1945,9 +1901,7 @@ bridge_rtdelete(sc, ifp, dynonly)
  * Gather all of the routes for this interface.
  */
 int
-bridge_rtfind(sc, baconf)
-	struct bridge_softc *sc;
-	struct ifbaconf *baconf;
+bridge_rtfind(struct bridge_softc *sc, struct ifbaconf *baconf)
 {
 	int i, error = 0, onlycnt = 0;
 	u_int32_t cnt = 0;
@@ -1992,9 +1946,7 @@ done:
  * Returns 0 if frame is ip, and 1 if it should be dropped.
  */
 int
-bridge_blocknonip(eh, m)
-	struct ether_header *eh;
-	struct mbuf *m;
+bridge_blocknonip(struct ether_header *eh, struct mbuf *m)
 {
 	struct llc llc;
 	u_int16_t etype;
@@ -2037,9 +1989,7 @@ bridge_blocknonip(eh, m)
 }
 
 u_int8_t
-bridge_filterrule(h, eh)
-	struct brl_head *h;
-	struct ether_header *eh;
+bridge_filterrule(struct brl_head *h, struct ether_header *eh)
 {
 	struct brl_node *n;
 	u_int8_t flags;
@@ -2070,10 +2020,7 @@ bridge_filterrule(h, eh)
 }
 
 int
-bridge_addrule(bif, req, out)
-	struct bridge_iflist *bif;
-	struct ifbrlreq *req;
-	int out;
+bridge_addrule(struct bridge_iflist *bif, struct ifbrlreq *req, int out)
 {
 	struct brl_node *n;
 
@@ -2097,8 +2044,7 @@ bridge_addrule(bif, req, out)
 }
 
 int
-bridge_flushrule(bif)
-	struct bridge_iflist *bif;
+bridge_flushrule(struct bridge_iflist *bif)
 {
 	struct brl_node *p;
 
@@ -2117,9 +2063,7 @@ bridge_flushrule(bif)
 
 #ifdef IPSEC
 int
-bridge_ipsec(dir, af, hlen, m)
-	int dir, af, hlen;
-	struct mbuf *m;
+bridge_ipsec(int dir, int af, int hlen, struct mbuf *m)
 {
 	union sockaddr_union dst;
 	struct timeval tv;
@@ -2319,12 +2263,8 @@ bridge_ipsec(dir, af, hlen, m)
  * who've read net/if_ethersubr.c and netinet/ip_input.c
  */
 struct mbuf *
-bridge_filter(sc, dir, ifp, eh, m)
-	struct bridge_softc *sc;
-	int dir;
-	struct ifnet *ifp;
-	struct ether_header *eh;
-	struct mbuf *m;
+bridge_filter(struct bridge_softc *sc, int dir, struct ifnet *ifp,
+    struct ether_header *eh, struct mbuf *m)
 {
 	struct llc llc;
 	int hassnap = 0;
@@ -2512,11 +2452,8 @@ dropit:
 #endif /* NPF > 0 */
 
 void
-bridge_fragment(sc, ifp, eh, m)
-	struct bridge_softc *sc;
-	struct ifnet *ifp;
-	struct ether_header *eh;
-	struct mbuf *m;
+bridge_fragment(struct bridge_softc *sc, struct ifnet *ifp,
+    struct ether_header *eh, struct mbuf *m)
 {
 	struct llc llc;
 	struct mbuf *m0;
@@ -2627,10 +2564,7 @@ bridge_fragment(sc, ifp, eh, m)
 }
 
 int
-bridge_ifenqueue(sc, ifp, m)
-	struct bridge_softc *sc;
-	struct ifnet *ifp;
-	struct mbuf *m;
+bridge_ifenqueue(struct bridge_softc *sc, struct ifnet *ifp, struct mbuf *m)
 {
 	int error, len;
 	short mflags;
@@ -2655,15 +2589,9 @@ bridge_ifenqueue(sc, ifp, m)
 
 #ifdef INET
 void
-bridge_send_icmp_err(sc, ifp, eh, n, hassnap, llc, type, code)
-	struct bridge_softc *sc;
-	struct ifnet *ifp;
-	struct ether_header *eh;
-	struct mbuf *n;
-	int hassnap;
-	struct llc *llc;
-	int type;
-	int code;
+bridge_send_icmp_err(struct bridge_softc *sc, struct ifnet *ifp,
+    struct ether_header *eh, struct mbuf *n, int hassnap, struct llc *llc,
+    int type, int code)
 {
 	struct ip *ip;
 	struct icmp *icp;
