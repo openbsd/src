@@ -43,7 +43,7 @@
 .Nm traceroute
 .Nd print the route packets take to network host
 .Sh SYNOPSIS
-.Nm traceroute
+.Nm
 .Op Fl d
 .Op Fl D
 .Op Fl g Ar gateway_addr
@@ -66,7 +66,7 @@ The Internet is a large and complex aggregation of
 network hardware, connected together by gateways.
 Tracking the route one's packets follow (or finding the miscreant
 gateway that's discarding your packets) can be difficult.
-.Nm Traceroute
+.Nm
 utilizes the IP protocol `time to live' field and attempts to elicit an
 .Tn ICMP
 .Dv TIME_EXCEEDED
@@ -113,7 +113,7 @@ Set the base
 .Tn UDP
 .Ar port
 number used in probes (default is 33434).
-.Nm Traceroute
+.Nm
 hopes that nothing is listening on
 .Tn UDP
 ports
@@ -176,9 +176,8 @@ packets other than
 and
 .Dv UNREACHABLE Ns s
 are listed.
-.It Fl w
-Set the time (in seconds) to wait for a response to a probe (default 3
-sec.).
+.It Fl w Ar waittime
+Set the time (in seconds) to wait for a response to a probe (default 3).
 .El
 .Pp
 This program attempts to trace the route an IP packet would follow to some
@@ -318,7 +317,7 @@ aren't sent for
 until we probe with a ttl that's at least twice the path
 length.  I.e., rip is really only 7 hops away.  A reply that
 returns with a ttl of 1 is a clue this problem exists.
-.Nm Traceroute
+.Nm
 prints a "!" after the time if the ttl is <= 1.
 Since vendors ship a lot of obsolete
 .Pf ( Tn DEC Ns \'s
@@ -342,7 +341,7 @@ or
 (source route failed or fragmentation needed \- neither of these should
 ever occur and the associated gateway is busted if you see one).  If
 almost all the probes result in some kind of unreachable,
-.Nm traceroute
+.Nm
 will give up and exit.
 .Pp
 .Bd -literal
@@ -361,7 +360,7 @@ This program is intended for use in network testing, measurement
 and management.
 It should be used primarily for manual fault isolation.
 Because of the load it could impose on the network, it is unwise to use
-.Nm traceroute
+.Nm
 during normal operations or from automated scripts.
 .Sh AUTHOR
 Implemented by Van Jacobson from a suggestion by Steve Deering.  Debugged
