@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_hdr.h,v 1.20 1998/06/30 20:51:11 millert Exp $	*/
+/*	$OpenBSD: pcvt_hdr.h,v 1.21 1998/09/06 23:00:03 niklas Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -1189,18 +1189,13 @@ static __inline void vt_selattr(struct video_state *svsp)
 	{ volatile u_char x = inb(0x84); (void) &x;} \
 	{ volatile u_char x = inb(0x84); (void) &x;} \
 	{ volatile u_char x = inb(0x84); (void) &x;} \
-	{ volatile u_char x = inb(0x84); (void) &x;} \
-	{ volatile u_char x = inb(0x84); (void) &x;} \
-	{ volatile u_char x = inb(0x84); (void) &x;} \
-	{ volatile u_char x = inb(0x84); (void) &x;} \
-	{ volatile u_char x = inb(0x84); (void) &x;} \
 	{ volatile u_char x = inb(0x84); (void) &x;}
 
 #else /* PCVT_PORTIO_DELAY */
 				/* use system supplied delay function for */
 				/* producing delays for accesssing the    */
 				/* keyboard controller                    */
-#define PCVT_KBD_DELAY()	delay(11)
+#define PCVT_KBD_DELAY()	delay(7)
 #endif /* PCVT_PORTIO_DELAY */
 
 /*---------------------------------- E O F ----------------------------------*/

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_kbd.c,v 1.18 1998/08/09 06:13:30 millert Exp $	*/
+/*	$OpenBSD: pcvt_kbd.c,v 1.19 1998/09/06 23:00:03 niklas Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -336,12 +336,13 @@ kbd_wait_output()
 {
 	u_int i;
 
-	for (i = 100000; i; i--) {
-		PCVT_KBD_DELAY();
+	/* > 100 msec */
+	for (i = 100; i; i--) {
 		if ((inb(CONTROLLER_CTRL) & STATUS_INPBF) == 0) {
 			PCVT_KBD_DELAY();
 			return 1;
 		}
+		DELAY(1000);
 	}
 	return 0;
 }
@@ -351,12 +352,13 @@ kbd_wait_input()
 {
 	u_int i;
 
-	for (i = 100000; i; i--) {
-		PCVT_KBD_DELAY();
+	/* > 500 msec */
+	for (i = 500; i; i--) {
 		if ((inb(CONTROLLER_CTRL) & STATUS_OUTPBF) != 0) {
 			PCVT_KBD_DELAY();
 			return 1;
 		}
+		DELAY(1000);
 	}
 	return 0;
 }
@@ -485,8 +487,15 @@ void doreset(void)
 	 * Discard any stale keyboard activity.  The 0.1 boot code isn't
 	 * very careful and sometimes leaves a KEYB_R_RESEND.
 	 */
-	while(inb(CONTROLLER_CTRL) & STATUS_OUTPBF)
-		kbd_response();
+	while (1) {
+		if (inb(CONTROLLER_CTRL) & STATUS_OUTPBF)
+			kbd_response();
+		else {
+			DELAY(10000);
+			if (!(inb(CONTROLLER_CTRL) & STATUS_OUTPBF))
+				break;
+		}
+	}
 
 	/* Start keyboard reset */
 
