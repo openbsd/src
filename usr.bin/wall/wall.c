@@ -1,4 +1,4 @@
-/*	$OpenBSD: wall.c,v 1.4 1996/08/26 10:21:48 deraadt Exp $	*/
+/*	$OpenBSD: wall.c,v 1.5 1996/08/26 10:28:22 deraadt Exp $	*/
 /*	$NetBSD: wall.c,v 1.6 1994/11/17 07:17:58 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)wall.c	8.2 (Berkeley) 11/16/93";
 #endif
-static char rcsid[] = "$OpenBSD: wall.c,v 1.4 1996/08/26 10:21:48 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: wall.c,v 1.5 1996/08/26 10:28:22 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -181,7 +181,7 @@ makemsg(fname)
 	}
 	while (fgets(lbuf, sizeof(lbuf), stdin))
 		for (cnt = 0, p = lbuf; (ch = *p) != '\0'; ++p, ++cnt) {
-			vis(tmpbuf, ch, VIS_SAFE, p[1]);
+			vis(tmpbuf, ch, VIS_SAFE|VIS_NOSLASH, p[1]);
 			if (cnt == 79+1-strlen(tmpbuf) || ch == '\n') {
 				for (; cnt < 79+1-strlen(tmpbuf); ++cnt)
 					putc(' ', fp);

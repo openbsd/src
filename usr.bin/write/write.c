@@ -1,4 +1,4 @@
-/*	$OpenBSD: write.c,v 1.5 1996/08/26 10:22:11 deraadt Exp $	*/
+/*	$OpenBSD: write.c,v 1.6 1996/08/26 10:28:20 deraadt Exp $	*/
 /*	$NetBSD: write.c,v 1.5 1995/08/31 21:48:32 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)write.c	8.2 (Berkeley) 4/27/95";
 #endif
-static char *rcsid = "$OpenBSD: write.c,v 1.5 1996/08/26 10:22:11 deraadt Exp $";
+static char *rcsid = "$OpenBSD: write.c,v 1.6 1996/08/26 10:28:20 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -310,7 +310,7 @@ wr_fputs(s)
 			PUTC('\n');
 			continue;
 		}
-		vis(visout, c, VIS_SAFE, s[1]);
+		vis(visout, c, VIS_SAFE|VIS_NOSLASH, s[1]);
 		for (s2 = visout; *s2; s2++)
 			PUTC(*s2);
 	}
