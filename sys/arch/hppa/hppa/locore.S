@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.67 2002/05/20 02:26:40 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.68 2002/05/20 03:46:53 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -100,38 +100,30 @@
 	.import	kpsw, data
 	.import	panic, code
 
-	.section .bss
-	.export	pdc_stack, data
-	.align	NBPG
-pdc_stack			/* temp stack for PDC call, must be > 9k */
-	.comm	4*NBPG
-	.export	exit_stack, data
-exit_stack			/* temp stack used during exit2() */
-	.comm   2*NBPG
-	.export	emerge_stack, data
-emerge_stack			/* stack for HPMC/TOC/PWRF */
-	.comm	2*NBPG
-	.export	$trap_tmp_save, data
-$trap_tmp_save			/* XXX assumed to be aligned on 2048 */
-	.block	TF_PHYS		/* XXX must be aligned to 64 */
-	.align	64
-	.export	kernelmapped, data
-kernelmapped			/* set when kernel is mapped */
-	.comm	4
-	.export fpu_csw, data
-fpu_csw
-	.comm	4
-	.export	fpu_curpcb, data
-fpu_curpcb
-	.comm	4
-	.export fpu_enable, data
-fpu_enable
-	.comm	4
+#define	EXIT_STACKSIZE	(2*NBPG)
+#define	EMRG_STACKSIZE	(2*NBPG)
+#define	FPEMU_STACKSIZE	(2*NBPG)
 
 	.data
+$trap_tmp_save			/* XXX assumed to be aligned on 2048 */
+	.block	TF_PHYS		/* XXX must be aligned to 64 */
+	.align	NBPG
+
+	BSS(pdc_stack, 4)	/* temp stack for PDC call */
+	BSS(exit_stack, 4)	/* temp stack used during exit2() */
+	BSS(emrg_stack, 4)	/* stack for HPMC/TOC/PWRF */
+	BSS(fpemu_stack, 4)	/* stack for FPU emulation */
+
+	.export	kernelmapped, data
+	BSS(kernelmapped, 4)	/* set when kernel is mapped */
+	.export fpu_csw, data
+	BSS(fpu_csw, 4)		/* count fpu context switches */
+	.export	fpu_curpcb, data
+	BSS(fpu_curpcb, 4)	/* pcb of the fpu owner */
+	.export fpu_enable, data
+	BSS(fpu_enable, 4)	/* bits to set in the ccr to enable fpu */
 	.export hppa_vtop, data
-hppa_vtop
-	.word	0
+	BSS(hppa_vtop, 4)	/* a vtop translation table addr (pa=va) */
 
 	.text
 	.import	$kernel_setup, entry
@@ -143,7 +135,7 @@ ENTRY($start,0)
 /*
  *	start(pdc, boothowto, bootdev, esym, bootapiver, argv, argc)
  *
- *	pdc - PDC entry point (not used, HP-UX compatibility)
+ *	pdc - PDC entry point
  *	boothowto - boot flags (see "reboot.h")
  *	bootdev - boot device (index into bdevsw)
  *	esym - end of symbol table (or &end if not present)
@@ -167,6 +159,19 @@ ENTRY($start,0)
 	/* Align arg3, which is the start of available memory */
 	ldo	NBPG-1(arg3), arg3
 	dep	r0, 31, PGSHIFT, arg3
+
+#define	STACK_ALLOC(n,s)		\
+	ldil	L%(n), t1		! \
+	stw	arg3, R%(n)(t1)		! \
+	ldil	L%(s), t2		! \
+	add	arg3, t2, arg3
+
+	STACK_ALLOC(pdc_stack, PDC_STACKSIZE)
+	STACK_ALLOC(exit_stack, EXIT_STACKSIZE)
+	STACK_ALLOC(emrg_stack, EMRG_STACKSIZE)
+	STACK_ALLOC(fpemu_stack, FPEMU_STACKSIZE)
+
+#undef	STACK_ALLOC
 
 	/* zero fake trapframe and proc0 u-area */
 	copy	arg3, t2
@@ -368,7 +373,7 @@ ENTRY(pdc_call,160)
 	comb,=	r0, ret0, pdc_call_unmapped1
 	nop
 	ldil	L%pdc_stack, ret1
-	ldo	R%pdc_stack(ret1), ret1
+	ldw	R%pdc_stack(ret1), ret1
 
 pdc_call_unmapped1
 	copy	sp, r1
@@ -1173,9 +1178,8 @@ ENTRY(TLABEL(excpt),0)
 	mtctl	sp, tr3
 	mtctl	r31, tr2
 
-	.import	$fpemu_stack, data
-	ldil	L%$fpemu_stack, r31
-	ldo	R%$fpemu_stack(r31), r31
+	ldil	L%fpemu_stack, r31
+	ldw	R%fpemu_stack(r31), r31
 	ldo	R%TRAPFRAME_SIZEOF+HPPA_FRAME_SIZE(r31), sp
 
 	stw	r1 , TF_R1 (r31)
@@ -1211,8 +1215,8 @@ ENTRY(TLABEL(excpt),0)
 	bv,n	0(t1)
 	nop
 
-	ldil	L%$fpemu_stack, r31
-	ldo	R%$fpemu_stack(r31), r31
+	ldil	L%fpemu_stack, r31
+	ldw	R%fpemu_stack(r31), r31
 
 	ldw	TF_CR11(r31), r1
 	mtsar	r1
@@ -1265,17 +1269,12 @@ EXIT($sfu_emu)
 	depi	1, 0, 1, r16		/* and set the valid bit */
 
 #if 1
-	.section .bss
-	.align	8
 	.export	dtlb_c, data
-dtlb_c
-	.comm	8
+	BSS(dtlb_c, 8)
 	.export	dtlb_c, data
-tlbd_c
-	.comm	8
+	BSS(tlbd_c, 8)
 	.export	dtlb_c, data
-itlb_c
-	.comm	8
+	BSS(itlb_c, 8)
 
 	.text
 	/* XXX this touches tr5, which it should not, perhaps */
@@ -1872,8 +1871,9 @@ ENTRY(TLABEL(hpmc),0)
 	ldw	R%kpsw(%arg2), %arg2
 	depi	0, PSW_I_POS, 1, %arg2
 	stw	%arg2, R%kpsw(t1)
+	ldil	L%emrg_stack, arg1
 	b	$kernel_setup
-	ldil	L%emerge_stack, arg1
+	ldw	R%emrg_stack(arg1), arg1
 
 	/* never returns, but still */
 hpmc_never_dies
@@ -1901,8 +1901,9 @@ ENTRY(hppa_toc,0)
 	depi	0, PSW_I_POS, 1, %arg2
 	stw	%arg2, R%kpsw(t1)
 	ldi	0, arg0
+	ldil	L%emrg_stack, arg1
 	b	$kernel_setup
-	ldil	L%emerge_stack, arg1
+	ldw	R%emrg_stack(arg1), arg1
 
 ALTENTRY(hppa_toc_end)
 	.word	0
@@ -1928,8 +1929,9 @@ ENTRY(hppa_pfr,0)
 	depi	0, PSW_I_POS, 1, %arg2
 	stw	%arg2, R%kpsw(t1)
 	ldi	RB_HALT|RB_POWERDOWN, arg0
+	ldil	L%emrg_stack, arg1
 	b	$kernel_setup
-	ldil	L%emerge_stack, arg1
+	ldw	R%emrg_stack(arg1), arg1
 
 ALTENTRY(hppa_pfr_end)
 	.word	0
@@ -2652,6 +2654,7 @@ ENTRY(switch_exit,0)
 
 	/* switch onto the temporary stack */
 	ldil	L%exit_stack, t4
+	ldw	R%exit_stack(t4), t4
 	ldo	HPPA_FRAME_SIZE(t4), sp
 	stw	r0, HPPA_FRAME_PSP(sp)
 	stw	r0, HPPA_FRAME_CRP(sp)
