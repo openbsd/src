@@ -7,7 +7,7 @@
 .Nd change device protection upon login
 .Sh DESCRIPTION
 The
-.Nm fbtab
+.Nm
 file contains lines which specify how the permissions and
 ownership of various system files should be changed based on
 the user's login device name.
@@ -19,12 +19,12 @@ All other lines consist of three fields delimited by
 whitespace.
 .Bl -tag -width xxxxxxxxxxxxxxxxxxxx
 .It Login Device
-The device you have logged in on, ie. /dev/ttyv0.
+The device you have logged in on, e.g. /dev/ttyv0.
 .It File Permission 
 An octal permission number (0600), as used by
 .Xr chmod 2 .
 .It Other devices
-The final field is a ":"-delimited list of devices, ie.
+The final field is a ":"-delimited list of devices, e.g.
 /dev/console:/dev/fd0a.
 All device names are absolute paths.
 A path that ends in "/*" refers to all
@@ -32,7 +32,7 @@ directory entries except "." and "..".
 .El
 .Pp
 The
-.Nm fbtab
+.Nm
 file is used by
 .Xr login 1
 to
@@ -42,13 +42,13 @@ the specified files to the user who has performed a login.  As well,
 is used to set the devices to the specified permission.
 When a user logs out,
 .Xr init 8
-is responsible for performing the inverse operation, this results in
+is responsible for performing the inverse operation, which results in
 the files once again belonging to root.
 .Sh FILES
 .Bl -tag -width /etc/fbtab -compact
 .It Pa /etc/fbtab
 The
-.Nm fbtab
+.Nm
 file resides in
 .Pa /etc .
 .El
