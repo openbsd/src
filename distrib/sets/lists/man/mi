@@ -1,3 +1,4 @@
+./usr/share/man/cat8/sparc64/installboot.0
 ./usr/share/doc/html
 ./usr/share/doc/html/curses
 ./usr/share/doc/html/curses/hackguide.html
@@ -568,6 +569,7 @@
 ./usr/share/man/cat1/sort.0
 ./usr/share/man/cat1/source.0
 ./usr/share/man/cat1/sparc
+./usr/share/man/cat1/sparc64
 ./usr/share/man/cat1/sparc/fdformat.0
 ./usr/share/man/cat1/sparc/screenblank.0
 ./usr/share/man/cat1/splain.0
@@ -682,6 +684,7 @@
 ./usr/share/man/cat3/mvme88k
 ./usr/share/man/cat3/mvmeppc
 ./usr/share/man/cat3/sparc
+./usr/share/man/cat3/sparc64
 ./usr/share/man/cat3/sun3
 ./usr/share/man/cat3/vax
 ./usr/share/man/cat3p
@@ -1156,6 +1159,7 @@
 ./usr/share/man/cat4/sl.0
 ./usr/share/man/cat4/sm.0
 ./usr/share/man/cat4/sparc
+./usr/share/man/cat4/sparc64
 ./usr/share/man/cat4/sparc/audioamd.0
 ./usr/share/man/cat4/sparc/audiocs.0
 ./usr/share/man/cat4/sparc/autoconf.0
@@ -1433,6 +1437,7 @@
 ./usr/share/man/cat5/services.0
 ./usr/share/man/cat5/shells.0
 ./usr/share/man/cat5/sparc
+./usr/share/man/cat5/sparc64
 ./usr/share/man/cat5/stab.0
 ./usr/share/man/cat5/sudoers.0
 ./usr/share/man/cat5/sun3
@@ -1830,6 +1835,7 @@
 ./usr/share/man/cat8/snkadm.0
 ./usr/share/man/cat8/snkinit.0
 ./usr/share/man/cat8/sparc
+./usr/share/man/cat8/sparc64
 ./usr/share/man/cat8/sparc/MAKEDEV.0
 ./usr/share/man/cat8/sparc/boot_sparc.0
 ./usr/share/man/cat8/sparc/eeprom.0
@@ -1931,6 +1937,7 @@
 ./usr/share/man/cat9/mvme88k
 ./usr/share/man/cat9/mvmeppc
 ./usr/share/man/cat9/sparc
+./usr/share/man/cat9/sparc64
 ./usr/share/man/cat9/sun3
 ./usr/share/man/cat9/vax
 ./usr/share/man/man1
@@ -1946,6 +1953,7 @@
 ./usr/share/man/man1/mvme88k
 ./usr/share/man/man1/mvmeppc
 ./usr/share/man/man1/sparc
+./usr/share/man/man1/sparc64
 ./usr/share/man/man1/sun3
 ./usr/share/man/man1/vax
 ./usr/share/man/man2
@@ -1964,6 +1972,7 @@
 ./usr/share/man/man4/mvme88k
 ./usr/share/man/man4/mvmeppc
 ./usr/share/man/man4/sparc
+./usr/share/man/man4/sparc64
 ./usr/share/man/man4/sun3
 ./usr/share/man/man4/vax
 ./usr/share/man/man5
@@ -1982,6 +1991,7 @@
 ./usr/share/man/man8/mvme88k
 ./usr/share/man/man8/mvmeppc
 ./usr/share/man/man8/sparc
+./usr/share/man/man8/sparc64
 ./usr/share/man/man8/sun3
 ./usr/share/man/man8/vax
 ./usr/share/man/man9
@@ -1998,6 +2008,7 @@
 ./usr/share/man/ps1/mvme88k
 ./usr/share/man/ps1/mvmeppc
 ./usr/share/man/ps1/sparc
+./usr/share/man/ps1/sparc64
 ./usr/share/man/ps1/sun3
 ./usr/share/man/ps1/vax
 ./usr/share/man/ps2
@@ -2015,6 +2026,7 @@
 ./usr/share/man/ps3/mvme88k
 ./usr/share/man/ps3/mvmeppc
 ./usr/share/man/ps3/sparc
+./usr/share/man/ps3/sparc64
 ./usr/share/man/ps3/sun3
 ./usr/share/man/ps3/vax
 ./usr/share/man/ps3p
@@ -2031,6 +2043,7 @@
 ./usr/share/man/ps4/mvme88k
 ./usr/share/man/ps4/mvmeppc
 ./usr/share/man/ps4/sparc
+./usr/share/man/ps4/sparc64
 ./usr/share/man/ps4/sun3
 ./usr/share/man/ps4/vax
 ./usr/share/man/ps5
@@ -2046,6 +2059,7 @@
 ./usr/share/man/ps5/mvme88k
 ./usr/share/man/ps5/mvmeppc
 ./usr/share/man/ps5/sparc
+./usr/share/man/ps5/sparc64
 ./usr/share/man/ps5/sun3
 ./usr/share/man/ps5/vax
 ./usr/share/man/ps6
@@ -2063,6 +2077,7 @@
 ./usr/share/man/ps8/mvme88k
 ./usr/share/man/ps8/mvmeppc
 ./usr/share/man/ps8/sparc
+./usr/share/man/ps8/sparc64
 ./usr/share/man/ps8/sun3
 ./usr/share/man/ps8/vax
 ./usr/share/man/ps9
@@ -2078,6 +2093,7 @@
 ./usr/share/man/ps9/mvme88k
 ./usr/share/man/ps9/mvmeppc
 ./usr/share/man/ps9/sparc
+./usr/share/man/ps9/sparc64
 ./usr/share/man/ps9/sun3
 ./usr/share/man/ps9/vax
 ./var/www/htdocs/manual/configuring.html

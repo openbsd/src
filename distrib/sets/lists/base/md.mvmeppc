@@ -1,3 +1,4 @@
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/eapreg.ph
 ./dev/scan0
 ./dev/scan1
 ./sbin/fdisk

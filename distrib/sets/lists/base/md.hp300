@@ -1,3 +1,6 @@
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/eapreg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/ieee.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/ieee.ph
 ./sbin/ldconfig
 ./usr/bin/c++filt
 ./usr/bin/ldd

@@ -1,3 +1,5 @@
+./usr/include/m68k/ieee.h
+./usr/include/amiga/ieee.h
 ./usr/bin/c++filt
 ./usr/bin/gdb
 ./usr/bin/objdump

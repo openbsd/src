@@ -1,3 +1,5 @@
+./usr/include/m68k/ieee.h
+./usr/include/hp300/ieee.h
 ./usr/bin/gdb
 ./usr/bin/objdump
 ./usr/include/ansidecl.h
