@@ -344,10 +344,8 @@ allocsys(v)
 		if (nbuf < 16)
 			nbuf = 16;
 	}
-#if defined(SUN4C) || defined(SUN4)
-	if ((CPU_ISSUN4C || CPU_ISSUN4) && nbuf > 200)
+	if (nbuf > 200)		/* XXX Sorry, our kvm space is too small */
 		nbuf = 200;
-#endif
 	if (nswbuf == 0) {
 		nswbuf = (nbuf / 2) &~ 1;	/* force even */
 		if (nswbuf > 256)
