@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.45 2002/04/28 14:37:12 espie Exp $	*/
+/*	$OpenBSD: eval.c,v 1.46 2003/04/05 14:42:11 espie Exp $	*/
 /*	$NetBSD: eval.c,v 1.7 1996/11/10 21:21:29 pk Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.2 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: eval.c,v 1.45 2002/04/28 14:37:12 espie Exp $";
+static char rcsid[] = "$OpenBSD: eval.c,v 1.46 2003/04/05 14:42:11 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -799,7 +799,7 @@ dochq(const char *argv[], int argc)
 			if (*argv[3])
 				strlcpy(rquote, argv[3], sizeof(rquote));
 		} else
-			strcpy(rquote, lquote);
+			strlcpy(rquote, lquote, sizeof(rquote));
 	} else {
 		lquote[0] = LQUOTE, lquote[1] = EOS;
 		rquote[0] = RQUOTE, rquote[1] = EOS;
