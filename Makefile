@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.43 1999/01/07 04:57:13 millert Exp $
+#	$OpenBSD: Makefile,v 1.44 1999/01/08 00:26:59 millert Exp $
 
 #
 # For more information on building in tricky environments, please see
@@ -58,11 +58,6 @@ regression-tests:
 
 includes:
 	(cd ${.CURDIR}/include; ${MAKE} includes)	
-.ifndef DESTDIR
-	rdist -cR /usr/include localhost:/usr/include.real
-.else
-	rdist -cR ${DESTDIR}usr/include localhost:${DESTDIR}usr/include.real
-.endif
 
 beforeinstall:
 .ifndef DESTDIR
