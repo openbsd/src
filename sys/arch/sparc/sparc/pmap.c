@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.51 1999/12/08 15:16:12 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.52 1999/12/09 13:22:59 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -5530,7 +5530,6 @@ pmap_enk4m(pm, va, prot, wired, pv, pteproto)
 		panic("pmap_enk4m: missing segment table for va 0x%lx", va);
 #endif
 
-
 	tpte = sp->sg_pte[VA_SUN4M_VPG(va)];
 	if ((tpte & SRMMU_TETYPE) == SRMMU_TEPTE) {
 		/* old mapping exists, and is of the same pa type */
@@ -5743,12 +5742,17 @@ pmap_kenter_pa4m(va, pa, prot)
 
 	pteproto = ((pa & PMAP_NC) == 0 ? SRMMU_PG_C : 0) |
 		PMAP_T2PTE_SRMMU(pa) | SRMMU_TEPTE | PPROT_RX_RX | PPROT_S |
-		(atop(pa) << SRMMU_PPNSHIFT) |
 		((prot & VM_PROT_WRITE) ? PPROT_WRITE : 0);
+
+	pa &= ~PMAP_TNC_SRMMU;
+
+	pteproto |= atop(pa) << SRMMU_PPNSHIFT;
+
 	pv = pvhead(atop(pa));
 
 	ctx = getcontext4m();
 	pmap_enk4m(pmap_kernel(), va, prot, TRUE, pv, pteproto);
+	setcontext(ctx);
 }
 
 void
@@ -5757,11 +5761,42 @@ pmap_kenter_pgs4m(va, pgs, npgs)
 	struct vm_page **pgs;
 	int npgs;
 {
-	int i;
+	int i, pteproto, pte, ctx;
+	struct pvlist *pv;
 
-	for (i = 0; i < npgs; i++, va += PAGE_SIZE)
-		pmap_kenter_pa4m(va, VM_PAGE_TO_PHYS(pgs[i]),
-				 VM_PROT_READ|VM_PROT_WRITE);
+	/*
+	 * The pages will always be "normal" so they can always be
+	 * cached.
+	 */
+	pteproto = SRMMU_PG_C |	SRMMU_TEPTE | PPROT_RX_RX | PPROT_S;
+#if 0
+	/*
+	 * XXX - make the pages read-only until we know what protection they
+	 *       should have.
+	 */
+	| ((prot & VM_PROT_WRITE) ? PPROT_WRITE : 0);
+#endif
+
+	/*
+	 * We can do even nastier stuff here. We happen to know that the
+	 * pte's are contig in the kernel (don't have to worry about
+	 * segment/region boundaries).
+	 */
+	ctx = getcontext4m();
+	for (i = 0; i < npgs; i++, va += PAGE_SIZE) {
+		int pnum;
+		paddr_t pa;
+
+		pa = atop(VM_PAGE_TO_PHYS(pgs[i]);
+		pnum = atop(pa);
+
+		pte = pteproto | (pnum << SRMMU_PPNSHIFT) |
+			PMAP_T2PTE_SRMMU(pa);
+		pv = pvhead(pnum);
+		pmap_enk4m(pmap_kernel(), va, VM_PROT_READ /* XXX */,
+			   TRUE, pv, pte);
+	}
+	setcontext(ctx);
 }
 
 void
@@ -5769,9 +5804,7 @@ pmap_kremove4m(va, len)
 	vaddr_t va;
 	vsize_t len;
 {
-	for (len >>= PAGE_SHIFT; len > 0; len--, va += PAGE_SIZE) {
-		pmap_remove(pmap_kernel(), va, va + PAGE_SIZE);
-	}
+	pmap_remove(pmap_kernel(), va, va + len);
 }
 #endif /* PMAP_NEW */
 
