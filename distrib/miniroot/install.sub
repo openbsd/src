@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.17 1997/05/05 05:18:19 grr Exp $
+#	$OpenBSD: install.sub,v 1.18 1997/05/05 05:27:30 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -557,7 +557,7 @@ __install_ftp_1
 	case "$resp" in
 	n*|N*) ;;
 	*)
-		ftp -V -a ftp://cvs.openbsd.org/pub/OpenBSD/`echo ${VERSION} | sed 's/\(.\)\(.\)/\1.\2/'`/ftplist | cat
+		ftp -V -a ftp://ftp.openbsd.org/pub/OpenBSD/`echo ${VERSION} | sed 's/\(.\)\(.\)/\1.\2/'`/ftplist | cat
 		;;
 	esac
 
