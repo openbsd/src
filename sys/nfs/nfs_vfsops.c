@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.18 1997/04/18 09:30:48 deraadt Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.19 1997/04/18 10:15:20 deraadt Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -267,9 +267,6 @@ nfs_mountroot()
 	int error;
 
 	procp = curproc; /* XXX */
-
-	if (root_device->dv_class != DV_IFNET)
-		return (ENODEV);
 
 	/*
 	 * XXX time must be non-zero when we init the interface or else
