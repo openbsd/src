@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.16 1998/01/04 23:57:29 deraadt Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.17 1998/08/07 21:49:18 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -389,6 +389,7 @@ Xmanual(cmd, disk, mbr, tt, offset)
 	int offset;
 {
 	char *pager = "/usr/bin/less";
+	sig_t opipe = signal(SIGPIPE, SIG_IGN);
 	extern char manpage[];
 	FILE *f;
 
@@ -400,5 +401,6 @@ Xmanual(cmd, disk, mbr, tt, offset)
 		pclose(f);
 	}
 
+	(void)signal(SIGPIPE, opipe);
 	return (CMD_CONT);
 }
