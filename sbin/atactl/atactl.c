@@ -1,4 +1,4 @@
-/*	$OpenBSD: atactl.c,v 1.1 1999/09/21 04:58:14 csapuntz Exp $	*/
+/*	$OpenBSD: atactl.c,v 1.2 2000/02/02 02:52:05 deraadt Exp $	*/
 /*	$NetBSD: atactl.c,v 1.4 1999/02/24 18:49:14 jwise Exp $	*/
 
 /*-
@@ -148,15 +148,20 @@ main(argc, argv)
 {
 	int i;
 
-	/* Must have at least: device command */
-	if (argc < 3)
-		usage();
-
-	/* Skip program name, get and skip device name and command. */
 	dvname = argv[1];
-	cmdname = argv[2];
-	argv += 3;
-	argc -= 3;
+	if (argc == 2) {
+		cmdname = "identify";
+		argv += 2;
+		argc -= 2;
+	} else if (argc < 3) {
+		usage();
+	} else {
+		/* Skip program name, get and skip device name and command. */
+
+		cmdname = argv[2];
+		argv += 3;
+		argc -= 3;
+	}
 
 	/*
 	 * Open the device

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: atactl.8,v 1.1 1999/09/21 04:58:14 csapuntz Exp $
+.\"	$OpenBSD: atactl.8,v 1.2 2000/02/02 02:52:05 deraadt Exp $
 .\"	$NetBSD: atactl.8,v 1.5 1999/02/24 18:49:14 jwise Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -59,6 +59,14 @@ the command may require.
 .Sh DEVICE COMMANDS
 The following commands may be used on IDE and ATA devices.  Note
 that not all devices support all commands.
+.Pp
+If the
+.Ar device
+is specified without a
+.Ar command ,
+the
+.Cm identify
+command is implied. 
 .Pp
 .Cm identify
 .Pp
@@ -121,4 +129,4 @@ command written by Jason R. Thorpe.
 The
 .Nm
 command first appeared in
-.Nx 1.4 .
+.Ox 2.6 .
