@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_userconf.c,v 1.30 2002/07/25 01:26:01 nordin Exp $	*/
+/*	$OpenBSD: subr_userconf.c,v 1.31 2002/07/29 23:18:57 art Exp $	*/
 
 /*
  * Copyright (c) 1996-2001 Mats O Jansson <moj@stacken.kth.se>
@@ -505,6 +505,10 @@ userconf_change(devno)
 					;
 				lk = l = (int *)malloc(sizeof(int) * i,
 				    M_TEMP, M_NOWAIT);
+				if (lk == NULL) {
+					printf("out of memory.\n");
+					return;
+				}
 				bcopy(cd->cf_loc, l, sizeof(int) * i);
 			}
 
