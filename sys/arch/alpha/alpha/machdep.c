@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.85 2004/01/22 17:47:27 miod Exp $ */
+/* $OpenBSD: machdep.c,v 1.86 2004/03/10 23:02:53 tom Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -1093,7 +1093,9 @@ boot(howto)
 
 	/* If system is cold, just halt. */
 	if (cold) {
-		howto |= RB_HALT;
+		/* (Unless the user explicitly asked for reboot.) */
+		if ((howto & RB_USERREQ) == 0)
+			howto |= RB_HALT;
 		goto haltsys;
 	}
 

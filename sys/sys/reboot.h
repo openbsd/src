@@ -1,4 +1,4 @@
-/*	$OpenBSD: reboot.h,v 1.12 2003/06/02 23:28:21 millert Exp $	*/
+/*	$OpenBSD: reboot.h,v 1.13 2004/03/10 23:02:53 tom Exp $	*/
 /*	$NetBSD: reboot.h,v 1.9 1996/04/22 01:23:25 christos Exp $	*/
 
 /*
@@ -52,6 +52,7 @@
 #define	RB_TIMEBAD	0x0800	/* don't call resettodr() in boot() */
 #define	RB_POWERDOWN	0x1000	/* attempt to power down machine */
 #define	RB_SERCONS	0x2000	/* use serial console if available */
+#define	RB_USERREQ	0x4000	/* boot() called at user request (e.g. ddb) */
 
 /*
  * Constants for converting boot-style device number to type,
