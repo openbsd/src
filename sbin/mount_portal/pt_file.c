@@ -1,4 +1,4 @@
-/*	$OpenBSD: pt_file.c,v 1.5 1997/06/18 13:26:38 deraadt Exp $	*/
+/*	$OpenBSD: pt_file.c,v 1.6 1998/08/07 01:31:46 csapuntz Exp $	*/
 /*	$NetBSD: pt_file.c,v 1.7 1995/06/06 19:54:30 mycroft Exp $	*/
 
 /*
@@ -81,11 +81,18 @@ portal_file(pcr, key, v, so, fdp)
 	if (seteuid(pcr->pcr_uid) < 0)
 		return (errno);
 
+
+	error = 0;
+
 	fd = open(pbuf, O_RDWR|O_CREAT, 0666);
-	if (fd < 0)
-		error = errno;
-	else
-		error = 0;
+	if (fd < 0) {
+	        if (errno == EISDIR) {
+			errno = 0;
+			fd = open(pbuf, O_RDONLY);
+		}
+		if (fd < 0)
+			error = errno;
+	}
 
 	if (seteuid((uid_t) 0) < 0) {	/* XXX - should reset gidset too */
 		error = errno;
