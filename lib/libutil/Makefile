@@ -1,13 +1,13 @@
-#	$OpenBSD: Makefile,v 1.19 1999/11/11 06:30:40 ericj Exp $
+#	$OpenBSD: Makefile,v 1.20 2000/11/26 01:27:19 millert Exp $
 #	$NetBSD: Makefile,v 1.8 1996/05/16 07:03:28 thorpej Exp $
 
 LIB=	util
 CFLAGS+=-DLIBC_SCCS
 
 HDRS=	util.h scsi.h
-SRCS=	getmaxpartitions.c getrawpartition.c login.c login_tty.c logout.c \
-	logwtmp.c opendev.c passwd.c pty.c readlabel.c scsi.c login_fbtab.c \
-	uucplock.c fparseln.c opendisk.c
+SRCS=	check_expire.c getmaxpartitions.c getrawpartition.c login.c \
+	login_tty.c logout.c logwtmp.c opendev.c passwd.c pty.c readlabel.c \
+	scsi.c login_fbtab.c uucplock.c fparseln.c opendisk.c
 
 MAN=	getmaxpartitions.3 getrawpartition.3 login.3 opendev.3 openpty.3 \
 	pw_init.3 pw_lock.3 readlabelfs.3 scsi.3 pw_getconf.3 uucplock.3 \
