@@ -11,7 +11,7 @@ DIR=${SAREL}${SADIR}
 CFLAGS+=-DSTANDALONE -DCOMPAT_UFS $(DEBUGFLAGS) -I${DIR} -I${DIR}/../..
 
 # stand routines
-SRCS+=	alloc.c bcopy.c exit.c exec.c getfile.c gets.c globals.c \
+SRCS+=	alloc.c bcopy.c memcpy.c exit.c exec.c getfile.c gets.c globals.c \
 	printf.c strerror.c
 
 # io routines
