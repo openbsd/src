@@ -1,4 +1,4 @@
-/*	$OpenBSD: unfdpass.c,v 1.11 2004/07/28 19:35:39 millert Exp $	*/
+/*	$OpenBSD: unfdpass.c,v 1.12 2004/08/30 18:13:14 millert Exp $	*/
 /*	$NetBSD: unfdpass.c,v 1.3 1998/06/24 23:51:30 thorpej Exp $	*/
 
 /*-
@@ -74,8 +74,8 @@ main(int argc, char *argv[])
 	struct sockaddr_un sun, csun;
 	int csunlen;
 	pid_t pid;
-	void *message;
-	int msglen, pflag;
+	char message[CMSG_SPACE(sizeof(int) * 2)];
+	int pflag;
 	extern char *__progname;
 
 	pflag = 0;
@@ -89,10 +89,6 @@ main(int argc, char *argv[])
 			exit(1);
 		}
 	}
-
-	msglen = CMSG_LEN(sizeof(int) * 2);
-	if ((message = malloc(msglen)) == NULL)
-		err(1, "malloc");
 
 	/*
 	 * Create the test files.
@@ -173,8 +169,8 @@ main(int argc, char *argv[])
 	 * Grab the descriptors passed to us.
 	 */
 	(void) memset(&msg, 0, sizeof(msg));
-	msg.msg_control = (caddr_t) message;
-	msg.msg_controllen = msglen;
+	msg.msg_control = message;
+	msg.msg_controllen = CMSG_LEN(sizeof(int) * 2);
 
 	if (recvmsg(sock, &msg, 0) < 0)
 		err(1, "recvmsg");
@@ -247,12 +243,8 @@ child(int sock)
 	struct cmsghdr *cmp;
 	int i, fd;
 	struct sockaddr_un sun;
-	struct cmsghdr *cmpf;
+	char cmsgbuf[CMSG_SPACE(sizeof(int) * 2)];
 	int *files;
-
-	if ((cmpf = malloc(CMSG_LEN(sizeof(int) * 2))) == NULL)
-		err(1, "malloc");
-	files = (int *)CMSG_DATA(cmpf);
 
 	/*
 	 * Create socket if needed and connect to the receiver.
@@ -270,24 +262,25 @@ child(int sock)
 			err(1, "child connect");
 	}
 
+	(void) memset(&msg, 0, sizeof(msg));
+	msg.msg_control = cmsgbuf;
+	msg.msg_controllen = CMSG_LEN(sizeof(int) * 2);
+
+	cmp = CMSG_FIRSTHDR(&msg);
+	cmp->cmsg_len = CMSG_LEN(sizeof(int) * 2);
+	cmp->cmsg_level = SOL_SOCKET;
+	cmp->cmsg_type = SCM_RIGHTS;
+
 	/*
 	 * Open the files again, and pass them to the child over the socket.
 	 */
+	files = (int *)CMSG_DATA(cmp);
 	for (i = 0; i < 2; i++) {
 		(void) snprintf(fname, sizeof fname, "file%d", i + 1);
 		if ((fd = open(fname, O_RDONLY, 0666)) == -1)
 			err(1, "child open %s", fname);
 		files[i] = fd;
 	}
-
-	(void) memset(&msg, 0, sizeof(msg));
-	msg.msg_control = (caddr_t)cmpf;
-	msg.msg_controllen = CMSG_LEN(sizeof(int) * 2);
-
-	cmp = cmpf;
-	cmp->cmsg_len = CMSG_LEN(sizeof(int) * 2);
-	cmp->cmsg_level = SOL_SOCKET;
-	cmp->cmsg_type = SCM_RIGHTS;
 
 	if (sendmsg(sock, &msg, 0))
 		err(1, "child sendmsg");
