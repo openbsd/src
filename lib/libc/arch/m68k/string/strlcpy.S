@@ -29,32 +29,32 @@
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: strlcpy.S,v 1.1 1999/04/25 00:10:06 millert Exp $"
+	.asciz "$OpenBSD: strlcpy.S,v 1.2 1999/04/30 22:07:13 millert Exp $"
 #endif /* LIBC_SCCS */
 
 ENTRY(strlcpy)
-	movl	sp@(4),a0		| a0 = dst
-	movl	sp@(8),a1		| a1 = src
-	movl	a1,a2			| a2 = orig_src
-	movl	sp@(12),a3		| a3 = orig_count
-	movl	a3,d1			| d1 = count
+	movl	sp@(4),a1		| a1 = dst
+	movl	sp@(8),a0		| a0 = src
+	movl	a0,a2			| a2 = orig_src
+	movl	sp@(12),d1		| d1 = orig_count
+	movl	d1,d0			| d0 = count
 	beq	slcloop			| don't let count wrap...
-	subql	#1,d1			| subtract one for the NUL
+	subql	#1,d0			| subtract one for the NUL
 slcloop:
-	tstb	a1@			| got a NUL?
+	tstb	a0@			| got a NUL in src?
 	beq	slcnul			| if so, add NUL to dst and we're done
-	tstl	d1			| only copy bytes if count is non-zero
+	tstl	d0			| only copy bytes if count is non-zero
 	beq	slcinc			| (else just increment src ptr)
-	movb	a1@,a0@+		| copy a byte but only increment dst
-	subql	#1,d1			| decrement count
+	movb	a0@,a1@+		| copy a byte but only increment dst
+	subql	#1,d0			| decrement count
 slcinc:
-	addql	#1,a1			| increment src ptr
+	addql	#1,a0			| increment src ptr
 	jra	slcloop			| keep going...
 slcnul:
-	tstl	a3			| make sure we had a non-zero orig_count
+	tstl	d1			| make sure we had a non-zero orig_count
 	beq	slcdone
-	clrb	a0@			| clear last byte
+	clrb	a1@			| clear last byte
 slcdone:
-	movl	a1,d0
+	movl	a0,d0
 	subl	a2,d0			| return value
 	rts
