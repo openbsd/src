@@ -1,4 +1,4 @@
-/* $OpenBSD: m88100_fp.S,v 1.2 2004/07/22 18:58:34 miod Exp $	*/
+/* $OpenBSD: m88100_fp.S,v 1.3 2004/08/09 20:18:14 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1991 Carnegie Mellon University
@@ -88,10 +88,10 @@ ASENTRY(m88100_Xfp_precise)
 
 
 	/*
-	 * Load into r1 the return address for the 0 handlers. Looking at
-	 * FPECR, branch to the appropriate 0 handler. However, if none of the
-	 * 0 bits are enabled, then a floating point instruction was issued
-	 * with the floating point unit disabled. This will cause an
+	 * Load into r1 the return address for the zero handlers. Looking at
+	 * FPECR, branch to the appropriate zero handler. However, if none of
+	 * the zero bits are enabled, then a floating point instruction was
+	 * issued with the floating point unit disabled. This will cause an
 	 * unimplemented opcode 0.
 	 */
 
@@ -120,7 +120,9 @@ ASENTRY(m88100_Xfp_precise)
 ASLOCAL(FPuimp)
 	subu	r31,r31,40		/* allocate stack */
 	st	r1,r31,36		/* save return address */
+#if 0
 	st	r3,r31,32		/* save exception frame */
+#endif
 	or	r2,r0,T_FPEPFLT		/* load trap type */
 	or	r3, r29, r0
 	bsr	_C_LABEL(m88100_trap)
@@ -189,20 +191,11 @@ ASLOCAL(FPdivzero)
 
 /*
  * The numerator is zero, so handle the invalid operation by setting the
- * invalid operation bit and branching to the user handler if there is one
- * or writing a quiet NaN to the destination.
+ * invalid operation bit and writing a quiet NaN to the destination.
  */
 
 ASLOCAL(resoper)
 	set	r2,r2,1<oper>
-#ifdef HANDLER
-	bb0	oper,r3,noreshand	/* branch to execute default handling */
-					/* for reserved operands */
-	bsr	_handler		/* branch to user handler */
-	br	FP_div_return
-#endif
-
-noreshand:
 	set	r5,r0,0<0>	/* put a NaN in high word */
 	set	r6,r0,0<0>	/* put a NaN in low word */
 	br	FP_div_return
@@ -212,24 +205,13 @@ noreshand:
 
 /*
  * The operation is divide by zero, so set the divide by zero bit in the
- * FPSR. If the user handler is set, then go to the user handler, else
- * go to the default mode.
- */
-
-setbit:
-	set	r2,r2,1<divzero>
-#ifdef HANDLER
-	bb0	divzero,r3,default	/* go to default routine if no hdlr */
-	bsr	_handler		/* execute handler routine */
-	br	FP_div_return
-#endif
-
-/*
+ * FPSR.
  * Considering the sign of the numerator and zero, write a correctly
  * signed infinity of the proper precision into the destination.
  */
 
-default:
+setbit:
+	set	r2,r2,1<divzero>
 	bb1	dsize,r9,FPzero_double	/* branch to handle double result */
 FPzero_single:
 	clr	r10,r5,31<0>	/* clear all of S1HI except sign bit */
@@ -610,20 +592,9 @@ maxneg:
 	br.n	FPintov_return
 	 set	r6,r6,1<sign>	/* set sign bit */
 
-	/*
-	 * For valid overflows, check to see if the integer overflow user
-	 * handler is set. If it is set, then go to user handler, else write
-	 * the correctly signed largest integer.
-	 */
-
+	/* For valid overflows, write the correctly signed largest integer. */
 overflw:
 	set	r2,r2,1<oper>
-#ifdef HANDLER
-	bb0	oper,r3,nohandler	/* do not go to user handler routine */
-	bsr	_handler		/* go to user handler routine */
-	br	FPintov_return
-nohandler:
-#endif
 	bb0.n	sign,r7,FPintov_return	/* if positive then return */
 	 set	r6,r6,31<0>		/* set result to largest positive int */
 	or.c	r6,r0,r6		/* negate r6, giving largest negative */
@@ -791,30 +762,12 @@ ASLOCAL(inf)
 					/* remaining alternative */
 
 /*
- * First check for an underflow user handler. If there is not one, then
- * branch to the routine to make a denormalized number. Before branching
- * to the underflow user handler, add 192 to a single precision exponent
- * and 1536 to a double precision exponent.
+ * Branch to the routine to make a denormalized number.
  */
-
 ASLOCAL(FPunderflow)
 	st	r1,r31,0	/* save return address */
 	set	r2,r2,1<underflow>
 	set	r2,r2,1<inexact>
-#ifdef HANDLER
-	bb0	efunf,r12,FPU_denorm	/* jump to default procedure */
-	bb1	destsize,r12,doubleprec	/* double precision destination */
-singleprec:
-	or.u	r6,r0,0x0c00	/* load exponent adjust 192 */
-	br.n	callundhand	/* branch to call handler for user handler */
-	 add	r12,r6,r12	/* adjust single precision exponent */
-doubleprec:
-	or.u	r6,r0,0x6000	/* load exponent adjust 1536 */
-	add	r12,r6,r12	/* adjust double precision exponent */
-callundhand:
-	bsr	_handler	/* call handler for user handler */
-	br	Ureturn
-#endif
 
 /*
  * Now the floating point number, which has an exponent smaller than what
@@ -1344,17 +1297,9 @@ addone:
 	 set	r9,r9,1<4>	/* indicate that a 1 has been added */
 	add.ci	r5,r5,r0	/* propagate carry into high word */
 
-
-/* Branch to inexact user handler if there is one. */
-
 noaddone:
 	set	r2,r2,1<inexact>
 	set	r2,r2,1<underflow>
-#ifdef HANDLER
-	bb1	efinx,r12,modformdef	/* branch to modify form for user */
-					/* handler */
-#endif
-
 
 /* Assemble the result of the denormalization routine for writeback to the */
 /* destination register. The exponent of a denormalized number is zero, */
@@ -1372,37 +1317,10 @@ doubassem:
 	 or	r10,r5,r0		/* load high word from r5 into r10 */
 	set	r10,r10,1<sign>		/* high word with sign loaded */
 signclr:
-	br	Ureturn
-
-
-/* modfordef modifies the result of denormalization to the input format of */
-/* the inexact user handler. This input format is the same format that */
-/* MANTHI, MANTLO, and IMPCR were initially loaded with. */
-
-#ifdef HANDLER
-modformdef:
-	clr	r12,r12,12<20>	/* clear result exponent,IMPCR complete */
-	clr	r10,r10,4<25>	/* clear old guard,round,sticky,and addone */
-	mak	r5,r9,3<26>	/* make grs field */
-	bb0.n	4,r9,newaddone	/* do not set new addone in MANTHI */
-	 or	r10,r5,r10	/* or in new grs field */
-	set	r10,r10,1<25>	/* set new addone */
-newaddone:
-	bb1.n	destsize,r12,moddefd /* branch to handle double precision */
-	 clr	r10,r10,21<0>	/* clear upper bits of old mantissa */
-moddefs:
-	extu	r5,r11,20<3>	/* extract upper bits */
-	or	r10,r5,r10	/* MANTHI complete */
-	bsr.n	_handler	/* execute user handler for inexact */
-	 rot	r11,r11,0<3>	/* MANTLO complete */
-	br	Ureturn
-moddefd:
-	bsr.n	_handler	/* execute user handler for inexact */
-	 or	r10,r5,r10	/* MANTHI complete,r5 should be set to OR */
-#endif
+	/* FALLTHROUGH */
+	/* br	Ureturn */
 
 /* Return to fpui. */
-
 Ureturn:
 	ld	r1,r31,0	/* load return address */
 	jmp	r1
@@ -1410,41 +1328,14 @@ Ureturn:
 /*
  * FPoverflow
  */
-/* If the overflow user handler bit is not set, then the inexact bit in the */
-/* FPSR is set, and the inexact user handler bit is checked. If it is set, */
-/* then the inexact user handler is executed, else the default routine for */
-/* overflow is executed. */
 
 ASLOCAL(FPoverflow)
 	st	r1,r31,0	/* save return address */
 	set	r2,r2,1<overflow>
 	set	r2,r2,1<inexact>
-#ifdef HANDLER
-	bb1	efovf,r12,hand	/* go to user handler if bit set for overflow */
-	bb0	efinx,r12,nohandler/* if userhandler for inexact not set,then */
-				/* round result */
-	br	callhandler	/* branch to user handler for inexact */
-
-/* Before the overflow user handler is executed, the exponent is modified */
-/* by subtracting 192 for single precision and 1536 for double precision. */
-
-hand:
-	bb1	10,r12,doubleprec /* double precision result */
-singleprec:
-	or.u	r5,r0,0x0c00	/* load exponent adjust */
-	br.n	callhandler	/* prepare to call user handler */
-	 subu	r12,r12,r5	/* adjust single precision exponent */
-doubleprec:
-	or.u	r5,r0,0x6000	/* load exponent adjust */
-	subu	r12,r12,r5	/* adjust double precision exponent */
-callhandler:
-	bsr	_handler	/* branch to common handler routine */
-	br	return
-#endif
 
 /* Determine which rounding mode to use for the default procedure. */
 
-nohandler:
 	bb1	modehi,r10,signed /* mode is either round toward pos. or neg. */
 	bb0	modelo,r10,OFnearest /* rounding mode is round nearest */
 	br	OFzero		/* rounding mode is round zero */
@@ -1463,13 +1354,13 @@ OFnearest:
 	 mask.u	r5,r10,0x8000		/* mask off sign bit from MANTHI */
 	or.u	r11,r0,hi16(0x7f800000)	/* load single infinity constant */
 	or	r11,r11,lo16(0x7f800000)
-	br.n	return			/* return with result */
+	br.n	FPof_return		/* return with result */
 	 or	r11,r5,r11		/* adjust sign */
 neardouble:
 	or	r11,r0,r0		/* load lower word of infinity */
 	or.u	r10,r0,hi16(0x7ff00000)	/* load upper word of infinity */
 	or	r10,r10,lo16(0x7ff00000)
-	br.n	return			/* return with result */
+	br.n	FPof_return		/* return with result */
 	 or	r10,r5,r10		/* adjust sign */
 
 
@@ -1484,13 +1375,13 @@ OFzero:
 	 mask.u	r5,r10,0x8000		/* mask off sign bit from MANTHI */
 	or.u	r11,r0,hi16(0x7f7fffff)	/* load single finite number constant */
 	or	r11,r11,lo16(0x7f7fffff)
-	br.n	return			/* return with result */
+	br.n	FPof_return		/* return with result */
 	 or	r11,r5,r11		/* adjust sign */
 zerodouble:
 	set	r11,r0,0<0>		/* load lower word of finite number */
 	or.u	r10,r0,hi16(0x7fefffff)	/* load upper word of finite number */
 	or	r10,r10,lo16(0x7fefffff)
-	br.n	return			/* return with result */
+	br.n	FPof_return		/* return with result */
 	 or	r10,r5,r10		/* adjust sign */
 
 
@@ -1505,25 +1396,25 @@ possingle:
 	bb1	sign,r10,possingleneg	/* branch to section for negatives */
 possinglepos:
 	or.u	r11,r0,hi16(0x7f800000)	/* load single infinity constant */
-	br.n	return			/* return with result */
+	br.n	FPof_return		/* return with result */
 	 or	r11,r11,lo16(0x7f800000)
 possingleneg:
 	or.u	r11,r0,hi16(0x7f7fffff)	/* load single finite number constant */
 	or	r11,r11,lo16(0x7f7fffff)
-	br.n	return			/* return with result */
+	br.n	FPof_return		/* return with result */
 	 set	r11,r11,1<sign>		/* set sign for negative */
 posdouble:
 	bb1	sign,r10,posdoubleneg	/* branch to negative double results */
 posdoublepos:
 	or	r11,r0,r0		/* load lower word of double infinity */
 	or.u	r10,r0,hi16(0x7ff00000)	/* load upper word of infinity */
-	br.n	return			/* return with result */
+	br.n	FPof_return		/* return with result */
 	 or	r10,r10,lo16(0x7ff00000)
 posdoubleneg:
 	set	r11,r0,0<0>		/* load lower word of finite number */
 	or.u	r10,r0,hi16(0x7fefffff)	/* load upper word of finite number */
 	or	r10,r10,lo16(0x7fefffff)
-	br.n	return			/* return with result */
+	br.n	FPof_return		/* return with result */
 	 set	r10,r10,1<sign>		/* set sign for negative */
 
 
@@ -1537,19 +1428,19 @@ negsingle:
 	bb1	sign,r10,negsingleneg	/* branch to section for negatives */
 negsinglepos:
 	or.u	r11,r0,hi16(0x7f7fffff)	/* load single finite number constant */
-	br.n	return			/* return with result */
+	br.n	FPof_return		/* return with result */
 	 or	r11,r11,lo16(0x7f7fffff)
 negsingleneg:
 	or.u	r11,r0,hi16(0x7f800000)	/* load single infinity constant */
 	or	r11,r11,lo16(0x7f800000)
-	br.n	return			/* return with result */
+	br.n	FPof_return		/* return with result */
 	 set	r11,r11,1<sign>		/* set sign for negative */
 negdouble:
 	bb1	sign,r10,negdoubleneg	/* branch to negative double results */
 negdoublepos:
 	set	r11,r0,0<0>		/* load lower word of finite number */
 	or.u	r10,r0,hi16(0x7fefffff)	/* load upper word of finite number */
-	br.n	return			/* return with result */
+	br.n	FPof_return		/* return with result */
 	 or	r10,r10,lo16(0x7fefffff)
 negdoubleneg:
 	or	r11,r0,r0		/* load lower word of double infinity */
@@ -1557,14 +1448,12 @@ negdoubleneg:
 	or	r10,r10,lo16(0x7ff00000)
 	set	r10,r10,1<sign>		/* set sign for negative */
 
-return:
+FPof_return:
 	ld	r1,r31,0		/* ld return address */
 	jmp	r1
 
 /* If either S1 or S2 is a signalling NaN, then set the invalid operation */
-/* bit of the FPSR. If the invalid operation user handler flag is set and */
-/* then NaN is signalling, then branch to the handler routine to go to the */
-/* user handler. */
+/* bit of the FPSR. */
 /* If S1 is the only NaN or one of two NaN''s, then write */
 /* a quiet S1 to the result. A signalling NaN must be made quiet before */
 /* it can be written, but a signalling S2 is not modified in this routine */
@@ -1574,12 +1463,6 @@ ASLOCAL(NaN)
 	 st	r1,r31,0		/* save return address */
 	bb1	sigbit,r5,S2sigcheck	/* S1 is not a signaling NaN */
 	set	r2,r2,1<oper>
-#ifdef HANDLER
-	bb0	oper,r3,S1nohandler	/* branch if no user handler */
-	bsr	_handler		/* branch to handler */
-	br	FPnan_return
-ASLOCAL(S1nohandler)
-#endif
 	br.n	S1write		/* FPSR bit already set, S1 is made quiet, */
 				/* and since we always write S1 if it is a */
 				/* NaN, write S1 and skip rest of routine */
@@ -1589,14 +1472,7 @@ ASLOCAL(S2sigcheck)
 	bb0	s2nan,r12,S1write	/* S2 is not a NaN */
 	bb1	sigbit,r7,S1write	/* S2 is not a signaling NaN */
 	set	r2,r2,1<oper>
-#ifdef HANDLER
-	bb0	oper,r3,S2nohandler	/* branch if no user handler */
-	bsr	_handler		/* branch to handler */
-	br	FPnan_return
-#endif
-
-ASLOCAL(S2nohandler)
-	set	r7,r7,1<sigbit>	/* make S2 a quiet NaN */
+	set	r7,r7,1<sigbit>		/* make S2 a quiet NaN */
 
 
 /* Write a single or double precision quiet NaN unless the opeation is FCMP. */
@@ -1910,12 +1786,6 @@ FSQRT:
 
 excpt:
 	set	r2,r2,1<oper>
-#ifdef HANDLER
-	bb0	oper,r3,nohandler	/* branch if no user handler */
-	bsr	_handler		/* branch to interface with user handler */
-	br	inf_return
-nohandler:
-#endif
 	set	r5,r0,0<0>	/* write NaN into r5 */
 	br.n	inf_return
 	 set	r6,r0,0<0>	/* write NaN into r6, writing NaN''s into */
@@ -1971,13 +1841,7 @@ FP_inf_overflw:
 	set	r2,r2,1<oper>
 	set	r2,r2,1<overflow>
 	set	r2,r2,1<inexact>
-#ifdef HANDLER
-	bb0	oper,r3,nohandlero /* do not go to user handler routine */
-	bsr	_handler	/* go to user handler routine */
-	br	inf_return
-#endif
 
-nohandlero:
 	bb0.n	sign,r7,inf_return /* if positive then return */
 
 	 set	r6,r6,31<0>	/* set result to largest positive integer */
@@ -1986,15 +1850,6 @@ nohandlero:
 inf_return:
 	ld	r1,r31,0	/* load return address */
 	jmp	r1
-
-#define FADD	denorm_FADD
-#define FSUB	denorm_FSUB
-#define FCMP	denorm_FCMP
-#define FMUL	denorm_FMUL
-#define FDIV	denorm_FDIV
-#define NINT	denorm_NINT
-#define TRNC	denorm_TRNC
-#define return	denorm_return
 
 /*
  * denorm
@@ -2075,32 +1930,32 @@ S2form:
 checkop:
 	extu	r10,r9,5<11>	/* extract opcode */
 	cmp	r11,r10,0x05	/* compare to FADD */
-	bb1	2,r11,FADD	/* operation is FADD */
+	bb1	2,r11,denorm_FADD	/* operation is FADD */
 	cmp	r11,r10,0x06	/* compare to FSUB */
-	bb1	2,r11,FSUB	/* operation is FSUB */
+	bb1	2,r11,denorm_FSUB	/* operation is FSUB */
 	cmp	r11,r10,0x07	/* compare to FCMP */
-	bb1	2,r11,FCMP	/* operation is FCMP */
+	bb1	2,r11,denorm_FCMP	/* operation is FCMP */
 	cmp	r11,r10,0x00	/* compare to FMUL */
-	bb1	2,r11,FMUL	/* operation is FMUL */
+	bb1	2,r11,denorm_FMUL	/* operation is FMUL */
 	cmp	r11,r10,0x0e	/* compare to FDIV */
-	bb1	2,r11,FDIV	/* operation is FDIV */
+	bb1	2,r11,denorm_FDIV	/* operation is FDIV */
 #if 0
 	cmp	r11,r10,0x0f	/* compare to FSQRT */
-	bb1	2,r11,FSQRT	/* operation is FSQRT */
+	bb1	2,r11,denorm_FSQRT	/* operation is FSQRT */
 #endif
 	cmp	r11,r10,0x09	/* compare to INT */
-	bb1	2,r11,INT	/* operation is INT */
+	bb1	2,r11,denorm_INT	/* operation is INT */
 	cmp	r11,r10,0x0a	/* compare to NINT */
-	bb1	2,r11,NINT	/* operation is NINT */
+	bb1	2,r11,denorm_NINT	/* operation is NINT */
 	cmp	r11,r10,0x0b	/* compare to TRNC */
-	bb1	2,r11,TRNC	/* operation is TRNC */
+	bb1	2,r11,denorm_TRNC	/* operation is TRNC */
 
 
 /* For all the following operations, the denormalized number is set to */
 /* zero and the operation is reperformed the correct destination and source */
 /* sizes. */
 
-FADD:
+denorm_FADD:
 	bb0	1,r12,FADDS2dnm	/* S1 is not denorm, so S2 must be */
 	or	r5,r0,r0	/* set S1 to zero */
 	or	r6,r0,r0
@@ -2116,39 +1971,39 @@ FADDsD:
 FADDsDsS1:
 	bb1	7,r9,FADDsDsS1dS2 /* branch for double precision S2 */
 FADDsDsS1sS2:
-	br.n	return
+	br.n	denorm_return
 	 fadd.sss r6,r6,r8	/* add the two sources and place result 10 S1 */
 FADDsDsS1dS2:
-	br.n	return
+	br.n	denorm_return
 	 fadd.ssd r6,r6,r7	/* add the two sources and place result 10 S1 */
 FADDsDdS1:
 	bb1	7,r9,FADDsDdS1dS2 /* branch for double precision S2 */
 FADDsDdS1sS2:
-	br.n	return
+	br.n	denorm_return
 	 fadd.sds r6,r5,r8	/* add the two sources and place result 10 S1 */
 FADDsDdS1dS2:
-	br.n	return
+	br.n	denorm_return
 	 fadd.sdd r6,r5,r7	/* add the two sources and place result 10 S1 */
 FADDdD:
 	bb1	9,r9,FADDdDdS1	/* branch for double precision S1 */
 FADDdDsS1:
 	bb1	7,r9,FADDdDsS1dS2 /* branch for double precision S2 */
 FADDdDsS1sS2:
-	br.n	return
+	br.n	denorm_return
 	 fadd.dss r5,r6,r8	/* add the two sources and place result 10 S1 */
 FADDdDsS1dS2:
-	br.n	return
+	br.n	denorm_return
 	 fadd.dsd r5,r6,r7	/* add the two sources and place result 10 S1 */
 FADDdDdS1:
 	bb1	7,r9,FADDdDdS1dS2 /* branch for double precision S2 */
 FADDdDdS1sS2:
-	br.n	return
+	br.n	denorm_return
 	 fadd.dds r5,r5,r8	/* add the two sources and place result 10 S1 */
 FADDdDdS1dS2:
-	br.n	return
+	br.n	denorm_return
 	 fadd.ddd r5,r5,r7	/* add the two sources and place result 10 S1 */
 
-FSUB:
+denorm_FSUB:
 	bb0	1,r12,FSUBS2dnm	/* S1 is not denorm, so S2 must be */
 	or	r5,r0,r0	/* set S1 to zero */
 	or	r6,r0,r0
@@ -2164,39 +2019,39 @@ FSUBsD:
 FSUBsDsS1:
 	bb1	7,r9,FSUBsDsS1dS2 /* branch for double precision S2 */
 FSUBsDsS1sS2:
-	br.n	return
+	br.n	denorm_return
 	 fsub.sss r6,r6,r8	/* add the two sources and place result 10 S1 */
 FSUBsDsS1dS2:
-	br.n	return
+	br.n	denorm_return
 	 fsub.ssd r6,r6,r7	/* add the two sources and place result 10 S1 */
 FSUBsDdS1:
 	bb1	7,r9,FSUBsDdS1dS2 /* branch for double precision S2 */
 FSUBsDdS1sS2:
-	br.n	return
+	br.n	denorm_return
 	 fsub.sds r6,r5,r8	/* add the two sources and place result 10 S1 */
 FSUBsDdS1dS2:
-	br.n	return
+	br.n	denorm_return
 	 fsub.sdd r6,r5,r7	/* add the two sources and place result 10 S1 */
 FSUBdD:
 	bb1	9,r9,FSUBdDdS1	/* branch for double precision S1 */
 FSUBdDsS1:
 	bb1	7,r9,FSUBdDsS1dS2 /* branch for double precision S2 */
 FSUBdDsS1sS2:
-	br.n	return
+	br.n	denorm_return
 	 fsub.dss r5,r6,r8	/* add the two sources and place result 10 S1 */
 FSUBdDsS1dS2:
-	br.n	return
+	br.n	denorm_return
 	 fsub.dsd r5,r6,r7	/* add the two sources and place result 10 S1 */
 FSUBdDdS1:
 	bb1	7,r9,FSUBdDdS1dS2 /* branch for double precision S2 */
 FSUBdDdS1sS2:
-	br.n	return
+	br.n	denorm_return
 	 fsub.dds r5,r5,r8	/* add the two sources and place result 10 S1 */
 FSUBdDdS1dS2:
-	br.n	return
+	br.n	denorm_return
 	 fsub.ddd r5,r5,r7	/* add the two sources and place result 10 S1 */
 
-FCMP:
+denorm_FCMP:
 	bb0	1,r12,FCMPS2dnm	/* S1 is not denorm, so S2 must be */
 	or	r5,r0,r0	/* set S1 to zero */
 	or	r6,r0,r0
@@ -2210,21 +2065,21 @@ FCMPcalc:
 FCMPsS1:
 	bb1	7,r9,FCMPsS1dS2	/* branch for double precision S2 */
 FCMPsS1sS2:
-	br.n	return
+	br.n	denorm_return
 	 fcmp.sss r6,r6,r8	/* add the two sources and place result 10 S1 */
 FCMPsS1dS2:
-	br.n	return
+	br.n	denorm_return
 	 fcmp.ssd r6,r6,r7	/* add the two sources and place result 10 S1 */
 FCMPdS1:
 	bb1	7,r9,FCMPdS1dS2	/* branch for double precision S2 */
 FCMPdS1sS2:
-	br.n	return
+	br.n	denorm_return
 	 fcmp.sds r6,r5,r8	/* add the two sources and place result 10 S1 */
 FCMPdS1dS2:
-	br.n	return
+	br.n	denorm_return
 	 fcmp.sdd r6,r5,r7	/* add the two sources and place result 10 S1 */
 
-FMUL:
+denorm_FMUL:
 	bb0	1,r12,FMULS2dnm	/* S1 is not denorm, so S2 must be */
 	or	r5,r0,r0	/* set S1 to zero */
 	or	r6,r0,r0
@@ -2240,39 +2095,39 @@ FMULsD:
 FMULsDsS1:
 	bb1	7,r9,FMULsDsS1dS2 /* branch for double precision S2 */
 FMULsDsS1sS2:
-	br.n	return
+	br.n	denorm_return
 	 fmul.sss r6,r6,r8	/* add the two sources and place result 10 S1 */
 FMULsDsS1dS2:
-	br.n	return
+	br.n	denorm_return
 	 fmul.ssd r6,r6,r7	/* add the two sources and place result 10 S1 */
 FMULsDdS1:
 	bb1	7,r9,FMULsDdS1dS2 /* branch for double precision S2 */
 FMULsDdS1sS2:
-	br.n	return
+	br.n	denorm_return
 	 fmul.sds r6,r5,r8	/* add the two sources and place result 10 S1 */
 FMULsDdS1dS2:
-	br.n	return
+	br.n	denorm_return
 	 fmul.sdd r6,r5,r7	/* add the two sources and place result 10 S1 */
 FMULdD:
 	bb1	9,r9,FMULdDdS1	/* branch for double precision S1 */
 FMULdDsS1:
 	bb1	7,r9,FMULdDsS1dS2 /* branch for double precision S2 */
 FMULdDsS1sS2:
-	br.n	return
+	br.n	denorm_return
 	 fmul.dss r5,r6,r8	/* add the two sources and place result 10 S1 */
 FMULdDsS1dS2:
-	br.n	return
+	br.n	denorm_return
 	 fmul.dsd r5,r6,r7	/* add the two sources and place result 10 S1 */
 FMULdDdS1:
 	bb1	7,r9,FMULdDdS1dS2 /* branch for double precision S2 */
 FMULdDdS1sS2:
-	br.n	return
+	br.n	denorm_return
 	 fmul.dds r5,r5,r8	/* add the two sources and place result 10 S1 */
 FMULdDdS1dS2:
-	br.n	return
+	br.n	denorm_return
 	 fmul.ddd r5,r5,r7	/* add the two sources and place result 10 S1 */
 
-FDIV:
+denorm_FDIV:
 	bb0	1,r12,FDIVS2dnm	/* S1 is not denorm, so S2 must be */
 	or	r5,r0,r0	/* set S1 to zero */
 	or	r6,r0,r0
@@ -2289,39 +2144,39 @@ FDIVsDsS1:
 	bb1	7,r9,FDIVsDsS1dS2 /* branch for double precision S2 */
 FDIVsDsS1sS2:
 	fdiv.sss r6,r6,r8	/* add the two sources and place result 10 S1 */
-	br	return
+	br	denorm_return
 FDIVsDsS1dS2:
 	fdiv.ssd r6,r6,r7	/* add the two sources and place result 10 S1 */
-	br	return
+	br	denorm_return
 FDIVsDdS1:
 	bb1	7,r9,FDIVsDdS1dS2 /* branch for double precision S2 */
 FDIVsDdS1sS2:
 	fdiv.sds r6,r5,r8	/* add the two sources and place result 10 S1 */
-	br	return
+	br	denorm_return
 FDIVsDdS1dS2:
 	fdiv.sdd r6,r5,r7	/* add the two sources and place result 10 S1 */
-	br	return
+	br	denorm_return
 FDIVdD:
 	bb1	9,r9,FDIVdDdS1	/* branch for double precision S1 */
 FDIVdDsS1:
 	bb1	7,r9,FDIVdDsS1dS2 /* branch for double precision S2 */
 FDIVdDsS1sS2:
 	fdiv.dss r5,r6,r8	/* add the two sources and place result 10 S1 */
-	br	return
+	br	denorm_return
 FDIVdDsS1dS2:
 	fdiv.dsd r5,r6,r7	/* add the two sources and place result 10 S1 */
-	br	return
+	br	denorm_return
 FDIVdDdS1:
 	bb1	7,r9,FDIVdDdS1dS2 /* branch for double precision S2 */
 FDIVdDdS1sS2:
 	fdiv.dds r5,r5,r8	/* add the two sources and place result 10 S1 */
-	br	return
+	br	denorm_return
 FDIVdDdS1dS2:
 	fdiv.ddd r5,r5,r7	/* add the two sources and place result 10 S1 */
-	br	return
+	br	denorm_return
 
 #if 0
-FSQRT:
+denorm_FSQRT:
 	or	r7,r0,r0	/* set S2 to zero */
 	or	r8,r0,r0
 FSQRTcalc:
@@ -2329,52 +2184,52 @@ FSQRTcalc:
 FSQRTsD:
 	bb1	7,r9,FSQRTsDdS2 /* branch for double precision S2 */
 FSQRTsDsS2:
-	br.n	return
+	br.n	denorm_return
 	 fsqrt.ss r6,r8		/* add the two sources and place result 10 S1 */
 FSQRTsDdS2:
-	br.n	return
+	br.n	denorm_return
 	 fsqrt.sd r6,r7		/* add the two sources and place result 10 S1 */
 FSQRTdD:
 	bb1	7,r9,FSQRTdDdS2	/* branch for double precision S2 */
 FSQRTdDsS2:
-	br.n	return
+	br.n	denorm_return
 	 fsqrt.ds r5,r8		/* add the two sources and place result 10 S1 */
 FSQRTdDdS2:
-	br.n	return
+	br.n	denorm_return
 	 fsqrt.dd r5,r7		/* add the two sources and place result 10 S1 */
 #endif
 
-INT:
+denorm_INT:
 	or	r7,r0,r0	/* set S2 to zero */
 	or	r8,r0,r0
 INTcalc:
 	bb1	7,r9,INTdS2	/* branch for double precision S2 */
 INTsS2:
-	br.n	return
+	br.n	denorm_return
 	 int.ss r6,r8		/* add the two sources and place result 10 S1 */
 INTdS2:
-	br.n	return
+	br.n	denorm_return
 	 int.sd r6,r7		/* add the two sources and place result 10 S1 */
 
-NINT:
+denorm_NINT:
 	or	r7,r0,r0	/* set S2 to zero */
 	or	r8,r0,r0
 NINTcalc:
 	bb1	7,r9,NINTdS2	/* branch for double precision S2 */
 NINTsS2:
-	br.n	return
+	br.n	denorm_return
 	 nint.ss r6,r8		/* add the two sources and place result 10 S1 */
 NINTdS2:
-	br.n	return
+	br.n	denorm_return
 	 nint.sd r6,r7		/* add the two sources and place result 10 S1 */
 
-TRNC:
+denorm_TRNC:
 	or	r7,r0,r0	/* set S2 to zero */
 	or	r8,r0,r0
 TRNCcalc:
 	bb1	7,r9,TRNCdS2	/* branch for double precision S2 */
 TRNCsS2:
-	br.n	return
+	br.n	denorm_return
 	 trnc.ss r6,r8		/* add the two sources and place result 10 S1 */
 TRNCdS2:
 	trnc.sd r6,r7		/* add the two sources and place result 10 S1 */
@@ -2382,7 +2237,7 @@ TRNCdS2:
 
 /* Return to the routine that detected the reserved operand. */
 
-return:
+denorm_return:
 	ld	r1,r31,0	/* load return address */
 	jmp	r1
 
@@ -2472,10 +2327,6 @@ ASENTRY(Xfp_imprecise)
 	br	_ASM_LABEL(FPoverflow)
 3:
 	/* XXX handle inexact!!! */
-#ifdef HANDLER
-	br	_handler		/* branch to handler since bit will */
-					/* be set for inexact */
-#endif
 
 fpui_wrapup:
 	tb1	0,r0,0		/* make sure all floating point operations */
@@ -2495,8 +2346,8 @@ fpui_wrapup:
 
 	/* write back the results */
 	extu	r2, r12, 5<0>
-	addu	r3, r29, EF_R0*4
-	bb0	destsize, r12, Iwritesingle
+	bb0.n	destsize, r12, Iwritesingle
+	 addu	r3, r29, EF_R0 * 4
 	st	r10, r3 [r2]
 	addu	r2, r2, 1
 	clr	r2, r2, 27<5>
