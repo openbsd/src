@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_boot.c,v 1.10 1997/01/22 18:20:49 deraadt Exp $ */
+/*	$OpenBSD: nfs_boot.c,v 1.11 1999/01/03 10:07:19 deraadt Exp $ */
 /*	$NetBSD: nfs_boot.c,v 1.26 1996/05/07 02:51:25 thorpej Exp $	*/
 
 /*
@@ -171,7 +171,7 @@ nfs_boot_init(nd, procp)
 	 */
 	if ((error = revarpwhoami(&my_ip, ifp)) != 0)
 		panic("revarp failed, error=%d", error);
-	printf("nfs_boot: client_addr=0x%x\n", (u_int32_t)ntohl(my_ip.s_addr));
+	printf("nfs_boot: client_addr=%s\n", inet_ntoa(my_ip));
 
 	/*
 	 * Do enough of ifconfig(8) so that the chosen interface
@@ -206,9 +206,8 @@ nfs_boot_init(nd, procp)
 	error = bp_whoami(&bp_sin, &my_ip, &gw_ip);
 	if (error)
 		panic("nfs_boot: bootparam whoami, error=%d", error);
-	printf("nfs_boot: server_addr=0x%x\n",
-		   (u_int32_t)ntohl(bp_sin.sin_addr.s_addr));
-	printf("nfs_boot: hostname=%s\n", hostname);
+	printf("nfs_boot: server_addr=%s hostname=%s\n",
+	    inet_ntoa(bp_sin.sin_addr), hostname);
 
 #ifdef	NFS_BOOT_GATEWAY
 	/*
@@ -239,7 +238,7 @@ nfs_boot_init(nd, procp)
 		/* Mask: (zero length) */
 		bzero(&mask, sizeof(mask));
 
-		printf("nfs_boot: gateway=0x%x\n", ntohl(gw_ip.s_addr));
+		printf("nfs_boot: gateway=%s\n", inet_ntoa(gw_ip));
 		/* add, dest, gw, mask, flags, 0 */
 		error = rtrequest(RTM_ADD, &dst, (struct sockaddr *)&gw,
 		    &mask, (RTF_UP | RTF_GATEWAY | RTF_STATIC), NULL);
