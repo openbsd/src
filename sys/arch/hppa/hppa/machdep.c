@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.61 2002/03/14 01:26:31 millert Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.62 2002/03/15 21:44:18 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -184,7 +184,9 @@ void hppa_user2frame(struct trapframe *sf, struct trapframe *tf);
 /*
  * wide used hardware params
  */
+#if defined(HP7100LC_CPU) || defined(HP7300LC_CPU)
 struct pdc_hwtlb pdc_hwtlb PDC_ALIGNMENT;
+#endif
 struct pdc_coproc pdc_coproc PDC_ALIGNMENT;
 struct pdc_coherence pdc_coherence PDC_ALIGNMENT;
 struct pdc_spidb pdc_spidbits PDC_ALIGNMENT;
@@ -198,10 +200,10 @@ pid_t sigpid = 0;
 /*
  * Whatever CPU types we support
  */
-extern const u_int itlb_x[], dtlb_x[], dtlbna_x[], tlbd_x[];
-extern const u_int itlb_s[], dtlb_s[], dtlbna_s[], tlbd_s[];
-extern const u_int itlb_t[], dtlb_t[], dtlbna_t[], tlbd_t[];
-extern const u_int itlb_l[], dtlb_l[], dtlbna_l[], tlbd_l[];
+extern const u_int itlb_x[], itlbna_x[], dtlb_x[], dtlbna_x[], tlbd_x[];
+extern const u_int itlb_s[], itlbna_s[], dtlb_s[], dtlbna_s[], tlbd_s[];
+extern const u_int itlb_t[], itlbna_t[], dtlb_t[], dtlbna_t[], tlbd_t[];
+extern const u_int itlb_l[], itlbna_l[], dtlb_l[], dtlbna_l[], tlbd_l[];
 int iibtlb_s(int i, pa_space_t sp, vaddr_t va, paddr_t pa,
     vsize_t sz, u_int prot);
 int idbtlb_s(int i, pa_space_t sp, vaddr_t va, paddr_t pa,
@@ -226,7 +228,7 @@ const struct hppa_cpu_typed {
 	int  arch;
 	int  features;
 	int (*desidhash)(void);
-	const u_int *itlbh, *dtlbh, *dtlbnah, *tlbdh;
+	const u_int *itlbh, *itlbnah, *dtlbh, *dtlbnah, *tlbdh;
 	int (*dbtlbins)(int i, pa_space_t sp, vaddr_t va, paddr_t pa,
 	    vsize_t sz, u_int prot);
 	int (*ibtlbins)(int i, pa_space_t sp, vaddr_t va, paddr_t pa,
@@ -236,50 +238,50 @@ const struct hppa_cpu_typed {
 } cpu_types[] = {
 #ifdef HP7000_CPU
 	{ "PCX",   hpcx,  0x10, 0,
-	  desidhash_x, itlb_x, dtlb_x, dtlbna_x, tlbd_x,
+	  desidhash_x, itlb_x, itlbna_l, dtlb_x, dtlbna_x, tlbd_x,
 	  ibtlb_g, NULL, pbtlb_g},
 #endif
 #ifdef HP7100_CPU
-	{ "PCXS",  hpcxs, 0x11, HPPA_FTRS_BTLBS,
-	  desidhash_s, itlb_s, dtlb_s, dtlbna_s, tlbd_s,
+	{ "PCXS",  hpcxs, 0x11, 0,
+	  desidhash_s, itlb_s, itlbna_l, dtlb_s, dtlbna_s, tlbd_s,
 	  ibtlb_g, NULL, pbtlb_g},
 #endif
 #ifdef HP7200_CPU
 	{ "PCXT",  hpcxt, 0x11, HPPA_FTRS_BTLBU,
-	  desidhash_t, itlb_t, dtlb_t, dtlbna_t, tlbd_t,
+	  desidhash_t, itlb_t, itlbna_l, dtlb_t, dtlbna_t, tlbd_t,
 	  ibtlb_g, NULL, pbtlb_g},
 /* HOW?	{ "PCXT'", hpcxta,0x11, HPPA_FTRS_BTLBU,
-	  desidhash_t, itlb_t, dtlb_t, dtlbna_t, tlbd_t,
+	  desidhash_t, itlb_t, itlbna_l, dtlb_t, dtlbna_t, tlbd_t,
 	  ibtlb_g, NULL, pbtlb_g}, */
 #endif
 #ifdef HP7100LC_CPU
 	{ "PCXL",  hpcxl, 0x11, HPPA_FTRS_BTLBU|HPPA_FTRS_HVT,
-	  desidhash_l, itlb_l, dtlb_l, dtlbna_l, tlbd_l,
+	  desidhash_l, itlb_l, itlbna_l, dtlb_l, dtlbna_l, tlbd_l,
 	  ibtlb_g, NULL, pbtlb_g, hpti_g},
 #endif
 #ifdef HP7300LC_CPU
 /* HOW?	{ "PCXL2", hpcxl2,0x11, HPPA_FTRS_BTLBU|HPPA_FTRS_HVT,
-	  desidhash_l, itlb_l, dtlb_l, dtlbna_l, tlbd_l,
+	  desidhash_l, itlb_l, itlbna_l, dtlb_l, dtlbna_l, tlbd_l,
 	  ibtlb_g, NULL, pbtlb_g, hpti_g}, */
 #endif
 #ifdef HP8000_CPU
 	{ "PCXU",  hpcxu, 0x20, HPPA_FTRS_W32B|HPPA_FTRS_BTLBU|HPPA_FTRS_HVT,
-	  desidhash_g, itlb_l, dtlb_l, dtlbna_l, tlbd_l,
+	  desidhash_g, itlb_l, itlbna_l, dtlb_l, dtlbna_l, tlbd_l,
 	  ibtlb_g, NULL, pbtlb_g, hpti_g},
 #endif
 #ifdef HP8200_CPU
 /* HOW?	{ "PCXU2", hpcxu2,0x20, HPPA_FTRS_W32B|HPPA_FTRS_BTLBU|HPPA_FTRS_HVT,
-	  desidhash_g, itlb_l, dtlb_l, dtlbna_l, tlbd_l,
+	  desidhash_g, itlb_l, itlbna_l, dtlb_l, dtlbna_l, tlbd_l,
 	  ibtlb_g, NULL, pbtlb_g, hpti_g}, */
 #endif
 #ifdef HP8500_CPU
 /* HOW?	{ "PCXW",  hpcxw, 0x20, HPPA_FTRS_W32B|HPPA_FTRS_BTLBU|HPPA_FTRS_HVT,
-	  desidhash_g, itlb_l, dtlb_l, dtlbna_l, tlbd_l,
+	  desidhash_g, itlb_l, itlbna_l, dtlb_l, dtlbna_l, tlbd_l,
 	  ibtlb_g, NULL, pbtlb_g, hpti_g}, */
 #endif
 #ifdef HP8600_CPU
 /* HOW?	{ "PCXW+", hpcxw, 0x20, HPPA_FTRS_W32B|HPPA_FTRS_BTLBU|HPPA_FTRS_HVT,
-	  desidhash_g, itlb_l, dtlb_l, dtlbna_l, tlbd_l,
+	  desidhash_g, itlb_l, itlbna_l, dtlb_l, dtlbna_l, tlbd_l,
 	  ibtlb_g, NULL, pbtlb_g, hpti_g}, */
 #endif
 	{ "", 0 }
@@ -290,10 +292,8 @@ hppa_init(start)
 	paddr_t start;
 {
 	extern int kernel_text;
-	vaddr_t v, vstart, vend;
-	register int error;
-	int hptsize;	/* size of HPT table if supported */
-	int cpu_features = 0;
+	vaddr_t v, v1;
+	int error, cpu_features = 0;
 
 	boothowto |= RB_SINGLE;	/* XXX always go into single-user while debug */
 
@@ -364,6 +364,9 @@ hppa_init(start)
 		PAGE0->ivec_mempflen = (hppa_pfr_end - hppa_pfr + 1) * 4;
 	}
 
+	/* may the scientific guessing begin */
+	cpu_features = 0;
+
 	/* BTLB params */
 	if ((error = pdc_call((iodcio_t)pdc, 0, PDC_BLOCK_TLB,
 	    PDC_BTLB_DEFAULT, &pdc_btlb)) < 0) {
@@ -388,8 +391,8 @@ hppa_init(start)
 		    PDC_BTLB_PURGE_ALL) < 0)
 			printf("WARNING: BTLB purge failed\n");
 
-		cpu_features = pdc_btlb.finfo.num_c?
-		    HPPA_FTRS_BTLBU : HPPA_FTRS_BTLBS;
+		if (pdc_btlb.finfo.num_c)
+			cpu_features |= HPPA_FTRS_BTLBU;
 	}
 
 	ptlball();
@@ -398,24 +401,14 @@ hppa_init(start)
 	totalphysmem = PAGE0->imm_max_mem / NBPG;
 	resvmem = ((vaddr_t)&kernel_text) / NBPG;
 
-	/* calculate HPT size */
-	for (hptsize = 256; hptsize < totalphysmem; hptsize *= 2);
-	hptsize *= 16;	/* sizeof(hpt_entry) */
-
+#if defined(HP7100LC_CPU) || defined(HP7300LC_CPU)
 	if (pdc_call((iodcio_t)pdc, 0, PDC_TLB, PDC_TLB_INFO, &pdc_hwtlb) &&
 	    !pdc_hwtlb.min_size && !pdc_hwtlb.max_size) {
 		printf("WARNING: no HPT support, fine!\n");
-		mtctl(hptsize - 1, CR_HPTMASK);
-		hptsize = 0;
-	} else {
+		pmap_hptsize = 0;
+	} else
 		cpu_features |= HPPA_FTRS_HVT;
-
-		if (hptsize > pdc_hwtlb.max_size)
-			hptsize = pdc_hwtlb.max_size;
-		else if (hptsize < pdc_hwtlb.min_size)
-			hptsize = pdc_hwtlb.min_size;
-		mtctl(hptsize - 1, CR_HPTMASK);
-	}
+#endif
 
 	/*
 	 * Deal w/ CPU now
@@ -452,8 +445,13 @@ hppa_init(start)
 			LDILDO(trap_ep_T_TLB_DIRTY , p->tlbdh);
 			LDILDO(trap_ep_T_DTLBMISS  , p->dtlbh);
 			LDILDO(trap_ep_T_DTLBMISSNA, p->dtlbnah);
-			LDILDO(trap_ep_T_ITLBMISS  , p->itlbh);
-			LDILDO(trap_ep_T_ITLBMISSNA, p->itlbh);
+			if (pdc_cache.dt_conf.tc_sh) {
+				LDILDO(trap_ep_T_DTLBMISS  , p->dtlbh);
+				LDILDO(trap_ep_T_DTLBMISSNA, p->dtlbnah);
+			} else {
+				LDILDO(trap_ep_T_ITLBMISS  , p->itlbh);
+				LDILDO(trap_ep_T_ITLBMISSNA, p->itlbnah);
+			}
 #undef LDILDO
 		}
 	}
@@ -465,9 +463,6 @@ hppa_init(start)
 	if (extent_alloc_region(hppa_ex, 0, (vaddr_t)PAGE0->imm_max_mem,
 	    EX_NOWAIT))
 		panic("cannot reserve main memory");
-
-	vstart = hppa_round_page(start);
-	vend = VM_MAX_KERNEL_ADDRESS;
 
 	/*
 	 * Now allocate kernel dynamic variables
@@ -491,7 +486,7 @@ hppa_init(start)
 	if (bufpages > nbuf * MAXBSIZE / PAGE_SIZE)
 		bufpages = nbuf * MAXBSIZE / PAGE_SIZE;
 	
-	v = vstart;
+	v1 = v = hppa_round_page(start);
 #define valloc(name, type, num) (name) = (type *)v; v = (vaddr_t)((name)+(num))
 
 	valloc(buf, struct buf, nbuf);
@@ -514,33 +509,15 @@ hppa_init(start)
 #undef valloc
 
 	v = hppa_round_page(v);
-	bzero ((void *)vstart, (v - vstart));
-	vstart = v;
+	bzero ((void *)v1, (v - v1));
 
 	/* sets physmem */
-	pmap_bootstrap(&vstart, &vend);
+	pmap_bootstrap(v);
 
 	/* alloc msgbuf */
 	if (!(msgbufp = (void *)pmap_steal_memory(MSGBUFSIZE, NULL, NULL)))
 		panic("cannot allocate msgbuf");
 	msgbufmapped = 1;
-
-	/* Turn on the HW TLB assist */
-	if (hptsize) {
-		u_int hpt;
-
-		mfctl(CR_VTOP, hpt);
-		if ((error = (cpu_hpt_init)(hpt, hptsize)) < 0) {
-#ifdef DEBUG
-			printf("WARNING: HPT init error %d\n", error);
-#endif
-		} else {
-#ifdef PMAPDEBUG
-			printf("HPT: %d entries @ 0x%x\n",
-			    hptsize / sizeof(struct hpt_entry), hpt);
-#endif
-		}
-	}
 
 	/* locate coprocessors and SFUs */
 	if ((error = pdc_call((iodcio_t)pdc, 0, PDC_COPROC, PDC_COPROC_DFLT,
@@ -630,10 +607,6 @@ cpu_startup()
 	printf("real mem = %d (%d reserved for PROM, %d used by OpenBSD)\n",
 	    ctob(totalphysmem), ctob(resvmem), ctob(physmem));
 
-	/*
-	 * Now allocate buffers proper.  They are different than the above
-	 * in that they usually occupy more virtual memory than physical.
-	 */
 	size = MAXBSIZE * nbuf;
 	if (uvm_map(kernel_map, (vaddr_t *) &buffers, round_page(size),
 	    NULL, UVM_UNKNOWN_OFFSET, 0, UVM_MAPFLAG(UVM_PROT_NONE,
@@ -661,9 +634,8 @@ cpu_startup()
 			if ((pg = uvm_pagealloc(NULL, 0, NULL, 0)) == NULL)
 				panic("cpu_startup: not enough memory for "
 				    "buffer cache");
-			pmap_enter(kernel_map->pmap, curbuf,
-			    VM_PAGE_TO_PHYS(pg), VM_PROT_READ|VM_PROT_WRITE,
-			    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+			pmap_kenter_pa(curbuf, VM_PAGE_TO_PHYS(pg),
+			    VM_PROT_READ|VM_PROT_WRITE);
 			curbuf += PAGE_SIZE;
 			curbufsize -= PAGE_SIZE;
 		}
@@ -890,11 +862,12 @@ btlb_insert(space, va, pa, lenp, prot)
 	va >>= PGSHIFT;
 	/* check address alignment */
 	if (pa & (len - 1))
-		printf("WARNING: BTLB address misaligned\n");
+		printf("WARNING: BTLB address misaligned pa=0x%x, len=0x%x\n",
+		    pa, len);
 
 	/* ensure IO space is uncached */
 	if ((pa & 0xF0000) == 0xF0000)
-		prot |= TLB_UNCACHEABLE;
+		prot |= TLB_UNCACHABLE;
 
 #ifdef BTLBDEBUG
 	printf("btlb_insert(%d): %x:%x=%x[%x,%x]\n", i, space, va, pa, len, prot);

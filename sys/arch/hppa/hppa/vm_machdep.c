@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.33 2002/02/21 06:12:30 mickey Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.34 2002/03/15 21:44:18 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -198,7 +198,7 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	pcbp = &p2->p_addr->u_pcb;
 	bcopy(&p1->p_addr->u_pcb, pcbp, sizeof(*pcbp));
 	/* space is cached for the copy{in,out}'s pleasure */
-	pcbp->pcb_space = p2->p_vmspace->vm_map.pmap->pmap_space;
+	pcbp->pcb_space = p2->p_vmspace->vm_map.pmap->pm_space;
 	pcbp->pcb_uva = (vaddr_t)p2->p_addr;
 
 	sp = (register_t)p2->p_addr + NBPG;
@@ -214,9 +214,8 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 
 	tf->tf_sr0 = tf->tf_sr1 = tf->tf_sr2 = tf->tf_sr3 =
 	tf->tf_sr4 = tf->tf_sr5 = tf->tf_sr6 =
-		p2->p_vmspace->vm_map.pmap->pmap_space;
 	tf->tf_iisq_head = tf->tf_iisq_tail =
-		p2->p_vmspace->vm_map.pmap->pmap_space;
+		p2->p_vmspace->vm_map.pmap->pm_space;
 	tf->tf_pidr1 = tf->tf_pidr2 = pmap_sid2pid(tf->tf_sr0);
 
 	/*

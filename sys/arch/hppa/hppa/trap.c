@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.39 2002/03/14 01:26:32 millert Exp $	*/
+/*	$OpenBSD: trap.c,v 1.40 2002/03/15 21:44:18 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -311,10 +311,10 @@ trap(type, frame)
 		else
 			map = &vm->vm_map;
 
-		if (map->pmap->pmap_space != space) {
+		if (map->pmap->pm_space != space) {
 #ifdef TRAPDEBUG
 			printf("trap: space missmatch %d != %d\n",
-			    space, map->pmap->pmap_space);
+			    space, map->pmap->pm_space);
 #endif
 			/* actually dump the user, crap the kernel */
 			goto dead_end;
@@ -371,7 +371,7 @@ trap(type, frame)
 					pcbp->pcb_onfault = 0;
 					break;
 				}
-#if 1
+#if 0
 if (kdb_trap (type, va, frame))
 	return;
 #else
@@ -434,7 +434,7 @@ return;
 		}
 		/* FALLTHROUGH to unimplemented */
 	default:
-#if 1
+#if 0
 if (kdb_trap (type, va, frame))
 	return;
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.9 2002/03/14 01:26:31 millert Exp $	*/
+/*	$OpenBSD: mem.c,v 1.10 2002/03/15 21:44:18 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -164,14 +164,15 @@ memattach(parent, self, aux)
 		printf (" viper rev %x, ctrl %b",
 			sc->sc_vp->vi_status.hw_rev,
 			VI_CTRL, VIPER_BITS);
-
 		s = splhigh();
+#if 0
 		VI_CTRL |= VI_CTRL_ANYDEN;
 		((struct vi_ctrl *)&VI_CTRL)->core_den = 0;
 		((struct vi_ctrl *)&VI_CTRL)->sgc0_den = 0;
 		((struct vi_ctrl *)&VI_CTRL)->sgc1_den = 0;
 		((struct vi_ctrl *)&VI_CTRL)->core_prf = 1;
 		sc->sc_vp->vi_control = VI_CTRL;
+#endif
 		splx(s);
 #ifdef DEBUG
 		printf (" >> %b", VI_CTRL, VIPER_BITS);

@@ -1,7 +1,7 @@
-/*	$OpenBSD: db_machdep.h,v 1.7 2002/03/14 01:26:32 millert Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.8 2002/03/15 21:44:18 mickey Exp $	*/
 
 /*
- * Copyright (c) 1998 Michael Shalayeff
+ * Copyright (c) 1998-2002 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,6 +35,7 @@
 
 #include <uvm/uvm_extern.h>
 
+#define	DB_AOUT_SYMBOLS
 #define	DB_ELF_SYMBOLS
 #define	DB_ELFSIZE	32
 
@@ -53,8 +54,8 @@ extern db_regs_t	ddb_regs;
 #define	BKPT_SIZE	sizeof(int)
 #define	BKPT_SET(inst)	BKPT_INST
 
-#define	IS_BREAKPOINT_TRAP(type, code) 1
-#define	IS_WATCHPOINT_TRAP(type, code) 0
+#define	IS_BREAKPOINT_TRAP(type, code) ((type) == T_IBREAK)
+#define	IS_WATCHPOINT_TRAP(type, code) ((type) == T_DBREAK)
 
 #define	FIXUP_PC_AFTER_BREAK(regs) ((regs)->tf_iioq_head -= sizeof(int))
 
@@ -90,8 +91,25 @@ static __inline int inst_trap_return(u_int ins)	{
 	return (ins & 0xfc001fc0) == 0x00000ca0;
 }
 
-#define db_clear_single_step(r)	((r)->tf_flags |= 0)
-#define db_set_single_step(r)	((r)->tf_flags |= 0)
+#if 0
+#define db_clear_single_step(r)	((r)->tf_flags &= ~(PSW_Z))
+#define db_set_single_step(r)	((r)->tf_flags |= (PSW_Z))
+#else
+#define	SOFTWARE_SSTEP		1
+#define	SOFTWARE_SSTEP_EMUL	1
+
+static __inline db_addr_t
+next_instr_address(db_addr_t addr, int b) {
+	return (addr + 4);
+}
+
+#define	branch_taken(ins,pc,f,regs)	branch_taken1(ins, pc, regs)
+static __inline db_addr_t
+branch_taken1(int ins, db_addr_t pc, db_regs_t *regs) {
+	return (pc);
+}
+
+#endif
 
 int db_valid_breakpoint(db_addr_t);
 int kdb_trap(int, int, db_regs_t *);

@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.19 2002/01/16 20:50:16 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.20 2002/03/15 21:44:18 mickey Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -69,24 +69,9 @@ export	HPPA_BREAK_GET_PSW
 export	HPPA_BREAK_SET_PSW
 
 # pte things
-export	TLB_REF_POS
+#export	TLB_REF_POS
 export	TLB_GATE_PROT
-export	TLB_DIRTY_POS
-
-# hpt_table fields
-struct	hpt_entry
-member	hpt_tlbprot
-member	hpt_tlbpage
-member	hpt_entry
-define	HPT_TAG		0
-
-# pv_entry fields
-struct	pv_entry
-member	pv_hash
-member	pv_space
-member	pv_va
-member	pv_tlbpage
-member	pv_tlbprot
+#export	TLB_DIRTY_POS
 
 # saved state fields
 struct	trapframe

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.59 2002/03/15 19:53:49 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.60 2002/03/15 21:44:18 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -117,6 +117,11 @@ fpu_curpcb
 	.comm	4
 fpu_enable
 	.comm	4
+$trap_tmp_save			/* XXX assumed to be aligned on 2048 */
+	.align	2048
+	.block	TF_PHYS		/* XXX must be aligned to 64 */
+	.align	64
+
 	.text
 
 /*
@@ -517,10 +522,6 @@ $bsd_syscall
 	.export	gateway_page_end, entry
 gateway_page_end
 
-$trap_tmp_save			/* XXX assumed to be aligned on 2048 */
-	.block	TF_PHYS		/* XXX must be aligned to 64 */
-	.align	64
-
 	.export $syscall,entry
 	.proc
 	.callinfo calls
@@ -898,6 +899,7 @@ $syscall_end
 
 #ifdef HP7000_CPU
 LDILDO(itlb_x)
+LDILDO(itlbna_x)
 LDILDO(dtlb_x)
 LDILDO(dtlbna_x)
 LDILDO(tlbd_x)
@@ -905,6 +907,7 @@ LDILDO(tlbd_x)
 
 #ifdef HP7100_CPU
 LDILDO(itlb_s)
+LDILDO(itlbna_s)
 LDILDO(dtlb_s)
 LDILDO(dtlbna_s)
 LDILDO(tlbd_s)
@@ -912,6 +915,7 @@ LDILDO(tlbd_s)
 
 #ifdef HP7200_CPU
 LDILDO(itlb_t)
+LDILDO(itlbna_t)
 LDILDO(dtlb_t)
 LDILDO(dtlbna_t)
 LDILDO(tlbd_t)
@@ -919,6 +923,7 @@ LDILDO(tlbd_t)
 
 #ifdef HP7100LC_CPU
 LDILDO(itlb_l)
+LDILDO(itlbna_l)
 LDILDO(dtlb_l)
 LDILDO(dtlbna_l)
 LDILDO(tlbd_l)
@@ -960,8 +965,8 @@ hpmc_v
 	ATRAP(excpt,T_EXCEPTION)
 #endif
 	STRAP(dtlb,T_DTLBMISS,DTLBPRE)	/* 15. data TLB miss fault */
-	STRAP(itlb,T_ITLBMISSNA,ITLBPRE)/* 16. ITLB non-access miss fault */
-	STRAP(dtlb,T_DTLBMISSNA,DTLBPRE)/* 17. DTLB non-access miss fault */
+	STRAP(itlbna,T_ITLBMISSNA,ITLBPRE)/* 16. ITLB non-access miss fault */
+	STRAP(dtlbna,T_DTLBMISSNA,DTLBPRE)/* 17. DTLB non-access miss fault */
 	ATRAP(dprot,T_DPROT)		/* 18. data protection trap
 					      unalligned data reference trap */
 	ATRAP(dbrk,T_DBREAK)		/* 19. data break trap */
@@ -1303,48 +1308,54 @@ LEAF_ENTRY(desidhash_t)
 EXIT(desidhash_t)
 #endif
 
+#if defined(HP7000_CPU) || defined(HP7100_CPU) || defined(HP7200_CPU)
+#define	TLB_PULL(bits)							! \
+	/* space:pgaddr -- r8:r9 */					! \
+	mfctl	vtop, r16						! \
+	ldwax,s	r8(r16), r17		/* space -> page directory */	! \
+	extru	r9, 9, 10, r25						! \
+	combt,=,n r0, r17, TLABEL(all)					! \
+	ldwax,s	r25(r17), r24		/* page -> page table */	! \
+	extru	r9, 19, 10, r16						! \
+	combt,=,n r0, r24, TLABEL(all)					! \
+	ldwax,s	r16(r24), r17		/* va -> pa:prot */		! \
+	sh2addl	r16, r24, r25						! \
+	combt,=,n r0, r17, TLABEL(all)					! \
+	depi	(bits), 21+bits, 1+bits, r17				! \
+	mfctl	tr7, r1							! \
+	stwas	r17, 0(r25)		/* store back w/ the bits */	! \
+	shd	r17, r0, 13, r25					! \
+	dep	r8, 30, 15, r25		/* mix0r the pid from the sid */! \
+	dep	r0, 31, 12, r17		/* needed ? */			! \
+	addi	2, r25, r25						! \
+	extru	r17, 24, 25, r17
+
 $tlbd_x
 $tlbd_s
 $tlbd_t
-#if 1
-	HPTENT
-	mtctl	r24, cr28
-
-	/*
-	 * Chase the list of entries for this hash bucket until we find
-	 * the correct mapping or NULL.
-	 */
-	ldw	HPT_ENTRY(r24), r24
-$hash_loop_tlbd_t
-	comb,=,n r0, r24, TLABEL(all)
-	ldw	PV_VA(r24), r25
-	ldw	PV_SPACE(r24), r17
-	comb,<>,n r9, r25, $hash_loop_tlbd_t
-	ldw	PV_HASH(r24), r24
-	comb,<>,n r8, r17, $hash_loop_tlbd_t
-	ldw	PV_HASH(r24), r24
-
-	VTAG	/* (r8,r9) -> r16 */
-	/* Set the dirty bit for this physical page. */
-	ldw	PV_TLBPROT(r24), r25
-	b	$tlb_inshpt_t
-	depi	1, TLB_DIRTY_POS, 1, r25
-#else
-
-	mfsp	%sr1, %r25
-	mtsp	%r8, %sr1
-	lpa	%r0(%sr1, %r9), %r17
-	mfctl	%cr29, %r16
-	mtsp	%r25, %sr1
-	extru	%r17, 20, 21, %r24
-	sh3add	%r24, %r16, %r16
-	
-#endif
+	TLB_PULL(1)
+	mfsp	sr1, r16
+	mtsp	r8, sr1
+	idtlba	r17,(sr1, r9)
+	idtlbp	r25,(sr1, r9)
+	mtsp	r16, sr1
+	rfir
+	nop
 
 $itlb_x
+$itlbna_x
 $itlb_s
+$itlbna_s
 $itlb_t
-	depi	1, TFF_ITLB_POS, 1, r1	/* mark for ITLB insert */
+$itlbna_t
+	TLB_PULL(0)
+	mfsp	sr1, r16
+	mtsp	r8, sr1
+	iitlba	r17,(sr1, r9)
+	iitlbp	r25,(sr1, r9)
+	mtsp	r16, sr1
+	rfir
+	nop
 
 $dtlb_x
 $dtlbna_x
@@ -1352,77 +1363,15 @@ $dtlb_s
 $dtlbna_s
 $dtlb_t
 $dtlbna_t
-	/*
-	 * r1 is the trap type
-	 * r8 is the space of the address that had the TLB miss
-	 * r9 is the offset of the address that had the TLB miss
-	 * r24 is the correspondent HPT entry pointer
-	 */
-
-	HPTENT
-	mtctl	r24, cr28
-
-	ldw	HPT_TAG(r24),r17
-	VTAG	/* (r8,r9) -> r16 */
-
-	/* Compare the tag against the HPT entry.
-	   If it matches, then do the TLB insertion. */
-	comb,<>,n r16, r17, $tlb_gottalook_t
-
-	ldw	HPT_TLBPAGE(r24), r17
-	b	$tlb_gothpt_t
-	ldw	HPT_TLBPROT(r24), r25
-
-$tlb_gottalook_t
-	/*
-	 * Chase the list of entries for this hash bucket until we find
-	 * the correct mapping or NULL.
-	 */
-	ldw	HPT_ENTRY(r24),r24
-$hash_loop_t
-	comb,=,n r0, r24, TLABEL(all)
-	ldw	PV_VA(r24),r25
-	ldw	PV_SPACE(r24),r17
-	comb,<>,n r9,r25,$hash_loop_t
-	ldw	PV_HASH(r24),r24
-	comb,<>,n r8,r17,$hash_loop_t
-	ldw	PV_HASH(r24),r24
-
-	/* Now set things up to enter the real mapping that we want */
-	ldw	PV_TLBPROT(r24),r25
-	depi	1, TLB_REF_POS, 1, r25
-
-	/*
-	 * Load the HPT cache with the miss information for the next time.
-	 */
-$tlb_inshpt_t
-	stw	r25, PV_TLBPROT(r24)
-	ldw	PV_TLBPAGE(r24),r17
-	mfctl	cr28, r24
-
-	stw	r16, HPT_TAG(r24)
-	stw	r25, HPT_TLBPROT(r24)
-	stw	r17, HPT_TLBPAGE(r24)
-
-$tlb_gothpt_t
+	TLB_PULL(0)
 	mfsp	sr1, r16
-	bb,<	r1, TFF_ITLB_POS, $tlb_itlb_t
 	mtsp	r8, sr1
-
 	idtlba	r17,(sr1, r9)
 	idtlbp	r25,(sr1, r9)
-	nop ! nop
 	mtsp	r16, sr1
 	rfir
 	nop
-
-$tlb_itlb_t
-	iitlba	r17,(sr1, r9)
-	iitlbp	r25,(sr1, r9)
-	nop ! nop
-	mtsp	r16, sr1
-	rfir
-	nop
+#endif /*  defined(HP7000_CPU) || defined(HP7100_CPU) || defined(HP7200_CPU) */
 
 #ifdef HP7100LC_CPU
 /*
@@ -1481,98 +1430,58 @@ EXIT(desidhash_l)
 
 
 	.align	32
+#define	IITLBAF(r)	.word	0x04000440 | ((r) << 16)
+#define	IITLBPF(r)	.word	0x04000400 | ((r) << 16)
+#define	IDTLBAF(r)	.word	0x04001440 | ((r) << 16)
+#define	IDTLBPF(r)	.word	0x04001400 | ((r) << 16)
+
+/*
+ * possible optimizations:
+ *	change pte to reduce number of shifts
+ *	reorder to reduce stalls
+ *	check if stwas is needed (if we changed the bits)
+ */
+#define	TLB_PULL_L(bits)						! \
+	/* space:pgaddr -- r8:r9 */					! \
+	mfctl	vtop, r16						! \
+	ldwax,s	r8(r16), r17		/* space -> page directory */	! \
+	extru	r9, 9, 10, r25						! \
+	combt,=,n r0, r17, TLABEL(all)					! \
+	ldwax,s	r25(r17), r24		/* page -> page table */	! \
+	extru	r9, 19, 10, r16						! \
+	combt,=,n r0, r24, TLABEL(all)					! \
+	ldwax,s	r16(r24), r17		/* va -> pa:prot */		! \
+	sh2addl	r16, r24, r25						! \
+	combt,=,n r0, r17, TLABEL(all)					! \
+	depi	(bits), 21+bits, 1+bits, r17				! \
+	mfctl	tr7, r1							! \
+	stwas	r17, 0(r25)		/* store back w/ the bits */	! \
+	shd	r17, r0, 13, r25					! \
+	dep	r8, 30, 15, r25		/* mix0r the pid from the sid */! \
+	dep	r0, 31, 12, r17		/* needed ? */			! \
+	addi	2, r25, r25						! \
+	extru	r17, 24, 25, r17
+
 $tlbd_l
-	mfctl	cr28, r24
-
-	/*
-	 * Chase the list of entries for this hash bucket until we find
-	 * the correct mapping or NULL.
-	 */
-	ldw	HPT_ENTRY(r24), r16
-$hash_loop_tlbd_l
-	comb,=,n r0, r16, TLABEL(all)
-	ldw	PV_VA(r16), r25
-	ldw	PV_SPACE(r16), r17
-	comb,<>,n r9, r25, $hash_loop_tlbd_l
-	ldw	PV_HASH(r16), r16
-	comb,<>,n r8, r17, $hash_loop_tlbd_l
-	ldw	PV_HASH(r16), r16
-
-	/* Set the dirty bit for this physical page. */
-	ldw	PV_TLBPAGE(r16), r17
-	ldw	PV_TLBPROT(r16), r25
-	depi	1, TLB_DIRTY_POS, 1, r25
-	depi	1, TLB_REF_POS, 1, r25
-	stw	r25, PV_TLBPROT(r16)
-	VTAG	/* (r8,r9) -> r16 */
-
-	stw	r16, HPT_TAG(r24)
-	stw	r25, HPT_TLBPROT(r24)
-	stw	r17, HPT_TLBPAGE(r24)
-
-	.word	0x04111440	; idtlbaf	r17
-	.word	0x04191400	; idtlbpf	r25
-	nop ! nop
+	TLB_PULL_L(1)
+	IDTLBAF(17)
+	IDTLBPF(25)
 	rfir
 	nop
-
-	.align	8
+$itlbna_l
 $itlb_l
-	depi	1, TFF_ITLB_POS, 1, r1	/* mark for ITLB insert */
-$dtlbna_l
-	HPTENT
-	mtctl	r24, cr28
-
-$dtlb_l
-	mfctl	cr28, r24
-	/*
-	 * r1 is the trap type
-	 * r8 is the space of the address that had the TLB miss
-	 * r9 is the offset of the address that had the TLB miss
-	 * r24 is the correspondent HPT entry pointer
-	 */
-
-	/*
-	 * Chase the list of entries for this hash bucket until we find
-	 * the correct mapping or NULL.
-	 */
-	ldw	HPT_ENTRY(r24), r16
-$hash_loop_l
-	comb,=,n r0, r16, TLABEL(all)
-	ldw	PV_VA(r16), r25
-	ldw	PV_SPACE(r16), r17
-	comb,<>,n r9, r25, $hash_loop_l
-	ldw	PV_HASH(r16), r16
-	comb,<>,n r8, r17, $hash_loop_l
-	ldw	PV_HASH(r16), r16
-
-	/* Now set things up to enter the real mapping that we want */
-	ldw	PV_TLBPAGE(r16), r17
-	ldw	PV_TLBPROT(r16), r25
-
-	/*
-	 * Load the HPT cache with the miss information for the next time.
-	 * The HPT entry address was saved by the HPTENT
-	 */
-	depi	1, TLB_REF_POS, 1, r25
-	stw	r25, PV_TLBPROT(r16)
-	VTAG	/* (r8,r9) -> r16 */
-
-	stw	r16, HPT_TAG(r24)
-	stw	r25, HPT_TLBPROT(r24)
-	bb,<	r1, TFF_ITLB_POS, $tlb_itlb_l
-	stw	r17, HPT_TLBPAGE(r24)
-
-	.word	0x04111440	; idtlbaf	r17
-	.word	0x04191400	; idtlbpf	r25
-	nop ! nop
+#if 0	/* XXX assume combined TLB */
+	TLB_PULL_L(0)
+	IITLBAF(17)
+	IITLBPF(25)
 	rfir
 	nop
-
-$tlb_itlb_l
-	.word	0x04110440	; iitlbaf	r17
-	.word	0x04190400	; iitlbpf	r25
-	nop ! nop
+#endif
+$dtlbna_l
+$dtlb_l
+	TLB_PULL_L(0)
+	IDTLBAF(17)
+	IDTLBPF(25)
 	rfir
 	nop
 #endif /* HP7100LC_CPU */

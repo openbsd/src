@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie_gsc.c,v 1.10 2002/03/14 01:26:31 millert Exp $	*/
+/*	$OpenBSD: if_ie_gsc.c,v 1.11 2002/03/15 21:44:18 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -85,7 +85,7 @@ static int ie_gsc_media[] = {
 };
 #define	IE_NMEDIA	(sizeof(ie_gsc_media) / sizeof(ie_gsc_media[0]))
 
-static char mem[IE_SIZE+16];
+char *ie_mem;
 
 void ie_gsc_reset(struct ie_softc *sc, int what);
 void ie_gsc_attend(struct ie_softc *sc);
@@ -154,7 +154,7 @@ ie_gsc_attend(sc)
 {
 	register volatile struct ie_gsc_regs *r = (struct ie_gsc_regs *)sc->ioh;
 
-	fdcache(0, (vaddr_t)&mem, sizeof(mem));
+	fdcache(0, (vaddr_t)ie_mem, IE_SIZE);
 	r->ie_attn = 0;
 }
 
@@ -328,8 +328,8 @@ ie_gsc_attach(parent, self, aux)
 	sc->sc_maddr = kvtop((caddr_t)sc->bh);
 
 #else
-	bzero(mem, sizeof(mem));
-	sc->bh = ((u_int)&mem + 15) & ~0xf;
+	printf("%x ", ie_mem);
+	sc->bh = (u_int)ie_mem;
 	sc->sc_maddr = sc->bh;
 #endif
 	sc->sysbus = 0x40 | IE_SYSBUS_82586 | IE_SYSBUS_INTLOW | IE_SYSBUS_TRG | IE_SYSBUS_BE;
