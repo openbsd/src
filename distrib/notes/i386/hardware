@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.127 2003/09/03 17:15:25 jason Exp $
+dnl	$OpenBSD: hardware,v 1.128 2003/09/05 19:11:38 henning Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PC's and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -108,7 +108,7 @@ Supported hardware {:-include-:}:
 		AdvanSys 'U', 'UW', 'U2W' and 'U160' PCI SCSI
 		    controllers including the ABP940U[AW],
 		    ASB3940U[AW]-00, ASB3940U2W-00 and ASB3950U160 [A] [B] [C]
-		AMD Am53c974 PCscsi-PCI SCSI controllers, including: [A] [C]
+		AMD Am53c974 PCscsi-PCI SCSI controllers, including: [A] [B] [C]
 		    Tekram DC-390
 		Buslogic BT-54x (Adaptec AHA-154x clones) [B] [C]
 		BusLogic 445, 74x, 9xx  (but not the new "FlashPoint" series
@@ -119,7 +119,7 @@ Supported hardware {:-include-:}:
 		    Initio INI-9100U/UW
 		    Iwill 2935UW
 		    DTC Domex 3194U Plus
-		QLogic PCI SCSI controllers [A]
+		QLogic PCI SCSI controllers [A] [C]
 		Seagate/Future Domain ISA SCSI adapter cards, including: [B] [C]
 		    ST01/02
 		    Future Domain TMC-885
@@ -152,7 +152,7 @@ Supported hardware {:-include-:}:
 		    Compaq SMART, SMART-2/E, SMART-2/P, SMART-2DH,
 		      SMART-2SL
 		DPT SmartCache and SmartRaid III/IV PCI/EISA adapters [A] [C]
-		Intel (and formerly ICP-Vortex) GDT series [A]
+		Intel (and formerly ICP-Vortex) GDT series [A] [C]
 		I2O (intelligent I/O) RAID controllers, including: [A] [C]
 		    Adaptec SCSI RAID (ASR-2100S, ASR-2110S, ASR-3200S,
 		      etc)
@@ -421,7 +421,7 @@ Supported hardware {:-include-:}:
 		    Addtron AEF-360TX
 		    Hawking PN102TX
 		    D-Link DFE530TX
-		Winbond W89C840F Ethernet adapters, including:
+		Winbond W89C840F Ethernet adapters, including: [A]
 		    Trendware TE100-PCIE
 		    Compex RL100-ATX 10/100baseTX
 	Wireless Ethernet Adapters
@@ -498,7 +498,7 @@ Supported hardware {:-include-:}:
 		    Netgear GA620 and GA620T
 		    SGI Tigon
 		Intel i82540, i82542, i82543, i82544, i82545, and i82546
-	       	based adapters, including: [A] [B] [C]
+	       	based adapters, including:
 		    Intel PRO/1000 Gigabit Server Adapter (SX Fiber)
 		      (PWLA8490)
 		    Intel PRO/1000F Gigabit Server Adapter (SX Fiber)
