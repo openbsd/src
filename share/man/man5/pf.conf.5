@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.175 2003/02/02 23:38:31 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.176 2003/02/03 16:17:49 mpech Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -525,7 +525,7 @@ should queue up to 5 Mbit/s in four second-level queues using
 .Ar cbq .
 Those four queues will be shown in a later example.
 .Bd -literal -offset indent
-.Xo Ic altq on dc0 cbq bandwidth 5Mb
+.Xo Ic altq on dc0 cbq bandwidth 5Mb\ 
 .Ic queue { std, http, mail, ssh }
 .Xc
 .Ed
