@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.39 1999/12/09 04:21:55 angelos Exp $	*/
+/*	$OpenBSD: inet.c,v 1.40 1999/12/09 08:55:16 angelos Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: inet.c,v 1.39 1999/12/09 04:21:55 angelos Exp $";
+static char *rcsid = "$OpenBSD: inet.c,v 1.40 1999/12/09 08:55:16 angelos Exp $";
 #endif
 #endif /* not lint */
 
@@ -782,6 +782,6 @@ ip4_stats(off, name)
         p(ip4s_qfull, "\t%u packet%s were dropped due to full output queue\n");
 	p(ip4s_ibytes, "\t%qu input byte%s\n");
 	p(ip4s_obytes, "\t%qu output byte%s\n");
-
+	p(ip4s_family, "\t%u protocol family mismatches\n");
 #undef p
 }
