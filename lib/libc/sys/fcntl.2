@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fcntl.2,v 1.19 2002/09/19 17:19:08 millert Exp $
+.\"	$OpenBSD: fcntl.2,v 1.20 2003/03/06 20:04:06 jmc Exp $
 .\"	$NetBSD: fcntl.2,v 1.6 1995/02/27 12:32:29 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1993
@@ -331,10 +331,10 @@ This semantic means that applications must be aware of any files that
 a subroutine library may access.
 For example if an application for updating the password file locks the
 password file database while making the update, and then calls
-.Xr getpwname 3
+.Xr getpwnam 3
 to retrieve a record,
 the lock will be lost because
-.Xr getpwname 3
+.Xr getpwnam 3
 opens, reads, and closes the password database.
 The database close will release all locks that the process has
 associated with the database, even if the library routine never

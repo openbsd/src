@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mmap.2,v 1.28 2002/04/30 16:31:42 mpech Exp $
+.\"	$OpenBSD: mmap.2,v 1.29 2003/03/06 20:04:06 jmc Exp $
 .\"	$NetBSD: mmap.2,v 1.5 1995/06/24 10:48:59 cgd Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -131,7 +131,7 @@ Notify the kernel that the region may contain semaphores and that special
 handling may be necessary.
 .It Dv MAP_INHERIT
 Permit regions to be inherited across
-.Xr exec 2
+.Xr exec 3
 system calls.
 .It Dv MAP_PRIVATE
 Modifications are private.
