@@ -243,6 +243,7 @@ sparc64-*-*)		gdb_target=sp64 ;;
 
 tahoe-*-*)		gdb_target=tahoe ;;
 
+vax-*-openbsd*)		gdb_target=obsd ;;
 vax-*-*)		gdb_target=vax ;;
 
 w65-*-*)		gdb_target=w65 ;;

@@ -783,6 +783,11 @@ case "${targ}" in
     ;;
 #endif
 
+  vax-*-openbsd*)
+    targ_defvec=vaxnetbsd_vec
+    targ_underscore=yes
+    ;;      
+
   vax*-*-*vms*)
     targ_defvec=vms_vax_vec
     ;;
