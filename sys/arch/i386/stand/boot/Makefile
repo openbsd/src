@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.14 1997/09/21 10:02:09 mickey Exp $
+#	$OpenBSD: Makefile,v 1.15 1997/09/29 23:01:06 mickey Exp $
 
 PROG=	boot
 SRCS=	srt0.S boot.c cmd.c conf.c
@@ -21,12 +21,6 @@ machine-links:
 	@rm -f machine i386
 	@ln -fs ${.CURDIR}/../.. i386
 	@ln -fs ${.CURDIR}/../../include machine
-
-kentry.o: kentry.c
-	@echo ${COMPILE.c} ${.IMPSRC}
-	@${COMPILE.c} -S -o tmp.s ${.IMPSRC}
-	@sed 's/ret/lret/g' tmp.s | ${AS} -f -o $@
-	@rm tmp.s
 
 ${PROG}: $(OBJS) $(DPADD)
 	$(LD) $(LDFLAGS) -o $(PROG) $(OBJS) $(LDADD)
