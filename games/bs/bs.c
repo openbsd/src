@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs.c,v 1.10 2001/02/17 23:00:05 pjanzen Exp $	*/
+/*	$OpenBSD: bs.c,v 1.11 2001/06/23 23:04:33 pjanzen Exp $	*/
 /*
  * bs.c - original author: Bruce Holloway
  *		salvo option by: Chuck A DeGaul
@@ -11,20 +11,21 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: bs.c,v 1.10 2001/02/17 23:00:05 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: bs.c,v 1.11 2001/06/23 23:04:33 pjanzen Exp $";
 #endif
 
 /* #define _POSIX_SOURCE  */  /* (setegid, random) */
 
 #include <sys/param.h>
-#include <curses.h>
-#include <signal.h>
-#include <ctype.h>
-#include <stdlib.h>
 #include <sys/types.h>
-#include <unistd.h>
+#include <curses.h>
+#include <ctype.h>
+#include <err.h>
+#include <signal.h>
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>
 
 #ifndef A_UNDERLINE	/* BSD curses */
 #define	beep()	write(1,"\007",1);
@@ -241,6 +242,11 @@ static void intro(void)
     (void)nonl();
     (void)cbreak();
     (void)noecho();
+
+    if ((LINES < PROMPTLINE + 3) || (COLS < COLWIDTH)) {
+	endwin();
+	errx(1, "screen must be at least %dx%d.", PROMPTLINE + 3, COLWIDTH);
+    }
 
 #ifdef PENGUIN
 #define	PR	(void)addstr
