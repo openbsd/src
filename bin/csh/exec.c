@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.6 1997/11/15 22:01:06 todd Exp $	*/
+/*	$OpenBSD: exec.c,v 1.7 1998/05/18 20:38:19 deraadt Exp $	*/
 /*	$NetBSD: exec.c,v 1.9 1996/09/30 20:03:54 christos Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.3 (Berkeley) 5/23/95";
 #else
-static char rcsid[] = "$OpenBSD: exec.c,v 1.6 1997/11/15 22:01:06 todd Exp $";
+static char rcsid[] = "$OpenBSD: exec.c,v 1.7 1998/05/18 20:38:19 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -587,17 +587,17 @@ executable(dir, name, dir_ok)
     bool    dir_ok;
 {
     struct stat stbuf;
-    Char    path[MAXPATHLEN + 1], *dp, *sp;
+    Char    path[MAXPATHLEN], *dp, *sp;
     char   *strname;
 
     if (dir && *dir) {
 	for (dp = path, sp = dir; *sp; *dp++ = *sp++)
-	    if (dp == &path[MAXPATHLEN + 1]) {
+	    if (dp == &path[MAXPATHLEN]) {
 		*--dp = '\0';
 		break;
 	    }
 	for (sp = name; *sp; *dp++ = *sp++)
-	    if (dp == &path[MAXPATHLEN + 1]) {
+	    if (dp == &path[MAXPATHLEN]) {
 		*--dp = '\0';
 		break;
 	    }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.5 1997/11/15 21:51:29 todd Exp $	*/
+/*	$OpenBSD: file.c,v 1.6 1998/05/18 20:38:20 deraadt Exp $	*/
 /*	$NetBSD: file.c,v 1.11 1996/11/08 19:34:37 christos Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)file.c	8.2 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: file.c,v 1.5 1997/11/15 21:51:29 todd Exp $";
+static char rcsid[] = "$OpenBSD: file.c,v 1.6 1998/05/18 20:38:20 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -450,7 +450,7 @@ tsearch(word, command, max_word_length)
     register DIR *dir_fd;
     register numitems = 0, ignoring = TRUE, nignored = 0;
     register name_length, looking_for_lognames;
-    Char    tilded_dir[MAXPATHLEN + 1], dir[MAXPATHLEN + 1];
+    Char    tilded_dir[MAXPATHLEN], dir[MAXPATHLEN];
     Char    name[MAXNAMLEN + 1], extended_name[MAXNAMLEN + 1];
     Char   *entry;
 
