@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.22 1996/10/31 22:33:52 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.23 1997/01/31 14:43:40 graichen Exp $
 
 # not yet done: catman
 
 .include <bsd.own.mk>
 
-SUBDIR=	ac accton adduser arp bootpd bootpgw bootpef bootptest \
+SUBDIR=	ac accton adduser amd arp bootpd bootpgw bootpef bootptest \
 	chown chroot config cron ctm dev_mkdb \
 	edquota gspa inetd iostat \
 	ipftest ipmon ipsend kgmon \
@@ -18,11 +18,6 @@ SUBDIR=	ac accton adduser arp bootpd bootpgw bootpef bootptest \
 
 .if defined (YP)
 SUBDIR+=ypbind yppoll ypset ypserv
-.endif
-
-# should be listed above, but doesn't work on the Alpha.
-.if   (${MACHINE_ARCH} != "alpha") || make(clean) || make(cleandir)
-SUBDIR+=amd
 .endif
 
 .if   make(clean) || make(cleandir) || make(obj)
