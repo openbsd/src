@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.9 1998/10/11 20:51:39 rahnds Exp $
+#	$OpenBSD: GENERIC,v 1.10 1999/01/23 19:41:30 rahnds Exp $
 #
 # PPC GENERIC config file
 #
@@ -50,9 +50,9 @@ com1		at isa? port 0x2f8 irq 3
 com2		at isa? port 0x3e8 irq 1	#addresses for VI board com1
 com3		at isa? port 0x2e8 irq 5	#addresses for VI board com0
 
-pcppi0		at isa?			# PC prog. periph. interface
-pckbd0		at pcppi?			# PC keyboard (kbd port)
-pms0		at pcppi?			# PS/2-style mouse (aux port)
+pckbc0		at isa?			# PC prog. periph. interface
+pckbd0		at pckbc?			# PC keyboard (kbd port)
+pms0		at pckbc?			# PS/2-style mouse (aux port)
 
 vga0		at isa?			# ISA VGA
 

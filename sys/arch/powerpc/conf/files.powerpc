@@ -84,16 +84,16 @@ define	pcmcia {}			# XXX dummy decl...
 include	"../../../dev/isa/files.isa"
 major	{ wd = 5 }		# Not even in bdevsw XXX
 
-device	pcppi { }
-attach	pcppi at isa
-file	arch/powerpc/isa/pcppi.c	pcppi
+device	pckbc { } 
+attach	pckbc at isa
+file	arch/powerpc/isa/pcppi.c	pckbc
 
 device	pckbd
-attach	pckbd at pcppi
+attach	pckbd at pckbc
 file	arch/powerpc/isa/pckbd.c	pckbd
 
 device	pms
-attach	pms at pcppi
+attach	pms at pckbc
 file	arch/powerpc/isa/pms.c		pms
 
 include "../../../dev/isa/files.isapnp"
