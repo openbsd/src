@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fddi.h,v 1.4 2002/03/14 01:27:09 millert Exp $	*/
+/*	$OpenBSD: if_fddi.h,v 1.5 2002/06/09 05:08:37 itojun Exp $	*/
 /*	$NetBSD: if_fddi.h,v 1.2 1995/08/19 04:35:28 cgd Exp $	*/
 
 /*
@@ -49,6 +49,7 @@ struct	fddi_header {
 };
 
 #define	FDDIMTU			4470
+#define	FDDIIPMTU		4352
 #define	FDDIMIN			3
 
 #define	FDDIFC_C		0x80	/* 0b10000000 */
