@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.35 1997/04/14 11:20:24 graichen Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.36 1997/05/02 22:26:15 graichen Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -252,11 +252,6 @@ cat3
 
 # ./usr/local/man/cat4
 cat4
-
-# ./usr/local/man/cat4/i386
-i386
-# ./usr/local/man/cat4/i386
-..
 
 # ./usr/local/man/cat4
 ..
