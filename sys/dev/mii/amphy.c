@@ -1,4 +1,4 @@
-/*	$OpenBSD: amphy.c,v 1.3 2002/03/14 01:26:57 millert Exp $	*/
+/*	$OpenBSD: amphy.c,v 1.4 2002/04/17 19:30:26 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -78,10 +78,14 @@ amphymatch(parent, match, aux)
 {
 	struct mii_attach_args *ma = aux;
 
-	if ((MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxAMD &&
-	     MII_MODEL(ma->mii_id2) == MII_MODEL_xxAMD_79C873) ||
-	    (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxDAVICOM &&
-	     MII_MODEL(ma->mii_id2) == MII_MODEL_xxDAVICOM_DM9101))
+	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxAMD &&
+	     MII_MODEL(ma->mii_id2) == MII_MODEL_xxAMD_79C873)
+		return (10);
+	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxDAVICOM &&
+	    MII_MODEL(ma->mii_id2) == MII_MODEL_xxDAVICOM_DM9101)
+		return(10);
+	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_DAVICOM &&
+	    MII_MODEL(ma->mii_id2) == MII_MODEL_DAVICOM_DM9102)
 		return(10);
 
 	return(0);
