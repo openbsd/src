@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.32 2001/05/24 10:59:23 angelos Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.33 2001/05/26 05:46:33 angelos Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -643,9 +643,9 @@ m_pullup2(n, len)
 	register struct mbuf *m;
 	register int count;
 	int space; 
+
 	if (len <= MHLEN)
 		return m_pullup(n, len);
- 
 	if ((n->m_flags & M_EXT) != 0 &&
 	    n->m_data + len < &n->m_data[MCLBYTES] && n->m_next) {
 		if (n->m_len >= len)
@@ -668,6 +668,8 @@ m_pullup2(n, len)
 			m->m_pkthdr = n->m_pkthdr;
 			if (TAILQ_EMPTY(&n->m_pkthdr.tags))
 				TAILQ_INIT(&m->m_pkthdr.tags);
+			else 
+				TAILQ_FIRST(&m->m_pkthdr.tags)->m_tag_link.tqe_prev = &m->m_pkthdr.tags.tqh_first;
 			m->m_flags = (n->m_flags & M_COPYFLAGS) | M_EXT;
 			n->m_flags &= ~M_PKTHDR;
 			TAILQ_INIT(&n->m_pkthdr.tags);
