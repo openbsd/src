@@ -38,7 +38,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: roken.h,v 1.2 2001/06/22 15:57:36 hin Exp $ */
+/* $Id: roken.h,v 1.3 2001/06/27 06:20:46 hin Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -209,6 +209,10 @@ struct hostent* roken_gethostbyaddr(const void*, size_t, int);
 #define roken_openlog(a,b,c) openlog(a,b,c)
 
 #define roken_getsockname(a,b,c) getsockname(a,b,c)
+
+void setprogname(const char *argv0);
+
+const char *getprogname(void);
 
 void set_progname(char *argv0);
 const char *get_progname(void);
