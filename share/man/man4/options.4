@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.79 2001/08/08 15:49:41 heko Exp $
+.\"	$OpenBSD: options.4,v 1.80 2001/08/11 23:47:19 heko Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -497,25 +497,6 @@ Adds support for
 style FIFOs (i.e.,
 .Dq named pipes ) .
 This option is recommended in almost all cases as many programs use these.
-.It Cd option NVNODE=integer
-This option sets the size of the cache used by the name-to-inode translation
-routines, (a.k.a. the
-.Fn namei
-cache, though called by many other names in the kernel source).
-By default,
-this cache has
-.Dv NPROC
-(set as 20 + 16 * MAXUSERS) * (80 + NPROC / 8) entries.
-A reasonable way to derive a value of
-.Dv NVNODE ,
-should a large number of namei cache misses be noticed with a tool such as
-.Xr systat 1 ,
-is to examine the system's current computed value with
-.Xr sysctl 8 ,
-(which calls this parameter "kern.maxvnodes") and to increase this value
-until either the namei cache hit rate improves or it is determined that
-the system does not benefit substantially from an increase in the size of
-the namei cache.
 .It Cd option EXT2FS_SYSTEM_FLAGS
 This option changes the behavior of the APPEND and IMMUTABLE flags
 for a file on an
