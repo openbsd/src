@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccons.c,v 1.5 1996/09/04 21:18:22 pefo Exp $	*/
+/*	$OpenBSD: pccons.c,v 1.6 1996/09/05 08:04:16 pefo Exp $	*/
 /*	$NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp $	*/
 
 /*-
@@ -73,7 +73,7 @@
 #include <machine/pccons.h>
 #include <arc/arc/arctype.h>
 #include <arc/pica/pica.h>
-#include <arc/desktech/desktech.h>
+#include <arc/dti/desktech.h>
 
 #include <dev/isa/isavar.h>
 #include <machine/kbdreg.h>
