@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKBIG,v 1.26 2002/05/02 22:56:06 miod Exp $
+#	$OpenBSD: RAMDISKBIG,v 1.27 2002/05/10 09:25:00 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
@@ -59,7 +59,8 @@ uhub*	at usb?
 uhub*	at uhub? port ? configuration ? interface ?
 
 # USB Generic HID devices
-uhid*	at uhub? port ? configuration ? interface ?
+uhidev*	at uhub? port ? configuration ? interface ?
+uhid*	at uhidev? reportid ?           # USB Generic HID devices
 
 # USB Printers
 #ulpt*	at uhub? port ? configuration ? interface ?
