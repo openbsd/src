@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.13 1996/05/26 00:27:31 deraadt Exp $	*/
+/*	$OpenBSD: wd.c,v 1.14 1996/06/01 09:35:36 deraadt Exp $	*/
 /*	$NetBSD: wd.c,v 1.150 1996/05/12 23:54:03 mycroft Exp $	*/
 
 /*
@@ -315,6 +315,8 @@ wdattach(parent, self, aux)
 	wd->sc_dk.dk_driver = &wddkdriver;
 	wd->sc_dk.dk_name = wd->sc_dev.dv_xname;
 	disk_attach(&wd->sc_dk);
+
+	dk_establish(&wd->sc_dk, &wd->sc_dev);
 
 	wd_get_parms(wd);
 	for (blank = 0, p = wd->sc_params.wdp_model, q = buf, i = 0;
