@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.108 2001/07/09 23:15:27 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.109 2001/07/11 16:14:15 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -197,8 +197,8 @@ int			 pf_test_state_udp(struct pf_state **, int,
 int			 pf_test_state_icmp(struct pf_state **, int,
 			    struct ifnet *, struct mbuf *, int, int,
 			    struct ip *, struct icmp *);
-void			*pf_pull_hdr(struct ifnet *, struct mbuf *, int, int,
-			    void *, int, struct ip *, u_short *, u_short *);
+void			*pf_pull_hdr(struct mbuf *, int, void *, int,
+			    u_short *, u_short *);
 int			 pflog_packet(struct mbuf *, int, u_short, u_short,
 			    struct pf_rule *);
 
@@ -2167,11 +2167,14 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 		int off2;
 
 		ipoff2 = off + ICMP_MINLEN;	/* offset of h2 in mbuf chain */
-		if (!pf_pull_hdr(ifp, m, 0, ipoff2, &h2, sizeof(h2), h,
-		    NULL, NULL)) {
+		if (!pf_pull_hdr(m, ipoff2, &h2, sizeof(h2), NULL, NULL)) {
 			printf("pf: ICMP error message too short (ip)\n");
 			return (PF_DROP);
 		}
+
+		/* ICMP error messages don't refer to non-first fragments */
+		if (h2.ip_off & IP_OFFMASK)
+			return (PF_DROP);
 
 		/* offset of protocol header that follows h2 */
 		off2 = ipoff2 + (h2.ip_hl << 2);
@@ -2188,8 +2191,7 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 			 * expected. Don't access any TCP header fields after
 			 * th_seq, an ackskew test is not possible.
 			 */
-			if (!pf_pull_hdr(ifp, m, ipoff2, off2, &th, 8,
-			    &h2, NULL, NULL)) {
+			if (!pf_pull_hdr(m, off2, &th, 8, NULL, NULL)) {
 				printf("pf: "
 				    "ICMP error message too short (tcp)\n");
 				return (PF_DROP);
@@ -2257,8 +2259,8 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 			struct udphdr uh;
 			struct pf_tree_key key;
 
-			if (!pf_pull_hdr(ifp, m, ipoff2, off2, &uh, sizeof(uh),
-			    &h2, NULL, NULL)) {
+			if (!pf_pull_hdr(m, off2, &uh, sizeof(uh),
+			    NULL, NULL)) {
 				printf("pf: ICMP error message too short (udp)\n");
 				return (PF_DROP);
 			}
@@ -2727,17 +2729,12 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct ifnet *ifp, u_short *reason)
  * h must be at "ipoff" on the mbuf chain.
  */
 void *
-pf_pull_hdr(struct ifnet *ifp, struct mbuf *m, int ipoff, int off, void *p,
-    int len, struct ip *h, u_short *actionp, u_short *reasonp)
+pf_pull_hdr(struct mbuf *m, int off, void *p, int len,
+    u_short *actionp, u_short *reasonp)
 {
+	struct ip *h = mtod(m, struct ip *);
 	u_int16_t fragoff = (h->ip_off & IP_OFFMASK) << 3;
 
-	/* sanity check */
-	if (ipoff > off) {
-		ACTION_SET(actionp, PF_DROP);
-		REASON_SET(reasonp, PFRES_BADOFF);
-		return (NULL);
-	}
 	if (fragoff) {
 		if (fragoff >= len)
 			ACTION_SET(actionp, PF_PASS);
@@ -2747,7 +2744,7 @@ pf_pull_hdr(struct ifnet *ifp, struct mbuf *m, int ipoff, int off, void *p,
 		}
 		return (NULL);
 	}
-	if (m->m_pkthdr.len < off + len || ipoff + h->ip_len < off + len) {
+	if (m->m_pkthdr.len < off + len || h->ip_len < off + len) {
 		ACTION_SET(actionp, PF_DROP);
 		REASON_SET(reasonp, PFRES_SHORT);
 		return (NULL);
@@ -2805,8 +2802,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 	case IPPROTO_TCP: {
 		struct tcphdr th;
 
-		if (!pf_pull_hdr(ifp, m, 0, off, &th, sizeof(th), h,
-		    &action, &reason)) {
+		if (!pf_pull_hdr(m, off, &th, sizeof(th), &action, &reason)) {
 			log = action != PF_PASS;
 			goto done;
 		}
@@ -2822,8 +2818,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 	case IPPROTO_UDP: {
 		struct udphdr uh;
 
-		if (!pf_pull_hdr(ifp, m, 0, off, &uh, sizeof(uh), h,
-		    &action, &reason)) {
+		if (!pf_pull_hdr(m, off, &uh, sizeof(uh), &action, &reason)) {
 			log = action != PF_PASS;
 			goto done;
 		}
@@ -2839,8 +2834,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 	case IPPROTO_ICMP: {
 		struct icmp ih;
 
-		if (!pf_pull_hdr(ifp, m, 0, off, &ih, ICMP_MINLEN, h,
-		    &action, &reason)) {
+		if (!pf_pull_hdr(m, off, &ih, ICMP_MINLEN, &action, &reason)) {
 			log = action != PF_PASS;
 			goto done;
 		}
