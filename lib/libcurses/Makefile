@@ -1,3 +1,5 @@
+#	$OpenBSD: Makefile,v 1.7 1996/06/19 02:48:03 niklas Exp $
+
 LIB=    curses
 SRCS=	hardscroll.c lib_acs.c lib_delch.c lib_insstr.c lib_options.c \
 	lib_set_term.c lib_addch.c lib_delwin.c lib_instr.c lib_overlay.c \
