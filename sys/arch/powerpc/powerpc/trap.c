@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.22 2001/01/25 03:02:43 drahn Exp $	*/
+/*	$OpenBSD: trap.c,v 1.23 2001/03/29 21:47:40 drahn Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -181,7 +181,9 @@ printf("kern dsi on addr %x iar %x\n", frame->dar, frame->srr0);
 			{
 				break;
 			}
+#if 0
 printf("dsi on addr %x iar %x lr %x\n", frame->dar, frame->srr0,frame->lr);
+#endif
 /*
  * keep this for later in case we want it later.
 */
