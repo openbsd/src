@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.20 2001/09/26 03:39:59 deraadt Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.21 2001/11/27 15:51:36 provos Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -192,53 +192,43 @@ sonewconn(head, connstatus)
 }
 
 void
-soqinsque(head, so, q)
-	register struct socket *head, *so;
-	int q;
+soqinsque(struct socket *head, struct socket *so, int q)
 {
 
-	register struct socket **prev;
+#ifdef DIAGNOSTIC
+	if (so->so_onq != NULL)
+		panic("soqinsque");
+#endif
+
 	so->so_head = head;
 	if (q == 0) {
 		head->so_q0len++;
-		so->so_q0 = 0;
-		for (prev = &(head->so_q0); *prev; )
-			prev = &((*prev)->so_q0);
+		so->so_onq = &head->so_q0;
 	} else {
 		head->so_qlen++;
-		so->so_q = 0;
-		for (prev = &(head->so_q); *prev; )
-			prev = &((*prev)->so_q);
+		so->so_onq = &head->so_q;
 	}
-	*prev = so;
+	TAILQ_INSERT_TAIL(so->so_onq, so, so_qe);
 }
 
 int
-soqremque(so, q)
-	register struct socket *so;
-	int q;
+soqremque(struct socket *so, int q)
 {
-	register struct socket *head, *prev, *next;
+	struct socket *head;
 
 	head = so->so_head;
-	prev = head;
-	for (;;) {
-		next = q ? prev->so_q : prev->so_q0;
-		if (next == so)
-			break;
-		if (next == 0)
-			return (0);
-		prev = next;
-	}
 	if (q == 0) {
-		prev->so_q0 = next->so_q0;
+		if (so->so_onq != &head->so_q0)
+			return (0);
 		head->so_q0len--;
 	} else {
-		prev->so_q = next->so_q;
+		if (so->so_onq != &head->so_q)
+			return (0);
 		head->so_qlen--;
 	}
-	next->so_q0 = next->so_q = 0;
-	next->so_head = 0;
+	TAILQ_REMOVE(so->so_onq, so, so_qe);
+	so->so_onq = NULL;
+	so->so_head = NULL;
 	return (1);
 }
 

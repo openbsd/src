@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.23 2001/07/05 08:10:31 art Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.24 2001/11/27 15:51:36 provos Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -37,6 +37,9 @@
  */
 
 #include <sys/select.h>			/* for struct selinfo */
+#include <sys/queue.h>
+
+TAILQ_HEAD(soqhead, socket);
 
 /*
  * Kernel structure per socket.
@@ -62,9 +65,11 @@ struct socket {
  * We allow connections to queue up based on current queue lengths
  * and limit on number of queued connections for this socket.
  */
-	struct	socket *so_head;	/* back pointer to accept socket */
-	struct	socket *so_q0;		/* queue of partial connections */
-	struct	socket *so_q;		/* queue of incoming connections */
+	struct	socket	*so_head;	/* back pointer to accept socket */
+	struct	soqhead	*so_onq;	/* queue (q or q0) that we're on */
+	struct	soqhead	so_q0;		/* queue of partial connections */
+	struct	soqhead	so_q;		/* queue of incoming connections */
+	TAILQ_ENTRY(socket) so_qe;	/* our queue entry (q or q0) */
 	short	so_q0len;		/* partials on so_q0 */
 	short	so_qlen;		/* number of connections on so_q */
 	short	so_qlimit;		/* max number queued connections */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.43 2001/10/26 12:03:27 art Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.44 2001/11/27 15:51:36 provos Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -202,7 +202,7 @@ sys_accept(p, v, retval)
 	/* connection has been removed from the listen queue */
 	KNOTE(&so->so_rcv.sb_sel.si_note, 0);
 
-	{ struct socket *aso = so->so_q;
+	{ struct socket *aso = TAILQ_FIRST(&so->so_q);
 	  if (soqremque(aso, 1) == 0)
 		panic("accept");
 	  so = aso;
