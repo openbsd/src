@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.104 2004/08/13 22:13:55 deraadt Exp $
+$OpenBSD: usbdevs,v 1.105 2004/09/18 20:26:00 deraadt Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1402,6 +1402,7 @@ product SIRIUS ROADSTER		0x0001	NetComm Roadster II 56
 
 /* Sitecom products */
 product SITECOM CN104		0x2068	CN104
+product SITECOM LN029		0x182d	LN029
 
 /* SmartBridges products */
 product SMARTBRIDGES SMARTLINK	0x0001	SmartLink Ethernet
