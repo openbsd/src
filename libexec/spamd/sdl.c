@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdl.c,v 1.9 2003/09/20 00:43:10 deraadt Exp $ */
+/*	$OpenBSD: sdl.c,v 1.10 2003/09/26 16:07:29 deraadt Exp $ */
 /*
  * Copyright (c) 2003 Bob Beck.  All rights reserved.
  *
@@ -253,15 +253,9 @@ sdl_lookup(struct sdlist *head, int af, void * src)
 static void
 sdl_free(struct sdlist *sdl)
 {
-	if (sdl->tag != NULL)
-		free(sdl->tag);
-
-	if (sdl->string != NULL)
-		free(sdl->string);
-
-	if (sdl->addrs != NULL)
-		free(sdl->addrs);
-
+	free(sdl->tag);
+	free(sdl->string);
+	free(sdl->addrs);
 	sdl_clear(sdl);
 }
 

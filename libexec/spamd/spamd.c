@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.47 2003/09/26 04:42:11 beck Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.48 2003/09/26 16:07:29 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -940,10 +940,8 @@ main(int argc, char *argv[])
 				max = MAX(max, con[i].fd);
 
 		if (max > omax) {
-			if (fdsr)
-				free(fdsr);
-			if (fdsw)
-				free(fdsw);
+			free(fdsr);
+			free(fdsw);
 			fdsr = (fd_set *)calloc(howmany(max+1, NFDBITS),
 			    sizeof(fd_mask));
 			if (fdsr == NULL)
