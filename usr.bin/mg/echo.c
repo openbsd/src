@@ -1,4 +1,4 @@
-/*	$OpenBSD: echo.c,v 1.5 2001/05/03 12:57:22 art Exp $	*/
+/*	$OpenBSD: echo.c,v 1.6 2001/05/23 16:25:24 art Exp $	*/
 
 /*
  *	Echo line reading and writing.
@@ -356,80 +356,58 @@ complt(flags, c, buf, cpos)
 
 	if ((flags & EFFUNC) != 0) {
 		buf[cpos] = '\0';
-		i = complete_function(buf, c);
-		if (i > 0) {
-			eputs(&buf[cpos]);
-			ttflush();
-			return i;
-		}
-		switch (i) {
-		case -3:
-			msg = " [Ambiguous]";
-			break;
-		case -2:
-			i = 0;
-			msg = " [No match]";
-			break;
-		case -1:
-		case 0:
-			return i;
-		default:
-			msg = " [Internal error]";
-			break;
-		}
-	} else {
-		if ((flags & EFBUF) != 0)
-			lh = &(bheadp->b_list);
-		else if ((flags & EFFILE) != 0) {
-			buf[cpos] = '\0';
-			wholelist = lh = make_file_list(buf);
-		} else
-			panic("broken complt call: flags");
+		wholelist = lh = complete_function_list(buf, c);
+	} else if ((flags & EFBUF) != 0)
+		lh = &(bheadp->b_list);
+	else if ((flags & EFFILE) != 0) {
+		buf[cpos] = '\0';
+		wholelist = lh = make_file_list(buf);
+	} else
+		panic("broken complt call: flags");
 
-		if (c == ' ')
-			wflag = TRUE;
-		else if (c != '\t' && c != CCHR('M'))
-			panic("broken complt call: c");
+	if (c == ' ')
+		wflag = TRUE;
+	else if (c != '\t' && c != CCHR('M'))
+		panic("broken complt call: c");
 
-		nhits = 0;
-		nxtra = HUGE;
+	nhits = 0;
+	nxtra = HUGE;
 
-		for (; lh != NULL; lh = lh->l_next) {
-			if (memcmp(buf, lh->l_name, cpos) != 0)
-				continue;
-			if (nhits == 0)
-				lh2 = lh;
-			++nhits;
-			if (lh->l_name[cpos] == '\0')
-				nxtra = -1;
-			else {
-				bxtra = getxtra(lh, lh2, cpos, wflag);
-				if (bxtra < nxtra)
-					nxtra = bxtra;
-				lh2 = lh;
-			}
-		}
+	for (; lh != NULL; lh = lh->l_next) {
+		if (memcmp(buf, lh->l_name, cpos) != 0)
+			continue;
 		if (nhits == 0)
-			msg = " [No match]";
-		else if (nhits > 1 && nxtra == 0)
-			msg = " [Ambiguous]";
+			lh2 = lh;
+		++nhits;
+		if (lh->l_name[cpos] == '\0')
+			nxtra = -1;
 		else {
-			/*
-			 * Being lazy - ought to check length, but all things
-			 * autocompleted have known types/lengths.
-			 */
-			if (nxtra < 0 && nhits > 1 && c == ' ')
-				nxtra = 1;
-			for (i = 0; i < nxtra; ++i) {
-				buf[cpos] = lh2->l_name[cpos];
-				eputc(buf[cpos++]);
-			}
-			ttflush();
-			free_file_list(wholelist);
-			if (nxtra < 0 && c != CCHR('M'))
-				return 0;
-			return nxtra;
+			bxtra = getxtra(lh, lh2, cpos, wflag);
+			if (bxtra < nxtra)
+				nxtra = bxtra;
+			lh2 = lh;
 		}
+	}
+	if (nhits == 0)
+		msg = " [No match]";
+	else if (nhits > 1 && nxtra == 0)
+		msg = " [Ambiguous]";
+	else {
+		/*
+		 * Being lazy - ought to check length, but all things
+		 * autocompleted have known types/lengths.
+		 */
+		if (nxtra < 0 && nhits > 1 && c == ' ')
+			nxtra = 1;
+		for (i = 0; i < nxtra; ++i) {
+			buf[cpos] = lh2->l_name[cpos];
+			eputc(buf[cpos++]);
+		}
+		ttflush();
+		free_file_list(wholelist);
+		if (nxtra < 0 && c != CCHR('M'))
+			return 0;
+		return nxtra;
 	}
 
 	/*
