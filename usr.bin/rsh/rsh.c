@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsh.c,v 1.30 2002/08/12 02:31:43 itojun Exp $	*/
+/*	$OpenBSD: rsh.c,v 1.31 2003/04/08 22:11:56 millert Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rsh.c	5.24 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$OpenBSD: rsh.c,v 1.30 2002/08/12 02:31:43 itojun Exp $";
+static char rcsid[] = "$OpenBSD: rsh.c,v 1.31 2003/04/08 22:11:56 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -58,6 +58,7 @@ static char rcsid[] = "$OpenBSD: rsh.c,v 1.30 2002/08/12 02:31:43 itojun Exp $";
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
+#include <err.h>
 #include <string.h>
 #include <stdarg.h>
 #include "pathnames.h"
@@ -465,20 +466,23 @@ char *
 copyargs(char **argv)
 {
 	char **ap, *p, *args;
-	int cc;
+	size_t cc, len;
 
 	cc = 0;
 	for (ap = argv; *ap; ++ap)
 		cc += strlen(*ap) + 1;
-	if (!(args = malloc((u_int)cc))) {
-		(void)fprintf(stderr, "rsh: %s.\n", strerror(ENOMEM));
-		exit(1);
-	}
+	if ((args = malloc(cc)) == NULL)
+		err(1, NULL);
 	for (p = args, ap = argv; *ap; ++ap) {
-		(void)strcpy(p, *ap);
-		for (p = strcpy(p, *ap); *p; ++p);
-		if (ap[1])
+		len = strlcpy(p, *ap, cc);
+		if (len >= cc)
+			errx(1, "copyargs overflow");
+		p += len;
+		cc -= len;
+		if (ap[1]) {
 			*p++ = ' ';
+			cc--;
+		}
 	}
 	return(args);
 }
