@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lereg.h,v 1.3 1997/08/08 08:25:13 downsj Exp $	*/
+/*	$OpenBSD: if_lereg.h,v 1.4 1998/12/02 07:34:34 deraadt Exp $	*/
 /*	$NetBSD: if_lereg.h,v 1.5 1995/12/10 10:15:07 mycroft Exp $ */
 
 /*-
@@ -40,7 +40,7 @@
  *	@(#)if_le.c	8.2 (Berkeley) 11/16/93
  */
 
-#define	MEMSIZE	0x4000
+#define	MEMSIZE	0x8000
 
 /*
  * LANCE registers.
