@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.19 2000/08/28 18:30:38 deraadt Exp $	*/
+/*	$OpenBSD: if.h,v 1.20 2000/09/20 13:07:25 art Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -256,7 +256,7 @@ struct ifaddr {
 	TAILQ_ENTRY(ifaddr) ifa_list;	/* list of addresses for interface */
 	void	(*ifa_rtrequest)	/* check or clean routes (+ or -)'d */
 		    __P((int, struct rtentry *, struct sockaddr *));
-	u_short	ifa_flags;		/* mostly rt_flags for cloning */
+	u_int	ifa_flags;		/* mostly rt_flags for cloning */
 	u_int	ifa_refcnt;		/* count of references */
 	int	ifa_metric;		/* cost of going out this interface */
 };
