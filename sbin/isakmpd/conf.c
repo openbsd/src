@@ -1,4 +1,4 @@
-/* $OpenBSD: conf.c,v 1.75 2005/03/10 17:30:31 cloder Exp $	 */
+/* $OpenBSD: conf.c,v 1.76 2005/03/15 20:33:07 moritz Exp $	 */
 /* $EOM: conf.c,v 1.48 2000/12/04 02:04:29 angelos Exp $	 */
 
 /*
@@ -215,15 +215,12 @@ conf_set_now(char *section, char *tag, char *value, int override,
  * headers and feed tag-value pairs into our configuration database.
  */
 static void
-conf_parse_line(int trans, char *line, size_t sz)
+conf_parse_line(int trans, char *line, int ln, size_t sz)
 {
 	char	*val;
 	size_t	 i;
 	int	 j;
 	static char *section = 0;
-	static int ln = 0;
-
-	ln++;
 
 	/* Lines starting with '#' or ';' are comments.  */
 	if (*line == '#' || *line == ';')
@@ -283,6 +280,7 @@ conf_parse(int trans, char *buf, size_t sz)
 	char	*cp = buf;
 	char	*bufend = buf + sz;
 	char	*line;
+	int	ln = 1;
 
 	line = cp;
 	while (cp < bufend) {
@@ -292,9 +290,10 @@ conf_parse(int trans, char *buf, size_t sz)
 				*(cp - 1) = *cp = ' ';
 			else {
 				*cp = '\0';
-				conf_parse_line(trans, line, cp - line);
+				conf_parse_line(trans, line, ln, cp - line);
 				line = cp + 1;
 			}
+			ln++;
 		}
 		cp++;
 	}
