@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.18 2001/09/15 20:44:52 drahn Exp $ */
+/*	$OpenBSD: loader.c,v 1.19 2001/09/22 04:58:18 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -68,7 +68,6 @@ char *_dl_debug;
 char *_dl_showmap;
 
 struct r_debug *_dl_debug_map;
-void _dl_unmaphints();
 
 void
 _dl_debug_state(void)
@@ -291,7 +290,6 @@ _dl_boot(const char **argv, const char **envp, const long loff,
 		_dl_show_objects();
 		DL_DEB(("dynamic loading done.\n"));
 	}
-	_dl_unmaphints();
 	if (_dl_traceld) {
 		_dl_exit(0);
 	}
