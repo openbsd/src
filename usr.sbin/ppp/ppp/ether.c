@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: ether.c,v 1.13 2001/08/19 23:22:17 brian Exp $
+ *	$OpenBSD: ether.c,v 1.14 2001/09/13 10:32:57 brian Exp $
  */
 
 #include <sys/param.h>
@@ -230,7 +230,7 @@ ether_MessageIn(struct etherdevice *dev)
   if (ret <= 0)
     return;
 
-  if (NgRecvMsg(dev->cs, rep, sizeof msgbuf, NULL) < 0)
+  if (NgRecvMsg(dev->cs, rep, sizeof msgbuf, NULL) <= 0)
     return;
 
   if (rep->header.version != NG_VERSION) {
@@ -511,7 +511,7 @@ ether_Create(struct physical *p)
 
     /* Get our list back */
     resp = (struct ng_mesg *)rbuf;
-    if (NgRecvMsg(dev->cs, resp, sizeof rbuf, NULL) < 0) {
+    if (NgRecvMsg(dev->cs, resp, sizeof rbuf, NULL) <= 0) {
       log_Printf(LogWARN, "Cannot get netgraph response: %s\n",
                  strerror(errno));
       return ether_Abandon(dev, p);
