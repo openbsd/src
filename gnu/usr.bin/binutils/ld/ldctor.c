@@ -161,7 +161,7 @@ ldctor_build_sets ()
       howto = bfd_reloc_type_lookup (output_bfd, p->reloc);
       if (howto == (reloc_howto_type *) NULL)
 	{
-	  if (link_info.relocateable)
+	  if (link_info.shared || link_info.relocateable)
 	    {
 	      einfo ("%P%X: %s does not support reloc %s for set %s\n",
 		     bfd_get_target (output_bfd),
@@ -233,7 +233,7 @@ ldctor_build_sets ()
 		minfo ("%G\n", e->section->owner, e->section, e->value);
 	    }
 
-	  if (link_info.relocateable)
+	  if (link_info.shared || link_info.relocateable)
 	    lang_add_reloc (p->reloc, howto, e->section, e->name,
 			    exp_intop (e->value));
 	  else

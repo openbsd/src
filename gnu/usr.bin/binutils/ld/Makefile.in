@@ -191,7 +191,7 @@ ALL_CFLAGS = $(INCLUDES) @HDEFINES@ $(CFLAGS)
 .c.o:
 	$(CC) -c $(ALL_CFLAGS) $<
 
-BFDDEP = ../bfd/libbfd.a
+BFDDEP =
 BFDLIB = @BFDLIB@
 LIBIBERTY = ../libiberty/libiberty.a
 
@@ -208,6 +208,7 @@ ALL_EMULATIONS = \
 	edelta68.o \
 	eebmon29k.o \
 	eelf32_sparc.o \
+	eelf32arc.o \
 	eelf32b4300.o \
 	eelf32bmip.o \
 	eelf32ebmip.o \
@@ -386,6 +387,9 @@ eebmon29k.c: $(srcdir)/emulparams/ebmon29k.sh \
 eelf32_sparc.c: $(srcdir)/emulparams/elf32_sparc.sh \
   $(srcdir)/emultempl/elf32.em $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 	${GENSCRIPTS} elf32_sparc "$(tdir_elf32_sparc)"
+eelf32arc.c: $(srcdir)/emulparams/elf32arc.sh \
+  $(srcdir)/emultempl/elfarc.em $(srcdir)/scripttempl/elfmips.sc ${GEN_DEPENDS}
+	${GENSCRIPTS} elf32arc "$(tdir_elf32arc)"
 eelf32b4300.c: $(srcdir)/emulparams/elf32b4300.sh \
   $(srcdir)/emultempl/elf32.em $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 	${GENSCRIPTS} elf32b4300 "$(tdir_elf32b4300)"
