@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkalias.c,v 1.7 2001/11/19 09:01:28 deraadt Exp $ */
+/*	$OpenBSD: mkalias.c,v 1.8 2002/03/27 02:19:57 fgsch Exp $ */
 
 /*
  * Copyright (c) 1997 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: mkalias.c,v 1.7 2001/11/19 09:01:28 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mkalias.c,v 1.8 2002/03/27 02:19:57 fgsch Exp $";
 #endif
 
 #include <ctype.h>
@@ -248,16 +248,17 @@ main(argc, argv)
 			exit(1);
 		}
 	
-		snprintf(db_tempname, sizeof(db_tempname), "%s%s", output,
-			mapname);
-		fd = mkstemp(db_tempname);
+		snprintf(db_tempname, sizeof(db_tempname), "%s%s%s", output,
+			mapname, YPDB_SUFFIX);
+		fd = mkstemps(db_tempname, 3);
 		if (fd == -1)
 			goto fail;
 		close(fd);
 
-		snprintf(db_mapname, sizeof(db_mapname), "%s%s", db_tempname,
-			YPDB_SUFFIX);
-		new_db = ypdb_open(db_tempname, O_RDWR|O_CREAT, 0444);
+		strncpy(db_mapname, db_tempname, strlen(db_tempname) - 3);
+		db_mapname[sizeof(db_mapname) - 1] = '\0';
+
+		new_db = ypdb_open(db_mapname, O_RDWR|O_TRUNC, 0444);
 		if (new_db == NULL) {
 fail:
 			if (fd != -1)
@@ -355,10 +356,10 @@ fail:
 
 	if (new_db != NULL) {
 		ypdb_close(new_db);
-		if (rename(db_mapname, db_outfile) < 0) {
+		if (rename(db_tempname, db_outfile) < 0) {
 			perror("rename");
-			fprintf(stderr,"rename %s -> %s failed!\n", db_mapname,
-			    db_outfile);
+			fprintf(stderr,"rename %s -> %s failed!\n",
+			    db_tempname, db_outfile);
 			exit(1);
 		}
 	}
