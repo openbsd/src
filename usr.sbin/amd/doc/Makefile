@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2002/11/02 19:17:41 fgsch Exp $
+#	$OpenBSD: Makefile,v 1.6 2002/11/06 17:54:51 pvalchev Exp $
 
 INFO = amdref.info amdref.info-1 amdref.info-2 amdref.info-3
 SRCS = amdref.texinfo
@@ -6,7 +6,7 @@ SRCS = amdref.texinfo
 all: ${INFO}
 
 ${INFO}: ${SRCS}
-	-makeinfo --no-validate --no-warn ${.CURDIR}/${SRCS}
+	-makeinfo --no-validate ${.CURDIR}/${SRCS}
 
 clean cleandir:
 	-rm -f ${INFO}
