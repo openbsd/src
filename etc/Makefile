@@ -1,5 +1,5 @@
+#	$NetBSD: Makefile,v 1.51 1995/11/01 13:52:40 pk Exp $
 #	from: @(#)Makefile	5.11 (Berkeley) 5/21/91
-#	$Id: Makefile,v 1.2 1995/11/01 16:42:45 deraadt Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -67,6 +67,8 @@ distribution: distrib-dirs
 	ln -s ${TZDIR}/${LOCALTIME} ${DESTDIR}/etc/localtime
 	/bin/rm -f ${DESTDIR}/etc/rmt
 	ln -s /usr/sbin/rmt ${DESTDIR}/etc/rmt
+	install -c -o root -g wheel -m 644 Makefile.yp \
+		${DESTDIR}/var/yp.no/Makefile
 	install -c -o ${BINOWN} -g operator -m 664 /dev/null \
 		${DESTDIR}/etc/dumpdates
 	install -c -o ${BINOWN} -g operator -m 644 /dev/null \
