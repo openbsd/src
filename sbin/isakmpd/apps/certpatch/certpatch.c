@@ -1,4 +1,4 @@
-/*	$OpenBSD: certpatch.c,v 1.14 2001/01/27 12:03:37 niklas Exp $	*/
+/*	$OpenBSD: certpatch.c,v 1.15 2001/02/16 21:17:31 provos Exp $	*/
 /*	$EOM: certpatch.c,v 1.11 2000/12/21 14:50:09 ho Exp $	*/
 
 /*
@@ -92,7 +92,7 @@ main (int argc, char **argv)
   EVP_PKEY *pkey_priv;
   X509 *cert;
   BIO *file;
-  EVP_MD *digest = EVP_md5 ();
+  const EVP_MD *digest;
   X509_EXTENSION *ex = NULL;
   ASN1_OCTET_STRING *data = NULL;
   struct in_addr saddr;
@@ -174,6 +174,9 @@ main (int argc, char **argv)
       printf ("PEM_read_bio_X509 () failed\n");
       exit (1);
     }
+
+  /* Get the digest for the actual signing */
+  digest = EVP_get_digestbyname (OBJ_nid2sn (OBJ_obj2nid (cert->sig_alg->algorithm)));
 
   if (!X509_set_version (cert, 2))
     {
@@ -263,8 +266,7 @@ main (int argc, char **argv)
 #endif
       free (new_id);
     }
-  
-  
+
   /* XXX This is a hack, how to do better?  */
   data->type = 0x30;
   data->data[0] = 0x30;
