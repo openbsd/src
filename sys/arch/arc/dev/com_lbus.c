@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_lbus.c,v 1.4 1997/05/01 15:18:13 pefo Exp $	*/
+/*	$OpenBSD: com_lbus.c,v 1.5 1997/07/07 17:05:29 niklas Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -105,7 +105,7 @@ com_localbus_probe(parent, match, aux)
 	if (iobase == comconsaddr && !comconsattached) {
 		return(rv);
 	}
-	rv = comprobe1(iot, ioh, iobase);
+	rv = comprobe1(iot, ioh);
 	return (rv);
 }
 
