@@ -1,4 +1,4 @@
-#	$OpenBSD: DISKLESS,v 1.30 2001/04/09 20:40:50 deraadt Exp $
+#	$OpenBSD: DISKLESS,v 1.31 2001/04/14 18:45:32 mjacob Exp $
 #	$NetBSD: DISKLESS,v 1.26 1996/05/20 18:17:16 mrg Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
@@ -403,6 +403,7 @@ an*	at pcmcia? function ?			# Aironet IEEE 802.11DS
 ray*	at pcmcia? function ?			# Raylink Aviator2.4/Pro 802.11FH
 
 # Media Independent Interface (mii) drivers
+eephy*	at mii? phy ?				# Marvell PHYs for Intel GigE
 exphy*	at mii? phy ?				# 3Com internal PHYs
 inphy*	at mii? phy ?				# Intel 82555 PHYs
 iophy*	at mii? phy ?				# Intel 82553 PHYs

@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.39 2001/04/13 05:43:04 deraadt Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.40 2001/04/14 18:45:32 mjacob Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -294,6 +294,7 @@ an*	at pcmcia? function ?			# Aironet IEEE 802.11DS
 ray*	at pcmcia? function ?			# Raylink Aviator2.4/Pro 802.11FH
 
 # Media Independent Interface (mii) drivers
+eephy*	at mii? phy ?				# Marvell PHYs for Intel GigE
 exphy*	at mii? phy ?				# 3Com internal PHYs
 inphy*	at mii? phy ?				# Intel 82555 PHYs
 iophy*	at mii? phy ?				# Intel 82553 PHYs
