@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.72 2002/06/07 18:24:33 itojun Exp $	*/
+/*	$OpenBSD: parse.y,v 1.73 2002/06/07 18:26:55 itojun Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1632,17 +1632,21 @@ expand_rule(struct pf_rule *r,
 		    (src_host->ifindex && dst_host->ifindex &&
 		     src_host->ifindex != dst_host->ifindex) ||
 		    (src_host->ifindex && if_nametoindex(interface->ifname) &&
-		     src_host->ifindex != if_nametoindex(interface->ifname)))
+		     src_host->ifindex != if_nametoindex(interface->ifname)) ||
+		    (dst_host->ifindex && if_nametoindex(interface->ifname) &&
+		     dst_host->ifindex != if_nametoindex(interface->ifname)))
 			continue;
 		if (!r->af && src_host->af)
 			r->af = src_host->af;
 		else if (!r->af && dst_host->af)
 			r->af = dst_host->af;
 
-		if (if_indextoname(src_host->ifindex, ifname) == 0)
-			memcpy(r->ifname, interface->ifname, sizeof(r->ifname));
-		else
+		if (if_indextoname(src_host->ifindex, ifname))
 			memcpy(r->ifname, ifname, sizeof(r->ifname));
+		else if (if_indextoname(dst_host->ifindex, ifname))
+			memcpy(r->ifname, ifname, sizeof(r->ifname));
+		else
+			memcpy(r->ifname, interface->ifname, sizeof(r->ifname));
 		r->proto = proto->proto;
 		r->src.addr = src_host->addr;
 		r->src.mask = src_host->mask;
