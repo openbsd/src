@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ray.4,v 1.2 2000/03/22 21:46:17 aaron Exp $
+.\"	$OpenBSD: ray.4,v 1.3 2000/04/03 19:34:19 deraadt Exp $
 .\"	$NetBSD: ray.4,v 1.5 2000/02/28 13:54:55 enami Exp $
 .\"
 .\" Copyright (c) 2000 Christian E. Hopps
@@ -31,7 +31,7 @@
 .Os
 .Sh NAME
 .Nm ray
-.Nd Raytheon Raylink / WebGear Aviator IEEE 802.11 2Mbps Wireless
+.Nd Raytheon Raylink / WebGear Aviator IEEE 802.11FH 2Mbps Wireless
 .Sh SYNOPSIS
 .Cd "ray* at pcmcia? function ?"
 .Cd "options RAY_PID_COUNTRY_CODE_DEFAULT=RAY_PID_COUNTRY_CODE_USA"
@@ -39,7 +39,7 @@
 The
 .Nm
 device driver supports the Raytheon Raylink and Aviator 2.4/PRO
-802.11 FH 2Mbps wireless PCMCIA cards.
+802.11 Frequency Hopping 2Mbps wireless PCMCIA cards.
 The cards can be operated in either adhoc or infrastructure modes.
 The operating mode is selectable with
 .Xr ifconfig 8
@@ -105,6 +105,7 @@ obstructions) it is a maximum of 500 feet (152 meters).
 Indicates the card has failed its initial startup tests.
 .El
 .Sh SEE ALSO
+.Xr awi 4 ,
 .Xr ifmedia 4 ,
 .Xr intro 4 ,
 .Xr pcmcia 4 ,
