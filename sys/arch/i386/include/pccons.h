@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccons.h,v 1.4 1996/09/01 16:39:57 deraadt Exp $	*/
+/*	$OpenBSD: pccons.h,v 1.5 1997/03/03 12:01:17 downsj Exp $	*/
 /*	$NetBSD: pccons.h,v 1.4 1996/02/02 18:06:06 mycroft Exp $	*/
 
 /*
@@ -41,5 +41,6 @@ typedef struct {
 #define CONSOLE_SET_TYPEMATIC_RATE	_IOW('t',124,u_char)
 #define CONSOLE_GET_KEYMAP		_IOR('t',128,pccons_keymap_t[KB_NUM_KEYS])
 #define CONSOLE_SET_KEYMAP		_IOW('t',129,pccons_keymap_t[KB_NUM_KEYS])
+#define CONSOLE_SET_BLANK		_IOW('t',130,int)
 
 #endif /* _PCCONS_H_ */

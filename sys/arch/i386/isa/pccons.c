@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccons.c,v 1.33 1996/12/29 12:25:59 graichen Exp $	*/
+/*	$OpenBSD: pccons.c,v 1.34 1997/03/03 12:01:15 downsj Exp $	*/
 /*	$NetBSD: pccons.c,v 1.99.4.1 1996/06/04 20:03:53 cgd Exp $	*/
 
 /*-
@@ -94,6 +94,7 @@ static u_char lock_state = 0x00,	/* all off */
 static u_short cursor_shape = 0xffff,	/* don't update until set by user */
 	       old_cursor_shape = 0xffff;
 static pccons_keymap_t	scan_codes[KB_NUM_KEYS];/* keyboard translation table */
+static int pc_blank = 300;
 #ifdef XSERVER
 int pc_xmode = 0;
 #endif
@@ -727,6 +728,10 @@ pcioctl(dev, cmd, data, flag, p)
 			return EINVAL;
 		bcopy(scan_codes, data, sizeof(pccons_keymap_t[KB_NUM_KEYS]));
 		return 0;
+	case CONSOLE_SET_BLANK:
+		pc_blank = *((int *)data);
+		screen_restore(0);
+		return 0;
 	default:
 		return ENOTTY;
 	}
@@ -1013,8 +1018,8 @@ screen_restore(perm)
 		bcopy(screen_backup, Crtat, ROW*COL*CHR);
 		screen_saved = 0;
 	}
-	if (! perm)
-		timeout(screen_blank, NULL, 300*hz);
+	if (!perm && (pc_blank > 0))
+		timeout(screen_blank, NULL, pc_blank * hz);
 }
 
 /*
