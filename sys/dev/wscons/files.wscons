@@ -1,0 +1,20 @@
+#	$OpenBSD: files.wscons,v 1.1 1997/11/10 04:01:24 mickey Exp $
+#
+
+#
+# "Workstation Console" glue; attaches frame buffer to emulator & kbd.
+#
+device	wscons
+attach	wscons at wsconsdev
+file	dev/wscons/wscons.c		wscons		needs-flag
+file	dev/wscons/wscons_emul.c	wscons
+
+file	dev/wscons/event.c		wscons
+file	dev/wscons/kbd.c		wscons
+file	dev/wscons/ms.c			wscons
+
+#
+# raster console routines
+#
+file	dev/wscons/wscons_rinit.c	raster
+file	dev/wscons/wscons_rops.c	raster

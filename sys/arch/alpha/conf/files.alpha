@@ -1,4 +1,4 @@
-#	$OpenBSD: files.alpha,v 1.16 1997/11/06 12:27:01 niklas Exp $
+#	$OpenBSD: files.alpha,v 1.17 1997/11/10 04:01:25 mickey Exp $
 #	$NetBSD: files.alpha,v 1.32 1996/11/25 04:03:21 cgd Exp $
 #
 # alpha-specific configuration info
@@ -48,8 +48,12 @@ major { rd = 6 }
 
 define	raster
 include "dev/rcons/files.rcons"
-file	dev/wscons/wscons_rinit.c	raster
-file	dev/wscons/wscons_rops.c	raster
+
+#
+# "wprkstation cpnsole" routines
+#
+
+include "dev/wscons/files.wscons"
 
 #
 # TurboChannel Devices

@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.69 1997/11/06 12:27:00 niklas Exp $
+#	$OpenBSD: files,v 1.70 1997/11/10 04:01:22 mickey Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -73,18 +73,6 @@ file	dev/ic/lpt.c		lpt & (lpt_isa | lpt_pica | lpt_algor) needs-flag
 # VGA
 device	vga: wsconsdev
 file	dev/ic/vga.c		vga & (vga_isa | vga_pci)
-
-#
-# "Workstation Console" glue; attaches frame buffer to emulator & kbd.
-#
-device	wscons
-attach	wscons at wsconsdev
-file	dev/wscons/wscons.c	wscons	needs-flag
-file	dev/wscons/wscons_emul.c	wscons
-
-file	dev/wscons/event.c	wscons
-file	dev/wscons/kbd.c	wscons
-file	dev/wscons/ms.c		wscons
 
 # Attributes which machine-independent bus support can be attached to.
 # These should be defined here, because some of these busses can have
