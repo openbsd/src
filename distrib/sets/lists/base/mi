@@ -1737,3 +1737,7 @@
 ./var/yp/Makefile.yp.dist
 ./var/yp/README
 ./usr/sbin/mkisofs
+./usr/share/ipsec/attributes.conf
+./usr/share/ipsec/photuris.conf
+./usr/share/ipsec/photuris.startup
+./usr/share/ipsec/secrets.conf
