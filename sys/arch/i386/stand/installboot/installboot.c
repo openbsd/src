@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.8 1997/08/30 02:13:48 mickey Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.9 1997/09/02 19:13:18 mickey Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -58,6 +58,7 @@
 #include <unistd.h>
 #include <util.h>
 
+extern	char *__progname;
 int	verbose, nowrite, heads, nsectors;
 char	*boot, *proto, *dev, *realdev;
 struct nlist nl[] = {
@@ -86,8 +87,8 @@ static int	record_block
 static void
 usage()
 {
-	fprintf(stderr,
-		"usage: installboot [-n] [-v] <boot> <proto> <device>\n");
+	fprintf(stderr, "usage: %s [-n] [-v] [-s <spt>] [-h <tpc>] "
+		"<boot> <proto> <device>\n", __progname);
 	exit(1);
 }
 
