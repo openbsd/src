@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.108 2004/06/26 17:36:33 markus Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.109 2004/07/03 20:24:16 deraadt Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.108 2004/06/26 17:36:33 markus Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.109 2004/07/03 20:24:16 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -2684,7 +2684,7 @@ getifgroups(void)
 }
 
 void
-carp_status()
+carp_status(void)
 {
 	const char *state;
 	struct carpreq carpr;
