@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: fsm.c,v 1.2 1997/12/06 12:08:56 brian Exp $
+ * $Id: fsm.c,v 1.3 1997/12/15 22:44:52 brian Exp $
  *
  *  TODO:
  *		o Refer loglevel for log output
@@ -367,7 +367,8 @@ FsmRecvConfigReq(struct fsm * fp, struct fsmheader * lhp, struct mbuf * bp)
     pfree(bp);
     return;
   case ST_CLOSING:
-    LogPrintf(LogERROR, "Got ConfigReq while state = %d\n", fp->state);
+    LogPrintf(fp->LogLevel, "Error: Got ConfigReq while state = %d\n",
+              fp->state);
   case ST_STOPPING:
     pfree(bp);
     return;
