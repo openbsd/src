@@ -11,6 +11,7 @@
 ./etc/firmware/atu-rfmd2958smc-int
 ./etc/firmware/kue
 ./etc/firmware/kue-license
+./etc/firmware/tigon-license
 ./etc/firmware/tigon1
 ./etc/firmware/tigon2
 ./sbin/ancontrol

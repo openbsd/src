@@ -14,6 +14,7 @@
 ./etc/firmware/symbol-eprim
 ./etc/firmware/symbol-esec
 ./etc/firmware/symbol-license
+./etc/firmware/tigon-license
 ./etc/firmware/tigon1
 ./etc/firmware/tigon2
 ./sbin/ipwcontrol
