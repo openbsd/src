@@ -12,7 +12,7 @@ COMM=	/sys/adosfs/*.[ch] \
 	/sys/conf/*.[ch] \
 	/sys/ddb/*.[ch] \
 	/sys/dev/*.[ch] /sys/dev/*/*.[ch] \
-	/sys/gnu/*.[ch] \
+	/sys/gnu/ext2fs/*.[ch] \
 	/sys/isofs/*/*.[ch] \
 	/sys/kern/*.[ch] \
 	/sys/lib/libkern/*.[ch] \
