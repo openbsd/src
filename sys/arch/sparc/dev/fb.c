@@ -1,4 +1,4 @@
-/*	$OpenBSD: fb.c,v 1.11 1997/11/11 11:49:12 niklas Exp $	*/
+/*	$OpenBSD: fb.c,v 1.12 1997/11/11 12:49:21 niklas Exp $	*/
 /*	$NetBSD: fb.c,v 1.23 1997/07/07 23:30:22 pk Exp $ */
 
 /*
@@ -412,20 +412,18 @@ fbrcons_init(fb)
 	if (CPU_ISSUN4) {
 		struct eeprom *eep = (struct eeprom *)eeprom_va;
 
-		if (eep == NULL) {
-			rc->rc_maxcol = max(rc->rc_maxcol, 80);
-			rc->rc_maxrow = max(rc->rc_maxrow, 34);
-		} else {
-			rc->rc_maxcol = max(rc->rc_maxcol, eep->eeTtyCols);
-			rc->rc_maxrow = max(rc->rc_maxrow, eep->eeTtyRows);
+		rc->rc_maxcol = min(rc->rc_maxcol,
+		    (eep && eep->eeTtyCols) ? eep->eeTtyCols : 80);
+		rc->rc_maxcol = min(rc->rc_maxcol,
+		    (eep && eep->eeTtyRows) ? eep->eeTtyRows : 34);
 		}
 	}
 #endif /* SUN4 */
 
 	if (!CPU_ISSUN4) {
-		rc->rc_maxcol = max(rc->rc_maxcol,
+		rc->rc_maxcol = min(rc->rc_maxcol,
 		    a2int(getpropstring(optionsnode, "screen-#columns"), 80));
-		rc->rc_maxrow = max(rc->rc_maxrow,
+		rc->rc_maxrow = min(rc->rc_maxrow,
 		    a2int(getpropstring(optionsnode, "screen-#rows"), 34));
 	}
 #endif /* !RASTERCONS_FULLSCREEN && !RASTERCONS_SMALLFONT */
