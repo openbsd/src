@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.61 1998/02/05 09:54:36 deraadt Exp $
+#	$OpenBSD: rc,v 1.62 1998/02/06 00:06:00 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -227,6 +227,7 @@ echo clearing /tmp
 	! -name quota.group -exec rm -rf -- {} \; -type d -prune)
 
 if [ -f /etc/sysctl.conf ]; then
+(
 	# delete comments and blank lines
 	set -- `sed -e 's/#.*$//' /etc/sysctl.conf | grep -v '^$'`
 	while [ $# -ge 1 ] ; do
