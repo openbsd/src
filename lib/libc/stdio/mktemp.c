@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: mktemp.c,v 1.7 1997/02/10 00:52:28 millert Exp $";
+static char rcsid[] = "$OpenBSD: mktemp.c,v 1.8 1997/04/07 22:48:50 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -132,7 +132,7 @@ _gettemp(path, doopen)
 			if (errno != EEXIST)
 				return(0);
 		}
-		else if (stat(path, &sbuf))
+		else if (lstat(path, &sbuf))
 			return(errno == ENOENT ? 1 : 0);
 
 		/* tricky little algorithm for backward compatibility */
