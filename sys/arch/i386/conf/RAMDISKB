@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKB,v 1.77 2005/01/06 21:32:57 deraadt Exp $
+#	$OpenBSD: RAMDISKB,v 1.78 2005/01/06 21:37:53 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -263,6 +263,7 @@ bge*	at pci?				# Broadcom BCM570x (aka Tigon3)
 re*	at pci?				# Realtek 8169/8169S/8110S
 #lge*	at pci?				# Level1 LXT1001 GigE
 #hme*	at pci?				# Sun Happy Meal
+vge*	at pci?				# VIA VT612x
 
 # Wireless network cards
 wi*	at pci?				# WaveLAN IEEE 802.11DS
@@ -288,6 +289,8 @@ dcphy*	at mii?				# Digital Clone PHYs
 amphy*	at mii?				# AMD 79C873 PHYs
 tqphy*	at mii?				# TDK 78Q212x PHYs
 bmtphy* at mii?				# Broadcom 10/100 PHYs
+rgephy*	at mii?				# Realtek 8169S/8110S PHY
+ciphy*	at mii?				# Cicada CS8201 10/100/1000 copper PHY
 ukphy*	at mii?				# "unknown" PHYs
 
 pseudo-device	loop	1		# network loopback
