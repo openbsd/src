@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttyio.c,v 1.23 2002/09/15 14:08:57 vincent Exp $	*/
+/*	$OpenBSD: ttyio.c,v 1.24 2003/11/09 00:23:01 vincent Exp $	*/
 
 /*
  * POSIX terminal I/O.
@@ -22,6 +22,7 @@
 #define TCSASOFT	0
 #endif
 
+int	ttstarted;
 char	obuf[NOBUF];			/* Output buffer. */
 int	nobuf;				/* Buffer count. */
 struct	termios	oldtty;			/* POSIX tty settings. */
@@ -37,7 +38,6 @@ int	ncol;				/* Terminal size, columns. */
 void
 ttopen(void)
 {
-
 	if (!isatty(STDIN_FILENO) || !isatty(STDOUT_FILENO))
 		panic("standard input and output must be a terminal");
 
@@ -55,7 +55,6 @@ ttopen(void)
 int
 ttraw(void)
 {
-
 	if (tcgetattr(0, &oldtty) < 0) {
 		ewprintf("ttopen can't get terminal attributes");
 		return (FALSE);
@@ -82,6 +81,8 @@ ttraw(void)
 		ewprintf("ttopen can't tcsetattr");
 		return (FALSE);
 	}
+	ttstarted = 1;
+
 	return (TRUE);
 }
 
@@ -94,8 +95,11 @@ ttraw(void)
 void
 ttclose(void)
 {
-	if (ttcooked() == FALSE)
-		panic("");		/* ttcooked() already printf'd */
+	if (ttstarted) {
+		if (ttcooked() == FALSE)
+			panic("");	/* ttcooked() already printf'd */
+		ttstarted = 0;
+	}
 }
 
 /*
@@ -187,6 +191,7 @@ typeahead(void)
 void
 panic(char *s)
 {
+	ttclose();
 	(void) fputs("panic: ", stderr);
 	(void) fputs(s, stderr);
 	(void) fputc('\n', stderr);
