@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-pfsync.c,v 1.16 2003/12/27 19:50:47 mcbride Exp $	*/
+/*	$OpenBSD: print-pfsync.c,v 1.17 2003/12/28 17:18:58 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -28,7 +28,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-pfsync.c,v 1.16 2003/12/27 19:50:47 mcbride Exp $";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-pfsync.c,v 1.17 2003/12/28 17:18:58 mcbride Exp $";
 #endif
 
 #include <sys/param.h>
@@ -107,6 +107,8 @@ pfsync_print(struct pfsync_header *hdr, int len)
 	struct pfsync_state *s;
 	struct pfsync_state_upd *u;
 	struct pfsync_state_del *d;
+	struct pfsync_state_clr *c;
+	struct pfsync_state_upd_req *r;
 	int i, flags;
 
 	if (eflag)
@@ -125,6 +127,11 @@ pfsync_print(struct pfsync_header *hdr, int len)
 		flags |= PF_OPT_USEDNS;
 
 	switch (hdr->action) {
+	case PFSYNC_ACT_CLR:
+		if (sizeof(*c) <= len) {
+			c = (void *)((char *)hdr + PFSYNC_HDRLEN);
+			printf("\tcreatorid: %08x\n", htonl(c->creatorid));
+		}
 	case PFSYNC_ACT_INS:
 	case PFSYNC_ACT_UPD:
 	case PFSYNC_ACT_DEL:
@@ -172,6 +179,13 @@ pfsync_print(struct pfsync_header *hdr, int len)
 		    i <= hdr->count && i * sizeof(*d) <= len; i++, d++) {
 			printf("\tid: %016llx creatorid: %08x\n",
 			    betoh64(d->id), htonl(d->creatorid));
+		}
+		break;
+	case PFSYNC_REQ_UPD:
+		for (i = 1, r = (void *)((char *)hdr + PFSYNC_HDRLEN);
+		    i <= hdr->count && i * sizeof(*r) <= len; i++, d++) {
+			printf("\tid: %016llx creatorid: %08x\n",
+			    betoh64(r->id), htonl(r->creatorid));
 		}
 		break;
 	default:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.h,v 1.6 2003/12/15 21:49:38 deraadt Exp $	*/
+/*	$OpenBSD: if_pfsync.h,v 1.7 2003/12/28 17:18:58 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -103,6 +103,12 @@ struct pfsync_state_del {
 	u_int8_t		pad[2];
 } __packed;
 
+struct pfsync_state_upd_req {
+	u_int64_t		id;
+	u_int32_t		creatorid;
+	u_int32_t		pad;
+} __packed;
+
 struct pfsync_state_clr {
 	u_int32_t		creatorid;
 	u_int32_t		pad;
@@ -115,6 +121,7 @@ union sc_statep {
 	struct pfsync_state_upd	*u;
 	struct pfsync_state_del	*d;
 	struct pfsync_state_clr	*c;
+	struct pfsync_state_upd_req	*r;
 };
 
 struct pfsync_softc {
@@ -123,6 +130,7 @@ struct pfsync_softc {
 
 	struct ip_moptions	 sc_imo;
 	struct timeout		 sc_tmo;
+	struct in_addr		 sc_sendaddr;
 	struct mbuf		*sc_mbuf;	/* current cummulative mbuf */
 	struct mbuf		*sc_mbuf_net;	/* current cummulative mbuf */
 	union sc_statep		 sc_statep;
@@ -146,14 +154,15 @@ struct pfsync_header {
 #define	PFSYNC_ACT_DEL_C	5	/* "compressed" state delete */
 #define	PFSYNC_ACT_INS_F	6	/* insert fragment */
 #define	PFSYNC_ACT_DEL_F	7	/* delete fragments */
-#define	PFSYNC_ACT_MAX		8
+#define	PFSYNC_ACT_UREQ		8	/* request "uncompressed" state */
+#define	PFSYNC_ACT_MAX		9
 	u_int8_t count;
 } __packed;
 
 #define PFSYNC_HDRLEN	sizeof(struct pfsync_header)
 #define	PFSYNC_ACTIONS \
 	"CLR ST", "INS ST", "UPD ST", "DEL ST", \
-	"UPD ST COMP", "DEL ST COMP", "INS FR", "DEL FR"
+	"UPD ST COMP", "DEL ST COMP", "INS FR", "DEL FR", "UPD REQ"
 
 #define PFSYNC_DFLTTL		255
 
@@ -220,23 +229,23 @@ struct pfsyncreq {
 #ifdef _KERNEL
 void pfsync_input(struct mbuf *, ...);
 int pfsync_clear_states(u_int32_t);
-int pfsync_pack_state(u_int8_t, struct pf_state *);
-#define pfsync_insert_state(st)	do {			\
-	if (st->rule.ptr->rule_flag & PFRULE_NOSYNC)	\
-		st->sync_flags |= PFSTATE_NOSYNC;	\
-	else if (!st->sync_flags)			\
-		pfsync_pack_state(PFSYNC_ACT_INS, (st));\
-	st->sync_flags &= ~PFSTATE_FROMSYNC;		\
+int pfsync_pack_state(u_int8_t, struct pf_state *, int);
+#define pfsync_insert_state(st)	do {				\
+	if (st->rule.ptr->rule_flag & PFRULE_NOSYNC)		\
+		st->sync_flags |= PFSTATE_NOSYNC;		\
+	else if (!st->sync_flags)				\
+		pfsync_pack_state(PFSYNC_ACT_INS, (st), 1);	\
+	st->sync_flags &= ~PFSTATE_FROMSYNC;			\
 } while (0)
-#define pfsync_update_state(st) do {			\
-	if (!st->sync_flags)				\
-		pfsync_pack_state(PFSYNC_ACT_UPD, (st));\
-	st->sync_flags &= ~PFSTATE_FROMSYNC;		\
+#define pfsync_update_state(st) do {				\
+	if (!st->sync_flags)					\
+		pfsync_pack_state(PFSYNC_ACT_UPD, (st), 1);	\
+	st->sync_flags &= ~PFSTATE_FROMSYNC;			\
 } while (0)
-#define pfsync_delete_state(st) do {			\
-	if (!st->sync_flags)				\
-		pfsync_pack_state(PFSYNC_ACT_DEL, (st));\
-	st->sync_flags &= ~PFSTATE_FROMSYNC;		\
+#define pfsync_delete_state(st) do {				\
+	if (!st->sync_flags)					\
+		pfsync_pack_state(PFSYNC_ACT_DEL, (st), 1);	\
+	st->sync_flags &= ~PFSTATE_FROMSYNC;			\
 } while (0)
 #endif
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.12 2003/12/18 16:07:38 dhartmei Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.13 2003/12/28 17:18:58 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -83,6 +83,7 @@ int	pfsyncioctl(struct ifnet *, u_long, caddr_t);
 void	pfsyncstart(struct ifnet *);
 
 struct mbuf *pfsync_get_mbuf(struct pfsync_softc *, u_int8_t, void **);
+int	pfsync_request_update(struct pfsync_state_upd *, struct in_addr *);
 int	pfsync_sendout(struct pfsync_softc *sc);
 void	pfsync_timeout(void *);
 
@@ -100,6 +101,7 @@ pfsyncattach(int npfsync)
 	pfsyncif.sc_statep.s = NULL;
 	pfsyncif.sc_statep_net.s = NULL;
 	pfsyncif.sc_maxupdates = 128;
+	pfsyncif.sc_sendaddr.s_addr = INADDR_PFSYNC_GROUP;
 	ifp = &pfsyncif.sc_if;
 	strlcpy(ifp->if_xname, "pfsync0", sizeof ifp->if_xname);
 	ifp->if_softc = &pfsyncif;
@@ -218,6 +220,8 @@ pfsync_input(struct mbuf *m, ...)
 	struct pfsync_state_upd *up;
 	struct pfsync_state_del *dp;
 	struct pfsync_state_clr *cp;
+	struct pfsync_state_upd_req *rup;
+	struct in_addr src;
 	struct mbuf *mp;
 	int iplen, action, error, i, s, count, offp;
 	u_long secs;
@@ -270,6 +274,9 @@ pfsync_input(struct mbuf *m, ...)
 		pfsyncstats.pfsyncs_badact++;
 		goto done;
 	}
+
+	/* Cheaper to grab this now than having to mess with mbufs later */
+	src = ip->ip_src;
 
 	switch (action) {
 	case PFSYNC_ACT_CLR: {
@@ -332,8 +339,9 @@ pfsync_input(struct mbuf *m, ...)
 
 			st = pf_find_state(&key, PF_ID);
 			if (st == NULL) {
-				/* try to do an insert? */
-				pfsyncstats.pfsyncs_badstate++;
+				/* insert the update */
+				if (pfsync_insert_net_state(sp)) 
+					pfsyncstats.pfsyncs_badstate++;
 				continue;
 			}
 			pf_state_peer_ntoh(&sp->src, &st->src);
@@ -376,7 +384,9 @@ pfsync_input(struct mbuf *m, ...)
 		pf_purge_expired_states();
 		splx(s);
 		break;
-	case PFSYNC_ACT_UPD_C:
+	case PFSYNC_ACT_UPD_C: {
+		int update_requested = 0;
+
 		if ((mp = m_pulldown(m, iplen + sizeof(*ph),
 		    count * sizeof(*up), &offp)) == NULL) {
 			pfsyncstats.pfsyncs_badlen++;
@@ -391,7 +401,9 @@ pfsync_input(struct mbuf *m, ...)
 
 			st = pf_find_state(&key, PF_ID);
 			if (st == NULL) {
-				/* send out a request for a full state? */
+				/* We don't have this state. Ask for it. */
+				pfsync_request_update(up, &src);
+				update_requested = 1;
 				pfsyncstats.pfsyncs_badstate++;
 				continue;
 			}
@@ -404,8 +416,11 @@ pfsync_input(struct mbuf *m, ...)
 				st->expire = ntohl(up->expire) + secs;
 
 		}
+		if (update_requested)
+			pfsync_sendout(sc);
 		splx(s);
 		break;
+	}
 	case PFSYNC_ACT_DEL_C:
 		if ((mp = m_pulldown(m, iplen + sizeof(*ph),
 		    count * sizeof(*dp), &offp)) == NULL) {
@@ -438,6 +453,34 @@ pfsync_input(struct mbuf *m, ...)
 	case PFSYNC_ACT_INS_F:
 	case PFSYNC_ACT_DEL_F:
 		/* not implemented */
+		break;
+	case PFSYNC_ACT_UREQ:
+		if ((mp = m_pulldown(m, iplen + sizeof(*ph),
+		    count * sizeof(*rup), &offp)) == NULL) {
+			pfsyncstats.pfsyncs_badlen++;
+			return;
+		}
+
+		s = splsoftnet();
+
+		/* XXX send existing. pfsync_pack_state should handle this. */ 
+		if (sc->sc_mbuf != NULL)
+			pfsync_sendout(sc);
+		for (i = 0, rup = (void *)((char *)mp->m_data +
+		    iplen + PFSYNC_HDRLEN); i < count; i++, rup++) {
+			key.id = rup->id;
+			key.creatorid = rup->creatorid;
+
+			st = pf_find_state(&key, PF_ID);
+			if (st == NULL) {
+				pfsyncstats.pfsyncs_badstate++;
+				continue;
+			}
+			pfsync_pack_state(PFSYNC_ACT_UPD, st, 0);
+		}
+		if (sc->sc_mbuf != NULL)
+			pfsync_sendout(sc);
+		splx(s);
 		break;
 	}
 
@@ -608,6 +651,10 @@ pfsync_get_mbuf(struct pfsync_softc *sc, u_int8_t action, void **sp)
 		len = sizeof(struct pfsync_header) +
 		     sizeof(struct pfsync_state_clr);
 		break;
+	case PFSYNC_ACT_UREQ:
+		len = sizeof(struct pfsync_header) +
+		     sizeof(struct pfsync_state_upd_req);
+		break;
 	default:
 		len = (sc->sc_maxcount * sizeof(struct pfsync_state))
 		    + sizeof(struct pfsync_header);
@@ -638,8 +685,9 @@ pfsync_get_mbuf(struct pfsync_softc *sc, u_int8_t action, void **sp)
 	return (m);
 }
 
+
 int
-pfsync_pack_state(u_int8_t action, struct pf_state *st)
+pfsync_pack_state(u_int8_t action, struct pf_state *st, int compress)
 {
 	struct ifnet *ifp = &pfsyncif.sc_if;
 	struct pfsync_softc *sc = ifp->if_softc;
@@ -700,6 +748,7 @@ pfsync_pack_state(u_int8_t action, struct pf_state *st)
 					if (usp->id == st->id &&
 					    usp->creatorid == st->creatorid) {
 						sp = usp;
+						sp->updates++;
 						break;
 					}
 					usp++;
@@ -747,8 +796,7 @@ pfsync_pack_state(u_int8_t action, struct pf_state *st)
 		sp->allow_opts = st->allow_opts;
 
 		sp->sync_flags = st->sync_flags & PFSTATE_NOSYNC;
-	} else
-		sp->updates++;
+	}
 
 	pf_state_peer_hton(&st->src, &sp->src);
 	pf_state_peer_hton(&st->dst, &sp->dst);
@@ -759,7 +807,7 @@ pfsync_pack_state(u_int8_t action, struct pf_state *st)
 		sp->expire = htonl(st->expire - secs);
 
 	/* do we need to build "compressed" actions for network transfer? */
-	if (sc->sc_sync_ifp) {
+	if (sc->sc_sync_ifp && compress) {
 		switch (action) {
 		case PFSYNC_ACT_UPD:
 			newaction = PFSYNC_ACT_UPD_C;
@@ -821,6 +869,50 @@ pfsync_pack_state(u_int8_t action, struct pf_state *st)
 		ret = pfsync_sendout(sc);
 
 	splx(s);
+	return (ret);
+}
+
+/* This must be called in splnet() */
+int
+pfsync_request_update(struct pfsync_state_upd *up, struct in_addr *src)
+{
+	struct ifnet *ifp = &pfsyncif.sc_if;
+	struct pfsync_header *h;
+	struct pfsync_softc *sc = ifp->if_softc;
+	struct pfsync_state_upd_req *rup;
+	int s, ret;
+
+	if (sc->sc_mbuf == NULL) {
+		if ((sc->sc_mbuf = pfsync_get_mbuf(sc, PFSYNC_ACT_UREQ,
+		    (void *)&sc->sc_statep.s)) == NULL) {
+			splx(s);
+			return (ENOMEM);
+		}
+		h = mtod(sc->sc_mbuf, struct pfsync_header *);
+	} else {
+		h = mtod(sc->sc_mbuf, struct pfsync_header *);
+		if (h->action != PFSYNC_ACT_UREQ) {
+			pfsync_sendout(sc);
+			if ((sc->sc_mbuf = pfsync_get_mbuf(sc, PFSYNC_ACT_UPD,
+			    (void *)&sc->sc_statep.s)) == NULL) {
+				splx(s);
+				return (ENOMEM);
+			}
+			h = mtod(sc->sc_mbuf, struct pfsync_header *);
+		}
+	}
+
+	sc->sc_sendaddr = *src;
+	sc->sc_mbuf->m_pkthdr.len = sc->sc_mbuf->m_len += sizeof(*rup);
+	h->count++;
+	rup = sc->sc_statep.r++;
+	bzero(rup, sizeof(*rup));
+	rup->id = up->id;
+	rup->creatorid = up->creatorid;
+
+	if (h->count == sc->sc_maxcount)
+		ret = pfsync_sendout(sc);
+
 	return (ret);
 }
 
@@ -895,7 +987,6 @@ pfsync_sendout(sc)
 			pfsyncstats.pfsyncs_onomem++;
 			return (0);
 		}
-		m->m_flags |= M_MCAST;
 		ip = mtod(m, struct ip *);
 		ip->ip_v = IPVERSION;
 		ip->ip_hl = sizeof(*ip) >> 2;
@@ -913,15 +1004,18 @@ pfsync_sendout(sc)
 		if (ifa == NULL)
 			return (0);
 		ip->ip_src.s_addr = ifatoia(ifa)->ia_addr.sin_addr.s_addr;
-		ip->ip_dst.s_addr = INADDR_PFSYNC_GROUP;
+
+		if (sc->sc_sendaddr.s_addr == INADDR_PFSYNC_GROUP)
+			m->m_flags |= M_MCAST;
+		ip->ip_dst = sc->sc_sendaddr;
+		sc->sc_sendaddr.s_addr = INADDR_PFSYNC_GROUP;
 
 		pfsyncstats.pfsyncs_opackets++;
 
 		if (ip_output(m, NULL, NULL, IP_RAWOUTPUT, &sc->sc_imo, NULL))
 			pfsyncstats.pfsyncs_oerrors++;
-	} else {
+	} else
 		m_freem(m);
-	}
 
 	return (0);
 }
