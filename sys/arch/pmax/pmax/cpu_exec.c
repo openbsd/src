@@ -66,9 +66,8 @@ cpu_exec_aout_makecmds(p, epp)
 	return ENOEXEC;
 }
 
-#ifdef COMPAT_ULTRIX
-extern struct emul emul_ultrix;
 
+#if defined(_KERN_DO_ECOFF)
 void
 cpu_exec_ecoff_setregs(p, pack, stack, retval)
 	struct proc *p;
@@ -92,13 +91,18 @@ cpu_exec_ecoff_setregs(p, pack, stack, retval)
  *
  */
 int
-cpu_exec_ecoff_hook(p, epp, eap)
+cpu_exec_ecoff_hook(p, epp)
 	struct proc *p;
 	struct exec_package *epp;
-	struct ecoff_aouthdr *eap;
 {
+#ifdef COMPAT_ULTRIX
+	extern struct emul emul_ultrix;
+#endif
 
+#if defined(COMPAT_ULTRIX)
 	epp->ep_emul = &emul_ultrix;
+#endif
 	return 0;
 }
-#endif
+
+#endif /* _KERN_DO_ECOFF */
