@@ -1,18 +1,9 @@
 #!/bin/sh
-#	$OpenBSD: testrsa.sh,v 1.4 2001/01/29 02:05:48 niklas Exp $
+#	$OpenBSD: testrsa.sh,v 1.5 2002/01/02 15:12:14 art Exp $
 
 
 #Test RSA certificate generation of openssl
 
-echo 
-echo RSA paramters test - NOTE THAT THIS WILL ONLY WORK IF YOU HAVE
-echo compiled libssl with the src-patent tree, currently living in 
-echo ~beck/src-patent.tar.gz on cvs. 
-echo
-echo This will *not* work with what\'s in the tree, rsa is not in that.
-echo
-sleep 3
- 
 cd $1
 
 # Generate RSA private key
