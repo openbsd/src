@@ -1,16 +1,28 @@
 
-			Known problems in GDB 6.1
+			Known problems in GDB 6.3
 
 		See also: http://www.gnu.org/software/gdb/bugs/
 
 
 *** Build problems
 
-build/1458: comple failed on hpux11
+build/1411: build fails on hpux 10.20 and hpux 11.00 with CMA threads
 
-GDB 6.1 is known to have build problems on HP/UX 11.00 using the
-vendor supplied compilers (GDB does build on HP/UX 11.11, and using
-GCC).
+GDB does not build on HP/UX 10.20 or HP/UX 11.00 if the CMA
+thread package is installed.  The compile error is:
+
+  ../../gdb/hpux-thread.c:222: variable-size type declared outside of any function
+
+This happens only if the CMA thread package is installed.
+
+As a workaround, you can disable support for CMA threads
+by editing the file gdb/configure.  Find the line:
+
+  if test -f /usr/include/dce/cma_config.h ; then
+
+And replace it with:
+
+  if false ; then
 
 *** Misc
 
@@ -76,38 +88,13 @@ implement virtual base classes.  gcc 2.x generated just one object code
 function with a hidden parameter, but gcc 3.x conforms to a multi-vendor
 ABI for C++ which requires multiple object code functions.
 
-*** Stack backtraces
+*** Threads
 
-GDB's core code base has been updated to use a new backtrace
-mechanism.  This mechanism makes it possible to support new features
-such DWARF 2 Call Frame Information (which in turn makes possible
-backtraces through optimized code).
+threads/1650: manythreads.exp
 
-Since this code is new, it is known to still have a few problems:
+On GNU/Linux systems that use the old LinuxThreads thread library, a
+program rapidly creating and deleting threads can confuse GDB leading
+to an internal error.
 
-gdb/1505: [regression] gdb prints a bad backtrace for a thread
-
-When backtracing a thread, gdb does not stop when it reaches the
-outermost frame, instead continuing until it hits garbage.  This is
-sensitive to the operating system and thread library.
-
-hppa*-*-*
-mips*-*-*
-
-The MIPS and HPPA backtrace code has only very recently been updated
-to use GDB's new frame mechanism.  At present there are still a few
-problems, in particular backtraces through signal handlers do not
-work.
-
-People encountering problems with these architectures should consult
-GDB's web pages and mailing lists (http://www.gnu.org/software/gdb/)
-to see if there are updates.
-
-powerpc*-*-*
-
-PowerPC architecture support, in 6.1, does not use the new frame code.
-
-Fortunately, PowerPC architecture support, in GDB's mainline sources,
-have been updated.  People encountering problems should consider
-downloading a more current snapshot of GDB
-(http://www.gnu.org/software/gdb/current/).
+This problem does not occur on newer systems that use the NPTL
+library, and did not occur with GDB 6.1.

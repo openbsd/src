@@ -25,6 +25,7 @@
 #define DOUBLEST_H
 
 struct type;
+struct floatformat;
 
 /* Setup definitions for host and target floating point formats.  We need to
    consider the format for `float', `double', and `long double' for both target
@@ -86,5 +87,12 @@ extern void store_typed_floating (void *addr, const struct type *type,
 extern void convert_typed_floating (const void *from,
 				    const struct type *from_type,
                                     void *to, const struct type *to_type);
+
+/* Table of convenient float-formats.  */
+extern const struct floatformat *floatformat_ieee_single[BFD_ENDIAN_UNKNOWN];
+extern const struct floatformat *floatformat_ieee_double[BFD_ENDIAN_UNKNOWN];
+extern const struct floatformat *floatformat_ieee_quad[BFD_ENDIAN_UNKNOWN];
+extern const struct floatformat *floatformat_arm_ext[BFD_ENDIAN_UNKNOWN];
+extern const struct floatformat *floatformat_ia64_spill[BFD_ENDIAN_UNKNOWN];
 
 #endif

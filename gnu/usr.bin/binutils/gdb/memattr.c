@@ -240,9 +240,9 @@ mem_info_command (char *args, int from_tty)
 		       m->number,
 		       m->enabled_p ? 'y' : 'n');
       if (TARGET_ADDR_BIT <= 32)
-	tmp = local_hex_string_custom ((unsigned long) m->lo, "08l");
+	tmp = hex_string_custom ((unsigned long) m->lo, 8);
       else
-	tmp = local_hex_string_custom ((unsigned long) m->lo, "016l");
+	tmp = hex_string_custom ((unsigned long) m->lo, 16);
       
       printf_filtered ("%s ", tmp);
 
@@ -251,14 +251,14 @@ mem_info_command (char *args, int from_tty)
 	if (m->hi == 0)
 	  tmp = "0x100000000";
 	else
-	  tmp = local_hex_string_custom ((unsigned long) m->hi, "08l");
+	  tmp = hex_string_custom ((unsigned long) m->hi, 8);
 	}
       else
 	{
 	if (m->hi == 0)
 	  tmp = "0x10000000000000000";
 	else
-	  tmp = local_hex_string_custom ((unsigned long) m->hi, "016l");
+	  tmp = hex_string_custom ((unsigned long) m->hi, 16);
 	}
 
       printf_filtered ("%s ", tmp);

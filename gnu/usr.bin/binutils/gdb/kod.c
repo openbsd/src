@@ -134,14 +134,15 @@ kod_set_os (char *arg, int from_tty, struct cmd_list_element *command)
 {
   char *p;
 
-  /* NOTE: cagney/2002-03-17: The add_show_from_set() function clones
-     the set command passed as a parameter.  The clone operation will
-     include (BUG?) any ``set'' command callback, if present.
-     Commands like ``info set'' call all the ``show'' command
-     callbacks.  Unfortunately, for ``show'' commands cloned from
-     ``set'', this includes callbacks belonging to ``set'' commands.
-     Making this worse, this only occures if add_show_from_set() is
-     called after add_cmd_sfunc() (BUG?).  */
+  /* NOTE: cagney/2002-03-17: The deprecated_add_show_from_set()
+     function clones the set command passed as a parameter.  The clone
+     operation will include (BUG?) any ``set'' command callback, if
+     present.  Commands like ``info set'' call all the ``show''
+     command callbacks.  Unfortunately, for ``show'' commands cloned
+     from ``set'', this includes callbacks belonging to ``set''
+     commands.  Making this worse, this only occures if
+     deprecated_add_show_from_set() is called after add_cmd_sfunc()
+     (BUG?).  */
 
   if (cmd_type (command) != set_cmd)
     return;
@@ -237,5 +238,5 @@ _initialize_kod (void)
 		   "Set operating system",
 		   &setlist);
   set_cmd_sfunc (c, kod_set_os);
-  add_show_from_set (c, &showlist);
+  deprecated_add_show_from_set (c, &showlist);
 }

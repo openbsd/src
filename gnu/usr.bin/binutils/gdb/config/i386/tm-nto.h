@@ -1,6 +1,6 @@
 /* QNX Neutrino target header.
  
-   Copyright 2003 Free Software Foundation, Inc.
+   Copyright 2003, 2004 Free Software Foundation, Inc.
 
    This code was donated by QNX Software Systems Ltd.
 
@@ -24,9 +24,7 @@
 #ifndef TM_NTO_H
 #define TM_NTO_H 1
 
-/* Pick up most of what we need from the generic i386 target include file.  */
-#include "i386/tm-i386.h"
-#include "tm-nto.h"
+#include "config/tm-nto.h"
 
 #include "solib.h"
 

@@ -282,9 +282,9 @@ static struct type *
 d10v_register_type (struct gdbarch *gdbarch, int reg_nr)
 {
   if (reg_nr == D10V_PC_REGNUM)
-    return builtin_type_void_func_ptr;
+    return builtin_type (gdbarch)->builtin_func_ptr;
   if (reg_nr == D10V_SP_REGNUM || reg_nr == D10V_FP_REGNUM)
-    return builtin_type_void_data_ptr;
+    return builtin_type (gdbarch)->builtin_data_ptr;
   else if (reg_nr >= a0_regnum (gdbarch)
 	   && reg_nr < (a0_regnum (gdbarch) + NR_A_REGS))
     return builtin_type_int64;
@@ -953,7 +953,7 @@ d10v_push_dummy_code (struct gdbarch *gdbarch,
 }
 
 static CORE_ADDR
-d10v_push_dummy_call (struct gdbarch *gdbarch, CORE_ADDR func_addr,
+d10v_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 		      struct regcache *regcache, CORE_ADDR bp_addr,
 		      int nargs, struct value **args, CORE_ADDR sp, 
 		      int struct_return, CORE_ADDR struct_addr)
@@ -1313,7 +1313,7 @@ display_trace (int low, int high)
 		  if (!suppress)
 		    /* FIXME-32x64--assumes sal.pc fits in long.  */
 		    printf_filtered ("No source file for address %s.\n",
-				 local_hex_string ((unsigned long) sal.pc));
+				     hex_string ((unsigned long) sal.pc));
 		  suppress = 1;
 		}
 	    }
@@ -1375,8 +1375,8 @@ d10v_frame_prev_register (struct frame_info *next_frame,
 {
   struct d10v_unwind_cache *info
     = d10v_frame_unwind_cache (next_frame, this_prologue_cache);
-  trad_frame_prev_register (next_frame, info->saved_regs, regnum,
-			    optimizedp, lvalp, addrp, realnump, bufferp);
+  trad_frame_get_prev_register (next_frame, info->saved_regs, regnum,
+				optimizedp, lvalp, addrp, realnump, bufferp);
 }
 
 static const struct frame_unwind d10v_frame_unwind = {
@@ -1542,8 +1542,8 @@ _initialize_d10v_tdep (void)
 {
   register_gdbarch_init (bfd_arch_d10v, d10v_gdbarch_init);
 
-  target_resume_hook = d10v_eva_prepare_to_trace;
-  target_wait_loop_hook = d10v_eva_get_trace_data;
+  deprecated_target_resume_hook = d10v_eva_prepare_to_trace;
+  deprecated_target_wait_loop_hook = d10v_eva_get_trace_data;
 
   deprecate_cmd (add_com ("regs", class_vars, show_regs, 
 			  "Print all registers"),
@@ -1563,13 +1563,17 @@ as reported by info trace (NOT addresses!).");
   add_info ("itrace", trace_info,
 	    "Display info about the trace data buffer.");
 
-  add_setshow_boolean_cmd ("itracedisplay", no_class, &trace_display,
-			   "Set automatic display of trace.\n",
-			   "Show automatic display of trace.\n",
+  add_setshow_boolean_cmd ("itracedisplay", no_class, &trace_display, "\
+Set automatic display of trace.", "\
+Show automatic display of trace.", "\
+Controls the display of d10v specific instruction trace information.", "\
+Automatic display of trace is %s.",
 			   NULL, NULL, &setlist, &showlist);
   add_setshow_boolean_cmd ("itracesource", no_class,
-			   &default_trace_show_source,
-			   "Set display of source code with trace.\n",
-			   "Show display of source code with trace.\n",
+			   &default_trace_show_source, "\
+Set display of source code with trace.", "\
+Show display of source code with trace.", "\
+When on source code is included in the d10v instruction trace display.", "\
+Display of source code with trace is %s.",
 			   NULL, NULL, &setlist, &showlist);
 }

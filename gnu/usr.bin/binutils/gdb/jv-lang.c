@@ -62,6 +62,8 @@ static struct value *java_value_string (char *ptr, int len);
 
 static void java_emit_char (int c, struct ui_file * stream, int quoter);
 
+static char *java_class_name_from_physname (const char *physname);
+
 /* This objfile contains symtabs that have been dynamically created
    to record dynamically loaded Java classes and dynamically
    compiled java methods. */
@@ -975,6 +977,59 @@ static char *java_demangle (const char *mangled, int options)
   return cplus_demangle (mangled, options | DMGL_JAVA);
 }
 
+/* Find the member function name of the demangled name NAME.  NAME
+   must be a method name including arguments, in order to correctly
+   locate the last component.
+
+   This function return a pointer to the first dot before the
+   member function name, or NULL if the name was not of the
+   expected form.  */
+
+static const char *
+java_find_last_component (const char *name)
+{
+  const char *p;
+
+  /* Find argument list.  */
+  p = strchr (name, '(');
+
+  if (p == NULL)
+    return NULL;
+
+  /* Back up and find first dot prior to argument list.  */
+  while (p > name && *p != '.')
+    p--;
+
+  if (p == name)
+    return NULL;
+
+  return p;
+}
+
+/* Return the name of the class containing method PHYSNAME.  */
+
+static char *
+java_class_name_from_physname (const char *physname) 
+{
+  char *ret = NULL;
+  const char *end;
+  int depth = 0;
+  char *demangled_name = java_demangle (physname, DMGL_PARAMS | DMGL_ANSI);
+
+  if (demangled_name == NULL)
+    return NULL;
+
+  end = java_find_last_component (demangled_name);
+  if (end != NULL)
+    {
+      ret = xmalloc (end - demangled_name + 1);
+      memcpy (ret, demangled_name, end - demangled_name);
+      ret[end - demangled_name] = '\0';
+    }
+
+  xfree (demangled_name);
+  return ret;
+}
 
 /* Table mapping opcodes into strings for printing operators
    and precedences of the operators.  */
@@ -1029,13 +1084,15 @@ const struct language_defn java_language_defn =
 {
   "java",			/* Language name */
   language_java,
-  c_builtin_types,
+  NULL,
   range_check_off,
   type_check_off,
   case_sensitive_on,
+  array_row_major,
   &exp_descriptor_java,
   java_parse,
   java_error,
+  null_post_parser,
   c_printchar,			/* Print a character constant */
   c_printstr,			/* Function to print string constant */
   java_emit_char,		/* Function to print a single character */
@@ -1048,15 +1105,13 @@ const struct language_defn java_language_defn =
   basic_lookup_symbol_nonlocal,	/* lookup_symbol_nonlocal */
   basic_lookup_transparent_type,/* lookup_transparent_type */
   java_demangle,		/* Language specific symbol demangler */
-  {"", "", "", ""},		/* Binary format info */
-  {"0%lo", "0", "o", ""},	/* Octal format info */
-  {"%ld", "", "d", ""},		/* Decimal format info */
-  {"0x%lx", "0x", "x", ""},	/* Hex format info */
+  java_class_name_from_physname,/* Language specific class name */
   java_op_print_tab,		/* expression operators for printing */
   0,				/* not c-style arrays */
   0,				/* String lower bound */
-  &builtin_type_char,		/* Type of string elements */
+  NULL,
   default_word_break_characters,
+  c_language_arch_info,
   LANG_MAGIC
 };
 

@@ -291,17 +291,17 @@ send_gdb "set width 0\n" ; gdb_expect -re "$gdb_prompt $"
 
 # PR's 16495, 18213
 # test that we can re-set breakpoints in shared libraries
-gdb_breakpoint "shr1"
+gdb_breakpoint "shr1" "allow-pending"
 
 # FIXME: should not send "run" explicitly.  Non-portable.
 
 if ![is_remote target] {
-  gdb_test "run" "Starting program:.*Breakpoint 1,.*" \
+  gdb_test "run" "Starting program:.*Breakpoint .,.*" \
 	"run to bp in shared library"
 
   gdb_test "cont" ".*Program exited normally..*"
 
-  gdb_test "run" "Starting program:.*Breakpoint 1,.*" \
+  gdb_test "run" "Starting program:.*Breakpoint .,.*" \
 	"re-run to bp in shared library (PR's 16495, 18213)"
 
   gdb_test "cont" ".*Program exited normally..*"

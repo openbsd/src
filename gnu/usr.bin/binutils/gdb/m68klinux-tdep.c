@@ -1,7 +1,7 @@
 /* Motorola m68k target-dependent support for GNU/Linux.
 
-   Copyright 1996, 1998, 2000, 2001, 2002, 2003 Free Software Foundation,
-   Inc.
+   Copyright 1996, 1998, 2000, 2001, 2002, 2003, 2004
+   Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -33,6 +33,8 @@
 #include "objfiles.h"
 #include "symtab.h"
 #include "m68k-tdep.h"
+#include "trad-frame.h"
+#include "frame-unwind.h"
 
 /* Offsets (in target ints) into jmp_buf.  */
 
@@ -64,7 +66,7 @@ m68k_linux_pc_in_sigtramp (CORE_ADDR pc, char *name)
   char buf[12];
   unsigned long insn0, insn1, insn2;
 
-  if (read_memory_nobpt (pc - 4, buf, sizeof (buf)))
+  if (deprecated_read_memory_nobpt (pc - 4, buf, sizeof (buf)))
     return 0;
   insn1 = extract_unsigned_integer (buf + 4, 4);
   insn2 = extract_unsigned_integer (buf + 8, 4);
@@ -160,12 +162,21 @@ static int m68k_linux_ucontext_reg_offset[M68K_NUM_REGS] =
 
 /* Get info about saved registers in sigtramp.  */
 
-static struct m68k_sigtramp_info
+struct m68k_linux_sigtramp_info
+{
+  /* Address of sigcontext.  */
+  CORE_ADDR sigcontext_addr;
+
+  /* Offset of registers in `struct sigcontext'.  */
+  int *sc_reg_offset;
+};
+
+static struct m68k_linux_sigtramp_info
 m68k_linux_get_sigtramp_info (struct frame_info *next_frame)
 {
   CORE_ADDR sp;
   char buf[4];
-  struct m68k_sigtramp_info info;
+  struct m68k_linux_sigtramp_info info;
 
   frame_unwind_register (next_frame, M68K_SP_REGNUM, buf);
   sp = extract_unsigned_integer (buf, 4);
@@ -180,106 +191,88 @@ m68k_linux_get_sigtramp_info (struct frame_info *next_frame)
   return info;
 }
 
-/* Extract from an array REGBUF containing the (raw) register state, a
-   function return value of TYPE, and copy that, in virtual format,
-   into VALBUF.  */
+/* Signal trampolines.  */
 
-static void
-m68k_linux_extract_return_value (struct type *type, struct regcache *regcache,
-				 void *valbuf)
+static struct trad_frame_cache *
+m68k_linux_sigtramp_frame_cache (struct frame_info *next_frame,
+				 void **this_cache)
 {
-  int len = TYPE_LENGTH (type);
-  char buf[M68K_MAX_REGISTER_SIZE];
-
-  if (TYPE_CODE (type) == TYPE_CODE_STRUCT
-      && TYPE_NFIELDS (type) == 1)
-    {
-      m68k_linux_extract_return_value (TYPE_FIELD_TYPE (type, 0), regcache,
-				       valbuf);
-      return;
-    }
-
-  if (TYPE_CODE (type) == TYPE_CODE_FLT)
-    {
-      regcache_raw_read (regcache, M68K_FP0_REGNUM, buf);
-      convert_typed_floating (buf, builtin_type_m68881_ext, valbuf, type);
-    }
-  else if (TYPE_CODE (type) == TYPE_CODE_PTR)
-    regcache_raw_read (regcache, M68K_A0_REGNUM, valbuf);
-  else
-    {
-      if (len <= 4)
-	{
-	  regcache_raw_read (regcache, M68K_D0_REGNUM, buf);
-	  memcpy (valbuf, buf + (4 - len), len);
-	}
-      else if (len <= 8)
-	{
-	  regcache_raw_read (regcache, M68K_D0_REGNUM, buf);
-	  memcpy (valbuf, buf + (8 - len), len - 4);
-	  regcache_raw_read (regcache, M68K_D1_REGNUM,
-			     (char *) valbuf + (len - 4));
-	}
-      else
-	internal_error (__FILE__, __LINE__,
-			"Cannot extract return value of %d bytes long.", len);
-    }
-}
-
-/* Write into the appropriate registers a function return value stored
-   in VALBUF of type TYPE, given in virtual format.  */
-
-static void
-m68k_linux_store_return_value (struct type *type, struct regcache *regcache,
-			       const void *valbuf)
-{
-  int len = TYPE_LENGTH (type);
-
-  if (TYPE_CODE (type) == TYPE_CODE_STRUCT
-      && TYPE_NFIELDS (type) == 1)
-    {
-      m68k_linux_store_return_value (TYPE_FIELD_TYPE (type, 0), regcache,
-				     valbuf);
-      return;
-    }
-
-  if (TYPE_CODE (type) == TYPE_CODE_FLT)
-    {
-      char buf[M68K_MAX_REGISTER_SIZE];
-      convert_typed_floating (valbuf, type, buf, builtin_type_m68881_ext);
-      regcache_raw_write (regcache, M68K_FP0_REGNUM, buf);
-    }
-  else if (TYPE_CODE (type) == TYPE_CODE_PTR)
-    regcache_raw_write (regcache, M68K_A0_REGNUM, valbuf);
-  else
-    {
-      if (len <= 4)
-	regcache_raw_write_part (regcache, M68K_D0_REGNUM,
-				 4 - len, len, valbuf);
-      else if (len <= 8)
-	{
-	  regcache_raw_write_part (regcache, M68K_D1_REGNUM, 8 - len,
-				   len - 4, valbuf);
-	  regcache_raw_write (regcache, M68K_D0_REGNUM,
-			      (char *) valbuf + (len - 4));
-	}
-      else
-	internal_error (__FILE__, __LINE__,
-			"Cannot store return value of %d bytes long.", len);
-    }
-}
-
-/* Extract from an array REGBUF containing the (raw) register state
-   the address in which a function should return its structure value,
-   as a CORE_ADDR.  */
-
-static CORE_ADDR
-m68k_linux_extract_struct_value_address (struct regcache *regcache)
-{
+  struct frame_id this_id;
+  struct trad_frame_cache *cache;
+  struct gdbarch_tdep *tdep = gdbarch_tdep (current_gdbarch);
+  struct m68k_linux_sigtramp_info info;
   char buf[4];
+  int i;
 
-  regcache_cooked_read (regcache, M68K_A0_REGNUM, buf);
-  return extract_unsigned_integer (buf, 4);
+  if (*this_cache)
+    return *this_cache;
+
+  cache = trad_frame_cache_zalloc (next_frame);
+
+  /* FIXME: cagney/2004-05-01: This is is long standing broken code.
+     The frame ID's code address should be the start-address of the
+     signal trampoline and not the current PC within that
+     trampoline.  */
+  frame_unwind_register (next_frame, M68K_SP_REGNUM, buf);
+  /* See the end of m68k_push_dummy_call.  */
+  this_id = frame_id_build (extract_unsigned_integer (buf, 4) - 4 + 8,
+			    frame_pc_unwind (next_frame));
+  trad_frame_set_id (cache, this_id);
+
+  info = m68k_linux_get_sigtramp_info (next_frame);
+
+  for (i = 0; i < M68K_NUM_REGS; i++)
+    if (info.sc_reg_offset[i] != -1)
+      trad_frame_set_reg_addr (cache, i,
+			       info.sigcontext_addr + info.sc_reg_offset[i]);
+
+  *this_cache = cache;
+  return cache;
+}
+
+static void
+m68k_linux_sigtramp_frame_this_id (struct frame_info *next_frame,
+				   void **this_cache,
+				   struct frame_id *this_id)
+{
+  struct trad_frame_cache *cache =
+    m68k_linux_sigtramp_frame_cache (next_frame, this_cache);
+  trad_frame_get_id (cache, this_id);
+}
+
+static void
+m68k_linux_sigtramp_frame_prev_register (struct frame_info *next_frame,
+					 void **this_cache,
+					 int regnum, int *optimizedp,
+					 enum lval_type *lvalp,
+					 CORE_ADDR *addrp,
+					 int *realnump, void *valuep)
+{
+  /* Make sure we've initialized the cache.  */
+  struct trad_frame_cache *cache =
+    m68k_linux_sigtramp_frame_cache (next_frame, this_cache);
+  trad_frame_get_register (cache, next_frame, regnum, optimizedp, lvalp,
+			   addrp, realnump, valuep);
+}
+
+static const struct frame_unwind m68k_linux_sigtramp_frame_unwind =
+{
+  SIGTRAMP_FRAME,
+  m68k_linux_sigtramp_frame_this_id,
+  m68k_linux_sigtramp_frame_prev_register
+};
+
+static const struct frame_unwind *
+m68k_linux_sigtramp_frame_sniffer (struct frame_info *next_frame)
+{
+  CORE_ADDR pc = frame_pc_unwind (next_frame);
+  char *name;
+
+  find_pc_partial_function (pc, &name, NULL, NULL);
+  if (m68k_linux_pc_in_sigtramp (pc, name))
+    return &m68k_linux_sigtramp_frame_unwind;
+
+  return NULL;
 }
 
 static void
@@ -289,14 +282,17 @@ m68k_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 
   tdep->jb_pc = M68K_LINUX_JB_PC;
   tdep->jb_elt_size = M68K_LINUX_JB_ELEMENT_SIZE;
-  tdep->get_sigtramp_info = m68k_linux_get_sigtramp_info;
+
+  /* GNU/Linux uses a calling convention that's similar to SVR4.  It
+     returns integer values in %d0/%di, pointer values in %a0 and
+     floating values in %fp0, just like SVR4, but uses %a1 to pass the
+     address to store a structure value.  It also returns small
+     structures in registers instead of memory.  */
+  m68k_svr4_init_abi (info, gdbarch);
+  tdep->struct_value_regnum = M68K_A1_REGNUM;
   tdep->struct_return = reg_struct_return;
 
-  set_gdbarch_extract_return_value (gdbarch, m68k_linux_extract_return_value);
-  set_gdbarch_store_return_value (gdbarch, m68k_linux_store_return_value);
-  set_gdbarch_deprecated_extract_struct_value_address (gdbarch, m68k_linux_extract_struct_value_address);
-
-  set_gdbarch_pc_in_sigtramp (gdbarch, m68k_linux_pc_in_sigtramp);
+  frame_unwind_append_sniffer (gdbarch, m68k_linux_sigtramp_frame_sniffer);
 
   /* Shared library handling.  */
   set_gdbarch_in_solib_call_trampoline (gdbarch, in_plt_section);

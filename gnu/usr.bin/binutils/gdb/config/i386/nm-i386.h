@@ -26,10 +26,6 @@
 /* Targets should define this to use the generic x86 watchpoint support.  */
 #ifdef I386_USE_GENERIC_WATCHPOINTS
 
-#ifndef TARGET_HAS_HARDWARE_WATCHPOINTS
-#define TARGET_HAS_HARDWARE_WATCHPOINTS
-#endif
-
 /* Clear the reference counts and forget everything we knew about DRi.  */
 extern void i386_cleanup_dregs (void);
 
@@ -51,10 +47,10 @@ extern int i386_region_ok_for_watchpoint (CORE_ADDR addr, int len);
    triggered.  */
 extern int i386_stopped_by_hwbp (void);
 
-/* If the inferior has some break/watchpoint that triggered, return
-   the address associated with that break/watchpoint.  Otherwise,
-   return zero.  */
-extern CORE_ADDR i386_stopped_data_address (void);
+/* If the inferior has some break/watchpoint that triggered, set
+   the address associated with that break/watchpoint and return
+   true.  Otherwise, return false.  */
+extern int i386_stopped_data_address (CORE_ADDR *);
 
 /* Insert a hardware-assisted breakpoint at address ADDR.  SHADOW is
    unused.  Return 0 on success, EBUSY on failure.  */
@@ -95,9 +91,11 @@ extern int  i386_remove_hw_breakpoint (CORE_ADDR addr, void *shadow);
 
 #define HAVE_CONTINUABLE_WATCHPOINT 1
 
-#define STOPPED_BY_WATCHPOINT(W)       (i386_stopped_data_address () != 0)
+extern int i386_stopped_by_watchpoint (void);
 
-#define target_stopped_data_address()  i386_stopped_data_address ()
+#define STOPPED_BY_WATCHPOINT(W)       (i386_stopped_by_watchpoint () != 0)
+
+#define target_stopped_data_address(target, x)  i386_stopped_data_address(x)
 
 /* Use these macros for watchpoint insertion/removal.  */
 

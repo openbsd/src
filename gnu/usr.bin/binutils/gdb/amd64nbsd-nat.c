@@ -20,6 +20,7 @@
    Boston, MA 02111-1307, USA.  */
 
 #include "defs.h"
+#include "target.h"
 
 #include "gdb_assert.h"
 
@@ -65,4 +66,7 @@ _initialize_amd64nbsd_nat (void)
   amd64_native_gregset32_reg_offset = amd64nbsd32_r_reg_offset;
   amd64_native_gregset32_num_regs = ARRAY_SIZE (amd64nbsd32_r_reg_offset);
   amd64_native_gregset64_reg_offset = amd64nbsd_r_reg_offset;
+
+  /* We've got nothing to add to the common *BSD/amd64 target.  */
+  add_target (amd64bsd_target ());
 }

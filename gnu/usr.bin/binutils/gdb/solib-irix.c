@@ -324,15 +324,11 @@ disable_break (void)
       status = 0;
     }
 
-  /* For the SVR4 version, we always know the breakpoint address.  For the
-     SunOS version we don't know it until the above code is executed.
-     Grumble if we are stopped anywhere besides the breakpoint address. */
-
-  if (stop_pc != breakpoint_addr)
-    {
-      warning
-	("stopped at unknown breakpoint while handling shared libraries");
-    }
+  /* Note that it is possible that we have stopped at a location that
+     is different from the location where we inserted our breakpoint.
+     On mips-irix, we can actually land in __dbx_init(), so we should
+     not check the PC against our breakpoint address here.  See procfs.c
+     for more details.  */
 
   return (status);
 }

@@ -1,3 +1,22 @@
+/* This testcase is part of GDB, the GNU debugger.
+
+   Copyright 1998, 1999, 2001, 2003, 2004, Free Software Foundation, Inc.
+
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+ 
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+   */
+
 /* Test GDB's ability to restore saved registers from stack frames
    when using the `return' command.
    Jim Blandy <jimb@cygnus.com> --- December 1998 */
@@ -27,7 +46,7 @@
                  " = increment (" previous  ");")
 	 (if first-end 
 	   (progn
-             (insert "  /" "* " first-end " *" "/")
+             (insert "  /" "* " first-end " prologue *" "/")
              (setq first-end nil)))
 	 (insert "\n")
 	 (setq previous (local j))
@@ -110,7 +129,7 @@ callee0 (int n)
 int
 callee1 (int n)
 {
-  register int l1 = increment (n);  /* callee1 */
+  register int l1 = increment (n);  /* callee1 prologue */
   return l1;
 }
 
@@ -118,7 +137,7 @@ callee1 (int n)
 int
 callee2 (int n)
 {
-  register int l1 = increment (n);  /* callee2 */
+  register int l1 = increment (n);  /* callee2 prologue */
   register int l2 = increment (l1);
   return l1+l2;
 }
@@ -127,7 +146,7 @@ callee2 (int n)
 int
 callee3 (int n)
 {
-  register int l1 = increment (n);  /* callee3 */
+  register int l1 = increment (n);  /* callee3 prologue */
   register int l2 = increment (l1);
   register int l3 = increment (l2);
   return l1+l2+l3;
@@ -137,7 +156,7 @@ callee3 (int n)
 int
 callee4 (int n)
 {
-  register int l1 = increment (n);  /* callee4 */
+  register int l1 = increment (n);  /* callee4 prologue */
   register int l2 = increment (l1);
   register int l3 = increment (l2);
   register int l4 = increment (l3);
@@ -148,7 +167,7 @@ callee4 (int n)
 int
 callee5 (int n)
 {
-  register int l1 = increment (n);  /* callee5 */
+  register int l1 = increment (n);  /* callee5 prologue */
   register int l2 = increment (l1);
   register int l3 = increment (l2);
   register int l4 = increment (l3);
@@ -159,7 +178,7 @@ callee5 (int n)
 int
 caller1 (void)
 {
-  register int l1 = increment (0x7eeb);  /* caller1 */
+  register int l1 = increment (0x7eeb);  /* caller1 prologue */
   register int n;
   n = callee0 (l1);
   n = callee1 (n + l1);
@@ -173,7 +192,7 @@ caller1 (void)
 int
 caller2 (void)
 {
-  register int l1 = increment (0x7eeb);  /* caller2 */
+  register int l1 = increment (0x7eeb);  /* caller2 prologue */
   register int l2 = increment (l1);
   register int n;
   n = callee0 (l2);
@@ -188,7 +207,7 @@ caller2 (void)
 int
 caller3 (void)
 {
-  register int l1 = increment (0x7eeb);  /* caller3 */
+  register int l1 = increment (0x7eeb);  /* caller3 prologue */
   register int l2 = increment (l1);
   register int l3 = increment (l2);
   register int n;
@@ -204,7 +223,7 @@ caller3 (void)
 int
 caller4 (void)
 {
-  register int l1 = increment (0x7eeb);  /* caller4 */
+  register int l1 = increment (0x7eeb);  /* caller4 prologue */
   register int l2 = increment (l1);
   register int l3 = increment (l2);
   register int l4 = increment (l3);
@@ -221,7 +240,7 @@ caller4 (void)
 int
 caller5 (void)
 {
-  register int l1 = increment (0x7eeb);  /* caller5 */
+  register int l1 = increment (0x7eeb);  /* caller5 prologue */
   register int l2 = increment (l1);
   register int l3 = increment (l2);
   register int l4 = increment (l3);

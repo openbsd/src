@@ -31,6 +31,10 @@
 extern int kernel_u_size (void);
 #define KERNEL_U_SIZE	arm_linux_kernel_u_size()
 
+/* This is the amount to subtract from u.u_ar0
+   to get the offset in the core file of the register values.  */
+#define KERNEL_U_ADDR 0x0
+
 /* Override copies of {fetch,store}_inferior_registers in infptrace.c.  */
 #define FETCH_INFERIOR_REGISTERS
 

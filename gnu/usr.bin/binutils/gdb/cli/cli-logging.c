@@ -1,7 +1,6 @@
 /* Command-line output logging for GDB, the GNU debugger.
 
-   Copyright 2003
-   Free Software Foundation, Inc.
+   Copyright 2003, 2004 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -175,27 +174,26 @@ _initialize_cli_logging (void)
   add_prefix_cmd ("logging", class_support, show_logging_command,
 		  "Show logging options", &show_logging_cmdlist,
 		  "show logging ", 0, &showlist);
-  add_setshow_boolean_cmd ("overwrite", class_support, &logging_overwrite,
-			   "Set whether logging overwrites or appends "
-			   "to the log file.\n",
-			   "Show whether logging overwrites or appends "
-			   "to the log file.\n",
+  add_setshow_boolean_cmd ("overwrite", class_support, &logging_overwrite, "\
+Set whether logging overwrites or appends to the log file.", "\
+Show whether logging overwrites or appends to the log file.", "\
+If set, logging overrides the log file.", "\
+Whether logging overwrites or appends to the log file is %s.",
 			   NULL, NULL, &set_logging_cmdlist, &show_logging_cmdlist);
-  add_setshow_boolean_cmd ("redirect", class_support, &logging_redirect,
-			   "Set the logging output mode.\n"
-			   "If redirect is off, output will go to both the "
-			   "screen and the log file.\n"
-			   "If redirect is on, output will go only to the log "
-			   "file.",
-			   "Show the logging output mode.\n"
-			   "If redirect is off, output will go to both the "
-			   "screen and the log file.\n"
-			   "If redirect is on, output will go only to the log "
-			   "file.",
+  add_setshow_boolean_cmd ("redirect", class_support, &logging_redirect, "\
+Set the logging output mode.", "\
+Show the logging output mode.", "\
+If redirect is off, output will go to both the screen and the log file.\n\
+If redirect is on, output will go only to the log file.", "\
+The logging output mode is %s.",
 			   NULL, NULL, &set_logging_cmdlist, &show_logging_cmdlist);
-  add_setshow_cmd ("file", class_support, var_filename, &logging_filename,
-		   "Set the current logfile.", "Show the current logfile.",
-		   NULL, NULL, &set_logging_cmdlist, &show_logging_cmdlist);
+  add_setshow_filename_cmd ("file", class_support, &logging_filename, "\
+Set the current logfile.", "\
+Show the current logfile.", "\
+The logfile is used when directing GDB's output.", "\
+The current logfile is %s.",
+			    NULL, NULL,
+			    &set_logging_cmdlist, &show_logging_cmdlist);
   add_cmd ("on", class_support, set_logging_on,
 	   "Enable logging.", &set_logging_cmdlist);
   add_cmd ("off", class_support, set_logging_off,

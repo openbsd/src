@@ -42,6 +42,8 @@ new_dwarf_expr_context (void)
   retval->stack_len = 0;
   retval->stack_allocated = 10;
   retval->stack = xmalloc (retval->stack_allocated * sizeof (CORE_ADDR));
+  retval->num_pieces = 0;
+  retval->pieces = 0;
   return retval;
 }
 
@@ -51,6 +53,7 @@ void
 free_dwarf_expr_context (struct dwarf_expr_context *ctx)
 {
   xfree (ctx->stack);
+  xfree (ctx->pieces);
   xfree (ctx);
 }
 
@@ -98,6 +101,29 @@ dwarf_expr_fetch (struct dwarf_expr_context *ctx, int n)
 	    n, ctx->stack_len);
   return ctx->stack[ctx->stack_len - (1 + n)];
 
+}
+
+/* Add a new piece to CTX's piece list.  */
+static void
+add_piece (struct dwarf_expr_context *ctx,
+           int in_reg, CORE_ADDR value, ULONGEST size)
+{
+  struct dwarf_expr_piece *p;
+
+  ctx->num_pieces++;
+
+  if (ctx->pieces)
+    ctx->pieces = xrealloc (ctx->pieces,
+                            (ctx->num_pieces
+                             * sizeof (struct dwarf_expr_piece)));
+  else
+    ctx->pieces = xmalloc (ctx->num_pieces
+                           * sizeof (struct dwarf_expr_piece));
+
+  p = &ctx->pieces[ctx->num_pieces - 1];
+  p->in_reg = in_reg;
+  p->value = value;
+  p->size = size;
 }
 
 /* Evaluate the expression at ADDR (LEN bytes long) using the context
@@ -575,6 +601,7 @@ execute_stack_op (struct dwarf_expr_context *ctx, unsigned char *op_ptr,
 		break;
 	      case DW_OP_div:
 		binop = BINOP_DIV;
+                break;
 	      case DW_OP_minus:
 		binop = BINOP_SUB;
 		break;
@@ -595,6 +622,7 @@ execute_stack_op (struct dwarf_expr_context *ctx, unsigned char *op_ptr,
 		break;
 	      case DW_OP_shr:
 		binop = BINOP_RSH;
+                break;
 	      case DW_OP_shra:
 		binop = BINOP_RSH;
 		val1 = value_from_longest (signed_address_type (), first);
@@ -658,6 +686,22 @@ execute_stack_op (struct dwarf_expr_context *ctx, unsigned char *op_ptr,
 
 	case DW_OP_nop:
 	  goto no_push;
+
+        case DW_OP_piece:
+          {
+            ULONGEST size;
+            CORE_ADDR addr_or_regnum;
+
+            /* Record the piece.  */
+            op_ptr = read_uleb128 (op_ptr, op_end, &size);
+            addr_or_regnum = dwarf_expr_fetch (ctx, 0);
+            add_piece (ctx, ctx->in_reg, addr_or_regnum, size);
+
+            /* Pop off the address/regnum, and clear the in_reg flag.  */
+            dwarf_expr_pop (ctx);
+            ctx->in_reg = 0;
+          }
+          goto no_push;
 
 	default:
 	  error ("Unhandled dwarf expression opcode 0x%x", op);

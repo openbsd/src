@@ -99,16 +99,6 @@ static void mi_exec_async_cli_cmd_continuation (struct continuation_arg *arg);
 static int register_changed_p (int regnum);
 static int get_register (int regnum, int format);
 
-/* A helper function which will set mi_error_message to
-   error_last_message.  */
-void
-mi_error_last_message (void)
-{
-  char *s = error_last_message ();
-  xasprintf (&mi_error_message, "%s", s);
-  xfree (s);
-}
-
 /* Command implementations. FIXME: Is this libgdb? No.  This is the MI
    layer that calls libgdb.  Any operation used in the below should be
    formalized. */
@@ -191,9 +181,7 @@ mi_cmd_exec_return (char *args, int from_tty)
 
   /* Because we have called return_command with from_tty = 0, we need
      to print the frame here. */
-  print_stack_frame (deprecated_selected_frame,
-		     frame_relative_level (deprecated_selected_frame),
-		     LOC_AND_ADDRESS);
+  print_stack_frame (get_selected_frame (), 1, LOC_AND_ADDRESS);
 
   return MI_CMD_DONE;
 }
@@ -215,8 +203,7 @@ mi_cmd_exec_interrupt (char *args, int from_tty)
 {
   if (!target_executing)
     {
-      xasprintf (&mi_error_message,
-		 "mi_cmd_exec_interrupt: Inferior not executing.");
+      mi_error_message = xstrprintf ("mi_cmd_exec_interrupt: Inferior not executing.");
       return MI_CMD_ERROR;
     }
   interrupt_target_command (args, from_tty);
@@ -241,8 +228,7 @@ mi_cmd_thread_select (char *command, char **argv, int argc)
 
   if (argc != 1)
     {
-      xasprintf (&mi_error_message,
-		 "mi_cmd_thread_select: USAGE: threadnum.");
+      mi_error_message = xstrprintf ("mi_cmd_thread_select: USAGE: threadnum.");
       return MI_CMD_ERROR;
     }
   else
@@ -265,8 +251,7 @@ mi_cmd_thread_list_ids (char *command, char **argv, int argc)
 
   if (argc != 0)
     {
-      xasprintf (&mi_error_message,
-		 "mi_cmd_thread_list_ids: No arguments required.");
+      mi_error_message = xstrprintf ("mi_cmd_thread_list_ids: No arguments required.");
       return MI_CMD_ERROR;
     }
   else
@@ -316,7 +301,7 @@ mi_cmd_data_list_register_names (char *command, char **argv, int argc)
       if (regnum < 0 || regnum >= numregs)
 	{
 	  do_cleanups (cleanup);
-	  xasprintf (&mi_error_message, "bad register number");
+	  mi_error_message = xstrprintf ("bad register number");
 	  return MI_CMD_ERROR;
 	}
       if (REGISTER_NAME (regnum) == NULL
@@ -342,7 +327,7 @@ mi_cmd_data_list_changed_registers (char *command, char **argv, int argc)
      case, some entries of REGISTER_NAME will change depending upon
      the particular processor being debugged.  */
 
-  numregs = NUM_REGS;
+  numregs = NUM_REGS + NUM_PSEUDO_REGS;
 
   cleanup = make_cleanup_ui_out_list_begin_end (uiout, "changed-registers");
 
@@ -359,8 +344,7 @@ mi_cmd_data_list_changed_registers (char *command, char **argv, int argc)
 	  if (changed < 0)
 	    {
 	      do_cleanups (cleanup);
-	      xasprintf (&mi_error_message,
-			 "mi_cmd_data_list_changed_registers: Unable to read register contents.");
+	      mi_error_message = xstrprintf ("mi_cmd_data_list_changed_registers: Unable to read register contents.");
 	      return MI_CMD_ERROR;
 	    }
 	  else if (changed)
@@ -382,8 +366,7 @@ mi_cmd_data_list_changed_registers (char *command, char **argv, int argc)
 	  if (changed < 0)
 	    {
 	      do_cleanups (cleanup);
-	      xasprintf (&mi_error_message,
-			 "mi_cmd_data_list_register_change: Unable to read register contents.");
+	      mi_error_message = xstrprintf ("mi_cmd_data_list_register_change: Unable to read register contents.");
 	      return MI_CMD_ERROR;
 	    }
 	  else if (changed)
@@ -392,7 +375,7 @@ mi_cmd_data_list_changed_registers (char *command, char **argv, int argc)
       else
 	{
 	  do_cleanups (cleanup);
-	  xasprintf (&mi_error_message, "bad register number");
+	  mi_error_message = xstrprintf ("bad register number");
 	  return MI_CMD_ERROR;
 	}
     }
@@ -409,13 +392,13 @@ register_changed_p (int regnum)
     return -1;
 
   if (memcmp (&old_regs[DEPRECATED_REGISTER_BYTE (regnum)], raw_buffer,
-	      DEPRECATED_REGISTER_RAW_SIZE (regnum)) == 0)
+	      register_size (current_gdbarch, regnum)) == 0)
     return 0;
 
   /* Found a changed register. Return 1. */
 
   memcpy (&old_regs[DEPRECATED_REGISTER_BYTE (regnum)], raw_buffer,
-	  DEPRECATED_REGISTER_RAW_SIZE (regnum));
+	  register_size (current_gdbarch, regnum));
 
   return 1;
 }
@@ -440,12 +423,11 @@ mi_cmd_data_list_register_values (char *command, char **argv, int argc)
      case, some entries of REGISTER_NAME will change depending upon
      the particular processor being debugged.  */
 
-  numregs = NUM_REGS;
+  numregs = NUM_REGS + NUM_PSEUDO_REGS;
 
   if (argc == 0)
     {
-      xasprintf (&mi_error_message,
-		 "mi_cmd_data_list_register_values: Usage: -data-list-register-values <format> [<regnum1>...<regnumN>]");
+      mi_error_message = xstrprintf ("mi_cmd_data_list_register_values: Usage: -data-list-register-values <format> [<regnum1>...<regnumN>]");
       return MI_CMD_ERROR;
     }
 
@@ -453,8 +435,7 @@ mi_cmd_data_list_register_values (char *command, char **argv, int argc)
 
   if (!target_has_registers)
     {
-      xasprintf (&mi_error_message,
-		 "mi_cmd_data_list_register_values: No registers.");
+      mi_error_message = xstrprintf ("mi_cmd_data_list_register_values: No registers.");
       return MI_CMD_ERROR;
     }
 
@@ -504,7 +485,7 @@ mi_cmd_data_list_register_values (char *command, char **argv, int argc)
       else
 	{
 	  do_cleanups (list_cleanup);
-	  xasprintf (&mi_error_message, "bad register number");
+	  mi_error_message = xstrprintf ("bad register number");
 	  return MI_CMD_ERROR;
 	}
     }
@@ -516,8 +497,7 @@ mi_cmd_data_list_register_values (char *command, char **argv, int argc)
 static int
 get_register (int regnum, int format)
 {
-  char raw_buffer[MAX_REGISTER_SIZE];
-  char virtual_buffer[MAX_REGISTER_SIZE];
+  char buffer[MAX_REGISTER_SIZE];
   int optim;
   int realnum;
   CORE_ADDR addr;
@@ -530,25 +510,13 @@ get_register (int regnum, int format)
     format = 0;
 
   frame_register (deprecated_selected_frame, regnum, &optim, &lval, &addr,
-		  &realnum, raw_buffer);
+		  &realnum, buffer);
 
   if (optim)
     {
-      xasprintf (&mi_error_message, "Optimized out");
+      mi_error_message = xstrprintf ("Optimized out");
       return -1;
     }
-
-  /* Convert raw data to virtual format if necessary.  */
-
-  if (DEPRECATED_REGISTER_CONVERTIBLE_P ()
-      && DEPRECATED_REGISTER_CONVERTIBLE (regnum))
-    {
-      DEPRECATED_REGISTER_CONVERT_TO_VIRTUAL (regnum,
-				   register_type (current_gdbarch, regnum),
-				   raw_buffer, virtual_buffer);
-    }
-  else
-    memcpy (virtual_buffer, raw_buffer, DEPRECATED_REGISTER_VIRTUAL_SIZE (regnum));
 
   if (format == 'r')
     {
@@ -557,11 +525,11 @@ get_register (int regnum, int format)
 
       strcpy (buf, "0x");
       ptr = buf + 2;
-      for (j = 0; j < DEPRECATED_REGISTER_RAW_SIZE (regnum); j++)
+      for (j = 0; j < register_size (current_gdbarch, regnum); j++)
 	{
 	  int idx = TARGET_BYTE_ORDER == BFD_ENDIAN_BIG ? j
-	  : DEPRECATED_REGISTER_RAW_SIZE (regnum) - 1 - j;
-	  sprintf (ptr, "%02x", (unsigned char) raw_buffer[idx]);
+	  : register_size (current_gdbarch, regnum) - 1 - j;
+	  sprintf (ptr, "%02x", (unsigned char) buffer[idx]);
 	  ptr += 2;
 	}
       ui_out_field_string (uiout, "value", buf);
@@ -569,7 +537,7 @@ get_register (int regnum, int format)
     }
   else
     {
-      val_print (register_type (current_gdbarch, regnum), virtual_buffer, 0, 0,
+      val_print (register_type (current_gdbarch, regnum), buffer, 0, 0,
 		 stb->stream, format, 1, 0, Val_pretty_default);
       ui_out_field_stream (uiout, "value", stb);
       ui_out_stream_delete (stb);
@@ -595,12 +563,11 @@ mi_cmd_data_write_register_values (char *command, char **argv, int argc)
      case, some entries of REGISTER_NAME will change depending upon
      the particular processor being debugged.  */
 
-  numregs = NUM_REGS;
+  numregs = NUM_REGS + NUM_PSEUDO_REGS;
 
   if (argc == 0)
     {
-      xasprintf (&mi_error_message,
-		 "mi_cmd_data_write_register_values: Usage: -data-write-register-values <format> [<regnum1> <value1>...<regnumN> <valueN>]");
+      mi_error_message = xstrprintf ("mi_cmd_data_write_register_values: Usage: -data-write-register-values <format> [<regnum1> <value1>...<regnumN> <valueN>]");
       return MI_CMD_ERROR;
     }
 
@@ -608,22 +575,19 @@ mi_cmd_data_write_register_values (char *command, char **argv, int argc)
 
   if (!target_has_registers)
     {
-      xasprintf (&mi_error_message,
-		 "mi_cmd_data_write_register_values: No registers.");
+      mi_error_message = xstrprintf ("mi_cmd_data_write_register_values: No registers.");
       return MI_CMD_ERROR;
     }
 
   if (!(argc - 1))
     {
-      xasprintf (&mi_error_message,
-		 "mi_cmd_data_write_register_values: No regs and values specified.");
+      mi_error_message = xstrprintf ("mi_cmd_data_write_register_values: No regs and values specified.");
       return MI_CMD_ERROR;
     }
 
   if ((argc - 1) % 2)
     {
-      xasprintf (&mi_error_message,
-		 "mi_cmd_data_write_register_values: Regs and vals are not in pairs.");
+      mi_error_message = xstrprintf ("mi_cmd_data_write_register_values: Regs and vals are not in pairs.");
       return MI_CMD_ERROR;
     }
 
@@ -646,13 +610,13 @@ mi_cmd_data_write_register_values (char *command, char **argv, int argc)
 	  old_chain = make_cleanup (xfree, buffer);
 	  store_signed_integer (buffer, DEPRECATED_REGISTER_SIZE, value);
 	  /* Write it down */
-	  deprecated_write_register_bytes (DEPRECATED_REGISTER_BYTE (regnum), buffer, DEPRECATED_REGISTER_RAW_SIZE (regnum));
+	  deprecated_write_register_bytes (DEPRECATED_REGISTER_BYTE (regnum), buffer, register_size (current_gdbarch, regnum));
 	  /* Free the buffer.  */
 	  do_cleanups (old_chain);
 	}
       else
 	{
-	  xasprintf (&mi_error_message, "bad register number");
+	  mi_error_message = xstrprintf ("bad register number");
 	  return MI_CMD_ERROR;
 	}
     }
@@ -674,8 +638,7 @@ mi_cmd_data_assign (char *command, char **argv, int argc)
 
   if (argc != 1)
     {
-      xasprintf (&mi_error_message,
-		 "mi_cmd_data_assign: Usage: -data-assign expression");
+      mi_error_message = xstrprintf ("mi_cmd_data_assign: Usage: -data-assign expression");
       return MI_CMD_ERROR;
     }
 
@@ -705,8 +668,7 @@ mi_cmd_data_evaluate_expression (char *command, char **argv, int argc)
 
   if (argc != 1)
     {
-      xasprintf (&mi_error_message,
-		 "mi_cmd_data_evaluate_expression: Usage: -data-evaluate-expression expression");
+      mi_error_message = xstrprintf ("mi_cmd_data_evaluate_expression: Usage: -data-evaluate-expression expression");
       return MI_CMD_ERROR;
     }
 
@@ -735,7 +697,7 @@ mi_cmd_target_download (char *args, int from_tty)
   char *run;
   struct cleanup *old_cleanups = NULL;
 
-  xasprintf (&run, "load %s", args);
+  run = xstrprintf ("load %s", args);
   old_cleanups = make_cleanup (xfree, run);
   execute_command (run, from_tty);
 
@@ -750,7 +712,7 @@ mi_cmd_target_select (char *args, int from_tty)
   char *run;
   struct cleanup *old_cleanups = NULL;
 
-  xasprintf (&run, "target %s", args);
+  run = xstrprintf ("target %s", args);
   old_cleanups = make_cleanup (xfree, run);
 
   /* target-select is always synchronous.  once the call has returned
@@ -838,8 +800,7 @@ mi_cmd_data_read_memory (char *command, char **argv, int argc)
 
   if (argc < 5 || argc > 6)
     {
-      xasprintf (&mi_error_message,
-		 "mi_cmd_data_read_memory: Usage: ADDR WORD-FORMAT WORD-SIZE NR-ROWS NR-COLS [ASCHAR].");
+      mi_error_message = xstrprintf ("mi_cmd_data_read_memory: Usage: ADDR WORD-FORMAT WORD-SIZE NR-ROWS NR-COLS [ASCHAR].");
       return MI_CMD_ERROR;
     }
 
@@ -878,16 +839,15 @@ mi_cmd_data_read_memory (char *command, char **argv, int argc)
   nr_rows = atol (argv[3]);
   if (nr_rows <= 0)
     {
-      xasprintf (&mi_error_message,
-		 "mi_cmd_data_read_memory: invalid number of rows.");
+      mi_error_message = xstrprintf ("mi_cmd_data_read_memory: invalid number of rows.");
       return MI_CMD_ERROR;
     }
   /* number of bytes per row. */
   nr_cols = atol (argv[4]);
   if (nr_cols <= 0)
     {
-      xasprintf (&mi_error_message,
-		 "mi_cmd_data_read_memory: invalid number of columns.");
+      mi_error_message = xstrprintf ("mi_cmd_data_read_memory: invalid number of columns.");
+      return MI_CMD_ERROR;
     }
   /* The un-printable character when printing ascii. */
   if (argc == 6)
@@ -899,12 +859,6 @@ mi_cmd_data_read_memory (char *command, char **argv, int argc)
   total_bytes = word_size * nr_rows * nr_cols;
   mbuf = xcalloc (total_bytes, 1);
   make_cleanup (xfree, mbuf);
-  if (mbuf == NULL)
-    {
-      xasprintf (&mi_error_message,
-		 "mi_cmd_data_read_memory: out of memory.");
-      return MI_CMD_ERROR;
-    }
   nr_bytes = 0;
   while (nr_bytes < total_bytes)
     {
@@ -1048,8 +1002,7 @@ mi_cmd_data_write_memory (char *command, char **argv, int argc)
 
   if (argc != 4)
     {
-      xasprintf (&mi_error_message,
-		 "mi_cmd_data_write_memory: Usage: [-o COLUMN_OFFSET] ADDR FORMAT WORD-SIZE VALUE.");
+      mi_error_message = xstrprintf ("mi_cmd_data_write_memory: Usage: [-o COLUMN_OFFSET] ADDR FORMAT WORD-SIZE VALUE.");
       return MI_CMD_ERROR;
     }
 
@@ -1314,7 +1267,7 @@ mi_execute_cli_command (const char *cmd, int args_p, const char *args)
       struct cleanup *old_cleanups;
       char *run;
       if (args_p)
-	xasprintf (&run, "%s %s", cmd, args);
+	run = xstrprintf ("%s %s", cmd, args);
       else
 	run = xstrdup (cmd);
       if (mi_debug_p)
@@ -1341,14 +1294,14 @@ mi_execute_async_cli_command (char *mi, char *args, int from_tty)
       make_exec_cleanup (free, async_args);
       strcpy (async_args, args);
       strcat (async_args, "&");
-      xasprintf (&run, "%s %s", mi, async_args);
+      run = xstrprintf ("%s %s", mi, async_args);
       make_exec_cleanup (free, run);
       add_continuation (mi_exec_async_cli_cmd_continuation, NULL);
       old_cleanups = NULL;
     }
   else
     {
-      xasprintf (&run, "%s %s", mi, args);
+      run = xstrprintf ("%s %s", mi, args);
       old_cleanups = make_cleanup (xfree, run);
     }
 

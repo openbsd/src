@@ -113,18 +113,26 @@ make_dump_file "dump tekhex val intarr1.tekhex intarray" \
 make_dump_file "dump tekhex val intstr1.tekhex intstruct" \
 	"dump struct as value, tekhex"
 
-proc capture_value { expression } {
+proc capture_value { expression args } {
     global gdb_prompt
     global expect_out
 
     set output_string ""
-    send_gdb "print ${expression}\n"
-    gdb_expect {
-	-re ".*\[\r\n\]+.\[0123456789\]+ = (\[^\r\n\]+).*$gdb_prompt $" {
-	    set output_string $expect_out(1,string)
+    if {[llength $args] > 0} {
+	# Convert $args into a simple string.
+	set test "[join $args]; capture $expression"
+    } {
+	set test "capture $expression"
+    }
+    gdb_test_multiple "print ${expression}" "$test" {
+	-re "\\$\[0-9\]+ = (\[^\r\n\]+).*$gdb_prompt $" {
+	    set output_string "$expect_out(1,string)"
+	    pass "$test"
 	}
-	default {
-	    fail "capture_value failed on $expression."
+	-re "(Cannot access memory at address \[^\r\n\]+).*$gdb_prompt $" {
+	    # Even a failed value is valid
+	    set output_string "$expect_out(1,string)"
+	    pass "$test"
 	}
     }
     return $output_string
@@ -182,13 +190,15 @@ gdb_file_cmd ${binfile}
 
 # Reload saved values one by one, and compare.
 
-if { ![string compare $array_val [capture_value "intarray"]] } then {
+if { ![string compare $array_val \
+	   [capture_value "intarray" "file binfile"]] } then {
     fail "start with intarray un-initialized"
 } else {
     pass "start with intarray un-initialized"
 }
 
-if { ![string compare $struct_val [capture_value "intstruct"]] } then {
+if { ![string compare $struct_val \
+	   [capture_value "intstruct" "file binfile"]] } then {
     fail "start with intstruct un-initialized"
 } else {
     pass "start with intstruct un-initialized"
@@ -198,10 +208,11 @@ proc test_reload_saved_value { filename msg oldval newval } {
     global gdb_prompt
     
     gdb_file_cmd $filename
-    if { ![string compare $oldval [capture_value $newval]] } then { 
-	pass $msg 
+    if { ![string compare $oldval \
+	       [capture_value $newval "$msg"]] } then { 
+	pass "$msg; value restored ok"
     } else {
-	fail $msg 
+	fail "$msg; value restored ok"
     }
 }
 
@@ -209,13 +220,13 @@ proc test_restore_saved_value { restore_args msg oldval newval } {
     global gdb_prompt
     
     gdb_test "restore $restore_args" \
-	    "Restoring .*" \
-	    "Restore command, $msg"
-
-    if { ![string compare $oldval [capture_value $newval]] } then { 
-	pass "Restored value, $msg"
+	"Restoring .*" \
+	"$msg; file restored ok"
+    if { ![string compare $oldval \
+	       [capture_value $newval "$msg"]] } then { 
+	pass "$msg; value restored ok"
     } else {
-	fail "Restored value, $msg"
+	fail "$msg; value restored ok"
     }
 }
 
@@ -268,13 +279,15 @@ if { ! [ runto_main ] } then {
     gdb_suppress_entire_file "Program failed to run, so remaining tests in this file will automatically fail."
 }
 
-if { ![string compare $array_val [capture_value "intarray"]] } then {
+if { ![string compare $array_val \
+	   [capture_value "intarray" "load binfile"]] } then {
     fail "start with intarray un-initialized, runto main"
 } else {
     pass "start with intarray un-initialized, runto main"
 }
 
-if { ![string compare $struct_val [capture_value "intstruct"]] } then {
+if { ![string compare $struct_val \
+	   [capture_value "intstruct" "load binfile"]] } then {
     fail "start with intstruct un-initialized, runto main"
 } else {
     pass "start with intstruct un-initialized, runto main"
@@ -420,8 +433,7 @@ if ![string compare $is64bitonly "no"] then {
   gdb_test "print zero_all ()" ""
 
   test_restore_saved_value "intarr1.srec 0 $element3_start $element4_start" \
-	"array partial, srec" \
-	[capture_value "4"] "intarray\[3\]"
+	"array partial, srec" 4 "intarray\[3\]"
 
   gdb_test "print intarray\[2\] == 0" " = 1" "element 2 not changed - 1"
   gdb_test "print intarray\[4\] == 0" " = 1" "element 4 not changed - 1"
@@ -429,8 +441,7 @@ if ![string compare $is64bitonly "no"] then {
   gdb_test "print zero_all ()" ""
 
   test_restore_saved_value "intarr1.ihex 0 $element3_start $element4_start" \
-	"array partial, ihex" \
-	[capture_value "4"] "intarray\[3\]"
+	"array partial, ihex" 4 "intarray\[3\]"
 
   gdb_test "print intarray\[2\] == 0" " = 1" "element 2 not changed - 2"
   gdb_test "print intarray\[4\] == 0" " = 1" "element 4 not changed - 2"
@@ -438,8 +449,7 @@ if ![string compare $is64bitonly "no"] then {
   gdb_test "print zero_all ()" ""
 
   test_restore_saved_value "intarr1.tekhex 0 $element3_start $element4_start" \
-	"array partial, tekhex" \
-	[capture_value "4"] "intarray\[3\]"
+	"array partial, tekhex" 4 "intarray\[3\]"
 
   gdb_test "print intarray\[2\] == 0" " = 1" "element 2 not changed - 3"
   gdb_test "print intarray\[4\] == 0" " = 1" "element 4 not changed - 3"
@@ -449,8 +459,7 @@ gdb_test "print zero_all ()" ""
 
 test_restore_saved_value \
     "intarr1.bin binary $array_start $element3_offset $element4_offset" \
-    "array partial, binary" \
-    [capture_value "4"] "intarray\[3\]"
+    "array partial, binary" 4 "intarray\[3\]"
 
 gdb_test "print intarray\[2\] == 0" " = 1" "element 2 not changed - 4"
 gdb_test "print intarray\[4\] == 0" " = 1" "element 4 not changed - 4"
@@ -461,8 +470,7 @@ if ![string compare $is64bitonly "no"] then {
   # restore with expressions 
   test_restore_saved_value \
 	"intarr3.srec ${array2_start}-${array_start} &intarray\[3\] &intarray\[4\]" \
-	"array partial with expressions" \
-	[capture_value "4"] "intarray2\[3\]"
+	"array partial with expressions" 4 "intarray2\[3\]"
 
   gdb_test "print intarray2\[2\] == 0" " = 1" "element 2 not changed, == 4"
   gdb_test "print intarray2\[4\] == 0" " = 1" "element 4 not changed, == 4"
@@ -471,4 +479,3 @@ if ![string compare $is64bitonly "no"] then {
 # clean up files
 
 remote_exec build "rm -f intarr1.bin intarr1b.bin intarr1.ihex intarr1.srec intarr1.tekhex intarr2.bin intarr2b.bin intarr2.ihex intarr2.srec intarr2.tekhex intstr1.bin intstr1b.bin intstr1.ihex intstr1.srec intstr1.tekhex intstr2.bin intstr2b.bin intstr2.ihex intstr2.srec intstr2.tekhex intarr3.srec"
-

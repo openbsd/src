@@ -1,4 +1,4 @@
-# Copyright 1999, 2000, 2002 Free Software Foundation, Inc.
+# Copyright 1999, 2000, 2001, 2002, 2004 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,9 +13,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
-
-# Please email any bugs, comments, and/or additions to this file to:
-# bug-gdb@prep.ai.mit.edu
 
 #
 # Test essential Machine interface (MI) operations
@@ -46,8 +43,11 @@ mi_gdb_reinitialize_dir $srcdir/$subdir
 mi_gdb_reinitialize_dir $srcdir/$subdir
 mi_gdb_load ${binfile}
 
+set line_callee4_head [gdb_get_line_number "callee4 ("]
+set line_callee4_body [expr $line_callee4_head + 2]
+
 mi_runto callee4
-mi_next_to "callee4" "" "basics.c" "9" "next at callee4"
+mi_next_to "callee4" "" "basics.c" [expr $line_callee4_body + 1] "next at callee4"
 
 mi_gdb_test "211-data-evaluate-expression A" "211\\^done,value=\"1\"" "eval A"
 

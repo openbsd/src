@@ -54,7 +54,7 @@ env_execute_cli_command (const char *cmd, const char *args)
       struct cleanup *old_cleanups;
       char *run;
       if (args != NULL)
-	xasprintf (&run, "%s %s", cmd, args);
+	run = xstrprintf ("%s %s", cmd, args);
       else
 	run = xstrdup (cmd);
       old_cleanups = make_cleanup (xfree, run);

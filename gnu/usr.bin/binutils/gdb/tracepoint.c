@@ -1,7 +1,7 @@
 /* Tracing functionality for remote targets in custom GDB protocol
 
-   Copyright 1997, 1998, 1999, 2000, 2001, 2002, 2003 Free Software
-   Foundation, Inc.
+   Copyright 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004
+   Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -65,9 +65,9 @@
 #define MAX_AGENT_EXPR_LEN	184
 
 
-extern void (*readline_begin_hook) (char *, ...);
-extern char *(*readline_hook) (char *);
-extern void (*readline_end_hook) (void);
+extern void (*deprecated_readline_begin_hook) (char *, ...);
+extern char *(*deprecated_readline_hook) (char *);
+extern void (*deprecated_readline_end_hook) (void);
 extern void x_command (char *, int);
 extern int addressprint;	/* Print machine addresses? */
 
@@ -494,11 +494,10 @@ tracepoints_info (char *tpnum_exp, int from_tty)
 	  char *tmp;
 
 	  if (TARGET_ADDR_BIT <= 32)
-	    tmp = local_hex_string_custom (t->address
-					   & (CORE_ADDR) 0xffffffff, 
-					   "08l");
+	    tmp = hex_string_custom (t->address & (CORE_ADDR) 0xffffffff, 
+				     8);
 	  else
-	    tmp = local_hex_string_custom (t->address, "016l");
+	    tmp = hex_string_custom (t->address, 16);
 
 	  printf_filtered ("%s ", tmp);
 	}
@@ -787,8 +786,8 @@ trace_actions_command (char *args, int from_tty)
 
       if (from_tty)
 	{
-	  if (readline_begin_hook)
-	    (*readline_begin_hook) ("%s  %s\n", tmpbuf, end_msg);
+	  if (deprecated_readline_begin_hook)
+	    (*deprecated_readline_begin_hook) ("%s  %s\n", tmpbuf, end_msg);
 	  else if (input_from_terminal_p ())
 	    printf_filtered ("%s\n%s\n", tmpbuf, end_msg);
 	}
@@ -797,8 +796,8 @@ trace_actions_command (char *args, int from_tty)
       t->step_count = 0;	/* read_actions may set this */
       read_actions (t);
 
-      if (readline_end_hook)
-	(*readline_end_hook) ();
+      if (deprecated_readline_end_hook)
+	(*deprecated_readline_end_hook) ();
       /* tracepoints_changed () */
     }
   /* else just return */
@@ -826,12 +825,7 @@ read_actions (struct tracepoint *t)
      isn't declared.  Leave this alone for now.  */
 #ifdef STOP_SIGNAL
   if (job_control)
-    {
-      if (event_loop_p)
-	signal (STOP_SIGNAL, handle_stop_sig);
-      else
-	signal (STOP_SIGNAL, stop_sig);
-    }
+    signal (STOP_SIGNAL, handle_stop_sig);
 #endif
   old_chain = make_cleanup_free_actions (t);
   while (1)
@@ -842,8 +836,8 @@ read_actions (struct tracepoint *t)
       gdb_flush (gdb_stdout);
       gdb_flush (gdb_stderr);
 
-      if (readline_hook && instream == NULL)
-	line = (*readline_hook) (prompt);
+      if (deprecated_readline_hook && instream == NULL)
+	line = (*deprecated_readline_hook) (prompt);
       else if (instream == stdin && ISATTY (instream))
 	{
 	  line = gdb_readline_wrapper (prompt);
@@ -1219,7 +1213,7 @@ collect_symbol (struct collection_list *collect, struct symbol *sym,
       /* check for doubles stored in two registers */
       /* FIXME: how about larger types stored in 3 or more regs? */
       if (TYPE_CODE (SYMBOL_TYPE (sym)) == TYPE_CODE_FLT &&
-	  len > DEPRECATED_REGISTER_RAW_SIZE (reg))
+	  len > register_size (current_gdbarch, reg))
 	add_register (collect, reg + 1);
       break;
     case LOC_REF_ARG:
@@ -1693,7 +1687,7 @@ remote_set_transparent_ranges (void)
 
       anysecs = 1;
       lma = s->lma;
-      size = bfd_get_section_size_before_reloc (s);
+      size = bfd_get_section_size (s);
       sprintf_vma (tmp1, lma);
       sprintf_vma (tmp2, lma + size);
       sprintf (target_buf + strlen (target_buf), 
@@ -1804,8 +1798,8 @@ trace_start_command (char *args, int from_tty)
       set_tracepoint_num (-1);
       set_traceframe_context (-1);
       trace_running_p = 1;
-      if (trace_start_stop_hook)
-	trace_start_stop_hook (1, from_tty);
+      if (deprecated_trace_start_stop_hook)
+	deprecated_trace_start_stop_hook (1, from_tty);
 
     }
   else
@@ -1823,8 +1817,8 @@ trace_stop_command (char *args, int from_tty)
       if (strcmp (target_buf, "OK"))
 	error ("Bogus reply from target: %s", target_buf);
       trace_running_p = 0;
-      if (trace_start_stop_hook)
-	trace_start_stop_hook (0, from_tty);
+      if (deprecated_trace_start_stop_hook)
+	deprecated_trace_start_stop_hook (0, from_tty);
     }
   else
     error ("Trace can only be run on remote targets.");
@@ -1935,7 +1929,7 @@ finish_tfind_command (char *msg,
 
   if (from_tty)
     {
-      int source_only;
+      enum print_what print_what;
 
       /* NOTE: in immitation of the step command, try to determine
          whether we have made a transition from one function to another.
@@ -1951,13 +1945,11 @@ finish_tfind_command (char *msg,
 	  (old_frame_addr == 0 ||
 	   get_frame_base (get_current_frame ()) == 0 ||
 	   old_frame_addr == get_frame_base (get_current_frame ())))
-	source_only = -1;
+	print_what = SRC_LINE;
       else
-	source_only = 1;
+	print_what = SRC_AND_LOC;
 
-      print_stack_frame (deprecated_selected_frame,
-			 frame_relative_level (deprecated_selected_frame),
-			 source_only);
+      print_stack_frame (get_selected_frame (), 1, print_what);
       do_displays ();
     }
 }
@@ -1985,8 +1977,8 @@ trace_find_command (char *args, int from_tty)
 
   if (target_is_remote ())
     {
-      if (trace_find_hook)
-	trace_find_hook (args, from_tty);
+      if (deprecated_trace_find_hook)
+	deprecated_trace_find_hook (args, from_tty);
 
       if (args == 0 || *args == 0)
 	{			/* TFIND with no args means find NEXT trace frame. */
@@ -2347,7 +2339,7 @@ scope_info (char *args, int from_tty)
 
   sals = decode_line_1 (&args, 1, NULL, 0, &canonical, NULL);
   if (sals.nelts == 0)
-    return;			/* presumably decode_line_1 has already warned */
+    return;		/* presumably decode_line_1 has already warned */
 
   /* Resolve line numbers to PC */
   resolve_sal_pc (&sals.sals[0]);
@@ -2389,7 +2381,8 @@ scope_info (char *args, int from_tty)
 	      break;
 	    case LOC_STATIC:
 	      printf_filtered ("in static storage at address ");
-	      print_address_numeric (SYMBOL_VALUE_ADDRESS (sym), 1, gdb_stdout);
+	      print_address_numeric (SYMBOL_VALUE_ADDRESS (sym), 
+				     1, gdb_stdout);
 	      break;
 	    case LOC_REGISTER:
 	      printf_filtered ("a local variable in register $%s",
@@ -2421,12 +2414,13 @@ scope_info (char *args, int from_tty)
 	      continue;
 	    case LOC_LABEL:
 	      printf_filtered ("a label at address ");
-	      print_address_numeric (SYMBOL_VALUE_ADDRESS (sym), 1, gdb_stdout);
+	      print_address_numeric (SYMBOL_VALUE_ADDRESS (sym), 
+				     1, gdb_stdout);
 	      break;
 	    case LOC_BLOCK:
 	      printf_filtered ("a function at address ");
-	      print_address_numeric (BLOCK_START (SYMBOL_BLOCK_VALUE (sym)), 1,
-				     gdb_stdout);
+	      print_address_numeric (BLOCK_START (SYMBOL_BLOCK_VALUE (sym)),
+				     1, gdb_stdout);
 	      break;
 	    case LOC_BASEREG:
 	      printf_filtered ("a variable at offset %ld from register $%s",
@@ -2439,7 +2433,8 @@ scope_info (char *args, int from_tty)
 			       REGISTER_NAME (SYMBOL_BASEREG (sym)));
 	      break;
 	    case LOC_UNRESOLVED:
-	      msym = lookup_minimal_symbol (DEPRECATED_SYMBOL_NAME (sym), NULL, NULL);
+	      msym = lookup_minimal_symbol (DEPRECATED_SYMBOL_NAME (sym), 
+					    NULL, NULL);
 	      if (msym == NULL)
 		printf_filtered ("Unresolved Static");
 	      else
@@ -2452,10 +2447,22 @@ scope_info (char *args, int from_tty)
 	    case LOC_OPTIMIZED_OUT:
 	      printf_filtered ("optimized out.\n");
 	      continue;
+	    case LOC_HP_THREAD_LOCAL_STATIC:
+	      printf_filtered ("HP thread local static ");
+	      break;
+	    case LOC_INDIRECT:
+	      printf_filtered ("extern (local indirect) at address ");
+	      print_address_numeric (SYMBOL_VALUE_ADDRESS (sym), 
+				     1, gdb_stdout);
+	      break;
+	    case LOC_COMPUTED:
+	    case LOC_COMPUTED_ARG:
+	      SYMBOL_OPS (sym)->describe_location (sym, gdb_stdout);
+	      break;
 	    }
 	  if (SYMBOL_TYPE (sym))
 	    printf_filtered (", length %d.\n",
-			   TYPE_LENGTH (check_typedef (SYMBOL_TYPE (sym))));
+			     TYPE_LENGTH (check_typedef (SYMBOL_TYPE (sym))));
 	}
       if (BLOCK_FUNCTION (block))
 	break;

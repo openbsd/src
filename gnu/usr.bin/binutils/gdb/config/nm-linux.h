@@ -24,9 +24,6 @@ struct target_ops;
 /* GNU/Linux is SVR4-ish but its /proc file system isn't.  */
 #undef USE_PROC_FS
 
-/* Tell GDB that we can attach and detach other processes.  */
-#define ATTACH_DETACH
-
 /* Since we're building a native debugger, we can include <signal.h>
    to find the range of real-time signals.  */
 
@@ -41,7 +38,6 @@ struct target_ops;
    style shared libraries.  */
 
 #ifdef HAVE_LINK_H
-#define SVR4_SHARED_LIBS
 #include "solib.h"             /* Support for shared libraries.  */
 #endif
 
@@ -56,10 +52,6 @@ extern void lin_lwp_attach_lwp (ptid_t ptid, int verbose);
 
 extern void lin_thread_get_thread_signals (sigset_t *mask);
 #define GET_THREAD_SIGNALS(mask) lin_thread_get_thread_signals (mask)
-
-/* Defined to make stepping-over-breakpoints be thread-atomic.  */
-#define USE_THREAD_STEP_NEEDED 1
-
 
 /* Use elf_gregset_t and elf_fpregset_t, rather than
    gregset_t and fpregset_t.  */
@@ -76,7 +68,7 @@ extern void lin_thread_get_thread_signals (sigset_t *mask);
 #define CHILD_POST_STARTUP_INFERIOR
 #define CHILD_POST_ATTACH
 #define CHILD_FOLLOW_FORK
-#define KILL_INFERIOR
+#define DEPRECATED_KILL_INFERIOR
 
 #define NATIVE_XFER_AUXV	procfs_xfer_auxv
 #include "auxv.h"		/* Declares it. */

@@ -1,0 +1,144 @@
+#   Copyright 2003, 2004
+#   Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
+
+# This file was created by Jeff Johnston. (jjohnstn@redhat.com)
+# The shared library compilation portion was copied from shlib-call.exp which was
+# written by Elena Zannoni (ezannoni@redhat.com).
+
+if $tracelevel then {
+    strace $tracelevel
+}
+
+#
+# test running programs
+#
+set prms_id 0
+set bug_id 0
+
+# are we on a target board?
+if ![isnative] then {
+    return 0
+}
+
+set testfile "unload"
+set libfile "unloadshr"
+set libsrcfile ${libfile}.c
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+set shlibdir ${objdir}/${subdir}
+
+if [get_compiler_info ${binfile}] {
+    return -1
+}
+
+set dl_lib_flag ""
+switch -glob [istarget] {
+    "hppa*-hp-hpux*" { }
+    "*-*-linux*"     { set dl_lib_flag "libs=-ldl" }
+    "*-*-solaris*"   { set dl_lib_flag "libs=-ldl" }
+    default          { }
+}
+
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable [list debug "additional_flags=-DSHLIB_DIR\=\"${shlibdir}\"" $dl_lib_flag]] != "" } {
+     gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
+}
+
+# Build the shared libraries this test case needs.
+#
+
+if {$gcc_compiled == 0} {
+    if [istarget "hppa*-hp-hpux*"] then {
+	set additional_flags "additional_flags=+z"
+    } elseif { [istarget "mips-sgi-irix*"] } {
+	# Disable SGI compiler's implicit -Dsgi
+	set additional_flags "additional_flags=-Usgi"
+    } else {
+	# don't know what the compiler is...
+	set additional_flags ""
+    }
+} else {
+    if { ([istarget "powerpc*-*-aix*"]
+       || [istarget "rs6000*-*-aix*"]) } {
+	set additional_flags ""
+    } else {
+	set additional_flags "additional_flags=-fpic"
+    }
+}
+
+if {[gdb_compile "${srcdir}/${subdir}/${libsrcfile}" "${objdir}/${subdir}/${libfile}.o" object [list debug $additional_flags]] != ""} {
+     gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
+}
+
+if [istarget "hppa*-*-hpux*"] {
+    remote_exec build "ld -b ${objdir}/${subdir}/${libfile}.o -o ${objdir}/${subdir}/${libfile}.sl"
+} else {
+    set additional_flags "additional_flags=-shared"
+    if {[gdb_compile "${objdir}/${subdir}/${libfile}.o" "${objdir}/${subdir}/${libfile}.sl" executable [list debug $additional_flags]] != ""} {
+	gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
+    }
+}
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+if [target_info exists gdb_stub] {
+    gdb_step_for_stub;
+}
+
+#
+# Test setting a breakpoint in a dynamically loaded library which is
+# manually loaded and unloaded
+#
+
+gdb_test_multiple "break shrfunc1" "set pending breakpoint" {
+     -re ".*Make breakpoint pending.*y or \\\[n\\\]. $" {
+	    gdb_test "y" "Breakpoint.*shrfunc1.*pending." "set pending breakpoint"
+     }
+}
+
+gdb_test "info break" \
+    "Num Type\[ \]+Disp Enb Address\[ \]+What.*
+\[0-9\]+\[\t \]+breakpoint     keep y.*PENDING.*shrfunc1.*" \
+"single pending breakpoint info"
+
+set unloadshr_line [gdb_get_line_number "unloadshr break" ${srcdir}/${subdir}/${libsrcfile}]
+
+gdb_test "run" \
+"Starting program.*unload.*
+Breakpoint.*at.*
+Pending breakpoint \"shrfunc1\" resolved.*
+Breakpoint.*, shrfunc1 \\\(x=3\\\).*unloadshr.c:$unloadshr_line.*" \
+"running program"
+
+gdb_test "continue" \
+"Continuing.*y is 7.*warning: Temporarily disabling breakpoints for.*unloadshr.sl.*Program exited normally." \
+"continuing to end of program"
+
+#
+# Try to rerun program and verify that shared breakpoint is reset properly
+#
+
+gdb_test "run" \
+".*Breakpoint.*shrfunc1.*at.*unloadshr.c:$unloadshr_line.*" \
+"rerun to shared library breakpoint"
+
+gdb_test "continue" \
+"Continuing.*y is 7.*warning: Temporarily disabling breakpoints for.*unloadshr.sl.*Program exited normally." \
+"continuing to end of program second time"
+

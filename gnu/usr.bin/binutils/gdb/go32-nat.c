@@ -183,7 +183,7 @@ static int go32_xfer_memory (CORE_ADDR memaddr, char *myaddr, int len,
 static void go32_files_info (struct target_ops *target);
 static void go32_stop (void);
 static void go32_kill_inferior (void);
-static void go32_create_inferior (char *exec_file, char *args, char **env);
+static void go32_create_inferior (char *exec_file, char *args, char **env, int from_tty);
 static void go32_mourn_inferior (void);
 static int go32_can_run (void);
 
@@ -466,7 +466,8 @@ static void
 fetch_register (int regno)
 {
   if (regno < FP0_REGNUM)
-    supply_register (regno, (char *) &a_tss + regno_mapping[regno].tss_ofs);
+    regcache_raw_supply (current_regcache, regno,
+			 (char *) &a_tss + regno_mapping[regno].tss_ofs);
   else if (i386_fp_regnum_p (regno) || i386_fpc_regnum_p (regno))
     i387_supply_fsave (current_regcache, regno, &npx);
   else
@@ -491,7 +492,8 @@ static void
 store_register (int regno)
 {
   if (regno < FP0_REGNUM)
-    regcache_collect (regno, (char *) &a_tss + regno_mapping[regno].tss_ofs);
+    regcache_raw_collect (current_regcache, regno,
+			  (char *) &a_tss + regno_mapping[regno].tss_ofs);
   else if (i386_fp_regnum_p (regno) || i386_fpc_regnum_p (regno))
     i387_fill_fsave ((char *) &npx, regno);
   else
@@ -574,7 +576,7 @@ go32_kill_inferior (void)
 }
 
 static void
-go32_create_inferior (char *exec_file, char *args, char **env)
+go32_create_inferior (char *exec_file, char *args, char **env, int from_tty)
 {
   extern char **environ;
   jmp_buf start_state;
@@ -859,7 +861,7 @@ init_go32_ops (void)
   go32_ops.to_fetch_registers = go32_fetch_registers;
   go32_ops.to_store_registers = go32_store_registers;
   go32_ops.to_prepare_to_store = go32_prepare_to_store;
-  go32_ops.to_xfer_memory = go32_xfer_memory;
+  go32_ops.deprecated_xfer_memory = go32_xfer_memory;
   go32_ops.to_files_info = go32_files_info;
   go32_ops.to_insert_breakpoint = memory_insert_breakpoint;
   go32_ops.to_remove_breakpoint = memory_remove_breakpoint;

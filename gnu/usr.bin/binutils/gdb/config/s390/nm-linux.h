@@ -45,7 +45,6 @@ extern int s390_stopped_by_watchpoint (void);
 extern int s390_insert_watchpoint (CORE_ADDR addr, int len);
 extern int s390_remove_watchpoint (CORE_ADDR addr, int len);
 
-#define TARGET_HAS_HARDWARE_WATCHPOINTS
 #define TARGET_CAN_USE_HARDWARE_WATCHPOINT(type, cnt, ot) 1
 #define TARGET_REGION_OK_FOR_HW_WATCHPOINT(addr, len) 1
 #define HAVE_CONTINUABLE_WATCHPOINT 1

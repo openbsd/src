@@ -14,9 +14,6 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
 
-# Please email any bugs, comments, and/or additions to this file to:
-# bug-gdb@prep.ai.mit.edu
-
 # Written by Satish Pai <pai@apollo.hp.com> 1997-07-07
 #    In the spirit of constvars.exp: added volatile, const-volatile stuff.
 
@@ -74,6 +71,9 @@ if ![runto_main] then {
 
 get_debug_format
 
+# Many tests xfail with gcc 2 -gstabs+.
+# TODO: check out the hp side of this.
+
 proc local_compiler_xfail_check { } {
     if { [test_compiler_info gcc-2-*] } then {
 	if { ![test_debug_format "HP"] \
@@ -85,6 +85,16 @@ proc local_compiler_xfail_check { } {
     global hp_cc_compiler
     if { $hp_cc_compiler } {
 	setup_xfail "hppa*-*-hpux*"
+    }
+}
+
+# A few tests still xfail with gcc 3 -gstabs+ and gcc 4 -gstabs+.
+
+proc local_compiler_xfail_check_2 { } {
+    if { [test_compiler_info gcc-3-*] || [test_compiler_info gcc-4-*] } {
+	if { [test_debug_format "stabs" ] } {
+	    setup_xfail "*-*-*"
+	}
     }
 }
 
@@ -248,11 +258,7 @@ gdb_test "ptype vendor" "type = const volatile unsigned char \\* const volatile.
 
 # test function parameters
 local_compiler_xfail_check
-if { [test_compiler_info gcc-3-*] && [test_debug_format "stabs"] } then {
-    # For reasons unknown, GCC 3 with stabs mangles several cv-qualified
-    # arguments to this function.
-    setup_xfail "*-*-*"
-}
+local_compiler_xfail_check_2
 send_gdb "ptype qux2\n"
 gdb_expect {
     -re "type = int \\(volatile unsigned char, const volatile int, volatile short( int)?, volatile long( int)? \\*, float \\* volatile, const volatile signed char \\* const volatile\\).*$gdb_prompt $" {

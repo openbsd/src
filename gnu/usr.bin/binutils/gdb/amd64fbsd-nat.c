@@ -22,6 +22,7 @@
 #include "defs.h"
 #include "inferior.h"
 #include "regcache.h"
+#include "target.h"
 
 #include "gdb_assert.h"
 #include <signal.h>
@@ -31,30 +32,18 @@
 #include <sys/sysctl.h>
 #include <machine/reg.h>
 
-#ifdef HAVE_SYS_PROCFS_H
-#include <sys/procfs.h>
-#endif
-
-#ifndef HAVE_GREGSET_T
-typedef struct reg gregset_t;
-#endif
-
-#ifndef HAVE_FPREGSET_T
-typedef struct fpreg fpregset_t;
-#endif
-
-#include "gregset.h"
+#include "fbsd-nat.h"
 #include "amd64-tdep.h"
 #include "amd64-nat.h"
 
 
-/* Offset to the gregset_t location where REG is stored.  */
-#define REG_OFFSET(reg) offsetof (gregset_t, reg)
+/* Offset in `struct reg' where MEMBER is stored.  */
+#define REG_OFFSET(member) offsetof (struct reg, member)
 
-/* At reg_offset[REGNUM] you'll find the offset to the gregset_t
-   location where the GDB register REGNUM is stored.  Unsupported
-   registers are marked with `-1'.  */
-static int reg_offset[] =
+/* At amd64fbsd64_r_reg_offset[REGNUM] you'll find the offset in
+   `struct reg' location where the GDB register REGNUM is stored.
+   Unsupported registers are marked with `-1'.  */
+static int amd64fbsd64_r_reg_offset[] =
 {
   REG_OFFSET (r_rax),
   REG_OFFSET (r_rbx),
@@ -104,44 +93,44 @@ static int amd64fbsd32_r_reg_offset[I386_NUM_GREGS] =
 };
 
 
-/* Transfering the registers between GDB, inferiors and core files.  */
+/* Support for debugging kernel virtual memory images.  */
 
-/* Fill GDB's register array with the general-purpose register values
-   in *GREGSETP.  */
+#include <sys/types.h>
+#include <machine/pcb.h>
 
-void
-supply_gregset (gregset_t *gregsetp)
+#include "bsd-kvm.h"
+
+static int
+amd64fbsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
 {
-  amd64_supply_native_gregset (current_regcache, gregsetp, -1);
-}
+  /* The following is true for FreeBSD 5.2:
 
-/* Fill register REGNUM (if it is a general-purpose register) in
-   *GREGSETPS with the value in GDB's register array.  If REGNUM is -1,
-   do this for all registers.  */
+     The pcb contains %rip, %rbx, %rsp, %rbp, %r12, %r13, %r14, %r15,
+     %ds, %es, %fs and %gs.  This accounts for all callee-saved
+     registers specified by the psABI and then some.  Here %esp
+     contains the stack pointer at the point just after the call to
+     cpu_switch().  From this information we reconstruct the register
+     state as it would like when we just returned from cpu_switch().  */
 
-void
-fill_gregset (gregset_t *gregsetp, int regnum)
-{
-  amd64_collect_native_gregset (current_regcache, gregsetp, regnum);
-}
+  /* The stack pointer shouldn't be zero.  */
+  if (pcb->pcb_rsp == 0)
+    return 0;
 
-/* Fill GDB's register array with the floating-point register values
-   in *FPREGSETP.  */
+  pcb->pcb_rsp += 8;
+  regcache_raw_supply (regcache, AMD64_RIP_REGNUM, &pcb->pcb_rip);
+  regcache_raw_supply (regcache, AMD64_RBX_REGNUM, &pcb->pcb_rbx);
+  regcache_raw_supply (regcache, AMD64_RSP_REGNUM, &pcb->pcb_rsp);
+  regcache_raw_supply (regcache, AMD64_RBP_REGNUM, &pcb->pcb_rbp);
+  regcache_raw_supply (regcache, 12, &pcb->pcb_r12);
+  regcache_raw_supply (regcache, 13, &pcb->pcb_r13);
+  regcache_raw_supply (regcache, 14, &pcb->pcb_r14);
+  regcache_raw_supply (regcache, 15, &pcb->pcb_r15);
+  regcache_raw_supply (regcache, AMD64_DS_REGNUM, &pcb->pcb_ds);
+  regcache_raw_supply (regcache, AMD64_ES_REGNUM, &pcb->pcb_es);
+  regcache_raw_supply (regcache, AMD64_FS_REGNUM, &pcb->pcb_fs);
+  regcache_raw_supply (regcache, AMD64_GS_REGNUM, &pcb->pcb_gs);
 
-void
-supply_fpregset (fpregset_t *fpregsetp)
-{
-  amd64_supply_fxsave (current_regcache, -1, fpregsetp);
-}
-
-/* Fill register REGNUM (if it is a floating-point register) in
-   *FPREGSETP with the value in GDB's register array.  If REGNUM is -1,
-   do this for all registers.  */
-
-void
-fill_fpregset (fpregset_t *fpregsetp, int regnum)
-{
-  amd64_fill_fxsave ((char *) fpregsetp, regnum);
+  return 1;
 }
 
 
@@ -151,10 +140,21 @@ void _initialize_amd64fbsd_nat (void);
 void
 _initialize_amd64fbsd_nat (void)
 {
+  struct target_ops *t;
   int offset;
 
   amd64_native_gregset32_reg_offset = amd64fbsd32_r_reg_offset;
-  amd64_native_gregset64_reg_offset = reg_offset;
+  amd64_native_gregset64_reg_offset = amd64fbsd64_r_reg_offset;
+
+  /* Add some extra features to the common *BSD/i386 target.  */
+  t = amd64bsd_target ();
+  t->to_pid_to_exec_file = fbsd_pid_to_exec_file;
+  t->to_find_memory_regions = fbsd_find_memory_regions;
+  t->to_make_corefile_notes = fbsd_make_corefile_notes;
+  add_target (t);
+
+  /* Support debugging kernel virtual memory images.  */
+  bsd_kvm_add_target (amd64fbsd_supply_pcb);
 
   /* To support the recognition of signal handlers, i386bsd-tdep.c
      hardcodes some constants.  Inclusion of this file means that we

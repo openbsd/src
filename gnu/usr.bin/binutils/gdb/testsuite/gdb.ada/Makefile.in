@@ -1,0 +1,21 @@
+VPATH = @srcdir@
+srcdir = @srcdir@
+
+EXECUTABLES = null_record
+
+MISCELLANEOUS =
+
+all info install-info dvi install uninstall installcheck check:
+	@echo "Nothing to be done for $@..."
+
+clean mostlyclean:
+	-gnatclean -Pgnat_ada -q $(EXECUTABLES)
+	-rm -f *~ *.o a.out xgdb *.x *.ci *.tmp
+	-rm -f core core.coremaker coremaker.core corefile $(EXECUTABLES)
+	-rm -f $(MISCELLANEOUS) twice-tmp.c
+
+distclean maintainer-clean realclean: clean
+	-rm -f *~ core
+	-rm -f Makefile config.status config.log gnat_ada.gpr
+	-rm -f *-init.exp
+	-rm -fr *.log summary detail *.plog *.sum *.psum site.*

@@ -659,9 +659,11 @@ const struct language_defn objc_language_defn = {
   range_check_off,
   type_check_off,
   case_sensitive_on,
+  array_row_major,
   &exp_descriptor_standard,
   objc_parse,
   objc_error,
+  null_post_parser,
   objc_printchar,		/* Print a character constant */
   objc_printstr,		/* Function to print string constant */
   objc_emit_char,
@@ -674,15 +676,13 @@ const struct language_defn objc_language_defn = {
   basic_lookup_symbol_nonlocal,	/* lookup_symbol_nonlocal */
   basic_lookup_transparent_type,/* lookup_transparent_type */
   objc_demangle,		/* Language specific symbol demangler */
-  {"",     "",    "",  ""},	/* Binary format info */
-  {"0%lo",  "0",   "o", ""},	/* Octal format info */
-  {"%ld",   "",    "d", ""},	/* Decimal format info */
-  {"0x%lx", "0x",  "x", ""},	/* Hex format info */
+  NULL,				/* Language specific class_name_from_physname */
   objc_op_print_tab,		/* Expression operators for printing */
   1,				/* C-style arrays */
   0,				/* String lower bound */
   &builtin_type_char,		/* Type of string elements */
   default_word_break_characters,
+  NULL, /* FIXME: la_language_arch_info.  */
   LANG_MAGIC
 };
 

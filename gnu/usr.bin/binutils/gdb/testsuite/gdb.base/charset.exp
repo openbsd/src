@@ -140,7 +140,7 @@ gdb_expect {
 	# We got some output that ended with a regular prompt
         fail "get valid character sets"
     }
-    -re "^set charset.*$" {
+    -re ".*$gdb_prompt set charset.*$" {
 	# We got some other output, send a cntrl-c to gdb to get us back
         # to the prompt.
 	send_gdb "\003"
@@ -200,7 +200,6 @@ gdb_expect {
 
     -re "\\.\r\n$gdb_prompt $" {
 	#set host_charset_list $expect_out(1,string)
-	set charsets($expect_out(1,string)) 1
 	pass "capture valid host charsets"
     }
 

@@ -1,4 +1,6 @@
-# Copyright 1998, 1999 Free Software Foundation, Inc.
+# This testcase is part of GDB, the GNU debugger.
+
+# Copyright 1998, 1999, 2004 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,21 +16,15 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
 
-# Please email any bugs, comments, and/or additions to this file to:
-# bug-gdb@prep.ai.mit.edu
-
 # This file was written by Elena Zannoni (ezannoni@cygnus.com)
 
-# This file is part of the gdb testsuite
+# Tests for correctenss of logical operators, associativity and
+# precedence with integer type variables
 
-#
-# tests for correctenss of logical operators, associativity and precedence
-# with integer type variables
-# 
 
 if $tracelevel then {
-	strace $tracelevel
-	}
+    strace $tracelevel
+}
 
 #
 # test running programs
@@ -41,8 +37,8 @@ set srcfile ${testfile}.c
 set binfile ${objdir}/${subdir}/${testfile}
 
 if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug additional_flags=-w}] != "" } {
-     gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
-    }
+    gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
+}
 
 if [get_compiler_info ${binfile}] {
     return -1;
@@ -63,515 +59,74 @@ if ![runto_main] then {
     continue
 }
 
-#
-# test expressions with "int" types
-#
-
-gdb_test "set variable x=0" "" "set variable x=0"
-gdb_test "set variable y=0" "" "set variable y=0"
-gdb_test "set variable z=0" "" "set variable z=0"
-
-send_gdb "print x\n"
-gdb_expect {
-    -re ".*0.*$gdb_prompt $" {
-        pass "print value of x"
-      }
-    -re ".*$gdb_prompt $" { fail "print value of x" }
-    timeout           { fail "(timeout) print value of x" }    
-  }
-
-
-send_gdb "print y\n"
-gdb_expect {
-    -re ".*0.*$gdb_prompt $" {
-        pass "print value of y"
-      }
-    -re ".*$gdb_prompt $" { fail "print value of y" }
-    timeout           { fail "(timeout) print value of y" }    
-  }
-
-send_gdb "print z\n"
-gdb_expect {
-    -re ".*0.*$gdb_prompt $" {
-        pass "print value of z"
-      }
-    -re ".*$gdb_prompt $" { fail "print value of z" }
-    timeout           { fail "(timeout) print value of z" }    
-  }
-
-
-# truth tables for && , || , !  
-
-send_gdb "print x && y\n"
-gdb_expect {
-    -re ".*$false.*$gdb_prompt $" {
-        pass "print value of x<y"
-      }
-    -re ".*$gdb_prompt $" { fail "print value of x<y" }
-    timeout           { fail "(timeout) print value of x<y" }    
-  }
-
-
-
-send_gdb "print x || y\n"
-gdb_expect {
-    -re ".*$false.*$gdb_prompt $" {
-        pass "print value of x<=y"
-      }
-    -re ".*$gdb_prompt $" { fail "print value of x<=y" }
-    timeout           { fail "(timeout) print value of x<=y" }    
-  }
-
-send_gdb "print !x\n"
-gdb_expect {
-    -re ".*$true.*$gdb_prompt $" {
-        pass "print value of x>y"
-      }
-    -re ".*$gdb_prompt $" { fail "print value of x>y" }
-    timeout           { fail "(timeout) print value of x>y" }    
-  }
-
-gdb_test "set variable y=1" "" "set variable y=1"
-
-send_gdb "print x && y\n"
-gdb_expect {
-    -re ".*$false.*$gdb_prompt $" {
-        pass "print value of x<y"
-      }
-    -re ".*$gdb_prompt $" { fail "print value of x<y" }
-    timeout           { fail "(timeout) print value of x<y" }    
-  }
-
-
-
-send_gdb "print x || y\n"
-gdb_expect {
-    -re ".*$true.*$gdb_prompt $" {
-        pass "print value of x<=y"
-      }
-    -re ".*$gdb_prompt $" { fail "print value of x<=y" }
-    timeout           { fail "(timeout) print value of x<=y" }    
-  }
-
-gdb_test "set variable x=1" "" "set variable x=1"
-
-send_gdb "print x && y\n"
-gdb_expect {
-    -re ".*$true.*$gdb_prompt $" {
-        pass "print value of x<y"
-      }
-    -re ".*$gdb_prompt $" { fail "print value of x<y" }
-    timeout           { fail "(timeout) print value of x<y" }    
-  }
-
-
-
-send_gdb "print x || y\n"
-gdb_expect {
-    -re ".*$true.*$gdb_prompt $" {
-        pass "print value of x<=y"
-      }
-    -re ".*$gdb_prompt $" { fail "print value of x<=y" }
-    timeout           { fail "(timeout) print value of x<=y" }    
-  }
-
-send_gdb "print !x\n"
-gdb_expect {
-    -re ".*$false.*$gdb_prompt $" {
-        pass "print value of x>y"
-      }
-    -re ".*$gdb_prompt $" { fail "print value of x>y" }
-    timeout           { fail "(timeout) print value of x>y" }    
-  }
-
-gdb_test "set variable y=0" "" "set variable y=0"
-
-send_gdb "print x && y\n"
-gdb_expect {
-    -re ".*$false.*$gdb_prompt $" {
-        pass "print value of x<y"
-      }
-    -re ".*$gdb_prompt $" { fail "print value of x<y" }
-    timeout           { fail "(timeout) print value of x<y" }    
-  }
-
-
-
-send_gdb "print x || y\n"
-gdb_expect {
-    -re ".*$true.*$gdb_prompt $" {
-        pass "print value of x<=y"
-      }
-    -re ".*$gdb_prompt $" { fail "print value of x<=y" }
-    timeout           { fail "(timeout) print value of x<=y" }    
-  }
-
-
-# end truth tables for &&, ||, !
-
-
-# test associativity of && , || , !
-
-gdb_test "set variable x=0" "" "set variable x=0"
-gdb_test "set variable y=0" "" "set variable y=0"
-gdb_test "set variable z=0" "" "set variable z=0"
-
-send_gdb "print x && y && z\n"
-gdb_expect {
-    -re ".*$false.*$gdb_prompt $" {
-        pass "print value of x &&  y && z (000)"
-      }
-    -re ".*$gdb_prompt $" { fail "print value of x && y && z (000) " }
-    timeout           { fail "(timeout) print value of x && y && z (000) " }    
-  }
-
-send_gdb "print x || y || z\n"
-gdb_expect {
-    -re ".*$false.*$gdb_prompt $" {
-        pass "print value of x || y || z (000)"
-      }
-    -re ".*$gdb_prompt $" { fail "print value of x || y || z (000)" }
-    timeout           { fail "(timeout) print value of x || y || z (000) " }    
-  }
-
-send_gdb "print !!x\n"
-gdb_expect {
-    -re ".*$false.*$gdb_prompt $" {
-        pass "print value of !!x (0)"
-      }
-    -re ".*$gdb_prompt $" { fail "print value of !!x (0)" }
-    timeout           { fail "(timeout) print value of !!x (0) " }    
-  }
-
-
-gdb_test "set variable y=1" "" "set variable y=1"
-
-send_gdb "print x && y && z\n"
-gdb_expect {
-    -re ".*$false.*$gdb_prompt $" {
-        pass "print value of x &&  y && z (010)"
-      }
-    -re ".*$gdb_prompt $" { fail "print value of x && y && z (010) " }
-    timeout           { fail "(timeout) print value of x && y && z (010) " }    
-  }
-
-send_gdb "print x || y || z\n"
-gdb_expect {
-    -re ".*$true.*$gdb_prompt $" {
-        pass "print value of x || y || z (010)"
-      }
-    -re ".*$gdb_prompt $" { fail "print value of x || y || z (010)" }
-    timeout           { fail "(timeout) print value of x || y || z (010) " }    
-  }
-
-
-gdb_test "set variable z=1" "" "set variable z=1"
-
-send_gdb "print x && y && z\n"
-gdb_expect {
-    -re ".*$false.*$gdb_prompt $" {
-        pass "print value of x &&  y && z (011)"
-      }
-    -re ".*$gdb_prompt $" { fail "print value of x && y && z (011) " }
-    timeout           { fail "(timeout) print value of x && y && z (011) " }    
-  }
-
-send_gdb "print x || y || z\n"
-gdb_expect {
-    -re ".*$true.*$gdb_prompt $" {
-        pass "print value of x || y || z (011)"
-      }
-    -re ".*$gdb_prompt $" { fail "print value of x || y || z (011)" }
-    timeout           { fail "(timeout) print value of x || y || z (011) " }    
-  }
-
-
-gdb_test "set variable x=1" "" "set variable x=1"
-
-send_gdb "print x && y && z\n"
-gdb_expect {
-    -re ".*$true.*$gdb_prompt $" {
-        pass "print value of x &&  y && z (111)"
-      }
-    -re ".*$gdb_prompt $" { fail "print value of x && y && z (111) " }
-    timeout           { fail "(timeout) print value of x && y && z (111) " }    
-  }
-
-send_gdb "print x || y || z\n"
-gdb_expect {
-    -re ".*$true.*$gdb_prompt $" {
-        pass "print value of x || y || z (111)"
-      }
-    -re ".*$gdb_prompt $" { fail "print value of x || y || z (111)" }
-    timeout           { fail "(timeout) print value of x || y || z (111) " }    
-  }
-
-send_gdb "print !!x\n"
-gdb_expect {
-    -re ".*$true.*$gdb_prompt $" {
-        pass "print value of !!x (1)"
-      }
-    -re ".*$gdb_prompt $" { fail "print value of !!x (1)" }
-    timeout           { fail "(timeout) print value of !!x (1) " }    
-  }
-
-
-gdb_test "set variable z=0" "" "set variable z=0"
-
-send_gdb "print x && y && z\n"
-gdb_expect {
-    -re ".*$false.*$gdb_prompt $" {
-        pass "print value of x &&  y && z (110)"
-      }
-    -re ".*$gdb_prompt $" { fail "print value of x && y && z (110) " }
-    timeout           { fail "(timeout) print value of x && y && z (110) " }    
-  }
-
-send_gdb "print x || y || z\n"
-gdb_expect {
-    -re ".*$true.*$gdb_prompt $" {
-        pass "print value of x || y || z (110)"
-      }
-    -re ".*$gdb_prompt $" { fail "print value of x || y || z (110)" }
-    timeout           { fail "(timeout) print value of x || y || z (110) " }    
-  }
-
-
-
-
-gdb_test "set variable y=0" "" "set variable y=0"
-
-send_gdb "print x && y && z\n"
-gdb_expect {
-    -re ".*$false.*$gdb_prompt $" {
-        pass "print value of x &&  y && z (100)"
-      }
-    -re ".*$gdb_prompt $" { fail "print value of x && y && z (100) " }
-    timeout           { fail "(timeout) print value of x && y && z (100) " }    
-  }
-
-send_gdb "print x || y || z\n"
-gdb_expect {
-    -re ".*$true.*$gdb_prompt $" {
-        pass "print value of x || y || z (100)"
-      }
-    -re ".*$gdb_prompt $" { fail "print value of x || y || z (100)" }
-    timeout           { fail "(timeout) print value of x || y || z (100) " }    
-  }
-
-
-
-
-gdb_test "set variable z=1" "" "set variable z=1"
-
-send_gdb "print x && y && z\n"
-gdb_expect {
-    -re ".*$false.*$gdb_prompt $" {
-        pass "print value of x &&  y && z (101)"
-      }
-    -re ".*$gdb_prompt $" { fail "print value of x && y && z (101) " }
-    timeout           { fail "(timeout) print value of x && y && z (101) " }    
-  }
-
-send_gdb "print x || y || z\n"
-gdb_expect {
-    -re ".*$true.*$gdb_prompt $" {
-        pass "print value of x || y || z (101)"
-      }
-    -re ".*$gdb_prompt $" { fail "print value of x || y || z (101)" }
-    timeout           { fail "(timeout) print value of x || y || z (101) " }    
-  }
-
-
-gdb_test "set variable x=0" "" "set variable x=0"
-
-send_gdb "print x && y && z\n"
-gdb_expect {
-    -re ".*$false.*$gdb_prompt $" {
-        pass "print value of x &&  y && z (001)"
-      }
-    -re ".*$gdb_prompt $" { fail "print value of x && y && z (001) " }
-    timeout           { fail "(timeout) print value of x && y && z (001) " }    
-  }
-
-send_gdb "print x || y || z\n"
-gdb_expect {
-    -re ".*$true.*$gdb_prompt $" {
-        pass "print value of x || y || z (001)"
-      }
-    -re ".*$gdb_prompt $" { fail "print value of x || y || z (001)" }
-    timeout           { fail "(timeout) print value of x || y || z (001) " }    
-  }
-
-
-
-
-# test precedence of &&, || ,! 
-
-
-send_gdb "print !x && y\n"
-gdb_expect {
-    -re ".*$false.*$gdb_prompt $" {
-        pass "print value of !x && y  (00)"
-      }
-    -re ".*$gdb_prompt $" { fail "print value of  !x && y (00)" }
-    timeout           { fail "(timeout) print value of !x && y (00) " }    
-  }
-
-
-gdb_test "set variable x=1" "" "set variable x=1"
-
-
-send_gdb "print !x && y\n"
-gdb_expect {
-    -re ".*$false.*$gdb_prompt $" {
-        pass "print value of !x && y  (10)"
-      }
-    -re ".*$gdb_prompt $" { fail "print value of  !x && y (10)" }
-    timeout           { fail "(timeout) print value of !x && y (10) " }    
-  }
-
-
-
-
-gdb_test "set variable y=1" "" "set variable y=1"
-
-send_gdb "print !x || y\n"
-gdb_expect {
-    -re ".*$true.*$gdb_prompt $" {
-        pass "print value of !x || y  (11)"
-      }
-    -re ".*$gdb_prompt $" { fail "print value of  !x || y (11)" }
-    timeout           { fail "(timeout) print value of !x || y (11) " }    
-  }
-
-
-gdb_test "set variable x=0" "" "set variable x=0"
-
-
-send_gdb "print !x || y\n"
-gdb_expect {
-    -re ".*$true.*$gdb_prompt $" {
-        pass "print value of !x || y  (01)"
-      }
-    -re ".*$gdb_prompt $" { fail "print value of  !x || y (01)" }
-    timeout           { fail "(timeout) print value of !x || y (01) " }    
-  }
-
-
-
-gdb_test "set variable x=1" "" "set variable x=1"
-gdb_test "set variable z=0" "" "set variable z=0"
-
-send_gdb "print x || y && z\n"
-gdb_expect {
-    -re ".*$true.*$gdb_prompt $" {
-        pass "print value of x || y && z  (110)"
-      }
-    -re ".*$gdb_prompt $" { fail "print value of  x || y && z (110)" }
-    timeout           { fail "(timeout) print value of x || y && z (110) " }    
-  }
-
-
-gdb_test "set variable y=0" "" "set variable y=0"
-
-
-send_gdb "print x || y && z\n"
-gdb_expect {
-    -re ".*$true.*$gdb_prompt $" {
-        pass "print value of x || y && z (100)"
-      }
-    -re ".*$gdb_prompt $" { fail "print value of  x || y && z (100)" }
-    timeout           { fail "(timeout) print value of x || y && z (100) " }    
-  }
-
-
-
-gdb_test "set variable x=0" "" "set variable x=0"
-
-send_gdb "print x || !y && z\n"
-gdb_expect {
-    -re ".*$false.*$gdb_prompt $" {
-        
-         gdb_test "set variable x=1" "" "set variable x=1"
-         send_gdb "print x || !y && z\n"
-         gdb_expect {
-             -re ".*$true.*$gdb_prompt $" {
-                  pass "print value of x || !y && z "
-             }
-             -re ".*$gdb_prompt $" { fail "print value of  x || !y && z" }
-             timeout           { fail "(timeout) print value of x || !y && z " }    
-           }
-    }       
-    -re ".*$gdb_prompt $" { fail "print value of  x || y && z " }
-    timeout           { fail "(timeout) print value of x || y && z " }    
- }
-
-
-
-
-
-gdb_test "set variable x=1" "" "set variable x=1"
-gdb_test "set variable y=2" "" "set variable y=2"
-gdb_test "set variable w=3" "" "set variable w=3"
-gdb_test "set variable z=3" "" "set variable z=3"
-
-
-send_gdb "print x > y || w == z\n"
-gdb_expect {
-    -re ".*$true.*$gdb_prompt $" {
-        pass "print value of x > y || w == z"
-      }
-    -re ".*$gdb_prompt $" { fail "print value of  x > y || w == z" }
-    timeout           { fail "(timeout) print value of x > y || w == z " }    
-  }
-
-
-gdb_test "set variable x=1" "" "set variable x=1"
-gdb_test "set variable y=2" "" "set variable y=2"
-gdb_test "set variable w=1" "" "set variable w=1"
-gdb_test "set variable z=3" "" "set variable z=3"
-
-
-send_gdb "print x >= y && w != z\n"
-gdb_expect {
-    -re ".*$false.*$gdb_prompt $" {
-        pass "print value of x >= y || w != z"
-      }
-    -re ".*$gdb_prompt $" { fail "print value of  x >= y || w != z" }
-    timeout           { fail "(timeout) print value of x >= y || w != z " }    
-  }
-
-
-
-gdb_test "set variable x=2" "" "set variable x=2"
-gdb_test "set variable y=2" "" "set variable y=2"
-gdb_test "set variable w=2" "" "set variable w=2"
-gdb_test "set variable z=3" "" "set variable z=3"
-
-
-send_gdb "print ! x > y || w + z\n"
-gdb_expect {
-    -re ".*$true.*$gdb_prompt $" {
-        pass "print value of x > y || w != z"
-      }
-    -re ".*$gdb_prompt $" { fail "print value of  x > y || w != z" }
-    timeout           { fail "(timeout) print value of x > y || w != z " }    
-  }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+proc evaluate { vars ops } {
+    for {set vari 0} {$vari < [llength $vars]} {incr vari} {
+	set var [lindex $vars $vari]
+	for {set opi 0} {$opi < [llength $ops]} {incr opi} {
+	    set op [lindex [lindex $ops $opi] 0]
+	    set val [lindex [lindex $ops $opi] [expr $vari + 1]]
+	    gdb_test "print $var, $op" " = $val" "evaluate $op; variables $var; expecting $val"
+	}
+    }
+}
+
+# Unary
+
+evaluate {
+    {x = 0} {x = 1}
+} {
+    { {x}   0 1 }
+    { {!x}  1 0 }
+    { {!!x} 0 1 }
+}
+
+# Binary (with unary)
+
+evaluate {
+    {x = 0, y = 0} {x = 0, y = 1} {x = 1, y = 0} {x = 1, y = 1}
+} {
+    { {x && y}   0 0 0 1 }
+    { {!x && y}  0 1 0 0 }
+    { {x && !y}  0 0 1 0 }
+    { {!x && !y} 1 0 0 0 }
+
+    { {x || y}   0 1 1 1 }
+    { {!x || y}  1 1 0 1 }
+    { {x || !y}  1 0 1 1 }
+    { {!x || !y} 1 1 1 0 }
+
+    { {x < y}    0 1 0 0 }
+    { {x <= y}   1 1 0 1 }
+    { {x == y}   1 0 0 1 }
+    { {x != y}   0 1 1 0 }
+    { {x >= y}   1 0 1 1 }
+    { {x > y}    0 0 1 0 }
+}
+
+# Full table of &&, || combinations, followed by random mix of unary ops
+
+evaluate {
+    {x = 0, y = 0, z = 0} {x = 0, y = 0, z = 1} {x = 0, y = 1, z = 0} {x = 0, y = 1, z = 1}
+    {x = 1, y = 0, z = 0} {x = 1, y = 0, z = 1} {x = 1, y = 1, z = 0} {x = 1, y = 1, z = 1}
+} {
+    { {x && y && z}    0 0 0 0  0 0 0 1 }
+    { {x || y && z}    0 0 0 1  1 1 1 1 }
+    { {x && y || z}    0 1 0 1  0 1 1 1 }
+    { {x || y || z}    0 1 1 1  1 1 1 1 }
+
+    { {x || !y && z}   0 1 0 0  1 1 1 1 }
+    { {!x || y && z}   1 1 1 1  0 0 0 1 }
+    { {!x || y && !z}  1 1 1 1  0 0 1 0 }
+}
+
+# More complex operations
+
+evaluate {
+    {x = 1, y = 2, w = 3, z = 3}
+    {x = 1, y = 2, w = 1, z = 3}
+    {x = 2, y = 2, w = 2, z = 3}
+} {
+    { {x > y || w == z}   1 0 0 }
+    { {x >= y && w != z}  0 0 1 }
+    { {! x > y || w + z}  1 1 1 }
+}

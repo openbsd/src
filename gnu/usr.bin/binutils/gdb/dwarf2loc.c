@@ -53,11 +53,14 @@ static char *
 find_location_expression (struct dwarf2_loclist_baton *baton,
 			  size_t *locexpr_length, CORE_ADDR pc)
 {
-  CORE_ADDR base_address = baton->base_address;
   CORE_ADDR low, high;
   char *loc_ptr, *buf_end;
   unsigned int addr_size = TARGET_ADDR_BIT / TARGET_CHAR_BIT, length;
   CORE_ADDR base_mask = ~(~(CORE_ADDR)1 << (addr_size * 8 - 1));
+  /* Adjust base_address for relocatable objects.  */
+  CORE_ADDR base_offset = ANOFFSET (baton->objfile->section_offsets,
+				    SECT_OFF_TEXT (baton->objfile));
+  CORE_ADDR base_address = baton->base_address + base_offset;
 
   loc_ptr = baton->data;
   buf_end = baton->data + baton->size;
@@ -202,7 +205,7 @@ dwarf2_evaluate_loc_desc (struct symbol *var, struct frame_info *frame,
 			  unsigned char *data, unsigned short size,
 			  struct objfile *objfile)
 {
-  CORE_ADDR result;
+  struct gdbarch *arch = get_frame_arch (frame);
   struct value *retval;
   struct dwarf_expr_baton baton;
   struct dwarf_expr_context *ctx;
@@ -225,21 +228,30 @@ dwarf2_evaluate_loc_desc (struct symbol *var, struct frame_info *frame,
   ctx->get_tls_address = dwarf_expr_tls_address;
 
   dwarf_expr_eval (ctx, data, size);
-  result = dwarf_expr_fetch (ctx, 0);
-
-  if (ctx->in_reg)
+  if (ctx->num_pieces > 0)
     {
-      int regnum = DWARF2_REG_TO_REGNUM (result);
-      retval = value_from_register (SYMBOL_TYPE (var), regnum, frame);
+      /* We haven't implemented splicing together pieces from
+         arbitrary sources yet.  */
+      error ("The value of variable '%s' is distributed across several\n"
+             "locations, and GDB cannot access its value.\n",
+             SYMBOL_NATURAL_NAME (var));
+    }
+  else if (ctx->in_reg)
+    {
+      CORE_ADDR dwarf_regnum = dwarf_expr_fetch (ctx, 0);
+      int gdb_regnum = DWARF2_REG_TO_REGNUM (dwarf_regnum);
+      retval = value_from_register (SYMBOL_TYPE (var), gdb_regnum, frame);
     }
   else
     {
+      CORE_ADDR address = dwarf_expr_fetch (ctx, 0);
+
       retval = allocate_value (SYMBOL_TYPE (var));
       VALUE_BFD_SECTION (retval) = SYMBOL_BFD_SECTION (var);
 
       VALUE_LVAL (retval) = lval_memory;
       VALUE_LAZY (retval) = 1;
-      VALUE_ADDRESS (retval) = result;
+      VALUE_ADDRESS (retval) = address;
     }
 
   free_dwarf_expr_context (ctx);
@@ -318,6 +330,17 @@ dwarf2_loc_desc_needs_frame (unsigned char *data, unsigned short size)
   dwarf_expr_eval (ctx, data, size);
 
   in_reg = ctx->in_reg;
+
+  if (ctx->num_pieces > 0)
+    {
+      int i;
+
+      /* If the location has several pieces, and any of them are in
+         registers, then we will need a frame to fetch them from.  */
+      for (i = 0; i < ctx->num_pieces; i++)
+        if (ctx->pieces[i].in_reg)
+          in_reg = 1;
+    }
 
   free_dwarf_expr_context (ctx);
 

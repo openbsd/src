@@ -1,5 +1,6 @@
 /* Native-dependent code for SuperH running NetBSD, for GDB.
-   Copyright 2002, 2003 Free Software Foundation, Inc.
+
+   Copyright 2002, 2003, 2004 Free Software Foundation, Inc.
    Contributed by Wasabi Systems, Inc.
 
    This file is part of GDB.
@@ -44,7 +45,7 @@ fetch_inferior_registers (int regno)
       struct reg inferior_registers;
 
       if (ptrace (PT_GETREGS, PIDGET (inferior_ptid),
-		  (PTRACE_ARG3_TYPE) &inferior_registers, 0) == -1)
+		  (PTRACE_TYPE_ARG3) &inferior_registers, 0) == -1)
 	perror_with_name ("Couldn't get registers");
 
       shnbsd_supply_reg ((char *) &inferior_registers, regno);
@@ -62,13 +63,13 @@ store_inferior_registers (int regno)
       struct reg inferior_registers;
 
       if (ptrace (PT_GETREGS, PIDGET (inferior_ptid),
-		  (PTRACE_ARG3_TYPE) &inferior_registers, 0) == -1)
+		  (PTRACE_TYPE_ARG3) &inferior_registers, 0) == -1)
 	perror_with_name ("Couldn't get registers");
 
       shnbsd_fill_reg ((char *) &inferior_registers, regno);
 
       if (ptrace (PT_SETREGS, PIDGET (inferior_ptid),
-		  (PTRACE_ARG3_TYPE) &inferior_registers, 0) == -1)
+		  (PTRACE_TYPE_ARG3) &inferior_registers, 0) == -1)
 	perror_with_name ("Couldn't set registers");
 
       if (regno != -1)

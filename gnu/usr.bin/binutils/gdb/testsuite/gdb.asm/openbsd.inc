@@ -1,6 +1,6 @@
 	comment "openbsd .note"
 
-.section	".note.openbsdbsd.ident", "a"
+.section	".note.openbsd.ident", "a"
 	.p2align	2
 
 	.long	8

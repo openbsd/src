@@ -1,3 +1,43 @@
+2004-10-21  Joel Brobecker  <brobecker@gnat.com>
+
+	* linux-x86-64-low.c (ARCH_SET_GS): Add definition if missing.
+	(ARCH_SET_FS): Likewise.
+	(ARCH_GET_FS): Likewise.
+	(ARCH_GET_GS): Likewise.
+
+2004-10-16  Daniel Jacobowitz  <dan@debian.org>
+
+	* linux-i386-low.c (ps_get_thread_area): New.
+	* linux-x86-64-low.c (ps_get_thread_area): New.
+	* linux-low.c: Include <sys/syscall.h>.
+	(linux_kill_one_process): Don't kill the first thread here.
+	(linux_kill): Kill the first thread here.
+	(kill_lwp): New function.
+	(send_sigstop, linux_send_signal): Use it.
+	* proc-service.c: Clean up #ifdefs.
+	(fpregset_info): Delete.
+	(ps_lgetregs): Update and enable implementation.
+	(ps_lsetregs, ps_lgetfpregs, ps_lsetfpregs): Remove disabled
+	implementations.
+	* remote-utils.c (struct sym_cache, symbol_cache): New.
+	(input_interrupt): Print a clearer message.
+	(async_io_enabled): New variable.
+	(enable_async_io, disable_async_io): Use it.  Update comments.
+	(look_up_one_symbol): Use the symbol cache.
+	* thread-db.c (thread_db_look_up_symbols): New function.
+	(thread_db_init): Update comments.  Call thread_db_look_up_symbols.
+
+2004-10-16  Daniel Jacobowitz  <dan@debian.org>
+
+	* configure.in: Test for -rdynamic.
+	* configure: Regenerated.
+	* Makefile (INTERNAL_LDFLAGS): New.
+	(gdbserver, gdbreplay): Use it.
+
+2004-09-02  Andrew Cagney  <cagney@gnu.org>
+
+	* Makefile.in (TAGS): Replace TM_FILE with DEPRECATED_TM_FILE.
+
 2004-03-23  Daniel Jacobowitz  <drow@mvista.com>
 
 	* linux-low.c (linux_wait): Clear all_processes list also.

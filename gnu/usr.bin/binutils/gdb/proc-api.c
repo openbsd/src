@@ -784,7 +784,7 @@ _initialize_proc_api (void)
 		   var_boolean, (char *) &procfs_trace, 
 		   "Set tracing for /proc api calls.\n", &setlist);
 
-  add_show_from_set (c, &showlist);
+  deprecated_add_show_from_set (c, &showlist);
   set_cmd_sfunc (c, set_procfs_trace_cmd);
   set_cmd_completer (c, filename_completer);
 
@@ -792,6 +792,6 @@ _initialize_proc_api (void)
 		   (char *) &procfs_filename, 
 		   "Set filename for /proc tracefile.\n", &setlist);
 
-  add_show_from_set (c, &showlist);
+  deprecated_add_show_from_set (c, &showlist);
   set_cmd_sfunc (c, set_procfs_file_cmd);
 }

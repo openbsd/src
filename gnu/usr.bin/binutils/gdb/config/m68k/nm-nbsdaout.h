@@ -1,5 +1,6 @@
-/* Native-dependent definitions for Motorola m68k running NetBSD, for GDB.
-   Copyright 1996, 2002 Free Software Foundation, Inc.
+/* Native-dependent definitions for NetBSD/m68k a.out.
+
+   Copyright 1996, 2002, 2004 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,9 +22,9 @@
 #ifndef NM_NBSDAOUT_H
 #define NM_NBSDAOUT_H
 
-#include "m68k/nm-nbsd.h"
+#include "config/nm-nbsd.h"
 
-/* Get generic NetBSD a.out native definitions. */
+/* Get generic NetBSD a.out native definitions.  */
 #include "config/nm-nbsdaout.h"
 
-#endif /* NM_NBSDAOUT_H */
+#endif /* nm-nbsdaout.h */

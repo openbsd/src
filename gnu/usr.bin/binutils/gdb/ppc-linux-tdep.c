@@ -1,7 +1,7 @@
 /* Target-dependent code for GDB, the GNU debugger.
 
    Copyright 1986, 1987, 1989, 1991, 1992, 1993, 1994, 1995, 1996,
-   1997, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
+   1997, 2000, 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -32,9 +32,11 @@
 #include "regcache.h"
 #include "value.h"
 #include "osabi.h"
-
+#include "regset.h"
 #include "solib-svr4.h"
 #include "ppc-tdep.h"
+#include "trad-frame.h"
+#include "frame-unwind.h"
 
 /* The following instructions are used in the signal trampoline code
    on GNU/Linux PPC. The kernel used to use magic syscalls 0x6666 and
@@ -112,7 +114,7 @@ static int ppc_linux_at_sigtramp_return_path (CORE_ADDR pc);
 /* Determine if pc is in a signal trampoline...
 
    Ha!  That's not what this does at all.  wait_for_inferior in
-   infrun.c calls PC_IN_SIGTRAMP in order to detect entry into a
+   infrun.c calls get_frame_type() in order to detect entry into a
    signal trampoline just after delivery of a signal.  But on
    GNU/Linux, signal trampolines are used for the return path only.
    The kernel sets things up so that the signal handler is called
@@ -144,20 +146,9 @@ static int ppc_linux_at_sigtramp_return_path (CORE_ADDR pc);
    signal is delivered while stepping, the next instruction that
    would've been stepped over isn't, instead a signal is delivered and
    the first instruction of the handler is stepped over instead.  That
-   puts us on the second instruction.  (I added the test for the
-   first instruction long after the fact, just in case the observed
-   behavior is ever fixed.)
-
-   PC_IN_SIGTRAMP is called from blockframe.c as well in order to set
-   the frame's type (if a SIGTRAMP_FRAME).  Because of our strange
-   definition of in_sigtramp below, we can't rely on the frame's type
-   getting set correctly from within blockframe.c.  This is why we
-   take pains to set it in init_extra_frame_info().
-
-   NOTE: cagney/2002-11-10: I suspect the real problem here is that
-   the get_prev_frame() only initializes the frame's type after the
-   call to INIT_FRAME_INFO.  get_prev_frame() should be fixed, this
-   code shouldn't be working its way around a bug :-(.  */
+   puts us on the second instruction.  (I added the test for the first
+   instruction long after the fact, just in case the observed behavior
+   is ever fixed.)  */
 
 int
 ppc_linux_in_sigtramp (CORE_ADDR pc, char *func_name)
@@ -336,111 +327,6 @@ ppc_linux_skip_trampoline_code (CORE_ADDR pc)
     return 0;
 
   return SYMBOL_VALUE_ADDRESS (msymbol);
-}
-
-/* The rs6000 version of FRAME_SAVED_PC will almost work for us.  The
-   signal handler details are different, so we'll handle those here
-   and call the rs6000 version to do the rest. */
-CORE_ADDR
-ppc_linux_frame_saved_pc (struct frame_info *fi)
-{
-  if ((get_frame_type (fi) == SIGTRAMP_FRAME))
-    {
-      CORE_ADDR regs_addr =
-	read_memory_integer (get_frame_base (fi)
-			     + PPC_LINUX_REGS_PTR_OFFSET, 4);
-      /* return the NIP in the regs array */
-      return read_memory_integer (regs_addr + 4 * PPC_LINUX_PT_NIP, 4);
-    }
-  else if (get_next_frame (fi)
-	   && (get_frame_type (get_next_frame (fi)) == SIGTRAMP_FRAME))
-    {
-      CORE_ADDR regs_addr =
-	read_memory_integer (get_frame_base (get_next_frame (fi))
-			     + PPC_LINUX_REGS_PTR_OFFSET, 4);
-      /* return LNK in the regs array */
-      return read_memory_integer (regs_addr + 4 * PPC_LINUX_PT_LNK, 4);
-    }
-  else
-    return rs6000_frame_saved_pc (fi);
-}
-
-void
-ppc_linux_init_extra_frame_info (int fromleaf, struct frame_info *fi)
-{
-  rs6000_init_extra_frame_info (fromleaf, fi);
-
-  if (get_next_frame (fi) != 0)
-    {
-      /* We're called from get_prev_frame_info; check to see if
-         this is a signal frame by looking to see if the pc points
-         at trampoline code */
-      if (ppc_linux_at_sigtramp_return_path (get_frame_pc (fi)))
-	deprecated_set_frame_type (fi, SIGTRAMP_FRAME);
-      else
-	/* FIXME: cagney/2002-11-10: Is this double bogus?  What
-           happens if the frame has previously been marked as a dummy?  */
-	deprecated_set_frame_type (fi, NORMAL_FRAME);
-    }
-}
-
-int
-ppc_linux_frameless_function_invocation (struct frame_info *fi)
-{
-  /* We'll find the wrong thing if we let 
-     rs6000_frameless_function_invocation () search for a signal trampoline */
-  if (ppc_linux_at_sigtramp_return_path (get_frame_pc (fi)))
-    return 0;
-  else
-    return rs6000_frameless_function_invocation (fi);
-}
-
-void
-ppc_linux_frame_init_saved_regs (struct frame_info *fi)
-{
-  if ((get_frame_type (fi) == SIGTRAMP_FRAME))
-    {
-      CORE_ADDR regs_addr;
-      int i;
-      if (deprecated_get_frame_saved_regs (fi))
-	return;
-
-      frame_saved_regs_zalloc (fi);
-
-      regs_addr =
-	read_memory_integer (get_frame_base (fi)
-			     + PPC_LINUX_REGS_PTR_OFFSET, 4);
-      deprecated_get_frame_saved_regs (fi)[PC_REGNUM] = regs_addr + 4 * PPC_LINUX_PT_NIP;
-      deprecated_get_frame_saved_regs (fi)[gdbarch_tdep (current_gdbarch)->ppc_ps_regnum] =
-        regs_addr + 4 * PPC_LINUX_PT_MSR;
-      deprecated_get_frame_saved_regs (fi)[gdbarch_tdep (current_gdbarch)->ppc_cr_regnum] =
-        regs_addr + 4 * PPC_LINUX_PT_CCR;
-      deprecated_get_frame_saved_regs (fi)[gdbarch_tdep (current_gdbarch)->ppc_lr_regnum] =
-        regs_addr + 4 * PPC_LINUX_PT_LNK;
-      deprecated_get_frame_saved_regs (fi)[gdbarch_tdep (current_gdbarch)->ppc_ctr_regnum] =
-        regs_addr + 4 * PPC_LINUX_PT_CTR;
-      deprecated_get_frame_saved_regs (fi)[gdbarch_tdep (current_gdbarch)->ppc_xer_regnum] =
-        regs_addr + 4 * PPC_LINUX_PT_XER;
-      deprecated_get_frame_saved_regs (fi)[gdbarch_tdep (current_gdbarch)->ppc_mq_regnum] =
-	regs_addr + 4 * PPC_LINUX_PT_MQ;
-      for (i = 0; i < 32; i++)
-	deprecated_get_frame_saved_regs (fi)[gdbarch_tdep (current_gdbarch)->ppc_gp0_regnum + i] =
-	  regs_addr + 4 * PPC_LINUX_PT_R0 + 4 * i;
-      for (i = 0; i < 32; i++)
-	deprecated_get_frame_saved_regs (fi)[FP0_REGNUM + i] = regs_addr + 4 * PPC_LINUX_PT_FPR0 + 8 * i;
-    }
-  else
-    rs6000_frame_init_saved_regs (fi);
-}
-
-CORE_ADDR
-ppc_linux_frame_chain (struct frame_info *thisframe)
-{
-  /* Kernel properly constructs the frame chain for the handler */
-  if ((get_frame_type (thisframe) == SIGTRAMP_FRAME))
-    return read_memory_integer (get_frame_base (thisframe), 4);
-  else
-    return rs6000_frame_chain (thisframe);
 }
 
 /* ppc_linux_memory_remove_breakpoints attempts to remove a breakpoint
@@ -951,88 +837,224 @@ ppc64_linux_convert_from_func_ptr_addr (struct gdbarch *gdbarch,
   return addr;
 }
 
-
-enum {
-  ELF_NGREG = 48,
-  ELF_NFPREG = 33,
-  ELF_NVRREG = 33
-};
-
-enum {
-  ELF_GREGSET_SIZE = (ELF_NGREG * 4),
-  ELF_FPREGSET_SIZE = (ELF_NFPREG * 8)
-};
-
-void
-ppc_linux_supply_gregset (char *buf)
+static void
+right_supply_register (struct regcache *regcache, int wordsize, int regnum,
+		       const bfd_byte *buf)
 {
-  int regi;
-  struct gdbarch_tdep *tdep = gdbarch_tdep (current_gdbarch); 
-
-  for (regi = 0; regi < 32; regi++)
-    supply_register (regi, buf + 4 * regi);
-
-  supply_register (PC_REGNUM, buf + 4 * PPC_LINUX_PT_NIP);
-  supply_register (tdep->ppc_lr_regnum, buf + 4 * PPC_LINUX_PT_LNK);
-  supply_register (tdep->ppc_cr_regnum, buf + 4 * PPC_LINUX_PT_CCR);
-  supply_register (tdep->ppc_xer_regnum, buf + 4 * PPC_LINUX_PT_XER);
-  supply_register (tdep->ppc_ctr_regnum, buf + 4 * PPC_LINUX_PT_CTR);
-  if (tdep->ppc_mq_regnum != -1)
-    supply_register (tdep->ppc_mq_regnum, buf + 4 * PPC_LINUX_PT_MQ);
-  supply_register (tdep->ppc_ps_regnum, buf + 4 * PPC_LINUX_PT_MSR);
+  regcache_raw_supply (regcache, regnum,
+		       (buf + wordsize - register_size (current_gdbarch, regnum)));
 }
 
+/* Extract the register values found in the WORDSIZED ABI GREGSET,
+   storing their values in REGCACHE.  Note that some are left-aligned,
+   while others are right aligned.  */
+
 void
-ppc_linux_supply_fpregset (char *buf)
+ppc_linux_supply_gregset (struct regcache *regcache,
+			  int regnum, const void *gregs, size_t size,
+			  int wordsize)
 {
   int regi;
-  struct gdbarch_tdep *tdep = gdbarch_tdep (current_gdbarch); 
+  struct gdbarch *regcache_arch = get_regcache_arch (regcache); 
+  struct gdbarch_tdep *regcache_tdep = gdbarch_tdep (regcache_arch);
+  const bfd_byte *buf = gregs;
 
-  for (regi = 0; regi < 32; regi++)
-    supply_register (FP0_REGNUM + regi, buf + 8 * regi);
+  for (regi = 0; regi < ppc_num_gprs; regi++)
+    right_supply_register (regcache, wordsize,
+                           regcache_tdep->ppc_gp0_regnum + regi,
+                           buf + wordsize * regi);
 
-  /* The FPSCR is stored in the low order word of the last doubleword in the
-     fpregset.  */
-  supply_register (tdep->ppc_fpscr_regnum, buf + 8 * 32 + 4);
+  right_supply_register (regcache, wordsize, gdbarch_pc_regnum (regcache_arch),
+			 buf + wordsize * PPC_LINUX_PT_NIP);
+  right_supply_register (regcache, wordsize, regcache_tdep->ppc_lr_regnum,
+			 buf + wordsize * PPC_LINUX_PT_LNK);
+  regcache_raw_supply (regcache, regcache_tdep->ppc_cr_regnum,
+		       buf + wordsize * PPC_LINUX_PT_CCR);
+  regcache_raw_supply (regcache, regcache_tdep->ppc_xer_regnum,
+		       buf + wordsize * PPC_LINUX_PT_XER);
+  regcache_raw_supply (regcache, regcache_tdep->ppc_ctr_regnum,
+		       buf + wordsize * PPC_LINUX_PT_CTR);
+  if (regcache_tdep->ppc_mq_regnum != -1)
+    right_supply_register (regcache, wordsize, regcache_tdep->ppc_mq_regnum,
+			   buf + wordsize * PPC_LINUX_PT_MQ);
+  right_supply_register (regcache, wordsize, regcache_tdep->ppc_ps_regnum,
+			 buf + wordsize * PPC_LINUX_PT_MSR);
 }
-
-/*
-  Use a local version of this function to get the correct types for regsets.
-*/
 
 static void
-fetch_core_registers (char *core_reg_sect,
-		      unsigned core_reg_size,
-		      int which,
-		      CORE_ADDR reg_addr)
+ppc32_linux_supply_gregset (const struct regset *regset,
+			    struct regcache *regcache,
+			    int regnum, const void *gregs, size_t size)
 {
-  if (which == 0)
-    {
-      if (core_reg_size == ELF_GREGSET_SIZE)
-	ppc_linux_supply_gregset (core_reg_sect);
-      else
-	warning ("wrong size gregset struct in core file");
-    }
-  else if (which == 2)
-    {
-      if (core_reg_size == ELF_FPREGSET_SIZE)
-	ppc_linux_supply_fpregset (core_reg_sect);
-      else
-	warning ("wrong size fpregset struct in core file");
-    }
+  ppc_linux_supply_gregset (regcache, regnum, gregs, size, 4);
 }
 
-/* Register that we are able to handle ELF file formats using standard
-   procfs "regset" structures.  */
-
-static struct core_fns ppc_linux_regset_core_fns =
-{
-  bfd_target_elf_flavour,	/* core_flavour */
-  default_check_format,		/* check_format */
-  default_core_sniffer,		/* core_sniffer */
-  fetch_core_registers,		/* core_read_registers */
-  NULL				/* next */
+static struct regset ppc32_linux_gregset = {
+  NULL, ppc32_linux_supply_gregset
 };
+
+struct ppc_linux_sigtramp_cache
+{
+  CORE_ADDR base;
+  struct trad_frame_saved_reg *saved_regs;
+};
+
+static struct ppc_linux_sigtramp_cache *
+ppc_linux_sigtramp_cache (struct frame_info *next_frame, void **this_cache)
+{
+  CORE_ADDR regs;
+  CORE_ADDR gpregs;
+  CORE_ADDR fpregs;
+  int i;
+  struct ppc_linux_sigtramp_cache *cache;
+  struct gdbarch *gdbarch = get_frame_arch (next_frame);
+  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+
+  if ((*this_cache) != NULL)
+    return (*this_cache);
+  cache = FRAME_OBSTACK_ZALLOC (struct ppc_linux_sigtramp_cache);
+  (*this_cache) = cache;
+  cache->saved_regs = trad_frame_alloc_saved_regs (next_frame);
+
+  cache->base = frame_unwind_register_unsigned (next_frame, SP_REGNUM);
+
+  /* Find the register pointer, which gives the address of the
+     register buffers.  */
+  if (tdep->wordsize == 4)
+    regs = (cache->base
+	    + 0xd0 /* Offset to ucontext_t.  */
+	    + 0x30 /* Offset to .reg.  */);
+  else
+    regs = (cache->base
+	    + 0x80 /* Offset to ucontext_t.  */
+	    + 0xe0 /* Offset to .reg.  */);
+  /* And the corresponding register buffers.  */
+  gpregs = read_memory_unsigned_integer (regs, tdep->wordsize);
+  fpregs = gpregs + 48 * tdep->wordsize;
+
+  /* General purpose.  */
+  for (i = 0; i < ppc_num_gprs; i++)
+    {
+      int regnum = i + tdep->ppc_gp0_regnum;
+      cache->saved_regs[regnum].addr = gpregs + i * tdep->wordsize;
+    }
+  cache->saved_regs[PC_REGNUM].addr = gpregs + 32 * tdep->wordsize;
+  cache->saved_regs[tdep->ppc_ctr_regnum].addr = gpregs + 35 * tdep->wordsize;
+  cache->saved_regs[tdep->ppc_lr_regnum].addr = gpregs + 36 * tdep->wordsize;
+  cache->saved_regs[tdep->ppc_xer_regnum].addr = gpregs + 37 * tdep->wordsize;
+  cache->saved_regs[tdep->ppc_cr_regnum].addr = gpregs + 38 * tdep->wordsize;
+
+  /* Floating point registers.  */
+  if (ppc_floating_point_unit_p (gdbarch))
+    {
+      for (i = 0; i < ppc_num_fprs; i++)
+        {
+          int regnum = i + tdep->ppc_fp0_regnum;
+          cache->saved_regs[regnum].addr = fpregs + i * tdep->wordsize;
+        }
+      cache->saved_regs[tdep->ppc_fpscr_regnum].addr
+        = fpregs + 32 * tdep->wordsize;
+    }
+
+  return cache;
+}
+
+static void
+ppc_linux_sigtramp_this_id (struct frame_info *next_frame, void **this_cache,
+			  struct frame_id *this_id)
+{
+  struct ppc_linux_sigtramp_cache *info
+    = ppc_linux_sigtramp_cache (next_frame, this_cache);
+  (*this_id) = frame_id_build (info->base, frame_pc_unwind (next_frame));
+}
+
+static void
+ppc_linux_sigtramp_prev_register (struct frame_info *next_frame,
+				void **this_cache,
+				int regnum, int *optimizedp,
+				enum lval_type *lvalp, CORE_ADDR *addrp,
+				int *realnump, void *valuep)
+{
+  struct ppc_linux_sigtramp_cache *info
+    = ppc_linux_sigtramp_cache (next_frame, this_cache);
+  trad_frame_get_prev_register (next_frame, info->saved_regs, regnum,
+				optimizedp, lvalp, addrp, realnump, valuep);
+}
+
+static const struct frame_unwind ppc_linux_sigtramp_unwind =
+{
+  SIGTRAMP_FRAME,
+  ppc_linux_sigtramp_this_id,
+  ppc_linux_sigtramp_prev_register
+};
+
+static const struct frame_unwind *
+ppc_linux_sigtramp_sniffer (struct frame_info *next_frame)
+{
+  struct gdbarch_tdep *tdep = gdbarch_tdep (get_frame_arch (next_frame));
+  if (frame_pc_unwind (next_frame)
+      > frame_unwind_register_unsigned (next_frame, SP_REGNUM))
+    /* Assume anything that is vaguely on the stack is a signal
+       trampoline.  */
+    return &ppc_linux_sigtramp_unwind;
+  else
+    return NULL;
+}
+
+static void
+ppc64_linux_supply_gregset (const struct regset *regset,
+			    struct regcache * regcache,
+			    int regnum, const void *gregs, size_t size)
+{
+  ppc_linux_supply_gregset (regcache, regnum, gregs, size, 8);
+}
+
+static struct regset ppc64_linux_gregset = {
+  NULL, ppc64_linux_supply_gregset
+};
+
+void
+ppc_linux_supply_fpregset (const struct regset *regset,
+			   struct regcache * regcache,
+			   int regnum, const void *fpset, size_t size)
+{
+  int regi;
+  struct gdbarch *regcache_arch = get_regcache_arch (regcache); 
+  struct gdbarch_tdep *regcache_tdep = gdbarch_tdep (regcache_arch);
+  const bfd_byte *buf = fpset;
+
+  if (! ppc_floating_point_unit_p (regcache_arch))
+    return;
+
+  for (regi = 0; regi < ppc_num_fprs; regi++)
+    regcache_raw_supply (regcache, 
+                         regcache_tdep->ppc_fp0_regnum + regi,
+                         buf + 8 * regi);
+
+  /* The FPSCR is stored in the low order word of the last
+     doubleword in the fpregset.  */
+  regcache_raw_supply (regcache, regcache_tdep->ppc_fpscr_regnum,
+                       buf + 8 * 32 + 4);
+}
+
+static struct regset ppc_linux_fpregset = { NULL, ppc_linux_supply_fpregset };
+
+static const struct regset *
+ppc_linux_regset_from_core_section (struct gdbarch *core_arch,
+				    const char *sect_name, size_t sect_size)
+{
+  struct gdbarch_tdep *tdep = gdbarch_tdep (core_arch);
+  if (strcmp (sect_name, ".reg") == 0)
+    {
+      if (tdep->wordsize == 4)
+	return &ppc32_linux_gregset;
+      else
+	return &ppc64_linux_gregset;
+    }
+  if (strcmp (sect_name, ".reg2") == 0)
+    return &ppc_linux_fpregset;
+  return NULL;
+}
 
 static void
 ppc_linux_init_abi (struct gdbarch_info info,
@@ -1042,6 +1064,15 @@ ppc_linux_init_abi (struct gdbarch_info info,
 
   if (tdep->wordsize == 4)
     {
+      /* NOTE: jimb/2004-03-26: The System V ABI PowerPC Processor
+         Supplement says that long doubles are sixteen bytes long.
+         However, as one of the known warts of its ABI, PPC GNU/Linux
+         uses eight-byte long doubles.  GCC only recently got 128-bit
+         long double support on PPC, so it may be changing soon.  The
+         Linux[sic] Standards Base says that programs that use 'long
+         double' on PPC GNU/Linux are non-conformant.  */
+      set_gdbarch_long_double_bit (gdbarch, 8 * TARGET_CHAR_BIT);
+
       /* Until November 2001, gcc did not comply with the 32 bit SysV
 	 R4 ABI requirement that structures less than or equal to 8
 	 bytes should be returned in registers.  Instead GCC was using
@@ -1051,19 +1082,9 @@ ppc_linux_init_abi (struct gdbarch_info info,
 	 PowerOpen struct convention.  */
       set_gdbarch_return_value (gdbarch, ppc_linux_return_value);
 
-      /* Note: kevinb/2002-04-12: See note in rs6000_gdbarch_init regarding
-	 *_push_arguments().  The same remarks hold for the methods below.  */
-      set_gdbarch_deprecated_frameless_function_invocation (gdbarch, ppc_linux_frameless_function_invocation);
-      set_gdbarch_deprecated_frame_chain (gdbarch, ppc_linux_frame_chain);
-      set_gdbarch_deprecated_frame_saved_pc (gdbarch, ppc_linux_frame_saved_pc);
-
-      set_gdbarch_deprecated_frame_init_saved_regs (gdbarch,
-                                         ppc_linux_frame_init_saved_regs);
-      set_gdbarch_deprecated_init_extra_frame_info (gdbarch,
-                                         ppc_linux_init_extra_frame_info);
-
       set_gdbarch_memory_remove_breakpoint (gdbarch,
                                             ppc_linux_memory_remove_breakpoint);
+
       /* Shared library handling.  */
       set_gdbarch_in_solib_call_trampoline (gdbarch, in_plt_section);
       set_gdbarch_skip_trampoline_code (gdbarch,
@@ -1086,6 +1107,8 @@ ppc_linux_init_abi (struct gdbarch_info info,
       /* PPC64 malloc's entry-point is called ".malloc".  */
       set_gdbarch_name_of_malloc (gdbarch, ".malloc");
     }
+  set_gdbarch_regset_from_core_section (gdbarch, ppc_linux_regset_from_core_section);
+  frame_unwind_append_sniffer (gdbarch, ppc_linux_sigtramp_sniffer);
 }
 
 void
@@ -1099,5 +1122,4 @@ _initialize_ppc_linux_tdep (void)
                          ppc_linux_init_abi);
   gdbarch_register_osabi (bfd_arch_rs6000, bfd_mach_rs6k, GDB_OSABI_LINUX,
                          ppc_linux_init_abi);
-  add_core_fns (&ppc_linux_regset_core_fns);
 }

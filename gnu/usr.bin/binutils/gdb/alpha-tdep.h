@@ -23,9 +23,8 @@
 #define ALPHA_TDEP_H
 
 /* Say how long (ordinary) registers are.  This is a piece of bogosity
-   used in push_word and a few other places;
-   DEPRECATED_REGISTER_RAW_SIZE is the real way to know how big a
-   register is.  */
+   used in push_word and a few other places; register_size() is the
+   real way to know how big a register is.  */
 #define ALPHA_REGISTER_SIZE 8
 
 /* Number of machine registers.  */
@@ -82,6 +81,12 @@ struct gdbarch_tdep
   /* Translate a signal handler stack base address into the address of
      the sigcontext structure for that signal handler.  */
   CORE_ADDR (*sigcontext_addr) (struct frame_info *);
+
+  /* Does the PC fall in a signal trampoline.  */
+  /* NOTE: cagney/2004-04-30: Do not copy/clone this code.  Instead
+     look at tramp-frame.h and other simplier per-architecture
+     sigtramp unwinders.  */
+  int (*pc_in_sigtramp) (CORE_ADDR pc, char *name);
 
   /* Offset of registers in `struct sigcontext'.  */
   int sc_pc_offset;

@@ -280,8 +280,7 @@ proc do_fork_tests {} {
 A fork or vfork creates a new process.  follow-fork-mode can be:.*
 .*parent  - the original process is debugged after a fork.*
 .*child   - the new process is debugged after a fork.*
-.*ask     - the debugger will ask for one of the above choices.*
-For \"parent\" or \"child\", the unfollowed process will run free..*
+The unfollowed process will continue to run..*
 By default, the debugger will follow the parent process..*$gdb_prompt $"\
                       { pass "help set follow" }
       -re "$gdb_prompt $" { fail "help set follow" }

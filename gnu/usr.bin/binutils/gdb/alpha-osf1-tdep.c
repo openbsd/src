@@ -54,13 +54,13 @@ alpha_osf1_init_abi (struct gdbarch_info info,
   /* Hook into the MDEBUG frame unwinder.  */
   alpha_mdebug_init_abi (info, gdbarch);
 
-  set_gdbarch_pc_in_sigtramp (gdbarch, alpha_osf1_pc_in_sigtramp);
   /* The next/step support via procfs on OSF1 is broken when running
      on multi-processor machines. We need to use software single stepping
      instead.  */
   set_gdbarch_software_single_step (gdbarch, alpha_software_single_step);
 
   tdep->sigcontext_addr = alpha_osf1_sigcontext_addr;
+  tdep->pc_in_sigtramp = alpha_osf1_pc_in_sigtramp;
 
   tdep->jb_pc = 2;
   tdep->jb_elt_size = 8;

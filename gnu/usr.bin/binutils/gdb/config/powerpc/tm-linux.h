@@ -35,8 +35,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
    without symbols */
 
 extern int ppc_linux_in_sigtramp (CORE_ADDR pc, char *func_name);
-#undef IN_SIGTRAMP
-#define IN_SIGTRAMP(pc,func_name) ppc_linux_in_sigtramp (pc,func_name)
+#undef DEPRECATED_IN_SIGTRAMP
+#define DEPRECATED_IN_SIGTRAMP(pc,func_name) ppc_linux_in_sigtramp (pc,func_name)
 
 #if 0
 #define CANNOT_FETCH_REGISTER(regno) ((regno) >= MQ_REGNUM)

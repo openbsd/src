@@ -187,13 +187,13 @@ if {![gdb_skip_float_test "print print_two_floats(*f3)"] && \
             ".*Contents of two_floats_t:\[ \r\n\]+-2\\.345000\[ \t]+1\\.000000\[ \r\n\]+.\[0-9\]+ = \\{float1 = -2\\.34500003, float2 = 1\\}"
 }
 
-if ![gdb_skip_stdio_test "print print_bit_flags_char(*flags)"] {
-    print_struct_call "print_bit_flags_char(*flags)" \
+if ![gdb_skip_stdio_test "print print_bit_flags_char(*cflags)"] {
+    print_struct_call "print_bit_flags_char(*cflags)" \
             ".*alpha\[ \r\n\]+gamma\[ \r\n\]+epsilon\[ \r\n\]+.\[0-9\]+ = \\{alpha = 1 '\\\\001', beta = 0 '\\\\0', gamma = 1 '\\\\001', delta = 0 '\\\\0', epsilon = 1 '\\\\001', omega = 0 '\\\\0'\\}"
 }
 
-if ![gdb_skip_stdio_test "print print_bit_flags_short(*flags)"] {
-    print_struct_call "print_bit_flags_short(*flags)" \
+if ![gdb_skip_stdio_test "print print_bit_flags_short(*sflags)"] {
+    print_struct_call "print_bit_flags_short(*sflags)" \
             ".*alpha\[ \r\n\]+gamma\[ \r\n\]+epsilon\[ \r\n\]+.\[0-9\]+ = \\{alpha = 1, beta = 0, gamma = 1, delta = 0, epsilon = 1, omega = 0\\}"
 }
 

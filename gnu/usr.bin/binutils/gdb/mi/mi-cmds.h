@@ -87,6 +87,7 @@ extern mi_cmd_args_ftype mi_cmd_exec_step_instruction;
 extern mi_cmd_args_ftype mi_cmd_exec_until;
 extern mi_cmd_args_ftype mi_cmd_exec_interrupt;
 extern mi_cmd_argv_ftype mi_cmd_file_list_exec_source_file;
+extern mi_cmd_argv_ftype mi_cmd_file_list_exec_source_files;
 extern mi_cmd_argv_ftype mi_cmd_gdb_exit;
 extern mi_cmd_argv_ftype mi_cmd_interpreter_exec;
 extern mi_cmd_argv_ftype mi_cmd_stack_info_depth;
@@ -146,7 +147,6 @@ extern int mi_debug_p;
 extern struct ui_file *raw_stdout;
 
 extern char *mi_error_message;
-extern void mi_error_last_message (void);
 extern void mi_execute_command (char *cmd, int from_tty);
 
 #endif

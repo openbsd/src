@@ -42,11 +42,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 /* To get entry_point_address.  */
 #include "objfiles.h"
 
-#include "solib.h"              /* Support for shared libraries. */
+#include "solib.h"              /* Support for shared libraries.  */
 #include "solib-svr4.h"         /* For struct link_map_offsets.  */
 #include "gdb_string.h"
 #include "dis-asm.h"
-
 
 enum cris_num_regs
 {
@@ -108,32 +107,19 @@ extern const struct cris_spec_reg cris_spec_regs[];
 
 /* CRIS version, set via the user command 'set cris-version'.  Affects
    register names and sizes.*/
-static int usr_cmd_cris_version;
+static unsigned int usr_cmd_cris_version;
 
 /* Indicates whether to trust the above variable.  */
 static int usr_cmd_cris_version_valid = 0;
 
-/* CRIS mode, set via the user command 'set cris-mode'.  Affects availability
-   of some registers.  */
-static const char *usr_cmd_cris_mode;
-
-/* Indicates whether to trust the above variable.  */
-static int usr_cmd_cris_mode_valid = 0;
-
-static const char CRIS_MODE_USER[] = "CRIS_MODE_USER";
-static const char CRIS_MODE_SUPERVISOR[] = "CRIS_MODE_SUPERVISOR";
-static const char *cris_mode_enums[] = 
-{
-  CRIS_MODE_USER,
-  CRIS_MODE_SUPERVISOR,
-  0
-};
+/* Whether to make use of Dwarf-2 CFI (default on).  */
+static int usr_cmd_cris_dwarf2_cfi = 1;
 
 /* CRIS architecture specific information.  */
 struct gdbarch_tdep
 {
-  int cris_version;
-  const char *cris_mode;
+  unsigned int cris_version;
+  int cris_dwarf2_cfi;
 };
 
 /* Functions for accessing target dependent data.  */
@@ -144,10 +130,121 @@ cris_version (void)
   return (gdbarch_tdep (current_gdbarch)->cris_version);
 }
 
-static const char *
-cris_mode (void)
+/* Sigtramp identification code copied from i386-linux-tdep.c.  */
+
+#define SIGTRAMP_INSN0    0x9c5f  /* movu.w 0xXX, $r9 */
+#define SIGTRAMP_OFFSET0  0
+#define SIGTRAMP_INSN1    0xe93d  /* break 13 */
+#define SIGTRAMP_OFFSET1  4
+
+static const unsigned short sigtramp_code[] =
 {
-  return (gdbarch_tdep (current_gdbarch)->cris_mode);
+  SIGTRAMP_INSN0, 0x0077,  /* movu.w $0x77, $r9 */
+  SIGTRAMP_INSN1           /* break 13 */
+};
+
+#define SIGTRAMP_LEN (sizeof sigtramp_code)
+
+/* Note: same length as normal sigtramp code.  */
+
+static const unsigned short rt_sigtramp_code[] =
+{
+  SIGTRAMP_INSN0, 0x00ad,  /* movu.w $0xad, $r9 */
+  SIGTRAMP_INSN1           /* break 13 */
+};
+
+/* If PC is in a sigtramp routine, return the address of the start of
+   the routine.  Otherwise, return 0.  */
+
+static CORE_ADDR
+cris_sigtramp_start (struct frame_info *next_frame)
+{
+  CORE_ADDR pc = frame_pc_unwind (next_frame);
+  unsigned short buf[SIGTRAMP_LEN];
+
+  if (!safe_frame_unwind_memory (next_frame, pc, buf, SIGTRAMP_LEN))
+    return 0;
+
+  if (buf[0] != SIGTRAMP_INSN0)
+    {
+      if (buf[0] != SIGTRAMP_INSN1)
+	return 0;
+
+      pc -= SIGTRAMP_OFFSET1;
+      if (!safe_frame_unwind_memory (next_frame, pc, buf, SIGTRAMP_LEN))
+	return 0;
+    }
+
+  if (memcmp (buf, sigtramp_code, SIGTRAMP_LEN) != 0)
+    return 0;
+
+  return pc;
+}
+
+/* If PC is in a RT sigtramp routine, return the address of the start of
+   the routine.  Otherwise, return 0.  */
+
+static CORE_ADDR
+cris_rt_sigtramp_start (struct frame_info *next_frame)
+{
+  CORE_ADDR pc = frame_pc_unwind (next_frame);
+  unsigned short buf[SIGTRAMP_LEN];
+
+  if (!safe_frame_unwind_memory (next_frame, pc, buf, SIGTRAMP_LEN))
+    return 0;
+
+  if (buf[0] != SIGTRAMP_INSN0)
+    {
+      if (buf[0] != SIGTRAMP_INSN1)
+	return 0;
+
+      pc -= SIGTRAMP_OFFSET1;
+      if (!safe_frame_unwind_memory (next_frame, pc, buf, SIGTRAMP_LEN))
+	return 0;
+    }
+
+  if (memcmp (buf, rt_sigtramp_code, SIGTRAMP_LEN) != 0)
+    return 0;
+
+  return pc;
+}
+
+/* Assuming NEXT_FRAME is a frame following a GNU/Linux sigtramp
+   routine, return the address of the associated sigcontext structure.  */
+
+static CORE_ADDR
+cris_sigcontext_addr (struct frame_info *next_frame)
+{
+  CORE_ADDR pc;
+  CORE_ADDR sp;
+  char buf[4];
+
+  frame_unwind_register (next_frame, SP_REGNUM, buf);
+  sp = extract_unsigned_integer (buf, 4);
+
+  /* Look for normal sigtramp frame first.  */
+  pc = cris_sigtramp_start (next_frame);
+  if (pc)
+    {
+      /* struct signal_frame (arch/cris/kernel/signal.c) contains
+	 struct sigcontext as its first member, meaning the SP points to
+	 it already.  */
+      return sp;
+    }
+
+  pc = cris_rt_sigtramp_start (next_frame);
+  if (pc)
+    {
+      /* struct rt_signal_frame (arch/cris/kernel/signal.c) contains
+	 a struct ucontext, which in turn contains a struct sigcontext.
+	 Magic digging:
+	 4 + 4 + 128 to struct ucontext, then
+	 4 + 4 + 12 to struct sigcontext.  */
+      return (sp + 156);
+    }
+
+  error ("Couldn't recognize signal trampoline.");
+  return 0;
 }
 
 struct cris_unwind_cache
@@ -172,6 +269,111 @@ struct cris_unwind_cache
   /* Table indicating the location of each and every register.  */
   struct trad_frame_saved_reg *saved_regs;
 };
+
+static struct cris_unwind_cache *
+cris_sigtramp_frame_unwind_cache (struct frame_info *next_frame,
+				  void **this_cache)
+{
+  struct gdbarch_tdep *tdep = gdbarch_tdep (current_gdbarch);
+  struct cris_unwind_cache *info;
+  CORE_ADDR pc;
+  CORE_ADDR sp;
+  CORE_ADDR addr;
+  char buf[4];
+  int i;
+
+  if ((*this_cache))
+    return (*this_cache);
+
+  info = FRAME_OBSTACK_ZALLOC (struct cris_unwind_cache);
+  (*this_cache) = info;
+  info->saved_regs = trad_frame_alloc_saved_regs (next_frame);
+
+  /* Zero all fields.  */
+  info->prev_sp = 0;
+  info->base = 0;
+  info->size = 0;
+  info->sp_offset = 0;
+  info->r8_offset = 0;
+  info->uses_frame = 0;
+  info->return_pc = 0;
+  info->leaf_function = 0;
+
+  frame_unwind_register (next_frame, SP_REGNUM, buf);
+  info->base = extract_unsigned_integer (buf, 4);
+
+  addr = cris_sigcontext_addr (next_frame);
+  
+  /* Layout of the sigcontext struct:
+     struct sigcontext {
+	struct pt_regs regs;
+	unsigned long oldmask;
+	unsigned long usp;
+     }; */
+  
+  /* R0 to R13 are stored in reverse order at offset (2 * 4) in 
+     struct pt_regs.  */
+  for (i = 0; i <= 13; i++)
+    info->saved_regs[i].addr = addr + ((15 - i) * 4);
+
+  info->saved_regs[MOF_REGNUM].addr = addr + (16 * 4);
+  info->saved_regs[DCCR_REGNUM].addr = addr + (17 * 4);
+  info->saved_regs[SRP_REGNUM].addr = addr + (18 * 4);
+  /* Note: IRP is off by 2 at this point.  There's no point in correcting it
+     though since that will mean that the backtrace will show a PC different
+     from what is shown when stopped.  */
+  info->saved_regs[IRP_REGNUM].addr = addr + (19 * 4);
+  info->saved_regs[PC_REGNUM] = info->saved_regs[IRP_REGNUM];
+  info->saved_regs[SP_REGNUM].addr = addr + (24 * 4);
+  
+  return info;
+}
+
+static void
+cris_sigtramp_frame_this_id (struct frame_info *next_frame, void **this_cache,
+                             struct frame_id *this_id)
+{
+  struct cris_unwind_cache *cache =
+    cris_sigtramp_frame_unwind_cache (next_frame, this_cache);
+  (*this_id) = frame_id_build (cache->base, frame_pc_unwind (next_frame));
+}
+
+/* Forward declaration.  */
+
+static void cris_frame_prev_register (struct frame_info *next_frame,
+				      void **this_prologue_cache,
+				      int regnum, int *optimizedp,
+				      enum lval_type *lvalp, CORE_ADDR *addrp,
+				      int *realnump, void *bufferp);
+static void
+cris_sigtramp_frame_prev_register (struct frame_info *next_frame,
+                                   void **this_cache,
+                                   int regnum, int *optimizedp,
+                                   enum lval_type *lvalp, CORE_ADDR *addrp,
+                                   int *realnump, void *valuep)
+{
+  /* Make sure we've initialized the cache.  */
+  cris_sigtramp_frame_unwind_cache (next_frame, this_cache);
+  cris_frame_prev_register (next_frame, this_cache, regnum,
+                            optimizedp, lvalp, addrp, realnump, valuep);
+}
+
+static const struct frame_unwind cris_sigtramp_frame_unwind =
+{
+  SIGTRAMP_FRAME,
+  cris_sigtramp_frame_this_id,
+  cris_sigtramp_frame_prev_register
+};
+
+static const struct frame_unwind *
+cris_sigtramp_frame_sniffer (struct frame_info *next_frame)
+{
+  if (cris_sigtramp_start (next_frame) 
+      || cris_rt_sigtramp_start (next_frame))
+    return &cris_sigtramp_frame_unwind;
+
+  return NULL;
+}
 
 /* The instruction environment needed to find single-step breakpoints.  */
 typedef 
@@ -345,13 +547,11 @@ static struct gdbarch *cris_gdbarch_init (struct gdbarch_info,
 
 static void cris_dump_tdep (struct gdbarch *, struct ui_file *);
 
-static void cris_version_update (char *ignore_args, int from_tty, 
-                                 struct cmd_list_element *c);
+static void set_cris_version (char *ignore_args, int from_tty, 
+			      struct cmd_list_element *c);
 
-static void cris_mode_update (char *ignore_args, int from_tty, 
-                              struct cmd_list_element *c);
-
-static CORE_ADDR bfd_lookup_symbol (bfd *, const char *);
+static void set_cris_dwarf2_cfi (char *ignore_args, int from_tty, 
+				 struct cmd_list_element *c);
 
 static CORE_ADDR cris_scan_prologue (CORE_ADDR pc, 
 				     struct frame_info *next_frame,
@@ -364,9 +564,8 @@ static CORE_ADDR cris_unwind_sp (struct gdbarch *gdbarch,
 				 struct frame_info *next_frame);
 
 /* When arguments must be pushed onto the stack, they go on in reverse
-   order.  The below implements a FILO (stack) to do this. */
-
-/* Borrowed from d10v-tdep.c.  */
+   order.  The below implements a FILO (stack) to do this.  
+   Copied from d10v-tdep.c.  */
 
 struct stack_item
 {
@@ -401,7 +600,7 @@ pop_stack_item (struct stack_item *si)
    the saved registers of frame described by FRAME_INFO.  This
    includes special registers such as pc and fp saved in special ways
    in the stack frame.  sp is even more special: the address we return
-   for it IS the sp for the next frame. */
+   for it IS the sp for the next frame.  */
 
 struct cris_unwind_cache *
 cris_frame_unwind_cache (struct frame_info *next_frame,
@@ -472,8 +671,8 @@ cris_frame_prev_register (struct frame_info *next_frame,
 {
   struct cris_unwind_cache *info
     = cris_frame_unwind_cache (next_frame, this_prologue_cache);
-  trad_frame_prev_register (next_frame, info->saved_regs, regnum,
-			    optimizedp, lvalp, addrp, realnump, bufferp);
+  trad_frame_get_prev_register (next_frame, info->saved_regs, regnum,
+				optimizedp, lvalp, addrp, realnump, bufferp);
 }
 
 /* Assuming NEXT_FRAME->prev is a dummy, return the frame ID of that
@@ -513,7 +712,7 @@ cris_push_dummy_code (struct gdbarch *gdbarch,
 }
 
 static CORE_ADDR
-cris_push_dummy_call (struct gdbarch *gdbarch, CORE_ADDR func_addr,
+cris_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 		      struct regcache *regcache, CORE_ADDR bp_addr,
 		      int nargs, struct value **args, CORE_ADDR sp,
 		      int struct_return, CORE_ADDR struct_addr)
@@ -533,7 +732,7 @@ cris_push_dummy_call (struct gdbarch *gdbarch, CORE_ADDR func_addr,
 
   struct stack_item *si = NULL;
 
-  /* Push the return address. */
+  /* Push the return address.  */
   regcache_cooked_write_unsigned (regcache, SRP_REGNUM, bp_addr);
 
   /* Are we returning a value using a structure return or a normal value
@@ -769,7 +968,7 @@ cris_scan_prologue (CORE_ADDR pc, struct frame_info *next_frame,
   limit = next_frame ? frame_pc_unwind (next_frame) : pc + 64;
 
   /* Find the prologue instructions.  */
-  while (pc < limit)
+  while (pc > 0 && pc < limit)
     {
       insn = read_memory_unsigned_integer (pc, 2);
       pc += 2;
@@ -1171,13 +1370,8 @@ cris_cannot_store_register (int regno)
     /* Writing has no effect.  */
     return 1;
 
-  else if (cris_mode () == CRIS_MODE_USER)
-    {
-      if (regno == IBR_REGNUM || regno == BAR_REGNUM || regno == BRP_REGNUM 
-          || regno == IRP_REGNUM)
-        /* Read-only in user mode.  */
-        return 1;
-    }
+  /* IBR, BAR, BRP and IRP are read-only in user mode.  Let the debug
+     agent decide whether they are writable.  */
   
   return 0;
 }
@@ -1204,7 +1398,7 @@ cris_register_offset (int regno)
     }
   else
     {
-      /* Invalid register. */
+      /* Invalid register.  */
       return -1;
     }
 }
@@ -1213,35 +1407,23 @@ cris_register_offset (int regno)
    of data in register regno.  */
 
 static struct type *
-cris_register_virtual_type (int regno)
+cris_register_type (struct gdbarch *gdbarch, int regno)
 {
-  if (regno == SP_REGNUM || regno == PC_REGNUM
-      || (regno > P8_REGNUM && regno < USP_REGNUM))
-    {
-      /* SP, PC, IBR, IRP, SRP, BAR, DCCR, BRP */
-      return lookup_pointer_type (builtin_type_void);
-    }
-  else if (regno == P8_REGNUM || regno == USP_REGNUM
-           || (regno >= 0 && regno < SP_REGNUM))
-    {
-      /* R0 - R13, P8, P15 */
-      return builtin_type_unsigned_long;
-    }
-  else if (regno > P3_REGNUM && regno < P8_REGNUM)
-    {
-      /* P4, CCR, DCR0, DCR1 */
-      return builtin_type_unsigned_short;
-    }
-  else if (regno > PC_REGNUM && regno < P4_REGNUM)
-    {
-      /* P0, P1, P2, P3 */
-      return builtin_type_unsigned_char;
-    }
+  if (regno == PC_REGNUM)
+    return builtin_type_void_func_ptr;
+  else if (regno == SP_REGNUM || regno == CRIS_FP_REGNUM)
+    return builtin_type_void_data_ptr;
+  else if ((regno >= 0 && regno < SP_REGNUM)
+	   || (regno >= MOF_REGNUM && regno <= USP_REGNUM))
+    /* Note: R8 taken care of previous clause.  */
+    return builtin_type_uint32;
+  else if (regno >= P4_REGNUM && regno <= CCR_REGNUM)
+      return builtin_type_uint16;
+  else if (regno >= P0_REGNUM && regno <= VR_REGNUM)
+      return builtin_type_uint8;
   else
-    {
-      /* Invalid register.  */
-      return builtin_type_void;
-    }
+      /* Invalid (unimplemented) register.  */
+      return builtin_type_int0;
 }
 
 /* Stores a function return value of type type, where valbuf is the address 
@@ -1319,10 +1501,49 @@ cris_register_name (int regno)
     }
 }
 
+/* Convert DWARF register number REG to the appropriate register
+   number used by GDB.  */
+
 static int
-cris_register_bytes_ok (long bytes)
+cris_dwarf2_reg_to_regnum (int reg)
 {
-  return (bytes == DEPRECATED_REGISTER_BYTES);
+  /* We need to re-map a couple of registers (SRP is 16 in Dwarf-2 register
+     numbering, MOF is 18).
+     Adapted from gcc/config/cris/cris.h.  */
+  static int cris_dwarf_regmap[] = {
+    0,  1,  2,  3,
+    4,  5,  6,  7,
+    8,  9,  10, 11,
+    12, 13, 14, 15,
+    27, -1, -1, -1,
+    -1, -1, -1, 23,
+    -1, -1, -1, 27,
+    -1, -1, -1, -1
+  };
+  int regnum = -1;
+
+  if (reg >= 0 && reg < ARRAY_SIZE (cris_dwarf_regmap))
+    regnum = cris_dwarf_regmap[reg];
+
+  if (regnum == -1)
+    warning ("Unmapped DWARF Register #%d encountered\n", reg);
+
+  return regnum;
+}
+
+/* DWARF-2 frame support.  */
+
+static void
+cris_dwarf2_frame_init_reg (struct gdbarch *gdbarch, int regnum,
+                            struct dwarf2_frame_state_reg *reg)
+{
+  /* The return address column.  */
+  if (regnum == PC_REGNUM)
+    reg->how = DWARF2_FRAME_REG_RA;
+
+  /* The call frame address.  */
+  else if (regnum == SP_REGNUM)
+    reg->how = DWARF2_FRAME_REG_CFA;
 }
 
 /* Extract from an array regbuf containing the raw register state a function
@@ -1598,6 +1819,7 @@ cris_software_single_step (enum target_signal ignore, int insert_breakpoints)
       if (status == -1)
         {
           /* Could not find a target.  FIXME: Should do something.  */
+          warning ("cris_software_single_step: unable to find step target");
         }
       else
         {
@@ -3314,7 +3536,7 @@ cris_delayed_get_disassembler (bfd_vma addr, struct disassemble_info *info)
      disassembler, even when there is no BFD.  Does something like
      "gdb; target remote; disassmeble *0x123" work?  */
   gdb_assert (exec_bfd != NULL);
-  print_insn =  cris_get_disassembler (exec_bfd);
+  print_insn = cris_get_disassembler (exec_bfd);
   gdb_assert (print_insn != NULL);
   return print_insn (addr, info);
 }
@@ -3338,7 +3560,7 @@ supply_gregset (elf_gregset_t *gregsetp)
      knows about the actual size of each register so that's no problem.  */
   for (i = 0; i < NUM_GENREGS + NUM_SPECREGS; i++)
     {
-      supply_register (i, (char *)&regp[i]);
+      regcache_raw_supply (current_regcache, i, (char *)&regp[i]);
     }
 }
 
@@ -3425,230 +3647,38 @@ cris_linux_svr4_fetch_link_map_offsets (void)
   return lmp;
 }
 
-static void
-cris_fpless_backtrace (char *noargs, int from_tty)
-{
-  /* Points at the instruction after the jsr (except when in innermost frame
-     where it points at the original pc).  */
-  CORE_ADDR pc = 0;
-
-  /* Temporary variable, used for parsing from the start of the function that
-     the pc is in, up to the pc.  */
-  CORE_ADDR tmp_pc = 0;
-  CORE_ADDR sp = 0;
-
-  /* Information about current frame.  */
-  struct symtab_and_line sal;
-  char* func_name;
-
-  /* Present instruction.  */
-  unsigned short insn;
-  
-  /* Next instruction, lookahead.  */
-  unsigned short insn_next; 
-
-  /* This is to store the offset between sp at start of function and until we
-     reach push srp (if any).  */
-  int sp_add_later = 0;
-  int push_srp_found = 0;
-
-  int val = 0;
-
-  /* Frame counter.  */
-  int frame = 0;
-
-  /* For the innermost frame, we want to look at srp in case it's a leaf
-     function (since there's no push srp in that case).  */
-  int innermost_frame = 1;
-  
-  deprecated_read_register_gen (PC_REGNUM, (char *) &pc);
-  deprecated_read_register_gen (SP_REGNUM, (char *) &sp);
-  
-  /* We make an explicit return when we can't find an outer frame.  */
-  while (1)
-    {
-      /* Get file name and line number.  */
-      sal = find_pc_line (pc, 0);
-
-      /* Get function name.  */
-      find_pc_partial_function (pc, &func_name, (CORE_ADDR *) NULL,
-                                (CORE_ADDR *) NULL);
-
-      /* Print information about current frame.  */
-      printf_unfiltered ("#%i  0x%08lx in %s", frame++, pc, func_name);
-      if (sal.symtab)
-        {    
-          printf_unfiltered (" at %s:%i", sal.symtab->filename, sal.line);
-        }
-      printf_unfiltered ("\n");
-      
-      /* Get the start address of this function.  */
-      tmp_pc = get_pc_function_start (pc);
-  
-      /* Mini parser, only meant to find push sp and sub ...,sp from the start
-         of the function, up to the pc.  */
-      while (tmp_pc < pc)
-        {
-          insn = read_memory_unsigned_integer (tmp_pc, sizeof (short));
-          tmp_pc += sizeof (short);
-          if (insn == 0xE1FC)
-            {
-              /* push <reg> 32 bit instruction */
-              insn_next = read_memory_unsigned_integer (tmp_pc, 
-                                                        sizeof (short));
-              tmp_pc += sizeof (short);
-
-              /* Recognize srp.  */
-              if (insn_next == 0xBE7E)
-                {
-                  /* For subsequent (not this one though) push or sub which
-                     affects sp, adjust sp immediately.  */
-                  push_srp_found = 1;
-
-                  /* Note: this will break if we ever encounter a 
-                     push vr (1 byte) or push ccr (2 bytes).  */
-                  sp_add_later += 4;
-                }
-              else
-                {
-                  /* Some other register was pushed.  */
-                  if (push_srp_found)
-                    {    
-                      sp += 4;
-                    }
-                  else
-                    {
-                      sp_add_later += 4;
-                    }
-                }
-            }
-          else if (cris_get_operand2 (insn) == SP_REGNUM 
-                   && cris_get_mode (insn) == 0x0000
-                   && cris_get_opcode (insn) == 0x000A)
-            {
-              /* subq <val>,sp */
-              val = cris_get_quick_value (insn);
-
-              if (push_srp_found)
-                {
-                  sp += val;
-                }
-              else
-                {
-                  sp_add_later += val;
-                }
-              
-            }
-          else if (cris_get_operand2 (insn) == SP_REGNUM
-                   /* Autoincrement addressing mode.  */
-                   && cris_get_mode (insn) == 0x0003
-                   /* Opcode.  */
-                   && ((insn) & 0x03E0) >> 5 == 0x0004)
-            {
-              /* subu <val>,sp */
-              val = get_data_from_address (&insn, tmp_pc);
-
-              if (push_srp_found)
-                {
-                  sp += val;
-                }
-              else
-                {
-                  sp_add_later += val;
-                }
-            }
-          else if (cris_get_operand2 (insn) == SP_REGNUM
-                   && ((insn & 0x0F00) >> 8) == 0x0001
-                   && (cris_get_signed_offset (insn) < 0))
-            {
-              /* Immediate byte offset addressing prefix word with sp as base 
-                 register.  Used for CRIS v8 i.e. ETRAX 100 and newer if <val> 
-                 is between 64 and 128. 
-                 movem r<regsave>,[sp=sp-<val>] */
-              val = -cris_get_signed_offset (insn);
-              insn_next = read_memory_unsigned_integer (tmp_pc, 
-                                                        sizeof (short));
-              tmp_pc += sizeof (short);
-              
-              if (cris_get_mode (insn_next) == PREFIX_ASSIGN_MODE
-                  && cris_get_opcode (insn_next) == 0x000F
-                  && cris_get_size (insn_next) == 0x0003
-                  && cris_get_operand1 (insn_next) == SP_REGNUM)
-                {             
-                  if (push_srp_found)
-                    {
-                      sp += val;
-                    }
-                  else
-                    {
-                      sp_add_later += val;
-                    }
-                }
-            }
-        }
-      
-      if (push_srp_found)
-        {
-          /* Reset flag.  */
-          push_srp_found = 0;
-
-          /* sp should now point at where srp is stored on the stack.  Update
-             the pc to the srp.  */
-          pc = read_memory_unsigned_integer (sp, 4);
-        }
-      else if (innermost_frame)
-        {
-          /* We couldn't find a push srp in the prologue, so this must be
-             a leaf function, and thus we use the srp register directly.
-             This should happen at most once, for the innermost function.  */
-          deprecated_read_register_gen (SRP_REGNUM, (char *) &pc);
-        }
-      else
-        {
-          /* Couldn't find an outer frame.  */
-          return;
-        }
-
-      /* Reset flag.  (In case the innermost frame wasn't a leaf, we don't
-         want to look at the srp register later either).  */
-      innermost_frame = 0;
-
-      /* Now, add the offset for everything up to, and including push srp,
-         that was held back during the prologue parsing.  */ 
-      sp += sp_add_later;
-      sp_add_later = 0;
-    }
-}
-
 extern initialize_file_ftype _initialize_cris_tdep; /* -Wmissing-prototypes */
 
 void
 _initialize_cris_tdep (void)
 {
+  static struct cmd_list_element *cris_set_cmdlist;
+  static struct cmd_list_element *cris_show_cmdlist;
+
   struct cmd_list_element *c;
 
   gdbarch_register (bfd_arch_cris, cris_gdbarch_init, cris_dump_tdep);
   
   /* CRIS-specific user-commands.  */
-  c = add_set_cmd ("cris-version", class_support, var_integer, 
-                   (char *) &usr_cmd_cris_version, 
-                   "Set the current CRIS version.", &setlist);
-  set_cmd_sfunc (c, cris_version_update);
-  add_show_from_set (c, &showlist);
+  add_setshow_uinteger_cmd ("cris-version", class_support, 
+			    &usr_cmd_cris_version, 
+			    "Set the current CRIS version.",
+			    "Show the current CRIS version.",
+			    "Set if autodetection fails.",
+			    "Current CRIS version is %s.",
+			    set_cris_version, NULL,
+			    &setlist, &showlist);
   
-  c = add_set_enum_cmd ("cris-mode", class_support, cris_mode_enums, 
-                        &usr_cmd_cris_mode, 
-                        "Set the current CRIS mode.", &setlist);
-  set_cmd_sfunc (c, cris_mode_update);
-  add_show_from_set (c, &showlist);
+  add_setshow_boolean_cmd ("cris-dwarf2-cfi", class_support,
+			   &usr_cmd_cris_dwarf2_cfi,
+			   "Set the usage of Dwarf-2 CFI for CRIS.",
+			   "Show the usage of Dwarf-2 CFI for CRIS.",
+			   "Set to \"off\" if using gcc-cris < R59.",
+			   "Usage of Dwarf-2 CFI for CRIS is %d.",
+			   set_cris_dwarf2_cfi, NULL,
+			   &setlist, &showlist);
 
-  c = add_cmd ("cris-fpless-backtrace", class_support, cris_fpless_backtrace, 
-               "Display call chain using the subroutine return pointer.\n"
-               "Note that this displays the address after the jump to the "
-               "subroutine.", &cmdlist);
-  
-  add_core_fns (&cris_elf_core_fns);
-  
+  deprecated_add_core_fns (&cris_elf_core_fns);
 }
 
 /* Prints out all target specific values.  */
@@ -3661,99 +3691,37 @@ cris_dump_tdep (struct gdbarch *gdbarch, struct ui_file *file)
     {
       fprintf_unfiltered (file, "cris_dump_tdep: tdep->cris_version = %i\n",
                           tdep->cris_version);
-      fprintf_unfiltered (file, "cris_dump_tdep: tdep->cris_mode = %s\n",
-                          tdep->cris_mode);
+      fprintf_unfiltered (file, "cris_dump_tdep: tdep->cris_dwarf2_cfi = %i\n",
+                          tdep->cris_dwarf2_cfi);
     }
 }
 
 static void
-cris_version_update (char *ignore_args, int from_tty, 
-                     struct cmd_list_element *c)
+set_cris_version (char *ignore_args, int from_tty, 
+		  struct cmd_list_element *c)
 {
   struct gdbarch_info info;
 
-  /* NOTE: cagney/2002-03-17: The add_show_from_set() function clones
-     the set command passed as a parameter.  The clone operation will
-     include (BUG?) any ``set'' command callback, if present.
-     Commands like ``info set'' call all the ``show'' command
-     callbacks.  Unfortunately, for ``show'' commands cloned from
-     ``set'', this includes callbacks belonging to ``set'' commands.
-     Making this worse, this only occures if add_show_from_set() is
-     called after add_cmd_sfunc() (BUG?).  */
-
-  /* From here on, trust the user's CRIS version setting.  */
-  if (cmd_type (c) == set_cmd)
-    {
-      usr_cmd_cris_version_valid = 1;
+  usr_cmd_cris_version_valid = 1;
   
-      /* Update the current architecture, if needed.  */
-      gdbarch_info_init (&info);
-      if (!gdbarch_update_p (info))
-        internal_error (__FILE__, __LINE__, "cris_gdbarch_update: failed to update architecture.");
-    }  
+  /* Update the current architecture, if needed.  */
+  gdbarch_info_init (&info);
+  if (!gdbarch_update_p (info))
+    internal_error (__FILE__, __LINE__, 
+		    "cris_gdbarch_update: failed to update architecture.");
 }
 
 static void
-cris_mode_update (char *ignore_args, int from_tty, 
-                 struct cmd_list_element *c)
+set_cris_dwarf2_cfi (char *ignore_args, int from_tty, 
+		     struct cmd_list_element *c)
 {
   struct gdbarch_info info;
-  
-  /* NOTE: cagney/2002-03-17: The add_show_from_set() function clones
-     the set command passed as a parameter.  The clone operation will
-     include (BUG?) any ``set'' command callback, if present.
-     Commands like ``info set'' call all the ``show'' command
-     callbacks.  Unfortunately, for ``show'' commands cloned from
-     ``set'', this includes callbacks belonging to ``set'' commands.
-     Making this worse, this only occures if add_show_from_set() is
-     called after add_cmd_sfunc() (BUG?).  */
 
-  /* From here on, trust the user's CRIS mode setting.  */
-  if (cmd_type (c) == set_cmd)
-    {
-      usr_cmd_cris_mode_valid = 1;
-  
-      /* Update the current architecture, if needed.  */
-      gdbarch_info_init (&info);
-      if (!gdbarch_update_p (info))
-        internal_error (__FILE__, __LINE__, "cris_gdbarch_update: failed to update architecture.");
-    }
-}
-
-/* Copied from pa64solib.c, with a couple of minor changes.  */
-
-static CORE_ADDR
-bfd_lookup_symbol (bfd *abfd, const char *symname)
-{
-  unsigned int storage_needed;
-  asymbol *sym;
-  asymbol **symbol_table;
-  unsigned int number_of_symbols;
-  unsigned int i;
-  struct cleanup *back_to;
-  CORE_ADDR symaddr = 0;
-
-  storage_needed = bfd_get_symtab_upper_bound (abfd);
-
-  if (storage_needed > 0)
-    {
-      symbol_table = (asymbol **) xmalloc (storage_needed);
-      back_to = make_cleanup (free, symbol_table);
-      number_of_symbols = bfd_canonicalize_symtab (abfd, symbol_table);
-
-      for (i = 0; i < number_of_symbols; i++)
-	{
-	  sym = *symbol_table++;
-	  if (!strcmp (sym->name, symname))
-	    {
-	      /* Bfd symbols are section relative.  */
-	      symaddr = sym->value + sym->section->vma;
-	      break;
-	    }
-	}
-      do_cleanups (back_to);
-    }
-  return (symaddr);
+  /* Update the current architecture, if needed.  */
+  gdbarch_info_init (&info);
+  if (!gdbarch_update_p (info))
+    internal_error (__FILE__, __LINE__, 
+		    "cris_gdbarch_update: failed to update architecture.");
 }
 
 static struct gdbarch *
@@ -3762,8 +3730,6 @@ cris_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   struct gdbarch *gdbarch;
   struct gdbarch_tdep *tdep;
   int cris_version;
-  const char *cris_mode;
-  int register_bytes;
 
   if (usr_cmd_cris_version_valid)
     {
@@ -3776,26 +3742,8 @@ cris_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
       cris_version = 10;
     }
 
-  if (usr_cmd_cris_mode_valid)
-    {
-      /* Trust the user's CRIS mode setting.  */ 
-      cris_mode = usr_cmd_cris_mode;
-    }
-  else if (cris_version == 10)
-    {
-      /* Assume CRIS version 10 is in user mode.  */
-      cris_mode = CRIS_MODE_USER;
-    }
-  else
-    {
-      /* Strictly speaking, older CRIS version don't have a supervisor mode,
-         but we regard its only mode as supervisor mode.  */
-      cris_mode = CRIS_MODE_SUPERVISOR;
-    }
-
   /* Make the current settings visible to the user.  */
   usr_cmd_cris_version = cris_version;
-  usr_cmd_cris_mode = cris_mode;
   
   /* Find a candidate among the list of pre-declared architectures.  Both
      CRIS version and ABI must match.  */
@@ -3803,8 +3751,10 @@ cris_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
        arches != NULL;
        arches = gdbarch_list_lookup_by_info (arches->next, &info))
     {
-      if ((gdbarch_tdep (arches->gdbarch)->cris_version == cris_version)
-          && (gdbarch_tdep (arches->gdbarch)->cris_mode == cris_mode))
+      if ((gdbarch_tdep (arches->gdbarch)->cris_version 
+	   == usr_cmd_cris_version)
+	  && (gdbarch_tdep (arches->gdbarch)->cris_dwarf2_cfi 
+	      == usr_cmd_cris_dwarf2_cfi))
         return arches->gdbarch;
     }
 
@@ -3812,8 +3762,8 @@ cris_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   tdep = (struct gdbarch_tdep *) xmalloc (sizeof (struct gdbarch_tdep));
   gdbarch = gdbarch_alloc (&info, tdep);
 
-  tdep->cris_version = cris_version;
-  tdep->cris_mode = cris_mode;
+  tdep->cris_version = usr_cmd_cris_version;
+  tdep->cris_dwarf2_cfi = usr_cmd_cris_dwarf2_cfi;
 
   /* INIT shall ensure that the INFO.BYTE_ORDER is non-zero.  */
   switch (info.byte_order)
@@ -3833,23 +3783,18 @@ cris_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_return_value (gdbarch, cris_return_value);
   set_gdbarch_deprecated_reg_struct_has_addr (gdbarch, 
 					      cris_reg_struct_has_addr);
-  set_gdbarch_use_struct_convention (gdbarch, always_use_struct_convention);
+  set_gdbarch_deprecated_use_struct_convention (gdbarch, always_use_struct_convention);
 
   /* There are 32 registers (some of which may not be implemented).  */
   set_gdbarch_num_regs (gdbarch, 32);
   set_gdbarch_sp_regnum (gdbarch, 14);
   set_gdbarch_pc_regnum (gdbarch, 15);
   set_gdbarch_register_name (gdbarch, cris_register_name);
-  
-  /* Length of ordinary registers used in push_word and a few other
-     places.  DEPRECATED_REGISTER_RAW_SIZE is the real way to know how
-     big a register is.  */
-  set_gdbarch_deprecated_register_size (gdbarch, 4);
+
   set_gdbarch_double_bit (gdbarch, 64);
   /* The default definition of a long double is 2 * TARGET_DOUBLE_BIT,
      which means we have to set this explicitly.  */
   set_gdbarch_long_double_bit (gdbarch, 64);  
-  set_gdbarch_register_bytes_ok (gdbarch, cris_register_bytes_ok);
   set_gdbarch_cannot_store_register (gdbarch, cris_cannot_store_register);
   set_gdbarch_cannot_fetch_register (gdbarch, cris_cannot_fetch_register);
 
@@ -3863,48 +3808,24 @@ cris_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
     case 1:
     case 2:
     case 3:
-      /* Support for these may be added later.  */
-      internal_error (__FILE__, __LINE__, "cris_gdbarch_init: unsupported CRIS version");
-      break;
-      
     case 8:
     case 9:
-      /* CRIS v8 and v9, a.k.a. ETRAX 100.  General registers R0 - R15 
-         (32 bits), special registers P0 - P1 (8 bits), P4 - P5 (16 bits), 
-         and P8 - P14 (32 bits).  */
-      register_bytes = (16 * 4) + (2 * 1) + (2 * 2) + (7 * 4);
+      /* Old versions; not supported.  */
+      internal_error (__FILE__, __LINE__, 
+		      "cris_gdbarch_init: unsupported CRIS version");
       break;
 
     case 10:
     case 11: 
       /* CRIS v10 and v11, a.k.a. ETRAX 100LX.  In addition to ETRAX 100, 
          P7 (32 bits), and P15 (32 bits) have been implemented.  */
-      register_bytes = (16 * 4) + (2 * 1) + (2 * 2) + (9 * 4);
       break;
 
     default:
       internal_error (__FILE__, __LINE__, "cris_gdbarch_init: unknown CRIS version");
     }
 
-  set_gdbarch_deprecated_register_bytes (gdbarch, register_bytes);
-
-  /* Returns the register offset for the first byte of register regno's space 
-     in the saved register state.  */
-  set_gdbarch_deprecated_register_byte (gdbarch, cris_register_offset);
-  
-  /* The length of the registers in the actual machine representation.  */
-  set_gdbarch_deprecated_register_raw_size (gdbarch, cris_register_size);
-  
-  /* The largest value DEPRECATED_REGISTER_RAW_SIZE can have.  */
-  set_gdbarch_deprecated_max_register_raw_size (gdbarch, 32);
-  
-  /* The length of the registers in the program's representation.  */
-  set_gdbarch_deprecated_register_virtual_size (gdbarch, cris_register_size);
-  
-  /* The largest value DEPRECATED_REGISTER_VIRTUAL_SIZE can have.  */
-  set_gdbarch_deprecated_max_register_virtual_size (gdbarch, 32);
-
-  set_gdbarch_deprecated_register_virtual_type (gdbarch, cris_register_virtual_type);
+  set_gdbarch_register_type (gdbarch, cris_register_type);
   
   /* Dummy frame functions.  */
   set_gdbarch_push_dummy_code (gdbarch, cris_push_dummy_code);
@@ -3923,9 +3844,16 @@ cris_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_unwind_sp (gdbarch, cris_unwind_sp);
   set_gdbarch_unwind_dummy_id (gdbarch, cris_unwind_dummy_id);
 
-  /* FIXME: Hook in the DWARF CFI frame unwinder.
-     frame_unwind_append_sniffer (gdbarch, dwarf2_frame_sniffer);
-  */
+  if (tdep->cris_dwarf2_cfi == 1)
+    {
+      /* Hook in the Dwarf-2 frame sniffer.  */
+      set_gdbarch_dwarf2_reg_to_regnum (gdbarch, cris_dwarf2_reg_to_regnum);
+      dwarf2_frame_set_init_reg (gdbarch, cris_dwarf2_frame_init_reg);
+      frame_unwind_append_sniffer (gdbarch, dwarf2_frame_sniffer);
+    }
+
+  frame_unwind_append_sniffer (gdbarch, cris_sigtramp_frame_sniffer);
+
   frame_unwind_append_sniffer (gdbarch, cris_frame_sniffer);
   frame_base_set_default (gdbarch, &cris_frame_base);
 

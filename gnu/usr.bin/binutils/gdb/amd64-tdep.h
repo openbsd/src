@@ -45,6 +45,12 @@ enum amd64_regnum
   AMD64_R15_REGNUM = 15,	/* %r15 */
   AMD64_RIP_REGNUM,		/* %rip */
   AMD64_EFLAGS_REGNUM,		/* %eflags */
+  AMD64_CS_REGNUM,		/* %cs */
+  AMD64_SS_REGNUM,		/* %ss */
+  AMD64_DS_REGNUM,		/* %ds */
+  AMD64_ES_REGNUM,		/* %es */
+  AMD64_FS_REGNUM,		/* %fs */
+  AMD64_GS_REGNUM,		/* %gs */
   AMD64_ST0_REGNUM = 24,	/* %st0 */
   AMD64_XMM0_REGNUM = 40,	/* %xmm0 */
   AMD64_XMM1_REGNUM		/* %xmm1 */
@@ -70,13 +76,6 @@ extern void amd64_supply_fxsave (struct regcache *regcache, int regnum,
 
 extern void amd64_collect_fxsave (const struct regcache *regcache, int regnum,
 				  void *fxsave);
-
-/* Fill register REGNUM (if it is a floating-point or SSE register) in
-   *FXSAVE with the value in GDB's register cache.  If REGNUM is -1, do
-   this for all registers.  This function doesn't touch any of the
-   reserved bits in *FXSAVE.  */
-
-extern void amd64_fill_fxsave (char *fxsave, int regnum);
 
 
 /* Variables exported from amd64nbsd-tdep.c.  */

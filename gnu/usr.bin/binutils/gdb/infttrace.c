@@ -1,7 +1,7 @@
 /* Low level Unix child interface to ttrace, for GDB when running under HP-UX.
-   Copyright 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1998,
-   1999, 2000, 2001, 2003
-   Free Software Foundation, Inc.
+
+   Copyright 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996,
+   1998, 1999, 2000, 2001, 2003, 2004 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -28,6 +28,7 @@
 #include "gdb_wait.h"
 #include "command.h"
 #include "gdbthread.h"
+#include "infttrace.h"
 
 /* We need pstat functionality so that we can get the exec file
    for a process we attach to.
@@ -43,10 +44,6 @@
 #ifdef  NO_FLAGS
 #define INFTTRACE_TEMP_HACK NO_FLAGS
 #undef  NO_FLAGS
-#endif
-
-#ifdef USG
-#include <sys/types.h>
 #endif
 
 #include <sys/param.h>
@@ -118,7 +115,7 @@
 #endif
 
 #include "gdbcore.h"
-#ifndef	NO_SYS_FILE
+#ifdef	HAVE_SYS_FILE_H
 #include <sys/file.h>
 #endif
 
@@ -2891,9 +2888,6 @@ ptrace_wait (ptid_t ptid, int *status)
       *status = _SIGTRAP;
     }
 
-  target_post_wait (pid_to_ptid (tsp.tts_pid), *status);
-
-
 #ifdef THREAD_DEBUG
   if (debug_on)
     printf ("Done waiting, pid is %d, tid %d\n", real_pid, real_tid);
@@ -3845,7 +3839,7 @@ kill_inferior (void)
 }
 
 
-#ifndef CHILD_RESUME
+#ifndef DEPRECATED_CHILD_RESUME
 
 /* Sanity check a thread about to be continued.
  */
@@ -4256,7 +4250,7 @@ threads_continue_one_with_signal (lwpid_t gdb_tid, int signal)
 }
 #endif
 
-#ifndef CHILD_RESUME
+#ifndef DEPRECATED_CHILD_RESUME
 
 /* Resume execution of the inferior process.
 
@@ -4557,10 +4551,8 @@ child_resume (ptid_t ptid, int step, enum target_signal signal)
 #endif
 
 }
-#endif /* CHILD_RESUME */
+#endif /* DEPRECATED_CHILD_RESUME */
 
-
-#ifdef ATTACH_DETACH
 /*
  * Like it says.
  *
@@ -4732,10 +4724,8 @@ update_thread_state_after_attach (int pid, attach_continue_t kind_of_go)
 
   attach_flag = 1;
 }
-#endif /* ATTACH_DETACH */
 
 
-#ifdef ATTACH_DETACH
 /* Start debugging the process whose number is PID.
  * (A _real_ pid).
  */
@@ -4802,7 +4792,6 @@ detach (int signal)
 
   /* Process-state? */
 }
-#endif /* ATTACH_DETACH */
 
 
 /* Default the type of the ttrace transfer to int.  */
@@ -4826,10 +4815,10 @@ _initialize_kernel_u_addr (void)
    to debugger memory starting at MYADDR.   Copy to inferior if
    WRITE is nonzero.  TARGET is ignored.
 
-   Returns the length copied, which is either the LEN argument or zero.
-   This xfer function does not do partial moves, since child_ops
-   doesn't allow memory operations to cross below us in the target stack
-   anyway.  */
+   Returns the length copied, which is either the LEN argument or
+   zero.  This xfer function does not do partial moves, since
+   deprecated_child_ops doesn't allow memory operations to cross below
+   us in the target stack anyway.  */
 
 int
 child_xfer_memory (CORE_ADDR memaddr, char *myaddr, int len, int write,

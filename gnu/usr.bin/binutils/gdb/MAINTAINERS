@@ -6,8 +6,8 @@
 
 Jim Blandy			jimb@redhat.com
 Kevin Buettner			kevinb@redhat.com
-Andrew Cagney			ac131313@redhat.com
-J.T. Conklin			jtc@redback.com
+Andrew Cagney			cagney@gnu.org
+J.T. Conklin			jtc@acorntoolworks.com
 Fred Fish			fnf@ninemoons.com
 Daniel Jacobowitz		dan@debian.org
 Mark Kettenis           	kettenis@gnu.org
@@ -82,7 +82,7 @@ maintainer works with the native maintainer when resolving API issues.
 	frv		--target=frv-elf ,-Werror
 			Maintenance only
 
-	h8300		--target=h8300hms ,-Werror
+	h8300		--target=h8300hms broken
 			Maintenance only
 
 	h8500		Deleted.
@@ -104,9 +104,10 @@ maintainer works with the native maintainer when resolving API issues.
 	m68k		--target=m68k-elf ,-Werror
 			Maintenance only
 
-	m88k		Deleted.
+	m88k		--target=m88k-openbsd ,-Werror
+			Mark Kettenis		kettenis@gnu.org
 
-	mcore		--target=mcore-elf ,-Werror
+	mcore		--target=mcore-elf broken
 			Maintenance only
 
 	mips		--target=mips-elf ,-Werror
@@ -114,13 +115,13 @@ maintainer works with the native maintainer when resolving API issues.
 
 	mn10200		Deleted.
 
-	mn10300		--target=mn10300-elf ,-Werror
+	mn10300		--target=mn10300-elf broken
 			Maintenance only
 
-	ns32k		--target=ns32k-netbsd ,-Werror
+	ns32k		--target=ns32k-netbsd broken
 			Maintenance only
 
-	pa		(--target=hppa-elf broken)
+	pa		--target=hppa-elf ,-Werror
 			Maintenance only
 
 	powerpc		--target=powerpc-eabi ,-Werror
@@ -130,6 +131,7 @@ maintainer works with the native maintainer when resolving API issues.
 			(contact DJ Barrow	djbarrow@de.ibm.com)
 
 	sh		--target=sh-elf ,-Werror
+			--target=sh64-elf broken
 			Elena Zannoni		ezannoni@redhat.com
 
 	sparc		--target=sparc-elf ,-Werror
@@ -137,7 +139,7 @@ maintainer works with the native maintainer when resolving API issues.
 
 	tic80		Deleted.
 
-	v850		--target=v850-elf ,-Werror
+	v850		--target=v850-elf broken
 			Maintenance only
 
 	vax		--target=vax-netbsd ,-Werror
@@ -148,7 +150,7 @@ maintainer works with the native maintainer when resolving API issues.
 	x86-64		--target=x86_64-linux-gnu ,-Werror
 			Maintenance only
 
-	xstormy16	--target=xstormy16-elf ,-Werror
+	xstormy16	--target=xstormy16-elf
 			Corinna Vinschen	vinschen@redhat.com
 
 	z8k		Deleted.
@@ -179,11 +181,12 @@ their platform.
 
 AIX			Peter Schauer		Peter.Schauer@regent.e-technik.tu-muenchen.de
 			Kevin Buettner		kevinb@redhat.com
+			Joel Brobecker		brobecker@gnat.com
 
 djgpp native		Eli Zaretskii		eliz@gnu.org
 			DJ Delorie		dj@redhat.com
 MS Windows (NT, '00, 9x, Me, XP) host & native
-			Chris Faylor		cgf@redhat.com
+			Chris Faylor		cgf@alum.bu.edu
 GNU/Linux/x86 native & host
 			Mark Kettenis		kettenis@gnu.org
 GNU/Linux PPC native	Kevin Buettner		kevinb@redhat.com
@@ -214,22 +217,17 @@ event loop		Elena Zannoni           ezannoni@redhat.com
                         For the part of top.c related to the event loop,
                         send questions to ezannoni@redhat.com
 
-generic symtabs		Jim Blandy		jimb@redhat.com
-			Elena Zannoni		ezannoni@redhat.com
-  dwarf readers		Jim Blandy		jimb@redhat.com
-			Elena Zannoni		ezannoni@redhat.com
-  elf reader		Jim Blandy		jimb@redhat.com
-			Elena Zannoni		ezannoni@redhat.com
-  stabs reader		Jim Blandy		jimb@redhat.com
-			Elena Zannoni		ezannoni@redhat.com
+generic symtabs		Elena Zannoni		ezannoni@redhat.com
+  dwarf readers		Elena Zannoni		ezannoni@redhat.com
+  elf reader		Elena Zannoni		ezannoni@redhat.com
+  stabs reader		Elena Zannoni		ezannoni@redhat.com
   coff reader		Philippe De Muyter	phdm@macqel.be
   xcoff reader		Any maintainer can modify this; please send tricky
 			ones to Kevin Buettner <kevinb@redhat.com>
-  linespec		Elena Zannoni		ezannoni@redhat.com
   HP/UX readers		Any [past] maintainer can modify this.
 			Please send tricky ones to the symtabs maintainers.
 
-tracing bytecode stuff  Jim Blandy              jimb@redhat.com
+tracing bytecode stuff  (Global Maintainers)
 tracing			Michael Snyder		msnyder@redhat.com
 threads			Michael Snyder		msnyder@redhat.com
 			Mark Kettenis		kettenis@gnu.org
@@ -248,17 +246,17 @@ include/remote-sim.h, remote-sim.c
 sds protocol		(vacant)
 rdi/adp protocol	(vacant)
 documentation		Eli Zaretskii		eliz@gnu.org
-testsuite		(Global Maintainers)
-  config                Mark Salter             msalter@redhat.com
-  lib                   Fernando Nasser         fnasser@redhat.com
-                        Mark Salter             msalter@redhat.com
+testsuite		Michael Chastain	mec.gnu@mindspring.com
+			(Global Maintainers)			
+  lib/, config/, gdb.base/, ...
+			Michael Chastain	mec.gnu@mindspring.com
+			(Global Maintainers)			
   gdbtk (gdb.gdbtk)     Keith Seitz             keiths@redhat.com
   c++ (gdb.cp) 		Michael Chastain	mec.gnu@mindspring.com
-			David Carlton		carlton@kealia.com
   mi tests (gdb.mi)     Elena Zannoni           ezannoni@redhat.com
                         Andrew Cagney           cagney@redhat.com
-  stabs (gdb.stabs)     Elena Zannoni           ezannoni@redhat.com
   threads (gdb.threads) Michael Snyder          msnyder@redhat.com
+			Michael Chastain	mec.gnu@mindspring.com
   trace (gdb.trace)     Michael Snyder          msnyder@redhat.com
   hp tests (gdb.hp)	(vacant)
   Java tests (gdb.java)	Anthony Green 		green@redhat.com
@@ -314,15 +312,16 @@ Scott Bambrough					scottb@netwinder.org
 Jim Blandy					jimb@redhat.com
 Philip Blundell					philb@gnu.org
 Per Bothner					per@bothner.com
-Joel Brobecker					brobecker@act-europe.fr
+Joel Brobecker					brobecker@gnat.com
 Dave Brolley					brolley@redhat.com
 Paul Brook					paul@codesourcery.com
 Kevin Buettner					kevinb@redhat.com
-Andrew Cagney					ac131313@redhat.com
-David Carlton					carlton@kealia.com
+Andrew Cagney					cagney@gnu.org
+David Carlton					carlton@bactrian.org
 Stephane Carrez					stcarrez@nerim.fr
 Michael Chastain				mec.gnu@mindspring.com
 Eric Christopher				echristo@redhat.com
+Randolph Chung					tausq@debian.org
 Nick Clifton					nickc@redhat.com
 Brendan Conoboy					blc@redhat.com
 DJ Delorie					dj@redhat.com
@@ -332,15 +331,16 @@ Dhananjay Deshpande				dhananjayd@kpitcummins.com
 Klee Dienes					kdienes@apple.com
 Richard Earnshaw				rearnsha@arm.com
 Frank Ch. Eigler				fche@redhat.com
-Ben Elliston					bje@wasabisystems.com
+Ben Elliston					bje@gnu.org
+Adam Fedor					fedor@gnu.org
+Fred Fish					fnf@ninemoons.com
+Brian Ford					ford@vss.fsi.com
+Orjan Friberg					orjanf@axis.com
+Paul Gilliam					pgilliam@us.ibm.com
 Raoul Gough					RaoulGough@yahoo.co.uk
 Anthony Green			 		green@redhat.com
 Matthew Green					mrg@eterna.com.au
 Jerome Guitton					guitton@act-europe.fr
-Chris Faylor					cgf@redhat.com
-Adam Fedor					fedor@gnu.org
-Fred Fish					fnf@ninemoons.com
-Orjan Friberg					orjanf@axis.com
 Ben Harris					bjh21@netbsd.org
 Richard Henderson				rth@redhat.com
 Aldy Hernandez					aldyh@redhat.com
@@ -351,6 +351,7 @@ Jeff Holcomb					jeffh@redhat.com
 Don Howard					dhoward@redhat.com
 Martin Hunt					hunt@redhat.com
 Jim Ingham					jingham@apple.com
+Manoj Iyer					manjo@austin.ibm.com
 Daniel Jacobowitz				dan@debian.org
 Andreas Jaeger					aj@suse.de
 Jeff Johnston					jjohnstn@redhat.com
@@ -366,6 +367,7 @@ Michal Ludvig                                   mludvig@suse.cz
 Glen McCready					gkm@redhat.com
 Greg McGary					greg@mcgary.org
 Roland McGrath					roland@redhat.com
+Bryce McKinlay					mckinlay@redhat.com
 Jason Merrill					jason@redhat.com
 David S. Miller					davem@redhat.com
 Mark Mitchell					mark@codesourcery.com
@@ -374,11 +376,12 @@ Alan Modra					amodra@bigpond.net.au
 Jason Molenda					jmolenda@apple.com
 Pierre Muller					muller@sources.redhat.com
 Fernando Nasser					fnasser@redhat.com
+Nathanael Nerode				neroden@gcc.gnu.org
 Hans-Peter Nilsson				hp@bitrange.com
 David O'Brien					obrien@freebsd.org
 Alexandre Oliva					aoliva@redhat.com
 Tom Rix						trix@redhat.com
-Nick Roberts					nick@nick.uklinux.net
+Nick Roberts					nickrob@snap.net.nz
 Bob Rossi 					bob_rossi@cox.net
 Theodore A. Roth				troth@openavr.org
 Ian Roxborough					irox@redhat.com
@@ -405,6 +408,8 @@ D Venkatasubramanian				dvenkat@noida.hcltech.com
 Corinna Vinschen				vinschen@redhat.com
 Keith Walker					keith.walker@arm.com
 Kris Warkentin					kewarken@qnx.com
+Ulrich Weigand					uweigand@de.ibm.com
+Nathan Williams					nathanw@wasabisystems.com
 Jim Wilson					wilson@specifixinc.com
 Elena Zannoni					ezannoni@redhat.com
 Eli Zaretskii					eliz@gnu.org
@@ -423,12 +428,16 @@ J.T. Conklin (dcache, NetBSD, remote)		jtc at redback dot com
 Frank Ch. Eigler (sim)				fche at redhat dot com
 Per Bothner (Java)				per at bothner dot com
 Anthony Green (Java)				green at redhat dot com
+Fernando Nasser (testsuite/, mi, cli)           fnasser at redhat dot com
+Mark Salter (testsuite/lib+config)		msalter at redhat dot com
 
 
 
 Folks that have been caught up in a paper trail:
 
+Chris Faylor					cgf@alum.bu.edu
 Jim Kingdon					jkingdon@engr.sgi.com
+David Carlton					carlton@bactrian.org
 
 --
 

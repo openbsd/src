@@ -1,4 +1,4 @@
-#   Copyright 1999, 2001 Free Software Foundation, Inc.
+# Copyright 1999, 2001, 2004 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -119,7 +119,10 @@ proc gdb_load_timed {executable downloadsize class writesize} {
     set load_begin_time [clock clicks]
     set result [gdb_load $executable]
     set load_end_time [clock clicks]
-    if {$result < 0} then { fail "$test - loading executable"; return }
+    if { $result != 0 } then {
+	fail "$test - loading executable"
+	return
+    }
     verbose "$test - time [expr ($load_end_time - $load_begin_time) / 1000] ms"
     pass $test
 }

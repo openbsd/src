@@ -40,10 +40,6 @@
 #include "gdbcore.h"
 #include "regcache.h"
 
-#ifdef USG
-#include <sys/types.h>
-#endif
-
 #include <signal.h>
 #include "serial.h"
 
@@ -75,8 +71,6 @@ static void sds_close (int);
 static void sds_store_registers (int);
 
 static void sds_mourn (void);
-
-static void sds_create_inferior (char *, char *, char **);
 
 static void sds_load (char *, int);
 
@@ -458,10 +452,10 @@ sds_fetch_registers (int regno)
 {
   unsigned char buf[PBUFSIZ];
   int i, retlen;
-  char *regs = alloca (DEPRECATED_REGISTER_BYTES);
+  char *regs = alloca (deprecated_register_bytes ());
 
   /* Unimplemented registers read as all bits zero.  */
-  memset (regs, 0, DEPRECATED_REGISTER_BYTES);
+  memset (regs, 0, deprecated_register_bytes ());
 
   buf[0] = 18;
   buf[1] = 1;
@@ -484,7 +478,8 @@ sds_fetch_registers (int regno)
   /* (should warn about reply too short) */
 
   for (i = 0; i < NUM_REGS; i++)
-    supply_register (i, &regs[DEPRECATED_REGISTER_BYTE (i)]);
+    regcache_raw_supply (current_regcache, i,
+			 &regs[DEPRECATED_REGISTER_BYTE (i)]);
 }
 
 /* Prepare to store registers.  Since we may send them all, we have to
@@ -494,7 +489,7 @@ static void
 sds_prepare_to_store (void)
 {
   /* Make sure the entire registers array is valid.  */
-  deprecated_read_register_bytes (0, (char *) NULL, DEPRECATED_REGISTER_BYTES);
+  deprecated_read_register_bytes (0, (char *) NULL, deprecated_register_bytes ());
 }
 
 /* Store register REGNO, or all registers if REGNO == -1, from the contents
@@ -985,7 +980,7 @@ sds_mourn (void)
 }
 
 static void
-sds_create_inferior (char *exec_file, char *args, char **env)
+sds_create_inferior (char *exec_file, char *args, char **env, int from_tty)
 {
   inferior_ptid = pid_to_ptid (42000);
 
@@ -1066,7 +1061,7 @@ Specify the serial device it is connected to (e.g. /dev/ttya).";
   sds_ops.to_fetch_registers = sds_fetch_registers;
   sds_ops.to_store_registers = sds_store_registers;
   sds_ops.to_prepare_to_store = sds_prepare_to_store;
-  sds_ops.to_xfer_memory = sds_xfer_memory;
+  sds_ops.deprecated_xfer_memory = sds_xfer_memory;
   sds_ops.to_files_info = sds_files_info;
   sds_ops.to_insert_breakpoint = sds_insert_breakpoint;
   sds_ops.to_remove_breakpoint = sds_remove_breakpoint;
@@ -1120,10 +1115,11 @@ _initialize_remote_sds (void)
   init_sds_ops ();
   add_target (&sds_ops);
 
-  add_show_from_set (add_set_cmd ("sdstimeout", no_class,
-				  var_integer, (char *) &sds_timeout,
-			     "Set timeout value for sds read.\n", &setlist),
-		     &showlist);
+  deprecated_add_show_from_set
+    (add_set_cmd ("sdstimeout", no_class,
+		  var_integer, (char *) &sds_timeout,
+		  "Set timeout value for sds read.\n", &setlist),
+     &showlist);
 
   add_com ("sds", class_obscure, sds_command,
 	   "Send a command to the SDS monitor.");

@@ -1,4 +1,4 @@
-# Copyright (C) 1999, 2000, 2002 Free Software Foundation, Inc.
+# Copyright 1999, 2000, 2001, 2002, 2004 Free Software Foundation, Inc.
 #
 # This Program Is Free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,9 +13,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-
-# Please email any bugs, comments, and/or additions to this file to:
-# bug-gdb@prep.ai.mit.edu
 
 # Test essential Machine interface (MI) operations
 #
@@ -168,7 +165,8 @@ mi_gdb_test "-var-update *" \
 	"update all vars"
 
 # Step over "linteger = 1234;"
-mi_step_to "do_locals_tests" "" "var-cmd.c" "107" "step at do_locals_test"
+set line_dlt_linteger [gdb_get_line_number "lpinteger = &linteger;"]
+mi_step_to "do_locals_tests" "" "var-cmd.c" $line_dlt_linteger "step at do_locals_test"
 
 # Test: c_variable-2.2
 # Desc: check whether only linteger changed values
@@ -177,7 +175,7 @@ mi_gdb_test "-var-update *" \
 	"update all vars: linteger changed"
 
 # Step over "lpinteger = &linteger;"
-mi_step_to "do_locals_tests" "" "var-cmd.c" 108 "step at do_locals_tests (2)"
+mi_step_to "do_locals_tests" "" "var-cmd.c" [expr $line_dlt_linteger + 1] "step at do_locals_tests (2)"
 
 # Test: c_variable-2.3
 # Desc: check whether only lpinteger changed
@@ -186,7 +184,7 @@ mi_gdb_test "-var-update *" \
 	"update all vars: lpinteger changed"
 
 # Step over "lcharacter = 'a';"
-mi_step_to "do_locals_tests" "" "var-cmd.c" "109" "step at do_locals_tests (3)"
+mi_step_to "do_locals_tests" "" "var-cmd.c" [expr $line_dlt_linteger + 2] "step at do_locals_tests (3)"
 
 # Test: c_variable-2.4
 # Desc: check whether only lcharacter changed
@@ -195,7 +193,7 @@ mi_gdb_test "-var-update *" \
 	"update all vars: lcharacter changed"
 
 # Step over "lpcharacter = &lcharacter;"
-mi_step_to "do_locals_tests" "" "var-cmd.c" "110" "step at do_locals_tests (4)"
+mi_step_to "do_locals_tests" "" "var-cmd.c" [expr $line_dlt_linteger + 3] "step at do_locals_tests (4)"
 
 # Test: c_variable-2.5
 # Desc: check whether only lpcharacter changed
@@ -216,7 +214,7 @@ mi_gdb_test "-var-update *" \
 #  lsimple.character = 'a';
 
 mi_execute_to "exec-step 9" "end-stepping-range" "do_locals_tests" "" \
-	"var-cmd.c" "119" "" "step at do_locals_tests (5)"
+	"var-cmd.c" [expr $line_dlt_linteger + 12] "" "step at do_locals_tests (5)"
 
 # Test: c_variable-2.6
 # Desc: check whether llong, lplong, lfloat, lpfloat, ldouble, lpdouble, lsimple.integer,
@@ -231,8 +229,10 @@ mi_gdb_test "-var-update *" \
 #  lpsimple = &lsimple;
 #  func = nothing;
 
+set line_dlt_4321 [gdb_get_line_number "linteger = 4321;"]
+
 mi_execute_to "exec-step 4" "end-stepping-range" "do_locals_tests" "" \
-	"var-cmd.c" "125" "" "step at do_locals_tests (6)"
+	"var-cmd.c" $line_dlt_4321 "" "step at do_locals_tests (6)"
 
 # Test: c_variable-2.7
 # Desc: check whether (lsimple.signed_character, lsimple.char_ptr) lpsimple, func changed
@@ -251,7 +251,7 @@ mi_gdb_test "-var-update *" \
 #  lsimple.character = 'b';
 
 mi_execute_to "exec-step 8" "end-stepping-range" "do_locals_tests" "" \
-	"var-cmd.c" "133" "" "step at do_locals_tests (7)"
+	"var-cmd.c" [expr $line_dlt_4321 + 8] "" "step at do_locals_tests (7)"
 
 # Test: c_variable-2.8
 # Desc: check whether linteger, lcharacter, llong, lfoat, ldouble, lsimple.integer,
@@ -384,12 +384,14 @@ mi_gdb_test "-var-assign lsimple.integer 333" \
 # End of assign tests 
 #####
 
+set line_subroutine1_body [gdb_get_line_number "global_simple.integer = i + 3;"]
+
 mi_gdb_test "-break-insert subroutine1" \
-	"\\^done,bkpt=\{number=\"2\",type=\"breakpoint\",disp=\"keep\",enabled=\"y\",addr=\"$hex\",func=\"subroutine1\",file=\".*var-cmd.c\",line=\"146\",times=\"0\"\}" \
+	"\\^done,bkpt=\{number=\"2\",type=\"breakpoint\",disp=\"keep\",enabled=\"y\",addr=\"$hex\",func=\"subroutine1\",file=\".*var-cmd.c\",line=\"$line_subroutine1_body\",times=\"0\"\}" \
 	"break-insert subroutine1"
 mi_continue_to "2" "subroutine1" \
 	"\{name=\"i\",value=\"4321\"\},\{name=\"l\",value=\"$hex\"\}" \
-	"var-cmd.c" "146" "continue to subroutine1"
+	"var-cmd.c" $line_subroutine1_body "continue to subroutine1"
 
 # Test: c_variable-2.10
 # Desc: create variable for locals i,l in subroutine1
@@ -408,7 +410,7 @@ mi_gdb_test "-var-create linteger * linteger" \
 	"create linteger"
 
 mi_step_to "subroutine1" "\{name=\"i\",value=\".*\"\},\{name=\"l\",value=\".*\"\}" \
-	"var-cmd.c" "147" "step at subroutine1"
+	"var-cmd.c" [expr $line_subroutine1_body + 1] "step at subroutine1"
 
 # Test: c_variable-2.12
 # Desc: change global_simple.integer
@@ -424,7 +426,7 @@ mi_gdb_test "-var-update *" \
 clear_xfail *-*-*
 
 mi_step_to "subroutine1" "\{name=\"i\",value=\".*\"\},\{name=\"l\",value=\".*\"\}" \
-	"var-cmd.c" "148" "step at subroutine1 (2)"
+	"var-cmd.c" [expr $line_subroutine1_body + 2] "step at subroutine1 (2)"
 
 # Test: c_variable-2.13
 # Desc: change subroutine1 local i
@@ -433,7 +435,7 @@ mi_gdb_test "-var-update *" \
 	"update all vars: i changed"
 
 mi_step_to "subroutine1" "\{name=\"i\",value=\".*\"\},\{name=\"l\",value=\".*\"\}" \
-	"var-cmd.c" "149" "step at subroutine1 (3)"
+	"var-cmd.c" [expr $line_subroutine1_body + 3] "step at subroutine1 (3)"
 
 # Test: c_variable-2.14
 # Desc: change do_locals_tests local llong
@@ -441,7 +443,9 @@ mi_gdb_test "-var-update *" \
 	"\\^done,changelist=\\\[\{name=\"llong\",in_scope=\"true\",type_changed=\"false\"\}\\\]" \
 	"update all vars: llong changed"
 
-mi_next_to "do_locals_tests" ""	"var-cmd.c" "136" "next out of subroutine1"
+set line_dlt_call_subroutine1 [gdb_get_line_number "subroutine1 (linteger, &llong);"]
+mi_next_to "do_locals_tests" ""	"var-cmd.c" \
+  [expr $line_dlt_call_subroutine1 + 1] "next out of subroutine1"
 
 # Test: c_variable-2.15
 # Desc: check for out of scope subroutine1 locals

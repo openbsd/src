@@ -36,11 +36,12 @@
 #include "objfiles.h"
 #include "elf/common.h"		/* for DT_PLTGOT value */
 #include "elf-bfd.h"
-#include "elf.h"                /* for PT_IA64_UNWIND value */
 #include "dis-asm.h"
+#include "infcall.h"
 #include "ia64-tdep.h"
 
 #ifdef HAVE_LIBUNWIND_IA64_H
+#include "elf/ia64.h"           /* for PT_IA_64_UNWIND value */
 #include "libunwind-frame.h"
 #include "libunwind-ia64.h"
 #endif
@@ -98,7 +99,6 @@ static gdbarch_register_type_ftype ia64_register_type;
 static gdbarch_breakpoint_from_pc_ftype ia64_breakpoint_from_pc;
 static gdbarch_skip_prologue_ftype ia64_skip_prologue;
 static gdbarch_extract_return_value_ftype ia64_extract_return_value;
-static gdbarch_use_struct_convention_ftype ia64_use_struct_convention;
 static struct type *is_float_or_hfa_type (struct type *t);
 
 static struct type *builtin_type_ia64_ext;
@@ -1116,7 +1116,7 @@ examine_prologue (CORE_ADDR pc, CORE_ADDR lim_pc, struct frame_info *next_frame,
       if (next_pc == 0)
 	break;
 
-      if (it == B && ((instr & 0x1e1f800003f) != 0x04000000000))
+      if (it == B && ((instr & 0x1e1f800003fLL) != 0x04000000000LL))
 	{
 	  /* Exit loop upon hitting a non-nop branch instruction. */ 
 	  if (trust_limit)
@@ -1228,7 +1228,7 @@ examine_prologue (CORE_ADDR pc, CORE_ADDR lim_pc, struct frame_info *next_frame,
 	    {
 	      cache->saved_regs[IA64_FR0_REGNUM + fM] = spill_addr;
 
-              if ((instr & 0x1efc0000000) == 0x0eec0000000)
+              if ((instr & 0x1efc0000000LL) == 0x0eec0000000LL)
 		spill_addr += imm;
 	      else
 		spill_addr = 0;		/* last one; must be done */
@@ -2048,7 +2048,7 @@ ia64_sigtramp_frame_sniffer (struct frame_info *next_frame)
   CORE_ADDR pc = frame_pc_unwind (next_frame);
 
   find_pc_partial_function (pc, &name, NULL, NULL);
-  if (PC_IN_SIGTRAMP (pc, name))
+  if (legacy_pc_in_sigtramp (pc, name))
     return &ia64_sigtramp_frame_unwind;
 
   return NULL;
@@ -2583,6 +2583,10 @@ ia64_libunwind_frame_prev_register (struct frame_info *next_frame,
   libunwind_frame_prev_register (next_frame, this_cache, reg,
 				 optimizedp, lvalp, addrp, realnump, valuep);
 
+  /* No more to do if the value is not supposed to be supplied.  */
+  if (!valuep)
+    return;
+
   if (VP0_REGNUM <= regnum && regnum <= VP63_REGNUM)
     {
       ULONGEST prN_val;
@@ -3019,7 +3023,7 @@ ia64_frame_align (struct gdbarch *gdbarch, CORE_ADDR sp)
 }
 
 static CORE_ADDR
-ia64_push_dummy_call (struct gdbarch *gdbarch, CORE_ADDR func_addr, 
+ia64_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 		      struct regcache *regcache, CORE_ADDR bp_addr,
 		      int nargs, struct value **args, CORE_ADDR sp,
 		      int struct_return, CORE_ADDR struct_addr)
@@ -3031,6 +3035,7 @@ ia64_push_dummy_call (struct gdbarch *gdbarch, CORE_ADDR func_addr,
   int nslots, rseslots, memslots, slotnum, nfuncargs;
   int floatreg;
   CORE_ADDR bsp, cfm, pfs, new_bsp, funcdescaddr, pc, global_pointer;
+  CORE_ADDR func_addr = find_function_addr (function, NULL);
 
   nslots = 0;
   nfuncargs = 0;
@@ -3328,7 +3333,7 @@ ia64_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   set_gdbarch_skip_prologue (gdbarch, ia64_skip_prologue);
 
-  set_gdbarch_use_struct_convention (gdbarch, ia64_use_struct_convention);
+  set_gdbarch_deprecated_use_struct_convention (gdbarch, ia64_use_struct_convention);
   set_gdbarch_extract_return_value (gdbarch, ia64_extract_return_value);
 
   set_gdbarch_store_return_value (gdbarch, ia64_store_return_value);

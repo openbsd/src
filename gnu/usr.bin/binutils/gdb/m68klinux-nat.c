@@ -30,10 +30,6 @@
 
 #include "m68k-tdep.h"
 
-#ifdef USG
-#include <sys/types.h>
-#endif
-
 #include <sys/param.h>
 #include <sys/dir.h>
 #include <signal.h>
@@ -141,7 +137,7 @@ fetch_register (int regno)
   if (CANNOT_FETCH_REGISTER (regno))
     {
       memset (buf, '\0', register_size (current_gdbarch, regno));	/* Supply zeroes */
-      supply_register (regno, buf);
+      regcache_raw_supply (current_regcache, regno, buf);
       return;
     }
 
@@ -167,7 +163,7 @@ fetch_register (int regno)
 	  perror_with_name (mess);
 	}
     }
-  supply_register (regno, buf);
+  regcache_raw_supply (current_regcache, regno, buf);
 }
 
 /* Fetch register values from the inferior.
@@ -218,7 +214,7 @@ store_register (int regno)
   regaddr = register_addr (regno, offset);
 
   /* Put the contents of regno into a local buffer */
-  regcache_collect (regno, buf);
+  regcache_raw_collect (current_regcache, regno, buf);
 
   /* Store the local buffer into the inferior a chunk at the time. */
   for (i = 0; i < register_size (current_gdbarch, regno);
@@ -282,9 +278,9 @@ supply_gregset (elf_gregset_t *gregsetp)
   int regi;
 
   for (regi = M68K_D0_REGNUM; regi <= SP_REGNUM; regi++)
-    supply_register (regi, (char *) &regp[regmap[regi]]);
-  supply_register (PS_REGNUM, (char *) &regp[PT_SR]);
-  supply_register (PC_REGNUM, (char *) &regp[PT_PC]);
+    regcache_raw_supply (current_regcache, regi, (char *) &regp[regmap[regi]]);
+  regcache_raw_supply (current_regcache, PS_REGNUM, (char *) &regp[PT_SR]);
+  regcache_raw_supply (current_regcache, PC_REGNUM, (char *) &regp[PT_PC]);
 }
 
 /* Fill register REGNO (if it is a general-purpose register) in
@@ -298,7 +294,7 @@ fill_gregset (elf_gregset_t *gregsetp, int regno)
 
   for (i = 0; i < NUM_GREGS; i++)
     if (regno == -1 || regno == i)
-      regcache_collect (i, regp + regmap[i]);
+      regcache_raw_collect (current_regcache, i, regp + regmap[i]);
 }
 
 #ifdef HAVE_PTRACE_GETREGS
@@ -366,10 +362,14 @@ supply_fpregset (elf_fpregset_t *fpregsetp)
   int regi;
 
   for (regi = FP0_REGNUM; regi < FP0_REGNUM + 8; regi++)
-    supply_register (regi, FPREG_ADDR (fpregsetp, regi - FP0_REGNUM));
-  supply_register (M68K_FPC_REGNUM, (char *) &fpregsetp->fpcntl[0]);
-  supply_register (M68K_FPS_REGNUM, (char *) &fpregsetp->fpcntl[1]);
-  supply_register (M68K_FPI_REGNUM, (char *) &fpregsetp->fpcntl[2]);
+    regcache_raw_supply (current_regcache, regi,
+			 FPREG_ADDR (fpregsetp, regi - FP0_REGNUM));
+  regcache_raw_supply (current_regcache, M68K_FPC_REGNUM,
+		       (char *) &fpregsetp->fpcntl[0]);
+  regcache_raw_supply (current_regcache, M68K_FPS_REGNUM,
+		       (char *) &fpregsetp->fpcntl[1]);
+  regcache_raw_supply (current_regcache, M68K_FPI_REGNUM,
+		       (char *) &fpregsetp->fpcntl[2]);
 }
 
 /* Fill register REGNO (if it is a floating-point register) in
@@ -384,12 +384,14 @@ fill_fpregset (elf_fpregset_t *fpregsetp, int regno)
   /* Fill in the floating-point registers.  */
   for (i = FP0_REGNUM; i < FP0_REGNUM + 8; i++)
     if (regno == -1 || regno == i)
-      regcache_collect (i, FPREG_ADDR (fpregsetp, i - FP0_REGNUM));
+      regcache_raw_collect (current_regcache, i,
+			    FPREG_ADDR (fpregsetp, i - FP0_REGNUM));
 
   /* Fill in the floating-point control registers.  */
   for (i = M68K_FPC_REGNUM; i <= M68K_FPI_REGNUM; i++)
     if (regno == -1 || regno == i)
-      regcache_collect (i, (char *) &fpregsetp->fpcntl[i - M68K_FPC_REGNUM]);
+      regcache_raw_collect (current_regcache, i,
+			    (char *) &fpregsetp->fpcntl[i - M68K_FPC_REGNUM]);
 }
 
 #ifdef HAVE_PTRACE_GETREGS
@@ -617,5 +619,5 @@ static struct core_fns linux_elf_core_fns =
 void
 _initialize_m68k_linux_nat (void)
 {
-  add_core_fns (&linux_elf_core_fns);
+  deprecated_add_core_fns (&linux_elf_core_fns);
 }

@@ -50,8 +50,6 @@
    + 8                        * 8 /* size of floating point regs */)
 
 #define NS32K_REGISTER_SIZE             4
-#define NS32K_MAX_REGISTER_RAW_SIZE     8
-#define NS32K_MAX_REGISTER_VIRTUAL_SIZE 8
 
 void ns32k_gdbarch_init_32082 (struct gdbarch *);
 void ns32k_gdbarch_init_32382 (struct gdbarch *);

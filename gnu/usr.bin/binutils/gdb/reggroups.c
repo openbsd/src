@@ -109,7 +109,7 @@ reggroup_add (struct gdbarch *gdbarch, struct reggroup *group)
       /* ULGH, called during architecture initialization.  Patch
          things up.  */
       groups = reggroups_init (gdbarch);
-      set_gdbarch_data (gdbarch, reggroups_data, groups);
+      deprecated_set_gdbarch_data (gdbarch, reggroups_data, groups);
     }
   add_group (groups, group,
 	     GDBARCH_OBSTACK_ZALLOC (gdbarch, struct reggroup_el));
@@ -268,7 +268,7 @@ extern initialize_file_ftype _initialize_reggroup; /* -Wmissing-prototypes */
 void
 _initialize_reggroup (void)
 {
-  reggroups_data = register_gdbarch_data (reggroups_init);
+  reggroups_data = gdbarch_data_register_post_init (reggroups_init);
 
   /* The pre-defined list of groups.  */
   add_group (&default_groups, general_reggroup, XMALLOC (struct reggroup_el));

@@ -15,6 +15,9 @@
 @V@/bfd/cpu-m68hc12.c @V@/bfd/cm68hc12.c
 @V@/bfd/efi-app-ia32.c @V@/bfd/efi-ia32-app.c
 @V@/bfd/efi-app-ia64.c @V@/bfd/efi-ia64-app.c
+@V@/bfd/elf32-crx.c @V@/bfd/elf32crx.c
+@V@/bfd/elf32-cris.c @V@/bfd/elf32cris.c
+@V@/bfd/elf32-cr16c.c @V@/bfd/elf32cr16c.c
 @V@/bfd/elf32-fr30.c @V@/bfd/elf32f30.c
 @V@/bfd/elf32-frv.c @V@/bfd/elf32fv.c
 @V@/bfd/elf32-i370.c @V@/bfd/e32i370.c
@@ -26,6 +29,8 @@
 @V@/bfd/elf32-ppc.c @V@/bfd/e32ppc.c
 @V@/bfd/elf32-sh.c @V@/bfd/e32sh.c
 @V@/bfd/elf32-sh64.c @V@/bfd/e32sh64.c
+@V@/bfd/elf32-sh-symbian.c @V@/bfd/e32sh-symbian.c
+@V@/bfd/elf32-sh64-com.c @V@/bfd/e32sh64-com.c
 @V@/bfd/elf64-alpha.c @V@/bfd/e64alphf.c
 @V@/bfd/elf64-sh64.c @V@/bfd/e64sh64.c
 @V@/dejagnu/baseboards/mn10200-cygmon.exp @V@/dejagnu/baseboards/mn10200cygmon.exp
@@ -83,10 +88,7 @@
 @V@/gdb/config/alpha/alpha-osf2.mh @V@/gdb/config/alpha/alphosf2.mh
 @V@/gdb/config/alpha/alpha-osf3.mh @V@/gdb/config/alpha/alphosf3.mh
 @V@/gdb/config/alpha/tm-alphalinux.h @V@/gdb/config/alpha/tm-alplinux.h
-@V@/gdb/config/alpha/xm-alphalinux.h @V@/gdb/config/alpha/xm-alplinux.h
-@V@/gdb/config/alpha/xm-alphaosf.h @V@/gdb/config/alpha/xm-alposf.h
 @V@/gdb/config/i386/nm-linux64.h @V@/gdb/config/i386/nm-lx64.h
-@V@/gdb/config/i386/tm-linux64.h @V@/gdb/config/i386/tm-lx64.h
 @V@/gdb/config/i386/nm-i386sco4.h @V@/gdb/config/i386/nm-sco4.h
 @V@/gdb/config/i386/nm-i386sco5.h @V@/gdb/config/i386/nm-sco5.h
 @V@/gdb/config/i386/nm-i386sol2.h @V@/gdb/config/i386/nm-sol2.h
@@ -97,14 +99,9 @@
 @V@/gdb/config/m88k/xm-delta88v4.h @V@/gdb/config/m88k/xm-d88v4.h
 @V@/gdb/config/mips/tm-linux.h @V@/gdb/config/mips/tm-lx.h
 @V@/gdb/config/pa/nm-hppah11.h @V@/gdb/config/pa/nm-hppa11.h
-@V@/gdb/config/powerpc/tm-ppcle-sim.h @V@/gdb/config/powerpc/tm-ppclsim.h
-@V@/gdb/config/powerpc/tm-ppcle-eabi.h @V@/gdb/config/powerpc/tm-ppcleabi.h
-@V@/gdb/config/rs6000/nm-rs6000ly.h @V@/gdb/config/rs6000/nm-rs6kly.h
 @V@/gdb/config/rs6000/tm-rs6000.h @V@/gdb/config/rs6000/tm-rs6k.h
 @V@/gdb/config/rs6000/tm-rs6000ly.h @V@/gdb/config/rs6000/tm-rs6kly.h
-@V@/gdb/config/rs6000/tm-rs6000-aix4.h @V@/gdb/config/rs6000/tm-rs6kaix4.h
 @V@/gdb/config/sparc/tm-sparclynx.h @V@/gdb/config/sparc/tm-splynx.h
-@V@/gdb/config/vax/xm-vaxult2.h @V@/gdb/config/vax/xm-vaxut2.h
 @V@/gdb/f-exp.tab.c @V@/gdb/f-exp_tab.c
 @V@/gdb/gdbtk/ChangeLog-2001 @V@/gdb/gdbtk/ChangeLog.001
 @V@/gdb/gdbtk/ChangeLog-2002 @V@/gdb/gdbtk/ChangeLog.002
@@ -120,6 +117,8 @@
 @V@/gdb/gdbtk/library/ChangeLog-2000 @V@/gdb/gdbtk/library/ChangeLog.000
 @V@/gdb/gdbtk/plugins/intel-pentium/intel-pentium.tcl.in @V@/gdb/gdbtk/plugins/intel-pentium/intel-pentium.t-in
 @V@/gdb/gdbtk/plugins/rhabout/rhabout.tcl.in @V@/gdb/gdbtk/plugins/rhabout/rhabout.t-in
+@V@/gdb/hppabsd-nat.c @V@/gdb/hppab-nat.c
+@V@/gdb/hppabsd-tdep.c @V@/gdb/hppab-tdep.c
 @V@/gdb/i386-interix-nat.c @V@/gdb/i386ix-nat.c
 @V@/gdb/i386-interix-tdep.c @V@/gdb/i386ix-tdep.c
 @V@/gdb/i386-linux-tdep.c @V@/gdb/i386lx-tdep.c
@@ -139,8 +138,12 @@
 @V@/gdb/ia64-linux-nat.c @V@/gdb/ia64lx-tdep.c
 @V@/gdb/jv-exp.tab.c @V@/gdb/jv-exp_tab.c
 @V@/gdb/m2-exp.tab.c @V@/gdb/m2-exp_tab.c
+@V@/gdb/m32r-linux-nat.c @V@/gdb/m32rlnxnat.c
+@V@/gdb/m32r-linux-tdep.c @V@/gdb/m32rlnxtdep.c
 @V@/gdb/m68klinux-nat.c @V@/gdb/m68kl-nat.c
 @V@/gdb/m68klinux-tdep.c @V@/gdb/m68kl-tdep.c
+@V@/gdb/m68kbsd-nat.c @V@/gdb/m68bsd-nat.c
+@V@/gdb/m68kbsd-tdep.c @V@/gdb/m68bsd-tdep.c
 @V@/gdb/m68knbsd-nat.c @V@/gdb/m6nbsd-nat.c
 @V@/gdb/m68knbsd-tdep.c @V@/gdb/m6nbsd-tdep.c
 @V@/gdb/mips-linux-nat.c @V@/gdb/mipslnxnat.c
@@ -156,6 +159,8 @@
 @V@/gdb/ppc-linux-nat.c @V@/gdb/ppc-lx-nat.c
 @V@/gdb/ppcnbsd-nat.c @V@/gdb/ppcnb-nat.c
 @V@/gdb/ppcnbsd-tdep.c @V@/gdb/ppcnb-tdep.c
+@V@/gdb/ppcobsd-nat.c @V@/gdb/ppcob-nat.c
+@V@/gdb/ppcobsd-tdep.c @V@/gdb/ppcob-tdep.c
 @V@/gdb/regformats/reg-i386-linux.dat @V@/gdb/regformats/r-i386-lnx.dat
 @V@/gdb/regformats/reg-s390x.dat @V@/gdb/regformats/r-s390x.dat
 @V@/gdb/remote-e7000.c @V@/gdb/rmt-e7000.c
@@ -188,6 +193,8 @@
 @V@/gdb/testsuite/gdb.arch/altivec-abi.exp @V@/gdb/testsuite/gdb.arch/av-abi.exp
 @V@/gdb/testsuite/gdb.arch/altivec-regs.c @V@/gdb/testsuite/gdb.arch/av-regs.c
 @V@/gdb/testsuite/gdb.arch/altivec-regs.exp @V@/gdb/testsuite/gdb.arch/av-regs.exp
+@V@/gdb/testsuite/gdb.arch/powerpc-aix-prologue.exp @V@/gdb/testsuite/gdb.arch/ppcaprol.exp
+@V@/gdb/testsuite/gdb.arch/powerpc-aix-prologue.c @V@/gdb/testsuite/gdb.arch/ppcaprol.c
 @V@/gdb/testsuite/gdb.base/coremaker2.c @V@/gdb/testsuite/gdb.base/core2maker.c
 @V@/gdb/testsuite/gdb.cp/m-static1.cc @V@/gdb/testsuite/gdb.cp/m-stat1.cc
 @V@/gdb/testsuite/gdb.cp/namespace1.cc @V@/gdb/testsuite/gdb.cp/namesp1.cc
@@ -232,6 +239,8 @@
 @V@/gdb/testsuite/gdb.mi/mi2-var-display.exp @V@/gdb/testsuite/gdb.mi/mi2vardisplay.exp
 @V@/gdb/amd64-linux-tdep.c @V@/gdb/amd64-ltdep.c
 @V@/gdb/amd64-linux-nat.c @V@/gdb/amd64-lnat.c
+@V@/gdb/hppa-linux-tdep.c @V@/gdb/palnxtdep.c
+@V@/gdb/hppa-linux-nat.c @V@/gdb/palnxnat.c
 @V@/include/ChangeLog-9103 @V@/include/ChangeLog.9103
 @V@/include/coff/ChangeLog-9103 @V@/include/coff/ChangeLog.9103
 @V@/include/elf/ChangeLog-9103 @V@/include/elf/ChangeLog.9103
@@ -328,6 +337,7 @@
 @V@/sim/testsuite/sim/arm/misaligned1.ms @V@/sim/testsuite/sim/arm/mis1.ms
 @V@/sim/testsuite/sim/arm/misaligned2.ms @V@/sim/testsuite/sim/arm/mis2.ms
 @V@/sim/testsuite/sim/arm/misaligned3.ms @V@/sim/testsuite/sim/arm/mis3.ms
+@V@/sim/testsuite/sim/mips/fpu64-ps-sb1.s @V@/sim/testsuite/sim/mips/fpu64ps-sb1.s
 @V@/sim/testsuite/sim/frv/interrupts/Ipipe-fr400.cgs @V@/sim/testsuite/sim/frv/interrupts/Ip-fr400.cgs
 @V@/sim/testsuite/sim/frv/interrupts/Ipipe-fr500.cgs @V@/sim/testsuite/sim/frv/interrupts/Ip-fr500.cgs
 @V@/sim/testsuite/sim/frv/interrupts/badalign-fr550.cgs @V@/sim/testsuite/sim/frv/interrupts/fr550-badalign.cgs
@@ -335,6 +345,9 @@
 @V@/sim/testsuite/sim/frv/interrupts/data_store_error-fr550.cgs @V@/sim/testsuite/sim/frv/interrupts/fr550-data_store_error.cgs
 @V@/sim/testsuite/sim/frv/interrupts/fp_exception-fr550.cgs @V@/sim/testsuite/sim/frv/interrupts/fr550-fp_exception.cgs
 @V@/sim/testsuite/sim/frv/interrupts/insn_access_error-fr550.cgs @V@/sim/testsuite/sim/frv/interrupts/fr550-insn_access_error.cgs
+@V@/sim/testsuite/sim/mips/hilo-hazard-1.s @V@/sim/testsuite/sim/mips/hilo-hz-1.s
+@V@/sim/testsuite/sim/mips/hilo-hazard-2.s @V@/sim/testsuite/sim/mips/hilo-hz-2.s
+@V@/sim/testsuite/sim/mips/hilo-hazard-3.s @V@/sim/testsuite/sim/mips/hilo-hz-3.s
 @V@/sim/testsuite/sim/sh64/compact/ldsl-mach.cgs @V@/sim/testsuite/sim/sh64/compact/mach-ldsl.cgs
 @V@/sim/testsuite/sim/sh64/compact/ldsl-macl.cgs @V@/sim/testsuite/sim/sh64/compact/macl-ldsl.cgs
 @V@/sim/testsuite/sim/sh64/compact/stsl-mach.cgs @V@/sim/testsuite/sim/sh64/compact/mach-stsl.cgs

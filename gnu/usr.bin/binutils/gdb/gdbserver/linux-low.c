@@ -35,6 +35,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
+#include <sys/syscall.h>
 
 /* ``all_threads'' is keyed by the LWP ID - it should be the thread ID instead,
    however.  This requires changing the ID in place when we go from !using_threads
@@ -223,6 +224,13 @@ linux_kill_one_process (struct inferior_list_entry *entry)
   struct process_info *process = get_thread_process (thread);
   int wstat;
 
+  /* We avoid killing the first thread here, because of a Linux kernel (at
+     least 2.6.0-test7 through 2.6.8-rc4) bug; if we kill the parent before
+     the children get a chance to be reaped, it will remain a zombie
+     forever.  */
+  if (entry == all_threads.head)
+    return;
+
   do
     {
       ptrace (PTRACE_KILL, pid_of (process), 0, 0);
@@ -235,7 +243,21 @@ linux_kill_one_process (struct inferior_list_entry *entry)
 static void
 linux_kill (void)
 {
+  struct thread_info *thread = (struct thread_info *) all_threads.head;
+  struct process_info *process = get_thread_process (thread);
+  int wstat;
+
   for_each_inferior (&all_threads, linux_kill_one_process);
+
+  /* See the comment in linux_kill_one_process.  We did not kill the first
+     thread in the list, so do so now.  */
+  do
+    {
+      ptrace (PTRACE_KILL, pid_of (process), 0, 0);
+
+      /* Make sure it died.  The loop is most likely unnecessary.  */
+      wstat = linux_wait_for_event (thread);
+    } while (WIFSTOPPED (wstat));
 }
 
 static void
@@ -709,6 +731,30 @@ retry:
   return ((unsigned char) WSTOPSIG (w));
 }
 
+/* Send a signal to an LWP.  For LinuxThreads, kill is enough; however, if
+   thread groups are in use, we need to use tkill.  */
+
+static int
+kill_lwp (int lwpid, int signo)
+{
+  static int tkill_failed;
+
+  errno = 0;
+
+#ifdef SYS_tkill
+  if (!tkill_failed)
+    {
+      int ret = syscall (SYS_tkill, lwpid, signo);
+      if (errno != ENOSYS)
+        return ret;
+      errno = 0;
+      tkill_failed = 1;
+    }
+#endif
+
+  return kill (lwpid, signo);
+}
+
 static void
 send_sigstop (struct inferior_list_entry *entry)
 {
@@ -728,7 +774,7 @@ send_sigstop (struct inferior_list_entry *entry)
   if (debug_threads)
     fprintf (stderr, "Sending sigstop to process %d\n", process->head.id);
 
-  kill (process->head.id, SIGSTOP);
+  kill_lwp (process->head.id, SIGSTOP);
   process->sigstop_sent = 1;
 }
 
@@ -1388,10 +1434,10 @@ linux_send_signal (int signum)
       struct process_info *process;
 
       process = get_thread_process (current_inferior);
-      kill (process->lwpid, signum);
+      kill_lwp (process->lwpid, signum);
     }
   else
-    kill (signal_pid, signum);
+    kill_lwp (signal_pid, signum);
 }
 
 /* Copy LEN bytes from inferior's auxiliary vector starting at OFFSET

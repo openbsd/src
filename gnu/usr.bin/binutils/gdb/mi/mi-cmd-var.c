@@ -50,9 +50,8 @@ mi_cmd_var_create (char *command, char **argv, int argc)
 
   if (argc != 3)
     {
-      /*      xasprintf (&mi_error_message,
-         "mi_cmd_var_create: Usage: .");
-         return MI_CMD_ERROR; */
+      /* mi_error_message = xstrprintf ("mi_cmd_var_create: Usage:
+         ...."); return MI_CMD_ERROR; */
       error ("mi_cmd_var_create: Usage: NAME FRAME EXPRESSION.");
     }
 

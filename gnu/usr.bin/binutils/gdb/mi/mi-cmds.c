@@ -81,7 +81,7 @@ struct mi_cmd mi_cmds[] =
   { "file-exec-file", { "exec-file", 1 }, NULL, NULL },
   { "file-list-exec-sections", { NULL, 0 }, NULL, NULL },
   { "file-list-exec-source-file", { NULL, 0 }, 0, mi_cmd_file_list_exec_source_file},
-  { "file-list-exec-source-files", { NULL, 0 }, NULL, NULL },
+  { "file-list-exec-source-files", { NULL, 0 }, NULL, mi_cmd_file_list_exec_source_files },
   { "file-list-shared-libraries", { NULL, 0 }, NULL, NULL },
   { "file-list-symbol-files", { NULL, 0 }, NULL, NULL },
   { "file-symbol-file", { "symbol-file", 1 }, NULL, NULL },

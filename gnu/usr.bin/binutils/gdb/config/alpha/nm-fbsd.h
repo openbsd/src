@@ -1,5 +1,6 @@
 /* Native-dependent definitions for FreeBSD/Alpha.
-   Copyright 1986, 1987, 1989, 1992, 1996, 2000
+
+   Copyright 1986, 1987, 1989, 1992, 1996, 2000, 2004
    Free Software Foundation, Inc.
 
    This file is part of GDB.
@@ -22,14 +23,8 @@
 #ifndef NM_FBSD_H
 #define NM_FBSD_H
 
-/* Type of the third argument to the `ptrace' system call.  */
-#define PTRACE_ARG3_TYPE caddr_t
-
-/* Override copies of {fetch,store}_inferior_registers in `infptrace.c'.  */
-#define FETCH_INFERIOR_REGISTERS
-
-/* We can attach and detach.  */
-#define ATTACH_DETACH
+/* Get generic BSD native definitions.  */
+#include "config/nm-bsd.h"
 
 /* The Alpha does not step over a breakpoint.  */
 #define CANNOT_STEP_BREAKPOINT 1

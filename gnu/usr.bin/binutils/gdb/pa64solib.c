@@ -52,6 +52,7 @@
 #include "language.h"
 #include "regcache.h"
 #include "exec.h"
+#include "hppa-tdep.h"
 
 #include <fcntl.h>
 
@@ -156,8 +157,8 @@ pa64_solib_sizeof_symbol_table (char *filename)
 
   /* We believe that filename was handed to us by the dynamic linker, and
      is therefore always an absolute path.  */
-  desc = openp (getenv ("PATH"), 1, filename, O_RDONLY | O_BINARY,
-		0, &absolute_name);
+  desc = openp (getenv ("PATH"), OPF_TRY_CWD_FIRST, filename,
+		O_RDONLY | O_BINARY, 0, &absolute_name);
   if (desc < 0)
     {
       perror_with_name (filename);
@@ -220,7 +221,7 @@ pa64_solib_add_solib_objfile (struct so_list *so, char *name, int from_tty,
 {
   bfd *tmp_bfd;
   asection *sec;
-  obj_private_data_t *obj_private;
+  struct hppa_objfile_private *obj_private;
   struct section_addr_info *section_addrs;
   struct cleanup *my_cleanups;
 
@@ -278,17 +279,18 @@ pa64_solib_add_solib_objfile (struct so_list *so, char *name, int from_tty,
   /* Mark this as a shared library and save private data.  */
   so->objfile->flags |= OBJF_SHARED;
 
-  if (so->objfile->obj_private == NULL)
+  obj_private = (struct hppa_objfile_private *)
+	        objfile_data (so->objfile, hppa_objfile_priv_data);
+  if (obj_private == NULL)
     {
-      obj_private = (obj_private_data_t *)
+      obj_private = (struct hppa_objfile_private *)
 	obstack_alloc (&so->objfile->objfile_obstack,
-		       sizeof (obj_private_data_t));
+		       sizeof (struct hppa_objfile_private));
+      set_objfile_data (so->objfile, hppa_objfile_priv_data, obj_private);
       obj_private->unwind_info = NULL;
       obj_private->so_info = NULL;
-      so->objfile->obj_private = obj_private;
     }
 
-  obj_private = (obj_private_data_t *) so->objfile->obj_private;
   obj_private->so_info = so;
   obj_private->dp = so->pa64_solib_desc.linkage_ptr;
   do_cleanups (my_cleanups);
@@ -647,7 +649,7 @@ pa64_solib_have_load_event (int pid)
 {
   CORE_ADDR event_kind;
 
-  event_kind = read_register (ARG0_REGNUM);
+  event_kind = read_register (HPPA_ARG0_REGNUM);
   return (event_kind == DLD_CB_LOAD);
 }
 
@@ -658,7 +660,7 @@ pa64_solib_have_unload_event (int pid)
 {
   CORE_ADDR event_kind;
 
-  event_kind = read_register (ARG0_REGNUM);
+  event_kind = read_register (HPPA_ARG0_REGNUM);
   return (event_kind == DLD_CB_UNLOAD);
 }
 
@@ -672,7 +674,7 @@ char *
 pa64_solib_loaded_library_pathname (int pid)
 {
   static char dll_path[MAXPATHLEN];
-  CORE_ADDR  dll_path_addr = read_register (ARG3_REGNUM);
+  CORE_ADDR  dll_path_addr = read_register (HPPA_ARG3_REGNUM);
   read_memory_string (dll_path_addr, dll_path, MAXPATHLEN);
   return dll_path;
 }
@@ -687,7 +689,7 @@ char *
 pa64_solib_unloaded_library_pathname (int pid)
 {
   static char dll_path[MAXPATHLEN];
-  CORE_ADDR dll_path_addr = read_register (ARG3_REGNUM);
+  CORE_ADDR dll_path_addr = read_register (HPPA_ARG3_REGNUM);
   read_memory_string (dll_path_addr, dll_path, MAXPATHLEN);
   return dll_path;
 }
@@ -794,23 +796,18 @@ pa64_sharedlibrary_info_command (char *ignore, int from_tty)
       if (so_list->loaded == 0)
 	printf_unfiltered ("  (shared library unloaded)");
       printf_unfiltered ("  %-18s",
-	local_hex_string_custom (so_list->pa64_solib_desc.linkage_ptr,
-				 "016l"));
+	hex_string_custom (so_list->pa64_solib_desc.linkage_ptr, 16));
       printf_unfiltered ("\n");
       printf_unfiltered ("%-18s",
-	local_hex_string_custom (so_list->pa64_solib_desc.text_base,
-				 "016l"));
+	hex_string_custom (so_list->pa64_solib_desc.text_base, 16));
       printf_unfiltered (" %-18s",
-	local_hex_string_custom ((so_list->pa64_solib_desc.text_base
-				  + so_list->pa64_solib_desc.text_size),
-				 "016l"));
+	hex_string_custom ((so_list->pa64_solib_desc.text_base
+			    + so_list->pa64_solib_desc.text_size), 16));
       printf_unfiltered (" %-18s",
-	local_hex_string_custom (so_list->pa64_solib_desc.data_base,
-				 "016l"));
+	hex_string_custom (so_list->pa64_solib_desc.data_base, 16));
       printf_unfiltered (" %-18s\n",
-	local_hex_string_custom ((so_list->pa64_solib_desc.data_base
-				  + so_list->pa64_solib_desc.data_size),
-				 "016l"));
+	hex_string_custom ((so_list->pa64_solib_desc.data_base
+			    + so_list->pa64_solib_desc.data_size), 16));
       so_list = so_list->next;
     }
 }
@@ -890,7 +887,7 @@ _initialize_pa64_solib (void)
   add_info ("sharedlibrary", pa64_sharedlibrary_info_command,
 	    "Status of loaded shared object libraries.");
 
-  add_show_from_set
+  deprecated_add_show_from_set
     (add_set_cmd ("auto-solib-add", class_support, var_boolean,
 		  (char *) &auto_solib_add,
 		  "Set autoloading of shared library symbols.\n\
@@ -901,7 +898,7 @@ inferior.  Otherwise, symbols must be loaded manually, using `sharedlibrary'.",
 		  &setlist),
      &showlist);
 
-  add_show_from_set
+  deprecated_add_show_from_set
     (add_set_cmd ("auto-solib-limit", class_support, var_zinteger,
 		  (char *) &auto_solib_limit,
 		  "Set threshold (in Mb) for autoloading shared library symbols.\n\

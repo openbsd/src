@@ -1,5 +1,6 @@
 /* GDB Notifications to Observers.
-   Copyright 2003 Free Software Foundation, Inc.
+
+   Copyright 2003, 2004 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -52,6 +53,10 @@
 
 #include "defs.h"
 #include "observer.h"
+#include "command.h"
+#include "gdbcmd.h"
+
+static int observer_debug;
 
 /* The internal generic observer.  */
 
@@ -159,37 +164,6 @@ generic_observer_notify (struct observer_list *subject, const void *args)
     }
 }
 
-/* normal_stop notifications.  */
-
-static struct observer_list *normal_stop_subject = NULL;
-
-static void
-observer_normal_stop_notification_stub (const void *data,
-					const void *unused_args)
-{
-  observer_normal_stop_ftype *notify = (observer_normal_stop_ftype *) data;
-  (*notify) ();
-}
-
-struct observer *
-observer_attach_normal_stop (observer_normal_stop_ftype *f)
-{
-  return generic_observer_attach (&normal_stop_subject,
-				  &observer_normal_stop_notification_stub,
-				  (void *) f);
-}
-
-void
-observer_detach_normal_stop (struct observer *observer)
-{
-  generic_observer_detach (&normal_stop_subject, observer);
-}
-
-void
-observer_notify_normal_stop (void)
-{
-  generic_observer_notify (normal_stop_subject, NULL);
-}
 
 /* The following code is only used to unit-test the observers from our
    testsuite.  DO NOT USE IT within observer.c (or anywhere else for
@@ -203,20 +177,35 @@ int observer_test_second_observer = 0;
 int observer_test_third_observer = 0;
 
 void
-observer_test_first_notification_function (void)
+observer_test_first_notification_function (struct bpstats *bs)
 {
   observer_test_first_observer++;
 }
 
 void
-observer_test_second_notification_function (void)
+observer_test_second_notification_function (struct bpstats *bs)
 {
   observer_test_second_observer++;
 }
 
 void
-observer_test_third_notification_function (void)
+observer_test_third_notification_function (struct bpstats *bs)
 {
   observer_test_third_observer++;
 }
 
+extern initialize_file_ftype _initialize_observer; /* -Wmissing-prototypes */
+
+void
+_initialize_observer (void)
+{
+  add_setshow_zinteger_cmd ("observer", class_maintenance, &observer_debug, "\
+Set observer debugging.", "\
+Show observer debugging.", "\
+When non-zero, observer debugging is enabled.", "\
+Observer debugging is %s.",
+			    NULL, NULL,
+			    &setdebuglist, &showdebuglist);
+}
+
+#include "observer.inc"

@@ -28,6 +28,10 @@
 #define KERNEL_U_SIZE kernel_u_size()
 extern int kernel_u_size (void);
 
+/* This is the amount to subtract from u.u_ar0
+   to get the offset in the core file of the register values.  */
+#define KERNEL_U_ADDR 0x0
+
 #define U_REGS_OFFSET 0
 
 #define REGISTER_U_ADDR(addr, blockend, regno) \

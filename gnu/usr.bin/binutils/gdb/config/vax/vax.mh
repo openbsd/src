@@ -1,0 +1,4 @@
+# Host: VAX running 4.2BSD or Ultrix
+NATDEPFILES= vax-nat.o fork-child.o infptrace.o inftarg.o \
+	corelow.o core-aout.o
+NAT_FILE= nm-vax.h

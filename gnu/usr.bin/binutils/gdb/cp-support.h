@@ -52,7 +52,7 @@ struct using_direct
 
 /* Functions from cp-support.c.  */
 
-extern char *class_name_from_physname (const char *physname);
+extern char *cp_class_name_from_physname (const char *physname);
 
 extern char *method_name_from_physname (const char *physname);
 

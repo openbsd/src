@@ -46,7 +46,4 @@
 extern int arm_in_call_stub (CORE_ADDR pc, char *name);
 extern CORE_ADDR arm_skip_stub (CORE_ADDR pc);
 
-#undef  IN_SIGTRAMP
-#define IN_SIGTRAMP(pc, name) 0
-
 #endif /* TM_ARMEMBED_H */

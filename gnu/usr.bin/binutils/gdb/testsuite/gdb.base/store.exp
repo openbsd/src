@@ -1,4 +1,6 @@
-# Copyright 2002, 2003 Free Software Foundation, Inc.
+# This testcase is part of GDB, the GNU debugger.
+
+# Copyright 2002, 2003, 2004 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,9 +16,6 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
 
-# Please email any bugs, comments, and/or additions to this file to:
-# bug-gdb@gnu.org
-
 if $tracelevel {
     strace $tracelevel
 }
@@ -31,7 +30,7 @@ set testfile "store"
 set srcfile ${testfile}.c
 set binfile ${objdir}/${subdir}/${testfile}
 if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
-     gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
+    gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
 }
 
 if [get_compiler_info ${binfile}] {
@@ -55,16 +54,24 @@ if ![runto_main] then {
 #
 
 proc check_set { t l r new add } {
-    global gdb_prompt
+    set prefix "var ${t} l"
     gdb_test "tbreak wack_${t}"
-    gdb_test "continue" "register ${t} l = u, r = v;" "continue to wack_${t}"
-    gdb_test "next" "l = add_${t} .l, r.;" "next ${t}"
-    gdb_test "print l" " = ${l}" "print old l - ${t}"
-    gdb_test "print r" " = ${r}" "print old r - ${t}"
-    gdb_test "set variable l = 4"
-    gdb_test "print l" " = ${new}" "print new l - ${t}"
-    gdb_test "next" "return l \\+ r;"
-    gdb_test "print l" " = ${add}" "print add  - ${t}"
+    gdb_test "continue" "register ${t} l = u, r = v;" \
+	"continue to wack_${t}"
+    gdb_test "next" "l = add_${t} .l, r.;" \
+	"${prefix}; next ${t}"
+    gdb_test "print l" " = ${l}" \
+	"${prefix}; print old l, expecting ${l}"
+    gdb_test "print r" " = ${r}" \
+	"${prefix}; print old r, expecting ${r}"
+    gdb_test "set variable l = 4" "" \
+	"${prefix}; setting l to 4"
+    gdb_test "print l" " = ${new}" \
+	"${prefix}; print new l, expecting ${l}"
+    gdb_test "next" "return l \\+ r;" \
+	"${prefix}; next over add call"
+    gdb_test "print l" " = ${add}" \
+	"${prefix}; print incremented l, expecting ${add}"
 }
 
 check_set "charest" "-1 .*" "-2 .*" "4 ..004." "2 ..002."
@@ -79,14 +86,20 @@ check_set "doublest" "-1" "-2" "4" "2"
 #
 
 proc up_set { t l r new } {
-    global gdb_prompt
+    set prefix "upvar ${t} l"
     gdb_test "tbreak add_${t}"
-    gdb_test "continue" "return u . v;" "continue to add_${t}"
-    gdb_test "up" "l = add_${t} .l, r.;" "up ${t}"
-    gdb_test "print l" " = ${l}" "up print old l - ${t}"
-    gdb_test "print r" " = ${r}" "up print old r - ${t}"
-    gdb_test "set variable l = 4"
-    gdb_test "print l" " = ${new}" "up print new l - ${t}"
+    gdb_test "continue" "return u . v;" \
+	"continue to add_${t}"
+    gdb_test "up" "l = add_${t} .l, r.;" \
+	"${prefix}; up"
+    gdb_test "print l" " = ${l}" \
+	"${prefix}; print old l, expecting ${l}"
+    gdb_test "print r" " = ${r}" \
+	"${prefix}; print old r, expecting ${r}"
+    gdb_test "set variable l = 4" "" \
+	"${prefix}; set l to 4"
+    gdb_test "print l" " = ${new}" \
+	"${prefix}; print new l, expecting ${new}"
 }
 
 up_set "charest" "-1 .*" "-2 .*" "4 ..004."
@@ -101,14 +114,18 @@ up_set "doublest" "-1" "-2" "4"
 #
 
 proc check_struct { t old new } {
-    global gdb_prompt
+    set prefix "var struct ${t} u"
     gdb_test "tbreak wack_struct_${t}"
     gdb_test "continue" "int i; register struct s_${t} u = z_${t};" \
-	    "continue set struct ${t}"
-    gdb_test "next 2" "add_struct_${t} .u.;"
-    gdb_test "print u" " = ${old}" "old check struct ${t}"
-    gdb_test "set variable u = s_${t}"
-    gdb_test "print u" " = ${new}" "new check struct ${t}"
+	"continue to wack_struct_${t}"
+    gdb_test "next 2" "add_struct_${t} .u.;" \
+	"${prefix}; next to add_struct_${t} call"
+    gdb_test "print u" " = ${old}" \
+	"${prefix}; print old u, expecting ${old}"
+    gdb_test "set variable u = s_${t}" "" \
+	"${prefix}; set u to s_${t}"
+    gdb_test "print u" " = ${new}" \
+	"${prefix}; print new u, expecting ${new}"
 }
 
 check_struct "1" "{s = \\{0}}" "{s = \\{1}}"
@@ -117,14 +134,18 @@ check_struct "3" "{s = \\{0, 0, 0}}" "{s = \\{1, 2, 3}}"
 check_struct "4" "{s = \\{0, 0, 0, 0}}" "{s = \\{1, 2, 3, 4}}"
 
 proc up_struct { t old new } {
-    global gdb_prompt
+    set prefix "up struct ${t} u"
     gdb_test "tbreak add_struct_${t}"
     gdb_test "continue" "for .i = 0; i < sizeof .s. / sizeof .s.s.0..; i..." \
-	    "continue up struct ${t}"
-    gdb_test "up" "u = add_struct_${t} .u.;" "up struct ${t}"
-    gdb_test "print u" " = ${old}" "old up struct ${t}"
-    gdb_test "set variable u = s_${t}"
-    gdb_test "print u" " = ${new}" "new up struct ${t}"
+	"continue to add_struct_${t}"
+    gdb_test "up" "u = add_struct_${t} .u.;" \
+	"${prefix}; up"
+    gdb_test "print u" " = ${old}" \
+	"${prefix}; print old u, expecting ${old}"
+    gdb_test "set variable u = s_${t}" "" \
+	"${prefix}; set u to s_${t}"
+    gdb_test "print u" " = ${new}" \
+	"${prefix}; print new u, expecting ${new}"
 }
 
 up_struct "1" "{s = \\{0}}" "{s = \\{1}}"

@@ -312,11 +312,36 @@ thread_db_find_new_threads (void)
     error ("Cannot find new threads: %s", thread_db_err_str (err));
 }
 
+/* Cache all future symbols that thread_db might request.  We can not
+   request symbols at arbitrary states in the remote protocol, only
+   when the client tells us that new symbols are available.  So when
+   we load the thread library, make sure to check the entire list.  */
+
+static void
+thread_db_look_up_symbols (void)
+{
+  const char **sym_list = td_symbol_list ();
+  CORE_ADDR unused;
+
+  for (sym_list = td_symbol_list (); *sym_list; sym_list++)
+    look_up_one_symbol (*sym_list, &unused);
+}
+
 int
 thread_db_init ()
 {
   int err;
 
+  /* FIXME drow/2004-10-16: This is the "overall process ID", which
+     GNU/Linux calls tgid, "thread group ID".  When we support
+     attaching to threads, the original thread may not be the correct
+     thread.  We would have to get the process ID from /proc for NPTL.
+     For LinuxThreads we could do something similar: follow the chain
+     of parent processes until we find the highest one we're attached
+     to, and use its tgid.
+
+     This isn't the only place in gdbserver that assumes that the first
+     process in the list is the thread group leader.  */
   proc_handle.pid = ((struct inferior_list_entry *)current_inferior)->id;
 
   err = td_ta_new (&proc_handle, &thread_agent);
@@ -332,6 +357,7 @@ thread_db_init ()
       if (thread_db_enable_reporting () == 0)
 	return 0;
       thread_db_find_new_threads ();
+      thread_db_look_up_symbols ();
       return 1;
 
     default:

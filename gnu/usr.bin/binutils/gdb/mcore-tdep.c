@@ -713,8 +713,7 @@ mcore_find_callers_reg (struct frame_info *fi, int regnum)
 {
   for (; fi != NULL; fi = get_next_frame (fi))
     {
-      if (DEPRECATED_PC_IN_CALL_DUMMY (get_frame_pc (fi), get_frame_base (fi),
-				       get_frame_base (fi)))
+      if (deprecated_pc_in_call_dummy (get_frame_pc (fi)))
 	return deprecated_read_register_dummy (get_frame_pc (fi),
 					       get_frame_base (fi), regnum);
       else if (deprecated_get_frame_saved_regs (fi)[regnum] != 0)
@@ -731,8 +730,7 @@ static CORE_ADDR
 mcore_frame_saved_pc (struct frame_info * fi)
 {
 
-  if (DEPRECATED_PC_IN_CALL_DUMMY (get_frame_pc (fi), get_frame_base (fi),
-				   get_frame_base (fi)))
+  if (deprecated_pc_in_call_dummy (get_frame_pc (fi)))
     return deprecated_read_register_dummy (get_frame_pc (fi),
 					   get_frame_base (fi), PC_REGNUM);
   else
@@ -750,9 +748,8 @@ mcore_pop_frame (void)
   int rn;
   struct frame_info *fi = get_current_frame ();
 
-  if (DEPRECATED_PC_IN_CALL_DUMMY (get_frame_pc (fi), get_frame_base (fi),
-				   get_frame_base (fi)))
-    generic_pop_dummy_frame ();
+  if (deprecated_pc_in_call_dummy (get_frame_pc (fi)))
+    deprecated_pop_dummy_frame ();
   else
     {
       /* Write out the PC we saved. */
@@ -919,11 +916,11 @@ mcore_push_return_address (CORE_ADDR pc, CORE_ADDR sp)
    argument.
 
    For gdb, this leaves us two routes, based on what
-   USE_STRUCT_CONVENTION (mcore_use_struct_convention) returns.  If
-   this macro returns 1, gdb will call STORE_STRUCT_RETURN to store
-   the return value.
+   DEPRECATED_USE_STRUCT_CONVENTION (mcore_use_struct_convention)
+   returns.  If this macro returns 1, gdb will call
+   STORE_STRUCT_RETURN to store the return value.
 
-   If USE_STRUCT_CONVENTION returns 0, then gdb uses
+   If DEPRECATED_USE_STRUCT_CONVENTION returns 0, then gdb uses
    STORE_RETURN_VALUE and EXTRACT_RETURN_VALUE to store/fetch the
    functions return value.  */
 
@@ -995,8 +992,7 @@ mcore_init_extra_frame_info (int fromleaf, struct frame_info *fi)
   get_frame_extra_info (fi)->status = 0;
   get_frame_extra_info (fi)->framesize = 0;
 
-  if (DEPRECATED_PC_IN_CALL_DUMMY (get_frame_pc (fi), get_frame_base (fi),
-				   get_frame_base (fi)))
+  if (deprecated_pc_in_call_dummy (get_frame_pc (fi)))
     {
       /* We need to setup fi->frame here because call_function_by_hand
          gets it wrong by assuming it's always FP.  */
@@ -1012,7 +1008,7 @@ static int
 get_insn (CORE_ADDR pc)
 {
   char buf[4];
-  int status = read_memory_nobpt (pc, buf, 2);
+  int status = deprecated_read_memory_nobpt (pc, buf, 2);
   if (status != 0)
     return 0;
 
@@ -1022,7 +1018,6 @@ get_insn (CORE_ADDR pc)
 static struct gdbarch *
 mcore_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 {
-  static LONGEST call_dummy_words[7] = { };
   struct gdbarch_tdep *tdep = NULL;
   struct gdbarch *gdbarch;
 
@@ -1041,14 +1036,11 @@ mcore_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   /* All registers are 32 bits */
   set_gdbarch_deprecated_register_size (gdbarch, MCORE_REG_SIZE);
-  set_gdbarch_deprecated_max_register_raw_size (gdbarch, MCORE_REG_SIZE);
-  set_gdbarch_deprecated_max_register_virtual_size (gdbarch, MCORE_REG_SIZE);
   set_gdbarch_register_name (gdbarch, mcore_register_name);
   set_gdbarch_deprecated_register_virtual_type (gdbarch, mcore_register_virtual_type);
   set_gdbarch_deprecated_register_virtual_size (gdbarch, mcore_register_size);
   set_gdbarch_deprecated_register_raw_size (gdbarch, mcore_register_size);
   set_gdbarch_deprecated_register_byte (gdbarch, mcore_register_byte);
-  set_gdbarch_deprecated_register_bytes (gdbarch, MCORE_REG_SIZE * MCORE_NUM_REGS);
   set_gdbarch_num_regs (gdbarch, MCORE_NUM_REGS);
   set_gdbarch_pc_regnum (gdbarch, 64);
   set_gdbarch_sp_regnum (gdbarch, 0);
@@ -1056,9 +1048,6 @@ mcore_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   /* Call Dummies:  */
 
-  set_gdbarch_deprecated_call_dummy_words (gdbarch, call_dummy_words);
-  set_gdbarch_deprecated_sizeof_call_dummy_words (gdbarch, 0);
-  set_gdbarch_deprecated_save_dummy_frame_tos (gdbarch, generic_save_dummy_frame_tos);
   set_gdbarch_deprecated_saved_pc_after_call (gdbarch, mcore_saved_pc_after_call);
   set_gdbarch_breakpoint_from_pc (gdbarch, mcore_breakpoint_from_pc);
   set_gdbarch_deprecated_push_return_address (gdbarch, mcore_push_return_address);
@@ -1084,7 +1073,7 @@ mcore_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   /* Stack grows down.  */
   set_gdbarch_inner_than (gdbarch, core_addr_lessthan);
-  set_gdbarch_use_struct_convention (gdbarch, mcore_use_struct_convention);
+  set_gdbarch_deprecated_use_struct_convention (gdbarch, mcore_use_struct_convention);
   set_gdbarch_believe_pcc_promotion (gdbarch, 1);
   /* MCore will never pass a sturcture by reference. It will always be split
      between registers and stack.  */
@@ -1113,9 +1102,10 @@ _initialize_mcore_tdep (void)
   gdbarch_register (bfd_arch_mcore, mcore_gdbarch_init, mcore_dump_tdep);
 
 #ifdef MCORE_DEBUG
-  add_show_from_set (add_set_cmd ("mcoredebug", no_class,
-				  var_boolean, (char *) &mcore_debug,
-				  "Set mcore debugging.\n", &setlist),
-		     &showlist);
+  deprecated_add_show_from_set
+    (add_set_cmd ("mcoredebug", no_class,
+		  var_boolean, (char *) &mcore_debug,
+		  "Set mcore debugging.\n", &setlist),
+     &showlist);
 #endif
 }

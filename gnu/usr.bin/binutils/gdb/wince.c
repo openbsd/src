@@ -1,5 +1,6 @@
 /* Target-vector operations for controlling Windows CE child processes, for GDB.
-   Copyright 1999, 2000, 2001 Free Software Foundation, Inc.
+
+   Copyright 1999, 2000, 2001, 2004 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions, A Red Hat Company.
 
    This file is part of GDB.
@@ -59,9 +60,6 @@
 #ifdef MIPS
 #include "mips-tdep.h"
 #endif
-
-/* The ui's event loop. */
-extern int (*ui_loop_hook) (int signo);
 
 /* If we're not using the old Cygwin header file set, define the
    following which never should have been in the generic Win32 API
@@ -128,9 +126,6 @@ upload_options[3] =
 
 static char *remote_upload = NULL;	/* Set by set remoteupload */
 static int remote_add_host = 0;
-
-/* Forward declaration */
-extern struct target_ops child_ops;
 
 static int win32_child_thread_alive (ptid_t);
 void child_kill_inferior (void);
@@ -1122,7 +1117,8 @@ do_child_fetch_inferior_registers (int r)
 {
   if (r >= 0)
     {
-      supply_register (r, (char *) regptr (&current_thread->context, r));
+      regcache_raw_supply (current_regcache, r,
+			   (char *) regptr (&current_thread->context, r));
     }
   else
     {
@@ -1510,8 +1506,8 @@ child_wait (ptid_t ptid, struct target_waitstatus *ourstatus)
       {
 	int detach = 0;
 
-	if (ui_loop_hook != NULL)
-	  detach = ui_loop_hook (0);
+	if (deprecated_ui_loop_hook != NULL)
+	  detach = deprecated_ui_loop_hook (0);
 
 	if (detach)
 	  child_kill_inferior ();
@@ -1589,7 +1585,8 @@ upload_to_device (const char *to, const char *from)
     return remotefile;		/* Don't bother uploading. */
 
   /* Open the source. */
-  if ((fd = openp (getenv ("PATH"), TRUE, (char *) from, O_RDONLY, 0, NULL)) < 0)
+  if ((fd = openp (getenv ("PATH"), OPF_TRY_CWD_FIRST, (char *) from, O_RDONLY,
+		   0, NULL)) < 0)
     error ("couldn't open %s", from);
 
   /* Get the time for later comparison. */
@@ -1720,7 +1717,8 @@ wince_initialize (void)
    ALLARGS is a string containing the arguments to the program.
    ENV is the environment vector to pass.  Errors reported with error().  */
 static void
-child_create_inferior (char *exec_file, char *args, char **env)
+child_create_inferior (char *exec_file, char *args, char **env,
+		       int from_tty)
 {
   PROCESS_INFORMATION pi;
   struct target_waitstatus dummy;
@@ -1765,7 +1763,7 @@ child_create_inferior (char *exec_file, char *args, char **env)
   memset (&current_event, 0, sizeof (current_event));
   current_event.dwThreadId = pi.dwThreadId;
   inferior_ptid = pid_to_ptid (current_event.dwThreadId);
-  push_target (&child_ops);
+  push_target (&deprecated_child_ops);
   child_init_thread_list ();
   child_add_thread (pi.dwThreadId, pi.hThread);
   init_wait_for_inferior ();
@@ -1786,7 +1784,7 @@ static void
 child_mourn_inferior (void)
 {
   (void) child_continue (DBG_CONTINUE, -1);
-  unpush_target (&child_ops);
+  unpush_target (&deprecated_child_ops);
   stop_stub ();
   CeRapiUninit ();
   connection_initialized = 0;
@@ -1888,45 +1886,43 @@ child_load (char *file, int from_tty)
   upload_to_device (file, file);
 }
 
-struct target_ops child_ops;
-
 static void
 init_child_ops (void)
 {
-  memset (&child_ops, 0, sizeof (child_ops));
-  child_ops.to_shortname = (char *) "child";
-  child_ops.to_longname = (char *) "Windows CE process";
-  child_ops.to_doc = (char *) "Windows CE process (started by the \"run\" command).";
-  child_ops.to_open = child_open;
-  child_ops.to_close = child_close;
-  child_ops.to_resume = child_resume;
-  child_ops.to_wait = child_wait;
-  child_ops.to_fetch_registers = child_fetch_inferior_registers;
-  child_ops.to_store_registers = child_store_inferior_registers;
-  child_ops.to_prepare_to_store = child_prepare_to_store;
-  child_ops.to_xfer_memory = child_xfer_memory;
-  child_ops.to_files_info = child_files_info;
-  child_ops.to_insert_breakpoint = memory_insert_breakpoint;
-  child_ops.to_remove_breakpoint = memory_remove_breakpoint;
-  child_ops.to_terminal_init = terminal_init_inferior;
-  child_ops.to_terminal_inferior = terminal_inferior;
-  child_ops.to_terminal_ours_for_output = terminal_ours_for_output;
-  child_ops.to_terminal_ours = terminal_ours;
-  child_ops.to_terminal_save_ours = terminal_save_ours;
-  child_ops.to_terminal_info = child_terminal_info;
-  child_ops.to_kill = child_kill_inferior;
-  child_ops.to_load = child_load;
-  child_ops.to_create_inferior = child_create_inferior;
-  child_ops.to_mourn_inferior = child_mourn_inferior;
-  child_ops.to_can_run = child_can_run;
-  child_ops.to_thread_alive = win32_child_thread_alive;
-  child_ops.to_stratum = process_stratum;
-  child_ops.to_has_all_memory = 1;
-  child_ops.to_has_memory = 1;
-  child_ops.to_has_stack = 1;
-  child_ops.to_has_registers = 1;
-  child_ops.to_has_execution = 1;
-  child_ops.to_magic = OPS_MAGIC;
+  memset (&deprecated_child_ops, 0, sizeof (deprecated_child_ops));
+  deprecated_child_ops.to_shortname = (char *) "child";
+  deprecated_child_ops.to_longname = (char *) "Windows CE process";
+  deprecated_child_ops.to_doc = (char *) "Windows CE process (started by the \"run\" command).";
+  deprecated_child_ops.to_open = child_open;
+  deprecated_child_ops.to_close = child_close;
+  deprecated_child_ops.to_resume = child_resume;
+  deprecated_child_ops.to_wait = child_wait;
+  deprecated_child_ops.to_fetch_registers = child_fetch_inferior_registers;
+  deprecated_child_ops.to_store_registers = child_store_inferior_registers;
+  deprecated_child_ops.to_prepare_to_store = child_prepare_to_store;
+  deprecated_child_ops.deprecated_xfer_memory = child_xfer_memory;
+  deprecated_child_ops.to_files_info = child_files_info;
+  deprecated_child_ops.to_insert_breakpoint = memory_insert_breakpoint;
+  deprecated_child_ops.to_remove_breakpoint = memory_remove_breakpoint;
+  deprecated_child_ops.to_terminal_init = terminal_init_inferior;
+  deprecated_child_ops.to_terminal_inferior = terminal_inferior;
+  deprecated_child_ops.to_terminal_ours_for_output = terminal_ours_for_output;
+  deprecated_child_ops.to_terminal_ours = terminal_ours;
+  deprecated_child_ops.to_terminal_save_ours = terminal_save_ours;
+  deprecated_child_ops.to_terminal_info = child_terminal_info;
+  deprecated_child_ops.to_kill = child_kill_inferior;
+  deprecated_child_ops.to_load = child_load;
+  deprecated_child_ops.to_create_inferior = child_create_inferior;
+  deprecated_child_ops.to_mourn_inferior = child_mourn_inferior;
+  deprecated_child_ops.to_can_run = child_can_run;
+  deprecated_child_ops.to_thread_alive = win32_child_thread_alive;
+  deprecated_child_ops.to_stratum = process_stratum;
+  deprecated_child_ops.to_has_all_memory = 1;
+  deprecated_child_ops.to_has_memory = 1;
+  deprecated_child_ops.to_has_stack = 1;
+  deprecated_child_ops.to_has_registers = 1;
+  deprecated_child_ops.to_has_execution = 1;
+  deprecated_child_ops.to_magic = OPS_MAGIC;
 }
 
 
@@ -1971,7 +1967,7 @@ _initialize_wince (void)
   struct cmd_list_element *set;
   init_child_ops ();
 
-  add_show_from_set
+  deprecated_add_show_from_set
     (add_set_cmd ((char *) "remotedirectory", no_class,
 		  var_string_noescape, (char *) &remote_directory,
 		  (char *) "Set directory for remote upload.\n",
@@ -1983,18 +1979,18 @@ _initialize_wince (void)
 		     var_string_noescape, (char *) &remote_upload,
 	       (char *) "Set how to upload executables to remote device.\n",
 		     &setlist);
-  add_show_from_set (set, &showlist);
+  deprecated_add_show_from_set (set, &showlist);
   set_cmd_cfunc (set, set_upload_type);
   set_upload_type (NULL, 0);
 
-  add_show_from_set
+  deprecated_add_show_from_set
     (add_set_cmd ((char *) "debugexec", class_support, var_boolean,
 		  (char *) &debug_exec,
 	      (char *) "Set whether to display execution in child process.",
 		  &setlist),
      &showlist);
 
-  add_show_from_set
+  deprecated_add_show_from_set
     (add_set_cmd ((char *) "remoteaddhost", class_support, var_boolean,
 		  (char *) &remote_add_host,
 		  (char *) "\
@@ -2002,28 +1998,28 @@ Set whether to add this host to remote stub arguments for\n\
 debugging over a network.", &setlist),
      &showlist);
 
-  add_show_from_set
+  deprecated_add_show_from_set
     (add_set_cmd ((char *) "debugevents", class_support, var_boolean,
 		  (char *) &debug_events,
 	  (char *) "Set whether to display kernel events in child process.",
 		  &setlist),
      &showlist);
 
-  add_show_from_set
+  deprecated_add_show_from_set
     (add_set_cmd ((char *) "debugmemory", class_support, var_boolean,
 		  (char *) &debug_memory,
 	(char *) "Set whether to display memory accesses in child process.",
 		  &setlist),
      &showlist);
 
-  add_show_from_set
+  deprecated_add_show_from_set
     (add_set_cmd ((char *) "debugexceptions", class_support, var_boolean,
 		  (char *) &debug_exceptions,
       (char *) "Set whether to display kernel exceptions in child process.",
 		  &setlist),
      &showlist);
 
-  add_target (&child_ops);
+  add_target (&deprecated_child_ops);
 }
 
 /* Determine if the thread referenced by "pid" is alive

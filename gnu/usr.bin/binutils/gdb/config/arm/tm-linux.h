@@ -57,7 +57,7 @@ extern CORE_ADDR in_svr4_dynsym_resolve_code (CORE_ADDR pc, char *name);
    through calls to signal handlers. */
 
 int arm_linux_in_sigtramp (CORE_ADDR pc, char *name);
-#define IN_SIGTRAMP(pc, name) arm_linux_in_sigtramp (pc, name)
+#define DEPRECATED_IN_SIGTRAMP(pc, name) arm_linux_in_sigtramp (pc, name)
 
 /* Each OS has different mechanisms for accessing the various
    registers stored in the sigcontext structure.  These definitions

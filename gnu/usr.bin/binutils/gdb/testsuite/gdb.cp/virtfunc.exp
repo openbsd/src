@@ -18,8 +18,6 @@
 # This file was written by Fred Fish. (fnf@cygnus.com)
 # And rewritten by Michael Chastain <mec.gnu@mindspring.com>.
 
-set wsopt	"\[\r\n\t \]*"
-set ws		"\[\r\n\t \]+"
 set nl		"\[\r\n\]+"
 
 if $tracelevel then {
@@ -27,6 +25,8 @@ if $tracelevel then {
 }
 
 if { [skip_cplus_tests] } { continue }
+
+load_lib "cp-support.exp"
 
 set testfile "virtfunc"
 set srcfile ${testfile}.cc
@@ -36,444 +36,146 @@ if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {c++
      gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
 }
 
-# Test ptype of a class.
-#
-# Different C++ compilers produce different output.  I build up regular
-# expressions piece by piece to accommodate all the compilers that I
-# have seen: gcc 2.95.3, gcc 3.3.2 (ABI 1), gcc 3.4 prerelease (ABI 2);
-# and all the debug formats I have seen: dwarf-2 and stabs+.
-#
-# A complicated class declaration looks like this:
-#
-#   class A : public virtual V {	// re_class
-#     private:
-#       V * _vb$V;			// re_vbptr
-#       int a;				// re_fields
-#
-#     public:				// re_access_methods
-#       A & operator=(A const &);	// re_synth_gcc_2
-#       A(int, A const &);		// ...
-#       A(int);				// ...
-#       virtual int f(void);		// re_methods
-#   }
-#
-# RE_CLASS matches the class declaration.  C++ allows multiple ways of
-# expressing this.
-#
-#   struct ... { private: ... };
-#   class ... { private: ... };
-#   class ... { ... };
-#
-# RE_VBPTR matches the virtual base declarations.  gcc 2.95.3 sometimes
-# emits these, but gcc 3.X.Y never emits these.  The name depends on the
-# debug format.
-#
-# RE_FIELDS matches the data fields of the class.
-# RE_METHODS matches the methods explicitly declared for the class.
-#
-# RE_SYNTH_GCC_2 and RE_SYNTH_GCC_3 match the optional synthetic methods
-# of the class.  gcc -gstabs+ emits these methods, and gcc -gdwarf-2
-# does not.
-#
-# RE_ACCESS_METHODS is an access specifier after RE_FIELDS and before
-# the methods (explicit methods and/or synthetic methods).
-# There is also an RE_ACCESS_FIELDS.
-#
-# When I get HP-UX aCC, I hope that I can just add RE_SYNTH_ACC_NNN.
-#
-# Yet another twist: with gcc v2, ctor and dtor methods have a hidden
-# argument in front, the "in-charge" flag.  With gcc v3, there is no
-# hidden argument; instead, there are multiple object functions for
-# each ctor and dtor.
-#
-# -- chastain 2004-01-01
-
-proc test_one_ptype { command testname re_class re_vbptr re_access_fields re_fields re_access_methods re_methods re_synth_gcc_2 re_synth_gcc_3 re_star } {
-    global gdb_prompt
-    global wsopt
-    global ws
-    global nl
-
-    gdb_test_multiple "$command" "$testname" {
-	-re "type = $re_class${wsopt}$re_access_fields${wsopt}$re_fields${wsopt}$re_access_methods${wsopt}$re_methods$nl\}$re_star$nl$gdb_prompt $" {
-	    # gcc 2.95.3, dwarf-2, no vbptr
-	    # gcc 3.X, abi 1, dwarf-2
-	    # gcc 3.X, abi 2, dwarf-2
-	    pass "$testname"
-	}
-	-re "type = $re_class${wsopt}$re_vbptr${wsopt}$re_access_fields${wsopt}$re_fields${wsopt}$re_access_methods${wsopt}$re_methods$nl\}$re_star$nl$gdb_prompt $" {
-	    # gcc 2.95.3, dwarf-2, vbptr
-	    # TODO: drow says the vbptr is a bug
-	    pass "$testname"
-	}
-	-re "type = $re_class${wsopt}$re_access_fields${wsopt}$re_fields${wsopt}$re_access_methods${wsopt}$re_synth_gcc_2${wsopt}$re_methods$nl\}$re_star$nl$gdb_prompt $" {
-	    # gcc 2.95.3, stabs+, no vbptr
-	    pass "$testname"
-	}
-	-re "type = $re_class${wsopt}$re_vbptr${wsopt}$re_access_fields${wsopt}$re_fields${wsopt}$re_access_methods${wsopt}$re_synth_gcc_2${wsopt}$re_methods$nl\}$re_star$nl$gdb_prompt $" {
-	    # gcc 2.95.3, stabs+, vbptr
-	    # TODO: drow says the vbptr is a bug
-	    pass "$testname"
-	}
-	-re "type = $re_class${wsopt}$re_access_fields${wsopt}$re_fields${wsopt}$re_access_methods${wsopt}$re_synth_gcc_3${wsopt}$re_methods$nl\}$re_star$nl$gdb_prompt $" {
-	    # gcc 3.X, abi 1, stabs+
-	    pass "$testname"
-	}
-	-re "type = $re_class${wsopt}$re_access_fields${wsopt}$re_fields${wsopt}$re_access_methods${wsopt}$re_methods${wsopt}$re_synth_gcc_3$nl\}$re_star$nl$gdb_prompt $" {
-	    # gcc 3.X, abi 2, stabs+
-	    pass "$testname"
-	}
-    }
-
-}
-
 proc test_ptype_of_classes {} {
-    global gdb_prompt
-    global ws
-    global nl
 
     # class VA
 
-    test_one_ptype "ptype VA" "ptype VA" \
-	"((struct|class) VA \{${ws}public:|struct VA \{)" \
-	"" \
-	"" "int va;" \
-	"" "" \
-	"VA & operator=\\(VA const ?&\\);${ws}VA\\(VA const ?&\\);${ws}VA\\((void|)\\);" \
-	"VA & operator=\\(VA const ?&\\);${ws}VA\\(VA const ?&\\);${ws}VA\\((void|)\\);" \
-	""
+    cp_test_ptype_class \
+	"ptype VA" "" "class" "VA" \
+	{
+	    { field public "int va;" }
+	}
 
     # class VB
 
-    test_one_ptype "ptype VB" "ptype VB" \
-	"((struct|class) VB \{${ws}public:|struct VB \{)" \
-	"" \
-	"" "int vb;" \
-	"" "int fvb\\((void|)\\);${ws}virtual int vvb\\((void|)\\);" \
-	"VB & operator=\\(VB const ?&\\);${ws}VB\\(VB const ?&\\);${ws}VB\\((void|)\\);" \
-	"VB & operator=\\(VB const ?&\\);${ws}VB\\(VB const ?&\\);${ws}VB\\((void|)\\);" \
-	""
+    cp_test_ptype_class \
+	"ptype VB" "" "class" "VB" \
+	{
+	    { field  public "int vb;" }
+	    { method public "int fvb();" }
+	    { method public "virtual int vvb();" }
+	}
 
     # class V
 
-    test_one_ptype "ptype V" "ptype V" \
-	"class V : public VA, public VB \{${ws}public:" \
-	"" \
-	"" "int w;" \
-	"" "int f\\((void|)\\);${ws}virtual int vv\\((void|)\\);" \
-	"V & operator=\\(V const ?&\\);${ws}V\\(V const ?&\\);${ws}V\\((void|)\\);" \
-	"V & operator=\\(V const ?&\\);${ws}V\\(V const ?&\\);${ws}V\\((void|)\\);" \
-	""
+    cp_test_ptype_class \
+	"ptype V" "" "class" "V" \
+	{
+	    { base          "public VA" }
+	    { base          "public VB" }
+	    { field  public "int w;" }
+	    { method public "int f();" }
+	    { method public "virtual int vv();" }
+	}
 
     # class A
 
-    test_one_ptype "ptype A" "ptype A" \
-	"class A : public virtual V \{(${ws}private:|)" \
-	"V \\*(_vb.1V|_vb.V);" \
-	"" "int a;" \
-	"public:" "virtual int f\\((void|)\\);" \
-	"A & operator=\\(A const ?&\\);${ws}A\\(int, A const ?&\\);${ws}A\\(int\\);" \
-	"A & operator=\\(A const ?&\\);${ws}A\\(A const ?&\\);${ws}A\\((void|)\\);" \
-	""
+    cp_test_ptype_class \
+	"ptype A" "" "class" "A" \
+	{
+	    { base           "public virtual V" }
+	    { vbase          "V" }
+	    { field  private "int a;" }
+	    { method public  "virtual int f();" }
+	}
 
     # class B
 
-    test_one_ptype "ptype B" "ptype B" \
-	"class B : public A \{(${ws}private:|)" \
-	"V \\*(_vb.1V|_vb.V);" \
-	"" "int b;" \
-	"public:" "virtual int f\\((void|)\\);" \
-	"B & operator=\\(B const ?&\\);${ws}B\\(int, B const ?&\\);${ws}B\\(int\\);" \
-	"B & operator=\\(B const ?&\\);${ws}B\\(B const ?&\\);${ws}B\\((void|)\\);" \
-	""
+    cp_test_ptype_class \
+	"ptype B" "" "class" "B" \
+	{
+	    { base           "public A" }
+	    { field  private "int b;" }
+	    { method public  "virtual int f();" }
+	}
 
     # class C
 
-    test_one_ptype "ptype C" "ptype C" \
-	"class C : public virtual V \{(${ws}private:|)" \
-	"V \\*(_vb.1V|_vb.V);" \
-	"public:" "int c;" \
-	"" "" \
-	"C & operator=\\(C const ?&\\);${ws}C\\(int, C const ?&\\);${ws}C\\(int\\);" \
-	"C & operator=\\(C const ?&\\);${ws}C\\(C const ?&\\);${ws}C\\((void|)\\);" \
-	""
+    cp_test_ptype_class \
+	"ptype C" "" "class" "C" \
+	{
+	    { base         "public virtual V" }
+	    { vbase        "V" }
+	    { field public "int c;" }
+	}
 
     # class AD
 
-    test_one_ptype "ptype AD" "ptype AD" \
-	"((struct|class) AD \{${ws}public:|struct AD \{)" \
-	"" \
-	"" "" \
-    	"" "virtual int vg\\((void|)\\);" \
-	"AD & operator=\\(AD const ?&\\);${ws}AD\\(AD const ?&\\);${ws}AD\\((void|)\\);" \
-	"AD & operator=\\(AD const ?&\\);${ws}AD\\(AD const ?&\\);${ws}AD\\((void|)\\);" \
-	""
+    cp_test_ptype_class \
+	"ptype AD" "" "class" "AD" \
+	{
+	    { method public "virtual int vg();" }
+	}
 
     # class D
 
-    test_one_ptype "ptype D" "ptype D" \
-	"class D : public AD, public virtual V \{(${ws}private:|)" \
-    	"V \\*(_vb.1V|_vb.V);" \
-    	"public:" "int d;" \
-	"" "static void s\\((void|)\\);${ws}virtual int vg\\((void|)\\);${ws}virtual int vd\\((void|)\\);${ws}int fd\\((void|)\\);" \
-	"D & operator=\\(D const ?&\\);${ws}D\\(int, D const ?&\\);${ws}D\\(int\\);" \
-	"D & operator=\\(D const ?&\\);${ws}D\\(D const ?&\\);${ws}D\\((void|)\\);" \
-	""
+    cp_test_ptype_class \
+	"ptype D" "" "class" "D" \
+	{
+	    { base          "public AD" }
+	    { base          "public virtual V" }
+	    { vbase         "V" }
+	    { method public "static void s();" }
+	    { method public "virtual int vg();" }
+	    { method public "virtual int vd();" }
+	    { method public "int fd();" }
+	    { field  public "int d;" }
+	}
 
     # class E
-    # TODO: E does not show a vbptr for V.  That seems strange.
 
-    test_one_ptype "ptype E" "ptype E" \
-	"class E : public B, public virtual V, public D, public C \{(${ws}private:|)" \
-	"" \
-	"public:" "int e;" \
-	"" "virtual int f\\((void|)\\);${ws}virtual int vg\\((void|)\\);${ws}virtual int vv\\((void|)\\);" \
-	"E & operator=\\(E const ?&\\);${ws}E\\(int, E const ?&\\);${ws}E\\(int\\);" \
-	"E & operator=\\(E const ?&\\);${ws}E\\(E const ?&\\);${ws}E\\((void|)\\);" \
-	""
+    cp_test_ptype_class \
+	"ptype E" "" "class" "E" \
+	{
+	    { base          "public B" }
+	    { base          "public virtual V" }
+	    { base          "public D" }
+	    { base          "public C" }
+	    { vbase         "V" }
+	    { method public "virtual int f();" }
+	    { method public "virtual int vg();" }
+	    { method public "virtual int vv();" }
+	    { field  public "int e;" }
+	}
 
     # An instance of D
 
-    test_one_ptype "ptype dd" "ptype dd" \
-	"class D : public AD, public virtual V \{(${ws}private:|)" \
-    	"V \\*(_vb.1V|_vb.V);" \
-    	"public:" "int d;" \
-	"" "static void s\\((void|)\\);${ws}virtual int vg\\((void|)\\);${ws}virtual int vd\\((void|)\\);${ws}int fd\\((void|)\\);" \
-	"D & operator=\\(D const ?&\\);${ws}D\\(int, D const ?&\\);${ws}D\\(int\\);" \
-	"D & operator=\\(D const ?&\\);${ws}D\\(D const ?&\\);${ws}D\\((void|)\\);" \
-	""
+    cp_test_ptype_class "ptype dd" "" "class" "D" ibid
 
     # An instance of D *
 
-    test_one_ptype "ptype ppd" "ptype ppd" \
-	"class D : public AD, public virtual V \{(${ws}private:|)" \
-    	"V \\*(_vb.1V|_vb.V);" \
-    	"public:" "int d;" \
-	"" "static void s\\((void|)\\);${ws}virtual int vg\\((void|)\\);${ws}virtual int vd\\((void|)\\);${ws}int fd\\((void|)\\);" \
-	"D & operator=\\(D const ?&\\);${ws}D\\(int, D const ?&\\);${ws}D\\(int\\);" \
-	"D & operator=\\(D const ?&\\);${ws}D\\(D const ?&\\);${ws}D\\((void|)\\);" \
-	" ?\\*"
+    cp_test_ptype_class "ptype ppd" "" "class" "D" ibid "*"
 
     # An instance of AD *
     # TODO: this should be named pADd, not pAd.
 
-    test_one_ptype "ptype pAd" "ptype pAd" \
-	"((struct|class) AD \{${ws}public:|struct AD \{)" \
-	"" \
-	"" "" \
-    	"" "virtual int vg\\((void|)\\);" \
-	"AD & operator=\\(AD const ?&\\);${ws}AD\\(AD const ?&\\);${ws}AD\\((void|)\\);" \
-	"AD & operator=\\(AD const ?&\\);${ws}AD\\(AD const ?&\\);${ws}AD\\((void|)\\);" \
-	" ?\\*"
+    cp_test_ptype_class "ptype pAd" "" "class" "AD" ibid "*"
 
-    # An instance of A
+    # Instances of these classes.
 
-    test_one_ptype "ptype a" "ptype a" \
-	"class A : public virtual V \{(${ws}private:|)" \
-	"V \\*(_vb.1V|_vb.V);" \
-	"" "int a;" \
-	"public:" "virtual int f\\((void|)\\);" \
-	"A & operator=\\(A const ?&\\);${ws}A\\(int, A const ?&\\);${ws}A\\(int\\);" \
-	"A & operator=\\(A const ?&\\);${ws}A\\(A const ?&\\);${ws}A\\((void|)\\);" \
-	""
+    cp_test_ptype_class "ptype a" "" "class" "A" ibid
+    cp_test_ptype_class "ptype b" "" "class" "B" ibid
+    cp_test_ptype_class "ptype c" "" "class" "C" ibid
+    cp_test_ptype_class "ptype d" "" "class" "D" ibid
+    cp_test_ptype_class "ptype e" "" "class" "E" ibid
+    cp_test_ptype_class "ptype v" "" "class" "V" ibid
+    cp_test_ptype_class "ptype vb" "" "class" "VB" ibid
 
-    # An instance of B
+    # Instances of pointers to these classes.
 
-    test_one_ptype "ptype b" "ptype b" \
-	"class B : public A \{(${ws}private:|)" \
-	"V \\*(_vb.1V|_vb.V);" \
-	"" "int b;" \
-	"public:" "virtual int f\\((void|)\\);" \
-	"B & operator=\\(B const ?&\\);${ws}B\\(int, B const ?&\\);${ws}B\\(int\\);" \
-	"B & operator=\\(B const ?&\\);${ws}B\\(B const ?&\\);${ws}B\\((void|)\\);" \
-	""
+    cp_test_ptype_class "ptype pAa" "" "class" "A" ibid "*"
+    cp_test_ptype_class "ptype pAe" "" "class" "A" ibid "*"
+    cp_test_ptype_class "ptype pBe" "" "class" "B" ibid "*"
+    cp_test_ptype_class "ptype pDd" "" "class" "D" ibid "*"
+    cp_test_ptype_class "ptype pDe" "" "class" "D" ibid "*"
+    cp_test_ptype_class "ptype pVa" "" "class" "V" ibid "*"
+    cp_test_ptype_class "ptype pVv" "" "class" "V" ibid "*"
+    cp_test_ptype_class "ptype pVe" "" "class" "V" ibid "*"
+    cp_test_ptype_class "ptype pVd" "" "class" "V" ibid "*"
+    cp_test_ptype_class "ptype pADe" "" "class" "AD" ibid "*"
+    cp_test_ptype_class "ptype pEe" "" "class" "E" ibid "*"
+    cp_test_ptype_class "ptype pVB" "" "class" "VB" ibid "*"
 
-    # An instance of C
-
-    test_one_ptype "ptype c" "ptype c" \
-	"class C : public virtual V \{(${ws}private:|)" \
-	"V \\*(_vb.1V|_vb.V);" \
-	"public:" "int c;" \
-	"" "" \
-	"C & operator=\\(C const ?&\\);${ws}C\\(int, C const ?&\\);${ws}C\\(int\\);" \
-	"C & operator=\\(C const ?&\\);${ws}C\\(C const ?&\\);${ws}C\\((void|)\\);" \
-	""
-
-    # An instance of D
-
-    test_one_ptype "ptype d" "ptype d" \
-	"class D : public AD, public virtual V \{(${ws}private:|)" \
-    	"V \\*(_vb.1V|_vb.V);" \
-    	"public:" "int d;" \
-	"" "static void s\\((void|)\\);${ws}virtual int vg\\((void|)\\);${ws}virtual int vd\\((void|)\\);${ws}int fd\\((void|)\\);" \
-	"D & operator=\\(D const ?&\\);${ws}D\\(int, D const ?&\\);${ws}D\\(int\\);" \
-	"D & operator=\\(D const ?&\\);${ws}D\\(D const ?&\\);${ws}D\\((void|)\\);" \
-	""
-
-    # An instance of E
-
-    test_one_ptype "ptype e" "ptype e" \
-	"class E : public B, public virtual V, public D, public C \{(${ws}private:|)" \
-	"" \
-	"public:" "int e;" \
-	"" "virtual int f\\((void|)\\);${ws}virtual int vg\\((void|)\\);${ws}virtual int vv\\((void|)\\);" \
-	"E & operator=\\(E const ?&\\);${ws}E\\(int, E const ?&\\);${ws}E\\(int\\);" \
-	"E & operator=\\(E const ?&\\);${ws}E\\(E const ?&\\);${ws}E\\((void|)\\);" \
-	""
-
-    # An instance of V
-
-    test_one_ptype "ptype v" "ptype v" \
-	"class V : public VA, public VB \{${ws}public:" \
-	"" \
-	"" "int w;" \
-	"" "int f\\((void|)\\);${ws}virtual int vv\\((void|)\\);" \
-	"V & operator=\\(V const ?&\\);${ws}V\\(V const ?&\\);${ws}V\\((void|)\\);" \
-	"V & operator=\\(V const ?&\\);${ws}V\\(V const ?&\\);${ws}V\\((void|)\\);" \
-	""
-
-    # An instance of VB
-
-    test_one_ptype "ptype vb" "ptype vb" \
-	"((struct|class) VB \{${ws}public:|struct VB \{)" \
-	"" \
-	"" "int vb;" \
-	"" "int fvb\\((void|)\\);${ws}virtual int vvb\\((void|)\\);" \
-	"VB & operator=\\(VB const ?&\\);${ws}VB\\(VB const ?&\\);${ws}VB\\((void|)\\);" \
-	"VB & operator=\\(VB const ?&\\);${ws}VB\\(VB const ?&\\);${ws}VB\\((void|)\\);" \
-	""
-
-    # An instance of A *
-
-    test_one_ptype "ptype pAa" "ptype pAa" \
-	"class A : public virtual V \{(${ws}private:|)" \
-	"V \\*(_vb.1V|_vb.V);" \
-	"" "int a;" \
-	"public:" "virtual int f\\((void|)\\);" \
-	"A & operator=\\(A const ?&\\);${ws}A\\(int, A const ?&\\);${ws}A\\(int\\);" \
-	"A & operator=\\(A const ?&\\);${ws}A\\(A const ?&\\);${ws}A\\((void|)\\);" \
-	" ?\\*"
-
-    # An instance of A *
-
-    test_one_ptype "ptype pAe" "ptype pAe" \
-	"class A : public virtual V \{(${ws}private:|)" \
-	"V \\*(_vb.1V|_vb.V);" \
-	"" "int a;" \
-	"public:" "virtual int f\\((void|)\\);" \
-	"A & operator=\\(A const ?&\\);${ws}A\\(int, A const ?&\\);${ws}A\\(int\\);" \
-	"A & operator=\\(A const ?&\\);${ws}A\\(A const ?&\\);${ws}A\\((void|)\\);" \
-	" ?\\*"
-
-    # An instance of B *
-
-    test_one_ptype "ptype pBe" "ptype pBe" \
-	"class B : public A \{(${ws}private:|)" \
-	"V \\*(_vb.1V|_vb.V);" \
-	"" "int b;" \
-	"public:" "virtual int f\\((void|)\\);" \
-	"B & operator=\\(B const ?&\\);${ws}B\\(int, B const ?&\\);${ws}B\\(int\\);" \
-	"B & operator=\\(B const ?&\\);${ws}B\\(B const ?&\\);${ws}B\\((void|)\\);" \
-	" ?\\*"
-
-    # An instance of D *
-
-    test_one_ptype "ptype pDd" "ptype pDd" \
-	"class D : public AD, public virtual V \{(${ws}private:|)" \
-    	"V \\*(_vb.1V|_vb.V);" \
-    	"public:" "int d;" \
-	"" "static void s\\((void|)\\);${ws}virtual int vg\\((void|)\\);${ws}virtual int vd\\((void|)\\);${ws}int fd\\((void|)\\);" \
-	"D & operator=\\(D const ?&\\);${ws}D\\(int, D const ?&\\);${ws}D\\(int\\);" \
-	"D & operator=\\(D const ?&\\);${ws}D\\(D const ?&\\);${ws}D\\((void|)\\);" \
-	" ?\\*"
-
-    # An instance of D *
-
-    test_one_ptype "ptype pDe" "ptype pDe" \
-	"class D : public AD, public virtual V \{(${ws}private:|)" \
-    	"V \\*(_vb.1V|_vb.V);" \
-    	"public:" "int d;" \
-	"" "static void s\\((void|)\\);${ws}virtual int vg\\((void|)\\);${ws}virtual int vd\\((void|)\\);${ws}int fd\\((void|)\\);" \
-	"D & operator=\\(D const ?&\\);${ws}D\\(int, D const ?&\\);${ws}D\\(int\\);" \
-	"D & operator=\\(D const ?&\\);${ws}D\\(D const ?&\\);${ws}D\\((void|)\\);" \
-	" ?\\*"
-
-    # An instance of V *
-
-    test_one_ptype "ptype pVa" "ptype pVa" \
-	"class V : public VA, public VB \{${ws}public:" \
-	"" \
-	"" "int w;" \
-	"" "int f\\((void|)\\);${ws}virtual int vv\\((void|)\\);" \
-	"V & operator=\\(V const ?&\\);${ws}V\\(V const ?&\\);${ws}V\\((void|)\\);" \
-	"V & operator=\\(V const ?&\\);${ws}V\\(V const ?&\\);${ws}V\\((void|)\\);" \
-	" ?\\*"
-
-    # An instance of V *
-
-    test_one_ptype "ptype pVv" "ptype pVv" \
-	"class V : public VA, public VB \{${ws}public:" \
-	"" \
-	"" "int w;" \
-	"" "int f\\((void|)\\);${ws}virtual int vv\\((void|)\\);" \
-	"V & operator=\\(V const ?&\\);${ws}V\\(V const ?&\\);${ws}V\\((void|)\\);" \
-	"V & operator=\\(V const ?&\\);${ws}V\\(V const ?&\\);${ws}V\\((void|)\\);" \
-	" ?\\*"
-
-    # An instance of V *
-
-    test_one_ptype "ptype pVe" "ptype pVe" \
-	"class V : public VA, public VB \{${ws}public:" \
-	"" \
-	"" "int w;" \
-	"" "int f\\((void|)\\);${ws}virtual int vv\\((void|)\\);" \
-	"V & operator=\\(V const ?&\\);${ws}V\\(V const ?&\\);${ws}V\\((void|)\\);" \
-	"V & operator=\\(V const ?&\\);${ws}V\\(V const ?&\\);${ws}V\\((void|)\\);" \
-	" ?\\*"
-
-    # An instance of V *
-
-    test_one_ptype "ptype pVd" "ptype pVd" \
-	"class V : public VA, public VB \{${ws}public:" \
-	"" \
-	"" "int w;" \
-	"" "int f\\((void|)\\);${ws}virtual int vv\\((void|)\\);" \
-	"V & operator=\\(V const ?&\\);${ws}V\\(V const ?&\\);${ws}V\\((void|)\\);" \
-	"V & operator=\\(V const ?&\\);${ws}V\\(V const ?&\\);${ws}V\\((void|)\\);" \
-	" ?\\*"
-
-    # An instance of AD *
-
-    test_one_ptype "ptype pADe" "ptype pADe" \
-	"((struct|class) AD \{${ws}public:|struct AD \{)" \
-	"" \
-	"" "" \
-    	"" "virtual int vg\\((void|)\\);" \
-	"AD & operator=\\(AD const ?&\\);${ws}AD\\(AD const ?&\\);${ws}AD\\((void|)\\);" \
-	"AD & operator=\\(AD const ?&\\);${ws}AD\\(AD const ?&\\);${ws}AD\\((void|)\\);" \
-	" ?\\*"
-
-    # An instance of E *
-
-    test_one_ptype "ptype pEe" "ptype pEe" \
-	"class E : public B, public virtual V, public D, public C \{(${ws}private:|)" \
-	"" \
-	"public:" "int e;" \
-	"" "virtual int f\\((void|)\\);${ws}virtual int vg\\((void|)\\);${ws}virtual int vv\\((void|)\\);" \
-	"E & operator=\\(E const ?&\\);${ws}E\\(int, E const ?&\\);${ws}E\\(int\\);" \
-	"E & operator=\\(E const ?&\\);${ws}E\\(E const ?&\\);${ws}E\\((void|)\\);" \
-	" ?\\*"
-
-    # An instance of VB *
-
-    test_one_ptype "ptype pVB" "ptype pVB" \
-	"((struct|class) VB \{${ws}public:|struct VB \{)" \
-	"" \
-	"" "int vb;" \
-	"" "int fvb\\((void|)\\);${ws}virtual int vvb\\((void|)\\);" \
-	"VB & operator=\\(VB const ?&\\);${ws}VB\\(VB const ?&\\);${ws}VB\\((void|)\\);" \
-	"VB & operator=\\(VB const ?&\\);${ws}VB\\(VB const ?&\\);${ws}VB\\((void|)\\);" \
-	" ?\\*"
 }
 
 # Call virtual functions.

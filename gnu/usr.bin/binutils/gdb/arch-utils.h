@@ -1,7 +1,7 @@
 /* Dynamic architecture support for GDB, the GNU debugger.
 
-   Copyright 1998, 1999, 2000, 2002, 2003 Free Software Foundation,
-   Inc.
+   Copyright 1998, 1999, 2000, 2002, 2003, 2004 Free Software
+   Foundation, Inc.
 
    This file is part of GDB.
 
@@ -32,6 +32,15 @@ struct gdbarch_info;
 /* gdbarch trace variable */
 extern int gdbarch_debug;
 
+/* An implementation of return_value that props up architectures still
+   using USE_STRUCT_RETURN, EXTRACT_RETURN_VALUE and
+   STORE_RETURN_VALUE.  See also the hacks in "stack.c".  */
+enum return_value_convention legacy_return_value (struct gdbarch *gdbarch,
+						  struct type *valtype,
+						  struct regcache *regcache,
+						  void *readbuf,
+						  const void *writebuf);
+
 /* Implementation of extract return value that grubs around in the
    register cache.  */
 extern gdbarch_extract_return_value_ftype legacy_extract_return_value;
@@ -41,16 +50,7 @@ extern gdbarch_store_return_value_ftype legacy_store_return_value;
 
 /* To return any structure or union type by value, store it at the
    address passed as an invisible first argument to the function.  */
-extern gdbarch_use_struct_convention_ftype always_use_struct_convention;
-
-/* Only structures, unions, and arrays are returned using the struct
-   convention.  Note that arrays are never passed by value in the C
-   language family, so that case is irrelevant for C.  */
-extern gdbarch_return_value_on_stack_ftype generic_return_value_on_stack_not;
-
-/* Backward compatible call_dummy_words. */
-extern LONGEST legacy_call_dummy_words[];
-extern int legacy_sizeof_call_dummy_words;
+extern gdbarch_deprecated_use_struct_convention_ftype always_use_struct_convention;
 
 /* Typical remote_translate_xfer_address */
 extern gdbarch_remote_translate_xfer_address_ftype generic_remote_translate_xfer_address;
@@ -71,10 +71,6 @@ extern gdbarch_convert_from_func_ptr_addr_ftype convert_from_func_ptr_addr_ident
 /* No-op conversion of reg to regnum. */
 
 extern int no_op_reg_to_regnum (int reg);
-
-/* Versions of init_frame_pc().  Do nothing; do the default. */
-
-extern CORE_ADDR deprecated_init_frame_pc_default (int fromleaf, struct frame_info *prev);
 
 /* Do nothing version of elf_make_msymbol_special. */
 
@@ -114,19 +110,11 @@ extern int generic_register_size (int regnum);
 /* Assume that the world is sane, the registers are all adjacent.  */
 extern int generic_register_byte (int regnum);
 
-/* Prop up old targets that use various IN_SIGTRAMP() macros.  */
+/* Prop up old targets that use various sigtramp macros.  */
 extern int legacy_pc_in_sigtramp (CORE_ADDR pc, char *name);
 
-/* The orginal register_convert*() functions were overloaded.  They
-   were used to both: convert between virtual and raw register formats
-   (something that is discouraged); and to convert a register to the
-   type of a corresponding variable.  These legacy functions preserve
-   that overloaded behavour in existing targets.  */
-extern int legacy_convert_register_p (int regnum, struct type *type);
-extern void legacy_register_to_value (struct frame_info *frame, int regnum,
-				      struct type *type, void *to);
-extern void legacy_value_to_register (struct frame_info *frame, int regnum,
-				      struct type *type, const void *from);
+/* By default, registers are not convertible.  */
+extern int generic_convert_register_p (int regnum, struct type *type);
 
 extern int default_stabs_argument_has_addr (struct gdbarch *gdbarch,
 					    struct type *type);

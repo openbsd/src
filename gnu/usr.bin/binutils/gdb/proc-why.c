@@ -154,7 +154,7 @@ proc_prettyfprint_why (FILE *file, unsigned long why, unsigned long what,
 #endif
 #ifdef PR_DEAD
 	case PR_DEAD:
-	  fprintf (file, "Exit status: %d\n", what);
+	  fprintf (file, "Exit status: %ld\n", what);
 	  break;
 #endif
 	default:

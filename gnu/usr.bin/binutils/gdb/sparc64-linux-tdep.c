@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux UltraSPARC.
 
-   Copyright 2003 Free Software Foundation, Inc.
+   Copyright 2003, 2004 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,39 +22,8 @@
 #include "defs.h"
 #include "gdbarch.h"
 #include "osabi.h"
-#include "solib-svr4.h"
 
 #include "sparc64-tdep.h"
-
-static struct link_map_offsets *
-sparc64_linux_svr4_fetch_link_map_offsets (void)
-{
-  static struct link_map_offsets lmo;
-  static struct link_map_offsets *lmp = NULL;
-
-  if (lmp == NULL)
-    {
-      lmp = &lmo;
-
-      /* Everything we need is in the first 16 bytes.  */
-      lmo.r_debug_size = 16;
-      lmo.r_map_offset = 8;
-      lmo.r_map_size   = 8;
-
-      /* Everything we need is in the first 40 bytes.  */
-      lmo.link_map_size = 40;
-      lmo.l_addr_offset = 0;
-      lmo.l_addr_size   = 8;
-      lmo.l_name_offset = 8;
-      lmo.l_name_size   = 8;
-      lmo.l_next_offset = 24;
-      lmo.l_next_size   = 8;
-      lmo.l_prev_offset = 32;
-      lmo.l_prev_size   = 8;
-    }
-
-  return lmp;
-}
 
 static void
 sparc64_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
@@ -66,9 +35,6 @@ sparc64_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 
   /* ... but doesn't have kernel-assisted single-stepping support.  */
   set_gdbarch_software_single_step (gdbarch, sparc_software_single_step);
-
-  set_solib_svr4_fetch_link_map_offsets
-    (gdbarch, sparc64_linux_svr4_fetch_link_map_offsets);
 }
 
 /* Provide a prototype to silence -Wmissing-prototypes.  */

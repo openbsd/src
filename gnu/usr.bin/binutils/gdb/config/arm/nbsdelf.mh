@@ -1,4 +1,3 @@
 # Host ARM running NetBSD
 NATDEPFILES= fork-child.o infptrace.o inftarg.o corelow.o armnbsd-nat.o
-XM_FILE=xm-nbsd.h
-NAT_FILE=nm-nbsd.h
+NAT_FILE= config/nm-nbsd.h

@@ -85,14 +85,9 @@ mi_cmd_stack_list_frames (char *command, char **argv, int argc)
        i++, fi = get_prev_frame (fi))
     {
       QUIT;
-      /* level == i: always print the level 'i'
-         source == LOC_AND_ADDRESS: print the location and the address 
-         always, even for level 0.
+      /* Print the location and the address always, even for level 0.
          args == 0: don't print the arguments. */
-      print_frame_info (fi /* frame info */ ,
-			i /* level */ ,
-			LOC_AND_ADDRESS /* source */ ,
-			0 /* args */ );
+      print_frame_info (fi, 1, LOC_AND_ADDRESS, 0 /* args */ );
     }
 
   do_cleanups (cleanup_stack);

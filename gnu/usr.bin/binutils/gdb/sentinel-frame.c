@@ -83,8 +83,7 @@ sentinel_frame_this_id (struct frame_info *next_frame,
 
 const struct frame_unwind sentinel_frame_unwinder =
 {
-  /* Should the sentinel frame be given a special type?  */
-  NORMAL_FRAME,
+  SENTINEL_FRAME,
   sentinel_frame_this_id,
   sentinel_frame_prev_register
 };

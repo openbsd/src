@@ -446,13 +446,22 @@ FieldAccess:
 /*|	SUPER '.' SimpleName { FIXME } */
 ;
 
+FuncStart:
+	Name '('
+                { push_expression_name ($1); }
+;
+
 MethodInvocation:
-	Name '(' ArgumentList_opt ')'
-		{ error (_("Method invocation not implemented")); }
+	FuncStart
+                { start_arglist(); }
+	ArgumentList_opt ')'
+                { write_exp_elt_opcode (OP_FUNCALL);
+		  write_exp_elt_longcst ((LONGEST) end_arglist ());
+		  write_exp_elt_opcode (OP_FUNCALL); }
 |	Primary '.' SimpleName '(' ArgumentList_opt ')'
-		{ error (_("Method invocation not implemented")); }
+		{ error (_("Form of method invocation not implemented")); }
 |	SUPER '.' SimpleName '(' ArgumentList_opt ')'
-		{ error (_("Method invocation not implemented")); }
+		{ error (_("Form of method invocation not implemented")); }
 ;
 
 ArrayAccess:

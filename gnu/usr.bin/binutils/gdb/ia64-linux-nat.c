@@ -1,8 +1,8 @@
 /* Functions specific to running gdb native on IA-64 running
    GNU/Linux.
 
-   Copyright 1999, 2000, 2001, 2002, 2003 Free Software Foundation,
-   Inc.
+   Copyright 1999, 2000, 2001, 2002, 2003, 2004
+   Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -367,32 +367,47 @@ supply_gregset (gregset_t *gregsetp)
 
   for (regi = IA64_GR0_REGNUM; regi <= IA64_GR31_REGNUM; regi++)
     {
-      supply_register (regi, (char *) (regp + (regi - IA64_GR0_REGNUM)));
+      regcache_raw_supply (current_regcache, regi,
+			   (char *) (regp + (regi - IA64_GR0_REGNUM)));
     }
 
   /* FIXME: NAT collection bits are at index 32; gotta deal with these
      somehow... */
 
-  supply_register (IA64_PR_REGNUM, (char *) (regp + 33));
+  regcache_raw_supply (current_regcache, IA64_PR_REGNUM, (char *) (regp + 33));
 
   for (regi = IA64_BR0_REGNUM; regi <= IA64_BR7_REGNUM; regi++)
     {
-      supply_register (regi, (char *) (regp + 34 + (regi - IA64_BR0_REGNUM)));
+      regcache_raw_supply (current_regcache, regi,
+			   (char *) (regp + 34 + (regi - IA64_BR0_REGNUM)));
     }
 
-  supply_register (IA64_IP_REGNUM, (char *) (regp + 42));
-  supply_register (IA64_CFM_REGNUM, (char *) (regp + 43));
-  supply_register (IA64_PSR_REGNUM, (char *) (regp + 44));
-  supply_register (IA64_RSC_REGNUM, (char *) (regp + 45));
-  supply_register (IA64_BSP_REGNUM, (char *) (regp + 46));
-  supply_register (IA64_BSPSTORE_REGNUM, (char *) (regp + 47));
-  supply_register (IA64_RNAT_REGNUM, (char *) (regp + 48));
-  supply_register (IA64_CCV_REGNUM, (char *) (regp + 49));
-  supply_register (IA64_UNAT_REGNUM, (char *) (regp + 50));
-  supply_register (IA64_FPSR_REGNUM, (char *) (regp + 51));
-  supply_register (IA64_PFS_REGNUM, (char *) (regp + 52));
-  supply_register (IA64_LC_REGNUM, (char *) (regp + 53));
-  supply_register (IA64_EC_REGNUM, (char *) (regp + 54));
+  regcache_raw_supply (current_regcache, IA64_IP_REGNUM,
+		       (char *) (regp + 42));
+  regcache_raw_supply (current_regcache, IA64_CFM_REGNUM,
+		       (char *) (regp + 43));
+  regcache_raw_supply (current_regcache, IA64_PSR_REGNUM,
+		       (char *) (regp + 44));
+  regcache_raw_supply (current_regcache, IA64_RSC_REGNUM,
+		       (char *) (regp + 45));
+  regcache_raw_supply (current_regcache, IA64_BSP_REGNUM,
+		       (char *) (regp + 46));
+  regcache_raw_supply (current_regcache, IA64_BSPSTORE_REGNUM,
+		       (char *) (regp + 47));
+  regcache_raw_supply (current_regcache, IA64_RNAT_REGNUM,
+		       (char *) (regp + 48));
+  regcache_raw_supply (current_regcache, IA64_CCV_REGNUM,
+		       (char *) (regp + 49));
+  regcache_raw_supply (current_regcache, IA64_UNAT_REGNUM,
+		       (char *) (regp + 50));
+  regcache_raw_supply (current_regcache, IA64_FPSR_REGNUM,
+		       (char *) (regp + 51));
+  regcache_raw_supply (current_regcache, IA64_PFS_REGNUM,
+		       (char *) (regp + 52));
+  regcache_raw_supply (current_regcache, IA64_LC_REGNUM,
+		       (char *) (regp + 53));
+  regcache_raw_supply (current_regcache, IA64_EC_REGNUM,
+		       (char *) (regp + 54));
 }
 
 void
@@ -403,8 +418,7 @@ fill_gregset (gregset_t *gregsetp, int regno)
 
 #define COPY_REG(_idx_,_regi_) \
   if ((regno == -1) || regno == _regi_) \
-    memcpy (regp + _idx_, &deprecated_registers[DEPRECATED_REGISTER_BYTE (_regi_)], \
-	    DEPRECATED_REGISTER_RAW_SIZE (_regi_))
+    regcache_raw_collect (current_regcache, _regi_, regp + _idx_)
 
   for (regi = IA64_GR0_REGNUM; regi <= IA64_GR31_REGNUM; regi++)
     {
@@ -448,7 +462,7 @@ supply_fpregset (fpregset_t *fpregsetp)
   for (regi = IA64_FR0_REGNUM; regi <= IA64_FR127_REGNUM; regi++)
     {
       from = (char *) &((*fpregsetp)[regi - IA64_FR0_REGNUM]);
-      supply_register (regi, from);
+      regcache_raw_supply (current_regcache, regi, from);
     }
 }
 
@@ -461,17 +475,12 @@ void
 fill_fpregset (fpregset_t *fpregsetp, int regno)
 {
   int regi;
-  char *to;
-  char *from;
 
   for (regi = IA64_FR0_REGNUM; regi <= IA64_FR127_REGNUM; regi++)
     {
       if ((regno == -1) || (regno == regi))
-	{
-	  from = (char *) &deprecated_registers[DEPRECATED_REGISTER_BYTE (regi)];
-	  to = (char *) &((*fpregsetp)[regi - IA64_FR0_REGNUM]);
-	  memcpy (to, from, DEPRECATED_REGISTER_RAW_SIZE (regi));
-	}
+	regcache_raw_collect (current_regcache, regi,
+			      &((*fpregsetp)[regi - IA64_FR0_REGNUM]));
     }
 }
 
@@ -502,7 +511,7 @@ fetch_debug_register (ptid_t ptid, int idx)
   if (tid == 0)
     tid = PIDGET (ptid);
 
-  val = ptrace (PT_READ_U, tid, (PTRACE_ARG3_TYPE) (PT_DBR + 8 * idx), 0);
+  val = ptrace (PT_READ_U, tid, (PTRACE_TYPE_ARG3) (PT_DBR + 8 * idx), 0);
 
   return val;
 }
@@ -516,7 +525,7 @@ store_debug_register (ptid_t ptid, int idx, long val)
   if (tid == 0)
     tid = PIDGET (ptid);
 
-  (void) ptrace (PT_WRITE_U, tid, (PTRACE_ARG3_TYPE) (PT_DBR + 8 * idx), val);
+  (void) ptrace (PT_WRITE_U, tid, (PTRACE_TYPE_ARG3) (PT_DBR + 8 * idx), val);
 }
 
 static void
@@ -621,19 +630,20 @@ ia64_linux_remove_watchpoint (ptid_t ptid, CORE_ADDR addr, int len)
   return -1;
 }
 
-CORE_ADDR
-ia64_linux_stopped_by_watchpoint (ptid_t ptid)
+int
+ia64_linux_stopped_data_address (CORE_ADDR *addr_p)
 {
   CORE_ADDR psr;
   int tid;
   struct siginfo siginfo;
+  ptid_t ptid = inferior_ptid;
 
   tid = TIDGET(ptid);
   if (tid == 0)
     tid = PIDGET (ptid);
   
   errno = 0;
-  ptrace (PTRACE_GETSIGINFO, tid, (PTRACE_ARG3_TYPE) 0, &siginfo);
+  ptrace (PTRACE_GETSIGINFO, tid, (PTRACE_TYPE_ARG3) 0, &siginfo);
 
   if (errno != 0 || siginfo.si_signo != SIGTRAP || 
       (siginfo.si_code & 0xffff) != 0x0004 /* TRAP_HWBKPT */)
@@ -644,7 +654,15 @@ ia64_linux_stopped_by_watchpoint (ptid_t ptid)
                            for the next instruction */
   write_register_pid (IA64_PSR_REGNUM, psr, ptid);
 
-  return (CORE_ADDR) siginfo.si_addr;
+  *addr_p = (CORE_ADDR)siginfo.si_addr;
+  return 1;
+}
+
+int
+ia64_linux_stopped_by_watchpoint (void)
+{
+  CORE_ADDR addr;
+  return ia64_linux_stopped_data_address (&addr);
 }
 
 LONGEST 

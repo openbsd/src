@@ -1,5 +1,5 @@
 /* GNU/Linux/i386 specific low level interface, for the remote server for GDB.
-   Copyright 1995, 1996, 1998, 1999, 2000, 2001, 2002
+   Copyright 1995, 1996, 1998, 1999, 2000, 2001, 2002, 2004
    Free Software Foundation, Inc.
 
    This file is part of GDB.
@@ -23,8 +23,28 @@
 #include "linux-low.h"
 #include "i387-fp.h"
 
+/* Correct for all GNU/Linux targets (for quite some time).  */
+#define GDB_GREGSET_T elf_gregset_t
+#define GDB_FPREGSET_T elf_fpregset_t
+
+#ifndef HAVE_ELF_FPREGSET_T
+/* Make sure we have said types.  Not all platforms bring in <linux/elf.h>
+   via <sys/procfs.h>.  */
+#ifdef HAVE_LINUX_ELF_H   
+#include <linux/elf.h>    
+#endif
+#endif
+   
+#include "../gdb_proc_service.h"
+
+#include <sys/ptrace.h>
+
 #ifdef HAVE_SYS_REG_H
 #include <sys/reg.h>
+#endif
+
+#ifndef PTRACE_GET_THREAD_AREA
+#define PTRACE_GET_THREAD_AREA 25
 #endif
 
 /* This module only supports access to the general purpose registers.  */
@@ -42,6 +62,22 @@ static int i386_regmap[] =
   EIP * 4, EFL * 4, CS * 4, SS * 4,
   DS * 4, ES * 4, FS * 4, GS * 4
 };
+
+/* Called by libthread_db.  */
+
+ps_err_e
+ps_get_thread_area (const struct ps_prochandle *ph, 
+		    lwpid_t lwpid, int idx, void **base)
+{
+  unsigned int desc[4];
+
+  if (ptrace (PTRACE_GET_THREAD_AREA, lwpid,
+	      (void *) idx, (unsigned long) &desc) < 0)
+    return PS_ERR;
+
+  *(int *)base = desc[1];
+  return PS_OK;
+}
 
 static int
 i386_cannot_store_register (int regno)

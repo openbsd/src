@@ -122,23 +122,63 @@ mn10300_saved_pc_after_call (struct frame_info *fi)
 }
 
 static void
-mn10300_extract_return_value (struct type *type, char *regbuf, char *valbuf)
+mn10300_extract_return_value (struct gdbarch *gdbarch, struct type *type,
+			      struct regcache *regcache, void *valbuf)
 {
+  char buf[MAX_REGISTER_SIZE];
+  int len = TYPE_LENGTH (type);
+  int reg, regsz;
+
   if (TYPE_CODE (type) == TYPE_CODE_PTR)
-    memcpy (valbuf, regbuf + DEPRECATED_REGISTER_BYTE (4), TYPE_LENGTH (type));
+    reg = 4;
   else
-    memcpy (valbuf, regbuf + DEPRECATED_REGISTER_BYTE (0), TYPE_LENGTH (type));
+    reg = 0;
+
+  regsz = register_size (gdbarch, reg);
+  if (len <= regsz)
+    {
+      regcache_raw_read (regcache, reg, buf);
+      memcpy (valbuf, buf, len);
+    }
+  else if (len <= 2 * regsz)
+    {
+      regcache_raw_read (regcache, reg, buf);
+      memcpy (valbuf, buf, regsz);
+      gdb_assert (regsz == register_size (gdbarch, reg + 1));
+      regcache_raw_read (regcache, reg + 1, buf);
+      memcpy ((char *) valbuf + regsz, buf, len - regsz);
+    }
+  else
+    internal_error (__FILE__, __LINE__,
+		    "Cannot extract return value %d bytes long.", len);
 }
 
 static void
-mn10300_store_return_value (struct type *type, char *valbuf)
+mn10300_store_return_value (struct gdbarch *gdbarch, struct type *type,
+			    struct regcache *regcache, const void *valbuf)
 {
+  int len = TYPE_LENGTH (type);
+  int reg, regsz;
+  
   if (TYPE_CODE (type) == TYPE_CODE_PTR)
-    deprecated_write_register_bytes (DEPRECATED_REGISTER_BYTE (4), valbuf,
-				     TYPE_LENGTH (type));
+    reg = 4;
   else
-    deprecated_write_register_bytes (DEPRECATED_REGISTER_BYTE (0), valbuf,
-				     TYPE_LENGTH (type));
+    reg = 0;
+
+  regsz = register_size (gdbarch, reg);
+
+  if (len <= regsz)
+    regcache_raw_write_part (regcache, reg, 0, len, valbuf);
+  else if (len <= 2 * regsz)
+    {
+      regcache_raw_write (regcache, reg, valbuf);
+      gdb_assert (regsz == register_size (gdbarch, reg + 1));
+      regcache_raw_write_part (regcache, reg+1, 0,
+			       len - regsz, (char *) valbuf + regsz);
+    }
+  else
+    internal_error (__FILE__, __LINE__,
+		    "Cannot store return value %d bytes long.", len);
 }
 
 static struct frame_info *analyze_dummy_frame (CORE_ADDR, CORE_ADDR);
@@ -164,12 +204,111 @@ analyze_dummy_frame (CORE_ADDR pc, CORE_ADDR frame)
 #define MY_FRAME_IN_FP 0x2
 #define NO_MORE_FRAMES 0x4
 
+/* Compute the alignment required by a type.  */
+
+static int
+mn10300_type_align (struct type *type)
+{
+  int i, align = 1;
+
+  switch (TYPE_CODE (type))
+    {
+    case TYPE_CODE_INT:
+    case TYPE_CODE_ENUM:
+    case TYPE_CODE_SET:
+    case TYPE_CODE_RANGE:
+    case TYPE_CODE_CHAR:
+    case TYPE_CODE_BOOL:
+    case TYPE_CODE_FLT:
+    case TYPE_CODE_PTR:
+    case TYPE_CODE_REF:
+      return TYPE_LENGTH (type);
+
+    case TYPE_CODE_COMPLEX:
+      return TYPE_LENGTH (type) / 2;
+
+    case TYPE_CODE_STRUCT:
+    case TYPE_CODE_UNION:
+      for (i = 0; i < TYPE_NFIELDS (type); i++)
+	{
+	  int falign = mn10300_type_align (TYPE_FIELD_TYPE (type, i));
+	  while (align < falign)
+	    align <<= 1;
+	}
+      return align;
+
+    case TYPE_CODE_ARRAY:
+      /* HACK!  Structures containing arrays, even small ones, are not
+	 elligible for returning in registers.  */
+      return 256;
+
+    case TYPE_CODE_TYPEDEF:
+      return mn10300_type_align (check_typedef (type));
+
+    default:
+      internal_error (__FILE__, __LINE__, "bad switch");
+    }
+}
 
 /* Should call_function allocate stack space for a struct return?  */
 static int
-mn10300_use_struct_convention (int gcc_p, struct type *type)
+mn10300_use_struct_convention (struct type *type)
 {
-  return (TYPE_NFIELDS (type) > 1 || TYPE_LENGTH (type) > 8);
+  /* Structures bigger than a pair of words can't be returned in
+     registers.  */
+  if (TYPE_LENGTH (type) > 8)
+    return 1;
+
+  switch (TYPE_CODE (type))
+    {
+    case TYPE_CODE_STRUCT:
+    case TYPE_CODE_UNION:
+      /* Structures with a single field are handled as the field
+	 itself.  */
+      if (TYPE_NFIELDS (type) == 1)
+	return mn10300_use_struct_convention (TYPE_FIELD_TYPE (type, 0));
+
+      /* Structures with word or double-word size are passed in memory, as
+	 long as they require at least word alignment.  */
+      if (mn10300_type_align (type) >= 4)
+	return 0;
+
+      return 1;
+
+      /* Arrays are addressable, so they're never returned in
+	 registers.  This condition can only hold when the array is
+	 the only field of a struct or union.  */
+    case TYPE_CODE_ARRAY:
+      return 1;
+
+    case TYPE_CODE_TYPEDEF:
+      return mn10300_use_struct_convention (check_typedef (type));
+
+    default:
+      return 0;
+    }
+}
+
+/* Determine, for architecture GDBARCH, how a return value of TYPE
+   should be returned.  If it is supposed to be returned in registers,
+   and READBUF is non-zero, read the appropriate value from REGCACHE,
+   and copy it into READBUF.  If WRITEBUF is non-zero, write the value
+   from WRITEBUF into REGCACHE.  */
+
+static enum return_value_convention
+mn10300_return_value (struct gdbarch *gdbarch, struct type *type,
+		      struct regcache *regcache, void *readbuf,
+		      const void *writebuf)
+{
+  if (mn10300_use_struct_convention (type))
+    return RETURN_VALUE_STRUCT_CONVENTION;
+
+  if (readbuf)
+    mn10300_extract_return_value (gdbarch, type, regcache, readbuf);
+  if (writebuf)
+    mn10300_store_return_value (gdbarch, type, regcache, writebuf);
+
+  return RETURN_VALUE_REGISTER_CONVENTION;
 }
 
 /* The breakpoint instruction must be the same size as the smallest
@@ -418,7 +557,7 @@ mn10300_analyze_prologue (struct frame_info *fi, CORE_ADDR pc)
 
   /* Get the next two bytes into buf, we need two because rets is a two
      byte insn and the first isn't enough to uniquely identify it.  */
-  status = read_memory_nobpt (pc, buf, 2);
+  status = deprecated_read_memory_nobpt (pc, buf, 2);
   if (status != 0)
     return pc;
 
@@ -457,8 +596,8 @@ mn10300_analyze_prologue (struct frame_info *fi, CORE_ADDR pc)
   addr = func_addr;
 
   /* Suck in two bytes.  */
-  status = read_memory_nobpt (addr, buf, 2);
-  if (status != 0)
+  if (addr + 2 >= stop
+      || (status = deprecated_read_memory_nobpt (addr, buf, 2)) != 0)
     {
       fix_frame_pointer (fi, 0);
       return addr;
@@ -482,7 +621,7 @@ mn10300_analyze_prologue (struct frame_info *fi, CORE_ADDR pc)
   if (buf[0] == 0xcf)
     {
       /* Extract the register list for the movm instruction.  */
-      status = read_memory_nobpt (addr + 1, buf, 1);
+      status = deprecated_read_memory_nobpt (addr + 1, buf, 1);
       movm_args = *buf;
 
       addr += 2;
@@ -500,7 +639,7 @@ mn10300_analyze_prologue (struct frame_info *fi, CORE_ADDR pc)
 	}
 
       /* Get the next two bytes so the prologue scan can continue.  */
-      status = read_memory_nobpt (addr, buf, 2);
+      status = deprecated_read_memory_nobpt (addr, buf, 2);
       if (status != 0)
 	{
 	  /* Fix fi->frame since it's bogus at this point.  */
@@ -537,7 +676,7 @@ mn10300_analyze_prologue (struct frame_info *fi, CORE_ADDR pc)
 	}
 
       /* Get two more bytes so scanning can continue.  */
-      status = read_memory_nobpt (addr, buf, 2);
+      status = deprecated_read_memory_nobpt (addr, buf, 2);
       if (status != 0)
 	{
 	  /* Fix fi->frame if it's bogus at this point.  */
@@ -559,7 +698,7 @@ mn10300_analyze_prologue (struct frame_info *fi, CORE_ADDR pc)
      If none of the above was found, then this prologue has no 
      additional stack.  */
 
-  status = read_memory_nobpt (addr, buf, 2);
+  status = deprecated_read_memory_nobpt (addr, buf, 2);
   if (status != 0)
     {
       /* Fix fi->frame if it's bogus at this point.  */
@@ -582,7 +721,7 @@ mn10300_analyze_prologue (struct frame_info *fi, CORE_ADDR pc)
     {
       /* Suck in imm_size more bytes, they'll hold the size of the
          current frame.  */
-      status = read_memory_nobpt (addr + 2, buf, imm_size);
+      status = deprecated_read_memory_nobpt (addr + 2, buf, imm_size);
       if (status != 0)
 	{
 	  /* Fix fi->frame if it's bogus at this point.  */
@@ -733,14 +872,13 @@ mn10300_pop_frame_regular (struct frame_info *frame)
         ULONGEST value;
 
         value = read_memory_unsigned_integer (deprecated_get_frame_saved_regs (frame)[regnum],
-                                              DEPRECATED_REGISTER_RAW_SIZE (regnum));
+                                              register_size (current_gdbarch, regnum));
         write_register (regnum, value);
       }
 
-  /* Actually cut back the stack.  */
-  write_register (SP_REGNUM, get_frame_base (frame));
-
-  /* Don't we need to set the PC?!?  XXX FIXME.  */
+  /* Actually cut back the stack, adjusted by the saved registers like
+     ret would.  */
+  write_register (SP_REGNUM, get_frame_base (frame) + saved_regs_size (frame));
 }
 
 /* Function: pop_frame
@@ -749,10 +887,13 @@ mn10300_pop_frame_regular (struct frame_info *frame)
 static void
 mn10300_pop_frame (void)
 {
-  /* This function checks for and handles generic dummy frames, and
-     calls back to our function for ordinary frames.  */
-  generic_pop_current_frame (mn10300_pop_frame_regular);
-
+  struct frame_info *frame = get_current_frame ();
+  if (get_frame_type (frame) == DUMMY_FRAME)
+    /* NOTE: cagney/2002-22-23: Does this ever occure?  Surely a dummy
+       frame will have already been poped by the "infrun.c" code.  */
+    deprecated_pop_dummy_frame ();
+  else
+    mn10300_pop_frame_regular (frame);
   /* Throw away any cached frame information.  */
   flush_cached_frames ();
 }
@@ -1023,8 +1164,8 @@ mn10300_print_register (const char *name, int regnum, int reg_width)
       int byte;
       if (TARGET_BYTE_ORDER == BFD_ENDIAN_BIG)
 	{
-	  for (byte = DEPRECATED_REGISTER_RAW_SIZE (regnum) - DEPRECATED_REGISTER_VIRTUAL_SIZE (regnum);
-	       byte < DEPRECATED_REGISTER_RAW_SIZE (regnum);
+	  for (byte = register_size (current_gdbarch, regnum) - DEPRECATED_REGISTER_VIRTUAL_SIZE (regnum);
+	       byte < register_size (current_gdbarch, regnum);
 	       byte++)
 	    printf_filtered ("%02x", (unsigned char) raw_buffer[byte]);
 	}
@@ -1108,7 +1249,6 @@ static struct gdbarch *
 mn10300_gdbarch_init (struct gdbarch_info info,
 		      struct gdbarch_list *arches)
 {
-  static LONGEST mn10300_call_dummy_words[] = { 0 };
   struct gdbarch *gdbarch;
   struct gdbarch_tdep *tdep = NULL;
   int am33_mode;
@@ -1150,11 +1290,8 @@ mn10300_gdbarch_init (struct gdbarch_info info,
   set_gdbarch_num_regs (gdbarch, num_regs);
   set_gdbarch_register_name (gdbarch, register_name);
   set_gdbarch_deprecated_register_size (gdbarch, 4);
-  set_gdbarch_deprecated_register_bytes (gdbarch, num_regs * gdbarch_deprecated_register_size (gdbarch));
-  set_gdbarch_deprecated_max_register_raw_size (gdbarch, 4);
   set_gdbarch_deprecated_register_raw_size (gdbarch, mn10300_register_raw_size);
   set_gdbarch_deprecated_register_byte (gdbarch, mn10300_register_byte);
-  set_gdbarch_deprecated_max_register_virtual_size (gdbarch, 4);
   set_gdbarch_deprecated_register_virtual_size (gdbarch, mn10300_register_virtual_size);
   set_gdbarch_deprecated_register_virtual_type (gdbarch, mn10300_register_virtual_type);
   set_gdbarch_dwarf2_reg_to_regnum (gdbarch, mn10300_dwarf2_reg_to_regnum);
@@ -1174,8 +1311,7 @@ mn10300_gdbarch_init (struct gdbarch_info info,
   set_gdbarch_deprecated_frame_init_saved_regs (gdbarch, mn10300_frame_init_saved_regs);
   set_gdbarch_deprecated_frame_chain (gdbarch, mn10300_frame_chain);
   set_gdbarch_deprecated_frame_saved_pc (gdbarch, mn10300_frame_saved_pc);
-  set_gdbarch_deprecated_extract_return_value (gdbarch, mn10300_extract_return_value);
-  set_gdbarch_deprecated_store_return_value (gdbarch, mn10300_store_return_value);
+  set_gdbarch_return_value (gdbarch, mn10300_return_value);
   set_gdbarch_deprecated_store_struct_return (gdbarch, mn10300_store_struct_return);
   set_gdbarch_deprecated_pop_frame (gdbarch, mn10300_pop_frame);
   set_gdbarch_skip_prologue (gdbarch, mn10300_skip_prologue);
@@ -1183,15 +1319,10 @@ mn10300_gdbarch_init (struct gdbarch_info info,
   set_gdbarch_deprecated_target_read_fp (gdbarch, mn10300_read_fp);
 
   /* Calling functions in the inferior from GDB.  */
-  set_gdbarch_deprecated_call_dummy_words (gdbarch, mn10300_call_dummy_words);
-  set_gdbarch_deprecated_sizeof_call_dummy_words (gdbarch, sizeof (mn10300_call_dummy_words));
-  set_gdbarch_deprecated_pc_in_call_dummy (gdbarch, deprecated_pc_in_call_dummy_at_entry_point);
   set_gdbarch_deprecated_push_arguments (gdbarch, mn10300_push_arguments);
   set_gdbarch_deprecated_reg_struct_has_addr
     (gdbarch, mn10300_reg_struct_has_addr);
   set_gdbarch_deprecated_push_return_address (gdbarch, mn10300_push_return_address);
-  set_gdbarch_deprecated_save_dummy_frame_tos (gdbarch, generic_save_dummy_frame_tos);
-  set_gdbarch_use_struct_convention (gdbarch, mn10300_use_struct_convention);
 
   tdep->am33_mode = am33_mode;
 

@@ -372,11 +372,17 @@ execute_cfa_program (unsigned char *insn_ptr, unsigned char *insn_end,
 	      {
 		struct dwarf2_frame_state_reg_info *old_rs = fs->regs.prev;
 
-		gdb_assert (old_rs);
-
-		xfree (fs->regs.reg);
-		fs->regs = *old_rs;
-		xfree (old_rs);
+		if (old_rs == NULL)
+		  {
+		    complaint (&symfile_complaints, "\
+bad CFI data; mismatched DW_CFA_restore_state at 0x%s", paddr (fs->pc));
+		  }
+		else
+		  {
+		    xfree (fs->regs.reg);
+		    fs->regs = *old_rs;
+		    xfree (old_rs);
+		  }
 	      }
 	      break;
 
@@ -420,7 +426,7 @@ execute_cfa_program (unsigned char *insn_ptr, unsigned char *insn_end,
 	    case DW_CFA_offset_extended_sf:
 	      insn_ptr = read_uleb128 (insn_ptr, insn_end, &reg);
 	      insn_ptr = read_sleb128 (insn_ptr, insn_end, &offset);
-	      offset += fs->data_align;
+	      offset *= fs->data_align;
 	      dwarf2_frame_state_alloc_regs (&fs->regs, reg + 1);
 	      fs->regs.reg[reg].how = DWARF2_FRAME_REG_SAVED_OFFSET;
 	      fs->regs.reg[reg].loc.offset = offset;
@@ -509,26 +515,12 @@ dwarf2_frame_default_init_reg (struct gdbarch *gdbarch, int regnum,
 /* Return a default for the architecture-specific operations.  */
 
 static void *
-dwarf2_frame_init (struct gdbarch *gdbarch)
+dwarf2_frame_init (struct obstack *obstack)
 {
   struct dwarf2_frame_ops *ops;
   
-  ops = GDBARCH_OBSTACK_ZALLOC (gdbarch, struct dwarf2_frame_ops);
+  ops = OBSTACK_ZALLOC (obstack, struct dwarf2_frame_ops);
   ops->init_reg = dwarf2_frame_default_init_reg;
-  return ops;
-}
-
-static struct dwarf2_frame_ops *
-dwarf2_frame_ops (struct gdbarch *gdbarch)
-{
-  struct dwarf2_frame_ops *ops = gdbarch_data (gdbarch, dwarf2_frame_data);
-  if (ops == NULL)
-    {
-      /* ULGH, called during architecture initialization.  Patch
-         things up.  */
-      ops = dwarf2_frame_init (gdbarch);
-      set_gdbarch_data (gdbarch, dwarf2_frame_data, ops);
-    }
   return ops;
 }
 
@@ -540,9 +532,8 @@ dwarf2_frame_set_init_reg (struct gdbarch *gdbarch,
 			   void (*init_reg) (struct gdbarch *, int,
 					     struct dwarf2_frame_state_reg *))
 {
-  struct dwarf2_frame_ops *ops;
+  struct dwarf2_frame_ops *ops = gdbarch_data (gdbarch, dwarf2_frame_data);
 
-  ops = dwarf2_frame_ops (gdbarch);
   ops->init_reg = init_reg;
 }
 
@@ -552,9 +543,8 @@ static void
 dwarf2_frame_init_reg (struct gdbarch *gdbarch, int regnum,
 		       struct dwarf2_frame_state_reg *reg)
 {
-  struct dwarf2_frame_ops *ops;
+  struct dwarf2_frame_ops *ops = gdbarch_data (gdbarch, dwarf2_frame_data);
 
-  ops = dwarf2_frame_ops (gdbarch);
   ops->init_reg (gdbarch, regnum, reg);
 }
 
@@ -900,9 +890,6 @@ struct comp_unit
   /* Linked list of CIEs for this object.  */
   struct dwarf2_cie *cie;
 
-  /* Address size for this unit - from unit header.  */
-  unsigned char addr_size;
-
   /* Pointer to the .debug_frame section loaded into memory.  */
   char *dwarf_frame_buffer;
 
@@ -1098,6 +1085,14 @@ read_encoded_value (struct comp_unit *unit, unsigned char encoding,
     case DW_EH_PE_textrel:
       base = unit->tbase;
       break;
+    case DW_EH_PE_funcrel:
+      /* FIXME: kettenis/20040501: For now just pretend
+         DW_EH_PE_funcrel is equivalent to DW_EH_PE_absptr.  For
+         reading the initial location of an FDE it should be treated
+         as such, and currently that's the only place where this code
+         is used.  */
+      base = 0;
+      break;
     case DW_EH_PE_aligned:
       base = 0;
       offset = buf - unit->dwarf_frame_buffer;
@@ -1111,7 +1106,7 @@ read_encoded_value (struct comp_unit *unit, unsigned char encoding,
       internal_error (__FILE__, __LINE__, "Invalid or unsupported encoding");
     }
 
-  if ((encoding & 0x0f) == 0x00)
+  if ((encoding & 0x07) == 0x00)
     encoding |= encoding_for_size (ptr_len);
 
   switch (encoding & 0x0f)
@@ -1270,6 +1265,7 @@ decode_frame_entry_1 (struct comp_unit *unit, char *start, int eh_frame_p)
       /* This is a CIE.  */
       struct dwarf2_cie *cie;
       char *augmentation;
+      unsigned int cie_version;
 
       /* Record the offset into the .debug_frame section of this CIE.  */
       cie_pointer = start - unit->dwarf_frame_buffer;
@@ -1285,12 +1281,12 @@ decode_frame_entry_1 (struct comp_unit *unit, char *start, int eh_frame_p)
       cie->cie_pointer = cie_pointer;
 
       /* The encoding for FDE's in a normal .debug_frame section
-         depends on the target address size as specified in the
-         Compilation Unit Header.  */
-      cie->encoding = encoding_for_size (unit->addr_size);
+         depends on the target address size.  */
+      cie->encoding = DW_EH_PE_absptr;
 
       /* Check version number.  */
-      if (read_1_byte (unit->abfd, buf) != DW_CIE_VERSION)
+      cie_version = read_1_byte (unit->abfd, buf);
+      if (cie_version != 1 && cie_version != 3)
 	return NULL;
       buf += 1;
 
@@ -1316,8 +1312,15 @@ decode_frame_entry_1 (struct comp_unit *unit, char *start, int eh_frame_p)
 	read_signed_leb128 (unit->abfd, buf, &bytes_read);
       buf += bytes_read;
 
-      cie->return_address_register = read_1_byte (unit->abfd, buf);
-      buf += 1;
+      if (cie_version == 1)
+	{
+	  cie->return_address_register = read_1_byte (unit->abfd, buf);
+	  bytes_read = 1;
+	}
+      else
+	cie->return_address_register = read_unsigned_leb128 (unit->abfd, buf,
+							     &bytes_read);
+      buf += bytes_read;
 
       cie->saw_z_augmentation = (*augmentation == 'z');
       if (cie->saw_z_augmentation)
@@ -1550,7 +1553,6 @@ dwarf2_build_frame_info (struct objfile *objfile)
   /* Build a minimal decoding of the DWARF2 compilation unit.  */
   unit.abfd = objfile->obfd;
   unit.objfile = objfile;
-  unit.addr_size = objfile->obfd->arch_info->bits_per_address / 8;
   unit.dbase = 0;
   unit.tbase = 0;
 
@@ -1564,8 +1566,7 @@ dwarf2_build_frame_info (struct objfile *objfile)
       unit.dwarf_frame_buffer = dwarf2_read_section (objfile,
 						     dwarf_eh_frame_section);
 
-      unit.dwarf_frame_size
-	= bfd_get_section_size_before_reloc (dwarf_eh_frame_section);
+      unit.dwarf_frame_size = bfd_get_section_size (dwarf_eh_frame_section);
       unit.dwarf_frame_section = dwarf_eh_frame_section;
 
       /* FIXME: kettenis/20030602: This is the DW_EH_PE_datarel base
@@ -1592,8 +1593,7 @@ dwarf2_build_frame_info (struct objfile *objfile)
       unit.cie = NULL;
       unit.dwarf_frame_buffer = dwarf2_read_section (objfile,
 						     dwarf_frame_section);
-      unit.dwarf_frame_size
-	= bfd_get_section_size_before_reloc (dwarf_frame_section);
+      unit.dwarf_frame_size = bfd_get_section_size (dwarf_frame_section);
       unit.dwarf_frame_section = dwarf_frame_section;
 
       frame_ptr = unit.dwarf_frame_buffer;
@@ -1608,6 +1608,6 @@ void _initialize_dwarf2_frame (void);
 void
 _initialize_dwarf2_frame (void)
 {
-  dwarf2_frame_data = register_gdbarch_data (dwarf2_frame_init);
+  dwarf2_frame_data = gdbarch_data_register_pre_init (dwarf2_frame_init);
   dwarf2_frame_objfile_data = register_objfile_data ();
 }

@@ -4,9 +4,7 @@
 # stop GDB hanging on HP/UX.  For some reason vfork() hangs yet fork()
 # doesn't ....
 
-MH_CFLAGS = -D__HP_CURSES -Dvfork=fork
-
-XM_FILE= xm-hppah.h
+MH_CFLAGS = -Dvfork=fork
 
 NAT_FILE= nm-hppah11.h
 NATDEPFILES= hppah-nat.o corelow.o core-aout.o inftarg.o fork-child.o infttrace.o hpread.o pa64solib.o solib.o

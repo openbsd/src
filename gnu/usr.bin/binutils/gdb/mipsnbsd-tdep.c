@@ -1,5 +1,5 @@
 /* Target-dependent code for MIPS systems running NetBSD.
-   Copyright 2002, 2003 Free Software Foundation, Inc.
+   Copyright 2002, 2003, 2004 Free Software Foundation, Inc.
    Contributed by Wasabi Systems, Inc.
 
    This file is part of GDB.
@@ -28,6 +28,7 @@
 
 #include "nbsd-tdep.h"
 #include "mipsnbsd-tdep.h"
+#include "mips-tdep.h"
 
 #include "solib-svr4.h"
 
@@ -44,9 +45,10 @@ mipsnbsd_supply_reg (char *regs, int regno)
       if (regno == i || regno == -1)
 	{
 	  if (CANNOT_FETCH_REGISTER (i))
-	    supply_register (i, NULL);
+	    regcache_raw_supply (current_regcache, i, NULL);
 	  else
-            supply_register (i, regs + (i * mips_regsize (current_gdbarch)));
+            regcache_raw_supply (current_regcache, i,
+				 regs + (i * mips_isa_regsize (current_gdbarch)));
         }
     }
 }
@@ -58,7 +60,8 @@ mipsnbsd_fill_reg (char *regs, int regno)
 
   for (i = 0; i <= PC_REGNUM; i++)
     if ((regno == i || regno == -1) && ! CANNOT_STORE_REGISTER (i))
-      regcache_collect (i, regs + (i * mips_regsize (current_gdbarch)));
+      regcache_raw_collect (current_regcache, i,
+			    regs + (i * mips_isa_regsize (current_gdbarch)));
 }
 
 void
@@ -73,9 +76,10 @@ mipsnbsd_supply_fpreg (char *fpregs, int regno)
       if (regno == i || regno == -1)
 	{
 	  if (CANNOT_FETCH_REGISTER (i))
-	    supply_register (i, NULL);
+	    regcache_raw_supply (current_regcache, i, NULL);
 	  else
-            supply_register (i, fpregs + ((i - FP0_REGNUM) * mips_regsize (current_gdbarch)));
+            regcache_raw_supply (current_regcache, i,
+				 fpregs + ((i - FP0_REGNUM) * mips_isa_regsize (current_gdbarch)));
 	}
     }
 }
@@ -88,7 +92,8 @@ mipsnbsd_fill_fpreg (char *fpregs, int regno)
   for (i = FP0_REGNUM; i <= mips_regnum (current_gdbarch)->fp_control_status;
        i++)
     if ((regno == i || regno == -1) && ! CANNOT_STORE_REGISTER (i))
-      regcache_collect (i, fpregs + ((i - FP0_REGNUM) * mips_regsize (current_gdbarch)));
+      regcache_raw_collect (current_regcache, i,
+			    fpregs + ((i - FP0_REGNUM) * mips_isa_regsize (current_gdbarch)));
 }
 
 static void
@@ -197,7 +202,7 @@ mipsnbsd_sigtramp_offset (CORE_ADDR pc)
   LONGEST off;
   int i;
 
-  if (read_memory_nobpt (pc, (char *) w, sizeof (w)) != 0)
+  if (deprecated_read_memory_nobpt (pc, (char *) w, sizeof (w)) != 0)
     return -1;
 
   for (i = 0; i < RETCODE_NWORDS; i++)
@@ -211,20 +216,13 @@ mipsnbsd_sigtramp_offset (CORE_ADDR pc)
   off = i * 4;
   pc -= off;
 
-  if (read_memory_nobpt (pc, (char *) ret, sizeof (ret)) != 0)
+  if (deprecated_read_memory_nobpt (pc, (char *) ret, sizeof (ret)) != 0)
     return -1;
 
   if (memcmp (ret, retcode, RETCODE_SIZE) == 0)
     return off;
 
   return -1;
-}
-
-static int
-mipsnbsd_pc_in_sigtramp (CORE_ADDR pc, char *func_name)
-{
-  return (nbsd_pc_in_sigtramp (pc, func_name)
-	  || mipsnbsd_sigtramp_offset (pc) >= 0);
 }
 
 /* Figure out where the longjmp will land.  We expect that we have
@@ -235,7 +233,7 @@ mipsnbsd_pc_in_sigtramp (CORE_ADDR pc, char *func_name)
    success.  */
 
 #define NBSD_MIPS_JB_PC			(2 * 4)
-#define NBSD_MIPS_JB_ELEMENT_SIZE	mips_regsize (current_gdbarch)
+#define NBSD_MIPS_JB_ELEMENT_SIZE	mips_isa_regsize (current_gdbarch)
 #define NBSD_MIPS_JB_OFFSET		(NBSD_MIPS_JB_PC * \
 					 NBSD_MIPS_JB_ELEMENT_SIZE)
 
@@ -344,8 +342,6 @@ static void
 mipsnbsd_init_abi (struct gdbarch_info info,
                    struct gdbarch *gdbarch)
 {
-  set_gdbarch_pc_in_sigtramp (gdbarch, mipsnbsd_pc_in_sigtramp);
-
   set_gdbarch_get_longjmp_target (gdbarch, mipsnbsd_get_longjmp_target);
 
   set_gdbarch_cannot_fetch_register (gdbarch, mipsnbsd_cannot_fetch_register);
@@ -365,6 +361,6 @@ _initialize_mipsnbsd_tdep (void)
   gdbarch_register_osabi (bfd_arch_mips, 0, GDB_OSABI_NETBSD_ELF,
 			  mipsnbsd_init_abi);
 
-  add_core_fns (&mipsnbsd_core_fns);
-  add_core_fns (&mipsnbsd_elfcore_fns);
+  deprecated_add_core_fns (&mipsnbsd_core_fns);
+  deprecated_add_core_fns (&mipsnbsd_elfcore_fns);
 }

@@ -1,5 +1,5 @@
 /* libthread_db helper functions for the remote server for GDB.
-   Copyright 2002
+   Copyright 2002, 2004
    Free Software Foundation, Inc.
 
    Contributed by MontaVista Software.
@@ -48,11 +48,11 @@ typedef void *gdb_ps_read_buf_t;
 typedef const void *gdb_ps_write_buf_t;
 typedef size_t gdb_ps_size_t;
 
-/* FIXME redo this right */
-#if 0
-#ifndef HAVE_LINUX_REGSETS
-#error HAVE_LINUX_REGSETS required!
-#else
+#ifdef HAVE_LINUX_REGSETS
+#define HAVE_REGSETS
+#endif
+
+#ifdef HAVE_REGSETS
 static struct regset_info *
 gregset_info(void)
 {
@@ -67,22 +67,6 @@ gregset_info(void)
 
   return &target_regsets[i];
 }
-
-static struct regset_info *
-fpregset_info(void)
-{
-  int i = 0;
-
-  while (target_regsets[i].size != -1)
-    {
-      if (target_regsets[i].type == FP_REGS)
-	break;
-      i++;
-    }
-
-  return &target_regsets[i];
-}
-#endif
 #endif
 
 /* Search for the symbol named NAME within the object named OBJ within
@@ -128,9 +112,8 @@ ps_pdwrite (gdb_ps_prochandle_t ph, paddr_t addr,
 ps_err_e
 ps_lgetregs (gdb_ps_prochandle_t ph, lwpid_t lwpid, prgregset_t gregset)
 {
-#if 0
+#ifdef HAVE_REGSETS
   struct thread_info *reg_inferior, *save_inferior;
-  void *regcache;
 
   reg_inferior = (struct thread_info *) find_inferior_id (&all_threads,
 							  lwpid);
@@ -140,16 +123,14 @@ ps_lgetregs (gdb_ps_prochandle_t ph, lwpid_t lwpid, prgregset_t gregset)
   save_inferior = current_inferior;
   current_inferior = reg_inferior;
 
-  regcache = new_register_cache ();
-  the_target->fetch_registers (0, regcache);
-  gregset_info()->fill_function (gregset, regcache);
-  free_register_cache (regcache);
+  the_target->fetch_registers (0);
+  gregset_info()->fill_function (gregset);
 
   current_inferior = save_inferior;
   return PS_OK;
-#endif
-  /* FIXME */
+#else
   return PS_ERR;
+#endif
 }
 
 /* Set the general registers of LWP LWPID within the target process PH
@@ -158,27 +139,7 @@ ps_lgetregs (gdb_ps_prochandle_t ph, lwpid_t lwpid, prgregset_t gregset)
 ps_err_e
 ps_lsetregs (gdb_ps_prochandle_t ph, lwpid_t lwpid, const prgregset_t gregset)
 {
-#if 0
-  struct thread_info *reg_inferior, *save_inferior;
-  void *regcache;
-
-  reg_inferior = (struct thread_info *) find_inferior_id (&all_threads, lwpid);
-  if (reg_inferior == NULL)
-    return PS_ERR;
-
-  save_inferior = current_inferior;
-  current_inferior = reg_inferior;
-
-  regcache = new_register_cache ();
-  gregset_info()->store_function (gregset, regcache);
-  the_target->store_registers (0, regcache);
-  free_register_cache (regcache);
-
-  current_inferior = save_inferior;
-
-  return PS_OK;
-#endif
-  /* FIXME */
+  /* Unneeded.  */
   return PS_ERR;
 }
 
@@ -189,27 +150,7 @@ ps_err_e
 ps_lgetfpregs (gdb_ps_prochandle_t ph, lwpid_t lwpid,
 	       gdb_prfpregset_t *fpregset)
 {
-#if 0
-  struct thread_info *reg_inferior, *save_inferior;
-  void *regcache;
-
-  reg_inferior = (struct thread_info *) find_inferior_id (&all_threads, lwpid);
-  if (reg_inferior == NULL)
-    return PS_ERR;
-
-  save_inferior = current_inferior;
-  current_inferior = reg_inferior;
-
-  regcache = new_register_cache ();
-  the_target->fetch_registers (0, regcache);
-  fpregset_info()->fill_function (fpregset, regcache);
-  free_register_cache (regcache);
-
-  current_inferior = save_inferior;
-
-  return PS_OK;
-#endif
-  /* FIXME */
+  /* Unneeded.  */
   return PS_ERR;
 }
 
@@ -220,27 +161,7 @@ ps_err_e
 ps_lsetfpregs (gdb_ps_prochandle_t ph, lwpid_t lwpid,
 	       const gdb_prfpregset_t *fpregset)
 {
-#if 0
-  struct thread_info *reg_inferior, *save_inferior;
-  void *regcache;
-
-  reg_inferior = (struct thread_info *) find_inferior_id (&all_threads, lwpid);
-  if (reg_inferior == NULL)
-    return PS_ERR;
-
-  save_inferior = current_inferior;
-  current_inferior = reg_inferior;
-
-  regcache = new_register_cache ();
-  fpregset_info()->store_function (fpregset, regcache);
-  the_target->store_registers (0, regcache);
-  free_register_cache (regcache);
-
-  current_inferior = save_inferior;
-
-  return PS_OK;
-#endif
-  /* FIXME */
+  /* Unneeded.  */
   return PS_ERR;
 }
 

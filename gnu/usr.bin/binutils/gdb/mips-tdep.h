@@ -43,9 +43,9 @@ enum mips_abi mips_abi (struct gdbarch *gdbarch);
 /* For wince :-(.  */
 extern CORE_ADDR mips_next_pc (CORE_ADDR pc);
 
-/* Return the "MIPS" register size.  Just a short cut to the BFD
+/* Return the MIPS ISA's register size.  Just a short cut to the BFD
    architecture's word size.  */
-extern int mips_regsize (struct gdbarch *gdbarch);
+extern int mips_isa_regsize (struct gdbarch *gdbarch);
 
 /* Return the current index for various MIPS registers.  */
 struct mips_regnum
@@ -62,6 +62,7 @@ struct mips_regnum
 extern const struct mips_regnum *mips_regnum (struct gdbarch *gdbarch);
 
 enum {
+  MIPS_SP_REGNUM = 29,
   MIPS_EMBED_LO_REGNUM = 33,
   MIPS_EMBED_HI_REGNUM = 34,
   MIPS_EMBED_BADVADDR_REGNUM = 35,

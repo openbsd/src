@@ -35,7 +35,6 @@
 #include "gdb-events.h"
 #include "ui-out.h"
 #include "top.h"
-#include "readline/readline.h"
 #include <unistd.h>
 #include <fcntl.h>
 
@@ -51,6 +50,11 @@
 #include "tui/tui-winsource.h"
 
 #include "gdb_curses.h"
+
+/* This redefines CTRL if it is not already defined, so it must come
+   after terminal state releated include files like <term.h> and
+   "gdb_curses.h".  */
+#include "readline/readline.h"
 
 int tui_target_has_run = 0;
 
@@ -123,7 +127,7 @@ tui_query_hook (const char * msg, va_list argp)
   return retval;
 }
 
-/* Prevent recursion of registers_changed_hook().  */
+/* Prevent recursion of deprecated_registers_changed_hook().  */
 static int tui_refreshing_registers = 0;
 
 static void
@@ -279,34 +283,34 @@ tui_detach_hook (void)
 void
 tui_install_hooks (void)
 {
-  target_wait_hook = tui_target_wait_hook;
-  selected_frame_level_changed_hook = tui_selected_frame_level_changed_hook;
-  print_frame_info_listing_hook = tui_print_frame_info_listing_hook;
+  deprecated_target_wait_hook = tui_target_wait_hook;
+  deprecated_selected_frame_level_changed_hook = tui_selected_frame_level_changed_hook;
+  deprecated_print_frame_info_listing_hook = tui_print_frame_info_listing_hook;
 
-  query_hook = tui_query_hook;
+  deprecated_query_hook = tui_query_hook;
 
   /* Install the event hooks.  */
-  tui_old_event_hooks = set_gdb_event_hooks (&tui_event_hooks);
+  tui_old_event_hooks = deprecated_set_gdb_event_hooks (&tui_event_hooks);
 
-  registers_changed_hook = tui_registers_changed_hook;
-  register_changed_hook = tui_register_changed_hook;
-  detach_hook = tui_detach_hook;
+  deprecated_registers_changed_hook = tui_registers_changed_hook;
+  deprecated_register_changed_hook = tui_register_changed_hook;
+  deprecated_detach_hook = tui_detach_hook;
 }
 
 /* Remove the TUI specific hooks.  */
 void
 tui_remove_hooks (void)
 {
-  target_wait_hook = 0;
-  selected_frame_level_changed_hook = 0;
-  print_frame_info_listing_hook = 0;
-  query_hook = 0;
-  registers_changed_hook = 0;
-  register_changed_hook = 0;
-  detach_hook = 0;
+  deprecated_target_wait_hook = 0;
+  deprecated_selected_frame_level_changed_hook = 0;
+  deprecated_print_frame_info_listing_hook = 0;
+  deprecated_query_hook = 0;
+  deprecated_registers_changed_hook = 0;
+  deprecated_register_changed_hook = 0;
+  deprecated_detach_hook = 0;
 
   /* Restore the previous event hooks.  */
-  set_gdb_event_hooks (tui_old_event_hooks);
+  deprecated_set_gdb_event_hooks (tui_old_event_hooks);
 }
 
 void _initialize_tui_hooks (void);
@@ -315,6 +319,6 @@ void
 _initialize_tui_hooks (void)
 {
   /* Install the permanent hooks.  */
-  tui_target_new_objfile_chain = target_new_objfile_hook;
-  target_new_objfile_hook = tui_new_objfile_hook;
+  tui_target_new_objfile_chain = deprecated_target_new_objfile_hook;
+  deprecated_target_new_objfile_hook = tui_new_objfile_hook;
 }

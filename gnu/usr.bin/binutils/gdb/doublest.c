@@ -1,8 +1,8 @@
 /* Floating point routines for GDB, the GNU debugger.
 
    Copyright 1986, 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995,
-   1996, 1997, 1998, 1999, 2000, 2001, 2003 Free Software Foundation,
-   Inc.
+   1996, 1997, 1998, 1999, 2000, 2001, 2003, 2004 Free Software
+   Foundation, Inc.
 
    This file is part of GDB.
 
@@ -91,10 +91,17 @@ get_field (unsigned char *data, enum floatformat_byteorders order,
     {
       result |= (unsigned long)*(data + cur_byte) << cur_bitshift;
       cur_bitshift += FLOATFORMAT_CHAR_BIT;
-      if (order == floatformat_little || order == floatformat_littlebyte_bigword)
-	++cur_byte;
-      else
-	--cur_byte;
+      switch (order)
+	{
+	case floatformat_little:
+	  ++cur_byte;
+	  break;
+	case floatformat_big:
+	  --cur_byte;
+	  break;
+	case floatformat_littlebyte_bigword:
+	  break;
+	}
     }
   if (len < sizeof(result) * FLOATFORMAT_CHAR_BIT)
     /* Mask out bits which are not part of the field */
@@ -554,19 +561,9 @@ floatformat_mantissa (const struct floatformat *fmt, char *val)
    increase precision as necessary.  Otherwise, we call the conversion
    routine and let it do the dirty work.  */
 
-#ifndef HOST_FLOAT_FORMAT
-#define HOST_FLOAT_FORMAT 0
-#endif
-#ifndef HOST_DOUBLE_FORMAT
-#define HOST_DOUBLE_FORMAT 0
-#endif
-#ifndef HOST_LONG_DOUBLE_FORMAT
-#define HOST_LONG_DOUBLE_FORMAT 0
-#endif
-
-static const struct floatformat *host_float_format = HOST_FLOAT_FORMAT;
-static const struct floatformat *host_double_format = HOST_DOUBLE_FORMAT;
-static const struct floatformat *host_long_double_format = HOST_LONG_DOUBLE_FORMAT;
+static const struct floatformat *host_float_format = GDB_HOST_FLOAT_FORMAT;
+static const struct floatformat *host_double_format = GDB_HOST_DOUBLE_FORMAT;
+static const struct floatformat *host_long_double_format = GDB_HOST_LONG_DOUBLE_FORMAT;
 
 void
 floatformat_to_doublest (const struct floatformat *fmt,
@@ -621,8 +618,8 @@ floatformat_from_doublest (const struct floatformat *fmt,
 
 
 /* Return a floating-point format for a floating-point variable of
-   length LEN.  Return NULL, if no suitable floating-point format
-   could be found.
+   length LEN.  If no suitable floating-point format is found, an
+   error is thrown.
 
    We need this functionality since information about the
    floating-point format of a type is not always available to GDB; the
@@ -636,12 +633,13 @@ floatformat_from_doublest (const struct floatformat *fmt,
 static const struct floatformat *
 floatformat_from_length (int len)
 {
+  const struct floatformat *format;
   if (len * TARGET_CHAR_BIT == TARGET_FLOAT_BIT)
-    return TARGET_FLOAT_FORMAT;
+    format = TARGET_FLOAT_FORMAT;
   else if (len * TARGET_CHAR_BIT == TARGET_DOUBLE_BIT)
-    return TARGET_DOUBLE_FORMAT;
+    format = TARGET_DOUBLE_FORMAT;
   else if (len * TARGET_CHAR_BIT == TARGET_LONG_DOUBLE_BIT)
-    return TARGET_LONG_DOUBLE_FORMAT;
+    format = TARGET_LONG_DOUBLE_FORMAT;
   /* On i386 the 'long double' type takes 96 bits,
      while the real number of used bits is only 80,
      both in processor and in memory.  
@@ -649,9 +647,13 @@ floatformat_from_length (int len)
   else if ((TARGET_LONG_DOUBLE_FORMAT != NULL) 
 	   && (len * TARGET_CHAR_BIT ==
                TARGET_LONG_DOUBLE_FORMAT->totalsize))
-    return TARGET_LONG_DOUBLE_FORMAT;
-
-  return NULL;
+    format = TARGET_LONG_DOUBLE_FORMAT;
+  else
+    format = NULL;
+  if (format == NULL)
+    error ("Unrecognized %d-bit floating-point type.",
+	   len * TARGET_CHAR_BIT);
+  return format;
 }
 
 const struct floatformat *
@@ -678,12 +680,6 @@ extract_floating_by_length (const void *addr, int len)
   const struct floatformat *fmt = floatformat_from_length (len);
   DOUBLEST val;
 
-  if (fmt == NULL)
-    {
-      warning ("Can't extract a floating-point number of %d bytes.", len);
-      return NAN;
-    }
-
   floatformat_to_doublest (fmt, addr, &val);
   return val;
 }
@@ -701,13 +697,6 @@ static void
 store_floating_by_length (void *addr, int len, DOUBLEST val)
 {
   const struct floatformat *fmt = floatformat_from_length (len);
-
-  if (fmt == NULL)
-    {
-      warning ("Can't store a floating-point number of %d bytes.", len);
-      memset (addr, 0, len);
-      return;
-    }
 
   floatformat_from_doublest (fmt, &val, addr);
 }
@@ -821,4 +810,27 @@ convert_typed_floating (const void *from, const struct type *from_type,
       floatformat_to_doublest (from_fmt, from, &d);
       floatformat_from_doublest (to_fmt, &d, to);
     }
+}
+
+const struct floatformat *floatformat_ieee_single[BFD_ENDIAN_UNKNOWN];
+const struct floatformat *floatformat_ieee_double[BFD_ENDIAN_UNKNOWN];
+const struct floatformat *floatformat_ieee_quad[BFD_ENDIAN_UNKNOWN];
+const struct floatformat *floatformat_arm_ext[BFD_ENDIAN_UNKNOWN];
+const struct floatformat *floatformat_ia64_spill[BFD_ENDIAN_UNKNOWN];
+
+extern void _initialize_doublest (void);
+
+extern void
+_initialize_doublest (void)
+{
+  floatformat_ieee_single[BFD_ENDIAN_LITTLE] = &floatformat_ieee_single_little;
+  floatformat_ieee_single[BFD_ENDIAN_BIG] = &floatformat_ieee_single_big;
+  floatformat_ieee_double[BFD_ENDIAN_LITTLE] = &floatformat_ieee_double_little;
+  floatformat_ieee_double[BFD_ENDIAN_BIG] = &floatformat_ieee_double_big;
+  floatformat_arm_ext[BFD_ENDIAN_LITTLE] = &floatformat_arm_ext_littlebyte_bigword;
+  floatformat_arm_ext[BFD_ENDIAN_BIG] = &floatformat_arm_ext_big;
+  floatformat_ia64_spill[BFD_ENDIAN_LITTLE] = &floatformat_ia64_spill_little;
+  floatformat_ia64_spill[BFD_ENDIAN_BIG] = &floatformat_ia64_spill_big;
+  floatformat_ieee_quad[BFD_ENDIAN_LITTLE] = &floatformat_ia64_quad_little;
+  floatformat_ieee_quad[BFD_ENDIAN_BIG] = &floatformat_ia64_quad_big;
 }

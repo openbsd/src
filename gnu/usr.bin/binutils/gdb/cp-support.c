@@ -148,7 +148,7 @@ find_last_component (const char *name)
 /* Return the name of the class containing method PHYSNAME.  */
 
 char *
-class_name_from_physname (const char *physname)
+cp_class_name_from_physname (const char *physname)
 {
   char *ret = NULL;
   const char *end;

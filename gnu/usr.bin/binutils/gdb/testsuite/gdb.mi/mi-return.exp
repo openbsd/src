@@ -1,4 +1,4 @@
-# Copyright 1999, 2000, 2002 Free Software Foundation, Inc.
+# Copyright 1999, 2000, 2001, 2002, 2004 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,9 +13,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
-
-# Please email any bugs, comments, and/or additions to this file to:
-# bug-gdb@prep.ai.mit.edu
 
 # Test Machine interface (MI) operations 
 # Verify that, using the MI, we can run a simple program and perform
@@ -51,9 +48,12 @@ proc test_return_simple {} {
     global mi_gdb_prompt
     global hex
 
+    set line_callee3_head         [gdb_get_line_number "callee3 ("]
+    set line_callee3_close_brace  [expr $line_callee3_head + 3]
+
     send_gdb "111-exec-return\n"
     gdb_expect {
-	-re "111\\^done,frame=\{level=\"0\",addr=\"$hex\",func=\"callee3\",args=\\\[.*\\\],file=\".*basics.c\",line=\"18\"\}\r\n$mi_gdb_prompt$" {pass "return from callee4 now"}
+	-re "111\\^done,frame=\{level=\"0\",addr=\"$hex\",func=\"callee3\",args=\\\[.*\\\],file=\".*basics.c\",line=\"$line_callee3_close_brace\"\}\r\n$mi_gdb_prompt$" {pass "return from callee4 now"}
 	-re ".*\r\n$mi_gdb_prompt$" { fail "return from callee4 now" }
 	timeout { fail "return from callee4 now (timeout)"
 	}

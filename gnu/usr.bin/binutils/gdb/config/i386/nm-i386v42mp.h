@@ -89,4 +89,8 @@
 /* Return whether PID contains a user-space thread id. */
 #define ISTID(PID) (ptid_get_tid (PID))
 
+/* This is the amount to subtract from u.u_ar0
+   to get the offset in the core file of the register values.  */
+#define KERNEL_U_ADDR 0xe0000000
+
 #endif /* NM_I386V42MP_H */

@@ -18,7 +18,6 @@
 # This file was written by Fred Fish. (fnf@cygnus.com)
 # And rewritten by Michael Chastain <mec.gnu@mindspring.com>.
 
-set ws "\[\r\n\t \]+"
 set nl "\[\r\n\]+"
 
 if $tracelevel then {
@@ -26,6 +25,8 @@ if $tracelevel then {
 }
 
 if { [skip_cplus_tests] } { continue }
+
+load_lib "cp-support.exp"
 
 set testfile "classes"
 set srcfile ${testfile}.cc
@@ -36,580 +37,349 @@ if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {deb
 }
 
 # Test ptype of class objects.
-#
-# This code accepts the output of gcc v2 and v3, dwarf-2 and stabs+.
-# It could use some expansion with other compilers such as hp-ux ac++.
-#
-# There are lots of variations in the output:
-#
-# . gcc -stabs+ emits debug info for implicit member functions:
-#   operator=, copy ctor, ctor.  gcc -gdwarf-2 does not.
-#
-# . gcc with abi version 1 puts the implicit member functions
-#   at the beginning of the member function list; with abi version 2,
-#   the implicit member functions are at the end of the member function
-#   list.  This appears as an output difference with -gstabs+.
-#   gcc 3.3.X defaults to abi version 1, and gcc 3.4 will default
-#   to abi version 2.
-#
-# . gcc v2 shows data members for virtual base pointers.
-#   gcc v3 does not.
-#
-# . gdb always prints "class" for both "class" and "struct".
-#   In the future, I should accept "struct" in case gdb improves.
 
 proc test_ptype_class_objects {} {
-    global gdb_prompt
-    global ws
-    global nl
 
     # Simple type.
 
-    gdb_test_multiple "ptype struct default_public_struct" "ptype struct default_public_struct" {
-	-re "type = class default_public_struct \{${ws}public:${ws}int a;${ws}int b;$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gdwarf-2
-	    # gcc 3.3.2 -gdwarf-2
-	    # gcc HEAD 2003-12-28 21:08:30 UTC -gdwarf-2
-	    pass "ptype struct default_public_struct"
+    cp_test_ptype_class \
+	"ptype struct default_public_struct" "" "struct" "default_public_struct" \
+	{
+	    { field public "int a;" }
+	    { field public "int b;" }
 	}
-	-re "type = class default_public_struct \{${ws}public:${ws}int a;${ws}int b;${ws}default_public_struct ?& ?operator ?=\\(default_public_struct const ?&\\);${ws}default_public_struct\\(default_public_struct const ?&\\);${ws}default_public_struct\\((void|)\\);$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gstabs+
-	    # gcc 3.3.2 -gstabs+
-	    # gcc HEAD 2003-12-28 21:08:30 UTC -gstabs+
-	    pass "ptype struct default_public_struct"
-	}
-    }
 
-    # Same test, slightly different type.
+    # Another simple type.
 
-    gdb_test_multiple "ptype struct explicit_public_struct" "ptype struct explicit_public_struct" {
-	-re "type = class explicit_public_struct \{${ws}public:${ws}int a;${ws}int b;$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gdwarf-2
-	    # gcc 3.3.2 -gdwarf-2
-	    # gcc HEAD 2003-12-28 21:08:30 UTC -gdwarf-2
-	    pass "ptype struct explicit_public_struct"
+    cp_test_ptype_class \
+	"ptype struct explicit_public_struct" "" "struct" "explicit_public_struct" \
+	{
+	    { field public "int a;" }
+	    { field public "int b;" }
 	}
-	-re "type = class explicit_public_struct \{${ws}public:${ws}int a;${ws}int b;${ws}explicit_public_struct ?& ?operator ?=\\(explicit_public_struct const ?&\\);${ws}explicit_public_struct\\(explicit_public_struct const ?&\\);${ws}explicit_public_struct\\((void|)\\);$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gstabs+
-	    # gcc 3.3.2 -gstabs+
-	    # gcc HEAD 2003-12-28 21:08:30 UTC -gstabs+
-	    pass "ptype struct explicit_public_struct"
-	}
-    }
 
-    # Same test, slightly different type.
+    # Another simple type.
 
-    gdb_test_multiple "ptype struct protected_struct" "ptype struct protected_struct" {
-	-re "type = class protected_struct \{${ws}protected:${ws}int a;${ws}int b;$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gdwarf-2
-	    # gcc 3.3.2 -gdwarf-2
-	    # gcc HEAD 2003-12-28 21:08:30 UTC -gdwarf-2
-	    pass "ptype struct protected_struct"
+    cp_test_ptype_class \
+	"ptype struct protected_struct" "" "struct" "protected_struct" \
+	{
+	    { field protected "int a;" }
+	    { field protected "int b;" }
 	}
-	-re "type = class protected_struct \{${ws}protected:${ws}int a;${ws}int b;${ws}public:${ws}protected_struct ?& ?operator ?=\\(protected_struct const ?&\\);${ws}protected_struct\\(protected_struct const ?&\\);${ws}protected_struct\\((void|)\\);$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gstabs+
-	    # gcc 3.3.2 -gstabs+
-	    # gcc HEAD 2003-12-28 21:08:30 UTC -gstabs+
-	    pass "ptype struct protected_struct"
-	}
-    }
 
-    # Same test, slightly different type.
+    # Another simple type.
 
-    gdb_test_multiple "ptype struct private_struct" "ptype struct private_struct" {
-	-re "type = class private_struct \{${ws}private:${ws}int a;${ws}int b;$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gdwarf-2
-	    # gcc 3.3.2 -gdwarf-2
-	    # gcc HEAD 2003-12-28 21:08:30 UTC -gdwarf-2
-	    pass "ptype struct private_struct"
+    cp_test_ptype_class \
+	"ptype struct private_struct" "" "struct" "private_struct" \
+	{
+	    { field private "int a;" }
+	    { field private "int b;" }
 	}
-	-re "type = class private_struct \{${ws}private:${ws}int a;${ws}int b;${ws}public:${ws}private_struct ?& ?operator ?=\\(private_struct const ?&\\);${ws}private_struct\\(private_struct const ?&\\);${ws}private_struct\\((void|)\\);$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gstabs+
-	    # gcc 3.3.2 -gstabs+
-	    # gcc HEAD 2003-12-28 21:08:30 UTC -gstabs+
-	    pass "ptype struct private_struct"
-	}
-    }
 
-    # Similar test, bigger type.
+    # A bigger type.
 
-    gdb_test_multiple "ptype struct mixed_protection_struct" "ptype struct mixed_protection_struct" {
-	-re "type = class mixed_protection_struct \{${ws}public:${ws}int a;${ws}int b;${ws}private:${ws}int c;${ws}int d;${ws}protected:${ws}int e;${ws}int f;${ws}public:${ws}int g;${ws}private:${ws}int h;${ws}protected:${ws}int i;$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gdwarf-2
-	    # gcc 3.3.2 -gdwarf-2
-	    # gcc HEAD 2003-12-28 21:08:30 UTC -gdwarf-2
-	    pass "ptype struct mixed_protection_struct"
+    cp_test_ptype_class \
+	"ptype struct mixed_protection_struct" "" "struct" "mixed_protection_struct" \
+	{
+	    { field public    "int a;" }
+	    { field public    "int b;" }
+	    { field private   "int c;" }
+	    { field private   "int d;" }
+	    { field protected "int e;" }
+	    { field protected "int f;" }
+	    { field public    "int g;" }
+	    { field private   "int h;" }
+	    { field protected "int i;" }
 	}
-	-re "type = class mixed_protection_struct \{${ws}public:${ws}int a;${ws}int b;${ws}private:${ws}int c;${ws}int d;${ws}protected:${ws}int e;${ws}int f;${ws}public:${ws}int g;${ws}private:${ws}int h;${ws}protected:${ws}int i;${ws}public:${ws}mixed_protection_struct ?& ?operator ?=\\(mixed_protection_struct const ?&\\);${ws}mixed_protection_struct\\(mixed_protection_struct const ?&\\);${ws}mixed_protection_struct\\((void|)\\);$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gstabs+
-	    # gcc 3.3.2 -gstabs+
-	    # gcc HEAD 2003-12-28 21:08:30 UTC -gstabs+
-	    pass "ptype struct mixed_protection_struct"
-	}
-    }
 
     # All that again with "class" instead of "struct".
     # gdb does not care about the difference anyways.
 
-    gdb_test_multiple "ptype class public_class" "ptype class public_class" {
-	-re "type = class public_class \{${ws}public:${ws}int a;${ws}int b;$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gdwarf-2
-	    # gcc 3.3.2 -gdwarf-2
-	    # gcc HEAD 2003-12-28 21:08:30 UTC -gdwarf-2
-	    pass "ptype class public_class"
+    cp_test_ptype_class \
+	"ptype class public_class" "" "class" "public_class" \
+	{
+	    { field public "int a;" }
+	    { field public "int b;" }
 	}
-	-re "type = class public_class \{${ws}public:${ws}int a;${ws}int b;${ws}public_class ?& ?operator ?=\\(public_class const ?&\\);${ws}public_class\\(public_class const ?&\\);${ws}public_class\\((void|)\\);$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gstabs+
-	    # gcc 3.3.2 -gstabs+
-	    # gcc HEAD 2003-12-28 21:08:30 UTC -gstabs+
-	    pass "ptype class public_class"
-	}
-    }
 
-    # Same test, slightly different type.
+    # Another simple type.
 
-    gdb_test_multiple "ptype class protected_class" "ptype class protected_class" {
-	-re "type = class protected_class \{${ws}protected:${ws}int a;${ws}int b;$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gdwarf-2
-	    # gcc 3.3.2 -gdwarf-2
-	    # gcc HEAD 2003-12-28 21:08:30 UTC -gdwarf-2
-	    pass "ptype class protected_class"
+    cp_test_ptype_class \
+	"ptype class protected_class" "" "class" "protected_class" \
+	{
+	    { field protected "int a;" }
+	    { field protected "int b;" }
 	}
-	-re "type = class protected_class \{${ws}protected:${ws}int a;${ws}int b;${ws}public:${ws}protected_class ?& ?operator ?=\\(protected_class const ?&\\);${ws}protected_class\\(protected_class const ?&\\);${ws}protected_class\\((void|)\\);$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gstabs+
-	    # gcc 3.3.2 -gstabs+
-	    # gcc HEAD 2003-12-28 21:08:30 UTC -gstabs+
-	    pass "ptype class protected_class"
-	}
-    }
 
-    # Same test, slightly different type.
-    # The 'private' is optional but gdb always prints it.
+    # Another simple type.
 
-    gdb_test_multiple "ptype class default_private_class" "ptype class default_private_class" {
-	-re "type = class default_private_class \{${ws}(private:${ws}|)int a;${ws}int b;$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gdwarf-2
-	    # gcc 3.3.2 -gdwarf-2
-	    # gcc HEAD 2003-12-28 21:08:30 UTC -gdwarf-2
-	    pass "ptype class default_private_class"
+    cp_test_ptype_class \
+	"ptype class default_private_class" "" "class" "default_private_class" \
+	{
+	    { field private "int a;" }
+	    { field private "int b;" }
 	}
-	-re "type = class default_private_class \{${ws}(private:${ws}|)int a;${ws}int b;${ws}public:${ws}default_private_class ?& ?operator ?=\\(default_private_class const ?&\\);${ws}default_private_class\\(default_private_class const ?&\\);${ws}default_private_class\\((void|)\\);$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gstabs+
-	    # gcc 3.3.2 -gstabs+
-	    # gcc HEAD 2003-12-28 21:08:30 UTC -gstabs+
-	    pass "ptype class default_private_class"
-	}
-    }
 
-    # Same test, slightly different type.
+    # Another simple type.
 
-    gdb_test_multiple "ptype class explicit_private_class" "ptype class explicit_private_class" {
-	-re "type = class explicit_private_class \{${ws}(private:${ws}|)int a;${ws}int b;$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gdwarf-2
-	    # gcc 3.3.2 -gdwarf-2
-	    # gcc HEAD 2003-12-28 21:08:30 UTC -gdwarf-2
-	    pass "ptype class explicit_private_class"
+    cp_test_ptype_class \
+	"ptype class explicit_private_class" "" "class" "explicit_private_class" \
+	{
+	    { field private "int a;" }
+	    { field private "int b;" }
 	}
-	-re "type = class explicit_private_class \{${ws}(private:${ws}|)int a;${ws}int b;${ws}public:${ws}explicit_private_class ?& ?operator ?=\\(explicit_private_class const ?&\\);${ws}explicit_private_class\\(explicit_private_class const ?&\\);${ws}explicit_private_class\\((void|)\\);$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gstabs+
-	    # gcc 3.3.2 -gstabs+
-	    # gcc HEAD 2003-12-28 21:08:30 UTC -gstabs+
-	    pass "ptype class explicit_private_class"
-	}
-    }
 
-    # Similar test, bigger type.
+    # A bigger type.
 
-    gdb_test_multiple "ptype class mixed_protection_class" "ptype struct mixed_protection_class" {
-	-re "type = class mixed_protection_class \{${ws}public:${ws}int a;${ws}int b;${ws}private:${ws}int c;${ws}int d;${ws}protected:${ws}int e;${ws}int f;${ws}public:${ws}int g;${ws}private:${ws}int h;${ws}protected:${ws}int i;$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gdwarf-2
-	    # gcc 3.3.2 -gdwarf-2
-	    # gcc HEAD 2003-12-28 21:08:30 UTC -gdwarf-2
-	    pass "ptype class mixed_protection_class"
+    cp_test_ptype_class \
+	"ptype class mixed_protection_class" "" "class" "mixed_protection_class" \
+	{
+
+	    { field public    "int a;" }
+	    { field public    "int b;" }
+	    { field private   "int c;" }
+	    { field private   "int d;" }
+	    { field protected "int e;" }
+	    { field protected "int f;" }
+	    { field public    "int g;" }
+	    { field private   "int h;" }
+	    { field protected "int i;" }
 	}
-	-re "type = class mixed_protection_class \{${ws}public:${ws}int a;${ws}int b;${ws}private:${ws}int c;${ws}int d;${ws}protected:${ws}int e;${ws}int f;${ws}public:${ws}int g;${ws}private:${ws}int h;${ws}protected:${ws}int i;${ws}public:${ws}mixed_protection_class ?& ?operator ?=\\(mixed_protection_class const ?&\\);${ws}mixed_protection_class\\(mixed_protection_class const ?&\\);${ws}mixed_protection_class\\((void|)\\);$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gstabs+
-	    # gcc 3.3.2 -gstabs+
-	    # gcc HEAD 2003-12-28 21:08:30 UTC -gstabs+
-	    pass "ptype class mixed_protection_class"
-	}
-    }
 
     # Here are some classes with inheritance.
 
     # Base class.
 
-    gdb_test_multiple "ptype class A" "ptype class A" {
-	-re "type = class A \{${ws}public:${ws}int a;${ws}int x;$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gdwarf-2
-	    # gcc 3.3.2 -gdwarf-2
-	    # gcc HEAD 2003-12-28 21:08:30 UTC -gdwarf-2
-	    pass "ptype class A"
+    cp_test_ptype_class \
+	"ptype class A" "" "class" "A" \
+	{
+	    { field public "int a;" }
+	    { field public "int x;" }
 	}
-	-re "type = class A \{${ws}public:${ws}int a;${ws}int x;${ws}A ?& ?operator ?=\\(A const ?&\\);${ws}A\\(A const ?&\\);${ws}A\\((void|)\\);$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gstabs+
-	    # gcc 3.3.2 -gstabs+
-	    # gcc HEAD 2003-12-28 21:08:30 UTC -gstabs+
-	    pass "ptype class A"
-	}
-    }
 
     # Derived class.
 
-    gdb_test_multiple "ptype class B" "ptype class B" {
-	-re "type = class B : public A \{${ws}public:${ws}int b;${ws}int x;$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gdwarf-2
-	    # gcc 3.3.2 -gdwarf-2
-	    # gcc HEAD 2003-12-28 21:08:30 UTC -gdwarf-2
-	    pass "ptype class B"
+    cp_test_ptype_class \
+	"ptype class B" "" "class" "B" \
+	{
+	    { base         "public A" }
+	    { field public "int b;" }
+	    { field public "int x;" }
 	}
-	-re "type = class B : public A \{${ws}public:${ws}int b;${ws}int x;${ws}B ?& ?operator ?=\\(B const ?&\\);${ws}B\\(B const ?&\\);${ws}B\\((void|)\\);$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gstabs+
-	    # gcc 3.3.2 -gstabs+
-	    # gcc HEAD 2003-12-28 21:08:30 UTC -gstabs+
-	    pass "ptype class B"
-	}
-    }
 
     # Derived class.
 
-    gdb_test_multiple "ptype class C" "ptype class C" {
-	-re "type = class C : public A \{${ws}public:${ws}int c;${ws}int x;$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gdwarf-2
-	    # gcc 3.3.2 -gdwarf-2
-	    # gcc HEAD 2003-12-28 21:08:30 UTC -gdwarf-2
-	    pass "ptype class C"
+    cp_test_ptype_class \
+	"ptype class C" "" "class" "C" \
+	{
+	    { base         "public A" }
+	    { field public "int c;" }
+	    { field public "int x;" }
 	}
-	-re "type = class C : public A \{${ws}public:${ws}int c;${ws}int x;${ws}C ?& ?operator ?=\\(C const ?&\\);${ws}C\\(C const ?&\\);${ws}C\\((void|)\\);$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gstabs+
-	    # gcc 3.3.2 -gstabs+
-	    # gcc HEAD 2003-12-28 21:08:30 UTC -gstabs+
-	    pass "ptype class C"
-	}
-    }
 
     # Derived class, multiple inheritance.
 
-    gdb_test_multiple "ptype class D" "ptype class D" {
-	-re "type = class D : public B, public C \{${ws}public:${ws}int d;${ws}int x;$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gdwarf-2
-	    # gcc 3.3.2 -gdwarf-2
-	    # gcc HEAD 2003-12-28 21:08:30 UTC -gdwarf-2
-	    pass "ptype class D"
+    cp_test_ptype_class \
+	"ptype class D" "" "class" "D" \
+	{
+	    { base         "public B" }
+	    { base         "public C" }
+	    { field public "int d;" }
+	    { field public "int x;" }
 	}
-	-re "type = class D : public B, public C \{${ws}public:${ws}int d;${ws}int x;${ws}D ?& ?operator ?=\\(D const ?&\\);${ws}D\\(D const ?&\\);${ws}D\\((void|)\\);$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gstabs+
-	    # gcc 3.3.2 -gstabs+
-	    # gcc HEAD 2003-12-28 21:08:30 UTC -gstabs+
-	    pass "ptype class D"
-	}
-    }
 
     # Derived class.
 
-    gdb_test_multiple "ptype class E" "ptype class E" {
-	-re "type = class E : public D \{${ws}public:${ws}int e;${ws}int x;$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gdwarf-2
-	    # gcc 3.3.2 -gdwarf-2
-	    # gcc HEAD 2003-12-28 21:08:30 UTC -gdwarf-2
-	    pass "ptype class E"
+    cp_test_ptype_class \
+	"ptype class E" "" "class" "E" \
+	{
+	    { base         "public D" }
+	    { field public "int e;" }
+	    { field public "int x;" }
 	}
-	-re "type = class E : public D \{${ws}public:${ws}int e;${ws}int x;${ws}E ?& ?operator ?=\\(E const ?&\\);${ws}E\\(E const ?&\\);${ws}E\\((void|)\\);$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gstabs+
-	    # gcc 3.3.2 -gstabs+
-	    # gcc HEAD 2003-12-28 21:08:30 UTC -gstabs+
-	    pass "ptype class E"
-	}
-    }
 
     # This is a break from inheritance tests.
     #
     # gcc 2.X with stabs (stabs or stabs+?) used to have a problem with
     # static methods whose name is the same as their argument mangling.
  
-    gdb_test_multiple "ptype class Static" "ptype class Static" {
-	-re "type = class Static \{${ws}public:${ws}static void ii\\(int, int\\);$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gdwarf-2
-	    # gcc 3.3.2 -gdwarf-2
-	    # gcc HEAD 2003-12-28 21:08:30 UTC -gdwarf-2
-	    pass "ptype class Static"
+    cp_test_ptype_class \
+	"ptype class Static" "" "class" "Static" \
+	{
+	    { method public "static void ii(int, int);" }
 	}
-	-re "type = class Static \{${ws}public:${ws}Static ?& ?operator ?=\\(Static const ?&\\);${ws}Static\\(Static const ?&\\);${ws}Static\\((void|)\\);${ws}static void ii\\(int, int\\);$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gstabs+
-	    # gcc 3.3.2 -gstabs+
-	    pass "ptype class Static"
-	}
-	-re "type = class Static \{${ws}public:${ws}static void ii\\(int, int\\);${ws}Static ?& ?operator ?=\\(Static const ?&\\);${ws}Static\\(Static const ?&\\);${ws}Static\\((void|)\\);$nl\}$nl$gdb_prompt $" {
-	    # gcc HEAD 2003-12-28 21:08:30 UTC -gstabs+
-	    pass "ptype class Static"
-	}
-    }
 
     # Here are some virtual inheritance tests.
 
-    gdb_test_multiple "ptype class vA" "ptype class vA" {
-	-re "type = class vA \{${ws}public:${ws}int va;${ws}int vx;$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gdwarf-2
-	    # gcc 3.3.2 -gdwarf-2
-	    # gcc HEAD 2003-12-28 21:08:30 UTC -gdwarf-2
-	    pass "ptype class vA"
-	}
-	-re "type = class vA \{${ws}public:${ws}int va;${ws}int vx;${ws}vA ?& ?operator ?=\\(vA const ?&\\);${ws}vA\\(vA const ?&\\);${ws}vA\\((void|)\\);$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gstabs+
-	    # gcc 3.3.2 -gstabs+
-	    # gcc HEAD 2003-12-28 21:08:30 UTC -gstabs+
-	    pass "ptype class vA"
-	}
-    }
+    # A virtual base class.
 
-    # With gcc 2, gdb prints the virtual base pointer.
-    # With gcc 3, gdb does not print the virtual base pointer.
-    # drow considers it a gdb bug if gdb prints the vbptr.
+    cp_test_ptype_class \
+	"ptype class vA" "" "class" "vA" \
+	{
+	    { field public "int va;" }
+	    { field public "int vx;" }
+	}
 
-    gdb_test_multiple "ptype class vB" "ptype class vB" {
-	-re "type = class vB : public virtual vA \{${ws}private:${ws}vA ?\\* ?_vb.2vA;${ws}public:${ws}int vb;${ws}int vx;$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gdwarf-2
-	    # TODO: kfail this
-	    fail "ptype class vB"
-	}
-	-re "type = class vB : public virtual vA \{${ws}public:${ws}int vb;${ws}int vx;$nl\}$nl$gdb_prompt $" {
-	    # gcc 3.3.2 -gdwarf-2
-	    # gcc HEAD 2003-12-28 21:08:30 UTC -gdwarf-2
-	    pass "ptype class vB"
-	}
-	-re "type = class vB : public virtual vA \{${ws}private:${ws}vA ?\\* ?_vb.vA;${ws}public:${ws}int vb;${ws}int vx;${ws}vB ?& ?operator ?=\\(vB const ?&\\);${ws}vB\\(int, ?vB const ?&\\);${ws}vB\\(int\\);$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gstabs+
-	    # See the hidden "in-charge" ctor parameter!
-	    # TODO: kfail this
-	    setup_xfail "*-*-*"
-	    fail "ptype class vB (FIXME: non-portable virtual table constructs)"
-	}
-	-re "type = class vB : public virtual vA \{${ws}public:${ws}int vb;${ws}int vx;${ws}vB ?& ?operator ?=\\(vB const ?&\\);${ws}vB\\(vB const ?&\\);${ws}vB\\((void|)\\);$nl\}$nl$gdb_prompt $" {
-	    # gcc 3.3.2 -gstabs+
-	    # gcc HEAD 2003-12-28 21:08:30 UTC -gstabs+
-	    pass "ptype class vB"
-	}
-    }
+    # A derived class with a virtual base.
 
-    # Another class with a virtual base.
+    cp_test_ptype_class \
+	"ptype class vB" "" "class" "vB" \
+	{
+	    { base         "public virtual vA" }
+	    { vbase        "vA" }
+	    { field public "int vb;" }
+	    { field public "int vx;" }
+	}
 
-    gdb_test_multiple "ptype class vC" "ptype class vC" {
-	-re "type = class vC : public virtual vA \{${ws}private:${ws}vA ?\\* ?_vb.2vA;${ws}public:${ws}int vc;${ws}int vx;$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gdwarf-2
-	    # TODO: kfail
-	    fail "ptype class vC"
-	}
-	-re "type = class vC : public virtual vA \{${ws}public:${ws}int vc;${ws}int vx;$nl\}$nl$gdb_prompt $" {
-	    # gcc 3.3.2 -gdwarf-2
-	    # gcc HEAD 2003-12-28 21:08:30 UTC -gdwarf-2
-	    pass "ptype class vC"
-	}
-	-re "type = class vC : public virtual vA \{${ws}private:${ws}vA ?\\* ?_vb.vA;${ws}public:${ws}int vc;${ws}int vx;${ws}vC ?& ?operator ?=\\(vC const ?&\\);${ws}vC\\(int, ?vC const ?&\\);${ws}vC\\(int\\);$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gstabs+
-	    # See the hidden "in-charge" ctor parameter!
-	    # TODO: kfail
-	    setup_xfail "*-*-*"
-	    fail "ptype class vC (FIXME: non-portable virtual table constructs)"
-	}
-	-re "type = class vC : public virtual vA \{${ws}public:${ws}int vc;${ws}int vx;${ws}vC ?& ?operator ?=\\(vC const ?&\\);${ws}vC\\(vC const ?&\\);${ws}vC\\((void|)\\);$nl\}$nl$gdb_prompt $" {
-	    # gcc 3.3.2 -gstabs+
-	    # gcc HEAD 2003-12-28 21:08:30 UTC -gstabs+
-	    pass "ptype class vC"
-	}
-    }
+    # Another derived class with a virtual base.
 
-    # The classic diamond inheritance.
+    cp_test_ptype_class \
+	"ptype class vC" "" "class" "vC" \
+	{
+	    { base         "public virtual vA" }
+	    { vbase        "vA" }
+	    { field public "int vc;" }
+	    { field public "int vx;" }
+	}
 
-    gdb_test_multiple "ptype class vD" "ptype class vD" {
-	-re "type = class vD : public virtual vB, public virtual vC \{${ws}private:${ws}vC ?\\* ?_vb.2vC;${ws}vB ?\\* ?_vb.2vB;${ws}public:${ws}int vd;${ws}int vx;$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gdwarf-2
-	    # TODO: kfail
-	    fail "ptype class vD"
-	}
-	-re "type = class vD : public virtual vB, public virtual vC \{${ws}public:${ws}int vd;${ws}int vx;$nl\}$nl$gdb_prompt $" {
-	    # gcc 3.3.2 -gdwarf-2
-	    # gcc HEAD 2003-12-28 21:08:30 UTC -gdwarf-2
-	    pass "ptype class vD"
-	}
-	-re "type = class vD : public virtual vB, public virtual vC \{${ws}private:${ws}vC ?\\* ?_vb.vC;${ws}vB ?\\* ?_vb.vB;${ws}public:${ws}int vd;${ws}int vx;${ws}vD ?& ?operator ?=\\(vD const ?&\\);${ws}vD\\(int, ?vD const ?&\\);${ws}vD\\(int\\);$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gstabs+
-	    # See the hidden "in-charge" ctor parameter!
-	    # TODO: kfail
-	    setup_xfail "*-*-*"
-	    fail "ptype class vD (FIXME: non-portable virtual table constructs)"
-	}
-	-re "type = class vD : public virtual vB, public virtual vC \{${ws}public:${ws}int vd;${ws}int vx;${ws}vD ?& ?operator ?=\\(vD const ?&\\);${ws}vD\\(vD const ?&\\);${ws}vD\\((void|)\\);$nl\}$nl$gdb_prompt $" {
-	    # gcc 3.3.2 -gstabs+
-	    # gcc HEAD 2003-12-28 21:08:30 UTC -gstabs+
-	    pass "ptype class vD"
-	}
-    }
+    # A classic diamond class.
 
-    # One more case of virtual derivation.
+    cp_test_ptype_class \
+	"ptype class vD" "" "class" "vD" \
+	{
+	    { base         "public virtual vB" }
+	    { base         "public virtual vC" }
+	    { vbase        "vC" }
+	    { vbase        "vB" }
+	    { field public "int vd;" }
+	    { field public "int vx;" }
+	}
 
-    gdb_test_multiple "ptype class vE" "ptype class vE" {
-	-re "type = class vE : public virtual vD \{${ws}private:${ws}vD ?\\* ?_vb.2vD;${ws}public:${ws}int ve;${ws}int vx;$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gdwarf-2
-	    # TODO: kfail
-	    fail "ptype class vE"
+    # A class derived from a diamond class.
+
+    cp_test_ptype_class \
+	"ptype class vE" "" "class" "vE" \
+	{
+	    { base         "public virtual vD" }
+	    { vbase        "vD" }
+	    { field public "int ve;" }
+	    { field public "int vx;" }
 	}
-	-re "type = class vE : public virtual vD \{${ws}public:${ws}int ve;${ws}int vx;$nl\}$nl$gdb_prompt $" {
-	    # gcc 3.3.2 -gdwarf-2
-	    # gcc HEAD 2003-12-28 21:08:30 UTC -gdwarf-2
-	    pass "ptype class vE"
-	}
-	-re "type = class vE : public virtual vD \{${ws}private:${ws}vD ?\\* ?_vb.vD;${ws}public:${ws}int ve;${ws}int vx;${ws}vE ?& ?operator ?=\\(vE const ?&\\);${ws}vE\\(int, ?vE const ?&\\);${ws}vE\\(int\\);$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gstabs+
-	    # See the hidden "in-charge" ctor parameter!
-	    # TODO: kfail
-	    setup_xfail "*-*-*"
-	    fail "ptype class vE (FIXME: non-portable virtual table constructs)"
-	}
-	-re "type = class vE : public virtual vD \{${ws}public:${ws}int ve;${ws}int vx;${ws}vE ?& ?operator ?=\\(vE const ?&\\);${ws}vE\\(vE const ?&\\);${ws}vE\\((void|)\\);$nl\}$nl$gdb_prompt $" {
-	    # gcc 3.3.2 -gstabs+
-	    # gcc HEAD 2003-12-28 21:08:30 UTC -gstabs+
-	    pass "ptype class vE"
-	}
-    }
 
     # Another inheritance series.
 
-    gdb_test_multiple "ptype class Base1" "ptype class Base1" {
-	-re "type = class Base1 \{${ws}public:${ws}int x;${ws}Base1\\(int\\);$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gdwarf-2
-	    # gcc 3.3.2 -gdwarf-2
-	    # gcc HEAD 2003-12-28 21:08:30 UTC -gdwarf-2
-	    pass "ptype class Base1"
-	}
-	-re "type = class Base1 \{${ws}public:${ws}int x;${ws}Base1 ?& ?operator ?=\\(Base1 const ?&\\);${ws}Base1\\(Base1 const ?&\\);${ws}Base1\\(int\\);$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gstabs+
-	    # gcc 3.3.2 -gstabs+
-	    pass "ptype class Base1"
-	}
-	-re "type = class Base1 \{${ws}public:${ws}int x;${ws}Base1\\(int\\);${ws}Base1 ?& ?operator ?=\\(Base1 const ?&\\);${ws}Base1\\(Base1 const ?&\\);$nl\}$nl$gdb_prompt $" {
-	    # gcc HEAD 2003-12-28 21:08:30 UTC -gstabs+
-	    pass "ptype class Base1"
-	}
-    }
+    # A base class.
 
-    # The second base class.
+    cp_test_ptype_class \
+	"ptype class Base1" "" "class" "Base1" \
+	{
+	    { field  public "int x;" }
+	    { method public "Base1(int);" }
+	}
 
-    gdb_test_multiple "ptype class Foo" "ptype class Foo" {
-	-re "type = class Foo \{${ws}public:${ws}int x;${ws}int y;${ws}static int st;${ws}Foo\\(int, int\\);${ws}int operator ?!\\((void|)\\);${ws}operator int\\((void|)\\);${ws}int times\\(int\\);$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gdwarf-2
-	    # gcc 3.3.2 -gdwarf-2
-	    # gcc HEAD 2003-12-28 21:08:30 UTC -gdwarf-2
-	    pass "ptype class Foo"
+    # Another base class.
+
+    cp_test_ptype_class \
+	"ptype class Foo" "" "class" "Foo" \
+	{
+	    { field public "int x;" }
+	    { field public "int y;" }
+	    { field public "static int st;" }
+	    { method public "Foo(int, int);" }
+	    { method public "int operator!();" }
+	    { method public "operator int();" }
+	    { method public "int times(int);" }
+	} \
+	"" \
+	{
+	    {
+		"operator int();"
+		"int operator int();"
+		{ setup_kfail "gdb/1497" "*-*-*" }
+	    }
+	    {
+		"operator int();"
+		"int operator int(void);"
+		{ setup_kfail "gdb/1497" "*-*-*" }
+	    }
 	}
-	-re "type = class Foo \{${ws}public:${ws}int x;${ws}int y;${ws}static int st;${ws}Foo ?& ?operator ?=\\(Foo const ?&\\);${ws}Foo\\(Foo const ?&\\);${ws}Foo\\(int, int\\);${ws}int operator ?!\\((void|)\\);${ws}int operator int\\((void|)\\);${ws}int times\\(int\\);$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gstabs+
-	    # TODO: "int operator int()" is a bug
-	    # kfail "gdb/1497" "ptype class Foo"
-	    pass "ptype class Foo"
-	}
-	-re "type = class Foo \{${ws}public:${ws}int x;${ws}int y;${ws}static int st;${ws}Foo ?& ?operator ?=\\(Foo const ?&\\);${ws}Foo\\(Foo const ?&\\);${ws}Foo\\(int, int\\);${ws}int operator ?!\\((void|)\\);${ws}operator int\\((void|)\\);${ws}int times\\(int\\);$nl\}$nl$gdb_prompt $" {
-	    # gcc 3.3.2 -gstabs+
-	    pass "ptype class Foo"
-	}
-	-re "type = class Foo \{${ws}public:${ws}int x;${ws}int y;${ws}static int st;${ws}Foo\\(int, int\\);${ws}int operator ?!\\((void|)\\);${ws}operator int\\((void|)\\);${ws}int times\\(int\\);${ws}Foo ?& ?operator ?=\\(Foo const ?&\\);${ws}Foo\\(Foo const ?&\\);$nl\}$nl$gdb_prompt $" {
-	    # gcc HEAD 2003-12-28 21:08:30 UTC -gstabs+
-	    pass "ptype class Foo"
-	}
-    }
 
     # A multiple inheritance derived class.
 
-    gdb_test_multiple "ptype class Bar" "ptype class Bar" {
-	-re "type = class Bar : public Base1, public Foo \{${ws}public:${ws}int z;${ws}Bar\\(int, int, int\\);$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gdwarf-2
-	    # gcc 3.3.2 -gdwarf-2
-	    # gcc HEAD 2003-12-28 21:08:30 UTC -gdwarf-2
-	    pass "ptype class Bar"
+    cp_test_ptype_class \
+	"ptype class Bar" "" "class" "Bar" \
+	{
+	    { base          "public Base1" }
+	    { base          "public Foo" }
+	    { field  public "int z;" }
+	    { method public "Bar(int, int, int);" }
 	}
-	-re "type = class Bar : public Base1, public Foo \{${ws}public:${ws}int z;${ws}Bar ?& ?operator ?=\\(Bar const ?&\\);${ws}Bar\\(Bar const ?&\\);${ws}Bar\\(int, int, int\\);$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gstabs+
-	    # gcc 3.3.2 -gstabs+
-	    pass "ptype class Bar"
-	}
-	-re "type = class Bar : public Base1, public Foo \{${ws}public:${ws}int z;${ws}Bar\\(int, int, int\\);${ws}Bar ?& ?operator ?=\\(Bar const ?&\\);${ws}Bar\\(Bar const ?&\\);$nl\}$nl$gdb_prompt $" {
-	    # gcc HEAD 2003-12-28 21:08:30 UTC -gstabs+
-	    pass "ptype class Bar"
-	}
-    }
+
 }
 
 # Test simple access to class members.
-# TODO: these test names are gross!
-# Just let the test name default.
 
 proc test_non_inherited_member_access {} {
-    global gdb_prompt
     
     # Print non-inherited members of g_A.
-    gdb_test "print g_A.a" ".* = 1" "g_A.a incorrect"
-    gdb_test "print g_A.x" ".* = 2" "g_A.x incorrect"
+    gdb_test "print g_A.a" ".* = 1"
+    gdb_test "print g_A.x" ".* = 2"
 
     # Print non-inherited members of g_B.
-    gdb_test "print g_B.b" ".* = 5" "g_B.b incorrect"
-    gdb_test "print g_B.x" ".* = 6" "g_B.x incorrect"
+    gdb_test "print g_B.b" ".* = 5"
+    gdb_test "print g_B.x" ".* = 6"
 
     # Print non-inherited members of g_C.
-    gdb_test "print g_C.c" ".* = 9" "g_C.c incorrect"
-    gdb_test "print g_C.x" ".* = 10" "g_C.x incorrect"
+    gdb_test "print g_C.c" ".* = 9"
+    gdb_test "print g_C.x" ".* = 10"
 
     # Print non-inherited members of g_D.
-    gdb_test "print g_D.d" ".* = 19" "g_D.d incorrect"
-    gdb_test "print g_D.x" ".* = 20" "g_D.x incorrect"
+    gdb_test "print g_D.d" ".* = 19"
+    gdb_test "print g_D.x" ".* = 20"
 
     # Print non-inherited members of g_E.
-    gdb_test "print g_E.e" ".* = 31" "g_E.e incorrect"
-    gdb_test "print g_E.x" ".* = 32" "g_E.x incorrect"
+    gdb_test "print g_E.e" ".* = 31"
+    gdb_test "print g_E.x" ".* = 32"
 }
 
 # Test access to members of other classes.
 # gdb should refuse to print them.
 # (I feel old -- I remember when this was legal in C -- chastain).
-# TODO: Again, change the silly test names.
 
 proc test_wrong_class_members {} {
-    global gdb_prompt
-
-    gdb_test "print g_A.b" "There is no member( or method|) named b." "print g_A.b should be error"
-    gdb_test "print g_B.c" "There is no member( or method|) named c." "print g_B.c should be error"
-    gdb_test "print g_B.d" "There is no member( or method|) named d." "print g_B.d should be error"
-    gdb_test "print g_C.b" "There is no member( or method|) named b." "print g_C.b should be error"
-    gdb_test "print g_C.d" "There is no member( or method|) named d." "print g_C.d should be error"
-    gdb_test "print g_D.e" "There is no member( or method|) named e." "print g_D.e should be error"
+    gdb_test "print g_A.b" "There is no member( or method|) named b."
+    gdb_test "print g_B.c" "There is no member( or method|) named c."
+    gdb_test "print g_B.d" "There is no member( or method|) named d."
+    gdb_test "print g_C.b" "There is no member( or method|) named b."
+    gdb_test "print g_C.d" "There is no member( or method|) named d."
+    gdb_test "print g_D.e" "There is no member( or method|) named e."
 }
 
 # Test access to names that are not members of any class.
-# TODO: test names again.
 
 proc test_nonexistent_members {} {
-    global gdb_prompt
-
-    gdb_test "print g_A.y" "There is no member( or method|) named y." "print g_A.y should be error"
-    gdb_test "print g_B.z" "There is no member( or method|) named z." "print g_B.z should be error"
-    gdb_test "print g_C.q" "There is no member( or method|) named q." "print g_C.q should be error"
-    gdb_test "print g_D.p" "There is no member( or method|) named p." "print g_D.p should be error"
+    gdb_test "print g_A.y" "There is no member( or method|) named y."
+    gdb_test "print g_B.z" "There is no member( or method|) named z."
+    gdb_test "print g_C.q" "There is no member( or method|) named q."
+    gdb_test "print g_D.p" "There is no member( or method|) named p."
 }
 
 # Call a method that expects a base class parameter with base, inherited,
 # and unrelated class arguments.
 
 proc test_method_param_class {} {
-    gdb_test "call class_param.Aptr_a (&g_A)" ".* = 1" "base class param->a"
-    gdb_test "call class_param.Aptr_x (&g_A)" ".* = 2" "base class param->x"
-    gdb_test "call class_param.Aptr_a (&g_B)" ".* = 3" "inherited class param->a"
-    gdb_test "call class_param.Aptr_x (&g_B)" ".* = 4" "inherited class param->x"
-    gdb_test "call class_param.Aref_a (g_A)" ".* = 1" "base class (&param)->a"
-    gdb_test "call class_param.Aref_x (g_A)" ".* = 2" "base class (&param)->x"
-    gdb_test "call class_param.Aref_a (g_B)" ".* = 3" "inherited class (&param)->a"
-    gdb_test "call class_param.Aref_x (g_B)" ".* = 4" "inherited class (&param)->x"
-    gdb_test "call class_param.Aval_a (g_A)" ".* = 1" "base class param.a"
-    gdb_test "call class_param.Aval_x (g_A)" ".* = 2" "base class param.x"
-    gdb_test "call class_param.Aval_a (g_B)" ".* = 3" "inherited class param.a"
-    gdb_test "call class_param.Aval_x (g_B)" ".* = 4" "inherited class param.x"
+    gdb_test "call class_param.Aptr_a (&g_A)" ".* = 1"
+    gdb_test "call class_param.Aptr_x (&g_A)" ".* = 2"
+    gdb_test "call class_param.Aptr_a (&g_B)" ".* = 3"
+    gdb_test "call class_param.Aptr_x (&g_B)" ".* = 4"
+    gdb_test "call class_param.Aref_a (g_A)" ".* = 1"
+    gdb_test "call class_param.Aref_x (g_A)" ".* = 2"
+    gdb_test "call class_param.Aref_a (g_B)" ".* = 3"
+    gdb_test "call class_param.Aref_x (g_B)" ".* = 4"
+    gdb_test "call class_param.Aval_a (g_A)" ".* = 1"
+    gdb_test "call class_param.Aval_x (g_A)" ".* = 2"
+    gdb_test "call class_param.Aval_a (g_B)" ".* = 3"
+    gdb_test "call class_param.Aval_x (g_B)" ".* = 4"
 
     gdb_test "call class_param.Aptr_a (&foo)" "Cannot resolve .*" "unrelated class *param"
     gdb_test "call class_param.Aref_a (foo)" "Cannot resolve .*" "unrelated class &param"
@@ -621,7 +391,6 @@ proc test_method_param_class {} {
 proc test_enums {} {
     global gdb_prompt
     global nl
-    global ws
 
     # print the object
 
@@ -670,40 +439,33 @@ proc test_enums {} {
     }
 
     # ptype on the object
-    gdb_test_multiple "ptype obj_with_enum" "ptype obj_with_enum" {
-	-re "type = class ClassWithEnum \{${ws}public:${ws}(enum |)ClassWithEnum::PrivEnum priv_enum;${ws}int x;$nl\}$nl$gdb_prompt $" {
-	    pass "ptype obj_with_enum"
+
+    # NOTE: carlton/2003-02-28: One could certainly argue that plain
+    # "PrivEnum"
+    # is acceptable: PrivEnum is a member of ClassWithEnum, so
+    # there's no need to explicitly qualify its name with
+    # "ClassWithEnum::".  The truth, though, is that GDB is simply
+    # forgetting that PrivEnum is a member of ClassWithEnum, so we do
+    # that output for a bad reason instead of a good reason.  Under
+    # stabs, we probably can't get this right; under DWARF-2, we can.
+
+    cp_test_ptype_class \
+	"ptype obj_with_enum" "" "class" "ClassWithEnum" \
+	{
+	    { field public "ClassWithEnum::PrivEnum priv_enum;" }
+	    { field public "int x;" }
+	} \
+	"" \
+	{
+	    {
+		"ClassWithEnum::PrivEnum priv_enum;"
+		"PrivEnum priv_enum;"
+		{ setup_kfail "gdb/57" "*-*-*" }
+	    }
 	}
-	-re "type = class ClassWithEnum \{${ws}public:${ws}(enum |)PrivEnum priv_enum;${ws}int x;$nl\}$nl$gdb_prompt $" {
-	    # NOTE: carlton/2003-02-28: One could certainly argue that
-	    # this output is acceptable: PrivEnum is a member of
-	    # ClassWithEnum, so there's no need to explicitly qualify
-	    # its name with "ClassWithEnum::".  The truth, though, is
-	    # that GDB is simply forgetting that PrivEnum is a member
-	    # of ClassWithEnum, so we do that output for a bad reason
-	    # instead of a good reason.  Under stabs, we probably
-	    # can't get this right; under DWARF-2, we can.
-	    #
-	    # gcc 2.95.3 -gdwarf-2
-	    # gcc 3.3.2 -gdwarf-2
-	    kfail "gdb/57" "ptype obj_with_enum"
-	}
-	-re "type = class ClassWithEnum \{${ws}public:${ws}(enum |)PrivEnum priv_enum;${ws}int x;${ws}ClassWithEnum ?& ?operator ?=\\(ClassWithEnum const ?&\\);${ws}ClassWithEnum\\(ClassWithEnum const ?&\\);${ws}ClassWithEnum\\((void|)\\);$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gstabs+
-	    kfail "gdb/57" "ptype obj_with_enum"
-	}
-	-re "type = class ClassWithEnum \{${ws}public:${ws}(enum |)ClassWithEnum::PrivEnum priv_enum;${ws}int x;${ws}ClassWithEnum ?& ?operator ?=\\(ClassWithEnum const ?&\\);${ws}ClassWithEnum\\(ClassWithEnum const ?&\\);${ws}ClassWithEnum\\((void|)\\);$nl\}$nl$gdb_prompt $" {
-	    # I think this is a PASS, but only carlton knows for sure.
-	    # -- chastain 2003-12-30
-	    #
-	    # gcc 3.3.2 -gstabs+
-	    # gcc HEAD 2003-12-28 21:08:30 UTC -gstabs+
-	    fail "ptype obj_with_enum"
-	}
-    }
 
     # I'll do this test two different ways, because of a parser bug.
-    # See PR gdb/826.
+    # See PR gdb/1588.
 
     gdb_test_multiple "print (ClassWithEnum::PrivEnum) 42" "print (ClassWithEnum::PrivEnum) 42" {
 	-re "\\$\[0-9\]+ = yellow$nl$gdb_prompt $" {
@@ -712,7 +474,7 @@ proc test_enums {} {
 	-re "A (parse|syntax) error in expression, near `42'.$nl$gdb_prompt $" {
 	    # "parse error" is bison 1.35.
 	    # "syntax error" is bison 1.875.
-	    kfail "gdb/826" "print (ClassWithEnum::PrivEnum) 42"
+	    kfail "gdb/1588" "print (ClassWithEnum::PrivEnum) 42"
 	}
     }
 
@@ -735,8 +497,6 @@ proc test_enums {} {
 # Pointers to class members
 
 proc test_pointers_to_class_members {} {
-    global gdb_prompt
-
     gdb_test "print Bar::z" "\\$\[0-9\]+ = \\(int ?\\( ?Bar::& ?\\) ?\\) ?Bar::z"
     gdb_test "print &Foo::x" "\\$\[0-9\]+ = \\(int ?\\( ?Foo::\\* ?\\) ?\\) ?&Foo::x"
     gdb_test "print (int)&Foo::x" "\\$\[0-9\]+ = 0"
@@ -753,7 +513,6 @@ proc test_pointers_to_class_members {} {
 # Test static members.
 
 proc test_static_members {} {
-    global gdb_prompt
     global hex
 
     gdb_test "print Foo::st" "\\$\[0-9\]+ = 100"
@@ -860,11 +619,6 @@ proc do_tests {} {
 	    fail "calling method for small class"
 	}
     }
-
-    # This is a random v2 demangling test.
-    # This is redundant with existing tests in demangle.exp.
-    # TODO: Just remove this.
-    gdb_test "maint demangle inheritance1__Fv" "inheritance1\\(void\\)" "demangle"
 }
 
 do_tests

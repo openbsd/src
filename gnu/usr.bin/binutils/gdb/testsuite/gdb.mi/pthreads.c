@@ -24,6 +24,7 @@
    Boston, MA 02111-1307, USA.  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <pthread.h>
 
 /* Under OSF 2.0 & 3.0 and HPUX 10, the second arg of pthread_create

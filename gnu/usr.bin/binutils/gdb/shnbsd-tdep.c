@@ -61,25 +61,26 @@ shnbsd_supply_reg (char *regs, int regno)
   int i;
 
   if (regno == PC_REGNUM || regno == -1)
-    supply_register (PC_REGNUM, regs + (0 * 4));
+    regcache_raw_supply (current_regcache, PC_REGNUM, regs + (0 * 4));
 
   if (regno == SR_REGNUM || regno == -1)
-    supply_register (SR_REGNUM, regs + (1 * 4));
+    regcache_raw_supply (current_regcache, SR_REGNUM, regs + (1 * 4));
 
   if (regno == PR_REGNUM || regno == -1)
-    supply_register (PR_REGNUM, regs + (2 * 4));
+    regcache_raw_supply (current_regcache, PR_REGNUM, regs + (2 * 4));
 
   if (regno == MACH_REGNUM || regno == -1)
-    supply_register (MACH_REGNUM, regs + (3 * 4));
+    regcache_raw_supply (current_regcache, MACH_REGNUM, regs + (3 * 4));
 
   if (regno == MACL_REGNUM || regno == -1)
-    supply_register (MACL_REGNUM, regs + (4 * 4));
+    regcache_raw_supply (current_regcache, MACL_REGNUM, regs + (4 * 4));
 
   if ((regno >= R0_REGNUM && regno <= (R0_REGNUM + 15)) || regno == -1)
     {
       for (i = R0_REGNUM; i <= (R0_REGNUM + 15); i++)
 	if (regno == i || regno == -1)
-          supply_register (i, regs + regmap[i - R0_REGNUM]);
+          regcache_raw_supply (current_regcache, i,
+			       regs + regmap[i - R0_REGNUM]);
     }
 }
 
@@ -89,25 +90,26 @@ shnbsd_fill_reg (char *regs, int regno)
   int i;
 
   if (regno == PC_REGNUM || regno == -1)
-    regcache_collect (PC_REGNUM, regs + (0 * 4));
+    regcache_raw_collect (current_regcache, PC_REGNUM, regs + (0 * 4));
 
   if (regno == SR_REGNUM || regno == -1)
-    regcache_collect (SR_REGNUM, regs + (1 * 4));
+    regcache_raw_collect (current_regcache, SR_REGNUM, regs + (1 * 4));
 
   if (regno == PR_REGNUM || regno == -1)
-    regcache_collect (PR_REGNUM, regs + (2 * 4));
+    regcache_raw_collect (current_regcache, PR_REGNUM, regs + (2 * 4));
 
   if (regno == MACH_REGNUM || regno == -1)
-    regcache_collect (MACH_REGNUM, regs + (3 * 4));
+    regcache_raw_collect (current_regcache, MACH_REGNUM, regs + (3 * 4));
 
   if (regno == MACL_REGNUM || regno == -1)
-    regcache_collect (MACL_REGNUM, regs + (4 * 4));
+    regcache_raw_collect (current_regcache, MACL_REGNUM, regs + (4 * 4));
 
   if ((regno >= R0_REGNUM && regno <= (R0_REGNUM + 15)) || regno == -1)
     {
       for (i = R0_REGNUM; i <= (R0_REGNUM + 15); i++)
 	if (regno == i || regno == -1)
-          regcache_collect (i, regs + regmap[i - R0_REGNUM]);
+          regcache_raw_collect (current_regcache, i,
+				regs + regmap[i - R0_REGNUM]);
     }
 }
 
@@ -166,19 +168,10 @@ static struct core_fns shnbsd_elfcore_fns =
   NULL					/* next */
 };
 
-static int
-shnbsd_pc_in_sigtramp (CORE_ADDR pc, char *func_name)
-{
-  /* FIXME: Need to add support for kernel-provided signal trampolines.  */
-  return (nbsd_pc_in_sigtramp (pc, func_name));
-}
-
 static void
 shnbsd_init_abi (struct gdbarch_info info,
                   struct gdbarch *gdbarch)
 {
-  set_gdbarch_pc_in_sigtramp (gdbarch, shnbsd_pc_in_sigtramp);
-
   set_solib_svr4_fetch_link_map_offsets (gdbarch,
 		                nbsd_ilp32_solib_svr4_fetch_link_map_offsets);
 }
@@ -186,8 +179,8 @@ shnbsd_init_abi (struct gdbarch_info info,
 void
 _initialize_shnbsd_tdep (void)
 {
-  add_core_fns (&shnbsd_core_fns);
-  add_core_fns (&shnbsd_elfcore_fns);
+  deprecated_add_core_fns (&shnbsd_core_fns);
+  deprecated_add_core_fns (&shnbsd_elfcore_fns);
 
   gdbarch_register_osabi (bfd_arch_sh, 0, GDB_OSABI_NETBSD_ELF,
 			  shnbsd_init_abi);

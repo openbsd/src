@@ -549,7 +549,7 @@ varobj_gen_name (void)
 
   /* generate a name for this object */
   id++;
-  xasprintf (&obj_name, "var%d", id);
+  obj_name = xstrprintf ("var%d", id);
 
   return obj_name;
 }
@@ -1254,7 +1254,7 @@ create_child (struct varobj *parent, int index, char *name)
     child->error = 1;
   child->parent = parent;
   child->root = parent->root;
-  xasprintf (&childs_name, "%s.%s", parent->obj_name, name);
+  childs_name = xstrprintf ("%s.%s", parent->obj_name, name);
   child->obj_name = childs_name;
   install_variable (child);
 
@@ -1837,7 +1837,7 @@ c_name_of_child (struct varobj *parent, int index)
   switch (TYPE_CODE (type))
     {
     case TYPE_CODE_ARRAY:
-      xasprintf (&name, "%d", index);
+      name = xstrprintf ("%d", index);
       break;
 
     case TYPE_CODE_STRUCT:
@@ -1856,7 +1856,7 @@ c_name_of_child (struct varobj *parent, int index)
 	  break;
 
 	default:
-	  xasprintf (&name, "*%s", parent->name);
+	  name = xstrprintf ("*%s", parent->name);
 	  break;
 	}
       break;
@@ -2070,7 +2070,7 @@ c_value_of_variable (struct varobj *var)
     case TYPE_CODE_ARRAY:
       {
 	char *number;
-	xasprintf (&number, "[%d]", var->num_children);
+	number = xstrprintf ("[%d]", var->num_children);
 	return (number);
       }
       /* break; */
@@ -2558,7 +2558,7 @@ _initialize_varobj (void)
   varobj_table = xmalloc (sizeof_table);
   memset (varobj_table, 0, sizeof_table);
 
-  add_show_from_set (add_set_cmd ("debugvarobj", class_maintenance, var_zinteger, (char *) &varobjdebug, "Set varobj debugging.\n\
+  deprecated_add_show_from_set (add_set_cmd ("debugvarobj", class_maintenance, var_zinteger, (char *) &varobjdebug, "Set varobj debugging.\n\
 When non-zero, varobj debugging is enabled.", &setlist),
 		     &showlist);
 }

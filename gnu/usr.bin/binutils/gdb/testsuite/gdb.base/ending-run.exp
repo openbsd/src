@@ -1,4 +1,7 @@
-# Copyright 1997, 1998, 1999, 2000, 2001, 2002 Free Software Foundation, Inc.
+# This testcase is part of GDB, the GNU debugger.
+
+# Copyright 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004 Free
+# Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -12,10 +15,7 @@
 # 
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
-
-# Please email any bugs, comments, and/or additions to this file to:
-# bug-gdb@prep.ai.mit.edu
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 # use this to debug:
 #
@@ -109,7 +109,7 @@ gdb_expect {
     -re ".*address (0x\[0-9a-fA-F]*).*$gdb_prompt $" {
         set line_nine $expect_out(1,string)
         gdb_test "b ending-run.c:14" ".*Breakpoint 7.*ending-run.c, line 14.*"
-        gdb_test "b *$line_nine" ".*Note.*also.*Breakpoint 8.*"
+        gdb_test "b *$line_nine" ".*Note.*also.*Breakpoint 8.*" "Breakpoint 7 at *ending-run.c:14"
         gdb_test "c" ".*Breakpoint.*7.*callee.*14.*"
         gdb_test "cle" ".*Deleted breakpoints 8 7.*" "Clear 2 by default"
     }

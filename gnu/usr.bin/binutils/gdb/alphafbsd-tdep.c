@@ -98,12 +98,11 @@ alphafbsd_init_abi (struct gdbarch_info info,
   /* Hook into the MDEBUG frame unwinder.  */
   alpha_mdebug_init_abi (info, gdbarch);
 
-  set_gdbarch_use_struct_convention (gdbarch, alphafbsd_use_struct_convention);
-
-  set_gdbarch_pc_in_sigtramp (gdbarch, alphafbsd_pc_in_sigtramp);
+  set_gdbarch_deprecated_use_struct_convention (gdbarch, alphafbsd_use_struct_convention);
 
   tdep->dynamic_sigtramp_offset = alphafbsd_sigtramp_offset;
   tdep->sigcontext_addr = alphafbsd_sigcontext_addr;
+  tdep->pc_in_sigtramp = alphafbsd_pc_in_sigtramp;
   tdep->sc_pc_offset = 288;
   tdep->sc_regs_offset = 24;
   tdep->sc_fpregs_offset = 320;

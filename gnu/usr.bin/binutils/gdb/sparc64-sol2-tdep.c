@@ -31,6 +31,7 @@
 #include "gdb_assert.h"
 
 #include "sparc64-tdep.h"
+#include "solib-svr4.h"
 
 /* From <sys/regset.h>.  */
 const struct sparc_gregset sparc64_sol2_gregset =
@@ -123,8 +124,8 @@ sparc64_sol2_sigtramp_frame_prev_register (struct frame_info *next_frame,
   struct sparc_frame_cache *cache =
     sparc64_sol2_sigtramp_frame_cache (next_frame, this_cache);
 
-  trad_frame_prev_register (next_frame, cache->saved_regs, regnum,
-			    optimizedp, lvalp, addrp, realnump, valuep);
+  trad_frame_get_prev_register (next_frame, cache->saved_regs, regnum,
+				optimizedp, lvalp, addrp, realnump, valuep);
 }
 
 static const struct frame_unwind sparc64_sol2_sigtramp_frame_unwind =
@@ -153,7 +154,6 @@ sparc64_sol2_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
 
-  set_gdbarch_pc_in_sigtramp (gdbarch, sparc_sol2_pc_in_sigtramp);
   frame_unwind_append_sniffer (gdbarch, sparc64_sol2_sigtramp_frame_sniffer);
 
   sparc64_init_abi (info, gdbarch);
@@ -161,6 +161,8 @@ sparc64_sol2_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   /* Solaris has SVR4-style shared libraries...  */
   set_gdbarch_in_solib_call_trampoline (gdbarch, in_plt_section);
   set_gdbarch_skip_trampoline_code (gdbarch, find_solib_trampoline_target);
+  set_solib_svr4_fetch_link_map_offsets
+    (gdbarch, svr4_lp64_fetch_link_map_offsets);
 
   /* ...which means that we need some special handling when doing
      prologue analysis.  */

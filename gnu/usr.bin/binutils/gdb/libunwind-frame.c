@@ -1,6 +1,6 @@
 /* Frame unwinder for frames using the libunwind library.
 
-   Copyright 2003 Free Software Foundation, Inc.
+   Copyright 2003, 2004 Free Software Foundation, Inc.
 
    Written by Jeff Johnston, contributed by Red Hat Inc.
 
@@ -45,10 +45,6 @@
 static int libunwind_initialized;
 static struct gdbarch_data *libunwind_descr_handle;
 
-#ifndef LIBUNWIND_SO
-#define LIBUNWIND_SO "libunwind.so"
-#endif
-
 /* Required function pointers from libunwind.  */
 static int (*unw_get_reg_p) (unw_cursor_t *, unw_regnum_t, unw_word_t *);
 static int (*unw_get_fpreg_p) (unw_cursor_t *, unw_regnum_t, unw_fpreg_t *);
@@ -74,6 +70,10 @@ struct libunwind_frame_cache
    libunwind.h header file.  */
 #define STRINGIFY2(name)	#name
 #define STRINGIFY(name)		STRINGIFY2(name)
+
+#ifndef LIBUNWIND_SO
+#define LIBUNWIND_SO "libunwind-" STRINGIFY(UNW_TARGET) ".so"
+#endif
 
 static char *get_reg_name = STRINGIFY(UNW_OBJ(get_reg));
 static char *get_fpreg_name = STRINGIFY(UNW_OBJ(get_fpreg));
@@ -111,7 +111,7 @@ libunwind_frame_set_descr (struct gdbarch *gdbarch, struct libunwind_descr *desc
     {
       /* First time here.  Must initialize data area.  */
       arch_descr = libunwind_descr_init (gdbarch);
-      set_gdbarch_data (gdbarch, libunwind_descr_handle, arch_descr);
+      deprecated_set_gdbarch_data (gdbarch, libunwind_descr_handle, arch_descr);
     }
 
   /* Copy new descriptor info into arch descriptor.  */
@@ -259,7 +259,8 @@ libunwind_frame_prev_register (struct frame_info *next_frame, void **this_cache,
   *lvalp = not_lval;
   *realnump = -1;
 
-  memset (valuep, 0, register_size (current_gdbarch, regnum));
+  if (valuep)
+    memset (valuep, 0, register_size (current_gdbarch, regnum));
 
   if (uw_regnum < 0)
     return;
@@ -281,7 +282,8 @@ libunwind_frame_prev_register (struct frame_info *next_frame, void **this_cache,
   if (ret < 0)
     return;
 
-  memcpy (valuep, ptr, register_size (current_gdbarch, regnum));
+  if (valuep)
+    memcpy (valuep, ptr, register_size (current_gdbarch, regnum));
 
   if (unw_get_saveloc_p (&cache->cursor, uw_regnum, &sl) < 0)
     return;
@@ -381,7 +383,7 @@ void _initialize_libunwind_frame (void);
 void
 _initialize_libunwind_frame (void)
 {
-  libunwind_descr_handle = register_gdbarch_data (libunwind_descr_init);
+  libunwind_descr_handle = gdbarch_data_register_post_init (libunwind_descr_init);
 
   libunwind_initialized = libunwind_load ();
 }

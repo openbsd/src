@@ -855,15 +855,11 @@ gdb_readline2 (gdb_client_data client_data)
 	}
 
       if (c == '\n')
-#ifndef CRLF_SOURCE_FILES
-	break;
-#else
 	{
 	  if (input_index > 0 && result[input_index - 1] == '\r')
 	    input_index--;
 	  break;
 	}
-#endif
 
       result[input_index++] = c;
       while (input_index >= result_size)
@@ -1106,58 +1102,55 @@ set_async_prompt (char *args, int from_tty, struct cmd_list_element *c)
 void
 gdb_setup_readline (void)
 {
-  /* This function is a noop for the sync case.  The assumption is that
-     the sync setup is ALL done in gdb_init, and we would only mess it up
-     here.  The sync stuff should really go away over time. */
+  /* This function is a noop for the sync case.  The assumption is
+     that the sync setup is ALL done in gdb_init, and we would only
+     mess it up here.  The sync stuff should really go away over
+     time.  */
 
-  if (event_loop_p)
+  gdb_stdout = stdio_fileopen (stdout);
+  gdb_stderr = stdio_fileopen (stderr);
+  gdb_stdlog = gdb_stderr;  /* for moment */
+  gdb_stdtarg = gdb_stderr; /* for moment */
+
+  /* If the input stream is connected to a terminal, turn on
+     editing.  */
+  if (ISATTY (instream))
     {
-      gdb_stdout = stdio_fileopen (stdout);
-      gdb_stderr = stdio_fileopen (stderr);
-      gdb_stdlog = gdb_stderr;  /* for moment */
-      gdb_stdtarg = gdb_stderr; /* for moment */
-
-      /* If the input stream is connected to a terminal, turn on
-         editing.  */
-      if (ISATTY (instream))
-	{
-	  /* Tell gdb that we will be using the readline library. This
-	     could be overwritten by a command in .gdbinit like 'set
-	     editing on' or 'off'. */
-	  async_command_editing_p = 1;
+      /* Tell gdb that we will be using the readline library. This
+	 could be overwritten by a command in .gdbinit like 'set
+	 editing on' or 'off'.  */
+      async_command_editing_p = 1;
 	  
-	  /* When a character is detected on instream by select or
-	     poll, readline will be invoked via this callback
-	     function. */
-	  call_readline = rl_callback_read_char_wrapper;
-	}
-      else
-	{
-	  async_command_editing_p = 0;
-	  call_readline = gdb_readline2;
-	}
-
-      /* When readline has read an end-of-line character, it passes
-         the complete line to gdb for processing. command_line_handler
-         is the function that does this. */
-      input_handler = command_line_handler;
-
-      /* Tell readline to use the same input stream that gdb uses. */
-      rl_instream = instream;
-
-      /* Get a file descriptor for the input stream, so that we can
-         register it with the event loop. */
-      input_fd = fileno (instream);
-
-      /* Now we need to create the event sources for the input file
-         descriptor. */
-      /* At this point in time, this is the only event source that we
-         register with the even loop. Another source is going to be
-         the target program (inferior), but that must be registered
-         only when it actually exists (I.e. after we say 'run' or
-         after we connect to a remote target. */
-      add_file_handler (input_fd, stdin_event_handler, 0);
+      /* When a character is detected on instream by select or poll,
+	 readline will be invoked via this callback function.  */
+      call_readline = rl_callback_read_char_wrapper;
     }
+  else
+    {
+      async_command_editing_p = 0;
+      call_readline = gdb_readline2;
+    }
+  
+  /* When readline has read an end-of-line character, it passes the
+     complete line to gdb for processing. command_line_handler is the
+     function that does this.  */
+  input_handler = command_line_handler;
+      
+  /* Tell readline to use the same input stream that gdb uses. */
+  rl_instream = instream;
+
+  /* Get a file descriptor for the input stream, so that we can
+     register it with the event loop.  */
+  input_fd = fileno (instream);
+
+  /* Now we need to create the event sources for the input file
+     descriptor.  */
+  /* At this point in time, this is the only event source that we
+     register with the even loop. Another source is going to be the
+     target program (inferior), but that must be registered only when
+     it actually exists (I.e. after we say 'run' or after we connect
+     to a remote target.  */
+  add_file_handler (input_fd, stdin_event_handler, 0);
 }
 
 /* Disable command input through the standard CLI channels.  Used in
@@ -1166,22 +1159,18 @@ gdb_setup_readline (void)
 void
 gdb_disable_readline (void)
 {
-  if (event_loop_p)
-    {
-      /* FIXME - It is too heavyweight to delete and remake these
-         every time you run an interpreter that needs readline.
-         It is probably better to have the interpreters cache these,
-         which in turn means that this needs to be moved into interpreter
-         specific code. */
+  /* FIXME - It is too heavyweight to delete and remake these every
+     time you run an interpreter that needs readline.  It is probably
+     better to have the interpreters cache these, which in turn means
+     that this needs to be moved into interpreter specific code.  */
 
 #if 0
-      ui_file_delete (gdb_stdout);
-      ui_file_delete (gdb_stderr);
-      gdb_stdlog = NULL;
-      gdb_stdtarg = NULL;
+  ui_file_delete (gdb_stdout);
+  ui_file_delete (gdb_stderr);
+  gdb_stdlog = NULL;
+  gdb_stdtarg = NULL;
 #endif
 
-      rl_callback_handler_remove ();
-      delete_file_handler (input_fd);
-    }
+  rl_callback_handler_remove ();
+  delete_file_handler (input_fd);
 }

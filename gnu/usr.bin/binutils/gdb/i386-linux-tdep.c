@@ -1,6 +1,6 @@
-/* Target-dependent code for GNU/Linux running on i386's, for GDB.
+/* Target-dependent code for GNU/Linux i386.
 
-   Copyright 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
+   Copyright 2000, 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -27,13 +27,13 @@
 #include "inferior.h"
 #include "osabi.h"
 #include "reggroups.h"
-#include "solib-svr4.h"
 
 #include "gdb_string.h"
 
 #include "i386-tdep.h"
 #include "i386-linux-tdep.h"
 #include "glibc-tdep.h"
+#include "solib-svr4.h"
 
 /* Return the name of register REG.  */
 
@@ -83,13 +83,13 @@ i386_linux_register_reggroup_p (struct gdbarch *gdbarch, int regnum,
 
    Checking for the code sequence should be somewhat reliable, because
    the effect is to call the system call sigreturn.  This is unlikely
-   to occur anywhere other than a signal trampoline.
+   to occur anywhere other than in a signal trampoline.
 
    It kind of sucks that we have to read memory from the process in
    order to identify a signal trampoline, but there doesn't seem to be
-   any other way.  The PC_IN_SIGTRAMP macro in tm-linux.h arranges to
-   only call us if no function name could be identified, which should
-   be the case since the code is on the stack.
+   any other way.  Therefore we only do the memory reads if no
+   function name could be identified, which should be the case since
+   the code is on the stack.
 
    Detection of signal trampolines for handlers that set the
    SA_RESTORER flag is in general not possible.  Unfortunately this is
@@ -115,12 +115,13 @@ static const unsigned char linux_sigtramp_code[] =
 
 #define LINUX_SIGTRAMP_LEN (sizeof linux_sigtramp_code)
 
-/* If PC is in a sigtramp routine, return the address of the start of
-   the routine.  Otherwise, return 0.  */
+/* If NEXT_FRAME unwinds into a sigtramp routine, return the address
+   of the start of the routine.  Otherwise, return 0.  */
 
 static CORE_ADDR
-i386_linux_sigtramp_start (CORE_ADDR pc)
+i386_linux_sigtramp_start (struct frame_info *next_frame)
 {
+  CORE_ADDR pc = frame_pc_unwind (next_frame);
   unsigned char buf[LINUX_SIGTRAMP_LEN];
 
   /* We only recognize a signal trampoline if PC is at the start of
@@ -130,7 +131,7 @@ i386_linux_sigtramp_start (CORE_ADDR pc)
      PC is not at the start of the instruction sequence, there will be
      a few trailing readable bytes on the stack.  */
 
-  if (read_memory_nobpt (pc, (char *) buf, LINUX_SIGTRAMP_LEN) != 0)
+  if (!safe_frame_unwind_memory (next_frame, pc, buf, LINUX_SIGTRAMP_LEN))
     return 0;
 
   if (buf[0] != LINUX_SIGTRAMP_INSN0)
@@ -151,7 +152,7 @@ i386_linux_sigtramp_start (CORE_ADDR pc)
 
       pc -= adjust;
 
-      if (read_memory_nobpt (pc, (char *) buf, LINUX_SIGTRAMP_LEN) != 0)
+      if (!safe_frame_unwind_memory (next_frame, pc, buf, LINUX_SIGTRAMP_LEN))
 	return 0;
     }
 
@@ -182,12 +183,13 @@ static const unsigned char linux_rt_sigtramp_code[] =
 
 #define LINUX_RT_SIGTRAMP_LEN (sizeof linux_rt_sigtramp_code)
 
-/* If PC is in a RT sigtramp routine, return the address of the start
-   of the routine.  Otherwise, return 0.  */
+/* If NEXT_FRAME unwinds into an RT sigtramp routine, return the
+   address of the start of the routine.  Otherwise, return 0.  */
 
 static CORE_ADDR
-i386_linux_rt_sigtramp_start (CORE_ADDR pc)
+i386_linux_rt_sigtramp_start (struct frame_info *next_frame)
 {
+  CORE_ADDR pc = frame_pc_unwind (next_frame);
   unsigned char buf[LINUX_RT_SIGTRAMP_LEN];
 
   /* We only recognize a signal trampoline if PC is at the start of
@@ -197,7 +199,7 @@ i386_linux_rt_sigtramp_start (CORE_ADDR pc)
      PC is not at the start of the instruction sequence, there will be
      a few trailing readable bytes on the stack.  */
 
-  if (read_memory_nobpt (pc, (char *) buf, LINUX_RT_SIGTRAMP_LEN) != 0)
+  if (!safe_frame_unwind_memory (next_frame, pc, buf, LINUX_RT_SIGTRAMP_LEN))
     return 0;
 
   if (buf[0] != LINUX_RT_SIGTRAMP_INSN0)
@@ -207,7 +209,8 @@ i386_linux_rt_sigtramp_start (CORE_ADDR pc)
 
       pc -= LINUX_RT_SIGTRAMP_OFFSET1;
 
-      if (read_memory_nobpt (pc, (char *) buf, LINUX_RT_SIGTRAMP_LEN) != 0)
+      if (!safe_frame_unwind_memory (next_frame, pc, buf,
+				     LINUX_RT_SIGTRAMP_LEN))
 	return 0;
     }
 
@@ -217,19 +220,25 @@ i386_linux_rt_sigtramp_start (CORE_ADDR pc)
   return pc;
 }
 
-/* Return whether PC is in a GNU/Linux sigtramp routine.  */
+/* Return whether the frame preceding NEXT_FRAME corresponds to a
+   GNU/Linux sigtramp routine.  */
 
 static int
-i386_linux_pc_in_sigtramp (CORE_ADDR pc, char *name)
+i386_linux_sigtramp_p (struct frame_info *next_frame)
 {
+  CORE_ADDR pc = frame_pc_unwind (next_frame);
+  char *name;
+
+  find_pc_partial_function (pc, &name, NULL, NULL);
+
   /* If we have NAME, we can optimize the search.  The trampolines are
      named __restore and __restore_rt.  However, they aren't dynamically
      exported from the shared C library, so the trampoline may appear to
      be part of the preceding function.  This should always be sigaction,
      __sigaction, or __libc_sigaction (all aliases to the same function).  */
   if (name == NULL || strstr (name, "sigaction") != NULL)
-    return (i386_linux_sigtramp_start (pc) != 0
-	    || i386_linux_rt_sigtramp_start (pc) != 0);
+    return (i386_linux_sigtramp_start (next_frame) != 0
+	    || i386_linux_rt_sigtramp_start (next_frame) != 0);
 
   return (strcmp ("__restore", name) == 0
 	  || strcmp ("__restore_rt", name) == 0);
@@ -251,7 +260,7 @@ i386_linux_sigcontext_addr (struct frame_info *next_frame)
   frame_unwind_register (next_frame, I386_ESP_REGNUM, buf);
   sp = extract_unsigned_integer (buf, 4);
 
-  pc = i386_linux_sigtramp_start (frame_pc_unwind (next_frame));
+  pc = i386_linux_sigtramp_start (next_frame);
   if (pc)
     {
       /* The sigcontext structure lives on the stack, right after
@@ -265,7 +274,7 @@ i386_linux_sigcontext_addr (struct frame_info *next_frame)
       return sp;
     }
 
-  pc = i386_linux_rt_sigtramp_start (frame_pc_unwind (next_frame));
+  pc = i386_linux_rt_sigtramp_start (next_frame);
   if (pc)
     {
       CORE_ADDR ucontext_addr;
@@ -304,47 +313,6 @@ i386_linux_write_pc (CORE_ADDR pc, ptid_t ptid)
      within GDB.  In all other cases the system call will not be
      restarted.  */
   write_register_pid (I386_LINUX_ORIG_EAX_REGNUM, -1, ptid);
-}
-
-/* Fetch (and possibly build) an appropriate link_map_offsets
-   structure for native GNU/Linux x86 targets using the struct offsets
-   defined in link.h (but without actual reference to that file).
-
-   This makes it possible to access GNU/Linux x86 shared libraries
-   from a GDB that was not built on an GNU/Linux x86 host (for cross
-   debugging).  */
-
-static struct link_map_offsets *
-i386_linux_svr4_fetch_link_map_offsets (void)
-{
-  static struct link_map_offsets lmo;
-  static struct link_map_offsets *lmp = NULL;
-
-  if (lmp == NULL)
-    {
-      lmp = &lmo;
-
-      lmo.r_debug_size = 8;	/* The actual size is 20 bytes, but
-				   this is all we need.  */
-      lmo.r_map_offset = 4;
-      lmo.r_map_size   = 4;
-
-      lmo.link_map_size = 20;	/* The actual size is 552 bytes, but
-				   this is all we need.  */
-      lmo.l_addr_offset = 0;
-      lmo.l_addr_size   = 4;
-
-      lmo.l_name_offset = 4;
-      lmo.l_name_size   = 4;
-
-      lmo.l_next_offset = 12;
-      lmo.l_next_size   = 4;
-
-      lmo.l_prev_offset = 16;
-      lmo.l_prev_size   = 4;
-    }
-
-  return lmp;
 }
 
 
@@ -435,19 +403,17 @@ i386_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 
   tdep->jb_pc_offset = 20;	/* From <bits/setjmp.h>.  */
 
+  tdep->sigtramp_p = i386_linux_sigtramp_p;
   tdep->sigcontext_addr = i386_linux_sigcontext_addr;
   tdep->sc_reg_offset = i386_linux_sc_reg_offset;
   tdep->sc_num_regs = ARRAY_SIZE (i386_linux_sc_reg_offset);
 
-  /* When the i386 Linux kernel calls a signal handler, the return
-     address points to a bit of code on the stack.  This function is
-     used to identify this bit of code as a signal trampoline in order
-     to support backtracing through calls to signal handlers.  */
-  set_gdbarch_pc_in_sigtramp (gdbarch, i386_linux_pc_in_sigtramp);
+  /* GNU/Linux uses SVR4-style shared libraries.  */
+  set_solib_svr4_fetch_link_map_offsets
+    (gdbarch, svr4_ilp32_fetch_link_map_offsets);
 
+  /* GNU/Linux uses the dynamic linker included in the GNU C Library.  */
   set_gdbarch_skip_solib_resolver (gdbarch, glibc_skip_solib_resolver);
-  set_solib_svr4_fetch_link_map_offsets (gdbarch,
-				       i386_linux_svr4_fetch_link_map_offsets);
 }
 
 /* Provide a prototype to silence -Wmissing-prototypes.  */

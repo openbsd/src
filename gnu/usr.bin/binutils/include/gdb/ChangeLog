@@ -1,3 +1,23 @@
+2004-09-08  Michael Snyder  <msnyder@redhat.com>
+
+	Commited by Corinna Vinschen <vinschen@redhat.com>
+	* sim-sh.h: Add new sh2a banked registers.
+
+2004-08-04  Andrew Cagney  <cagney@gnu.org>
+
+	* sim-ppc.h: Add extern "C" wrapper.
+	(enum sim_ppc_regnum): Add full list of SPRs.
+
+2004-08-04  Jim Blandy  <jimb@redhat.com>
+
+	* sim-ppc.h: New file.
+
+2004-06-25  J"orn Rennecke <joern.rennecke@superh.com>
+
+	* callback.h (host_callback_struct): Replace members fdopen and
+	alwaysopen with fd_buddy.
+	[sim/common: * callback.c: Changed all users.  ]
+
 2003-10-31  Kevin Buettner  <kevin@redhat.com>
 
 	* sim-frv.h: New file.

@@ -50,8 +50,6 @@ struct MessageIO
 /* Prototypes for functions located in other files */
 extern void break_command (char *, int);
 
-extern int (*ui_loop_hook) (int);
-
 /* Prototypes for local functions */
 static int init_hidden_window (void);
 
@@ -443,7 +441,7 @@ v850ice_wait (ptid_t ptid, struct target_waitstatus *status)
     {
       if (count++ % 100000)
 	{
-	  ui_loop_hook (0);
+	  deprecated_ui_loop_hook (0);
 	  count = 0;
 	}
 
@@ -534,8 +532,8 @@ v850ice_fetch_registers (int regno)
     error ("v850ice_fetch_registers (%d):  bad value from ICE: %s.",
 	   regno, val);
 
-  store_unsigned_integer (val, DEPRECATED_REGISTER_RAW_SIZE (regno), regval);
-  supply_register (regno, val);
+  store_unsigned_integer (val, register_size (current_gdbarch, regno), regval);
+  regcache_raw_supply (current_regcache, regno, val);
 }
 
 /* Store register REGNO, or all registers if REGNO == -1, from the contents
@@ -560,7 +558,7 @@ v850ice_store_registers (int regno)
     }
 
   regval = extract_unsigned_integer (&deprecated_registers[DEPRECATED_REGISTER_BYTE (regno)],
-				     DEPRECATED_REGISTER_RAW_SIZE (regno));
+				     register_size (current_gdbarch, regno));
   strcpy (cmd, "reg ");
   if (!convert_register (regno, &cmd[4]))
     return;
@@ -901,7 +899,7 @@ init_850ice_ops (void)
   v850ice_ops.to_fetch_registers = v850ice_fetch_registers;
   v850ice_ops.to_store_registers = v850ice_store_registers;
   v850ice_ops.to_prepare_to_store = v850ice_prepare_to_store;
-  v850ice_ops.to_xfer_memory = v850ice_xfer_memory;
+  v850ice_ops.deprecated_xfer_memory = v850ice_xfer_memory;
   v850ice_ops.to_files_info = v850ice_files_info;
   v850ice_ops.to_insert_breakpoint = v850ice_insert_breakpoint;
   v850ice_ops.to_remove_breakpoint = v850ice_remove_breakpoint;

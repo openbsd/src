@@ -4,7 +4,7 @@
 
 @c This is a dir.info fragment to support semi-automated addition of
 @c manuals to an info tree.
-@dircategory Programming & development tools.
+@dircategory Software development
 @direntry
 * Annotate: (annotate).                 The obsolete annotation interface.
 @end direntry

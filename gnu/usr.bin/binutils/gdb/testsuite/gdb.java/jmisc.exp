@@ -1,4 +1,4 @@
-# Copyright 2000 Free Software Foundation, Inc.
+# Copyright 2000, 2004 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -72,7 +72,7 @@ if ![set_lang_java] then {
 
     send_gdb "ptype jmisc\n"   
     gdb_expect {   
-	-re "type = class jmisc  extends java.lang.Object \{\[\r\n\ \t]+void main\\(java\.lang\.String\\\[]\\);\[\r\n\ \t]+void <init>\\(void\\);\[\r\n\ \t]+\}\[\r\n\ \t]+$gdb_prompt $"               { pass "ptype jmisc" }
+	-re "type = class jmisc  extends java.lang.Object \{\[\r\n\ \t]+void main\\(java\.lang\.String\\\[]\\);\[\r\n\ \t]+jmisc\\(\\);\[\r\n\ \t]+\}\[\r\n\ \t]+$gdb_prompt $"               { pass "ptype jmisc" }
 	-re ".*$gdb_prompt $"             { fail "ptype jmisc" }
 	timeout { fail "ptype jmisc (timeout)" ; return }
     }

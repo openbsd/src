@@ -1,5 +1,6 @@
 /* Definitions to target GDB to GNU/Linux on IA-64 running AIX.
-   Copyright 2000, 2001 Free Software Foundation, Inc.
+
+   Copyright 2000, 2001, 2004 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -24,9 +25,7 @@
 #include "ia64/tm-ia64.h"
 #include "config/tm-sysv4.h"
 
-#define TARGET_ELF64
-
 extern int ia64_aix_in_sigtramp (CORE_ADDR pc, char *func_name);
-#define IN_SIGTRAMP(pc,func_name) ia64_aix_in_sigtramp (pc, func_name)
+#define DEPRECATED_IN_SIGTRAMP(pc,func_name) ia64_aix_in_sigtramp (pc, func_name)
 
 #endif /* #ifndef TM_AIX_H */

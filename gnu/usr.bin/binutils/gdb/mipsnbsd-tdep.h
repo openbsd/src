@@ -1,5 +1,6 @@
 /* Common target dependent code for GDB on MIPS systems running NetBSD.
-   Copyright 2002 Free Software Foundation, Inc.
+
+   Copyright 2002, 2004 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -27,7 +28,7 @@ void mipsnbsd_fill_reg (char *, int);
 void mipsnbsd_supply_fpreg (char *, int);
 void mipsnbsd_fill_fpreg (char *, int);
 
-#define SIZEOF_STRUCT_REG	(38 * mips_regsize (current_gdbarch))
-#define SIZEOF_STRUCT_FPREG	(33 * mips_regsize (current_gdbarch))
+#define SIZEOF_STRUCT_REG	(38 * mips_isa_regsize (current_gdbarch))
+#define SIZEOF_STRUCT_FPREG	(33 * mips_isa_regsize (current_gdbarch))
 
 #endif /* MIPSNBSD_TDEP_H */

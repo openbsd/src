@@ -205,7 +205,7 @@ do
     trap "exit 1"  1 2 15
     dir=${builddir}/${target}
 
-    # Should a scratch rebuild be forced, for perhaphs the entire
+    # Should a scratch rebuild be forced, for perhaps the entire
     # build be skipped?
 
     if ${force}

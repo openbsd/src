@@ -736,12 +736,9 @@ translate_insn_rn (int rn, int media_mode)
 static CORE_ADDR
 sh64_frame_chain (struct frame_info *frame)
 {
-  if (DEPRECATED_PC_IN_CALL_DUMMY (get_frame_pc (frame),
-				   get_frame_base (frame),
-				   get_frame_base (frame)))
+  if (deprecated_pc_in_call_dummy (get_frame_pc (frame)))
     return get_frame_base (frame);    /* dummy frame same as caller's frame */
-  if (get_frame_pc (frame)
-      && !deprecated_inside_entry_file (get_frame_pc (frame)))
+  if (get_frame_pc (frame))
     {
       int media_mode = pc_is_isa32 (get_frame_pc (frame));
       int size;
@@ -765,8 +762,7 @@ sh64_get_saved_pr (struct frame_info *fi, int pr_regnum)
   int media_mode = 0;
 
   for (; fi; fi = get_next_frame (fi))
-    if (DEPRECATED_PC_IN_CALL_DUMMY (get_frame_pc (fi), get_frame_base (fi),
-				     get_frame_base (fi)))
+    if (deprecated_pc_in_call_dummy (get_frame_pc (fi)))
       /* When the caller requests PR from the dummy frame, we return
          PC because that's where the previous routine appears to have
          done a call from.  */
@@ -1215,8 +1211,7 @@ sh64_init_extra_frame_info (int fromleaf, struct frame_info *fi)
   if (get_next_frame (fi)) 
     deprecated_update_frame_pc_hack (fi, DEPRECATED_FRAME_SAVED_PC (get_next_frame (fi)));
 
-  if (DEPRECATED_PC_IN_CALL_DUMMY (get_frame_pc (fi), get_frame_base (fi),
-				   get_frame_base (fi)))
+  if (deprecated_pc_in_call_dummy (get_frame_pc (fi)))
     {
       /* We need to setup fi->frame here because call_function_by_hand
          gets it wrong by assuming it's always FP.  */
@@ -1224,7 +1219,7 @@ sh64_init_extra_frame_info (int fromleaf, struct frame_info *fi)
       get_frame_extra_info (fi)->return_pc = 
 	deprecated_read_register_dummy (get_frame_pc (fi),
 					get_frame_base (fi), PC_REGNUM);
-      get_frame_extra_info (fi)->f_offset = -(DEPRECATED_CALL_DUMMY_LENGTH + 4);
+      get_frame_extra_info (fi)->f_offset = -4;
       get_frame_extra_info (fi)->leaf_function = 0;
       return;
     }
@@ -1273,9 +1268,7 @@ sh64_get_saved_register (char *raw_buffer, int *optimized, CORE_ADDR *addrp,
 
   while (frame && ((frame = get_next_frame (frame)) != NULL))
     {
-      if (DEPRECATED_PC_IN_CALL_DUMMY (get_frame_pc (frame),
-				       get_frame_base (frame),
-				       get_frame_base (frame)))
+      if (deprecated_pc_in_call_dummy (get_frame_pc (frame)))
 	{
 	  if (lval)		/* found it in a CALL_DUMMY frame */
 	    *lval = not_lval;
@@ -1370,10 +1363,8 @@ sh64_pop_frame (void)
 
   int media_mode = pc_is_isa32 (get_frame_pc (frame));
 
-  if (DEPRECATED_PC_IN_CALL_DUMMY (get_frame_pc (frame),
-				   get_frame_base (frame),
-				   get_frame_base (frame)))
-    generic_pop_dummy_frame ();
+  if (deprecated_pc_in_call_dummy (get_frame_pc (frame)))
+    deprecated_pop_dummy_frame ();
   else
     {
       fp = get_frame_base (frame);
@@ -2745,8 +2736,6 @@ sh64_do_registers_info (int regnum, int fpregs)
    sh_compact_do_registers_info (regnum, fpregs);
 }
 
-#ifdef SVR4_SHARED_LIBS
-
 /* Fetch (and possibly build) an appropriate link_map_offsets structure
    for native i386 linux targets using the struct offsets defined in
    link.h (but without actual reference to that file).
@@ -2787,14 +2776,12 @@ sh_linux_svr4_fetch_link_map_offsets (void)
 
     return lmp;
 }
-#endif /* SVR4_SHARED_LIBS */
 
 gdbarch_init_ftype sh64_gdbarch_init;
 
 struct gdbarch *
 sh64_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 {
-  static LONGEST sh64_call_dummy_words[] = {0};
   struct gdbarch *gdbarch;
   struct gdbarch_tdep *tdep;
 
@@ -2847,7 +2834,6 @@ sh64_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_skip_prologue (gdbarch, sh_skip_prologue);
   set_gdbarch_inner_than (gdbarch, core_addr_lessthan);
 
-  set_gdbarch_deprecated_frameless_function_invocation (gdbarch, legacy_frameless_look_for_prologue);
   set_gdbarch_believe_pcc_promotion (gdbarch, 1);
 
   set_gdbarch_deprecated_frame_saved_pc (gdbarch, sh_frame_saved_pc);
@@ -2861,9 +2847,6 @@ sh64_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   /* The number of real registers is the same whether we are in 
      ISA16(compact) or ISA32(media).  */
   set_gdbarch_num_regs (gdbarch, SIM_SH64_NR_REGS);
-  set_gdbarch_deprecated_register_bytes (gdbarch,
-					 ((SIM_SH64_NR_FP_REGS + 1) * 4)
-					 + (SIM_SH64_NR_REGS - SIM_SH64_NR_FP_REGS -1) * 8);
 
   set_gdbarch_register_name (gdbarch, sh64_register_name);
   set_gdbarch_register_type (gdbarch, sh64_register_type);
@@ -2875,8 +2858,6 @@ sh64_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_deprecated_do_registers_info (gdbarch, sh64_do_registers_info);
   set_gdbarch_deprecated_frame_init_saved_regs (gdbarch, sh64_nofp_frame_init_saved_regs);
   set_gdbarch_breakpoint_from_pc (gdbarch, sh64_breakpoint_from_pc);
-  set_gdbarch_deprecated_call_dummy_words (gdbarch, sh64_call_dummy_words);
-  set_gdbarch_deprecated_sizeof_call_dummy_words (gdbarch, sizeof (sh64_call_dummy_words));
 
   set_gdbarch_deprecated_init_extra_frame_info (gdbarch, sh64_init_extra_frame_info);
   set_gdbarch_deprecated_frame_chain (gdbarch, sh64_frame_chain);
@@ -2887,7 +2868,7 @@ sh64_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_deprecated_dummy_write_sp (gdbarch, deprecated_write_sp);
   set_gdbarch_deprecated_store_struct_return (gdbarch, sh64_store_struct_return);
   set_gdbarch_deprecated_extract_struct_value_address (gdbarch, sh64_extract_struct_value_address);
-  set_gdbarch_use_struct_convention (gdbarch, sh64_use_struct_convention);
+  set_gdbarch_deprecated_use_struct_convention (gdbarch, sh64_use_struct_convention);
   set_gdbarch_deprecated_pop_frame (gdbarch, sh64_pop_frame);
   set_gdbarch_elf_make_msymbol_special (gdbarch,
 					sh64_elf_make_msymbol_special);

@@ -35,6 +35,11 @@ The observer implementation is also currently not reentrant.
 In particular, it is therefore not possible to call the attach
 or detach routines during a notification.
 
+@section Debugging
+Observer notifications can be traced using the command @samp{set debug
+observer 1} (@pxref{Debugging Output, , Optional messages about
+internal happenings, gdb, Debugging with @var{GDBN}}).
+
 @section @code{normal_stop} Notifications
 @cindex @code{normal_stop} observer
 @cindex notification about inferior execution stop
@@ -50,21 +55,43 @@ a condition that is not met.  If the breakpoint has any associated
 commands list, the commands are executed after the notification
 is emitted.
 
-The following interface is available to manage @code{normal_stop}
-observers:
+The following interfaces are available to manage observers:
 
-@deftypefun extern struct observer *observer_attach_normal_stop (observer_normal_stop_ftype *@var{f})
-Attach the given @code{normal_stop} callback function @var{f} and
-return the associated observer.
+@deftypefun extern struct observer *observer_attach_@var{event} (observer_@var{event}_ftype *@var{f})
+Using the function @var{f}, create an observer that is notified when
+ever @var{event} occures, return the observer.
 @end deftypefun
 
-@deftypefun extern void observer_detach_normal_stop (struct observer *@var{observer});
+@deftypefun extern void observer_detach_@var{event} (struct observer *@var{observer});
 Remove @var{observer} from the list of observers to be notified when
-a @code{normal_stop} event occurs.
+@var{event} occurs.
 @end deftypefun
 
-@deftypefun extern void observer_notify_normal_stop (void);
-Send a notification to all @code{normal_stop} observers.
+@deftypefun extern void observer_notify_@var{event} (void);
+Send a notification to all @var{event} observers.
 @end deftypefun
 
+The following observable events are defined:
+
+@c note: all events must take at least one parameter.
+
+@deftypefun void normal_stop (struct bpstats *@var{bs})
+The inferior has stopped for real.
+@end deftypefun
+
+@deftypefun void target_changed (struct target_ops *@var{target})
+The target's register contents have changed.
+@end deftypefun
+
+@deftypefun void inferior_created (struct target_ops *@var{objfile}, int @var{from_tty})
+@value{GDBN} has just connected to an inferior.  For @samp{run},
+@value{GDBN} calls this observer while the inferior is still stopped
+at the entry-point instruction.  For @samp{attach} and @samp{core},
+@value{GDBN} calls this observer immediately after connecting to the
+inferior, and before any information on the inferior has been printed.
+@end deftypefun
+
+@deftypefun void solib_unloaded (struct so_list *@var{solib})
+The specified shared library has been discovered to be unloaded.
+@end deftypefun
 

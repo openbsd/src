@@ -1,6 +1,6 @@
 /* Native-dependent definitions for FreeBSD/sparc64.
 
-   Copyright 2002, 2003 Free Software Foundation, Inc.
+   Copyright 2002, 2003, 2004 Free Software Foundation, Inc.
    Contributed by David E. O'Brien <obrien@FreeBSD.org>.
 
    This file is part of GDB.
@@ -22,15 +22,8 @@
 #ifndef NM_FBSD_H
 #define NM_FBSD_H
 
-/* Type of the third argument to the `ptrace' system call.  */
-#define PTRACE_ARG3_TYPE caddr_t
-
-/* Override copies of {fetch,store}_inferior_registers in `infptrace.c'.  */
-#define FETCH_INFERIOR_REGISTERS
-
-/* We can attach and detach.  */
-#define ATTACH_DETACH
-
+/* Get generic BSD native definitions.  */
+#include "config/nm-bsd.h"
 
 /* Shared library support.  */
 

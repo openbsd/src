@@ -29,33 +29,33 @@ if $tracelevel then {
 if { [skip_cplus_tests] } { continue }
 
 set testfile "cttiadd"
-set srcfile  "${srcdir}/${subdir}/${testfile}.cc"
-set srcfile1 "${srcdir}/${subdir}/${testfile}1.cc"
-set srcfile2 "${srcdir}/${subdir}/${testfile}2.cc"
-set srcfile3 "${srcdir}/${subdir}/${testfile}3.cc"
-set objfile  "${objdir}/${subdir}/${testfile}.o"
-set objfile1 "${objdir}/${subdir}/${testfile}1.o"
-set objfile2 "${objdir}/${subdir}/${testfile}2.o"
-set objfile3 "${objdir}/${subdir}/${testfile}3.o"
+set srcfile  "${testfile}.cc"
+set srcfile1 "${testfile}1.cc"
+set srcfile2 "${testfile}2.cc"
+set srcfile3 "${testfile}3.cc"
+set objfile  "${testfile}.o"
+set objfile1 "${testfile}1.o"
+set objfile2 "${testfile}2.o"
+set objfile3 "${testfile}3.o"
 set binfile  "${objdir}/${subdir}/${testfile}"
 
-if { [gdb_compile "${srcfile}" "${objfile}" object {debug c++}] != "" } {
+if { [gdb_compile "$srcdir/$subdir/$srcfile" "$objdir/$subdir/$objfile" object {debug c++}] != "" } {
      gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
 }
 
-if { [gdb_compile "${srcfile1}" "${objfile1}" object {debug c++}] != "" } {
+if { [gdb_compile "$srcdir/$subdir/$srcfile1" "$objdir/$subdir/$objfile1" object {debug c++}] != "" } {
      gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
 }
 
-if { [gdb_compile "${srcfile2}" "${objfile2}" object {debug c++}] != "" } {
+if { [gdb_compile "$srcdir/$subdir/$srcfile2" "$objdir/$subdir/$objfile2" object {debug c++}] != "" } {
      gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
 }
 
-if { [gdb_compile "${srcfile3}" "${objfile3}" object {debug c++}] != "" } {
+if { [gdb_compile "$srcdir/$subdir/$srcfile3" "$objdir/$subdir/$objfile3" object {debug c++}] != "" } {
      gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
 }
 
-if { [gdb_compile "${objfile} ${objfile1} ${objfile2} ${objfile3}" "${binfile}" executable {debug c++}] != "" } {
+if { [gdb_compile "$objdir/$subdir/$objfile $objdir/$subdir/$objfile1 $objdir/$subdir/$objfile2 $objdir/$subdir/$objfile3" "${binfile}" executable {debug c++}] != "" } {
      gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
 }
 

@@ -899,16 +899,6 @@ m68hc11_frame_this_id (struct frame_info *next_frame,
     return;
 
   id = frame_id_build (base, func);
-#if 0
-  /* Check that we're not going round in circles with the same frame
-     ID (but avoid applying the test to sentinel frames which do go
-     round in circles).  Can't use frame_id_eq() as that doesn't yet
-     compare the frame's PC value.  */
-  if (frame_relative_level (next_frame) >= 0
-      && get_frame_type (next_frame) != DUMMY_FRAME
-      && frame_id_eq (get_frame_id (next_frame), id))
-    return;
-#endif
   (*this_id) = id;
 }
 
@@ -922,8 +912,8 @@ m68hc11_frame_prev_register (struct frame_info *next_frame,
   struct m68hc11_unwind_cache *info
     = m68hc11_frame_unwind_cache (next_frame, this_prologue_cache);
 
-  trad_frame_prev_register (next_frame, info->saved_regs, regnum,
-                            optimizedp, lvalp, addrp, realnump, bufferp);
+  trad_frame_get_prev_register (next_frame, info->saved_regs, regnum,
+				optimizedp, lvalp, addrp, realnump, bufferp);
 
   if (regnum == HARD_PC_REGNUM)
     {
@@ -936,9 +926,9 @@ m68hc11_frame_prev_register (struct frame_info *next_frame,
 
           CORE_ADDR page;
 
-          trad_frame_prev_register (next_frame, info->saved_regs,
-                                    HARD_PAGE_REGNUM, &page_optimized,
-                                    0, &page, 0, 0);
+          trad_frame_get_prev_register (next_frame, info->saved_regs,
+					HARD_PAGE_REGNUM, &page_optimized,
+					0, &page, 0, 0);
           *addrp -= 0x08000;
           *addrp += ((page & 0x0ff) << 14);
           *addrp += 0x1000000;
@@ -1182,7 +1172,7 @@ m68hc11_stack_align (CORE_ADDR addr)
 }
 
 static CORE_ADDR
-m68hc11_push_dummy_call (struct gdbarch *gdbarch, CORE_ADDR func_addr,
+m68hc11_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
                          struct regcache *regcache, CORE_ADDR bp_addr,
                          int nargs, struct value **args, CORE_ADDR sp,
                          int struct_return, CORE_ADDR struct_addr)
@@ -1342,31 +1332,24 @@ m68hc11_extract_return_value (struct type *type, struct regcache *regcache,
     }
 }
 
-/* Should call_function allocate stack space for a struct return?  */
-static int
-m68hc11_use_struct_convention (int gcc_p, struct type *type)
+enum return_value_convention
+m68hc11_return_value (struct gdbarch *gdbarch, struct type *valtype,
+		      struct regcache *regcache, void *readbuf,
+		      const void *writebuf)
 {
-  return (TYPE_CODE (type) == TYPE_CODE_STRUCT
-          || TYPE_CODE (type) == TYPE_CODE_UNION
-          || TYPE_LENGTH (type) > 4);
-}
-
-static int
-m68hc11_return_value_on_stack (struct type *type)
-{
-  return TYPE_LENGTH (type) > 4;
-}
-
-/* Extract from an array REGBUF containing the (raw) register state
-   the address in which a function should return its structure value,
-   as a CORE_ADDR (or an expression that can be used as one).  */
-static CORE_ADDR
-m68hc11_extract_struct_value_address (struct regcache *regcache)
-{
-  char buf[M68HC11_REG_SIZE];
-
-  regcache_cooked_read (regcache, HARD_D_REGNUM, buf);
-  return extract_unsigned_integer (buf, M68HC11_REG_SIZE);
+  if (TYPE_CODE (valtype) == TYPE_CODE_STRUCT
+      || TYPE_CODE (valtype) == TYPE_CODE_UNION
+      || TYPE_CODE (valtype) == TYPE_CODE_ARRAY 
+      || TYPE_LENGTH (valtype) > 4)
+    return RETURN_VALUE_STRUCT_CONVENTION;
+  else
+    {
+      if (readbuf != NULL)
+	m68hc11_extract_return_value (valtype, regcache, readbuf);
+      if (writebuf != NULL)
+	m68hc11_store_return_value (valtype, regcache, writebuf);
+      return RETURN_VALUE_REGISTER_CONVENTION;
+    }
 }
 
 /* Test whether the ELF symbol corresponds to a function using rtc or
@@ -1549,12 +1532,7 @@ m68hc11_gdbarch_init (struct gdbarch_info info,
 
   set_gdbarch_push_dummy_call (gdbarch, m68hc11_push_dummy_call);
 
-  set_gdbarch_extract_return_value (gdbarch, m68hc11_extract_return_value);
-  set_gdbarch_return_value_on_stack (gdbarch, m68hc11_return_value_on_stack);
-
-  set_gdbarch_store_return_value (gdbarch, m68hc11_store_return_value);
-  set_gdbarch_deprecated_extract_struct_value_address (gdbarch, m68hc11_extract_struct_value_address);
-  set_gdbarch_use_struct_convention (gdbarch, m68hc11_use_struct_convention);
+  set_gdbarch_return_value (gdbarch, m68hc11_return_value);
   set_gdbarch_skip_prologue (gdbarch, m68hc11_skip_prologue);
   set_gdbarch_inner_than (gdbarch, core_addr_lessthan);
   set_gdbarch_breakpoint_from_pc (gdbarch, m68hc11_breakpoint_from_pc);

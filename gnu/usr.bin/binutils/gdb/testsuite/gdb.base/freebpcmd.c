@@ -1,5 +1,5 @@
 /* Test program for GDB crashes while doing bp commands that continue inferior.
-   Copyright 2003 Free Software Foundation, Inc.
+   Copyright 2003, 2004 Free Software Foundation, Inc.
 
    This file is part of the gdb testsuite.
 
@@ -17,6 +17,8 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place - Suite 330,
    Boston, MA 02111-1307, USA.  */
+
+#include <stdio.h>
 
 int
 main (int argc, char **argv)

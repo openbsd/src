@@ -26,10 +26,26 @@
 
 #include "i386-tdep.h"
 
+static CORE_ADDR
+i386_cygwin_skip_trampoline_code (CORE_ADDR pc)
+{
+  return i386_pe_skip_trampoline_code (pc, NULL);
+}
+
+static int
+i386_cygwin_in_solib_call_trampoline (CORE_ADDR pc, char *name)
+{
+  return (i386_pe_skip_trampoline_code (pc, name) != 0);
+}
+
 static void
 i386_cygwin_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+
+  set_gdbarch_in_solib_call_trampoline (gdbarch,
+                                        i386_cygwin_in_solib_call_trampoline);
+  set_gdbarch_skip_trampoline_code (gdbarch, i386_cygwin_skip_trampoline_code);
 
   tdep->struct_return = reg_struct_return;
 }

@@ -1842,7 +1842,7 @@ minsym_found (int funfirstline, struct minimal_symbol *msymbol)
   values.sals[0].section = SYMBOL_BFD_SECTION (msymbol);
   if (funfirstline)
     {
-      values.sals[0].pc += FUNCTION_START_OFFSET;
+      values.sals[0].pc += DEPRECATED_FUNCTION_START_OFFSET;
       values.sals[0].pc = SKIP_PROLOGUE (values.sals[0].pc);
     }
   values.nelts = 1;

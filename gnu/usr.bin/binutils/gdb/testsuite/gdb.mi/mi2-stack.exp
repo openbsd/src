@@ -1,4 +1,4 @@
-# Copyright 2000, 2002 Free Software Foundation, Inc.
+# Copyright 2000, 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,9 +13,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
-
-# Please email any bugs, comments, and/or additions to this file to:
-# bug-gdb@prep.ai.mit.edu
 
 #
 # Test essential Machine interface (MI) operations
@@ -50,6 +47,9 @@ proc test_stack_frame_listing {} {
     global mi_gdb_prompt
     global hex
 
+    set line_callee4_head [gdb_get_line_number "callee4 ("]
+    set line_callee4_body [expr $line_callee4_head + 2]
+
     # Obtain a stack trace
     # Tests:
     # -stack-list-frames
@@ -57,7 +57,7 @@ proc test_stack_frame_listing {} {
     # -stack-list-frames 1 3
 
     mi_gdb_test "231-stack-list-frames" \
-	    "231\\^done,stack=\\\[frame=\{level=\"0\",addr=\"$hex\",func=\"callee4\",file=\".*basics.c\",line=\"8\"\},frame=\{level=\"1\",addr=\"$hex\",func=\"callee3\",.*\},frame=\{level=\"2\",addr=\"$hex\",func=\"callee2\",.*\},frame=\{level=\"3\",addr=\"$hex\",func=\"callee1\",.*\},frame=\{level=\"4\",addr=\"$hex\",func=\"main\",.*\}\\\]" \
+	    "231\\^done,stack=\\\[frame=\{level=\"0\",addr=\"$hex\",func=\"callee4\",file=\".*basics.c\",line=\"$line_callee4_body\"\},frame=\{level=\"1\",addr=\"$hex\",func=\"callee3\",.*\},frame=\{level=\"2\",addr=\"$hex\",func=\"callee2\",.*\},frame=\{level=\"3\",addr=\"$hex\",func=\"callee1\",.*\},frame=\{level=\"4\",addr=\"$hex\",func=\"main\",.*\}\\\]" \
                 "stack frame listing"
     mi_gdb_test "232-stack-list-frames 1 1" \
 	    "232\\^done,stack=\\\[frame=\{level=\"1\",addr=\"$hex\",func=\"callee3\",.*\}\\\]" \
@@ -155,10 +155,12 @@ proc test_stack_locals_listing {} {
 	    "232\\^done,locals=\\\[name=\"A\",name=\"B\",name=\"C\"\\\]" \
                 "stack locals listing 0"
 
+set line_callee4_return_0 [gdb_get_line_number "return 0;"]
+
 # step until A, B, C, have some reasonable values.
 send_gdb "-exec-next 3\n"
 gdb_expect {
-    -re "\\^running\r\n${mi_gdb_prompt}\\*stopped,reason=\"end-stepping-range\",thread-id=\"\[01\]\",frame=\{addr=\"$hex\",func=\"callee4\",args=\\\[\\\],file=\".*basics.c\",line=\"13\"\}\r\n$mi_gdb_prompt$" {
+    -re "\\^running\r\n${mi_gdb_prompt}\\*stopped,reason=\"end-stepping-range\",thread-id=\"\[01\]\",frame=\{addr=\"$hex\",func=\"callee4\",args=\\\[\\\],file=\".*basics.c\",line=\"$line_callee4_return_0\"\}\r\n$mi_gdb_prompt$" {
 	pass "next's in callee4"
     }
     timeout { fail "next in callee4 (timeout)" }

@@ -99,7 +99,7 @@ enum dict_type
     /* Symbols are stored in a fixed-size array.  */
     DICT_LINEAR,
     /* Symbols are stored in an expandable array.  */
-    DICT_LINEAR_EXPANDABLE,
+    DICT_LINEAR_EXPANDABLE
   };
 
 /* The virtual function table.  */
@@ -636,7 +636,7 @@ iter_name_first_hashed (const struct dictionary *dict,
        sym = sym->hash_next)
     {
       /* Warning: the order of arguments to strcmp_iw matters!  */
-      if (strcmp_iw (SYMBOL_NATURAL_NAME (sym), name) == 0)
+      if (strcmp_iw (SYMBOL_SEARCH_NAME (sym), name) == 0)
 	{
 	  break;
 	}
@@ -656,7 +656,7 @@ iter_name_next_hashed (const char *name, struct dict_iterator *iterator)
        next != NULL;
        next = next->hash_next)
     {
-      if (strcmp_iw (SYMBOL_NATURAL_NAME (next), name) == 0)
+      if (strcmp_iw (SYMBOL_SEARCH_NAME (next), name) == 0)
 	break;
     }
 
@@ -674,7 +674,7 @@ insert_symbol_hashed (struct dictionary *dict,
   unsigned int hash_index;
   struct symbol **buckets = DICT_HASHED_BUCKETS (dict);
 
-  hash_index = (msymbol_hash_iw (SYMBOL_NATURAL_NAME (sym))
+  hash_index = (msymbol_hash_iw (SYMBOL_SEARCH_NAME (sym))
 		% DICT_HASHED_NBUCKETS (dict));
   sym->hash_next = buckets[hash_index];
   buckets[hash_index] = sym;
@@ -789,7 +789,7 @@ iter_name_next_linear (const char *name, struct dict_iterator *iterator)
   for (i = DICT_ITERATOR_INDEX (iterator) + 1; i < nsyms; ++i)
     {
       sym = DICT_LINEAR_SYM (dict, i);
-      if (strcmp_iw (SYMBOL_NATURAL_NAME (sym), name) == 0)
+      if (strcmp_iw (SYMBOL_SEARCH_NAME (sym), name) == 0)
 	{
 	  retval = sym;
 	  break;

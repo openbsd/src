@@ -1,6 +1,6 @@
 /* Target-dependent definitions for Solaris SPARC.
 
-   Copyright 2003 Free Software Foundation, Inc.
+   Copyright 2003, 2004 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,7 +21,8 @@
 #ifndef TM_SOL2_H
 #define TM_SOL2_H
 
-#define GDB_MULTI_ARCH GDB_MULTI_ARCH_TM
+/* Shared library support.  */
+#include "solib.h"
 
 /* The Sun compilers (Sun ONE Studio, Forte Developer, Sun WorkShop,
    SunPRO) compiler puts out 0 instead of the address in N_SO stabs.

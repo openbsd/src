@@ -35,13 +35,15 @@ set asm-arch ""
 set asm-note "empty"
 set asm-flags ""
 set link-flags "--entry _start"
+set debug-flags ""
 
 switch -glob -- [istarget] {
     "alpha*-*-*" {
         set asm-arch alpha
 	# ??? Won't work with ecoff systems like Tru64, but then we also
 	# don't have any other -g flag that creates mdebug output.
-        set asm-flags "-gdwarf2 -no-mdebug -I${srcdir}/${subdir} -I${objdir}/${subdir}"
+        set asm-flags "-no-mdebug -I${srcdir}/${subdir} -I${objdir}/${subdir}"
+	set debug-flags "-gdwarf-2"
     }
     "*arm-*-*" {
         set asm-arch arm
@@ -63,10 +65,14 @@ switch -glob -- [istarget] {
     }
     "x86_64-*-*" {
         set asm-arch x86_64
-        set asm-flags "-gdwarf2 -I${srcdir}/${subdir} -I${objdir}/${subdir}"
+        set asm-flags "-I${srcdir}/${subdir} -I${objdir}/${subdir}"
+	set debug-flags "-gdwarf-2"
     }
     "i\[3456\]86-*-*" {
         set asm-arch i386
+    }
+    "m32r*-linux*" {
+        set asm-arch m32r-linux
     }
     "m32r*-*" {
         set asm-arch m32r
@@ -74,11 +80,11 @@ switch -glob -- [istarget] {
     }
     "m6811-*-*" {
         set asm-arch m68hc11
-        set asm-flags "-mshort-double -m68hc11 -gdwarf2 --no-warn -I${srcdir}/${subdir} -I${objdir}/${subdir}"
+        set asm-flags "-mshort-double -m68hc11 -gdwarf-2 --no-warn -I${srcdir}/${subdir} -I${objdir}/${subdir}"
     }
     "m6812-*-*" {
         set asm-arch m68hc11
-        set asm-flags "-mshort-double -m68hc12 -gdwarf2 --no-warn -I${srcdir}/${subdir} -I${objdir}/${subdir}"
+        set asm-flags "-mshort-double -m68hc12 -gdwarf-2 --no-warn -I${srcdir}/${subdir} -I${objdir}/${subdir}"
     }
     "mips*-*" {
         set asm-arch mips
@@ -88,18 +94,21 @@ switch -glob -- [istarget] {
     }
     "sh*-*-*" {
         set asm-arch sh
-        set asm-flags "-gdwarf2 -I${srcdir}/${subdir} -I${objdir}/${subdir}"
+        set asm-flags "-I${srcdir}/${subdir} -I${objdir}/${subdir}"
+	set debug-flags "-gdwarf-2"
     }
     "sparc-*-*" {
         set asm-arch sparc
     }
     "sparc64-*-*" {
         set asm-arch sparc64
-        set asm-flags "-xarch=v9 -gstabs -I${srcdir}/${subdir} -I${objdir}/${subdir}"
+        set asm-flags "-xarch=v9 -I${srcdir}/${subdir} -I${objdir}/${subdir}"
+	set debug-flags "-gdwarf-2"
     }
     "xstormy16-*-*" {
         set asm-arch xstormy16
-        set asm-flags "-gdwarf2 -I${srcdir}/${subdir} -I${objdir}/${subdir}"
+        set asm-flags "-I${srcdir}/${subdir} -I${objdir}/${subdir}"
+	set debug-flags "-gdwarf-2"
     }
     "v850-*-*" {
         set asm-arch v850
@@ -110,7 +119,13 @@ switch -glob -- [istarget] {
     }
     "ia64-*-*" {
         set asm-arch ia64
-        set asm-flags "-gdwarf2 -I${srcdir}/${subdir} -I${objdir}/${subdir}"
+        set asm-flags "-I${srcdir}/${subdir} -I${objdir}/${subdir}"
+	set debug-flags "-gdwarf-2"
+    }
+    "hppa*-linux-*" {
+        set asm-arch pa
+        set asm-flags "-I${srcdir}/${subdir} -I${objdir}/${subdir}"
+	set debug-flags "-gdwarf-2"
     }
 }
 
@@ -157,13 +172,39 @@ remote_exec build "rm -f ${subdir}/note.inc"
 remote_download host ${srcdir}/${subdir}/${asm-note}.inc ${subdir}/note.inc
 
 if { "${asm-flags}" == "" } {
-    set asm-flags "-gstabs -I${srcdir}/${subdir} -I${objdir}/${subdir}"
+    set asm-flags "-I${srcdir}/${subdir} -I${objdir}/${subdir}"
+    set debug-flags "-gstabs"
 }
 
-if {[target_assemble ${srcdir}/${subdir}/${srcfile1} asmsrc1.o "${asm-flags}"] != ""} then {
+# Allow the target board to override the debug flags.
+if { [board_info $dest exists debug_flags] } then {
+    set debug-flags "[board_info $dest debug_flags]"
+}
+
+# The debug flags are in the format that gcc expects:
+# "-gdwarf-2", "-gstabs+", or "-gstabs".  To be compatible with the
+# other languages in the test suite, we accept this input format.
+# So the user can run the test suite with:
+#
+#   runtest --target_board unix/gdb:debug_flags=-gdwarf-2
+#   make check RUNTESTFLAGS="--target_board unix/gdb:debug_flags=-gdwarf-2"
+#
+# However, the GNU assembler has different spellings than gcc.
+# So I adjust the debug flags here.
+
+# The GNU assembler spells "dwarf-2" as "dwarf2".
+regsub "--" "-gdwarf-2" "${debug-flags}" "-gdwarf2" debug-flags
+
+# The GNU assembler before 2.15 did not support "stabs+".
+regsub "--" "-gstabs\[+\]" "${debug-flags}" "-gstabs" debug-flags
+
+# The GNU assembler does not support level options like "-g2" or "-g3".
+regsub "--" "-g\[0-9\]" "${debug-flags}" "" debug-flags
+
+if {[target_assemble ${srcdir}/${subdir}/${srcfile1} asmsrc1.o "${asm-flags} ${debug-flags}"] != ""} then {
      gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
 }
-if {[target_assemble ${srcdir}/${subdir}/${srcfile2} asmsrc2.o "${asm-flags}"] != ""} then {
+if {[target_assemble ${srcdir}/${subdir}/${srcfile2} asmsrc2.o "${asm-flags} ${debug-flags}"] != ""} then {
      gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
 }
 

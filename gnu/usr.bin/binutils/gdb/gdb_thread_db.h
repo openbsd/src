@@ -292,7 +292,7 @@ typedef struct td_thrinfo
   intptr_t ti_sp;			/* Unused.  */
   short int ti_flags;			/* Unused.  */
   int ti_pri;				/* Thread priority.  */
-  lwpid_t ti_lid;			/* Unused.  */
+  lwpid_t ti_lid;			/* Kernel pid for this thread.  */
   sigset_t ti_sigmask;			/* Signal mask.  */
   unsigned char ti_traceme;		/* Nonzero if event reporting
 					   enabled.  */

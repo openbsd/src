@@ -1,4 +1,4 @@
-# Copyright 1998, 1999, 2001, 2003 Free Software Foundation, Inc.
+# Copyright 1998, 1999, 2001, 2003, 2004 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -199,6 +199,40 @@ gdb_expect {
           {fail "help user command: nextwhere"}
   timeout {fail "(timeout) help user command: nextwhere"}
 }
+
+# Verify that the command parser doesn't require a space after an 'if'
+# command in a user defined function.
+#
+gdb_test_multiple "define ifnospace" "define user command: ifnospace" \
+{
+  -re "Type commands for definition of \"ifnospace\".\r\nEnd with a line saying just \"end\".\r\n>$" \
+    {
+      gdb_test_multiple "if(3<4)\nprint \"hi there\\n\"\nend\nend" "send body of ifnospace"  \
+        {
+         -re "$gdb_prompt $"\
+                 {pass "define user command: ifnospace"}
+        }
+    }
+}
+
+gdb_test "ifnospace" ".*hi there.*" "test ifnospace is parsed correctly"
+
+# Verify that the command parser doesn't require a space after an 'while'
+# command in a user defined function.
+#
+gdb_test_multiple "define whilenospace" "define user command: whilenospace" \
+{
+  -re "Type commands for definition of \"whilenospace\".\r\nEnd with a line saying just \"end\".\r\n>$" \
+    {
+      gdb_test_multiple "set \$i=1\nwhile(\$i<2)\nset \$i=2\nprint \"hi there\\n\"\nend\nend" "send body of whilenospace" \
+         {
+           -re "$gdb_prompt $" \
+                   {pass "define user command: whilenospace"}
+         }
+    }
+}
+
+gdb_test "whilenospace" ".*hi there.*" "test whilenospace is parsed correctly"
 
 # Verify that the user can "hook" a builtin command.  We choose to
 # hook the "stop" pseudo command, and we'll define it to use a user-

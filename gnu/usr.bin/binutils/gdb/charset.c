@@ -1257,7 +1257,7 @@ _initialize_charset (void)
 
   set_cmd_sfunc (new_cmd, set_host_charset_sfunc);
 
-  add_show_from_set (new_cmd, &showlist);
+  deprecated_add_show_from_set (new_cmd, &showlist);
 
 
 
@@ -1273,5 +1273,5 @@ _initialize_charset (void)
 			      &setlist);
 
   set_cmd_sfunc (new_cmd, set_target_charset_sfunc);
-  add_show_from_set (new_cmd, &showlist);
+  deprecated_add_show_from_set (new_cmd, &showlist);
 }

@@ -28,6 +28,10 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 #define KERNEL_U_SIZE kernel_u_size()
 extern int kernel_u_size (void);
 
+/* This is the amount to subtract from u.u_ar0
+   to get the offset in the core file of the register values.  */
+#define KERNEL_U_ADDR 0x0
+
 #define FETCH_INFERIOR_REGISTERS
 
 #endif /* #ifndef NM_LINUX_H */

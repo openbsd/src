@@ -38,6 +38,8 @@ set bug_id 0
 
 if { [skip_cplus_tests] } { continue }
 
+load_lib "cp-support.exp"
+
 set testfile "derivation"
 set srcfile ${testfile}.cc
 set binfile ${objdir}/${subdir}/${testfile}
@@ -61,38 +63,22 @@ if ![runto 'marker1'] then {
 gdb_test "up" ".*main.*" "up from marker1"
 
 # Print class types and values.
-# See virtfunc.exp for a discussion of ptype.
 
 # class A
 
-set re_class		"((struct|class) A \{${ws}public:|struct A \{)"
-set re_fields		"int a;${ws}int aa;"
-set re_methods		"A\\((void|)\\);${ws}int afoo\\((void|)\\);${ws}int foo\\((void|)\\);"
-set re_synth_gcc_23	"A & operator=\\(A const ?&\\);${ws}A\\(A const ?&\\);"
-set re_all_methods	"($re_methods|$re_methods${ws}$re_synth_gcc_23|$re_synth_gcc_23${ws}$re_methods)"
-
 gdb_test "print a_instance" "\\$\[0-9\]+ = \{a = 1, aa = 2\}" "print value of a_instance"
 
-gdb_test_multiple "ptype a_instance" "ptype a_instance" {
-    -re "type = $re_class${ws}$re_fields${ws}$re_methods$nl\}$nl$gdb_prompt $" {
-	pass "ptype a_instance (no synth ops)"
+cp_test_ptype_class \
+    "ptype a_instance" "" "class" "A" \
+    {
+	{ field  public "int a;" }
+	{ field  public "int aa;" }
+	{ method public "A();" }
+	{ method public "int afoo();" }
+	{ method public "int foo();" }
     }
-    -re "type = $re_class${ws}$re_fields${ws}$re_synth_gcc_23${ws}$re_methods${ws}$nl\}$nl$gdb_prompt $" {
-	pass "ptype a_instance (with synth ops)"
-    }
-    -re "type = $re_class${ws}$re_fields${ws}$re_methods${ws}$re_synth_gcc_23$nl\}$nl$gdb_prompt $" {
-	pass "ptype a_instance (with synth ops)"
-    }
-}
 
 # class D
-
-set re_class		"class D : private A, public B, protected C \{${ws}public:"
-set XX_class		"class D : private A, public B, private C \{${ws}public:"
-set re_fields		"int d;${ws}int dd;"
-set re_methods		"D\\((void|)\\);${ws}int dfoo\\((void|)\\);${ws}int foo\\((void|)\\);"
-set re_synth_gcc_23	"D & operator=\\(D const ?&\\);${ws}D\\(D const ?&\\);"
-set re_all_methods	"($re_methods|$re_methods${ws}$re_synth_gcc_23|$re_synth_gcc_23${ws}$re_methods)"
 
 gdb_test_multiple "print d_instance" "print value of d_instance" {
     -re "\\$\[0-9\]+ = \{<(class A|A)> = \{a = 1, aa = 2\}, <(class B|B)> = \{b = 3, bb = 4\}, <(class C|C)> = \{c = 5, cc = 6\}, d = 7, dd = 8\}$nl$gdb_prompt $" {
@@ -100,35 +86,24 @@ gdb_test_multiple "print d_instance" "print value of d_instance" {
     }
 }
 
-gdb_test_multiple "ptype d_instance" "ptype d_instance" {
-    -re "type = $re_class${ws}$re_fields${ws}$re_methods${ws}$re_synth_gcc_23$nl\}$nl$gdb_prompt $" {
-	pass "ptype d_instance"
+cp_test_ptype_class \
+    "ptype d_instance" "" "class" "D" \
+    {
+	{ base          "private A" }
+	{ base          "public B" }
+	{ base          "protected C" }
+	{ field  public "int d;" }
+	{ field  public "int dd;" }
+	{ method public "D();" }
+	{ method public "int dfoo();" }
+	{ method public "int foo();" }
+    } \
+    "" \
+    {
+	{ "protected C" "private C" { setup_xfail "*-*-*" "gcc/13539" } }
     }
-    -re "type = $re_class${ws}$re_fields${ws}$re_all_methods$nl\}$nl$gdb_prompt $" {
-	pass "ptype d_instance"
-    }
-    -re "type = $XX_class${ws}$re_fields${ws}$re_methods${ws}$re_synth_gcc_23$nl\}$nl$gdb_prompt $" {
-	# This is a gcc bug, gcc/13539, gdb/1498.
-	# Fixed in gcc HEAD 2004-01-13
-	setup_xfail "*-*-*" "gcc/13539"
-	fail "ptype d_instance"
-    }
-    -re "type = $XX_class${ws}$re_fields${ws}$re_all_methods$nl\}$nl$gdb_prompt $" {
-	# This is a gcc bug, gcc/13539, gdb/1498.
-	# Fixed in gcc HEAD 2004-01-13
-	setup_xfail "*-*-*" "gcc/13539"
-	fail "ptype d_instance"
-    }
-}
 
 # class E
-
-set re_class		"class E : public A, private B, protected C \{${ws}public:"
-set XX_class		"class E : public A, private B, private C \{${ws}public:"
-set re_fields		"int e;${ws}int ee;"
-set re_methods		"E\\((void|)\\);${ws}int efoo\\((void|)\\);${ws}int foo\\((void|)\\);"
-set re_synth_gcc_23	"E & operator=\\(E const ?&\\);${ws}E\\(E const ?&\\);"
-set re_all_methods	"($re_methods|$re_methods${ws}$re_synth_gcc_23|$re_synth_gcc_23${ws}$re_methods)"
 
 gdb_test_multiple "print e_instance" "print value of e_instance" {
     -re "\\$\[0-9\]+ = \{<(class A|A)> = \{a = 1, aa = 2\}, <(class B|B)> = \{b = 3, bb = 4\}, <(class C|C)> = \{c = 5, cc = 6\}, e = 9, ee = 10\}$nl$gdb_prompt $" {
@@ -136,34 +111,24 @@ gdb_test_multiple "print e_instance" "print value of e_instance" {
     }
 }
 
-gdb_test_multiple "ptype e_instance" "ptype e_instance" {
-    -re "type = $re_class${ws}$re_fields${ws}$re_methods${ws}$re_synth_gcc_23$nl\}$nl$gdb_prompt $" {
-	pass "ptype e_instance"
+cp_test_ptype_class \
+    "ptype e_instance" "" "class" "E" \
+    {
+	{ base          "public A" }
+	{ base          "private B" }
+	{ base          "protected C" }
+	{ field  public "int e;" }
+	{ field  public "int ee;" }
+	{ method public "E();" }
+	{ method public "int efoo();" }
+	{ method public "int foo();" }
+    } \
+    "" \
+    {
+	{ "protected C" "private C" { setup_xfail "*-*-*" "gcc/13539" } }
     }
-    -re "type = $re_class${ws}$re_fields${ws}$re_all_methods$nl\}$nl$gdb_prompt $" {
-	pass "ptype e_instance"
-    }
-    -re "type = $XX_class${ws}$re_fields${ws}$re_methods${ws}$re_synth_gcc_23$nl\}$nl$gdb_prompt $" {
-	# This is a gcc bug, gcc/13539, gdb/1498.
-	# Fixed in gcc HEAD 2004-01-13
-	setup_xfail "*-*-*" "gcc/13539"
-	fail "ptype e_instance"
-    }
-    -re "type = $XX_class${ws}$re_fields${ws}$re_all_methods$nl\}$nl$gdb_prompt $" {
-	# This is a gcc bug, gcc/13539, gdb/1498.
-	# Fixed in gcc HEAD 2004-01-13
-	setup_xfail "*-*-*" "gcc/13539"
-	fail "ptype e_instance"
-    }
-}
 
 # class F
-
-set re_class		"class F : private A, public B, private C \{${ws}public:"
-set re_fields		"int f;${ws}int ff;"
-set re_methods		"F\\((void|)\\);${ws}int ffoo\\((void|)\\);${ws}int foo\\((void|)\\);"
-set re_synth_gcc_23	"F & operator=\\(F const ?&\\);${ws}F\\(F const ?&\\);"
-set re_all_methods	"($re_methods|$re_methods${ws}$re_synth_gcc_23|$re_synth_gcc_23${ws}$re_methods)"
 
 gdb_test_multiple "print f_instance" "print value of f_instance" {
     -re "\\$\[0-9\]+ = \{<(class A|A)> = \{a = 1, aa = 2\}, <(class B|B)> = \{b = 3, bb = 4\}, <(class C|C)> = \{c = 5, cc = 6\}, f = 11, ff = 12\}$nl$gdb_prompt $" {
@@ -171,14 +136,18 @@ gdb_test_multiple "print f_instance" "print value of f_instance" {
     }
 }
 
-gdb_test_multiple "ptype f_instance" "ptype f_instance" {
-    -re "type = $re_class${ws}$re_fields${ws}$re_methods${ws}$re_synth_gcc_23$nl\}$nl$gdb_prompt $" {
-	pass "ptype f_instance"
+cp_test_ptype_class \
+    "ptype f_instance" "" "class" "F" \
+    {
+	{ base          "private A" }
+	{ base          "public B" }
+	{ base          "private C" }
+	{ field  public "int f;" }
+	{ field  public "int ff;" }
+	{ method public "F();" }
+	{ method public "int ffoo();" }
+	{ method public "int foo();" }
     }
-    -re "type = $re_class${ws}$re_fields${ws}$re_all_methods$nl\}$nl$gdb_prompt $" {
-	pass "ptype f_instance"
-    }
-}
 
 # Print individual fields.
 

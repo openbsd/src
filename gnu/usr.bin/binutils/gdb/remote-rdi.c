@@ -1,6 +1,6 @@
 /* GDB interface to ARM RDI library.
 
-   Copyright 1997, 1998, 1999, 2000, 2001, 2002 Free Software
+   Copyright 1997, 1998, 1999, 2000, 2001, 2002, 2004 Free Software
    Foundation, Inc.
 
    This file is part of GDB.
@@ -38,10 +38,6 @@
 #include "regcache.h"
 #include "arm-tdep.h"
 
-#ifdef USG
-#include <sys/types.h>
-#endif
-
 #include <signal.h>
 
 #include "rdi-share/ardi.h"
@@ -67,8 +63,6 @@ static void arm_rdi_resume (ptid_t pid, int step,
                             enum target_signal siggnal);
 
 static void arm_rdi_open (char *name, int from_tty);
-
-static void arm_rdi_create_inferior (char *exec_file, char *args, char **env);
 
 static void arm_rdi_close (int quitting);
 
@@ -334,7 +328,7 @@ device is attached to the remote system (e.g. /dev/ttya).");
    user types "run" after having attached.  */
 
 static void
-arm_rdi_create_inferior (char *exec_file, char *args, char **env)
+arm_rdi_create_inferior (char *exec_file, char *args, char **env, int from_tty)
 {
   int len, rslt;
   unsigned long arg1, arg2;
@@ -498,10 +492,10 @@ arm_rdi_fetch_registers (int regno)
       for (regno = 0; regno < 15; regno++)
 	{
 	  store_unsigned_integer (cookedreg, 4, rawregs[regno]);
-	  supply_register (regno, (char *) cookedreg);
+	  regcache_raw_supply (current_regcache, regno, (char *) cookedreg);
 	}
       store_unsigned_integer (cookedreg, 4, rawregs[15]);
-      supply_register (ARM_PS_REGNUM, (char *) cookedreg);
+      regcache_raw_supply (current_regcache, ARM_PS_REGNUM, (char *) cookedreg);
       arm_rdi_fetch_registers (ARM_PC_REGNUM);
     }
   else
@@ -513,7 +507,7 @@ arm_rdi_fetch_registers (int regno)
       else if (regno < 0 || regno > 15)
 	{
 	  rawreg = 0;
-	  supply_register (regno, (char *) &rawreg);
+	  regcache_raw_supply (current_regcache, regno, (char *) &rawreg);
 	  return;
 	}
       else
@@ -525,7 +519,7 @@ arm_rdi_fetch_registers (int regno)
 	  printf_filtered ("RDI_CPUread: %s\n", rdi_error_message (rslt));
 	}
       store_unsigned_integer (cookedreg, 4, rawreg);
-      supply_register (regno, (char *) cookedreg);
+      regcache_raw_supply (current_regcache, regno, (char *) cookedreg);
     }
 }
 
@@ -901,7 +895,7 @@ Specify the serial device it is connected to (e.g. /dev/ttya).";
   arm_rdi_ops.to_fetch_registers = arm_rdi_fetch_registers;
   arm_rdi_ops.to_store_registers = arm_rdi_store_registers;
   arm_rdi_ops.to_prepare_to_store = arm_rdi_prepare_to_store;
-  arm_rdi_ops.to_xfer_memory = arm_rdi_xfer_memory;
+  arm_rdi_ops.deprecated_xfer_memory = arm_rdi_xfer_memory;
   arm_rdi_ops.to_files_info = arm_rdi_files_info;
   arm_rdi_ops.to_insert_breakpoint = arm_rdi_insert_breakpoint;
   arm_rdi_ops.to_remove_breakpoint = arm_rdi_remove_breakpoint;
@@ -997,24 +991,24 @@ _initialize_remote_rdi (void)
 	   "Withough an argument, it will display current state.\n",
 	   &maintenancelist);
 
-  add_setshow_boolean_cmd
-    ("rdiromatzero", no_class, &rom_at_zero,
-     "Set target has ROM at addr 0.\n"
-     "A true value disables vector catching, false enables vector catching.\n"
-     "This is evaluated at the time the 'target rdi' command is executed\n",
-     "Show if target has ROM at addr 0.\n",
-     NULL, NULL,
-     &setlist, &showlist);
+  add_setshow_boolean_cmd ("rdiromatzero", no_class, &rom_at_zero, "\
+Set target has ROM at addr 0.", "\
+Show if target has ROM at addr 0.", "\
+A true value disables vector catching, false enables vector catching.\n\
+This is evaluated at the time the 'target rdi' command is executed.", "\
+Target has ROM at addr 0 is %s.",
+			   NULL, NULL,
+			   &setlist, &showlist);
 
-  add_setshow_boolean_cmd
-    ("rdiheartbeat", no_class, &rdi_heartbeat,
-     "Set enable for ADP heartbeat packets.\n"
-     "I don't know why you would want this. If you enable them,\n"
-     "it will confuse ARM and EPI JTAG interface boxes as well\n"
-     "as the Angel Monitor.\n",
-     "Show enable for ADP heartbeat packets.\n",
-     NULL, NULL,
-     &setlist, &showlist);
+  add_setshow_boolean_cmd ("rdiheartbeat", no_class, &rdi_heartbeat, "\
+Set enable for ADP heartbeat packets.", "\
+Show enable for ADP heartbeat packets.", "\
+I don't know why you would want this. If you enable them,\n\
+it will confuse ARM and EPI JTAG interface boxes as well\n\
+as the Angel Monitor.", "\
+Enable for ADP heartbeat packets is %s.",
+			   NULL, NULL,
+			   &setlist, &showlist);
 }
 
 /* A little dummy to make linking with the library succeed. */

@@ -51,7 +51,6 @@ struct mi_interp
 /* These are the interpreter setup, etc. functions for the MI interpreter */
 static void mi_execute_command_wrapper (char *cmd);
 static void mi_command_loop (int mi_version);
-static char *mi_input (char *);
 
 /* These are hooks that we put in place while doing interpreter_exec
    so we can report interesting things that happened "behind the mi's
@@ -99,22 +98,19 @@ mi_interpreter_resume (void *data)
 
   gdb_setup_readline ();
 
-  if (event_loop_p)
-    {
-      /* These overwrite some of the initialization done in
-         _intialize_event_loop. */
-      call_readline = gdb_readline2;
-      input_handler = mi_execute_command_wrapper;
-      add_file_handler (input_fd, stdin_event_handler, 0);
-      async_command_editing_p = 0;
-      /* FIXME: This is a total hack for now.  PB's use of the MI implicitly
-         relies on a bug in the async support which allows asynchronous
-         commands to leak through the commmand loop.  The bug involves
-         (but is not limited to) the fact that sync_execution was
-         erroneously initialized to 0.  Duplicate by initializing it
-         thus here... */
-      sync_execution = 0;
-    }
+  /* These overwrite some of the initialization done in
+     _intialize_event_loop.  */
+  call_readline = gdb_readline2;
+  input_handler = mi_execute_command_wrapper;
+  add_file_handler (input_fd, stdin_event_handler, 0);
+  async_command_editing_p = 0;
+  /* FIXME: This is a total hack for now.  PB's use of the MI
+     implicitly relies on a bug in the async support which allows
+     asynchronous commands to leak through the commmand loop.  The bug
+     involves (but is not limited to) the fact that sync_execution was
+     erroneously initialized to 0.  Duplicate by initializing it thus
+     here...  */
+  sync_execution = 0;
 
   gdb_stdout = mi->out;
   /* Route error and log output through the MI */
@@ -127,17 +123,17 @@ mi_interpreter_resume (void *data)
      be a better way of doing this... */
   clear_interpreter_hooks ();
 
-  show_load_progress = mi_load_progress;
+  deprecated_show_load_progress = mi_load_progress;
 
   /* If we're _the_ interpreter, take control. */
   if (current_interp_named_p (INTERP_MI1))
-    command_loop_hook = mi1_command_loop;
+    deprecated_command_loop_hook = mi1_command_loop;
   else if (current_interp_named_p (INTERP_MI2))
-    command_loop_hook = mi2_command_loop;
+    deprecated_command_loop_hook = mi2_command_loop;
   else if (current_interp_named_p (INTERP_MI3))
-    command_loop_hook = mi3_command_loop;
+    deprecated_command_loop_hook = mi3_command_loop;
   else
-    command_loop_hook = mi2_command_loop;
+    deprecated_command_loop_hook = mi2_command_loop;
 
   return 1;
 }
@@ -194,25 +190,21 @@ mi_cmd_interpreter_exec (char *command, char **argv, int argc)
 
   if (argc < 2)
     {
-      xasprintf (&mi_error_message,
-		 "mi_cmd_interpreter_exec: Usage: -interpreter-exec interp command");
+      mi_error_message = xstrprintf ("mi_cmd_interpreter_exec: Usage: -interpreter-exec interp command");
       return MI_CMD_ERROR;
     }
 
   interp_to_use = interp_lookup (argv[0]);
   if (interp_to_use == NULL)
     {
-      xasprintf (&mi_error_message,
-		 "mi_cmd_interpreter_exec: could not find interpreter \"%s\"",
-		 argv[0]);
+      mi_error_message = xstrprintf ("mi_cmd_interpreter_exec: could not find interpreter \"%s\"", argv[0]);
       return MI_CMD_ERROR;
     }
 
   if (!interp_exec_p (interp_to_use))
     {
-      xasprintf (&mi_error_message,
-		 "mi_cmd_interpreter_exec: interpreter \"%s\" does not support command execution",
-		 argv[0]);
+      mi_error_message = xstrprintf ("mi_cmd_interpreter_exec: interpreter \"%s\" does not support command execution",
+				     argv[0]);
       return MI_CMD_ERROR;
     }
 
@@ -246,7 +238,7 @@ mi_cmd_interpreter_exec (char *command, char **argv, int argc)
       sync_execution = 1;
       if (interp_exec (interp_to_use, argv[i]) < 0)
 	{
-	  mi_error_last_message ();
+	  mi_error_message = error_last_message ();
 	  result = MI_CMD_ERROR;
 	  break;
 	}
@@ -282,13 +274,13 @@ mi_cmd_interpreter_exec (char *command, char **argv, int argc)
 static void
 mi_insert_notify_hooks (void)
 {
-  query_hook = mi_interp_query_hook;
+  deprecated_query_hook = mi_interp_query_hook;
 }
 
 static void
 mi_remove_notify_hooks (void)
 {
-  query_hook = NULL;
+  deprecated_query_hook = NULL;
 }
 
 static int
@@ -341,27 +333,27 @@ mi_command_loop (int mi_version)
   uiout = mi_out_new (mi_version);
   /* HACK: Override any other interpreter hooks.  We need to create a
      real event table and pass in that. */
-  init_ui_hook = 0;
-  /* command_loop_hook = 0; */
-  print_frame_info_listing_hook = 0;
-  query_hook = 0;
-  warning_hook = 0;
-  create_breakpoint_hook = 0;
-  delete_breakpoint_hook = 0;
-  modify_breakpoint_hook = 0;
-  interactive_hook = 0;
-  registers_changed_hook = 0;
-  readline_begin_hook = 0;
-  readline_hook = 0;
-  readline_end_hook = 0;
-  register_changed_hook = 0;
-  memory_changed_hook = 0;
-  context_hook = 0;
-  target_wait_hook = 0;
-  call_command_hook = 0;
-  error_hook = 0;
-  error_begin_hook = 0;
-  show_load_progress = mi_load_progress;
+  deprecated_init_ui_hook = 0;
+  /* deprecated_command_loop_hook = 0; */
+  deprecated_print_frame_info_listing_hook = 0;
+  deprecated_query_hook = 0;
+  deprecated_warning_hook = 0;
+  deprecated_create_breakpoint_hook = 0;
+  deprecated_delete_breakpoint_hook = 0;
+  deprecated_modify_breakpoint_hook = 0;
+  deprecated_interactive_hook = 0;
+  deprecated_registers_changed_hook = 0;
+  deprecated_readline_begin_hook = 0;
+  deprecated_readline_hook = 0;
+  deprecated_readline_end_hook = 0;
+  deprecated_register_changed_hook = 0;
+  deprecated_memory_changed_hook = 0;
+  deprecated_context_hook = 0;
+  deprecated_target_wait_hook = 0;
+  deprecated_call_command_hook = 0;
+  deprecated_error_hook = 0;
+  deprecated_error_begin_hook = 0;
+  deprecated_show_load_progress = mi_load_progress;
 #endif
   /* Turn off 8 bit strings in quoted output.  Any character with the
      high bit set is printed using C's octal format. */
@@ -369,16 +361,7 @@ mi_command_loop (int mi_version)
   /* Tell the world that we're alive */
   fputs_unfiltered ("(gdb) \n", raw_stdout);
   gdb_flush (raw_stdout);
-  if (!event_loop_p)
-    simplified_command_loop (mi_input, mi_execute_command);
-  else
-    start_event_loop ();
-}
-
-static char *
-mi_input (char *buf)
-{
-  return gdb_readline (NULL);
+  start_event_loop ();
 }
 
 extern initialize_file_ftype _initialize_mi_interp; /* -Wmissing-prototypes */

@@ -14494,7 +14494,7 @@ Wed Apr 24 14:22:21 2002  Andrew Cagney  <cagney@redhat.com>
 	* rs6000-tdep.c (rs6000_register_virtual_type): Change type of
 	AltiVec register to new builtin type.
 
-2001-01-15  Daniel Jacobowitz  <drow@mvista.com>
+2002-01-15  Daniel Jacobowitz  <drow@mvista.com>
 
 	* stabsread.c (read_type): Pass dbx_lookup_type (typenums)
 	to make_cv_type.

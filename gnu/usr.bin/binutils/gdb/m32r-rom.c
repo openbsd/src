@@ -1,7 +1,8 @@
 /* Remote debugging interface to m32r and mon2000 ROM monitors for GDB, 
    the GNU debugger.
-   Copyright 1996, 1997, 1998, 1999, 2000, 2001
-   Free Software Foundation, Inc.
+
+   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2004 Free Software
+   Foundation, Inc.
 
    Adapted by Michael Snyder of Cygnus Support.
 
@@ -319,7 +320,7 @@ init_m32r_cmds (void)
   m32r_cmds.getreg.term_cmd = NULL;	/* getreg.term_cmd */
   m32r_cmds.dump_registers = ".reg\r";	/* dump_registers */
   m32r_cmds.register_pattern = "\\(\\w+\\) += \\([0-9a-fA-F]+\\b\\)";	/* register_pattern */
-  m32r_cmds.supply_register = m32r_supply_register;	/* supply_register */
+  m32r_cmds.supply_register = m32r_supply_register;
   m32r_cmds.load_routine = NULL;	/* load_routine (defaults to SRECs) */
   m32r_cmds.load = NULL;	/* download command */
   m32r_cmds.loadresp = NULL;	/* load response */
@@ -379,7 +380,7 @@ init_mon2000_cmds (void)
   mon2000_cmds.getreg.term_cmd = NULL;	/* getreg.term_cmd */
   mon2000_cmds.dump_registers = ".reg\r";	/* dump_registers */
   mon2000_cmds.register_pattern = "\\(\\w+\\) += \\([0-9a-fA-F]+\\b\\)";	/* register_pattern */
-  mon2000_cmds.supply_register = m32r_supply_register;	/* supply_register */
+  mon2000_cmds.supply_register = m32r_supply_register;
   mon2000_cmds.load_routine = NULL;	/* load_routine (defaults to SRECs) */
   mon2000_cmds.load = NULL;	/* download command */
   mon2000_cmds.loadresp = NULL;	/* load response */
@@ -557,22 +558,25 @@ Specify the serial device it is connected to (e.g. /dev/ttya).";
   mon2000_ops.to_open = mon2000_open;
   add_target (&mon2000_ops);
 
-  add_setshow_cmd ("download-path", class_obscure,
-		   var_string, &download_path,
-		   "Set the default path for downloadable SREC files.",
-		   "Show the default path for downloadable SREC files.",
+  add_setshow_string_cmd ("download-path", class_obscure, &download_path, "\
+Set the default path for downloadable SREC files.", "\
+Show the default path for downloadable SREC files.", "\
+Determines the default path for downloadable SREC files.", "\
+The default path for downloadable SREC files is %s.",
 		   NULL, NULL, &setlist, &showlist);
 
-  add_setshow_cmd ("board-address", class_obscure,
-		   var_string, &board_addr,
-		   "Set IP address for M32R-EVA target board.",
-		   "Show IP address for M32R-EVA target board.",
+  add_setshow_string_cmd ("board-address", class_obscure, &board_addr, "\
+Set IP address for M32R-EVA target board.", "\
+Show IP address for M32R-EVA target board.", "\
+Determine the IP address for M32R-EVA target board.", "\
+IP address for M32R-EVA target board is %s",
 		   NULL, NULL, &setlist, &showlist);
 
-  add_setshow_cmd ("server-address", class_obscure,
-		   var_string, &server_addr,
-		   "Set IP address for download server (GDB's host computer).",
-		   "Show IP address for download server (GDB's host computer).",
+  add_setshow_string_cmd ("server-address", class_obscure, &server_addr, "\
+Set IP address for download server (GDB's host computer).", "\
+Show IP address for download server (GDB's host computer).", "\
+Determine the IP address for download server (GDB's host computer).", "\
+IP address for download server (GDB's host computer) is %s.",
 		   NULL, NULL, &setlist, &showlist);
 
   add_com ("upload", class_obscure, m32r_upload_command,

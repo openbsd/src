@@ -134,7 +134,7 @@ mi_cmd_break_insert (char *command, char **argv, int argc)
   address = argv[optind];
 
   /* Now we have what we need, let's insert the breakpoint! */
-  old_hooks = set_gdb_event_hooks (&breakpoint_hooks);
+  old_hooks = deprecated_set_gdb_event_hooks (&breakpoint_hooks);
   switch (type)
     {
     case REG_BP:
@@ -160,7 +160,7 @@ mi_cmd_break_insert (char *command, char **argv, int argc)
       internal_error (__FILE__, __LINE__,
 		      "mi_cmd_break_insert: Bad switch.");
     }
-  set_gdb_event_hooks (old_hooks);
+  deprecated_set_gdb_event_hooks (old_hooks);
 
   if (rc == GDB_RC_FAIL)
     return MI_CMD_CAUGHT_ERROR;

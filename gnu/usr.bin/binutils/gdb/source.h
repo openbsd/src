@@ -27,6 +27,9 @@ struct symtab;
    negative number for error.  */
 extern int open_source_file (struct symtab *s);
 
+extern char* psymtab_to_fullname (struct partial_symtab *ps);
+extern char* symtab_to_fullname (struct symtab *s);
+
 /* Create and initialize the table S->line_charpos that records the
    positions of the lines in the source file, which is assumed to be
    open on descriptor DESC.  All set S->nlines to the number of such

@@ -1102,7 +1102,7 @@ extern initialize_file_ftype _initialize_pascal_valprint; /* -Wmissing-prototype
 void
 _initialize_pascal_valprint (void)
 {
-  add_show_from_set
+  deprecated_add_show_from_set
     (add_set_cmd ("pascal_static-members", class_support, var_boolean,
 		  (char *) &pascal_static_field_print,
 		  "Set printing of pascal static members.",

@@ -53,7 +53,7 @@ int main() {
 
 void *thread_function(void *arg) {
     int my_number =  (long) arg;
-    int *myp = &args[my_number];
+    int *myp = (int *) &args[my_number];
 
     /* Don't run forever.  Run just short of it :)  */
     while (*myp > 0)

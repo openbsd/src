@@ -107,7 +107,11 @@ struct target_so_ops
     
   };
 
+/* Free the memory associated with a (so_list *).  */
 void free_so (struct so_list *so);
+
+/* Return address of first so_list entry in master shared object list.  */
+struct so_list *master_so_list (void);
 
 /* Find solib binary file and open it.  */
 extern int solib_open (char *in_pathname, char **found_pathname);

@@ -1,7 +1,7 @@
 /* Dynamic architecture support for GDB, the GNU debugger.
 
-   Copyright 1998, 1999, 2000, 2001, 2002, 2003 Free Software Foundation,
-   Inc.
+   Copyright 1998, 1999, 2000, 2001, 2002, 2003, 2004 Free Software
+   Foundation, Inc.
 
    This file is part of GDB.
 
@@ -30,7 +30,7 @@
 #include "regcache.h"
 #include "gdb_assert.h"
 #include "sim-regno.h"
-
+#include "gdbcore.h"
 #include "osabi.h"
 
 #include "version.h"
@@ -60,13 +60,46 @@ legacy_store_return_value (struct type *type, struct regcache *regcache,
   DEPRECATED_STORE_RETURN_VALUE (type, b);
 }
 
-
 int
 always_use_struct_convention (int gcc_p, struct type *value_type)
 {
   return 1;
 }
 
+enum return_value_convention
+legacy_return_value (struct gdbarch *gdbarch, struct type *valtype,
+		     struct regcache *regcache, void *readbuf,
+		     const void *writebuf)
+{
+  /* NOTE: cagney/2004-06-13: The gcc_p parameter to
+     USE_STRUCT_CONVENTION isn't used.  */
+  int struct_return = ((TYPE_CODE (valtype) == TYPE_CODE_STRUCT
+			|| TYPE_CODE (valtype) == TYPE_CODE_UNION
+			|| TYPE_CODE (valtype) == TYPE_CODE_ARRAY)
+		       && DEPRECATED_USE_STRUCT_CONVENTION (0, valtype));
+
+  if (writebuf != NULL)
+    {
+      gdb_assert (!struct_return);
+      /* NOTE: cagney/2004-06-13: See stack.c:return_command.  Old
+	 architectures don't expect STORE_RETURN_VALUE to handle small
+	 structures.  Should not be called with such types.  */
+      gdb_assert (TYPE_CODE (valtype) != TYPE_CODE_STRUCT
+		  && TYPE_CODE (valtype) != TYPE_CODE_UNION);
+      STORE_RETURN_VALUE (valtype, regcache, writebuf);
+    }
+
+  if (readbuf != NULL)
+    {
+      gdb_assert (!struct_return);
+      EXTRACT_RETURN_VALUE (valtype, regcache, readbuf);
+    }
+
+  if (struct_return)
+    return RETURN_VALUE_STRUCT_CONVENTION;
+  else
+    return RETURN_VALUE_REGISTER_CONVENTION;
+}
 
 int
 legacy_register_sim_regno (int regnum)
@@ -82,12 +115,6 @@ legacy_register_sim_regno (int regnum)
     return regnum;
   else
     return LEGACY_SIM_REGNO_IGNORE;
-}
-
-int
-generic_return_value_on_stack_not (struct type *type)
-{
-  return 0;
 }
 
 CORE_ADDR
@@ -119,13 +146,6 @@ generic_in_function_epilogue_p (struct gdbarch *gdbarch, CORE_ADDR pc)
 {
   return 0;
 }
-
-#if defined (CALL_DUMMY)
-LONGEST legacy_call_dummy_words[] = CALL_DUMMY;
-#else
-LONGEST legacy_call_dummy_words[1];
-#endif
-int legacy_sizeof_call_dummy_words = sizeof (legacy_call_dummy_words);
 
 void
 generic_remote_translate_xfer_address (struct gdbarch *gdbarch,
@@ -208,17 +228,6 @@ no_op_reg_to_regnum (int reg)
   return reg;
 }
 
-CORE_ADDR
-deprecated_init_frame_pc_default (int fromleaf, struct frame_info *prev)
-{
-  if (fromleaf && DEPRECATED_SAVED_PC_AFTER_CALL_P ())
-    return DEPRECATED_SAVED_PC_AFTER_CALL (get_next_frame (prev));
-  else if (get_next_frame (prev) != NULL)
-    return DEPRECATED_FRAME_SAVED_PC (get_next_frame (prev));
-  else
-    return read_pc ();
-}
-
 void
 default_elf_make_msymbol_special (asymbol *sym, struct minimal_symbol *msym)
 {
@@ -269,13 +278,7 @@ int
 generic_register_size (int regnum)
 {
   gdb_assert (regnum >= 0 && regnum < NUM_REGS + NUM_PSEUDO_REGS);
-  if (gdbarch_register_type_p (current_gdbarch))
-    return TYPE_LENGTH (gdbarch_register_type (current_gdbarch, regnum));
-  else
-    /* FIXME: cagney/2003-03-01: Once all architectures implement
-       gdbarch_register_type(), this entire function can go away.  It
-       is made obsolete by register_size().  */
-    return TYPE_LENGTH (DEPRECATED_REGISTER_VIRTUAL_TYPE (regnum)); /* OK */
+  return TYPE_LENGTH (gdbarch_register_type (current_gdbarch, regnum));
 }
 
 /* Assume all registers are adjacent.  */
@@ -298,41 +301,17 @@ generic_register_byte (int regnum)
 int
 legacy_pc_in_sigtramp (CORE_ADDR pc, char *name)
 {
-#if !defined (IN_SIGTRAMP)
-  if (SIGTRAMP_START_P ())
-    return (pc) >= SIGTRAMP_START (pc) && (pc) < SIGTRAMP_END (pc);
-  else
-    return name && strcmp ("_sigtramp", name) == 0;
+#if defined (DEPRECATED_IN_SIGTRAMP)
+  return DEPRECATED_IN_SIGTRAMP (pc, name);
 #else
-  return IN_SIGTRAMP (pc, name);
+  return name && strcmp ("_sigtramp", name) == 0;
 #endif
 }
 
 int
-legacy_convert_register_p (int regnum, struct type *type)
+generic_convert_register_p (int regnum, struct type *type)
 {
-  return (DEPRECATED_REGISTER_CONVERTIBLE_P ()
-	  && DEPRECATED_REGISTER_CONVERTIBLE (regnum));
-}
-
-void
-legacy_register_to_value (struct frame_info *frame, int regnum,
-			  struct type *type, void *to)
-{
-  char from[MAX_REGISTER_SIZE];
-  get_frame_register (frame, regnum, from);
-  DEPRECATED_REGISTER_CONVERT_TO_VIRTUAL (regnum, type, from, to);
-}
-
-void
-legacy_value_to_register (struct frame_info *frame, int regnum,
-			  struct type *type, const void *tmp)
-{
-  char to[MAX_REGISTER_SIZE];
-  char *from = alloca (TYPE_LENGTH (type));
-  memcpy (from, from, TYPE_LENGTH (type));
-  DEPRECATED_REGISTER_CONVERT_TO_RAW (type, regnum, from, to);
-  put_frame_register (frame, regnum, to);
+  return 0;
 }
 
 int

@@ -110,7 +110,7 @@ user_reg_add (struct gdbarch *gdbarch, const char *name,
       /* ULGH, called during architecture initialization.  Patch
          things up.  */
       regs = user_regs_init (gdbarch);
-      set_gdbarch_data (gdbarch, user_regs_data, regs);
+      deprecated_set_gdbarch_data (gdbarch, user_regs_data, regs);
     }
   append_user_reg (regs, name, read,
 		   GDBARCH_OBSTACK_ZALLOC (gdbarch, struct user_reg));
@@ -207,5 +207,5 @@ extern initialize_file_ftype _initialize_user_regs; /* -Wmissing-prototypes */
 void
 _initialize_user_regs (void)
 {
-  user_regs_data = register_gdbarch_data (user_regs_init);
+  user_regs_data = gdbarch_data_register_post_init (user_regs_init);
 }

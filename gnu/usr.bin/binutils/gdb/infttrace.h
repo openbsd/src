@@ -1,6 +1,6 @@
 /* Low level Unix child interface to ttrace, for GDB when running under HP-UX.
 
-   Copyright 2003 Free Software Foundation, Inc.
+   Copyright 2003, 2004 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,7 +22,14 @@
 #ifndef INFTTRACE_H
 #define INFTTRACE_H
 
+enum target_waitkind;
+
 extern int parent_attach_all (int, PTRACE_ARG3_TYPE, int);
 extern pid_t hppa_switched_threads (pid_t gdb_pid);
+extern int hpux_has_forked (int pid, int *childpid);
+extern int hpux_has_vforked (int pid, int *childpid);
+extern int hpux_has_execd (int pid, char **execd_pathname);
+extern int hpux_has_syscall_event (int pid, enum target_waitkind *kind,
+				   int *syscall_id);
 
 #endif

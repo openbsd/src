@@ -427,8 +427,8 @@ add_dump_command (char *name, void (*func) (char *args, char *mode),
   set_cmd_context (c, d);
   c->func = call_dump_func;
 
-  /* Replace "Dump " at start of docstring with "Append "
-     (borrowed from add_show_from_set).  */
+  /* Replace "Dump " at start of docstring with "Append " (borrowed
+     from deprecated_add_show_from_set).  */
   if (   c->doc[0] == 'W' 
       && c->doc[1] == 'r' 
       && c->doc[2] == 'i'

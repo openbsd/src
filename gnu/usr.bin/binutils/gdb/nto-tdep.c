@@ -1,6 +1,6 @@
 /* nto-tdep.c - general QNX Neutrino target functionality.
 
-   Copyright 2003 Free Software Foundation, Inc.
+   Copyright 2003, 2004 Free Software Foundation, Inc.
 
    Contributed by QNX Software Systems Ltd.
 
@@ -115,7 +115,7 @@ nto_find_and_open_solib (char *solib, unsigned o_flags, char **temp_pathname)
   sprintf (buf, path_fmt, arch_path, arch_path, arch_path, arch_path,
 	   arch_path);
 
-  return openp (buf, 1, solib, o_flags, 0, temp_pathname);
+  return openp (buf, OPF_TRY_CWD_FIRST, solib, o_flags, 0, temp_pathname);
 }
 
 void
@@ -306,12 +306,15 @@ static struct core_fns regset_core_fns = {
 void
 _initialize_nto_tdep (void)
 {
-  add_setshow_cmd ("nto-debug", class_maintenance, var_zinteger,
-		   &nto_internal_debugging, "Set QNX NTO internal debugging.\n\
+  add_setshow_zinteger_cmd ("nto-debug", class_maintenance,
+			    &nto_internal_debugging, "\
+Set QNX NTO internal debugging.", "\
+Show QNX NTO internal debugging.", "\
 When non-zero, nto specific debug info is\n\
 displayed. Different information is displayed\n\
-for different positive values.", "Show QNX NTO internal debugging.\n",
-		   NULL, NULL, &setdebuglist, &showdebuglist);
+for different positive values.", "\
+QNX NTO internal debugging is %s.",
+			    NULL, NULL, &setdebuglist, &showdebuglist);
 
   /* We use SIG45 for pulses, or something, so nostop, noprint
      and pass them.  */
@@ -333,5 +336,5 @@ for different positive values.", "Show QNX NTO internal debugging.\n",
 #endif
 
   /* Register core file support.  */
-  add_core_fns (&regset_core_fns);
+  deprecated_add_core_fns (&regset_core_fns);
 }

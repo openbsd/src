@@ -1,6 +1,6 @@
 /* Definitions for a frame unwinder, for GDB, the GNU debugger.
 
-   Copyright 2003 Free Software Foundation, Inc.
+   Copyright 2003, 2004 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,6 +22,7 @@
 #if !defined (FRAME_UNWIND_H)
 #define FRAME_UNWIND_H 1
 
+struct frame_data;
 struct frame_info;
 struct frame_id;
 struct frame_unwind;
@@ -41,6 +42,14 @@ struct regcache;
    THIS frame's prologue cache can be used to cache information such
    as where this frame's prologue stores the previous frame's
    registers.  */
+
+/* Given the NEXT frame, take a wiff of THIS frame's registers (namely
+   the PC and attributes) and if SELF is the applicable unwinder,
+   return non-zero.  Possibly also initialize THIS_PROLOGUE_CACHE.  */
+
+typedef int (frame_sniffer_ftype) (const struct frame_unwind *self,
+				   struct frame_info *next_frame,
+				   void **this_prologue_cache);
 
 /* Assuming the frame chain: (outer) prev <-> this <-> next (inner);
    use the NEXT frame, and its register unwind method, to determine
@@ -118,7 +127,18 @@ struct frame_unwind
      here?  */
   frame_this_id_ftype *this_id;
   frame_prev_register_ftype *prev_register;
+  const struct frame_data *unwind_data;
+  frame_sniffer_ftype *sniffer;
 };
+
+/* Register a frame unwinder, _prepending_ it to the front of the
+   search list (so it is sniffed before previously registered
+   unwinders).  By using a prepend, later calls can install unwinders
+   that override earlier calls.  This allows, for instance, an OSABI
+   to install a a more specific sigtramp unwinder that overrides the
+   traditional brute-force unwinder.  */
+extern void frame_unwind_prepend_unwinder (struct gdbarch *gdbarch,
+					   const struct frame_unwind *unwinder);
 
 /* Given the NEXT frame, take a wiff of THIS frame's registers (namely
    the PC and attributes) and if it is the applicable unwinder return
@@ -134,8 +154,9 @@ extern void frame_unwind_append_sniffer (struct gdbarch *gdbarch,
 					 frame_unwind_sniffer_ftype *sniffer);
 
 /* Iterate through the next frame's sniffers until one returns with an
-   unwinder implementation.  */
+   unwinder implementation.  Possibly initialize THIS_CACHE.  */
 
-extern const struct frame_unwind *frame_unwind_find_by_frame (struct frame_info *next_frame);
+extern const struct frame_unwind *frame_unwind_find_by_frame (struct frame_info *next_frame,
+							      void **this_cache);
 
 #endif

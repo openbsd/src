@@ -52,12 +52,6 @@ extern unsigned long amd64_linux_dr_get_status (void);
   amd64_linux_dr_get_status ()
 
 
-/* Type of the third argument to the `ptrace' system call.  */
-#define PTRACE_ARG3_TYPE long
-
-/* Type of the fourth argument to the `ptrace' system call.  */
-#define PTRACE_XFER_TYPE long
-
 /* Override copies of {fetch,store}_inferior_registers in `infptrace.c'.  */
 #define FETCH_INFERIOR_REGISTERS
 

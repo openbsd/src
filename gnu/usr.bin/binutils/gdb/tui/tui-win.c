@@ -301,7 +301,7 @@ tui_command (char *args, int from_tty)
 }
 
 struct cmd_list_element **
-tui_get_cmd_list ()
+tui_get_cmd_list (void)
 {
   if (tuilist == 0)
     add_prefix_cmd ("tui", class_tui, tui_command,
@@ -379,7 +379,7 @@ Usage: w <#lines>\n");
      "ascii           use ascii characters + - | for the border\n"
      "acs             use the Alternate Character Set\n",
      &tui_setlist);
-  add_show_from_set (c, &tui_showlist);
+  deprecated_add_show_from_set (c, &tui_showlist);
 
   c = add_set_enum_cmd
     ("border-mode", no_class,
@@ -394,7 +394,7 @@ Usage: w <#lines>\n");
      "bold            use extra bright or bold\n"
      "bold-standout   use extra bright or bold with standout mode\n",
      &tui_setlist);
-  add_show_from_set (c, &tui_showlist);
+  deprecated_add_show_from_set (c, &tui_showlist);
 
   c = add_set_enum_cmd
     ("active-border-mode", no_class,
@@ -409,7 +409,7 @@ Usage: w <#lines>\n");
      "bold            use extra bright or bold\n"
      "bold-standout   use extra bright or bold with standout mode\n",
      &tui_setlist);
-  add_show_from_set (c, &tui_showlist);
+  deprecated_add_show_from_set (c, &tui_showlist);
 }
 
 /* Update gdb's knowledge of the terminal size.  */

@@ -472,8 +472,8 @@ fetch_bitmapped_register (int regno, struct bit_field *bf)
 
   /* supply register stores in target byte order, so swap here */
 
-  store_unsigned_integer (regbuf, DEPRECATED_REGISTER_RAW_SIZE (regno), val);
-  supply_register (regno, regbuf);
+  store_unsigned_integer (regbuf, register_size (current_gdbarch, regno), val);
+  regcache_raw_supply (current_regcache, regno, regbuf);
 
 }
 

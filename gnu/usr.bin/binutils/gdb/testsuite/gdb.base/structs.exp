@@ -218,11 +218,8 @@ proc test_struct_calls { n } {
     set tests "call $n ${testfile}"
 
     # Call fun${n}, checking the printed return-value.
-    setup_kfails structs-*tld* i*86-*-* gdb/1447
-    setup_kfails structs-*tld* sparc64-*-* gdb/1447
-    setup_kfails structs-*tld* sparc*-*-solaris2* gdb/1447
-    setup_kfails structs-*tld* x86_64-*-* gdb/1447
-    setup_compiler_kfails structs-tc-* gcc-3-3 "DWARF 2" i*86-*-* gdb/1455
+    setup_compiler_kfails structs-tc-tll gcc-3-3-* "DWARF 2" i*86-*-* gdb/1455
+    setup_compiler_kfails structs-tc-td gcc-3-3-* "DWARF 2" i*86-*-* gdb/1455
     gdb_test "p/c fun${n}()"  "[foo ${n}]" "p/c fun<n>(); ${tests}"
 
     # Check that GDB can always pass a structure to an inferior function.
@@ -233,11 +230,8 @@ proc test_struct_calls { n } {
     # examining that global to confirm that the value is as expected.
 
     gdb_test "call Fun${n}(foo${n})" "" "call Fun<n>(foo<n>); ${tests}"
-    setup_kfails structs-*tld* i*86-*-* gdb/1447
-    setup_kfails structs-*tld* sparc64-*-* gdb/1447
-    setup_kfails structs-*tld* sparc*-*-solaris2* gdb/1447
-    setup_kfails structs-*tld* x86_64-*-* gdb/1447
-    setup_compiler_kfails structs-tc-* gcc-3-3 "DWARF 2" i*86-*-* gdb/1455
+    setup_compiler_kfails structs-tc-tll gcc-3-3-* "DWARF 2" i*86-*-* gdb/1455
+    setup_compiler_kfails structs-tc-td gcc-3-3-* "DWARF 2" i*86-*-* gdb/1455
     gdb_test "p/c L${n}" [foo ${n}] "p/c L<n>; ${tests}"
 }
 
@@ -290,10 +284,6 @@ proc test_struct_returns { n } {
 	    "advance to fun<n> for return; ${tests}"
 
     # Check that the program invalidated the relevant global.
-    setup_kfails structs-tld i*86-*-* gdb/1447
-    setup_kfails structs-tld sparc64-*-* gdb/1447
-    setup_kfails structs-tld sparc*-*-solaris2* gdb/1447
-    setup_kfails structs-tld x86_64-*-* gdb/1447
     gdb_test "p/c L${n}" " = [zed $n]" "zed L<n> for return; ${tests}"
 
     # Force the "return".  This checks that the return is always
@@ -304,21 +294,21 @@ proc test_struct_returns { n } {
 
     # The test is writen so that it only reports one FAIL/PASS for the
     # entire operation.  The value returned is checked further down.
-    # "return_value_unknown", if non-empty, records why GDB realised
-    # that it didn't know where the return value was.
+    # "return_value_known", if non-zero, indicates that GDB knew where
+    # the return value was located.
 
     set test "return foo<n>; ${tests}"
-    set return_value_unknown 0
+    set return_value_known 1
     set return_value_unimplemented 0
     gdb_test_multiple "return foo${n}" "${test}" {
 	-re "The location" {
 	    # Ulgh, a struct return, remember this (still need prompt).
-	    set return_value_unknown 1
+	    set return_value_known 0
 	    exp_continue
 	}
 	-re "A structure or union" {
 	    # Ulgh, a struct return, remember this (still need prompt).
-	    set return_value_unknown 1
+	    set return_value_known 0
 	    # Double ulgh.  Architecture doesn't use return_value and
 	    # hence hasn't implemented small structure return.
 	    set return_value_unimplemented 1
@@ -339,34 +329,30 @@ proc test_struct_returns { n } {
 
     # Check that the return-value is as expected.  At this stage we're
     # just checking that GDB has returned a value consistent with
-    # "return_value_unknown" set above.
+    # "return_value_known" set above.
 
     set test "value foo<n> returned; ${tests}"
-    setup_kfails structs-*tld* i*86-*-* gdb/1447
-    setup_kfails structs-*tld* sparc64-*-* gdb/1447
-    setup_kfails structs-*tld* sparc*-*-solaris2* gdb/1447
-    setup_kfails structs-*tld* x86_64-*-* gdb/1447
     gdb_test_multiple "p/c L${n}" "${test}" {
 	-re " = [foo ${n}].*${gdb_prompt} $" {
-	    if $return_value_unknown {
+	    if $return_value_known {
+		pass "${test}"
 		# This contradicts the above claim that GDB didn't
 		# know the location of the return-value.
-		fail "${test}"
 	    } else {
-		pass "${test}"
+		fail "${test}"
 	    }
 	}
 	-re " = [zed ${n}].*${gdb_prompt} $" {
-	    if $return_value_unknown {
+	    if $return_value_known {
+		# This contradicts the above claim that GDB knew
+		# the location of the return-value.
+		fail "${test}"
+	    } else {
 		# The struct return case.  Since any modification
 		# would be by reference, and that can't happen, the
 		# value should be unmodified and hence Z is expected.
 		# Is this a reasonable assumption?
 		pass "${test}"
-	    } else {
-		# This contradicts the above claim that GDB knew
-		# the location of the return-value.
-		fail "${test}"
 	    }
 	}
 	-re ".*${gdb_prompt} $" {
@@ -396,23 +382,20 @@ proc test_struct_returns { n } {
 	    "advance to fun<n> for finish; ${tests}"
 
     # Check that the program invalidated the relevant global.
-    setup_kfails structs-tld i*86-*-* gdb/1447
-    setup_kfails structs-tld sparc64-*-* gdb/1447
-    setup_kfails structs-tld sparc*-*-solaris2* gdb/1447
-    setup_kfails structs-tld x86_64-*-* gdb/1447
     gdb_test "p/c L${n}" " = [zed $n]" "zed L<n> for finish; ${tests}"
 
-    # Finish the function, set 'finish_value_unknown" to non-empty if the
-    # return-value was not found.
+    # Finish the function, set 'finish_value_known" to non-empty if
+    # the return-value was found.
+
     set test "finish foo<n>; ${tests}"
-    set finish_value_unknown 0
+    set finish_value_known 1
     gdb_test_multiple "finish" "${test}" {
 	-re "Value returned is .*${gdb_prompt} $" {
 	    pass "${test}"
 	}
 	-re "Cannot determine contents.*${gdb_prompt} $" {
 	    # Expected bad value.  For the moment this is ok.
-	    set finish_value_unknown 1
+	    set finish_value_known 0
 	    pass "${test}"
 	}
     }
@@ -421,28 +404,24 @@ proc test_struct_returns { n } {
     # "p/c".  If no return value was found, the 'Z' from the previous
     # check that the variable was cleared, is printed.
     set test "value foo<n> finished; ${tests}"
-    setup_kfails structs-*tld* i*86-*-* gdb/1447
-    setup_kfails structs-*tld* sparc64-*-* gdb/1447
-    setup_kfails structs-*tld* sparc*-*-solaris2* gdb/1447
-    setup_kfails structs-*tld* x86_64-*-* gdb/1447
     gdb_test_multiple "p/c" "${test}" {
 	-re "[foo ${n}]\[\r\n\]+${gdb_prompt} $" {
-	    if $finish_value_unknown {
+	    if $finish_value_known {
+		pass "${test}"
+	    } else {
 		# This contradicts the above claim that GDB didn't
 		# know the location of the return-value.
 		fail "${test}"
-	    } else {
-		pass "${test}"
 	    }
 	}
 	-re "[zed ${n}]\[\r\n\]+${gdb_prompt} $" {
 	    # The value didn't get found.  This is "expected".
-	    if $finish_value_unknown {
-		pass "${test}"
-	    } else {
+	    if $finish_value_known {
 		# This contradicts the above claim that GDB did
 		# know the location of the return-value.
 		fail "${test}"
+	    } else {
+		pass "${test}"
 	    }
 	}
     }
@@ -450,20 +429,17 @@ proc test_struct_returns { n } {
     # Finally, check that "return" and finish" have consistent
     # behavior.
 
-    # Since both "return" and "finish" use equivalent "which
-    # return-value convention" logic, both commands should have
-    # identical can/can-not find return-value messages.
+    # Since "finish" works in more cases than "return" (see
+    # RETURN_VALUE_ABI_RETURNS_ADDRESS and
+    # RETURN_VALUE_ABI_PRESERVES_ADDRESS), the "return" value being
+    # known implies that the "finish" value is known (but not the
+    # reverse).
 
-    # Note that since "call" and "finish" use common code paths, a
-    # failure here is a strong indicator of problems with "store
-    # return-value" code paths.  Suggest looking at "return_value"
-    # when investigating a fix.
-
-    set test "return and finish use same convention; ${tests}"
-    if {$finish_value_unknown == $return_value_unknown} {
-	pass "${test}"
-    } else {
+    set test "return value known implies finish value known; ${tests}"
+    if {$return_value_known && ! $finish_value_known} {
 	kfail gdb/1444 "${test}"
+    } else {
+	pass "${test}"
     }
 }
 

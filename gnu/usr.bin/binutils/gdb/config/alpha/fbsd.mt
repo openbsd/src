@@ -1,3 +1,3 @@
-# Target: FreeBSD/Alpha
+# Target: FreeBSD/alpha
 TDEPFILES= alpha-tdep.o alpha-mdebug-tdep.o alphabsd-tdep.o alphafbsd-tdep.o
-TM_FILE= tm-fbsd.h
+DEPRECATED_TM_FILE= tm-alpha.h

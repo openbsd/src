@@ -1,6 +1,6 @@
 /* Unwinder test program.
 
-   Copyright 2003 Free Software Foundation, Inc.
+   Copyright 2003, 2004 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,6 +19,12 @@
    Foundation, Inc., 59 Temple Place - Suite 330,
    Boston, MA 02111-1307, USA.  */
 
+#ifdef SYMBOL_PREFIX
+#define SYMBOL(str)	SYMBOL_PREFIX #str
+#else
+#define SYMBOL(str)	#str
+#endif
+
 void
 trap (void)
 {
@@ -34,9 +40,9 @@ asm(".text\n"
     "gdb1435:\n"
     "    pushl %ebp\n"
     "    mov   %esp, %ebp\n"
-    "    call  trap\n"
-    "    .globl main\n"
-    "main:\n"
+    "    call  " SYMBOL (trap) "\n"
+    "    .globl " SYMBOL (main) "\n"
+    SYMBOL (main) ":\n"
     "    pushl %ebp\n"
     "    mov   %esp, %ebp\n"
     "    call  gdb1435\n");

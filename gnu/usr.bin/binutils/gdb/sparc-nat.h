@@ -1,6 +1,6 @@
 /* Native-dependent code for SPARC.
 
-   Copyright 2003 Free Software Foundation, Inc.
+   Copyright 2003, 2004 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -36,5 +36,10 @@ extern int (*sparc_fpregset_supplies_p) (int);
 
 extern int sparc32_gregset_supplies_p (int regnum);
 extern int sparc32_fpregset_supplies_p (int regnum);
+
+/* Create a prototype generic SPARC target.  The client can override
+   it with local methods.  */
+
+extern struct target_ops *sparc_target (void);
 
 #endif /* sparc-nat.h */

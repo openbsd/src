@@ -37,6 +37,7 @@
 #include "ocd.h"
 #include "ppc-tdep.h"
 #include "regcache.h"
+#include "gdb_assert.h"
 
 static void bdm_ppc_open (char *name, int from_tty);
 
@@ -153,21 +154,12 @@ static int bdm_regmap[] =
 static void
 bdm_ppc_fetch_registers (int regno)
 {
+  struct gdbarch_tdep *tdep = gdbarch_tdep (current_gdbarch);
   int i;
-  unsigned char *regs, *beginregs, *endregs, *almostregs;
-  unsigned char midregs[32];
-  unsigned char mqreg[1];
+  unsigned char *regs;
   int first_regno, last_regno;
   int first_bdm_regno, last_bdm_regno;
-  int reglen, beginreglen, endreglen;
-
-#if 1
-  for (i = 0; i < (FPLAST_REGNUM - FP0_REGNUM + 1); i++)
-    {
-      midregs[i] = -1;
-    }
-  mqreg[0] = -1;
-#endif
+  int reglen;
 
   if (regno == -1)
     {
@@ -188,9 +180,15 @@ bdm_ppc_fetch_registers (int regno)
 
   if (first_bdm_regno == -1)
     {
-      supply_register (first_regno, NULL);
+      regcache_raw_supply (current_regcache, first_regno, NULL);
       return;			/* Unsupported register */
     }
+
+  /* FIXME: jimb/2004-05-04: I'm not sure how to adapt this code to
+     processors that lack floating point registers, and I don't have
+     have the equipment to test it.  So we'll leave that case for the
+     next person who encounters it.  */
+  gdb_assert (ppc_floating_point_unit_p (current_gdbarch));
 
 #if 1
   /* Can't ask for floating point regs on ppc 8xx, also need to
@@ -202,10 +200,11 @@ bdm_ppc_fetch_registers (int regno)
       /* if asking for an invalid register */
       if ((first_regno == gdbarch_tdep (current_gdbarch)->ppc_mq_regnum)
           || (first_regno == gdbarch_tdep (current_gdbarch)->ppc_fpscr_regnum)
-	  || ((first_regno >= FP0_REGNUM) && (first_regno <= FPLAST_REGNUM)))
+	  || ((first_regno >= tdep->ppc_fp0_regnum)
+              && (first_regno < tdep->ppc_fp0_regnum + ppc_num_fprs)))
 	{
 /*          printf("invalid reg request!\n"); */
-	  supply_register (first_regno, NULL);
+	  regcache_raw_supply (current_regcache, first_regno, NULL);
 	  return;		/* Unsupported register */
 	}
       else
@@ -215,18 +214,9 @@ bdm_ppc_fetch_registers (int regno)
 	}
     }
   else
-    /* want all regs */
-    {
-/*      printf("Asking for registers %d to %d\n", first_regno, last_regno); */
-      beginregs = ocd_read_bdm_registers (first_bdm_regno,
-					  FP0_REGNUM - 1, &beginreglen);
-      endregs = (strcat (midregs,
-			 ocd_read_bdm_registers (FPLAST_REGNUM + 1,
-					  last_bdm_regno - 1, &endreglen)));
-      almostregs = (strcat (beginregs, endregs));
-      regs = (strcat (almostregs, mqreg));
-      reglen = beginreglen + 32 + endreglen + 1;
-    }
+    internal_error (__FILE__, __LINE__,
+                    "ppc_bdm_fetch_registers: "
+                    "'all registers' case not implemented");
 
 #endif
 #if 0
@@ -245,10 +235,10 @@ bdm_ppc_fetch_registers (int regno)
 	  if (regoffset >= reglen / 4)
 	    continue;
 
-	  supply_register (i, regs + 4 * regoffset);
+	  regcache_raw_supply (current_regcache, i, regs + 4 * regoffset);
 	}
       else
-	supply_register (i, NULL);	/* Unsupported register */
+	regcache_raw_supply (current_regcache, i, NULL);	/* Unsupported register */
     }
 }
 
@@ -258,6 +248,7 @@ bdm_ppc_fetch_registers (int regno)
 static void
 bdm_ppc_store_registers (int regno)
 {
+  struct gdbarch_tdep *tdep = gdbarch_tdep (current_gdbarch);
   int i;
   int first_regno, last_regno;
   int first_bdm_regno, last_bdm_regno;
@@ -282,6 +273,12 @@ bdm_ppc_store_registers (int regno)
   if (first_bdm_regno == -1)
     return;			/* Unsupported register */
 
+  /* FIXME: jimb/2004-05-04: I'm not sure how to adapt this code to
+     processors that lack floating point registers, and I don't have
+     have the equipment to test it.  So we'll leave that case for the
+     next person who encounters it.  */
+  gdb_assert (ppc_floating_point_unit_p (current_gdbarch));
+
   for (i = first_regno; i <= last_regno; i++)
     {
       int bdm_regno;
@@ -292,7 +289,8 @@ bdm_ppc_store_registers (int regno)
       /* (need to avoid FP regs and MQ reg) */
       if ((i != gdbarch_tdep (current_gdbarch)->ppc_mq_regnum) 
           && (i != gdbarch_tdep (current_gdbarch)->ppc_fpscr_regnum) 
-          && ((i < FP0_REGNUM) || (i > FPLAST_REGNUM)))
+          && ((i < tdep->ppc_fp0_regnum)
+              || (i >= tdep->ppc_fp0_regnum + ppc_num_fprs)))
 	{
 /*          printf("write valid reg %d\n", bdm_regno); */
 	  ocd_write_bdm_registers (bdm_regno, deprecated_registers + DEPRECATED_REGISTER_BYTE (i), 4);
@@ -327,7 +325,7 @@ a wiggler, specify wiggler and then the port it is connected to\n\
   bdm_ppc_ops.to_fetch_registers = bdm_ppc_fetch_registers;
   bdm_ppc_ops.to_store_registers = bdm_ppc_store_registers;
   bdm_ppc_ops.to_prepare_to_store = ocd_prepare_to_store;
-  bdm_ppc_ops.to_xfer_memory = ocd_xfer_memory;
+  bdm_ppc_ops.deprecated_xfer_memory = ocd_xfer_memory;
   bdm_ppc_ops.to_files_info = ocd_files_info;
   bdm_ppc_ops.to_insert_breakpoint = ocd_insert_breakpoint;
   bdm_ppc_ops.to_remove_breakpoint = ocd_remove_breakpoint;

@@ -40,25 +40,21 @@ set prms_id 0
 set bug_id 0
 
 set testfile "rtti"
-set srcfile1 "${srcdir}/${subdir}/${testfile}1.cc"
-set objfile1 "${objdir}/${subdir}/${testfile}1.o"
-set srcfile2 "${srcdir}/${subdir}/${testfile}2.cc"
-set objfile2 "${objdir}/${subdir}/${testfile}2.o"
-set binfile ${objdir}/${subdir}/${testfile}
+set srcfile1 "${testfile}1.cc"
+set objfile1 "${testfile}1.o"
+set srcfile2 "${testfile}2.cc"
+set objfile2 "${testfile}2.o"
+set binfile  "${objdir}/${subdir}/${testfile}"
 
-# gdb_get_line_number needs this to be called srcfile.  Except that it
-# gets confused if the directories are included. :-(
-set srcfile "${testfile}1.cc"
-
-if  { [gdb_compile "${srcfile1}" "${objfile1}" object {debug c++}] != "" } {
+if  { [gdb_compile "$srcdir/$subdir/$srcfile1" "$objdir/$subdir/$objfile1" object {debug c++}] != "" } {
      gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
 }
 
-if  { [gdb_compile "${srcfile2}" "${objfile2}" object {debug c++}] != "" } {
+if  { [gdb_compile "$srcdir/$subdir/$srcfile2" "$objdir/$subdir/$objfile2" object {debug c++}] != "" } {
      gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
 }
 
-if  { [gdb_compile "${objfile1} ${objfile2}" "${binfile}" executable {debug c++}] != "" } {
+if  { [gdb_compile "$objdir/$subdir/$objfile1 $objdir/$subdir/$objfile2" "${binfile}" executable {debug c++}] != "" } {
      gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
 }
 
@@ -79,7 +75,7 @@ if ![runto_main] then {
 
 # First, run to after we've constructed the object:
 
-gdb_breakpoint [gdb_get_line_number "main-constructs-done"]
+gdb_breakpoint [gdb_get_line_number "main-constructs-done" "$srcfile1"]
 gdb_continue_to_breakpoint "end of constructors in main"
 
 gdb_test_multiple "print *e1" "print *e1" {
@@ -135,12 +131,12 @@ gdb_test_multiple "print *e2" "print *e2" {
 # Now we test the hack that's been implemented to get around some
 # instances of PR gdb/1511.
 
-gdb_breakpoint [gdb_get_line_number "func-constructs-done"]
+gdb_breakpoint [gdb_get_line_number "func-constructs-done" "$srcfile1"]
 gdb_continue_to_breakpoint "end of constructors in func"
 
 gdb_test "print *obj" "\\$\[0-9\]* = {<n2::Base2> = .*}"
 
-gdb_breakpoint [gdb_get_line_number "func3-constructs-done"]
+gdb_breakpoint [gdb_get_line_number "func3-constructs-done" "$srcfile1"]
 gdb_continue_to_breakpoint "end of constructors in func3"
 
 gdb_test "print *obj3" "\\$\[0-9\]* = {<n2::C2> = .*}"

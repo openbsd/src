@@ -207,6 +207,31 @@ gdb_test "info break" \
 \[0-9\]+\[\t \]+breakpoint     keep y.*PENDING.*pendshr.c:26 if x > 3.*" \
 "multiple pending breakpoints"
 
+
+#
+# Try a pending break for a line in a source file with ignore count:
+#
+
+gdb_test_multiple "break pendshr.c:27" "Set pending breakpoint 3" {
+     -re ".*Make breakpoint pending.*y or \\\[n\\\]. $" {
+	    gdb_test "y" "Breakpoint.*pendshr.c:27.*pending." \
+		"Set pending breakpoint 3"
+     }
+}
+
+gdb_test {ignore $bpnum 2} "Will ignore next 2 crossings of breakpoint .*" \
+    "set ignore count on pending breakpoint 3"
+
+gdb_test "info break" \
+    "Num Type\[ \]+Disp Enb Address\[ \]+What.*
+\[0-9\]+\[\t \]+breakpoint     keep n.*PENDING.*pendfunc1.*
+\[\t \]+stop only if k == 1.*
+\[\t \]+print k.*
+\[0-9\]+\[\t \]+breakpoint     keep y.* in main at .*$srcfile:$mainline.*
+\[0-9\]+\[\t \]+breakpoint     keep y.*PENDING.*pendshr.c:26 if x > 3.*
+\[0-9\]+\[\t \]+breakpoint     keep y.*PENDING.*pendshr.c:27.*ignore next 2 hits.*" \
+"multiple pending breakpoints 2"
+
 #
 # Run to main which should resolve a pending breakpoint
 #
@@ -239,6 +264,19 @@ gdb_test "continue" \
 \[$\]1 = 1." \
 "continue to resolved breakpoint 1"
 
+#
+# Disable the other two breakpoints, and continue to the one with
+# the ignore count.  Make sure you hit it the third time, x should
+# be 3 then.
+#
+
+gdb_test "disable 7" "" "Disable other breakpoints"
+gdb_test "disable 5" "" "Disable other breakpoints"
+
+gdb_test "continue" \
+	{.*Breakpoint.*pendfunc1.*\(x=3\) at.*pendshr.c:27.*printf.*;} \
+"continue to resolved breakpoint 3"
+
 delete_breakpoints
 
 gdb_breakpoint "main"
@@ -259,6 +297,7 @@ gdb_test_multiple "break imaginary" "set imaginary pending breakpoint" {
 #
 
 rerun_to_main
+
 gdb_test "info break" \
     "Num Type\[ \]+Disp Enb Address\[ \]+What.*
 \[0-9\]+\[\t \]+breakpoint     keep y.* in main at .*$srcfile:$mainline.*

@@ -1,5 +1,5 @@
-#   Copyright 2002
-#   Free Software Foundation, Inc.
+# Copyright 2002, 2004
+# Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,9 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
-
-# Please email any bugs, comments, and/or additions to this file to:
-# bug-gdb@prep.ai.mit.edu
 
 # This file was written by Andrew Cagney (cagney at redhat dot com),
 # derived from xfullpath.exp (written by Joel Brobecker), derived from
@@ -51,13 +48,22 @@ proc setup_test { executable } {
     set oldtimeout $timeout
     set timeout 600
     verbose "Timeout is now $timeout seconds" 2
-    if {[gdb_load $executable] <0} then {
-	set timeout $oldtimeout
-	verbose "Timeout is now $timeout seconds" 2
-	return -1
-    }
+
+    global gdb_file_cmd_debug_info
+    set gdb_file_cmd_debug_info "unset"
+
+    set result [gdb_load $executable]
     set timeout $oldtimeout
     verbose "Timeout is now $timeout seconds" 2
+
+    if { $result != 0 } then {
+	return -1
+    }
+
+    if { $gdb_file_cmd_debug_info != "debug" } then {
+	untested "No debug information, skipping testcase."
+	return -1
+    }
 
     # Set a breakpoint at main
     gdb_test "break captured_command_loop" \

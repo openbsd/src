@@ -1,4 +1,7 @@
-# Copyright 1998, 1999, 2000 Free Software Foundation, Inc.
+# This testcase is part of GDB, the GNU debugger.
+
+# Copyright 1998, 1999, 2000, 2001, 2002, 2004 Free Software
+# Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,9 +17,6 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
 
-# Please email any bugs, comments, and/or additions to this file to:
-# bug-gdb@prep.ai.mit.edu
-
 # Test GDB's ability to restore saved registers from stack frames
 # when using the `return' command.
 #
@@ -24,7 +24,7 @@
 # fragments borrowed from return.exp.
 
 if $tracelevel then {
-	strace $tracelevel
+    strace $tracelevel
 }
 
 set prms_id 0
@@ -34,13 +34,15 @@ set testfile "restore"
 set srcfile ${testfile}.c
 set binfile ${objdir}/${subdir}/${testfile}
 if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
-     gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
+    gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
 }
 
 proc restore_tests { } {
     global gdb_prompt
 
-    if { ! [ runto driver ] } then { return 0 }
+    if { ! [ runto driver ] } {
+	return 0
+    }
 
     set limit 5
 
@@ -48,30 +50,35 @@ proc restore_tests { } {
     #   call each of the callee functions,
     #   force a return from the callee, and
     #   make sure that the local variables still have the right values.
+
     for {set c 1} {$c <= $limit} {incr c} {
 
         # Set a breakpoint at the next caller function.
-        gdb_test "tbreak caller$c" "Breakpoint.*\[0-9\]*\\." "tbreak caller$c"
+        gdb_test "tbreak caller$c" "Breakpoint.*\[0-9\]*\\." \
+	    "tbreak caller$c"
 
 	# Continue to the next caller function.
-	gdb_test "continue" ".*/\\* caller$c \\*/" "run to caller$c"
+	gdb_test "continue" " caller$c prologue .*" "run to caller$c"
 
 	# Do each callee function.
         for {set e 1} {$e <= $limit} {incr e} {
 
             gdb_test "tbreak callee$e" "Breakpoint.*\[0-9\]*\\." \
-                    "tbreak callee$e"
+		"caller$c calls callee$e; tbreak callee"
             
-  	    gdb_test "continue" ".*/\\* callee$e \\*/" "run to callee$e"
-
+  	    gdb_test "continue" " callee$e prologue .*/" \
+		"caller$c calls callee$e; continue to callee"
+	    
             # Do a forced return from the callee.
-	    send_gdb "return 0\n"
-	    gdb_expect {
+	    set test "caller$c calls callee$e; return callee now"
+	    gdb_test_multiple "return 0" "$test" {
 		-re "Make .* return now.*y or n. $" {
 		    send_gdb "y\n"
 		    exp_continue
 		}
-		-re "$gdb_prompt $" { }
+		-re " caller$c .*$gdb_prompt $" {
+		    pass "$test"
+		}
             }
 
             # Check that the values of the local variables are what
@@ -79,7 +86,7 @@ proc restore_tests { } {
             for {set var 1} {$var <= $c} {incr var} {
                 set expected [expr 0x7eeb + $var]
 	        gdb_test "print l$var" " = $expected" \
-                         "caller$c called callee$e; variable l$var restored to $expected"
+		    "caller$c calls callee$e; return restored l$var to $expected"
             }
         }
     }

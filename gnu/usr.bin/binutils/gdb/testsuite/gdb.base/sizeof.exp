@@ -1,4 +1,6 @@
-# Copyright 2000, 2002 Free Software Foundation, Inc.
+# This testcase is part of GDB, the GNU debugger.
+
+# Copyright 2000, 2002, 2003, 2004 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,8 +16,10 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
 
-# Please email any bugs, comments, and/or additions to this file to:
-# bug-gdb@prep.ai.mit.edu
+if [target_info exists gdb,noinferiorio] {
+    verbose "Skipping fileio.exp because of no fileio capabilities."
+    continue
+}
 
 if $tracelevel {
     strace $tracelevel
@@ -58,15 +62,13 @@ if ![runto_main] then {
 
 proc get_valueof { fmt exp default } {
     global gdb_prompt
-    send_gdb "print${fmt} ${exp}\n"
-    gdb_expect {
+
+    set test "get valueof \"${exp}\""
+    set val ${default}
+    gdb_test_multiple "print${fmt} ${exp}" "$test" {
 	-re "\\$\[0-9\]* = (\[-\]*\[0-9\]*).*$gdb_prompt $" {
 	    set val $expect_out(1,string)
-	    pass "get value of ${exp} ($val)"
-	}
-	timeout {
-	    set size ${default}
-	    fail "get value of ${exp} (timeout)"
+	    pass "$test ($val)"
 	}
     }
     return ${val}
@@ -98,23 +100,8 @@ set sizeof_long_double [get_sizeof "long double" 8]
 proc check_sizeof { type size } {
     global gdb_prompt
 
-    if [gdb_skip_stdio_test "check sizeof $type == $size"] {
-	return;
-    }
-
     set pat [string_to_regexp "sizeof (${type}) == ${size}"]
-    send_gdb "next\n"
-    gdb_expect {
-	-re "${pat}\[\r\n\].*$gdb_prompt $" {
-	    pass "check sizeof ${type} == ${size}"
-	}
-	-re ".*$gdb_prompt $" {
-	    fail "check sizeof ${type} == ${size}"
-	}
-	timeout {
-	    fail "check sizeof ${type} == ${size} (timeout)"
-	}
-    }
+    gdb_test "next" "${pat}\[\r\n\]+\[0-9\].*"  "check sizeof \"$type\""
 }
 
 check_sizeof "char" ${sizeof_char}
@@ -133,23 +120,8 @@ check_sizeof "long double" ${sizeof_long_double}
 proc check_valueof { exp val } {
     global gdb_prompt
 
-    if [gdb_skip_stdio_test "check valueof $exp == $val"] {
-	return;
-    }
-
     set pat [string_to_regexp "valueof (${exp}) == ${val}"]
-    send_gdb "next\n"
-    gdb_expect {
-	-re "${pat}\[\r\n\].*$gdb_prompt $" {
-	    pass "check valueof ${exp} == ${val}"
-	}
-	-re ".*$gdb_prompt $" {
-	    fail "check valueof ${exp} == ${val}"
-	}
-	timeout {
-	    fail "check valueof ${exp} == ${val} (timeout)"
-	}
-    }
+    gdb_test "next" "${pat}\[\r\n\]+\[0-9\].*" "check valueof \"$exp\""
 }
 
 # Check that GDB and the target agree over the sign of a character.

@@ -28,6 +28,8 @@ if $tracelevel then {
 
 if { [skip_cplus_tests] } { continue }
 
+load_lib "cp-support.exp"
+
 set testfile "inherit"
 set srcfile misc.cc
 set binfile ${objdir}/${subdir}/${testfile}
@@ -43,127 +45,44 @@ proc test_ptype_si { } {
     global ws
     global nl
 
-    # Print class A as a type.
+    # A simple class.
 
-    set re_class	"class A \{${ws}public:"
-    set re_fields	"int a;${ws}int x;"
-    set re_synth_gcc_23	"A & operator=\\(A const ?&\\);${ws}A\\(A const ?&\\);${ws}A\\((void|)\\);"
-
-    set name "ptype A (FIXME)"
-    gdb_test_multiple "ptype A" $name {
-	-re "type = $re_class${ws}$re_fields$nl\}$nl$gdb_prompt $" {
-	    pass $name
+    cp_test_ptype_class \
+	"ptype A" "ptype A (FIXME)" "class" "A" \
+	{
+	    { field public "int a;" }
+	    { field public "int x;" }
 	}
-	-re "type = $re_class${ws}$re_fields${ws}$re_synth_gcc_23$nl\}$nl$gdb_prompt $" {
-	    pass $name
+    cp_test_ptype_class "ptype class A" "ptype class A (FIXME)" "class" "A" ibid
+    cp_test_ptype_class "ptype g_A" "ptype g_A (FIXME)" "class" "A" ibid
+
+    # A derived class.
+
+    cp_test_ptype_class \
+	"ptype B" "" "class" "B" \
+	{
+	    { base         "public A" }
+	    { field public "int b;" }
+	    { field public "int x;" }
 	}
-    }
+    cp_test_ptype_class "ptype class B" "" "class" "B" ibid
+    cp_test_ptype_class "ptype g_B" "" "class" "B" ibid
 
-    # Print class A as an explicit class.
+    # Another derived class.
 
-    set name "ptype class A (FIXME)"
-    gdb_test_multiple "ptype class A" $name {
-	-re "type = $re_class${ws}$re_fields$nl\}$nl$gdb_prompt $" {
-	    pass $name
+    cp_test_ptype_class \
+	"ptype C" "" "class" "C" \
+	{
+	    { base         "public A" }
+	    { field public "int c;" }
+	    { field public "int x;" }
 	}
-	-re "type = $re_class${ws}$re_fields${ws}$re_synth_gcc_23$nl\}$nl$gdb_prompt $" {
-	    pass $name
-	}
-    }
+    cp_test_ptype_class "ptype class C" "" "class" "C" ibid
+    cp_test_ptype_class "ptype g_C" "" "class" "C" ibid
 
-    # Print type of an object of type A.
-
-    set name "ptype g_A (FIXME)"
-    gdb_test_multiple "ptype g_A" $name {
-	-re "type = $re_class${ws}$re_fields$nl\}$nl$gdb_prompt $" {
-	    pass $name
-	}
-	-re "type = $re_class${ws}$re_fields${ws}$re_synth_gcc_23$nl\}$nl$gdb_prompt $" {
-	    pass $name
-	}
-    }
-
-    # Print class B as a type.
-
-    set re_class	"class B : public A \{${ws}public:"
-    set re_fields	"int b;${ws}int x;"
-    set re_synth_gcc_23	"B & operator=\\(B const ?&\\);${ws}B\\(B const ?&\\);${ws}B\\((void|)\\);"
-
-    set name "ptype B"
-    gdb_test_multiple "ptype B" $name {
-	-re "type = $re_class${ws}$re_fields$nl\}$nl$gdb_prompt $" {
-	    pass $name
-	}
-	-re "type = $re_class${ws}$re_fields${ws}$re_synth_gcc_23$nl\}$nl$gdb_prompt $" {
-	    pass $name
-	}
-    }
-
-    # Print class B as an explicit class.
-
-    set name "ptype class B"
-    gdb_test_multiple "ptype class B" $name {
-	-re "type = $re_class${ws}$re_fields$nl\}$nl$gdb_prompt $" {
-	    pass $name
-	}
-	-re "type = $re_class${ws}$re_fields${ws}$re_synth_gcc_23$nl\}$nl$gdb_prompt $" {
-	    pass $name
-	}
-    }
-
-    # Print type of an object of type B.
-
-    set name "ptype g_B"
-    gdb_test_multiple "ptype g_B" $name {
-	-re "type = $re_class${ws}$re_fields$nl\}$nl$gdb_prompt $" {
-	    pass $name
-	}
-	-re "type = $re_class${ws}$re_fields${ws}$re_synth_gcc_23$nl\}$nl$gdb_prompt $" {
-	    pass $name
-	}
-    }
-
-    # Print class C as a type.
-
-    set re_class	"class C : public A \{${ws}public:"
-    set re_fields	"int c;${ws}int x;"
-    set re_synth_gcc_23	"C & operator=\\(C const ?&\\);${ws}C\\(C const ?&\\);${ws}C\\((void|)\\);"
-
-    set name "ptype C"
-    gdb_test_multiple "ptype C" $name {
-	-re "type = $re_class${ws}$re_fields$nl\}$nl$gdb_prompt $" {
-	    pass $name
-	}
-	-re "type = $re_class${ws}$re_fields${ws}$re_synth_gcc_23$nl\}$nl$gdb_prompt $" {
-	    pass $name
-	}
-    }
-
-    # Print class C as an explicit class.
-
-    set name "ptype class C"
-    gdb_test_multiple "ptype class C" $name {
-	-re "type = $re_class${ws}$re_fields$nl\}$nl$gdb_prompt $" {
-	    pass $name
-	}
-	-re "type = $re_class${ws}$re_fields${ws}$re_synth_gcc_23$nl\}$nl$gdb_prompt $" {
-	    pass $name
-	}
-    }
-
-    # Print type of an object of type g_C.
-
-    set name "ptype g_C"
-    gdb_test_multiple "ptype g_C" $name {
-	-re "type = $re_class${ws}$re_fields$nl\}$nl$gdb_prompt $" {
-	    pass $name
-	}
-	-re "type = $re_class${ws}$re_fields${ws}$re_synth_gcc_23$nl\}$nl$gdb_prompt $" {
-	    pass $name
-	}
-    }
-
-    # Print a structure with no tag.
+    # A structure with no tag.
+    # TODO: move this mess into a separate file, and re-specify
+    # which results are PASS, KFAIL, XFAIL, and FAIL.
 
     set re_tag		"tagless_struct"
     set XX_tag		"\\._1"
@@ -177,20 +96,22 @@ proc test_ptype_si { } {
     gdb_test_multiple "ptype tagless_struct" $name {
 	-re "type = $XX_class${ws}$re_fields$nl\}$nl$gdb_prompt $" {
 	    # gcc 2.95.3 -gdwarf-2
-	    pass "$name (obsolete gcc or gdb)"
+	    pass "$name"
 	}
 	-re "type = $re_class${ws}$re_fields${ws}$XX_synth_gcc_23$nl\}$nl$gdb_prompt $" {
 	    # gcc 2.95.3 -gstabs+
-	    pass "$name (obsolete gcc or gdb)"
+	    pass "$name"
 	}
 	-re "type = $re_class${ws}$re_fields$nl\}$nl$gdb_prompt $" {
-	    # gcc 3.3.2 -gdwarf-2
-	    # gcc HEAD 2004-01-21 -gdwarf-2
-	    pass "$name (obsolete gcc or gdb)"
+	    # gcc 3.3.4 -gdwarf-2
+	    # gcc 3.4.1 -gdwarf-2
+	    # gcc HEAD 2004-07-31 -gdwarf-2
+	    # gcc HEAD 2004-07-31 -gstabs+
+	    pass "$name"
 	}
 	-re "type = $re_class${ws}$re_fields${ws}$re_synth_gcc_23$nl\}$nl$gdb_prompt $" {
-	    # gcc 3.3.2 -gstabs+
-	    # gcc HEAD 2004-01-21 -gstabs+
+	    # gcc 3.3.4 -gstabs+
+	    # gcc 3.4.1 -gstabs+
 	    pass "$name"
 	}
     }
@@ -199,20 +120,22 @@ proc test_ptype_si { } {
     gdb_test_multiple "ptype v_tagless" $name {
 	-re "type = $XX_class${ws}$re_fields$nl\}$nl$gdb_prompt $" {
 	    # gcc 2.95.3 -gdwarf-2
-	    pass "$name (obsolete gcc or gdb)"
+	    pass "$name"
 	}
 	-re "type = $re_class${ws}$re_fields${ws}$XX_synth_gcc_23$nl\}$nl$gdb_prompt $" {
 	    # gcc 2.95.3 -gstabs+
-	    pass "$name (obsolete gcc or gdb)"
+	    pass "$name"
 	}
 	-re "type = $re_class${ws}$re_fields$nl\}$nl$gdb_prompt $" {
-	    # gcc 3.3.2 -gdwarf-2
-	    # gcc HEAD 2004-01-21 -gdwarf-2
-	    pass "$name (obsolete gcc or gdb)"
+	    # gcc 3.3.4 -gdwarf-2
+	    # gcc 3.4.1 -gdwarf-2
+	    # gcc HEAD 2004-07-31 -gdwarf-2
+	    # gcc HEAD 2004-07-31 -gstabs+
+	    pass "$name"
 	}
 	-re "type = $re_class${ws}$re_fields${ws}$re_synth_gcc_23$nl\}$nl$gdb_prompt $" {
-	    # gcc 3.3.2 -gstabs+
-	    # gcc HEAD 2004-01-21 -gstabs+
+	    # gcc 3.3.4 -gstabs+
+	    # gcc 3.4.1 -gstabs+
 	    pass "$name"
 	}
     }
@@ -221,433 +144,108 @@ proc test_ptype_si { } {
 # Multiple inheritance, print type definitions.
 
 proc test_ptype_mi { } {
-    global gdb_prompt
-    global ws
-    global nl
 
-    set re_class	"class D : public B, public C \{${ws}public:"
-    set re_fields	"int d;${ws}int x;"
-    set re_synth_gcc_23	"D & operator=\\(D const ?&\\);${ws}D\\(D const ?&\\);${ws}D\\((void|)\\);"
+    # A class with two bases.
 
-    # ptype D: type, class, object.
+    cp_test_ptype_class \
+	"ptype D" "" "class" "D" \
+	{
+	    { base         "public B" }
+	    { base         "public C" }
+	    { field public "int d;" }
+	    { field public "int x;" }
+	}
+    cp_test_ptype_class "ptype class D" "" "class" "D" ibid
+    cp_test_ptype_class "ptype g_D" "" "class" "D" ibid
 
-    set name "ptype D"
-    gdb_test_multiple "ptype D" $name {
-	-re "type = $re_class${ws}$re_fields$nl\}$nl$gdb_prompt $" {
-	    pass $name
-	}
-	-re "type = $re_class${ws}$re_fields${ws}$re_synth_gcc_23$nl\}$nl$gdb_prompt $" {
-	    pass $name
-	}
-    }
+    # A class derived from the previous class.
 
-    set name "ptype class D"
-    gdb_test_multiple "ptype class D" $name {
-	-re "type = $re_class${ws}$re_fields$nl\}$nl$gdb_prompt $" {
-	    pass $name
+    cp_test_ptype_class \
+	"ptype E" "" "class" "E" \
+	{
+	    { base         "public D" }
+	    { field public "int e;" }
+	    { field public "int x;" }
 	}
-	-re "type = $re_class${ws}$re_fields${ws}$re_synth_gcc_23$nl\}$nl$gdb_prompt $" {
-	    pass $name
-	}
-    }
-
-    set name "ptype g_D"
-    gdb_test_multiple "ptype g_D" $name {
-	-re "type = $re_class${ws}$re_fields$nl\}$nl$gdb_prompt $" {
-	    pass $name
-	}
-	-re "type = $re_class${ws}$re_fields${ws}$re_synth_gcc_23$nl\}$nl$gdb_prompt $" {
-	    pass $name
-	}
-    }
-
-    set re_class	"class E : public D \{${ws}public:"
-    set re_fields	"int e;${ws}int x;"
-    set re_synth_gcc_23	"E & operator=\\(E const ?&\\);${ws}E\\(E const ?&\\);${ws}E\\((void|)\\);"
-
-    # ptype E: type, class, object.
-
-    set name "ptype E"
-    gdb_test_multiple "ptype E" $name {
-	-re "type = $re_class${ws}$re_fields$nl\}$nl$gdb_prompt $" {
-	    pass $name
-	}
-	-re "type = $re_class${ws}$re_fields${ws}$re_synth_gcc_23$nl\}$nl$gdb_prompt $" {
-	    pass $name
-	}
-    }
-
-    set name "ptype class E"
-    gdb_test_multiple "ptype class E" $name {
-	-re "type = $re_class${ws}$re_fields$nl\}$nl$gdb_prompt $" {
-	    pass $name
-	}
-	-re "type = $re_class${ws}$re_fields${ws}$re_synth_gcc_23$nl\}$nl$gdb_prompt $" {
-	    pass $name
-	}
-    }
-
-    set name "ptype g_E"
-    gdb_test_multiple "ptype g_E" $name {
-	-re "type = $re_class${ws}$re_fields$nl\}$nl$gdb_prompt $" {
-	    pass $name
-	}
-	-re "type = $re_class${ws}$re_fields${ws}$re_synth_gcc_23$nl\}$nl$gdb_prompt $" {
-	    pass $name
-	}
-    }
+    cp_test_ptype_class "ptype class E" "" "class" "E" ibid
+    cp_test_ptype_class "ptype g_E" "" "class" "E" ibid
 }
 
 # Single virtual inheritance, print type definitions.
 
 proc test_ptype_vi { } {
-    global gdb_prompt
-    global ws
-    global nl
 
-    # ptype vA: type, class, object.
+    # class vA
 
-    set re_class	"class vA \{${ws}public:"
-    set re_fields	"int va;${ws}int vx;"
-    set re_synth_gcc_23	"vA & operator=\\(vA const ?&\\);${ws}vA\\(vA const ?&\\);${ws}vA\\((void|)\\);"
+    cp_test_ptype_class \
+	"ptype vA" "" "class" "vA" \
+	{
+	    { field public "int va;" }
+	    { field public "int vx;" }
+	}
+    cp_test_ptype_class "ptype class vA" "" "class" "vA" ibid
+    cp_test_ptype_class "ptype g_vA" "" "class" "vA" ibid
 
-    set name "ptype vA"
-    gdb_test_multiple "ptype vA" $name {
-	-re "type = $re_class${ws}$re_fields$nl\}$nl$gdb_prompt $" {
-	    pass $name
-	}
-	-re "type = $re_class${ws}$re_fields${ws}$re_synth_gcc_23$nl\}$nl$gdb_prompt $" {
-	    pass $name
-	}
-    }
+    # class vB
 
-    set name "ptype class vA"
-    gdb_test_multiple "ptype class vA" $name {
-	-re "type = $re_class${ws}$re_fields$nl\}$nl$gdb_prompt $" {
-	    pass $name
+    cp_test_ptype_class \
+	"ptype vB" "" "class" "vB" \
+	{
+	    { base         "public virtual vA" }
+	    { vbase        "vA" }
+	    { field public "int vb;" }
+	    { field public "int vx;" }
 	}
-	-re "type = $re_class${ws}$re_fields${ws}$re_synth_gcc_23$nl\}$nl$gdb_prompt $" {
-	    pass $name
-	}
-    }
+    cp_test_ptype_class "ptype class vB" "" "class" "vB" ibid
+    cp_test_ptype_class "ptype g_vB" "" "class" "vB" ibid
 
-    set name "ptype g_vA"
-    gdb_test_multiple "ptype g_vA" $name {
-	-re "type = $re_class${ws}$re_fields$nl\}$nl$gdb_prompt $" {
-	    pass $name
-	}
-	-re "type = $re_class${ws}$re_fields${ws}$re_synth_gcc_23$nl\}$nl$gdb_prompt $" {
-	    pass $name
-	}
-    }
+    # class vC
 
-    # ptype vB: type, class, object.
+    cp_test_ptype_class \
+	"ptype vC" "" "class" "vC" \
+	{
+	    { base         "public virtual vA" }
+	    { vbase        "vA" }
+	    { field public "int vc;" }
+	    { field public "int vx;" }
+	}
+    cp_test_ptype_class "ptype class vC" "" "class" "vC" ibid
+    cp_test_ptype_class "ptype g_vC" "" "class" "vC" ibid
 
-    set re_class	"class vB : public virtual vA \{(${ws}private:|)"
-    set re_vbptr	"vA \\*(_vb.2vA|_vb.vA);${ws}"
-    set re_access	"public:"
-    set re_fields	"int vb;${ws}int vx;"
-    set re_synth_gcc_2	"vB & operator=\\(vB const ?&\\);${ws}vB\\(int, vB const ?&\\);${ws}vB\\(int\\);"
-    set re_synth_gcc_3	"vB & operator=\\(vB const ?&\\);${ws}vB\\(vB const ?&\\);${ws}vB\\((void|)\\);"
-
-    set name "ptype vB"
-    gdb_test_multiple "ptype vB" $name {
-	-re "type = $re_class${ws}$re_vbptr${ws}$re_access${ws}$re_fields$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gdwarf-2
-	    pass $name
-	}
-	-re "type = $re_class${ws}$re_vbptr${ws}$re_access${ws}$re_fields${ws}$re_synth_gcc_2$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gstabs+
-	    pass $name
-	}
-	-re "type = $re_class${ws}$re_access${ws}$re_fields$nl\}$nl$gdb_prompt $" {
-	    # gcc 3.3.2 -gdwarf-2
-	    # gcc HEAD 2004-01-21 -gdwarf-2
-	    pass "$name (aCC)"
-	}
-	-re "type = $re_class${ws}$re_access${ws}$re_fields${ws}$re_synth_gcc_3$nl\}$nl$gdb_prompt $" {
-	    # gcc 3.3.2 -gstabs+
-	    # gcc HEAD 2004-01-21 -gstabs+
-	    pass "$name (aCC)"
-	}
-    }
-
-    set name "ptype class vB"
-    gdb_test_multiple "ptype class vB" $name {
-	-re "type = $re_class${ws}$re_vbptr${ws}$re_access${ws}$re_fields$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gdwarf-2
-	    pass $name
-	}
-	-re "type = $re_class${ws}$re_vbptr${ws}$re_access${ws}$re_fields${ws}$re_synth_gcc_2$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gstabs+
-	    pass $name
-	}
-	-re "type = $re_class${ws}$re_access${ws}$re_fields$nl\}$nl$gdb_prompt $" {
-	    # gcc 3.3.2 -gdwarf-2
-	    # gcc HEAD 2004-01-21 -gdwarf-2
-	    pass "$name (aCC)"
-	}
-	-re "type = $re_class${ws}$re_access${ws}$re_fields${ws}$re_synth_gcc_3$nl\}$nl$gdb_prompt $" {
-	    # gcc 3.3.2 -gstabs+
-	    # gcc HEAD 2004-01-21 -gstabs+
-	    pass "$name (aCC)"
-	}
-    }
-
-    set name "ptype g_vB"
-    gdb_test_multiple "ptype g_vB" $name {
-	-re "type = $re_class${ws}$re_vbptr${ws}$re_access${ws}$re_fields$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gdwarf-2
-	    pass $name
-	}
-	-re "type = $re_class${ws}$re_vbptr${ws}$re_access${ws}$re_fields${ws}$re_synth_gcc_2$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gstabs+
-	    pass $name
-	}
-	-re "type = $re_class${ws}$re_access${ws}$re_fields$nl\}$nl$gdb_prompt $" {
-	    # gcc 3.3.2 -gdwarf-2
-	    # gcc HEAD 2004-01-21 -gdwarf-2
-	    pass "$name (aCC)"
-	}
-	-re "type = $re_class${ws}$re_access${ws}$re_fields${ws}$re_synth_gcc_3$nl\}$nl$gdb_prompt $" {
-	    # gcc 3.3.2 -gstabs+
-	    # gcc HEAD 2004-01-21 -gstabs+
-	    pass "$name (aCC)"
-	}
-    }
-
-    # ptype vC: type, class, object.
-
-    set re_class	"class vC : public virtual vA \{(${ws}private:|)"
-    set re_vbptr	"vA \\*(_vb.2vA|_vb.vA);${ws}"
-    set re_access	"public:"
-    set re_fields	"int vc;${ws}int vx;"
-    set re_synth_gcc_2	"vC & operator=\\(vC const ?&\\);${ws}vC\\(int, vC const ?&\\);${ws}vC\\(int\\);"
-    set re_synth_gcc_3	"vC & operator=\\(vC const ?&\\);${ws}vC\\(vC const ?&\\);${ws}vC\\((void|)\\);"
-
-    set name "ptype vC"
-    gdb_test_multiple "ptype vC" $name {
-	-re "type = $re_class${ws}$re_vbptr${ws}$re_access${ws}$re_fields$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gdwarf-2
-	    pass $name
-	}
-	-re "type = $re_class${ws}$re_vbptr${ws}$re_access${ws}$re_fields${ws}$re_synth_gcc_2$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gstabs+
-	    pass $name
-	}
-	-re "type = $re_class${ws}$re_access${ws}$re_fields$nl\}$nl$gdb_prompt $" {
-	    # gcc 3.3.2 -gdwarf-2
-	    # gcc HEAD 2004-01-21 -gdwarf-2
-	    pass "$name (aCC)"
-	}
-	-re "type = $re_class${ws}$re_access${ws}$re_fields${ws}$re_synth_gcc_3$nl\}$nl$gdb_prompt $" {
-	    # gcc 3.3.2 -gstabs+
-	    # gcc HEAD 2004-01-21 -gstabs+
-	    pass "$name (aCC)"
-	}
-    }
-
-    set name "ptype class vC"
-    gdb_test_multiple "ptype class vC" $name {
-	-re "type = $re_class${ws}$re_vbptr${ws}$re_access${ws}$re_fields$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gdwarf-2
-	    pass $name
-	}
-	-re "type = $re_class${ws}$re_vbptr${ws}$re_access${ws}$re_fields${ws}$re_synth_gcc_2$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gstabs+
-	    pass $name
-	}
-	-re "type = $re_class${ws}$re_access${ws}$re_fields$nl\}$nl$gdb_prompt $" {
-	    # gcc 3.3.2 -gdwarf-2
-	    # gcc HEAD 2004-01-21 -gdwarf-2
-	    pass "$name (aCC)"
-	}
-	-re "type = $re_class${ws}$re_access${ws}$re_fields${ws}$re_synth_gcc_3$nl\}$nl$gdb_prompt $" {
-	    # gcc 3.3.2 -gstabs+
-	    # gcc HEAD 2004-01-21 -gstabs+
-	    pass "$name (aCC)"
-	}
-    }
-
-    set name "ptype g_vC"
-    gdb_test_multiple "ptype g_vC" $name {
-	-re "type = $re_class${ws}$re_vbptr${ws}$re_access${ws}$re_fields$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gdwarf-2
-	    pass $name
-	}
-	-re "type = $re_class${ws}$re_vbptr${ws}$re_access${ws}$re_fields${ws}$re_synth_gcc_2$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gstabs+
-	    pass $name
-	}
-	-re "type = $re_class${ws}$re_access${ws}$re_fields$nl\}$nl$gdb_prompt $" {
-	    # gcc 3.3.2 -gdwarf-2
-	    # gcc HEAD 2004-01-21 -gdwarf-2
-	    pass "$name (aCC)"
-	}
-	-re "type = $re_class${ws}$re_access${ws}$re_fields${ws}$re_synth_gcc_3$nl\}$nl$gdb_prompt $" {
-	    # gcc 3.3.2 -gstabs+
-	    # gcc HEAD 2004-01-21 -gstabs+
-	    pass "$name (aCC)"
-	}
-    }
 }
 
 # Multiple virtual inheritance, print type definitions.
 
 proc test_ptype_mvi { } {
-    global gdb_prompt
-    global ws
-    global nl
 
-    # ptype vD: type, class, object.
+    # class vD
 
-    set re_class	"class vD : public virtual vB, public virtual vC \{(${ws}private:|)"
-    set re_vbptr	"vC \\*(_vb.2vC|_vb.vC);${ws}vB \\*(_vb.2vB|_vb.vB);"
-    set re_access	"public:"
-    set re_fields	"int vd;${ws}int vx;"
-    set re_synth_gcc_2	"vD & operator=\\(vD const ?&\\);${ws}vD\\(int, vD const ?&\\);${ws}vD\\(int\\);"
-    set re_synth_gcc_3	"vD & operator=\\(vD const ?&\\);${ws}vD\\(vD const ?&\\);${ws}vD\\((void|)\\);"
+    cp_test_ptype_class \
+	"ptype vD" "" "class" "vD" \
+	{
+	    { base         "public virtual vB" }
+	    { base         "public virtual vC" }
+	    { vbase        "vC" }
+	    { vbase        "vB" }
+	    { field public "int vd;" }
+	    { field public "int vx;" }
+	}
+    cp_test_ptype_class "ptype class vD" "" "class" "vD" ibid
+    cp_test_ptype_class "ptype g_vD" "" "class" "vD" ibid
 
-    set name "ptype vD"
-    gdb_test_multiple "ptype vD" $name {
-	-re "type = $re_class${ws}$re_vbptr${ws}$re_access${ws}$re_fields$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gdwarf-2
-	    pass $name
-	}
-	-re "type = $re_class${ws}$re_vbptr${ws}$re_access${ws}$re_fields${ws}$re_synth_gcc_2$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gstabs+
-	    pass $name
-	}
-	-re "type = $re_class${ws}$re_access${ws}$re_fields$nl\}$nl$gdb_prompt $" {
-	    # gcc 3.3.2 -gdwarf-2
-	    # gcc HEAD 2004-01-21 -gdwarf-2
-	    pass "$name"
-	}
-	-re "type = $re_class${ws}$re_access${ws}$re_fields${ws}$re_synth_gcc_3$nl\}$nl$gdb_prompt $" {
-	    # gcc 3.3.2 -gstabs+
-	    # gcc HEAD 2004-01-21 -gstabs+
-	    pass "$name"
-	}
-    }
+    # class vE
 
-    set name "ptype class vD"
-    gdb_test_multiple "ptype class vD" $name {
-	-re "type = $re_class${ws}$re_vbptr${ws}$re_access${ws}$re_fields$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gdwarf-2
-	    pass $name
+    cp_test_ptype_class \
+	"ptype vE" "" "class" "vE" \
+	{
+	    { base         "public virtual vD" }
+	    { vbase        "vD" }
+	    { field public "int ve;" }
+	    { field public "int vx;" }
 	}
-	-re "type = $re_class${ws}$re_vbptr${ws}$re_access${ws}$re_fields${ws}$re_synth_gcc_2$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gstabs+
-	    pass $name
-	}
-	-re "type = $re_class${ws}$re_access${ws}$re_fields$nl\}$nl$gdb_prompt $" {
-	    # gcc 3.3.2 -gdwarf-2
-	    # gcc HEAD 2004-01-21 -gdwarf-2
-	    pass "$name"
-	}
-	-re "type = $re_class${ws}$re_access${ws}$re_fields${ws}$re_synth_gcc_3$nl\}$nl$gdb_prompt $" {
-	    # gcc 3.3.2 -gstabs+
-	    # gcc HEAD 2004-01-21 -gstabs+
-	    pass "$name"
-	}
-    }
+    cp_test_ptype_class "ptype class vE" "" "class" "vE" ibid
+    cp_test_ptype_class "ptype g_vE" "" "class" "vE" ibid
 
-    set name "ptype g_vD"
-    gdb_test_multiple "ptype g_vD" $name {
-	-re "type = $re_class${ws}$re_vbptr${ws}$re_access${ws}$re_fields$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gdwarf-2
-	    pass $name
-	}
-	-re "type = $re_class${ws}$re_vbptr${ws}$re_access${ws}$re_fields${ws}$re_synth_gcc_2$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gstabs+
-	    pass $name
-	}
-	-re "type = $re_class${ws}$re_access${ws}$re_fields$nl\}$nl$gdb_prompt $" {
-	    # gcc 3.3.2 -gdwarf-2
-	    # gcc HEAD 2004-01-21 -gdwarf-2
-	    pass "$name"
-	}
-	-re "type = $re_class${ws}$re_access${ws}$re_fields${ws}$re_synth_gcc_3$nl\}$nl$gdb_prompt $" {
-	    # gcc 3.3.2 -gstabs+
-	    # gcc HEAD 2004-01-21 -gstabs+
-	    pass "$name"
-	}
-    }
-
-    # ptype vE: type, class, object.
-
-    set re_class	"class vE : public virtual vD \{(${ws}private:|)"
-    set re_vbptr	"vD \\*(_vb.2vD|_vb.vD);"
-    set re_access	"public:"
-    set re_fields	"int ve;${ws}int vx;"
-    set re_synth_gcc_2	"vE & operator=\\(vE const ?&\\);${ws}vE\\(int, vE const ?&\\);${ws}vE\\(int\\);"
-    set re_synth_gcc_3	"vE & operator=\\(vE const ?&\\);${ws}vE\\(vE const ?&\\);${ws}vE\\((void|)\\);"
-
-    set name "ptype vE"
-    gdb_test_multiple "ptype vE" $name {
-	-re "type = $re_class${ws}$re_vbptr${ws}$re_access${ws}$re_fields$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gdwarf-2
-	    pass $name
-	}
-	-re "type = $re_class${ws}$re_vbptr${ws}$re_access${ws}$re_fields${ws}$re_synth_gcc_2$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gstabs+
-	    pass $name
-	}
-	-re "type = $re_class${ws}$re_access${ws}$re_fields$nl\}$nl$gdb_prompt $" {
-	    # gcc 3.3.2 -gdwarf-2
-	    # gcc HEAD 2004-01-21 -gdwarf-2
-	    pass "$name"
-	}
-	-re "type = $re_class${ws}$re_access${ws}$re_fields${ws}$re_synth_gcc_3$nl\}$nl$gdb_prompt $" {
-	    # gcc 3.3.2 -gstabs+
-	    # gcc HEAD 2004-01-21 -gstabs+
-	    pass "$name"
-	}
-    }
-
-    set name "ptype class vE"
-    gdb_test_multiple "ptype class vE" $name {
-	-re "type = $re_class${ws}$re_vbptr${ws}$re_access${ws}$re_fields$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gdwarf-2
-	    pass $name
-	}
-	-re "type = $re_class${ws}$re_vbptr${ws}$re_access${ws}$re_fields${ws}$re_synth_gcc_2$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gstabs+
-	    pass $name
-	}
-	-re "type = $re_class${ws}$re_access${ws}$re_fields$nl\}$nl$gdb_prompt $" {
-	    # gcc 3.3.2 -gdwarf-2
-	    # gcc HEAD 2004-01-21 -gdwarf-2
-	    pass "$name"
-	}
-	-re "type = $re_class${ws}$re_access${ws}$re_fields${ws}$re_synth_gcc_3$nl\}$nl$gdb_prompt $" {
-	    # gcc 3.3.2 -gstabs+
-	    # gcc HEAD 2004-01-21 -gstabs+
-	    pass "$name"
-	}
-    }
-
-    set name "ptype g_vE"
-    gdb_test_multiple "ptype g_vE" $name {
-	-re "type = $re_class${ws}$re_vbptr${ws}$re_access${ws}$re_fields$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gdwarf-2
-	    pass $name
-	}
-	-re "type = $re_class${ws}$re_vbptr${ws}$re_access${ws}$re_fields${ws}$re_synth_gcc_2$nl\}$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gstabs+
-	    pass $name
-	}
-	-re "type = $re_class${ws}$re_access${ws}$re_fields$nl\}$nl$gdb_prompt $" {
-	    # gcc 3.3.2 -gdwarf-2
-	    # gcc HEAD 2004-01-21 -gdwarf-2
-	    pass "$name"
-	}
-	-re "type = $re_class${ws}$re_access${ws}$re_fields${ws}$re_synth_gcc_3$nl\}$nl$gdb_prompt $" {
-	    # gcc 3.3.2 -gstabs+
-	    # gcc HEAD 2004-01-21 -gstabs+
-	    pass "$name"
-	}
-    }
 }
 
 # Single inheritance, print individual members.
@@ -812,20 +410,20 @@ proc test_print_anon_union {} {
 	}
     }
 
-    set re_class	"class class_with_anon_union \{${ws}public:"
-    set re_fields	"int one;${ws}"
-    set re_anon_union	"union \{${ws}int a;${ws}long int b;${ws}\};"
-    set re_synth_gcc_23	"class_with_anon_union & operator=\\(class_with_anon_union const ?&\\);${ws}class_with_anon_union\\(class_with_anon_union const ?&\\);${ws}class_with_anon_union\\((void|)\\);"
+    # The nested union prints as a multi-line field, but the class body
+    # scanner is inherently line-oriented.  This is ugly but it works.
 
-    set name "print type of anonymous union"
-    gdb_test_multiple "ptype g_anon_union" $name {
-	-re "type = $re_class${ws}$re_fields${ws}$re_anon_union$nl\}$nl$gdb_prompt $" {
-	    pass $name
+    cp_test_ptype_class \
+	"ptype g_anon_union" "print type of anonymous union" \
+	"class" "class_with_anon_union" \
+	{
+	    { field public "int one;" }
+	    { field public "union \{" }
+	    { field public "int a;" }
+	    { field public "long int b;" }
+	    { field public "\};" }
 	}
-	-re "type = $re_class${ws}$re_fields${ws}$re_anon_union${ws}$re_synth_gcc_23$nl\}$nl$gdb_prompt $" {
-	    pass $name
-	}
-    }
+
 }
 
 
@@ -888,13 +486,18 @@ proc test_print_svi_classes { } {
 	    pass $name
 	}
 	-re "$vhn = \{<vA> = \{va = 3, vx = 4\}, $re_vbptr_3 = $hex, vb = 5, vx = 6\}$nl$gdb_prompt $" {
-	    # gcc 3.3.2 -gdwarf-2
-	    # gcc HEAD 2004-01-21 -gdwarf-2
-	    # gcc HEAD 2004-01-21 -gstabs+
+	    # gcc 3.3.4 -gdwarf-2
+	    # gcc 3.4.1 -gdwarf-2
+	    # gcc 3.4.1 -gstabs+
+	    # gcc HEAD 2004-07-31 -gdwarf-2
 	    pass "$name (FIXME v3 vtbl ptr)"
 	}
 	-re "$vhn = \{<vA> = \{va = 3, vx = 4\}, $re_vbptr_3 = $hex <VTT for vB>, vb = 5, vx = 6\}$nl$gdb_prompt $" {
-	    # gcc 3.3.2 -gstabs+
+	    # gcc 3.3.4 -gstabs+
+	    pass $name
+	}
+	-re "$vhn = \{<vA> = \{va = 3, vx = 4\}, $re_vbptr_3 = $hex <typeinfo for vB>, vb = 5, vx = 6\}$nl$gdb_prompt $" {
+	    # gcc HEAD 2004-07-31 -gstabs+
 	    pass $name
 	}
     }
@@ -911,13 +514,18 @@ proc test_print_svi_classes { } {
 	    pass $name
 	}
 	-re "$vhn = \{<vA> = \{va = 7, vx = 8\}, $re_vbptr_3 = $hex, vc = 9, vx = 10\}$nl$gdb_prompt $" {
-	    # gcc 3.3.2 -gdwarf-2
-	    # gcc HEAD 2004-01-21 -gdwarf-2
-	    # gcc HEAD 2004-01-21 -gstabs+
+	    # gcc 3.3.4 -gdwarf-2
+	    # gcc 3.4.1 -gdwarf-2
+	    # gcc 3.4.1 -gstabs+
+	    # gcc HEAD 2004-07-31 -gdwarf-2
 	    pass "$name (FIXME v3 vtbl ptr)"
 	}
 	-re "$vhn = \{<vA> = \{va = 7, vx = 8\}, $re_vbptr_3 = $hex <VTT for vC>, vc = 9, vx = 10\}$nl$gdb_prompt $" {
-	    # gcc 3.3.2 -gstabs+
+	    # gcc 3.3.4 -gstabs+
+	    pass $name
+	}
+	-re "$vhn = \{<vA> = \{va = 7, vx = 8\}, $re_vbptr_3 = $hex <typeinfo for vC>, vc = 9, vx = 10\}$nl$gdb_prompt $" {
+	    # gcc HEAD 2004-07-31 -gstabs+
 	    pass $name
 	}
     }
@@ -1003,15 +611,20 @@ proc test_print_mvi_classes { } {
 	    pass $name
 	}
 	-re "$vhn = \{<vD> = \{<vB> = \{<vA> = \{va = 0, vx = 0\}, $re_vbptr_3_vB = $hex, vb = 0, vx = 0\}, <vC> = \{$re_vbptr_3_vC = $hex, vc = 0, vx = 0\}, $re_vbptr_3_vD = $hex, vd = 0, vx = 0\}, $re_vbptr_3_vE = $hex, ve = 27, vx = 28\}$nl$gdb_prompt $" {
-	    # gcc 3.3.2 -gdwarf-2
-	    # gcc 3.3.2 -gstabs+
-	    # gcc HEAD 2004-01-21 -gdwarf-2
-	    # gcc HEAD 2004-01-21 -gstabs+
+	    # gcc 3.3.4 -gdwarf-2
+	    # gcc 3.3.4 -gstabs+
+	    # gcc 3.4.1 -gdwarf-2
+	    # gcc 3.4.1 -gstabs+
+	    # gcc HEAD 2004-07-31 -gdwarf-2
 	    pass "$name (FIXME v3 vtbl ptr)"
 	}
 	-re "$vhn = \{<vD> = \{<vB> = \{<vA> = \{va = 0, vx = 0\}, $re_vbptr_3_vB = $hex, vb = 0, vx = 0\}, <vC> = \{$re_vbptr_3_vC = $hex <VTT for vD>, vc = 0, vx = 0\}, $re_vbptr_3_vD = $hex, vd = 0, vx = 0\}, $re_vbptr_3_vE = $hex, ve = 27, vx = 28\}$nl$gdb_prompt $" {
 	    # gcc 3.2.7-rh -gstabs+
-	    pass "$name (FIXME v3 vtbl ptr)"
+	    pass $name
+	}
+	-re "$vhn = \{<vD> = \{<vB> = \{<vA> = \{va = 0, vx = 0\}, $re_vbptr_3_vB = $hex, vb = 0, vx = 0\}, <vC> = \{$re_vbptr_3_vC = $hex <typeinfo for vE>, vc = 0, vx = 0\}, $re_vbptr_3_vD = $hex, vd = 0, vx = 0\}, $re_vbptr_3_vE = $hex, ve = 27, vx = 28\}$nl$gdb_prompt $" {
+	    # gcc HEAD 2004-07-31 -gstabs+
+	    pass $name
 	}
     }
 }

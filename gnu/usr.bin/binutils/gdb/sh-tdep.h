@@ -64,11 +64,23 @@ enum
     RE_REGNUM = 44,
     DSP_R0_BANK_REGNUM = 51,
     DSP_R7_BANK_REGNUM = 58,
+    /* sh2a register */
+    R0_BANK0_REGNUM = 43,
+    MACHB_REGNUM = 58,
+    IVNB_REGNUM = 59,
+    PRB_REGNUM = 60,
+    GBRB_REGNUM = 61,
+    MACLB_REGNUM = 62,
+    BANK_REGNUM = 63,
+    IBCR_REGNUM = 64,
+    IBNR_REGNUM = 65,
+    TBR_REGNUM = 66,
+    PSEUDO_BANK_REGNUM = 67,
     /* Floating point pseudo registers */
-    DR0_REGNUM = 59,
-    DR_LAST_REGNUM = 66,
-    FV0_REGNUM = 67,
-    FV_LAST_REGNUM = 70
+    DR0_REGNUM = 68,
+    DR_LAST_REGNUM = 75,
+    FV0_REGNUM = 76,
+    FV_LAST_REGNUM = 79
   };
 
 extern gdbarch_init_ftype sh64_gdbarch_init;

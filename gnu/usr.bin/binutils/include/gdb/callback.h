@@ -123,8 +123,15 @@ struct host_callback_struct
   int last_errno;		/* host format */
 
   int fdmap[MAX_CALLBACK_FDS];
-  char fdopen[MAX_CALLBACK_FDS];
-  char alwaysopen[MAX_CALLBACK_FDS];
+  /* fd_buddy is used to contruct circular lists of target fds that point to
+     the same host fd.  A uniquely mapped fd points to itself; for a closed
+     one, fd_buddy has the value -1.  The host file descriptors for stdin /
+     stdout / stderr are never closed by the simulators, so they are put
+     in a special fd_buddy circular list which also has MAX_CALLBACK_FDS
+     as a member.  */
+  /* ??? We don't have a callback entry for dup, although it is trival to
+     implement now.  */
+  short fd_buddy[MAX_CALLBACK_FDS+1];
 
   /* System call numbers.  */
   CB_TARGET_DEFS_MAP *syscall_map;

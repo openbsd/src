@@ -1,5 +1,5 @@
-#   Copyright 1999, 2000, 2001, 2002, 2003
-#   Free Software Foundation, Inc.
+# Copyright 1999, 2000, 2001, 2002, 2003, 2004 Free Software
+# Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,9 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
-
-# Please email any bugs, comments, and/or additions to this file to:
-# bug-gdb@prep.ai.mit.edu
 
 # This file was written by Elena Zannoni (ezannoni@cygnus.com)
 
@@ -272,35 +269,40 @@ gdb_expect {
 # annotate-arg-value
 # annotate-arg-end
 #
-send_gdb "signal SIGUSR1\n"
-gdb_expect {
-    -re "\r\n\032\032post-prompt\r\nContinuing with signal SIGUSR1.\r\n\r\n\032\032starting\r\n\r\n\032\032frames-invalid\r\n\r\n\032\032breakpoint 2\r\n\r\nBreakpoint 2, \r\n\032\032frame-begin 0 $hex\r\n\r\n\032\032frame-function-name\r\nhandle_USR1\r\n\032\032frame-args\r\n \\(\r\n\032\032arg-begin\r\nsig\r\n\032\032arg-name-end\r\n=\r\n\032\032arg-value -\r\n$decimal\r\n\032\032arg-end\r\n\\)\r\n\032\032frame-source-begin\r\n at \r\n\032\032frame-source-file\r\n${escapedsrcfile}\r\n\032\032frame-source-file-end\r\n:\r\n\032\032frame-source-line\r\n.*\r\n\032\032frame-source-end\r\n\r\n\r\n\032\032source.*annota1.c:.*:.*:beg:$hex\r\n\r\n\032\032frame-end\r\n\r\n\032\032stopped\r\n$gdb_prompt$" \
-	{ pass "send SIGUSR1" }
-    -re "\r\n\032\032post-prompt\r\nContinuing with signal SIGUSR1.\r\n\r\n\032\032starting\r\n\r\n\032\032frames-invalid\r\n\r\n\032\032breakpoint 2\r\n\r\nBreakpoint 2, \r\n\032\032frame-begin 0 $hex\r\n\r\n\032\032frame-function-name\r\nhandle_USR1\r\n\032\032frame-args\r\n \\(\r\n\032\032arg-begin\r\nsig\r\n\032\032arg-name-end\r\n=\r\n\032\032arg-value -\r\n$decimal\r\n\032\032arg-end\r\n\\)\r\n\032\032frame-source-begin\r\n at \r\n\032\032frame-source-file\r\n.*${srcfile}\r\n\032\032frame-source-file-end\r\n:\r\n\032\032frame-source-line\r\n.*\r\n\032\032frame-source-end\r\n\r\n\r\n\032\032source.*annota1.c:.*:.*:beg:$hex\r\n\r\n\032\032frame-end\r\n\r\n\032\032stopped\r\n$gdb_prompt$" \
-	{ setup_xfail "*-*-*" 1270
-          fail "send SIGUSR1" }
-  -re ".*$gdb_prompt$"     { fail "send SIGUSR1" }
-  timeout	            { fail "send SIGUSR1 (timeout)" }
-}
 
-
-#
-# test:
-# annotate-signal-handler-caller
-#
-verbose "match_max local is: [match_max]"
-verbose "match_max default is: [match_max -d]"
-# This is necessary because a 2000 buffer is not enought to get everything
-# up to the prompt ad the test gets a timeout.
-match_max 3000
-verbose "match_max now is: [match_max]"
-send_gdb "backtrace\n"
-gdb_expect {
-    -re "frame-begin 0 $hex\r\n#0.*frame-end.*frame-begin 1 $hex\r\n#1.*(\032\032signal-handler-caller\r\n.signal handler called.\r\n\r\n)+\032\032frame-end\r\n\r\n\032\032frame-begin 2 $hex\r\n#2.*(frame-begin 3 $hex\r\n#3.*)*frame-end.*$gdb_prompt$" {
-	pass "backtrace @ signal handler"
+if [target_info exists gdb,nosignals] {
+    unsupported "send SIGUSR1"
+    unsupported "backtrace @ signal handler"
+} else {
+    send_gdb "signal SIGUSR1\n"
+    gdb_expect {
+	-re "\r\n\032\032post-prompt\r\nContinuing with signal SIGUSR1.\r\n\r\n\032\032starting\r\n\r\n\032\032frames-invalid\r\n\r\n\032\032breakpoint 2\r\n\r\nBreakpoint 2, \r\n\032\032frame-begin 0 $hex\r\n\r\n\032\032frame-function-name\r\nhandle_USR1\r\n\032\032frame-args\r\n \\(\r\n\032\032arg-begin\r\nsig\r\n\032\032arg-name-end\r\n=\r\n\032\032arg-value -\r\n$decimal\r\n\032\032arg-end\r\n\\)\r\n\032\032frame-source-begin\r\n at \r\n\032\032frame-source-file\r\n${escapedsrcfile}\r\n\032\032frame-source-file-end\r\n:\r\n\032\032frame-source-line\r\n.*\r\n\032\032frame-source-end\r\n\r\n\r\n\032\032source.*annota1.c:.*:.*:beg:$hex\r\n\r\n\032\032frame-end\r\n\r\n\032\032stopped\r\n$gdb_prompt$" \
+	    { pass "send SIGUSR1" }
+	-re "\r\n\032\032post-prompt\r\nContinuing with signal SIGUSR1.\r\n\r\n\032\032starting\r\n\r\n\032\032frames-invalid\r\n\r\n\032\032breakpoint 2\r\n\r\nBreakpoint 2, \r\n\032\032frame-begin 0 $hex\r\n\r\n\032\032frame-function-name\r\nhandle_USR1\r\n\032\032frame-args\r\n \\(\r\n\032\032arg-begin\r\nsig\r\n\032\032arg-name-end\r\n=\r\n\032\032arg-value -\r\n$decimal\r\n\032\032arg-end\r\n\\)\r\n\032\032frame-source-begin\r\n at \r\n\032\032frame-source-file\r\n.*${srcfile}\r\n\032\032frame-source-file-end\r\n:\r\n\032\032frame-source-line\r\n.*\r\n\032\032frame-source-end\r\n\r\n\r\n\032\032source.*annota1.c:.*:.*:beg:$hex\r\n\r\n\032\032frame-end\r\n\r\n\032\032stopped\r\n$gdb_prompt$" \
+	    { setup_xfail "*-*-*" 1270
+	      fail "send SIGUSR1" }
+      -re ".*$gdb_prompt$"     { fail "send SIGUSR1" }
+      timeout	            { fail "send SIGUSR1 (timeout)" }
     }
-    -re ".*$gdb_prompt$"   { fail "backtrace @ signal handler" }
-    timeout                { fail "backtrace @ signal handler (timeout)" }
+
+    #
+    # test:
+    # annotate-signal-handler-caller
+    #
+    verbose "match_max local is: [match_max]"
+    verbose "match_max default is: [match_max -d]"
+    # This is necessary because a 2000 buffer is not enought to get everything
+    # up to the prompt ad the test gets a timeout.
+    match_max 3000
+    verbose "match_max now is: [match_max]"
+    send_gdb "backtrace\n"
+    gdb_expect {
+	-re "frame-begin 0 $hex\r\n#0.*frame-end.*frame-begin 1 $hex\r\n#1.*(\032\032signal-handler-caller\r\n.signal handler called.\r\n\r\n)+\032\032frame-end\r\n\r\n\032\032frame-begin 2 $hex\r\n#2.*(frame-begin 3 $hex\r\n#3.*)*frame-end.*$gdb_prompt$" {
+	    pass "backtrace @ signal handler"
+	}
+	-re ".*$gdb_prompt$"   { fail "backtrace @ signal handler" }
+	timeout                { fail "backtrace @ signal handler (timeout)" }
+    }
 }
 
 #
@@ -449,30 +451,35 @@ gdb_expect {
 # It has been verified that other signals will be delivered.  However,
 # rather than twiddle the test, I choose to leave it as-is as it
 # exposes an interesting failure on hpux11.
-setup_xfail hppa*-*-hpux11*
-send_gdb "signal SIGTRAP\n"
-gdb_expect {
-  -re ".*\032\032post-prompt\r\nContinuing with signal SIGTRAP.\r\n\r\n\032\032starting\r\n\r\n\032\032frames-invalid\r\n\r\n\032\032frames-invalid\r\n\r\n\032\032signalled\r\n\r\nProgram terminated with signal \r\n\032\032signal-name\r\nSIGTRAP\r\n\032\032signal-name-end\r\n, \r\n\032\032signal-string\r\nTrace.breakpoint trap\r\n\032\032signal-string-end\r\n.\r\nThe program no longer exists.\r\n\r\n\032\032stopped\r\n$gdb_prompt$" \
-	  { pass "signal sent" }
-  -re ".*$gdb_prompt$" { fail "signal sent" }
-  timeout { fail "signal sent (timeout)" }
+
+if [target_info exists gdb,nosignals] {
+    unsupported "signal sent"
+} else {
+    setup_xfail hppa*-*-hpux11*
+    send_gdb "signal SIGTRAP\n"
+    gdb_expect {
+      -re ".*\032\032post-prompt\r\nContinuing with signal SIGTRAP.\r\n\r\n\032\032starting\r\n\r\n\032\032frames-invalid\r\n\r\n\032\032frames-invalid\r\n\r\n\032\032signalled\r\n\r\nProgram terminated with signal \r\n\032\032signal-name\r\nSIGTRAP\r\n\032\032signal-name-end\r\n, \r\n\032\032signal-string\r\nTrace.breakpoint trap\r\n\032\032signal-string-end\r\n.\r\nThe program no longer exists.\r\n\r\n\032\032stopped\r\n$gdb_prompt$" \
+	      { pass "signal sent" }
+      -re ".*$gdb_prompt$" { fail "signal sent" }
+      timeout { fail "signal sent (timeout)" }
+    }
 }
 
 
-# Check for production of a core file
-# and remove it!
+# Check for production of a core file and remove it!
 
 set exec_output [remote_exec build "ls core"]
 
+set test "cleanup core file"
 if [ regexp "core not found" $exec_output]  {
-    pass "No core dumped"
+    pass "$test (not dumped)"
 } else {
-  if [ regexp "No such file or directory" $exec_output] {
-      pass "No core dumped"
-  } else {
-      remote_exec build "rm -f core"
-      pass "Core dumped and removed"
-  }
+    if [ regexp "No such file or directory" $exec_output] {
+	pass "$test (not dumped)"
+    } else {
+	remote_exec build "rm -f core"
+	pass "$test (removed)"
+    }
 }
 
 # restore the original prompt for the rest of the testsuite

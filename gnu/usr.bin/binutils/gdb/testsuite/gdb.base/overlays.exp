@@ -1,4 +1,4 @@
-# Copyright 1997, 1998, 2001, 2002, 2003 Free Software Foundation, Inc.
+# Copyright 1997, 1998, 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -36,6 +36,11 @@ if [istarget "d10v-*-*"] then {
     set linker_script "${srcdir}/${subdir}/m32r.ld";
 } else {
     verbose "Skipping overlay test -- not implemented for this target."
+    return 
+}
+
+if [istarget "*-*-linux*"] then {
+    verbose "Skipping overlay test -- Linux doesn't support overlayed programs."
     return 
 }
 

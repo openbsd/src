@@ -11,5 +11,5 @@ int
 main (int argc, char *argv[])
 {
   Foo *foo = 0;
-  exit (0);
+  return 0;
 }

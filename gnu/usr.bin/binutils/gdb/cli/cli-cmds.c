@@ -600,7 +600,7 @@ edit_command (char *arg, int from_tty)
           if (sal.symtab == 0)
 	    /* FIXME-32x64--assumes sal.pc fits in long.  */
 	    error ("No source file for address %s.",
-		   local_hex_string((unsigned long) sal.pc));
+		   hex_string ((unsigned long) sal.pc));
           sym = find_pc_function (sal.pc);
           if (sym)
 	    {
@@ -767,7 +767,7 @@ list_command (char *arg, int from_tty)
       if (sal.symtab == 0)
 	/* FIXME-32x64--assumes sal.pc fits in long.  */
 	error ("No source file for address %s.",
-	       local_hex_string ((unsigned long) sal.pc));
+	       hex_string ((unsigned long) sal.pc));
       sym = find_pc_function (sal.pc);
       if (sym)
 	{
@@ -858,7 +858,7 @@ disassemble_command (char *arg, int from_tty)
 	/* FIXME: cagney/2004-02-07: This should be an observer.  */
 	low = tui_get_low_disassembly_address (low, pc);
 #endif
-      low += FUNCTION_START_OFFSET;
+      low += DEPRECATED_FUNCTION_START_OFFSET;
     }
   else if (!(space_index = (char *) strchr (arg, ' ')))
     {
@@ -873,7 +873,7 @@ disassemble_command (char *arg, int from_tty)
 	/* FIXME: cagney/2004-02-07: This should be an observer.  */
 	low = tui_get_low_disassembly_address (low, pc);
 #endif
-      low += FUNCTION_START_OFFSET;
+      low += DEPRECATED_FUNCTION_START_OFFSET;
     }
   else
     {
@@ -1119,7 +1119,7 @@ when gdb is started.", &cmdlist);
   c = add_set_cmd ("verbose", class_support, var_boolean, (char *) &info_verbose,
 		   "Set ",
 		   &setlist),
-    add_show_from_set (c, &showlist);
+    deprecated_add_show_from_set (c, &showlist);
   set_cmd_sfunc (c, set_verbose);
   set_verbose (NULL, 0, c);
 
@@ -1130,7 +1130,7 @@ when gdb is started.", &cmdlist);
 		  "Generic command for showing command history parameters.",
 		  &showhistlist, "show history ", 0, &showlist);
 
-  add_show_from_set
+  deprecated_add_show_from_set
     (add_set_cmd ("expansion", no_class, var_boolean, (char *) &history_expansion_p,
 		  "Set history expansion on command input.\n\
 Without an argument, history expansion is enabled.", &sethistlist),
@@ -1174,9 +1174,10 @@ is used, the same rules apply to its nested commands as to the first ones.");
 
   /* If target is open when baud changes, it doesn't take effect until the
      next open (I think, not sure).  */
-  add_show_from_set (add_set_cmd ("remotebaud", no_class,
-				  var_zinteger, (char *) &baud_rate,
-				  "Set baud rate for remote serial I/O.\n\
+  deprecated_add_show_from_set
+    (add_set_cmd ("remotebaud", no_class,
+		  var_zinteger, (char *) &baud_rate,
+		  "Set baud rate for remote serial I/O.\n\
 This value is used to set the speed of the serial port when debugging\n\
 using remote targets.", &setlist),
 		     &showlist);
@@ -1187,21 +1188,23 @@ using remote targets.", &setlist),
 When enabled, each packet sent or received with the remote target\n\
 is displayed.", &setlist);
   deprecate_cmd (c, "set debug remote");
-  deprecate_cmd (add_show_from_set (c, &showlist), "show debug remote");
+  deprecate_cmd (deprecated_add_show_from_set (c, &showlist),
+		 "show debug remote");
 
-  add_show_from_set (add_set_cmd ("remote", no_class, var_zinteger,
-				  (char *) &remote_debug,
-				  "Set debugging of remote protocol.\n\
+  deprecated_add_show_from_set
+    (add_set_cmd ("remote", no_class, var_zinteger,
+		  (char *) &remote_debug,
+		  "Set debugging of remote protocol.\n\
 When enabled, each packet sent or received with the remote target\n\
 is displayed.", &setdebuglist),
 		     &showdebuglist);
 
-  add_show_from_set (
-		      add_set_cmd ("remotetimeout", no_class, var_integer, (char *) &remote_timeout,
-				   "Set timeout limit to wait for target to respond.\n\
+  deprecated_add_show_from_set
+    (add_set_cmd ("remotetimeout", no_class, var_integer, (char *) &remote_timeout,
+		  "Set timeout limit to wait for target to respond.\n\
 This value is used to set the time limit for gdb to wait for a response\n\
 from the target.", &setlist),
-		      &showlist);
+     &showlist);
 
   add_prefix_cmd ("debug", no_class, set_debug,
 		  "Generic command for setting gdb debugging flags",
@@ -1279,10 +1282,10 @@ Argument is the name of the user defined command.\n\
 With no argument, show definitions of all user defined commands.", &showlist);
   add_com ("apropos", class_support, apropos_command, "Search for commands matching a REGEXP");
 
-  add_show_from_set (
-		      add_set_cmd ("max-user-call-depth", no_class, var_integer, 
-				   (char *) &max_user_call_depth,
-				   "Set the max call depth for user-defined commands.\n", 
-				   &setlist),
-		      &showlist);
+  deprecated_add_show_from_set
+    (add_set_cmd ("max-user-call-depth", no_class, var_integer, 
+		  (char *) &max_user_call_depth,
+		  "Set the max call depth for user-defined commands.\n", 
+		  &setlist),
+     &showlist);
 }

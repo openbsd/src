@@ -41,8 +41,18 @@ if ![isnative] then {
 # consumes too many resources - gigabytes worth of disk space and and
 # I/O bandwith.
 
-if { [istarget "*-*-*bsd*"] || [istarget "*-*-hpux*"] } {
+if { [istarget "*-*-*bsd*"]
+     || [istarget "*-*-hpux*"]
+     || [istarget "*-*-solaris*"] 
+     || [istarget "*-*-cygwin*"] } {
     untested "Kernel lacks sparse corefile support (PR gdb/1551)"
+    return
+}
+
+# This testcase causes too much stress (in terms of memory usage)
+# on certain systems...
+if { [istarget "*-*-*irix*"] } {
+    untested "Testcase too stressful for this system"
     return
 }
 
@@ -53,36 +63,6 @@ set corefile ${objdir}/${subdir}/${testfile}.corefile
 
 if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
      gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
-}
-
-# Create a core file named "TESTFILE.corefile" rather than just
-# "core", to avoid problems with sys admin types that like to
-# regularly prune all files named "core" from the system.
-
-# Some systems append "core" to the name of the program; others append
-# the name of the program to "core"; still others (like Linux, as of
-# May 2003) create cores named "core.PID".  In the latter case, we
-# could have many core files lying around, and it may be difficult to
-# tell which one is ours, so let's run the program in a subdirectory.
-
-set found 0
-set coredir "${objdir}/${subdir}/coredir.[getpid]"
-file mkdir $coredir
-catch "system \"(cd ${coredir}; ${binfile}; true) >/dev/null 2>&1\""
-set names [glob -nocomplain -directory $coredir *core*]
-if {[llength $names] == 1} {
-    set file [file join $coredir [lindex $names 0]]
-    remote_exec build "mv $file $corefile"
-    set found 1
-}
-
-# Try to clean up after ourselves. 
-remote_file build delete [file join $coredir coremmap.data]
-remote_exec build "rmdir $coredir"
-    
-if { $found == 0  } {
-    warning "can't generate a core file - core tests suppressed - check ulimit -c"
-    return 0
 }
 
 # Run GDB on the bigcore program up-to where it will dump core.
@@ -104,8 +84,7 @@ gdb_test continue ".*print_string.*"
 gdb_test next ".*0 = 0.*"
 
 # Traverse part of bigcore's linked list of memory chunks (forward or
-# backward), saving each chunk's address.  I don't know why but
-# expect_out didn't work with gdb_test_multiple.
+# backward), saving each chunk's address.
 
 proc extract_heap { dir } {
     global gdb_prompt
@@ -113,8 +92,7 @@ proc extract_heap { dir } {
     set heap ""
     set test "extract ${dir} heap"
     set lim 0
-    send_gdb "print heap.${dir}\n"
-    gdb_expect {
+    gdb_test_multiple "print heap.${dir}" "$test" {
 	-re " = \\(struct list \\*\\) 0x0.*$gdb_prompt $" {
 	    pass "$test"
 	}
@@ -139,6 +117,79 @@ proc extract_heap { dir } {
 }
 set next_heap [extract_heap next]
 set prev_heap [extract_heap prev]
+
+# Now create a core dump
+
+# Rename the core file to "TESTFILE.corefile" rather than just "core",
+# to avoid problems with sys admin types that like to regularly prune
+# all files named "core" from the system.
+
+# Some systems append "core" to the name of the program; others append
+# the name of the program to "core"; still others (like Linux, as of
+# May 2003) create cores named "core.PID".
+
+# Save the process ID.  Some systems dump the core into core.PID.
+set test "grab pid"
+gdb_test_multiple "info program" $test {
+    -re "child process (\[0-9\]+).*$gdb_prompt $" {
+	set inferior_pid $expect_out(1,string)
+	pass $test
+    }
+    -re "$gdb_prompt $" {
+	set inferior_pid unknown
+	pass $test
+    }
+}
+
+# Dump core using SIGABRT
+set oldtimeout $timeout
+set timeout 600
+gdb_test "signal SIGABRT" "Program terminated with signal SIGABRT, .*"
+
+# Find the corefile
+set file ""
+foreach pat [list core.${inferior_pid} ${testfile}.core core] {
+    set names [glob -nocomplain $pat]
+    if {[llength $names] == 1} {
+	set file [lindex $names 0]
+	remote_exec build "mv $file $corefile"
+	break
+    }
+}
+
+if { $file == "" } {
+    untested "Can't generate a core file"
+    return 0
+}
+
+# Check that the corefile is plausibly large enough.  We're trying to
+# detect the case where the operating system has truncated the file
+# just before signed wraparound.  TCL, unfortunately, has a similar
+# problem - so use catch.  It can handle the "bad" size but not
+# necessarily the "good" one.  And we must use GDB for the comparison,
+# similarly.
+
+if {[catch {file size $corefile} core_size] == 0} {
+    set core_ok 0
+    gdb_test_multiple "print bytes_allocated < $core_size" "check core size" {
+	-re " = 1\r\n$gdb_prompt $" {
+	    pass "check core size"
+	    set core_ok 1
+	}
+    }
+} { 
+    # Probably failed due to the TCL build having problems with very
+    # large values.  Since GDB uses a 64-bit off_t (when possible) it
+    # shouldn't have this problem.  Assume that things are going to
+    # work.  Without this assumption the test is skiped on systems
+    # (such as i386 GNU/Linux with patched kernel) which do pass.
+    pass "check core size"
+    set core_ok 1
+}
+if {! $core_ok} {
+    untested "check core size (system does not support large corefiles)"
+    return 0
+}
 
 # Now load up that core file
 

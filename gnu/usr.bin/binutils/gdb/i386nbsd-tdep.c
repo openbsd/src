@@ -23,10 +23,12 @@
 
 #include "defs.h"
 #include "arch-utils.h"
+#include "frame.h"
 #include "gdbcore.h"
 #include "regcache.h"
 #include "regset.h"
 #include "osabi.h"
+#include "symtab.h"
 
 #include "gdb_assert.h"
 #include "gdb_string.h"
@@ -62,7 +64,7 @@ i386nbsd_aout_supply_regset (const struct regset *regset,
 			     struct regcache *regcache, int regnum,
 			     const void *regs, size_t len)
 {
-  const struct gdbarch_tdep *tdep = regset->descr;
+  const struct gdbarch_tdep *tdep = gdbarch_tdep (regset->arch);
 
   gdb_assert (len >= tdep->sizeof_gregset + I387_SIZEOF_FSAVE);
 
@@ -84,11 +86,8 @@ i386nbsd_aout_regset_from_core_section (struct gdbarch *gdbarch,
       && sect_size >= tdep->sizeof_gregset + I387_SIZEOF_FSAVE)
     {
       if (tdep->gregset == NULL)
-	{
-	  tdep->gregset = XMALLOC (struct regset);
-	  tdep->gregset->descr = tdep;
-	  tdep->gregset->supply_regset = i386nbsd_aout_supply_regset;
-	}
+        tdep->gregset =
+	  regset_alloc (gdbarch, i386nbsd_aout_supply_regset, NULL);
       return tdep->gregset;
     }
 
@@ -133,13 +132,14 @@ static const unsigned char sigtramp_retcode[] =
 };
 
 static LONGEST
-i386nbsd_sigtramp_offset (CORE_ADDR pc)
+i386nbsd_sigtramp_offset (struct frame_info *next_frame)
 {
+  CORE_ADDR pc = frame_pc_unwind (next_frame);
   unsigned char ret[sizeof(sigtramp_retcode)], insn;
   LONGEST off;
   int i;
 
-  if (read_memory_nobpt (pc, &insn, 1) != 0)
+  if (!safe_frame_unwind_memory (next_frame, pc, &insn, 1))
     return -1;
 
   switch (insn)
@@ -151,7 +151,7 @@ i386nbsd_sigtramp_offset (CORE_ADDR pc)
     case RETCODE_INSN2:
       /* INSN2 and INSN3 are the same.  Read at the location of PC+1
 	 to determine if we're actually looking at INSN2 or INSN3.  */
-      if (read_memory_nobpt (pc + 1, &insn, 1) != 0)
+      if (!safe_frame_unwind_memory (next_frame, pc + 1, &insn, 1))
 	return -1;
 
       if (insn == RETCODE_INSN3)
@@ -174,7 +174,7 @@ i386nbsd_sigtramp_offset (CORE_ADDR pc)
 
   pc -= off;
 
-  if (read_memory_nobpt (pc, (char *) ret, sizeof (ret)) != 0)
+  if (!safe_frame_unwind_memory (next_frame, pc, ret, sizeof (ret)))
     return -1;
 
   if (memcmp (ret, sigtramp_retcode, sizeof (ret)) == 0)
@@ -183,11 +183,18 @@ i386nbsd_sigtramp_offset (CORE_ADDR pc)
   return -1;
 }
 
+/* Return whether the frame preceding NEXT_FRAME corresponds to a
+   NetBSD sigtramp routine.  */
+
 static int
-i386nbsd_pc_in_sigtramp (CORE_ADDR pc, char *name)
+i386nbsd_sigtramp_p (struct frame_info *next_frame)
 {
+  CORE_ADDR pc = frame_pc_unwind (next_frame);
+  char *name;
+
+  find_pc_partial_function (pc, &name, NULL, NULL);
   return (nbsd_pc_in_sigtramp (pc, name)
-	  || i386nbsd_sigtramp_offset (pc) >= 0);
+	  || i386nbsd_sigtramp_offset (next_frame) >= 0);
 }
 
 /* From <machine/signal.h>.  */
@@ -225,18 +232,15 @@ i386nbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   tdep->sizeof_gregset = 16 * 4;
 
   /* NetBSD has different signal trampoline conventions.  */
-  set_gdbarch_pc_in_sigtramp (gdbarch, i386nbsd_pc_in_sigtramp);
-  /* FIXME: kettenis/20020906: We should probably provide
-     NetBSD-specific versions of these functions if we want to
-     recognize signal trampolines that live on the stack.  */
-  set_gdbarch_sigtramp_start (gdbarch, NULL);
-  set_gdbarch_sigtramp_end (gdbarch, NULL);
+  tdep->sigtramp_start = 0;
+  tdep->sigtramp_end = 0;
+  tdep->sigtramp_p = i386nbsd_sigtramp_p;
 
   /* NetBSD uses -freg-struct-return by default.  */
   tdep->struct_return = reg_struct_return;
 
   /* NetBSD has a `struct sigcontext' that's different from the
-     origional 4.3 BSD.  */
+     original 4.3 BSD.  */
   tdep->sc_reg_offset = i386nbsd_sc_reg_offset;
   tdep->sc_num_regs = ARRAY_SIZE (i386nbsd_sc_reg_offset);
 }

@@ -1,5 +1,5 @@
 /* Native debugging support for GNU/Linux (LWP layer).
-   Copyright 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
+   Copyright 2000, 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,6 +17,8 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place - Suite 330,
    Boston, MA 02111-1307, USA.  */
+
+#include "target.h"
 
 /* Structure describing an LWP.  */
 
@@ -52,6 +54,11 @@ struct lwp_info
   /* Non-zero if we were stepping this LWP.  */
   int step;
 
+  /* If WAITSTATUS->KIND != TARGET_WAITKIND_SPURIOUS, the waitstatus
+     for this LWP's last event.  This may correspond to STATUS above,
+     or to a local variable in lin_lwp_wait.  */
+  struct target_waitstatus waitstatus;
+
   /* Next LWP in list.  */
   struct lwp_info *next;
 };
@@ -60,7 +67,6 @@ struct lwp_info
    system".  */
 struct mem_attrib;
 struct target_ops;
-struct target_waitstatus;
 
 extern int linux_proc_xfer_memory (CORE_ADDR addr, char *myaddr, int len,
 				   int write, struct mem_attrib *attrib,

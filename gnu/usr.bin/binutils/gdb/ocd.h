@@ -112,7 +112,8 @@ int ocd_xfer_memory (CORE_ADDR memaddr, char *myaddr,
 
 void ocd_mourn (void);
 
-void ocd_create_inferior (char *exec_file, char *args, char **env);
+void ocd_create_inferior (char *exec_file, char *args, char **env,
+			  int from_tty);
 
 int ocd_thread_alive (ptid_t th);
 

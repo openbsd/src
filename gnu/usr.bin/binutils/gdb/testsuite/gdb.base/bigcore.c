@@ -19,9 +19,17 @@
    Please email any bugs, comments, and/or additions to this file to:
    bug-gdb@prep.ai.mit.edu  */
 
-#include <unistd.h>
-#include <stdlib.h>
+/* Get 64-bit stuff if on a GNU system.  */
+#define _GNU_SOURCE
+
+#include <sys/types.h>
+#include <sys/time.h>
 #include <sys/resource.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
+#include <stdlib.h>
+#include <unistd.h>
 
 /* Print routines:
 
@@ -40,7 +48,7 @@ print_char (char c)
 }
 
 static void
-print_unsigned (unsigned long u)
+print_unsigned (unsigned long long u)
 {
   if (u >= 10)
     print_unsigned (u / 10);
@@ -48,7 +56,7 @@ print_unsigned (unsigned long u)
 }
 
 static void
-print_hex (unsigned long u)
+print_hex (unsigned long long u)
 {
   if (u >= 16)
     print_hex (u / 16);
@@ -67,6 +75,16 @@ print_address (const void *a)
 {
   print_string ("0x");
   print_hex ((unsigned long) a);
+}
+
+static void
+print_byte_count (unsigned long long u)
+{
+  print_unsigned (u);
+  print_string (" (");
+  print_string ("0x");
+  print_hex (u);
+  print_string (") bytes");
 }
 
 /* Print the current values of RESOURCE.  */
@@ -117,10 +135,22 @@ struct list
 static struct list dummy;
 static struct list heap = { &dummy, &dummy };
 
+static unsigned long bytes_allocated;
+
+#ifdef O_LARGEFILE
+#define large_off_t off64_t
+#define large_lseek lseek64
+#else
+#define large_off_t off_t
+#define O_LARGEFILE 0
+#define large_lseek lseek
+#endif
+
 int
 main ()
 {
   size_t max_chunk_size;
+  large_off_t max_core_size;
 
   /* Try to expand all the resource limits beyond the point of sanity
      - we're after the biggest possible core file.  */
@@ -139,26 +169,57 @@ main ()
   maximize_rlimit (RLIMIT_AS, "stack");
 #endif
 
+  print_string ("Maximize allocation limits ...\n");
+
+  /* Compute the largest possible corefile size.  No point in trying
+     to create a corefile larger than the largest file supported by
+     the file system.  What about 64-bit lseek64?  */
+  {
+    int fd;
+    large_off_t tmp;
+    unlink ("bigcore.corefile");
+    fd = open ("bigcore.corefile", O_RDWR | O_CREAT | O_TRUNC | O_LARGEFILE);
+    for (tmp = 1; tmp > 0; tmp <<= 1)
+      {
+	if (large_lseek (fd, tmp, SEEK_SET) > 0)
+	  max_core_size = tmp;
+      }
+    close (fd);
+  }
+  
   /* Compute an initial chunk size.  The math is dodgy but it works
-     for the moment.  Perhaphs there's a constant around somewhere.  */
+     for the moment.  Perhaphs there's a constant around somewhere.
+     Limit this to max_core_size bytes - no point in trying to
+     allocate more than can be written to the corefile.  */
   {
     size_t tmp;
-    for (tmp = 1; tmp > 0; tmp <<= 1)
+    for (tmp = 1; tmp > 0 && tmp < max_core_size; tmp <<= 1)
       max_chunk_size = tmp;
   }
+
+  print_string ("  core: ");
+  print_byte_count (max_core_size);
+  print_string ("\n");
+  print_string ("  chunk: ");
+  print_byte_count (max_chunk_size);
+  print_string ("\n");
+  print_string ("  large? ");
+  if (O_LARGEFILE)
+    print_string ("yes\n");
+  else
+    print_string ("no\n");
 
   /* Allocate as much memory as possible creating a linked list of
      each section.  The linking ensures that some, but not all, the
      memory is allocated.  NB: Some kernels handle this efficiently -
      only allocating and writing out referenced pages leaving holes in
-     the file for unreferend pages - while others handle this poorly -
-     writing out all pages including those that wern't referenced.  */
+     the file for unmodified pages - while others handle this poorly -
+     writing out all pages including those that weren't modified.  */
 
   print_string ("Alocating the entire heap ...\n");
   {
     size_t chunk_size;
-    long bytes_allocated = 0;
-    long chunks_allocated = 0;
+    unsigned long chunks_allocated = 0;
     /* Create a linked list of memory chunks.  Start with
        MAX_CHUNK_SIZE blocks of memory and then try allocating smaller
        and smaller amounts until all (well at least most) memory has
@@ -169,9 +230,10 @@ main ()
       {
 	unsigned long count = 0;
 	print_string ("  ");
-	print_unsigned (chunk_size);
-	print_string (" bytes ... ");
-	while (1)
+	print_byte_count (chunk_size);
+	print_string (" ... ");
+	while (bytes_allocated + (1 + count) * chunk_size
+	       < max_core_size)
 	  {
 	    struct list *chunk = malloc (chunk_size);
 	    if (chunk == NULL)
@@ -190,7 +252,7 @@ main ()
 	bytes_allocated += chunk_size * count;
       }
     print_string ("Total of ");
-    print_unsigned (bytes_allocated);
+    print_byte_count (bytes_allocated);
     print_string (" bytes ");
     print_unsigned (chunks_allocated);
     print_string (" chunks\n");

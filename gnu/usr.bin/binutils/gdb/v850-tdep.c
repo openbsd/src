@@ -797,8 +797,7 @@ static CORE_ADDR
 v850_find_callers_reg (struct frame_info *fi, int regnum)
 {
   for (; fi; fi = get_next_frame (fi))
-    if (DEPRECATED_PC_IN_CALL_DUMMY (get_frame_pc (fi), get_frame_base (fi),
-				     get_frame_base (fi)))
+    if (deprecated_pc_in_call_dummy (get_frame_pc (fi)))
       return deprecated_read_register_dummy (get_frame_pc (fi),
 					     get_frame_base (fi), regnum);
     else if (deprecated_get_frame_saved_regs (fi)[regnum] != 0)
@@ -825,7 +824,7 @@ v850_frame_chain (struct frame_info *fi)
   callers_pc = DEPRECATED_FRAME_SAVED_PC (fi);
   /* If caller is a call-dummy, then our FP bears no relation to his FP! */
   fp = v850_find_callers_reg (fi, E_FP_RAW_REGNUM);
-  if (DEPRECATED_PC_IN_CALL_DUMMY (callers_pc, fp, fp))
+  if (deprecated_pc_in_call_dummy (callers_pc))
     return fp;			/* caller is call-dummy: return oldest value of FP */
 
   /* Caller is NOT a call-dummy, so everything else should just work.
@@ -882,10 +881,8 @@ v850_pop_frame (void)
   struct frame_info *frame = get_current_frame ();
   int regnum;
 
-  if (DEPRECATED_PC_IN_CALL_DUMMY (get_frame_pc (frame),
-				   get_frame_base (frame),
-				   get_frame_base (frame)))
-    generic_pop_dummy_frame ();
+  if (deprecated_pc_in_call_dummy (get_frame_pc (frame)))
+    deprecated_pop_dummy_frame ();
   else
     {
       write_register (E_PC_REGNUM, DEPRECATED_FRAME_SAVED_PC (frame));
@@ -1010,35 +1007,13 @@ v850_push_return_address (CORE_ADDR pc, CORE_ADDR sp)
 static CORE_ADDR
 v850_frame_saved_pc (struct frame_info *fi)
 {
-  if (DEPRECATED_PC_IN_CALL_DUMMY (get_frame_pc (fi), get_frame_base (fi),
-				   get_frame_base (fi)))
+  if (deprecated_pc_in_call_dummy (get_frame_pc (fi)))
     return deprecated_read_register_dummy (get_frame_pc (fi),
 					   get_frame_base (fi), E_PC_REGNUM);
   else
     return v850_find_callers_reg (fi, E_RP_REGNUM);
 }
 
-
-/* Function: fix_call_dummy
-   Pokes the callee function's address into the CALL_DUMMY assembly stub.
-   Assumes that the CALL_DUMMY looks like this:
-   jarl <offset24>, r31
-   trap
- */
-
-static void
-v850_fix_call_dummy (char *dummy, CORE_ADDR sp, CORE_ADDR fun, int nargs,
-		     struct value **args, struct type *type, int gcc_p)
-{
-  long offset24;
-
-  offset24 = (long) fun - (long) entry_point_address ();
-  offset24 &= 0x3fffff;
-  offset24 |= 0xff800000;	/* jarl <offset24>, r31 */
-
-  store_unsigned_integer ((unsigned int *) &dummy[2], 2, offset24 & 0xffff);
-  store_unsigned_integer ((unsigned int *) &dummy[0], 2, offset24 >> 16);
-}
 
 static CORE_ADDR
 v850_saved_pc_after_call (struct frame_info *ignore)
@@ -1065,7 +1040,7 @@ v850_extract_return_value (struct type *type, char *regbuf, char *valbuf)
          pointed to by R6. */
       return_buffer =
 	extract_unsigned_integer (regbuf + DEPRECATED_REGISTER_BYTE (E_V0_REGNUM),
-				  DEPRECATED_REGISTER_RAW_SIZE (E_V0_REGNUM));
+				  register_size (current_gdbarch, E_V0_REGNUM));
 
       read_memory (return_buffer, valbuf, TYPE_LENGTH (type));
     }
@@ -1107,8 +1082,7 @@ v850_frame_init_saved_regs (struct frame_info *fi)
 
       /* The call dummy doesn't save any registers on the stack, so we
          can return now.  */
-      if (DEPRECATED_PC_IN_CALL_DUMMY (get_frame_pc (fi), get_frame_base (fi),
-				       get_frame_base (fi)))
+      if (deprecated_pc_in_call_dummy (get_frame_pc (fi)))
 	return;
 
       /* Find the beginning of this function, so we can analyze its
@@ -1175,7 +1149,6 @@ v850_target_read_fp (void)
 static struct gdbarch *
 v850_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 {
-  static LONGEST call_dummy_words[1] = { 0 };
   struct gdbarch_tdep *tdep = NULL;
   struct gdbarch *gdbarch;
   int i;
@@ -1218,12 +1191,9 @@ v850_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_pc_regnum (gdbarch, E_PC_REGNUM);
   set_gdbarch_register_name (gdbarch, v850_register_name);
   set_gdbarch_deprecated_register_size (gdbarch, v850_reg_size);
-  set_gdbarch_deprecated_register_bytes (gdbarch, E_ALL_REGS_SIZE);
   set_gdbarch_deprecated_register_byte (gdbarch, v850_register_byte);
-  set_gdbarch_deprecated_register_raw_size (gdbarch, v850_register_raw_size);
-  set_gdbarch_deprecated_max_register_raw_size (gdbarch, v850_reg_size);
+  set_gdbarch_deprecated_register_raw_size (current_gdbarch, gdbarch, v850_register_raw_size);
   set_gdbarch_deprecated_register_virtual_size (gdbarch, v850_register_raw_size);
-  set_gdbarch_deprecated_max_register_virtual_size (gdbarch, v850_reg_size);
   set_gdbarch_deprecated_register_virtual_type (gdbarch, v850_reg_virtual_type);
 
   set_gdbarch_deprecated_target_read_fp (gdbarch, v850_target_read_fp);
@@ -1254,10 +1224,7 @@ v850_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_deprecated_pop_frame (gdbarch, v850_pop_frame);
   set_gdbarch_deprecated_store_struct_return (gdbarch, v850_store_struct_return);
   set_gdbarch_deprecated_store_return_value (gdbarch, v850_store_return_value);
-  set_gdbarch_use_struct_convention (gdbarch, v850_use_struct_convention);
-  set_gdbarch_deprecated_call_dummy_words (gdbarch, call_dummy_nil);
-  set_gdbarch_deprecated_sizeof_call_dummy_words (gdbarch, 0);
-  set_gdbarch_deprecated_fix_call_dummy (gdbarch, v850_fix_call_dummy);
+  set_gdbarch_deprecated_use_struct_convention (gdbarch, v850_use_struct_convention);
   set_gdbarch_breakpoint_from_pc (gdbarch, v850_breakpoint_from_pc);
 
   set_gdbarch_int_bit (gdbarch, 4 * TARGET_CHAR_BIT);

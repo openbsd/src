@@ -21,8 +21,6 @@
 #ifndef TM_IA64_H
 #define TM_IA64_H
 
-#define GDB_MULTI_ARCH 1
-
 /* Register numbers of various important registers */
 
 /* General registers; there are 128 of these 64 bit wide registers.  The

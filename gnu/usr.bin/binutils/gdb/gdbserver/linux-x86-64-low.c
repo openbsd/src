@@ -1,6 +1,6 @@
 /* GNU/Linux/x86-64 specific low level interface, for the remote server
    for GDB.
-   Copyright 2002
+   Copyright 2002, 2004
    Free Software Foundation, Inc.
 
    This file is part of GDB.
@@ -24,9 +24,37 @@
 #include "linux-low.h"
 #include "i387-fp.h"
 
+/* Correct for all GNU/Linux targets (for quite some time).  */
+#define GDB_GREGSET_T elf_gregset_t
+#define GDB_FPREGSET_T elf_fpregset_t
+
+#ifndef HAVE_ELF_FPREGSET_T
+/* Make sure we have said types.  Not all platforms bring in <linux/elf.h>
+   via <sys/procfs.h>.  */
+#ifdef HAVE_LINUX_ELF_H   
+#include <linux/elf.h>    
+#endif
+#endif
+   
+#include "../gdb_proc_service.h"
+
 #include <sys/reg.h>
 #include <sys/procfs.h>
 #include <sys/ptrace.h>
+
+/* This definition comes from prctl.h, but some kernels may not have it.  */
+#ifndef PTRACE_ARCH_PRCTL
+#define PTRACE_ARCH_PRCTL      30
+#endif
+
+/* The following definitions come from prctl.h, but may be absent
+   for certain configurations.  */
+#ifndef ARCH_GET_FS
+#define ARCH_SET_GS 0x1001
+#define ARCH_SET_FS 0x1002
+#define ARCH_GET_FS 0x1003
+#define ARCH_GET_GS 0x1004
+#endif
 
 static int x86_64_regmap[] = {
   RAX * 8, RBX * 8, RCX * 8, RDX * 8,
@@ -38,6 +66,28 @@ static int x86_64_regmap[] = {
 };
 
 #define X86_64_NUM_GREGS (sizeof(x86_64_regmap)/sizeof(int))
+
+/* Called by libthread_db.  */
+
+ps_err_e
+ps_get_thread_area (const struct ps_prochandle *ph,
+                    lwpid_t lwpid, int idx, void **base)
+{
+  switch (idx)
+    {
+    case FS:
+      if (ptrace (PTRACE_ARCH_PRCTL, lwpid, base, ARCH_GET_FS) == 0)
+	return PS_OK;
+      break;
+    case GS:
+      if (ptrace (PTRACE_ARCH_PRCTL, lwpid, base, ARCH_GET_GS) == 0)
+	return PS_OK;
+      break;
+    default:
+      return PS_BADADDR;
+    }
+  return PS_ERR;
+}
 
 static void
 x86_64_fill_gregset (void *buf)

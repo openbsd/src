@@ -23,9 +23,12 @@
 
 #include "defs.h"
 #include "arch-utils.h"
+#include "frame.h"
 #include "gdbcore.h"
 #include "regcache.h"
 #include "regset.h"
+#include "symtab.h"
+#include "objfiles.h"
 #include "osabi.h"
 #include "target.h"
 
@@ -48,11 +51,13 @@
 /* Default page size.  */
 static const int i386obsd_page_size = 4096;
 
-/* Return whether PC is in an OpenBSD sigtramp routine.  */
+/* Return whether the frame preceding NEXT_FRAME corresponds to an
+   OpenBSD sigtramp routine.  */
 
 static int
-i386obsd_pc_in_sigtramp (CORE_ADDR pc, char *name)
+i386obsd_sigtramp_p (struct frame_info *next_frame)
 {
+  CORE_ADDR pc = frame_pc_unwind (next_frame);
   CORE_ADDR start_pc = (pc & ~(i386obsd_page_size - 1));
   const char sigreturn[] =
   {
@@ -60,52 +65,40 @@ i386obsd_pc_in_sigtramp (CORE_ADDR pc, char *name)
     0x67, 0x00, 0x00, 0x00,	/* movl $SYS_sigreturn, %eax */
     0xcd, 0x80			/* int $0x80 */
   };
-  char *buf;
+  size_t buflen = sizeof sigreturn;
+  char *name, *buf;
 
-  /* Avoid reading memory from the target if possible.  If we're in a
-     named function, we're certainly not in a sigtramp routine
-     provided by the kernel.  Take synthetic function names into
-     account though.  */
-  if (name && name[0] != '<')
+  /* If the function has a valid symbol name, it isn't a
+     trampoline.  */
+  find_pc_partial_function (pc, &name, NULL, NULL);
+  if (name != NULL)
     return 0;
 
+  /* If the function lives in a valid section (even without a starting
+     point) it isn't a trampoline.  */
+  if (find_pc_section (pc) != NULL)
+    return 0;
+
+  /* Allocate buffer.  */
+  buf = alloca (buflen);
+
   /* If we can't read the instructions at START_PC, return zero.  */
-  buf = alloca (sizeof sigreturn);
-  if (target_read_memory (start_pc + 0x14, buf, sizeof sigreturn))
+  if (!safe_frame_unwind_memory (next_frame, start_pc + 0x0a, buf, buflen))
     return 0;
 
   /* Check for sigreturn(2).  */
-  if (memcmp (buf, sigreturn, sizeof sigreturn) == 0)
+  if (memcmp (buf, sigreturn, buflen) == 0)
     return 1;
 
-  /* Check for a traditional BSD sigtramp routine.  */
-  return i386bsd_pc_in_sigtramp (pc, name);
-}
+  /* If we can't read the instructions at START_PC, return zero.  */
+  if (!safe_frame_unwind_memory (next_frame, start_pc + 0x14, buf, buflen))
+    return 0;
 
-/* Return the start address of the sigtramp routine.  */
+  /* Check for sigreturn(2) (again).  */
+  if (memcmp (buf, sigreturn, buflen) == 0)
+    return 1;
 
-static CORE_ADDR
-i386obsd_sigtramp_start (CORE_ADDR pc)
-{
-  CORE_ADDR start_pc = (pc & ~(i386obsd_page_size - 1));
-
-  if (i386bsd_pc_in_sigtramp (pc, NULL))
-    return i386bsd_sigtramp_start (pc);
-
-  return start_pc;
-}
-
-/* Return the end address of the sigtramp routine.  */
-
-static CORE_ADDR
-i386obsd_sigtramp_end (CORE_ADDR pc)
-{
-  CORE_ADDR start_pc = (pc & ~(i386obsd_page_size - 1));
-
-  if (i386bsd_pc_in_sigtramp (pc, NULL))
-    return i386bsd_sigtramp_end (pc);
-
-  return start_pc + 0x22;
+  return 0;
 }
 
 /* Mapping between the general-purpose registers in `struct reg'
@@ -137,7 +130,7 @@ i386obsd_aout_supply_regset (const struct regset *regset,
 			     struct regcache *regcache, int regnum,
 			     const void *regs, size_t len)
 {
-  const struct gdbarch_tdep *tdep = regset->descr;
+  const struct gdbarch_tdep *tdep = gdbarch_tdep (regset->arch);
 
   gdb_assert (len >= tdep->sizeof_gregset + I387_SIZEOF_FSAVE);
 
@@ -159,11 +152,8 @@ i386obsd_aout_regset_from_core_section (struct gdbarch *gdbarch,
       && sect_size >= tdep->sizeof_gregset + I387_SIZEOF_FSAVE)
     {
       if (tdep->gregset == NULL)
-	{
-	  tdep->gregset = XMALLOC (struct regset);
-	  tdep->gregset->descr = tdep;
-	  tdep->gregset->supply_regset = i386obsd_aout_supply_regset;
-	}
+        tdep->gregset =
+	  regset_alloc (gdbarch, i386obsd_aout_supply_regset, NULL);
       return tdep->gregset;
     }
 
@@ -215,12 +205,10 @@ i386obsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   /* OpenBSD uses a different memory layout.  */
   tdep->sigtramp_start = i386obsd_sigtramp_start_addr;
   tdep->sigtramp_end = i386obsd_sigtramp_end_addr;
-  set_gdbarch_pc_in_sigtramp (gdbarch, i386obsd_pc_in_sigtramp);
-  set_gdbarch_sigtramp_start (gdbarch, i386obsd_sigtramp_start);
-  set_gdbarch_sigtramp_end (gdbarch, i386obsd_sigtramp_end);
+  tdep->sigtramp_p = i386obsd_sigtramp_p;
 
   /* OpenBSD has a `struct sigcontext' that's different from the
-     origional 4.3 BSD.  */
+     original 4.3 BSD.  */
   tdep->sc_reg_offset = i386obsd_sc_reg_offset;
   tdep->sc_num_regs = ARRAY_SIZE (i386obsd_sc_reg_offset);
 }

@@ -1766,8 +1766,11 @@ yylex ()
 #endif /* not 0 */
 	  return TYPENAME;
         }
-    if ((yylval.tsym.type = lookup_primitive_typename (tmp)) != 0)
-	return TYPENAME;
+    yylval.tsym.type
+      = language_lookup_primitive_type_by_name (current_language,
+						current_gdbarch, tmp);
+    if (yylval.tsym.type != NULL)
+      return TYPENAME;
 
     /* See if it's an ObjC classname.  */
     if (!sym)

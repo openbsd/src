@@ -32,7 +32,4 @@
 #define THREAD_STATE_CLEAR_TRACED(state) \
   	((((struct i386_thread_state *) (state))->efl &= ~0x100), 1)
 
-/* We can attach and detach.  */
-#define ATTACH_DETACH 1
-
 #endif /* nm-i386gnu.h */

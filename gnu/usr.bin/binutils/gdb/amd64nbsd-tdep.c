@@ -24,6 +24,7 @@
 #include "frame.h"
 #include "gdbcore.h"
 #include "osabi.h"
+#include "symtab.h"
 
 #include "gdb_assert.h"
 
@@ -33,18 +34,34 @@
 
 /* Support for signal handlers.  */
 
-/* Assuming NEXT_FRAME is for a frame following a BSD sigtramp
-   routine, return the address of the associated sigcontext structure.  */
+/* Return whether the frame preceding NEXT_FRAME corresponds to a
+   NetBSD sigtramp routine.  */
+
+static int
+amd64nbsd_sigtramp_p (struct frame_info *next_frame)
+{
+  CORE_ADDR pc = frame_pc_unwind (next_frame);
+  char *name;
+
+  find_pc_partial_function (pc, &name, NULL, NULL);
+  return nbsd_pc_in_sigtramp (pc, name);
+}
+
+/* Assuming NEXT_FRAME is preceded by a frame corresponding to a
+   NetBSD sigtramp routine, return the address of the associated
+   mcontext structure.  */
 
 static CORE_ADDR
-amd64nbsd_sigcontext_addr (struct frame_info *next_frame)
+amd64nbsd_mcontext_addr (struct frame_info *next_frame)
 {
-  CORE_ADDR sp;
+  CORE_ADDR addr;
 
-  /* The stack pointer points at `struct sigcontext' upon entry of a
+  /* The register %r15 points at `struct ucontext' upon entry of a
      signal trampoline.  */
-  sp = frame_unwind_register_unsigned (next_frame, AMD64_RSP_REGNUM);
-  return sp;
+  addr = frame_unwind_register_unsigned (next_frame, AMD64_R15_REGNUM);
+
+  /* The mcontext structure lives as offset 56 in `struct ucontext'.  */
+  return addr + 56;
 }
 
 /* NetBSD 2.0 or later.  */
@@ -85,8 +102,6 @@ static void
 amd64nbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
-  int *sc_reg_offset;
-  int i;
 
   /* Initialize general-purpose register set details first.  */
   tdep->gregset_reg_offset = amd64nbsd_r_reg_offset;
@@ -98,22 +113,10 @@ amd64nbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   tdep->jb_pc_offset = 7 * 8;
 
   /* NetBSD has its own convention for signal trampolines.  */
-  set_gdbarch_pc_in_sigtramp (gdbarch, nbsd_pc_in_sigtramp);
-  tdep->sigcontext_addr = amd64nbsd_sigcontext_addr;
-
-  /* Initialize the array with register offsets in `struct
-     sigcontext'.  This `struct sigcontext' has an sc_mcontext member
-     at offset 32, and in <machine/reg.h> we have an explicit comment
-     saying that `struct reg' is the same as mcontext.__gregs.  */
+  tdep->sigtramp_p = amd64nbsd_sigtramp_p;
+  tdep->sigcontext_addr = amd64nbsd_mcontext_addr;
+  tdep->sc_reg_offset = amd64nbsd_r_reg_offset;
   tdep->sc_num_regs = ARRAY_SIZE (amd64nbsd_r_reg_offset);
-  tdep->sc_reg_offset = XCALLOC (tdep->sc_num_regs, int);
-  for (i = 0; i < tdep->sc_num_regs; i++)
-    {
-      if (amd64nbsd_r_reg_offset[i] < 0)
-	tdep->sc_reg_offset[i] = -1;
-      else
-	tdep->sc_reg_offset[i] = 32 + amd64nbsd_r_reg_offset[i];
-    }
 
   /* NetBSD uses SVR4-style shared libraries.  */
   set_solib_svr4_fetch_link_map_offsets

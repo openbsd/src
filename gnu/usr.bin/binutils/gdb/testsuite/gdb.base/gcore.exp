@@ -187,7 +187,6 @@ if ![string compare $pre_corefile_allregs $post_corefile_allregs] then {
 
 set post_corefile_extern_array \
 	[capture_command_output "print extern_array" "$print_prefix"]
-pass "extern_array = $post_corefile_extern_array"
 if ![string compare $pre_corefile_extern_array $post_corefile_extern_array]  {
     pass "corefile restored extern array"
 } else {
@@ -196,7 +195,6 @@ if ![string compare $pre_corefile_extern_array $post_corefile_extern_array]  {
 
 set post_corefile_static_array \
 	[capture_command_output "print static_array" "$print_prefix"]
-pass "static_array = $post_corefile_static_array"
 if ![string compare $pre_corefile_static_array $post_corefile_static_array]  {
     pass "corefile restored static array"
 } else {
@@ -205,7 +203,6 @@ if ![string compare $pre_corefile_static_array $post_corefile_static_array]  {
 
 set post_corefile_uninit_array \
 	[capture_command_output "print un_initialized_array" "$print_prefix"]
-pass "uninit_array = $post_corefile_uninit_array"
 if ![string compare $pre_corefile_uninit_array $post_corefile_uninit_array]  {
     pass "corefile restored un-initialized array"
 } else {
@@ -214,7 +211,6 @@ if ![string compare $pre_corefile_uninit_array $post_corefile_uninit_array]  {
 
 set post_corefile_heap_string \
 	[capture_command_output "print heap_string" "$print_prefix"]
-pass "heap_string = $post_corefile_heap_string"
 if ![string compare $pre_corefile_heap_string $post_corefile_heap_string]  {
     pass "corefile restored heap array"
 } else {
@@ -223,7 +219,6 @@ if ![string compare $pre_corefile_heap_string $post_corefile_heap_string]  {
 
 set post_corefile_local_array \
 	[capture_command_output "print array_func::local_array" "$print_prefix"]
-pass "local_array = $post_corefile_local_array"
 if ![string compare $pre_corefile_local_array $post_corefile_local_array]  {
     pass "corefile restored stack array"
 } else {

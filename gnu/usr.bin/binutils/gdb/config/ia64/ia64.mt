@@ -1,2 +1,2 @@
 TDEPFILES= ia64-tdep.o
-TM_FILE= tm-ia64.h
+DEPRECATED_TM_FILE= tm-ia64.h

@@ -20,25 +20,25 @@
    Boston, MA 02111-1307, USA.  */
 
 #include "defs.h"
-#include "value.h"
-#include "inferior.h"
-#include "arch-utils.h"
-#include "regcache.h"
+#include "frame.h"
+#include "frame-base.h"
+#include "frame-unwind.h"
+#include "dwarf2-frame.h"
+#include "symtab.h"
+#include "gdbtypes.h"
+#include "gdbcmd.h"
 #include "gdbcore.h"
-#include "objfiles.h"
+#include "value.h"
 #include "dis-asm.h"
-
-struct gdbarch_tdep
-{
-  /* gdbarch target dependent data here. Currently unused for Xstormy16. */
-};
-
-/* Extra info which is saved in each frame_info. */
-struct frame_extra_info
-{
-  int framesize;
-  int frameless_p;
-};
+#include "inferior.h"
+#include "gdb_string.h"
+#include "gdb_assert.h"
+#include "arch-utils.h"
+#include "floatformat.h"
+#include "regcache.h"
+#include "doublest.h"
+#include "osabi.h"
+#include "objfiles.h"
 
 enum gdb_regnum
 {
@@ -69,6 +69,20 @@ enum gdb_regnum
   E_NUM_REGS
 };
 
+/* Use an invalid address value as 'not available' marker.  */
+enum { REG_UNAVAIL = (CORE_ADDR) -1 };
+
+struct xstormy16_frame_cache
+{
+  /* Base address.  */
+  CORE_ADDR base;
+  CORE_ADDR pc;
+  LONGEST framesize;
+  int uses_fp;
+  CORE_ADDR saved_regs[E_NUM_REGS];
+  CORE_ADDR saved_sp;
+};
+
 /* Size of instructions, registers, etc. */
 enum
 {
@@ -87,15 +101,8 @@ enum
   E_MAX_RETTYPE_SIZE_IN_REGS = E_MAX_RETTYPE_SIZE (E_R2_REGNUM)
 };
 
-
-/* Size of all registers as a whole. */
-enum
-{
-  E_ALL_REGS_SIZE = (E_NUM_REGS - 1) * xstormy16_reg_size + xstormy16_pc_size
-};
-
 /* Function: xstormy16_register_name
-   Returns the name of the standard Xstormy16 register N. */
+   Returns the name of the standard Xstormy16 register N.  */
 
 static const char *
 xstormy16_register_name (int regnum)
@@ -106,8 +113,7 @@ xstormy16_register_name (int regnum)
     "psw", "sp", "pc"
   };
 
-  if (regnum < 0 ||
-      regnum >= sizeof (register_names) / sizeof (register_names[0]))
+  if (regnum < 0 || regnum >= E_NUM_REGS)
     internal_error (__FILE__, __LINE__,
 		    "xstormy16_register_name: illegal register number %d",
 		    regnum);
@@ -116,72 +122,18 @@ xstormy16_register_name (int regnum)
 
 }
 
-/* Function: xstormy16_register_byte 
-   Returns the byte position in the register cache for register N. */
-
-static int
-xstormy16_register_byte (int regnum)
-{
-  if (regnum < 0 || regnum >= E_NUM_REGS)
-    internal_error (__FILE__, __LINE__,
-		    "xstormy16_register_byte: illegal register number %d",
-		    regnum);
-  else
-    /* All registers occupy 2 bytes in the regcache except for PC
-       which is the last one. Therefore the byte position is still
-       simply a multiple of 2. */
-    return regnum * xstormy16_reg_size;
-}
-
-/* Function: xstormy16_register_raw_size
-   Returns the number of bytes occupied by the register on the target. */
-
-static int
-xstormy16_register_raw_size (int regnum)
-{
-  if (regnum < 0 || regnum >= E_NUM_REGS)
-    internal_error (__FILE__, __LINE__,
-		    "xstormy16_register_raw_size: illegal register number %d",
-		    regnum);
-  /* Only the PC has 4 Byte, all other registers 2 Byte. */
-  else if (regnum == E_PC_REGNUM)
-    return xstormy16_pc_size;
-  else
-    return xstormy16_reg_size;
-}
-
-/* Function: xstormy16_reg_virtual_type 
-   Returns the default type for register N. */
-
 static struct type *
-xstormy16_reg_virtual_type (int regnum)
+xstormy16_register_type (struct gdbarch *gdbarch, int regnum)
 {
-  if (regnum < 0 || regnum >= E_NUM_REGS)
-    internal_error (__FILE__, __LINE__,
-		    "xstormy16_register_virtual_type: illegal register number %d",
-		    regnum);
-  else if (regnum == E_PC_REGNUM)
+  if (regnum == E_PC_REGNUM)
     return builtin_type_uint32;
   else
     return builtin_type_uint16;
 }
 
-/* Function: xstormy16_get_saved_register
-   Find a register's saved value on the call stack. */
-
-static void
-xstormy16_get_saved_register (char *raw_buffer,
-			      int *optimized,
-			      CORE_ADDR *addrp,
-			      struct frame_info *fi,
-			      int regnum, enum lval_type *lval)
-{
-  deprecated_generic_get_saved_register (raw_buffer, optimized, addrp, fi, regnum, lval);
-}
-
 /* Function: xstormy16_type_is_scalar
    Makes the decision if a given type is a scalar types.  Scalar
-   types are returned in the registers r2-r7 as they fit. */
+   types are returned in the registers r2-r7 as they fit.  */
 
 static int
 xstormy16_type_is_scalar (struct type *t)
@@ -191,66 +143,117 @@ xstormy16_type_is_scalar (struct type *t)
 	  && TYPE_CODE(t) != TYPE_CODE_ARRAY);
 }
 
+/* Function: xstormy16_use_struct_convention 
+   Returns non-zero if the given struct type will be returned using
+   a special convention, rather than the normal function return method.
+   7sed in the contexts of the "return" command, and of
+   target function calls from the debugger.  */ 
+
+static int
+xstormy16_use_struct_convention (struct type *type)
+{
+  return !xstormy16_type_is_scalar (type)
+	 || TYPE_LENGTH (type) > E_MAX_RETTYPE_SIZE_IN_REGS;
+} 
+
 /* Function: xstormy16_extract_return_value
-   Copy the function's return value into VALBUF. 
-   This function is called only in the context of "target function calls",
-   ie. when the debugger forces a function to be called in the child, and
-   when the debugger forces a function to return prematurely via the
-   "return" command. */
+   Find a function's return value in the appropriate registers (in
+   regbuf), and copy it into valbuf.  */
 
 static void
-xstormy16_extract_return_value (struct type *type, char *regbuf, char *valbuf)
+xstormy16_extract_return_value (struct type *type, struct regcache *regcache,
+				void *valbuf)
 {
-  CORE_ADDR return_buffer;
-  int offset = 0;
+  int len = TYPE_LENGTH (type);
+  int i, regnum = E_1ST_ARG_REGNUM;
 
-  if (xstormy16_type_is_scalar (type)
-      && TYPE_LENGTH (type) <= E_MAX_RETTYPE_SIZE_IN_REGS)
-    {
-      /* Scalar return values of <= 12 bytes are returned in 
-         E_1ST_ARG_REGNUM to E_LST_ARG_REGNUM. */
-      memcpy (valbuf,
-	      &regbuf[DEPRECATED_REGISTER_BYTE (E_1ST_ARG_REGNUM)] + offset,
-	      TYPE_LENGTH (type));
+  for (i = 0; i < len; i += xstormy16_reg_size)
+    regcache_raw_read (regcache, regnum++, (char *) valbuf + i);
+}
+
+/* Function: xstormy16_store_return_value
+   Copy the function return value from VALBUF into the
+   proper location for a function return. 
+   Called only in the context of the "return" command.  */
+
+static void 
+xstormy16_store_return_value (struct type *type, struct regcache *regcache,
+			      const void *valbuf)
+{
+  if (TYPE_LENGTH (type) == 1)
+    {    
+      /* Add leading zeros to the value. */
+      char buf[xstormy16_reg_size];
+      memset (buf, 0, xstormy16_reg_size);
+      memcpy (buf, valbuf, 1);
+      regcache_raw_write (regcache, E_1ST_ARG_REGNUM, buf);
     }
   else
     {
-      /* Aggregates and return values > 12 bytes are returned in memory,
-         pointed to by R2. */
-      return_buffer =
-	extract_unsigned_integer (regbuf + DEPRECATED_REGISTER_BYTE (E_PTR_RET_REGNUM),
-				  DEPRECATED_REGISTER_RAW_SIZE (E_PTR_RET_REGNUM));
+      int len = TYPE_LENGTH (type);
+      int i, regnum = E_1ST_ARG_REGNUM;
 
-      read_memory (return_buffer, valbuf, TYPE_LENGTH (type));
+      for (i = 0; i < len; i += xstormy16_reg_size)
+        regcache_raw_write (regcache, regnum++, (char *) valbuf + i);
     }
 }
 
-/* Function: xstormy16_push_arguments
-   Setup the function arguments for GDB to call a function in the inferior.
-   Called only in the context of a target function call from the debugger.
-   Returns the value of the SP register after the args are pushed.
-*/
+static enum return_value_convention
+xstormy16_return_value (struct gdbarch *gdbarch, struct type *type,
+			struct regcache *regcache,
+			void *readbuf, const void *writebuf)
+{
+  if (xstormy16_use_struct_convention (type))
+    return RETURN_VALUE_STRUCT_CONVENTION;
+  if (writebuf)
+    xstormy16_store_return_value (type, regcache, writebuf);
+  else if (readbuf)
+    xstormy16_extract_return_value (type, regcache, readbuf);
+  return RETURN_VALUE_REGISTER_CONVENTION;
+}
 
 static CORE_ADDR
-xstormy16_push_arguments (int nargs, struct value **args, CORE_ADDR sp,
-			  int struct_return, CORE_ADDR struct_addr)
+xstormy16_frame_align (struct gdbarch *gdbarch, CORE_ADDR addr)
+{
+  if (addr & 1)
+    ++addr;
+  return addr;
+}
+
+/* Function: xstormy16_push_dummy_call
+   Setup the function arguments for GDB to call a function in the inferior.
+   Called only in the context of a target function call from the debugger.
+   Returns the value of the SP register after the args are pushed.  */
+
+static CORE_ADDR
+xstormy16_push_dummy_call (struct gdbarch *gdbarch,
+			   struct value *function,
+			   struct regcache *regcache,
+			   CORE_ADDR bp_addr, int nargs,
+			   struct value **args,
+			   CORE_ADDR sp, int struct_return,
+			   CORE_ADDR struct_addr)
 {
   CORE_ADDR stack_dest = sp;
   int argreg = E_1ST_ARG_REGNUM;
   int i, j;
   int typelen, slacklen;
   char *val;
+  char buf[xstormy16_pc_size];
 
   /* If struct_return is true, then the struct return address will
      consume one argument-passing register.  */
   if (struct_return)
-    argreg++;
+    {
+      regcache_cooked_write_unsigned (regcache, E_PTR_RET_REGNUM, struct_addr);
+      argreg++;
+    }
 
   /* Arguments are passed in R2-R7 as they fit. If an argument doesn't
      fit in the remaining registers we're switching over to the stack.
      No argument is put on stack partially and as soon as we switched
      over to stack no further argument is put in a register even if it
-     would fit in the remaining unused registers. */
+     would fit in the remaining unused registers.  */
   for (i = 0; i < nargs && argreg <= E_LST_ARG_REGNUM; i++)
     {
       typelen = TYPE_LENGTH (VALUE_ENCLOSING_TYPE (args[i]));
@@ -260,7 +263,7 @@ xstormy16_push_arguments (int nargs, struct value **args, CORE_ADDR sp,
       /* Put argument into registers wordwise. */
       val = VALUE_CONTENTS (args[i]);
       for (j = 0; j < typelen; j += xstormy16_reg_size)
-	write_register (argreg++,
+	regcache_cooked_write_unsigned (regcache, argreg++,
 			extract_unsigned_integer (val + j,
 						  typelen - j ==
 						  1 ? 1 :
@@ -268,11 +271,10 @@ xstormy16_push_arguments (int nargs, struct value **args, CORE_ADDR sp,
     }
 
   /* Align SP */
-  if (stack_dest & 1)
-    ++stack_dest;
+  stack_dest = xstormy16_frame_align (gdbarch, stack_dest);
 
   /* Loop backwards through remaining arguments and push them on the stack,
-     wordaligned. */
+     wordaligned.  */
   for (j = nargs - 1; j >= i; j--)
     {
       typelen = TYPE_LENGTH (VALUE_ENCLOSING_TYPE (args[j]));
@@ -286,155 +288,16 @@ xstormy16_push_arguments (int nargs, struct value **args, CORE_ADDR sp,
       stack_dest += typelen + slacklen;
     }
 
-  /* And that should do it.  Return the new stack pointer. */
-  return stack_dest;
-}
+  store_unsigned_integer (buf, xstormy16_pc_size, bp_addr);
+  write_memory (stack_dest, buf, xstormy16_pc_size);
+  stack_dest += xstormy16_pc_size;
 
-/* Function: xstormy16_push_return_address (pc)
-   Setup the return address for GDB to call a function in the inferior.
-   Called only in the context of a target function call from the debugger.
-   Returns the value of the SP register when the operation is finished
-   (which may or may not be the same as before).
-*/
+  /* Update stack pointer.  */
+  regcache_cooked_write_unsigned (regcache, E_SP_REGNUM, stack_dest);
 
-static CORE_ADDR
-xstormy16_push_return_address (CORE_ADDR pc, CORE_ADDR sp)
-{
-  unsigned char buf[xstormy16_pc_size];
-
-  store_unsigned_integer (buf, xstormy16_pc_size, entry_point_address ());
-  write_memory (sp, buf, xstormy16_pc_size);
-  return sp + xstormy16_pc_size;
-}
-
-/* Function: xstormy16_pop_frame
-   Destroy the innermost (Top-Of-Stack) stack frame, restoring the 
-   machine state that was in effect before the frame was created. 
-   Used in the contexts of the "return" command, and of 
-   target function calls from the debugger.
-*/
-
-static void
-xstormy16_pop_frame (void)
-{
-  struct frame_info *fi = get_current_frame ();
-  int i;
-
-  if (fi == NULL)
-    return;			/* paranoia */
-
-  if (DEPRECATED_PC_IN_CALL_DUMMY (get_frame_pc (fi), get_frame_base (fi),
-				   get_frame_base (fi)))
-    {
-      generic_pop_dummy_frame ();
-    }
-  else
-    {
-      /* Restore the saved regs. */
-      for (i = 0; i < NUM_REGS; i++)
-	if (deprecated_get_frame_saved_regs (fi)[i])
-	  {
-	    if (i == SP_REGNUM)
-	      write_register (i, deprecated_get_frame_saved_regs (fi)[i]);
-	    else if (i == E_PC_REGNUM)
-	      write_register (i, read_memory_integer (deprecated_get_frame_saved_regs (fi)[i],
-						      xstormy16_pc_size));
-	    else
-	      write_register (i, read_memory_integer (deprecated_get_frame_saved_regs (fi)[i],
-						      xstormy16_reg_size));
-	  }
-      /* Restore the PC */
-      write_register (PC_REGNUM, DEPRECATED_FRAME_SAVED_PC (fi));
-      flush_cached_frames ();
-    }
-  return;
-}
-
-/* Function: xstormy16_store_struct_return
-   Copy the (struct) function return value to its destined location. 
-   Called only in the context of a target function call from the debugger.
-*/
-
-static void
-xstormy16_store_struct_return (CORE_ADDR addr, CORE_ADDR sp)
-{
-  write_register (E_PTR_RET_REGNUM, addr);
-}
-
-/* Function: xstormy16_store_return_value
-   Copy the function return value from VALBUF into the 
-   proper location for a function return. 
-   Called only in the context of the "return" command.
-*/
-
-static void
-xstormy16_store_return_value (struct type *type, char *valbuf)
-{
-  CORE_ADDR return_buffer;
-  char buf[xstormy16_reg_size];
-
-  if (xstormy16_type_is_scalar (type) && TYPE_LENGTH (type) == 1)
-    {
-      /* Add leading zeros to the value. */
-      memset (buf, 0, xstormy16_reg_size);
-      memcpy (buf, valbuf, 1);
-      deprecated_write_register_gen (E_1ST_ARG_REGNUM, buf);
-    }
-  else if (xstormy16_type_is_scalar (type) &&
-	   TYPE_LENGTH (type) <= E_MAX_RETTYPE_SIZE_IN_REGS)
-    deprecated_write_register_bytes (DEPRECATED_REGISTER_BYTE (E_1ST_ARG_REGNUM),
-				     valbuf, TYPE_LENGTH (type));
-  else
-    {
-      return_buffer = read_register (E_PTR_RET_REGNUM);
-      write_memory (return_buffer, valbuf, TYPE_LENGTH (type));
-    }
-}
-
-/* Function: xstormy16_extract_struct_value_address
-   Returns the address in which a function should return a struct value. 
-   Used in the contexts of the "return" command, and of 
-   target function calls from the debugger.
-*/
-
-static CORE_ADDR
-xstormy16_extract_struct_value_address (struct regcache *regcache)
-{
-  /* FIXME: cagney/2004-01-17: Does the ABI guarantee that the return
-     address regster is preserved across function calls?  Probably
-     not, making this function wrong.  */
-  ULONGEST val;
-  regcache_raw_read_unsigned (regcache, E_PTR_RET_REGNUM, &val);
-  return val;
-}
-
-/* Function: xstormy16_use_struct_convention 
-   Returns non-zero if the given struct type will be returned using
-   a special convention, rather than the normal function return method. 
-   7sed in the contexts of the "return" command, and of 
-   target function calls from the debugger.
-*/
-
-static int
-xstormy16_use_struct_convention (int gcc_p, struct type *type)
-{
-  return !xstormy16_type_is_scalar (type)
-    || TYPE_LENGTH (type) > E_MAX_RETTYPE_SIZE_IN_REGS;
-}
-
-/* Function: frame_saved_register
-   Returns the value that regnum had in frame fi
-   (saved in fi or in one of its children).  
-*/
-
-static CORE_ADDR
-xstormy16_frame_saved_register (struct frame_info *fi, int regnum)
-{
-  int size = xstormy16_register_raw_size (regnum);
-  char *buf = (char *) alloca (size);
-
-  deprecated_generic_get_saved_register (buf, NULL, NULL, fi, regnum, NULL);
-  return (CORE_ADDR) extract_unsigned_integer (buf, size);
+  /* Return the new stack pointer minus the return address slot since
+     that's what DWARF2/GCC uses as the frame's CFA.  */
+  return stack_dest - xstormy16_pc_size;
 }
 
 /* Function: xstormy16_scan_prologue
@@ -442,37 +305,25 @@ xstormy16_frame_saved_register (struct frame_info *fi, int regnum)
    Decide when we must have reached the end of the function prologue.
    If a frame_info pointer is provided, fill in its saved_regs etc.
 
-   Returns the address of the first instruction after the prologue. 
-*/
+   Returns the address of the first instruction after the prologue.  */
 
 static CORE_ADDR
-xstormy16_scan_prologue (CORE_ADDR start_addr, CORE_ADDR end_addr,
-			 struct frame_info *fi, int *frameless)
+xstormy16_analyze_prologue (CORE_ADDR start_addr, CORE_ADDR end_addr,
+			    struct xstormy16_frame_cache *cache,
+			    struct frame_info *next_frame)
 {
-  CORE_ADDR sp = 0, fp = 0;
   CORE_ADDR next_addr;
   ULONGEST inst, inst2;
   LONGEST offset;
   int regnum;
 
-  if (frameless)
-    *frameless = 1;
-  if (fi)
-    {
-      /* In a call dummy, don't touch the frame. */
-      if (DEPRECATED_PC_IN_CALL_DUMMY (get_frame_pc (fi), get_frame_base (fi),
-				       get_frame_base (fi)))
-	return start_addr;
+  /* Initialize framesize with size of PC put on stack by CALLF inst. */
+  cache->saved_regs[E_PC_REGNUM] = 0;
+  cache->framesize = xstormy16_pc_size;
 
-      /* Grab the frame-relative values of SP and FP, needed below. 
-         The frame_saved_register function will find them on the
-         stack or in the registers as appropriate. */
-      sp = xstormy16_frame_saved_register (fi, E_SP_REGNUM);
-      fp = xstormy16_frame_saved_register (fi, E_FP_REGNUM);
+  if (start_addr >= end_addr)
+    return end_addr;
 
-      /* Initialize framesize with size of PC put on stack by CALLF inst. */
-      get_frame_extra_info (fi)->framesize = xstormy16_pc_size;
-    }
   for (next_addr = start_addr;
        next_addr < end_addr; next_addr += xstormy16_inst_size)
     {
@@ -482,42 +333,33 @@ xstormy16_scan_prologue (CORE_ADDR start_addr, CORE_ADDR end_addr,
 
       if (inst >= 0x0082 && inst <= 0x008d)	/* push r2 .. push r13 */
 	{
-	  if (fi)
-	    {
-	      regnum = inst & 0x000f;
-	      deprecated_get_frame_saved_regs (fi)[regnum] = get_frame_extra_info (fi)->framesize;
-	      get_frame_extra_info (fi)->framesize += xstormy16_reg_size;
-	    }
+	  regnum = inst & 0x000f;
+	  cache->saved_regs[regnum] = cache->framesize;
+	  cache->framesize += xstormy16_reg_size;
 	}
 
       /* optional stack allocation for args and local vars <= 4 byte */
       else if (inst == 0x301f || inst == 0x303f)	/* inc r15, #0x1/#0x3 */
 	{
-	  if (fi)		/* Record the frame size. */
-	    get_frame_extra_info (fi)->framesize += ((inst & 0x0030) >> 4) + 1;
+	  cache->framesize += ((inst & 0x0030) >> 4) + 1;
 	}
 
       /* optional stack allocation for args and local vars > 4 && < 16 byte */
       else if ((inst & 0xff0f) == 0x510f)	/* 51Hf   add r15, #0xH */
 	{
-	  if (fi)		/* Record the frame size. */
-	    get_frame_extra_info (fi)->framesize += (inst & 0x00f0) >> 4;
+	  cache->framesize += (inst & 0x00f0) >> 4;
 	}
 
       /* optional stack allocation for args and local vars >= 16 byte */
       else if (inst == 0x314f && inst2 >= 0x0010)	/* 314f HHHH  add r15, #0xH */
 	{
-	  if (fi)		/* Record the frame size. */
-	    get_frame_extra_info (fi)->framesize += inst2;
+	  cache->framesize += inst2;
 	  next_addr += xstormy16_inst_size;
 	}
 
       else if (inst == 0x46fd)	/* mov r13, r15 */
 	{
-	  if (fi)		/* Record that the frame pointer is in use. */
-	    get_frame_extra_info (fi)->frameless_p = 0;
-	  if (frameless)
-	    *frameless = 0;
+	  cache->uses_fp = 1;
 	}
 
       /* optional copying of args in r2-r7 to r10-r13 */
@@ -532,81 +374,19 @@ xstormy16_scan_prologue (CORE_ADDR start_addr, CORE_ADDR end_addr,
       /* 73DS HHHH   mov.w (rD, 0xHHHH), r(S-8) */
       else if ((inst & 0xfed8) == 0x72d8 && (inst & 0x0007) >= 2)
 	{
-	  if (fi)
-	    {
-	      regnum = inst & 0x0007;
-	      /* Only 12 of 16 bits of the argument are used for the
-	         signed offset. */
-	      offset = (LONGEST) (inst2 & 0x0fff);
-	      if (offset & 0x0800)
-		offset -= 0x1000;
+	  regnum = inst & 0x0007;
+	  /* Only 12 of 16 bits of the argument are used for the
+	     signed offset. */
+	  offset = (LONGEST) (inst2 & 0x0fff);
+	  if (offset & 0x0800)
+	    offset -= 0x1000;
 
-	      deprecated_get_frame_saved_regs (fi)[regnum] = get_frame_extra_info (fi)->framesize + offset;
-	    }
+	  cache->saved_regs[regnum] = cache->framesize + offset;
 	  next_addr += xstormy16_inst_size;
 	}
-
-#if 0
-      /* 2001-08-10: Not part of the prologue anymore due to change in
-         ABI. r8 and r9 are not used for argument passing anymore. */
-
-      /* optional copying of r8, r9 to stack */
-      /* 46S7; 73Df HHHH   mov.w r7,rS; mov.w (rD, 0xHHHH), r7 D=8,9; S=13,15 */
-      /* 46S7; 72df HHHH   mov.w r7,rS; mov.b (rD, 0xHHHH), r7 D=8,9; S=13,15 */
-      else if ((inst & 0xffef) == 0x4687 && (inst2 & 0xfedf) == 0x72df)
-	{
-	  next_addr += xstormy16_inst_size;
-	  if (fi)
-	    {
-	      regnum = (inst & 0x00f0) >> 4;
-	      inst = inst2;
-	      inst2 = read_memory_unsigned_integer (next_addr
-						    + xstormy16_inst_size,
-						    xstormy16_inst_size);
-	      /* Only 12 of 16 bits of the argument are used for the
-	         signed offset. */
-	      offset = (LONGEST) (inst2 & 0x0fff);
-	      if (offset & 0x0800)
-		offset -= 0x1000;
-
-	      fi->saved_regs[regnum] = fi->extra_info->framesize + offset;
-	    }
-	  next_addr += xstormy16_inst_size;
-	}
-#endif
 
       else			/* Not a prologue instruction. */
 	break;
-    }
-
-  if (fi)
-    {
-      /* Special handling for the "saved" address of the SP:
-         The SP is of course never saved on the stack at all, so
-         by convention what we put here is simply the previous 
-         _value_ of the SP (as opposed to an address where the
-         previous value would have been pushed).  */
-      if (get_frame_extra_info (fi)->frameless_p)
-	{
-	  deprecated_get_frame_saved_regs (fi)[E_SP_REGNUM] = sp - get_frame_extra_info (fi)->framesize;
-	  deprecated_update_frame_base_hack (fi, sp);
-	}
-      else
-	{
-	  deprecated_get_frame_saved_regs (fi)[E_SP_REGNUM] = fp - get_frame_extra_info (fi)->framesize;
-	  deprecated_update_frame_base_hack (fi, fp);
-	}
-
-      /* So far only offsets to the beginning of the frame are
-         saved in the saved_regs. Now we now the relation between
-         sp, fp and framesize. We know the beginning of the frame
-         so we can translate the register offsets to real addresses. */
-      for (regnum = 0; regnum < E_SP_REGNUM; ++regnum)
-	if (deprecated_get_frame_saved_regs (fi)[regnum])
-	  deprecated_get_frame_saved_regs (fi)[regnum] += deprecated_get_frame_saved_regs (fi)[E_SP_REGNUM];
-
-      /* Save address of PC on stack. */
-      deprecated_get_frame_saved_regs (fi)[E_PC_REGNUM] = deprecated_get_frame_saved_regs (fi)[E_SP_REGNUM];
     }
 
   return next_addr;
@@ -632,12 +412,12 @@ xstormy16_skip_prologue (CORE_ADDR pc)
     {
       struct symtab_and_line sal;
       struct symbol *sym;
+      struct xstormy16_frame_cache cache;
 
       /* Don't trust line number debug info in frameless functions. */
-      int frameless = 1;
-      CORE_ADDR plg_end = xstormy16_scan_prologue (func_addr, func_end,
-						   NULL, &frameless);
-      if (frameless)
+      CORE_ADDR plg_end = xstormy16_analyze_prologue (func_addr, func_end,
+						      &cache, NULL);
+      if (!cache.uses_fp)
         return plg_end;
 
       /* Found a function.  */
@@ -667,7 +447,7 @@ xstormy16_skip_prologue (CORE_ADDR pc)
 static int
 xstormy16_in_function_epilogue_p (struct gdbarch *gdbarch, CORE_ADDR pc)
 {
-  CORE_ADDR addr, func_addr = 0, func_end = 0;
+  CORE_ADDR func_addr = 0, func_end = 0;
 
   if (find_pc_partial_function (pc, NULL, &func_addr, &func_end))
     {
@@ -704,153 +484,6 @@ xstormy16_in_function_epilogue_p (struct gdbarch *gdbarch, CORE_ADDR pc)
 	return 1;
     }
   return 0;
-}
-
-/* Function: xstormy16_frame_init_saved_regs
-   Set up the 'saved_regs' array.
-   This is a data structure containing the addresses on the stack 
-   where each register has been saved, for each stack frame.  
-   Registers that have not been saved will have zero here.
-   The stack register is special: rather than the address where the 
-   stack register has been saved, saved_regs[SP_REGNUM] will have the
-   actual value of the previous frame's stack register. 
-
-   This function may be called in any context where the saved register
-   values may be needed (backtrace, frame_info, frame_register).  On
-   many targets, it is called directly by init_extra_frame_info, in
-   part because the information may be needed immediately by
-   frame_chain.  */
-
-static void
-xstormy16_frame_init_saved_regs (struct frame_info *fi)
-{
-  CORE_ADDR func_addr, func_end;
-
-  if (!deprecated_get_frame_saved_regs (fi))
-    {
-      frame_saved_regs_zalloc (fi);
-
-      /* Find the beginning of this function, so we can analyze its
-         prologue. */
-      if (find_pc_partial_function (get_frame_pc (fi), NULL, &func_addr, &func_end))
-	xstormy16_scan_prologue (func_addr, get_frame_pc (fi), fi, NULL);
-      /* Else we're out of luck (can't debug completely stripped code). 
-         FIXME. */
-    }
-}
-
-/* Function: xstormy16_frame_saved_pc
-   Returns the return address for the selected frame. 
-   Called by frame_info, legacy_frame_chain_valid, and sometimes by
-   get_prev_frame.  */
-
-static CORE_ADDR
-xstormy16_frame_saved_pc (struct frame_info *fi)
-{
-  CORE_ADDR saved_pc;
-
-  if (DEPRECATED_PC_IN_CALL_DUMMY (get_frame_pc (fi), get_frame_base (fi),
-				   get_frame_base (fi)))
-    {
-      saved_pc = deprecated_read_register_dummy (get_frame_pc (fi),
-						 get_frame_base (fi),
-						 E_PC_REGNUM);
-    }
-  else
-    {
-      saved_pc = read_memory_unsigned_integer (deprecated_get_frame_saved_regs (fi)[E_PC_REGNUM],
-					       xstormy16_pc_size);
-    }
-
-  return saved_pc;
-}
-
-/* Function: xstormy16_init_extra_frame_info
-   This is the constructor function for the frame_info struct, 
-   called whenever a new frame_info is created (from create_new_frame,
-   and from get_prev_frame).
-*/
-
-static void
-xstormy16_init_extra_frame_info (int fromleaf, struct frame_info *fi)
-{
-  if (!get_frame_extra_info (fi))
-    {
-      frame_extra_info_zalloc (fi, sizeof (struct frame_extra_info));
-      get_frame_extra_info (fi)->framesize = 0;
-      get_frame_extra_info (fi)->frameless_p = 1;	/* Default frameless, detect framed */
-
-      /* By default, the fi->frame is set to the value of the FP reg by gdb.
-         This may not always be right; we may be in a frameless function,
-         or we may be in the prologue, before the FP has been set up.
-         Unfortunately, we can't make this determination without first
-         calling scan_prologue, and we can't do that unles we know the
-         get_frame_pc (fi).  */
-
-      if (!get_frame_pc (fi))
-	{
-	  /* Sometimes we are called from get_prev_frame without
-	     the PC being set up first.  Long history, don't ask.
-	     Fortunately this will never happen from the outermost
-	     frame, so we should be able to get the saved pc from
-	     the next frame. */
-	  if (get_next_frame (fi))
-	    deprecated_update_frame_pc_hack (fi, xstormy16_frame_saved_pc (get_next_frame (fi)));
-	}
-
-      /* Take care of the saved_regs right here (non-lazy). */
-      xstormy16_frame_init_saved_regs (fi);
-    }
-}
-
-/* Function: xstormy16_frame_chain
-   Returns a pointer to the stack frame of the calling function.
-   Called only from get_prev_frame.  Needed for backtrace, "up", etc.
-*/
-
-static CORE_ADDR
-xstormy16_frame_chain (struct frame_info *fi)
-{
-  if (DEPRECATED_PC_IN_CALL_DUMMY (get_frame_pc (fi), get_frame_base (fi),
-				   get_frame_base (fi)))
-    {
-      /* Call dummy's frame is the same as caller's.  */
-      return get_frame_base (fi);
-    }
-  else
-    {
-      /* Return computed offset from this frame's fp. */
-      return get_frame_base (fi) - get_frame_extra_info (fi)->framesize;
-    }
-}
-
-static int
-xstormy16_frame_chain_valid (CORE_ADDR chain, struct frame_info *thisframe)
-{
-  return chain < 0x8000 && DEPRECATED_FRAME_SAVED_PC (thisframe) >= 0x8000 &&
-    (get_frame_extra_info (thisframe)->frameless_p ||
-     get_frame_base (thisframe) - get_frame_extra_info (thisframe)->framesize == chain);
-}
-
-/* Function: xstormy16_saved_pc_after_call Returns the previous PC
-   immediately after a function call.  This function is meant to
-   bypass the regular frame_register() mechanism, ie. it is meant to
-   work even if the frame isn't complete.  Called by
-   step_over_function, and sometimes by get_prev_frame.  */
-
-static CORE_ADDR
-xstormy16_saved_pc_after_call (struct frame_info *ignore)
-{
-  CORE_ADDR sp, pc, tmp;
-
-  sp = read_register (E_SP_REGNUM) - xstormy16_pc_size;
-  pc = read_memory_integer (sp, xstormy16_pc_size);
-
-  /* Skip over jump table entry if necessary.  */
-  if ((tmp = SKIP_TRAMPOLINE_CODE (pc)))
-    pc = tmp;
-
-  return pc;
 }
 
 const static unsigned char *
@@ -917,7 +550,6 @@ xstormy16_find_jmp_table_entry (CORE_ADDR faddr)
 	  for (addr = osect->addr;
 	       addr < osect->endaddr; addr += 2 * xstormy16_inst_size)
 	    {
-	      int status;
 	      LONGEST inst, inst2, faddr2;
 	      char buf[2 * xstormy16_inst_size];
 
@@ -938,7 +570,7 @@ xstormy16_find_jmp_table_entry (CORE_ADDR faddr)
 static CORE_ADDR
 xstormy16_skip_trampoline_code (CORE_ADDR pc)
 {
-  int tmp = xstormy16_resolve_jmp_table_entry (pc);
+  CORE_ADDR tmp = xstormy16_resolve_jmp_table_entry (pc);
 
   if (tmp && tmp != pc)
     return tmp;
@@ -950,6 +582,13 @@ xstormy16_in_solib_call_trampoline (CORE_ADDR pc, char *name)
 {
   return xstormy16_skip_trampoline_code (pc) != 0;
 }
+
+/* Function pointers are 16 bit.  The address space is 24 bit, using
+   32 bit addresses.  Pointers to functions on the XStormy16 are implemented
+   by using 16 bit pointers, which are either direct pointers in case the
+   function begins below 0x10000, or indirect pointers into a jump table.
+   The next two functions convert 16 bit pointers into 24 (32) bit addresses
+   and vice versa.  */
 
 static CORE_ADDR
 xstormy16_pointer_to_address (struct type *type, const void *buf)
@@ -981,19 +620,163 @@ xstormy16_address_to_pointer (struct type *type, void *buf, CORE_ADDR addr)
   store_unsigned_integer (buf, TYPE_LENGTH (type), addr);
 }
 
-static CORE_ADDR
-xstormy16_stack_align (CORE_ADDR addr)
+static struct xstormy16_frame_cache *
+xstormy16_alloc_frame_cache (void)
 {
-  if (addr & 1)
-    ++addr;
-  return addr;
+  struct xstormy16_frame_cache *cache;
+  int i;
+
+  cache = FRAME_OBSTACK_ZALLOC (struct xstormy16_frame_cache);
+
+  cache->base = 0;
+  cache->saved_sp = 0;
+  cache->pc = 0;
+  cache->uses_fp = 0;
+  cache->framesize = 0;
+  for (i = 0; i < E_NUM_REGS; ++i)
+    cache->saved_regs[i] = REG_UNAVAIL;
+
+  return cache;
+}
+
+static struct xstormy16_frame_cache *
+xstormy16_frame_cache (struct frame_info *next_frame, void **this_cache)
+{
+  struct xstormy16_frame_cache *cache;
+  CORE_ADDR current_pc;
+  int i;
+
+  if (*this_cache)
+    return *this_cache;
+
+  cache = xstormy16_alloc_frame_cache ();
+  *this_cache = cache;
+
+  cache->base = frame_unwind_register_unsigned (next_frame, E_FP_REGNUM);
+  if (cache->base == 0)
+    return cache;
+
+  cache->pc = frame_func_unwind (next_frame);
+  current_pc = frame_pc_unwind (next_frame);
+  if (cache->pc)
+    xstormy16_analyze_prologue (cache->pc, current_pc, cache, next_frame);
+
+  if (!cache->uses_fp)
+    cache->base = frame_unwind_register_unsigned (next_frame, E_SP_REGNUM);
+
+  cache->saved_sp = cache->base - cache->framesize;
+
+  for (i = 0; i < E_NUM_REGS; ++i)
+    if (cache->saved_regs[i] != REG_UNAVAIL)
+      cache->saved_regs[i] += cache->saved_sp;
+
+  return cache;
 }
 
 static void
-xstormy16_save_dummy_frame_tos (CORE_ADDR sp)
+xstormy16_frame_prev_register (struct frame_info *next_frame, void **this_cache,
+			       int regnum, int *optimizedp,
+			       enum lval_type *lvalp, CORE_ADDR *addrp,
+			       int *realnump, void *valuep)
 {
-  generic_save_dummy_frame_tos (sp - xstormy16_pc_size);
+  struct xstormy16_frame_cache *cache = xstormy16_frame_cache (next_frame,
+                                                               this_cache);
+  gdb_assert (regnum >= 0);
+
+  if (regnum == E_SP_REGNUM && cache->saved_sp)
+    {
+      *optimizedp = 0;
+      *lvalp = not_lval;
+      *addrp = 0;
+      *realnump = -1;
+      if (valuep)
+        {
+          /* Store the value.  */
+          store_unsigned_integer (valuep, xstormy16_reg_size, cache->saved_sp);
+        }
+      return;
+    }
+
+  if (regnum < E_NUM_REGS && cache->saved_regs[regnum] != REG_UNAVAIL)
+    {
+      *optimizedp = 0;
+      *lvalp = lval_memory;
+      *addrp = cache->saved_regs[regnum];
+      *realnump = -1;
+      if (valuep)
+        {
+          /* Read the value in from memory.  */
+          read_memory (*addrp, valuep,
+                       register_size (current_gdbarch, regnum));
+        }
+      return;
+    }
+
+  frame_register_unwind (next_frame, regnum,
+                         optimizedp, lvalp, addrp, realnump, valuep);
 }
+
+static void
+xstormy16_frame_this_id (struct frame_info *next_frame, void **this_cache,
+			 struct frame_id *this_id)
+{
+  struct xstormy16_frame_cache *cache = xstormy16_frame_cache (next_frame,
+							       this_cache);
+
+  /* This marks the outermost frame.  */
+  if (cache->base == 0)
+    return;
+
+  *this_id = frame_id_build (cache->saved_sp, cache->pc);
+}
+
+static CORE_ADDR
+xstormy16_frame_base_address (struct frame_info *next_frame, void **this_cache)
+{
+  struct xstormy16_frame_cache *cache = xstormy16_frame_cache (next_frame,
+							       this_cache);
+  return cache->base;
+}
+
+static const struct frame_unwind xstormy16_frame_unwind = {
+  NORMAL_FRAME,
+  xstormy16_frame_this_id,
+  xstormy16_frame_prev_register
+};
+
+static const struct frame_base xstormy16_frame_base = {
+  &xstormy16_frame_unwind,
+  xstormy16_frame_base_address,
+  xstormy16_frame_base_address,
+  xstormy16_frame_base_address
+};
+
+static const struct frame_unwind *
+xstormy16_frame_sniffer (struct frame_info *next_frame)
+{
+  return &xstormy16_frame_unwind;
+}
+
+static CORE_ADDR
+xstormy16_unwind_sp (struct gdbarch *gdbarch, struct frame_info *next_frame)
+{
+  return frame_unwind_register_unsigned (next_frame, E_SP_REGNUM);
+}
+
+static CORE_ADDR
+xstormy16_unwind_pc (struct gdbarch *gdbarch, struct frame_info *next_frame)
+{
+  return frame_unwind_register_unsigned (next_frame, E_PC_REGNUM);
+}
+
+static struct frame_id
+xstormy16_unwind_dummy_id (struct gdbarch *gdbarch,
+			   struct frame_info *next_frame)
+{
+  return frame_id_build (xstormy16_unwind_sp (gdbarch, next_frame),
+			 frame_pc_unwind (next_frame));
+}
+
 
 /* Function: xstormy16_gdbarch_init
    Initializer function for the xstormy16 gdbarch vector.
@@ -1002,8 +785,6 @@ xstormy16_save_dummy_frame_tos (CORE_ADDR sp)
 static struct gdbarch *
 xstormy16_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 {
-  static LONGEST call_dummy_words[1] = { 0 };
-  struct gdbarch_tdep *tdep = NULL;
   struct gdbarch *gdbarch;
 
   /* find a candidate among the list of pre-declared architectures. */
@@ -1011,97 +792,68 @@ xstormy16_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   if (arches != NULL)
     return (arches->gdbarch);
 
-#if 0
-  tdep = (struct gdbarch_tdep *) xmalloc (sizeof (struct gdbarch_tdep));
-#endif
-
-  gdbarch = gdbarch_alloc (&info, 0);
-
-  /* NOTE: cagney/2002-12-06: This can be deleted when this arch is
-     ready to unwind the PC first (see frame.c:get_prev_frame()).  */
-  set_gdbarch_deprecated_init_frame_pc (gdbarch, deprecated_init_frame_pc_default);
+  gdbarch = gdbarch_alloc (&info, NULL);
 
   /*
-   * Basic register fields and methods.
+   * Basic register fields and methods, datatype sizes and stuff.
    */
 
   set_gdbarch_num_regs (gdbarch, E_NUM_REGS);
   set_gdbarch_num_pseudo_regs (gdbarch, 0);
   set_gdbarch_sp_regnum (gdbarch, E_SP_REGNUM);
-  set_gdbarch_deprecated_fp_regnum (gdbarch, E_FP_REGNUM);
   set_gdbarch_pc_regnum (gdbarch, E_PC_REGNUM);
   set_gdbarch_register_name (gdbarch, xstormy16_register_name);
-  set_gdbarch_deprecated_register_size (gdbarch, xstormy16_reg_size);
-  set_gdbarch_deprecated_register_bytes (gdbarch, E_ALL_REGS_SIZE);
-  set_gdbarch_deprecated_register_byte (gdbarch, xstormy16_register_byte);
-  set_gdbarch_deprecated_register_raw_size (gdbarch, xstormy16_register_raw_size);
-  set_gdbarch_deprecated_max_register_raw_size (gdbarch, xstormy16_pc_size);
-  set_gdbarch_deprecated_register_virtual_size (gdbarch, xstormy16_register_raw_size);
-  set_gdbarch_deprecated_max_register_virtual_size (gdbarch, 4);
-  set_gdbarch_deprecated_register_virtual_type (gdbarch, xstormy16_reg_virtual_type);
-
-  /*
-   * Frame Info
-   */
-  set_gdbarch_deprecated_init_extra_frame_info (gdbarch,
-				     xstormy16_init_extra_frame_info);
-  set_gdbarch_deprecated_frame_init_saved_regs (gdbarch,
-				     xstormy16_frame_init_saved_regs);
-  set_gdbarch_deprecated_frame_chain (gdbarch, xstormy16_frame_chain);
-  set_gdbarch_deprecated_get_saved_register (gdbarch, xstormy16_get_saved_register);
-  set_gdbarch_deprecated_saved_pc_after_call (gdbarch, xstormy16_saved_pc_after_call);
-  set_gdbarch_deprecated_frame_saved_pc (gdbarch, xstormy16_frame_saved_pc);
-  set_gdbarch_skip_prologue (gdbarch, xstormy16_skip_prologue);
-  set_gdbarch_deprecated_frame_chain_valid (gdbarch, xstormy16_frame_chain_valid);
-
-  set_gdbarch_in_function_epilogue_p (gdbarch,
-				      xstormy16_in_function_epilogue_p);
-
-  /* 
-   * Miscelany
-   */
-  /* Stack grows up. */
-  set_gdbarch_inner_than (gdbarch, core_addr_greaterthan);
-
-  /*
-   * Call Dummies
-   * 
-   * These values and methods are used when gdb calls a target function.  */
-  set_gdbarch_deprecated_push_return_address (gdbarch, xstormy16_push_return_address);
-  set_gdbarch_deprecated_extract_return_value (gdbarch, xstormy16_extract_return_value);
-  set_gdbarch_deprecated_push_arguments (gdbarch, xstormy16_push_arguments);
-  set_gdbarch_deprecated_pop_frame (gdbarch, xstormy16_pop_frame);
-  set_gdbarch_deprecated_store_struct_return (gdbarch, xstormy16_store_struct_return);
-  set_gdbarch_deprecated_store_return_value (gdbarch, xstormy16_store_return_value);
-  set_gdbarch_deprecated_extract_struct_value_address (gdbarch, xstormy16_extract_struct_value_address);
-  set_gdbarch_use_struct_convention (gdbarch,
-				     xstormy16_use_struct_convention);
-  set_gdbarch_deprecated_call_dummy_words (gdbarch, call_dummy_words);
-  set_gdbarch_deprecated_sizeof_call_dummy_words (gdbarch, 0);
-  set_gdbarch_breakpoint_from_pc (gdbarch, xstormy16_breakpoint_from_pc);
+  set_gdbarch_register_type (gdbarch, xstormy16_register_type);
 
   set_gdbarch_char_signed (gdbarch, 0);
+  set_gdbarch_short_bit (gdbarch, 2 * TARGET_CHAR_BIT);
   set_gdbarch_int_bit (gdbarch, 2 * TARGET_CHAR_BIT);
+  set_gdbarch_long_bit (gdbarch, 4 * TARGET_CHAR_BIT);
+  set_gdbarch_long_long_bit (gdbarch, 8 * TARGET_CHAR_BIT);
+
+  set_gdbarch_float_bit (gdbarch, 4 * TARGET_CHAR_BIT);
+  set_gdbarch_double_bit (gdbarch, 8 * TARGET_CHAR_BIT);
+  set_gdbarch_long_double_bit (gdbarch, 8 * TARGET_CHAR_BIT);
+
   set_gdbarch_ptr_bit (gdbarch, 2 * TARGET_CHAR_BIT);
   set_gdbarch_addr_bit (gdbarch, 4 * TARGET_CHAR_BIT);
-  set_gdbarch_long_double_bit (gdbarch, 8 * TARGET_CHAR_BIT);
 
   set_gdbarch_address_to_pointer (gdbarch, xstormy16_address_to_pointer);
   set_gdbarch_pointer_to_address (gdbarch, xstormy16_pointer_to_address);
 
-  set_gdbarch_deprecated_stack_align (gdbarch, xstormy16_stack_align);
+  set_gdbarch_write_pc (gdbarch, generic_target_write_pc);
 
-  set_gdbarch_deprecated_save_dummy_frame_tos (gdbarch, xstormy16_save_dummy_frame_tos);
+  /* Stack grows up. */
+  set_gdbarch_inner_than (gdbarch, core_addr_greaterthan);
+
+  /*
+   * Frame Info
+   */
+  set_gdbarch_unwind_sp (gdbarch, xstormy16_unwind_sp);
+  set_gdbarch_unwind_pc (gdbarch, xstormy16_unwind_pc);
+  set_gdbarch_unwind_dummy_id (gdbarch, xstormy16_unwind_dummy_id);
+  set_gdbarch_frame_align (gdbarch, xstormy16_frame_align);
+  frame_base_set_default (gdbarch, &xstormy16_frame_base);
+
+  set_gdbarch_skip_prologue (gdbarch, xstormy16_skip_prologue);
+  set_gdbarch_in_function_epilogue_p (gdbarch,
+				      xstormy16_in_function_epilogue_p);
+
+  /* These values and methods are used when gdb calls a target function.  */
+  set_gdbarch_push_dummy_call (gdbarch, xstormy16_push_dummy_call);
+  set_gdbarch_breakpoint_from_pc (gdbarch, xstormy16_breakpoint_from_pc);
+  set_gdbarch_return_value (gdbarch, xstormy16_return_value);
 
   set_gdbarch_skip_trampoline_code (gdbarch, xstormy16_skip_trampoline_code);
-
   set_gdbarch_in_solib_call_trampoline (gdbarch,
 					xstormy16_in_solib_call_trampoline);
 
-  /* Should be using push_dummy_call.  */
-  set_gdbarch_deprecated_dummy_write_sp (gdbarch, deprecated_write_sp);
-
   set_gdbarch_print_insn (gdbarch, print_insn_xstormy16);
+
+  gdbarch_init_osabi (info, gdbarch);
+
+  frame_unwind_append_sniffer (gdbarch, dwarf2_frame_sniffer);
+  frame_unwind_append_sniffer (gdbarch, xstormy16_frame_sniffer);
 
   return gdbarch;
 }

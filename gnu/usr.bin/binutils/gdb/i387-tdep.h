@@ -82,6 +82,14 @@ extern void i387_supply_fsave (struct regcache *regcache, int regnum,
 			       const void *fsave);
 
 /* Fill register REGNUM (if it is a floating-point register) in *FSAVE
+   with the value from REGCACHE.  If REGNUM is -1, do this for all
+   registers.  This function doesn't touch any of the reserved bits in
+   *FSAVE.  */
+
+extern void i387_collect_fsave (const struct regcache *regcache, int regnum,
+				void *fsave);
+
+/* Fill register REGNUM (if it is a floating-point register) in *FSAVE
    with the value in GDB's register cache.  If REGNUM is -1, do this
    for all registers.  This function doesn't touch any of the reserved
    bits in *FSAVE.  */

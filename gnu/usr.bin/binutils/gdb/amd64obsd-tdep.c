@@ -22,6 +22,8 @@
 #include "defs.h"
 #include "frame.h"
 #include "gdbcore.h"
+#include "symtab.h"
+#include "objfiles.h"
 #include "osabi.h"
 #include "regset.h"
 #include "target.h"
@@ -40,7 +42,7 @@ amd64obsd_supply_regset (const struct regset *regset,
 			 struct regcache *regcache, int regnum,
 			 const void *regs, size_t len)
 {
-  const struct gdbarch_tdep *tdep = regset->descr;
+  const struct gdbarch_tdep *tdep = gdbarch_tdep (regset->arch);
 
   gdb_assert (len >= tdep->sizeof_gregset + I387_SIZEOF_FXSAVE);
 
@@ -61,11 +63,7 @@ amd64obsd_regset_from_core_section (struct gdbarch *gdbarch,
       && sect_size >= tdep->sizeof_gregset + I387_SIZEOF_FXSAVE)
     {
       if (tdep->gregset == NULL)
-	{
-	  tdep->gregset = XMALLOC (struct regset);
-	  tdep->gregset->descr = tdep;
-	  tdep->gregset->supply_regset = amd64obsd_supply_regset;
-	}
+        tdep->gregset = regset_alloc (gdbarch, amd64obsd_supply_regset, NULL);
       return tdep->gregset;
     }
 
@@ -75,11 +73,16 @@ amd64obsd_regset_from_core_section (struct gdbarch *gdbarch,
 
 /* Support for signal handlers.  */
 
+/* Default page size.  */
 static const int amd64obsd_page_size = 4096;
 
+/* Return whether the frame preceding NEXT_FRAME corresponds to an
+   OpenBSD sigtramp routine.  */
+
 static int
-amd64obsd_pc_in_sigtramp (CORE_ADDR pc, char *name)
+amd64obsd_sigtramp_p (struct frame_info *next_frame)
 {
+  CORE_ADDR pc = frame_pc_unwind (next_frame);
   CORE_ADDR start_pc = (pc & ~(amd64obsd_page_size - 1));
   const char sigreturn[] =
   {
@@ -87,18 +90,30 @@ amd64obsd_pc_in_sigtramp (CORE_ADDR pc, char *name)
     0x67, 0x00, 0x00, 0x00,	/* movq $SYS_sigreturn, %rax */
     0xcd, 0x80			/* int $0x80 */
   };
-  char *buf;
+  size_t buflen = (sizeof sigreturn) + 1;
+  char *name, *buf;
 
-  if (name)
+  /* If the function has a valid symbol name, it isn't a
+     trampoline.  */
+  find_pc_partial_function (pc, &name, NULL, NULL);
+  if (name != NULL)
+    return 0;
+
+  /* If the function lives in a valid section (even without a starting
+     point) it isn't a trampoline.  */
+  if (find_pc_section (pc) != NULL)
     return 0;
 
   /* If we can't read the instructions at START_PC, return zero.  */
-  buf = alloca (sizeof sigreturn);
-  if (target_read_memory (start_pc + 0x7, buf, sizeof sigreturn))
+  buf = alloca ((sizeof sigreturn) + 1);
+  if (!safe_frame_unwind_memory (next_frame, start_pc + 6, buf, buflen))
     return 0;
 
-  /* Check for sigreturn(2).  */
-  if (memcmp (buf, sigreturn, sizeof sigreturn))
+  /* Check for sigreturn(2).  Depending on how the assembler encoded
+     the `movq %rsp, %rdi' instruction, the code starts at offset 6 or
+     7.  */
+  if (memcmp (buf, sigreturn, sizeof sigreturn)
+      && memcpy (buf + 1, sigreturn, sizeof sigreturn))
     return 0;
 
   return 1;
@@ -110,9 +125,25 @@ amd64obsd_pc_in_sigtramp (CORE_ADDR pc, char *name)
 static CORE_ADDR
 amd64obsd_sigcontext_addr (struct frame_info *next_frame)
 {
+  CORE_ADDR pc = frame_pc_unwind (next_frame);
+  ULONGEST offset = (pc & (amd64obsd_page_size - 1));
+
   /* The %rsp register points at `struct sigcontext' upon entry of a
-     signal trampoline.  */
-  return frame_unwind_register_unsigned (next_frame, AMD64_RSP_REGNUM);
+     signal trampoline.  The relevant part of the trampoline is
+
+        call    *%rax
+        movq    %rsp, %rdi
+        pushq   %rdi
+        movq    $SYS_sigreturn,%rax
+        int     $0x80
+
+     (see /usr/src/sys/arch/amd64/amd64/locore.S).  The `pushq'
+     instruction clobbers %rsp, but its value is saved in `%rdi'.  */
+
+  if (offset > 5)
+    return frame_unwind_register_unsigned (next_frame, AMD64_RDI_REGNUM);
+  else
+    return frame_unwind_register_unsigned (next_frame, AMD64_RSP_REGNUM);
 }
 
 /* OpenBSD 3.5 or later.  */
@@ -195,7 +226,7 @@ amd64obsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 
   tdep->jb_pc_offset = 7 * 8;
 
-  set_gdbarch_pc_in_sigtramp (gdbarch, amd64obsd_pc_in_sigtramp);
+  tdep->sigtramp_p = amd64obsd_sigtramp_p;
   tdep->sigcontext_addr = amd64obsd_sigcontext_addr;
   tdep->sc_reg_offset = amd64obsd_sc_reg_offset;
   tdep->sc_num_regs = ARRAY_SIZE (amd64obsd_sc_reg_offset);

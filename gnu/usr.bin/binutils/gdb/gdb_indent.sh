@@ -77,6 +77,7 @@ types="\
 -T prgregset_t -T fpregset_t -T gregset_t -T sigset_t \
 -T td_thrhandle_t -T td_event_msg_t -T td_thr_events_t \
 -T td_notify_t -T td_thr_iter_f -T td_thrinfo_t \
+-T caddr_t \
 `cat *.h | sed -n \
     -e 's/^.*[^a-z0-9_]\([a-z0-9_]*_ftype\).*$/-T \1/p' \
     -e 's/^.*[^a-z0-9_]\([a-z0-9_]*_func\).*$/-T \1/p' \

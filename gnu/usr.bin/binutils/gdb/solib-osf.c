@@ -554,7 +554,6 @@ osf_current_sos (void)
       tail->next = NULL;
     }
 
- done:
   close_map (&ctxt);
   return head;
 }

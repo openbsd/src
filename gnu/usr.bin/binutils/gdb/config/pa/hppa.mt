@@ -1,2 +1,2 @@
 TDEPFILES= hppa-tdep.o
-TM_FILE= tm-hppa.h
+DEPRECATED_TM_FILE= tm-hppa.h

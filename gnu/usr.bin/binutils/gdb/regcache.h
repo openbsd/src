@@ -96,8 +96,6 @@ void regcache_cooked_write_part (struct regcache *regcache, int regnum,
    target.  These functions are called by the target in response to a
    target_fetch_registers() or target_store_registers().  */
 
-extern void supply_register (int regnum, const void *val);
-extern void regcache_collect (int regnum, void *buf);
 extern void regcache_raw_supply (struct regcache *regcache,
 				 int regnum, const void *buf);
 extern void regcache_raw_collect (const struct regcache *regcache,
@@ -115,48 +113,20 @@ extern void regcache_raw_collect (const struct regcache *regcache,
 
 extern int register_offset_hack (struct gdbarch *gdbarch, int regnum);
 
+/* Similar.  The total number of bytes occupied by a regcache.  */
+
+extern int deprecated_register_bytes (void );
+
 
 /* The type of a register.  This function is slightly more efficient
    then its gdbarch vector counterpart since it returns a precomputed
-   value stored in a table.
-
-   NOTE: cagney/2002-08-17: The original macro was called
-   DEPRECATED_REGISTER_VIRTUAL_TYPE.  This was because the register
-   could have different raw and cooked (nee virtual) representations.
-   The CONVERTABLE methods being used to convert between the two
-   representations.  Current code does not do this.  Instead, the
-   first [0..NUM_REGS) registers are 1:1 raw:cooked, and the type
-   exactly describes the register's representation.  Consequently, the
-   ``virtual'' has been dropped.
-
-   FIXME: cagney/2002-08-17: A number of architectures, including the
-   MIPS, are currently broken in this regard.  */
+   value stored in a table.  */
 
 extern struct type *register_type (struct gdbarch *gdbarch, int regnum);
 
 
 /* Return the size of register REGNUM.  All registers should have only
-   one size.
-
-   FIXME: cagney/2003-02-28:
-
-   Unfortunately, thanks to some legacy architectures, this doesn't
-   hold.  A register's cooked (nee virtual) and raw size can differ
-   (see MIPS).  Such architectures should be using different register
-   numbers for the different sized views of identical registers.
-
-   Anyway, the up-shot is that, until that mess is fixed, core code
-   can end up being very confused - should the RAW or VIRTUAL size be
-   used?  As a rule of thumb, use DEPRECATED_REGISTER_VIRTUAL_SIZE in
-   cooked code, but with the comment:
-
-   OK: REGISTER_VIRTUAL_SIZE
-
-   or just
-
-   OK
-
-   appended to the end of the line.  */
+   one size.  */
    
 extern int register_size (struct gdbarch *gdbarch, int regnum);
 
@@ -216,7 +186,7 @@ extern void deprecated_write_register_bytes (int regbyte, char *myaddr,
    referenced thread.  This global is often found in close proximity
    to code that is directly manipulating the deprecated_registers[]
    array.  In such cases, it should be possible to replace the lot
-   with a call to supply_register().  If you find yourself in dire
+   with a call to regcache_raw_supply().  If you find yourself in dire
    straits, still needing access to the cache status bit, the
    regcache_valid_p() and set_register_cached() functions are
    available.  */
@@ -226,13 +196,14 @@ extern signed char *deprecated_register_valid;
    registers for the most recently referenced thread.
 
    NOTE: cagney/2002-11-14: Target side code should be using
-   supply_register() and/or regcache_collect() while architecture side
-   code should use the more generic regcache methods.  */
+   regcache_raw_supply() and/or regcache_collect() while architecture
+   side code should use the more generic regcache methods.  */
 
 extern char *deprecated_registers;
 
 /* NOTE: cagney/2002-11-05: This function, and its co-conspirator
-   deprecated_registers[], have been superseeded by supply_register().  */
+   deprecated_registers[], have been superseeded by
+   regcache_raw_supply().  */
 extern void deprecated_registers_fetched (void);
 
 extern int register_cached (int regnum);

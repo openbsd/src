@@ -1,6 +1,6 @@
 /* Remote debugging interface for M32R/SDI.
 
-   Copyright 2003 Free Software Foundation, Inc.
+   Copyright 2003, 2004 Free Software Foundation, Inc.
 
    Contributed by Renesas Technology Co.
    Written by Kei Sakamoto <sakamoto.kei@renesas.com>.
@@ -63,12 +63,6 @@ static int use_ib_breakpoints = 1;
 static int max_ib_breakpoints;
 static unsigned long bp_address[MAX_BREAKPOINTS];
 static unsigned char bp_data[MAX_BREAKPOINTS][4];
-static const unsigned char ib_bp_entry_enable[] = {
-  0x00, 0x00, 0x00, 0x06
-};
-static const unsigned char ib_bp_entry_disable[] = {
-  0x00, 0x00, 0x00, 0x00
-};
 
 /* dbt -> nop */
 static const unsigned char dbt_bp_entry[] = {
@@ -161,7 +155,7 @@ get_ack (void)
 {
   int c;
 
-  if (!sdi_desc) 
+  if (!sdi_desc)
     return -1;
 
   c = serial_readchar (sdi_desc, SDI_TIMEOUT);
@@ -169,7 +163,7 @@ get_ack (void)
   if (c < 0)
     return -1;
 
-  if (c != '+')		/* error */
+  if (c != '+')			/* error */
     return -1;
 
   return 0;
@@ -181,7 +175,7 @@ send_data (void *buf, int len)
 {
   int ret;
 
-  if (!sdi_desc) 
+  if (!sdi_desc)
     return -1;
 
   if (serial_write (sdi_desc, buf, len) != 0)
@@ -200,7 +194,7 @@ recv_data (void *buf, int len)
   int total = 0;
   int c;
 
-  if (!sdi_desc) 
+  if (!sdi_desc)
     return -1;
 
   while (total < len)
@@ -224,20 +218,72 @@ store_long_parameter (void *buf, long val)
   memcpy (buf, &val, 4);
 }
 
+static int
+send_cmd (unsigned char cmd)
+{
+  unsigned char buf[1];
+  buf[0] = cmd;
+  return send_data (buf, 1);
+}
+
+static int
+send_one_arg_cmd (unsigned char cmd, unsigned char arg1)
+{
+  unsigned char buf[2];
+  buf[0] = cmd;
+  buf[1] = arg1;
+  return send_data (buf, 2);
+}
+
+static int
+send_two_arg_cmd (unsigned char cmd, unsigned char arg1, unsigned long arg2)
+{
+  unsigned char buf[6];
+  buf[0] = cmd;
+  buf[1] = arg1;
+  store_long_parameter (buf + 2, arg2);
+  return send_data (buf, 6);
+}
+
+static int
+send_three_arg_cmd (unsigned char cmd, unsigned long arg1, unsigned long arg2,
+		    unsigned long arg3)
+{
+  unsigned char buf[13];
+  buf[0] = cmd;
+  store_long_parameter (buf + 1, arg1);
+  store_long_parameter (buf + 5, arg2);
+  store_long_parameter (buf + 9, arg3);
+  return send_data (buf, 13);
+}
+
+static unsigned char
+recv_char_data (void)
+{
+  unsigned char val;
+  recv_data (&val, 1);
+  return val;
+}
+
+static unsigned long
+recv_long_data (void)
+{
+  unsigned long val;
+  recv_data (&val, 4);
+  return ntohl (val);
+}
+
+
 /* Check if MMU is on */
 static void
 check_mmu_status (void)
 {
   unsigned long val;
-  unsigned char buf[2];
 
   /* Read PC address */
-  buf[0] = SDI_READ_CPU_REG;
-  buf[1] = SDI_REG_BPC;
-  if (send_data (buf, 2) == -1)
+  if (send_one_arg_cmd (SDI_READ_CPU_REG, SDI_REG_BPC) == -1)
     return;
-  recv_data (&val, 4);
-  val = ntohl (val);
+  val = recv_long_data ();
   if ((val & 0xc0000000) == 0x80000000)
     {
       mmu_on = 1;
@@ -245,12 +291,9 @@ check_mmu_status (void)
     }
 
   /* Read EVB address */
-  buf[0] = SDI_READ_CPU_REG;
-  buf[1] = SDI_REG_EVB;
-  if (send_data (buf, 2) == -1)
+  if (send_one_arg_cmd (SDI_READ_CPU_REG, SDI_REG_EVB) == -1)
     return;
-  recv_data (&val, 4);
-  val = ntohl (val);
+  val = recv_long_data ();
   if ((val & 0xc0000000) == 0x80000000)
     {
       mmu_on = 1;
@@ -264,7 +307,7 @@ check_mmu_status (void)
 /* This is called not only when we first attach, but also when the
    user types "run" after having attached.  */
 static void
-m32r_create_inferior (char *execfile, char *args, char **env)
+m32r_create_inferior (char *execfile, char *args, char **env, int from_tty)
 {
   CORE_ADDR entry_pt;
 
@@ -308,7 +351,6 @@ m32r_open (char *args, int from_tty)
   struct sockaddr_in server_addr;
   char *port_str, hostname[256];
   int port;
-  unsigned char buf[2];
   int i, n;
   int yes = 1;
 
@@ -325,7 +367,7 @@ m32r_open (char *args, int from_tty)
     {
       port_str = strchr (args, ':');
       if (port_str == NULL)
-        sprintf (hostname, "%s:%d", args, SDIPORT);
+	sprintf (hostname, "%s:%d", args, SDIPORT);
       else
 	strcpy (hostname, args);
     }
@@ -337,16 +379,12 @@ m32r_open (char *args, int from_tty)
   if (get_ack () == -1)
     error ("Cannot connect to SDI target\n");
 
-  buf[0] = SDI_OPEN;
-  if (send_data (buf, 1) == -1)
+  if (send_cmd (SDI_OPEN) == -1)
     error ("Cannot connect to SDI target\n");
 
   /* Get maximum number of ib breakpoints */
-  buf[0] = SDI_GET_ATTR;
-  buf[1] = SDI_ATTR_BRK;
-  send_data (buf, 2);
-  recv_data (buf, 1);
-  max_ib_breakpoints = buf[0];
+  send_one_arg_cmd (SDI_GET_ATTR, SDI_ATTR_BRK);
+  max_ib_breakpoints = recv_char_data ();
   if (remote_debug)
     printf_filtered ("Max IB Breakpoints = %d\n", max_ib_breakpoints);
 
@@ -355,11 +393,8 @@ m32r_open (char *args, int from_tty)
     bp_address[i] = 0xffffffff;
 
   /* Get maximum number of access breaks. */
-  buf[0] = SDI_GET_ATTR;
-  buf[1] = SDI_ATTR_ABRK;
-  send_data (buf, 2);
-  recv_data (buf, 1);
-  max_access_breaks = buf[0];
+  send_one_arg_cmd (SDI_GET_ATTR, SDI_ATTR_ABRK);
+  max_access_breaks = recv_char_data ();
   if (remote_debug)
     printf_filtered ("Max Access Breaks = %d\n", max_access_breaks);
 
@@ -370,9 +405,7 @@ m32r_open (char *args, int from_tty)
   check_mmu_status ();
 
   /* Get the name of chip on target board. */
-  buf[0] = SDI_GET_ATTR;
-  buf[1] = SDI_ATTR_NAME;
-  send_data (buf, 2);
+  send_one_arg_cmd (SDI_GET_ATTR, SDI_ATTR_NAME);
   recv_data (chip_name, 64);
 
   if (from_tty)
@@ -385,15 +418,12 @@ m32r_open (char *args, int from_tty)
 static void
 m32r_close (int quitting)
 {
-  unsigned char buf[1];
-
   if (remote_debug)
     fprintf_unfiltered (gdb_stdlog, "m32r_close(%d)\n", quitting);
 
   if (sdi_desc)
     {
-      buf[0] = SDI_CLOSE;
-      send_data (buf, 1);
+      send_cmd (SDI_CLOSE);
       serial_close (sdi_desc);
       sdi_desc = NULL;
     }
@@ -408,6 +438,7 @@ static void
 m32r_resume (ptid_t ptid, int step, enum target_signal sig)
 {
   unsigned long pc_addr, bp_addr, ab_addr;
+  int ib_breakpoints;
   unsigned char buf[13];
   int i;
 
@@ -451,206 +482,181 @@ m32r_resume (ptid_t ptid, int step, enum target_signal sig)
     }
 
   /* Set PC. */
-  buf[0] = SDI_WRITE_CPU_REG;
-  buf[1] = SDI_REG_BPC;
-  store_long_parameter (buf + 2, pc_addr);
-  send_data (buf, 6);
+  send_two_arg_cmd (SDI_WRITE_CPU_REG, SDI_REG_BPC, pc_addr);
 
   /* step mode. */
   step_mode = step;
   if (step)
     {
       /* Set PBP. */
-      buf[0] = SDI_WRITE_CPU_REG;
-      buf[1] = SDI_REG_PBP;
-      store_long_parameter (buf + 2, pc_addr | 1);
-      send_data (buf, 6);
+      send_two_arg_cmd (SDI_WRITE_CPU_REG, SDI_REG_PBP, pc_addr | 1);
     }
   else
     {
-      int ib_breakpoints;
-
-      if (use_ib_breakpoints)
-	ib_breakpoints = max_ib_breakpoints;
-      else
-	ib_breakpoints = 0;
-
-      /* Set ib breakpoints. */
-      for (i = 0; i < ib_breakpoints; i++)
-	{
-	  bp_addr = bp_address[i];
-	  if (bp_addr != 0xffffffff && bp_addr != pc_addr)
-	    {
-	      /* Set PBP. */
-	      buf[0] = SDI_WRITE_MEMORY;
-	      store_long_parameter (buf + 1, 0xffff8000 + 4 * i);
-	      store_long_parameter (buf + 5, 4);
-	      if (TARGET_BYTE_ORDER == BFD_ENDIAN_BIG)
-		{
-		  buf[9] = ib_bp_entry_enable[0];
-		  buf[10] = ib_bp_entry_enable[1];
-		  buf[11] = ib_bp_entry_enable[2];
-		  buf[12] = ib_bp_entry_enable[3];
-		}
-	      else
-		{
-		  buf[9] = ib_bp_entry_enable[3];
-		  buf[10] = ib_bp_entry_enable[2];
-		  buf[11] = ib_bp_entry_enable[1];
-		  buf[12] = ib_bp_entry_enable[0];
-		}
-	      send_data (buf, 13);
-
-	      buf[0] = SDI_WRITE_MEMORY;
-	      store_long_parameter (buf + 1, 0xffff8080 + 4 * i);
-	      store_long_parameter (buf + 5, 4);
-	      store_unsigned_integer (buf + 9, 4, bp_addr);
-	      send_data (buf, 13);
-	    }
-	}
-
-      /* Set dbt breakpoints. */
-      for (i = ib_breakpoints; i < MAX_BREAKPOINTS; i++)
-	{
-	  bp_addr = bp_address[i];
-	  if (bp_addr != 0xffffffff && bp_addr != pc_addr)
-	    {
-	      if (!mmu_on)
-		bp_addr &= 0x7fffffff;
-
-	      /* Write DBT instruction. */
-	      buf[0] = SDI_WRITE_MEMORY;
-	      if ((bp_addr & 2) == 0 && bp_addr != (pc_addr & 0xfffffffc))
-		{
-		  store_long_parameter (buf + 1, bp_addr);
-		  store_long_parameter (buf + 5, 4);
-		  if (TARGET_BYTE_ORDER == BFD_ENDIAN_BIG)
-		    {
-		      buf[9] = dbt_bp_entry[0];
-		      buf[10] = dbt_bp_entry[1];
-		      buf[11] = dbt_bp_entry[2];
-		      buf[12] = dbt_bp_entry[3];
-		    }
-		  else
-		    {
-		      buf[9] = dbt_bp_entry[3];
-		      buf[10] = dbt_bp_entry[2];
-		      buf[11] = dbt_bp_entry[1];
-		      buf[12] = dbt_bp_entry[0];
-		    }
-		  send_data (buf, 13);
-		}
-	      else
-		{
-		  if (TARGET_BYTE_ORDER == BFD_ENDIAN_BIG)
-		    store_long_parameter (buf + 1, bp_addr);
-		  else if ((bp_addr & 2) == 0)
-		    store_long_parameter (buf + 1, bp_addr + 2);
-		  else
-		    store_long_parameter (buf + 1, bp_addr - 2);
-		  store_long_parameter (buf + 5, 2);
-		  if (TARGET_BYTE_ORDER == BFD_ENDIAN_BIG)
-		    {
-		      buf[9] = dbt_bp_entry[0];
-		      buf[10] = dbt_bp_entry[1];
-		    }
-		  else
-		    {
-		      buf[9] = dbt_bp_entry[1];
-		      buf[10] = dbt_bp_entry[0];
-		    }
-		  send_data (buf, 11);
-		}
-	    }
-	}
-
-      /* Set access breaks. */
-      for (i = 0; i < max_access_breaks; i++)
-	{
-	  ab_addr = ab_address[i];
-	  if (ab_addr != 0x00000000)
-	    {
-	      /* DBC register */
-	      buf[0] = SDI_WRITE_MEMORY;
-	      store_long_parameter (buf + 1, 0xffff8100 + 4 * i);
-	      store_long_parameter (buf + 5, 4);
-	      if (TARGET_BYTE_ORDER == BFD_ENDIAN_BIG)
-		{
-		  buf[9] = 0x00;
-		  buf[10] = 0x00;
-		  buf[11] = 0x00;
-		  switch (ab_type[i])
-		    {
-		    case 0:	/* write watch */
-		      buf[12] = 0x86;
-		      break;
-		    case 1:	/* read watch */
-		      buf[12] = 0x46;
-		      break;
-		    case 2:	/* access watch */
-		      buf[12] = 0x06;
-		      break;
-		    }
-		}
-	      else
-		{
-		  switch (ab_type[i])
-		    {
-		    case 0:	/* write watch */
-		      buf[9] = 0x86;
-		      break;
-		    case 1:	/* read watch */
-		      buf[9] = 0x46;
-		      break;
-		    case 2:	/* access watch */
-		      buf[9] = 0x06;
-		      break;
-		    }
-		  buf[10] = 0x00;
-		  buf[11] = 0x00;
-		  buf[12] = 0x00;
-		}
-	      send_data (buf, 13);
-
-	      /* DBAH register */
-	      buf[0] = SDI_WRITE_MEMORY;
-	      store_long_parameter (buf + 1, 0xffff8180 + 4 * i);
-	      store_long_parameter (buf + 5, 4);
-	      store_unsigned_integer (buf + 9, 4, ab_addr);
-	      send_data (buf, 13);
-
-	      /* DBAL register */
-	      buf[0] = SDI_WRITE_MEMORY;
-	      store_long_parameter (buf + 1, 0xffff8200 + 4 * i);
-	      store_long_parameter (buf + 5, 4);
-	      store_long_parameter (buf + 9, 0xffffffff);
-	      send_data (buf, 13);
-
-	      /* DBD register */
-	      buf[0] = SDI_WRITE_MEMORY;
-	      store_long_parameter (buf + 1, 0xffff8280 + 4 * i);
-	      store_long_parameter (buf + 5, 4);
-	      store_long_parameter (buf + 9, 0x00000000);
-	      send_data (buf, 13);
-
-	      /* DBDM register */
-	      buf[0] = SDI_WRITE_MEMORY;
-	      store_long_parameter (buf + 1, 0xffff8300 + 4 * i);
-	      store_long_parameter (buf + 5, 4);
-	      store_long_parameter (buf + 9, 0x00000000);
-	      send_data (buf, 13);
-	    }
-	}
-
       /* Unset PBP. */
-      buf[0] = SDI_WRITE_CPU_REG;
-      buf[1] = SDI_REG_PBP;
-      store_long_parameter (buf + 2, 0x00000000);
-      send_data (buf, 6);
+      send_two_arg_cmd (SDI_WRITE_CPU_REG, SDI_REG_PBP, 0x00000000);
     }
 
-  buf[0] = SDI_EXEC_CPU;
-  send_data (buf, 1);
+  if (use_ib_breakpoints)
+    ib_breakpoints = max_ib_breakpoints;
+  else
+    ib_breakpoints = 0;
+
+  /* Set ib breakpoints. */
+  for (i = 0; i < ib_breakpoints; i++)
+    {
+      bp_addr = bp_address[i];
+
+      if (bp_addr == 0xffffffff)
+	continue;
+
+      /* Set PBP. */
+      if (TARGET_BYTE_ORDER == BFD_ENDIAN_BIG)
+	send_three_arg_cmd (SDI_WRITE_MEMORY, 0xffff8000 + 4 * i, 4,
+			    0x00000006);
+      else
+	send_three_arg_cmd (SDI_WRITE_MEMORY, 0xffff8000 + 4 * i, 4,
+			    0x06000000);
+
+      send_three_arg_cmd (SDI_WRITE_MEMORY, 0xffff8080 + 4 * i, 4, bp_addr);
+    }
+
+  /* Set dbt breakpoints. */
+  for (i = ib_breakpoints; i < MAX_BREAKPOINTS; i++)
+    {
+      bp_addr = bp_address[i];
+
+      if (bp_addr == 0xffffffff)
+	continue;
+
+      if (!mmu_on)
+	bp_addr &= 0x7fffffff;
+
+      /* Write DBT instruction. */
+      buf[0] = SDI_WRITE_MEMORY;
+      store_long_parameter (buf + 1, bp_addr);
+      store_long_parameter (buf + 5, 4);
+      if ((bp_addr & 2) == 0 && bp_addr != (pc_addr & 0xfffffffc))
+	{
+	  if (TARGET_BYTE_ORDER == BFD_ENDIAN_BIG)
+	    {
+	      buf[9] = dbt_bp_entry[0];
+	      buf[10] = dbt_bp_entry[1];
+	      buf[11] = dbt_bp_entry[2];
+	      buf[12] = dbt_bp_entry[3];
+	    }
+	  else
+	    {
+	      buf[9] = dbt_bp_entry[3];
+	      buf[10] = dbt_bp_entry[2];
+	      buf[11] = dbt_bp_entry[1];
+	      buf[12] = dbt_bp_entry[0];
+	    }
+	}
+      else
+	{
+	  if (TARGET_BYTE_ORDER == BFD_ENDIAN_BIG)
+	    {
+	      if ((bp_addr & 2) == 0)
+		{
+		  buf[9] = dbt_bp_entry[0];
+		  buf[10] = dbt_bp_entry[1];
+		  buf[11] = bp_data[i][2] & 0x7f;
+		  buf[12] = bp_data[i][3];
+		}
+	      else
+		{
+		  buf[9] = bp_data[i][0];
+		  buf[10] = bp_data[i][1];
+		  buf[11] = dbt_bp_entry[0];
+		  buf[12] = dbt_bp_entry[1];
+		}
+	    }
+	  else
+	    {
+	      if ((bp_addr & 2) == 0)
+		{
+		  buf[9] = bp_data[i][0];
+		  buf[10] = bp_data[i][1] & 0x7f;
+		  buf[11] = dbt_bp_entry[1];
+		  buf[12] = dbt_bp_entry[0];
+		}
+	      else
+		{
+		  buf[9] = dbt_bp_entry[1];
+		  buf[10] = dbt_bp_entry[0];
+		  buf[11] = bp_data[i][2];
+		  buf[12] = bp_data[i][3];
+		}
+	    }
+	}
+      send_data (buf, 13);
+    }
+
+  /* Set access breaks. */
+  for (i = 0; i < max_access_breaks; i++)
+    {
+      ab_addr = ab_address[i];
+
+      if (ab_addr == 0x00000000)
+	continue;
+
+      /* DBC register */
+      if (TARGET_BYTE_ORDER == BFD_ENDIAN_BIG)
+	{
+	  switch (ab_type[i])
+	    {
+	    case 0:		/* write watch */
+	      send_three_arg_cmd (SDI_WRITE_MEMORY, 0xffff8100 + 4 * i, 4,
+				  0x00000086);
+	      break;
+	    case 1:		/* read watch */
+	      send_three_arg_cmd (SDI_WRITE_MEMORY, 0xffff8100 + 4 * i, 4,
+				  0x00000046);
+	      break;
+	    case 2:		/* access watch */
+	      send_three_arg_cmd (SDI_WRITE_MEMORY, 0xffff8100 + 4 * i, 4,
+				  0x00000006);
+	      break;
+	    }
+	}
+      else
+	{
+	  switch (ab_type[i])
+	    {
+	    case 0:		/* write watch */
+	      send_three_arg_cmd (SDI_WRITE_MEMORY, 0xffff8100 + 4 * i, 4,
+				  0x86000000);
+	      break;
+	    case 1:		/* read watch */
+	      send_three_arg_cmd (SDI_WRITE_MEMORY, 0xffff8100 + 4 * i, 4,
+				  0x46000000);
+	      break;
+	    case 2:		/* access watch */
+	      send_three_arg_cmd (SDI_WRITE_MEMORY, 0xffff8100 + 4 * i, 4,
+				  0x06000000);
+	      break;
+	    }
+	}
+
+      /* DBAH register */
+      send_three_arg_cmd (SDI_WRITE_MEMORY, 0xffff8180 + 4 * i, 4, ab_addr);
+
+      /* DBAL register */
+      send_three_arg_cmd (SDI_WRITE_MEMORY, 0xffff8200 + 4 * i, 4,
+			  0xffffffff);
+
+      /* DBD register */
+      send_three_arg_cmd (SDI_WRITE_MEMORY, 0xffff8280 + 4 * i, 4,
+			  0x00000000);
+
+      /* DBDM register */
+      send_three_arg_cmd (SDI_WRITE_MEMORY, 0xffff8300 + 4 * i, 4,
+			  0x00000000);
+    }
+
+  /* Resume program. */
+  send_cmd (SDI_EXEC_CPU);
 
   /* Without this, some commands which require an active target (such as kill)
      won't work.  This variable serves (at least) double duty as both the pid
@@ -679,6 +685,7 @@ m32r_wait (ptid_t ptid, struct target_waitstatus *status)
 {
   static RETSIGTYPE (*prev_sigint) ();
   unsigned long bp_addr, pc_addr;
+  int ib_breakpoints;
   long i;
   unsigned char buf[13];
   unsigned long val;
@@ -704,7 +711,7 @@ m32r_wait (ptid_t ptid, struct target_waitstatus *status)
       if (c < 0)
 	error ("Remote connection closed");
 
-      if (c == '-')	/* error */
+      if (c == '-')		/* error */
 	{
 	  status->kind = TARGET_WAITKIND_STOPPED;
 	  status->value.sig = TARGET_SIGNAL_HUP;
@@ -746,130 +753,106 @@ m32r_wait (ptid_t ptid, struct target_waitstatus *status)
       last_pc_addr = 0xffffffff;
     }
 
-  /* Breakpoints are inserted only for "next" command */
-  if (!step_mode)
-    {
-      int ib_breakpoints;
-
-      if (use_ib_breakpoints)
-	ib_breakpoints = max_ib_breakpoints;
-      else
-	ib_breakpoints = 0;
-
-      /* Set back pc by 2 if m32r is stopped with dbt. */
-      buf[0] = SDI_READ_CPU_REG;
-      buf[1] = SDI_REG_BPC;
-      send_data (buf, 2);
-      recv_data (&val, 4);
-      pc_addr = ntohl (val) - 2;
-      for (i = ib_breakpoints; i < MAX_BREAKPOINTS; i++)
-	{
-	  if (pc_addr == bp_address[i])
-	    {
-	      buf[0] = SDI_WRITE_CPU_REG;
-	      buf[1] = SDI_REG_BPC;
-	      store_long_parameter (buf + 2, pc_addr);
-	      send_data (buf, 6);
-
-	      /* If there is a parallel instruction with +2 offset at pc
-	         address, we have to take care of it later. */
-	      if ((pc_addr & 0x2) != 0)
-		{
-		  if (TARGET_BYTE_ORDER == BFD_ENDIAN_BIG)
-		    {
-		      if ((bp_data[i][2] & 0x80) != 0)
-			{
-			  last_pc_addr = pc_addr;
-			  last_pc_addr_data[0] = bp_data[i][2];
-			  last_pc_addr_data[1] = bp_data[i][3];
-			}
-		    }
-		  else
-		    {
-		      if ((bp_data[i][1] & 0x80) != 0)
-			{
-			  last_pc_addr = pc_addr;
-			  last_pc_addr_data[0] = bp_data[i][1];
-			  last_pc_addr_data[1] = bp_data[i][0];
-			}
-		    }
-		}
-	      break;
-	    }
-	}
-
-      /* Remove ib breakpoints. */
-      for (i = 0; i < ib_breakpoints; i++)
-	{
-	  if (bp_address[i] != 0xffffffff)
-	    {
-	      buf[0] = SDI_WRITE_MEMORY;
-	      store_long_parameter (buf + 1, 0xffff8000 + 4 * i);
-	      store_long_parameter (buf + 5, 4);
-	      buf[9] = ib_bp_entry_disable[0];
-	      buf[10] = ib_bp_entry_disable[1];
-	      buf[11] = ib_bp_entry_disable[2];
-	      buf[12] = ib_bp_entry_disable[3];
-	      send_data (buf, 13);
-	    }
-	}
-      /* Remove dbt breakpoints. */
-      for (i = ib_breakpoints; i < MAX_BREAKPOINTS; i++)
-	{
-	  bp_addr = bp_address[i];
-	  if (bp_addr != 0xffffffff)
-	    {
-	      if (!mmu_on)
-		bp_addr &= 0x7fffffff;
-	      buf[0] = SDI_WRITE_MEMORY;
-	      store_long_parameter (buf + 1, bp_addr & 0xfffffffc);
-	      store_long_parameter (buf + 5, 4);
-	      buf[9] = bp_data[i][0];
-	      buf[10] = bp_data[i][1];
-	      buf[11] = bp_data[i][2];
-	      buf[12] = bp_data[i][3];
-	      send_data (buf, 13);
-	    }
-	}
-
-      /* Remove access breaks. */
-      hit_watchpoint_addr = 0;
-      for (i = 0; i < max_access_breaks; i++)
-	{
-	  if (ab_address[i] != 0x00000000)
-	    {
-	      buf[0] = SDI_READ_MEMORY;
-	      store_long_parameter (buf + 1, 0xffff8100 + 4 * i);
-	      store_long_parameter (buf + 5, 4);
-	      serial_write (sdi_desc, buf, 9);
-	      c = serial_readchar (sdi_desc, SDI_TIMEOUT);
-	      if (c != '-' && recv_data (buf, 4) != -1)
-		{
-		  if (TARGET_BYTE_ORDER == BFD_ENDIAN_BIG)
-		    {
-		      if ((buf[3] & 0x1) == 0x1)
-			hit_watchpoint_addr = ab_address[i];
-		    }
-		  else
-		    {
-		      if ((buf[0] & 0x1) == 0x1)
-			hit_watchpoint_addr = ab_address[i];
-		    }
-		}
-
-	      buf[0] = SDI_WRITE_MEMORY;
-	      store_long_parameter (buf + 1, 0xffff8100 + 4 * i);
-	      store_long_parameter (buf + 5, 4);
-	      store_long_parameter (buf + 9, 0x00000000);
-	      send_data (buf, 13);
-	    }
-	}
-
-      if (remote_debug)
-	fprintf_unfiltered (gdb_stdlog, "pc => 0x%lx\n", pc_addr);
-    }
+  if (use_ib_breakpoints)
+    ib_breakpoints = max_ib_breakpoints;
   else
-    last_pc_addr = 0xffffffff;
+    ib_breakpoints = 0;
+
+  /* Set back pc by 2 if m32r is stopped with dbt. */
+  last_pc_addr = 0xffffffff;
+  send_one_arg_cmd (SDI_READ_CPU_REG, SDI_REG_BPC);
+  pc_addr = recv_long_data () - 2;
+  for (i = ib_breakpoints; i < MAX_BREAKPOINTS; i++)
+    {
+      if (pc_addr == bp_address[i])
+	{
+	  send_two_arg_cmd (SDI_WRITE_CPU_REG, SDI_REG_BPC, pc_addr);
+
+	  /* If there is a parallel instruction with +2 offset at pc
+	     address, we have to take care of it later. */
+	  if ((pc_addr & 0x2) != 0)
+	    {
+	      if (TARGET_BYTE_ORDER == BFD_ENDIAN_BIG)
+		{
+		  if ((bp_data[i][2] & 0x80) != 0)
+		    {
+		      last_pc_addr = pc_addr;
+		      last_pc_addr_data[0] = bp_data[i][2];
+		      last_pc_addr_data[1] = bp_data[i][3];
+		    }
+		}
+	      else
+		{
+		  if ((bp_data[i][1] & 0x80) != 0)
+		    {
+		      last_pc_addr = pc_addr;
+		      last_pc_addr_data[0] = bp_data[i][1];
+		      last_pc_addr_data[1] = bp_data[i][0];
+		    }
+		}
+	    }
+	  break;
+	}
+    }
+
+  /* Remove ib breakpoints. */
+  for (i = 0; i < ib_breakpoints; i++)
+    {
+      if (bp_address[i] != 0xffffffff)
+	send_three_arg_cmd (SDI_WRITE_MEMORY, 0xffff8000 + 4 * i, 4,
+			    0x00000000);
+    }
+  /* Remove dbt breakpoints. */
+  for (i = ib_breakpoints; i < MAX_BREAKPOINTS; i++)
+    {
+      bp_addr = bp_address[i];
+      if (bp_addr != 0xffffffff)
+	{
+	  if (!mmu_on)
+	    bp_addr &= 0x7fffffff;
+	  buf[0] = SDI_READ_MEMORY;
+	  store_long_parameter (buf + 1, bp_addr & 0xfffffffc);
+	  store_long_parameter (buf + 5, 4);
+	  buf[9] = bp_data[i][0];
+	  buf[10] = bp_data[i][1];
+	  buf[11] = bp_data[i][2];
+	  buf[12] = bp_data[i][3];
+	  send_data (buf, 13);
+	}
+    }
+
+  /* Remove access breaks. */
+  hit_watchpoint_addr = 0;
+  for (i = 0; i < max_access_breaks; i++)
+    {
+      if (ab_address[i] != 0x00000000)
+	{
+	  buf[0] = SDI_READ_MEMORY;
+	  store_long_parameter (buf + 1, 0xffff8100 + 4 * i);
+	  store_long_parameter (buf + 5, 4);
+	  serial_write (sdi_desc, buf, 9);
+	  c = serial_readchar (sdi_desc, SDI_TIMEOUT);
+	  if (c != '-' && recv_data (buf, 4) != -1)
+	    {
+	      if (TARGET_BYTE_ORDER == BFD_ENDIAN_BIG)
+		{
+		  if ((buf[3] & 0x1) == 0x1)
+		    hit_watchpoint_addr = ab_address[i];
+		}
+	      else
+		{
+		  if ((buf[0] & 0x1) == 0x1)
+		    hit_watchpoint_addr = ab_address[i];
+		}
+	    }
+
+	  send_three_arg_cmd (SDI_WRITE_MEMORY, 0xffff8100 + 4 * i, 4,
+			      0x00000000);
+	}
+    }
+
+  if (remote_debug)
+    fprintf_unfiltered (gdb_stdlog, "pc => 0x%lx\n", pc_addr);
 
   return inferior_ptid;
 }
@@ -933,7 +916,6 @@ static void
 m32r_fetch_register (int regno)
 {
   unsigned long val, val2, regid;
-  unsigned char buf[2];
 
   if (regno == -1)
     m32r_fetch_registers ();
@@ -942,19 +924,13 @@ m32r_fetch_register (int regno)
       char buffer[MAX_REGISTER_SIZE];
 
       regid = get_reg_id (regno);
-      buf[0] = SDI_READ_CPU_REG;
-      buf[1] = regid;
-      send_data (buf, 2);
-      recv_data (&val, 4);
-      val = ntohl (val);
+      send_one_arg_cmd (SDI_READ_CPU_REG, regid);
+      val = recv_long_data ();
 
       if (regid == SDI_REG_PSW)
 	{
-	  buf[0] = SDI_READ_CPU_REG;
-	  buf[1] = SDI_REG_BBPSW;
-	  send_data (buf, 2);
-	  recv_data (&val2, 4);
-	  val2 = ntohl (val2);
+	  send_one_arg_cmd (SDI_READ_CPU_REG, SDI_REG_BBPSW);
+	  val2 = recv_long_data ();
 	  val = ((0x00c1 & val2) << 8) | ((0xc100 & val) >> 8);
 	}
 
@@ -965,7 +941,7 @@ m32r_fetch_register (int regno)
       /* We got the number the register holds, but gdb expects to see a
          value in the target byte ordering.  */
       store_unsigned_integer (buffer, 4, val);
-      supply_register (regno, buffer);
+      regcache_raw_supply (current_regcache, regno, buffer);
     }
   return;
 }
@@ -992,7 +968,6 @@ m32r_store_register (int regno)
 {
   int regid;
   ULONGEST regval, tmp;
-  unsigned char buf[6];
 
   if (regno == -1)
     m32r_store_registers ();
@@ -1005,36 +980,21 @@ m32r_store_register (int regno)
 	{
 	  unsigned long psw, bbpsw;
 
-	  buf[0] = SDI_READ_CPU_REG;
-	  buf[1] = SDI_REG_PSW;
-	  send_data (buf, 2);
-	  recv_data (&psw, 4);
-	  psw = ntohl (psw);
+	  send_one_arg_cmd (SDI_READ_CPU_REG, SDI_REG_PSW);
+	  psw = recv_long_data ();
 
-	  buf[0] = SDI_READ_CPU_REG;
-	  buf[1] = SDI_REG_BBPSW;
-	  send_data (buf, 2);
-	  recv_data (&bbpsw, 4);
-	  bbpsw = ntohl (bbpsw);
+	  send_one_arg_cmd (SDI_READ_CPU_REG, SDI_REG_BBPSW);
+	  bbpsw = recv_long_data ();
 
 	  tmp = (0x00c1 & psw) | ((0x00c1 & regval) << 8);
-	  buf[0] = SDI_WRITE_CPU_REG;
-	  buf[1] = SDI_REG_PSW;
-	  store_long_parameter (buf + 2, tmp);
-	  send_data (buf, 6);
+	  send_two_arg_cmd (SDI_WRITE_CPU_REG, SDI_REG_PSW, tmp);
 
 	  tmp = (0x0030 & bbpsw) | ((0xc100 & regval) >> 8);
-	  buf[0] = SDI_WRITE_CPU_REG;
-	  buf[1] = SDI_REG_BBPSW;
-	  store_long_parameter (buf + 2, tmp);
-	  send_data (buf, 6);
+	  send_two_arg_cmd (SDI_WRITE_CPU_REG, SDI_REG_BBPSW, tmp);
 	}
       else
 	{
-	  buf[0] = SDI_WRITE_CPU_REG;
-	  buf[1] = regid;
-	  store_long_parameter (buf + 2, regval);
-	  send_data (buf, 6);
+	  send_two_arg_cmd (SDI_WRITE_CPU_REG, regid, regval);
 	}
 
       if (remote_debug)
@@ -1319,7 +1279,7 @@ m32r_load (char *args, int from_tty)
 	  int n;
 
 	  section_address = bfd_section_lma (pbfd, section);
-	  section_size = bfd_get_section_size_before_reloc (section);
+	  section_size = bfd_get_section_size (section);
 
 	  if (!mmu_on)
 	    {
@@ -1422,13 +1382,10 @@ m32r_load (char *args, int from_tty)
 static void
 m32r_stop (void)
 {
-  unsigned char buf[1];
-
   if (remote_debug)
     fprintf_unfiltered (gdb_stdlog, "m32r_stop()\n");
 
-  buf[0] = SDI_STOP_CPU;
-  send_data (buf, 1);
+  send_cmd (SDI_STOP_CPU);
 
   return;
 }
@@ -1493,29 +1450,33 @@ m32r_remove_watchpoint (CORE_ADDR addr, int len, int type)
   return 0;
 }
 
-CORE_ADDR
-m32r_stopped_data_address (void)
+int
+m32r_stopped_data_address (struct target_ops *target, CORE_ADDR *addr_p)
 {
-  return hit_watchpoint_addr;
+  int rc = 0;
+  if (hit_watchpoint_addr != 0x00000000)
+    {
+      *addr_p = hit_watchpoint_addr;
+      rc = 1;
+    }
+  return rc;
 }
 
 int
 m32r_stopped_by_watchpoint (void)
 {
-  return (hit_watchpoint_addr != 0x00000000);
+  CORE_ADDR addr;
+  return m32r_stopped_data_address (&current_target, &addr);
 }
 
 
 static void
 sdireset_command (char *args, int from_tty)
 {
-  unsigned char buf[1];
-
   if (remote_debug)
     fprintf_unfiltered (gdb_stdlog, "m32r_sdireset()\n");
 
-  buf[0] = SDI_OPEN;
-  send_data (buf, 1);
+  send_cmd (SDI_OPEN);
 
   inferior_ptid = null_ptid;
 }
@@ -1533,17 +1494,16 @@ sdistatus_command (char *args, int from_tty)
   if (!sdi_desc)
     return;
 
-  buf[0] = SDI_STATUS;
-  send_data (buf, 1);
+  send_cmd (SDI_STATUS);
   for (i = 0; i < 4096; i++)
     {
       c = serial_readchar (sdi_desc, SDI_TIMEOUT);
       if (c < 0)
-        return;
+	return;
       buf[i] = c;
       if (c == 0)
-        break;
-    }    
+	break;
+    }
 
   printf_filtered ("%s", buf);
 }
@@ -1615,7 +1575,7 @@ init_m32r_ops (void)
   m32r_ops.to_fetch_registers = m32r_fetch_register;
   m32r_ops.to_store_registers = m32r_store_register;
   m32r_ops.to_prepare_to_store = m32r_prepare_to_store;
-  m32r_ops.to_xfer_memory = m32r_xfer_memory;
+  m32r_ops.deprecated_xfer_memory = m32r_xfer_memory;
   m32r_ops.to_files_info = m32r_files_info;
   m32r_ops.to_insert_breakpoint = m32r_insert_breakpoint;
   m32r_ops.to_remove_breakpoint = m32r_remove_breakpoint;

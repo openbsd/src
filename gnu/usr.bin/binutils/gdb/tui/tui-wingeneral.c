@@ -94,10 +94,14 @@ box_win (struct tui_gen_win_info * win_info, int highlight_flag)
         attrs = tui_border_attrs;
 
       wattron (win, attrs);
+#ifdef HAVE_WBORDER
       wborder (win, tui_border_vline, tui_border_vline,
                tui_border_hline, tui_border_hline,
                tui_border_ulcorner, tui_border_urcorner,
                tui_border_llcorner, tui_border_lrcorner);
+#else
+      box (win, tui_border_vline, tui_border_hline);
+#endif
       if (win_info->title)
         mvwaddstr (win, 0, 3, win_info->title);
       wattroff (win, attrs);

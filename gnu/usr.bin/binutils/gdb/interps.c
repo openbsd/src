@@ -268,17 +268,15 @@ void
 current_interp_command_loop (void)
 {
   /* Somewhat messy.  For the moment prop up all the old ways of
-     selecting the command loop.  `command_loop_hook' should be
-     deprecated.  */
-  if (command_loop_hook != NULL)
-    command_loop_hook ();
+     selecting the command loop.  `deprecated_command_loop_hook'
+     should be deprecated.  */
+  if (deprecated_command_loop_hook != NULL)
+    deprecated_command_loop_hook ();
   else if (current_interpreter != NULL
 	   && current_interpreter->procs->command_loop_proc != NULL)
     current_interpreter->procs->command_loop_proc (current_interpreter->data);
-  else if (event_loop_p)
-    cli_command_loop ();
   else
-    command_loop ();
+    cli_command_loop ();
 }
 
 int
@@ -322,27 +320,27 @@ interp_exec (struct interp *interp, const char *command_str)
 void
 clear_interpreter_hooks (void)
 {
-  init_ui_hook = 0;
-  print_frame_info_listing_hook = 0;
+  deprecated_init_ui_hook = 0;
+  deprecated_print_frame_info_listing_hook = 0;
   /*print_frame_more_info_hook = 0; */
-  query_hook = 0;
-  warning_hook = 0;
-  create_breakpoint_hook = 0;
-  delete_breakpoint_hook = 0;
-  modify_breakpoint_hook = 0;
-  interactive_hook = 0;
-  registers_changed_hook = 0;
-  readline_begin_hook = 0;
-  readline_hook = 0;
-  readline_end_hook = 0;
-  register_changed_hook = 0;
-  memory_changed_hook = 0;
-  context_hook = 0;
-  target_wait_hook = 0;
-  call_command_hook = 0;
-  error_hook = 0;
-  error_begin_hook = 0;
-  command_loop_hook = 0;
+  deprecated_query_hook = 0;
+  deprecated_warning_hook = 0;
+  deprecated_create_breakpoint_hook = 0;
+  deprecated_delete_breakpoint_hook = 0;
+  deprecated_modify_breakpoint_hook = 0;
+  deprecated_interactive_hook = 0;
+  deprecated_registers_changed_hook = 0;
+  deprecated_readline_begin_hook = 0;
+  deprecated_readline_hook = 0;
+  deprecated_readline_end_hook = 0;
+  deprecated_register_changed_hook = 0;
+  deprecated_memory_changed_hook = 0;
+  deprecated_context_hook = 0;
+  deprecated_target_wait_hook = 0;
+  deprecated_call_command_hook = 0;
+  deprecated_error_hook = 0;
+  deprecated_error_begin_hook = 0;
+  deprecated_command_loop_hook = 0;
   clear_gdb_event_hooks ();
 }
 

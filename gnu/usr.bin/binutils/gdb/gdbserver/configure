@@ -1582,6 +1582,28 @@ rm -f conftest*
   else
     srv_libs="$srv_cv_thread_db"
   fi
+  old_LDFLAGS="$LDFLAGS"
+  LDFLAGS="$LDFLAGS -rdynamic"
+  cat > conftest.$ac_ext <<EOF
+#line 1589 "configure"
+#include "confdefs.h"
+
+int main() {
+
+; return 0; }
+EOF
+if { (eval echo configure:1596: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+  rm -rf conftest*
+  RDYNAMIC=-rdynamic
+else
+  echo "configure: failed program was:" >&5
+  cat conftest.$ac_ext >&5
+  rm -rf conftest*
+  RDYNAMIC=
+fi
+rm -f conftest*
+  
+  LDFLAGS="$old_LDFLAGS"
 fi
 
 if test "$srv_linux_thread_db" = "yes"; then
@@ -1749,6 +1771,7 @@ s%@INSTALL_PROGRAM@%$INSTALL_PROGRAM%g
 s%@INSTALL_SCRIPT@%$INSTALL_SCRIPT%g
 s%@INSTALL_DATA@%$INSTALL_DATA%g
 s%@CPP@%$CPP%g
+s%@RDYNAMIC@%$RDYNAMIC%g
 s%@GDBSERVER_DEPFILES@%$GDBSERVER_DEPFILES%g
 s%@GDBSERVER_LIBS@%$GDBSERVER_LIBS%g
 s%@USE_THREAD_DB@%$USE_THREAD_DB%g
