@@ -62,23 +62,15 @@
  *	@(#)in.c	8.2 (Berkeley) 11/15/93
  */
 
-#if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__NetBSD__)
-#include "opt_inet.h"
-#endif
-
 #include <sys/param.h>
-#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
 #include <sys/ioctl.h>
-#endif
 #include <sys/errno.h>
 #include <sys/malloc.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/sockio.h>
 #include <sys/systm.h>
-#if !defined(__bsdi__) && !(defined(__FreeBSD__) && __FreeBSD__ < 3)
 #include <sys/proc.h>
-#endif
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
@@ -87,18 +79,16 @@
 #include <net/if_types.h>
 #include <net/route.h>
 #include "gif.h"
+
 #if NGIF > 0
 #include <net/if_gif.h>
 #endif
+
 #include <net/if_dl.h>
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>
-#ifdef __NetBSD__
-#include <net/if_ether.h>
-#else
 #include <netinet/if_ether.h>
-#endif
 
 #include <netinet6/nd6.h>
 #include <netinet6/ip6.h>
@@ -108,10 +98,6 @@
 #include <netinet6/in6_ifattach.h>
 
 #include <net/net_osdep.h>
-
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-MALLOC_DEFINE(M_IPMADDR, "in6_multi", "internet multicast address");
-#endif
 
 /*
  * Definitions of some costant IP6 addresses.
@@ -131,17 +117,9 @@ const struct in6_addr in6mask64 = IN6MASK64;
 const struct in6_addr in6mask96 = IN6MASK96;
 const struct in6_addr in6mask128 = IN6MASK128;
 
-#if !defined(__bsdi__) && !(defined(__FreeBSD__) && __FreeBSD__ < 3)
 static int in6_lifaddr_ioctl __P((struct socket *, u_long, caddr_t,
 	struct ifnet *, struct proc *));
-#else
-static int in6_lifaddr_ioctl __P((struct socket *, u_long, caddr_t,
-	struct ifnet *));
-#endif
 
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-struct in6_multihead in6_multihead;	/* XXX BSS initialization */
-#else
 /*
  * This structure is used to keep track of in6_multi chains which belong to
  * deleted interface addresses.
@@ -153,7 +131,6 @@ struct multi6_kludge {
 	struct ifnet *mk_ifp;
 	struct in6_multihead mk_head;
 };
-#endif
 
 /*
  * Determine whether an IP6 address is in a reserved set of addresses
@@ -179,27 +156,7 @@ in6_canforward(src, dst)
 static int
 in6_is_ifloop_auto(struct ifaddr *ifa)
 {
-#ifdef __OpenBSD__
 	return 0;
-#else
-#define SIN6(s) ((struct sockaddr_in6 *)s)
-	/*
-	 * If RTF_CLONING is unset, or (IFF_LOOPBACK | IFF_POINTOPOINT),
-	 * or netmask is all0 or all1, then cloning will not happen,
-	 * then we can't rely on its loopback entry generation.
-	 */
-	if ((ifa->ifa_flags & RTF_CLONING) == 0 ||
-	    (ifa->ifa_ifp->if_flags & (IFF_LOOPBACK | IFF_POINTOPOINT)) ||
-	    (SIN6(ifa->ifa_netmask)->sin6_len == sizeof(struct sockaddr_in6)
-	     &&
-	     IN6_ARE_ADDR_EQUAL(&SIN6(ifa->ifa_netmask)->sin6_addr,
-				&in6mask128)) ||
-	    ((struct sockaddr_in6 *)ifa->ifa_netmask)->sin6_len == 0)
-		return 0;
-	else
-		return 1;
-#undef SIN6
-#endif
 }
 
 /*
@@ -255,11 +212,7 @@ in6_ifaddloop(struct ifaddr *ifa)
 		struct rtentry *rt;
 
 		/* If there is no loopback entry, allocate one. */
-		rt = rtalloc1(ifa->ifa_addr, 0
-#ifdef __FreeBSD__
-			      , 0
-#endif /* __FreeBSD__ */
-			      );
+		rt = rtalloc1(ifa->ifa_addr, 0);
 		if (rt == 0 || (rt->rt_ifp->if_flags & IFF_LOOPBACK) == 0)
 			in6_ifloop_request(RTM_ADD, ifa);
 		if (rt)
@@ -388,11 +341,7 @@ in6_ifindex2scopeid(idx)
 		return -1;
 	ifp = ifindex2ifnet[idx];
 
-#if defined(__bsdi__) || (defined(__FreeBSD__) && __FreeBSD__ < 3)
-	for (ifa = ifp->if_addrlist; ifa; ifa = ifa->ifa_next)
-#else
 	for (ifa = ifp->if_addrlist.tqh_first; ifa; ifa = ifa->ifa_list.tqe_next)
-#endif
 	{
 		if (ifa->ifa_addr->sa_family != AF_INET6)
 			continue;
@@ -444,42 +393,24 @@ int	in6_interfaces;		/* number of external internet interfaces */
 #define ia62ifa(ia6)	((struct ifaddr *)(ia6))
 
 int
-#if !defined(__bsdi__) && !(defined(__FreeBSD__) && __FreeBSD__ < 3)
 in6_control(so, cmd, data, ifp, p)
 	struct	socket *so;
 	u_long cmd;
 	caddr_t	data;
 	struct ifnet *ifp;
 	struct proc *p;
-#else
-in6_control(so, cmd, data, ifp)
-	struct	socket *so;
-	u_long cmd;
-	caddr_t	data;
-	struct ifnet *ifp;
-#endif
 {
 	struct	in6_ifreq *ifr = (struct in6_ifreq *)data;
-#if defined(__bsdi__) || (defined(__FreeBSD__) && __FreeBSD__ < 3)
-	struct  ifaddr *ifa;
-#endif
 	struct	in6_ifaddr *ia, *oia;
 	struct	in6_aliasreq *ifra = (struct in6_aliasreq *)data;
 	struct	sockaddr_in6 oldaddr, net;
 	int	error = 0, hostIsNew, prefixIsNew;
-#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
 	time_t time_second = (time_t)time.tv_sec;
-#endif
 	int privileged;
 
 	privileged = 0;
-#if defined(__NetBSD__) || (defined(__FreeBSD__) && __FreeBSD__ >= 3)
-	if (p && !suser(p->p_ucred, &p->p_acflag))
-		privileged++;
-#else
 	if ((so->so_state & SS_PRIV) != 0)
 		privileged++;
-#endif
 
 	/*
 	 * xxx should prevent processes for link-local addresses?
@@ -540,11 +471,7 @@ in6_control(so, cmd, data, ifp)
 			return(EPERM);
 		/*fall through*/
 	case SIOCGLIFADDR:
-#if !defined(__bsdi__) && !(defined(__FreeBSD__) && __FreeBSD__ < 3)
 		return in6_lifaddr_ioctl(so, cmd, data, ifp, p);
-#else
-		return in6_lifaddr_ioctl(so, cmd, data, ifp);
-#endif
 	}
 
 	/*
@@ -612,17 +539,10 @@ in6_control(so, cmd, data, ifp)
 				oia->ia_next = ia;
 			} else
 				in6_ifaddr = ia;
-#if defined(__bsdi__) || (defined(__FreeBSD__) && __FreeBSD__ < 3)
-			if ((ifa = ifp->if_addrlist) != NULL) {
-				for ( ; ifa->ifa_next; ifa = ifa->ifa_next)
-					continue;
-				ifa->ifa_next = ia62ifa(ia);
-			} else
-				ifp->if_addrlist = ia62ifa(ia);
-#else
+
 			TAILQ_INSERT_TAIL(&ifp->if_addrlist,
 				(struct ifaddr *)ia, ifa_list);
-#endif
+
 			if ((ifp->if_flags & IFF_LOOPBACK) == 0)
 				in6_interfaces++;	/*XXX*/
 		}
@@ -950,21 +870,7 @@ in6_control(so, cmd, data, ifp)
 		if (nd6_proxyall)
 			in6_ifremproxy(ia);
 
-#if defined(__bsdi__) || (defined(__FreeBSD__) && __FreeBSD__ < 3)
-		if ((ifa = ifp->if_addrlist) == ia62ifa(ia))
-			ifp->if_addrlist = ifa->ifa_next;
-		else {
-			while (ifa->ifa_next &&
-			       (ifa->ifa_next != ia62ifa(ia)))
-				ifa = ifa->ifa_next;
-			if (ifa->ifa_next)
-				ifa->ifa_next = ia62ifa(ia)->ifa_next;
-			else
-				printf("Couldn't unlink in6_ifaddr from ifp\n");
-		}
-#else
 		TAILQ_REMOVE(&ifp->if_addrlist, (struct ifaddr *)ia, ifa_list);
-#endif
 		oia = ia;
 		if (oia == (ia = in6_ifaddr))
 			in6_ifaddr = ia->ia_next;
@@ -983,14 +889,13 @@ in6_control(so, cmd, data, ifp)
 				in6_mask2len(&oia->ia_prefixmask.sin6_addr);
 			in6_prefix_remove_ifid(iilen, oia);
 		}
-#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
+
 		if (oia->ia6_multiaddrs.lh_first == NULL) {
 			IFAFREE(&oia->ia_ifa);
 			break;
 		}
 		else
 			in6_savemkludge(oia);
-#endif
 
 		IFAFREE((&oia->ia_ifa));
 		break;
@@ -1027,20 +932,12 @@ in6_control(so, cmd, data, ifp)
  * address encoding scheme. (see figure on page 8)
  */
 static int
-#if !defined(__bsdi__) && !(defined(__FreeBSD__) && __FreeBSD__ < 3)
 in6_lifaddr_ioctl(so, cmd, data, ifp, p)
 	struct socket *so;
 	u_long cmd;
 	caddr_t	data;
 	struct ifnet *ifp;
 	struct proc *p;
-#else
-in6_lifaddr_ioctl(so, cmd, data, ifp)
-	struct socket *so;
-	u_long cmd;
-	caddr_t	data;
-	struct ifnet *ifp;
-#endif
 {
 	struct if_laddrreq *iflr = (struct if_laddrreq *)data;
 	struct ifaddr *ifa;
@@ -1149,11 +1046,8 @@ in6_lifaddr_ioctl(so, cmd, data, ifp)
 		in6_len2mask(&ifra.ifra_prefixmask.sin6_addr, prefixlen);
 
 		ifra.ifra_flags = iflr->flags & ~IFLR_PREFIX;
-#if !defined(__bsdi__) && !(defined(__FreeBSD__) && __FreeBSD__ < 3)
-		return in6_control(so, SIOCAIFADDR_IN6, (caddr_t)&ifra, ifp, p);
-#else
-		return in6_control(so, SIOCAIFADDR_IN6, (caddr_t)&ifra, ifp);
-#endif
+		return in6_control(so, SIOCAIFADDR_IN6, (caddr_t)&ifra,
+				   ifp, p);
 	    }
 	case SIOCGLIFADDR:
 	case SIOCDLIFADDR:
@@ -1194,13 +1088,9 @@ in6_lifaddr_ioctl(so, cmd, data, ifp)
 			}
 		}
 
-#if defined(__bsdi__) || (defined(__FreeBSD__) && __FreeBSD__ < 3)
-		for (ifa = ifp->if_addrlist; ifa; ifa = ifa->ifa_next)
-#else
 		for (ifa = ifp->if_addrlist.tqh_first;
 		     ifa;
 		     ifa = ifa->ifa_list.tqe_next)
-#endif
 		{
 			if (ifa->ifa_addr->sa_family != AF_INET6)
 				continue;
@@ -1252,13 +1142,9 @@ in6_lifaddr_ioctl(so, cmd, data, ifp)
 				ia->ia_prefixmask.sin6_len);
 
 			ifra.ifra_flags = ia->ia6_flags;
-#if !defined(__bsdi__) && !(defined(__FreeBSD__) && __FreeBSD__ < 3)
+
 			return in6_control(so, SIOCDIFADDR_IN6, (caddr_t)&ifra,
 				ifp, p);
-#else
-			return in6_control(so, SIOCDIFADDR_IN6, (caddr_t)&ifra,
-				ifp);
-#endif
 		}
 	    }
 	}
@@ -1355,15 +1241,12 @@ in6_ifinit(ifp, ia, sin6, scrub)
 	/* Add ownaddr as loopback rtentry, if necessary(ex. on p2p link). */
 	in6_ifaddloop(&(ia->ia_ifa));
 
-#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
 	if (ifp->if_flags & IFF_MULTICAST)
 		in6_restoremkludge(ia, ifp);
-#endif
 
 	return(error);
 }
 
-#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
 /*
  * Multicast address kludge:
  * If there were any multicast addresses attached to this interface address,
@@ -1449,11 +1332,7 @@ in6_addmulti(maddr6, ifp, errorp)
 	struct	in6_ifaddr *ia;
 	struct	in6_ifreq ifr;
 	struct	in6_multi *in6m;
-#ifdef __NetBSD__
-	int	s = splsoftnet();
-#else
 	int	s = splnet();
-#endif
 
 	*errorp = 0;
 	/*
@@ -1528,11 +1407,7 @@ in6_delmulti(in6m)
 	struct in6_multi *in6m;
 {
 	struct	in6_ifreq ifr;
-#ifdef __NetBSD__
-	int	s = splsoftnet();
-#else
 	int	s = splnet();
-#endif
 
 	if (--in6m->in6m_refcount == 0) {
 		/*
@@ -1561,95 +1436,6 @@ in6_delmulti(in6m)
 	}
 	splx(s);
 }
-#else /* not FreeBSD3 */
-/*
- * Add an address to the list of IP6 multicast addresses for a 
- * given interface.
- */
-struct	in6_multi *
-in6_addmulti(maddr6, ifp, errorp)
-	register struct in6_addr *maddr6;
-	register struct ifnet *ifp;
-	int *errorp;
-{
-	struct	in6_multi *in6m;
-	struct sockaddr_in6 sin6;
-	struct ifmultiaddr *ifma;
-	int	s = splnet();
-
-	*errorp = 0;
-
-	/*
-	 * Call generic routine to add membership or increment
-	 * refcount.  It wants addresses in the form of a sockaddr,
-	 * so we build one here (being careful to zero the unused bytes).
-	 */
-	bzero(&sin6, sizeof sin6);
-	sin6.sin6_family = AF_INET6;
-	sin6.sin6_len = sizeof sin6;
-	sin6.sin6_addr = *maddr6;
-	*errorp = if_addmulti(ifp, (struct sockaddr *)&sin6, &ifma);
-	if (*errorp) {
-		splx(s);
-		return 0;
-	}
-
-	/*
-	 * If ifma->ifma_protospec is null, then if_addmulti() created
-	 * a new record.  Otherwise, we are done.
-	 */
-	if (ifma->ifma_protospec != 0)
-		return ifma->ifma_protospec;
-
-	/* XXX - if_addmulti uses M_WAITOK.  Can this really be called
-	   at interrupt time?  If so, need to fix if_addmulti. XXX */
-	in6m = (struct in6_multi *)malloc(sizeof(*in6m), M_IPMADDR, M_NOWAIT);
-	if (in6m == NULL) {
-		splx(s);
-		return (NULL);
-	}
-
-	bzero(in6m, sizeof *in6m);
-	in6m->in6m_addr = *maddr6;
-	in6m->in6m_ifp = ifp;
-	in6m->in6m_ifma = ifma;
-	ifma->ifma_protospec = in6m;
-	LIST_INSERT_HEAD(&in6_multihead, in6m, in6m_entry);
-
-	/*
-	 * Let MLD6 know that we have joined a new IP6 multicast
-	 * group.
-	 */
-	mld6_start_listening(in6m);
-	splx(s);
-	return(in6m);
-}
-
-/*
- * Delete a multicast address record.
- */
-void
-in6_delmulti(in6m)
-	struct in6_multi *in6m;
-{
-	struct ifmultiaddr *ifma = in6m->in6m_ifma;
-	int	s = splnet();
-
-	if (ifma->ifma_refcount == 1) {
-		/*
-		 * No remaining claims to this record; let MLD6 know
-		 * that we are leaving the multicast group.
-		 */
-		mld6_stop_listening(in6m);
-		ifma->ifma_protospec = 0;
-		LIST_REMOVE(in6m, in6m_entry);
-		free(in6m, M_IPMADDR);
-	}
-	/* XXX - should be separate API for when we have an ifma? */
-	if_delmulti(ifma->ifma_ifp, ifma->ifma_addr);
-	splx(s);
-}
-#endif /* not FreeBSD3 */
 
 /*
  * Find an IPv6 interface link-local address specific to an interface.
@@ -1660,11 +1446,9 @@ in6ifa_ifpforlinklocal(ifp)
 {
 	register struct ifaddr *ifa;
 
-#if defined(__bsdi__) || (defined(__FreeBSD__) && __FreeBSD__ < 3)
-	for (ifa = ifp->if_addrlist; ifa; ifa = ifa->ifa_next)
-#else
-	for (ifa = ifp->if_addrlist.tqh_first; ifa; ifa = ifa->ifa_list.tqe_next)
-#endif
+	for (ifa = ifp->if_addrlist.tqh_first;
+	     ifa;
+	     ifa = ifa->ifa_list.tqe_next)
 	{
 		if (ifa->ifa_addr == NULL)
 			continue;	/* just for safety */
@@ -1688,11 +1472,9 @@ in6ifa_ifpwithaddr(ifp, addr)
 {
 	register struct ifaddr *ifa;
 
-#if defined(__bsdi__) || (defined(__FreeBSD__) && __FreeBSD__ < 3)
-	for (ifa = ifp->if_addrlist; ifa; ifa = ifa->ifa_next)
-#else
-	for (ifa = ifp->if_addrlist.tqh_first; ifa; ifa = ifa->ifa_list.tqe_next)
-#endif
+	for (ifa = ifp->if_addrlist.tqh_first;
+	     ifa;
+	     ifa = ifa->ifa_list.tqe_next)
 	{
 		if (ifa->ifa_addr == NULL)
 			continue;	/* just for safety */
@@ -1932,21 +1714,20 @@ in6_ifawithscope(ifp, dst)
 	 * If two or more, return one which matches the dst longest.
 	 * If none, return one of global addresses assigned other ifs.
 	 */
-#if defined(__bsdi__) || (defined(__FreeBSD__) && __FreeBSD__ < 3)
-	for (ifa = ifp->if_addrlist; ifa; ifa = ifa->ifa_next)
-#else
-	for (ifa = ifp->if_addrlist.tqh_first; ifa; ifa = ifa->ifa_list.tqe_next)
-#endif
+	for (ifa = ifp->if_addrlist.tqh_first;
+	     ifa;
+	     ifa = ifa->ifa_list.tqe_next)
 	{
 		if (ifa->ifa_addr->sa_family != AF_INET6)
 			continue;
 		if (((struct in6_ifaddr *)ifa)->ia6_flags & IN6_IFF_ANYCAST)
-			continue; /* XXX: is there any case to allow anycast? */
+		        continue; /* XXX: is there any case to allow anycast?*/
 		if (((struct in6_ifaddr *)ifa)->ia6_flags & IN6_IFF_NOTREADY)
 			continue; /* don't use this interface */
 		if (((struct in6_ifaddr *)ifa)->ia6_flags & IN6_IFF_DETACHED)
 			continue;
-		if (((struct in6_ifaddr *)ifa)->ia6_flags & IN6_IFF_DEPRECATED) {
+		if (((struct in6_ifaddr *)ifa)->ia6_flags &
+		    IN6_IFF_DEPRECATED) {
 			if (ip6_use_deprecated)
 				dep[0] = (struct in6_ifaddr *)ifa;
 			continue;
@@ -2022,21 +1803,20 @@ in6_ifawithifp(ifp, dst)
 	 * If two or more, return one which matches the dst longest.
 	 * If none, return one of global addresses assigned other ifs.
 	 */
-#if defined(__bsdi__) || (defined(__FreeBSD__) && __FreeBSD__ < 3)
-	for (ifa = ifp->if_addrlist; ifa; ifa = ifa->ifa_next)
-#else
-	for (ifa = ifp->if_addrlist.tqh_first; ifa; ifa = ifa->ifa_list.tqe_next)
-#endif
+	for (ifa = ifp->if_addrlist.tqh_first;
+	     ifa;
+	     ifa = ifa->ifa_list.tqe_next)
 	{
 		if (ifa->ifa_addr->sa_family != AF_INET6)
 			continue;
 		if (((struct in6_ifaddr *)ifa)->ia6_flags & IN6_IFF_ANYCAST)
-			continue; /* XXX: is there any case to allow anycast? */
+			continue; /* XXX: is there any case to allow anycast?*/
 		if (((struct in6_ifaddr *)ifa)->ia6_flags & IN6_IFF_NOTREADY)
 			continue; /* don't use this interface */
 		if (((struct in6_ifaddr *)ifa)->ia6_flags & IN6_IFF_DETACHED)
 			continue;
-		if (((struct in6_ifaddr *)ifa)->ia6_flags & IN6_IFF_DEPRECATED) {
+		if (((struct in6_ifaddr *)ifa)->ia6_flags &
+		    IN6_IFF_DEPRECATED) {
 			if (ip6_use_deprecated)
 				dep[0] = (struct in6_ifaddr *)ifa;
 			continue;
@@ -2061,21 +1841,20 @@ in6_ifawithifp(ifp, dst)
 	if (besta)
 		return(besta);
 
-#if defined(__bsdi__) || (defined(__FreeBSD__) && __FreeBSD__ < 3)
-	for (ifa = ifp->if_addrlist; ifa; ifa = ifa->ifa_next)
-#else
-	for (ifa = ifp->if_addrlist.tqh_first; ifa; ifa = ifa->ifa_list.tqe_next)
-#endif
+	for (ifa = ifp->if_addrlist.tqh_first;
+	     ifa;
+	     ifa = ifa->ifa_list.tqe_next)
 	{
 		if (ifa->ifa_addr->sa_family != AF_INET6)
 			continue;
 		if (((struct in6_ifaddr *)ifa)->ia6_flags & IN6_IFF_ANYCAST)
-			continue; /* XXX: is there any case to allow anycast? */
+			continue; /* XXX: is there any case to allow anycast?*/
 		if (((struct in6_ifaddr *)ifa)->ia6_flags & IN6_IFF_NOTREADY)
 			continue; /* don't use this interface */
 		if (((struct in6_ifaddr *)ifa)->ia6_flags & IN6_IFF_DETACHED)
 			continue;
-		if (((struct in6_ifaddr *)ifa)->ia6_flags & IN6_IFF_DEPRECATED) {
+		if (((struct in6_ifaddr *)ifa)->ia6_flags &
+		    IN6_IFF_DEPRECATED) {
 			if (ip6_use_deprecated)
 				dep[1] = (struct in6_ifaddr *)ifa;
 			continue;
@@ -2104,22 +1883,16 @@ in6_if_up(ifp)
 	struct in6_ifaddr *ia;
 	struct sockaddr_dl *sdl;
 	int type;
-#ifdef __bsdi__
-	u_char ea[ETHER_ADDR_LEN];
-#else
 	struct ether_addr ea;
-#endif
 	int off;
 	int dad_delay;		/* delay ticks before DAD output */
 
 	bzero(&ea, sizeof(ea));
 	sdl = NULL;
 
-#if defined(__bsdi__) || (defined(__FreeBSD__) && __FreeBSD__ < 3)
-	for (ifa = ifp->if_addrlist; ifa; ifa = ifa->ifa_next)
-#else
-	for (ifa = ifp->if_addrlist.tqh_first; ifa; ifa = ifa->ifa_list.tqe_next)
-#endif
+	for (ifa = ifp->if_addrlist.tqh_first;
+	     ifa;
+	     ifa = ifa->ifa_list.tqe_next)
 	{
 		if (ifa->ifa_addr->sa_family == AF_INET6
 		 && IN6_IS_ADDR_LINKLOCAL(&((struct sockaddr_in6 *)ifa->ifa_addr)->sin6_addr)) {
@@ -2164,11 +1937,9 @@ in6_if_up(ifp)
 
 dad:
 	dad_delay = 0;
-#if defined(__bsdi__) || (defined(__FreeBSD__) && __FreeBSD__ < 3)
-	for (ifa = ifp->if_addrlist; ifa; ifa = ifa->ifa_next)
-#else
-	for (ifa = ifp->if_addrlist.tqh_first; ifa; ifa = ifa->ifa_list.tqe_next)
-#endif
+	for (ifa = ifp->if_addrlist.tqh_first;
+	     ifa;
+	     ifa = ifa->ifa_list.tqe_next)
 	{
 		if (ifa->ifa_addr->sa_family != AF_INET6)
 			continue;
@@ -2188,11 +1959,7 @@ in6_setmaxmtu()
 	unsigned long maxmtu = 0;
 	struct ifnet *ifp;
 
-#if defined(__bsdi__) || (defined(__FreeBSD__) && __FreeBSD__ < 3)
-	for (ifp = ifnet; ifp; ifp = ifp->if_next)
-#else
 	for (ifp = TAILQ_FIRST(&ifnet); ifp; ifp = TAILQ_NEXT(ifp, if_list))
-#endif
 	{
 		if ((ifp->if_flags & IFF_LOOPBACK) == 0 &&
 		    nd_ifinfo[ifp->if_index].linkmtu > maxmtu)
