@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.50 2002/06/04 00:09:08 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.51 2002/06/07 21:57:57 drahn Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -525,8 +525,10 @@ mpc_print_pci_stat();
 #ifdef DDB
 		/* set up registers */
 		db_save_regs(frame);
-#endif
 		db_find_sym_and_offset(frame->srr0, &name, &offset);
+#else
+		name = NULL;
+#endif
 		if (!name) {
 			name = "0";
 			offset = frame->srr0;
