@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.83 2002/09/10 22:25:46 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.84 2002/09/10 22:37:46 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -48,6 +48,8 @@
 
 #include <machine/cpufunc.h>
 
+#include <dev/rndvar.h>
+
 #ifdef PMAPDEBUG
 #define	DPRINTF(l,s)	do {		\
 	if ((pmapdebug & (l)) == (l))	\
@@ -94,7 +96,7 @@ int		pmap_hptsize = 256;	/* patchable */
 #endif
 
 struct pmap	kernel_pmap_store;
-int		pmap_sid_counter, hppa_sid_max = HPPA_SID_MAX;
+int		hppa_sid_max = HPPA_SID_MAX;
 boolean_t	pmap_initialized = FALSE;
 struct pool	pmap_pmap_pool;
 struct pool	pmap_pv_pool;
@@ -658,11 +660,9 @@ pmap_create()
 	pmap->pm_obj.uo_npages = 0;
 	pmap->pm_obj.uo_refs = 1;
 
-	if (pmap_sid_counter >= hppa_sid_max) {
-		/* collect some */
-		panic("pmap_create: outer space");
-	} else
-		space = ++pmap_sid_counter;
+	do
+		space = 1 + (arc4random() % hppa_sid_max);
+	while (pmap_sdir_get(space));
 
 	if ((pmap->pm_pdir_pg = pmap_pagealloc(NULL, 0)) == NULL)
 		panic("pmap_create: no pages");
