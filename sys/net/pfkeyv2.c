@@ -921,7 +921,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	bzero(&ii, sizeof(struct ipsecinit));
 
 	newsa->tdb_satype = ((struct sadb_msg *)headers[0])->sadb_msg_satype;
-	if ((rval == pfkeyv2_get_proto_alg(newsa->tdb_satype, 
+	if ((rval = pfkeyv2_get_proto_alg(newsa->tdb_satype, 
 					   &newsa->tdb_sproto, &alg)))
 	  goto splxret;
 
