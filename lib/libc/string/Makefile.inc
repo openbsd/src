@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.9 1999/11/09 11:20:41 art Exp $
+#	$OpenBSD: Makefile.inc,v 1.10 2001/09/05 16:27:01 mickey Exp $
 
 # string sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/string ${LIBCSRCDIR}/string
@@ -26,6 +26,11 @@ memmove.o: bcopy.c
 	@${LD} -x -r ${.TARGET}
 	@mv a.out ${.TARGET}
 
+memmove.go: bcopy.c
+	${CC} -g -DMEMMOVE ${CFLAGS} ${CPPFLAGS} -c ${.ALLSRC} -o ${.TARGET}
+	@${LD} -x -r ${.TARGET}
+	@mv a.out ${.TARGET}
+
 memmove.po: bcopy.c
 	${CC} -DMEMMOVE ${CFLAGS} ${CPPFLAGS} -c -p ${.ALLSRC} -o ${.TARGET}
 	@${LD} -X -r ${.TARGET}
@@ -44,6 +49,11 @@ memmove.so: bcopy.c
 OBJS+=	memcpy.o
 memcpy.o: bcopy.c
 	${CC} -DMEMCOPY ${CFLAGS} ${CPPFLAGS} -c ${.ALLSRC} -o ${.TARGET}
+	@${LD} -x -r ${.TARGET}
+	@mv a.out ${.TARGET}
+
+memcpy.go: bcopy.c
+	${CC} -g -DMEMCOPY ${CFLAGS} ${CPPFLAGS} -c ${.ALLSRC} -o ${.TARGET}
 	@${LD} -x -r ${.TARGET}
 	@mv a.out ${.TARGET}
 
@@ -66,6 +76,11 @@ strchr.o: index.c
 	@${LD} -x -r ${.TARGET}
 	@mv a.out ${.TARGET}
 
+strchr.go: index.c
+	${CC} -g -DSTRCHR ${CFLAGS} ${CPPFLAGS} -c ${.ALLSRC} -o ${.TARGET}
+	@${LD} -x -r ${.TARGET}
+	@mv a.out ${.TARGET}
+
 strchr.po: index.c
 	${CC} -DSTRCHR ${CFLAGS} ${CPPFLAGS} -c -p ${.ALLSRC} -o ${.TARGET}
 	@${LD} -X -r ${.TARGET}
@@ -81,6 +96,11 @@ strchr.so: index.c
 OBJS+=	strrchr.o
 strrchr.o: rindex.c
 	${CC} -DSTRRCHR ${CFLAGS} ${CPPFLAGS} -c ${.ALLSRC} -o ${.TARGET}
+	@${LD} -x -r ${.TARGET}
+	@mv a.out ${.TARGET}
+
+strrchr.go: rindex.c
+	${CC} -g -DSTRRCHR ${CFLAGS} ${CPPFLAGS} -c ${.ALLSRC} -o ${.TARGET}
 	@${LD} -x -r ${.TARGET}
 	@mv a.out ${.TARGET}
 
