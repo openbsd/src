@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.28 2005/03/12 13:25:45 damien Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.29 2005/03/12 13:37:49 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005
@@ -463,8 +463,8 @@ iwi_dma_alloc(struct iwi_softc *sc)
 	 * Allocate Tx buffers DMA maps
 	 */
 	for (i = 0; i < IWI_TX_RING_SIZE; i++) {
-		error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, IWI_MAX_NSEG,
-		    MCLBYTES, 0, BUS_DMA_NOWAIT, &sc->tx_buf[i].map);
+		error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES,
+		    0, BUS_DMA_NOWAIT, &sc->tx_buf[i].map);
 		if (error != 0) {
 			printf("%s: could not create tx buf DMA map",
 			    sc->sc_dev.dv_xname);

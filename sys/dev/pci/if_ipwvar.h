@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipwvar.h,v 1.11 2005/03/12 13:31:26 damien Exp $	*/
+/*	$OpenBSD: if_ipwvar.h,v 1.12 2005/03/12 13:37:49 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005
@@ -82,7 +82,7 @@ struct ipw_tx_radiotap_header {
 	((1 << IEEE80211_RADIOTAP_FLAGS) |				\
 	 (1 << IEEE80211_RADIOTAP_CHANNEL))
 
-#define IPW_MAX_NSEG	6
+#define IPW_MAX_NSEG	1
 
 struct ipw_softc {
 	struct device			sc_dev;
