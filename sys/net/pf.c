@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.368 2003/06/24 13:52:50 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.369 2003/06/24 13:55:13 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -77,6 +77,7 @@
 #include <netinet/ip6.h>
 #include <netinet/in_pcb.h>
 #include <netinet/icmp6.h>
+#include <netinet6/nd6.h>
 #endif /* INET6 */
 
 #ifdef ALTQ
@@ -4647,9 +4648,10 @@ pf_route6(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 	 * If the packet is too large for the outgoing interface,
 	 * send back an icmp6 error.
 	 */
+	if (IN6_IS_ADDR_LINKLOCAL(&dst->sin6_addr))
+		dst->sin6_addr.s6_addr16[1] = htons(ifp->if_index);
 	if ((u_long)m0->m_pkthdr.len <= ifp->if_mtu) {
-		error = (*ifp->if_output)(ifp, m0, (struct sockaddr *)dst,
-		    NULL);
+		error = nd6_output(ifp, ifp, m0, dst, NULL);
 	} else {
 		in6_ifstat_inc(ifp, ifs6_in_toobig);
 		if (r->rt != PF_DUPTO)
