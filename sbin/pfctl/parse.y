@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.389 2003/05/25 17:07:28 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.390 2003/06/09 11:14:46 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -2467,7 +2467,7 @@ pooltype	: /* empty */
 		;
 
 staticport	: /* empty */			{ $$ = 0; }
-		| STATICPORT			{ $$ = PF_POOL_STATICPORT; }
+		| STATICPORT			{ $$ = 1; }
 		;
 
 redirection	: /* empty */			{ $$ = NULL; }
@@ -2624,13 +2624,22 @@ natrule		: nataction interface af proto fromto tag redirpool pooltype
 				    sizeof(struct pf_poolhashkey));
 
 			if ($9 != NULL) {
-				if (r.action == PF_NAT)
-					r.rpool.opts |= PF_POOL_STATICPORT;
-				else {
+				if (r.action != PF_NAT) {
 					yyerror("the 'static-port' option is "
 					    "only valid with nat rules");
 					YYERROR;
 				}
+				if (r.rpool.proxy_port[0] !=
+				    PF_NAT_PROXY_PORT_LOW &&
+				    r.rpool.proxy_port[1] !=
+				    PF_NAT_PROXY_PORT_HIGH) {
+					yyerror("the 'static-port' option can't"
+					    " be used when specifying a port"
+					    " range");
+					YYERROR;
+				}
+				r.rpool.proxy_port[0] = 0;
+				r.rpool.proxy_port[1] = 0;
 			}
 
 			expand_rule(&r, $2, $7 == NULL ? NULL : $7->host, $4,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.161 2003/05/24 19:14:06 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.162 2003/06/09 11:14:46 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -419,8 +419,8 @@ print_pool(struct pf_pool *pool, u_int16_t p1, u_int16_t p2,
 	}
 	switch (id) {
 	case PF_NAT:
-		if (p1 != PF_NAT_PROXY_PORT_LOW ||
-		    p2 != PF_NAT_PROXY_PORT_HIGH) {
+		if ((p1 != PF_NAT_PROXY_PORT_LOW ||
+		    p2 != PF_NAT_PROXY_PORT_HIGH) && (p1 != 0 || p2 != 0)) {
 			if (p1 == p2)
 				printf(" port %u", p1);
 			else
@@ -455,7 +455,7 @@ print_pool(struct pf_pool *pool, u_int16_t p1, u_int16_t p2,
 		printf(" round-robin");
 		break;
 	}
-	if (pool->opts & PF_POOL_STATICPORT)
+	if (id == PF_NAT && p1 == 0 && p2 == 0)
 		printf(" static-port");
 }
 
