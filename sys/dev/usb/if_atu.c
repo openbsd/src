@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.36 2004/12/05 03:04:44 dlg Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.37 2004/12/05 04:51:47 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -2233,10 +2233,17 @@ atu_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 void
 atu_watchdog(struct ifnet *ifp)
 {
-	struct atu_softc	*sc;
+	struct atu_softc	*sc = ifp->if_softc;
 	struct atu_chain	*c;
 	usbd_status		stat;
 	int			cnt, s;
+
+	DPRINTF(("%s: atu_watchdog\n", USBDEVNAME(sc->atu_dev)));
+
+	ifp->if_timer = 0;
+
+	if (sc->atu_dying)
+		return;
 
 	sc = ifp->if_softc;
 	s = splnet();
@@ -2259,6 +2266,8 @@ atu_watchdog(struct ifnet *ifp)
 	if (ifp->if_snd.ifq_head != NULL)
 		atu_start(ifp);
 	splx(s);
+
+	ieee80211_watchdog(ifp);
 }
 
 /*
