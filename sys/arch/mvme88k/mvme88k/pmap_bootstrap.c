@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_bootstrap.c,v 1.1 2004/07/25 11:06:43 miod Exp $	*/
+/*	$OpenBSD: pmap_bootstrap.c,v 1.2 2004/08/01 17:44:17 miod Exp $	*/
 /*
  * Copyright (c) 2001-2004, Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -47,24 +47,8 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-/*
-#include <sys/simplelock.h>
-#include <sys/proc.h>
-#include <sys/malloc.h>
-#include <sys/pool.h>
-#include <sys/msgbuf.h>
-#include <sys/user.h>
-*/
 
 #include <uvm/uvm.h>
-
-/*
-#include <machine/asm_macro.h>
-#include <machine/board.h>
-#include <machine/cmmu.h>
-#include <machine/cpu_number.h>
-#include <machine/pmap_table.h>
-*/
 
 extern vaddr_t pmap_map(vaddr_t, paddr_t, paddr_t, vm_prot_t, u_int);
 extern vaddr_t avail_start;
