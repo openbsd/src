@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.176 2003/09/26 21:44:09 cedric Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.177 2003/10/08 14:47:57 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1317,7 +1317,7 @@ pfctl_get_ticket(struct pfr_buffer *buf, int rs_num, const char *anchor,
 }
 
 int
-pfctl_trans(int dev, struct pfr_buffer *buf, int cmd, int from)
+pfctl_trans(int dev, struct pfr_buffer *buf, u_long cmd, int from)
 {
 	struct pfioc_trans trans;
 
