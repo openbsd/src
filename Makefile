@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 1996/05/18 05:37:48 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.11 1996/06/02 07:22:46 tholo Exp $
 #	$NetBSD: Makefile,v 1.25 1995/10/09 02:11:28 thorpej Exp $
 
 .include <bsd.own.mk>	# for NOMAN, if it's there.
@@ -44,7 +44,7 @@ build:
 	(cd ${.CURDIR}/share/mk && ${MAKE} install)
 	(cd ${.CURDIR}/include; ${MAKE} includes)
 .if defined(KERBEROS)
-	(cd ${.CURDIR}/kerberosIV/include && ${MAKE} install)
+	(cd ${.CURDIR}/kerberosIV/include && ${MAKE} includes)
 .endif
 	${MAKE} cleandir
 	(cd ${.CURDIR}/lib && ${MAKE} depend && ${MAKE} && ${MAKE} install)
