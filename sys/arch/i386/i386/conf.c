@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.40 1997/10/27 14:42:02 niklas Exp $	*/
+/*	$OpenBSD: conf.c,v 1.41 1997/10/28 10:19:12 niklas Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -383,10 +383,13 @@ static struct {
 } disk_maj[] = {
 	{ "wd", 0 },
 	{ "sd", 4 },
+#if 0
+	/* XXX It's not clear at all that recognizing these will help us */
 	{ "acd", 18 },
 	{ "cd", 6 },
 	{ "mcd", 7 },		/* XXX I wonder if any BIOSes support this */
 	{ "scd", 15 }		/* 	-	   "		-	   */
+#endif
 };
 
 dev_t dev_rawpart __P((struct device *));	/* XXX */
