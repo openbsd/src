@@ -1,4 +1,4 @@
-/*      $OpenBSD: isp_openbsd.h,v 1.18 2001/12/14 00:20:55 mjacob Exp $ */
+/*      $OpenBSD: isp_openbsd.h,v 1.19 2002/02/15 02:37:51 art Exp $ */
 /*
  * OpenBSD Specific definitions for the Qlogic ISP Host Adapter
  */
@@ -427,16 +427,8 @@ isp_wait_complete(struct ispsoftc *isp)
 		int rv = 0;
                 isp->isp_osinfo.mboxwaiting = 1;
                 while (isp->isp_osinfo.mboxwaiting && rv == 0) {
-			static struct timeval fivesec = { 5, 0 };
-			int timo;
-			struct timeval tv;
-			microtime(&tv);
-			timeradd(&tv, &fivesec, &tv);
-			if ((timo = hzto(&tv)) == 0) {
-				timo = 1;
-			}
 			rv = tsleep(&isp->isp_osinfo.mboxwaiting,
-			    PRIBIO, "isp_mboxcmd", timo);
+			    PRIBIO, "isp_mboxcmd", 5 * hz);
 		}
 		if (rv == EWOULDBLOCK) {
 			isp->isp_mboxbsy = 0;
