@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKB,v 1.66 2004/04/10 08:33:04 deraadt Exp $
+#	$OpenBSD: RAMDISKB,v 1.67 2004/05/08 05:11:00 grange Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -49,6 +49,7 @@ pcibios0 at bios0 flags 0x0000
 
 isa0	at mainbus0
 isa0	at pcib?
+isa0	at ichpcib?
 eisa0	at mainbus0
 pci*	at mainbus0
 
@@ -60,6 +61,7 @@ ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 pci*	at ppb? bus ?
 pci*	at pchb? bus ?
 pcib*	at pci? dev ? function ?	# PCI-ISA bridge
+ichpcib* at pci? dev ? function ?	# Intel ICHx/ICHx-M LPC bridges
 
 # ISA PCMCIA controllers
 #pcic0	at isa? port 0x3e0 iomem 0xd0000 iosiz 0x4000
