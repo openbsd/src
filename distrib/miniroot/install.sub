@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.58 1998/03/24 06:38:56 millert Exp $
+#	$OpenBSD: install.sub,v 1.59 1998/03/26 03:49:19 millert Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -645,6 +645,7 @@ install_url() {
 	#	_ftp_server_password, and _ftp_active must be global.
 
 	local _sets
+	local _kernel
 	local _f
 	local _file_list
 	local _get_files
@@ -968,11 +969,17 @@ install_url() {
 
 install_from_mounted_fs() {
 	# $1 - directory containing installation sets
-	local _filename
 	local _sets
-	local _next
-	local _f
 	local _kernel
+	local _f
+	local _get_files
+	local _failed_files
+	local _osetsdone
+
+	if [ ! -d $1 ]; then
+		echo "No such directory: $1"
+		return
+	fi
 
 	_sets=""
 	if dir_has_sets $1 $THESETS; then
@@ -988,63 +995,176 @@ install_from_mounted_fs() {
 			fi
 		done
 	else
-		echo "There are no OpenBSD install sets available in \"$1\""
-		return
+		echo "There are no OpenBSD install sets available in \"$1\"."
+		echo -n "Search for *.tar.gz and *.tgz files? [y] "
+		getresp "y"
+		case "$resp" in
+			n*|N*)	return ;;
+			*)	;;
+		esac
+		# *.tar.gz and *.tgz are possible sets
+		_sets=""
+		_kernel=""
+		_sets=`cd $1 ; echo *.tar.gz *.tgz`
+		if [ "X${_sets}" = X'*.tar.gz *.tgz' ]; then
+			echo "There are no *.tar.gz or *.tgz files in that dir."
+			echo -n "See a directory listing? [y] "
+			getresp "y"
+			case "$resp" in
+				n*|N*)	return ;;
+				*)	;;
+			esac
+			echo ""
+			( cd $1 && ls )
+			echo ""
+			return
+		else
+			echo "Adding *.tar.gz and *.tgz files to selector."
+		fi
 	fi
 
+	echo "\n"\
+"You will now be asked for files to extract.  In addition to the\n"\
+"files listed in the selector you may enter any file located in\n"\
+"$1.  You can also enter 'all' to install all the standard\n"\
+"sets, or 'list' to list the files avilable in $1.\n"\
+"When you are done selecting files, enter 'done'.\n"\
+"Some of these sets are required for your ${MODE} and some are optional --\n"\
+"You will want at least the base and bsd sets.\n"\
+"Consult the intallation notes if you are not sure which sets are required!\n"\
+	_osetsdone="$_setsdone"
 	while : ; do
-		echo "The following sets are available for extraction:"
-		echo "(marked sets have already been extracted)"
+		echo ""
+		echo "The following sets are available for extraction."
+		echo "Enter filename, \`list', \`all', or \`done'."
 		echo ""
 
 		_next=""
 		for _f in $_sets $_kernel ; do
-			if isin $_f $_setsdone; then
+			if isin $_f $_setsdone ; then
 				echo -n "	[X] "
 				_next=""
 			else
 				echo -n "	[ ] "
 				if [ -z "$_next" ]; then
-					_next=$_f
+				    _next=$_f
 				fi
 			fi
 			echo $_f
 		done
-		echo ""
 
 		# Get the name of the file.
-		if [ "X$_next" = "X" ]; then
-			resp=n
-		else
-			resp=y
-		fi
-		echo -n "Continue extraction in this directory [$resp]?"
-		getresp "$resp"
-		if [ "$resp" = "n" ]; then
-			break
-		fi
-
 		echo -n "File name [$_next]? "
 		getresp "$_next"
+		if [ "X${resp}" = X"done" ]; then
+			break
+		elif [ "X${resp}" = X"list" ]; then
+			echo ""
+			echo "${1}:"
+			( cd $1 && ls )
+			continue
+		elif [ "X${resp}" = X"all" ]; then
+			# XXX - setting _setsdone like this
+			#       is not entirely correct.
+			_get_files="$_sets $_kernel"
+			_setsdone="$_sets $_kernel"
+			break
+		fi
 		_f=$resp
-		_filename="/$1/$_f"
 
 		# Ensure file exists
-		if [ ! -f $_filename ]; then
-			echo "File $_filename does not exist.  Check to make"
+		if [ ! -f $1/$_f ]; then
+			echo "File $1/$_f does not exist.  Check to make"
 			echo "sure you entered the information properly."
 			continue
 		fi
 
-		# Extract file
-		if [ X$_f = X$_kernel ]; then
-			cp $_filename /mnt/$_f
-		else
-			cat $_filename | (cd /mnt; tar -zxvpf -)
-		fi
-		echo "Extraction complete."
+		# Add file to extraction list
+		_get_files="${_get_files} $_f"
 		_setsdone="$_f $_setsdone"
+	done
 
+	# User may have said "done" without selecting any files
+	if [ "X${_get_files}" = X"" ]; then
+		return
+	fi
+
+	echo
+	echo -n "Ready to extract selected file sets? [y] "
+	getresp "y"
+	case "$resp" in
+		y*|Y*)
+			;;
+		*)
+			_setsdone="$_osetsdone"
+			return
+			;;
+	esac
+
+	# Extract the files one at a time and keep track of which ones failed
+	while test -n "${_get_files}" ; do
+		_failed_files=""
+		for _f in $_get_files ; do
+			echo ""
+			echo "$1/${_f}:"
+			if [ "X${_f}" = "X${_kernel}" ]; then
+				cp $1/$_f /mnt/$_f
+			else
+				cat $1/$_f | (cd /mnt; tar -zxvpf -)
+			fi
+			if [ $? -ne 0 ]; then
+				# Mark xfer as having failed,.
+				_setsdone=`rmel $_f $_setsdone`
+				_failed_files="${_failed_files} ${_f}"
+			fi
+		done
+
+		# Give them the option of retrying failed files.
+		_get_files=""
+		while test -n "${_failed_files}" ; do
+			echo ""
+			echo "The following files failed to extract correctly:"
+			echo "Choose which one(s) to retry or 'done' to exit selector."
+			echo ""
+
+			_next=""
+			for _f in $_failed_files ; do
+				if isin $_f $_setsdone ; then
+					echo -n "	[X] "
+					_next=""
+				else
+					echo -n "	[ ] "
+					if [ -z "$_next" ]; then
+						_next=$_f
+					fi
+				fi
+				echo $_f
+			done
+			echo ""
+
+			# Get the name of the file.
+			echo -n "File name [$_next]? "
+			getresp "$_next"
+			if [ "X${resp}" = X"done" ]; then
+				break
+			elif [ "X${resp}" = X"list" ]; then
+				echo ""
+				echo "${1}:"
+				( cd $1 && ls )
+				echo ""
+				continue
+			fi
+			_f=$resp
+
+			# Ensure file exists
+			if [ ! -f $1/$_f ]; then
+				echo "File $1/$_f does not exist.  Check to make"
+				echo "sure you entered the information properly."
+			fi
+			# Add file to extraction list
+			_get_files="${_get_files} ${_f}"
+			_setsdone="${_f} ${_setsdone}"
+		done
 	done
 }
 
