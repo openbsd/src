@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.10 1996/05/16 11:52:08 mickey Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.11 1996/05/27 07:57:59 deraadt Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -291,11 +291,11 @@ tun_ioctl(ifp, cmd, data)
 		break;
 	case SIOCSIFDSTADDR:
 		tuninit((struct tun_softc *)(ifp->if_softc));
-		TUNDEBUG(("%s: destination address set\n", ifp->if_name));
+		TUNDEBUG(("%s: destination address set\n", ifp->if_xname));
 		break;
 	case SIOCSIFBRDADDR:
 		tuninit((struct tun_softc *)(ifp->if_softc));
-		TUNDEBUG(("%s: broadcast address set\n", ifp->if_name));
+		TUNDEBUG(("%s: broadcast address set\n", ifp->if_xname));
 		break;
 #if 0
 	case SIOCSIFMTU:
