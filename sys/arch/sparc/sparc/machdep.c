@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.49 2000/05/18 13:31:12 jason Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.50 2000/06/23 00:55:55 fgsch Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -546,8 +546,9 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	struct proc *p;
 {
 #if (NAUXREG > 0) || (NLED > 0)
-	int ret, oldval;
+	int oldval;
 #endif
+	int ret;
 
 	/* all sysctl names are this level are terminal */
 	if (namelen != 1)
