@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx_openbsd.c,v 1.15 2004/12/20 20:56:32 krw Exp $	*/
+/*	$OpenBSD: aic79xx_openbsd.c,v 1.16 2004/12/20 22:07:25 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -384,6 +384,7 @@ ahd_action(struct scsi_xfer *xs)
 	SC_DEBUG(xs->sc_link, SDEV_DB3, ("start scb(%p)\n", scb));
 
 	scb->xs = xs;
+	timeout_set(&xs->stimeout, ahd_timeout, scb);
 
 	/*
 	 * Put all the arguments for the xfer in the scb
@@ -396,17 +397,11 @@ ahd_action(struct scsi_xfer *xs)
 		scb->flags |= SCB_DEVICE_RESET;
 		hscb->control |= MK_MESSAGE;
 		hscb->task_management = SIU_TASKMGMT_LUN_RESET;
-		ahd_execute_scb(scb, NULL, 0);
+		return (ahd_execute_scb(scb, NULL, 0));
 	} else {
 		hscb->task_management = 0;
+		return (ahd_setup_data(ahd, xs, scb));
 	}
-#if 0
-	if (ccb->ccb_h.flags & CAM_TAG_ACTION_VALID)
-		hscb->control |= ccb->csio.tag_action;
-#endif
-	timeout_set(&xs->stimeout, ahd_timeout, scb);
-
-	return ahd_setup_data(ahd, xs, scb);
 }
 
 int
