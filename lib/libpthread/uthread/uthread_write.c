@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_write.c,v 1.6 2000/01/06 07:23:24 d Exp $	*/
+/*	$OpenBSD: uthread_write.c,v 1.7 2001/08/11 15:01:57 fgsch Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -50,6 +50,9 @@ write(int fd, const void *buf, size_t nbytes)
 	ssize_t n;
 	ssize_t num = 0;
 	ssize_t	ret;
+
+	/* This is a cancellation point: */
+	_thread_enter_cancellation_point();
 
 	/* POSIX says to do just this: */
 	if (nbytes == 0)
