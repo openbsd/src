@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.16 2001/01/28 09:43:42 aaron Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.17 2001/03/22 02:10:22 mickey Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.72 2000/04/14 14:13:56 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -103,13 +103,13 @@ typedef u_int16_t usb_product_id_t;
  */
 struct usb_known_vendor {
 	usb_vendor_id_t		vendor;
-	char			*vendorname;
+	const char		*vendorname;
 };
 
 struct usb_known_product {
 	usb_vendor_id_t		vendor;
 	usb_product_id_t	product;
-	char			*productname;
+	const char		*productname;
 };
 
 #include <dev/usb/usbdevs_data.h>
@@ -213,23 +213,25 @@ usbd_get_string(usbd_device_handle dev, int si, char *buf)
 	return (buf);
 }
 
-static void
+static char *
 usbd_trim_trailings_spaces(char *p)
 {
-	char *q;
+	char *q, *r;
 
 	if (p == NULL)
-		return;
+		return NULL;
+	r = p;
 	q = p + strlen(p);
 	while (--q >= p && *q == ' ')
 		*q = 0;
+	return r;
 }
 
 void
 usbd_devinfo_vp(usbd_device_handle dev, char *v, char *p, int usedev)
 {
 	usb_device_descriptor_t *udd = &dev->ddesc;
-	char *vendor = 0, *product = 0;
+	const char *vendor = NULL, *product = NULL;
 #ifdef USBVERBOSE
 	const struct usb_known_vendor *ukv;
 	const struct usb_known_product *ukp;
@@ -241,10 +243,10 @@ usbd_devinfo_vp(usbd_device_handle dev, char *v, char *p, int usedev)
 	}
 
 	if (usedev) {
-		vendor = usbd_get_string(dev, udd->iManufacturer, v);
-		usbd_trim_trailings_spaces(vendor);
-		product = usbd_get_string(dev, udd->iProduct, p);
-		usbd_trim_trailings_spaces(product);
+		vendor = usbd_trim_trailings_spaces(
+		    usbd_get_string(dev, udd->iManufacturer, v));
+		product = usbd_trim_trailings_spaces(
+		    usbd_get_string(dev, udd->iProduct, p));
 	} else {
 		vendor = NULL;
 		product = NULL;
