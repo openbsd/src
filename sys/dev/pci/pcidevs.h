@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.205 1999/12/16 21:53:03 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.206 1999/12/16 22:15:45 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -551,7 +551,7 @@
 
 
 /* 3COM Products */
-#define	PCI_PRODUCT_3COM_3c450	0x4500		/* 3c450 */
+#define	PCI_PRODUCT_3COM_3C450	0x4500		/* 3c450 */
 #define	PCI_PRODUCT_3COM_3C590	0x5900		/* 3c590 10Mbps */
 #define	PCI_PRODUCT_3COM_3C595TX	0x5950		/* 3c595 100Base-TX */
 #define	PCI_PRODUCT_3COM_3C595T4	0x5951		/* 3c595 100Base-T4 */
