@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.6 1997/07/19 19:08:28 mickey Exp $	*/
+/*	$OpenBSD: main.c,v 1.7 1997/08/19 06:32:36 denny Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)compress.c	8.2 (Berkeley) 1/7/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.6 1997/07/19 19:08:28 mickey Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.7 1997/08/19 06:32:36 denny Exp $";
 #endif
 #endif /* not lint */
 
@@ -99,8 +99,9 @@ main(argc, argv)
 	int ch, bits, cat, decomp, error;
 	struct compressor *method;
 	int exists, isreg, oreg;
-	char *infile, outfile[MAXPATHLEN], suffix[16];
+	char *infile, outfile[MAXPATHLEN+4], suffix[16];
 	char *p;
+	int rc = 0;
 
 	bits = cat = decomp = 0;
 	p = __progname;
@@ -143,6 +144,11 @@ main(argc, argv)
 			break;
 		case 'b':
 			bits = strtol(optarg, &p, 10);
+			/*
+			 * POSIX 1002.3 says 9 <= bits <= 14 for portable
+			 * apps, but says the implementation may allow
+			 * greater.
+			 */
 			if (*p)
 				errx(1, "illegal bit count -- %s", optarg);
 			break;
@@ -202,10 +208,28 @@ main(argc, argv)
 		if (*argv != NULL) {
 			infile = *argv;
 			if (outfile[0] == '\0') {
-				if (!decomp && !cat && outfile[0] == '\0')
-					snprintf(outfile, sizeof(outfile), "%s%s",
-						 infile, method->suffix);
-				else if (decomp && !cat) {
+				if (!decomp && !cat && outfile[0] == '\0') {
+					int len;
+					char *p;
+
+					snprintf(outfile, sizeof(outfile),
+						"%s%s", infile,
+						method->suffix);
+
+					len = strlen(outfile);
+					if (len > MAXPATHLEN) {
+						errx(1, "pathname%s too long",
+							method->suffix);
+					}
+					
+					p = strrchr(outfile, '/');
+					if (p == NULL) p = outfile;
+					len = strlen(p);
+					if (len > NAME_MAX) {
+						errx(1, "filename%s too long",
+							method->suffix);
+					}
+				} else if (decomp && !cat) {
 					char *p = strrchr(infile, '.');
 					if (p != NULL)
 						for (method = &c_table[0];
@@ -258,6 +282,7 @@ main(argc, argv)
 					fprintf(stderr, "file would grow; "
 						     "left unmodified\n");
 				error = 1;
+				rc = 2;
 			} else {
 
 				setfile(outfile, &sb);
@@ -290,7 +315,7 @@ main(argc, argv)
 
 	} while (*argv != NULL);
 
-	return (0);
+	return (rc);
 }
 
 int
