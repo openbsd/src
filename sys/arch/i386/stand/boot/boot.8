@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot.8,v 1.6 1997/09/20 22:40:35 flipk Exp $
+.\"	$OpenBSD: boot.8,v 1.7 1997/10/07 09:20:31 mickey Exp $
 .\"
 .\" Copyright (c) 1997 Michael Shalayeff
 .\" All rights reserved.
@@ -76,7 +76,7 @@ operations is as follows:
 .Bl -enum
 .It
 Set up a protected mode environment which catches and reports processor
-exceptions, and provides a simple real-mode BIOS interface.
+exceptions, and provides a simple protected-mode BIOS interface.
 .It
 Probe for console devices, which includes the (default) PC VGA+Keyboard
 console (pc0) and up to four serial consoles (com0 through com3) connected
@@ -122,12 +122,12 @@ timeout period has expired.
 The following commands are accepted at the
 .Nm
 prompt:
-.Bl -tag -width machine_diskinfo_boot_
+.Bl -tag -width stty_device_baudrate_____
 .It boot Op Ar image Op Fl abcds
 Boots kernel image specified by the
 .Ar image
 with options if any. Image specification consists of a pair
-.Nm device : Nm filename ,
+.Em device : filename ,
 either of each maybe omitted (':' is not needed if both),
 in which case values from
 .Nm
@@ -142,20 +142,21 @@ commands, if any.
 .It machine Op Ar subcommand
 Issues machine-dependant commands. These are defined for i386 architecture:
 .Bl -tag -width diskinfo_
-.It diskinfo
+.It Nm diskinfo
 Prints list of hard disks installed on your system including:
 BIOS device number, and the BIOS geometry.
+.It Nm regs
+Prints contents of processor registers if compiled with
+.Em DEBUG .
 .El
 .It ls Op Ar directory
 Prints contents of the specified
 .Ar directory
 in long format including: attributes and file type, owner, group,
 size, filename.
-.It regs
-Prints contents of processor registers, if defind for this architecture.
 .It reboot
 Reboots machine by initiating a warm boot procedure.
-.It set Op varname Op value
+.It set Op Ar varname Op Ar value
 If invoked without arguments, prints a list of variables and their values.
 If only
 .Ar varname
@@ -168,31 +169,35 @@ are both specified, sets that variable to the given value.
 Variables include:
 .Pp
 .Bl -tag -compact -width boothow
-.It addr
+.It Nm addr
 Address at wich to load the kernel.
-.It howto
+.It Nm howto
 Options to pass to the loaded kernel.
-.It debug
+.It Nm debug
 Debug flag if
 .Nm
 was compiled with DEBUG defined.
-.It device
+.It Nm device
 Boot device name (ie fd0a, sd0a).
-.It tty
+.It Nm tty
 Active console device name.
-.It image
+.It Nm image
 File name containing the kernel image.
 .El
-.It stty Op Ar baudrate
-Displays or sets the baudrate for serial console.  If the currently
-active console is a serial console, gives you five seconds of pause
+.It stty Op Ar device Op Ar baudrate
+Displays or sets the
+.Ar baudrate
+for a console
+.Ar device .
+If changing speed for the currently
+active console, gives you five seconds of pause
 before changing the baud rate to allow you to change your terminal's
-speed to match.  If the active console is
+speed to match.  If changing speed
 .Em not
-a serial console, sets the baudrate value to be used the
+for the active console, sets the baudrate value to be used the
 .Em next
-time you switch to a serial console. (The baudrate value is not used
-for the pc0 console.)
+time you switch to a serial console.
+The baudrate value is not used for the pc0 console.
 .Pp
 The default baudrate if not specifically
 set is 9600 baud.
@@ -218,8 +223,7 @@ kernel image
 .Pp
 RFC 1950 describes the zlib library interface.
 .Pp
-The official home page for the version of zlib used in
-.Ox
+The official home page for the version of zlib used in this
 operating system see http://quest.jpl.nasa.gov/zlib/ .
 .Sh BUGS
 Well, nobody is perfect.
