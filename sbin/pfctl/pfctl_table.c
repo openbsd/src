@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_table.c,v 1.1 2003/01/03 21:37:44 cedric Exp $ */
+/*	$OpenBSD: pfctl_table.c,v 1.2 2003/01/03 21:43:11 deraadt Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -447,8 +447,8 @@ _next_token(char buf[_BUF_SIZE], FILE *fp)
 	} while (!feof(fp) && !isspace(_next_ch));
 	if (i >= _BUF_SIZE) {
 		fprintf(stderr, "%s: address too long (%d bytes)\n",
-			__progname, i);
-	        exit(1);
+		    __progname, i);
+		exit(1);
 	}
 	buf[i] = '\0';
 	return (1);
@@ -470,7 +470,7 @@ _append_addr(char *s, int test)
 	p = strrchr(buf, '/');
 	if (test && (not || p))
 		fprintf(stderr, "%s: illegal test address: \"%s\"\n",
-			__progname, s);
+		    __progname, s);
 	if (p) {
 		net = strtol(p+1, &q, 0);
 		if (!q || *q) {
@@ -497,7 +497,7 @@ _append_addr(char *s, int test)
 			if (size >= msize)
 				_grow_buffer(sizeof(struct pfr_addr), 0);
 			buffer.addrs[size].pfra_ip4addr =
-				((struct sockaddr_in *)ai->ai_addr)->sin_addr;
+			    ((struct sockaddr_in *)ai->ai_addr)->sin_addr;
 			buffer.addrs[size].pfra_not = not;
 			buffer.addrs[size].pfra_net = (net >= 0) ? net : 32;
 			buffer.addrs[size].pfra_af = AF_INET;
@@ -545,20 +545,20 @@ _print_addr(struct pfr_addr *ad, struct pfr_addr *rad, int dns)
 	}
 	if (rad != NULL && fback == PFR_FB_NONE)
 		printf("\t nomatch");
-        if (dns && ad->pfra_net == hostnet) {
-	        char host[NI_MAXHOST] = "?";
+	if (dns && ad->pfra_net == hostnet) {
+		char host[NI_MAXHOST] = "?";
 		union sockaddr_union sa;
 		int rv;
 
 		sa.sa.sa_len = (ad->pfra_af == AF_INET) ?
-			sizeof(sa.sin) : sizeof(sa.sin6);
+		    sizeof(sa.sin) : sizeof(sa.sin6);
 		sa.sa.sa_family = ad->pfra_af;
 		if (ad->pfra_af == AF_INET)
 			sa.sin.sin_addr = ad->pfra_ip4addr;
 		else
 			sa.sin6.sin6_addr = ad->pfra_ip6addr;
 		rv = getnameinfo(&sa.sa, sa.sa.sa_len, host, sizeof(host),
-			NULL, 0, NI_NAMEREQD);
+		    NULL, 0, NI_NAMEREQD);
 		if (!rv)
 			printf("\t(%s)", host);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_radix.c,v 1.1 2003/01/03 21:37:44 cedric Exp $ */
+/*	$OpenBSD: pfctl_radix.c,v 1.2 2003/01/03 21:43:11 deraadt Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -283,20 +283,20 @@ int
 pfr_clr_astats(struct pfr_table *tbl, struct pfr_addr *addr, int size,
     int *nzero, int flags)
 {
-        struct pfioc_table io;
+	struct pfioc_table io;
 
-        if (tbl == NULL || size < 0 || (size && addr == NULL))
-                RETURN_EINVAL;
-        bzero(&io, sizeof io);
-        io.pfrio_flags = flags;
-        io.pfrio_table = *tbl;
-        io.pfrio_buffer = addr;
-        io.pfrio_size = size;
-        if (_pfr_ioctl(DIOCRCLRTSTATS, &io))
-                return (-1);
-        if (nzero != NULL)
-                *nzero = io.pfrio_nzero;
-        return (0);
+	if (tbl == NULL || size < 0 || (size && addr == NULL))
+		RETURN_EINVAL;
+	bzero(&io, sizeof io);
+	io.pfrio_flags = flags;
+	io.pfrio_table = *tbl;
+	io.pfrio_buffer = addr;
+	io.pfrio_size = size;
+	if (_pfr_ioctl(DIOCRCLRTSTATS, &io))
+		return (-1);
+	if (nzero != NULL)
+		*nzero = io.pfrio_nzero;
+	return (0);
 }
 
 int
