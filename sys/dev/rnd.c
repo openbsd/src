@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.21 1997/06/12 01:45:16 mickey Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.22 1997/06/12 02:18:39 mickey Exp $	*/
 
 /*
  * random.c -- A strong random number generator
@@ -278,15 +278,15 @@ int	rnd_debug = 0x0000;
 struct random_bucket {
 	u_int	add_ptr;
 	u_int	entropy_count;
-	int	input_rotate;
-	u_int32_t *pool;
+	u_char	input_rotate;
+	u_int32_t pool[POOLWORDS];
 };
 
 /* There is one of these per entropy source */
 struct timer_rand_state {
 	u_long	last_time;
-	int	last_delta;
-	int	dont_count_entropy:1;
+	u_int	last_delta;
+	u_char	dont_count_entropy:1;
 };
 
 struct arc4_stream {
@@ -303,26 +303,24 @@ struct arc4_stream {
 static struct random_bucket random_state;
 static int arc4random_uninitialized = 2;
 static struct arc4_stream arc4random_state;
-static u_int32_t random_pool[POOLWORDS];
 static struct timer_rand_state mouse_timer_state;
 static struct timer_rand_state extract_timer_state;
 static struct timer_rand_state disk_timer_state;
 static struct timer_rand_state net_timer_state;
 static struct timer_rand_state tty_timer_state;
 static int rnd_sleep = 0;
+static int rnd_attached = 0;
 
 #ifndef MIN
 #define MIN(a,b) (((a) < (b)) ? (a) : (b))
 #endif
 
-static __inline void add_entropy_word __P((struct random_bucket *,
-	    const u_int32_t));
-void	add_timer_randomness __P((struct random_bucket *,
-	    struct timer_rand_state *, u_int));
-static __inline int extract_entropy __P((struct random_bucket *, char *, int));
+static __inline void add_entropy_word __P((const u_int32_t));
+void	add_timer_randomness __P((struct timer_rand_state *, u_int));
+static __inline int extract_entropy __P((register char *, int));
 void	arc4_init __P((struct arc4_stream *, u_char *, int));
-static __inline void arc4_stir (struct arc4_stream *);
-static __inline u_char arc4_getbyte __P((struct arc4_stream *));
+static __inline void arc4_stir (register struct arc4_stream *);
+static __inline u_char arc4_getbyte __P((register struct arc4_stream *));
 
 /* Arcfour random stream generator.  This code is derived from section
  * 17.1 of Applied Cryptography, second edition, which describes a
@@ -359,9 +357,9 @@ arc4_init (struct arc4_stream *as, u_char *data, int len)
 }
 
 static __inline u_char
-arc4_getbyte (struct arc4_stream *as)
+arc4_getbyte (register struct arc4_stream *as)
 {
-	u_char si, sj;
+	register u_char si, sj;
 
 	as->i = (as->i + 1) & 0xff;
 	si = as->s[as->i];
@@ -375,13 +373,13 @@ arc4_getbyte (struct arc4_stream *as)
 static inline void
 arc4maybeinit (void)
 {
-  if (arc4random_uninitialized) {
-    if (arc4random_uninitialized > 1
-	|| random_state.entropy_count >= 128) {
-      arc4random_uninitialized--;
-      arc4_stir (&arc4random_state);
-    }
-  }
+	if (arc4random_uninitialized) {
+		if (arc4random_uninitialized > 1
+		    || random_state.entropy_count >= 128) {
+			arc4random_uninitialized--;
+			arc4_stir (&arc4random_state);
+		}
+	}
 }
 
 u_int32_t
@@ -402,13 +400,13 @@ randomattach(void)
 
 	random_state.add_ptr = 0;
 	random_state.entropy_count = 0;
-	random_state.pool = random_pool;
 	extract_timer_state.dont_count_entropy = 1;
 
 	for (i = 0; i < 256; i++)
 		arc4random_state.s[i] = i;
 	microtime (&tv);
 	arc4_init (&arc4random_state, (u_char *) &tv, sizeof (tv));
+	rnd_attached = 1;
 }
 
 int
@@ -446,34 +444,36 @@ randomclose(dev, flag, mode, p)
  * get affected. --- TYT, 10/11/95
  */
 static __inline void
-add_entropy_word(r, input)
-	struct random_bucket	*r;
+add_entropy_word(input)
 	const u_int32_t		input;
 {
 	u_int		i;
 	u_int32_t	w;
 
-	w = (input << r->input_rotate) | (input >> (32 - r->input_rotate));
-	i = r->add_ptr = (r->add_ptr - 1) & (POOLWORDS-1);
+	w = (input << random_state.input_rotate) |
+		(input >> (32 - random_state.input_rotate));
+	i = random_state.add_ptr = (random_state.add_ptr - 1) & (POOLWORDS-1);
 	if (i)
-		r->input_rotate = (r->input_rotate + 7) & 31;
+		random_state.input_rotate =
+			(random_state.input_rotate + 7) & 31;
 	else
 		/*
 		 * At the beginning of the pool, add an extra 7 bits
 		 * rotation, so that successive passes spread the
 		 * input bits across the pool evenly.
 		 */
-		r->input_rotate = (r->input_rotate + 14) & 31;
+		random_state.input_rotate =
+			(random_state.input_rotate + 14) & 31;
 
 	/* XOR in the various taps */
-	w ^= r->pool[(i+TAP1)&(POOLWORDS-1)];
-	w ^= r->pool[(i+TAP2)&(POOLWORDS-1)];
-	w ^= r->pool[(i+TAP3)&(POOLWORDS-1)];
-	w ^= r->pool[(i+TAP4)&(POOLWORDS-1)];
-	w ^= r->pool[(i+TAP5)&(POOLWORDS-1)];
-	w ^= r->pool[i];
+	w ^= random_state.pool[(i+TAP1)&(POOLWORDS-1)];
+	w ^= random_state.pool[(i+TAP2)&(POOLWORDS-1)];
+	w ^= random_state.pool[(i+TAP3)&(POOLWORDS-1)];
+	w ^= random_state.pool[(i+TAP4)&(POOLWORDS-1)];
+	w ^= random_state.pool[(i+TAP5)&(POOLWORDS-1)];
+	w ^= random_state.pool[i];
 	/* Rotate w left 1 bit (stolen from SHA) and store */
-	r->pool[i] = (w << 1) | (w >> 31);
+	random_state.pool[i] = (w << 1) | (w >> 31);
 }
 
 /*
@@ -489,8 +489,7 @@ add_entropy_word(r, input)
  *
  */
 void
-add_timer_randomness(r, state, num)
-	struct random_bucket	*r;
+add_timer_randomness(state, num)
 	struct timer_rand_state	*state;
 	u_int	num;
 {
@@ -502,8 +501,8 @@ add_timer_randomness(r, state, num)
 	microtime(&tv);
 	time = tv.tv_usec ^ tv.tv_sec;
 
-	add_entropy_word(r, (u_int32_t)num);
-	add_entropy_word(r, time);
+	add_entropy_word((u_int32_t)num);
+	add_entropy_word(time);
 
 	/*
 	 * Calculate number of bits of randomness we probably
@@ -523,19 +522,19 @@ add_timer_randomness(r, state, num)
 		for (nbits = 0; delta; nbits++)
 			delta >>= 1;
 
-		r->entropy_count += nbits;
+		random_state.entropy_count += nbits;
 	
 		/* Prevent overflow */
-		if (r->entropy_count > POOLBITS)
-			r->entropy_count = POOLBITS;
+		if (random_state.entropy_count > POOLBITS)
+			random_state.entropy_count = POOLBITS;
 	}
 
-	if (r->entropy_count > 8 && rnd_sleep != 0) {
+	if (random_state.entropy_count > 8 && rnd_sleep != 0) {
 		rnd_sleep--;
 #ifdef	DEBUG
 		if (rnd_debug & RD_WAIT)
 			printf("rnd: wakeup[%d]{%u}\n",
-				rnd_sleep, r->entropy_count);
+				rnd_sleep, random_state.entropy_count);
 #endif
 		wakeup(&rnd_sleep);
 	}
@@ -545,14 +544,22 @@ void
 add_mouse_randomness(mouse_data)
 	u_int32_t	mouse_data;
 {
-	add_timer_randomness(&random_state, &mouse_timer_state, mouse_data);
+	/* Has randomattach run yet?  */
+	if (!rnd_attached)
+		return;
+
+	add_timer_randomness(&mouse_timer_state, mouse_data);
 }
 
 void
 add_net_randomness(isr)
 	int	isr;
 {
-	add_timer_randomness(&random_state, &net_timer_state, ENT_NET + isr);
+	/* Has randomattach run yet?  */
+	if (!rnd_attached)
+		return;
+
+	add_timer_randomness(&net_timer_state, ENT_NET + isr);
 }
 
 void
@@ -562,7 +569,7 @@ add_disk_randomness(n)
 	u_int8_t c;
 
 	/* Has randomattach run yet?  */
-	if (random_state.pool == NULL)
+	if (!rnd_attached)
 		return;
 
 	c = n & 0xff;
@@ -572,7 +579,7 @@ add_disk_randomness(n)
 	c ^= n & 0xff;
 	n >>= 8;
 	c ^= n & 0xff;
-	add_timer_randomness(&random_state, &disk_timer_state, ENT_DISK + c);
+	add_timer_randomness(&disk_timer_state, ENT_DISK + c);
 }
 
 void
@@ -580,10 +587,10 @@ add_tty_randomness(c)
 	int	c;
 {
 	/* Has randomattach run yet?  */
-	if (random_state.pool == NULL)
+	if (!rnd_attached)
 		return;
 
-	add_timer_randomness(&random_state, &tty_timer_state, ENT_TTY + c);
+	add_timer_randomness(&tty_timer_state, ENT_TTY + c);
 }
 
 #if POOLWORDS % 16
@@ -596,42 +603,41 @@ add_tty_randomness(c)
  * number of bytes that are actually obtained.
  */
 static __inline int
-extract_entropy(r, buf, nbytes)
-	struct random_bucket *r;
-	char	*buf;
+extract_entropy(buf, nbytes)
+	register char	*buf;
 	int	nbytes;
 {
 	int	ret, i;
 	MD5_CTX tmp;
 	
-	add_timer_randomness(r, &extract_timer_state, nbytes);
+	add_timer_randomness(&extract_timer_state, nbytes);
 	
 	/* Redundant, but just in case... */
-	if (r->entropy_count > POOLBITS) 
-		r->entropy_count = POOLBITS;
+	if (random_state.entropy_count > POOLBITS) 
+		random_state.entropy_count = POOLBITS;
 
 	ret = nbytes;
-	if (r->entropy_count / 8 >= nbytes)
-		r->entropy_count -= nbytes*8;
+	if (random_state.entropy_count / 8 >= nbytes)
+		random_state.entropy_count -= nbytes*8;
 	else
-		r->entropy_count = 0;
+		random_state.entropy_count = 0;
 
 	while (nbytes) {
 		/* Hash the pool to get the output */
 		MD5Init(&tmp);
 
 		for (i = 0; i < POOLWORDS; i += 16)
-			MD5Update(&tmp, (u_int8_t*)r->pool+i, 16);
+			MD5Update(&tmp, (u_int8_t*)random_state.pool+i, 16);
 
 		/* Modify pool so next hash will produce different results */
 		for (i = 0; i < sizeof(tmp.buffer)/sizeof(tmp.buffer[0]); i++)
-			add_entropy_word(r, tmp.buffer[i]);
+			add_entropy_word(tmp.buffer[i]);
 		/*
 		 * Run the MD5 Transform one more time, since we want
 		 * to add at least minimal obscuring of the inputs to
 		 * add_entropy_word().  --- TYT
 		 */
-		MD5Update(&tmp, (u_int8_t*)r->pool, 16);
+		MD5Update(&tmp, (u_int8_t*)random_state.pool, 16);
 
 		/*
 		 * In case the hash function has some recognizable
@@ -650,7 +656,7 @@ extract_entropy(r, buf, nbytes)
 		bcopy((caddr_t)&tmp.buffer, buf, i);
 		nbytes -= i;
 		buf += i;
-		add_timer_randomness(r, &extract_timer_state, nbytes);
+		add_timer_randomness(&extract_timer_state, nbytes);
 	}
 
 	/* Wipe data from memory */
@@ -669,7 +675,7 @@ get_random_bytes(buf, nbytes)
 	void	*buf;
 	size_t	nbytes;
 {
-	extract_entropy(&random_state, (char *) buf, nbytes);
+	extract_entropy((char *) buf, nbytes);
 }
 
 int
@@ -720,7 +726,7 @@ randomread(dev, uio, ioflag)
 				printf("rnd: %u possible output\n", n);
 #endif
 		case RND_URND:
-			n = extract_entropy(&random_state, (char *)buf, n);
+			n = extract_entropy((char *)buf, n);
 #ifdef	DEBUG
 			if (rnd_debug & RD_OUTPUT)
 				printf("rnd: %u bytes for output\n", n);
@@ -764,7 +770,7 @@ randomselect(dev, rw, p)
 }
 
 static __inline void
-arc4_stir (struct arc4_stream *as)
+arc4_stir (register struct arc4_stream *as)
 {
 	u_char buf[256];
 
@@ -799,7 +805,7 @@ randomwrite(dev, uio, flags)
 				((u_char *) buf)[n++] = 0;
 			n >>= 2;
 			for (i = 0; i < n; i++)
-				add_entropy_word(&random_state, buf[i]);
+				add_entropy_word(buf[i]);
 		}
 	}
 
