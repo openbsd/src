@@ -1,4 +1,4 @@
-.\"     $OpenBSD: harmony.4,v 1.5 2003/06/02 18:51:33 jason Exp $
+.\"     $OpenBSD: harmony.4,v 1.6 2003/08/20 18:43:24 mickey Exp $
 .\"
 .\"
 .\" Copyright (c) 2003 Jason L. Wright (jason@thought.net)
@@ -60,14 +60,30 @@ models
 .Nm
 also provides two additional channels for an add-on
 card with two fax/voice/modems.
+.Pp
+One of the hardware registers reflects the state of the
+.Tn CHI
+bus that is used to communicate with the codec and thus
+being sampled at a low accuracy secondary frequency
+(such as
+.Xr timeout 9 )
+produces poor quality random bit stream that is fed into the
+entropy pool of
+.Xr random 4 .
 .Sh SEE ALSO
 .Xr ioctl 2 ,
 .Xr audio 4 ,
 .Xr gsc 4 ,
-.Xr intro 4
+.Xr intro 4 ,
+.Xr random 4
 .Sh HISTORY
 .Ox
 support for
 .Nm
 first appeared in
 .Ox 3.3 .
+.Sh CAVEATS
+To trigger entropy collection
+.Tn CHI
+bus has to be programmed into the data mode that happens once
+a single buffer of data has been played or recorded.
