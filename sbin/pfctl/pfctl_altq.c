@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.37 2003/02/25 12:03:02 henning Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.38 2003/03/02 11:24:58 henning Exp $	*/
 
 /*
  * Copyright (C) 2002
@@ -139,7 +139,8 @@ qname_to_qid(const char *qname, const char *ifname)
 	struct pf_altq	*altq;
 
 	TAILQ_FOREACH(altq, &altqs, entries) {
-		if (strncmp(ifname, altq->ifname, IFNAMSIZ) == 0 &&
+		if ((ifname == NULL ||
+		    strncmp(ifname, altq->ifname, IFNAMSIZ) == 0) &&
 		    strncmp(qname, altq->qname, PF_QNAME_SIZE) == 0)
 			return (altq->qid);
 	}
@@ -308,6 +309,7 @@ eval_pfqueue(struct pfctl *pf, struct pf_altq *pa, u_int32_t bw_absolute,
 		errx(1, "altq not defined on %s", pa->ifname);
 	pa->scheduler = if_pa->scheduler;
 	pa->ifbandwidth = if_pa->ifbandwidth;
+	pa->qid = qname_to_qid(pa->qname, NULL);
 
 	parent = NULL;
 	if (pa->parent[0] != 0) {
