@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphy.c,v 1.1 2000/08/28 05:22:25 jason Exp $	*/
+/*	$OpenBSD: brgphy.c,v 1.2 2000/08/29 19:00:36 jason Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -126,6 +126,9 @@ brgphy_service(sc, mii, cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int reg;
+
+	if ((sc->mii_dev.dv_flags & DVF_ACTIVE) == 0)
+		return (ENXIO);
 
 	switch (cmd) {
 	case MII_POLLSTAT:

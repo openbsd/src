@@ -1,4 +1,4 @@
-/*	$OpenBSD: xmphy.c,v 1.1 2000/08/28 13:40:23 jason Exp $	*/
+/*	$OpenBSD: xmphy.c,v 1.2 2000/08/29 19:00:36 jason Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -104,7 +104,7 @@ xmphy_attach(parent, self, aux)
 	sc->mii_service = xmphy_service;
 	sc->mii_status = xmphy_status;
 	sc->mii_pdata = mii;
-	sc->mii_flags |= MIIF_NOISOLATE;
+	sc->mii_flags |= MIIF_NOISOLATE | mii->mii_flags;
 
 #define	ADD(m, c)	ifmedia_add(&mii->mii_media, (m), (c), NULL)
 
@@ -129,6 +129,9 @@ xmphy_service(sc, mii, cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int reg;
+
+	if ((sc->mii_dev.dv_flags & DVF_ACTIVE) == 0)
+		return (ENXIO);
 
 	switch (cmd) {
 	case MII_POLLSTAT:
