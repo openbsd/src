@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.22 1999/10/27 01:22:53 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.23 1999/11/14 02:33:44 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -839,19 +839,20 @@ pmap_init(void)
 	/* allocate the rest of the steal area for pv_pages */
 #ifdef PMAPDEBUG
 	printf("pmap_init: %d pv_pages @ %x allocated\n",
-	       (virtual_avail - virtual_steal) / sizeof(struct pv_page),
-	       virtual_steal);
+	    (virtual_avail - virtual_steal) / sizeof(struct pv_page),
+	    virtual_steal);
 #endif
-	while ((pvp = (struct pv_page *)pmap_steal_memory(
-			sizeof(*pvp), NULL, NULL)))
+	while ((pvp = (struct pv_page *)
+	    pmap_steal_memory(sizeof(*pvp), NULL, NULL)))
 		pmap_insert_pvp(pvp, 1);
 
 #ifdef PMAPDEBUG
 	pmapdebug = opmapdebug /* | PDB_VA | PDB_PV */;
 #endif
-
 	TAILQ_INIT(&pmap_freelist);
 	pid_counter = HPPA_PID_KERNEL + 2;
+
+	pmap_initialized = TRUE;
 
         /*
 	 * map SysCall gateways page once for everybody
@@ -859,10 +860,7 @@ pmap_init(void)
 	 *     if we have one at SYSCALLGATE address (;
 	 */
 	pmap_enter_pv(pmap_kernel(), SYSCALLGATE, TLB_GATE_PROT,
-	tlbbtop((paddr_t)&gateway_page),
-	pmap_find_va(HPPA_SID_KERNEL, SYSCALLGATE));
-
-	pmap_initialized = TRUE;
+	    tlbbtop((paddr_t)&gateway_page), pmap_alloc_pv());
 }
 
 /*
@@ -877,7 +875,7 @@ pmap_pinit(pmap)
 
 #ifdef PMAPDEBUG
 	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_pinit(%p)\n", pmap);
+		printf("pmap_pinit(%p), pid=%x\n", pmap, pmap->pmap_pid);
 #endif
 
 	if (!pmap->pmap_pid) {
@@ -895,14 +893,14 @@ pmap_pinit(pmap)
 		simple_unlock(&sid_pid_lock);
 
 		if (pid == 0)
-			printf("Warning no more pmap ids\n");
+			panic ("no more pmap ids\n");
 
-		pmap->pmap_pid = pid;
 		simple_lock_init(&pmap->pmap_lock);
 	}
 
 	simple_lock(&pmap->pmap_lock);
-	pmap->pmap_space = pmap->pmap_pid >> 1;
+	pmap->pmap_pid = pid;
+	pmap->pmap_space = (pmap->pmap_pid >> 1) - 1;
 	pmap->pmap_refcnt = 1;
 	pmap->pmap_stats.resident_count = 0;
 	pmap->pmap_stats.wired_count = 0;
@@ -910,15 +908,10 @@ pmap_pinit(pmap)
 }
 
 /*
- * pmap_create(size)
+ * pmap_create()
  *
  * Create and return a physical map.
- *
- * If the size specified for the map is zero, the map is an actual physical
- * map, and may be referenced by the hardware.
- *
- * If the size specified is non-zero, the map will be used in software 
- * only, and is bounded by that size.
+ * the map is an actual physical map, and may be referenced by the hardware.
  */
 pmap_t
 pmap_create()
@@ -1067,8 +1060,7 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 		 * Flush the current TLB entry to force
 		 * a fault and reload.
 		 */
-		pdtlb(space, va);
-		pitlb(space, va);
+		pmap_clear_pv(pa, NULL);
 	}
 
 	/*
@@ -1377,7 +1369,7 @@ pmap_zero_page(pa)
 	register paddr_t pa;
 {
 	extern int dcache_line_mask;
-	register int psw;
+	/* register int psw; */
 	register paddr_t pe = pa + PAGE_SIZE;
 
 #ifdef PMAPDEBUG
@@ -1387,21 +1379,20 @@ pmap_zero_page(pa)
 
 	pmap_clear_pv(pa, NULL);
 
-	rsm(PSW_I,psw);
+	/* rsm(PSW_I,psw); */
 	while (pa < pe) {
 		__asm volatile("stwas,ma %%r0,4(%0)\n\t"
-			       : "=r" (pa):: "memory");
+			       : "=r" (pa) : "0" (pa) : "memory");
 
 		if (!(pa & dcache_line_mask))
 			__asm volatile("rsm %1, %%r0\n\t"
 				       "fdc %2(%0)\n\t"
 				       "ssm %1, %%r0"
-				       : "=r" (pa): "i" (PSW_D), "r" (-4)
-				       : "memory");
+			    :: "r" (pa), "i" (PSW_D), "r" (-4) : "memory");
 	}
 
 	sync_caches();
-	mtsm(psw);
+	/* mtsm(psw); */
 }
 
 /*
@@ -1652,15 +1643,15 @@ pmap_hptdump()
 	db_printf("HPT dump %p-%p:\n", hpt, ehpt);
 	for (; hpt < ehpt; hpt++)
 		if (hpt->hpt_valid || hpt->hpt_entry) {
-			db_printf("hpt@%p: %x{%sv=%x:%x}, prot=%x, pa=%x\n",
+			db_printf("hpt@%p: %x{%sv=%x:%x}, prot=%b, pa=%x\n",
 				  hpt, *(int *)hpt, (hpt->hpt_valid?"ok,":""),
 				  hpt->hpt_space, hpt->hpt_vpn << 9,
-				  hpt->hpt_tlbprot, hpt->hpt_tlbpage);
+				  hpt->hpt_tlbprot, TLB_BITS, hpt->hpt_tlbpage);
 			for (pv = hpt->hpt_entry; pv; pv = pv->pv_hash)
-				db_printf("    pv={%p,%x:%x,%x,%x}->%p\n",
+				db_printf("    pv={%p,%x:%x,%b,%x}->%p\n",
 					  pv->pv_pmap, pv->pv_space, pv->pv_va,
-					  pv->pv_tlbprot, pv->pv_tlbpage,
-					  pv->pv_hash);
+					  pv->pv_tlbprot, TLB_BITS,
+					  pv->pv_tlbpage, pv->pv_hash);
 		}
 }
 #endif
