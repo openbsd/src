@@ -1,5 +1,5 @@
 /* $NetBSD: loadfile.c,v 1.10 2000/12/03 02:53:04 tsutsui Exp $ */
-/* $OpenBSD: loadfile.c,v 1.3 2002/11/11 00:04:30 mickey Exp $ */
+/* $OpenBSD: loadfile.c,v 1.4 2003/05/07 18:11:37 mickey Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -359,7 +359,6 @@ elf_exec(fd, elf, marks, flags)
 			return 1;
 		}
 		sz = elf->e_shnum * sizeof(Elf_Shdr);
-
 		shp = ALLOC(sz);
 
 		if (read(fd, shp, sz) != sz) {
@@ -409,11 +408,11 @@ elf_exec(fd, elf, marks, flags)
 		}
 		if (flags & LOAD_SYM) {
 			BCOPY(shp, shpp, sz);
-			FREE(shp, sz);
 
 			if (havesyms && first == 0)
 				PROGRESS(("]"));
 		}
+		FREE(shp, sz);
 	}
 
 	/*
