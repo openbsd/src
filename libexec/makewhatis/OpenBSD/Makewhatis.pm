@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Makewhatis.pm,v 1.3 2004/08/06 16:19:42 espie Exp $
+# $OpenBSD: Makewhatis.pm,v 1.4 2004/08/07 07:52:10 espie Exp $
 # Copyright (c) 2000-2004 Marc Espie <espie@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -46,7 +46,7 @@ sub scan_manpages
 		next;
 	    }
 	}
-	if (m/\.[1-9ln][^.]*$/) {
+	if (m/\.(?:[1-9ln][^.]*|tbl)$/) {
 	    require OpenBSD::Makewhatis::Unformated;
 
 	    $subjects = OpenBSD::Makewhatis::Unformated::handle($file, $_);
