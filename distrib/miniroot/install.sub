@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.232 2002/06/11 03:12:22 krw Exp $
+#	$OpenBSD: install.sub,v 1.233 2002/06/11 04:25:49 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -338,40 +338,41 @@ quit
 __EOT
 }
 
-# $1 is relative mountpoint
+# $1 is the mountpoint the local directory will be relative to.
+# $2 is the default directory
 get_localdir() {
-	local _mp=$1 _dir=
+	local _mp=$1 _dir=$2
 
+	local_sets_dir=
 	while : ; do
-		ask "Enter the pathname where the sets are stored:" "$_dir"
-		_dir=$resp
+		ask "Enter the pathname where the sets are stored (or abort)" "$_dir"
+		case $resp in
+		abort)	return;;
+		"")	continue;;
+		*)	;;
+		esac
 
-		# Allow break-out with empty response
-		if [ -z "$_dir" ]; then
-			ask "Are you sure you don't want to set the pathname?" n
-			case $resp in
-			y*|Y*)	break
-				;;
-			*)	continue
-				;;
-			esac
-		fi
+		_dir=$_mp/$resp
 
-		if list_has_sets "`ls -l ${_mp}/${_dir}`" $THESETS
-		then
-			local_sets_dir=$_mp/$_dir
-			break
-		fi
+		if [ ! -d "$_dir" ]; then
+			echo "The directory '${_dir}' does not exist"
+		elif list_has_sets "`ls -l ${_dir}`" $THESETS; then
+			local_sets_dir=$_dir
+			return
+		else
+			cat << __EOT
+The directory
 
-		cat << __EOT
-The directory "${_mp}/${_dir}" does not exist, or does not hold any
-OpenBSD ${VERSION_MAJOR}.${VERSION_MINOR} ${MODE} sets.
+	"$_dir"
+
+does not hold any OpenBSD ${VERSION_MAJOR}.${VERSION_MINOR} ${MODE} sets.
 __EOT
+		fi
+
 		ask "Re-enter pathname?" y
 		case $resp in
 		y*|Y*)	;;
-		*)	local_sets_dir=
-			break
+		*)	break
 			;;
 		esac
 	done
@@ -1089,7 +1090,6 @@ This is an automated ${_url_type}-based installation process. You will be asked
 questions and then the files will be retrieved iteratively via ${_url_type}.
 
 __EOT
-
 	# Proxy the connections?
 	[ "$_proxy_host" ] || _proxy_host=none
 
@@ -1257,29 +1257,29 @@ __EOT
 	install_get_files_list "$_url_base" "`eval echo \$_${_url_type}_server_dir`"
 }
 
-# $1 - directory containing installation sets
-install_from_mounted_fs() {
-	local _f _get_files _file_list
+# $1 - mount point directory is relative to
+# $2 - default directory
+install_mounted_fs() {
+	local _f _file_list
 
-	if [ ! -d "$1" ]; then
-		echo "No such directory: '$1'"
-		return
-	fi
+	get_localdir "$1" "$2"
 
-	_file_list=`ls -l ${1}`
+	[ -d "$local_sets_dir" ] || return
 
-	get_sets_list "$_file_list" "$1"
+	_file_list=`ls -l ${local_sets_dir}`
+
+	get_sets_list "$_file_list" "$local_sets_dir"
 
 	[ "$_sets" ] || return
 
 	display_extract_msg
 
-	get_get_files_list "$1"
+	get_get_files_list "$local_sets_dir"
 
 	# User may have selected no files
 	[ "$_get_files" ] || return
 
-	install_get_files_list "file:$1" "$1"
+	install_get_files_list "file:$local_sets_dir" "$local_sets_dir"
 }
 
 install_cdrom() {
@@ -1385,20 +1385,14 @@ __EOT
 		return
 	fi
 
-	# Get the directory where the file lives
-	resp=
-	_directory=${VERSION_MAJOR}.${VERSION_MINOR}/${ARCH}
-	echo "Enter the directory relative to the mount point that contains"
-	ask "the file:" "$_directory"
-
-	install_from_mounted_fs "/mnt2/${resp}"
+	install_mounted_fs /mnt2 "${VERSION_MAJOR}.${VERSION_MINOR}/${ARCH}"
 	umount -f /mnt2 > /dev/null 2>&1
 }
 
 mount_a_disk() {
 	# Mount a disk on /mnt2. The set of disk devices to choose from
 	# is $_DKDEVS.
-	# returns 0 on failure.
+	# returns 0 on success, 1 on failure
 
 	local _drive _def_partition _partition_range _partition
 	local _fstype _fsopts
@@ -1416,13 +1410,13 @@ __EOT
 
 	case $resp in
 	abort)	echo "Aborting."
-		return 0
+		return 1
 		;;
 	*)	if isin $resp $_DKDEVS ; then
 			_drive=$resp
 		else
 			echo "\nThe disk $resp does not exist.\nAborting."
-			return 0
+			return 1
 		fi
 		;;
 	esac
@@ -1449,7 +1443,7 @@ __EOT
 			sed -n 's/^\[\(.\).*\]/\1/p'`
 		if [ -z "$_def_partition" ]; then
 			echo "There are no usable partitions on that disk"
-			return 0
+			return 1
 		fi
 	fi
 
@@ -1499,23 +1493,17 @@ __EOT
 	# Mount the disk read-only
 	if ! mount $_fstype -o ro,$_fsopts /dev/${_drive}${_partition} /mnt2; then
 		echo "Cannot mount disk. Aborting."
-		return 0
+		return 1
 	fi
 
-	return 1
+	return 0
 }
 
 install_disk() {
-	if mount_a_disk ; then
-		return
+	if mount_a_disk; then
+		install_mounted_fs /mnt2
+		umount -f /mnt2 > /dev/null 2>&1
 	fi
-
-	# Get the directory where the file lives
-	echo "Enter the directory relative to the mount point that"
-	ask "contains the file:" .
-
-	install_from_mounted_fs "/mnt2/${resp}"
-	umount -f /mnt2 > /dev/null 2>&1
 }
 
 install_nfs() {
@@ -1556,14 +1544,7 @@ install_nfs() {
 		return
 	fi
 
-	# Get the directory where the file lives
-	resp=
-	while [ -z "$resp" ]; do
-		echo "Enter the directory relative to the mount point that"
-		ask "contains the file:" .
-	done
-
-	install_from_mounted_fs "/mnt2/${resp}"
+	install_mounted_fs /mnt2
 	umount -f /mnt2 > /dev/null 2>&1
 }
 
