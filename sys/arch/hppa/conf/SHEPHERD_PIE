@@ -1,4 +1,4 @@
-#	$OpenBSD: SHEPHERD_PIE,v 1.16 2002/03/01 23:27:57 mickey Exp $
+#	$OpenBSD: SHEPHERD_PIE,v 1.17 2002/04/22 01:42:35 mickey Exp $
 #
 # Diskless kernel config
 #
@@ -110,9 +110,14 @@ option	EISAVERBOSE
 #qbox*	at hil? code 7	# quadrature
 
 #medusa* at gsc? irq 4	# FDDI
-com0	at gsc0 irq 5	# RS/232 serial port
-com1	at gsc1 irq 5	# RS/232 serial port
-com2	at gsc0 irq 13	# only on asp0 w/o harmony
+
+# RS/232 serial ports
+com0	at gsc0 offset 0x5000 irq 5	# on lasi
+com1	at gsc1 offset 0x5000 irq 5
+com0	at gsc0 offset 0x23000 irq 5	# on asp
+com1	at gsc0 offset 0x22000 irq 6
+com2	at gsc0 offset 0x0 irq 13	# only on asp0 w/o audio (off ?)
+
 lpt0	at gsc? irq 7	# both com and lpt are on WD16C552
 ie0	at gsc0 irq 8	# 82C5[89]6 ether
 ie1	at gsc1 irq 8
