@@ -1,4 +1,4 @@
-/*	$OpenBSD: key.c,v 1.4 2001/07/02 02:28:35 deraadt Exp $	*/
+/*	$OpenBSD: key.c,v 1.5 2001/10/26 16:02:20 ho Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -25,9 +25,10 @@
 #include "sysdep.h"
 
 #include "dyn.h"
-#include "util.h"
-#include "log.h"
 #include "key.h"
+#include "libcrypto.h"
+#include "log.h"
+#include "util.h"
 #include "x509.h"
 
 void
