@@ -1,4 +1,4 @@
-.\"	$NetBSD: lint.1,v 1.2 1995/07/03 21:25:17 cgd Exp $
+.\"	$NetBSD: lint.1,v 1.3 1995/10/23 13:45:31 jpo Exp $
 .\"
 .\" Copyright (c) 1994, 1995 Jochen Pohl
 .\" All Rights Reserved.
@@ -40,7 +40,7 @@
 .Op Fl abceghprvxzHFV
 .Op Fl s Ns | Ns Fl t
 .Op Fl i Ns | Ns Fl nu
-.Op Fl D Ns Ar name Ns Bq =def
+.Op Fl D Ns Ar name Ns Op =def
 .Op Fl U Ns Ar name
 .Op Fl I Ns Ar directory
 .Op Fl L Ns Ar directory
@@ -51,7 +51,7 @@
 .Op Fl abceghprvzHFV
 .Op Fl s Ns | Ns Fl t
 .Fl C Ns Ar library
-.Op Fl D Ns Ar name Ns Bq =def
+.Op Fl D Ns Ar name Ns Op =def
 .Op Fl I Ns Ar directory
 .Op Fl U Ns Ar name
 .Ar
@@ -176,12 +176,23 @@ and combinations of
 and
 .Sy integer Ns -Types.
 .It Fl g
-Print warnings instead of errors for some extensions of
+Don't print warnings for some extensions of
 .Xr gcc 1
-to the C language.
-Currently these are nonconstant initialzers in automatic aggregat
-initialisations, arithmetic on pointer to void, zero sized
-structures and subscripting of non-lvalue arrays.
+to the C language. Currently these are nonconstant initializers in
+automatic aggregate initializations, arithmetic on pointer to void,
+zero sized structures, subscripting of non-lvalue arrays, prototypes
+overriding old style function declarations and long long
+integer types. The
+.Fl g
+flag also turns on the keywords
+.Sy asm
+and
+.Sy inline
+(alternate keywords with leading underscores for both
+.Sy asm
+and
+.Sy inline
+are always available).
 .It Fl h
 Apply a number of heuristic tests to attempt to intuit
 bugs, improve style, and reduce waste.
@@ -206,17 +217,31 @@ previous declaration.
 .It Fl s
 Strict ANSI C mode. Issue warnings and errors required by ANSI C.
 Also do not produce warnings for constructs which behave
-differently in traditional C and ANSI C.
+differently in traditional C and ANSI C. With the
+.Fl s
+flag,
+.Li __STRICT_ANSI__
+is a predefined preprocessor macro.
 .It Fl t
 Traditional C mode.
 .Li __STDC__
-is not predefined in this mode. Warnings are printed for
-constructs not allowed in traditional C. Warnings for constructs
-which behave differently in traditional C and ANSI C are
-suppressed.
+is not predefined in this mode. Warnings are printed for constructs
+not allowed in traditional C. Warnings for constructs which behave
+differently in traditional C and ANSI C are suppressed. Preprocessor
+macros describing the machine type (e.g.
+.Li sun3 Ns )
+and machine architecture (e.g.
+.Li m68k Ns )
+are defined without leading and trailing underscores. The keywords
+.Sy const Ns ,
+.Sy volatile
+and
+.Sy signed
+are not available in traditional C mode (although the alternate
+keywords with leading underscores still are).
 .It Fl u
 Do not complain about functions and external variables used
-and not defined, or defined and not used. (this is suitable
+and not defined, or defined and not used (this is suitable
 for running
 .Nm
 on a subset of files comprising part of a larger program).
@@ -235,7 +260,7 @@ Create a
 .Nm
 library with the name
 .Pa llib-l Ns Ar library Ns Pa .ln .
-These library is built of all
+This library is built from all
 .Pa \&.c
 and
 .Pa \&.ln
@@ -245,7 +270,7 @@ variables in these files are written to the newly created library,
 checks all input files, including libraries specified with the
 .Fl l
 option, for mutual compatibility.
-.It Fl D Ns Ar name Ns Bq =def
+.It Fl D Ns Ar name Ns Op =def
 Define
 .Ar name
 for
@@ -273,7 +298,7 @@ Print pathnames of files.
 .Nm
 normally prints the filename without the path.
 .It Fl H
-If an complaint stems from an included file
+If a complaint stems from an included file
 .Nm
 prints the name of the included file instead of the source file name
 followed by a question mark.
@@ -300,7 +325,7 @@ Remove any initial definition of
 .Ar name
 for the preprocessor.
 .It Fl V
-Print the command lines constructred by the controller program to
+Print the command lines constructed by the controller program to
 run the C preprocessor and
 .Nm lint Ns 's
 first and second pass.
@@ -324,8 +349,8 @@ is taken to be 0 (this option acts like the
 .Fl v
 option for the next function).
 .It Li /* CONSTCOND */ No or Xo
-.Li /* CONSTANDCOND */ No or
-.Li /* CONSTANDCONDITION */
+.Li /* CONSTANTCOND */ No or
+.Li /* CONSTANTCONDITION */
 .Xc
 suppress complaints about constant operands for the next expression.
 .It Li /*\ FALLTHRU\ */ No or Xo
@@ -349,9 +374,11 @@ Also shut off complaints about unused function arguments.
 .Op Ar comment
 .Li */
 .Xc
-suppresses any intra-file warning except those dealing with
+Suppresses any intra-file warning except those dealing with
 unused variables or functions. This directive should be placed
 on the line immediately preceding where the lint warning occured.
+.It Li /* LONGLONG */
+Suppress complaints about use of long long integer types.
 .It Li /* NOTREACHED */
 At appropriate points, inhibit complaints about unreachable code.
 (This comment is typically placed just after calls to functions
@@ -426,7 +453,7 @@ options. this will print all the inter-file inconsistencies. This
 scheme works well with
 .Xr make 1 ;
 it allows
-.Xr make
+.Xr make 1
 to be used to
 .Nm
 only the source files that have been modified since the last

@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.7 1995/10/02 17:29:59 jpo Exp $	*/
+/*	$NetBSD: scan.l,v 1.8 1995/10/23 13:38:51 jpo Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: scan.l,v 1.7 1995/10/02 17:29:59 jpo Exp $";
+static char rcsid[] = "$NetBSD: scan.l,v 1.8 1995/10/23 13:38:51 jpo Exp $";
 #endif
 
 #include <stdlib.h>
@@ -741,7 +741,7 @@ ccon()
 static int
 wccon()
 {
-	static	char buf[MB_CUR_MAX + 1];
+	static	char buf[MB_LEN_MAX + 1];
 	int	i, c;
 	wchar_t	wc;
 
