@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_x25subr.c,v 1.16 2004/06/21 23:50:37 tholo Exp $	*/
+/*	$OpenBSD: if_x25subr.c,v 1.17 2004/07/18 15:44:36 henning Exp $	*/
 /*	$NetBSD: if_x25subr.c,v 1.13 1996/05/09 22:29:25 scottr Exp $	*/
 
 /*
@@ -69,17 +69,6 @@
 #include <netns/ns.h>
 #include <netns/ns_if.h>
 #endif
-
-#ifdef ISO
-#include <netiso/argo_debug.h>
-#include <netiso/iso.h>
-#include <netiso/iso_var.h>
-#ifdef TPCONS
-#include <netiso/tp_param.h>
-#include <netiso/tp_var.h>
-#endif
-#endif
-
 
 LIST_HEAD(, llinfo_x25) llinfo_x25;
 #ifndef _offsetof
@@ -200,12 +189,6 @@ x25_ifinput(m, v)
 		inq = &nsintrq;
 		break;
 
-#endif
-#ifdef	ISO
-	case AF_ISO:
-		isr = NETISR_ISO;
-		inq = &clnlintrq;
-		break;
 #endif
 	default:
 		m_freem(m);
@@ -713,9 +696,6 @@ struct x25_dgproto {
 	u_char          spilen;
 	int             (*f)(struct mbuf *, void *);
 } x25_dgprototab[] = {
-#if defined(ISO) && defined(TPCONS)
-	{ 0x0, 0, tp_incoming },
-#endif
 	{ 0xcc, 1, x25_dgram_incoming },
 	{ 0xcd, 1, x25_dgram_incoming },
 	{ 0x81, 1, x25_dgram_incoming },
