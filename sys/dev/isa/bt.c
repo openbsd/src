@@ -100,6 +100,13 @@ struct bt_mbx {
 
 #define KVTOPHYS(x)	vtophys(x)
 
+#include "aha.h"
+#include "bt.h"
+#if NAHA > 0
+int btports[NBT];
+int nbtports;
+#endif
+
 struct bt_softc {
 	struct device sc_dev;
 	struct isadev sc_id;
@@ -255,7 +262,8 @@ bt_cmd(iobase, sc, icnt, ibuf, ocnt, obuf)
 			delay(50);
 		}
 		if (!i) {
-			if (opcode != BT_INQUIRE_REVISION)
+			if (opcode != BT_INQUIRE_REVISION &&
+			    opcode != BT_INQUIRE_REVISION_3)
 				printf("%s: bt_cmd, cmd/data port full\n", name);
 			outb(iobase + BT_CTRL_PORT, BT_CTRL_SRST);
 			return ENXIO;
@@ -274,7 +282,8 @@ bt_cmd(iobase, sc, icnt, ibuf, ocnt, obuf)
 			delay(50);
 		}
 		if (!i) {
-			if (opcode != BT_INQUIRE_REVISION)
+			if (opcode != BT_INQUIRE_REVISION &&
+			    opcode != BT_INQUIRE_REVISION_3)
 				printf("%s: bt_cmd, cmd/data port empty %d\n",
 				    name, ocnt);
 			outb(iobase + BT_CTRL_PORT, BT_CTRL_SRST);
@@ -817,6 +826,8 @@ bt_find(ia, sc)
 	u_char sts;
 	struct bt_extended_inquire inquire;
 	struct bt_config config;
+	struct bt_revision revision;
+	struct bt_digit digit;
 	int irq, drq;
 
 	/*
@@ -845,13 +856,13 @@ bt_find(ia, sc)
 	 * Check that we actually know how to use this board.
 	 */
 	delay(1000);
+	bzero(&inquire, sizeof inquire);
 	inquire.cmd.opcode = BT_INQUIRE_EXTENDED;
 	inquire.cmd.len = sizeof(inquire.reply);
 	bt_cmd(iobase, sc, sizeof(inquire.cmd), (u_char *)&inquire.cmd,
 	    sizeof(inquire.reply), (u_char *)&inquire.reply);
 	switch (inquire.reply.bus_type) {
 	case BT_BUS_TYPE_24BIT:
-		/* XXXX How do we avoid conflicting with the aha1542 probe? */
 	case BT_BUS_TYPE_32BIT:
 		break;
 	case BT_BUS_TYPE_MCA:
@@ -861,6 +872,16 @@ bt_find(ia, sc)
 		printf("bt_find: illegal bus type %c\n", inquire.reply.bus_type);
 		return 1;
 	}
+
+#if NAHA > 0
+	/* Adaptec 1542 cards do not support this */
+	digit.reply.digit = '@';
+	digit.cmd.opcode = BT_INQUIRE_REVISION_3;
+	bt_cmd(iobase, sc, sizeof(digit.cmd), (u_char *)&digit.cmd,
+	    sizeof(digit.reply), (u_char *)&digit.reply);
+	if (digit.reply.digit == '@')
+		return 1;
+#endif
 
 	/*
 	 * Assume we have a board at this stage setup dma channel from
@@ -933,6 +954,10 @@ bt_find(ia, sc)
 			return 1;
 	}
 
+#if NAHA > 0
+	/* XXXX To avoid conflicting with the aha1542 probe */
+	btports[nbtports++] = iobase;
+#endif
 	return 0;
 }
 
