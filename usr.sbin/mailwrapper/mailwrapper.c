@@ -1,4 +1,4 @@
-/*	$OpenBSD: mailwrapper.c,v 1.11 2002/12/09 11:05:22 deraadt Exp $	*/
+/*	$OpenBSD: mailwrapper.c,v 1.12 2002/12/20 15:29:54 millert Exp $	*/
 /*	$NetBSD: mailwrapper.c,v 1.2 1999/02/20 22:10:07 thorpej Exp $	*/
 
 /*
@@ -52,7 +52,6 @@ int main(int, char *[], char *[]);
 
 static void initarg(struct arglist *);
 static void addarg(struct arglist *, const char *, int);
-static void freearg(struct arglist *, int);
 
 extern const char *__progname;	/* from crt0.o */
 
@@ -90,16 +89,6 @@ addarg(struct arglist *al, const char *arg, int copy)
 		al->argv[al->argc++] = (char *)arg;
 }
 
-static void
-freearg(struct arglist *al, int copy)
-{
-	size_t i;
-	if (copy)
-		for (i = 0; i < al->argc; i++)
-			free(al->argv[i]);
-	free(al->argv);
-}
-
 int
 main(int argc, char *argv[], char *envp[])
 {
@@ -119,7 +108,6 @@ main(int argc, char *argv[], char *envp[])
 		    _PATH_MAILERCONF, _PATH_DEFAULTMTA);
 		closelog();
 		execve(_PATH_DEFAULTMTA, al.argv, envp);
-		freearg(&al, 0);
 		err(1, "mailwrapper: execing %s", _PATH_DEFAULTMTA);
 		/*NOTREACHED*/
 	}
@@ -166,13 +154,9 @@ main(int argc, char *argv[], char *envp[])
 	addarg(&al, NULL, 0);
 
 	execve(to, al.argv, envp);
-	freearg(&al, 0);
-	free(line);
 	err(1, "mailwrapper: execing %s", to);
 	/*NOTREACHED*/
 parse_error:
-	freearg(&al, 0);
-	free(line);
 	errx(1, "mailwrapper: parse error in %s at line %lu",
 	    _PATH_MAILERCONF, (u_long)lineno);
 	/*NOTREACHED*/
