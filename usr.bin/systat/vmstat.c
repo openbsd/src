@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmstat.c,v 1.45 2004/02/15 22:56:12 tedu Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.46 2004/04/23 04:15:27 tedu Exp $	*/
 /*	$NetBSD: vmstat.c,v 1.5 1996/05/10 23:16:40 thorpej Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-static char rcsid[] = "$OpenBSD: vmstat.c,v 1.45 2004/02/15 22:56:12 tedu Exp $";
+static char rcsid[] = "$OpenBSD: vmstat.c,v 1.46 2004/04/23 04:15:27 tedu Exp $";
 #endif /* not lint */
 
 /*
@@ -363,10 +363,15 @@ showkre(void)
 	float f1, f2;
 	int psiz, inttotal;
 	int i, l, c;
-	static int failcnt = 0;
+	static int failcnt = 0, first_run = 0;
 
-	if (state == TIME)
+	if (state == TIME) {
 		dkswap();
+		if (!first_run) {
+			first_run = 1;
+			return;
+		}
+	}
 	etime = 0;
 	for (i = 0; i < CPUSTATES; i++) {
 		X(time);
