@@ -1,4 +1,4 @@
-/*	$OpenBSD: chat.c,v 1.19 2003/04/03 18:53:50 deraadt Exp $	*/
+/*	$OpenBSD: chat.c,v 1.20 2003/04/04 22:38:49 avsm Exp $	*/
 
 /*
  *	Chat -- a program for automatic session establishment (i.e. dial
@@ -83,7 +83,7 @@
 #if 0
 static char rcsid[] = "Id: chat.c,v 1.19 1998/03/24 23:57:48 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: chat.c,v 1.19 2003/04/03 18:53:50 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: chat.c,v 1.20 2003/04/04 22:38:49 avsm Exp $";
 #endif
 #endif
 
@@ -1354,7 +1354,7 @@ register char *string;
 		    struct tm* tm_now = localtime (&time_now);
 
 		    strftime (report_buffer, 20, "%b %d %H:%M:%S ", tm_now);
-		    strcat (report_buffer, report_string[n]);
+		    strlcat (report_buffer, report_string[n], sizeof(report_buffer));
 
 		    report_string[n] = (char *) NULL;
 		    report_gathering = 1;
