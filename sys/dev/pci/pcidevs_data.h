@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.218 2000/02/11 05:59:58 mickey Exp 
+ *		OpenBSD: pcidevs,v 1.219 2000/02/18 11:16:43 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -509,31 +509,31 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_ADVSYS, PCI_PRODUCT_ADVSYS_1200A,
 	    0,
-	    "Advanced System Products",
+	    "Advansys",
 	    "1200A",
 	},
 	{
 	    PCI_VENDOR_ADVSYS, PCI_PRODUCT_ADVSYS_1200B,
 	    0,
-	    "Advanced System Products",
+	    "Advansys",
 	    "1200B",
 	},
 	{
 	    PCI_VENDOR_ADVSYS, PCI_PRODUCT_ADVSYS_ULTRA,
 	    0,
-	    "Advanced System Products",
+	    "Advansys",
 	    "ABP-930/40UA",
 	},
 	{
 	    PCI_VENDOR_ADVSYS, PCI_PRODUCT_ADVSYS_WIDE,
 	    0,
-	    "Advanced System Products",
+	    "Advansys",
 	    "ABP-940UW",
 	},
 	{
 	    PCI_VENDOR_ADVSYS, PCI_PRODUCT_ADVSYS_U2W,
 	    0,
-	    "Advanced System Products",
+	    "Advansys",
 	    "ASP-3940U2W",
 	},
 	{
@@ -5501,7 +5501,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_ADVSYS, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Advanced System Products",
+	    "Advansys",
 	    NULL,
 	},
 	{

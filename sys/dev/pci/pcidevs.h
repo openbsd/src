@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.218 2000/02/11 05:59:58 mickey Exp 
+ *		OpenBSD: pcidevs,v 1.219 2000/02/18 11:16:43 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -247,7 +247,7 @@
 #define	PCI_VENDOR_FUJITSU	0x10ca		/* Fujitsu */
 #define	PCI_VENDOR_OMRON	0x10cb		/* Omron */
 #define	PCI_VENDOR_MENTOR	0x10cc		/* Mentor ARC */
-#define	PCI_VENDOR_ADVSYS	0x10cd		/* Advanced System Products */
+#define	PCI_VENDOR_ADVSYS	0x10cd		/* Advansys */
 #define	PCI_VENDOR_RADIUS	0x10ce		/* Radius */
 #define	PCI_VENDOR_CITICORP	0x10cf		/* Citicorp TTI */
 #define	PCI_VENDOR_FUJITSU2	0x10d0		/* Fujitsu (2nd ID) */
