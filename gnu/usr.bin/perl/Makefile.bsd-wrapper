@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.bsd-wrapper,v 1.34 2000/04/07 02:52:54 millert Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.35 2000/04/07 14:07:30 millert Exp $
 #
 # Build wrapper for Perl 5.6.0
 #
@@ -29,7 +29,7 @@ PICFLAG=-fPIC
 .endif
 
 .ifndef NOMAN
-MANALL=	Win32.cat1 a2p.cat1 c2ph.cat1 dprofpp.cat1 find2perl.cat1 \
+MANALL=	a2p.cat1 c2ph.cat1 dprofpp.cat1 find2perl.cat1 \
         h2ph.cat1 h2xs.cat1 perl.cat1 perl5004delta.cat1 \
         perl5005delta.cat1 perlamiga.cat1 perlapi.cat1 perlapio.cat1 \
         perlbook.cat1 perlboot.cat1 perlbot.cat1 perlbug.cat1 \
@@ -109,7 +109,7 @@ MANALL=	Win32.cat1 a2p.cat1 c2ph.cat1 dprofpp.cat1 find2perl.cat1 \
         diagnostics.cat3p fields.cat3p filetest.cat3p integer.cat3p \
         less.cat3p lib.cat3p locale.cat3p open.cat3p ops.cat3p overload.cat3p \
         re.cat3p sigtrap.cat3p strict.cat3p subs.cat3p utf8.cat3p vars.cat3p \
-        warnings.cat3p
+        warnings.cat3p Win32.cat3p
 .else
 MANALL=
 .endif
@@ -191,8 +191,6 @@ x2p/cflags:
 perly.c perly.h: perly.y
 	-@true
 
-Win32.cat1: pod/Win32.pod
-	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 perl.cat1: pod/perl.pod
 	${POD2MAN} --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 perl5004delta.cat1: pod/perl5004delta.pod
@@ -775,6 +773,8 @@ utf8.cat3p: lib/utf8.pm
 vars.cat3p: lib/vars.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 warnings.cat3p: lib/warnings.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+Win32.cat3p: pod/Win32.pod
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 
 .ifdef NOMAN
