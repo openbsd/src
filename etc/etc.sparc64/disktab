@@ -1,4 +1,4 @@
-# $OpenBSD: disktab,v 1.1 2001/09/11 15:56:53 jason Exp $
+# $OpenBSD: disktab,v 1.2 2001/09/20 23:17:42 jason Exp $
 #
 #	@(#)disktab	5.5 (Berkeley) 2/27/91
 #
@@ -24,10 +24,11 @@ miniroot:\
 	:pb#0:ob#0:\
 	:pc#10240:oc#0:
 
-rdroot:\
-	:ty=ramdisk:se#512:nt#2:rm#300:ns#8:nc#1024:\
-	:pa#8192:oa#0:ta=4.2BSD:ba#8192:fa#1024: \
-	:pc#8192:oc#0:
+# Leave nc=16; adjust size using: ns
+rdroot|ramdiskroot|RAM-disk root FS image:\
+	:ty=simulated:se#512:nc#16:nt#2:ns#256:\
+	:ta=4.2BSD:oa#0:pa#8192:fa#1024:ba#8192:\
+	:ob#0:pb#0:oc#0:pc#8192:
 
 floppy|floppy3|3in|3.5in High Density Floppy:\
 	:dt=floppy:ty=floppy:se#512:nt#2:rm#300:ns#18:nc#80:\
