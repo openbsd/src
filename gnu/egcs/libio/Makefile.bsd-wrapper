@@ -1,4 +1,9 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.4 2000/05/15 06:10:20 niklas Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.5 2000/08/25 14:36:39 maja Exp $
+
+.if (${MACHINE_ARCH} == "mips")
+MAKE+= -DNOPIC
+NOPIC=
+.endif
 
 LIBIO=		io
 LIBIOSTREAM=	iostream

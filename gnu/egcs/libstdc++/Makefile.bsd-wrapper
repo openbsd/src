@@ -1,4 +1,8 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.8 2000/05/15 06:10:21 niklas Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.9 2000/08/25 14:36:39 maja Exp $
+
+.if (${MACHINE_ARCH} == "mips")
+NOPIC=
+.endif
 
 IO_DIR=		$(.CURDIR)/../libio
 LIBIBERTY_DIR=	$(.CURDIR)/../libiberty

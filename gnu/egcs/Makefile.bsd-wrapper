@@ -1,9 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.2 1999/05/28 15:08:26 espie Exp $
-
-.if (${MACHINE_ARCH} == "mips")
-MAKE+= -DNOPIC
-.endif
-
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.3 2000/08/25 14:36:38 maja Exp $
 
 SUBDIR+= libiberty libio libstdc++ libf2c libobjc
 
