@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftp.c,v 1.13 2003/06/10 22:20:53 deraadt Exp $	*/
+/*	$OpenBSD: tftp.c,v 1.14 2003/06/25 15:45:10 deraadt Exp $	*/
 /*	$NetBSD: tftp.c,v 1.5 1995/04/29 05:55:25 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tftp.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: tftp.c,v 1.13 2003/06/10 22:20:53 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: tftp.c,v 1.14 2003/06/25 15:45:10 deraadt Exp $";
 #endif /* not lint */
 
 /* Many bug fixes are from Jim Guyton <guyton@rand-unix> */
@@ -88,10 +88,7 @@ static void tpacket(const char *, struct tftphdr *, int);
  * Send the requested file.
  */
 void
-sendfile(fd, name, mode)
-	int fd;
-	char *name;
-	char *mode;
+sendfile(int fd, char *name, char *mode)
 {
 	struct tftphdr *dp, *ap;	   /* data and ack packets */
 	volatile int block, size, convert;
@@ -191,10 +188,7 @@ abort:
  * Receive a file.
  */
 void
-recvfile(fd, name, mode)
-	int fd;
-	char *name;
-	char *mode;
+recvfile(int fd, char *name, char *mode)
 {
 	struct tftphdr *dp, *ap;
 	volatile int block, size, firsttrip;
@@ -298,11 +292,8 @@ abort:						/* ok to ack, since user */
 }
 
 static int
-makerequest(request, name, tp, mode)
-	int request;
-	const char *name;
-	struct tftphdr *tp;
-	const char *mode;
+makerequest(int request, const char *name, struct tftphdr *tp,
+    const char *mode)
 {
 	char *cp;
 	int len, pktlen;
@@ -339,8 +330,7 @@ struct errmsg {
  * offset by 100.
  */
 static void
-nak(error)
-	int error;
+nak(int error)
 {
 	struct errmsg *pe;
 	struct tftphdr *tp;
@@ -367,10 +357,7 @@ nak(error)
 }
 
 static void
-tpacket(s, tp, n)
-	const char *s;
-	struct tftphdr *tp;
-	int n;
+tpacket(const char *s, struct tftphdr *tp, int n)
 {
 	static char *opcodes[] =
 	   { "#0", "RRQ", "WRQ", "DATA", "ACK", "ERROR" };
@@ -423,9 +410,7 @@ stopclock(void)
 }
 
 static void
-printstats(direction, amount)
-	const char *direction;
-	unsigned long amount;
+printstats(const char *direction, unsigned long amount)
 {
 	double delta;
 			/* compute delta in 1/10's second units */
@@ -439,8 +424,7 @@ printstats(direction, amount)
 }
 
 static void
-timer(sig)
-	int sig;
+timer(int sig)
 {
 	int save_errno = errno;
 

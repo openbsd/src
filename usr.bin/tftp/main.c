@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.14 2003/06/10 22:20:53 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.15 2003/06/25 15:45:10 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.6 1995/05/21 16:54:10 mycroft Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: main.c,v 1.14 2003/06/10 22:20:53 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: main.c,v 1.15 2003/06/25 15:45:10 deraadt Exp $";
 #endif /* not lint */
 
 /* Many bug fixes are from Jim Guyton <guyton@rand-unix> */
@@ -465,8 +465,7 @@ get(int argc, char *argv[])
 }
 
 static void
-getusage(s)
-	char *s;
+getusage(char *s)
 {
 	printf("usage: %s host:file host:file ... file, or\n", s);
 	printf("       %s file file ... file if connected\n", s);
