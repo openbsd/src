@@ -9,7 +9,7 @@
    just the address if the first argument, on other platforms we need
    to do something a little more subtle here.  */
 #define GET_ARGV(ARGVP, ARGS) \
-	asm("   addiu   %0,$29,328" : "=r" (ARGVP))
+	ARGVP = ((unsigned int*) & a4 - 4 );
 
 /* Get the address of the Global offset table.  This must be absolute,
    not relative. This is already set up on mips  */

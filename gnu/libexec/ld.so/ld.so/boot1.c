@@ -170,9 +170,12 @@ static void _dl_debug_state()
   return;
 }
 
-void _dl_boot(void);
+/*
+ *  XXX The following function declaration is a HACK to make this work
+ * without asm code for the MIPS processors. Don't ask why... :-)
+ */
 
-void _dl_boot()
+void _dl_boot(void *a0, void *a1, void *a2, void *a3, void *a4)
 {
   unsigned int argc;
   char ** argv, ** envp;
@@ -199,7 +202,7 @@ void _dl_boot()
      what binary is loaded, where it is loaded, etc, etc */
 
 
-  GET_ARGV(aux_dat, 0);
+  GET_ARGV(aux_dat, a0);
 
   stack = aux_dat;	/* Remember this for start later */
   argc = *(aux_dat);
