@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_pcmcia.c,v 1.9 2001/10/25 16:18:46 mickey Exp $	*/
+/*	$OpenBSD: if_wi_pcmcia.c,v 1.10 2001/10/25 17:25:33 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -118,6 +118,11 @@ static const struct wi_pcmcia_product {
 	  PCMCIA_PRODUCT_COREGA_WIRELESS_LAN_PCCA_11,
 	  PCMCIA_CIS_COREGA_WIRELESS_LAN_PCCA_11,
 	  "Corega Wireless LAN PCCA-11",
+	},
+	{ PCMCIA_VENDOR_COREGA,
+	  PCMCIA_PRODUCT_COREGA_WIRELESS_LAN_PCCB_11,
+	  PCMCIA_CIS_COREGA_WIRELESS_LAN_PCCB_11,
+	  "Corega Wireless LAN PCCB-11",
 	},
 	{ PCMCIA_VENDOR_INTERSIL,
 	  PCMCIA_PRODUCT_INTERSIL_PRISM2,
