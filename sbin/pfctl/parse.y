@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.128 2002/07/20 18:58:44 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.129 2002/07/20 23:43:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -58,9 +58,13 @@ static int lineno = 1;
 static int errors = 0;
 static int rulestate = 0;
 
-enum {PFCTL_STATE_NONE=0, PFCTL_STATE_OPTION=1,
-      PFCTL_STATE_SCRUB=2, PFCTL_STATE_NAT=3,
-      PFCTL_STATE_FILTER=4};
+enum {
+	PFCTL_STATE_NONE = 0,
+	PFCTL_STATE_OPTION = 1,
+	PFCTL_STATE_SCRUB = 2,
+	PFCTL_STATE_NAT = 3,
+	PFCTL_STATE_FILTER = 4
+};
 
 struct node_if {
 	char			 ifname[IFNAMSIZ];
@@ -254,8 +258,7 @@ ruleset		: /* empty */
 		| ruleset error '\n'		{ errors++; }
 		;
 
-option		: SET OPTIMIZATION STRING
-		{
+option		: SET OPTIMIZATION STRING		{
 			if (pf->opts & PF_OPT_VERBOSE)
 				printf("set optimization %s\n", $3);
 			if (check_rulestate(PFCTL_STATE_OPTION))
@@ -269,8 +272,7 @@ option		: SET OPTIMIZATION STRING
 		| SET TIMEOUT '{' timeout_list '}'
 		| SET LIMIT limit_spec
 		| SET LIMIT '{' limit_list '}'
-		| SET LOGINTERFACE STRING
-		{
+		| SET LOGINTERFACE STRING		{
 			if (pf->opts & PF_OPT_VERBOSE)
 				printf("set loginterface %s\n", $3);
 			if (check_rulestate(PFCTL_STATE_OPTION))
@@ -282,8 +284,7 @@ option		: SET OPTIMIZATION STRING
 		}
 		;
 
-varset		: STRING PORTUNARY STRING
-		{
+varset		: STRING PORTUNARY STRING		{
 			if (pf->opts & PF_OPT_VERBOSE)
 				printf("%s = %s\n", $1, $3);
 			if (symset($1, $3) == -1) {
