@@ -1,4 +1,4 @@
-/*	$OpenBSD: sfbvar.h,v 1.4 1997/11/06 12:27:06 niklas Exp $	*/
+/*	$OpenBSD: sfbvar.h,v 1.5 2000/08/04 16:45:47 ericj Exp $	*/
 /*	$NetBSD: sfbvar.h,v 1.1 1996/05/01 21:15:51 cgd Exp $	*/
 
 /*
@@ -30,7 +30,6 @@
 
 #include <machine/sfbreg.h>
 #include <dev/rcons/raster.h>
-#include <dev/wscons/wsconsvar.h>
 #include <dev/wscons/wscons_raster.h>
 
 struct sfb_devconfig;
@@ -60,4 +59,10 @@ struct sfb_softc {
 	struct device sc_dev;
 
 	struct sfb_devconfig *sc_dc;	/* device configuration */
+
+	int nscreens;
 };
+
+#if 0
+int sfb_cnattach __P((tc_addr_t));
+#endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cfb.c,v 1.10 1998/11/21 18:13:03 millert Exp $	*/
+/*	$OpenBSD: cfb.c,v 1.11 2000/08/04 16:45:47 ericj Exp $	*/
 /*	$NetBSD: cfb.c,v 1.7 1996/12/05 01:39:39 cgd Exp $	*/
 
 /*
@@ -43,13 +43,10 @@
 #include <dev/tc/tcvar.h>
 #include <machine/cfbreg.h>
 #include <alpha/tc/cfbvar.h>
-#if 0
-#include <alpha/tc/bt459reg.h>
-#endif
 
 #include <dev/rcons/raster.h>
 #include <dev/wscons/wscons_raster.h>
-#include <dev/wscons/wsconsvar.h>
+#include <dev/wscons/wsdisplayvar.h>
 #include <machine/fbio.h>
 
 #include <machine/autoconf.h>
@@ -61,7 +58,6 @@ int	cfbmatch __P((struct device *, void *, void *));
 int	cfbmatch __P((struct device *, struct cfdata *, void *));
 #endif
 void	cfbattach __P((struct device *, struct device *, void *));
-int	cfbprint __P((void *, const char *));
 
 struct cfattach cfb_ca = {
 	sizeof(struct cfb_softc), cfbmatch, cfbattach,
@@ -73,21 +69,52 @@ struct cfdriver cfb_cd = {
 
 void	cfb_getdevconfig __P((tc_addr_t dense_addr, struct cfb_devconfig *dc));
 struct cfb_devconfig cfb_console_dc;
+tc_addr_t cfb_consaddr;
 
-struct wscons_emulfuncs cfb_emulfuncs = {
+struct wsdisplay_emulops cfb_emulfuncs = {
 	rcons_cursor,			/* could use hardware cursor; punt */
-	rcons_putstr,
+	rcons_mapchar,
+	rcons_putchar,
 	rcons_copycols,
 	rcons_erasecols,
 	rcons_copyrows,
 	rcons_eraserows,
-	rcons_setattr,
+	rcons_alloc_attr
+};
+
+struct wsscreen_descr cfb_stdscreen = {
+        "std",
+        0, 0,        /* will be filled in -- XXX shouldn't, it's global */
+        &cfb_emulfuncs,
+        0, 0
+};
+
+const struct wsscreen_descr *_cfb_scrlist[] = {
+        &cfb_stdscreen,
+        /* XXX other formats, graphics screen? */
+};
+
+struct wsscreen_list cfb_screenlist = {
+        sizeof(_cfb_scrlist) / sizeof(struct wsscreen_descr *), _cfb_scrlist
 };
 
 int	cfbioctl __P((void *, u_long, caddr_t, int, struct proc *));
 int	cfbmmap __P((void *, off_t, int));
 
 int	cfbintr __P((void *));
+static int      cfb_alloc_screen __P((void *, const struct wsscreen_descr *,
+		          void **, int *, int *, long *));
+static void     cfb_free_screen __P((void *, void *));
+static int      cfb_show_screen __P((void *, void *, int,
+                                     void (*) (void *, int, int), void *));
+
+struct wsdisplay_accessops cfb_accessops = {
+	cfbioctl,
+	cfbmmap,
+	cfb_alloc_screen,
+	cfb_free_screen,
+	cfb_show_screen,
+};
 
 int
 cfbmatch(parent, match, aux)
@@ -166,6 +193,9 @@ cfb_getdevconfig(dense_addr, dc)
 	rcp->rc_crowp = &rcp->rc_crow;
 	rcp->rc_ccolp = &rcp->rc_ccol;
 	rcons_init(rcp, 34, 80);
+
+	cfb_stdscreen.nrows = dc->dc_rcons.rc_maxrow;
+	cfb_stdscreen.ncols = dc->dc_rcons.rc_maxcol;
 }
 
 void
@@ -175,14 +205,14 @@ cfbattach(parent, self, aux)
 {
 	struct cfb_softc *sc = (struct cfb_softc *)self;
 	struct tc_attach_args *ta = aux;
-	struct wscons_attach_args waa;
-	struct wscons_odev_spec *wo;
+	struct wsemuldisplaydev_attach_args waa;
 	int console;
 
-	console = 0;					/* XXX */
-	if (console)
+	console = (ta->ta_addr == cfb_consaddr);
+	if (console) {
 		sc->sc_dc = &cfb_console_dc;
-	else {
+		sc->nscreens = 1;
+	} else {
 		sc->sc_dc = (struct cfb_devconfig *)
 		    malloc(sizeof(struct cfb_devconfig), M_DEVBUF, M_WAITOK);
 		cfb_getdevconfig(ta->ta_addr, sc->sc_dc);
@@ -199,33 +229,12 @@ cfbattach(parent, self, aux)
 	*(volatile u_int32_t *)(sc->sc_dc->dc_vaddr + CFB_IREQCTRL_OFFSET) = 0;
 
 	/* initialize the raster */
-	waa.waa_isconsole = console;
-	wo = &waa.waa_odev_spec;
+	waa.console = console;
+	waa.scrdata = &cfb_screenlist;
+	waa.accessops = &cfb_accessops;
+	waa.accesscookie = sc;
 
-	wo->wo_emulfuncs = &cfb_emulfuncs;
-	wo->wo_emulfuncs_cookie = &sc->sc_dc->dc_rcons;
-
-	wo->wo_ioctl = cfbioctl;
-	wo->wo_mmap = cfbmmap;
-	wo->wo_miscfuncs_cookie = sc;
-
-	wo->wo_nrows = sc->sc_dc->dc_rcons.rc_maxrow;
-	wo->wo_ncols = sc->sc_dc->dc_rcons.rc_maxcol;
-	wo->wo_crow = 0;
-	wo->wo_ccol = 0;
-
-	config_found(self, &waa, cfbprint);
-}
-
-int
-cfbprint(aux, pnp)
-	void *aux;
-	const char *pnp;
-{
-
-	if (pnp)
-		printf("wscons at %s", pnp);
-	return (UNCONF);
+	config_found(self, &waa, wsemuldisplaydevprint);
 }
 
 int
@@ -303,7 +312,7 @@ cfbmmap(v, offset, prot)
 {
 	struct cfb_softc *sc = v;
 
-	if (offset >= CFB_SIZE || offset < 0)
+	if (offset > CFB_SIZE)
 		return (-1);
 	return alpha_btop(sc->sc_dc->dc_paddr + offset);
 }
@@ -319,41 +328,69 @@ cfbintr(v)
 	return (1);
 }
 
-#if 0
-void
-tga_console(bc, pc, bus, device, function)
-	bus_chipset_tag_t bc;
-	pci_chipset_tag_t pc;
-	int bus, device, function;
+int 
+cfb_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
+	void *v;
+	const struct wsscreen_descr *type;
+	void **cookiep;
+	int *curxp, *curyp;
+	long *attrp;
 {
-	struct tga_devconfig *dcp = &tga_console_dc;
-	struct wscons_odev_spec wo;
+	struct cfb_softc *sc = v;
+	long defattr;
 
-	tga_getdevconfig(bc, pc, pci_make_tag(pc, bus, device, function), dcp);
+	if (sc->nscreens > 0)
+		return (ENOMEM);
 
-	/* sanity checks */
-	if (dcp->dc_vaddr == NULL)
-		panic("tga_console(%d, %d): couldn't map memory space",
-		    device, function);
-	if (dcp->dc_tgaconf == NULL)
-		panic("tga_console(%d, %d): unknown board configuration",
-		    device, function);
+	*cookiep = &sc->sc_dc->dc_rcons; /* one and only for now */
+	*curxp = 0;
+	*curyp = 0;
+	rcons_alloc_attr(&sc->sc_dc->dc_rcons, 0, 0, 0, &defattr);
+	*attrp = defattr;
+	sc->nscreens++;
+	return(0);
+}
 
-	/*
-	 * Initialize the RAMDAC but DO NOT allocate any private storage.
-	 * Initialization includes disabling cursor, setting a sane
-	 * colormap, etc.  It will be reinitialized in tgaattach().
-	 */
-	(*dcp->dc_tgaconf->tgac_ramdac->tgar_init)(dcp, 0);
+void
+cfb_free_screen(v, cookie)
+	void *v;
+	void *cookie;
+{
+	struct cfb_softc *sc = v;
 
-	wo.wo_ef = &tga_emulfuncs;
-	wo.wo_efa = &dcp->dc_rcons;
-	wo.wo_nrows = dcp->dc_rcons.rc_maxrow;
-	wo.wo_ncols = dcp->dc_rcons.rc_maxcol;
-	wo.wo_crow = 0;
-	wo.wo_ccol = 0;
-	/* ioctl and mmap are unused until real attachment. */
+	if (sc->sc_dc == &cfb_console_dc)
+		panic("cfb_free_screen: console");
 
-	wscons_attach_console(&wo);
+	sc->nscreens--;
+}
+
+int
+cfb_show_screen(v, cookie, waitok, cb, cbarg)
+	void *v;
+	void *cookie;
+	int waitok;
+	void (*cb) __P((void *, int, int));
+	void *cbarg;
+{
+	return (0);
+}
+
+#if 0
+int 
+cfb_cnattach(addr)
+	tc_addr_t addr;
+{
+	struct cfb_devconfig *dc = &cfb_console_dc;
+	long defattr;
+
+	cfb_getdevconfig(addr, dcp);
+
+	rcons_alloc_attr(&dcp->dc_rcons, 0, 0, 0, &defattr);
+	
+	wsdisplay_cnattach(&cfb_stdscreen, &dcp->dc_rcons,
+		0,0, defattr;);
+
+	cfb_consaddr = addr;
+	return (0);
 }
 #endif
