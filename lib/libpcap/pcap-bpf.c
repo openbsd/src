@@ -126,6 +126,12 @@ pcap_read(pcap_t *p, int cnt, pcap_handler callback, u_char *user)
 	return (n);
 }
 
+int
+pcap_inject(pcap_t *p, const void *buf, size_t len)
+{
+	return (write(p->fd, buf, len));
+}
+
 static inline int
 bpf_open(pcap_t *p, char *errbuf)
 {

@@ -57,6 +57,10 @@ u_char *sp)
 .ft
 .LP
 .ft B
+int pcap_inject(pcap_t *p, void *, size_t)
+.ft
+.LP
+.ft B
 int pcap_immediate(pcap_t *p)
 .ft
 .LP
@@ -212,6 +216,11 @@ Note that its calling arguments are suitable for use with
 .ft B
 (??? this guy is kind of weird.)
 .ft
+.PP
+.B pcap_inject()
+uses
+.B write(2)
+to inject a raw packet through the network interface.
 .PP
 .B pcap_immediate()
 sets ``immediate'' mode.
