@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_extern.h,v 1.22 2001/06/27 07:14:22 art Exp $	*/
+/*	$OpenBSD: vm_extern.h,v 1.23 2001/07/05 07:24:10 art Exp $	*/
 /*	$NetBSD: vm_extern.h,v 1.20 1996/04/23 12:25:23 christos Exp $	*/
 
 /*-
@@ -46,21 +46,7 @@ struct vnode;
 struct core;
 
 #ifdef _KERNEL
-void		assert_wait __P((void *, boolean_t));
 void		swstrategy __P((struct buf *));
-void		thread_block __P((char *));
-void		thread_sleep_msg __P((void *, simple_lock_t,
-		    boolean_t, char *, int));
-
-/* backwards compatibility */
-#define		thread_sleep(event, lock, ruptible) \
-	thread_sleep_msg((event), (lock), (ruptible), "thrd_sleep")
-
-/*
- * This define replaces a thread_wakeup prototype, as thread_wakeup
- * was solely a wrapper around wakeup.
- */
-#define thread_wakeup wakeup
 
 /* Machine dependent portion */
 void		vmapbuf __P((struct buf *, vsize_t));
