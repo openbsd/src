@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.352 2003/05/14 21:50:56 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.353 2003/05/14 23:46:45 frantzen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -128,8 +128,6 @@ u_int16_t		 pf_cksum_fixup(u_int16_t, u_int16_t, u_int16_t,
 void			 pf_change_ap(struct pf_addr *, u_int16_t *,
 			    u_int16_t *, u_int16_t *, struct pf_addr *,
 			    u_int16_t, u_int8_t, sa_family_t);
-void			 pf_change_a(u_int32_t *, u_int16_t *, u_int32_t,
-			    u_int8_t);
 #ifdef INET6
 void			 pf_change_a6(struct pf_addr *, u_int16_t *,
 			    struct pf_addr *, u_int8_t);
@@ -181,8 +179,6 @@ int			 pf_test_state_icmp(struct pf_state **, int,
 			    void *, struct pf_pdesc *);
 int			 pf_test_state_other(struct pf_state **, int,
 			    struct ifnet *, struct pf_pdesc *);
-void			*pf_pull_hdr(struct mbuf *, int, void *, int,
-			    u_short *, u_short *, sa_family_t);
 void			 pf_calc_skip_steps(struct pf_rulequeue *);
 void			 pf_rule_set_qid(struct pf_rulequeue *);
 u_int32_t		 pf_qname_to_qid(char *);
@@ -947,12 +943,15 @@ pf_change_ap(struct pf_addr *a, u_int16_t *p, u_int16_t *ic, u_int16_t *pc,
 	}
 }
 
-void
-pf_change_a(u_int32_t *a, u_int16_t *c, u_int32_t an, u_int8_t u)
-{
-	u_int32_t	ao = *a;
 
-	*a = an;
+/* Changes a u_int32_t.  Uses a void * so there are no align restrictions */
+void
+pf_change_a(void *a, u_int16_t *c, u_int32_t an, u_int8_t u)
+{
+	u_int32_t	ao;
+
+	memcpy(&ao, a, sizeof(ao));
+	memcpy(a, &an, sizeof(u_int32_t));
 	*c = pf_cksum_fixup(pf_cksum_fixup(*c, ao / 65536, an / 65536, u),
 	    ao % 65536, an % 65536, u);
 }
@@ -2137,7 +2136,8 @@ pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
 		return (PF_DROP);
 	}
 
-	if (r->keep_state || nat != NULL || rdr != NULL) {
+	if (r->keep_state || nat != NULL || rdr != NULL ||
+	    (pd->flags & PFDESC_TCP_NORM)) {
 		/* create new state */
 		u_int16_t	 len;
 		struct pf_state	*s = NULL;
@@ -2232,8 +2232,15 @@ pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
 		s->bytes = pd->tot_len;
 
 		if ((pd->flags & PFDESC_TCP_NORM) && pf_normalize_tcp_init(m,
-		    pd, th, &s->src, &s->dst)) {
+		    off, pd, th, &s->src, &s->dst)) {
 			REASON_SET(&reason, PFRES_MEMORY);
+			pool_put(&pf_state_pl, s);
+			return (PF_DROP);
+		}
+		if ((pd->flags & PFDESC_TCP_NORM) && s->src.scrub &&
+		    pf_normalize_tcp_stateful(m, off, pd, &reason, th, &s->src,
+		    &s->dst, &rewrite)) {
+			pf_normalize_tcp_cleanup(s);
 			pool_put(&pf_state_pl, s);
 			return (PF_DROP);
 		}
@@ -3092,6 +3099,7 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 	u_int32_t		 ack, end, seq;
 	u_int8_t		 sws, dws;
 	int			 ackskew;
+	int			 copyback = 0;
 	struct pf_state_peer	*src, *dst;
 
 	key.af = pd->af;
@@ -3129,7 +3137,7 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 
 		if ((pd->flags & PFDESC_TCP_NORM || dst->scrub) &&
 		    src->scrub == NULL) {
-			if (pf_normalize_tcp_init(m, pd, th, src, dst)) {
+			if (pf_normalize_tcp_init(m, off, pd, th, src, dst)) {
 				REASON_SET(reason, PFRES_MEMORY);
 				return (PF_DROP);
 			}
@@ -3143,6 +3151,7 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 			pf_change_a(&th->th_seq, &th->th_sum, htonl(seq +
 			    src->seqdiff), 0);
 			pf_change_a(&th->th_ack, &th->th_sum, htonl(ack), 0);
+			copyback = 1;
 		} else {
 			ack = ntohl(th->th_ack);
 		}
@@ -3194,6 +3203,7 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 			pf_change_a(&th->th_seq, &th->th_sum, htonl(seq +
 			    src->seqdiff), 0);
 			pf_change_a(&th->th_ack, &th->th_sum, htonl(ack), 0);
+			copyback = 1;
 		}
 		end = seq + pd->p_len;
 		if (th->th_flags & TH_SYN)
@@ -3376,8 +3386,9 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 		return (PF_DROP);
 	}
 
-	if ((pd->flags & PFDESC_TCP_NORM) && (dst->scrub || src->scrub)) {
-		if (pf_normalize_tcp_stateful(m, pd, reason, th, src, dst))
+	if (dst->scrub || src->scrub) {
+		if (pf_normalize_tcp_stateful(m, off, pd, reason, th, src, dst,
+		    &copyback))
 			return (PF_DROP);
 	}
 
@@ -3394,8 +3405,8 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 			    &th->th_sum, &(*state)->lan.addr,
 			    (*state)->lan.port, 0, pd->af);
 		m_copyback(m, off, sizeof(*th), (caddr_t)th);
-	} else if (src->seqdiff) {
-		/* Copyback sequence modulation */
+	} else if (copyback) {
+		/* Copyback sequence modulation or stateful scrub changes */
 		m_copyback(m, off, sizeof(*th), (caddr_t)th);
 	}
 

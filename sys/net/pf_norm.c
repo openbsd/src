@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.58 2003/05/14 08:42:00 canacar Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.59 2003/05/14 23:46:45 frantzen Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -37,6 +37,7 @@
 #include <sys/time.h>
 #include <sys/pool.h>
 
+#include <dev/rndvar.h>
 #include <net/if.h>
 #include <net/if_types.h>
 #include <net/bpf.h>
@@ -1038,6 +1039,9 @@ pf_normalize_tcp(int dir, struct ifnet *ifp, struct mbuf *m, int ipoff,
 	else
 		r->packets++;
 
+	if (rm->rule_flag & PFRULE_REASSEMBLE_TCP)
+		pd->flags |= PFDESC_TCP_NORM;
+
 	flags = th->th_flags;
 	if (flags & TH_SYN) {
 		/* Illegal packet */
@@ -1090,9 +1094,6 @@ pf_normalize_tcp(int dir, struct ifnet *ifp, struct mbuf *m, int ipoff,
 	if (rewrite)
 		m_copyback(m, off, sizeof(*th), (caddr_t)th);
 
-	/* Inform the state code to do stateful normalizations */
-	pd->flags |= PFDESC_TCP_NORM;
-
 	return (PF_PASS);
 
  tcp_drop:
@@ -1103,14 +1104,18 @@ pf_normalize_tcp(int dir, struct ifnet *ifp, struct mbuf *m, int ipoff,
 }
 
 int
-pf_normalize_tcp_init(struct mbuf *m, struct pf_pdesc *pd,
+pf_normalize_tcp_init(struct mbuf *m, int off, struct pf_pdesc *pd,
     struct tcphdr *th, struct pf_state_peer *src, struct pf_state_peer *dst)
 {
+	u_int8_t hdr[60];
+	u_int8_t *opt;
+
 	KASSERT(src->scrub == NULL);
 
 	src->scrub = pool_get(&pf_state_scrub_pl, PR_NOWAIT);
 	if (src->scrub == NULL)
 		return (1);
+	bzero(src->scrub, sizeof(*src->scrub));
 
 	switch (pd->af) {
 #ifdef INET
@@ -1128,6 +1133,44 @@ pf_normalize_tcp_init(struct mbuf *m, struct pf_pdesc *pd,
 	}
 #endif /* INET6 */
 	}
+
+
+	/*
+	 * All normalizations below are only begun if we see the start of
+	 * the connections.  They must all set an enabled bit in pfss_flags
+	 */
+	if ((th->th_flags & TH_SYN) == 0)
+		return 0;
+
+
+	if (th->th_off > (sizeof(struct tcphdr) >> 2) && src->scrub &&
+	    pf_pull_hdr(m, off, hdr, th->th_off << 2, NULL, NULL, pd->af)) {
+		/* Diddle with TCP options */
+		int hlen;
+		opt = hdr + sizeof(struct tcphdr);
+		hlen = (th->th_off << 2) - sizeof(struct tcphdr);
+		while (hlen >= TCPOLEN_TIMESTAMP) {
+			switch (*opt) {
+			case TCPOPT_EOL:	/* FALLTHROUH */
+			case TCPOPT_NOP:
+				opt++;
+				hlen--;
+				break;
+			case TCPOPT_TIMESTAMP:
+				if (opt[1] >= TCPOLEN_TIMESTAMP) {
+					src->scrub->pfss_flags |=
+					    PFSS_TIMESTAMP;
+					src->scrub->pfss_ts_mod = arc4random();
+				}
+				/* FALLTHROUGH */
+			default:
+				hlen -= opt[1];
+				opt += opt[1];
+				break;
+			}
+		}
+	}
+
 	return (0);
 }
 
@@ -1143,11 +1186,15 @@ pf_normalize_tcp_cleanup(struct pf_state *state)
 }
 
 int
-pf_normalize_tcp_stateful(struct mbuf *m, struct pf_pdesc *pd, u_short *reason,
-    struct tcphdr *th, struct pf_state_peer *src, struct pf_state_peer *dst)
+pf_normalize_tcp_stateful(struct mbuf *m, int off, struct pf_pdesc *pd,
+    u_short *reason, struct tcphdr *th, struct pf_state_peer *src,
+    struct pf_state_peer *dst, int *writeback)
 {
-	KASSERT(src->scrub || dst->scrub);
+	u_int8_t hdr[60];
+	u_int8_t *opt;
+	int copyback = 0;
 
+	KASSERT(src->scrub || dst->scrub);
 
 	/*
 	 * Enforce the minimum TTL seen for this connection.  Negate a common
@@ -1177,6 +1224,67 @@ pf_normalize_tcp_stateful(struct mbuf *m, struct pf_pdesc *pd, u_short *reason,
 		break;
 	}
 #endif /* INET6 */
+	}
+
+	if (th->th_off > (sizeof(struct tcphdr) >> 2) &&
+	    ((src->scrub && (src->scrub->pfss_flags & PFSS_TIMESTAMP)) ||
+	    (dst->scrub && (dst->scrub->pfss_flags & PFSS_TIMESTAMP))) &&
+	    pf_pull_hdr(m, off, hdr, th->th_off << 2, NULL, NULL, pd->af)) {
+		/* Diddle with TCP options */
+		int hlen;
+		opt = hdr + sizeof(struct tcphdr);
+		hlen = (th->th_off << 2) - sizeof(struct tcphdr);
+		while (hlen >= TCPOLEN_TIMESTAMP) {
+			switch (*opt) {
+			case TCPOPT_EOL:	/* FALLTHROUH */
+			case TCPOPT_NOP:
+				opt++;
+				hlen--;
+				break;
+			case TCPOPT_TIMESTAMP:
+				/* Modulate the timestamps.  Can be used for
+				 * NAT detection, OS uptime determination or
+				 * reboot detection.
+				 */
+				if (opt[1] >= TCPOLEN_TIMESTAMP) {
+					u_int32_t ts_value;
+					if (src->scrub &&
+					    (src->scrub->pfss_flags &
+					    PFSS_TIMESTAMP)) {
+						memcpy(&ts_value, &opt[2],
+						    sizeof(u_int32_t));
+						ts_value = htonl(ntohl(ts_value)
+						    + src->scrub->pfss_ts_mod);
+						pf_change_a(&opt[2],
+						    &th->th_sum, ts_value, 0);
+						copyback = 1;
+					}
+					if (dst->scrub &&
+					    (dst->scrub->pfss_flags &
+					    PFSS_TIMESTAMP)) {
+						memcpy(&ts_value, &opt[6],
+						    sizeof(u_int32_t));
+						ts_value = htonl(ntohl(ts_value)
+						    - dst->scrub->pfss_ts_mod);
+						pf_change_a(&opt[6],
+						    &th->th_sum, ts_value, 0);
+						copyback = 1;
+					}
+				}
+				/* FALLTHROUGH */
+			default:
+				hlen -= opt[1];
+				opt += opt[1];
+				break;
+			}
+		}
+		if (copyback) {
+			/* Copyback the options, caller copys back header */
+			*writeback = 1;
+			m_copyback(m, off + sizeof(struct tcphdr),
+			    (th->th_off << 2) - sizeof(struct tcphdr), hdr +
+			    sizeof(struct tcphdr));
+		}
 	}
 
 

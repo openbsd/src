@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.148 2003/05/14 08:42:00 canacar Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.149 2003/05/14 23:46:45 frantzen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -375,6 +375,7 @@ struct pf_rule {
 	struct pf_rule_uid	 uid;
 	struct pf_rule_gid	 gid;
 
+	u_int32_t		 rule_flag;
 	u_int8_t		 action;
 	u_int8_t		 direction;
 	u_int8_t		 log;
@@ -388,10 +389,8 @@ struct pf_rule {
 	u_int8_t		 proto;
 	u_int8_t		 type;
 	u_int8_t		 code;
-
 	u_int8_t		 flags;
 	u_int8_t		 flagset;
-	u_int8_t		 rule_flag;
 	u_int8_t		 min_ttl;
 	u_int8_t		 allow_opts;
 	u_int8_t		 rt;
@@ -399,23 +398,29 @@ struct pf_rule {
 	u_int8_t		 tos;
 };
 
-#define	PFRULE_DROP		0x00
-#define	PFRULE_RETURNRST	0x01
-#define	PFRULE_NODF		0x02
-#define	PFRULE_FRAGMENT		0x04
-#define	PFRULE_RETURNICMP	0x08
-#define	PFRULE_FRAGCROP		0x10	/* non-buffering frag cache */
-#define	PFRULE_FRAGDROP		0x20	/* drop funny fragments */
-#define	PFRULE_RETURN		0x40
-#define PFRULE_RANDOMID		0x80
+/* rule flags */
+#define	PFRULE_DROP		0x0000
+#define	PFRULE_RETURNRST	0x0001
+#define	PFRULE_FRAGMENT		0x0002
+#define	PFRULE_RETURNICMP	0x0004
+#define	PFRULE_RETURN		0x0008
+
+/* scrub flags */
+#define	PFRULE_NODF		0x0100
+#define	PFRULE_FRAGCROP		0x0200	/* non-buffering frag cache */
+#define	PFRULE_FRAGDROP		0x0400	/* drop funny fragments */
+#define PFRULE_RANDOMID		0x0800
+#define PFRULE_REASSEMBLE_TCP	0x1000
 
 #define PFSTATE_HIWAT		10000	/* default state table size */
 
 
 struct pf_state_scrub {
-	u_int8_t	pfss_ttl;	/* stashed TTL			*/
+	u_int16_t	pfss_flags;
+#define PFSS_TIMESTAMP	0x0001		/* modulate timestamp	*/
+	u_int8_t	pfss_ttl;	/* stashed TTL		*/
 	u_int8_t	pad;
-	u_int16_t	pad2;
+	u_int32_t	pfss_ts_mod;	/* timestamp modulation	*/
 };
 
 struct pf_state_host {
@@ -612,7 +617,7 @@ struct pf_pdesc {
 	u_int32_t	 p_len;		/* total length of payload */
 	u_int16_t	 flags;		/* Let SCRUB trigger behavior in
 					 * state code. Easier than tags */
-#define PFDESC_TCP_NORM	0x0001		/* TCP was normalized */
+#define PFDESC_TCP_NORM	0x0001		/* TCP shall be statefully scrubbed */
 	sa_family_t	 af;
 	u_int8_t	 proto;
 	u_int8_t	 tos;
@@ -1034,6 +1039,9 @@ int	pf_test(int, struct ifnet *, struct mbuf **);
 int	pf_test6(int, struct ifnet *, struct mbuf **);
 #endif /* INET */
 
+void   *pf_pull_hdr(struct mbuf *, int, void *, int, u_short *, u_short *,
+	    sa_family_t);
+void	pf_change_a(void *, u_int16_t *, u_int32_t, u_int8_t);
 int	pflog_packet(struct ifnet *, struct mbuf *, sa_family_t, u_int8_t,
 	    u_int8_t, struct pf_rule *, struct pf_rule *, struct pf_ruleset *);
 int	pf_match_addr(u_int8_t, struct pf_addr *, struct pf_addr *,
@@ -1048,10 +1056,11 @@ int	pf_normalize_ip(struct mbuf **, int, struct ifnet *, u_short *);
 int	pf_normalize_tcp(int, struct ifnet *, struct mbuf *, int, int, void *,
 	    struct pf_pdesc *);
 void	pf_normalize_tcp_cleanup(struct pf_state *);
-int	pf_normalize_tcp_init(struct mbuf *, struct pf_pdesc *, struct tcphdr *,
-	    struct pf_state_peer *, struct pf_state_peer *);
-int	pf_normalize_tcp_stateful(struct mbuf *, struct pf_pdesc *, u_short *,
+int	pf_normalize_tcp_init(struct mbuf *, int, struct pf_pdesc *,
 	    struct tcphdr *, struct pf_state_peer *, struct pf_state_peer *);
+int	pf_normalize_tcp_stateful(struct mbuf *, int, struct pf_pdesc *,
+	    u_short *, struct tcphdr *, struct pf_state_peer *,
+	    struct pf_state_peer *, int *);
 u_int32_t
 	pf_state_expires(const struct pf_state *);
 void	pf_purge_expired_fragments(void);
