@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.7 1996/07/05 20:42:18 deraadt Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.8 1997/01/26 01:23:46 tholo Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -458,6 +458,15 @@ udp_output(m, va_alist)
 	if (m == 0) {
 		error = ENOBUFS;
 		goto bail;
+	}
+
+	/*
+	 * Compute the packet length of the IP header, and
+	 * punt if the length looks bogus.
+	 */
+	if ((len + sizeof(struct udpiphdr)) > IP_MAXPACKET) {
+		error = EMSGSIZE;
+		goto release;
 	}
 
 	/*
