@@ -1,4 +1,4 @@
-#	$OpenBSD: NETTAN,v 1.39 2000/06/08 00:16:03 mickey Exp $
+#	$OpenBSD: NETTAN,v 1.40 2001/02/15 04:58:07 krw Exp $
 #
 #	NETTAN -- Applitron Datasystem AB
 #
@@ -6,7 +6,7 @@
 machine		i386		# architecture, used by config; REQUIRED
 
 #include "../../../conf/GENERIC"
-#	$OpenBSD: NETTAN,v 1.39 2000/06/08 00:16:03 mickey Exp $
+#	$OpenBSD: NETTAN,v 1.40 2001/02/15 04:58:07 krw Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -214,8 +214,10 @@ scsibus* at isp?
 aic0	at isa? port 0x340 irq 11	# Adaptec 152[02] SCSI controllers
 aic*	at pcmcia? function ?		# PCMCIA based aic SCSI controllers
 scsibus* at aic?
-ncr*	at pci? dev ? function ?	# NCR 538XX SCSI controllers
-scsibus* at ncr?
+#ncr*	at pci? dev ? function ?	# NCR 538XX SCSI controllers(old)
+#scsibus* at ncr?
+siop*	at pci? dev ? function ?	# NCR 538XX SCSI controllers(new)
+scsibus* at siop?
 adv*	at pci? dev ? function ?	# AdvanSys 1200A/B and ULTRA SCSI
 scsibus* at adv?
 adw*	at pci? dev ? function ?	# AdvanSys ULTRA WIDE SCSI

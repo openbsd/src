@@ -1,4 +1,4 @@
-#	$OpenBSD: WALDORF,v 1.21 1999/10/03 21:08:15 niklas Exp $
+#	$OpenBSD: WALDORF,v 1.22 2001/02/15 04:58:08 krw Exp $
 #
 #	WALDORF -- a 486 kernel config Applitron use for some gateway
 #		   machines (waldorf and neuro).
@@ -135,8 +135,10 @@ scsibus* at aic?
 #bt1	at isa? port 0x334 irq ? drq ?	# BusLogic [57]4X SCSI controllers
 #bt2	at isa? port ? irq ?
 #scsibus* at bt?
-ncr*	at pci? dev ? function ?	# NCR 538XX SCSI controllers
-scsibus* at ncr?
+#ncr*	at pci? dev ? function ?	# NCR 538XX SCSI controllers(old)
+#scsibus* at ncr?
+siop*	at pci? dev ? function ?	# NCR 538XX SCSI controllers(new)
+scsibus* at siop?
 #sea0	at isa? iomem 0xc8000 irq 5	# Seagate ST0[12] SCSI controllers
 #scsibus* at sea?
 #uha0	at isa? port 0x330 irq ? drq ?	# UltraStor [13]4f SCSI controllers

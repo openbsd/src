@@ -1,7 +1,7 @@
 #
 #	GANDALF -- Dual Tyan P5/166 PCI/EISA bus
 #
-#	$OpenBSD: GANDALF,v 1.31 1999/10/03 21:08:15 niklas Exp $
+#	$OpenBSD: GANDALF,v 1.32 2001/02/15 04:58:06 krw Exp $
 #
 
 machine		i386		# architecture, used by config; REQUIRED
@@ -114,8 +114,10 @@ fd*	at fdc? drive ?
 ahc*	at pci? dev ? function ?	# Adaptec 2940 SCSI controllers
 scsibus* at ahc?
 
-ncr*	at pci? dev ? function ?
-scsibus* at ncr?
+#ncr*	at pci? dev ? function ?	# NCR 538XX SCSI controllers(old)
+#scsibus* at ncr?
+siop*	at pci? dev ? function ?	# NCR 538XX SCSI controllers(new)
+scsibus* at siop?
 
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
 st*	at scsibus? target ? lun ?	# SCSI tape drives

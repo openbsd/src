@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKC,v 1.12 2001/02/13 14:50:33 deraadt Exp $
+#	$OpenBSD: RAMDISKC,v 1.13 2001/02/15 04:58:08 krw Exp $
 #	from: OpenBSD: INST,v 1.19 1996/11/05 03:49:13 tholo Exp 
 #
 #	Install kernels no longer support X.
@@ -142,8 +142,10 @@ scsibus* at isp?
 aic0	at isa? port 0x340 irq 11	# Adaptec 152[02] SCSI controllers
 aic*	at pcmcia? function ?		# PCMCIA based aic SCSI controllers
 scsibus* at aic?
-#ncr*	at pci? dev ? function ?	# NCR 538XX SCSI controllers
+#ncr*	at pci? dev ? function ?	# NCR 538XX SCSI controllers(old)
 #scsibus* at ncr?
+#siop*	at pci? dev ? function ?	# NCR 538XX SCSI controllers(new)
+#scsibus* at siop?
 #adv*	at pci? dev ? function ?	# AdvanSys 1200A/B and ULTRA SCSI
 #scsibus* at adv?
 #adw*	at pci? dev ? function ?	# AdvanSys ULTRA WIDE SCSI
