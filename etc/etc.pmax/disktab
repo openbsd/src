@@ -100,7 +100,7 @@ rz24l|RZ24L|DEC RZ24L Winchester:\
 # A DEC RZ25, configured so that all of the free partition IDs are at
 # the end, etc.  A good setup to make a disk image from...
 rz25|RZ25|DEC RZ25 SCSI:\
-	dt=SCSI::ty=winchester:ns#62:nt#9:nc#1476:\
+	:dt=SCSI::ty=winchester:ns#62:nt#9:nc#1476:\
 	:pa#32768:oa#0:ba#8192:fa#1024:ta=4.2BSD:\
 	:pb#131072:ob#32768:bb#8192:fb#1024:tb=swap:\
 	:pc#823608:oc#0:\
