@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: Makefile,v 1.12 2000/05/18 13:49:51 espie Exp $
+#	$OpenBSD: Makefile,v 1.13 2001/01/17 04:53:33 d Exp $
 #
 # Copyright (c) 1997 Tobias Weingartner
 # All rights reserved.
@@ -37,9 +37,9 @@ DPADD=	${LIBUTIL}
 LDADD=	-lutil
 CLEANFILES+=manual.c
 
-manual.c:	fdisk.8
+manual.c:	fdisk.cat8
 	(echo 'char manpage[] = "\\'; \
-	nroff -mandoc ${.CURDIR}/fdisk.8 | sed -e 's/$$/\\n\\/'; \
+	sed -e 's/[\\"]/\\&/g' -e 's/$$/\\n\\/' fdisk.cat8; \
 	echo '";' ) > manual.c
 .else
 NOPROG=yes
