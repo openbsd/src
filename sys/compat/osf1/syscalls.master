@@ -1,9 +1,9 @@
-	$OpenBSD: syscalls.master,v 1.3 1996/08/25 12:19:55 deraadt Exp $
+	$OpenBSD: syscalls.master,v 1.4 1997/01/26 23:05:12 downsj Exp $
 ;	$NetBSD: syscalls.master,v 1.2 1995/10/07 06:27:28 mycroft Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
-; NetBSD COMPAT_OSF1 system call name/number "master" file.
+; OpenBSD COMPAT_OSF1 system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
 ;
 ; Fields: number type [type-dependent ...]
@@ -284,7 +284,7 @@
 205	UNIMPL		semget
 206	UNIMPL		semop
 207	UNIMPL		uname
-208	UNIMPL		lchown
+208	NOARGS		{ int sys_lchown(char *path, int uid, int gid); }
 209	UNIMPL		shmat
 210	UNIMPL		shmctl
 211	UNIMPL		shmdt
