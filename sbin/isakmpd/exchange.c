@@ -1,4 +1,4 @@
-/*	$OpenBSD: exchange.c,v 1.52 2001/06/29 18:52:16 ho Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.53 2001/06/29 19:55:51 niklas Exp $	*/
 /*	$EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	*/
 
 /*
@@ -55,6 +55,9 @@
 #include "exchange.h"
 #include "ipsec_num.h"
 #include "isakmp.h"
+#ifdef USE_ISAKMP_CFG
+#include "isakmp_cfg.h"
+#endif
 #include "libcrypto.h"
 #include "log.h"
 #include "message.h"
@@ -181,6 +184,10 @@ exchange_script (struct exchange *exchange)
 #endif
     case ISAKMP_EXCH_INFO:
       return script_informational;
+#ifdef USE_ISAKMP_CFG
+    case ISAKMP_EXCH_TRANSACTION:
+      return script_transaction;
+#endif
     default:
       if (exchange->type >= ISAKMP_EXCH_DOI_MIN
 	  && exchange->type <= ISAKMP_EXCH_DOI_MAX)
@@ -966,8 +973,10 @@ exchange_setup_p1 (struct message *msg, u_int32_t doi)
        * policies too.
        */
       t->vtbl->get_dst (t, &dst);
-      name = conf_get_str ("Phase 1",
-			   inet_ntoa (((struct sockaddr_in *)dst)->sin_addr));
+      if (sockaddr2text(dst, &addr, 0) == -1)
+	return 0;
+      name = conf_get_str ("Phase 1", addr);
+      free (addr);
       if (name)
 	{
 	  /*
@@ -1534,7 +1543,7 @@ exchange_save_certreq (struct message *msg)
   return 0;
 }
 
-/* Free the list of pending CERTREQ.  */
+/* Free the list of pending CERTREQs.  */
 void
 exchange_free_aca_list (struct exchange *exchange)
 {
