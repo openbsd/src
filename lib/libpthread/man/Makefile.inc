@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.9 2001/08/04 13:56:19 fgsch Exp $
+# $OpenBSD: Makefile.inc,v 1.10 2001/08/11 16:15:55 fgsch Exp $
 # $FreeBSD: Makefile.inc,v 1.6 1999/08/28 00:03:02 peter Exp $
 
 # POSIX thread man files
@@ -43,6 +43,7 @@ MAN+=	\
 	pthread_rwlockattr_getpshared.3 \
 	pthread_rwlockattr_init.3 \
 	pthread_rwlockattr_setpshared.3 \
+	pthread_schedparam.3 \
 	pthread_self.3 \
 	pthread_set_name_np.3 \
 	pthread_setspecific.3 \
@@ -80,5 +81,7 @@ MLINKS+=flockfile.3 funlockfile.3 \
 	pthread_mutexattr.3 pthread_mutexattr_setprioceiling.3 \
 	pthread_mutexattr.3 pthread_mutexattr_setprotocol.3 \
 	pthread_mutexattr.3 pthread_mutexattr_setpshared.3 \
-	pthread_mutexattr.3 pthread_mutexattr_settype.3
-	
+	pthread_mutexattr.3 pthread_mutexattr_settype.3 \
+	pthread_schedparam.3 pthread_getschedparam.3 \
+	pthread_schedparam.3 pthread_setschedparam.3
+
