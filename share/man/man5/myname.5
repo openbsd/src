@@ -1,0 +1,88 @@
+.\"	$OpenBSD: myname.5,v 1.1 2003/07/26 07:07:08 jmc Exp $
+.\"
+.\" Copyright (c) 2003 Jason McIntyre <jmc@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd July 24, 2003
+.Dt MYNAME 5
+.Os
+.Sh NAME
+.Nm myname , mygate
+.Nd default hostname and gateway
+.Sh SYNOPSIS
+.Nm /etc/myname
+.Nm /etc/mygate
+.Sh DESCRIPTION
+The
+.Nm myname
+and
+.Nm mygate
+files are read by
+.Xr netstart 8
+at system startup time.
+.Pp
+.Pa /etc/myname
+contains the symbolic name of the host machine.
+The file should contain a single line specifying the
+fully qualified domain name
+.Pq FQDN
+of the system
+.Pq e.g. host.example.com .
+The name must be resolvable, either by matching a hostname specified in
+.Pa /etc/hosts
+(see
+.Xr hosts 5 )
+or through DNS
+(see
+.Xr resolv.conf 5 ) .
+The hostname is set via the
+.Xr hostname 1
+utility at boot time.
+See
+.Xr hostname 7
+for a description of hostname resolution.
+.Pp
+.Pa /etc/mygate
+contains the address of the gateway host, if it exists.
+The gateway is added to the routing tables by the
+.Xr route 8
+utility.
+If
+.Pa /etc/mygate
+does not exist, no default gateway is added to the routing tables.
+The file should contain a single line specifying the gateway address,
+in dotted quad notation
+.Pq e.g. 192.0.2.0 .
+.Pa /etc/mygate
+is processed after all interfaces have been configured.
+It will therefore override any DHCP-supplied default route information.
+.Pp
+Neither file may contain comments.
+.Sh FILES
+.Bl -tag -width "/etc/myname" -compact
+.It Pa /etc/myname
+Default hostname.
+.It Pa /etc/mygate
+Default gateway address.
+.El
+.Sh SEE ALSO
+.Xr hostname 1 ,
+.Xr hosts 5 ,
+.Xr resolv.conf 5 ,
+.Xr hostname 7 ,
+.Xr netstart 8 ,
+.Xr route 8
+.Sh HISTORY
+This manual page first appeared in
+.Ox 3.4 .
