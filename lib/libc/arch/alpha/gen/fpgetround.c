@@ -1,3 +1,6 @@
+/*	$OpenBSD: fpgetround.c,v 1.3 1996/11/13 21:20:13 niklas Exp $	*/
+/*	$NetBSD: fpgetround.c,v 1.1 1995/04/29 05:09:55 cgd Exp $	*/
+
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
  * All rights reserved.
@@ -30,7 +33,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: fpgetround.c,v 1.2 1996/08/19 08:10:28 tholo Exp $";
+static char *rcsid = "$OpenBSD: fpgetround.c,v 1.3 1996/11/13 21:20:13 niklas Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>

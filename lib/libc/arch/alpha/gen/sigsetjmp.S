@@ -1,3 +1,6 @@
+/*	$OpenBSD: sigsetjmp.S,v 1.3 1996/11/13 21:20:23 niklas Exp $	*/
+/*	$NetBSD: sigsetjmp.S,v 1.2 1996/10/17 03:08:07 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -25,11 +28,11 @@
  * rights to redistribute these changes.
  */
 
-#include "DEFS.h"
+#include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: sigsetjmp.S,v 1.2 1996/08/19 08:10:47 tholo Exp $"
+	.asciz "$OpenBSD: sigsetjmp.S,v 1.3 1996/11/13 21:20:23 niklas Exp $"
 #endif
 
 /*
@@ -47,19 +50,19 @@
 	.set	noreorder
 
 LEAF(sigsetjmp, 2)
-	SETGP(pv)
+	LDGP(pv)
 	stq	a1, (81 * 8)(a0)		/* save the mask */
 	bne	a1, Lsavesig			/* if !zero, save signals */
-	JMP(_setjmp)				/* else don't. */
+	jmp	zero, _setjmp			/* else don't. */
 Lsavesig:
-	JMP(setjmp)
+	jmp	zero, setjmp
 END(sigsetjmp)
 
 LEAF(siglongjmp, 2)
-	SETGP(pv)
+	LDGP(pv)
 	ldq	t0, (81 * 8)(a0)		/* get the mask */
 	bne	t0, Lrestoresig			/* if !zero, restore signals */
-	JMP(_longjmp)
+	jmp	zero, _longjmp
 Lrestoresig:
-	JMP(longjmp)
+	jmp	zero, longjmp
 END(siglongjmp)

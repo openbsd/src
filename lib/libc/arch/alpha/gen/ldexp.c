@@ -1,3 +1,6 @@
+/*	$OpenBSD: ldexp.c,v 1.3 1996/11/13 21:20:20 niklas Exp $	*/
+/*	$NetBSD: ldexp.c,v 1.1 1995/02/10 17:50:24 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -26,7 +29,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: ldexp.c,v 1.2 1996/08/19 08:10:42 tholo Exp $";
+static char *rcsid = "$OpenBSD: ldexp.c,v 1.3 1996/11/13 21:20:20 niklas Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>

@@ -1,3 +1,6 @@
+/*	$OpenBSD: _setjmp.S,v 1.3 1996/11/13 21:20:09 niklas Exp $	*/
+/*	$NetBSD: _setjmp.S,v 1.2 1996/10/17 03:08:03 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -25,11 +28,11 @@
  * rights to redistribute these changes.
  */
 
-#include "DEFS.h"
+#include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: _setjmp.S,v 1.2 1996/08/19 08:10:20 tholo Exp $"
+	.asciz "$OpenBSD: _setjmp.S,v 1.3 1996/11/13 21:20:09 niklas Exp $"
 #endif
 
 /*
@@ -46,7 +49,7 @@
 	.set	noreorder
 
 LEAF(_setjmp, 1)
-	SETGP(pv)
+	LDGP(pv)
 	stq	ra, (2 * 8)(a0)			/* sc_pc = return address */
 	stq	s0, (( 9 + 4) * 8)(a0)		/* saved bits of sc_regs */
 	stq	s1, ((10 + 4) * 8)(a0)
@@ -57,10 +60,10 @@ LEAF(_setjmp, 1)
 	stq	s6, ((15 + 4) * 8)(a0)
 	stq	ra, ((26 + 4) * 8)(a0)
 	stq	sp, ((30 + 4) * 8)(a0)
-	CONST(0xACEDBADD, t0)			/* sigcontext magic number */
+	ldiq	t0, 0xacedbadd			/* sigcontext magic number */
 	stq	t0, ((31 + 4) * 8)(a0)		/* magic in sc_regs[31] */
 	/* Too bad we can't check if we actually used FP */
-	CONST(1, t0)
+	ldiq	t0, 1
 	stq	t0, (36 * 8)(a0)		/* say we've used FP.  */
 	stt	fs0, ((2 + 37) * 8)(a0)		/* saved bits of sc_fpregs */
 	stt	fs1, ((3 + 37) * 8)(a0)
@@ -70,7 +73,7 @@ LEAF(_setjmp, 1)
 	stt	fs5, ((7 + 37) * 8)(a0)
 	stt	fs6, ((8 + 37) * 8)(a0)
 	stt	fs7, ((9 + 37) * 8)(a0)
-	MF_FPCR(ft0)				/* get FP control reg */
+	mf_fpcr ft0				/* get FP control reg */
 	stt	ft0, (69 * 8)(a0)		/* and store it in sc_fpcr */
 	stq	zero, (70 * 8)(a0)		/* FP software control XXX */
 	stq	zero, (71 * 8)(a0)		/* sc_reserved[0] */
@@ -89,9 +92,9 @@ LEAF(_setjmp, 1)
 END(_setjmp)
 
 LEAF(_longjmp, 2)
-	SETGP(pv)
+	LDGP(pv)
 	ldq	t0, ((31 + 4) * 8)(a0)		/* magic in sc_regs[31] */
-	CONST(0xACEDBADD, t1)
+	ldiq	t1, 0xacedbadd
 	cmpeq	t0, t1, t0
 	beq	t0, botch			/* If the magic was bad, punt */
 
@@ -114,7 +117,7 @@ LEAF(_longjmp, 2)
 	ldt	fs6, ((8 + 37) * 8)(a0)
 	ldt	fs7, ((9 + 37) * 8)(a0)
 	ldt	ft0, (69 * 8)(a0)		/* get sc_fpcr */
-	MT_FPCR(ft0)				/* and restore it. */
+	mt_fpcr	ft0				/* and restore it. */
 
 	mov	a1, v0				/* return second arg */
 	RET

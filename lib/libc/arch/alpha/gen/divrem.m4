@@ -1,4 +1,5 @@
-/*	$OpenBSD: divrem.m4,v 1.2 1996/08/19 08:10:22 tholo Exp $	*/
+/*	$OpenBSD: divrem.m4,v 1.3 1996/11/13 21:20:09 niklas Exp $	*/
+/*	$NetBSD: divrem.m4,v 1.7 1996/10/17 03:08:04 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -54,7 +55,7 @@ define(CC, `t2')
 define(T_0, `t3')
 ifelse(S, `true', `define(NEG, `t4')')
 
-#include "DEFS.h"
+#include <machine/asm.h>
 
 LEAF(NAME, 0)					/* XXX */
 	lda	sp, -64(sp)
@@ -112,7 +113,7 @@ ifelse(WORDSIZE, `32', `
 	/* kill the special cases. */
 	beq	B, Ldotrap			/* division by zero! */
 
-1:	cmpult	A, B, CC			/* A < B? */
+	cmpult	A, B, CC			/* A < B? */
 	/* RESULT is already zero, from above.  A is untouched. */
 	bne	CC, Lret_result
 
@@ -125,7 +126,7 @@ ifelse(WORDSIZE, `32', `
 	 * Find out how many bits of zeros are at the beginning of the divisor.
 	 */
 LBbits:
-	CONST(1, T_0)				/* I = 0; BIT = 1<<WORDSIZE-1 */
+	ldiq	T_0, 1				/* I = 0; BIT = 1<<WORDSIZE-1 */
 	mov	zero, I
 	sll	T_0, WORDSIZE-1, BIT
 LBloop:
@@ -138,7 +139,7 @@ LBloop:
 
 LAbits:
 	beq	I, Ldodiv			/* If I = 0, divide now.  */
-	CONST(1, T_0)				/* BIT = 1<<WORDSIZE-1 */
+	ldiq	T_0, 1				/* BIT = 1<<WORDSIZE-1 */
 	sll	T_0, WORDSIZE-1, BIT
 
 LAloop:
@@ -150,7 +151,7 @@ LAloop:
 
 Ldodiv:
 	sll	B, I, B				/* B <<= i */
-	CONST(1, T_0)
+	ldiq	T_0, 1
 	sll	T_0, I, BIT
 
 Ldivloop:
@@ -187,7 +188,7 @@ ifelse(S, `true',
 	ret	zero, (t9), 1
 
 Ldotrap:
-	CONST(-2, a0)			/* This is the signal to SIGFPE! */
+	ldiq	a0, -2			/* This is the signal to SIGFPE! */
 	call_pal PAL_gentrap
 ifelse(OP, `div',
 `', `	mov	zero, A			/* so that zero will be returned */
