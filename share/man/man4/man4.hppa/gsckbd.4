@@ -1,4 +1,4 @@
-.\" $OpenBSD: gsckbd.4,v 1.1 2003/01/31 23:03:12 miod Exp $
+.\" $OpenBSD: gsckbd.4,v 1.2 2003/02/16 01:48:50 miod Exp $
 .\"
 .\" Copyright (c) 2003, Miodrag Vallat.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 31, 2003
+.Dd February 15, 2003
 .Dt GSCKBD 4
 .Os
 .Sh NAME
@@ -57,6 +57,95 @@ Other mappings can be used if the whole keymap is replaced by means of
 .Xr wsconsctl 8 .
 The built-in mappings are at this time:
 .Bl -hang
+.It KB_BE
+(
+.Dq be
+) Belgium French.
+.It KB_BR
+(
+.Dq br
+) Brazilian.
+.It KB_DE
+(
+.Dq de
+) German with
+.Dq dead accents .
+.It KB_DK
+(
+.Dq dk
+) Danish with
+.Dq dead accents .
+.It KB_ES
+(
+.Dq es
+) Spanish.
+.It KB_FR
+(
+.Dq fr
+) French.
+.It KB_IT
+(
+.Dq it
+) Italian.
+.It KB_JP
+(
+.Dq jp
+) Japanese.
+.It KB_LA
+(
+.Dq la
+) Latinamerican.
+.It KB_LT
+(
+.Dq \&lt
+) Lithuanian in
+.Dq ISO 8859-13 .
+.It KB_NO
+(
+.Dq no
+) Norwegian with
+.Dq dead accents .
+.It KB_PL
+(
+.Dq pl
+) Polish in
+.Dq ISO 8859-2 .
+.It KB_PT
+(
+.Dq pt
+) Portuguese.
+.It KB_RU
+(
+.Dq ru
+) Russian in
+.Dq KOI8 .
+.It KB_SF
+(
+.Dq sf
+) Swiss French with
+.Dq dead accents .
+.It KB_SG
+(
+.Dq sg
+) Swiss German with
+.Dq dead accents .
+.It KB_SV
+(
+.Dq sv
+) Swedish with
+.Dq dead accents .
+.It KB_TR
+(
+.Dq tr
+) Turkish in
+.Dq ISO 8859-9
+with
+.Dq dead accents .
+.It KB_UA
+(
+.Dq ua
+) Ukrainian in
+.Dq KOI8 .
 .It KB_UK
 (
 .Dq uk
@@ -65,21 +154,63 @@ The built-in mappings are at this time:
 (
 .Dq us
 ) English / US keyboard mapping (default).
+.It KB_US | KB_DECLK
+(
+.Dq us.declk
+) English / US mapping for
+.Tn DEC
+LK400-style keyboards with PC keyboard interface (eg LK461).
+.It KB_US | KB_DVORAK
+(
+.Dq us.dvorak
+) English / US keyboard with
+.Dq Dvorak
+layout.
 .El
 .Pp
-The KB_US mapping can be modified
+The KB_DE, KB_DK, KB_NO, KB_SF, KB_SG, KB_SV and KB_TR mappings can be used in
+the KB_NODEAD (
+.Dq .nodead
+) variant.
+This switches off the
+.Dq dead accents .
+.Pp
+The KB_BE, KB_FR, KB_JP, KB_US and KB_US | KB_DVORAK mappings can be modified
 to swap the left Control and the Caps Lock keys by the
 KB_SWAPCTRLCAPS variant bit or the
 .Dq .swapctrlcaps
 suffix.
+.Pp
+The KB_METAESC (
+.Dq .metaesc
+) option can be applied to any layout.
+If set, keys pressed together
+with the ALT modifier are prefixed by an ESC character.
+(Standard behaviour is to add 128 to the ASCII value.)
 .Sh EXAMPLES
-To set a british keyboard layout, use
-.Ic wsconsctl -w keyboard.encoding=uk .
+To set a german keyboard layout without
+.Dq dead accents
+and sending an ESC character before the key symbol if the ALT
+key is pressed simultaneously, use
+.Ic wsconsctl -w keyboard.encoding=de.nodead.metaesc .
 To set it at kernel build time, add
-.Em option GSCKBD_LAYOUT="KB_UK"
+.Em option PCKBD_LAYOUT="(KB_DE|KB_NODEAD|KB_METAESC)"
 to the kernel configuration file.
 .Sh SEE ALSO
 .Xr gsc 4 ,
 .Xr gsckbc 4 ,
+.Xr pckbd 4 ,
 .Xr wskbd 4 ,
 .Xr wsconsctl 8
+.Sh BUGS
+.Pp
+The list of built-in mappings doesn't follow any logics.
+It grew as people submitted what they needed.
+.Pp
+The
+.Dq br
+and
+.Dq jp
+encodings are missing some keys compared to their
+.Xr pckbd 4
+equivalents.
