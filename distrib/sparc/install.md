@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.16 1997/10/27 04:59:11 todd Exp $
+#	$OpenBSD: install.md,v 1.17 1998/03/12 08:48:54 deraadt Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -211,7 +211,6 @@ md_copy_kernel() {
 md_welcome_banner() {
 {
 	if [ "$MODE" = "install" ]; then
-		echo ""
 		echo "Welcome to the OpenBSD/sparc ${VERSION} installation program."
 		cat << \__welcome_banner_1
 

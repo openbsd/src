@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.17 1998/02/28 02:39:11 millert Exp $
+#       $OpenBSD: install.md,v 1.18 1998/03/12 08:48:52 deraadt Exp $
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
@@ -183,7 +183,6 @@ __md_prep_disklabel_1
 md_welcome_banner() {
 {
 	if [ "$MODE" = "install" ]; then
-		echo ""
 		echo "Welcome to the OpenBSD/alpha ${VERSION_MAJOR}.${VERSION_MINOR} installation program."
 		cat << \__welcome_banner_1
 
