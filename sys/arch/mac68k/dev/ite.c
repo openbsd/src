@@ -1,4 +1,4 @@
-/*	$OpenBSD: ite.c,v 1.10 1997/03/08 16:16:54 briggs Exp $	*/
+/*	$OpenBSD: ite.c,v 1.11 1997/03/12 13:26:38 briggs Exp $	*/
 /*	$NetBSD: ite.c,v 1.32 1997/02/20 00:23:25 scottr Exp $	*/
 
 /*
@@ -112,7 +112,7 @@ static void	putc_getpars __P((char));
 static void	putc_square __P((char));
 static void	ite_putchar __P((char));
 static int	ite_pollforchar __P((void));
-static int	itematch __P((struct device *, struct cfdata *, void *));
+static int	itematch __P((struct device *, void *, void *));
 static void	iteattach __P((struct device *, struct device *, void *));
 
 #define dprintf if (0) printf
@@ -855,9 +855,9 @@ struct cfdriver ite_cd = {
 };
 
 static int
-itematch(parent, cf, aux)
+itematch(parent, vcf, aux)
 	struct device *parent;
-	struct cfdata *cf;
+	void *vcf;
 	void *aux;
 {
 	struct grfbus_attach_args *ga = aux;
@@ -866,7 +866,7 @@ itematch(parent, cf, aux)
 
 	if (strcmp(ga->ga_name, "ite"))
 		return 0;
-	pa = pmap_extract(pmap_kernel(), (vm_offset_t) gm->fbbase);
+	pa = pmap_extract(pmap_kernel(), (vm_offset_t) gm->fbbase + gm->fboff);
 
 	return (pa == (vm_offset_t) mac68k_vidphys);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_iv.c,v 1.8 1997/03/08 16:16:51 briggs Exp $	*/
+/*	$OpenBSD: grf_iv.c,v 1.9 1997/03/12 13:26:37 briggs Exp $	*/
 /*	$NetBSD: grf_iv.c,v 1.17 1997/02/20 00:23:27 scottr Exp $	*/
 
 /*
@@ -62,7 +62,7 @@ extern unsigned long	videosize;
 
 static int	grfiv_mode __P((struct grf_softc *gp, int cmd, void *arg));
 static caddr_t	grfiv_phys __P((struct grf_softc *gp, vm_offset_t addr));
-static int	grfiv_match __P((struct device *, struct cfdata *, void *));
+static int	grfiv_match __P((struct device *, void *, void *));
 static void	grfiv_attach __P((struct device *, struct device *, void *));
 
 static void	grfiv_q700intr __P((void *client_data, int slot));
@@ -92,15 +92,14 @@ grfiv_q700intr(client_data, slot)
 }
 
 static int
-grfiv_match(parent, cf, aux)
+grfiv_match(parent, vcf, aux)
 	struct device *parent;
-	struct cfdata *cf;
+	void *vcf;
 	void *aux;
 {
 	char		*addr = NULL;
-	static int	internal_video_found = 0;
 
-	if (internal_video_found || (mac68k_vidlog == 0)) {
+	if (mac68k_vidlog == 0) {
 		return 0;
 	}
 
@@ -140,8 +139,8 @@ grfiv_attach(parent, self, aux)
 	gm->hres = 80;		/* XXX Hack */
 	gm->vres = 80;		/* XXX Hack */
 	gm->fbsize = gm->rowbytes * gm->height;
-	gm->fbbase = (caddr_t) mac68k_vidlog;
-	gm->fboff = 0;
+	gm->fbbase = (caddr_t) (mac68k_vidlog & ~PGOFSET);
+	gm->fboff = mac68k_vidlog & PGOFSET;
 
 	/* Perform common video attachment. */
 	grf_establish(sc, NULL, grfiv_mode, grfiv_phys);
