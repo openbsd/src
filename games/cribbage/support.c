@@ -1,4 +1,4 @@
-/*	$OpenBSD: support.c,v 1.3 1998/08/19 07:40:26 pjanzen Exp $	*/
+/*	$OpenBSD: support.c,v 1.4 1999/11/29 06:42:20 millert Exp $	*/
 /*	$NetBSD: support.c,v 1.3 1995/03/21 15:08:59 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)support.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: support.c,v 1.3 1998/08/19 07:40:26 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: support.c,v 1.4 1999/11/29 06:42:20 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -134,7 +134,7 @@ plyrhand(hand, s)
 {
 	static char prompt[BUFSIZ];
 	int i, j;
-	BOOLEAN win;
+	bool win;
 
 	prhand(hand, CINHAND, Playwin, FALSE);
 	(void) sprintf(prompt, "Your %s scores ", s);
@@ -187,7 +187,7 @@ int
 chkscr(scr, inc)
 	int    *scr, inc;
 {
-	BOOLEAN myturn;
+	bool myturn;
 
 	myturn = (scr == &cscore);
 	if (inc != 0) {
@@ -209,7 +209,7 @@ void
 prpeg(score, peg, myturn)
 	int score;
 	int peg;
-	BOOLEAN myturn;
+	bool myturn;
 {
 	int y, x;
 
@@ -246,7 +246,7 @@ prpeg(score, peg, myturn)
  */
 void
 cdiscard(mycrib)
-	BOOLEAN mycrib;
+	bool mycrib;
 {
 	CARD    d[CARDS], h[FULLHAND], cb[2];
 	int i, j, k;

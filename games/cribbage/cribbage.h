@@ -1,3 +1,4 @@
+/*	$OpenBSD: cribbage.h,v 1.2 1999/11/29 06:42:20 millert Exp $	*/
 /*	$NetBSD: cribbage.h,v 1.3 1995/03/21 15:08:46 cgd Exp $	*/
 
 /*
@@ -53,11 +54,11 @@ extern  int		cgames;			/* comp's games won */
 extern  int		gamecount;		/* # games played */
 extern	int		Lastscore[2];		/* previous score for each */
 
-extern  BOOLEAN		iwon;			/* if comp won last */
-extern  BOOLEAN		explain;		/* player mistakes explained */
-extern  BOOLEAN		rflag;			/* if all cuts random */
-extern  BOOLEAN		quiet;			/* if suppress random mess */
-extern	BOOLEAN		playing;		/* currently playing game */
+extern  bool		iwon;			/* if comp won last */
+extern  bool		explain;		/* player mistakes explained */
+extern  bool		rflag;			/* if all cuts random */
+extern  bool		quiet;			/* if suppress random mess */
+extern	bool		playing;		/* currently playing game */
 
 extern  char		expl[];			/* string for explanation */
 
@@ -67,13 +68,13 @@ int	 anymove __P((CARD [], int, int));
 int	 anysumto __P((CARD [], int, int, int));
 void	 bye __P((void));
 int	 cchose __P((CARD [], int, int));
-void	 cdiscard __P((BOOLEAN));
+void	 cdiscard __P((bool));
 int	 chkscr __P((int *, int));
 int	 comphand __P((CARD [], char *));
 void	 cremove __P((CARD, CARD [], int));
-int	 cut __P((BOOLEAN, int));
+int	 cut __P((bool, int));
 int	 deal __P((int));
-void	 discard __P((BOOLEAN));
+void	 discard __P((bool));
 void	 do_wait __P((void));
 void	 endmsg __P((void));
 int	 eq __P((CARD, CARD));
@@ -90,25 +91,25 @@ void	 makeboard __P((void));
 void	 makedeck __P((CARD []));
 void	 makeknown __P((CARD [], int));
 void	 msg __P((const char *, ...));
-int	 msgcard __P((CARD, BOOLEAN));
-int	 msgcrd __P((CARD, BOOLEAN, char *, BOOLEAN));
+int	 msgcard __P((CARD, bool));
+int	 msgcrd __P((CARD, bool, char *, bool));
 int	 number __P((int, int, char *));
 int	 numofval __P((CARD [], int, int));
 int	 pairuns __P((CARD [], int));
-int	 peg __P((BOOLEAN));
+int	 peg __P((bool));
 int	 pegscore __P((CARD, CARD [], int, int));
-int	 playhand __P((BOOLEAN));
+int	 playhand __P((bool));
 int	 plyrhand __P((CARD [], char *));
-void	 prcard __P((WINDOW *, int, int, CARD, BOOLEAN));
-void	 prcrib __P((BOOLEAN, BOOLEAN));
-void	 prhand __P((CARD [], int, WINDOW *, BOOLEAN));
-void	 printcard __P((WINDOW *, int, CARD, BOOLEAN));
-void	 prpeg __P((int, int, BOOLEAN));
+void	 prcard __P((WINDOW *, int, int, CARD, bool));
+void	 prcrib __P((bool, bool));
+void	 prhand __P((CARD [], int, WINDOW *, bool));
+void	 printcard __P((WINDOW *, int, CARD, bool));
+void	 prpeg __P((int, int, bool));
 void	 prtable __P((int));
 int	 readchar __P((void));
 void	 rint __P((int));
-int	 score __P((BOOLEAN));
-int	 scorehand __P((CARD [], CARD, int, BOOLEAN, BOOLEAN));
+int	 score __P((bool));
+int	 scorehand __P((CARD [], CARD, int, bool, bool));
 void	 shuffle __P((CARD []));
 void	 sorthand __P((CARD [], int));
 void	 wait_for __P((int));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: score.c,v 1.2 1998/08/19 07:40:24 pjanzen Exp $	*/
+/*	$OpenBSD: score.c,v 1.3 1999/11/29 06:42:20 millert Exp $	*/
 /*	$NetBSD: score.c,v 1.3 1995/03/21 15:08:57 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)score.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: score.c,v 1.2 1998/08/19 07:40:24 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: score.c,v 1.3 1999/11/29 06:42:20 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -113,12 +113,12 @@ scorehand(hand, starter, n, crb, do_explain)
 	CARD hand[];
 	CARD starter;
 	int n;
-	BOOLEAN crb;		/* true if scoring crib */
-	BOOLEAN do_explain;	/* true if must explain this hand */
+	bool crb;		/* true if scoring crib */
+	bool do_explain;	/* true if must explain this hand */
 {
 	int i, k;
 	int score;
-	BOOLEAN flag;
+	bool flag;
 	CARD h[(CINHAND + 1)];
 	char buf[32];
 
@@ -234,7 +234,7 @@ pairuns(h, n)
 	int i;
 	int runlength, runmult, lastmult, curmult;
 	int mult1, mult2, pair1, pair2;
-	BOOLEAN run;
+	bool run;
 
 	run = TRUE;
 	runlength = 1;
@@ -300,7 +300,7 @@ pegscore(crd, tbl, n, sum)
 	CARD crd, tbl[];
 	int n, sum;
 {
-	BOOLEAN got[RANKS];
+	bool got[RANKS];
 	int i, j, scr;
 	int k, lo, hi;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: crib.c,v 1.6 1999/03/27 04:19:31 pjanzen Exp $	*/
+/*	$OpenBSD: crib.c,v 1.7 1999/11/29 06:42:20 millert Exp $	*/
 /*	$NetBSD: crib.c,v 1.7 1997/07/10 06:47:29 mikel Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)crib.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: crib.c,v 1.6 1999/03/27 04:19:31 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: crib.c,v 1.7 1999/11/29 06:42:20 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -66,7 +66,7 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	BOOLEAN playing;
+	bool playing;
 	int ch;
 #ifdef LOGGING
 	FILE *f;
@@ -209,8 +209,8 @@ void
 game()
 {
 	int i, j;
-	BOOLEAN flag;
-	BOOLEAN compcrib;
+	bool flag;
+	bool compcrib;
 
 	makedeck(deck);
 	shuffle(deck);
@@ -300,7 +300,7 @@ game()
  */
 int
 playhand(mycrib)
-	BOOLEAN mycrib;
+	bool mycrib;
 {
 	int deckpos;
 
@@ -332,7 +332,7 @@ playhand(mycrib)
  */
 int
 deal(mycrib)
-	BOOLEAN mycrib;
+	bool mycrib;
 {
 	int i, j;
 
@@ -355,7 +355,7 @@ deal(mycrib)
  */
 void
 discard(mycrib)
-	BOOLEAN mycrib;
+	bool mycrib;
 {
 	char *prompt;
 	CARD crd;
@@ -385,11 +385,11 @@ discard(mycrib)
  */
 int
 cut(mycrib, pos)
-	BOOLEAN mycrib;
+	bool mycrib;
 	int  pos;
 {
 	int i;
-	BOOLEAN win;
+	bool win;
 
 	win = FALSE;
 	if (mycrib) {
@@ -429,7 +429,7 @@ cut(mycrib, pos)
  */
 void
 prcrib(mycrib, blank)
-	BOOLEAN mycrib, blank;
+	bool mycrib, blank;
 {
 	int y, cardx;
 
@@ -460,13 +460,13 @@ static int Tcnt;
 
 int
 peg(mycrib)
-	BOOLEAN mycrib;
+	bool mycrib;
 {
 	static CARD ch[CINHAND], ph[CINHAND];
 	int i, j, k;
 	int l;
 	int cnum, pnum, sum;
-	BOOLEAN myturn, mego, ugo, last, played;
+	bool myturn, mego, ugo, last, played;
 	CARD crd;
 
 	played = FALSE;
@@ -633,7 +633,7 @@ prtable(score)
  */
 int
 score(mycrib)
-	BOOLEAN mycrib;
+	bool mycrib;
 {
 	sorthand(crib, CINHAND);
 	if (mycrib) {

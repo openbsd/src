@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.4 1998/08/19 07:40:22 pjanzen Exp $	*/
+/*	$OpenBSD: io.c,v 1.5 1999/11/29 06:42:20 millert Exp $	*/
 /*	$NetBSD: io.c,v 1.9 1997/07/09 06:25:47 phil Exp $	*/
 
 /*-
@@ -89,7 +89,7 @@ char   *suitchar[SUITS] = {"S", "H", "D", "C"};
 int
 msgcard(c, brief)
 	CARD c;
-	BOOLEAN brief;
+	bool brief;
 {
 	if (brief)
 		return (msgcrd(c, TRUE, NULL, TRUE));
@@ -104,7 +104,7 @@ msgcard(c, brief)
 int
 msgcrd(c, brfrank, mid, brfsuit)
 	CARD c;
-	BOOLEAN brfrank, brfsuit;
+	bool brfrank, brfsuit;
 	char *mid;
 {
 	if (c.rank == EMPTY || c.suit == EMPTY)
@@ -131,7 +131,7 @@ printcard(win, cardno, c, blank)
 	WINDOW *win;
 	int     cardno;
 	CARD    c;
-	BOOLEAN blank;
+	bool blank;
 {
 	prcard(win, cardno * 2, cardno, c, blank);
 }
@@ -145,7 +145,7 @@ prcard(win, y, x, c, blank)
 	WINDOW *win;
 	int y, x;
 	CARD c;
-	BOOLEAN blank;
+	bool blank;
 {
 	if (c.rank == EMPTY)
 		return;
@@ -172,7 +172,7 @@ prhand(h, n, win, blank)
 	CARD h[];
 	int n;
 	WINDOW *win;
-	BOOLEAN blank;
+	bool blank;
 {
 	int i;
 
@@ -250,7 +250,7 @@ incard(crd)
 	int i;
 	int rnk, sut;
 	char *line, *p, *p1;
-	BOOLEAN retval;
+	bool retval;
 
 	retval = FALSE;
 	rnk = sut = EMPTY;
