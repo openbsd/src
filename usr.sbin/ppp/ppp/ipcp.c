@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: ipcp.c,v 1.17 1999/06/08 20:12:30 brian Exp $
+ * $Id: ipcp.c,v 1.18 1999/08/05 10:32:14 brian Exp $
  *
  *	TODO:
  *		o Support IPADDRS properly
@@ -385,7 +385,7 @@ ipcp_Init(struct ipcp *ipcp, struct bundle *bundle, struct link *l,
 
   memset(&ipcp->vj, '\0', sizeof ipcp->vj);
 
-  throughput_init(&ipcp->throughput);
+  throughput_init(&ipcp->throughput, SAMPLE_PERIOD);
   memset(ipcp->Queue, '\0', sizeof ipcp->Queue);
   ipcp_Setup(ipcp, INADDR_NONE);
 }

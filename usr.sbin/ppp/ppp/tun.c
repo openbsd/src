@@ -23,12 +23,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: tun.c,v 1.6 1999/05/08 11:06:40 brian Exp $
+ *	$Id: tun.c,v 1.7 1999/08/05 10:32:14 brian Exp $
  */
 
 #include <sys/param.h>
+#ifdef __OpenBSD__
 #include <sys/socket.h>		/* For IFF_ defines */
 #include <net/if.h>		/* For IFF_ defines */
+#endif
 #include <netinet/in.h>
 #include <net/if_types.h>
 #include <net/if_tun.h>
@@ -95,17 +97,10 @@ tun_configure(struct bundle *bundle, int mtu)
 
   memset(&info, '\0', sizeof info);
   info.type = IFT_PPP;
-#ifndef NORADIUS
-  if (bundle->radius.valid && bundle->radius.mtu && bundle->radius.mtu < mtu) {
-    log_Printf(LogLCP, "Reducing MTU to radius value %lu\n",
-               bundle->radius.mtu);
-    info.mtu = bundle->radius.mtu;
-  } else
-#endif
-    info.mtu = mtu;
+  info.mtu = mtu;
   
-  info.baudrate = bundle->ifSpeed;
-#ifdef __OpenBSD__                                           
+  info.baudrate = bundle->bandwidth;
+#ifdef __OpenBSD__
   info.flags = IFF_UP|IFF_POINTOPOINT;                             
 #endif
   if (ioctl(bundle->dev.fd, TUNSIFINFO, &info) < 0)
