@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile,v 1.2 1999/07/18 20:13:49 niklas Exp $
-#	$EOM: Makefile,v 1.3 1999/07/18 20:11:17 niklas Exp $
+#	$OpenBSD: Makefile,v 1.3 2000/04/07 22:06:36 niklas Exp $
+#	$EOM: Makefile,v 1.6 2000/03/28 21:22:06 ho Exp $
 
 #
 # Copyright (c) 1999 Niels Provos.  All rights reserved.
@@ -45,5 +45,9 @@ CFLAGS+=	-I${TOPSRC} -I${TOPSRC}/sysdep/${OS} -I${TOPOBJ} -Wall
 LDADD+=		-lcrypto
 DPADD+=		${LIBCRYPTO}
 MAN=		certpatch.8
+
+.include "${TOPSRC}/sysdep/${OS}/Makefile.sysdep"
+# Override LIBSYSDEPDIR definition from Makefile.sysdep
+LIBSYSDEPDIR=	${TOPSRC}/sysdep/common/libsysdep
 
 .include <bsd.prog.mk>
