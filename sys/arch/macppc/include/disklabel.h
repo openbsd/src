@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.4 2002/09/15 09:01:58 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.5 2004/11/10 10:36:12 grange Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -87,12 +87,7 @@ struct dos_partition {
 static __inline u_int32_t get_le(void *p);
 
 static __inline u_int32_t
-#ifdef __cplusplus
 get_le(void *p)
-#else
-get_le(p)
-	void *p;
-#endif
 {
 	u_int8_t *_p = (u_int8_t *)p;
 	int x;

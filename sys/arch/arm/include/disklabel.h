@@ -1,5 +1,5 @@
-/*	$OpenBSD: disklabel.h,v 1.3 2004/05/19 03:17:07 drahn Exp $	*/
-/*	$OpenBSD: disklabel.h,v 1.3 2004/05/19 03:17:07 drahn Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.4 2004/11/10 10:36:12 grange Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.4 2004/11/10 10:36:12 grange Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.2 2001/11/25 19:02:03 thorpej Exp $	*/
 
 /*
@@ -110,12 +110,7 @@ struct dos_partition {
 #else
 static __inline u_int32_t get_le(void *p);
 static __inline u_int32_t
-#ifdef __cplusplus
 get_le(void *p)
-#else
-get_le(p)
-	void *p;
-#endif
 {
 	u_int8_t *_p = (u_int8_t *)p;
 	int x;
