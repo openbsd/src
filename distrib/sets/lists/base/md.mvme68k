@@ -1241,10 +1241,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/netinet6/in6_prefix.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/netinet6/in6_var.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/netinet6/ip6_mroute.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/netinet6/ip6_mroute.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/netinet6/ip6_var.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/netinet6/ip6_var.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/netinet6/ip6protosw.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/netinet6/ip6protosw.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/netinet6/mld6_var.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/netinet6/nd6.ph
