@@ -1,6 +1,7 @@
-/*	$OpenBSD: sunkbd.c,v 1.13 2003/01/01 17:51:36 miod Exp $	*/
+/*	$OpenBSD: sunkbd.c,v 1.14 2003/01/22 19:02:31 miod Exp $	*/
 
 /*
+ * Copyright (c) 2002, 2003 Miodrag Vallat.
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
  * All rights reserved.
  *
@@ -887,8 +888,10 @@ const struct wscons_keydesc sunkbd5_keydesctab[] = {
 
 /*
  * Keyboard layout to ID table
- * References: Sun Type 5 Keyboard Supplement Installation Guide, May 1992
- *        and  http://docs.sun.com/db/doc/806-6642/6jfipqu57?a=view
+ * References:
+ *	Sun Type 5 Keyboard Supplement Installation Guide, May 1992
+ *	http://docs.sun.com/db/doc/806-6642/6jfipqu57?a=view
+ *	http://jp.sunsolve.sun.com/handbook_pub/Systems/SSVygr/INPUT_Compact1_Keyboard.html
  */
 const int sunkbd_layouts[MAXSUNLAYOUT] = {
 	/* Type 4 layouts */
@@ -958,6 +961,44 @@ const int sunkbd_layouts[MAXSUNLAYOUT] = {
 	-1,	/* 03d unaffected */
 	-1,	/* 03e Turkey-F5 */
 	-1,	/* 03f Canada/French */
+
+	/* Not affected range */
+	-1,	/* 040 */
+	-1,	/* 041 */
+	-1,	/* 042 */
+	-1,	/* 043 */
+	-1,	/* 044 */
+	-1,	/* 045 */
+	-1,	/* 046 */
+	-1,	/* 047 */
+	-1,	/* 048 */
+	-1,	/* 049 */
+	-1,	/* 04a */
+	-1,	/* 04b */
+	-1,	/* 04c */
+	-1,	/* 04d */
+	-1,	/* 04e */
+	-1,	/* 04f */
+
+	/* ``Compact-1'' layouts */
+	KB_US,	/* 050 USA */
+	KB_US,	/* 051 UNIX */
+	KB_FR,	/* 052 France */
+	KB_DK,	/* 053 Denmark */
+	KB_DE,	/* 054 Germany */
+	KB_IT,	/* 055 Italy */
+	KB_NL,	/* 056 The Netherlands */
+	KB_NO,	/* 057 Norway */
+	KB_PT,	/* 058 Portugal */
+	KB_ES,	/* 059 Spain */
+	KB_SV,	/* 05a Sweden */
+	KB_SF,	/* 05b Switzerland/French */
+	KB_SG,	/* 05c Switzerland/German */
+	KB_UK,	/* 05d Great Britain */
+	-1,	/* 05e Korea */
+	-1,	/* 05f Taiwan */
+	-1,	/* 060 Japan */
+	-1,	/* 061 Canada/French */
 };
 
 struct wskbd_mapdata sunkbd_keymapdata = {
