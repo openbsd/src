@@ -39,7 +39,7 @@
  */
 
 /* $KTH: roken.h.in,v 1.159 2001/08/21 15:32:05 assar Exp $ */
-/* $Id: roken.h,v 1.8 2002/05/30 20:06:23 hin Exp $ */
+/* $Id: roken.h,v 1.9 2003/05/12 00:00:38 hin Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -228,6 +228,6 @@ void set_progname(char *argv0);
 const char *get_progname(void);
 
 ROKEN_CPP_END
-#define ROKEN_VERSION 0.4e
+#define ROKEN_VERSION 0.6RC1
 
 #endif /* __ROKEN_H__ */

@@ -1,1 +1,1 @@
-#define VERSIONLIST { "heimdal-0.4e/OpenBSD", }
+#define VERSIONLIST { "heimdal-0.6RC1/OpenBSD", }
