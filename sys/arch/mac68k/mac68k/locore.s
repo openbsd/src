@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.11 1996/06/23 16:24:08 briggs Exp $	*/
+/*	$OpenBSD: locore.s,v 1.12 1996/09/21 04:14:01 briggs Exp $	*/
 /*	$NetBSD: locore.s,v 1.65 1996/06/15 21:25:21 briggs Exp $	*/
 
 /*
@@ -2153,6 +2153,7 @@ _mac68k_vrsrc_cnt:
 _mac68k_vrsrc_vec:
 	.word	0, 0, 0, 0, 0, 0
 _mac68k_buserr_addr:
+	.long	0
 	.globl	_SONICSPACE, _SONICSPACE_size
 _SONICSPACE:
 	.space	108123
