@@ -1,4 +1,4 @@
-/* $OpenBSD: memconfig.c,v 1.4 2002/02/16 21:28:04 millert Exp $ */
+/* $OpenBSD: memconfig.c,v 1.5 2002/05/30 19:09:05 deraadt Exp $ */
 /*-
  * Copyright (c) 1999 Michael Smith <msmith@freebsd.org>
  * All rights reserved.
@@ -64,18 +64,18 @@ static void	clearfunc(int, int, char *[]);
 static void	helpfunc(int, int, char *[]);
 static void	help(char *);
 
-struct 
+struct
 {
 	char	*cmd;
 	char	*desc;
 	void	(*func)(int, int, char *[]);
 } functions[] = {
-	{"list",	
+	{"list",
 	 "List current memory range attributes\n"
 	 "    list [-a]\n"
 	 "        -a    list all range slots, even those that are inactive",
 	 listfunc},
-	{"set",	
+	{"set",
 	 "Set memory range attributes\n"
 	 "    set -b <base> -l <length> -o <owner> <attribute>\n"
 	 "        <base>      memory range base address\n"
@@ -88,7 +88,7 @@ struct
 	 "                        write-back\n"
 	 "                        write-protect",
 	 setfunc},
-	{"clear",	
+	{"clear",
 	 "Clear memory range attributes\n"
 	 "    clear -o <owner>\n"
 	 "        <owner>     all ranges with this owner will be cleared\n"
@@ -102,8 +102,8 @@ struct
 
 int
 main(argc, argv)
-	int 	 argc;
-	char 	*argv[];
+	int	 argc;
+	char	*argv[];
 {
 	int	 i, memfd;
 
@@ -112,7 +112,7 @@ main(argc, argv)
 	} else {
 		if ((memfd = open("/dev/mem", O_RDONLY)) == -1)
 			err(1, "can't open /dev/mem");
-		
+
 		for (i = 0; functions[i].cmd != NULL; i++)
 			if (!strcmp(argv[1], functions[i].cmd))
 				break;
@@ -124,8 +124,8 @@ main(argc, argv)
 
 static struct mem_range_desc *
 mrgetall(memfd, nmr)
-	int 	 memfd;
-	int 	*nmr;
+	int	 memfd;
+	int	*nmr;
 {
 	struct mem_range_desc	*mrd;
 	struct mem_range_op		mro;
@@ -133,27 +133,27 @@ mrgetall(memfd, nmr)
 	mro.mo_arg[0] = 0;
 	if (ioctl(memfd, MEMRANGE_GET, &mro))
 		err(1, "can't size range descriptor array");
-	
+
 	*nmr = mro.mo_arg[0];
 	mrd = malloc(*nmr * sizeof(struct mem_range_desc));
 	if (mrd == NULL)
-		errx(1, "can't allocate %d bytes for %d range descriptors", 
+		errx(1, "can't allocate %d bytes for %d range descriptors",
 		     *nmr * sizeof(struct mem_range_desc), *nmr);
-	
+
 	mro.mo_arg[0] = *nmr;
 	mro.mo_desc = mrd;
 	if (ioctl(memfd, MEMRANGE_GET, &mro))
 		err(1, "can't fetch range descriptor array");
-	
+
 	return(mrd);
 }
 
 
 static void
 listfunc(memfd, argc, argv)
-	int 	 memfd;
-	int 	 argc;
-	char 	*argv[];
+	int	 memfd;
+	int	 argc;
+	char	*argv[];
 {
 	struct mem_range_desc	*mrd;
 	int			 nd, i, j;
@@ -174,15 +174,15 @@ listfunc(memfd, argc, argv)
 		default:
 			help("list");
 		}
-	
+
 	mrd = mrgetall(memfd, &nd);
-	
+
 	for (i = 0; i < nd; i++) {
 		if (!showall && !(mrd[i].mr_flags & MDF_ACTIVE))
 			continue;
 		if (owner && strcmp(mrd[i].mr_owner, owner))
 			continue;
-		printf("%qx/%qx %.8s ", mrd[i].mr_base, mrd[i].mr_len, 
+		printf("%qx/%qx %.8s ", mrd[i].mr_base, mrd[i].mr_len,
 		       mrd[i].mr_owner[0] ? mrd[i].mr_owner : "-");
 		for (j = 0; attrnames[j].name != NULL; j++)
 			if (mrd[i].mr_flags & attrnames[j].val)
@@ -196,9 +196,9 @@ listfunc(memfd, argc, argv)
 
 static void
 setfunc(memfd, argc, argv)
-	int 	 memfd;
-	int 	 argc; 
-	char 	*argv[];
+	int	 memfd;
+	int	 argc;
+	char	*argv[];
 {
 	struct mem_range_desc	 mrd;
 	struct mem_range_op	 mro;
@@ -228,18 +228,18 @@ setfunc(memfd, argc, argv)
 				help("set");
 			strcpy(mrd.mr_owner, optarg);
 			break;
-			
+
 		case '?':
 		default:
 			help("set");
 		}
-	
+
 	if (mrd.mr_len == 0)
 		help("set");
-	
+
 	argc -= optind;
 	argv += optind;
-	
+
 	while(argc--) {
 		for (i = 0; attrnames[i].name != NULL; i++) {
 			if (!strcmp(attrnames[i].name, argv[0])) {
@@ -253,7 +253,7 @@ setfunc(memfd, argc, argv)
 			help("flags");
 		argv++;
 	}
-	
+
 	mro.mo_desc = &mrd;
 	mro.mo_arg[0] = 0;
 	if (ioctl(memfd, MEMRANGE_SET, &mro))
@@ -262,16 +262,16 @@ setfunc(memfd, argc, argv)
 
 static void
 clearfunc(memfd, argc, argv)
-	int 	 memfd;
-	int 	 argc;
-	char 	*argv[];
+	int	 memfd;
+	int	 argc;
+	char	*argv[];
 {
 	struct mem_range_desc	 mrd, *mrdp;
 	struct mem_range_op      mro;
 	int			 i, nd;
 	int			 ch;
 	char			*ep, *owner;
-	
+
 	mrd.mr_base = 0;
 	mrd.mr_len = 0;
 	owner = NULL;
@@ -292,24 +292,24 @@ clearfunc(memfd, argc, argv)
 				help("clear");
 			owner = strdup(optarg);
 			break;
-			
+
 		case '?':
 		default:
 			help("clear");
 		}
-	
+
 	if (owner != NULL) {
 		/* clear-by-owner */
 		if ((mrd.mr_base != 0) || (mrd.mr_len != 0))
 			help("clear");
-		
+
 		mrdp = mrgetall(memfd, &nd);
 		mro.mo_arg[0] = MEMRANGE_SET_REMOVE;
 		for (i = 0; i < nd; i++) {
-			if (!strcmp(owner, mrdp[i].mr_owner) && 
+			if (!strcmp(owner, mrdp[i].mr_owner) &&
 			    (mrdp[i].mr_flags & MDF_ACTIVE) &&
 			    !(mrdp[i].mr_flags & MDF_FIXACTIVE)) {
-				
+
 				mro.mo_desc = mrdp + i;
 				if (ioctl(memfd, MEMRANGE_SET, &mro))
 					warn("couldn't clear range owned by '%s'", owner);
@@ -328,19 +328,19 @@ clearfunc(memfd, argc, argv)
 
 static void
 helpfunc(memfd, argc, argv)
-	int 	 memfd; 
-	int 	 argc;
-	char 	*argv[];
+	int	 memfd;
+	int	 argc;
+	char	*argv[];
 {
 	help(argv[1]);
 }
 
 static void
 help(what)
-	char 	*what;
+	char	*what;
 {
 	int	 i;
-	
+
 	if (what != NULL) {
 		/* find a function that matches */
 		for (i = 0; functions[i].cmd != NULL; i++)
@@ -350,7 +350,7 @@ help(what)
 			}
 		fprintf(stderr, "Unknown command '%s'\n", what);
 	}
-	
+
 	/* print general help */
 	fprintf(stderr, "Valid commands are :\n");
 	for (i = 0; functions[i].cmd != NULL; i++)

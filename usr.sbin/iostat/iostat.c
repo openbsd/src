@@ -1,4 +1,4 @@
-/*	$OpenBSD: iostat.c,v 1.13 2002/03/14 16:44:25 mpech Exp $	*/
+/*	$OpenBSD: iostat.c,v 1.14 2002/05/30 19:09:05 deraadt Exp $	*/
 /*	$NetBSD: iostat.c,v 1.10 1996/10/25 18:21:58 scottr Exp $	*/
 
 /*
@@ -96,7 +96,7 @@ static char *rcsid = "$NetBSD: iostat.c,v 1.10 1996/10/25 18:21:58 scottr Exp $"
 
 /* Defined in dkstats.c */
 extern struct _disk cur;
-extern int  	dk_ndrive;
+extern int	dk_ndrive;
 
 /* Namelist and memory files. */
 char	*nlistf, *memf;
@@ -272,7 +272,7 @@ double etime;
 			mbps = (cur.dk_bytes[dn] / (1024.0)) / cur.dk_xfer[dn];
 		else
 			mbps = 0.0;
-		(void)printf(" %5.2f", mbps); 
+		(void)printf(" %5.2f", mbps);
 
 		/* average transfers per second. */
 		(void)printf(" %3.0f", cur.dk_xfer[dn] / etime);
@@ -284,7 +284,7 @@ double etime;
 		/* Megabytes per second. */
 		if (atime != 0.0)
 			mbps = cur.dk_bytes[dn] / (double)(1024 * 1024);
-		else 
+		else
 			mbps = 0;
 		(void)printf(" %4.2f ", mbps / etime);
 	}
@@ -362,7 +362,7 @@ display()
 
 	if (ISSET(todo, SHOW_TTY))
 		printf("%4.0f %4.0f", cur.tk_nin / etime, cur.tk_nout / etime);
-	
+
 	if (ISSET(todo, SHOW_STATS_1))
 		disk_stats(etime);
 

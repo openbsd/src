@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypbind.c,v 1.43 2002/03/14 16:44:25 mpech Exp $ */
+/*	$OpenBSD: ypbind.c,v 1.44 2002/05/30 19:09:06 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997,1998 Theo de Raadt <deraadt@OpenBSD.org>
@@ -35,7 +35,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypbind.c,v 1.43 2002/03/14 16:44:25 mpech Exp $";
+static char rcsid[] = "$OpenBSD: ypbind.c,v 1.44 2002/05/30 19:09:06 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -577,7 +577,7 @@ main(argc, argv)
  * State transition is done like this: 
  *
  * STATE	EVENT		ACTION			NEWSTATE	TIMEOUT
- * no binding	timeout		broadcast 		no binding	5 sec
+ * no binding	timeout		broadcast		no binding	5 sec
  * no binding	answer		--			binding		60 sec
  * binding	timeout		ping server		checking	5 sec
  * checking	timeout		ping server + broadcast	checking	5 sec
@@ -1019,7 +1019,7 @@ int force;
 		}
 		return;
 	}
-	
+
 	memcpy(&ypdb->dom_server_addr, raddrp, sizeof ypdb->dom_server_addr);
 	/* recheck binding in 60 seconds */
 	ypdb->dom_check_t = time(NULL) + 60;

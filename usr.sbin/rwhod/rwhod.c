@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)rwhod.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: rwhod.c,v 1.22 2002/03/14 16:44:25 mpech Exp $";
+static char rcsid[] = "$OpenBSD: rwhod.c,v 1.23 2002/05/30 19:09:05 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -137,7 +137,7 @@ main(argc, argv)
 	struct pollfd pfd[1];
 	int on = 1, ch;
 	char *cp;
-	
+
 	while ((ch = getopt(argc, argv, "d")) != -1) {
 		switch (ch) {
 		case 'd':

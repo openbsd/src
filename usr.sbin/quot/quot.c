@@ -1,4 +1,4 @@
-/*	$OpenBSD: quot.c,v 1.10 2000/11/21 04:23:09 millert Exp $	*/
+/*	$OpenBSD: quot.c,v 1.11 2002/05/30 19:09:05 deraadt Exp $	*/
 /*	$NetBSD: quot.c,v 1.7.4.1 1996/05/31 18:06:36 jtc Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: quot.c,v 1.10 2000/11/21 04:23:09 millert Exp $";
+static char rcsid[] = "$Id: quot.c,v 1.11 2002/05/30 19:09:05 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -87,7 +87,7 @@ get_inode(fd, super, ino)
 {
 	static struct dinode *ip;
 	static ino_t last;
-	
+
 	if (fd < 0) {		/* flush cache */
 		if (ip) {
 			free(ip);
@@ -95,7 +95,7 @@ get_inode(fd, super, ino)
 		}
 		return 0;
 	}
-	
+
 	if (!ip || ino < last || ino >= last + INOCNT(super)) {
 		if (!ip && !(ip = (struct dinode *)malloc(INOSZ(super))))
 			err(1, "allocate inodes");
@@ -107,7 +107,7 @@ get_inode(fd, super, ino)
 			err(1, "read inodes");
 		}
 	}
-	
+
 	return ip + ino % INOCNT(super);
 }
 
@@ -123,7 +123,7 @@ virtualblocks(super, ip)
 	struct dinode *ip;
 {
 	off_t nblk, sz;
-	
+
 	sz = ip->di_size;
 #ifdef	COMPAT
 	if (lblkno(super, sz) >= NDADDR) {
@@ -131,10 +131,10 @@ virtualblocks(super, ip)
 		if (sz == nblk)
 			nblk += super->fs_bsize;
 	}
-	
+
 	return sz / 1024;
 #else	/* COMPAT */
-	
+
 	if (lblkno(super, sz) >= NDADDR) {
 		nblk = blkroundup(super, sz);
 		sz = lblkno(super, nblk);
@@ -146,7 +146,7 @@ virtualblocks(super, ip)
 		}
 	} else
 		nblk = fragroundup(super, sz);
-	
+
 	return nblk / DEV_BSIZE;
 #endif	/* COMPAT */
 }
@@ -186,7 +186,7 @@ inituser()
 {
 	int i;
 	struct user *usr;
-	
+
 	if (!nusers) {
 		nusers = 8;
 		if (!(users =
@@ -207,7 +207,7 @@ usrrehash()
 	int i;
 	struct user *usr, *usrn;
 	struct user *svusr;
-	
+
 	svusr = users;
 	nusers <<= 1;
 	if (!(users = (struct user *)calloc(nusers, sizeof(struct user))))
@@ -230,14 +230,14 @@ user(uid)
 	int i;
 	struct passwd *pwd;
 	struct user *usr;
-	
+
 	while (1) {
 		for (usr = users + (uid&(nusers - 1)), i = nusers;
 		     --i >= 0;
 		    usr--) {
 			if (!usr->name) {
 				usr->uid = uid;
-				
+
 				if (!(pwd = getpwuid(uid)))
 					asprintf(&usr->name, "#%u", uid);
 				else
@@ -273,14 +273,14 @@ uses(uid, blks, act)
 {
 	static time_t today;
 	struct user *usr;
-	
+
 	if (!today)
 		time(&today);
-	
+
 	usr = user(uid);
 	usr->count++;
 	usr->space += blks;
-	
+
 	if (today - act > 90L * 24L * 60L * 60L)
 		usr->spc90 += blks;
 	if (today - act > 60L * 24L * 60L * 60L)
@@ -306,7 +306,7 @@ initfsizes()
 {
 	struct fsizes *fp;
 	int i;
-	
+
 	for (fp = fsizes; fp; fp = fp->fsz_next) {
 		for (i = FSZCNT; --i >= 0;) {
 			fp->fsz_count[i] = 0;
@@ -326,7 +326,7 @@ dofsizes(fd, super, name)
 	daddr_t sz, ksz;
 	struct fsizes *fp, **fsp;
 	int i;
-	
+
 	maxino = super->fs_ncg * super->fs_ipg - 1;
 #ifdef	COMPAT
 	if (!(fsizes = (struct fsizes *)malloc(sizeof(struct fsizes))))
@@ -399,7 +399,7 @@ douser(fd, super, name)
 	struct user *usr, *usrs;
 	struct dinode *ip;
 	int n;
-	
+
 	maxino = super->fs_ncg * super->fs_ipg - 1;
 	for (inode = 0; inode < maxino; inode++) {
 		errno = 0;
@@ -441,7 +441,7 @@ donames(fd, super, name)
 	ino_t inode, inode1;
 	ino_t maxino;
 	struct dinode *ip;
-	
+
 	maxino = super->fs_ncg * super->fs_ipg - 1;
 	/* first skip the name of the filesystem */
 	while ((c = getchar()) != EOF && (c < '0' || c > '9'))
@@ -530,7 +530,7 @@ quot(name, mp)
 	char *name, *mp;
 {
 	int fd;
-	
+
 	get_inode(-1);		/* flush cache */
 	inituser();
 	initfsizes();
@@ -568,7 +568,7 @@ main(argc, argv)
 	int cnt, all, i;
 	char dev[MNAMELEN], *nm, *mountpoint, *cp;
 	struct statfs *mp;
-	
+
 	all = 0;
 	func = douser;
 #ifndef	COMPAT

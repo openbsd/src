@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.30 2002/03/14 16:44:25 mpech Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.31 2002/05/30 19:09:05 deraadt Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
 #else
-static char *rcsid = "$OpenBSD: pstat.c,v 1.30 2002/03/14 16:44:25 mpech Exp $";
+static char *rcsid = "$OpenBSD: pstat.c,v 1.31 2002/05/30 19:09:05 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -295,7 +295,7 @@ vnode_print(avnode, vp)
 	struct vnode *avnode;
 	struct vnode *vp;
 {
-	char *type, flags[16]; 
+	char *type, flags[16];
 	char *fp = flags;
 	int flag;
 
@@ -321,7 +321,7 @@ vnode_print(avnode, vp)
 		type = "fif"; break;
 	case VBAD:
 		type = "bad"; break;
-	default: 
+	default:
 		type = "unk"; break;
 	}
 	/*
@@ -358,13 +358,13 @@ vnode_print(avnode, vp)
 }
 
 void
-ufs_header() 
+ufs_header()
 {
 	(void)printf(" FILEID IFLAG RDEV|SZ");
 }
 
 int
-ufs_print(vp) 
+ufs_print(vp)
 	struct vnode *vp;
 {
 	int flag;
@@ -406,7 +406,7 @@ ufs_print(vp)
 	if (S_ISCHR(ip->i_ffs_mode) || S_ISBLK(ip->i_ffs_mode))
 		if (usenumflag ||
 		    ((name = devname(ip->i_ffs_rdev, type)) == NULL))
-			(void)printf("   %2d,%-2d", 
+			(void)printf("   %2d,%-2d",
 			    major(ip->i_ffs_rdev), minor(ip->i_ffs_rdev));
 		else
 			(void)printf(" %7s", name);
@@ -416,13 +416,13 @@ ufs_print(vp)
 }
 
 void
-ext2fs_header() 
+ext2fs_header()
 {
 	(void)printf(" FILEID IFLAG SZ");
 }
 
 int
-ext2fs_print(vp) 
+ext2fs_print(vp)
 	struct vnode *vp;
 {
 	int flag;
@@ -462,13 +462,13 @@ ext2fs_print(vp)
 }
 
 void
-nfs_header() 
+nfs_header()
 {
 	(void)printf(" FILEID NFLAG RDEV|SZ");
 }
 
 int
-nfs_print(vp) 
+nfs_print(vp)
 	struct vnode *vp;
 {
 	struct nfsnode nfsnode, *np = &nfsnode;
@@ -502,7 +502,7 @@ nfs_print(vp)
 	type = VT.va_mode & S_IFMT;
 	if (S_ISCHR(VT.va_mode) || S_ISBLK(VT.va_mode))
 		if (usenumflag || ((name = devname(VT.va_rdev, type)) == NULL))
-			(void)printf("   %2d,%-2d", 
+			(void)printf("   %2d,%-2d",
 			    major(VT.va_rdev), minor(VT.va_rdev));
 		else
 			(void)printf(" %7s", name);
@@ -510,7 +510,7 @@ nfs_print(vp)
 		(void)printf(" %7qd", np->n_size);
 	return (0);
 }
-	
+
 /*
  * Given a pointer to a mount structure in kernel space,
  * read it in and return a usable pointer to it.
@@ -768,7 +768,7 @@ kinfo_vnodes(avnodes)
 	*avnodes = num;
 	return ((struct e_vnode *)vbuf);
 }
-	
+
 char hdr[]="   LINE RAW  CAN  OUT  HWT LWT    COL STATE      SESS  PGID DISC\n";
 
 void
@@ -824,7 +824,7 @@ ttyprt(tp)
 	else
 		(void)printf("%7s ", name);
 	(void)printf("%3d %4d ", tp->t_rawq.c_cc, tp->t_canq.c_cc);
-	(void)printf("%4d %4d %3d %6d ", tp->t_outq.c_cc, 
+	(void)printf("%4d %4d %3d %6d ", tp->t_outq.c_cc,
 		tp->t_hiwat, tp->t_lowat, tp->t_column);
 	for (i = j = 0; ttystates[i].flag; i++)
 		if (tp->t_state&ttystates[i].flag)
@@ -884,7 +884,7 @@ filemode()
 	addr = ((struct filelist *)buf)->lh_first;
 	ffp = (struct file *)(buf + sizeof(struct filelist));
 	nfile = (len - sizeof(struct filelist)) / sizeof(struct file);
-	
+
 	(void)printf("%d/%d open files\n", nfile, maxfile);
 
 	(void)printf("%*s TYPE       FLG  CNT  MSG  %*s  OFFSET\n",
@@ -1023,13 +1023,13 @@ swapmode()
 		avail += xsize;
 		if (totalflag)
 			continue;
-		(void)printf("%8d %8d %5.0f%%    %d\n", 
+		(void)printf("%8d %8d %5.0f%%    %d\n",
 		    used / div, xfree / div,
 		    (double)used / (double)xsize * 100.0,
 		    swdev[i].se_priority);
 	}
 
-	/* 
+	/*
 	 * If only one partition has been set up via swapon(8), we don't
 	 * need to bother with totals.
 	 */

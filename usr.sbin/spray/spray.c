@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: spray.c,v 1.1.1.1 1995/10/18 08:48:21 deraadt Exp $
+ *	$Id: spray.c,v 1.2 2002/05/30 19:09:05 deraadt Exp $
  */
 
 #include <stdio.h>
@@ -118,7 +118,6 @@ main(argc, argv)
 	/* Initialize spray argument */
 	host_array.sprayarr_len = length - SPRAYOVERHEAD;
 	host_array.sprayarr_val = spray_buffer;
-	
 
 	/* create connection with server */
 	cl = clnt_create(*argv, SPRAYPROG, SPRAYVERS, "udp");
@@ -127,10 +126,9 @@ main(argc, argv)
 		exit(1);
 	}
 
-
 	/*
-	 * For some strange reason, RPC 4.0 sets the default timeout, 
-	 * thus timeouts specified in clnt_call() are always ignored.  
+	 * For some strange reason, RPC 4.0 sets the default timeout,
+	 * thus timeouts specified in clnt_call() are always ignored.
 	 *
 	 * The following (undocumented) hack resets the internal state
 	 * of the client handle.
@@ -139,7 +137,8 @@ main(argc, argv)
 
 
 	/* Clear server statistics */
-	if (clnt_call(cl, SPRAYPROC_CLEAR, xdr_void, NULL, xdr_void, NULL, TIMEOUT) != RPC_SUCCESS) {
+	if (clnt_call(cl, SPRAYPROC_CLEAR, xdr_void, NULL, xdr_void, NULL,
+	    TIMEOUT) != RPC_SUCCESS) {
 		clnt_perror(cl, progname);
 		exit(1);
 	}
@@ -186,7 +185,7 @@ main(argc, argv)
 
 	printf("Rcvd:");
 	print_xferstats(host_stats.counter, length, xmit_time);
-	
+
 	exit (0);
 }
 
@@ -207,11 +206,11 @@ print_xferstats(packets, packetlen, xfertime)
 
 	printf("\t%.0f packets/sec, ", pps);
 
-	if (bps >= 1024) 
+	if (bps >= 1024)
 		printf ("%.1fK ", bps / 1024);
 	else
 		printf ("%.0f ", bps);
-	
+
 	printf("bytes/sec\n");
 }
 

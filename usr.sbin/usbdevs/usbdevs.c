@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdevs.c,v 1.6 2002/05/29 09:46:20 deraadt Exp $	*/
+/*	$OpenBSD: usbdevs.c,v 1.7 2002/05/30 19:09:05 deraadt Exp $	*/
 /*	$NetBSD: usbdevs.c,v 1.19 2002/02/21 00:34:31 christos Exp $	*/
 
 /*
@@ -128,11 +128,10 @@ usbdev(int f, int a, int rec)
 			if (verbose) {
 				printf("%*sport %d %s\n", indent+1, "", p+1,
 				       s == USB_PORT_ENABLED ? "enabled" :
-				       s == USB_PORT_SUSPENDED ? "suspended" : 
+				       s == USB_PORT_SUSPENDED ? "suspended" :
 				       s == USB_PORT_POWERED ? "powered" :
 				       s == USB_PORT_DISABLED ? "disabled" :
 				       "???");
-				
 			}
 			continue;
 		}

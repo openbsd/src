@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.92 2002/05/29 19:23:34 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.93 2002/05/30 19:09:05 deraadt Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.92 2002/05/29 19:23:34 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.93 2002/05/30 19:09:05 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -61,7 +61,7 @@ static char rcsid[] = "$OpenBSD: inetd.c,v 1.92 2002/05/29 19:23:34 deraadt Exp 
  * to receive further messages on, or ``take over the socket'',
  * processing all arriving datagrams and, eventually, timing
  * out.	 The first type of server is said to be ``multi-threaded'';
- * the second type of server ``single-threaded''. 
+ * the second type of server ``single-threaded''.
  *
  * Inetd uses a configuration file which is read at startup
  * and, possibly, at some later time in response to a hangup signal.
@@ -117,23 +117,23 @@ static char rcsid[] = "$OpenBSD: inetd.c,v 1.92 2002/05/29 19:23:34 deraadt Exp 
  * Here's the scoop concerning the user[.:]group feature:
  *
  * 1) set-group-option off.
- * 
- * 	a) user = root:	NO setuid() or setgid() is done
- * 
- * 	b) other:	setgid(primary group as found in passwd)
- * 			initgroups(name, primary group)
- * 			setuid()
+ *
+ *	a) user = root:	NO setuid() or setgid() is done
+ *
+ *	b) other:	setgid(primary group as found in passwd)
+ *			initgroups(name, primary group)
+ *			setuid()
  *
  * 2) set-group-option on.
- * 
- * 	a) user = root:	setgid(specified group)
- * 			NO initgroups()
- * 			NO setuid()
  *
- * 	b) other:	setgid(specified group)
- * 			initgroups(name, specified group)
- * 			setuid()
- * 
+ *	a) user = root:	setgid(specified group)
+ *			NO initgroups()
+ *			NO setuid()
+ *
+ *	b) other:	setgid(specified group)
+ *			initgroups(name, specified group)
+ *			setuid()
+ *
  */
 
 #include <sys/param.h>
@@ -421,7 +421,7 @@ main(argc, argv, envp)
 	sigaddset(&blockmask, SIGALRM);
 
 	memset((char *)&sa, 0, sizeof(sa));
-	sigemptyset(&sa.sa_mask);	
+	sigemptyset(&sa.sa_mask);
 	sigaddset(&sa.sa_mask, SIGALRM);
 	sigaddset(&sa.sa_mask, SIGCHLD);
 	sigaddset(&sa.sa_mask, SIGHUP);
@@ -462,7 +462,7 @@ main(argc, argv, envp)
 		}
 		(void) sigprocmask(SIG_SETMASK, &emptymask, NULL);
 	    }
-	    
+
 	    if (wantretry || wantconfig || wantreap || wantdie) {
 		if (wantretry) {
 		    doretry();
@@ -812,10 +812,10 @@ doconfig(void)
 			/*
 			 * sep->se_wait may be holding the pid of a daemon
 			 * that we're waiting for.  If so, don't overwrite
-			 * it unless the config file explicitly says don't 
+			 * it unless the config file explicitly says don't
 			 * wait.
 			 */
-			if (cp->se_bi == 0 && 
+			if (cp->se_bi == 0 &&
 			    (sep->se_wait == 1 || cp->se_wait == 0))
 				sep->se_wait = cp->se_wait;
 			SWAP(int, cp->se_max, sep->se_max);
@@ -843,7 +843,7 @@ doconfig(void)
 				break;
 			(void)unlink(sep->se_service);
 			n = strlen(sep->se_service);
-			if (n > sizeof sep->se_ctrladdr_un.sun_path - 1) 
+			if (n > sizeof sep->se_ctrladdr_un.sun_path - 1)
 				n = sizeof sep->se_ctrladdr_un.sun_path - 1;
 			strncpy(sep->se_ctrladdr_un.sun_path,
 			    sep->se_service, n);
@@ -1306,14 +1306,14 @@ getconfigent()
 	memset(sep, 0, sizeof *sep);
 more:
 	freeconfig(sep);
-	
+
 	while ((cp = nextline(fconfig)) && *cp == '#')
 		;
 	if (cp == NULL) {
 		free(sep);
 		return (NULL);
 	}
-	
+
 	memset((char *)sep, 0, sizeof *sep);
 	arg = skip(&cp, 0);
 	if (arg == NULL) {
@@ -1365,7 +1365,7 @@ more:
 
 	if ((arg = skip(&cp, 1)) == NULL)
 		goto more;
-	
+
 	sep->se_proto = newstr(arg);
 
 	if (strcmp(sep->se_proto, "unix") == 0) {
@@ -1395,7 +1395,7 @@ more:
 			sep->se_rpcversl = sep->se_rpcversh = l;
 			if (*ccp == '-') {
 				cp = ccp + 1;
-				l = strtol(cp, &ccp, 0); 
+				l = strtol(cp, &ccp, 0);
 				if (ccp == cp || l < 0 || l > INT_MAX ||
 				    l < sep->se_rpcversl || *ccp)
 					goto badafterall;
@@ -1435,7 +1435,7 @@ more:
 	}
 	if ((arg = skip(&cp, 1)) == NULL)
 		goto more;
-	
+
 	sep->se_server = newstr(arg);
 	if (strcmp(sep->se_server, "internal") == 0) {
 		struct biltin *bi;
@@ -1621,7 +1621,7 @@ erp:
 			syslog(LOG_ERR, "syntax error in inetd config file");
 		return (NULL);
 	}
-	
+
 again:
 	while (*cp == ' ' || *cp == '\t')
 		cp++;

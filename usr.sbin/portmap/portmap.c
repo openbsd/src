@@ -1,4 +1,4 @@
-/*	$OpenBSD: portmap.c,v 1.21 2002/03/14 16:44:25 mpech Exp $	*/
+/*	$OpenBSD: portmap.c,v 1.22 2002/05/30 19:09:05 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 Theo de Raadt (OpenBSD). All rights reserved.
@@ -44,7 +44,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)portmap.c	5.4 (Berkeley) 4/19/91";
 #else
-static char rcsid[] = "$OpenBSD: portmap.c,v 1.21 2002/03/14 16:44:25 mpech Exp $";
+static char rcsid[] = "$OpenBSD: portmap.c,v 1.22 2002/05/30 19:09:05 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -65,23 +65,23 @@ static char sccsid[] = "@(#)portmap.c 1.32 87/08/06 Copyr 1984 Sun Micro";
  * may copy or modify Sun RPC without charge, but are not authorized
  * to license or distribute it to anyone else except as part of a product or
  * program developed by the user.
- * 
+ *
  * SUN RPC IS PROVIDED AS IS WITH NO WARRANTIES OF ANY KIND INCLUDING THE
  * WARRANTIES OF DESIGN, MERCHANTIBILITY AND FITNESS FOR A PARTICULAR
  * PURPOSE, OR ARISING FROM A COURSE OF DEALING, USAGE OR TRADE PRACTICE.
- * 
+ *
  * Sun RPC is provided with no support and without any obligation on the
  * part of Sun Microsystems, Inc. to assist in its use, correction,
  * modification or enhancement.
- * 
+ *
  * SUN MICROSYSTEMS, INC. SHALL HAVE NO LIABILITY WITH RESPECT TO THE
  * INFRINGEMENT OF COPYRIGHTS, TRADE SECRETS OR ANY PATENTS BY SUN RPC
  * OR ANY PART THEREOF.
- * 
+ *
  * In no event will Sun Microsystems, Inc. be liable for any lost revenue
  * or profits or other special, indirect and consequential damages, even if
  * Sun has been advised of the possibility of such damages.
- * 
+ *
  * Sun Microsystems, Inc.
  * 2550 Garcia Avenue
  * Mountain View, California  94043
@@ -274,7 +274,7 @@ find_service(prog, vers, prot)
 	return (hit);
 }
 
-/* 
+/*
  * 1 OK, 0 not
  */
 void
@@ -287,7 +287,7 @@ reg_service(rqstp, xprt)
 	struct sockaddr_in *fromsin;
 	long ans = 0, port;
 	caddr_t t;
-	
+
 	fromsin = svc_getcaller(xprt);
 
 	if (debugging)
@@ -350,7 +350,7 @@ reg_service(rqstp, xprt)
 			goto done;
 		}
 
-		/* 
+		/*
 		 * add to END of list
 		 */
 		pml = (struct pmaplist *)malloc(sizeof(struct pmaplist));
@@ -460,7 +460,7 @@ reg_service(rqstp, xprt)
 		 * Calls a procedure on the local machine.  If the requested
 		 * procedure is not registered this procedure does not return
 		 * error information!!
-		 * This procedure is only supported on rpc/udp and calls via 
+		 * This procedure is only supported on rpc/udp and calls via
 		 * rpc/udp.  It passes null authentication parameters.
 		 */
 		callit(rqstp, xprt);
@@ -572,7 +572,7 @@ xdr_len_opaque_parms(xdrs, cap)
  * a machine should shut-up instead of complain, less the requestor be
  * overrun with complaints at the expense of not hearing a valid reply ...
  *
- * This now forks so that the program & process that it calls can call 
+ * This now forks so that the program & process that it calls can call
  * back to the portmapper.
  */
 void

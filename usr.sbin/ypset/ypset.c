@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypset.c,v 1.5 1997/07/21 19:18:34 deraadt Exp $ */
+/*	$OpenBSD: ypset.c,v 1.6 2002/05/30 19:09:06 deraadt Exp $ */
 /*	$NetBSD: ypset.c,v 1.8 1996/05/13 02:46:33 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypset.c,v 1.5 1997/07/21 19:18:34 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypset.c,v 1.6 2002/05/30 19:09:06 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -73,7 +73,7 @@ char *dom, *server;
 	int sock, port;
 	int r;
 	struct in_addr iaddr;
-	
+
 	if( (port=htons(getrpcport(server, YPPROG, YPPROC_NULL, IPPROTO_UDP))) == 0) {
 		fprintf(stderr, "%s not running ypserv.\n", server);
 		exit(1);
@@ -95,7 +95,7 @@ char *dom, *server;
 	bcopy(&port, &ypsd.ypsetdom_binding.ypbind_binding_port,
 	    sizeof(ypsd.ypsetdom_binding.ypbind_binding_port));
 	ypsd.ypsetdom_vers = YPVERS;
-	
+
 	tv.tv_sec = 15;
 	tv.tv_usec = 0;
 	sock = RPC_ANYSOCK;

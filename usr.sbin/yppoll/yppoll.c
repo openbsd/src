@@ -1,4 +1,4 @@
-/*	$OpenBSD: yppoll.c,v 1.3 1997/06/23 01:05:10 deraadt Exp $ */
+/*	$OpenBSD: yppoll.c,v 1.4 2002/05/30 19:09:06 deraadt Exp $ */
 /*	$NetBSD: yppoll.c,v 1.5 1996/05/13 02:46:36 thorpej Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: yppoll.c,v 1.3 1997/06/23 01:05:10 deraadt Exp $";
+static char rcsid[] = "$Id: yppoll.c,v 1.4 2002/05/30 19:09:06 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -105,7 +105,7 @@ get_remote_info(indomain, inmap, server, outorder, outname)
 		    server);
 		exit(1);
 	}
-	
+
 	yprnk.domain = indomain;
 	yprnk.map = inmap;
 

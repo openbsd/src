@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmoused.c,v 1.12 2002/05/26 09:32:44 deraadt Exp $ */
+/* $OpenBSD: wsmoused.c,v 1.13 2002/05/30 19:09:05 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Baptiste Marchand, Julien Montagne and Jerome Verdon
@@ -329,7 +329,7 @@ treat_event(struct wscons_event *event)
 		mouse_click(&mapped_event);
 		return 1;
 	}
-	if (event->type == WSCONS_EVENT_WSMOUSED_CLOSE) 
+	if (event->type == WSCONS_EVENT_WSMOUSED_CLOSE)
 		/* we have to close mouse fd */
 		return 0;
 	return 1;
@@ -414,9 +414,9 @@ wsmoused(void)
 
 		/* get major and minor of mouse device */
 		res = stat(mouse.portname, &mdev_stat);
-		if (res != -1) 
+		if (res != -1)
 			event.value = mdev_stat.st_rdev;
-		else 
+		else
 			event.value = 0;
 	}
 	else
@@ -446,7 +446,7 @@ wsmoused(void)
 			read(mouse.mfd, &event, sizeof(event));
 			res = treat_event(&event);
 			if (!res) {
-				/* close mouse device and sleep until 
+				/* close mouse device and sleep until
 				   the X server release it */
 
 				struct wscons_event sleeping;
@@ -457,19 +457,19 @@ wsmoused(void)
 
 				close(mouse.mfd);
 				mouse.mfd = -1;
-				
+
 				/* sleep until X server releases mouse device */
 				sleeping.type = WSCONS_EVENT_WSMOUSED_SLEEP;
 				sleeping.value = 0;
-				ioctl(mouse.cfd, WSDISPLAYIO_WSMOUSED, 
+				ioctl(mouse.cfd, WSDISPLAYIO_WSMOUSED,
 				    &sleeping);
 
 				/* waiting for availability of mouse device */
 				sleep(1);
 
-				if ((mouse.mfd = open(mouse.portname, 
-				    O_RDONLY | O_NONBLOCK, 0)) == -1) 
-					logerr(1, "unable to open %s", 
+				if ((mouse.mfd = open(mouse.portname,
+				    O_RDONLY | O_NONBLOCK, 0)) == -1)
+					logerr(1, "unable to open %s",
 					    mouse.portname);
 				mouse_init();
 			}

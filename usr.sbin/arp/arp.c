@@ -1,4 +1,4 @@
-/*	$OpenBSD: arp.c,v 1.22 2002/05/26 09:25:21 deraadt Exp $ */
+/*	$OpenBSD: arp.c,v 1.23 2002/05/30 19:09:05 deraadt Exp $ */
 /*	$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $ */
 
 /*
@@ -45,7 +45,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)arp.c	8.2 (Berkeley) 1/2/94";*/
-static char *rcsid = "$OpenBSD: arp.c,v 1.22 2002/05/26 09:25:21 deraadt Exp $";
+static char *rcsid = "$OpenBSD: arp.c,v 1.23 2002/05/30 19:09:05 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -112,7 +112,7 @@ main(argc, argv)
 	pid = getpid();
 	opterr = 0;
 	func = 0;
-	
+
 	while ((ch = getopt(argc, argv, "andsf")) != -1) {
 		switch ((char)ch) {
 		case 'a':
@@ -147,7 +147,7 @@ main(argc, argv)
 	if (!func)
 		func = F_GET;
 	rtn = 0;
-	
+
 	switch (func) {
 	case F_GET:
 		if (aflag && argc == 0)
@@ -233,7 +233,7 @@ struct	{
 }	m_rtmsg;
 
 /*
- * Set an individual arp entry 
+ * Set an individual arp entry
  */
 int
 set(argc, argv)
@@ -260,7 +260,7 @@ set(argc, argv)
 		return (1);
 	ea = ether_aton(eaddr);
 	if (ea == NULL) 
-	  errx(1, "invalid ethernet address: %s", eaddr);
+		errx(1, "invalid ethernet address: %s", eaddr);
 	memcpy(LLADDR(&sdl_m), ea, sizeof(*ea));
 	sdl_m.sdl_alen = 6;
 	doing_proxy = flags = export_only = expire_time = 0;
@@ -270,7 +270,7 @@ set(argc, argv)
 			(void)gettimeofday(&time, 0);
 			expire_time = time.tv_sec + 20 * 60;
 			if (flags & RTF_PERMANENT_ARP) {
-			        /* temp or permanent, not both */
+				/* temp or permanent, not both */
 				usage();
 				return (0);
 			}
@@ -278,11 +278,11 @@ set(argc, argv)
 		else if (strncmp(argv[0], "pub", 3) == 0) {
 			flags |= RTF_ANNOUNCE;
 			doing_proxy = SIN_PROXY;
-		}	
+		}
 		else if (strncmp(argv[0], "permanent", 9) == 0) {
 			flags |= RTF_PERMANENT_ARP;
 			if (expire_time != 0) {
-			        /* temp or permanent, not both */
+				/* temp or permanent, not both */
 				usage();
 				return (0);
 			}
@@ -303,10 +303,12 @@ tryagain:
 	if (sin->sin_addr.s_addr == sin_m.sin_addr.s_addr) {
 		if (sdl->sdl_family == AF_LINK &&
 		    (rtm->rtm_flags & RTF_LLINFO) &&
-		    !(rtm->rtm_flags & RTF_GATEWAY)) switch (sdl->sdl_type) {
-		case IFT_ETHER: case IFT_FDDI: case IFT_ISO88023:
-		case IFT_ISO88024: case IFT_ISO88025:
-			goto overwrite;
+		    !(rtm->rtm_flags & RTF_GATEWAY)) {
+			switch (sdl->sdl_type) {
+			case IFT_ETHER: case IFT_FDDI: case IFT_ISO88023:
+			case IFT_ISO88024: case IFT_ISO88025:
+				goto overwrite;
+			}
 		}
 		if (doing_proxy == 0) {
 			(void)printf("set: can only proxy for %s\n", host);
@@ -355,7 +357,7 @@ get(host)
 }
 
 /*
- * Delete an arp entry 
+ * Delete an arp entry
  */
 int
 delete(host, info)
@@ -385,10 +387,12 @@ tryagain:
 	if (sin->sin_addr.s_addr == sin_m.sin_addr.s_addr) {
 		if (sdl->sdl_family == AF_LINK &&
 		    (rtm->rtm_flags & RTF_LLINFO) &&
-		    !(rtm->rtm_flags & RTF_GATEWAY)) switch (sdl->sdl_type) {
-		case IFT_ETHER: case IFT_FDDI: case IFT_ISO88023:
-		case IFT_ISO88024: case IFT_ISO88025:
-			goto delete;
+		    !(rtm->rtm_flags & RTF_GATEWAY)) {
+			switch (sdl->sdl_type) {
+			case IFT_ETHER: case IFT_FDDI: case IFT_ISO88023:
+			case IFT_ISO88024: case IFT_ISO88025:
+				goto delete;
+			}
 		}
 	}
 	if (sin_m.sin_other & SIN_PROXY) {
@@ -403,7 +407,7 @@ delete:
 		(void)printf("cannot locate %s\n", host);
 		return (1);
 	}
-	if (rtmsg(RTM_DELETE)) 
+	if (rtmsg(RTM_DELETE))
 		return (1);
 	(void)printf("%s (%s) deleted\n", host, inet_ntoa(sin->sin_addr));
 	return (0);
@@ -467,7 +471,7 @@ print_entry(sdl, sin, rtm)
 	char *host;
 	extern int h_errno;
 	struct hostent *hp;
-	
+
 	if (nflag == 0)
 		hp = gethostbyaddr((caddr_t)&(sin->sin_addr),
 		    sizeof(sin->sin_addr), AF_INET);
@@ -498,7 +502,7 @@ print_entry(sdl, sin, rtm)
 			(void)printf(" published");
 		if (sin->sin_len != 8)
 			(void)printf("(weird)");
- 	}
+	}
 	printf("\n");
 }
 
@@ -512,7 +516,7 @@ nuke_entry(sdl, sin, rtm)
 	struct rt_msghdr *rtm;
 {
 	char ip[20];
-	
+
 	strlcpy(ip, inet_ntoa(sin->sin_addr), sizeof(ip));
 	delete(ip, NULL);
 }

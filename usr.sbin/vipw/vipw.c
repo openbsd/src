@@ -116,7 +116,7 @@ copyfile(from, to)
 	char buf[8*1024];
 	struct stat sb;
 	struct timeval tv[2];
-	
+
 	if (fstat(from, &sb) == -1)
 		pw_error(_PATH_MASTERPASSWD, 1, 1);
 	while ((nr = read(from, buf, sizeof(buf))) > 0)
