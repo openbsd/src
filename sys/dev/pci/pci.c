@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.34 2004/06/25 08:57:10 art Exp $	*/
+/*	$OpenBSD: pci.c,v 1.35 2004/12/07 02:11:24 brad Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -74,8 +74,10 @@ int	pciprint(void *, const char *);
 int	pcisubmatch(struct device *, void *, void *);
 
 /*
- * Callback so that ISA/EISA bridges can attach their child busses
- * after PCI configuration is done.
+ * Important note about PCI-ISA bridges:
+ *
+ * Callbacks are used to configure these devices so that ISA/EISA bridges
+ * can attach their child busses after PCI configuration is done.
  *
  * This works because:
  *	(1) there can be at most one ISA/EISA bridge per PCI bus, and
@@ -93,9 +95,9 @@ int	pcisubmatch(struct device *, void *, void *);
  * and the bridge is seen before the video board is, the board can show
  * up as an ISA device, and that can (bogusly) complicate the PCI device's
  * attach code, or make the PCI device not be properly attached at all.
+ *
+ * We use the generic config_defer() facility to achieve this.
  */
-static void	(*pci_isa_bridge_callback)(void *);
-static void	*pci_isa_bridge_callback_arg;
 
 int
 pcimatch(parent, match, aux)
@@ -158,9 +160,6 @@ pciattach(parent, self, aux)
 	sc->sc_pc = pba->pba_pc;
 	sc->sc_bus = bus;
 #endif
-
-	if (bus == 0)
-		pci_isa_bridge_callback = NULL;
 
 #ifdef __PCI_BUS_DEVORDER
 	pci_bus_devorder(pc, bus, devs);
@@ -279,9 +278,6 @@ pciattach(parent, self, aux)
 			config_found_sm(self, &pa, pciprint, pcisubmatch);
 		}
 	}
-
-	if (bus == 0 && pci_isa_bridge_callback != NULL)
-		(*pci_isa_bridge_callback)(pci_isa_bridge_callback_arg);
 }
 
 int
@@ -341,18 +337,6 @@ pcisubmatch(parent, match, aux)
 	}
 
 	return (success);
-}
-
-void
-set_pci_isa_bridge_callback(fn, arg)
-	void (*fn)(void *);
-	void *arg;
-{
-
-	if (pci_isa_bridge_callback != NULL)
-		panic("set_pci_isa_bridge_callback");
-	pci_isa_bridge_callback = fn;
-	pci_isa_bridge_callback_arg = arg;
 }
 
 int
