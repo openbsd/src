@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_cons.c,v 1.5 1995/09/20 05:36:15 jonathan Exp $	*/
+/*	$NetBSD: cpu_cons.c,v 1.6 1996/01/03 20:39:19 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,9 +74,8 @@
 #include <pmax/dev/fbreg.h>
 
 #include <machine/autoconf.h>
-#include <pmax/tc/tc.h>
 #include <pmax/dev/lk201.h>
-
+#include <dev/tc/tcvar.h>
 
 #include <pm.h>
 #include <cfb.h>
@@ -143,8 +142,6 @@ struct consdev cd = {
  */
 
 
-int consprobetc __P((int prom_slot));
-int consprobeslot __P((int slot));
 void consinit __P((void));
 void xconsinit __P((void));
 
@@ -281,7 +278,7 @@ consinit()
 	    /*
 	     * Check for a suitable turbochannel frame buffer.
 	     */
-	    if (consprobetc(crt)) {
+	    if (tc_findconsole(crt)) {
 			cd.cn_pri = CN_NORMAL;
 #ifdef RCONS_HACK
 /* FIXME */		cd.cn_putc = v_putc;
@@ -366,102 +363,6 @@ xconsinit()
 	};
 	if (cd.cn_dev == NODEV)
 		printf("Can't configure console!\n");
-}
-
-
-
-/*
- * Probe for a framebuffer option card.  Configure the first one
- * found as a console.
- */
-int
-consprobetc(preferred_slot)
-	int preferred_slot;
-{
-	int slot;
-
-	struct tc_cpu_desc * sc_desc;
-
-	/*printf("Looking for fb console in slot %d", slot);*/
-
-	/* First, try the slot configured as console in NVRAM. */
-	 /* if (consprobeslot(preferred_slot)) return (1); */
-
-	/*
-	 * Try to configure each turbochannel (or CPU-internal) device.
-	 * Knows about gross internals of TurboChannel bus autoconfig
-	 * descriptor, which needs to be fixed badly.
-	 */
-	if ((sc_desc = cpu_tcdesc(pmax_boardtype)) == NULL)
-		return 0;
-	for (slot = 0; slot < sc_desc->tcd_ndevs; slot++) {
-
-		if (consprobeslot(slot))
-			return (1);
-	}
-	return (0);
-}
-
-/*
- * Try and configure one slot as framebuffer console.
- * Accept only the framebuffers configured in.
- * Attach the framebuffer if found.
- */
-int
-consprobeslot(slot)
-	int slot;
-{
-	void *slotaddr;
-	char name[20];
-	struct tc_cpu_desc * sc_desc;
-
-	if (slot < 0 || ((sc_desc = cpu_tcdesc(pmax_boardtype)) == NULL))
-		return 0;
-	slotaddr = (void *)sc_desc->tcd_slots[slot].tsd_dense;
-
-	/*printf("probing slot %d at 0x%x\n", slot, slotaddr);*/
-
-	if (tc_checkdevmem(slotaddr) == 0)
-		return (0);
-
-	if (tc_checkslot(slotaddr, name) == 0)
-		return (0);
-
-	/*
-	 * We found an device in the given slot. Now see if it's a
-	 * framebuffer for which we have a driver. 
-	 */
-
-	/*printf(", trying to init a \"%s\"", name);*/
-
-#define DRIVER_FOR_SLOT(slotname, drivername) \
-	(strcmp (slotname, drivername) == 0)
-
-#if NMFB > 0
-	if (DRIVER_FOR_SLOT(name, "PMAG-AA ") &&
-	    mfbinit(slotaddr, 0, 1)) {
-		cd.cn_pri = CN_NORMAL;
-		return (1);
-	}
-#endif /* NMFB */
-
-#if NSFB > 0
-	if (DRIVER_FOR_SLOT(name, "PMAGB-BA") &&
-	    sfbinit(slotaddr, 0, 1)) {
-		cd.cn_pri = CN_NORMAL;
-		return (1);
-	}
-#endif /* NSFB */
-
-#if NCFB > 0
-	/*"cfb"*/
-	if (DRIVER_FOR_SLOT(name, "PMAG-BA ") &&
-	    cfbinit(NULL, slotaddr, 0, 1)) {
-		cd.cn_pri = CN_NORMAL;
-		return (1);
-	}
-#endif /* NCFB */
-	return (0);
 }
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ds-tc-conf.c,v 1.4 1995/10/09 01:45:28 jonathan Exp $	*/
+/*	$NetBSD: ds-tc-conf.c,v 1.5 1996/01/03 20:39:16 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1995 Jonathan Stone
@@ -13,27 +13,33 @@
  * addresses are different on the two machines.
  * (thankfully the IOASIC subslots are all the same size.)
  */
+
+#define C(x)	((void *)(u_long)x)
+
 struct confargs tc3_devs[4] = {
-	/* name	      entry   pri xxx */
-	{ "IOCTL   ",     3, -1,  /*0x040000*/ 0x0,   },
-	{ NULL, 	  2,  2,    0x0,   },
-	{ NULL, 	  1,  1,    0x0,   },
-	{ NULL, 	  0,  0,    0x0,   }
+	/* name	       slot  offset intpri */
+	{ "IOCTL   ",     3,  0x0,   -1,   },  /* offset 0x040000 ?*/
+	{ NULL, 	  2,  0x0,    2,   },
+	{ NULL, 	  1,  0x0,    1,   },
+	{ NULL, 	  0,  0x0,    0,   }
 
 };
 
 /* 3MAXPLUS slot addreseses */
- static struct tc_slot_desc kn03_slot_addrs [4] = {
-       	{ KV(KN03_PHYS_TC_0_START), },	/* slot 0 - tc option slot 0 */
-	{ KV(KN03_PHYS_TC_1_START), },	/* slot 1 - tc option slot 1 */
-	{ KV(KN03_PHYS_TC_2_START), },	/* slot 2 - tc option slot 2 */
-	{ KV(KN03_PHYS_TC_3_START), }	/* slot 3 - IOCTL asic on CPU board */
+static struct tc_slotdesc tc_kn03_slots [4] = {
+       	{ KV(KN03_PHYS_TC_0_START), C(0) },  /* slot0 - tc option slot 0 */
+	{ KV(KN03_PHYS_TC_1_START), C(1) },  /* slot1 - tc option slot 1 */
+	{ KV(KN03_PHYS_TC_2_START), C(2) },  /* slot2 - tc option slot 2 */
+	{ KV(KN03_PHYS_TC_3_START), C(3) }   /* slot3 - IO asic on b'board */
 };
+int tc_kn03_nslots =
+    sizeof(tc_kn03_slots) / sizeof(tc_kn03_slots[0]);
+
 
 /* 3MAXPLUS turbochannel autoconfiguration table */
 struct tc_cpu_desc kn03_tc_desc =
 {
-	kn03_slot_addrs, KN03_TC_NSLOTS,
+	tc_kn03_slots, KN03_TC_NSLOTS,
 	tc3_devs, KN03_TC_NSLOTS, /*XXX*/
 	tc_ds_ioasic_intr_setup,
 	tc_ds_ioasic_intr_establish,
@@ -44,17 +50,20 @@ struct tc_cpu_desc kn03_tc_desc =
 /************************************************************************/
 
 /* 3MIN slot addreseses */
-static struct tc_slot_desc kmin_slot_addrs [4] = {
-       	{ KV(KMIN_PHYS_TC_0_START), },	/* slot 0 - tc option slot 0 */
-	{ KV(KMIN_PHYS_TC_1_START), },	/* slot 1 - tc option slot 1 */
-	{ KV(KMIN_PHYS_TC_2_START), },	/* slot 2 - tc option slot 2 */
-	{ KV(KMIN_PHYS_TC_3_START), }	/* slot 3 - IOCTL asic on CPU board */
+static struct tc_slotdesc tc_kmin_slots [] = {
+       	{ KV(KMIN_PHYS_TC_0_START), C(0) },   /* slot0 - tc option slot 0 */
+	{ KV(KMIN_PHYS_TC_1_START), C(1) },   /* slot1 - tc option slot 1 */
+	{ KV(KMIN_PHYS_TC_2_START), C(3) },   /* slot2 - tc option slot 2 */
+	{ KV(KMIN_PHYS_TC_3_START), C(4) }    /* slot3 - IO asic on b'board */
 };
+
+int tc_kmin_nslots =
+    sizeof(tc_kmin_slots) / sizeof(tc_kmin_slots[0]);
 
 /* 3MIN turbochannel autoconfiguration table */
 struct tc_cpu_desc kmin_tc_desc =
 {
-	kmin_slot_addrs, KMIN_TC_NSLOTS,
+	tc_kmin_slots,  KMIN_TC_NSLOTS,
 	tc3_devs, KMIN_TC_NSLOTS, /*XXX*/
 	tc_ds_ioasic_intr_setup,
 	tc_ds_ioasic_intr_establish,
@@ -66,29 +75,35 @@ struct tc_cpu_desc kmin_tc_desc =
 
 /* MAXINE  turbochannel slots  */
 struct confargs xine_devs[4] = {
-	{ "PMAG-DV ",	  3,   3,    0x0,  },	/* xcfb ? */
-	{ "IOCTL   ",  	  2,  -1,    0x0,  },
-	{ NULL, 	  1,   1,    0x0,  },
-	{ NULL, 	  0,   0,    0x0,  }
+	/* name	       slot  offset intpri  */
+	{ "PMAG-DV ",	  3,  0x0,    3,   },	/* xcfb */
+	{ "IOCTL   ",  	  2,  0x0,   -1,   },
+	{ NULL, 	  1,  0x0,    1,   },
+	{ NULL, 	  0,  0x0,    0,   }
 };
 
 /* MAXINE slot addreseses */
-static struct tc_slot_desc xine_slot_addrs [4] = {
-       	{ KV(XINE_PHYS_TC_0_START), },	/* slot 0 - tc option slot 0 */
-	{ KV(XINE_PHYS_TC_1_START), },	/* slot 1 - tc option slot 1 */
-	{ KV(XINE_PHYS_TC_3_START), },	/* slot 2 - IOCTL asic on CPU board */
-	{ KV(XINE_PHYS_CFB_START),  }	/* slot 3 - fb on CPU board */
+static struct tc_slotdesc tc_xine_slots [4] = {
+       	{ KV(XINE_PHYS_TC_0_START), C(0) },   /* slot 0 - tc option slot 0 */
+	{ KV(XINE_PHYS_TC_1_START), C(1) },   /* slot 1 - tc option slot 1 */
+		/* physical space for ``slot 2'' is reserved */
+	{ KV(XINE_PHYS_TC_3_START), C(8) },   /* slot 2 - IO asic on b'board */
+	{ KV(XINE_PHYS_CFB_START), C(-1) }    /* slot 3 - fb on b'board */
 };
+
+int tc_xine_nslots =
+    sizeof(tc_xine_slots) / sizeof(tc_xine_slots[0]);
 
 struct tc_cpu_desc xine_tc_desc =
 {
-	xine_slot_addrs, XINE_TC_NSLOTS,
+	tc_xine_slots, XINE_TC_NSLOTS,
 	xine_devs, 4, /*XXX*/ 
 	tc_ds_ioasic_intr_setup,
 	tc_ds_ioasic_intr_establish,
 	tc_ds_ioasic_intr_disestablish,
 	/*xine_intr*/ (void *) -1
 };
+
 
 /************************************************************************/
 
@@ -104,19 +119,19 @@ struct tc_cpu_desc xine_tc_desc =
 struct confargs kn02_devs[8] = {
    /* The 3max  supposedly has "KN02    " at 0xbffc0410 */
 
-	/* name	     entry   pri xxx */
-	{ KN02_ASIC_NAME, 7,  -1,   0x0,   },	/* System CSR and subslots */
-	{ TC_ETHER, 	  6,   6,   0x0,   },	/* slot 6: Ether on cpu board*/
-	{ TC_SCSI, 	  5,   5,   0x0,   },	/* slot 5: SCSI on cpu board */
-/*XXX*/	{ NULL, 	  4,   0,    -1,   },	/* slot 3 reserved */
-/*XXX*/	{ NULL, 	  3,   0,    -1,   },	/* slot 3 reserved */
-	{ NULL, 	  2,   2,   0x0,   },	/* slot 2 - TC option slot 2 */
-	{ NULL, 	  1,   1,   0x0,   },	/* slot 1 - TC option slot 1 */
-	{ NULL, 	  0,   0,   0x0,   }	/* slot 0 - TC option slot 0 */
+	/* name        slot  offset intpri  */
+	{ KN02_ASIC_NAME, 7,  0x0,   -1,   },	/* System CSR and subslots */
+	{ TC_ETHER, 	  6,  0x0,    6,   },	/* slot 6: Ether on cpu board*/
+	{ TC_SCSI, 	  5,  0x0,    5,   },	/* slot 5: SCSI on cpu board */
+/*XXX*/	{ NULL, 	  4,   -1,    0,   },	/* slot 3 reserved */
+/*XXX*/	{ NULL, 	  3,   -1,    0,   },	/* slot 3 reserved */
+	{ NULL, 	  2,  0x0,    2,   },	/* slot 2 - TC option slot 2 */
+	{ NULL, 	  1,  0x0,    1,   },	/* slot 1 - TC option slot 1 */
+	{ NULL, 	  0,  0x0,    0,   }	/* slot 0 - TC option slot 0 */
 };
 
 /* slot addreseses */
-static struct tc_slot_desc kn02_slot_addrs [8] = {
+static struct tc_slotdesc tc_kn02_slots [8] = {
        	{ KV(KN02_PHYS_TC_0_START), },	/* slot 0 - tc option slot 0 */
 	{ KV(KN02_PHYS_TC_1_START), },	/* slot 1 - tc option slot 1 */
 	{ KV(KN02_PHYS_TC_2_START), },	/* slot 2 - tc option slot 2 */
@@ -128,10 +143,25 @@ static struct tc_slot_desc kn02_slot_addrs [8] = {
 
 };
 
+int tc_kn02_nslots =
+    sizeof(tc_kn02_slots) / sizeof(tc_kn02_slots[0]);
+
+#define KN02_ROM_NAME KN02_ASIC_NAME
+
+#define TC_KN02_DEV_IOASIC     -1
+#define TC_KN02_DEV_ETHER	6
+#define TC_KN02_DEV_SCSI	5
+
+struct tc_builtin tc_kn02_builtins[] = {
+	{ KN02_ROM_NAME,7, 0x00000000, C(TC_KN02_DEV_IOASIC),	},
+	{ TC_ETHER,	6, 0x00000000, C(TC_KN02_DEV_ETHER),	},
+	{ TC_SCSI,	5, 0x00000000, C(TC_KN02_DEV_SCSI),	},
+};
+
 
 struct tc_cpu_desc kn02_tc_desc =
 {
-	kn02_slot_addrs, KN02_TC_NSLOTS,
+	tc_kn02_slots, KN02_TC_NSLOTS,
 	kn02_devs, 8, /*XXX*/
 	tc_ds_ioasic_intr_setup,
 	tc_ds_ioasic_intr_establish,
