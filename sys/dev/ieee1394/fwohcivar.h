@@ -1,4 +1,4 @@
-/*	$OpenBSD: fwohcivar.h,v 1.3 2002/12/30 11:12:12 tdeval Exp $	*/
+/*	$OpenBSD: fwohcivar.h,v 1.4 2003/01/12 12:03:48 tdeval Exp $	*/
 /*	$NetBSD: fwohcivar.h,v 1.17 2002/01/16 01:47:37 eeh Exp $	*/
 
 /*
@@ -60,7 +60,7 @@
 	    OHCI_BUF_ATRS_CNT + OHCI_BUF_IR_CNT + 1 + 1)
 
 #define	OHCI_LOOP				1000
-#define	OHCI_SELFID_TIMEOUT			(hz * 3)
+#define	OHCI_SELFID_TIMEOUT			(3 * hz)
 #define	OHCI_ASYNC_STREAM			0x40
 
 struct fwohci_softc;
@@ -127,6 +127,7 @@ typedef struct fwohci_ctx {
 
 typedef struct fwohci_uidtbl {
 	int			fu_valid;
+	int			fu_link_speed;
 	u_int8_t		fu_uid[8];
 } fwohci_uidtbl;
 
