@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_bwx_bus_io_chipdep.c,v 1.4 2002/03/14 01:26:27 millert Exp $ */
+/* $OpenBSD: pci_bwx_bus_io_chipdep.c,v 1.5 2003/09/02 17:25:21 miod Exp $ */
 /* $NetBSD: pcs_bus_io_common.c,v 1.14 1996/12/02 22:19:35 cgd Exp $ */
 
 /*
@@ -43,6 +43,16 @@
 
 #define	__C(A,B)	__CONCAT(A,B)
 #define	__S(S)		__STRING(S)
+
+#ifndef	CHIP_EXTENT_NAME
+#define	CHIP_EXTENT_NAME(v)	__S(__C(CHIP,_bus_io))
+#endif
+
+#ifndef	CHIP_EXTENT_STORAGE
+#define CHIP_EXTENT_STORAGE(v)	__C(CHIP,_io_ex_storage)
+static long
+    __C(CHIP,_io_ex_storage)[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
+#endif
 
 /* mapping/unmapping */
 int		__C(CHIP,_io_map)(void *, bus_addr_t, bus_size_t, int,
@@ -172,9 +182,6 @@ void		__C(CHIP,_io_write_raw_multi_8)(void *,
 		    bus_space_handle_t, bus_size_t, const u_int8_t *,
 		    bus_size_t);
 
-static long
-    __C(CHIP,_io_ex_storage)[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
-
 void
 __C(CHIP,_bus_io_init)(t, v)
 	bus_space_tag_t t;
@@ -265,9 +272,9 @@ __C(CHIP,_bus_io_init)(t, v)
 	t->abs_wrm_4 =		__C(CHIP,_io_write_raw_multi_4);
 	t->abs_wrm_8 =		__C(CHIP,_io_write_raw_multi_8);
 
-	ex = extent_create(__S(__C(CHIP,_bus_io)), 0x0UL, 0xffffffffUL,
-	    M_DEVBUF, (caddr_t)__C(CHIP,_io_ex_storage),
-	    sizeof(__C(CHIP,_io_ex_storage)), EX_NOWAIT|EX_NOCOALESCE);
+	ex = extent_create(CHIP_EXTENT_NAME(v), 0x0UL, 0xffffffffUL,
+	    M_DEVBUF, (caddr_t)CHIP_EXTENT_STORAGE(v),
+	    sizeof(CHIP_EXTENT_STORAGE(v)), EX_NOWAIT|EX_NOCOALESCE);
 
 	CHIP_IO_EXTENT(v) = ex;
 }

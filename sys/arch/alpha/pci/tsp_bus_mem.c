@@ -1,4 +1,4 @@
-/* $OpenBSD: tsp_bus_mem.c,v 1.3 2001/11/06 19:53:13 miod Exp $ */
+/* $OpenBSD: tsp_bus_mem.c,v 1.4 2003/09/02 17:25:21 miod Exp $ */
 /* $NetBSD: tsp_bus_mem.c,v 1.4 2000/06/26 19:46:25 thorpej Exp $ */
 
 /*-
@@ -61,6 +61,9 @@
  * support for the assembler to emit BWX opcodes.
  */                                                                      
 __asm(".arch ev6");                                                      
+
+#define	CHIP_EXTENT_NAME(v)	((struct tsp_config *)(v))->pc_mem_ex_name
+#define	CHIP_EXTENT_STORAGE(v)	((struct tsp_config *)(v))->pc_mem_ex_storage
 
 #include <alpha/pci/pci_bwx_bus_mem_chipdep.c>
 
