@@ -1,4 +1,4 @@
-/*	$OpenBSD: strings.c,v 1.4 1997/09/11 11:21:54 deraadt Exp $	*/
+/*	$OpenBSD: strings.c,v 1.5 2000/02/23 19:44:08 provos Exp $	*/
 /*	$NetBSD: strings.c,v 1.7 1995/02/15 15:49:19 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)strings.c	8.2 (Berkeley) 1/28/94";
 #endif
-static char rcsid[] = "$OpenBSD: strings.c,v 1.4 1997/09/11 11:21:54 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: strings.c,v 1.5 2000/02/23 19:44:08 provos Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -87,7 +87,7 @@ main(argc, argv)
 	register int ch, cnt;
 	register u_char *C;
 	EXEC *head;
-	int exitcode, minlen;
+	int exitcode, minlen, maxlen, bfrlen;
 	short asdata, fflg;
 	u_char *bfr;
 	char *file, *p;
@@ -102,7 +102,8 @@ main(argc, argv)
 	asdata = exitcode = fflg = 0;
 	offset_format = NULL;
 	minlen = -1;
-	while ((ch = getopt(argc, argv, "-0123456789an:oft:")) != -1)
+	maxlen = -1;
+	while ((ch = getopt(argc, argv, "-0123456789an:m:oft:")) != -1)
 		switch((char)ch) {
 		case '0': case '1': case '2': case '3': case '4':
 		case '5': case '6': case '7': case '8': case '9':
@@ -127,6 +128,9 @@ main(argc, argv)
 			break;
 		case 'n':
 			minlen = atoi(optarg);
+			break;
+		case 'm':
+			maxlen = atoi(optarg);
 			break;
 		case 'o':
 			offset_format = FORMAT_OCT;
@@ -160,12 +164,17 @@ main(argc, argv)
 		(void)fprintf(stderr, "strings: length less than 1\n");
 		exit (1);
 	}
-
-	if (!(bfr = malloc(minlen + 1))) {
+	if (maxlen != -1 && maxlen < minlen) {
+		(void)fprintf(stderr, "strings: max length less than min\n");
+		exit (1);
+	}
+	bfrlen = maxlen == -1 ? minlen : maxlen;
+	bfr = malloc(bfrlen + 1);
+	if (!bfr) {
 		(void)fprintf(stderr, "strings: %s\n", strerror(errno));
 		exit(1);
 	}
-	bfr[minlen] = '\0';
+	bfr[bfrlen] = '\0';
 	file = "stdin";
 	do {
 		if (*argv) {
@@ -205,6 +214,21 @@ start:
 				*C++ = ch;
 				if (++cnt < minlen)
 					continue;
+				if (maxlen != -1) {
+					while ((ch = getch()) != EOF &&
+					       ISSTR(ch) && cnt++ < maxlen)
+						*C++ = ch;
+					if (ch == EOF ||
+					    (ch != 0 && ch != '\n')) {
+						/* get all of too big string */
+						while ((ch = getch()) != EOF &&
+						       ISSTR(ch))
+							;
+						ungetc(ch, stdin);
+						goto out;
+					}
+					*C = 0;
+				}
 
 				if (fflg)
 					printf("%s:", file);
@@ -213,10 +237,13 @@ start:
 					printf(offset_format, foff - minlen);
 
 				printf("%s", bfr);
-
-				while ((ch = getch()) != EOF && ISSTR(ch))
-					putchar((char)ch);
+				
+				if (maxlen == -1)
+					while ((ch = getch()) != EOF &&
+					       ISSTR(ch))
+						putchar((char)ch);
 				putchar('\n');
+			out:
 			}
 			cnt = 0;
 		}
