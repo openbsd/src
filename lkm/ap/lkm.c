@@ -1,4 +1,4 @@
-/*	$OpenBSD: lkm.c,v 1.1 1996/03/05 11:25:34 mickey Exp $	*/
+/*	$OpenBSD: lkm.c,v 1.2 1998/01/26 04:55:11 deraadt Exp $	*/
 /*
  * Copyright (c) 1994 The XFree86 Project Inc.
  */
@@ -29,7 +29,7 @@ static int
 ap_load(struct lkm_table *lkmtp, int cmd)
 {
     if (cmd == LKM_E_LOAD) {
-	printf("\n Aperture driver for XFree86 version %s.%s\n",
+	printf("Aperture driver for XFree86 version %s.%s\n",
 	       ap_major_version, ap_minor_version);
     }
     return(0);
