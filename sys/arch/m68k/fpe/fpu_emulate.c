@@ -1,4 +1,5 @@
-/*	$NetBSD: fpu_emulate.c,v 1.4 1995/11/05 00:35:17 briggs Exp $	*/
+/*	$OpenBSD: fpu_emulate.c,v 1.3 1996/05/09 22:20:43 niklas Exp $	*/
+/*	$NetBSD: fpu_emulate.c,v 1.5 1996/04/30 11:52:13 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -38,6 +39,7 @@
 
 #include <sys/types.h>
 #include <sys/signal.h>
+#include <sys/systm.h>
 #include <machine/frame.h>
 
 #include "fpu_emulate.h"
@@ -50,6 +52,8 @@ static int fpu_emul_brcc __P((struct fpemu *fe, struct instruction *insn));
 static int test_cc __P((struct fpemu *fe, int pred));
 static struct fpn *fpu_cmp __P((struct fpemu *fe));
 
+int	fusword __P((void *));
+
 #if !defined(DL_DEFAULT)
 #  if defined(DEBUG_WITH_FPU)
 #    define DL_DEFAULT DL_ALL
@@ -59,7 +63,9 @@ static struct fpn *fpu_cmp __P((struct fpemu *fe));
 #endif
 
 int fpu_debug_level;
+#if DEBUG
 static int global_debug_level = DL_DEFAULT;
+#endif
 
 #define DUMP_INSN(insn)							\
 if (fpu_debug_level & DL_DUMPINSN) {					\
@@ -86,8 +92,6 @@ fpu_emulate(frame, fpf)
     static struct instruction insn;
     static struct fpemu fe;
     int word, optype, sig;
-    int i;
-    u_int *pt;
 
 #ifdef DEBUG
     /* initialize insn.is_datasize to tell it is *not* initialized */
@@ -115,7 +119,7 @@ fpu_emulate(frame, fpf)
 	printf("ENTERING fpu_emulate: FPSR=%08x, FPCR=%08x\n",
 	       fe.fe_fpsr, fe.fe_fpcr);
     }
-    word = fusword(frame->f_pc);
+    word = fusword((void *) (frame->f_pc));
     if (word < 0) {
 #ifdef DEBUG
 	printf("  fpu_emulate: fault reading opcode\n");
@@ -146,7 +150,7 @@ fpu_emulate(frame, fpf)
     insn.is_opcode = word;
     optype = (word & 0x01C0);
 
-    word = fusword(frame->f_pc + 2);
+    word = fusword((void *) (frame->f_pc + 2));
     if (word < 0) {
 #ifdef DEBUG
 	printf("  fpu_emulate: fault reading word1\n");
@@ -344,8 +348,8 @@ fpu_emul_fmovmcr(fe, insn)
 {
     struct frame *frame = fe->fe_frame;
     struct fpframe *fpf = fe->fe_fpframe;
-    int word1, sig;
-    int reglist, regmask, regnum;
+    int sig;
+    int reglist;
     int fpu_to_mem;
 
     /* move to/from control registers */
@@ -1031,7 +1035,6 @@ fpu_emul_type1(fe, insn)
      struct instruction *insn;
 {
     struct frame *frame = fe->fe_frame;
-    struct fpframe *fpf = fe->fe_fpframe;
     int advance, sig, branch, displ;
 
     branch = test_cc(fe, insn->is_word1);
@@ -1050,7 +1053,7 @@ fpu_emul_type1(fe, insn)
 	    u_int16_t count = frame->f_regs[insn->is_opcode & 7];
 
 	    if (count-- != 0) {
-		displ = fusword(frame->f_pc + insn->is_advance);
+		displ = fusword((void *) (frame->f_pc + insn->is_advance));
 		if (displ < 0) {
 #ifdef DEBUG
 		    printf("  fpu_emul_type1: fault reading displacement\n");
@@ -1130,9 +1133,8 @@ fpu_emul_brcc(fe, insn)
      struct instruction *insn;
 {
     struct frame *frame = fe->fe_frame;
-    struct fpframe *fpf = fe->fe_fpframe;
     int displ, word2;
-    int sig, advance;
+    int sig;
 
     /*
      * Get branch displacement.
@@ -1141,7 +1143,7 @@ fpu_emul_brcc(fe, insn)
     displ = insn->is_word1;
 
     if (insn->is_opcode & 0x40) {
-	word2 = fusword(frame->f_pc + insn->is_advance);
+	word2 = fusword((void *) (frame->f_pc + insn->is_advance));
 	if (word2 < 0) {
 #ifdef DEBUG
 	    printf("  fpu_emul_brcc: fault reading word2\n");

@@ -1,4 +1,5 @@
-/*	$NetBSD: fpu_implode.c,v 1.1 1995/11/03 04:47:12 briggs Exp $ */
+/*	$OpenBSD: fpu_implode.c,v 1.2 1996/05/09 22:20:47 niklas Exp $	*/
+/*	$NetBSD: fpu_implode.c,v 1.2 1996/04/30 11:52:30 briggs Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,6 +51,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/systm.h>
 
 #include "ieee.h"
 #include <machine/reg.h>
@@ -79,7 +81,7 @@ int
 round(register struct fpemu *fe, register struct fpn *fp)
 {
 	register u_int m0, m1, m2, m3;
-	register int gr, s, ret;
+	register int gr, s;
 
 	m0 = fp->fp_mant[0];
 	m1 = fp->fp_mant[1];

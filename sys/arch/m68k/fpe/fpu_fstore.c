@@ -1,4 +1,5 @@
-/*	$NetBSD: fpu_fstore.c,v 1.2 1995/11/05 00:35:29 briggs Exp $	*/
+/*	$OpenBSD: fpu_fstore.c,v 1.2 1996/05/09 22:20:46 niklas Exp $	*/
+/*	$NetBSD: fpu_fstore.c,v 1.3 1996/04/30 11:52:27 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Ken Nakata
@@ -27,6 +28,7 @@
 
 #include <sys/types.h>
 #include <sys/signal.h>
+#include <sys/systm.h>
 #include <machine/frame.h>
 
 #include "fpu_emulate.h"
@@ -48,11 +50,9 @@ fpu_emul_fstore(fe, insn)
     int regnum;
     int format;
     u_int buf[3];
-    u_int flags;
-    char regname;
 
     if (fpu_debug_level & DL_FSTORE) {
-	printf("  fpu_emul_fstore: frame at %08x fpframe at %08x\n",
+	printf("  fpu_emul_fstore: frame at %p fpframe at %p\n",
 	       frame, fe->fe_fpframe);
     }
 

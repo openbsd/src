@@ -1,4 +1,5 @@
-/*	$NetBSD: fpu_add.c,v 1.1 1995/11/03 04:46:58 briggs Exp $ */
+/*	$OpenBSD: fpu_add.c,v 1.2 1996/05/09 22:20:42 niklas Exp $	*/
+/*	$NetBSD: fpu_add.c,v 1.2 1996/04/30 11:52:09 briggs Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -51,6 +52,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/systm.h>
 
 #include <machine/reg.h>
 

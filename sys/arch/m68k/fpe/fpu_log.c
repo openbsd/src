@@ -1,4 +1,5 @@
-/*	$NetBSD: fpu_log.c,v 1.2 1995/11/05 00:35:31 briggs Exp $	*/
+/*	$OpenBSD: fpu_log.c,v 1.2 1996/05/09 22:20:47 niklas Exp $	*/
+/*	$NetBSD: fpu_log.c,v 1.3 1996/04/30 11:52:33 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata
@@ -32,6 +33,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/systm.h>
 
 #include "fpu_emulate.h"
 

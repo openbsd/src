@@ -1,4 +1,5 @@
-/*	$NetBSD: fpu_emulate.h,v 1.3 1996/01/12 04:23:54 briggs Exp $	*/
+/*	$OpenBSD: fpu_emulate.h,v 1.3 1996/05/09 22:20:44 niklas Exp $	*/
+/*	$NetBSD: fpu_emulate.h,v 1.4 1996/04/30 11:52:14 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon Ross
@@ -285,6 +286,8 @@ int fpu_emul_fscale __P((struct fpemu *fe, struct instruction *insn));
  */
 #include "fpu_arith_proto.h"
 
+int fpu_emulate __P((struct frame *frame, struct fpframe *fpf));
+
 /*
  * "helper" functions
  */
@@ -301,6 +304,9 @@ int fpu_load_ea __P((struct frame *frame, struct instruction *insn,
 		 struct insn_ea *ea, char *dst));
 int fpu_store_ea __P((struct frame *frame, struct instruction *insn,
 		  struct insn_ea *ea, char *src));
+
+/* fpu_subr.c */
+void fpu_norm __P((register struct fpn *fp));
 
 /* declarations for debugging */
 

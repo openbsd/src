@@ -1,4 +1,5 @@
-/*	$NetBSD: fpu_explode.c,v 1.1 1995/11/03 04:47:07 briggs Exp $ */
+/*	$OpenBSD: fpu_explode.c,v 1.2 1996/05/09 22:20:45 niklas Exp $	*/
+/*	$NetBSD: fpu_explode.c,v 1.2 1996/04/30 11:52:18 briggs Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,6 +51,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/systm.h>
 
 #include "ieee.h"
 #include <machine/reg.h>
