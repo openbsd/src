@@ -148,7 +148,7 @@ usage()
 {
 	fprintf(stderr,"\ncursor - set cursor shape for pcvt video driver\n");
 	fprintf(stderr,"usage: cursor -d [device] -n [no] -s [line] -e [line]\n");
-	fprintf(stderr,"       -d <device>   device to use (/dev/ttyvX), default current\n");
+	fprintf(stderr,"       -d <device>   device to use (/dev/ttyCX), default current\n");
 	fprintf(stderr,"       -n <no>       screen no if specified, else current screen\n");
 	fprintf(stderr,"       -s <line>     start scan line (topmost scan line)\n");
 	fprintf(stderr,"       -e <line>     ending scan line (bottom scan line)\n\n");
