@@ -17,7 +17,7 @@ CFLAGS+= -DAFS
 LDADD+=  -lkafs
 DPADD+=  ${LIBKRBAFS}
 .endif # AFS
-CFLAGS+= -DKRB4 -I/usr/include/kerberosIV
+CFLAGS+= -DKRB4 -I${DESTDIR}/usr/include/kerberosIV
 SRCS+=	auth-krb4.c
 LDADD+=	 -lkrb
 DPADD+=	 ${LIBKRB}

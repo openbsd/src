@@ -5,5 +5,5 @@ CFLAGS	+= -I${.CURDIR}/../src/util -I${.CURDIR}/../src/lib/roken \
 	   -I${.CURDIR}/../src/rxdef -I${.CURDIR}/../src/lwp -I../libarla \
 	   -I${.CURDIR}/../src/arlad -I${.CURDIR}/../src \
 	   -I${.CURDIR}/../src/lib/ko -I${.CURDIR}/../src/rxkad \
-	   -I${.CURDIR}/../src/lib/sl -I/usr/include/kerberosIV
+	   -I${.CURDIR}/../src/lib/sl -I${DESTDIR}/usr/include/kerberosIV
 	   
