@@ -30,6 +30,7 @@ static int check_noident __P((char *));
 ssize_t timed_read __P((int, void *, size_t, time_t));
 ssize_t timed_write __P((int, const void *, size_t, time_t));
 int parse __P((int, struct in_addr *, struct in_addr *));
+void gentoken __P((char *, int));
 
 /*
  * A small routine to check for the existance of the ".noident"
@@ -51,21 +52,25 @@ check_noident(homedir)
 	return 0;
 }
 
-static unsigned char itoa64[] =	 /* 0 ... 63 => ascii - 64 */
-	"./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+static char token0cnv[] = "abcdefghijklmnopqrstuvwxyz";
+static char tokencnv[] = "abcdefghijklmnopqrstuvwxyz0123456789";
 
-static void to64 __P((char *, u_int32_t, int));
-
-static void
-to64(s, v, n)
-	char *s;
-	u_int32_t v;
-	int n;
+void
+gentoken(buf, len)
+	char *buf;
+	int len;
 {
-	while (--n >= 0) {
-		*s++ = itoa64[v&0x3f];
-		v >>= 6;
+	char *p;
+
+	if (len == 0)
+		return;
+	for (p = buf; len > 1; p++, len--) {
+		if (p == buf)
+			*p = token0cnv[arc4random() % (sizeof token0cnv-1)];
+		else
+			*p = tokencnv[arc4random() % (sizeof tokencnv-1)];
 	}
+	*p = '\0';
 }
 
 /*
@@ -259,15 +264,8 @@ parse(fd, laddr, faddr)
 
 	if (token_flag) {
 		char token[21];
-		char *s = token;
 
-		memset(token, 0, sizeof token);
-		to64(s, arc4random(), 4);
-		to64(s + 4, arc4random(), 4);
-		to64(s + 8, arc4random(), 4);
-		to64(s + 12, arc4random(), 4);
-		to64(s + 16, arc4random(), 4);
-
+		gentoken(token, sizeof token);
 		syslog(LOG_NOTICE, "token %s == uid %u (%s)", token, uid,
 		    pw->pw_name);
 		n = snprintf(buf, sizeof(buf),
