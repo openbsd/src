@@ -1,5 +1,5 @@
-/*	$OpenBSD: certpatch.c,v 1.3 1999/08/26 22:29:29 niklas Exp $	*/
-/*	$EOM: certpatch.c,v 1.2 1999/07/17 20:44:13 niklas Exp $	*/
+/*	$OpenBSD: certpatch.c,v 1.4 1999/10/01 14:08:54 niklas Exp $	*/
+/*	$EOM: certpatch.c,v 1.4 1999/09/28 21:26:47 angelos Exp $	*/
 
 /*
  * Copyright (c) 1999 Niels Provos.  All rights reserved.
@@ -67,7 +67,8 @@
 #include "x509.h"
 
 #define IDTYPE_IP	"ip"
-
+#define IDTYPE_FQDN     "fqdn"
+#define IDTYPE_UFQDN    "ufqdn"
 int
 main (int argc, char **argv)
 {
@@ -82,11 +83,17 @@ main (int argc, char **argv)
   X509_EXTENSION *ex = NULL;
   ASN1_OCTET_STRING *data = NULL;
   struct in_addr saddr;
-  char ipaddr[6];
-  char *type = "ip", *keyfile = NULL, *id = NULL;
+  char ipaddr[6], *new_id;
+  char *type = IDTYPE_IP, *keyfile = NULL, *id = NULL;
   char *certin, *certout;
   char ch;
   int err;
+
+#if SSLEAY_VERSION_NUMBER >= 0x00904100L
+  unsigned char *p;
+  ASN1_STRING str;
+  int i;
+#endif
 
 
   /* read command line arguments */
@@ -120,7 +127,9 @@ main (int argc, char **argv)
 
   /* Check ID */
 
-  if (strcasecmp (IDTYPE_IP, type) != 0 || id == NULL)
+  if ((strcasecmp (IDTYPE_IP, type) != 0 &&
+       strcasecmp (IDTYPE_FQDN, type) != 0 &&
+       strcasecmp (IDTYPE_UFQDN, type) != 0) || id == NULL)
     {
       printf ("wrong id type or missing id\n");
       exit (1);
@@ -142,7 +151,11 @@ main (int argc, char **argv)
       perror ("read");
       exit(1);
     }
+#if SSLEAY_VERSION_NUMBER >= 0x00904100L
+  cert = PEM_read_bio_X509 (file, NULL, NULL, NULL);
+#else
   cert = PEM_read_bio_X509 (file, NULL, NULL);
+#endif
   BIO_free (file);
   if (cert == NULL)
     {
@@ -156,21 +169,90 @@ main (int argc, char **argv)
       exit (1);
     }
 
-  if (inet_aton (id, &saddr) == -1)
+  if (!strcasecmp (IDTYPE_IP, type))
     {
-      printf ("inet_aton () failed\n");
-      exit (1);
+      if (inet_aton (id, &saddr) == -1)
+        {
+	  printf ("inet_aton () failed\n");
+	  exit (1);
+	}
+
+      saddr.s_addr = htonl (saddr.s_addr);
+      ipaddr[0] = 0x87;
+      ipaddr[1] = 0x04;
+      ipaddr[2] = saddr.s_addr >> 24;
+      ipaddr[3] = (saddr.s_addr >> 16) & 0xff;
+      ipaddr[4] = (saddr.s_addr >> 8) & 0xff;
+      ipaddr[5] = saddr.s_addr & 0xff;
+
+#if SSLEAY_VERSION_NUMBER >= 0x00904100L
+      str.length = 6;
+      str.type = V_ASN1_OCTET_STRING;
+      str.data = ipaddr;
+      data = ASN1_OCTET_STRING_new ();
+      if (!data)
+	{
+	  perror ("ASN1_OCTET_STRING_new() failed");
+	  exit (1);
+	}
+
+      i = i2d_ASN1_OCTET_STRING ((ASN1_OCTET_STRING *)&str, NULL);
+      if (!ASN1_STRING_set ((ASN1_STRING *)data,NULL,i))
+        {
+	  perror ("ASN1_STRING_set() failed");
+	  exit (1);
+	}
+      p = (unsigned char *)data->data;
+      i2d_ASN1_OCTET_STRING ((ASN1_OCTET_STRING *)&str, &p);
+      data->length = i;
+#else
+      data = X509v3_pack_string (NULL, V_ASN1_OCTET_STRING, ipaddr, 6);
+#endif
     }
+  else if (!strcasecmp (IDTYPE_FQDN, type) || !strcasecmp (IDTYPE_UFQDN, type))
+    {
+      new_id = malloc (strlen (id) + 2);
+      if (new_id == NULL)
+        {
+          printf ("malloc () failed\n");
+          exit (1);
+        }
 
-  saddr.s_addr = htonl (saddr.s_addr);
-  ipaddr[0] = 0x87;
-  ipaddr[1] = 0x04;
-  ipaddr[2] = saddr.s_addr >> 24;
-  ipaddr[3] = (saddr.s_addr >> 16) & 0xff;
-  ipaddr[4] = (saddr.s_addr >> 8) & 0xff;
-  ipaddr[5] = saddr.s_addr & 0xff;
+      if (!strcasecmp (IDTYPE_FQDN, type))
+        new_id[0] = 0x82;
+      else
+        new_id[0] = 0x81; /* IDTYPE_UFQDN */
 
-  data = X509v3_pack_string (NULL, V_ASN1_OCTET_STRING, ipaddr, 6);
+      new_id[1] = strlen (id);
+      memcpy (data + 2, id, strlen(id));
+#if SSLEAY_VERSION_NUMBER >= 0x00904100L
+      str.length = strlen (id) + 2;
+      str.type = V_ASN1_OCTET_STRING;
+      str.data = new_id;
+      data = ASN1_OCTET_STRING_new ();
+      if (!data)
+        {
+          perror ("ASN1_OCTET_STRING_new() failed");
+          exit (1);
+        }
+
+      i = i2d_ASN1_OCTET_STRING ((ASN1_OCTET_STRING *)&str, NULL);
+      if (!ASN1_STRING_set ((ASN1_STRING *)data,NULL,i))
+        {
+          perror ("ASN1_STRING_set() failed");
+          exit (1);
+        }
+      p = (unsigned char *)data->data;
+      i2d_ASN1_OCTET_STRING ((ASN1_OCTET_STRING *)&str, &p);
+      data->length = i;
+#else
+      data = X509v3_pack_string (NULL, V_ASN1_OCTET_STRING, new_id,
+				 strlen (id) + 2);
+#endif
+      free (new_id);
+    }
+  
+  
   /* XXX This is a hack, how to do better?  */
   data->type = 0x30;
   data->data[0] = 0x30;
@@ -190,7 +272,11 @@ main (int argc, char **argv)
       perror ("open");
       exit (1);
     }
+#if SSLEAY_VERSION_NUMBER >= 0x00904100L
+  if ((pkey_priv = PEM_read_bio_PrivateKey (file, NULL, NULL, NULL)) == NULL)
+#else
   if ((pkey_priv = PEM_read_bio_PrivateKey (file, NULL, NULL)) == NULL)
+#endif
     {
       printf ("Can not read private key %s\n", keyfile);
       exit (1);
