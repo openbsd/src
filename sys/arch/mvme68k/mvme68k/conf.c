@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.26 2002/04/27 23:21:05 miod Exp $ */
+/*	$OpenBSD: conf.c,v 1.27 2002/04/28 01:05:44 miod Exp $ */
 
 /*-
  * Copyright (c) 1995 Theo de Raadt
@@ -79,8 +79,10 @@
 #include "ch.h"
 #include "ss.h"
 #include "uk.h"
+#ifdef notyet
 #include "xd.h"
 bdev_decl(xd);
+#endif
 #include "vnd.h"
 #include "ccd.h"
 #include "rd.h"
@@ -97,7 +99,11 @@ struct bdevsw	bdevsw[] =
 	bdev_tape_init(NST,st),		/* 7: SCSI tape */
 	bdev_disk_init(NCD,cd),		/* 8: SCSI CD-ROM */
 	bdev_disk_init(NRD,rd),		/* 9: RAM disk - for install tape */
+#ifdef notyet
 	bdev_disk_init(NXD,xd),		/* 10: XD disk */
+#else
+	bdev_notdef(),			/* 10 */
+#endif
 	bdev_notdef(),			/* 11 */
 	bdev_notdef(),			/* 12 */
 	bdev_lkm_dummy(),		/* 13 */
@@ -146,7 +152,9 @@ cdev_decl(xfs_dev);
 #include "ksyms.h"
 cdev_decl(ksyms);
 
+#ifdef notyet
 cdev_decl(xd);
+#endif
 
 #include "bpfilter.h"
 #include "tun.h"
@@ -183,7 +191,11 @@ struct cdevsw	cdevsw[] =
 	cdev_bpftun_init(NTUN,tun),	/* 23: network tunnel */
 	cdev_lkm_init(NLKM,lkm),	/* 24: loadable module driver */
 	cdev_notdef(),			/* 25 */
+#ifdef notyet
 	cdev_disk_init(NXD,xd),		/* 26: XD disk */
+#else
+	cdev_notdef(),			/* 26 */
+#endif
 	cdev_notdef(),			/* 27 */
 	cdev_lp_init(NLP,lp),		/* 28: lp */
 	cdev_lp_init(NLPTWO,lptwo),	/* 29: lptwo */
