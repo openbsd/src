@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wi.4tbl,v 1.15 2002/05/03 15:24:35 millert Exp $
+.\"	$OpenBSD: wi.4tbl,v 1.16 2002/05/28 02:29:56 millert Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -303,9 +303,9 @@ See
 .Xr wicontrol 8
 for information on how to change the channel.
 .Pp
-3.3V
+Not all 3.3V
 .Nm
-PCMCIA cards do not currently work.
+PCMCIA cards work.
 .Pp
 IBSS creation does not currently work with Symbol cards.
 .Pp
