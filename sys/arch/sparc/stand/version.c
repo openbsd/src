@@ -35,7 +35,8 @@
  *
  *	1.1
  *	1.2	get it to work with V0 bootproms.
- *	1.4	add oldmon support and network support.
+ *	1.3	add oldmon support and network support.
+ *	1.4	add cd9660 support
  */
 
-char *version = "$Revision: 1.3 $";
+char *version = "$Revision: 1.4 $";
