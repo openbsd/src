@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgtworeg.h,v 1.1 2002/08/12 10:44:04 miod Exp $	*/
+/*	$OpenBSD: cgtworeg.h,v 1.2 2004/02/01 15:39:37 miod Exp $	*/
 /*	$NetBSD: cgtworeg.h,v 1.3 1995/10/04 00:21:27 pk Exp $ */
 
 /*
@@ -137,7 +137,7 @@ struct dblbufreg {
  */
 struct cg2_zoom {
 	union {
-		u_int short reg;
+		u_short reg;
 		u_char reg_pad[4096];
 	} wordpan;
 	union {

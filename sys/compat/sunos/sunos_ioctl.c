@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunos_ioctl.c,v 1.14 2003/01/04 22:36:12 deraadt Exp $	*/
+/*	$OpenBSD: sunos_ioctl.c,v 1.15 2004/02/01 15:39:38 miod Exp $	*/
 /*	$NetBSD: sunos_ioctl.c,v 1.23 1996/03/14 19:33:46 christos Exp $	*/
 
 /*
@@ -1028,6 +1028,7 @@ sunos_sys_fcntl(p, v, retval)
 		return (EOPNOTSUPP);
 
 	default:
+		break;
 	}
 
 	ret = sys_fcntl(p, uap, retval);
@@ -1043,6 +1044,7 @@ sunos_sys_fcntl(p, v, retval)
 		}
 		break;
 	default:
+		break;
 	}
 
 	return (ret);
