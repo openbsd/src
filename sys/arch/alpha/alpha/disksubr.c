@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.26 1998/11/23 03:35:56 millert Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.27 1999/01/05 04:29:03 millert Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -342,6 +342,15 @@ readdoslabel(bp, strat, lp, osdep, partoffp, cylp, spoofonly)
 	char *msg = NULL, *cp;
 	int dospartoff, cyl, i, ourpart = -1;
 	dev_t dev;
+
+	if (lp->d_secpercyl == 0) {
+		msg = "invalid label, d_secpercyl == 0";
+		return (msg);
+	}
+	if (lp->d_secsize == 0) {
+		msg = "invalid label, d_secsize == 0";
+		return (msg);
+	}
 
 	/* do dos partitions in the process of getting disklabel? */
 	dospartoff = 0;
@@ -745,6 +754,13 @@ bounds_check_with_label(bp, lp, osdep, wlabel)
 	    lp) + osdep->labelsector;
 	int sz = howmany(bp->b_bcount, DEV_BSIZE);
 
+	/* avoid division by zero */
+	if (lp->d_secpercyl == 0) {
+		bp->b_error = EINVAL;
+		goto bad;
+	}
+
+	/* beyond partition? */
 	if (bp->b_blkno + sz > blockpersec(p->p_size, lp)) {
 		sz = blockpersec(p->p_size, lp) - bp->b_blkno;
 		if (sz == 0) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.21 1998/10/03 21:18:56 millert Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.22 1999/01/05 04:29:03 millert Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.16 1996/04/28 20:25:59 thorpej Exp $ */
 
 /*
@@ -318,6 +318,12 @@ bounds_check_with_label(bp, lp, osdep, wlabel)
 		goto bad;
 	}
 
+	/* avoid division by zero */
+	if (lp->d_secpercyl == 0) {
+		bp->b_error = EINVAL;
+		goto bad;
+	}
+
 	/* beyond partition? */
 	if (bp->b_blkno + sz > blockpersec(p->p_size, lp)) {
 		sz = blockpersec(p->p_size, lp) - bp->b_blkno;
@@ -521,7 +527,8 @@ disklabel_bsd_to_sun(lp, cp)
 	int i, secpercyl;
 	u_short cksum, *sp1, *sp2;
 
-	if (lp->d_secsize != 512)
+	/* Enforce preconditions */
+	if (lp->d_secsize != 512 || lp->d_nsectors == 0 || lp->d_ntracks == 0)
 		return (EINVAL);
 
 	sl = (struct sun_disklabel *)cp;
