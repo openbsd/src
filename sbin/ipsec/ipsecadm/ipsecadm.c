@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.9 1997/09/24 18:39:43 angelos Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.10 1997/09/24 18:45:26 angelos Exp $ */
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
  * 	(except when noted otherwise).
@@ -238,7 +238,6 @@ main(argc, argv)
 		  i++;
 	     } else if (!strcmp(argv[i]+1, "oldpadding")) {
 		  oldpadding = 1;
-		  i++;
 	     } else if (!strcmp(argv[i]+1, "tunnel") && i+2 < argc) {
 		  osrc.s_addr = inet_addr(argv[i+1]);
 		  i++;
