@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmdtab.c,v 1.7 2003/06/03 02:56:11 millert Exp $	*/
+/*	$OpenBSD: cmdtab.c,v 1.8 2004/01/03 20:26:36 millert Exp $	*/
 /*	$NetBSD: cmdtab.c,v 1.7 1996/12/28 07:10:59 tls Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static const char sccsid[] = "@(#)cmdtab.c	8.2 (Berkeley) 4/20/95";
 #else
-static const char rcsid[] = "$OpenBSD: cmdtab.c,v 1.7 2003/06/03 02:56:11 millert Exp $";
+static const char rcsid[] = "$OpenBSD: cmdtab.c,v 1.8 2004/01/03 20:26:36 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -46,6 +46,7 @@ static const char rcsid[] = "$OpenBSD: cmdtab.c,v 1.7 2003/06/03 02:56:11 miller
  *
  * Define all of the command names and bindings.
  */
+typedef int (*cfunc_t)(void *);
 const struct cmd cmdtab[] = {
 	/* 						msgmask	msgflag	 */
 	/* command	function	argtype		result	& mask	 */
@@ -67,8 +68,8 @@ const struct cmd cmdtab[] = {
 	{ "unset",	{ unset },	M|RAWLIST,	1,	1000 },
 	{ "mail",	{ sendmail },	R|M|I|STRLIST,	0,	0 },
 	{ "mbox",	{ mboxit },	W|MSGLIST,	0,	0 },
-	{ "pipe",	{ pipeit },	MSGLIST|STRLIST,0,	MMNDEL },
-	{ "|",	  	{ pipeit },	MSGLIST|STRLIST,0,	MMNDEL },
+	{ "pipe",	{ (cfunc_t)pipeit }, MSGLIST|STRLIST,0,	MMNDEL },
+	{ "|",	  	{ (cfunc_t)pipeit }, MSGLIST|STRLIST,0,	MMNDEL },
 	{ "more",	{ more },	MSGLIST,	0,	MMNDEL },
 	{ "page",	{ more },	MSGLIST,	0,	MMNDEL },
 	{ "More",	{ More },	MSGLIST,	0,	MMNDEL },
