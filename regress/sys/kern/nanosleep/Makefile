@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2002/02/17 05:33:33 art Exp $
+#	$OpenBSD: Makefile,v 1.3 2002/09/02 20:01:44 avsm Exp $
 
 PROG=	nanosleep
 SRCS=	nanosleep.c
@@ -18,7 +18,7 @@ time_elapsed_with_signal: nanosleep
 short_time: nanosleep
 	./nanosleep -S
 
-REGRESSTARGETS=trivial with_signal time_elapsed time_elapsed_with_signal
-REGRESSTARGETS+=short_time
+REGRESS_TARGETS=trivial with_signal time_elapsed time_elapsed_with_signal
+REGRESS_TARGETS+=short_time
 
 .include <bsd.regress.mk>

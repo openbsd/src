@@ -1,9 +1,9 @@
-# $OpenBSD: Makefile,v 1.3 2002/01/04 13:56:36 art Exp $
+# $OpenBSD: Makefile,v 1.4 2002/09/02 20:01:43 avsm Exp $
 
 PROG=	socket2a
 CFLAGS+= -I${.CURDIR}/../../include
 
-REGRESSTARGETS=dummy
+REGRESS_TARGETS=dummy
 
 dummy: ${PROG}
 	@cd ${.CURDIR}/../2; \

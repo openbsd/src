@@ -1,8 +1,8 @@
-# $OpenBSD: Makefile,v 1.18 2002/04/16 16:15:30 espie Exp $
+# $OpenBSD: Makefile,v 1.19 2002/09/02 20:01:44 avsm Exp $
 
 # We don't pass t7, t13, t14, t17
 # and t16 yields piss poor performance
-REGRESSTARGETS=t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13 t14 t15 t16 t17 t18
+REGRESS_TARGETS=t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13 t14 t15 t16 t17 t18
 
 MALLOC_OPTIONS?=AZJ
 t1: t1.out

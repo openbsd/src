@@ -1,11 +1,11 @@
-#	$OpenBSD: Makefile,v 1.2 2002/08/23 15:31:00 art Exp $
+#	$OpenBSD: Makefile,v 1.3 2002/09/02 20:01:44 avsm Exp $
 
 PROG=	sigfpe
 
 # XXX - don't want the compiler to optimize away our tests
 CFLAGS=   -O0 ${PIPE} ${DEBUG}
 
-REGRESSTARGETS=	divzero oflow
+REGRESS_TARGETS=	divzero oflow
 
 divzero: ${PROG}
 	./${PROG} -z

@@ -1,7 +1,7 @@
-# $OpenBSD: Makefile,v 1.3 2002/02/18 10:36:26 art Exp $
+# $OpenBSD: Makefile,v 1.4 2002/09/02 20:01:43 avsm Exp $
 
-REGRESSTARGETS=md5 sha1 rmd160 md5_string_vs_files md5_pipe
-REGRESSTARGETS+=md5_pipe_vs_file md5_multiple_files
+REGRESS_TARGETS=md5 sha1 rmd160 md5_string_vs_files md5_pipe
+REGRESS_TARGETS+=md5_pipe_vs_file md5_multiple_files
 
 md5:
 	md5 -x | cmp -s ${.CURDIR}/testsuite.md5 /dev/stdin
@@ -33,6 +33,6 @@ md5_multiple_files:
 		false ; \
 	fi
 
-.PHONY: ${REGRESSTARGETS}
+.PHONY: ${REGRESS_TARGETS}
 
 .include <bsd.regress.mk>

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2002/02/18 11:27:45 art Exp $
+#	$OpenBSD: Makefile,v 1.4 2002/09/02 20:01:43 avsm Exp $
 PROG=	longjmp
 
 do-longjmp: ${PROG}
@@ -7,7 +7,7 @@ do-longjmp: ${PROG}
 do-_longjmp: ${PROG}
 	./longjmp -_
 
-REGRESSTARGETS=do-longjmp do-_longjmp
-.PHONY: ${REGRESSTARGETS}
+REGRESS_TARGETS=do-longjmp do-_longjmp
+.PHONY: ${REGRESS_TARGETS}
 
 .include <bsd.regress.mk>

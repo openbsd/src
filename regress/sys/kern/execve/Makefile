@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2002/01/01 23:05:30 art Exp $
+#	$OpenBSD: Makefile,v 1.5 2002/09/02 20:01:44 avsm Exp $
 
 PROG=	doexec
 LDSTATIC= -static
@@ -14,7 +14,7 @@ CLEANFILES+= ${TESTFILES}
 
 all:	${PROG} ${TESTFILES}
 
-REGRESSTARGETS=	test-empty test-nonexist \
+REGRESS_TARGETS=	test-empty test-nonexist \
 		test-nonexistshell test-devnullscript test-badinterplen \
 		test-goodscript test-scriptarg test-scriptarg-nospace \
 		test-goodaout test-truncaout

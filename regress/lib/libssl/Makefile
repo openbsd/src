@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.8 2002/09/01 16:29:31 markus Exp $
+#	$OpenBSD: Makefile,v 1.9 2002/09/02 20:01:43 avsm Exp $
 
 CLEANFILES+= testdsa.key testdsa.pem rsakey.pem rsacert.pem dsa512.pem
 
-REGRESSTARGETS=ossltests ssl-enc ssl-dsa ssl-rsa 
+REGRESS_TARGETS=ossltests ssl-enc ssl-dsa ssl-rsa 
 
 OPENSSL=/usr/sbin/openssl
 CLEAR1=p
@@ -83,7 +83,7 @@ ssl-enc-${ENC}: ${CLEAR1} ${CLEAR2}.${ENC}
 ssl-enc-${ENC}.b64: ${CLEAR1} ${CLEAR2}.${ENC}.b64
 	cmp ${CLEAR1} ${CLEAR2}.${ENC}.b64
 
-REGRESSTARGETS+=ssl-enc-${ENC} ssl-enc-${ENC}.b64
+REGRESS_TARGETS+=ssl-enc-${ENC} ssl-enc-${ENC}.b64
 CLEANFILES+=${CIPHER}.${ENC} ${CIPHER}.${ENC}.b64 ${CLEAR2}.${ENC} ${CLEAR2}.${ENC}.b64 e_os.h .rnd
 .endfor
 

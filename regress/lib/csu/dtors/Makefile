@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.2 2002/02/18 11:09:48 art Exp $
+#	$OpenBSD: Makefile,v 1.3 2002/09/02 20:01:43 avsm Exp $
 
 PROG=dtors
 
-REGRESSTARGETS=dtor-exit dtor-return
+REGRESS_TARGETS=dtor-exit dtor-return
 
 dtor-exit: dtors
 	./dtors

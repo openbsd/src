@@ -1,6 +1,6 @@
 
 PERL=perl
-REGRESSTARGETS=test-fp
+REGRESS_TARGETS=test-fp
 
 test-fp: test-fp.pl
 	${PERL} ${.CURDIR}/$@.pl | diff -u - ${.CURDIR}/test-fp.out

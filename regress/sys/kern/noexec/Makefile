@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2002/08/31 22:56:01 mickey Exp $
+#	$OpenBSD: Makefile,v 1.2 2002/09/02 20:01:44 avsm Exp $
 
 .if ${MACHINE} == "sparc64" || ${MACHINE} == "sparc" || \
     ${MACHINE} == "alpha" || ${MACHINE} == "macppc" || \
@@ -8,7 +8,7 @@
 PROG=	noexec
 CFLAGS+=-Wall -Werror
 LDSTATIC= ${STATIC}
-REGRESSTARGETS=		nxtext-mprotect \
+REGRESS_TARGETS=nxtext-mprotect \
 		nxdata	nxdata-mprotect \
 		nxbss	nxbss-mprotect \
 		nxheap	nxheap-mprotect \
@@ -42,7 +42,7 @@ nxstack-mprotect: ${PROG}
 	@./${PROG} -S -p
 
 .else
-REGRESSTARGETS=		# this architecture has no test for this
+REGRESS_TARGETS=		# this architecture has no test for this
 .endif
 
 .include <bsd.regress.mk>

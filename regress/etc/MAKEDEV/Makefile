@@ -1,5 +1,5 @@
 
-# $OpenBSD: Makefile,v 1.12 2002/02/21 14:34:28 todd Exp $
+# $OpenBSD: Makefile,v 1.13 2002/09/02 20:01:43 avsm Exp $
 
 MAKEDEVARCHS+=alpha amiga hp300 hppa i386 mac68k macppc mvme68k mvme88k
 MAKEDEVARCHS+=mvmeppc sparc sparc64 sun3 vax
@@ -8,15 +8,15 @@ MAKEDEVTARGS?=all ramdisk
 
 ETCSRCDIR?=	/usr/src/etc
 
-REGRESSSLOWTARGETS=${REGRESSTARGETS}
+REGRESS_SLOW_TARGETS=${REGRESS_TARGETS}
 
 # test separate targets, all, ramdisk/raminst, std, etc
 # t1 = all
 # t2 = ramdisk
 
-REGRESSTARGETS+= ${MAKEDEVARCHS}
+REGRESS_TARGETS+= ${MAKEDEVARCHS}
 
-${REGRESSTARGETS}:
+${REGRESS_TARGETS}:
 . for _T in ${MAKEDEVTARGS}
 	@echo "====> ${_T}.${.TARGET}"
 	@exec ${SUDO} rm -rf test.${_T}.${.TARGET}
