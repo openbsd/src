@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.38 2004/08/25 08:00:08 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.39 2004/10/01 20:20:36 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -59,6 +59,8 @@
 
 #include "assym.h"
 #include "ksyms.h"
+
+#include <sys/errno.h>
 
 #include <machine/asm.h>
 #include <machine/trap.h>
@@ -406,7 +408,12 @@ GLOBAL(spin_cpu)
 	tb0	0,    r0,  0x200-16		/* call 188Bug */
 	jmp	r1
 
+/*
+ * MVME188 specific support routines
+ */
+
 #ifdef MVME188
+
 /* 
  * void m188_delay(int us)
  *
@@ -432,6 +439,46 @@ GLOBAL(m188_delay)
 	 subu	r4, r4, 2	/* two cycles per iteration */
 
 	jmp	r1
+
+/*
+ * int guarded_access(volatile u_int8_t *, unsigned, u_int8_t *)
+ *
+ * Necessary for interrupt vector retrieval - it could cause a bus error!
+ */
+GLOBAL(guarded_access_start)
+ENTRY(guarded_access)
+	cmp	 r9,r3,4
+	bb1	 eq,r9,@L145
+	cmp	 r9,r3,2
+	bb1	 eq,r9,@L144
+	cmp	 r9,r3,1
+	bb1	 eq,r9,@L143
+	br	 _C_LABEL(guarded_access_bad)
+@L143:
+	ld.b	 r9,r0,r2
+	tb1	0, r0, 0
+	st.b	 r9,r0,r4
+	br	 @L142
+@L144:
+	ld.h	 r9,r0,r2
+	tb1	0, r0, 0
+	st.h	 r9,r0,r4
+	br	 @L142
+@L145:
+	ld	 r9,r0,r2
+	tb1	0, r0, 0
+	st	 r9,r0,r4
+	br	 @L142
+
+GLOBAL(guarded_access_bad)
+	jmp.n	 r1
+	 or	 r2,r0,EFAULT
+
+@L142:
+	jmp.n	 r1
+	 or	 r2,r0,0
+GLOBAL(guarded_access_end)
+
 #endif
 
 /*****************************************************************************/

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.11 2004/09/30 21:48:56 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.12 2004/10/01 20:20:34 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -213,9 +213,11 @@ m88100_trap(unsigned type, struct trapframe *frame)
 	int sig = 0;
 
 	extern struct vm_map *kernel_map;
+#ifdef MVME188	/* XXX - only MVME188 needs guarded_access() */
 	extern caddr_t guarded_access_start;
 	extern caddr_t guarded_access_end;
 	extern caddr_t guarded_access_bad;
+#endif
 
 	uvmexp.traps++;
 	if ((p = curproc) == NULL)
@@ -317,6 +319,7 @@ m88100_trap(unsigned type, struct trapframe *frame)
 #endif
 
 		switch (pbus_type) {
+#ifdef MVME188	/* XXX - only MVME188 needs guarded_access() */
 		case CMMU_PFSR_BERROR:
 			/*
 		 	 * If it is a guarded access, bus error is OK.
@@ -344,6 +347,7 @@ m88100_trap(unsigned type, struct trapframe *frame)
 				return;
 			}
 			break;
+#endif
 		case CMMU_PFSR_SUCCESS:
 			/*
 			 * The fault was resolved. Call data_access_emulation
@@ -651,9 +655,6 @@ m88110_trap(unsigned type, struct trapframe *frame)
 	pt_entry_t *pte;
 
 	extern struct vm_map *kernel_map;
-	extern unsigned guarded_access_start;
-	extern unsigned guarded_access_end;
-	extern unsigned guarded_access_bad;
 	extern pt_entry_t *pmap_pte(pmap_t, vaddr_t);
 
 	uvmexp.traps++;
@@ -793,18 +794,6 @@ m88110_trap(unsigned type, struct trapframe *frame)
 		vm = p->p_vmspace;
 		map = kernel_map;
 
-		if (frame->tf_dsr & CMMU_DSR_BE) {
-			/*
-			 * If it is a guarded access, bus error is OK.
-			 */
-			if ((frame->tf_exip & XIP_ADDR) >=
-			      (unsigned)&guarded_access_start &&
-			    (frame->tf_exip & XIP_ADDR) <=
-			      (unsigned)&guarded_access_end) {
-				frame->tf_exip = (unsigned)&guarded_access_bad;
-				return;
-			}
-		}
 		if (frame->tf_dsr & (CMMU_DSR_SI | CMMU_DSR_PI)) {
 			frame->tf_dsr &= ~CMMU_DSR_WE;	/* undefined */
 			/*

@@ -1,4 +1,4 @@
-/* $OpenBSD: subr.S,v 1.4 2004/08/02 10:44:51 miod Exp $	*/
+/* $OpenBSD: subr.S,v 1.5 2004/10/01 20:20:34 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -1539,41 +1539,6 @@ ENTRY(longjmp)
 ENTRY(read_processor_identification_register)
 	jmp.n	r1
 	 ldcr	r2, PID
-
-GLOBAL(guarded_access_start)
-ENTRY(guarded_access)
-	cmp	 r9,r3,4
-	bb1	 eq,r9,@L145
-	cmp	 r9,r3,2
-	bb1	 eq,r9,@L144
-	cmp	 r9,r3,1
-	bb1	 eq,r9,@L143
-	br	 _C_LABEL(guarded_access_bad)
-@L143:
-	ld.b	 r9,r0,r2
-	tb1	0, r0, 0
-	st.b	 r9,r0,r4
-	br	 @L142
-@L144:
-	ld.h	 r9,r0,r2
-	tb1	0, r0, 0
-	st.h	 r9,r0,r4
-	br	 @L142
-@L145:
-	ld	 r9,r0,r2
-	tb1	0, r0, 0
-	st	 r9,r0,r4
-	br	 @L142
-
-GLOBAL(guarded_access_bad)
-	jmp.n	 r1
-	 or	 r2,r0,EFAULT
-
-@L142:
-	jmp.n	 r1
-	 or	 r2,r0,0
-
-GLOBAL(guarded_access_end)
 
 /*
  * void set_cpu_number(unsigned number);
