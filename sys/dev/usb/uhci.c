@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.34 2004/08/11 04:23:15 dlg Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.35 2004/08/11 04:24:27 dlg Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -1964,8 +1964,6 @@ uhci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 	/*
 	 * Step 3: Execute callback.
 	 */
-	xfer->hcpriv = ii;
-
 	DPRINTFN(1,("uhci_abort_xfer: callback\n"));
 	s = splusb();
 #ifdef DIAGNOSTIC
