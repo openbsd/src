@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_quick_mode.c,v 1.50 2001/06/27 00:16:30 ho Exp $	*/
+/*	$OpenBSD: ike_quick_mode.c,v 1.51 2001/06/29 17:59:34 ho Exp $	*/
 /*	$EOM: ike_quick_mode.c,v 1.139 2001/01/26 10:43:17 niklas Exp $	*/
 
 /*
@@ -1538,7 +1538,7 @@ responder_recv_HASH_SA_NONCE (struct message *msg)
       /* Get initiator and responder addresses.  */
       msg->transport->vtbl->get_src (msg->transport, &src, &srclen);
       msg->transport->vtbl->get_dst (msg->transport, &dst, &dstlen);
-      ie->id_ci_sz = ISAKMP_ID_DATA_OFF + sockaddr_len (dst);
+      ie->id_ci_sz = ISAKMP_ID_DATA_OFF + sockaddr_len (src);
       ie->id_cr_sz = ISAKMP_ID_DATA_OFF + sockaddr_len (dst);
       ie->id_ci = calloc (ie->id_ci_sz, sizeof (char));
       ie->id_cr = calloc (ie->id_cr_sz, sizeof (char));
