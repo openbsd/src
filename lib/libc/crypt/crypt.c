@@ -1,4 +1,4 @@
-/*	$Id: crypt.c,v 1.1 1995/12/16 12:55:30 deraadt Exp $ */
+/*	$Id: crypt.c,v 1.2 1995/12/18 17:59:55 deraadt Exp $ */
 
 /*
  * FreeSec: libcrypt
@@ -45,13 +45,6 @@
  * attention of the author).  A list of errata for this book has been
  * posted to the sci.crypt newsgroup by the author and is available for FTP.
  *
- * ARCHITECTURE ASSUMPTIONS:
- *	This code assumes that u_longs are 32 bits.  It will probably not
- *	operate on 64-bit machines without modifications.
- *	It is assumed that the 8-byte arrays passed by reference can be
- *	addressed as arrays of u_longs (ie. the CPU is not picky about
- *	alignment).
- * 
  * NOTE:
  * This file has a static version of des_setkey() so that crypt.o exports
  * only the crypt() interface. This is required to make binaries linked
