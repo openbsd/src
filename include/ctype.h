@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctype.h,v 1.8 2002/12/14 02:34:38 millert Exp $	*/
+/*	$OpenBSD: ctype.h,v 1.9 2002/12/14 14:26:19 millert Exp $	*/
 /*	$NetBSD: ctype.h,v 1.14 1994/10/26 00:55:47 cgd Exp $	*/
 
 /*
@@ -134,7 +134,7 @@ static __inline int isspace(int c)
 
 static __inline int isupper(int c)
 {
-	return (c == EOF ? : (_ctype_ + 1)[(unsigned int)c] & _U);
+	return (c == EOF ? 0 : (_ctype_ + 1)[(unsigned int)c] & _U);
 }
 
 static __inline int isxdigit(int c)
