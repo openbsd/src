@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.4 2000/04/20 07:49:47 angelos Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.5 2000/04/20 07:50:54 angelos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -778,7 +778,7 @@ main(argc, argv)
 	(void) fflush(stderr);
 
 	if (min_hops > 1)
-		Printf("Skipping %d intermediate hops", min_hops - 1);
+		Printf("Skipping %d intermediate hops\n", min_hops - 1);
 
 	/*
 	 * Main loop
