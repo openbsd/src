@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.99 2005/02/08 13:42:27 markus Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.100 2005/02/28 00:26:47 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -105,7 +105,6 @@ struct carp_softc {
 	struct arpcom sc_ac;
 #define	sc_if		sc_ac.ac_if
 #define	sc_carpdev	sc_ac.ac_if.if_carpdev
-	int if_flags;			/* current flags to treat UP/DOWN */
 	void *ah_cookie;
 	struct ip_moptions sc_imo;
 #ifdef INET6
