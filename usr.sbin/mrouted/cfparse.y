@@ -188,7 +188,7 @@ stmt	: error
 					}
 		tunnelmods
 					{
-			log(LOG_INFO, 0,
+			logit(LOG_INFO, 0,
 			    "installing tunnel from %s to %s as vif #%u - rate=%d",
 			    inet_fmt($2, s1), inet_fmt($3, s2),
 			    numvifs, v->uv_rate_limit);
@@ -398,7 +398,7 @@ fatal(char *fmt, ...)
 	vsnprintf(buf, sizeof buf, fmt, ap);
 	va_end(ap);
 
-	log(LOG_ERR,0,"%s: %s near line %d", configfilename, buf, lineno);
+	logit(LOG_ERR,0,"%s: %s near line %d", configfilename, buf, lineno);
 }
 
 static void
@@ -411,14 +411,14 @@ warn(char *fmt, ...)
 	vsnprintf(buf, sizeof buf, fmt, ap);
 	va_end(ap);
 
-	log(LOG_WARNING,0,"%s: %s near line %d", configfilename, buf, lineno);
+	logit(LOG_WARNING,0,"%s: %s near line %d", configfilename, buf, lineno);
 }
 
 static void
 yyerror(s)
 char *s;
 {
-	log(LOG_ERR, 0, "%s: %s near line %d", configfilename, s, lineno);
+	logit(LOG_ERR, 0, "%s: %s near line %d", configfilename, s, lineno);
 }
 
 static char *
@@ -566,7 +566,7 @@ config_vifs_from_file()
 
 	if ((f = fopen(configfilename, "r")) == NULL) {
 	    if (errno != ENOENT)
-		log(LOG_ERR, errno, "can't open %s", configfilename);
+		logit(LOG_ERR, errno, "can't open %s", configfilename);
 	    return;
 	}
 

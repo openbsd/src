@@ -52,7 +52,7 @@
 
 #ifndef lint
 static char rcsid[] =
-    "@(#) $Id: mtrace.c,v 1.20 2003/09/23 09:19:18 matthieu Exp $";
+    "@(#) $Id: mtrace.c,v 1.21 2003/11/26 01:17:12 millert Exp $";
 #endif
 
 #include <netdb.h>
@@ -1660,7 +1660,7 @@ or multicast at ttl %d doesn't reach its last-hop router for that source\n",
 void
 check_vif_state()
 {
-    log(LOG_WARNING, errno, "sendto");
+    logit(LOG_WARNING, errno, "sendto");
 }
 
 /*
@@ -1669,7 +1669,7 @@ check_vif_state()
  * LOG_ERR or worse, terminate the program.
  */
 void
-log(int severity, int syserr, char *format, ...)
+logit(int severity, int syserr, char *format, ...)
 {
     va_list ap;
 

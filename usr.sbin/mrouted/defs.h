@@ -147,7 +147,7 @@ extern char *		sys_errlist[];
 #endif
 
 /* main.c */
-extern void		log(int, int, char *, ...);
+extern void		logit(int, int, char *, ...);
 extern int		register_input_handler(int fd, ihfunc_t func);
 
 /* igmp.c */

@@ -28,7 +28,7 @@ config_vifs_from_kernel(void)
     short flags;
 
     if (getifaddrs(&ifap) < 0)
-	log(LOG_ERR, errno, "getifaddrs");
+	logit(LOG_ERR, errno, "getifaddrs");
 
     for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
 	/*
@@ -57,7 +57,7 @@ config_vifs_from_kernel(void)
 	if (!inet_valid_subnet(subnet, mask) ||
 	    addr == subnet ||
 	    addr == (subnet | ~mask)) {
-	    log(LOG_WARNING, 0,
+	    logit(LOG_WARNING, 0,
 		"ignoring %s, has invalid address (%s) and/or mask (%s)",
 		ifa->ifa_name, inet_fmt(addr, s1), inet_fmt(mask, s2));
 	    continue;
@@ -70,7 +70,7 @@ config_vifs_from_kernel(void)
 	for (vifi = 0, v = uvifs; vifi < numvifs; ++vifi, ++v) {
 	    if ((addr & v->uv_subnetmask) == v->uv_subnet ||
 		(v->uv_subnet & mask) == subnet) {
-		log(LOG_WARNING, 0, "ignoring %s, same subnet as %s",
+		logit(LOG_WARNING, 0, "ignoring %s, same subnet as %s",
 		    ifa->ifa_name, v->uv_name);
 		break;
 	    }
@@ -82,7 +82,7 @@ config_vifs_from_kernel(void)
 	 * If there is room in the uvifs array, install this interface.
 	 */
 	if (numvifs == MAXVIFS) {
-	    log(LOG_WARNING, 0, "too many vifs, ignoring %s", ifa->ifa_name);
+	    logit(LOG_WARNING, 0, "too many vifs, ignoring %s", ifa->ifa_name);
 	    continue;
 	}
 	v  = &uvifs[numvifs];
@@ -101,7 +101,7 @@ config_vifs_from_kernel(void)
 	v->uv_acl         = NULL;
 	v->uv_addrs	  = NULL;
 
-	log(LOG_INFO,0,"installing %s (%s on subnet %s) as vif #%u - rate=%d",
+	logit(LOG_INFO,0,"installing %s (%s on subnet %s) as vif #%u - rate=%d",
 	    v->uv_name, inet_fmt(addr, s1), inet_fmts(subnet, mask, s2),
 	    numvifs, v->uv_rate_limit);
 

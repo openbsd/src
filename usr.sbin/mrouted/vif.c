@@ -72,10 +72,10 @@ init_vifs(void)
      * (Open a UDP socket for ioctl use in the config procedures.)
      */
     if ((udp_socket = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
-	log(LOG_ERR, errno, "UDP socket");
-    log(LOG_INFO,0,"Getting vifs from kernel interfaces");
+	logit(LOG_ERR, errno, "UDP socket");
+    logit(LOG_INFO,0,"Getting vifs from kernel interfaces");
     config_vifs_from_kernel();
-    log(LOG_INFO,0,"Getting vifs from %s",configfilename);
+    logit(LOG_INFO,0,"Getting vifs from %s",configfilename);
     config_vifs_from_file();
 
     /*
@@ -95,26 +95,26 @@ init_vifs(void)
 	}
     }
     if (enabled_vifs < 2)
-	log(LOG_ERR, 0, "can't forward: %s",
+	logit(LOG_ERR, 0, "can't forward: %s",
 	    enabled_vifs == 0 ? "no enabled vifs" : "only one enabled vif");
 
     if (enabled_phyints == 0)
-	log(LOG_WARNING, 0,
+	logit(LOG_WARNING, 0,
 	    "no enabled interfaces, forwarding via tunnels only");
 
-    log(LOG_INFO, 0, "Installing vifs in mrouted...");
+    logit(LOG_INFO, 0, "Installing vifs in mrouted...");
     for (vifi = 0, v = uvifs; vifi < numvifs; ++vifi, ++v) {
 	if (!(v->uv_flags & VIFF_DISABLED)) {
 	    if (!(v->uv_flags & VIFF_DOWN)) {
 		if (v->uv_flags & VIFF_TUNNEL)
-		    log(LOG_INFO, 0, "vif #%d, tunnel %s -> %s", vifi,
+		    logit(LOG_INFO, 0, "vif #%d, tunnel %s -> %s", vifi,
 				inet_fmt(v->uv_lcl_addr, s1),
 				inet_fmt(v->uv_rmt_addr, s2));
 		else
-		    log(LOG_INFO, 0, "vif #%d, phyint %s", vifi,
+		    logit(LOG_INFO, 0, "vif #%d, phyint %s", vifi,
 				inet_fmt(v->uv_lcl_addr, s1));
 		start_vif2(vifi);
-	    } else log(LOG_INFO, 0,
+	    } else logit(LOG_INFO, 0,
 		     "%s is not yet up; vif #%u not in service",
 		     v->uv_name, vifi);
 	}
@@ -131,19 +131,19 @@ init_installvifs(void)
     vifi_t vifi;
     struct uvif *v;
 
-    log(LOG_INFO, 0, "Installing vifs in kernel...");
+    logit(LOG_INFO, 0, "Installing vifs in kernel...");
     for (vifi = 0, v = uvifs; vifi < numvifs; ++vifi, ++v) {
 	if (!(v->uv_flags & VIFF_DISABLED)) {
 	    if (!(v->uv_flags & VIFF_DOWN)) {
 		if (v->uv_flags & VIFF_TUNNEL)
-		    log(LOG_INFO, 0, "vif #%d, tunnel %s -> %s", vifi,
+		    logit(LOG_INFO, 0, "vif #%d, tunnel %s -> %s", vifi,
 				inet_fmt(v->uv_lcl_addr, s1),
 				inet_fmt(v->uv_rmt_addr, s2));
 		else
-		    log(LOG_INFO, 0, "vif #%d, phyint %s", vifi,
+		    logit(LOG_INFO, 0, "vif #%d, phyint %s", vifi,
 				inet_fmt(v->uv_lcl_addr, s1));
 		k_add_vif(vifi, &uvifs[vifi]);
-	    } else log(LOG_INFO, 0,
+	    } else logit(LOG_INFO, 0,
 		     "%s is not yet up; vif #%u not in service",
 		     v->uv_name, vifi);
 	}
@@ -170,14 +170,14 @@ check_vif_state(void)
 
 	strncpy(ifr.ifr_name, v->uv_name, IFNAMSIZ);
 	if (ioctl(udp_socket, SIOCGIFFLAGS, (char *)&ifr) < 0)
-	    log(LOG_ERR, errno,
+	    logit(LOG_ERR, errno,
 		"ioctl SIOCGIFFLAGS for %s", ifr.ifr_name);
 
 	if (v->uv_flags & VIFF_DOWN) {
 	    if (ifr.ifr_flags & IFF_UP) {
 		v->uv_flags &= ~VIFF_DOWN;
 		start_vif(vifi);
-		log(LOG_INFO, 0,
+		logit(LOG_INFO, 0,
 		    "%s has come up; vif #%u now in service",
 		    v->uv_name, vifi);
 	    }
@@ -187,7 +187,7 @@ check_vif_state(void)
 	    if (!(ifr.ifr_flags & IFF_UP)) {
 		stop_vif(vifi);
 		v->uv_flags |= VIFF_DOWN;
-		log(LOG_INFO, 0,
+		logit(LOG_INFO, 0,
 		    "%s has gone down; vif #%u taken out of service",
 		    v->uv_name, vifi);
 		vifs_down = TRUE;
@@ -503,7 +503,7 @@ accept_membership_query(u_int32_t src, u_int32_t dst, u_int32_t group,
 
     if ((vifi = find_vif(src, dst)) == NO_VIF ||
 	(uvifs[vifi].uv_flags & VIFF_TUNNEL)) {
-	log(LOG_INFO, 0,
+	logit(LOG_INFO, 0,
 	    "ignoring group membership query from non-adjacent host %s",
 	    inet_fmt(src, s1));
 	return;
@@ -541,7 +541,7 @@ accept_group_report(u_int32_t src, u_int32_t dst, u_int32_t group,
 
     if ((vifi = find_vif(src, dst)) == NO_VIF ||
 	(uvifs[vifi].uv_flags & VIFF_TUNNEL)) {
-	log(LOG_INFO, 0,
+	logit(LOG_INFO, 0,
 	    "ignoring group membership report from non-adjacent host %s",
 	    inet_fmt(src, s1));
 	return;
@@ -577,7 +577,7 @@ accept_group_report(u_int32_t src, u_int32_t dst, u_int32_t group,
     if (g == NULL) {
 	g = (struct listaddr *)malloc(sizeof(struct listaddr));
 	if (g == NULL)
-	    log(LOG_ERR, 0, "ran out of memory");    /* fatal */
+	    logit(LOG_ERR, 0, "ran out of memory");    /* fatal */
 
 	g->al_addr   = group;
 	if (r_type == IGMP_v2_HOST_MEMBERSHIP_REPORT)
@@ -615,7 +615,7 @@ accept_leave_message(u_int32_t src, u_int32_t dst, u_int32_t group)
 
     if ((vifi = find_vif(src, dst)) == NO_VIF ||
 	(uvifs[vifi].uv_flags & VIFF_TUNNEL)) {
-	log(LOG_INFO, 0,
+	logit(LOG_INFO, 0,
 	    "ignoring group leave report from non-adjacent host %s",
 	    inet_fmt(src, s1));
 	return;
@@ -632,7 +632,7 @@ accept_leave_message(u_int32_t src, u_int32_t dst, u_int32_t group)
      */
     for (g = v->uv_groups; g != NULL; g = g->al_next) {
 	if (group == g->al_addr) {
-	    log(LOG_DEBUG, 0,
+	    logit(LOG_DEBUG, 0,
 		"[vif.c, _accept_leave_message] %d %d \n",
 		g->al_old, g->al_query);
 
@@ -713,7 +713,7 @@ accept_neighbor_request(u_int32_t src, u_int32_t dst)
 	if ((udp = socket(AF_INET, SOCK_DGRAM, 0)) < 0
 	    || connect(udp, (struct sockaddr *) &addr, sizeof(addr)) < 0
 	    || getsockname(udp, (struct sockaddr *) &addr, &addrlen) < 0) {
-	    log(LOG_WARNING, errno, "Determining local address");
+	    logit(LOG_WARNING, errno, "Determining local address");
 	    close(udp);
 	    return;
 	}
@@ -800,7 +800,7 @@ accept_neighbor_request2(u_int32_t src, u_int32_t dst)
 	if ((udp = socket(AF_INET, SOCK_DGRAM, 0)) < 0
 	    || connect(udp, (struct sockaddr *) &addr, sizeof(addr)) < 0
 	    || getsockname(udp, (struct sockaddr *) &addr, &addrlen) < 0) {
-	    log(LOG_WARNING, errno, "Determining local address");
+	    logit(LOG_WARNING, errno, "Determining local address");
 	    close(udp);
 	    return;
 	}
@@ -908,7 +908,7 @@ accept_info_request(u_int32_t src, u_int32_t dst, u_char *p, int datalen)
 
 	    case DVMRP_INFO_NEIGHBORS:
 	    default:
-		log(LOG_INFO, 0, "ignoring unknown info type %d", *p);
+		logit(LOG_INFO, 0, "ignoring unknown info type %d", *p);
 		break;
 	}
 	*(q+1) = len++;
@@ -951,7 +951,7 @@ void
 accept_neighbors(u_int32_t src, u_int32_t dst, u_char *p, int datalen,
     u_int32_t level)
 {
-    log(LOG_INFO, 0, "ignoring spurious DVMRP neighbor list from %s to %s",
+    logit(LOG_INFO, 0, "ignoring spurious DVMRP neighbor list from %s to %s",
 	inet_fmt(src, s1), inet_fmt(dst, s2));
 }
 
@@ -963,7 +963,7 @@ void
 accept_neighbors2(u_int32_t src, u_int32_t dst, u_char *p, int datalen,
     u_int32_t level)
 {
-    log(LOG_INFO, 0, "ignoring spurious DVMRP neighbor list2 from %s to %s",
+    logit(LOG_INFO, 0, "ignoring spurious DVMRP neighbor list2 from %s to %s",
 	inet_fmt(src, s1), inet_fmt(dst, s2));
 }
 
@@ -973,7 +973,7 @@ accept_neighbors2(u_int32_t src, u_int32_t dst, u_char *p, int datalen,
 void
 accept_info_reply(u_int32_t src, u_int32_t dst, u_char *p, int datalen)
 {
-    log(LOG_INFO, 0, "ignoring spurious DVMRP info reply from %s to %s",
+    logit(LOG_INFO, 0, "ignoring spurious DVMRP info reply from %s to %s",
 	inet_fmt(src, s1), inet_fmt(dst, s2));
 }
 
@@ -1012,7 +1012,7 @@ update_neighbor(vifi_t vifi, u_int32_t addr, int msgtype, char *p,
     if (!(v->uv_flags & VIFF_TUNNEL) &&
 	(addr == v->uv_lcl_addr ||
 	 addr == v->uv_subnet )) {
-	log(LOG_WARNING, 0,
+	logit(LOG_WARNING, 0,
 	    "received DVMRP message from 'the unknown host' or self: %s",
 	    inet_fmt(addr, s1));
 	return (FALSE);
@@ -1042,7 +1042,7 @@ update_neighbor(vifi_t vifi, u_int32_t addr, int msgtype, char *p,
 	    (n->al_mv != ((level >> 8) & 0xff))) {
 
 	    do_reset = TRUE;
-	    log(LOG_DEBUG, 0,
+	    logit(LOG_DEBUG, 0,
 		"version change neighbor %s [old:%d.%d, new:%d.%d]",
 		inet_fmt(addr, s1),
 		n->al_pv, n->al_mv, level&0xff, (level >> 8) & 0xff);
@@ -1055,13 +1055,13 @@ update_neighbor(vifi_t vifi, u_int32_t addr, int msgtype, char *p,
 	 * If not found, add it to the list.  If the neighbor has a lower
 	 * IP address than me, yield querier duties to it.
 	 */
-	log(LOG_DEBUG, 0, "New neighbor %s on vif %d v%d.%d nf 0x%02x",
+	logit(LOG_DEBUG, 0, "New neighbor %s on vif %d v%d.%d nf 0x%02x",
 	    inet_fmt(addr, s1), vifi, level & 0xff, (level >> 8) & 0xff,
 	    (level >> 16) & 0xff);
 
 	n = (struct listaddr *)malloc(sizeof(struct listaddr));
 	if (n == NULL)
-	    log(LOG_ERR, 0, "ran out of memory");    /* fatal */
+	    logit(LOG_ERR, 0, "ran out of memory");    /* fatal */
 
 	n->al_addr      = addr;
 	n->al_pv	= level & 0xff;
@@ -1107,7 +1107,7 @@ update_neighbor(vifi_t vifi, u_int32_t addr, int msgtype, char *p,
 	    int i;
 
 	    if (datalen < 4) {
-		log(LOG_WARNING, 0,
+		logit(LOG_WARNING, 0,
 		    "received truncated probe message from %s (len %d)",
 		    inet_fmt(addr, s1), datalen);
 		return (FALSE);
@@ -1120,7 +1120,7 @@ update_neighbor(vifi_t vifi, u_int32_t addr, int msgtype, char *p,
 	    if (n->al_genid == 0)
 		n->al_genid = genid;
 	    else if (n->al_genid != genid) {
-		log(LOG_DEBUG, 0,
+		logit(LOG_DEBUG, 0,
 		    "new genid neigbor %s on vif %d [old:%x, new:%x]",
 		    inet_fmt(addr, s1), vifi, n->al_genid, genid);
 
@@ -1136,7 +1136,7 @@ update_neighbor(vifi_t vifi, u_int32_t addr, int msgtype, char *p,
 
 	    while (datalen > 0) {
 		if (datalen < 4) {
-		    log(LOG_WARNING, 0,
+		    logit(LOG_WARNING, 0,
 			"received truncated probe message from %s (len %d)",
 			inet_fmt(addr, s1), datalen);
 		    return (FALSE);
@@ -1343,7 +1343,7 @@ dump_vifs(FILE *fp)
 	}
 	v_req.vifi = vifi;
 	if (ioctl(udp_socket, SIOCGETVIFCNT, (char *)&v_req) < 0) {
-	    log(LOG_WARNING, 0,
+	    logit(LOG_WARNING, 0,
 		"SIOCGETVIFCNT fails");
 	}
 	else {

@@ -30,7 +30,7 @@
 
 #ifndef lint
 static char rcsid[] =
-	"@(#) $Id: main.c,v 1.13 2003/03/12 22:55:01 deraadt Exp $";
+	"@(#) $Id: main.c,v 1.14 2003/11/26 01:17:12 millert Exp $";
 #endif
 
 extern char *configfilename;
@@ -182,7 +182,7 @@ usage:	fprintf(stderr,
     snprintf(versionstring, sizeof versionstring, "mrouted version %d.%d",
 			PROTOCOL_VERSION, MROUTED_VERSION);
 
-    log(LOG_NOTICE, 0, "%s", versionstring);
+    logit(LOG_NOTICE, 0, "%s", versionstring);
 
 #ifdef SYSV
     srand48(time(NULL));
@@ -223,7 +223,7 @@ usage:	fprintf(stderr,
      */
     if ((((vers >> 8) & 0xff) != 3) ||
 	 ((vers & 0xff) != 5))
-	log(LOG_ERR, 0, "kernel (v%d.%d)/mrouted (v%d.%d) version mismatch",
+	logit(LOG_ERR, 0, "kernel (v%d.%d)/mrouted (v%d.%d) version mismatch",
 		(vers >> 8) & 0xff, vers & 0xff,
 		PROTOCOL_VERSION, MROUTED_VERSION);
 #endif
@@ -272,12 +272,12 @@ usage:	fprintf(stderr,
 
     FD_ZERO(&readers);
     if (igmp_socket >= FD_SETSIZE)
-	log(LOG_ERR, 0, "descriptor too big");
+	logit(LOG_ERR, 0, "descriptor too big");
     FD_SET(igmp_socket, &readers);
     nfds = igmp_socket + 1;
     for (i = 0; i < nhandlers; i++) {
 	if (ihandlers[i].fd >= FD_SETSIZE)
-	    log(LOG_ERR, 0, "descriptor too big");
+	    logit(LOG_ERR, 0, "descriptor too big");
 	FD_SET(ihandlers[i].fd, &readers);
 	if (ihandlers[i].fd >= nfds)
 	    nfds = ihandlers[i].fd + 1;
@@ -331,7 +331,7 @@ usage:	fprintf(stderr,
 #endif
    {
             if (errno != EINTR) /* SIGALRM is expected */
-                log(LOG_WARNING, errno, "select failed");
+                logit(LOG_WARNING, errno, "select failed");
             continue;
         }
 
@@ -339,13 +339,13 @@ usage:	fprintf(stderr,
 	    recvlen = recvfrom(igmp_socket, recv_buf, RECV_BUF_SIZE,
 			       0, NULL, &dummy);
 	    if (recvlen < 0) {
-		if (errno != EINTR) log(LOG_ERR, errno, "recvfrom");
+		if (errno != EINTR) logit(LOG_ERR, errno, "recvfrom");
 		continue;
 	    }
 	    (void)sigemptyset(&mask);
 	    (void)sigaddset(&mask, SIGALRM);
 	    if (sigprocmask(SIG_BLOCK, &mask, &omask) < 0)
-		    log(LOG_ERR, errno, "sigprocmask");
+		    logit(LOG_ERR, errno, "sigprocmask");
 	    accept_igmp(recvlen);
 	    (void)sigprocmask(SIG_SETMASK, &omask, NULL);
         }
@@ -489,7 +489,7 @@ timer(void)
 static void
 done(int i)
 {
-    log(LOG_NOTICE, 0, "%s exiting", versionstring);
+    logit(LOG_NOTICE, 0, "%s exiting", versionstring);
     cleanup();
     _exit(1);
 }
@@ -563,7 +563,7 @@ restart(int i)
 {
     sigset_t mask, omask;
 
-    log(LOG_NOTICE, 0, "%s restart", versionstring);
+    logit(LOG_NOTICE, 0, "%s restart", versionstring);
 
     /*
      * reset all the entries
@@ -571,7 +571,7 @@ restart(int i)
     (void)sigemptyset(&mask);
     (void)sigaddset(&mask, SIGALRM);
     if (sigprocmask(SIG_BLOCK, &mask, &omask) < 0)
-	log(LOG_ERR, errno, "sigprocmask");
+	logit(LOG_ERR, errno, "sigprocmask");
     free_all_prunes();
     free_all_routes();
     stop_all_vifs();
@@ -623,7 +623,7 @@ resetlogging(void *arg)
  * For errors of severity LOG_ERR or worse, terminate the program.
  */
 void
-log(int severity, int syserr, char *format, ...)
+logit(int severity, int syserr, char *format, ...)
 {
     va_list ap;
     static char fmt[211] = "warning - ";
@@ -672,7 +672,7 @@ log(int severity, int syserr, char *format, ...)
 
 #ifdef DEBUG_MFC
 void
-md_log(int what, u_int32_t origin, u_int32_t mcastgrp)
+md_logit(int what, u_int32_t origin, u_int32_t mcastgrp)
 {
     static FILE *f = NULL;
     struct timeval tv;
@@ -680,7 +680,7 @@ md_log(int what, u_int32_t origin, u_int32_t mcastgrp)
 
     if (!f) {
 	if ((f = fopen("/tmp/mrouted.clog", "w")) == NULL) {
-	    log(LOG_ERR, errno, "open /tmp/mrouted.clog");
+	    logit(LOG_ERR, errno, "open /tmp/mrouted.clog");
 	}
     }
 

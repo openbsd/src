@@ -286,7 +286,7 @@ create_route(u_int32_t origin, u_int32_t mask)
     if ((r = (struct rtentry *) malloc(sizeof(struct rtentry) +
 				       (2 * numvifs * sizeof(u_int32_t)) +
 				       (numvifs * sizeof(u_int)))) == NULL) {
-	log(LOG_ERR, 0, "ran out of memory");	/* fatal */
+	logit(LOG_ERR, 0, "ran out of memory");	/* fatal */
     }
     r->rt_origin     = origin;
     r->rt_originmask = mask;
@@ -350,7 +350,7 @@ update_route(u_int32_t origin, u_int32_t mask, u_int metric, u_int32_t src,
      * all unreachable/poisoned metrics into a single value.
      */
     if (src != 0 && (metric < 1 || metric >= 2*UNREACHABLE)) {
-	log(LOG_WARNING, 0,
+	logit(LOG_WARNING, 0,
 	    "%s reports out-of-range metric %u for origin %s",
 	    inet_fmt(src, s1), metric, inet_fmts(origin, mask, s2));
 	return;
@@ -371,7 +371,7 @@ update_route(u_int32_t origin, u_int32_t mask, u_int metric, u_int32_t src,
 	    return;
 	}
 	if (src != 0 && !inet_valid_subnet(origin, mask)) {
-	    log(LOG_WARNING, 0,
+	    logit(LOG_WARNING, 0,
 		"%s reports an invalid origin (%s) and/or mask (%08x)",
 		inet_fmt(src, s1), inet_fmt(origin, s2), ntohl(mask));
 	    return;
@@ -686,7 +686,7 @@ accept_probe(u_int32_t src, u_int32_t dst, char *p, int datalen,
     vifi_t vifi;
 
     if ((vifi = find_vif(src, dst)) == NO_VIF) {
-	log(LOG_INFO, 0,
+	logit(LOG_INFO, 0,
 	    "ignoring probe from non-neighbor %s", inet_fmt(src, s1));
 	return;
     }
@@ -740,7 +740,7 @@ accept_report(u_int32_t src, u_int32_t dst, char *p, int datalen,
     struct newrt rt[4096];
 
     if ((vifi = find_vif(src, dst)) == NO_VIF) {
-	log(LOG_INFO, 0,
+	logit(LOG_INFO, 0,
 	    "ignoring route report from non-neighbor %s", inet_fmt(src, s1));
 	return;
     }
@@ -749,7 +749,7 @@ accept_report(u_int32_t src, u_int32_t dst, char *p, int datalen,
 	return;
 
     if (datalen > 2*4096) {
-	log(LOG_INFO, 0,
+	logit(LOG_INFO, 0,
 	    "ignoring oversize (%d bytes) route report from %s",
 	    datalen, inet_fmt(src, s1));
 	return;
@@ -758,7 +758,7 @@ accept_report(u_int32_t src, u_int32_t dst, char *p, int datalen,
     while (datalen > 0) {	/* Loop through per-mask lists. */
 
 	if (datalen < 3) {
-	    log(LOG_WARNING, 0,
+	    logit(LOG_WARNING, 0,
 		"received truncated route report from %s",
 		inet_fmt(src, s1));
 	    return;
@@ -768,7 +768,7 @@ accept_report(u_int32_t src, u_int32_t dst, char *p, int datalen,
 	if ((((u_char *)&mask)[2] = *p++) != 0) width = 3;
 	if ((((u_char *)&mask)[3] = *p++) != 0) width = 4;
 	if (!inet_valid_mask(ntohl(mask))) {
-	    log(LOG_WARNING, 0,
+	    logit(LOG_WARNING, 0,
 		"%s reports bogus netmask 0x%08x (%s)",
 		inet_fmt(src, s1), ntohl(mask), inet_fmt(mask, s2));
 	    return;
@@ -777,7 +777,7 @@ accept_report(u_int32_t src, u_int32_t dst, char *p, int datalen,
 
 	do {			/* Loop through (origin, metric) pairs */
 	    if (datalen < width + 1) {
-		log(LOG_WARNING, 0,
+		logit(LOG_WARNING, 0,
 		    "received truncated route report from %s",
 		    inet_fmt(src, s1));
 		return;
@@ -802,12 +802,12 @@ accept_report(u_int32_t src, u_int32_t dst, char *p, int datalen,
     if (rt[nrt-1].origin == 0)
 	rt[nrt-1].mask = 0;
 
-    log(LOG_DEBUG, 0, "Updating %d routes from %s to %s", nrt,
+    logit(LOG_DEBUG, 0, "Updating %d routes from %s to %s", nrt,
 		inet_fmt(src, s1), inet_fmt(dst, s2));
     for (i = 0; i < nrt; ++i) {
 	if (i != 0 && rt[i].origin == rt[i-1].origin &&
 		      rt[i].mask == rt[i-1].mask) {
-	    log(LOG_WARNING, 0, "%s reports duplicate route for %s",
+	    logit(LOG_WARNING, 0, "%s reports duplicate route for %s",
 		inet_fmt(src, s1), inet_fmts(rt[i].origin, rt[i].mask, s2));
 	    continue;
 	}
@@ -1071,7 +1071,7 @@ report_next_chunk(void)
 	min = 0;	/* Neighborless router didn't send any routes */
 
     n = min;
-    log(LOG_INFO, 0, "update %d starting at %d of %d",
+    logit(LOG_INFO, 0, "update %d starting at %d of %d",
 	n, (nroutes - start_rt), nroutes);
 
     start_rt = (start_rt + n) % nroutes;

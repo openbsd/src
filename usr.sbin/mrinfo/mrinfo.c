@@ -76,7 +76,7 @@
 
 #ifndef lint
 static char rcsid[] =
-    "@(#) $OpenBSD: mrinfo.c,v 1.17 2003/08/19 19:09:45 deraadt Exp $";
+    "@(#) $OpenBSD: mrinfo.c,v 1.18 2003/11/26 01:17:12 millert Exp $";
 /*  original rcsid:
     "@(#) Header: mrinfo.c,v 1.6 93/04/08 15:14:16 van Exp (LBL)";
 */
@@ -133,7 +133,7 @@ inet_name(u_int32_t addr)
  * worse, terminate the program.
  */
 void
-log(int severity, int syserr, char *format, ...)
+logit(int severity, int syserr, char *format, ...)
 {
 	va_list ap;
 
@@ -443,7 +443,7 @@ main(int argc, char *argv[])
 					perror("select");
 				continue;
 			} else if (count == 0) {
-				log(LOG_DEBUG, 0,
+				logit(LOG_DEBUG, 0,
 				    "Timed out receiving neighbor lists");
 				if (++tries > retries)
 					break;
@@ -469,7 +469,7 @@ main(int argc, char *argv[])
 			}
 
 			if (recvlen < sizeof(struct ip)) {
-				log(LOG_WARNING, 0,
+				logit(LOG_WARNING, 0,
 				    "packet too short (%u bytes) for IP header",
 				    recvlen);
 				continue;
@@ -482,7 +482,7 @@ main(int argc, char *argv[])
 			iphdrlen = ip->ip_hl << 2;
 			ipdatalen = ntohs(ip->ip_len);
 			if (iphdrlen + ipdatalen != recvlen) {
-				log(LOG_WARNING, 0,
+				logit(LOG_WARNING, 0,
 				    "packet shorter (%u bytes) than "
 				    "hdr+data length (%u+%u)",
 				    recvlen, iphdrlen, ipdatalen);
@@ -492,7 +492,7 @@ main(int argc, char *argv[])
 			group = igmp->igmp_group.s_addr;
 			igmpdatalen = ipdatalen - IGMP_MINLEN;
 			if (igmpdatalen < 0) {
-				log(LOG_WARNING, 0,
+				logit(LOG_WARNING, 0,
 				    "IP data field too short (%u bytes) "
 				    "for IGMP, from %s",
 				    ipdatalen, inet_fmt(src, s1));

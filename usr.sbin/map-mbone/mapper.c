@@ -169,7 +169,7 @@ Neighbor *find_neighbor(addr, node)
  * worse, terminate the program.
  */
 void
-log(int severity, int syserr, char *format, ...)
+logit(int severity, int syserr, char *format, ...)
 {
     va_list ap;
     char    fmt[100];
@@ -224,7 +224,7 @@ void accept_group_report(src, dst, group, r_type)
     u_int32_t src, dst, group;
     int r_type;
 {
-    log(LOG_INFO, 0, "ignoring IGMP group membership report from %s to %s",
+    logit(LOG_INFO, 0, "ignoring IGMP group membership report from %s to %s",
 	inet_fmt(src, s1), inet_fmt(dst, s2));
 }
 
@@ -237,7 +237,7 @@ void accept_probe(src, dst, p, datalen, level)
     char *p;
     int datalen;
 {
-    log(LOG_INFO, 0, "ignoring DVMRP probe from %s to %s",
+    logit(LOG_INFO, 0, "ignoring DVMRP probe from %s to %s",
 	inet_fmt(src, s1), inet_fmt(dst, s2));
 }
 
@@ -250,7 +250,7 @@ void accept_report(src, dst, p, datalen, level)
     char *p;
     int datalen;
 {
-    log(LOG_INFO, 0, "ignoring DVMRP routing report from %s to %s",
+    logit(LOG_INFO, 0, "ignoring DVMRP routing report from %s to %s",
 	inet_fmt(src, s1), inet_fmt(dst, s2));
 }
 
@@ -262,7 +262,7 @@ void accept_neighbor_request(src, dst)
     u_int32_t src, dst;
 {
     if (src != our_addr)
-	log(LOG_INFO, 0,
+	logit(LOG_INFO, 0,
 	    "ignoring spurious DVMRP neighbor request from %s to %s",
 	    inet_fmt(src, s1), inet_fmt(dst, s2));
 }
@@ -271,7 +271,7 @@ void accept_neighbor_request2(src, dst)
     u_int32_t src, dst;
 {
     if (src != our_addr)
-	log(LOG_INFO, 0,
+	logit(LOG_INFO, 0,
 	    "ignoring spurious DVMRP neighbor request2 from %s to %s",
 	    inet_fmt(src, s1), inet_fmt(dst, s2));
 }
@@ -326,7 +326,7 @@ void accept_neighbors(src, dst, p, datalen, level)
 	Neighbor       *old_neighbors;
 
 	if (datalen < 4 + 3) {
-	    log(LOG_WARNING, 0, "received truncated interface record from %s",
+	    logit(LOG_WARNING, 0, "received truncated interface record from %s",
 		inet_fmt(src, s1));
 	    return;
 	}
@@ -371,7 +371,7 @@ void accept_neighbors(src, dst, p, datalen, level)
 			if (nb_i->addr == nb_n->addr) {
 			    if (nb_i->metric != nb_n->metric
 				|| nb_i->threshold != nb_n->threshold)
-				log(LOG_WARNING, 0,
+				logit(LOG_WARNING, 0,
 				    "inconsistent %s for neighbor %s of %s",
 				    "metric/threshold",
 				    inet_fmt(nb_i->addr, s1),
@@ -403,7 +403,7 @@ void accept_neighbors(src, dst, p, datalen, level)
 	    Node       *n_node;
 
 	    if (datalen < 4) {
-		log(LOG_WARNING, 0, "received truncated neighbor list from %s",
+		logit(LOG_WARNING, 0, "received truncated neighbor list from %s",
 		    inet_fmt(src, s1));
 		return;
 	    }
@@ -415,7 +415,7 @@ void accept_neighbors(src, dst, p, datalen, level)
 	    for (nb = old_neighbors; nb; nb = nb->next)
 		if (nb->addr == neighbor) {
 		    if (metric != nb->metric || threshold != nb->threshold)
-			log(LOG_WARNING, 0,
+			logit(LOG_WARNING, 0,
 			    "inconsistent %s for neighbor %s of %s",
 			    "metric/threshold",
 			    inet_fmt(nb->addr, s1), inet_fmt(node->addr, s2));
@@ -463,7 +463,7 @@ void accept_neighbors2(src, dst, p, datalen, level)
 	Neighbor       *old_neighbors;
 
 	if (datalen < 4 + 4) {
-	    log(LOG_WARNING, 0, "received truncated interface record from %s",
+	    logit(LOG_WARNING, 0, "received truncated interface record from %s",
 		inet_fmt(src, s1));
 	    return;
 	}
@@ -514,7 +514,7 @@ void accept_neighbors2(src, dst, p, datalen, level)
 			if (nb_i->addr == nb_n->addr) {
 			    if (nb_i->metric != nb_n->metric
 				|| nb_i->threshold != nb_i->threshold)
-				log(LOG_WARNING, 0,
+				logit(LOG_WARNING, 0,
 				    "inconsistent %s for neighbor %s of %s",
 				    "metric/threshold",
 				    inet_fmt(nb_i->addr, s1),
@@ -546,7 +546,7 @@ void accept_neighbors2(src, dst, p, datalen, level)
 	    Node       *n_node;
 
 	    if (datalen < 4) {
-		log(LOG_WARNING, 0, "received truncated neighbor list from %s",
+		logit(LOG_WARNING, 0, "received truncated neighbor list from %s",
 		    inet_fmt(src, s1));
 		return;
 	    }
@@ -561,7 +561,7 @@ void accept_neighbors2(src, dst, p, datalen, level)
 	    for (nb = old_neighbors; nb; nb = nb->next)
 		if (nb->addr == neighbor) {
 		    if (metric != nb->metric || threshold != nb->threshold)
-			log(LOG_WARNING, 0,
+			logit(LOG_WARNING, 0,
 			    "inconsistent %s for neighbor %s of %s",
 			    "metric/threshold",
 			    inet_fmt(nb->addr, s1), inet_fmt(node->addr, s2));
@@ -590,7 +590,7 @@ void accept_neighbors2(src, dst, p, datalen, level)
 
 void check_vif_state()
 {
-    log(LOG_NOTICE, 0, "network marked down...");
+    logit(LOG_NOTICE, 0, "network marked down...");
 }
 
 
@@ -948,7 +948,7 @@ int main(argc, argv)
 		perror("select");
 	    continue;
 	} else if (count == 0) {
-	    log(LOG_DEBUG, 0, "Timed out receiving neighbor lists");
+	    logit(LOG_DEBUG, 0, "Timed out receiving neighbor lists");
 	    if (retry_requests(routers))
 		continue;
 	    else
