@@ -1,4 +1,4 @@
-/*	$OpenBSD: openfirm.h,v 1.1 2001/08/18 16:19:28 jason Exp $	*/
+/*	$OpenBSD: openfirm.h,v 1.2 2001/08/19 05:15:40 art Exp $	*/
 /*	$NetBSD: openfirm.h,v 1.8 2001/07/20 00:07:14 eeh Exp $	*/
 
 /*
@@ -57,7 +57,8 @@ void OF_set_symbol_lookup (void (*s2v)(void *), void (*v2s)(void *));
 void OF_poweroff (void) __attribute__((__noreturn__));
 void OF_sym2val (void *);
 void OF_val2sym (void *);
-/* void OF_interpret (char *); */
 int OF_milliseconds (void);
 int OF_searchprop (int node, char *prop, void *buf, int buflen);
 int OF_mapintr(int node, int *interrupt, int validlen, int buflen);
+
+void (*OF_set_callback(void (*)(void *)))(void *);
