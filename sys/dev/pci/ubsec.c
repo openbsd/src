@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.16 2000/06/20 05:40:45 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.17 2000/07/20 21:45:19 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -31,6 +31,9 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#define UBSEC_DEBUG
+
 
 /*
  * uBsec 5[56]01 hardware crypto accelerator
@@ -208,10 +211,14 @@ ubsec_intr(arg)
 
 	WRITE_REG(sc, BS_STAT, stat);		/* IACK */
 
-	if (stat & BS_STAT_MCR1_DONE) {
+printf("ubsec intr %x\n", stat);
+	if ((stat & BS_STAT_MCR1_DONE)) {
 		while (!SIMPLEQ_EMPTY(&sc->sc_qchip)) {
 			q = SIMPLEQ_FIRST(&sc->sc_qchip);
-			if ((q->q_mcr.mcr_flags & UBS_MCR_DONE) == 0)
+			printf("mcr_flags %x %x %x\n", &q->q_mcr, q->q_mcr.mcr_flags,
+			    READ_REG(sc, BS_ERR));
+			if ((q->q_mcr.mcr_flags & UBS_MCR_DONE) == 0 &&
+			    READ_REG(sc, BS_ERR) != vtophys(&q->q_mcr))
 				break;
 			npkts++;
 			SIMPLEQ_REMOVE_HEAD(&sc->sc_qchip, q, q_next);
