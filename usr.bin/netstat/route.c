@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.38 2000/09/19 03:18:46 angelos Exp $	*/
+/*	$OpenBSD: route.c,v 1.39 2000/12/11 17:33:07 provos Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: route.c,v 1.38 2000/09/19 03:18:46 angelos Exp $";
+static char *rcsid = "$OpenBSD: route.c,v 1.39 2000/12/11 17:33:07 provos Exp $";
 #endif
 #endif /* not lint */
 
@@ -612,6 +612,7 @@ p_rtentry(rt)
 		printf("%6ld ", rt->rt_rmx.rmx_mtu);
 	else
 		printf("%6s ", "-");
+	putchar((rt->rt_rmx.rmx_locks & RTV_MTU) ? 'L' : ' ');
 	if (rt->rt_ifp) {
 		if (rt->rt_ifp != lastif) {
 			kget(rt->rt_ifp, ifnet);
@@ -621,6 +622,24 @@ p_rtentry(rt)
 			rt->rt_nodes[0].rn_dupedkey ? " =>" : "");
 	}
 	putchar('\n');
+ 	if (vflag) {
+ 		printf("\texpire   %10lu%c  recvpipe %10ld%c  "
+		       "sendpipe %10ld%c\n",
+ 			rt->rt_rmx.rmx_expire, 
+ 			(rt->rt_rmx.rmx_locks & RTV_EXPIRE) ? 'L' : ' ',
+ 			rt->rt_rmx.rmx_recvpipe,
+ 			(rt->rt_rmx.rmx_locks & RTV_RPIPE) ? 'L' : ' ',
+ 			rt->rt_rmx.rmx_sendpipe,
+ 			(rt->rt_rmx.rmx_locks & RTV_SPIPE) ? 'L' : ' ');
+ 		printf("\tssthresh %10lu%c  rtt      %10ld%c  "
+		       "rttvar   %10ld%c\n",
+ 			rt->rt_rmx.rmx_ssthresh, 
+ 			(rt->rt_rmx.rmx_locks & RTV_SSTHRESH) ? 'L' : ' ',
+ 			rt->rt_rmx.rmx_rtt, 
+ 			(rt->rt_rmx.rmx_locks & RTV_RTT) ? 'L' : ' ',
+ 			rt->rt_rmx.rmx_rttvar, 
+			(rt->rt_rmx.rmx_locks & RTV_RTTVAR) ? 'L' : ' ');
+ 	}	
 }
 
 char *

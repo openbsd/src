@@ -1,4 +1,4 @@
-.\"	$OpenBSD: netstat.1,v 1.22 2000/11/09 17:52:27 aaron Exp $
+.\"	$OpenBSD: netstat.1,v 1.23 2000/12/11 17:33:07 provos Exp $
 .\"	$NetBSD: netstat.1,v 1.11 1995/10/03 21:42:43 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1992, 1993
@@ -298,6 +298,8 @@ sending to the same destination.
 The use field provides a count of the number of packets sent using that route.
 The MTU entry shows the MTU associated with that route.
 This MTU value is used as the basis for the TCP maximum segment size (MSS).
+The 'L' flag appended to the mtu value indicates that the value is
+locked, and that path mtu discovery is turned off for that route.
 A
 .Sq -
 indicates that the MTU for this route has not been set, and a default
