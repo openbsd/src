@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.8 1999/06/05 03:36:17 mickey Exp $
+#	$OpenBSD: genassym.cf,v 1.9 1999/06/12 17:36:16 mickey Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -97,9 +97,6 @@ member	pv_tlbprot
 struct	pmap
 member	pmap_space
 member	pmap_pid
-
-# vm_map
-define vmmap_pmap	offsetof(struct vm_map, pmap)
 
 # export iomod
 struct	iomod
