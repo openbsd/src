@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_subr.c,v 1.10 1999/11/07 17:39:14 provos Exp $	*/
+/*	$OpenBSD: kern_subr.c,v 1.11 2000/03/03 16:58:49 art Exp $	*/
 /*	$NetBSD: kern_subr.c,v 1.15 1996/04/09 17:21:56 ragge Exp $	*/
 
 /*
@@ -46,6 +46,12 @@
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/queue.h>
+#include <sys/kernel.h>
+#include <sys/resourcevar.h>
+
+void uio_yield __P((struct proc *));
+
+#define UIO_NEED_YIELD (roundrobin_attempts >= 2)
 
 int
 uiomove(cp, n, uio)
@@ -56,12 +62,15 @@ uiomove(cp, n, uio)
 	register struct iovec *iov;
 	u_int cnt;
 	int error = 0;
+	struct proc *p;
+
+	p = uio->uio_procp;
 
 #ifdef DIAGNOSTIC
 	if (uio->uio_rw != UIO_READ && uio->uio_rw != UIO_WRITE)
 		panic("uiomove: mode");
-	if (uio->uio_segflg == UIO_USERSPACE && uio->uio_procp != curproc)
-		panic("uiomove proc");
+	if (uio->uio_segflg == UIO_USERSPACE && p != curproc)
+		panic("uiomove: proc");
 #endif
 	while (n > 0 && uio->uio_resid) {
 		iov = uio->uio_iov;
@@ -76,6 +85,8 @@ uiomove(cp, n, uio)
 		switch (uio->uio_segflg) {
 
 		case UIO_USERSPACE:
+			if (UIO_NEED_YIELD)
+				uio_yield(p);
 			if (uio->uio_rw == UIO_READ)
 				error = copyout(cp, iov->iov_base, cnt);
 			else
@@ -155,6 +166,20 @@ again:
 	uio->uio_resid--;
 	uio->uio_offset++;
 	return (0);
+}
+
+void
+uio_yield(p)
+	struct proc *p;
+{
+	int s;
+
+	p->p_priority = p->p_usrpri;
+	s = splstatclock();
+	setrunqueue(p);
+	p->p_stats->p_ru.ru_nivcsw++;
+	mi_switch();
+	splx(s);
 }
 
 /*
