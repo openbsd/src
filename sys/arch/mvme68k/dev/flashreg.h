@@ -1,4 +1,4 @@
-/*	$Id: flashreg.h,v 1.2 1995/11/07 08:48:56 deraadt Exp $ */
+/*	$Id: flashreg.h,v 1.3 1995/11/13 03:43:07 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -42,11 +42,11 @@
 #define FLCMD_WSETUP		0x40
 #define FLCMD_AWSETUP		0x10
 
-#define FLSR_WSMS		0x80
-#define FLSR_ESS		0x40
-#define FLSR_ES			0x20
-#define FLSR_BWS		0x10
-#define FLSR_VPPS		0x08
+#define FLSR_WSMS		0x80	/* write state machine status */
+#define FLSR_ESS		0x40	/* erase suspend status */
+#define FLSR_ES			0x20	/* erase status */
+#define FLSR_BWS		0x10	/* byte write status */
+#define FLSR_VPPS		0x08	/* Vpp status */
 
 /* manufacturers */
 #define FLMANU_INTEL		0x89
