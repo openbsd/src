@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2000/06/13 22:27:06 angelos Exp $
+#	$OpenBSD: Makefile,v 1.9 2000/06/14 01:05:04 itojun Exp $
 
 PROG=	netstat
 SRCS=	if.c inet.c ipx.c iso.c main.c mbuf.c mroute.c ns.c route.c \
@@ -14,6 +14,6 @@ INET6?=	yes
 CPPFLAGS+=	-DINET6
 .endif
 
-#CPPFLAGS+=	-DKAME_SCOPEID
+CPPFLAGS+=	-DKAME_SCOPEID
 
 .include <bsd.prog.mk>
