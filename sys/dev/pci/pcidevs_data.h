@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.329 2000/10/08 19:34:08 millert Exp 
+ *		OpenBSD: pcidevs,v 1.330 2000/10/12 16:52:39 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1641,6 +1641,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "SoftK56 PCI",
 	},
 	{
+	    PCI_VENDOR_CONEXANT, PCI_PRODUCT_CONEXANT_56K_WINMODEM,
+	    0,
+	    "Conexant",
+	    "56k Winmodem",
+	},
+	{
 	    PCI_VENDOR_CONTAQ, PCI_PRODUCT_CONTAQ_82C599,
 	    0,
 	    "Contaq Microsystems",
@@ -2401,6 +2407,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "82562",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82820_MCH,
+	    0,
+	    "Intel",
+	    "82820 MCH (Camino)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82820_AGP,
+	    0,
+	    "Intel",
+	    "82820 AGP",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371SB_ISA,
@@ -3553,6 +3571,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Nvidia",
 	    "GeForce256 DDR",
+	},
+	{
+	    PCI_VENDOR_NVIDOA, PCI_PRODUCT_NVIDOA_GEFORCE2GTS,
+	    0,
+	    "",
+	    "GeForce2 GTS",
 	},
 	{
 	    PCI_VENDOR_OAKTECH, PCI_PRODUCT_OAKTECH_OTI1007,

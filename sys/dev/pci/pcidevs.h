@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.329 2000/10/08 19:34:08 millert Exp 
+ *		OpenBSD: pcidevs,v 1.330 2000/10/12 16:52:39 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -912,6 +912,7 @@
 
 /* Conexant products */
 #define	PCI_PRODUCT_CONEXANT_SOFTK56_PCI	0x2443		/* SoftK56 PCI */
+#define	PCI_PRODUCT_CONEXANT_56K_WINMODEM	0x1033		/* 56k Winmodem */
 
 /* Contaq Microsystems products */
 #define	PCI_PRODUCT_CONTAQ_82C599	0x0600		/* 82C599 PCI-VLB */
@@ -1102,6 +1103,8 @@
 #define	PCI_PRODUCT_INTEL_82801AB_ACM	0x2426		/* 82801AB AC-97 Modem */
 #define	PCI_PRODUCT_INTEL_82801AB_HPB	0x2428		/* 82801AB Hub-to-PCI */
 #define	PCI_PRODUCT_INTEL_82562	0x2449		/* 82562 */
+#define	PCI_PRODUCT_INTEL_82820_MCH	0x2501		/* 82820 MCH (Camino) */
+#define	PCI_PRODUCT_INTEL_82820_AGP	0x250f		/* 82820 AGP */
 #define	PCI_PRODUCT_INTEL_82371SB_ISA	0x7000		/* 82371SB (Triton II) PCI-ISA */
 #define	PCI_PRODUCT_INTEL_82371SB_IDE	0x7010		/* 82371SB (Triton II) IDE */
 #define	PCI_PRODUCT_INTEL_82371USB	0x7020		/* 82371SB (Triton II) USB */
@@ -1360,6 +1363,7 @@
 #define	PCI_PRODUCT_NVIDIA_RIVA_TNT2	0x0028		/* Riva TNT2 */
 #define	PCI_PRODUCT_NVIDIA_GEFORCE256	0x0100		/* GeForce256 */
 #define	PCI_PRODUCT_NVIDIA_GEFORCE256_DDR	0x0101		/* GeForce256 DDR */
+#define	PCI_PRODUCT_NVIDOA_GEFORCE2GTS	0x0150		/* GeForce2 GTS */
 
 /* Oak Technologies products */
 #define	PCI_PRODUCT_OAKTECH_OTI1007	0x0107		/* OTI107 */
