@@ -1162,6 +1162,11 @@
 ./usr/sbin/fs
 ./usr/sbin/fsinfo
 ./usr/sbin/getencstat
+./usr/sbin/group
+./usr/sbin/groupadd
+./usr/sbin/groupdel
+./usr/sbin/groupinfo
+./usr/sbin/groupmod
 ./usr/sbin/host
 ./usr/sbin/httpd
 ./usr/sbin/ifmcstat
@@ -1273,6 +1278,11 @@
 ./usr/sbin/trpt
 ./usr/sbin/trsp
 ./usr/sbin/usbdevs
+./usr/sbin/user
+./usr/sbin/useradd
+./usr/sbin/userdel
+./usr/sbin/userinfo
+./usr/sbin/usermod
 ./usr/sbin/vipw
 ./usr/sbin/visudo
 ./usr/sbin/vnconfig
@@ -2585,6 +2595,7 @@
 ./var/backups
 ./var/crash
 ./var/cron
+./var/cron/tabs
 ./var/db
 ./var/db/ns
 ./var/db/pkg
@@ -2631,4 +2642,3 @@
 ./var/yp/Makefile.yp
 ./var/yp/Makefile.yp.dist
 ./var/yp/README
-./var/cron/tabs
