@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.355 2001/01/18 00:58:54 mickey Exp 
+ *		OpenBSD: pcidevs,v 1.357 2001/01/22 21:44:56 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -666,7 +666,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AIC7892,
 	    0,
 	    "Adaptec(2)",
-	    "AIC-7892 U60",
+	    "AIC-7892 U160",
 	},
 	{
 	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_29160,
