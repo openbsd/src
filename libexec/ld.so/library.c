@@ -1,4 +1,4 @@
-/*	$OpenBSD: library.c,v 1.17 2002/07/23 23:56:31 mickey Exp $ */
+/*	$OpenBSD: library.c,v 1.18 2002/07/24 00:13:25 deraadt Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -437,7 +437,7 @@ _dl_tryload_shlib(const char *libname, int type)
 			next_load->start = start;
 			next_load->size = size;
 			next_load->prot = PFLAGS(phdp->p_flags);
-			if (_dl_check_error(res)) {
+			if (_dl_check_error((long)res)) {
 				_dl_printf("%s: rtld mmap failed mapping %s.\n",
 				    _dl_progname, libname);
 				_dl_close(libfile);
@@ -456,7 +456,7 @@ _dl_tryload_shlib(const char *libname, int type)
 				res = _dl_mmap(start, size,
 				    PFLAGS(phdp->p_flags),
 				    MAP_FIXED|MAP_PRIVATE|MAP_ANON, -1, 0);
-				if (_dl_check_error(res)) {
+				if (_dl_check_error((long)res)) {
 					_dl_printf("%s: rtld mmap failed mapping %s.\n",
 					    _dl_progname, libname);
 					_dl_close(libfile);
