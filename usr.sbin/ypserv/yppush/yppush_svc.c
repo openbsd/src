@@ -1,4 +1,4 @@
-/*	$OpenBSD: yppush_svc.c,v 1.3 2000/06/28 23:58:24 deraadt Exp $ */
+/*	$OpenBSD: yppush_svc.c,v 1.4 2000/10/12 09:47:28 deraadt Exp $ */
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -32,24 +32,21 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: yppush_svc.c,v 1.3 2000/06/28 23:58:24 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: yppush_svc.c,v 1.4 2000/10/12 09:47:28 deraadt Exp $";
 #endif /* not lint */
 
 #include "yppush.h"
-#include <stdio.h>
-#include <stdlib.h>/* getenv, exit */
-#include <netdb.h>
-#include <signal.h>
-#include <sys/ttycom.h>/* TIOCNOTTY */
-#include <memory.h>
+
+#include <sys/types.h>
+#include <sys/ttycom.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#ifdef SYSLOG
+#include <stdio.h>
+#include <stdlib.h>
+#include <netdb.h>
+#include <signal.h>
+#include <memory.h>
 #include <syslog.h>
-#else
-#define LOG_ERR 1
-#define openlog(a, b, c)
-#endif
 
 #ifdef __STDC__
 #define SIG_PF void(*)(int)

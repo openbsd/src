@@ -1,4 +1,4 @@
-/*	$OpenBSD: yppush.h,v 1.3 1997/07/25 20:12:32 mickey Exp $ */
+/*	$OpenBSD: yppush.h,v 1.4 2000/10/12 09:47:27 deraadt Exp $ */
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -106,5 +106,7 @@ extern  void * yppushproc_null_1_svc();
 extern  void * yppushproc_xfrresp_1();
 extern  void * yppushproc_xfrresp_1_svc();
 #endif /* Old Style C */ 
+
+char *	yppush_err_string(enum yppush_status y);
 
 #endif /* !_YPPUSH_H_RPCGEN */

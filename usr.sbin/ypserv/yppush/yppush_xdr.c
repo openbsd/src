@@ -1,4 +1,4 @@
-/*	$OpenBSD: yppush_xdr.c,v 1.2 1996/05/30 09:53:22 deraadt Exp $ */
+/*	$OpenBSD: yppush_xdr.c,v 1.3 2000/10/12 09:47:28 deraadt Exp $ */
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: yppush_xdr.c,v 1.2 1996/05/30 09:53:22 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: yppush_xdr.c,v 1.3 2000/10/12 09:47:28 deraadt Exp $";
 #endif
 
 #include <rpc/rpc.h>
@@ -116,11 +116,8 @@ xdr_yppush_status(xdrs, objp)
 	XDR *xdrs;
 	yppush_status *objp;
 {
-	 register long *buf;
-
-	 if (!xdr_enum(xdrs, (enum_t *)objp)) {
-		 return (FALSE);
-	 }
+	if (!xdr_enum(xdrs, (enum_t *)objp))
+		return (FALSE);
 	return (TRUE);
 }
 
@@ -130,14 +127,10 @@ xdr_yppushresp_xfr(xdrs, objp)
 	yppushresp_xfr *objp;
 {
 
-	 register long *buf;
-
-	 if (!xdr_u_int(xdrs, &objp->transid)) {
-		 return (FALSE);
-	 }
-	 if (!xdr_yppush_status(xdrs, &objp->status)) {
-		 return (FALSE);
-	 }
+	if (!xdr_u_int(xdrs, &objp->transid))
+		return (FALSE);
+	if (!xdr_yppush_status(xdrs, &objp->status))
+		return (FALSE);
 	return (TRUE);
 }
 

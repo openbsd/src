@@ -1,4 +1,4 @@
-/*	$OpenBSD: yppush.c,v 1.11 1998/02/24 04:29:06 deraadt Exp $ */
+/*	$OpenBSD: yppush.c,v 1.12 2000/10/12 09:47:27 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Mats O Jansson <moj@stacken.kth.se>
@@ -32,21 +32,26 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: yppush.c,v 1.11 1998/02/24 04:29:06 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: yppush.c,v 1.12 2000/10/12 09:47:27 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/resource.h>
+#include <sys/signal.h>
+#include <sys/wait.h>
+
 #include <stdio.h>
 #include <unistd.h>
+#include <stdlib.h>
+#include <ctype.h>
+#include <signal.h>
 
 #include <rpc/rpc.h>
 #include <rpc/xdr.h>
 #include <rpcsvc/yp.h>
 #include <rpcsvc/ypclnt.h>
 
-#include <sys/stat.h>
-#include <sys/resource.h>
-#include <sys/signal.h>
 #include <netdb.h>
 #include <string.h>
 #include <errno.h>
@@ -68,9 +73,6 @@ void
 usage()
 {
 	fprintf(stderr, "Usage:\n");
-/*
-	fprintf(stderr, "\typpush [-d domainname] [-t seconds] [-p #paralleljobs] [-h host] [-v] mapname\n");
-*/
 	fprintf(stderr, "\typpush [-d domainname] [-h host] [-v] mapname\n");
 	exit(1);
 }
@@ -81,16 +83,16 @@ _svc_run()
 	fd_set readfds;
 	struct timeval timeout;
 
-	timeout.tv_sec=60; timeout.tv_usec=0;
+	timeout.tv_sec = 60;
+	timeout.tv_usec = 0;
 
-	for(;;) {
+	for (;;) {
 		readfds = svc_fdset;
-		switch (select(_rpc_dtablesize(), &readfds, (void *) 0,
-			       (void *) 0, &timeout)) {
+		switch (select(_rpc_dtablesize(), &readfds, NULL,
+		    NULL, &timeout)) {
 		case -1:
-			if (errno == EINTR) {
+			if (errno == EINTR)
 				continue;
-			}
 			perror("yppush: _svc_run: select failed");
 			return;
 		case 0:
@@ -98,9 +100,9 @@ _svc_run()
 			exit(0);
 		default:
 			svc_getreqset(&readfds);
+			break;
 		}
 	}
-	
 }
 
 void
@@ -114,7 +116,8 @@ CLIENT *client;
 	struct ypreq_xfr request;
 	struct timeval tv;
 
-	tv.tv_sec=0; tv.tv_usec=0;
+	tv.tv_sec = 0;
+	tv.tv_usec = 0;
 
 	request.map_parms.domain=(char *)&Domain;
 	request.map_parms.map=(char *)&Map;
@@ -126,20 +129,18 @@ CLIENT *client;
 
 	if (Verbose)
 		printf("%d: %s(%u@%s) -> %s@%s\n",
-		       request.transid,
-		       request.map_parms.map,
-		       request.map_parms.ordernum,
-		       host,
-		       request.map_parms.peer,
-		       request.map_parms.domain);
+		    request.transid, request.map_parms.map,
+		    request.map_parms.ordernum, host,
+		    request.map_parms.peer, request.map_parms.domain);
 	switch (clnt_call(client, YPPROC_XFR, xdr_ypreq_xfr, &request,
-			  xdr_void, NULL, tv)) {
+	    xdr_void, NULL, tv)) {
 	case RPC_SUCCESS:
 	case RPC_TIMEDOUT:
 		break;
 	default:
 		clnt_perror(client, "yppush: Cannot call YPPROC_XFR");
 		kill(pid, SIGTERM);
+		break;
 	}
 }
 
@@ -153,7 +154,7 @@ char *indata;
 	SVCXPRT *transp;
 	int sock = RPC_ANYSOCK;
 	u_int prog;
-	bool_t sts;
+	bool_t sts = 0;
 	pid_t pid;
 	int status;
 	struct rusage res;
@@ -180,8 +181,8 @@ char *indata;
 	}
 
 	for (prog=0x40000000; prog<0x5fffffff; prog++) {
-		if (sts = svc_register(transp, prog, 1,
-		    yppush_xfrrespprog_1, IPPROTO_UDP))
+		if ((sts = svc_register(transp, prog, 1,
+		    yppush_xfrrespprog_1, IPPROTO_UDP)))
 			break;
 	}
 
@@ -219,7 +220,7 @@ char *inval;
 int invallen;
 char *indata;
 {
-	if(instatus != YP_TRUE)
+	if (instatus != YP_TRUE)
 		return instatus;
 	push(invallen, inval);
 	return 0;
@@ -243,15 +244,12 @@ char **argv;
 	char order_key[YP_LAST_LEN] = YP_LAST_KEY;
 	datum o;
 
-        yp_get_default_domain(&domain);
+	yp_get_default_domain(&domain);
 	hostname = NULL;
-/*
-	while( (c=getopt(argc, argv, "d:h:p:t:v?")) != -1)
-*/
-	while( (c=getopt(argc, argv, "d:h:v?")) != -1)
+	while ((c=getopt(argc, argv, "d:h:v")) != -1)
 		switch(c) {
 		case 'd':
-                        domain = optarg;
+			domain = optarg;
 			break;
 		case 'h':
 			hostname = optarg;
@@ -262,15 +260,15 @@ char **argv;
 		case 't':
 			timeout = optarg;
 			break;
-                case 'v':
-                        Verbose = 1;
-                        break;
-                case '?':
-                        usage();
-                        /*NOTREACHED*/
+		case 'v':
+			Verbose = 1;
+			break;
+		default:
+			usage();
+			/*NOTREACHED*/
 		}
 
-	if(optind + 1 != argc )
+	if (optind + 1 != argc )
 		usage();
 
 	map = argv[optind];
@@ -313,47 +311,45 @@ char **argv;
 				Map);
 		} else {
 			OrderNum=0;
-			for(i=0; i<o.dsize-1; i++) {
+			for (i=0; i<o.dsize-1; i++) {
 				if (!isdigit(o.dptr[i])) {
 					OrderNum=0xffffffff;
 				}
 			}
 			if (OrderNum != 0) {
 				fprintf(stderr,
-					"yppush: %s: Invalid order number '%s'\n",
-					Map,
-					o.dptr);
+				    "yppush: %s: Invalid order number '%s'\n",
+				    Map, o.dptr);
 			} else {
 				OrderNum = atoi(o.dptr);
 			}
 		}
-        }
+	}
 	
 
 	yp_bind(Domain);
 
 	r = yp_master(Domain, ypmap, &master);
-        if (r != 0) {
+	if (r != 0) {
 		fprintf(stderr, "yppush: could not get ypservers map\n");
 		exit(1);
 	}
 
 	if (hostname != NULL) {
-	  push(strlen(hostname), hostname);
+		push(strlen(hostname), hostname);
 	} else {
-	  
-	  if (Verbose) {
-		printf("Contacting master for ypservers (%s).\n", master);
-	  }
+		if (Verbose) {
+			printf("Contacting master for ypservers (%s).\n",
+			    master);
+		}
 
-	  client = yp_bind_host(master, YPPROG, YPVERS, 0, 1);
+		client = yp_bind_host(master, YPPROG, YPVERS, 0, 1);
 
-	  ypcb.foreach = pushit;
-	  ypcb.data = NULL;
-
-	  r = yp_all_host(client,Domain, ypmap, &ypcb);
+		ypcb.foreach = pushit;
+		ypcb.data = NULL;
+		r = yp_all_host(client,Domain, ypmap, &ypcb);
 	}
-        
-        exit(0);
+
+	exit(0);
 }
 
