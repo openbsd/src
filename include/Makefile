@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.68 1999/06/22 14:41:35 art Exp $
+#	$OpenBSD: Makefile,v 1.69 1999/06/24 15:18:11 espie Exp $
 #	$NetBSD: Makefile,v 1.59 1996/05/15 21:36:43 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
@@ -46,12 +46,8 @@ PRDIRS=
 
 # Directories with an includes target that use Makefile.bsd-wrapper
 WDIRS=	../lib/libssl ../gnu/lib/libgmp
-
 WDIRS+= ../gnu/egcs/libio ../gnu/egcs/libstdc++ ../gnu/egcs/libf2c \
 	../gnu/egcs/libobjc ../gnu/egcs/gcc
-#WDIRS+= ../gnu/lib/libg++/libg++ ../gnu/lib/libg++/libio \
-#	../gnu/lib/libg++/librx ../gnu/lib/libg++/libstdc++ \
-#	../gnu/usr.bin/gcc 
 
 # Places using Makefile.bsd-wrapper that needs a prerequisite target met
 # before includes
@@ -151,7 +147,6 @@ symlinks:
 	done
 	cd ${DESTDIR}/usr/include && rm -rf ${MACHINE} ${MACHINE_ARCH} machine
 	ln -s /sys/arch/${MACHINE}/include ${DESTDIR}/usr/include/${MACHINE}
-	rm -rf ${DESTDIR}/usr/include/${MACHINE_ARCH}
 	if test ${MACHINE} != ${MACHINE_ARCH} -a \
 	    -d ../sys/arch/${MACHINE_ARCH}/include ; then \
 		ln -s /sys/arch/${MACHINE_ARCH}/include \
