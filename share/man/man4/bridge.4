@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bridge.4,v 1.37 2001/10/07 12:24:39 dhartmei Exp $
+.\"	$OpenBSD: bridge.4,v 1.38 2001/12/05 16:08:23 hugh Exp $
 .\"
 .\" Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -517,8 +517,8 @@ Bridged packets pass through
 twice.
 They can be filtered on any interface, in both directions.
 For stateful filtering, filtering on only one interface (using
-'keep state') and passing all traffic on the other interfaces is
-recommended.
+.Sq keep state )
+and passing all traffic on the other interfaces is recommended.
 A state entry only permits outgoing packets from initial source to
 destination and incoming packets from initial destination to source.
 Since bridged packets pass through the filter twice with the source
