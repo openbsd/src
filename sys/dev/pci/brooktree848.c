@@ -1,4 +1,4 @@
-/* $OpenBSD: brooktree848.c,v 1.16 2000/02/10 11:22:47 d Exp $ */
+/* $OpenBSD: brooktree848.c,v 1.17 2000/11/13 22:16:21 aaron Exp $ */
 /* $Roger: brooktree848.c,v 1.85 1999/06/12 14:54:54 roger Exp $ */
 
 /* BT848 Driver for Brooktree's Bt848, Bt848A, Bt849A, Bt878, Bt879 based cards.
@@ -5348,7 +5348,7 @@ static int locate_eeprom_address( bktr_ptr_t bktr) {
  *    stereo chips.
  */
 
-#define VENDOR_AVER_MEDIA 0x1431
+#define VENDOR_AVER_MEDIA 0x1461
 #define VENDOR_HAUPPAUGE  0x0070
 #define VENDOR_FLYVIDEO   0x1851
 #define VENDOR_STB        0x10B4
