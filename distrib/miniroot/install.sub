@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.206 2002/04/20 13:42:52 krw Exp $
+#	$OpenBSD: install.sub,v 1.207 2002/04/26 02:14:23 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -194,16 +194,6 @@ cutlast () {
 	[ -z "$1" ] && return
 	while [ "$#" -gt 10 ]; do shift 10; done
 	eval echo \$$#
-}
-
-# return first character of argument
-firstchar () {
-	local _a=$1
-
-	while [ ${#_a} != 1 ]; do
-		_a=${_a%?}
-	done
-	echo $_a
 }
 
 basename () {
@@ -418,7 +408,7 @@ __EOT
 # $1 - IP address
 # $2 - symbolic name
 addhostent() {
-	sed "/ $2\$/d" < /tmp/hosts > /tmp/hosts.new
+	sed "/ $2\$/d" /tmp/hosts > /tmp/hosts.new
 	mv /tmp/hosts.new /tmp/hosts
 
 	echo "$1 $2" >> /tmp/hosts
@@ -1182,14 +1172,13 @@ __EOT
 			-a ${resp:-0} -ge 1 \
 			-a -f /tmp/ftplist ]
 			then
-			maxlines=`grep "^${_url_type}:" /tmp/ftplist | cat -n |
-				sed -n -e '$p' | cutword 1`
+			maxlines=`grep "^${_url_type}:" /tmp/ftplist | sed -ne '$='`
 			if [ $maxlines -lt $resp ]; then
 				echo "There is no ${resp}th line in the list."
 				resp=
 				continue
 			fi
-			tline=`grep "^${_url_type}:" /tmp/ftplist | sed -n -e "${resp}p"`
+			tline=`grep "^${_url_type}:" /tmp/ftplist | sed -ne "${resp}p"`
 			url=`echo $tline | sed -e "s/^${_url_type}:\/\///" |
 				cutword -t' ' 1 | cutword -t' ' 1`
 			host=`echo $url | cutword -t/ 1`
@@ -2031,7 +2020,7 @@ get_fqdn() {
 		#    1.2.3.4 hostname
 		# to
 		#    1.2.3.4 hostname.$FQDN hostname
-		sed "s/\\(.*\\)[[:space:]]\\(.*\\)\$/\\1 \\2.$FQDN \\2/" < $2 > $2.new
+		sed "s/\\(.*\\)[[:space:]]\\(.*\\)\$/\\1 \\2.$FQDN \\2/" $2 > $2.new
 		mv $2.new $2
 	else
 		echo -n "Enter DNS domain name (e.g. 'bar.com'): [$FQDN] "
@@ -2101,9 +2090,11 @@ __EOT
 	# override a user supplied (or previous DHCP supplied) FQDN.
 	get_fqdn /tmp/resolv.conf /tmp/hosts
 
-	resp=`route -n show |
-		grep '^default' |
-		sed -e 's/^default *//' -e 's/ .*//'`
+	resp=`route -n show | sed -ne '/^default */{
+		s///
+		s/ .*//
+		p
+	}'`
 	if [ -z "$resp" ] ; then
 		resp=none
 		if [ -f /tmp/mygate ]; then
@@ -2125,8 +2116,7 @@ __EOT
 	resp=none
 	if [ -f /tmp/resolv.conf ]; then
 		resp=
-		for n in `grep '^nameserver ' /tmp/resolv.conf | \
-			sed -e 's/^nameserver //'`
+		for n in `sed -ne '/^nameserver /s///p' /tmp/resolv.conf`
 			do
 			if [ -z "$resp" ] ; then
 				resp=$n

@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.96 2002/04/20 13:42:52 krw Exp $
+#	$OpenBSD: install.sh,v 1.97 2002/04/26 02:14:23 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -137,26 +137,33 @@ __EOT
 		#	also allow a way to enter non-BSD partitions (but don't newfs!)
 		# Get the list of BSD partitions and store sizes
 		_npartitions=0
-		for _p in `disklabel ${DISK} 2>&1 | grep '^ *[a-p]:.*BSD' | sed 's/^ *\([a-p]\): *\([0-9][0-9]*\) .*/\1\2/'`; do
-			_pp=`firstchar ${_p}`
-			if [ "${DISK}" = "${ROOTDISK}" -a "$_pp" = "a" ]; then
-				continue
-			fi
-			_ps=`echo ${_p} | sed 's/^.//'`
-			_partitions[${_npartitions}]=${_pp}
-			_psizes[${_npartitions}]=${_ps}
+
+		# XXX - It would be nice to just pipe the output of sed to a
+		#       'while read _pp _ps' loop, but our 'sh' runs the last
+		#       element of a pipeline in a subshell and the required side
+		#       effects to _partitions, _npartitions, etc. would be lost.
+		for _p in $(disklabel ${DISK} 2>&1 | sed -ne '/^ *\([a-p]\): *\([0-9][0-9]*\).*BSD.*/s//\1\2/p'); do
+			# All characters after the initial [a-p] are the partition size
+			_ps=${_p#?}
+			# Removing the partition size leaves us with the partition name
+			_pp=${_p%${_ps}}
+
+			[ "$DISK" = "$ROOTDISK" -a "$_pp" = "a" ] && continue
+
+			_partitions[$_npartitions]=$_pp
+			_psizes[$_npartitions]=$_ps
 			# If the user assigned a mount point, use it.
-			if [ -f /tmp/fstab.${DISK} ]; then
-				_mount_points[${_npartitions}]=`sed -n "s:^/dev/$DISK$_pp[ 	]*\([^ 	]*\).*:\1:p" < /tmp/fstab.${DISK}`
+			if [ -f /tmp/fstab.$DISK ]; then
+				_mount_points[$_npartitions]=`sed -n "s:^/dev/${DISK}${_pp}[ 	]*\([^ 	]*\).*:\1:p" < /tmp/fstab.${DISK}`
 			fi
-			_npartitions=$(( ${_npartitions} + 1 ))
+			: $(( _npartitions += 1 ))
 		done
 
 		# Now prompt the user for the mount points. Loop until "done"
 		echo
 		_i=0
-		resp=X
-		while [ $_npartitions -gt 0 -a X${resp} != X"done" ]; do
+		resp=
+		while [ $_npartitions -gt 0 -a "$resp" != "done" ]; do
 			_pp=${_partitions[${_i}]}
 			_ps=$(( ${_psizes[${_i}]} / 2 ))
 			_mp=${_mount_points[${_i}]}
