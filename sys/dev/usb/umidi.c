@@ -1,4 +1,4 @@
-/*	$OpenBSD: umidi.c,v 1.8 2003/05/07 04:33:33 deraadt Exp $	*/
+/*	$OpenBSD: umidi.c,v 1.9 2003/05/19 00:36:33 nate Exp $	*/
 /*	$NetBSD: umidi.c,v 1.16 2002/07/11 21:14:32 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -986,9 +986,9 @@ alloc_all_mididevs(struct umidi_softc *sc, int nmidi)
 	sc->sc_num_mididevs = nmidi;
 	sc->sc_mididevs = malloc(sizeof(*sc->sc_mididevs)*nmidi,
 				 M_USBDEV, M_WAITOK);
-	memset(sc->sc_mididevs, 0, sizeof(*sc->sc_mididevs)*nmidi);
 	if (!sc->sc_mididevs)
 		return USBD_NOMEM;
+	memset(sc->sc_mididevs, 0, sizeof(*sc->sc_mididevs)*nmidi);
 
 	return USBD_NORMAL_COMPLETION;
 }
