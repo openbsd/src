@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_svcout.c,v 1.5 2001/07/18 22:26:00 deraadt Exp $	*/
+/*	$OpenBSD: rpc_svcout.c,v 1.6 2001/11/07 18:44:28 deraadt Exp $	*/
 /*	$NetBSD: rpc_svcout.c,v 1.7 1995/06/24 14:59:59 pk Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -123,7 +123,7 @@ write_most(infile, netflag, nomain)
 	} else {
 	  if( tirpcflag ) {
 		if (netflag) {
-			f_print(fout, "\tregister SVCXPRT *%s;\n", TRANSP);
+			f_print(fout, "\tSVCXPRT *%s;\n", TRANSP);
 			f_print(fout, "\tstruct netconfig *nconf = NULL;\n");
 		}
 		f_print(fout, "\tpid_t pid;\n");
@@ -134,7 +134,7 @@ write_most(infile, netflag, nomain)
 		write_rpc_svc_fg(infile, "\t\t");
 		f_print(fout, "\t}\n");
 	      } else {
-		f_print(fout, "\tregister SVCXPRT *%s;\n", TRANSP);
+		f_print(fout, "\tSVCXPRT *%s;\n", TRANSP);
 		f_print(fout, "\n");
 		print_pmapunset("\t");
 	      }
@@ -218,7 +218,7 @@ write_nettype_register(transp)
 		for (vp = def->def.pr.versions; vp != NULL; vp = vp->next) {
 			f_print(fout, "\tif (!svc_create(");
 			pvname(def->def_name, vp->vers_num);
-			f_print(fout, ", %s, %s, \"%s\")) {\n ",
+			f_print(fout, ", %s, %s, \"%s\")) {\n",
 				def->def_name, vp->vers_name, transp);
 			(void) sprintf(_errbuf,
 				"unable to create (%s, %s) for %s.",
@@ -534,7 +534,7 @@ write_inetmost(infile)
 	f_print(fout, "\t\tif (saddr.sin_family != AF_INET)\n");
 	f_print(fout, "\t\t\texit(1);\n");
 	f_print(fout, "\t\tif (getsockopt(0, SOL_SOCKET, SO_TYPE,\n");
-	f_print(fout, "\t\t\t\t(char *)&_rpcfdtype, &ssize) == -1)\n");
+	f_print(fout, "\t\t    (char *)&_rpcfdtype, &ssize) == -1)\n");
 	f_print(fout, "\t\t\texit(1);\n");
 	f_print(fout, "\t\tsock = 0;\n");
 	f_print(fout, "\t\t_rpcpmstart = 1;\n");
@@ -626,9 +626,10 @@ write_msg_out()
 	if (inetdflag || pmflag)
 		f_print(fout, "\tif (_rpcpmstart)\n");
 	f_print(fout, "\t\tsyslog(LOG_ERR, msg);\n");
-	f_print(fout, "\telse\n");
-	f_print(fout, "\t\t(void) fprintf(stderr, \"%%s\\n\", msg);\n");
-	f_print(fout, "#else\n");
+	f_print(fout, "\telse {\n");
+	f_print(fout, "\t\t(void) write(STDERR_FILENO, msg, strlen(msg));\n");
+	f_print(fout, "\t\t(void) write(STDERR_FILENO, \"\\n\", 1);\n");
+	f_print(fout, "\t}\n#else\n");
 	f_print(fout, "\tsyslog(LOG_ERR, msg);\n");
 	f_print(fout, "#endif\n");
 	f_print(fout, "}\n");
@@ -646,6 +647,7 @@ write_timeout_func()
 	f_print(fout, "static void\n");
 	f_print(fout, "closedown()\n");
 	f_print(fout, "{\n");
+	f_print(fout, "\tint save_errno = errno;\n\n");
 	f_print(fout, "\tif (_rpcsvcdirty == 0) {\n");
 	f_print(fout, "\t\textern fd_set *__svc_fdset;\n");
 	f_print(fout, "\t\textern int __svc_fdsetsize;\n");
@@ -656,14 +658,15 @@ write_timeout_func()
 	} else {
 		f_print(fout, "\n\t\tif (_rpcfdtype == SOCK_DGRAM)\n");
 	}
-	f_print(fout, "\t\t\texit(0);\n");
+	f_print(fout, "\t\t\t_exit(0);\n");
 	f_print(fout, "\t\tfor (i = 0, openfd = 0; i < __svc_fdsetsize && openfd < 2; i++)\n");
 	f_print(fout, "\t\t\tif (FD_ISSET(i, __svc_fdset))\n");
 	f_print(fout, "\t\t\t\topenfd++;\n");
 	f_print(fout, "\t\tif (openfd <= (_rpcpmstart?0:1))\n");
-	f_print(fout, "\t\t\texit(0);\n");
+	f_print(fout, "\t\t\t_exit(0);\n");
 	f_print(fout, "\t}\n");
 	f_print(fout, "\t(void) alarm(_RPCSVC_CLOSEDOWN);\n");
+	f_print(fout, "\terrno = save_errno;\n");
 	f_print(fout, "}\n");
 }
 
@@ -885,7 +888,7 @@ write_inetd_register(transp)
 		isudp = 0;
 	f_print(fout, "\n");
 	if (inetdflag) {
-		f_print(fout, "\tif ((_rpcfdtype == 0) || (_rpcfdtype == %s)) {\n",
+		f_print(fout, "\tif (_rpcfdtype == 0 || _rpcfdtype == %s) {\n",
 				isudp ? "SOCK_DGRAM" : "SOCK_STREAM");
 	}
 	if (inetdflag && streq(transp, "tcp")) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_cout.c,v 1.6 2001/07/18 22:26:00 deraadt Exp $	*/
+/*	$OpenBSD: rpc_cout.c,v 1.7 2001/11/07 18:44:28 deraadt Exp $	*/
 /*	$NetBSD: rpc_cout.c,v 1.6 1996/10/01 04:13:53 cgd Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -85,7 +85,7 @@ emit(def)
 
 		if (strcmp(def->def.ty.old_type, def->def_name) == 0)
 			return;
-	};
+	}
 
 	print_header(def);
 	switch (def->def_kind) {
@@ -143,14 +143,14 @@ print_generic_header(procname, pointerp)
 		f_print(fout, "%s ", procname);
 		if (pointerp)
 			f_print(fout, "*");
-		f_print(fout, "objp)\n{\n\n");
+		f_print(fout, "objp)\n{\n");
 	} else {
 		f_print(fout, "xdr_%s(xdrs, objp)\n", procname);
 		f_print(fout, "\tXDR *xdrs;\n");
 		f_print(fout, "\t%s ", procname);
 		if (pointerp)
 			f_print(fout, "*");
-		f_print(fout, "objp;\n{\n\n");
+		f_print(fout, "objp;\n{\n");
 	}
 }
 
@@ -174,7 +174,7 @@ print_header(def)
 	if (doinline == 0)
 		return;
 	/* May cause lint to complain. but  ... */
-	f_print(fout, "\t register int32_t *buf;\n\n");
+	f_print(fout, "\tint32_t *buf;\n\n");
 
 }
 
@@ -199,7 +199,7 @@ print_ifopen(indent, name)
 	char   *name;
 {
 	tabify(fout, indent);
-	f_print(fout, " if (!xdr_%s(xdrs", name);
+	f_print(fout, "if (!xdr_%s(xdrs", name);
 }
 
 static
@@ -231,9 +231,9 @@ print_ifclose(indent)
 {
 	f_print(fout, ")) {\n");
 	tabify(fout, indent);
-	f_print(fout, "\t return (FALSE);\n");
+	f_print(fout, "\treturn (FALSE);\n");
 	tabify(fout, indent);
-	f_print(fout, " }\n");
+	f_print(fout, "}\n");
 }
 
 static
@@ -427,7 +427,7 @@ emit_struct(def)
 	}
 	for (dl = def->def.st.decls; dl != NULL; dl = dl->next)
 		if (dl->decl.rel == REL_VECTOR) {
-			f_print(fout, "\t int i;\n");
+			f_print(fout, "\tint i;\n");
 			break;
 		}
 	size = 0;
@@ -442,7 +442,7 @@ emit_struct(def)
 			else {
 				can_inline = 1;
 				break;	/* can be inlined */
-			};
+			}
 		} else {
 			if (size >= doinline) {
 				can_inline = 1;
@@ -457,7 +457,7 @@ emit_struct(def)
 		for (dl = def->def.st.decls; dl != NULL; dl = dl->next)
 			print_stat(1, &dl->decl);
 		return;
-	};
+	}
 
 
 
@@ -466,9 +466,9 @@ emit_struct(def)
 	for (j = 0; j < 2; j++) {
 
 		if (flag == PUT)
-			f_print(fout, "\n\t if (xdrs->x_op == XDR_ENCODE) {\n");
+			f_print(fout, "\n\tif (xdrs->x_op == XDR_ENCODE) {\n");
 		else
-			f_print(fout, "\n \t return (TRUE);\n\t} else if (xdrs->x_op == XDR_DECODE) {\n");
+			f_print(fout, "\t\treturn (TRUE);\n\t} else if (xdrs->x_op == XDR_DECODE) {\n");
 
 
 		i = 0;
@@ -504,9 +504,9 @@ emit_struct(def)
 						sizestr = (char *)realloc(sizestr, strlen(sizestr) + strlen(ptemp) + 1);
 						if (sizestr == NULL) {
 
-							f_print(stderr, "Fatal error : no memory \n");
+							f_print(stderr, "Fatal error : no memory\n");
 							crash();
-						};
+						}
 						sizestr = strcat(sizestr, ptemp);	/* build up length of
 											 * array */
 
@@ -519,7 +519,7 @@ emit_struct(def)
 						/* don't expand into inline
 						 * code if size < doinline */
 						while (cur != dl) {
-							print_stat(1, &cur->decl);
+							print_stat(2, &cur->decl);
 							cur = cur->next;
 						}
 					} else {
@@ -529,27 +529,27 @@ emit_struct(def)
 						/* were already looking at a
 						 * xdr_inlineable structure */
 						if (sizestr == NULL)
-							f_print(fout, "\t buf = (int32_t *)XDR_INLINE(xdrs,%d * BYTES_PER_XDR_UNIT);",
+							f_print(fout, "\t\tbuf = (int32_t *)XDR_INLINE(xdrs, %d * BYTES_PER_XDR_UNIT);",
 							    size);
 						else
 							if (size == 0)
 								f_print(fout,
-								    "\t buf = (int32_t *)XDR_INLINE(xdrs,%s * BYTES_PER_XDR_UNIT);",
+								    "\t\tbuf = (int32_t *)XDR_INLINE(xdrs, %s * BYTES_PER_XDR_UNIT);",
 								    sizestr);
 							else
 								f_print(fout,
-								    "\t buf = (int32_t *)XDR_INLINE(xdrs,(%d + %s)* BYTES_PER_XDR_UNIT);",
+								    "\t\tbuf = (int32_t *)XDR_INLINE(xdrs, (%d + %s)* BYTES_PER_XDR_UNIT);",
 								    size, sizestr);
 
-						f_print(fout, "\n\t   if (buf == NULL) {\n");
+						f_print(fout, "\n\t\tif (buf == NULL) {\n");
 
 						psav = cur;
 						while (cur != dl) {
-							print_stat(2, &cur->decl);
+							print_stat(3, &cur->decl);
 							cur = cur->next;
 						}
 
-						f_print(fout, "\n\t  }\n\t  else {\n");
+						f_print(fout, "\t\t} else {\n");
 
 						cur = psav;
 						while (cur != dl) {
@@ -557,12 +557,12 @@ emit_struct(def)
 							cur = cur->next;
 						}
 
-						f_print(fout, "\t  }\n");
+						f_print(fout, "\t\t}\n");
 					}
 				size = 0;
 				i = 0;
 				sizestr = NULL;
-				print_stat(1, &dl->decl);
+				print_stat(2, &dl->decl);
 			}
 
 		}
@@ -571,7 +571,7 @@ emit_struct(def)
 				/* don't expand into inline code if size <
 				 * doinline */
 				while (cur != dl) {
-					print_stat(1, &cur->decl);
+					print_stat(2, &cur->decl);
 					cur = cur->next;
 				}
 			} else {
@@ -579,26 +579,26 @@ emit_struct(def)
 				/* were already looking at a xdr_inlineable
 				 * structure */
 				if (sizestr == NULL)
-					f_print(fout, "\t\tbuf = (int32_t *)XDR_INLINE(xdrs,%d * BYTES_PER_XDR_UNIT);",
+					f_print(fout, "\t\tbuf = (int32_t *)XDR_INLINE(xdrs, %d * BYTES_PER_XDR_UNIT);",
 					    size);
 				else
 					if (size == 0)
 						f_print(fout,
-						    "\t\tbuf = (int32_t *)XDR_INLINE(xdrs,%s * BYTES_PER_XDR_UNIT);",
+						    "\t\tbuf = (int32_t *)XDR_INLINE(xdrs, %s * BYTES_PER_XDR_UNIT);",
 						    sizestr);
 					else
 						f_print(fout,
-						    "\t\tbuf = (int32_t *)XDR_INLINE(xdrs,(%d + %s)* BYTES_PER_XDR_UNIT);",
+						    "\t\tbuf = (int32_t *)XDR_INLINE(xdrs, (%d + %s)* BYTES_PER_XDR_UNIT);",
 						    size, sizestr);
 
 				f_print(fout, "\n\t\tif (buf == NULL) {\n");
 
 				psav = cur;
 				while (cur != NULL) {
-					print_stat(2, &cur->decl);
+					print_stat(3, &cur->decl);
 					cur = cur->next;
 				}
-				f_print(fout, "\n\t  }\n\t  else {\n");
+				f_print(fout, "\t\t} else {\n");
 
 				cur = psav;
 				while (cur != dl) {
@@ -606,12 +606,12 @@ emit_struct(def)
 					cur = cur->next;
 				}
 
-				f_print(fout, "\t  }\n");
+				f_print(fout, "\t\t}\n");
 
 			}
 		flag = GET;
 	}
-	f_print(fout, "\t return(TRUE);\n\t}\n\n");
+	f_print(fout, "\t\treturn (TRUE);\n\t}\n\n");
 
 	/* now take care of XDR_FREE case */
 
@@ -664,14 +664,15 @@ emit_inline(decl, flag)
 
 	switch (decl->rel) {
 	case REL_ALIAS:
+		f_print(fout, "\t");
 		emit_single_in_line(decl, flag, REL_ALIAS);
 		break;
 	case REL_VECTOR:
-		f_print(fout, "\t\t{ register %s *genp; \n", decl->type);
-		f_print(fout, "\t\t  for ( i = 0,genp=objp->%s;\n \t\t\ti < %s; i++){\n\t\t",
+		f_print(fout, "\t\t\t{\n\t\t\t\t%s *genp;\n\n", decl->type);
+		f_print(fout, "\t\t\t\tfor (i = 0, genp = objp->%s;\n\t\t\t\t    i < %s; i++) {\n\t\t\t",
 		    decl->name, decl->array_max);
 		emit_single_in_line(decl, flag, REL_VECTOR);
-		f_print(fout, "\t\t   }\n\t\t };\n");
+		f_print(fout, "\t\t\t\t}\n\t\t\t}\n");
 
 	}
 }
@@ -687,12 +688,12 @@ emit_single_in_line(decl, flag, rel)
 
 
 	if (flag == PUT)
-		f_print(fout, "\t\t IXDR_PUT_");
+		f_print(fout, "\t\tIXDR_PUT_");
 	else
 		if (rel == REL_ALIAS)
-			f_print(fout, "\t\t objp->%s = IXDR_GET_", decl->name);
+			f_print(fout, "\t\tobjp->%s = IXDR_GET_", decl->name);
 		else
-			f_print(fout, "\t\t *genp++ = IXDR_GET_");
+			f_print(fout, "\t\t*genp++ = IXDR_GET_");
 
 	upp_case = upcase(decl->type);
 
@@ -709,9 +710,9 @@ emit_single_in_line(decl, flag, rel)
 	}
 	if (flag == PUT)
 		if (rel == REL_ALIAS)
-			f_print(fout, "%s(buf,objp->%s);\n", upp_case, decl->name);
+			f_print(fout, "%s(buf, objp->%s);\n", upp_case, decl->name);
 		else
-			f_print(fout, "%s(buf,*genp++);\n", upp_case);
+			f_print(fout, "%s(buf, *genp++);\n", upp_case);
 
 	else
 		f_print(fout, "%s(buf);\n", upp_case);
@@ -730,9 +731,9 @@ upcase(str)
 
 	ptr = (char *) malloc(strlen(str)+1);
 	if (ptr == (char *) NULL) {
-		f_print(stderr, "malloc failed \n");
+		f_print(stderr, "malloc failed\n");
 		exit(1);
-	};
+	}
 
 	hptr = ptr;
 	while (*str != '\0')

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_main.c,v 1.7 2001/07/18 22:26:00 deraadt Exp $	*/
+/*	$OpenBSD: rpc_main.c,v 1.8 2001/11/07 18:44:28 deraadt Exp $	*/
 /*	$NetBSD: rpc_main.c,v 1.9 1996/02/19 11:12:43 pk Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,7 +32,7 @@
 
 #ifndef lint
 static char sccsid[] = "@(#)rpc_main.c 1.30 89/03/30 (C) 1987 SMI";
-static char cvsid[] = "$OpenBSD: rpc_main.c,v 1.7 2001/07/18 22:26:00 deraadt Exp $";
+static char cvsid[] = "$OpenBSD: rpc_main.c,v 1.8 2001/11/07 18:44:28 deraadt Exp $";
 #endif
 
 /*
@@ -633,12 +633,8 @@ s_output(argc, argv, infile, define, extend, outfile, nomain, netflag)
 	if (/*timerflag &&*/ tirpcflag)
 		f_print(fout, "#include <sys/resource.h> /* rlimit */\n");
 	if (logflag || inetdflag || pmflag) {
-		f_print(fout, "#ifdef SYSLOG\n");
 		f_print(fout, "#include <syslog.h>\n");
-		f_print(fout, "#else\n");
-		f_print(fout, "#define LOG_ERR 1\n");
-		f_print(fout, "#define openlog(a, b, c)\n");
-		f_print(fout, "#endif\n");
+		f_print(fout, "#include <errno.h>\n");
 	}
 
 	/* for ANSI-C */
@@ -890,7 +886,7 @@ char *outfile;
       {
 	perror(infile);
 	crash();
-      };
+      }
 #if 0
   if (outfile) {
     if (stat(outfile, &buf) < 0) 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_parse.c,v 1.4 2001/07/18 22:26:00 deraadt Exp $	*/
+/*	$OpenBSD: rpc_parse.c,v 1.5 2001/11/07 18:44:28 deraadt Exp $	*/
 /*	$NetBSD: rpc_parse.c,v 1.5 1995/08/29 23:05:55 cgd Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -335,7 +335,7 @@ def_union(defp)
 	  *tailp = cases;
 	  tailp = &cases->next;
 	  cases = ALLOC(case_list);
-	};
+	}
 
     get_declaration(&dec, DEF_UNION);
     cases->case_decl = dec;
