@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.5 2002/12/31 01:01:28 dhartmei Exp $
+.\"	$OpenBSD: spamd.8,v 1.6 2002/12/31 12:19:57 avsm Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -75,7 +75,7 @@ The SMTP version banner that is reported upon initial connection.
 is designed to be very efficient so that it does not slow down the
 receiving machine.  SPAM is never accepted, but always rejected with
 either a 450 or 550 error message.  The normal way that SPAM has been
-dealt with in the way is to either acccept and drop, or outright block.
+dealt with in the way is to either accept and drop, or outright block.
 When configured to use 450 responses,
 .Nm
 takes neither of these actions: it rejects the mail back to the senders'
@@ -86,7 +86,7 @@ is best started from
 .Xr rc 8
 and is used in conjuction with
 .Xr spamd-setup 8
-which proceses a list of spammers addresses, and applies appropriate
+which processes a list of spammers addresses, and applies appropriate
 .Xr pfctl 8
 rdr rules.
 .Pp
