@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.29 2001/12/05 18:23:55 millert Exp $ */
+/* $OpenBSD: user.c,v 1.30 2002/03/05 17:30:15 millert Exp $ */
 /* $NetBSD: user.c,v 1.45 2001/08/17 08:29:00 joda Exp $ */
 
 /*
@@ -1298,6 +1298,7 @@ useradd(int argc, char **argv)
 			memsave(&u.u_primgrp, optarg, strlen(optarg));
 			break;
 		case 'k':
+			defaultfield = 1;
 			memsave(&u.u_skeldir, optarg, strlen(optarg));
 			break;
 #ifdef EXTENSIONS
