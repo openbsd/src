@@ -1,7 +1,7 @@
 #! /bin/sh
 
 ## (From INN-1.4, written by Rich Salz)
-##  $Revision: 1.2 $
+##  $Revision: 1.3 $
 ##  A script to install files and directories.
 
 PROGNAME=`basename $0`
@@ -20,12 +20,14 @@ WHOAMI=whoami
 
 ##  Some systems don't support -x, so we have to use -f.
 if [ ${CHOWN} = chown ] ; then
-    if [ -f /etc/chown ] ; then
+    if [ -f /sbin/chown ] ; then
+	CHOWN=/sbin/chown
+    elif [ -f /etc/chown ] ; then
 	CHOWN=/etc/chown
-    elif [ -f /usr/etc/chown ] ; then
-	CHOWN=/usr/etc/chown
     elif [ -f /usr/sbin/chown ] ; then
 	CHOWN=/usr/sbin/chown
+    elif [ -f /usr/etc/chown ] ; then
+	CHOWN=/usr/etc/chown
     fi
 fi
 
