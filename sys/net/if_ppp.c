@@ -87,10 +87,6 @@
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
 
-#ifdef i386
-#include <machine/psl.h>
-#endif
-
 #include <net/if.h>
 #include <net/if_types.h>
 #include <net/netisr.h>
@@ -202,18 +198,6 @@ pppattach()
 	bpfattach(&sc->sc_bpf, &sc->sc_if, DLT_PPP, PPP_HDRLEN);
 #endif
     }
-
-#ifdef i386
-    /*
-     * XXX kludge to fix the bug in the i386 interrupt handling code,
-     * where software interrupts could be taken while hardware
-     * interrupts were blocked.
-     */
-    if ((imask[IPL_TTY] & SIR_NETMASK) == 0) {
-	imask[IPL_TTY] |= SIR_NETMASK;
-	intr_calculatemasks();
-    }
-#endif
 }
 
 /*
