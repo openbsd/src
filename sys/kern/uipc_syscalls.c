@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.18 1999/02/15 20:00:50 millert Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.19 1999/02/15 21:28:23 millert Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -350,7 +350,7 @@ sys_sendto(p, v, retval)
 		syscallarg(size_t) len;
 		syscallarg(int) flags;
 		syscallarg(struct sockaddr *) to;
-		syscallarg(int) tolen;
+		syscallarg(socklen_t) tolen;
 	} */ *uap = v;
 	struct msghdr msg;
 	struct iovec aiov;

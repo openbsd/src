@@ -1,4 +1,4 @@
-.\"	$OpenBSD: send.2,v 1.10 1998/11/16 07:12:36 deraadt Exp $
+.\"	$OpenBSD: send.2,v 1.11 1999/02/15 21:28:23 millert Exp $
 .\"	$NetBSD: send.2,v 1.6 1996/01/15 01:17:18 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -48,7 +48,7 @@
 .Ft ssize_t
 .Fn send "int s" "const void *msg" "size_t len" "int flags"
 .Ft ssize_t
-.Fn sendto "int s" "const void *msg" "size_t len" "int flags" "const struct sockaddr *to" "int tolen"
+.Fn sendto "int s" "const void *msg" "size_t len" "int flags" "const struct sockaddr *to" "socklen_t tolen"
 .Ft ssize_t
 .Fn sendmsg "int s" "const struct msghdr *msg" "int flags"
 .Sh DESCRIPTION

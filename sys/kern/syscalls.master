@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.33 1999/02/15 20:00:49 millert Exp $
+;	$OpenBSD: syscalls.master,v 1.34 1999/02/15 21:28:23 millert Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -248,7 +248,7 @@
 132	STD		{ int sys_mkfifo(const char *path, int mode); }
 133	STD		{ ssize_t sys_sendto(int s, const void *buf, \
 			    size_t len, int flags, const struct sockaddr *to, \
-			    int tolen); }
+			    socklen_t tolen); }
 134	STD		{ int sys_shutdown(int s, int how); }
 135	STD		{ int sys_socketpair(int domain, int type, \
 			    int protocol, int *rsv); }
