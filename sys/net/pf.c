@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.476 2004/12/22 17:17:55 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.477 2005/01/07 18:58:39 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -5624,6 +5624,9 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0,
 	    (m_tag_find(m, PACKET_TAG_PF_GENERATED, NULL) != NULL))
 		return (PF_PASS);
 
+	if (ifp->if_type == IFT_CARP && ifp->if_carpdev)
+		ifp = ifp->if_carpdev;
+
 	kif = pfi_index2kif[ifp->if_index];
 	if (kif == NULL)
 		return (PF_DROP);
@@ -5932,6 +5935,9 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 	if (!pf_status.running ||
 	    (m_tag_find(m, PACKET_TAG_PF_GENERATED, NULL) != NULL))
 		return (PF_PASS);
+
+	if (ifp->if_type == IFT_CARP && ifp->if_carpdev)
+		ifp = ifp->if_carpdev;
 
 	kif = pfi_index2kif[ifp->if_index];
 	if (kif == NULL)
