@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.15 2003/08/11 09:41:31 miod Exp $
+#	$OpenBSD: Makefile,v 1.16 2004/01/09 17:10:07 brad Exp $
 
 PROG=	ksh
 SRCS=	alloc.c c_ksh.c c_sh.c c_test.c c_ulimit.c edit.c emacs.c \
@@ -21,7 +21,7 @@ MLINKS=	ksh.1 rksh.1 ksh.1 ulimit.1
 
 siglist.out: config.h sh.h siglist.in siglist.sh
 	/bin/sh ${.CURDIR}/siglist.sh \
-		"${CPP} ${CPPFLAGS} ${DEFS} -I${.CURDIR}" \
+		"${CC} -E ${CPPFLAGS} ${DEFS} -I${.CURDIR}" \
 		< ${.CURDIR}/siglist.in > siglist.out
 
 emacs.out: emacs.c

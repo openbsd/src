@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: mkioctls,v 1.14 2003/07/02 20:54:17 deraadt Exp $
+#	$OpenBSD: mkioctls,v 1.15 2004/01/09 17:10:07 brad Exp $
 
 #
 # Copyright (c) 1994
@@ -31,7 +31,7 @@
 #
 #	@(#)mkioctls	8.2 (Berkeley) 4/28/95
 #
-cpp -nostdinc -idirafter $DESTDIR/usr/include -dM ${1+"$@"} | awk '
+${CC:-cc} -E -nostdinc -idirafter $DESTDIR/usr/include -dM ${1+"$@"} | awk '
 BEGIN {
 	print "#include <sys/param.h>"
 	print "#include <sys/socket.h>"
