@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.86 2002/10/15 14:44:45 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.87 2002/10/22 19:35:45 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -296,8 +296,6 @@ hppa_init(start)
 	extern int kernel_text;
 	vaddr_t v, v1;
 	int error, cpu_features = 0;
-
-	boothowto |= RB_SINGLE;	/* XXX always go into single-user while debug */
 
 	pdc_init();	/* init PDC iface, so we can call em easy */
 
