@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aue.c,v 1.9 2000/10/13 04:42:10 aaron Exp $ */
+/*	$OpenBSD: if_aue.c,v 1.10 2000/11/07 21:03:01 aaron Exp $ */
 /*	$NetBSD: if_aue.c,v 1.38 2000/04/04 20:16:19 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -657,7 +657,7 @@ aue_setmulti(sc)
 		if (ifma->ifma_addr->sa_family != AF_LINK)
 			continue;
 		h = aue_crc(LLADDR((struct sockaddr_dl *)ifma->ifma_addr));
-		AUE_SETBIT(sc, AUE_MAR + (h >> 3), 1 << (h & 0xF));
+		AUE_SETBIT(sc, AUE_MAR + (h >> 3), 1 << (h & 0x7));
 	}
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
 #if defined(__NetBSD__)
@@ -675,7 +675,7 @@ aue_setmulti(sc)
 		}
 #endif
 		h = aue_crc(enm->enm_addrlo);
-		AUE_SETBIT(sc, AUE_MAR + (h >> 3), 1 << (h & 0xF));
+		AUE_SETBIT(sc, AUE_MAR + (h >> 3), 1 << (h & 0x7));
 		ETHER_NEXT_MULTI(step, enm);
 	}
 #endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
