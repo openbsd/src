@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.110 2002/06/11 18:28:01 ho Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.111 2002/06/11 18:50:21 ho Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -1091,7 +1091,11 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming,
   /* Setup the rest of the SA extension.  */
   ssa.sadb_sa_exttype = SADB_EXT_SA;
   ssa.sadb_sa_len = sizeof ssa / PF_KEY_V2_CHUNK;
-  memcpy (&ssa.sadb_sa_spi, proto->spi[incoming], sizeof ssa.sadb_sa_spi);
+  if (proto->spi_sz[incoming] == 2) /* IPCOMP uses 16bit CPIs.  */
+    ssa.sadb_sa_spi = htonl(proto->spi[incoming][0] << 8
+			    | proto->spi[incoming][1]);
+  else
+    memcpy (&ssa.sadb_sa_spi, proto->spi[incoming], sizeof ssa.sadb_sa_spi);
   ssa.sadb_sa_replay
     = conf_get_str ("General", "Shared-SADB") ? 0 : iproto->replay_window;
   ssa.sadb_sa_state = SADB_SASTATE_MATURE;
@@ -1703,6 +1707,9 @@ pf_key_v2_flow (struct sockaddr *laddr, struct sockaddr *lmask,
       break;
     case IPSEC_PROTO_IPSEC_AH:
       msg.sadb_msg_satype = SADB_SATYPE_AH;
+      break;
+    case IPSEC_PROTO_IPCOMP:
+      msg.sadb_msg_satype = SADB_X_SATYPE_IPCOMP;
       break;
     default:
       log_print ("pf_key_v2_flow: invalid proto %d", proto);
