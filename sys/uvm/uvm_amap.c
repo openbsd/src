@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_amap.c,v 1.7 2001/01/29 02:07:42 niklas Exp $	*/
-/*	$NetBSD: uvm_amap.c,v 1.20 1999/04/11 04:04:11 chs Exp $	*/
+/*	$OpenBSD: uvm_amap.c,v 1.8 2001/03/15 11:48:17 art Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.21 1999/07/06 02:15:53 cgd Exp $	*/
 
 /*
  *
@@ -190,23 +190,28 @@ amap_alloc1(slots, padslots, waitf)
 	amap->am_maxslot = totalslots;
 	amap->am_nslot = slots;
 	amap->am_nused = 0;
-	MALLOC(amap->am_slots,  int *, totalslots * sizeof(int), M_UVMAMAP, waitf);
-	if (amap->am_slots) {
-		MALLOC(amap->am_bckptr, int *, totalslots * sizeof(int), M_UVMAMAP, waitf);
-		if (amap->am_bckptr) {
-			MALLOC(amap->am_anon, struct vm_anon **, 
-			    totalslots * sizeof(struct vm_anon *), M_UVMAMAP, waitf);
-		}
-	}
 
-	if (amap->am_anon)
-		return(amap);
+	amap->am_slots = malloc(totalslots * sizeof(int), M_UVMAMAP,
+	    waitf);
+	if (amap->am_slots == NULL)
+		goto fail1;
 
-	if (amap->am_slots) {
-		FREE(amap->am_slots, M_UVMAMAP);
-		if (amap->am_bckptr)
-			FREE(amap->am_bckptr, M_UVMAMAP);
-	}
+	amap->am_bckptr = malloc(totalslots * sizeof(int), M_UVMAMAP, waitf);
+	if (amap->am_bckptr == NULL)
+		goto fail2;
+
+	amap->am_anon = malloc(totalslots * sizeof(struct vm_anon *),
+	    M_UVMAMAP, waitf);
+	if (amap->am_anon == NULL)
+		goto fail3;
+
+	return(amap);
+
+fail3:
+	free(amap->am_bckptr, M_UVMAMAP);
+fail2:
+	free(amap->am_slots, M_UVMAMAP);
+fail1:
 	pool_put(&uvm_amap_pool, amap);
 	return (NULL);
 }
