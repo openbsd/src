@@ -1,8 +1,8 @@
-/*	$OpenBSD: altq_red.h,v 1.3 2002/11/26 01:03:34 henning Exp $	*/
+/*	$OpenBSD: altq_red.h,v 1.4 2002/12/16 09:18:05 kjc Exp $	*/
 /*	$KAME: altq_red.h,v 1.5 2000/12/14 08:12:46 thorpej Exp $	*/
 
 /*
- * Copyright (C) 1997-2000
+ * Copyright (C) 1997-2002
  *	Sony Computer Science Laboratories Inc.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,47 +32,6 @@
 
 #include <altq/altq_classq.h>
 
-struct red_interface {
-	char	red_ifname[IFNAMSIZ];
-};
-
-struct red_stats {
-	struct red_interface iface;
-	int q_len;
-	int q_avg;
-
-	struct pktcntr	xmit_cnt;
-	struct pktcntr	drop_cnt;
-	u_int		drop_forced;
-	u_int		drop_unforced;
-	u_int		marked_packets;
-
-	/* static red parameters */
-	int q_limit;
-	int weight;
-	int inv_pmax;
-	int th_min;
-	int th_max;
-
-	/* flowvalve related stuff */
-	u_int fv_flows;
-	u_int fv_pass;
-	u_int fv_predrop;
-	u_int fv_alloc;
-	u_int fv_escape;
-};
-
-struct red_conf {
-	struct red_interface iface;
-	int red_weight;		/* weight for EWMA */
-	int red_inv_pmax;	/* inverse of max drop probability */
-	int red_thmin;		/* red min threshold */
-	int red_thmax;		/* red max threshold */
-	int red_limit;		/* max queue length */
-	int red_pkttime;	/* average packet time in usec */
-	int red_flags;		/* see below */
-};
-
 /* red flags */
 #define	REDF_ECN4	0x01	/* use packet marking for IPv4 packets */
 #define	REDF_ECN6	0x02	/* use packet marking for IPv6 packets */
@@ -98,21 +57,7 @@ struct redstats {
 	u_int		marked_packets;
 };
 
-
-/*
- * IOCTLs for RED
- */
-#define	RED_IF_ATTACH		_IOW('Q', 1, struct red_interface)
-#define	RED_IF_DETACH		_IOW('Q', 2, struct red_interface)
-#define	RED_ENABLE		_IOW('Q', 3, struct red_interface)
-#define	RED_DISABLE		_IOW('Q', 4, struct red_interface)
-#define	RED_CONFIG		_IOWR('Q', 6, struct red_conf)
-#define	RED_GETSTATS		_IOWR('Q', 12, struct red_stats)
-#define	RED_SETDEFAULTS		_IOW('Q', 30, struct redparams)
-
 #ifdef _KERNEL
-
-struct flowvalve;
 
 /* weight table structure for idle time calibration */
 struct wtab {
@@ -148,8 +93,6 @@ typedef struct red {
 	struct wtab *red_wtab;	/* weight table */
 	struct timeval red_last;  /* timestamp when the queue becomes idle */
 
-	struct flowvalve *red_flowvalve;	/* flowvalve state */
-
 	struct {
 		struct pktcntr	xmit_cnt;
 		struct pktcntr	drop_cnt;
@@ -158,15 +101,6 @@ typedef struct red {
 		u_int		marked_packets;
 	} red_stats;
 } red_t;
-
-typedef struct red_queue {
-	struct red_queue *rq_next;	/* next red_state in the list */
-	struct ifaltq *rq_ifq;		/* backpointer to ifaltq */
-
-	class_queue_t *rq_q;
-
-	red_t *rq_red;
-} red_queue_t;
 
 /* red drop types */
 #define	DTYPE_NODROP	0	/* no drop */

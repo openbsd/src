@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_rmclass.c,v 1.5 2002/11/29 07:52:31 kjc Exp $	*/
+/*	$OpenBSD: altq_rmclass.c,v 1.6 2002/12/16 09:18:05 kjc Exp $	*/
 /*	$KAME: altq_rmclass.c,v 1.10 2001/02/09 07:20:40 kjc Exp $	*/
 
 /*
@@ -44,12 +44,8 @@
 #include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/time.h>
-#include <sys/kernel.h>
 
 #include <net/if.h>
-#include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/ip.h>
 
 #include <altq/altq.h>
 #include <altq/altq_rmclass.h>

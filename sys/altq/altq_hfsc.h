@@ -1,5 +1,5 @@
-/*	$OpenBSD: altq_hfsc.h,v 1.2 2002/11/26 01:03:34 henning Exp $	*/
-/*	$KAME: altq_hfsc.h,v 1.6 2000/12/14 08:12:46 thorpej Exp $	*/
+/*	$OpenBSD: altq_hfsc.h,v 1.3 2002/12/16 09:18:05 kjc Exp $	*/
+/*	$KAME: altq_hfsc.h,v 1.8 2002/11/29 04:36:23 kjc Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Carnegie Mellon University. All Rights Reserved.
@@ -45,34 +45,16 @@
 extern "C" {
 #endif
 
-struct hfsc_interface {
-	char	hfsc_ifname[IFNAMSIZ];  /* interface name (e.g., fxp0) */
-};
-
-struct hfsc_attach {
-	struct hfsc_interface	iface;
-	u_int			bandwidth;  /* link bandwidth in bits/sec */
-};
-
 struct service_curve {
 	u_int	m1;	/* slope of the first segment in bits/sec */
 	u_int	d;	/* the x-projection of the first segment in msec */
 	u_int	m2;	/* slope of the second segment in bits/sec */
 };
 
-struct hfsc_add_class {
-	struct hfsc_interface	iface;
-	u_long			parent_handle;
-	struct service_curve	service_curve;
-	int			qlimit;
-	int			flags;
-
-	u_long			class_handle;  /* return value */
-};
-
 /* special class handles */
-#define	HFSC_ROOTCLASS_HANDLE	0
 #define	HFSC_NULLCLASS_HANDLE	0
+#define	HFSC_ROOTCLASS_HANDLE	1
+#define	HFSC_MAX_CLASSES	64
 
 /* hfsc class flags */
 #define	HFCF_RED		0x0001	/* use RED */
@@ -81,41 +63,18 @@ struct hfsc_add_class {
 #define	HFCF_CLEARDSCP		0x0010  /* clear diffserv codepoint */
 #define	HFCF_DEFAULTCLASS	0x1000	/* default class */
 
-struct hfsc_delete_class {
-	struct hfsc_interface	iface;
-	u_long			class_handle;
-};
-
 /* service curve types */
 #define	HFSC_REALTIMESC		1
 #define	HFSC_LINKSHARINGSC	2
+#define	HFSC_UPPERLIMITSC	4
 #define	HFSC_DEFAULTSC		(HFSC_REALTIMESC|HFSC_LINKSHARINGSC)
 
-struct hfsc_modify_class {
-	struct hfsc_interface	iface;
-	u_long			class_handle;
-	struct service_curve	service_curve;
-	int			sctype;
-};
-
-struct hfsc_add_filter {
-	struct hfsc_interface	iface;
-	u_long			class_handle;
-	struct flow_filter	filter;
-
-	u_long			filter_handle;  /* return value */
-};
-
-struct hfsc_delete_filter {
-	struct hfsc_interface	iface;
-	u_long			filter_handle;
-};
-
-struct class_stats {
+struct hfsc_classstats {
 	u_int			class_id;
-	u_long			class_handle;
+	u_int32_t		class_handle;
 	struct service_curve	rsc;
 	struct service_curve	fsc;
+	struct service_curve	usc;	/* upper limit service curve */
 
 	u_int64_t		total;	/* total work in bytes */
 	u_int64_t		cumul;	/* cumulative work in bytes
@@ -123,38 +82,34 @@ struct class_stats {
 	u_int64_t		d;		/* deadline */
 	u_int64_t		e;		/* eligible time */
 	u_int64_t		vt;		/* virtual time */
+	u_int64_t		f;		/* fit time for upper-limit */
+
+	/* info helpful for debugging */
+	u_int64_t		initvt;		/* init virtual time */
+	u_int64_t		vtoff;		/* cl_vt_ipoff */
+	u_int64_t		cvtmax;		/* cl_maxvt */
+	u_int64_t		myf;		/* cl_myf */
+	u_int64_t		cfmin;		/* cl_mincf */
+	u_int64_t		cvtmin;		/* cl_mincvt */
+	u_int64_t		myfadj;		/* cl_myfadj */
+	u_int64_t		vtadj;		/* cl_vtadj */
+	u_int64_t		cur_time;
+	u_int32_t		machclk_freq;
 
 	u_int			qlength;
+	u_int			qlimit;
 	struct pktcntr		xmit_cnt;
 	struct pktcntr		drop_cnt;
 	u_int 			period;
+
+	u_int			vtperiod;	/* vt period sequence no */
+	u_int			parentperiod;	/* parent's vt period seqno */
+	int			nactive;	/* number of active children */
 
 	/* red and rio related info */
 	int		qtype;
 	struct redstats	red[3];
 };
-
-struct hfsc_class_stats {
-	struct hfsc_interface	iface;
-	int			nskip;		/* skip # of classes */
-	int			nclasses;	/* # of class stats (WR) */
-	u_int64_t		cur_time;	/* current time */
-	u_int			hif_classes;	/* # of classes in the tree */
-	u_int			hif_packets;	/* # of packets in the tree */
-	struct class_stats	*stats;		/* pointer to stats array */
-};
-
-#define	HFSC_IF_ATTACH		_IOW('Q', 1, struct hfsc_attach)
-#define	HFSC_IF_DETACH		_IOW('Q', 2, struct hfsc_interface)
-#define	HFSC_ENABLE		_IOW('Q', 3, struct hfsc_interface)
-#define	HFSC_DISABLE		_IOW('Q', 4, struct hfsc_interface)
-#define	HFSC_CLEAR_HIERARCHY	_IOW('Q', 5, struct hfsc_interface)
-#define	HFSC_ADD_CLASS		_IOWR('Q', 7, struct hfsc_add_class)
-#define	HFSC_DEL_CLASS		_IOW('Q', 8, struct hfsc_delete_class)
-#define	HFSC_MOD_CLASS		_IOW('Q', 9, struct hfsc_modify_class)
-#define	HFSC_ADD_FILTER		_IOWR('Q', 10, struct hfsc_add_filter)
-#define	HFSC_DEL_FILTER		_IOW('Q', 11, struct hfsc_delete_filter)
-#define	HFSC_GETSTATS		_IOWR('Q', 12, struct hfsc_class_stats)
 
 #ifdef _KERNEL
 /*
@@ -211,7 +166,7 @@ typedef TAILQ_ENTRY(hfsc_class) actentry_t;
 
 struct hfsc_class {
 	u_int		cl_id;		/* class id (just for debug) */
-	u_long		cl_handle;	/* class handle */
+	u_int32_t	cl_handle;	/* class handle */
 	struct hfsc_if	*cl_hif;	/* back pointer to struct hfsc_if */
 	int		cl_flags;	/* misc flags */
 
@@ -229,12 +184,31 @@ struct hfsc_class {
 	u_int64_t	cl_d;		/* deadline */
 	u_int64_t	cl_e;		/* eligible time */
 	u_int64_t	cl_vt;		/* virtual time */
+	u_int64_t	cl_f;		/* time when this class will fit for
+					   link-sharing, max(myf, cfmin) */
+	u_int64_t	cl_myf;		/* my fit-time (as calculated from this
+					   class's own upperlimit curve) */
+	u_int64_t	cl_myfadj;	/* my fit-time adjustment
+					   (to cancel history dependence) */
+	u_int64_t	cl_cfmin;	/* earliest children's fit-time (used
+					   with cl_myf to obtain cl_f) */
+	u_int64_t	cl_cvtmin;	/* minimal virtual time among the
+					   children fit for link-sharing
+					   (monotonic within a period) */
+	u_int64_t	cl_vtadj;	/* intra-period cumulative vt
+					   adjustment */
+	u_int64_t	cl_vtoff;	/* inter-period cumulative vt offset */
+	u_int64_t	cl_cvtmax;	/* max child's vt in the last period */
+
+	u_int64_t	cl_initvt;	/* init virtual time (for debugging) */
 
 	struct internal_sc *cl_rsc;	/* internal real-time service curve */
 	struct internal_sc *cl_fsc;	/* internal fair service curve */
+	struct internal_sc *cl_usc;	/* internal upperlimit service curve */
 	struct runtime_sc  cl_deadline;	/* deadline curve */
 	struct runtime_sc  cl_eligible;	/* eligible curve */
 	struct runtime_sc  cl_virtual;	/* virtual curve */
+	struct runtime_sc  cl_ulimit;	/* upperlimit curve */
 
 	u_int		cl_vtperiod;	/* vt period sequence no */
 	u_int		cl_parentperiod;  /* parent's vt period seqno */
@@ -259,6 +233,7 @@ struct hfsc_if {
 	struct ifaltq		*hif_ifq;	/* backpointer to ifaltq */
 	struct hfsc_class	*hif_rootclass;		/* root class */
 	struct hfsc_class	*hif_defaultclass;	/* default class */
+	struct hfsc_class	*hif_class_tbl[HFSC_MAX_CLASSES];
 	struct hfsc_class	*hif_pollcache;	/* cache for poll operation */
 
 	u_int	hif_classes;			/* # of classes in the tree */
@@ -266,8 +241,6 @@ struct hfsc_if {
 	u_int	hif_classid;			/* class id sequence number */
 
 	ellist_t *hif_eligible;			/* eligible list */
-
-	struct acc_classifier	hif_classifier;
 };
 
 #endif /* _KERNEL */

@@ -1,7 +1,7 @@
-/*	$OpenBSD: altq_priq.h,v 1.2 2002/11/26 01:03:34 henning Exp $	*/
+/*	$OpenBSD: altq_priq.h,v 1.3 2002/12/16 09:18:05 kjc Exp $	*/
 /*	$KAME: altq_priq.h,v 1.1 2000/10/18 09:15:23 kjc Exp $	*/
 /*
- * Copyright (C) 2000
+ * Copyright (C) 2000-2002
  *	Sony Computer Science Laboratories Inc.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -40,20 +40,6 @@ extern "C" {
 
 #define	PRIQ_MAXPRI	16	/* upper limit of the number of priorities */
 
-struct priq_interface {
-	char	ifname[IFNAMSIZ];	/* interface name (e.g., fxp0) */
-	u_long	arg;			/* request-specific argument */
-};
-
-struct priq_add_class {
-	struct priq_interface	iface;
-	int			pri;	/* priority (0 is the lowest) */
-	int			qlimit;	/* queue size limit */
-	int			flags;	/* misc flags (see below) */
-
-	u_long			class_handle;  /* return value */
-};
-
 /* priq class flags */
 #define	PRCF_RED		0x0001	/* use RED */
 #define	PRCF_ECN		0x0002  /* use RED/ECN */
@@ -64,36 +50,11 @@ struct priq_add_class {
 /* special class handles */
 #define	PRIQ_NULLCLASS_HANDLE	0
 
-struct priq_delete_class {
-	struct priq_interface	iface;
-	u_long			class_handle;
-};
-
-struct priq_modify_class {
-	struct priq_interface	iface;
-	u_long			class_handle;
-	int			pri;
-	int			qlimit;
-	int			flags;
-};
-
-struct priq_add_filter {
-	struct priq_interface	iface;
-	u_long			class_handle;
-	struct flow_filter	filter;
-
-	u_long			filter_handle;  /* return value */
-};
-
-struct priq_delete_filter {
-	struct priq_interface	iface;
-	u_long			filter_handle;
-};
-
-struct class_stats {
-	u_long			class_handle;
+struct priq_classstats {
+	u_int32_t		class_handle;
 
 	u_int			qlength;
+	u_int			qlimit;
 	u_int 			period;
 	struct pktcntr		xmitcnt;  /* transmitted packet counter */
 	struct pktcntr		dropcnt;  /* dropped packet counter */
@@ -103,29 +64,10 @@ struct class_stats {
 	struct redstats	red[3];		/* rio has 3 red stats */
 };
 
-struct priq_class_stats {
-	struct priq_interface	iface;
-	int			maxpri;	  /* in/out */
-
-	struct class_stats	*stats;   /* pointer to stats array */
-};
-
-#define	PRIQ_IF_ATTACH		_IOW('Q', 1, struct priq_interface)
-#define	PRIQ_IF_DETACH		_IOW('Q', 2, struct priq_interface)
-#define	PRIQ_ENABLE		_IOW('Q', 3, struct priq_interface)
-#define	PRIQ_DISABLE		_IOW('Q', 4, struct priq_interface)
-#define	PRIQ_CLEAR		_IOW('Q', 5, struct priq_interface)
-#define	PRIQ_ADD_CLASS		_IOWR('Q', 7, struct priq_add_class)
-#define	PRIQ_DEL_CLASS		_IOW('Q', 8, struct priq_delete_class)
-#define	PRIQ_MOD_CLASS		_IOW('Q', 9, struct priq_modify_class)
-#define	PRIQ_ADD_FILTER		_IOWR('Q', 10, struct priq_add_filter)
-#define	PRIQ_DEL_FILTER		_IOW('Q', 11, struct priq_delete_filter)
-#define	PRIQ_GETSTATS		_IOWR('Q', 12, struct priq_class_stats)
-
 #ifdef _KERNEL
 
 struct priq_class {
-	u_long		cl_handle;	/* class handle */
+	u_int32_t	cl_handle;	/* class handle */
 	class_queue_t	*cl_q;		/* class queue structure */
 	struct red	*cl_red;	/* RED state */
 	int		cl_pri;		/* priority */
@@ -149,7 +91,6 @@ struct priq_if {
 	int			pif_maxpri;	/* max priority in use */
 	struct priq_class	*pif_default;	/* default class */
 	struct priq_class	*pif_classes[PRIQ_MAXPRI]; /* classes */
-	struct acc_classifier	pif_classifier;	/* classifier */
 };
 
 #endif /* _KERNEL */

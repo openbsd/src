@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_rio.h,v 1.3 2002/11/26 01:03:34 henning Exp $	*/
+/*	$OpenBSD: altq_rio.h,v 1.4 2002/12/16 09:18:05 kjc Exp $	*/
 /*	$KAME: altq_rio.h,v 1.5 2000/12/14 08:12:46 thorpej Exp $	*/
 
 /*
@@ -68,17 +68,6 @@ struct rio_conf {
 #define	RIOF_ECN6	0x02	/* use packet marking for IPv6 packets */
 #define	RIOF_ECN	(RIOF_ECN4 | RIOF_ECN6)
 #define	RIOF_CLEARDSCP	0x200	/* clear diffserv codepoint */
-
-/*
- * IOCTLs for RIO
- */
-#define	RIO_IF_ATTACH		_IOW('Q', 1, struct rio_interface)
-#define	RIO_IF_DETACH		_IOW('Q', 2, struct rio_interface)
-#define	RIO_ENABLE		_IOW('Q', 3, struct rio_interface)
-#define	RIO_DISABLE		_IOW('Q', 4, struct rio_interface)
-#define	RIO_CONFIG		_IOWR('Q', 6, struct rio_conf)
-#define	RIO_GETSTATS		_IOWR('Q', 12, struct rio_stats)
-#define	RIO_SETDEFAULTS		_IOW('Q', 30, struct redparams[RIO_NDROPPREC])
 
 #ifdef _KERNEL
 

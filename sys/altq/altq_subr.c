@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_subr.c,v 1.12 2002/11/29 07:51:54 kjc Exp $	*/
+/*	$OpenBSD: altq_subr.c,v 1.13 2002/12/16 09:18:05 kjc Exp $	*/
 /*	$KAME: altq_subr.c,v 1.11 2002/01/11 08:11:49 kjc Exp $	*/
 
 /*
@@ -56,7 +56,6 @@
 
 #include <net/pfvar.h>
 #include <altq/altq.h>
-#include <altq/altq_conf.h>
 
 /* machine dependent clock related includes */
 #if defined(__i386__)
@@ -68,33 +67,6 @@
  * internal function prototypes
  */
 static void	tbr_timeout(void *);
-static int 	extract_ports4(struct mbuf *, struct ip *,
-				    struct flowinfo_in *);
-#ifdef INET6
-static int 	extract_ports6(struct mbuf *, struct ip6_hdr *,
-				    struct flowinfo_in6 *);
-#endif
-static int	apply_filter4(u_int32_t, struct flow_filter *,
-				   struct flowinfo_in *);
-static int	apply_ppfilter4(u_int32_t, struct flow_filter *,
-				     struct flowinfo_in *);
-#ifdef INET6
-static int	apply_filter6(u_int32_t, struct flow_filter6 *,
-					   struct flowinfo_in6 *);
-#endif
-static int	apply_tosfilter4(u_int32_t, struct flow_filter *,
-					     struct flowinfo_in *);
-static u_long	get_filt_handle(struct acc_classifier *, int);
-static struct acc_filter *filth_to_filtp(struct acc_classifier *,
-					      u_long);
-static u_int32_t filt2fibmask(struct flow_filter *);
-
-static void 	ip4f_cache(struct ip *, struct flowinfo_in *);
-static int 	ip4f_lookup(struct ip *, struct flowinfo_in *);
-static int 	ip4f_init(void);
-static struct ip4_frag	*ip4f_alloc(void);
-static void 	ip4f_free(struct ip4_frag *);
-
 int (*altq_input)(struct mbuf *, int) = NULL;
 static int tbr_timer = 0;	/* token bucket regulator timer */
 static struct callout tbr_callout = CALLOUT_INITIALIZER;
@@ -135,14 +107,12 @@ altq_attach(ifq, type, discipline, enqueue, dequeue, request, clfier, classify)
 	if (!ALTQ_IS_READY(ifq))
 		return ENXIO;
 
-	if (PFALTQ_IS_ACTIVE()) {
-		/* pfaltq can override the existing discipline */
-	} else {
-		if (ALTQ_IS_ENABLED(ifq))
-			return EBUSY;
-		if (ALTQ_IS_ATTACHED(ifq))
-			return EEXIST;
-	}
+#if 0	/* pfaltq can override the existing discipline */
+	if (ALTQ_IS_ENABLED(ifq))
+		return EBUSY;
+	if (ALTQ_IS_ATTACHED(ifq))
+		return EEXIST;
+#endif
 	ifq->altq_type     = type;
 	ifq->altq_disc     = discipline;
 	ifq->altq_enqueue  = enqueue;
@@ -150,14 +120,8 @@ altq_attach(ifq, type, discipline, enqueue, dequeue, request, clfier, classify)
 	ifq->altq_request  = request;
 	ifq->altq_clfier   = clfier;
 	ifq->altq_classify = classify;
-	if (PFALTQ_IS_ACTIVE())
-		ifq->altq_flags &= (ALTQF_CANTCHANGE|ALTQF_ENABLED);
-	else
-		ifq->altq_flags &= ALTQF_CANTCHANGE;
+	ifq->altq_flags &= (ALTQF_CANTCHANGE|ALTQF_ENABLED);
 
-#ifdef ALTQ_KLD
-	altq_module_incref(type);
-#endif
 	return 0;
 }
 
@@ -172,9 +136,6 @@ altq_detach(ifq)
 	if (!ALTQ_IS_ATTACHED(ifq))
 		return (0);
 
-#ifdef ALTQ_KLD
-	altq_module_declref(ifq->altq_type);
-#endif
 	ifq->altq_type     = ALTQT_NONE;
 	ifq->altq_disc     = NULL;
 	ifq->altq_enqueue  = NULL;
@@ -364,16 +325,7 @@ tbr_timeout(arg)
 
 	active = 0;
 	s = splimp();
-#ifdef __FreeBSD__
-#if (__FreeBSD_version < 300000)
-	for (ifp = ifnet; ifp; ifp = ifp->if_next)
-#else
-	for (ifp = ifnet.tqh_first; ifp != NULL; ifp = ifp->if_link.tqe_next)
-#endif
-#else /* !FreeBSD */
-	for (ifp = ifnet.tqh_first; ifp != NULL; ifp = ifp->if_list.tqe_next)
-#endif
-	{
+	for (ifp = TAILQ_FIRST(&ifnet); ifp; ifp = TAILQ_NEXT(ifp, if_list)) {
 		if (!TBR_IS_ENABLED(&ifp->if_snd))
 			continue;
 		active++;
@@ -436,11 +388,23 @@ altq_pfattach(struct pf_altq *a)
 	switch (a->scheduler) {
 	case ALTQT_NONE:
 		break;
+#ifdef ALTQ_CBQ
 	case ALTQT_CBQ:
 		error = cbq_pfattach(a);
 		break;
+#endif
+#ifdef ALTQ_PRIQ
+	case ALTQT_PRIQ:
+		error = priq_pfattach(a);
+		break;
+#endif
+#ifdef ALTQ_HFSC
+	case ALTQT_HFSC:
+		error = hfsc_pfattach(a);
+		break;
+#endif
 	default:
-		error = EINVAL;
+		error = ENXIO;
 	}
 
 	ifp = ifunit(a->ifname);
@@ -502,12 +466,29 @@ altq_add(struct pf_altq *a)
 	if (a->qname[0] != 0)
 		return (altq_add_queue(a));
 
+	if (machclk_freq == 0)
+		init_machclk();
+	if (machclk_freq == 0)
+		panic("altq_add: no cpu clock");
+
 	switch (a->scheduler) {
+#ifdef ALTQ_CBQ
 	case ALTQT_CBQ:
 		error = cbq_add_altq(a);
 		break;
+#endif
+#ifdef ALTQ_PRIQ
+	case ALTQT_PRIQ:
+		error = priq_add_altq(a);
+		break;
+#endif
+#ifdef ALTQ_HFSC
+	case ALTQT_HFSC:
+		error = hfsc_add_altq(a);
+		break;
+#endif
 	default:
-		error = EINVAL;
+		error = ENXIO;
 	}
 
 	return (error);
@@ -525,11 +506,23 @@ altq_remove(struct pf_altq *a)
 		return (altq_remove_queue(a));
 
 	switch (a->scheduler) {
+#ifdef ALTQ_CBQ
 	case ALTQT_CBQ:
 		error = cbq_remove_altq(a);
 		break;
+#endif
+#ifdef ALTQ_PRIQ
+	case ALTQT_PRIQ:
+		error = priq_remove_altq(a);
+		break;
+#endif
+#ifdef ALTQ_HFSC
+	case ALTQT_HFSC:
+		error = hfsc_remove_altq(a);
+		break;
+#endif
 	default:
-		error = EINVAL;
+		error = ENXIO;
 	}
 
 	return (error);
@@ -544,11 +537,23 @@ altq_add_queue(struct pf_altq *a)
 	int error = 0;
 
 	switch (a->scheduler) {
+#ifdef ALTQ_CBQ
 	case ALTQT_CBQ:
 		error = cbq_add_queue(a);
 		break;
+#endif
+#ifdef ALTQ_PRIQ
+	case ALTQT_PRIQ:
+		error = priq_add_queue(a);
+		break;
+#endif
+#ifdef ALTQ_HFSC
+	case ALTQT_HFSC:
+		error = hfsc_add_queue(a);
+		break;
+#endif
 	default:
-		error = EINVAL;
+		error = ENXIO;
 	}
 
 	return (error);
@@ -563,11 +568,23 @@ altq_remove_queue(struct pf_altq *a)
 	int error = 0;
 
 	switch (a->scheduler) {
+#ifdef ALTQ_CBQ
 	case ALTQT_CBQ:
 		error = cbq_remove_queue(a);
 		break;
+#endif
+#ifdef ALTQ_PRIQ
+	case ALTQT_PRIQ:
+		error = priq_remove_queue(a);
+		break;
+#endif
+#ifdef ALTQ_HFSC
+	case ALTQT_HFSC:
+		error = hfsc_remove_queue(a);
+		break;
+#endif
 	default:
-		error = EINVAL;
+		error = ENXIO;
 	}
 
 	return (error);
@@ -582,955 +599,27 @@ altq_getqstats(struct pf_altq *a, void *ubuf, int *nbytes)
 	int error = 0;
 
 	switch (a->scheduler) {
+#ifdef ALTQ_CBQ
 	case ALTQT_CBQ:
 		error = cbq_getqstats(a, ubuf, nbytes);
 		break;
+#endif
+#ifdef ALTQ_PRIQ
+	case ALTQT_PRIQ:
+		error = priq_getqstats(a, ubuf, nbytes);
+		break;
+#endif
+#ifdef ALTQ_HFSC
+	case ALTQT_HFSC:
+		error = hfsc_getqstats(a, ubuf, nbytes);
+		break;
+#endif
 	default:
-		error = EINVAL;
+		error = ENXIO;
 	}
 
 	return (error);
 }
-
-
-#ifndef IPPROTO_ESP
-#define	IPPROTO_ESP	50		/* encapsulating security payload */
-#endif
-#ifndef IPPROTO_AH
-#define	IPPROTO_AH	51		/* authentication header */
-#endif
-
-/*
- * extract flow information from a given packet.
- * filt_mask shows flowinfo fields required.
- * we assume the ip header is in one mbuf, and addresses and ports are
- * in network byte order.
- */
-int
-altq_extractflow(m, af, flow, filt_bmask)
-	struct mbuf *m;
-	int af;
-	struct flowinfo *flow;
-	u_int32_t	filt_bmask;
-{
-
-	switch (af) {
-	case PF_INET: {
-		struct flowinfo_in *fin;
-		struct ip *ip;
-
-		ip = mtod(m, struct ip *);
-
-		if (ip->ip_v != 4)
-			break;
-
-		fin = (struct flowinfo_in *)flow;
-		fin->fi_len = sizeof(struct flowinfo_in);
-		fin->fi_family = AF_INET;
-
-		fin->fi_proto = ip->ip_p;
-		fin->fi_tos = ip->ip_tos;
-
-		fin->fi_src.s_addr = ip->ip_src.s_addr;
-		fin->fi_dst.s_addr = ip->ip_dst.s_addr;
-
-		if (filt_bmask & FIMB4_PORTS)
-			/* if port info is required, extract port numbers */
-			extract_ports4(m, ip, fin);
-		else {
-			fin->fi_sport = 0;
-			fin->fi_dport = 0;
-			fin->fi_gpi = 0;
-		}
-		return (1);
-	}
-
-#ifdef INET6
-	case PF_INET6: {
-		struct flowinfo_in6 *fin6;
-		struct ip6_hdr *ip6;
-
-		ip6 = mtod(m, struct ip6_hdr *);
-		/* should we check the ip version? */
-
-		fin6 = (struct flowinfo_in6 *)flow;
-		fin6->fi6_len = sizeof(struct flowinfo_in6);
-		fin6->fi6_family = AF_INET6;
-
-		fin6->fi6_proto = ip6->ip6_nxt;
-		fin6->fi6_tclass   = (ntohl(ip6->ip6_flow) >> 20) & 0xff;
-
-		fin6->fi6_flowlabel = ip6->ip6_flow & htonl(0x000fffff);
-		fin6->fi6_src = ip6->ip6_src;
-		fin6->fi6_dst = ip6->ip6_dst;
-
-		if ((filt_bmask & FIMB6_PORTS) ||
-		    ((filt_bmask & FIMB6_PROTO)
-		     && ip6->ip6_nxt > IPPROTO_IPV6))
-			/*
-			 * if port info is required, or proto is required
-			 * but there are option headers, extract port
-			 * and protocol numbers.
-			 */
-			extract_ports6(m, ip6, fin6);
-		else {
-			fin6->fi6_sport = 0;
-			fin6->fi6_dport = 0;
-			fin6->fi6_gpi = 0;
-		}
-		return (1);
-	}
-#endif /* INET6 */
-
-	default:
-		break;
-	}
-
-	/* failed */
-	flow->fi_len = sizeof(struct flowinfo);
-	flow->fi_family = AF_UNSPEC;
-	return (0);
-}
-
-/*
- * helper routine to extract port numbers
- */
-/* structure for ipsec and ipv6 option header template */
-struct _opt6 {
-	u_int8_t	opt6_nxt;	/* next header */
-	u_int8_t	opt6_hlen;	/* header extension length */
-	u_int16_t	_pad;
-	u_int32_t	ah_spi;		/* security parameter index
-					   for authentication header */
-};
-
-/*
- * extract port numbers from a ipv4 packet.
- */
-static int
-extract_ports4(m, ip, fin)
-	struct mbuf *m;
-	struct ip *ip;
-	struct flowinfo_in *fin;
-{
-	struct mbuf *m0;
-	u_short ip_off;
-	u_int8_t proto;
-	int 	off;
-
-	fin->fi_sport = 0;
-	fin->fi_dport = 0;
-	fin->fi_gpi = 0;
-
-	ip_off = ntohs(ip->ip_off);
-	/* if it is a fragment, try cached fragment info */
-	if (ip_off & IP_OFFMASK) {
-		ip4f_lookup(ip, fin);
-		return (1);
-	}
-
-	/* locate the mbuf containing the protocol header */
-	for (m0 = m; m0 != NULL; m0 = m0->m_next)
-		if (((caddr_t)ip >= m0->m_data) &&
-		    ((caddr_t)ip < m0->m_data + m0->m_len))
-			break;
-	if (m0 == NULL) {
-#ifdef ALTQ_DEBUG
-		printf("extract_ports4: can't locate header! ip=%p\n", ip);
-#endif
-		return (0);
-	}
-	off = ((caddr_t)ip - m0->m_data) + (ip->ip_hl << 2);
-	proto = ip->ip_p;
-
-#ifdef ALTQ_IPSEC
- again:
-#endif
-	while (off >= m0->m_len) {
-		off -= m0->m_len;
-		m0 = m0->m_next;
-		if (m0 == NULL)
-			return (0);  /* bogus ip_hl! */
-	}
-	if (m0->m_len < off + 4)
-		return (0);
-
-	switch (proto) {
-	case IPPROTO_TCP:
-	case IPPROTO_UDP: {
-		struct udphdr *udp;
-
-		udp = (struct udphdr *)(mtod(m0, caddr_t) + off);
-		fin->fi_sport = udp->uh_sport;
-		fin->fi_dport = udp->uh_dport;
-		fin->fi_proto = proto;
-		}
-		break;
-
-#ifdef ALTQ_IPSEC
-	case IPPROTO_ESP:
-		if (fin->fi_gpi == 0){
-			u_int32_t *gpi;
-
-			gpi = (u_int32_t *)(mtod(m0, caddr_t) + off);
-			fin->fi_gpi   = *gpi;
-		}
-		fin->fi_proto = proto;
-		break;
-
-	case IPPROTO_AH: {
-			/* get next header and header length */
-			struct _opt6 *opt6;
-
-			opt6 = (struct _opt6 *)(mtod(m0, caddr_t) + off);
-			proto = opt6->opt6_nxt;
-			off += 8 + (opt6->opt6_hlen * 4);
-			if (fin->fi_gpi == 0 && m0->m_len >= off + 8)
-				fin->fi_gpi = opt6->ah_spi;
-		}
-		/* goto the next header */
-		goto again;
-#endif  /* ALTQ_IPSEC */
-
-	default:
-		fin->fi_proto = proto;
-		return (0);
-	}
-
-	/* if this is a first fragment, cache it. */
-	if (ip_off & IP_MF)
-		ip4f_cache(ip, fin);
-
-	return (1);
-}
-
-#ifdef INET6
-static int
-extract_ports6(m, ip6, fin6)
-	struct mbuf *m;
-	struct ip6_hdr *ip6;
-	struct flowinfo_in6 *fin6;
-{
-	struct mbuf *m0;
-	int	off;
-	u_int8_t proto;
-
-	fin6->fi6_gpi   = 0;
-	fin6->fi6_sport = 0;
-	fin6->fi6_dport = 0;
-
-	/* locate the mbuf containing the protocol header */
-	for (m0 = m; m0 != NULL; m0 = m0->m_next)
-		if (((caddr_t)ip6 >= m0->m_data) &&
-		    ((caddr_t)ip6 < m0->m_data + m0->m_len))
-			break;
-	if (m0 == NULL) {
-#ifdef ALTQ_DEBUG
-		printf("extract_ports6: can't locate header! ip6=%p\n", ip6);
-#endif
-		return (0);
-	}
-	off = ((caddr_t)ip6 - m0->m_data) + sizeof(struct ip6_hdr);
-
-	proto = ip6->ip6_nxt;
-	do {
-		while (off >= m0->m_len) {
-			off -= m0->m_len;
-			m0 = m0->m_next;
-			if (m0 == NULL)
-				return (0);
-		}
-		if (m0->m_len < off + 4)
-			return (0);
-
-		switch (proto) {
-		case IPPROTO_TCP:
-		case IPPROTO_UDP: {
-			struct udphdr *udp;
-
-			udp = (struct udphdr *)(mtod(m0, caddr_t) + off);
-			fin6->fi6_sport = udp->uh_sport;
-			fin6->fi6_dport = udp->uh_dport;
-			fin6->fi6_proto = proto;
-			}
-			return (1);
-
-		case IPPROTO_ESP:
-			if (fin6->fi6_gpi == 0) {
-				u_int32_t *gpi;
-
-				gpi = (u_int32_t *)(mtod(m0, caddr_t) + off);
-				fin6->fi6_gpi   = *gpi;
-			}
-			fin6->fi6_proto = proto;
-			return (1);
-
-		case IPPROTO_AH: {
-			/* get next header and header length */
-			struct _opt6 *opt6;
-
-			opt6 = (struct _opt6 *)(mtod(m0, caddr_t) + off);
-			if (fin6->fi6_gpi == 0 && m0->m_len >= off + 8)
-				fin6->fi6_gpi = opt6->ah_spi;
-			proto = opt6->opt6_nxt;
-			off += 8 + (opt6->opt6_hlen * 4);
-			/* goto the next header */
-			break;
-			}
-
-		case IPPROTO_HOPOPTS:
-		case IPPROTO_ROUTING:
-		case IPPROTO_DSTOPTS: {
-			/* get next header and header length */
-			struct _opt6 *opt6;
-
-			opt6 = (struct _opt6 *)(mtod(m0, caddr_t) + off);
-			proto = opt6->opt6_nxt;
-			off += (opt6->opt6_hlen + 1) * 8;
-			/* goto the next header */
-			break;
-			}
-
-		case IPPROTO_FRAGMENT:
-			/* ipv6 fragmentations are not supported yet */
-		default:
-			fin6->fi6_proto = proto;
-			return (0);
-		}
-	} while (1);
-	/*NOTREACHED*/
-}
-#endif /* INET6 */
-
-/*
- * altq common classifier
- */
-int
-acc_add_filter(classifier, filter, class, phandle)
-	struct acc_classifier *classifier;
-	struct flow_filter *filter;
-	void	*class;
-	u_long	*phandle;
-{
-	struct acc_filter *afp, *prev, *tmp;
-	int	i, s;
-
-#ifdef INET6
-	if (filter->ff_flow.fi_family != AF_INET &&
-	    filter->ff_flow.fi_family != AF_INET6)
-		return (EINVAL);
-#else
-	if (filter->ff_flow.fi_family != AF_INET)
-		return (EINVAL);
-#endif
-
-	MALLOC(afp, struct acc_filter *, sizeof(struct acc_filter),
-	       M_DEVBUF, M_WAITOK);
-	if (afp == NULL)
-		return (ENOMEM);
-	bzero(afp, sizeof(struct acc_filter));
-
-	afp->f_filter = *filter;
-	afp->f_class = class;
-
-	i = ACC_WILDCARD_INDEX;
-	if (filter->ff_flow.fi_family == AF_INET) {
-		struct flow_filter *filter4 = &afp->f_filter;
-
-		/*
-		 * if address is 0, it's a wildcard.  if address mask
-		 * isn't set, use full mask.
-		 */
-		if (filter4->ff_flow.fi_dst.s_addr == 0)
-			filter4->ff_mask.mask_dst.s_addr = 0;
-		else if (filter4->ff_mask.mask_dst.s_addr == 0)
-			filter4->ff_mask.mask_dst.s_addr = 0xffffffff;
-		if (filter4->ff_flow.fi_src.s_addr == 0)
-			filter4->ff_mask.mask_src.s_addr = 0;
-		else if (filter4->ff_mask.mask_src.s_addr == 0)
-			filter4->ff_mask.mask_src.s_addr = 0xffffffff;
-
-		/* clear extra bits in addresses  */
-		   filter4->ff_flow.fi_dst.s_addr &=
-		       filter4->ff_mask.mask_dst.s_addr;
-		   filter4->ff_flow.fi_src.s_addr &=
-		       filter4->ff_mask.mask_src.s_addr;
-
-		/*
-		 * if dst address is a wildcard, use hash-entry
-		 * ACC_WILDCARD_INDEX.
-		 */
-		if (filter4->ff_mask.mask_dst.s_addr != 0xffffffff)
-			i = ACC_WILDCARD_INDEX;
-		else
-			i = ACC_GET_HASH_INDEX(filter4->ff_flow.fi_dst.s_addr);
-	}
-#ifdef INET6
-	else if (filter->ff_flow.fi_family == AF_INET6) {
-		struct flow_filter6 *filter6 =
-			(struct flow_filter6 *)&afp->f_filter;
-#ifndef IN6MASK0 /* taken from kame ipv6 */
-#define	IN6MASK0	{{{ 0, 0, 0, 0 }}}
-#define	IN6MASK128	{{{ 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff }}}
-		const struct in6_addr in6mask0 = IN6MASK0;
-		const struct in6_addr in6mask128 = IN6MASK128;
-#endif
-
-		if (IN6_IS_ADDR_UNSPECIFIED(&filter6->ff_flow6.fi6_dst))
-			filter6->ff_mask6.mask6_dst = in6mask0;
-		else if (IN6_IS_ADDR_UNSPECIFIED(&filter6->ff_mask6.mask6_dst))
-			filter6->ff_mask6.mask6_dst = in6mask128;
-		if (IN6_IS_ADDR_UNSPECIFIED(&filter6->ff_flow6.fi6_src))
-			filter6->ff_mask6.mask6_src = in6mask0;
-		else if (IN6_IS_ADDR_UNSPECIFIED(&filter6->ff_mask6.mask6_src))
-			filter6->ff_mask6.mask6_src = in6mask128;
-
-		/* clear extra bits in addresses  */
-		for (i = 0; i < 16; i++)
-			filter6->ff_flow6.fi6_dst.s6_addr[i] &=
-			    filter6->ff_mask6.mask6_dst.s6_addr[i];
-		for (i = 0; i < 16; i++)
-			filter6->ff_flow6.fi6_src.s6_addr[i] &=
-			    filter6->ff_mask6.mask6_src.s6_addr[i];
-
-		if (filter6->ff_flow6.fi6_flowlabel == 0)
-			i = ACC_WILDCARD_INDEX;
-		else
-			i = ACC_GET_HASH_INDEX(filter6->ff_flow6.fi6_flowlabel);
-	}
-#endif /* INET6 */
-
-	afp->f_handle = get_filt_handle(classifier, i);
-
-	/* update filter bitmask */
-	afp->f_fbmask = filt2fibmask(filter);
-	classifier->acc_fbmask |= afp->f_fbmask;
-
-	/*
-	 * add this filter to the filter list.
-	 * filters are ordered from the highest rule number.
-	 */
-	s = splimp();
-	prev = NULL;
-	LIST_FOREACH(tmp, &classifier->acc_filters[i], f_chain) {
-		if (tmp->f_filter.ff_ruleno > afp->f_filter.ff_ruleno)
-			prev = tmp;
-		else
-			break;
-	}
-	if (prev == NULL)
-		LIST_INSERT_HEAD(&classifier->acc_filters[i], afp, f_chain);
-	else
-		LIST_INSERT_AFTER(prev, afp, f_chain);
-	splx(s);
-
-	*phandle = afp->f_handle;
-	return (0);
-}
-
-int
-acc_delete_filter(classifier, handle)
-	struct acc_classifier *classifier;
-	u_long handle;
-{
-	struct acc_filter *afp;
-	int	s;
-
-	if ((afp = filth_to_filtp(classifier, handle)) == NULL)
-		return (EINVAL);
-
-	s = splimp();
-	LIST_REMOVE(afp, f_chain);
-	splx(s);
-
-	FREE(afp, M_DEVBUF);
-
-	/* todo: update filt_bmask */
-
-	return (0);
-}
-
-/*
- * delete filters referencing to the specified class.
- * if the all flag is not 0, delete all the filters.
- */
-int
-acc_discard_filters(classifier, class, all)
-	struct acc_classifier *classifier;
-	void	*class;
-	int	all;
-{
-	struct acc_filter *afp;
-	int	i, s;
-
-#if 1 /* PFALTQ */
-	if (classifier == NULL)
-		return (0);
-#endif
-	s = splimp();
-	for (i = 0; i < ACC_FILTER_TABLESIZE; i++) {
-		do {
-			LIST_FOREACH(afp, &classifier->acc_filters[i], f_chain)
-				if (all || afp->f_class == class) {
-					LIST_REMOVE(afp, f_chain);
-					FREE(afp, M_DEVBUF);
-					/* start again from the head */
-					break;
-				}
-		} while (afp != NULL);
-	}
-	splx(s);
-
-	if (all)
-		classifier->acc_fbmask = 0;
-
-	return (0);
-}
-
-void *
-acc_classify(clfier, m, af)
-	void *clfier;
-	struct mbuf *m;
-	int af;
-{
-	struct acc_classifier *classifier;
-	struct flowinfo flow;
-	struct acc_filter *afp;
-	int	i;
-
-	classifier = (struct acc_classifier *)clfier;
-	altq_extractflow(m, af, &flow, classifier->acc_fbmask);
-
-	if (flow.fi_family == AF_INET) {
-		struct flowinfo_in *fp = (struct flowinfo_in *)&flow;
-
-		if ((classifier->acc_fbmask & FIMB4_ALL) == FIMB4_TOS) {
-			/* only tos is used */
-			LIST_FOREACH(afp,
-				 &classifier->acc_filters[ACC_WILDCARD_INDEX],
-				 f_chain)
-				if (apply_tosfilter4(afp->f_fbmask,
-						     &afp->f_filter, fp))
-					/* filter matched */
-					return (afp->f_class);
-		} else if ((classifier->acc_fbmask &
-			(~(FIMB4_PROTO|FIMB4_SPORT|FIMB4_DPORT) & FIMB4_ALL))
-		    == 0) {
-			/* only proto and ports are used */
-			LIST_FOREACH(afp,
-				 &classifier->acc_filters[ACC_WILDCARD_INDEX],
-				 f_chain)
-				if (apply_ppfilter4(afp->f_fbmask,
-						    &afp->f_filter, fp))
-					/* filter matched */
-					return (afp->f_class);
-		} else {
-			/* get the filter hash entry from its dest address */
-			i = ACC_GET_HASH_INDEX(fp->fi_dst.s_addr);
-			do {
-				/*
-				 * go through this loop twice.  first for dst
-				 * hash, second for wildcards.
-				 */
-				LIST_FOREACH(afp, &classifier->acc_filters[i],
-					     f_chain)
-					if (apply_filter4(afp->f_fbmask,
-							  &afp->f_filter, fp))
-						/* filter matched */
-						return (afp->f_class);
-
-				/*
-				 * check again for filters with a dst addr
-				 * wildcard.
-				 * (daddr == 0 || dmask != 0xffffffff).
-				 */
-				if (i != ACC_WILDCARD_INDEX)
-					i = ACC_WILDCARD_INDEX;
-				else
-					break;
-			} while (1);
-		}
-	}
-#ifdef INET6
-	else if (flow.fi_family == AF_INET6) {
-		struct flowinfo_in6 *fp6 = (struct flowinfo_in6 *)&flow;
-
-		/* get the filter hash entry from its flow ID */
-		if (fp6->fi6_flowlabel != 0)
-			i = ACC_GET_HASH_INDEX(fp6->fi6_flowlabel);
-		else
-			/* flowlable can be zero */
-			i = ACC_WILDCARD_INDEX;
-
-		/* go through this loop twice.  first for flow hash, second
-		   for wildcards. */
-		do {
-			LIST_FOREACH(afp, &classifier->acc_filters[i], f_chain)
-				if (apply_filter6(afp->f_fbmask,
-					(struct flow_filter6 *)&afp->f_filter,
-					fp6))
-					/* filter matched */
-					return (afp->f_class);
-
-			/*
-			 * check again for filters with a wildcard.
-			 */
-			if (i != ACC_WILDCARD_INDEX)
-				i = ACC_WILDCARD_INDEX;
-			else
-				break;
-		} while (1);
-	}
-#endif /* INET6 */
-
-	/* no filter matched */
-	return (NULL);
-}
-
-static int
-apply_filter4(fbmask, filt, pkt)
-	u_int32_t	fbmask;
-	struct flow_filter *filt;
-	struct flowinfo_in *pkt;
-{
-	if (filt->ff_flow.fi_family != AF_INET)
-		return (0);
-	if ((fbmask & FIMB4_SPORT) && filt->ff_flow.fi_sport != pkt->fi_sport)
-		return (0);
-	if ((fbmask & FIMB4_DPORT) && filt->ff_flow.fi_dport != pkt->fi_dport)
-		return (0);
-	if ((fbmask & FIMB4_DADDR) &&
-	    filt->ff_flow.fi_dst.s_addr !=
-	    (pkt->fi_dst.s_addr & filt->ff_mask.mask_dst.s_addr))
-		return (0);
-	if ((fbmask & FIMB4_SADDR) &&
-	    filt->ff_flow.fi_src.s_addr !=
-	    (pkt->fi_src.s_addr & filt->ff_mask.mask_src.s_addr))
-		return (0);
-	if ((fbmask & FIMB4_PROTO) && filt->ff_flow.fi_proto != pkt->fi_proto)
-		return (0);
-	if ((fbmask & FIMB4_TOS) && filt->ff_flow.fi_tos !=
-	    (pkt->fi_tos & filt->ff_mask.mask_tos))
-		return (0);
-	if ((fbmask & FIMB4_GPI) && filt->ff_flow.fi_gpi != (pkt->fi_gpi))
-		return (0);
-	/* match */
-	return (1);
-}
-
-/*
- * filter matching function optimized for a common case that checks
- * only protocol and port numbers
- */
-static int
-apply_ppfilter4(fbmask, filt, pkt)
-	u_int32_t	fbmask;
-	struct flow_filter *filt;
-	struct flowinfo_in *pkt;
-{
-	if (filt->ff_flow.fi_family != AF_INET)
-		return (0);
-	if ((fbmask & FIMB4_SPORT) && filt->ff_flow.fi_sport != pkt->fi_sport)
-		return (0);
-	if ((fbmask & FIMB4_DPORT) && filt->ff_flow.fi_dport != pkt->fi_dport)
-		return (0);
-	if ((fbmask & FIMB4_PROTO) && filt->ff_flow.fi_proto != pkt->fi_proto)
-		return (0);
-	/* match */
-	return (1);
-}
-
-/*
- * filter matching function only for tos field.
- */
-static int
-apply_tosfilter4(fbmask, filt, pkt)
-	u_int32_t	fbmask;
-	struct flow_filter *filt;
-	struct flowinfo_in *pkt;
-{
-	if (filt->ff_flow.fi_family != AF_INET)
-		return (0);
-	if ((fbmask & FIMB4_TOS) && filt->ff_flow.fi_tos !=
-	    (pkt->fi_tos & filt->ff_mask.mask_tos))
-		return (0);
-	/* match */
-	return (1);
-}
-
-#ifdef INET6
-static int
-apply_filter6(fbmask, filt, pkt)
-	u_int32_t	fbmask;
-	struct flow_filter6 *filt;
-	struct flowinfo_in6 *pkt;
-{
-	int i;
-
-	if (filt->ff_flow6.fi6_family != AF_INET6)
-		return (0);
-	if ((fbmask & FIMB6_FLABEL) &&
-	    filt->ff_flow6.fi6_flowlabel != pkt->fi6_flowlabel)
-		return (0);
-	if ((fbmask & FIMB6_PROTO) &&
-	    filt->ff_flow6.fi6_proto != pkt->fi6_proto)
-		return (0);
-	if ((fbmask & FIMB6_SPORT) &&
-	    filt->ff_flow6.fi6_sport != pkt->fi6_sport)
-		return (0);
-	if ((fbmask & FIMB6_DPORT) &&
-	    filt->ff_flow6.fi6_dport != pkt->fi6_dport)
-		return (0);
-	if (fbmask & FIMB6_SADDR) {
-		for (i = 0; i < 4; i++)
-			if (filt->ff_flow6.fi6_src.s6_addr32[i] !=
-			    (pkt->fi6_src.s6_addr32[i] &
-			     filt->ff_mask6.mask6_src.s6_addr32[i]))
-				return (0);
-	}
-	if (fbmask & FIMB6_DADDR) {
-		for (i = 0; i < 4; i++)
-			if (filt->ff_flow6.fi6_dst.s6_addr32[i] !=
-			    (pkt->fi6_dst.s6_addr32[i] &
-			     filt->ff_mask6.mask6_dst.s6_addr32[i]))
-				return (0);
-	}
-	if ((fbmask & FIMB6_TCLASS) &&
-	    filt->ff_flow6.fi6_tclass !=
-	    (pkt->fi6_tclass & filt->ff_mask6.mask6_tclass))
-		return (0);
-	if ((fbmask & FIMB6_GPI) &&
-	    filt->ff_flow6.fi6_gpi != pkt->fi6_gpi)
-		return (0);
-	/* match */
-	return (1);
-}
-#endif /* INET6 */
-
-/*
- *  filter handle:
- *	bit 20-28: index to the filter hash table
- *	bit  0-19: unique id in the hash bucket.
- */
-static u_long
-get_filt_handle(classifier, i)
-	struct acc_classifier *classifier;
-	int	i;
-{
-	static u_long handle_number = 1;
-	u_long 	handle;
-	struct acc_filter *afp;
-
-	while (1) {
-		handle = handle_number++ & 0x000fffff;
-
-		if (LIST_EMPTY(&classifier->acc_filters[i]))
-			break;
-
-		LIST_FOREACH(afp, &classifier->acc_filters[i], f_chain)
-			if ((afp->f_handle & 0x000fffff) == handle)
-				break;
-		if (afp == NULL)
-			break;
-		/* this handle is already used, try again */
-	}
-
-	return ((i << 20) | handle);
-}
-
-/* convert filter handle to filter pointer */
-static struct acc_filter *
-filth_to_filtp(classifier, handle)
-	struct acc_classifier *classifier;
-	u_long handle;
-{
-	struct acc_filter *afp;
-	int	i;
-
-	i = ACC_GET_HINDEX(handle);
-
-	LIST_FOREACH(afp, &classifier->acc_filters[i], f_chain)
-		if (afp->f_handle == handle)
-			return (afp);
-
-	return (NULL);
-}
-
-/* create flowinfo bitmask */
-static u_int32_t
-filt2fibmask(filt)
-	struct flow_filter *filt;
-{
-	u_int32_t mask = 0;
-#ifdef INET6
-	struct flow_filter6 *filt6;
-#endif
-
-	switch (filt->ff_flow.fi_family) {
-	case AF_INET:
-		if (filt->ff_flow.fi_proto != 0)
-			mask |= FIMB4_PROTO;
-		if (filt->ff_flow.fi_tos != 0)
-			mask |= FIMB4_TOS;
-		if (filt->ff_flow.fi_dst.s_addr != 0)
-			mask |= FIMB4_DADDR;
-		if (filt->ff_flow.fi_src.s_addr != 0)
-			mask |= FIMB4_SADDR;
-		if (filt->ff_flow.fi_sport != 0)
-			mask |= FIMB4_SPORT;
-		if (filt->ff_flow.fi_dport != 0)
-			mask |= FIMB4_DPORT;
-		if (filt->ff_flow.fi_gpi != 0)
-			mask |= FIMB4_GPI;
-		break;
-#ifdef INET6
-	case AF_INET6:
-		filt6 = (struct flow_filter6 *)filt;
-
-		if (filt6->ff_flow6.fi6_proto != 0)
-			mask |= FIMB6_PROTO;
-		if (filt6->ff_flow6.fi6_tclass != 0)
-			mask |= FIMB6_TCLASS;
-		if (!IN6_IS_ADDR_UNSPECIFIED(&filt6->ff_flow6.fi6_dst))
-			mask |= FIMB6_DADDR;
-		if (!IN6_IS_ADDR_UNSPECIFIED(&filt6->ff_flow6.fi6_src))
-			mask |= FIMB6_SADDR;
-		if (filt6->ff_flow6.fi6_sport != 0)
-			mask |= FIMB6_SPORT;
-		if (filt6->ff_flow6.fi6_dport != 0)
-			mask |= FIMB6_DPORT;
-		if (filt6->ff_flow6.fi6_gpi != 0)
-			mask |= FIMB6_GPI;
-		if (filt6->ff_flow6.fi6_flowlabel != 0)
-			mask |= FIMB6_FLABEL;
-		break;
-#endif /* INET6 */
-	}
-	return (mask);
-}
-
-
-/*
- * helper functions to handle IPv4 fragments.
- * currently only in-sequence fragments are handled.
- *	- fragment info is cached in a LRU list.
- *	- when a first fragment is found, cache its flow info.
- *	- when a non-first fragment is found, lookup the cache.
- */
-
-struct ip4_frag {
-    TAILQ_ENTRY(ip4_frag) ip4f_chain;
-    char    ip4f_valid;
-    u_short ip4f_id;
-    struct flowinfo_in ip4f_info;
-};
-
-static TAILQ_HEAD(ip4f_list, ip4_frag) ip4f_list; /* IPv4 fragment cache */
-
-#define	IP4F_TABSIZE		16	/* IPv4 fragment cache size */
-
-
-static void
-ip4f_cache(ip, fin)
-	struct ip *ip;
-	struct flowinfo_in *fin;
-{
-	struct ip4_frag *fp;
-
-	if (TAILQ_EMPTY(&ip4f_list)) {
-		/* first time call, allocate fragment cache entries. */
-		if (ip4f_init() < 0)
-			/* allocation failed! */
-			return;
-	}
-
-	fp = ip4f_alloc();
-	fp->ip4f_id = ip->ip_id;
-	fp->ip4f_info.fi_proto = ip->ip_p;
-	fp->ip4f_info.fi_src.s_addr = ip->ip_src.s_addr;
-	fp->ip4f_info.fi_dst.s_addr = ip->ip_dst.s_addr;
-
-	/* save port numbers */
-	fp->ip4f_info.fi_sport = fin->fi_sport;
-	fp->ip4f_info.fi_dport = fin->fi_dport;
-	fp->ip4f_info.fi_gpi   = fin->fi_gpi;
-}
-
-static int
-ip4f_lookup(ip, fin)
-	struct ip *ip;
-	struct flowinfo_in *fin;
-{
-	struct ip4_frag *fp;
-
-	for (fp = TAILQ_FIRST(&ip4f_list); fp != NULL && fp->ip4f_valid;
-	     fp = TAILQ_NEXT(fp, ip4f_chain))
-		if (ip->ip_id == fp->ip4f_id &&
-		    ip->ip_src.s_addr == fp->ip4f_info.fi_src.s_addr &&
-		    ip->ip_dst.s_addr == fp->ip4f_info.fi_dst.s_addr &&
-		    ip->ip_p == fp->ip4f_info.fi_proto) {
-
-			/* found the matching entry */
-			fin->fi_sport = fp->ip4f_info.fi_sport;
-			fin->fi_dport = fp->ip4f_info.fi_dport;
-			fin->fi_gpi   = fp->ip4f_info.fi_gpi;
-
-			if ((ntohs(ip->ip_off) & IP_MF) == 0)
-				/* this is the last fragment,
-				   release the entry. */
-				ip4f_free(fp);
-
-			return (1);
-		}
-
-	/* no matching entry found */
-	return (0);
-}
-
-static int
-ip4f_init(void)
-{
-	struct ip4_frag *fp;
-	int i;
-
-	TAILQ_INIT(&ip4f_list);
-	for (i=0; i<IP4F_TABSIZE; i++) {
-		MALLOC(fp, struct ip4_frag *, sizeof(struct ip4_frag),
-		       M_DEVBUF, M_NOWAIT);
-		if (fp == NULL) {
-			printf("ip4f_init: can't alloc %dth entry!\n", i);
-			if (i == 0)
-				return (-1);
-			return (0);
-		}
-		fp->ip4f_valid = 0;
-		TAILQ_INSERT_TAIL(&ip4f_list, fp, ip4f_chain);
-	}
-	return (0);
-}
-
-static struct ip4_frag *
-ip4f_alloc(void)
-{
-	struct ip4_frag *fp;
-
-	/* reclaim an entry at the tail, put it at the head */
-	fp = TAILQ_LAST(&ip4f_list, ip4f_list);
-	TAILQ_REMOVE(&ip4f_list, fp, ip4f_chain);
-	fp->ip4f_valid = 1;
-	TAILQ_INSERT_HEAD(&ip4f_list, fp, ip4f_chain);
-	return (fp);
-}
-
-static void
-ip4f_free(fp)
-	struct ip4_frag *fp;
-{
-	TAILQ_REMOVE(&ip4f_list, fp, ip4f_chain);
-	fp->ip4f_valid = 0;
-	TAILQ_INSERT_TAIL(&ip4f_list, fp, ip4f_chain);
-}
-
 
 /*
  * read and write diffserv field in IPv4 or IPv6 header
