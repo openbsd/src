@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.5 2001/09/26 23:02:10 drahn Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.6 2002/01/03 01:11:10 art Exp $	*/
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -47,11 +47,11 @@
 
 #ifdef __STDC__
 #define _CAT(x,y) x##y
-#define	__ENTRY(p,x)	ENTRY(p##x)
 #else
 #define _CAT(x,y) x/**/y
-#define	__ENTRY(p,x)	ENTRY(p/**/x)
 #endif
+
+#define	__ENTRY(p,x)	ENTRY(_CAT(p,x)) ; .weak x; x = _CAT(p,x)
 
 /*
  * ERROR branches to cerror.  This is done with a macro so that I can
@@ -132,26 +132,9 @@
  */
 #define __SYSENTRY(p,x) __ENTRY(p,x)
 
-#ifdef	_THREAD_SAFE
-/*
- * For the thread_safe versions, we prepend _thread_sys_ to the function
- * name so that the 'C' wrapper can go around the real name.
- */
 #define	SYSCALL(x)		__SYSCALL(_thread_sys_,x)
 #define	RSYSCALL(x)		__RSYSCALL(_thread_sys_,x)
 #define	RSYSCALL_NOERROR(x,y)	__RSYSCALL_NOERROR(_thread_sys_,x,y)
 #define	PSEUDO(x,y)		__PSEUDO(_thread_sys_,x,y)
 #define	PSEUDO_NOERROR(x,y)	__PSEUDO_NOERROR(_thread_sys_,x,y)
 #define	SYSENTRY(x)		__SYSENTRY(_thread_sys_,x)
-#else	/* _THREAD_SAFE */
-/*
- * The non-threaded library defaults to traditional syscalss where
- * the function name matches the syscall name.
- */
-#define	SYSCALL(x)		__SYSCALL(,x)
-#define	RSYSCALL(x)		__RSYSCALL(,x)
-#define	RSYSCALL_NOERROR(x,y)	__RSYSCALL_NOERROR(,x,y)
-#define	PSEUDO(x,y)		__PSEUDO(,x,y)
-#define	PSEUDO_NOERROR(x,y)	__PSEUDO_NOERROR(,x,y)
-#define	SYSENTRY(x)		__SYSENTRY(,x)
-#endif	/* _THREAD_SAFE */
