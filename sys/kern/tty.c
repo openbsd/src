@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.7 1996/06/17 05:25:03 downsj Exp $	*/
+/*	$OpenBSD: tty.c,v 1.8 1996/07/31 18:34:36 deraadt Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -58,6 +58,8 @@
 #include <sys/malloc.h>
 #include <sys/signalvar.h>
 #include <sys/resourcevar.h>
+
+#include <sys/namei.h>
 
 #include <vm/vm.h>
 
@@ -708,20 +710,29 @@ ttioctl(tp, cmd, data, flag, p)
 		ttyflush(tp, flags);
 		break;
 	}
-	case TIOCCONS:			/* become virtual console */
+	case TIOCCONS: {		/* become virtual console */
+		struct nameidata nid;
+
+		/* ensure user can open the real console */
+		NDINIT(&nid, LOOKUP, FOLLOW, UIO_SYSSPACE, "/dev/console", p);
+		error = namei(&nid);
+		if (error)
+			return (error);
+		error = VOP_ACCESS(nid.ni_vp, VREAD, p->p_ucred, p);
+		vrele(nid.ni_vp);
+		if (error)
+			return (error);
+
 		if (*(int *)data) {
 			if (constty && constty != tp &&
 			    ISSET(constty->t_state, TS_CARR_ON | TS_ISOPEN) ==
 			    (TS_CARR_ON | TS_ISOPEN))
 				return (EBUSY);
-#ifndef	UCONSOLE
-			if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
-				return (error);
-#endif
 			constty = tp;
 		} else if (tp == constty)
 			constty = NULL;
 		break;
+	}
 	case TIOCDRAIN:			/* wait till output drained */
 		if ((error = ttywait(tp)) != 0)
 			return (error);
