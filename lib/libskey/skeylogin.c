@@ -11,7 +11,7 @@
  *
  * S/KEY verification check, lookups, and authentication.
  * 
- * $OpenBSD: skeylogin.c,v 1.20 1997/07/27 22:11:41 millert Exp $
+ * $OpenBSD: skeylogin.c,v 1.21 1997/09/04 18:19:47 millert Exp $
  */
 
 #include <sys/param.h>
@@ -300,7 +300,6 @@ skeyverify(mp, response)
 	/* Reread the file record NOW */
 	(void)fseek(mp->keyfile, mp->recstart, SEEK_SET);
 	if (fgets(mp->buf, sizeof(mp->buf), mp->keyfile) != mp->buf) {
-		(void)flock(fileno(mp->keyfile), LOCK_UN);
 		(void)fclose(mp->keyfile);
 		return(-1);
 	}
@@ -317,7 +316,6 @@ skeyverify(mp, response)
 	/* Do actual comparison */
 	if (memcmp(filekey, fkey, SKEY_BINKEY_SIZE) != 0){
 		/* Wrong response */
-		(void)flock(fileno(mp->keyfile), LOCK_UN);
 		(void)fclose(mp->keyfile);
 		return(1);
 	}
@@ -339,7 +337,6 @@ skeyverify(mp, response)
 			      mp->logname, skey_get_algorithm(), mp->n,
 			      mp->seed, mp->val, tbuf);
 
-	(void)flock(fileno(mp->keyfile), LOCK_UN);
 	(void)fclose(mp->keyfile);
 	
 	return(0);
