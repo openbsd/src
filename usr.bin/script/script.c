@@ -1,4 +1,4 @@
-/*	$OpenBSD: script.c,v 1.6 1997/07/25 21:05:40 mickey Exp $	*/
+/*	$OpenBSD: script.c,v 1.7 1997/07/25 22:03:08 mickey Exp $	*/
 /*	$NetBSD: script.c,v 1.3 1994/12/21 08:55:43 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)script.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: script.c,v 1.6 1997/07/25 21:05:40 mickey Exp $";
+static char rcsid[] = "$OpenBSD: script.c,v 1.7 1997/07/25 22:03:08 mickey Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -65,6 +65,7 @@ static char rcsid[] = "$OpenBSD: script.c,v 1.6 1997/07/25 21:05:40 mickey Exp $
 #include <unistd.h>
 
 #include <util.h>
+#include <err.h>
 
 FILE	*fscript;
 int	master, slave;
@@ -77,7 +78,6 @@ struct	termios tt;
 __dead	void done __P((void));
 	void dooutput __P((void));
 	void doshell __P((void));
-	void err __P((const char *, ...));
 	void fail __P((void));
 	void finish __P((int));
 	void scriptflush __P((int));
@@ -113,12 +113,12 @@ main(argc, argv)
 		fname = "typescript";
 
 	if ((fscript = fopen(fname, aflg ? "a" : "w")) == NULL)
-		err("%s: %s", fname, strerror(errno));
+		err(1, fname);
 
 	(void)tcgetattr(STDIN_FILENO, &tt);
 	(void)ioctl(STDIN_FILENO, TIOCGWINSZ, &win);
 	if (openpty(&master, &slave, NULL, &tt, &win) == -1)
-		err("openpty: %s", strerror(errno));
+		err(1, "openpty");
 
 	(void)printf("Script started, output file is %s\n", fname);
 	rtt = tt;
@@ -247,31 +247,3 @@ done()
 	exit(0);
 }
 
-#ifdef __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-
-void
-#ifdef __STDC__
-err(const char *fmt, ...)
-#else
-err(fmt, va_alist)
-	char *fmt;
-	va_dcl
-#endif
-{
-	va_list ap;
-#ifdef __STDC__
-	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
-	(void)fprintf(stderr, "script: ");
-	(void)vfprintf(stderr, fmt, ap);
-	va_end(ap);
-	(void)fprintf(stderr, "\n");
-	exit(1);
-	/* NOTREACHED */
-}
