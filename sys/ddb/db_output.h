@@ -1,4 +1,4 @@
-/*	$NetBSD: db_output.h,v 1.5 1994/10/09 08:19:36 mycroft Exp $	*/
+/*	$NetBSD: db_output.h,v 1.6 1995/10/16 05:28:17 mycroft Exp $	*/
 
 /* 
  * Mach Operating System
@@ -35,4 +35,4 @@
 void db_force_whitespace __P((void));
 int db_print_position __P((void));
 void db_end_line __P((void));
-int db_printf __P((char *, ...));
+void db_printf __P((const char *, ...));

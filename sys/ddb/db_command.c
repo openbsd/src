@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.13 1994/10/09 08:29:59 mycroft Exp $	*/
+/*	$NetBSD: db_command.c,v 1.15 1995/10/26 14:52:33 gwr Exp $	*/
 
 /* 
  * Mach Operating System
@@ -31,6 +31,8 @@
  */
 #include <sys/param.h>
 #include <sys/proc.h>
+
+#include <vm/vm.h>
 
 #include <machine/db_machdep.h>		/* type definitions */
 
@@ -291,7 +293,7 @@ db_map_print_cmd(addr, have_addr, count, modif)
         if (modif[0] == 'f')
                 full = TRUE;
 
-        _vm_map_print(addr, full, db_printf);
+        _vm_map_print((vm_map_t)addr, full, db_printf);
 }
 
 /*ARGSUSED*/
@@ -308,7 +310,7 @@ db_object_print_cmd(addr, have_addr, count, modif)
         if (modif[0] == 'f')
                 full = TRUE;
 
-        _vm_object_print(addr, full, db_printf);
+        _vm_object_print((vm_object_t)addr, full, db_printf);
 }
 
 /*

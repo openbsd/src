@@ -1,4 +1,4 @@
-/*	$NetBSD: db_output.c,v 1.8 1994/06/29 22:41:41 deraadt Exp $	*/
+/*	$NetBSD: db_output.c,v 1.9 1995/10/16 05:28:16 mycroft Exp $	*/
 
 /* 
  * Mach Operating System
@@ -186,6 +186,7 @@ db_print_position()
 extern int	db_radix;
 
 /*VARARGS1*/
+void
 #ifdef __STDC__
 db_printf(char *fmt, ...)
 #else
@@ -202,6 +203,7 @@ db_printf(fmt, va_alist)
 /* alternate name */
 
 /*VARARGS1*/
+void
 #ifdef __STDC__
 kdbprintf(char *fmt, ...)
 #else

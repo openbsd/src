@@ -1,4 +1,4 @@
-/*	$NetBSD: quad.h,v 1.4.2.1 1995/10/12 15:17:26 jtc Exp $	*/
+/*	$NetBSD: quad.h,v 1.5 1995/10/12 15:13:58 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993

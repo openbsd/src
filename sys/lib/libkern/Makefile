@@ -1,9 +1,13 @@
-#	$NetBSD: Makefile,v 1.23 1995/10/07 09:56:54 mycroft Exp $
+#	$NetBSD: Makefile,v 1.24 1995/10/20 01:10:06 cgd Exp $
 
 LIB=	kern
 NOPIC=
 
 DIR=${KERNREL}${KERNDIR}
+
+CC=	${KERNCC}
+CFLAGS=	-I${DIR}/arch/${MACHINE_ARCH} \
+	${KERNCFLAGS:S/-D_KERNEL//:S@-I.@-I${KERNREL}.@g}
 
 .if exists (${DIR}/arch/${MACHINE_ARCH}/Makefile.inc)
 .PATH:	${DIR}/arch/${MACHINE_ARCH}
@@ -11,10 +15,6 @@ DIR=${KERNREL}${KERNDIR}
 .endif
 
 .PATH: ${DIR}
-
-CC = ${KERNCC}
-CFLAGS += -I${DIR}/arch/${MACHINE_ARCH} \
-	${KERNCFLAGS:S/-D_KERNEL//:S@-I.@-I${KERNREL}.@g}
 
 .if (${MACHINE_ARCH} != "alpha")
 # Quad support
