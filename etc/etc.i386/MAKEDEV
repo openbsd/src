@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.62 1998/09/02 00:28:18 art Exp $
+#	$OpenBSD: MAKEDEV,v 1.63 1998/09/12 06:34:36 fgsch Exp $
 #	$NetBSD: MAKEDEV,v 1.40 1996/03/31 00:50:47 perry Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -115,7 +115,7 @@ all)
 	sh MAKEDEV lpt0 lpt1 lpt2 ttyC0 ttyC1 ttyC2 ttyC3 ttyC4 ttyC5
 	sh MAKEDEV ipl tun0 tun1 tun2
 	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
-	sh MAKEDEV speaker lkm mms0 lms0 pms0 audio joy0 joy1 apm pcmcia local
+	sh MAKEDEV speaker lkm mms0 lms0 pms0 audio joy0 joy1 apm local
 	sh MAKEDEV random uk0 uk1 ss0 ss1 pctr bktr0 tuner0
 	sh MAKEDEV fd0 fd0B fd0C fd0D fd0E fd0F fd0G fd0H 
 	sh MAKEDEV fd1 fd1B fd1C fd1D fd1E fd1F fd1G fd1H
@@ -573,37 +573,37 @@ random|srandom|urandom|prandom|arandom)
 	chmod 644 random srandom urandom prandom arandom
 	;;
 
-pcmcia*)
-	rm -f pcmcia/bus? pcmcia/chip? pcmcia/slot*
-	mkdir -p pcmcia
-	mknod pcmcia/bus0 c 25 128
-	mknod pcmcia/bus1 c 25 129
-	mknod pcmcia/bus2 c 25 130
-	mknod pcmcia/bus3 c 25 131
-	mknod pcmcia/chip0 c 25 64
-	mknod pcmcia/chip1 c 25 65
-	mknod pcmcia/chip2 c 25 66
-	mknod pcmcia/chip3 c 25 67
-	mknod pcmcia/slot0 c 25 0
-	mknod pcmcia/slot1 c 25 1
-	mknod pcmcia/slot2 c 25 2
-	mknod pcmcia/slot3 c 25 3
-	mknod pcmcia/slot4 c 25 4
-	mknod pcmcia/slot5 c 25 5
-	mknod pcmcia/slot6 c 25 6
-	mknod pcmcia/slot7 c 25 7
-	mknod pcmcia/slot8 c 25 8
-	mknod pcmcia/slot9 c 25 9
-	mknod pcmcia/slot10 c 25 10
-	mknod pcmcia/slot11 c 25 11
-	mknod pcmcia/slot12 c 25 12
-	mknod pcmcia/slot13 c 25 13
-	mknod pcmcia/slot14 c 25 14
-	mknod pcmcia/slot15 c 25 15
-	chown -R root.wheel pcmcia
-	chmod 700 pcmcia
-	chmod 600 pcmcia/*
-	;;
+#pcmcia*)
+#	rm -f pcmcia/bus? pcmcia/chip? pcmcia/slot*
+#	mkdir -p pcmcia
+#	mknod pcmcia/bus0 c 25 128
+#	mknod pcmcia/bus1 c 25 129
+#	mknod pcmcia/bus2 c 25 130
+#	mknod pcmcia/bus3 c 25 131
+#	mknod pcmcia/chip0 c 25 64
+#	mknod pcmcia/chip1 c 25 65
+#	mknod pcmcia/chip2 c 25 66
+#	mknod pcmcia/chip3 c 25 67
+#	mknod pcmcia/slot0 c 25 0
+#	mknod pcmcia/slot1 c 25 1
+#	mknod pcmcia/slot2 c 25 2
+#	mknod pcmcia/slot3 c 25 3
+#	mknod pcmcia/slot4 c 25 4
+#	mknod pcmcia/slot5 c 25 5
+#	mknod pcmcia/slot6 c 25 6
+#	mknod pcmcia/slot7 c 25 7
+#	mknod pcmcia/slot8 c 25 8
+#	mknod pcmcia/slot9 c 25 9
+#	mknod pcmcia/slot10 c 25 10
+#	mknod pcmcia/slot11 c 25 11
+#	mknod pcmcia/slot12 c 25 12
+#	mknod pcmcia/slot13 c 25 13
+#	mknod pcmcia/slot14 c 25 14
+#	mknod pcmcia/slot15 c 25 15
+#	chown -R root.wheel pcmcia
+#	chmod 700 pcmcia
+#	chmod 600 pcmcia/*
+#	;;
 
 uk*)
 	unit=`expr $i : 'uk\(.*\)'`
