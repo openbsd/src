@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.28 2000/01/15 23:56:24 angelos Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.29 2000/02/18 05:23:55 itojun Exp $	*/
 /*      $NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $      */
 
 /*
@@ -81,7 +81,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.28 2000/01/15 23:56:24 angelos Exp $";
+static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.29 2000/02/18 05:23:55 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -588,7 +588,8 @@ printif(ifrm, ifaliases)
 			continue;
 		strncpy(name, ifrp->ifr_name, sizeof(ifrp->ifr_name));
 		if (ifrp->ifr_addr.sa_family == AF_LINK) {
-			ifreq = ifr = *ifrp;
+			memcpy(&ifr, ifrp, sizeof(ifr));
+			ifreq = ifr;
 			if (getinfo(&ifreq) < 0)
 				continue;
 			status(1);
@@ -604,7 +605,7 @@ printif(ifrm, ifaliases)
 			if (ifaliases == 0 && noinet == 0)
 				continue;
 #endif
-			ifr = *ifrp;
+			memcpy(&ifr, ifrp, sizeof(ifr));
 #ifdef INET6
 			/* quickhack: sizeof(ifr) < sizeof(ifr6) */
 			if (ifrp->ifr_addr.sa_family == AF_INET6)
