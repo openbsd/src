@@ -1123,7 +1123,6 @@
 ./usr/libexec/auth/login_krb5-or-pwd
 ./usr/libexec/auth/login_lchpass
 ./usr/libexec/auth/login_passwd
-./usr/libexec/auth/login_radius
 ./usr/libexec/auth/login_reject
 ./usr/libexec/auth/login_skey
 ./usr/libexec/auth/login_snk
