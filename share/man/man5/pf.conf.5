@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.155 2002/12/22 16:23:35 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.156 2002/12/23 13:05:20 mcbride Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -564,7 +564,7 @@ The
 .Pa no
 option prefixed to a translation rule causes packets to remain untranslated,
 much in the same way as
-.Pa drop <direction> quick
+.Pa drop quick
 works in the packet filter (see below).
 .Pp
 If no rule matches the packet, the packet is passed to the filter unmodified.
@@ -667,12 +667,11 @@ generates all needed rule combinations.
 .Bl -tag -width xxxx
 .It Pa in No or Pa out
 The rule applies to incoming or outgoing packets.
-Either
+If neither
 .Pa in
 or
 .Pa out
-must be specified.
-To cover both directions, two rules are needed.
+are specified, the rule will match packets in both directions.
 .It Em log
 In addition to the action specified, a log message is generated.
 All packets for that connection are logged, unless the `keep state'
@@ -1041,8 +1040,7 @@ searches in O(log2 n).
 .Pp
 For instance:
 .Bd -literal
-    block out all
-    block in  all
+    block all
     pass out proto tcp from any to any         flags S/SA keep state
     pass in  proto tcp from any to any port 25 flags S/SA keep state
 .Ed
@@ -1088,7 +1086,7 @@ e.g as created by
 out, creates state, and matches incoming echo replies correctly to states.
 .Pp
 Note:
-.Pa nat No or Pa rdr
+.Pa nat, binat No and Pa rdr
 rules implicitly create state for connections.
 .Sh STATE MODULATION
 Much of the security derived from TCP is attributable to how well the
@@ -1355,7 +1353,8 @@ incoming connections to port 25.
 .Pp
 Then
 .Bd -literal
-    # echo "block in quick from 1.2.3.4 to any" | pfctl -a spews:manual -f -
+    # echo "block in quick from 1.2.3.4 to any" \ \\
+	pfctl -a spews:manual -f -
 .Ed
 .Pp
 loads a single ruleset containing a single rule into the
@@ -1386,7 +1385,8 @@ spews are only evaluated for
 packets with destination port 25.
 Hence,
 .Bd -literal
-    # echo "block in quick from 1.2.3.4 to any" | pfctl -a spews:manual -f -
+    # echo "block in quick from 1.2.3.4 to any" | \\
+	pfctl -a spews:manual -f -
 .Ed
 .Pp
 will only block connections from 1.2.3.4 to port 25.
@@ -1484,12 +1484,7 @@ ext_if = "kue0"
 scrub in on $ext_if all fragment reassemble
 
 # block and log everything by default
-block             out log on $ext_if           all
-block             in  log on $ext_if           all
-block return-rst  out log on $ext_if proto tcp all
-block return-rst  in  log on $ext_if proto tcp all
-block return-icmp out log on $ext_if proto udp all
-block return-icmp in  log on $ext_if proto udp all
+block return log on $ext_if all
 
 # block anything coming from source we have no back routes for
 block in from no-route to any
@@ -1515,8 +1510,7 @@ block in log quick on $ext_if from { 10.0.0.0/8, 172.16.0.0/12, \\
 # so replies (like 0/0 for 8/0) will match queries
 # ICMP error messages (which always refer to a TCP/UDP packet) are
 # handled by the TCP/UDP states
-pass out on $ext_if inet proto icmp all icmp-type 8 code 0 keep state
-pass in  on $ext_if inet proto icmp all icmp-type 8 code 0 keep state
+pass on $ext_if inet proto icmp all icmp-type 8 code 0 keep state
 
 # UDP
 
@@ -1558,7 +1552,7 @@ option         = set ( [ "timeout" ( timeout | "{" timeout-list "}" ) ] |
                  [ "block-policy" ( "drop" | "return" ) ] |
                  [ "require-order" ( "yes" | "no" ) ] )
 
-pf-rule        = action ( "in" | "out" )
+pf-rule        = action [ ( "in" | "out" ) ]
                  [ "log" | "log-all" ] [ "quick" ]
                  [ "on" ifspec ] [ route ] [ af ] [ protospec ]
                  hosts [filteropt-list]
