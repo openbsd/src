@@ -1711,7 +1711,7 @@ refuseconnections()
 #  else
 #   ifndef NKPDE			/* FreeBSD 2.0 */
 #    define NKPDE 63
-typedef unsigned int	*pt_entry_t;
+/*typedef unsigned int	*pt_entry_t; */
 #   endif
 #  endif
 # endif
@@ -2405,7 +2405,7 @@ vsprintf(s, fmt, ap)
  * causing nast effects.
  **************************************************************/
 
-/*static char _id[] = "$Id: conf.c,v 1.3 1996/09/19 06:44:53 fn Exp $";*/
+/*static char _id[] = "$Id: conf.c,v 1.4 1996/10/01 23:07:18 michaels Exp $";*/
 static void dopr();
 static char *end;
 
