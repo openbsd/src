@@ -1,4 +1,4 @@
-/*	$OpenBSD: req.c,v 1.10 2005/01/13 05:39:07 jfb Exp $	*/
+/*	$OpenBSD: req.c,v 1.11 2005/01/13 06:09:14 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -33,12 +33,7 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <signal.h>
 #include <string.h>
-#include <sysexits.h>
-#ifdef CVS_ZLIB
-#include <zlib.h>
-#endif
 
 #include "buf.h"
 #include "cvs.h"
@@ -55,91 +50,93 @@ extern int   cvs_nolog;
 extern int   cvs_readonly;
 
 
-static int  cvs_req_set        (int, char *);
-static int  cvs_req_root       (int, char *);
-static int  cvs_req_validreq   (int, char *);
-static int  cvs_req_validresp  (int, char *);
-static int  cvs_req_directory  (int, char *);
-static int  cvs_req_case       (int, char *);
-static int  cvs_req_argument   (int, char *);
-static int  cvs_req_globalopt  (int, char *);
-static int  cvs_req_gzipstream (int, char *);
-static int  cvs_req_version    (int, char *);
+static int  cvs_req_set          (int, char *);
+static int  cvs_req_root         (int, char *);
+static int  cvs_req_validreq     (int, char *);
+static int  cvs_req_validresp    (int, char *);
+static int  cvs_req_directory    (int, char *);
+static int  cvs_req_useunchanged (int, char *);
+static int  cvs_req_case         (int, char *);
+static int  cvs_req_argument     (int, char *);
+static int  cvs_req_globalopt    (int, char *);
+static int  cvs_req_gzipstream   (int, char *);
+
+static int  cvs_req_command      (int, char *);
 
 
 struct cvs_reqhdlr {
 	int (*hdlr)(int, char *);
 } cvs_req_swtab[CVS_REQ_MAX + 1] = {
-	{ NULL               },
-	{ cvs_req_root       },
-	{ cvs_req_validreq   },
-	{ cvs_req_validresp  },
-	{ cvs_req_directory  },
-	{ NULL               },
-	{ NULL               },
-	{ NULL               },
-	{ NULL               },
-	{ NULL               },
-	{ NULL               },	/* 10 */
-	{ NULL               },
-	{ NULL               },
-	{ NULL               },
-	{ NULL               },
-	{ NULL               },
-	{ NULL               },
-	{ NULL               },
-	{ cvs_req_case       },
-	{ NULL               },
-	{ cvs_req_argument   },	/* 20 */
-	{ cvs_req_argument   },
-	{ cvs_req_globalopt  },
-	{ cvs_req_gzipstream },
-	{ NULL               },
-	{ NULL               },
-	{ NULL               },
-	{ NULL               },
-	{ NULL               },
-	{ NULL               },
-	{ NULL               },	/* 30 */
-	{ NULL               },
-	{ NULL               },
-	{ NULL               },
-	{ cvs_req_set        },
-	{ NULL               },
-	{ NULL               },
-	{ NULL               },
-	{ NULL               },
-	{ NULL               },
-	{ NULL               },	/* 40 */
-	{ NULL               },
-	{ NULL               },
-	{ NULL               },
-	{ NULL               },
-	{ NULL               },
-	{ NULL               },
-	{ NULL               },
-	{ NULL               },
-	{ NULL               },
-	{ NULL               },	/* 50 */
-	{ NULL               },
-	{ NULL               },
-	{ NULL               },
-	{ NULL               },
-	{ NULL               },
-	{ NULL               },
-	{ NULL               },
-	{ NULL               },
-	{ NULL               },
-	{ NULL               },	/* 60 */
-	{ NULL               },
-	{ NULL               },
-	{ NULL               },
-	{ NULL               },
-	{ NULL               },
-	{ NULL               },
-	{ NULL               },
-	{ NULL               },
-	{ cvs_req_version    },
+	{ NULL                  },
+	{ cvs_req_root          },
+	{ cvs_req_validreq      },
+	{ cvs_req_validresp     },
+	{ cvs_req_directory     },
+	{ NULL                  },
+	{ NULL                  },
+	{ NULL                  },
+	{ NULL                  },
+	{ NULL                  },
+	{ NULL                  },	/* 10 */
+	{ NULL                  },
+	{ NULL                  },
+	{ NULL                  },
+	{ cvs_req_useunchanged  },
+	{ NULL                  },
+	{ NULL                  },
+	{ NULL                  },
+	{ cvs_req_case          },
+	{ NULL                  },
+	{ cvs_req_argument      },	/* 20 */
+	{ cvs_req_argument      },
+	{ cvs_req_globalopt     },
+	{ cvs_req_gzipstream    },
+	{ NULL                  },
+	{ NULL                  },
+	{ NULL                  },
+	{ NULL                  },
+	{ NULL                  },
+	{ NULL                  },
+	{ NULL                  },	/* 30 */
+	{ NULL                  },
+	{ NULL                  },
+	{ NULL                  },
+	{ cvs_req_set           },
+	{ NULL                  },
+	{ cvs_req_command       },
+	{ NULL                  },
+	{ NULL                  },
+	{ NULL                  },
+	{ NULL                  },	/* 40 */
+	{ NULL                  },
+	{ NULL                  },
+	{ NULL                  },
+	{ NULL                  },
+	{ NULL                  },
+	{ cvs_req_command       },
+	{ NULL                  },
+	{ cvs_req_command       },
+	{ NULL                  },
+	{ NULL                  },	/* 50 */
+	{ NULL                  },
+	{ NULL                  },
+	{ NULL                  },
+	{ cvs_req_command       },
+	{ cvs_req_command       },
+	{ cvs_req_command       },
+	{ NULL                  },
+	{ NULL                  },
+	{ NULL                  },
+	{ cvs_req_command       },	/* 60 */
+	{ NULL                  },
+	{ cvs_req_command       },
+	{ cvs_req_command       },
+	{ cvs_req_command       },
+	{ NULL                  },
+	{ NULL                  },
+	{ NULL                  },
+	{ NULL                  },
+	{ cvs_req_command       },
 };
 
 
@@ -147,6 +144,8 @@ struct cvs_reqhdlr {
 /*
  * Argument array built by `Argument' and `Argumentx' requests.
  */
+
+static char *cvs_req_rootpath;
 
 static char *cvs_req_args[CVS_PROTO_MAXARG];
 static int   cvs_req_nargs = 0;
@@ -187,24 +186,17 @@ static int
 cvs_req_root(int reqid, char *line)
 {
 
-	return (0);
-}
-
-
-static int
-cvs_req_set(int reqid, char *line)
-{
-	char *cp;
-
-	cp = strchr(line, '=');
-	if (cp == NULL) {
-		cvs_log(LP_ERR, "error in Set request "
-		    "(no = in variable assignment)");
+	if (cvs_req_rootpath != NULL) {
+		cvs_log(LP_ERR, "duplicate Root request received");
 		return (-1);
 	}
 
-	if (cvs_var_set(line, cp) < 0)
+	cvs_req_rootpath = strdup(line);
+	if (cvs_req_rootpath == NULL) {
+		cvs_log(LP_ERRNO, "failed to copy Root path");
 		return (-1);
+	}
+
 	return (0);
 }
 
@@ -218,7 +210,9 @@ cvs_req_validreq(int reqid, char *line)
 	if (vreq == NULL)
 		return (-1);
 
-	cvs_sendresp(CVS_RESP_VALIDREQ, vreq);
+	if ((cvs_sendresp(CVS_RESP_VALIDREQ, vreq) < 0) ||
+	    (cvs_sendresp(CVS_RESP_OK, NULL) < 0))
+		return (-1);
 
 	return (0);
 }
@@ -249,9 +243,27 @@ cvs_req_validresp(int reqid, char *line)
 static int
 cvs_req_directory(int reqid, char *line)
 {
+	char rdir[MAXPATHLEN];
+
+	if (cvs_getln(NULL, rdir, sizeof(rdir)) < 0)
+		return (-1);
 
 	return (0);
 }
+
+/*
+ * cvs_req_useunchanged()
+ *
+ * Handler for the `UseUnchanged' requests.  The protocol documentation
+ * specifies that this request must be supported by the server and must be
+ * sent by the client, though it gives no clue regarding its use.
+ */
+static int
+cvs_req_useunchanged(int reqid, char *line)
+{
+	return (0);
+}
+
 
 /*
  * cvs_req_case()
@@ -262,6 +274,35 @@ static int
 cvs_req_case(int reqid, char *line)
 {
 	cvs_nocase = 1;
+	return (0);
+}
+
+
+static int
+cvs_req_set(int reqid, char *line)
+{
+	char *cp, *lp;
+
+	if ((lp = strdup(line)) == NULL) {
+		cvs_log(LP_ERRNO, "failed to copy Set argument");
+		return (-1);
+	}
+
+	if ((cp = strchr(lp, '=')) == NULL) {
+		cvs_log(LP_ERR, "error in Set request "
+		    "(no = in variable assignment)");
+		free(lp);
+		return (-1);
+	}
+	*(cp++) = '\0';
+
+	if (cvs_var_set(lp, cp) < 0) {
+		free(lp);
+		return (-1);
+	}
+
+	free(lp);
+
 	return (0);
 }
 
@@ -347,7 +388,6 @@ cvs_req_globalopt(int reqid, char *line)
  * level given along with the request.  After this request has been processed,
  * all further connection data should be compressed.
  */
-
 static int
 cvs_req_gzipstream(int reqid, char *line)
 {
@@ -369,9 +409,38 @@ cvs_req_gzipstream(int reqid, char *line)
 }
 
 
+/*
+ * cvs_req_command()
+ *
+ * Generic request handler for CVS command requests (i.e. diff, update, tag).
+ */
 static int
-cvs_req_version(int reqid, char *line)
+cvs_req_command(int reqid, char *line)
 {
-	cvs_printf("%s\n", CVS_VERSION);
-	return (0);
+	int ret;
+
+	switch (reqid) {
+	case CVS_REQ_NOOP:	/* do nothing */
+		break;
+	case CVS_REQ_VERSION:
+		ret = cvs_sendresp(CVS_RESP_M, CVS_VERSION);
+		break;
+	case CVS_REQ_ADD:
+	case CVS_REQ_ANNOTATE:
+	case CVS_REQ_CI:
+	case CVS_REQ_DIFF:
+	case CVS_REQ_LOG:
+	case CVS_REQ_REMOVE:
+	case CVS_REQ_STATUS:
+	case CVS_REQ_TAG:
+	default:
+		cvs_sendresp(CVS_RESP_E, "command not yet implemented");
+		cvs_sendresp(CVS_RESP_ERROR, NULL);
+		return (0);
+	}
+
+	if (ret == 0)
+		ret = cvs_sendresp(CVS_RESP_OK, NULL);
+
+	return (ret);
 }
