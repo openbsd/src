@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioprbs.c,v 1.4 2003/04/27 11:22:52 ho Exp $	*/
+/*	$OpenBSD: ioprbs.c,v 1.5 2004/04/12 22:12:32 jmc Exp $	*/
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -301,10 +301,10 @@ ioprbs_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	}
 
-	if ((letoh32(param.p.bdi.capabilities) & I2O_RBS_CAP_REMOVEABLE_MEDIA)
+	if ((letoh32(param.p.bdi.capabilities) & I2O_RBS_CAP_REMOVABLE_MEDIA)
 	    != 0) {
-		/* sc->sc_flags = IOPRBS_REMOVEABLE; */
-		fixedstr = "removeable";
+		/* sc->sc_flags = IOPRBS_REMOVABLE; */
+		fixedstr = "removable";
 		enable = 0;
 	} else
 		fixedstr = "fixed";

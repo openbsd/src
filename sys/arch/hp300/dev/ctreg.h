@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctreg.h,v 1.5 2003/06/02 23:27:44 millert Exp $	*/
+/*	$OpenBSD: ctreg.h,v 1.6 2004/04/12 22:12:32 jmc Exp $	*/
 /*	$NetBSD: ctreg.h,v 1.6 1996/02/09 18:00:35 scottr Exp $	*/
 
 /*
@@ -114,7 +114,7 @@ struct ct_describe {
 		d_access:16,	/* unit: access time param (1/100-sec) */
 		d_maxint:8,	/* unit: maximum interleave */
 		d_fvbyte:8,	/* unit: fixed volume byte */
-		d_rvbyte:8,	/* unit: removeable volume byte */
+		d_rvbyte:8,	/* unit: removable volume byte */
 		d_maxcyl:24,	/* volume: maximum cylinder */
 		d_maxhead:8,	/* volume: maximum head */
 		d_maxsect:16,	/* volume: maximum sector on track */
