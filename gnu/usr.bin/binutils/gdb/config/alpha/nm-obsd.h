@@ -30,6 +30,8 @@ get_longjmp_target PARAMS ((CORE_ADDR *));
 /* #include "nm-obsd.h" */
 #include <machine/alpha_cpu.h>
 
+#define ATTACH_DETACH
+
 /* unnneeded here. */
 #define PTRACE_ARG3_TYPE char*
 
