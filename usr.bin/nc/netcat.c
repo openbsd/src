@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.48 2002/05/29 09:23:25 deraadt Exp $ */
+/* $OpenBSD: netcat.c,v 1.49 2002/05/30 09:37:38 hugh Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -66,7 +66,7 @@ int	vflag;					/* Verbosity */
 int	xflag;					/* Socks proxy */
 int	zflag;					/* Port Scan Flag */
 
-int timeout;
+int timeout = -1;
 int family = AF_UNSPEC;
 char *portlist[PORT_MAX];
 
@@ -160,6 +160,9 @@ main(int argc, char *argv[])
 			timeout = (int)strtoul(optarg, &endp, 10);
 			if (timeout < 0 || *endp != '\0')
 				errx(1, "timeout cannot be negative");
+			if (timeout >= (INT_MAX / 1000))
+				errx(1, "timeout too large");
+			timeout *= 1000;
 			break;
 		case 'x':
 			xflag = 1;
@@ -548,12 +551,15 @@ readwrite(int nfd)
 		if (iflag)
 			sleep(iflag);
 
-		if (poll(pfd, 2, timeout) < 0) {
+		if ((n = poll(pfd, 2, timeout)) < 0) {
 			close(nfd);
 			close(wfd);
 			free(pfd);
 			errx(1, "Polling Error");
 		}
+
+		if (n == 0)
+			return;
 
 		if (pfd[0].revents & POLLIN) {
 			if ((n = read(nfd, buf, sizeof(buf))) <= 0) {
