@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.21 2001/09/20 04:12:07 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.22 2001/09/20 21:31:35 todd Exp $
 #
 # Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -217,7 +217,9 @@ std)M console	c 0 0 600
 	M mem		c 3 0 640 kmem
 	M kmem		c 3 1 640 kmem
 	M ksyms		c 76 0 640 kmem
-	M drum		c 7 0 640 kmem;;
+	M drum		c 7 0 640 kmem
+	M openprom	c 70 0 644
+	;;
 mouse*)name=${i##mouse-}
 	if [ ! -c $name ]; then
 		$0 $name	# make the appropriate device
