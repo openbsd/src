@@ -1,4 +1,4 @@
-/*	$OpenBSD: login.c,v 1.27 1999/08/17 09:13:15 millert Exp $	*/
+/*	$OpenBSD: login.c,v 1.28 1999/12/30 01:07:23 ericj Exp $	*/
 /*	$NetBSD: login.c,v 1.13 1996/05/15 23:50:16 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: login.c,v 1.27 1999/08/17 09:13:15 millert Exp $";
+static char rcsid[] = "$OpenBSD: login.c,v 1.28 1999/12/30 01:07:23 ericj Exp $";
 #endif /* not lint */
 
 /*
@@ -98,7 +98,6 @@ void	 dofork __P((void));
 void	 kgettokens __P((char *));
 #endif
 
-extern void login __P((struct utmp *));
 extern int check_failedlogin __P((uid_t));
 extern void log_failedlogin __P((uid_t, char *, char *, char *));
 
