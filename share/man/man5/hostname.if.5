@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hostname.if.5,v 1.23 2000/11/20 08:00:03 deraadt Exp $
+.\"	$OpenBSD: hostname.if.5,v 1.24 2001/01/10 22:17:10 jason Exp $
 .\"	$NetBSD: hosts.5,v 1.4 1994/11/30 19:31:20 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -247,6 +247,8 @@ add fxp0
 add ep1
 -learn fxp0
 #
+!ipsecadm flush
+#
 static fxp0 8:0:20:1e:2f:2b
 up    # and finally enable it
 .Ed
@@ -258,6 +260,9 @@ The options are as follows:
 is called for each successive line.
 Comments starting with
 .Ql #
+and commands to be executed
+prefixed by
+.Ql !
 are permitted.
 .El
 .Sh SEE ALSO
