@@ -4,10 +4,6 @@
 ./usr/share/man/cat1/rtld.0
 ./usr/share/man/cat5/ar.0
 ./usr/share/man/cat5/ranlib.0
-./usr/share/man/cat8/amiga/binpatch.0
-./usr/share/man/cat8/amiga/installboot.0
-./usr/share/man/cat8/amiga/loadbsd.0
-./usr/share/man/cat8/amiga/loadkmap.0
 ./usr/share/man/cat8/grfconfig.0
 ./usr/share/man/cat8/iteconfig.0
 ./usr/share/man/cat8/iteconfig_amiga.0

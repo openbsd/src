@@ -1376,6 +1376,7 @@
 ./usr/share/ipsec/photuris.startup
 ./usr/share/ipsec/rc.vpn
 ./usr/share/ipsec/secrets.conf
+./usr/share/locale
 ./usr/share/lkm
 ./usr/share/lkm/misc
 ./usr/share/lkm/misc/module
@@ -1385,13 +1386,6 @@
 ./usr/share/lkm/syscall/test
 ./usr/share/lkm/vfs
 ./usr/share/lkm/vfs/module
-./usr/share/locale
-./usr/share/locale/de
-./usr/share/locale/de/LC_MESSAGES
-./usr/share/locale/de/LC_MESSAGES/texinfo.mo
-./usr/share/locale/fr
-./usr/share/locale/fr/LC_MESSAGES
-./usr/share/locale/fr/LC_MESSAGES/texinfo.mo
 ./usr/share/man
 ./usr/share/man/COPYRIGHT
 ./usr/share/man/cat1
@@ -2682,3 +2676,4 @@
 ./var/yp/README
 ./usr/sbin/rip6query
 ./usr/sbin/usbdevs
+./usr/sbin/traceroute6
