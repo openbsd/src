@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypcat.c,v 1.6 1997/07/21 19:21:14 deraadt Exp $ */
+/*	$OpenBSD: ypcat.c,v 1.7 2002/01/02 20:07:09 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993, 1996 Theo de Raadt <deraadt@theos.com>
@@ -33,7 +33,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypcat.c,v 1.6 1997/07/21 19:21:14 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypcat.c,v 1.7 2002/01/02 20:07:09 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -53,6 +53,7 @@ struct ypalias {
 	char *alias, *name;
 } ypaliases[] = {
 	{ "passwd", "passwd.byname" },
+	{ "master.passwd", "master.passwd.byname" },
 	{ "group", "group.byname" },
 	{ "networks", "networks.byaddr" },
 	{ "hosts", "hosts.byaddr" },
