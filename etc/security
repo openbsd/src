@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: security,v 1.16 1996/12/06 18:12:57 millert Exp $
+#	$OpenBSD: security,v 1.17 1996/12/10 07:26:01 deraadt Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -22,7 +22,7 @@ if ! mkdir $DIR ; then
 	exit 1
 fi
 
-trap 'rm -rf $DIR' 0
+trap 'rm -rf $DIR' 0 1 15
 
 # Check the master password file syntax.
 MP=/etc/master.passwd
