@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.138 2000/05/15 18:24:42 hin Exp $
+#	$OpenBSD: rc,v 1.139 2000/05/19 16:53:17 mickey Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -260,12 +260,6 @@ if [ X${nfs_server} = X"YES" -a -s /etc/exports -a \
 	if [ X${lockd} = X"YES" ]; then
 		echo -n ' rpc.lockd';	rpc.lockd
 	fi
-fi
-
-# $nfs_client is imported from /etc/rc.conf;
-# if $nfs_client == YES, the machine is setup for being an nfs client
-if [ X${nfs_client} = X"YES" ]; then
-	echo -n ' nfsiod';		nfsiod ${nfsiod_flags}
 fi
 
 if [ X${amd} = X"YES" -a -d ${amd_dir} -a -e ${amd_master} ]; then
