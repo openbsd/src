@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.8 2003/06/01 17:00:40 deraadt Exp $	*/
+/*	$OpenBSD: boot.c,v 1.9 2003/06/03 15:59:03 deraadt Exp $	*/
 /*	$NetBSD: boot.c,v 1.3 2001/05/31 08:55:19 mrg Exp $	*/
 /*
  * Copyright (c) 1997, 1999 Eduardo E. Horvath.  All rights reserved.
@@ -68,8 +68,8 @@
  * this list is used in sequence, to find a kernel.
  */
 char *kernels[] = {
-	"bsd ",
-	"obsd ",
+	"bsd",
+	"obsd",
 	NULL
 };
 
