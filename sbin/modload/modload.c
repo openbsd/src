@@ -1,4 +1,4 @@
-/*	$OpenBSD: modload.c,v 1.17 1997/09/17 00:56:42 weingart Exp $	*/
+/*	$OpenBSD: modload.c,v 1.18 1997/09/17 00:57:45 weingart Exp $	*/
 /*	$NetBSD: modload.c,v 1.13 1995/05/28 05:21:58 jtc Exp $	*/
 
 /*
@@ -513,7 +513,7 @@ main(argc, argv)
 			err(15, "error fetching module stats for post-install");
 		sprintf(id, "%d", sbuf.id);
 		sprintf(type, "0x%x", sbuf.type);
-		sprintf(offset, "%d", sbuf.offset);
+		sprintf(offset, "%ld", sbuf.offset);
 		/*
 		 * XXX
 		 * The modload docs say that drivers can install bdevsw &
