@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.7 2000/02/15 02:28:15 jason Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.8 2000/07/02 00:27:23 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -863,6 +863,7 @@ vr_probe(parent, match, aux)
 		switch (PCI_PRODUCT(pa->pa_id)) {
 		case PCI_PRODUCT_VIATECH_RHINE:
 		case PCI_PRODUCT_VIATECH_RHINEII:
+		case PCI_PRODUCT_VIATECH_RHINEII_2:
 			return (1);
 		}
 	}
