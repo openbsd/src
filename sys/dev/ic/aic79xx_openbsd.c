@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx_openbsd.c,v 1.18 2004/12/27 21:34:42 krw Exp $	*/
+/*	$OpenBSD: aic79xx_openbsd.c,v 1.19 2004/12/28 04:12:24 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -257,6 +257,7 @@ ahd_done(struct ahd_softc *ahd, struct scb *scb)
 	case CAM_BDR_SENT:
 	case CAM_SCSI_BUS_RESET:
 		xs->error = XS_RESET;
+		break;
 	case CAM_REQUEUE_REQ:
 		xs->error = XS_TIMEOUT;
 		xs->retries++;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_openbsd.c,v 1.25 2004/10/24 04:28:33 krw Exp $	*/
+/*	$OpenBSD: aic7xxx_openbsd.c,v 1.26 2004/12/28 04:12:24 krw Exp $	*/
 /*	$NetBSD: aic7xxx_osm.c,v 1.14 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -274,6 +274,7 @@ ahc_done(struct ahc_softc *ahc, struct scb *scb)
 	case CAM_BDR_SENT:
 	case CAM_SCSI_BUS_RESET:
 		xs->error = XS_RESET;
+		break;
 	case CAM_REQUEUE_REQ:
 		xs->error = XS_TIMEOUT;
 		xs->retries++;
