@@ -1,4 +1,4 @@
-/*	$OpenBSD: iop_pci.c,v 1.1 2001/06/25 23:12:52 niklas Exp $	*/
+/*	$OpenBSD: iop_pci.c,v 1.2 2001/06/26 06:05:55 niklas Exp $	*/
 /*	$NetBSD: iop_pci.c,v 1.4 2001/03/20 13:21:00 ad Exp $	*/
 
 /*-
@@ -62,14 +62,14 @@
 #define	PCI_INTERFACE_I2O_POLLED	0x00
 #define	PCI_INTERFACE_I2O_INTRDRIVEN	0x01
 
-static void	iop_pci_attach(struct device *, struct device *, void *);
-static int	iop_pci_match(struct device *, void *, void *);
+void	iop_pci_attach(struct device *, struct device *, void *);
+int	iop_pci_match(struct device *, void *, void *);
 
 struct cfattach iop_pci_ca = {
 	sizeof(struct iop_softc), iop_pci_match, iop_pci_attach
 };
 
-static int
+int
 iop_pci_match(parent, match, aux)
 	struct device *parent;
 	void *match;
@@ -92,7 +92,7 @@ iop_pci_match(parent, match, aux)
 	return (0);
 }
 
-static void
+void
 iop_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa;
