@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.c,v 1.14 2001/05/03 02:20:34 aaron Exp $ */
+/*	$OpenBSD: usbdi.c,v 1.15 2002/04/01 21:47:07 nate Exp $ */
 /*	$NetBSD: usbdi.c,v 1.81 2001/04/17 00:05:33 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -1053,6 +1053,24 @@ usbd_ratecheck(struct timeval *last)
 	static struct timeval errinterval = { 0, 250000 }; /* 0.25 s*/
 
 	return (ratecheck(last, &errinterval));
+}
+
+/*
+ * Search for a vendor/product pair in an array.  The item size is
+ * given as an argument.
+ */
+const struct usb_devno *
+usb_match_device(const struct usb_devno *tbl, u_int nentries, u_int sz,
+		 u_int16_t vendor, u_int16_t product)
+{
+	while (nentries-- > 0) {
+		u_int16_t tproduct = tbl->ud_product;
+		if (tbl->ud_vendor == vendor &&
+		    (tproduct == product || tproduct == USB_PRODUCT_ANY))
+			return (tbl);
+		tbl = (struct usb_devno *)((char *)tbl + sz);
+	}
+	return (NULL);
 }
 
 #if defined(__FreeBSD__)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_auereg.h,v 1.5 2001/10/31 04:24:44 nate Exp $ */
+/*	$OpenBSD: if_auereg.h,v 1.6 2002/04/01 21:47:07 nate Exp $ */
 /*	$NetBSD: if_auereg.h,v 1.16 2001/10/10 02:14:17 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -262,8 +262,9 @@ struct aue_softc {
 	int			aue_if_flags;
 	struct aue_cdata	aue_cdata;
 
-	u_int16_t			aue_flags;
+	u_int16_t		aue_flags;
 
+	int			aue_refcnt;
 	char			aue_dying;
 	char			aue_attached;
 	u_int			aue_rx_errs;
