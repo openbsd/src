@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcount.c,v 1.6 2003/06/02 23:28:08 millert Exp $	*/
+/*	$OpenBSD: mcount.c,v 1.7 2004/07/22 16:06:34 art Exp $	*/
 /*	$NetBSD: mcount.c,v 1.3.6.1 1996/06/12 04:23:01 cgd Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)mcount.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$OpenBSD: mcount.c,v 1.6 2003/06/02 23:28:08 millert Exp $";
+static char rcsid[] = "$OpenBSD: mcount.c,v 1.7 2004/07/22 16:06:34 art Exp $";
 #endif
 #endif
 
@@ -64,12 +64,12 @@ _MCOUNT_DECL(u_long frompc, u_long selfpc) __attribute__((unused));
 _MCOUNT_DECL(frompc, selfpc)	/* _mcount; may be static, inline, etc */
 	register u_long frompc, selfpc;
 {
-	register u_short *frompcindex;
-	register struct tostruct *top, *prevtop;
-	register struct gmonparam *p;
-	register long toindex;
+	u_short *frompcindex;
+	struct tostruct *top, *prevtop;
+	struct gmonparam *p;
+	long toindex;
 #ifdef _KERNEL
-	register int s;
+	int s;
 #endif
 
 	p = &_gmonparam;
