@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dc.1,v 1.7 2003/10/11 18:31:19 otto Exp $
+.\"	$OpenBSD: dc.1,v 1.8 2003/10/18 19:47:10 otto Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -100,7 +100,7 @@ For addition and subtraction, the scale of the result is the maximum
 of scales of the operands.
 For division the scale of the result is defined
 by the scale set by the
-.Ar k
+.Ic k
 operation.
 For multiplication, the scale is defined by the expression
 .Sy min(a+b,max(a,b,scale)) ,
@@ -111,7 +111,7 @@ and
 are the scales of the operands, and
 .Sy scale
 is the scale defined by the
-.Ar k
+.Ic k
 operation.
 For exponentation with a non-negative exponent, the scale of the result is
 .Sy min(a*b,max(scale,a)) ,
@@ -124,7 +124,7 @@ is the
 of the exponent.
 If the exponent is negative, the scale of the result is the scale
 defined by the
-.Ar k
+.Ic k
 operation.
 .Pp
 In the case of the division and modulus operator (~),
@@ -143,7 +143,7 @@ where
 .Ar x
 may be any character, including space, tab or any other special character.
 If the
-.Ar s
+.Ic s
 is capitalized,
 .Ar x
 is treated as a stack and the value is pushed on it.
@@ -182,7 +182,7 @@ Exits the program.
 If executing a string, the recursion level is
 popped by two.
 If
-.Ar q
+.Ic q
 is capitalized,
 the top value on the stack is popped and the string execution level is popped
 by that value.
@@ -290,6 +290,23 @@ since the string
 is written in an array that is later popped, to reveal the array that
 stored
 .Ql first .
+.It Ic J
+Pop the top value of the stack. The recursion level is popped by that value,
+and following that, the input is skipped until the first occurence of
+the
+.Ic M
+operator.
+.It Ic M
+Mark used by the
+.Ic J
+operator.
+The
+.Ic J
+and
+.Ic M
+operators are non-portable extensions, used by the
+.Xr bc 1
+command.
 .El
 .Sh EXAMPLES
 An example which prints the first ten values of
@@ -366,6 +383,13 @@ will execute an endless loop, while the commands
 .Ed
 .Pp
 will terminate because of a too deep recursion level.
+.It J command argument exceeded string execution depth
+for trying to pop the recursion level more than the current
+recursion level.
+.It mark not found
+for a failed scan for an occurence of the
+.Ic M
+operator.
 .El
 .Sh SEE ALSO
 .Xr bc 1
