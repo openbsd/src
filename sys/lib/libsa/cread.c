@@ -1,4 +1,4 @@
-/*	$OpenBSD: cread.c,v 1.7 1999/01/25 19:28:38 mickey Exp $	*/
+/*	$OpenBSD: cread.c,v 1.8 1999/02/14 20:07:46 mickey Exp $	*/
 /*	$NetBSD: cread.c,v 1.2 1997/02/04 18:38:20 thorpej Exp $	*/
 
 /*
@@ -78,6 +78,10 @@ static struct sd {
   unsigned long    crc;     /* crc32 of uncompressed data */
   int      transparent; /* 1 if input file is not a .gz file */
 } *ss[SOPEN_MAX];
+
+#ifdef DEBUG
+int z_verbose = 0;
+#endif
 
 /*
  * compression utilities
