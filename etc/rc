@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.93 1998/11/11 09:22:49 downsj Exp $
+#	$OpenBSD: rc,v 1.94 1998/12/21 03:33:43 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -141,6 +141,13 @@ fi
 # photurisd isn't run.
 if [ "X${photurisd_flags}" != X"NO" -a -e /etc/photuris/photuris.conf ]; then
 	echo 'starting photurisd';	photurisd ${photurisd_flags}
+fi
+
+# $isakmpd_flags is imported from /etc/rc.conf;
+# If $isakmpd_flags == NO or /etc/isakmpd.conf doesn't exist, then
+# isakmpd isn't run.
+if [ "X${isakmpd_flags}" != X"NO" -a -e /etc/isakmpd.conf ]; then
+	echo 'starting isakmpd';	isakmpd ${isakmpd_flags}
 fi
 
 echo -n 'starting rpc daemons:'
