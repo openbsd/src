@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.arc,v 1.1.1.1 1996/06/24 09:07:20 pefo Exp $
+#	$OpenBSD: Makefile.arc,v 1.2 1996/07/16 07:46:15 pefo Exp $
 
 #	@(#)Makefile.arc	8.2 (Berkeley) 2/16/94
 #
@@ -109,7 +109,7 @@ newvers:
 	${CC} $(CFLAGS) -c vers.c
 
 clean::
-	rm -f eddep bsd bsd.gdb tags *.o locore.i [a-z]*.s \
+	rm -f eddep bsd bsd.gdb bsd.ecoff tags *.o locore.i [a-z]*.s \
 	    Errs errs linterrs makelinks genassym
 
 lint: /tmp param.c

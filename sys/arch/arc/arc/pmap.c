@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.1.1.1 1996/06/24 09:07:21 pefo Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.2 1996/07/16 07:46:13 pefo Exp $	*/
 /* 
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.c	8.4 (Berkeley) 1/26/94
- *      $Id: pmap.c,v 1.1.1.1 1996/06/24 09:07:21 pefo Exp $
+ *      $Id: pmap.c,v 1.2 1996/07/16 07:46:13 pefo Exp $
  */
 
 /*
@@ -206,17 +206,17 @@ pmap_bootstrap(firstaddr)
 	 * phys_start and phys_end but its better to use kseg0 addresses
 	 * rather than kernel virtual addresses mapped through the TLB.
 	 */
-	i = maxmem - pica_btop(CACHED_TO_PHYS(firstaddr));
+	i = maxmem - mips_btop(CACHED_TO_PHYS(firstaddr));
 	valloc(pv_table, struct pv_entry, i);
 
 	/*
 	 * Clear allocated memory.
 	 */
-	firstaddr = pica_round_page(firstaddr);
+	firstaddr = mips_round_page(firstaddr);
 	bzero((caddr_t)start, firstaddr - start);
 
 	avail_start = CACHED_TO_PHYS(firstaddr);
-	avail_end = pica_ptob(maxmem);
+	avail_end = mips_ptob(maxmem);
 	mem_size = avail_end - avail_start;
 
 	virtual_avail = VM_MIN_KERNEL_ADDRESS;
@@ -540,7 +540,7 @@ pmap_remove(pmap, sva, eva)
 		panic("pmap_remove: uva not in range");
 #endif
 	while (sva < eva) {
-		nssva = pica_trunc_seg(sva) + NBSEG;
+		nssva = mips_trunc_seg(sva) + NBSEG;
 		if (nssva == 0 || nssva > eva)
 			nssva = eva;
 		/*
@@ -710,7 +710,7 @@ pmap_protect(pmap, sva, eva, prot)
 		panic("pmap_protect: uva not in range");
 #endif
 	while (sva < eva) {
-		nssva = pica_trunc_seg(sva) + NBSEG;
+		nssva = mips_trunc_seg(sva) + NBSEG;
 		if (nssva == 0 || nssva > eva)
 			nssva = eva;
 		/*
@@ -1412,7 +1412,7 @@ pmap_phys_address(ppn)
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_phys_address(%x)\n", ppn);
 #endif
-	return (pica_ptob(ppn));
+	return (mips_ptob(ppn));
 }
 
 /*

@@ -1,4 +1,4 @@
-/*      $OpenBSD: param.h,v 1.1.1.1 1996/06/24 09:07:17 pefo Exp $ */
+/*      $OpenBSD: param.h,v 1.2 1996/07/16 07:46:17 pefo Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -137,10 +137,10 @@
 /*
  * Mach derived conversion macros
  */
-#define pica_round_page(x)	((((unsigned)(x)) + NBPG - 1) & ~(NBPG-1))
-#define pica_trunc_page(x)	((unsigned)(x) & ~(NBPG-1))
-#define pica_btop(x)		((unsigned)(x) >> PGSHIFT)
-#define pica_ptob(x)		((unsigned)(x) << PGSHIFT)
+#define mips_round_page(x)	((((unsigned)(x)) + NBPG - 1) & ~(NBPG-1))
+#define mips_trunc_page(x)	((unsigned)(x) & ~(NBPG-1))
+#define mips_btop(x)		((unsigned)(x) >> PGSHIFT)
+#define mips_ptob(x)		((unsigned)(x) << PGSHIFT)
 
 #ifdef _KERNEL
 #ifndef _LOCORE

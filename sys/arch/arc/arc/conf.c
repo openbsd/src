@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.3 1996/07/15 14:57:00 mickey Exp $ */
+/*	$OpenBSD: conf.c,v 1.4 1996/07/16 07:46:12 pefo Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)conf.c	8.2 (Berkeley) 11/14/93
- *      $Id: conf.c,v 1.3 1996/07/15 14:57:00 mickey Exp $
+ *      $Id: conf.c,v 1.4 1996/07/16 07:46:12 pefo Exp $
  */
 
 #include <sys/param.h>
@@ -97,7 +97,7 @@ int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
 	dev_init(c,n,tty), ttselect, dev_init(c,n,mmap), D_TTY }
 
 /* open, close, write, ioctl */
-#define	cdev_lpt_init(c,n) { \
+#define	cdev_lpr_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
 	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
 	0, seltrue, (dev_type_mmap((*))) enodev }
@@ -133,8 +133,8 @@ cdev_decl(vnd);
 cdev_decl(bpf);
 #include "ace.h"
 cdev_decl(ace);
-#include "lpt.h"
-cdev_decl(lpt);
+#include "lpr.h"
+cdev_decl(lpr);
 cdev_decl(sd);
 #include "pc.h"
 cdev_decl(pc);
@@ -171,7 +171,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NFDC,fd),	/* 13: Floppy disk */
 	cdev_pc_init(NPC,pc),		/* 14: builtin pc style console dev */
 	cdev_mouse_init(1,pms),		/* 15: builtin PS2 style mouse */
-	cdev_lpt_init(NLPT,lpt),	/* 16: lpt paralell printer interface */
+	cdev_lpr_init(NLPR,lpr),	/* 16: lpr paralell printer interface */
 	cdev_tty_init(NACE,ace),	/* 17: ace 16C450 serial interface */
 	cdev_notdef(),			/* 18: */
 	cdev_notdef(),			/* 19: */

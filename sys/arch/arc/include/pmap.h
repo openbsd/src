@@ -1,4 +1,4 @@
-/*      $OpenBSD: pmap.h,v 1.1.1.1 1996/06/24 09:07:17 pefo Exp $ */
+/*      $OpenBSD: pmap.h,v 1.2 1996/07/16 07:46:18 pefo Exp $ */
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -64,8 +64,8 @@
  * dynamically allocated at boot time.
  */
 
-#define pica_trunc_seg(x)	((vm_offset_t)(x) & ~SEGOFSET)
-#define pica_round_seg(x)	(((vm_offset_t)(x) + SEGOFSET) & ~SEGOFSET)
+#define mips_trunc_seg(x)	((vm_offset_t)(x) & ~SEGOFSET)
+#define mips_round_seg(x)	(((vm_offset_t)(x) + SEGOFSET) & ~SEGOFSET)
 #define pmap_segmap(m, v)	((m)->pm_segtab->seg_tab[((v) >> SEGSHIFT)])
 
 #define PMAP_SEGTABSIZE		512

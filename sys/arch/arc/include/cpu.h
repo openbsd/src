@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.1.1.1 1996/06/24 09:07:17 pefo Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.2 1996/07/16 07:46:17 pefo Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -274,7 +274,7 @@
 #endif /* _KERNEL */
 
 /*
- * Exported definitions unique to pica/mips cpu support.
+ * Exported definitions unique to mips cpu support.
  */
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.1.1.1 1996/06/24 09:07:21 pefo Exp $	*/
+/*	$OpenBSD: trap.c,v 1.2 1996/07/16 07:46:14 pefo Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  * from: Utah Hdr: trap.c 1.32 91/04/06
  *
  *	from: @(#)trap.c	8.5 (Berkeley) 1/11/94
- *      $Id: trap.c,v 1.1.1.1 1996/06/24 09:07:21 pefo Exp $
+ *      $Id: trap.c,v 1.2 1996/07/16 07:46:14 pefo Exp $
  */
 
 #include <sys/param.h>
@@ -289,7 +289,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 			if (!(entry & PG_V) || (entry & PG_M))
 				panic("trap: ktlbmod: invalid pte");
 #endif
-			if (pmap_is_page_ro(pmap_kernel(), pica_trunc_page(vadr), entry)) {
+			if (pmap_is_page_ro(pmap_kernel(), mips_trunc_page(vadr), entry)) {
 				/* write to read only page in the kernel */
 				ftype = VM_PROT_WRITE;
 				goto kernel_fault;
@@ -326,7 +326,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 			panic("trap: utlbmod: invalid pte");
 		}
 #endif
-		if (pmap_is_page_ro(pmap, pica_trunc_page(vadr), entry)) {
+		if (pmap_is_page_ro(pmap, mips_trunc_page(vadr), entry)) {
 			/* write to read only page */
 			ftype = VM_PROT_WRITE;
 			goto dofault;

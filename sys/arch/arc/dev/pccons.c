@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccons.c,v 1.1.1.1 1996/06/24 09:07:19 pefo Exp $	*/
+/*	$OpenBSD: pccons.c,v 1.2 1996/07/16 07:46:16 pefo Exp $	*/
 /*	$NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp $	*/
 
 /*-
@@ -1701,11 +1701,11 @@ pcmmap(dev, offset, nprot)
 {
 
 	if (offset >= 0xa0000 && offset < 0xc0000)
-		return pica_btop(PICA_P_LOCAL_VIDEO + offset);
+		return mips_btop(PICA_P_LOCAL_VIDEO + offset);
 	if (offset >= 0x0000 && offset < 0x10000)
-		return pica_btop(PICA_P_LOCAL_VIDEO_CTRL + offset);
+		return mips_btop(PICA_P_LOCAL_VIDEO_CTRL + offset);
 	if (offset >= 0x40000000 && offset < 0x40800000)
-		return pica_btop(PICA_P_LOCAL_VIDEO + offset - 0x40000000);
+		return mips_btop(PICA_P_LOCAL_VIDEO + offset - 0x40000000);
 	return -1;
 }
 
