@@ -1,4 +1,4 @@
-/*	$OpenBSD: register.c,v 1.10 2002/08/05 14:26:07 provos Exp $	*/
+/*	$OpenBSD: register.c,v 1.11 2002/08/05 14:49:27 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -102,7 +102,8 @@ systrace_initcb(void)
 	intercept_register_translation("native", "fchmod", 0, &fdt);
 	intercept_register_translation("native", "fchmod", 1, &modeflags);
 	X(intercept_register_sccb("native", "readlink", trans_cb, NULL));
-	tl = intercept_register_translink("native", "readlink", 0);
+	tl = intercept_register_translation("native", "readlink", 0,
+	    &ic_translate_unlinkname);
 	alias = systrace_new_alias("native", "readlink", "native", "fsread");
 	systrace_alias_add_trans(alias, tl);
 
@@ -129,7 +130,7 @@ systrace_initcb(void)
 	intercept_register_transfn("native", "rename", 1);
 	X(intercept_register_sccb("native", "symlink", trans_cb, NULL));
 	intercept_register_transstring("native", "symlink", 0);
-	intercept_register_translink("native", "symlink", 1);
+	intercept_register_transfn("native", "symlink", 1);
 	X(intercept_register_sccb("native", "link", trans_cb, NULL));
 	intercept_register_transfn("native", "link", 0);
 	intercept_register_transfn("native", "link", 1);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept.c,v 1.24 2002/08/04 04:15:50 provos Exp $	*/
+/*	$OpenBSD: intercept.c,v 1.25 2002/08/05 14:49:26 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -486,7 +486,7 @@ intercept_replace(int fd, pid_t pid, struct intercept_replace *repl)
 char *
 intercept_get_string(int fd, pid_t pid, void *addr)
 {
-	static char name[_POSIX2_LINE_MAX];
+	static char name[8192];
 	int off = 0, done = 0, stride;
 
 	stride = 32;
@@ -546,8 +546,15 @@ intercept_filename(int fd, pid_t pid, void *addr, int userp)
 		static char rcwd[2*MAXPATHLEN];
 		int failed = 0;
 
-		if (userp == ICLINK_NOLAST)
-			goto nolast;
+		if (userp == ICLINK_NOLAST) {
+			char *file = basename(cwd);
+
+			/* Check if the last component has special meaning */
+			if (strcmp(file, ".") == 0 || strcmp(file, "..") == 0)
+				userp = ICLINK_ALL;
+			else
+				goto nolast;
+		}
 
 		/* If realpath fails then the filename does not exist,
 		 * or we are supposed to not resolve the last component */
@@ -574,7 +581,9 @@ intercept_filename(int fd, pid_t pid, void *addr, int userp)
 				failed = 1;
 				goto out;
 			}
-			if (strlcat(rcwd, "/", sizeof(rcwd)) >= sizeof(rcwd))
+			/* If path is not "/" append a "/" */
+			if (strlen(rcwd) > 1 &&
+			    strlcat(rcwd, "/", sizeof(rcwd)) >= sizeof(rcwd))
 				goto error;
 			if (strlcat(rcwd, file, sizeof(rcwd)) >= sizeof(rcwd))
 				goto error;
