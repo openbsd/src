@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.51 2002/02/12 16:38:39 art Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.52 2002/05/23 14:59:24 art Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -253,9 +253,10 @@ sys_accept(p, v, retval)
 	if (error) {
 		fdremove(p->p_fd, tmpfd);
 		closef(fp, p);
+	} else {
+		FILE_SET_MATURE(fp);
 	}
 	m_freem(nam);
-	FILE_SET_MATURE(fp);
 bad:
 	splx(s);
 	FRELE(headfp);
