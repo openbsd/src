@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.53 2003/06/02 20:06:16 millert Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.54 2003/06/11 05:32:43 itojun Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -1508,7 +1508,7 @@ pr_pack(buf, cc, mhdr)
 		return;
 	}
 	if ((pktinfo = get_rcvpktinfo(mhdr)) == NULL) {
-		warnx("failed to get receiving pakcet information");
+		warnx("failed to get receiving packet information");
 		return;
 	}
 
