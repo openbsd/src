@@ -1,0 +1,30 @@
+#	$Id: Makefile.bsd-wrapper,v 1.1 1995/12/19 09:23:39 deraadt Exp $
+
+all:	config.status
+	${MAKE}
+
+.FORCE:	.IGNORE
+
+config: .FORCE
+	${.CURDIR}/configure --prefix=/usr
+
+config.status:
+	${.CURDIR}/configure --prefix=/usr
+
+install:
+	${MAKE} prefix=${DESTDIR}/usr install
+
+clean cleandir:
+	${MAKE} clean
+
+depend:
+	# Nothing here so far...
+
+lint:
+	# Nothing here so far...
+
+tags:
+	# Nothing here so far...
+
+.include <bsd.obj.mk>
+.include <bsd.subdir.mk>
