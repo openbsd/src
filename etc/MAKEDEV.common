@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.12 2004/08/19 07:05:20 miod Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.13 2005/01/10 07:53:57 dlg Exp $-})dnl
 divert(1)dnl
 dnl
 dnl Common device definitions.
@@ -387,7 +387,8 @@ _mcdev({-ulpt-}, ulpt*, {-ulpt-}, {-major_ulpt_c-}, 660)dnl
 __devitem(ttyU, ttyU*, USB serial ports,ucom)dnl
 _mkdev({-ttyU-}, {-ttyU[0-9a-zA-Z]-}, {-U=${i#ttyU*}
 	o=$(alph2d $U)
-	M ttyU$U c major_ttyU_c $o 660 dialer uucp-})dnl
+	M ttyU$U c major_ttyU_c $o 660 dialer uucp
+	M cuaU$U c major_ttyU_c Add($o, 128) 660 dialer uucp-})dnl
 __devitem(urio, urio*, Diamond Multimedia Rio 500)dnl
 _mcdev({-urio-}, urio*, {-urio-}, {-major_urio_c-}, 660)dnl
 __devitem(uscan, uscanner*, Scanners,uscanner)dnl
