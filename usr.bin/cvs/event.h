@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.h,v 1.1.1.1 2004/07/13 22:02:40 jfb Exp $	*/
+/*	$OpenBSD: event.h,v 1.2 2004/07/25 03:32:05 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -45,14 +45,6 @@
 #define CVS_EVENT_REMOVE      8
 #define CVS_EVENT_UPDATE      9
 #define CVS_EVENT_TAG        10
-
-
-struct cvs_file {
-	char                 *cf_path;  /* path relative to the module */
-	LIST_ENTRY(cvs_file)  cf_list;
-};
-
-
 
 
 struct cvs_event {
