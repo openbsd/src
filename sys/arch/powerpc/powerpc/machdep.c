@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.74 2001/08/17 22:29:21 drahn Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.75 2001/08/18 05:58:34 drahn Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -232,20 +232,35 @@ where = 3;
 	battable[0].batu = BATU(0x00000000);
 
 	/* map all of possible physical memory, ick */
-	battable[0x1].batl = BATL(0x10000000, BAT_M);
-	battable[0x1].batu = BATU(0x10000000);
-	battable[0x2].batl = BATL(0x20000000, BAT_M);
-	battable[0x2].batu = BATU(0x20000000);
-	battable[0x3].batl = BATL(0x30000000, BAT_M);
-	battable[0x3].batu = BATU(0x30000000);
-	battable[0x4].batl = BATL(0x40000000, BAT_M);
-	battable[0x4].batu = BATU(0x40000000);
-	battable[0x5].batl = BATL(0x50000000, BAT_M);
-	battable[0x5].batu = BATU(0x50000000);
-	battable[0x6].batl = BATL(0x60000000, BAT_M);
-	battable[0x6].batu = BATU(0x60000000);
-	battable[0x7].batl = BATL(0x70000000, BAT_M);
-	battable[0x7].batu = BATU(0x70000000);
+	if (ctob(physmem) > 0x10000000) {
+		battable[0x1].batl = BATL(0x10000000, BAT_M);
+		battable[0x1].batu = BATU(0x10000000);
+	}
+	if (ctob(physmem) > 0x20000000) {
+		battable[0x2].batl = BATL(0x20000000, BAT_M);
+		battable[0x2].batu = BATU(0x20000000);
+	}
+	if (ctob(physmem) > 0x30000000) {
+		battable[0x3].batl = BATL(0x30000000, BAT_M);
+		battable[0x3].batu = BATU(0x30000000);
+	}
+	if (ctob(physmem) > 0x40000000) {
+		battable[0x4].batl = BATL(0x40000000, BAT_M);
+		battable[0x4].batu = BATU(0x40000000);
+	}
+	if (ctob(physmem) > 0x50000000) {
+		battable[0x5].batl = BATL(0x50000000, BAT_M);
+		battable[0x5].batu = BATU(0x50000000);
+	}
+	if (ctob(physmem) > 0x60000000) {
+		battable[0x6].batl = BATL(0x60000000, BAT_M);
+		battable[0x6].batu = BATU(0x60000000);
+	}
+	if (ctob(physmem) > 0x70000000) {
+		battable[0x7].batl = BATL(0x70000000, BAT_M);
+		battable[0x7].batu = BATU(0x70000000);
+	}
+
 
 	battable[0x8].batl = BATL(0x80000000, BAT_I);
 	battable[0x8].batu = BATU(0x80000000);
