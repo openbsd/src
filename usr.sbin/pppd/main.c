@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.13 1996/12/23 13:22:44 mickey Exp $	*/
+/*	$OpenBSD: main.c,v 1.14 1997/01/23 02:18:05 niklas Exp $	*/
 
 /*
  * main.c - Point-to-Point Protocol main module
@@ -20,7 +20,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: main.c,v 1.13 1996/12/23 13:22:44 mickey Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.14 1997/01/23 02:18:05 niklas Exp $";
 #endif
 
 #include <stdio.h>
@@ -270,7 +270,7 @@ main(argc, argv)
     }
     syslog(LOG_NOTICE, "pppd %s.%d started by %s, uid %d",
 	   VERSION, PATCHLEVEL, p, uid);
-  
+
     /*
      * Compute mask of all interesting signals and install signal handlers
      * for each.  Only one signal handler may be active at a time.  Therefore,
