@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_unix.c,v 1.25 2003/02/18 18:50:54 mickey Exp $	*/
+/*	$OpenBSD: uvm_unix.c,v 1.26 2003/03/04 18:24:05 mickey Exp $	*/
 /*	$NetBSD: uvm_unix.c,v 1.18 2000/09/13 15:00:25 thorpej Exp $	*/
 
 /*
@@ -216,7 +216,7 @@ uvm_coredump(p, vp, cred, chdr)
 			end = VM_MAXUSER_ADDRESS;
 
 #ifdef MACHINE_STACK_GROWS_UP
-		if (start >= USRSTACK) {
+		if (USRSTACK <= start && start < (USRSTACK + MAXSSIZ)) {
 			end = round_page(USRSTACK + ctob(vm->vm_ssize));
 			if (start >= end)
 				continue;
