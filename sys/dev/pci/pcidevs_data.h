@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.69 1998/07/20 15:05:14 mickey Exp 
+ *	OpenBSD: pcidevs,v 1.70 1998/07/21 18:45:51 mickey Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -331,6 +331,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Advanced Micro Devices",
 	    "79C974 PCnet-PCI Ethernet & SCSI",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_BANDIT,
+	    0,
+	    "Apple Computer",
+	    "PCI Controller",
 	},
 	{
 	    PCI_VENDOR_ARC, PCI_PRODUCT_ARC_1000PV,
@@ -939,6 +945,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "RoadRunner Gig-E Interface",
 	},
 	{
+	    PCI_VENDOR_2MICRO, PCI_PRODUCT_2MICRO_OZ6832,
+	    0,
+	    "2 Micro Inc",
+	    "CardBus Controller",
+	},
+	{
 	    PCI_VENDOR_ES, PCI_PRODUCT_ES_FREEDOM,
 	    0,
 	    "Evans & Sutherland",
@@ -1389,6 +1401,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "XXX USB",
 	},
 	{
+	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_POWERVR2,
+	    0,
+	    "NEC",
+	    "PowerVR PCX2",
+	},
+	{
 	    PCI_VENDOR_NEOMAGIC, PCI_PRODUCT_NEOMAGIC_NM3160,
 	    0,
 	    "Neomagic",
@@ -1537,6 +1555,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "PC Technology",
 	    "RZ1000",
+	},
+	{
+	    PCI_VENDOR_PROLAN, PCI_PRODUCT_PROLAN_NE2KETHER,
+	    0,
+	    "",
+	    "NE2000-compatible Ethernet",
 	},
 	{
 	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_DC5030,
@@ -2181,6 +2205,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "VT82C561",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C586_IDE,
+	    0,
+	    "VIA Technologies",
+	    "VT82C586 (Apollo VP) IDE Controller",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C576,
 	    0,
 	    "VIA Technologies",
@@ -2196,7 +2226,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C586,
 	    0,
 	    "VIA Technologies",
-	    "VT82C586 (Apollo VP) PCI-ISA Bridge w/IDE",
+	    "VT82C586 (Apollo VP) PCI-ISA Bridge",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C597PCI,
