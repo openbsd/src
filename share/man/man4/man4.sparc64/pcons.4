@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pcons.4,v 1.1 2001/10/09 00:34:10 miod Exp $
+.\"	$OpenBSD: pcons.4,v 1.2 2002/03/29 22:31:08 miod Exp $
 .\"
 .\" Copyright (c) 2001 Miodrag Vallat.
 .\" All rights reserved.
@@ -56,3 +56,10 @@ support for the
 .Nm
 first appeared in
 .Ox 3.0 .
+.Sh CAVEATS
+Since the PROM will handle break (or Stop-A) sequences before
+.Nm pcons ,
+the preferred way to enter
+.Xr ddb 4
+on a ddb-enabled pcons console is to enter the following sequence :
+.Sq +++++
