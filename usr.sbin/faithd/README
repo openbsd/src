@@ -1,8 +1,8 @@
 Configuring FAITH IPv6-to-IPv4 TCP relay
 
 Kazu Yamamoto and Jun-ichiro itojun Hagino
-$OpenBSD: README,v 1.2 1999/12/20 16:32:53 itojun Exp $
-KAME Id: README,v 1.1.1.1 1999/12/20 16:07:42 itojun Exp
+$OpenBSD: README,v 1.3 1999/12/21 01:38:27 itojun Exp $
+KAME Id: README,v 1.2 1999/12/21 01:37:06 itojun Exp
 
 
 Introduction
@@ -10,8 +10,8 @@ Introduction
 
 FAITH is a IPv6-to-IPv4 TCP relay.  It performs tcp relay just as some of
 firewall-oriented gateway does, but between IPv6 and IPv4 with address
-address translation.
-TCP connections has to be made from IPv6 node to to IPv4 node.  FAITH will
+translation.
+TCP connections has to be made from IPv6 node to IPv4 node.  FAITH will
 not relay connections for the opposite direction.
 To perform relays, FAITH daemon needs to be executed on a router between
 your local IPv6 site and outside IPv4 network.  The daemon needs to be
