@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.2 2005/03/05 23:22:10 jmc Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.3 2005/04/06 18:51:29 joris Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -40,7 +40,7 @@
 
 #include "log.h"
 #include "rcs.h"
-
+#include "strtab.h"
 
 extern char *__progname;
 
@@ -68,14 +68,18 @@ int
 main(int argc, char **argv)
 {
 	u_int i;
+	int ret;
+
+	ret = -1;
+	cvs_strtab_init();
 
 	for (i = 0; i < (sizeof(programs)/sizeof(programs[0])); i++)
 		if (strcmp(__progname, programs[i].prog_name) == 0)
-			return (*programs[i].prog_hdlr)(argc, argv);
+			ret = programs[i].prog_hdlr(argc, argv);
 
-	errx(1, "not too sure what you expect me to do!");
+	cvs_strtab_cleanup();
 
-	return (0);
+	return (ret);
 }
 
 

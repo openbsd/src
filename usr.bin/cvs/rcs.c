@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.38 2005/04/06 17:09:05 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.39 2005/04/06 18:51:29 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -37,6 +37,7 @@
 
 #include "rcs.h"
 #include "log.h"
+#include "strtab.h"
 
 #define RCS_BUFSIZE     16384
 #define RCS_BUFEXTSIZE   8192
@@ -301,7 +302,7 @@ rcs_close(RCSFILE *rfp)
 		rsp = TAILQ_FIRST(&(rfp->rf_symbols));
 		TAILQ_REMOVE(&(rfp->rf_symbols), rsp, rs_list);
 		rcsnum_free(rsp->rs_num);
-		free(rsp->rs_name);
+		cvs_strfree(rsp->rs_name);
 		free(rsp);
 	}
 
@@ -320,11 +321,11 @@ rcs_close(RCSFILE *rfp)
 	if (rfp->rf_path != NULL)
 		free(rfp->rf_path);
 	if (rfp->rf_comment != NULL)
-		free(rfp->rf_comment);
+		cvs_strfree(rfp->rf_comment);
 	if (rfp->rf_expand != NULL)
-		free(rfp->rf_expand);
+		cvs_strfree(rfp->rf_expand);
 	if (rfp->rf_desc != NULL)
-		free(rfp->rf_desc);
+		cvs_strfree(rfp->rf_desc);
 	free(rfp);
 }
 
@@ -495,7 +496,7 @@ rcs_access_add(RCSFILE *file, const char *login)
 		return (-1);
 	}
 
-	ap->ra_name = strdup(login);
+	ap->ra_name = cvs_strdup(login);
 	if (ap->ra_name == NULL) {
 		cvs_log(LP_ERRNO, "failed to duplicate user name");
 		free(ap);
@@ -531,7 +532,7 @@ rcs_access_remove(RCSFILE *file, const char *login)
 	}
 
 	TAILQ_REMOVE(&(file->rf_access), ap, ra_list);
-	free(ap->ra_name);
+	cvs_strfree(ap->ra_name);
 	free(ap);
 
 	/* not synced anymore */
@@ -565,7 +566,7 @@ rcs_sym_add(RCSFILE *rfp, const char *sym, RCSNUM *snum)
 		return (-1);
 	}
 
-	symp->rs_name = strdup(sym);
+	symp->rs_name = cvs_strdup(sym);
 	if (symp->rs_name == NULL) {
 		cvs_log(LP_ERRNO, "failed to duplicate symbol");
 		free(symp);
@@ -574,7 +575,7 @@ rcs_sym_add(RCSFILE *rfp, const char *sym, RCSNUM *snum)
 
 	symp->rs_num = rcsnum_alloc();
 	if (symp->rs_num == NULL) {
-		free(symp->rs_name);
+		cvs_strfree(symp->rs_name);
 		free(symp);
 		return (-1);
 	}
@@ -610,7 +611,7 @@ rcs_sym_remove(RCSFILE *file, const char *sym)
 	}
 
 	TAILQ_REMOVE(&(file->rf_symbols), symp, rs_list);
-	free(symp->rs_name);
+	cvs_strfree(symp->rs_name);
 	rcsnum_free(symp->rs_num);
 	free(symp);
 
@@ -707,11 +708,11 @@ rcs_desc_set(RCSFILE *file, const char *desc)
 {
 	char *tmp;
 
-	if ((tmp = strdup(desc)) == NULL)
+	if ((tmp = cvs_strdup(desc)) == NULL)
 		return (-1);
 
 	if (file->rf_desc != NULL)
-		free(file->rf_desc);
+		cvs_strfree(file->rf_desc);
 	file->rf_desc = tmp;
 	file->rf_flags &= ~RCS_SYNCED;
 
@@ -740,11 +741,11 @@ rcs_comment_set(RCSFILE *file, const char *comment)
 {
 	char *tmp;
 
-	if ((tmp = strdup(comment)) == NULL)
+	if ((tmp = cvs_strdup(comment)) == NULL)
 		return (-1);
 
 	if (file->rf_comment != NULL)
-		free(file->rf_comment);
+		cvs_strfree(file->rf_comment);
 	file->rf_comment = tmp;
 	file->rf_flags &= ~RCS_SYNCED;
 
@@ -1057,14 +1058,14 @@ rcs_kwexp_set(RCSFILE *file, int mode)
 			buf[i++] = 'l';
 	}
 
-	if ((tmp = strdup(buf)) == NULL) {
+	if ((tmp = cvs_strdup(buf)) == NULL) {
 		cvs_log(LP_ERRNO, "%s: failed to copy expansion mode",
 		    file->rf_path);
 		return (-1);
 	}
 
 	if (file->rf_expand != NULL)
-		free(file->rf_expand);
+		cvs_strfree(file->rf_expand);
 	file->rf_expand = tmp;
 
 	return (0);
@@ -1220,7 +1221,7 @@ rcs_parse(RCSFILE *rfp)
 		return (-1);
 	}
 
-	rfp->rf_desc = strdup(RCS_TOKSTR(rfp));
+	rfp->rf_desc = cvs_strdup(RCS_TOKSTR(rfp));
 	if (rfp->rf_desc == NULL) {
 		cvs_log(LP_ERRNO, "failed to duplicate rcs token");
 		rcs_freepdata(pdp);
@@ -1322,14 +1323,14 @@ rcs_parse_admin(RCSFILE *rfp)
 				    rfp->rf_branch) < 0)
 					return (-1);
 			} else if (tok == RCS_TOK_COMMENT) {
-				rfp->rf_comment = strdup(RCS_TOKSTR(rfp));
+				rfp->rf_comment = cvs_strdup(RCS_TOKSTR(rfp));
 				if (rfp->rf_comment == NULL) {
 					cvs_log(LP_ERRNO,
 					    "failed to duplicate rcs token");
 					return (-1);
 				}
 			} else if (tok == RCS_TOK_EXPAND) {
-				rfp->rf_expand = strdup(RCS_TOKSTR(rfp));
+				rfp->rf_expand = cvs_strdup(RCS_TOKSTR(rfp));
 				if (rfp->rf_expand == NULL) {
 					cvs_log(LP_ERRNO,
 					    "failed to duplicate rcs token");
@@ -1472,7 +1473,7 @@ rcs_parse_delta(RCSFILE *rfp)
 
 			if (tokstr != NULL)
 				free(tokstr);
-			tokstr = strdup(RCS_TOKSTR(rfp));
+			tokstr = cvs_strdup(RCS_TOKSTR(rfp));
 			if (tokstr == NULL) {
 				cvs_log(LP_ERRNO,
 				    "failed to duplicate rcs token");
@@ -1540,7 +1541,7 @@ rcs_parse_delta(RCSFILE *rfp)
 	}
 
 	if (tokstr != NULL)
-		free(tokstr);
+		cvs_strfree(tokstr);
 
 	TAILQ_INSERT_TAIL(&(rfp->rf_delta), rdp, rd_list);
 	rfp->rf_ndelta++;
@@ -1604,7 +1605,7 @@ rcs_parse_deltatext(RCSFILE *rfp)
 		    RCS_TOKSTR(rfp));
 		return (-1);
 	}
-	rdp->rd_log = strdup(RCS_TOKSTR(rfp));
+	rdp->rd_log = cvs_strdup(RCS_TOKSTR(rfp));
 	if (rdp->rd_log == NULL) {
 		cvs_log(LP_ERRNO, "failed to copy RCS deltatext log");
 		return (-1);
@@ -1624,7 +1625,7 @@ rcs_parse_deltatext(RCSFILE *rfp)
 		return (-1);
 	}
 
-	rdp->rd_text = strdup(RCS_TOKSTR(rfp));
+	rdp->rd_text = cvs_strdup(RCS_TOKSTR(rfp));
 	if (rdp->rd_text == NULL) {
 		cvs_log(LP_ERRNO, "failed to copy RCS delta text");
 		return (-1);
@@ -1686,7 +1687,7 @@ rcs_parse_symbols(RCSFILE *rfp)
 			cvs_log(LP_ERRNO, "failed to allocate RCS symbol");
 			return (-1);
 		}
-		symp->rs_name = strdup(RCS_TOKSTR(rfp));
+		symp->rs_name = cvs_strdup(RCS_TOKSTR(rfp));
 		if (symp->rs_name == NULL) {
 			cvs_log(LP_ERRNO, "failed to duplicate rcs token");
 			free(symp);
@@ -1696,7 +1697,7 @@ rcs_parse_symbols(RCSFILE *rfp)
 		symp->rs_num = rcsnum_alloc();
 		if (symp->rs_num == NULL) {
 			cvs_log(LP_ERRNO, "failed to allocate rcsnum info");
-			free(symp->rs_name);
+			cvs_strfree(symp->rs_name);
 			free(symp);
 			return (-1);
 		}
@@ -1706,7 +1707,7 @@ rcs_parse_symbols(RCSFILE *rfp)
 			cvs_log(LP_ERR, "unexpected token `%s' in symbol list",
 			    RCS_TOKSTR(rfp));
 			rcsnum_free(symp->rs_num);
-			free(symp->rs_name);
+			cvs_strfree(symp->rs_name);
 			free(symp);
 			return (-1);
 		}
@@ -1716,7 +1717,7 @@ rcs_parse_symbols(RCSFILE *rfp)
 			cvs_log(LP_ERR, "unexpected token `%s' in symbol list",
 			    RCS_TOKSTR(rfp));
 			rcsnum_free(symp->rs_num);
-			free(symp->rs_name);
+			cvs_strfree(symp->rs_name);
 			free(symp);
 			return (-1);
 		}
@@ -1725,7 +1726,7 @@ rcs_parse_symbols(RCSFILE *rfp)
 			cvs_log(LP_ERR, "failed to parse RCS NUM `%s'",
 			    RCS_TOKSTR(rfp));
 			rcsnum_free(symp->rs_num);
-			free(symp->rs_name);
+			cvs_strfree(symp->rs_name);
 			free(symp);
 			return (-1);
 		}
@@ -1877,13 +1878,13 @@ rcs_freedelta(struct rcs_delta *rdp)
 		rcsnum_free(rdp->rd_next);
 
 	if (rdp->rd_author != NULL)
-		free(rdp->rd_author);
+		cvs_strfree(rdp->rd_author);
 	if (rdp->rd_state != NULL)
-		free(rdp->rd_state);
+		cvs_strfree(rdp->rd_state);
 	if (rdp->rd_log != NULL)
-		free(rdp->rd_log);
+		cvs_strfree(rdp->rd_log);
 	if (rdp->rd_text != NULL)
-		free(rdp->rd_text);
+		cvs_strfree(rdp->rd_text);
 
 	while ((rb = TAILQ_FIRST(&(rdp->rd_branches))) != NULL) {
 		TAILQ_REMOVE(&(rdp->rd_branches), rb, rb_list);
