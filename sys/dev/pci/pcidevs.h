@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.675 2003/10/04 19:57:29 krw Exp 
+ *		OpenBSD: pcidevs,v 1.676 2003/10/04 21:52:42 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1781,8 +1781,10 @@
 #define	PCI_PRODUCT_RCC_CIOB30	0x0010		/* CIOB30 */
 #define	PCI_PRODUCT_RCC_CMIC_HE	0x0011		/* CMIC_HE Host */
 #define	PCI_PRODUCT_RCC_CMIC_LE	0x0012		/* CMIC_LE Host */
+#define	PCI_PRODUCT_RCC_CNB20_HE	0x0014		/* CNB20-HE */
 #define	PCI_PRODUCT_RCC_CMIC_SL	0x0017		/* CMIC_SL Host */
 #define	PCI_PRODUCT_RCC_CIOBX2	0x0101		/* CIOBX2 */
+#define	PCI_PRODUCT_RCC_CIOB_E	0x0110		/* CIOB-E */
 #define	PCI_PRODUCT_RCC_ROSB4	0x0200		/* ROSB4 SouthBridge */
 #define	PCI_PRODUCT_RCC_CSB5	0x0201		/* CSB5 SouthBridge */
 #define	PCI_PRODUCT_RCC_CSB6_PCI	0x0203		/* CSB6 Host-PCI */

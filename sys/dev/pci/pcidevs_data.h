@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.675 2003/10/04 19:57:29 krw Exp 
+ *		OpenBSD: pcidevs,v 1.676 2003/10/04 21:52:42 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -4911,12 +4911,20 @@ static const struct pci_known_product pci_known_products[] = {
 	    "CMIC_LE Host",
 	},
 	{
+	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_CNB20_HE,
+	    "CNB20-HE",
+	},
+	{
 	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_CMIC_SL,
 	    "CMIC_SL Host",
 	},
 	{
 	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_CIOBX2,
 	    "CIOBX2",
+	},
+	{
+	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_CIOB_E,
+	    "CIOB-E",
 	},
 	{
 	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_ROSB4,
