@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.10 2000/07/11 13:00:48 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.11 2000/07/11 13:06:46 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -148,6 +148,11 @@ INDEX entry without needing more files.
 Set to name of script invoked by
 .Ar configure
 target, if appropriate. Should be relative to ${WRKSRC}.
+.It Ev CONFIGURE_SHARED
+Set to --enable-shared or --disable-shared, depending whether the
+architecture supports shared libraries.
+Append to CONFIGURE_ARGS, for ports that build dynamic libraries and
+whose configure script supports those options.
 .It Ev CONFIGURE_STYLE
 Set to style of configuration that needs to happen.
 If
