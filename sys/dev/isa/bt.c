@@ -182,7 +182,6 @@ struct scsi_device bt_dev = {
 
 int	btprobe __P((struct device *, void *, void *));
 void	btattach __P((struct device *, struct device *, void *));
-int	btprint __P((void *, const char *));
 
 struct cfattach bt_ca = {
 	sizeof(struct bt_softc), btprobe, btattach
@@ -356,17 +355,6 @@ btprobe(parent, match, aux)
 	return 1;
 }
 
-int
-btprint(aux, name)
-	void *aux;
-	const char *name;
-{
-
-	if (name != NULL)
-		printf("%s: scsibus ", name);
-	return UNCONF;
-}
-
 /*
  * Attach all the sub-devices we can find
  */
@@ -408,7 +396,7 @@ btattach(parent, self, aux)
 	/*
 	 * ask the adapter what subunits are present
 	 */
-	config_found(self, &sc->sc_link, btprint);
+	config_found(self, &sc->sc_link, scsiprint);
 }
 
 integrate void
