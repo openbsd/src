@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.5 1996/12/10 15:42:38 deraadt Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.6 1997/01/30 08:16:45 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #endif
-static char *rcsid = "$OpenBSD: kdump.c,v 1.5 1996/12/10 15:42:38 deraadt Exp $";
+static char *rcsid = "$OpenBSD: kdump.c,v 1.6 1997/01/30 08:16:45 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -283,9 +283,9 @@ ioctldecode(cmd)
 {
 	char dirbuf[4], *dir = dirbuf;
 
-	if (cmd & IOC_OUT)
-		*dir++ = 'W';
 	if (cmd & IOC_IN)
+		*dir++ = 'W';
+	if (cmd & IOC_OUT)
 		*dir++ = 'R';
 	*dir = '\0';
 
