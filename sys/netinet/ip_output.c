@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.71 2000/06/01 04:47:55 angelos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.72 2000/06/17 23:50:45 angelos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -125,7 +125,11 @@ ip_output(m0, va_alist)
 	int flags;
 	struct ip_moptions *imo;
 	va_list ap;
+	u_int8_t sproto = 0, donerouting = 0;
 #ifdef IPSEC
+	union sockaddr_union sdst;
+	u_int32_t sspi;
+
 	u_int8_t sa_require = 0, sa_have = 0;
 	struct inpcb *inp;
 	struct tdb *tdb;
@@ -150,7 +154,9 @@ ip_output(m0, va_alist)
 		m = ip_insertoptions(m, opt, &len);
 		hlen = len;
 	}
+
 	ip = mtod(m, struct ip *);
+
 	/*
 	 * Fill in IP header.
 	 */
@@ -165,66 +171,264 @@ ip_output(m0, va_alist)
 		hlen = ip->ip_hl << 2;
 	}
 
+#ifdef IPSEC
+	s = splnet();
+
 	/*
-	 * Route packet.
+	 * If the higher-level protocol has cached the SA to use, we
+	 * can avoid the routing lookup if the source address is zero.
 	 */
-	if (ro == 0) {
-		ro = &iproute;
-		bzero((caddr_t)ro, sizeof (*ro));
+	if (inp != NULL && inp->inp_tdb != NULL &&
+	    ip->ip_src.s_addr == INADDR_ANY &&
+	    tdb->tdb_dst.sa.sa_family == AF_INET &&
+	    tdb->tdb_dst.sin.sin_addr.s_addr != AF_INET) {
+	        ip->ip_src.s_addr = tdb->tdb_dst.sin.sin_addr.s_addr;
+		splx(s);
+		goto skip_routing;
 	}
-	dst = satosin(&ro->ro_dst);
+
+	splx(s);
+#endif /* IPSEC */
+
 	/*
-	 * If there is a cached route,
-	 * check that it is to the same destination
-	 * and is still up.  If not, free it and try again.
+	 * If we're missing the IP source address, do a route lookup. We'll
+	 * remember this result, in case we don't need to do any IPsec
+	 * processing on the packet. We need the source address so we can
+	 * do an SPD lookup in IPsec; for most packets, the source address
+	 * is set at a higher level protocol. ICMPs and other packets
+	 * though (e.g., traceroute) have a source address of zeroes.
 	 */
-	if (ro->ro_rt && ((ro->ro_rt->rt_flags & RTF_UP) == 0 ||
-	    dst->sin_addr.s_addr != ip->ip_dst.s_addr)) {
-		RTFREE(ro->ro_rt);
-		ro->ro_rt = (struct rtentry *)0;
-	}
-	if (ro->ro_rt == 0) {
-		dst->sin_family = AF_INET;
-		dst->sin_len = sizeof(*dst);
-		dst->sin_addr = ip->ip_dst;
-	}
-	/*
-	 * If routing to interface only,
-	 * short circuit routing lookup.
-	 */
-	if (flags & IP_ROUTETOIF) {
-		if ((ia = ifatoia(ifa_ifwithdstaddr(sintosa(dst)))) == 0 &&
-		    (ia = ifatoia(ifa_ifwithnet(sintosa(dst)))) == 0) {
-			ipstat.ips_noroute++;
-			error = ENETUNREACH;
-			goto bad;
+	if (ip->ip_src.s_addr == INADDR_ANY) {
+	        donerouting = 1;
+
+	        if (ro == 0) {
+		        ro = &iproute;
+			bzero((caddr_t)ro, sizeof (*ro));
 		}
-		ifp = ia->ia_ifp;
-		ip->ip_ttl = 1;
-	} else {
-		if (ro->ro_rt == 0)
-			rtalloc(ro);
+
+		dst = satosin(&ro->ro_dst);
+
+		/*
+		 * If there is a cached route, check that it is to the same
+		 * destination and is still up.  If not, free it and try again.
+		 */
+		if (ro->ro_rt && ((ro->ro_rt->rt_flags & RTF_UP) == 0 ||
+				  dst->sin_addr.s_addr != ip->ip_dst.s_addr)) {
+		        RTFREE(ro->ro_rt);
+			ro->ro_rt = (struct rtentry *)0;
+		}
+
 		if (ro->ro_rt == 0) {
-			ipstat.ips_noroute++;
-			error = EHOSTUNREACH;
-			goto bad;
+		        dst->sin_family = AF_INET;
+			dst->sin_len = sizeof(*dst);
+			dst->sin_addr = ip->ip_dst;
 		}
-		ia = ifatoia(ro->ro_rt->rt_ifa);
-		ifp = ro->ro_rt->rt_ifp;
-		ro->ro_rt->rt_use++;
-		if (ro->ro_rt->rt_flags & RTF_GATEWAY)
-			dst = satosin(ro->ro_rt->rt_gateway);
+
+		/*
+		 * If routing to interface only, short-circuit routing lookup.
+		 */
+		if (flags & IP_ROUTETOIF) {
+		        if ((ia = ifatoia(ifa_ifwithdstaddr(sintosa(dst)))) == 0 &&
+			    (ia = ifatoia(ifa_ifwithnet(sintosa(dst)))) == 0) {
+			    ipstat.ips_noroute++;
+			    error = ENETUNREACH;
+			    goto bad;
+			}
+
+			ifp = ia->ia_ifp;
+			ip->ip_ttl = 1;
+		} else {
+		        if (ro->ro_rt == 0)
+			        rtalloc(ro);
+
+			if (ro->ro_rt == 0) {
+			        ipstat.ips_noroute++;
+				error = EHOSTUNREACH;
+				goto bad;
+			}
+
+			ia = ifatoia(ro->ro_rt->rt_ifa);
+			ifp = ro->ro_rt->rt_ifp;
+			ro->ro_rt->rt_use++;
+
+			if (ro->ro_rt->rt_flags & RTF_GATEWAY)
+			        dst = satosin(ro->ro_rt->rt_gateway);
+		}
+
+		/* Set the source IP address */
+		ip->ip_src = ia->ia_addr.sin_addr;
 	}
+
+#ifdef IPSEC
+ skip_routing:
+
+	/* Disallow nested IPsec for now */
+	if (flags & IP_ENCAPSULATED)
+	  goto done_spd;
+
+	/*
+	 * splnet is chosen over spltdb because we are not allowed to
+	 * lower the level, and udp_output calls us in splnet().
+	 */
+	s = splnet();
+
+	/*
+	 * Check if there was an outgoing SA bound to the flow
+	 * from a transport protocol.
+	 */
+	if (inp && inp->inp_tdb &&
+	    inp->inp_tdb->tdb_dst.sa.sa_family == AF_INET &&
+	    !bcmp(&inp->inp_tdb->tdb_dst.sin.sin_addr,
+		  &ip->ip_dst, sizeof(ip->ip_dst)))
+	        tdb = inp->inp_tdb;
+	else
+	        tdb = ipsp_spd_lookup(m, AF_INET, hlen, &error);
+
+	if (tdb == NULL) {
+	        splx(s);
+
+		if (error == 0) {
+		        /*
+			 * No IPsec processing required, we'll just send the
+			 * packet out.
+			 */
+		        sproto = 0;
+
+			/* Fall through to routing/multicast handling */
+		} else {
+		        /*
+			 * -EINVAL is used to indicate that the packet should
+			 * be silently dropped, typically because we've asked
+			 * key management for an SA.
+			 */
+		        if (error == -EINVAL) /* Should silently drop packet */
+			  error = 0;
+
+			m_freem(m);
+			goto done;
+		}
+	} else {
+	        /* We need to do IPsec */
+	        bcopy(&tdb->tdb_dst, &sdst, sizeof(sdst));
+		sspi = tdb->tdb_spi;
+		sproto = tdb->tdb_sproto;
+
+		/*
+		 * If the socket has set the bypass flags and SA destination
+		 * matches the IP destination, skip IPsec. This allows
+		 * IKE packets to travel through IPsec tunnels.
+		 */
+		if (inp != NULL && 
+		    inp->inp_seclevel[SL_AUTH] == IPSEC_LEVEL_BYPASS &&
+		    inp->inp_seclevel[SL_ESP_TRANS] == IPSEC_LEVEL_BYPASS &&
+		    inp->inp_seclevel[SL_ESP_NETWORK] == IPSEC_LEVEL_BYPASS &&
+		    sdst.sa.sa_family == AF_INET &&
+		    !bcmp(&sdst.sin.sin_addr.s_addr, &ip->ip_dst.s_addr,
+			  sizeof(ip->ip_dst.s_addr))) {
+		        splx(s);
+		        sproto = 0; /* mark as no-IPsec-needed */
+			goto done_spd;
+		}
+
+		/* What are the socket (or default) security requirements ? */
+		if (inp == NULL)
+		        sa_require = get_sa_require(NULL);
+		else
+		        sa_require = inp->inp_secrequire;
+
+		/*
+		 * Now we check if this tdb has all the transforms which
+		 * are required by the socket or our default policy.
+		 */
+		SPI_CHAIN_ATTRIB(sa_have, tdb_onext, tdb);
+		splx(s);
+		if (sa_require & ~sa_have) {
+			error = EHOSTUNREACH;
+			m_freem(m);
+			goto done;
+		}
+
+		/* If it's not a multicast packet, try to fast-path */
+		if (!IN_MULTICAST(ip->ip_dst.s_addr)) {
+			goto sendit;
+		}
+	}
+
+	/* Fall through to the routing/multicast handling code */
+ done_spd:
+#endif /* IPSEC */
+
+	if (donerouting == 0) {
+	        if (ro == 0) {
+		        ro = &iproute;
+			bzero((caddr_t)ro, sizeof (*ro));
+		}
+
+		dst = satosin(&ro->ro_dst);
+
+		/*
+		 * If there is a cached route, check that it is to the same
+		 * destination and is still up.  If not, free it and try again.
+		 */
+		if (ro->ro_rt && ((ro->ro_rt->rt_flags & RTF_UP) == 0 ||
+				  dst->sin_addr.s_addr != ip->ip_dst.s_addr)) {
+		        RTFREE(ro->ro_rt);
+			ro->ro_rt = (struct rtentry *)0;
+		}
+
+		if (ro->ro_rt == 0) {
+		        dst->sin_family = AF_INET;
+			dst->sin_len = sizeof(*dst);
+			dst->sin_addr = ip->ip_dst;
+		}
+
+		/*
+		 * If routing to interface only, short-circuit routing lookup.
+		 */
+		if (flags & IP_ROUTETOIF) {
+		        if ((ia = ifatoia(ifa_ifwithdstaddr(sintosa(dst)))) == 0 &&
+			    (ia = ifatoia(ifa_ifwithnet(sintosa(dst)))) == 0) {
+			    ipstat.ips_noroute++;
+			    error = ENETUNREACH;
+			    goto bad;
+			}
+
+			ifp = ia->ia_ifp;
+			ip->ip_ttl = 1;
+		} else {
+		        if (ro->ro_rt == 0)
+			        rtalloc(ro);
+
+			if (ro->ro_rt == 0) {
+			        ipstat.ips_noroute++;
+				error = EHOSTUNREACH;
+				goto bad;
+			}
+
+			ia = ifatoia(ro->ro_rt->rt_ifa);
+			ifp = ro->ro_rt->rt_ifp;
+			ro->ro_rt->rt_use++;
+
+			if (ro->ro_rt->rt_flags & RTF_GATEWAY)
+			        dst = satosin(ro->ro_rt->rt_gateway);
+		}
+
+		/* Set the source IP address */
+		ip->ip_src = ia->ia_addr.sin_addr;
+	}
+
 	if (IN_MULTICAST(ip->ip_dst.s_addr)) {
 		struct in_multi *inm;
 
 		m->m_flags |= M_MCAST;
+
 		/*
 		 * IP destination address is multicast.  Make sure "dst"
 		 * still points to the address in "ro".  (It may have been
 		 * changed to point to a gateway address, above.)
 		 */
 		dst = satosin(&ro->ro_dst);
+
 		/*
 		 * See if the caller provided any multicast options
 		 */
@@ -234,14 +438,18 @@ ip_output(m0, va_alist)
 				ifp = imo->imo_multicast_ifp;
 		} else
 			ip->ip_ttl = IP_DEFAULT_MULTICAST_TTL;
+
 		/*
-		 * Confirm that the outgoing interface supports multicast.
+		 * Confirm that the outgoing interface supports multicast,
+		 * but only if the packet actually is going out on that
+		 * interface (i.e., no IPsec is applied).
 		 */
-		if ((ifp->if_flags & IFF_MULTICAST) == 0) {
+		if (((ifp->if_flags & IFF_MULTICAST) == 0) && (sproto == 0)) {
 			ipstat.ips_noroute++;
 			error = ENETUNREACH;
 			goto bad;
 		}
+
 		/*
 		 * If source address not specified yet, use address
 		 * of outgoing interface.
@@ -249,7 +457,9 @@ ip_output(m0, va_alist)
 		if (ip->ip_src.s_addr == INADDR_ANY) {
 			register struct in_ifaddr *ia;
 
-			for (ia = in_ifaddr.tqh_first; ia; ia = ia->ia_list.tqe_next)
+			for (ia = in_ifaddr.tqh_first;
+			     ia;
+			     ia = ia->ia_list.tqe_next)
 				if (ia->ia_ifp == ifp) {
 					ip->ip_src = ia->ia_addr.sin_addr;
 					break;
@@ -305,20 +515,13 @@ ip_output(m0, va_alist)
 
 		goto sendit;
 	}
-#ifndef notdef
+
 	/*
-	 * If source address not specified yet, use address
-	 * of outgoing interface.
+	 * Look for broadcast address and and verify user is allowed to send
+	 * such a packet; if the packet is going in an IPsec tunnel, skip
+	 * this check.
 	 */
-	if (ip->ip_src.s_addr == INADDR_ANY)
-		ip->ip_src = ia->ia_addr.sin_addr;
-#endif
-	/*
-	 * Look for broadcast address and
-	 * and verify user is allowed to send
-	 * such a packet.
-	 */
-	if (in_broadcast(dst->sin_addr, ifp)) {
+	if ((sproto == 0) && (in_broadcast(dst->sin_addr, ifp))) {
 		if ((ifp->if_flags & IFF_BROADCAST) == 0) {
 			error = EADDRNOTAVAIL;
 			goto bad;
@@ -327,7 +530,8 @@ ip_output(m0, va_alist)
 			error = EACCES;
 			goto bad;
 		}
-		/* don't allow broadcast messages to be fragmented */
+
+		/* Don't allow broadcast messages to be fragmented */
 		if ((u_int16_t)ip->ip_len > ifp->if_mtu) {
 			error = EMSGSIZE;
 			goto bad;
@@ -341,76 +545,31 @@ sendit:
 	/*
 	 * Check if the packet needs encapsulation.
 	 */
-	if (!(flags & IP_ENCAPSULATED) &&
-	    (inp == NULL || 
-	     inp->inp_seclevel[SL_AUTH] != IPSEC_LEVEL_BYPASS ||
-	     inp->inp_seclevel[SL_ESP_TRANS] != IPSEC_LEVEL_BYPASS ||
-	     inp->inp_seclevel[SL_ESP_NETWORK] != IPSEC_LEVEL_BYPASS)) {
-	        if (inp == NULL)
-		        sa_require = get_sa_require(NULL);
-		else
-		        sa_require = inp->inp_secrequire;
+	if (sproto != 0) {
+	        s = splnet();
 
-		/*
-		 * Check if there was an outgoing SA bound to the flow
-		 * from a transport protocol.
-		 */
-		if (inp && inp->inp_tdb &&
-		    (inp->inp_tdb->tdb_dst.sin.sin_addr.s_addr == INADDR_ANY ||
-		     !bcmp(&inp->inp_tdb->tdb_dst.sin.sin_addr,
-			   &ip->ip_dst, sizeof(ip->ip_dst)))) {
-			tdb = inp->inp_tdb;
-			goto have_tdb;
-		}
-
-		/*
-		 * splnet is chosen over spltdb because we are not allowed to
-		 * lower the level, and udp_output calls us in splnet().
-		 */
-		s = splnet();
-
-		/* SPD lookup */
-		tdb = ipsp_spd_lookup(m, AF_INET, hlen, &error);
+		tdb = gettdb(sspi, &sdst, sproto);
 		if (tdb == NULL) {
-		        splx(s);
-			if (error == 0) /* No IPsec processing required */
-			  goto no_encap;
-
-			if (error == -EINVAL) /* Should silently drop packet */
-			  error = 0;
-
+			error = EHOSTUNREACH;
 			m_freem(m);
 			goto done;
 		}
 
-	     have_tdb:
 		/* Massage the IP header for use by the IPsec code */
 		ip->ip_len = htons((u_short) ip->ip_len);
 		ip->ip_off = htons((u_short) ip->ip_off);
 		ip->ip_sum = 0;
 
 		/*
-		 * Now we check if this tdb has all the transforms which
-		 * are required by the socket or our default policy.
+		 * Clear these -- they'll be set in the recursive invocation
+		 * as needed.
 		 */
-		SPI_CHAIN_ATTRIB(sa_have, tdb_onext, tdb);
-		if (sa_require & ~sa_have) {
-		        splx(s);
-			goto no_encap;
-		}
+		m->m_flags &= ~(M_MCAST | M_BCAST);
 
 		/* Callee frees mbuf */
 		error = ipsp_process_packet(m, tdb, AF_INET, 0);
 		splx(s);
 		return error;  /* Nothing more to be done */
-
-no_encap:
-		/* No IPSec processing though it was required, drop packet */
-		if (sa_require) {
-			error = EHOSTUNREACH;
-			m_freem(m);
-			goto done;
-		}
 	}
 #endif /* IPSEC */
 
