@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioapic.c,v 1.2 2004/06/13 21:49:15 niklas Exp $	*/
+/*	$OpenBSD: ioapic.c,v 1.3 2004/06/23 17:14:31 niklas Exp $	*/
 /* 	$NetBSD: ioapic.c,v 1.7 2003/07/14 22:32:40 lukem Exp $	*/
 
 /*-
@@ -115,6 +115,22 @@ int ioapic_cold = 1;
 struct ioapic_softc *ioapics;	 /* head of linked list */
 int nioapics = 0;	   	 /* number attached */
 
+void ioapic_set_id(struct ioapic_softc *);
+
+/*
+ * A bitmap telling what APIC IDs usable for I/O APICs are free.
+ * The size must be at least IOAPIC_ID_MAX bits (16).
+ */
+u_int16_t ioapic_id_map = (1 << IOAPIC_ID_MAX) - 1;
+
+/*
+ * When we renumber I/O APICs we provide a mapping vector giving us the new
+ * ID out of the old BIOS supplied one.  Each item must be able to hold IDs
+ * in [0, IOAPIC_ID_MAX << 1), since we use an extra bit to tell if the ID
+ * has actually been remapped.  
+ */
+u_int8_t ioapic_id_remap[IOAPIC_ID_MAX];
+
 /*
  * Register read/write routines.
  */
@@ -201,6 +217,23 @@ ioapic_match(struct device *parent, void *matchv, void *aux)
 	return (0);
 }
 
+/* Reprogram the APIC ID, and check that it actually got set. */
+void
+ioapic_set_id(struct ioapic_softc *sc) {
+	u_int8_t apic_id;
+
+	ioapic_write(sc, IOAPIC_ID,
+	    (ioapic_read(sc, IOAPIC_ID) & ~IOAPIC_ID_MASK) |
+	    (sc->sc_apicid << IOAPIC_ID_SHIFT));
+
+	apic_id = (ioapic_read(sc, IOAPIC_ID) & IOAPIC_ID_MASK) >>
+	    IOAPIC_ID_SHIFT;
+
+	if (apic_id != sc->sc_apicid)
+		printf(", can't remap to apid %d\n", sc->sc_apicid);
+	else
+		printf(", remapped to apic %d\n", sc->sc_apicid);
+}
 
 /*
  * can't use bus_space_xxx as we don't have a bus handle ...
@@ -211,23 +244,15 @@ ioapic_attach(struct device *parent, struct device *self, void *aux)
 	struct ioapic_softc *sc = (struct ioapic_softc *)self;
 	struct apic_attach_args  *aaa = (struct apic_attach_args *)aux;
 	int apic_id;
+	int8_t new_id;
 	bus_space_handle_t bh;
 	u_int32_t ver_sz;
-	int i;
+	int i, ioapic_found;
 
 	sc->sc_flags = aaa->flags;
 	sc->sc_apicid = aaa->apic_id;
 
-	printf(" apid %d", aaa->apic_id);
-
-	if (ioapic_find(aaa->apic_id) != NULL) {
-		printf(": duplicate apic id (ignored)\n");
-		return;
-	}
-
-	ioapic_add(sc);
-
-	printf(": pa 0x%lx", aaa->apic_address);
+	printf(": apid %d pa 0x%lx", aaa->apic_id, aaa->apic_address);
 
 	if (bus_mem_add_mapping(aaa->apic_address, PAGE_SIZE, 0, &bh) != 0) {
 		printf(", map failed\n");
@@ -236,10 +261,7 @@ ioapic_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_reg = (volatile u_int32_t *)(bh + IOAPIC_REG);
 	sc->sc_data = (volatile u_int32_t *)(bh + IOAPIC_DATA);
 
-	apic_id = (ioapic_read(sc,IOAPIC_ID) & IOAPIC_ID_MASK) >>
-	    IOAPIC_ID_SHIFT;
 	ver_sz = ioapic_read(sc, IOAPIC_VER);
-
 	sc->sc_apic_vers = (ver_sz & IOAPIC_VER_MASK) >> IOAPIC_VER_SHIFT;
 	sc->sc_apic_sz = (ver_sz & IOAPIC_MAX_MASK) >> IOAPIC_MAX_SHIFT;
 	sc->sc_apic_sz++;
@@ -250,6 +272,38 @@ ioapic_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	printf(", version %x, %d pins\n", sc->sc_apic_vers, sc->sc_apic_sz);
+
+	/*
+	 * If either a LAPIC or an I/O APIC is already at the ID the BIOS
+	 * setup for this I/O APIC, try to find a free ID to use and reprogram
+	 * the chip.  Record this remapping since all references done by the
+	 * MP BIOS will be through the old ID.
+	 */
+	ioapic_found = ioapic_find(sc->sc_apicid) != NULL;
+	if (cpu_info[sc->sc_apicid] != NULL || ioapic_found) {
+		printf("%s: duplicate apic id", sc->sc_dev.dv_xname);
+		new_id = ffs(ioapic_id_map) - 1;
+		if (new_id == -1) {
+			printf(" (and none free, ignoring)\n");
+			return;
+		}
+
+		/*
+		 * If there were many I/O APICs at the same ID, we choose
+		 * to let later references to that ID (in the MP BIOS) refer
+		 * to the first found.
+		 */
+		if (!ioapic_found && !IOAPIC_REMAPPED(sc->sc_apicid))
+			IOAPIC_REMAP(sc->sc_apicid, new_id);
+		sc->sc_apicid = new_id;
+		ioapic_set_id(sc);
+	}
+	ioapic_id_map &= ~(1 << sc->sc_apicid);
+
+	ioapic_add(sc);
+
+	apic_id = (ioapic_read(sc, IOAPIC_ID) & IOAPIC_ID_MASK) >>
+	    IOAPIC_ID_SHIFT;
 
 	sc->sc_pins = malloc(sizeof(struct ioapic_pin) * sc->sc_apic_sz,
 	    M_DEVBUF, M_WAITOK);
@@ -267,24 +321,11 @@ ioapic_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * In case the APIC is not initialized to the correct ID
 	 * do it now.
-	 * Maybe we should record the original ID for interrupt
-	 * mapping later ...
 	 */
 	if (apic_id != sc->sc_apicid) {
 		printf("%s: misconfigured as apic %d", sc->sc_dev.dv_xname,
 		    apic_id);
-
-		ioapic_write(sc, IOAPIC_ID,
-		    (ioapic_read(sc, IOAPIC_ID) & ~IOAPIC_ID_MASK)
-		    | (sc->sc_apicid << IOAPIC_ID_SHIFT));
-
-		apic_id = (ioapic_read(sc,IOAPIC_ID) & IOAPIC_ID_MASK) >>
-		    IOAPIC_ID_SHIFT;
-
-		if (apic_id != sc->sc_apicid)
-			printf(", can't remap to apid %d\n", sc->sc_apicid);
-		else
-			printf(", remapped to apic %d\n", sc->sc_apicid);
+		ioapic_set_id(sc);
 	}
 #if 0
 	/* output of this was boring. */
@@ -344,6 +385,7 @@ apic_set_redir(struct ioapic_softc *sc, int pin)
 		redlo |= IOAPIC_REDLO_MASK;
 	} else {
 		redlo |= (pp->ip_vector & 0xff);
+		redlo &= ~IOAPIC_REDLO_DEL_MASK;
 		redlo |= (IOAPIC_REDLO_DEL_FIXED << IOAPIC_REDLO_DEL_SHIFT);
 		redlo &= ~IOAPIC_REDLO_DSTMOD;
 

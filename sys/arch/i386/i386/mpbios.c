@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpbios.c,v 1.2 2004/06/13 21:49:15 niklas Exp $	*/
+/*	$OpenBSD: mpbios.c,v 1.3 2004/06/23 17:14:31 niklas Exp $	*/
 /*	$NetBSD: mpbios.c,v 1.2 2002/10/01 12:56:57 fvdl Exp $	*/
 
 /*-
@@ -1011,17 +1011,20 @@ mpbios_int(ent, enttype, mpi)
 	struct mp_intr_map *mpi;
 {
 	const struct mpbios_int *entry = (const struct mpbios_int *)ent;
+	struct mpbios_int rw_entry = *entry;
 	struct ioapic_softc *sc = NULL;
 
 	struct mp_intr_map *altmpi;
 	struct mp_bus *mpb;
 
-	u_int32_t id = entry->dst_apic_id;
+	u_int32_t id = IOAPIC_REMAPPED_ID(entry->dst_apic_id);
 	u_int32_t pin = entry->dst_apic_int;
 	u_int32_t bus = entry->src_bus_id;
 	u_int32_t dev = entry->src_bus_irq;
 	u_int32_t type = entry->int_type;
 	u_int32_t flags = entry->int_flags;
+
+	rw_entry.dst_apic_id = id;
 
 	switch (type) {
 	case MPS_INTTYPE_INT:
@@ -1054,7 +1057,7 @@ mpbios_int(ent, enttype, mpi)
 		return;
 	}
 
-	(*mpb->mb_intr_cfg)(entry, &mpi->redir);
+	(*mpb->mb_intr_cfg)(&rw_entry, &mpi->redir);
 
 	if (enttype == MPS_MCT_IOINT) {
 		sc = ioapic_find(id);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.5 2004/06/20 19:33:07 aaron Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.6 2004/06/23 17:14:31 niklas Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -102,6 +102,7 @@
 #endif
 
 #if NIOAPIC > 0
+#include <machine/i82093reg.h>
 #include <machine/i82093var.h>
 #endif
 
@@ -315,6 +316,10 @@ cpu_attach(parent, self, aux)
 	printf("\n");
 #endif	/* !MULTIPROCESSOR */
 
+	/* Mark this ID as taken if it's in the I/O APIC ID area */
+	if (ci->ci_apicid < IOAPIC_ID_MAX)
+		ioapic_id_map &= ~(1 << ci->ci_apicid);
+	
 #ifdef MULTIPROCESSOR
 	if (mp_verbose) {
 		printf("%s: kstack at 0x%lx for %d bytes\n",

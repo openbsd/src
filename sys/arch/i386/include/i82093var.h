@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82093var.h,v 1.2 2004/06/13 21:49:16 niklas Exp $	*/
+/*	$OpenBSD: i82093var.h,v 1.3 2004/06/23 17:14:31 niklas Exp $	*/
 /* $NetBSD: i82093var.h,v 1.1 2003/02/26 21:26:10 fvdl Exp $ */
 
 /*-
@@ -85,6 +85,15 @@ struct ioapic_softc {
 #define APIC_IRQ_APIC(x) ((x & APIC_INT_APIC_MASK) >> APIC_INT_APIC_SHIFT)
 #define APIC_IRQ_PIN(x) ((x & APIC_INT_PIN_MASK) >> APIC_INT_PIN_SHIFT)
 
+/* I/O APIC ID remapping helper macros. */
+#define IOAPIC_REMAP_MASK	(IOAPIC_ID_MASK >> IOAPIC_ID_SHIFT)
+#define IOAPIC_REMAP_FLAG	((IOAPIC_REMAP_MASK + 1) << 1)
+#define IOAPIC_REMAP(old_id, new_id) \
+    (ioapic_id_remap[(old_id)] = IOAPIC_REMAP_FLAG | (new_id))
+#define IOAPIC_REMAPPED(id)	(ioapic_id_remap[(id)] & IOAPIC_REMAP_FLAG)
+#define IOAPIC_REMAPPED_ID(id)	\
+    (IOAPIC_REMAPPED(id) ? ioapic_id_remap[(id)] & IOAPIC_REMAP_MASK : (id))
+
 void   *apic_intr_establish(int, int, int, int (*)(void *), void *, char *); 
 void	apic_intr_disestablish(void *);
 
@@ -99,5 +108,7 @@ void	lapic_vectorset(void); /* XXX */
 extern int ioapic_bsp_id;
 extern int nioapics;
 extern struct ioapic_softc *ioapics;
+extern u_int16_t ioapic_id_map;
+extern u_int8_t ioapic_id_remap[];
 
 #endif /* !_I386_I82093VAR_H_ */
