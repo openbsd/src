@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_ext.c,v 1.11 1998/01/04 12:50:18 deraadt Exp $	*/
+/*	$OpenBSD: pcvt_ext.c,v 1.12 1998/03/28 09:36:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -268,6 +268,10 @@ vga_chipset(void)
 			case 0xe3:
 				can_do_132col = 1;
 				return(VGA_TR9440);
+
+			case 0xd3:
+				can_do_132col = 1;
+				return(VGA_TR9660);
 
 			default:
 				return(VGA_TRUNKNOWN);
