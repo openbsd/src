@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.11 1997/04/06 19:52:11 millert Exp $	*/
+/*	$OpenBSD: parse.c,v 1.12 1997/04/19 19:08:29 kstailey Exp $	*/
 /*
  * (C)opyright 1993-1996 by Darren Reed.
  *
@@ -110,13 +110,15 @@ char	*line;
 			fil.fr_flags |= FR_RETICMP;
 			cpp++;
 			if (*(*cpp + 11) == '(') {
-				fil.fr_icode = icmpcode(*cpp + 12);
-				if (fil.fr_icode == -1) {
+				int icode = icmpcode(*cpp + 12);
+
+				if (icode == -1) {
 					fprintf(stderr,
-						"uncrecognised icmp code %s\n",
+						"unrecognized icmp code %s\n",
 						*cpp + 12);
 					return NULL;
 				}
+				fil.fr_icode = icode;
 			}
 		} else if (!strncasecmp(*(cpp+1), "return-rst", 10)) {
 			fil.fr_flags |= FR_RETRST;
