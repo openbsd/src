@@ -1,4 +1,4 @@
-/* $OpenBSD: aicasm_symbol.h,v 1.1 2000/03/22 02:50:50 smurph Exp $ */
+/* $OpenBSD: aicasm_symbol.h,v 1.2 2002/02/16 04:36:33 smurph Exp $ */
 /*
  * Aic7xxx SCSI host adapter firmware asssembler symbol table definitions
  *
@@ -14,6 +14,9 @@
  * 2. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
+ * Alternatively, this software may be distributed under the terms of the
+ * GNU Public License ("GPL").
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -26,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/dev/aic7xxx/aicasm_symbol.h,v 1.6 1999/12/06 18:23:31 gibbs Exp $
+ * $FreeBSD: src/sys/dev/aic7xxx/aicasm/aicasm_symbol.h,v 1.12 2000/11/10 19:54:17 gibbs Exp $
  */
 
 #include <sys/queue.h>
@@ -111,6 +114,12 @@ typedef struct symbol_node {
 	symbol_t *symbol;
 }symbol_node_t;
 
+typedef struct critical_section {
+        TAILQ_ENTRY(critical_section) links;
+        int begin_addr;
+        int end_addr;
+} critical_section_t;
+
 typedef enum {
 	SCOPE_ROOT,
 	SCOPE_IF,
@@ -135,6 +144,7 @@ typedef struct scope {
 	int func_num;
 } scope_t;
 
+TAILQ_HEAD(cs_tailq, critical_section);
 SLIST_HEAD(scope_list, scope);
 TAILQ_HEAD(scope_tailq, scope);
 
@@ -160,3 +170,4 @@ void	symlist_free __P((symlist_t *symlist));
 void	symlist_merge __P((symlist_t *symlist_dest, symlist_t *symlist_src1,
 			   symlist_t *symlist_src2));
 void	symtable_dump __P((FILE *ofile));
+

@@ -1,11 +1,9 @@
-/*	$OpenBSD: smc93cx6var.h,v 1.6 2000/01/31 01:50:54 weingart Exp $	*/
-/* $FreeBSD: sys/dev/aic7xxx/93cx6.h,v 1.3 1999/12/29 04:35:33 peter Exp $ */
 /*
- * Interface to the 93C46 serial EEPROM that is used to store BIOS
+ * Interface to the 93C46/56 serial EEPROM that is used to store BIOS
  * settings for the aic7xxx based adaptec SCSI controllers.  It can
  * also be used for 93C26 and 93C06 serial EEPROMS.
  *
- * Copyright (c) 1994, 1995 Justin T. Gibbs.
+ * Copyright (c) 1994, 1995, 2000 Justin T. Gibbs.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -13,16 +11,12 @@
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions, and the following disclaimer,
- *    without modification, immediately at the beginning of the file.
+ *    without modification.
  * 2. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
- * Where this Software is combined with software released under the terms of 
- * the GNU Public License ("GPL") and the terms of the GPL would require the 
- * combined work to also be released under the terms of the GPL, the terms
- * and conditions of this License will apply in addition to those of the
- * GPL with the exception of any terms or conditions of this License that
- * conflict with, or are expressly prohibited by, the GPL.
+ * Alternatively, this software may be distributed under the terms of the
+ * GNU Public License ("GPL").
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -35,14 +29,13 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ * $Id: aic7xxx_93cx6.h,v 1.1 2002/02/16 04:36:33 smurph Exp $
+ *
+ * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx_93cx6.h,v 1.9 2000/12/20 01:11:37 gibbs Exp $
  */
-
-#include <sys/param.h>
-#if !(defined(__NetBSD__) || defined(__OpenBSD__))
-#include <sys/systm.h>
-#endif
-
-#ifdef _KERNEL
+#ifndef _AIC7XXX_93CX6_H_
+#define _AIC7XXX_93CX6_H_
 
 typedef enum {
 	C46 = 6,
@@ -50,18 +43,17 @@ typedef enum {
 } seeprom_chip_t;
 
 struct seeprom_descriptor {
-	bus_space_tag_t sd_tag;             
-	bus_space_handle_t sd_bsh;
-	bus_size_t sd_control_offset;
-	bus_size_t sd_status_offset;
-	bus_size_t sd_dataout_offset;
+	struct ahc_softc *sd_ahc;
+	u_int sd_control_offset;
+	u_int sd_status_offset;
+	u_int sd_dataout_offset;
 	seeprom_chip_t sd_chip;
-	u_int16_t sd_MS;
-	u_int16_t sd_RDY;
-	u_int16_t sd_CS;
-	u_int16_t sd_CK;
-	u_int16_t sd_DO;
-	u_int16_t sd_DI;
+	uint16_t sd_MS;
+	uint16_t sd_RDY;
+	uint16_t sd_CS;
+	uint16_t sd_CK;
+	uint16_t sd_DO;
+	uint16_t sd_DI;
 };
 
 /*
@@ -81,15 +73,20 @@ struct seeprom_descriptor {
  */
 
 #define	SEEPROM_INB(sd) \
-	bus_space_read_1(sd->sd_tag, sd->sd_bsh, sd->sd_control_offset)
-#define	SEEPROM_OUTB(sd, value) \
-	bus_space_write_1(sd->sd_tag, sd->sd_bsh, sd->sd_control_offset, value)
+	ahc_inb(sd->sd_ahc, sd->sd_control_offset)
+#define	SEEPROM_OUTB(sd, value)					\
+do {								\
+	ahc_outb(sd->sd_ahc, sd->sd_control_offset, value);	\
+	ahc_flush_device_writes(sd->sd_ahc);			\
+} while(0)
+
 #define	SEEPROM_STATUS_INB(sd) \
-	bus_space_read_1(sd->sd_tag, sd->sd_bsh, sd->sd_status_offset)
+	ahc_inb(sd->sd_ahc, sd->sd_status_offset)
 #define	SEEPROM_DATA_INB(sd) \
-	bus_space_read_1(sd->sd_tag, sd->sd_bsh, sd->sd_dataout_offset)
+	ahc_inb(sd->sd_ahc, sd->sd_dataout_offset)
 
-int read_seeprom(struct seeprom_descriptor *sd, u_int16_t *buf,
-		 bus_size_t start_addr, bus_size_t count);
+int read_seeprom(struct seeprom_descriptor *sd, uint16_t *buf,
+		 u_int start_addr, u_int count);
+int verify_cksum(struct seeprom_config *sc);
 
-#endif /* _KERNEL */
+#endif /* _AIC7XXX_93CX6_H_ */

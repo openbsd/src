@@ -1,4 +1,4 @@
-/* $OpenBSD: aicasm.h,v 1.1 2000/03/22 02:50:49 smurph Exp $ */
+/* $OpenBSD: aicasm.h,v 1.2 2002/02/16 04:36:33 smurph Exp $ */
 /*
  * Assembler for the sequencer program downloaded to Aic7xxx SCSI host adapters
  *
@@ -14,6 +14,9 @@
  * 2. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
+ * Alternatively, this software may be distributed under the terms of the
+ * GNU Public License ("GPL").
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -26,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/dev/aic7xxx/aicasm.h,v 1.6 1999/12/06 18:23:30 gibbs Exp $
+ * $FreeBSD: src/sys/dev/aic7xxx/aicasm/aicasm.h,v 1.13 2001/07/18 21:03:32 gibbs Exp $
  */
 
 #include <sys/queue.h>
@@ -54,15 +57,18 @@ typedef enum {
 SLIST_HEAD(path_list, path_entry);
 
 extern struct path_list search_path;
+extern struct cs_tailq cs_tailq;
 extern struct scope_list scope_stack;
 extern struct symlist patch_functions;
 extern int includes_search_curdir;		/* False if we've seen -I- */
 extern char *appname;
 extern int yylineno;
 extern char *yyfilename;
+extern char *versions;
 
 void stop(const char *errstring, int err_code);
 void include_file(char *file_name, include_type type);
 struct instruction *seq_alloc(void);
+struct critical_section *cs_alloc(void);
 struct scope *scope_alloc(void);
 void process_scope(struct scope *);
