@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.16 1997/02/20 06:17:03 kstailey Exp $	*/
+/*	$OpenBSD: locore.s,v 1.17 1997/02/20 06:30:03 kstailey Exp $	*/
 /*	$NetBSD: locore.s,v 1.40 1996/11/06 20:19:54 cgd Exp $	*/
 
 /*
@@ -92,7 +92,6 @@ L_per_pmeg:
 
 | Kernel is now double mapped at zero and KERNBASE.
 | Force a long jump to the relocated code (high VA).
-
 	movl	#IC_CLEAR, d0		| Flush the I-cache
 	movc	d0, cacr
 	jmp L_high_code:l		| long jump
@@ -1035,7 +1034,7 @@ Lsw2:
 	movl	a0,_curproc
 	clrl	_want_resched
 #ifdef notyet
-	movl	sp@+,a1
+	movl	sp@+,a1			| XXX - Make this work!
 	cmpl	a0,a1			| switching to same proc?
 	jeq	Lswdone			| yes, skip save and restore
 #endif
@@ -1083,11 +1082,13 @@ Lswnofpsave:
 
 | Important note:  We MUST call pmap_activate to set the
 | MMU context register (like setting a root table pointer).
+| XXX - Eventually, want to do that here, inline.
 	lea	a2@(VM_PMAP),a2		| pmap = &vmspace.vm_pmap
 	pea	a2@			| push pmap
 	jbsr	_pmap_activate		| pmap_activate(pmap)
 	addql	#4,sp
 	movl	_curpcb,a1		| restore p_addr
+| Note: pmap_activate will clear the cache if needed.
 
 	/*
 	 * Reload the registers for the new process.
@@ -1158,8 +1159,8 @@ ENTRY(ICIA)
 ENTRY(DCIU)
 	rts
 
-/* ICPL, ICPP, DCPL, DCPP, DCPA, DCFL, DCFP, PCIA */
-/* ecacheon, ecacheoff */
+/* ICPL, ICPP, DCPL, DCPP, DCPA, DCFL, DCFP */
+/* PCIA, ecacheon, ecacheoff */
 
 /*
  * Get callers current SP value.
@@ -1239,8 +1240,6 @@ ENTRY(_remque)
 
 /*
  * Save and restore 68881 state.
- * Pretty awful looking since our assembler does not
- * recognize FP mnemonics.
  */
 ENTRY(m68881_save)
 	movl	sp@(4),a0		| save area pointer
