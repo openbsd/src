@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.31 2001/09/28 02:53:13 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.32 2001/09/28 03:33:39 mickey Exp $	*/
 /*	$NetBSD: conf.c,v 1.16 1996/10/18 21:26:57 cgd Exp $	*/
 
 /*-
@@ -53,10 +53,8 @@ bdev_decl(wd);
 #include "uk.h"
 #include "vnd.h"
 #include "raid.h"
-bdev_decl(raid);
 #include "ccd.h"
 #include "rd.h"
-bdev_decl(rd);
 
 struct bdevsw	bdevsw[] =
 {
@@ -98,7 +96,6 @@ dev_type_open(filedescopen);
 #include "scc.h"
 cdev_decl(scc);
 #include "audio.h"
-cdev_decl(audio);
 #include "com.h"
 cdev_decl(com);
 #include "wsdisplay.h"
@@ -106,7 +103,6 @@ cdev_decl(com);
 #include "wsmouse.h"
 #include "lpt.h"
 cdev_decl(lpt);
-cdev_decl(rd);
 cdev_decl(prom);			/* XXX XXX XXX */
 cdev_decl(wd);
 #include "cy.h"
