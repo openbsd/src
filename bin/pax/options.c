@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.39 1999/07/27 20:00:45 espie Exp $	*/
+/*	$OpenBSD: options.c,v 1.40 1999/07/28 12:33:40 espie Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: options.c,v 1.39 1999/07/27 20:00:45 espie Exp $";
+static char rcsid[] = "$OpenBSD: options.c,v 1.40 1999/07/28 12:33:40 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -843,6 +843,31 @@ tar_options(argc, argv)
 					chdname = *argv++;
 
 					continue;
+				} 
+				if (strcmp(*argv, "-T") == 0) {
+					FILE *fp;
+					char *str;
+
+					if (*++argv == NULL)
+						break;
+
+					if ((fp = fopen(*argv, "r")) == NULL) {
+						paxwarn(1, "Unable to open file '%s' for read", *argv);
+						tar_usage();
+					}
+					while ((str = getline(fp)) != NULL) {
+						if (pat_add(str, chdname) < 0)
+							tar_usage();
+						sawpat++;
+					}
+					fclose(fp);
+					if (getline_error) {
+						paxwarn(1, "Problem with file '%s'", *argv);
+						tar_usage();
+					}
+					argv++;
+
+					continue;
 				}
 				if (pat_add(*argv++, chdname) < 0)
 					tar_usage();
@@ -870,6 +895,30 @@ tar_options(argc, argv)
 					break;
 				if (ftree_add(*argv++, 1) < 0)
 					tar_usage();
+
+				continue;
+			}
+			if (strcmp(*argv, "-T") == 0) {
+				FILE *fp;
+				char *str;
+
+				if (*++argv == NULL)
+					break;
+
+				if ((fp = fopen(*argv, "r")) == NULL) {
+					paxwarn(1, "Unable to open file '%s' for read", *argv);
+					tar_usage();
+				}
+				while ((str = getline(fp)) != NULL) {
+					if (ftree_add(str, 0) < 0)
+						tar_usage();
+				}
+				fclose(fp);
+				if (getline_error) {
+					paxwarn(1, "Problem with file '%s'", *argv);
+					tar_usage();
+				}
+				argv++;
 
 				continue;
 			}
@@ -1541,7 +1590,7 @@ tar_usage()
 {
 	(void)fputs("usage: tar -{txru}[cevfbmopqswzBHLPXZ014578] [tapefile] ",
 		 stderr);
-	(void)fputs("[blocksize] [replstr] [-C directory] file1 file2...\n",
+	(void)fputs("[blocksize] [replstr] [-C directory] [-T file] file1 file2...\n",
 	    stderr);
 	exit(1);
 }

@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: tar.1,v 1.21 1999/07/04 18:21:12 espie Exp $
+.\"	$OpenBSD: tar.1,v 1.22 1999/07/28 12:33:40 espie Exp $
 .\"
 .Dd June 11, 1996
 .Dt TAR 1
@@ -45,6 +45,9 @@
 .\" XXX how to do this right?
 .No [-C
 .Ar directory
+.No ]
+.No [-T
+.Ar file
 .No ]
 .No [-s
 .Ar replstr
@@ -197,6 +200,9 @@ Do not strip leading slashes
 .Pq Sq /
 from pathnames.
 The default is to strip leading slashes.
+.It Fl T Ar file
+This is a positional argument which reads the names of files to archive or
+extract from the given file.
 .It Fl X
 Do not cross mount points in the file system.
 .It Fl Z
