@@ -4,6 +4,7 @@ Policy: /usr/sbin/lpd, Emulation: native
 	native-__sysctl: permit
 	native-accept: permit
 	native-bind: sockaddr eq "/var/run/printer" then permit
+	native-bind: sockaddr eq "inet-[0.0.0.0]:0" then permit
 	native-bind: sockaddr match "inet-*:515" then permit
 	native-break: permit
 	native-chdir: permit
@@ -12,12 +13,14 @@ Policy: /usr/sbin/lpd, Emulation: native
 	native-close: permit
 	native-connect: sockaddr eq "/dev/log" then permit
 	native-connect: sockaddr match "inet-*:53" then permit
+	native-connect: sockaddr sub ":515" then permit
 	native-dup2: permit
 	native-exit: permit
 	native-fchmod: permit
 	native-fcntl: permit
 	native-fork: permit
 	native-fsread: filename eq "/dev/arandom" then permit
+	native-fsread: filename eq "/etc/hosts" then permit
 	native-fsread: filename eq "/etc/malloc.conf" then permit
 	native-fsread: filename eq "/etc/printcap" then permit
 	native-fsread: filename eq "/etc/printcap.db" then permit
@@ -44,6 +47,8 @@ Policy: /usr/sbin/lpd, Emulation: native
 	native-getegid: permit
 	native-geteuid: permit
 	native-getpid: permit
+	native-getsockname: permit
+	native-getsockopt: permit
 	native-gettimeofday: permit
 	native-issetugid: permit
 	native-kill: permit
@@ -52,17 +57,19 @@ Policy: /usr/sbin/lpd, Emulation: native
 	native-mmap: permit
 	native-mprotect: permit
 	native-munmap: permit
+	native-nanosleep: permit
 	native-pread: permit
 	native-read: permit
 	native-recvfrom: permit
 	native-select: permit
 	native-sendto: permit
 	native-setegid: gid eq "1" then permit
-	native-setegid: permit
 	native-seteuid: uid eq "0" then permit
 	native-seteuid: uid eq "1" then permit
+	native-setitimer: permit
 	native-setpgid: permit
 	native-setsid: permit
+	native-setsockopt: permit
 	native-sigaction: permit
 	native-sigprocmask: permit
 	native-sigreturn: permit
@@ -70,3 +77,4 @@ Policy: /usr/sbin/lpd, Emulation: native
 	native-umask: permit
 	native-wait4: permit
 	native-write: permit
+
