@@ -117,6 +117,16 @@
 #endif
 #include <sys/exec_elf.h>
 
+#ifdef SYSVMSG
+#include <sys/msg.h>
+#endif
+#ifdef SYSVSEM
+#include <sys/sem.h>
+#endif
+#ifdef SYSVSHM
+#include <sys/shm.h>
+#endif
+
 #define _SPARC_BUS_DMA_PRIVATE
 #include <machine/autoconf.h>
 #include <machine/bus.h>
