@@ -33,7 +33,7 @@ static char copright[] =
 "@(#) Copyright (c) 1994 Christopher G. Demetriou\n\
  All rights reserved.\n";
 
-static char rcsid[] = "$Id: main.c,v 1.5 2000/11/10 15:33:15 provos Exp $";
+static char rcsid[] = "$Id: main.c,v 1.6 2001/07/27 20:34:36 pvalchev Exp $";
 #endif
 
 /*
@@ -350,7 +350,7 @@ acct_load(pn, wr)
 			if (sflag || (mflag && !qflag))
 				usracct_add(&ci);
 		} else if (!qflag)
-			printf("%6u %12.2lf cpu %12quk mem %12qu io %s\n",
+			printf("%6u %12.2f cpu %12lluk mem %12llu io %s\n",
 			    ci.ci_uid,
 			    (ci.ci_utime + ci.ci_stime) / (double) AHZ,
 			    ci.ci_mem, ci.ci_io, ci.ci_comm);

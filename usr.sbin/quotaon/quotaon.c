@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)quotaon.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: quotaon.c,v 1.10 1997/06/22 06:09:02 deraadt Exp $";
+static char *rcsid = "$Id: quotaon.c,v 1.11 2001/07/27 20:34:36 pvalchev Exp $";
 #endif /* not lint */
 
 /*
@@ -72,7 +72,6 @@ main(argc, argv)
 	char *qfnp, *whoami;
 	long argnum, done = 0;
 	int i, offmode = 0, errs = 0;
-	extern char *optarg;
 	extern int optind;
 	int ch;
 

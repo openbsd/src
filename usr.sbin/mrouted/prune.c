@@ -1944,7 +1944,6 @@ dump_cache(fp2)
     register struct rtentry *r;
     register struct gtable *gt;
     register struct stable *st;
-    register struct ptable *pt;
     register vifi_t i;
     register time_t thyme = time(0);
 

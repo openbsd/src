@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootparamd.c,v 1.9 1998/07/10 08:06:50 deraadt Exp $	*/
+/*	$OpenBSD: bootparamd.c,v 1.10 2001/07/27 20:34:36 pvalchev Exp $	*/
 
 /*
  * This code is not copyright, and is placed in the public domain.
@@ -64,10 +64,8 @@ main(argc, argv)
 	char  **argv;
 {
 	SVCXPRT *transp;
-	int     i, s, pid;
 	struct hostent *he;
 	struct stat buf;
-	char   *optstring;
 	int    c;
 
 	while ((c = getopt(argc, argv, "dsr:f:")) != -1)
@@ -204,7 +202,6 @@ bootparamproc_getfile_1_svc(getfile, rqstp)
 	bp_getfile_arg *getfile;
 	struct svc_req *rqstp;
 {
-	char   *where;
 	static bp_getfile_res res;
 	int     err;
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: memconfig.c,v 1.2 1999/12/05 06:32:56 deraadt Exp $ */
+/* $OpenBSD: memconfig.c,v 1.3 2001/07/27 20:34:36 pvalchev Exp $ */
 /*-
  * Copyright (c) 1999 Michael Smith <msmith@freebsd.org>
  * All rights reserved.
@@ -157,7 +157,6 @@ listfunc(memfd, argc, argv)
 {
 	struct mem_range_desc	*mrd;
 	int			 nd, i, j;
-	int			 error;
 	int			 ch;
 	int			 showall = 0;
 	char			*owner;

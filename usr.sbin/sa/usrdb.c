@@ -29,7 +29,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: usrdb.c,v 1.2 1999/08/06 20:41:08 deraadt Exp $";
+static char rcsid[] = "$Id: usrdb.c,v 1.3 2001/07/27 20:34:36 pvalchev Exp $";
 #endif
 
 #include <sys/types.h>
@@ -172,7 +172,6 @@ usracct_update()
 	DB *saved_usracct_db;
 	DBT key, data;
 	BTREEINFO bti;
-	uid_t uid;
 	int error, serr, nerr;
 
 	memset(&bti, 0, sizeof(bti));
@@ -243,7 +242,7 @@ usracct_print()
 		if (t < 0.0001)		/* kill divide by zero */
 			t = 0.0001;
 
-		printf("%12.2lf%s ", t / 60.0, "cpu");
+		printf("%12.2f%s ", t / 60.0, "cpu");
 
 		/* ui->ui_calls is always != 0 */
 		if (dflag)

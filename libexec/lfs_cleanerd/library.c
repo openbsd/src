@@ -1,4 +1,4 @@
-/*	$OpenBSD: library.c,v 1.3 1997/07/23 20:36:30 kstailey Exp $	*/
+/*	$OpenBSD: library.c,v 1.4 2001/07/27 20:34:36 pvalchev Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "@(#)library.c	8.3 (Berkeley) 5/24/95";*/
-static char rcsid[] = "$OpenBSD: library.c,v 1.3 1997/07/23 20:36:30 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: library.c,v 1.4 2001/07/27 20:34:36 pvalchev Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -110,7 +110,6 @@ get_fs_info (lstatfsp, use_mmap)
 	int use_mmap;			/* IN: mmap or read */
 {
 	FS_INFO	*fsp;
-	int	i;
 	
 	fsp = (FS_INFO *)malloc(sizeof(FS_INFO));
 	if (fsp == NULL)
@@ -136,8 +135,6 @@ reread_fs_info(fsp, use_mmap)
 	FS_INFO *fsp;	/* IN: prointer fs_infos to reread */
 	int use_mmap;
 {
-	int i;
-	
 	if (statfs(fsp->fi_statfsp->f_mntonname, fsp->fi_statfsp))
 		err(1, "reread_fs_info: statfs failed");
 	get_ifile (fsp, use_mmap);
@@ -376,7 +373,6 @@ add_blocks (fsp, bip, countp, sp, seg_buf, segaddr, psegaddr)
 	int db_per_block, i, j;
 	int db_frag;
 	u_long page_size;
-long *lp;
 
 #ifdef VERBOSE
 	printf("FILE INFOS\n");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: portmap.c,v 1.18 2000/07/31 17:28:26 deraadt Exp $	*/
+/*	$OpenBSD: portmap.c,v 1.19 2001/07/27 20:34:36 pvalchev Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 Theo de Raadt (OpenBSD). All rights reserved.
@@ -44,7 +44,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)portmap.c	5.4 (Berkeley) 4/19/91";
 #else
-static char rcsid[] = "$OpenBSD: portmap.c,v 1.18 2000/07/31 17:28:26 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: portmap.c,v 1.19 2001/07/27 20:34:36 pvalchev Exp $";
 #endif
 #endif /* not lint */
 
@@ -332,7 +332,7 @@ reg_service(rqstp, xprt)
 		}
 
 		if (debugging)
-			printf("set: prog %u vers %u port %u\n",
+			printf("set: prog %lu vers %lu port %lu\n",
 			    reg.pm_prog, reg.pm_vers, reg.pm_port);
 
 		if (reg.pm_port & ~0xffff)

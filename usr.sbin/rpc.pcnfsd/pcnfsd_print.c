@@ -209,14 +209,12 @@ char *fname;
 char *opts;
 char **id;
 {
-char            snum[20];
 static char     req_id[256];
 char            cmdbuf[256];
 char            resbuf[256];
 FILE *fd;
 int i;
 char *xcmd;
-char *cp;
 int failed = 0;
 
 #ifdef HACK_FOR_ROTATED_TRANSCRIPT

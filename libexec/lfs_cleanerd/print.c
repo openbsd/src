@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.2 1996/07/01 11:04:58 downsj Exp $	*/
+/*	$OpenBSD: print.c,v 1.3 2001/07/27 20:34:36 pvalchev Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "@(#)print.c	8.2 (Berkeley) 5/24/95";*/
-static char rcsid[] = "$OpenBSD: print.c,v 1.2 1996/07/01 11:04:58 downsj Exp $";
+static char rcsid[] = "$OpenBSD: print.c,v 1.3 2001/07/27 20:34:36 pvalchev Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -101,7 +101,7 @@ dump_summary(lfsp, sp, flags, iaddrp)
 	dp = (daddr_t *)((caddr_t)sp + LFS_SUMMARY_SIZE);
 	for (--dp, i = 0; i < sp->ss_ninos; --dp)
 		if (flags & DUMP_INODE_ADDRS) {
-			(void)printf("\t0x%lx", *dp);
+			(void)printf("\t0x%x", *dp);
 			if (++i % 7 == 0)
 				(void)printf("\n");
 		} else

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cleanerd.c,v 1.5 1997/08/05 23:42:54 angelos Exp $	*/
+/*	$OpenBSD: cleanerd.c,v 1.6 2001/07/27 20:34:36 pvalchev Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)cleanerd.c	8.5 (Berkeley) 6/10/95";*/
-static char rcsid[] = "$OpenBSD: cleanerd.c,v 1.5 1997/08/05 23:42:54 angelos Exp $";
+static char rcsid[] = "$OpenBSD: cleanerd.c,v 1.6 2001/07/27 20:34:36 pvalchev Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -162,7 +162,7 @@ main(argc, argv)
 	struct timeval timeout;		/* sleep timeout */
 	fsid_t fsid;
 	long clean_opts;		/* cleaning options */
-	int i, nodaemon, segs_per_clean;
+	int nodaemon, segs_per_clean;
 	int opt, cmd_err;
 	char *fs_name;			/* name of filesystem to clean */
 	extern int optind;
@@ -278,7 +278,7 @@ clean_loop(fsp, nsegs, options)
 	    (fsp->fi_cip->clean < max_free_segs &&
 	    (fsp->fi_cip->clean <= MIN_SEGS(&fsp->fi_lfs) ||
 	    fsp->fi_cip->clean < max_free_segs * BUSY_LIM))) {
-		printf("Cleaner Running  at %s (%d of %d segments available)\n",
+		printf("Cleaner Running  at %s (%d of %lu segments available)\n",
 		    ctime(&now), fsp->fi_cip->clean, max_free_segs);
 		clean_fs(fsp, cost_benefit, nsegs, options);
 		return (1);
