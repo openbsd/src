@@ -1,4 +1,4 @@
-/*	$OpenBSD: whois.c,v 1.12 2001/10/04 19:28:58 millert Exp $	*/
+/*	$OpenBSD: whois.c,v 1.13 2002/01/21 00:55:55 stevesk Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)whois.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: whois.c,v 1.12 2001/10/04 19:28:58 millert Exp $";
+static char rcsid[] = "$OpenBSD: whois.c,v 1.13 2002/01/21 00:55:55 stevesk Exp $";
 #endif
 #endif /* not lint */
 
@@ -303,6 +303,6 @@ usage()
 {
 
 	(void)fprintf(stderr,
-	    "usage: whois [-adgimpqQrR6] [-h hostname] name ...\n");
+	    "usage: whois [-adgimpqQrR] [-h hostname] name ...\n");
 	exit(EX_USAGE);
 }
