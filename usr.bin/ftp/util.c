@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.32 2003/03/31 23:04:07 millert Exp $	*/
+/*	$OpenBSD: util.c,v 1.33 2003/04/05 17:19:47 deraadt Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: util.c,v 1.32 2003/03/31 23:04:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.33 2003/04/05 17:19:47 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -138,17 +138,22 @@ setpeer(argc, argv)
 		/*
 		 * Set up defaults for FTP.
 		 */
-		(void)strcpy(formname, "non-print"), form = FORM_N;
-		(void)strcpy(modename, "stream"), mode = MODE_S;
-		(void)strcpy(structname, "file"), stru = STRU_F;
-		(void)strcpy(bytename, "8"), bytesize = 8;
+		(void)strlcpy(formname, "non-print", sizeof formname);
+		form = FORM_N;
+		(void)strlcpy(modename, "stream", sizeof modename);
+		mode = MODE_S;
+		(void)strlcpy(structname, "file", sizeof structname);
+		stru = STRU_F;
+		(void)strlcpy(bytename, "8", sizeof bytename);
+		bytesize = 8;
+
 		/*
 		 * Set type to 0 (not specified by user),
 		 * meaning binary by default, but don't bother
 		 * telling server.  We can use binary
 		 * for text files unless changed by the user.
 		 */
-		(void)strcpy(typename, "binary");
+		(void)strlcpy(typename, "binary", sizeof typename);
 		curtype = TYPE_A;
 		type = 0;
 		if (autologin)
@@ -308,7 +313,7 @@ tryagain:
 	connected = -1;
 	for (n = 0; n < macnum; ++n) {
 		if (!strcmp("init", macros[n].mac_name)) {
-			(void)strcpy(line, "$init");
+			(void)strlcpy(line, "$init", sizeof line);
 			makeargv();
 			domacro(margc, margv);
 			break;
@@ -397,10 +402,10 @@ remglob(argv, doswitch, errbuf)
 			return (NULL);
 		}
 
-		(void)strcpy(temp, cp);
+		(void)strlcpy(temp, cp, sizeof temp);
 		if (temp[len-1] != '/')
 			temp[len++] = '/';
-		(void)strcpy(&temp[len], TMPFILE);
+		(void)strlcpy(&temp[len], TMPFILE, sizeof temp - len);
                 if ((fd = mkstemp(temp)) < 0) {
                         warn("unable to create temporary file %s", temp);
                         return (NULL);

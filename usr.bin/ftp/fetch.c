@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.45 2003/03/31 23:04:07 millert Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.46 2003/04/05 17:19:47 deraadt Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: fetch.c,v 1.45 2003/03/31 23:04:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: fetch.c,v 1.46 2003/04/05 17:19:47 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -783,7 +783,7 @@ bad_ftp_url:
 		if (strcmp(host, lasthost) != 0) {
 			int oautologin;
 
-			(void)strcpy(lasthost, host);
+			(void)strlcpy(lasthost, host, sizeof lasthost);
 			if (connected)
 				disconnect(0, NULL);
 			xargv[0] = __progname;

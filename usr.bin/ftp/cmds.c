@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.43 2003/03/31 23:04:07 millert Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.44 2003/04/05 17:19:47 deraadt Exp $	*/
 /*	$NetBSD: cmds.c,v 1.27 1997/08/18 10:20:15 lukem Exp $	*/
 
 /*
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: cmds.c,v 1.43 2003/03/31 23:04:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: cmds.c,v 1.44 2003/04/05 17:19:47 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -152,7 +152,7 @@ settype(argc, argv)
 	else
 		comret = command("TYPE %s", p->t_mode);
 	if (comret == COMPLETE) {
-		(void)strcpy(typename, p->t_name);
+		(void)strlcpy(typename, p->t_name, sizeof typename);
 		curtype = type = p->t_type;
 	}
 }
@@ -2242,9 +2242,8 @@ page(argc, argv)
 	p = getenv("PAGER");
 	if (p == NULL || (*p == '\0'))
 		p = PAGER;
-	if ((pager = malloc(strlen(p) + 2)) == NULL)
+	if (asprintf(&pager, "|%s", p) == -1)
 		errx(1, "Can't allocate memory for $PAGER");
-	(void)sprintf(pager, "|%s", p);
 
 	orestart_point = restart_point;
 	ohash = hash;

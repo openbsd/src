@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.51 2003/03/31 23:04:07 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.52 2003/04/05 17:19:47 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.51 2003/03/31 23:04:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.52 2003/04/05 17:19:47 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -281,8 +281,8 @@ main(argc, argv)
 	if (pw == NULL)
 		pw = getpwuid(getuid());
 	if (pw != NULL) {
+		(void)strlcpy(homedir, pw->pw_dir, sizeof homedir);
 		home = homedir;
-		(void)strcpy(home, pw->pw_dir);
 	}
 
 	setttywidth(0);

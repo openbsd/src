@@ -1,4 +1,4 @@
-/*	$OpenBSD: complete.c,v 1.13 2002/02/16 21:27:46 millert Exp $	*/
+/*	$OpenBSD: complete.c,v 1.14 2003/04/05 17:19:47 deraadt Exp $	*/
 /*	$NetBSD: complete.c,v 1.10 1997/08/18 10:20:18 lukem Exp $	*/
 
 /*-
@@ -39,7 +39,7 @@
 
 #ifndef SMALL
 #ifndef lint
-static char rcsid[] = "$OpenBSD: complete.c,v 1.13 2002/02/16 21:27:46 millert Exp $";
+static char rcsid[] = "$OpenBSD: complete.c,v 1.14 2003/04/05 17:19:47 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -94,7 +94,7 @@ complete_ambiguous(word, list, words)
 		return (CC_ERROR);	/* no choices available */
 
 	if (words->sl_cur == 1) {	/* only once choice available */
-		(void)strcpy(insertstr, words->sl_str[0]);
+		(void)strlcpy(insertstr, words->sl_str[0], sizeof insertstr);
 		if (el_insertstr(el, insertstr + wordlen) == -1)
 			return (CC_ERROR);
 		else
@@ -277,7 +277,7 @@ complete_remote(word, list)
 			fprintf(ttyout, "\n%s\n", emesg);
 			return (CC_REDISPLAY);
 		}
-		(void)strcpy(lastdir, dir);
+		(void)strlcpy(lastdir, dir, sizeof lastdir);
 		dirchange = 0;
 	}
 

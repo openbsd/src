@@ -1,7 +1,7 @@
-/*	$OpenBSD: pch.c,v 1.11 2000/12/14 00:02:19 beck Exp $	*/
+/*	$OpenBSD: pch.c,v 1.12 2003/04/05 17:17:53 deraadt Exp $	*/
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: pch.c,v 1.11 2000/12/14 00:02:19 beck Exp $";
+static char rcsid[] = "$OpenBSD: pch.c,v 1.12 2003/04/05 17:17:53 deraadt Exp $";
 #endif /* not lint */
 
 #include "EXTERN.h"
@@ -454,9 +454,10 @@ another_hunk()
 	    ret = pgets(buf, sizeof buf, pfp);
 	    p_input_line++;
 	    if (ret == Nullch) {
-		if (p_max - p_end < 4)
-		    strcpy(buf, "  \n");  /* assume blank lines got chopped */
-		else {
+		if (p_max - p_end < 4) {
+		    /* assume blank lines got chopped */
+		    strlcpy(buf, "  \n", sizeof buf);
+		} else {
 		    if (repl_beginning && repl_could_be_missing) {
 			repl_missing = TRUE;
 			goto hunk_done;
@@ -595,7 +596,7 @@ another_hunk()
 		repl_could_be_missing = FALSE;
 	      change_line:
 		if (buf[1] == '\n' && canonicalize)
-		    strcpy(buf+1," \n");
+		    strlcpy(buf+1," \n", sizeof buf -1);
 		if (!isspace(buf[1]) && buf[1] != '>' && buf[1] != '<' &&
 		  repl_beginning && repl_could_be_missing) {
 		    repl_missing = TRUE;
@@ -807,9 +808,10 @@ another_hunk()
 	    ret = pgets(buf, sizeof buf, pfp);
 	    p_input_line++;
 	    if (ret == Nullch) {
-		if (p_max - filldst < 3)
-		    strcpy(buf, " \n");  /* assume blank lines got chopped */
-		else {
+		if (p_max - filldst < 3) {
+		    /* assume blank lines got chopped */
+		    strlcpy(buf, " \n", sizeof buf);
+		} else {
 		    fatal1("unexpected end of file in patch\n");
 		}
 	    }

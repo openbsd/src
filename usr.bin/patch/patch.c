@@ -1,4 +1,4 @@
-/*	$OpenBSD: patch.c,v 1.15 2002/07/04 04:22:48 deraadt Exp $	*/
+/*	$OpenBSD: patch.c,v 1.16 2003/04/05 17:17:53 deraadt Exp $	*/
 
 /* patch - a program to apply diffs to original files
  *
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: patch.c,v 1.15 2002/07/04 04:22:48 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: patch.c,v 1.16 2003/04/05 17:17:53 deraadt Exp $";
 #endif /* not lint */
 
 #include "INTERN.h"
@@ -96,46 +96,32 @@ char **argv;
     {
       /* Directory for temporary files.  */
       char *tmpdir;
-      int tmpname_len;
 
       tmpdir = getenv ("TMPDIR");
       if (tmpdir == NULL) {
 	tmpdir = "/tmp";
       }
-      tmpname_len = strlen (tmpdir) + 20;
 
-      TMPOUTNAME = (char *) malloc (tmpname_len);
-      if (TMPOUTNAME == NULL)
+      if (asprintf(&TMPOUTNAME, "%s/patchoXXXXXX", tmpdir) == -1)
 	fatal1("cannot allocate memory");
-      strcpy (TMPOUTNAME, tmpdir);
-      strcat (TMPOUTNAME, "/patchoXXXXXX");
       if ((i = mkstemp(TMPOUTNAME)) < 0)
 	pfatal2("can't create %s", TMPOUTNAME);
       Close(i);
 
-      TMPINNAME = (char *) malloc (tmpname_len);
-      if (TMPINNAME == NULL)
+      if (asprintf(&TMPINNAME, "%s/patchiXXXXXX", tmpdir) == -1)
 	fatal1("cannot allocate memory");
-      strcpy (TMPINNAME, tmpdir);
-      strcat (TMPINNAME, "/patchiXXXXXX");
       if ((i = mkstemp(TMPINNAME)) < 0)
 	pfatal2("can't create %s", TMPINNAME);
       Close(i);
 
-      TMPREJNAME = (char *) malloc (tmpname_len);
-      if (TMPREJNAME == NULL)
+      if (asprintf(&TMPREJNAME, "%s/patchrXXXXXX", tmpdir) == -1)
 	fatal1("cannot allocate memory");
-      strcpy (TMPREJNAME, tmpdir);
-      strcat (TMPREJNAME, "/patchrXXXXXX");
       if ((i = mkstemp(TMPREJNAME)) < 0)
 	pfatal2("can't create %s", TMPREJNAME);
       Close(i);
 
-      TMPPATNAME = (char *) malloc (tmpname_len);
-      if (TMPPATNAME == NULL)
+      if (asprintf(&TMPPATNAME, "%s/patchpXXXXXX", tmpdir) == -1)
 	fatal1("cannot allocate memory");
-      strcpy (TMPPATNAME, tmpdir);
-      strcat (TMPPATNAME, "/patchpXXXXXX");
       if ((i = mkstemp(TMPPATNAME)) < 0)
 	pfatal2("can't create %s", TMPPATNAME);
       Close(i);

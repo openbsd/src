@@ -1,4 +1,4 @@
-/*	$OpenBSD: ruserpass.c,v 1.14 2003/03/31 23:04:07 millert Exp $	*/
+/*	$OpenBSD: ruserpass.c,v 1.15 2003/04/05 17:19:47 deraadt Exp $	*/
 /*	$NetBSD: ruserpass.c,v 1.14 1997/07/20 09:46:01 lukem Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ruserpass.c	8.4 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: ruserpass.c,v 1.14 2003/03/31 23:04:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: ruserpass.c,v 1.15 2003/04/05 17:19:47 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -96,7 +96,7 @@ ruserpass(host, aname, apass, aacct)
 	if (hdir == NULL || *hdir == '\0')
 		return (0);
 	if (strlen(hdir) + sizeof(".netrc") < sizeof(buf)) {
-		(void)sprintf(buf, "%s/.netrc", hdir);
+		(void)snprintf(buf, sizeof buf, "%s/.netrc", hdir);
 	} else {
 		warnx("%s/.netrc: %s", hdir, strerror(ENAMETOOLONG));
 		return (0);
@@ -150,11 +150,9 @@ next:
 
 		case LOGIN:
 			if (token()) {
-				if (*aname == 0) {
-					*aname = malloc((unsigned)
-					    strlen(tokval) + 1);
-					(void)strcpy(*aname, tokval);
-				} else {
+				if (*aname == 0)
+					*aname = strdup(tokval);
+				else {
 					if (strcmp(*aname, tokval))
 						goto next;
 				}
@@ -168,10 +166,8 @@ next:
 	warnx("Remove password or make file unreadable by others.");
 				goto bad;
 			}
-			if (token() && *apass == 0) {
-				*apass = malloc((unsigned) strlen(tokval) + 1);
-				(void)strcpy(*apass, tokval);
-			}
+			if (token() && *apass == 0)
+				*apass = strdup(tokval);
 			break;
 		case ACCOUNT:
 			if (fstat(fileno(cfile), &stb) >= 0
@@ -180,10 +176,8 @@ next:
 	warnx("Remove account or make file unreadable by others.");
 				goto bad;
 			}
-			if (token() && *aacct == 0) {
-				*aacct = malloc((unsigned) strlen(tokval) + 1);
-				(void)strcpy(*aacct, tokval);
-			}
+			if (token() && *aacct == 0)
+				*aacct = strdup(tokval);
 			break;
 		case MACDEF:
 			if (proxy) {

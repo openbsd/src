@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.51 2003/03/11 04:01:29 itojun Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.52 2003/04/05 17:19:47 deraadt Exp $	*/
 /*	$NetBSD: ftp.c,v 1.27 1997/08/18 10:20:23 lukem Exp $	*/
 
 /*
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-static char rcsid[] = "$OpenBSD: ftp.c,v 1.51 2003/03/11 04:01:29 itojun Exp $";
+static char rcsid[] = "$OpenBSD: ftp.c,v 1.52 2003/04/05 17:19:47 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -1663,15 +1663,15 @@ pswitch(flag)
 	ip->ntflg = ntflag;
 	ntflag = op->ntflg;
 	(void)strlcpy(ip->nti, ntin, sizeof(ip->nti));
-	(void)strcpy(ntin, op->nti);
+	(void)strlcpy(ntin, op->nti, sizeof ntin);
 	(void)strlcpy(ip->nto, ntout, sizeof(ip->nto));
-	(void)strcpy(ntout, op->nto);
+	(void)strlcpy(ntout, op->nto, sizeof ntout);
 	ip->mapflg = mapflag;
 	mapflag = op->mapflg;
 	(void)strlcpy(ip->mi, mapin, sizeof(ip->mi));
-	(void)strcpy(mapin, op->mi);
+	(void)strlcpy(mapin, op->mi, sizeof mapin);
 	(void)strlcpy(ip->mo, mapout, sizeof(ip->mo));
-	(void)strcpy(mapout, op->mo);
+	(void)strlcpy(mapout, op->mo, sizeof mapout);
 	(void)signal(SIGINT, oldintr);
 	if (abrtflag) {
 		abrtflag = 0;
@@ -1856,7 +1856,7 @@ gunique(local)
 		warn("local: %s", local);
 		return ((char *) 0);
 	}
-	(void)strcpy(new, local);
+	(void)strlcpy(new, local, sizeof new);
 	cp = new + strlen(new);
 	*cp++ = '.';
 	while (!d) {
