@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.698 2003/12/15 22:28:22 deraadt Exp $
+$OpenBSD: pcidevs,v 1.699 2003/12/17 16:49:29 jason Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -235,6 +235,7 @@ vendor	NETSEC		0x1660	NetSec
 vendor	GLOBALSUN	0x16ab	Global Sun
 vendor	SAFENET		0x16ae	SafeNet
 vendor	USR2		0x16ec	US Robotics
+vendor	LINKSYS		0x1737	Linksys
 vendor	NETOCTAVE	0x170b	Netoctave
 vendor	ALTIMA		0x173b	Altima
 vendor	ANTARES		0x1754	Antares Microsystems
@@ -947,6 +948,7 @@ product DIAMOND VIPER		0x9001	Viper/PCI
 product DLINK 550TX		0x1002	550TX
 product DLINK 530TXPLUS		0x1300	530TX+
 product DLINK DGE550T		0x4000	DGE-550T
+product DLINK DGE530T		0x4c00	DGE-530T
 
 /* Distributed Processing Technology products */
 product DPT SC_RAID		0xa400	SmartCache/Raid
@@ -1400,6 +1402,10 @@ product LEADTEK WINFAST		0x6606	Leadtek WinFast TV 2000
 
 /* Level 1 (Intel) */
 product LEVEL1 LXT1001		0x0001	LXT1001
+
+/* Linksys products */
+product	LINKSYS	EG1032		0x1032	EG1032
+product	LINKSYS	EG1064		0x1064	EG1064
 
 /* Lite-On Communications */
 product LITEON	PNIC		0x0002	PNIC
