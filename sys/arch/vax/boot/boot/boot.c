@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.7 2001/09/10 04:28:52 bjc Exp $ */
+/*	$OpenBSD: boot.c,v 1.8 2001/10/04 00:21:09 miod Exp $ */
 /*	$NetBSD: boot.c,v 1.4 1999/10/23 14:42:22 ragge Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -202,6 +202,8 @@ fail:			printf("usage: boot [filename] [-asd]\n");
 		while (*++arg) {
 			if (*arg == 'a')
 				howto |= RB_ASKNAME;
+			else if (*arg == 'c')
+				howto |= RB_CONFIG;
 			else if (*arg == 'd')
 				howto |= RB_KDB;
 			else if (*arg == 's')
