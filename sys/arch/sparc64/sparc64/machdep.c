@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.14 2001/08/30 20:06:07 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.15 2001/08/31 06:29:40 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -486,9 +486,6 @@ setregs(p, pack, stack, retval)
 #ifdef NOTDEF_DEBUG
 	printf("setregs: setting tf %p sp %p pc %p\n", (long)tf, 
 	       (long)tf->tf_out[6], (long)tf->tf_pc);
-#ifdef DDB
-	Debugger();
-#endif
 #endif
 	retval[1] = 0;
 }
@@ -583,11 +580,8 @@ sendsig(catcher, sig, mask, code, type, val)
 	struct trapframe64 *tf;
 	vaddr_t addr; 
 	struct rwindow *oldsp, *newsp;
-#ifdef NOT_DEBUG
-	struct rwindow tmpwin;
-#endif
 	struct sigframe sf;
-	int oonstack;
+	int onstack;
 	extern char sigcode[], esigcode[];
 #define	szsigcode	(esigcode - sigcode)
 
@@ -598,9 +592,9 @@ sendsig(catcher, sig, mask, code, type, val)
 	 * Compute new user stack addresses, subtract off
 	 * one signal frame, and align.
 	 */
-	oonstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
+	onstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
 
-	if ((psp->ps_flags & SAS_ALTSTACK) && !oonstack &&
+	if ((psp->ps_flags & SAS_ALTSTACK) && !onstack &&
 	    (psp->ps_sigonstack & sigmask(sig))) {
 		fp = (struct sigframe *)((caddr_t)psp->ps_sigstk.ss_sp +
 		    psp->ps_sigstk.ss_size);
@@ -636,17 +630,8 @@ sendsig(catcher, sig, mask, code, type, val)
 	/*
 	 * Build the signal context to be used by sigreturn.
 	 */
-	sf.sf_sc.sc_onstack = oonstack;
+	sf.sf_sc.sc_onstack = onstack;
 	sf.sf_sc.sc_mask = mask;
-#ifdef COMPAT_13
-	/*
-	 * XXX We always have to save an old style signal mask because
-	 * XXX we might be delivering a signal to a process which will
-	 * XXX escape from the signal in a non-standard way and invoke
-	 * XXX sigreturn() directly.
-	 */
-	native_sigset_to_sigset13(mask, &sf.sf_sc.__sc_mask13);
-#endif
 	/* Save register context. */
 	sf.sf_sc.sc_sp = (long)tf->tf_out[6];
 	sf.sf_sc.sc_pc = tf->tf_pc;
@@ -683,9 +668,6 @@ sendsig(catcher, sig, mask, code, type, val)
 #endif
 	/* XXX do not copyout siginfo if not needed */
 	if (rwindow_save(p) || copyout((caddr_t)&sf, (caddr_t)fp, sizeof sf) || 
-#ifdef NOT_DEBUG
-	    copyin(oldsp, &tmpwin, sizeof(tmpwin)) || copyout(&tmpwin, newsp, sizeof(tmpwin)) ||
-#endif
 	    CPOUTREG(&(((struct rwindow *)newsp)->rw_in[6]), tf->tf_out[6])) {
 		/*
 		 * Process has trashed its stack; give it an illegal
