@@ -1,4 +1,4 @@
-/*	$OpenBSD: style,v 1.2 1996/04/22 01:28:30 deraadt Exp $	*/
+/*	$OpenBSD: style,v 1.3 1999/08/08 21:37:23 d Exp $	*/
 
 /*
  * Style guide for the 4BSD KNF (Kernel Normal Form).
@@ -44,7 +44,7 @@
 #include <paths.h>
 
 /* Then, there's a blank line, and the user include files. */
-#include "pathnames.h"		/* Local includes in double quotes. */		
+#include "pathnames.h"		/* Local includes in double quotes. */
 
 /*
  * ANSI function declarations for private functions (i.e. functions not used
@@ -98,7 +98,7 @@ struct foo *foohead;		/* Head of global foo list */
 typedef struct _bar {
 	int	level;
 } BAR;
-	
+
 /*
  * All major routines should have a comment briefly describing what
  * they do.  The comment before the "main" routine should describe
@@ -153,7 +153,7 @@ main(argc, argv)
 	for (p = buf; *p != '\0'; ++p);
 	for (;;)
 		stmt;
-	
+
 	/*
 	 * Parts of a for loop may be left empty.  Don't put declarations
 	 * inside blocks unless the routine is unusually complicated.
@@ -165,7 +165,7 @@ main(argc, argv)
 
 	/* Second level indents are four spaces. */
 	while (cnt < 20)
-		z = a + really + long + statment + that + needs + two lines +
+		z = a + really + long + statment + that + needs + two + lines +
 		    gets + indented + four + spaces + on + the + second +
 		    and + subsequent + lines.
 
@@ -180,14 +180,14 @@ main(argc, argv)
 		stmt;
 	} else
 		stmt;
-		
+
 	/* No spaces after function names. */
 	if (error = function(a1, a2))
 		exit(error);
 
 	/*
 	 * Unary operators don't require spaces, binary operators do. Don't
-	 * use parenthesis unless they're required for precedence, or the
+	 * use parentheses unless they're required for precedence, or the
 	 * statement is really confusing without them.
 	 */
 	a = b->c[0] + ~d == (e || f) || g && h ? i : j >> 1;
@@ -310,6 +310,6 @@ usage()
 	 * "usage: f [-ade] [-b b_arg] [-m m_arg] req1 req2 [opt1 [opt2]]\n"
 	 * "usage: f [-a | -b] [-c [-de] [-n number]]\n"
 	 */
-	(void)fprintf(stderr, "usage: f [-ab]\n");
+	(void)fprintf(stderr, "usage: f [-ab] [-n number]\n");
 	exit(1);
 }
