@@ -1,4 +1,4 @@
-/*	$OpenBSD: kernfs_vnops.c,v 1.23 2001/12/04 22:44:31 art Exp $	*/
+/*	$OpenBSD: kernfs_vnops.c,v 1.24 2001/12/11 16:48:12 millert Exp $	*/
 /*	$NetBSD: kernfs_vnops.c,v 1.43 1996/03/16 23:52:47 christos Exp $	*/
 
 /*
@@ -499,7 +499,7 @@ kernfs_getattr(v)
 	microtime(&tv);
 	TIMEVAL_TO_TIMESPEC(&tv, &vap->va_atime);
 	vap->va_mtime = vap->va_atime;
-	vap->va_ctime = vap->va_ctime;
+	vap->va_ctime = vap->va_atime;
 	vap->va_gen = 0;
 	vap->va_flags = 0;
 	vap->va_rdev = 0;
