@@ -32,7 +32,7 @@
  * 	fed.h, 3.00, last edit-date: [Sun Jan  2 20:10:31 1994]
  */
 
-#include <ncurses.h>
+#include <curses.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
