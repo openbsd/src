@@ -102,7 +102,10 @@ extern struct open_file files[];
 #define F_NODEV		0x0008	/* network open - no device */
 
 #define isupper(c)	((c) >= 'A' && (c) <= 'Z')
+#define islower(c)	((c) >= 'a' && (c) <= 'z')
+#define	isalpha(c)	(isupper(c)||islower(c))
 #define tolower(c)	((c) - 'A' + 'a')
+#define toupper(c)	((c) - 'a' + 'A')
 #define isspace(c)	((c) == ' ' || (c) == '\t')
 #define isdigit(c)	((c) >= '0' && (c) <= '9')
 
