@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.46 2000/01/31 19:57:18 deraadt Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.47 2000/02/28 18:04:08 provos Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -253,6 +253,8 @@ main(framep)
 	filedesc0.fd_fd.fd_ofiles = filedesc0.fd_dfiles;
 	filedesc0.fd_fd.fd_ofileflags = filedesc0.fd_dfileflags;
 	filedesc0.fd_fd.fd_nfiles = NDFILE;
+	filedesc0.fd_fd.fd_himap = filedesc0.fd_dhimap;
+	filedesc0.fd_fd.fd_lomap = filedesc0.fd_dlomap;
 
 	/* Create the limits structures. */
 	p->p_limit = &limit0;

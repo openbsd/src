@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.18 1999/07/13 15:17:50 provos Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.19 2000/02/28 18:04:08 provos Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -74,13 +74,76 @@ int nfiles;			/* actual number of open files */
 
 static __inline void fd_used __P((struct filedesc *, int));
 static __inline void fd_unused __P((struct filedesc *, int));
+static __inline int find_next_zero __P((u_int *, int, u_int));
 int finishdup __P((struct filedesc *, int, int, register_t *));
+int find_last_set __P((struct filedesc *, int));
+
+static __inline int
+find_next_zero (u_int *bitmap, int want, u_int bits)
+{
+        int i, off, maxoff;
+	u_int sub;
+
+        if (want > bits)
+                return -1;
+
+	off = want >> NDENTRYSHIFT;
+	i = want & NDENTRYMASK;
+        if (i) {
+		sub = bitmap[off] | ((u_int)~0 >> (NDENTRIES - i));
+		if (sub != ~0)
+			goto found;
+		off++;
+        }
+
+	maxoff = NDLOSLOTS(bits);
+        while (off < maxoff) {
+                if ((sub = bitmap[off]) != ~0)
+                        goto found;
+		off++;
+        }
+
+        return -1;
+
+ found:
+        return (off << NDENTRYSHIFT) + ffs(~sub) - 1;
+}
+
+int
+find_last_set(struct filedesc *fd, int last)
+{
+	int off, i;
+	struct file **ofiles = fd->fd_ofiles;
+	u_int *bitmap = fd->fd_lomap;
+
+	off = (last - 1) >> NDENTRYSHIFT;
+
+	while (!bitmap[off] && off >= 0)
+		off--;
+
+	if (off < 0)
+		return 0;
+	
+	i = ((off + 1) << NDENTRYSHIFT) - 1;
+	if (i >= last)
+		i = last - 1;
+
+	while (i > 0 && ofiles[i] == NULL)
+		i--;
+
+	return i;
+}
 
 static __inline void
 fd_used(fdp, fd)
 	register struct filedesc *fdp;
 	register int fd;
 {
+	u_int off = fd >> NDENTRYSHIFT;
+
+	fdp->fd_lomap[off] |= 1 << (fd & NDENTRYMASK);
+	if (fdp->fd_lomap[off] == ~0)
+		fdp->fd_himap[off >> NDENTRYSHIFT] |= 1 << (off & NDENTRYMASK);
 
 	if (fd > fdp->fd_lastfile)
 		fdp->fd_lastfile = fd;
@@ -91,19 +154,21 @@ fd_unused(fdp, fd)
 	register struct filedesc *fdp;
 	register int fd;
 {
+	u_int off = fd >> NDENTRYSHIFT;
 
 	if (fd < fdp->fd_freefile)
 		fdp->fd_freefile = fd;
+
+	if (fdp->fd_lomap[off] == ~0)
+		fdp->fd_himap[off >> NDENTRYSHIFT] &= ~(1 << (off & NDENTRYMASK));
+	fdp->fd_lomap[off] &= ~(1 << (fd & NDENTRYMASK));
+
 #ifdef DIAGNOSTIC
 	if (fd > fdp->fd_lastfile)
 		panic("fd_unused: fd_lastfile inconsistent");
 #endif
-	if (fd == fdp->fd_lastfile) {
-		do {
-			fd--;
-		} while (fd >= 0 && fdp->fd_ofiles[fd] == NULL);
-		fdp->fd_lastfile = fd;
-	}
+	if (fd == fdp->fd_lastfile)
+		fdp->fd_lastfile = find_last_set(fdp, fd);
 }
 
 /*
@@ -535,6 +600,7 @@ fdalloc(p, want, result)
 	int lim, last, nfiles;
 	struct file **newofile;
 	char *newofileflags;
+	u_int *newhimap, *newlomap, new, off;
 
 	/*
 	 * Search for a free descriptor starting at the higher
@@ -546,8 +612,15 @@ fdalloc(p, want, result)
 		last = min(fdp->fd_nfiles, lim);
 		if ((i = want) < fdp->fd_freefile)
 			i = fdp->fd_freefile;
-		for (; i < last; i++) {
-			if (fdp->fd_ofiles[i] == NULL) {
+		off = i >> NDENTRYSHIFT;
+		new = find_next_zero(fdp->fd_himap, off,
+				     (last + NDENTRIES - 1) >> NDENTRYSHIFT);
+		if (new != -1) {
+			i = find_next_zero(&fdp->fd_lomap[new], 
+					   new > off ? 0 : i & NDENTRYMASK,
+					   NDENTRIES);
+			i += (new << NDENTRYSHIFT);
+			if (i < last) {
 				fd_used(fdp, i);
 				if (want <= fdp->fd_freefile)
 					fdp->fd_freefile = i;
@@ -569,6 +642,11 @@ fdalloc(p, want, result)
 		MALLOC(newofile, struct file **, nfiles * OFILESIZE,
 		    M_FILEDESC, M_WAITOK);
 		newofileflags = (char *) &newofile[nfiles];
+
+		MALLOC(newhimap, u_int *, NDHISLOTS(nfiles) * sizeof(u_int),
+		       M_FILEDESC, M_WAITOK);
+		MALLOC(newlomap, u_int *, NDLOSLOTS(nfiles) * sizeof(u_int),
+		       M_FILEDESC, M_WAITOK);
 		/*
 		 * Copy the existing ofile and ofileflags arrays
 		 * and zero the new portion of each array.
@@ -579,11 +657,28 @@ fdalloc(p, want, result)
 		bcopy(fdp->fd_ofileflags, newofileflags,
 			(i = sizeof(char) * fdp->fd_nfiles));
 		bzero(newofileflags + i, nfiles * sizeof(char) - i);
+
+		bcopy(fdp->fd_himap, newhimap,
+		      (i = NDHISLOTS(fdp->fd_nfiles) * sizeof(u_int)));
+		bzero((char *)newhimap + i,
+		      NDHISLOTS(nfiles) * sizeof(u_int) - i);
+
+		bcopy(fdp->fd_lomap, newlomap,
+		      (i = NDLOSLOTS(fdp->fd_nfiles) * sizeof(u_int)));
+		bzero((char *)newlomap + i,
+		      NDLOSLOTS(nfiles) * sizeof(u_int) - i);
+
 		if (fdp->fd_nfiles > NDFILE)
 			FREE(fdp->fd_ofiles, M_FILEDESC);
+		if (NDHISLOTS(fdp->fd_nfiles) > NDHISLOTS(NDFILE)) {
+			FREE(fdp->fd_himap, M_FILEDESC);
+			FREE(fdp->fd_lomap, M_FILEDESC);
+		}
 		fdp->fd_ofiles = newofile;
 		fdp->fd_ofileflags = newofileflags;
 		fdp->fd_nfiles = nfiles;
+		fdp->fd_himap = newhimap;
+		fdp->fd_lomap = newlomap;
 		fdexpand++;
 	}
 }
@@ -627,6 +722,7 @@ falloc(p, resultfp, resultfd)
 	if ((error = fdalloc(p, 0, &i)) != 0)
 		return (error);
 	if (nfiles >= maxfiles) {
+		fd_unused(p->p_fd, i);
 		tablefull("file");
 		return (ENFILE);
 	}
@@ -697,6 +793,8 @@ fdinit(p)
 	newfdp->fd_fd.fd_ofiles = newfdp->fd_dfiles;
 	newfdp->fd_fd.fd_ofileflags = newfdp->fd_dfileflags;
 	newfdp->fd_fd.fd_nfiles = NDFILE;
+	newfdp->fd_fd.fd_himap = newfdp->fd_dhimap;
+	newfdp->fd_fd.fd_lomap = newfdp->fd_dlomap;
 
 	newfdp->fd_fd.fd_freefile = 0;
 	newfdp->fd_fd.fd_lastfile = 0;
@@ -758,9 +856,22 @@ fdcopy(p)
 		    M_FILEDESC, M_WAITOK);
 		newfdp->fd_ofileflags = (char *) &newfdp->fd_ofiles[i];
 	}
+	if (NDHISLOTS(i) <= NDHISLOTS(NDFILE)) {
+		newfdp->fd_himap =
+			((struct filedesc0 *) newfdp)->fd_dhimap;
+		newfdp->fd_lomap =
+			((struct filedesc0 *) newfdp)->fd_dlomap;
+	} else {
+		MALLOC(newfdp->fd_himap, u_int *, NDHISLOTS(i) * sizeof(u_int),
+		       M_FILEDESC, M_WAITOK);
+		MALLOC(newfdp->fd_lomap, u_int *, NDLOSLOTS(i) * sizeof(u_int),
+		       M_FILEDESC, M_WAITOK);
+	}
 	newfdp->fd_nfiles = i;
 	bcopy(fdp->fd_ofiles, newfdp->fd_ofiles, i * sizeof(struct file **));
 	bcopy(fdp->fd_ofileflags, newfdp->fd_ofileflags, i * sizeof(char));
+	bcopy(fdp->fd_himap, newfdp->fd_himap, NDHISLOTS(i) * sizeof(u_int));
+	bcopy(fdp->fd_lomap, newfdp->fd_lomap, NDLOSLOTS(i) * sizeof(u_int));
 	fpp = newfdp->fd_ofiles;
 	for (i = newfdp->fd_lastfile; i >= 0; i--, fpp++)
 		if (*fpp != NULL) {
@@ -801,6 +912,10 @@ fdfree(p)
 	p->p_fd = NULL;
 	if (fdp->fd_nfiles > NDFILE)
 		FREE(fdp->fd_ofiles, M_FILEDESC);
+	if (NDHISLOTS(fdp->fd_nfiles) > NDHISLOTS(NDFILE)) {
+		FREE(fdp->fd_himap, M_FILEDESC);
+		FREE(fdp->fd_lomap, M_FILEDESC);
+	}
 	vrele(fdp->fd_cdir);
 	if (fdp->fd_rdir)
 		vrele(fdp->fd_rdir);
