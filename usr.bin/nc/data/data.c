@@ -154,7 +154,7 @@ nextbuf:				/* loop sleaze */
   if (genning)
     goto do_gen;
 wrong:
-  fprintf (stderr, surveysez);		/* if both or neither */
+  fprintf (stderr, "%s", surveysez);		/* if both or neither */
   exit (1);
 
 do_gen:
