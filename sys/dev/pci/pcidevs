@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.620 2003/05/12 08:57:21 tdeval Exp $
+	$OpenBSD: pcidevs,v 1.621 2003/05/14 01:15:42 pb Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1097,6 +1097,11 @@ product COMPAQ TRIFLEX4		0x4000	Triflex Host-PCI
 product COMPAQ CSA5300		0x4070	Smart Array 5300
 product COMPAQ CSA5i		0x4080	Smart Array 5i
 product COMPAQ CSA532		0x4082	Smart Array 532
+product COMPAQ CSA5312		0x4083	Smart Array 5312
+product COMPAQ CSA641		0x409A	Smart Array 641
+product COMPAQ CSA642		0x409B	Smart Array 642
+product COMPAQ CSA6400		0x409C	Smart Array 6400
+product COMPAQ CSA6400EM	0x409D	Smart Array 6400 EM
 product COMPAQ USB		0x7020	USB
 product COMPAQ FXP		0xa0f0	Netelligent ASMC
 product COMPAQ PCI_ISA_BRIDGE1	0xa0f3	PCI-ISA
