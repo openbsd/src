@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.18 1997/06/24 09:50:56 downsj Exp $	*/
+/*	$OpenBSD: fd.c,v 1.19 1997/06/25 13:04:20 downsj Exp $	*/
 /*	$NetBSD: fd.c,v 1.51 1997/05/24 20:16:19 pk Exp $	*/
 
 /*-
@@ -996,7 +996,7 @@ fdcstatus(dv, n, s)
 	char *s;
 {
 	struct fdc_softc *fdc = (void *)dv->dv_parent;
-	char bits[64];
+
 #if 0
 	/*
 	 * A 82072 seems to return <invalid command> on
@@ -1521,7 +1521,6 @@ void
 fdcretry(fdc)
 	struct fdc_softc *fdc;
 {
-	char bits[64];
 	struct fd_softc *fd;
 	struct buf *bp;
 
@@ -1601,11 +1600,6 @@ fdioctl(dev, cmd, addr, flag, p)
 	struct proc *p;
 {
 	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
-	struct fdformat_parms *form_parms;
-	struct fdformat_cmd *form_cmd;
-	struct fd_formb fd_formbbuf;
-	int il[FD_MAX_NSEC + 1];
-	int i, j;
 	int error;
 
 	switch (cmd) {
@@ -1786,7 +1780,7 @@ void
 fdgetdisklabel(dev)
 	dev_t dev;
 {
-	int unit = FDUNIT(dev), i;
+	int unit = FDUNIT(dev);
 	struct fd_softc *fd = fd_cd.cd_devs[unit];
 	struct disklabel *lp = fd->sc_dk.dk_label;
 	struct cpu_disklabel *clp = fd->sc_dk.dk_cpulabel;
