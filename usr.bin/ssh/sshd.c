@@ -11,7 +11,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.94 2000/03/23 22:15:34 markus Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.95 2000/03/28 20:31:29 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -23,6 +23,8 @@ RCSID("$OpenBSD: sshd.c,v 1.94 2000/03/23 22:15:34 markus Exp $");
 #include "mpaux.h"
 #include "servconf.h"
 #include "uidswap.h"
+#include "match.h"
+#include "channels.h"
 #include "compat.h"
 
 #ifdef LIBWRAP

@@ -28,7 +28,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: nchan.c,v 1.10 2000/01/10 10:15:28 markus Exp $");
+RCSID("$Id: nchan.c,v 1.11 2000/03/28 20:31:27 markus Exp $");
 
 #include "ssh.h"
 
@@ -41,7 +41,6 @@ static void chan_send_ieof(Channel *c);
 static void chan_send_oclose(Channel *c);
 static void chan_shutdown_write(Channel *c);
 static void chan_shutdown_read(Channel *c);
-static void chan_delete_if_full_closed(Channel *c);
 
 /*
  * EVENTS update channel input/output states execute ACTIONS
@@ -222,7 +221,7 @@ chan_shutdown_read(Channel *c)
 		error("chan_shutdown_read failed for #%d/fd%d [i%d o%d]: %.100s",
 		      c->self, c->sock, c->istate, c->ostate, strerror(errno));
 }
-static void
+void
 chan_delete_if_full_closed(Channel *c)
 {
 	if (c->istate == CHAN_INPUT_CLOSED && c->ostate == CHAN_OUTPUT_CLOSED) {

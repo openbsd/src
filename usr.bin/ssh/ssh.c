@@ -11,7 +11,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: ssh.c,v 1.43 2000/03/23 21:52:02 markus Exp $");
+RCSID("$Id: ssh.c,v 1.44 2000/03/28 20:31:28 markus Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -20,6 +20,7 @@ RCSID("$Id: ssh.c,v 1.43 2000/03/23 21:52:02 markus Exp $");
 #include "authfd.h"
 #include "readconf.h"
 #include "uidswap.h"
+#include "channels.h"
 
 /* Flag indicating whether IPv4 or IPv6.  This can be set on the command line.
    Default value is AF_UNSPEC means both IPv4 and IPv6. */

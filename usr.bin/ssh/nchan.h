@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* RCSID("$Id: nchan.h,v 1.5 1999/11/24 16:15:25 markus Exp $"); */
+/* RCSID("$Id: nchan.h,v 1.6 2000/03/28 20:31:27 markus Exp $"); */
 
 #ifndef NCHAN_H
 #define NCHAN_H
@@ -83,4 +83,6 @@ void    chan_write_failed(Channel * c);
 void    chan_obuf_empty(Channel * c);
 
 void    chan_init_iostates(Channel * c);
+
+void	chan_delete_if_full_closed(Channel *c);
 #endif
