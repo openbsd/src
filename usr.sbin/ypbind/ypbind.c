@@ -31,7 +31,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: ypbind.c,v 1.1.1.1 1995/10/18 08:48:31 deraadt Exp $";
+static char rcsid[] = "$Id: ypbind.c,v 1.2 1995/10/18 10:58:58 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -76,6 +76,7 @@ struct _dom_binding {
 	time_t dom_ask_t;
 	int dom_lockfd;
 	int dom_alive;
+	int dom_xid;
 };
 
 extern bool_t xdr_domainname(), xdr_ypbind_resp();
@@ -473,7 +474,7 @@ ping(ypdb)
 	msg.rm_call.cb_cred = rpcua->ah_cred;
 	msg.rm_call.cb_verf = rpcua->ah_verf;
 
-	msg.rm_xid = (long)dom;
+	msg.rm_xid = ypdb->dom_xid = ypdb2xid(ypdb);
 	xdrmem_create(&xdr, buf, sizeof buf, XDR_ENCODE);
 	if (!xdr_callmsg(&xdr, &msg)) {
 		st = RPC_CANTENCODEARGS;
@@ -501,6 +502,28 @@ ping(ypdb)
 		perror("sendto");
 	return 0;
 
+}
+
+int
+ypdb2xid(ypdb)
+	struct _dom_binding *ypdb;
+{
+	int xid;
+
+	xid = (int)ypdb;		/* XXX: & 0xffffffff; */
+	return (xid);
+}
+
+struct _dom_binding *
+xid2ypdb(xid)
+	int xid;
+{
+	struct _dom_binding *ypdb;
+
+	for (ypdb = ypbindlist; ypdb; ypdb = ypdb->dom_pnext)
+		if (ypdb->dom_xid == xid)
+			break;
+	return (ypdb);
 }
 
 broadcast(ypdb)
@@ -538,7 +561,7 @@ broadcast(ypdb)
 	msg.rm_call.cb_cred = rpcua->ah_cred;
 	msg.rm_call.cb_verf = rpcua->ah_verf;
 
-	msg.rm_xid = (long)dom;
+	msg.rm_xid = ypdb->dom_xid = ypdb2xid(ypdb);
 	xdrmem_create(&xdr, buf, sizeof buf, XDR_ENCODE);
 	if (!xdr_callmsg(&xdr, &msg)) {
 		st = RPC_CANTENCODEARGS;
@@ -643,6 +666,7 @@ handle_replies()
 {
 	char buf[1400];
 	int fromlen, inlen;
+	struct _dom_binding *ypdb;
 	struct sockaddr_in raddr;
 	struct rpc_msg msg;
 	XDR xdr;
@@ -675,7 +699,9 @@ try_again:
 		if ((msg.rm_reply.rp_stat == MSG_ACCEPTED) &&
 		    (msg.acpted_rply.ar_stat == SUCCESS)) {
 			raddr.sin_port = htons((u_short)rmtcr_port);
-			rpc_received(msg.rm_xid, &raddr, 0);
+			ypdb = xid2ypdb(msg.rm_xid);
+			if (ypdb)
+				rpc_received(ypdb->dom_domain, &raddr, 0);
 		}
 	}
 	xdr.x_op = XDR_FREE;
@@ -690,6 +716,7 @@ handle_ping()
 {
 	char buf[1400];
 	int fromlen, inlen;
+	struct _dom_binding *ypdb;
 	struct sockaddr_in raddr;
 	struct rpc_msg msg;
 	XDR xdr;
@@ -722,7 +749,9 @@ try_again:
 	if (xdr_replymsg(&xdr, &msg)) {
 		if ((msg.rm_reply.rp_stat == MSG_ACCEPTED) &&
 		    (msg.acpted_rply.ar_stat == SUCCESS)) {
-			rpc_received(msg.rm_xid, &raddr, 0);
+			ypdb = xid2ypdb(msg.rm_xid);
+			if (ypdb)
+				rpc_received(ypdb->dom_domain, &raddr, 0);
 		}
 	}
 	xdr.x_op = XDR_FREE;
@@ -746,14 +775,7 @@ int force;
 	char path[MAXPATHLEN];
 	int fd;
 
-	/* XXX XXX USING POINTERS OVER THE NET LIKE THIS IS TOTALLY WRONG. */
-
 	/*printf("returned from %s about %s\n", inet_ntoa(raddrp->sin_addr), dom);*/
-
-#ifdef __alpha__						/* XXX XXX */
-	/* you _REALLY_ do not want to know... */		/* XXX XXX */
-	dom = (char *)((u_long)dom | (u_long)0x100000000);	/* XXX XXX */
-#endif								/* XXX XXX */
 
 	if (dom == NULL)
 		return;
