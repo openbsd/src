@@ -1,4 +1,4 @@
-/*	$OpenBSD: des.h,v 1.2 1997/09/21 10:45:30 niklas Exp $	*/
+/*	$OpenBSD: des.h,v 1.3 1998/08/16 16:38:55 art Exp $	*/
 
 /* crypto/des/des.h */
 /* Copyright (C) 1995-1997 Eric Young (eay@mincom.oz.au)
@@ -184,16 +184,13 @@ int des_enc_read(int fd,char *buf,int len,des_key_schedule sched,
 int des_enc_write(int fd,char *buf,int len,des_key_schedule sched,
 	des_cblock *iv);
 char *des_fcrypt(const char *buf,const char *salt, char *ret);
-#ifdef PERL5
 char *des_crypt(const char *buf,const char *salt);
-#else
 /* some stupid compilers complain because I have declared char instead
  * of const char */
 #ifdef HEADER_DES_LOCL_H
 char *crypt(const char *buf,const char *salt);
 #else
 char *crypt();
-#endif
 #endif
 void des_ofb_encrypt(unsigned char *in,unsigned char *out,
 	int numbits,long length,des_key_schedule schedule,des_cblock *ivec);
@@ -250,11 +247,8 @@ void des_ede3_cbc_encrypt();
 int des_enc_read();
 int des_enc_write();
 char *des_fcrypt();
-#ifdef PERL5
 char *des_crypt();
-#else
 char *crypt();
-#endif
 void des_ofb_encrypt();
 void des_pcbc_encrypt();
 DES_LONG des_quad_cksum();
