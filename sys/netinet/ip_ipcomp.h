@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_ipcomp.h,v 1.2 2001/07/05 08:40:59 angelos Exp $ */
+/* $OpenBSD: ip_ipcomp.h,v 1.3 2001/07/17 12:35:35 jjbg Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -44,8 +44,8 @@ struct ipcompstat {
 	u_int32_t	ipcomps_output;	/* Output IPcomp packets */
 	u_int32_t	ipcomps_invalid;	/* Trying to use an invalid
 						 * TDB */
-	u_int32_t	ipcomps_ibytes;	/* Input bytes */
-	u_int32_t	ipcomps_obytes;	/* Output bytes */
+	u_int64_t	ipcomps_ibytes;	/* Input bytes */
+	u_int64_t	ipcomps_obytes;	/* Output bytes */
 	u_int32_t	ipcomps_toobig;	/* Packet got larger than
 					 * IP_MAXPACKET */
 	u_int32_t	ipcomps_pdrops;	/* Packet blocked due to policy */
