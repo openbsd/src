@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.12 1997/07/24 17:27:11 millert Exp $	*/
+/*	$OpenBSD: lex.c,v 1.13 1997/07/30 06:32:40 millert Exp $	*/
 /*	$NetBSD: lex.c,v 1.10 1997/05/17 19:55:13 pk Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: lex.c,v 1.12 1997/07/24 17:27:11 millert Exp $";
+static char rcsid[] = "$OpenBSD: lex.c,v 1.13 1997/07/30 06:32:40 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -220,12 +220,12 @@ commands()
 
 	if (!sourcing) {
 		if (signal(SIGINT, SIG_IGN) != SIG_IGN)
-			signal(SIGINT, intr);
+			(void)signal(SIGINT, intr);
 		if (signal(SIGHUP, SIG_IGN) != SIG_IGN)
-			signal(SIGHUP, hangup);
-		signal(SIGTSTP, stop);
-		signal(SIGTTOU, stop);
-		signal(SIGTTIN, stop);
+			(void)signal(SIGHUP, hangup);
+		(void)signal(SIGTSTP, stop);
+		(void)signal(SIGTTOU, stop);
+		(void)signal(SIGTTIN, stop);
 	}
 	setexit();
 	for (;;) {
@@ -577,12 +577,12 @@ stop(s)
 	sig_t old_action = signal(s, SIG_DFL);
 	sigset_t nset;
 
-	sigemptyset(&nset);
-	sigaddset(&nset, s);
-	sigprocmask(SIG_UNBLOCK, &nset, NULL);
-	kill(0, s);
-	sigprocmask(SIG_BLOCK, &nset, NULL);
-	signal(s, old_action);
+	(void)sigemptyset(&nset);
+	(void)sigaddset(&nset, s);
+	(void)sigprocmask(SIG_UNBLOCK, &nset, NULL);
+	(void)kill(0, s);
+	(void)sigprocmask(SIG_BLOCK, &nset, NULL);
+	(void)signal(s, old_action);
 	if (reset_on_stop) {
 		reset_on_stop = 0;
 		reset(0);

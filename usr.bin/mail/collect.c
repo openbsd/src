@@ -1,4 +1,4 @@
-/*	$OpenBSD: collect.c,v 1.12 1997/07/24 17:27:10 millert Exp $	*/
+/*	$OpenBSD: collect.c,v 1.13 1997/07/30 06:32:39 millert Exp $	*/
 /*	$NetBSD: collect.c,v 1.9 1997/07/09 05:25:45 mikel Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)collect.c	8.2 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$OpenBSD: collect.c,v 1.12 1997/07/24 17:27:10 millert Exp $";
+static char rcsid[] = "$OpenBSD: collect.c,v 1.13 1997/07/30 06:32:39 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -106,9 +106,9 @@ collect(hp, printheaders)
 	sigaddset(&nset, SIGHUP);
 	sigprocmask(SIG_BLOCK, &nset, &oset);
 	if ((saveint = signal(SIGINT, SIG_IGN)) != SIG_IGN)
-		signal(SIGINT, collint);
+		(void)signal(SIGINT, collint);
 	if ((savehup = signal(SIGHUP, SIG_IGN)) != SIG_IGN)
-		signal(SIGHUP, collhup);
+		(void)signal(SIGHUP, collhup);
 	savetstp = signal(SIGTSTP, collstop);
 	savettou = signal(SIGTTOU, collstop);
 	savettin = signal(SIGTTIN, collstop);
@@ -417,16 +417,16 @@ out:
 	if (collf != NULL)
 		rewind(collf);
 	noreset--;
-	sigemptyset(&nset);
-	sigaddset(&nset, SIGINT);
-	sigaddset(&nset, SIGHUP);
-	sigprocmask(SIG_BLOCK, &nset, &oset);
-	signal(SIGINT, saveint);
-	signal(SIGHUP, savehup);
-	signal(SIGTSTP, savetstp);
-	signal(SIGTTOU, savettou);
-	signal(SIGTTIN, savettin);
-	sigprocmask(SIG_SETMASK, &oset, NULL);
+	(void)sigemptyset(&nset);
+	(void)sigaddset(&nset, SIGINT);
+	(void)sigaddset(&nset, SIGHUP);
+	(void)sigprocmask(SIG_BLOCK, &nset, &oset);
+	(void)signal(SIGINT, saveint);
+	(void)signal(SIGHUP, savehup);
+	(void)signal(SIGTSTP, savetstp);
+	(void)signal(SIGTTOU, savettou);
+	(void)signal(SIGTTIN, savettin);
+	(void)sigprocmask(SIG_SETMASK, &oset, NULL);
 	return(collf);
 }
 
@@ -610,12 +610,12 @@ collstop(s)
 	sig_t old_action = signal(s, SIG_DFL);
 	sigset_t nset;
 
-	sigemptyset(&nset);
-	sigaddset(&nset, s);
-	sigprocmask(SIG_UNBLOCK, &nset, NULL);
-	kill(0, s);
-	sigprocmask(SIG_BLOCK, &nset, NULL);
-	signal(s, old_action);
+	(void)sigemptyset(&nset);
+	(void)sigaddset(&nset, s);
+	(void)sigprocmask(SIG_UNBLOCK, &nset, NULL);
+	(void)kill(0, s);
+	(void)sigprocmask(SIG_BLOCK, &nset, NULL);
+	(void)signal(s, old_action);
 	if (colljmp_p) {
 		colljmp_p = 0;
 		hadintr = 0;

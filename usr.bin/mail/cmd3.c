@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd3.c,v 1.7 1997/07/14 00:24:25 millert Exp $	*/
+/*	$OpenBSD: cmd3.c,v 1.8 1997/07/30 06:32:38 millert Exp $	*/
 /*	$NetBSD: cmd3.c,v 1.8 1997/07/09 05:29:49 mikel Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd3.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: cmd3.c,v 1.7 1997/07/14 00:24:25 millert Exp $";
+static char rcsid[] = "$OpenBSD: cmd3.c,v 1.8 1997/07/30 06:32:38 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -65,8 +65,9 @@ shell(v)
 	char *shell;
 	char cmd[BUFSIZ];
 
-	(void)strcpy(cmd, str);
-	if (bangexp(cmd) < 0)
+	(void)strncpy(cmd, str, sizeof(cmd) - 1);
+	cmd[sizeof(cmd) - 1] = '\0';
+	if (bangexp(cmd, sizeof(cmd)) < 0)
 		return(1);
 	if ((shell = value("SHELL")) == NULL)
 		shell = _PATH_CSHELL;
@@ -99,14 +100,13 @@ dosh(v)
  * Expand the shell escape by expanding unescaped !'s into the
  * last issued command where possible.
  */
-
-char	lastbang[128];
-
 int
-bangexp(str)
+bangexp(str, strsize)
 	char *str;
+	size_t strsize;
 {
 	char bangbuf[BUFSIZ];
+	static char lastbang[BUFSIZ];
 	register char *cp, *cp2;
 	register int n;
 	int changed = 0;
@@ -141,11 +141,12 @@ overf:
 	}
 	*cp2 = 0;
 	if (changed) {
-		printf("!%s\n", bangbuf);
-		fflush(stdout);
+		(void)printf("!%s\n", bangbuf);
+		(void)fflush(stdout);
 	}
-	strcpy(str, bangbuf);
-	strncpy(lastbang, bangbuf, sizeof(lastbang) - 1);
+	(void)strncpy(str, bangbuf, strsize - 1);
+	str[strsize - 1]  = '\0';
+	(void)strncpy(lastbang, bangbuf, sizeof(lastbang) - 1);
 	lastbang[sizeof(lastbang) - 1] = '\0';
 	return(0);
 }

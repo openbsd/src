@@ -1,4 +1,4 @@
-/*	$OpenBSD: v7.local.c,v 1.8 1997/07/14 00:24:31 millert Exp $	*/
+/*	$OpenBSD: v7.local.c,v 1.9 1997/07/30 06:32:41 millert Exp $	*/
 /*	$NetBSD: v7.local.c,v 1.8 1997/05/13 06:15:58 mikel Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)v7.local.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: v7.local.c,v 1.8 1997/07/14 00:24:31 millert Exp $";
+static char rcsid[] = "$OpenBSD: v7.local.c,v 1.9 1997/07/30 06:32:41 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -65,13 +65,18 @@ findmail(user, buf, buflen)
 	int buflen;
 {
 	char *mbox;
+	struct stat sb;
 
-	if (!(mbox = getenv("MAIL")))
-		(void)snprintf(buf, buflen, "%s/%s", _PATH_MAILDIR, user);
-	else {
+	/* Ignore $MAIL if it is not owned by the invoking user */
+	if ((mbox = getenv("MAIL")) && stat(mbox, &sb) == 0 &&
+	    sb.st_uid != getuid() && sb.st_uid != geteuid())
+		mbox = NULL;
+
+	if (mbox) {
 		(void)strncpy(buf, mbox, buflen - 1);
 		buf[buflen - 1] = '\0';
-	}
+	} else
+		(void)snprintf(buf, buflen, "%s/%s", _PATH_MAILDIR, user);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.8 1997/07/14 15:56:24 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.9 1997/07/30 06:32:40 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.7 1997/05/13 06:15:57 mikel Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.8 1997/07/14 15:56:24 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.9 1997/07/30 06:32:40 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -237,18 +237,18 @@ Usage: %s [-iInv] [-s subject] [-c cc-addr] [-b bcc-addr] to-addr ...\n\
 		extern char *version;
 
 		if ((prevint = signal(SIGINT, SIG_IGN)) != SIG_IGN)
-			signal(SIGINT, hdrstop);
+			(void)signal(SIGINT, hdrstop);
 		if (value("quiet") == NULL)
-			printf("Mail version %s.  Type ? for help.\n",
+			(void)printf("Mail version %s.  Type ? for help.\n",
 				version);
 		announce();
-		fflush(stdout);
-		signal(SIGINT, prevint);
+		(void)fflush(stdout);
+		(void)signal(SIGINT, prevint);
 	}
 	commands();
-	signal(SIGHUP, SIG_IGN);
-	signal(SIGINT, SIG_IGN);
-	signal(SIGQUIT, SIG_IGN);
+	(void)signal(SIGHUP, SIG_IGN);
+	(void)signal(SIGINT, SIG_IGN);
+	(void)signal(SIGQUIT, SIG_IGN);
 	quit();
 	exit(0);
 }

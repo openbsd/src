@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.7 1997/07/22 18:54:45 millert Exp $	*/
+/*	$OpenBSD: tty.c,v 1.8 1997/07/30 06:32:41 millert Exp $	*/
 /*	$NetBSD: tty.c,v 1.7 1997/07/09 05:25:46 mikel Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: tty.c,v 1.7 1997/07/22 18:54:45 millert Exp $";
+static char rcsid[] = "$OpenBSD: tty.c,v 1.8 1997/07/30 06:32:41 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -106,9 +106,9 @@ grabh(hp, gflags)
 	ttybuf.c_cc[VERASE] = 0;
 	ttybuf.c_cc[VKILL] = 0;
 	if ((saveint = signal(SIGINT, SIG_IGN)) == SIG_DFL)
-		signal(SIGINT, SIG_DFL);
+		(void)signal(SIGINT, SIG_DFL);
 	if ((savequit = signal(SIGQUIT, SIG_IGN)) == SIG_DFL)
-		signal(SIGQUIT, SIG_DFL);
+		(void)signal(SIGQUIT, SIG_DFL);
 #else
 # ifdef	TIOCEXT
 	extproc = ((ttybuf.c_lflag & EXTPROC) ? 1 : 0);
@@ -156,15 +156,15 @@ grabh(hp, gflags)
 			extract(readtty("Bcc: ", detract(hp->h_bcc, 0)), GBCC);
 	}
 out:
-	signal(SIGTSTP, savetstp);
-	signal(SIGTTOU, savettou);
-	signal(SIGTTIN, savettin);
+	(void)signal(SIGTSTP, savetstp);
+	(void)signal(SIGTTOU, savettou);
+	(void)signal(SIGTTIN, savettin);
 #ifndef TIOCSTI
 	ttybuf.c_cc[VERASE] = c_erase;
 	ttybuf.c_cc[VKILL] = c_kill;
 	if (ttyset)
 		tcsetattr(fileno(stdin), TCSADRAIN, &ttybuf);
-	signal(SIGQUIT, savequit);
+	(void)signal(SIGQUIT, savequit);
 #else
 # ifdef	TIOCEXT
 	if (extproc) {
@@ -174,7 +174,7 @@ out:
 	}
 # endif	/* TIOCEXT */
 #endif
-	signal(SIGINT, saveint);
+	(void)signal(SIGINT, saveint);
 	return(errs);
 }
 
@@ -231,9 +231,9 @@ readtty(pr, src)
 	cp2 = cp;
 	if (sigsetjmp(rewrite, 1))
 		goto redo;
-	signal(SIGTSTP, ttystop);
-	signal(SIGTTOU, ttystop);
-	signal(SIGTTIN, ttystop);
+	(void)signal(SIGTSTP, ttystop);
+	(void)signal(SIGTTOU, ttystop);
+	(void)signal(SIGTTIN, ttystop);
 	clearerr(stdin);
 	while (cp2 < canonb + BUFSIZ) {
 		c = getc(stdin);
@@ -242,9 +242,9 @@ readtty(pr, src)
 		*cp2++ = c;
 	}
 	*cp2 = 0;
-	signal(SIGTSTP, SIG_DFL);
-	signal(SIGTTOU, SIG_DFL);
-	signal(SIGTTIN, SIG_DFL);
+	(void)signal(SIGTSTP, SIG_DFL);
+	(void)signal(SIGTTOU, SIG_DFL);
+	(void)signal(SIGTTIN, SIG_DFL);
 	if (c == EOF && ferror(stdin)) {
 redo:
 		cp = strlen(canonb) > 0 ? canonb : NULL;
@@ -298,12 +298,12 @@ ttystop(s)
 	sig_t old_action = signal(s, SIG_DFL);
 	sigset_t nset;
 
-	sigemptyset(&nset);
-	sigaddset(&nset, s);
-	sigprocmask(SIG_UNBLOCK, &nset, NULL);
-	kill(0, s);
-	sigprocmask(SIG_BLOCK, &nset, NULL);
-	signal(s, old_action);
+	(void)sigemptyset(&nset);
+	(void)sigaddset(&nset, s);
+	(void)sigprocmask(SIG_UNBLOCK, &nset, NULL);
+	(void)kill(0, s);
+	(void)sigprocmask(SIG_BLOCK, &nset, NULL);
+	(void)signal(s, old_action);
 	siglongjmp(rewrite, 1);
 }
 

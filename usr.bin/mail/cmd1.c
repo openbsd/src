@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd1.c,v 1.10 1997/07/24 17:27:09 millert Exp $	*/
+/*	$OpenBSD: cmd1.c,v 1.11 1997/07/30 06:32:38 millert Exp $	*/
 /*	$NetBSD: cmd1.c,v 1.9 1997/07/09 05:29:48 mikel Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd1.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: cmd1.c,v 1.10 1997/07/24 17:27:09 millert Exp $";
+static char rcsid[] = "$OpenBSD: cmd1.c,v 1.11 1997/07/30 06:32:38 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -341,7 +341,7 @@ type1(msgvec, doign, page)
 				warn(cp);
 				obuf = stdout;
 			} else
-				signal(SIGPIPE, brokpipe);
+				(void)signal(SIGPIPE, brokpipe);
 		}
 	}
 	for (ip = msgvec; *ip && ip - msgvec < msgCount; ip++) {
@@ -357,9 +357,9 @@ close_pipe:
 		/*
 		 * Ignore SIGPIPE so it can't cause a duplicate close.
 		 */
-		signal(SIGPIPE, SIG_IGN);
+		(void)signal(SIGPIPE, SIG_IGN);
 		(void)Pclose(obuf);
-		signal(SIGPIPE, SIG_DFL);
+		(void)signal(SIGPIPE, SIG_DFL);
 	}
 	return(0);
 }
