@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.6 1999/11/13 22:13:00 millert Exp $
+	$OpenBSD: syscalls.master,v 1.7 2000/05/01 23:10:58 deraadt Exp $
 
 ; OpenBSD COMPAT_BSDOS system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
@@ -375,7 +375,7 @@
 222	NOARGS		{ int sys_semop(int semid, struct sembuf *sops, \
 			    u_int nsops); }
 ; 223 is UNIMPL in BSD/OS
-223	NOARGS		{ int sys_semconfig(int flag); }
+223	OBSOL		sys_semconfig
 #else
 220	UNIMPL		semctl
 221	UNIMPL		semget
