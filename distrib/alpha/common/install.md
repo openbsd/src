@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.8 2002/05/14 01:49:25 krw Exp $
+#       $OpenBSD: install.md,v 1.9 2002/05/18 17:56:03 krw Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -44,27 +44,6 @@ MDTERM=sun
 ARCH=ARCH
 
 md_set_term() {
-}
-
-md_get_msgbuf() {
-	# Only want to see one boot's worth of info
-	dmesg > /tmp/msgbuf
-	sed -n -f /dev/stdin /tmp/msgbuf <<- OOF
-		/^OpenBSD /h
-		/^OpenBSD /!H
-		\${
-			g
-			p
-		}
-	OOF
-}
-
-md_get_diskdevs() {
-	md_get_msgbuf | egrep -a "^[sw]d[0-9]+ " | cutword 1
-}
-
-md_get_cddevs() {
-	md_get_msgbuf | egrep -a "^cd[0-9]+ " | cutword 1
 }
 
 md_questions() {

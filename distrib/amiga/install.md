@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.17 2002/05/14 01:49:25 krw Exp $
+#	$OpenBSD: install.md,v 1.18 2002/05/18 17:56:03 krw Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -43,19 +43,10 @@
 # Machine-dependent install sets
 MDSETS=kernel
 MDFSTYPE=ados
+MDCDDEVS="'/^a\{0,1\}cd[0-9][0-9]* /s/ .*//p'"
 ARCH=ARCH
 
 md_set_term() {
-}
-
-md_get_diskdevs() {
-	# return available disk devices
-	dmesg | sed -n -e '/^[sw]d[0-9] /{s/ .*//;p;}'
-}
-
-md_get_cddevs() {
-	# return available CDROM devices
-	dmesg | sed -n -e '/^a\{0,1\}cd[0-9] /{s/ .*//;p;}'
 }
 
 md_questions() {

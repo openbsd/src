@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.11 2002/05/14 01:49:25 krw Exp $
+#	$OpenBSD: install.md,v 1.12 2002/05/18 17:56:03 krw Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,16 +46,6 @@ MDFSTYPE=msdos
 ARCH=ARCH
 
 md_set_term() {
-}
-
-md_get_diskdevs() {
-	# return available disk devices
-	bsort `dmesg | egrep -a "^[sw]d[0-9]+ " | cutword 1`
-}
-
-md_get_cddevs() {
-	# return available CDROM devices
-	bsort `dmesg | egrep -a "^cd[0-9]+ " | cutword 1`
 }
 
 md_questions() {

@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.9 2002/05/14 01:49:25 krw Exp $
+#	$OpenBSD: install.md,v 1.10 2002/05/18 17:56:03 krw Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,33 +42,10 @@
 # Machine-dependent install sets
 MDSETS=kernel
 MDTERM=sun
+MDDISKDEVS="'/^sd[0-9] /s/ .*//p;/^x[dy][0-9] /s/ .*//p'"
 ARCH=ARCH
 
 md_set_term() {
-}
-
-md_get_msgbuf() {
-	# Only want to see one boot's worth of info
-	dmesg > /tmp/msgbuf
-	sed -n -f /dev/stdin /tmp/msgbuf <<- OOF
-		/^OpenBSD /h
-		/^OpenBSD /!H
-		\${
-			g
-			p
-		}
-	OOF
-}
-
-md_get_diskdevs() {
-	# return available disk devices
-	md_get_msgbuf | sed -n 	-e '/^sd[0-9] /{s/ .*//;p;}' \
-	    -e '/^x[dy][0-9] /{s/ .*//;p;}'
-}
-
-md_get_cddevs() {
-	# return available CDROM devices
-	md_get_msgbuf | sed -n 	-e '/^cd[0-9] /{s/ .*//;p;}'
 }
 
 md_questions() {
