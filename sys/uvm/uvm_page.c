@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.22 2001/08/11 10:57:22 art Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.23 2001/08/25 12:13:27 art Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.37 2000/06/09 04:43:19 soda Exp $	*/
 
 /* 
@@ -100,7 +100,7 @@ int vm_nphysseg = 0;				/* XXXCDC: uvm.nphysseg */
  * We therefore provide a way to disable it from machdep code here.
  */
 
-boolean_t vm_page_zero_enable = TRUE;
+boolean_t vm_page_zero_enable = FALSE;
 
 /*
  * local variables
