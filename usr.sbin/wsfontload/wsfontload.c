@@ -1,4 +1,4 @@
-/* $OpenBSD: wsfontload.c,v 1.2 2001/01/30 06:50:12 aaron Exp $ */
+/* $OpenBSD: wsfontload.c,v 1.3 2001/03/13 03:10:21 mickey Exp $ */
 /* $NetBSD: wsfontload.c,v 1.2 2000/01/05 18:46:43 ad Exp $ */
 
 /*
@@ -88,18 +88,20 @@ main(argc, argv)
 	f.bitorder = DEFBITORDER;
 	f.byteorder = DEFBYTEORDER;
 
-	while ((c = getopt(argc, argv, "f:w:h:e:N:bB")) != -1) {
+	while ((c = getopt(argc, argv, "bBe:f:h:N:w:")) != -1) {
 		switch (c) {
 		case 'f':
 			wsdev = optarg;
 			break;
 		case 'w':
 			if (sscanf(optarg, "%d", &f.fontwidth) != 1)
-				errx(1, "invalid font width");
+				errx(1, "invalid font width of %d",
+				    f.fontwidth);
 			break;
 		case 'h':
 			if (sscanf(optarg, "%d", &f.fontheight) != 1)
-				errx(1, "invalid font height");
+				errx(1, "invalid font height of %d",
+				    f.fontheight);
 			break;
 		case 'e':
 			f.encoding = getencoding(optarg);
@@ -127,12 +129,12 @@ main(argc, argv)
 
 	wsfd = open(wsdev, O_RDWR, 0);
 	if (wsfd < 0)
-		err(2, "open ws");
+		err(2, "open %s", wsdev);
 
 	if (argc > 0) {
 		ffd = open(argv[0], O_RDONLY, 0);
 		if (ffd < 0)
-			err(4, "open font");
+			err(4, "open %s", argv[0]);
 		if (!f.name)
 			f.name = argv[0];
 	} else
@@ -149,9 +151,9 @@ main(argc, argv)
 		errx(1, "malloc");
 	res = read(ffd, buf, len);
 	if (res < 0)
-		err(4, "read font");
+		err(4, "read %s", argv[0]);
 	if (res != len)
-		errx(4, "short read");
+		errx(4, "short read on %s", argv[0]);
 
 	f.data = buf;
 
