@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.117 2001/07/19 00:07:36 krw Exp $ */
+/*	$OpenBSD: pf.c,v 1.118 2001/07/21 23:26:41 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -121,7 +121,7 @@ void			 pf_insert_state(struct pf_state *);
 void			 pf_purge_expired_states(void);
 
 void			 pf_print_host(u_int32_t, u_int16_t);
-void			 pf_print_state(int, struct pf_state *);
+void			 pf_print_state(struct pf_state *);
 void			 pf_print_flags(u_int8_t);
 
 void			 pfattach(int);
@@ -472,6 +472,7 @@ void
 pf_insert_state(struct pf_state *state)
 {
 	struct pf_tree_key key;
+	struct pf_state *s;
 
 	key.proto = state->proto;
 	key.addr[0].s_addr = state->lan.addr;
@@ -479,9 +480,17 @@ pf_insert_state(struct pf_state *state)
 	key.addr[1].s_addr = state->ext.addr;
 	key.port[1] = state->ext.port;
 	/* sanity checks can be removed later, should never occur */
-	if (pf_find_state(tree_lan_ext, &key) != NULL)
+	if ((s = pf_find_state(tree_lan_ext, &key)) != NULL) {
 		printf("pf: ERROR! insert invalid\n");
-	else {
+		printf("    key already in tree_lan_ext\n");
+		printf("    key: proto = %u, lan = ", state->proto);
+		pf_print_host(key.addr[0].s_addr, key.port[0]);
+		printf(", ext = ");
+		pf_print_host(key.addr[1].s_addr, key.port[1]);
+		printf("\n    state: ");
+		pf_print_state(s);
+		printf("\n");
+	} else {
 		pf_tree_insert(&tree_lan_ext, NULL, &key, state);
 		if (pf_find_state(tree_lan_ext, &key) != state)
 			printf("pf: ERROR! insert failed\n");
@@ -492,9 +501,17 @@ pf_insert_state(struct pf_state *state)
 	key.port[0] = state->ext.port;
 	key.addr[1].s_addr = state->gwy.addr;
 	key.port[1] = state->gwy.port;
-	if (pf_find_state(tree_ext_gwy, &key) != NULL)
+	if ((s = pf_find_state(tree_ext_gwy, &key)) != NULL) {
 		printf("pf: ERROR! insert invalid\n");
-	else {
+		printf("    key already in tree_ext_gwy\n");
+		printf("    key: proto = %u, ext = ", state->proto);
+		pf_print_host(key.addr[0].s_addr, key.port[0]);
+		printf(", gwy = ");
+		pf_print_host(key.addr[1].s_addr, key.port[1]);
+		printf("\n    state: ");
+		pf_print_state(s);
+		printf("\n");
+	} else {
 		pf_tree_insert(&tree_ext_gwy, NULL, &key, state);
 		if (pf_find_state(tree_ext_gwy, &key) != state)
 			printf("pf: ERROR! insert failed\n");
@@ -559,8 +576,22 @@ pf_print_host(u_int32_t a, u_int16_t p)
 }
 
 void
-pf_print_state(int direction, struct pf_state *s)
+pf_print_state(struct pf_state *s)
 {
+	switch (s->proto) {
+	case IPPROTO_TCP:
+		printf("TCP ");
+		break;
+	case IPPROTO_UDP:
+		printf("UDP ");
+		break;
+	case IPPROTO_ICMP:
+		printf("ICMP ");
+		break;
+	default:
+		printf("%u ", s->proto);
+		break;
+	}
 	pf_print_host(s->lan.addr, s->lan.port);
 	printf(" ");
 	pf_print_host(s->gwy.addr, s->gwy.port);
@@ -1954,7 +1985,7 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 	} else {
 		/* XXX Remove these printfs before release */
 		printf("pf: BAD state: ");
-		pf_print_state(direction, *state);
+		pf_print_state(*state);
 		pf_print_flags(th->th_flags);
 		printf(" seq=%lu ack=%lu len=%u ", seq, ack, len);
 		printf("\n");
@@ -2144,7 +2175,7 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 			    !SEQ_GEQ(seq, src->seqlo - dst->max_win)) {
 
 				printf("pf: BAD ICMP state: ");
-				pf_print_state(direction, *state);
+				pf_print_state(*state);
 				printf(" seq=%lu\n", seq);
 				return (PF_DROP);
 			}
