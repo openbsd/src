@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti.c,v 1.19 2003/02/11 19:11:51 miod Exp $	*/
+/*	$OpenBSD: sti.c,v 1.20 2003/02/11 19:41:35 miod Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -121,6 +121,7 @@ int sti_inqcfg(struct sti_softc *sc, struct sti_inqconfout *out);
 void sti_bmove(struct sti_softc *sc, int, int, int, int, int, int,
 	enum sti_bmove_funcs);
 int sti_fetchfonts(struct sti_softc *sc, u_int32_t addr);
+void sti_attach_deferred(void *);
 
 void
 sti_attach_common(sc)
@@ -339,27 +340,33 @@ sti_attach_common(sc)
 	sti_default_screen.fontheight = sc->sc_curfont.height;
 
 #if NWSDISPLAY > 0
-	{
-		struct wsemuldisplaydev_attach_args waa;
-
-		waa.console = sc->sc_flags & STI_CONSOLE? 1 : 0;
-		waa.scrdata = &sti_default_screenlist;
-		waa.accessops = &sti_accessops;
-		waa.accesscookie = sc;
-
-		/* attach as console if required */
-		if (waa.console) {
-			long defattr;
-
-			sti_alloc_attr(sc, 0, 0, 0, &defattr);
-			wsdisplay_cnattach(&sti_default_screen, sc,
-			    0, sti_default_screen.nrows - 1, defattr);
-		}
-
-		config_found(&sc->sc_dev, &waa, wsemuldisplaydevprint);
-	}
+	startuphook_establish(sti_attach_deferred, sc);
 #endif
+
 	/* { extern int pmapdebug; pmapdebug = 0; } */
+}
+
+void
+sti_attach_deferred(void *v)
+{
+	struct sti_softc *sc = v;
+	struct wsemuldisplaydev_attach_args waa;
+
+	waa.console = sc->sc_flags & STI_CONSOLE? 1 : 0;
+	waa.scrdata = &sti_default_screenlist;
+	waa.accessops = &sti_accessops;
+	waa.accesscookie = sc;
+
+	/* attach as console if required */
+	if (waa.console) {
+		long defattr;
+
+		sti_alloc_attr(sc, 0, 0, 0, &defattr);
+		wsdisplay_cnattach(&sti_default_screen, sc,
+		    0, sti_default_screen.nrows - 1, defattr);
+	}
+
+	config_found(&sc->sc_dev, &waa, wsemuldisplaydevprint);
 }
 
 int
