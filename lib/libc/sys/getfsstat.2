@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getfsstat.2,v 1.10 1999/06/29 14:09:58 aaron Exp $
+.\"	$OpenBSD: getfsstat.2,v 1.11 1999/12/31 03:43:23 millert Exp $
 .\"	$NetBSD: getfsstat.2,v 1.6 1995/06/29 11:40:44 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -64,7 +64,7 @@ struct statfs {
     u_int32_t  f_iosize;      /* optimal transfer block size */
     u_int32_t  f_blocks;      /* total data blocks in file system */
     u_int32_t  f_bfree;       /* free blocks in fs */
-    u_int32_t  f_bavail;      /* free blocks avail to non-superuser */
+    int32_t    f_bavail;      /* free blocks avail to non-superuser */
     u_int32_t  f_files;       /* total file nodes in file system */
     u_int32_t  f_ffree;       /* free file nodes in fs */
     fsid_t     f_fsid;        /* file system id */
