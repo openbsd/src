@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.37 2001/08/23 04:10:31 deraadt Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.38 2001/08/28 00:02:43 frantzen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -67,6 +67,9 @@ int	 pfctl_show_status(int);
 int	 pfctl_rules(int, char *, int);
 int	 pfctl_nat(int, char *, int);
 int	 pfctl_log(int, char *, int);
+int	 pfctl_timeout(int, char *, int);
+int	 pfctl_gettimeout(int, const char *);
+int	 pfctl_settimeout(int, const char *, int);
 int	 pfctl_debug(int, u_int32_t, int);
 
 int	 opts = 0;
@@ -75,9 +78,30 @@ char	*logopt;
 char	*natopt;
 char	*rulesopt;
 char	*showopt;
+char	*timeoutopt;
 char	*debugopt;
 
 char	*infile;
+
+
+static const struct {
+	const char	*name;
+	int		timeout;
+} pf_timeouts[] = {
+	{ "tcp.first",		PFTM_TCP_FIRST_PACKET },
+	{ "tcp.opening",	PFTM_TCP_OPENING },
+	{ "tcp.established",	PFTM_TCP_ESTABLISHED },
+	{ "tcp.closing",	PFTM_TCP_CLOSING },
+	{ "tcp.finwait",	PFTM_TCP_FIN_WAIT },
+	{ "tcp.closed",		PFTM_TCP_CLOSED },
+	{ "udp.first",		PFTM_UDP_FIRST_PACKET },
+	{ "udp.single",		PFTM_UDP_SINGLE },
+	{ "udp.multiple",	PFTM_UDP_MULTIPLE },
+	{ "icmp.first",		PFTM_ICMP_FIRST_PACKET },
+	{ "icmp.error",		PFTM_ICMP_ERROR_REPLY },
+	{ "frag",		PFTM_FRAG },
+	{ "interval",		PFTM_INTERVAL },
+	{ NULL,			0 }};
 
 void
 usage()
@@ -86,7 +110,7 @@ usage()
 
 	fprintf(stderr, "usage: %s [-dehnqv] [-F set] [-l interface] ",
 	    __progname);
-	fprintf(stderr, "[-N file] [-R file] [-s set] [-x level]\n");
+	fprintf(stderr, "[-N file] [-R file] [-s set] [-t set] [-x level]\n");
 	exit(1);
 }
 
@@ -428,6 +452,89 @@ pfctl_log(int dev, char *ifname, int opts)
 }
 
 int
+pfctl_timeout(int dev, char *opt, int opts)
+{
+	char *seconds, *serr = NULL;
+	int setval;
+
+	seconds = index(opt, '=');
+	if (seconds == NULL)
+		return pfctl_gettimeout(dev, opt);
+	else {
+		/* Set the timeout value */
+		if (*seconds != '\0')
+			*seconds++ = '\0';	/* Eat '=' */
+		setval = strtol(seconds, &serr, 10);
+		if (*serr != '\0' || *seconds == '\0' || setval < 0) {
+			warnx("Bad timeout arguement.  Format -t name=seconds");
+			return 1;
+		}
+		return pfctl_settimeout(dev, opt, setval);
+	}
+}
+
+int
+pfctl_gettimeout(int dev, const char *opt)
+{
+	struct pfioc_tm pt;
+	int i;
+
+	for (i = 0; pf_timeouts[i].name; i++) {
+		if (strcmp(opt, "all") == 0) {
+			/* Need to dump all of the values */
+			pt.timeout = pf_timeouts[i].timeout;
+			if (ioctl(dev, DIOCGETTIMEOUT, &pt))
+				err(1, "DIOCGETTIMEOUT");
+			printf("%-20s %ds\n", pf_timeouts[i].name, pt.seconds);
+		} else if (strcasecmp(opt, pf_timeouts[i].name) == 0) {
+			pt.timeout = pf_timeouts[i].timeout;
+			break;
+		}
+	}
+	if (strcmp(opt, "all") == 0)
+		return 0;
+
+	if (pf_timeouts[i].name == NULL) {
+		warnx("Bad timeout name.  Format -t name[=<seconds>]");
+		return 1;
+	}
+
+	if (ioctl(dev, DIOCGETTIMEOUT, &pt))
+		err(1, "DIOCSETTIMEOUT");
+	if ((opts & PF_OPT_QUIET) == 0)
+		printf("%s timeout %ds\n", pf_timeouts[i].name,
+		    pt.seconds);
+	return (0);
+}
+
+int
+pfctl_settimeout(int dev, const char *opt, int seconds)
+{
+	struct pfioc_tm pt;
+	int i;
+
+	for (i = 0; pf_timeouts[i].name; i++) {
+		if (strcasecmp(opt, pf_timeouts[i].name) == 0) {
+			pt.timeout = pf_timeouts[i].timeout;
+			break;
+		}
+	}
+
+	if (pf_timeouts[i].name == NULL) {
+		warnx("Bad timeout name.  Format -t name[=<seconds>]");
+		return 1;
+	}
+
+	pt.seconds = seconds;
+	if (ioctl(dev, DIOCSETTIMEOUT, &pt))
+		err(1, "DIOCSETTIMEOUT");
+	if ((opts & PF_OPT_QUIET) == 0)
+		printf("%s timeout %ds -> %ds\n", pf_timeouts[i].name,
+		    pt.seconds, seconds);
+	return (0);
+}
+
+int
 pfctl_debug(int dev, u_int32_t level, int opts)
 {
 	if (ioctl(dev, DIOCSETDEBUG, &level))
@@ -465,7 +572,7 @@ main(int argc, char *argv[])
 	if (argc < 2)
 		usage();
 
-	while ((ch = getopt(argc, argv, "deqF:hl:nN:R:s:vx:")) != -1) {
+	while ((ch = getopt(argc, argv, "deqF:hl:nN:R:s:t:vx:")) != -1) {
 		switch (ch) {
 		case 'd':
 			opts |= PF_OPT_DISABLE;
@@ -493,6 +600,9 @@ main(int argc, char *argv[])
 			break;
 		case 's':
 			showopt = optarg;
+			break;
+		case 't':
+			timeoutopt = optarg;
 			break;
 		case 'v':
 			opts |= PF_OPT_VERBOSE;
@@ -589,6 +699,10 @@ main(int argc, char *argv[])
 
 	if (logopt != NULL)
 		if (pfctl_log(dev, logopt, opts))
+			error = 1;
+
+	if (timeoutopt != NULL)
+		if (pfctl_timeout(dev, timeoutopt, opts))
 			error = 1;
 
 	if (opts & PF_OPT_ENABLE)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.46 2001/08/25 21:54:26 frantzen Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.47 2001/08/28 00:02:43 frantzen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -44,6 +44,11 @@ enum	{ PF_DEBUG_NONE=0, PF_DEBUG_URGENT=1, PF_DEBUG_MISC=2 };
 enum	{ PF_CHANGE_ADD_HEAD=1, PF_CHANGE_ADD_TAIL=2,
 	  PF_CHANGE_ADD_BEFORE=3, PF_CHANGE_ADD_AFTER=4,
 	  PF_CHANGE_REMOVE=5 };
+enum	{ PFTM_TCP_FIRST_PACKET=0, PFTM_TCP_OPENING=1, PFTM_TCP_ESTABLISHED=2,
+	  PFTM_TCP_CLOSING=3, PFTM_TCP_FIN_WAIT=4, PFTM_TCP_CLOSED=5,
+	  PFTM_UDP_FIRST_PACKET=6, PFTM_UDP_SINGLE=7, PFTM_UDP_MULTIPLE=8,
+	  PFTM_ICMP_FIRST_PACKET=9, PFTM_ICMP_ERROR_REPLY=10, PFTM_FRAG=11,
+	  PFTM_INTERVAL=12, PFTM_MAX=13 };
 
 struct pf_rule_addr {
 	u_int32_t	addr;
@@ -306,6 +311,11 @@ struct pfioc_if {
 	char		 ifname[IFNAMSIZ];
 };
 
+struct pfioc_tm {
+	int		 timeout;
+	int		 seconds;
+};
+
 /*
  * ioctl operations
  */
@@ -338,6 +348,8 @@ struct pfioc_if {
 #define DIOCCHANGERULE	_IOWR('D', 26, struct pfioc_changerule)
 #define DIOCCHANGENAT	_IOWR('D', 27, struct pfioc_changenat)
 #define DIOCCHANGERDR	_IOWR('D', 28, struct pfioc_changerdr)
+#define DIOCSETTIMEOUT	_IOWR('D', 29, struct pfioc_tm)
+#define DIOCGETTIMEOUT	_IOWR('D', 30, struct pfioc_tm)
 
 #ifdef _KERNEL
 

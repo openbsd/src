@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.30 2001/08/22 17:28:02 beck Exp $
+.\" $OpenBSD: pfctl.8,v 1.31 2001/08/28 00:02:43 frantzen Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -38,6 +38,7 @@
 .Op Fl N Ar file
 .Op Fl R Ar file
 .Op Fl s Ar modifier
+.Op Fl t Ar modifier
 .Op Fl x Ar level
 .Sh DESCRIPTION
 The
@@ -130,6 +131,71 @@ Show filter information (statistics and counters).
 .It Fl s Ar all
 Show all of the above.
 .El
+.It Fl t Ar modifier
+Get a timeout or interval value.  Any of the modifiers may be set,
+with the exception of
+.Em all,
+by appending =<seconds> to the modifier without any whitespace seperating
+the modifier, the equals and the number of seconds.
+.Bl -tag -width "t interval " -compact
+.It Fl t Ar all
+Display all timeouts and intervals.
+.It Fl t Ar interval
+Interval between purging expired states and fragments.
+.It Fl t Ar frag
+Seconds before an unassembled fragment is expired.
+.El
+.Pp
+When a packet matches a stateful connection, the seconds to live of the
+connection will be updated to that of the proto.modifier which corresponds
+to the connection state.  Each packet which matches this state will increase
+the TTL.  It is permissible to set the TTL for a particular state to zero
+if you do not want packets matching a particular state to prolong the life
+of the state.  Tuning these values may improve the performance of the
+firewall at the risk of dropping valid idled connections.
+
+.Bl -tag -width "t tcp.established " -compact
+.It Fl t Ar tcp.first
+The state after the first packet.
+.It Fl t Ar tcp.opening
+The state before the destination host ever sends a packet.
+.It Fl t Ar tcp.established
+The fully established state.
+.It Fl t Ar tcp.closing
+The state after the first FIN has been sent.
+.It Fl t Ar tcp.finwait
+The state after both FINs have been exchanged and the connection is closed.
+If you see lots of blocked packets coming back from web servers (notably
+Solaris), increase this value and possibly tcp.closing.
+.It Fl t Ar tcp.closed
+The state after one endpoint sends a RST.
+.El
+.Pp
+ICMP and UDP are handled in a similar fashion to TCP but with a much more
+limited set of states.
+.Bl -tag -width "t udp.multiple " -compact
+.It Fl t Ar udp.first
+The state after the first packet.
+.It Fl t Ar udp.single
+The state if the source host sends more than one packet but the destination
+host has never sent one back.
+.It Fl t Ar udp.multiple
+The state if both hosts have sent packets.
+.It Fl t Ar icmp.first
+The state after the first packet.
+.It Fl t Ar icmp.error
+The state after an icmp error came back in response to an icmp packet.
+.El
+.Pp
+.Bd -literal
+Example:
+    # Timeout established connections after an hour of inactivity
+    pfctl -t tcp.established=3600
+
+    # Display the current established idle timeout
+    pfctl -t tcp.established
+.Ed
+
 .It Fl v
 Produce more verbose output.
 .It Fl x Ar level

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.139 2001/08/26 23:23:03 niklas Exp $ */
+/*	$OpenBSD: pf.c,v 1.140 2001/08/28 00:02:43 frantzen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -112,6 +112,34 @@ u_int32_t		 ticket_rdrs_active;
 u_int32_t		 ticket_rdrs_inactive;
 struct pf_port_list	 pf_tcp_ports;
 struct pf_port_list	 pf_udp_ports;
+
+/* Timeouts */
+int			 pftm_tcp_first_packet = 60;	/* First TCP packet */
+int			 pftm_tcp_opening = 30;		/* No response yet */
+int			 pftm_tcp_established = 24*60*60;  /* established  */
+int			 pftm_tcp_closing = 5 * 60;	/* Got a FIN */
+int			 pftm_tcp_fin_wait = 2 * 60;	/* Got both FINs */
+int			 pftm_tcp_closed = 1 * 60;	/* Got a RST */
+
+int			 pftm_udp_first_packet = 60;	/* First UDP packet */
+int			 pftm_udp_single = 30;		/* Unidirectional */
+int			 pftm_udp_multiple = 60;	/* Bidirectional */
+
+int			 pftm_icmp_first_packet = 20;	/* First ICMP packet */
+int			 pftm_icmp_error_reply = 10;	/* Got error response */
+
+int			 pftm_frag = 30;		/* Fragment expire */
+
+int			 pftm_interval = 10;		/* expire interval */
+
+int			*pftm_timeouts[PFTM_MAX] = { &pftm_tcp_first_packet,
+				&pftm_tcp_opening, &pftm_tcp_established,
+				&pftm_tcp_closing, &pftm_tcp_fin_wait,
+				&pftm_tcp_closed, &pftm_udp_first_packet,
+				&pftm_udp_single, &pftm_udp_multiple,
+				&pftm_icmp_first_packet, &pftm_icmp_error_reply,
+				&pftm_frag, &pftm_interval };
+
 
 struct pool		 pf_tree_pl, pf_rule_pl, pf_nat_pl, pf_sport_pl;
 struct pool		 pf_rdr_pl, pf_state_pl;
@@ -793,6 +821,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		case DIOCADDRDR:
 		case DIOCCOMMITRDRS:
 		case DIOCCLRSTATES:
+		case DIOCSETTIMEOUT:
 			return EPERM;
 		}
 
@@ -1515,6 +1544,32 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		break;
 	}
 
+	case DIOCSETTIMEOUT: {
+		struct pfioc_tm *pt = (struct pfioc_tm *)addr;
+		int old;
+
+		if (pt->timeout < 0 || pt->timeout >= PFTM_MAX ||
+		    pt->seconds < 0) {
+			error = EINVAL;
+			goto fail;
+		}
+		old = *pftm_timeouts[pt->timeout];
+		*pftm_timeouts[pt->timeout] = pt->seconds;
+		pt->seconds = old;
+		break;
+	}
+
+	case DIOCGETTIMEOUT: {
+		struct pfioc_tm *pt = (struct pfioc_tm *)addr;
+
+		if (pt->timeout < 0 || pt->timeout >= PFTM_MAX) {
+			error = EINVAL;
+			goto fail;
+		}
+		pt->seconds = *pftm_timeouts[pt->timeout];
+		break;
+	}
+
 	case DIOCSETDEBUG: {
 		u_int32_t *level = (u_int32_t *)addr;
 		pf_status.debug = *level;
@@ -2111,7 +2166,7 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf *m,
 		s->src.state = TCPS_SYN_SENT;
 		s->dst.state = TCPS_CLOSED;
 		s->creation = pftv.tv_sec;
-		s->expire = pftv.tv_sec + 60;
+		s->expire = pftv.tv_sec + pftm_tcp_first_packet;
 		s->packets = 1;
 		s->bytes = h->ip_len;
 		pf_insert_state(s);
@@ -2286,7 +2341,7 @@ pf_test_udp(int direction, struct ifnet *ifp, struct mbuf *m,
 		s->dst.max_win = 0;
 		s->dst.state = 0;
 		s->creation = pftv.tv_sec;
-		s->expire = pftv.tv_sec + 30;
+		s->expire = pftv.tv_sec + pftm_udp_first_packet;
 		s->packets = 1;
 		s->bytes = h->ip_len;
 		pf_insert_state(s);
@@ -2406,7 +2461,7 @@ pf_test_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 		s->dst.max_win = 0;
 		s->dst.state = 0;
 		s->creation = pftv.tv_sec;
-		s->expire = pftv.tv_sec + 20;
+		s->expire = pftv.tv_sec + pftm_icmp_first_packet;
 		s->packets = 1;
 		s->bytes = h->ip_len;
 		pf_insert_state(s);
@@ -2615,18 +2670,18 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 		/* update expire time */
 		if (src->state >= TCPS_FIN_WAIT_2 &&
 		    dst->state >= TCPS_FIN_WAIT_2)
-			(*state)->expire = pftv.tv_sec + 5;
+			(*state)->expire = pftv.tv_sec + pftm_tcp_closed;
 		else if (src->state >= TCPS_FIN_WAIT_2 ||
 		    dst->state >= TCPS_FIN_WAIT_2)
-			(*state)->expire = pftv.tv_sec + 15;
-		else if (src->state >= TCPS_CLOSING &&
+			(*state)->expire = pftv.tv_sec + pftm_tcp_fin_wait;
+		else if (src->state >= TCPS_CLOSING ||
 		    dst->state >= TCPS_CLOSING)
-			(*state)->expire = pftv.tv_sec + 300;
+			(*state)->expire = pftv.tv_sec + pftm_tcp_closing;
 		else if (src->state < TCPS_ESTABLISHED ||
 		    dst->state < TCPS_ESTABLISHED)
-			(*state)->expire = pftv.tv_sec + 30;
+			(*state)->expire = pftv.tv_sec + pftm_tcp_opening;
 		else
-			(*state)->expire = pftv.tv_sec + 24*60*60;
+			(*state)->expire = pftv.tv_sec + pftm_tcp_established;
 
 		/* Fall through to PASS packet */
 
@@ -2780,9 +2835,9 @@ pf_test_state_udp(struct pf_state **state, int direction, struct ifnet *ifp,
 
 	/* update expire time */
 	if (src->state == 2 && dst->state == 2)
-		(*state)->expire = pftv.tv_sec + 60;
+		(*state)->expire = pftv.tv_sec + pftm_udp_multiple;
 	else
-		(*state)->expire = pftv.tv_sec + 20;
+		(*state)->expire = pftv.tv_sec + pftm_udp_single;
 
 	/* translate source/destination address, if necessary */
 	if (STATE_TRANSLATE(*state)) {
@@ -2835,7 +2890,7 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 
 		(*state)->packets++;
 		(*state)->bytes += h->ip_len;
-		(*state)->expire = pftv.tv_sec + 10;
+		(*state)->expire = pftv.tv_sec + pftm_icmp_error_reply;
 
 		/* translate source/destination address, if needed */
 		if ((*state)->lan.addr != (*state)->gwy.addr) {
@@ -3111,9 +3166,9 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 		panic("non-M_PKTHDR is passed to pf_test");
 #endif
 
-	/* purge expire states, at most once every 10 seconds */
+	/* purge expire states */
 	microtime(&pftv);
-	if (pftv.tv_sec - pf_last_purge >= 10) {
+	if (pftv.tv_sec - pf_last_purge >= pftm_interval) {
 		pf_purge_expired_states();
 		pf_purge_expired_fragments();
 		pf_last_purge = pftv.tv_sec;
