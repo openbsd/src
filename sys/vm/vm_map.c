@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_map.c,v 1.14 1998/04/25 07:01:19 niklas Exp $	*/
+/*	$OpenBSD: vm_map.c,v 1.15 1998/04/25 20:15:13 niklas Exp $	*/
 /*	$NetBSD: vm_map.c,v 1.23 1996/02/10 00:08:08 christos Exp $	*/
 
 /* 
@@ -136,8 +136,16 @@
  *	maps and requires map entries.
  */
 
+#if defined(MACHINE_NEW_NONCONTIG)
+u_int8_t	kentry_data_store[MAX_KMAP*sizeof(struct vm_map) +
+			MAX_KMAPENT*sizeof(struct vm_map_entry)];
+vm_offset_t	kentry_data = (vm_offset_t) kentry_data_store;
+vm_size_t	kentry_data_size = sizeof(kentry_data_store);
+#else
+/* NUKE NUKE NUKE */
 vm_offset_t	kentry_data;
 vm_size_t	kentry_data_size;
+#endif
 vm_map_entry_t	kentry_free;
 vm_map_t	kmap_free;
 
@@ -158,6 +166,12 @@ vm_map_startup()
 	register int i;
 	register vm_map_entry_t mep;
 	vm_map_t mp;
+
+	/*
+	 * zero kentry area
+	 * XXX necessary?
+	 */
+	bzero((caddr_t)kentry_data, kentry_data_size);
 
 	/*
 	 * Static map structures for allocation before initialization of
@@ -197,11 +211,24 @@ vmspace_alloc(min, max, pageable)
 	register struct vmspace *vm;
 
 	if (mapvmpgcnt == 0 && mapvm == 0) {
-#ifndef MACHINE_NONCONTIG
-		mapvmpgcnt = ((last_page-first_page) * sizeof(struct vm_map_entry) + PAGE_SIZE - 1) / PAGE_SIZE;
-#else
-		mapvmpgcnt = (vm_page_count * sizeof(struct vm_map_entry) + PAGE_SIZE - 1) / PAGE_SIZE;
-#endif
+#if defined(MACHINE_NEW_NONCONTIG)
+		int vm_page_count = 0;
+		int lcv;
+
+		for (lcv = 0; lcv < vm_nphysseg; lcv++)
+			vm_page_count += (vm_physmem[lcv].end - 
+							vm_physmem[lcv].start);
+
+		mapvmpgcnt = (vm_page_count * 
+		sizeof(struct vm_map_entry) + PAGE_SIZE - 1) / PAGE_SIZE;
+
+#elif defined(MACHINE_NONCONTIG) 
+		mapvmpgcnt = (vm_page_count * 
+		sizeof(struct vm_map_entry) + PAGE_SIZE - 1) / PAGE_SIZE;
+#else /* must be contig */
+		mapvmpgcnt = ((last_page-first_page) * 
+		sizeof(struct vm_map_entry) + PAGE_SIZE - 1) / PAGE_SIZE;
+#endif /* contig */
 		mapvm_start = mapvm = kmem_alloc_pageable(kernel_map,
 			mapvmpgcnt * PAGE_SIZE);
 		mapvmmax = mapvm_start + mapvmpgcnt * PAGE_SIZE;
