@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.14 2002/02/19 19:39:37 millert Exp $	*/
+/*	$OpenBSD: inet.c,v 1.15 2004/01/21 00:30:15 jfb Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996, 1997, 1998
@@ -35,7 +35,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/lib/libpcap/inet.c,v 1.14 2002/02/19 19:39:37 millert Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/lib/libpcap/inet.c,v 1.15 2004/01/21 00:30:15 jfb Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -123,14 +123,13 @@ pcap_lookupdev(errbuf)
 		}
 	}
 	if (mp == NULL) {
-		(void)strncpy(errbuf, "no suitable device found",
+		(void)strlcpy(errbuf, "no suitable device found",
 		    PCAP_ERRBUF_SIZE);
 		freeifaddrs(ifap);
 		return (NULL);
 	}
 
-	(void)strncpy(device, mp->ifa_name, sizeof(device) - 1);
-	device[sizeof(device) - 1] = '\0';
+	(void)strlcpy(device, mp->ifa_name, sizeof(device));
 	freeifaddrs(ifap);
 	return (device);
 #else
@@ -181,7 +180,8 @@ pcap_lookupdev(errbuf)
 		 * SIOCGIFFLAGS stomps over it because the requests
 		 * are returned in a union.)
 		 */
-		strncpy(ifr.ifr_name, ifrp->ifr_name, sizeof(ifr.ifr_name));
+		(void)strlcpy(ifr.ifr_name, ifrp->ifr_name,
+		    sizeof(ifr.ifr_name));
 		if (ioctl(fd, SIOCGIFFLAGS, (char *)&ifr) < 0) {
 			if (errno == ENXIO)
 				continue;
@@ -212,8 +212,7 @@ pcap_lookupdev(errbuf)
 		return (NULL);
 	}
 
-	(void)strncpy(device, mp->ifr_name, sizeof(device) - 1);
-	device[sizeof(device) - 1] = '\0';
+	(void)strlcpy(device, mp->ifr_name, sizeof(device));
 	return (device);
 #endif
 }
@@ -239,7 +238,7 @@ pcap_lookupnet(device, netp, maskp, errbuf)
 	/* XXX Work around Linux kernel bug */
 	ifr.ifr_addr.sa_family = AF_INET;
 #endif
-	(void)strncpy(ifr.ifr_name, device, sizeof(ifr.ifr_name));
+	(void)strlcpy(ifr.ifr_name, device, sizeof(ifr.ifr_name));
 	if (ioctl(fd, SIOCGIFADDR, (char *)&ifr) < 0) {
 		if (errno == EADDRNOTAVAIL) {
 			(void)snprintf(errbuf, PCAP_ERRBUF_SIZE,

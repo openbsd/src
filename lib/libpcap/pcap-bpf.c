@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcap-bpf.c,v 1.13 2003/11/24 05:39:42 mickey Exp $	*/
+/*	$OpenBSD: pcap-bpf.c,v 1.14 2004/01/21 00:30:15 jfb Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1998
@@ -22,7 +22,7 @@
  */
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/lib/libpcap/pcap-bpf.c,v 1.13 2003/11/24 05:39:42 mickey Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/lib/libpcap/pcap-bpf.c,v 1.14 2004/01/21 00:30:15 jfb Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>			/* optionally get BSD define */
@@ -209,7 +209,7 @@ pcap_open_live(char *device, int snaplen, int promisc, int to_ms, char *ebuf)
 	 */
 	(void) ioctl(fd, BIOCSBLEN, (caddr_t)&v);
 
-	(void)strncpy(ifr.ifr_name, device, sizeof(ifr.ifr_name));
+	(void)strlcpy(ifr.ifr_name, device, sizeof(ifr.ifr_name));
 	if (ioctl(fd, BIOCSETIF, (caddr_t)&ifr) < 0) {
 		snprintf(ebuf, PCAP_ERRBUF_SIZE, "%s: %s",
 		    device, pcap_strerror(errno));
