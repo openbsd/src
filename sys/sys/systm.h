@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.12 1996/10/29 08:46:27 mickey Exp $	*/
+/*	$OpenBSD: systm.h,v 1.13 1996/11/06 01:29:24 deraadt Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -225,6 +225,10 @@ void	cpu_set_kpc __P((struct proc *, void (*)(struct proc *)));
 #ifdef GPROF
 void	kmstartup __P((void));
 #endif
+
+int nfs_mountroot __P((void));
+int dk_mountroot __P((void));
+int (*mountroot) __P((void));
 
 #include <lib/libkern/libkern.h>
 
