@@ -1,0 +1,64 @@
+.\" $OpenBSD: afslog.1,v 1.1 2002/06/11 15:28:04 hin Exp $
+.\"
+.Dd June 10, 2002
+.Dt AFSLOG 1
+.Os HEIMDAL
+.Sh NAME
+.Nm afslog
+.Nd "obtains AFS tokens"
+.Sh SYNOPSIS
+.Nm
+.Op Fl uvh
+.Op Fl -cells Ns = Ns Ar cell
+.Op Fl c Ar cell
+.Op Fl k Ar realm
+.Op Fl -realm Ns = Ns Ar realm
+.Op Fl p Pa path
+.Op Fl -paths Ns = Ns Ar path
+.Op Fl -unlog
+.Op Ar args
+.Sh DESCRIPTION
+The
+.Nm
+command obtains AFS tokens for the cell or path
+.Ar args Ns .
+.Ar args
+is treated as a path
+if it contains the characters
+.Li . Ns , Li .. Ns ,
+or
+.Li / Ns .
+If not, it is treated as a cellname or the beginning of a cellname.
+.Pp
+The
+.Fl c Ns , Fl -cells Ns , Fl p
+and
+.Fl -path
+flags can be used to resolve ambiguities between cells and paths.
+.Pp
+If
+.Nm
+fails to guess the Kerberos realm to get tickets for,
+.Fl k Ar realm
+can be specified.
+.Pp
+If the
+.Fl u
+or
+.Fl -unlog
+flag is given any tokens are removed and all other arguments are ignored.
+.Sh SEE ALSO
+.Xr kauth 1 ,
+.Xr kafs 3
+.Sh CAVEATS
+.Nm
+might fail to guess the Kerberos realm to get tickets for (for
+instance if the volume location servers of the cell does not reside in
+the kerberos realm that holds the AFS service key, and the correct
+realm isn't the same as the cell name or the local realm
+(this is not a common problem)).
+The flag
+.Fl k
+can be used to give a hint. It should not be used unless there is a
+problem, since all tickets will be taken from the specified realm and
+this is not (usually) prefered.
