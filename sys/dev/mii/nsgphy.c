@@ -1,4 +1,4 @@
-/*	$OpenBSD: nsgphy.c,v 1.1 2001/06/08 02:19:30 nate Exp $	*/
+/*	$OpenBSD: nsgphy.c,v 1.2 2001/07/02 05:08:28 nate Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 2001
@@ -109,8 +109,17 @@ nsgphyattach(parent, self, aux)
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
 
-	printf(": %s, rev. %d\n", MII_STR_NATSEMI_DP83861,
-	       MII_REV(ma->mii_id2));
+	switch(MII_MODEL(ma->mii_id2)) {
+	case MII_MODEL_NATSEMI_DP83861:
+	  printf(": %s, rev. %d\n", MII_STR_NATSEMI_DP83861,
+		 MII_REV(ma->mii_id2));
+	  break;
+
+	case MII_MODEL_NATSEMI_DP83891:
+	  printf(": %s, rev. %d\n", MII_STR_NATSEMI_DP83891,
+		 MII_REV(ma->mii_id2));
+	  break;
+	}
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
