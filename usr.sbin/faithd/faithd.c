@@ -1,4 +1,4 @@
-/*	$OpenBSD: faithd.c,v 1.5 2000/05/31 03:09:22 itojun Exp $	*/
+/*	$OpenBSD: faithd.c,v 1.6 2000/06/29 00:21:52 deraadt Exp $	*/
 /*	$KAME: faithd.c,v 1.18 2000/05/31 03:06:07 itojun Exp $	*/
 
 /*
@@ -664,7 +664,7 @@ exit_failure(const char *fmt, ...)
 	va_start(ap, fmt);
 	vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
-	syslog(LOG_ERR, buf);
+	syslog(LOG_ERR, "%s", buf);
 	exit(EXIT_FAILURE);
 }
 
@@ -677,7 +677,7 @@ exit_success(const char *fmt, ...)
 	va_start(ap, fmt);
 	vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
-	syslog(LOG_INFO, buf);
+	syslog(LOG_INFO, "%s", buf);
 	exit(EXIT_SUCCESS);
 }
 
