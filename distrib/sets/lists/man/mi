@@ -1348,6 +1348,7 @@
 ./usr/share/man/cat4/uvisor.0
 ./usr/share/man/cat4/uyap.0
 ./usr/share/man/cat4/vax
+./usr/share/man/cat4/vax/asc.0
 ./usr/share/man/cat4/vax/autoconf.0
 ./usr/share/man/cat4/vax/cons.0
 ./usr/share/man/cat4/vax/de.0
@@ -1658,6 +1659,7 @@
 ./usr/share/man/cat8/hp300/hilinfo.0
 ./usr/share/man/cat8/hppa
 ./usr/share/man/cat8/hppa/MAKEDEV.0
+./usr/share/man/cat8/hppa/boot_hppa.0
 ./usr/share/man/cat8/hppa/kbd.0
 ./usr/share/man/cat8/hppa/wsconscfg.0
 ./usr/share/man/cat8/hppa/wsconsctl.0
