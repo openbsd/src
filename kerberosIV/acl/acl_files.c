@@ -1,4 +1,4 @@
-/*	$OpenBSD: acl_files.c,v 1.5 1997/12/12 05:30:07 art Exp $	*/
+/*	$OpenBSD: acl_files.c,v 1.6 1997/12/17 02:02:59 deraadt Exp $	*/
 /* $KTH: acl_files.c,v 1.10 1997/05/02 14:28:56 assar Exp $ */
 
 /* 
@@ -38,6 +38,8 @@ or implied warranty.
 
 #include <kerberosIV/krb.h>
 #include <kerberosIV/acl.h>
+
+#define min(a,b)	(a < b ? a : b)
 
 /*** Routines for manipulating access control list files ***/
 
