@@ -1,4 +1,4 @@
-/*	$OpenBSD: netbsd_signal.c,v 1.2 1999/09/14 02:06:25 kstailey Exp $	*/
+/*	$OpenBSD: netbsd_signal.c,v 1.3 1999/09/15 18:36:38 kstailey Exp $	*/
 
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
@@ -43,18 +43,6 @@
  *	@(#)kern_sig.c	8.7 (Berkeley) 4/18/94
  */
 
-/*
-
-missing:
-
-;293	STD		{ int netbsd_sys___sigprocmask14(int how, \
-;			    const sigset_t *set, \
-;			    sigset_t *oset); }
-
-;294	STD		{ int netbsd_sys___sigsuspend14(const sigset_t *set); }
-
-*/
-
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/signalvar.h>
@@ -63,7 +51,6 @@ missing:
 
 #include <compat/netbsd/netbsd_types.h>
 #include <compat/netbsd/netbsd_signal.h>
-/* #include <compat/netbsd/netbsd_stat.h> */
 #include <compat/netbsd/netbsd_syscallargs.h>
 
 static void netbsd_to_openbsd_sigaction __P((struct netbsd_sigaction *,
@@ -95,9 +82,8 @@ netbsd_to_openbsd_sigaction(nbsa, obsa)
 	struct netbsd_sigaction	*nbsa;
 	struct sigaction	*obsa;
 {
-	memset(nbsa, 0, sizeof(struct sigaction));
 	obsa->sa_handler = nbsa->netbsd_sa_handler;
-	bcopy(&nbsa->netbsd_sa_mask.__bits[0],&obsa->sa_mask,
+	bcopy(&nbsa->netbsd_sa_mask.__bits[0], &obsa->sa_mask,
 		sizeof(sigset_t));
 	obsa->sa_flags = nbsa->netbsd_sa_flags;
 }
@@ -245,6 +231,86 @@ netbsd_sys___sigpending14(p, v, retval)
 	} */ *uap = v;
 	netbsd_sigset_t nss;
 
-	memcpy(&nss.__bits[0], &p->p_siglist, sizeof(sigset_t));
+	bcopy(&p->p_siglist, &nss.__bits[0], sizeof(sigset_t));
 	return (copyout((caddr_t)&nss, (caddr_t)SCARG(uap, set), sizeof(nss)));
 }
+
+int
+netbsd_sys___sigprocmask14(p, v, retval)
+	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct netbsd_sys___sigprocmask14_args /* {
+		syscallarg(int) how;
+		syscallarg(netbsd_sigset_t *) set;
+		syscallarg(netbsd_sigset_t *) oset;
+	} */ *uap = v;
+	netbsd_sigset_t nss, oss;
+	sigset_t obnss;
+	int error = 0;
+
+	if (SCARG(uap, set)) {
+		error = copyin(SCARG(uap, set), &nss, sizeof(nss));
+		if (error)
+			return (error);
+	}
+	if (SCARG(uap, oset)) {
+		bzero(&oss, sizeof(netbsd_sigset_t));
+		bcopy(&p->p_sigmask, &oss.__bits[0], sizeof(sigset_t));
+		error = copyout((caddr_t)&oss, (caddr_t)SCARG(uap, oset),
+			sizeof(netbsd_sigset_t));
+		if (error)
+			return (error);
+	}
+	bcopy(&nss.__bits[0], &obnss, sizeof(sigset_t));
+	(void)splhigh();
+	switch (SCARG(uap, how)) {
+	case SIG_BLOCK:
+		p->p_sigmask |= obnss &~ sigcantmask;
+		break;
+	case SIG_UNBLOCK:
+		p->p_sigmask &= ~obnss;
+		break;
+	case SIG_SETMASK:
+		p->p_sigmask = obnss &~ sigcantmask;
+		break;
+	default:
+		error = EINVAL;
+		break;
+	}
+	(void) spl0();
+	return (error);
+}
+
+int
+netbsd_sys___sigsuspend14(p, v, retval)
+	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct netbsd_sys___sigsuspend14_args /* {
+		syscallarg(netbsd_sigset_t *) set;
+	} */ *uap = v;
+	register struct sigacts *ps = p->p_sigacts;
+	netbsd_sigset_t nbset;
+	sigset_t obset;
+
+	copyin(SCARG(uap, set), &nbset, sizeof(netbsd_sigset_t));
+	bcopy(&nbset.__bits[0], &obset, sizeof(sigset_t));
+	/*
+	 * When returning from sigpause, we want
+	 * the old mask to be restored after the
+	 * signal handler has finished.  Thus, we
+	 * save it here and mark the sigacts structure
+	 * to indicate this.
+	 */
+	ps->ps_oldmask = p->p_sigmask;
+	ps->ps_flags |= SAS_OLDMASK;
+	p->p_sigmask = obset &~ sigcantmask;
+	while (tsleep((caddr_t) ps, PPAUSE|PCATCH, "pause", 0) == 0)
+		/* void */;
+	/* always return EINTR rather than ERESTART... */
+	return (EINTR);
+}
+

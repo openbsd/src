@@ -1,4 +1,4 @@
-#	$OpenBSD: files.netbsd,v 1.2 1999/09/14 01:05:25 kstailey Exp $
+#	$OpenBSD: files.netbsd,v 1.3 1999/09/15 18:36:37 kstailey Exp $
 #
 # Config.new file description for machine-independent NetBSD compat code.
 # Included by ports that need it.
@@ -7,8 +7,9 @@
 # own file lists.
 
 file	compat/netbsd/netbsd_exec.c		compat_netbsd
-file	compat/netbsd/netbsd_stat.c		compat_netbsd
 file	compat/netbsd/netbsd_getcwd.c		compat_netbsd
+file	compat/netbsd/netbsd_misc.c		compat_netbsd
 file	compat/netbsd/netbsd_signal.c		compat_netbsd
+file	compat/netbsd/netbsd_stat.c		compat_netbsd
 file	compat/netbsd/netbsd_sysent.c		compat_netbsd
 file	compat/netbsd/netbsd_syscalls.c		compat_netbsd
