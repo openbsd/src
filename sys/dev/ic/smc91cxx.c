@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc91cxx.c,v 1.10 2001/06/23 23:17:35 fgsch Exp $	*/
+/*	$OpenBSD: smc91cxx.c,v 1.11 2001/06/24 04:57:07 fgsch Exp $	*/
 /*	$NetBSD: smc91cxx.c,v 1.11 1998/08/08 23:51:41 mycroft Exp $	*/
 
 /*-
@@ -930,6 +930,7 @@ smc91cxx_read(sc)
 		bpf_mtap(ifp->if_bpf, m);
 #endif
 
+	m->m_pkthdr.len = m->m_len = packetlen;
 	ether_input_mbuf(ifp, m);
 
  out:
