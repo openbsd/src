@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.76 2003/08/15 20:32:20 tedu Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.77 2003/10/01 21:35:50 itojun Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -862,6 +862,8 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 		 */
 		m0 = m;
 		for (off = hlen; off < tlen; off += len) {
+			struct mbuf *mlast;
+
 			MGETHDR(m, M_DONTWAIT, MT_HEADER);
 			if (!m) {
 				error = ENOBUFS;
@@ -892,7 +894,9 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 				ip6stat.ip6s_odropped++;
 				goto sendorfree;
 			}
-			m_cat(m, m_frgpart);
+			for (mlast = m; mlast->m_next; mlast = mlast->m_next)
+				;
+			mlast->m_next = m_frgpart;
 			m->m_pkthdr.len = len + hlen + sizeof(*ip6f);
 			m->m_pkthdr.rcvif = (struct ifnet *)0;
 			ip6f->ip6f_reserved = 0;
