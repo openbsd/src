@@ -29,7 +29,6 @@
 ./usr/share/info/cvsclient.info-1
 ./usr/share/info/cvsclient.info-2
 ./usr/share/info/cvsclient.info-3
-./usr/share/info/dc.info
 ./usr/share/info/dir
 ./usr/share/info/g77.info
 ./usr/share/info/g77.info-1
@@ -234,7 +233,6 @@
 ./usr/share/man/cat1/gencat.0
 ./usr/share/man/cat1/getconf.0
 ./usr/share/man/cat1/getopt.0
-./usr/share/man/cat1/gnubc.0
 ./usr/share/man/cat1/grep.0
 ./usr/share/man/cat1/grodvi.0
 ./usr/share/man/cat1/groff.0
