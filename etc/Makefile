@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.63 1997/07/27 23:35:38 downsj Exp $
+#	$OpenBSD: Makefile,v 1.64 1997/07/28 10:01:11 deraadt Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -170,6 +170,7 @@ distribution-etc-root-var: distrib-dirs
 .endif
 	(cd ../usr.sbin/sendmail/cf/cf; ${MAKE} distribution)
 	(cd ../usr.sbin/ypserv/ypinit; ${MAKE} distribution)
+	(cd ../usr.bin/mail; ${MAKE} distribution)
 
 distribution: distribution-etc-root-var
 	(cd ..; ${MAKE} install)
