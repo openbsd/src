@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.23 2001/05/04 22:48:59 aaron Exp $	*/
+/*	$OpenBSD: locore.s,v 1.24 2001/05/10 01:32:58 millert Exp $	*/
 /*	$NetBSD: locore.s,v 1.91 1998/11/11 06:41:25 thorpej Exp $	*/
 
 /*
@@ -268,6 +268,8 @@ Lnot68030:
 	cmpb	#MMUID_425_T,d0		| are we a 425t?
 	jeq	Lisa425
 	cmpb	#MMUID_425_S,d0		| how about 425s?
+	jeq	Lisa425
+	cmpb	#MMUID_425_E,d0		| or maybe a 425e?
 	jeq	Lisa425
 	cmpb	#MMUID_433_T,d0		| or a 433t?
 	jeq	Lisa433
