@@ -67,6 +67,8 @@ int32_t	max_block_count;
 char	*karch;
 char	cpumodel[100];
 
+int	isofsblk = 0;
+int	isofseblk = 0;
 
 char		*loadprotoblocks __P((char *, long *));
 int		loadblocknums __P((char *, int));
@@ -79,7 +81,8 @@ static void
 usage()
 {
 	fprintf(stderr,
-		"usage: installboot [-n] [-v] [-h] [-a <karch>] <boot> <proto> <device>\n");
+		"usage: installboot [-n] [-v] [-h] [-s isofsblk -e isofseblk]"
+		"[-a <karch>] <boot> <proto> <device>\n");
 	exit(1);
 }
 
@@ -95,7 +98,7 @@ main(argc, argv)
 	int	mib[2];
 	size_t	size;
 
-	while ((c = getopt(argc, argv, "a:vnh")) != -1) {
+	while ((c = getopt(argc, argv, "a:vnhs:e:")) != -1) {
 		switch (c) {
 		case 'a':
 			karch = optarg;
@@ -111,6 +114,12 @@ main(argc, argv)
 		case 'v':
 			/* Chat */
 			verbose = 1;
+			break;
+		case 's':
+			isofsblk = atoi(optarg);
+			break;
+		case 'e':
+			isofseblk = atoi(optarg);
 			break;
 		default:
 			usage();
@@ -345,6 +354,26 @@ int	devfd;
 
 	if (fstatfs(fd, &statfsbuf) != 0)
 		err(1, "statfs: %s", boot);
+
+	if (isofsblk) {
+		int i;
+
+		*block_size_p = 512;
+		*block_count_p = (isofseblk - isofsblk) * (2048/512);
+		if (*block_count_p > max_block_count)
+			errx(1, "%s: Too many blocks", boot);
+		if (verbose)
+			printf("%s: %d block numbers: ", boot, *block_count_p);
+		for (i = 0; i < *block_count_p; i++) {
+			blk = (isofsblk * (2048/512)) + i;
+			block_table[i] = blk;
+			if (verbose)
+				printf("%d ", blk);
+		}
+		if (verbose)
+			printf("\n");
+		return 0;
+	}
 
 	if (strncmp(statfsbuf.f_fstypename, "ffs", MFSNAMELEN) &&
 	    strncmp(statfsbuf.f_fstypename, "ufs", MFSNAMELEN)) {
