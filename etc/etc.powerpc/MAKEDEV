@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.44 2001/05/30 02:11:24 deraadt Exp $
+#	$OpenBSD: MAKEDEV,v 1.45 2001/06/17 06:40:50 brad Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -437,11 +437,11 @@ cd*)
 
 audio*)
 	major=44
-	audio=audio$n
-	sound=sound$n
-	mixer=mixer$n
-	audioctl=audioctl$n
-	rm -f $audio $sound $mixer $audioctl
+	audio=audio$unit
+	sound=sound$unit
+	mixer=mixer$unit
+	audioctl=audioctl$unit
+	rm -f $sound $audio $mixer $audioctl
 	mknod $sound    c $major $unit
 	mknod $audio    c $major $(( $unit + 128 ))
 	mknod $mixer    c $major $(( $unit + 16 ))
