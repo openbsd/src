@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.6 2003/01/04 10:35:32 mickey Exp $	*/
+/*	$OpenBSD: intr.c,v 1.7 2003/02/18 19:01:50 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -60,7 +60,7 @@ struct hppa_iv {
 register_t kpsw = PSL_Q | PSL_P | PSL_C | PSL_D;
 volatile int cpl = IPL_NESTED;
 volatile u_long ipending, imask[NIPL];
-u_long cpu_mask;   
+u_long cpu_mask;
 struct hppa_iv *intr_list, intr_store[8*CPU_NINTS], *intr_more = intr_store;
 struct hppa_iv intr_table[CPU_NINTS] = {
 	{ IPL_SOFTCLOCK, 0, HPPA_IV_SOFT, 0, (int (*)(void *))&softclock },
@@ -98,7 +98,7 @@ softtty(void)
 }
 
 void
-cpu_intr_init()
+cpu_intr_init(void)
 {
 	u_long mask = cpu_mask | SOFTINT_MASK;
 	int level;
@@ -150,7 +150,8 @@ cpu_intr_init()
 }
 
 void *
-cpu_intr_map(void *v, int pri, int irq, int (*handler)(void *), void *arg, struct device *dv)
+cpu_intr_map(void *v, int pri, int irq, int (*handler)(void *), void *arg,
+    struct device *dv)
 {
 	struct hppa_iv *iv, *pv = v, *ivb = pv->next;
 
@@ -170,7 +171,8 @@ cpu_intr_map(void *v, int pri, int irq, int (*handler)(void *), void *arg, struc
 }
 
 void *
-cpu_intr_establish(int pri, int irq, int (*handler)(void *), void *arg, struct device *dv)
+cpu_intr_establish(int pri, int irq, int (*handler)(void *), void *arg,
+    struct device *dv)
 {
 	struct hppa_iv *iv;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.101 2003/02/12 21:33:40 jason Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.102 2003/02/18 19:01:50 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -418,7 +418,7 @@ hppa_init(start)
 		const struct hppa_cpu_typed *p;
 
 		for (p = cpu_types;
-		     p->arch && p->features != cpu_features; p++);
+		    p->arch && p->features != cpu_features; p++);
 
 		if (!p->arch) {
 			printf("WARNING: UNKNOWN CPU TYPE; GOOD LUCK (%x)\n",
@@ -438,11 +438,11 @@ hppa_init(start)
 			extern u_int trap_ep_T_ITLBMISS[];
 			extern u_int trap_ep_T_ITLBMISSNA[];
 
-			cpu_type      = p->type;
-			cpu_typename  = p->name;
+			cpu_type = p->type;
+			cpu_typename = p->name;
 			cpu_ibtlb_ins = p->ibtlbins;
 			cpu_dbtlb_ins = p->dbtlbins;
-			cpu_hpt_init  = p->hptinit;
+			cpu_hpt_init = p->hptinit;
 			cpu_desidhash = p->desidhash;
 
 #define	LDILDO(t,f) ((t)[0] = (f)[0], (t)[1] = (f)[1])
@@ -533,7 +533,7 @@ hppa_init(start)
 	/* More buffer pages than fits into the buffers is senseless. */
 	if (bufpages > nbuf * MAXBSIZE / PAGE_SIZE)
 		bufpages = nbuf * MAXBSIZE / PAGE_SIZE;
-	
+
 	v1 = v = hppa_round_page(start);
 #define valloc(name, type, num) (name) = (type *)v; v = (vaddr_t)((name)+(num))
 
@@ -584,7 +584,7 @@ hppa_init(start)
 }
 
 void
-cpu_startup()
+cpu_startup(void)
 {
 	vaddr_t minaddr, maxaddr;
 	vsize_t size;
@@ -766,7 +766,7 @@ fall(c_base, c_count, c_loop, c_stride, data)
 }
 
 void
-fcacheall()
+fcacheall(void)
 {
 	/*
 	 * Flush the instruction, then data cache.
@@ -780,7 +780,7 @@ fcacheall()
 }
 
 void
-ptlball()
+ptlball(void)
 {
 	register pa_space_t sp;
 	register int i, j, k;
@@ -811,7 +811,7 @@ ptlball()
 }
 
 int
-desidhash_g()
+desidhash_g(void)
 {
 	/* TODO call PDC to disable SID hashing in the cache index */
 
@@ -974,7 +974,7 @@ long	dumplo = 0;		/* blocks */
  * cpu_dumpsize: calculate size of machine-dependent kernel core dump headers.
  */
 int
-cpu_dumpsize()
+cpu_dumpsize(void)
 {
 	int size;
 
@@ -989,7 +989,7 @@ cpu_dumpsize()
  * Called from HPMC handler in locore
  */
 void
-hpmc_dump()
+hpmc_dump(void)
 {
 	printf("HPMC\n");
 
@@ -998,7 +998,7 @@ hpmc_dump()
 }
 
 int
-cpu_dump()
+cpu_dump(void)
 {
 	long buf[dbtob(1) / sizeof (long)];
 	kcore_seg_t	*segp;
@@ -1028,7 +1028,7 @@ cpu_dump()
 #define	BYTES_PER_DUMP	NBPG
 
 void
-dumpsys()
+dumpsys(void)
 {
 	int psize, bytes, i, n;
 	register caddr_t maddr;
@@ -1062,7 +1062,7 @@ dumpsys()
 		dump = bdevsw[major(dumpdev)].d_dump;
 		/* TODO block map the whole physical memory */
 		for (i = 0; i < bytes; i += n) {
-		
+
 			/* Print out how many MBs we are to go. */
 			n = bytes - i;
 			if (n && (n % (1024*1024)) == 0)
@@ -1266,9 +1266,9 @@ sendsig(catcher, sig, mask, code, type, val)
 	sss += HPPA_FRAME_SIZE;
 	zero = 0;
 	if (copyout(&zero, (caddr_t)scp + sss - HPPA_FRAME_SIZE,
-	      sizeof(register_t)) ||
+	    sizeof(register_t)) ||
 	    copyout(&zero, (caddr_t)scp + sss + HPPA_FRAME_CRP,
-	      sizeof(register_t)))
+	    sizeof(register_t)))
 		sigexit(p, SIGILL);
 
 #ifdef DEBUG
@@ -1421,7 +1421,7 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
  * initialize the system console.
  */
 void
-consinit()
+consinit(void)
 {
 	static int initted;
 

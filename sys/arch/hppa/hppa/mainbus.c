@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.40 2003/01/22 02:13:40 mickey Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.41 2003/02/18 19:01:50 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -396,18 +396,18 @@ mbus_sm_8(void *v, bus_space_handle_t h, bus_size_t o, u_int64_t vv, bus_size_t 
 }
 
 void mbus_rrm_2(void *v, bus_space_handle_t h,
-		     bus_size_t o, u_int16_t*a, bus_size_t c);
+	    bus_size_t o, u_int16_t*a, bus_size_t c);
 void mbus_rrm_4(void *v, bus_space_handle_t h,
-		     bus_size_t o, u_int32_t*a, bus_size_t c);
+	    bus_size_t o, u_int32_t*a, bus_size_t c);
 void mbus_rrm_8(void *v, bus_space_handle_t h,
-		     bus_size_t o, u_int64_t*a, bus_size_t c);
+	    bus_size_t o, u_int64_t*a, bus_size_t c);
 
 void mbus_wrm_2(void *v, bus_space_handle_t h,
-		     bus_size_t o, const u_int16_t *a, bus_size_t c);
+	    bus_size_t o, const u_int16_t *a, bus_size_t c);
 void mbus_wrm_4(void *v, bus_space_handle_t h,
-		     bus_size_t o, const u_int32_t *a, bus_size_t c);
+	    bus_size_t o, const u_int32_t *a, bus_size_t c);
 void mbus_wrm_8(void *v, bus_space_handle_t h,
-		     bus_size_t o, const u_int64_t *a, bus_size_t c);
+	    bus_size_t o, const u_int64_t *a, bus_size_t c);
 
 void
 mbus_rr_1(void *v, bus_space_handle_t h, bus_size_t o, u_int8_t *a, bus_size_t c)
@@ -734,7 +734,7 @@ mbus_dmamem_alloc(void *v, bus_size_t size, bus_size_t alignment,
 
 	if (uvm_map(kernel_map, &va, size, NULL, UVM_UNKNOWN_OFFSET, 0,
 	    UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW, UVM_INH_NONE,
-	      UVM_ADV_RANDOM, 0))) {
+	    UVM_ADV_RANDOM, 0))) {
 		uvm_pglistfree(&pglist);
 		return (ENOMEM);
 	}

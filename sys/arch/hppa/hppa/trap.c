@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.60 2003/02/18 09:40:43 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.61 2003/02/18 19:01:50 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -199,13 +199,13 @@ trap(type, frame)
 
 	switch (type) {
 	case T_NONEXIST:
-	case T_NONEXIST|T_USER:
+	case T_NONEXIST | T_USER:
 		/* we've got screwed up by the central scrutinizer */
 		printf("trap: elvis has just left the building!\n");
 		goto dead_end;
 
 	case T_RECOVERY:
-	case T_RECOVERY|T_USER:
+	case T_RECOVERY | T_USER:
 		/* XXX will implement later */
 		printf("trap: handicapped");
 		goto dead_end;
@@ -218,7 +218,8 @@ trap(type, frame)
 	case T_PRIV_OP:
 	case T_PRIV_REG:
 		/* these just can't make it to the trap() ever */
-	case T_HPMC:      case T_HPMC | T_USER:
+	case T_HPMC:
+	case T_HPMC | T_USER:
 #endif
 	case T_IBREAK:
 	case T_DATALIGN:
@@ -297,7 +298,7 @@ trap(type, frame)
 		sv.sival_int = va;
 		trapsignal(p, SIGFPE, type &~ T_USER, FPE_INTOVF, sv);
 		break;
-		
+
 	case T_CONDITION | T_USER:
 		break;
 
@@ -329,13 +330,19 @@ trap(type, frame)
 		trapsignal(p, SIGSEGV, vftype, SEGV_ACCERR, sv);
 		break;
 
-	case T_DATACC:   	case T_USER | T_DATACC:
+	case T_DATACC:
+	case T_DATACC | T_USER:
 		fault = VM_FAULT_PROTECT;
-	case T_ITLBMISS:	case T_USER | T_ITLBMISS:
-	case T_DTLBMISS:	case T_USER | T_DTLBMISS:
-	case T_ITLBMISSNA:	case T_USER | T_ITLBMISSNA:
-	case T_DTLBMISSNA:	case T_USER | T_DTLBMISSNA:
-	case T_TLB_DIRTY:	case T_USER | T_TLB_DIRTY:
+	case T_ITLBMISS:
+	case T_ITLBMISS | T_USER:
+	case T_DTLBMISS:
+	case T_DTLBMISS | T_USER:
+	case T_ITLBMISSNA:
+	case T_ITLBMISSNA | T_USER:
+	case T_DTLBMISSNA:
+	case T_DTLBMISSNA | T_USER:
+	case T_TLB_DIRTY:
+	case T_TLB_DIRTY | T_USER:
 		/*
 		 * user faults out of user addr space are always a fail,
 		 * this happens on va >= VM_MAXUSER_ADDRESS, where
@@ -436,7 +443,7 @@ trap(type, frame)
 		break;
 
 	case T_INTERRUPT:
-	case T_INTERRUPT|T_USER:
+	case T_INTERRUPT | T_USER:
 		cpu_intr(frame);
 		break;
 
@@ -454,7 +461,8 @@ trap(type, frame)
 	case T_POWERFAIL:
 	case T_LPMC:
 	case T_PAGEREF:
-	case T_DATAPID:  	case T_DATAPID  | T_USER:
+	case T_DATAPID:
+	case T_DATAPID | T_USER:
 		if (0 /* T-chip */) {
 			break;
 		}

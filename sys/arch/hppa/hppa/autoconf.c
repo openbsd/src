@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.28 2003/02/18 01:45:53 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.29 2003/02/18 19:01:50 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -100,7 +100,7 @@ extern int hz;
  * called at boot time, configure all devices on system
  */
 void
-cpu_configure()
+cpu_configure(void)
 {
 	splhigh();
 	if (config_rootfound("mainbus", "mainbus") == NULL)
@@ -139,7 +139,7 @@ heartbeat(v)
 	int toggle, cp_mask, cp_total;
 
 	cp_total = cp_time[CP_USER] + cp_time[CP_NICE] + cp_time[CP_SYS] +
-	     cp_time[CP_INTR] + cp_time[CP_IDLE];
+	    cp_time[CP_INTR] + cp_time[CP_IDLE];
 	if (!cp_total)
 		cp_total = 1;
 	cp_mask = 0xf0 >> (cp_time[CP_IDLE] - ocp_idle) * 4 /
@@ -166,7 +166,7 @@ heartbeat(v)
  * Configure swap space and related parameters.
  */
 void
-swapconf()
+swapconf(void)
 {
 	struct swdevt *swp;
 	int nblks, maj;
@@ -193,7 +193,7 @@ swapconf()
  * reduce the chance that swapping trashes it.
  */
 void
-dumpconf()
+dumpconf(void)
 {
 	extern int dumpsize;
 	int nblks, dumpblks;	/* size of dump area */
@@ -271,7 +271,7 @@ findblkname(maj)
 		if (maj == nam2blk[i].maj)
 			return (nam2blk[i].name);
 	return (NULL);
-} 
+}
 
 struct device *
 getdisk(str, len, defpart, devp)
@@ -365,7 +365,7 @@ gotdisk:
  * That should be fixed.
  */
 void
-setroot()
+setroot(void)
 {
 	struct swdevt *swp;
 	struct device *dv;
@@ -672,7 +672,7 @@ hppa_mod_info(type, sv)
 	static char fakeid[32];
 
 	for (mi = hppa_knownmods; mi->mi_type >= 0 &&
-	     (mi->mi_type != type || mi->mi_sv != sv); mi++);
+	    (mi->mi_type != type || mi->mi_sv != sv); mi++);
 
 	if (mi->mi_type < 0) {
 		sprintf(fakeid, "type %x, sv %x", type, sv);
@@ -759,7 +759,7 @@ device_register(struct device *dev, void *aux)
 			return;
 		}
 
-		/* 
+		/*
 		 * And now check for proper target and lun values
 		 */
 		if (sl->target == PAGE0->mem_boot.pz_layers[0] &&

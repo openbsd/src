@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.49 2003/01/29 20:57:01 mickey Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.50 2003/02/18 19:01:50 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -78,9 +78,10 @@ cpu_coredump(p, vp, cred, core)
 	cseg.c_addr = 0;
 	cseg.c_size = core->c_cpusize;
 
-#define	write(vp, addr, n) vn_rdwr(UIO_WRITE, (vp), (caddr_t)(addr), (n), off, \
-			     UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, NULL, p)
-	
+#define	write(vp, addr, n) \
+	vn_rdwr(UIO_WRITE, (vp), (caddr_t)(addr), (n), off, \
+	    UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, NULL, p)
+
 	off = core->c_hdrsize;
 	if ((error = write(vp, &cseg, core->c_seghdrsize)))
 		return error;
