@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.64 2000/04/08 05:50:49 aaron Exp $
+#	$OpenBSD: files.i386,v 1.65 2000/05/15 04:17:29 jason Exp $
 #	$NetBSD: files.i386,v 1.73 1996/05/07 00:58:36 thorpej Exp $
 #
 # new style config file for i386 architecture
@@ -287,6 +287,12 @@ file	dev/isa/i82365_isa.c		pcic_isa
 
 # Code common to ISA and ISAPnP attachments
 file	dev/isa/i82365_isasubr.c	pcic_isa | pcic_isapnp
+
+# Databook TCIC/2 pcmcia/isa bridge
+device	tcic: pcmciabus
+file	dev/ic/tcic2.c			tcic
+attach	tcic at isa with tcic_isa
+file	dev/isa/tcic2_isa.c		tcic_isa
 
 #
 # Machine-independent PUC drivers

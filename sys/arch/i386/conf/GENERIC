@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.183 2000/04/27 02:19:42 millert Exp $
+#	$OpenBSD: GENERIC,v 1.184 2000/05/15 04:17:30 jason Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -59,9 +59,11 @@ pcib*	at pci? dev ? function ?	# PCI-ISA bridges (do nothing)
 pcic0	at isa? port 0x3e0 iomem 0xd0000 iosiz 0x10000
 pcic1	at isa? port 0x3e2 iomem 0xe0000 iosiz 0x4000
 pcic2	at isa? port 0x3e4 iomem 0xe0000 iosiz 0x4000
+#tcic0	at isa? port 0x240 iomem 0xd0000 iosiz 0x10000
 
 # PCMCIA bus support
 pcmcia*	at pcic? controller ? socket ?
+#pcmcia* at tcic? controller ? socket ?
 
 # CardBus bus support (also see NOTE below)
 #cardbus*	at cardslot?
