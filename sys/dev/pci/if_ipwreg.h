@@ -1,4 +1,4 @@
-/*      $Id: if_ipwreg.h,v 1.1 2004/10/20 12:50:48 deraadt Exp $ */
+/*      $Id: if_ipwreg.h,v 1.2 2004/10/27 21:10:22 damien Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -43,18 +43,19 @@
 #define IPW_CSR_RST		0x0020
 #define IPW_CSR_CTL		0x0024
 #define IPW_CSR_IO		0x0030
-#define IPW_CSR_TABLE1_BASE	0x0380
-#define IPW_CSR_TABLE2_BASE	0x0384
+#define IPW_CSR_TX_BD_BASE	0x0200
+#define IPW_CSR_TX_BD_SIZE	0x0204
 #define IPW_CSR_RX_BD_BASE	0x0240
 #define IPW_CSR_RX_STATUS_BASE	0x0244
 #define IPW_CSR_RX_BD_SIZE	0x0248
-#define IPW_CSR_RX_READ_INDEX	0x02a0
-#define IPW_CSR_RX_WRITE_INDEX	0x0fa0
-#define IPW_CSR_TX_BD_BASE	0x0200
-#define IPW_CSR_TX_BD_SIZE	0x0204
 #define IPW_CSR_TX_READ_INDEX	0x0280
+#define IPW_CSR_RX_READ_INDEX	0x02a0
+#define IPW_CSR_TABLE1_BASE	0x0380
+#define IPW_CSR_TABLE2_BASE	0x0384
 #define IPW_CSR_TX_WRITE_INDEX	0x0f80
+#define IPW_CSR_RX_WRITE_INDEX	0x0fa0
 
+/* possible flags for register IPW_CSR_INTR */
 #define IPW_INTR_TX_TRANSFER	0x00000001
 #define IPW_INTR_RX_TRANSFER	0x00000002
 #define IPW_INTR_STATUS_CHANGE	0x00000010
@@ -78,7 +79,7 @@
 /* possible flags for register IPW_CSR_CTL */
 #define IPW_CTL_CLOCK_READY	0x00000001
 #define IPW_CTL_ALLOW_STANDBY	0x00000002
-#define IPW_CTL_INIT_DONE	0x00000004
+#define IPW_CTL_INIT		0x00000004
 
 /* possible flags for register IPW_CSR_IO */
 #define IPW_IO_GPIO1_ENABLE	0x00000008
@@ -268,12 +269,11 @@ struct ipw_configuration {
 
 #define CSR_WRITE_MULTI_1(sc, reg, buf, len)				\
 	bus_space_write_multi_1((sc)->sc_st, (sc)->sc_sh, (reg), 	\
-	    (buf), (len));
+	    (buf), (len))
 
 /*
  * indirect memory space access macros
  */
-
 #define MEM_WRITE_1(sc, addr, val) do {					\
 	CSR_WRITE_4((sc), IPW_CSR_INDIRECT_ADDR, (addr));		\
 	CSR_WRITE_1((sc), IPW_CSR_INDIRECT_DATA, (val));		\
@@ -293,3 +293,4 @@ struct ipw_configuration {
 	CSR_WRITE_4((sc), IPW_CSR_INDIRECT_ADDR, (addr));		\
 	CSR_WRITE_MULTI_1((sc), IPW_CSR_INDIRECT_DATA, (buf), (len));	\
 } while (/* CONSTCOND */0)
+
