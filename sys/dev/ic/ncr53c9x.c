@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9x.c,v 1.12 2002/01/23 00:39:47 art Exp $	*/
+/*	$OpenBSD: ncr53c9x.c,v 1.13 2002/02/19 04:40:54 jason Exp $	*/
 /*     $NetBSD: ncr53c9x.c,v 1.56 2000/11/30 14:41:46 thorpej Exp $    */
 
 /*
@@ -589,7 +589,7 @@ ncr53c9x_select(sc, ecb)
 	if ((ecb->xs->flags & SCSI_POLL) == 0) {
 		int timeout = ecb->timeout;
 
-		if (hz > 100 && timeout > 1000)
+		if (timeout > 1000000)
 			timeout = (timeout / 1000) * hz;
 		else
 			timeout = (timeout * hz) / 1000;
@@ -2723,7 +2723,7 @@ ncr53c9x_abort(sc, ecb)
 		/*
 		 * Reschedule timeout.
 		 */
-		if (hz > 100 && timeout > 1000)
+		if (timeout > 1000000)
 			timeout = (timeout / 1000) * hz;
 		else
 			timeout = (timeout * hz) / 1000;
