@@ -1,4 +1,4 @@
-/*	$OpenBSD: iop.c,v 1.21 2001/11/06 19:53:18 miod Exp $	*/
+/*	$OpenBSD: iop.c,v 1.22 2002/06/07 09:10:13 nordin Exp $	*/
 /*	$NetBSD: iop.c,v 1.12 2001/03/21 14:27:05 ad Exp $	*/
 
 /*-
@@ -272,9 +272,15 @@ iop_init(struct iop_softc *sc, const char *intrstr)
 	int rv, i, nsegs;
 	int state = 0;
 
-	if (iop_ictxhashtbl == NULL)
-		iop_ictxhashtbl = hashinit(IOP_ICTXHASH_NBUCKETS,
-		    M_DEVBUF, M_NOWAIT, &iop_ictxhash);
+	if (iop_ictxhashtbl == NULL) {
+		iop_ictxhashtbl = hashinit(IOP_ICTXHASH_NBUCKETS, M_DEVBUF,
+		    M_NOWAIT, &iop_ictxhash);
+		if (iop_ictxhashtbl == NULL) {
+			printf("%s: cannot allocate hashtable\n",
+			    sc->sc_dv.dv_xname);
+			return;
+		}
+	}
 
 	/* Reset the IOP and request status. */
 	printf("I2O adapter");
