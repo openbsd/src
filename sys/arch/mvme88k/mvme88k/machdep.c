@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.47 2001/08/05 20:35:46 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.48 2001/08/06 20:48:26 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -75,6 +75,8 @@
 #include <sys/sysctl.h>
 #include <sys/errno.h>
 #include <sys/extent.h>
+#include <sys/core.h>
+#include <sys/kcore.h>
 
 #include <net/netisr.h>
 
@@ -88,6 +90,7 @@
 #include <machine/prom.h>
 #include <machine/m88100.h>  		/* DMT_VALID        */
 #include <machine/m882xx.h>  		/* CMMU stuff       */
+#include <machine/kcore.h>
 
 #include <dev/cons.h>
 
@@ -1188,26 +1191,51 @@ m188_reset(void)
 unsigned dumpmag = 0x8fca0101;	 /* magic number for savecore */
 int   dumpsize = 0;	/* also for savecore */
 long  dumplo = 0;
+cpu_kcore_hdr_t cpu_kcore_hdr;
 
+/*
+ * This is called by configure to set dumplo and dumpsize.
+ * Dumps always skip the first PAGE_SIZE of disk space
+ * in case there might be a disk label stored there.
+ * If there is extra space, put dump at the end to
+ * reduce the chance that swapping trashes it.
+ */
 void
 dumpconf()
 {
-	int nblks;
+	int nblks;	/* size of dump area */
+	int maj;
+
+	if (dumpdev == NODEV)
+		return;
+	maj = major(dumpdev);
+	if (maj < 0 || maj >= nblkdev)
+		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
+	if (bdevsw[maj].d_psize == NULL)
+		return;
+	nblks = (*bdevsw[maj].d_psize)(dumpdev);
+	if (nblks <= ctod(1))
+		return;
 
 	dumpsize = physmem;
-	if (dumpdev != NODEV && bdevsw[major(dumpdev)].d_psize) {
-		nblks = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
-		if (dumpsize > btoc(dbtob(nblks - dumplo)))
-			dumpsize = btoc(dbtob(nblks - dumplo));
-		else if (dumplo == 0)
-			dumplo = nblks - btodb(ctob(physmem));
-	}
+
+	/* mvme88k only uses a single segment. */
+	cpu_kcore_hdr.ram_segs[0].start = 0;
+	cpu_kcore_hdr.ram_segs[0].size = ctob(physmem);
+	cpu_kcore_hdr.cputype = cputyp;
+
 	/*
 	 * Don't dump on the first block
 	 * in case the dump device includes a disk label.
 	 */
-	if (dumplo < btodb(PAGE_SIZE))
-		dumplo = btodb(PAGE_SIZE);
+	if (dumplo < ctod(1))
+		dumplo = ctod(1);
+
+	/* Put dump at end of partition, and make it fit. */
+	if (dumpsize + 1 > dtoc(nblks - dumplo))
+		dumpsize = dtoc(nblks - dumplo) - 1;
+	if (dumplo < nblks - ctod(dumpsize) - 1)
+		dumplo = nblks - ctod(dumpsize) - 1;
 }
 
 /*
@@ -1218,37 +1246,108 @@ dumpconf()
 void
 dumpsys()
 {
+	int maj;
+	int psize;
+	daddr_t blkno;		/* current block to write */
+				/* dump routine */
+	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
+	int pg;			/* page being dumped */
+	paddr_t maddr;		/* PA being dumped */
+	int error;		/* error code from (*dump)() */
+	kcore_seg_t *kseg_p;
+	cpu_kcore_hdr_t *chdr_p;
+	char dump_hdr[dbtob(1)];	/* XXX assume hdr fits in 1 block */
+
 	extern int msgbufmapped;
 
 	msgbufmapped = 0;
+
+	/* Make sure dump device is valid. */
 	if (dumpdev == NODEV)
 		return;
-	/*
-	 * For dumps during autoconfiguration,
-	 * if dump device has already configured...
-	 */
-	if (dumpsize == 0)
+	if (dumpsize == 0) {
 		dumpconf();
-	if (dumplo < 0)
+		if (dumpsize == 0)
+			return;
+	}
+	maj = major(dumpdev);
+	if (dumplo < 0) {
+		printf("\ndump to dev %u,%u not possible\n", maj,
+		    minor(dumpdev));
 		return;
-	printf("\ndumping to dev %x, offset %d\n", dumpdev, dumplo);
+	}
+	dump = bdevsw[maj].d_dump;
+	blkno = dumplo;
+
+	printf("\ndumping to dev %u,%u offset %ld\n", maj,
+	    minor(dumpdev), dumplo);
+
+	/* Setup the dump header */
+	kseg_p = (kcore_seg_t *)dump_hdr;
+	chdr_p = (cpu_kcore_hdr_t *)&dump_hdr[ALIGN(sizeof(*kseg_p))];
+	bzero(dump_hdr, sizeof(dump_hdr));
+
+	CORE_SETMAGIC(*kseg_p, KCORE_MAGIC, MID_MACHINE, CORE_CPU);
+	kseg_p->c_size = dbtob(1) - ALIGN(sizeof(*kseg_p));
+	*chdr_p = cpu_kcore_hdr;
+
 	printf("dump ");
-	switch ((*bdevsw[major(dumpdev)].d_dump)(dumpdev)) {
+	psize = (*bdevsw[maj].d_psize)(dumpdev);
+	if (psize == -1) {
+		printf("area unavailable\n");
+		return;
+	}
+
+	/* Dump the header. */
+	error = (*dump)(dumpdev, blkno++, (caddr_t)dump_hdr, dbtob(1));
+	if (error != 0)
+		goto abort;
+
+	maddr = (paddr_t)0;
+	for (pg = 0; pg < dumpsize; pg++) {
+#define NPGMB	(1024 * 1024 / PAGE_SIZE)
+		/* print out how many MBs we have dumped */
+		if (pg != 0 && (pg % NPGMB) == 0)
+			printf("%d ", pg / NPGMB);
+#undef NPGMB
+		pmap_enter(pmap_kernel(), (vaddr_t)vmmap, maddr,
+		    VM_PROT_READ, VM_PROT_READ|PMAP_WIRED);
+
+		error = (*dump)(dumpdev, blkno, vmmap, PAGE_SIZE);
+		if (error == 0) {
+			maddr += PAGE_SIZE;
+			blkno += btodb(PAGE_SIZE);
+		} else
+			break;
+	}
+abort:
+	switch (error) {
+	case 0:
+		printf("succeeded\n");
+		break;
 	
 	case ENXIO:
 		printf("device bad\n");
 		break;
+
 	case EFAULT:
 		printf("device not ready\n");
 		break;
+
 	case EINVAL:
 		printf("area improper\n");
 		break;
+
 	case EIO:
 		printf("i/o error\n");
 		break;
+
+	case EINTR:
+		printf("aborted from console\n");
+		break;
+
 	default:
-		printf("succeeded\n");
+		printf("error %d\n", error);
 		break;
 	}
 }
@@ -2150,8 +2249,6 @@ mvme_bootstrap(void)
 	uvmexp.pagesize = NBPG;
 	uvm_setpagesize();
 	first_addr = round_page(first_addr);
-
-	if (!no_symbols) boothowto |= RB_KDB;
 
 	last_addr = size_memory();
 	cmmu_parity_enable();
