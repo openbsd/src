@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.11 1997/01/25 17:37:34 dm Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.12 1997/07/25 17:31:38 mickey Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -871,7 +871,7 @@ sys_flock(p, v, retval)
 	else if (how & LOCK_SH)
 		lf.l_type = F_RDLCK;
 	else
-		return (EBADF);
+		return (EINVAL);
 	fp->f_flag |= FHASLOCK;
 	if (how & LOCK_NB)
 		return (VOP_ADVLOCK(vp, (caddr_t)fp, F_SETLK, &lf, F_FLOCK));
