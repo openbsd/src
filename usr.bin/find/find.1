@@ -1,4 +1,4 @@
-.\"	$OpenBSD: find.1,v 1.31 2001/03/14 22:08:33 deraadt Exp $
+.\"	$OpenBSD: find.1,v 1.32 2001/08/22 16:50:50 heko Exp $
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -45,8 +45,8 @@
 .Nm find
 .Op Fl HdhXxW
 .Op Fl f Ar file
-.Op Ar file ...
-.Ar expression
+.Ar file Op Ar ...
+.Op Ar expression
 .Sh DESCRIPTION
 .Nm
 recursively descends the directory tree for each
@@ -56,7 +56,7 @@ listed, evaluating an
 (composed of the
 .Dq primaries
 and
-.Dq operands
+.Dq operators
 listed below) in terms
 of each file in the tree.
 .Pp
