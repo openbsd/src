@@ -1,4 +1,4 @@
-/*	$OpenBSD: rwlock.h,v 1.2 2003/12/28 17:14:33 tedu Exp $	*/
+/*	$OpenBSD: rwlock.h,v 1.3 2004/01/11 00:42:03 tedu Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -67,6 +67,9 @@
 
 #ifndef SYS_RWLOCK_H
 #define SYS_RWLOCK_H
+
+
+struct proc;
 
 struct rwlock {
 	__volatile unsigned long rwl_owner;
