@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.21 2004/06/09 07:15:56 alexander Exp $	*/
+/*	$OpenBSD: ntp.c,v 1.22 2004/06/17 18:09:33 alexander Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 by N.M. Maclaren. All rights reserved.
@@ -310,10 +310,9 @@ read_packet(int fd, struct ntp_data *data, double *off, double *error)
 	fd_set	*rfds;
 
 	rfds = (fd_set *)calloc(howmany(fd + 1, NFDBITS), sizeof(fd_mask));
-	if (!rfds) {
-		warnx("calloc() failed");
-		return 1;
-	}
+
+	if (rfds == NULL)
+		err(1, "calloc");
 
 	FD_SET(fd, rfds);
 
