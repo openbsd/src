@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypxfr.c,v 1.22 1997/07/30 12:07:02 maja Exp $ */
+/*	$OpenBSD: ypxfr.c,v 1.23 1998/01/08 22:36:49 maja Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypxfr.c,v 1.22 1997/07/30 12:07:02 maja Exp $";
+static char rcsid[] = "$OpenBSD: ypxfr.c,v 1.23 1998/01/08 22:36:49 maja Exp $";
 #endif
 
 #include <sys/types.h>
@@ -340,7 +340,7 @@ DBM *db;
 	status = yp_match_host(client, domain, map,
 			       k.dptr, k.dsize, &value, &vallen);
 	
-	if(status > 0) {
+	if(status == 0 && value) {
 		v.dptr = value;
 		v.dsize = vallen;
 		

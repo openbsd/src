@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypserv_proc.c,v 1.14 1997/09/12 01:44:57 deraadt Exp $ */
+/*	$OpenBSD: ypserv_proc.c,v 1.15 1998/01/08 22:36:48 maja Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypserv_proc.c,v 1.14 1997/09/12 01:44:57 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypserv_proc.c,v 1.15 1998/01/08 22:36:48 maja Exp $";
 #endif
 
 #include <rpc/rpc.h>
@@ -186,7 +186,7 @@ bail:
 	if (secure && (ntohs(caller->sin_port) >= IPPORT_RESERVED)) {
 		res.stat = YP_YPERR;
 	} else {
-		res = ypdb_get_record(argp->domain,argp->map,argp->key, FALSE);
+		res = ypdb_get_record(argp->domain,argp->map,argp->key, TRUE);
 	}
 
 #ifdef DEBUG
@@ -720,7 +720,7 @@ bail:
 		      ypdb_get_record(argp->ypmatch_req_domain,
 				      argp->ypmatch_req_map,
 				      argp->ypmatch_req_keydat,
-				      FALSE);
+				      TRUE);
 	}
 
 #ifdef DEBUG
