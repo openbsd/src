@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.228 2003/05/01 16:21:02 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.229 2003/05/06 15:52:27 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1994,8 +1994,8 @@ filteropt-list = filteropt-list filteropt | filteropt
 filteropt      = user | group | flags | icmp-type | icmp6-type | tos |
                  ( keep | modulate ) state [ ( state-opts ) ] |
                  fragment | no-df | min-ttl number | max-mss number |
-                 random-id | fragmentation | allow-opts |
-                 label string | queue ( string | ( string [ [ , ] string ] ) )
+                 random-id | fragmentation | allow-opts | label string |
+                 queue ( string | ( string [ [ , ] string ] ) )
 
 nat-rule       = [ no ] nat [ on ifspec ] [ af ] [ protospec ]
                  hosts [ -> ( redirhost | { redirhost-list } )
@@ -2024,10 +2024,11 @@ tableaddr      = hostname | ipv4-dotted-quad | ipv6-coloned-hex |
 
 altq-rule      = altq on interface-name queueopts-list
                  queue queue-list
-queue-rule     = queue string [ on interface-name ] queueopts-list queue-list
+queue-rule     = queue string [ on interface-name ] queueopts-list
+                 queue-list
 
-anchor-rule    = anchor string [ ( in | out ) ] [ on ifspec ] [ af ] [ proto ]
-                 [ protospec ] [ hosts ]
+anchor-rule    = anchor string [ ( in | out ) ] [ on ifspec ] [ af ]
+                 [ proto ] [ protospec ] [ hosts ]
 
 trans-anchors  = ( nat-anchor | rdr-anchor | binat-anchor ) string
                  [ on ifspec ] [ af ] [ proto ] [ protospec ] [ hosts ]
