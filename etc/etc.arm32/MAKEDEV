@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.9 1997/05/14 15:41:09 niklas Exp $
+#	$OpenBSD: MAKEDEV,v 1.10 1997/09/16 06:00:54 deraadt Exp $
 #	$NetBSD: MAKEDEV,v 1.3 1996/04/26 20:10:24 mark Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -92,7 +92,8 @@ all)
 	sh MAKEDEV std fd fd0 fd1 wd0 wd1 rd0 rd1 sd0 sd1 sd2 tty0 tty1 pty0 pty1
 	sh MAKEDEV st0 st1 ch0 cd0 cd1 vnd0 vnd1 ccd0 ccd1 uk0 uk1 ss0
 	sh MAKEDEV ttyv0 ttyv1 ttyv2 ttyv3 ttyv4 ttyv5 ttyv6 ttyv7 ttyv8 ttyv9
-	sh MAKEDEV lpa0 lpt0 bpf0 bpf1 bpf2 bpf3 tun0 tun1 tun2 random
+	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
+	sh MAKEDEV lpa0 lpt0 tun0 tun1 tun2 random
 	sh MAKEDEV beep lkm quadmouse local cpu0 cpu1 cpu2 cpu3 cpu4 cpu5
 	;;
 

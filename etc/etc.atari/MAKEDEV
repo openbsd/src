@@ -93,8 +93,8 @@ all)
 	sh MAKEDEV grf2 grf3 grf4 grf5 mouse0 mouse1
 	sh MAKEDEV kbd sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9 vnd0 vnd1 vnd2
 	sh MAKEDEV vnd3 vnd4 view00 view01 view02 view03 view04 view05 pty0 
-	sh MAKEDEV vnd5 vnd6 cd0 fd0 fd1 fd2 fd3 bpf0 bpf1 bpf2 bpf3
-	sh MAKEDEV ccd0 ccd1 ccd2 ccd3
+	sh MAKEDEV vnd5 vnd6 cd0 fd0 fd1 fd2 fd3 ccd0 ccd1 ccd2 ccd3
+	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
 	sh MAKEDEV tun0 tun1 lkm ser02 mdm02 lpt0 random uk0 uk1 ss0 local
 	;;
 

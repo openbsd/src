@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.5 1997/09/16 03:03:04 deraadt Exp $
+#	$OpenBSD: MAKEDEV,v 1.6 1997/09/16 06:01:05 deraadt Exp $
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
 
@@ -43,10 +43,10 @@ do
 case $i in
 
 all)        
-        sh MAKEDEV std fd sd0 sd1 sd2 st0 cd0 tty00 tty01 pty0 pty1
-        sh MAKEDEV pms0 random bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6
-	sh MAKEDEV bpf7 bpf8 bpf9 local
-        ;;
+	sh MAKEDEV std fd sd0 sd1 sd2 st0 cd0 tty00 tty01 pty0 pty1
+	sh MAKEEDV bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
+	sh MAKEDEV pms0 random local
+	;;
 
 std)
 	mknod console		c 0 0
@@ -234,10 +234,10 @@ pty*)
 	0|1|2|3|4)
 		umask 0
 		eval `echo $offset $name | awk ' { b=$1; n=$2 } END {
-                        for (i = 0; i < 16; i++)
-                                printf("rm -f tty%s%x; mknod tty%s%x c 4 %d;" \
-                                    "rm -f pty%s%x; mknod pty%s%x c 5 %d; ", \
-                                    n, i, n, i, b+i, n, i, n, i, b+i); }'`
+	                for (i = 0; i < 16; i++)
+	                        printf("rm -f tty%s%x; mknod tty%s%x c 4 %d;" \
+	                            "rm -f pty%s%x; mknod pty%s%x c 5 %d; ", \
+	                            n, i, n, i, b+i, n, i, n, i, b+i); }'`
 		umask 77
 		;;
 	esac
