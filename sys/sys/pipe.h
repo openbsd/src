@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipe.h,v 1.2 1996/09/04 22:38:47 niklas Exp $	*/
+/*	$OpenBSD: pipe.h,v 1.3 1999/02/16 21:27:37 art Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -32,6 +32,17 @@
 #include <vm/vm.h>			/* for vm_page_t */
 #include <machine/param.h>		/* for PAGE_SIZE */
 #endif /* _KERNEL */
+
+/*
+ * Use this define if you want to disable *fancy* VM things.  Expect an
+ * approx 30% decrease in transfer rate.  This could be useful for
+ * NetBSD or OpenBSD.
+ */
+#ifdef _KERNEL
+#if defined(__NetBSD__) || defined(__OpenBSD__)
+#define PIPE_NODIRECT
+#endif
+#endif
 
 /*
  * Pipe buffer size, keep moderate in value, pipes take kva space.
@@ -72,6 +83,7 @@ struct pipebuf {
 	struct	vm_object *object;	/* VM object containing buffer */
 };
 
+#ifndef PIPE_NODIRECT
 /*
  * Information to support direct transfers between processes for pipes.
  */
@@ -82,6 +94,7 @@ struct pipemapping {
 	int		npages;		/* number of pages */
 	vm_page_t	ms[PIPENPAGES];	/* pages in source process */
 };
+#endif
 
 /*
  * Bits in pipe_state.
@@ -103,7 +116,9 @@ struct pipemapping {
  */
 struct pipe {
 	struct	pipebuf pipe_buffer;	/* data storage */
+#ifndef PIPE_NODIRECT
 	struct	pipemapping pipe_map;	/* pipe mapping for direct I/O */
+#endif
 	struct	selinfo pipe_sel;	/* for compat with select */
 	struct	timeval pipe_atime;	/* time of last access */
 	struct	timeval pipe_mtime;	/* time of last modify */

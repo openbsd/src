@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.8 1997/11/06 05:58:21 csapuntz Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.9 1999/02/16 21:27:37 art Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -86,15 +86,6 @@
 #include <vm/vm_page.h>
 
 #include <sys/pipe.h>
-
-/*
- * Use this define if you want to disable *fancy* VM things.  Expect an
- * approx 30% decrease in transfer rate.  This could be useful for
- * NetBSD or OpenBSD.
- */
-#if defined(__NetBSD__) || defined(__OpenBSD__)
-#define PIPE_NODIRECT
-#endif
 
 /*
  * interfaces to the outside world
@@ -981,9 +972,11 @@ pipe_ioctl(fp, cmd, data, p)
 		return (0);
 
 	case FIONREAD:
+#ifndef PIPE_NODIRECT
 		if (mpipe->pipe_state & PIPE_DIRECTW)
 			*(int *)data = mpipe->pipe_map.cnt;
 		else
+#endif
 			*(int *)data = mpipe->pipe_buffer.cnt;
 		return (0);
 
