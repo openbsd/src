@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_cksum.c,v 1.5 2002/09/15 09:01:59 deraadt Exp $	*/
+/*	$OpenBSD: in_cksum.c,v 1.6 2003/10/15 02:43:09 drahn Exp $	*/
 /*	$NetBSD: in_cksum.c,v 1.1 1996/09/30 16:34:47 ws Exp $	*/
 
 /*
@@ -48,9 +48,7 @@
 #define	ADDCARRY	do { while (sum > 0xffff) REDUCE; } while (0)
 
 int
-in_cksum(m, len)
-	struct mbuf *m;
-	int len;
+in_cksum(struct mbuf *m, int len)
 {
 	u_char *w;
 	u_int sum = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcopy.c,v 1.4 2003/06/02 23:27:53 millert Exp $	*/
+/*	$OpenBSD: bcopy.c,v 1.5 2003/10/15 02:43:09 drahn Exp $	*/
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)bcopy.c	5.11 (Berkeley) 6/21/91";*/
-static char *rcsid = "$Id: bcopy.c,v 1.4 2003/06/02 23:27:53 millert Exp $";
+static char *rcsid = "$Id: bcopy.c,v 1.5 2003/10/15 02:43:09 drahn Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/cdefs.h>
@@ -59,23 +59,20 @@ typedef	int word;		/* "word" used for optimal copy speed */
  */
 #ifdef MEMCOPY
 void *
-memcpy(dst0, src0, length)
+memcpy(void *dst0, const void *src0, size_t length)
 #else
 #ifdef MEMMOVE
 void *
-memmove(dst0, src0, length)
+memmove(void *dst0, const void *src0, size_t length)
 #else
 void
-bcopy(src0, dst0, length)
+bcopy(const void *src0, void *dst0, size_t length)
 #endif
 #endif
-	void *dst0;
-	const void *src0;
-	register size_t length;
 {
-	register char *dst = dst0;
-	register const char *src = src0;
-	register size_t t;
+	char *dst = dst0;
+	const char *src = src0;
+	size_t t;
 
 	if (length == 0 || dst == src)		/* nothing to do */
 		goto done;

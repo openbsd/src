@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.36 2002/09/15 09:01:59 deraadt Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.37 2003/10/15 02:43:09 drahn Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.1 1996/09/30 16:34:57 ws Exp $	*/
 
 /*
@@ -50,12 +50,8 @@
  * Finish a fork operation, with process p2 nearly set up.
  */
 void
-cpu_fork(p1, p2, stack, stacksize, func, arg)
-	struct proc *p1, *p2;
-	void *stack;
-	size_t stacksize;
-	void (*func)(void *);
-	void *arg;
+cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
+    void (*func)(void *), void *arg)
 {
 	struct trapframe *tf;
 	struct callframe *cf;
@@ -74,15 +70,15 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 			save_vec(p1);
 		pcb->pcb_vr = pool_get(&ppc_vecpl, PR_WAITOK);
 		*pcb->pcb_vr = *p1->p_addr->u_pcb.pcb_vr;
-	} else {
+	} else
 		pcb->pcb_vr = NULL;
-	}
+
 #endif /* ALTIVEC */
 
 	pcb->pcb_pm = p2->p_vmspace->vm_map.pmap;
 
 	pmap_extract(pmap_kernel(),
-		(vm_offset_t)pcb->pcb_pm, (paddr_t *)&pcb->pcb_pmreal);
+	    (vm_offset_t)pcb->pcb_pm, (paddr_t *)&pcb->pcb_pmreal);
 	
 	/*
 	 * Setup the trap frame for the new process
@@ -99,7 +95,7 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 		tf->fixreg[1] = (register_t)stack + stacksize;
 	}
 
-	stktop2 = (caddr_t)((u_long)stktop2 & ~15);	/* Align stack pointer */
+	stktop2 = (caddr_t)((u_long)stktop2 & ~15);  /* Align stack pointer */
 	
 	/*
 	 * There happens to be a callframe, too.
@@ -128,8 +124,7 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 }
 
 void
-cpu_swapin(p)
-	struct proc *p;
+cpu_swapin(struct proc *p)
 {
 	struct pcb *pcb = &p->p_addr->u_pcb;
 	
@@ -141,9 +136,7 @@ cpu_swapin(p)
  * Move pages from one kernel virtual address to another.
  */
 void
-pagemove(from, to, size)
-	caddr_t from, to;
-	size_t size;
+pagemove(caddr_t from, caddr_t to, size_t size)
 {
 	vaddr_t va;
 	paddr_t pa;
@@ -169,8 +162,7 @@ pagemove(from, to, size)
  * Not sure whether we can get away with this in the single proc version.		XXX
  */
 void
-cpu_exit(p)
-	struct proc *p;
+cpu_exit(struct proc *p)
 {
 #ifdef ALTIVEC
 	struct pcb *pcb = &p->p_addr->u_pcb;
@@ -194,11 +186,8 @@ cpu_exit(p)
  * Write the machine-dependent part of a core dump.
  */
 int
-cpu_coredump(p, vp, cred, chdr)
-	struct proc *p;
-	struct vnode *vp;
-	struct ucred *cred;
-	struct core *chdr;
+cpu_coredump(struct proc *p, struct vnode *vp, struct ucred *cred,
+    struct core *chdr)
 {
 	struct coreseg cseg;
 	struct md_coredump md_core;
@@ -215,13 +204,16 @@ cpu_coredump(p, vp, cred, chdr)
 	cseg.c_addr = 0;
 	cseg.c_size = chdr->c_cpusize;
 
-	if ((error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cseg, chdr->c_seghdrsize,
-			    (off_t)chdr->c_hdrsize, UIO_SYSSPACE,
-			    IO_NODELOCKED|IO_UNIT, cred, NULL, p)))
+	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cseg, chdr->c_seghdrsize,
+	    (off_t)chdr->c_hdrsize, UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT,
+	    cred, NULL, p);
+	if (error)
 		return error;
-	if ((error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&md_core, sizeof md_core,
-			    (off_t)(chdr->c_hdrsize + chdr->c_seghdrsize),
-			    UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, NULL, p)))
+
+	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&md_core, sizeof md_core,
+	    (off_t)(chdr->c_hdrsize + chdr->c_seghdrsize), UIO_SYSSPACE,
+	    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
+	if (error)
 		return error;
 
 	chdr->c_nseg++;
@@ -232,9 +224,7 @@ cpu_coredump(p, vp, cred, chdr)
  * Map an IO request into kernel virtual address space.
  */
 void
-vmapbuf(bp, len)
-	struct buf *bp;
-	vm_size_t len;
+vmapbuf(struct buf *bp, vm_size_t len)
 {
 	vm_offset_t faddr, taddr, off;
 	vm_offset_t pa;
@@ -249,9 +239,10 @@ vmapbuf(bp, len)
 	taddr = uvm_km_valloc_wait(phys_map, len);
 	bp->b_data = (caddr_t)(taddr + off);
 	for (; len > 0; len -= NBPG) {
-		pmap_extract(vm_map_pmap(&bp->b_proc->p_vmspace->vm_map), faddr, &pa);
+		pmap_extract(vm_map_pmap(&bp->b_proc->p_vmspace->vm_map),
+		    faddr, &pa);
 		pmap_enter(vm_map_pmap(phys_map), taddr, pa,
-			   VM_PROT_READ | VM_PROT_WRITE, PMAP_WIRED);
+		    VM_PROT_READ | VM_PROT_WRITE, PMAP_WIRED);
 		faddr += NBPG;
 		taddr += NBPG;
 	}
@@ -262,9 +253,7 @@ vmapbuf(bp, len)
  * Free the io map addresses associated with this IO operation.
  */
 void
-vunmapbuf(bp, len)
-	struct buf *bp;
-	vm_size_t len;
+vunmapbuf(struct buf *bp, vm_size_t len)
 {
 	vm_offset_t addr, off;
 	

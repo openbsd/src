@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.7 2003/07/02 22:09:29 drahn Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.8 2003/10/15 02:43:09 drahn Exp $	*/
 /*	$NetBSD: fpu.c,v 1.1 1996/09/30 16:34:44 ws Exp $	*/
 
 /*
@@ -39,8 +39,7 @@
 #include <machine/psl.h>
 
 void
-enable_fpu(p)
-	struct proc *p;
+enable_fpu(struct proc *p)
 {
 	int msr;
 	struct pcb *pcb = &p->p_addr->u_pcb;
@@ -93,8 +92,7 @@ enable_fpu(p)
 }
 
 void
-save_fpu(p)
-	struct proc *p;
+save_fpu(struct proc *p)
 {
 	int msr;
 	struct pcb *pcb;
