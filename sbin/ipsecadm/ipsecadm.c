@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.73 2004/01/27 09:26:22 markus Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.74 2004/01/27 22:46:55 itojun Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -159,6 +159,7 @@ addrparse(const char *str, struct sockaddr *addr, struct sockaddr *mask)
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_socktype = SOCK_DGRAM;	/* dummy */
 	hints.ai_flags = AI_NUMERICHOST;
+	hints.ai_family = PF_UNSPEC;
 	if (getaddrinfo(str, "0", &hints, &res) != 0)
 		return -1;
 	if (res->ai_next)
@@ -749,15 +750,23 @@ main(int argc, char *argv[])
 			sad8.sadb_address_exttype = SADB_X_EXT_DST2;
 			memset(&hints, 0, sizeof(hints));
 			hints.ai_socktype = SOCK_DGRAM;	/*dummy*/
-#ifdef INET6
-			if (hints.ai_family = AF_INET6,
-			    getaddrinfo(argv[i + 1], "0", &hints, &res) == 0) {
-				if (res->ai_next) {
-					fprintf(stderr,
-					    "%s: destination address2 %s resolves to multiple addresses\n",
-					    argv[0], argv[i + 1]);
-					exit(1);
-				}
+			hints.ai_family = PF_UNSPEC;
+			if (getaddrinfo(argv[i + 1], "0", &hints, &res) != 0) {
+				fprintf(stderr,
+				    "%s: destination address2 %s is not valid\n",
+				    argv[0], argv[i + 1]);
+				exit(1);
+			}
+
+			if (res->ai_next) {
+				fprintf(stderr,
+				    "%s: destination address2 %s resolves to multiple addresses\n",
+				    argv[0], argv[i + 1]);
+				exit(1);
+			}
+
+			switch (res->ai_family) {
+			case AF_INET6:
 				if (res->ai_addrlen != sizeof(dst2->sin6)) {
 					fprintf(stderr,
 					    "%s: destination address2 %s resolves to unexpected address\n",
@@ -767,17 +776,8 @@ main(int argc, char *argv[])
 				memcpy(&dst2->sin6, res->ai_addr,
 				    sizeof(dst2->sin6));
 				dst2set = 1;
-				freeaddrinfo(res);
-			} else
-#endif
-			if (hints.ai_family = AF_INET,
-			    getaddrinfo(argv[i + 1], "0", &hints, &res) == 0) {
-				if (res->ai_next) {
-					fprintf(stderr,
-					    "%s: destination address2 %s resolves to multiple addresses\n",
-					    argv[0], argv[i + 1]);
-					exit(1);
-				}
+				break;
+			case AF_INET:
 				if (res->ai_addrlen != sizeof(dst2->sin)) {
 					fprintf(stderr,
 					    "%s: destination address2 %s resolves to unexpected address\n",
@@ -787,12 +787,19 @@ main(int argc, char *argv[])
 				memcpy(&dst2->sin, res->ai_addr,
 				    sizeof(dst2->sin));
 				dst2set = 1;
-				freeaddrinfo(res);
+				break;
+			default:
+				fprintf(stderr,
+				    "%s: destination address2 %s resolved to unsupported address family\n",
+				    argv[0], argv[i + 1]);
+				exit(1);
 			}
+
+			freeaddrinfo(res);
 
 			if (dst2set == 0) {
 				fprintf(stderr,
-				    "%s: Warning: destination address2 %s is not valid\n",
+				    "%s: destination address2 %s is not valid\n",
 				    argv[0], argv[i + 1]);
 				exit(1);
 			}
@@ -803,15 +810,23 @@ main(int argc, char *argv[])
 			sad1.sadb_address_exttype = SADB_EXT_ADDRESS_SRC;
 			memset(&hints, 0, sizeof(hints));
 			hints.ai_socktype = SOCK_DGRAM;	/*dummy*/
-#ifdef INET6
-			if (hints.ai_family = AF_INET6,
-			    getaddrinfo(argv[i + 1], "0", &hints, &res) == 0) {
-				if (res->ai_next) {
-					fprintf(stderr,
-					    "%s: source address %s resolves to multiple addresses\n",
-					    argv[0], argv[i + 1]);
-					exit(1);
-				}
+			hints.ai_family = PF_UNSPEC;
+			if (getaddrinfo(argv[i + 1], "0", &hints, &res) != 0) {
+				fprintf(stderr,
+				    "%s: source address %s is not valid\n",
+				    argv[0], argv[i + 1]);
+				exit(1);
+			}
+
+			if (res->ai_next) {
+				fprintf(stderr,
+				    "%s: source address %s resolves to multiple addresses\n",
+				    argv[0], argv[i + 1]);
+				exit(1);
+			}
+
+			switch (res->ai_family) {
+			case AF_INET6:
 				if (res->ai_addrlen != sizeof(src->sin6)) {
 					fprintf(stderr,
 					    "%s: source address %s resolves to unexpected address\n",
@@ -821,19 +836,10 @@ main(int argc, char *argv[])
 				memcpy(&src->sin6, res->ai_addr,
 				    sizeof(src->sin6));
 				srcset = 1;
-				freeaddrinfo(res);
 				sad1.sadb_address_len = (sizeof(sad1) +
 				    ROUNDUP(sizeof(struct sockaddr_in6))) / 8;
-			} else
-#endif
-			if (hints.ai_family = AF_INET,
-			    getaddrinfo(argv[i + 1], "0", &hints, &res) == 0) {
-				if (res->ai_next) {
-					fprintf(stderr,
-					    "%s: source address %s resolves to multiple addresses\n",
-					    argv[0], argv[i + 1]);
-					exit(1);
-				}
+				break;
+			case AF_INET:
 				if (res->ai_addrlen != sizeof(src->sin)) {
 					fprintf(stderr,
 					    "%s: source address %s resolves to unexpected address\n",
@@ -843,14 +849,21 @@ main(int argc, char *argv[])
 				memcpy(&src->sin, res->ai_addr,
 				    sizeof(src->sin));
 				srcset = 1;
-				freeaddrinfo(res);
 				sad1.sadb_address_len = (sizeof(sad1) +
 				    ROUNDUP(sizeof(struct sockaddr_in))) / 8;
+				break;
+			default:
+				fprintf(stderr,
+				    "%s: source address %s resolved to unsupported address family\n",
+				    argv[0], argv[i + 1]);
+				exit(1);
 			}
+
+			freeaddrinfo(res);
 
 			if (srcset == 0) {
 				fprintf(stderr,
-				    "%s: Warning: source address %s is not valid\n",
+				    "%s: source address %s is not valid\n",
 				    argv[0], argv[i + 1]);
 				exit(1);
 			}
@@ -862,15 +875,23 @@ main(int argc, char *argv[])
 			sad3.sadb_address_exttype = SADB_EXT_ADDRESS_PROXY;
 			memset(&hints, 0, sizeof(hints));
 			hints.ai_socktype = SOCK_DGRAM;	/*dummy*/
-#ifdef INET6
-			if (hints.ai_family = AF_INET6,
-			    getaddrinfo(argv[i + 1], "0", &hints, &res) == 0) {
-				if (res->ai_next) {
-					fprintf(stderr,
-					    "%s: source address %s resolves to multiple addresses\n",
-					    argv[0], argv[i + 1]);
-					exit(1);
-				}
+			hints.ai_family = PF_UNSPEC;
+			if (getaddrinfo(argv[i + 1], "0", &hints, &res) != 0) {
+				fprintf(stderr,
+				    "%s: proxy address %s is not valid\n",
+				    argv[0], argv[i + 1]);
+				exit(1);
+			}
+
+			if (res->ai_next) {
+				fprintf(stderr,
+				    "%s: source address %s resolves to multiple addresses\n",
+				    argv[0], argv[i + 1]);
+				exit(1);
+			}
+
+			switch (res->ai_family) {
+			case AF_INET6:
 				if (res->ai_addrlen != sizeof(proxy->sin6)) {
 					fprintf(stderr,
 					    "%s: source address %s resolves to unexpected address\n",
@@ -880,19 +901,10 @@ main(int argc, char *argv[])
 				memcpy(&proxy->sin6, res->ai_addr,
 				    sizeof(proxy->sin6));
 				proxyset = 1;
-				freeaddrinfo(res);
 				sad3.sadb_address_len = (sizeof(sad3) +
 				    ROUNDUP(sizeof(struct sockaddr_in6))) / 8;
-			} else
-#endif
-			if (hints.ai_family = AF_INET,
-			    getaddrinfo(argv[i + 1], "0", &hints, &res) == 0) {
-				if (res->ai_next) {
-					fprintf(stderr,
-					    "%s: source address %s resolves to multiple addresses\n",
-					    argv[0], argv[i + 1]);
-					exit(1);
-				}
+				break;
+			case AF_INET:
 				if (res->ai_addrlen != sizeof(proxy->sin)) {
 					fprintf(stderr,
 					    "%s: source address %s resolves to unexpected address\n",
@@ -902,14 +914,21 @@ main(int argc, char *argv[])
 				memcpy(&proxy->sin, res->ai_addr,
 				    sizeof(proxy->sin));
 				proxyset = 1;
-				freeaddrinfo(res);
 				sad3.sadb_address_len = (sizeof(sad3) +
 				    ROUNDUP(sizeof(struct sockaddr_in))) / 8;
+				break;
+			default:
+				fprintf(stderr,
+				    "%s: proxy address %s resolved to unsupported address family\n",
+				    argv[0], argv[i + 1]);
+				exit(1);
 			}
+
+			freeaddrinfo(res);
 
 			if (proxyset == 0) {
 				fprintf(stderr,
-				    "%s: Warning: proxy address %s is not valid\n",
+				    "%s: proxy address %s is not valid\n",
 				    argv[0], argv[i + 1]);
 				exit(1);
 			}
@@ -1222,15 +1241,23 @@ main(int argc, char *argv[])
 			sad2.sadb_address_exttype = SADB_EXT_ADDRESS_DST;
 			memset(&hints, 0, sizeof(hints));
 			hints.ai_socktype = SOCK_DGRAM;	/*dummy*/
-#ifdef INET6
-			if (hints.ai_family = AF_INET6,
-			    getaddrinfo(argv[i + 1], "0", &hints, &res) == 0) {
-				if (res->ai_next) {
-					fprintf(stderr,
-					    "%s: destination address %s resolves to multiple addresses\n",
-					    argv[0], argv[i + 1]);
-					exit(1);
-				}
+			hints.ai_family = PF_UNSPEC;
+			if (getaddrinfo(argv[i + 1], "0", &hints, &res) != 0) {
+				fprintf(stderr,
+				    "%s: destination address %s is not valid\n",
+				    argv[0], argv[i + 1]);
+				exit(1);
+			}
+
+			if (res->ai_next) {
+				fprintf(stderr,
+				    "%s: destination address %s resolves to multiple addresses\n",
+				    argv[0], argv[i + 1]);
+				exit(1);
+			}
+
+			switch (res->ai_family) {
+			case AF_INET6:
 				if (res->ai_addrlen != sizeof(dst->sin6)) {
 					fprintf(stderr,
 					    "%s: destination address %s resolves to unexpected address\n",
@@ -1240,19 +1267,10 @@ main(int argc, char *argv[])
 				memcpy(&dst->sin6, res->ai_addr,
 				    sizeof(dst->sin6));
 				dstset = 1;
-				freeaddrinfo(res);
 				sad2.sadb_address_len = (sizeof(sad2) +
 				    ROUNDUP(sizeof(struct sockaddr_in6))) / 8;
-			} else
-#endif
-			if (hints.ai_family = AF_INET,
-			    getaddrinfo(argv[i + 1], "0", &hints, &res) == 0) {
-				if (res->ai_next) {
-					fprintf(stderr,
-					    "%s: destination address %s resolves to multiple addresses\n",
-					    argv[0], argv[i + 1]);
-					exit(1);
-				}
+				break;
+			case AF_INET:
 				if (res->ai_addrlen != sizeof(dst->sin)) {
 					fprintf(stderr,
 					    "%s: destination address %s resolves to unexpected address\n",
@@ -1262,14 +1280,21 @@ main(int argc, char *argv[])
 				memcpy(&dst->sin, res->ai_addr,
 				    sizeof(dst->sin));
 				dstset = 1;
-				freeaddrinfo(res);
 				sad2.sadb_address_len = (sizeof(sad2) +
 				    ROUNDUP(sizeof(struct sockaddr_in))) / 8;
+				break;
+			default:
+				fprintf(stderr,
+				    "%s: destination address %s resolved to unsupported address family\n",
+				    argv[0], argv[i + 1]);
+				exit(1);
 			}
+
+			freeaddrinfo(res);
 
 			if (dstset == 0) {
 				fprintf(stderr,
-				    "%s: Warning: destination address %s is not valid\n",
+				    "%s: destination address %s is not valid\n",
 				    argv[0], argv[i + 1]);
 				exit(1);
 			}
@@ -1696,12 +1721,10 @@ argfail:
 					osrc->sin.sin_port = sport;
 					osmask->sin.sin_port = 0xffff;
 				}
-#ifdef INET6
 				else if (osrc->sa.sa_family == AF_INET6) {
 					osrc->sin6.sin6_port = sport;
 					osmask->sin6.sin6_port = 0xffff;
 				}
-#endif				/* INET6 */
 			}
 			iov[cnt].iov_base = &sad4;
 			iov[cnt++].iov_len = sizeof(sad4);
@@ -1719,12 +1742,10 @@ argfail:
 					odst->sin.sin_port = dport;
 					odmask->sin.sin_port = 0xffff;
 				}
-#ifdef INET6
 				else if (odst->sa.sa_family == AF_INET6) {
 					odst->sin6.sin6_port = dport;
 					odmask->sin6.sin6_port = 0xffff;
 				}
-#endif				/* INET6 */
 			}
 			iov[cnt].iov_base = odst;
 			iov[cnt++].iov_len = ROUNDUP(odst->sa.sa_len);
