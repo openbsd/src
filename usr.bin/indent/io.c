@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.5 2002/02/19 19:39:38 millert Exp $	*/
+/*	$OpenBSD: io.c,v 1.6 2002/10/04 15:27:21 mickey Exp $	*/
 
 /*
  * Copyright (c) 1985 Sun Microsystems, Inc.
@@ -37,7 +37,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: io.c,v 1.5 2002/02/19 19:39:38 millert Exp $";
+static char rcsid[] = "$OpenBSD: io.c,v 1.6 2002/10/04 15:27:21 mickey Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -625,10 +625,8 @@ parsefont(f, s0)
 	    sizedelta++;
 	else if (*s == '-')
 	    sizedelta--;
-	else {
-	    fprintf(stderr, "indent: bad font specification: %s\n", s0);
-	    exit(1);
-	}
+	else
+	    errx(1, "bad font specification: %s", s0);
 	s++;
     }
     if (f->font[0] == 0)
