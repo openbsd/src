@@ -1,5 +1,5 @@
 '\" t
-.\" $OpenBSD: curses.3tbl,v 1.14 2000/07/10 03:06:10 millert Exp $
+.\" $OpenBSD: curses.3tbl,v 1.15 2000/07/24 04:06:09 millert Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998,1999 Free Software Foundation, Inc.                   *
@@ -29,7 +29,7 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $From: ncurses.3x,v 1.40 2000/07/08 13:10:31 tom Exp $
+.\" $From: ncurses.3x,v 1.41 2000/07/15 22:04:13 tom Exp $
 .TH ncurses 3 ""
 .ds n 5
 .ds d /usr/share/terminfo
@@ -200,7 +200,7 @@ addch/\fBcurs_addch\fR(3)
 addchnstr/\fBcurs_addchstr\fR(3)
 addchstr/\fBcurs_addchstr\fR(3)
 addnstr/\fBcurs_addstr\fR(3)
-assume_default_colors/\fBdft_fgbg\fR(3)*
+assume_default_colors/\fBdefault_colors\fR(3)*
 attr_get/\fBcurs_attr\fR(3)
 attr_off/\fBcurs_attr\fR(3)
 attr_on/\fBcurs_attr\fR(3)
@@ -433,7 +433,7 @@ unctrl/\fBcurs_util\fR(3)
 ungetch/\fBcurs_getch\fR(3)
 ungetmouse/\fBcurs_mouse\fR(3)*
 untouchwin/\fBcurs_touch\fR(3)
-use_default_colors/\fBdft_fgbg\fR(3)*
+use_default_colors/\fBdefault_colors\fR(3)*
 use_env/\fBcurs_util\fR(3)
 use_extended_names/\fBcurs_extend\fR(3)*
 vidattr/\fBterminfo\fR(3)

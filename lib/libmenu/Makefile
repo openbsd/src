@@ -6,15 +6,15 @@ SRCS=	m_adabind.c m_attribs.c m_cursor.c m_driver.c m_format.c \
 	m_req_name.c m_scale.c m_spacing.c m_sub.c m_userptr.c m_win.c
 HDRS=	menu.h eti.h
 CFLAGS+=-I${.CURDIR} -I${.CURDIR}/../libcurses -DHAVE_CONFIG_H
-MAN=	menu.3tbl menu_attribs.3 menu_cursor.3 menu_driver.3 menu_format.3 \
+MAN=	menu.3tbl menu_attributes.3 menu_cursor.3 menu_driver.3 menu_format.3 \
 	menu_hook.3 menu_items.3 menu_mark.3 menu_new.3 menu_opts.3 \
 	menu_pattern.3 menu_post.3 menu_requestname.3 menu_spacing.3 \
 	menu_userptr.3 menu_win.3 mitem_current.3 mitem_name.3 mitem_new.3 \
 	mitem_opts.3 mitem_userptr.3 mitem_value.3 mitem_visible.3
-MLINKS=	menu_attribs.3 set_menu_fore.3 menu_attribs.3 menu_fore.3 \
-        menu_attribs.3 set_menu_back.3 menu_attribs.3 menu_back.3 \
-        menu_attribs.3 set_menu_grey.3 menu_attribs.3 menu_grey.3 \
-        menu_attribs.3 set_menu_pad.3 menu_attribs.3 menu_pad.3 \
+MLINKS=	menu_attributes.3 set_menu_fore.3 menu_attributes.3 menu_fore.3 \
+        menu_attributes.3 set_menu_back.3 menu_attributes.3 menu_back.3 \
+        menu_attributes.3 set_menu_grey.3 menu_attributes.3 menu_grey.3 \
+        menu_attributes.3 set_menu_pad.3 menu_attributes.3 menu_pad.3 \
         menu_cursor.3 pos_menu_cursor.3 menu_format.3 set_menu_format.3 \
         menu_hook.3 set_item_init.3 menu_hook.3 item_init.3 menu_hook.3 \
         set_item_term.3 menu_hook.3 item_term.3 menu_hook.3 \

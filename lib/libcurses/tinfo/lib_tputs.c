@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_tputs.c,v 1.6 2000/06/19 03:53:50 millert Exp $	*/
+/*	$OpenBSD: lib_tputs.c,v 1.7 2000/07/24 04:06:10 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -47,7 +47,7 @@
 #include <termcap.h>		/* ospeed */
 #include <tic.h>
 
-MODULE_ID("$From: lib_tputs.c,v 1.47 2000/05/27 23:08:41 tom Exp $")
+MODULE_ID("$From: lib_tputs.c,v 1.48 2000/07/22 22:33:23 Bruno.Haible Exp $")
 
 char PC = 0;			/* used by termcap library */
 speed_t ospeed = 0;		/* used by termcap library */
@@ -80,7 +80,7 @@ delay_output(int ms)
 void
 _nc_flush(void)
 {
-    (void)fflush(NC_OUTPUT);
+    (void) fflush(NC_OUTPUT);
 }
 
 int
@@ -122,20 +122,20 @@ _nc_utf8_outch(int ch)
     int result[7], *ptr;
     int count = 0;
 
-    if (ch < 0x80)
+    if ((unsigned int) ch < 0x80)
 	count = 1;
-    else if (ch < 0x800)
+    else if ((unsigned int) ch < 0x800)
 	count = 2;
-    else if (ch < 0x10000)
+    else if ((unsigned int) ch < 0x10000)
 	count = 3;
-    else if (ch < 0x200000)
+    else if ((unsigned int) ch < 0x200000)
 	count = 4;
-    else if (ch < 0x4000000)
+    else if ((unsigned int) ch < 0x4000000)
 	count = 5;
-    else if (ch <= 0x7FFFFFFF)
+    else if ((unsigned int) ch <= 0x7FFFFFFF)
 	count = 6;
     else {
-	count = 2;
+	count = 3;
 	ch = 0xFFFD;
     }
     ptr = result + count;

@@ -1,8 +1,8 @@
 '\" t
-.\" $OpenBSD: menu.3tbl,v 1.4 1999/01/22 03:45:06 millert Exp $
+.\" $OpenBSD: menu.3tbl,v 1.5 2000/07/24 04:06:12 millert Exp $
 .\"
 .\"***************************************************************************
-.\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
+.\" Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
 .\"                                                                          *
 .\" Permission is hereby granted, free of charge, to any person obtaining a  *
 .\" copy of this software and associated documentation files (the            *
@@ -29,7 +29,7 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $From: menu.3x,v 1.13 1998/11/29 01:09:07 Rick.Ohnemus Exp $
+.\" $From: menu.3x,v 1.14 2000/07/15 22:55:59 tom Exp $
 .TH menu 3 ""
 .SH NAME
 \fBmenu\fR - curses extension for programming menus
@@ -79,18 +79,18 @@ item_term 	\fBmenu_hook\fR(3)
 item_userptr	\fBmitem_userptr\fR(3)
 item_value	\fBmitem_value\fR(3)
 item_visible	\fBmitem_visible\fR(3)
-menu_back 	\fBmenu_attribs\fR(3)
+menu_back 	\fBmenu_attributes\fR(3)
 menu_driver	\fBmenu_driver\fR(3)
-menu_fore 	\fBmenu_attribs\fR(3)
+menu_fore 	\fBmenu_attributes\fR(3)
 menu_format	\fBmenu_format\fR(3)
-menu_grey 	\fBmenu_attribs\fR(3)
+menu_grey 	\fBmenu_attributes\fR(3)
 menu_init 	\fBmenu_hook\fR(3)
 menu_items	\fBmenu_items\fR(3)
 menu_mark 	\fBmenu_mark\fR(3)
 menu_opts 	\fBmenu_opts\fR(3)
 menu_opts_off	\fBmenu_opts\fR(3)
 menu_opts_on	\fBmenu_opts\fR(3)
-menu_pad  	\fBmenu_attribs\fR(3)
+menu_pad  	\fBmenu_attributes\fR(3)
 menu_pattern	\fBmenu_pattern\fR(3)
 menu_request_by_name	\fBmenu_requestname\fR(3)
 menu_request_name	\fBmenu_requestname\fR(3)
@@ -110,15 +110,15 @@ set_item_opts	\fBmitem_opts\fR(3)
 set_item_term	\fBmenu_hook\fR(3)
 set_item_userptr	\fBmitem_userptr\fR(3)
 set_item_value	\fBmitem_value\fR(3)
-set_menu_back	\fBmenu_attribs\fR(3)
-set_menu_fore	\fBmenu_attribs\fR(3)
+set_menu_back	\fBmenu_attributes\fR(3)
+set_menu_fore	\fBmenu_attributes\fR(3)
 set_menu_format	\fBmenu_format\fR(3)
-set_menu_grey	\fBmenu_attribs\fR(3)
+set_menu_grey	\fBmenu_attributes\fR(3)
 set_menu_init	\fBmenu_hook\fR(3)
 set_menu_items	\fBmenu_items\fR(3)
 set_menu_mark	\fBmenu_mark\fR(3)
 set_menu_opts	\fBmitem_opts\fR(3)
-set_menu_pad	\fBmenu_attribs\fR(3)
+set_menu_pad	\fBmenu_attributes\fR(3)
 set_menu_pattern	\fBmenu_pattern\fR(3)
 set_menu_spacing	\fBmenu_spacing\fR(3)
 set_menu_sub	\fBmenu_win\fR(3)

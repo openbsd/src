@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_update.c,v 1.10 2000/07/10 03:06:17 millert Exp $	*/
+/*	$OpenBSD: tty_update.c,v 1.11 2000/07/24 04:06:11 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -72,7 +72,7 @@
 
 #include <term.h>
 
-MODULE_ID("$From: tty_update.c,v 1.141 2000/07/04 21:01:40 tom Exp $")
+MODULE_ID("$From: tty_update.c,v 1.142 2000/07/23 01:41:17 tom Exp $")
 
 /*
  * This define controls the line-breakout optimization.  Every once in a
@@ -858,14 +858,15 @@ ClrToEOL(chtype blank, bool needclear)
     int j;
 
     if (curscr != 0
-	&& SP->_cursrow >= 0
-	&& SP->_curscol >= 0) {
+	&& SP->_cursrow >= 0) {
 	for (j = SP->_curscol; j < screen_columns; j++) {
-	    chtype *cp = &(curscr->_line[SP->_cursrow].text[j]);
+	    if (j >= 0) {
+		chtype *cp = &(curscr->_line[SP->_cursrow].text[j]);
 
-	    if (*cp != blank) {
-		*cp = blank;
-		needclear = TRUE;
+		if (*cp != blank) {
+		    *cp = blank;
+		    needclear = TRUE;
+		}
 	    }
 	}
     } else {
@@ -899,11 +900,9 @@ ClrToEOS(chtype blank)
     row = SP->_cursrow;
     col = SP->_curscol;
 
-    {
-	UpdateAttrs(blank);
-	TPUTS_TRACE("clr_eos");
-	tputs(clr_eos, screen_lines - row, _nc_outch);
-    }
+    UpdateAttrs(blank);
+    TPUTS_TRACE("clr_eos");
+    tputs(clr_eos, screen_lines - row, _nc_outch);
 
     while (col < screen_columns)
 	curscr->_line[row].text[col++] = blank;

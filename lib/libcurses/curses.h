@@ -1,4 +1,4 @@
-/*	$OpenBSD: curses.h,v 1.52 2000/07/10 03:06:10 millert Exp $	*/
+/*	$OpenBSD: curses.h,v 1.53 2000/07/24 04:06:09 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -50,7 +50,7 @@
 /* These are defined only in curses.h, and are used for conditional compiles */
 #define NCURSES_VERSION_MAJOR 5
 #define NCURSES_VERSION_MINOR 1
-#define NCURSES_VERSION_PATCH 20000708
+#define NCURSES_VERSION_PATCH 20000722
 
 /* This is defined in more than one ncurses header, for identification */
 #undef  NCURSES_VERSION

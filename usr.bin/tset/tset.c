@@ -102,7 +102,7 @@ char *ttyname(int fd);
 #include <curses.h>		/* for bool typedef */
 #include <dump_entry.h>
 
-MODULE_ID("$From: tset.c,v 0.41 2000/03/12 00:03:00 tom Exp $")
+MODULE_ID("$From: tset.c,v 0.42 2000/07/09 23:17:34 tom Exp $")
 
 extern char **environ;
 
@@ -260,10 +260,19 @@ static const SPEEDS speeds[] =
     {"2400", B2400},
     {"4800", B4800},
     {"9600", B9600},
+    /* sgttyb may define up to this point */
+#ifdef B19200
     {"19200", B19200},
+#endif
+#ifdef B38400
     {"38400", B38400},
+#endif
+#ifdef B19200
     {"19200", B19200},
+#endif
+#ifdef B38400
     {"38400", B38400},
+#endif
 #ifdef B19200
     {"19200", B19200},
 #else
@@ -761,6 +770,7 @@ reset_mode(void)
  * Returns a "good" value for the erase character.  This is loosely based on
  * the BSD4.4 logic.
  */
+#ifdef TERMIOS
 static int
 default_erase(void)
 {
@@ -775,6 +785,7 @@ default_erase(void)
 
     return result;
 }
+#endif
 
 /*
  * Update the values of the erase, interrupt, and kill characters in 'mode'.
@@ -954,10 +965,10 @@ set_tabs()
 /*
  * Tell the user if a control key has been changed from the default value.
  */
+#ifdef TERMIOS
 static void
 report(const char *name, int which, unsigned def)
 {
-#ifdef TERMIOS
     unsigned older, newer;
     char *p;
 
@@ -984,8 +995,8 @@ report(const char *name, int which, unsigned def)
 	(void) fprintf(stderr, "control-%c (^%c).\n", newer, newer);
     } else
 	(void) fprintf(stderr, "%c.\n", newer);
-#endif
 }
+#endif
 
 /*
  * Convert the obsolete argument forms into something that getopt can handle.
@@ -1052,17 +1063,12 @@ main(int argc, char **argv)
     void wrtermcap (char *);
 #endif /* __OpenBSD__ */
 
-#ifdef TERMIOS
-    if (tcgetattr(STDERR_FILENO, &mode) < 0)
+    if (GET_TTY(STDERR_FILENO, &mode) < 0)
 	failed("standard error");
-
     oldmode = mode;
+#ifdef TERMIOS
     ospeed = cfgetospeed(&mode);
 #else
-    if (gtty(STDERR_FILENO, &mode) < 0)
-	failed("standard error");
-
-    oldmode = mode;
     ospeed = mode.sg_ospeed;
 #endif
 
@@ -1179,11 +1185,13 @@ main(int argc, char **argv)
 	 * If erase, kill and interrupt characters could have been
 	 * modified and not -Q, display the changes.
 	 */
+#ifdef TERMIOS
 	if (!quiet) {
 	    report("Erase", VERASE, CERASE);
 	    report("Kill", VKILL, CINTR);
 	    report("Interrupt", VINTR, CKILL);
 	}
+#endif
     }
 
 #ifdef __OpenBSD__

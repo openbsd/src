@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.45 2000/07/10 03:06:03 millert Exp $
+#	$OpenBSD: Makefile,v 1.46 2000/07/24 04:06:09 millert Exp $
 
 # Uncomment this to enable tracing in libcurses
 #CURSESTRACE=-DTRACE
@@ -59,7 +59,7 @@ MAN=	curs_addch.3 curs_addchstr.3 curs_addstr.3 curs_attr.3 curs_beep.3 \
 	curs_outopts.3 curs_overlay.3 curs_pad.3 curs_print.3 curs_printw.3 \
 	curs_refresh.3 curs_scanw.3 curs_scr_dump.3 curs_scroll.3 curs_slk.3 \
 	curs_termattrs.3 curs_touch.3 curs_util.3 curs_window.3 \
-	curses.3 define_key.3 dft_fgbg.3 keybound.3 keyok.3 resizeterm.3 \
+	curses.3 define_key.3 default_colors.3 keybound.3 keyok.3 resizeterm.3 \
 	wresize.3 termcap.3 terminfo.3 terminfo.5 term.5 term.7
 MLINKS+=curses.3 ncurses.3
 MLINKS+=curs_addch.3 addch.3 curs_addch.3 waddch.3 curs_addch.3 mvaddch.3 \
@@ -168,9 +168,10 @@ MLINKS+=curs_addch.3 addch.3 curs_addch.3 waddch.3 curs_addch.3 mvaddch.3 \
 	mvwin.3 curs_window.3 subwin.3 curs_window.3 derwin.3 curs_window.3 \
 	mvderwin.3 curs_window.3 dupwin.3 curs_window.3 wsyncup.3 \
 	curs_window.3 syncok.3 curs_window.3 wcursyncup.3 curs_window.3 \
-	wsyncdown.3 dft_fgbg.3 use_default_colors.3
+	wsyncdown.3 default_colors.3 use_default_colors.3
 MLINKS+=curs_extend.3 curses_version.3 curs_extend.3 use_extended_names.3 \
-	dft_fgbg.3 assume_default_colors.3 dft_fgbg.3 use_default_colors.3
+	default_colors.3 assume_default_colors.3 default_colors.3 \
+	use_default_colors.3
 MLINKS+= terminfo.3 setupterm.3 terminfo.3 setterm.3 terminfo.3 set_curterm.3 \
 	terminfo.3 del_curterm.3 terminfo.3 restartterm.3 terminfo.3 tparm.3 \
 	terminfo.3 tparam.3 terminfo.3 tputs.3 terminfo.3 putp.3 \
