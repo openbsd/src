@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_state.c,v 1.24 2001/01/17 04:47:16 fgsch Exp $	*/
+/*	$OpenBSD: ip_state.c,v 1.25 2001/01/17 07:25:19 fgsch Exp $	*/
 
 /*
  * Copyright (C) 1995-2000 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)$IPFilter: ip_state.c,v 2.30.2.27 2000/12/02 00:15:25 darrenr Exp $";
+static const char rcsid[] = "@(#)$IPFilter: ip_state.c,v 2.30.2.28 2001/01/08 14:04:46 darrenr Exp $";
 #endif
 
 #include <sys/errno.h>
@@ -1375,6 +1375,9 @@ void *ifp;
 }
 
 
+/*
+ * Must always be called with fr_ipfstate held as a write lock.
+ */
 static void fr_delstate(is)
 ipstate_t *is;
 {
@@ -1393,7 +1396,7 @@ ipstate_t *is;
 
 	fr = is->is_rule;
 	if (fr != NULL) {
-		ATOMIC_DEC32(fr->fr_ref);
+		fr->fr_ref--;
 		if (fr->fr_ref == 0) {
 			KFREE(fr);
 		}
@@ -1449,12 +1452,12 @@ void fr_timeoutstate()
 			fr_delstate(is);
 		} else
 			isp = &is->is_next;
-	RWLOCK_EXIT(&ipf_state);
-	SPL_X(s);
 	if (fr_state_doflush) {
 		(void) fr_state_flush(1);
 		fr_state_doflush = 0;
 	}
+	RWLOCK_EXIT(&ipf_state);
+	SPL_X(s);
 }
 
 
