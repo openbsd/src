@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.56 2002/02/06 19:29:06 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.57 2002/02/07 05:47:03 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -827,7 +827,7 @@ pmap_pinit(pmap)
 
 	DPRINTF(PDB_FOLLOW, ("pmap_pinit(%p), pid=%x\n", pmap, pmap->pmap_pid));
 
-	if (!pmap->pmap_pid) {
+	if (!(pid = pmap->pmap_pid)) {
 
 		/*
 		 * Allocate space and protection IDs for the pmap.
@@ -849,7 +849,7 @@ pmap_pinit(pmap)
 
 	s = splimp();
 	pmap->pmap_pid = pid;
-	pmap->pmap_space = (pmap->pmap_pid >> 1) - 1;
+	pmap->pmap_space = (pid >> 1) - 1;
 	pmap->pmap_refcnt = 1;
 	pmap->pmap_stats.resident_count = 0;
 	pmap->pmap_stats.wired_count = 0;
@@ -953,6 +953,8 @@ pmap_enter(pmap, va, pa, prot, flags)
 	int s;
 
 	pa = hppa_trunc_page(pa);
+	va = hppa_trunc_page(va);
+	space = pmap_sid(pmap, va);
 #ifdef PMAPDEBUG
 	if (pmapdebug & PDB_FOLLOW &&
 	    (!pmap_initialized || pmapdebug & PDB_ENTER))
@@ -965,10 +967,11 @@ pmap_enter(pmap, va, pa, prot, flags)
 	if (!(pv = pmap_find_pv(pa)))
 		panic("pmap_enter: pmap_find_pv failed");
 
-	va = hppa_trunc_page(va);
-	space = pmap_sid(pmap, va);
 	tlbpage = tlbbtop(pa);
-	tlbprot = TLB_UNCACHEABLE | pmap_prot(pmap, prot) | pmap->pmap_pid;
+	tlbprot = TLB_UNCACHEABLE | TLB_REF |
+	    pmap_prot(pmap, prot) | pmap->pmap_pid;
+	if (flags & VM_PROT_WRITE)
+		tlbprot |= TLB_DIRTY;
 
 	if (!(ppv = pmap_find_va(space, va))) {
 		/*
@@ -1213,6 +1216,7 @@ pmap_unwire(pmap, va)
 	vaddr_t	va;
 {
 	struct pv_entry *pv;
+	int s;
 
 	va = hppa_trunc_page(va);
 	DPRINTF(PDB_FOLLOW, ("pmap_unwire(%p, %x)\n", pmap, va));
@@ -1222,6 +1226,7 @@ pmap_unwire(pmap, va)
 
 	simple_lock(&pmap->pmap_lock);
 
+	s = splimp();
 	if ((pv = pmap_find_va(pmap_sid(pmap, va), va)) == NULL)
 		panic("pmap_unwire: can't find mapping entry");
 
@@ -1229,6 +1234,7 @@ pmap_unwire(pmap, va)
 		pv->pv_tlbprot &= ~TLB_WIRED;
 		pmap->pmap_stats.wired_count--;
 	}
+	splx(s);
 	simple_unlock(&pmap->pmap_lock);
 }
 
@@ -1246,16 +1252,18 @@ pmap_extract(pmap, va, pap)
 	paddr_t *pap;
 {
 	struct pv_entry *pv;
+	int s;
 
-	va = hppa_trunc_page(va);
 	DPRINTF(PDB_FOLLOW, ("pmap_extract(%p, %x)\n", pmap, va));
 
-	if (!(pv = pmap_find_va(pmap_sid(pmap, va), va & ~PGOFSET)))
+	s = splimp();
+	if (!(pv = pmap_find_va(pmap_sid(pmap, va), hppa_trunc_page(va))))
 		return (FALSE);
 	else {
 		*pap = tlbptob(pv->pv_tlbpage) + (va & PGOFSET);
 		return (TRUE);
 	}
+	splx(s);
 }
 
 /*
@@ -1269,11 +1277,18 @@ pmap_zero_page(pa)
 {
 	extern int dcache_line_mask;
 	register paddr_t pe = pa + PAGE_SIZE;
-	u_int32_t psw;
+	int s;
 
 	DPRINTF(PDB_FOLLOW|PDB_PHYS, ("pmap_zero_page(%x)\n", pa));
 
-	rsm(PSW_I, psw);
+	/*
+	 * do not allow any ints to happen, since cache is in
+	 * inconsistant state during the loop.
+	 *
+	 * do not rsm(PSW_I) since that will lose ints completely,
+	 * instead, keep 'em pending (or verify by the book).
+	 */
+	s = splhigh();
 	pmap_clear_pv(pa, NULL);
 
 	while (pa < pe) {
@@ -1292,7 +1307,7 @@ pmap_zero_page(pa)
 	}
 
 	sync_caches();
-	ssm(PSW_I, psw);
+	splx(s);
 }
 
 /*
@@ -1310,11 +1325,11 @@ pmap_copy_page(spa, dpa)
 {
 	extern int dcache_line_mask;
 	register paddr_t spe = spa + PAGE_SIZE;
-	u_int32_t psw;
+	int s;
 
 	DPRINTF(PDB_FOLLOW|PDB_PHYS, ("pmap_copy_page(%x, %x)\n", spa, dpa));
 
-	rsm(PSW_I, psw);
+	s = splhigh();
 	pmap_clear_pv(spa, NULL);
 	pmap_clear_pv(dpa, NULL);
 
@@ -1341,7 +1356,7 @@ pmap_copy_page(spa, dpa)
 	}
 
 	sync_caches();
-	ssm(PSW_I, psw);
+	splx(s);
 }
 
 /*
