@@ -10,7 +10,7 @@
  *
  * S/KEY misc routines.
  *
- * $Id: skeysubr.c,v 1.8 1996/09/30 23:26:28 millert Exp $
+ * $Id: skeysubr.c,v 1.9 1996/09/30 23:54:38 millert Exp $
  */
 
 #include <stdio.h>
@@ -187,7 +187,7 @@ f(x)
 	skey_algorithm_table[skey_hash_type].f(x);
 }
 
-void
+static void
 f_md4(x)
 	char *x;
 {
@@ -205,7 +205,7 @@ f_md4(x)
 	(void)memcpy((void *)x, (void *)results, 8);
 }
 
-void
+static void
 f_md5(x)
 	char *x;
 {
@@ -223,7 +223,7 @@ f_md5(x)
 	(void)memcpy((void *)x, (void *)results, 8);
 }
 
-void
+static void
 f_sha1(x)
 	char *x;
 {
