@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.1 2002/06/08 08:36:39 jason Exp $
+#	$OpenBSD: Makefile,v 1.2 2003/02/12 07:05:34 mickey Exp $
 
-SUBDIR+= trivial1
+SUBDIR+= rint trivial1
 
 install:
 
