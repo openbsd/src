@@ -956,7 +956,7 @@ syscall(code, frame)
 		 * on the stack to skip, the argument follows the syscall
 		 * number without a gap.
 		 */
-		if (code != SUNOS_SYS_sunos_sigreturn) {
+		if (code != SUNOS_SYS_sigreturn) {
 			frame.f_regs[SP] += sizeof (int);
 			/*
 			 * remember that we adjusted the SP,
