@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: netstart,v 1.21 1995/10/08 18:11:40 thorpej Exp $
+#	$NetBSD: netstart,v 1.22 1995/12/17 18:31:09 perry Exp $
 #	@(#)netstart	5.9 (Berkeley) 3/30/91
 
 # set these to "NO" to turn them off.  otherwise, they're used as flags
@@ -99,4 +99,20 @@ route add $hostname localhost
 # that name must be in /etc/hosts.
 if [ -f /etc/mygate ]; then
 	route add default `cat /etc/mygate`
+fi
+
+# /etc/ifaliases, if it exists, contains the names of additional IP
+# addresses for each interface. It is formatted as a series of lines
+# that contain
+# address interface
+if [ -f /etc/ifaliases ]; then
+(
+	set -- `cat /etc/ifaliases`
+
+	while [ $# -ge 2 ] ; do
+		ifconfig $2 inet alias $1
+		route add $1 localhost
+		shift 2
+	done
+)
 fi
