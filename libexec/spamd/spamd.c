@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.12 2003/03/02 20:32:05 deraadt Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.13 2003/03/02 20:40:15 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -103,7 +103,8 @@ usage(void)
 char *
 grow_obuf(struct con *cp, int off)
 {
-	char * tmp;
+	char *tmp;
+
 	if (!cp->obufalloc)
 		cp->obuf = NULL;
 	tmp = realloc(cp->obuf, cp->osize + 8192);
@@ -190,8 +191,8 @@ parse_configline(char *line)
 void
 parse_configs(void)
 {
-	int i;
 	char *start, *end;
+	int i;
 
 	if (cbu == cbs) {
 		char *tmp;
@@ -363,7 +364,7 @@ append_error_string (struct con *cp, size_t off, char *fmt, int af, void *ia)
 
 
 void
-build_reply(struct  con * cp)
+build_reply(struct con *cp)
 {
 	struct sdlist **matches;
 	int off = 0;
@@ -412,7 +413,7 @@ bad:
 	if (cp->obuf == NULL) {
 		/* we're having a really bad day.. */
 		cp->obufalloc = 0; /* know not to free or mangle */
-		cp->obuf="450 Try again\r\n";
+		cp->obuf="450 Try again\n";
 	} else
 		cp->osize = strlen(cp->obuf) + 1;
 }
@@ -473,7 +474,7 @@ initcon(struct con *cp, int fd, struct sockaddr_in *sin)
 	cp->ol = strlen(cp->op);
 	cp->w = t + 1;
 	cp->s = t;
-	strlcpy(cp->rend, "\n\r", sizeof cp->rend);
+	strlcpy(cp->rend, "\n", sizeof cp->rend);
 	clients++;
 }
 
@@ -899,7 +900,7 @@ main(int argc, char *argv[])
 				err(1, "accept");
 			}
 		}
-		if (conffd != -1  && FD_ISSET(conffd, fdsr)) {
+		if (conffd != -1 && FD_ISSET(conffd, fdsr)) {
 			do_config();
 		}
 

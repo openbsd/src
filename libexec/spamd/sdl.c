@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdl.c,v 1.2 2003/03/02 20:32:05 deraadt Exp $ */
+/*	$OpenBSD: sdl.c,v 1.3 2003/03/02 20:40:15 deraadt Exp $ */
 /*
  * Copyright (c) 2003 Bob Beck.  All rights reserved.
  *
@@ -50,7 +50,7 @@ struct sdlist *blacklists = NULL;
 int blc = 0, blu = 0;
 
 int
-sdl_add (char *sdname, char *sdstring, char ** addrs, int addrc)
+sdl_add(char *sdname, char *sdstring, char ** addrs, int addrc)
 {
 	int i, index = -1;
 	char astring[40];
@@ -76,7 +76,7 @@ sdl_add (char *sdname, char *sdstring, char ** addrs, int addrc)
 			printf("adding list %s\n", sdname);
 		index = blu;
 	}
-	if (index == blu &&  blu == blc) {
+	if (index == blu && blu == blc) {
 		struct sdlist *tmp;
 		tmp = realloc (blacklists, (blc + 128) *
 		    sizeof(struct sdlist));
@@ -197,7 +197,7 @@ sdl_lookup(struct sdlist *head, int af, void * src)
 	int i, matches = 0;
 	struct sdlist *sdl;
 	struct sdentry *sda;
-	struct sdaddr *source = (struct sdaddr *) src ;
+	struct sdaddr *source = (struct sdaddr *) src;
 	static int sdnewlen = 0;
 	static struct sdlist **sdnew = NULL;
 
@@ -213,10 +213,12 @@ sdl_lookup(struct sdlist *head, int af, void * src)
 					struct sdlist **tmp;
 					tmp = realloc(sdnew,
 					    (sdnewlen + 128) *
-					     sizeof(struct sdlist *) );
+					     sizeof(struct sdlist *));
 					if (tmp == NULL)
-						/* XXX out of memory - return
-						   what we have */
+						/*
+						 * XXX out of memory -
+						 * return what we have
+						 */
 						return(sdnew);
 					sdnew = tmp;
 					sdnewlen += 128;
