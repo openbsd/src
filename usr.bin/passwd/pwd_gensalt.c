@@ -30,10 +30,12 @@
 
 #include <sys/syslimits.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <err.h>
 #include <pwd.h>
 #include <util.h>
+#include <time.h>
 
 void to64( char *, long, int n);
 

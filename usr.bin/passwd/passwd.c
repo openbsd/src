@@ -1,4 +1,4 @@
-/*	$OpenBSD: passwd.c,v 1.5 1997/01/15 23:43:01 millert Exp $	*/
+/*	$OpenBSD: passwd.c,v 1.6 1997/03/27 00:30:54 weingart Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)passwd.c	5.5 (Berkeley) 7/6/91";*/
-static char rcsid[] = "$OpenBSD: passwd.c,v 1.5 1997/01/15 23:43:01 millert Exp $";
+static char rcsid[] = "$OpenBSD: passwd.c,v 1.6 1997/03/27 00:30:54 weingart Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -65,6 +65,14 @@ int use_yp;
 int force_yp;
 #endif
 
+
+extern int local_passwd(char *);
+extern int yp_passwd(char *);
+extern int krb_passwd(void);
+void usage(void);
+
+
+int
 main(argc, argv)
 	int argc;
 	char **argv;
@@ -73,7 +81,6 @@ main(argc, argv)
 	register int ch;
 	char *username;
 	int status = 0;
-	char *basename;
 #if defined(KERBEROS) || defined(KERBEROS5)
 	extern char realm[];
 
@@ -84,10 +91,7 @@ main(argc, argv)
 	use_yp = _yp_check(NULL);
 #endif
 
-	basename = strrchr(argv[0], '/');
-	if (basename == NULL)
-		basename = argv[0];
-	
+	/* Process args and options */
 	while ((ch = getopt(argc, argv, "lky")) != -1)
 		switch (ch) {
 		case 'l':		/* change local password file */
@@ -163,7 +167,8 @@ main(argc, argv)
 	exit(local_passwd(username));
 }
 
-usage()
+void
+usage(void)
 {
 	fprintf(stderr, "usage: passwd [-l] [-k] [-y] user\n");
 }

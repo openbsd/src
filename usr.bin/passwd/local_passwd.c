@@ -1,4 +1,4 @@
-/*	$OpenBSD: local_passwd.c,v 1.6 1997/02/16 20:08:56 provos Exp $	*/
+/*	$OpenBSD: local_passwd.c,v 1.7 1997/03/27 00:30:53 weingart Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,24 +35,25 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)local_passwd.c	5.5 (Berkeley) 5/6/91";*/
-static char rcsid[] = "$OpenBSD: local_passwd.c,v 1.6 1997/02/16 20:08:56 provos Exp $";
+static char rcsid[] = "$OpenBSD: local_passwd.c,v 1.7 1997/03/27 00:30:53 weingart Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <pwd.h>
+#include <err.h>
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <ctype.h>
 #include <fcntl.h>
 #include <util.h>
 
-uid_t uid;
+static uid_t uid;
 
-char *progname = "passwd";
-char *tempname;
 
+int
 local_passwd(uname)
 	char *uname;
 {
@@ -65,13 +66,13 @@ local_passwd(uname)
 		extern int use_yp;
 		if (!use_yp)
 #endif
-		(void)fprintf(stderr, "passwd: unknown user %s.\n", uname);
+		warnx("unknown user %s.", uname);
 		return(1);
 	}
 
 	uid = getuid();
 	if (uid && uid != pw->pw_uid) {
-		(void)fprintf(stderr, "passwd: %s\n", strerror(EACCES));
+		warnx("login != uid: %s", strerror(EACCES));
 		return(1);
 	}
 

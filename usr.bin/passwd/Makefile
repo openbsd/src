@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.13 1997/03/26 00:35:32 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.14 1997/03/27 00:30:52 weingart Exp $
 
 .include <bsd.own.mk>
 
@@ -16,7 +16,7 @@ CFLAGS+=-DYP -I${.CURDIR}/../../lib/libc/yp
 .include <bsd.own.mk>	# For Kerberos
 
 .if defined(KERBEROS5)
-#SRCS+= krb5_passwd.c XXX fix the /tmp/tkt_cpw_%d race first
+#SRCS+= krb5_passwd.c XXX fix the /tmp/tkt_cpw_%d race first + others
 CFLAGS+= -DKERBEROS5
 DPADD+=	${LIBKRB5} ${LIBCRYPTO}
 LDADD+=	-lkrb5 -lcrypto
