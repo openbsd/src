@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.20 2000/02/28 22:26:17 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.21 2000/07/03 19:15:35 niklas Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -33,7 +33,7 @@ all: ${CBIN} ${FLOPPY}
 	@echo "all done"
 
 DISKTYPE=       rdroot
-NBLKS=          6144
+NBLKS=          5744
 
 # old format, minfree, opt, b/i  trks, sects, cpg
 NEWFSARGS=	-t ffs -m 0 -o space
