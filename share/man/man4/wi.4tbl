@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wi.4tbl,v 1.4 2002/04/03 18:36:43 millert Exp $
+.\"	$OpenBSD: wi.4tbl,v 1.5 2002/04/05 19:00:50 millert Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -133,11 +133,12 @@ _ _ _
 l l l .
 Card:Chip:Bus
 3Com AirConnect 3CRWE737A:Spectrum24:PCMCIA
-3Com AirConnect 3CRWE777A:Prism-II:PCMCIA
+3Com AirConnect 3CRWE777A:Prism-II:PCI
 Addtron AWP-100:Prism-II:PCMCIA
 Agere Orinoco:Hermes:PCMCIA
-BUFFALO AirStation:Prism-II:PCMCIA
-BUFFALO AirStation:Prism-II:CF
+Apple Airport:Hermes:macobio
+Buffalo AirStation:Prism-II:PCMCIA
+Buffalo AirStation:Prism-II:CF
 Cabletron RoamAbout:Hermes:PCMCIA
 Compaq Agency NC5004:Prism-II:PCMCIA
 Contec FLEXLAN/FX-DS110-PCC:Prism-II:PCMCIA
@@ -179,7 +180,7 @@ or 9052 chip.
 The following such adapters are supported or expected to work:
 .Pp
 .Bl -tag -width -offset indent -compact
-.It 3Com AirConnect 3CRWE777A
+.It 3Com AirConnect 3CRWE777A (3.3V)
 .It Belkin F5D6000 (a rebadged WL11000P)
 .It Eumitcom WL11000P
 .It Global Sun Technology GL24110P (untested)
@@ -189,6 +190,45 @@ The following such adapters are supported or expected to work:
 .It US Robotics 2415 (rebadged WL11000P)
 .El
 .Pp
+.Sh EXAMPLES
+The following examples utilize
+.Xr ifconfig 8
+for simplicity, however,
+.Xr wicontrol 8
+can also be used to set wireless parameters.
+.Pp
+Join an existing BSS network (ie: connect to an access point):
+.Dl # ifconfig wi0 inet 192.168.0.20 netmask 0xffffff00
+.Pp
+Join a specific BSS network with network name
+.Dq my_net .
+.Dl # ifconfig wi0 inet 192.168.0.20 netmask 0xffffff00 nwid my_net
+.br
+.Pp
+Join a specific BSS network with WEP encryption:
+.Bd -literal -compact -offset indent
+# ifconfig wi0 inet 192.168.0.20 netmask 0xffffff00 nwid my_net \e
+	nwkey 0x8736639624
+.Ed
+.Pp
+Join an ad-hoc network with network name
+.Dq my_net .
+.Bd -literal -compact -offset indent
+# ifconfig wi0 inet 192.168.0.20 netmask 0xffffff00 nwid my_net \e
+	media adhoc
+.Ed
+.Pp
+Create a host-based access point (Prism only):
+.Bd -literal -compact -offset indent
+# ifconfig wi0 inet 192.168.0.10 netmask 0xffffff00 nwid my_ap \e
+	media hostap
+.Ed
+.Pp
+Create a host-based wireless bridge to fxp0 (Prism only):
+.Bd -literal -compact -offset indent
+# ifconfig wi0 inet up nwid my_ap media hostap
+# brconfig bridge0 add fxp0 add wi0 up
+.Ed
 .Sh DIAGNOSTICS
 .Bl -diag
 .It "wi%d: init failed"
@@ -205,6 +245,7 @@ command.
 .Xr an 4 ,
 .Xr arp 4 ,
 .Xr netintro 4 ,
+.Xr hostname.if 5 ,
 .Xr ifconfig 8 ,
 .Xr wicontrol 8
 .Rs
@@ -233,3 +274,7 @@ Non-Lucent cards vary, for instance the Addtron cards use channel
 See
 .Xr wicontrol 8
 for information on how to change the channel.
+.Pp
+3.3V
+.Nm
+PCMCIA cards do not currently work.
