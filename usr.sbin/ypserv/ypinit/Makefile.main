@@ -1,0 +1,5 @@
+#	$Id: Makefile.main,v 1.3 1996/01/20 00:36:24 chuck Exp $
+
+SUBDIR=	
+
+.include <bsd.subdir.mk>
