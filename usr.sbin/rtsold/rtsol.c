@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsol.c,v 1.3 2000/01/05 01:54:50 itojun Exp $	*/
+/*	$OpenBSD: rtsol.c,v 1.4 2000/01/17 16:33:49 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -63,7 +63,7 @@ static struct iovec rcviov[2];
 static struct iovec sndiov[2];
 static struct sockaddr_in6 from;
 
-static int rssock;
+int rssock;
 
 static struct sockaddr_in6 sin6_allrouters = {sizeof(sin6_allrouters), AF_INET6};
 

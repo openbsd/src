@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsold.c,v 1.4 1999/12/16 03:13:46 deraadt Exp $	*/
+/*	$OpenBSD: rtsold.c,v 1.5 2000/01/17 16:33:49 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -169,18 +169,22 @@ main(argc, argv)
 	if (signal(SIGUSR1, (void *)rtsold_set_dump_file) < 0)
 		errx(1, "failed to set signal for dump status");
 
+	/*
+	 * Open a socket for sending RS and receiving RA.
+	 * This should be done before calling ifinit(), since the function
+	 * uses the socket.
+	 */
+	if ((s = sockopen()) < 0)
+		errx(1, "failed to open a socket");
+
 	/* configuration per interface */
 	if (ifinit())
 		errx(1, "failed to initilizatoin interfaces");
 	while (argc--) {
 		if (ifconfig(*argv))
-			errx(1, "failed to initilize %s", *argv);
+			errx(1, "failed to initialize %s", *argv);
 		argv++;
 	}
-
-	/* open a socket for sending RS and receiving RA */
-	if ((s = sockopen()) < 0)
-		errx(1, "failed to open a socket");
 
 	/* setup for probing default routers */
 	if (probe_init())
