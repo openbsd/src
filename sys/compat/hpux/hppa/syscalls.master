@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.2 2004/07/10 22:37:33 mickey Exp $
+	$OpenBSD: syscalls.master,v 1.3 2004/07/11 00:20:46 mickey Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -514,7 +514,9 @@
 378	UNIMPL		pwrite64
 379	UNIMPL		pwritev64
 380	UNIMPL		setcontext
-381	UNIMPL		sigaltstack
+381	STD		{ int hpux_sys_sigaltstack( \
+			    const struct hpux_sigaltstack *nss, \
+			    struct hpux_sigaltstack *oss); }
 382	UNIMPL		waitid
 383	UNIMPL		setpgrp
 384	UNIMPL		recvmsg2

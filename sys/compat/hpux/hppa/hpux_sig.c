@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_sig.c,v 1.1 2004/07/09 21:48:21 mickey Exp $	*/
+/*	$OpenBSD: hpux_sig.c,v 1.2 2004/07/11 00:20:46 mickey Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff.  All rights reserved.
@@ -53,6 +53,7 @@
 
 #include <compat/hpux/hpux.h>
 #include <compat/hpux/hpux_sig.h>
+#include <compat/hpux/hpux_util.h>
 #include <compat/hpux/hppa/hpux_syscallargs.h>
 
 /* indexed by HPUX signal number - 1 */
@@ -411,4 +412,54 @@ hpux_sigsetreturn(struct proc *p, void *v, register_t *retval)
 
 printf("hpux_sigsetreturn(%x)\n", SCARG(uap, cookie));
 	return (0);
+}
+
+int
+hpux_sys_sigaltstack(struct proc *p, void *v, register_t *retval)
+{
+	struct hpux_sys_sigaltstack_args /* {
+		syscallarg(struct hpux_sigaltstack *) nss;
+		syscallarg(struct hpux_sigaltstack *) oss;
+	} */ *uap = v;
+	struct hpux_sigaltstack {
+		void	*ss_sp;
+		int	ss_flags;
+#define	HPUX_SS_DISABLE	0x0002
+		size_t	ss_size;
+	} hsa;
+	struct sys_sigaltstack_args saa;
+	struct sigaltstack *psa, sa;
+	caddr_t sg;
+	int error;
+
+	if ((error = copyin(SCARG(uap, nss), &hsa, sizeof hsa)))
+		return (error);
+
+	sa.ss_sp = hsa.ss_sp;
+	sa.ss_size = hsa.ss_size;
+	sa.ss_flags = hsa.ss_flags & SS_ONSTACK;
+	if (hsa.ss_flags & HPUX_SS_DISABLE)
+		sa.ss_flags |= SS_DISABLE;
+
+	sg = stackgap_init(p->p_emul);
+	psa = stackgap_alloc(&sg, 2 * sizeof(struct sigaltstack));
+	SCARG(&saa, nss) = &psa[0];
+	SCARG(&saa, oss) = &psa[1];
+
+	if ((error = copyout(&sa, psa, sizeof sa)))
+		return (error);
+
+	if ((error = sys_sigaltstack(p, &saa, retval)))
+		return (error);
+
+	if ((error = copyin(SCARG(&saa, oss), &sa, sizeof sa)))
+		return (error);
+
+	hsa.ss_sp = sa.ss_sp;
+	hsa.ss_flags = sa.ss_flags & SS_ONSTACK;
+	if (sa.ss_flags & SS_DISABLE)
+		hsa.ss_flags |= HPUX_SS_DISABLE;
+	hsa.ss_size = sa.ss_size;
+
+	return (copyout(&hsa, SCARG(uap, oss), sizeof hsa));
 }
