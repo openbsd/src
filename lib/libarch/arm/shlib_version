@@ -1,0 +1,4 @@
+#	$OpenBSD: shlib_version,v 1.1 2005/02/03 17:12:41 drahn Exp $
+#
+major=0
+minor=0
