@@ -44,6 +44,15 @@
 >20	belong		9		(PPP
 >20	belong		10		(FDDI
 >20	belong		11		(RFC 1483 ATM
+>20	belong		12		(Loopback
+>20	belong		13		(IPSec Enc
+>20	belong		14		(Raw IP
+>20	belong		15		(BSD/OS SLIP
+>20	belong		16		(BSD/OS PPP
+>20	belong		17		(Old PF Log
+>20	belong		18		(PFSync
+>20	belong		105		(IEEE 802.11 wireless
+>20	belong		117		(PF Log
 >16	belong		x		\b, capture length %d)
 0	ulelong		0xa1b2c3d4	tcpdump capture file (little-endian)
 >4	leshort		x		- version %d
@@ -60,4 +69,13 @@
 >20	lelong		9		(PPP
 >20	lelong		10		(FDDI
 >20	lelong		11		(RFC 1483 ATM
+>20	lelong		12		(Loopback
+>20	lelong		13		(IPSec Enc
+>20	lelong		14		(Raw IP
+>20	lelong		15		(BSD/OS SLIP
+>20	lelong		16		(BSD/OS PPP
+>20	lelong		17		(Old PF Log
+>20	lelong		18		(PFSync
+>20	lelong		105		(IEEE 802.11 wireless
+>20	lelong		117		(PF Log
 >16	lelong		x		\b, capture length %d)
