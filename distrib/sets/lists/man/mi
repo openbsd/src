@@ -1,4 +1,3 @@
-./usr/share/man/cat4/enc.0
 ./usr/share/doc/html
 ./usr/share/doc/html/curses
 ./usr/share/doc/html/curses/hackguide.html
@@ -210,6 +209,7 @@
 ./usr/share/man/cat1/cut.0
 ./usr/share/man/cat1/cvs.0
 ./usr/share/man/cat1/date.0
+./usr/share/man/cat1/dbmmanage.0
 ./usr/share/man/cat1/dc.0
 ./usr/share/man/cat1/dd.0
 ./usr/share/man/cat1/deroff.0
@@ -272,6 +272,8 @@
 ./usr/share/man/cat1/host.0
 ./usr/share/man/cat1/hostname.0
 ./usr/share/man/cat1/hpftodit.0
+./usr/share/man/cat1/htdigest.0
+./usr/share/man/cat1/htpasswd.0
 ./usr/share/man/cat1/id.0
 ./usr/share/man/cat1/ident.0
 ./usr/share/man/cat1/indent.0
@@ -474,6 +476,7 @@
 ./usr/share/man/cat1/rwall.0
 ./usr/share/man/cat1/rwho.0
 ./usr/share/man/cat1/s2p.0
+./usr/share/man/cat1/scp.0
 ./usr/share/man/cat1/script.0
 ./usr/share/man/cat1/sdiff.0
 ./usr/share/man/cat1/sed.0
@@ -487,11 +490,16 @@
 ./usr/share/man/cat1/skeyinfo.0
 ./usr/share/man/cat1/skeyinit.0
 ./usr/share/man/cat1/sleep.0
+./usr/share/man/cat1/slogin.0
 ./usr/share/man/cat1/soelim.0
 ./usr/share/man/cat1/sort.0
 ./usr/share/man/cat1/source.0
 ./usr/share/man/cat1/splain.0
 ./usr/share/man/cat1/split.0
+./usr/share/man/cat1/ssh-add.0
+./usr/share/man/cat1/ssh-agent.0
+./usr/share/man/cat1/ssh-keygen.0
+./usr/share/man/cat1/ssh.0
 ./usr/share/man/cat1/startkey.0
 ./usr/share/man/cat1/stop.0
 ./usr/share/man/cat1/strings.0
@@ -613,6 +621,7 @@
 ./usr/share/man/cat3/list_next.0
 ./usr/share/man/cat3/mpool.0
 ./usr/share/man/cat3/nextkey.0
+./usr/share/man/cat3/opendisk.0
 ./usr/share/man/cat3/pthread_cancel.0
 ./usr/share/man/cat3/pthread_cleanup_pop.0
 ./usr/share/man/cat3/pthread_cleanup_push.0
@@ -840,6 +849,7 @@
 ./usr/share/man/cat3p/strict.0
 ./usr/share/man/cat3p/subs.0
 ./usr/share/man/cat3p/vars.0
+./usr/share/man/cat4/ac97.0
 ./usr/share/man/cat4/adv.0
 ./usr/share/man/cat4/advansys.0
 ./usr/share/man/cat4/adw.0
@@ -923,6 +933,7 @@
 ./usr/share/man/cat4/eap.0
 ./usr/share/man/cat4/ec.0
 ./usr/share/man/cat4/ef.0
+./usr/share/man/cat4/enc.0
 ./usr/share/man/cat4/ep.0
 ./usr/share/man/cat4/esis.0
 ./usr/share/man/cat4/eso.0
@@ -1048,6 +1059,7 @@
 ./usr/share/man/cat4/pc532/lpt.0
 ./usr/share/man/cat4/pc532/mem.0
 ./usr/share/man/cat4/pc532/plip.0
+./usr/share/man/cat4/pcic.0
 ./usr/share/man/cat4/pciide.0
 ./usr/share/man/cat4/pcmcia.0
 ./usr/share/man/cat4/pmax
@@ -1076,6 +1088,7 @@
 ./usr/share/man/cat4/scsi.0
 ./usr/share/man/cat4/scsibus.0
 ./usr/share/man/cat4/sd.0
+./usr/share/man/cat4/sk.0
 ./usr/share/man/cat4/sl.0
 ./usr/share/man/cat4/sm.0
 ./usr/share/man/cat4/sparc/audioamd.0
@@ -1254,6 +1267,7 @@
 ./usr/share/man/cat5/ipnat.0
 ./usr/share/man/cat5/ipsend.0
 ./usr/share/man/cat5/isakmpd.conf.0
+./usr/share/man/cat5/keynote.0
 ./usr/share/man/cat5/krb.conf.0
 ./usr/share/man/cat5/krb.realms.0
 ./usr/share/man/cat5/lastlog.0
@@ -1322,6 +1336,7 @@
 ./usr/share/man/cat7/re_format.0
 ./usr/share/man/cat7/symlink.0
 ./usr/share/man/cat7/term.0
+./usr/share/man/cat8/ab.0
 ./usr/share/man/cat8/ac.0
 ./usr/share/man/cat8/accton.0
 ./usr/share/man/cat8/afsd.0
@@ -1329,9 +1344,12 @@
 ./usr/share/man/cat8/amiga/MAKEDEV.0
 ./usr/share/man/cat8/amiga/makedev.0
 ./usr/share/man/cat8/amq.0
+./usr/share/man/cat8/apachectl.0
+./usr/share/man/cat8/apxs.0
 ./usr/share/man/cat8/arm32/MAKEDEV.0
 ./usr/share/man/cat8/arm32/makedev.0
 ./usr/share/man/cat8/arp.0
+./usr/share/man/cat8/atactl.0
 ./usr/share/man/cat8/atari/MAKEDEV.0
 ./usr/share/man/cat8/atari/makedev.0
 ./usr/share/man/cat8/atrun.0
@@ -1429,6 +1447,7 @@
 ./usr/share/man/cat8/kstash.0
 ./usr/share/man/cat8/kvm_mkdb.0
 ./usr/share/man/cat8/locate.updatedb.0
+./usr/share/man/cat8/logresolve.0
 ./usr/share/man/cat8/lpc.0
 ./usr/share/man/cat8/lpd.0
 ./usr/share/man/cat8/mail.local.0
@@ -1524,6 +1543,7 @@
 ./usr/share/man/cat8/rmgroup.0
 ./usr/share/man/cat8/rmt.0
 ./usr/share/man/cat8/rmuser.0
+./usr/share/man/cat8/rotatelogs.0
 ./usr/share/man/cat8/route.0
 ./usr/share/man/cat8/routed.0
 ./usr/share/man/cat8/rpc.bootparamd.0
@@ -1564,11 +1584,13 @@
 ./usr/share/man/cat8/sparc/makedev.0
 ./usr/share/man/cat8/spray.0
 ./usr/share/man/cat8/sprayd.0
+./usr/share/man/cat8/sshd.0
 ./usr/share/man/cat8/ssl.0
 ./usr/share/man/cat8/stdethers.0
 ./usr/share/man/cat8/stdhosts.0
 ./usr/share/man/cat8/sticky.0
 ./usr/share/man/cat8/sudo.0
+./usr/share/man/cat8/suexec.0
 ./usr/share/man/cat8/sun3/MAKEDEV.0
 ./usr/share/man/cat8/sun3/makedev.0
 ./usr/share/man/cat8/supfilesrv.0
@@ -1679,24 +1701,3 @@
 ./usr/share/man/man4/alpha
 ./usr/share/man/man4/pmax
 ./usr/share/man/man4/powerpc
-./usr/share/man/cat4/pcic.0
-./usr/share/man/cat3/opendisk.0
-./usr/share/man/cat8/atactl.0
-./usr/share/man/cat1/slogin.0
-./usr/share/man/cat1/scp.0
-./usr/share/man/cat1/ssh-add.0
-./usr/share/man/cat1/ssh-agent.0
-./usr/share/man/cat1/ssh-keygen.0
-./usr/share/man/cat1/ssh.0
-./usr/share/man/cat8/sshd.0
-./usr/share/man/cat4/sk.0
-./usr/share/man/cat1/dbmmanage.0
-./usr/share/man/cat1/htdigest.0
-./usr/share/man/cat1/htpasswd.0
-./usr/share/man/cat8/ab.0
-./usr/share/man/cat8/apachectl.0
-./usr/share/man/cat8/apxs.0
-./usr/share/man/cat8/logresolve.0
-./usr/share/man/cat8/rotatelogs.0
-./usr/share/man/cat8/suexec.0
-./usr/share/man/cat4/ac97.0
