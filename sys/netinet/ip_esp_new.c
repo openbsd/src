@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp_new.c,v 1.53 1999/12/07 07:37:40 angelos Exp $	*/
+/*	$OpenBSD: ip_esp_new.c,v 1.54 1999/12/08 02:26:18 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -662,40 +662,6 @@ esp_new_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 
     espstat.esps_output++;
 
-    /*
-     * Loop through mbuf chain; if we find an M_EXT mbuf with 
-     * more than one reference, replace the rest of the chain. 
-     */
-    mi = m;
-    while (mi != NULL && 
-	   (!(mi->m_flags & M_EXT) || 
-	    (mi->m_ext.ext_ref == NULL &&
-	     mclrefcnt[mtocl(mi->m_ext.ext_buf)] <= 1)))
-    {
-        mo = mi;
-        mi = mi->m_next;
-    }
-     
-    if (mi != NULL)
-    {
-        /* Replace the rest of the mbuf chain. */
-        struct mbuf *n = m_copym2(mi, 0, M_COPYALL, M_DONTWAIT);
-      
-        if (n == NULL)
-        {
-	    espstat.esps_hdrops++;
-	    m_freem(m);
-	    return ENOBUFS;
-        }
-
-        if (mo != NULL)
-	  mo->m_next = n;
-        else
-	  m = n;
-
-        m_freem(mi);
-    }
-
     /* Check for replay counter wrap-around in automatic (not manual) keying */
     if ((tdb->tdb_rpl == 0) && (tdb->tdb_wnd > 0))
     {
@@ -739,6 +705,40 @@ esp_new_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
     {
 	pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_SOFT);
 	tdb->tdb_flags &= ~TDBF_SOFT_BYTES;     /* Turn off checking */
+    }
+
+    /*
+     * Loop through mbuf chain; if we find an M_EXT mbuf with 
+     * more than one reference, replace the rest of the chain. 
+     */
+    mi = m;
+    while (mi != NULL && 
+	   (!(mi->m_flags & M_EXT) || 
+	    (mi->m_ext.ext_ref == NULL &&
+	     mclrefcnt[mtocl(mi->m_ext.ext_buf)] <= 1)))
+    {
+        mo = mi;
+        mi = mi->m_next;
+    }
+     
+    if (mi != NULL)
+    {
+        /* Replace the rest of the mbuf chain. */
+        struct mbuf *n = m_copym2(mi, 0, M_COPYALL, M_DONTWAIT);
+      
+        if (n == NULL)
+        {
+	    espstat.esps_hdrops++;
+	    m_freem(m);
+	    return ENOBUFS;
+        }
+
+        if (mo != NULL)
+	  mo->m_next = n;
+        else
+	  m = n;
+
+        m_freem(mi);
     }
 
     /* Inject ESP header */
