@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.68 1998/03/30 20:56:37 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.69 1998/03/31 03:22:01 millert Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -901,7 +901,7 @@ eval echo "\\\\n"\
 "When you are done selecting files, enter 'done'.\\\\n"\
 "Some of these sets are required for your ${MODE} and some are optional --\\\\n"\
 "You will want at least the base and bsd sets.\\\\n"\
-"Consult the intallation notes if you are not sure which sets are required!\\\\n"
+"Consult the intallation notes if you are not sure which sets are required!"
 _osetsdone="$_setsdone"
 # Set a minimal default
 for _f in $_sets $_kernel; do
@@ -1149,7 +1149,7 @@ echo "\n"\
 "When you are done selecting files, enter 'done'.\n"\
 "Some of these sets are required for your ${MODE} and some are optional --\n"\
 "You will want at least the base and bsd sets.\n"\
-"Consult the intallation notes if you are not sure which sets are required!\n"
+"Consult the intallation notes if you are not sure which sets are required!"
 _osetsdone="$_setsdone"
 # Set a minimal default
 for _f in $_sets $_kernel; do
