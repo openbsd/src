@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.12 2003/07/06 20:04:00 deraadt Exp $ */
+/*	$OpenBSD: syscall.h,v 1.13 2004/08/06 09:40:44 pefo Exp $ */
 
 /*
  * Copyright (c) 1998-2002 Opsycon AB, Sweden.
@@ -29,8 +29,8 @@
 #define __DL_SYSCALL_H__
 
 #include <sys/stat.h>
-
 #include <sys/syscall.h>
+#include <sys/signal.h>
 
 extern long _dl__syscall(quad_t val, ...);
 
@@ -175,7 +175,7 @@ _dl_mmap(void *addr, size_t size, int prot, int flags, int fd, off_t f_offset)
 	    "addiu $29,40"
 	    : "=r" (malloc_buffer)
 	    : "0" (SYS___syscall), "r" (addr), "r" (size), "r" (prot),
-	    "r" (flags), "r" (fd), "r" (f_offset)
+	    "r" (flags), "r" (fd), "r" ((int)f_offset)
 	    : "$2", "$3", "$4", "$5", "$6", "$7", "$8", "$9",
 	    "$10","$11","$12","$13","$14","$15","$24","$25");
 	return malloc_buffer;
@@ -315,4 +315,61 @@ _dl_lseek(int fd, off_t offset, int whence)
 {
 	return _dl__syscall((quad_t)SYS_lseek, fd, 0, offset, whence);
 }
+
+extern inline int
+_dl_sigprocmask(int how, const sigset_t *set, sigset_t *oset)
+{
+        sigset_t sig_store;
+        sigset_t sig_store1;
+
+        if (set != NULL) {
+                sig_store1 = *set;
+        } else {
+                sig_store1 = 0;
+        }
+
+        __asm__ volatile (
+	    "li    $2,%1\n\t"
+	    "move  $4,%2\n\t"
+	    "move  $5,%3\n\t"
+            "syscall\n\t"
+            "move    %0, $2"
+            : "=r" (sig_store)
+            : "I" (SYS_sigprocmask), "r" (how), "r" (sig_store1)
+	    : "$2", "$3", "$4", "$5", "$6", "$7", "$8", "$9",
+	    "$10","$11","$12","$13","$14","$15","$24","$25");
+        if (oset != NULL)
+                *oset = sig_store;
+
+        return 0;
+}
+static inline int
+_dl_sysctl(int *name, u_int namelen, void *oldp, size_t *oldplen, void *newp,
+    size_t newlen)
+{
+        register int status __asm__ ("$2");
+
+        __asm__ volatile (
+	    "move  $2,%1\n\t"
+	    "addiu $29,-40\n\t"
+            "move  $4,%2\n\t"
+            "move  $5,%3\n\t"
+            "move  $6,%4\n\t"
+            "move  $7,%5\n\t"
+            "sw    %6,16($29)\n\t"
+            "sw    %7,20($29)\n\t"
+            "syscall\n\t"
+	    "addiu $29,40\n\t"
+            "beqz   $2,1f\n\t"
+            "li    $2,-1\n\t"
+            "1:"
+            : "=r" (status)
+            : "r" (SYS___sysctl), "r" (name), "r" (namelen), "r" (oldp),
+            "r" (oldplen), "r" (newp), "r" (newlen)
+	    : "$2", "$3", "$4", "$5", "$6", "$7", "$8", "$9",
+	    "$10","$11","$12","$13","$14","$15","$24","$25");
+        return status;
+}
+
+
 #endif /*__DL_SYSCALL_H__*/
