@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.67 2003/08/21 18:56:07 tedu Exp $	*/
+/*	$OpenBSD: proc.h,v 1.68 2003/11/08 06:11:11 nordin Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -263,6 +263,7 @@ struct	proc {
 #define P_INEXEC	0x200000	/* Process is doing an exec right now */
 #define P_SYSTRACE	0x400000	/* Process system call tracing active*/
 #define P_CONTINUED	0x800000	/* Proc has continued from a stopped state. */
+#define P_SWAPIN	0x1000000	/* Swapping in right now */
 
 #define	P_BITS \
     ("\20\01ADVLOCK\02CTTY\03INMEM\04NOCLDSTOP\05PPWAIT\06PROFIL\07SELECT" \

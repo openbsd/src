@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_glue.c,v 1.35 2003/08/10 00:04:50 miod Exp $	*/
+/*	$OpenBSD: uvm_glue.c,v 1.36 2003/11/08 06:11:10 nordin Exp $	*/
 /*	$NetBSD: uvm_glue.c,v 1.44 2001/02/06 19:54:44 eeh Exp $	*/
 
 /* 
@@ -352,6 +352,14 @@ uvm_swapin(p)
 	vaddr_t addr;
 	int rv, s;
 
+	s = splstatclock();
+	if (p->p_flag & P_SWAPIN) {
+		splx(s);
+		return;
+	}
+	p->p_flag |= P_SWAPIN;
+	splx(s);
+
 	addr = (vaddr_t)p->p_addr;
 	/* make P_INMEM true */
 	if ((rv = uvm_fault_wire(kernel_map, addr, addr + USPACE,
@@ -367,6 +375,7 @@ uvm_swapin(p)
 	if (p->p_stat == SRUN)
 		setrunqueue(p);
 	p->p_flag |= P_INMEM;
+	p->p_flag &= ~P_SWAPIN;
 	splx(s);
 	p->p_swtime = 0;
 	++uvmexp.swapins;
@@ -552,26 +561,30 @@ uvm_swapout(p)
 #ifdef DEBUG
 	if (swapdebug & SDB_SWAPOUT)
 		printf("swapout: pid %d(%s)@%p, stat %x pri %d free %d\n",
-	   p->p_pid, p->p_comm, p->p_addr, p->p_stat,
-	   p->p_slptime, uvmexp.free);
+		    p->p_pid, p->p_comm, p->p_addr, p->p_stat,
+		    p->p_slptime, uvmexp.free);
 #endif
-
-	/*
-	 * Do any machine-specific actions necessary before swapout.
-	 * This can include saving floating point state, etc.
-	 */
-	cpu_swapout(p);
 
 	/*
 	 * Mark it as (potentially) swapped out.
 	 */
 	s = splstatclock();
+	if (!(p->p_flag & P_INMEM)) {
+		splx(s);
+		return;
+	}
 	p->p_flag &= ~P_INMEM;
 	if (p->p_stat == SRUN)
 		remrunqueue(p);
 	splx(s);
 	p->p_swtime = 0;
 	++uvmexp.swapouts;
+
+	/*
+	 * Do any machine-specific actions necessary before swapout.
+	 * This can include saving floating point state, etc.
+	 */
+	cpu_swapout(p);
 
 	/*
 	 * Unwire the to-be-swapped process's user struct and kernel stack.

@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.83 2003/08/10 00:03:21 miod Exp $ */
+/* $OpenBSD: machdep.c,v 1.84 2003/11/08 06:11:11 nordin Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -1891,7 +1891,6 @@ fpusave_proc(struct proc *p, int save)
 #endif
 
 	KDASSERT(p->p_addr != NULL);
-	KDASSERT(p->p_flag & P_INMEM);
 
 	oci = p->p_addr->u_pcb.pcb_fpcpu;
 	if (oci == NULL) {
