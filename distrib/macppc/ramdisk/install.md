@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.1 2001/09/01 16:47:03 drahn Exp $
+#	$OpenBSD: install.md,v 1.2 2001/09/04 22:25:02 deraadt Exp $
 #
 #
 # Copyright rc) 1996 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@ md_native_fsopts() {
 md_init_mbr() {
 	# $1 is the disk to init
 	echo
-	echo "You will now be asked if you want to initialize the disk with a 1Mb"
+	echo "You will now be asked if you want to initialize the disk with a 1MB"
 	echo "MSDOS partition. This is the recomended setup and will allow you to"
 	echo "store the boot and other interesting things here."
 	echo
@@ -119,7 +119,7 @@ md_init_mbr() {
 		echo
 		echo "An MBR record with an OpenBSD usable partition table will now be copied"
 		echo "to your disk. Unless you have special requirements you will not need"
-		echo "to edit this MBR. After the MBR is copied an empty 1Mb MSDOS partition"
+		echo "to edit this MBR. After the MBR is copied an empty 1MB MSDOS partition"
 		echo "will be created on the disk. You *MUST* setup the OpenBSD disklabel"
 		echo "to have a partition include this MSDOS partition."
 		echo "You will have an opportunity to do this shortly."
@@ -197,7 +197,7 @@ md_checkforMBRdisklabel() {
 		echo
 		echo "You may keep your current setup if you want to be able to use any"
 		echo "already loaded OS. However you will be asked to prepare an empty"
-		echo "partition for OpenBSD later. There must also be at least ~0.5Mb free space"
+		echo "partition for OpenBSD later. There must also be at least ~0.5MB free space"
 		echo "in the boot partition to hold the OpenBSD bootloader."
 		echo
 		echo "Also note that the boot partition must be included as partition"

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.15 1999/05/26 16:08:43 espie Exp $
+#	$OpenBSD: Makefile,v 1.16 2001/09/04 22:25:02 deraadt Exp $
 
 REV=		${OSrev}
 
@@ -17,7 +17,7 @@ DISKTYPE=	rdroot
 PID!=		echo $$$$
 REALIMAGE!=	echo /tmp/image.${PID}
 IMAGE?=		ramdisk${REV}.fs
-IMAGESIZE?=	8192 # 4Mb in 512 byte blocks
+IMAGESIZE?=	8192 # 4MB in 512 byte blocks
 NEWFS_WILL_FAIL?=false
 CRUNCHGENOPTS?=
 KERNEL?=	RAMDISK

@@ -9,7 +9,7 @@ Installation is supported from several media types, including:
 	HTTP
 
 No matter which installation medium you choose, you'll need to have
-a floppy disk (1.44Mb required).
+a floppy disk (1.44MB required).
 
 If you are using a UN*X-like system to write the floppy image to
 disk, you should use the "dd" command to copy the file system image
