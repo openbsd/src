@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_physio.c,v 1.11 2001/06/22 14:14:09 deraadt Exp $	*/
+/*	$OpenBSD: kern_physio.c,v 1.12 2001/06/26 06:27:39 aaron Exp $	*/
 /*	$NetBSD: kern_physio.c,v 1.28 1997/05/19 10:43:28 pk Exp $	*/
 
 /*-
@@ -249,7 +249,7 @@ after_unlock:
 				panic("done > todo; strategy broken");
 #endif
 			iovp->iov_len -= done;
-			iovp->iov_base += done;
+			iovp->iov_base = (caddr_t)iovp->iov_base + done;
 			uio->uio_offset += done;
 			uio->uio_resid -= done;
 

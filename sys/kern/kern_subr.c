@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_subr.c,v 1.17 2001/06/23 05:45:13 art Exp $	*/
+/*	$OpenBSD: kern_subr.c,v 1.18 2001/06/26 06:27:40 aaron Exp $	*/
 /*	$NetBSD: kern_subr.c,v 1.15 1996/04/09 17:21:56 ragge Exp $	*/
 
 /*
@@ -107,7 +107,7 @@ uiomove(cp, n, uio)
 			break;
 #endif
 		}
-		iov->iov_base += cnt;
+		iov->iov_base = (caddr_t)iov->iov_base + cnt;
 		iov->iov_len -= cnt;
 		uio->uio_resid -= cnt;
 		uio->uio_offset += cnt;
@@ -157,7 +157,7 @@ again:
 		*(char *)iov->iov_base = c;
 		break;
 	}
-	iov->iov_base++;
+	iov->iov_base = (caddr_t)iov->iov_base + 1;
 	iov->iov_len--;
 	uio->uio_resid--;
 	uio->uio_offset++;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ktrace.c,v 1.23 2001/06/22 14:14:08 deraadt Exp $	*/
+/*	$OpenBSD: kern_ktrace.c,v 1.24 2001/06/26 06:27:38 aaron Exp $	*/
 /*	$NetBSD: kern_ktrace.c,v 1.23 1996/02/09 18:59:36 christos Exp $	*/
 
 /*
@@ -230,7 +230,7 @@ ktrgenio(p, fd, rw, iov, len, error)
 			break;
 
 		iov->iov_len -= count;
-		iov->iov_base += count;
+		iov->iov_base = (caddr_t)iov->iov_base + count;
 
 		if (iov->iov_len == 0)
 			iov++;
