@@ -1,7 +1,5 @@
-#	$OpenBSD: Makefile,v 1.1 2003/02/01 18:17:27 jason Exp $
+#	$OpenBSD: Makefile,v 1.2 2003/07/31 15:56:32 deraadt Exp $
 
 SUBDIR+= audio
-
-install:
 
 .include <bsd.subdir.mk>
