@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hostname.1,v 1.7 1999/05/23 14:10:48 aaron Exp $
+.\"	$OpenBSD: hostname.1,v 1.8 1999/08/17 14:04:00 aaron Exp $
 .\"	$NetBSD: hostname.1,v 1.11 1995/09/07 06:28:39 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1988, 1990, 1993
@@ -45,15 +45,16 @@
 .Op Fl s
 .Op Ar name-of-host
 .Sh DESCRIPTION
+The
 .Nm
-prints the name of the current host.  The super-user can
+utility prints the name of the current host.  The super-user can
 set the host name by supplying an argument; this is usually done in the
 network initialization script
 .Pa /etc/netstart ,
 normally run at boot
 time.
 .Pp
-Options:
+The options are as follows:
 .Bl -tag -width flag
 .It Fl s
 Trims off any domain information from the printed

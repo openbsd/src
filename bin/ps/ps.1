@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ps.1,v 1.21 1999/05/23 14:10:48 aaron Exp $
+.\"	$OpenBSD: ps.1,v 1.22 1999/08/17 14:04:01 aaron Exp $
 .\"	$NetBSD: ps.1,v 1.16 1996/03/21 01:36:28 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1991, 1993, 1994
@@ -54,11 +54,12 @@
 .Nm ps
 .Op Fl L
 .Sh DESCRIPTION
+The
 .Nm
-displays a header line followed by lines containing information about your
-processes that have controlling terminals.
-This information is sorted by process
-.Tn ID .
+utility displays information about active processes.
+When given no options,
+.Nm
+prints information about processes associated with the controlling terminal.
 .Pp
 The information displayed is selected based on a set of keywords (and for
 even more control, see the
@@ -67,8 +68,7 @@ even more control, see the
 and
 .Fl o
 options).
-The default output format includes, for each process, the process's
-.Tn ID ,
+The default output format includes, for each process, the process's ID,
 controlling terminal, CPU time (including both user and system time),
 state, and associated command.
 .Pp

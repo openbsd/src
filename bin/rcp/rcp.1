@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcp.1,v 1.9 1999/07/21 01:27:27 deraadt Exp $
+.\"	$OpenBSD: rcp.1,v 1.10 1999/08/17 14:04:01 aaron Exp $
 .\"	$NetBSD: rcp.1,v 1.6 1995/07/25 19:37:25 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
@@ -51,8 +51,9 @@
 .Ar file ...
 .Ar directory
 .Sh DESCRIPTION
+The
 .Nm
-copies files between machines.  Each
+utility copies files between machines.  Each
 .Ar file
 or
 .Ar directory
@@ -60,16 +61,16 @@ argument is either a remote file name of the
 form
 .Dq rname@rhost:path ,
 or a local file name (containing no
-.Dq \&:
+.Ql \&:
 characters,
 or a
-.Dq /
+.Ql /
 before any
 .Br
-.Dq \&:
+.Ql \&:
 characters).
 .Pp
-Available options are as follows:
+The options are as follows:
 .Bl -tag -width flag
 .It Fl K
 Turns off all Kerberos authentication.

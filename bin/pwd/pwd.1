@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pwd.1,v 1.7 1999/05/23 14:10:49 aaron Exp $
+.\"	$OpenBSD: pwd.1,v 1.8 1999/08/17 14:04:01 aaron Exp $
 .\"	$NetBSD: pwd.1,v 1.10 1995/09/07 06:47:30 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -46,11 +46,20 @@
 .Sh SYNOPSIS
 .Nm pwd
 .Sh DESCRIPTION
+The
 .Nm
-writes the absolute pathname of the current working directory to
+utility prints the absolute pathname of the current working directory to
 the standard output.
+Both the Bourne shell
+.Pq Xr sh 1
+and Korn shell
+.Pq Xr ksh 1
+have their own built-in version of
+.Nm pwd .
 .Pp
-The pwd utility exits 0 on success or >0 if an error occurred.
+The
+.Nm
+utility exits 0 on success or >0 if an error occurred.
 .Sh STANDARDS
 The
 .Nm
@@ -60,6 +69,8 @@ compatible.
 .Sh SEE ALSO
 .Xr cd 1 ,
 .Xr csh 1 ,
+.Xr ksh 1 ,
+.Xr sh 1 ,
 .Xr getcwd 3
 .Sh BUGS
 In
