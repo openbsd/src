@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.38 2003/12/27 00:53:51 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.39 2003/12/27 01:30:00 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -141,7 +141,7 @@ kroute_msg(int fd, int action, struct kroute *kroute)
 	} r;
 	ssize_t	n;
 
-	if (!fib_sync)
+	if (fib_sync == 0)
 		return (0);
 
 	bzero(&r, sizeof(r));
@@ -305,11 +305,31 @@ kroute_compare(struct kroute_node *a, struct kroute_node *b)
 void
 kroute_shutdown(int fd)
 {
+	kroute_fib_decouple(fd);
+}
+
+void
+kroute_fib_couple(int fd)
+{
+	struct kroute_node	*kr;
+
+	fib_sync = 1;
+
+	RB_FOREACH(kr, kroute_tree, &krt)
+		if ((kr->flags & F_BGPD_INSERTED))
+			kroute_msg(fd, RTM_ADD, &kr->r);
+}
+
+void
+kroute_fib_decouple(int fd)
+{
 	struct kroute_node	*kr;
 
 	RB_FOREACH(kr, kroute_tree, &krt)
 		if ((kr->flags & F_BGPD_INSERTED))
 			kroute_msg(fd, RTM_DELETE, &kr->r);
+
+	fib_sync = 0;
 }
 
 #define	ROUNDUP(a, size)	\
