@@ -20,7 +20,7 @@
 .if n .sp
 .if t .sp 0.4
 ..
-.Id $Id: gcc.1,v 1.2 2002/11/24 00:58:17 espie Exp $
+.Id $Id: gcc.1,v 1.3 2002/12/03 23:09:38 fgsch Exp $
 .TH GCC 1 "\*(Dt" "GNU Tools" "GNU Tools"
 .SH NAME
 gcc, g++ \- GNU project C and C++ Compiler (gcc-2.95)
@@ -207,6 +207,7 @@ in the following sections.
 \-Wredundant\-decls
 \-Wreturn\-type
 \-Wshadow
+\-Wstack\-protector
 \-Wstrict\-prototypes
 \-Wswitch
 \-Wtemplate\-debugging
@@ -511,6 +512,7 @@ in the following sections.
 \-fno\-common
 \-fno\-ident
 \-fno\-gnu\-linker
+\-fno\-stack\-protector
 \-fpcc\-struct\-return
 \-fpic
 \-fPIC
@@ -1977,6 +1979,9 @@ except when the same as the default promotion.
 Warn if any functions that return structures or unions are defined or
 called.  (In languages where you can return an array, this also elicits
 a warning.)
+.TP
+.B \-Wstack\-protector
+Warn if stack protection is enabled and a function can not be protected.
 .TP
 .B \-Wstrict\-prototypes
 Warn if a function is declared or defined without specifying the
@@ -3965,6 +3970,9 @@ distribution.)  For systems which \c
 compiler driver \c
 .B gcc\c
 \& is configured to do this automatically.
+.TP
+.B \-fno\-stack\-protector
+Do not include code to detect stack overflows.
 .TP
 .B \-finhibit-size-directive
 Don't output a \c
