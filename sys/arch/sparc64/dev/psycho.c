@@ -1,4 +1,4 @@
-/*	$OpenBSD: psycho.c,v 1.20 2002/06/08 18:06:02 jason Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.21 2002/07/18 05:46:29 jason Exp $	*/
 /*	$NetBSD: psycho.c,v 1.39 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -755,7 +755,7 @@ psycho_iommu_init(sc, tsbsize)
 
 	/* give us a nice name.. */
 	name = (char *)malloc(32, M_DEVBUF, M_NOWAIT);
-	if (name == 0)
+	if (name == NULL)
 		panic("couldn't malloc iommu name");
 	snprintf(name, 32, "%s dvma", sc->sc_dev.dv_xname);
 
