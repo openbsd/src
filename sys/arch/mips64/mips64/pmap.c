@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.12 2004/09/23 08:42:38 pefo Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.13 2004/09/23 12:38:28 pefo Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -175,11 +175,12 @@ pmap_bootstrap()
 	pmap_kernel()->pm_count = 1;
 
 	/*
-	 * The R4?00 stores only one copy of the Global bit in the
-	 * translation lookaside buffer for each 2 page entry.
-	 * Thus invalid entrys must have the Global bit set so
-	 * when Entry LO and Entry HI G bits are anded together
-	 * they will produce a global bit to store in the tlb.
+	 * The 64 bit Mips architecture stores the AND result
+	 * of the Global bits in the pte pair in the on chip
+	 * translation lookaside buffer. Thus invalid entrys
+	 * must have the Global bit set so when Entry LO and
+	 * Entry HI G bits are ANDed together they will produce
+	 * a global bit to store in the tlb.
 	 */
 	for(i = 0, spte = Sysmap; i < Sysmapsize; i++, spte++)
 		spte->pt_entry = PG_G;
@@ -189,12 +190,10 @@ pmap_bootstrap()
  *  Page steal allocator used during bootup.
  */
 vaddr_t
-pmap_steal_memory(size, vstartp, vendp)
-	vsize_t size;
-	vaddr_t *vstartp, *vendp;
+pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 {
 	int i, j, x;
-	int npgs;
+	int npg;
 	vaddr_t va;
 	paddr_t pa;
 
@@ -205,7 +204,7 @@ pmap_steal_memory(size, vstartp, vendp)
 #endif
 
 	size = round_page(size);
-	npgs = atop(size);
+	npg = atop(size);
 	va = 0;
 
 	for(i = 0; i < vm_nphysseg && va == 0; i++) {
@@ -214,37 +213,31 @@ pmap_steal_memory(size, vstartp, vendp)
 			continue;
 		}
 
-		if ((vm_physmem[i].avail_end - vm_physmem[i].avail_start) < npgs) {
+		if ((vm_physmem[i].avail_end - vm_physmem[i].avail_start) < npg)
 			continue;
-		}
 
 		pa = ptoa(vm_physmem[i].avail_start);
-		vm_physmem[i].avail_start += npgs;
-		vm_physmem[i].start += npgs;
+		vm_physmem[i].avail_start += npg;
+		vm_physmem[i].start += npg;
 
 		if (vm_physmem[i].avail_start == vm_physmem[i].end) {
-			if (vm_nphysseg == 1) {
+			if (vm_nphysseg == 1)
 				panic("pmap_steal_memory: out of memory!");
-			}
 
 			vm_nphysseg--;
-			for(j = i; j < vm_nphysseg; x++) {
+			for (j = i; j < vm_nphysseg; x++)
 				vm_physmem[x] = vm_physmem[x + 1];
-			}
 		}
-		if (vstartp) {
+		if (vstartp)
 			*vstartp = round_page(virtual_start);
-		}
-		if (vendp) {
+		if (vendp)
 			*vendp = virtual_end;
-		}
 		va = PHYS_TO_KSEG0(pa);
-		memset((caddr_t)va, 0, size);
+		bzero((void *)va, size);
 	}
 
-	if (va == 0) {
+	if (va == 0)
 		panic("pmap_steal_memory: no memory to steal");
-	}
 
 	return(va);
 }
@@ -335,8 +328,7 @@ extern struct user *proc0paddr;
  *	no valid mappings.
  */
 void
-pmap_destroy(pmap)
-	pmap_t pmap;
+pmap_destroy(pmap_t pmap)
 {
 	int count;
 
@@ -382,8 +374,7 @@ pmap_destroy(pmap)
  *	Add a reference to the specified pmap.
  */
 void
-pmap_reference(pmap)
-	pmap_t pmap;
+pmap_reference(pmap_t pmap)
 {
 
 	DPRINTF(PDB_FOLLOW, ("pmap_reference(%x)\n", pmap));
@@ -399,13 +390,10 @@ pmap_reference(pmap)
  *      Make a new pmap (vmspace) active for the given process.
  */
 void
-pmap_activate(p)
-	struct proc *p;
+pmap_activate(struct proc *p)
 {
 	pmap_t pmap = p->p_vmspace->vm_map.pmap;
-
 	p->p_addr->u_pcb.pcb_segtab = pmap->pm_segtab;
-
 	pmap_alloc_tlbpid(p);
 }
 
@@ -413,8 +401,7 @@ pmap_activate(p)
  *      Make a previously active pmap (vmspace) inactive.
  */
 void
-pmap_deactivate(p)
-	struct proc *p;
+pmap_deactivate(struct proc *p)
 {
 	/* Empty */
 }
@@ -426,9 +413,7 @@ pmap_deactivate(p)
  *	rounded to the page size.
  */
 void
-pmap_remove(pmap, sva, eva)
-	pmap_t pmap;
-	vaddr_t sva, eva;
+pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 {
 	vaddr_t nssva;
 	pt_entry_t *pte;
@@ -438,9 +423,9 @@ pmap_remove(pmap, sva, eva)
 		("pmap_remove(%x, %x, %x)\n", pmap, sva, eva));
 
 	stat_count(remove_stats.calls);
-	if (pmap == NULL) {
+
+	if (pmap == NULL)
 		return;
-	}
 
 	if (pmap == pmap_kernel()) {
 		pt_entry_t *pte;
@@ -514,9 +499,7 @@ pmap_remove(pmap, sva, eva)
  *	Lower the permission for all mappings to a given page.
  */
 void
-pmap_page_protect(pg, prot)
-	struct vm_page *pg;
-	vm_prot_t prot;
+pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 {
 	pv_entry_t pv;
 	vaddr_t va;
@@ -567,14 +550,11 @@ pmap_page_protect(pg, prot)
  *	specified range of this map as requested.
  */
 void
-pmap_protect(pmap, sva, eva, prot)
-	pmap_t pmap;
-	vaddr_t sva, eva;
-	vm_prot_t prot;
+pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
 	vaddr_t nssva;
 	pt_entry_t *pte;
-	unsigned entry;
+	u_int entry;
 	u_int p;
 
 	DPRINTF(PDB_FOLLOW|PDB_PROTECT,
@@ -644,9 +624,6 @@ pmap_protect(pmap, sva, eva, prot)
 				continue;
 			entry = (entry & ~(PG_M | PG_RO)) | p;
 			pte->pt_entry = entry;
-			/*
-			 * Update the TLB if the given address is in the cache.
-			 */
 			if (pmap->pm_tlbgen == tlbpid_gen)
 				tlb_update(sva | (pmap->pm_tlbpid <<
 					VMTLB_PID_SHIFT), entry);
@@ -664,12 +641,7 @@ pmap_protect(pmap, sva, eva, prot)
  *	insert this page into the given map NOW.
  */
 int
-pmap_enter(pmap, va, pa, prot, flags)
-	pmap_t pmap;
-	vaddr_t va;
-	paddr_t pa;
-	vm_prot_t prot;
-	int flags;
+pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 {
 	pt_entry_t *pte;
 	u_int npte;
@@ -829,10 +801,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 }
 
 void
-pmap_kenter_pa(va, pa, prot)
-	vaddr_t va;
-	paddr_t pa;
-	vm_prot_t prot;
+pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 {
 	pt_entry_t *pte;
 	u_int npte;
@@ -856,9 +825,7 @@ pmap_kenter_pa(va, pa, prot)
  *  pages behind the back of the VP tracking system. 
  */
 void
-pmap_kremove(va, len)
-	vaddr_t va;
-	vsize_t len;
+pmap_kremove(vaddr_t va, vsize_t len)
 {
 	pt_entry_t *pte;
 	vaddr_t eva;
@@ -879,9 +846,7 @@ pmap_kremove(va, len)
 }
 
 void
-pmap_unwire(pmap, va)
-	pmap_t pmap;
-	vaddr_t va;
+pmap_unwire(pmap_t pmap, vaddr_t va)
 {
 	/* XXX this pmap does not handle wired mappings yet... */
 }
@@ -893,10 +858,7 @@ pmap_unwire(pmap, va)
  *		with the given map/virtual_address pair.
  */
 boolean_t
-pmap_extract(pmap, va, pa)
-	pmap_t	pmap;
-	vaddr_t va;
-	paddr_t *pa;
+pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pa)
 {
 	boolean_t rv = TRUE;
 	pt_entry_t *pte;
@@ -938,9 +900,7 @@ pmap_extract(pmap, va, pa)
  * will not cause cache aliases.
  */
 void
-pmap_prefer(foff, vap)
-	paddr_t foff;
-	vaddr_t *vap;
+pmap_prefer(paddr_t foff, vaddr_t *vap)
 {
 #if 1
 	*vap += (foff - *vap) & (CpuCacheAliasMask | PAGE_MASK);
@@ -1090,8 +1050,7 @@ pmap_clear_modify(struct vm_page *pg)
 }
 
 void
-pmap_set_modify(pg)
-	struct vm_page *pg;
+pmap_set_modify(struct vm_page *pg)
 {
 	pv_entry_t pv;
 
@@ -1105,8 +1064,7 @@ pmap_set_modify(pg)
  *	Clear the reference bit on the specified physical page.
  */
 boolean_t
-pmap_clear_reference(pg)
-	struct vm_page *pg;
+pmap_clear_reference(struct vm_page *pg)
 {
 	pv_entry_t pv;
 	boolean_t rv;
@@ -1126,8 +1084,7 @@ pmap_clear_reference(pg)
  *	by any physical maps.
  */
 boolean_t
-pmap_is_referenced(pg)
-	struct vm_page *pg;
+pmap_is_referenced(struct vm_page *pg)
 {
 	pv_entry_t pv;
 
@@ -1142,8 +1099,7 @@ pmap_is_referenced(pg)
  *	by any physical maps.
  */
 boolean_t
-pmap_is_modified(pg)
-	struct vm_page *pg;
+pmap_is_modified(struct vm_page *pg)
 {
 	pv_entry_t pv;
 
@@ -1247,8 +1203,7 @@ pmap_page_alloc(vaddr_t *ret)
  * This is called only by switch().
  */
 int
-pmap_alloc_tlbpid(p)
-	struct proc *p;
+pmap_alloc_tlbpid(struct proc *p)
 {
 	pmap_t pmap;
 	int id;
@@ -1376,7 +1331,6 @@ pmap_enter_pv(pmap_t pmap, vaddr_t va, vm_page_t pg, u_int *npte)
 
 /*
  * Remove a physical to virtual address translation from the PV table.
- * Returns TRUE if it was the last mapping and cached, else FALSE.
  */
 void
 pmap_remove_pv(pmap_t pmap, vaddr_t va, paddr_t pa)
@@ -1396,10 +1350,9 @@ pmap_remove_pv(pmap_t pmap, vaddr_t va, paddr_t pa)
 
 	pv = pg_to_pvh(pg);
 	/*
-	 * If it is the first entry on the list, it is actually
-	 * in the header and we must copy the following entry up
-	 * to the header.  Otherwise we must search the list for
-	 * the entry. In either case we free the now unused entry.
+	 * If we are removing the first entry on the list, copy up
+	 * the next entry, if any, and free that pv item since the
+	 * first root item can't be freed. Else walk the list.
 	 */
 	if (pmap == pv->pv_pmap && va == pv->pv_va) {
 		npv = pv->pv_next;
@@ -1409,7 +1362,6 @@ pmap_remove_pv(pmap_t pmap, vaddr_t va, paddr_t pa)
 			pmap_pv_free(npv);
 		} else {
 			pv->pv_pmap = NULL;
-			Mips_SyncDCachePage(pv->pv_va);
 		}
 		stat_count(remove_stats.pvfirst);
 	} else {
