@@ -1,7 +1,7 @@
-/*	$OpenBSD: monitor.c,v 1.6 2004/12/11 08:38:26 moritz Exp $	*/
+/*	$OpenBSD: monitor.c,v 1.7 2004/12/20 14:58:57 moritz Exp $	*/
 
 /*
- * Copyright (c) 2004 Moritz Jodeit <moritz@jodeit.org>
+ * Copyright (c) 2004 Moritz Jodeit <moritz@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
