@@ -1,4 +1,4 @@
-/*	$OpenBSD: advmcode.c,v 1.2 1998/09/28 01:56:58 downsj Exp $	*/
+/*	$OpenBSD: advmcode.c,v 1.3 2003/06/25 23:20:03 mickey Exp $	*/
 /*      $NetBSD: advmcode.c,v 1.3 1998/09/26 16:02:57 dante Exp $        */
 
 /*
@@ -63,7 +63,7 @@
  * This code is loaded into Lram during initializzation procedure.
  */
 
-u_int8_t asc_mcode[] =
+const u_int8_t asc_mcode[] =
 {
   0x01,  0x03,  0x01,  0x19,  0x0F,  0x00,  0x00,  0x00,  0x00,  0x00,  0x00,  0x00,  0x00,  0x00,  0x00,  0x00,
   0x0F,  0x0F,  0x0F,  0x0F,  0x0F,  0x0F,  0x0F,  0x0F,  0x00,  0x00,  0x00,  0x00,  0x00,  0x00,  0x00,  0x00,
@@ -211,11 +211,11 @@ u_int8_t asc_mcode[] =
   0x41,  0x23,  0xF6,  0x88,  0x11,  0x23,  0xA1,  0x01,  0x04,  0x23,  0xA0,  0x01,  0xE6,  0x84,
 };
 
-u_int16_t asc_mcode_size = sizeof(asc_mcode);
+const u_int16_t asc_mcode_size = sizeof(asc_mcode);
 
 /*
  * This checksum is used to compare with that one that will be calculated
  * at run time.
  * This is performed to ensure the uCode is correctly loaded into the Lram.
  */
-u_int32_t asc_mcode_chksum = 0x012B5442UL;
+const u_int32_t asc_mcode_chksum = 0x012B5442UL;
