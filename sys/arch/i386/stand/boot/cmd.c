@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.31 1997/09/02 21:02:15 mickey Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.32 1997/09/17 19:55:34 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -34,7 +34,6 @@
 
 #include <sys/param.h>
 #include <libsa.h>
-#include <debug.h>
 #include <sys/reboot.h>
 #include "cmd.h"
 
@@ -47,9 +46,6 @@ static int Xboot __P((void));
 static int Xdevice __P((void));
 #ifdef DEBUG
 static int Xdebug __P((void));
-#endif
-#ifdef DUMP_REGS
-static int Xregs __P((void));
 #endif
 static int Xhelp __P((void));
 static int Ximage __P((void));
@@ -86,9 +82,6 @@ static const struct cmd_table cmd_table[] = {
 	{"machine",CMDT_MDC, Xmachine},
 #endif
 	{"reboot", CMDT_CMD, Xreboot},
-#ifdef DUMP_REGS
-	{"regs",   CMDT_CMD, Xregs},
-#endif
 	{"set",    CMDT_SET, Xset},
 	{"time",   CMDT_CMD, Xtime},
 	{NULL, 0},
@@ -609,11 +602,3 @@ Xreboot()
 	return 0; /* just in case */
 }
 
-#ifdef DUMP_REGS
-static int
-Xregs()
-{
-	DUMP_REGS;
-	return 0;
-}
-#endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd_i386.c,v 1.5 1997/09/03 04:32:44 weingart Exp $	*/
+/*	$OpenBSD: cmd_i386.c,v 1.6 1997/09/17 19:55:36 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff, Tobias Weingartner
@@ -34,14 +34,17 @@
 
 #include <sys/param.h>
 #include <machine/biosvar.h>
+#include "debug.h"
 #include "biosdev.h"
 #include "libsa.h"
 #include <cmd.h>
 
 static int Xdiskinfo __P((void));
+static int Xregs __P((void));
 
 const struct cmd_table cmd_machine[] = {
 	{ "diskinfo", CMDT_CMD, Xdiskinfo },
+	{ "regs",     CMDT_CMD, Xregs },
 	{ NULL, 0 }
 };
 
@@ -60,3 +63,9 @@ Xdiskinfo()
 	return 0;
 }
 
+static int
+Xregs()
+{
+	DUMP_REGS;
+	return 0;
+}
