@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.64 1997/12/01 04:21:49 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.65 1997/12/01 22:58:32 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.202 1996/05/18 15:54:59 christos Exp $	*/
 
 /*-
@@ -1143,11 +1143,10 @@ void
 init386(first_avail)
 	vm_offset_t first_avail;
 {
-	int i;
-	u_int cm, em;
+	int x;
+	unsigned biosbasemem, biosextmem;
 	struct region_descriptor region;
 	extern void consinit __P((void));
-	extern char end, kernel_text;
 
 	proc0.p_addr = proc0paddr;
 
@@ -1190,6 +1189,8 @@ init386(first_avail)
 	ldt[LBSDICALLS_SEL] = ldt[LSYS5CALLS_SEL];
 
 	/* exceptions */
+	for (x = 0; x < NIDT; x++)
+		setgate(&idt[x], &IDTVEC(rsvd), 0, SDT_SYS386TGT, SEL_KPL, GCODE_SEL);
 	setgate(&idt[  0], &IDTVEC(div),     0, SDT_SYS386TGT, SEL_KPL, GCODE_SEL);
 	setgate(&idt[  1], &IDTVEC(dbg),     0, SDT_SYS386TGT, SEL_KPL, GCODE_SEL);
 	setgate(&idt[  2], &IDTVEC(nmi),     0, SDT_SYS386TGT, SEL_KPL, GCODE_SEL);
@@ -1205,12 +1206,9 @@ init386(first_avail)
 	setgate(&idt[ 12], &IDTVEC(stk),     0, SDT_SYS386TGT, SEL_KPL, GCODE_SEL);
 	setgate(&idt[ 13], &IDTVEC(prot),    0, SDT_SYS386TGT, SEL_KPL, GCODE_SEL);
 	setgate(&idt[ 14], &IDTVEC(page),    0, SDT_SYS386TGT, SEL_KPL, GCODE_SEL);
-	setgate(&idt[ 15], &IDTVEC(rsvd),    0, SDT_SYS386TGT, SEL_KPL, GCODE_SEL);
 	setgate(&idt[ 16], &IDTVEC(fpu),     0, SDT_SYS386TGT, SEL_KPL, GCODE_SEL);
 	setgate(&idt[ 17], &IDTVEC(align),   0, SDT_SYS386TGT, SEL_KPL, GCODE_SEL);
 	setgate(&idt[ 18], &IDTVEC(rsvd),    0, SDT_SYS386TGT, SEL_KPL, GCODE_SEL);
-	for (i = 19; i < NIDT; i++)
-		setgate(&idt[i], &IDTVEC(rsvd), 0, SDT_SYS386TGT, SEL_KPL, GCODE_SEL);
 	setgate(&idt[128], &IDTVEC(syscall), 0, SDT_SYS386TGT, SEL_UPL, GCODE_SEL);
 
 	setregion(&region, gdt, sizeof(gdt) - 1);
@@ -1222,9 +1220,30 @@ init386(first_avail)
 	isa_defaultirq();
 #endif
 
+#ifdef MEM_COMPUTE /* Default config  - get sizes from bootblocks */
+	splhigh();
+	enable_intr();
+
+	/*
+	 * Use BIOS values stored in RTC CMOS RAM, since probing
+	 * breaks certain 386 AT relics.
+	 *
+	 * XXX Not only does probing break certain 386 AT relics, but
+	 * not all BIOSes (Dell, Compaq, others) report the correct
+	 * amount of extended memory.
+	 */
+	biosbasemem = (mc146818_read(NULL, NVRAM_BASEHI) << 8) |
+	    mc146818_read(NULL, NVRAM_BASELO);
+	biosextmem = (mc146818_read(NULL, NVRAM_EXTHI) << 8) |
+	    mc146818_read(NULL, NVRAM_EXTLO);
+#else
+	biosbasemem = cnvmem;	/* Base memory as reported by BIOS call */
+	biosextmem = extmem;	/* Extended memory as reported by BIOS call */
+#endif
+
 #ifdef EXTMEM_SIZE
 	/* Override memory size */
-	extmem = EXTMEM_SIZE;
+	biosextmem = EXTMEM_SIZE;
 #endif
 
 	/*
@@ -1237,13 +1256,8 @@ init386(first_avail)
 		printf("WARNING: CAN'T ALLOCATE BASE RAM FROM IOMEM EXTENT MAP!\n");
 	}
 
-	/*
-	 * BIOS leaves data in low memory and VM system doesn't work with
-	 * phys 0,  /boot leaves arguments at page 1.
-	 */
-	avail_next = avail_start = NBPG + i386_round_page(bootargc);
-	avail_end = extmem ? IOM_END + extmem * 1024
-		: cnvmem * 1024;	/* just temporary use */
+	avail_end = biosextmem ? IOM_END + biosextmem * 1024
+	    : biosbasemem * 1024;	/* just temporary use */
 
 	if (avail_end > IOM_END && extent_alloc_region(iomem_ex, IOM_END,
 	    (avail_end - IOM_END), EX_NOWAIT)) {
@@ -1252,25 +1266,36 @@ init386(first_avail)
 	}
 
 	/* Round down to whole pages. */
-	cm = i386_round_page(cnvmem * 1024);
-	em = i386_round_page(extmem * 1024);
+	biosbasemem &= -(NBPG / 1024);
+	biosextmem &= -(NBPG / 1024);
+
+	/*
+	 * BIOS leaves data in low memory and VM system doesn't work with
+	 * phys 0,  /boot leaves arguments at page 1.
+	 */
+	avail_start = NBPG + i386_round_page(bootargc);
+
+	avail_end = biosextmem ? IOM_END + biosextmem * 1024
+	    : biosbasemem * 1024;
 
 	/* number of pages of physmem addr space */
-	physmem = btoc(cm + em);
-	dumpmem_low = btoc(cm);
-	dumpmem_high = btoc(em);
+	physmem = btoc((biosbasemem + biosextmem) * 1024);
+	dumpmem_low = btoc(biosbasemem * 1024);
+	dumpmem_high = btoc(biosextmem * 1024);
 
 	/*
 	 * Initialize for pmap_free_pages and pmap_next_page.
 	 * These guys should be page-aligned.
-	 * We load right after the I/O hole; adjust hole_end to compensate.
 	 */
-	hole_start = cm;
+	hole_start = biosbasemem * 1024;
+
+	/* we load right after the I/O hole; adjust hole_end to compensate */
 	hole_end = round_page(first_avail);
+	avail_next = avail_start;
 
 	if (physmem < btoc(2 * 1024 * 1024)) {
-		printf("\awarning: too little memory available;"
-		       "running in degraded mode\npress a key to confirm\n\n");
+		printf("warning: too little memory available; running in degraded mode\n"
+		    "press a key to confirm\n\n");
 		cngetc();
 	}
 
