@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.27 2004/10/11 14:11:42 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.28 2004/10/11 14:25:28 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -28,7 +28,8 @@ sub new
 	bless {state => 
 	    {default_owner=>'root', 
 	     default_group=>'bin', 
-	     default_mode=> 0444} }, $class;
+	     default_mode=> 0444,
+	     cwd=>'.'} }, $class;
 }
 
 sub read
@@ -126,24 +127,8 @@ sub write
 {
 	my ($self, $fh) = @_;
 
-	if (defined $self->{cvstags}) {
-		for my $item (@{$self->{cvstags}}) {
-			$item->write($fh);
-		}
-	}
-	for my $unique_item (qw(name no-default-conflict manual-installation extrainfo arch)) {
-		$self->{$unique_item}->write($fh) if defined $self->{$unique_item};
-	}
-	for my $listname (qw(modules pkgcfl conflict pkgdep newdepend libdepend groups users items)) {
-		if (defined $self->{$listname}) {
-			for my $item (@{$self->{$listname}}) {
-				$item->write($fh);
-			}
-		}
-	}
-	for my $special (OpenBSD::PackageInfo::info_names()) {
-		$self->{$special}->write($fh) if defined $self->{$special};
-	}
+	$self->visit('write', $fh);
+
 }
 
 

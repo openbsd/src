@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.21 2004/10/11 10:30:33 espie Exp $
+# $OpenBSD: pkg_create,v 1.22 2004/10/11 14:25:28 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -285,6 +285,15 @@ if (defined $opt_d) {
 print "Creating package $ARGV[0]\n" if $opt_v;
 
 my $plist = new OpenBSD::PackingList;
+my @extra_files = ();
+for my $special (info_names()) {
+    next unless -f $dir.$special;
+    push(@extra_files, $special);
+    my $f = OpenBSD::PackingElement::File->add($plist, $special);
+    $f->{ignore} = 1;
+    $f->{md5} = OpenBSD::md5::fromfile($dir.$special);
+}
+
 if (defined $opt_p) {
 	OpenBSD::PackingElement::Cwd->add($plist, $opt_p);
 } else {
@@ -392,15 +401,6 @@ if (defined $opt_U) {
     copy_subst($opt_U, $dir.UNDISPLAY);
 }
 
-my @extra_files = ();
-OpenBSD::PackingElement::Cwd->add($plist, '.');
-for my $special (info_names()) {
-    next unless -f $dir.$special;
-    push(@extra_files, $special);
-    my $f = OpenBSD::PackingElement::File->add($plist, $special);
-    $f->{ignore} = 1;
-    $f->{md5} = OpenBSD::md5::fromfile($dir.$special);
-}
 
 if (!defined $plist->{name}) {
 	print STDERR "Can't write unnamed packing list\n";
