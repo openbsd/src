@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_drv.c,v 1.10 1996/04/21 22:17:07 deraadt Exp $	*/
+/*	$OpenBSD: pcvt_drv.c,v 1.11 1996/04/24 18:16:57 mickey Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -92,10 +92,6 @@
 #define EXTERN			/* allocate mem */
 
 #include "pcvt_hdr.h"		/* global include */
-#include "rnd.h"
-#if	NRND
-#include <dev/rndvar.h>
-#endif
 
 #ifdef NOTDEF
 unsigned	__debug = 0; /*0xffe */;
@@ -890,9 +886,6 @@ pcrint(void)
 
 		dt = inb(CONTROLLER_DATA);		/* get it 8042 data */
 
-#if	NRND
-		add_keyboard_randomness(dt);
-#endif
 		if (pcvt_kbd_count >= PCVT_KBD_FIFO_SZ)	/* fifo overflow ? */
 		{
 			log (LOG_WARNING, "pcvt: keyboard buffer overflow\n");
