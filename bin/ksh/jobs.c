@@ -1,4 +1,4 @@
-/*	$OpenBSD: jobs.c,v 1.10 1998/11/19 19:59:09 millert Exp $	*/
+/*	$OpenBSD: jobs.c,v 1.11 1999/01/08 20:24:59 millert Exp $	*/
 
 /*
  * Process and job control
@@ -643,6 +643,8 @@ exchild(t, flags, close_fd)
 	}
 
 	/* shell (parent) stuff */
+	/* Ensure next child gets a (slightly) different $RANDOM sequence */
+	change_random();
 	if (!(flags & XPIPEO)) {	/* last process in a job */
 #ifdef TTY_PGRP
 		/* YYY: Is this needed? (see also YYY above)
@@ -899,8 +901,9 @@ j_resume(cp, bg)
 			}
 			/* See comment in j_waitj regarding saved_ttypgrp. */
 			if (ttypgrp_ok && tcsetpgrp(tty_fd, (j->flags & JF_SAVEDTTYPGRP) ? j->saved_ttypgrp : j->pgrp) < 0) {
-				if (j->flags & JF_SAVEDTTY)
+				if (j->flags & JF_SAVEDTTY) {
 					set_tty(tty_fd, &tty_state, TF_NONE);
+				}
 				sigprocmask(SIG_SETMASK, &omask,
 					(sigset_t *) 0);
 				bi_errorf("1st tcsetpgrp(%d, %d) failed: %s",
@@ -921,8 +924,9 @@ j_resume(cp, bg)
 		if (!bg) {
 			j->flags &= ~JF_FG;
 # ifdef TTY_PGRP
-			if (ttypgrp_ok && (j->flags & JF_SAVEDTTY))
+			if (ttypgrp_ok && (j->flags & JF_SAVEDTTY)) {
 				set_tty(tty_fd, &tty_state, TF_NONE);
+			}
 			if (ttypgrp_ok && tcsetpgrp(tty_fd, our_pgrp) < 0) {
 				warningf(TRUE,
 				"fg: 2nd tcsetpgrp(%d, %d) failed: %s",

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sh.h,v 1.6 1998/06/25 19:02:19 millert Exp $	*/
+/*	$OpenBSD: sh.h,v 1.7 1999/01/08 20:25:02 millert Exp $	*/
 
 /*
  * Public Domain Bourne/Korn shell
@@ -378,6 +378,16 @@ EXTERN	Area	aperm;		/* permanent object space */
 #ifdef MEM_DEBUG
 # include "chmem.h" /* a debugging front end for malloc et. al. */
 #endif /* MEM_DEBUG */
+
+#ifdef KSH_DEBUG
+# define kshdebug_init()	kshdebug_init_()
+# define kshdebug_printf(a)	kshdebug_printf_ a
+# define kshdebug_dump(a)	kshdebug_dump_ a
+#else /* KSH_DEBUG */
+# define kshdebug_init()
+# define kshdebug_printf(a)
+# define kshdebug_dump(a)
+#endif /* KSH_DEBUG */
 
 
 /*

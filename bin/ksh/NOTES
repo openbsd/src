@@ -1,4 +1,4 @@
-$OpenBSD: NOTES,v 1.5 1998/10/29 04:09:19 millert Exp $
+$OpenBSD: NOTES,v 1.6 1999/01/08 20:24:57 millert Exp $
 
 General features of at&t ksh88 that are not (yet) in pdksh:
     - exported aliases and functions (not in ksh93).
@@ -35,6 +35,13 @@ Known bugs (see also BUG-REPORTS and PROJECTS files):
 	- `echo foo | read bar; echo $bar' prints foo in at&t ksh, nothing
 	  in pdksh (ie, the read is done in a separate process in pdksh).
     Misc:
+
+Known problems not caused by ksh:
+    - after stoping a job, emacs/vi is not re-entered.  Hitting return
+      prints the prompt and everything is fine again.  Problem (often
+      involving a pager like less) is related to order of process
+      scheduling (shell runs before `stop'ed (sub) processes have had a chance
+      to clean up the screen/terminal).
 
 Known differences between pdksh & at&t ksh (that may change)
     - vi:
@@ -191,6 +198,13 @@ Known differences between pdksh & at&t ksh (that are not likely to change)
       at&t ksh (and sh) don't.  Eg., pdksh likes
 	while false ; do done
       but ksh88 doesn't like it.
+    - pdksh bumps RANDOM in parent after a fork, at&t ksh bumps it in both
+      parent and child:
+	RANDOM=1
+	echo child: `echo $RANDOM`
+	echo parent: $RANDOM
+      will produce "child: 16838 parent: 5758" in pdksh, while at&t ksh
+      will produce "child: 5758 parent: 5758".
 
 Oddities in ksh (pd & at&t):
     - array references inside (())/$(()) are strange:

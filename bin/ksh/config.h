@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.h,v 1.3 1998/06/25 19:01:49 millert Exp $	*/
+/*	$OpenBSD: config.h,v 1.4 1999/01/08 20:24:58 millert Exp $	*/
 
 /* config.h.  Generated automatically by configure.  */
 /* config.h.in.  Generated automatically from configure.in by autoheader.  */
@@ -195,6 +195,10 @@
 /* Default PATH (see comments in configure.in for more details) */
 #define DEFAULT_PATH "/bin:/usr/bin:/usr/ucb"
 
+/* Define if your C library's getwd/getcwd function dumps core in unreadable
+ * directories.  */
+/* #undef HPUX_GETWD_BUG */
+
 /* Include ksh features? (see comments in configure.in for more details) */
 /* #define KSH 1 */
 
@@ -246,6 +250,9 @@
 
 /* Define if you have the flock function.  */
 #define HAVE_FLOCK 1
+
+/* Define if you have the getcwd function.  */
+#define HAVE_GETCWD 1
 
 /* Define if you have the getgroups function.  */
 /* #undef HAVE_GETGROUPS */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.5 1997/06/19 13:58:49 kstailey Exp $	*/
+/*	$OpenBSD: vi.c,v 1.6 1999/01/08 20:25:03 millert Exp $	*/
 
 /*
  *	vi command editing
@@ -208,8 +208,9 @@ x_vi(buf, len)
 				vi_macro_reset();
 				c = x_getc();
 			}
-		} else
+		} else {
 			c = x_getc();
+		}
 		if (c == -1)
 			break;
 		if (state != VLIT) {

@@ -1,4 +1,4 @@
-$OpenBSD: CONTRIBUTORS,v 1.5 1998/10/29 04:09:19 millert Exp $
+$OpenBSD: CONTRIBUTORS,v 1.6 1999/01/08 20:24:56 millert Exp $
 
 This is a partial history of this shell gleened from old change logs and
 readmes (most of which are still in the misc directory) and the source
@@ -116,3 +116,5 @@ Other contributors:
     * Theo de Raadt (<deraadt@cvs.openbsd.org>): allow ". /dev/null".
     * Eric Youngdale (<ericy@datafocus.com>): flag field incorrectly changed
       in exec.c(flushcom).
+    * Todd. C Miller (Todd C. Miller <Todd.Miller@courtesan.com>): fix
+      for coredump in jobs.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.8 1998/10/29 04:09:21 millert Exp $	*/
+/*	$OpenBSD: misc.c,v 1.9 1999/01/08 20:25:01 millert Exp $	*/
 
 /*
  * Miscellaneous functions
@@ -1265,16 +1265,62 @@ reset_nonblock(fd)
 # define MAXPATHLEN PATH
 #endif /* MAXPATHLEN */
 
+#ifdef HPUX_GETWD_BUG
+# include "ksh_dir.h"
+
+/*
+ * Work around bug in hpux 10.x C library - getwd/getcwd dump core
+ * if current directory is not readable.  Done in macro 'cause code
+ * is needed in GETWD and GETCWD cases.
+ */
+# define HPUX_GETWD_BUG_CODE \
+	{ \
+	    DIR *d = ksh_opendir("."); \
+	    if (!d) \
+		return (char *) 0; \
+	    closedir(d); \
+	}
+#else /* HPUX_GETWD_BUG */
+# define HPUX_GETWD_BUG_CODE
+#endif /* HPUX_GETWD_BUG */
+
 /* Like getcwd(), except bsize is ignored if buf is 0 (MAXPATHLEN is used) */
 char *
 ksh_get_wd(buf, bsize)
 	char *buf;
 	int bsize;
 {
-#ifdef HAVE_GETWD
+#ifdef HAVE_GETCWD
+	char *b;
+	char *ret;
+
+	/* Before memory allocated */
+	HPUX_GETWD_BUG_CODE
+
+	/* Assume getcwd() available */
+	if (!buf) {
+		bsize = MAXPATHLEN;
+		b = alloc(MAXPATHLEN + 1, ATEMP);
+	} else
+		b = buf;
+
+	ret = getcwd(b, bsize);
+
+	if (!buf) {
+		if (ret)
+			ret = aresize(b, strlen(b) + 1, ATEMP);
+		else
+			afree(b, ATEMP);
+	}
+
+	return ret;
+#else /* HAVE_GETCWD */
 	extern char *getwd ARGS((char *));
 	char *b;
 	int len;
+
+	/* Before memory allocated */
+	HPUX_GETWD_BUG_CODE
 
 	if (buf && bsize > MAXPATHLEN)
 		b = buf;
@@ -1300,26 +1346,5 @@ ksh_get_wd(buf, bsize)
 	}
 
 	return b;
-#else /* HAVE_GETWD */
-	char *b;
-	char *ret;
-
-	/* Assume getcwd() available */
-	if (!buf) {
-		bsize = MAXPATHLEN;
-		b = alloc(MAXPATHLEN + 1, ATEMP);
-	} else
-		b = buf;
-
-	ret = getcwd(b, bsize);
-
-	if (!buf) {
-		if (ret)
-			ret = aresize(b, strlen(b) + 1, ATEMP);
-		else
-			afree(b, ATEMP);
-	}
-
-	return ret;
-#endif /* HAVE_GETWD */
+#endif /* HAVE_GETCWD */
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.5 1998/06/25 19:02:00 millert Exp $	*/
+/*	$OpenBSD: io.c,v 1.6 1999/01/08 20:24:59 millert Exp $	*/
 
 /*
  * shell buffered IO and formatted output
@@ -179,6 +179,69 @@ shprintf(fmt, va_alist)
 	va_end(va);
 }
 
+#ifdef KSH_DEBUG
+static struct shf *kshdebug_shf;
+
+void
+kshdebug_init_()
+{
+	if (kshdebug_shf)
+		shf_close(kshdebug_shf);
+	kshdebug_shf = shf_open("/tmp/ksh-debug.log",
+				O_WRONLY|O_APPEND|O_CREAT, 0600,
+				SHF_WR|SHF_MAPHI);
+	if (kshdebug_shf) {
+		shf_fprintf(kshdebug_shf, "\nNew shell[pid %d]\n", getpid());
+		shf_flush(kshdebug_shf);
+	}
+}
+
+/* print to debugging log */
+void
+# ifdef HAVE_PROTOTYPES
+kshdebug_printf_(const char *fmt, ...)
+# else
+kshdebug_printf_(fmt, va_alist)
+	const char *fmt;
+	va_dcl
+# endif
+{
+	va_list va;
+
+	if (!kshdebug_shf)
+		return;
+	SH_VA_START(va, fmt);
+	shf_fprintf(kshdebug_shf, "[%d] ", getpid());
+	shf_vfprintf(kshdebug_shf, fmt, va);
+	va_end(va);
+	shf_flush(kshdebug_shf);
+}
+
+void
+kshdebug_dump_(str, mem, nbytes)
+	const char *str;
+	const void *mem;
+	int nbytes;
+{
+	int i, j;
+	int nprow = 16;
+
+	if (!kshdebug_shf)
+		return;
+	shf_fprintf(kshdebug_shf, "[%d] %s:\n", getpid(), str);
+	for (i = 0; i < nbytes; i += nprow) {
+		char c = '\t';
+		for (j = 0; j < nprow && i + j < nbytes; j++) {
+			shf_fprintf(kshdebug_shf, "%c%02x",
+				c, ((const unsigned char *) mem)[i + j]);
+			c = ' ';
+		}
+		shf_fprintf(kshdebug_shf, "\n");
+	}
+	shf_flush(kshdebug_shf);
+}
+#endif /* KSH_DEBUG */
+
 /* test if we can seek backwards fd (returns 0 or SHF_UNBUF) */
 int
 can_seek(fd)
@@ -199,6 +262,7 @@ initio()
 	shf_fdopen(2, SHF_WR, shl_out);
 	shf_fdopen(2, SHF_WR, shl_spare);	/* force buffer allocation */
 	initio_done = 1;
+	kshdebug_init();
 }
 
 /* A dup2() with error checking */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.8 1998/12/21 05:53:27 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.9 1999/01/08 20:25:02 millert Exp $	*/
 
 /*
  * signal handling
@@ -84,8 +84,9 @@ alarm_catcher(sig)
 #endif /* KSH */
 
 Trap *
-gettrap(name)
+gettrap(name, igncase)
 	const char *name;
+	int igncase;
 {
 	int i;
 	register Trap *p;
@@ -98,10 +99,20 @@ gettrap(name)
 		return NULL;
 	}
 	for (p = sigtraps, i = SIGNALS+1; --i >= 0; p++)
-		if (p->name && (strcasecmp(p->name, name) == 0 ||
-		    (strlen(name) > 3 && !strncasecmp("SIG", p->name, 3) &&
-		    !strcasecmp(p->name, name + 3))))
-			return p;
+		if (p->name) {
+			if (igncase) {
+				if (p->name && (!strcasecmp(p->name, name) ||
+				    (strlen(name) > 3 && !strncasecmp("SIG",
+				    p->name, 3) &&
+				    !strcasecmp(p->name, name + 3))))
+					return p;
+			} else {
+				if (p->name && (!strcmp(p->name, name) ||
+				    (strlen(name) > 3 && !strncmp("SIG",
+				    p->name, 3) && !strcmp(p->name, name + 3))))
+					return p;
+			}
+		}
 	return NULL;
 }
 

@@ -962,3 +962,77 @@ expected-stdout:
 ---
 
 
+name: regression-56
+description:
+	Check eval vs substitution exit codes
+	(this is what ksh88 does)
+stdin:
+	eval $(false)
+	echo A $?
+	eval ' $(false)'
+	echo B $?
+	eval " $(false)"
+	echo C $?
+	eval "eval $(false)"
+	echo D $?
+	eval 'eval '"$(false)"
+	echo E $?
+	IFS="$IFS:"
+	eval $(echo :; false)
+	echo F $?
+expected-stdout: 
+	A 1
+	B 1
+	C 1
+	D 0
+	E 0
+	F 1
+---
+
+name: regression-57
+description:
+	Check if typeset output is correct for
+	uninitialized array elements.
+stdin:
+	typeset -i xxx[4]
+	echo A
+	typeset -i | grep xxx | sed 's/^/    /'
+	echo B
+	typeset | grep xxx | sed 's/^/    /'
+	
+	xxx[1]=2+5
+	echo M
+	typeset -i | grep xxx | sed 's/^/    /'
+	echo N
+	typeset | grep xxx | sed 's/^/    /'
+expected-stdout: 
+	A
+	    xxx
+	B
+	    typeset -i xxx
+	M
+	    xxx[1]=7
+	N
+	    typeset -i xxx
+---
+
+name: regression-58
+description:
+	Check if trap exit is ok (exit not mistaken for signal name)
+stdin:
+	trap 'echo hi' exit
+	trap exit 1
+expected-stdout: 
+	hi
+---
+
+name: regression-59
+description:
+	Check if ${#array[*]} is calculated correctly.
+stdin:
+	a[12]=hi
+	a[8]=there
+	echo ${#a[*]}
+expected-stdout: 
+	2
+---

@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_ulimit.c,v 1.6 1998/11/24 04:32:47 millert Exp $	*/
+/*	$OpenBSD: c_ulimit.c,v 1.7 1999/01/08 20:24:57 millert Exp $	*/
 
 /*
 	ulimit -- handle "ulimit" builtin
@@ -231,7 +231,7 @@ c_ulimit(wp)
 					bi_errorf("exceeds allowable limit");
 				else
 					bi_errorf("bad limit: %s",
-					    strerror(errno));
+						strerror(errno));
 				return 1;
 			}
 		} else {

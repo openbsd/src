@@ -1,3 +1,50 @@
+Wed Dec 16 15:02:48 NST 1998 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* io.c(kshdebug_init_,kshdebug_printf_,kshdebug_dump_),
+	  sh.h(kshdebug_init,kshdebug_printf,kshdebug_dump):
+	  new macros/functions.
+
+Wed Dec 16 12:12:23 NST 1998 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* c_sh.c(c_eval): set exstat to substs_exstat to propogate
+	  substition exit status if resulting command is empty
+	  (based on fix from Mark Funkenhauser).
+
+Tue Dec 15 15:50:34 NST 1998 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* main.c(initcom[]): PPID no longer read only.
+
+Mon Dec 14 17:09:52 NST 1998 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* trap.c(gettrap): added igncase argument; changed all calls.
+	* c_sh.c(c_trap): use case sensitive compare for first gettrap().
+	  (fix "trap exit 1").
+
+Thu Dec 10 12:24:53 NST 1998 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* configure.in: added test for getcwd.
+	* aclocal.m4(KSH_OS_TYPE): added case for hpux; added test for
+	  bug in hpux getcwd (dumps core if . is not readable).
+	* config.h.in: added HAVE_HPUX_GETWD_BUG define.
+	* aclocal.m4,configure.in: remove AC_C_CROSS or change to AC_PROG_CC.
+	* misc.c(ksh_get_wd): added code to handle bug in hpux getwd;
+	  changed precedence of getcwd vs getwd (use getcwd if available:
+	  getwd causes warnings under linux).
+
+Tue Dec  8 17:17:47 NST 1998 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* main.c(main): seed RANDOM using time, pid, ppid (was just time).
+
+Tue Nov 24 17:17:12 NST 1998 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* c_ulimit.c(c_ulimit): improve setrlimit error message for EPERM
+	  (fix from Todd C. Miller).
+
+Thu Nov 19 18:09:59 NST 1998 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* jobs.c(waitfor): if j_lookup fails, always return
+	  (fix from Todd C. Miller).
+
 Fri Oct 23 19:59:25 NDT 1998 Michael Rendell (michael@lenny.cs.mun.ca)
 
 	* jobs.c(JF_SAVEDTTYPGRP,j_resume,j_waitj): added save_ttypgrp
@@ -243,7 +290,7 @@ Wed Oct 30 11:23:17 NST 1996 Michael Rendell (michael@panda.cs.mun.ca)
 	* exec.c(comexec): case CFUNC: set $0 to kshname if non-function
 	  function.
 
-$OpenBSD: ChangeLog,v 1.7 1998/10/29 04:09:19 millert Exp $
+$OpenBSD: ChangeLog,v 1.8 1999/01/08 20:24:56 millert Exp $
 
 Tue Oct 29 11:34:58 NST 1996 Michael Rendell (michael@panda.cs.mun.ca)
 

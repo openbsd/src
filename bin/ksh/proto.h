@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.h,v 1.5 1998/10/29 04:09:21 millert Exp $	*/
+/*	$OpenBSD: proto.h,v 1.6 1999/01/08 20:25:01 millert Exp $	*/
 
 /*
  * prototypes for PD-KSH
@@ -112,6 +112,12 @@ void 	shellf		ARGS((const char *fmt, ...))
 				GCC_FUNC_ATTR(format(printf, 1, 2));
 void 	shprintf	ARGS((const char *fmt, ...))
 				GCC_FUNC_ATTR(format(printf, 1, 2));
+#ifdef KSH_DEBUG
+void 	kshdebug_init_	ARGS((void));
+void 	kshdebug_printf_ ARGS((const char *fmt, ...))
+				GCC_FUNC_ATTR(format(printf, 1, 2));
+void 	kshdebug_dump_	ARGS((const char *str, const void *mem, int nbytes));
+#endif /* KSH_DEBUG */
 int	can_seek	ARGS((int fd));
 void	initio		ARGS((void));
 int	ksh_dup2	ARGS((int ofd, int nfd, int errok));
@@ -222,7 +228,7 @@ void	inittraps	ARGS((void));
 #ifdef KSH
 void	alarm_init	ARGS((void));
 #endif /* KSH */
-Trap *	gettrap		ARGS((const char *name));
+Trap *	gettrap		ARGS((const char *name, int igncase));
 RETSIGTYPE trapsig	ARGS((int i));
 void	intrcheck	ARGS((void));
 int	fatal_trap_check ARGS((void));
@@ -263,6 +269,7 @@ char	*skip_wdvarname ARGS((const char *s, int aok));
 int	is_wdvarname	ARGS((const char *s, int aok));
 int	is_wdvarassign	ARGS((const char *s));
 char **	makenv		ARGS((void));
+void	change_random	ARGS((void));
 int	array_ref_len	ARGS((const char *cp));
 char *	arrayname	ARGS((const char *str));
 void    set_array	ARGS((const char *var, int reset, char **vals));

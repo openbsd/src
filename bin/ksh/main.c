@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.11 1998/10/29 04:09:21 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.12 1999/01/08 20:25:00 millert Exp $	*/
 
 /*
  * startup, main loop, enviroments and error handling
@@ -37,10 +37,22 @@ static const char version_param[] =
 #endif /* KSH */
 	;
 
+/*
+MAILCHECK:
+    typeset -i MAILCHECK
+    : "${MAILCHECK=600}"
+SECONDS:
+    typeset -i SECONDS
+    initialize seconds to $SECONDS
+TMOUT:
+    typeset -i
+    do setspec
+*/
+
 static const char *const initcoms [] = {
 	"typeset", "-x", "SHELL", "PATH", "HOME", NULL,
 	"typeset", "-r", version_param, NULL,
-	"typeset", "-ri", "PPID", NULL,
+	"typeset", "-i", "PPID", NULL,
 	"typeset", "-i", "OPTIND=1",
 #ifdef KSH
 	    "MAILCHECK=600", "RANDOM", "SECONDS=0", "TMOUT=0",
@@ -94,6 +106,7 @@ main(argc, argv)
 	int restricted, errexit;
 	char **wp;
 	struct env env;
+	pid_t ppid;
 
 #ifdef MEM_DEBUG
 	chmem_set_defaults("ct", 1);
@@ -241,9 +254,10 @@ main(argc, argv)
 		if (current_wd[0] || pwd != null)
 			setstr(pwd_v, current_wd);
 	}
-	setint(global("PPID"), (long) getppid());
+	ppid = getppid();
+	setint(global("PPID"), (long) ppid);
 #ifdef KSH
-	setint(global("RANDOM"), (long) time((time_t *)0));
+	setint(global("RANDOM"), (long) (time((time_t *)0) * kshpid * ppid));
 #endif /* KSH */
 	setstr(global(version_param), ksh_version);
 
@@ -596,8 +610,6 @@ shell(s, toplevel)
 		t = compile(s);
 		if (t != NULL && t->type == TEOF) {
 			if (wastty && Flag(FIGNOREEOF) && --attempts > 0) {
-				shellf("pgrp=%d, ttypgrp=%d\n",
-					getpgrp(), tcgetpgrp(0));
 				shellf("Use `exit' to leave ksh\n");
 				s->type = SSTDIN;
 			} else if (wastty && !really_exit
