@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.201 2002/07/27 04:10:01 deraadt Exp $
+#	$OpenBSD: rc,v 1.202 2002/07/27 22:11:58 matthieu Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -600,6 +600,24 @@ if [ "X${wsmoused_flags}" != X"NO" -a -x /usr/sbin/wsmoused ]; then
 	echo 'starting wsmoused...';	/usr/sbin/wsmoused ${wsmoused_flags}
 fi
 
+# create Unix sockets directories  for X if needed and make sure they have
+# correct permissions
+if [ -d /usr/X11R6/lib ]; then 
+	for d in /tmp/.X11-unix /tmp/.ICE-unix ; do
+		if [ -d $d ]; then 
+			if [ `ls -ld $d | cut -d' ' -f4` != root ]; then
+				chown root $d
+			fi
+			if [ `ls -ld $d | cut -d' ' -f1` != drwxrwxrwt ]; then
+				chmod 1777 $d
+			fi
+		elif [ -e $d ]; then
+			echo "Error: $d exists and isn't a directory."
+		else
+			mkdir -m 1777 $d
+		fi
+	done
+fi
 # Alternatively, on some architectures, xdm may be started in /etc/ttys.
 if [ "X${xdm_flags}" != X"NO" ]; then
 	echo 'starting xdm...';		/usr/X11R6/bin/xdm ${xdm_flags}
