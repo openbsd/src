@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.12 1996/08/29 09:25:51 deraadt Exp $	*/
+/*	$OpenBSD: conf.c,v 1.13 1996/10/05 15:47:50 niklas Exp $	*/
 /*	$NetBSD: conf.c,v 1.36 1996/05/19 21:04:18 veego Exp $	*/
 
 /*-
@@ -60,7 +60,7 @@ int	ttselect	__P((dev_t, int, struct proc *));
 #include "fd.h"
 #include "ccd.h"
 #include "ss.h"
-#include "wdc.h"
+#include "wd.h"
 #include "acd.h"
 #if 0
 #include "rd.h"
@@ -68,7 +68,7 @@ int	ttselect	__P((dev_t, int, struct proc *));
 
 struct bdevsw	bdevsw[] =
 {
-	bdev_disk_init(NWDC,wd),	/* 0: ST506/ESDI/IDE disk */
+	bdev_disk_init(NWD,wd),	/* 0: ST506/ESDI/IDE disk */
 	bdev_notdef(),			/* 1 */
 	bdev_disk_init(NFD,fd),		/* 2: floppy disk */
 	bdev_swap_init(1,sw),		/* 3: swap pseudo-device */
@@ -152,7 +152,7 @@ struct cdevsw	cdevsw[] =
 	cdev_gen_ipf(NIPF,ipl),		/* 34: IP filter log */
 	cdev_random_init(NRANDOM,random), /* 35: random data source */
 	cdev_uk_init(NUK,uk),		/* 36: unknown SCSI */
-	cdev_disk_init(NWDC,wd),	/* 37: ST506/ESDI/IDE disk */
+	cdev_disk_init(NWD,wd),		/* 37: ST506/ESDI/IDE disk */
 	cdev_disk_init(NACD,acd),	/* 38: ATAPI CD-ROM */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);

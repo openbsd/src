@@ -1,4 +1,4 @@
-/*	$OpenBSD: swapgeneric.c,v 1.5 1996/05/29 10:14:35 niklas Exp $	*/
+/*	$OpenBSD: swapgeneric.c,v 1.6 1996/10/05 15:47:51 niklas Exp $	*/
 /*	$NetBSD: swapgeneric.c,v 1.24 1996/05/21 17:15:40 is Exp $	*/
 
 /*
@@ -51,9 +51,11 @@
 
 #include "fd.h"
 #include "sd.h"
+#include "wd.h"
 #include "cd.h"
+#include "acd.h"
 
-#if NCD > 0
+#if NCD + NACD > 0
 #include <sys/mount.h>
 #include <isofs/cd9660/iso.h>
 #endif
@@ -79,8 +81,14 @@ extern	struct cfdriver fd_cd;
 #if NSD > 0
 extern	struct cfdriver sd_cd;
 #endif
+#if NWD > 0
+extern	struct cfdriver wd_cd;
+#endif
 #if NCD > 0
 extern	struct cfdriver cd_cd;
+#endif
+#if NACD > 0
+extern	struct cfdriver acd_cd;
 #endif
 
 struct genericconf {
@@ -102,8 +110,14 @@ struct genericconf genericconf[] = {
 #if NSD > 0
 	{&sd_cd,	makedev(4, 0)},
 #endif
+#if NWD > 0
+	{&wd_cd,	makedev(0, 0)},
+#endif
 #if NCD > 0
 	{&cd_cd,	makedev(7, 0)},
+#endif
+#if NACD > 0
+	{&acd_cd,	makedev(15, 0)},
 #endif
 	{ 0 },
 };
