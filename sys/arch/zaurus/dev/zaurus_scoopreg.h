@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_scoopreg.h,v 1.3 2005/01/20 23:34:36 uwe Exp $	*/
+/*	$OpenBSD: zaurus_scoopreg.h,v 1.4 2005/01/26 06:34:54 uwe Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -34,6 +34,10 @@
 #define SCOOP_GPRR	0x28
 
 /* GPIO bit assignments for the Zaurus C3000. */
-#define C3000_SCOOP0_LED_GREEN		1
-#define C3000_SCOOP0_LED_ORANGE		7
-#define C3000_SCOOP1_BACKLIGHT_ON	8
+#define SCOOP0_LED_GREEN_C3000		1
+#define SCOOP0_JK_B_C3000		2
+#define SCOOP0_CHARGE_OFF_C3000		3
+#define SCOOP0_LED_ORANGE_C3000		7
+#define SCOOP0_JK_A_C3000		8
+#define SCOOP0_ADC_TEMP_ON_C3000	9
+#define SCOOP1_BACKLIGHT_ON_C3000	8

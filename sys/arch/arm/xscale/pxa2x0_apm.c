@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_apm.c,v 1.2 2005/01/20 23:34:36 uwe Exp $	*/
+/*	$OpenBSD: pxa2x0_apm.c,v 1.3 2005/01/26 06:34:53 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -77,8 +77,8 @@ int	apm_userstandbys;
 int	apm_suspends;
 int	apm_battlow;
 
-void	apm_battery_info(struct pxa2x0_apm_softc *,
-    struct pxaapm_battery_info *);
+void	apm_power_info(struct pxa2x0_apm_softc *,
+    struct apm_power_info *);
 void	apm_standby(struct pxa2x0_apm_softc *);
 void	apm_suspend(struct pxa2x0_apm_softc *);
 void	apm_resume(struct pxa2x0_apm_softc *);
@@ -115,13 +115,17 @@ struct filterops apmread_filtops =
 #define	SCFLAG_OPEN	(SCFLAG_OREAD|SCFLAG_OWRITE)
 
 void
-apm_battery_info(struct pxa2x0_apm_softc *sc,
-    struct pxaapm_battery_info *battp)
+apm_power_info(struct pxa2x0_apm_softc *sc,
+    struct apm_power_info *power)
 {
 
-	bzero(battp, sizeof(struct pxaapm_battery_info));
-	if (sc->sc_battery_info != NULL)
-		sc->sc_battery_info(battp);
+	power->ac_state = APM_AC_UNKNOWN;
+	power->battery_state = APM_BATT_UNKNOWN;;
+	power->battery_life = 0 /* APM_BATT_LIFE_UNKNOWN */;
+	power->minutes_left = 0;
+
+	if (sc->sc_power_info != NULL)
+		sc->sc_power_info(sc, power);
 }
 
 void
@@ -272,7 +276,6 @@ int
 apmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct pxa2x0_apm_softc *sc;
-	struct pxaapm_battery_info batt;
 	struct apm_power_info *power;
 	int error = 0;
 
@@ -325,41 +328,7 @@ apmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 	case APM_IOC_GETPOWER:
 	        power = (struct apm_power_info *)data;
-
-		apm_battery_info(sc, &batt);
-
-		power->ac_state = ((batt.flags & PXAAPM_AC_PRESENT) ?
-		    APM_AC_ON : APM_AC_OFF);
-		power->battery_life =
-		    ((batt.cur_charge * 100) / batt.max_charge);
-
-		/*
-		 * If the battery is charging, return the minutes left until
-		 * charging is complete. apmd knows this.
-		 */
-
-		if (!(batt.flags & PXAAPM_BATT_PRESENT)) {
-			power->battery_state = APM_BATT_UNKNOWN;
-			power->minutes_left = 0;
-			power->battery_life = 0;
-		} else if ((power->ac_state == APM_AC_ON) &&
-			   (batt.draw > 0)) {
-			power->minutes_left =
-			    (((batt.max_charge - batt.cur_charge) * 3600) /
-			    batt.draw) / 60;
-			power->battery_state = APM_BATT_CHARGING;
-		} else {
-			power->minutes_left =
-			    ((batt.cur_charge * 3600) / (-batt.draw)) / 60;
-
-			/* XXX - Arbitrary */
-			if (power->battery_life > 60)
-				power->battery_state = APM_BATT_HIGH;
-			else if (power->battery_life < 10)
-				power->battery_state = APM_BATT_CRITICAL;
-			else
-				power->battery_state = APM_BATT_LOW;
-		}
+		apm_power_info(sc, power);
 		break;
 
 	default:

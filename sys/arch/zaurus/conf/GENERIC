@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.23 2005/01/25 21:16:57 drahn Exp $
+#	$OpenBSD: GENERIC,v 1.24 2005/01/26 06:34:53 uwe Exp $
 #
 # GENERIC machine description file
 #
@@ -181,6 +181,9 @@ ukphy*	at mii?			# "unknown" PHYs
 # LCD
 lcd0		at pxaip?
 wsdisplay*	at lcd? console ?
+
+# Dedicated SSP unit for ADC, touch screen, and backlight
+zssp0		at pxaip?
 
 # APM emulation
 apm0		at pxaip?

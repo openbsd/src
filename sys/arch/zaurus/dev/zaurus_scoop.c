@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_scoop.c,v 1.3 2005/01/20 23:34:37 uwe Exp $	*/
+/*	$OpenBSD: zaurus_scoop.c,v 1.4 2005/01/26 06:34:54 uwe Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -130,12 +130,42 @@ scoop_led_set(int led, int on)
 		switch(led) {
 		case SCOOP_LED_GREEN:
 			scoop_gpio_pin_write(scoop_cd.cd_devs[0],
-			    C3000_SCOOP0_LED_GREEN, on);
+			    SCOOP0_LED_GREEN_C3000, on);
 			break;
 		case SCOOP_LED_ORANGE:
 			scoop_gpio_pin_write(scoop_cd.cd_devs[0],
-			    C3000_SCOOP0_LED_ORANGE, on);
+			    SCOOP0_LED_ORANGE_C3000, on);
 			break;
 		}
 	}
+}
+
+void
+scoop_battery_temp_adc(int enable)
+{
+
+	if (scoop_cd.cd_ndevs > 0 && scoop_cd.cd_devs[0] != NULL)
+		scoop_gpio_pin_write(scoop_cd.cd_devs[0],
+		    SCOOP0_ADC_TEMP_ON_C3000, enable);
+}
+
+void
+scoop_charge_battery(int enable, int voltage_high)
+{
+
+	if (scoop_cd.cd_ndevs > 0 && scoop_cd.cd_devs[0] != NULL) {
+		scoop_gpio_pin_write(scoop_cd.cd_devs[0],
+		    SCOOP0_JK_B_C3000, voltage_high);
+		scoop_gpio_pin_write(scoop_cd.cd_devs[0],
+		    SCOOP0_CHARGE_OFF_C3000, !enable);
+	}
+}
+
+void
+scoop_discharge_battery(int enable)
+{
+
+	if (scoop_cd.cd_ndevs > 0 && scoop_cd.cd_devs[0] != NULL)
+		scoop_gpio_pin_write(scoop_cd.cd_devs[0],
+		    SCOOP0_JK_A_C3000, enable);
 }

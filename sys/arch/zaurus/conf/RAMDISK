@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.17 2005/01/20 23:34:36 uwe Exp $
+#	$OpenBSD: RAMDISK,v 1.18 2005/01/26 06:34:53 uwe Exp $
 #
 # GENERIC machine description file
 #
@@ -161,6 +161,9 @@ ukphy*	at mii?			# "unknown" PHYs
 # LCD
 lcd0		at pxaip?
 wsdisplay*	at lcd? console ?
+
+# Dedicated SSP unit for ADC, touch screen, and backlight
+zssp0		at pxaip?
 
 # APM emulation
 apm0		at pxaip?

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0reg.h,v 1.8 2005/01/12 17:14:37 uwe Exp $ */
+/*	$OpenBSD: pxa2x0reg.h,v 1.9 2005/01/26 06:34:53 uwe Exp $ */
 /* $NetBSD: pxa2x0reg.h,v 1.4 2003/06/11 20:43:01 scw Exp $ */
 
 /*
@@ -108,7 +108,10 @@
 #define PXA2X0_GPIO_SIZE  	0x70
 #define PXA2X0_POWMAN_BASE  	0x40f00000 /* Power management */
 #define PXA2X0_POWMAN_SIZE	0x100
-#define PXA2X0_SSP_BASE 	0x41000000
+#define PXA2X0_SSP_BASE		0x41000000 /* SSP serial port */
+#define PXA2X0_SSP1_BASE	0x41700000 /* PXA270 */
+#define PXA2X0_SSP2_BASE	0x41900000 /* PXA270 */
+#define PXA2X0_SSP_SIZE		0x40
 #define PXA2X0_MMC_BASE 	0x41100000 /* MultiMediaCard */
 #define PXA2X0_MMC_SIZE		0x48
 #define PXA2X0_CLKMAN_BASE  	0x41300000 /* Clock Manager */
@@ -218,14 +221,20 @@ struct pxa2x0_dma_desc {
 #define I2C_ISAR	0x16a0		/* Slave address */
 
 /* Power Manager */
-#define POWMAN_RCSR	0x30	/* Reset Controller Status Register */
-#define  RCSR_GPR	 (1<<3)
-#define  RCSR_SMR	 (1<<2)
-#define  RCSR_WDR	 (1<<1)
+#define POWMAN_PSSR	0x04	/* Sleep Status register */
+#define  PSSR_RDH	 (1<<5)
+#define POWMAN_PCFR	0x1c	/* General Configuration register */
+#define  PCFR_GRP_EN	 (1<<4)		/* PXA270 */
+#define  PCFR_GP_ROD	 (1<<8)		/* PXA270 */
+#define POWMAN_RCSR	0x30	/* Reset Controller Status register */
 #define  RCSR_HWR	 (1<<0)
+#define  RCSR_WDR	 (1<<1)
+#define  RCSR_SMR	 (1<<2)
+#define  RCSR_GPR	 (1<<3)
 
 /* Clock Manager */
 #define CLKMAN_CCCR	0x00	/* Core Clock Configuration */
+#define  CCCR_CPDIS	 (1<<31) /* PXA270 */
 #define  CCCR_TURBO_X1	 (2<<7)
 #define  CCCR_TURBO_X15	 (3<<7)	/* x 1.5 */
 #define  CCCR_TURBO_X2	 (4<<7)
@@ -714,5 +723,13 @@ struct pxa2x0_dma_desc {
 #define  OWER_WME	 (1<<0)
 #define OST_OIER	0x001c	/* Interrupt Enable */
 #define  OIER_E3	 (1<<3)
+
+/* Synchronous Serial Protocol (SSP) serial ports */
+#define SSP_SSCR0	0x00
+#define SSP_SSCR1	0x04
+#define SSP_SSSR	0x08
+#define  SSSR_TNF	(1<<2)
+#define  SSSR_RNE	(1<<3)
+#define SSP_SSDR	0x10
 
 #endif /* _ARM_XSCALE_PXA2X0REG_H_ */

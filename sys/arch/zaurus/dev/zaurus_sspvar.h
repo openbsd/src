@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_apm.h,v 1.3 2005/01/26 06:34:53 uwe Exp $	*/
+/*	$OpenBSD: zaurus_sspvar.h,v 1.1 2005/01/26 06:34:54 uwe Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -16,27 +16,4 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef _PXA2X0_APM_H_
-#define _PXA2X0_APM_H_
-
-#include <sys/event.h>
-
-#include <machine/bus.h>
-#include <machine/apmvar.h>
-
-struct pxa2x0_apm_softc {
-	struct	device sc_dev;
-	struct	proc *sc_thread;
-	struct	lock sc_lock;
-	struct	klist sc_note;
-	int	sc_flags;
-	bus_space_tag_t sc_iot;
-	bus_space_handle_t sc_pm_ioh;
-	void	(*sc_periodic_check)(struct pxa2x0_apm_softc *);
-	void	(*sc_power_info)(struct pxa2x0_apm_softc *,
-	    struct apm_power_info *);
-};
-
-extern	void pxa2x0_apm_attach_sub(struct pxa2x0_apm_softc *);
-
-#endif
+int	zssp_read_max1111(u_int32_t);
