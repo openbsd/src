@@ -237,39 +237,12 @@ systracef_ioctl(fp, cmd, data, p)
         case FIOASYNC:
                 return (0);
 
-	case STRIOCATTACH:
-		pid = *(pid_t *)data;
-		if (!pid)
-			ret = EINVAL;
-		else
-			ret = systrace_attach(fst, pid);
-		DPRINTF(("%s: attach to %d: %d\n", __func__, pid, ret));
-		goto unlock;
 	case STRIOCDETACH:
 	case STRIOCREPORT:
 		pid = *(pid_t *)data;
 		if (!pid)
 			ret = EINVAL;
 		break;
-	case STRIOCRESCWD:
-		if (!fst->fd_pid) {
-			ret = EINVAL;
-			goto unlock;
-		}
-		fdp = p->p_fd;
-
-		/* Release cwd from other process */
-		if (fdp->fd_cdir)
-			vrele(fdp->fd_cdir);
-		if (fdp->fd_rdir)
-			vrele(fdp->fd_rdir);
-		/* This restores the cwd we had before */
-		fdp->fd_cdir = fst->fd_cdir;
-		fdp->fd_rdir = fst->fd_rdir;
-		/* Note that we are normal again */
-		fst->fd_pid = 0;
-		fst->fd_cdir = fst->fd_rdir = NULL;
-		goto unlock;
  	case STRIOCANSWER:
 		pid = ((struct systrace_answer *)data)->stra_pid;
 		if (!pid)
@@ -285,6 +258,8 @@ systracef_ioctl(fp, cmd, data, p)
 		if (!pid)
 			ret = EINVAL;
 		break;
+	case STRIOCATTACH:
+	case STRIOCRESCWD:
 	case STRIOCPOLICY:
 		break;
  	case STRIOCREPLACE:
@@ -310,6 +285,14 @@ systracef_ioctl(fp, cmd, data, p)
 	}
 
 	switch (cmd) {
+	case STRIOCATTACH:
+		pid = *(pid_t *)data;
+		if (!pid)
+			ret = EINVAL;
+		else
+			ret = systrace_attach(fst, pid);
+		DPRINTF(("%s: attach to %d: %d\n", __func__, pid, ret));
+		break;
 	case STRIOCDETACH:
 		ret = systrace_detach(strp);
 		break;
@@ -327,6 +310,25 @@ systracef_ioctl(fp, cmd, data, p)
 		break;
 	case STRIOCREPLACE:
 		ret = systrace_preprepl(strp, (struct systrace_replace *)data);
+		break;
+	case STRIOCRESCWD:
+		if (!fst->fd_pid) {
+			ret = EINVAL;
+			break;
+		}
+		fdp = p->p_fd;
+
+		/* Release cwd from other process */
+		if (fdp->fd_cdir)
+			vrele(fdp->fd_cdir);
+		if (fdp->fd_rdir)
+			vrele(fdp->fd_rdir);
+		/* This restores the cwd we had before */
+		fdp->fd_cdir = fst->fd_cdir;
+		fdp->fd_rdir = fst->fd_rdir;
+		/* Note that we are normal again */
+		fst->fd_pid = 0;
+		fst->fd_cdir = fst->fd_rdir = NULL;
 		break;
 	case STRIOCGETCWD:
 		ret = systrace_getcwd(fst, strp);
