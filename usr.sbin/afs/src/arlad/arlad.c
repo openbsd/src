@@ -174,6 +174,14 @@ arla_start (char *device_file, const char *cache_dir)
     if (fork_flag)
 	kill(getppid(), SIGUSR1);
     
+    if (pw) {
+	setgroups(1, &pw->pw_gid);
+	setegid(pw->pw_gid);
+	setgid(pw->pw_gid);	
+	seteuid(pw->pw_uid);
+	setuid(pw->pw_uid);
+    }
+
     LWP_WaitProcess ((char *)arla_start);
     abort ();
 }

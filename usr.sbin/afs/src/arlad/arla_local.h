@@ -224,3 +224,4 @@ extern int fake_stat;
 extern int fetch_block_size;
 
 extern char *cache_dir;
+extern struct passwd *pw;
