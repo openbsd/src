@@ -1,3 +1,4 @@
+/*	$OpenBSD: machdep.c,v 1.7 1996/04/27 18:38:46 niklas Exp $	*/
 /*	$NetBSD: machdep.c,v 1.59 1995/10/09 04:33:58 chopps Exp $	*/
 
 /*
@@ -168,9 +169,8 @@ walk_ipls (start_ipl, ending_psw)
 	int ending_psw;
 {
 	int i;
-	int handled = 0;
 
-	for (i = start_ipl; !handled && i >= isr_exter_lowipl; i--) {
+	for (i = start_ipl; i >= isr_exter_lowipl; i--) {
 		register int psw = i << 8 | PSL_S;
 		struct isr *isr;
 		      
@@ -179,8 +179,8 @@ walk_ipls (start_ipl, ending_psw)
 			return;
 		}
 		__asm __volatile("movew %0,sr" : : "d" (psw) : "cc");
-		for (isr = isr_exter[i]; !handled && isr; isr = isr->isr_forw)
-			handled = (*isr->isr_intr)(isr->isr_arg);
+		for (isr = isr_exter[i]; isr; isr = isr->isr_forw)
+			(*isr->isr_intr)(isr->isr_arg);
 	}
 	isr_exter_ipl = 0;
 	__asm __volatile("movew %0,sr" : : "di" (PSL_S|PSL_IPL6) : "cc");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.4 1996/04/21 22:15:01 deraadt Exp $	*/
+/*	$OpenBSD: clock.c,v 1.5 1996/04/27 18:38:50 niklas Exp $	*/
 /*	$NetBSD: clock.c,v 1.12 1996/03/17 05:58:30 mhitch Exp $	*/
 
 /*
@@ -48,6 +48,7 @@
 #include <sys/device.h>
 #include <machine/psl.h>
 #include <machine/cpu.h>
+#include <machine/intr.h>
 #include <amiga/amiga/device.h>
 #include <amiga/amiga/custom.h>
 #include <amiga/amiga/cia.h>

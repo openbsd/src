@@ -1,7 +1,7 @@
-/*	$NetBSD: ggbus_pio.c,v 1.1 1995/08/04 14:32:17 niklas Exp $	*/
+/*	$OpenBSD: intr.h,v 1.1 1996/04/27 18:38:53 niklas Exp $	*/
 
 /*
- * Copyright (c) 1995 Niklas Hallqvist
+ * Copyright (c) 1996 Niklas Hallqvist
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,86 +29,22 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#include <sys/types.h>
-#include <sys/device.h>
 
-#include <machine/pio.h>
+#ifndef _MACHINE_INTR_H_
+#define _MACHINE_INTR_H_
 
-#include <dev/isa/isavar.h>
+/* Interrupt priority `levels'; not mutually exclusive. */
+#define	IPL_NONE	-1
+#define	IPL_BIO		3	/* block I/O */
+#define	IPL_NET		3	/* network */
+#define	IPL_TTY		4	/* terminal */
+#define	IPL_CLOCK	4	/* clock */
+#define	IPL_IMP		4	/* memory allocation */
 
-#include <amiga/amiga/isr.h>
-#include <amiga/dev/zbusvar.h>
-#include <amiga/isa/isa_machdep.h>
-#include <amiga/isa/ggbusreg.h>
-#include <amiga/isa/ggbusvar.h>
+/* Interrupt sharing types. */
+#define	IST_NONE	0	/* none */
+#define	IST_PULSE	1	/* pulsed */
+#define	IST_EDGE	2	/* edge-triggered */
+#define	IST_LEVEL	3	/* level-triggered */
 
-extern struct ggbus_device *ggbusp;
-
-void		ggbus_outb __P((int, u_int8_t));
-u_int8_t	ggbus_inb __P((int));
-void		ggbus_outw __P((int, u_int16_t));
-u_int16_t	ggbus_inw __P((int));
-
-struct isa_pio_fcns ggbus_pio_fcns = {
-	ggbus_inb,	isa_insb,
-	ggbus_inw,	isa_insw,
-	0 /* ggbus_inl */,	0 /* ggbus_insl */,
-	ggbus_outb,	isa_outsb,
-	ggbus_outw,	isa_outsw,
-	0 /* ggbus_outl */,	0 /* ggbus_outsl */,
-};
-
-void
-ggbus_outb(ia, b)
-	int ia;
-	u_int8_t b;
-{
-#ifdef DEBUG
-	if (ggdebug)
-		printf("outb 0x%x,0x%x\n", ia, b);
-#endif
-	*(volatile u_int8_t *)(ggbusp->gd_zargs.va + 2 * ia + 1) = b;
-}
-
-u_int8_t
-ggbus_inb(ia)
-	int ia;
-{
-	u_int8_t retval =
-	    *(volatile u_int8_t *)(ggbusp->gd_zargs.va + 2 * ia + 1);
-
-
-#ifdef DEBUG
-	if (ggdebug)
-		printf("inb 0x%x => 0x%x\n", ia, retval);
-#endif
-	return retval;
-}
-
-void
-ggbus_outw(ia, w)
-	int ia;
-	u_int16_t w;
-{
-#ifdef DEBUG
-	if (ggdebug)
-		printf("outw 0x%x,0x%x\n", ia, w);
-#endif
-	*(volatile u_int16_t *)(ggbusp->gd_zargs.va + 2 * ia) = swap (w);
-}
-
-u_int16_t
-ggbus_inw(ia)
-	int ia;
-{
-	u_int16_t retval =
-            swap(*(volatile u_int16_t *)(ggbusp->gd_zargs.va + 2 * ia));
-
-
-#ifdef DEBUG
-	if (ggdebug)
-		printf("inw 0x%x => 0x%x\n", ia, retval);
-#endif
-	return retval;
-}
-
+#endif /* _MACHINE_INTR_H_ */

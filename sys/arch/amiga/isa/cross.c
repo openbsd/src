@@ -1,8 +1,7 @@
-/*	$OpenBSD: cross.c,v 1.2 1996/02/27 15:40:54 niklas Exp $	*/
-/*	$NetBSD: cross.c,v 1.0 1994/07/08 23:32:17 niklas Exp $	*/
+/*	$OpenBSD: cross.c,v 1.3 1996/04/27 18:38:55 niklas Exp $	*/
 
 /*
- * Copyright (c) 1994 Niklas Hallqvist, Carsten Hammer
+ * Copyright (c) 1994, 1996 Niklas Hallqvist, Carsten Hammer
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -15,7 +14,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Christian E. Hopps.
+ *      This product includes software developed by Niklas Hallqvist.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *
@@ -30,14 +29,16 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/syslog.h>
 
+#include <machine/bus.h>
 #include <machine/cpu.h>
-#include <machine/pio.h>
+#include <machine/intr.h>
 
 #include <dev/isa/isavar.h>
 
@@ -46,35 +47,93 @@
 #include <amiga/amiga/isr.h>
 #include <amiga/dev/zbusvar.h>
 #include <amiga/isa/isa_machdep.h>
-#include <amiga/isa/isa_intr.h>
 #include <amiga/isa/crossvar.h>
 #include <amiga/isa/crossreg.h>
 
+extern int cold;
+
 int crossdebug = 0;
 
-/* This static is OK because we only allow one ISA bus.  */
-struct cross_device *crossp;
+void	crossattach __P((struct device *, struct device *, void *));
+int	crossmatch __P((struct device *, void *, void *));
+int	crossprint __P((void *, char *));
 
-void crossattach __P((struct device *, struct device *, void *));
-int crossmatch __P((struct device *, void *, void *));
-int crossprint __P((void *auxp, char *));
-void crossstb __P((struct device *, int, u_char));
-u_char crossldb __P((struct device *, int));
-void crossstw __P((struct device *, int, u_short));
-u_short crossldw __P((struct device *, int));
-void    *cross_establish_intr __P((int intr, int type, int level,
-                                   int (*ih_fun) (void *), void *ih_arg,
-				   char *ih_what));
-void    cross_disestablish_intr __P((void *handler));
+int	cross_io_map(bus_chipset_tag_t, bus_io_addr_t, bus_io_size_t,
+	    bus_io_handle_t *);
+int	cross_mem_map(bus_chipset_tag_t, bus_mem_addr_t, bus_mem_size_t, int,
+	    bus_mem_handle_t *);
 
-struct isa_intr_fcns cross_intr_fcns = {
-        0 /* cross_intr_setup */,       cross_establish_intr,
-        cross_disestablish_intr,        0 /* cross_iointr */
+void	cross_io_read_multi_1(bus_io_handle_t, bus_io_size_t, u_int8_t *,
+	    bus_io_size_t);
+void	cross_io_read_multi_2(bus_io_handle_t, bus_io_size_t, u_int16_t *,
+	    bus_io_size_t);
+
+void	cross_io_write_multi_1(bus_io_handle_t, bus_io_size_t,
+	    const u_int8_t *, bus_io_size_t);
+void	cross_io_write_multi_2(bus_io_handle_t, bus_io_size_t,
+	    const u_int16_t *, bus_io_size_t);
+
+/*
+ * Note that the following unified access functions are prototyped for the
+ * I/O access case.  We use casts to get type correctness.
+ */
+int	cross_unmap(bus_io_handle_t, bus_io_size_t);
+
+__inline u_int8_t cross_read_1(bus_io_handle_t, bus_io_size_t);
+__inline u_int16_t cross_read_2(bus_io_handle_t, bus_io_size_t);
+
+__inline void cross_write_1(bus_io_handle_t, bus_io_size_t, u_int8_t);
+__inline void cross_write_2(bus_io_handle_t, bus_io_size_t, u_int16_t);
+
+/*
+ * In order to share the access function implementations for I/O and memory
+ * access we cast the functions for the memory access case.  These typedefs
+ * make that casting look nicer.
+ */
+typedef int (*bus_mem_unmap_t)(bus_mem_handle_t, bus_mem_size_t);
+typedef u_int8_t (*bus_mem_read_1_t)(bus_mem_handle_t, bus_mem_size_t);
+typedef u_int16_t (*bus_mem_read_2_t)(bus_mem_handle_t, bus_mem_size_t);
+typedef void (*bus_mem_write_1_t)(bus_mem_handle_t, bus_mem_size_t, u_int8_t);
+typedef void (*bus_mem_write_2_t)(bus_mem_handle_t, bus_mem_size_t, u_int16_t);
+
+void	cross_attach_hook(struct device *, struct device *,
+	    struct isabus_attach_args *);
+void	*cross_intr_establish __P((void *, int, int, int, int (*)(void *),
+	    void *, char *));
+void	cross_intr_disestablish __P((void *, void *));
+
+static u_int16_t swap __P((u_int16_t));
+
+struct amiga_bus_chipset cross_chipset = {
+	0 /* bc_data */,
+
+	cross_io_map, cross_unmap,
+	cross_read_1, cross_read_2,
+	0 /* bc_io_read_4 */, 0 /* bc_io_read_8 */,
+	cross_io_read_multi_1, cross_io_read_multi_2,
+	0 /* bc_io_multi_4 */, 0 /* bc_io_multi_8 */,
+	cross_write_1, cross_write_2,
+	0 /* bc_io_write_4 */, 0 /* bc_io_write_8 */,
+	cross_io_write_multi_1, cross_io_write_multi_2,
+	0 /* bc_io_write_multi_4 */, 0 /* bc_io_write_multi_8 */,
+
+	cross_mem_map, (bus_mem_unmap_t)cross_unmap,
+	(bus_mem_read_1_t)cross_read_1, (bus_mem_read_2_t)cross_read_2,
+	0 /* bc_mem_read_4 */, 0 /* bc_mem_read_8 */,
+	(bus_mem_write_1_t)cross_write_1, (bus_mem_write_2_t)cross_write_2,
+	0 /* bc_mem_write_4 */, 0 /* bc_mem_write_8 */,
+
+	/* These are extensions to the general NetBSD bus interface.  */
+	swap, 0 /* bc_to_host_4 */, 0 /* bc_to_host_8 */,
+	swap, 0 /* bc_from_host_4 */, 0 /* bc_from_host_8 */,
 };
 
-struct cfdriver crosscd = {
-	NULL, "cross", crossmatch, crossattach, 
-	DV_DULL, sizeof(struct cross_device), 0
+struct cfattach cross_ca = {
+	sizeof(struct cross_softc), crossmatch, crossattach
+};
+
+struct cfdriver cross_cd = {
+	NULL, "cross", DV_DULL, 0
 };
 
 int
@@ -93,38 +152,36 @@ crossmatch(parent, match, aux)
 }
 
 void
-crossattach(pdp, dp, auxp)
-	struct device *pdp, *dp;
-	void *auxp;
+crossattach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
 {
-	struct zbus_args *zap = auxp;
-	struct cross_device *cdp = (struct cross_device *)dp;
+	struct cross_softc *sc = (struct cross_softc *)self;
+	struct zbus_args *zap = aux;
+	struct isabus_attach_args iba;
 
-	crossp = cdp;
-	bcopy(zap, &cdp->cd_zargs, sizeof(struct zbus_args));
-	cdp->cd_link.il_dev = dp;
-	cdp->cd_link.il_ldb = crossldb;
-	cdp->cd_link.il_stb = crossstb;
-	cdp->cd_link.il_ldw = crossldw;
-	cdp->cd_link.il_stw = crossstw;
-	cdp->cd_imask = 1 << CROSS_MASTER;
+	bcopy(zap, &sc->sc_zargs, sizeof(struct zbus_args));
+	bcopy(&cross_chipset, &sc->sc_bc, sizeof(struct amiga_bus_chipset));
+	sc->sc_bc.bc_data = sc;
+	sc->sc_status = CROSS_STATUS_ADDR(zap->va);
+	sc->sc_imask = 1 << CROSS_MASTER;
 
-	isa_intr_fcns = &cross_intr_fcns;
-        isa_pio_fcns = &cross_pio_fcns;
-
-	/* Enable interrupts lazily in crossaddint.  */
+	/* Enable interrupts lazily in cross_intr_establish.  */
 	CROSS_ENABLE_INTS(zap->va, 0);
 	/* Default 16 bit tranfer  */
-	*(volatile u_short *)(cdp->cd_zargs.va + CROSS_XLP_LATCH) = CROSS_SBHE; 
-
+	*CROSS_HANDLE_TO_XLP_LATCH((bus_io_handle_t)zap->va) = CROSS_SBHE; 
 	printf(": pa 0x%08x va 0x%08x size 0x%x\n", zap->pa, zap->va,
-            zap->size);
+	    zap->size);
 
+	sc->sc_ic.ic_data = sc;
+	sc->sc_ic.ic_attach_hook = cross_attach_hook;
+	sc->sc_ic.ic_intr_establish = cross_intr_establish;
+	sc->sc_ic.ic_intr_disestablish = cross_intr_disestablish;
 
-	/*
-	 * attempt to configure the board.
-	 */
-	config_found(dp, &cdp->cd_link, crossprint);
+	iba.iba_busname = "isa";
+	iba.iba_bc = &sc->sc_bc;
+	iba.iba_ic = &sc->sc_ic;
+	config_found(self, &iba, crossprint);
 }
 
 int
@@ -138,76 +195,140 @@ crossprint(auxp, pnp)
 }
 
 
-void
-crossstb(dev, ia, b)
-	struct device *dev;
-	int ia;
-	u_char b;
+int
+cross_io_map(bct, addr, sz, handle)
+	bus_chipset_tag_t bct;
+	bus_io_addr_t addr;
+	bus_io_size_t sz;
+	bus_io_handle_t *handle;
 {
-	/* generate A13-A19 for correct page */
-	u_short upper_addressbits = ia >> 13;
-	struct cross_device *cd = (struct cross_device *)dev;
-
-	*(volatile u_short *)(cd->cd_zargs.va + CROSS_XLP_LATCH) =
-	    upper_addressbits | CROSS_SBHE;
-	*(volatile u_char *)(cd->cd_zargs.va + CROSS_MEMORY_OFFSET + 2 * ia) =
-	    b;
-}
-
-u_char
-crossldb(dev, ia)
-	struct device *dev;
-	int ia;
-{
-	/* generate A13-A19 for correct page */
-	u_short upper_addressbits = ia >> 13;
-	struct cross_device *cd = (struct cross_device *)dev;
-
-	*(volatile u_short *)(cd->cd_zargs.va + CROSS_XLP_LATCH) =
-	    upper_addressbits | CROSS_SBHE;
-	return *(volatile u_char *)(cd->cd_zargs.va + CROSS_MEMORY_OFFSET +
-            2 * ia);
-}
-
-void
-crossstw(dev, ia, w)
-	struct device *dev;
-	int ia;
-	u_short w;
-{
-	/* generate A13-A19 for correct page */
-	u_short upper_addressbits = ia >> 13;
-	struct cross_device *cd = (struct cross_device *)dev;
- 	
-	*(volatile u_short *)(cd->cd_zargs.va + CROSS_XLP_LATCH) =
-	    upper_addressbits | CROSS_SBHE;
-#ifdef DEBUG
-	if (crossdebug)
-		printf("outw 0x%x,0x%x\n", ia, w);
+	*handle = (bus_io_handle_t)
+	    ((struct cross_softc *)bct->bc_data)->sc_zargs.va + 2 * addr;
+#if 0
+	printf("io_map %x %d -> %x\n", addr, sz, *handle);
 #endif
-	*(volatile u_short *)(cd->cd_zargs.va + CROSS_MEMORY_OFFSET + 2 * ia) =
-	    w;
+	return 0;
 }
 
-u_short
-crossldw(dev, ia)
-	struct device *dev;
-	int ia;
+int
+cross_mem_map(bct, addr, sz, cacheable, handle)
+	bus_chipset_tag_t bct;
+	bus_mem_addr_t addr;
+	bus_mem_size_t sz;
+	int cacheable;
+	bus_mem_handle_t *handle;
+{
+	*handle = (bus_mem_handle_t)
+	    ((struct cross_softc *)bct->bc_data)->sc_zargs.va + 2 * addr +
+	    CROSS_MEMORY_OFFSET;
+#if 0
+	printf("mem_map %x %d -> %x\n", addr, sz, *handle);
+#endif
+	return 0;
+}
+
+int
+cross_unmap(handle, sz)
+	bus_io_handle_t handle;
+	bus_io_size_t sz;
+{
+	return 0;
+}
+
+__inline u_int8_t
+cross_read_1(handle, addr)
+	bus_io_handle_t handle;
+	bus_io_size_t addr;
+{
+	u_int8_t val;
+
+	/* generate A13-A19 for correct page */
+	*CROSS_HANDLE_TO_XLP_LATCH(handle) = addr >> 13 | CROSS_SBHE;
+	val = *(volatile u_int8_t *)(handle + 2 * addr);
+
+#if 0
+	printf("read_1 @%x handle %x -> %d\n", addr, handle, val);
+#endif
+	return val;
+}
+
+__inline u_int16_t
+cross_read_2(handle, addr)
+	bus_io_handle_t handle;
+	bus_io_size_t addr;
 {
 	/* generate A13-A19 for correct page */
-	u_short upper_addressbits = ia >> 13;
-	struct cross_device *cd = (struct cross_device *)dev;
-	u_short retval;
+	*CROSS_HANDLE_TO_XLP_LATCH(handle) = addr >> 13 | CROSS_SBHE;
+	return *(volatile u_int16_t *)(handle + 2 * addr);
+}
 
-	*(volatile u_short *)(cd->cd_zargs.va + CROSS_XLP_LATCH) =
-	    upper_addressbits | CROSS_SBHE;
-	retval = *(volatile u_short *)(cd->cd_zargs.va + CROSS_MEMORY_OFFSET +
-	    2 * ia);
-#ifdef DEBUG
-	if (crossdebug)
-		printf("ldw 0x%x => 0x%x\n", ia, retval);
+void
+cross_io_read_multi_1(handle, addr, buf, cnt)
+	bus_io_handle_t handle;
+	bus_io_size_t addr;
+	u_int8_t *buf;
+	bus_io_size_t cnt;
+{
+	while (cnt--)
+		*buf++ = cross_read_1(handle, addr);
+}
+
+void
+cross_io_read_multi_2(handle, addr, buf, cnt)
+	bus_io_handle_t handle;
+	bus_io_size_t addr;
+	u_int16_t *buf;
+	bus_io_size_t cnt;
+{
+	while (cnt--)
+		*buf++ = cross_read_2(handle, addr);
+}
+
+__inline void
+cross_write_1(handle, addr, val)
+	bus_io_handle_t handle;
+	bus_io_size_t addr;
+	u_int8_t val;
+{
+	/* generate A13-A19 for correct page */
+	*CROSS_HANDLE_TO_XLP_LATCH(handle) = addr >> 13 | CROSS_SBHE;
+#if 0
+	printf("write_1 @%x handle %x: %d\n", addr, handle, val);
 #endif
-	return retval;
+	*(volatile u_int8_t *)(handle + 2 * addr + 1) = val;
+}
+
+__inline void
+cross_write_2(handle, addr, val)
+	bus_io_handle_t handle;
+	bus_io_size_t addr;
+	u_int16_t val;
+{
+	/* generate A13-A19 for correct page */
+	*CROSS_HANDLE_TO_XLP_LATCH(handle) = addr >> 13 | CROSS_SBHE;
+	*(volatile u_int16_t *)(handle + 2 * addr) = val;
+}
+
+void
+cross_io_write_multi_1(handle, addr, buf, cnt)
+	bus_io_handle_t handle;
+	bus_io_size_t addr;
+	const u_int8_t *buf;
+	bus_io_size_t cnt;
+{
+	while (cnt--)
+		cross_write_1(handle, addr, *buf++);
+}
+
+void
+cross_io_write_multi_2(handle, addr, buf, cnt)
+	bus_io_handle_t handle;
+	bus_io_size_t addr;
+	const u_int16_t *buf;
+	bus_io_size_t cnt;
+{
+	while (cnt--)
+		cross_write_2(handle, addr, *buf++);
 }
 
 static cross_int_map[] = {
@@ -216,106 +337,131 @@ static cross_int_map[] = {
     CROSS_IRQ15
 };
 
-#if 0
-/* XXX We don't care about the priority yet, although we ought to.  */
-void
-crossaddint(dev, irq, func, arg, pri)
-	struct device *dev;
-	int irq;
-	int (*func)();
-	void *arg;
-	int pri;
-{
-	struct cross_device *cd = (struct cross_device *)dev;
-	int s = splhigh();
-	int bit = cross_int_map[irq + 1];
-
-	if (!bit) {
-		log(LOG_WARNING, "Registration of unknown ISA interrupt %d\n",
-		    irq);
-		goto out;
-	}
-	if (cd->cd_imask & 1 << bit) {
-		log(LOG_WARNING, "ISA interrupt %d already handled\n", irq);
-		goto out;
-	}
-	cd->cd_imask |= (1 << bit);
-        CROSS_ENABLE_INTS (cd->cd_zargs.va, cd->cd_imask);
-	cd->cd_ifunc[bit] = func;
-	cd->cd_ipri[bit] = pri;
-	cd->cd_iarg[bit] = arg;
-out:
-	splx(s);
-}
-
-void
-crossremint(dev, irq)
-	struct device *dev;
-	int irq;
-{
-	struct cross_device *cd = (struct cross_device *)dev;
-	int s = splhigh();
-	int bit = cross_int_map[irq + 1];
-
-	cd->cd_imask &= ~(1 << bit);
-        CROSS_ENABLE_INTS (cd->cd_zargs.va, cd->cd_imask);
-	splx(s);
-}
-#endif
-struct crossintr_desc {
-	struct	isr cid_isr;
-	int	cid_mask;
-        int     (*cid_fun)(void *);
-        void    *cid_arg;
-};
-
-static struct crossintr_desc *crid[16];	/* XXX */
-
 int
-crossintr(cid)
-	struct crossintr_desc *cid;
+crossintr(v)
+	void *v;
 {
-	return (CROSS_GET_STATUS (crossp->cd_zargs.va) & cid->cid_mask) ?
-	    (*cid->cid_fun)(cid->cid_arg) : 0;
+	struct intrhand *ih = (struct intrhand *)v;
+	int handled;
+
+	if (!(*ih->ih_status & ih->ih_mask))
+		return 0;
+	for (handled = 0; ih; ih = ih->ih_next)
+		if ((*ih->ih_fun)(ih->ih_arg))
+			handled = 1;
+	return handled;
+}
+
+void
+cross_attach_hook(parent, self, iba)
+	struct device *parent, *self;
+	struct isabus_attach_args *iba;
+{
 }
 
 void *
-cross_establish_intr(intr, type, level, ih_fun, ih_arg, ih_what)
-        int intr;
-        int type;
-        int level;
-        int (*ih_fun)(void *);
-        void *ih_arg;
+cross_intr_establish(ic, irq, type, level, ih_fun, ih_arg, ih_what)
+	void *ic;
+	int irq;
+	int type;
+	int level;
+	int (*ih_fun)(void *);
+	void *ih_arg;
 	char *ih_what;
 {
-	if (crid[intr]) {
-		log(LOG_WARNING, "ISA interrupt %d already handled\n", intr);
-		return 0;
-	}
-	MALLOC(crid[intr], struct crossintr_desc *,
-	    sizeof(struct crossintr_desc), M_DEVBUF, M_WAITOK);
-	crid[intr]->cid_isr.isr_intr = crossintr;
-	crid[intr]->cid_isr.isr_arg = crid[intr];
-	crid[intr]->cid_isr.isr_ipl = 6;
-	crid[intr]->cid_isr.isr_mapped_ipl = level;
-	crid[intr]->cid_mask = 1 << cross_int_map[intr + 1];
-	crid[intr]->cid_fun = ih_fun;
-	crid[intr]->cid_arg = ih_arg;
-	add_isr (&crid[intr]->cid_isr);
-	crossp->cd_imask |= 1 << cross_int_map[intr + 1];
-        CROSS_ENABLE_INTS (crossp->cd_zargs.va, crossp->cd_imask);
-	return &crid[intr];
+	struct intrhand **p, *c, *ih;
+	struct cross_softc *sc = (struct cross_softc *)ic;
+
+	/* no point in sleeping unless someone can free memory. */
+	ih = malloc(sizeof *ih, M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
+	if (ih == NULL)
+		panic("cross_intr_establish: can't malloc handler info");
+
+	if (irq > ICU_LEN || type == IST_NONE)
+		panic("cross_intr_establish: bogus irq or type");
+
+	switch (sc->sc_intrsharetype[irq]) {
+	case IST_EDGE:
+	case IST_LEVEL:
+		if (type == sc->sc_intrsharetype[irq])
+			break;
+	case IST_PULSE:
+		if (type != IST_NONE)
+			panic("cross_intr_establish: can't share %s with %s",
+			    isa_intr_typename(sc->sc_intrsharetype[irq]),
+			    isa_intr_typename(type));
+		break;
+        }
+
+	/*
+	 * Figure out where to put the handler.
+	 * This is O(N^2), but we want to preserve the order, and N is
+	 * generally small.
+	 */
+	for (p = &sc->sc_ih[irq]; (c = *p) != NULL; p = &c->ih_next)
+		;
+
+	/*
+	 * Poke the real handler in now.
+	 */
+	ih->ih_fun = ih_fun;
+	ih->ih_arg = ih_arg;
+	ih->ih_count = 0;
+	ih->ih_next = NULL;
+	ih->ih_irq = irq;
+	ih->ih_what = ih_what;
+	ih->ih_mask = 1 << cross_int_map[irq + 1];
+	ih->ih_status = sc->sc_status;
+	ih->ih_isr.isr_intr = crossintr;
+	ih->ih_isr.isr_arg = ih;
+	ih->ih_isr.isr_ipl = 6;
+	ih->ih_isr.isr_mapped_ipl = level;
+	*p = ih;
+	add_isr(&ih->ih_isr);
+
+	sc->sc_imask |= 1 << cross_int_map[irq + 1];
+	CROSS_ENABLE_INTS(sc->sc_zargs.va, sc->sc_imask);
+
+	return ih;
 }
 
 void
-cross_disestablish_intr(handler)
-        void  *handler;
+cross_intr_disestablish(ic, arg)
+	void *ic;
+	void *arg;
 {
-        struct crossintr_desc **cid = handler;
+	struct intrhand *ih = arg;
+	struct cross_softc *sc = (struct cross_softc *)ic;
+	int irq = ih->ih_irq;
+	struct intrhand **p, *q;
 
-	remove_isr(&(*cid)->cid_isr);
-	crossp->cd_imask &= ~(*cid)->cid_mask;
-	FREE(*cid, M_DEVBUF);
-	*cid = 0;
-        CROSS_ENABLE_INTS (crossp->cd_zargs.va, crossp->cd_imask);
+	if (irq > ICU_LEN)
+		panic("cross_intr_establish: bogus irq");
+
+	sc->sc_imask &= ~ih->ih_mask;
+	CROSS_ENABLE_INTS (sc->sc_zargs.va, sc->sc_imask);
+	remove_isr(&ih->ih_isr);
+
+	/*
+	 * Remove the handler from the chain.
+	 * This is O(n^2), too.
+	 */
+	for (p = &sc->sc_ih[irq]; (q = *p) != NULL && q != ih; p = &q->ih_next)
+		;
+	if (q)
+		*p = q->ih_next;
+	else
+		panic("cross_intr_disestablish: handler not registered");
+	free(ih, M_DEVBUF);
+
+	if (sc->sc_intrsharetype[irq] == NULL)
+		sc->sc_intrsharetype[irq] = IST_NONE;
+}
+
+/* Swap bytes in a short word.  */
+static u_short
+swap(u_short x)
+{
+	__asm("rolw #8,%0" : "=r" (x) : "0" (x));
+	return x;
 }

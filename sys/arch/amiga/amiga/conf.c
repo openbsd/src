@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.4 1996/03/30 22:18:06 niklas Exp $	*/
+/*	$OpenBSD: conf.c,v 1.5 1996/04/27 18:38:45 niklas Exp $	*/
 /*	$NetBSD: conf.c,v 1.33 1996/03/14 21:22:23 christos Exp $	*/
 
 /*-
@@ -115,6 +115,12 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
 	0, (dev_type_select((*))) enodev, (dev_type_mmap((*))) enodev }
 
+/* open, close, write, ioctl */
+#define	cdev_lpt_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
+	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
+	0, seltrue, (dev_type_mmap((*))) enodev }
+
 cdev_decl(cn);
 cdev_decl(ctty);
 #define	mmread	mmrw
@@ -175,6 +181,11 @@ cdev_decl(ipl);
 #define NIPF 0
 #endif
 
+#include "com.h"
+cdev_decl(com);
+#include "lpt.h"
+cdev_decl(lpt);
+
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -211,7 +222,9 @@ struct cdevsw	cdevsw[] =
 	cdev_lkm_dummy(),		/* 29 */
 	cdev_lkm_dummy(),		/* 30 */
  	cdev_tty_init(NMSC,msc),	/* 31: A2232 MSC Multiport serial */
-	cdev_gen_ipf(NIPF,ipl),         /* 32: IP filter log */
+	cdev_tty_init(NCOM,com),	/* 32: ISA serial port */
+	cdev_lpt_init(NLPT,lpt),	/* 33: ISA parallel printer */
+	cdev_gen_ipf(NIPF,ipl),         /* 34: IP filter log */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -331,6 +344,7 @@ chrtoblk(dev)
  */
 cons_decl(ser);
 cons_decl(ite);
+cons_decl(com);
 
 struct	consdev constab[] = {
 #if NSER > 0
@@ -338,6 +352,11 @@ struct	consdev constab[] = {
 #endif
 #if NITE > 0
 	cons_init(ite),
+#endif
+#ifdef notyet
+#if NCOM > 0
+	cons_init(com),
+#endif
 #endif
 	{ 0 },
 };

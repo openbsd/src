@@ -1,4 +1,4 @@
-#	$OpenBSD: FILIPPA,v 1.2 1996/02/26 23:07:41 niklas Exp $
+#	$OpenBSD: FILIPPA,v 1.3 1996/04/27 18:38:48 niklas Exp $
 
 #
 # GENERIC AMIGA
@@ -176,8 +176,8 @@ ite1		at grf1			# terminal emulators for grf's
 
 
 # scsi stuff, all possible
-gvpbus*	at zbus0
-gtsc0		at gvpbus?		# GVP series II scsi
+#gvpbus*	at zbus0
+#gtsc0		at gvpbus?		# GVP series II scsi
 #ahsc0		at mainbus0		# A3000 scsi
 #atzsc0		at zbus0
 #wstsc0		at zbus0		# Wordsync II scsi
@@ -206,19 +206,16 @@ st*	at scsibus? target ? lun ?	# scsi tapes
 cd0	at scsibus0 target 6 lun ?	# scsi cd's
 cd*	at scsibus? target ? lun ?	# scsi cd's
 
-ggbus0	at zbus0			# Goldengate bridge
-isa*	at ggbus0
+ggbus*	at zbus0			# Goldengate bridge
+isa*	at ggbus?
 
-cross0	at zbus0			# CrossLink bridge
-isa*	at cross0
+cross*	at zbus0			# CrossLink bridge
+isa*	at cross?
 
 com0	at isa? port 0x3f8 irq 4	# Standard PC serial ports
 com1	at isa? port 0x2f8 irq 3
 com2	at isa? port 0x3e8 irq 5
 com3	at isa? port 0x2e8 irq 9
-
-#com0   at isa? port 0x0f0 irq 11	# Crosslink builtin ports
-#com1	at isa? port 0x0f8 irq 10
 
 ast0	at isa? port 0x1a0 irq 3	# AST 4-port serial cards
 #com*	at ast? slave ? flags 1
@@ -227,17 +224,20 @@ com5	at ast? slave ? flags 1
 com6	at ast? slave ? flags 1
 com7	at ast? slave ? flags 1
 
+com8	at isa? port 0x0f0 irq 11	# Crosslink builtin ports
+com9	at isa? port 0x0f8 irq 10
+
 lpt0	at isa? port 0x378 irq 7	# Standard PC parallel ports
 lpt1	at isa? port 0x278
 lpt2	at isa? port 0x3bc
 
-# XXX should be ed0
+# XXX should be ed0 but clashes with Zorro ed device
 isaed0	at isa? port 0x300 iomem 0xcc000 irq 10	# WD/SMC, 3C503, and NE[12]000
 						#   ethernetcards
 fd*	at fdc0 unit ?
 
 pseudo-device	sl			# slip
-pseudo-device	ppp			# ppp
+#pseudo-device	ppp			# ppp
 pseudo-device	view	10		# views
 pseudo-device	pty	32		# pseudo terminals
 pseudo-device	loop			# network loopback

@@ -1,7 +1,7 @@
-/*	$NetBSD: crossreg.h,v 1.1 1994/07/08 23:32:17 niklas Exp $	*/
+/*	$OpenBSD: crossreg.h,v 1.2 1996/04/27 18:38:56 niklas Exp $	*/
 
 /*
- * Copyright (c) 1994 Niklas Hallqvist, Carsten Hammer
+ * Copyright (c) 1994, 1996 Niklas Hallqvist, Carsten Hammer
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -14,7 +14,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Christian E. Hopps.
+ *      This product includes software developed by Niklas Hallqvist.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *
@@ -29,8 +29,10 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 #ifndef _CROSSREG_H_
 #define _CROSSREG_H_
+
 /***
 * 
 *
@@ -95,6 +97,7 @@
 *              about this register. However, it can be also used to
 *              determine which interrupt a board is connected to. 
 **/
+
 /* hardware offsets from config address */
 
 #define CROSS_XL_ROM          0x8000
@@ -104,16 +107,18 @@
 #define CROSS_XLP_INTSTAT 0
 #define CROSS_XLP_INTABLE 0
 #define CROSS_XLP_LATCH 2
+#define CROSS_HANDLE_TO_XLP_LATCH(va) \
+    ((volatile u_int16_t *)((va) & 0xffff | CROSS_XLP_LATCH))
 
 #define CROSS_MEMORY_OFFSET (CROSS_XL_MEM - 2 * 0x90000)
 #define CROSS_SBHE 0x40
 
-#define CROSS_GET_STATUS(va) \
-    (*(volatile u_short *)((va) + CROSS_XLP_INTSTAT))
+#define CROSS_STATUS_ADDR(va) \
+    ((volatile u_int16_t *)((va) + CROSS_XLP_INTSTAT))
 
 #define CROSS_MASTER 5
-/* From what I understand IRQ2 is really IRQ9 -NH */
-#define CROSS_IRQ9 10
+
+#define CROSS_IRQ9 10	/* IRQ9 is an alias of IRQ2 */
 #define CROSS_IRQ3 11
 #define CROSS_IRQ4 12
 #define CROSS_IRQ5 13
@@ -128,6 +133,6 @@
 #define CROSS_GET_INT_STATUS(va) (CROSS_GET_STATUS(va) & CROSS_IRQMASK)
 
 #define CROSS_ENABLE_INTS(va, ints) \
-    (*(volatile u_short *)((va) + CROSS_XLP_INTABLE) = ints) 
+    (*(volatile u_int16_t *)((va) + CROSS_XLP_INTABLE) = ints) 
 
 #endif

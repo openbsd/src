@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.11 1996/04/21 22:16:15 deraadt Exp $
+#	$OpenBSD: files.i386,v 1.12 1996/04/27 18:39:05 niklas Exp $
 #	$NetBSD: files.i386,v 1.72 1996/04/09 22:59:03 cgd Exp $
 #
 # new style config file for i386 architecture
@@ -133,6 +133,13 @@ major	{fd = 2}
 device	spkr: tty
 attach	spkr at pckbd
 file	arch/i386/isa/spkr.c		spkr needs-flag
+
+# National Semiconductor DS8390/WD83C690-based boards
+# (WD/SMC 80x3 family, SMC Ultra [8216], 3Com 3C503, NE[12]000, and clones)
+# XXX conflicts with other ports; can't be in files.isa
+device	ed: ether, ifnet
+attach	ed at isa
+file	dev/isa/if_ed.c			ed
 
 # AMD am7990 (Lance) -based boards
 # (BICC Isolan, NE2100, DEPCA)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: zssc.c,v 1.5 1996/04/21 22:15:51 deraadt Exp $	*/
+/*	$OpenBSD: zssc.c,v 1.6 1996/04/27 18:38:51 niklas Exp $	*/
 /*	$NetBSD: zssc.c,v 1.15 1996/03/17 01:18:00 thorpej Exp $	*/
 
 /*
@@ -40,6 +40,7 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <machine/psl.h>
+#include <machine/intr.h>
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
 #include <amiga/amiga/custom.h>

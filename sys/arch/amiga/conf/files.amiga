@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amiga,v 1.9 1996/04/21 22:14:53 deraadt Exp $
+#	$OpenBSD: files.amiga,v 1.10 1996/04/27 18:38:49 niklas Exp $
 #	$NetBSD: files.amiga,v 1.41 1996/03/28 18:41:55 is Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -255,29 +255,24 @@ file	arch/amiga/dev/idesc.c		idesc needs-flag
 define	bridge {}
 
 # GoldenGate bridge
-device	ggbus at zbus: bridge
+device	ggbus: isabus
+attach	ggbus at zbus
 file	arch/amiga/isa/ggbus.c		ggbus needs-flag
-file	arch/amiga/isa/ggbus_pio.c	ggbus
 
 # CrossLink bridge
-device	cross at zbus: bridge
+device	cross: isabus
+attach	cross at zbus
 file	arch/amiga/isa/cross.c		cross needs-flag
-file	arch/amiga/isa/cross_pio.c	cross
-
-device	isa at bridge {[port = -1], [size = 0],	# XXX
-		       [iomem = -1], [iosiz = 0],
-		       [irq = -1], [drq = -1]}
 
 # XXX Dummy busses needed for some multi-homed devices specified in files.isa
 define	pci { }
-device	pcmciabus at isa {}
-file	arch/amiga/conf/files.amiga		pcmciabus	needs-flag
 
 include	"../../../dev/isa/files.isa"
-file	arch/amiga/isa/isa_machdep.c	isa		needs-flag # XXX
 
-# XXX should really use if_ed instead
-device	isaed at isa: ifnet, ether
+# XXX should really use if_ed instead, but can't for the moment due to
+# name clashes with the amiga variant.
+device	isaed: ifnet, ether
+attach	isaed at isa
 file	arch/amiga/isa/if_isaed.c	isaed
 
 # list of standard files...

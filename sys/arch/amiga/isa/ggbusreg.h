@@ -1,7 +1,7 @@
-/*	$NetBSD: ggbusreg.h,v 1.1 1994/07/08 23:32:17 niklas Exp $	*/
+/*	$OpenBSD: ggbusreg.h,v 1.2 1996/04/27 18:38:59 niklas Exp $	*/
 
 /*
- * Copyright (c) 1994 Niklas Hallqvist
+ * Copyright (c) 1994, 1996 Niklas Hallqvist
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,13 +29,14 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 #ifndef _GGBUSREG_H_
 #define _GGBUSREG_H_
 
 #define GG2_MEMORY_OFFSET (0x20000 - 2 * 0x90000)
 
 #define GG2_STATUS 0x18000
-#define GG2_GET_STATUS(va) (*(volatile u_short *)((va) + GG2_STATUS))
+#define GG2_STATUS_ADDR(va) (volatile u_int16_t *)((va) + GG2_STATUS)
 
 #define GG2_MASTER 0
 #define GG2_WAIT 1
@@ -54,11 +55,11 @@
 #define GG2_GET_INT_STATUS(va) (GG2_GET_STATUS(va) & GG2_IRQ_MASK)
 
 #define GG2_INT_CTRL 0x18002
-#define GG2_DISABLE_INTS(va) (*(volatile u_short *)((va) + GG2_INT_CTRL))
-#define GG2_ENABLE_INTS(va) (*(volatile u_short *)((va) + GG2_INT_CTRL) = 0)
+#define GG2_DISABLE_INTS(va) (*(volatile u_int16_t *)((va) + GG2_INT_CTRL))
+#define GG2_ENABLE_INTS(va) (*(volatile u_int16_t *)((va) + GG2_INT_CTRL) = 0)
 
 #define GG2_WAIT_CTRL 0x18004
-#define GG2_TOGGLE_WAIT(va) (*(volatile u_char *)((va) + GG2_WAIT_CTRL))
+#define GG2_TOGGLE_WAIT(va) (*(volatile u_int8_t *)((va) + GG2_WAIT_CTRL))
 #define GG2_ENABLE_WAIT(va) \
     while ((GG2_GET_STATUS(va) & 1 << GG2_WAIT) == 0) GG2_TOGGLE_WAIT(va)
 #define GG2_DISABLE_WAIT(va) \

@@ -1,7 +1,7 @@
-/*	$NetBSD: crossvar.h,v 1.1 1994/07/08 23:32:17 niklas Exp $	*/
+/*	$OpenBSD: crossvar.h,v 1.2 1996/04/27 18:38:57 niklas Exp $	*/
 
 /*
- * Copyright (c) 1994 Niklas Hallqvist
+ * Copyright (c) 1994, 1996 Niklas Hallqvist
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -14,7 +14,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Christian E. Hopps.
+ *      This product includes software developed by Niklas Hallqvist.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *
@@ -29,18 +29,40 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 #ifndef _CROSSVAR_H_
 #define _CROSSVAR_H_
 
-struct cross_device {
-	struct	device cd_dev;
-	struct	zbus_args cd_zargs;
-	struct	isa_link cd_link;
-	int	(*cd_ifunc[16])();
-	void	*cd_iarg[16];
-	int	cd_ipri[16];
-	int	cd_imask;
-	struct	isr cd_isr;
+/*
+ * Interrupt handler chains.  cross_intr_establish() inserts a handler into
+ * the list.  The handler is called with its (single) argument.
+ */
+struct intrhand {
+	struct	intrhand *ih_next;
+	int	(*ih_fun)();
+	void	*ih_arg;
+	u_long	ih_count;
+	int	ih_irq;
+	char	*ih_what;
+
+	struct	isr ih_isr;
+	u_int16_t ih_mask;
+	volatile u_int16_t *ih_status;
+};
+
+#define	ICU_LEN		16	/* number of ISA IRQs (XXX) */
+
+struct cross_softc {
+	struct	device sc_dev;
+
+	struct	zbus_args sc_zargs;
+	struct	intrhand *sc_ih[ICU_LEN];
+	int	sc_intrsharetype[ICU_LEN];
+	u_int16_t sc_imask;
+	volatile u_int16_t *sc_status;
+
+	struct amiga_bus_chipset sc_bc;
+	struct amiga_isa_chipset sc_ic;
 };
 
 extern int crossdebug;

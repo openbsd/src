@@ -1,7 +1,7 @@
-/*	$NetBSD: ggbusvar.h,v 1.1 1994/07/08 23:32:17 niklas Exp $	*/
+/*	$OpenBSD: ggbusvar.h,v 1.2 1996/04/27 18:39:00 niklas Exp $	*/
 
 /*
- * Copyright (c) 1994, 1995 Niklas Hallqvist
+ * Copyright (c) 1994, 1995, 1996 Niklas Hallqvist
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,22 +29,41 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 #ifndef _GGBUSVAR_H_
 #define _GGBUSVAR_H_
 
-struct ggbus_device {
-	struct	device gd_dev;
-	struct	zbus_args gd_zargs;
-	struct	isa_link gd_link;
-	int	(*gd_ifunc[16])();
-	void	*gd_iarg[16];
-	int	gd_ipri[16];
-	int	gd_imask;
-	struct	isr gd_isr;
+/*
+ * Interrupt handler chains.  ggbus_intr_establish() inserts a handler into
+ * the list.  The handler is called with its (single) argument.
+ */
+struct intrhand {
+	struct	intrhand *ih_next;
+	int	(*ih_fun)();
+	void	*ih_arg;
+	u_long	ih_count;
+	int	ih_irq;
+	char	*ih_what;
+
+	struct	isr ih_isr;
+	u_int16_t ih_mask;
+	volatile u_int16_t *ih_status;
+};
+
+#define	ICU_LEN		16	/* number of ISA IRQs (XXX) */
+
+struct ggbus_softc {
+	struct	device sc_dev;
+
+	struct	zbus_args sc_zargs;
+	struct	intrhand *sc_ih[ICU_LEN];
+	int	sc_intrsharetype[ICU_LEN];
+	volatile u_int16_t *sc_status;
+
+	struct amiga_bus_chipset sc_bc;
+	struct amiga_isa_chipset sc_ic;
 };
 
 extern int ggdebug;
 
 #endif
-
-

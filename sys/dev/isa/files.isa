@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.9 1996/04/24 16:52:42 mickey Exp $
+#	$OpenBSD: files.isa,v 1.10 1996/04/27 18:39:07 niklas Exp $
 #	$NetBSD: files.isa,v 1.17 1996/03/29 20:53:30 mycroft Exp $
 #
 # Config.new file and device description for machine-independent ISA code.
@@ -167,9 +167,9 @@ file	dev/isa/elink.c			elink
 # National Semiconductor DS8390/WD83C690-based boards
 # (WD/SMC 80x3 family, SMC Ultra [8216], 3Com 3C503, NE[12]000, and clones)
 # XXX conflicts with amiga if_ed.c
-device	ed: ether, ifnet
-attach	ed at isa
-file	dev/isa/if_ed.c			ed needs-flag
+#device	ed: ether, ifnet
+#attach	ed at isa
+#file	dev/isa/if_ed.c			ed needs-flag
 
 # 3Com 3C505
 device	eg: ether, ifnet

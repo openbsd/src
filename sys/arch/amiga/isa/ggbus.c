@@ -1,8 +1,7 @@
-/*	$OpenBSD: ggbus.c,v 1.2 1996/02/27 15:40:56 niklas Exp $	*/
-/*	$NetBSD: ggbus.c,v 1.1 1994/07/08 23:32:17 niklas Exp $	*/
+/*	$OpenBSD: ggbus.c,v 1.3 1996/04/27 18:38:58 niklas Exp $	*/
 
 /*
- * Copyright (c) 1994, 1995 Niklas Hallqvist
+ * Copyright (c) 1994, 1995, 1996 Niklas Hallqvist
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,14 +29,16 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/syslog.h>
 
+#include <machine/bus.h>
 #include <machine/cpu.h>
-#include <machine/pio.h>
+#include <machine/intr.h>
 
 #include <dev/isa/isavar.h>
 
@@ -46,36 +47,120 @@
 #include <amiga/amiga/isr.h>
 #include <amiga/dev/zbusvar.h>
 #include <amiga/isa/isa_machdep.h>
-#include <amiga/isa/isa_intr.h>
 #include <amiga/isa/ggbusvar.h>
 #include <amiga/isa/ggbusreg.h>
+
+extern int cold;
 
 int ggdebug = 0;
 int ggstrayints = 0;
 
-/* This is OK because we only allow one ISA bus.  */
-struct ggbus_device *ggbusp;
-
 void	ggbusattach __P((struct device *, struct device *, void *));
 int	ggbusmatch __P((struct device *, void *, void *));
-int	ggbusprint __P((void *auxp, char *));
-void	ggbusstb __P((struct device *, int, u_char));
-u_char	ggbusldb __P((struct device *, int));
-void	ggbusstw __P((struct device *, int, u_short));
-u_short ggbusldw __P((struct device *, int));
-void	*ggbus_establish_intr __P((int intr, int type, int level,
-				   int (*ih_fun) (void *), void *ih_arg,
-				   char *ih_what));
-void	ggbus_disestablish_intr __P((void *handler));
+int	ggbusprint __P((void *, char *));
 
-struct isa_intr_fcns ggbus_intr_fcns = {
-	0 /* ggbus_intr_setup */,	ggbus_establish_intr,
-	ggbus_disestablish_intr,	0 /* ggbus_iointr */
+int	ggbus_io_map(bus_chipset_tag_t, bus_io_addr_t, bus_io_size_t,
+	    bus_io_handle_t *);
+int	ggbus_mem_map(bus_chipset_tag_t, bus_mem_addr_t, bus_mem_size_t, int,
+	    bus_mem_handle_t *);
+
+void	ggbus_io_read_multi_1(bus_io_handle_t, bus_io_size_t, u_int8_t *,
+	    bus_io_size_t);
+void	ggbus_io_read_multi_2(bus_io_handle_t, bus_io_size_t, u_int16_t *,
+	    bus_io_size_t);
+
+void	ggbus_io_write_multi_1(bus_io_handle_t, bus_io_size_t,
+	    const u_int8_t *, bus_io_size_t);
+void	ggbus_io_write_multi_2(bus_io_handle_t, bus_io_size_t,
+	    const u_int16_t *, bus_io_size_t);
+
+/*
+ * Note that the following unified access functions are prototyped for the
+ * I/O access case.  We use casts to get type correctness.
+ */
+int	ggbus_unmap(bus_io_handle_t, bus_io_size_t);
+
+__inline u_int8_t ggbus_read_1(bus_io_handle_t, bus_io_size_t);
+__inline u_int16_t ggbus_read_2(bus_io_handle_t, bus_io_size_t);
+
+__inline void ggbus_write_1(bus_io_handle_t, bus_io_size_t, u_int8_t);
+__inline void ggbus_write_2(bus_io_handle_t, bus_io_size_t, u_int16_t);
+
+/*
+ * In order to share the access function implementations for I/O and memory
+ * access we cast the functions for the memory access case.  These typedefs
+ * make that casting look nicer.
+ */
+typedef int (*bus_mem_unmap_t)(bus_mem_handle_t, bus_mem_size_t);
+typedef u_int8_t (*bus_mem_read_1_t)(bus_mem_handle_t, bus_mem_size_t);
+typedef u_int16_t (*bus_mem_read_2_t)(bus_mem_handle_t, bus_mem_size_t);
+typedef void (*bus_mem_write_1_t)(bus_mem_handle_t, bus_mem_size_t, u_int8_t);
+typedef void (*bus_mem_write_2_t)(bus_mem_handle_t, bus_mem_size_t, u_int16_t);
+
+void	ggbus_attach_hook(struct device *, struct device *,
+	    struct isabus_attach_args *);
+void	*ggbus_intr_establish __P((void *, int, int, int, int (*)(void *),
+	    void *, char *));
+void	ggbus_intr_disestablish __P((void *, void *));
+
+static u_int16_t swap __P((u_int16_t));
+
+/* Golden Gate I.  */
+struct amiga_bus_chipset ggbus1_chipset = {
+	0 /* bc_data */,
+
+	ggbus_io_map, ggbus_unmap,
+	ggbus_read_1, ggbus_read_2,
+	0 /* bc_io_read_4 */, 0 /* bc_io_read_8 */,
+	ggbus_io_read_multi_1, ggbus_io_read_multi_2,
+	0 /* bc_io_multi_4 */, 0 /* bc_io_multi_8 */,
+	ggbus_write_1, ggbus_write_2,
+	0 /* bc_io_write_4 */, 0 /* bc_io_write_8 */,
+	ggbus_io_write_multi_1, ggbus_io_write_multi_2,
+	0 /* bc_io_write_multi_4 */, 0 /* bc_io_write_multi_8 */,
+
+	0 /* bc_mem_map */, 0 /* bc_mem_unmap */,
+	0 /* bc_mem_read_1 */, 0 /* bc_mem_read_2 */,
+	0 /* bc_mem_read_4 */, 0 /* bc_mem_read_8 */,
+	0 /* bc_mem_write_1 */, 0 /* bc_mem_write_2 */,
+	0 /* bc_mem_write_4 */, 0 /* bc_mem_write_8 */,
+
+	/* These are extensions to the general NetBSD bus interface.  */
+	swap, 0 /* bc_to_host_4 */, 0 /* bc_to_host_8 */,
+	swap, 0 /* bc_from_host_4 */, 0 /* bc_from_host_8 */,
 };
 
-struct cfdriver ggbuscd = {
-	NULL, "ggbus", ggbusmatch, ggbusattach, 
-	DV_DULL, sizeof(struct ggbus_device), 0
+/* Golden Gate II.  */
+struct amiga_bus_chipset ggbus2_chipset = {
+	0 /* bc_data */,
+
+	ggbus_io_map, ggbus_unmap,
+	ggbus_read_1, ggbus_read_2,
+	0 /* bc_io_read_4 */, 0 /* bc_io_read_8 */,
+	ggbus_io_read_multi_1, ggbus_io_read_multi_2,
+	0 /* bc_io_multi_4 */, 0 /* bc_io_multi_8 */,
+	ggbus_write_1, ggbus_write_2,
+	0 /* bc_io_write_4 */, 0 /* bc_io_write_8 */,
+	ggbus_io_write_multi_1, ggbus_io_write_multi_2,
+	0 /* bc_io_write_multi_4 */, 0 /* bc_io_write_multi_8 */,
+
+	ggbus_mem_map, (bus_mem_unmap_t)ggbus_unmap,
+	(bus_mem_read_1_t)ggbus_read_1, (bus_mem_read_2_t)ggbus_read_2,
+	0 /* bc_mem_read_4 */, 0 /* bc_mem_read_8 */,
+	(bus_mem_write_1_t)ggbus_write_1, (bus_mem_write_2_t)ggbus_write_2,
+	0 /* bc_mem_write_4 */, 0 /* bc_mem_write_8 */,
+
+	/* These are extensions to the general NetBSD bus interface.  */
+	swap, 0 /* bc_to_host_4 */, 0 /* bc_to_host_8 */,
+	swap, 0 /* bc_from_host_4 */, 0 /* bc_from_host_8 */,
+};
+
+struct cfattach ggbus_ca = {
+	sizeof(struct ggbus_softc), ggbusmatch, ggbusattach
+};
+
+struct cfdriver ggbus_cd = {
+	NULL, "ggbus", DV_DULL, 0
 };
 
 int
@@ -94,48 +179,39 @@ ggbusmatch(parent, match, aux)
 }
 
 void
-ggbusattach(pdp, dp, auxp)
-	struct device *pdp, *dp;
-	void *auxp;
+ggbusattach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
 {
-	struct zbus_args *zap = auxp;
-	struct ggbus_device *gdp = (struct ggbus_device *)dp;
+	struct ggbus_softc *sc = (struct ggbus_softc *)self;
+	struct zbus_args *zap = aux;
+	struct isabus_attach_args iba;
 
-	ggbusp = gdp;
-	bcopy(zap, &gdp->gd_zargs, sizeof(struct zbus_args));
-	gdp->gd_link.il_dev = dp;
-	if (gdp->gd_zargs.serno >= 2)
-	  {
-	    gdp->gd_link.il_ldb = ggbusldb;
-	    gdp->gd_link.il_stb = ggbusstb;
-	    gdp->gd_link.il_ldw = ggbusldw;
-	    gdp->gd_link.il_stw = ggbusstw;
-	  }
-	else
-	  {
-	    gdp->gd_link.il_ldb = 0;
-	    gdp->gd_link.il_stb = 0;
-	    gdp->gd_link.il_ldw = 0;
-	    gdp->gd_link.il_stw = 0;
-	  }
-	gdp->gd_imask = 0;
+	bcopy(zap, &sc->sc_zargs, sizeof(struct zbus_args));
+	/* XXX Is serno reliable?  */
+	bcopy(zap->serno < 2 ? &ggbus1_chipset : &ggbus2_chipset,
+	    &sc->sc_bc, sizeof(struct amiga_bus_chipset));
+	sc->sc_bc.bc_data = sc;
+	sc->sc_status = GG2_STATUS_ADDR(sc->sc_zargs.va);
 
-	isa_intr_fcns = &ggbus_intr_fcns;
-	isa_pio_fcns = &ggbus_pio_fcns;
+	if (sc->sc_zargs.serno >= 2) {
+		/* XXX turn on wait states unconditionally for now. */
+		GG2_ENABLE_WAIT(zap->va);
+		GG2_ENABLE_INTS(zap->va);
+	}
 
-	if (gdp->gd_zargs.serno >= 2)
-	  {
-	    /* XXX turn on wait states unconditionally for now. */
-	    GG2_ENABLE_WAIT(zap->va);
-	    GG2_ENABLE_INTS(zap->va);
-	  }
+	printf(": pa 0x%08x va 0x%08x size 0x%x\n", zap->pa, zap->va,
+	    zap->size);
 
-	printf(": pa 0x%08x va 0x%08x size 0x%x\n", zap->pa, zap->va, zap->size);
+	sc->sc_ic.ic_data = sc;
+	sc->sc_ic.ic_attach_hook = ggbus_attach_hook;
+	sc->sc_ic.ic_intr_establish = ggbus_intr_establish;
+	sc->sc_ic.ic_intr_disestablish = ggbus_intr_disestablish;
 
-	/*
-	 * attempt to configure the board.
-	 */
-	config_found(dp, &gdp->gd_link, ggbusprint);
+	iba.iba_busname = "isa";
+	iba.iba_bc = &sc->sc_bc;
+	iba.iba_ic = &sc->sc_ic;
+	config_found(self, &iba, ggbusprint);
 }
 
 int
@@ -148,59 +224,130 @@ ggbusprint(auxp, pnp)
 	return(UNCONF);
 }
 
+int
+ggbus_io_map(bct, addr, sz, handle)
+	bus_chipset_tag_t bct;
+	bus_io_addr_t addr;
+	bus_io_size_t sz;
+	bus_io_handle_t *handle;
+{
+	*handle = (bus_io_handle_t)
+	    ((struct ggbus_softc *)bct->bc_data)->sc_zargs.va + 2 * addr;
+#if 0
+	printf("io_map %x %d -> %x\n", addr, sz, *handle);
+#endif
+	return 0;
+}
+
+int
+ggbus_mem_map(bct, addr, sz, cacheable, handle)
+	bus_chipset_tag_t bct;
+	bus_mem_addr_t addr;
+	bus_mem_size_t sz;
+	int cacheable;
+	bus_mem_handle_t *handle;
+{
+	*handle = (bus_mem_handle_t)
+	    ((struct ggbus_softc *)bct->bc_data)->sc_zargs.va + 2 * addr +
+	    GG2_MEMORY_OFFSET;
+#if 0
+	printf("mem_map %x %d -> %x\n", addr, sz, *handle);
+#endif
+	return 0;
+}
+
+int
+ggbus_unmap(handle, sz)
+	bus_io_handle_t handle;
+	bus_io_size_t sz;
+{
+	return 0;
+}
+
+__inline u_int8_t
+ggbus_read_1(handle, addr)
+	bus_io_handle_t handle;
+	bus_io_size_t addr;
+{
+	u_int8_t val = *(volatile u_int8_t *)(handle + 2 * addr + 1);
+
+#if 0
+	printf("read_1 @%x handle %x -> %d\n", addr, handle, val);
+#endif
+	return val;
+}
+
+__inline u_int16_t
+ggbus_read_2(handle, addr)
+	bus_io_handle_t handle;
+	bus_io_size_t addr;
+{
+	return swap(*(volatile u_int16_t *)(handle + 2 * addr));
+}
 
 void
-ggbusstb(dev, ia, b)
-	struct device *dev;
-	int ia;
-	u_char b;
+ggbus_io_read_multi_1(handle, addr, buf, cnt)
+	bus_io_handle_t handle;
+	bus_io_size_t addr;
+	u_int8_t *buf;
+	bus_io_size_t cnt;
 {
-	struct ggbus_device *gd = (struct ggbus_device *)dev;
-
-	*(volatile u_char *)(gd->gd_zargs.va + GG2_MEMORY_OFFSET + 2 * ia + 1) = b;
-}
-
-u_char
-ggbusldb(dev, ia)
-	struct device *dev;
-	int ia;
-{
-	struct ggbus_device *gd = (struct ggbus_device *)dev;
-	u_char retval =
-	    *(volatile u_char *)(gd->gd_zargs.va + GG2_MEMORY_OFFSET + 2 * ia + 1);
-
-#ifdef DEBUG
-	if (ggdebug)
-		printf("ldb 0x%x => 0x%x\n", ia, retval);
-#endif
-	return retval;
+	while (cnt--)
+		*buf++ = ggbus_read_1(handle, addr);
 }
 
 void
-ggbusstw(dev, ia, w)
-	struct device *dev;
-	int ia;
-	u_short w;
+ggbus_io_read_multi_2(handle, addr, buf, cnt)
+	bus_io_handle_t handle;
+	bus_io_size_t addr;
+	u_int16_t *buf;
+	bus_io_size_t cnt;
 {
-	struct ggbus_device *gd = (struct ggbus_device *)dev;
-
-	*(volatile u_short *)(gd->gd_zargs.va + GG2_MEMORY_OFFSET + 2 * ia) = swap(w);
+	while (cnt--)
+		*buf++ = ggbus_read_2(handle, addr);
 }
 
-u_short
-ggbusldw(dev, ia)
-	struct device *dev;
-	int ia;
+__inline void
+ggbus_write_1(handle, addr, val)
+	bus_io_handle_t handle;
+	bus_io_size_t addr;
+	u_int8_t val;
 {
-	struct ggbus_device *gd = (struct ggbus_device *)dev;
-	u_short retval =
-	    swap(*(volatile u_short *)(gd->gd_zargs.va + GG2_MEMORY_OFFSET + 2 * ia));
-
-#ifdef DEBUG
-	if (ggdebug)
-		printf("ldw 0x%x => 0x%x\n", ia, retval);
+#if 0
+	printf("write_1 @%x handle %x: %d\n", addr, handle, val);
 #endif
-	return retval;
+	*(volatile u_int8_t *)(handle + 2 * addr + 1) = val;
+}
+
+__inline void
+ggbus_write_2(handle, addr, val)
+	bus_io_handle_t handle;
+	bus_io_size_t addr;
+	u_int16_t val;
+{
+	*(volatile u_int16_t *)(handle + 2 * addr) = swap(val);
+}
+
+void
+ggbus_io_write_multi_1(handle, addr, buf, cnt)
+	bus_io_handle_t handle;
+	bus_io_size_t addr;
+	const u_int8_t *buf;
+	bus_io_size_t cnt;
+{
+	while (cnt--)
+		ggbus_write_1(handle, addr, *buf++);
+}
+
+void
+ggbus_io_write_multi_2(handle, addr, buf, cnt)
+	bus_io_handle_t handle;
+	bus_io_size_t addr;
+	const u_int16_t *buf;
+	bus_io_size_t cnt;
+{
+	while (cnt--)
+		ggbus_write_2(handle, addr, *buf++);
 }
 
 static ggbus_int_map[] = {
@@ -208,56 +355,126 @@ static ggbus_int_map[] = {
     GG2_IRQ9, GG2_IRQ10, GG2_IRQ11, GG2_IRQ12, 0, GG2_IRQ14, GG2_IRQ15
 };
 
-struct ggintr_desc {
-	struct	isr gid_isr;
-	int	gid_mask;
-	int	(*gid_fun)(void *);
-	void	*gid_arg;
-};
-
-static struct ggintr_desc *ggid[16];	/* XXX */
-
 int
-ggbusintr(gid)
-	struct ggintr_desc *gid;
+ggbusintr(v)
+	void *v;
 {
-	return (GG2_GET_STATUS (ggbusp->gd_zargs.va) & gid->gid_mask) ?
-	    (*gid->gid_fun)(gid->gid_arg) : 0;
+	struct intrhand *ih = (struct intrhand *)v;
+	int handled;
+
+	if (!(*ih->ih_status & ih->ih_mask))
+		return 0;
+	for (handled = 0; ih; ih = ih->ih_next)
+		if ((*ih->ih_fun)(ih->ih_arg))
+			handled = 1;
+	return handled;
+}
+
+void
+ggbus_attach_hook(parent, self, iba)
+	struct device *parent, *self;
+	struct isabus_attach_args *iba;
+{
 }
 
 void *
-ggbus_establish_intr(intr, type, level, ih_fun, ih_arg, ih_what)
-	int intr;
+ggbus_intr_establish(ic, irq, type, level, ih_fun, ih_arg, ih_what)
+	void *ic;
+	int irq;
 	int type;
 	int level;
 	int (*ih_fun)(void *);
 	void *ih_arg;
 	char *ih_what;
 {
-	if (ggid[intr]) {
-		log(LOG_WARNING, "ISA interrupt %d already handled\n", intr);
-		return 0;
-	}
-	MALLOC(ggid[intr], struct ggintr_desc *, sizeof(struct ggintr_desc),
-	    M_DEVBUF, M_WAITOK);
-	ggid[intr]->gid_isr.isr_intr = ggbusintr;
-	ggid[intr]->gid_isr.isr_arg = ggid[intr];
-	ggid[intr]->gid_isr.isr_ipl = 6;
-	ggid[intr]->gid_isr.isr_mapped_ipl = level;
-	ggid[intr]->gid_mask = 1 << ggbus_int_map[intr + 1];
-	ggid[intr]->gid_fun = ih_fun;
-	ggid[intr]->gid_arg = ih_arg;
-	add_isr(&ggid[intr]->gid_isr);
-	return &ggid[intr];
+	struct intrhand **p, *c, *ih;
+	struct ggbus_softc *sc = (struct ggbus_softc *)ic;
+
+	/* no point in sleeping unless someone can free memory. */
+	ih = malloc(sizeof *ih, M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
+	if (ih == NULL)
+		panic("ggbus_intr_establish: can't malloc handler info");
+
+	if (irq > ICU_LEN || type == IST_NONE)
+		panic("ggbus_intr_establish: bogus irq or type");
+
+	switch (sc->sc_intrsharetype[irq]) {
+	case IST_EDGE:
+	case IST_LEVEL:
+		if (type == sc->sc_intrsharetype[irq])
+			break;
+	case IST_PULSE:
+		if (type != IST_NONE)
+			panic("ggbus_intr_establish: can't share %s with %s",
+			    isa_intr_typename(sc->sc_intrsharetype[irq]),
+			    isa_intr_typename(type));
+		break;
+        }
+
+	/*
+	 * Figure out where to put the handler.
+	 * This is O(N^2), but we want to preserve the order, and N is
+	 * generally small.
+	 */
+	for (p = &sc->sc_ih[irq]; (c = *p) != NULL; p = &c->ih_next)
+		;
+
+	/*
+	 * Poke the real handler in now.
+	 */
+	ih->ih_fun = ih_fun;
+	ih->ih_arg = ih_arg;
+	ih->ih_count = 0;
+	ih->ih_next = NULL;
+	ih->ih_irq = irq;
+	ih->ih_what = ih_what;
+	ih->ih_mask = 1 << ggbus_int_map[irq + 1];
+	ih->ih_status = sc->sc_status;
+	ih->ih_isr.isr_intr = ggbusintr;
+	ih->ih_isr.isr_arg = ih;
+	ih->ih_isr.isr_ipl = 6;
+	ih->ih_isr.isr_mapped_ipl = level;
+	*p = ih;
+
+	add_isr(&ih->ih_isr);
+	return ih;
 }
 
 void
-ggbus_disestablish_intr(handler)
-	void  *handler;
+ggbus_intr_disestablish(ic, arg)
+	void *ic;
+	void *arg;
 {
-	struct ggintr_desc **gid = handler;
+	struct intrhand *ih = arg;
+	struct ggbus_softc *sc = (struct ggbus_softc *)ic;
+	int irq = ih->ih_irq;
+	struct intrhand **p, *q;
 
-	remove_isr(&(*gid)->gid_isr);
-	FREE(*gid, M_DEVBUF);
-	*gid = 0;
+	if (irq > ICU_LEN)
+		panic("ggbus_intr_establish: bogus irq");
+
+	remove_isr(&ih->ih_isr);
+
+	/*
+	 * Remove the handler from the chain.
+	 * This is O(n^2), too.
+	 */
+	for (p = &sc->sc_ih[irq]; (q = *p) != NULL && q != ih; p = &q->ih_next)
+		;
+	if (q)
+		*p = q->ih_next;
+	else
+		panic("ggbus_intr_disestablish: handler not registered");
+	free(ih, M_DEVBUF);
+
+	if (sc->sc_intrsharetype[irq] == NULL)
+		sc->sc_intrsharetype[irq] = IST_NONE;
+}
+
+/* Swap bytes in a short word.  */
+static u_int16_t
+swap(u_int16_t x)
+{
+	__asm("rolw #8,%0" : "=r" (x) : "0" (x));
+	return x;
 }

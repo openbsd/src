@@ -1,7 +1,7 @@
-/*	$NetBSD: isa_machdep.h,v 1.1 1995/07/21 23:07:17 niklas Exp $	*/
+/*	$OpenBSD: isa_machdep.h,v 1.2 1996/04/27 18:39:04 niklas Exp $	*/
 
 /*
- * Copyright (c) 1995 Niklas Hallqvist
+ * Copyright (c) 1995, 1996 Niklas Hallqvist
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,159 +34,29 @@
 
 #include <machine/endian.h>
 
-void	isa_insb __P((int port, void *addr, int));
-void	isa_outsb __P((int port, void *addr, int));
-void	isa_insw __P((int port, void *addr, int));
-void	isa_outsw __P((int port, void *addr, int));
-
 /*
- * The link between the ISA device drivers and the bridgecard used.
+ * Types provided to machine-independent ISA code.
  */
-struct isa_link {
-	struct	device *il_dev;
-	void	(*il_stb)(struct device *, int, u_char);
-	u_char	(*il_ldb)(struct device *, int);
-	void	(*il_stw)(struct device *, int, u_short);
-	u_short	(*il_ldw)(struct device *, int);
+typedef struct amiga_isa_chipset *isa_chipset_tag_t;
+
+struct amiga_isa_chipset {
+	void	*ic_data;
+
+	void	(*ic_attach_hook) __P((struct device *, struct device *,
+		    struct isabus_attach_args *));
+	void	*(*ic_intr_establish) __P((void *, int, int, int,
+		    int (*)(void *), void *, char *));
+	void	(*ic_intr_disestablish) __P((void *, void *));
 };
 
-extern struct isa_link *isa;
-extern struct cfdriver isacd;
-
-static __inline void
-stb(addr, val)
-	int addr;
-	u_char val;
-{
-	(*isa->il_stb)(isa->il_dev, addr, val);
-}
-
-static __inline u_char
-ldb(addr)
-	int addr;
-{
-	return (*isa->il_ldb)(isa->il_dev, addr);
-}
-
-static __inline void
-stw(addr, val)
-	int addr;
-	u_short val;
-{
-	(*isa->il_stw)(isa->il_dev, addr, val);
-}
-
-static __inline u_short
-ldw(addr)
-	int addr;
-{
-	return (*isa->il_ldw)(isa->il_dev, addr);
-}
-
 /*
- * Should these be out-of-line instead?  If so, move them to isa.c!
- * How about unaligned word accesses?  Does the '020 allow them?  If not
- * we have to do odd to even moves and vice versa bytewise instead of
- * wordwise.
+ * Functions provided to machine-independent ISA code.
  */
-static __inline void
-copy_from_isa (void *from, void *to, int cnt)
-{
-	int a = (int)from;
-
-	if (a & 1 && cnt) {
-		*(u_char *)to = ldb(a++);
-		to = ((u_char *)to) + 1;
-		cnt--;
-	}
-	/* Maybe use Duff's device here... */
-	while (cnt > 1) {
-		*(u_short *)to = ldw(a);
-		a += sizeof(u_short);
-		to = ((u_short *)to) + 1;
-		cnt -= 2;
-	}
-	if (cnt)
-		*(u_char *)to = ldb(a);
-}
-
-static __inline void
-copy_to_isa (const void *from, void *to, int cnt)
-{
-	int a = (int)to;
-
-	if (a & 1 && cnt) {
-		stb(a++, *(u_char *)from);
-		from = ((u_char *)from) + 1;
-		cnt--;
-	}
-	/* Maybe use Duff's device here... */
-	while (cnt > 1) {
-		stw(a, *(u_short *)from);
-		a += sizeof(u_short);
-		from = ((u_short *)from) + 1;
-		cnt -= 2;
-	}
-	if (cnt)
-		stb(a, *(u_char *)from);
-}
-
-static __inline void
-zero_isa (void *addr, int cnt)
-{
-	int a = (int)addr;
-
-	if (a & 1 && cnt) {
-		stb(a++, 0);
-		cnt--;
-	}
-	/* Maybe use Duff's device here... */
-	while (cnt > 1) {
-		stw(a, 0);
-		a += sizeof(u_short);
-		cnt -= 2;
-	}
-	if (cnt)
-		stb(a, 0);
-}
-
-/*
- * These inlines convert shorts from/to isa (intel) byte order to host
- * byte-order.  I know both are exactly equal, but I think it make code
- * more readable to have separate names for them as they indeed have
- * distinctive functionalities.
- */
-static __inline u_short
-swap(u_short x)
-{
-	__asm("rolw #8,%0" : "=r" (x) : "0" (x));
-	return x;
-}
-
-static __inline u_short
-itohs(u_short x)
-{
-#if BYTE_ORDER == LITTLE_ENDIAN
-	return x;
-#else
-	return swap(x);
-#endif
-}
-
-static __inline u_short
-htois(u_short x)
-{
-#if BYTE_ORDER == LITTLE_ENDIAN
-	return x;
-#else
-	return swap(x);
-#endif
-}
-
-/*
- * Given a physical address in the "hole",
- * return a kernel virtual address.
- */
-#define	ISA_HOLE_VADDR(p)  ((caddr_t)p)
+#define	isa_attach_hook(p, s, a)					\
+    (*(a)->iba_ic->ic_attach_hook)((p), (s), (a))
+#define	isa_intr_establish(c, i, t, l, f, a, w)				\
+    (*(c)->ic_intr_establish)((c)->ic_data, (i), (t), (l), (f), (a), (w))
+#define	isa_intr_disestablish(c, h)					\
+    (*(c)->ic_intr_disestablish)((c)->ic_data, (h))
 
 #endif
