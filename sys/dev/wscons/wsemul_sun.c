@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_sun.c,v 1.9 2002/09/09 22:14:42 miod Exp $ */
+/* $OpenBSD: wsemul_sun.c,v 1.10 2002/09/15 12:54:49 fgsch Exp $ */
 /* $NetBSD: wsemul_sun.c,v 1.11 2000/01/05 11:19:36 drochner Exp $ */
 
 /*
@@ -704,7 +704,9 @@ static char *sun_fkeys[] = {
 	"\033[230z",
 	"\033[231z",
 	"\033[232z",
-	"\033[233z",	/* F10 */
+	"\033[233z",
+	"\033[234z",
+	"\033[235z",	/* F12 */
 };
 
 static char *sun_lkeys[] = {
@@ -736,11 +738,11 @@ wsemul_sun_translate(cookie, in, out)
 		return (1);
 	}
 
-	if (in >= KS_f1 && in <= KS_f10) {
+	if (in >= KS_f1 && in <= KS_f12) {
 		*out = sun_fkeys[in - KS_f1];
 		return (6);
 	}
-	if (in >= KS_F1 && in <= KS_F10) {
+	if (in >= KS_F1 && in <= KS_F12) {
 		*out = sun_fkeys[in - KS_F1];
 		return (6);
 	}
@@ -754,36 +756,44 @@ wsemul_sun_translate(cookie, in, out)
 	}
 
 	switch (in) {
-	    case KS_Home:
-	    case KS_KP_Home:
-	    case KS_KP_Begin:
+	case KS_Home:
+	case KS_KP_Home:
+	case KS_KP_Begin:
 		*out = "\033[214z";
 		return (6);
-	    case KS_Prior:
-	    case KS_KP_Prior:
+	case KS_End:
+	case KS_KP_End:
+		*out = "\033[220z";
+		return (6);
+	case KS_Insert:
+	case KS_KP_Insert:
+		*out = "\033[247z";
+		return (6);
+	case KS_Prior:
+	case KS_KP_Prior:
 		*out = "\033[216z";
 		return (6);
-	    case KS_Next:
-	    case KS_KP_Next:
+	case KS_Next:
+	case KS_KP_Next:
 		*out = "\033[222z";
 		return (6);
-	    case KS_Up:
-	    case KS_KP_Up:
+	case KS_Up:
+	case KS_KP_Up:
 		*out = "\033[A";
 		return (3);
-	    case KS_Down:
-	    case KS_KP_Down:
+	case KS_Down:
+	case KS_KP_Down:
 		*out = "\033[B";
 		return (3);
-	    case KS_Left:
-	    case KS_KP_Left:
+	case KS_Left:
+	case KS_KP_Left:
 		*out = "\033[D";
 		return (3);
-	    case KS_Right:
-	    case KS_KP_Right:
+	case KS_Right:
+	case KS_KP_Right:
 		*out = "\033[C";
 		return (3);
-	    case KS_KP_Delete:
+	case KS_KP_Delete:
 		*out = "\177";
 		return (1);
 	}
