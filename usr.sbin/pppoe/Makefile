@@ -1,3 +1,4 @@
+# $OpenBSD: Makefile,v 1.2 2000/06/18 07:47:32 jason Exp $
 
 PROG=		pppoe
 MAN=		pppoe.8
