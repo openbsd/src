@@ -1,7 +1,7 @@
-#	$OpenBSD: list,v 1.11 1997/08/24 07:07:35 deraadt Exp $
+#	$OpenBSD: list,v 1.12 1997/08/24 22:44:59 deraadt Exp $
 #	$NetBSD: list,v 1.4.4.1 1996/06/20 20:30:26 pk Exp $
 
-SRCDIRS usr.bin bin sbin usr.sbin gnu/usr.bin
+SRCDIRS usr.bin bin sbin usr.sbin gnu/usr.bin usr.bin/vi
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/instbin	instbin
@@ -51,7 +51,7 @@ SYMLINK	../../instbin		usr/bin/gzip usr/bin/gunzip usr/bin/gzcat
 SYMLINK	../../instbin		usr/bin/sed
 SYMLINK	../../instbin		usr/bin/sort
 SYMLINK	../../instbin		usr/bin/tip
-SYMLINK	../../instbin		usr/bin/vi
+SYMLINK	../../instbin		usr/bin/build
 
 # `internal' crunchgen links
 ARGVLINK mount_ffs	ffs
@@ -74,3 +74,4 @@ COPY	${CURDIR}/install.sh		install
 COPY	${CURDIR}/upgrade.sh		upgrade
 SPECIAL sed "/^VERSION=/s/=.*/=${REV}/" < ${CURDIR}/install.sub > install.sub
 SPECIAL	chmod 755 install upgrade
+SPECIAL	ln -s instbin		usr/bin/vi
