@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.23 1998/10/03 21:18:58 millert Exp $	*/
+/*	$OpenBSD: fd.c,v 1.24 2001/03/24 01:37:28 ho Exp $	*/
 /*	$NetBSD: fd.c,v 1.51 1997/05/24 20:16:19 pk Exp $	*/
 
 /*-
@@ -65,6 +65,7 @@
 #include <sys/syslog.h>
 #include <sys/queue.h>
 #include <sys/conf.h>
+#include <sys/timeout.h>
 
 #include <dev/cons.h>
 
@@ -137,6 +138,8 @@ struct fdc_softc {
 #define sc_nstat	sc_io.fdcio_nstat
 #define sc_status	sc_io.fdcio_status
 #define sc_intrcnt	sc_io.fdcio_intrcnt
+	struct timeout	fdctimeout_to;
+	struct timeout	fdcpseudointr_to;
 };
 
 #ifndef FDC_C_HANDLER
@@ -195,6 +198,9 @@ struct fd_softc {
 	TAILQ_ENTRY(fd_softc) sc_drivechain;
 	int sc_ops;		/* I/O ops since last switch */
 	struct buf sc_q;	/* head of buf chain */
+
+	struct timeout fd_motor_on_to;
+	struct timeout fd_motor_off_to;
 };
 
 /* floppy driver configuration */
@@ -483,6 +489,9 @@ fdcattach(parent, self, aux)
 
 	}
 
+	timeout_set(&fdc->fdctimeout_to, fdctimeout, fdc);
+	timeout_set(&fdc->fdcpseudointr_to, fdcpseudointr, fdc);
+
 	/*
 	 * physical limit: four drives per controller, but the dev_t
 	 * only has room for 2
@@ -618,6 +627,10 @@ fdattach(parent, self, aux)
 
 	/* XXX Need to do some more fiddling with sc_dk. */
 	dk_establish(&fd->sc_dk, &fd->sc_dv);
+
+	/* Setup timeouts */
+	timeout_set(&fd->fd_motor_on_to, fd_motor_on, fd);
+	timeout_set(&fd->fd_motor_off_to, fd_motor_off, fd);
 }
 
 __inline struct fd_type *
@@ -684,7 +697,7 @@ fdstrategy(bp)
 	/* Queue transfer on drive, activate drive and controller if idle. */
 	s = splbio();
 	disksort(&fd->sc_q, bp);
-	untimeout(fd_motor_off, fd); /* a good idea */
+	timeout_del(&fd->fd_motor_off_to); /* a good idea */
 	if (!fd->sc_q.b_active)
 		fdstart(fd);
 #ifdef DIAGNOSTIC
@@ -749,7 +762,7 @@ fdfinish(fd, bp)
 
 	biodone(bp);
 	/* turn off motor 5s from now */
-	timeout(fd_motor_off, fd, 5 * hz);
+	timeout_add(&fd->fd_motor_off_to, 5 * hz);
 	fdc->sc_state = DEVIDLE;
 }
 
@@ -1209,7 +1222,7 @@ loop:
 		fd->sc_skip = 0;
 		fd->sc_bcount = bp->b_bcount;
 		fd->sc_blkno = bp->b_blkno / (FDC_BSIZE / DEV_BSIZE);
-		untimeout(fd_motor_off, fd);
+		timeout_del(&fd->fd_motor_off_to);
 		if ((fd->sc_flags & FD_MOTOR_WAIT) != 0) {
 			fdc->sc_state = MOTORWAIT;
 			return (1);
@@ -1218,7 +1231,7 @@ loop:
 			/* Turn on the motor, being careful about pairing. */
 			struct fd_softc *ofd = fdc->sc_fd[fd->sc_drive ^ 1];
 			if (ofd && ofd->sc_flags & FD_MOTOR) {
-				untimeout(fd_motor_off, ofd);
+				timeout_del(&ofd->fd_motor_off_to);
 				ofd->sc_flags &= ~(FD_MOTOR | FD_MOTOR_WAIT);
 			}
 			fd->sc_flags |= FD_MOTOR | FD_MOTOR_WAIT;
@@ -1226,7 +1239,7 @@ loop:
 			fdc->sc_state = MOTORWAIT;
 			if (fdc->sc_flags & FDC_82077) { /* XXX */
 				/* Allow .25s for motor to stabilize. */
-				timeout(fd_motor_on, fd, hz / 4);
+				timeout_add(&fd->fd_motor_on_to, hz / 4);
 			} else {
 				fd->sc_flags &= ~FD_MOTOR_WAIT;
 				goto loop;
@@ -1268,7 +1281,7 @@ loop:
 		fd->sc_dk.dk_seek++;
 		disk_busy(&fd->sc_dk);
 
-		timeout(fdctimeout, fdc, 4 * hz);
+		timeout_add(&fdc->fdctimeout_to, 4 * hz);
 		return (1);
 
 	case DOIO:
@@ -1337,15 +1350,15 @@ loop:
 		disk_busy(&fd->sc_dk);
 
 		/* allow 2 seconds for operation */
-		timeout(fdctimeout, fdc, 2 * hz);
+		timeout_add(&fdc->fdctimeout_to, 2 * hz);
 		return (1);				/* will return later */
 
 	case SEEKWAIT:
-		untimeout(fdctimeout, fdc);
+		timeout_del(&fdc->fdctimeout_to);
 		fdc->sc_state = SEEKCOMPLETE;
 		if (fdc->sc_flags & FDC_NEEDHEADSETTLE) {
 			/* allow 1/50 second for heads to settle */
-			timeout(fdcpseudointr, fdc, hz / 50);
+			timeout_add(&fdc->fdcpseudointr_to, hz / 50);
 			return (1);		/* will return later */
 		}
 		/*FALLTHROUGH*/
@@ -1376,7 +1389,7 @@ loop:
 		goto loop;
 
 	case IOCOMPLETE: /* IO DONE, post-analyze */
-		untimeout(fdctimeout, fdc);
+		timeout_del(&fdc->fdctimeout_to);
 
 		disk_unbusy(&fd->sc_dk, (bp->b_bcount - bp->b_resid));
 
@@ -1460,11 +1473,11 @@ loop:
 		fdc->sc_nstat = 0;
 		fdc->sc_istate = ISTATE_SENSEI;
 		fdc->sc_state = RESETCOMPLETE;
-		timeout(fdctimeout, fdc, hz / 2);
+		timeout_add(&fdc->fdctimeout_to, hz / 2);
 		return (1);			/* will return later */
 
 	case RESETCOMPLETE:
-		untimeout(fdctimeout, fdc);
+		timeout_del(&fdc->fdctimeout_to);
 		fdconf(fdc);
 
 		/* fall through */
@@ -1475,15 +1488,15 @@ loop:
 		/* recalibrate function */
 		OUT_FDC(fdc, NE7CMD_RECAL, RECALTIMEDOUT);
 		OUT_FDC(fdc, fd->sc_drive, RECALTIMEDOUT);
-		timeout(fdctimeout, fdc, 5 * hz);
+		timeout_add(&fdc->fdctimeout_to, 5 * hz);
 		return (1);			/* will return later */
 
 	case RECALWAIT:
-		untimeout(fdctimeout, fdc);
+		timeout_del(&fdc->fdctimeout_to);
 		fdc->sc_state = RECALCOMPLETE;
 		if (fdc->sc_flags & FDC_NEEDHEADSETTLE) {
 			/* allow 1/30 second for heads to settle */
-			timeout(fdcpseudointr, fdc, hz / 30);
+			timeout_add(&fdc->fdcpseudointr_to, hz / 30);
 			return (1);		/* will return later */
 		}
 
