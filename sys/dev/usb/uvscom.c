@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvscom.c,v 1.4 2004/07/08 22:18:45 deraadt Exp $ */
+/*	$OpenBSD: uvscom.c,v 1.5 2004/07/11 09:27:54 deraadt Exp $ */
 /*	$NetBSD: uvscom.c,v 1.9 2003/02/12 15:36:20 ichiro Exp $	*/
 /*-
  * Copyright (c) 2001-2002, Shunsuke Akiyama <akiyama@jp.FreeBSD.org>.
@@ -215,6 +215,10 @@ struct ucom_methods uvscom_methods = {
 };
 
 static const struct usb_devno uvscom_devs [] = {
+	/* SUNTAC U-Cable type A3 */
+	{ USB_VENDOR_SUNTAC, USB_PRODUCT_SUNTAC_AS64LX },
+	/* SUNTAC U-Cable type A4 */
+	{ USB_VENDOR_SUNTAC, USB_PRODUCT_SUNTAC_AS144L4 },
 	/* SUNTAC U-Cable type D2 */
 	{ USB_VENDOR_SUNTAC, USB_PRODUCT_SUNTAC_DS96L },
 	/* SUNTAC U-Cable type P1 */
