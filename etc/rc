@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.239 2004/03/05 23:54:47 henning Exp $
+#	$OpenBSD: rc,v 1.240 2004/03/22 04:34:42 mcbride Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -45,6 +45,15 @@ if [ $1x = shutdownx ]; then
 		if [ "X${powerdown}" = X"YES" ]; then
 			exit 2
 		fi
+
+		# bring carp interfaces down gracefully
+		for hn in /etc/hostname.carp[0-9]*; do
+			# Strip off /etc/hostname. prefix
+			if=${hn#/etc/hostname.}
+			test "$if" = "*" && continue
+
+			ifconfig $if down
+		done
 	else
 		echo single user: not running /etc/rc.shutdown
 	fi
@@ -124,6 +133,7 @@ if [ "X${pf}" != X"NO" ]; then
 	RULES="$RULES\npass in proto tcp from any to any port 22 keep state"
 	RULES="$RULES\npass out proto { tcp, udp } from any to any port 53 keep state"
 	RULES="$RULES\npass out inet proto icmp all icmp-type echoreq keep state"
+	RULES="$RULES\npass proto { pfsync, carp }"
 	case `sysctl vfs.mounts.nfs 2>/dev/null` in
 	*[1-9]*)
 		# don't kill NFS
