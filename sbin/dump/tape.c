@@ -1,4 +1,4 @@
-/*	$OpenBSD: tape.c,v 1.5 1997/08/05 23:17:12 angelos Exp $	*/
+/*	$OpenBSD: tape.c,v 1.6 1997/08/25 15:09:10 deraadt Exp $	*/
 /*	$NetBSD: tape.c,v 1.11 1997/06/05 11:13:26 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.2 (Berkeley) 3/17/94";
 #else
-static char rcsid[] = "$OpenBSD: tape.c,v 1.5 1997/08/05 23:17:12 angelos Exp $";
+static char rcsid[] = "$OpenBSD: tape.c,v 1.6 1997/08/25 15:09:10 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -428,10 +428,13 @@ trewind()
 void
 close_rewind()
 {
+	time_t tstart_changevol, tend_changevol;
+
 	trewind();
 	(void)do_stats();
 	if (nexttape)
 		return;
+	time(&tstart_changevol);
 	if (!nogripe) {
 		msg("Change Volumes: Mount volume #%d\n", tapeno+1);
 		broadcast("CHANGE DUMP VOLUMES!\7\7\n");
@@ -441,6 +444,8 @@ close_rewind()
 			dumpabort(0);
 			/*NOTREACHED*/
 		}
+	time(&tend_changevol);
+	tstart_writing += (tend_changevol - tstart_changevol);
 }
 
 void
