@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fingerd.8,v 1.14 2003/08/08 09:26:03 jmc Exp $
+.\"	$OpenBSD: fingerd.8,v 1.15 2003/10/17 10:41:18 jmc Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -28,7 +28,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)fingerd.8	8.1 (Berkeley) 6/4/93
-.\"	$Id: fingerd.8,v 1.14 2003/08/08 09:26:03 jmc Exp $
+.\"	$Id: fingerd.8,v 1.15 2003/10/17 10:41:18 jmc Exp $
 .\"
 .Dd June 4, 1993
 .Dt FINGERD 8
@@ -38,13 +38,7 @@
 .Nd remote user information server
 .Sh SYNOPSIS
 .Nm fingerd
-.Op Fl s
-.Op Fl l
-.Op Fl u
-.Op Fl m
-.Op Fl M
-.Op Fl p
-.Op Fl S
+.Op Fl lMmpSsu
 .Op Fl P Ar filename
 .Sh DESCRIPTION
 .Nm
@@ -99,16 +93,25 @@ The following options may be passed to
 as server program arguments in
 .Pa /etc/inetd.conf :
 .Bl -tag -width Ds
-.It Fl s
-Enable secure mode.
-Forwarding of queries to other remote hosts is denied.
 .It Fl l
 Enable logging.
-The name of the host originating the query is reported via
+The name of the host originating the query and the actual request
+is reported via
 .Xr syslog 3
 at LOG_NOTICE priority.
-.It Fl u
-Queries without a user name are rejected.
+A request of the form
+.Sq /W
+or
+.Sq /w
+will return long output.
+Empty requests will return all currently logged in users.
+All other requests look for specific users.
+See RFC 1288 for details.
+.It Fl M
+Enables matching of
+.Ar user
+names.
+This is disabled by default if the system is running YP.
 .It Fl m
 Prevent matching of
 .Ar user
@@ -118,11 +121,17 @@ is usually a login name; however, matching will also be done on the
 users' real names, unless the
 .Fl m
 option is supplied.
-.It Fl M
-Enables matching of
-.Ar user
-names.
-This is disabled by default if the system is running YP.
+.It Fl P Ar filename
+Use an alternate program as the local information provider.
+The default local program
+executed by
+.Nm
+is
+.Xr finger 1 .
+By specifying a customized local server,
+this option allows a system manager
+to have more control over what information is
+provided to remote sites.
 .It Fl p
 Prevents
 .Nm
@@ -136,17 +145,11 @@ Prints user information in short mode, one line per user.
 This overrides the
 .Dq Pa Whois switch
 that may be passed in from the remote client.
-.It Fl P Ar filename
-Use an alternate program as the local information provider.
-The default local program
-executed by
-.Nm
-is
-.Xr finger 1 .
-By specifying a customized local server,
-this option allows a system manager
-to have more control over what information is
-provided to remote sites.
+.It Fl s
+Enable secure mode.
+Forwarding of queries to other remote hosts is denied.
+.It Fl u
+Queries without a user name are rejected.
 .El
 .Sh SEE ALSO
 .Xr finger 1 ,
