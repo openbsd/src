@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.9 2002/02/06 18:40:56 jason Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.10 2002/02/07 04:44:52 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -363,7 +363,8 @@ cgsixattach(parent, self, aux)
 	sc->sc_raster.height = sc->sc_height;
 	sc->sc_raster.depth = sc->sc_depth;
 	sc->sc_raster.linelongs = sc->sc_linebytes / 4;
-	sc->sc_raster.pixels = (void *)sc->sc_vid_regs;
+	sc->sc_raster.pixels = (void *)bus_space_vaddr(sc->sc_bustag,
+	    sc->sc_vid_regs);
 
 	if (console == 0 ||
 	    romgetcursoraddr(&sc->sc_rcons.rc_crowp, &sc->sc_rcons.rc_ccolp)) {
