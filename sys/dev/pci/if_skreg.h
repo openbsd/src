@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_skreg.h,v 1.13 2004/08/05 19:57:17 brad Exp $	*/
+/*	$OpenBSD: if_skreg.h,v 1.14 2004/11/16 17:45:54 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1345,7 +1345,7 @@ struct sk_chain {
 
 struct sk_txmap_entry {
 	bus_dmamap_t			dmamap;
-	SLIST_ENTRY(sk_txmap_entry)	link;
+	SIMPLEQ_ENTRY(sk_txmap_entry)	link;
 };
 
 struct sk_chain_data {
@@ -1432,7 +1432,7 @@ struct sk_if_softc {
 	int			sk_if_flags;
 	LIST_HEAD(__sk_jfreehead, sk_jpool_entry)	sk_jfree_listhead;
 	LIST_HEAD(__sk_jinusehead, sk_jpool_entry)	sk_jinuse_listhead;
-	SLIST_HEAD(__sk_txmaphead, sk_txmap_entry)	sk_txmap_listhead;
+	SIMPLEQ_HEAD(__sk_txmaphead, sk_txmap_entry)	sk_txmap_head;
 };
 
 struct skc_attach_args {
