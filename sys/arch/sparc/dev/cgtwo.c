@@ -212,7 +212,8 @@ cgtwoattach(parent, self, args)
 #endif
 	} else
 		printf("\n");
-	if (node == fbnode)
+	if ((node == fbnode && cputyp != CPU_SUN4) ||
+	    (isconsole && cputyp == CPU_SUN4))
 		fb_attach(&sc->sc_fb);
 }
 

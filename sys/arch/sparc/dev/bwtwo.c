@@ -236,11 +236,8 @@ bwtwoattach(parent, self, args)
 	if (ca->ca_bustype == BUS_SBUS)
 		sbus_establish(&sc->sc_sd, &sc->sc_dev);
 #endif
-	/*
-	 * XXX: this could cause a panic in fb_attach() if more
-	 * than one frame buffer device is found on a Sun 4.
-	 */
-	if (node == fbnode || cputyp == CPU_SUN4)
+	if ((node == fbnode && cputyp != CPU_SUN4) ||
+	    (isconsole && cputyp == CPU_SUN4))
 		fb_attach(&sc->sc_fb);
 }
 

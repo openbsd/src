@@ -180,7 +180,7 @@ cgsixattach(parent, self, args)
 {
 	register struct cgsix_softc *sc = (struct cgsix_softc *)self;
 	register struct confargs *ca = args;
-	register int node, ramsize, i;
+	register int node, ramsize, i, isconsole;
 	register volatile struct bt_regs *bt;
 	register volatile struct cg6_layout *p;
 	char *nam;
@@ -234,6 +234,7 @@ cgsixattach(parent, self, args)
 	 * the video RAM mapped.  Just map what we care about for ourselves
 	 * (the FHC, THC, and Brooktree registers).
 	 */
+	isconsole = node == fbnode && fbconstty != NULL;
 	sc->sc_physadr = p = (struct cg6_layout *)ca->ca_ra.ra_paddr;
 	sc->sc_bt = bt = (volatile struct bt_regs *)
 	    mapiodev((caddr_t)&p->cg6_bt_un.un_btregs, sizeof *sc->sc_bt,
@@ -263,7 +264,7 @@ cgsixattach(parent, self, args)
 	/* enable video */
 	sc->sc_thc->thc_misc |= THC_MISC_VIDEN;
 
-	if (node == fbnode && fbconstty != NULL) {
+	if (isconsole) {
 		printf(" (console)\n");
 	} else
 		printf("\n");
@@ -271,7 +272,8 @@ cgsixattach(parent, self, args)
 	if (ca->ca_bustype == BUS_SBUS)
 		sbus_establish(&sc->sc_sd, &sc->sc_dev);
 #endif /* SUN4C || SUN4M */
-	if (node == fbnode)
+	if ((node == fbnode && cputyp != CPU_SUN4) ||
+	    (isconsole && cputyp == CPU_SUN4))
 		fb_attach(&sc->sc_fb);
 }
 
