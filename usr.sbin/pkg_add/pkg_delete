@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.42 2004/09/14 22:58:30 espie Exp $
+# $OpenBSD: pkg_delete,v 1.43 2004/09/18 09:27:05 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -270,6 +270,33 @@ sub delete
 	    my $fullname = $state->{destdir}.$self->fullname();
 	    VSystem($state->{verbose}, 
 	    "install-info", "--delete", "--info-dir=".dirname($fullname), $fullname);
+	}
+	$self->SUPER::delete($state);
+}
+
+package OpenBSD::PackingElement::Shell;
+sub delete
+{
+	my ($self, $state) = @_;
+	unless ($state->{not}) {
+		my $destdir = $state->{destdir};
+		my $fullname = $self->fullname();
+		my @l=();
+		if (open(my $shells, '<', $destdir.'/etc/shells')) {
+			local $_;
+			while(<$shells>) {
+				push(@l, $_);
+				s/^\#.*//;
+				if ($_ =~ m/^\Q$fullname\E\s*$/) {
+					pop(@l);
+				}
+			}
+			close($shells);
+			open(my $shells2, '>', $destdir.'/etc/shells');
+			print $shells2 @l;
+			close $shells2;
+			print "Shell $fullname removed from $destdir/etc/shells\n";
+		}
 	}
 	$self->SUPER::delete($state);
 }

@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.54 2004/09/14 22:53:17 espie Exp $
+# $OpenBSD: pkg_add,v 1.55 2004/09/18 09:27:05 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -171,6 +171,27 @@ sub install
 	my $fullname = $destdir.$self->fullname();
 	VSystem($verbose, 
 	    "install-info", "--info-dir=".dirname($fullname), $fullname);
+}
+
+package OpenBSD::PackingElement::Shell;
+sub install
+{
+	my ($self, $archive, $destdir, $verbose, $not) = @_;
+	$self->SUPER::install($archive, $destdir, $verbose, $not);
+	return if $not;
+	my $fullname = $self->fullname();
+	# go append to /etc/shells if needed
+	open(my $shells, '<', $destdir.'/etc/shells') or return;
+	local $_;
+	while(<$shells>) {
+		s/^\#.*//;
+		return if $_ =~ m/^\Q$fullname\E\s*$/;
+	}
+	close($shells);
+	open(my $shells2, '>>', $destdir.'/etc/shells') or return;
+	print $shells2 $fullname, "\n";
+	close $shells2;
+	print "Shell $fullname appended to $destdir/etc/shells\n";
 }
 
 package OpenBSD::PackingElement::Dir;
