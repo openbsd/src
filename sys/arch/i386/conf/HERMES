@@ -1,0 +1,120 @@
+#
+#	HERMES -- Ken's 586/83 VLB OpenBSD 2.0 config file
+#
+# This system was a 468 but now has an Intel Pentium Overdrive Processor[tm]
+#
+
+machine		i386		# architecture, used by config; REQUIRED
+
+makeoptions     CC="cc -Werror"
+
+options		I586_CPU	# CPU classes; at least one is REQUIRED
+
+options		XSERVER
+
+maxusers	16		# estimated number of users
+options		TIMEZONE=0	# time zone to adjust RTC time by
+options		DST=0		# daylight savings time used by RTC
+
+options		SWAPPAGER	# paging; REQUIRED
+options		DEVPAGER	# mmap() of devices
+
+#options	DDB		# in-kernel debugger
+#makeoptions	DEBUG="-g"	# compile full symbol table
+options		DIAGNOSTIC	# internally consistency checks
+options		KTRACE		# system call tracing, a la ktrace(1)
+
+options		SYSVMSG		# System V-like message queues
+options		SYSVSEM		# System V-like semaphores
+options		SYSVSHM		# System V-like memory sharing
+#options	SHMMAXPGS=1024	# 1024 pages is the default
+
+options		COMPAT_NOMID	# compatibility with 386BSD, BSDI, NetBSD 0.8,
+options		COMPAT_09	# NetBSD 0.9,
+options		COMPAT_10	# NetBSD 1.0,
+options		COMPAT_11	# NetBSD 1.1,
+options		COMPAT_43	# and 4.3BSD
+#options	TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
+
+#options	COMPAT_SVR4	# binary compatibility with SVR4
+#options	COMPAT_IBCS2	# binary compatibility with SCO and ISC
+options		COMPAT_LINUX	# binary compatibility with Linux
+options		COMPAT_FREEBSD	# binary compatibility with FreeBSD
+
+#options	VM86		# Virtual x86 mode; to be used by dos emualtors
+#options	USER_LDT	# user-settable LDT; used by WINE
+#options	LKM		# loadable kernel modules
+
+options		FFS		# UFS
+#options	QUOTA		# UFS quotas
+#options	LFS		# log-structured file system
+options		MFS		# memory file system
+
+options		NFSCLIENT	# Network File System client
+options		NFSSERVER	# Network File System server
+
+#options	CD9660		# ISO 9660 + Rock Ridge file system
+#options	FDESC		# /dev/fd
+options		FIFO		# FIFOs; multiuser fails without this
+options		KERNFS		# /kern
+options		MSDOSFS		# MS-DOS file system
+options		NULLFS		# mount directories on directories
+options		PORTAL		# call processes via the FS
+options		PROCFS		# access the insides of procs via the FS
+#options	UMAPFS		# NULLFS + uid and gid remapping
+#options	UNION		# union file system
+
+options		INET		# IP + ICMP + TCP + UDP
+options		GATEWAY		# packet forwarding
+option		IPFILTER	# IP packet filter for security
+#options	NS		# XNS
+#options	ISO,TPIP	# OSI
+#options	EON		# OSI tunneling over IP
+#options	CCITT,LLC,HDLC	# X.25
+#options	"NMBCLUSTERS=1024"
+
+config		bsd	root on sd0a swap on sd0b dumps on sd0b
+
+mainbus0 at root
+
+isa0	at mainbus0			# ISA and VL bus systems
+isadma0	at isa?
+
+npx0	at isa? port 0xf0 irq 13	# math coprocessor
+
+pc0	at isa? port 0x60 irq 1		# generic PC console device
+#vt0	at isa? port 0x60 irq 1
+
+com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
+com1	at isa? port 0x2f8 irq 3
+
+lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
+
+lms0	at isa? port 0x23c irq 9	# Logitech bus mouse
+
+bt0	at isa? port 0x330 irq ? drq ?	# BusLogic [57]4X SCSI controllers
+scsibus* at bt?
+sd*	at scsibus? target ? lun ?	# SCSI disk drives
+st*	at scsibus? target ? lun ?	# SCSI tape drives
+ss*	at scsibus? target ? lun ?	# SCSI scanners (hermes is the cradle)
+uk*	at scsibus? target ? lun ?	# unknown SCSI
+#cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
+#ch*	at scsibus? target ? lun ?	# SCSI autochangers
+
+fdc0	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
+fd*	at fdc? drive ?
+
+ep0	at isa? port ? irq ?		# 3c509 ethernet card
+
+sb0	at isa? port 0x220 irq 5 drq 3	# SoundBlaster
+spkr0	at pckbd? port 0x61		# built-in speaker
+
+pseudo-device	loop	1		# network loopback
+pseudo-device	bpfilter 4		# packet filter (used by rarpd)
+#pseudo-device	sl	2		# CSLIP
+pseudo-device	ppp	1		# PPP
+#pseudo-device	tun	2		# network tunneling over tty
+
+pseudo-device	pty	32		# pseudo-terminals
+#pseudo-device	tb	1		# tablet line discipline
+pseudo-device	vnd	2		# paging to files; mount floppy images
