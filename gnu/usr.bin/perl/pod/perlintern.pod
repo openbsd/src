@@ -160,9 +160,9 @@ The 0'th slot of a frame AV is an AV which is @_.
 other entries are storage for variables and op targets.
 
 During compilation:
-C<PL_comppad_name> is set the the the names AV.
-C<PL_comppad> is set the the frame AV for the frame CvDEPTH == 1.
-C<PL_curpad> is set the body of the frame AV (i.e. AvARRAY(PL_comppad)).
+C<PL_comppad_name> is set to the names AV.
+C<PL_comppad> is set to the frame AV for the frame CvDEPTH == 1.
+C<PL_curpad> is set to body of the frame AV (i.e. AvARRAY(PL_comppad)).
 
 Itterating over the names AV itterates over all possible pad
 items. Pad slots that are SVs_PADTMP (targets/GVs/constants) end up having
@@ -183,7 +183,7 @@ For typed lexicals name SV is SVt_PVMG and SvSTASH points at the type.
 If SvFAKE is set on the name SV then slot in the frame AVs are
 a REFCNT'ed references to a lexical from "outside".
 
-If the 'name' is '&' the the corresponding entry in frame AV
+If the 'name' is '&' the corresponding entry in frame AV
 is a CV representing a possible closure.
 (SvFAKE and name of '&' is not a meaningful combination currently but could
 become so if C<my sub foo {}> is implemented.)

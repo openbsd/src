@@ -416,7 +416,7 @@ for more information about UTF-8.
 =item *
 
 If your environment variables (LC_ALL, LC_CTYPE, LANG, LANGUAGE) look
-like you want to use UTF-8 (any of the the variables match C</utf-?8/i>),
+like you want to use UTF-8 (any of the variables match C</utf-?8/i>),
 your STDIN, STDOUT, STDERR handles and the default open layer
 (see L<open>) are marked as UTF-8.  (This feature, like other new
 features that combine Unicode and I/O, work only if you are using
@@ -3361,7 +3361,7 @@ use the bundled C compiler.)
 
 Perl 5.8.0 doesn't build in AmigaOS.  It broke at some point during
 the ithreads work and we could not find Amiga experts to unbreak the
-problems.  Perl 5.6.1 still works for AmigaOS (as does the the 5.7.2
+problems.  Perl 5.6.1 still works for AmigaOS (as does the 5.7.2
 development release).
 
 =head2 BeOS
@@ -3690,7 +3690,7 @@ from the CPAN.
 Perl 5.8 unfortunately does not build anymore on AmigaOS; this broke
 accidentally at some point.  Since there are not that many Amiga
 developers available, we could not get this fixed and tested in time
-for 5.8.0.  Perl 5.6.1 still works for AmigaOS (as does the the 5.7.2
+for 5.8.0.  Perl 5.6.1 still works for AmigaOS (as does the 5.7.2
 development release).
 
 The C<PerlIO::Scalar> and C<PerlIO::Via> (capitalised) were renamed as

@@ -542,7 +542,7 @@ techniques such as queues, which remove some of the hard work involved.
 =head2 Controlling access: lock()
 
 The lock() function takes a shared variable and puts a lock on it.  
-No other thread may lock the variable until the the variable is unlocked
+No other thread may lock the variable until the variable is unlocked
 by the thread holding the lock. Unlocking happens automatically
 when the locking thread exits the outermost block that contains
 C<lock()> function.  Using lock() is straightforward: this example has

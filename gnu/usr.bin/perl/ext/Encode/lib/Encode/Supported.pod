@@ -182,7 +182,7 @@ This is also covered in Encode::Byte even though it is not an
 
 Note that Vietnamese is listed above.  Also read "Encoding vs Charset"
 below.  Also note that these are implemented in distinct modules by
-countries, due the the size concerns (simplified Chinese is mapped
+countries, due the size concerns (simplified Chinese is mapped
 to 'CN', continental China, while traditional Chinese is mapped to
 'TW', Taiwan).  Please refer to their respective documentataion pages.
 

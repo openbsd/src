@@ -421,7 +421,7 @@ C<use> declaration will fail at compile time.
 
 =item connected
 
-If the socket is in a connected state the the peer address is returned.
+If the socket is in a connected state the peer address is returned.
 If the socket is not in a connected state then undef will be returned.
 
 =item protocol

@@ -1436,7 +1436,7 @@ Returns the number of elements in the array.
 
 =item B<$X-E<gt>splice(offset, length, elements);>
 
-Returns a splice of the the array.
+Returns a splice of the array.
 
 =back
 
