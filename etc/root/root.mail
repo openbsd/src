@@ -1,35 +1,68 @@
-From deraadt Tue Mar 31 10:38:59 MST 1998
+From deraadt@do-not-reply.openbsd.org Wed Apr  8 04:50:00 MDT 1998
 Return-Path: root
-Date: Tue Mar 31 10:38:59 MST 1998
-From: deraadt@do.not.reply (Theo de Raadt)
+Date: Wed Apr  8 04:50:00 MDT 1998
+From: deraadt@do-not-reply.openbsd.org (Theo de Raadt)
 To: root
 Subject: Welcome to OpenBSD 2.3
 
 This message attempts to describe the most basic first questions that a
-system administrator of an OpenBSD box might have.  You are urged to
-save this message.
+system administrator of an OpenBSD box might have.  You are urged to save
+this message for later reference.
 
 For more information on how to setup your OpenBSD system, refer to the
 "afterboot" man page.  If you are not familiar with how to read man pages,
-type "man man" at a shell prompt and read the entire thing.  The GNU "info"
-subsystem is also installed with further documentation resources; to read
-info pages type "info".
+type "man man" at a shell prompt and read the entire thing.  Pay specific
+attention to the "man -k keyword" option, which will permit you to find the
+man page you are looking for easier.  The GNU "info" subsystem is also
+installed with further documentation resources; to read info pages type "info".
 
 If you have installed the X11 packages during the install process, you can find
 further information regarding configuration in the file /usr/X11R6/README.
 
-Binary packages of emacs 20.2, bash 2.01.1, tcsh--6.07.02, and pine-3.96 are
+Binary packages of emacs 20.2, bash 2.01.1, tcsh-6.07.02, and pine-3.96 are
 available on most architectures. The files are in the directory
 	ftp://ftp.openbsd.org/pub/OpenBSD/2.3/packages/
 or	CD2:/packages/   (ie. mount /dev/cd0a /mnt; cd /mnt/packages)
 Select your architecture and download the tarballs of your choice.  For example
 to install the emacs package for i386, execute
    # pkg_add ftp://ftp.openbsd.org/pub/OpenBSD/2.3/packages/i386/emacs-20.2.tgz
+
 Other important packages not permitted on the CD (due to patents) are available
 on our FTP servers (as described above).  In particular, we provide the USA and
 international versions of ssh and pgp.  The filenames are ssh-usa-1.2.22.tgz,
 ssh-intl-1.2.22.tgz, pgp-usa-2.6.3.tgz, and pgp-intl-2.6.3.tgz.
+You are strongly urged to install one of the ssh packages and use ssh instead
+of telnet, rlogin, or rsh.
 
-You are strongly urged to install an ssh package and use it instead of telnet
-or rlogin.
+Significant efforts were made to centralize all system configuration in the
+/etc directory.  You should be able to find each of the configuration files
+you seek there, lightly documented.  In particular, much of the configuration
+has been centralized in the file /etc/rc.conf.  You should not need to ever
+edit the file /etc/rc.   The files /etc/rc.securelevel and /etc/rc.local exist
+for this purpose; the first is run before the system has gone into secure
+mode; the second is run afterwards (if in doubt, add your tools to rc.local).
+
+Please refer to our web pages for any other questions you might have.
+	http://www.OpenBSD.org
+
+OpenBSD is free software.  You can do with it as you like, subject to very few
+conditions (described at www.OpenBSD.org/policy.html).  But free software isn't
+written without money.  Network links, hardware costs, release engineering
+and testing work; all these things take money and significant effort on the
+part of those who have made this OpenBSD release what it is.  Please reward the
+developers who have made OpenBSD what it is, and thus make it possible for this
+wonderful process to continue.  For more information on how you can help,
+please see www.OpenBSD.org/goals.html and visit www.OpenBSD.org/donations.html
+to see a list of those who have donated money, equipment, or other resources
+to ensure OpenBSD continues.  (Thus far, most of those who have donated have
+been developers themselves.)
+
+If you wish ensure that OpenBSD runs better on your machines, please do us
+a favor (after have your mail system setup!) and type
+	dmesg | mail dmesg@openbsd.org
+So that we can see what kinds of configurations people are running.  We will
+use this information to improve device driver support in future releases.
+
+(If you used 'mail' to read this message and it scrolled by too quickly,
+type "more .")
 
