@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.31 2002/02/15 00:29:56 dhartmei Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.32 2002/02/19 12:18:24 dhartmei Exp $
 .\"
 .\" Copyright (c) 2001, Daniel Hartmeier
 .\" All rights reserved.
@@ -67,6 +67,8 @@ hosts      = "all" |
              "to"   ( "any" | host | "{" host-list "}" ) [ port ] .
 
 host       = [ "!" ] address [ "/" mask-bits ] .
+address    = ( interface-name | host-name | ipv4-dotted-quad |
+               ipv6-coloned-hex ) .
 host-list  = host [ "," host-list ] .
 port       = "port" ( unary-op | binary-op | "{" port-list "}" ) .
 port-list  = ( unary-op | binary-op ) [ "," port-list ] .
@@ -249,7 +251,7 @@ show:
     pass in all
     pass in from any to any
     pass in proto tcp from any port <= 1024 to any
-    pass in proto tcp from any to any port = 25
+    pass in proto tcp from any to any port 25
     pass in proto tcp from 10.0.0.0/8 port > 1024 to ! 10.1.2.3 port != 22
 .Ed
 .Ss flags <a> | <a>/<b> | /<b>
@@ -305,8 +307,8 @@ shows per-rule statistics for rules that have labels.
 supports macro definition and expansion like:
 .Bd -literal
     ext_if = "kue0"
-    pass out on $ext_if from any to any           keep state
-    pass in  on $ext_if from any to any port = 25 keep state
+    pass out on $ext_if from any to any         keep state
+    pass in  on $ext_if from any to any port 25 keep state
 .Ed
 .Pp
 Macro names must start with a letter and may contain letters, digits
@@ -347,8 +349,8 @@ For instance:
 .Bd -literal
     block out all
     block in  all
-    pass out proto tcp from any to any           flags S/SA keep state
-    pass in  proto tcp from any to any port = 25 flags S/SA keep state
+    pass out proto tcp from any to any         flags S/SA keep state
+    pass in  proto tcp from any to any port 25 flags S/SA keep state
 .Ed
 .Pp
 This rule set blocks everything by default.
@@ -414,8 +416,8 @@ For instance:
 .Bd -literal
     block out all
     block in  all
-    pass out proto tcp from any to any                      modulate state
-    pass in  proto tcp from any to any port = 25 flags S/SA modulate state
+    pass out proto tcp from any to any                    modulate state
+    pass in  proto tcp from any to any port 25 flags S/SA modulate state
 .Ed
 .Pp
 Caveat:  If
@@ -507,7 +509,7 @@ pass in  on $ext_if inet proto icmp all icmp-type 8 code 0 keep state
 pass out on $ext_if proto udp all keep state
 
 # pass in certain UDP connections and keep state (DNS)
-pass in on $ext_if proto udp from any to any port = domain keep state
+pass in on $ext_if proto udp from any to any port domain keep state
 
 # TCP
 
