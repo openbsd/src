@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.23 2001/01/16 18:04:19 art Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.24 2001/01/21 17:09:21 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -507,7 +507,7 @@ struct elf_args {
 #define Elf_Shdr	Elf32_Shdr
 #define Elf_Sym		Elf32_Sym
 #define Elf_Rel		Elf32_Rel
-#define Elf_RelA	Elf32_RelA
+#define Elf_RelA	Elf32_Rela
 #define Elf_Dyn		Elf32_Dyn
 #define Elf_Word	Elf32_Word
 #define Elf_Sword	Elf32_Sword
@@ -517,6 +517,7 @@ struct elf_args {
 
 #define ELF_R_SYM	ELF32_R_SYM
 #define ELF_R_TYPE	ELF32_R_TYPE
+#define ELF_R_INFO	ELF32_R_INFO
 #define ELFCLASS	ELFCLASS32
 
 #define ELF_ST_BIND	ELF32_ST_BIND
@@ -530,7 +531,7 @@ struct elf_args {
 #define Elf_Shdr	Elf64_Shdr
 #define Elf_Sym		Elf64_Sym
 #define Elf_Rel		Elf64_Rel
-#define Elf_RelA	Elf64_RelA
+#define Elf_RelA	Elf64_Rela
 #define Elf_Dyn		Elf64_Dyn
 #define Elf_Word	Elf64_Word
 #define Elf_Sword	Elf64_Sword
@@ -540,6 +541,7 @@ struct elf_args {
 
 #define ELF_R_SYM	ELF64_R_SYM
 #define ELF_R_TYPE	ELF64_R_TYPE
+#define ELF_R_INFO	ELF64_R_INFO
 #define ELFCLASS	ELFCLASS64
 
 #define ELF_ST_BIND	ELF64_ST_BIND
