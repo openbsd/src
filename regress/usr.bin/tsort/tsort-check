@@ -13,12 +13,13 @@ while(<SORTED>) {
 close(SORTED);
 
 open(PAIRS, shift) or die "No pairs\n";
-undef $/;
-$_ = <PAIRS>;
-close(PAIRS);
-@pairs = split(/\s+/, $_);
-while (@pairs > 0) {
-	($a, $b) = (pop @pairs, pop @pairs);
-	next unless $order{$a} < $order{$b};
-	die "Bad pair $a $b\n";
+while (<PAIRS>) {
+	chomp;
+	push(@pairs, split(/\s+/, $_));
+	while (@pairs >= 2) {
+	    ($a, $b) = (pop @pairs, pop @pairs);
+	    next unless $order{$a} < $order{$b};
+	    die "Bad pair $a $b\n";
+    	}
 }
+close(PAIRS);
