@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.69 1997/09/11 22:38:46 downsj Exp $
+#	$OpenBSD: Makefile,v 1.70 1997/09/24 02:05:17 deraadt Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -90,6 +90,10 @@ distribution-etc-root-var: distrib-dirs
 		${INSTALL} -c -o root -g wheel -m 600 special \
 		    ${DESTDIR}/etc/mtree; \
 		${INSTALL} -c -o root -g wheel -m 444 4.4BSD.dist \
+		    ${DESTDIR}/etc/mtree)
+		${INSTALL} -c -o root -g wheel -m 444 BSD.local.dist \
+		    ${DESTDIR}/etc/mtree)
+		${INSTALL} -c -o root -g wheel -m 444 BSD.x11.dist \
 		    ${DESTDIR}/etc/mtree)
 	(cd photuris; \
 		${INSTALL} -c -o root -g wheel -m 600 secrets.conf \
