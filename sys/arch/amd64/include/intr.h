@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.1 2004/01/28 01:39:39 mickey Exp $	*/
+/*	$OpenBSD: intr.h,v 1.2 2004/05/07 20:33:04 tedu Exp $	*/
 /*	$NetBSD: intr.h,v 1.2 2003/05/04 22:01:56 fvdl Exp $	*/
 
 /*-
@@ -113,7 +113,7 @@ struct intrhand {
 extern void Xspllower(int);
 
 static __inline int splraise(int);
-static __inline void spllower(int);
+static __inline int spllower(int);
 static __inline void softintr(int);
 
 /*
@@ -151,9 +151,10 @@ splraise(int nlevel)
  * Restore a value to cpl (unmasking interrupts).  If any unmasked
  * interrupts are pending, call Xspllower() to process them.
  */
-static __inline void
+static __inline int
 spllower(int nlevel)
 {
+	int olevel;
 	struct cpu_info *ci = curcpu();
 
 	__splbarrier();
@@ -162,10 +163,12 @@ spllower(int nlevel)
 	 * the XOR below should only show interrupts that
 	 * are being unmasked.
 	 */
+	olevel = ci->ci_ilevel;
 	if (ci->ci_ipending & IUNMASK(ci,nlevel))
 		Xspllower(nlevel);
 	else
 		ci->ci_ilevel = nlevel;
+	return (olevel);
 }
 
 /*
