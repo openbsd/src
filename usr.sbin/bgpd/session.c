@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.100 2004/01/28 19:18:38 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.101 2004/01/28 19:24:06 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -99,6 +99,7 @@ void
 session_sighdlr(int sig)
 {
 	switch (sig) {
+	case SIGINT:
 	case SIGTERM:
 		session_quit = 1;
 		break;
@@ -182,6 +183,7 @@ session_main(struct bgpd_config *config, struct peer *cpeers, int pipe_m2s[2],
 	endpwent();
 
 	signal(SIGTERM, session_sighdlr);
+	signal(SIGINT, session_sighdlr);
 	signal(SIGPIPE, SIG_IGN);
 	log_info("session engine ready");
 	close(pipe_m2s[0]);

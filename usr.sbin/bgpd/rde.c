@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.69 2004/01/27 21:56:21 henning Exp $ */
+/*	$OpenBSD: rde.c,v 1.70 2004/01/28 19:24:06 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -75,6 +75,7 @@ void
 rde_sighdlr(int sig)
 {
 	switch (sig) {
+	case SIGINT:
 	case SIGTERM:
 		rde_quit = 1;
 		break;
@@ -124,6 +125,7 @@ rde_main(struct bgpd_config *config, struct peer *peer_l,
 	endpwent();
 
 	signal(SIGTERM, rde_sighdlr);
+	signal(SIGINT, rde_sighdlr);
 
 	close(pipe_s2r[0]);
 	close(pipe_m2r[0]);
