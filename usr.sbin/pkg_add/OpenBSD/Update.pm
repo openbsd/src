@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.18 2004/11/09 22:55:56 espie Exp $
+# $OpenBSD: Update.pm,v 1.19 2004/11/11 10:23:53 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -213,7 +213,7 @@ sub split_libs
 	my $items = [];
 
 	my $splitted = OpenBSD::PackingList->new();
-	OpenBSD::PackingElement::Name->add($splitted, "_libs-".$plist->pkgname());
+	OpenBSD::PackingElement::Name->add($splitted, ".libs-".$plist->pkgname());
 	# we conflict with the package we just removed...
 	OpenBSD::PackingElement::Conflict->add($splitted, $plist->pkgname());
 
