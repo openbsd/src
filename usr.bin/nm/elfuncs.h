@@ -1,4 +1,4 @@
-/*	$OpenBSD: elfuncs.h,v 1.1 2004/10/09 20:26:57 mickey Exp $	*/
+/*	$OpenBSD: elfuncs.h,v 1.2 2005/01/19 19:37:29 grange Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -30,6 +30,7 @@ extern char *stab;
 
 int	elf32_fix_header(Elf32_Ehdr *eh);
 Elf32_Shdr*elf32_load_shdrs(const char *, FILE *, off_t, Elf32_Ehdr *);
+Elf32_Phdr*elf32_load_phdrs(const char *, FILE *, off_t, Elf32_Ehdr *);
 int	elf32_fix_shdrs(Elf32_Ehdr *eh, Elf32_Shdr *shdr);
 int	elf32_fix_phdrs(Elf32_Ehdr *eh, Elf32_Phdr *phdr);
 int	elf32_fix_sym(Elf32_Ehdr *eh, Elf32_Sym *sym);
@@ -39,6 +40,7 @@ int	elf32_symload(const char *, FILE *, off_t, Elf32_Ehdr *, Elf32_Shdr *,
 
 int	elf64_fix_header(Elf64_Ehdr *eh);
 Elf64_Shdr*elf64_load_shdrs(const char *, FILE *, off_t, Elf64_Ehdr *);
+Elf64_Phdr*elf64_load_phdrs(const char *, FILE *, off_t, Elf64_Ehdr *);
 int	elf64_fix_shdrs(Elf64_Ehdr *eh, Elf64_Shdr *shdr);
 int	elf64_fix_phdrs(Elf64_Ehdr *eh, Elf64_Phdr *phdr);
 int	elf64_fix_sym(Elf64_Ehdr *eh, Elf64_Sym *sym);

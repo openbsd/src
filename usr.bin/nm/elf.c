@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf.c,v 1.12 2004/10/11 04:50:47 mickey Exp $	*/
+/*	$OpenBSD: elf.c,v 1.13 2005/01/19 19:37:29 grange Exp $	*/
 
 /*
  * Copyright (c) 2003 Michael Shalayeff
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: elf.c,v 1.12 2004/10/11 04:50:47 mickey Exp $";
+static const char rcsid[] = "$OpenBSD: elf.c,v 1.13 2005/01/19 19:37:29 grange Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -55,6 +55,7 @@ static const char rcsid[] = "$OpenBSD: elf.c,v 1.12 2004/10/11 04:50:47 mickey E
 #define	swap_quarter	swap16
 #define	elf_fix_header	elf32_fix_header
 #define	elf_load_shdrs	elf32_load_shdrs
+#define	elf_load_phdrs	elf32_load_phdrs
 #define	elf_fix_shdrs	elf32_fix_shdrs
 #define	elf_fix_phdrs	elf32_fix_phdrs
 #define	elf_fix_sym	elf32_fix_sym
@@ -78,6 +79,7 @@ static const char rcsid[] = "$OpenBSD: elf.c,v 1.12 2004/10/11 04:50:47 mickey E
 #define	swap_quarter	swap16
 #define	elf_fix_header	elf64_fix_header
 #define	elf_load_shdrs	elf64_load_shdrs
+#define	elf_load_phdrs	elf64_load_phdrs
 #define	elf_fix_shdrs	elf64_fix_shdrs
 #define	elf_fix_phdrs	elf64_fix_phdrs
 #define	elf_fix_sym	elf64_fix_sym
@@ -163,6 +165,32 @@ elf_load_shdrs(const char *name, FILE *fp, off_t foff, Elf_Ehdr *head)
 
 	elf_fix_shdrs(head, shdr);
 	return (shdr);
+}
+
+Elf_Phdr *
+elf_load_phdrs(const char *name, FILE *fp, off_t foff, Elf_Ehdr *head)
+{
+	Elf_Phdr *phdr;
+
+	if ((phdr = malloc(head->e_phentsize * head->e_phnum)) == NULL) {
+		warn("%s: malloc phdr", name);
+		return (NULL);
+	}
+
+	if (fseeko(fp, foff + head->e_phoff, SEEK_SET)) {
+		warn("%s: fseeko", name);
+		free(phdr);
+		return (NULL);
+	}
+
+	if (fread(phdr, head->e_phentsize, head->e_phnum, fp) != head->e_phnum) {
+		warnx("%s: premature EOF", name);
+		free(phdr);
+		return (NULL);
+	}
+
+	elf_fix_phdrs(head, phdr);
+	return (phdr);
 }
 
 int
