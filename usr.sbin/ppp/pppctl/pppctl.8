@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pppctl.8,v 1.12 2003/06/12 12:59:52 jmc Exp $
+.\"	$OpenBSD: pppctl.8,v 1.13 2004/03/16 21:21:16 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Brian Somers <brian@Awfulhak.org>
 .\" All rights reserved.
@@ -85,9 +85,9 @@ delimiters, allowing more than one
 .Ar command
 in a given
 .Dq session .
-For example:
+For example (adding a route):
 .Bd -literal -offset indent
-pppctl 3000 set timeout 300\\; show timeout
+pppctl 3000 add 192.168.1.0 255.255.255.0 127.0.0.1\e; show route
 .Ed
 .Pp
 Don't forget to escape or quote the
