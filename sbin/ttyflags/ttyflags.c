@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttyflags.c,v 1.4 1996/08/30 00:53:26 deraadt Exp $	*/
+/*	$OpenBSD: ttyflags.c,v 1.5 1996/10/30 08:17:05 tholo Exp $	*/
 /*	$NetBSD: ttyflags.c,v 1.8 1996/04/09 05:20:30 cgd Exp $	*/
 
 /*
@@ -39,7 +39,7 @@ char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: ttyflags.c,v 1.4 1996/08/30 00:53:26 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ttyflags.c,v 1.5 1996/10/30 08:17:05 tholo Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -169,9 +169,12 @@ ttyflags(tep, print)
 	struct ttyent *tep;
 	int print;
 {
-	int fd, flags = 0, rval, st = 0, sep = 0;
+	int fd, flags = 0, rval = 0, st, sep = 0;
 	char path[PATH_MAX];
-	char strflags[256] = "";
+	char strflags[256];
+
+	st = tep->ty_status;
+	strflags[0] = '\0';
 
 	if (print == 0) {
 		/* Convert ttyent.h flags into ioctl flags. */
