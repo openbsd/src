@@ -8,7 +8,7 @@
  * Support is included for Intel 82365SL PCIC controllers and clones
  * thereof.
  *
- * $Id: i82365reg.h,v 1.2 1996/04/29 14:15:58 hvozda Exp $
+ * $Id: i82365reg.h,v 1.3 1996/04/29 15:25:35 hvozda Exp $
  ***********************************************************************/
 
 /*
@@ -230,3 +230,4 @@ struct pcic_regs {
 #endif /* __82365_H__ */
 #ifndef __82365_H__
 #define __82365_H__
+#endif
