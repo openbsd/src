@@ -1,4 +1,4 @@
-# $OpenBSD: pf.os,v 1.13 2004/01/12 20:05:56 frantzen Exp $
+# $OpenBSD: pf.os,v 1.14 2004/01/17 14:49:03 frantzen Exp $
 # passive OS fingerprinting
 # -------------------------
 #
@@ -291,7 +291,7 @@ S22:64:1:52:M*,N,N,S,N,W0:	Linux:2.2:ts:Linux 2.2 w/o timestamps
 16384:64:1:60:M*,N,W0,N,N,T0:	NetBSD:1.6:df:NetBSD 1.6 (DF)
 65535:64:1:60:M*,N,W1,N,N,T0:	NetBSD:1.6::NetBSD 1.6W-current (DF)
 65535:64:1:60:M*,N,W0,N,N,T0:	NetBSD:1.6::NetBSD 1.6X (DF)
-
+32768:64:1:60:M*,N,W0,N,N,T0:	NetBSD:1.6:randomization:NetBSD 1.6ZH-current (w/ ip_id randomization)
 
 # ----------------- OpenBSD -----------------
 
