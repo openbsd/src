@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.43 2002/02/17 19:42:28 millert Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.44 2002/04/04 20:57:17 millert Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -393,7 +393,14 @@ mntsrv(rqstp, transp)
 			syslog(LOG_ERR, "Can't send reply");
 		return;
 	case RPCMNT_MOUNT:
+		if (debug)
+			fprintf(stderr,
+			    "Got mount request from %s\n", 
+			    inet_ntoa(transp->xp_raddr.sin_addr));
 		if (sport >= IPPORT_RESERVED && resvport_only) {
+			syslog(LOG_NOTICE, 
+			    "Refused mount RPC from host %s port %d",
+			    inet_ntoa(transp->xp_raddr.sin_addr), sport);
 			svcerr_weakauth(transp);
 			return;
 		}
@@ -401,6 +408,8 @@ mntsrv(rqstp, transp)
 			svcerr_decode(transp);
 			return;
 		}
+		if (debug)
+			fprintf(stderr, "rpcpath: %s\n", rpcpath);
 
 		/*
 		 * Get the real pathname and make sure it is a file or
@@ -464,8 +473,12 @@ mntsrv(rqstp, transp)
 			else
 				add_mlist(inet_ntoa(transp->xp_raddr.sin_addr),
 					dirpath);
-			if (debug)
-				fprintf(stderr, "Mount successful.\n");
+			if (debug) {
+				fprintf(stderr,
+				    "Mount successful for %s by %s.\n",
+				    dirpath,
+				    inet_ntoa(transp->xp_raddr.sin_addr));
+			}
 		} else
 			bad = EACCES;
 
