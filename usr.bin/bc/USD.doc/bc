@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bc,v 1.4 2003/10/22 12:25:13 otto Exp $
+.\"	$OpenBSD: bc,v 1.5 2003/11/09 19:27:27 otto Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -783,7 +783,7 @@ The following are reserved keywords:
 	length	return
 	while	quit
 	for	continue
-	else
+	else	last
 .fi
 .ft
 .NH 2
@@ -798,6 +798,9 @@ Expressions
 .PP
 The value of an expression is printed unless the main
 operator is an assignment.
+The value printed is assigned to the special variable \fBlast\fP.
+A single dot may be used as a synonym for \fBlast\fP.
+This is a non-portable extension.
 Precedence is the same as the order
 of presentation here, with highest appearing first.
 Left or right associativity, where applicable, is

@@ -1,5 +1,5 @@
 %{
-/*      $OpenBSD: scan.l,v 1.9 2003/10/18 20:35:36 otto Exp $	*/
+/*      $OpenBSD: scan.l,v 1.10 2003/11/09 19:27:27 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -18,7 +18,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: scan.l,v 1.9 2003/10/18 20:35:36 otto Exp $";
+static const char rcsid[] = "$OpenBSD: scan.l,v 1.10 2003/11/09 19:27:27 otto Exp $";
 #endif /* not lint */
 
 #include <err.h>
@@ -109,6 +109,7 @@ DIGIT		[0-9A-F]
 "else"		return ELSE;
 "ibase"		return IBASE;
 "if"		return IF;
+"last"		return DOT;
 "for"		return FOR;
 "length"	return LENGTH;
 "obase"		return OBASE;

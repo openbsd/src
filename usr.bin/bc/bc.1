@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bc.1,v 1.9 2003/10/22 12:24:41 otto Exp $
+.\"	$OpenBSD: bc.1,v 1.10 2003/11/09 19:27:27 otto Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -91,6 +91,7 @@ Names
 simple variables: L
 array elements: L [ E ]
 The words `ibase', `obase', and `scale'
+The word `last' or a single dot
 .Ed
 .Pp
 Other operands
@@ -167,6 +168,9 @@ All function arguments are passed by value.
 .Pp
 The value of a statement that is an expression is printed
 unless the main operator is an assignment.
+The value printed is assigned to the special variable `last'.
+This is a non-portable extension.
+A single dot may be used as a synonym for `last'.
 Either semicolons or newlines may separate statements.
 Assignment to
 .Ar scale
