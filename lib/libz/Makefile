@@ -1,10 +1,9 @@
-#	$OpenBSD: Makefile,v 1.9 2003/10/01 09:07:14 jmc Exp $
+#	$OpenBSD: Makefile,v 1.10 2003/12/16 22:33:02 henning Exp $
 
 LIB=	z
 HDRS=	zconf.h zlib.h
-SRCS=	adler32.c compress.c crc32.c deflate.c gzio.c infblock.c \
-	infcodes.c inffast.c inflate.c inftrees.c infutil.c trees.c \
-	uncompr.c zutil.c
+SRCS=	adler32.c compress.c crc32.c deflate.c gzio.c infback.c \
+	inffast.c inflate.c inftrees.c trees.c uncompr.c zutil.c
 MAN=	compress.3
 MLINKS=	compress.3 zlibVersion.3 compress.3 deflateInit.3 \
 	compress.3 deflate.3 compress.3 deflateEnd.3 \
