@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.23 2001/06/25 19:15:43 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.24 2001/06/25 21:44:00 mickey Exp $
 #
 # PPC GENERIC config file
 #
@@ -64,6 +64,7 @@ vgafb0		at pci? dev ? function ?	# PCI VGA graphics
 #pciide*	at pci? dev ? function ?
 macobio0	at pci? dev ? function ?
 gm*		at pci? dev ? function ?	# GMAC ethernet
+an*		at pci? dev ? function ?	# Cisco/Aironet 802.11DS
 
 # how many of these are needed?
 exphy*		at mii? phy ?		# 3Com internal PHYs
@@ -89,6 +90,7 @@ bm*		at macobio?		# bmac ethernet
 #mesh*		at macobio? flags 0xffff# MESH SCSI
 #nvram*		at macobio?		# nvram
 adb*		at macobio?		# Apple Desktop Bus
+wi*		at macobio?		# Apple Airport 802.11DS
 gpio*		at macobio?		# GPIO, PMU interrupt router.
 gpio*		at gpio?		# GPIO, PMU interrupt router.
 aed*		at adb?			# ADB Event Device
