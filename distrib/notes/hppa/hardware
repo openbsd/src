@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.15 2004/08/17 20:35:32 mickey Exp $
+dnl	$OpenBSD: hardware,v 1.16 2004/09/15 22:12:40 mickey Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of HP9000 machines:
 dnl - PA7000-based
 dnl	705, 710, 720, 730, 750
@@ -23,6 +23,12 @@ dnl	705, 710, 720, 730, 750
 	B132L, B132L+, B160L, B180L+, C132L, C160L
 	744, 745, 748
 	RDI PrecisionBook
+- PA8000-based(in 32-bit mode):
+	C160, C180
+- PA8200-based(in 32-bit mode):
+	C200, C230, C240
+- PA8500-based(in 32-bit mode):
+	C360
 
 Supported devices {:-include-:}:
 - Ethernet Controllers
