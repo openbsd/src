@@ -47,7 +47,7 @@ extern void	 remque __P((void *));
 
 extern void	*tdelete __P((const void *, void **,
 			      int (*)(const void *, const void *)));
-extern void	*tfind __P((const void *, void **,
+extern void	*tfind __P((const void *, void * const *,
 			      int (*)(const void *, const void *)));
 extern void	*tsearch __P((const void *, void **, 
 			      int (*)(const void *, const void *)));
