@@ -1,4 +1,4 @@
-# $OpenBSD: disktab,v 1.4 2001/09/21 20:40:17 jason Exp $
+# $OpenBSD: disktab,v 1.5 2001/10/12 14:30:43 jason Exp $
 #
 #	@(#)disktab	5.5 (Berkeley) 2/27/91
 #
@@ -43,6 +43,11 @@ fakecdrom|Fake image for Bootable CDROM:\
 	:pb#1310720:ob#0:bb#8192:fb#1024:tb=4.2BSD:\
 	:pc#1310720:oc#0:bc#8192:fc#1024:tc=4.2BSD:\
 	:pd#1310720:od#0:bd#8192:fd#1024:td=4.2BSD:
+
+fakeramdisk:\
+	:ty=winchester:se#512:nt#1:rm#350:ns#640:nc#2048:\
+	:pa#12800:oa#0:ba#8192:fa#4096:ta=4.2BSD:\
+	:pc#12800:oc#0:ta=4.2BSD:
 
 ASI-1.0GIBM:\
 	:ty#winchester:ns#80:nt#15:nc#1632:
