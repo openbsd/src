@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.40 2002/12/29 22:00:37 dhartmei Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.41 2003/01/01 02:28:26 dhartmei Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -531,8 +531,8 @@ change_filter(int add, const char *luser, const char *ipsrc)
 {
 	char			 fn[MAXPATHLEN];
 	FILE			*f = NULL;
-	const int		 action[PF_RULESET_MAX] = { PF_PASS,
-				    PF_NAT, PF_BINAT, PF_RDR };
+	const int		 action[PF_RULESET_MAX] = { PF_SCRUB,
+				    PF_PASS, PF_NAT, PF_BINAT, PF_RDR };
 	struct pfctl		 pf;
 	struct pfioc_rule	 pr[PF_RULESET_MAX];
 	int			 i;
@@ -693,6 +693,13 @@ pfctl_add_rule(struct pfctl *pf, struct pf_rule *r)
 	struct pfioc_rule	*pr;
 
 	switch (r->action) {
+	case PF_PASS:
+	case PF_DROP:
+		pr = pf->prule[PF_RULESET_FILTER];
+		break;
+	case PF_SCRUB:
+		pr = pf->prule[PF_RULESET_SCRUB];
+		break;
 	case PF_NAT:
 	case PF_NONAT:
 		pr = pf->prule[PF_RULESET_NAT];
@@ -706,7 +713,8 @@ pfctl_add_rule(struct pfctl *pf, struct pf_rule *r)
 		pr = pf->prule[PF_RULESET_BINAT];
 		break;
 	default:
-		pr = pf->prule[PF_RULESET_RULE];
+		syslog(LOG_ERR, "invalid rule action %d", r->action);
+		return (1);
 	}
 	if (pfctl_add_pool(pf, &r->rpool, r->af))
 		return (1);
