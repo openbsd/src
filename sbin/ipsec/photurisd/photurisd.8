@@ -1,4 +1,4 @@
-.\" $OpenBSD: photurisd.8,v 1.3 1998/05/13 12:28:01 niklas Exp $
+.\" $OpenBSD: photurisd.8,v 1.4 1998/05/14 10:46:21 niklas Exp $
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -230,7 +230,14 @@ addresses match their respective options the packet will be routed into the
 tunnel.
 .It exchange_lifetime
 Determines the lifetime of the exchange. After an exchange expires
-no new SPIs are created.
+no new SPIs are created, which means the transport or tunnel is torn down
+as soon as the current SPI times out (see
+.Nm spi_lifetime
+below).  The default value is gotten from the
+.Nm exchange_lifetime
+parameter given in
+.Pa photuris.conf .
+If it is not given there the default is 1800 seconds.
 .It spi_lifetime
 Determines the lifetime of each created SPI in the exchange.
 .It user
@@ -241,7 +248,9 @@ secrets are taken from the users secret file.
 Exchanges are separated by newlines.
 .Pp
 .Sh EXAMPLE
-A sample photuris.startup entry:
+A sample
+.Pa photuris.startup
+entry:
 .Pp
 .Bd -literal
 dst=134.100.106.2 port=468 options=auth

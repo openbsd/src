@@ -1,4 +1,4 @@
-.\" $OpenBSD: startkey.1,v 1.5 1998/05/13 12:29:36 niklas Exp $
+.\" $OpenBSD: startkey.1,v 1.6 1998/05/14 10:46:23 niklas Exp $
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -104,7 +104,14 @@ addresses match their respective options the packet will be routed into the
 tunnel.
 .It exchange_lifetime
 Determines the lifetime of the exchange. After an exchange expires
-no new SPIs are created.
+no new SPIs are created, which means the transport or tunnel is torn down
+as soon as the current SPI times out (see
+.Nm spi_lifetime
+below).  The default value is gotten from the
+.Nm exchange_lifetime
+parameter given in
+.Pa photuris.conf .
+If it is not given there the default is 1800 seconds.
 .It spi_lifetime
 Determines the lifetime of each created SPI in the exchange.
 .It user
