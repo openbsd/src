@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.42 1998/07/13 02:11:30 millert Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.43 1998/07/13 05:43:10 csapuntz Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -251,7 +251,6 @@ sys_mount(p, v, retval)
 	mp->mnt_stat.f_type = vfsp->vfc_typenum;
 	mp->mnt_flag |= (vfsp->vfc_flags & MNT_VISFLAGMASK);
 	strncpy(mp->mnt_stat.f_fstypename, vfsp->vfc_name, MFSNAMELEN);
-	vp->v_mountedhere = mp;
 	mp->mnt_vnodecovered = vp;
 	mp->mnt_stat.f_owner = p->p_ucred->cr_uid;
 update:
@@ -291,6 +290,9 @@ update:
 		vfs_unbusy(mp, p);
 		return (error);
 	}
+
+	vp->v_mountedhere = mp;
+
 	/*
 	 * Put the new filesystem on the mount list after root.
 	 */
