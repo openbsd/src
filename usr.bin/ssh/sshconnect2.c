@@ -28,7 +28,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect2.c,v 1.12 2000/05/31 09:20:38 markus Exp $");
+RCSID("$OpenBSD: sshconnect2.c,v 1.13 2000/06/02 02:00:19 todd Exp $");
 
 #include <openssl/bn.h>
 #include <openssl/rsa.h>
@@ -264,8 +264,11 @@ ssh2_try_passwd(const char *server_user, const char *host, const char *service)
 	char prompt[80];
 	char *password;
 
-	if (attempt++ > options.number_of_password_prompts)
+	if (attempt++ >= options.number_of_password_prompts)
 		return 0;
+
+	if(attempt != 1)
+		error("Permission denied, please try again.");
 
 	snprintf(prompt, sizeof(prompt), "%.30s@%.40s's password: ",
 	    server_user, host);
