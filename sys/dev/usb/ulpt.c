@@ -1,4 +1,4 @@
-/*	$OpenBSD: ulpt.c,v 1.7 2001/05/03 02:20:34 aaron Exp $ */
+/*	$OpenBSD: ulpt.c,v 1.8 2001/10/04 22:55:56 gluk Exp $ */
 /*	$NetBSD: ulpt.c,v 1.42 2001/04/16 00:18:06 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
@@ -40,7 +40,7 @@
  */
 
 /*
- * Printer Class spec: http://www.usb.org/developers/data/devclass/usbprint109.PDF
+ * Printer Class spec: http://www.usb.org/developers/data/devclass/usbprint11.pdf
  */
 
 #include <sys/param.h>
@@ -180,8 +180,9 @@ USB_MATCH(ulpt)
 	if (id != NULL &&
 	    id->bInterfaceClass == UICLASS_PRINTER &&
 	    id->bInterfaceSubClass == UISUBCLASS_PRINTER &&
-	    (id->bInterfaceProtocol == UIPROTO_PRINTER_UNI ||
-	     id->bInterfaceProtocol == UIPROTO_PRINTER_BI))
+	    ((id->bInterfaceProtocol == UIPROTO_PRINTER_UNI) ||
+	     (id->bInterfaceProtocol == UIPROTO_PRINTER_BI) ||
+	     (id->bInterfaceProtocol == UIPROTO_PRINTER_IEEE_1284_4)))
 		return (UMATCH_IFACECLASS_IFACESUBCLASS_IFACEPROTO);
 	return (UMATCH_NONE);
 }
@@ -413,6 +414,7 @@ ulpt_status(struct ulpt_softc *sc)
 	usbd_status err;
 	u_char status;
 
+	req.bmRequestType = UT_READ_CLASS_INTERFACE;
 	req.bRequest = UR_GET_PORT_STATUS;
 	USETW(req.wValue, 0);
 	USETW(req.wIndex, sc->sc_ifaceno);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.h,v 1.12 2001/01/28 09:43:42 aaron Exp $ */
+/*	$OpenBSD: usb.h,v 1.13 2001/10/04 22:55:56 gluk Exp $ */
 /*	$NetBSD: usb.h,v 1.50 2000/06/01 15:43:32 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
@@ -379,6 +379,7 @@ typedef struct {
 #define  UISUBCLASS_PRINTER	1
 #define  UIPROTO_PRINTER_UNI	1
 #define  UIPROTO_PRINTER_BI	2
+#define  UIPROTO_PRINTER_IEEE_1284_4	3
 
 #define UICLASS_MASS		0x08
 #define  UISUBCLASS_RBC		1
