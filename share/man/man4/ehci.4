@@ -1,4 +1,4 @@
-.\" $OpenBSD: ehci.4,v 1.1 2004/05/23 02:43:42 deraadt Exp $
+.\" $OpenBSD: ehci.4,v 1.2 2004/05/23 17:18:05 jmc Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -50,13 +50,16 @@ driver provides support for the USB Enhanced Host Controller Interface,
 which is used by USB 2.0 controllers.
 .Pp
 EHCI controllers are peculiar in that they can only handle the USB 2.0
-protocol.  This means that they normally have one or more companion controllers
+protocol.
+This means that they normally have one or more companion controllers
 (i.e.,
 .Xr ohci 4
 or
 .Xr uhci 4 )
-handling USB 1.x devices.  Consequently each USB connector is electrically
-connected to two USB controllers.  The handling of this is totally automatic,
+handling USB 1.x devices.
+Consequently each USB connector is electrically
+connected to two USB controllers.
+The handling of this is totally automatic,
 but can be noticed since USB 1.x and USB 2.0 devices plugged in to the same
 connector appear to connect to different USB busses.
 .Sh SEE ALSO
