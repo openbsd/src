@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.58 2004/10/23 05:12:55 brad Exp $	*/
+/*	$OpenBSD: xl.c,v 1.59 2004/10/23 05:14:33 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1709,9 +1709,10 @@ reload:
 		struct mbuf		*m_new = NULL;
 
 		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
-		if (m_new == NULL)
+		if (m_new == NULL) {
 			m_freem(m_head);
 			return(1);
+		}
 		if (m_head->m_pkthdr.len > MHLEN) {
 			MCLGET(m_new, M_DONTWAIT);
 			if (!(m_new->m_flags & M_EXT)) {
