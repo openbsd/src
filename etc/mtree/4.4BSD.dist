@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.24 1996/08/29 06:31:25 dm Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.25 1996/09/06 17:27:02 deraadt Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -27,6 +27,11 @@ fd		gname=bin uname=root mode=0555
 
 # ./etc
 etc
+
+# ./etc/amd
+amd
+# ./etc/amd
+..
 
 # ./etc/disklabels
 disklabels

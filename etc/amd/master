@@ -1,0 +1,5 @@
+#	$OpenBSD: master,v 1.1 1996/09/06 17:27:00 deraadt Exp $
+#
+# Check the amd(8) manual for more information.  Enable amd in /etc/netstart
+# Example:
+#/home	amd.home
