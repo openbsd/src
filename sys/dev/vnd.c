@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.33 2002/05/23 22:47:16 art Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.34 2002/05/24 13:10:52 art Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -652,9 +652,9 @@ vndiodone(bp)
 	struct buf *pbp = vbp->vb_obp;
 	struct vnd_softc *vnd = &vnd_softc[vndunit(pbp->b_dev)];
 	long count;
-	int s;
 
-	s = splbio();
+	splassert(IPL_BIO);
+
 #ifdef DEBUG
 	if (vnddebug & VDB_IO)
 		printf("vndiodone(%d): vbp %p vp %p blkno %x addr %p cnt %lx\n",
@@ -688,7 +688,6 @@ vndiodone(bp)
 		else
 			vnd->sc_tab.b_active--;
 	}
-	splx(s);
 }
 
 /* ARGSUSED */

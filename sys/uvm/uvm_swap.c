@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.52 2002/05/24 08:58:41 art Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.53 2002/05/24 13:10:53 art Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -1506,7 +1506,7 @@ sw_reg_iodone(bp)
 	struct vndxfer *vnx = vbp->vb_xfer;
 	struct buf *pbp = vnx->vx_bp;		/* parent buffer */
 	struct swapdev	*sdp = vnx->vx_sdp;
-	int		s, resid;
+	int resid;
 	UVMHIST_FUNC("sw_reg_iodone"); UVMHIST_CALLED(pdhist);
 
 	UVMHIST_LOG(pdhist, "  vbp=%p vp=%p blkno=%x addr=%p",
@@ -1514,11 +1514,8 @@ sw_reg_iodone(bp)
 	UVMHIST_LOG(pdhist, "  cnt=%lx resid=%lx",
 	    vbp->vb_buf.b_bcount, vbp->vb_buf.b_resid, 0, 0);
 
-	/*
-	 * protect vbp at splbio and update.
-	 */
+	splassert(IPL_BIO);
 
-	s = splbio();
 	resid = vbp->vb_buf.b_bcount - vbp->vb_buf.b_resid;
 	pbp->b_resid -= resid;
 	vnx->vx_pending--;
@@ -1570,7 +1567,6 @@ sw_reg_iodone(bp)
 	 */
 	sdp->swd_tab.b_active--;
 	sw_reg_start(sdp);
-	splx(s);
 }
 
 

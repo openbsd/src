@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccd.c,v 1.48 2002/05/23 14:28:36 art Exp $	*/
+/*	$OpenBSD: ccd.c,v 1.49 2002/05/24 13:10:52 art Exp $	*/
 /*	$NetBSD: ccd.c,v 1.33 1996/05/05 04:21:14 thorpej Exp $	*/
 
 /*-
@@ -1033,11 +1033,12 @@ ccdiodone(vbp)
 	int unit = cbp->cb_unit;
 	struct ccd_softc *cs = &ccd_softc[unit];
 	int old_io = cbp->cb_flags & CBF_OLD;
-	int cbflags, s, i;
+	int cbflags, i;
 	long count = bp->b_bcount, off;
 	char *comptype;
 
-	s = splbio();
+	splassert(IPL_BIO);
+
 #ifdef DEBUG
 	if (ccddebug & CCDB_FOLLOW)
 		printf("ccdiodone(%p)\n", cbp);
@@ -1106,7 +1107,6 @@ ccdiodone(vbp)
 		if (bp->b_resid == 0)
 			ccdintr(&ccd_softc[unit], bp);
 	}
-	splx(s);
 }
 
 /* ARGSUSED */

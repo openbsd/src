@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pager.c,v 1.31 2002/05/22 14:29:20 art Exp $	*/
+/*	$OpenBSD: uvm_pager.c,v 1.32 2002/05/24 13:10:53 art Exp $	*/
 /*	$NetBSD: uvm_pager.c,v 1.36 2000/11/27 18:26:41 chs Exp $	*/
 
 /*
@@ -794,10 +794,12 @@ uvm_aio_aiodone(bp)
 	int npages = bp->b_bufsize >> PAGE_SHIFT;
 	struct vm_page *pg, *pgs[npages];
 	struct uvm_object *uobj;
-	int s, i, error;
+	int i, error;
 	boolean_t write, swap;
 	UVMHIST_FUNC("uvm_aio_aiodone"); UVMHIST_CALLED(ubchist);
 	UVMHIST_LOG(ubchist, "bp %p", bp, 0,0,0);
+
+	splassert(IPL_BIO);
 
 	error = (bp->b_flags & B_ERROR) ? (bp->b_error ? bp->b_error : EIO) : 0;
 	write = (bp->b_flags & B_READ) == 0;
@@ -881,12 +883,10 @@ uvm_aio_aiodone(bp)
 #ifdef UVM_SWAP_ENCRYPT
 freed:
 #endif
-	s = splbio();
 	if (write && (bp->b_flags & B_AGE) != 0 && bp->b_vp != NULL) {
 		vwakeup(bp->b_vp);
 	}
 	pool_put(&bufpool, bp);
-	splx(s);
 }
 
 /*
