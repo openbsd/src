@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mtree.8,v 1.6 1997/07/12 23:05:35 millert Exp $
+.\"	$OpenBSD: mtree.8,v 1.7 1997/07/18 05:46:13 millert Exp $
 .\"	$NetBSD: mtree.8,v 1.4 1995/03/07 21:26:25 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -150,6 +150,8 @@ The number of hard links the file is expected to have.
 .It Cm optional
 The file is optional; don't complain about the file if it's
 not in the file hierarchy.
+.It Cm rmd160digest
+The RIPEMD-160 message digest of the file.
 .It Cm sha1digest
 The SHA-1 message digest of the file.
 .It Cm uid
@@ -281,10 +283,12 @@ system specification directory
 .Xr chgrp 1 ,
 .Xr cksum 1 ,
 .Xr md5 1 ,
+.Xr rmd160 1 ,
 .Xr sha1 1 ,
 .Xr stat 2 ,
 .Xr fts 3 ,
 .Xr md5 3 ,
+.Xr rmd160 3 ,
 .Xr sha1 3 ,
 .Xr chown 8
 .Sh HISTORY

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtree.c,v 1.5 1997/01/15 23:44:03 millert Exp $	*/
+/*	$OpenBSD: mtree.c,v 1.6 1997/07/18 05:46:13 millert Exp $	*/
 /*	$NetBSD: mtree.c,v 1.7 1996/09/05 23:29:22 thorpej Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mtree.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: mtree.c,v 1.5 1997/01/15 23:44:03 millert Exp $";
+static char rcsid[] = "$OpenBSD: mtree.c,v 1.6 1997/07/18 05:46:13 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -61,7 +61,7 @@ extern u_int32_t crc_total;
 
 int ftsoptions = FTS_PHYSICAL;
 int cflag, dflag, eflag, iflag, nflag, rflag, sflag, tflag, uflag, Uflag;
-u_short keys;
+u_int keys;
 char fullpath[MAXPATHLEN];
 
 static void usage __P((void));

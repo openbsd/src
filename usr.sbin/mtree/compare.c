@@ -1,5 +1,5 @@
 /*	$NetBSD: compare.c,v 1.11 1996/09/05 09:56:48 mycroft Exp $	*/
-/*	$OpenBSD: compare.c,v 1.7 1997/07/12 23:05:34 millert Exp $	*/
+/*	$OpenBSD: compare.c,v 1.8 1997/07/18 05:46:11 millert Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)compare.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: compare.c,v 1.7 1997/07/12 23:05:34 millert Exp $";
+static char rcsid[] = "$OpenBSD: compare.c,v 1.8 1997/07/18 05:46:11 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -52,6 +52,7 @@ static char rcsid[] = "$OpenBSD: compare.c,v 1.7 1997/07/12 23:05:34 millert Exp
 #include <unistd.h>
 #include <md5.h>
 #include <sha1.h>
+#include <rmd160.h>
 #include "mtree.h"
 #include "extern.h"
 
@@ -238,6 +239,22 @@ typeerr:		LABEL;
 		} else if (strcmp(new_digest, s->md5digest)) {
 			LABEL;
 			printf("%sMD5 (%s, %s)\n", tab, s->md5digest,
+			       new_digest);
+			tab = "\t";
+		}
+	}
+	if (s->flags & F_RMD160) {
+		char *new_digest, buf[41];
+
+		new_digest = RMD160File(p->fts_accpath, buf);
+		if (!new_digest) {
+			LABEL;
+			printf("%sRMD160File: %s: %s\n", tab, p->fts_accpath,
+			       strerror(errno));
+			tab = "\t";
+		} else if (strcmp(new_digest, s->rmd160digest)) {
+			LABEL;
+			printf("%sRMD160 (%s, %s)\n", tab, s->rmd160digest,
 			       new_digest);
 			tab = "\t";
 		}

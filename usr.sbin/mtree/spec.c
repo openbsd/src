@@ -1,5 +1,5 @@
 /*	$NetBSD: spec.c,v 1.6 1995/03/07 21:12:12 cgd Exp $	*/
-/*	$OpenBSD: spec.c,v 1.7 1997/07/12 23:05:36 millert Exp $	*/
+/*	$OpenBSD: spec.c,v 1.8 1997/07/18 05:46:14 millert Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)spec.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: spec.c,v 1.7 1997/07/12 23:05:36 millert Exp $";
+static char rcsid[] = "$OpenBSD: spec.c,v 1.8 1997/07/18 05:46:14 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -215,6 +215,11 @@ set(t, ip)
 			ip->st_nlink = strtoul(val, &ep, 10);
 			if (*ep)
 				err("invalid link count %s", val);
+			break;
+		case F_RMD160:
+			ip->rmd160digest = strdup(val);
+			if (!ip->rmd160digest)
+				err("%s", strerror(errno));
 			break;
 		case F_SHA1:
 			ip->sha1digest = strdup(val);
