@@ -1,4 +1,4 @@
-/* $OpenBSD: keynote.h,v 1.4 1999/05/31 20:09:59 angelos Exp $ */
+/* $OpenBSD: keynote.h,v 1.5 1999/08/13 22:34:26 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -25,15 +25,15 @@
 #include <regex.h>
 
 #ifdef CRYPTO
-#include "ssl/crypto.h"
-#include "ssl/dsa.h"
-#include "ssl/rsa.h"
-#include "ssl/sha.h"
-#include "ssl/md5.h"
-#include "ssl/err.h"
-#include "ssl/rand.h"
-#include "ssl/x509.h"
-#include "ssl/pem.h"
+#include "crypto.h"
+#include "dsa.h"
+#include "rsa.h"
+#include "sha.h"
+#include "md5.h"
+#include "err.h"
+#include "rand.h"
+#include "x509.h"
+#include "pem.h"
 #endif /* CRYPTO */
 
 #ifdef WIN32
