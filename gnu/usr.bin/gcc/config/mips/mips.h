@@ -1136,7 +1136,7 @@ do {							\
 
 
 /* Tell collect that the object format is ECOFF */
-#ifndef OBJECT_FORMAT_ROSE
+#if !defined(OBJECT_FORMAT_ROSE) && !defined(OBJECT_FORMAT_ELF)
 #define OBJECT_FORMAT_COFF	/* Object file looks like COFF */
 #define EXTENDED_COFF		/* ECOFF, not normal coff */
 #endif
