@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.483 2002/01/19 02:32:36 nate Exp 
+ *		OpenBSD: pcidevs,v 1.484 2002/01/21 17:37:04 nate Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -2729,6 +2729,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_USBHC,
 	    "USB",
+	},
+	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_USBHC2,
+	    "USB 2-port",
 	},
 	{
 	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_USBQBUS,
