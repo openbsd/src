@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.28 2001/05/08 18:19:44 jason Exp $	*/
+/*	$OpenBSD: bus.h,v 1.29 2001/06/25 23:03:43 mickey Exp $	*/
 /*	$NetBSD: bus.h,v 1.6 1996/11/10 03:19:25 thorpej Exp $	*/
 
 /*-
@@ -53,7 +53,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Christopher G. Demetriou
+ *	This product includes software developed by Christopher G. Demetriou
  *	for the NetBSD Project.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
@@ -151,9 +151,8 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 			cld					;	\
 		1:	movb (%2),%%al				;	\
 			stosb					;	\
-			loop 1b"				: 	\
-		    "=D" (_addr), "=c" (_cnt)			:	\
-		    "r" ((h) + (o)), "0" (_addr), "1" (_cnt)	:	\
+			loop 1b"				:	\
+		    "+D" (_addr), "+c" (_cnt) : "r" ((h) + (o))	:	\
 		    "%eax", "memory", "cc");				\
 	}								\
 } while (0)
@@ -167,8 +166,7 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 		1:	movw (%2),%%ax				;	\
 			stosw					;	\
 			loop 1b"				:	\
-		    "=D" (_addr), "=c" (_cnt)			:	\
-		    "r" ((h) + (o)), "0" (_addr), "1" (_cnt)	:	\
+		    "+D" (_addr), "+c" (_cnt) : "r" ((h) + (o))	:	\
 		    "%eax", "memory", "cc");				\
 	}								\
 } while (0)
@@ -182,8 +180,7 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 		1:	movl (%2),%%eax				;	\
 			stosl					;	\
 			loop 1b"				:	\
-		    "=D" (_addr), "=c" (_cnt)			:	\
-		    "r" ((h) + (o)), "0" (_addr), "1" (_cnt)	:	\
+		    "+D" (_addr), "+c" (_cnt) : "r" ((h) + (o))	:	\
 		    "%eax", "memory", "cc");				\
 	}								\
 } while (0)
@@ -231,9 +228,8 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 		1:	inb %w2,%%al				;	\
 			stosb					;	\
 			incl %2					;	\
-			loop 1b"				: 	\
-		    "=D" (_addr), "=c" (_cnt), "=d" (_port)	:	\
-		    "0" (_addr), "1" (_cnt), "2" (_port)	:	\
+			loop 1b"				:	\
+		    "+D" (_addr), "+c" (_cnt), "+d" (_port)	::	\
 		    "%eax", "memory", "cc");				\
 	} else								\
 		i386_space_copy(_port, _addr, 1, _cnt);			\
@@ -247,9 +243,8 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 		1:	inw %w2,%%ax				;	\
 			stosw					;	\
 			addl $2,%2				;	\
-			loop 1b"				: 	\
-		    "=D" (_addr), "=c" (_cnt), "=d" (_port)	:	\
-		    "0" (_addr), "1" (_cnt), "2" (_port)	:	\
+			loop 1b"				:	\
+		    "+D" (_addr), "+c" (_cnt), "+d" (_port)	::	\
 		    "%eax", "memory", "cc");				\
 	} else								\
 		i386_space_copy(_port, _addr, 2, _cnt);			\
@@ -263,9 +258,8 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 		1:	inl %w2,%%eax				;	\
 			stosl					;	\
 			addl $4,%2				;	\
-			loop 1b"				: 	\
-		    "=D" (_addr), "=c" (_cnt), "=d" (_port)	:	\
-		    "0" (_addr), "1" (_cnt), "2" (_port)	:	\
+			loop 1b"				:	\
+		    "+D" (_addr), "+c" (_cnt), "+d" (_port)	::	\
 		    "%eax", "memory", "cc");				\
 	} else								\
 		i386_space_copy(_port, _addr, 4, _cnt);			\
@@ -348,9 +342,8 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 			cld					;	\
 		1:	lodsb					;	\
 			movb %%al,(%2)				;	\
-			loop 1b"				: 	\
-		    "=S" (_addr), "=c" (_cnt)			:	\
-		    "r" ((h) + (o)), "0" (_addr), "1" (_cnt)	:	\
+			loop 1b"				:	\
+		    "+S" (_addr), "+c" (_cnt) : "r" ((h) + (o))	:	\
 		    "%eax", "memory", "cc");				\
 	}								\
 } while (0)
@@ -363,9 +356,8 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 			cld					;	\
 		1:	lodsw					;	\
 			movw %%ax,(%2)				;	\
-			loop 1b"				: 	\
-		    "=S" (_addr), "=c" (_cnt)			:	\
-		    "r" ((h) + (o)), "0" (_addr), "1" (_cnt)	:	\
+			loop 1b"				:	\
+		    "+S" (_addr), "+c" (_cnt) : "r" ((h) + (o))	:	\
 		    "%eax", "memory", "cc");				\
 	}								\
 } while (0)
@@ -378,9 +370,8 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 			cld					;	\
 		1:	lodsl					;	\
 			movl %%eax,(%2)				;	\
-			loop 1b"				: 	\
-		    "=S" (_addr), "=c" (_cnt)			:	\
-		    "r" ((h) + (o)), "0" (_addr), "1" (_cnt)	:	\
+			loop 1b"				:	\
+		    "+S" (_addr), "+c" (_cnt) : "r" ((h) + (o))	:	\
 		    "%eax", "memory", "cc");				\
 	}								\
 } while (0)
@@ -428,9 +419,8 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 		1:	lodsb					;	\
 			outb %%al,%w0				;	\
 			incl %0					;	\
-			loop 1b"				: 	\
-		    "=d" (_port), "=S" (_addr), "=c" (_cnt)	:	\
-		    "0" (_port), "1" (_addr), "2" (_cnt)	:	\
+			loop 1b"				:	\
+		    "+d" (_port), "+S" (_addr), "+c" (_cnt)	::	\
 		    "%eax", "memory", "cc");				\
 	} else								\
 		i386_space_copy(_addr, _port, 1, _cnt);			\
@@ -444,9 +434,8 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 		1:	lodsw					;	\
 			outw %%ax,%w0				;	\
 			addl $2,%0				;	\
-			loop 1b"				: 	\
-		    "=d" (_port), "=S" (_addr), "=c" (_cnt)	:	\
-		    "0" (_port), "1" (_addr), "2" (_cnt)	:	\
+			loop 1b"				:	\
+		    "+d" (_port), "+S" (_addr), "+c" (_cnt)	::	\
 		    "%eax", "memory", "cc");				\
 	} else								\
 		i386_space_copy(_addr, _port, 2, _cnt);			\
@@ -460,9 +449,8 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 		1:	lodsl					;	\
 			outl %%eax,%w0				;	\
 			addl $4,%0				;	\
-			loop 1b"				: 	\
-		    "=d" (_port), "=S" (_addr), "=c" (_cnt)	:	\
-		    "0" (_port), "1" (_addr), "2" (_cnt)	:	\
+			loop 1b"				:	\
+		    "+d" (_port), "+S" (_addr), "+c" (_cnt)	::	\
 		    "%eax", "memory", "cc");				\
 	} else								\
 		i386_space_copy(_addr, _port, 4, _cnt);			\
@@ -509,19 +497,17 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 	if ((t) == I386_BUS_SPACE_IO) {					\
 		__asm __volatile("					\
 			cld					;	\
-		1:	outb %%al,%w1				;	\
-			loop 1b"				: 	\
-		    "=c" (_cnt)					:	\
-		    "d" ((h) + (o)), "0" ((_cnt)), "a" ((v))	:	\
-		    "%eax", "cc");					\
+		1:	outb %b2, %w1				;	\
+			loop 1b"				:	\
+		    "+c" (_cnt) : "d" ((h) + (o)), "a" ((v))	:	\
+		    "cc");						\
 	} else {							\
 		__asm __volatile("					\
 			cld					;	\
-		1:	movb %%al,(%1)				;	\
-			loop 1b"				: 	\
-		    "=c" (_cnt)					:	\
-		    "D" ((h) + (o)), "0" ((_cnt)), "a" ((v))	:	\
-		    "%eax", "cc");					\
+		1:	movb %b2, (%1)				;	\
+			loop 1b"				:	\
+		    "+c" (_cnt) : "D" ((h) + (o)), "a" ((v))	:	\
+		    "cc", "memory");					\
 	}								\
 } while (0)
 
@@ -530,19 +516,17 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 	if ((t) == I386_BUS_SPACE_IO) {					\
 		__asm __volatile("					\
 			cld					;	\
-		1:	outw %%ax,%w1				;	\
-			loop 1b"				: 	\
-		    "=c" (_cnt)					:	\
-		    "d" ((h) + (o)), "0" ((_cnt)), "a" ((v))	:	\
-		    "%eax", "cc");					\
+		1:	outw %w2, %w1				;	\
+			loop 1b"				:	\
+		    "+c" (_cnt) : "d" ((h) + (o)), "a" ((v))	:	\
+		    "cc");						\
 	} else {							\
 		__asm __volatile("					\
 			cld					;	\
-		1:	movw %%ax,(%1)				;	\
-			loop 1b"				: 	\
-		    "=c" (_cnt)					:	\
-		    "D" ((h) + (o)), "0" ((_cnt)), "a" ((v))	:	\
-		    "%eax", "cc");					\
+		1:	movw %w2, (%1)				;	\
+			loop 1b"				:	\
+		    "+c" (_cnt) : "D" ((h) + (o)), "a" ((v))	:	\
+		    "cc", "memory");					\
 	}								\
 } while (0)
 
@@ -551,19 +535,17 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 	if ((t) == I386_BUS_SPACE_IO) {					\
 		__asm __volatile("					\
 			cld					;	\
-		1:	outl %%eax,%w1				;	\
-			loop 1b"				: 	\
-		    "=c" (_cnt)					:	\
-		    "d" ((h) + (o)), "0" ((_cnt)), "a" ((v))	:	\
-		    "%eax", "cc");					\
+		1:	outl %2,%w1				;	\
+			loop 1b"				:	\
+		    "+c" (_cnt) : "d" ((h) + (o)), "a" ((v))	:	\
+		    "cc");						\
 	} else {							\
 		__asm __volatile("					\
 			cld					;	\
-		1:	movl %%eax,(%1)				;	\
-			loop 1b"				: 	\
-		    "=c" (_cnt)					:	\
-		    "D" ((h) + (o)), "0" ((_cnt)), "a" ((v))	:	\
-		    "%eax", "cc");					\
+		1:	movl %2,(%1)				;	\
+			loop 1b"				:	\
+		    "+c" (_cnt) : "D" ((h) + (o)), "a" ((v))	:	\
+		    "cc", "memory");					\
 	}								\
 } while (0)
 
@@ -587,17 +569,15 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 		__asm __volatile("					\
 		1:	outb %%al,%w0				;	\
 			incl %0					;	\
-			loop 1b"				: 	\
-		    "=d" (_port), "=c" (_cnt)			:	\
-		    "0" (_port), "1" (_cnt), "a" ((v))		:	\
+			loop 1b"				:	\
+		    "+d" (_port), "+c" (_cnt) : "a" ((v))	:	\
 		    "cc");						\
 	} else {							\
 		__asm __volatile("					\
 			cld					;	\
 			repne					;	\
 			stosb"					:	\
-		    "=D" (_port), "=c" (_cnt)			:	\
-		    "0" (_port), "1" (_cnt), "a" ((v))		:	\
+		    "+D" (_port), "+c" (_cnt) : "a" ((v))	:	\
 		    "memory", "cc");					\
 	}								\
 } while (0)
@@ -608,17 +588,15 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 		__asm __volatile("					\
 		1:	outw %%ax,%w0				;	\
 			addl $2, %0				;	\
-			loop 1b"				: 	\
-		    "=d" (_port), "=c" (_cnt)			:	\
-		    "0" (_port), "1" (_cnt), "a" ((v))		:	\
+			loop 1b"				:	\
+		    "+d" (_port), "+c" (_cnt) : "a" ((v))	:	\
 		    "cc");						\
 	} else {							\
 		__asm __volatile("					\
 			cld					;	\
 			repne					;	\
 			stosw"					:	\
-		    "=D" (_port), "=c" (_cnt)			:	\
-		    "0" (_port), "1" (_cnt), "a" ((v))		:	\
+		    "+D" (_port), "+c" (_cnt) : "a" ((v))	:	\
 		    "memory", "cc");					\
 	}								\
 } while (0)
@@ -629,17 +607,15 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 		__asm __volatile("					\
 		1:	outl %%eax,%w0				;	\
 			addl $4, %0				;	\
-			loop 1b"				: 	\
-		    "=d" (_port), "=c" (_cnt)			:	\
-		    "0" (_port), "1" (_cnt), "a" ((v))		:	\
+			loop 1b"				:	\
+		    "+d" (_port), "+c" (_cnt) : "a" ((v))	:	\
 		    "cc");						\
 	} else {							\
 		__asm __volatile("					\
 			cld					;	\
 			repne					;	\
 			stosl"					:	\
-		    "=D" (_port), "=c" (_cnt)			:	\
-		    "0" (_port), "1" (_cnt), "a" ((v))		:	\
+		    "+D" (_port), "+c" (_cnt) : "a" ((v))	:	\
 		    "memory", "cc");					\
 	}								\
 } while (0)
@@ -669,9 +645,8 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 			outb %%al,%%dx				;	\
 			incl %0					;	\
 			incl %1					;	\
-			loop 1b"				: 	\
-		    "=D" (_port2), "=S" (_port1), "=c" ((_cnt))	:	\
-		    "0" (_port2), "1" (_port1), "2" ((_cnt))	:	\
+			loop 1b"				:	\
+		    "+D" (_port2), "+S" (_port1), "+c" ((_cnt))	::	\
 		    "%edx", "%eax", "cc");				\
 	} else								\
 		i386_space_copy(_port1, _port2, 1, _cnt);		\
@@ -687,9 +662,8 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 			outw %%ax,%%dx				;	\
 			addl $2, %0				;	\
 			addl $2, %1				;	\
-			loop 1b"				: 	\
-		    "=D" (_port2), "=S" (_port1), "=c" ((_cnt))	:	\
-		    "0" (_port2), "1" (_port1), "2" ((_cnt))	:	\
+			loop 1b"				:	\
+		    "+D" (_port2), "+S" (_port1), "+c" ((_cnt))	::	\
 		    "%edx", "%eax", "cc");				\
 	} else								\
 		i386_space_copy(_port1, _port2, 2, _cnt);		\
@@ -705,9 +679,8 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 			outl %%eax,%%dx				;	\
 			addl $4, %0				;	\
 			addl $4, %1				;	\
-			loop 1b"				: 	\
-		    "=D" (_port2), "=S" (_port1), "=c" ((_cnt))	:	\
-		    "0" (_port2), "1" (_port1), "2" ((_cnt))	:	\
+			loop 1b"				:	\
+		    "+D" (_port2), "+S" (_port1), "+c" ((_cnt))	::	\
 		    "%edx", "%eax", "cc");				\
 	} else								\
 		i386_space_copy(_port1, _port2, 4, _cnt);		\
