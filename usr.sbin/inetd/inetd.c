@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.117 2004/04/24 21:40:35 millert Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.118 2004/06/30 07:58:12 otto Exp $	*/
 
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -37,7 +37,7 @@ char copyright[] =
 
 #ifndef lint
 /*static const char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static const char rcsid[] = "$OpenBSD: inetd.c,v 1.117 2004/04/24 21:40:35 millert Exp $";
+static const char rcsid[] = "$OpenBSD: inetd.c,v 1.118 2004/06/30 07:58:12 otto Exp $";
 #endif /* not lint */
 
 /*
@@ -666,7 +666,7 @@ void
 doconfig(void)
 {
 	struct servtab *sep, *cp, **sepp;
-	int n, add;
+	int add;
 	char protoname[10];
 	sigset_t omask;
 
@@ -720,16 +720,21 @@ doconfig(void)
 		case AF_UNIX:
 			if (sep->se_fd != -1)
 				break;
-			(void)unlink(sep->se_service);
-			n = strlen(sep->se_service);
-			if (n > sizeof sep->se_ctrladdr_un.sun_path - 1)
-				n = sizeof sep->se_ctrladdr_un.sun_path - 1;
-			strncpy(sep->se_ctrladdr_un.sun_path,
-			    sep->se_service, n);
-			sep->se_ctrladdr_un.sun_path[n] = '\0';
+			sep->se_ctrladdr_size =
+			    strlcpy(sep->se_ctrladdr_un.sun_path,
+			    sep->se_service,
+			    sizeof sep->se_ctrladdr_un.sun_path);
+			if (sep->se_ctrladdr_size >=
+			    sizeof sep->se_ctrladdr_un.sun_path) {
+				syslog(LOG_WARNING, "%s/%s: UNIX domain socket "
+				    "path too long", sep->se_service,
+				    sep->se_proto);
+				goto serv_unknown;
+			}
 			sep->se_ctrladdr_un.sun_family = AF_UNIX;
-			sep->se_ctrladdr_size = n +
-			    sizeof sep->se_ctrladdr_un.sun_family;
+			sep->se_ctrladdr_size +=
+			    1 + sizeof sep->se_ctrladdr_un.sun_family;
+			(void)unlink(sep->se_service);
 			setup(sep);
 			break;
 		case AF_INET:
@@ -1241,12 +1246,6 @@ more:
 
 	if (strcmp(sep->se_proto, "unix") == 0) {
 		sep->se_family = AF_UNIX;
-		if (sep->se_hostaddr != NULL) {
-			syslog(LOG_WARNING, "%s/%s: %s: host address "
-			    "specifiers are not supported in the UNIX domain",
-			    sep->se_service, sep->se_proto, sep->se_hostaddr);
-			goto more;
-		}
 	} else {
 		int s;
 
@@ -1363,7 +1362,7 @@ more:
 	 * Resolve each hostname in the se_hostaddr list (if any)
 	 * and create a new entry for each resolved address.
 	 */
-	if (sep->se_hostaddr != NULL) {
+	if (sep->se_hostaddr != NULL && strcmp(sep->se_proto, "unix") != 0) {
 		struct addrinfo hints, *res0, *res;
 		char *host, *hostlist0, *hostlist, *port;
 		int error;
