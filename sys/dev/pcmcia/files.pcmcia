@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pcmcia,v 1.12 1999/01/20 18:28:46 niklas Exp $
+#	$OpenBSD: files.pcmcia,v 1.13 1999/01/21 04:57:47 fgsch Exp $
 #	$NetBSD: files.pcmcia,v 1.9 1998/06/21 18:45:41 christos Exp $
 #
 # Config.new file and device description for machine-independent PCMCIA code.
@@ -25,8 +25,8 @@ file	dev/pcmcia/if_ne_pcmcia.c		ne_pcmcia
 attach	aic at pcmcia with aic_pcmcia
 file	dev/pcmcia/aic_pcmcia.c			aic_pcmcia
 
-attach	com at pcmcia with com_pcmcia
-file	dev/pcmcia/com_pcmcia.c			com_pcmcia
+#attach	com at pcmcia with com_pcmcia
+#file	dev/pcmcia/com_pcmcia.c			com_pcmcia
 
 # Digital RoamAbout / Lucent WaveLAN PCMCIA card
 #device	wl: arp, ether, ifnet
