@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.19 2003/04/07 17:24:08 mickey Exp $	*/
+/*	$OpenBSD: mem.c,v 1.20 2003/04/07 20:18:34 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -283,8 +283,8 @@ mmrw(dev, uio, flags)
 			v = uio->uio_offset;
 			o = v & PGOFSET;
 			c = min(uio->uio_resid, (int)(PAGE_SIZE - o));
-			if (!uvm_kernacc((caddr_t)v, c,
-			    (uio->uio_rw == UIO_READ) ? B_READ : B_WRITE)) {
+			if (btoc(v) > totalphysmem && !uvm_kernacc((caddr_t)v,
+			    c, (uio->uio_rw == UIO_READ) ? B_READ : B_WRITE)) {
 				error = EFAULT;
 				/* this will break us out of the loop */
 				continue;
