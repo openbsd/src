@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld.c,v 1.13 1999/12/10 00:11:02 deraadt Exp $	*/
+/*	$OpenBSD: rtld.c,v 1.14 2000/01/11 21:38:47 millert Exp $	*/
 /*	$NetBSD: rtld.c,v 1.43 1996/01/14 00:35:17 pk Exp $	*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -1420,7 +1420,11 @@ build_sod(name, sodp)
 	sodp->sod_library = 0;
 	sodp->sod_major = sodp->sod_minor = 0;
 
-	/* asking for lookup? */
+	/* is this a filename? */
+	if (strchr((char *)sodp->sod_name, '/'))
+		return;
+
+	/* does it look like /^lib/ ? */
 	if (strncmp((char *)sodp->sod_name, "lib", 3) != 0)
 		return;
 
