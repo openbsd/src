@@ -4,10 +4,10 @@
 # generated from:
 #
 #	OpenBSD: etc.macppc/MAKEDEV.md,v 1.3 2002/01/23 07:53:01 todd Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.24 2002/02/09 16:59:50 deraadt Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.25 2002/02/09 19:34:40 drahn Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.5 2002/01/23 06:02:19 todd Exp 
 #
-#	$OpenBSD: MAKEDEV,v 1.10 2002/02/09 17:01:41 deraadt Exp $
+#	$OpenBSD: MAKEDEV,v 1.11 2002/02/09 19:35:31 drahn Exp $
 #
 # Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -31,7 +31,6 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-
 # Device "make" file.  Valid arguments:
 #	all	makes all known devices, including local devices.
 #		Tries to make the ``standard'' number of each type.
@@ -422,7 +421,8 @@ st*)
 	;;
 
 ramdisk)
-	R bpf0 std pty0 ttyE0 rd0 cd0 cd1 st0 st1 sd0 sd1 sd2 sd3 sd4
+	R bpf0 std pty0 ttyE0 rd0 cd0 cd1 st0 st1 wd0 wd1 wd2 wd3 wd4
+	R sd0 sd1 sd2 sd3 sd4
 	;;
 
 local)
