@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.63 2001/06/05 21:43:46 ho Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.64 2001/06/07 07:45:18 angelos Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -1487,7 +1487,8 @@ pf_key_v2_flow (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
   flowtype.sadb_protocol_len = sizeof flowtype / PF_KEY_V2_CHUNK;
   flowtype.sadb_protocol_direction
     = ingress ? IPSP_DIRECTION_IN : IPSP_DIRECTION_OUT;
-  flowtype.sadb_protocol_proto = SADB_X_FLOW_TYPE_REQUIRE;
+  flowtype.sadb_protocol_proto
+    = ingress ? SADB_X_FLOW_TYPE_ACQUIRE: SADB_X_FLOW_TYPE_REQUIRE;
 
   if (pf_key_v2_msg_add (flow, (struct sadb_ext *)&flowtype, 0) == -1)
     goto cleanup;
@@ -1759,7 +1760,8 @@ pf_key_v2_flow (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
       goto cleanup;
     }
   ipsecrequest->sadb_x_ipsecrequest_mode = IPSEC_MODE_TUNNEL;	/* XXX */
-  ipsecrequest->sadb_x_ipsecrequest_level = IPSEC_LEVEL_REQUIRE;
+  ipsecrequest->sadb_x_ipsecrequest_level
+    = ingress ? IPSEC_LEVEL_USE : IPSEC_LEVEL_REQUIRE;
   ipsecrequest->sadb_x_ipsecrequest_reqid = 0;	/* XXX */
 
   /* Add source and destination addresses.  XXX IPv4 dependent */
@@ -1956,7 +1958,7 @@ pf_key_v2_enable_sa (struct sa *sa, struct sa *isakmp_sa)
 			  ((struct sockaddr_in *)src)->sin_addr.s_addr,
 			  ((struct sockaddr_in *)dst)->sin_addr.s_addr, 0, 1,
 			  sidtype, sid, sidlen, didtype, did, didlen);
-  
+
  cleanup:
 #ifdef SADB_X_EXT_FLOW_TYPE
   if (sid)
