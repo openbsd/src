@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.73 2004/09/07 10:14:43 markus Exp $	*/
+/*	$OpenBSD: route.c,v 1.74 2004/09/15 23:40:29 deraadt Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)route.c	8.3 (Berkeley) 3/19/94";
 #else
-static const char rcsid[] = "$OpenBSD: route.c,v 1.73 2004/09/07 10:14:43 markus Exp $";
+static const char rcsid[] = "$OpenBSD: route.c,v 1.74 2004/09/15 23:40:29 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -90,7 +90,7 @@ union	sockunion {
 typedef union sockunion *sup;
 pid_t	pid;
 int	rtm_addrs, s;
-int	forcehost, forcenet, doflush, nflag, af, qflag, tflag, keyword(char *);
+int	forcehost, forcenet, nflag, af, qflag, tflag, keyword(char *);
 int	Sflag, iflag, verbose, aflen = sizeof (struct sockaddr_in);
 int	locking, lockrest, debugonly;
 struct	rt_metrics rt_metrics;
@@ -108,7 +108,7 @@ void	 print_getmsg(struct rt_msghdr *, int);
 void	 print_rtmsg(struct rt_msghdr *, int);
 void	 pmsg_common(struct rt_msghdr *);
 void	 pmsg_addrs(char *, int);
-void	 bprintf(FILE *, int, u_char *);
+void	 bprintf(FILE *, int, char *);
 void	 mask_addr(union sockunion *, union sockunion *, int which);
 #ifdef INET6
 static int inet6_makenetandmask(struct sockaddr_in6 *);
@@ -681,7 +681,7 @@ inet_makenetandmask(u_int32_t net, struct sockaddr_in *sin, int bits, int which)
 		else if ((addr & IN_CLASSC_HOST) == 0)
 			mask =  IN_CLASSC_NET;
 		else
-			mask = -1;
+			mask = 0xffffffff;
 	}
 	addr &= mask;
 	sin->sin_addr.s_addr = htonl(addr);
@@ -1028,7 +1028,6 @@ int
 rtmsg(int cmd, int flags)
 {
 	static int seq;
-	int rlen;
 	char *cp = m_rtmsg.m_space;
 	int l;
 
@@ -1080,7 +1079,7 @@ rtmsg(int cmd, int flags)
 		print_rtmsg(&rtm, l);
 	if (debugonly)
 		return (0);
-	if ((rlen = write(s, (char *)&m_rtmsg, l)) < 0) {
+	if (write(s, (char *)&m_rtmsg, l) < 0) {
 		if (qflag == 0)
 			perror("writing to routing socket");
 		return (-1);
@@ -1379,7 +1378,7 @@ pmsg_addrs(char *cp, int addrs)
 }
 
 void
-bprintf(FILE *fp, int b, u_char *s)
+bprintf(FILE *fp, int b, char *s)
 {
 	int i;
 	int gotsome = 0;
