@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.securelevel,v 1.8 1998/02/18 00:05:51 deraadt Exp $
+#	$OpenBSD: rc.securelevel,v 1.9 1998/03/25 23:08:12 deraadt Exp $
 #
 # site-specific startup actions, daemons, and other things which
 # can be done BEFORE your system goes into securemode.  For actions
@@ -12,8 +12,6 @@
 # XXX 5 files instead of 2 (the kernel and init)
 # XXX
 securelevel=1
-
-echo 'starting pre-securelevel services:'
 
 echo -n 'starting pre-securelevel daemons:'
 
