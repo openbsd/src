@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.6 2002/07/19 14:38:58 itojun Exp $	*/
+/*	$OpenBSD: parse.y,v 1.7 2002/07/30 05:33:39 itojun Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -59,9 +59,12 @@ struct logic *parse_newsymbol(char *, int, char *);
 
 int yylex(void);
 int yyparse(void);
+int yyerror(const char *, ...);
 
 int errors = 0;
 struct filter *myfilter;
+extern char *mystring;
+extern int myoff;
 
 %}
 
@@ -278,10 +281,8 @@ action		: PERMIT
 }
 %%
 
-int yyerror(char *, ...);
-
 int
-yyerror(char *fmt, ...)
+yyerror(const char *fmt, ...)
 {
 	va_list ap;
 	errors = 1;
@@ -322,9 +323,6 @@ parse_newsymbol(char *type, int typeoff, char *data)
 int
 parse_filter(char *name, struct filter **pfilter)
 {
-	extern char *mystring;
-	extern int myoff;
-	extern struct filter *myfilter;
 
 	errors = 0;
 
