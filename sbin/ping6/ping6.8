@@ -1,5 +1,5 @@
-.\"	$OpenBSD: ping6.8,v 1.18 2001/06/23 05:57:02 deraadt Exp $
-.\"	$KAME: ping6.8,v 1.40 2001/06/22 13:16:02 itojun Exp $
+.\"	$OpenBSD: ping6.8,v 1.19 2001/07/05 06:37:19 itojun Exp $
+.\"	$KAME: ping6.8,v 1.45 2001/07/05 06:28:04 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -108,8 +108,8 @@ Generate ICMPv6 Node Information Node Addresses query, rather than echo-request.
 must be a string constructed of the following characters.
 .Bl -tag -width Ds -compact
 .It Ic a
-requests all the responder's unicast addresses.
-If the charater is ommited,
+requests unicast addresses from all of the responder's interfaces.
+If the character is omitted,
 only those addresses which belong to the interface which has the
 responder's address are requests.
 .It Ic c
