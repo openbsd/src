@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_readwrite.c,v 1.4 1996/06/24 03:35:04 downsj Exp $	*/
+/*	$OpenBSD: ufs_readwrite.c,v 1.5 1996/07/01 06:52:24 downsj Exp $	*/
 /*	$NetBSD: ufs_readwrite.c,v 1.9 1996/05/11 18:27:57 mycroft Exp $	*/
 
 /*-
@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ufs_readwrite.c	8.8 (Berkeley) 8/4/94
+ *	@(#)ufs_readwrite.c	8.11 (Berkeley) 5/8/95
  */
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #ifdef LFS_READWRITE
-#define	BLKSIZE(a, b, c)	blksize(a)
+#define	BLKSIZE(a, b, c)	blksize(a, b, c)
 #define	FS			struct lfs
 #define	I_FS			i_lfs
 #define	READ			lfs_read
@@ -268,7 +268,7 @@ WRITE(v)
 			xfersize = uio->uio_resid;
 #ifdef LFS_READWRITE
 		(void)lfs_check(vp, lbn);
-		error = lfs_balloc(vp, xfersize, lbn, &bp);
+		error = lfs_balloc(vp, blkoffset, xfersize, lbn, &bp);
 #else
 		if (fs->fs_bsize > xfersize)
 			flags |= B_CLRBUF;

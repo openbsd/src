@@ -40,6 +40,9 @@
  *	@(#)dinode.h	8.6 (Berkeley) 9/13/94
  */
 
+#ifndef _UFS_DINODE_H_
+#define _UFS_DINODE_H_
+
 /*
  * The root inode is the root of the file system.  Inode 0 can't be used for
  * normal purposes and historically bad blocks were linked to inode 1, thus
@@ -123,3 +126,5 @@ struct dinode {
 #define	IFLNK		0120000		/* Symbolic link. */
 #define	IFSOCK		0140000		/* UNIX domain socket. */
 #define	IFWHT		0160000		/* Whiteout. */
+
+#endif /* _UFS_DINODE_H_ */
