@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.6 1999/06/17 15:40:54 art Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.7 1999/06/24 11:37:02 art Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.23 1998/12/26 06:25:59 marc Exp $	*/
 
 /*
@@ -2005,7 +2005,6 @@ swapmount()
 		vput(sdp->swd_vp);
 		free(sdp->swd_path, M_VMSWAP);
 		free(sdp, M_VMSWAP);
-		free(spp, M_VMSWAP);
 		return;
 	}
 
