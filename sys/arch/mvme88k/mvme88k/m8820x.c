@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.c,v 1.3 2001/12/14 01:33:50 miod Exp $	*/
+/*	$OpenBSD: m8820x.c,v 1.4 2001/12/14 01:52:36 miod Exp $	*/
 /*
  * Copyright (c) 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -1801,7 +1801,7 @@ m8820x_cmmu_show_translation(address, supervisor_flag, verbose_flag, cmmu_num)
 				DEBUG_MSG("ack! can't figure my own data cmmu number.\n");
 				return;
 			}
-			cmmu_num = cpu_cmmu[cpu].pair[DATA_CMMU] - cmmu;
+			cmmu_num = cpu_cmmu[cpu].pair[DATA_CMMU] - m8820x_cmmu;
 			if (verbose_flag)
 				DEBUG_MSG("The data cmmu for cpu#%d is cmmu#%d.\n",
 					  0, cmmu_num);
