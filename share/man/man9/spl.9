@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spl.9,v 1.15 2003/04/20 20:04:17 jmc Exp $
+.\"	$OpenBSD: spl.9,v 1.16 2003/05/29 14:39:06 ho Exp $
 .\"	$NetBSD: spl.9,v 1.1 1997/03/11 06:15:05 mikel Exp $
 .\"
 .\" Copyright (c) 1997 Michael Long.
@@ -177,7 +177,8 @@ function checks that the system is running at a certain priority level.
 The argument
 .Fa s
 should be one of these constants:
-.Bl -tag -width IPL_SOFTCLOCKXX
+.Pp
+.Bl -tag -width IPL_SOFTCLOCKXX -compact -offset indent
 .It Dv IPL_STATCLOCK
 .It Dv IPL_CLOCK
 .It Dv IPL_VM
@@ -203,10 +204,22 @@ must be an error (if some code is protected from
 interrupts, but accessed from an
 .Dv IPL_NET
 interrupt, it must be a design error in the code).
+.Pp
 The behavior of the
 .Fn splassert
 function is controlled by the kern.splassert
 .Xr sysctl 8 .
-Set to 0 it disables error checking, set to 1 it prints an error message
-if error is detected, 2 prints a message and stack traceback if possible,
-any other value causes a system panic on errors.
+Valid values for it are:
+.Pp
+.Bl -tag -width 1nr -compact -offset indent
+.It 0
+disable error checking
+.It 1
+print a message if an error is detected
+.It 2
+print a message and a stack trace if possible
+.It 3
+like 2 but also drop into the kernel debugger
+.El
+.Pp
+Any other value causes a system panic on errors.
