@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.conf.5,v 1.77 2003/05/10 21:13:41 jmc Exp $
+.\" $OpenBSD: isakmpd.conf.5,v 1.78 2003/05/16 20:31:16 ho Exp $
 .\" $EOM: isakmpd.conf.5,v 1.57 2000/12/21 14:43:17 ho Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -190,6 +190,12 @@ The default is "/etc/isakmpd/pubkeys".
 Read
 .Xr isakmpd 8
 for the required naming convention of the files in here.
+.It Em Renegotiate-on-HUP
+If this tag is defined, whatever the value is, 
+.Nm isakmpd
+will renegotiate all current phase 2 SAs when the daemon receives
+a SIGHUP signal, or a 'R' is sent to the FIFO interface. (See
+.Xr isakmpd 8 ) .
 .It Em Retransmits
 How many times should a message be retransmitted before giving up.
 .It Em Shared-SADB

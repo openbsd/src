@@ -1,4 +1,4 @@
-/*	$OpenBSD: sa.c,v 1.68 2003/05/15 02:28:56 ho Exp $	*/
+/*	$OpenBSD: sa.c,v 1.69 2003/05/16 20:31:16 ho Exp $	*/
 /*	$EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	*/
 
 /*
@@ -46,6 +46,7 @@
 
 #include "sysdep.h"
 
+#include "conf.h"
 #include "connection.h"
 #include "cookie.h"
 #include "doi.h"
@@ -977,6 +978,29 @@ sa_hard_expire (void *v_sa)
     exchange_establish (sa->name, 0, 0);
 
   sa_delete (sa, 1);
+}
+
+void
+sa_reinit (void)
+{
+  struct sa *sa;
+  char *tag;
+  int i;
+
+  /* For now; only do this if we have the proper tag configured.  */
+  tag = conf_get_str ("General", "Renegotiate-on-HUP");
+  if (!tag)
+    return;
+
+  /* Get phase 2 SAs. Soft expire those without active exchanges.  */
+  for (i = 0; i <= bucket_mask; i++)
+    for (sa = LIST_FIRST (&sa_tab[i]); sa; sa = LIST_NEXT (sa, link))
+      if (sa->phase == 2)
+	if (exchange_lookup_by_name (sa->name, sa->phase) == 0)
+	  {
+	    timer_remove_event (sa->soft_death);
+	    sa_soft_expire (sa);
+	  }
 }
 
 /*

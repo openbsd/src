@@ -1,4 +1,4 @@
-/*	$OpenBSD: sa.h,v 1.30 2003/05/15 02:28:56 ho Exp $	*/
+/*	$OpenBSD: sa.h,v 1.31 2003/05/16 20:31:16 ho Exp $	*/
 /*	$EOM: sa.h,v 1.58 2000/10/10 12:39:01 provos Exp $	*/
 
 /*
@@ -220,6 +220,7 @@ extern struct sa *sa_find (int (*) (struct sa *, void *), void *);
 extern int sa_flag (char *);
 extern void sa_free (struct sa *);
 extern void sa_init (void);
+extern void sa_reinit (void);
 extern struct sa *sa_isakmp_lookup_by_peer (struct sockaddr *, socklen_t);
 extern void sa_isakmp_upgrade (struct message *);
 extern struct sa *sa_lookup (u_int8_t *, u_int8_t *);
