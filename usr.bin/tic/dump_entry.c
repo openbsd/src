@@ -1,7 +1,7 @@
-/*	$OpenBSD: dump_entry.c,v 1.10 1999/12/12 04:49:19 millert Exp $	*/
+/*	$OpenBSD: dump_entry.c,v 1.11 2000/01/02 21:48:13 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998,1999 Free Software Foundation, Inc.                   *
+ * Copyright (c) 1998-2000 Free Software Foundation, Inc.                   *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -40,31 +40,32 @@
 #include <termsort.c>		/* this C file is generated */
 #include <parametrized.h>	/* so is this */
 
-MODULE_ID("$From: dump_entry.c,v 1.43 1999/12/12 02:29:54 tom Exp $")
+MODULE_ID("$From: dump_entry.c,v 1.44 2000/01/02 02:14:35 tom Exp $")
+
 #define INDENT			8
-
 #define DISCARD(string) string = ABSENT_STRING
+#define PRINTF (void) printf
 
-     static int tversion;	/* terminfo version */
-     static int outform;	/* output format to use */
-     static int sortmode;	/* sort mode to use */
-     static int width = 60;	/* max line width for listings */
-     static int column;		/* current column, limited by 'width' */
-     static int oldcol;		/* last value of column before wrap */
-     static int tracelevel;	/* level of debug output */
-     static bool pretty;	/* true if we format if-then-else strings */
+static int tversion;		/* terminfo version */
+static int outform;		/* output format to use */
+static int sortmode;		/* sort mode to use */
+static int width = 60;		/* max line width for listings */
+static int column;		/* current column, limited by 'width' */
+static int oldcol;		/* last value of column before wrap */
+static int tracelevel;		/* level of debug output */
+static bool pretty;		/* true if we format if-then-else strings */
 
-     static char *outbuf;	/* the output-buffer */
-     static size_t out_used;	/* ...its current length */
-     static size_t out_size;	/* ...and its allocated length */
+static char *outbuf;		/* the output-buffer */
+static size_t out_used;		/* ...its current length */
+static size_t out_size;		/* ...and its allocated length */
 
 /* indirection pointers for implementing sort and display modes */
-     static const int *bool_indirect, *num_indirect, *str_indirect;
-     static NCURSES_CONST char *const *bool_names;
-     static NCURSES_CONST char *const *num_names;
-     static NCURSES_CONST char *const *str_names;
+static const int *bool_indirect, *num_indirect, *str_indirect;
+static NCURSES_CONST char *const *bool_names;
+static NCURSES_CONST char *const *num_names;
+static NCURSES_CONST char *const *str_names;
 
-     static const char *separator, *trailer;
+static const char *separator, *trailer;
 
 /* cover various ports and variants of terminfo */
 #define V_ALLCAPS	0	/* all capabilities (SVr4, XSI, ncurses) */
@@ -92,8 +93,8 @@ MODULE_ID("$From: dump_entry.c,v 1.43 1999/12/12 02:29:54 tom Exp $")
 #endif
 
 #if NO_LEAKS
-     void
-       _nc_leaks_dump_entry(void)
+void
+_nc_leaks_dump_entry(void)
 {
     if (outbuf != 0) {
 	free(outbuf);
@@ -328,8 +329,7 @@ version_filter(int type, int idx)
     return (FALSE);		/* pacify the compiler */
 }
 
-static
-void
+static void
 append_output(const char *src)
 {
     if (src == 0) {
@@ -350,8 +350,7 @@ append_output(const char *src)
     }
 }
 
-static
-void
+static void
 force_wrap(void)
 {
     oldcol = column;
@@ -359,8 +358,7 @@ force_wrap(void)
     column = INDENT;
 }
 
-static
-void
+static void
 wrap_concat(const char *src)
 {
     int need = strlen(src);
@@ -600,15 +598,15 @@ fmt_entry(TERMTYPE * tterm,
 		}
 	    }
 
-	    if (init_3string != 0
-		&& termcap_reset != 0
-		&& !strcmp(init_3string, termcap_reset))
-		DISCARD(init_3string);
+	    if (termcap_reset != ABSENT_STRING) {
+		if (init_3string != ABSENT_STRING
+		    && !strcmp(init_3string, termcap_reset))
+		    DISCARD(init_3string);
 
-	    if (reset_2string != 0
-		&& termcap_reset != 0
-		&& !strcmp(reset_2string, termcap_reset))
-		DISCARD(reset_2string);
+		if (reset_2string != ABSENT_STRING
+		    && !strcmp(reset_2string, termcap_reset))
+		    DISCARD(reset_2string);
+	    }
 	}
 
 	predval = pred(STRING, i);
@@ -766,7 +764,7 @@ dump_entry(TERMTYPE * tterm, bool limited, int numbers, int (*pred) (int
 
     if (((len = fmt_entry(tterm, pred, FALSE, infodump, numbers)) > critlen)
 	&& limited) {
-	(void) printf("# (untranslatable capabilities removed to fit entry within %d bytes)\n",
+	PRINTF("# (untranslatable capabilities removed to fit entry within %d bytes)\n",
 	    critlen);
 	if ((len = fmt_entry(tterm, pred, TRUE, infodump, numbers)) > critlen) {
 	    /*
@@ -775,13 +773,13 @@ dump_entry(TERMTYPE * tterm, bool limited, int numbers, int (*pred) (int
 	     */
 	    char *oldsgr = set_attributes;
 	    set_attributes = ABSENT_STRING;
-	    (void) printf("# (sgr removed to fit entry within %d bytes)\n",
+	    PRINTF("# (sgr removed to fit entry within %d bytes)\n",
 		critlen);
 	    if ((len = fmt_entry(tterm, pred, TRUE, infodump, numbers)) > critlen) {
 		int oldversion = tversion;
 
 		tversion = V_BSD;
-		(void) printf("# (terminfo-only capabilities suppressed to fit entry within %d bytes)\n",
+		PRINTF("# (terminfo-only capabilities suppressed to fit entry within %d bytes)\n",
 		    critlen);
 
 		if ((len = fmt_entry(tterm, pred, TRUE, infodump, numbers))
@@ -790,7 +788,7 @@ dump_entry(TERMTYPE * tterm, bool limited, int numbers, int (*pred) (int
 			"warning: %s entry is %d bytes long\n",
 			_nc_first_name(tterm->term_names),
 			len);
-		    (void) printf(
+		    PRINTF(
 			"# WARNING: this entry, %d bytes long, may core-dump %s libraries!\n",
 			len, legend);
 		}
