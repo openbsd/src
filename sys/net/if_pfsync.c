@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.15 2004/01/19 07:24:07 mcbride Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.16 2004/01/19 19:46:33 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -331,11 +331,6 @@ pfsync_input(struct mbuf *m, ...)
 		}
 		splx(s);
 		break;
-
-	/*
-	 * It's not strictly necessary for us to support the "uncompressed"
-	 * update and delete actions, but it's relatively simple for us to do.
-	 */
 	case PFSYNC_ACT_UPD:
 		if ((mp = m_pulldown(m, iplen + sizeof(*ph),
 		    count * sizeof(*sp), &offp)) == NULL) {
@@ -367,6 +362,10 @@ pfsync_input(struct mbuf *m, ...)
 		}
 		splx(s);
 		break;
+	/*
+	 * It's not strictly necessary for us to support the "uncompressed"
+	 * delete action, but it's relatively simple and maintains consistency.
+	 */
 	case PFSYNC_ACT_DEL:
 		if ((mp = m_pulldown(m, iplen + sizeof(*ph),
 		    count * sizeof(*sp), &offp)) == NULL) {
