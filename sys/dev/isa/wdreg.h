@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdreg.h,v 1.3 1996/06/09 08:59:58 downsj Exp $	*/
+/*	$OpenBSD: wdreg.h,v 1.4 1996/09/09 06:17:29 downsj Exp $	*/
 /*	$NetBSD: wdreg.h,v 1.13 1995/03/29 21:56:46 briggs Exp $	*/
 
 /*-
@@ -119,29 +119,6 @@
 #define	WDSD_IBM	0xa0	/* forced to 512 byte sector, ecc */
 #define	WDSD_CHS	0x00	/* cylinder/head/sector addressing */
 #define	WDSD_LBA	0x40	/* logical block addressing */
-
-/* Commands for ATAPI devices */
-#define ATAPI_CHECK_POWER_MODE      0xe5 
-#define ATAPI_EXEC_DRIVE_DIAGS      0x90
-#define ATAPI_IDLE_IMMEDIATE        0xe1
-#define ATAPI_NOP           0x00
-#define ATAPI_PACKET_COMMAND        0xa0 
-#define ATAPI_IDENTIFY_DEVICE       0xa1 
-#define ATAPI_SOFT_RESET        0x08
-#define ATAPI_SET_FEATURES      0xef
-#define ATAPI_SLEEP         0xe6
-#define ATAPI_STANDBY_IMMEDIATE     0xe0
-
-/* ireason */
-#define WDCI_CMD         0x01    /* command(1) or data(0) */
-#define WDCI_IN          0x02    /* transfer to(1) or from(0) the host */
-#define WDCI_RELEASE     0x04    /* bus released until completion */
-
-#define PHASE_CMDOUT    (WDCS_DRQ | WDCI_CMD)  
-#define PHASE_DATAIN    (WDCS_DRQ | WDCI_IN)
-#define PHASE_DATAOUT   WDCS_DRQ
-#define PHASE_COMPLETED (WDCI_IN | WDCI_CMD)
-#define PHASE_ABORTED   0
 
 /* Commands for ATAPI devices */
 #define ATAPI_CHECK_POWER_MODE      0xe5 
