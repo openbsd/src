@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.29 2001/11/27 05:27:11 art Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.30 2001/12/07 00:11:14 niklas Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -119,7 +119,7 @@ struct vnd_softc {
 	struct disk	 sc_dk;
 
 	int		 sc_flags;	/* flags */
-	size_t		 sc_size;	/* size of vnd */
+	size_t		 sc_size;	/* size of vnd in blocks */
 	struct vnode	*sc_vp;		/* vnode */
 	struct ucred	*sc_cred;	/* credentials */
 	int		 sc_maxactive;	/* max # of active requests */
@@ -155,8 +155,8 @@ void	vndshutdown __P((void));
 void	vndgetdisklabel __P((dev_t, struct vnd_softc *));
 void	vndencrypt __P((struct vnd_softc *, caddr_t, size_t, daddr_t, int));
 
-static	int vndlock __P((struct vnd_softc *));
-static	void vndunlock __P((struct vnd_softc *));
+int	vndlock __P((struct vnd_softc *));
+void	vndunlock __P((struct vnd_softc *));
 
 void
 vndencrypt(vnd, addr, size, off, encrypt)
@@ -189,7 +189,7 @@ vndattach(num)
 	int num;
 {
 	char *mem;
-	register u_long size;
+	u_long size;
 
 	if (num <= 0)
 		return;
@@ -389,14 +389,15 @@ vndclose(dev, flags, mode, p)
  */
 void
 vndstrategy(bp)
-	register struct buf *bp;
+	struct buf *bp;
 {
 	int unit = vndunit(bp->b_dev);
-	register struct vnd_softc *vnd = &vnd_softc[unit];
-	register struct vndbuf *nbp;
-	register int bn, bsize;
-	register caddr_t addr;
-	register size_t resid;
+	struct vnd_softc *vnd = &vnd_softc[unit];
+	struct vndbuf *nbp;
+	int bsize;
+	off_t bn;
+	caddr_t addr;
+	size_t resid;
 	int sz, flags, error, s;
 	struct iovec aiov;
 	struct uio auio;
@@ -459,7 +460,7 @@ vndstrategy(bp)
 			auio.uio_resid = aiov.iov_len = bp->b_bcount;
 			auio.uio_iov = &aiov;
 			auio.uio_iovcnt = 1;
-			auio.uio_offset = dbtob(bp->b_blkno + off);
+			auio.uio_offset = dbtob((off_t)(bp->b_blkno + off));
 			auio.uio_segflg = UIO_SYSSPACE;
 			auio.uio_procp = NULL;
 
@@ -604,9 +605,9 @@ vndstrategy(bp)
  */
 void
 vndstart(vnd)
-	register struct vnd_softc *vnd;
+	struct vnd_softc *vnd;
 {
-	register struct buf *bp;
+	struct buf *bp;
 
 	/*
 	 * Dequeue now since lower level strategy routine might
@@ -633,9 +634,9 @@ void
 vndiodone(bp)
 	struct buf *bp;
 {
-	register struct vndbuf *vbp = (struct vndbuf *) bp;
-	register struct buf *pbp = vbp->vb_obp;
-	register struct vnd_softc *vnd = &vnd_softc[vndunit(pbp->b_dev)];
+	struct vndbuf *vbp = (struct vndbuf *) bp;
+	struct buf *pbp = vbp->vb_obp;
+	struct vnd_softc *vnd = &vnd_softc[vndunit(pbp->b_dev)];
 	long count;
 	int s;
 
@@ -736,7 +737,7 @@ vndioctl(dev, cmd, addr, flag, p)
 	struct proc *p;
 {
 	int unit = vndunit(dev);
-	register struct vnd_softc *vnd;
+	struct vnd_softc *vnd;
 	struct vnd_ioctl *vio;
 	struct vattr vattr;
 	struct nameidata nd;
@@ -814,7 +815,7 @@ vndioctl(dev, cmd, addr, flag, p)
 			vnd->sc_keyctx = NULL;
 			
 		vndthrottle(vnd, vnd->sc_vp);
-		vio->vnd_size = dbtob(vnd->sc_size);
+		vio->vnd_size = dbtob((off_t)vnd->sc_size);
 		vnd->sc_flags |= VNF_INITED;
 #ifdef DEBUG
 		if (vnddebug & VDB_INIT)
@@ -940,7 +941,7 @@ vndioctl(dev, cmd, addr, flag, p)
  */
 int
 vndsetcred(vnd, cred)
-	register struct vnd_softc *vnd;
+	struct vnd_softc *vnd;
 	struct ucred *cred;
 {
 	struct uio auio;
@@ -974,7 +975,7 @@ vndsetcred(vnd, cred)
  */
 void
 vndthrottle(vnd, vp)
-	register struct vnd_softc *vnd;
+	struct vnd_softc *vnd;
 	struct vnode *vp;
 {
 #ifdef NFSCLIENT
@@ -993,7 +994,7 @@ vndthrottle(vnd, vp)
 void
 vndshutdown()
 {
-	register struct vnd_softc *vnd;
+	struct vnd_softc *vnd;
 
 	for (vnd = &vnd_softc[0]; vnd < &vnd_softc[numvnd]; vnd++)
 		if (vnd->sc_flags & VNF_INITED)
@@ -1002,9 +1003,9 @@ vndshutdown()
 
 void
 vndclear(vnd)
-	register struct vnd_softc *vnd;
+	struct vnd_softc *vnd;
 {
-	register struct vnode *vp = vnd->sc_vp;
+	struct vnode *vp = vnd->sc_vp;
 	struct proc *p = curproc;		/* XXX */
 
 #ifdef DEBUG
@@ -1026,7 +1027,7 @@ vndsize(dev)
 	dev_t dev;
 {
 	int unit = vndunit(dev);
-	register struct vnd_softc *vnd = &vnd_softc[unit];
+	struct vnd_softc *vnd = &vnd_softc[unit];
 
 	if (unit >= numvnd || (vnd->sc_flags & VNF_INITED) == 0)
 		return (-1);
@@ -1051,7 +1052,7 @@ vnddump(dev, blkno, va, size)
  * XXX
  * Several drivers do this; it should be abstracted and made MP-safe.
  */
-static int
+int
 vndlock(sc)
 	struct vnd_softc *sc;
 {
@@ -1069,7 +1070,7 @@ vndlock(sc)
 /*
  * Unlock and wake up any waiters.
  */
-static void
+void
 vndunlock(sc)
 	struct vnd_softc *sc;
 {

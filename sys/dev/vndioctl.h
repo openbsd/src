@@ -1,4 +1,4 @@
-/*	$OpenBSD: vndioctl.h,v 1.3 2000/06/20 21:29:20 provos Exp $	*/
+/*	$OpenBSD: vndioctl.h,v 1.4 2001/12/07 00:11:14 niklas Exp $	*/
 /*	$NetBSD: vndioctl.h,v 1.5 1995/01/25 04:46:30 cgd Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
  */
 struct vnd_ioctl {
 	char	*vnd_file;	/* pathname of file to mount */
-	int	vnd_size;	/* (returned) size of disk */
+	off_t	vnd_size;	/* (returned) size of disk */
 	u_char	*vnd_key;
 	int	vnd_keylen;
 };
