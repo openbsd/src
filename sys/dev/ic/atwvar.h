@@ -1,5 +1,5 @@
-/*	$OpenBSD: atwvar.h,v 1.4 2004/07/15 15:39:41 millert Exp $	*/
-/*	$NetBSD: atwvar.h,v 1.10 2004/07/15 06:06:53 dyoung Exp $	*/
+/*	$OpenBSD: atwvar.h,v 1.5 2004/07/15 16:14:14 millert Exp $	*/
+/*	$NetBSD: atwvar.h,v 1.11 2004/07/15 06:13:44 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.  All rights reserved.
@@ -386,9 +386,6 @@ do {									\
  * Note we rely on MCLBYTES being a power of two.  Because the `length'
  * field is only 11 bits, we must subtract 1 from the length to avoid
  * having it truncated to 0!
- *
- * Apparently we have to set ATW_RXSTAT_SQL to make the ADM8211 tell
- * us RSSI.
  */
 #define	ATW_INIT_RXDESC(sc, x)						\
 do {									\
@@ -396,7 +393,6 @@ do {									\
 	struct atw_rxdesc *__rxd = &sc->sc_rxdescs[(x)];		\
 	struct mbuf *__m = __rxs->rxs_mbuf;				\
 									\
-	__m->m_data = __m->m_ext.ext_buf;				\
 	__rxd->ar_buf1 =						\
 	    htole32(__rxs->rxs_dmamap->dm_segs[0].ds_addr);		\
 	__rxd->ar_buf2 =	/* for descriptor chaining */		\
@@ -406,9 +402,8 @@ do {									\
 	                   ATW_RXCTL_RBS1_MASK) |			\
 		    0 /* ATW_RXCTL_RCH */ |				\
 	    ((x) == (ATW_NRXDESC - 1) ? ATW_RXCTL_RER : 0));		\
-	__rxd->ar_stat =						\
-	    htole32(ATW_RXSTAT_OWN|ATW_RXSTAT_SQL|ATW_RXSTAT_FS|	\
-	            ATW_RXSTAT_LS);					\
+	__rxd->ar_stat = htole32(ATW_RXSTAT_OWN);			\
+	            							\
 	ATW_CDRXSYNC((sc), (x),						\
 	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);			\
 } while (0)
