@@ -33,12 +33,11 @@ process again from scratch.  If, at any point, the kernel panics
 with "ffs_valloc" your inst floppy is probably corrupted.  You
 should make a new inst floppy or fsck your existing one (if you can).
 
-	Boot your machine using of the appropriate kernel-copy floppy.
-	When presented with the boot prompt (the prompt begins with
-	"Boot" and ends with ":-"), hit return.  If the boot prompt
+	Boot your machine using of the floppy.fs floppy.  When
+	presented with the boot prompt hit return.  If the boot prompt
 	does not appear in a reasonable amount of time, you either
 	have a bad boot floppy or a hardware problem.  Try writing the
-	kernel-copy floppy image to a different disk, and using that.
+	floppy.fs floppy image to a different disk, and using that.
 	If that doesn't work, try booting after disabling your CPU's
 	internal and external caches (if any).  If it still doesn't
 	work, OpenBSD probably can't be run on your hardware.  This can
@@ -47,19 +46,11 @@ should make a new inst floppy or fsck your existing one (if you can).
 	configuration as you can.
 
 	It will take a while to load the kernel from the floppy,
-	probably around a minute or so.  After its loaded, you will be
-	presented with the message:
-		"Insert file system floppy"
-	If you do not see that message after a reasonable time has
-	elapsed, or the spinning cursor has stopped and nothing
-	further has happened, either your boot floppy is bad or you
-	are having hardware problems, and should proceed as outlined
-	above.
-
-	Once you have reached that prompt, remove the kernel-copy
-	floppy from the floppy drive.  Make sure that the installation
-	disk (the "inst-20" floppy) is writable, insert it into the
-	floppy drive, and hit any key.
+	most likely more than a minute.  If some action doesn't
+	eventually happen, or the spinning cursor has stopped and
+	nothing further has happened, either your boot floppy is
+	bad or you are having hardware problems, and should proceed
+	as outlined above.
 
 	You will then be presented with the OpenBSD kernel boot
 	messages.  You will want to read them, to determine your
@@ -68,7 +59,9 @@ should make a new inst floppy or fsck your existing one (if you can).
 	begins with its name.  As mentioned above, you will need your
 	disk's geometry when creating OpenBSD's partitions.  You will
 	also need to know the name, to tell the install tools what
-	disk to install on.
+	disk to install on.  If you cannot read the messages as they
+	scroll by, do not worry -- you can get at this information
+	later inside the install program.
 
 	While booting, you will probably see several warnings.  You
 	should be warned that no swap space is present, and that
@@ -87,6 +80,12 @@ should make a new inst floppy or fsck your existing one (if you can).
 	forwarding.  If you are SURE that it does, reply
 	affirmatively.  Otherwise, the install program will
 	automatically reserve space for bad144 tables.
+
+	(If at any time you decide you want to run fdisk, you can
+	type ^Z to pause the install script.  You can type 'fg' to
+	get back.  This is a nasty kludge because the install script
+	has not been properly changed to let the user run fdisk
+	nicely yet.)
 
 	The install program will then tell you which disks of that
 	type it can install on, and ask you which it should use.
@@ -181,13 +180,11 @@ should make a new inst floppy or fsck your existing one (if you can).
 	section of the installation.  If there are, restart from the
 	beginning of the installation process.
 
-	You will be placed at a shell prompt ("#").  The remaining
-	tasks are to copy the kernel from the kernel copy floppy to
-	the hard drive's root filesystem and install the distribution
-	sets.  The flow of installation differs depending on your
-	hardware resources, and on what media the distribution sets
-	reside.
+	After all your filesystems have been created, the install
+	program will now prompt you asking how you wish to install
+	the remaining required system files.
 
+XXX
 	To install from floppy:
 		If you only have only one floppy drive, the order of
 		installation is different.  Follow the directions in
@@ -413,39 +410,6 @@ should make a new inst floppy or fsck your existing one (if you can).
 	host name, domain name, and other network configuration
 	information.  It will set up your configuration files and make
 	the device nodes for the newly-installed system.
-
-Kernel Installation:
-
-	Enter "halt" at the prompt to halt the system.  When the
-	system is halted, remove the "inst-20" floppy from the floppy
-	drive, and replace it with the OpenBSD 2.1 kernel-copy floppy
-	that you previously booted from.  Reboot with that floppy.
-	with that floppy.
-
-	Once again, you will be prompted to insert a file system
-	floppy.  DO NOT replace the kernel-copy floppy, just hit any
-	key.
-
-	Again, While booting, you may see several warnings.  You may
-	be warned that no swap space is present, that init(8) cannot
-	find /etc/rc, and that one or more databases with names like
-	"pwd.db" cannot be found.  Do not be alarmed, as, again, these
-	are completely normal.  Hit return at the prompt asking you
-	for a shell name.
-
-	You will be presented with a shell prompt, at which you should
-	enter the "copy_kernel" command.  It will ask you what
-	partition to copy the kernel to, and you should reply with the
-	name of your root partition (e.g. sd0a or wd0a).
-
-	You will be asked if you are sure that you want to copy the
-	kernel.  Reply affirmatively, and it will check the file
-	system on your root partition, mount it, and copy the kernel.
-	Once the kernel is copied, you should use "halt" to halt the
-	system.
-
-	Once the system is halted, remove the kernel-copy floppy from
-	the floppy disk drive, and hit any key to reboot.
 
 Congratulations, you have successfully installed OpenBSD 2.1.  When you
 reboot into OpenBSD, you should log in as "root" at the login prompt.
