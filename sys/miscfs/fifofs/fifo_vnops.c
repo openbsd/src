@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo_vnops.c,v 1.3 1996/04/21 22:28:10 deraadt Exp $	*/
+/*	$OpenBSD: fifo_vnops.c,v 1.4 1996/11/04 03:31:54 tholo Exp $	*/
 /*	$NetBSD: fifo_vnops.c,v 1.18 1996/03/16 23:52:42 christos Exp $	*/
 
 /*
@@ -266,6 +266,9 @@ fifo_read(v)
 		rso->so_state &= ~SS_CANTRCVMORE;
 	if (ap->a_ioflag & IO_NDELAY)
 		rso->so_state &= ~SS_NBIO;
+	if ((ap->a_ioflag & IO_NDELAY) && error == EWOULDBLOCK &&
+	    ap->a_vp->v_fifoinfo->fi_writers == 0)
+		error = 0;
 	return (error);
 }
 
