@@ -1,4 +1,4 @@
-/*	$OpenBSD: inftrees.c,v 1.9 2002/03/12 00:26:30 millert Exp $	*/
+/*	$OpenBSD: inftrees.c,v 1.10 2003/12/16 03:26:54 deraadt Exp $	*/
 /* inftrees.c -- generate Huffman trees for efficient decoding
  * Copyright (C) 1995-2002 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h 
@@ -11,8 +11,10 @@
 #  define BUILDFIXED   /* non ANSI compilers may not accept inffixed.h */
 #endif
 
+#ifndef SMALL
 const char inflate_copyright[] =
    " inflate 1.1.4 Copyright 1995-2002 Mark Adler ";
+#endif
 /*
   If you use the zlib library in a product, an acknowledgment is welcome
   in the documentation of your product. If for some reason you cannot
@@ -307,10 +309,18 @@ z_streamp z;            /* for messages */
   r = huft_build(c, 19, 19, (uIntf*)Z_NULL, (uIntf*)Z_NULL,
                  tb, bb, hp, &hn, v);
   if (r == Z_DATA_ERROR)
+#ifdef SMALL
+    z->msg = "error";
+#else
     z->msg = (char*)"oversubscribed dynamic bit lengths tree";
+#endif
   else if (r == Z_BUF_ERROR || *bb == 0)
   {
+#ifdef SMALL
+    z->msg = "error";
+#else
     z->msg = (char*)"incomplete dynamic bit lengths tree";
+#endif
     r = Z_DATA_ERROR;
   }
   ZFREE(z, v);
@@ -342,10 +352,18 @@ z_streamp z;            /* for messages */
   if (r != Z_OK || *bl == 0)
   {
     if (r == Z_DATA_ERROR)
+#ifdef SMALL
+      z->msg = "error";
+#else
       z->msg = (char*)"oversubscribed literal/length tree";
+#endif
     else if (r != Z_MEM_ERROR)
     {
+#ifdef SMALL
+      z->msg = "error";
+#else
       z->msg = (char*)"incomplete literal/length tree";
+#endif
       r = Z_DATA_ERROR;
     }
     ZFREE(z, v);
@@ -357,18 +375,30 @@ z_streamp z;            /* for messages */
   if (r != Z_OK || (*bd == 0 && nl > 257))
   {
     if (r == Z_DATA_ERROR)
+#ifdef SMALL
+      z->msg = "error";
+#else
       z->msg = (char*)"oversubscribed distance tree";
+#endif
     else if (r == Z_BUF_ERROR) {
 #ifdef PKZIP_BUG_WORKAROUND
       r = Z_OK;
     }
 #else
+#ifdef SMALL
+      z->msg = "error";
+#else
       z->msg = (char*)"incomplete distance tree";
+#endif
       r = Z_DATA_ERROR;
     }
     else if (r != Z_MEM_ERROR)
     {
+#ifdef SMALL
+      z->msg = "error";
+#else
       z->msg = (char*)"empty distance tree with lengths";
+#endif
       r = Z_DATA_ERROR;
     }
     ZFREE(z, v);

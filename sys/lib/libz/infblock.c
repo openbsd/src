@@ -1,4 +1,4 @@
-/*	$OpenBSD: infblock.c,v 1.9 2002/03/12 00:26:30 millert Exp $	*/
+/*	$OpenBSD: infblock.c,v 1.10 2003/12/16 03:26:54 deraadt Exp $	*/
 /* infblock.c -- interpret and process block types to last block
  * Copyright (C) 1995-2002 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h 
@@ -175,7 +175,11 @@ int r;
         case 3:                         /* illegal */
           DUMPBITS(3)
           s->mode = BAD;
+#ifdef SMALL
+          z->msg = "error";
+#else
           z->msg = (char*)"invalid block type";
+#endif
           r = Z_DATA_ERROR;
           LEAVE
       }
@@ -185,7 +189,11 @@ int r;
       if ((((~b) >> 16) & 0xffff) != (b & 0xffff))
       {
         s->mode = BAD;
+#ifdef SMALL
+        z->msg = "error";
+#else
         z->msg = (char*)"invalid stored block lengths";
+#endif
         r = Z_DATA_ERROR;
         LEAVE
       }
@@ -218,7 +226,11 @@ int r;
       if ((t & 0x1f) > 29 || ((t >> 5) & 0x1f) > 29)
       {
         s->mode = BAD;
+#ifdef SMALL
+        z->msg = "error";
+#else
         z->msg = (char*)"too many length or distance symbols";
+#endif
         r = Z_DATA_ERROR;
         LEAVE
       }
@@ -290,7 +302,11 @@ int r;
           {
             ZFREE(z, s->sub.trees.blens);
             s->mode = BAD;
+#ifdef SMALL
+            z->msg = "error";
+#else
             z->msg = (char*)"invalid bit length repeat";
+#endif
             r = Z_DATA_ERROR;
             LEAVE
           }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: inflate.c,v 1.6 2002/03/12 00:26:30 millert Exp $	*/
+/*	$OpenBSD: inflate.c,v 1.7 2003/12/16 03:26:54 deraadt Exp $	*/
 /* inflate.c -- zlib interface to inflate modules
  * Copyright (C) 1995-2002 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h 
@@ -166,14 +166,22 @@ int f;
       if (((z->state->sub.method = NEXTBYTE) & 0xf) != Z_DEFLATED)
       {
         z->state->mode = BAD;
+#ifdef SMALL
+        z->msg = "error";
+#else
         z->msg = (char*)"unknown compression method";
+#endif
         z->state->sub.marker = 5;       /* can't try inflateSync */
         break;
       }
       if ((z->state->sub.method >> 4) + 8 > z->state->wbits)
       {
         z->state->mode = BAD;
+#ifdef SMALL
+        z->msg = "error";
+#else
         z->msg = (char*)"invalid window size";
+#endif
         z->state->sub.marker = 5;       /* can't try inflateSync */
         break;
       }
@@ -184,7 +192,11 @@ int f;
       if (((z->state->sub.method << 8) + b) % 31)
       {
         z->state->mode = BAD;
+#ifdef SMALL
+        z->msg = "error";
+#else
         z->msg = (char*)"incorrect header check";
+#endif
         z->state->sub.marker = 5;       /* can't try inflateSync */
         break;
       }
@@ -215,7 +227,11 @@ int f;
       return Z_NEED_DICT;
     case DICT0:
       z->state->mode = BAD;
+#ifdef SMALL
+      z->msg = "error";
+#else
       z->msg = (char*)"need dictionary";
+#endif
       z->state->sub.marker = 0;       /* can try inflateSync */
       return Z_STREAM_ERROR;
     case BLOCKS:
@@ -257,7 +273,11 @@ int f;
       if (z->state->sub.check.was != z->state->sub.check.need)
       {
         z->state->mode = BAD;
+#ifdef SMALL
+        z->msg = "error";
+#else
         z->msg = (char*)"incorrect data check";
+#endif
         z->state->sub.marker = 5;       /* can't try inflateSync */
         break;
       }

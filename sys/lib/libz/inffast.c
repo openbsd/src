@@ -1,4 +1,4 @@
-/*	$OpenBSD: inffast.c,v 1.6 2002/03/12 00:26:30 millert Exp $	*/
+/*	$OpenBSD: inffast.c,v 1.7 2003/12/16 03:26:54 deraadt Exp $	*/
 /* inffast.c -- process literals and length/distance pairs fast
  * Copyright (C) 1995-2002 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h 
@@ -138,7 +138,11 @@ z_streamp z;
           }
           else
           {
+#ifdef SMALL
+            z->msg = "error";
+#else
             z->msg = (char*)"invalid distance code";
+#endif
             UNGRAB
             UPDATE
             return Z_DATA_ERROR;
@@ -169,7 +173,11 @@ z_streamp z;
       }
       else
       {
+#ifdef SMALL
+        z->msg = "error";
+#else
         z->msg = (char*)"invalid literal/length code";
+#endif
         UNGRAB
         UPDATE
         return Z_DATA_ERROR;
