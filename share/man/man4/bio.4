@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bio.4,v 1.1 2002/06/09 22:03:43 niklas Exp $
+.\"	$OpenBSD: bio.4,v 1.2 2002/06/12 18:02:21 mpech Exp $
 .\"
 .\" Copyright (c) 2002 Niklas Hallqvist
 .\" All rights reserved.
@@ -46,8 +46,8 @@ The
 .Pa /dev/bio
 device node operates by delegating
 .Xr ioctl 2
-calls to a requested device driver.  Only drivers which have registered
-with the
+calls to a requested device driver.
+Only drivers which have registered with the
 .Nm
 device can be accessed via this interface.
 .Pp
@@ -65,8 +65,8 @@ device:
 .Bl -tag -width BIOCLOCATE
 .It Dv BIOCLOCATE
 Locate a named device and give back a cookie to the application
-for subsequent ioctl calls.  The cookie is used to tunnel further
-ioctls to the right device.
+for subsequent ioctl calls.
+The cookie is used to tunnel further ioctls to the right device.
 .El
 .Sh FILES
 .Bl -tag -width /dev/bio -compact
