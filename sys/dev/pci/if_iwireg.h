@@ -1,4 +1,4 @@
-/*	$Id: if_iwireg.h,v 1.5 2004/11/24 21:20:58 damien Exp $ */
+/*	$Id: if_iwireg.h,v 1.6 2004/12/04 17:24:06 damien Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -27,8 +27,9 @@
  * SUCH DAMAGE.
  */
 
-#define IWI_TX_SLOT_SIZE	128
-#define IWI_RX_NSLOTS		32
+#define IWI_TX_RING_SIZE	64
+#define IWI_CMD_RING_SIZE	16
+#define IWI_RX_RING_SIZE	32
 
 #define IWI_CSR_INTR		0x0008
 #define IWI_CSR_INTR_MASK	0x000c
@@ -39,21 +40,37 @@
 #define IWI_CSR_RST		0x0020
 #define IWI_CSR_CTL		0x0024
 #define IWI_CSR_IO		0x0030
-#define IWI_CSR_TX_BASE		0x0200
-#define IWI_CSR_TX_SIZE		0x0204
-#define IWI_CSR_TX_READ_INDEX	0x0280
+#define IWI_CSR_CMD_BASE	0x0200
+#define IWI_CSR_CMD_SIZE	0x0204
+#define IWI_CSR_TX1_BASE	0x0208
+#define IWI_CSR_TX1_SIZE	0x020c
+#define IWI_CSR_TX2_BASE	0x0210
+#define IWI_CSR_TX2_SIZE	0x0214
+#define IWI_CSR_TX3_BASE	0x0218
+#define IWI_CSR_TX3_SIZE	0x021c
+#define IWI_CSR_TX4_BASE	0x0220
+#define IWI_CSR_TX4_SIZE	0x0224
+#define IWI_CSR_CMD_READ_INDEX	0x0280
+#define IWI_CSR_TX1_READ_INDEX	0x0284
+#define IWI_CSR_TX2_READ_INDEX	0x0288
+#define IWI_CSR_TX3_READ_INDEX	0x028c
+#define IWI_CSR_TX4_READ_INDEX	0x0290
 #define IWI_CSR_RX_READ_INDEX	0x02a0
-#define IWI_CSR_RX_SLOT_BASE	0x0500
+#define IWI_CSR_RX_BASE		0x0500
 #define IWI_CSR_TABLE0_SIZE	0x0700
 #define IWI_CSR_TABLE0_BASE	0x0704
 #define IWI_CSR_CURRENT_TX_RATE	IWI_CSR_TABLE0_BASE
-#define IWI_CSR_TX_WRITE_INDEX	0x0f80
+#define IWI_CSR_CMD_WRITE_INDEX	0x0f80
+#define IWI_CSR_TX1_WRITE_INDEX	0x0f84
+#define IWI_CSR_TX2_WRITE_INDEX	0x0f88
+#define IWI_CSR_TX3_WRITE_INDEX	0x0f8c
+#define IWI_CSR_TX4_WRITE_INDEX	0x0f90
 #define IWI_CSR_RX_WRITE_INDEX	0x0fa0
 #define IWI_CSR_READ_INT	0x0ff4
 
 /* possible flags for IWI_CSR_INTR */
 #define IWI_INTR_RX_TRANSFER	0x00000002
-#define IWI_INTR_TX0_TRANSFER	0x00000800
+#define IWI_INTR_CMD_TRANSFER	0x00000800
 #define IWI_INTR_TX1_TRANSFER	0x00001000
 #define IWI_INTR_TX2_TRANSFER	0x00002000
 #define IWI_INTR_TX3_TRANSFER	0x00004000
@@ -63,7 +80,7 @@
 #define IWI_INTR_PARITY_ERROR	0x80000000
 
 #define IWI_INTR_MASK							\
-	(IWI_INTR_RX_TRANSFER |	IWI_INTR_TX0_TRANSFER |			\
+	(IWI_INTR_RX_TRANSFER |	IWI_INTR_CMD_TRANSFER |			\
 	 IWI_INTR_TX1_TRANSFER | IWI_INTR_TX2_TRANSFER |		\
 	 IWI_INTR_TX3_TRANSFER | IWI_INTR_TX4_TRANSFER |		\
 	 IWI_INTR_FW_INITED | IWI_INTR_FATAL_ERROR |			\
@@ -186,7 +203,8 @@ struct iwi_frame {
 } __attribute__((__packed__));
 
 /* header for transmission */
-struct iwi_data {
+struct iwi_tx_desc {
+	struct iwi_hdr	hdr;
 	u_int32_t	reserved1[2];
 	u_int8_t	cmd;
 #define IWI_DATA_CMD_TX	0x0b
@@ -214,7 +232,8 @@ struct iwi_data {
 } __attribute__((__packed__));
 
 /* command */
-struct iwi_cmd {
+struct iwi_cmd_desc {
+	struct iwi_hdr	hdr;
 	u_int8_t	type;
 #define IWI_CMD_ENABLE				2
 #define IWI_CMD_SET_CONFIGURATION		6

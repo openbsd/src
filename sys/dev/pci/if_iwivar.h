@@ -1,4 +1,4 @@
-/*	$Id: if_iwivar.h,v 1.2 2004/11/22 21:34:35 damien Exp $ */
+/*	$Id: if_iwivar.h,v 1.3 2004/12/04 17:24:06 damien Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -26,42 +26,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-struct iwi_buf {
-	struct mbuf		*m;
-	struct ieee80211_node	*ni;
-	bus_dmamap_t		map;
-	TAILQ_ENTRY(iwi_buf)	next;
-};
-
-struct iwi_tx_slot {
-	caddr_t		virtaddr;
-	struct iwi_buf	*buf;
-};
-
-struct iwi_rx_slot {
-	u_int32_t	csr;
-	struct iwi_buf	*buf;
-};
-
-struct iwi_rx_queue {
-	struct iwi_rx_slot	*slots;
-	u_int32_t		cur;
-	u_int32_t		size;
-};
-
-struct iwi_tx_queue {
-	bus_dmamap_t		map;
-	bus_dma_segment_t	seg;
-	bus_addr_t		physaddr;
-	caddr_t			virtaddr;
-	struct iwi_tx_slot	*slots;
-	u_int32_t		csr_read;
-	u_int32_t		csr_write;
-	u_int32_t		old;
-	u_int32_t		cur;
-	u_int32_t 		size;
-};
 
 struct iwi_rx_radiotap_header {
 	struct ieee80211_radiotap_header wr_ihdr;
@@ -103,8 +67,33 @@ struct iwi_softc {
 	u_int32_t		flags;
 #define IWI_FLAG_FW_INITED	(1 << 0)
 
-	struct iwi_tx_queue	txqueue[5];
-	struct iwi_rx_queue	rxqueue;
+	bus_dma_tag_t		sc_dmat;
+
+	struct iwi_tx_desc	*tx_desc;
+	bus_dmamap_t		tx_ring_map;
+	bus_dma_segment_t	tx_ring_seg;
+
+	struct iwi_tx_buf {
+		bus_dmamap_t		map;
+		struct mbuf		*m;
+		struct ieee80211_node	*ni;
+	} tx_buf[IWI_TX_RING_SIZE];
+
+	int			tx_cur;
+	int			tx_old;
+	int			tx_free;
+
+	struct iwi_cmd_desc	*cmd_desc;
+	bus_dmamap_t		cmd_ring_map;
+	bus_dma_segment_t	cmd_ring_seg;
+	int			cmd_cur;
+
+	struct iwi_rx_buf {
+		bus_dmamap_t	map;
+		struct mbuf	*m;
+	} rx_buf[IWI_RX_RING_SIZE];
+
+	int			rx_cur;
 
 	struct resource		*irq;
 	struct resource		*mem;
@@ -117,12 +106,6 @@ struct iwi_softc {
 	int			authmode;
 
 	int			sc_tx_timer;
-
-	bus_dma_tag_t		sc_dmat;
-
-	struct iwi_buf		*buf_list;
-	int			nbuf;
-	TAILQ_HEAD(, iwi_buf)	sc_free_buf;
 
 #if NBPFILTER > 0
 	caddr_t			sc_drvbpf;
@@ -142,8 +125,6 @@ struct iwi_softc {
 	int			sc_txtap_len;
 #endif
 };
-
-#define IWI_ASYNC_CMD	(1 << 0)
 
 #define SIOCGRADIO	_IOWR('i', 139, struct ifreq)
 #define SIOCGTABLE0	_IOWR('i', 140, struct ifreq)
