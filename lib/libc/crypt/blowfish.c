@@ -1,4 +1,4 @@
-/* $OpenBSD: blowfish.c,v 1.12 1998/08/30 22:35:39 niklas Exp $ */
+/* $OpenBSD: blowfish.c,v 1.13 1999/05/14 16:08:58 niklas Exp $ */
 /*
  * Blowfish block cipher for OpenBSD
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -711,7 +711,7 @@ blf_cbc_decrypt(c, iva, data, len)
 		data[7] = r & 0xff;
 		for (j = 0; j < 8; j++)
 			data[j] ^= iv[j];
-		iv = data;
+		iv -= 8;
 		data -= 8;
 	}
 	l = data[0] << 24 | data[1] << 16 | data[2] << 8 | data[3];
