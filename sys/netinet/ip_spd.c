@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.23 2001/06/08 03:13:14 angelos Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.24 2001/06/24 21:50:51 mickey Exp $ */
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -8,7 +8,7 @@
  * Permission to use, copy, and modify this software without fee
  * is hereby granted, provided that this entire notice is included in
  * all copies of any software which is or includes a copy or
- * modification of this software. 
+ * modification of this software.
  * You may use this code under the GNU public license if you so wish. Please
  * contribute changes back to the authors under this freer than GPL license
  * so that we may further the use of strong encryption without limitations to
@@ -645,8 +645,11 @@ ipsec_add_policy(struct sockaddr_encap *dst, struct sockaddr_encap *mask,
  * Delete a pending ACQUIRE record.
  */
 void
-ipsp_delete_acquire(struct ipsec_acquire *ipa)
+ipsp_delete_acquire(void *v)
 {
+    struct ipsec_acquire *ipa = v;
+
+    timeout_del(&ipa->ipa_timeout);
     TAILQ_REMOVE(&ipsec_acquire_head, ipa, ipa_next);
     if (ipa->ipa_packet)
       m_freem(ipa->ipa_packet);
@@ -748,34 +751,6 @@ ipsp_clear_acquire(struct tdb *tdb)
 }
 
 /*
- * Expire old acquire requests to key management.
- */
-void
-ipsp_acquire_expirations(void *arg)
-{
-    struct ipsec_acquire *ipa;
-
-    for (ipa = TAILQ_FIRST(&ipsec_acquire_head);
-	 ipa;
-	 ipa = TAILQ_FIRST(&ipsec_acquire_head))
-    {
-	if (ipa->ipa_expire <= time.tv_sec)
-	  ipsp_delete_acquire(ipa); /* Delete */
-	else
-	{
-	    /* Schedule us for another expiration */
-	    timeout(ipsp_acquire_expirations, (void *) NULL,
-		    hz * (ipa->ipa_expire - time.tv_sec));
-	    return;
-	}
-    }
-
-    /* If there's no request pending, we don't need to schedule us */
-
-    return;
-}
-
-/*
  * Find out if there's an ACQUIRE pending.
  * XXX Need a better structure.
  */
@@ -829,6 +804,7 @@ ipsp_acquire_sa(struct ipsec_policy *ipo, union sockaddr_union *gw,
 
     bzero(ipa, sizeof(struct ipsec_acquire));
     bcopy(gw, &ipa->ipa_addr, sizeof(union sockaddr_union));
+    timeout_set(&ipa->ipa_timeout, ipsp_delete_acquire, ipa);
 
     ipa->ipa_info.sen_len = ipa->ipa_mask.sen_len = SENT_LEN;
     ipa->ipa_info.sen_family = ipa->ipa_mask.sen_family = PF_KEY;
@@ -941,12 +917,8 @@ ipsp_acquire_sa(struct ipsec_policy *ipo, union sockaddr_union *gw,
     if (m)
       ipa->ipa_packet = m_copym2(m, 0, M_COPYALL, M_DONTWAIT);
 
-    ipa->ipa_expire = time.tv_sec + ipsec_expire_acquire;
+    timeout_add(&ipa->ipa_timeout, ipsec_expire_acquire * hz);
     TAILQ_INSERT_TAIL(&ipsec_acquire_head, ipa, ipa_next);
-
-    if (TAILQ_FIRST(&ipsec_acquire_head) == ipa)
-      timeout(ipsp_acquire_expirations, (void *) NULL,
-	      hz * (ipa->ipa_expire - time.tv_sec));
 
     /* PF_KEYv2 notification message */
     return pfkeyv2_acquire(ipo, gw, laddr, &ipa->ipa_seq, ddst);
