@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint) 
-static char *rcsid = "$OpenBSD: svc.c,v 1.10 1997/09/22 05:11:09 millert Exp $";
+static char *rcsid = "$OpenBSD: svc.c,v 1.11 1998/02/25 12:21:18 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -97,7 +97,7 @@ xprt_register(xprt)
 			free(__svc_fdset);
 		}
 		__svc_fdset = fds;
-		__svc_fdsetsize = howmany(sock+1, NFDBITS);
+		__svc_fdsetsize = sock+1;
 	}
 
 	if (sock < FD_SETSIZE)
