@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.16 1996/10/26 07:27:01 tholo Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.17 1996/10/27 08:02:32 tholo Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -1134,6 +1134,7 @@ sys_lseek(p, v, retval)
 	register struct filedesc *fdp = p->p_fd;
 	register struct file *fp;
 	struct vattr vattr;
+	struct vnode *vp;
 	int error;
 
 	if ((u_int)SCARG(uap, fd) >= fdp->fd_nfiles ||
@@ -1141,8 +1142,13 @@ sys_lseek(p, v, retval)
 		return (EBADF);
 	if (fp->f_type != DTYPE_VNODE)
 		return (ESPIPE);
+	vp = (struct vnode *)fp->f_data;
+	if (vp->v_type == VFIFO)
+		return (ESPIPE);
 	switch (SCARG(uap, whence)) {
 	case L_INCR:
+		if (fp->f_offset + SCARG(uap, offset) < 0)
+			return (EINVAL);
 		fp->f_offset += SCARG(uap, offset);
 		break;
 	case L_XTND:
@@ -1150,9 +1156,13 @@ sys_lseek(p, v, retval)
 				    cred, p);
 		if (error)
 			return (error);
+		if (vattr.va_size + SCARG(uap, offset) < 0)
+			return (EINVAL);
 		fp->f_offset = SCARG(uap, offset) + vattr.va_size;
 		break;
 	case L_SET:
+		if (SCARG(uap, offset) < 0)
+			return (EINVAL);
 		fp->f_offset = SCARG(uap, offset);
 		break;
 	default:
