@@ -36,64 +36,61 @@
  * SUCH DAMAGE. 
  */
 
-/* $KTH: com_err.h,v 1.3 1998/05/02 20:13:28 assar Exp $ */
-
-/* MIT compatible com_err library */
-
-#ifndef __COM_ERR_H__
-#define __COM_ERR_H__
-
-#ifdef __STDC__
-#include <stdarg.h>
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+RCSID("$KTH: error.c,v 1.13 1998/02/17 21:19:44 bg Exp $");
 #endif
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <com_right.h>
 
-#ifndef __P
-#ifdef __STDC__
-#define __P(X) X
-#else
-#define __P(X) ()
-#endif
-#endif
+const char *
+com_right(struct et_list *list, long code)
+{
+    struct et_list *p;
+    for (p = list; p; p = p->next) {
+	if (code >= p->table->base && code < p->table->base + p->table->n_msgs)
+	    return p->table->msgs[code - p->table->base];
+    }
+    return NULL;
+}
 
-
-/*
- * For compatibility with MIT's com_err the com_right.h include
- * file is inserted here.
- */
-/* $KTH: com_right.h,v 1.8 1998/02/17 21:19:43 bg Exp $ */
-
-#ifndef __COM_RIGHT_H__
-#define __COM_RIGHT_H__
-
-struct error_table {
-    char const * const * msgs;
-    long base;
-    int n_msgs;
+struct foobar {
+    struct et_list etl;
+    struct error_table et;
 };
-struct et_list {
-    struct et_list *next;
-    struct error_table *table;
-};
-extern struct et_list *_et_list;
 
-const char *com_right(struct et_list *list, long code);
-void initialize_error_table_r(struct et_list **, const char **, int, long);
-void free_error_table(struct et_list *);
+void
+initialize_error_table_r(struct et_list **list, 
+			 const char **messages, 
+			 int num_errors,
+			 long base)
+{
+    struct et_list *et;
+    struct foobar *f;
+    for (et = *list; et; et = et->next)
+        if (et->table->msgs == messages)
+            return;
+    f = malloc(sizeof(*f));
+    if (f == NULL)
+        return;
+    et = &f->etl;
+    et->table = &f->et;
+    et->table->msgs = messages;
+    et->table->n_msgs = num_errors;
+    et->table->base = base;
+    et->next = *list;
+    *list = et;
+}
+			
 
-#endif /* __COM_RIGHT_H__ */
-
-
-typedef void (*errf) __P((const char *, long, const char *, va_list));
-
-const char * error_message __P((long));
-int init_error_table __P((const char**, long, int));
-
-void com_err_va __P((const char *, long, const char *, va_list));
-void com_err __P((const char *, long, const char *, ...));
-
-errf set_com_err_hook __P((errf));
-errf reset_com_err_hook __P((void));
-
-const char *error_table_name(int num);
-
-#endif /* __COM_ERR_H__ */
+void
+free_error_table(struct et_list *et)
+{
+    while(et){
+	struct et_list *p = et;
+	et = et->next;
+	free(p);
+    }
+}

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -36,64 +36,48 @@
  * SUCH DAMAGE. 
  */
 
-/* $KTH: com_err.h,v 1.3 1998/05/02 20:13:28 assar Exp $ */
+/* $KTH: compile_et.h,v 1.3 1998/11/22 09:39:46 assar Exp $ */
 
-/* MIT compatible com_err library */
+#ifndef __COMPILE_ET_H__
+#define __COMPILE_ET_H__
 
-#ifndef __COM_ERR_H__
-#define __COM_ERR_H__
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
-#ifdef __STDC__
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 #include <stdarg.h>
-#endif
+#include <ctype.h>
 
-#ifndef __P
-#ifdef __STDC__
-#define __P(X) X
-#else
-#define __P(X) ()
-#endif
-#endif
+extern long base;
+extern int number;
+extern char *prefix;
+extern char name[128];
+extern char *id_str;
+extern char *filename;
+extern int numerror;
 
-
-/*
- * For compatibility with MIT's com_err the com_right.h include
- * file is inserted here.
- */
-/* $KTH: com_right.h,v 1.8 1998/02/17 21:19:43 bg Exp $ */
-
-#ifndef __COM_RIGHT_H__
-#define __COM_RIGHT_H__
-
-struct error_table {
-    char const * const * msgs;
-    long base;
-    int n_msgs;
+struct error_code {
+    unsigned number;
+    char *name;
+    char *string;
+    struct error_code *next, **tail;
 };
-struct et_list {
-    struct et_list *next;
-    struct error_table *table;
-};
-extern struct et_list *_et_list;
 
-const char *com_right(struct et_list *list, long code);
-void initialize_error_table_r(struct et_list **, const char **, int, long);
-void free_error_table(struct et_list *);
+extern struct error_code *codes;
 
-#endif /* __COM_RIGHT_H__ */
+#define APPEND(L, V) 				\
+do {						\
+    if((L) == NULL) {				\
+	(L) = (V);				\
+	(L)->tail = &(V)->next;			\
+	(L)->next = NULL;			\
+    }else{					\
+	*(L)->tail = (V);			\
+	(L)->tail = &(V)->next;			\
+    }						\
+}while(0)
 
-
-typedef void (*errf) __P((const char *, long, const char *, va_list));
-
-const char * error_message __P((long));
-int init_error_table __P((const char**, long, int));
-
-void com_err_va __P((const char *, long, const char *, va_list));
-void com_err __P((const char *, long, const char *, ...));
-
-errf set_com_err_hook __P((errf));
-errf reset_com_err_hook __P((void));
-
-const char *error_table_name(int num);
-
-#endif /* __COM_ERR_H__ */
+#endif /* __COMPILE_ET_H__ */

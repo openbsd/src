@@ -36,30 +36,6 @@
  * SUCH DAMAGE. 
  */
 
-/* $KTH: com_err.h,v 1.3 1998/05/02 20:13:28 assar Exp $ */
-
-/* MIT compatible com_err library */
-
-#ifndef __COM_ERR_H__
-#define __COM_ERR_H__
-
-#ifdef __STDC__
-#include <stdarg.h>
-#endif
-
-#ifndef __P
-#ifdef __STDC__
-#define __P(X) X
-#else
-#define __P(X) ()
-#endif
-#endif
-
-
-/*
- * For compatibility with MIT's com_err the com_right.h include
- * file is inserted here.
- */
 /* $KTH: com_right.h,v 1.8 1998/02/17 21:19:43 bg Exp $ */
 
 #ifndef __COM_RIGHT_H__
@@ -81,19 +57,3 @@ void initialize_error_table_r(struct et_list **, const char **, int, long);
 void free_error_table(struct et_list *);
 
 #endif /* __COM_RIGHT_H__ */
-
-
-typedef void (*errf) __P((const char *, long, const char *, va_list));
-
-const char * error_message __P((long));
-int init_error_table __P((const char**, long, int));
-
-void com_err_va __P((const char *, long, const char *, va_list));
-void com_err __P((const char *, long, const char *, ...));
-
-errf set_com_err_hook __P((errf));
-errf reset_com_err_hook __P((void));
-
-const char *error_table_name(int num);
-
-#endif /* __COM_ERR_H__ */

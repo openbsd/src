@@ -1,8 +1,8 @@
 .\" Copyright (c) 1988 Massachusetts Institute of Technology,
 .\" Student Information Processing Board.  All rights reserved.
 .\"
-.\" $OpenBSD: compile_et.1,v 1.7 2000/01/03 00:18:05 aaron Exp $
-.\" $Header: /home/cvs/src/usr.bin/compile_et/Attic/compile_et.1,v 1.7 2000/01/03 00:18:05 aaron Exp $
+.\" $OpenBSD: compile_et.1,v 1.8 2000/02/19 12:07:18 hin Exp $
+.\" $Header: /home/cvs/src/usr.bin/compile_et/Attic/compile_et.1,v 1.8 2000/02/19 12:07:18 hin Exp $
 .\"
 .Dd	November 22, 1988
 .Dt COMPILE_ET 1
@@ -21,23 +21,41 @@ a C source file suitable for use with the
 library.
 .Pp
 The source file name must end with a suffix of ``.et''; the file
-consists of a declaration supplying the name (up to four characters
-long) of the error-code table:
+consists of headers and declarations supplying the name (up to four characters
+long) of the error-code table.
+
+The file may have these declarations:
+
+.Em id string
+
+where string is a revision control system tag.
+
+.Em prefix string
+
+where string is prepended to all error codes specified in the file.
 
 .Em error_table name
 
-followed by up to 256 entries of the form:
+which specifies the name of the error table.
+
+.Em index number
+
+sets the assigned error number for the next entry.
 
 .Em error_code name ,
 "
 .Em string
 "
 
+declares an error code called name with description name. Upto
+256 error codes are allowed.
+
 and a final
 
 .Em end
 
 to indicate the end of the table.
+
 .Pp
 The name of the table is used to construct the name of a subroutine
 .Em initialize_XXXX_error_table
