@@ -173,8 +173,8 @@
 ./usr/include/sgi/frame.h
 ./usr/include/sgi/ieee.h
 ./usr/include/sgi/ieeefp.h
-./usr/include/sgi/intr.h
 ./usr/include/sgi/internal_types.h
+./usr/include/sgi/intr.h
 ./usr/include/sgi/kbdreg.h
 ./usr/include/sgi/kcore.h
 ./usr/include/sgi/kdbparam.h

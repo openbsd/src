@@ -1369,7 +1369,6 @@
 ./usr/share/man/cat4/pf.0
 ./usr/share/man/cat4/pflog.0
 ./usr/share/man/cat4/pfsync.0
-./usr/share/man/cat4/sgi
 ./usr/share/man/cat4/pms.0
 ./usr/share/man/cat4/pmsi.0
 ./usr/share/man/cat4/pnp.0
@@ -1404,6 +1403,7 @@
 ./usr/share/man/cat4/sf.0
 ./usr/share/man/cat4/sf2r.0
 ./usr/share/man/cat4/sfr.0
+./usr/share/man/cat4/sgi
 ./usr/share/man/cat4/siop.0
 ./usr/share/man/cat4/sis.0
 ./usr/share/man/cat4/sk.0
@@ -2145,8 +2145,8 @@
 ./usr/share/man/cat8/setextattr.0
 ./usr/share/man/cat8/setobjstat.0
 ./usr/share/man/cat8/sftp-server.0
-./usr/share/man/cat8/showmount.0
 ./usr/share/man/cat8/sgi
+./usr/share/man/cat8/showmount.0
 ./usr/share/man/cat8/shutdown.0
 ./usr/share/man/cat8/skeyprune.0
 ./usr/share/man/cat8/slattach.0
