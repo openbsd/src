@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.48 2002/05/24 21:53:08 deraadt Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.49 2002/06/07 23:59:19 jasoni Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -141,9 +141,9 @@ icmp_error(n, type, code, dest, destifp)
 	n_long dest;
 	struct ifnet *destifp;
 {
-	register struct ip *oip = mtod(n, struct ip *), *nip;
-	register unsigned oiplen = oip->ip_hl << 2;
-	register struct icmp *icp;
+	struct ip *oip = mtod(n, struct ip *), *nip;
+	unsigned oiplen = oip->ip_hl << 2;
+	struct icmp *icp;
 	struct mbuf *m;
 	struct m_tag *mtag;
 	unsigned icmplen, mblen;
@@ -289,10 +289,10 @@ struct sockaddr_in icmpmask = { 8, 0 };
 void
 icmp_input(struct mbuf *m, ...)
 {
-	register struct icmp *icp;
-	register struct ip *ip = mtod(m, struct ip *);
+	struct icmp *icp;
+	struct ip *ip = mtod(m, struct ip *);
 	int icmplen = ip->ip_len;
-	register int i;
+	int i;
 	struct in_ifaddr *ia;
 	void *(*ctlfunc)(int, struct sockaddr *, void *);
 	int code;
@@ -605,8 +605,8 @@ void
 icmp_reflect(m)
 	struct mbuf *m;
 {
-	register struct ip *ip = mtod(m, struct ip *);
-	register struct in_ifaddr *ia;
+	struct ip *ip = mtod(m, struct ip *);
+	struct in_ifaddr *ia;
 	struct in_addr t;
 	struct mbuf *opts = 0;
 	int optlen = (ip->ip_hl << 2) - sizeof(struct ip);
@@ -667,7 +667,7 @@ icmp_reflect(m)
 	ip->ip_ttl = MAXTTL;
 
 	if (optlen > 0) {
-		register u_char *cp;
+		u_char *cp;
 		int opt, cnt;
 		u_int len;
 
@@ -750,12 +750,12 @@ done:
  */
 void
 icmp_send(m, opts)
-	register struct mbuf *m;
+	struct mbuf *m;
 	struct mbuf *opts;
 {
-	register struct ip *ip = mtod(m, struct ip *);
-	register int hlen;
-	register struct icmp *icp;
+	struct ip *ip = mtod(m, struct ip *);
+	int hlen;
+	struct icmp *icp;
 
 	hlen = ip->ip_hl << 2;
 	m->m_data += hlen;
