@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wb.c,v 1.25 2004/09/28 04:37:33 brad Exp $	*/
+/*	$OpenBSD: if_wb.c,v 1.26 2004/12/11 02:06:47 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -379,9 +379,9 @@ int wb_mii_readreg(sc, frame)
 	/* Check for ack */
 	SIO_CLR(WB_SIO_MII_CLK);
 	DELAY(1);
+	ack = CSR_READ_4(sc, WB_SIO) & WB_SIO_MII_DATAOUT;
 	SIO_SET(WB_SIO_MII_CLK);
 	DELAY(1);
-	ack = CSR_READ_4(sc, WB_SIO) & WB_SIO_MII_DATAOUT;
 	SIO_CLR(WB_SIO_MII_CLK);
 	DELAY(1);
 	SIO_SET(WB_SIO_MII_CLK);
