@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.44 2003/06/02 23:28:05 millert Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.45 2003/06/21 00:42:58 tedu Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -283,6 +283,12 @@ exit1(p, rv)
 	curproc = NULL;
 	limfree(p->p_limit);
 	p->p_limit = NULL;
+
+	/*
+	 * If emulation has process exit hook, call it now.
+	 */
+	if (p->p_emul->e_proc_exit)
+		(*p->p_emul->e_proc_exit)(p);
 
 	/*
 	 * Finally, call machine-dependent code to switch to a new

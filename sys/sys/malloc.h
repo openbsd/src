@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.67 2003/06/02 23:28:21 millert Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.68 2003/06/21 00:42:58 tedu Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -152,7 +152,8 @@
 #define M_PACKET_TAGS	111	/* Packet-attached information */
 #define M_1394CTL	112	/* IEEE 1394 control structures */
 #define M_1394DATA	113	/* IEEE 1394 data buffers */
-/* 114-122 - free */
+#define	M_EMULDATA	114	/* Per-process emulation data */
+/* 115-122 - free */
 
 /* KAME IPv6 */
 #define	M_IP6OPT	123	/* IPv6 options */
@@ -279,7 +280,8 @@
 	"packet tags",	/* 111 M_PACKET_TAGS */ \
 	"1394ctl",	/* 112 M_1394CTL */ \
 	"1394data",	/* 113 M_1394DATA */ \
-	NULL, NULL, NULL, NULL, NULL, \
+	"emuldata",	/* 114 M_EMULDATA */ \
+	NULL, NULL, NULL, NULL, \
 	NULL, NULL, NULL, NULL, \
 	"ip6_options",	/* 123 M_IP6OPT */ \
 	"NDP",		/* 124 M_IP6NDP */ \

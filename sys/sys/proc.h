@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.64 2003/06/02 23:28:21 millert Exp $	*/
+/*	$OpenBSD: proc.h,v 1.65 2003/06/21 00:42:58 tedu Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -96,6 +96,10 @@ struct	emul {
 	char	*e_sigcode;		/* Start of sigcode */
 	char	*e_esigcode;		/* End of sigcode */
 	struct uvm_object *e_sigobject;	/* shared sigcode object */
+					/* Per-process hooks */
+	void	(*e_proc_exec)(struct proc *, struct exec_package *);
+	void	(*e_proc_fork)(struct proc *p, struct proc *parent);
+	void	(*e_proc_exit)(struct proc *);
 };
 
 /*
@@ -173,7 +177,8 @@ struct	proc {
 
 	int	p_holdcnt;		/* If non-zero, don't swap. */
 	struct	emul *p_emul;		/* Emulation information */
-
+	void	*p_emuldata;		/* Per-process emulation data, or */
+					/* NULL. Malloc type M_EMULDATA */
 	struct	klist p_klist;		/* knotes attached to this process */
 					/* pad to 256, avoid shifting eproc. */
 

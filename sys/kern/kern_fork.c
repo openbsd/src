@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.60 2003/06/02 23:28:05 millert Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.61 2003/06/21 00:42:58 tedu Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -275,6 +275,11 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
 	else
 		p2->p_sigacts = sigactsinit(p1);
 
+	/*
+	 * If emulation has process fork hook, call it now.
+	 */
+	if (p2->p_emul->e_proc_fork)
+		(*p2->p_emul->e_proc_fork)(p2, p1);
 	/*
 	 * This begins the section where we must prevent the parent
 	 * from being swapped.

@@ -1,10 +1,13 @@
-/*	$OpenBSD: linux_exec.c,v 1.20 2002/03/14 01:26:50 millert Exp $	*/
+/*	$OpenBSD: linux_exec.c,v 1.21 2003/06/21 00:42:58 tedu Exp $	*/
 /*	$NetBSD: linux_exec.c,v 1.13 1996/04/05 00:01:10 christos Exp $	*/
 
-/*
- * Copyright (c) 1995 Frank van der Linden
- * Copyright (c) 1994 Christos Zoulas
+/*-
+ * Copyright (c) 1994, 1995, 1998, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Christos Zoulas, Frank van der Linden, Eric Haszlakiewicz and
+ * Thor Lancelot Simon.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -14,21 +17,25 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * based on exec_aout.c, sunos_exec.c and svr4_exec.c
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <sys/param.h>
@@ -58,6 +65,7 @@
 #include <compat/linux/linux_syscallargs.h>
 #include <compat/linux/linux_util.h>
 #include <compat/linux/linux_exec.h>
+#include <compat/linux/linux_emuldata.h>
 
 static void *linux_aout_copyargs(struct exec_package *,
 	struct ps_strings *, void *, void *);
@@ -79,6 +87,11 @@ int exec_linux_aout_prep_nmagic(struct proc *, struct exec_package *);
 int exec_linux_aout_prep_omagic(struct proc *, struct exec_package *);
 int exec_linux_aout_prep_qmagic(struct proc *, struct exec_package *);
 
+void linux_e_proc_exec(struct proc *, struct exec_package *);
+void linux_e_proc_fork(struct proc *, struct proc *);
+void linux_e_proc_exit(struct proc *);
+void linux_e_proc_init(struct proc *, struct vmspace *);
+
 struct emul emul_linux_aout = {
 	"linux",
 	linux_error,
@@ -97,6 +110,10 @@ struct emul emul_linux_aout = {
 	NULL,
 	linux_sigcode,
 	linux_esigcode,
+	NULL,
+	linux_e_proc_exec,
+	linux_e_proc_fork,
+	linux_e_proc_exit,
 };
 
 struct emul emul_linux_elf = {
@@ -117,8 +134,73 @@ struct emul emul_linux_elf = {
 	exec_elf32_fixup,
 	linux_sigcode,
 	linux_esigcode,
+	NULL,
+	linux_e_proc_exec,
+	linux_e_proc_fork,
+	linux_e_proc_exit,
 };
 
+/*
+ * Allocate per-process structures. Called when executing Linux
+ * process. We can reuse the old emuldata - if it's not null,
+ * the executed process is of same emulation as original forked one.
+ */
+void
+linux_e_proc_init(p, vmspace)
+	struct proc *p;
+	struct vmspace *vmspace;
+{
+	if (!p->p_emuldata) {
+		/* allocate new Linux emuldata */
+		MALLOC(p->p_emuldata, void *, sizeof(struct linux_emuldata),
+		    M_EMULDATA, M_WAITOK);
+	}
+
+	memset(p->p_emuldata, '\0', sizeof(struct linux_emuldata));
+
+	/* Set the process idea of the break to the real value */
+	((struct linux_emuldata *)(p->p_emuldata))->p_break = 
+	    vmspace->vm_daddr + ctob(vmspace->vm_dsize);
+}
+
+void
+linux_e_proc_exec(p, epp)
+	struct proc *p;
+	struct exec_package *epp;
+{
+	/* exec, use our vmspace */
+	linux_e_proc_init(p, p->p_vmspace);
+}
+
+/*
+ * Emulation per-process exit hook.
+ */
+void
+linux_e_proc_exit(p)
+	struct proc *p;
+{
+	/* free Linux emuldata and set the pointer to null */
+	FREE(p->p_emuldata, M_EMULDATA);
+	p->p_emuldata = NULL;
+}
+
+/*
+ * Emulation fork hook.
+ */
+void
+linux_e_proc_fork(p, parent)
+	struct proc *p, *parent;
+{
+	/*
+	 * It could be desirable to copy some stuff from parent's
+	 * emuldata. We don't need anything like that for now.
+	 * So just allocate new emuldata for the new process.
+	 */
+	p->p_emuldata = NULL;
+
+	/* fork, use parent's vmspace (our vmspace may not be setup yet) */
+	linux_e_proc_init(p, parent->p_vmspace);
+}
 
 static void *
 linux_aout_copyargs(pack, arginfo, stack, argp)

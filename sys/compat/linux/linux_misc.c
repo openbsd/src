@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_misc.c,v 1.48 2003/01/30 03:29:49 millert Exp $	*/
+/*	$OpenBSD: linux_misc.c,v 1.49 2003/06/21 00:42:58 tedu Exp $	*/
 /*	$NetBSD: linux_misc.c,v 1.27 1996/05/20 01:59:21 fvdl Exp $	*/
 
 /*
@@ -77,6 +77,7 @@
 #include <compat/linux/linux_syscallargs.h>
 #include <compat/linux/linux_util.h>
 #include <compat/linux/linux_dirent.h>
+#include <compat/linux/linux_emuldata.h>
 
 #include <compat/common/compat_dir.h>
 
@@ -333,21 +334,16 @@ linux_sys_brk(p, v, retval)
 	char *nbrk = SCARG(uap, nsize);
 	struct sys_obreak_args oba;
 	struct vmspace *vm = p->p_vmspace;
-	caddr_t oldbrk;
+	struct linux_emuldata *ed = (struct linux_emuldata*)p->p_emuldata;
 
-	oldbrk = vm->vm_daddr + ctob(vm->vm_dsize);
-	/*
-	 * XXX inconsistent.. Linux always returns at least the old
-	 * brk value, but it will be page-aligned if this fails,
-	 * and possibly not page aligned if it succeeds (the user
-	 * supplied pointer is returned).
-	 */
 	SCARG(&oba, nsize) = nbrk;
 
 	if ((caddr_t) nbrk > vm->vm_daddr && sys_obreak(p, &oba, retval) == 0)
-		retval[0] = (register_t)nbrk;
+		ed->p_break = (char*)nbrk;
 	else
-		retval[0] = (register_t)oldbrk;
+		nbrk = ed->p_break;
+
+	retval[0] = (register_t)nbrk;
 
 	return 0;
 }
