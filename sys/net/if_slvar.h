@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_slvar.h,v 1.4 1997/02/24 13:34:01 niklas Exp $	*/
+/*	$OpenBSD: if_slvar.h,v 1.5 2001/03/13 05:16:07 mickey Exp $	*/
 /*	$NetBSD: if_slvar.h,v 1.16 1996/05/07 02:40:46 thorpej Exp $	*/
 
 /*-
@@ -76,7 +76,7 @@ struct sl_softc {
 #define	SC_AUTOCOMP	IFF_LINK2	/* auto-enable TCP compression */
 
 #ifdef _KERNEL
-void	slattach __P((void));
+void	slattach __P((int));
 void	slclose __P((struct tty *));
 void	slinput __P((int, struct tty *));
 int	slioctl __P((struct ifnet *, u_long, caddr_t));

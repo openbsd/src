@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sl.c,v 1.9 1999/04/22 20:02:43 art Exp $	*/
+/*	$OpenBSD: if_sl.c,v 1.10 2001/03/13 05:16:06 mickey Exp $	*/
 /*	$NetBSD: if_sl.c,v 1.39.4.1 1996/06/02 16:26:31 thorpej Exp $	*/
 
 /*
@@ -66,9 +66,6 @@
  * Note that splimp() is used throughout to block both (tty) input
  * interrupts and network activity; thus, splimp must be >= spltty.
  */
-
-#include "sl.h"
-#if NSL > 0
 
 #include "bpfilter.h"
 
@@ -181,7 +178,8 @@ Huh?  SLMTU way too small.
 #define	ABT_COUNT	3	/* count of escapes for abort */
 #define	ABT_WINDOW	(ABT_COUNT*2+2)	/* in seconds - time to count */
 
-struct sl_softc sl_softc[NSL];
+struct sl_softc *sl_softc;
+int nsl;
 
 #define FRAME_END	 	0xc0		/* Frame End */
 #define FRAME_ESCAPE		0xdb		/* Frame Esc */
@@ -195,12 +193,18 @@ static struct mbuf *sl_btom __P((struct sl_softc *, int));
  * Called from boot code to establish sl interfaces.
  */
 void
-slattach()
+slattach(n)
+	int n;
 {
 	register struct sl_softc *sc;
 	register int i = 0;
-
-	for (sc = sl_softc; i < NSL; sc++) {
+	
+	sl_softc = malloc(n * sizeof(struct sl_softc), M_DEVBUF, M_NOWAIT);
+	if (!sl_softc)
+		return;
+	nsl = n;
+	bzero(sl_softc, n * sizeof(struct sl_softc));
+	for (sc = sl_softc; i < nsl; sc++) {
 		sc->sc_unit = i;		/* XXX */
 		sprintf(sc->sc_if.if_xname, "sl%d", i++);
 		sc->sc_if.if_softc = sc;
@@ -253,9 +257,7 @@ slopen(dev, tp)
 {
 	struct proc *p = curproc;		/* XXX */
 	register struct sl_softc *sc;
-	register int nsl;
-	int error;
-	int s;
+	int i, error, s;
 
 	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);
@@ -263,7 +265,7 @@ slopen(dev, tp)
 	if (tp->t_line == SLIPDISC)
 		return (0);
 
-	for (nsl = NSL, sc = sl_softc; --nsl >= 0; sc++)
+	for (i = nsl, sc = sl_softc; i--; sc++)
 		if (sc->sc_ttyp == NULL) {
 			if (slinit(sc) == 0)
 				return (ENOBUFS);
@@ -910,4 +912,3 @@ slioctl(ifp, cmd, data)
 	splx(s);
 	return (error);
 }
-#endif
