@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.152 2003/05/12 01:25:31 dhartmei Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.153 2003/05/13 21:15:07 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -746,7 +746,10 @@ print_rule(struct pf_rule *r, int verbose)
 		printf("queue(%s, %s) ", r->qname, r->pqname);
 	else if (r->qname[0])
 		printf("queue %s ", r->qname);
-
+	if (r->tagname[0])
+		printf("tag %s ", r->tagname);
+	if (r->match_tagname[0])
+		printf("with tag %s ", r->match_tagname);
 	printf("\n");
 }
 

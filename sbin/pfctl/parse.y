@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.374 2003/05/11 01:48:50 mcbride Exp $	*/
+/*	$OpenBSD: parse.y,v 1.375 2003/05/13 21:15:07 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -169,6 +169,8 @@ struct filter_opts {
 	int			 allowopts;
 	char			*label;
 	struct node_qassign	 queues;
+	char			*tag;
+	char			*match_tag;
 } filter_opts;
 
 struct antispoof_opts {
@@ -364,6 +366,7 @@ typedef struct {
 %token	ALTQ CBQ PRIQ HFSC BANDWIDTH TBRSIZE LINKSHARE REALTIME UPPERLIMIT
 %token	QUEUE PRIORITY QLIMIT
 %token	LOAD
+%token	TAGGED TAG
 %token	<v.string>		STRING
 %token	<v.i>			PORTBINARY
 %type	<v.interface>		interface if_list if_item_not if_item
@@ -1262,6 +1265,11 @@ pfrule		: action dir logquick interface route af proto fromto
 			r.quick = $3.quick;
 
 			r.af = $6;
+			if ($9.tag)
+				strlcpy(r.tagname, $9.tag, PF_TAG_NAME_SIZE);
+			if ($9.match_tag)
+				strlcpy(r.match_tagname, $9.match_tag,
+				    PF_TAG_NAME_SIZE);
 			r.flags = $9.flags.b1;
 			r.flagset = $9.flags.b2;
 			if (rule_label(&r, $9.label))
@@ -1450,6 +1458,12 @@ filter_opt	: USER uids {
 				YYERROR;
 			}
 			filter_opts.queues = $1;
+		}
+		| TAG string				{
+			filter_opts.tag = $2;
+		}
+		| TAGGED string			{
+			filter_opts.match_tag = $2;
 		}
 		;
 
@@ -3678,6 +3692,8 @@ lookup(char *s)
 		{ "state",		STATE},
 		{ "static-port",	STATICPORT},
 		{ "table",		TABLE},
+		{ "tag",		TAG},
+		{ "tagged",		TAGGED},
 		{ "tbrsize",		TBRSIZE},
 		{ "timeout",		TIMEOUT},
 		{ "to",			TO},
