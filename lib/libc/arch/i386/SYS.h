@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: SYS.h,v 1.4 1998/11/20 11:18:29 d Exp $
+ *	$OpenBSD: SYS.h,v 1.5 1999/01/06 05:36:17 d Exp $
  */
 
 #include <machine/asm.h>
@@ -72,13 +72,6 @@
 			__DO_SYSCALL(y);		\
 			ret
 
-/* jump to the real syscall */
-/* XXX shouldn't be here */
-# define    __PASSTHRU(p,x)				\
-			.globl __LABEL2(p,x);		\
-		ENTRY(x);				\
-			jmp PIC_PLT(__LABEL2(p,x))
-
 /*
  * Design note:
  *
@@ -86,8 +79,6 @@
  * specially by the threaded library, these macros insert `_thread_sys_'
  * in front of their name. This avoids the need to #ifdef _THREAD_SAFE 
  * everywhere that the renamed function needs to be called.
- * The PASSTHRU macro is later used for system calls that don't need
- * wrapping. (XXX its a shame the loader can't do this aliasing)
  */
 #ifdef _THREAD_SAFE
 /*
@@ -98,7 +89,6 @@
 # define RSYSCALL(x)	__RSYSCALL(_thread_sys_,x)
 # define PSEUDO(x,y)	__PSEUDO(_thread_sys_,x,y)
 # define SYSENTRY(x)	__ENTRY(_thread_sys_,x)
-# define PASSTHRU(x)	__PASSTHRU(_thread_sys_,x)
 #else _THREAD_SAFE
 /*
  * The non-threaded library defaults to traditional syscalls where
