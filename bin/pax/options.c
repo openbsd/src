@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.50 2002/02/19 19:39:35 millert Exp $	*/
+/*	$OpenBSD: options.c,v 1.51 2002/09/06 18:17:30 deraadt Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: options.c,v 1.50 2002/02/19 19:39:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: options.c,v 1.51 2002/09/06 18:17:30 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -165,15 +165,18 @@ options(register int argc, register char **argv)
 	else
 		argv0 = argv[0];
 
-	if (strcmp(NM_TAR, argv0) == 0)
-		return(tar_options(argc, argv));
-	else if (strcmp(NM_CPIO, argv0) == 0)
-		return(cpio_options(argc, argv));
+	if (strcmp(NM_TAR, argv0) == 0) {
+		tar_options(argc, argv);
+		return;
+	} else if (strcmp(NM_CPIO, argv0) == 0) {
+		cpio_options(argc, argv);
+		return;
+	}
 	/*
 	 * assume pax as the default
 	 */
 	argv0 = NM_PAX;
-	return(pax_options(argc, argv));
+	pax_options(argc, argv);
 }
 
 /*
