@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.24 1998/09/27 03:55:59 rahnds Exp $
+#	$OpenBSD: files.pci,v 1.25 1998/09/28 01:23:47 mickey Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config.new file and device description for machine-independent PCI code.
@@ -47,7 +47,7 @@ attach	isp at pci with isp_pci
 file	dev/pci/isp_pci.c		isp_pci
 
 # Ethernet driver for DC21040-based boards
-device	de: ether, ifnet
+device	de: ether, ifnet, ifmedia
 attach	de at pci
 file	dev/pci/if_de.c			de
 
@@ -102,12 +102,12 @@ attach	bktr at pci
 file	dev/pci/brooktree848.c		bktr	needs-count
 
 # 3C90x
-device	xl: ether, ifnet
+device	xl: ether, ifnet, ifmedia
 attach	xl at pci
 file	dev/pci/if_xl.c			xl
 
 # SMC EPIC, 83c170
-device	tx: ether, ifnet
+device	tx: ether, ifnet, ifmedia
 attach	tx at pci
 file	dev/pci/if_tx.c			tx
 
