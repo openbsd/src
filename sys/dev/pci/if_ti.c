@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.3 1999/09/26 03:22:40 jason Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.4 1999/10/01 02:02:20 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -166,10 +166,8 @@ void ti_cmd_ext		__P((struct ti_softc *, struct ti_cmd_desc *,
 void ti_handle_events	__P((struct ti_softc *));
 int ti_alloc_jumbo_mem	__P((struct ti_softc *));
 void *ti_jalloc		__P((struct ti_softc *));
-void ti_jfree		__P((caddr_t, u_int));
-#if 0
-void ti_jref		__P((caddr_t, u_int));
-#endif
+void ti_jfree		__P((struct mbuf *));
+void ti_jref		__P((struct mbuf *));
 int ti_newbuf_std		__P((struct ti_softc *, int, struct mbuf *));
 int ti_newbuf_mini		__P((struct ti_softc *, int, struct mbuf *));
 int ti_newbuf_jumbo		__P((struct ti_softc *, int, struct mbuf *));
@@ -638,19 +636,20 @@ void *ti_jalloc(sc)
 	return(sc->ti_cdata.ti_jslots[entry->slot].ti_buf);
 }
 
-#if 0
 /*
  * Adjust usage count on a jumbo buffer. In general this doesn't
  * get used much because our jumbo buffers don't get passed around
  * too much, but it's implemented for correctness.
  */
-void ti_jref(buf, size)
-	caddr_t			buf;
-	u_int			size;
+void
+ti_jref(m)
+	struct mbuf *m;
 {
-	struct ti_softc		*sc;
-	u_int64_t		**aptr;
-	register int		i;
+	caddr_t buf = m->m_ext.ext_buf;
+	u_int size = m->m_ext.ext_size;
+	struct ti_softc *sc;
+	u_int64_t **aptr;
+	register int i;
 
 	/* Extract the softc struct pointer. */
 	aptr = (u_int64_t **)(buf - sizeof(u_int64_t));
@@ -677,19 +676,20 @@ void ti_jref(buf, size)
 
 	return;
 }
-#endif
 
 /*
  * Release a jumbo buffer.
  */
-void ti_jfree(buf, size)
-	caddr_t			buf;
-	u_int			size;
+void
+ti_jfree(m)
+	struct mbuf *m;
 {
-	struct ti_softc		*sc;
-	u_int64_t		**aptr;
-	int		        i;
-	struct ti_jpool_entry   *entry;
+	caddr_t buf = m->m_ext.ext_buf;
+	u_int size = m->m_ext.ext_size;
+	struct ti_softc *sc;
+	u_int64_t **aptr;
+	int i;
+	struct ti_jpool_entry *entry;
 
 	/* Extract the softc struct pointer. */
 	aptr = (u_int64_t **)(buf - sizeof(u_int64_t));
@@ -725,7 +725,6 @@ void ti_jfree(buf, size)
 
 	return;
 }
-
 
 /*
  * Intialize a standard receive ring descriptor.
@@ -855,9 +854,7 @@ int ti_newbuf_jumbo(sc, i, m)
 		m_new->m_len = m_new->m_pkthdr.len =
 		    m_new->m_ext.ext_size = TI_JUMBO_FRAMELEN;
 		m_new->m_ext.ext_free = ti_jfree;
-#if 0
 		m_new->m_ext.ext_ref = ti_jref;
-#endif
 	} else {
 		m_new = m;
 		m_new->m_data = m_new->m_ext.ext_buf;
