@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_hostap.c,v 1.30 2004/11/23 21:12:23 fgsch Exp $	*/
+/*	$OpenBSD: if_wi_hostap.c,v 1.31 2005/01/04 18:13:03 millert Exp $	*/
 
 /*
  * Copyright (c) 2002
@@ -576,6 +576,10 @@ wihap_auth_req(struct wi_softc *sc, struct wi_frame *rxfrm,
 	if (sc->sc_arpcom.ac_if.if_flags & IFF_DEBUG)
 		printf("wihap_auth_req: station %s algo=0x%x seq=0x%x\n",
 		    ether_sprintf(rxfrm->wi_addr2), algo, seq);
+
+	/* Ignore vendor private tlv (if any). */
+	(void)take_tlv(&pkt, &len, IEEE80211_ELEMID_VENDOR, challenge,
+	    sizeof(challenge));
 
 	challenge_len = 0;
 	if (len > 0 && (challenge_len = take_tlv(&pkt, &len,
