@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.11 2001/05/23 15:35:10 art Exp $	*/
+/*	$OpenBSD: def.h,v 1.12 2001/05/23 15:39:35 art Exp $	*/
 
 /*
  * This file is the general header file for all parts
@@ -367,8 +367,8 @@ int	 poptobuffer		__P((int, int));
 int	 killbuffer		__P((int, int));
 int	 savebuffers		__P((int, int));
 int	 listbuffers		__P((int, int));
-int	 addline		__P((BUFFER *, char *));
 int	 addlinef		__P((BUFFER *, char *, ...));
+#define	 addline(bp, text)	addlinef(bp, "%s", text)
 int	 anycb			__P((int));
 int	 bclear			__P((BUFFER *));
 int	 showbuffer		__P((BUFFER *, MGWIN *, int));
