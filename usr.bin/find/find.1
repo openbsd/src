@@ -1,4 +1,4 @@
-.\"	$OpenBSD: find.1,v 1.7 1996/09/01 04:30:16 tholo Exp $
+.\"	$OpenBSD: find.1,v 1.8 1996/09/01 04:56:25 tholo Exp $
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -142,6 +142,8 @@ information and the time
 was started, rounded up to the next full 24\-hour period, is
 .Ar n
 24\-hour periods.
+.It Ic -empty
+True if the current file or directory is empty.
 .It Ic -exec Ar utility Op argument ... ; 
 True if the program named
 .Ar utility

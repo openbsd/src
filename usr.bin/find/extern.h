@@ -1,4 +1,4 @@
-/* *      $OpenBSD: extern.h,v 1.4 1996/09/01 04:30:15 tholo Exp $*/
+/* *      $OpenBSD: extern.h,v 1.5 1996/09/01 04:56:25 tholo Exp $*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -52,6 +52,7 @@ int	 queryuser __P((char **));
 PLAN	*c_atime __P((char *));
 PLAN	*c_ctime __P((char *));
 PLAN	*c_depth __P((void));
+PLAN	*c_empty __P((void));
 PLAN	*c_exec __P((char ***, int));
 PLAN	*c_follow __P((void));
 PLAN	*c_fstype __P((char *));
