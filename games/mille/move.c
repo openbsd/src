@@ -1,4 +1,4 @@
-/*	$OpenBSD: move.c,v 1.6 1999/09/30 03:23:59 pjanzen Exp $	*/
+/*	$OpenBSD: move.c,v 1.7 1999/11/25 11:07:53 pjanzen Exp $	*/
 /*	$NetBSD: move.c,v 1.4 1995/03/24 05:01:57 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)move.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: move.c,v 1.6 1999/09/30 03:23:59 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: move.c,v 1.7 1999/11/25 11:07:53 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -290,21 +290,17 @@ protected:
 
 	  case C_GAS_SAFE:	case C_SPARE_SAFE:
 	  case C_DRIVE_SAFE:	case C_RIGHT_WAY:
-		if (pp->battle == opposite(card)
-		    || (card == C_RIGHT_WAY && pp->speed == C_LIMIT)) {
-			if (!(card == C_RIGHT_WAY && !isrepair(pp->battle))) {
-				pp->battle = C_GO;
-				pp->can_go = TRUE;
-			}
+		if ((pp->new_battle && pp->battle == opposite(card))
+		    || (pp->new_speed && card == C_RIGHT_WAY)) {
+			/* coup fourre */
+			pp->coups[card - S_CONV] = TRUE;
+			pp->total += SC_COUP;
+			pp->hand_tot += SC_COUP;
+			pp->coupscore += SC_COUP;
+			pp->battle = C_GO;
+			pp->can_go = TRUE;
 			if (card == C_RIGHT_WAY && pp->speed == C_LIMIT)
 				pp->speed = C_INIT;
-			if (pp->new_battle
-			    || (pp->new_speed && card == C_RIGHT_WAY)) {
-				pp->coups[card - S_CONV] = TRUE;
-				pp->total += SC_COUP;
-				pp->hand_tot += SC_COUP;
-				pp->coupscore += SC_COUP;
-			}
 		}
 		/*
 		 * if not coup, must pick first
@@ -318,14 +314,15 @@ protected:
 			pp->total += SC_ALL_SAFE;
 			pp->hand_tot += SC_ALL_SAFE;
 		}
+		if (pp->battle == opposite(card)) {
+			pp->battle = C_GO;
+			pp->can_go = TRUE;
+		}
 		if (card == C_RIGHT_WAY) {
 			if (pp->speed == C_LIMIT)
 				pp->speed = C_INIT;
-			if (pp->battle == C_STOP || pp->battle == C_INIT) {
-				pp->can_go = TRUE;
-				pp->battle = C_GO;
-			}
-			if (!pp->can_go && isrepair(pp->battle)) {
+			if (pp->battle == C_STOP || pp->battle == C_INIT ||
+			    (!pp->can_go && isrepair(pp->battle))) {
 				pp->can_go = TRUE;
 				pp->battle = C_GO;
 			}
