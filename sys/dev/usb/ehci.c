@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.32 2004/10/31 10:29:45 dlg Exp $ */
+/*	$OpenBSD: ehci.c,v 1.33 2004/12/29 01:52:27 dlg Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -144,7 +144,6 @@ struct ehci_pipe {
 	} u;
 };
 
-Static void		ehci_shutdown(void *);
 Static void		ehci_power(int, void *);
 
 Static usbd_status	ehci_open(usbd_pipe_handle);
@@ -416,7 +415,6 @@ ehci_init(ehci_softc_t *sc)
 	sc->sc_bus.pipe_size = sizeof(struct ehci_pipe);
 
 	sc->sc_powerhook = powerhook_establish(ehci_power, sc);
-	sc->sc_shutdownhook = shutdownhook_establish(ehci_shutdown, sc);
 
 	sc->sc_eintrs = EHCI_NORMAL_INTRS;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehcivar.h,v 1.6 2004/10/20 12:45:31 dlg Exp $ */
+/*	$OpenBSD: ehcivar.h,v 1.7 2004/12/29 01:52:27 dlg Exp $ */
 /*	$NetBSD: ehcivar.h,v 1.12 2001/12/31 12:16:57 augustss Exp $	*/
 
 /*
@@ -154,3 +154,4 @@ usbd_status	ehci_init(ehci_softc_t *);
 int		ehci_intr(void *);
 int		ehci_detach(ehci_softc_t *, int);
 int		ehci_activate(device_ptr_t, enum devact);
+void		ehci_shutdown(void *);

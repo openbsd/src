@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci_cardbus.c,v 1.1 2004/12/07 05:42:41 dlg Exp $ */
+/*	$OpenBSD: ehci_cardbus.c,v 1.2 2004/12/29 01:52:26 dlg Exp $ */
 /*	$NetBSD: ehci_cardbus.c,v 1.6.6.3 2004/09/21 13:27:25 skrll Exp $	*/
 
 /*
@@ -227,6 +227,8 @@ XXX	(ct->ct_cf->cardbus_mem_open)(cc, 0, iob, iob + 0x40);
 
 		return;
 	}
+
+	sc->sc.sc_shutdownhook = shutdownhook_establish(ehci_shutdown, &sc->sc);
 
 	/* Attach usb device. */
 	sc->sc.sc_child = config_found((void *)sc, &sc->sc.sc_bus,

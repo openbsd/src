@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci_pci.c,v 1.3 2004/05/30 01:25:17 tedu Exp $ */
+/*	$OpenBSD: ehci_pci.c,v 1.4 2004/12/29 01:52:27 dlg Exp $ */
 /*	$NetBSD: ehci_pci.c,v 1.15 2004/04/23 21:13:06 itojun Exp $	*/
 
 /*
@@ -69,16 +69,19 @@ extern int ehcidebug;
 #define DPRINTF(x)
 #endif
 
-int	ehci_pci_match(struct device *, void *, void *);
-void	ehci_pci_attach(struct device *, struct device *, void *);
-int	ehci_pci_detach(device_ptr_t, int);
-
 struct ehci_pci_softc {
 	ehci_softc_t		sc;
 	pci_chipset_tag_t	sc_pc;
 	pcitag_t		sc_tag;
 	void 			*sc_ih;		/* interrupt vectoring */
 };
+
+int	ehci_pci_match(struct device *, void *, void *);
+void	ehci_pci_attach(struct device *, struct device *, void *);
+int	ehci_pci_detach(device_ptr_t, int);
+void	ehci_pci_givecontroller(struct ehci_pci_softc *);
+void	ehci_pci_takecontroller(struct ehci_pci_softc *);
+void	ehci_pci_shutdown(void *);
 
 struct cfattach ehci_pci_ca = {
 	sizeof(struct ehci_pci_softc), ehci_pci_match, ehci_pci_attach,
@@ -203,12 +206,15 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 	}
 	sc->sc.sc_ncomp = ncomp;
 
+	ehci_pci_takecontroller(sc);
 	r = ehci_init(&sc->sc);
 	if (r != USBD_NORMAL_COMPLETION) {
 		printf("%s: init failed, error=%d\n", devname, r);
 		bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc.sc_size);
 		return;
 	}
+
+	sc->sc.sc_shutdownhook = shutdownhook_establish(ehci_pci_shutdown, sc);
 
 	/* Attach usb device. */
 	sc->sc.sc_child = config_found((void *)sc, &sc->sc.sc_bus,
@@ -233,4 +239,64 @@ ehci_pci_detach(device_ptr_t self, int flags)
 		sc->sc.sc_size = 0;
 	}
 	return (0);
+}
+
+void
+ehci_pci_givecontroller(struct ehci_pci_softc *sc)
+{
+	u_int32_t cparams, eec, legsup;
+	int eecp;
+
+	cparams = EREAD4(&sc->sc, EHCI_HCCPARAMS);
+	for (eecp = EHCI_HCC_EECP(cparams); eecp != 0;
+	    eecp = EHCI_EECP_NEXT(eec)) {
+		eec = pci_conf_read(sc->sc_pc, sc->sc_tag, eecp);
+		if (EHCI_EECP_ID(eec) != EHCI_EC_LEGSUP)
+			continue;
+		legsup = eec;
+		pci_conf_write(sc->sc_pc, sc->sc_tag, eecp,
+		    legsup & ~EHCI_LEGSUP_OSOWNED);
+	}
+}
+
+void
+ehci_pci_takecontroller(struct ehci_pci_softc *sc)
+{
+	u_int32_t cparams, eec, legsup;
+	int eecp, i;
+
+	cparams = EREAD4(&sc->sc, EHCI_HCCPARAMS);
+	/* Synchronise with the BIOS if it owns the controller. */
+	for (eecp = EHCI_HCC_EECP(cparams); eecp != 0;
+	    eecp = EHCI_EECP_NEXT(eec)) {
+		eec = pci_conf_read(sc->sc_pc, sc->sc_tag, eecp);
+		if (EHCI_EECP_ID(eec) != EHCI_EC_LEGSUP)
+			continue;
+		legsup = eec;
+		pci_conf_write(sc->sc_pc, sc->sc_tag, eecp,
+		    legsup | EHCI_LEGSUP_OSOWNED);
+		if (legsup & EHCI_LEGSUP_BIOSOWNED) {
+			DPRINTF(("%s: waiting for BIOS to give up control\n",
+			    USBDEVNAME(sc->sc.sc_bus.bdev)));
+			for (i = 0; i < 5000; i++) {
+				legsup = pci_conf_read(sc->sc_pc, sc->sc_tag,
+				    eecp);
+				if ((legsup & EHCI_LEGSUP_BIOSOWNED) == 0)
+					break;
+				DELAY(1000);
+			}
+			if (legsup & EHCI_LEGSUP_BIOSOWNED)
+				printf("%s: timed out waiting for BIOS\n",
+				    USBDEVNAME(sc->sc.sc_bus.bdev));
+		}
+	}
+}
+
+void
+ehci_pci_shutdown(void *v)
+{
+	struct ehci_pci_softc *sc = (struct ehci_pci_softc *)v;
+
+	ehci_shutdown(&sc->sc);
+	ehci_pci_givecontroller(sc);
 }
