@@ -1,4 +1,5 @@
-$OpenBSD: README.PKI,v 1.1 1999/07/17 21:54:39 niklas Exp $
+$OpenBSD: README.PKI,v 1.2 1999/07/17 22:00:19 niklas Exp $
+$EOM: README.PKI,v 1.2 1999/07/17 21:29:47 niklas Exp $
 
 1	Create your own CA as root.
 
