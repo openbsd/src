@@ -1,4 +1,4 @@
-/*	$OpenBSD: hmereg.h,v 1.3 1998/07/13 02:27:42 jason Exp $	*/
+/*	$OpenBSD: hmereg.h,v 1.4 1998/07/17 21:33:08 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -311,48 +311,6 @@ struct hme_tcvr {
 /* Transceiver status register */
 #define TCVR_STAT_BASIC		0xffff0000	/* The "basic" part */
 #define TCVR_STAT_NORMAL	0x0000ffff	/* The "non-basic" part */
-
-struct hme_rxd {
-	volatile u_int32_t	rx_flags;
-	volatile u_int32_t	rx_addr;
-};
-#define	RXFLAG_OWN		0x80000000	/* desc owner: 1=hw,0=sw */
-#define RXFLAG_OVERFLOW		0x40000000	/* 1 = buffer over flow */
-#define RXFLAG_SIZE		0x3fff0000	/* desciptor size */
-#define RXFLAG_CSUM		0x0000ffff	/* checksum mask */
-
-struct hme_txd {
-	volatile u_int32_t	tx_flags;
-	volatile u_int32_t	tx_addr;
-};
-#define	TXFLAG_OWN		0x80000000	/* desc owner: 1=hw,0=sw */
-#define	TXFLAG_SOP		0x40000000 	/* 1 = start of pkt */
-#define	TXFLAG_EOP		0x20000000	/* 1 = end of pkt */
-#define	TXFLAG_CSENABLE		0x10000000	/* 1 = use hw checksums */
-#define	TXFLAG_CSLOCATION	0x0ff00000	/* checksum location mask */
-#define	TXFLAG_CSBUFBEGIN	0x000fc000	/* checksum begin mask */
-#define	TXFLAG_SIZE		0x00003fff 	/* pkt size mask */
-
-#define RX_RING_SIZE	32	/* Must be 32, 64, 128, or 256 */
-#define TX_RING_SIZE	32	/* Must be 16<=x<=255, and divisible by 16 */
-#define RX_RING_MAX	256	/* maximum ring size: rx */
-#define TX_RING_MAX	256	/* maximum ring size: tx */
-#define RX_PKT_BUF_SZ	2048	/* size of a rx buffer */
-#define RX_OFFSET	2	/* packet offset */
-#define RX_CSUMLOC	0x00	/* checksum location */
-#define TX_PKT_BUF_SZ	1546	/* size of a tx buffer */
-#define RX_ALIGN_SIZE	64	/* rx packet buffers must align on 64 bytes */
-#define RX_ALIGN_MASK	(~(RX_ALIGN_SIZE - 1))
-
-struct hme_desc {
-	struct hme_rxd hme_rxd[RX_RING_MAX];
-	struct hme_txd hme_txd[TX_RING_MAX];
-};
-
-struct hme_bufs {
-	char rx_buf[RX_RING_SIZE][RX_PKT_BUF_SZ];
-	char tx_buf[TX_RING_SIZE][TX_PKT_BUF_SZ];
-};
 
 /* hme flags */
 #define	HME_FLAG_POLL		0x00000001	/* polling mif? */

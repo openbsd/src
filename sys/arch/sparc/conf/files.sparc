@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc,v 1.18 1998/07/10 19:20:11 jason Exp $
+#	$OpenBSD: files.sparc,v 1.19 1998/07/17 21:33:05 jason Exp $
 #	$NetBSD: files.sparc,v 1.44 1997/08/31 21:29:16 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
@@ -113,6 +113,13 @@ device	me {}
 attach	me at qec
 file	arch/sparc/dev/me.c		me
 
+# HappyMeal (hme) ethernet
+device hme
+attach hme at sbus
+file	arch/sparc/dev/hme.c		hme
+
+file	arch/sparc/dev/stp2002base.c	hme | be
+
 device esp: scsi, ncr53c9x
 attach esp at sbus, dma, obio
 file	arch/sparc/dev/esp.c		esp
@@ -121,11 +128,6 @@ device audioamd: audio
 attach audioamd at mainbus, obio, sbus
 file	arch/sparc/dev/amd7930.c	audio
 file	arch/sparc/sparc/amd7930intr.s	audio
-
-# HappyMeal (hme) ethernet
-device hme
-attach hme at sbus
-file	arch/sparc/dev/hme.c		hme
 
 # Brooktree DAC attribute
 define bt_dac

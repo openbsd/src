@@ -1,4 +1,4 @@
-/*	$OpenBSD: hmevar.h,v 1.1 1998/07/10 19:09:12 jason Exp $	*/
+/*	$OpenBSD: hmevar.h,v 1.2 1998/07/17 21:33:10 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -33,7 +33,6 @@
 
 struct hme_softc {
 	struct	device sc_dev;		/* base device */
-	struct	arpcom sc_arpcom;	/* ethernet common */
 	struct	sbusdev sc_sd;		/* sbus device */
 	struct	intrhand sc_ih;		/* interrupt vectoring */
 	int	sc_node;		/* which sbus node */
@@ -61,8 +60,5 @@ struct hme_softc {
 	/*
 	 * RX/TX ring buffers, descriptors, and counters
 	 */
-	struct	hme_desc *sc_desc, *sc_desc_dva;	/* descriptors */
-	struct	hme_bufs *sc_bufs, *sc_bufs_dva;	/* buffers */
-	int	sc_first_td, sc_last_td, sc_no_td;	/* tx counters */
-	int	sc_last_rd;				/* rx counter */
+	struct	stp_base sc_stp;
 };
