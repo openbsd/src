@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.18 2002/06/11 09:40:32 hugh Exp $
+#	$OpenBSD: RAMDISK,v 1.19 2002/12/10 23:46:49 miod Exp $
 
 machine 	vax			# machine type
 
@@ -42,9 +42,6 @@ option		INET		# IP + ICMP + TCP + UDP
 option		BOOT_CONFIG	# boot-time kernel config
 
 config		bsd	root on rd0a swap on rd0b	# and sd0b
-
-# WS console uses VT100 terminal emulation
-#option		WSEMUL_VT100
 
 # Old compat stuff; needed to run 4.3BSD Reno programs.
 # Note that if COMPAT_ULTRIX is set, you lose compatibility with

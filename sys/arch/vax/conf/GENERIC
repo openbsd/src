@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.31 2002/05/11 09:54:08 hugh Exp $
+#	$OpenBSD: GENERIC,v 1.32 2002/12/10 23:46:49 miod Exp $
 #	$NetBSD: GENERIC,v 1.61 2000/04/19 06:50:36 itojun Exp $
 
 machine 	vax			# machine type; required
@@ -27,10 +27,6 @@ option		VAX53		# VAX 4000 10X, MicroVAX 3100m9X
 maxusers	8	
 
 option		SCSIVERBOSE	# Verbose SCSI errors
-
-# WS console uses VT100 terminal emulation
-option		WSEMUL_VT100
-option		WSDISPLAY_DEFAULTSCREENS=8
 
 # Old compat stuff; needed to run 4.3BSD Reno programs.
 # Note that if COMPAT_ULTRIX is set, you lose compatibility with
