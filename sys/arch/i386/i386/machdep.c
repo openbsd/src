@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.260 2004/01/06 21:09:20 tedu Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.261 2004/01/12 08:09:23 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -271,6 +271,7 @@ int	cpu_dump(void);
 void	identifycpu(void);
 void	init386(paddr_t);
 void	consinit(void);
+void	(*cpuresetfn)(void);
 
 int	bus_mem_add_mapping(bus_addr_t, bus_size_t,
 	    int, bus_space_handle_t *);
@@ -1596,6 +1597,19 @@ cyrix6x86_cpu_setup(cpu_device, model, step)
 #endif
 }
 
+#if defined(I586_CPU) || defined(I686_CPU)
+void	natsem6x86_cpureset(void);
+
+void
+natsem6x86_cpureset(void)
+{
+	/* reset control SC1100 (datasheet page 170) */
+	outl(0xCF8, 0x80009044UL);
+	/* system wide reset */
+	outb(0xCFC, 0x0F);
+}
+#endif
+
 void
 natsem6x86_cpu_setup(cpu_device, model, step)
 	const char *cpu_device;
@@ -1610,8 +1624,10 @@ natsem6x86_cpu_setup(cpu_device, model, step)
 		cpu_feature &= ~CPUID_TSC;
 		break;
 	}
+	cpuresetfn = natsem6x86_cpureset;
 #endif
 }
+
 
 void
 intel586_cpu_setup(cpu_device, model, step)
@@ -3059,6 +3075,9 @@ cpu_reset()
 	struct region_descriptor region;
 
 	disable_intr();
+
+	if (cpuresetfn)
+		(*cpuresetfn)();
 
 	/* Toggle the hardware reset line on the keyboard controller. */
 	outb(IO_KBD + KBCMDP, KBC_PULSE0);
