@@ -1,4 +1,4 @@
-/*	$OpenBSD: intvec.s,v 1.14 2001/08/25 13:33:37 hugh Exp $   */
+/*	$OpenBSD: intvec.s,v 1.15 2002/04/29 19:13:24 miod Exp $   */
 /*	$NetBSD: intvec.s,v 1.39 1999/06/28 08:20:48 itojun Exp $   */
 
 /*
@@ -34,8 +34,7 @@
 
 #include "assym.h"
 
-#include "ppp.h"
-#include "bridge.h"
+#include <net/netisr.h>
 
 #define ENTRY(name) \
 	.text			; \
@@ -284,31 +283,11 @@ ENTRY(sbiflt);
 
 ENTRY(netint)
 	PUSHR
-#ifdef INET
-	bbcc	$NETISR_ARP,_netisr,1f; calls $0,_arpintr; 1:
-	bbcc	$NETISR_IP,_netisr,1f; calls $0,_ipintr; 1:
-#endif
-#ifdef INET6
-	bbcc	$NETISR_IPV6,_netisr,1f; calls $0,_ip6intr; 1:
-#endif
-#ifdef NETATALK
-	bbcc	$NETISR_ATALK,_netisr,1f; calls $0,_atintr; 1:
-#endif
-#ifdef NS
-	bbcc	$NETISR_NS,_netisr,1f; calls $0,_nsintr; 1:
-#endif
-#ifdef ISO
-	bbcc	$NETISR_ISO,_netisr,1f; calls $0,_clnlintr; 1:
-#endif
-#ifdef CCITT
-	bbcc	$NETISR_CCITT,_netisr,1f; calls $0,_ccittintr; 1:
-#endif
-#if NPPP > 0
-	bbcc	$NETISR_PPP,_netisr,1f; calls $0,_pppintr; 1:
-#endif
-#if NBRIDGE > 0
-	bbcc	$NETISR_BRIDGE,_netisr,1f; calls $0, _bridgeintr; 1:
-#endif
+/* XXX this relies on -traditional-cpp, since we can't use _C_LABEL here */
+#define	DONETISR(bit, fn) \
+	bbcc	$bit,_netisr,1f; calls $0,_/**/fn; 1:
+#include <net/netisr_dispatch.h>
+#undef	DONETISR
 	POPR
 	rei
 
