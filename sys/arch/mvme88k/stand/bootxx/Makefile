@@ -1,11 +1,11 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/10/93
-#	$OpenBSD: Makefile,v 1.7 2003/08/01 07:42:33 miod Exp $
+#	$OpenBSD: Makefile,v 1.8 2003/08/20 19:36:59 miod Exp $
 
 S=	${.CURDIR}/../../../..
 DEFS=-DSTAGE2_RELOC=${STAGE2_RELOC} 
 INCPATH=-I${.CURDIR} -I${.CURDIR}/../libsa -I${.CURDIR}/../libbug \
 	-I${.CURDIR}/../../include -I${S} -I${S}/lib/libsa
-CFLAGS=-O0 ${INCPATH} ${DEFS} ${COPTS}
+CFLAGS+=${INCPATH} ${DEFS} ${COPTS}
 CLEANFILES+=bootxx
 
 .include "${S}/arch/mvme88k/stand/bugcrt/Makefile.inc"

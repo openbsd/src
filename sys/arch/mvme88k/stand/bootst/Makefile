@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/10/93
-#	$OpenBSD: Makefile,v 1.8 2003/08/01 07:42:32 miod Exp $
+#	$OpenBSD: Makefile,v 1.9 2003/08/20 19:36:59 miod Exp $
 
 SIZE?=	size
 
@@ -7,7 +7,7 @@ S=	${.CURDIR}/../../../..
 DEFS= -DSTANDALONE -DCOMPAT_NOLABEL
 INCPATH=-I${.CURDIR} -I${.CURDIR}/../libsa -I${.CURDIR}/../libbug \
 	-I${.CURDIR}/../../include -I${S} -I${S}/lib/libsa
-CFLAGS=-O0 ${INCPATH} ${DEFS} ${COPTS}
+CFLAGS+=${INCPATH} ${DEFS} ${COPTS}
 LDFLAGS=-s -N -T ${STAGE2_RELOC}
 CLEANFILES+=stboot bootst bootst.bug
 
