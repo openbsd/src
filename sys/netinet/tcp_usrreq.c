@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.23 1998/06/10 06:24:48 deraadt Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.24 1998/06/11 16:47:17 deraadt Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -82,7 +82,7 @@ extern	int tcptv_keep_init;
 /* from in_pcb.c */
 extern	struct baddynamicports baddynamicports;
 
-static int tcp_ident __P((void *, size_t *, void *,	size_t));
+int tcp_ident __P((void *, size_t *, void *, size_t));
 
 /*
  * Process a TCP user request for TCP tb.  If this is a send request
@@ -580,10 +580,9 @@ tcp_usrclosed(tp)
 }
 
 /*
- * Look up a socket for ident.. 
+ * Look up a socket for ident..
  */
-
-static int
+int
 tcp_ident(oldp, oldlenp, newp, newlen)
 	void *oldp;
 	size_t *oldlenp;
@@ -594,21 +593,19 @@ tcp_ident(oldp, oldlenp, newp, newlen)
 	struct tcp_ident_mapping tir;
 	struct inpcb *inp;
 	struct sockaddr_in *fin, *lin;
-	
 
-	if (oldp == NULL || newp != NULL || newlen != 0) 
+	if (oldp == NULL || newp != NULL || newlen != 0)
 		return (EINVAL);
-	if  (*oldlenp < sizeof(tir)) 
+	if  (*oldlenp < sizeof(tir))
 		return (ENOMEM);
 	if ((error = copyin (oldp, &tir, sizeof (tir))) != 0 )
 		return (error);
-	if (tir.faddr.sa_len != sizeof (struct sockaddr) 
-	    || (tir.faddr.sa_family != AF_INET))    
-		return (EINVAL); 
-	fin = (struct sockaddr_in *) &tir.faddr;
-	lin = (struct sockaddr_in *) &tir.laddr;
-	
-	
+	if (tir.faddr.sa_len != sizeof (struct sockaddr) ||
+	    tir.faddr.sa_family != AF_INET)
+		return (EINVAL);
+	fin = (struct sockaddr_in *)&tir.faddr;
+	lin = (struct sockaddr_in *)&tir.laddr;
+
 	s = splsoftnet ();
 	inp = in_pcbhashlookup (&tcbtable,  fin->sin_addr, fin->sin_port,
 	    lin->sin_addr, lin->sin_port);
@@ -630,7 +627,6 @@ tcp_ident(oldp, oldlenp, newp, newlen)
 	error = copyout ((void *)&tir, oldp, sizeof (tir));
 	return (error);
 }
-  
 
 /*
  * Sysctl for tcp variables.
@@ -678,7 +674,7 @@ tcp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 
 	case TCPCTL_SENDSPACE:
 		return (sysctl_int(oldp, oldlenp, newp, newlen,&tcp_sendspace));
-	case TCPCTL_IDENT: 
+	case TCPCTL_IDENT:
 	        return (tcp_ident(oldp, oldlenp, newp, newlen));
 	default:
 		return (ENOPROTOOPT);
