@@ -1,4 +1,4 @@
-/*	$OpenBSD: exchange.c,v 1.71 2002/11/06 23:57:36 ho Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.72 2002/11/08 10:16:30 ho Exp $	*/
 /*	$EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	*/
 
 /*
@@ -866,6 +866,7 @@ exchange_establish_p1 (struct transport *t, u_int8_t type, u_int32_t doi,
     {
       log_print ("exchange_establish_p1: message_alloc () failed");
       exchange_free (exchange);
+      return;
     }
   msg->exchange = exchange;
 
