@@ -1,12 +1,16 @@
-#	$Id: Makefile.inc,v 1.5 2000/01/06 07:11:41 d Exp $
-#	$OpenBSD: Makefile.inc,v 1.5 2000/01/06 07:11:41 d Exp $
+#	$Id: Makefile.inc,v 1.6 2000/10/04 05:55:35 d Exp $
+#	$OpenBSD: Makefile.inc,v 1.6 2000/10/04 05:55:35 d Exp $
 
 .PATH:	 ${LIBC_RSRCDIR}/sys ${LIBC_RSRCDIR}/arch/${MACHINE_ARCH}
 
-SRCS+=	uthread_error.c _atomic_lock.c slow_atomic_lock.c
+SRCS+=	uthread_error.c
+SRCS+=	_atomic_lock.c slow_atomic_lock.c
 
-.if exists(${LIBC_RSRCDIR}/arch/${MACHINE_ARCH}/uthread_machdep.S)
-SRCS+=	uthread_machdep.S
+.if exists(${LIBC_RSRCDIR}/arch/${MACHINE_ARCH}/uthread_machdep_asm.S)
+SRCS+=	uthread_machdep_asm.S
+.endif
+.if exists(${LIBC_RSRCDIR}/arch/${MACHINE_ARCH}/uthread_machdep.c)
+SRCS+=	uthread_machdep.c
 .endif
 
 .if (${LIB} == "c_r")

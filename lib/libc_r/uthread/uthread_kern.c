@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_kern.c,v 1.9 1999/11/25 07:01:37 d Exp $	*/
+/*	$OpenBSD: uthread_kern.c,v 1.10 2000/10/04 05:55:35 d Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -39,7 +39,6 @@
 #include <string.h>
 #include <poll.h>
 #include <unistd.h>
-#include <setjmp.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -77,6 +76,7 @@ void
 _thread_kern_sched(struct sigcontext * scp)
 {
 	pthread_t       pthread, pthread_h = NULL;
+	pthread_t	old_thread_run;
 	struct itimerval itimer;
 	struct timespec ts, ts1;
 	struct timeval  tv, tv1;
@@ -100,29 +100,10 @@ _thread_kern_sched(struct sigcontext * scp)
 		/*
 		 * Save floating point state.
 		 */
-		_thread_machdep_save_float_state(_thread_run);
+		_thread_machdep_save_float_state(&_thread_run->_machdep);
 
 		/* Flag the signal context as the last state saved: */
 		_thread_run->sig_saved = 1;
-	}
-	/* Save the state of the current thread: */
-	else if (_thread_machdep_setjmp(_thread_run->saved_jmp_buf) != 0) {
-		/*
-		 * This point is reached when a longjmp() is called to
-		 * restore the state of a thread. 
-		 *
-		 * This is the normal way out of the scheduler.
-		 */
-		_thread_kern_in_sched = 0;
-
-		if (_sched_switch_hook != NULL) {
-			/* Run the installed switch hook: */
-			thread_run_switch_hook(_last_user_thread, _thread_run);
-		}
-
-		_thread_check_cancel();
-
-		return;
 	} else
 		/* Flag the jump buffer was the last state saved: */
 		_thread_run->sig_saved = 0;
@@ -134,12 +115,15 @@ _thread_kern_sched(struct sigcontext * scp)
 	/* Save errno. */
 	_thread_run->error = errno;
 
+	/* Save the current thread to switch from */
+	old_thread_run = _thread_run;
+
 	/*
 	 * Enter a scheduling loop that finds the next thread that is
 	 * ready to run. This loop completes when there are no more threads
 	 * in the global list or when a thread has its state restored by
 	 * either a sigreturn (if the state was saved as a sigcontext) or a
-	 * longjmp (if the state was saved by a setjmp). 
+	 * switch.
 	 */
 	while (!(TAILQ_EMPTY(&_thread_list))) {
 		/* Get the current time of day: */
@@ -541,7 +525,7 @@ _thread_kern_sched(struct sigcontext * scp)
 				/*
 				 * Restore floating point state.
 				 */
-				_thread_machdep_restore_float_state(_thread_run);
+				_thread_machdep_restore_float_state(&_thread_run->_machdep);
 
 				/*
 				 * Do a sigreturn to restart the thread that
@@ -561,15 +545,33 @@ _thread_kern_sched(struct sigcontext * scp)
 				_thread_sys_sigreturn(&_thread_run->saved_sigcontext);
 			} else {
 				/*
-				 * Do a longjmp to restart the thread that
-				 * was context switched out (by a longjmp to
-				 * a different thread): 
+				 * This is the normal way out of the scheduler.
 				 */
-				_thread_machdep_longjmp(_thread_run->saved_jmp_buf, 1);
+				_thread_kern_in_sched = 0;
+
+				if (_sched_switch_hook != NULL) {
+					/* Run the installed switch hook: */
+					thread_run_switch_hook(_last_user_thread,
+					    _thread_run);
+				}
+
+				_thread_check_cancel();
+
+				/*
+				 * Resume thread _thread_run.
+				 */
+				_thread_machdep_switch(&_thread_run->_machdep,
+					&old_thread_run->_machdep);
+				/*
+				 * This thread is now the new _thread_run
+				 * again.
+				 */
+				return;
+
 			}
 
 			/* This point should not be reached. */
-			PANIC("Thread has returned from sigreturn or longjmp");
+			PANIC("Thread has returned from sigreturn or switch");
 		}
 	}
 

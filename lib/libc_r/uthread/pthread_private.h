@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_private.h,v 1.19 2000/01/06 07:13:56 d Exp $	*/
+/*	$OpenBSD: pthread_private.h,v 1.20 2000/10/04 05:55:35 d Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -41,7 +41,6 @@
 /*
  * Include files.
  */
-#include <setjmp.h>
 #include <signal.h>
 #include <sys/queue.h>
 #include <sys/types.h>
@@ -513,16 +512,10 @@ struct pthread {
 	 */
 	struct  sigcontext saved_sigcontext;
 
-	/* 
-	 * Saved jump buffer used in call to longjmp by _thread_kern_sched
-	 * if sig_saved is FALSE.
-	 */
-	_machdep_jmp_buf	saved_jmp_buf;
-
 	/*
-	 * Further machine-dependent context, valid if sig_saved is FALSE.
+	 * Machine-dependent context, valid if sig_saved is FALSE.
 	 */
-	struct _machdep_struct	_machdep;
+	struct _machdep_state	_machdep;
 
 	/*
 	 * TRUE if the last state saved was a signal context. FALSE if the
@@ -690,6 +683,16 @@ struct pthread {
 };
 
 /*
+ * Flags and prototypes for the machine dependent layer
+ */
+void _thread_machdep_switch(struct _machdep_state *newstate, 
+        struct _machdep_state *savestate);
+void _thread_machdep_init(struct _machdep_state *state, void *stackbase, 
+        int stacksize, void (*entry)(void));
+void _thread_machdep_save_float_state(struct _machdep_state* statep);
+void _thread_machdep_restore_float_state(struct _machdep_state* statep);
+
+/*
  * Global variables for the uthread kernel.
  */
 
@@ -847,6 +850,7 @@ int	_thread_slow_atomic_lock(volatile _spinlock_lock_t *);
 int	_thread_slow_atomic_is_locked(volatile _spinlock_lock_t *);
 struct stack * _thread_stack_alloc(void *, size_t);
 void	_thread_stack_free(struct stack *);
+
 
 /* #include <signal.h> */
 #ifdef _USER_SIGNAL_H

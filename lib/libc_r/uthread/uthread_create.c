@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_create.c,v 1.13 2000/01/06 07:15:05 d Exp $	*/
+/*	$OpenBSD: uthread_create.c,v 1.14 2000/10/04 05:55:35 d Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -104,16 +104,13 @@ pthread_create(pthread_t * thread, const pthread_attr_t * attr,
 			/* Initialise the thread for signals: */
 			new_thread->sigmask = _thread_run->sigmask;
 
-			/* Initialise the jump buffer: */
-			_thread_machdep_setjmp(new_thread->saved_jmp_buf);
-
 			/*
-			 * Set up new stack frame so that it looks like it
-			 * returned from a longjmp() to the beginning of
-			 * _thread_start().
+			 * Set up new stack frame so that it 'returns' to
+			 * the beginning of _thread_start() after it is
+			 * switched to:
 			 */
-			_thread_machdep_thread_create(new_thread, _thread_start,
-			    pattr);
+			_thread_machdep_init(&new_thread->_machdep,
+			    stack->base, stack->size, _thread_start);
 
 			/* Copy the thread attributes: */
 			memcpy(&new_thread->attr, pattr, sizeof(struct pthread_attr));
