@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.15 2004/12/06 21:03:12 deraadt Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.16 2004/12/06 21:58:31 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -230,13 +230,13 @@ static struct cvs_cmd {
 		"Server mode",
 	},
 	{
-		CVS_OP_STATUS, "status",   {}, cvs_status,
+		CVS_OP_STATUS, "status",   { "st", "stat" }, cvs_status,
 		"",
 		"",
 		"Display status information on checked out files",
 	},
 	{
-		CVS_OP_TAG, "tag",      { "ta", }, NULL,
+		CVS_OP_TAG, "tag",      { "ta", "freeze" }, NULL,
 		"",
 		"",
 		"Add a symbolic tag to checked out version of files",
@@ -248,13 +248,13 @@ static struct cvs_cmd {
 		"Undo an edit command",
 	},
 	{
-		CVS_OP_UPDATE, "update",   {}, cvs_update,
+		CVS_OP_UPDATE, "update",   { "up", "upd" }, cvs_update,
 		"",
 		"",
 		"Bring work tree in sync with repository",
 	},
 	{
-		CVS_OP_VERSION, "version",  {}, cvs_version,
+		CVS_OP_VERSION, "version",  { "ve", "ver" }, cvs_version,
 		"", "",
 		"Show current CVS version(s)",
 	},
