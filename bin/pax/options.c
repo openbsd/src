@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.29 1997/07/25 18:58:32 mickey Exp $	*/
+/*	$OpenBSD: options.c,v 1.30 1997/09/01 18:29:54 deraadt Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: options.c,v 1.29 1997/07/25 18:58:32 mickey Exp $";
+static char rcsid[] = "$OpenBSD: options.c,v 1.30 1997/09/01 18:29:54 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -612,8 +612,8 @@ tar_options(argc, argv)
 	 * process option flags
 	 */
 	while ((c = getoldopt(argc, argv,
-	    "b:cef:hmopruts:vwxzBC:HLOPXZ014578")) 
-	    != EOF)  {
+	    "b:cef:hmopruts:vwxzBC:HLOPXZ014578"))
+	    != EOF) {
 		switch(c) {
 		case 'b':
 			/*
@@ -816,7 +816,7 @@ tar_options(argc, argv)
 	default:
 		{
 			int sawpat = 0;
-				
+
 			while (*argv != NULL) {
 				if (strcmp(*argv, "-C") == 0) {
 					if(*++argv == NULL)
@@ -833,9 +833,9 @@ tar_options(argc, argv)
 			 * if patterns were added, we are doing	chdir()
 			 * on a file-by-file basis, else, just one 
 			 * global chdir (if any) after opening input.
-			*/
+			 */
 			if (sawpat > 0)
-				chdname = NULL;	
+				chdname = NULL;
 		}
 		break;
 	case ARCHIVE:

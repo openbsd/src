@@ -1,4 +1,4 @@
-/*	$OpenBSD: chio.c,v 1.5 1996/12/14 12:17:35 mickey Exp $	*/
+/*	$OpenBSD: chio.c,v 1.6 1997/09/01 18:29:12 deraadt Exp $	*/
 /*	$NetBSD: chio.c,v 1.1.1.1 1996/04/03 00:34:38 thorpej Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
-#include <sys/chio.h> 
+#include <sys/chio.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>

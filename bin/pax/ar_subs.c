@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar_subs.c,v 1.11 1997/07/25 18:58:24 mickey Exp $	*/
+/*	$OpenBSD: ar_subs.c,v 1.12 1997/09/01 18:29:44 deraadt Exp $	*/
 /*	$NetBSD: ar_subs.c,v 1.5 1995/03/21 09:07:06 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: ar_subs.c,v 1.11 1997/07/25 18:58:24 mickey Exp $";
+static char rcsid[] = "$OpenBSD: ar_subs.c,v 1.12 1997/09/01 18:29:44 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -915,7 +915,7 @@ copy()
 		 * try to create a hard link to the src file if requested
 		 * but make sure we are not trying to overwrite ourselves.
 		 */
-		if (lflag) 
+		if (lflag)
 			res = cross_lnk(arcn);
 		else
 			res = chk_same(arcn);
@@ -1022,7 +1022,7 @@ next_head(arcn)
 	register int hsz;
 	register int in_resync = 0; 	/* set when we are in resync mode */
 	int cnt = 0;			/* counter for trailer function */
-	
+
 	/*
 	 * set up initial conditions, we want a whole frmt->hsz block as we
 	 * have no data yet.
@@ -1166,7 +1166,7 @@ get_arc()
 	register int minhd = BLKMULT;
 	char *hdend;
 	int notice = 0;
-	
+
 	/*
 	 * find the smallest header size in all archive formats and then set up
 	 * to read the archive.

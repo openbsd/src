@@ -1,4 +1,4 @@
-/*	$OpenBSD: tar.c,v 1.11 1997/07/25 18:58:38 mickey Exp $	*/
+/*	$OpenBSD: tar.c,v 1.12 1997/09/01 18:30:03 deraadt Exp $	*/
 /*	$NetBSD: tar.c,v 1.5 1995/03/21 09:07:49 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: tar.c,v 1.11 1997/07/25 18:58:38 mickey Exp $";
+static char rcsid[] = "$OpenBSD: tar.c,v 1.12 1997/09/01 18:30:03 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -186,7 +186,7 @@ ul_oct(val, str, len, term)
 #endif
 {
 	register char *pt;
-	
+
 	/*
 	 * term selects the appropriate character(s) for the end of the string
 	 */
@@ -250,7 +250,7 @@ uqd_oct(val, str, len, term)
 #endif
 {
 	register char *pt;
-	
+
 	/*
 	 * term selects the appropriate character(s) for the end of the string
 	 */
@@ -319,8 +319,8 @@ tar_chksm(blk, len)
 	 */
 	pt = blk;
 	stop = blk + CHK_OFFSET;
-	while (pt < stop)	
-		chksm += (u_long)(*pt++ & 0xff);	
+	while (pt < stop)
+		chksm += (u_long)(*pt++ & 0xff);
 	/*
 	 * move past the checksum field and keep going, spec counts the
 	 * checksum field as the sum of 8 blanks (which is pre-computed as
@@ -331,7 +331,7 @@ tar_chksm(blk, len)
 	pt += CHK_LEN;
 	stop = blk + len;
 	while (pt < stop)
-		chksm += (u_long)(*pt++ & 0xff);	
+		chksm += (u_long)(*pt++ & 0xff);
 	return(chksm);
 }
 
@@ -1032,7 +1032,7 @@ ustar_wr(arcn)
 	l_strncpy(hd->name, pt, sizeof(hd->name) - 1);
 	hd->name[sizeof(hd->name) - 1] = '\0';
 
-	/* 
+	/*
 	 * set the fields in the header that are type dependent
 	 */
 	switch(arcn->type) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.5 1997/06/19 13:58:49 kstailey Exp $	*/
+/*	$OpenBSD: var.c,v 1.6 1997/09/01 18:30:16 deraadt Exp $	*/
 
 #include "sh.h"
 #include "ksh_time.h"
@@ -159,7 +159,7 @@ global(n)
 	register struct block *l = e->loc;
 	register struct tbl *vp;
 	register int c;
-	unsigned h; 
+	unsigned h;
 	bool_t	 array;
 	int	 val;
 
@@ -405,7 +405,7 @@ getint(vp, nump)
 	int base, neg;
 	int have_base = 0;
 	long num;
-	
+
 	if (vp->flag&SPECIAL)
 		getspec(vp);
 	/* XXX is it possible for ISSET to be set and val.s to be 0? */
@@ -460,7 +460,7 @@ setint_v(vq, vp)
 {
 	int base;
 	long num;
-	
+
 	if ((base = getint(vp, &num)) == -1)
 		return NULL;
 	if (!(vq->flag & INTEGER) && (vq->flag & ALLOC)) {
@@ -583,7 +583,7 @@ typeset(var, set, clr, field, base)
 		return NULL;
 	if (*val == '[') {
 		int len;
-		
+
 		len = array_ref_len(val);
 		if (len == 0)
 			return NULL;

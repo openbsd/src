@@ -1,4 +1,4 @@
-/*	$OpenBSD: gfmt.c,v 1.3 1996/06/23 14:21:50 deraadt Exp $	*/
+/*	$OpenBSD: gfmt.c,v 1.4 1997/09/01 18:30:33 deraadt Exp $	*/
 /*	$NetBSD: gfmt.c,v 1.10 1996/05/07 18:20:08 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)gfmt.c	8.6 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: gfmt.c,v 1.3 1996/06/23 14:21:50 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: gfmt.c,v 1.4 1997/09/01 18:30:33 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -77,7 +77,7 @@ gprint(tp, wp, ldisc)
 }
 
 void
-gread(tp, s) 
+gread(tp, s)
 	struct termios *tp;
 	char *s;
 {

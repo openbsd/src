@@ -1,4 +1,4 @@
-/*	$OpenBSD: pat_rep.c,v 1.10 1997/07/25 18:58:34 mickey Exp $	*/
+/*	$OpenBSD: pat_rep.c,v 1.11 1997/09/01 18:29:56 deraadt Exp $	*/
 /*	$NetBSD: pat_rep.c,v 1.4 1995/03/21 09:07:33 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)pat_rep.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: pat_rep.c,v 1.10 1997/07/25 18:58:34 mickey Exp $";
+static char rcsid[] = "$OpenBSD: pat_rep.c,v 1.11 1997/09/01 18:29:56 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -380,7 +380,7 @@ pat_sel(arcn)
 		 */
 		if (pt->pend != NULL)
 			*pt->pend = '\0';
-			
+
 		if ((pt->pstr = strdup(arcn->name)) == NULL) {
 			paxwarn(1, "Pattern select out of memory");
 			if (pt->pend != NULL)
@@ -405,7 +405,7 @@ pat_sel(arcn)
 		if (*(pt->pstr + len) == '/') {
 			*(pt->pstr + len) = '\0';
 			pt->plen = len;
-		} 
+		}
 		pt->flgs = DIR_MTCH | MTCH;
 		arcn->pat = pt;
 		return(0);
@@ -1055,7 +1055,7 @@ rep_name(name, nlen, prnt)
 			 */
 		} while (pt->flgs & GLOB);
 
-		if (found) 
+		if (found)
 			break;
 
 		/*
@@ -1078,7 +1078,7 @@ rep_name(name, nlen, prnt)
 				paxwarn(1,"Replacement name too long %s >> %s",
 				    name, nname);
 			return(1);
-		} 
+		}
 
 		/*
 		 * inform the user of the result if wanted
@@ -1087,7 +1087,7 @@ rep_name(name, nlen, prnt)
 			if (*nname == '\0')
 				(void)fprintf(stderr,"%s >> <empty string>\n",
 				    name);
-			else 
+			else
 				(void)fprintf(stderr,"%s >> %s\n", name, nname);
 		}
 
@@ -1095,7 +1095,7 @@ rep_name(name, nlen, prnt)
 		 * if empty inform the caller this file is to be skipped
 		 * otherwise copy the new name over the orig name and return
 		 */
-		if (*nname == '\0') 
+		if (*nname == '\0')
 			return(1);
 		*nlen = l_strncpy(name, nname, PAXPATHLEN + 1);
 		name[PAXPATHLEN] = '\0';

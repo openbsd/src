@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftree.c,v 1.7 1997/07/25 18:58:30 mickey Exp $	*/
+/*	$OpenBSD: ftree.c,v 1.8 1997/09/01 18:29:49 deraadt Exp $	*/
 /*	$NetBSD: ftree.c,v 1.4 1995/03/21 09:07:21 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ftree.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: ftree.c,v 1.7 1997/07/25 18:58:30 mickey Exp $";
+static char rcsid[] = "$OpenBSD: ftree.c,v 1.8 1997/09/01 18:29:49 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -220,7 +220,7 @@ ftree_sel(arcn)
 	 * when file trees are supplied pax as args. The list is not used when
 	 * the trees are read from stdin.
 	 */
-	if (ftcur != NULL) 
+	if (ftcur != NULL)
 		ftcur->refcnt = 1;
 
 	/*

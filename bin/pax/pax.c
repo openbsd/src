@@ -1,4 +1,4 @@
-/*	$OpenBSD: pax.c,v 1.10 1997/07/25 18:58:35 mickey Exp $	*/
+/*	$OpenBSD: pax.c,v 1.11 1997/09/01 18:29:58 deraadt Exp $	*/
 /*	$NetBSD: pax.c,v 1.5 1996/03/26 23:54:20 mrg Exp $	*/
 
 /*-
@@ -48,7 +48,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)pax.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: pax.c,v 1.10 1997/07/25 18:58:35 mickey Exp $";
+static char rcsid[] = "$OpenBSD: pax.c,v 1.11 1997/09/01 18:29:58 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -390,27 +390,27 @@ gen_init()
 	n_hand.sa_handler = sig_cleanup;
 
 	if ((sigaction(SIGHUP, &n_hand, &o_hand) < 0) &&
-	    (o_hand.sa_handler == SIG_IGN) && 
+	    (o_hand.sa_handler == SIG_IGN) &&
 	    (sigaction(SIGHUP, &o_hand, &o_hand) < 0))
 		goto out;
 
 	if ((sigaction(SIGTERM, &n_hand, &o_hand) < 0) &&
-	    (o_hand.sa_handler == SIG_IGN) && 
+	    (o_hand.sa_handler == SIG_IGN) &&
 	    (sigaction(SIGTERM, &o_hand, &o_hand) < 0))
 		goto out;
 
 	if ((sigaction(SIGINT, &n_hand, &o_hand) < 0) &&
-	    (o_hand.sa_handler == SIG_IGN) && 
+	    (o_hand.sa_handler == SIG_IGN) &&
 	    (sigaction(SIGINT, &o_hand, &o_hand) < 0))
 		goto out;
 
 	if ((sigaction(SIGQUIT, &n_hand, &o_hand) < 0) &&
-	    (o_hand.sa_handler == SIG_IGN) && 
+	    (o_hand.sa_handler == SIG_IGN) &&
 	    (sigaction(SIGQUIT, &o_hand, &o_hand) < 0))
 		goto out;
 
 	if ((sigaction(SIGXCPU, &n_hand, &o_hand) < 0) &&
-	    (o_hand.sa_handler == SIG_IGN) && 
+	    (o_hand.sa_handler == SIG_IGN) &&
 	    (sigaction(SIGXCPU, &o_hand, &o_hand) < 0))
 		goto out;
 

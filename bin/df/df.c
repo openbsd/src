@@ -1,4 +1,4 @@
-/*	$OpenBSD: df.c,v 1.18 1997/08/19 06:44:54 denny Exp $	*/
+/*	$OpenBSD: df.c,v 1.19 1997/09/01 18:29:24 deraadt Exp $	*/
 /*	$NetBSD: df.c,v 1.21.2.1 1995/11/01 00:06:11 jtc Exp $	*/
 
 /*
@@ -49,7 +49,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: df.c,v 1.18 1997/08/19 06:44:54 denny Exp $";
+static char rcsid[] = "$OpenBSD: df.c,v 1.19 1997/09/01 18:29:24 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -386,7 +386,7 @@ prtstat(sfsp, maxwidth, headerlen, blocksize)
 		used = inodes - sfsp->f_ffree;
 		(void)printf(" %7ld %7ld %5.0f%% ", used, sfsp->f_ffree,
 		   inodes == 0 ? 100.0 : (double)used / (double)inodes * 100.0);
-	} else 
+	} else
 		(void)printf("  ");
 	(void)printf("  %s\n", sfsp->f_mntonname);
 }

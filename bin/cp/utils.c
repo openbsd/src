@@ -1,4 +1,4 @@
-/*	$OpenBSD: utils.c,v 1.8 1997/07/31 17:00:58 kstailey Exp $	*/
+/*	$OpenBSD: utils.c,v 1.9 1997/09/01 18:29:19 deraadt Exp $	*/
 /*	$NetBSD: utils.c,v 1.6 1997/02/26 14:40:51 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utils.c	8.3 (Berkeley) 4/1/94";
 #else
-static char rcsid[] = "$OpenBSD: utils.c,v 1.8 1997/07/31 17:00:58 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: utils.c,v 1.9 1997/09/01 18:29:19 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -69,7 +69,7 @@ copy_file(entp, dne)
 #ifdef VM_AND_BUFFER_CACHE_SYNCHRONIZED
 	char *p;
 #endif
-	
+
 	if ((from_fd = open(entp->fts_path, O_RDONLY, 0)) == -1) {
 		warn("%s", entp->fts_path);
 		return (1);

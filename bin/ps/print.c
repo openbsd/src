@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.7 1997/08/22 20:08:14 kstailey Exp $	*/
+/*	$OpenBSD: print.c,v 1.8 1997/09/01 18:30:19 deraadt Exp $	*/
 /*	$NetBSD: print.c,v 1.27 1995/09/29 21:58:12 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$OpenBSD: print.c,v 1.7 1997/08/22 20:08:14 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: print.c,v 1.8 1997/09/01 18:30:19 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -422,7 +422,7 @@ wchan(k, ve)
 	v = ve->var;
 	if (KI_PROC(k)->p_wchan) {
 		if (KI_PROC(k)->p_wmesg)
-			(void)printf("%-*.*s", v->width, v->width, 
+			(void)printf("%-*.*s", v->width, v->width,
 				      KI_EPROC(k)->e_wmesg);
 		else
 			(void)printf("%-*lx", v->width,
@@ -589,7 +589,7 @@ pagein(k, ve)
 	VAR *v;
 
 	v = ve->var;
-	(void)printf("%*ld", v->width, 
+	(void)printf("%*ld", v->width,
 	    k->ki_u.u_valid ? k->ki_u.u_ru.ru_majflt : 0);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cp.c,v 1.8 1997/08/23 00:01:38 millert Exp $	*/
+/*	$OpenBSD: cp.c,v 1.9 1997/09/01 18:29:17 deraadt Exp $	*/
 /*	$NetBSD: cp.c,v 1.14 1995/09/07 06:14:51 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cp.c	8.5 (Berkeley) 4/29/95";
 #else
-static char rcsid[] = "$OpenBSD: cp.c,v 1.8 1997/08/23 00:01:38 millert Exp $";
+static char rcsid[] = "$OpenBSD: cp.c,v 1.9 1997/09/01 18:29:17 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -110,7 +110,7 @@ main(argc, argv)
 	char *p, **av;
 
 	Hflag = Lflag = Pflag = Rflag = 0;
-	while ((ch = getopt(argc, argv, "HLPRfipr")) != -1) 
+	while ((ch = getopt(argc, argv, "HLPRfipr")) != -1)
 		switch (ch) {
 		case 'H':
 			Hflag = 1;
@@ -192,7 +192,7 @@ main(argc, argv)
 	to.target_end = to.p_end;
 
 	/* Set end of argument list for fts(3). */
-	argv[argc] = NULL;     
+	argv[argc] = NULL;
 
 	/* Strip trailing slashes from source files */
 	for (av = argv; *av != NULL; av++) {
@@ -221,7 +221,7 @@ main(argc, argv)
 	if (r == -1 || !S_ISDIR(to_stat.st_mode)) {
 		/*
 		 * Case (1).  Target is not a directory.
-		 */ 
+		 */
 		if (argc > 1) {
 			usage();
 			exit(1);
@@ -238,7 +238,7 @@ main(argc, argv)
 				stat(*argv, &tmp_stat);
 			else
 				lstat(*argv, &tmp_stat);
-			
+
 			if (S_ISDIR(tmp_stat.st_mode) && (Rflag || rflag))
 				type = DIR_TO_DNE;
 			else
@@ -313,10 +313,10 @@ copy(argv, type, fts_options)
 			if (curr->fts_level == FTS_ROOTLEVEL)
 				if (type != DIR_TO_DNE) {
 					p = strrchr(curr->fts_path, '/');
-					base = (p == NULL) ? 0 : 
+					base = (p == NULL) ? 0 :
 					    (int)(p - curr->fts_path + 1);
 
-					if (!strcmp(&curr->fts_path[base], 
+					if (!strcmp(&curr->fts_path[base],
 					    ".."))
 						base += 1;
 				} else
@@ -329,7 +329,7 @@ copy(argv, type, fts_options)
 				*target_mid++ = '/';
 			*target_mid = '\0';
 			if (target_mid - to.p_path + nlen >= MAXPATHLEN) {
-				warnx("%s%s: name too long (not copied)", 
+				warnx("%s%s: name too long (not copied)",
 				    to.p_path, p);
 				rval = 1;
 				continue;
@@ -385,7 +385,7 @@ copy(argv, type, fts_options)
 			 * umask blocks owner writes, we fail..
 			 */
 			if (dne) {
-				if (mkdir(to.p_path, 
+				if (mkdir(to.p_path,
 				    curr->fts_statp->st_mode | S_IRWXU) < 0)
 					err(1, "%s", to.p_path);
 			} else if (!S_ISDIR(to_stat.st_mode)) {
@@ -401,7 +401,7 @@ copy(argv, type, fts_options)
 			if (pflag && setfile(curr->fts_statp, 0))
 				rval = 1;
 			else if (dne)
-				(void)chmod(to.p_path, 
+				(void)chmod(to.p_path,
 				    curr->fts_statp->st_mode);
 			break;
 		case S_IFBLK:
@@ -417,7 +417,7 @@ copy(argv, type, fts_options)
 			if (Rflag) {
 				if (copy_fifo(curr->fts_statp, !dne))
 					rval = 1;
-			} else 
+			} else
 				if (copy_file(curr, dne))
 					rval = 1;
 			break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar_io.c,v 1.16 1997/07/25 18:58:21 mickey Exp $	*/
+/*	$OpenBSD: ar_io.c,v 1.17 1997/09/01 18:29:42 deraadt Exp $	*/
 /*	$NetBSD: ar_io.c,v 1.5 1996/03/26 23:54:13 mrg Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_io.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: ar_io.c,v 1.16 1997/07/25 18:58:21 mickey Exp $";
+static char rcsid[] = "$OpenBSD: ar_io.c,v 1.17 1997/09/01 18:29:42 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -478,7 +478,7 @@ ar_set_wr()
 	 * will stop us if the archive containing the trailer was not written
 	 */
 	wr_trail = 0;
-	
+
 	/* 
 	 * Add any device dependent code as required here
 	 */
@@ -612,7 +612,7 @@ ar_read(buf, cnt)
 	else
 		paxwarn(0, "End of archive volume %d reached", arvol);
 	return(res);
-} 
+}
 
 /*
  * ar_write()
@@ -730,8 +730,8 @@ ar_write(buf, bsz)
 		paxwarn(1,"Unable to append, trailer re-write failed. Quitting.");
 		return(res);
 	}
-		
-	if (res == 0) 
+
+	if (res == 0)
 		paxwarn(0, "End of archive volume %d reached", arvol);
 	else if (res < 0)
 		syswarn(1, errno, "Failed write to archive volume: %d", arvol);
@@ -811,7 +811,7 @@ ar_rdsync()
 		if ((cpos = lseek(arfd, (off_t)0L, SEEK_CUR)) < 0)
 			break;
 		mpos = fsbz - (cpos % (off_t)fsbz);
-		if (lseek(arfd, mpos, SEEK_CUR) < 0) 
+		if (lseek(arfd, mpos, SEEK_CUR) < 0)
 			break;
 		lstrval = 1;
 		break;
@@ -870,7 +870,7 @@ ar_fow(sksz, skipped)
 	 * number of physical blocks to skip (we do not know physical block
 	 * size at this point), so we must only read foward on tapes!
 	 */
-	if (artyp != ISREG) 
+	if (artyp != ISREG)
 		return(0);
 
 	/*
@@ -918,7 +918,7 @@ ar_rev(sksz)
 {
 	off_t cpos;
 	struct mtop mb;
-	register int phyblk; 
+	register int phyblk;
 
 	/*
 	 * make sure we do not have try to reverse on a flawed archive
@@ -928,7 +928,7 @@ ar_rev(sksz)
 
 	switch(artyp) {
 	case ISPIPE:
-		if (sksz <= 0) 
+		if (sksz <= 0)
 			break;
 		/*
 		 * cannot go backwards on these critters
@@ -1238,7 +1238,7 @@ ar_next()
 				/*
 				 * we are to continue with the same device
 				 */
-				if (ar_open(arcname) >= 0) 
+				if (ar_open(arcname) >= 0)
 					return(0);
 				tty_prnt("Cannot re-open %s, try again\n",
 					arcname);

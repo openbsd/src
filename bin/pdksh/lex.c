@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.8 1997/08/05 21:49:55 grr Exp $	*/
+/*	$OpenBSD: lex.c,v 1.9 1997/09/01 18:30:08 deraadt Exp $	*/
 
 /*
  * lexical analysis and source input
@@ -62,7 +62,7 @@ yylex(cf)
 #ifdef KSH
 	else if (cf&LETEXPR) {
 		*wp++ = OQUOTE;	 /* enclose arguments in (double) quotes */
-		istate = SDPAREN;	
+		istate = SDPAREN;
 		ndparen = 0;
 	}
 #endif /* KSH */

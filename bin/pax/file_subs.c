@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_subs.c,v 1.12 1997/07/25 18:58:29 mickey Exp $	*/
+/*	$OpenBSD: file_subs.c,v 1.13 1997/09/01 18:29:48 deraadt Exp $	*/
 /*	$NetBSD: file_subs.c,v 1.4 1995/03/21 09:07:18 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: file_subs.c,v 1.12 1997/07/25 18:58:29 mickey Exp $";
+static char rcsid[] = "$OpenBSD: file_subs.c,v 1.13 1997/09/01 18:29:48 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -582,7 +582,7 @@ unlnk_exist(name, type)
 		 */
 		if (rmdir(name) < 0) {
 			if (type == PAX_DIR)
-				return(1); 
+				return(1);
 			syswarn(1,errno,"Unable to remove directory %s", name);
 			return(-1);
 		}
@@ -898,7 +898,7 @@ file_write(fd, str, cnt, rem, isempt, sz, name)
 	register char *end;
 	register int wcnt;
 	register char *st = str;
-	
+
 	/*
 	 * while we have data to process
 	 */

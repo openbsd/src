@@ -1,4 +1,4 @@
-/*	$OpenBSD: rmail.c,v 1.7 1997/04/09 18:47:53 felix Exp $	*/
+/*	$OpenBSD: rmail.c,v 1.8 1997/09/01 18:30:29 deraadt Exp $	*/
 /*	$NetBSD: rmail.c,v 1.8 1995/09/07 06:51:50 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rmail.c	8.3 (Berkeley) 5/15/95";
 #else
-static char rcsid[] = "$OpenBSD: rmail.c,v 1.7 1997/04/09 18:47:53 felix Exp $";
+static char rcsid[] = "$OpenBSD: rmail.c,v 1.8 1997/09/01 18:30:29 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -53,7 +53,7 @@ static char rcsid[] = "$OpenBSD: rmail.c,v 1.7 1997/04/09 18:47:53 felix Exp $";
  *
  * This program reads the >From ... remote from ... lines that UUCP is so
  * fond of and turns them into something reasonable.  It then execs sendmail
- * with various options built from these lines. 
+ * with various options built from these lines.
  *
  * The expected syntax is:
  *
@@ -288,7 +288,7 @@ main(argc, argv)
 			sprintf (args [i++], "<%s>", *argv);
 		}
 		argv++;
-	} 
+	}
 	args[i] = 0;
 
 	if (debug) {

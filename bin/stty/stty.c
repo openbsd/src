@@ -1,4 +1,4 @@
-/*	$OpenBSD: stty.c,v 1.5 1997/06/04 04:39:33 deraadt Exp $	*/
+/*	$OpenBSD: stty.c,v 1.6 1997/09/01 18:30:35 deraadt Exp $	*/
 /*	$NetBSD: stty.c,v 1.11 1995/03/21 09:11:30 cgd Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)stty.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: stty.c,v 1.5 1997/06/04 04:39:33 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: stty.c,v 1.6 1997/09/01 18:30:35 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -63,7 +63,7 @@ static char rcsid[] = "$OpenBSD: stty.c,v 1.5 1997/06/04 04:39:33 deraadt Exp $"
 #include "extern.h"
 
 int
-main(argc, argv) 
+main(argc, argv)
 	int argc;
 	char *argv[];
 {
@@ -119,7 +119,7 @@ args:	argc -= optind;
 		gprint(&i.t, &i.win, i.ldisc);
 		break;
 	}
-	
+
 	for (i.set = i.wset = 0; *argv; ++argv) {
 		if (ksearch(&argv, &i))
 			continue;

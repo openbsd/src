@@ -1,5 +1,5 @@
 /*	$NetBSD: rcp.c,v 1.9 1995/03/21 08:19:06 cgd Exp $	*/
-/*	$OpenBSD: rcp.c,v 1.14 1997/07/25 18:58:41 mickey Exp $	*/
+/*	$OpenBSD: rcp.c,v 1.15 1997/09/01 18:30:22 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1992, 1993
@@ -103,7 +103,7 @@ int	 kerberos __P((char **, char *, char *, char *));
 void	 oldw __P((const char *, ...));
 /* XXX from ../../usr.bin/rlogin/krcmd.c */
 int krcmd __P((char **, u_short, char *, char *, int *, char *));
-int krcmd_mutual __P((char **, u_short, char *, char *, int *, 
+int krcmd_mutual __P((char **, u_short, char *, char *, int *,
 		       char *, CREDENTIALS *, Key_schedule));
 #endif
 int	 response __P((void));
@@ -364,10 +364,10 @@ tolocal(argc, argv)
 		if ((bp = malloc(len)) == NULL)
 			err(1, NULL);
 		(void)snprintf(bp, len, "%s -f %s", cmd, src);
-		rem = 
+		rem =
 #ifdef KERBEROS
-		    use_kerberos ? 
-			kerberos(&host, bp, pwd->pw_name, suser) : 
+		    use_kerberos ?
+			kerberos(&host, bp, pwd->pw_name, suser) :
 #endif
 			rcmd(&host, port, pwd->pw_name, suser, bp, 0);
 		(void)free(bp);
@@ -711,7 +711,7 @@ bad:			run_err("%s: %s", np, strerror(errno));
 					j = write(ofd, bp->buf, count);
 					if (j != count) {
 						wrerr = YES;
-						wrerrno = j >= 0 ? EIO : errno; 
+						wrerrno = j >= 0 ? EIO : errno;
 					}
 				}
 				count = 0;
@@ -721,7 +721,7 @@ bad:			run_err("%s: %s", np, strerror(errno));
 		if (count != 0 && wrerr == NO &&
 		    (j = write(ofd, bp->buf, count)) != count) {
 			wrerr = YES;
-			wrerrno = j >= 0 ? EIO : errno; 
+			wrerrno = j >= 0 ? EIO : errno;
 		}
 		if (ftruncate(ofd, size)) {
 			run_err("%s: truncate: %s", np, strerror(errno));
@@ -777,8 +777,8 @@ again:
 		errno = 0;
 		if (dest_realm == NULL)
 			dest_realm = krb_realmofhost(*host);
-		rem = 
-		    doencrypt ? 
+		rem =
+		    doencrypt ?
 			krcmd_mutual(host,
 			    port, user, bp, 0, dest_realm, &cred, schedule) :
 			krcmd(host, port, user, bp, 0, dest_realm);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf_subs.c,v 1.6 1997/07/25 18:58:25 mickey Exp $	*/
+/*	$OpenBSD: buf_subs.c,v 1.7 1997/09/01 18:29:46 deraadt Exp $	*/
 /*	$NetBSD: buf_subs.c,v 1.5 1995/03/21 09:07:08 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)buf_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: buf_subs.c,v 1.6 1997/07/25 18:58:25 mickey Exp $";
+static char rcsid[] = "$OpenBSD: buf_subs.c,v 1.7 1997/09/01 18:29:46 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -105,7 +105,7 @@ wr_start()
 	 * archive that might be hard to read elsewhere. If all ok, we then
 	 * open the first archive volume
 	 */
-	if (!wrblksz)  
+	if (!wrblksz)
 		wrblksz = frmt->bsz;
 	if (wrblksz > MAXBLK) {
 		paxwarn(1, "Write block size of %d too large, maximium is: %d",
@@ -819,7 +819,7 @@ rd_wrfile(arcn, ofd, left)
 	/*
 	 * if we failed from archive read, we do not want to skip
 	 */
-	if ((size > 0L) && (*left == 0L)) 
+	if ((size > 0L) && (*left == 0L))
 		return(-1);
 
 	/*
@@ -1028,7 +1028,7 @@ buf_flush(bufcnt)
 		/*
 		 * write a block and check if it all went out ok
 		 */
-		cnt = ar_write(buf, blksz); 
+		cnt = ar_write(buf, blksz);
 		if (cnt == blksz) {
 			/*
 			 * the write went ok

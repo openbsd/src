@@ -1,4 +1,4 @@
-/*	$OpenBSD: sub.c,v 1.5 1996/12/14 12:17:58 mickey Exp $	*/
+/*	$OpenBSD: sub.c,v 1.6 1997/09/01 18:29:31 deraadt Exp $	*/
 /*	$NetBSD: sub.c,v 1.4 1995/03/21 09:04:50 cgd Exp $	*/
 
 /* sub.c: This file contains the substitution routines for the ed 
@@ -33,7 +33,7 @@
 #if 0
 static char *rcsid = "@(#)sub.c,v 1.1 1994/02/01 00:34:44 alm Exp";
 #else
-static char rcsid[] = "$OpenBSD: sub.c,v 1.5 1996/12/14 12:17:58 mickey Exp $";
+static char rcsid[] = "$OpenBSD: sub.c,v 1.6 1997/09/01 18:29:31 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -194,7 +194,7 @@ substitute_matching_text(pat, lp, gflag, kth)
 
 	if ((txt = get_sbuf_line(lp)) == NULL)
 		return ERR;
-	if (isbinary) 
+	if (isbinary)
 		NUL_TO_NEWLINE(txt, lp->len);
 	eot = txt + lp->len;
 	if (!regexec(pat, txt, SE_MAX, rm, 0)) {

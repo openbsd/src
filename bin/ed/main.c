@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.11 1997/08/05 22:22:55 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.12 1997/09/01 18:29:30 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/03/21 09:04:44 cgd Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
@@ -39,7 +39,7 @@ char *copyright =
 #if 0
 static char *rcsid = "@(#)main.c,v 1.1 1994/02/01 00:34:42 alm Exp";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.11 1997/08/05 22:22:55 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.12 1997/09/01 18:29:30 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -212,7 +212,7 @@ top:
 				fputs("?\n", stderr);
 				strcpy(errmsg, "warning: file modified");
 				if (!interactive) {
-					fprintf(stderr, garrulous ? 
+					fprintf(stderr, garrulous ?
 					    "script, line %d: %s\n" :
 					    "", lineno, errmsg);
 					quit(2);
@@ -245,16 +245,16 @@ top:
 			fputs("?\n", stderr);		/* give warning */
 			strcpy(errmsg, "warning: file modified");
 			if (!interactive) {
-				fprintf(stderr, garrulous ? 
-				    "script, line %d: %s\n" : 
+				fprintf(stderr, garrulous ?
+				    "script, line %d: %s\n" :
 				    "", lineno, errmsg);
 				quit(2);
 			}
 			break;
 		case FATAL:
 			if (!interactive)
-				fprintf(stderr, garrulous ? 
-				    "script, line %d: %s\n" : "", 
+				fprintf(stderr, garrulous ?
+				    "script, line %d: %s\n" : "",
 				    lineno, errmsg);
 			else
 				fprintf(stderr, garrulous ? "%s\n" : "",
@@ -263,7 +263,7 @@ top:
 		default:
 			fputs("?\n", stderr);
 			if (!interactive) {
-				fprintf(stderr, garrulous ? 
+				fprintf(stderr, garrulous ?
 				    "script, line %d: %s\n" : "",
 				    lineno, errmsg);
 				quit(2);
@@ -568,7 +568,7 @@ exec_command()
 			GET_COMMAND_SUFFIX();
 		isglobal++;
 		if (exec_global(n, gflag) < 0)
-			return ERR; 
+			return ERR;
 		break;
 	case 'h':
 		if (addr_cnt > 0) {
@@ -711,7 +711,7 @@ exec_command()
 				sflags |= SGR;
 				ibufp++;
 				break;
-			case '0': case '1': case '2': case '3': case '4': 
+			case '0': case '1': case '2': case '3': case '4':
 			case '5': case '6': case '7': case '8': case '9':
 				STRTOL(sgnum, ibufp);
 				sflags |= SGF;
@@ -822,7 +822,7 @@ exec_command()
 			return ERR;
 		}
 #endif
-		if ((addr = write_file(*fnp ? fnp : old_filename, 
+		if ((addr = write_file(*fnp ? fnp : old_filename,
 		    (c == 'W') ? "a" : "w", first_addr, second_addr)) < 0)
 			return ERR;
 		else if (addr == addr_last)
@@ -1168,7 +1168,7 @@ move_lines(addr)
 		REQUE(b2, b1->q_forw);
 		REQUE(a1->q_back, a2);
 		REQUE(b1, a1);
-		current_addr = addr + ((addr < first_addr) ? 
+		current_addr = addr + ((addr < first_addr) ?
 		    second_addr - first_addr + 1 : 0);
 	}
 	if (isglobal)
