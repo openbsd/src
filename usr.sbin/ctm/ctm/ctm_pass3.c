@@ -6,7 +6,7 @@
  * this stuff is worth it, you can buy me a beer in return.   Poul-Henning Kamp
  * ----------------------------------------------------------------------------
  *
- * $Id: ctm_pass3.c,v 1.1.1.1 1996/10/30 17:32:58 graichen Exp $
+ * $Id: ctm_pass3.c,v 1.2 1998/11/22 22:50:35 deraadt Exp $
  *
  */
 
@@ -139,10 +139,11 @@ Pass3(FILE *fd)
 		case CTM_F_Gid:  GETFIELDCOPY(gid,sep); break;
 		case CTM_F_Mode: GETFIELDCOPY(mode,sep); break;
 		case CTM_F_MD5:
-		    if(j & CTM_Q_MD5_Before)
+		    if(j & CTM_Q_MD5_Before) {
 			GETFIELDCOPY(md5before,sep);
-		    else
+		    } else {
 			GETFIELDCOPY(md5,sep);
+		    }
 		    break;
 		case CTM_F_Count: GETBYTECNT(cnt,sep); break;
 		case CTM_F_Bytes: GETDATA(trash,cnt); break;
