@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.272 2004/02/01 19:23:54 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.273 2004/02/02 01:15:58 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1141,9 +1141,7 @@ viac3_rnd(void *v)
 	struct timeout *tmo = v;
 	unsigned int *p, i, rv, creg0, len = VIAC3_RNG_BUFSIZ;
 	static int buffer[VIAC3_RNG_BUFSIZ + 2];
-	int s;
 
-	s = splhigh();
 	creg0 = rcr0();		/* Permit access to SIMD/FPU path */
 	lcr0(creg0 & ~(CR0_EM|CR0_TS));
 
@@ -1162,7 +1160,6 @@ viac3_rnd(void *v)
 		add_true_randomness(*p);
 
 	timeout_add(tmo, (hz>100)?(hz/100):1);
-	splx(s);
 }
 
 #ifdef CRYPTO
@@ -1237,9 +1234,7 @@ viac3_crypto_setup(void)
 
 	crypto_register(vc3_sc->sc_cid, algs, viac3_crypto_newsession,
 	    viac3_crypto_freesession, viac3_crypto_process);
-#ifdef notdef
 	i386_has_xcrypt = 1;
-#endif
 }
 
 int
@@ -1439,9 +1434,7 @@ viac3_crypto(void *cw, void *src, void *dst, void *key, int rep,
     void *iv, int type)
 {
 	unsigned int creg0;
-	int s;
 
-	s = splhigh();
 	creg0 = rcr0();		/* Permit access to SIMD/FPU path */
 	lcr0(creg0 & ~(CR0_EM|CR0_TS));
 
@@ -1479,7 +1472,6 @@ viac3_crypto(void *cw, void *src, void *dst, void *key, int rep,
 	}
 
 	lcr0(creg0);
-	splx(s);
 }
 
 #endif /* CRYPTO */
