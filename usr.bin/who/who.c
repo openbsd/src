@@ -1,4 +1,4 @@
-/*	$OpenBSD: who.c,v 1.13 2003/04/07 21:14:28 deraadt Exp $	*/
+/*	$OpenBSD: who.c,v 1.14 2003/04/14 03:13:07 deraadt Exp $	*/
 /*	$NetBSD: who.c,v 1.4 1994/12/07 04:28:49 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)who.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: who.c,v 1.13 2003/04/07 21:14:28 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: who.c,v 1.14 2003/04/14 03:13:07 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -231,8 +231,9 @@ output(up)
 		if (now == 0)
 			time(&now);
 		
-		strcpy(line, _PATH_DEV);
-		strncat(line, up->ut_line, sizeof (up->ut_line));
+		memset(line, 0, sizeof line);
+		strlcpy(line, _PATH_DEV, sizeof line);
+		strlcat(line, up->ut_line, sizeof line);
 
 		if (stat(line, &sb) == 0) {
 			state = (sb.st_mode & 020) ? '+' : '-';
