@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.24 2001/03/28 20:03:00 angelos Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.25 2001/03/30 19:24:35 angelos Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -806,7 +806,8 @@ m_inject(m0, len0, siz, wait)
 	}
 
 	n->m_len = siz;
-	m0->m_pkthdr.len += siz;
+	if (m0->m_flags & M_PKTHDR)
+		m0->m_pkthdr.len += siz;
 	m->m_len -= remain; /* Trim */
 	if (n2)	{
 	        for (n3 = n; n3->m_next != NULL; n3 = n3->m_next)
