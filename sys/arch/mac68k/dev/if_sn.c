@@ -1,5 +1,5 @@
 /*	$NetBSD: if_sn.c,v 1.7 1997/03/20 17:47:51 scottr Exp $	*/
-/*	$OpenBSD: if_sn.c,v 1.20 1997/04/13 14:14:51 briggs Exp $	*/
+/*	$OpenBSD: if_sn.c,v 1.21 1997/04/18 11:58:34 briggs Exp $	*/
 
 /*
  * National Semiconductor  SONIC Driver
@@ -696,7 +696,6 @@ camprogram(sc)
 	/* Assume we won't need allmulti bit. */
 	ifp->if_flags &= ~IFF_ALLMULTI;
 
-	mcount++;
 	/* Loop through multicast addresses */
 	ETHER_FIRST_MULTI(step, &sc->sc_arpcom, enm);
 	while (enm != NULL) {
@@ -840,6 +839,7 @@ initialise_rra(sc)
 	/* rea must point just past the end of the rra space */
 	NIC_PUT(sc, SNR_REA, LOWER(sc->v_rea));
 	NIC_PUT(sc, SNR_RRP, LOWER(sc->v_rra[0]));
+	NIC_PUT(sc, SNR_RSC, 0);
 
 	/* fill up SOME of the rra with buffers */
 	for (i = 0; i < NRBA; i++) {
