@@ -1,4 +1,4 @@
-/*	$OpenBSD: i386_vm86.c,v 1.2 1997/07/23 20:41:12 kstailey Exp $	*/
+/*	$OpenBSD: i386_vm86.c,v 1.3 1998/02/03 04:42:23 tholo Exp $	*/
 /*	$NetBSD: i386_vm86.c,v 1.1 1996/02/21 00:21:56 jtk Exp $	*/
 
 /*-
@@ -49,6 +49,7 @@ i386_vm86(vmcp)
 	register struct vm86_struct *vmcp;
 {
 
+	/* LINTED pointer cast may be troublesome */
 	return sysarch(I386_VM86, (char *)vmcp);
 }
 

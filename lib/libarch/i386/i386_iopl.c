@@ -1,4 +1,4 @@
-/*	$OpenBSD: i386_iopl.c,v 1.3 1997/07/23 20:41:11 kstailey Exp $	*/
+/*	$OpenBSD: i386_iopl.c,v 1.4 1998/02/03 04:42:21 tholo Exp $	*/
 /*	$NetBSD: i386_iopl.c,v 1.2 1996/02/27 22:57:29 jtc Exp $	*/
 
 /*-
@@ -40,6 +40,7 @@
 #include <sys/cdefs.h>
 #include <sys/types.h>
 
+#include <machine/segments.h>
 #include <machine/sysarch.h>
 
 int
@@ -50,5 +51,6 @@ i386_iopl(iopl)
 
 	p.iopl = iopl;
 
+	/* LINTED pointer casts may be troublesome */
 	return sysarch(I386_IOPL, (char *)&p);
 }
