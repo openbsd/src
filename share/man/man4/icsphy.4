@@ -1,4 +1,4 @@
-.\"	$OpenBSD: icsphy.4,v 1.5 2001/05/31 09:08:21 deraadt Exp $
+.\"	$OpenBSD: icsphy.4,v 1.6 2003/02/19 14:40:26 miod Exp $
 .\"	$NetBSD: icsphy.4,v 1.1 1998/11/04 05:53:58 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,19 +36,19 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 31, 2001
+.Dd February 19, 2003
 .Dt ICSPHY 4
 .Os
 .Sh NAME
 .Nm icsphy
-.Nd Integrated Circuit Systems ICS1890 and ICS1892 10/100 Ethernet PHY driver
+.Nd Integrated Circuit Systems ICS189x 10/100 Ethernet PHY driver
 .Sh SYNOPSIS
 .Cd "icsphy* at mii? phy ?"
 .Sh DESCRIPTION
 The
 .Nm
 driver supports the Integrated Circuit Systems ICS1890 10/100 Ethernet PHYs
-and its successor ICS1892.
+and its successors ICS1892 and ICS1893.
 These PHYs are found on a variety of high-performance Ethernet interfaces.
 .Sh SEE ALSO
 .Xr ifmedia 4 ,
