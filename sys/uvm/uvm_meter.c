@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_meter.c,v 1.17 2002/03/14 01:27:18 millert Exp $	*/
+/*	$OpenBSD: uvm_meter.c,v 1.18 2004/05/17 13:08:42 pedro Exp $	*/
 /*	$NetBSD: uvm_meter.c,v 1.21 2001/07/14 06:36:03 matt Exp $	*/
 
 /*
@@ -92,7 +92,7 @@ uvm_meter()
 
 /*
  * uvm_loadav: compute a tenex style load average of a quantity on
- * 1, 5, and 15 minute internvals.
+ * 1, 5, and 15 minute intervals.
  */
 static void
 uvm_loadav(avg)
