@@ -1,4 +1,4 @@
-/*	$OpenBSD: symbol.c,v 1.4 2002/03/15 18:04:41 art Exp $	*/
+/*	$OpenBSD: symbol.c,v 1.5 2002/03/16 01:12:47 art Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -155,9 +155,8 @@ st_open(struct pstate *ps, const char *name, reg offs)
 	if ((st = (*ps->ps_sops->sop_open)(name)) != NULL) {
 		TAILQ_INSERT_TAIL(&ps->ps_syms, st, st_list);
 		strlcpy(st->st_fname, name, sizeof(st->st_fname));
+		st->st_offs = offs;
 	}
-
-	st->st_offs = offs;
 
 	return (st);
 }
