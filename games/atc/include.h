@@ -72,8 +72,6 @@
 #include <curses.h>
 
 #ifdef SYSV
-#define	index	strchr
-#define	rindex	strrchr
 #define bcopy(a,b,c)	memcpy((b), (a), (c))
 #define	bzero(a,b)	memset((a), '\0', (b))
 #define	srandom	srand

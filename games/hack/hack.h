@@ -7,11 +7,6 @@
 #include "config.h"
 #include <string.h>
 
-#ifndef BSD
-#define	index	strchr
-#define	rindex	strrchr
-#endif BSD
-
 #define	Null(type)	((struct type *) 0)
 
 #include	"def.objclass.h"

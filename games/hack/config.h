@@ -19,8 +19,6 @@
  * <sys/time.h>		<time.h>
  * <sgtty.h>		<termio.h>
  * Some routines are called differently
- * index		strchr
- * rindex		strrchr
  * Also, the code for suspend and various ioctls is only given for BSD4.2
  * (I do not have access to a SYSV system.)
  */
