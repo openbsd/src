@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.17 2002/08/22 23:28:19 deraadt Exp $	*/
+/*	$OpenBSD: display.c,v 1.18 2002/08/29 22:45:22 vincent Exp $	*/
 
 /*
  * The functions in this file handle redisplay. The
@@ -486,11 +486,19 @@ update(void)
 #ifdef	NOTAB
 		    && !(curbp->b_flag & BFNOTAB)
 #endif
-			)
+			) {
 			curcol |= 0x07;
-		else if (ISCTRL(c) != FALSE)
-			++curcol;
-		++curcol;
+			curcol++;
+		} else if (ISCTRL(c) != FALSE)
+			curcol += 2;
+		else if (isprint(c))
+			curcol++;
+		else {
+			char bf[5];
+
+			snprintf(bf, sizeof bf, "\\%o", c);
+			curcol += strlen(bf);
+		}
 	}
 	if (curcol >= ncol - 1) {	/* extended line. */
 		/* flag we are extended and changed */
