@@ -1,4 +1,4 @@
-/*	$OpenBSD: unixdev.c,v 1.2 2005/01/11 11:47:11 uwe Exp $	*/
+/*	$OpenBSD: unixdev.c,v 1.3 2005/01/24 22:20:33 uwe Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Michael Shalayeff
@@ -43,12 +43,15 @@ unixstrategy(void *devdata, int rw, daddr_t blk, size_t size, void *buf,
     size_t *rsize)
 {
 	int	rc = 0;
+	off_t	off;
 
 #ifdef	UNIX_DEBUG
 	printf("unixstrategy: %s %d bytes @ %d\n",
 	    (rw==F_READ?"reading":"writing"), size, blk);
 #endif
-	if ((rc = ulseek((int)devdata, blk * DEV_BSIZE, 0)) >= 0)
+
+	off = (off_t)blk * DEV_BSIZE;
+	if ((rc = ulseek((int)devdata, off, SEEK_SET)) >= 0)
 		rc = (rw==F_READ) ? uread((int)devdata, buf, size) :
 		    uwrite((int)devdata, buf, size);
 
@@ -112,13 +115,31 @@ unixioctl(struct open_file *f, u_long cmd, void *data)
 	return uioctl((int)f->f_devdata, cmd, data);
 }
 
-#if 0
 off_t
 ulseek(int fd, off_t off, int wh)
 {
-	return __syscall((quad_t)SYS_lseek, fd, 0, off, wh);
+	extern	long ulseek32(int, long, int);
+	off_t	r;
+
+	/* XXX only SEEK_SET is used, so anything else can fail for now. */
+
+	if (wh == SEEK_SET) {
+		if (ulseek32(fd, 0, SEEK_SET) != 0)
+			return -1;
+		while (off > OFFT_OFFSET_MAX) {
+			off -= OFFT_OFFSET_MAX;
+			if (ulseek32(fd, OFFT_OFFSET_MAX, SEEK_CUR) < 0 &&
+			    errno != EOVERFLOW)
+				return -1;
+		}
+		r = ulseek32(fd, (long)off, SEEK_CUR);
+		if (r == -1 && errno == EOVERFLOW)
+			r = off;
+	} else
+		r = ulseek32(fd, (long)off, wh);
+
+	return r;
 }
-#endif
 
 
 void

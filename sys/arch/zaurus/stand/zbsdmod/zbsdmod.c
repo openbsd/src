@@ -1,4 +1,4 @@
-/*	$OpenBSD: zbsdmod.c,v 1.4 2005/01/14 08:10:17 uwe Exp $	*/
+/*	$OpenBSD: zbsdmod.c,v 1.5 2005/01/24 22:20:33 uwe Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -19,6 +19,9 @@
  */
 
 #include "compat_linux.h"
+
+#define BOOTARGS_BUFSIZ	256
+#define BOOTARGS_MAJIC	0x4f425344
 
 #define ZBOOTDEV_MAJOR	99
 #define ZBOOTDEV_MODE	0222
@@ -57,13 +60,14 @@ static	int isopen;
 static	loff_t position;
 
 /* Outcast local variables to avoid stack usage in elf32bsdboot(). */
-static	Elf32_Phdr phdr[32];
 static	unsigned int sz;
 static	int i;
+static	vaddr_t minv;
 static	int *addr;
 
 /* The maximum size of a kernel image is restricted to 8MB. */
 static	int bsdimage[2097152];	/* XXX use kmalloc() */
+static	char bootargs[BOOTARGS_BUFSIZ];
 
 /*
  * Boot the loaded BSD kernel image, or return if an error is found.
@@ -74,21 +78,18 @@ elf32bsdboot(void)
 {
 	int cpsr;
 
-#define elf ((Elf32_Ehdr *)bsdimage)
+#define elf	((Elf32_Ehdr *)bsdimage)
+#define phdr	((Elf32_Phdr *)((char *)elf + elf->e_phoff))
 
 	if (memcmp(elf->e_ident, ELFMAG, SELFMAG) != 0 ||
 	    elf->e_ident[EI_CLASS] != ELFCLASS32)
 		return;
 
-	sz = elf->e_phnum * sizeof(Elf32_Phdr);
-	while (sz > 0) {
-		sz--;
-		((char *)phdr)[sz] = (((char *)elf) + elf->e_phoff)[sz];
-	}
-
 	__asm__ volatile ("mrs %0, cpsr_all" : "=r" (cpsr));
 	cpsr |= 0xc0;  /* set FI */
 	__asm__ volatile ("msr cpsr_all, %0" :: "r" (cpsr));
+
+	minv = (vaddr_t)~0;
 
 	for (i = 0; i < elf->e_phnum; i++) {
 
@@ -108,11 +109,19 @@ elf32bsdboot(void)
 				sz--;
 				((char *)phdr[i].p_vaddr)[sz] =
 				    (((char *)elf) + phdr[i].p_offset)[sz];
+				if (minv > phdr[i].p_vaddr)
+					minv = phdr[i].p_vaddr;
 			}
 		}
 	}
 
-	addr = (int *)0xa0200000;
+	sz = BOOTARGS_BUFSIZ;
+	while (sz > 0) {
+		sz--;
+		((char *)minv - BOOTARGS_BUFSIZ)[sz] = bootargs[sz];
+	}
+
+	addr = (int *)(elf->e_entry);
 	__asm__ volatile (
 		"mov  r0, %0;"
 		"mov  r2, #0;"
@@ -208,12 +217,20 @@ zbsdmod_close(struct inode *ino, struct file *f)
 		if (position > 0) {
 			printk("%s: loaded %d bytes\n", ZBOOTDEV_NAME,
 			    position);
+
+			if (position < BOOTARGS_BUFSIZ) {
+				*(int *)bootargs = BOOTARGS_MAJIC;
+				bootargs[position + sizeof(int)] = '\0';
+				memcpy(bootargs + sizeof(int), bsdimage,
+				    position);
+			} else {
 #ifndef _TEST
-			elf32bsdboot();
-			printk("%s: boot failed\n", ZBOOTDEV_NAME);
+				elf32bsdboot();
+				printk("%s: boot failed\n", ZBOOTDEV_NAME);       
 #else
-			printk("/* boot() */\n");
+				printk("/* boot() */\n");
 #endif
+			}
 		}
 		isopen = 0;
 		return 0;

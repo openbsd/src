@@ -236,10 +236,10 @@ extern struct user *proc0paddr;
 void	zaurus_reset(void);
 void	zaurus_powerdown(void);
 
-#if 0
+#define	BOOT_STRING_MAGIC 0x4f425344
+
+char	bootargs[MAX_BOOT_STRING];
 void	process_kernel_args(char *);
-void	parse_mi_bootargs(char *args);
-#endif
 
 void	consinit(void);
 void	early_clkman(u_int, int);
@@ -748,15 +748,11 @@ initarm(void *arg)
 			     (tmp & ~(1<<4)) | (1<<0));
 	}
 
-#if 0
 	/*
 	 * Examine the boot args string for options we need to know about
 	 * now.
 	 */
-	process_kernel_args((char *)nwbootinfo.bt_args);
-#else
-	boothowto = RB_AUTOBOOT;
-#endif
+	process_kernel_args((char *)0xa0200000 - MAX_BOOT_STRING - 1);
 #ifdef RAMDISK_HOOKS
         boothowto |= RB_DFLTROOT;
 #endif /* RAMDISK_HOOKS */
@@ -1178,15 +1174,22 @@ initarm(void *arg)
 	return(kernelstack.pv_va + USPACE_SVC_STACK_TOP);
 }
 
-#if 0
 void
 process_kernel_args(char *args)
 {
 
+	if (*(int *)args != BOOT_STRING_MAGIC) {
+		boothowto = RB_AUTOBOOT;
+		return;
+	}
+
+	*(int *)args = 0;
+	args += sizeof(int);
+
 	boothowto = 0;
 
 	/* Make a local copy of the bootargs */
-	strncpy(bootargs, args, MAX_BOOT_STRING);
+	strncpy(bootargs, args, MAX_BOOT_STRING - sizeof(int));
 
 	args = bootargs;
 	boot_file = bootargs;
@@ -1206,9 +1209,10 @@ process_kernel_args(char *args)
 	printf("bootfile: %s\n", boot_file);
 	printf("bootargs: %s\n", boot_args);
 
+#if 1
 	parse_mi_bootargs(boot_args);
-}
 #endif
+}
 
 #ifdef KGDB
 #ifndef KGDB_DEVNAME

@@ -1,4 +1,4 @@
-/*	$OpenBSD: compat_linux.h,v 1.3 2005/01/10 21:50:54 deraadt Exp $	*/
+/*	$OpenBSD: compat_linux.h,v 1.4 2005/01/24 22:20:33 uwe Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -25,13 +25,21 @@
 #include <compat/linux/linux_fcntl.h>
 #endif
 
+#define	INT_LIMIT(x)		(~((x)1 << (sizeof(x)*8 - 1)))
+#define	OFFSET_MAX		INT_LIMIT(long long)
+#define	OFFT_OFFSET_MAX		INT_LIMIT(long)
+
 #undef	O_RDONLY
 #undef	O_WRONLY
 #undef	SEEK_SET
+#undef	SEEK_CUR
 
 #define O_RDONLY		LINUX_O_RDONLY
 #define O_WRONLY		LINUX_O_WRONLY
 #define SEEK_SET		0
+#define SEEK_CUR		1
+
+#define	EOVERFLOW		75
 
 /* linux/asm/unistd.h */
 #define __NR_SYSCALL_BASE	0x900000
@@ -40,7 +48,7 @@
 #define __NR_write		(__NR_SYSCALL_BASE+  4)
 #define __NR_open		(__NR_SYSCALL_BASE+  5)
 #define __NR_close		(__NR_SYSCALL_BASE+  6)
-#define __NR_lseek		(__NR_SYSCALL_BASE+ 19)
+#define __NR_lseek32		(__NR_SYSCALL_BASE+ 19)
 #define __NR_ioctl		(__NR_SYSCALL_BASE+ 54)
 #define __NR__new_select	(__NR_SYSCALL_BASE+142)
 #define __NR_select		__NR__new_select /* XXX */

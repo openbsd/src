@@ -1,4 +1,4 @@
-/*	$OpenBSD: arm32_machdep.c,v 1.6 2005/01/21 16:22:32 miod Exp $	*/
+/*	$OpenBSD: arm32_machdep.c,v 1.7 2005/01/24 22:20:32 uwe Exp $	*/
 /*	$NetBSD: arm32_machdep.c,v 1.42 2003/12/30 12:33:15 pk Exp $	*/
 
 /*
@@ -525,7 +525,7 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 }
 #endif
 
-#if 0
+#if 1
 void
 parse_mi_bootargs(args)
 	char *args;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: unixsys.S,v 1.3 2005/01/10 21:50:54 deraadt Exp $	*/
+/*	$OpenBSD: unixsys.S,v 1.4 2005/01/24 22:20:33 uwe Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -30,7 +30,7 @@
 RSYSCALL(open)
 RSYSCALL(read)
 RSYSCALL(write)
-RSYSCALL(lseek)
+RSYSCALL(lseek32)
 RSYSCALL(ioctl)
 RSYSCALL(close)
 RSYSCALL(exit)

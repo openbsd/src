@@ -1,5 +1,5 @@
 /* $NetBSD: loadfile.c,v 1.10 2000/12/03 02:53:04 tsutsui Exp $ */
-/* $OpenBSD: loadfile.c,v 1.1 2005/01/10 00:25:03 deraadt Exp $ */
+/* $OpenBSD: loadfile.c,v 1.2 2005/01/24 22:20:33 uwe Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -91,6 +91,7 @@
 #include "compat_linux.h"
 #include "pathnames.h"
 #include <lib/libsa/loadfile.h>
+#include <stand/boot/cmd.h>
 
 #define BOOT_ZBOOT
 
@@ -630,9 +631,56 @@ static int
 zboot_exec(int fd, u_long *marks, int flags)
 {
 	char buf[512];
+	char *p;
 	int tofd;
 	int sz;
-	int total = 0;
+	int i;
+
+	/* XXX cheating here by assuming that Xboot() was called before. */
+
+	tofd = uopen(_PATH_ZBOOT, O_WRONLY);
+	if (tofd == -1) {
+		printf("%s: can't open (errno %d)\n", _PATH_ZBOOT, errno);
+		return 1;
+	}
+
+	p = cmd.path;
+	for (; *p != '\0'; p++)
+		if (*p == ':') {
+			strlcpy(buf, p+1, sizeof(buf));
+			break;
+		}
+	if (*p == '\0')
+		strlcpy(buf, cmd.path, sizeof(buf));
+
+	p = buf;
+	for (; *p == '/'; p++)
+		;
+
+	sz = strlen(p);
+	if (uwrite(tofd, p, sz) != sz) {
+		printf("zboot_exec: argument write error\n");
+		goto err;
+	}
+
+	buf[0] = ' ';
+	i = (cmd.argc > 1 && cmd.argv[1][0] != '-') ? 2 : 1;
+	for (; i < cmd.argc; i++) {
+
+		if (i > 0 && uwrite(tofd, buf, 1) != 1) {
+			printf("zboot_exec: argument write error\n");
+			goto err;
+		}
+
+		sz = strlen(cmd.argv[i]);
+		if (uwrite(tofd, cmd.argv[i], sz) != sz) {
+			printf("zboot_exec: argument write error\n");
+			goto err;
+		}
+	}
+
+	/* Commit boot arguments. */
+	uclose(tofd);
 
 	tofd = uopen(_PATH_ZBOOT, O_WRONLY);
 	if (tofd == -1) {
@@ -650,7 +698,6 @@ zboot_exec(int fd, u_long *marks, int flags)
 			printf("%s: write error\n", _PATH_ZBOOT);
 			goto err;
 		}
-		total += sz;
 	}
 
 	if (sz < 0) {
@@ -662,19 +709,12 @@ zboot_exec(int fd, u_long *marks, int flags)
 		printf("zboot_exec: write error\n");
 		goto err;
 	}
-	total += sz;
 
-	/*
-	 * Module is now armed.  Reboot is triggered in run_loadfile().
-	 */
-
-	printf("zboot_exec: %d bytes written\n", total);
-
-	close(tofd);
+	uclose(tofd);
 	return 0;
 
 err:
-	close(tofd);
+	uclose(tofd);
 	return 1;
 }
 #endif /* BOOT_ZBOOT */
