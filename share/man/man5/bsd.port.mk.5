@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.47 2001/08/24 14:43:28 todd Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.48 2001/08/24 15:01:02 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -700,17 +700,23 @@ Command to use to apply all patches.
 Defaults to
 .Pa /usr/bin/patch .
 .It Ev PATCHORIG
-Suffix used by using the '-b' option of 
-.Xr patch 1
-(to determine original file suffix names) created
-from ${PATCHDIR}/patch-* and
+Suffix used by
+.Ar patch
+to rename original files, and
 .Ar update-patches
-which generates the above patches looking for files with this suffix.
+to re-generate 
+.Pa ${PATCHDIR}/${PATCH_LIST}
+by looking for files using this suffix.
 Defaults to
 .Pa .orig .
-Set this if you have a port that already contains .orig files in the
-${DISTFILES} to something else, such as
+For a port that already contains 
+.Pa .orig 
+files in the ${DISTFILES},
+set this to something else, such as
 .Pa .pat.orig .
+See also
+.Ar distpatch ,
+.Ev DISTORIG .
 .It Ev PATCH_CASES
 In the normal distpatch stage (when
 .Ev PATCHFILES
