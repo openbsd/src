@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.30 2004/03/11 12:41:36 henning Exp $ */
+/*	$OpenBSD: log.c,v 1.31 2004/04/16 04:47:19 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -362,14 +362,16 @@ log_notification(const struct peer *peer, u_int8_t errcode, u_int8_t subcode,
 }
 
 void
-log_conn_attempt(const struct peer *peer, struct in_addr remote)
+log_conn_attempt(const struct peer *peer, struct sockaddr *sa)
 {
-	char *p;
+	char *p, buf[48];
 
-	if (peer == NULL)	/* connection from non-peer, drop */
-		logit(LOG_INFO, "connection from non-peer %s refused",
-			    inet_ntoa(remote));
-	else {
+
+	if (peer == NULL) {	/* connection from non-peer, drop */
+		if (inet_ntop(sa->sa_family, sa, buf, sizeof(buf)) == NULL)
+			strlcpy(buf, "(unknown)", sizeof(buf));
+		logit(LOG_INFO, "connection from non-peer %s refused", buf);
+	} else {
 		p = log_fmt_peer(&peer->conf);
 		logit(LOG_INFO, "Connection attempt from %s while session is "
 		    "in state %s", p, statenames[peer->state]);
