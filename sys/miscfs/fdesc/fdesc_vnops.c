@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdesc_vnops.c,v 1.15 1999/08/13 07:05:46 csapuntz Exp $	*/
+/*	$OpenBSD: fdesc_vnops.c,v 1.16 1999/10/13 06:32:23 art Exp $	*/
 /*	$NetBSD: fdesc_vnops.c,v 1.32 1996/04/11 11:24:29 mrg Exp $	*/
 
 /*
@@ -646,11 +646,11 @@ fdesc_setattr(v)
 	 * Can setattr the underlying vnode, but not sockets!
 	 */
 	switch (fp->f_type) {
-	case DTYPE_PIPE:
 	case DTYPE_VNODE:
 		error = VOP_SETATTR((struct vnode *) fp->f_data, ap->a_vap, ap->a_cred, ap->a_p);
 		break;
 
+	case DTYPE_PIPE:
 	case DTYPE_SOCKET:
 		if (vap->va_flags != VNOVAL)
 			error = EOPNOTSUPP;
