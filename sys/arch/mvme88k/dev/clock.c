@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.22 2003/09/28 18:03:41 miod Exp $ */
+/*	$OpenBSD: clock.c,v 1.23 2003/09/28 22:10:20 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1995 Theo de Raadt
@@ -231,9 +231,7 @@ sbc_clockintr(eframe)
 {
 	sys_pcc2->pcc2_t1irq = prof_reset;
 
-	/* increment intr counter */
 	intrcnt[M88K_CLK_IRQ]++;
-
 	hardclock(eframe);
 #if NBUGTTY > 0
 	bugtty_chkinput();
@@ -277,43 +275,30 @@ m188_clockintr(eframe)
 	void *eframe;
 {
 	volatile int tmp;
-	int *volatile dti_stop = (int *volatile)DART_STOPC;
-	int *volatile dti_start = (int *volatile)DART_STARTC;
-        int *volatile ist = (int *volatile)MVME188_IST;
 
-	/* increment intr counter */
-	intrcnt[M88K_CLK_IRQ]++;
 	/* acknowledge the timer interrupt */
-	dma_cachectl(0xFFF82000, 0x1000, DMA_CACHE_SYNC_INVAL);
-	tmp = *dti_stop;
-
 #if 0
-	/* clear the counter/timer output OP3 while we program the DART */
-	*((int *volatile) DART_OPCR) = 0x00;
-
-	/* do the stop counter/timer command */
-	tmp = *((int *volatile) DART_STOPC);
-
-	/* set counter/timer to counter mode, clock/16 */
-	*((int *volatile) DART_ACR) = 0x30;
-
-	*((int *volatile) DART_CTUR) = counter / 256;	     /* set counter MSB */
-	*((int *volatile) DART_CTLR) = counter % 256;	     /* set counter LSB */
-	*((int *volatile) DART_IVR) = SYSCV_TIMER1;	  /* set interrupt vec */
+	dma_cachectl(DART_BASE, PAGE_SIZE, DMA_CACHE_SYNC_INVAL);
+#else
+	tmp = *(int *volatile)DART_ISR;
 #endif
+
+	/* stop the timer while the interrupt is being serviced */
+	tmp = *(int *volatile)DART_STOPC;
+
+	intrcnt[M88K_CLK_IRQ]++;
 	hardclock(eframe);
 #if NBUGTTY > 0
 	bugtty_chkinput();
 #endif /* NBUGTTY */
 
-	/* give the start counter/timer command */
-	tmp = *dti_start;
-#if 0
-	*((int *volatile) DART_OPCR) = 0x04;
-#endif
-	if (*ist & DTI_BIT) {
+	tmp = *(int *volatile)DART_STARTC;
+
+#ifdef CLOCK_DEBUG
+	if (*(int *volatile)MVME188_IST & DTI_BIT) {
 		printf("DTI not clearing!\n");
 	}
+#endif
 
 	return (1);
 }
