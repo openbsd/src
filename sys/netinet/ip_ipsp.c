@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.82 2000/03/28 07:04:02 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.83 2000/04/19 03:37:35 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -559,7 +559,7 @@ reserve_spi(u_int32_t sspi, u_int32_t tspi, union sockaddr_union *src,
 
 	if (tdbp != (struct tdb *) NULL)
 	  continue;
-	
+
 	MALLOC(tdbp, struct tdb *, sizeof(struct tdb), M_TDB, M_WAITOK);
 	bzero((caddr_t) tdbp, sizeof(struct tdb));
 	
@@ -1083,6 +1083,7 @@ tdb_rehash(void)
 	  tdbp->tdb_hnext = new_tdbh[hashval];
 	  new_tdbh[hashval] = tdbp;
       }
+
     FREE(tdbh, M_TDB);
     tdbh = new_tdbh;
 }
@@ -1377,6 +1378,7 @@ tdb_delete(struct tdb *tdbp, int delchain, int expflags)
 
     if (delchain && tdbpn)
       tdb_delete(tdbpn, delchain, expflags);
+
     splx(s);
 }
 
