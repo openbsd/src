@@ -1,0 +1,61 @@
+.\" $OpenBSD: ntpd.conf.5,v 1.1 2004/06/18 04:11:24 henning Exp $
+.\"
+.\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF MIND, USE, DATA OR PROFITS, WHETHER IN
+.\" AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+.\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd June 17, 2004
+.Dt NTPD.CONF 5
+.Os
+.Sh NAME
+.Nm ntpd.conf
+.Nd Network Time Protocol daemon configuration file
+.Sh DESCRIPTION
+The
+.Ar ntpd
+daemon implements the Network Time Protocol version 4.
+The settings are as follows:
+.Bl -tag -width xxxxxxxx
+.It Ar listen on
+Specify a local IP address the
+.Ar ntpd
+daemon should listen on.
+.Bd -literal -offset indent
+listen on 127.0.0.1
+.Ed
+.Pp
+Can appear multiple times,
+.Ar ntpd
+will listen on each given address.
+.It Ar server
+Specify the IP address of a
+.Ar ntp
+server to syncronize to.
+.Bd -literal -offset indent
+server 10.0.0.2
+.Ed
+.El
+.Sh FILES
+.Bl -tag -width "/etc/ntpd.conf" -compact
+.It Pa /etc/ntpd.conf
+.Nm
+configuration file.
+.El
+.Sh SEE ALSO
+.Xr ntpd 8 ,
+.Xr rdate 8
+.Sh HISTORY
+The
+.Nm
+file format first appeared in
+.Ox 3.6 .
