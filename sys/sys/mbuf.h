@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.60 2002/03/15 01:20:04 millert Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.61 2002/06/03 12:04:06 deraadt Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -508,7 +508,7 @@ void _sk_mclget(struct mbuf *, int);
 /* length to m_copy to copy all */
 #define	M_COPYALL	1000000000
 
-/* compatiblity with 4.3 */
+/* compatibility with 4.3 */
 #define  m_copy(m, o, l)	m_copym((m), (o), (l), M_DONTWAIT)
 
 /*

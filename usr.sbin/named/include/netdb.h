@@ -1,4 +1,4 @@
-/*	$OpenBSD: netdb.h,v 1.4 2002/02/16 21:28:05 millert Exp $	*/
+/*	$OpenBSD: netdb.h,v 1.5 2002/06/03 12:04:08 deraadt Exp $	*/
 
 /*
  * ++Copyright++ 1980, 1983, 1988, 1993
@@ -88,7 +88,7 @@ struct	hostent {
 	int	h_addrtype;	/* host address type */
 	int	h_length;	/* length of address */
 	char	**h_addr_list;	/* list of addresses from name server */
-#define	h_addr	h_addr_list[0]	/* address, for backward compatiblity */
+#define	h_addr	h_addr_list[0]	/* address, for backward compatibility */
 };
 
 /*

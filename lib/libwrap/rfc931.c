@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfc931.c,v 1.7 2002/04/25 10:58:39 mpech Exp $	*/
+/*	$OpenBSD: rfc931.c,v 1.8 2002/06/03 12:04:08 deraadt Exp $	*/
 
 /* rfc1413 does an attempt at an ident query to a client. Originally written
  * by Wietse Venema, rewritten by Bob Beck <beck@openbsd.org> to avoid 
@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rfc931.c,v 1.7 2002/04/25 10:58:39 mpech Exp $";
+static char rcsid[] = "$OpenBSD: rfc931.c,v 1.8 2002/06/03 12:04:08 deraadt Exp $";
 #endif
 
 #include <stdio.h>
@@ -39,7 +39,7 @@ timeout(s)
 }
 
 /*
- * The old rfc931 from original libwrap for compatiblity. Now it calls
+ * The old rfc931 from original libwrap for compatibility. Now it calls
  * rfc1413 with the default global parameters, but puts in the string
  * "unknown" (from global unknown) on failure just like the original.
  */

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.29 2002/04/16 15:32:55 miod Exp $
+#	$OpenBSD: GENERIC,v 1.30 2002/06/03 12:04:08 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.52 1997/01/13 23:34:07 scottr Exp $
 #
 # GENERIC - an all-in-one kernel for the mac68k
@@ -13,7 +13,7 @@ option		M68030
 option		M68020		# Must have 68851 PMMU
 option		FPSP
 option		FPU_EMULATE
-option		COMPAT_SUNOS	# SunOS m68k binary compatiblity
+option		COMPAT_SUNOS	# SunOS m68k binary compatibility
 option		ZS_CONSOLE_ABORT
 option		DISABLE_EXT_CACHE # Don't use IIci external cache
 option		DISABLE_ADB_WITH_SERIAL_CONSOLE
