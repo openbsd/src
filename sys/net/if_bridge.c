@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.66 2001/06/25 05:04:43 kjell Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.67 2001/06/26 18:17:53 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1880,7 +1880,6 @@ bridge_filter(sc, ifp, eh, m)
 	struct llc llc;
 	int hassnap = 0;
 	struct ip *ip;
-	struct mbuf *m1;
 	int hlen;
 
 	if (eh->ether_type != htons(ETHERTYPE_IP)) {
@@ -1948,10 +1947,8 @@ bridge_filter(sc, ifp, eh, m)
 	}
 
 	/* Finally, we get to filter the packet! */
-	m1 = m;
-	if (pf_test(PF_IN, m->m_pkthdr.rcvif, &m1) != PF_PASS)
+	if (pf_test(PF_IN, m->m_pkthdr.rcvif, m) != PF_PASS)
 		goto dropit;
-	m = m1;
 
 	/* Rebuild the IP header */
 	if (m->m_len < hlen && ((m = m_pullup(m, hlen)) == NULL))

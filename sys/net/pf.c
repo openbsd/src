@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.54 2001/06/26 17:45:57 provos Exp $ */
+/*	$OpenBSD: pf.c,v 1.55 2001/06/26 18:17:53 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -148,21 +148,20 @@ int		 match_addr(u_int8_t, u_int32_t, u_int32_t, u_int32_t);
 int		 match_port(u_int8_t, u_int16_t, u_int16_t, u_int16_t);
 struct pf_nat	*get_nat(struct ifnet *, u_int8_t, u_int32_t);
 struct pf_rdr	*get_rdr(struct ifnet *, u_int8_t, u_int32_t, u_int16_t);
-int		 pf_test_tcp(int, struct ifnet *, struct mbuf **,
+int		 pf_test_tcp(int, struct ifnet *, struct mbuf *,
 		    int, int, struct ip *, struct tcphdr *);
-int		 pf_test_udp(int, struct ifnet *, struct mbuf **,
+int		 pf_test_udp(int, struct ifnet *, struct mbuf *,
 		    int, int, struct ip *, struct udphdr *);
-int		 pf_test_icmp(int, struct ifnet *, struct mbuf **,
+int		 pf_test_icmp(int, struct ifnet *, struct mbuf *,
 		    int, int, struct ip *, struct icmp *);
-struct pf_state	*pf_test_state_tcp(int, struct ifnet *, struct mbuf **,
+struct pf_state	*pf_test_state_tcp(int, struct ifnet *, struct mbuf *,
 		    int, int, struct ip *, struct tcphdr *);
-struct pf_state	*pf_test_state_udp(int, struct ifnet *, struct mbuf **,
+struct pf_state	*pf_test_state_udp(int, struct ifnet *, struct mbuf *,
 		    int, int, struct ip *, struct udphdr *);
-struct pf_state	*pf_test_state_icmp(int, struct ifnet *, struct mbuf **,
+struct pf_state	*pf_test_state_icmp(int, struct ifnet *, struct mbuf *,
 		    int, int, struct ip *, struct icmp *);
-void		*pull_hdr(struct ifnet *, struct mbuf **, int, int, void *, int,
+void		*pull_hdr(struct ifnet *, struct mbuf *, int, int, void *, int,
 		    struct ip *, int *);
-int		 pf_test(int, struct ifnet *, struct mbuf **);
 int		 pflog_packet(struct mbuf *, int, u_short, u_short, u_short,
 		    struct pf_rule *);
 
@@ -1218,7 +1217,7 @@ get_rdr(struct ifnet *ifp, u_int8_t proto, u_int32_t addr, u_int16_t port)
 }
 
 int
-pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf **m,
+pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf *m,
     int ipoff, int off, struct ip *h, struct tcphdr *th)
 {
 	struct pf_nat *nat = NULL;
@@ -1276,7 +1275,7 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf **m,
 
 	/* XXX will log packet before rewrite */
 	if ((rm != NULL) && rm->log)
-		PFLOG_PACKET(h, *m, AF_INET, direction, PFRES_MATCH, mnr, rm);
+		PFLOG_PACKET(h, m, AF_INET, direction, PFRES_MATCH, mnr, rm);
 
 	if ((rm != NULL) && (rm->action == PF_DROP_RST)) {
 		/* undo NAT/RST changes, if they have taken place */
@@ -1358,13 +1357,13 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf **m,
 
 	/* copy back packet headers if we performed NAT operations */
 	if (rewrite)
-		m_copyback((*m), off, sizeof(*th), (caddr_t)th);
+		m_copyback(m, off, sizeof(*th), (caddr_t)th);
 
 	return (PF_PASS);
 }
 
 int
-pf_test_udp(int direction, struct ifnet *ifp, struct mbuf **m,
+pf_test_udp(int direction, struct ifnet *ifp, struct mbuf *m,
     int ipoff, int off, struct ip *h, struct udphdr *uh)
 {
 	struct pf_nat *nat = NULL;
@@ -1420,7 +1419,7 @@ pf_test_udp(int direction, struct ifnet *ifp, struct mbuf **m,
 
 	/* XXX will log packet before rewrite */
 	if (rm != NULL && rm->log)
-		PFLOG_PACKET(h, *m, AF_INET, direction, PFRES_MATCH, mnr, rm);
+		PFLOG_PACKET(h, m, AF_INET, direction, PFRES_MATCH, mnr, rm);
 
 	if (rm != NULL && rm->action != PF_PASS)
 		return (PF_DROP);
@@ -1482,13 +1481,13 @@ pf_test_udp(int direction, struct ifnet *ifp, struct mbuf **m,
 
 	/* copy back packet headers if we performed NAT operations */
 	if (rewrite)
-		m_copyback((*m), off, sizeof(*uh), (caddr_t)uh);
+		m_copyback(m, off, sizeof(*uh), (caddr_t)uh);
 
 	return (PF_PASS);
 }
 
 int
-pf_test_icmp(int direction, struct ifnet *ifp, struct mbuf **m,
+pf_test_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
     int ipoff, int off, struct ip *h, struct icmp *ih)
 {
 	struct pf_nat *nat = NULL;
@@ -1528,7 +1527,7 @@ pf_test_icmp(int direction, struct ifnet *ifp, struct mbuf **m,
 
 	/* XXX will log packet before rewrite */
 	if (rm != NULL && rm->log)
-		PFLOG_PACKET(h, *m, AF_INET, direction, PFRES_MATCH, mnr, rm);
+		PFLOG_PACKET(h, m, AF_INET, direction, PFRES_MATCH, mnr, rm);
 
 	if (rm != NULL && rm->action != PF_PASS)
 		return (PF_DROP);
@@ -1579,13 +1578,13 @@ pf_test_icmp(int direction, struct ifnet *ifp, struct mbuf **m,
 
 	/* copy back packet headers if we performed NAT operations */
 	if (rewrite)
-		m_copyback((*m), off, sizeof(*ih), (caddr_t)ih);
+		m_copyback(m, off, sizeof(*ih), (caddr_t)ih);
 
 	return (PF_PASS);
 }
 
 struct pf_state *
-pf_test_state_tcp(int direction, struct ifnet *ifp, struct mbuf **m,
+pf_test_state_tcp(int direction, struct ifnet *ifp, struct mbuf *m,
     int ipoff, int off, struct ip *h, struct tcphdr *th)
 {
 	struct pf_state *s;
@@ -1732,7 +1731,7 @@ pf_test_state_tcp(int direction, struct ifnet *ifp, struct mbuf **m,
 
 		/* copy back packet headers if we performed NAT operations */
 		if (rewrite)
-			m_copyback((*m), off, sizeof(*th), (caddr_t)th);
+			m_copyback(m, off, sizeof(*th), (caddr_t)th);
 
 		return (s);
 	}
@@ -1740,7 +1739,7 @@ pf_test_state_tcp(int direction, struct ifnet *ifp, struct mbuf **m,
 }
 
 struct pf_state *
-pf_test_state_udp(int direction, struct ifnet *ifp, struct mbuf **m,
+pf_test_state_udp(int direction, struct ifnet *ifp, struct mbuf *m,
     int ipoff, int off, struct ip *h, struct udphdr *uh)
 {
 	struct pf_state *s;
@@ -1798,7 +1797,7 @@ pf_test_state_udp(int direction, struct ifnet *ifp, struct mbuf **m,
 
 		/* copy back packet headers if we performed NAT operations */
 		if (rewrite)
-			m_copyback((*m), off, sizeof(*uh), (caddr_t)uh);
+			m_copyback(m, off, sizeof(*uh), (caddr_t)uh);
 
 		return (s);
 	}
@@ -1806,7 +1805,7 @@ pf_test_state_udp(int direction, struct ifnet *ifp, struct mbuf **m,
 }
 
 struct pf_state *
-pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf **m,
+pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
     int ipoff, int off, struct ip *h, struct icmp *ih)
 {
 	u_int16_t len = h->ip_len - off - sizeof(*ih);
@@ -1948,10 +1947,10 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf **m,
 			 * operations
 			 */
 			if (rewrite) {
-				m_copyback((*m), off, sizeof(*ih), (caddr_t)ih);
-				m_copyback((*m), ipoff2, sizeof(h2),
+				m_copyback(m, off, sizeof(*ih), (caddr_t)ih);
+				m_copyback(m, ipoff2, sizeof(h2),
 				    (caddr_t)&h2);
-				m_copyback((*m), off2, sizeof(th),
+				m_copyback(m, off2, sizeof(th),
 				    (caddr_t)&th);
 			}
 
@@ -2003,10 +2002,10 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf **m,
 			 * operations
 			 */
 			if (rewrite) {
-				m_copyback((*m), off, sizeof(*ih), (caddr_t)ih);
-				m_copyback((*m), ipoff2, sizeof(h2),
+				m_copyback(m, off, sizeof(*ih), (caddr_t)ih);
+				m_copyback(m, ipoff2, sizeof(h2),
 				    (caddr_t)&h2);
-				m_copyback((*m), off2, sizeof(uh),
+				m_copyback(m, off2, sizeof(uh),
 				    (caddr_t)&uh);
 			}
 
@@ -2027,7 +2026,7 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf **m,
  * h must be at "ipoff" on the mbuf chain.
  */
 void *
-pull_hdr(struct ifnet *ifp, struct mbuf **m, int ipoff, int off, void *p,
+pull_hdr(struct ifnet *ifp, struct mbuf *m, int ipoff, int off, void *p,
     int len, struct ip *h, int *action)
 {
 	u_int16_t fragoff = (h->ip_off & IP_OFFMASK) << 3;
@@ -2048,18 +2047,18 @@ pull_hdr(struct ifnet *ifp, struct mbuf **m, int ipoff, int off, void *p,
 		}
 		return (NULL);
 	}
-	if ((*m)->m_pkthdr.len < off + len || ipoff + h->ip_len < off + len) {
+	if (m->m_pkthdr.len < off + len || ipoff + h->ip_len < off + len) {
 		*action = PF_DROP;
 		printf("pf: dropping short packet");
 		print_ip(ifp, h);
 		return (NULL);
 	}
-	m_copydata((*m), off, len, p);
+	m_copydata(m, off, len, p);
 	return p;
 }
 
 int
-pf_test(int direction, struct ifnet *ifp, struct mbuf **m)
+pf_test(int direction, struct ifnet *ifp, struct mbuf *m)
 {
 	int action;
 	struct ip *h;
@@ -2069,7 +2068,7 @@ pf_test(int direction, struct ifnet *ifp, struct mbuf **m)
 		return (PF_PASS);
 
 #ifdef DIAGNOSTIC
-	if (((*m)->m_flags & M_PKTHDR) == 0)
+	if ((m->m_flags & M_PKTHDR) == 0)
 		panic("non-M_PKTHDR is passed to pf_test");
 #endif
 
@@ -2080,12 +2079,12 @@ pf_test(int direction, struct ifnet *ifp, struct mbuf **m)
 		pf_last_purge = pftv.tv_sec;
 	}
 
-	if ((*m)->m_pkthdr.len < sizeof(*h)) {
+	if (m->m_pkthdr.len < sizeof(*h)) {
 		printf("pf: ip header too short\n");
 		action = PF_DROP;
 		goto done;
 	}
-	h = mtod(*m, struct ip *);
+	h = mtod(m, struct ip *);
 
 	off = h->ip_hl << 2;
 

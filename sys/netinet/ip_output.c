@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.126 2001/06/25 17:16:23 angelos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.127 2001/06/26 18:17:54 deraadt Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -589,17 +589,13 @@ sendit:
 		 * Packet filter
 		 */
 #if NPF > 0
-		{
-			struct mbuf *m1 = m;
-			if (pf_test(PF_OUT, &encif[0].sc_if, &m1) != PF_PASS) {
-				error = EHOSTUNREACH;
-				splx(s);
-				m_freem(m1);
-				goto done;
-			}
-			ip = mtod(m = m1, struct ip *);
-			hlen = ip->ip_hl << 2;
+		if (pf_test(PF_OUT, &encif[0].sc_if, m) != PF_PASS) {
+			error = EHOSTUNREACH;
+			splx(s);
+			m_freem(m);
+			goto done;
 		}
+		hlen = ip->ip_hl << 2;
 #endif
 
 		tdb = gettdb(sspi, &sdst, sproto);
@@ -678,14 +674,10 @@ sendit:
 	 * Packet filter
 	 */
 #if NPF > 0
-	{
-		struct mbuf *m1 = m;
-		if (pf_test(PF_OUT, ifp, &m1) != PF_PASS) {
-			error = EHOSTUNREACH;
-			m_freem(m1);
-			goto done;
-		}
-		ip = mtod(m = m1, struct ip *);
+	if (pf_test(PF_OUT, ifp, m) != PF_PASS) {
+		error = EHOSTUNREACH;
+		m_freem(m);
+		goto done;
 	}
 #endif
 	/* Catch routing changes wrt. hardware checksumming for TCP or UDP. */
