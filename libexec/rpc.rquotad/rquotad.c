@@ -1,4 +1,4 @@
-/*	$OpenBSD: rquotad.c,v 1.11 2002/02/16 21:27:31 millert Exp $	*/
+/*	$OpenBSD: rquotad.c,v 1.12 2002/06/09 04:18:55 deraadt Exp $	*/
 /*
  * by Manuel Bouyer (bouyer@ensta.fr)
  * 
@@ -94,7 +94,8 @@ main(argc, argv)
 		exit(1);
 	}
 	if (!svc_register(transp, RQUOTAPROG, RQUOTAVERS, rquota_service, proto)) {
-		syslog(LOG_ERR, "unable to register (RQUOTAPROG, RQUOTAVERS, %s).", proto?"udp":"(inetd)");
+		syslog(LOG_ERR, "unable to register (RQUOTAPROG, RQUOTAVERS, %s).",
+		    proto ? "udp" : "(inetd)");
 		exit(1);
 	}
 
