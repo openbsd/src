@@ -43,7 +43,7 @@
 
 #include <vm/vm.h>
 
-/*#include "bpfilter.h"*/
+#include "bpfilter.h"
 #if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
@@ -163,7 +163,7 @@ m_checkm(m)
 	}
 }
 
-int ethdebug = 1;
+int ethdebug = 0;
 
 int snintr __P((struct sn_softc *));
 int snioctl __P((struct ifnet *ifp, u_long cmd, caddr_t data));
@@ -341,11 +341,13 @@ snattach(parent, self, aux)
 	sngetaddr(sc);
 	printf(" address %s\n", ether_sprintf(sc->sc_enaddr));
 
+#if 0
 printf("\nsonic buffers: rra=0x%x cda=0x%x rda=0x%x tda=0x%x rba=0x%x\n",
 	p_rra, p_cda, p_rda, p_tda, p_rba);
 printf("sonic buffers: rra=0x%x cda=0x%x rda=0x%x tda=0x%x rba=0x%x\n",
 	v_rra, v_cda, v_rda, v_tda, v_rba);
 printf("mapped to offset 0x%x size 0x%x\n", SONICBUF - pp, p - SONICBUF);
+#endif
 
 	BUS_INTR_ESTABLISH(ca, (intr_handler_t)snintr, (void *)sc);
 
@@ -370,7 +372,8 @@ snioctl(ifp, cmd, data)
 {
 	struct ifaddr *ifa;
 	struct sn_softc *sc = sncd.cd_devs[ifp->if_unit];
-	int     s = splimp(), error = 0;
+	int     s = splimp(), err = 0;
+	int	temp;
 
 	switch (cmd) {
 
@@ -423,33 +426,36 @@ snioctl(ifp, cmd, data)
 		    (ifp->if_flags & IFF_RUNNING)) {
 			sc->sc_iflags = ifp->if_flags;
 			printf("change in flags\n");
+			temp = sc->sc_if.if_flags & IFF_UP;
 			snreset(sc);
+			sc->sc_if.if_flags |= temp;
 			snstart(ifp);
 		}
 		break;
 
 	case SIOCADDMULTI:
-		error = ether_addmulti((struct ifreq *)data, &sc->sc_ac);
-		goto update_multicast;
-
 	case SIOCDELMULTI:
-		error = ether_delmulti((struct ifreq *)data, &sc->sc_ac);
-	update_multicast:
-		if (error == ENETRESET) {
+		if(cmd == SIOCADDMULTI)
+			err = ether_addmulti((struct ifreq *)data, &sc->sc_ac);
+		else
+			err = ether_delmulti((struct ifreq *)data, &sc->sc_ac);
+
+		if (err == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware
-			 * filter accordingly.
+			 * filter accordingly. But remember UP flag!
 			 */
-			printf("new multicast\n");
+			temp = sc->sc_if.if_flags & IFF_UP;
 			snreset(sc);
-			error = 0;
+			sc->sc_if.if_flags |= temp;
+			err = 0;
 		}
 		break;
 	default:
-		error = EINVAL;
+		err = EINVAL;
 	}
 	splx(s);
-	return (error);
+	return (err);
 }
 
 /*
@@ -528,15 +534,11 @@ sninit(unit)
 
 	s = splimp();
 
-printf("sninit csr 0x%8x\n", csr);
-
 	csr->s_cr = CR_RST;	/* s_dcr only accessable reset mode! */
 
 	/* config it */
-#if 0 /* This is done in BIOS */
 	csr->s_dcr = DCR_LBR | DCR_SYNC | DCR_WAIT0 | DCR_DW32 | DCR_DMABLOCK |
 	    DCR_RFT16 | DCR_TFT16;
-#endif
 	csr->s_rcr = RCR_BRD | RCR_LBNONE;
 	csr->s_imr = IMR_PRXEN | IMR_PTXEN | IMR_TXEREN | IMR_HBLEN | IMR_LCDEN;
 
@@ -595,8 +597,6 @@ snstop(unit)
 	struct mtd *mtd;
 	int s = splimp();
 
-	printf("snstop\n");
-
 	/* stick chip in reset */
 	sc->sc_csr->s_cr = CR_RST;
 	wbflush();
@@ -630,8 +630,7 @@ snwatchdog(unit)
 	int unit;
 {
 	struct sn_softc *sc = sncd.cd_devs[unit];
-
-printf("watchdog\n");
+	int temp;
 
 	if (mtdhead && mtdhead->mtd_mbuf) {
 		/* something still pending for transmit */
@@ -641,7 +640,9 @@ printf("watchdog\n");
 		else
 			log(LOG_ERR, "%s%d: Tx - lost interrupt\n",
 			    sc->sc_if.if_name, sc->sc_if.if_unit);
+		temp = sc->sc_if.if_flags & IFF_UP;
 		snreset(sc);
+		sc->sc_if.if_flags |= temp;
 	}
 }
 /*
@@ -663,7 +664,6 @@ sonicput(sc, m0)
 	/* grab the replacement mtd */
 	if ((mtdnew = mtd_alloc()) == 0)
 		return (0);
-printf("got mtd %8x next %8x\n", mtdnew, mtdnext);
 
 	/* this packet goes to mdtnext fill in the TDA */
 	mtdnext->mtd_mbuf = m0;
@@ -682,7 +682,6 @@ printf("got mtd %8x next %8x\n", mtdnew, mtdnext);
 		unsigned va = (unsigned) mtod(m, caddr_t);
 		int resid = m->m_len;
 
-printf("va=%x offs=%x len=%d\n", va, fragoffset, resid);
 		MachHitFlushDCache(va, resid);
 		len += resid;
 		DMA_MAP(sc->dma, (caddr_t)va, resid, fragoffset);
@@ -696,12 +695,6 @@ printf("va=%x offs=%x len=%d\n", va, fragoffset, resid);
 			if (n > NBPG - (va & PGOFSET)) {
 				n = NBPG - (va & PGOFSET);
 			}
-
-for (i = 0; i < n; i++)
-	printf("%2x ", (*(u_char *)(va + i)) & 0xff);
-printf("\n");
-printf("frag %d: pa=%x len=%d\n", fr, pa, n);
-
 			if (fr < FRAGMAX) {
 				SWR(txp->u[fr].frag_ptrlo, LOWER(pa));
 				SWR(txp->u[fr].frag_ptrhi, UPPER(pa));
@@ -797,7 +790,7 @@ void sonictxint __P((struct sn_softc *));
 void sonicrxint __P((struct sn_softc *));
 
 int sonic_read __P((struct sn_softc *, struct RXpkt *));
-struct mbuf *sonic_get __P((struct sn_softc *, struct ether_header *, int, int));
+struct mbuf *sonic_get __P((struct sn_softc *, struct ether_header *, int));
 
 void 
 mtd_free(mtd)
@@ -983,10 +976,8 @@ snintr(sc)
 	struct sonic_reg *csr = sc->sc_csr;
 	int	isr;
 
-printf("snintr\n");
 	while (isr = (csr->s_isr & ISR_ALL)) {
 		/* scrub the interrupts that we are going to service */
-		printf("sonic isr %x\n", isr);
 		csr->s_isr = isr;
 		wbflush();
 
@@ -1114,7 +1105,6 @@ sonicrxint(sc)
 
 	while (SRD(rxp->in_use) == 0) {
 		unsigned status = SRD(rxp->status);
-		printf("sonic: Rx packet status=%x\n", status);
 		if ((status & RCR_LPKT) == 0)
 			printf("sonic: more than one packet in RBA!\n");
 		assert(PSNSEQ(SRD(rxp->seq_no)) == 0);
@@ -1210,8 +1200,6 @@ sonic_read(sc, rxp)
 		return (0);
 	}
 
-	off = 0;
-
 #if NBPFILTER > 0
 	/*
 	 * Check if there's a bpf filter listening on this interface.
@@ -1221,16 +1209,18 @@ sonic_read(sc, rxp)
 	if (sc->sc_if.if_bpf) {
 		bpf_tap(sc->sc_if.if_bpf, pkt,
 		    len + sizeof(struct ether_header));
-		if ((flags & (M_BCAST | M_MCAST)) == 0 &&
-		    bcmp(et->ether_dhost, sc->sc_addr,
+		if ((ifp->if_flags & IFF_PROMISC) != 0 &&
+		    (et->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
+		    bcmp(et->ether_dhost, sc->sc_enaddr,
 			    sizeof(et->ether_dhost)) != 0)
 			return;
 	}
 #endif
-	m = sonic_get(sc, et, len, off);
+	m = sonic_get(sc, et, len);
 	if (m == NULL)
 		return (0);
 	ether_input(ifp, et, m);
+	return(1);
 }
 
 #define sonicdataaddr(eh, off, type)       ((type)(((caddr_t)((eh)+1)+(off))))
@@ -1241,23 +1231,19 @@ sonic_read(sc, rxp)
  * is slow.
 */
 struct mbuf *
-sonic_get(sc, eh, datalen, off0)
+sonic_get(sc, eh, datalen)
 	struct sn_softc *sc;
 	struct ether_header *eh;
-	int datalen, off0;
+	int datalen;
 {
 	struct mbuf *m;
 	struct mbuf *top = 0, **mp = &top;
-	int off = off0, len;
+	int	len;
 	char   *spkt = sonicdataaddr(eh, 0, caddr_t);
 	char   *epkt = spkt + datalen;
 	char *cp = spkt;
 
 	epkt = cp + datalen;
-	if (off0) {
-		cp += off + 2 * sizeof(u_short);
-		datalen -= 2 * sizeof(u_short);
-	}
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == 0)
 		return (0);
