@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.36 2000/04/22 02:40:01 angelos Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.37 2000/04/22 02:43:15 angelos Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -201,7 +201,7 @@ usage()
 	    "\t  -proto <val>\t\t\tsecurity protocol\n"
 	    "\t  -chain\t\t\tSPI chain delete\n"
 	    "\t  -transport <val>\t\tprotocol number for flow\n"
-	    "\t  -addr <ip> <net> <ip> <net>\t subnets for flow\n"
+	    "\t  -addr <ip> <net> <ip> <net>\tsubnets for flow\n"
 	    "\t  -delete\t\t\tdelete specified flow\n"
 	    "\t  -bypass\t\t\tcreate/delete a bypass flow\n"
 	    "\t  -sport\t\t\tsource port for flow\n"
