@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahc_eisa.c,v 1.14 2002/06/28 00:34:54 smurph Exp $	*/
+/*	$OpenBSD: ahc_eisa.c,v 1.15 2003/10/21 10:27:12 jmc Exp $	*/
 /*	$NetBSD: ahc_eisa.c,v 1.10 1996/10/21 22:30:58 thorpej Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: ahc_eisa.c,v 1.14 2002/06/28 00:34:54 smurph Exp $
+ *	$Id: ahc_eisa.c,v 1.15 2003/10/21 10:27:12 jmc Exp $
  */
 
 #include "eisa.h"
@@ -79,7 +79,7 @@ bus_space_handle_t ioh;
 	u_char intdef;
 	u_char hcntrl;
 	
-	/* Pause the card preseving the IRQ type */
+	/* Pause the card preserving the IRQ type */
 	hcntrl = bus_space_read_1(iot, ioh, HCNTRL) & IRQMS;
 	bus_space_write_1(iot, ioh, HCNTRL, hcntrl | PAUSE);
 	
@@ -209,7 +209,7 @@ void *aux;
 
 	/*
 	 * Tell the user what type of interrupts we're using.
-	 * usefull for debugging irq problems
+	 * useful for debugging irq problems
 	 */
 	if (bootverbose) {
 		printf("%s: Using %s Interrupts\n",
@@ -256,7 +256,7 @@ void *aux;
 	/*      
 	 * See if we have a Rev E or higher aic7770. Anything below a
 	 * Rev E will have a R/O autoflush disable configuration bit.
-	 * It's still not clear exactly what is differenent about the Rev E.
+	 * It's still not clear exactly what is different about the Rev E.
 	 * We think it allows 8 bit entries in the QOUTFIFO to support
 	 * "paging" SCBs so you can have more than 4 commands active at
 	 * once.

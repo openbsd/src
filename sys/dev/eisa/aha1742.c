@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha1742.c,v 1.17 2002/03/14 01:26:53 millert Exp $	*/
+/*	$OpenBSD: aha1742.c,v 1.18 2003/10/21 10:27:12 jmc Exp $	*/
 /*	$NetBSD: aha1742.c,v 1.61 1996/05/12 23:40:01 mycroft Exp $	*/
 
 /*
@@ -564,7 +564,7 @@ ahbintr(arg)
 	for (;;) {
 		/*
 		 * First get all the information and then
-		 * acknowlege the interrupt
+		 * acknowledge the interrupt
 		 */
 		ahbstat = bus_space_read_1(iot, ioh, G2INTST);
 		mboxval = bus_space_read_4(iot, ioh, MBOXIN0);

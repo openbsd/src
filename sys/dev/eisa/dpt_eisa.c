@@ -1,4 +1,4 @@
-/*	$OpenBSD: dpt_eisa.c,v 1.2 2002/03/14 01:26:53 millert Exp $	*/
+/*	$OpenBSD: dpt_eisa.c,v 1.3 2003/10/21 10:27:12 jmc Exp $	*/
 /*	$NetBSD: dpt_eisa.c,v 1.2 1999/10/18 21:59:19 ad Exp $	*/
 
 /*
@@ -209,6 +209,6 @@ dpt_eisa_attach(parent, self, aux)
 		return;	
 	}
 
-	/* Now attach to the bus-independant code */
+	/* Now attach to the bus-independent code */
 	dpt_init(sc, intrstr);
 }
