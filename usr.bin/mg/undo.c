@@ -1,4 +1,4 @@
-/* $OpenBSD: undo.c,v 1.22 2003/11/09 01:44:39 vincent Exp $ */
+/* $OpenBSD: undo.c,v 1.23 2003/11/29 17:28:40 vincent Exp $ */
 /*
  * Copyright (c) 2002 Vincent Labrecque
  * All rights reserved.
@@ -222,12 +222,10 @@ undo_add_insert(LINE *lp, int offset, int size)
 	 * We try to reuse the last undo record to `compress' things.
 	 */
 	rec = LIST_FIRST(&curwp->w_undo);
-	if (rec != NULL) {
-		if (rec->type == INSERT) {
-			if (rec->pos + rec->region.r_size == pos) {
-				rec->region.r_size += reg.r_size;
-				return (TRUE);
-			}
+	if (rec != NULL && rec->type == INSERT) {
+		if (rec->pos + rec->region.r_size == pos) {
+			rec->region.r_size += reg.r_size;
+			return (TRUE);
 		}
 	}
 
@@ -277,8 +275,7 @@ undo_add_delete(LINE *lp, int offset, int size)
 		if (rec->type == DELETE) {
 			if (rec->pos - rec->region.r_size != pos)
 				undo_add_boundary();
-		} else if (rec->type != BOUNDARY)
-			undo_add_boundary();
+		}
 	}
 	rec = new_undo_record();
 	rec->pos = pos;
@@ -414,14 +411,14 @@ undo(int f, int n)
 	struct undo_rec *ptr, *nptr;
 	int done, rval;
 	LINE *lp;
-	int offset, save;
+	int offset, save, dot;
+
+	dot = find_absolute_dot(curwp->w_dotp, curwp->w_doto);
 
 	ptr = curwp->w_undoptr;
 
 	/* if we moved, make ptr point back to the top of the list */
-	if ((curwp->w_undopos.r_linep != curwp->w_dotp) ||
-	    (curwp->w_undopos.r_offset != curwp->w_doto) ||
-	    (ptr == NULL))
+	if (ptr == NULL || curwp->w_undopos != dot)
 		ptr = LIST_FIRST(&curwp->w_undo);
 
 	rval = TRUE;
@@ -507,8 +504,8 @@ undo(int f, int n)
 	 * since we change the dot when undoing....)
 	 */
 	curwp->w_undoptr = ptr;
-	curwp->w_undopos.r_linep = curwp->w_dotp;
-	curwp->w_undopos.r_offset = curwp->w_doto;
+
+	curwp->w_undopos = find_absolute_dot(curwp->w_dotp, curwp->w_doto);
 
 	return (rval);
 }
