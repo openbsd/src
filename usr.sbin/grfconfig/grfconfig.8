@@ -1,4 +1,4 @@
-.\"	$NetBSD: grfconfig.8,v 1.2 1995/10/09 04:11:18 chopps Exp $
+.\"	$NetBSD: grfconfig.8,v 1.3 1995/12/27 07:59:00 chopps Exp $
 .\"
 .\" Copyright (c) 1994 Ezra Story
 .\" All rights reserved.
@@ -43,7 +43,7 @@
 .Sh DESCRIPTION
 .Nm Grfconfig
 is used to change or view the screen mode definition list contained
-in a grf device.  You may also alter the sonsole screen definition as well
+in a grf device.  You may also alter the console screen definition as well
 as the definitions for the graphic screen.  The console will automatically
 reinitialize itself to the new screen mode.
 .Pp
@@ -63,7 +63,7 @@ will print out of a list of the modes currently loaded into
 the grf device.  
 .Pp
 .Sh MODE DEFINITION FILE
-THe mode definitions are taken from a file which has lines of the format:
+The mode definitions are taken from a file which has lines of the format:
 .Pp
 num clk wid hi dep hbs hss hse hbe ht vbs vss vse vbe vt
 .Pp
@@ -128,7 +128,7 @@ This is provided the grf device supports those two modes of operation.
 
 
 .Sh BUGS
-Some grf devices only understand horixontal cycle values instead of 
+Some grf devices only understand horizontal cycle values instead of 
 horizontal pixel values.  Add
 the option
 .Nm -o
