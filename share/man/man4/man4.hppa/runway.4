@@ -1,4 +1,4 @@
-.\"	$OpenBSD: runway.4,v 1.3 2004/09/26 20:04:46 mickey Exp $
+.\"	$OpenBSD: runway.4,v 1.4 2004/09/27 06:56:36 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Michael Shalayeff
 .\" All rights reserved.
@@ -34,22 +34,22 @@
 .Sh DESCRIPTION
 The
 .Nm
-bus is a CPU and memory bus on systems based on PA-7200,
-PA-8000 and later CPUs.
+bus is a CPU and memory bus on systems based on the PA-7200,
+PA-8000, and later CPUs.
 The
 .Nm
 bus is a 64-bit multiplexed address/data bus with support for cache
-coherency and allows up to 4-way SMP system configurrations.
+coherency and allows up to 4-way SMP system configurations.
 .Pp
 One or two
 .Xr uturn 4
-bridges connect
+bridges connect the
 .Nm
 bus to the system's
 .Xr gsc 4
-or 
+or
 .Xr pci 4
-busses.
+buses.
 .Sh SEE ALSO
 .Xr cpu 4 ,
 .Xr dino 4 ,
@@ -61,5 +61,5 @@ busses.
 The
 .Nm
 driver
-appeared in
+first appeared in
 .Ox 3.7 .
