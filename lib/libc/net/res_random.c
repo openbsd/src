@@ -1,4 +1,4 @@
-/* $OpenBSD: res_random.c,v 1.4 1997/04/23 22:37:50 provos Exp $ */
+/* $OpenBSD: res_random.c,v 1.5 1997/04/25 07:43:05 provos Exp $ */
 
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -189,7 +189,7 @@ res_randomid()
 	        tmp = arc4random();
 
 	/* Skip a random number of ids */
-	n = tmp & 0x2f; tmp = tmp >> 6;
+	n = tmp & 0x7; tmp = tmp >> 3;
 	if (ru_counter + n >= RU_MAX)
                 res_initid();
 
