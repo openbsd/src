@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.20 2000/07/17 23:01:20 espie Exp $
+#	$OpenBSD: Makefile,v 1.21 2000/07/17 23:09:06 espie Exp $
 
 PROG=	make
 CFLAGS+= -I${.OBJDIR} -I${.CURDIR} -Wall -Wno-char-subscripts -Wno-unused -Wstrict-prototypes#-Wmissing-prototypes -Wstrict-prototypes
@@ -8,7 +8,7 @@ CFLAGS+=-O0
 .endif
 
 SRCS=	arch.c buf.c compat.c cond.c dir.c error.c for.c hash.c job.c lowparse.c \
-	main.c make.c parse.c str.c suff.c targ.c var.c #util.c 
+	main.c make.c parse.c str.c suff.c targ.c var.c varmodifiers.c #util.c 
 SRCS+=	lstAppend.c lstAtEnd.c lstAtFront.c lstClose.c lstConcat.c \
 	lstConcatDestroy.c lstDeQueue.c lstDestroy.c lstDupl.c lstEnQueue.c \
 	lstFindFrom.c lstForEachFrom.c \
