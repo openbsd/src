@@ -1,4 +1,4 @@
-/*	$OpenBSD: gidt.S,v 1.1 1997/04/05 18:56:27 mickey Exp $	*/
+/*	$OpenBSD: gidt.S,v 1.2 1997/04/07 01:21:54 weingart Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -81,8 +81,13 @@ _Idtr_real:
 	.word	1023
 	.long	0
 
-	.globl	_Idtr_prot
+	.globl	_Idtr_reset
+	.align 3
+_Idtr_reset:
+	.word	0
+	.long	0
 
+	.globl	_Idtr_prot
 	.align 3
 idt:	/*
 	 * We beleive that all the boot code fits into
