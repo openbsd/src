@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.2 1999/01/06 16:03:16 millert Exp $
+#	$OpenBSD: airport,v 1.3 1999/12/12 19:54:02 jakob Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 # 
 # Some of this information from the Airport Search Engine at
@@ -97,6 +97,7 @@ GEG:Spokane International, Washington, USA
 GIG:Rio De Janeiro, Brazil
 GLA:Glasgow, Scotland
 GND:Grenada, GD
+GOT:Landvetter, Goteborg, Sweden
 GRR:Grand Rapids/Kent County International, Michigan, USA
 GRU:Sao Paulo, Brazil
 GSO:Greensboro-High Pt.-Winston Salem Regional, North Carolina, USA
