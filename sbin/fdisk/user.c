@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.c,v 1.8 1997/10/16 10:35:06 deraadt Exp $	*/
+/*	$OpenBSD: user.c,v 1.9 1997/10/17 08:07:15 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -144,10 +144,13 @@ USER_modify(disk, tt, offset)
 
 	/* Edit cycle */
 	do {
+again:
 		printf("fdisk:%c%d> ", (modified)?'*':' ', editlevel);
 		fflush(stdout);
 		ask_cmd(&cmd);
 
+		if (cmd.cmd[0] == '\0')
+			goto again;
 		for(i = 0; cmd_table[i].cmd != NULL; i++)
 			if(strstr(cmd_table[i].cmd, cmd.cmd)==cmd_table[i].cmd)
 				break;
