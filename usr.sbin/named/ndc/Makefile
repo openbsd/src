@@ -20,4 +20,4 @@ ndc: ndc.sh Makefile ${.CURDIR}/../Makefile.inc
 	chmod +x ndc
 
 .include <bsd.prog.mk>
-.include <bsd.prog.mk>
+.include "../../Makefile.inc"

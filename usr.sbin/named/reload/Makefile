@@ -17,4 +17,4 @@ named.reload:	named.reload.sh Makefile ${.CURDIR}/../Makefile.inc
 	chmod +x named.reload
 
 .include <bsd.prog.mk>
-.include <bsd.prog.mk>
+.include "../../Makefile.inc"

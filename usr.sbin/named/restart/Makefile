@@ -17,4 +17,4 @@ named.restart:	named.restart.sh Makefile ${.CURDIR}/../Makefile.inc
 	chmod +x named.restart
 
 .include <bsd.prog.mk>
-.include <bsd.prog.mk>
+.include "../../Makefile.inc"
