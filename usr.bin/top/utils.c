@@ -1,4 +1,4 @@
-/*	$OpenBSD: utils.c,v 1.7 2003/04/25 21:40:52 deraadt Exp $	*/
+/*	$OpenBSD: utils.c,v 1.8 2003/04/25 23:58:36 deraadt Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -400,7 +400,7 @@ time_t seconds;
  * Compromise time.  We need to return a string, but we don't want the
  * caller to have to worry about freeing a dynamically allocated string.
  * Unfortunately, we can't just return a pointer to a static area as one
- * of the common uses of this function is in a large call to sprintf where
+ * of the common uses of this function is in a large call to snprintf where
  * it might get invoked several times.  Our compromise is to maintain an
  * array of strings and cycle thru them with each invocation.  We make the
  * array large enough to handle the above mentioned case.  The constant
