@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.80 2003/11/19 21:30:43 grange Exp $     */
+/*      $OpenBSD: wdc.c,v 1.81 2003/12/16 03:37:37 millert Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -158,9 +158,9 @@ struct channel_softc_vtbl wdc_default_vtbl = {
 };
 
 static char *wdc_log_buf = NULL;
-static int wdc_tail = 0;
-static int wdc_head = 0;
-static int wdc_size = 16 * 1024;
+static unsigned int wdc_tail = 0;
+static unsigned int wdc_head = 0;
+static unsigned int wdc_size = 16 * 1024;
 static int chp_idx = 1;
 
 void
@@ -233,7 +233,7 @@ wdc_get_log(unsigned int * size, unsigned int *left)
 
 	if (bytes < 0)
 		bytes += wdc_size;
-	if (bytes > *size) {
+	if ((u_int)bytes > *size) {
 		if (left != NULL) {
 			*left = bytes - *size;
 		}
@@ -329,7 +329,7 @@ wdc_default_read_raw_multi_2(chp, data, nbytes)
 	unsigned int nbytes;
 {
 	if (data == NULL) {
-		int i;
+		unsigned int i;
 
 		for (i = 0; i < nbytes; i += 2) {
 			bus_space_read_2(chp->cmd_iot, chp->cmd_ioh, 0);
@@ -351,7 +351,7 @@ wdc_default_write_raw_multi_2(chp, data, nbytes)
 	unsigned int nbytes;
 {
 	if (data == NULL) {
-		int i;
+		unsigned int i;
 
 		for (i = 0; i < nbytes; i += 2) {
 			bus_space_write_2(chp->cmd_iot, chp->cmd_ioh, 0, 0);
@@ -373,7 +373,7 @@ wdc_default_write_raw_multi_4(chp, data, nbytes)
 	unsigned int nbytes;
 {
 	if (data == NULL) {
-		int i;
+		unsigned int i;
 
 		for (i = 0; i < nbytes; i += 4) {
 			bus_space_write_4(chp->cmd_iot, chp->cmd_ioh, 0, 0);
@@ -395,7 +395,7 @@ wdc_default_read_raw_multi_4(chp, data, nbytes)
 	unsigned int nbytes;
 {
 	if (data == NULL) {
-		int i;
+		unsigned int i;
 
 		for (i = 0; i < nbytes; i += 4) {
 			bus_space_read_4(chp->cmd_iot, chp->cmd_ioh, 0);
@@ -2209,7 +2209,7 @@ wdc_ioctl_strategy(bp)
 	 * Abort if physio broke up the transfer
 	 */
 
-	if (bp->b_bcount != wi->wi_atareq.datalen) {
+	if ((u_long)bp->b_bcount != wi->wi_atareq.datalen) {
 		printf("physio split wd ioctl request... cannot proceed\n");
 		error = EIO;
 		goto bad;
