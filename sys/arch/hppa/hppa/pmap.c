@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.120 2004/09/18 06:43:23 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.121 2004/09/19 01:30:11 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -435,8 +435,8 @@ void
 pmap_bootstrap(vstart)
 	vaddr_t vstart;
 {
-	extern int etext, __rodata_end, __data_start;
-	extern u_int totalphysmem, *ie_mem;
+	extern int resvphysmem, etext, __rodata_end, __data_start;
+	extern u_int *ie_mem;
 	extern paddr_t hppa_vtop;
 	vaddr_t va, addr = hppa_round_page(vstart), t;
 	vsize_t size;
@@ -536,11 +536,11 @@ pmap_bootstrap(vstart)
 	}
 
 	/* kernel virtual is the last gig of the moohicans */
-	nkpdes = totalphysmem >> 14;	/* at least 16/gig for kmem */
+	nkpdes = physmem >> 14;	/* at least 16/gig for kmem */
 	if (nkpdes < 4)
 		nkpdes = 4;		/* ... but no less than four */
 	nkpdes += HPPA_IOLEN / PDE_SIZE; /* ... and io space too */
-	npdes = nkpdes + (totalphysmem + btoc(PDE_SIZE) - 1) / btoc(PDE_SIZE);
+	npdes = nkpdes + (physmem + btoc(PDE_SIZE) - 1) / btoc(PDE_SIZE);
 
 	/* map the pdes */
 	for (va = 0; npdes--; va += PDE_SIZE, addr += PAGE_SIZE) {
@@ -557,13 +557,13 @@ pmap_bootstrap(vstart)
 		kpm->pm_stats.resident_count++; /* count PTP as resident */
 	}
 
-	physmem = atop(addr);
-	DPRINTF(PDB_INIT, ("physmem: 0x%x - 0x%x\n", physmem, totalphysmem));
-	uvm_page_physload(0, totalphysmem,
-	    physmem, totalphysmem, VM_FREELIST_DEFAULT);
+	resvphysmem = atop(addr);
+	DPRINTF(PDB_INIT, ("physmem: 0x%x - 0x%x\n", resvphysmem, physmem));
+	uvm_page_physload(0, physmem,
+	    resvphysmem, physmem, VM_FREELIST_DEFAULT);
 
 	/* TODO optimize/inline the kenter */
-	for (va = 0; va < ptoa(totalphysmem); va += PAGE_SIZE) {
+	for (va = 0; va < ptoa(physmem); va += PAGE_SIZE) {
 		extern struct user *proc0paddr;
 		vm_prot_t prot = UVM_PROT_RW;
 
@@ -1218,9 +1218,6 @@ pmap_kremove(va, size)
 	vaddr_t va;
 	vsize_t size;
 {
-#ifdef PMAPDEBUG
-	extern u_int totalphysmem;
-#endif
 	struct pv_entry *pve;
 	vaddr_t eva, pdemask;
 	volatile pt_entry_t *pde;
@@ -1230,7 +1227,7 @@ pmap_kremove(va, size)
 	DPRINTF(PDB_FOLLOW|PDB_REMOVE,
 	    ("pmap_kremove(%x, %x)\n", va, size));
 #ifdef PMAPDEBUG
-	if (va < ptoa(totalphysmem)) {
+	if (va < ptoa(physmem)) {
 		printf("pmap_kremove(%x, %x): unmapping physmem\n", va, size);
 		return;
 	}

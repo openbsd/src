@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.136 2004/09/18 05:06:17 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.137 2004/09/19 01:30:11 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -153,7 +153,7 @@ int (*cpu_dbtlb_ins)(int i, pa_space_t sp, vaddr_t va, paddr_t pa,
 	    vsize_t sz, u_int prot);
 
 dev_t	bootdev;
-int	totalphysmem, resvmem, physmem, esym;
+int	physmem, resvmem, resvphysmem, esym;
 paddr_t	avail_end;
 
 /*
@@ -360,7 +360,7 @@ hppa_init(start)
 	avail_end = trunc_page(PAGE0->imm_max_mem);
 	if (avail_end > SYSCALLGATE)
 		avail_end = SYSCALLGATE;
-	totalphysmem = btoc(avail_end);
+	physmem = btoc(avail_end);
 	resvmem = btoc(((vaddr_t)&kernel_text));
 
 	/* we hope this won't fail */
@@ -377,8 +377,8 @@ hppa_init(start)
 
 	/* buffer cache parameters */
 	if (bufpages == 0)
-		bufpages = totalphysmem / 100 *
-		    (totalphysmem <= 0x1000? 5 : bufcachepercent);
+		bufpages = physmem / 100 *
+		    (physmem <= 0x1000? 5 : bufcachepercent);
 
 	if (nbuf == 0)
 		nbuf = bufpages < 16? 16 : bufpages;
@@ -412,7 +412,7 @@ hppa_init(start)
 	v += round_page(MSGBUFSIZE);
 	bzero(msgbufp, MSGBUFSIZE);
 
-	/* sets physmem */
+	/* sets resvphysmem */
 	pmap_bootstrap(v);
 
 	msgbufmapped = 1;
@@ -648,7 +648,7 @@ cpu_startup(void)
 
 	printf("%s\n", cpu_model);
 	printf("real mem = %d (%d reserved for PROM, %d used by OpenBSD)\n",
-	    ctob(totalphysmem), ctob(resvmem), ctob(physmem - resvmem));
+	    ctob(physmem), ctob(resvmem), ctob(resvphysmem - resvmem));
 
 	size = MAXBSIZE * nbuf;
 	if (uvm_map(kernel_map, &minaddr, round_page(size),
@@ -1113,7 +1113,7 @@ dumpsys(void)
 
 	if (!(error = cpu_dump())) {
 
-		bytes = ctob(totalphysmem);
+		bytes = ctob(physmem);
 		maddr = NULL;
 		blkno = dumplo + cpu_dumpsize();
 		dump = bdevsw[major(dumpdev)].d_dump;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.25 2004/04/07 18:24:19 mickey Exp $	*/
+/*	$OpenBSD: mem.c,v 1.26 2004/09/19 01:30:11 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -325,7 +325,6 @@ mmrw(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	extern u_int totalphysmem;
 	struct iovec	*iov;
 	vaddr_t	v, o;
 	int error = 0;
@@ -346,12 +345,12 @@ mmrw(dev, uio, flags)
 
 			/* If the address isn't in RAM, bail. */
 			v = uio->uio_offset;
-			if (btoc(v) > totalphysmem) {
+			if (btoc(v) > physmem) {
 				error = EFAULT;
 				/* this will break us out of the loop */
 				continue;
 			}
-			c = ctob(totalphysmem) - v;
+			c = ctob(physmem) - v;
 			c = min(c, uio->uio_resid);
 			error = uiomove((caddr_t)v, c, uio);
 			break;
@@ -360,7 +359,7 @@ mmrw(dev, uio, flags)
 			v = uio->uio_offset;
 			o = v & PGOFSET;
 			c = min(uio->uio_resid, (int)(PAGE_SIZE - o));
-			if (btoc(v) > totalphysmem && !uvm_kernacc((caddr_t)v,
+			if (btoc(v) > physmem && !uvm_kernacc((caddr_t)v,
 			    c, (uio->uio_rw == UIO_READ) ? B_READ : B_WRITE)) {
 				error = EFAULT;
 				/* this will break us out of the loop */
