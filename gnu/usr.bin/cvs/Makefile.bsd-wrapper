@@ -1,10 +1,11 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.33 1999/12/06 09:24:55 deraadt Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.34 2000/02/21 03:05:42 ho Exp $
 
 .include <bsd.own.mk>
 
 MAN=	man/cvs.1 man/cvs.5 man/cvsbug.8
 GNUCFLAGS=	CC="${CC}" CFLAGS="${CFLAGS} ${COPTS}"
-CLEANFILES=	lib/getdate.c macintosh/Makefile os2/Makefile doc/CVSvn.texi \
+CLEANFILES=	lib/getdate.c macintosh/Makefile os2/Makefile zlib/Makefile \
+		windows-NT/SCC/Makefile emx/Makefile doc/CVSvn.texi \
                 doc/cvs.info doc/cvs.info-1 doc/cvs.info-2 doc/cvs.info-3 \
                 doc/cvs.info-4 doc/cvs.info-5 doc/cvs.info-6 doc/cvs.info-7 \
 		doc/cvs.info-8 doc/cvs.info-9 doc/cvsclient.info doc/cvsclient.info-1 \
