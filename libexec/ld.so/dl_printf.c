@@ -1,4 +1,4 @@
-/*	$OpenBSD: dl_printf.c,v 1.6 2002/05/23 22:13:46 deraadt Exp $	*/
+/*	$OpenBSD: dl_printf.c,v 1.7 2002/05/24 01:53:58 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -67,8 +67,6 @@ static void kprintn(void (*)(int), u_long, int);
 static void kdoprnt(void (*)(int), const char *, va_list);
 
 static void putchar(int);
-static void sputchar(int);
-static char *sbuf;
 
 static void
 putchar(int c)
@@ -76,12 +74,6 @@ putchar(int c)
 	char b;
 	b = c;
 	_dl_write(2, &b, 1);
-}
-
-static void
-sputchar(int c)
-{
-	*sbuf++ = c;
 }
 
 void
@@ -180,7 +172,7 @@ reswitch:
 		{
 			int l = 28;
 			ul = lflag ? va_arg(ap, u_long) : va_arg(ap, u_int);
-			while(l >= 0) {
+			while (l >= 0) {
 				put("0123456789abcdef"[(ul >> l) & 0xf]);
 				l -= 4;
 			}
