@@ -1,4 +1,4 @@
-.\" $OpenBSD: wsconsctl.8,v 1.17 2004/06/23 07:37:23 david Exp $
+.\" $OpenBSD: wsconsctl.8,v 1.18 2004/07/30 23:28:23 jmc Exp $
 .\" $NetBSD: wsconsctl.8,v 1.5 1999/09/12 18:47:11 kleink Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -50,10 +50,10 @@
 .Ar name ...
 .Nm wsconsctl
 .Op Fl n
-.Ar name=value ...
+.Ar name Ns = Ns Ar value ...
 .Nm wsconsctl
 .Op Fl n
-.Ar name+=value ...
+.Ar name Ns += Ns Ar value ...
 .Sh DESCRIPTION
 The
 .Nm
@@ -68,7 +68,7 @@ The options are as follows:
 Print all device variables and their current values.
 .It Fl n
 Suppress printing of the variable name in the output.
-.It Ar name=value
+.It Ar name Ns = Ns Ar value
 Attempt to set the specified variable
 .Ar name
 to
