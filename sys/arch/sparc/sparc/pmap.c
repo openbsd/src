@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.107 2001/12/07 13:43:30 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.108 2001/12/07 15:11:49 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -5821,14 +5821,15 @@ pmap_is_referenced4m(pg)
 #if defined(SUN4) || defined(SUN4C)
 
 void
-pmap_zero_page4_4c(pa)
-	paddr_t pa;
+pmap_zero_page4_4c(paddr_t pa)
 {
-	caddr_t va;
-	int pte;
 	struct pvlist *pv;
+	caddr_t va;
+	u_int pfn;
+	int pte;
 
-	if (pmap_initialized && (pv = pvhead(atop(pa))) != NULL) {
+	pfn = atop(pa);
+	if (pmap_initialized && (pv = pvhead(pfn)) != NULL) {
 		/*
 		 * The following might not be necessary since the page
 		 * is being cleared because it is about to be allocated,
@@ -5836,7 +5837,7 @@ pmap_zero_page4_4c(pa)
 		 */
 		pv_flushcache(pv);
 	}
-	pte = PG_V | PG_S | PG_W | PG_NC | (atop(pa) & PG_PFNUM);
+	pte = PG_V | PG_S | PG_W | PG_NC | (pfn & PG_PFNUM);
 
 	va = vpage[0];
 	setpte4(va, pte);
@@ -5854,24 +5855,23 @@ pmap_zero_page4_4c(pa)
  * the processor.
  */
 void
-pmap_copy_page4_4c(src, dst)
-	paddr_t src, dst;
+pmap_copy_page4_4c(paddr_t src, paddr_t dst)
 {
+	struct pvlist *pv;
 	caddr_t sva, dva;
 	int spte, dpte;
-	struct pvlist *pv;
+	u_int pfn;
 
-	pv = pvhead(atop(src));
-	if (pv && CACHEINFO.c_vactype == VAC_WRITEBACK)
+	pfn = atop(src);
+	if ((pv = pvhead(pfn)) != NULL && CACHEINFO.c_vactype == VAC_WRITEBACK)
 		pv_flushcache(pv);
+	spte = PG_V | PG_S | (pfn & PG_PFNUM);
 
-	spte = PG_V | PG_S | (atop(src) & PG_PFNUM);
-
-	pv = pvhead(atop(dst));
+	pfn = atop(dst);
+	pv = pvhead(pfn);
 	if (pv && CACHEINFO.c_vactype != VAC_NONE)
 		pv_flushcache(pv);
-
-	dpte = PG_V | PG_S | PG_W | PG_NC | (atop(dst) & PG_PFNUM);
+	dpte = PG_V | PG_S | PG_W | PG_NC | (pfn & PG_PFNUM);
 
 	sva = vpage[0];
 	dva = vpage[1];
@@ -5892,26 +5892,26 @@ pmap_copy_page4_4c(src, dst)
  * XXX	might be faster to use destination's context and allow cache to fill?
  */
 void
-pmap_zero_page4m(pa)
-	paddr_t pa;
+pmap_zero_page4m(paddr_t pa)
 {
-	int pte;
 	struct pvlist *pv;
 	static int *ptep;
 	static vaddr_t va;
+	u_int pfn;
+	int pte;
 
 	if (ptep == NULL)
 		ptep = getptep4m(pmap_kernel(), (va = (vaddr_t)vpage[0]));
 
-	if (pmap_initialized && (pv = pvhead(atop(pa))) != NULL) {
+	pfn = atop(pa);
+	if (pmap_initialized && (pv = pvhead(pfn)) != NULL) {
 		if (CACHEINFO.c_vactype != VAC_NONE)
 			pv_flushcache(pv);
 		else
 			pcache_flush_page(pa, 1);
 	}
 
-	pte = (SRMMU_TEPTE | PPROT_S | PPROT_WRITE |
-	       (atop(pa) << SRMMU_PPNSHIFT));
+	pte = (SRMMU_TEPTE | PPROT_S | PPROT_WRITE | (pfn << SRMMU_PPNSHIFT));
 	if (cpuinfo.flags & CPUFLG_CACHE_MANDATORY)
 		pte |= SRMMU_PG_C;
 	else
@@ -5934,32 +5934,29 @@ pmap_zero_page4m(pa)
  * the processor.
  */
 void
-pmap_copy_page4m(src, dst)
-	paddr_t src, dst;
+pmap_copy_page4m(paddr_t src, paddr_t dst)
 {
 	int spte, dpte;
 	struct pvlist *pv;
 	static int *sptep, *dptep;
 	static vaddr_t sva, dva;
+	u_int pfn;
 
 	if (sptep == NULL) {
 		sptep = getptep4m(pmap_kernel(), (sva = (vaddr_t)vpage[0]));
 		dptep = getptep4m(pmap_kernel(), (dva = (vaddr_t)vpage[1]));
 	}
 
-	pv = pvhead(atop(src));
-	if (pv && CACHEINFO.c_vactype == VAC_WRITEBACK)
+	pfn = atop(src);
+	if ((pv = pvhead(pfn)) != NULL && CACHEINFO.c_vactype == VAC_WRITEBACK)
 		pv_flushcache(pv);
+	spte = SRMMU_TEPTE | SRMMU_PG_C | PPROT_S | (pfn << SRMMU_PPNSHIFT);
 
-	spte = SRMMU_TEPTE | SRMMU_PG_C | PPROT_S |
-		(atop(src) << SRMMU_PPNSHIFT);
-
-	pv = pvhead(atop(dst));
-	if (pv && CACHEINFO.c_vactype != VAC_NONE)
+	pfn = atop(dst);
+	if ((pv = pvhead(pfn)) != NULL && CACHEINFO.c_vactype != VAC_NONE)
 		pv_flushcache(pv);
+	dpte = (SRMMU_TEPTE | PPROT_S | PPROT_WRITE | (pfn << SRMMU_PPNSHIFT));
 
-	dpte = (SRMMU_TEPTE | PPROT_S | PPROT_WRITE |
-	       (atop(dst) << SRMMU_PPNSHIFT));
 	if (cpuinfo.flags & CPUFLG_CACHE_MANDATORY)
 		dpte |= SRMMU_PG_C;
 	else
@@ -5984,10 +5981,8 @@ pmap_copy_page4m(src, dst)
  *	elsewhere, or even not at all
  */
 paddr_t
-pmap_phys_address(x)
-	int x;
+pmap_phys_address(int x)
 {
-
 	return (x);
 }
 
@@ -6072,7 +6067,7 @@ pmap_prefer(vaddr_t foff, vaddr_t *vap)
 }
 
 void
-pmap_redzone()
+pmap_redzone(void)
 {
 #if defined(SUN4M)
 	if (CPU_ISSUN4M) {
@@ -6093,8 +6088,7 @@ pmap_redzone()
  * process is the current process, load the new MMU context.
  */
 void
-pmap_activate(p)
-	struct proc *p;
+pmap_activate(struct proc *p)
 {
 	pmap_t pmap = p->p_vmspace->vm_map.pmap;
 	int s;
@@ -6124,8 +6118,7 @@ pmap_activate(p)
  * Deactivate the address space of the specified process.
  */
 void
-pmap_deactivate(p)
-	struct proc *p;
+pmap_deactivate(struct proc *p)
 {
 }
 
@@ -6134,9 +6127,7 @@ pmap_deactivate(p)
  * Check consistency of a pmap (time consuming!).
  */
 void
-pm_check(s, pm)
-	char *s;
-	struct pmap *pm;
+pm_check(char *s, struct pmap *pm)
 {
 	if (pm == pmap_kernel())
 		pm_check_k(s, pm);
@@ -6145,9 +6136,7 @@ pm_check(s, pm)
 }
 
 void
-pm_check_u(s, pm)
-	char *s;
-	struct pmap *pm;
+pm_check_u(char *s, struct pmap *pm)
 {
 	struct regmap *rp;
 	struct segmap *sp;
@@ -6233,9 +6222,7 @@ pm_check_u(s, pm)
 }
 
 void
-pm_check_k(s, pm)		/* Note: not as extensive as pm_check_u. */
-	char *s;
-	struct pmap *pm;
+pm_check_k(char *s, struct pmap *pm) /* Note: not as extensive as pm_check_u. */
 {
 	struct regmap *rp;
 	int vr, vs, n;
@@ -6295,7 +6282,7 @@ pm_check_k(s, pm)		/* Note: not as extensive as pm_check_u. */
  * The last page or two contains stuff so libkvm can bootstrap.
  */
 int
-pmap_dumpsize()
+pmap_dumpsize(void)
 {
 	long	sz;
 
@@ -6314,17 +6301,15 @@ pmap_dumpsize()
  * there is no in-core copy of kernel memory mappings on a 4/4c machine.
  */
 int
-pmap_dumpmmu(dump, blkno)
-	daddr_t blkno;
-	int (*dump)	__P((dev_t, daddr_t, caddr_t, size_t));
+pmap_dumpmmu(int (*dump)(dev_t, daddr_t, caddr_t, size_t), daddr_t blkno)	
 {
 	kcore_seg_t	*ksegp;
 	cpu_kcore_hdr_t	*kcpup;
 	phys_ram_seg_t	memseg;
 	int	error = 0;
 	int	i, memsegoffset, pmegoffset;
-	int		buffer[dbtob(1) / sizeof(int)];
-	int		*bp, *ep;
+	int	buffer[dbtob(1) / sizeof(int)];
+	int	*bp, *ep;
 #if defined(SUN4C) || defined(SUN4)
 	int	pmeg;
 #endif
@@ -6423,9 +6408,7 @@ out:
  * Helper function for debuggers.
  */
 void
-pmap_writetext(dst, ch)
-	unsigned char *dst;
-	int ch;
+pmap_writetext(unsigned char *dst, int ch)
 {
 	int s, pte0, pte, ctx;
 	vaddr_t va;
@@ -6475,10 +6458,10 @@ pmap_writetext(dst, ch)
 
 #ifdef EXTREME_DEBUG
 
-static void test_region __P((int, int, int));
+static void test_region(int, int, int);
 
 void
-debug_pagetables()
+debug_pagetables(void)
 {
 	int i;
 	int *regtbl;
@@ -6525,10 +6508,7 @@ debug_pagetables()
 }
 
 static u_int
-VA2PAsw(ctx, addr, pte)
-	int ctx;
-	caddr_t addr;
-	int *pte;
+VA2PAsw(int ctx, caddr_t addr, int *pte)
 {
 	int *curtbl;
 	int curpte;
@@ -6595,9 +6575,8 @@ VA2PAsw(ctx, addr, pte)
 	printf("Bizarreness with address 0x%x!\n",addr);
 }
 
-void test_region(reg, start, stop)
-	int reg;
-	int start, stop;
+void
+test_region(int reg, int start, int stop)
 {
 	int i;
 	int addr;
@@ -6635,7 +6614,8 @@ void test_region(reg, start, stop)
 }
 
 
-void print_fe_map(void)
+void
+print_fe_map(void)
 {
 	u_int i, pte;
 
