@@ -1,4 +1,4 @@
-/*    $OpenBSD: func.c,v 1.3 1996/06/23 14:19:22 deraadt Exp $       */
+/*    $OpenBSD: func.c,v 1.4 1997/06/18 18:39:38 kstailey Exp $       */
 /*    $NetBSD: func.c,v 1.11 1996/02/09 02:28:29 christos Exp $       */
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)func.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: func.c,v 1.3 1996/06/23 14:19:22 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: func.c,v 1.4 1997/06/18 18:39:38 kstailey Exp $";
 #endif
 #endif /* not lint */
 
@@ -1174,7 +1174,7 @@ findlim(cp)
 {
     register struct limits *lp, *res;
 
-    res = (struct limits *) NULL;
+    res = NULL;
     for (lp = limits; lp->limconst >= 0; lp++)
 	if (prefix(cp, str2short(lp->limname))) {
 	    if (res)
