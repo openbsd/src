@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.78 2003/10/21 21:09:13 itojun Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.79 2004/01/14 08:42:23 kjc Exp $	*/
 
 /*
  * Copyright (c) 2002
@@ -82,7 +82,7 @@ u_int32_t	 eval_bwspec(struct node_queue_bw *, u_int32_t);
 void		 print_hfsc_sc(const char *, u_int, u_int, u_int,
 		     const struct node_hfsc_sc *);
 
-static u_int32_t	 max_qid = 1;
+static u_int32_t	 max_qid = 0;
 
 void
 pfaltq_store(struct pf_altq *a)
@@ -261,6 +261,8 @@ eval_pfaltq(struct pfctl *pf, struct pf_altq *pa, struct node_queue_bw *bw,
 		else
 			size = 24;
 		size = size * getifmtu(pa->ifname);
+		if (size > 0xffff)
+			size = 0xffff;
 		pa->tbrsize = size;
 	}
 	return (errors);
@@ -410,7 +412,7 @@ eval_pfqueue_cbq(struct pfctl *pf, struct pf_altq *pa)
 
 	if (pa->parent[0] == 0)
 		opts->flags |= (CBQCLF_ROOTCLASS | CBQCLF_WRR);
-	else if (pa->qid == 0 && (opts->flags & CBQCLF_DEFCLASS) == 0)
+	if (pa->qid == 0)
 		pa->qid = ++max_qid;
 
 	cbq_compute_idletime(pf, pa);
@@ -663,15 +665,15 @@ eval_pfqueue_hfsc(struct pfctl *pf, struct pf_altq *pa)
 
 	opts = &pa->pq_u.hfsc_opts;
 
+	if (pa->qid == 0)
+		pa->qid = ++max_qid;
 	if (pa->parent[0] == 0) {
 		/* root queue */
-		pa->qid = HFSC_ROOTCLASS_HANDLE;
 		opts->lssc_m1 = pa->ifbandwidth;
 		opts->lssc_m2 = pa->ifbandwidth;
 		opts->lssc_d = 0;
 		return (0);
-	} else if (pa->qid == 0)
-		pa->qid = ++max_qid;
+	}
 
 	LIST_INIT(&rtsc);
 	LIST_INIT(&lssc);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_priq.c,v 1.16 2003/04/03 14:31:02 henning Exp $	*/
+/*	$OpenBSD: altq_priq.c,v 1.17 2004/01/14 08:42:23 kjc Exp $	*/
 /*	$KAME: altq_priq.c,v 1.1 2000/10/18 09:15:23 kjc Exp $	*/
 /*
  * Copyright (C) 2000
@@ -137,8 +137,8 @@ priq_add_queue(struct pf_altq *a)
 		return (EINVAL);
 	if (a->qid == 0)
 		return (EINVAL);
-	if (a->qid > PRIQ_MAXQID)
-		return (EINVAL);
+	if (pif->pif_classes[a->priority] != NULL)
+		return (EBUSY);
 	if (clh_to_clp(pif, a->qid) != NULL)
 		return (EBUSY);
 
@@ -183,9 +183,6 @@ priq_getqstats(struct pf_altq *a, void *ubuf, int *nbytes)
 		return (EINVAL);
 
 	get_class_stats(&stats, cl);
-#if 0
-	stats.handle = a->qid;
-#endif
 
 	if ((error = copyout((caddr_t)&stats, ubuf, sizeof(stats))) != 0)
 		return (error);
@@ -561,15 +558,16 @@ get_class_stats(struct priq_classstats *sp, struct priq_class *cl)
 static struct priq_class *
 clh_to_clp(struct priq_if *pif, u_int32_t chandle)
 {
+	struct priq_class *cl;
 	int idx;
 
 	if (chandle == 0)
 		return (NULL);
 
 	for (idx = pif->pif_maxpri; idx >= 0; idx--)
-		if (pif->pif_classes[idx] != NULL &&
-		    pif->pif_classes[idx]->cl_handle == chandle)
-			return (pif->pif_classes[idx]);
+		if ((cl = pif->pif_classes[idx]) != NULL &&
+		    cl->cl_handle == chandle)
+			return (cl);
 
 	return (NULL);
 }

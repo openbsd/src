@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_hfsc.h,v 1.5 2003/12/06 06:39:51 kjc Exp $	*/
+/*	$OpenBSD: altq_hfsc.h,v 1.6 2004/01/14 08:42:23 kjc Exp $	*/
 /*	$KAME: altq_hfsc.h,v 1.8 2002/11/29 04:36:23 kjc Exp $	*/
 
 /*
@@ -50,7 +50,6 @@ struct service_curve {
 
 /* special class handles */
 #define	HFSC_NULLCLASS_HANDLE	0
-#define	HFSC_ROOTCLASS_HANDLE	1
 #define	HFSC_MAX_CLASSES	64
 
 /* hfsc class flags */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_cbq.c,v 1.17 2003/08/20 12:33:57 henning Exp $	*/
+/*	$OpenBSD: altq_cbq.c,v 1.18 2004/01/14 08:42:23 kjc Exp $	*/
 /*	$KAME: altq_cbq.c,v 1.9 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -69,9 +69,7 @@ static void		 cbq_purge(cbq_state_t *);
 static int
 cbq_class_destroy(cbq_state_t *cbqp, struct rm_class *cl)
 {
-	u_int32_t	chandle;
-
-	chandle = cl->stats_.handle;
+	int	i;
 
 	/* delete the class */
 	rmc_delete_class(&cbqp->ifnp, cl);
@@ -79,21 +77,14 @@ cbq_class_destroy(cbq_state_t *cbqp, struct rm_class *cl)
 	/*
 	 * free the class handle
 	 */
-	switch (chandle) {
-	case ROOT_CLASS_HANDLE:
-		cbqp->ifnp.root_ = NULL;
-		break;
-	case DEFAULT_CLASS_HANDLE:
-		cbqp->ifnp.default_ = NULL;
-		break;
-	case NULL_CLASS_HANDLE:
-		break;
-	default:
-		if (chandle >= CBQ_MAX_CLASSES)
-			break;
-		cbqp->cbq_class_tbl[chandle] = NULL;
-	}
+	for (i = 0; i < CBQ_MAX_CLASSES; i++)
+		if (cbqp->cbq_class_tbl[i] == cl)
+			cbqp->cbq_class_tbl[i] = NULL;
 
+	if (cl == cbqp->ifnp.root_)
+		cbqp->ifnp.root_ = NULL;
+	if (cl == cbqp->ifnp.default_)
+		cbqp->ifnp.default_ = NULL;
 	return (0);
 }
 
@@ -101,19 +92,24 @@ cbq_class_destroy(cbq_state_t *cbqp, struct rm_class *cl)
 static struct rm_class *
 clh_to_clp(cbq_state_t *cbqp, u_int32_t chandle)
 {
-	switch (chandle) {
-	case NULL_CLASS_HANDLE:
-		return (NULL);
-	case ROOT_CLASS_HANDLE:
-		return (cbqp->ifnp.root_);
-	case DEFAULT_CLASS_HANDLE:
-		return (cbqp->ifnp.default_);
-	}
+	int i;
+	struct rm_class *cl;
 
-	if (chandle >= CBQ_MAX_CLASSES)
+	if (chandle == 0)
 		return (NULL);
-
-	return (cbqp->cbq_class_tbl[chandle]);
+	/*
+	 * first, try the slot corresponding to the lower bits of the handle.
+	 * if it does not match, do the linear table search.
+	 */
+	i = chandle % CBQ_MAX_CLASSES;
+	if ((cl = cbqp->cbq_class_tbl[i]) != NULL &&
+	    cl->stats_.handle == chandle)
+		return (cl);
+	for (i = 0; i < CBQ_MAX_CLASSES; i++)
+		if ((cl = cbqp->cbq_class_tbl[i]) != NULL &&
+		    cl->stats_.handle == chandle)
+			return (cl);
+	return (NULL);
 }
 
 static int
@@ -132,18 +128,12 @@ cbq_clear_interface(cbq_state_t *cbqp)
 				else {
 					cbq_class_destroy(cbqp, cl);
 					cbqp->cbq_class_tbl[i] = NULL;
+					if (cl == cbqp->ifnp.root_)
+						cbqp->ifnp.root_ = NULL;
+					if (cl == cbqp->ifnp.default_)
+						cbqp->ifnp.default_ = NULL;
 				}
 			}
-		}
-		if (cbqp->ifnp.default_ != NULL &&
-		    !is_a_parent_class(cbqp->ifnp.default_)) {
-			cbq_class_destroy(cbqp, cbqp->ifnp.default_);
-			cbqp->ifnp.default_ = NULL;
-		}
-		if (cbqp->ifnp.root_ != NULL &&
-		    !is_a_parent_class(cbqp->ifnp.root_)) {
-			cbq_class_destroy(cbqp, cbqp->ifnp.root_);
-			cbqp->ifnp.root_ = NULL;
 		}
 	} while (again);
 
@@ -167,6 +157,7 @@ cbq_request(struct ifaltq *ifq, int req, void *arg)
 static void
 get_class_stats(class_stats_t *statsp, struct rm_class *cl)
 {
+	statsp->handle		= cl->stats_.handle;
 	statsp->xmit_cnt	= cl->stats_.xmit_cnt;
 	statsp->drop_cnt	= cl->stats_.drop_cnt;
 	statsp->over		= cl->stats_.over;
@@ -266,9 +257,26 @@ cbq_add_queue(struct pf_altq *a)
 	cbq_state_t	*cbqp;
 	struct rm_class	*cl;
 	struct cbq_opts	*opts;
+	int		i;
 
 	if ((cbqp = a->altq_disc) == NULL)
 		return (EINVAL);
+	if (a->qid == 0)
+		return (EINVAL);
+
+	/*
+	 * find a free slot in the class table.  if the slot matching
+	 * the lower bits of qid is free, use this slot.  otherwise,
+	 * use the first free slot.
+	 */
+	i = a->qid % CBQ_MAX_CLASSES;
+	if (cbqp->cbq_class_tbl[i] != NULL) {
+		for (i = 0; i < CBQ_MAX_CLASSES; i++)
+			if (cbqp->cbq_class_tbl[i] == NULL)
+				break;
+		if (i == CBQ_MAX_CLASSES)
+			return (EINVAL);
+	}
 
 	opts = &a->pq_u.cbq_opts;
 	/* check parameters */
@@ -305,21 +313,14 @@ cbq_add_queue(struct pf_altq *a)
 			return (EINVAL);
 		if (cbqp->ifnp.root_)
 			return (EINVAL);
-		a->qid = ROOT_CLASS_HANDLE;
 		break;
 	case CBQCLF_DEFCLASS:
 		if (cbqp->ifnp.default_)
 			return (EINVAL);
-		a->qid = DEFAULT_CLASS_HANDLE;
 		break;
 	case 0:
 		if (a->qid == 0)
 			return (EINVAL);
-		if (a->qid >= CBQ_MAX_CLASSES &&
-		    a->qid != DEFAULT_CLASS_HANDLE)
-			return (EINVAL);
-		if (cbqp->cbq_class_tbl[a->qid] != NULL)
-			return (EBUSY);
 		break;
 	default:
 		/* more than two flags bits set */
@@ -330,7 +331,7 @@ cbq_add_queue(struct pf_altq *a)
 	 * create a class.  if this is a root class, initialize the
 	 * interface.
 	 */
-	if (a->qid == ROOT_CLASS_HANDLE) {
+	if ((opts->flags & CBQCLF_CLASSMASK) == CBQCLF_ROOTCLASS) {
 		rmc_init(cbqp->ifnp.ifq_, &cbqp->ifnp, opts->ns_per_byte,
 		    cbqrestart, a->qlimit, RM_MAXQUEUED,
 		    opts->maxidle, opts->minidle, opts->offtime,
@@ -351,17 +352,11 @@ cbq_add_queue(struct pf_altq *a)
 	cl->stats_.depth = cl->depth_;
 
 	/* save the allocated class */
-	switch (a->qid) {
-	case NULL_CLASS_HANDLE:
-	case ROOT_CLASS_HANDLE:
-		break;
-	case DEFAULT_CLASS_HANDLE:
+	cbqp->cbq_class_tbl[i] = cl;
+
+	if ((opts->flags & CBQCLF_CLASSMASK) == CBQCLF_DEFCLASS)
 		cbqp->ifnp.default_ = cl;
-		break;
-	default:
-		cbqp->cbq_class_tbl[a->qid] = cl;
-		break;
-	}
+
 	return (0);
 }
 
@@ -370,6 +365,7 @@ cbq_remove_queue(struct pf_altq *a)
 {
 	struct rm_class	*cl;
 	cbq_state_t	*cbqp;
+	int		i;
 
 	if ((cbqp = a->altq_disc) == NULL)
 		return (EINVAL);
@@ -387,20 +383,15 @@ cbq_remove_queue(struct pf_altq *a)
 	/*
 	 * free the class handle
 	 */
-	switch (a->qid) {
-	case ROOT_CLASS_HANDLE:
-		cbqp->ifnp.root_ = NULL;
-		break;
-	case DEFAULT_CLASS_HANDLE:
-		cbqp->ifnp.default_ = NULL;
-		break;
-	case NULL_CLASS_HANDLE:
-		break;
-	default:
-		if (a->qid >= CBQ_MAX_CLASSES)
+	for (i = 0; i < CBQ_MAX_CLASSES; i++)
+		if (cbqp->cbq_class_tbl[i] == cl) {
+			cbqp->cbq_class_tbl[i] = NULL;
+			if (cl == cbqp->ifnp.root_)
+				cbqp->ifnp.root_ = NULL;
+			if (cl == cbqp->ifnp.default_)
+				cbqp->ifnp.default_ = NULL;
 			break;
-		cbqp->cbq_class_tbl[a->qid] = NULL;
-	}
+		}
 
 	return (0);
 }
@@ -423,7 +414,6 @@ cbq_getqstats(struct pf_altq *a, void *ubuf, int *nbytes)
 		return (EINVAL);
 
 	get_class_stats(&stats, cl);
-	stats.handle = a->qid;
 
 	if ((error = copyout((caddr_t)&stats, ubuf, sizeof(stats))) != 0)
 		return (error);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_cbq.h,v 1.9 2003/08/22 21:50:34 david Exp $	*/
+/*	$OpenBSD: altq_cbq.h,v 1.10 2004/01/14 08:42:23 kjc Exp $	*/
 /*	$KAME: altq_cbq.h,v 1.5 2000/12/02 13:44:40 kjc Exp $	*/
 
 /*
@@ -43,12 +43,7 @@
 extern "C" {
 #endif
 
-/*
- * Define a well known class handles
- */
-#define	NULL_CLASS_HANDLE	0xffffffff
-#define	ROOT_CLASS_HANDLE	0xfffffffe
-#define	DEFAULT_CLASS_HANDLE	0xfffffffd
+#define	NULL_CLASS_HANDLE	0
 
 /* class flags should be same as class flags in rm_class.h */
 #define	CBQCLF_RED		0x0001	/* use RED */
@@ -102,7 +97,7 @@ typedef struct _cbq_class_stats_ {
 /*
  * Define macros only good for kernel drivers and modules.
  */
-#define	CBQ_WATCHDOG		(HZ / 20)
+#define	CBQ_WATCHDOG		(hz / 20)
 #define	CBQ_TIMEOUT		10
 #define	CBQ_LS_TIMEOUT		(20 * hz / 1000)
 
