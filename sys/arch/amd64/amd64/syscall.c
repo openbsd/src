@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.c,v 1.2 2004/02/07 08:00:33 deraadt Exp $	*/
+/*	$OpenBSD: syscall.c,v 1.3 2004/02/09 14:11:09 mickey Exp $	*/
 /*	$NetBSD: syscall.c,v 1.1 2003/04/26 18:39:32 fvdl Exp $	*/
 
 /*-
@@ -159,7 +159,7 @@ syscall_plain(frame)
 #endif /* SYSCALL_DEBUG */
 
 	rval[0] = 0;
-	rval[1] = 0;
+	rval[1] = frame.tf_rdx;
 	KERNEL_PROC_LOCK(p);
 	error = (*callp->sy_call)(p, argp, rval);
 	KERNEL_PROC_UNLOCK(p);
