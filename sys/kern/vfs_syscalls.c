@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.39 1998/03/25 19:44:50 deraadt Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.40 1998/04/06 09:00:58 niklas Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -443,6 +443,8 @@ dounmount(mp, flags, p)
 		mp->mnt_flag &= ~MNT_UNMOUNT;
 		lockmgr(&mp->mnt_lock, LK_RELEASE | LK_INTERLOCK | LK_REENABLE,
 		    &mountlist_slock, p);
+		if (mp->mnt_flag & MNT_MWAIT)
+			wakeup((caddr_t)mp);
 		return (error);
 	}
 	CIRCLEQ_REMOVE(&mountlist, mp, mnt_list);
