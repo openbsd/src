@@ -15,7 +15,7 @@ b or ctrl-B		Skip backwards k screenfuls of text [1]
 /<regular expression>	Search for kth occurrence of regular expression [1]
 n			Search for kth occurrence of last r.e [1]
 !<cmd> or :!<cmd>	Execute <cmd> in a subshell
-v			Start up /usr/ucb/vi at current line
+v			Start up $EDITOR or /usr/bin/vi at current line
 ctrl-L			Redraw screen
 :n			Go to kth next file [1]
 :p			Go to kth previous file [1]
