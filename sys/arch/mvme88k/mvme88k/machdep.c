@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.70 2001/12/08 02:24:06 art Exp $	*/
+/* $OpenBSD: machdep.c,v 1.71 2001/12/08 18:05:59 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -1713,8 +1713,8 @@ sbc_ext_int(u_int v, struct m88100_saved_state *eframe)
 	 */
 
 	if ((mask == level) && level) {
-		printf("mask == level, %d\n", level);
-		goto beatit;
+		panic("mask == level, %d\n", level);
+		return;
 	}
 
 	/*
@@ -1723,8 +1723,8 @@ sbc_ext_int(u_int v, struct m88100_saved_state *eframe)
 	 */
 
 	if (level == 0) {
-		printf("Bogons... level %x and mask %x\n", level, mask);
-		goto beatit;
+		panic("Bogons... level %x and mask %x\n", level, mask);
+		return;
 	}
 
 	/* and block interrupts at level or lower */
@@ -1809,9 +1809,6 @@ out:
 	 * was taken.
 	 */
 	setipl((u_char)mask);
-
-beatit:
-	return;
 }
 #endif /* defined(MVME187) || defined(MVME197) */
 
