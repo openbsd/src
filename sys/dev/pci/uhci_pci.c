@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci_pci.c,v 1.1 1999/08/13 05:32:29 fgsch Exp $	*/
+/*	$OpenBSD: uhci_pci.c,v 1.2 1999/08/13 08:09:26 fgsch Exp $	*/
 /*	$NetBSD: uhci_pci.c,v 1.7 1999/05/20 09:52:35 augustss Exp $	*/
 
 /*
@@ -57,11 +57,7 @@
 #include <dev/usb/uhcireg.h>
 #include <dev/usb/uhcivar.h>
 
-#if defined(__NetBSD__)
-int	uhci_pci_match __P((struct device *, struct cfdata *, void *));
-#else
 int	uhci_pci_match __P((struct device *, void *, void *));
-#endif
 void	uhci_pci_attach __P((struct device *, struct device *, void *));
 
 struct cfattach uhci_pci_ca = {
@@ -71,12 +67,7 @@ struct cfattach uhci_pci_ca = {
 int
 uhci_pci_match(parent, match, aux)
 	struct device *parent;
-#if defined(__NetBSD__)
-	struct cfdata *match;
-#else
-	void *match;
-#endif
-	void *aux;
+	void *match, *aux;
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 
@@ -100,21 +91,13 @@ uhci_pci_attach(parent, self, aux)
 	char const *intrstr;
 	pci_intr_handle_t ih;
 	pcireg_t csr;
-#if defined(__NetBSD__)
-	char *typestr, *vendor;
-#else
 	char *typestr;
-#endif
-	char devinfo[256];
 	usbd_status r;
-
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
-	printf(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
 
 	/* Map I/O registers */
 	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
 			   &sc->iot, &sc->ioh, NULL, NULL)) {
-		printf("%s: can't map i/o space\n", sc->sc_bus.bdev.dv_xname);
+		printf(": can't map i/o space\n");
 		return;
 	}
 
@@ -128,26 +111,21 @@ uhci_pci_attach(parent, self, aux)
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
 	    pa->pa_intrline, &ih)) {
-		printf("%s: couldn't map interrupt\n", 
-		       sc->sc_bus.bdev.dv_xname);
+		printf(": couldn't map interrupt\n");
 		return;
 	}
+
 	intrstr = pci_intr_string(pc, ih);
-#if defined(__NetBSD__)
-	sc->sc_ih = pci_intr_establish(pc, ih, IPL_USB, uhci_intr, sc);
-#else
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_USB, uhci_intr, sc,
 	    sc->sc_bus.bdev.dv_xname);
-#endif
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt",
-		    sc->sc_bus.bdev.dv_xname);
+		printf(": couldn't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", sc->sc_bus.bdev.dv_xname, intrstr);
+	printf(": %s", intrstr);
 
 	switch(pci_conf_read(pc, pa->pa_tag, PCI_USBREV) & PCI_USBREV_MASK) {
 	case PCI_USBREV_PRE_1_0:
@@ -160,18 +138,8 @@ uhci_pci_attach(parent, self, aux)
 		typestr = "unknown";
 		break;
 	}
-	printf("%s: USB version %s\n", sc->sc_bus.bdev.dv_xname, typestr);
+	printf(" version %s\n", typestr);
 
-#if defined(__NetBSD__)
-	/* Figure out vendor for root hub descriptor. */
-	vendor = pci_findvendor(pa->pa_id);
-	sc->sc_id_vendor = PCI_VENDOR(pa->pa_id);
-	if (vendor)
-		strncpy(sc->sc_vendor, vendor, sizeof(sc->sc_vendor) - 1);
-	else
-		sprintf(sc->sc_vendor, "vendor 0x%04x", PCI_VENDOR(pa->pa_id));
-#endif
-	
 	r = uhci_init(sc);
 	if (r != USBD_NORMAL_COMPLETION) {
 		printf("%s: init failed, error=%d\n", 
