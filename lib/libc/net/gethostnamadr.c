@@ -52,7 +52,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.45 2002/02/17 19:42:23 millert Exp $";
+static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.46 2002/05/18 00:06:42 itojun Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -676,6 +676,12 @@ gethostbyaddr(addr, len, af)
 		return (res);
 	}
 
+	if (af == AF_INET6 && len == IN6ADDRSZ &&
+	    (IN6_IS_ADDR_LINKLOCAL((struct in6_addr *)uaddr) ||
+	     IN6_IS_ADDR_SITELOCAL((struct in6_addr *)uaddr))) {
+		h_errno = HOST_NOT_FOUND;
+		return (NULL);
+	}
 	if (af == AF_INET6 && len == IN6ADDRSZ &&
 	    (IN6_IS_ADDR_V4MAPPED((struct in6_addr *)uaddr) ||
 	     IN6_IS_ADDR_V4COMPAT((struct in6_addr *)uaddr))) {
