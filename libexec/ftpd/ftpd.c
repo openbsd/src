@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.90 2001/01/19 18:02:25 deraadt Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.91 2001/02/03 21:48:47 pjanzen Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -694,7 +694,7 @@ sgetpwnam(name)
 
 static int login_attempts;	/* number of failed login attempts */
 static int askpasswd;		/* had user command, ask for passwd */
-static char curname[16];	/* current USER name */
+static char curname[MAXLOGNAME];	/* current USER name */
 
 /*
  * USER command.
@@ -771,10 +771,8 @@ user(name)
 		}
 		lc = login_getclass(pw->pw_class);
 	}
-	if (logging) {
-		strncpy(curname, name, sizeof(curname)-1);
-		curname[sizeof(curname)-1] = '\0';
-	}
+	if (logging)
+		strlcpy(curname, name, sizeof(curname));
 #ifdef SKEY
 	if (!skey_haskey(name)) {
 		char *myskey, *skey_keyinfo __P((char *name));
@@ -940,9 +938,9 @@ skip:
 	if (doutmp) {
 		memset((void *)&utmp, 0, sizeof(utmp));
 		(void)time(&utmp.ut_time);
-		(void)strncpy(utmp.ut_name, pw->pw_name, sizeof(utmp.ut_name));
-		(void)strncpy(utmp.ut_host, remotehost, sizeof(utmp.ut_host));
-		(void)strncpy(utmp.ut_line, ttyline, sizeof(utmp.ut_line));
+		(void)strlcpy(utmp.ut_name, pw->pw_name, sizeof(utmp.ut_name));
+		(void)strlcpy(utmp.ut_host, remotehost, sizeof(utmp.ut_host));
+		(void)strlcpy(utmp.ut_line, ttyline, sizeof(utmp.ut_line));
 		login(&utmp);
 	}
 
@@ -2063,9 +2061,8 @@ dolog(sa)
 	char hbuf[sizeof(remotehost)];
 
 	getnameinfo(sa, sa->sa_len, hbuf, sizeof(hbuf), NULL, 0, 0);
-	(void) strncpy(remotehost, hbuf, sizeof(remotehost)-1);
+	(void) strlcpy(remotehost, hbuf, sizeof(remotehost));
 
-	remotehost[sizeof(remotehost)-1] = '\0';
 #ifdef HASSETPROCTITLE
 	snprintf(proctitle, sizeof(proctitle), "%s: connected", remotehost);
 	setproctitle("%s", proctitle);
@@ -2522,8 +2519,7 @@ guniquefd(local, nam)
 	}
 	if (cp)
 		*cp = '/';
-	(void) strncpy(new, local, sizeof(new)-1);
-	new[sizeof(new)-1] = '\0';
+	(void) strlcpy(new, local, sizeof(new));
 	len = strlen(new);
 	if (len+2+1 >= sizeof(new)-1)
 		return (-1);
@@ -2725,10 +2721,8 @@ logxfer(name, size, start)
 			return;
 
 		snprintf(path, sizeof path, "%s/%s", dir, name);
-		if (realpath(path, rpath) == NULL) {
-			strncpy(rpath, path, sizeof rpath-1);
-			rpath[sizeof rpath-1] = '\0';
-		}
+		if (realpath(path, rpath) == NULL)
+			strlcpy(rpath, path, sizeof rpath);
 		strvis(vpath, rpath, VIS_SAFE|VIS_NOSLASH);
 
 		strvis(vremotehost, remotehost, VIS_SAFE|VIS_NOSLASH);
