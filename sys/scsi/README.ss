@@ -1,4 +1,4 @@
-$OpenBSD: README.ss,v 1.3 1997/03/10 02:28:46 kstailey Exp $
+$OpenBSD: README.ss,v 1.4 1997/03/11 02:34:25 kstailey Exp $
 
 If you think SCSI tape drives are quirky you haven't seen anything.
 
@@ -42,3 +42,16 @@ to describe the kind of data that is available.
 
 Halftone control of scanners is missing, save for one pre-defined
 selection.  This also should be in the ioctl() interface.
+
+Basic workflow for scanning
+
+1. Open driver.
+2. ioctl to get parameters (this fills in default values and generally makes
+   step 3 easier.)
+3. Modify parameters.
+4. ioctl to set parameters.
+5. ioctl to get data size (same as step 2, but values will be different if
+   the image size, resolution, or image data type was set.)
+6. Read data based on size from scanner retrieved in step 5 (the driver
+   delivers an EOF if you overread.)
+7. Close driver (or use ioctl to reset it so you can scan again.)
