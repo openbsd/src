@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.34 2002/05/24 13:10:52 art Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.35 2003/02/25 09:13:35 tedu Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -999,9 +999,6 @@ vndthrottle(vnd, vp)
 	else
 #endif
 		vnd->sc_maxactive = 8;
-
-	if (vnd->sc_maxactive < 1)
-		vnd->sc_maxactive = 1;
 }
 
 void
