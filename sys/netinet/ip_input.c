@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.106 2002/08/28 15:43:03 pefo Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.107 2002/09/04 19:04:38 dhartmei Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -1272,8 +1272,6 @@ ip_weadvertise(addr)
 	rt = rtalloc1(sintosa(&sin), 0);
 	if (rt == 0)
 		return 0;
-
-	RTFREE(rt);
 
 	if ((rt->rt_flags & RTF_GATEWAY) || (rt->rt_flags & RTF_LLINFO) == 0 ||
 	    rt->rt_gateway->sa_family != AF_LINK) {
