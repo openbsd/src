@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmdb.c,v 1.12 2002/08/08 18:27:57 art Exp $	*/
+/*	$OpenBSD: pmdb.c,v 1.13 2003/03/28 23:33:27 mickey Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -247,7 +247,7 @@ cmd_show_registers(int argc, char **argv, void *arg)
 	if (ps->ps_state != STOPPED) {
 		if (ps->ps_flags & PSF_CORE) {
 			/* dump registers from core */
-			core_printregs(ps->ps_core);
+			core_printregs(ps);
 			return (0);
 		}
 		fprintf(stderr, "process not stopped\n");

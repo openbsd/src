@@ -1,4 +1,4 @@
-/*	$OpenBSD: core.c,v 1.3 2002/07/22 02:55:54 art Exp $	*/
+/*	$OpenBSD: core.c,v 1.4 2003/03/28 23:33:27 mickey Exp $	*/
 /*
  * Copyright (c) 2002 Jean-Francois Brousseau <krapht@secureops.com>
  * All rights reserved. 
@@ -38,6 +38,7 @@
 
 #include "core.h"
 #include "pmdb.h"
+#include "symbol.h"
 
 int
 read_core(const char *path, struct pstate *ps)
@@ -129,15 +130,18 @@ free_core(struct pstate *ps)
 }
 
 void
-core_printregs(struct corefile *cf)
+core_printregs(struct pstate *ps)
 {
+	struct corefile *cf = ps->ps_core;
 	reg *rg;
+	char buf[256];
 	int i;
 
 	rg = (reg *)cf->regs;
 	for (i = 0; i < md_def.nregs; i++)
-		printf("%s:\t0x%.*lx\n", md_def.md_reg_names[i],
-		    (int)(sizeof(reg) * 2), (long) rg[i]);
+		printf("%s:\t0x%.*lx\t%s\n", md_def.md_reg_names[i],
+		    (int)(sizeof(reg) * 2), (long) rg[i],
+		    sym_print(ps, rg[i], buf, sizeof(buf)));
 }
 
 

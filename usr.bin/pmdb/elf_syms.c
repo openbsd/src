@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf_syms.c,v 1.7 2002/07/31 04:42:01 art Exp $	*/
+/*	$OpenBSD: elf_syms.c,v 1.8 2003/03/28 23:33:27 mickey Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -165,14 +165,17 @@ elf_open(const char *name)
 		goto fail;
 	}
 
-	if ((esh->esh_strtab = mmap(NULL, esh->esh_strsize, PROT_READ,
-	    MAP_SHARED, fd, stroff)) == MAP_FAILED) {
-		goto fail;
-	}
+	if (esh->esh_symsize) {
 
-	if ((esh->esh_symtab = mmap(NULL, esh->esh_symsize, PROT_READ,
-	    MAP_SHARED, fd, symoff)) == MAP_FAILED) {
-		goto fail;
+		if ((esh->esh_strtab = mmap(NULL, esh->esh_strsize, PROT_READ,
+		    MAP_SHARED, fd, stroff)) == MAP_FAILED) {
+			goto fail;
+		}
+
+		if ((esh->esh_symtab = mmap(NULL, esh->esh_symsize, PROT_READ,
+		    MAP_SHARED, fd, symoff)) == MAP_FAILED) {
+			goto fail;
+		}
 	}
 
 	return (ESH_TO_ST(esh));
@@ -203,6 +206,9 @@ elf_name_and_off(struct sym_table *st, reg pc, reg *offs)
 	Elf_Addr bestoff = 0;
 	int nsyms, i;
 	char *symn;
+
+	if (esh == NULL)
+		return (NULL);
 
 #define SYMVAL(S) (unsigned long)((S)->st_value + st->st_offs)
 
@@ -240,6 +246,9 @@ elf_lookup_table(struct elf_symbol_handle *esh, const char *name)
 	int nsyms, i;
 	char *symn;
 	Elf_Sym *s = NULL;
+
+	if (esh == NULL)
+		return (NULL);
 
 	/* XXX - dumb, doesn't follow the rules (weak, hash, etc.). */
 	nsyms = esh->esh_symsize / sizeof(Elf_Sym);
