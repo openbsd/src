@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.hp300,v 1.19 1998/03/03 22:34:52 niklas Exp $
+#	$OpenBSD: Makefile.hp300,v 1.20 2000/06/18 20:00:54 millert Exp $
 #	$NetBSD: Makefile.hp300,v 1.54 1997/04/01 23:16:41 scottr Exp $
 
 # Makefile for OpenBSD
@@ -29,8 +29,10 @@ STRIP?=	strip
 COPTS?=		-O2
 
 # source tree is located via $S relative to the compilation directory
-S=	../../../..
-HP300=	../..
+.ifndef S
+S!=	cd ../../../..; pwd
+.endif
+HP300=	$S/arch/hp300
 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
