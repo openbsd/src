@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptosoft.c,v 1.31 2002/03/05 15:59:41 markus Exp $	*/
+/*	$OpenBSD: cryptosoft.c,v 1.32 2002/03/19 23:24:53 angelos Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -105,8 +105,22 @@ swcr_encdec(struct cryptodesc *crd, struct swcr_data *sw, caddr_t buf,
 		if (crd->crd_flags & CRD_F_IV_EXPLICIT)
 			bcopy(crd->crd_iv, iv, blks);
 		else {
-			/* Use IV from context */
-			bcopy(sw->sw_iv, iv, blks);
+			/* Get random IV */
+			for (i = 0;
+			    i + sizeof (u_int32_t) < EALG_MAX_BLOCK_LEN;
+			    i += sizeof (u_int32_t))
+				*((u_int32_t *) (iv + i)) = arc4random();
+			/*
+			 * What if the block size is not a multiple
+			 * of sizeof (u_int32_t), which is the size of
+			 * what arc4random() returns ?
+			 */
+			if (EALG_MAX_BLOCK_LEN % sizeof (u_int32_t) != 0) {
+				u_int32_t temp = arc4random();
+
+				bcopy (&temp, iv + i,
+				    EALG_MAX_BLOCK_LEN - i);
+			}
 		}
 
 		/* Do we need to write the IV */
@@ -364,10 +378,6 @@ swcr_encdec(struct cryptodesc *crd, struct swcr_data *sw, caddr_t buf,
 		}
 	}
 
-	/* Keep the last block */
-	if (crd->crd_flags & CRD_F_ENCRYPT)
-		bcopy(ivp, sw->sw_iv, blks);
-
 	return 0; /* Done with encryption/decryption */
 }
 
@@ -602,13 +612,7 @@ swcr_newsession(u_int32_t *sid, struct cryptoini *cri)
 		enccommon:
 			txf->setkey(&((*swd)->sw_kschedule), cri->cri_key,
 			    cri->cri_klen / 8);
-			(*swd)->sw_iv = malloc(txf->blocksize, M_CRYPTO_DATA, M_NOWAIT);
-			if ((*swd)->sw_iv == NULL) {
-				swcr_freesession(i);
-				return ENOBUFS;
-			}
 			(*swd)->sw_exf = txf;
-			get_random_bytes((*swd)->sw_iv, txf->blocksize);
 			break;
 	
 		case CRYPTO_MD5_HMAC:
@@ -756,8 +760,6 @@ swcr_freesession(u_int64_t tid)
 
 			if (swd->sw_kschedule)
 				txf->zerokey(&(swd->sw_kschedule));
-			if (swd->sw_iv)
-				free(swd->sw_iv, M_CRYPTO_DATA);
 			break;
 
 		case CRYPTO_MD5_HMAC:
