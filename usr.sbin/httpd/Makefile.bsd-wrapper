@@ -1,5 +1,5 @@
 # Build wrapper for Apache 
-# $OpenBSD: Makefile.bsd-wrapper,v 1.40 2003/05/26 07:16:14 henning Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.41 2003/08/21 14:00:28 henning Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -257,6 +257,9 @@ MANUALFILES= \
 	manual/configuring.html.html \
 	manual/configuring.html.ja.jis \
 	manual/content-negotiation.html \
+	manual/content-negotiation.html.en \
+	manual/content-negotiation.html.html \
+	manual/content-negotiation.html.ja.jis \
 	manual/custom-error.html.en \
 	manual/custom-error.html.fr \
 	manual/custom-error.html.html \
@@ -418,6 +421,7 @@ MANUALFILES= \
 	manual/mod/mod_ssl/ssl_template.title-tutor.gif \
 	manual/mod/core.html.en \
 	manual/mod/core.html.fr \
+	manual/mod/core.html.ja.jis \
 	manual/mod/core.html.html \
 	manual/mod/directive-dict.html.en \
 	manual/mod/directive-dict.html.fr \
@@ -445,11 +449,13 @@ MANUALFILES= \
 	manual/mod/mod_actions.html.html \
 	manual/mod/mod_actions.html.ja.jis \
 	manual/mod/mod_alias.html.en \
+	manual/mod/mod_alias.html.html \
 	manual/mod/mod_alias.html.ja.jis \
 	manual/mod/mod_asis.html.en \
 	manual/mod/mod_asis.html.html \
 	manual/mod/mod_asis.html.ja.jis \
 	manual/mod/mod_auth.html.en \
+	manual/mod/mod_auth.html.html \
 	manual/mod/mod_auth.html.ja.jis \
 	manual/mod/mod_auth_anon.html \
 	manual/mod/mod_auth_db.html \
@@ -483,6 +489,9 @@ MANUALFILES= \
 	manual/mod/mod_log_agent.html \
 	manual/mod/mod_log_common.html \
 	manual/mod/mod_log_config.html \
+	manual/mod/mod_log_config.html.en \
+	manual/mod/mod_log_config.html.html \
+	manual/mod/mod_log_config.html.ja.jis \
 	manual/mod/mod_log_referer.html \
 	manual/mod/mod_mime.html.en \
 	manual/mod/mod_mime.html.html \
