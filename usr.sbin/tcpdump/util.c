@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.10 2000/10/31 16:06:49 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.11 2001/03/05 22:34:01 jakob Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/util.c,v 1.10 2000/10/31 16:06:49 deraadt Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/util.c,v 1.11 2001/03/05 22:34:01 jakob Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>
@@ -134,6 +134,33 @@ ts_print(register const struct timeval *tvp)
 		/* Unix timeval style */
 		(void)printf("%u.%06u ",
 		    (u_int32_t)tvp->tv_sec, (u_int32_t)tvp->tv_usec);
+	}
+}
+
+/*
+ * Print a relative number of seconds (e.g. hold time, prune timer)
+ * in the form 5m1s.  This does no truncation, so 32230861 seconds
+ * is represented as 1y1w1d1h1m1s.
+ */
+void
+relts_print(int secs)
+{
+	static char *lengths[] = {"y", "w", "d", "h", "m", "s"};
+	static int seconds[] = {31536000, 604800, 86400, 3600, 60, 1};
+	char **l = lengths;
+	int *s = seconds;
+
+	if (secs <= 0) {
+		(void)printf("0s");
+		return;
+	}
+	while (secs > 0) {
+		if (secs >= *s) {
+			(void)printf("%d%s", secs / *s, *l);
+			secs -= (secs / *s) * *s;
+		}
+		s++;
+		l++;
 	}
 }
 
@@ -271,4 +298,25 @@ read_infile(char *fname)
 	cp[(int)buf.st_size] = '\0';
 
 	return (cp);
+}
+
+void
+safeputs(const char *s)
+{
+	while (*s) {
+		safeputchar(*s);
+		s++;
+	}
+}
+
+void
+safeputchar(int c)
+{
+	unsigned char ch;
+
+	ch = (unsigned char)(c & 0xff);
+	if (c < 0x80 && isprint(c))
+		printf("%c", c & 0xff);
+	else
+		printf("\\%03o", c & 0xff);
 }
