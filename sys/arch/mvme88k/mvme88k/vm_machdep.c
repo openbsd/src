@@ -1,4 +1,5 @@
-/*	$OpenBSD: vm_machdep.c,v 1.13 2000/06/08 09:50:16 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.14 2000/06/08 22:25:21 niklas Exp $	*/
+
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -42,12 +43,12 @@
  *	from: Utah $Hdr: vm_machdep.c 1.21 91/04/06$
  *	from: @(#)vm_machdep.c	7.10 (Berkeley) 5/7/91
  *	vm_machdep.c,v 1.3 1993/07/07 07:09:32 cgd Exp
- *	$Id: vm_machdep.c,v 1.13 2000/06/08 09:50:16 art Exp $
  */
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/signalvar.h>
 #include <sys/malloc.h>
 #include <sys/map.h>
 #include <sys/buf.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.23 2000/02/21 21:05:59 art Exp $	*/
+/*	$OpenBSD: trap.c,v 1.24 2000/06/08 22:25:22 niklas Exp $	*/
 /*	$NetBSD: trap.c,v 1.58 1997/09/12 08:55:01 pk Exp $ */
 
 /*
@@ -52,6 +52,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/signalvar.h>
 #include <sys/user.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>

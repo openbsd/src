@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.8 1999/09/27 19:13:24 smurph Exp $	*/
+/*	$OpenBSD: trap.c,v 1.9 2000/06/08 22:25:21 niklas Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -50,6 +50,7 @@
 #include <vm/vm_kern.h>			/* kernel_map */
 
 #include <sys/proc.h>
+#include <sys/signalvar.h>
 #include <sys/user.h>
 #include <sys/syscall.h>
 #include <sys/ktrace.h>

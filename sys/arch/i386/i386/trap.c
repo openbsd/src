@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.31 1999/03/21 03:30:01 weingart Exp $	*/
+/*	$OpenBSD: trap.c,v 1.32 2000/06/08 22:25:19 niklas Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 #undef DEBUG
@@ -49,6 +49,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/signalvar.h>
 #include <sys/user.h>
 #include <sys/acct.h>
 #include <sys/kernel.h>

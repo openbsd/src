@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.16 2000/04/27 01:10:14 bjc Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.17 2000/06/08 22:25:23 niklas Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.56 2000/01/20 22:19:00 sommerfeld Exp $	     */
 
 /*
@@ -35,6 +35,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/signalvar.h>
 #include <sys/user.h>
 #include <sys/exec.h>
 #include <sys/vnode.h>

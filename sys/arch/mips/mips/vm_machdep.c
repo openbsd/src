@@ -1,4 +1,5 @@
-/*	$OpenBSD: vm_machdep.c,v 1.10 2000/06/08 10:12:15 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.11 2000/06/08 22:25:20 niklas Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -44,6 +45,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/signalvar.h>
 #include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/vnode.h>

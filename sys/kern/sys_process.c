@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.7 1999/02/26 05:12:18 art Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.8 2000/06/08 22:25:24 niklas Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -56,6 +56,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/signalvar.h>
 #include <sys/errno.h>
 #include <sys/ptrace.h>
 #include <sys/uio.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.6 1997/01/16 04:04:34 kstailey Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.7 2000/06/08 22:25:23 niklas Exp $	*/
 /*	$NetBSD: sys_machdep.c,v 1.3 1995/10/27 15:58:23 gwr Exp $	*/
 
 /*
@@ -42,6 +42,7 @@
 #include <sys/file.h>
 #include <sys/time.h>
 #include <sys/proc.h>
+#include <sys/signalvar.h>
 #include <sys/uio.h>
 #include <sys/kernel.h>
 #include <sys/mtio.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.19 2000/02/10 20:29:09 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.20 2000/06/08 22:25:19 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998-2000 Michael Shalayeff
@@ -39,6 +39,7 @@
 #include <sys/syscall.h>
 #include <sys/ktrace.h>
 #include <sys/proc.h>
+#include <sys/signalvar.h>
 #include <sys/user.h>
 #include <sys/acct.h>
 #include <sys/signal.h>

@@ -45,6 +45,7 @@
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/proc.h>
+#include <sys/signalvar.h>
 #include <sys/device.h>
 #include <sys/time.h>
 #include <sys/systm.h>

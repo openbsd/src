@@ -1,4 +1,4 @@
-/*	$OpenBSD: npx.c,v 1.16 1999/02/26 04:20:40 art Exp $	*/
+/*	$OpenBSD: npx.c,v 1.17 2000/06/08 22:25:19 niklas Exp $	*/
 /*	$NetBSD: npx.c,v 1.57 1996/05/12 23:12:24 mycroft Exp $	*/
 
 #if 0
@@ -49,6 +49,7 @@
 #include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/proc.h>
+#include <sys/signalvar.h>
 #include <sys/user.h>
 #include <sys/ioctl.h>
 #include <sys/device.h>
