@@ -305,6 +305,23 @@ sparc_xfer_wcookie (struct target_ops *ops, enum target_object object,
   memcpy (readbuf, buf + offset, len);
   return len;
 }
+
+LONGEST (*inf_ptrace_xfer_partial) (struct target_ops *, enum target_object,
+				    const char *, void *, const void *,
+				    ULONGEST, LONGEST);
+
+static LONGEST
+sparc_xfer_partial (struct target_ops *ops, enum target_object object,
+		    const char *annex, void *readbuf, const void *writebuf,
+		    ULONGEST offset, LONGEST len)
+{
+  if (object == TARGET_OBJECT_WCOOKIE)
+    return sparc_xfer_wcookie (ops, object, annex, readbuf, writebuf, 
+			       offset, len);
+
+  return inf_ptrace_xfer_partial (ops, object, annex, readbuf, writebuf,
+				  offset, len);
+}
 
 /* Create a prototype generic SPARC target.  The client can override
    it with local methods.  */
@@ -317,6 +334,8 @@ sparc_target (void)
   t = inf_ptrace_target ();
   t->to_fetch_registers = fetch_inferior_registers;
   t->to_store_registers = store_inferior_registers;
+  inf_ptrace_xfer_partial = t->to_xfer_partial;
+  t->to_xfer_partial = sparc_xfer_partial;
   return t;
 }
 

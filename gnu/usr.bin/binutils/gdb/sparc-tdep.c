@@ -1211,6 +1211,16 @@ sparc_supply_rwindow (struct regcache *regcache, CORE_ADDR sp, int regnum)
 	  if (regnum == i || regnum == -1)
 	    {
 	      target_read_memory (sp + ((i - SPARC_L0_REGNUM) * 8), buf, 8);
+
+	      /* Handle StackGhost.  */
+	      if (i == SPARC_I7_REGNUM)
+		{
+		  ULONGEST wcookie = sparc_fetch_wcookie ();
+		  ULONGEST i7 = extract_unsigned_integer (buf + offset, 8);
+
+		  store_unsigned_integer (buf + offset, 8, i7 ^ wcookie);
+		}
+
 	      regcache_raw_supply (regcache, i, buf);
 	    }
 	}
@@ -1269,6 +1279,16 @@ sparc_collect_rwindow (const struct regcache *regcache,
 	  if (regnum == -1 || regnum == SPARC_SP_REGNUM || regnum == i)
 	    {
 	      regcache_raw_collect (regcache, i, buf);
+
+	      /* Handle StackGhost.  */
+	      if (i == SPARC_I7_REGNUM)
+		{
+		  ULONGEST wcookie = sparc_fetch_wcookie ();
+		  ULONGEST i7 = extract_unsigned_integer (buf + offset, 8);
+
+		  store_unsigned_integer (buf, 8, i7 ^ wcookie);
+		}
+
 	      target_write_memory (sp + ((i - SPARC_L0_REGNUM) * 8), buf, 8);
 	    }
 	}

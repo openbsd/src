@@ -133,6 +133,20 @@ sparc64nbsd_sigcontext_saved_regs (CORE_ADDR sigcontext_addr,
        regnum <= SPARC_I7_REGNUM; regnum++, addr += 8)
     saved_regs[regnum].addr = addr;
 
+  /* Handle StackGhost.  */
+  {
+    ULONGEST wcookie = sparc_fetch_wcookie ();
+
+    if (wcookie != 0)
+      {
+	ULONGEST i7;
+
+	addr = saved_regs[SPARC_I7_REGNUM].addr;
+	i7 = get_frame_memory_unsigned (next_frame, addr, 8);
+	trad_frame_set_value (saved_regs, SPARC_I7_REGNUM, i7 ^ wcookie);
+      }
+  }
+
   /* TODO: Handle the floating-point registers.  */
 
   return saved_regs;

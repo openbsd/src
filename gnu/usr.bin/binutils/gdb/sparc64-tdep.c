@@ -519,6 +519,30 @@ sparc64_frame_prev_register (struct frame_info *next_frame, void **this_cache,
       return;
     }
 
+  /* Handle StackGhost.  */
+  {
+    ULONGEST wcookie = sparc_fetch_wcookie ();
+
+    if (wcookie != 0 && !cache->frameless_p && regnum == SPARC_I7_REGNUM)
+      {
+	*optimizedp = 0;
+	*lvalp = not_lval;
+	*addrp = 0;
+	*realnump = -1;
+	if (valuep)
+	  {
+	    CORE_ADDR addr =
+	      cache->base + BIAS + (regnum - SPARC_L0_REGNUM) * 8;
+	    ULONGEST i7;
+
+	    /* Read the value in from memory.  */
+	    i7 = get_frame_memory_unsigned (next_frame, addr, 8);
+	    store_unsigned_integer (valuep, 8, i7 ^ wcookie);
+	  }
+	return;
+      }
+  }
+
   /* The previous frame's `local' and `in' registers have been saved
      in the register save area.  */
   if (!cache->frameless_p
