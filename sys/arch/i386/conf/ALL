@@ -1,4 +1,4 @@
-#	$OpenBSD: ALL,v 1.7 1996/08/31 02:09:13 deraadt Exp $
+#	$OpenBSD: ALL,v 1.8 1996/09/04 21:20:44 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	ALL -- everything that's currently supported
@@ -107,6 +107,7 @@ isadma0	at isa?
 pc0	at isa? port 0x60 irq 1		# generic PC console device
 #vt0	at isa? port 0x60 irq 1
 
+#pccom	at isa? port 0x3f8 irq 4
 com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
 com1	at isa? port 0x2f8 irq 3
 com2	at isa? port 0x3e8 irq 5
