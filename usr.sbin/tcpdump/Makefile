@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.40 2003/06/11 20:58:45 markus Exp $
+#	$OpenBSD: Makefile,v 1.41 2003/07/17 08:45:37 markus Exp $
 #
 #  Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
 # 	The Regents of the University of California.  All rights reserved.
@@ -32,8 +32,8 @@ CFLAGS+=-DCSLIP -DPPP -DHAVE_FDDI -DETHER_SERVICE -DRETSIGTYPE=void -DHAVE_NET_S
 CFLAGS+=-DLBL_ALIGN
 .endif
 
-LDADD+=	-lpcap -ll
-DPADD+=	${LIBL} ${LIBPCAP}
+LDADD+=	-lpcap -ll -lcrypto
+DPADD+=	${LIBL} ${LIBPCAP} ${LIBCRYPTO}
 
 SRCS=	tcpdump.c addrtoname.c \
 	print-ether.c print-ip.c print-arp.c print-tcp.c print-udp.c \

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpdump.8,v 1.36 2003/07/14 13:46:14 jmc Exp $
+.\"	$OpenBSD: tcpdump.8,v 1.37 2003/07/17 08:45:37 markus Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994, 1995, 1996
 .\"	The Regents of the University of California.  All rights reserved.
@@ -35,6 +35,7 @@
 .Op Fl s Ar snaplen
 .Op Fl T Ar type
 .Op Fl w Ar file
+.Op Fl E Oo Ar espalg: Oc Ar espkey
 .Op Ar expression
 .Sh DESCRIPTION
 .Nm
@@ -193,6 +194,34 @@ No Selective Acknowledgements
 and
 .Cm wb
 .Pq distributed White Board .
+.It Xo
+.Fl E Oo Ar espalg: Oc Ar espkey
+.Xc
+Try to decrypt
+.Tn RFC 2406
+.Cm ESP
+traffic using the specified hex key
+.Ar espkey .
+Supported algorithms for
+.Ar espalg
+are:
+.Cm aes128 ,
+.Cm aes128-hmac96 ,
+.Cm blowfish ,
+.Cm blowfish-hmac96 ,
+.Cm cast ,
+.Cm cast-hmac96 ,
+.Cm des3 ,
+.Cm des3-hmac96 ,
+.Cm des
+and
+.Cm des-hmac96 .
+The algorithm defaults to
+.Cm aes128-hmac96 .
+This option should be used for debugging only, since
+the key will show up in
+.Xr ps 1
+output.
 .It Fl S
 Print absolute, rather than relative,
 .Tn TCP
@@ -412,9 +441,8 @@ expressions can be prepended with the keywords,
 or
 .Cm rarp
 as in:
-.Bd -literal -offset indent
-.Cm ip host Ar host
-.Ed
+.Pp
+.D1 Cm ip host Ar host
 .Pp
 which is equivalent to:
 .Bd -ragged -offset indent
@@ -529,9 +557,8 @@ Any of the above port expressions can be prepended with the keywords
 or
 .Cm udp ,
 as in:
-.Bd -literal -offset indent
-.Cm tcp src port Ar port
-.Ed
+.Pp
+.D1 Cm tcp src port Ar port
 .Pp
 which matches only
 .Tn TCP
@@ -541,17 +568,15 @@ packets whose source port is
 True if the packet has a length less than or equal to
 .Ar length .
 This is equivalent to:
-.Bd -literal -offset indent
-.Cm len \*(<= Ar length .
-.Ed
+.Pp
+.D1 Cm len \*(Le Ar length .
 .Pp
 .It Cm greater Ar length
 True if the packet has a length greater than or equal to
 .Ar length .
 This is equivalent to:
-.Bd -literal -offset indent
-.Cm len \*(>= Ar length .
-.Ed
+.Pp
+.D1 Cm len \*(Ge Ar length .
 .Pp
 .It Cm ip proto Ar proto
 True if the packet is an
@@ -716,9 +741,8 @@ and
 .Cm mopdl
 .Xc
 Abbreviations for:
-.Bd -literal -offset indent
-.Cm ether proto Ar p
-.Ed
+.Pp
+.D1 Cm ether proto Ar p
 .Pp
 where
 .Ar p
@@ -990,6 +1014,19 @@ packets that are not echo requests/replies (i.e., not ping packets):
 \&'
 .Cm icmp Ns [0] != 8
 .Cm and icmp Ns [0] !\&= 0
+\&'
+.Ed
+.Pp
+To print and decrypt all
+.Tn ESP
+packets with
+.Tn SPI
+0x00001234:
+.Bd -ragged -offset indent
+.Nm
+-E des3-hmac96:ab...def
+\&'
+.Cm ip Ns [20:4] = 0x00001234
 \&'
 .Ed
 .El
@@ -1664,7 +1701,7 @@ The file
 .Pa /etc/atalk.names
 is used to translate AppleTalk net and node numbers to names.
 Lines in this file have the form
-.Bd -literal -offset indent
+.Bd -unfilled -offset indent
 .Ar number		name
 
 1.254		ether

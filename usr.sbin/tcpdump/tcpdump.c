@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpdump.c,v 1.31 2003/05/14 08:50:37 canacar Exp $	*/
+/*	$OpenBSD: tcpdump.c,v 1.32 2003/07/17 08:45:37 markus Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -26,7 +26,7 @@ static const char copyright[] =
     "@(#) Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n";
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/tcpdump.c,v 1.31 2003/05/14 08:50:37 canacar Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/tcpdump.c,v 1.32 2003/07/17 08:45:37 markus Exp $ (LBL)";
 #endif
 
 /*
@@ -80,6 +80,7 @@ int32_t thiszone;		/* seconds offset from gmt to local time */
 
 /* Externs */
 extern void bpf_dump(struct bpf_program *, int);
+extern int esp_init(char *);
 
 /* Forwards */
 RETSIGTYPE cleanup(int);
@@ -161,7 +162,7 @@ main(int argc, char **argv)
 		error("%s", ebuf);
 
 	opterr = 0;
-	while ((op = getopt(argc, argv, "ac:defF:i:lnNOpqr:s:StT:vw:xXY")) != -1)
+	while ((op = getopt(argc, argv, "ac:deE:fF:i:lnNOpqr:s:StT:vw:xXY")) != -1)
 		switch (op) {
 
 		case 'a':
@@ -282,6 +283,11 @@ main(int argc, char **argv)
 		case 'X':
 			++Xflag;
 			if (xflag == 0) ++xflag;
+			break;
+
+		case 'E':
+			if (esp_init(optarg) < 0)
+				error("bad esp specification `%s'", optarg);
 			break;
 
 		default:
@@ -531,10 +537,11 @@ usage(void)
 	(void)fprintf(stderr, "%s version %s\n", program_name, version);
 	(void)fprintf(stderr, "libpcap version %s\n", pcap_version);
 	(void)fprintf(stderr,
-"Usage: %s [-adeflnNOpqStvxX] [-c count] [ -F file ]\n", program_name);
+"Usage: %s [-adeflnNOpqStvxX] [-c count] [-F file] [-i interface] [-r file]\n",
+	    program_name);
 	(void)fprintf(stderr,
-"\t\t[ -i interface ] [ -r file ] [ -s snaplen ]\n");
+"\t\t[-s snaplen] [-T type] [-w file] [-E [espalg:]espkey]\n");
 	(void)fprintf(stderr,
-"\t\t[ -T type ] [ -w file ] [ expression ]\n");
+"\t\t[expression]\n");
 	exit(1);
 }
