@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.25 2002/12/18 23:52:45 mickey Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.26 2003/01/04 10:35:32 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -108,6 +108,7 @@ cpu_configure()
 	timeout_set(&heartbeat_tmo, heartbeat, NULL);
 	heartbeat(NULL);
 #endif
+	cold = 0;
 }
 
 #ifdef USELEDS
