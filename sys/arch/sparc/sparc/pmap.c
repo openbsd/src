@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.72 2000/02/01 10:34:32 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.73 2000/02/01 16:16:36 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -2357,6 +2357,13 @@ pv_changepte4m(pv0, bis, bic)
 		setpgt4m(ptep, tpte);
 
 		/* Update PV_C4M flag if required */
+		/*
+		 * XXX - this is incorrect. The PV_C4M means that _this_
+		 *       mapping should be kept uncached. This way we
+		 *       effectively uncache this pa until all mappings
+		 *       to it are gone (see also the XXX in pv_link4m and
+		 *       pv_unlink4m).
+		 */
 		if (bis & SRMMU_PG_C)
 			pv->pv_flags |= PV_C4M;
 		if (bic & SRMMU_PG_C)
@@ -2489,6 +2496,11 @@ pv_unlink4m(pv, pm, va)
 		/*
 		 * Not cached: check to see if we can fix that now.
 		 */
+		/*
+		 * XXX - This code is incorrect. Even if the bad alias
+		 *       has disappeared we keep the PV_ANC flag because
+		 *       one of the mappings is not PV_C4M.
+		 */
 		va = pv->pv_va;
 		for (npv = pv->pv_next; npv != NULL; npv = npv->pv_next)
 			if (BADALIAS(va, npv->pv_va) ||
@@ -2524,6 +2536,9 @@ retry:
 		pv->pv_next = NULL;
 		pv->pv_pmap = pm;
 		pv->pv_va = va;
+		/*
+		 * XXX - should we really keep the MOD/REF flags?
+		 */
 		pv->pv_flags |= nc ? 0 : PV_C4M;
 		return (ret);
 	}
@@ -2554,6 +2569,11 @@ retry:
 		ret = SRMMU_PG_C;
 	} else {
 		for (npv = pv; npv != NULL; npv = npv->pv_next) {
+			/*
+			 * XXX - This code is incorrect. Even when we have
+			 *       a bad alias we can fail to set PV_ANC because
+			 *       one of the mappings doesn't have PV_C4M set.
+			 */
 			if ((npv->pv_flags & PV_C4M) == 0) {
 				ret = SRMMU_PG_C;
 				break;
