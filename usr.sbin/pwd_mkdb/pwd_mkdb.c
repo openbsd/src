@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd_mkdb.c,v 1.35 2003/06/02 23:36:54 millert Exp $	*/
+/*	$OpenBSD: pwd_mkdb.c,v 1.36 2003/06/08 21:14:55 millert Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -32,16 +32,16 @@
  */
 
 #ifndef lint
-static char copyright[] =
+static const char copyright[] =
 "@(#) Copyright (c) 1991, 1993, 1994\n\
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
 #if 0
-static char sccsid[] = "from: @(#)pwd_mkdb.c	8.5 (Berkeley) 4/20/94";
+static const char sccsid[] = "from: @(#)pwd_mkdb.c	8.5 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: pwd_mkdb.c,v 1.35 2003/06/02 23:36:54 millert Exp $";
+static const char rcsid[] = "$OpenBSD: pwd_mkdb.c,v 1.36 2003/06/08 21:14:55 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -98,9 +98,7 @@ char	*changedir(char *path, char *dir);
 void	db_store(FILE *, FILE *, DB *, DB *,struct passwd *, int, char *, uid_t);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char **argv)
 {
 	DB *dp, *edp;
 	DBT data, key;
@@ -134,6 +132,8 @@ main(argc, argv)
 			break;
 		case 'u':			/* only update this record */
 			username = optarg;
+			if (strlen(username) > _PW_NAME_LEN)
+				errx(1, "username too long");
 			break;
 		case 'v':			/* backward compatible */
 			break;
@@ -290,7 +290,7 @@ main(argc, argv)
 
 	/*
 	 * Write the .db files.
-	 * We do this three times, one per key type (for getpw{name,uid,ent}).
+	 * We do this three times, one per key type (for getpw{nam,uid,ent}).
 	 * The first time through we also check for YP, issue warnings
 	 * and save the V7 format passwd file if necessary.
 	 */
@@ -351,10 +351,7 @@ main(argc, argv)
 }
 
 int
-scan(fp, pw, flags)
-	FILE *fp;
-	struct passwd *pw;
-	int *flags;
+scan(FILE *fp, struct passwd *pw, int *flags)
 {
 	static int lcnt;
 	static char line[LINE_MAX];
@@ -472,7 +469,7 @@ cleanup()
 }
 
 void
-usage()
+usage(void)
 {
 
 	(void)fprintf(stderr,
@@ -481,8 +478,7 @@ usage()
 }
 
 char *
-changedir(path, dir)
-	char *path, *dir;
+changedir(char *path, char *dir)
 {
 	static char fixed[MAXPATHLEN];
 	char *p;
@@ -497,15 +493,8 @@ changedir(path, dir)
 }
 
 void
-db_store(fp, oldfp, edp, dp, pw, keytype, username, olduid)
-	FILE *fp;
-	FILE *oldfp;
-	DB *edp;
-	DB *dp;
-	struct passwd *pw;
-	int keytype;
-	char *username;
-	uid_t olduid;
+db_store(FILE *fp, FILE *oldfp, DB *edp, DB *dp, struct passwd *pw,
+	 int keytype, char *username, uid_t olduid)
 {
 	int flags = 0;
 	int dbmode, found = 0;
