@@ -1,7 +1,7 @@
-/*	$OpenBSD: main.c,v 1.3 1997/01/15 23:44:11 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.4 1997/11/17 14:01:28 gene Exp $	*/
 
 #ifndef lint
-static char *rcsid = "$OpenBSD: main.c,v 1.3 1997/01/15 23:44:11 millert Exp $";
+static char *rcsid = "$OpenBSD: main.c,v 1.4 1997/11/17 14:01:28 gene Exp $";
 #endif
 
 /*
@@ -33,9 +33,9 @@ static char Options[] = "acdDe:fikrRpLqImvhl:";
 int	Flags		= 0;
 Boolean AllInstalled	= FALSE;
 Boolean Quiet		= FALSE;
-char *InfoPrefix	= "";
-char PlayPen[FILENAME_MAX];
-char *CheckPkg		= NULL;
+char	*InfoPrefix	= "";
+char 	PlayPen[FILENAME_MAX];
+char 	*CheckPkg	= NULL;
 
 int
 main(int argc, char **argv)
@@ -173,7 +173,7 @@ usage(const char *name, const char *fmt, ...)
     fprintf(stderr, "-R         show packages depending on this package\n");
     fprintf(stderr, "-p         show prefix\n");
     fprintf(stderr, "-l <str>   Prefix each info catagory with <str>\n");
-    fprintf(stderr, "-L         show intalled files\n");
+    fprintf(stderr, "-L         show installed files\n");
     fprintf(stderr, "-q         minimal output (``quiet'' mode)\n");
     fprintf(stderr, "-v         show all information\n");
     fprintf(stderr, "-t temp    use temp as template for mktemp()\n");
