@@ -1831,7 +1831,7 @@ strip_main (argc, argv)
   struct section_list *p;
   char *output_file = NULL;
 
-  while ((c = getopt_long (argc, argv, "b:i:I:j:K:N:s:O:d:F:L:G:R:SpgxXVvW:",
+  while ((c = getopt_long (argc, argv, "I:O:F:K:N:R:o:sSpdgxXhVv",
 			   strip_options, (int *) 0)) != EOF)
     {
       switch (c)
@@ -1963,7 +1963,7 @@ copy_main (argc, argv)
   struct section_list *p;
   struct stat statbuf;
 
-  while ((c = getopt_long (argc, argv, "b:i:I:j:K:N:s:O:d:F:L:R:SpgxXVvW:",
+  while ((c = getopt_long (argc, argv, "b:i:I:j:K:N:s:O:d:F:L:G:R:SpgxXhVvW:",
 			   copy_options, (int *) 0)) != EOF)
     {
       switch (c)
