@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.2 2004/12/31 00:16:15 jsg Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.3 2005/01/04 04:54:56 jsg Exp $	*/
 /* $NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -633,14 +633,13 @@ rtw_srom_parse(struct rtw_srom *sr, u_int32_t *flags, u_int8_t *cs_threshold,
 	*rcr &= ~(RTW_RCR_ENCS1 | RTW_RCR_ENCS2);
 
 	version = RTW_SR_GET16(sr, RTW_SR_VERSION);
-	printf("%s: SROM version %d.%d", dvname, version >> 8, version & 0xff);
+	printf("SROM %d.%d ", version >> 8, version & 0xff);
 
 	if (version <= 0x0101) {
-		printf(" is not understood, limping along with defaults\n");
+		printf(" is not understood, limping along with defaults ");
 		rtw_srom_defaults(sr, flags, cs_threshold, rfchipid, rcr);
 		return 0;
 	}
-	printf("\n");
 
 	for (i = 0; i < IEEE80211_ADDR_LEN; i++)
 		mac[i] = RTW_SR_GET(sr, RTW_SR_MAC + i);
@@ -671,16 +670,16 @@ rtw_srom_parse(struct rtw_srom *sr, u_int32_t *flags, u_int8_t *cs_threshold,
 		paname = "Winspring WS9901";
 		break;
 	case RTW_RFCHIPID_MAXIM:
-		rfname = "Maxim MAX2820";	/* guess */
-		paname = "Maxim MAX2422";	/* guess */
+		rfname = "MAX2820";	/* guess */
+		paname = "MAX2422";	/* guess */
 		break;
 	case RTW_RFCHIPID_INTERSIL:
 		rfname = "Intersil HFA3873";	/* guess */
 		paname = "Intersil <unknown>";
 		break;
 	case RTW_RFCHIPID_PHILIPS:	/* this combo seen in the wild */
-		rfname = "Philips SA2400A";
-		paname = "Philips SA2411";
+		rfname = "SA2400A";
+		paname = "SA2411";
 		break;
 	case RTW_RFCHIPID_RFMD:
 		/* this is the same front-end as an atw(4)! */
@@ -698,7 +697,7 @@ rtw_srom_parse(struct rtw_srom *sr, u_int32_t *flags, u_int8_t *cs_threshold,
 		snprintf(scratch, sizeof(scratch), "unknown 0x%02x", *rfchipid);
 		rfname = paname = scratch;
 	}
-	printf("%s: RF: %s, PA: %s\n", dvname, rfname, paname);
+	printf("RF %s PA %s ", rfname, paname);
 
 	switch (RTW_SR_GET(sr, RTW_SR_CONFIG0) & RTW_CONFIG0_GL_MASK) {
 	case RTW_CONFIG0_GL_USA:
@@ -915,7 +914,8 @@ rtw_init_channels(enum rtw_locale locale,
 			ADD_CHANNEL(chans, i);
 		break;
 	}
-	printf("%s: Geographic Location %s\n", dvname, name);
+	RTW_DPRINTF(RTW_DEBUG_ATTACH, ("%s: Geographic Location %s\n",
+	    dvname, name));
 #undef ADD_CHANNEL
 }
 
@@ -965,7 +965,7 @@ rtw_identify_sta(struct rtw_regs *regs, u_int8_t (*addr)[IEEE80211_ADDR_LEN],
 		return ENXIO;
 	}
 
-	printf("%s: 802.11 address %s\n", dvname, ether_sprintf(*addr));
+	printf("address %s\n", ether_sprintf(*addr));
 
 	return 0;
 }
@@ -3367,7 +3367,7 @@ rtw_attach(struct rtw_softc *sc)
 		rf_write = rtw_rf_macwrite;
 		break;
 	}
-	printf("%s: hardware version %c\n", sc->sc_dev.dv_xname, vers);
+	printf("%s: ver %c ", sc->sc_dev.dv_xname, vers);
 
 	rc = bus_dmamem_alloc(sc->sc_dmat, sizeof(struct rtw_descs),
 	    RTW_DESC_ALIGNMENT, 0, &sc->sc_desc_segs, 1, &sc->sc_desc_nsegs,
@@ -3469,10 +3469,11 @@ rtw_attach(struct rtw_softc *sc)
 		goto err;
 	}
 
-	printf("%s: %s PHY\n", sc->sc_dev.dv_xname,
-	    ((sc->sc_flags & RTW_F_DIGPHY) != 0) ? "digital" : "analog");
+	RTW_DPRINTF(RTW_DEBUG_ATTACH, ("%s: %s PHY\n", sc->sc_dev.dv_xname,
+	    ((sc->sc_flags & RTW_F_DIGPHY) != 0) ? "digital" : "analog"));
 
-	printf("%s: CS threshold %u\n", sc->sc_dev.dv_xname, sc->sc_csthr);
+	RTW_DPRINTF(RTW_DEBUG_ATTACH, ("%s: CS threshold %u\n",
+	    sc->sc_dev.dv_xname, sc->sc_csthr));
 
 	NEXT_ATTACH_STATE(sc, FINISH_PARSE_SROM);
 
