@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.91 2002/06/07 20:59:19 fgsch Exp $
+	$OpenBSD: pcmciadevs,v 1.92 2002/06/20 17:10:21 millert Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -172,6 +172,7 @@ product DUAL NE2000		0x0100 Dual NE2000
 product ELSA MC2_IEEE		0x0001 AirLancer MC-2 IEEE
 product ELSA XI300_IEEE		0x0002 XI300 Wireless LAN
 product ELSA XI800_IEEE		0x0004 XI800 CF Wireless LAN
+product ELSA XI325_IEEE		0x0005 XI325 Wireless LAN
 
 /* EMTAC */
 product EMTAC WLAN		0x0002 EMTAC A2424i 11Mbps WLAN Card

@@ -1,4 +1,4 @@
-/* $OpenBSD: if_wi_pcmcia.c,v 1.32 2002/06/09 22:34:16 millert Exp $ */
+/* $OpenBSD: if_wi_pcmcia.c,v 1.33 2002/06/20 17:10:56 millert Exp $ */
 /* $NetBSD: if_wi_pcmcia.c,v 1.14 2001/11/26 04:34:56 ichiro Exp $ */
 
 /*
@@ -169,6 +169,11 @@ static const struct wi_pcmcia_product {
 	  PCMCIA_PRODUCT_ELSA_XI300_IEEE,
 	  PCMCIA_CIS_ELSA_XI300_IEEE,
 	  "XI300 Wireless LAN",
+	},
+	{ PCMCIA_VENDOR_ELSA,
+	  PCMCIA_PRODUCT_ELSA_XI325_IEEE,
+	  PCMCIA_CIS_ELSA_XI325_IEEE,
+	  "XI325 Wireless LAN",
 	},
 	{ PCMCIA_VENDOR_COMPAQ,
 	  PCMCIA_PRODUCT_COMPAQ_NC5004,
