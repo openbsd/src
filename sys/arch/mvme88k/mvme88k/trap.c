@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.64 2004/01/09 00:24:25 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.65 2004/01/09 11:03:39 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -78,12 +78,6 @@
 #endif /* DDB */
 #define SSBREAKPOINT (0xF000D1F8U) /* Single Step Breakpoint */
 
-#define TRAPTRACE
-
-#if defined(TRAPTRACE)
-unsigned traptrace = 0;
-#endif
-
 #ifdef DDB
 #define DEBUG_MSG(x) db_printf x
 #else
@@ -99,7 +93,7 @@ extern int procfs_domem(struct proc *, struct proc *, void *, struct uio *);
 extern void regdump(struct trapframe *f);
 __dead void error_fatal(struct m88100_saved_state *frame);
 
-char  *trap_type[] = {
+const char *trap_type[] = {
 	"Reset",
 	"Interrupt Exception",
 	"Instruction Access",
@@ -113,8 +107,9 @@ char  *trap_type[] = {
 	"Error Exception",
 	"Non-Maskable Exception",
 };
+const int trap_types = sizeof trap_type / sizeof trap_type[0];
 
-char  *pbus_exception_type[] = {
+const char *pbus_exception_type[] = {
 	"Success (No Fault)",
 	"unknown 1",
 	"unknown 2",
@@ -124,8 +119,6 @@ char  *pbus_exception_type[] = {
 	"Supervisor Violation",
 	"Write Violation",
 };
-
-int   trap_types = sizeof trap_type / sizeof trap_type[0];
 
 static inline void
 userret(struct proc *p, struct m88100_saved_state *frame, u_quad_t oticks)
@@ -221,7 +214,6 @@ m88100_trap(unsigned type, struct m88100_saved_state *frame)
 	int s;
 #endif
 	int sig = 0;
-	unsigned pc = PC_REGS(frame);  /* get program counter (sxip) */
 
 	extern struct vm_map *kernel_map;
 	extern caddr_t guarded_access_start;
@@ -534,6 +526,7 @@ user_fault:
 			unsigned instr;
 			struct uio uio;
 			struct iovec iov;
+			unsigned pc = PC_REGS(frame);
 
 			/* read break instruction */
 			copyin((caddr_t)pc, &instr, sizeof(unsigned));
@@ -657,7 +650,6 @@ m88110_trap(unsigned type, struct m88100_saved_state *frame)
         int s; /* IPL */
 #endif
 	int sig = 0;
-	unsigned pc = PC_REGS(frame);  /* get program counter (exip) */
 	pt_entry_t *pte;
 
 	extern struct vm_map *kernel_map;
@@ -669,16 +661,6 @@ m88110_trap(unsigned type, struct m88100_saved_state *frame)
 	uvmexp.traps++;
 	if ((p = curproc) == NULL)
 		p = &proc0;
-
-#ifdef DEBUG
-	if (type != T_INT && type != T_ASTFLT
-#ifdef DDB
-	    && type != T_KDB_ENTRY
-#endif
-	   ) {
-		printf("m88110_trap: %d %s\n", type, frame->vector < trap_types ? trap_type[frame->vector] : "unknown");
-	}
-#endif
 
 	if (USERMODE(frame->epsr)) {
 		sticks = p->p_sticks;
@@ -1061,6 +1043,7 @@ m88110_user_fault:
 			unsigned instr;
 			struct uio uio;
 			struct iovec iov;
+			unsigned pc = PC_REGS(frame);
 
 			/* read break instruction */
 			copyin((caddr_t)pc, &instr, sizeof(unsigned));
@@ -1135,7 +1118,6 @@ m88110_user_fault:
 
 	userret(p, frame, sticks);
 }
-
 #endif /* MVME197 */
 
 __dead void
@@ -1330,7 +1312,6 @@ m88100_syscall(register_t code, struct m88100_saved_state *tf)
 #endif /* M88100 */
 
 #ifdef M88110
-
 /* Instruction pointers operate differently on mc88110 */
 void
 m88110_syscall(register_t code, struct m88100_saved_state *tf)
@@ -1696,9 +1677,9 @@ ss_next_instr_address(struct proc *p, unsigned pc, unsigned delay_slot)
 
 int
 cpu_singlestep(p)
-register struct proc *p;
+	struct proc *p;
 {
-	struct trapframe *sstf = USER_REGS(p); /*p->p_md.md_tf;*/
+	struct trapframe *sstf = USER_REGS(p);
 	unsigned pc, brpc;
 	int i;
 	int bpinstr = SSBREAKPOINT;
@@ -1761,22 +1742,20 @@ register struct proc *p;
 	return (0);
 }
 
-
 #ifdef DIAGNOSTIC
 void
 splassert_check(int wantipl, const char *func)
 {
 	int oldipl;
 
-	oldipl = getipl();
+	/*
+	 * This will raise the spl if too low,
+	 * in a feeble attempt to reduce further damage.
+	 */
+	oldipl = raiseipl(wantipl);
 
 	if (oldipl < wantipl) {
 		splassert_fail(wantipl, oldipl, func);
-		/*
-		 * If the splassert_ctl is set to not panic, raise the ipl
-		 * in a feeble attempt to reduce damage.
-		 */
-		setipl(wantipl);
 	}
 }
 #endif
