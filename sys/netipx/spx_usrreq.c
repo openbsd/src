@@ -1,4 +1,4 @@
-/*	$OpenBSD: spx_usrreq.c,v 1.7 2000/01/11 01:26:22 fgsch Exp $	*/
+/*	$OpenBSD: spx_usrreq.c,v 1.8 2000/01/11 01:57:05 fgsch Exp $	*/
 
 /*-
  *
@@ -1407,20 +1407,6 @@ spx_usrreq(so, req, m, nam, controlp)
 		cb = spx_disconnect(cb);
 		break;
 
-	/*
-	 * Accept a connection.  Essentially all the work is
-	 * done at higher levels; just return the address
-	 * of the peer, storing through addr.
-	 */
-	case PRU_ACCEPT: {
-		struct sockaddr_ipx *sipx = mtod(nam, struct sockaddr_ipx *);
-
-		nam->m_len = sizeof (struct sockaddr_ipx);
-		sipx->sipx_family = AF_IPX;
-		sipx->sipx_addr = ipxp->ipxp_faddr;
-		break;
-		}
-
 	case PRU_SHUTDOWN:
 		socantsendmore(so);
 		cb = spx_usrclosed(cb);
@@ -1483,6 +1469,14 @@ spx_usrreq(so, req, m, nam, controlp)
 	case PRU_SOCKADDR:
 		ipx_setsockaddr(ipxp, nam);
 		break;
+
+	/*
+	 * Accept a connection.  Essentially all the work is
+	 * done at higher levels; just return the address
+	 * of the peer, storing through addr.
+	 */
+	case PRU_ACCEPT:
+		/* FALLTHROUGH */
 
 	case PRU_PEERADDR:
 		ipx_setpeeraddr(ipxp, nam);
