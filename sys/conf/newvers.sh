@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: newvers.sh,v 1.61 2004/04/05 07:12:44 deraadt Exp $
+#	$OpenBSD: newvers.sh,v 1.62 2004/04/05 08:34:10 deraadt Exp $
 #	$NetBSD: newvers.sh,v 1.17.2.1 1995/10/12 05:17:11 jtc Exp $
 #
 # Copyright (c) 1984, 1986, 1990, 1993
@@ -61,27 +61,27 @@ id=`basename ${d}`
 #		change	/X.X/macppc/bsd.rd
 #
 # -current and -beta tagging:
-#	right after a release, re-tag to -current by changing the
-#	following lines below, as shown:
-#
-#	"    @(#)${ost} ${osr}-current (${id}) #${v}: ${t}\n";
-#	"${ost} ${osr}-current (${id}) #${v}: ${t}\n    ${u}@${h}:${d}\n";
-#	
-#	a month or so before release, change to -beta by changing in the
-#	same way.
-#
+#	For release, select STATUS ""
+#	Right after release unlock, select STATUS "-current"
+#	A month or so before release, select STATUS "-beta"
 
 ost="OpenBSD"
 osr="3.5"
 
 cat >vers.c <<eof
+#define STATUS "-current"
+#if 0
+#define STATUS "-beta"
+#define STATUS ""			/* release */
+#endif
+
 const char ostype[] = "${ost}";
 const char osrelease[] = "${osr}";
 const char osversion[] = "${id}#${v}";
 const char sccs[] =
-    "    @(#)${ost} ${osr}-current (${id}) #${v}: ${t}\n";
+    "    @(#)${ost} ${osr}" STATUS " (${id}) #${v}: ${t}\n";
 const char version[] =
-    "${ost} ${osr}-current (${id}) #${v}: ${t}\n    ${u}@${h}:${d}\n";
+    "${ost} ${osr}" STATUS " (${id}) #${v}: ${t}\n    ${u}@${h}:${d}\n";
 eof
 
 expr ${v} + 1 > version
