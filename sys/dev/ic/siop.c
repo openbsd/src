@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.31 2003/10/21 18:58:49 jmc Exp $ */
+/*	$OpenBSD: siop.c,v 1.32 2004/04/18 00:49:28 krw Exp $ */
 /*	$NetBSD: siop.c,v 1.65 2002/11/08 22:04:41 bouyer Exp $	*/
 
 /*
@@ -769,6 +769,15 @@ scintr:
 					/* no table to flush here */
 					CALL_SCRIPT(Ent_msgin_ack);
 					return 1;
+				} else if (msg == MSG_EXTENDED &&
+				    extmsg == MSG_EXT_PPR) {
+					/* PPR negotiation rejected */
+					siop_target->target_c.offset = 0;
+					siop_target->target_c.period = 0;
+					siop_target->target_c.status = TARST_ASYNC;
+					siop_target->target_c.flags &= ~(TARF_DT | TARF_ISDT);
+					CALL_SCRIPT(Ent_msgin_ack);
+					return 1;
 				} else if (msg == MSG_SIMPLE_Q_TAG || 
 				    msg == MSG_HEAD_OF_Q_TAG ||
 				    msg == MSG_ORDERED_Q_TAG) {
@@ -1417,7 +1426,6 @@ siop_scsicmd(xs)
 
 						/* Set TARF_DT here because if it is turned off during PPR, it must STAY off! */
 						if ((lun == 0) && 
-						    (((struct scsi_inquiry_data *)xs->data)->flags2 & SID_CLOCKING) &&
 						    (sc->sc_c.features & SF_BUS_ULTRA3))
  							sc->sc_c.targets[target]->flags |= TARF_DT;
 						/* Can't do lun 0 here, because flags not set yet */

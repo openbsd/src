@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.87 2004/03/10 01:37:40 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.88 2004/04/18 00:49:29 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -634,7 +634,6 @@ scsi_probedev(scsi, inqbuflun0, target, lun)
 	sc_link->lun = lun;
 	sc_link->device = &probe_switch;
 	sc_link->inquiry_flags = 0;
-	sc_link->inquiry_flags2 = 0;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("scsi_link created.\n"));
 
@@ -739,7 +738,6 @@ scsi_probedev(scsi, inqbuflun0, target, lun)
 	 * Save INQUIRY "flags" (SID_Linked, etc.) for low-level drivers.
 	 */
 	sc_link->inquiry_flags = inqbuf.flags;
-	sc_link->inquiry_flags2 = inqbuf.flags2;
 
 	/*
 	 * note what BASIC type of device it is

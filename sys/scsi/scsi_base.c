@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.55 2004/03/14 22:46:47 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.56 2004/04/18 00:49:29 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -311,38 +311,13 @@ scsi_inquire(sc_link, inqbuf, flags)
 	memset(&inqbuf->extra, ' ', sizeof inqbuf->extra);
 
 	/*
-	 * First try for the basic 36 bytes of SCSI2 inquiry information. This
+	 * Ask for only the basic 36 bytes of SCSI2 inquiry information. This
 	 * avoids problems with devices that choke trying to supply more.
 	 */
 	scsi_cmd.length = SID_INQUIRY_HDR + SID_SCSI2_ALEN;
 	error = scsi_scsi_cmd(sc_link, (struct scsi_generic *)&scsi_cmd,
 	    sizeof(scsi_cmd), (u_char *)inqbuf, scsi_cmd.length, 2, 10000, NULL,
 	    SCSI_DATA_IN | flags);
-
-	/*
-	 * If the device can supply more information, ask for as much
-	 * as we can handle or as much as it has, whichever is less.
-	 */
-	if (!error && inqbuf->additional_length > SID_SCSI2_ALEN) {
-		switch (inqbuf->device & SID_QUAL) {
-		case SID_QUAL_RSVD:
-		case SID_QUAL_BAD_LU:
-		case SID_QUAL_LU_OFFLINE:
-			return (0);
-		case SID_QUAL_LU_OK:
-			if ((inqbuf->device & SID_TYPE) == T_NODEVICE)
-				return (0);
-			break;
-		default:
-			break;
-		}
-
-		scsi_cmd.length = min(sizeof(struct scsi_inquiry_data),
-		    SID_INQUIRY_HDR + inqbuf->additional_length);
-		error = scsi_scsi_cmd(sc_link, (struct scsi_generic *)&scsi_cmd,
-		    sizeof(scsi_cmd), (u_char *)inqbuf, scsi_cmd.length, 2,
-		    10000, NULL, SCSI_DATA_IN | flags);
-	}
 
 	return (error);
 }
