@@ -1,11 +1,11 @@
-/*	$OpenBSD: ns_main.c,v 1.3 1997/03/12 10:42:31 downsj Exp $	*/
+/*	$OpenBSD: ns_main.c,v 1.4 1997/04/04 09:07:05 deraadt Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 #if 0
 static char sccsid[] = "@(#)ns_main.c	4.55 (Berkeley) 7/1/91";
 static char rcsid[] = "$From: ns_main.c,v 8.24 1996/11/26 10:11:22 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: ns_main.c,v 1.3 1997/03/12 10:42:31 downsj Exp $";
+static char rcsid[] = "$OpenBSD: ns_main.c,v 1.4 1997/04/04 09:07:05 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -90,7 +90,10 @@ char copyright[] =
 #endif
 #include <sys/ioctl.h>
 #include <sys/socket.h>
+#include <netinet/in_systm.h>
 #include <netinet/in.h>
+#include <netinet/ip.h>
+#include <netinet/ip_var.h>
 #if defined(__osf__)
 # include <sys/mbuf.h>
 # include <net/route.h>
@@ -193,7 +196,7 @@ main(argc, argv, envp)
 	FILE	*fp;			/* file descriptor for pid file */
 #endif
 #ifdef IP_OPTIONS
-	u_char ip_opts[50];		/* arbitrary size */
+	struct ipoption ip_opts;
 #endif
 #ifdef	RLIMIT_NOFILE
 	struct rlimit rl;
@@ -742,14 +745,32 @@ main(argc, argv, envp)
 #if defined(IP_OPTIONS)
 			len = sizeof ip_opts;
 			if (getsockopt(rfd, IPPROTO_IP, IP_OPTIONS,
-				       (char *)ip_opts, &len) < 0) {
+				       (char *)&ip_opts, &len) < 0) {
 				syslog(LOG_INFO,
 				       "getsockopt(rfd, IP_OPTIONS): %m");
 				(void) my_close(rfd);
 				continue;
 			}
 			if (len != 0) {
+				int i;
+
 				nameserIncr(from_addr.sin_addr, nssRcvdOpts);
+				/* any socket with an LSRR or SSRR option
+				 * must be killed immediately or it can be
+				 * tcp sequenced */
+				for (i = 0; (void *)&ip_opts.ipopt_list[i] -
+				    (void *)&ip_opts < len && rfd != -1; ) {	
+					u_char c = (u_char)ip_opts.ipopt_list[i];
+					if (c == IPOPT_LSRR || c == IPOPT_SSRR) {
+						my_close(rfd);
+						rfd = -1;
+						break;
+					}
+					if (c == IPOPT_EOL)
+						break;
+					i += (c == IPOPT_NOP) ? 1 :
+					    (u_char)ip_opts.ipopt_list[i+1];
+				}
 				if (!haveComplained((char*)
 						    from_addr.sin_addr.s_addr,
 						    "rcvd ip options")) {
@@ -758,6 +779,8 @@ main(argc, argv, envp)
 					       inet_ntoa(from_addr.sin_addr),
 					       ntohs(from_addr.sin_port));
 				}
+				if (rfd == -1) /* LSRR or SSRR killed it */
+					continue;
 				if (setsockopt(rfd, IPPROTO_IP, IP_OPTIONS,
 					       NULL, 0) < 0) {
 					syslog(LOG_INFO,
