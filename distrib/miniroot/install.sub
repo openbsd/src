@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.76 1998/04/28 16:25:03 millert Exp $
+#	$OpenBSD: install.sub,v 1.77 1998/06/05 01:24:15 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -1652,11 +1652,11 @@ fi
 	
 cat << \__get_timezone_1
 
-Select a time zone for your location. Timezones are represented on the
-system by a directory structure rooted in "/usr/share/timezone". Most
-timezones can be selected by entering a token like "MET" or "GMT-6".
-Other zones are grouped by continent, with detailed zone information
-separated by a slash ("/"), e.g. "US/Pacific" or "Canada/Mountain".
+Select a time zone for your location. Timezones are represented on the system
+by a directory structure rooted in "/usr/share/timezone". Most timezones can
+be selected by entering a token like "MET" or "GMT-6".  Other zones are
+grouped by continent or country, with detailed zone information separated by
+a slash ("/"), e.g. "US/Pacific" or "Canada/Mountain".
 
 To get a listing of what's available in /usr/share/zoneinfo, enter "?"
 at the prompts below.
