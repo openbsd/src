@@ -1,4 +1,4 @@
-/*	$OpenBSD: shutdown.c,v 1.9 1997/06/23 07:03:30 downsj Exp $	*/
+/*	$OpenBSD: shutdown.c,v 1.10 1997/07/25 01:26:47 mickey Exp $	*/
 /*	$NetBSD: shutdown.c,v 1.9 1995/03/18 15:01:09 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)shutdown.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$OpenBSD: shutdown.c,v 1.9 1997/06/23 07:03:30 downsj Exp $";
+static char rcsid[] = "$OpenBSD: shutdown.c,v 1.10 1997/07/25 01:26:47 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -80,10 +80,18 @@ static char rcsid[] = "$OpenBSD: shutdown.c,v 1.9 1997/06/23 07:03:30 downsj Exp
 struct interval {
 	int timeleft, timetowait;
 } tlist[] = {
-	10 H,  5 H,	 5 H,  3 H,	 2 H,  1 H,	1 H, 30 M,
-	30 M, 10 M,	20 M, 10 M,	10 M,  5 M,	5 M,  3 M,
-	 2 M,  1 M,	 1 M, 30 S,	30 S, 30 S,
-	 0, 0,
+	{ 10 H,  5 H },
+	{  5 H,  3 H },
+	{  2 H,  1 H },
+	{  1 H, 30 M },
+	{ 30 M, 10 M },
+	{ 20 M, 10 M },
+	{ 10 M,  5 M },
+	{  5 M,  3 M },
+	{  2 M,  1 M },
+	{  1 M, 30 S },
+	{ 30 S, 30 S },
+	{    0,    0 }
 };
 #undef H
 #undef M
@@ -94,11 +102,11 @@ static int dofast, dohalt, doreboot, dopower, killflg, mbuflen, nosync;
 static char *whom, mbuf[BUFSIZ];
 
 void badtime __P((void));
-void die_you_gravy_sucking_pig_dog __P((void));
+void __attribute ((noreturn)) die_you_gravy_sucking_pig_dog __P((void));
 void doitfast __P((void));
-void finish __P((int));
+void __attribute ((noreturn)) finish __P((int));
 void getoffset __P((char *));
-void loop __P((void));
+void __attribute ((noreturn)) loop __P((void));
 void nolog __P((void));
 void timeout __P((int));
 void timewarn __P((int));
@@ -255,7 +263,7 @@ loop()
 		 * Warn now, if going to sleep more than a fifth of
 		 * the next wait time.
 		 */
-		if (sltime = offset - tp->timeleft) {
+		if ((sltime = offset - tp->timeleft)) {
 			if (sltime > tp->timetowait / 5)
 				timewarn(offset);
 			(void)sleep(sltime);
