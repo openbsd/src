@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.33 1999/06/05 04:16:06 aaron Exp $
+.\"	$OpenBSD: options.4,v 1.34 1999/06/11 19:51:55 pattonme Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt 
@@ -488,10 +488,10 @@ routine, the
 driver,
 the
 .Xr ncr 4
-driver,
-and much of the networking code.
-.Em N.B. This option is silently
-.Em turned on by the DEBUG option.
+driver, and much of the networking code.
+Note that this option is silently turned on by the
+.Em DEBUG
+option.
 .El
 .Ss Networking Options
 .Bl -ohang
@@ -606,17 +606,6 @@ one segment has been dropped per window, the transmission can continue
 without waiting for a retranmission timeout. This option cannot be used
 together with
 .Em TCP_SACK .
-.It Cd option TCPCOOKIE
-This causes the kernel to keep a list of "friendly" hosts, that is IP
-addresses that have been verified to exist. TCP connections from these
-addresses are allowed to proceed. Connections from other addresses
-trigger a mechanism for determining whether those are "friendly". The
-list of friendly addresses is controlled by the
-.Em TCK_NFRIENDS
-option, which is by default set to 16. Unfortunately, hosts behind
-some stateful packet-filtering firewalls are unverifiable due to the
-nature of the mechanism and the filtering process, so connections
-from such hosts are not allowed to proceed.
 .It Cd option TCP_SACK
 Turns on selective acknowledgements. Additional information about
 segments already received can be transmitted back to the sender,
@@ -632,22 +621,17 @@ outstanding data during the fast recovery phase by using
 .Em SACK 
 information. This option can be used together with
 .Em TCP_SACK .
-.It Cd option PFIL_HOOKS
-This option turns on the packet filter interface hooks.  See
-.Xr pfil 9
-for details.
 .It Cd option IPFILTER
-This option enables the IP filtering on the packet level using the
-ip-filter package.  This option requires that the
-.Em PFIL_HOOK
-option also be included.
+This option enables the IP filtering on the packet level using
+Darren Reed's ip-filter package.
 .It Cd option IPFILTER_LOG
 This option, in conjunction with
 .Em IPFILTER ,
 enables logging of IP packets using ip-filter.
 .It Cd option IPFILTER_DEFAULT_BLOCK
-This option sets the default policy of ip-filter.  If it is set,
-ip-filter will block packets by default.
+This option sets the default policy of ip-filter to block packets that
+exit the rule-set unmatched. Otherwise they are silently passed. See
+ipf(1) for details.
 .It Cd option PPP_FILTER
 This option turns on
 .Xr pcap 3
