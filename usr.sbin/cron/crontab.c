@@ -16,7 +16,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Id: crontab.c,v 1.1.1.1 1995/10/18 08:47:30 deraadt Exp $";
+static char rcsid[] = "$Id: crontab.c,v 1.2 1996/08/07 06:18:09 deraadt Exp $";
 #endif
 
 /* crontab - install and manage per-user crontab files
@@ -143,7 +143,7 @@ parse_args(argc, argv)
 		fprintf(stderr, "bailing out.\n");
 		exit(ERROR_EXIT);
 	}
-	strcpy(User, pw->pw_name);
+	strncpy(User, pw->pw_name, sizeof User);
 	strcpy(RealUser, User);
 	Filename[0] = '\0';
 	Option = opt_unknown;
@@ -166,7 +166,7 @@ parse_args(argc, argv)
 					ProgramName, optarg);
 				exit(ERROR_EXIT);
 			}
-			(void) strcpy(User, optarg);
+			(void) strncpy(User, optarg, sizeof User);
 			break;
 		case 'l':
 			if (Option != opt_unknown)
@@ -197,7 +197,7 @@ parse_args(argc, argv)
 	} else {
 		if (argv[optind] != NULL) {
 			Option = opt_replace;
-			(void) strcpy (Filename, argv[optind]);
+			(void) strncpy (Filename, argv[optind], sizeof Filename);
 		} else {
 			usage("file name must be specified for replace");
 		}
@@ -473,7 +473,8 @@ edit_cmd() {
 			ProgramName, Filename);
 		goto done;
 	default:
-		fprintf(stderr, "%s: panic: bad switch() in replace_cmd()\n");
+		fprintf(stderr, "%s: panic: bad switch() in replace_cmd()\n",
+		    ProgramName);
 		goto fatal;
 	}
  remove:
