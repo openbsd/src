@@ -1,4 +1,4 @@
-/*	$OpenBSD: unixdev.h,v 1.2 1997/04/02 05:26:42 mickey Exp $	*/
+/*	$OpenBSD: unixdev.h,v 1.3 1998/05/25 18:37:31 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -39,10 +39,11 @@ int unixopen __P((struct open_file *, ...));
 int unixclose __P((struct open_file *));
 int unixioctl __P((struct open_file *, u_long, void *));
 
-int unix_probe __P((void));
-int unix_getc __P((void));
-void unix_putc __P((int));
-int unix_ischar __P((void));
+void unix_probe __P((struct consdev *));
+void unix_init __P((struct consdev *));
+int unix_getc __P((dev_t));
+void unix_putc __P((dev_t, int));
+int unix_ischar __P((dev_t));
 
 /* unixsys.S */
 int uopen __P((const char *, int, ...));
@@ -51,6 +52,6 @@ int uwrite __P((int, void *, size_t));
 int uioctl __P((int, u_long, char *));
 int uclose __P((int));
 off_t ulseek __P((int, off_t, int));
-void uexit __P((int));
+void uexit __P((int)) __attribute__((noreturn));
 int syscall __P((int, ...));
 int __syscall __P((quad_t, ...));

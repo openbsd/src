@@ -1,7 +1,7 @@
-/*	$OpenBSD: unixdev.c,v 1.3 1997/03/30 20:15:06 mickey Exp $	*/
+/*	$OpenBSD: unixdev.c,v 1.4 1998/05/25 18:37:30 mickey Exp $	*/
 
 /*
- * Copyright (c) 1996 Michael Shalayeff
+ * Copyright (c) 1996-1998 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -36,12 +36,12 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/syscall.h>
-#include <string.h>
 #define open uopen
 #include <sys/fcntl.h>
+#include <dev/cons.h>
 #undef open
 #include "libsa.h"
-#include "unixdev.h"
+#include <lib/libsa/unixdev.h>
 
 int
 unixstrategy(devdata, rw, blk, size, buf, rsize)
@@ -128,42 +128,51 @@ ulseek( fd, off, wh)
 }
 
 
-int
-unix_probe()
+void
+unix_probe(cn)
+	struct consdev *cn;
 {
-	return 1;
+	cn->cn_pri = CN_INTERNAL;
+	cn->cn_dev = makedev(0,0);
+	printf("ux%d ", minor(cn->cn_dev));
 }
 
 void
-unix_putc(c)
+unix_init(cn)
+	struct consdev *cn;
+{
+}
+
+void
+unix_putc(dev, c)
+	dev_t dev;
 	int c;
 {
 	uwrite(1, &c, 1);
 }
 
 int
-unix_getc()
+unix_getc(dev)
+	dev_t dev;
 {
-	int c;
-	return uread(0, &c, 1)<1? -1: c;
-}
+	if (dev & 0x80) {
+		struct timeval tv;
+		fd_set fdset;
+		int rc;
 
-int
-unix_ischar()
-{
-	struct timeval tv;
-	fd_set fdset;
-	int rc;
+		tv.tv_sec = 0;
+		tv.tv_usec = 100000;
+		FD_ZERO(&fdset);
+		FD_SET(0, &fdset);
 
-	tv.tv_sec = 0;
-	tv.tv_usec = 100000;
-	FD_ZERO(&fdset);
-	FD_SET(0, &fdset);
-
-	if ((rc = syscall(SYS_select, 1, &fdset, NULL, NULL, &tv)) <= 0)
-		return 0;
-	else
-		return 1;
+		if ((rc = syscall(SYS_select, 1, &fdset, NULL, NULL, &tv)) <= 0)
+			return 0;
+		else
+			return 1;
+	} else {
+		char c;
+		return uread(0, &c, 1)<1? -1: c;
+	}
 }
 
 time_t
@@ -173,12 +182,25 @@ getsecs()
 }
 
 void
+time_print()
+{
+}
+
+void
 atexit()
 {
+}
 
+int
+cnspeed(dev, sp)
+	dev_t dev;
+	int sp;
+{
+	return 9600;
 }
 
 void
 __main()
 {
 }
+
