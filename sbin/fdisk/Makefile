@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: Makefile,v 1.9 1997/10/16 10:54:28 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.10 1998/04/25 07:04:44 deraadt Exp $
 #
 # Copyright (c) 1997 Tobias Weingartner
 # All rights reserved.
@@ -39,7 +39,7 @@ MAN=	fdisk.8
 CLEANFILES+=manual.c
 manual.c:	fdisk.cat8
 	(echo 'char manpage[] = "\\'; \
-	sed -e 's/$$/\\n\\/' ${.OBJDIR}/fdisk.cat8; \
+	nroff -mandoc ${.CURDIR}/fdisk.8 | sed -e 's/$$/\\n\\/'; \
 	echo '";' ) > manual.c
 
 .include <bsd.prog.mk>
