@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.4 1996/12/08 14:32:29 downsj Exp $
+#	$OpenBSD: Makefile,v 1.5 1997/03/29 03:01:43 millert Exp $
 #	$NetBSD: Makefile,v 1.8 1996/06/08 19:48:09 christos Exp $
 
 PROG=	mail
-SRCS=	version.c aux.c cmd1.c cmd2.c cmd3.c cmdtab.c collect.c dotlock.c \
+SRCS=	version.c aux.c cmd1.c cmd2.c cmd3.c cmdtab.c collect.c \
 	edit.c fio.c getname.c head.c v7.local.c lex.c list.c main.c names.c \
 	popen.c quit.c send.c strings.c temp.c tty.c vars.c
 SFILES=	mail.help mail.tildehelp

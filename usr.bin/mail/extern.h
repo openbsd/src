@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.3 1996/06/11 12:53:39 deraadt Exp $	*/
+/*	$OpenBSD: extern.h,v 1.4 1997/03/29 03:01:45 millert Exp $	*/
 /*	$NetBSD: extern.h,v 1.4 1996/06/08 19:48:21 christos Exp $	*/
 
 /*-
@@ -236,6 +236,8 @@ int	 shell __P((void *));
 void	 sigchild __P((int));
 void	 sort __P((char **));
 int	 source __P((void *));
+int	 spool_lock __P((void));
+int	 spool_unlock __P((void));
 void	 spreserve __P((void));
 void	 sreset __P((void));
 int	 start_command __P((char *, sigset_t *, int, int, char *, char *, char *));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: popen.c,v 1.3 1996/06/26 21:22:34 dm Exp $	*/
+/*	$OpenBSD: popen.c,v 1.4 1997/03/29 03:01:47 millert Exp $	*/
 /*	$NetBSD: popen.c,v 1.4 1996/06/08 19:48:35 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: popen.c,v 1.3 1996/06/26 21:22:34 dm Exp $";
+static char rcsid[] = "$OpenBSD: popen.c,v 1.4 1997/03/29 03:01:47 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -69,6 +69,7 @@ static struct child *child;
 static struct child *findchild __P((int));
 static void delchild __P((struct child *));
 static int file_pid __P((FILE *));
+static int handle_spool_locks __P((int));
 
 FILE *
 Fopen(file, mode)
@@ -397,4 +398,60 @@ free_child(pid)
 	else
 		cp->free = 1;
 	sigprocmask(SIG_SETMASK, &oset, NULL);
+}
+
+/*
+ * Lock(1)/unlock(0) mail spool using mail.local's -H flag.
+ * Returns 1 for success, 0 for failure, -1 for bad usage.
+ */
+static int
+handle_spool_locks(action)
+	int action;
+{
+	char *cmd;
+	static FILE *lockfp = NULL;
+	static int lock_pid;
+
+	if (action == 0) {
+		/* Clear the lock */
+		if (lockfp == NULL) {
+			fprintf(stderr,
+			    "handle_spool_locks: no spool lock to remove.\n");
+			return (-1);
+		}
+		(void)kill(lock_pid, SIGTERM);
+		Pclose(lockfp);
+		lockfp = NULL;
+	} else if (action == 1) {
+		/* Create the lock */
+		if ((cmd = (char *) malloc(sizeof(_PATH_MAIL_LOCAL) + 3)) == NULL)
+			panic("Out of memory");
+		sprintf(cmd, "%s -H", _PATH_MAIL_LOCAL);
+		if ((lockfp = Popen(cmd, "r")) == NULL || getc(lockfp) != '1') {
+			lockfp = NULL;
+			free(cmd);
+			return (0);
+		}
+
+		lock_pid = fp_head->pid;	/* new entries added at head */
+		free(cmd);
+	} else {
+		fprintf(stderr, "handle_spool_locks: unknown action %d\n",
+		    action);
+		return (-1);
+	}
+
+	return (1);
+}
+
+int
+spool_lock()
+{
+	return(handle_spool_locks(1));
+}
+
+int
+spool_unlock()
+{
+	return(handle_spool_locks(0));
 }

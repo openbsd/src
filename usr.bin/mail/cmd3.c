@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd3.c,v 1.2 1996/06/11 12:53:34 deraadt Exp $	*/
+/*	$OpenBSD: cmd3.c,v 1.3 1997/03/29 03:01:44 millert Exp $	*/
 /*	$NetBSD: cmd3.c,v 1.5 1996/06/08 19:48:14 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd3.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: cmd3.c,v 1.2 1996/06/11 12:53:34 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: cmd3.c,v 1.3 1997/03/29 03:01:44 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -348,7 +348,7 @@ messize(v)
 	for (ip = msgvec; *ip != NULL; ip++) {
 		mesg = *ip;
 		mp = &message[mesg-1];
-		printf("%d: %d/%ld\n", mesg, mp->m_lines, mp->m_size);
+		printf("%d: %d/%d\n", mesg, mp->m_lines, mp->m_size);
 	}
 	return(0);
 }
