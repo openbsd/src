@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.h,v 1.16 2002/01/29 15:48:29 jason Exp $	*/
+/*	$OpenBSD: cryptodev.h,v 1.17 2002/02/24 00:30:00 deraadt Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -9,7 +9,7 @@
  *
  * Copyright (c) 2000 Angelos D. Keromytis
  *
- * Permission to use, copy, and modify this software without fee
+ * Permission to use, copy, and modify this software with or without fee
  * is hereby granted, provided that this entire notice is included in
  * all source code copies of any software which is or includes a copy or
  * modification of this software. 
