@@ -1,4 +1,4 @@
-/* $OpenBSD: zaurus_kbd.c,v 1.10 2005/01/18 17:57:13 drahn Exp $ */
+/* $OpenBSD: zaurus_kbd.c,v 1.11 2005/01/28 14:47:31 drahn Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
  *
@@ -223,7 +223,13 @@ zkbd_attach(struct device *parent, struct device *self, void *aux)
 	pxa2x0_gpio_intr_establish(sc->sc_swb_pin, IST_EDGE_BOTH, IPL_TTY,
 	    zkbd_hinge, sc, sc->sc_dev.dv_xname);
 
-	a.console = 0;
+	if (1) {
+		wskbd_cnattach(&zkbd_consops, sc, &zkbd_keymapdata);
+		a.console = 1;
+	} else {
+		a.console = 0;
+	}
+
 	a.keymap = &zkbd_keymapdata;
 	a.accessops = &zkbd_accessops;
 	a.accesscookie = sc;
