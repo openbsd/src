@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.51 2004/09/14 22:46:12 espie Exp $
+# $OpenBSD: pkg_add,v 1.52 2004/09/14 22:47:48 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -136,7 +136,9 @@ sub install
 		if ($not) {
 			print "The configuration file $filename would be installed from $origname\n";
 		} else {
-			copy($origname, $filename);
+			if (!copy($origname, $filename)) {
+				print STDERR "Configuration file $filename could not be installed:\n\t$!\n";
+			}
 			$self->set_modes($filename);
 			print "The configuration file $filename has been installed from $origname\n";
 		}
