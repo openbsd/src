@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sn.c,v 1.5 1996/05/26 18:35:25 briggs Exp $	*/
+/*	$OpenBSD: if_sn.c,v 1.6 1996/09/21 03:34:55 briggs Exp $	*/
 
 /*
  * National Semiconductor  SONIC Driver
@@ -131,7 +131,21 @@ struct cfdriver sn_cd = {
 	NULL, "sn", DV_IFNET
 };
 
-#include <assert.h>
+#undef assert
+#undef _assert
+
+#ifdef NDEBUG
+#define	assert(e)	((void)0)
+#define	_assert(e)	((void)0)
+#else
+#define	_assert(e)	assert(e)
+#ifdef __STDC__
+#define	assert(e)	((e) ? (void)0 : __assert(__FILE__, __LINE__, #e))
+#else	/* PCC */
+#define	assert(e)	((e) ? (void)0 : __assert(__FILE__, __LINE__, "e"))
+#endif
+#endif
+
 void
 __assert(file, line, failedexpr)
 	const char *file, *failedexpr;
@@ -841,7 +855,7 @@ camdump(sc)
 		ap0 = csr->s_cap0;
 		printf("%d: ap2=0x%x ap1=0x%x ap0=0x%x\n", i, ap2, ap1, ap0);
 	}
-	printf("CAM enable 0x%x\n", csr->s_cep);
+	printf("CAM enable 0x%lx\n", csr->s_cep);
 
 	csr->s_cr = 0;
 	wbflush();
