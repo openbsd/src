@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.44 1997/04/15 09:26:44 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.45 1997/04/15 12:32:17 graichen Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -128,6 +128,10 @@ distribution-etc-root-var: distrib-dirs
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
 		${DESTDIR}/var/log/daemon
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
+		${DESTDIR}/var/log/ftpd
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
+		${DESTDIR}/var/log/ipflog
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
 		${DESTDIR}/var/log/lastlog
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
 		${DESTDIR}/var/log/lpd-errs
@@ -135,8 +139,6 @@ distribution-etc-root-var: distrib-dirs
 		${DESTDIR}/var/log/maillog
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
 		${DESTDIR}/var/log/messages
-	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
-		${DESTDIR}/var/log/ftpd
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
 		${DESTDIR}/var/log/secure
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
@@ -150,10 +152,6 @@ distribution-etc-root-var: distrib-dirs
 	(cd etc.${MACHINE}; ${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 \
 	    fstab.* ${DESTDIR}/etc)
 	(cd ${DESTDIR}/dev; ./MAKEDEV all)
-.if ${MACHINE} == "tahoe"
-	(cd etc.tahoe; ${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 ${WCS1} \
-	    ${DESTDIR}/)
-.endif
 .if ${MACHINE} == "vax"
 	(cd etc.vax; ${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 ${PCS} \
 	    ${DESTDIR}/)
