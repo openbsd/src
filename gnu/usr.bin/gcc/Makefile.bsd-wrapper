@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.43 2004/01/28 23:40:36 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.44 2004/01/31 20:25:36 espie Exp $
 
 #MAN=		cccp.1 gcc.1 gcc-local.1 protoize.1 gcov.1
 MAN=		gcc.1 cpp.1 gcov.1 gcc-local.1
@@ -18,12 +18,12 @@ MLINKS+=	g77.1 f77.1
 V=3.3.2
 
 FAKE_FILES=/usr/share/info/g77.info-21 \
-	/usr/share/info/gcc-info-25 \
-	/usr/share/info/gcc-info-26 \
-	/usr/share/info/gcc-info-27 \
-	/usr/share/info/gcc-info-28 \
-	/usr/share/info/gcc-info-29 \
-	/usr/share/info/gcc-info-30
+	/usr/share/info/gcc.info-25 \
+	/usr/share/info/gcc.info-26 \
+	/usr/share/info/gcc.info-27 \
+	/usr/share/info/gcc.info-28 \
+	/usr/share/info/gcc.info-29 \
+	/usr/share/info/gcc.info-30
 
 .SUFFIXES:	.1
 .PATH.1:	${.CURDIR}/gcc ${.CURDIR}/gcc/doc
@@ -70,7 +70,7 @@ GCCARCH=	${M_ARCH}-unknown-openbsd${OSREV}
 GCCINC=	/usr/lib/gcc-lib/${GCCARCH}/$V/include
 
 all:	config.status
-	exec ${MAKE} ${MAKE_FLAGS} all doc
+	exec ${MAKE} ${MAKE_FLAGS} all doc proto
 
 tconfig.h: config.status
 	exec ${MAKE} ${MAKE_FLAGS} tconfig.h

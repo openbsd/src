@@ -2246,7 +2246,7 @@ protoize$(exeext): protoize.o $(PROTO_OBJS) $(LIBDEPS)
 unprotoize$(exeext): unprotoize.o $(PROTO_OBJS) $(LIBDEPS)
 	$(CC) $(ALL_CFLAGS) $(LDFLAGS) -o $@ unprotoize.o $(PROTO_OBJS) $(LIBS)
 
-protoize.o: protoize.c $(srcdir)/../include/getopt.h $(CONFIG_H) $(SYSTEM_H) \
+protoize.o: protoize.c $(LIBIBERTY_INCLUDES)/getopt.h $(CONFIG_H) $(SYSTEM_H) \
    Makefile version.h
 	(SHLIB_LINK='$(SHLIB_LINK)' \
 	SHLIB_MULTILIB='$(SHLIB_MULTILIB)'; \
@@ -2254,7 +2254,7 @@ protoize.o: protoize.c $(srcdir)/../include/getopt.h $(CONFIG_H) $(SYSTEM_H) \
 	  $(DRIVER_DEFINES) \
 	  $(srcdir)/protoize.c $(OUTPUT_OPTION))
 
-unprotoize.o: protoize.c $(srcdir)/../include/getopt.h \
+unprotoize.o: protoize.c $(LIBIBERTY_INCLUDES)/getopt.h \
    $(CONFIG_H) $(SYSTEM_H) Makefile version.h
 	(SHLIB_LINK='$(SHLIB_LINK)' \
 	SHLIB_MULTILIB='$(SHLIB_MULTILIB)'; \
