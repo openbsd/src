@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.70 2004/03/03 06:50:13 deraadt Exp $ */
+/* $OpenBSD: netcat.c,v 1.71 2004/03/07 07:55:55 mcbride Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -489,6 +489,9 @@ remote_connect(char *host, char *port, struct addrinfo hints)
 
 		if (connect(s, res0->ai_addr, res0->ai_addrlen) == 0)
 			break;
+		else if (vflag)
+			warn("connect to %s port %s (%s) failed", host, port,
+			    uflag ? "udp" : "tcp");
 
 		close(s);
 		s = -1;
