@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.11 2001/03/29 18:50:11 drahn Exp $	*/
+/*	$OpenBSD: bus.h,v 1.12 2001/06/10 15:20:16 drahn Exp $	*/
 
 /*
  * Copyright (c) 1997 Per Fogelstrom.  All rights reserved.
@@ -47,7 +47,7 @@
 /*
  * Bus access types.
  */
-typedef u_int32_t bus_addr_t;
+typedef u_long    bus_addr_t;
 typedef u_int32_t bus_size_t;
 typedef u_int32_t bus_space_handle_t;
 typedef struct ppc_bus_space *bus_space_tag_t;

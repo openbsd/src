@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.30 2001/06/08 08:09:22 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.31 2001/06/10 15:20:16 drahn Exp $	*/
 /*	$NetBSD: pmap.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -1053,6 +1053,7 @@ poalloc()
 	splx(s);
 	if (po == NULL)
 		panic("poalloc: failed to alloc po");
+	return po;
 }
 
 static void

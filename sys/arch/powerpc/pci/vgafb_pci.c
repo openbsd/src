@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb_pci.c,v 1.2 2000/11/21 02:03:44 deraadt Exp $	*/
+/*	$OpenBSD: vgafb_pci.c,v 1.3 2001/06/10 15:20:17 drahn Exp $	*/
 /*	$NetBSD: vga_pci.c,v 1.4 1996/12/05 01:39:38 cgd Exp $	*/
 
 /*
@@ -90,7 +90,8 @@ vgafb_pci_probe(pa, id, ioaddr, iosize, memaddr, memsize, cacheable, mmioaddr, m
 	u_int32_t *memaddr, *memsize, *cacheable;
 	u_int32_t *mmioaddr, *mmiosize;
 {
-	u_int32_t addr, size, tcacheable;
+	u_long addr;
+	u_int32_t size, tcacheable;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	int retval;
 	int i;
