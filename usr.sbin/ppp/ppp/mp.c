@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: mp.c,v 1.22 2001/07/03 22:23:56 brian Exp $
+ *	$OpenBSD: mp.c,v 1.23 2001/07/31 15:20:19 brian Exp $
  */
 
 #include <sys/param.h>
@@ -998,7 +998,7 @@ mp_SetEnddisc(struct cmdargs const *arg)
         log_Printf(LogERROR, "set enddisc: socket(): %s\n", strerror(errno));
         return 2;
       }
-      if (get_ether_addr(s, addr, &hwaddr)) {
+      if (arp_EtherAddr(s, addr, &hwaddr, 1)) {
         mp->cfg.enddisc.class = ENDDISC_MAC;
         memcpy(mp->cfg.enddisc.address, hwaddr.sdl_data + hwaddr.sdl_nlen,
                hwaddr.sdl_alen);

@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: arp.h,v 1.4 2001/06/13 21:33:40 brian Exp $
+ * $OpenBSD: arp.h,v 1.5 2001/07/31 15:20:19 brian Exp $
  */
 
 struct sockaddr_dl;
@@ -33,4 +33,4 @@ struct bundle;
 
 extern int arp_ClearProxy(struct bundle *, struct in_addr, int);
 extern int arp_SetProxy(struct bundle *, struct in_addr, int);
-extern int get_ether_addr(int, struct in_addr, struct sockaddr_dl *);
+extern int arp_EtherAddr(int, struct in_addr, struct sockaddr_dl *, int);
