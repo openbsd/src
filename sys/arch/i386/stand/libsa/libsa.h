@@ -1,4 +1,4 @@
-/*	$OpenBSD: libsa.h,v 1.40 2004/06/23 00:21:49 tom Exp $	*/
+/*	$OpenBSD: libsa.h,v 1.41 2004/06/26 05:19:37 tom Exp $	*/
 
 /*
  * Copyright (c) 1996-1999 Michael Shalayeff
@@ -44,6 +44,7 @@ extern void (*sa_cleanup)(void);
 void gateA20(int);
 void gateA20on(void);
 
+void cpuprobe(void);
 void smpprobe(void);
 void ps2probe(void);
 void pciprobe(void);
