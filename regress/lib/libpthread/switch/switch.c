@@ -1,4 +1,4 @@
-/*	$OpenBSD: switch.c,v 1.2 2002/06/16 23:06:53 marc Exp $	*/
+/*	$OpenBSD: switch.c,v 1.3 2002/10/12 18:59:13 marc Exp $	*/
 /*
  * Copyright (c) 1993, 1994, 1995, 1996 by Chris Provenzano and contributors, 
  * proven@mit.edu All rights reserved.
@@ -46,6 +46,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include <stdlib.h>
+
 #include "test.h"
 
 const char buf[] = "abcdefghijklmnopqrstuvwxyz";
@@ -59,7 +60,8 @@ volatile int ending = 0;
  */
 void usage(void)
 {
-    printf("test_switch [-d?] [-c count]\n");
+    extern char *__progname;
+    printf("usage: %s [-?] [-c count]\n", __progname);
 	printf("count must be between 2 and 26\n");
     errno = 0;
 }
@@ -68,10 +70,14 @@ void *
 new_thread(arg)
 	void *arg;
 {
+	int i;
+
 	SET_NAME("writer");
 	while (!ending) {
 		CHECKe(write (fd, (char *) arg, 1));
 		x[(char *)arg - buf] = 1;
+		for (i = 0; i < 999999; i += 1)
+			;
 	}
 	return NULL;
 }
@@ -83,7 +89,6 @@ main(argc, argv)
 {
 	pthread_t thread;
 	int count = 4;
-	int debug = 0;
 	int eof = 0;
 	long i;
 
@@ -96,9 +101,6 @@ main(argc, argv)
 	    {
 	    case EOF:
 	      eof = 1;
-	      break;
-	    case 'd':
-	      debug++;
 	      break;
 	    case 'c':
 	      count = atoi(optarg);
@@ -120,7 +122,7 @@ main(argc, argv)
 		    (void*)(buf+i)));
 
 	/* give all threads a chance to run */
-	sleep (4);
+	sleep (2);
 
 	ending = 1;
 	for (i = 0; i < count; i++)
