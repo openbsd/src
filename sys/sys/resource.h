@@ -1,4 +1,4 @@
-/*	$OpenBSD: resource.h,v 1.2 1996/03/03 12:12:12 niklas Exp $	*/
+/*	$OpenBSD: resource.h,v 1.3 1997/03/21 21:27:22 millert Exp $	*/
 /*	$NetBSD: resource.h,v 1.14 1996/02/09 18:25:27 christos Exp $	*/
 
 /*
@@ -61,7 +61,7 @@ struct	rusage {
 	struct timeval ru_stime;	/* system time used */
 	long	ru_maxrss;		/* max resident set size */
 #define	ru_first	ru_ixrss
-	long	ru_ixrss;		/* integral shared memory size */
+	long	ru_ixrss;		/* integral shared text memory size */
 	long	ru_idrss;		/* integral unshared data " */
 	long	ru_isrss;		/* integral unshared stack " */
 	long	ru_minflt;		/* page reclaims */
