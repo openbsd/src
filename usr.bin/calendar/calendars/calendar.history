@@ -1,7 +1,7 @@
 /*
  * History
  *
- * $OpenBSD: calendar.history,v 1.29 2003/12/29 07:50:27 mickey Exp $
+ * $OpenBSD: calendar.history,v 1.30 2003/12/30 00:49:48 mickey Exp $
  */
 
 #ifndef _calendar_history_
@@ -470,6 +470,8 @@
 12/29	Edison receives patent for Radio, 1891
 12/30	First Los Angeles freeway dedicated, 1940
 12/31	St. Sylvester in Switzerland
+12/31	Windows tax in England, 1695
+12/31	First supersonic commercial flight by Tu-144, 1968
 12/31	Winterland closes its doors, 1978
 
 #endif /* !_calendar_history_ */
