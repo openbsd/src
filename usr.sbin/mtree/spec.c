@@ -1,5 +1,5 @@
 /*	$NetBSD: spec.c,v 1.6 1995/03/07 21:12:12 cgd Exp $	*/
-/*	$OpenBSD: spec.c,v 1.2 1996/03/02 00:46:04 tholo Exp $	*/
+/*	$OpenBSD: spec.c,v 1.3 1996/12/10 08:26:10 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -68,7 +68,7 @@ spec()
 	int c_cur, c_next;
 	char buf[2048];
 
-	root = NULL;
+	centry = last = root = NULL;
 	bzero(&ginfo, sizeof(ginfo));
 	c_cur = c_next = 0;
 	for (lineno = 1; fgets(buf, sizeof(buf), stdin);
@@ -171,14 +171,14 @@ set(t, ip)
 	register NODE *ip;
 {
 	register int type;
-	register char *kw, *val;
+	register char *kw, *val = NULL;
 	struct group *gr;
 	struct passwd *pw;
 	mode_t *m;
 	int value;
 	char *ep;
 
-	for (; kw = strtok(t, "= \t\n"); t = NULL) {
+	for (; (kw = strtok(t, "= \t\n")); t = NULL) {
 		ip->flags |= type = parsekey(kw, &value);
 		if (value && (val = strtok(NULL, " \t\n")) == NULL)
 			err("missing value");
@@ -187,6 +187,12 @@ set(t, ip)
 			ip->cksum = strtoul(val, &ep, 10);
 			if (*ep)
 				err("invalid checksum %s", val);
+			break;
+		case F_MD5:
+			ip->md5digest = strdup(val);
+			if (!ip->md5digest) {
+				err("%s", strerror(errno));
+			}
 			break;
 		case F_GID:
 			ip->st_gid = strtoul(val, &ep, 10);
@@ -212,7 +218,7 @@ set(t, ip)
 				err("invalid link count %s", val);
 			break;
 		case F_SIZE:
-			ip->st_size = strtouq(val, &ep, 10);
+			ip->st_size = strtoq(val, &ep, 10);
 			if (*ep)
 				err("invalid size %s", val);
 			break;
@@ -282,6 +288,6 @@ unset(t, ip)
 {
 	register char *p;
 
-	while (p = strtok(t, "\n\t "))
+	while ((p = strtok(t, "\n\t ")))
 		ip->flags &= ~parsekey(p, NULL);
 }

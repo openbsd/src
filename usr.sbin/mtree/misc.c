@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.2 1996/12/08 01:13:40 niklas Exp $	*/
+/*	$OpenBSD: misc.c,v 1.3 1996/12/10 08:26:08 deraadt Exp $	*/
 /*	$NetBSD: misc.c,v 1.4 1995/03/07 21:26:23 cgd Exp $	*/
 
 /*-
@@ -55,19 +55,19 @@ typedef struct _key {
 
 /* NB: the following table must be sorted lexically. */
 static KEY keylist[] = {
-	"cksum",	F_CKSUM,	NEEDVALUE,
-	"gid",		F_GID,		NEEDVALUE,
-	"gname",	F_GNAME,	NEEDVALUE,
-	"ignore",	F_IGN,		0,
-	"link",		F_SLINK,	NEEDVALUE,
-	"mode",		F_MODE,		NEEDVALUE,
-	"nlink",	F_NLINK,	NEEDVALUE,
-	"optional",	F_OPT,		0,
-	"size",		F_SIZE,		NEEDVALUE,
-	"time",		F_TIME,		NEEDVALUE,
-	"type",		F_TYPE,		NEEDVALUE,
-	"uid",		F_UID,		NEEDVALUE,
-	"uname",	F_UNAME,	NEEDVALUE,
+	{"cksum",	F_CKSUM,	NEEDVALUE},
+	{"gid",		F_GID,		NEEDVALUE},
+	{"gname",	F_GNAME,	NEEDVALUE},
+	{"ignore",	F_IGN,		0},
+	{"link",	F_SLINK,	NEEDVALUE},
+	{"md5digest",	F_MD5,		NEEDVALUE},
+	{"mode",	F_MODE,		NEEDVALUE},
+	{"nlink",	F_NLINK,	NEEDVALUE},
+	{"size",	F_SIZE,		NEEDVALUE},
+	{"time",	F_TIME,		NEEDVALUE},
+	{"type",	F_TYPE,		NEEDVALUE},
+	{"uid",		F_UID,		NEEDVALUE},
+	{"uname",	F_UNAME,	NEEDVALUE},
 };
 
 u_int
@@ -117,7 +117,8 @@ err(fmt, va_alist)
 #else
 	va_start(ap);
 #endif
-	(void)fprintf(stderr, "mtree: ");
+	(void)fflush(NULL);
+	(void)fprintf(stderr, "\nmtree: ");
 	(void)vfprintf(stderr, fmt, ap);
 	va_end(ap);
 	(void)fprintf(stderr, "\n");

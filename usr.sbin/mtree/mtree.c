@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtree.c,v 1.2 1996/12/08 01:13:41 niklas Exp $	*/
+/*	$OpenBSD: mtree.c,v 1.3 1996/12/10 08:26:09 deraadt Exp $	*/
 /*	$NetBSD: mtree.c,v 1.5 1995/03/07 21:12:10 cgd Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mtree.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: mtree.c,v 1.2 1996/12/08 01:13:41 niklas Exp $";
+static char rcsid[] = "$OpenBSD: mtree.c,v 1.3 1996/12/10 08:26:09 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -60,7 +60,7 @@ static char rcsid[] = "$OpenBSD: mtree.c,v 1.2 1996/12/08 01:13:41 niklas Exp $"
 extern u_int32_t crc_total;
 
 int ftsoptions = FTS_PHYSICAL;
-int cflag, dflag, eflag, rflag, sflag, uflag;
+int cflag, dflag, eflag, iflag, nflag, rflag, sflag, uflag, Uflag;
 u_short keys;
 char fullpath[MAXPATHLEN];
 
@@ -75,10 +75,11 @@ main(argc, argv)
 	extern char *optarg;
 	int ch;
 	char *dir, *p;
+	int status;
 
 	dir = NULL;
 	keys = KEYDEFAULT;
-	while ((ch = getopt(argc, argv, "cdef:K:k:p:rs:ux")) != EOF)
+	while ((ch = getopt(argc, argv, "cdef:iK:k:np:rs:Uux")) != EOF)
 		switch((char)ch) {
 		case 'c':
 			cflag = 1;
@@ -93,6 +94,9 @@ main(argc, argv)
 			if (!(freopen(optarg, "r", stdin)))
 				err("%s: %s", optarg, strerror(errno));
 			break;
+		case 'i':
+			iflag = 1;
+			break;
 		case 'K':
 			while ((p = strsep(&optarg, " \t,")) != NULL)
 				if (*p != '\0')
@@ -103,6 +107,9 @@ main(argc, argv)
 			while ((p = strsep(&optarg, " \t,")) != NULL)
 				if (*p != '\0')
 					keys |= parsekey(p, NULL);
+			break;
+		case 'n':
+			nflag = 1;
 			break;
 		case 'p':
 			dir = optarg;
@@ -115,6 +122,10 @@ main(argc, argv)
 			crc_total = ~strtol(optarg, &p, 0);
 			if (*p)
 				err("illegal seed value -- %s", optarg);
+		case 'U':
+			Uflag = 1;
+			uflag = 1;
+			break;
 		case 'u':
 			uflag = 1;
 			break;
@@ -141,13 +152,16 @@ main(argc, argv)
 		cwalk();
 		exit(0);
 	}
-	exit(verify());
+	status = verify();
+	if (Uflag & (status == MISMATCHEXIT))
+		status = 0;
+	exit(status);
 }
 
 static void
 usage()
 {
 	(void)fprintf(stderr,
-"usage: mtree [-cderux] [-f spec] [-K key] [-k key] [-p path] [-s seed]\n");
+"usage: mtree [-cdeinrUux] [-f spec] [-K key] [-k key] [-p path] [-s seed]\n");
 	exit(1);
 }

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mtree.8,v 1.2 1996/12/08 01:13:41 niklas Exp $
+.\"	$OpenBSD: mtree.8,v 1.3 1996/12/10 08:26:08 deraadt Exp $
 .\"	$NetBSD: mtree.8,v 1.4 1995/03/07 21:26:25 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -42,7 +42,7 @@
 .Nd map a directory hierarchy
 .Sh SYNOPSIS
 .Nm mtree
-.Op Fl cderux
+.Op Fl cdeinrUux
 .Op Fl f Ar spec
 .Op Fl K Ar keywords
 .Op Fl k Ar keywords
@@ -70,12 +70,26 @@ specification.
 Read the specification from
 .Ar file  ,
 instead of from the standard input.
+.It Fl i
+Indents the output 4 spaces each time a directory level is descended when
+create a specification with the
+.Fl c
+option.
+This does not effect either the /set statements or the comment before each
+directory.
+It does however effect the comment before the close of each directory.
 .It Fl K
 Add the specified (whitespace or comma separated) keywords to the current
 set of keywords.
 .It Fl k
 Use the ``type'' keyword plus the specified (whitespace or comma separated)
 keywords instead of the current set of keywords.
+.It Fl n
+Do not emit pathname comments when creating a specification.  Normally 
+a comment is emitted before each directory and before the close of that
+directory when using the 
+.Fl c
+option.
 .It Fl p
 Use the file hierarchy rooted in
 .Ar path  ,
@@ -89,11 +103,18 @@ of the files for which the keyword
 .Cm cksum
 was specified.
 The checksum is seeded with the specified value.
-.It Fl u
+.It Fl U
 Modify the owner, group, and permissions of existing files to match
 the specification and create any missing directories.
 User, group, and permissions must all be specified for missing directories
 to be created.
+Exit with a status of 0 on success, 1 if any error occurred,
+a mismatch is not considered an error if it was corrected.
+.It Fl u
+Same as
+.Fl U
+except a status of 2 is returned if the file hierarchy did not match
+the specification.
 .It Fl x
 Don't descend below mount points in the file hierarchy.
 .El
@@ -116,22 +137,21 @@ Ignore any file hierarchy below this file.
 The file group as a numeric value.
 .It Cm gname
 The file group as a symbolic name.
-.It Cm link
-The file the symbolic link is expected to reference.
+.It Cm md5digest
+The MD5 message digest of the file.
 .It Cm mode
 The current file's permissions as a numeric (octal) or symbolic
 value.
 .It Cm nlink
 The number of hard links the file is expected to have.
-.It Cm optional
-The file is optional; don't complain about the file if it's
-not in the file hierarchy.
 .It Cm uid
 The file owner as a numeric value.
 .It Cm uname
 The file owner as a symbolic name.
 .It Cm size
 The size, in bytes, of the file.
+.It Cm link
+The file the symbolic link is expected to reference.
 .It Cm time
 The last modification time of the file.
 .It Cm type
@@ -157,10 +177,10 @@ socket
 .Pp
 The default set of keywords are
 .Cm gid ,
-.Cm link ,
 .Cm mode ,
 .Cm nlink ,
 .Cm size ,
+.Cm link ,
 .Cm time ,
 and
 .Cm uid .
@@ -210,32 +230,39 @@ The
 .Nm mtree
 utility exits with a status of 0 on success, 1 if any error occurred,
 and 2 if the file hierarchy did not match the specification.
+A status of 2 is converted to a status of 0 if the
+.Fl U
+option is used.
 .Sh EXAMPLES
 To detect system binaries that have been ``trojan horsed'', it is recommended
 that
 .Nm mtree
+.Fl K
+.Cm md5digest
 be run on the file systems, and a copy of the results stored on a different
 machine, or, at least, in encrypted form.
-The seed for the
-.Fl s
-option should not be an obvious value and the final checksum should not be
-stored on-line under any circumstances!
+The output file itself should be digested using the
+.Xr md5 1
+utility.
 Then, periodically,
 .Nm mtree
-should be run against the on-line specifications and the final checksum
-compared with the previous value.
+and
+.Xr md5 1
+should be run against the on-line specifications.
 While it is possible for the bad guys to change the on-line specifications
-to conform to their modified binaries, it shouldn't be possible for them
-to make it produce the same final checksum value.
-If the final checksum value changes, the off-line copies of the specification
-can be used to detect which of the binaries have actually been modified.
+to conform to their modified binaries, it is believed to be
+impractical for them to create a modified specification which has
+the same MD5 digest as the original.
 .Pp
 The
 .Fl d
 and
 .Fl u
 options can be used in combination to create directory hierarchies
-for distributions and other such things.
+for distributions and other such things; the files in
+.Pa /etc/mtree
+were used to create almost all directories in a normal binary
+distribution.
 .Sh FILES
 .Bl -tag -width /etc/mtree -compact
 .It Pa /etc/mtree
@@ -243,13 +270,16 @@ system specification directory
 .El
 .Sh SEE ALSO
 .Xr chmod 1 ,
-.Xr chown 1 ,
 .Xr chgrp 1 ,
 .Xr cksum 1 ,
+.Xr md5 1 ,
 .Xr stat 2 ,
 .Xr fts 3 ,
+.Xr md5 3 ,
+.Xr chown 8
 .Sh HISTORY
 The
 .Nm mtree
 utility appeared in
 .Bx 4.3 Reno .
+The MD5 digest capability was added in FreeBSD.
