@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.samples.7,v 1.10 1999/05/16 19:57:38 alex Exp $
+.\"	$OpenBSD: mdoc.samples.7,v 1.11 1999/05/18 00:26:16 alex Exp $
 .\"	$NetBSD: mdoc.samples.7,v 1.5 1996/04/03 20:17:34 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -1967,6 +1967,16 @@ Cross references
 are specified using the
 .Ql \&.Xr
 macro.
+Cross references in the
+.Sx SEE ALSO
+section should be sorted by section number, and then
+placed in alphabetical order and comma separated.  For example:
+.Pp
+.Xr ls 1 ,
+.Xr ps 1 ,
+.Xr group 5 ,
+.Xr passwd 5
+.Pp
 At this time
 .Xr refer 1
 style references are not accommodated.
