@@ -1,5 +1,5 @@
-.\"	$OpenBSD: inet6.4,v 1.11 2000/05/28 18:27:15 deraadt Exp $
-.\"	$KAME: inet6.4,v 1.9 2000/04/14 09:30:11 itojun Exp $
+.\"	$OpenBSD: inet6.4,v 1.12 2000/06/12 11:15:37 itojun Exp $
+.\"	$KAME: inet6.4,v 1.10 2000/06/12 10:27:23 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -286,17 +286,6 @@ message protocol is accessible from a raw socket.
 .Xr ip6 4 ,
 .Xr tcp 4 ,
 .Xr udp 4
-.Sh CAVEAT
-The IPv6 support is subject to change as the Internet protocols develop.
-Users should not depend on details of the current implementation,
-but rather the services exported.
-.Pp
-Users are suggested to implement
-.Dq version independent
-code as much as possible, as you will need to support both
-.Xr inet 4
-and
-.Nm inet6 .
 .Sh STANDARDS
 .Rs
 .%A Tatsuya Jinmei
@@ -312,3 +301,14 @@ The
 .Nm
 protocol interface are defined in RFC2553 and RFC2292.
 The implementation described herein appeared in WIDE/KAME project.
+.Sh BUGS
+The IPv6 support is subject to change as the Internet protocols develop.
+Users should not depend on details of the current implementation,
+but rather the services exported.
+.Pp
+Users are suggested to implement
+.Dq version independent
+code as much as possible, as you will need to support both
+.Xr inet 4
+and
+.Nm inet6 .
