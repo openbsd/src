@@ -1,4 +1,4 @@
-/*	$OpenBSD: dirs.c,v 1.11 1996/12/16 17:11:41 deraadt Exp $	*/
+/*	$OpenBSD: dirs.c,v 1.12 1996/12/24 08:37:50 deraadt Exp $	*/
 /*	$NetBSD: dirs.c,v 1.16 1995/06/19 00:20:11 cgd Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)dirs.c	8.5 (Berkeley) 8/31/94";
 #else
-static char rcsid[] = "$OpenBSD: dirs.c,v 1.11 1996/12/16 17:11:41 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: dirs.c,v 1.12 1996/12/24 08:37:50 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -156,15 +156,10 @@ extractdirs(genmode)
 	(void) sprintf(dirfile, "%srstdir%d", _PATH_TMP, dumpdate);
 	if (command != 'r' && command != 'R') {
 		(void *) strcat(dirfile, "-XXXXXX");
-		if (mktemp(dirfile) == NULL) {
-			fprintf(stderr,
-			    "restore: %s - cannot mktemp directory temporary\n",
-			    dirfile);
-			exit(1);
-		}
-	}
-	if ((fd = open(dirfile, O_RDWR|O_CREAT|O_EXCL, 0666)) == -1 ||
-	    (df = fdopen(fd, "w")) == NULL) {
+		fd = mkstemp(dirfile);
+	} else
+		fd = open(dirfile, O_RDWR|O_CREAT|O_EXCL, 0666);
+	if (fd == -1 || (df = fdopen(fd, "w")) == NULL) {
 		if (fd != -1)
 			close(fd);
 		fprintf(stderr,
@@ -177,15 +172,10 @@ extractdirs(genmode)
 		(void) sprintf(modefile, "%srstmode%d", _PATH_TMP, dumpdate);
 		if (command != 'r' && command != 'R') {
 			(void *) strcat(modefile, "-XXXXXX");
-			if (mktemp(modefile) == NULL) {
-				fprintf(stderr,
-				    "restore: %s - cannot mktemp modefile\n",
-				    modefile);
-				exit(1);
-			}
-		}
-		if ((fd = open(modefile, O_RDWR|O_CREAT|O_EXCL,
-		    0666)) == -1 || (mf = fdopen(fd, "w")) == NULL) {
+			fd = mkstemp(modefile);
+		} else
+			fd = open(modefile, O_RDWR|O_CREAT|O_EXCL, 0666);
+		if (fd == -1 || (mf = fdopen(fd, "w")) == NULL) {
 			if (fd != -1)
 				close(fd);
 			fprintf(stderr,
