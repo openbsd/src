@@ -9,7 +9,7 @@
 .\"
 .\" Created: Sat Apr 22 21:55:14 1995 ylo
 .\"
-.\" $Id: ssh.1,v 1.44 2000/04/12 21:47:51 aaron Exp $
+.\" $Id: ssh.1,v 1.45 2000/04/12 23:00:28 markus Exp $
 .\"
 .Dd September 25, 1999
 .Dt SSH 1
@@ -548,6 +548,12 @@ and
 are supported.
 The default is
 .Dq 3des .
+.It Cm Ciphers
+Specifies the ciphers allowed for protocol version 2
+in order of preference.
+Multiple ciphers must be comma-separated.
+The default is
+.Dq blowfish-cbc,3des-cbc,arcfour,cast128-cbc .
 .It Cm Compression
 Specifies whether to use compression.
 The argument must be
@@ -697,6 +703,17 @@ or
 .It Cm Port
 Specifies the port number to connect on the remote host.
 Default is 22.
+.It Cm Protocol
+Specifies the protocol versions
+.Nm
+should support in order of preference.
+The possible values are
+.Dq 1
+and
+.Dq 2 .
+Multiple versions must be comma-separated.
+The default is
+.Dq 1 .
 .It Cm ProxyCommand
 Specifies the command to use to connect to the server.
 The command

@@ -9,7 +9,7 @@
 .\"
 .\" Created: Sat Apr 22 21:55:14 1995 ylo
 .\"
-.\" $Id: sshd.8,v 1.40 2000/04/12 21:47:51 aaron Exp $
+.\" $Id: sshd.8,v 1.41 2000/04/12 23:00:28 markus Exp $
 .\"
 .Dd September 25, 1999
 .Dt SSHD 8
@@ -246,6 +246,11 @@ wildcards in the patterns.
 Only user names are valid, a numerical user ID isn't recognized.
 By default login is allowed regardless of the user name.
 .Pp
+.It Cm Ciphers
+Specifies the ciphers allowed for protocol version 2.
+Multiple ciphers must be comma-separated.
+The default is
+.Dq blowfish-cbc,3des-cbc,arcfour,cast128-cbc .
 .It Cm CheckMail
 Specifies whether
 .Nm
@@ -427,6 +432,17 @@ when a user logs in interactively.
 or equivalent.)
 The default is
 .Dq yes .
+.It Cm Protocol
+Specifies the protocol versions
+.Nm
+should support.
+The possible values are
+.Dq 1
+and
+.Dq 2 .
+Multiple versions must be comma-separated.
+The default is
+.Dq 1 .
 .It Cm RandomSeed
 Obsolete.
 Random number generation uses other techniques.
