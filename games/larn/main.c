@@ -5,7 +5,9 @@ static char rcsid[] = "$NetBSD: main.c,v 1.7.6.1 1996/05/27 15:54:26 mrg Exp $";
 /*	main.c		*/
 #include <sys/types.h>
 #include "header.h"
+#include <errno.h>
 #include <pwd.h>
+#include <stdio.h>
 #include <string.h>
 
 static char copyright[]="\nLarn is copyrighted 1986 by Noah Morgan.\n";
@@ -76,9 +78,20 @@ main(argc,argv)
 	strcpy(loginname,ptr); /* save loginname of the user for logging purposes */
 	strcpy(logname,ptr);	/* this will be overwritten with the players name */
 	if ((ptr = getenv("HOME")) == 0) ptr = ".";
-	strcpy(savefilename, ptr);
-	strcat(savefilename, "/Larn.sav");	/* save file name in home directory */
-	sprintf(optsfile, "%s/.larnopts",ptr);	/* the .larnopts filename */
+	if (strlen(ptr) + 9 < sizeof(savefilename)) {
+		strcpy(savefilename, ptr);
+		strcat(savefilename, "/Larn.sav");	/* save file name in home directory */
+	} else {
+		fprintf(stderr, "%s/Larn.sav: %s\n", ptr, strerror(ENAMETOOLONG));
+		exit();
+	}
+	if (strlen(ptr) + 10 < sizeof(savefilename)) {
+		strcpy(optsfile, ptr);
+		strcat(optsfile, "/.larnopts");		/* the .larnopts filename */
+	} else {
+		fprintf(stderr, "%s/.larnopts: %s\n", ptr, strerror(ENAMETOOLONG));
+		exit();
+	}
 
 /*
  *	now malloc the memory for the dungeon 
