@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_vax.c,v 1.3 1997/02/26 16:46:35 niklas Exp $ */
+/*	$OpenBSD: kvm_vax.c,v 1.4 2001/03/16 05:46:09 bjc Exp $ */
 /*	$NetBSD: kvm_vax.c,v 1.3 1996/03/18 22:34:06 thorpej Exp $ */
 
 /*-
@@ -133,4 +133,16 @@ _kvm_kvatop(kd, va, pa)
 
 	*pa = (va - KERNBASE);
 	return (end - va);
+}
+
+/*  
+ * Translate a physical address to an offset in the crash dump
+ * XXX crashdumps not working yet anyway
+ */
+off_t
+_kvm_pa2off(kd, pa)
+	kvm_t	*kd;
+	u_long	pa;
+{
+	return(kd->dump_off+pa);
 }
