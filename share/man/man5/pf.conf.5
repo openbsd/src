@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.185 2003/02/14 09:43:18 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.186 2003/02/18 22:06:49 pb Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1899,7 +1899,7 @@ queueopts      = [ bandwidth number ( b | Kb | Mb | Gb |  %) ] |
                  [ qlimit number ] | [ tbrsize number ] |
                  [ priority number ] | [ schedulers ] | 
                  [ qlimit number ]
-schedulers     = cbq-def
+schedulers     = ( cbq-def | priq-def )
 
 action         = pass | block [ return ] | scrub
 return         = drop | return | return-rst [ ( ttl number ) ]
@@ -1981,9 +1981,11 @@ pooltype       = ( bitmask | random
 
 subqueue       = string | { queue-list }
 queue-list     = string [ [ , ] string ]
-cbq-def        = cbq [ ( cbq-type [ [ , ] cbq-type ] ) ]
-cbq-type       = ( default | control | borrow |
+cbq-def        = cbq [ ( cbq-opt [ [ , ] cbq-opt ] ) ]
+priq-def       = priq [ ( priq-opt [ [ , ] priq-opt ] ) ]
+cbq-opt        = ( default | control | borrow |
                  red | ecn | rio )
+priq-opt       = ( default | red | ecn | rio )
 .Ed
 .Sh FILES
 .Bl -tag -width "/etc/protocols" -compact
