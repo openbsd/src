@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.1 1995/06/22 21:31:03 fvdl Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.2 1996/01/16 23:19:43 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -141,7 +141,8 @@ enum AuxID {
 
 #ifdef _KERNEL
 
-#define ELF32_NO_ADDR	((u_long) ~0)
+#define ELF32_NO_ADDR	((u_long) ~0)	/* Indicates addr. not yet filled in */
+#define ELF_AUX_ENTRIES	8		/* Size of aux array passed to loader */
 
 struct elf_args {
         u_long  arg_entry;      /* progran entry point */
