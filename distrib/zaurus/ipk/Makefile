@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2005/03/19 00:18:53 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.5 2005/03/19 00:27:35 deraadt Exp $
 
 TOP=    ${.CURDIR}/..
 IPK=	openbsd${OSrev}_arm.ipk
@@ -51,7 +51,7 @@ Packages:
 	echo "Architecture: arm" >> ${.OBJDIR}/Packages
 	echo "Maintainer: uwe@openbsd.org" >> ${.OBJDIR}/Packages
 	echo "Filename: ${IPK}" >> ${.OBJDIR}/Packages
-	echo "Size: " `/bin/ls -l ${IPK} | awk '{print $5}'` \
+	echo "Size:" `/bin/ls -l ${IPK} | awk '{print $$5}'` \
 	    >> ${.OBJDIR}/Packages
 	echo "Description: OpenBSD ${OSREV} boot loader and kernel" \
 	    >> ${.OBJDIR}/Packages
