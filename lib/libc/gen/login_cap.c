@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_cap.c,v 1.6 2001/05/30 16:56:00 millert Exp $	*/
+/*	$OpenBSD: login_cap.c,v 1.7 2002/01/23 19:04:09 millert Exp $	*/
 
 /*-
  * Copyright (c) 1995,1997 Berkeley Software Design, Inc. All rights reserved.
@@ -151,40 +151,38 @@ login_getstyle(lc, style, atype)
 	if (style && strcmp(style, "s/key") == 0)
 		style = "skey";
 
+	if (lc->lc_style) {
+		free(lc->lc_style);
+		lc->lc_style = 0;
+	}
+
     	if (!atype || !(auths = login_getcapstr(lc, atype, NULL, NULL)))
-		auths = login_getcapstr(lc, "auth", "", NULL);
+		auths = login_getcapstr(lc, "auth", NULL, NULL);
 
 	if (auths) {
-		if (*auths) {
-			f1 = ta = auths = strdup(auths);
-			if (!auths) {
-				syslog(LOG_ERR, "strdup: %m");
-				return (0);
-			}
-			i = 2;
-			while (*ta)
-				if (*ta++ == ',')
-					++i;
-			f2 = authtypes = malloc(sizeof(char *) * i);
-			if (!authtypes) {
-				syslog(LOG_ERR, "malloc: %m");
-				free(f1);
-				return (0);
-			}
-			i = 0;
-			while (*auths) {
-				authtypes[i] = auths;
-				while (*auths && *auths != ',')
-					++auths;
-				if (*auths)
-					*auths++ = 0;
-				if (!*authtypes[i])
-					authtypes[i] = LOGIN_DEFSTYLE;
+		f1 = ta = auths;	/* auths malloced by login_getcapstr */
+		i = 2;
+		while (*ta)
+			if (*ta++ == ',')
 				++i;
-			}
-			authtypes[i] = 0;
-			
+		f2 = authtypes = malloc(sizeof(char *) * i);
+		if (!authtypes) {
+			syslog(LOG_ERR, "malloc: %m");
+			free(f1);
+			return (0);
 		}
+		i = 0;
+		while (*auths) {
+			authtypes[i] = auths;
+			while (*auths && *auths != ',')
+				++auths;
+			if (*auths)
+				*auths++ = 0;
+			if (!*authtypes[i])
+				authtypes[i] = LOGIN_DEFSTYLE;
+			++i;
+		}
+		authtypes[i] = 0;
 	}
 
 	if (!style)
@@ -200,9 +198,10 @@ login_getstyle(lc, style, atype)
 			free(f2);
 		if (*authtypes)
 			syslog(LOG_ERR, "strdup: %m");
-		lc->lc_style = 0;
 		return (0);
 	}
+	if (f1)
+		free(f1);
 	if (f2)
 		free(f2);
 	return (lc->lc_style = auths);
@@ -215,28 +214,37 @@ login_getcapstr(lc, cap, def, e)
 	char *def;
 	char *e;
 {
-	char *res;
+	char *res, *str;
 	int stat;
 
 	errno = 0;
+	str = e;			/* return error string by default */
+	res = NULL;
 
     	if (!lc->lc_cap)
 		return (def);
 
 	switch (stat = cgetstr(lc->lc_cap, cap, &res)) {
 	case -1:
-		return (def);
+		str = def;
+		break;
 	case -2:
 		syslog(LOG_ERR, "%s: getting capability %s: %m",
 		    lc->lc_class, cap);
-		return (e);
+		break;
 	default:
-		if (stat >= 0) 
-			return (res);
-		syslog(LOG_ERR, "%s: unexpected error with capability %s",
-		    lc->lc_class, cap);
-		return (e);
+		if (stat >= 0)
+			str = res;
+		else
+			syslog(LOG_ERR,
+			    "%s: unexpected error with capability %s",
+			    lc->lc_class, cap);
+		break;
 	}
+
+	if (res != NULL && str != res)
+		free(res);
+	return(str);
 }
 
 quad_t
@@ -252,13 +260,19 @@ login_getcaptime(lc, cap, def, e)
 	quad_t q, r;
 
 	errno = 0;
+	res = NULL;
+
     	if (!lc->lc_cap)
 		return (def);
 
 	switch (stat = cgetstr(lc->lc_cap, cap, &res)) {
 	case -1:
+		if (res)
+			free(res);
 		return (def);
 	case -2:
+		if (res)
+			free(res);
 		syslog(LOG_ERR, "%s: getting capability %s: %m",
 		    lc->lc_class, cap);
 		errno = ERANGE;
@@ -266,16 +280,20 @@ login_getcaptime(lc, cap, def, e)
 	default:
 		if (stat >= 0) 
 			break;
+		if (res)
+			free(res);
 		syslog(LOG_ERR, "%s: unexpected error with capability %s",
 		    lc->lc_class, cap);
 		errno = ERANGE;
 		return (e);
 	}
 
-	if (strcasecmp(res, "infinity") == 0)
-		return (RLIM_INFINITY);
-
 	errno = 0;
+
+	if (strcasecmp(res, "infinity") == 0) {
+		free(res);
+		return (RLIM_INFINITY);
+	}
 
 	q = 0;
 	sres = res;
@@ -284,6 +302,7 @@ login_getcaptime(lc, cap, def, e)
 		if (!ep || ep == res ||
 		    ((r == QUAD_MIN || r == QUAD_MAX) && errno == ERANGE)) {
 invalid:
+			free(sres);
 			syslog(LOG_ERR, "%s:%s=%s: invalid time",
 			    lc->lc_class, cap, sres);
 			errno = ERANGE;
@@ -316,6 +335,7 @@ invalid:
 		res = ep;
 		q += r;
 	}
+	free(sres);
 	return (q);
 }
 
