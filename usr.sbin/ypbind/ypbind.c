@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypbind.c,v 1.10 1996/07/05 21:14:29 deraadt Exp $ */
+/*	$OpenBSD: ypbind.c,v 1.11 1996/07/25 21:42:45 deraadt Exp $ */
 
 /*
  * Copyright (c) 1996 Theo de Raadt <deraadt@theos.com>
@@ -34,7 +34,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypbind.c,v 1.10 1996/07/05 21:14:29 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypbind.c,v 1.11 1996/07/25 21:42:45 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -100,7 +100,7 @@ int ypsetmode = YPSET_NO;
 int rpcsock, pingsock;
 struct rmtcallargs rmtca;
 struct rmtcallres rmtcr;
-char rmtcr_outval;
+bool_t rmtcr_outval;
 u_long rmtcr_port;
 SVCXPRT *udptransp, *tcptransp;
 SVCXPRT *ludptransp, *ltcptransp;
