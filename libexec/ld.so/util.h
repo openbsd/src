@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.16 2003/07/06 20:03:58 deraadt Exp $	*/
+/*	$OpenBSD: util.h,v 1.17 2003/11/11 14:51:01 drahn Exp $	*/
 
 /*
  * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -142,6 +142,24 @@ _dl_strchr(const char *p, const int ch)
 			return((char *)NULL);
 	}
 	/* NOTREACHED */
+}
+
+static inline char *
+_dl_strstr(const char *s, const char *find)
+{
+	char c, sc;
+	size_t len;
+	if ((c = *find++) != 0) {
+		len = _dl_strlen(find);
+		do {
+			do {
+				if ((sc = *s++) == 0)
+					return (NULL);
+			} while (sc != c);
+		} while (_dl_strncmp(s, find, len) != 0);
+		s--;
+	}
+	return ((char *)s);
 }
 
 #endif /*__DL_UTIL_H__*/

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sod.c,v 1.19 2003/10/26 23:23:12 drahn Exp $	*/
+/*	$OpenBSD: sod.c,v 1.20 2003/11/11 14:51:01 drahn Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -69,40 +69,36 @@ _dl_build_sod(const char *name, struct sod *sodp)
 
 	/* does it look like /^lib/ ? */
 	if (_dl_strncmp((char *)sodp->sod_name, "lib", 3) != 0)
-		return;
+		goto backout;
 
 	/* is this a filename? */
 	if (_dl_strchr((char *)sodp->sod_name, '/'))
-		return;
+		goto backout;
 
 	/* skip over 'lib' */
 	cp = (char *)sodp->sod_name + 3;
 
+	realname = cp;
+
 	/* dot guardian */
 	if ((_dl_strchr(cp, '.') == NULL) || (*(cp+_dl_strlen(cp)-1) == '.'))
-		return;
+		goto backout;
+
+	cp = _dl_strstr(cp, ".so");
+	if (cp == NULL)
+		goto backout;
 
 	/* default */
 	major = minor = -1;
 
-	realname = NULL;
 	/* loop through name - parse skipping name */
 	for (tuplet = 0; (tok = strsep(&cp, ".")) != NULL; tuplet++) {
 		switch (tuplet) {
 		case 0:
-			/* removed 'lib' and extensions from name */
-			realname = tok;
+			/* empty tok, we already skipped to "\.so.*" */
 			break;
 		case 1:
 			/* 'so' extension */
-			if (_dl_strcmp(tok, "so") != 0) {
-				/*
-				 * filenames such as libX-A.B.so.X.Y
-				 * screw this up, decrement tuplet
-				 * and try to continue.
-				 */
-				 tuplet--;
-			}
 			break;
 		case 2:
 			/* major version extension */
