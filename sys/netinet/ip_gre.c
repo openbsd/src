@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_gre.c,v 1.11 2001/06/19 00:48:23 deraadt Exp $ */
+/*      $OpenBSD: ip_gre.c,v 1.12 2001/09/04 00:57:44 angelos Exp $ */
 /*	$NetBSD: ip_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -270,7 +270,6 @@ gre_mobile_input(m, va_alist)
 	va_list ap;
 	u_char osrc = 0;
 	int msiz;
-	u_int af = AF_INET;
 
 	va_start(ap,m);
 	hlen = va_arg(ap, int);
@@ -330,6 +329,7 @@ gre_mobile_input(m, va_alist)
                  * try to free it or keep a pointer a to it).
                  */
                 struct mbuf m0;
+		u_int af = AF_INET;
 
                 m0.m_next = m;
                 m0.m_len = 4;
