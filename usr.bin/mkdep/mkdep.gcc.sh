@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: mkdep.gcc.sh,v 1.12 2003/06/03 02:56:13 millert Exp $
+#	$OpenBSD: mkdep.gcc.sh,v 1.13 2003/07/16 09:38:01 otto Exp $
 #	$NetBSD: mkdep.gcc.sh,v 1.9 1994/12/23 07:34:59 jtc Exp $
 #
 # Copyright (c) 1991, 1993
@@ -33,6 +33,24 @@
 #	@(#)mkdep.gcc.sh	8.1 (Berkeley) 6/6/93
 #
 
+#
+# Scan for a -o option in the arguments are record the filename given.
+# This is needed, since "cc -M -o out" writes to the file "out", not to
+# stdout.
+#
+scanfordasho() {
+	while [ $# != 0 ]
+	do case "$1" in
+		-o)	
+			file="$2"; shift; shift ;;
+		-o*)
+			file="${1#-o}"; shift ;;
+		*)
+			shift ;;
+		esac
+	done
+}
+
 D=.depend			# default dependency file is .depend
 append=0
 pflag=
@@ -64,18 +82,21 @@ if [ $# = 0 ] ; then
 	exit 1
 fi
 
-um=`umask`
-umask 022
+scanfordasho "$@"
 
 TMP=`mktemp /tmp/mkdep.XXXXXXXXXX` || exit 1
 
-umask $um
 trap 'rm -f $TMP ; trap 2 ; kill -2 $$' 1 2 3 13 15
 
-if [ x$pflag = x ]; then
-	${CC:-cc} -M "$@" | sed -e 's; \./; ;g' > $TMP
+if [ "x$file" = x ]; then
+	${CC:-cc} -M "$@"
 else
-	${CC:-cc} -M "$@" | sed -e 's;\.o[ ]*:; :;' -e 's; \./; ;g' > $TMP
+	${CC:-cc} -M "$@" && cat "$file"
+fi |
+if [ x$pflag = x ]; then
+	sed -e 's; \./; ;g' > $TMP
+else
+	sed -e 's;\.o[ ]*:; :;' -e 's; \./; ;g' > $TMP
 fi
 
 if [ $? != 0 ]; then
