@@ -1,4 +1,4 @@
-/*	$OpenBSD: fmt.c,v 1.7 1997/09/23 11:54:00 deraadt Exp $	*/
+/*	$OpenBSD: fmt.c,v 1.8 1997/10/01 15:31:03 millert Exp $	*/
 /*	$NetBSD: fmt.c,v 1.4 1995/09/01 01:29:41 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)fmt.c	8.1 (Berkeley) 7/20/93";
 #else
-static char rcsid[] = "$OpenBSD: fmt.c,v 1.7 1997/09/23 11:54:00 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: fmt.c,v 1.8 1997/10/01 15:31:03 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -372,7 +372,7 @@ split(line)
 		 */
 		while (*cp && *cp != ' ') {
 			if (*cp == '\\' && isspace(cp[1]))
-				*cp2++ = *cp++;
+				*cp2++ = *cp++, wordl++;
 			*cp2++ = *cp++;
 			wordl++;/* LIZ@UOM 6/18/85 */
 		}
