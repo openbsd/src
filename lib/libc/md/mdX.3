@@ -6,7 +6,7 @@
 .\" this stuff is worth it, you can buy me a beer in return.   Poul-Henning Kamp
 .\" ----------------------------------------------------------------------------
 .\"
-.\" 	$OpenBSD: mdX.3,v 1.4 1996/10/15 22:00:12 millert Exp $
+.\" 	$OpenBSD: mdX.3,v 1.5 1997/03/07 11:25:37 provos Exp $
 .\"
 .Dd October 9, 1996
 .Dt MDX 3
@@ -115,6 +115,10 @@ argument is non-null it must point to at least 33 characters of buffer space.
 .%A RSA Laboratories 
 .%T Frequently Asked Questions About today's Cryptography
 .Re
+.Rs
+.%A Hans Dobbertin
+.%T Cryptanalysis of MD5 Compress
+.Re
 .Sh AUTHOR
 The original MDX routines were developed by
 .Tn RSA
@@ -127,9 +131,8 @@ Phk ristede runen.
 These functions appeared in
 .Em FreeBSD-2.0 .
 .Sh BUGS
-No method is known to exist which finds two files having the same hash value,
-nor to find a file with a specific hash value.
-There is on the other hand no guarantee that such a method doesn't exist.
+Hans Dobbertin has found a collision in the compress function of MD5 and
+recommends using SHA or RIPEMD-160 instead.
 .Pp
 MD2 has only been licensed for use in Privacy Enhanced Mail.
 Use MD4 or MD5 if that isn't what you're doing.
