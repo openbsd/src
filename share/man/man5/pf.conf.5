@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.20 2001/10/05 14:45:54 mpech Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.21 2001/10/07 11:56:57 dhartmei Exp $
 .\"
 .\" Copyright (c) 2001, Daniel Hartmeier
 .\" All rights reserved.
@@ -186,8 +186,21 @@ Common protocols used here are tcp, udp, icmp and ipv6-icmp.
 .Ss from <source> port <source> to <dest> port <dest>
 The rule applies only to packets with the specified source and destination
 addresses/ports.
-Addresses can be specified in CIDR notation (matching netblocks) and ports
-can be specified using these operators
+.Pp
+Addresses can be specified in CIDR notation (matching netblocks), as
+symbolic host names or interface names.
+Host name resolution and interface to address translation are done at
+rule set load-time.
+When the address of an interface (or host name) changes (by DHCP or PPP,
+for instance), the rule set must be reloaded for the change to be reflected
+in the kernel.
+See
+.Xr dhclient-script 8
+or
+.Xr ppp 8
+for information on how to automate this task.
+.Pp
+Ports can be specified using these operators
 .Bd -literal
     = (equal), != (unequal), < (lesser), <= (lesser or equal), > (greater),
     >= (greater or equal), >< (range) and <> (except range).

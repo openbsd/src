@@ -1,0 +1,5 @@
+pass in from 127.0.0.1 to 127.0.0.1/8
+pass in from 127.0.0.1/16 to 127.0.0.1/24
+pass in from 127.0.0.1/25 to ! 127.0.0.1/26
+pass in from ! localhost to localhost/16
+pass in from ! lo0 to ! lo0/8

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nat.conf.5,v 1.15 2001/10/05 14:45:54 mpech Exp $
+.\"	$OpenBSD: nat.conf.5,v 1.16 2001/10/07 11:56:57 dhartmei Exp $
 .\"
 .\" Copyright (c) 2001 Ian Darwin.  All rights reserved.
 .\"
@@ -88,9 +88,19 @@ Comments begin with the character `#'; empty lines are ignored.
 An
 .Em ifname
 is a network interface such as fxp4, ne0, or ep1.
-An
 .Em address
-is an IP address.
+can be specified in CIDR notation (matching netblocks), as
+symbolic host names or interface names.
+Host name resolution and interface to address translation are done at rule
+set load-time.
+When the address of an interface (or host name) changes (by DHCP or PPP,
+for instance), the rule set must be reloaded for the change to be reflected
+in the kernel.
+See
+.Xr dhclient-script 8
+or
+.Xr ppp 8
+for information on how to automate this task.
 If specified,
 .Em mask-bits
 refers to the number of bits in the netmask.

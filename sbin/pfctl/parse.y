@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.38 2001/10/01 17:58:16 markus Exp $	*/
+/*	$OpenBSD: parse.y,v 1.39 2001/10/07 11:56:57 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -38,6 +38,8 @@
 #include <arpa/inet.h>
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <ifaddrs.h>
 #include <netdb.h>
 #include <stdarg.h>
 #include <errno.h>
@@ -120,6 +122,10 @@ struct sym *symhead = NULL;
 
 int	symset(char *name, char *val);
 char *	symget(char *name);
+
+struct ifaddrs    *ifa0_lookup(char *ifa_name);
+struct ifaddrs    *ifa4_lookup(char *ifa_name);
+struct ifaddrs    *ifa6_lookup(char *ifa_name);
 
 typedef struct {
 	union {
@@ -409,8 +415,41 @@ host		: address			{
 
 address		: STRING			{
 			struct hostent *hp;
+			struct ifaddrs *ifa;
 
-			if ((hp = gethostbyname2($1, AF_INET)) == NULL) {
+			if (ifa0_lookup($1)) {
+				/* an interface with this name exists */
+				if ((ifa = ifa4_lookup($1))) {
+					struct sockaddr_in *sin =
+					    (struct sockaddr_in *)
+					    ifa->ifa_addr;
+
+					$$ = calloc(1,
+					    sizeof(struct node_host));
+					if ($$ == NULL)
+						err(1, "address: calloc");
+					$$->af = AF_INET;
+					memcpy(&$$->addr, &sin->sin_addr,
+					    sizeof(u_int32_t));
+				} else if ((ifa = ifa6_lookup($1))) {
+					struct sockaddr_in6 *sin6 =
+					    (struct sockaddr_in6 *)
+					    ifa->ifa_addr;
+
+					$$ = calloc(1,
+					    sizeof(struct node_host));
+					if ($$ == NULL)
+						err(1, "address: calloc");
+					$$->af = AF_INET6;
+					memcpy(&$$->addr, &sin6->sin6_addr,
+					    sizeof(struct pf_addr));
+				} else {
+					yyerror("interface %s has no IP "
+					    "addresses", $1);
+					YYERROR;
+				}
+			}
+			else if ((hp = gethostbyname2($1, AF_INET)) == NULL) {
 				if ((hp = gethostbyname2($1, AF_INET6))
 				    == NULL) {
 					yyerror("cannot resolve %s", $1);
@@ -1555,3 +1594,100 @@ symget(char *nam)
 			return (sym->val);
 	return (NULL);
 }
+
+struct ifaddrs **ifa0tab, **ifa4tab, **ifa6tab;
+int ifa0len, ifa4len, ifa6len;
+
+int
+ifa_comp(const void *p1, const void *p2)
+{
+	struct ifaddrs *ifa1 = *(struct ifaddrs **)p1;
+	struct ifaddrs *ifa2 = *(struct ifaddrs **)p2;
+
+	return strcmp(ifa1->ifa_name, ifa2->ifa_name);
+}
+
+void
+ifa_load(void)
+{
+	struct ifaddrs *ifap, *ifa;
+	int ifalen = 0;
+
+	if (getifaddrs(&ifap) < 0)
+		err(1, "getifaddrs");
+	for (ifa = ifap; ifa; ifa = ifa->ifa_next)
+		ifalen++;
+	/* (over-)allocate tables */
+	ifa0tab = malloc(ifalen * sizeof(void *));
+	ifa4tab = malloc(ifalen * sizeof(void *));
+	ifa6tab = malloc(ifalen * sizeof(void *));
+	if (!ifa0tab || !ifa4tab || !ifa6tab)
+		err(1, "malloc");
+	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
+		if (ifa->ifa_addr->sa_family == AF_LINK) {
+			if (bsearch(&ifa, ifa0tab, ifa0len, sizeof(void *),
+			    ifa_comp))
+				continue; /* take only the first LINK address */
+			ifa0tab[ifa0len++] = ifa;
+			qsort(ifa0tab, ifa0len, sizeof(void *), ifa_comp);
+		}
+		if (ifa->ifa_addr->sa_family == AF_INET) {
+			if (bsearch(&ifa, ifa4tab, ifa4len, sizeof(void *),
+			    ifa_comp))
+				continue; /* take only the first IPv4 address */
+			ifa4tab[ifa4len++] = ifa;
+			qsort(ifa4tab, ifa4len, sizeof(void *), ifa_comp);
+		}
+		if (ifa->ifa_addr->sa_family == AF_INET6) {
+			/* XXX - better address selection required! */
+			if (bsearch(&ifa, ifa6tab, ifa6len, sizeof(void *),
+			    ifa_comp))
+				continue; /* take only the first IPv6 address */
+			ifa6tab[ifa6len++] = ifa;
+			qsort(ifa6tab, ifa6len, sizeof(void *), ifa_comp);
+		}
+	}
+	/* shrink tables */
+	ifa0tab = realloc(ifa0tab, ifa0len * sizeof(void *));
+	ifa4tab = realloc(ifa4tab, ifa4len * sizeof(void *));
+	ifa6tab = realloc(ifa6tab, ifa6len * sizeof(void *));
+	if (!ifa0tab || !ifa4tab || !ifa6tab)
+		err(1, "realloc");
+}
+
+struct ifaddrs *
+ifa0_lookup(char *ifa_name)
+{
+	struct ifaddrs ifa, *ifp = &ifa, **ifpp;
+
+	if (!ifa0tab)
+		ifa_load();
+	ifa.ifa_name = ifa_name;
+	ifpp = bsearch(&ifp, ifa0tab, ifa0len, sizeof(void *), ifa_comp);
+	return ifpp ? *ifpp : NULL;
+}
+
+struct ifaddrs *
+ifa4_lookup(char *ifa_name)
+{
+	struct ifaddrs ifa, *ifp = &ifa, **ifpp;
+
+	if (!ifa4tab)
+		ifa_load();
+	ifa.ifa_name = ifa_name;
+	ifpp = bsearch(&ifp, ifa4tab, ifa4len, sizeof(void *), ifa_comp);
+	return ifpp ? *ifpp : NULL;
+}
+
+struct ifaddrs *
+ifa6_lookup(char *ifa_name)
+{
+	struct ifaddrs ifa, *ifp = &ifa, **ifpp;
+
+	if (!ifa6tab)
+		ifa_load();
+	ifa.ifa_name = ifa_name;
+	ifpp = bsearch(&ifp, ifa6tab, ifa6len, sizeof(void *), ifa_comp);
+	return ifpp ? *ifpp : NULL;
+}
+
