@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.11 2003/06/02 23:27:56 millert Exp $	*/
+/*	$OpenBSD: psl.h,v 1.12 2005/01/05 18:42:28 fgsch Exp $	*/
 /*	$NetBSD: psl.h,v 1.20 2001/04/13 23:30:05 thorpej Exp $ */
 
 /*
@@ -84,10 +84,10 @@
 #define PIL_LPT		6
 #define PIL_NET		6
 #define PIL_VM		7
+#define	PIL_AUD		8
 #define PIL_CLOCK	10
 #define PIL_FD		11
 #define PIL_SER		12
-#define	PIL_AUD		13
 #define PIL_STATCLOCK	14
 #define PIL_HIGH	15
 #define PIL_SCHED	PIL_CLOCK
