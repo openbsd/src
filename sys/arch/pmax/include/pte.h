@@ -16,6 +16,14 @@
 #ifndef  __MIPS_PTE_H__
 #define  __MIPS_PTE_H__
 
+/* XXX hack to make libkvm.old happy - MIPS1 is only defined if we are
+       building a kernel - but not for libkvm.old - so we define MIPS1
+       here - which is no problem at the moment - because the pmax port
+       at the moment only supports MIPS1 cpu based machines
+*/
+#if !defined(MIPS1) && !defined(MIPS3)
+#define MIPS1
+#endif
 
 #if defined(MIPS1) && defined(MIPS3)
 #error  Cannot yet support both  "MIPS1" (r2000 family) and "MIPS3" (r4000 family) in the same kernel.

@@ -67,6 +67,12 @@
 #define MACH_MAX_MEM_ADDR		0xbe000000
 #define	MACH_RESERVED_ADDR		0xbfc80000
 
+/* XXX - this is just to make libkvm happy - all MACH_CAHED...
+         should be changed to CAHED etc. to be in sync with 
+         the arc
+*/
+#define	CACHED_TO_PHYS(x)	((unsigned)(x) & 0x1fffffff)
+
 #define	MACH_CACHED_TO_PHYS(x)	((unsigned)(x) & 0x1fffffff)
 #define	MACH_PHYS_TO_CACHED(x)	((unsigned)(x) | MACH_CACHED_MEMORY_ADDR)
 #define	MACH_UNCACHED_TO_PHYS(x) ((unsigned)(x) & 0x1fffffff)
