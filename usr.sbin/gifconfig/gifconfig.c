@@ -1,4 +1,4 @@
-/*	$OpenBSD: gifconfig.c,v 1.2 1999/12/21 08:48:06 itojun Exp $	*/
+/*	$OpenBSD: gifconfig.c,v 1.3 2000/01/09 00:32:01 angelos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -57,9 +57,6 @@
 #include <sys/sysctl.h>
 
 #include <net/if.h>
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-#include <net/if_var.h>
-#endif /* __FreeBSD__ >= 3 */
 #include <net/if_dl.h>
 #include <net/if_types.h>
 #include <net/route.h>
@@ -363,14 +360,7 @@ ifconfig(argc, argv, af, rafp)
 	else
 		metric = ifr.ifr_metric;
 
-#if defined(SIOCGIFMTU) && !defined(__OpenBSD__)
-	if (ioctl(s, SIOCGIFMTU, (caddr_t)&ifr) < 0)
-		perror("ioctl (SIOCGIFMTU)");
-	else
-		mtu = ifr.ifr_mtu;
-#else
 	mtu = 0;
-#endif
 
 	if (argc == 0) {
 		status();
@@ -575,9 +565,6 @@ in_status(force)
 	int force;
 {
 	struct sockaddr_in *sin, null_sin;
-#if 0
-	char *inet_ntoa();
-#endif
 	
 	memset(&null_sin, 0, sizeof(null_sin));
 
@@ -618,10 +605,6 @@ in6_status(force)
 	int force;
 {
 	struct sockaddr_in6 *sin, null_sin;
-#if 0
-	char *inet_ntop();
-#endif
-	
 
 	memset(&null_sin, 0, sizeof(null_sin));
 
