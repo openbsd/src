@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_openbsd.h,v 1.5 1999/11/23 21:17:38 mjacob Exp $ */
+/*	$OpenBSD: isp_openbsd.h,v 1.6 1999/12/16 05:23:52 mjacob Exp $ */
 /*
  * OpenBSD Specific definitions for the Qlogic ISP Host Adapter
  *
@@ -63,12 +63,12 @@
 #include <vm/pmap.h>
 
 #define	ISP_PLATFORM_VERSION_MAJOR	0
-#define	ISP_PLATFORM_VERSION_MINOR	5
+#define	ISP_PLATFORM_VERSION_MINOR	6
 
 #define	ISP_SCSI_XFER_T		struct scsi_xfer
 struct isposinfo {
 	struct device		_dev;
-	struct scsi_link	_link;
+	struct scsi_link	_link[2];
 	struct scsi_adapter	_adapter;
 	int			blocked;
 	union {
@@ -109,12 +109,12 @@ struct isposinfo {
 #if	defined(SCSIDEBUG)
 #define	DFLT_DBLEVEL		3
 #define	CFGPRINTF		printf
-#elif	defined(DIAGNOSTIC)
-#define	DFLT_DBLEVEL		1
-#define	CFGPRINTF		if (0) printf
 #elif	defined(DEBUG)
 #define	DFLT_DBLEVEL		2
 #define	CFGPRINTF		printf
+#elif	defined(DIAGNOSTIC)
+#define	DFLT_DBLEVEL		1
+#define	CFGPRINTF		if (0) printf
 #else
 #define	DFLT_DBLEVEL		0
 #define	CFGPRINTF		if (0) printf
@@ -133,7 +133,7 @@ struct isposinfo {
 #define	XS_LUN(xs)		((int) (xs)->sc_link->lun)
 #define	XS_TGT(xs)		((int) (xs)->sc_link->target)
 #define	XS_RESID(xs)		(xs)->resid
-#define	XS_CHANNEL(xs)		0	/* only one channel supported */
+#define	XS_CHANNEL(xs)		(((xs)->sc_link->flags & SDEV_2NDBUS)? 1 : 0)
 #define	XS_XFRLEN(xs)		(xs)->datalen
 #define	XS_CDBLEN(xs)		(xs)->cmdlen
 #define	XS_CDBP(xs)		((caddr_t) (xs)->cmd)
