@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.43 2000/07/07 13:22:43 rahnds Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.44 2000/07/14 03:45:27 rahnds Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -1046,21 +1046,24 @@ ppc_intr_setup(intr_establish_t *establish, intr_disestablish_t *disestablish)
  * so it is faster
  */
 void
-ppc_intr_enable(void)
+ppc_intr_enable(int enable)
 {
 	u_int32_t emsr, dmsr;
-	__asm__ volatile("mfmsr %0" : "=r"(emsr));
-	dmsr = emsr | PSL_EE;
-	__asm__ volatile("mtmsr %0" :: "r"(dmsr));
+	if (enable != 0)  {
+		__asm__ volatile("mfmsr %0" : "=r"(emsr));
+		dmsr = emsr | PSL_EE;
+		__asm__ volatile("mtmsr %0" :: "r"(dmsr));
+	}
 }
 
-void
+int
 ppc_intr_disable(void)
 {
 	u_int32_t emsr, dmsr;
 	__asm__ volatile("mfmsr %0" : "=r"(emsr));
 	dmsr = emsr & ~PSL_EE;
 	__asm__ volatile("mtmsr %0" :: "r"(dmsr));
+	return (emsr & PSL_EE);
 }
 
 /* BUS functions */
