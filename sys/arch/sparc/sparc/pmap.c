@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.125 2002/07/09 18:08:18 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.126 2002/07/24 00:55:52 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -651,6 +651,58 @@ setpte4m(va, pte)
 	ptep = getptep4m(pmap_kernel(), va);
 	tlb_flush_page(va);
 	setpgt4m(ptep, pte);
+}
+
+/*
+ * Translation table for kernel vs. PTE protection bits.
+ */
+u_int protection_codes[2][8];
+#define pte_prot4m(pm, prot) (protection_codes[pm == pmap_kernel()?0:1][prot])
+
+static void
+sparc_protection_init4m(void)
+{
+	u_int prot, *kp, *up;
+
+	kp = protection_codes[0];
+	up = protection_codes[1];
+
+	for (prot = 0; prot < 8; prot++) {
+		switch (prot) {
+		case VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE:
+			kp[prot] = PPROT_N_RWX;
+			up[prot] = PPROT_RWX_RWX;
+			break;
+		case VM_PROT_READ | VM_PROT_WRITE | VM_PROT_NONE:
+			kp[prot] = PPROT_N_RWX;
+			up[prot] = PPROT_RW_RW;
+			break;
+		case VM_PROT_READ | VM_PROT_NONE  | VM_PROT_EXECUTE:
+			kp[prot] = PPROT_N_RX;
+			up[prot] = PPROT_RX_RX;
+			break;
+		case VM_PROT_READ | VM_PROT_NONE  | VM_PROT_NONE:
+			kp[prot] = PPROT_N_RX;
+			up[prot] = PPROT_R_R;
+			break;
+		case VM_PROT_NONE | VM_PROT_WRITE | VM_PROT_EXECUTE:
+			kp[prot] = PPROT_N_RWX;
+			up[prot] = PPROT_RWX_RWX;
+			break;
+		case VM_PROT_NONE | VM_PROT_WRITE | VM_PROT_NONE:
+			kp[prot] = PPROT_N_RWX;
+			up[prot] = PPROT_RW_RW;
+			break;
+		case VM_PROT_NONE | VM_PROT_NONE  | VM_PROT_EXECUTE:
+			kp[prot] = PPROT_N_RX;
+			up[prot] = PPROT_X_X;
+			break;
+		case VM_PROT_NONE | VM_PROT_NONE  | VM_PROT_NONE:
+			kp[prot] = PPROT_N_RX;
+			up[prot] = PPROT_R_R;
+			break;
+		}
+	}
 }
 
 #endif /* 4m only */
@@ -3217,6 +3269,7 @@ pmap_bootstrap4m(void)
 	mmu_install_tables(&cpuinfo);
 
 	pmap_page_upload(avail_start);
+	sparc_protection_init4m();
 }
 
 void
@@ -4781,10 +4834,7 @@ pmap_changeprot4m(pm, va, prot, wired)
 	write_user_windows();	/* paranoia */
 
 	va = trunc_page(va);
-	if (pm == pmap_kernel())
-		newprot = prot & VM_PROT_WRITE ? PPROT_N_RWX : PPROT_N_RX;
-	else
-		newprot = prot & VM_PROT_WRITE ? PPROT_RWX_RWX : PPROT_RX_RX;
+	newprot = pte_prot4m(pm, prot);
 
 	pmap_stats.ps_changeprots++;
 
@@ -5238,8 +5288,7 @@ pmap_enter4m(pm, va, pa, prot, flags)
 #endif
 	pteproto |= PMAP_T2PTE_SRMMU(pa);
 
-	/* Make sure we get a pte with appropriate perms! */
-	pteproto |= SRMMU_TEPTE | PPROT_RX_RX;
+	pteproto |= SRMMU_TEPTE;
 
 	pa &= ~PMAP_TNC_SRMMU;
 	/*
@@ -5254,12 +5303,12 @@ pmap_enter4m(pm, va, pa, prot, flags)
 
 	pteproto |= (atop(pa) << SRMMU_PPNSHIFT);
 
-	if (prot & VM_PROT_WRITE)
-		pteproto |= PPROT_WRITE;
+	/* correct protections */
+	pteproto |= pte_prot4m(pm, prot);
 
 	ctx = getcontext4m();
 	if (pm == pmap_kernel())
-		ret = pmap_enk4m(pm, va, prot, flags, pv, pteproto | PPROT_S);
+		ret = pmap_enk4m(pm, va, prot, flags, pv, pteproto);
 	else
 		ret = pmap_enu4m(pm, va, prot, flags, pv, pteproto);
 #ifdef DIAGNOSTIC
