@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.111 1999/09/04 22:20:20 millert Exp $
+#	$OpenBSD: rc,v 1.112 1999/09/27 23:40:25 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -100,7 +100,9 @@ if [ ! -f /var/db/host.random ]; then
 	chmod 600 /var/db/host.random
 else
 	dd if=/var/db/host.random of=/dev/urandom bs=1024 count=64 \
-		>/dev/null 2>&1
+	    > /dev/null 2>&1
+	dd if=/var/db/host.random of=/dev/arandom bs=1024 count=64 >
+	    > /dev/null 2>&1
 fi
 
 # set hostname, turn on network
