@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.21 1998/09/19 18:18:03 deraadt Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.22 1998/10/18 20:02:34 millert Exp $
 #
 # Build wrapper for Perl 5.003.
 #
@@ -106,6 +106,7 @@ all:	${GENERATED}
 	(cd ${.OBJDIR}; ${MAKE})
 
 config.sh: config.sh.OpenBSD
+	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
 	(cd ${.OBJDIR}; /bin/sh Configure -f config.sh.OpenBSD -dsE)
 
 Makefile:

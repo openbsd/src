@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.16 1997/09/05 07:15:10 kstailey Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.17 1998/10/18 20:02:36 millert Exp $
 
 #
 # less config
@@ -7,7 +7,7 @@ PREFIX=		/usr
 BINDIR=		${PREFIX}/bin
 DATADIR=	${PREFIX}/share/misc
 LESS_HLP=	more.help
-LIBS=		-ltermcap
+LIBS=		-lcurses
 LINKS=		${BINDIR}/less ${BINDIR}/more ${BINDIR}/less ${BINDIR}/page
 MAN=		less.1 lesskey.1
 MLINKS=		less.1 more.1 less.1 page.1
@@ -55,10 +55,12 @@ config: .FORCE
 .ifndef GLOBAL_AUTOCONF_CACHE
 	-rm -f config.cache
 .endif
+	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
 	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
 		/bin/sh ${.CURDIR}/configure --prefix=/usr ${CF}
 
 config.status:
+	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
 	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
 		/bin/sh ${.CURDIR}/configure --prefix=/usr ${CF}
 

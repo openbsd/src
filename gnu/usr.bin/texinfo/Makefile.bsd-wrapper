@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.24 1997/09/05 19:53:23 flipk Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.25 1998/10/18 20:02:35 millert Exp $
 
 INFODIR=	infodir=${DESTDIR}/usr/share/info
 INFOPATH=	DEFAULT_INFOPATH=/usr/local/info:/usr/share/info:.
@@ -28,10 +28,12 @@ config: .FORCE
 .ifndef GLOBAL_AUTOCONF_CACHE
 	-rm -f config.cache
 .endif
+	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
 	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
 		/bin/sh ${.CURDIR}/configure --prefix=/usr ${CF}
 
 config.status:
+	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
 	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
 		/bin/sh ${.CURDIR}/configure --prefix=/usr ${CF}
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.28 1998/08/24 19:35:35 kstailey Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.29 1998/10/18 20:02:29 millert Exp $
 
 .include <bsd.own.mk>
 
@@ -28,10 +28,12 @@ CF=
 
 config: .FORCE
 	-rm -f config.cache
+	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
 	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
 		sh ${.CURDIR}/configure --prefix=/usr ${KRB} ${CF}
 
 config.status:
+	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
 	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
 		sh ${.CURDIR}/configure --prefix=/usr ${KRB} ${CF}
 

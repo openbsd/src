@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.7 1998/09/10 03:28:44 millert Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.8 1998/10/18 20:02:27 millert Exp $
 
 SUBDIR+=	mpn mpz mpf mpq
 
@@ -26,10 +26,12 @@ config: .FORCE
 .ifndef GLOBAL_AUTOCONF_CACHE
 	-rm -f config.cache
 .endif
+	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
 	/bin/sh ${.CURDIR}/configure --with-gnu-as --with-gnu-ld \
 		--prefix=/usr --local-prefix=/usr ${CF}
 
 config.status:	Makefile.in configure
+	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
 	/bin/sh ${.CURDIR}/configure --with-gnu-as --with-gnu-ld \
 		--prefix=/usr --local-prefix=/usr ${CF} && touch config.status
 

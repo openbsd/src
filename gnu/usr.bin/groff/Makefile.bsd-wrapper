@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.10 1997/09/05 07:18:35 kstailey Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.11 1998/10/18 20:02:31 millert Exp $
 
 #
 # groff config
@@ -60,11 +60,13 @@ config: .FORCE
 .ifndef GLOBAL_AUTOCONF_CACHE
 	-rm -f config.cache
 .endif
+	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
 	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
 	/bin/sh ${.CURDIR}/configure --prefix=${PREFIX} \
 		--mandir=${DATASUBDIR}/man ${CF}
 
 config.status:
+	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
 	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
 	/bin/sh ${.CURDIR}/configure --prefix=${PREFIX} \
 		--mandir=${DATASUBDIR}/man ${CF}

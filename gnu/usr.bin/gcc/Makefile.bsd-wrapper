@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.33 1998/03/06 21:38:01 niklas Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.34 1998/10/18 20:02:30 millert Exp $
 
 MAN=		cccp.1 gcc.1 cp/g++.1 f/g77.1
 MLINKS+=	gcc.1 cc.1
@@ -42,12 +42,14 @@ config: .FORCE
 .ifndef GLOBAL_AUTOCONF_CACHE
 	-rm -f config.cache
 .endif
+	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
 	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
 	/bin/sh ${.CURDIR}/configure --with-gnu-as --with-gnu-ld \
 		--prefix=/usr --with-local-prefix=/usr ${CF} \
 		--with-gxx-include-dir=${GPP_INC_DIR} ${GCCARCH}
 
 config.status: Makefile.in configure c-parse.in
+	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
 	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
 	/bin/sh ${.CURDIR}/configure --with-gnu-as --with-gnu-ld \
 		--prefix=/usr --with-local-prefix=/usr ${CF} \

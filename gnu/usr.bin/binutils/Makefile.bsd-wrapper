@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.27 1998/08/08 08:42:43 downsj Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.28 1998/10/18 20:02:29 millert Exp $
 
 SUBDIRS=	libiberty opcodes bfd
 MAN=
@@ -46,9 +46,11 @@ config: .FORCE
 .ifndef GLOBAL_AUTOCONF_CACHE
 	-rm -f config.cache
 .endif
+	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
 	sh ${.CURDIR}/configure --prefix=/usr --infodir=/usr/share/info --disable-gdbtk ${CF}
 
 config.status:
+	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
 	sh ${.CURDIR}/configure --prefix=/usr --infodir=/usr/share/info --disable-gdbtk ${CF}
 
 .ifdef NOMAN
