@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.32 2001/11/06 19:53:21 miod Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.33 2001/11/13 00:10:56 art Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
@@ -162,13 +162,14 @@ nospace:
  * invoked to get an appropriate block.
  */
 int
-ffs_realloccg(ip, lbprev, bpref, osize, nsize, cred, bpp)
+ffs_realloccg(ip, lbprev, bpref, osize, nsize, cred, bpp, blknop)
 	register struct inode *ip;
 	daddr_t lbprev;
 	daddr_t bpref;
 	int osize, nsize;
 	struct ucred *cred;
 	struct buf **bpp;
+	ufs_daddr_t *blknop;
 {
 	register struct fs *fs;
 	struct buf *bp;
@@ -198,13 +199,16 @@ ffs_realloccg(ip, lbprev, bpref, osize, nsize, cred, bpp)
 	/*
 	 * Allocate the extra space in the buffer.
 	 */
-	if ((error = bread(ITOV(ip), lbprev, osize, NOCRED, &bp)) != 0) {
+	if (bpp != NULL &&
+	    (error = bread(ITOV(ip), lbprev, osize, NOCRED, &bp)) != 0) {
 		brelse(bp);
 		return (error);
 	}
 #ifdef QUOTA
 	if ((error = chkdq(ip, (long)btodb(nsize - osize), cred, 0)) != 0) {
-		brelse(bp);
+		if (bpp != NULL) {
+			brelse(bp);
+		}
 		return (error);
 	}
 #endif
@@ -213,14 +217,19 @@ ffs_realloccg(ip, lbprev, bpref, osize, nsize, cred, bpp)
 	 */
 	cg = dtog(fs, bprev);
 	if ((bno = ffs_fragextend(ip, cg, (long)bprev, osize, nsize)) != 0) {
-		if (bp->b_blkno != fsbtodb(fs, bno))
-			panic("ffs_realloccg: bad blockno");
 		ip->i_ffs_blocks += btodb(nsize - osize);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
-		allocbuf(bp, nsize);
-		bp->b_flags |= B_DONE;
-		bzero((char *)bp->b_data + osize, (u_int)nsize - osize);
-		*bpp = bp;
+		if (bpp != NULL) {
+			if (bp->b_blkno != fsbtodb(fs, bno))
+				panic("ffs_realloccg: bad blockno");
+			allocbuf(bp, nsize);
+			bp->b_flags |= B_DONE;
+			bzero((char *)bp->b_data + osize, (u_int)nsize - osize);
+			*bpp = bp;
+		}
+		if (blknop != NULL) {
+			*blknop = bno;
+		}
 		return (0);
 	}
 	/*
@@ -274,7 +283,6 @@ ffs_realloccg(ip, lbprev, bpref, osize, nsize, cred, bpp)
 	bno = (daddr_t)ffs_hashalloc(ip, cg, (long)bpref, request,
 	    			     ffs_alloccg);
 	if (bno > 0) {
-		bp->b_blkno = fsbtodb(fs, bno);
 		(void) uvm_vnp_uncache(ITOV(ip));
 		if (!DOINGSOFTDEP(ITOV(ip)))
 			ffs_blkfree(ip, bprev, (long)osize);
@@ -283,10 +291,16 @@ ffs_realloccg(ip, lbprev, bpref, osize, nsize, cred, bpp)
 			    (long)(request - nsize));
 		ip->i_ffs_blocks += btodb(nsize - osize);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
-		allocbuf(bp, nsize);
-		bp->b_flags |= B_DONE;
-		bzero((char *)bp->b_data + osize, (u_int)nsize - osize);
-		*bpp = bp;
+		if (bpp != NULL) {
+			bp->b_blkno = fsbtodb(fs, bno);
+			allocbuf(bp, nsize);
+			bp->b_flags |= B_DONE;
+			bzero((char *)bp->b_data + osize, (u_int)nsize - osize);
+			*bpp = bp;
+		}
+		if (blknop != NULL) {
+			*blknop = bno;
+		}
 		return (0);
 	}
 #ifdef QUOTA
@@ -295,7 +309,9 @@ ffs_realloccg(ip, lbprev, bpref, osize, nsize, cred, bpp)
 	 */
 	(void) chkdq(ip, (long)-btodb(nsize - osize), cred, FORCE);
 #endif
-	brelse(bp);
+	if (bpp != NULL) {
+		brelse(bp);
+	}
 nospace:
 	/*
 	 * no space available

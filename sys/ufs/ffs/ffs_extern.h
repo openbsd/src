@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_extern.h,v 1.13 2001/06/23 02:07:53 csapuntz Exp $	*/
+/*	$OpenBSD: ffs_extern.h,v 1.14 2001/11/13 00:10:56 art Exp $	*/
 /*	$NetBSD: ffs_extern.h,v 1.4 1996/02/09 22:22:22 christos Exp $	*/
 
 /*-
@@ -75,7 +75,7 @@ __BEGIN_DECLS
 int ffs_alloc __P((struct inode *, daddr_t, daddr_t , int, struct ucred *,
 		   daddr_t *));
 int ffs_realloccg __P((struct inode *, daddr_t, daddr_t, int, int ,
-		       struct ucred *, struct buf **));
+		       struct ucred *, struct buf **, daddr_t *));
 int ffs_reallocblks __P((void *));
 int ffs_inode_alloc(struct inode *, int, struct ucred *, struct vnode **);
 int ffs_inode_free(struct inode *, ino_t, int);

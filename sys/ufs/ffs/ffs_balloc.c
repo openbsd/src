@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_balloc.c,v 1.15 2001/11/06 19:53:21 miod Exp $	*/
+/*	$OpenBSD: ffs_balloc.c,v 1.16 2001/11/13 00:10:56 art Exp $	*/
 /*	$NetBSD: ffs_balloc.c,v 1.3 1996/02/09 22:22:21 christos Exp $	*/
 
 /*
@@ -93,18 +93,17 @@ ffs_balloc(struct inode *ip, off_t startoffset, int size, struct ucred *cred,
 		osize = blksize(fs, ip, nb);
 		if (osize < fs->fs_bsize && osize > 0) {
 			error = ffs_realloccg(ip, nb,
-				ffs_blkpref(ip, nb, (int)nb, &ip->i_ffs_db[0]),
-				osize, (int)fs->fs_bsize, cred, &bp);
+			    ffs_blkpref(ip, nb, (int)nb, &ip->i_ffs_db[0]),
+			    osize, (int)fs->fs_bsize, cred, &bp, &newb);
 			if (error)
 				return (error);
 			if (DOINGSOFTDEP(vp))
-				softdep_setup_allocdirect(ip, nb,
-				    dbtofsb(fs, bp->b_blkno), ip->i_ffs_db[nb],
-				    fs->fs_bsize, osize, bp);
+				softdep_setup_allocdirect(ip, nb, newb,
+				    ip->i_ffs_db[nb], fs->fs_bsize, osize, bp);
 
 			ip->i_ffs_size = lblktosize(fs, nb + 1);
 			uvm_vnp_setsize(vp, ip->i_ffs_size);
-			ip->i_ffs_db[nb] = dbtofsb(fs, bp->b_blkno);
+			ip->i_ffs_db[nb] = newb;
 			ip->i_flag |= IN_CHANGE | IN_UPDATE;
 			if (flags & B_SYNC)
 				bwrite(bp);
@@ -142,13 +141,12 @@ ffs_balloc(struct inode *ip, off_t startoffset, int size, struct ucred *cred,
 				error = ffs_realloccg(ip, lbn,
 				    ffs_blkpref(ip, lbn, (int)lbn,
 					&ip->i_ffs_db[0]),
-				    osize, nsize, cred, &bp);
+				    osize, nsize, cred, &bp, &newb);
 				if (error)
 					return (error);
 				if (DOINGSOFTDEP(vp))
 					softdep_setup_allocdirect(ip, lbn,
-					    dbtofsb(fs, bp->b_blkno), nb,
-					    nsize, osize, bp);
+					    newb, nb, nsize, osize, bp);
 			}
 		} else {
 			if (ip->i_ffs_size < lblktosize(fs, lbn + 1))
