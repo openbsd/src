@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_motorola.c,v 1.1 2001/11/30 20:54:52 miod Exp $ */
+/*	$OpenBSD: pmap_motorola.c,v 1.2 2001/12/02 02:01:52 millert Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -211,13 +211,13 @@ int dokwriteback = 1;	/* 68040: enable writeback caching of kernel AS */
  */
 #if defined(M68040) || defined(M68060)
 #define	pmap_ste1(m, v)	\
-	(&((m)->pm_stab[(vm_offset_t)(v) >> SG4_SHIFT1]))
+	(&((m)->pm_stab[(vaddr_t)(v) >> SG4_SHIFT1]))
 /* XXX assumes physically contiguous ST pages (if more than one) */
 #define pmap_ste2(m, v) \
 	(&((m)->pm_stab[(st_entry_t *)(*(u_int *)pmap_ste1(m, v) & SG4_ADDR1) \
 			- (m)->pm_stpa + (((v) & SG4_MASK2) >> SG4_SHIFT2)]))
 #define	pmap_ste(m, v)	\
-	(&((m)->pm_stab[(vm_offset_t)(v) \
+	(&((m)->pm_stab[(vaddr_t)(v) \
 			>> (mmutype <= MMU_68040 ? SG4_SHIFT1 : SG_ISHIFT)]))
 #define pmap_ste_v(m, v) \
 	(mmutype <= MMU_68040 \
@@ -225,11 +225,11 @@ int dokwriteback = 1;	/* 68040: enable writeback caching of kernel AS */
 	    (*pmap_ste2(m, v) & SG_V)) \
 	 : (*pmap_ste(m, v) & SG_V))
 #else
-#define	pmap_ste(m, v)	 (&((m)->pm_stab[(vm_offset_t)(v) >> SG_ISHIFT]))
+#define	pmap_ste(m, v)	 (&((m)->pm_stab[(vaddr_t)(v) >> SG_ISHIFT]))
 #define pmap_ste_v(m, v) (*pmap_ste(m, v) & SG_V)
 #endif
 
-#define pmap_pte(m, v)	(&((m)->pm_ptab[(vm_offset_t)(v) >> PG_SHIFT]))
+#define pmap_pte(m, v)	(&((m)->pm_ptab[(vaddr_t)(v) >> PG_SHIFT]))
 #define pmap_pte_pa(pte)	(*(pte) & PG_FRAME)
 #define pmap_pte_w(pte)		(*(pte) & PG_W)
 #define pmap_pte_ci(pte)	(*(pte) & PG_CI)
@@ -275,7 +275,7 @@ struct kpt_page *kpt_pages;
 st_entry_t	*Sysseg;
 pt_entry_t	*Sysmap, *Sysptmap;
 st_entry_t	*Segtabzero, *Segtabzeropa;
-vm_size_t	Sysptsize = VM_KERNEL_PT_PAGES;
+vsize_t		Sysptsize = VM_KERNEL_PT_PAGES;
 
 extern caddr_t	CADDR1, CADDR2;
 
@@ -286,11 +286,11 @@ struct pmap	kernel_pmap_store;
 struct vm_map	*st_map, *pt_map;
 struct vm_map	st_map_store, pt_map_store;
 
-vm_offset_t    	avail_start;	/* PA of first available physical page */
-vm_offset_t	avail_end;	/* PA of last available physical page */
-vm_size_t	mem_size;	/* memory size in bytes */
-vm_offset_t	virtual_avail;  /* VA of first avail page (after kernel bss)*/
-vm_offset_t	virtual_end;	/* VA of last avail page (end of kernel AS) */
+paddr_t    	avail_start;	/* PA of first available physical page */
+paddr_t		avail_end;	/* PA of last available physical page */
+vsize_t		mem_size;	/* memory size in bytes */
+vaddr_t		virtual_avail;  /* VA of first avail page (after kernel bss)*/
+vaddr_t		virtual_end;	/* VA of last avail page (end of kernel AS) */
 int		page_cnt;	/* number of pages managed by VM system */
 
 boolean_t	pmap_initialized = FALSE;	/* Has pmap_init completed? */
@@ -446,7 +446,7 @@ pmap_init()
 		panic("pmap_init: can't allocate data structures");
 
 	Segtabzero = (st_entry_t *) addr;
-	pmap_extract(pmap_kernel(), addr, (paddr_t *)Segtabzeropa);
+	pmap_extract(pmap_kernel(), addr, (paddr_t *)&Segtabzeropa);
 #ifdef M68060
 	if (mmutype == MMU_68060) {
 		for (addr2 = addr; addr2 < addr + MACHINE_STSIZE;
@@ -550,7 +550,7 @@ pmap_init()
 		maxproc = (MACHINE_PTMAXSIZE / MACHINE_MAX_PTSIZE);
 	} else
 		s = (maxproc * MACHINE_MAX_PTSIZE);
-	pt_map = uvm_km_suballoc(kernel_map, &addr, &addr2, s, VM_MAP_PAGEABLE,
+	pt_map = uvm_km_suballoc(kernel_map, &addr, &addr2, s, 0,
 	    TRUE, &pt_map_store);
 
 #if defined(M68040) || defined(M68060)
@@ -2715,7 +2715,7 @@ pmap_enter_ptpage(pmap, va)
 			PMAP_DPRINTF(PDB_COLLECT,
 			    ("enter: no KPT pages, collecting...\n"));
 			pmap_collect(pmap_kernel());
-			if ((kpt = kpt_free_list) == (struct kpt_page *)0)
+			if ((kpt = kpt_free_list) == NULL)
 				panic("pmap_enter_ptpage: can't get KPT page");
 		}
 		kpt_free_list = kpt->kpt_next;
@@ -2960,10 +2960,10 @@ pmap_check_wiring(str, va)
 #ifdef mac68k
 void
 mac68k_set_pte(va, pge)
-	vm_offset_t va;
-	vm_offset_t pge;
+	vaddr_t va;
+	paddr_t pge;
 {
-extern	vm_offset_t tmp_vpages[];
+extern	vaddr_t tmp_vpages[];
 	register pt_entry_t *pte;
 
 	if (va != tmp_vpages[0])
