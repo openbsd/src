@@ -1,5 +1,40 @@
-/*	$OpenBSD: kvm_proc.c,v 1.3 1996/10/26 08:44:08 tholo Exp $	*/
-
+/*	$OpenBSD: kvm_proc.c,v 1.4 1999/12/01 09:58:16 deraadt Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.30 1999/03/24 05:50:50 mrg Exp $	*/
+/*-
+ * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Charles M. Hannum.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 /*-
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1989, 1992, 1993
@@ -39,7 +74,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
+#if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
+#else
+static char *rcsid = "$OpenBSD: kvm_proc.c,v 1.4 1999/12/01 09:58:16 deraadt Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -64,7 +103,13 @@ static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 
 #include <vm/vm.h>
 #include <vm/vm_param.h>
+
+#ifdef UVM
+#include <uvm/uvm_extern.h>
+#include <uvm/uvm_amap.h>
+#else
 #include <vm/swap_pager.h>
+#endif
 
 #include <sys/sysctl.h>
 
@@ -75,10 +120,12 @@ static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #include "kvm_private.h"
 
 #define KREAD(kd, addr, obj) \
-	(kvm_read(kd, addr, (char *)(obj), sizeof(*obj)) != sizeof(*obj))
+	(kvm_read(kd, addr, (void *)(obj), sizeof(*obj)) != sizeof(*obj))
 
+#ifndef UVM
 int		_kvm_readfromcore __P((kvm_t *, u_long, u_long));
 int		_kvm_readfrompager __P((kvm_t *, struct vm_object *, u_long));
+#endif
 ssize_t		kvm_uread __P((kvm_t *, const struct proc *, u_long, char *,
 		    size_t));
 
@@ -100,11 +147,18 @@ _kvm_uread(kd, p, va, cnt)
 	u_long va;
 	u_long *cnt;
 {
-	register u_long addr, head;
-	register u_long offset;
+	u_long addr, head;
+	u_long offset;
 	struct vm_map_entry vme;
+#ifdef UVM
+	struct vm_amap amap;
+	struct vm_anon *anonp, anon;
+	struct vm_page pg;
+	u_long slot;
+#else
 	struct vm_object vmo;
 	int rv;
+#endif
 
 	if (kd->swapspc == 0) {
 		kd->swapspc = (char *)_kvm_malloc(kd, kd->nbpg);
@@ -123,15 +177,67 @@ _kvm_uread(kd, p, va, cnt)
 		if (KREAD(kd, addr, &vme))
 			return (0);
 
+#ifdef UVM
+		if (va >= vme.start && va < vme.end && 
+		    vme.aref.ar_amap != NULL)
+			break;
+#else
 		if (va >= vme.start && va < vme.end && 
 		    vme.object.vm_object != 0)
 			break;
+#endif
 
 		addr = (u_long)vme.next;
 		if (addr == head)
 			return (0);
 	}
 
+#ifdef UVM
+	/*
+	 * we found the map entry, now to find the object...
+	 */
+	if (vme.aref.ar_amap == NULL)
+		return NULL;
+
+	addr = (u_long)vme.aref.ar_amap;
+	if (KREAD(kd, addr, &amap))
+		return NULL;
+
+	offset = va - vme.start;
+	slot = offset / kd->nbpg + vme.aref.ar_pageoff;
+	/* sanity-check slot number */
+	if (slot > amap.am_nslot)
+		return NULL;
+
+	addr = (u_long)amap.am_anon + (offset / kd->nbpg) * sizeof(anonp);
+	if (KREAD(kd, addr, &anonp))
+		return NULL;
+
+	addr = (u_long)anonp;
+	if (KREAD(kd, addr, &anon))
+		return NULL;
+
+	addr = (u_long)anon.u.an_page;
+	if (addr) {
+		if (KREAD(kd, addr, &pg))
+			return NULL;
+
+		if (lseek(kd->pmfd, pg.phys_addr, SEEK_SET) < 0)
+			return NULL;
+
+		if (read(kd->pmfd, (void *)kd->swapspc, (size_t)kd->nbpg)
+		    != kd->nbpg)
+			return NULL;
+	} else {
+		if (lseek(kd->swfd, (off_t)(anon.an_swslot * kd->nbpg),
+			  SEEK_SET) < 0)
+			return NULL;
+		if (read(kd->swfd, (void *)kd->swapspc, (size_t)kd->nbpg)
+		    != kd->nbpg)
+			return NULL;
+	}
+ 
+#else
 	/*
 	 * We found the right object -- follow shadow links.
 	 */
@@ -160,12 +266,15 @@ _kvm_uread(kd, p, va, cnt)
 
 	if (rv == -1)
 		return (0);
+#endif
 
 	/* Found the page. */
 	offset %= kd->nbpg;
 	*cnt = kd->nbpg - offset;
 	return (&kd->swapspc[offset]);
 }
+
+#ifndef UVM
 
 #define	vm_page_hash(kd, object, offset) \
 	(((u_long)object + (u_long)(offset / kd->nbpg)) & kd->vm_page_hash_mask)
@@ -311,6 +420,7 @@ _kvm_readfrompager(kd, vmop, offset)
 
 	return (1);
 }
+#endif /* UVM */
 
 /*
  * Read proc's from memory file into buffer bp, which has space to hold
@@ -324,7 +434,7 @@ kvm_proclist(kd, what, arg, p, bp, maxcnt)
 	struct kinfo_proc *bp;
 	int maxcnt;
 {
-	register int cnt = 0;
+	int cnt = 0;
 	struct eproc eproc;
 	struct pgrp pgrp;
 	struct session sess;
@@ -411,7 +521,7 @@ kvm_proclist(kd, what, arg, p, bp, maxcnt)
 			    eproc.e_wmesg, WMESGLEN);
 
 		(void)kvm_read(kd, (u_long)proc.p_vmspace,
-		    (char *)&eproc.e_vm, sizeof(eproc.e_vm));
+		    &eproc.e_vm, sizeof(eproc.e_vm));
 
 		eproc.e_xsize = eproc.e_xrssize = 0;
 		eproc.e_xccount = eproc.e_xswrss = 0;
@@ -449,8 +559,8 @@ kvm_deadprocs(kd, what, arg, a_allproc, a_zombproc, maxcnt)
 	u_long a_zombproc;
 	int maxcnt;
 {
-	register struct kinfo_proc *bp = kd->procbase;
-	register int acnt, zcnt;
+	struct kinfo_proc *bp = kd->procbase;
+	int acnt, zcnt;
 	struct proc *p;
 
 	if (KREAD(kd, a_allproc, &p)) {
@@ -587,14 +697,14 @@ static char **
 kvm_argv(kd, p, addr, narg, maxcnt)
 	kvm_t *kd;
 	const struct proc *p;
-	register u_long addr;
-	register int narg;
-	register int maxcnt;
+	u_long addr;
+	int narg;
+	int maxcnt;
 {
-	register char *np, *cp, *ep, *ap;
-	register u_long oaddr = -1;
-	register int len, cc;
-	register char **argv;
+	char *np, *cp, *ep, *ap;
+	u_long oaddr = -1;
+	int len, cc;
+	char **argv;
 
 	/*
 	 * Check that there aren't an unreasonable number of agruments,
@@ -656,9 +766,9 @@ kvm_argv(kd, p, addr, narg, maxcnt)
 		if (ep != 0)
 			cc = ep - cp + 1;
 		if (len + cc > kd->arglen) {
-			register int off;
-			register char **pp;
-			register char *op = kd->argspc;
+			int off;
+			char **pp;
+			char *op = kd->argspc;
 
 			kd->arglen *= 2;
 			kd->argspc = (char *)_kvm_realloc(kd, kd->argspc,
@@ -737,7 +847,7 @@ proc_verify(kd, kernp, p)
 	 * Just read in the whole proc.  It's not that big relative
 	 * to the cost of the read system call.
 	 */
-	if (kvm_read(kd, kernp, (char *)&kernproc, sizeof(kernproc)) != 
+	if (kvm_read(kd, kernp, &kernproc, sizeof(kernproc)) != 
 	    sizeof(kernproc))
 		return (0);
 	return (p->p_pid == kernproc.p_pid &&
@@ -751,8 +861,8 @@ kvm_doargv(kd, kp, nchr, info)
 	int nchr;
 	void (*info)(struct ps_strings *, u_long *, int *);
 {
-	register const struct proc *p = &kp->kp_proc;
-	register char **ap;
+	const struct proc *p = &kp->kp_proc;
+	char **ap;
 	u_long addr;
 	int cnt;
 	struct ps_strings arginfo;
@@ -769,6 +879,7 @@ kvm_doargv(kd, kp, nchr, info)
 		sysctl(mib, 2, &_ps, &len, NULL, 0);
 		ps = (struct ps_strings *)_ps.val;
 	}
+
 	/*
 	 * Pointers are stored at the top of the user stack.
 	 */
@@ -817,22 +928,22 @@ kvm_getenvv(kd, kp, nchr)
 ssize_t
 kvm_uread(kd, p, uva, buf, len)
 	kvm_t *kd;
-	register const struct proc *p;
-	register u_long uva;
-	register char *buf;
-	register size_t len;
+	const struct proc *p;
+	u_long uva;
+	char *buf;
+	size_t len;
 {
-	register char *cp;
+	char *cp;
 
 	cp = buf;
 	while (len > 0) {
-		register int cc;
-		register char *dp;
+		int cc;
+		char *dp;
 		u_long cnt;
 
 		dp = _kvm_uread(kd, p, uva, &cnt);
 		if (dp == 0) {
-			_kvm_err(kd, 0, "invalid address (%x)", uva);
+			_kvm_err(kd, 0, "invalid address (%lx)", uva);
 			return (0);
 		}
 		cc = MIN(cnt, len);

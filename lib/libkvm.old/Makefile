@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 1996/05/26 01:04:39 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.3 1999/12/01 09:58:16 deraadt Exp $
 #	$NetBSD: Makefile,v 1.4 1996/05/13 02:30:20 thorpej Exp $
 
 LIB=	kvm
@@ -24,3 +24,7 @@ MLINKS+=kvm_open.3 kvm_openfiles.3 kvm_open.3 kvm_close.3
 MLINKS+=kvm_read.3 kvm_write.3
 
 .include <bsd.lib.mk>
+
+.if (${UVM} == "yes")
+CFLAGS+=-DUVM
+.endif
