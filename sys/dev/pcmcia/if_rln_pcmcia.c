@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rln_pcmcia.c,v 1.5 1999/08/18 06:06:13 fgsch Exp $	*/
+/*	$OpenBSD: if_rln_pcmcia.c,v 1.6 1999/08/19 06:38:24 d Exp $	*/
 /*
  * David Leonard <d@openbsd.org>, 1999. Public domain.
  *
@@ -230,7 +230,7 @@ rln_pcmcia_attach(parent, self, aux)
 		    sc->sc_dev.dv_xname);
 
 #ifdef DIAGNOSTIC
-	if (rpp->manufacturer == 0)
+	if (rpp->manufacturer == PCMCIA_VENDOR_INVALID)
 		printf(" manf %04x prod %04x", pa->manufacturer, pa->product);
 #endif
 
