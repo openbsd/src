@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.h,v 1.28 2004/01/05 09:53:40 jmc Exp $	*/
+/*	$OpenBSD: pdc.h,v 1.29 2004/09/14 22:11:25 mickey Exp $	*/
 
 /*
  * Copyright (c) 1990 mt Xinu, Inc.  All rights reserved.
@@ -124,8 +124,8 @@
 #define	PDC_MODEL_DISPEC	5	/* disable product-specific instrs */
 #define	PDC_MODEL_CPUID		6	/* return CPU versions */
 #define	PDC_MODEL_CPBALITIES	7	/* return capabilites */
-#define	PDC_MODEL_GETBOOTSTOPTS	8	/* return boot test options */
-#define	PDC_MODEL_SETBOOTSTOPTS	9	/* set boot test options */
+#define	PDC_MODEL_GETBOOTOPTS	8	/* return boot test options */
+#define	PDC_MODEL_SETBOOTOPTS	9	/* set boot test options */
 
 #define	PDC_CACHE	5	/* return cache and TLB params */
 #define	PDC_CACHE_DFLT		0	/* return parameters */
@@ -201,7 +201,8 @@
 #define	PDC_INSTR_DFLT		0
 
 #define	PDC_PROC	16	/* stop currently executing processor */
-#define	PDC_PROC_DFLT		0
+#define	PDC_PROC_STOP		0
+#define	PDC_PROC_RENDEZVOUS	1
 
 #define	PDC_CONF	17	/* (de)configure a module */
 #define	PDC_CONF_DECONF		0	/* deconfigure module */
@@ -277,10 +278,15 @@ typedef int (*iodcio_t)(struct iomod *, int, ...);
  * Commonly used PDC calls and the structures they return.
  */
 
-struct pdc_pim {	/* PDC_PIM */
-	u_int	count;		/* actual (HPMC, LPMC) or total (SIZE) count */
-	u_int	archsize;	/* size of architected regions (see "pim.h") */
-	u_int	filler[30];
+/*
+ * Device path specifications used by PDC.
+ */
+struct device_path {
+	u_char	dp_flags;	/* see bit definitions below */
+	char	dp_bc[6];	/* Bus Converter routing info to a specific */
+				/* I/O adaptor (< 0 means none, > 63 resvd) */
+	u_char	dp_mod;		/* fixed field of specified module */
+	int	dp_layers[6];	/* device-specific info (ctlr #, unit # ...) */
 };
 
 struct pdc_model {	/* PDC_MODEL */
@@ -303,15 +309,22 @@ struct pdc_model {	/* PDC_MODEL */
 	u_int	filler2[22];
 };
 
-struct pdc_cpuid {	/* PDC_MODEL, PDC_CPUID */
+struct pdc_cpuid {	/* PDC_MODEL_CPUID */
 	u_int	reserved : 20;
 	u_int	version  :  7;	/* CPU version */
 	u_int	revision :  5;	/* CPU revision */
 	u_int	filler[31];
 };
 
+struct pdc_getbootopts {	/* PDC_MODEL_GETBOOTOPTS */
+	u_int	cur_test;	/* current enabled tests */
+	u_int	sup_test;	/* supported tests */
+	u_int	def_test;	/* default enabled tests */
+	u_int	filler[29];
+};
+
 struct cache_cf {	/* PDC_CACHE (for "struct pdc_cache") */
-	u_int	cc_resv0: 4,
+	u_int	cc_alias: 4,	/* virtual address aliasing boundary */
 		cc_block: 4,	/* used to determine most efficient stride */
 		cc_line	: 3,	/* max data written by store (16-byte mults) */
 		cc_resv1: 2,	/* (reserved) */
@@ -414,6 +427,24 @@ struct pdc_tod {	/* PDC_TOD, PDC_TOD_READ */
 	u_int	sec;		/* elapsed time since 00:00:00 GMT, 1/1/70 */
 	u_int	usec;		/* accurate to microseconds */
 	u_int	filler2[30];
+};
+
+struct pdc_itimer {	/* PDC_TOD_ITIMER */
+	u_int	calib0;		/* double giving itmr freq */
+	u_int	calib1;
+	u_int	tod_acc;	/* TOD accuracy in 1e-9 part */
+	u_int	cr_acc;		/* itmr accuracy in 1e-9 parts */
+	u_int	filler[28];
+};
+
+struct pdc_nvm {	/* PDC_NVM */
+	u_int	hv[9];		/* 0x00: HV dependent */
+	struct device_path bootpath;	/* 0x24: boot path */
+	u_int	isl_ver;	/* 0x44: ISL revision */
+	u_int	timestamp;	/* 0x48: timestamp */
+	u_int	lif_ue[12];	/* 0x4c: LIF utility entries */
+	u_int	eptr;		/* 0x7c: entry pointer */
+	u_int	os_panic[32];	/* 0x80: OS panic info */
 };
 
 struct pdc_instr {	/* PDC_INSTR */
@@ -539,17 +570,6 @@ struct pdc_lan_station_id {	/* PDC_LAN_STATION_ID */
 #define	PDC_OSTAT_WARN	0x5	/* battery dying, etc */
 #define	PDC_OSTAT_RUN	0x6	/* OS running */
 #define	PDC_OSTAT_ON	0x7	/* all on */
-
-/*
- * Device path specifications used by PDC.
- */
-struct device_path {
-	u_char	dp_flags;	/* see bit definitions below */
-	char	dp_bc[6];	/* Bus Converter routing info to a specific */
-				/* I/O adaptor (< 0 means none, > 63 resvd) */
-	u_char	dp_mod;		/* fixed field of specified module */
-	int	dp_layers[6];	/* device-specific info (ctlr #, unit # ...) */
-};
 
 /* dp_flags */
 #define	PZF_AUTOBOOT	0x80	/* These two are PDC flags for how to locate */
