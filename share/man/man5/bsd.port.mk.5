@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.37 2001/06/24 07:30:29 pvalchev Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.38 2001/07/03 12:11:49 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -630,7 +630,7 @@ Set to
 if platform does not support shared libraries.
 To be tested after including
 .Nm bsd.port.mk ,
-if neither PFRAG.SHARED nor CONFIGURE_SHARED are enough.
+if neither PFRAG.shared nor CONFIGURE_SHARED are enough.
 .It Ev ONLY_FOR_ARCHS
 List of architectures on which this port builds.
 Can hold both processor-specific information (e.g., m68k), and more
@@ -1311,7 +1311,7 @@ To avoid substitution, variables can be escaped as follows:
 Constructs such as the line
 .Li "%%SHARED%%"
 or
-.Li "%%!SHARED%%"
+.Li "!%%SHARED%%"
 in the packing-list template trigger the inclusion of the
 .Pa ${PKGDIR}/PFRAG.shared${SUBPACKAGE}
 or
@@ -1320,7 +1320,7 @@ or
 Similarly, if FLAVORS lists flav1, then the line
 .Li "%%flav1%%"
 (resp.
-.Li "%%!flav1%%" )
+.Li "!%%flav1%%" )
 will trigger the inclusion of
 .Pa ${PKGDIR}/PFRAG.flav1${SUBPACKAGE}
 (resp.
