@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fthread.c,v 1.1 1998/03/01 00:37:56 niklas Exp $	*/
+/*	$OpenBSD: kern_fthread.c,v 1.2 2001/05/06 01:23:37 art Exp $	*/
 /*	$NetBSD: kern_fthread.c,v 1.3 1998/02/07 16:23:35 chs Exp $	*/
 
 /* 
@@ -124,6 +124,7 @@ thread_sleep_msg(event, lock, ruptible, msg, timo)
 	splx(s);
 }
 
+#if !defined(UVM)
 /*
  * DEBUG stuff
  */
@@ -165,3 +166,4 @@ iprintf(pr, fmt, va_alist)
 #endif /* __powerpc__ */			/* XXX */
 	va_end(ap);
 }
+#endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_extern.h,v 1.18 2000/03/13 14:33:42 art Exp $	*/
+/*	$OpenBSD: vm_extern.h,v 1.19 2001/05/06 01:23:35 art Exp $	*/
 /*	$NetBSD: vm_extern.h,v 1.20 1996/04/23 12:25:23 christos Exp $	*/
 
 /*-
@@ -65,8 +65,8 @@ int		sstk __P((struct proc *, void *, int *));
 #endif
 
 void		assert_wait __P((void *, boolean_t));
-void		iprintf __P((int (*)(const char *, ...), const char *, ...));
 #if !defined(UVM)
+void		iprintf __P((int (*)(const char *, ...), const char *, ...));
 int		grow __P((struct proc *, vm_offset_t));
 int		kernacc __P((caddr_t, int, int));
 vm_offset_t	kmem_alloc __P((vm_map_t, vm_size_t));
