@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.35 2001/01/22 13:57:36 art Exp $
+#	$OpenBSD: RAMDISK,v 1.36 2001/01/23 20:50:36 art Exp $
 #	$NetBSD: RAMDISK,v 1.9 1996/12/03 17:25:33 cgd Exp $
 
 machine	alpha			# architecture, used by config; REQUIRED
@@ -58,12 +58,12 @@ pci*	at	ppb?
 #ahc*	at	pci? dev ? function ?		# AHA-28xx SCSI (NOT 64-BIT)
 de*	at	pci? dev ? function ?		# 21x4[012]-based Ethernet
 fxp*	at	pci? dev ? function ?		# EtherExpress 10/100B ethernet cards
-ne*	at	pci? dev ? function ?		# NE2000-compat ethernet cards
+#ne*	at	pci? dev ? function ?		# NE2000-compat ethernet cards
 #en*	at	pci? dev ? function ?		# ENI PCI ATM (untested)
 #ep*	at	pci? dev ? function ?		# 3COM 3c59x (untested)
 #xl*	at	pci? dev ? function ?		# 3COM 3c9xx (untested)
 #fpa*	at	pci? dev ? function ?		# DEC DEFPA FDDI cards
-le*	at	pci? dev ? function ?		# PCI LANCE Ethernet (untested)
+#le*	at	pci? dev ? function ?		# PCI LANCE Ethernet (untested)
 ncr*	at	pci? dev ? function ?		# NCR 53c8xx SCSI
 pceb*	at	pci? dev ? function ?		# Intel PCI-EISA brige
 vga*	at	pci? dev ? function ?		# PCI VGA graphics
@@ -96,21 +96,20 @@ com*	at	isa? port 0x3f8 irq 4		# standard serial ports
 com*	at	isa? port 0x2f8 irq 3
 #lpt*	at	isa? port 0x3bc irq 7		# standard parallel port
 vga*	at	isa?				# ISA (EISA: XXX) VGA
-we0	at 	isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC 80x3 ethernet series
-we1	at 	isa? port 0x300 iomem 0xcc000 irq 10	#
-ec0	at 	isa? port 0x250 iomem 0xd8000 irq 9	# 3C503 ethernet cards
-ne0	at 	isa? port 0x240 irq 9		# NE[12]000 ethernet cards
-ne1	at 	isa? port 0x300 irq 10		# NE[12]000 ethernet cards
-ne2	at 	isa? port 0x280 irq 9		# NE[12]000 ethernet cards
-#wss*	at	isa? port 0x530 irq 9 drq 0	# Windows Sound System
+#we0	at 	isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC 80x3 ethernet series
+#we1	at 	isa? port 0x300 iomem 0xcc000 irq 10	#
+#ec0	at 	isa? port 0x250 iomem 0xd8000 irq 9	# 3C503 ethernet cards
+#ne0	at 	isa? port 0x240 irq 9		# NE[12]000 ethernet cards
+#ne1	at 	isa? port 0x300 irq 10		# NE[12]000 ethernet cards
+#ne2	at 	isa? port 0x280 irq 9		# NE[12]000 ethernet cards
 #cy0	at	isa? iomem 0xd4000 irq 12	# ISA cyclom card
 
 # IDE
-#pciide* at pci ? dev ? function ? flags 0x0000
+pciide* at pci ? dev ? function ? flags 0x0000
 #wdc0	at isa? port 0x1f0 irq 14 flags 0x00
 #wdc1	at isa? port 0x170 irq 15 flags 0x00
 #wd*	at wdc? channel ? drive ? flags 0x0000
-#wd*	at pciide? channel ? drive ? flags 0x0000
+wd*	at pciide? channel ? drive ? flags 0x0000
 
 #atapiscsi* at wdc? channel ?
 #atapiscsi* at pciide? channel ?
@@ -124,7 +123,7 @@ scsibus* at	isp?
 # SCSI devices
 #cd*	at	scsibus? target ? lun ?		# SCSI CD-ROM drives
 sd*	at	scsibus? target ? lun ?		# SCSI disk drives
-st*	at	scsibus? target ? lun ?		# SCSI tape drives
+#st*	at	scsibus? target ? lun ?		# SCSI tape drives
 
 # Workstation Console attachments
 #wsdisplay*	at	cfb?
@@ -133,6 +132,6 @@ wsdisplay*	at	vga?
 wsdisplay*	at	tga?
 wskbd*          at      pckbd?
 
-pseudo-device	bpfilter	1
+#pseudo-device	bpfilter	1
 pseudo-device	loop
 pseudo-device	rd		1
