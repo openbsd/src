@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.72 1996/01/13 02:05:19 thorpej Exp $
+#	$NetBSD: files,v 1.74 1996/02/13 17:09:46 christos Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -121,7 +121,6 @@ file kern/sysv_msg.c			sysvmsg
 file kern/sysv_sem.c			sysvsem
 file kern/sysv_shm.c			sysvshm
 file kern/tty.c
-file kern/tty_compat.c
 file kern/tty_conf.c
 file kern/tty_pty.c			pty			needs-count
 file kern/tty_subr.c
@@ -281,6 +280,7 @@ file netns/ns_ip.c			ns
 file netns/ns_output.c			ns
 file netns/ns_pcb.c			ns
 file netns/ns_proto.c			ns
+file netns/ns_cksum.c			ns
 file netns/spp_debug.c			ns
 file netns/spp_usrreq.c			ns
 file nfs/krpc_subr.c			nfsclient
