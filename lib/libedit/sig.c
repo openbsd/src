@@ -1,4 +1,4 @@
-/*	$OpenBSD: sig.c,v 1.5 1997/06/29 23:40:52 millert Exp $	*/
+/*	$OpenBSD: sig.c,v 1.6 2001/12/06 04:26:00 deraadt Exp $	*/
 /*	$NetBSD: sig.c,v 1.3 1997/04/11 17:52:48 christos Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)sig.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$OpenBSD: sig.c,v 1.5 1997/06/29 23:40:52 millert Exp $";
+static char rcsid[] = "$OpenBSD: sig.c,v 1.6 2001/12/06 04:26:00 deraadt Exp $";
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -74,6 +74,7 @@ private void
 sig_handler(signo)
     int signo;
 {
+    int save_errno = errno;
     int i;
     sigset_t nset, oset;
 
@@ -83,18 +84,18 @@ sig_handler(signo)
 
     switch (signo) {
     case SIGCONT:
-	tty_rawmode(sel);
-	if (ed_redisplay(sel, 0) == CC_REFRESH)
-	    re_refresh(sel);
-	term__flush();
+	tty_rawmode(sel);				/* XXX signal race */
+	if (ed_redisplay(sel, 0) == CC_REFRESH)		/* XXX signal race */
+	    re_refresh(sel);				/* XXX signal race */
+	term__flush();					/* XXX signal race */
 	break;
 
     case SIGWINCH:
-	el_resize(sel);
+	el_resize(sel);					/* XXX signal race */
 	break;
 
     default:
-	tty_cookedmode(sel);
+	tty_cookedmode(sel);				/* XXX signal race */
 	break;
     }
 
@@ -105,6 +106,7 @@ sig_handler(signo)
     (void)signal(signo, sel->el_signal[i]);
     (void)sigprocmask(SIG_SETMASK, &oset, NULL);
     (void)kill(0, signo);
+    errno = save_errno;
 }
 
 
