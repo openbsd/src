@@ -1,4 +1,4 @@
-/*	$OpenBSD: elink3.c,v 1.23 1998/02/25 23:56:51 deraadt Exp $	*/
+/*	$OpenBSD: elink3.c,v 1.24 1998/04/04 08:09:23 deraadt Exp $	*/
 /*	$NetBSD: elink3.c,v 1.32 1997/05/14 00:22:00 thorpej Exp $	*/
 
 /*
@@ -1478,7 +1478,8 @@ epbusyeeprom(sc)
 		    sc->sc_dev.dv_xname);
 		return (1);
 	}
-	if (sc->bustype != EP_BUS_PCMCIA && (j & EEPROM_TST_MODE)) {
+	if (sc->bustype != EP_BUS_PCMCIA && sc->bustype != EP_BUS_PCI &&
+	    (j & EEPROM_TST_MODE)) {
 		printf("\n%s: erase pencil mark, or disable PnP mode!\n",
 		    sc->sc_dev.dv_xname);
 		return (1);
