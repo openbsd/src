@@ -1,4 +1,4 @@
-/*	$OpenBSD: fmt.c,v 1.6 1997/02/08 10:23:39 deraadt Exp $	*/
+/*	$OpenBSD: fmt.c,v 1.7 1997/09/23 11:54:00 deraadt Exp $	*/
 /*	$NetBSD: fmt.c,v 1.4 1995/09/01 01:29:41 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)fmt.c	8.1 (Berkeley) 7/20/93";
 #else
-static char rcsid[] = "$OpenBSD: fmt.c,v 1.6 1997/02/08 10:23:39 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: fmt.c,v 1.7 1997/09/23 11:54:00 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -175,6 +175,10 @@ fmt(fi)
 	register char *cp, *cp2, cc;
 	register int c, col;
 #define CHUNKSIZE 1024
+
+	canonb = malloc(CHUNKSIZE);
+	if (canonb == 0)
+		errx(1, "Ran out of memory");
 
 	if (center) {
 		register int len;
