@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.78 2000/07/03 19:30:22 mickey Exp $
+#	$OpenBSD: files.pci,v 1.79 2000/07/20 21:45:19 deraadt Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -89,6 +89,16 @@ file	dev/pci/ich.c			ich
 device	clcs: audio, auconv, mulaw, ac97
 attach	clcs at pci
 file	dev/pci/cs4280.c		clcs
+
+# Forte Media FM801
+device	fms: audio, auconv, mulaw, ac97, midibus
+attach	fms at pci
+file	dev/pci/fms.c			fms
+
+# VIA VT82C686A AC'97 Audio
+device	auvia: audio, auconv, mulaw, ac97
+attach	auvia at pci
+file	dev/pci/auvia.c			auvia
 
 # ICP Vortex GDT PCI RAID controllers
 # device declaration in sys/conf/files
