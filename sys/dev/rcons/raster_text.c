@@ -1,4 +1,4 @@
-/*	$NetBSD: raster_text.c,v 1.2 1995/10/04 23:57:22 pk Exp $ */
+/*	$NetBSD: raster_text.c,v 1.3 1995/11/24 23:50:56 cgd Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -45,6 +45,7 @@
 
 #ifdef _KERNEL
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <dev/rcons/raster.h>
 #ifdef COLORFONT_CACHE
 #include <sys/malloc.h>
@@ -52,13 +53,13 @@
 #endif
 #else
 #include <sys/types.h>
-#include <dev/rcons/raster.h>
+#include <string.h>
+#include "raster.h"
 #ifdef COLORFONT_CACHE
 #include <malloc.h>
 #define NEW(size) malloc(size)
 #endif
 #endif
-
 
 /* Draws text.  Returns 0 on success, -1 on failure. */
 int
@@ -234,7 +235,7 @@ raster_alloc( width, height, depth )
 	return (struct raster*) 0;
     linelongs = ( ( width * depth + 31 ) >> 5 );
     r = (struct raster*)
-	NEW( sizeof(struct raster) + height * linelongs * sizeof(u_long));
+	NEW( sizeof(struct raster) + height * linelongs * sizeof(u_int32_t));
     if ( r == (struct raster*) 0 )
 	return (struct raster*) 0;
 
@@ -242,7 +243,7 @@ raster_alloc( width, height, depth )
     r->height = height;
     r->depth = depth;
     r->linelongs = linelongs;
-    r->pixels = (u_long*) (r + 1);
+    r->pixels = (u_int32_t*) (r + 1);
     r->data = (caddr_t) 0;
     return r;
     }

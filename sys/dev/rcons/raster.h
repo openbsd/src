@@ -1,4 +1,4 @@
-/*	$NetBSD: raster.h,v 1.2 1995/10/04 23:57:19 pk Exp $ */
+/*	$NetBSD: raster.h,v 1.3 1995/11/24 23:50:51 cgd Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -87,7 +87,7 @@ struct raster {
     int width, height;	/* size in pixels */
     int depth;		/* bits per pixel - 1 or 8 */
     int linelongs;	/* longs from one line to the next - for padding */
-    u_long* pixels;	/* pointer to the actual bits */
+    u_int32_t *pixels;	/* pointer to the actual bits */
     caddr_t data;	/* special pointer for frame buffers and subregions */
     };
 

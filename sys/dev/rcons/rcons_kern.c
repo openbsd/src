@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons_kern.c,v 1.2 1995/10/04 23:57:25 pk Exp $ */
+/*	$NetBSD: rcons_kern.c,v 1.3 1995/11/29 22:09:23 pk Exp $ */
 
 /*
  * Copyright (c) 1991, 1993
@@ -185,7 +185,7 @@ rcons_init(rc)
 		return;
 	}
 	rp->linelongs = rc->rc_linebytes >> 2;
-	rp->pixels = (u_long *)rc->rc_pixels;
+	rp->pixels = (u_int32_t *)rc->rc_pixels;
 
 	rc->rc_ras_blank = RAS_CLEAR;
 
