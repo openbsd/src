@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.68 1997/09/10 07:19:12 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.69 1997/09/11 22:38:46 downsj Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -50,7 +50,6 @@ distribution-etc-root-var distribution distrib-dirs release snapshot:
 .else
 distribution-etc-root-var: distrib-dirs
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 644 ${BIN1} ${DESTDIR}/etc
-	/usr/sbin/sendmail -bi -O AliasFile=${DESTDIR}/etc/aliases
 	cat etc.${MACHINE}/ttys ttys.pty > ${DESTDIR}/etc/ttys && \
 	    chown ${BINOWN} ${DESTDIR}/etc/ttys && \
 	    chgrp ${BINGRP} ${DESTDIR}/etc/ttys && \
@@ -170,6 +169,7 @@ distribution-etc-root-var: distrib-dirs
 	(cd ../usr.sbin/sendmail/cf/cf; ${MAKE} distribution)
 	(cd ../usr.sbin/ypserv/ypinit; ${MAKE} distribution)
 	(cd ../usr.bin/mail; ${MAKE} distribution)
+	/usr/sbin/sendmail -C${DESTDIR}/etc/sendmail.cf -bi -O AliasFile=${DESTDIR}/etc/aliases
 
 distribution: distribution-etc-root-var
 	(cd ..; ${MAKE} install)
