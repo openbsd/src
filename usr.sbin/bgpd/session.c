@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.41 2003/12/25 13:17:27 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.42 2003/12/25 13:39:00 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -47,6 +47,11 @@
 #define PFD_PIPE_ROUTE	2
 #define PFD_PEERS_START	3
 
+enum blockmodes {
+	BM_NORMAL,
+	BM_NONBLOCK
+};
+
 void	session_sighdlr(int);
 int	setup_listener(void);
 void	init_conf(struct bgpd_config *);
@@ -59,7 +64,7 @@ void	session_close_connection(struct peer *);
 void	session_terminate(void);
 void	change_state(struct peer *, enum session_state, enum session_events);
 int	session_setup_socket(struct peer *);
-void	session_socket_blockmode(int, int);
+void	session_socket_blockmode(int, enum blockmodes);
 void	session_accept(int);
 int	session_connect(struct peer *);
 void	session_open(struct peer *);
@@ -112,6 +117,9 @@ setup_listener(void)
 		close(fd);
 		return (-1);
 	}
+
+	session_socket_blockmode(fd, BM_NONBLOCK);
+
 	if (listen(fd, MAX_BACKLOG)) {
 		close(fd);
 		return (-1);
@@ -689,7 +697,7 @@ session_connect(struct peer *peer)
 		return (-1);
 	}
 
-	session_socket_blockmode(peer->sock, 1);
+	session_socket_blockmode(peer->sock, BM_NONBLOCK);
 
 	if ((n = connect(peer->sock, (struct sockaddr *)&peer->conf.remote_addr,
 	    sizeof(peer->conf.remote_addr))) == -1)
@@ -737,14 +745,14 @@ session_setup_socket(struct peer *p)
 }
 
 void
-session_socket_blockmode(int fd, int block)
+session_socket_blockmode(int fd, enum blockmodes bm)
 {
 	int	flags;
 
 	if ((flags = fcntl(fd, F_GETFL, 0)) == -1)
 		fatal("fnctl F_GETFL", errno);
 
-	if (block)
+	if (bm == BM_NONBLOCK)
 		flags |= O_NONBLOCK;
 	else
 		flags &= ~O_NONBLOCK;
@@ -761,7 +769,7 @@ session_open(struct peer *peer)
 	u_int16_t	 len;
 	int		 errs = 0, n;
 
-	session_socket_blockmode(peer->sock, 0);
+	session_socket_blockmode(peer->sock, BM_NORMAL);
 
 	len = MSGSIZE_OPEN_MIN;
 
