@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.68 2004/11/07 11:39:10 espie Exp $
+# $OpenBSD: pkg_delete,v 1.69 2004/11/09 11:11:01 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -22,7 +22,6 @@ use OpenBSD::Getopt;
 use OpenBSD::PackingList;
 use OpenBSD::PackingOld;
 use OpenBSD::RequiredBy;
-use OpenBSD::Logger;
 use OpenBSD::Error;
 use OpenBSD::ProgressMeter;
 use OpenBSD::Delete;
@@ -119,8 +118,6 @@ for my $pkgname (@realnames) {
 
 push(@todo, @realnames);
 
-OpenBSD::Logger::log_as("pkg_delete");
-
 while (my $pkgname = pop @todo) {
 	my $deps = OpenBSD::RequiredBy->new($pkgname)->list();
 	if (@$deps > 0) {
@@ -152,7 +149,6 @@ $state->{destdir} = $opt_B;
 if ($opt_B eq '') {
     $state->{destdirname} = '';
 } else {
-    OpenBSD::Logger::annotate("PKG_DESTDIR=\"$opt_B\"; export PKG_DESTDIR\n");
     $state->{destdirname} = '${PKG_DESTDIR}';
 }
 
@@ -199,10 +195,6 @@ if (defined $state->{dirs_to_rm} or defined $state->{users_to_rm} or
 
 OpenBSD::PackingElement::Fontdir::finish_fontdirs();
 
-my $logname = OpenBSD::Logger::logname();
-if (defined $logname) {
-	print "Problems logged as $logname\n";
-}
 if ($state->{beverbose}) {
 	OpenBSD::Vstat::tally();
 }

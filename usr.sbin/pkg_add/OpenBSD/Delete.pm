@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.5 2004/11/09 10:49:25 espie Exp $
+# $OpenBSD: Delete.pm,v 1.6 2004/11/09 11:11:01 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -138,20 +138,9 @@ sub delete_plist
 }
 
 package OpenBSD::PackingElement;
-use OpenBSD::Logger;
 
 sub delete
 {
-}
-
-sub log_pkgname
-{
-	my ($self, $state) = @_;
-	if (defined $state->{pkgname_tolog}) {
-		OpenBSD::Logger::log
-		    "# package ", $state->{pkgname_tolog}, "\n";
-	$state->{pkgname_tolog} = undef;
-	}
 }
 
 package OpenBSD::PackingElement::NewUser;
@@ -243,16 +232,14 @@ sub delete
 			if (!defined $self->{md5}) {
 				print "Problem: $name does not have an md5 checksum\n";
 				print "NOT deleting: $realname\n";
-				$self->log_pkgname($state);
-				OpenBSD::Logger::log "rm $state->{destdirname}$name\n";
+				$state->print("Couldn't delete $realname (no md5)\n");
 				return;
 			}
 			my $md5 = OpenBSD::md5::fromfile($realname);
 			if ($md5 ne $self->{md5}) {
 				print "Problem: md5 doesn't match for $name\n";
 				print "NOT deleting: $realname\n";
-				$self->log_pkgname($state);
-				OpenBSD::Logger::log "rm $state->{destdirname}$name #MD5\n";
+				$state->print("Couldn't delete $realname (bad md5)\n");
 				return;
 			}
 		}
@@ -263,8 +250,7 @@ sub delete
 	return if $state->{not};
 	if (!unlink $realname) {
 		print "Problem deleting $realname\n";
-		$self->log_pkgname($state);
-		OpenBSD::Logger::log "rm $state->{destdirname}$name\n";
+		$state->print("deleting $realname failed: $!\n");
 	}
 }
 
@@ -293,8 +279,7 @@ sub delete
 	if (!defined $orig->{md5}) {
 		print "Problem: file $name does not have an md5 checksum\n";
 		print "NOT deleting: $realname\n";
-		$self->log_pkgname($state);
-		OpenBSD::Logger::log "rm $state->{destdirname}$name\n";
+		$state->print("Couldn't delete $realname (no md5)\n");
 		return;
 	}
 
@@ -319,8 +304,7 @@ sub delete
 	print "deleting $realname\n" if $state->{verbose};
 	if (!unlink $realname) {
 		print "Problem deleting $realname\n";
-		$self->log_pkgname($state);
-		OpenBSD::Logger::log "rm $state->{destdirname}$name\n";
+		$state->print("deleting $realname failed: $!\n");
 	}
 }
 		
