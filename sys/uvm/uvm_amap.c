@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_amap.c,v 1.19 2002/01/02 22:23:25 miod Exp $	*/
+/*	$OpenBSD: uvm_amap.c,v 1.20 2002/01/15 20:09:56 art Exp $	*/
 /*	$NetBSD: uvm_amap.c,v 1.27 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -987,7 +987,7 @@ amap_wiperange(amap, slotoff, slots)
 	struct vm_amap *amap;
 	int slotoff, slots;
 {
-	int byanon, lcv, stop, curslot, ptr;
+	int byanon, lcv, stop, curslot, ptr, slotend;
 	struct vm_anon *anon;
 
 	/*
@@ -1003,26 +1003,23 @@ amap_wiperange(amap, slotoff, slots)
 		byanon = FALSE;
 		lcv = 0;
 		stop = amap->am_nused;
+		slotend = slotoff + slots;
 	}
 
-	/*
-	 * ok, now do it!
-	 */
-
-	for (; lcv < stop; lcv++) {
+	while (lcv < stop) {
 		int refs;
 
-		/*
-		 * verify the anon is ok.
-		 */
-		if (byanon) {
-			if (amap->am_anon[lcv] == NULL)
+  		if (byanon) {
+			curslot = lcv++;	/* lcv advances here */
+			if (amap->am_anon[curslot] == NULL)
 				continue;
-			curslot = lcv;
 		} else {
 			curslot = amap->am_slots[lcv];
-			if (curslot < slotoff || curslot >= stop)
+			if (curslot < slotoff || curslot >= slotend) {
+				lcv++;		/* lcv advances here */
 				continue;
+			}
+			stop--;	/* drop stop, since anon will be removed */
 		}
 		anon = amap->am_anon[curslot];
 
