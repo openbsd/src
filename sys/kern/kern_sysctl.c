@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.46 2001/06/03 03:28:41 angelos Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.47 2001/06/03 03:53:57 angelos Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -78,8 +78,9 @@
 
 extern struct forkstat forkstat;
 extern struct nchstats nchstats;
-extern int nselcoll;
+extern int nselcoll, fscale;
 extern struct disklist_head disklist;
+extern fixpt_t ccpu;
 
 int sysctl_diskinit(int, struct proc *);
 
@@ -399,6 +400,10 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	case KERN_TTY:
 		return (sysctl_tty(name + 1, namelen - 1, oldp, oldlenp,
 		    newp, newlen));
+	case KERN_FSCALE:
+		return (sysctl_rdint(oldp, oldlenp, newp, fscale));
+	case KERN_CCPU:
+		return (sysctl_rdint(oldp, oldlenp, newp, ccpu));
 	default:
 		return (EOPNOTSUPP);
 	}
