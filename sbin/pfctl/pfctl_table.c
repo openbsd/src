@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_table.c,v 1.25 2003/01/22 01:15:32 cedric Exp $ */
+/*	$OpenBSD: pfctl_table.c,v 1.26 2003/01/23 16:10:29 cedric Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -513,21 +513,21 @@ print_addrx(struct pfr_addr *ad, struct pfr_addr *rad, int dns)
 	if (rad != NULL && fback == PFR_FB_NONE)
 		printf("\t nomatch");
 	if (dns && ad->pfra_net == hostnet) {
-		char host[NI_MAXHOST] = "?";
+		char host[NI_MAXHOST];
 		union sockaddr_union sa;
-		int rv;
 
+		strlcpy(host, "?", sizeof(host));
 		bzero(&sa, sizeof(sa));
-		sa.sa.sa_len = (ad->pfra_af == AF_INET) ?
-		    sizeof(sa.sin) : sizeof(sa.sin6);
 		sa.sa.sa_family = ad->pfra_af;
-		if (ad->pfra_af == AF_INET)
+		if (sa.sa.sa_family == AF_INET) {
+			sa.sa.sa_len = sizeof(sa.sin);
 			sa.sin.sin_addr = ad->pfra_ip4addr;
-		else
+		} else {
+			sa.sa.sa_len = sizeof(sa.sin6);
 			sa.sin6.sin6_addr = ad->pfra_ip6addr;
-		rv = getnameinfo(&sa.sa, sa.sa.sa_len, host, sizeof(host),
-		    NULL, 0, NI_NAMEREQD);
-		if (!rv)
+		}
+		if (getnameinfo(&sa.sa, sa.sa.sa_len, host, sizeof(host),
+		    NULL, 0, NI_NAMEREQD) == 0)
 			printf("\t(%s)", host);
 	}
 	printf("\n");
