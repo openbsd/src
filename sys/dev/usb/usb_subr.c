@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.14 2000/11/08 18:10:39 aaron Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.15 2001/01/27 04:02:10 deraadt Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.72 2000/04/14 14:13:56 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -100,13 +100,16 @@ typedef u_int16_t usb_product_id_t;
 /*
  * Descriptions of of known vendors and devices ("products").
  */
-struct usb_knowndev {
+struct usb_known_vendor {
+	usb_vendor_id_t		vendor;
+	char			*vendorname;
+};
+
+struct usb_known_product {
 	usb_vendor_id_t		vendor;
 	usb_product_id_t	product;
-	int			flags;
-	char			*vendorname, *productname;
+	char			*productname;
 };
-#define	USB_KNOWNDEV_NOPROD	0x01		/* match on vendor only */
 
 #include <dev/usb/usbdevs_data.h>
 #endif /* USBVERBOSE */
@@ -215,7 +218,8 @@ usbd_devinfo_vp(usbd_device_handle dev, char *v, char *p)
 	usb_device_descriptor_t *udd = &dev->ddesc;
 	char *vendor = 0, *product = 0;
 #ifdef USBVERBOSE
-	struct usb_knowndev *kdp;
+	struct usb_known_vendor *ukv;
+	struct usb_known_product *ukp;
 #endif
 
 	if (dev == NULL) {
@@ -227,20 +231,24 @@ usbd_devinfo_vp(usbd_device_handle dev, char *v, char *p)
 	product = usbd_get_string(dev, udd->iProduct, p);
 #ifdef USBVERBOSE
 	if (vendor == NULL || product == NULL) {
-		for(kdp = usb_knowndevs;
-		    kdp->vendorname != NULL;
-		    kdp++) {
-			if (kdp->vendor == UGETW(udd->idVendor) && 
-			    (kdp->product == UGETW(udd->idProduct) ||
-			     (kdp->flags & USB_KNOWNDEV_NOPROD) != 0))
+		for(ukv = usb_known_vendors;
+		    ukv->vendorname != NULL;
+		    ukv++) {
+			if (ukv->vendor == UGETW(udd->idVendor)) {
+				vendor = ukv->vendorname;
 				break;
+			}
 		}
-		if (kdp->vendorname != NULL) {
-			if (!vendor)
-			    vendor = kdp->vendorname;
-			if (!product)
-			    product = (kdp->flags & USB_KNOWNDEV_NOPROD) == 0 ?
-				kdp->productname : NULL;
+		if (vendor != NULL) {
+			for(ukp = usb_known_products;
+			    ukp->productname != NULL;
+			    ukp++) {
+				if (ukp->vendor == UGETW(udd->idVendor) &&
+				    (ukp->product == UGETW(udd->idProduct))) {
+					product = ukp->productname;
+					break;
+				}
+			}
 		}
 	}
 #endif
