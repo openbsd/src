@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: nlist.c,v 1.48 2004/05/18 02:05:52 jfb Exp $";
+static char rcsid[] = "$OpenBSD: nlist.c,v 1.49 2004/09/15 19:00:43 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -336,6 +336,7 @@ __elf_fdnlist(int fd, struct nlist *list)
 		usemalloc = 1;
 		if ((shdr = malloc(shdr_size)) == NULL)
 			return (-1);
+
 		if (pread(fd, shdr, shdr_size, ehdr.e_shoff) != shdr_size) {
 			free(shdr);
 			return (-1);
