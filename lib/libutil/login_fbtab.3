@@ -1,10 +1,10 @@
 .Dd November 8, 1999
-.Dt login_fbtab 3
+.Dt LOGIN_FBTAB 3
 .Os
 .Sh NAME
 .Nm login_fbtab
 .Nd implement device security based on
-.Pa /etc/fstab
+.Pa /etc/fbtab
 .Sh SYNOPSIS
 .Fd #include <util.h>
 .Ft void
@@ -30,13 +30,13 @@ daemon with the severity of
 .El
 .Sh SEE ALSO
 .Xr fbtab 5
-.Sh BUGS
-This module uses
-.Xr strtok 3 ,
-which may cause conflicts with other uses of that same routine.
 .Sh AUTHOR
-.Bd -unfilled -offset indent
+.Bd -unfilled
 Wietse Venema (wietse@wzv.win.tue.nl)
 Eindhoven University of Technology
 The Netherlands
 .Ed
+.Sh BUGS
+This module uses
+.Xr strtok 3 ,
+which may cause conflicts with other uses of that same routine.
