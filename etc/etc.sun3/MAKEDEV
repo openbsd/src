@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.29 2000/05/19 23:30:37 miod Exp $
+#	$OpenBSD: MAKEDEV,v 1.30 2000/05/22 21:04:31 miod Exp $
 #	$NetBSD: MAKEDEV,v 1.8 1996/03/03 16:54:17 thorpej Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -105,8 +105,8 @@ std)
 	mk zero		c 3 12
 	mk drum		c 7 0 640 kmem
 
-	mk ttya		c 12 0 tty
-	mk ttyb		c 12 1 tty
+	mk ttya		c 12 0 666 tty
+	mk ttyb		c 12 1 666 tty
 	mk mouse	c 13 0
 	mk klog		c 16 0 600
 	mk fb		c 22 0
