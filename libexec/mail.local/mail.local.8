@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)mail.local.8	6.8 (Berkeley) 4/27/91
-.\"	$Id: mail.local.8,v 1.18 2000/03/29 01:28:56 deraadt Exp $
+.\"	$Id: mail.local.8,v 1.19 2000/08/16 17:14:08 brad Exp $
 .\"
 .Dd April 27, 1991
 .Dt MAIL.LOCAL 8
@@ -158,7 +158,7 @@ mailer flag for the
 mailer.  To do this, locate the line beginning with
 .Dq Mlocal
 in
-.Pa /etc/sendmail.cf
+.Pa /etc/mail/sendmail.cf
 and remove the
 .Dq m
 from the flags section, denoted by
@@ -169,7 +169,7 @@ the line:
 to your
 .Dq \.mc
 file (this is the source file that is used to generate
-.Pa /etc/sendmail.cf ) .
+.Pa /etc/mail/sendmail.cf ) .
 .Sh SEE ALSO
 .Xr biff 1 ,
 .Xr mail 1 ,
