@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 1997/04/27 20:56:08 millert Exp $
+#	$OpenBSD: Makefile,v 1.6 2002/02/16 01:49:38 deraadt Exp $
 #	$NetBSD: Makefile,v 1.15 1995/09/07 07:17:53 jtc Exp $
 
 LIB=	compat
@@ -15,14 +15,14 @@ NOPIC=	nopic
 	${.CURDIR}/regexp
 
 # compat 4.1 sources
-# missing: getpw.c tell.c vlimit.c vtimes.c
+# missing: tell.c vlimit.c vtimes.c
 SRCS=	gtty.c ftime.c stty.c
 
 .if (${MACHINE} == "vax")
 # missing: (for vax) reset.s
 .endif
 
-MAN+=	ftime.3 getpw.3 stty.3 vlimit.3 vtimes.3
+MAN+=	ftime.3 stty.3 vlimit.3 vtimes.3
 
 MLINKS+=stty.3 gtty.3
 
