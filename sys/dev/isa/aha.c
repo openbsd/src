@@ -1,5 +1,5 @@
-/*	$OpenBSD: aha.c,v 1.17 1996/05/07 07:51:27 deraadt Exp $	*/
-/*	$NetBSD: aha.c,v 1.9 1996/04/29 20:28:40 christos Exp $	*/
+/*	$OpenBSD: aha.c,v 1.18 1996/05/10 12:35:01 deraadt Exp $	*/
+/*	$NetBSD: aha.c,v 1.10 1996/05/05 00:40:01 mycroft Exp $	*/
 
 #define AHADIAG
 #define integrate
@@ -1046,7 +1046,7 @@ aha_init(sc)
 	 */
 	for (i = 0; i < AHA_MBX_SIZE; i++) {
 		wmbx->mbo[i].cmd = AHA_MBO_FREE;
-		wmbx->mbi[i].stat = AHA_MBO_FREE;
+		wmbx->mbi[i].stat = AHA_MBI_FREE;
 	}
 	wmbx->cmbo = wmbx->tmbo = &wmbx->mbo[0];
 	wmbx->tmbi = &wmbx->mbi[0];
