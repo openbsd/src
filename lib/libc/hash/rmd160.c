@@ -32,7 +32,7 @@
 #include <rmd160.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: rmd160.c,v 1.12 2002/12/23 04:33:31 millert Exp $";
+static char rcsid[] = "$OpenBSD: rmd160.c,v 1.13 2003/12/14 11:22:35 markus Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #define PUT_64BIT_LE(cp, value) do {                                    \
@@ -167,7 +167,11 @@ RMD160Transform(u_int32_t state[5], const u_char block[64])
 	int i;
 
 	for (i = 0; i < 16; i++)
-		x[i] = swap32(*(u_int32_t*)(block+i*4));
+		x[i] = (u_int32_t)(
+		    (u_int32_t)(block[i*4 + 0]) |
+		    (u_int32_t)(block[i*4 + 1]) <<  8 |
+		    (u_int32_t)(block[i*4 + 2]) << 16 |
+		    (u_int32_t)(block[i*4 + 3]) << 24);
 #endif
 
 	a = state[0];

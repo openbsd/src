@@ -1,4 +1,4 @@
-/*	$OpenBSD: rmd160.c,v 1.3 2001/09/26 21:40:13 markus Exp $	*/
+/*	$OpenBSD: rmd160.c,v 1.4 2003/12/14 11:22:35 markus Exp $	*/
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  *
@@ -164,7 +164,11 @@ RMD160Transform(u_int32_t state[5], const u_char block[64])
 	int i;
 
 	for (i = 0; i < 16; i++)
-		x[i] = swap32(*(u_int32_t*)(block+i*4));
+		x[i] = (u_int32_t)(
+		    (u_int32_t)(block[i*4 + 0]) |
+		    (u_int32_t)(block[i*4 + 1]) <<  8 |
+		    (u_int32_t)(block[i*4 + 2]) << 16 |
+		    (u_int32_t)(block[i*4 + 3]) << 24);
 #endif
 
 	a = state[0];
