@@ -1,4 +1,4 @@
-/*	$OpenBSD: local_passwd.c,v 1.29 2003/06/03 02:56:14 millert Exp $	*/
+/*	$OpenBSD: local_passwd.c,v 1.30 2003/06/20 16:53:27 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -31,7 +31,7 @@
 
 #ifndef lint
 /*static const char sccsid[] = "from: @(#)local_passwd.c	5.5 (Berkeley) 5/6/91";*/
-static const char rcsid[] = "$OpenBSD: local_passwd.c,v 1.29 2003/06/03 02:56:14 millert Exp $";
+static const char rcsid[] = "$OpenBSD: local_passwd.c,v 1.30 2003/06/20 16:53:27 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -93,7 +93,8 @@ local_passwd(char *uname, int authenticated)
 	pw->pw_passwd = getnewpasswd(pw, lc, authenticated);
 
 	/* Reset password change time based on login.conf. */
-	period = login_getcaptime(lc, "passwordtime", 0, 0);
+	period = (time_t)login_getcaptime(lc, "passwordtime",
+	    (quad_t)0, (quad_t)0);
 	if (period > 0) {
 		pw->pw_change = time(NULL) + period;
 	} else {
