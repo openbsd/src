@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.42 1997/08/19 21:55:14 niklas Exp $
+#	$OpenBSD: rc,v 1.43 1997/08/23 15:01:24 mickey Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -93,7 +93,7 @@ if [ -f /etc/ifaliases ]; then
 fi
 
 if [ X"${ipfilter}" = X"YES" -a X"${ipmon_flags}" != X"NO" ]; then
-	ipmon ${ipmon_flags}
+	echo 'starting ipmon';		ipmon ${ipmon_flags}
 fi
 
 if [ X"${rfc1323}" = X"NO" ]; then
