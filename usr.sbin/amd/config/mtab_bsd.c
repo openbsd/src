@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtab_bsd.c,v 1.2 1996/03/25 15:54:52 niklas Exp $	*/
+/*	$OpenBSD: mtab_bsd.c,v 1.3 1996/10/27 23:22:16 millert Exp $	*/
 
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -52,7 +52,7 @@ struct statfs *mp;
 
 	new_mp->mnt_fsname = strdup(mp->f_mntfromname);
 	new_mp->mnt_dir = strdup(mp->f_mntonname);
-#ifndef __NetBSD__
+#if !defined(__NetBSD__) && !defined(__OpenBSD__)
 	switch (mp->f_type) {
 	case MOUNT_UFS:  ty = MTAB_TYPE_UFS; break;
 	case MOUNT_NFS:  ty = MTAB_TYPE_NFS; break;
