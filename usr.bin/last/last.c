@@ -1,4 +1,4 @@
-/*	$OpenBSD: last.c,v 1.23 2003/04/14 02:04:58 deraadt Exp $	*/
+/*	$OpenBSD: last.c,v 1.24 2003/04/25 07:13:55 tedu Exp $	*/
 /*	$NetBSD: last.c,v 1.6 1994/12/24 16:49:02 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)last.c	8.2 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: last.c,v 1.23 2003/04/14 02:04:58 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: last.c,v 1.24 2003/04/25 07:13:55 tedu Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -633,7 +633,7 @@ dateconv(arg)
 	timet = mktime(t);
 	if (timet == -1)
 terr:	   errx(1,
-	"out of range or illegal time specification: [[[CC]YY[MMDD]hhmm[.SS]");
+	"out of range or illegal time specification: [[[CC]YY]MMDD]hhmm[.SS]");
 	return (timet);
 }
 
