@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.229 2002/06/10 21:09:51 krw Exp $
+#	$OpenBSD: install.sub,v 1.230 2002/06/10 22:38:12 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1011,9 +1011,6 @@ get_get_files_list () {
 # Install the list of files in the global _get_files from the source
 # in $1, aka $2. For mounted file system installs $1==file:$2. For URL
 # installs $1 == $_url_base and $2 == $1 w/o passwords, etc.
-#
-# Return 0 if install was attempted, 1 if user aborted before install
-# was tried.
 install_get_files_list () {
 	local _f _failed_files _src=$1 _public_src=$2
 
@@ -1021,7 +1018,7 @@ install_get_files_list () {
 	case $resp in
 	y*|Y*)	;;
 	*)	_setsdone=$_osetsdone
-		return 1
+		return
 		;;
 	esac
 
@@ -1258,10 +1255,6 @@ network connection.
 __EOT
 
 	install_get_files_list "$_url_base" "`eval echo \$_${_url_type}_server_dir`"
-	if [ $? -eq 0 ] ; then
-		# Stash the fact that we configured and downloaded via this url method
-		eval _installed_via_${_url_type}=1
-	fi
 }
 
 # $1 - directory containing installation sets
