@@ -1,4 +1,4 @@
-/*	$OpenBSD: lprm.c,v 1.5 1997/01/17 16:12:47 millert Exp $	*/
+/*	$OpenBSD: lprm.c,v 1.6 2001/02/15 05:20:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)lprm.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: lprm.c,v 1.5 1997/01/17 16:12:47 millert Exp $";
+static char rcsid[] = "$OpenBSD: lprm.c,v 1.6 2001/02/15 05:20:35 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -82,7 +82,7 @@ char	*user[MAXUSERS];	/* users to process */
 int	 users;			/* # of users in user array */
 uid_t	 uid, euid;		/* real and effective user id's */
 
-static char	luser[16];	/* buffer for person */
+static char	luser[MAXLOGNAME];	/* buffer for person */
 
 void usage __P((void));
 
