@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.18 2000/08/02 02:21:13 mickey Exp $	*/
+/*	$OpenBSD: pchb.c,v 1.19 2000/09/15 02:00:33 mickey Exp $	*/
 /*	$NetBSD: pchb.c,v 1.6 1997/06/06 23:29:16 thorpej Exp $	*/
 
 /*
@@ -275,6 +275,7 @@ pchbattach(parent, self, aux)
 				printf(": disabled CPU-PCI write posting");
 			}
 			break;
+		case PCI_PRODUCT_INTEL_82810_MCH:
 		case PCI_PRODUCT_INTEL_82810E_MCH:
 		case PCI_PRODUCT_INTEL_82840_HB:
 			sc->bt = pa->pa_memt;
