@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.60 2003/04/13 20:16:06 henning Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.61 2003/04/13 20:55:50 henning Exp $	*/
 
 /*
  * Copyright (C) 2002
@@ -86,6 +86,7 @@ u_int32_t	 getifspeed(char *);
 u_long		 getifmtu(char *);
 int		 eval_queue_opts(struct pf_altq *, struct node_queue_opt *,
 		     u_int32_t);
+u_int32_t	 eval_bwspec(struct node_queue_bw *, u_int32_t);
 
 static u_int32_t	 max_qid = 1;
 
@@ -247,11 +248,8 @@ eval_pfaltq(struct pfctl *pf, struct pf_altq *pa, struct node_queue_bw *bw,
 			    "for %s, specify an absolute bandwidth\n",
 			    pa->ifname);
 			errors++;
-		} else
-			if (bw->bw_percent > 0)
-				pa->ifbandwidth = rate / 100 * bw->bw_percent;
-			else
-				pa->ifbandwidth = rate;
+		} else if ((pa->ifbandwidth = eval_bwspec(bw, rate)) == 0)
+			pa->ifbandwidth = rate;
 
 	errors += eval_queue_opts(pa, opts, rate);
 
@@ -342,12 +340,8 @@ eval_pfqueue(struct pfctl *pf, struct pf_altq *pa, struct node_queue_bw *bw,
 		pa->qlimit = DEFAULT_QLIMIT;
 
 	if (pa->scheduler == ALTQT_CBQ || pa->scheduler == ALTQT_HFSC) {
-		if (bw->bw_absolute > 0)
-			pa->bandwidth = bw->bw_absolute;
-		else if (bw->bw_percent > 0 && parent != NULL)
-			pa->bandwidth = parent->bandwidth / 100 *
-			    bw->bw_percent;
-		else {
+		if ((pa->bandwidth = eval_bwspec(bw,
+		    parent == NULL ? 0 : parent->bandwidth)) == 0) {
 			fprintf(stderr, "bandwidth for %s invalid (%d / %d)\n",
 			    pa->qname, bw->bw_absolute, bw->bw_percent);
 			return (1);
@@ -1156,4 +1150,16 @@ eval_queue_opts(struct pf_altq *pa, struct node_queue_opt *opts,
 	}
 
 	return (errors);
+}
+
+u_int32_t
+eval_bwspec(struct node_queue_bw *bw, u_int32_t ref_bw)
+{
+	if (bw->bw_absolute > 0)
+		return (bw->bw_absolute);
+
+	if (bw->bw_percent > 0)
+		return (ref_bw / 100 * bw->bw_percent);
+
+	return (0);
 }
