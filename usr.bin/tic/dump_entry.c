@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump_entry.c,v 1.16 2000/10/08 22:47:10 millert Exp $	*/
+/*	$OpenBSD: dump_entry.c,v 1.17 2003/04/06 18:38:42 deraadt Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998-2000 Free Software Foundation, Inc.                   *
@@ -542,9 +542,9 @@ fmt_entry(TERMTYPE * tterm,
 
 	predval = pred(BOOLEAN, i);
 	if (predval != FAIL) {
-	    (void) strcpy(buffer, name);
+	    (void) strlcpy(buffer, name, sizeof buffer);
 	    if (predval <= 0)
-		(void) strcat(buffer, "@");
+		(void) strlcat(buffer, "@", sizeof buffer);
 	    else if (i + 1 > num_bools)
 		num_bools = i + 1;
 	    WRAP_CONCAT;
@@ -566,9 +566,9 @@ fmt_entry(TERMTYPE * tterm,
 	predval = pred(NUMBER, i);
 	if (predval != FAIL) {
 	    if (tterm->Numbers[i] < 0) {
-		sprintf(buffer, "%s@", name);
+		snprintf(buffer, sizeof buffer, "%s@", name);
 	    } else {
-		sprintf(buffer, "%s#%d", name, tterm->Numbers[i]);
+		snprintf(buffer, sizeof buffer, "%s#%d", name, tterm->Numbers[i]);
 		if (i + 1 > num_values)
 		    num_values = i + 1;
 	    }
@@ -617,14 +617,14 @@ fmt_entry(TERMTYPE * tterm,
 	    if (insert_character || parm_ich) {
 		if (&tterm->Strings[i] == &enter_insert_mode
 		    && enter_insert_mode == ABSENT_STRING) {
-		    (void) strcpy(buffer, "im=");
+		    (void) strlcpy(buffer, "im=", sizeof buffer);
 		    WRAP_CONCAT;
 		    continue;
 		}
 
 		if (&tterm->Strings[i] == &exit_insert_mode
 		    && exit_insert_mode == ABSENT_STRING) {
-		    (void) strcpy(buffer, "ei=");
+		    (void) strlcpy(buffer, "ei=", sizeof buffer);
 		    WRAP_CONCAT;
 		    continue;
 		}
@@ -640,7 +640,7 @@ fmt_entry(TERMTYPE * tterm,
 		num_strings = i + 1;
 
 	    if (!VALID_STRING(tterm->Strings[i])) {
-		sprintf(buffer, "%s@", name);
+		snprintf(buffer, sizeof buffer, "%s@", name);
 		WRAP_CONCAT;
 	    } else if (outform == F_TERMCAP || outform == F_TCONVERR) {
 		int params = (i < (int) SIZEOF(parametrized)) ? parametrized[i] : 0;
@@ -649,15 +649,17 @@ fmt_entry(TERMTYPE * tterm,
 
 		if (cv == 0) {
 		    if (outform == F_TCONVERR) {
-			sprintf(buffer, "%s=!!! %s WILL NOT CONVERT !!!",
+			snprintf(buffer, sizeof buffer,
+			    "%s=!!! %s WILL NOT CONVERT !!!",
 			    name, srccap);
 		    } else if (suppress_untranslatable) {
 			continue;
 		    } else {
 			char *s = srccap, *d = buffer;
-			sprintf(d, "..%s=", name);
-			d += strlen(d);
-			while ((*d = *s++) != 0) {
+			snprintf(buffer, buffer + sizeof buffer - d, "..%s=",
+			    name);
+			d = buffer + strlen(buffer);
+			while ((*d = *s++) != 0) {	/* XXX overflow? */
 			    if (*d == ':') {
 				*d++ = '\\';
 				*d = ':';
@@ -668,7 +670,7 @@ fmt_entry(TERMTYPE * tterm,
 			}
 		    }
 		} else {
-		    sprintf(buffer, "%s=%s", name, cv);
+		    snprintf(buffer, sizeof buffer, "%s=%s", name, cv);
 		}
 		len += strlen(tterm->Strings[i]) + 1;
 		WRAP_CONCAT;
@@ -701,11 +703,11 @@ fmt_entry(TERMTYPE * tterm,
      */
     if (tversion == V_HPUX) {
 	if (memory_lock) {
-	    (void) sprintf(buffer, "meml=%s", memory_lock);
+	    (void) snprintf(buffer, sizeof buffer, "meml=%s", memory_lock);
 	    WRAP_CONCAT;
 	}
 	if (memory_unlock) {
-	    (void) sprintf(buffer, "memu=%s", memory_unlock);
+	    (void) snprintf(buffer, sizeof buffer, "memu=%s", memory_unlock);
 	    WRAP_CONCAT;
 	}
     } else if (tversion == V_AIX) {
@@ -728,9 +730,9 @@ fmt_entry(TERMTYPE * tterm,
 	    tp[0] = '\0';
 
 	    if (box_ok) {
-		(void) strcpy(buffer, "box1=");
-		(void) strcat(buffer, _nc_tic_expand(boxchars,
-			outform == F_TERMINFO, numbers));
+		(void) strlcpy(buffer, "box1=", sizeof buffer);
+		(void) strlcat(buffer, _nc_tic_expand(boxchars,
+			outform == F_TERMINFO, numbers), sizeof buffer);
 		WRAP_CONCAT;
 	    }
 	}
@@ -853,7 +855,8 @@ dump_uses(const char *name, bool infodump)
     char buffer[MAX_TERMINFO_LENGTH];
 
     strcpy_DYN(&outbuf, 0);
-    (void) sprintf(buffer, "%s%s", infodump ? "use=" : "tc=", name);
+    (void) snprintf(buffer, sizeof buffer,
+	"%s%s", infodump ? "use=" : "tc=", name);
     wrap_concat(buffer);
     (void) fputs(outbuf.text, stdout);
     return outbuf.used;
