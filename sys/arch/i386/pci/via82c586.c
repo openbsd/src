@@ -1,4 +1,4 @@
-/*	$OpenBSD: via82c586.c,v 1.4 2000/08/02 02:42:50 mickey Exp $	*/
+/*	$OpenBSD: via82c586.c,v 1.5 2001/01/16 20:49:49 mickey Exp $	*/
 /*	$NetBSD: via82c586.c,v 1.2 2000/07/18 11:24:09 soda Exp $	*/
 
 /*-
@@ -113,7 +113,7 @@ const int vp3_cfg_intr_shift[] = {
 	VP3_CFG_INTR_SHIFT_PIRQD,
 };
 
-#define	VP3_PIRQ(req, pirq)	(((reg) >> vp3_cfg_intr_shift[(pirq)]) & \
+#define	VP3_PIRQ(reg, pirq)	(((reg) >> vp3_cfg_intr_shift[(pirq)]) & \
 				 VP3_CFG_INTR_MASK)
 
 int
@@ -171,7 +171,8 @@ via82c586_get_intr(v, clink, irqp)
 
 	reg = pci_conf_read(ph->ph_pc, ph->ph_tag, VP3_CFG_PIRQ_REG);
 	val = VP3_PIRQ(reg, clink);
-	*irqp = (val == VP3_PIRQ_NONE) ? 0xff : val;
+	*irqp = (val == VP3_PIRQ_NONE)?
+	    I386_PCI_INTERRUPT_LINE_NO_CONNECTION : val;
 
 	return (0);
 }
