@@ -1236,7 +1236,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_640,
 	    0,
 	    "CMD Technology",
-	    "PCI640",
+	    "PCI0640",
 	},
 	{
 	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_642,
@@ -1261,6 +1261,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "CMD Technology",
 	    "PCI0647",
+	},
+	{
+	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_648,
+	    0,
+	    "CMD Technology",
+	    "PCI0648",
+	},
+	{
+	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_649,
+	    0,
+	    "CMD Technology",
+	    "PCI0649",
 	},
 	{
 	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_650A,

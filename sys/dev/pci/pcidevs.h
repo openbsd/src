@@ -824,13 +824,14 @@
 #define	PCI_PRODUCT_CIRRUS_CS4610	0x6001		/* CS4610 SoundFusion Audio */
 #define	PCI_PRODUCT_CIRRUS_CS4280	0x6003		/* CS4280 CrystalClear Audio */
 
-/* CMD Technology products -- info gleaned from their web site */
-#define	PCI_PRODUCT_CMDTECH_640	0x0640		/* PCI640 */
-/* No data on the CMD Tech. web site for the following as of Mar. 3 '98 */
+/* CMD Technology products -- info gleaned from www.cmd.com */
+#define	PCI_PRODUCT_CMDTECH_640	0x0640		/* PCI0640 */
 #define	PCI_PRODUCT_CMDTECH_642	0x0642		/* PCI0642 */
 #define	PCI_PRODUCT_CMDTECH_643	0x0643		/* PCI0643 */
 #define	PCI_PRODUCT_CMDTECH_646	0x0646		/* PCI0646 */
 #define	PCI_PRODUCT_CMDTECH_647	0x0647		/* PCI0647 */
+#define	PCI_PRODUCT_CMDTECH_648	0x0648		/* PCI0648 */
+#define	PCI_PRODUCT_CMDTECH_649	0x0649		/* PCI0649 */
 /* Inclusion of 'A' in the following entry is probably wrong. */
 /* No data on the CMD Tech. web site for the following as of Mar. 3 '98 */
 #define	PCI_PRODUCT_CMDTECH_650A	0x0650		/* PCI0650A */
