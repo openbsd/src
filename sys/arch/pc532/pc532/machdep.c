@@ -652,6 +652,11 @@ boot(howto)
 	}
 	boothowto = howto;
 	if ((howto&RB_NOSYNC) == 0 && waittime < 0) {
+		extern struct proc proc0;
+		/* defeat against panic on sync   XXX */
+		if (curproc == NULL)
+			curproc = proc0;
+
 		waittime = 0;
 		vfs_shutdown();
 		/*
