@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.4 1999/04/20 20:45:37 mickey Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.5 1999/05/21 17:49:47 mickey Exp $	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,7 +96,10 @@ void
 cpu_swapout(p)
 	struct proc *p;
 {
-	/* FPU save state */
+	/*
+	 * explicit FPU save state, since user area might get
+	 * swapped out as well, and won't be able to save it no more
+	 */
 }
 
 void
@@ -152,11 +155,11 @@ void
 cpu_exit(p)
 	struct proc *p;
 {
-	/* FPU: save state */
-
+	extern struct proc *fpu_curproc;	/* from machdep.c */
 	uvmexp.swtch++;
 
 	curproc = NULL;
+	fpu_curproc = NULL;
 	uvmspace_free(p->p_vmspace);
 
 	/* XXX should be in the locore? */
