@@ -88,7 +88,7 @@ lint:
 install: installdirs
 	@for prog in $(PROGS); do \
 	  echo Installing $$prog in $(bindir); \
-	  $(INSTALL) $$prog $(bindir)/$$prog ; \
+	  $(INSTALL_PROGRAM) $$prog $(bindir)/$$prog ; \
 	done
 
 installdirs:
