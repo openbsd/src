@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
  * SUCH DAMAGE.
  *
- * $OpenBSD: pthread.h,v 1.3 1998/12/10 00:40:19 d Exp $
+ * $OpenBSD: pthread.h,v 1.4 1998/12/21 07:30:25 d Exp $
  *
  */
 #ifndef _PTHREAD_H_
@@ -46,7 +46,7 @@
 #include <sys/time.h>
 #include <sys/signal.h>
 #include <limits.h>
-#include <sched.h>	/* SUSV2 */
+#include <sched.h>
 
 /*
  * Run-time invariant values:
@@ -150,23 +150,14 @@ struct pthread_once {
 /*
  * Static once initialization values. 
  */
-#define PTHREAD_ONCE_INIT   { PTHREAD_NEEDS_INIT, NULL }
+#define PTHREAD_ONCE_INIT   { PTHREAD_NEEDS_INIT, PTHREAD_MUTEX_INITIALIZER }
 
 /*
  * Static initialization values. 
  */
-#define PTHREAD_MUTEX_INITIALIZER	NULL
-#define PTHREAD_COND_INITIALIZER	NULL
-#define PTHREAD_RWLOCK_INITIALIZER	NULL
-
-/*
- * Default attribute arguments (draft 4, deprecated).
- */
-#ifndef PTHREAD_KERNEL
-#define pthread_condattr_default    NULL
-#define pthread_mutexattr_default   NULL
-#define pthread_attr_default        NULL
-#endif
+#define PTHREAD_MUTEX_INITIALIZER	((pthread_mutex_t) NULL)
+#define PTHREAD_COND_INITIALIZER	((pthread_cond_t) NULL)
+#define PTHREAD_RWLOCK_INITIALIZER	((pthread_rwlock_t) NULL)
 
 enum pthread_mutextype {
 	PTHREAD_MUTEX_DEFAULT		= 1,
@@ -291,23 +282,16 @@ int		pthread_attr_setcleanup __P((pthread_attr_t *,
 
 #if 0
 /*
- * Single Unix Specification v2 wants these:
+ * Single Unix Specification v2 (UNIX98) also wants these:
  */
 #define PTHREAD_CANCEL_ASYNCHRONOUS
 #define PTHREAD_CANCEL_ENABLE
 #define PTHREAD_CANCEL_DEFERRED
 #define PTHREAD_CANCEL_DISABLE
 #define PTHREAD_CANCELED
-#define PTHREAD_MUTEX_DEFAULT
-#define PTHREAD_MUTEX_ERRORCHECK
-#define PTHREAD_MUTEX_NORMAL
-#define PTHREAD_MUTEX_INITIALIZER
-#define PTHREAD_MUTEX_RECURSIVE
 #define PTHREAD_PRIO_INHERIT
 #define PTHREAD_PRIO_NONE
 #define PTHREAD_PRIO_PROTECT
-#define PTHREAD_PROCESS_SHARED
-#define PTHREAD_PROCESS_PRIVATE
 
 int		pthread_attr_getguardsize __P((const pthread_attr_t *, 
 			size_t *));
@@ -322,7 +306,7 @@ int		pthread_setconcurrency __P((int));
 
 __END_DECLS
 
-#else
+#else /* ! _POSIX_THREADS */
 #warning "included <pthread.h> without -pthread compiler option"
-#endif _POSIX_THREADS
-#endif
+#endif /* ! _POSIX_THREADS */
+#endif /* _PTHREAD_H_ */
