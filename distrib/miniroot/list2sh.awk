@@ -1,4 +1,4 @@
-#	$OpenBSD: list2sh.awk,v 1.5 1997/05/05 16:31:36 grr Exp $
+#	$OpenBSD: list2sh.awk,v 1.6 2002/04/25 21:57:43 deraadt Exp $
 #	$NetBSD: list2sh.awk,v 1.2 1996/05/04 15:45:31 pk Exp $
 
 BEGIN {
@@ -11,14 +11,14 @@ BEGIN {
 }
 $1 == "COPY" {
 	printf("echo '%s'\n", $0);
-	printf("rm -f ${TARGDIR}/%s\n", $3);
+	printf("test -f ${TARGDIR}/%s && rm -fr ${TARGDIR}/%s\n", $3, $3);
 	printf("cp %s ${TARGDIR}/%s\n", $2, $3);
 	next;
 }
 $1 == "LINK" {
 	printf("echo '%s'\n", $0);
 	for (i = 3; i <= NF; i++) {
-		printf("rm -f ${TARGDIR}/%s\n", $i);
+		printf("test -f ${TARGDIR}/%s && rm -f ${TARGDIR}/%s\n", $i, $i);
 		printf("(cd ${TARGDIR}; ln %s %s)\n", $2, $i);
 	}
 	next;
@@ -26,7 +26,7 @@ $1 == "LINK" {
 $1 == "SYMLINK" {
 	printf("echo '%s'\n", $0);
 	for (i = 3; i <= NF; i++) {
-		printf("rm -f ${TARGDIR}/%s\n", $i);
+		printf("test -f ${TARGDIR}/%s && rm -f ${TARGDIR}/%s\n", $i, $i);
 		printf("(cd ${TARGDIR}; ln -s %s %s)\n", $2, $i);
 	}
 	next;
