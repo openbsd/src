@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1.1.1 2001/08/18 04:16:37 jason Exp $
+#	$OpenBSD: Makefile,v 1.2 2001/08/22 06:43:14 art Exp $
 #	$NetBSD: Makefile,v 1.1 2000/08/20 14:58:45 mrg Exp $
 
 CURDIR=	${.CURDIR}
@@ -8,7 +8,7 @@ S=	${CURDIR}/../../../..
 # Override normal settings
 #
 
-PROG=	bootblk
+PROG=	
 SRCS=		bootblk.fth
 OBJS=
 CLEANFILES=	assym.fth.h assym.fth.h.tmp machine sparc \
@@ -30,7 +30,7 @@ SVR4=-U__SVR4 -U__svr4__ -D__NetBSD__
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_LKM ${SVR4}
 
-#all:: bootblk.text bootblk
+all: bootblk.text bootblk
 
 #clean:: 
 #	rm assym.fth.h bootblk.text machine bootblk
