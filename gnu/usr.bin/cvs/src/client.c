@@ -262,21 +262,22 @@ arg_should_not_be_sent_to_server (arg)
 	    this_root = Name_Root ((char *) NULL, (char *) NULL);
 	}
 
+	/*
+	 * This is so bogus!  Means if you have checked out from
+	 * a replica of a repository, and then when you want to
+	 * check it in to the real (read/write) repository, the
+	 * file will be skipped!
+	 */
+#if 0
 	/* Now check the value for root. */
 	if (this_root && current_root
 	    && (strcmp (this_root, current_root) != 0))
 	{
 	    /* Don't send this, since the CVSROOTs don't match. */
 	    free (this_root);
-
-	    /*
-	     * This is so bogus!  Means if you have checked out from
-	     * a replica of a repository, and then when you want to
-	     * check it in to the real (read/write) repository, the
-	     * file will be skipped!
-	     */
 	    return 1;
 	}
+#endif
 	free (this_root);
     }
     
