@@ -1,8 +1,7 @@
 # sidfiles
-0       string          PSID      		PlaySID v2.2+ (AMIGA) sidtune,
 0	string		SIDPLAY\ INFOFILE	Sidplay info file
->Audit-Trail:
->Unformatted:
+0       string          PSID      		PlaySID v2.2+ (AMIGA) sidtune,
+>4      beshort         >0                      w/ header v%d,
 >14     beshort         =1              	single song,
 >14     beshort         >1              	%d songs,
 >16     beshort         >0              	default song: %d
