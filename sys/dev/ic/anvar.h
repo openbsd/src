@@ -1,4 +1,4 @@
-/*	$OpenBSD: anvar.h,v 1.11 2002/06/09 03:14:18 todd Exp $	*/
+/*	$OpenBSD: anvar.h,v 1.12 2003/07/14 22:48:50 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -271,8 +271,8 @@ struct an_ltv_stats {
 	u_int32_t		an_lostsync_hostreq;	/* 0x16C */
 	u_int32_t		an_host_tx_bytes;	/* 0x170 */
 	u_int32_t		an_host_rx_bytes;	/* 0x174 */
-	u_int32_t		an_uptime_secs;		/* 0x178 */
-	u_int32_t		an_uptime_usecs;	/* 0x17C */
+	u_int32_t		an_uptime_usecs;	/* 0x178 */
+	u_int32_t		an_uptime_secs;		/* 0x17C */
 	u_int32_t		an_lostsync_better_ap;	/* 0x180 */
 	u_int32_t		an_rsvd[10];
 };
