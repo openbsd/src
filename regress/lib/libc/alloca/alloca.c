@@ -1,4 +1,4 @@
-/*	$OpenBSD: alloca.c,v 1.6 2003/09/02 23:52:16 david Exp $	*/
+/*	$OpenBSD: alloca.c,v 1.7 2004/03/10 01:17:45 deraadt Exp $	*/
 
 /*	Written by Michael Shalayeff, 2003, Public Domain.	*/
 
@@ -12,10 +12,10 @@ main(int argc, char *argv[])
 	char *q, *p;
 
 	p = alloca(41);
-	strcpy(p, "hellow world");
+	strlcpy(p, "hellow world", 41);
 
 	q = alloca(53);
-	strcpy(q, "hellow world");
+	strlcpy(q, "hellow world", 53);
 
 	exit(strcmp(p, q));
 }
