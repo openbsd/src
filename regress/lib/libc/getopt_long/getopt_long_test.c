@@ -67,7 +67,7 @@ main(int argc, char **argv)
 	goggles = 0;
 	for (;;) {
 		idx = -1;
-		ch = gl(argc, argv, "19bf:i:hW;", longopts, &idx);
+		ch = gl(argc, argv, "19bf:i:hW;-", longopts, &idx);
 		if (ch == -1)
 			break;
 		switch (ch) {
@@ -76,6 +76,7 @@ main(int argc, char **argv)
 		case '9':
 		case 'h':
 		case 'b':
+		case '-':
 			if (idx != -1) {
 				if (goggles == 42)
 					printf("option %s, arg %s\n",

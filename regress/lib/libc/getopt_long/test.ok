@@ -10,10 +10,11 @@ option illiterate
 option i, arg foo.in
 remaining ARGV: onefile twofile threefile 
 
-getopt_long: -1bfast 
+getopt_long: -1bfast - 
 option 1
 option b
 option f, arg ast
+option -
 
 getopt_long: --fast --drinking=guiness -i foo.in somefile 
 option fast
@@ -27,10 +28,11 @@ remaining ARGV: myfile --force -f infile -9
 getopt_long (POSIXLY_CORRECT): onefile twofile --best -Williterate -i foo.in threefile 
 remaining ARGV: onefile twofile --best -Williterate -i foo.in threefile 
 
-getopt_long (POSIXLY_CORRECT): -1bfast 
+getopt_long (POSIXLY_CORRECT): -1bfast - 
 option 1
 option b
 option f, arg ast
+option -
 
 getopt_long (POSIXLY_CORRECT): --fast --drinking=guiness -i foo.in somefile 
 option fast
@@ -50,10 +52,11 @@ option illiterate
 option i, arg foo.in
 remaining ARGV: onefile twofile threefile 
 
-getopt_long_only: -1bfast 
+getopt_long_only: -1bfast - 
 option 1
 option b
 option fast
+option -
 
 getopt_long_only: --fast -drinking=guiness -i foo.in somefile 
 option fast
@@ -67,10 +70,11 @@ remaining ARGV: myfile -force -f infile -9
 getopt_long_only (POSIXLY_CORRECT): onefile twofile -best -Williterate -i foo.in threefile 
 remaining ARGV: onefile twofile -best -Williterate -i foo.in threefile 
 
-getopt_long_only (POSIXLY_CORRECT): -1bfast 
+getopt_long_only (POSIXLY_CORRECT): -1bfast - 
 option 1
 option b
 option fast
+option -
 
 getopt_long_only (POSIXLY_CORRECT): --fast -drinking=guiness -i foo.in somefile 
 option fast
