@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.183 2002/11/08 10:50:28 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.184 2002/11/13 16:51:37 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -837,6 +837,8 @@ address		: '(' STRING ')'		{
 			$$->addr.addr_dyn = (struct pf_addr_dyn *)1;
 			strncpy($$->addr.addr.pfa.ifname, $2,
 			    sizeof($$->addr.addr.pfa.ifname));
+			$$->next = NULL;
+			$$->tail = $$;
 		}
 		| STRING			{ $$ = host($1, -1); }
 		;
