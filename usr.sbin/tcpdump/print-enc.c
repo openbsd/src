@@ -21,7 +21,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-enc.c,v 1.4 1999/12/08 21:45:00 angelos Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-enc.c,v 1.5 2000/04/18 06:06:17 angelos Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -84,6 +84,10 @@ enc_if_print(u_char *user, const struct pcap_pkthdr *h,
 	
 	hdr = (struct enchdr *)p;
 	flags = hdr->flags;
+	if (flags == 0)
+	  printf("(unprotected): ");
+	else
+	  printf("(");
 	ENC_PRINT_TYPE(flags, M_AUTH, "authentic");
 	ENC_PRINT_TYPE(flags, M_CONF, "confidential");
 	/* ENC_PRINT_TYPE(flags, M_TUNNEL, "tunnel"); */
