@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.58 2002/05/27 01:59:58 deraadt Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.59 2002/06/14 00:07:57 mickey Exp $	*/
 
 /*
  * random.c -- A strong random number generator
@@ -481,6 +481,22 @@ void arc4maybeinit(void);
  * RC4 is a registered trademark of RSA Laboratories.
  */
 
+static __inline u_int8_t
+arc4_getbyte(void)
+{
+	register u_int8_t si, sj;
+
+	rndstats.arc4_reads++;
+	arc4random_state.cnt++;
+	arc4random_state.i++;
+	si = arc4random_state.s[arc4random_state.i];
+	arc4random_state.j += si;
+	sj = arc4random_state.s[arc4random_state.j];
+	arc4random_state.s[arc4random_state.i] = sj;
+	arc4random_state.s[arc4random_state.j] = si;
+	return arc4random_state.s[(si + sj) & 0xff];
+}
+
 static __inline void
 arc4_stir(void)
 {
@@ -511,22 +527,14 @@ arc4_stir(void)
 	rndstats.arc4_stirs += len;
 	rndstats.arc4_nstirs++;
 	splx(s);
-}
 
-static __inline u_int8_t
-arc4_getbyte(void)
-{
-	register u_int8_t si, sj;
-
-	rndstats.arc4_reads++;
-	arc4random_state.cnt++;
-	arc4random_state.i++;
-	si = arc4random_state.s[arc4random_state.i];
-	arc4random_state.j += si;
-	sj = arc4random_state.s[arc4random_state.j];
-	arc4random_state.s[arc4random_state.i] = sj;
-	arc4random_state.s[arc4random_state.j] = si;
-	return arc4random_state.s[(si + sj) & 0xff];
+	/*
+	 * Throw away the first N words of output, as suggested in the
+	 * paper "Weaknesses in the Key Scheduling Algorithm of RC4"
+	 * by Fluher, Mantin, and Shamir.  (N = 256 in our case.)
+	 */
+	for (n = 0; n < 256 * 4; n++)
+		arc4_getbyte();
 }
 
 void
