@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.144 2005/01/17 19:01:00 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.145 2005/01/23 16:28:29 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -108,19 +108,23 @@
 	.align	64
 $trap_tmp_save
 	.block	TF_PHYS
+	.size	$trap_tmp_save, .-$trap_tmp_save
 
 	.export netisr, data
 	.align 16
 netisr
 	.word	0
+	.size	netisr, .-netisr
 	.align	16
 
 	.export cpu_hzticks, data
 cpu_hzticks			/* itmr ticks in one hz */
 	.word	0
+	.size	cpu_hzticks, .-cpu_hzticks
 	.export cpu_itmr, data
 cpu_itmr			/* itmr value at the most recent clk int */
 	.word	0
+	.size	cpu_itmr, .-cpu_itmr
 
 	BSS(pdc_stack, 4)	/* temp stack for PDC call */
 	BSS(emrg_stack, 4)	/* stack for HPMC/TOC/PWRF */
@@ -549,6 +553,7 @@ $bsd_syscall
 	be	R%$syscall(sr1, t2)
 	nop ! nop ! nop ! nop
 
+	.size	gateway_page, .-gateway_page
 	.align	NBPG
 	.export	gateway_page_end, entry
 gateway_page_end
@@ -850,6 +855,7 @@ $syscall_return_phys
 	nop
 	.exit
 	.procend
+	.size	$syscall, .-$syscall
 $syscall_end
 
 /*
@@ -868,13 +874,15 @@ $syscall_end
 #define	ATRAP(name,num) \
 	.export	TLABEL(name)$num, entry	! \
 	.label	TLABEL(name)$num	! \
-	TRAP(all,num)
+	TRAP(all,num)			! \
+	.size	TLABEL(name)$num, .-TLABEL(name)$num
 
 #define	CTRAP(name,num,pre) \
 	.export	TLABEL(name)$num, entry	! \
 	.label	TLABEL(name)$num	! \
 	pre				! \
-	TRAP(name,num)
+	TRAP(name,num)			! \
+	.size	TLABEL(name)$num, .-TLABEL(name)$num
 
 #define	STRAP(name,num,pre) \
 	.export	TLABEL(name)$num, entry	! \
@@ -888,7 +896,8 @@ $syscall_end
 	ldi	num, r1			! \
 	b	__CONCAT($name,_t)+8	! \
 	b	__CONCAT($name,_s)+12	! \
-	b	__CONCAT($name,_u)+16
+	b	__CONCAT($name,_u)+16	! \
+	.size	TLABEL(name)$num, .-TLABEL(name)$num
 
 #define	ITLBPRE \
 	mfctl	pcoq,r9 ! \
@@ -974,6 +983,7 @@ hpmc_v
 	ATRAP(unk62,62)
 	ATRAP(unk63,63)
 					/* 64 */
+	.size	$ivaaddr, .-$ivaaddr
 
 	.export TLABEL(excpt), entry
 ENTRY(TLABEL(excpt),0)
@@ -1220,8 +1230,8 @@ EXIT(TLABEL(emu))
 	extru	r17, 24, 25, r17
 
 	.align	32
-$tlbd_s
-$tlbd_t
+LEAF_ENTRY($tlbd_s)
+ALTENTRY($tlbd_t)
 	TLB_STATS_PRE(tlbd)
 	TLB_PULL(1, TLABEL(all))
 	mfsp	sr1, r16
@@ -1232,9 +1242,10 @@ $tlbd_t
 	TLB_STATS_AFT(tlbd)
 	rfir
 	nop
+EXIT($tlbd_s)
 
-$itlb_s
-$itlb_t
+LEAF_ENTRY($itlb_s)
+ALTENTRY($itlb_t)
 	TLB_STATS_PRE(itlb)
 	TLB_PULL(0, TLABEL(all))
 	extru,=	r25, 5, 1, r0	/* gate needs a kernel pid */
@@ -1247,9 +1258,10 @@ $itlb_t
 	TLB_STATS_AFT(itlb)
 	rfir
 	nop
+EXIT($itlb_s)
 
-$dtlb_s
-$dtlb_t
+LEAF_ENTRY($dtlb_s)
+ALTENTRY($dtlb_t)
 	TLB_STATS_PRE(dtlb)
 	TLB_PULL(0, TLABEL(all))
 	mfsp	sr1, r16
@@ -1260,11 +1272,12 @@ $dtlb_t
 	TLB_STATS_AFT(dtlb)
 	rfir
 	nop
+EXIT($dtlb_s)
 
-$itlbna_s
-$dtlbna_s
-$itlbna_t
-$dtlbna_t
+LEAF_ENTRY($dtlbna_s)
+ALTENTRY($itlbna_s)
+ALTENTRY($dtlbna_t)
+ALTENTRY($itlbna_t)
 	TLB_STATS_PRE(dtlb)
 	TLB_PULL(0, $dtlbna_t_fake)
 	mfsp	sr1, r16
@@ -1297,6 +1310,7 @@ $dtlbna_t_fake
 	TLB_STATS_AFT(dtlb)
 	rfir
 	nop
+EXIT($dtlbna_s)
 
 #endif /*  defined(HP7000_CPU) || defined(HP7100_CPU) || defined(HP7200_CPU) */
 
@@ -1336,7 +1350,7 @@ $dtlbna_t_fake
 	sync
 
 	.align	32
-$tlbd_l
+LEAF_ENTRY($tlbd_l)
 	TLB_STATS_PRE(tlbd)
 	TLB_PULL_L(1, TLABEL(all))
 	IDTLBAF(17)
@@ -1352,13 +1366,14 @@ $tlbd_l
 	TLB_STATS_AFT(tlbd)
 	rfir
 	nop
+EXIT($tlbd_l)
 
 	/*
 	 * from 7100lc ers, pg.6:
 	 * we found a post-silicon bug that makes cr28
 	 * unreliable for the itlb miss handler
 	 */
-$itlb_l
+LEAF_ENTRY($itlb_l)
 	TLB_STATS_PRE(itlb)
 	TLB_PULL_L(0, TLABEL(all))
 	extru,=	r25, 5, 1, r0	/* gate needs a kernel pid */
@@ -1368,9 +1383,10 @@ $itlb_l
 	TLB_STATS_AFT(itlb)
 	rfir
 	nop
+EXIT($itlb_l)
 
-$itlbna_l
-$dtlbna_l
+LEAF_ENTRY($dtlbna_l)
+ALTENTRY($itlbna_l)
 	TLB_STATS_PRE(dtlb)
 	TLB_PULL_L(0, $dtlbna_l_fake)
 	IDTLBAF(17)
@@ -1396,8 +1412,9 @@ $dtlbna_l_fake
 	TLB_STATS_AFT(dtlb)
 	rfir
 	nop
+EXIT($dtlbna_l)
 
-$dtlb_l
+LEAF_ENTRY($dtlb_l)
 	TLB_STATS_PRE(dtlb)
 	TLB_PULL_L(0, TLABEL(all))
 	IDTLBAF(17)
@@ -1446,6 +1463,7 @@ $dtlb_done_l
 	TLB_STATS_AFT(dtlb)
 	rfir
 	nop
+EXIT($dtlb_l)
 #endif /* HP7100LC_CPU */
 
 #if defined(HP8000_CPU) || defined(HP8200_CPU) || defined(HP8500_CPU)
@@ -1468,7 +1486,7 @@ $dtlb_done_l
 	depdi	0, 44, 30, r25			! \
 	depd	r16, 14, 15, r25
 
-$tlbd_u
+LEAF_ENTRY($tlbd_u)
 	TLB_STATS_PRE(tlbd)
 	TLB_PULL_L(1, TLABEL(all))
 	TLB_PCX2PCXU
@@ -1476,8 +1494,9 @@ $tlbd_u
 	TLB_STATS_AFT(tlbd)
 	rfir
 	nop
+EXIT($tlbd_u)
 
-$itlb_u
+LEAF_ENTRY($itlb_u)
 	TLB_STATS_PRE(itlb)
 	TLB_PULL_L(0, TLABEL(all))
 	extru,=	r25, 5, 1, r0	/* gate needs a kernel pid */
@@ -1487,9 +1506,10 @@ $itlb_u
 	TLB_STATS_AFT(itlb)
 	rfir
 	nop
+EXIT($itlb_u)
 
-$itlbna_u
-$dtlbna_u
+LEAF_ENTRY($dtlbna_u)
+ALTENTRY($itlbna_u)
 	TLB_STATS_PRE(dtlb)
 	TLB_PULL_L(0, $dtlbna_u_fake)
 	TLB_PCX2PCXU
@@ -1514,8 +1534,9 @@ $dtlbna_u_fake
 	TLB_STATS_AFT(dtlb)
 	rfir
 	nop
+EXIT($dtlbna_u)
 
-$dtlb_u
+LEAF_ENTRY($dtlb_u)
 	TLB_STATS_PRE(dtlb)
 	TLB_PULL_L(0, TLABEL(all))
 	TLB_PCX2PCXU
@@ -1523,12 +1544,10 @@ $dtlb_u
 	TLB_STATS_AFT(dtlb)
 	rfir
 	nop
+EXIT($dtlb_u)
 
 	.level	1.1
 #endif /* HP8000_CPU */
-
-	.export	$tlb_missend, entry
-$tlb_missend
 
 	.align	64
 	.export	TLABEL(all), entry
@@ -1810,9 +1829,6 @@ $trapnowvirt
 	/* means curproc have actually changed */
 	b	$syscall_return
 	nop
-
-	.export	$trap$all$end, entry
-$trap$all$end
 EXIT(TLABEL(all))
 
 #if defined(HP7000_CPU) || defined(HP7100_CPU)
