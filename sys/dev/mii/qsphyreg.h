@@ -1,4 +1,4 @@
-/*	$OpenBSD: qsphyreg.h,v 1.1 1998/09/10 17:17:34 jason Exp $	*/
+/*	$OpenBSD: qsphyreg.h,v 1.2 1999/03/09 00:02:45 jason Exp $	*/
 /*	$NetBSD: qsphyreg.h,v 1.1 1998/08/11 00:01:03 thorpej Exp $	*/
 
 /*-
@@ -42,7 +42,9 @@
 #define	_DEV_MII_QSPHYREG_H_
 
 /*
- * QS6612 registers.
+ * Register definitions for the Quality Semiconductor QS6612
+ * Further documentation can be found at:
+ * 	http://www.qualitysemi.com/products/network.html
  */
 
 #define	MII_QSPHY_MCTL		0x11	/* Mode control */

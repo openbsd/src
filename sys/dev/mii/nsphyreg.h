@@ -1,4 +1,4 @@
-/*	$OpenBSD: nsphyreg.h,v 1.1 1998/09/10 17:17:34 jason Exp $	*/
+/*	$OpenBSD: nsphyreg.h,v 1.2 1999/03/09 00:02:45 jason Exp $	*/
 /*	$NetBSD: nsphyreg.h,v 1.1 1998/08/10 23:58:39 thorpej Exp $	*/
 
 /*-
@@ -42,7 +42,9 @@
 #define	_DEV_MII_NSPHYREG_H_
 
 /*
- * DP83840 registers.
+ * National Semiconductor DP83840 Ethernet PHY register definitions
+ * Further documentation can be found at:
+ *	http://www.national.com/pf/DP/DP83840A.html
  */
 
 #define	MII_NSPHY_DCR		0x12	/* Disconnect counter */

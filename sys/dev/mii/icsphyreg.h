@@ -1,4 +1,4 @@
-/*	$OpenBSD: icsphyreg.h,v 1.1 1998/11/11 19:34:46 jason Exp $	*/
+/*	$OpenBSD: icsphyreg.h,v 1.2 1999/03/09 00:02:44 jason Exp $	*/
 /*	$NetBSD: icsphyreg.h,v 1.1 1998/11/02 23:46:20 thorpej Exp $	*/
 
 /*-
@@ -42,7 +42,9 @@
 #define	_DEV_MII_ICSPHYREG_H_
 
 /*
- * ICS1890 registers.
+ * Register definitions for the ICS1890 Ethernet PHY
+ * Further documentation can be found at:
+ *	http://www.icst.com/products/pinfo/1890.htm
  */
 
 #define	MII_ICSPHY_ECR		0x10	/* Extended Control Register */
