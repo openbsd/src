@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rbox.4,v 1.4 2005/01/08 18:30:31 miod Exp $
+.\"	$OpenBSD: rbox.4,v 1.5 2005/01/08 19:47:38 miod Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -67,9 +67,6 @@ console framework.
 The Renaissance can be configured at either the ``internal'' address
 (frame buffer address 0x200000, control register space address 0x560000)
 or at an external select code less than 32.
-At the internal address it will be the ``preferred'' console device
-(see
-.Xr cons 4 ) .
 The hardware installation manual describes the procedure for
 setting these values.
 .Sh SEE ALSO
