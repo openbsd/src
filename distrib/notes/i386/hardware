@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.132 2003/09/27 19:52:58 fgsch Exp $
+dnl	$OpenBSD: hardware,v 1.133 2003/10/02 21:20:55 fgsch Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PC's and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -572,7 +572,7 @@ Supported hardware {:-include-:}:
 		    Hifn 7751 and 9751 reference boards
 		    Invertex AEON
 		SafeNet SafeXcel 1141/1741 [G]
-	PC Cards (PCMCIA [B] and Carbus [B] [C])
+	PC Cards (PCMCIA [B] and Cardbus [B] [C])
 		ATA cards, including:
 		    ATA/IDE card drives
 		    ATA/IDE CD-ROM adapters
