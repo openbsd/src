@@ -1,4 +1,4 @@
-/*	$OpenBSD: crunchide.c,v 1.15 2002/06/09 05:53:53 todd Exp $	*/
+/*	$OpenBSD: crunchide.c,v 1.16 2002/08/05 15:24:07 art Exp $	*/
 
 /*
  * Copyright (c) 1994 University of Maryland
@@ -76,7 +76,8 @@
  * The alpha and mips based ports define _NLIST_DO_AOUT although it doesn't
  * fully support a.out.
  */
-#if defined(_NLIST_DO_AOUT) && !(defined(__alpha__) || defined(__mips__))
+#if defined(_NLIST_DO_AOUT) && !(defined(__alpha__) || defined(__mips__) || \
+    (defined(__sparc__) && defined(__ELF__)))
 #define DO_AOUT
 #endif
 
@@ -213,7 +214,7 @@ struct nlist *symbase;
 #define IS_GLOBAL_DEFINED(sp) \
 		  (((sp)->n_type & N_EXT) && ((sp)->n_type & N_TYPE) != N_UNDF)
 
-#if defined(__sparc__) && !defined(__sparc64__)
+#if defined(__sparc__) && !defined(__ELF__)
 /* is the relocation entry dependent on a symbol? */
 #define IS_SYMBOL_RELOC(rp)   \
 	((rp)->r_extern || \
