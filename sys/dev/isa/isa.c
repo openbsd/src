@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa.c,v 1.33 1998/06/29 02:14:23 downsj Exp $	*/
+/*	$OpenBSD: isa.c,v 1.34 1998/06/29 05:51:13 downsj Exp $	*/
 /*	$NetBSD: isa.c,v 1.85 1996/05/14 00:31:04 thorpej Exp $	*/
 
 /*
@@ -210,6 +210,7 @@ isascan(parent, match)
 			printf(">>> probing for %s*\n",
 			    cf->cf_driver->cd_name);
 		while ((*cf->cf_attach->ca_match)(parent, dev, &ia2) > 0) {
+#if !defined(__NO_ISA_INTR_CHECK)
 			if ((ia2.ia_irq != IRQUNK) &&
 			    !isa_intr_check(sc->sc_ic, ia2.ia_irq, IST_EDGE)) {
 				printf("%s%d: irq %d already in use\n",
@@ -218,6 +219,7 @@ isascan(parent, match)
 				ia2 = ia;
 				continue;
 			}
+#endif
 
 			if (autoconf_verbose)
 				printf(">>> probe for %s* clone into %s%d\n",
@@ -249,12 +251,14 @@ isascan(parent, match)
 		printf(">>> probing for %s%d\n", cf->cf_driver->cd_name,
 		    cf->cf_unit);
 	if ((*cf->cf_attach->ca_match)(parent, dev, &ia) > 0) {
+#if !defined(__NO_ISA_INTR_CHECK)
 		if ((ia.ia_irq != IRQUNK) &&
 		    !isa_intr_check(sc->sc_ic, ia.ia_irq, IST_EDGE)) {
 			printf("%s%d: irq %d already in use\n",
 			    cf->cf_driver->cd_name, cf->cf_unit, ia.ia_irq);
 			free(dev, M_DEVBUF);
 		} else {
+#endif
 			if (autoconf_verbose)
 				printf(">>> probing for %s%d succeeded\n",
 				    cf->cf_driver->cd_name, cf->cf_unit);
@@ -266,7 +270,9 @@ isascan(parent, match)
 			if (ia.ia_drq2 != DRQUNK)
 				ISA_DRQ_ALLOC((struct device *)sc, ia.ia_drq2);
 #endif /* NISAMDA > 0 */
+#if !defined(__NO_ISA_INTR_CHECK)
 		}
+#endif
 	} else {
 		if (autoconf_verbose)
 			printf(">>> probing for %s%d failed\n",
