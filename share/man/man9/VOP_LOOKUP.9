@@ -1,4 +1,4 @@
-.\" $OpenBSD: VOP_LOOKUP.9,v 1.6 2003/03/18 12:48:31 david Exp $
+.\" $OpenBSD: VOP_LOOKUP.9,v 1.7 2003/04/15 04:14:29 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Ted Unangst
 .\" All rights reserved.
@@ -164,7 +164,7 @@ The following sections comment on the VOP functions from the consumer's
 perspective.
 Some notes for file system implementors follow.
 .Sh VOP_CREATE
-.Nm VOP_CREATE
+.Fn VOP_CREATE
 creates a new directory entry for a regular file in the directory
 .Ar dvp
 and returns a locked, referenced vnode in
@@ -174,7 +174,7 @@ The file name is in
 and its permissions will be
 .Ar vap .
 .Sh VOP_FSYNC
-.Nm VOP_FSYNC
+.Fn VOP_FSYNC
 flushes any dirty buffers associated with
 .Ar vp
 to disk.
@@ -183,9 +183,9 @@ The vnode is locked on entry and exit.
 can be set to MNT_WAIT to indicate VOP_FSYNC should not return
 until all data is written.
 .Sh VOP_GETEXTATTR
-.Nm VOP_GETEXTATTR
+.Fn VOP_GETEXTATTR
 and
-.Nm VOP_SETEXTATTR
+.Fn VOP_SETEXTATTR
 are called to get and set named extended file attributes (see
 .Xr extattr 9 ) .
 .Ar vp
@@ -207,7 +207,7 @@ if it is non-NULL.
 .Ar cred
 is a pointer to the credentials used to access the file.
 .Sh VOP_LINK
-.Nm VOP_LINK
+.Fn VOP_LINK
 increases the link count for the vnode
 .Ar vp .
 A new entry with name
@@ -217,7 +217,7 @@ should be added to the directory
 .Ar dvp
 is locked on entry and unlocked on exit.
 .Sh VOP_LOOKUP
-.Nm VOP_LOOKUP
+.Fn VOP_LOOKUP
 finds the file corresponding to the name
 .Ar cnp
 in the directory
@@ -234,8 +234,10 @@ if
 .Ar dvp
 has been unlocked for an unsuccessful return.
 .Sh VOP_MKDIR
-.Nm VOP_MKDIR
-implements the mkdir syscall.
+.Fn VOP_MKDIR
+implements the
+.Xr mkdir 2
+syscall.
 A new directory with name matching that in
 .Ar cnp
 and with permissions
@@ -247,13 +249,13 @@ On success, the new vnode is returned locked in
 .Ar dvp
 must be locked on entry and is unlocked on exit.
 .Sh VOP_READLINK
-.Nm VOP_READLINK
+.Fn VOP_READLINK
 reads a symbolic link and returns the target's name in
 .Ar uio .
 .Ar vp
 is locked on entry and exit and must be a symlink.
 .Sh VOP_RECLAIM
-.Nm VOP_RECLAIM
+.Fn VOP_RECLAIM
 is used by
 .Xr vclean 9
 so that the file system has an opportunity to free memory
@@ -263,7 +265,7 @@ and perform any other cleanup activity related to
 is unlocked on entry and exit.
 VOP_RECLAIM should not be used by generic code.
 .Sh VOP_REMOVE
-.Nm VOP_REMOVE
+.Fn VOP_REMOVE
 removes the link named
 .Ar cnp
 from the directory
@@ -275,7 +277,7 @@ each has its reference count decremented by one.
 VOP_REMOVE does not delete the file from disk unless its link count
 becomes zero (for file systems which support multiple links).
 .Sh VOP_REVOKE
-.Nm VOP_REVOKE
+.Fn VOP_REVOKE
 is used by the
 .Xr revoke 2
 syscall to prevent any further access to a vnode.
@@ -284,8 +286,10 @@ errors.
 .Ar vp
 must be unlocked.
 .Sh VOP_RMDIR
-.Nm VOP_RMDIR
-implements the rmdir syscall.
+.Fn VOP_RMDIR
+implements the
+.Xr rmdir 2
+syscall.
 The directory
 .Ar vp
 will be removed from the directory
@@ -294,7 +298,7 @@ Both are locked on entry and unlocked on exit.
 The name of the directory for removal is additionally contained in
 .Ar cnp .
 .Sh VOP_SYMLINK
-.Nm VOP_SYMLINK
+.Fn VOP_SYMLINK
 creates a symbolic link with name
 .Ar cnp
 in the directory
@@ -309,17 +313,17 @@ The directory vnode is locked on entry and unlocked on exit.
 Note that unlike most VOP calls returning a vnode, VOP_SYMLINK
 does not lock or reference
 .Ar vpp .
-.Sh VOP_UNLOCK
-.Nm VOP_LOCK
+.Sh VOP_LOCK
+.Fn VOP_LOCK
 is used internally by
 .Xr vn_lock 9
 to lock a vnode.
 It should not be used by other file system code.
-.Nm VOP_UNLOCK
+.Fn VOP_UNLOCK
 unlocks a vnode.
 .Ar flags
 should be zero in most cases.
-.Nm VOP_ISLOCKED
+.Fn VOP_ISLOCKED
 returns 1 if
 .Ar vp
 is locked and 0 if not.
@@ -357,7 +361,7 @@ The
 functions return 0 to indicate success and a non-zero error code
 to indicate failure.
 .Sh FILES
-.Bl -tag -width sys/kern/vnode_if.src
+.Bl -tag -width sys/kern/vnode_if.src -compact
 .It Pa sys/kern/vnode_if.src
 source file containing
 .Nm

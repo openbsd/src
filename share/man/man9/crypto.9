@@ -1,4 +1,4 @@
-.\"	$OpenBSD: crypto.9,v 1.21 2003/02/20 06:35:25 jason Exp $
+.\"	$OpenBSD: crypto.9,v 1.22 2003/04/15 04:14:29 jmc Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -157,7 +157,7 @@ On success, the first argument will contain the Session Identifier (SID).
 The second argument contains all the necessary information for
 the driver to establish the session.
 The third argument indicates whether a
-hardware driver (1) should be used or not (0).
+hardware driver should be used (1) or not (0).
 The various fields in the
 .Fa cryptoini
 structure are:
@@ -407,20 +407,20 @@ structure are:
 Operation code, such as CRK_MOD_EXP.
 .It Fa krp_status
 Return code.
-This errno-style variable indicates whether lower level reasons
+This errno-style variable indicates whether there were lower level reasons
 for operation failure.
 .It Fa krp_iparams
-Number if input parameters to the specified operation.
-Note that each operation has a (typically hardwired) number of such parameters. 
+Number of input parameters to the specified operation.
+Note that each operation has a (typically hardwired) number of such parameters.
 .It Fa krp_oparams
-Number if output parameters from the specified operation.
-Note that each operation has a (typically hardwired) number of such parameters. 
+Number of output parameters from the specified operation.
+Note that each operation has a (typically hardwired) number of such parameters.
 .It Fa krp_kvp
 An array of kernel memory blocks containing the parameters.
 .It Fa krp_hid
 Identifier specifying which low-level driver is being used.
 .It Fa krp_callback
-Callback called on completion of a keying operation. 
+Callback called on completion of a keying operation.
 .El
 .Sh DRIVER-SIDE API
 The
@@ -503,7 +503,7 @@ field of the
 structure.
 When the request is completed, or an error is detected, the
 .Fn process
-routine should invoked
+routine should invoke
 .Fn crypto_done .
 Session migration may be performed, as mentioned previously.
 .Pp
@@ -520,7 +520,7 @@ field of the
 structure.
 When the request is completed, or an error is detected, the
 .Fn kprocess
-routine should invoked
+routine should invoke
 .Fn crypto_kdone .
 .Sh RETURN VALUES
 .Fn crypto_register ,
@@ -541,7 +541,7 @@ on failure.
 .Fn crypto_dispatch
 returns
 .Er EINVAL
-is its argument or the callback function was
+if its argument or the callback function was
 .Dv NULL ,
 and 0 otherwise.
 The callback is provided with an error code in case of failure, in the

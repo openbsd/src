@@ -1,12 +1,12 @@
-.\"	$OpenBSD: bus_space.9,v 1.7 2002/10/09 21:14:36 deraadt Exp $ 
+.\"	$OpenBSD: bus_space.9,v 1.8 2003/04/15 04:14:29 jmc Exp $
 .\" $NetBSD: bus_space.9,v 1.15 2000/08/09 03:11:00 tv Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
-.\" 
+.\"
 .\" This code is derived from software contributed to The NetBSD Foundation
 .\" by Christopher G. Demetriou.
-.\" 
+.\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
 .\" are met:
@@ -22,7 +22,7 @@
 .\" 4. Neither the name of The NetBSD Foundation nor the names of its
 .\"    contributors may be used to endorse or promote products derived
 .\"    from this software without specific prior written permission.
-.\" 
+.\"
 .\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
 .\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 .\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -340,7 +340,7 @@ functions exist to allow device drivers machine-independent access to
 bus memory and register areas.
 All of the functions and types described in this document can be used by
 including the
-.Pa Aq machine/bus.h
+.Aq Pa machine/bus.h
 header file.
 .Pp
 Many common devices are used on multiple architectures, but are accessed
@@ -372,7 +372,7 @@ versions of these interfaces, but may implement them as macros if
 appropriate.
 Machine-dependent types, variables, and functions should be marked
 clearly in
-.Pa Aq machine/bus.h
+.Aq Pa machine/bus.h
 to avoid confusion with the machine-independent types and functions,
 and, if possible, should be given names which make the
 machine-dependence clear.
@@ -461,7 +461,7 @@ specified
 is zero.
 .Sh TYPES
 Several types are defined in
-.Pa Aq machine/bus.h
+.Aq Pa machine/bus.h
 to facilitate use of the
 .Nm
 functions by drivers.
@@ -549,7 +549,7 @@ argument controls how the space is to be mapped.
 Supported flags include:
 .Bl -tag -width BUS_SPACE_MAP_CACHEABLE -offset indent
 .It Dv BUS_SPACE_MAP_CACHEABLE
-Try to map the space so that accesses can be cached by the system cache.
+Try to map the space so that access can be cached by the system cache.
 If this flag is not specified, the implementation should map the space
 so that it will not be cached.
 This mapping method will only be useful in very rare occasions.
@@ -1126,7 +1126,7 @@ used).
 All locations being read and written must lie within the bus space
 region specified by their respective handles.
 .Pp
-For portability, the starting addresses of the regions specified by the
+For portability, the starting addresses of the regions specified by
 each handle plus its respective offset should be a multiple of the size
 of data items being copied.
 On some systems, not obeying this requirement may cause incorrect data

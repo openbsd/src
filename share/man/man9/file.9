@@ -1,4 +1,4 @@
-.\"     $OpenBSD: file.9,v 1.4 2002/08/23 19:48:38 art Exp $
+.\"     $OpenBSD: file.9,v 1.5 2003/04/15 04:14:29 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved.
@@ -56,15 +56,15 @@ pipes (see
 kqueues (see
 .Xr kqueue 2 ) ,
 and various special purpose communication endpoints.
-.Pp 
+.Pp
 A new file descriptor is allocated with the function
-.Fn falloc 
+.Fn falloc
 and freed with
 .Fn fdrelease .
 .Fn falloc
 and
 .Fn fdrelease
-deal with allocating and freeing slots in the file descriptor table
+deal with allocating and freeing slots in the file descriptor table,
 expanding the table when necessary and initializing the descriptor.
 It's possible to do those things in smaller steps, but it's not
 recommended to make complicated kernel APIs that require it.
@@ -88,7 +88,7 @@ also check if the descriptor is a vnode or socket, return the proper
 errno on error and increase the use count with
 .Fn FREF .
 .Sh CONCURRENT ACCESS
-Since multiple processes can share the same file descriptor table
+Since multiple processes can share the same file descriptor table,
 it's important that the file is not freed in one process while some
 other process is still accessing it.
 To solve that problem a special use count is kept with the functions
@@ -113,6 +113,6 @@ not using them.
 The majority of those functions are implemented in
 .Pa sys/kern/kern_descrip.c .
 The function prototypes and the macros are located in
-.Pa sys/sys/file.h 
+.Pa sys/sys/file.h
 and
 .Pa sys/sys/filedesc.h .

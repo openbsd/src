@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.9,v 1.7 2001/08/03 15:21:17 mpech Exp $
+.\"	$OpenBSD: disklabel.9,v 1.8 2003/04/15 04:14:29 jmc Exp $
 .\"	$NetBSD: disklabel.9,v 1.7 1999/03/06 22:09:29 mycroft Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ using the device strategy routine passed in
 Note that a buffer structure is required to pass to the strategy routine;
 it needs to be acquired and parametrized for the intended I/O operation,
 and disposed of when the operation has completed.
-Some fields in the in the disklabel passed in
+Some fields in the disklabel passed in
 .Fa lp
 may be pre-initialized by the caller in order to meet device driver
 requirements for the I/O operation initiated to get to the disklabel data
@@ -186,7 +186,7 @@ Programs that intend to do so using the raw device interface should notify
 the driver by using a
 .Dv DIOCWLABEL
 ioctl function.
-Zero value is returned if any of the bound checks failed or
+A zero value is returned if any of the bound checks failed or
 transfer was attempted exactly at the end of disk partition.
 Otherwise the value of 1 is returned.
 .Sh SEE ALSO

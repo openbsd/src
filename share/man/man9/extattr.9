@@ -1,4 +1,4 @@
-.\"     $OpenBSD: extattr.9,v 1.4 2003/03/08 23:17:18 jmc Exp $
+.\"     $OpenBSD: extattr.9,v 1.5 2003/04/15 04:14:29 jmc Exp $
 .\"-
 .\" Copyright (c) 1999, 2000, 2001 Robert N. M. Watson
 .\" All rights reserved.
@@ -43,7 +43,7 @@ The semantics of this additional data is that of a "name=value" pair, where
 a name may be defined or undefined, and if defined, associated with zero or
 more bytes of arbitrary binary data.
 Extended attribute names exist within a set of namespaces; each operation
-on an extended attribute is required to provide the namespace to which to
+on an extended attribute is required to provide the namespace to which the
 operation refers.
 If the same name is present in multiple namespaces, the extended attributes
 associated with the names are stored and manipulated independently.

@@ -1,13 +1,13 @@
-.\"	$OpenBSD: bus_dma.9,v 1.15 2003/04/01 19:34:31 jmc Exp $ 
+.\"	$OpenBSD: bus_dma.9,v 1.16 2003/04/15 04:14:29 jmc Exp $
 .\" $NetBSD: bus_dma.9,v 1.14 2000/06/14 06:49:19 cgd Exp $
 .\"
 .\" Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
-.\" 
+.\"
 .\" This code is derived from software contributed to The NetBSD Foundation
 .\" by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
 .\" NASA Ames Research Center.
-.\" 
+.\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
 .\" are met:
@@ -320,7 +320,7 @@ Also refer to the use of this flag with the
 .Fn bus_dmamem_alloc
 function.
 .It Dv BUS_DMA_READ
-This is a hint to the machine-dependent back-end that indicates the  
+This is a hint to the machine-dependent back-end that indicates the
 mapping will be used only for a
 .Em "device -\*[Gt] memory"
 transaction.
@@ -435,7 +435,7 @@ This is the bus_dma_tag_t passed down from the parent driver via
 .It Fa dmam
 The DMA mapping to be synchronized.
 .It Fa ops
-One or more synchronization operation to perform.
+One or more synchronization operations to perform.
 The following DMA synchronization operations are defined:
 .Bl -tag -width BUS_DMASYNC_POSTWRITE -compact
 .It Dv BUS_DMASYNC_PREREAD
@@ -542,7 +542,7 @@ This function returns 0 on success, or an error code indicating mode of
 failure.
 .Pp
 The mapping of this memory is machine-dependent (or "opaque");
-machine-independent code is not to assume that the addresses returned
+machine-independent code should not assume that the addresses returned
 are valid in kernel virtual address space, or that the addresses
 returned are system physical addresses.
 The address value returned as part of
@@ -601,7 +601,7 @@ to conform to the platform-dependent requirements for the use of the
 flag with the
 .Fn bus_dmamap_load
 function.
-If the platform does not support the  
+If the platform does not support the
 .Dv BUS_DMA_STREAMING
 feature, or if the size, alignment, and boundary constraints
 would already satisfy the platform's requirements, this flag
