@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pctr.4,v 1.6 1998/03/09 02:52:56 millert Exp $
+.\"	$OpenBSD: pctr.4,v 1.7 1998/08/30 23:11:16 downsj Exp $
 .\"
 .\" Pentium performance counter driver for OpenBSD.
 .\" Copyright 1996 David Mazieres <dm@lcs.mit.edu>.
@@ -8,23 +8,25 @@
 .\" OpenBSD project (for instance by leaving this copyright notice
 .\" intact).
 .\"
-.Dd Aug 15, 1996
+.Dd August 15, 1996
 .Dt PCTR 4 i386
 .Os OpenBSD
 .Sh NAME
 .Nm pctr
-.Nd Driver for Pentium/Pentium Pro performance counters
+.Nd driver for cpu performance counters
 .Sh SYNOPSIS
 .Cd pseudo-device pctr
 .Sh DESCRIPTION
 The
 .Nm
-device provides access to the performance counters on the Pentium and
-Pentium Pro processors.  These processors have two 40-bit performance
+device provides access to the performance counters on Intel brand processors,
+and to the TSC on others.
+.Pp
+Intel processors have two 40-bit performance
 counters which can be programmed to count events such as cache misses,
 branch target buffer hits, TLB misses, dual-issues, interrupts,
 pipeline flushes, and more.
-
+.Pp
 There is one
 .Em ioctl
 call to read the status of all counters, and one
@@ -72,29 +74,28 @@ and
 .Dv PCIOCS1 ,
 which require a writeable file descriptor and take an argument of type
 .Dv "unsigned int" . \&
-The meaning of this integer is dependent on the particular CPU.  The
-following procedure can be used to determine which counters are
-available on a given cpu:
-.Bd -literal -offset indent
-ctrval id = __cpuid();
-if (__hasp5ctr(id)) {
-	/* The machine has Pentium counters */
-} else if (__hasp6ctr(id)) {
-	/* The machine has Pentium Pro counters */
-} else if (__hastsc(id)) {
-	/* The machine just has a time stamp counter */
-} else {
-	/* No counters at all */
-}
-.Ed
-
+The meaning of this integer is dependent on the particular CPU.
+.\" The
+.\" following procedure can be used to determine which counters are
+.\" available on a given cpu:
+.\" .Bd -literal -offset indent
+.\" ctrval id = __cpuid();
+.\" if (__hasp5ctr(id)) {
+.\"	/* The machine has Pentium counters */
+.\" } else if (__hasp6ctr(id)) {
+.\"	/* The machine has Pentium Pro counters */
+.\" } else if (__hastsc(id)) {
+.\"	/* The machine just has a time stamp counter */
+.\" } else {
+.\"	/* No counters at all */
+.\"}
+.\" .Ed
 .Ss Time stamp counter
-
 The time stamp counter is available on all machines with Pentium and
 Pentium Pro counters, as well as on some 486s and non-intel CPUs.  It
 is set to zero at boot time, and then increments with each cycle.
 Because the counter is 64-bits wide, it does not overflow.
-
+.Pp
 The time stamp counter can be be read directly from user-mode using
 the
 .Fn rdtsc
@@ -116,18 +117,16 @@ time_functionx(void)
 	printf ("Functionx took %qd cycles.\en", tsc);
 }
 .Ed
-
+.Pp
 The value of the time stamp counter is also returned by the
 .Dv PCIOCRD
 .Em ioctl ,
 so that one can get an exact timestamp on readings of the hardware
 event counters.
-
 .Ss Pentium counters
-
 The Pentium counters are programmed with a 9 bit function.  The top
 three bits contain the following flags:
-
+.Pp
 .Bl -tag -width P5CTR_C
 .It Dv P5CTR_K
 Enables counting of events that occur in kernel mode.
@@ -143,11 +142,11 @@ When this flag is set, the counter attempts to count the number of
 cycles spent servicing a particular event, rather than simply the
 number of occurences of that event.
 .El
-
+.Pp
 The bottom 6 bits set the particular event counted.  Here is the event
 type of each permissible value for the bottom 6 bits of the counter
 function:
-
+.Pp
 .Bl -tag -width "0x00" -compact -offset indent
 .It 0x00
 Data read
@@ -226,9 +225,7 @@ Data read or data write
 .It 0x29
 Data read miss or data write miss
 .El
-
 .Ss Pentium Pro counters
-
 The Pentium Pro counter functions contain several parts.  The most
 significant byte (an 8-bit integer shifted left by
 .Dv P6CTR_CM_SHIFT )
@@ -239,8 +236,8 @@ must occur in one cycle for the counter to be incremented.  The
 .Em "counter mask"
 can therefore be used to count cycles in which an event
 occurs at least some number of times.
-
 The next byte contains several flags:
+.Pp
 .Bl -tag -width P6CTR_EN
 .It Dv P6CTR_U
 Enables counting of events that occur in user mode.
@@ -268,11 +265,12 @@ there are no
 events than specified in the
 .Em "counter mask" .
 .El
-
+.Pp
 The next byte, also known as the
 .Em "unit mask" ,
 contains flags specific to the event being counted.  For events
 dealing with the L2 cache, the following flags are valid:
+.Pp
 .Bl -tag -width P6CTR_UM_M
 .It Dv P6CTR_UM_M
 Count events involving modified cache lines.
@@ -283,12 +281,11 @@ Count events involving shared cache lines.
 .It Dv P6CTR_UM_I
 Count events involving invalid cache lines.
 .El
-
 To measure all L2 cache activity, all these bits should be set.  They
 can be set with the macro
 .Dv P6CTR_UM_MESI
 which contains the bitwise or of all of the above.
-
+.Pp
 For event types dealing with bus transactions, there is another flag
 that can be set in the
 .Em "unit mask" :
@@ -297,10 +294,10 @@ that can be set in the
 Count all appropriate bus events, not just those initiated by the
 processor.
 .El
-
+.Pp
 Finally, the least significant byte of the counter function is the
 event type to count.  The following values are available:
-
+.Pp
 .Bl -tag -width 0x00 -compact
 .It 0x03 LD_BLOCKS
 Number of store buffer blocks.
@@ -448,7 +445,7 @@ Number of bogus branches.
 .It 0xe6 BACLEARS
 Number of times BACLEAR is asserted.
 .El
-
+.Pp
 Events marked /mesi require the
 .Dv P6CTR_UM_[MESI]
 bits in the
@@ -456,7 +453,7 @@ bits in the
 Events marked /a can take the
 .Dv P6CTR_UM_A
 bit.
-
+.Pp
 Unlike the Pentium counters, the Pentium Pro counters can be read
 directly from user-mode without need to invoke the kernel.  The macro
 .Fn rdpmc ctr
@@ -469,22 +466,21 @@ possibility of an interrupt between invocations of
 .Fn rdpmc
 and/or
 .Fn rdtsc .
-
 .Sh SEE ALSO
-pctr(1)
+.Xr pctr 1
 .Sh FILES
 .Pa /dev/pctr
 .Sh HISTORY
 A
 .Nm
-device first appeared in the OpenBSD operating system.
+device first appeared in
+.Ox 2.0 .
 .Sh AUTHORS
 The
 .Nm
 device was written by David Mazieres
 .Aq dm@lcs.mit.edu .
 .Sh ERRORS
-
 .Bl -tag -width "[ENODEV]"
 .It Bq Er ENODEV
 An attempt was made to set the counter functions on a CPU that does
