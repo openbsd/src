@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.14 2004/01/04 20:21:56 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.15 2004/01/04 21:45:05 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -32,7 +32,13 @@ enum actions {
 	SHOW,
 	SHOW_SUMMARY,
 	SHOW_NEIGHBOR,
+	SHOW_NEIGHBOR_TIMERS,
 	RELOAD
+};
+
+enum neighbor_views {
+	NV_DEFAULT,
+	NV_TIMERS
 };
 
 struct keywords {
@@ -50,12 +56,21 @@ static const struct keywords keywords_show[] = {
 	{ "summary",	SHOW_SUMMARY}
 };
 
+static const struct keywords keywords_neighbor[] = {
+	{ "timers",	SHOW_NEIGHBOR_TIMERS},
+	{ "messages",	SHOW_NEIGHBOR}
+};
+
 int		 main(int, char *[]);
 int		 match_keyword(const char *, const struct keywords [], size_t);
 void		 show_summary_head(void);
 int		 show_summary_msg(struct imsg *);
-int		 show_neighbor_msg(struct imsg *);
+int		 show_neighbor_msg(struct imsg *, enum neighbor_views);
+void		 print_neighbor_msgstats(struct peer *);
+void		 print_neighbor_timers(struct peer *);
+void		 print_timer(const char *, time_t);
 static char	*fmt_timeframe(time_t t);
+static char	*fmt_timeframe_core(time_t t);
 int		 parse_addr(const char *, struct bgpd_addr *);
 
 struct imsgbuf	ibuf;
@@ -105,6 +120,7 @@ again:
 		show_summary_head();
 		break;
 	case SHOW_NEIGHBOR:
+	case SHOW_NEIGHBOR_TIMERS:
 		/* get ip address of neighbor, limit query to that */
 		if (argc >= 4) {
 			if (!parse_addr(argv[3], &addr))
@@ -113,6 +129,11 @@ again:
 			    &addr, sizeof(addr));
 		} else
 			imsg_compose(&ibuf, IMSG_CTL_SHOW_NEIGHBOR, 0, NULL, 0);
+
+		if (argc >= 5)
+			action = match_keyword(argv[4], keywords_neighbor,
+			    sizeof(keywords_neighbor)/
+			    sizeof(keywords_neighbor[0]));
 		break;
 	case RELOAD:
 		if (argc >= 3)
@@ -141,7 +162,10 @@ again:
 				done = show_summary_msg(&imsg);
 				break;
 			case SHOW_NEIGHBOR:
-				done = show_neighbor_msg(&imsg);
+				done = show_neighbor_msg(&imsg, NV_DEFAULT);
+				break;
+			case SHOW_NEIGHBOR_TIMERS:
+				done = show_neighbor_msg(&imsg, NV_TIMERS);
 				break;
 			case RELOAD:
 				break;
@@ -210,7 +234,7 @@ show_summary_msg(struct imsg *imsg)
 }
 
 int
-show_neighbor_msg(struct imsg *imsg)
+show_neighbor_msg(struct imsg *imsg, enum neighbor_views nv)
 {
 	struct peer		*p;
 
@@ -233,22 +257,15 @@ show_neighbor_msg(struct imsg *imsg)
 		printf("  Last read %s, holdtime %us, keepalive interval %us\n",
 		    fmt_timeframe(p->stats.last_read),
 		    p->holdtime, p->holdtime/3);
-		printf("  Message statistics:\n");
-		printf("  %-15s %-10s %-10s\n", "", "Sent", "Received");
-		printf("  %-15s %10llu %10llu\n", "Opens",
-		    p->stats.msg_sent_open, p->stats.msg_rcvd_open);
-		printf("  %-15s %10llu %10llu\n", "Notifications",
-		    p->stats.msg_sent_notification,
-		    p->stats.msg_rcvd_notification);
-		printf("  %-15s %10llu %10llu\n", "Updates",
-		    p->stats.msg_sent_update, p->stats.msg_rcvd_update);
-		printf("  %-15s %10llu %10llu\n", "Keepalives",
-		    p->stats.msg_sent_keepalive, p->stats.msg_rcvd_keepalive);
-		printf("  %-15s %10llu %10llu\n", "Total",
-		    p->stats.msg_sent_open + p->stats.msg_sent_notification +
-		    p->stats.msg_sent_update + p->stats.msg_sent_keepalive,
-		    p->stats.msg_rcvd_open + p->stats.msg_rcvd_notification +
-		    p->stats.msg_rcvd_update + p->stats.msg_rcvd_keepalive);
+		printf("\n");
+		switch (nv) {
+		case NV_DEFAULT:
+			print_neighbor_msgstats(p);
+			break;
+		case NV_TIMERS:
+			print_neighbor_timers(p);
+			break;
+		}
 		printf("\n");
 		break;
 	case IMSG_CTL_END:
@@ -261,11 +278,65 @@ show_neighbor_msg(struct imsg *imsg)
 	return (0);
 }
 
+void
+print_neighbor_msgstats(struct peer *p)
+{
+	printf("  Message statistics:\n");
+	printf("  %-15s %-10s %-10s\n", "", "Sent", "Received");
+	printf("  %-15s %10llu %10llu\n", "Opens",
+	    p->stats.msg_sent_open, p->stats.msg_rcvd_open);
+	printf("  %-15s %10llu %10llu\n", "Notifications",
+	    p->stats.msg_sent_notification, p->stats.msg_rcvd_notification);
+	printf("  %-15s %10llu %10llu\n", "Updates",
+	    p->stats.msg_sent_update, p->stats.msg_rcvd_update);
+	printf("  %-15s %10llu %10llu\n", "Keepalives",
+	    p->stats.msg_sent_keepalive, p->stats.msg_rcvd_keepalive);
+	printf("  %-15s %10llu %10llu\n", "Total",
+	    p->stats.msg_sent_open + p->stats.msg_sent_notification +
+	    p->stats.msg_sent_update + p->stats.msg_sent_keepalive,
+	    p->stats.msg_rcvd_open + p->stats.msg_rcvd_notification +
+	    p->stats.msg_rcvd_update + p->stats.msg_rcvd_keepalive);
+}
+
+void
+print_neighbor_timers(struct peer *p)
+{
+	print_timer("StartTimer:", p->StartTimer);
+	print_timer("ConnectRetryTimer:", p->ConnectRetryTimer);
+	print_timer("HoldTimer:", p->HoldTimer);
+	print_timer("KeepaliveTimer:", p->KeepaliveTimer);
+}
+
+void
+print_timer(const char *name, time_t val)
+{
+	int	d;
+
+	d = val - time(NULL);
+	printf("  %-20s ", name);
+
+	if (val == 0)
+		printf("not running\n");
+	else if (d <= 0)
+		printf("due\n");
+	else
+		printf("due in %s\n", fmt_timeframe_core(d));
+}
+
 #define TF_BUFS	8
 #define TF_LEN	9
 
 static char *
 fmt_timeframe(time_t t)
+{
+	if (t == 0)
+		return ("Never");
+	else
+		return(fmt_timeframe_core(time(NULL) - t));
+}
+
+static char *
+fmt_timeframe_core(time_t t)
 {
 	char		*buf;
 	static char	 tfbuf[TF_BUFS][TF_LEN];	/* ring buffer */
@@ -276,12 +347,7 @@ fmt_timeframe(time_t t)
 	if (idx == TF_BUFS)
 		idx = 0;
 
-	if (t == 0) {
-		snprintf(buf, TF_LEN, "%s", "Never");
-		return (buf);
-	}
-
-	week = time(NULL) - t;
+	week = t;
 
 	sec = week % 60;
 	week /= 60;
