@@ -1,7 +1,5 @@
 #!/bin/sh
-
-#
-#    $OpenBSD: rc.vpn,v 1.15 2001/06/27 03:32:56 angelos Exp $
+#	$OpenBSD: rc.vpn,v 1.16 2002/12/04 15:03:56 markus Exp $
 #
 # Richard Reiner, Ph.D., FSC Internet Corp.
 # rreiner@fscinternet.com
@@ -23,14 +21,15 @@
 
 # Gateway adresses
 GW_LOCAL=192.168.254.254
-GW_PEER=192.168.1.2
+GW_REMOTE=192.168.1.2
 
-# Local and remote networks, numbered, syntax <network>/<mask>
-LOCAL_NET_0=192.168.254.0/255.255.255.0
-LOCAL_NET_1=192.168.253.0/255.255.255.0
-REMOTE_NET_0=192.168.1.0/255.255.255.0
-REMOTE_NET_1=192.168.2.0/255.255.255.0
+# Local and remote networks, numbered
+LOCAL_NET_0="192.168.254.0/24"
+LOCAL_NET_1="192.168.253.0/24"
+REMOTE_NET_0="192.168.1.0/24"
+REMOTE_NET_1="192.168.2.0/24"
 
+# Optional, use for manual keying only
 # Crypto options and keys, note that key/iv lengths need to correspond
 # to the selected encryption and authentication algorithms.
 ENC=3des
@@ -53,128 +52,66 @@ ipsecadm=/sbin/ipsecadm
 
 abort=0
 if [ `/usr/sbin/sysctl -n net.inet.esp.enable` == 0 ]; then
-    echo " VPN: variable 'net.inet.esp.enable' (IPsec ESP protocol)"
-    abort=1
+	echo "$0: variable 'net.inet.esp.enable' (IPsec ESP protocol)"
+	abort=1
 fi
 if [ `/usr/sbin/sysctl -n net.inet.ip.forwarding` == 0 ]; then
-    echo " VPN: variable 'net.inet.ip.forwarding' (IP forwarding/routing)"
-    abort=1
+	echo "$0: variable 'net.inet.ip.forwarding' (IP forwarding/routing)"
+	abort=1
 fi
 if [ ${abort} = 1 ]; then
-    echo " VPN: must be enabled in /etc/sysctl.conf. Aborting VPN setup." 
-    exit 0
+	echo "$0: must be enabled in /etc/sysctl.conf. Aborting VPN setup." 
+	[ ! -n "${DEBUG}" ] && exit 0
 fi
 
-[ ! -n "${DEBUG}" ] && echo " VPN "
+$DEBUG $ipsecadm flush
 
 #
-# Setup the SAs
+# Setup the manual SAs
 #
 
-$DEBUG $ipsecadm new esp -src $GW_LOCAL -dst $GW_PEER \
-    -forcetunnel -spi $SPI_OUT -enc $ENC -auth $AUTH \
-    -keyfile $KEYFILE -authkeyfile $AUTHKEYFILE
+if [ "$ENC" ]; then
+	$DEBUG $ipsecadm new esp -src $GW_LOCAL -dst $GW_REMOTE \
+		-forcetunnel -spi $SPI_OUT -enc $ENC -auth $AUTH \
+		-keyfile $KEYFILE -authkeyfile $AUTHKEYFILE
 
-$DEBUG $ipsecadm new esp -src $GW_PEER -dst $GW_LOCAL \
-    -forcetunnel -spi $SPI_IN -enc $ENC -auth $AUTH \
-    -keyfile $KEYFILE -authkeyfile $AUTHKEYFILE
+	$DEBUG $ipsecadm new esp -src $GW_REMOTE -dst $GW_LOCAL \
+		-forcetunnel -spi $SPI_IN -enc $ENC -auth $AUTH \
+		-keyfile $KEYFILE -authkeyfile $AUTHKEYFILE
+fi
 
 #
-# Create the flows
+# Setup the Flows, aka SPD
 #
 
-# Gateway to gateway (both egress and ingress flows)
-$DEBUG $ipsecadm flow -proto esp -src $GW_LOCAL -dst $GW_PEER \
-    -addr $GW_LOCAL 255.255.255.255 $GW_PEER 255.255.255.255 -out -require
-$DEBUG $ipsecadm flow -proto esp -src $GW_LOCAL -dst $GW_PEER \
-    -addr $GW_PEER 255.255.255.255 $GW_LOCAL 255.255.255.255 -in -require
+FLOW="$DEBUG $ipsecadm flow -proto esp -src $GW_LOCAL -dst $GW_REMOTE"
+FLOWIN="$FLOW -in -require -addr"
+FLOWOUT="$FLOW -out -require -addr"
 
-# Flows from each local to each remote subnet, and vice versa for
-# ACL entries
-mycount=0
-while :
-do
-    eval network=\$LOCAL_NET_${mycount}
-    set `echo $network | sed 's%/% %g'` 0x0 0x0
-    local_net=$1
-    local_mask=$2
-    if [ "${local_net}" != "0x0" ]; then
-	peercount=0
-	while :
-	do
-	    eval network=\$REMOTE_NET_${peercount}
-	    set `echo $network | sed 's%/% %g'` 0x0 0x0
-	    remote_net=$1
-	    remote_mask=$2
-	    if [ "${remote_net}" != "0x0" ]; then
-		$DEBUG $ipsecadm flow \
-		    -proto esp -src $GW_LOCAL -dst $GW_PEER \
-		    -addr $local_net $local_mask $remote_net $remote_mask \
-		    -out -require
+# local gateway to remote gateway
 
-		$DEBUG $ipsecadm flow \
-		    -proto esp -src $GW_LOCAL -dst $GW_PEER \
-                    -in -require \
-		    -addr $remote_net $remote_mask $local_net $local_mask
-		peercount=$(($peercount + 1))
-	    else
+$FLOWOUT ${GW_LOCAL}/32  ${GW_REMOTE}/32
+$FLOWIN  ${GW_REMOTE}/32 ${GW_LOCAL}/32
+
+# each local net to each remote net
+
+localcount=0
+while true; do
+	local_net=`eval "echo \\\$LOCAL_NET_${localcount}"`
+	if [ "x${local_net}" == "x" ]; then
 		break;
-	    fi
+	fi
+	remotecount=0
+	while true; do
+		remote_net=`eval "echo \\\$REMOTE_NET_${remotecount}"`
+		if [ "x${remote_net}" == "x" ]; then
+			break;
+		fi
+		$FLOWOUT $local_net  $remote_net
+		$FLOWIN  $remote_net $local_net
+		remotecount=$(($remotecount + 1))
 	done
-	mycount=$(($mycount + 1))
-    else
-	break;
-    fi
-done
-
-# XXX Stuff below is mainly for testing, may be removed later.
-
-# Flows from local gw to each remote subnet, and vice versa
-peercount=0
-while :
-do
-    eval network=\$REMOTE_NET_${peercount}
-    set `echo $network | sed 's%/% %g'` 0x0 0x0
-    remote_net=$1
-    remote_mask=$2
-    if [ "${remote_net}" != "0x0" ]; then
-	$DEBUG $ipsecadm flow \
-	    -proto esp -dst $GW_PEER -out -require \
-            -src $GW_LOCAL \
-	    -addr $GW_LOCAL 255.255.255.255 $remote_net $remote_mask \
-
-	$DEBUG $ipsecadm flow \
-	    -proto esp -dst $GW_PEER -in -require \
-            -src $GW_LOCAL \
-	    -addr $remote_net $remote_mask $GW_LOCAL 255.255.255.255 
-	peercount=$(($peercount + 1))
-    else
-	break;
-    fi
-done
-
-# Flows from local subnets to the remote gw and vice versa
-mycount=0
-while :
-do
-    eval network=\$LOCAL_NET_${mycount}
-    set `echo $network | sed 's%/% %g'` 0x0 0x0
-    local_net=$1
-    local_mask=$2
-    if [ "${local_net}" != "0x0" ]; then
-	$DEBUG $ipsecadm flow \
-	    -proto esp -dst $GW_PEER -out -require \
-            -src $GW_LOCAL \
-	    -addr $local_net $local_mask $GW_PEER 255.255.255.255
-
-	$DEBUG $ipsecadm flow \
-	    -proto esp -dst $GW_PEER -in -require \
-            -src $GW_LOCAL \
-	    -addr $GW_PEER 255.255.255.255 $local_net $local_mask 
-	mycount=$(($mycount + 1))
-    else
-	break;
-    fi
+	localcount=$(($localcount + 1))
 done
 
 exit 0
