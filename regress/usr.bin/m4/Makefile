@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2001/09/16 21:09:19 espie Exp $
+#	$OpenBSD: Makefile,v 1.7 2001/09/17 08:07:22 espie Exp $
 #	$NetBSD: Makefile,v 1.2 1999/02/13 02:54:33 lukem Exp $
 
 NOMAN=
@@ -9,7 +9,7 @@ M4=m4
 
 CLEANFILES+= ff_after_dnl.m4 fibo.out
 
-regress: test-ff_after_dnl test-m4wrap test-fibo test-patterns
+regress: test-ff_after_dnl test-m4wrap test-fibo test-patterns trip
 
 test-ff_after_dnl: ff_after_dnl.m4
 	${M4} ff_after_dnl.m4 | diff - ${.CURDIR}/ff_after_dnl.out
@@ -29,6 +29,9 @@ fibo.out:
 test-fibo: fibo.out
 	${M4} -DN=${FIBOMAX} ${.CURDIR}/fibo.m4| diff - fibo.out
 
-.PHONY:	test-ff_after_dnl test-m4wrap test-patterns test-fibo
+trip:
+	echo "undefine(\`errprint')"|MALLOC_OPTIONS=A ${M4} -Derrprint=a >/dev/null
+
+.PHONY:	test-ff_after_dnl test-m4wrap test-patterns test-fibo trip
 
 .include <bsd.prog.mk>
