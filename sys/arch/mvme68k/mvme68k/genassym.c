@@ -1,4 +1,4 @@
-/*	$OpenBSD: genassym.c,v 1.3 1996/04/28 10:57:44 deraadt Exp $ */
+/*	$OpenBSD: genassym.c,v 1.4 1997/02/10 17:49:11 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -272,6 +272,11 @@ main()
 	def("MMU_68851", MMU_68851);
 	def("MMU_68030", MMU_68030);
 	def("MMU_68040", MMU_68040);
+
+	def("CPU_68020", CPU_68020);
+	def("CPU_68030", CPU_68030);
+	def("CPU_68040", CPU_68040);
+	def("CPU_68060", CPU_68060);
 
 	off("NETCTRL_DEV", struct prom_netctrl, dev);
 	off("NETCTRL_CTRL", struct prom_netctrl, ctrl);

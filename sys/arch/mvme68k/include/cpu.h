@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.4 1996/04/28 10:56:07 deraadt Exp $ */
+/*	$OpenBSD: cpu.h,v 1.5 1997/02/10 17:49:09 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -74,6 +74,9 @@
 /*
  * Exported definitions unique to mvme68k/68k cpu support.
  */
+
+#define M68K_MMU_MOTOROLA
+#include <m68k/cpu.h>
 
 /*
  * definitions of cpu-dependent requirements

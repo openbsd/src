@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.14 1997/02/10 11:39:25 downsj Exp $ */
+/*	$OpenBSD: locore.s,v 1.15 1997/02/10 17:49:12 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -200,6 +200,9 @@ is147:
 	RELOC(_mmutype, a0)		| no, we have 68030
 	movl	#MMU_68030,a0@		| set to reflect 68030 PMMU
 
+	RELOC(_cputype, a0)		| no, we have 68030
+	movl	#CPU_68030,a0@		| set to reflect 68030 CPU
+
 	movl	#CACHE_OFF,d0
 	movc	d0,cacr			| clear and disable on-chip cache(s)
 
@@ -240,6 +243,9 @@ is162:
 	RELOC(_mmutype, a0)
 	movl	#MMU_68040,a0@		| with a 68040 MMU
 
+	RELOC(_cputype, a0)		| no, we have 68040
+	movl	#CPU_68040,a0@		| set to reflect 68040 CPU
+
 	bra	is16x
 #endif
 
@@ -255,6 +261,9 @@ is167:
 	RELOC(_mmutype, a0)
 	movl	#MMU_68040,a0@		| with a 68040 MMU
 
+	RELOC(_cputype, a0)		| no, we have 68040
+	movl	#CPU_68040,a0@		| set to reflect 68040 CPU
+
 	bra	is16x
 #endif
 
@@ -268,7 +277,10 @@ is177:
 	movl	d0, d2
 
 	RELOC(_mmutype, a0)
-	movl	#MMU_68040,a0@		| XXX TDR FIX FIX with a 68060 MMU
+	movl	#MMU_68060,a0@		| with a 68060 MMU
+
+	RELOC(_cputype, a0)		| no, we have 68060
+	movl	#CPU_68060,a0@		| set to reflect 68060 CPU
 
 	bra	is16x
 #endif
@@ -1869,9 +1881,11 @@ not147:
 	/*NOTREACHED*/
 
 	.data
-	.globl	_mmutype,_protorp
+	.globl	_mmutype,_protorp, _cputype
 _mmutype:
 	.long	MMU_68030	| default to MMU_68030
+_cputype:
+	.long	CPU_68030	| default to CPU_68030
 _protorp:
 	.long	0,0		| prototype root pointer
 	.globl	_cold
