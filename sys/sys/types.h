@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.15 1999/02/15 18:53:57 millert Exp $	*/
+/*	$OpenBSD: types.h,v 1.16 2000/02/22 17:29:12 millert Exp $	*/
 /*	$NetBSD: types.h,v 1.29 1996/11/15 22:48:25 jtc Exp $	*/
 
 /*-
@@ -75,7 +75,6 @@ typedef	u_int32_t	ino_t;		/* inode number */
 typedef	long		key_t;		/* IPC key (for Sys V IPC) */
 typedef	u_int16_t	mode_t;		/* permissions */
 typedef	u_int16_t	nlink_t;	/* link count */
-typedef	quad_t		off_t;		/* file offset */
 typedef	int32_t		pid_t;		/* process id */
 typedef quad_t		rlim_t;		/* resource limit */
 typedef	int32_t		segsz_t;	/* segment size */
@@ -95,29 +94,6 @@ typedef u_int32_t	in_addr_t;	/* base type for internet address */
 typedef u_int16_t	in_port_t;	/* IP port type */
 typedef u_int8_t	sa_family_t;	/* sockaddr address family type */
 typedef u_int32_t	socklen_t;	/* length type for network syscalls */
-
-/*
- * These belong in unistd.h, but are placed here too to ensure that
- * long arguments will be promoted to off_t if the program fails to
- * include that header or explicitly cast them to off_t.
- */
-#if !defined(_POSIX_SOURCE) && !defined(_XOPEN_SOURCE)
-#ifndef _KERNEL
-#include <sys/cdefs.h>
-__BEGIN_DECLS
-off_t	 lseek __P((int, off_t, int));
-int	 ftruncate __P((int, off_t));
-int	 truncate __P((const char *, off_t));
-__END_DECLS
-#endif /* !_KERNEL */
-#endif /* !defined(_POSIX_SOURCE) ... */
-
-#if !defined(_POSIX_SOURCE) && !defined(_XOPEN_SOURCE)
-/* Major, minor numbers, dev_t's. */
-#define	major(x)	((int32_t)(((u_int32_t)(x) >> 8) & 0xff))
-#define	minor(x)	((int32_t)((x) & 0xff))
-#define	makedev(x,y)	((dev_t)(((x) << 8) | (y)))
-#endif
 
 #ifdef	_BSD_CLOCK_T_
 typedef	_BSD_CLOCK_T_	clock_t;
@@ -147,6 +123,34 @@ typedef	_BSD_CLOCKID_T_	clockid_t;
 #ifdef	_BSD_TIMER_T_
 typedef	_BSD_TIMER_T_	timer_t;
 #undef	_BSD_TIMER_T_
+#endif
+
+#ifdef	_BSD_OFF_T_
+typedef	_BSD_OFF_T_	off_t;
+#undef	_BSD_OFF_T_
+#endif
+
+/*
+ * These belong in unistd.h, but are placed here too to ensure that
+ * long arguments will be promoted to off_t if the program fails to
+ * include that header or explicitly cast them to off_t.
+ */
+#if !defined(_POSIX_SOURCE) && !defined(_XOPEN_SOURCE)
+#ifndef _KERNEL
+#include <sys/cdefs.h>
+__BEGIN_DECLS
+off_t	 lseek __P((int, off_t, int));
+int	 ftruncate __P((int, off_t));
+int	 truncate __P((const char *, off_t));
+__END_DECLS
+#endif /* !_KERNEL */
+#endif /* !defined(_POSIX_SOURCE) ... */
+
+#if !defined(_POSIX_SOURCE) && !defined(_XOPEN_SOURCE)
+/* Major, minor numbers, dev_t's. */
+#define	major(x)	((int32_t)(((u_int32_t)(x) >> 8) & 0xff))
+#define	minor(x)	((int32_t)((x) & 0xff))
+#define	makedev(x,y)	((dev_t)(((x) << 8) | (y)))
 #endif
 
 #if !defined(_POSIX_SOURCE) && !defined(_XOPEN_SOURCE)

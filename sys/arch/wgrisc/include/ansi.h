@@ -1,4 +1,4 @@
-/*	$OpenBSD: ansi.h,v 1.5 1997/07/07 05:56:44 millert Exp $	*/
+/*	$OpenBSD: ansi.h,v 1.6 2000/02/22 17:29:14 millert Exp $	*/
 /*	$NetBSD: ansi.h,v 1.5 1994/10/26 21:09:33 cgd Exp $	*/
 
 /*-
@@ -72,6 +72,13 @@
  * defined for ctype.h.
  */
 #define	_BSD_WCHAR_T_	int			/* wchar_t */
+#define	_BSD_WINT_T_	int			/* wint_t */
 #define	_BSD_RUNE_T_	int			/* rune_t */
+
+/*
+ * We describe off_t here so its declaration can be visible to
+ * stdio without pulling in all of <sys/type.h>, thus appeasing ANSI.
+ */
+#define _BSD_OFF_T_	long long		/* file offset */
 
 #endif	/* _ANSI_H_ */

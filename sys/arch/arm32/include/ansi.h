@@ -74,4 +74,10 @@
 #define _BSD_WINT_T_	int			/* wint_t */
 #define	_BSD_RUNE_T_	int			/* rune_t */
 
+/*
+ * We describe off_t here so its declaration can be visible to
+ * stdio without pulling in all of <sys/type.h>, thus appeasing ANSI.
+ */
+#define _BSD_OFF_T_	long long		/* file offset */
+
 #endif	/* _ANSI_H_ */

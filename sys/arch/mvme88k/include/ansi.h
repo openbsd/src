@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ansi.h	8.2 (Berkeley) 1/4/94
- *      $Id: ansi.h,v 1.7 1999/02/09 06:36:25 smurph Exp $
+ *      $Id: ansi.h,v 1.8 2000/02/22 17:29:13 millert Exp $
  */
 
 #ifndef	_ANSI_H_
@@ -78,5 +78,11 @@
  */
 #define	_BSD_WCHAR_T_	int			/* wchar_t */
 #define	_BSD_RUNE_T_	int			/* rune_t */
+
+/*
+ * We describe off_t here so its declaration can be visible to
+ * stdio without pulling in all of <sys/type.h>, thus appeasing ANSI.
+ */
+#define _BSD_OFF_T_	long long		/* file offset */
 
 #endif	/* _ANSI_H_ */

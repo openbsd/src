@@ -1,4 +1,4 @@
-/*	$OpenBSD: ansi.h,v 1.8 1997/07/07 05:56:34 millert Exp $	*/
+/*	$OpenBSD: ansi.h,v 1.9 2000/02/22 17:29:12 millert Exp $	*/
 /*	$NetBSD: ansi.h,v 1.6 1996/11/15 22:38:45 jtc Exp $	*/
 
 /*-
@@ -79,5 +79,11 @@ typedef struct {
 #define	_BSD_WCHAR_T_	int			/* wchar_t */
 #define _BSD_WINT_T_	int			/* wint_t */
 #define	_BSD_RUNE_T_	int			/* rune_t */
+
+/*
+ * We describe off_t here so its declaration can be visible to
+ * stdio without pulling in all of <sys/type.h>, thus appeasing ANSI.
+ */
+#define _BSD_OFF_T_	long			/* file offset */
 
 #endif	/* _ANSI_H_ */

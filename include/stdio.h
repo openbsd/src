@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdio.h,v 1.12 2000/02/21 22:11:20 millert Exp $	*/
+/*	$OpenBSD: stdio.h,v 1.13 2000/02/22 17:29:12 millert Exp $	*/
 /*	$NetBSD: stdio.h,v 1.18 1996/04/25 18:29:21 jtc Exp $	*/
 
 /*-
@@ -47,11 +47,16 @@
 #endif
 
 #include <sys/cdefs.h>
-
 #include <machine/ansi.h>
+
 #ifdef	_BSD_SIZE_T_
 typedef	_BSD_SIZE_T_	size_t;
 #undef	_BSD_SIZE_T_
+#endif
+
+#ifdef	_BSD_OFF_T_
+typedef	_BSD_OFF_T_	off_t;
+#undef	_BSD_OFF_T_
 #endif
 
 #ifndef NULL
@@ -62,21 +67,9 @@ typedef	_BSD_SIZE_T_	size_t;
 #endif
 #endif
 
-/*      
- * This is fairly grotesque, but pure ANSI code must not inspect the
- * innards of an fpos_t anyway.  The library internally uses off_t,
- * which we assume is exactly as big as eight chars.
- */
-#if !defined(_ANSI_SOURCE) && !defined(__STRICT_ANSI__)
-typedef off_t fpos_t;
-#else
-typedef struct __sfpos {
-	/* LONGLONG */
-	long long _pos;			/* XXX must be the same as off_t */
-} fpos_t;
-#endif
-
 #define	_FSTDIO			/* Define for new stdio with functions. */
+
+typedef off_t fpos_t;		/* stdio file position type */
 
 /*
  * NB: to fit things in six character monocase externals, the stdio
