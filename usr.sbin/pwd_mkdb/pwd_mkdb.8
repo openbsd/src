@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pwd_mkdb.8,v 1.18 2004/03/09 07:59:50 otto Exp $
+.\"	$OpenBSD: pwd_mkdb.8,v 1.19 2004/10/12 16:28:33 millert Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -63,7 +63,7 @@ The
 must be in the correct format (see
 .Xr passwd 5 ) .
 It is important to note that the format used in this system is
-different from the historic Version 7 style format.
+different from the historic 6th Edition-style format.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -71,7 +71,7 @@ The options are as follows:
 Check if the password file is in the correct format.
 Do not change, add, or remove any files.
 .It Fl p
-Create a Version 7 style password file and install it into
+Create a 6th Edition-style password file and install it into
 .Pa /etc/passwd .
 .It Fl s
 Only update the secure version of the database.
@@ -127,7 +127,7 @@ exits zero on success, non-zero on failure.
 .It Pa /etc/master.passwd
 current password file
 .It Pa /etc/passwd
-a Version 7 format password file
+a 6th Edition-style password file
 .It Pa /etc/pwd.db
 insecure password database file
 .It Pa /etc/pwd.db.tmp
