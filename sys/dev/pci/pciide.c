@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.132 2003/06/18 20:21:50 grange Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.133 2003/07/20 22:26:50 tedu Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -4034,9 +4034,6 @@ acer_chip_map(sc, pa)
 	pciide_mapreg_dma(sc, pa);
 	sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
 	    WDC_CAPABILITY_MODE;
-
-	if (rev < 0xC4)
-		sc->sc_wdcdev.cap |= WDC_CAPABILITY_NO_ATAPI_DMA;
 
 	if (sc->sc_dma_ok) {
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA;
