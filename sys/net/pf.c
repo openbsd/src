@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.265 2002/11/29 18:25:22 mickey Exp $ */
+/*	$OpenBSD: pf.c,v 1.266 2002/12/01 01:20:02 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -447,7 +447,7 @@ pf_insert_state(struct pf_state *state)
 	pf_status.fcounters[FCNT_STATE_INSERT]++;
 	pf_status.states++;
 #if NPFSYNC
-	pfsync_insert_state(state);
+	/* pfsync_insert_state(state); */
 #endif
 	return (0);
 }
@@ -495,7 +495,7 @@ pf_purge_expired_states(void)
 			RB_REMOVE(pf_state_tree, &tree_lan_ext, peer);
 
 #if NPFSYNC
-			pfsync_delete_state(cur->state);
+			/* pfsync_delete_state(cur->state); */
 #endif
 			if (cur->state->rule.ptr != NULL)
 				cur->state->rule.ptr->states--;
