@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcs_bus_io_common.c,v 1.6 1997/04/02 22:08:09 niklas Exp $	*/
+/*	$OpenBSD: pcs_bus_io_common.c,v 1.7 1997/07/06 18:28:00 niklas Exp $	*/
 /*	$NetBSD: pcs_bus_io_common.c,v 1.14 1996/12/02 22:19:35 cgd Exp $	*/
 
 /*
@@ -41,6 +41,8 @@
 
 #define	__C(A,B)	__CONCAT(A,B)
 #define	__S(S)		__STRING(S)
+
+#define MIN(x,y)	((x) < (y) ? (x) : (y))
 
 /* mapping/unmapping */
 int		__C(CHIP,_io_map) __P((void *, bus_addr_t, bus_size_t, int,
@@ -760,11 +762,12 @@ __C(__C(CHIP,_io_read_raw_multi_),BYTES)(v, h, o, a, c)			\
 	while (c > 0) {							\
 		__C(CHIP,_io_barrier)(v, h, o, BYTES, BUS_BARRIER_READ); \
 		temp = __C(__C(CHIP,_io_read_),BYTES)(v, h, o);		\
-		for (i = 0; i < BYTES; i++) {				\
+		i = MIN(c, BYTES);					\
+		c -= i;							\
+		while (i--) {						\
 			*a++ = temp & 0xff;				\
 			temp >>= 8;					\
 		}							\
-		c -= BYTES;						\
 	}								\
 }
 CHIP_io_read_raw_multi_N(2,u_int16_t)
@@ -786,12 +789,14 @@ __C(__C(CHIP,_io_write_raw_multi_),BYTES)(v, h, o, a, c)		\
 		temp = 0;						\
 		for (i = BYTES - 1; i >= 0; i--) {			\
 			temp <<= 8;					\
-			temp |= *(a + i);				\
+			if (i < c)					\
+				temp |= *(a + i);			\
 		}							\
 		__C(__C(CHIP,_io_write_),BYTES)(v, h, o, temp);		\
 		__C(CHIP,_io_barrier)(v, h, o, BYTES, BUS_BARRIER_WRITE); \
-		c -= BYTES;						\
-		a += BYTES;						\
+		i = MIN(c, BYTES) - 1; 					\
+		c -= i;							\
+		a += i;							\
 	}								\
 }
 CHIP_io_write_raw_multi_N(2,u_int16_t)
