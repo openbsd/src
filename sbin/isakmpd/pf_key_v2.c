@@ -1,4 +1,4 @@
-/* $OpenBSD: pf_key_v2.c,v 1.154 2005/02/27 14:26:00 pat Exp $  */
+/* $OpenBSD: pf_key_v2.c,v 1.155 2005/03/02 12:49:51 hshoexer Exp $  */
 /* $EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	 */
 
 /*
@@ -98,10 +98,10 @@
 struct pf_key_v2_node {
 	TAILQ_ENTRY(pf_key_v2_node) link;
 	void           *seg;
-	size_t          sz;
-	int             cnt;
+	size_t		sz;
+	int		cnt;
 	u_int16_t       type;
-	u_int8_t        flags;
+	u_int8_t	flags;
 };
 
 TAILQ_HEAD(pf_key_v2_msg, pf_key_v2_node);
@@ -110,7 +110,7 @@ TAILQ_HEAD(pf_key_v2_msg, pf_key_v2_node);
 #define PF_KEY_V2_NODE_MARK 2
 
 /* Used to derive "unique" connection identifiers. */
-int             connection_seq = 0;
+int		connection_seq = 0;
 
 #ifdef KAME
 /*
@@ -120,10 +120,10 @@ int             connection_seq = 0;
 struct pf_key_v2_sa_seq {
 	TAILQ_ENTRY(pf_key_v2_sa_seq) link;
 	u_int8_t       *spi;
-	size_t          sz;
-	u_int8_t        proto;
+	size_t		sz;
+	u_int8_t	proto;
 	struct sockaddr *dst;
-	int             dstlen;
+	int		dstlen;
 	u_int32_t       seq;
 };
 
@@ -280,7 +280,7 @@ pf_key_v2_seq(void)
 static struct pf_key_v2_msg *
 pf_key_v2_read(u_int32_t seq)
 {
-	ssize_t         n;
+	ssize_t		n;
 	u_int8_t       *buf = 0;
 	struct pf_key_v2_msg *ret = 0;
 	struct sadb_msg *msg;
@@ -295,7 +295,7 @@ pf_key_v2_read(u_int32_t seq)
 		 * reply to get lost as PF_KEY is an unreliable service per
 		 * the specs. Currently we do this by setting a short timeout,
 		 * and if it is not readable in that time, we fail the read.
-	         */
+		 */
 		if (seq) {
 			fds = calloc(howmany(pf_key_v2_socket + 1, NFDBITS),
 			    sizeof(fd_mask));
@@ -414,10 +414,10 @@ u_int32_t
 pf_key_v2_write(struct pf_key_v2_msg *pmsg)
 {
 	struct iovec   *iov = 0;
-	ssize_t         n;
-	size_t          len;
-	int             i, cnt = TAILQ_FIRST(pmsg)->cnt;
-	char            header[80];
+	ssize_t		n;
+	size_t		len;
+	int		i, cnt = TAILQ_FIRST(pmsg)->cnt;
+	char		header[80];
 	struct sadb_msg *msg = TAILQ_FIRST(pmsg)->seg;
 	struct pf_key_v2_node *np = TAILQ_FIRST(pmsg);
 
@@ -441,10 +441,10 @@ pf_key_v2_write(struct pf_key_v2_msg *pmsg)
 		len += iov[i].iov_len = np->sz;
 
 		/*
-		 * XXX One can envision setting specific extension fields, like
-		 * *_reserved ones here.  For now we require them to be set by the
-		 * caller.
-	         */
+		 * XXX One can envision setting specific extension fields,
+		 * like *_reserved ones here.  For now we require them to be
+		 * set by the caller.
+		 */
 
 		np = TAILQ_NEXT(np, link);
 	}
@@ -512,7 +512,7 @@ pf_key_v2_find_ext(struct pf_key_v2_msg *msg, u_int16_t type)
 int
 pf_key_v2_open(void)
 {
-	int             fd = -1, err;
+	int		fd = -1, err;
 	struct sadb_msg msg;
 	struct pf_key_v2_msg *regmsg = 0, *ret = 0;
 
@@ -619,7 +619,7 @@ pf_key_v2_get_spi(size_t *sz, u_int8_t proto, struct sockaddr *src,
 	struct pf_key_v2_msg *getspi = 0, *ret = 0;
 	struct pf_key_v2_node *ext;
 	u_int8_t       *spi = 0;
-	int             len, err;
+	int		len, err;
 #ifdef KAME
 	struct sadb_x_sa2 ssa2;
 #endif
@@ -1040,11 +1040,11 @@ pf_key_v2_set_spi(struct sa *sa, struct proto *proto, int incoming,
 	struct sockaddr *src, *dst;
 	struct pf_key_v2_msg *update = 0, *ret = 0;
 	struct ipsec_proto *iproto = proto->data;
-	size_t          len;
-	int             keylen, hashlen, err;
+	size_t		len;
+	int		keylen, hashlen, err;
 #ifndef KAME
 	u_int8_t       *pp;
-	int             idtype;
+	int		idtype;
 #else				/* KAME */
 	struct sadb_x_sa2 ssa2;
 #endif
@@ -1352,7 +1352,7 @@ pf_key_v2_set_spi(struct sa *sa, struct proto *proto, int incoming,
 		/*
 		 * XXX I am not sure which one is best in security respect.
 		 * Maybe the RFCs actually mandate what a lifetime really is.
-	         */
+		 */
 #if 0
 		life->sadb_lifetime_addtime = 0;
 		life->sadb_lifetime_usetime = sa->seconds;
@@ -1368,7 +1368,7 @@ pf_key_v2_set_spi(struct sa *sa, struct proto *proto, int incoming,
 		/*
 		 * Setup the soft limits, we use 90 % of the hard ones.
 		 * XXX A configurable ratio would be better.
-	         */
+		 */
 		life = malloc(sizeof *life);
 		if (!life)
 			goto cleanup;
@@ -1379,7 +1379,7 @@ pf_key_v2_set_spi(struct sa *sa, struct proto *proto, int incoming,
 		/*
 		 * XXX I am not sure which one is best in security respect.
 		 * Maybe the RFCs actually mandate what a lifetime really is.
-	         */
+		 */
 #if 0
 		life->sadb_lifetime_addtime = 0;
 		life->sadb_lifetime_usetime = sa->seconds * 9 / 10;
@@ -1388,13 +1388,13 @@ pf_key_v2_set_spi(struct sa *sa, struct proto *proto, int incoming,
 		life->sadb_lifetime_usetime = 0;
 #endif
 		if (pf_key_v2_msg_add(update, (struct sadb_ext *) life,
-				      PF_KEY_V2_NODE_MALLOCED) == -1)
+		    PF_KEY_V2_NODE_MALLOCED) == -1)
 			goto cleanup;
 		life = 0;
 	}
 	/*
 	 * Setup the ADDRESS extensions.
-         */
+	 */
 	if (incoming)
 		sa->transport->vtbl->get_dst(sa->transport, &src);
 	else
@@ -1598,7 +1598,7 @@ nodid:
 	 * our credentials, since the process either knows them (if it
 	 * specified them with setsockopt()), or has no business looking at
 	 * them (e.g., system wide certs).
-         */
+	 */
 	if (isakmp_sa->recv_cert) {
 		switch (isakmp_sa->recv_certtype) {
 		case ISAKMP_CERTENC_NONE:
@@ -1675,7 +1675,7 @@ nodid:
 	/*
 	 * Tell the kernel what the peer used to authenticate, unless it was a
 	 * passphrase.
-         */
+	 */
 	if (isakmp_sa->recv_key) {
 		u_int8_t       *data;
 
@@ -1687,7 +1687,7 @@ nodid:
 		 * system-wide passphrases used for authentication with remote
 		 * systems. Same reason we don't send up the key (private or
 		 * passphrase) we used to authenticate with the peer.
-	         */
+		 */
 		if (isakmp_sa->recv_keytype == ISAKMP_KEY_PASSPHRASE)
 			goto doneauth;
 
@@ -1821,7 +1821,7 @@ doneauth:
 	/*
 	 * Although PF_KEY knows about expirations, it is unreliable per the
 	 * specs thus we need to do them inside isakmpd as well.
-         */
+	 */
 	if (sa->seconds)
 		if (sa_setup_expirations(sa))
 			goto cleanup;
@@ -1839,7 +1839,7 @@ doneauth:
 	 * If we are doing an addition into an SADB shared with our peer,
 	 * errors here are to be expected as the peer will already have
 	 * created the SA, and can thus be ignored.
-         */
+	 */
 	if (err && !(msg.sadb_msg_type == SADB_ADD &&
 	    conf_get_str("General", "Shared-SADB"))) {
 		log_print("pf_key_v2_set_spi: %s: %s",
@@ -1876,9 +1876,9 @@ pf_key_v2_mask_to_bits(u_int32_t mask)
 }
 
 static int
-pf_key_v2_mask6_to_bits(u_int8_t * mask)
+pf_key_v2_mask6_to_bits(u_int8_t *mask)
 {
-	int             n;
+	int		n;
 
 	bit_ffc(mask, 128, &n);
 	return n == -1 ? 128 : n;
@@ -1914,8 +1914,8 @@ pf_key_v2_flow(struct sockaddr *laddr, struct sockaddr *lmask,
 	struct sadb_address *addr = 0;
 	struct sadb_protocol tprotocol;
 	struct pf_key_v2_msg *flow = 0, *ret = 0;
-	size_t          len;
-	int             err;
+	size_t		len;
+	int		err;
 
 #if !defined (SADB_X_SAFLAGS_INGRESS_FLOW) && !defined (SADB_X_EXT_FLOW_TYPE)
 	if (ingress)
@@ -2023,7 +2023,7 @@ pf_key_v2_flow(struct sockaddr *laddr, struct sockaddr *lmask,
 
 	/*
 	 * Setup the ADDRESS extensions.
-         */
+	 */
 	len = sizeof *addr + PF_KEY_V2_ROUND(sysdep_sa_len(src));
 #if !defined (SADB_X_EXT_FLOW_TYPE)
 	if (!delete || ingress)
@@ -2176,8 +2176,8 @@ cleanup:
 	struct sockaddr *saddr;
 	struct pf_key_v2_msg *flow = 0, *ret = 0;
 	u_int8_t       *policy_buf;
-	size_t          len;
-	int             err;
+	size_t		len;
+	int		err;
 	struct sockaddr_in *ip4_sa;
 	struct sockaddr_in6 *ip6_sa;
 
@@ -2197,7 +2197,7 @@ cleanup:
 
 	/*
 	 * Setup the ADDRESS extensions.
-         */
+	 */
 	len = sizeof *addr + PF_KEY_V2_ROUND(sysdep_sa_len(src));
 	addr = calloc(1, len);
 	if (!addr)
@@ -2393,10 +2393,10 @@ cleanup:
 
 #ifndef KAME
 static u_int8_t *
-pf_key_v2_convert_id(u_int8_t * id, int idlen, size_t * reslen, int *idtype)
+pf_key_v2_convert_id(u_int8_t *id, int idlen, size_t *reslen, int *idtype)
 {
 	u_int8_t       *addr, *res = 0;
-	char            addrbuf[ADDRESS_MAX + 5];
+	char		addrbuf[ADDRESS_MAX + 5];
 
 	switch (id[0]) {
 	case IPSEC_ID_FQDN:
@@ -2409,7 +2409,7 @@ pf_key_v2_convert_id(u_int8_t * id, int idlen, size_t * reslen, int *idtype)
 		memcpy(res, id + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ, *reslen);
 		*idtype = SADB_IDENTTYPE_FQDN;
 		LOG_DBG((LOG_SYSDEP, 40, "pf_key_v2_convert_id: FQDN %.*s",
-			 (int) *reslen, res));
+		    (int) *reslen, res));
 		return res;
 
 	case IPSEC_ID_USER_FQDN:
@@ -2422,7 +2422,7 @@ pf_key_v2_convert_id(u_int8_t * id, int idlen, size_t * reslen, int *idtype)
 		memcpy(res, id + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ, *reslen);
 		*idtype = SADB_IDENTTYPE_USERFQDN;
 		LOG_DBG((LOG_SYSDEP, 40, "pf_key_v2_convert_id: UFQDN %.*s",
-			 (int) *reslen, res));
+		    (int) *reslen, res));
 		return res;
 
 	case IPSEC_ID_IPV4_ADDR:	/* XXX CONNECTION ? */
@@ -2507,10 +2507,10 @@ pf_key_v2_enable_sa(struct sa *sa, struct sa *isakmp_sa)
 {
 	struct ipsec_sa *isa = sa->data;
 	struct sockaddr *dst, *src;
-	int             error;
+	int		error;
 	struct proto   *proto = TAILQ_FIRST(&sa->protos);
-	int             sidtype = 0, didtype = 0;
-	size_t          sidlen = 0, didlen = 0;
+	int		sidtype = 0, didtype = 0;
+	size_t		sidlen = 0, didlen = 0;
 	u_int8_t       *sid = 0, *did = 0;
 #if !defined (SADB_X_EXT_FLOW_TYPE)
 	struct sockaddr_storage hostmask_storage;
@@ -2540,10 +2540,9 @@ pf_key_v2_enable_sa(struct sa *sa, struct sa *isakmp_sa)
 #endif				/* SADB_X_EXT_FLOW_TYPE */
 
 	error = pf_key_v2_flow(isa->src_net, isa->src_mask, isa->dst_net,
-			 isa->dst_mask, isa->tproto, isa->sport, isa->dport,
-			       proto->spi[0], proto->proto, dst, src, 0, 0,
-			       sidtype, sid, sidlen, didtype, did, didlen,
-			       proto->data);
+	    isa->dst_mask, isa->tproto, isa->sport, isa->dport, proto->spi[0],
+	    proto->proto, dst, src, 0, 0, sidtype, sid, sidlen, didtype, did,
+	    didlen, proto->data);
 	if (error)
 		goto cleanup;
 
@@ -2573,8 +2572,8 @@ pf_key_v2_enable_sa(struct sa *sa, struct sa *isakmp_sa)
 	/* Ingress flows, handling SA bundles. */
 	while (TAILQ_NEXT(proto, link)) {
 		error = pf_key_v2_flow(dst, hostmask, src, hostmask, 0, 0, 0,
-				       proto->spi[1], proto->proto, src, dst,
-				       0, 1, 0, 0, 0, 0, 0, 0, proto->data);
+		    proto->spi[1], proto->proto, src, dst, 0, 1, 0, 0, 0, 0, 0,
+		    0, proto->data);
 		if (error)
 			goto cleanup;
 		proto = TAILQ_NEXT(proto, link);
@@ -2582,10 +2581,9 @@ pf_key_v2_enable_sa(struct sa *sa, struct sa *isakmp_sa)
 #endif				/* SADB_X_EXT_FLOW_TYPE */
 
 	error = pf_key_v2_flow(isa->dst_net, isa->dst_mask, isa->src_net,
-			 isa->src_mask, isa->tproto, isa->dport, isa->sport,
-			       proto->spi[1], proto->proto, src, dst, 0, 1,
-			       sidtype, sid, sidlen, didtype, did, didlen,
-			       proto->data);
+	    isa->src_mask, isa->tproto, isa->dport, isa->sport, proto->spi[1],
+	    proto->proto, src, dst, 0, 1, sidtype, sid, sidlen, didtype, did,
+	    didlen, proto->data);
 
 cleanup:
 #if defined (SADB_X_EXT_FLOW_TYPE)
@@ -2603,8 +2601,8 @@ cleanup:
 static int
 pf_key_v2_conf_refinc(int af, char *section)
 {
-	char            conn[22];
-	int             num;
+	char		conn[22];
+	int		num;
 
 	if (!section)
 		return 0;
@@ -2626,8 +2624,8 @@ pf_key_v2_conf_refinc(int af, char *section)
 static int
 pf_key_v2_conf_refhandle(int af, char *section)
 {
-	char            conn[22];
-	int             num;
+	char		conn[22];
+	int		num;
 
 	if (!section)
 		return 0;
@@ -2650,7 +2648,7 @@ pf_key_v2_remove_conf(char *section)
 	char           *ikepeer, *localid, *remoteid, *configname;
 	struct conf_list_node *attr;
 	struct conf_list *attrs;
-	int             af;
+	int		af;
 
 	if (!section)
 		return 0;
@@ -2662,7 +2660,7 @@ pf_key_v2_remove_conf(char *section)
 	attrs = conf_get_list(section, "Flags");
 	if (attrs) {
 		for (attr = TAILQ_FIRST(&attrs->fields); attr;
-		     attr = TAILQ_NEXT(attr, link))
+		    attr = TAILQ_NEXT(attr, link))
 			if (!strcasecmp(attr->field, "__ondemand"))
 				goto passed;
 
@@ -2715,7 +2713,7 @@ pf_key_v2_disable_sa(struct sa *sa, int incoming)
 #if !defined (SADB_X_EXT_FLOW_TYPE)
 	struct sockaddr_storage hostmask_storage;
 	struct sockaddr *hostmask = (struct sockaddr *)&hostmask_storage;
-	int             error;
+	int		error;
 #endif				/* SADB_X_EXT_FLOW_TYPE */
 
 	sa->transport->vtbl->get_dst(sa->transport, &dst);
@@ -2781,7 +2779,7 @@ pf_key_v2_delete_spi(struct sa *sa, struct proto *proto, int incoming)
 	struct sadb_sa  ssa;
 	struct sadb_address *addr = 0;
 	struct sockaddr *saddr;
-	int             len, err;
+	int		len, err;
 	struct pf_key_v2_msg *delete = 0, *ret = 0;
 #ifdef KAME
 	struct sadb_x_sa2 ssa2;
@@ -2795,9 +2793,8 @@ pf_key_v2_delete_spi(struct sa *sa, struct proto *proto, int incoming)
 	 * If the SA was not replaced and was not one acquired through the
 	 * kernel (ACQUIRE message), remove the flow associated with it.
 	 * We ignore any errors from the disabling of the flow.
-         */
-	if (!(sa->flags & SA_FLAG_REPLACED)
-	    && !(sa->flags & SA_FLAG_ONDEMAND))
+	 */
+	if (!(sa->flags & SA_FLAG_REPLACED) && !(sa->flags & SA_FLAG_ONDEMAND))
 		pf_key_v2_disable_sa(sa, incoming);
 
 	if (sa->name && !(sa->flags & SA_FLAG_REPLACED)) {
@@ -2852,7 +2849,7 @@ pf_key_v2_delete_spi(struct sa *sa, struct proto *proto, int incoming)
 
 	/*
 	 * Setup the ADDRESS extensions.
-         */
+	 */
 	if (incoming)
 		sa->transport->vtbl->get_dst(sa->transport, &saddr);
 	else
@@ -2878,7 +2875,7 @@ pf_key_v2_delete_spi(struct sa *sa, struct proto *proto, int incoming)
 		break;
 	}
 	if (pf_key_v2_msg_add(delete, (struct sadb_ext *) addr,
-			      PF_KEY_V2_NODE_MALLOCED) == -1)
+	    PF_KEY_V2_NODE_MALLOCED) == -1)
 		goto cleanup;
 	addr = 0;
 
@@ -2907,7 +2904,7 @@ pf_key_v2_delete_spi(struct sa *sa, struct proto *proto, int incoming)
 		break;
 	}
 	if (pf_key_v2_msg_add(delete, (struct sadb_ext *) addr,
-			      PF_KEY_V2_NODE_MALLOCED) == -1)
+	    PF_KEY_V2_NODE_MALLOCED) == -1)
 		goto cleanup;
 	addr = 0;
 
@@ -2952,7 +2949,7 @@ pf_key_v2_stayalive(struct exchange *exchange, void *vconn, int fail)
 	/*
 	 * Remove failed configuration entry -- call twice because it is
 	 * created with a Refcount of 2.
-         */
+	 */
 	if (fail && (!exchange || exchange->name)) {
 		pf_key_v2_remove_conf(conn);
 		pf_key_v2_remove_conf(conn);
@@ -3042,7 +3039,7 @@ pf_key_v2_expire(struct pf_key_v2_msg *pmsg)
 	 * protection suites consisting of more than one protocol, any
 	 * expired individual IPsec stack SA will be seen as an expiration
 	 * of the full suite.
-         */
+	 */
 	switch (msg->sadb_msg_satype) {
 	case SADB_SATYPE_ESP:
 		sa = ipsec_sa_lookup(dstaddr, ssa->sadb_sa_spi,
@@ -3076,7 +3073,7 @@ pf_key_v2_expire(struct pf_key_v2_msg *pmsg)
 	 * course it has already been replaced by another.
 	 * Also, ignore SAs that were not dynamically established, or that
 	 * did not see any use.
-         */
+	 */
 	if (!(sa->flags & SA_FLAG_REPLACED) &&
 	    (sa->flags & SA_FLAG_ONDEMAND) &&
 	    lifecurrent->sadb_lifetime_bytes)
@@ -3101,24 +3098,24 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 	struct sadb_comb *scmb = 0;
 	struct sadb_prop *sprp = 0;
 	struct sadb_ident *srcident = 0, *dstident = 0;
-	char            dstbuf[ADDRESS_MAX], srcbuf[ADDRESS_MAX], *peer = 0,
+	char		dstbuf[ADDRESS_MAX], srcbuf[ADDRESS_MAX], *peer = 0,
 	               *conn = 0;
-	char            confname[120];
+	char		confname[120];
 	char           *srcid = 0, *dstid = 0, *prefstring = 0;
-	int             slen, af, afamily, masklen, buflen;
+	int		slen, af, afamily, masklen, buflen;
 	struct sockaddr *smask, *sflow, *dmask, *dflow;
 	struct sadb_protocol *sproto;
-	char            ssflow[ADDRESS_MAX], sdflow[ADDRESS_MAX];
-	char            sdmask[ADDRESS_MAX], ssmask[ADDRESS_MAX];
+	char		ssflow[ADDRESS_MAX], sdflow[ADDRESS_MAX];
+	char		sdmask[ADDRESS_MAX], ssmask[ADDRESS_MAX];
 	char           *sidtype = 0, *didtype = 0;
-	char            lname[100], dname[100], configname[30];
-	int             shostflag = 0, dhostflag = 0;
+	char		lname[100], dname[100], configname[30];
+	int		shostflag = 0, dhostflag = 0;
 	struct pf_key_v2_node *ext;
 	struct passwd  *pwd = 0;
 	u_int16_t       sport = 0, dport = 0;
-	u_int8_t        tproto = 0;
-	char            tmbuf[sizeof sport * 3 + 1], *xform;
-	int             connlen;
+	u_int8_t	tproto = 0;
+	char		tmbuf[sizeof sport * 3 + 1], *xform;
+	int		connlen;
 #if defined (SADB_X_CREDTYPE_NONE)
 	struct sadb_x_cred *cred = 0, *sauth = 0;
 #endif
@@ -3386,7 +3383,7 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 			 * The kernel will pass an all '0' EXT_ADDRESS_SRC if
 			 * it wasn't specified for the flow. In that case, do
 			 * NOT specify the srcaddr in the Peer-name below
-		         */
+			 */
 			srcbuf[0] = 0;
 			srcaddr = NULL;
 			break;
@@ -3481,7 +3478,7 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 				 * (and acquire the login name). If there is
 				 * both a string and a user ID, check that
 				 * they match.
-			         */
+				 */
 				if ((slen == 0) &&
 				    (srcident->sadb_ident_id == 0)) {
 					log_print("pf_key_v2_acquire: "
@@ -3649,7 +3646,7 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 				 * (and acquire the login name). If there is
 				 * both a string and a user ID, check that
 				 * they match.
-			         */
+				 */
 				if (slen == 0 &&
 				    dstident->sadb_ident_id == 0) {
 					log_print("pf_key_v2_acquire: "
@@ -3751,7 +3748,7 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 	 * - Local-ID/Remote-ID (if provided)
 	 * - Acquire-ID (sequence number of kernel message, e.g., PF_KEYv2)
 	 * - Configuration
-         *
+	 *
 	 * Also set the following section:
 	 *    [Peer-dstaddr(/srcaddr)(-srcid)(/dstid)]
 	 * with these fields:
@@ -3762,7 +3759,7 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 	 * - Address
 	 * - Configuration (if an entry ISAKMP-configuration-dstaddr(/srcaddr)
 	 *                  exists -- otherwise use the defaults)
-         */
+	 */
 
 	slen = strlen(dstbuf) + strlen(srcbuf) + (srcid ? strlen(srcid) : 0)
 		+ (dstid ? strlen(dstid) : 0) + sizeof "Peer-/-/";
@@ -3780,7 +3777,7 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 	 * - Peer-dstaddr-srcid/dstid
 	 * - Peer-dstaddr-/dstid
 	 * - Peer-dstaddr-srcid
-         */
+	 */
 	snprintf(peer, slen, "Peer-%s%s%s%s%s%s%s", dstbuf, srcaddr ? "/" : "",
 		 srcaddr ? srcbuf : "", srcid ? "-" : "", srcid ? srcid : "",
 		 dstid ? (srcid ? "/" : "-/") : "", dstid ? dstid : "");
@@ -3788,7 +3785,7 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 	/*
 	 * Set the IPsec connection section. Refcount is set to 2, because
 	 * it will be linked both to the incoming and the outgoing SA.
-         */
+	 */
 	af = conf_begin();
 	if (conf_set(af, conn, "Phase", "2", 0, 0)
 	    || conf_set(af, conn, "Flags", "__ondemand", 0, 0)
@@ -3896,7 +3893,7 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 	 * XXX
 	 * We should be using information from the proposal to set this up.
 	 * At least, we should make this selectable.
-         */
+	 */
 
 	/* Phase 2 configuration. */
 	if (conf_set(af, conn, "Configuration", configname, 0, 0)) {
@@ -3946,7 +3943,7 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 		if (cred) {
 			struct cert_handler *handler = 0;
 			void           *cert;
-			char            num[12], *certprint;
+			char		num[12], *certprint;
 
 			/* Convert to bytes in-place. */
 			cred->sadb_x_cred_len *= PF_KEY_V2_CHUNK;
@@ -4098,7 +4095,7 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 					 * an "Authentication" tag (typically
 					 * as a remnant of passphrase-based
 					 * testing).
-				         */
+					 */
 					if (conf_set(af, peer,
 					    "PKAuthentication", authm, 0, 0)) {
 						free(authm);
@@ -4205,13 +4202,13 @@ pf_key_v2_handler(int fd)
 {
 	struct pf_key_v2_msg *msg;
 #if !defined (LINUX_IPSEC)
-	int             n;
+	int		n;
 
 	/*
 	 * As synchronous read/writes to the socket can have taken place
 	 * between the select(2) call of the main loop and this handler, we
 	 * need to recheck the readability.
-         */
+	 */
 	if (ioctl(pf_key_v2_socket, FIONREAD, &n) == -1) {
 		log_error("pf_key_v2_handler: ioctl (%d, FIONREAD, &n) failed",
 			  pf_key_v2_socket);
@@ -4242,8 +4239,8 @@ pf_key_v2_group_spis(struct sa *sa, struct proto *proto1,
 	struct sadb_protocol protocol;
 	struct pf_key_v2_msg *grpspis = 0, *ret = 0;
 	struct sockaddr *saddr;
-	int             err;
-	size_t          len;
+	int		err;
+	size_t		len;
 #ifdef KAME
 	struct sadb_x_sa2 kamesa2;
 #endif
@@ -4307,7 +4304,7 @@ pf_key_v2_group_spis(struct sa *sa, struct proto *proto1,
 
 	/*
 	 * Setup the ADDRESS extensions.
-         */
+	 */
 	if (incoming)
 		sa->transport->vtbl->get_src(sa->transport, &saddr);
 	else
