@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxp.c,v 1.14 1998/08/21 20:29:10 downsj Exp $	*/
+/*	$OpenBSD: if_fxp.c,v 1.15 1998/08/24 18:52:17 downsj Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -183,6 +183,7 @@ static u_char fxp_cb_config_template[] = {
 	0x5	/* 21 */
 };
 
+static const char *fxp_phyname	__P((int));
 static inline void fxp_scb_wait	__P((struct fxp_softc *));
 static FXP_INTR_TYPE fxp_intr	__P((void *));
 static void fxp_start		__P((struct ifnet *));
@@ -381,8 +382,7 @@ fxp_attach(parent, self, aux)
 		return;
 	}
 
-	printf(": address %s%s, %s\n", ether_sprintf(enaddr),
-	    sc->phy_10Mbps_only ? ", 10Mbps" : "", intrstr);
+	printf(": %s\n", intrstr);
 
 #ifdef __OpenBSD__
 	ifp = &sc->arpcom.ac_if;
@@ -396,6 +396,11 @@ fxp_attach(parent, self, aux)
 	ifp->if_ioctl = fxp_ioctl;
 	ifp->if_start = fxp_start;
 	ifp->if_watchdog = fxp_watchdog;
+
+	printf(FXP_FORMAT ": %s (%s) address %s\n", FXP_ARGS(sc),
+	    fxp_phyname(sc->phy_primary_device),
+	    sc->phy_10Mbps_only ? "10Mbps" : "10/100Mbps",
+	    ether_sprintf(sc->arpcom.ac_enaddr));
 
 	/*
 	 * Attach the interface.
@@ -427,6 +432,20 @@ fxp_attach(parent, self, aux)
 	 * reboot before the driver initializes.
 	 */
 	shutdownhook_establish(fxp_shutdown, sc);
+}
+
+static const char *
+fxp_phyname(device)
+	int device;
+{
+	static const char * const phynames[] = { "unknown", "82553A",
+	    "82553C", "82503", "DP83840", "80C240", "80C24",
+	    "82555/82558/82558B", "unknown", "unknown",
+	    "DP83840A", "82555B" };
+
+	if ((device < FXP_PHY_NONE) || (device > FXP_PHY_82555B))
+		return(phynames[0]);
+	return(phynames[device]);
 }
 
 /*
@@ -677,6 +696,7 @@ fxp_attach_common(sc, enaddr)
 	sc->phy_primary_addr = data & 0xff;
 	sc->phy_primary_device = (data >> 8) & 0x3f;
 	sc->phy_10Mbps_only = data >> 15;
+	sc->phy_settings = 0;
 
 	/*
 	 * Read MAC address.
@@ -1210,7 +1230,7 @@ fxp_init(xsc)
 	struct fxp_cb_config *cbp;
 	struct fxp_cb_ias *cb_ias;
 	struct fxp_cb_tx *txp;
-	int i, s, prm;
+	int i, s, prm, oldmdi;
 
 	s = splimp();
 	/*
@@ -1350,6 +1370,8 @@ fxp_init(xsc)
 	    vtophys(sc->rfa_headm->m_ext.ext_buf) + RFA_ALIGNMENT_FUDGE);
 	CSR_WRITE_1(sc, FXP_CSR_SCB_COMMAND, FXP_SCB_COMMAND_RU_START);
 
+	oldmdi = sc->phy_settings;
+
 	/*
 	 * Toggle a few bits in the PHY.
 	 */
@@ -1395,6 +1417,9 @@ fxp_init(xsc)
 			     FXP_PHY_BMCR) |
 			    FXP_PHY_BMCR_AUTOEN));
 		}
+
+		sc->phy_settings = fxp_mdi_read(sc, sc->phy_primary_addr,
+						FXP_PHY_BMCR);
 		break;
 	/*
 	 * The Seeq 80c24 doesn't have a PHY programming interface, so do
@@ -1407,6 +1432,17 @@ fxp_init(xsc)
 		    ": warning: unsupported PHY, type = %d, addr = %d\n",
 		     FXP_ARGS(sc), sc->phy_primary_device,
 		     sc->phy_primary_addr);
+	}
+
+	if (oldmdi != sc->phy_settings) {
+		printf(FXP_FORMAT ": %s %s%s port\n",
+		    FXP_ARGS(sc),
+		    (sc->phy_settings & FXP_PHY_BMCR_AUTOEN) ?
+		    		"autosensing" : "enabling",
+		    (sc->phy_settings & FXP_PHY_BMCR_FULLDUPLEX) ?
+		    		"full duplex " : "",
+		    (sc->phy_settings & FXP_PHY_BMCR_SPEED_100M) ?
+		    		"100baseTX" : "10baseT");
 	}
 
 	ifp->if_flags |= IFF_RUNNING;

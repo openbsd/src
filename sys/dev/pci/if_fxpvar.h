@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxpvar.h,v 1.4 1998/08/21 20:29:13 downsj Exp $	*/
+/*	$OpenBSD: if_fxpvar.h,v 1.5 1998/08/24 18:52:19 downsj Exp $	*/
 /*	$NetBSD: if_fxpvar.h,v 1.1 1997/06/05 02:01:58 thorpej Exp $	*/
 
 /*                  
@@ -70,6 +70,7 @@ struct fxp_softc {
 	int phy_primary_addr;		/* address of primary PHY */
 	int phy_primary_device;		/* device type of primary PHY */
 	int phy_10Mbps_only;		/* PHY is 10Mbps-only device */
+	int phy_settings;		/* previous PHY bits */
 };
 
 /* Macros to ease CSR access. */
