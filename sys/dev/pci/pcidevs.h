@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.688 2003/11/06 07:21:26 mickey Exp 
+ *		OpenBSD: pcidevs,v 1.689 2003/11/17 20:51:41 grange Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -263,6 +263,7 @@
 #define	PCI_VENDOR_ADP2	0x9005		/* Adaptec */
 #define	PCI_VENDOR_ATRONICS	0x907f		/* Atronics */
 #define	PCI_VENDOR_NETMOS	0x9710		/* NetMos */
+#define	PCI_VENDOR_TIGERJET	0xe159		/* TigerJet Network */
 #define	PCI_VENDOR_ENDACE	0xeace		/* Endace Measurement Systems */
 #define	PCI_VENDOR_ARC	0xedd8		/* ARC Logic */
 #define	PCI_VENDOR_INVALID	0xffff		/* INVALID VENDOR ID */
@@ -2148,6 +2149,9 @@
 #define	PCI_PRODUCT_TI_PCI1520	0xac55		/* PCI1520 PCI-CardBus */
 #define	PCI_PRODUCT_TI_PCI1510	0xac56		/* PCI1510 PCI-CardBus */
 #define	PCI_PRODUCT_TI_PCI2040	0xac60		/* PCI2040 PCI-DSP */
+
+/* TigerJet Network products */
+#define	PCI_PRODUCT_TIGERJET_TIGER320	0x0001		/* PCI interface */
 
 /* Topic */
 #define	PCI_PRODUCT_TOPIC_5634PCV	0x0000		/* 5634PCV SurfRider */

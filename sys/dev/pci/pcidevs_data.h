@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.688 2003/11/06 07:21:26 mickey Exp 
+ *		OpenBSD: pcidevs,v 1.689 2003/11/17 20:51:41 grange Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -6095,6 +6095,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "PCI2040 PCI-DSP",
 	},
 	{
+	    PCI_VENDOR_TIGERJET, PCI_PRODUCT_TIGERJET_TIGER320,
+	    "PCI interface",
+	},
+	{
 	    PCI_VENDOR_TOPIC, PCI_PRODUCT_TOPIC_5634PCV,
 	    "5634PCV SurfRider",
 	},
@@ -7957,6 +7961,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_NETMOS,
 	    "NetMos",
+	},
+	{
+	    PCI_VENDOR_TIGERJET,
+	    "TigerJet Network",
 	},
 	{
 	    PCI_VENDOR_ENDACE,
