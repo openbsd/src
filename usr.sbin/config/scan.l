@@ -1,6 +1,6 @@
 %{
-/*	$OpenBSD: scan.l,v 1.5 1996/07/07 22:02:21 maja Exp $	*/
-/*	$NetBSD: scan.l,v 1.4 1996/03/17 06:29:35 cgd Exp $	*/
+/*	$OpenBSD: scan.l,v 1.6 1996/10/23 22:37:59 niklas Exp $	*/
+/*	$NetBSD: scan.l,v 1.7 1996/08/31 21:15:13 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -88,6 +88,7 @@ WORD	[A-Za-z_][-A-Za-z_0-9]*
 and		{ return AND; }
 at		{ return AT; }
 attach		{ return ATTACH; }
+build		{ return BUILD; }
 compile-with	{ return COMPILE_WITH; }
 config		{ return CONFIG; }
 define		{ return DEFINE; }
@@ -108,13 +109,11 @@ options		{ return OPTIONS; }
 option		{ return OPTIONS; }
 "pseudo-device"	{ return PSEUDO_DEVICE; }
 root		{ return ROOT; }
+source		{ return SOURCE; }
 swap		{ return SWAP; }
-vector		{ return VECTOR; }
 with		{ return WITH; }
 
 		/* keywords with values */
-config-dependent { yylval.val = FI_CONFIGDEP; return FFLAG; }
-device-driver	{ yylval.val = FI_DRIVER; return FFLAG; }
 needs-count	{ yylval.val = FI_NEEDSCOUNT; return FFLAG; }
 needs-flag	{ yylval.val = FI_NEEDSFLAG; return FFLAG; }
 
@@ -191,10 +190,16 @@ include(fname, ateof)
 {
 	register FILE *fp;
 	register struct incl *in;
+	char *s;
 
-	if ((fp = fopen(fname, "r")) == NULL) {
-		error("cannot open %s for reading: %s\n",
-		    fname, strerror(errno));
+	/* Kludge until files.* files are fixed. */
+	if (strncmp(fname, "../../../", 9) == 0)
+		fname += 9;
+
+	s = (*fname == '/') ? strdup(fname) : sourcepath(fname);
+	if ((fp = fopen(s, "r")) == NULL) {
+		error("cannot open %s for reading: %s\n", s, strerror(errno));
+		free(s);
 		return (-1);
 	}
 	in = emalloc(sizeof *in);
@@ -205,9 +210,10 @@ include(fname, ateof)
 	in->in_preveof = eoftoken;
 	incl = in;
 	yy_switch_to_buffer(yy_create_buffer(fp, YY_BUF_SIZE));
-	yyfile = intern(fname);
+	yyfile = intern(s);
 	yyline = 1;
 	eoftoken = ateof;
+	free(s);
 	return (0);
 }
 

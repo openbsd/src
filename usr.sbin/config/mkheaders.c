@@ -1,5 +1,5 @@
-/*	$OpenBSD: mkheaders.c,v 1.3 1996/04/21 23:40:15 deraadt Exp $	*/
-/*	$NetBSD: mkheaders.c,v 1.10 1996/03/17 13:18:21 cgd Exp $	*/
+/*	$OpenBSD: mkheaders.c,v 1.4 1996/10/23 22:37:54 niklas Exp $	*/
+/*	$NetBSD: mkheaders.c,v 1.11 1996/08/31 20:58:22 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -81,13 +81,12 @@ emitcnt(head)
 {
 	register struct nvlist *nv;
 	register FILE *fp;
-	register char *fname;
 	int cnt;
 	char nam[100];
 	char buf[BUFSIZ];
+	char fname[BUFSIZ];
 
-	(void)sprintf(buf, "%s.h", head->nv_name);
-	fname = path(buf);
+	(void)sprintf(fname, "%s.h", head->nv_name);
 	if ((fp = fopen(fname, "r")) == NULL)
 		goto writeit;
 	nv = head;

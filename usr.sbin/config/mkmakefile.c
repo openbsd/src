@@ -1,5 +1,5 @@
-/*	$OpenBSD: mkmakefile.c,v 1.4 1996/05/10 12:10:04 mickey Exp $	*/
-/*	$NetBSD: mkmakefile.c,v 1.29 1996/03/17 13:18:23 cgd Exp $	*/
+/*	$OpenBSD: mkmakefile.c,v 1.5 1996/10/23 22:37:56 niklas Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.32 1996/09/23 05:04:23 ghudson Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -75,20 +75,21 @@ mkmakefile()
 	register FILE *ifp, *ofp;
 	register int lineno;
 	register int (*fn) __P((FILE *));
-	register char *ofname;
-	char line[BUFSIZ], ifname[200];
+	register char *ifname;
+	char line[BUFSIZ], buf[200];
 
-	(void)sprintf(ifname, "Makefile.%s", machine);
+	(void)sprintf(buf, "arch/%s/conf/Makefile.%s", machine, machine);
+	ifname = sourcepath(buf);
 	if ((ifp = fopen(ifname, "r")) == NULL) {
 		(void)fprintf(stderr, "config: cannot read %s: %s\n",
 		    ifname, strerror(errno));
+		free(ifname);
 		return (1);
 	}
-	ofname = path("Makefile");
-	if ((ofp = fopen(ofname, "w")) == NULL) {
-		(void)fprintf(stderr, "config: cannot write %s: %s\n",
-		    ofname, strerror(errno));
-		free(ofname);
+	if ((ofp = fopen("Makefile", "w")) == NULL) {
+		(void)fprintf(stderr, "config: cannot write Makefile: %s\n",
+		    strerror(errno));
+		free(ifname);
 		return (1);
 	}
 	if (emitdefs(ofp) != 0)
@@ -124,8 +125,8 @@ mkmakefile()
 		    "config: error reading %s (at line %d): %s\n",
 		    ifname, lineno, strerror(errno));
 		goto bad;
-		/* (void)unlink(ofname); */
-		free(ofname);
+		/* (void)unlink("Makefile"); */
+		free(ifname);
 		return (1);
 	}
 	if (fclose(ofp)) {
@@ -133,16 +134,16 @@ mkmakefile()
 		goto wrerror;
 	}
 	(void)fclose(ifp);
-	free(ofname);
+	free(ifname);
 	return (0);
 wrerror:
-	(void)fprintf(stderr, "config: error writing %s: %s\n",
-	    ofname, strerror(errno));
+	(void)fprintf(stderr, "config: error writing Makefile: %s\n",
+	    strerror(errno));
 bad:
 	if (ofp != NULL)
 		(void)fclose(ofp);
-	/* (void)unlink(ofname); */
-	free(ofname);
+	/* (void)unlink("Makefile"); */
+	free(ifname);
 	return (1);
 }
 
@@ -195,6 +196,17 @@ emitdefs(fp)
 		return (1);
 	if (fprintf(fp, "PARAM=-DMAXUSERS=%d\n", maxusers) < 0)
 		return (1);
+	if (*srcdir == '/' || *srcdir == '.') {
+		if (fprintf(fp, "S=\t%s\n", srcdir) < 0)
+			return (1);
+	} else {
+		/*
+		 * libkern and libcompat "Makefile.inc"s want relative S
+		 * specification to begin with '.'.
+		 */
+		if (fprintf(fp, "S=\t./%s\n", srcdir) < 0)
+			return (1);
+	}
 	for (nv = mkoptions; nv != NULL; nv = nv->nv_next)
 		if (fprintf(fp, "%s=%s\n", nv->nv_name, nv->nv_str) < 0)
 			return (1);
@@ -338,12 +350,11 @@ emitrules(fp)
 		    *fpath != '/' ? "$S/" : "", fpath) < 0)
 			return (1);
 		if ((cp = fi->fi_mkrule) == NULL) {
-			cp = fi->fi_flags & FI_DRIVER ? "DRIVER" : "NORMAL";
+			cp = "NORMAL";
 			ch = fpath[strlen(fpath) - 1];
 			if (islower(ch))
 				ch = toupper(ch);
-			(void)sprintf(buf, "${%s_%c%s}", cp, ch,
-			    fi->fi_flags & FI_CONFIGDEP ? "_C" : "");
+			(void)sprintf(buf, "${%s_%c}", cp, ch);
 			cp = buf;
 		}
 		if (fprintf(fp, "\t%s\n\n", cp) < 0)

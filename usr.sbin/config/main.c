@@ -1,5 +1,5 @@
-/*	$OpenBSD: main.c,v 1.7 1996/09/13 04:25:41 mickey Exp $	*/
-/*	$NetBSD: main.c,v 1.17 1996/03/17 11:50:13 cgd Exp $	*/
+/*	$OpenBSD: main.c,v 1.8 1996/10/23 22:37:53 niklas Exp $	*/
+/*	$NetBSD: main.c,v 1.18 1996/08/31 20:58:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,6 +53,7 @@ static char copyright[] =
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/param.h>
 #include <ctype.h>
 #include <errno.h>
 #include <stdio.h>
@@ -87,11 +88,11 @@ main(argc, argv)
 	char **argv;
 {
 	register char *p;
+	const char *last_component;
 	int pflag, ch;
-	struct stat st;
 
 	pflag = 0;
-	while ((ch = getopt(argc, argv, "gp")) != EOF) {
+	while ((ch = getopt(argc, argv, "gpb:s:")) != EOF) {
 		switch (ch) {
 
 		case 'g':
@@ -120,6 +121,14 @@ main(argc, argv)
 			pflag = 1;
 			break;
 
+		case 'b':
+			builddir = optarg;
+			break;
+
+		case 's':
+			srcdir = optarg;
+			break;
+
 		case '?':
 		default:
 			goto usage;
@@ -128,12 +137,12 @@ main(argc, argv)
 
 	argc -= optind;
 	argv += optind;
-	if (argc != 1) {
+	if (argc > 1) {
 usage:
-		(void)fputs("usage: config [-p] sysname\n", stderr);
+		(void)fputs("usage: config [-p] [-s srcdir] [-b builddir] sysname\n", stderr);
 		exit(1);
 	}
-	conffile = argv[0];
+	conffile = (argc == 1) ? argv[0] : "CONFIG";
 	if (firstfile(conffile)) {
 		(void)fprintf(stderr, "config: cannot read %s: %s\n",
 		    conffile, strerror(errno));
@@ -161,31 +170,18 @@ usage:
 	 * Handle profiling (must do this before we try to create any
 	 * files).
 	 */
+	last_component = strrchr(conffile, '/');
+	last_component = (last_component) ? last_component + 1 : conffile;
 	if (pflag) {
-		char *s;
-
-		s = emalloc(strlen(conffile) + sizeof(".PROF"));
-		(void)sprintf(s, "%s.PROF", conffile);
-		confdirbase = s;
+		p  = emalloc(strlen(last_component) + 17);
+		(void)sprintf(p, "../compile/%s.PROF", last_component);
 		(void)addmkoption(intern("PROF"), "-pg");
 		(void)addoption(intern("GPROF"), NULL);
-	} else
-		confdirbase = conffile;
-
-	/*
-	 * Verify, creating if necessary, the compilation directory.
-	 */
-	p = path(NULL);
-	if (stat(p, &st)) {
-		if (mkdir(p, 0777)) {
-			(void)fprintf(stderr, "config: cannot create %s: %s\n",
-			    p, strerror(errno));
-			exit(2);
-		}
-	} else if (!S_ISDIR(st.st_mode)) {
-		(void)fprintf(stderr, "config: %s is not a directory\n", p);
-		exit(2);
+	} else {
+		p = emalloc(strlen(last_component) + 13);
+		(void)sprintf(p, "../compile/%s", last_component);
 	}
+	defbuilddir = (argc == 0) ? "." : p;
 
 	/*
 	 * Parse config file (including machine definitions).
@@ -242,29 +238,30 @@ static int
 mksymlinks()
 {
 	int ret;
-	char *p, buf[200];
+	char *p, buf[MAXPATHLEN];
+	const char *q;
 
-	p = path("machine");
-	(void)sprintf(buf, "../../include");
-	(void)unlink(p);
-	ret = symlink(buf, p);
+	sprintf(buf, "arch/%s/include", machine);
+	p = sourcepath(buf);
+	(void)unlink("machine");
+	ret = symlink(p, "machine");
 	if (ret)
-		(void)fprintf(stderr, "config: symlink(%s -> %s): %s\n",
-		    p, buf, strerror(errno));
-	free(p);
+		(void)fprintf(stderr, "config: symlink(machine -> %s): %s\n",
+		    p, strerror(errno));
 
 	if (machinearch != NULL) {
-		p = path(machinearch);
-		(void)sprintf(buf, "../../../%s/include", machinearch);
+		sprintf(buf, "arch/%s/include", machinearch);
+		p = sourcepath(buf);
+		q = machinearch;
 	} else {
-		p = path(machine);
-		(void)sprintf(buf, "machine");
+		p = strdup("machine");
+		q = machine;
 	}
-	(void)unlink(p);
-	ret = symlink(buf, p);
+	(void)unlink(q);
+	ret = symlink(p, q);
 	if (ret)
 		(void)fprintf(stderr, "config: symlink(%s -> %s): %s\n",
-		    p, buf, strerror(errno));
+		    q, p, strerror(errno));
 	free(p);
 
 	return (ret);

@@ -1,5 +1,5 @@
-/*	$OpenBSD: pack.c,v 1.4 1996/06/23 10:23:04 deraadt Exp $	*/
-/*	$NetBSD: pack.c,v 1.3.4.1 1996/06/17 18:22:44 cgd Exp $	*/
+/*	$OpenBSD: pack.c,v 1.5 1996/10/23 22:37:58 niklas Exp $	*/
+/*	$NetBSD: pack.c,v 1.5 1996/08/31 21:15:11 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -182,7 +182,6 @@ packdevi()
 				l->i_pvlen = 0;
 				l->i_pvoff = -1;
 				l->i_locoff = -1;
-				l->i_ivoff = -1;
 				/* try to find an equivalent for l */
 				for (j = m; j < n; j++) {
 					p = packed[j];

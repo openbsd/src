@@ -1,5 +1,5 @@
-/*	$OpenBSD: util.c,v 1.4 1996/09/01 18:02:02 deraadt Exp $	*/
-/*	$NetBSD: util.c,v 1.4 1996/03/17 11:50:16 cgd Exp $	*/
+/*	$OpenBSD: util.c,v 1.5 1996/10/23 22:38:02 niklas Exp $	*/
+/*	$NetBSD: util.c,v 1.5 1996/08/31 20:58:29 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -98,23 +98,16 @@ nomem()
 }
 
 /*
- * Prepend the compilation directory to a file name.
+ * Prepend the source path to a file name.
  */
 char *
-path(file)
+sourcepath(file)
 	const char *file;
 {
 	register char *cp;
-#define	CDIR "../compile/"
 
-	if (file == NULL) {
-		cp = emalloc(sizeof(CDIR) + strlen(confdirbase));
-		(void)sprintf(cp, "%s%s", CDIR, confdirbase);
-	} else {
-		cp = emalloc(sizeof(CDIR) + strlen(confdirbase) + 1 +
-		    strlen(file));
-		(void)sprintf(cp, "%s%s/%s", CDIR, confdirbase, file);
-	}
+	cp = emalloc(strlen(srcdir) + 1 + strlen(file) + 1);
+	(void)sprintf(cp, "%s/%s", srcdir, file);
 	return (cp);
 }
 

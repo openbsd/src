@@ -1,5 +1,5 @@
-.\"	$OpenBSD: config.8,v 1.3 1996/04/21 23:40:05 deraadt Exp $
-.\"	$NetBSD: config.8,v 1.9 1996/03/17 06:29:19 cgd Exp $
+.\"	$OpenBSD: config.8,v 1.4 1996/10/23 22:37:50 niklas Exp $
+.\"	$NetBSD: config.8,v 1.10 1996/08/31 20:58:16 mycroft Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -42,33 +42,25 @@
 .Nd build kernel compilation directories
 .Sh SYNOPSIS
 .Nm config
+.Op Fl b Ar builddir
+.Op Fl s Ar srcdir
 .Op Fl p
-.Ar system-name
+.Op Ar config-file
 .Sh DESCRIPTION
 .Pp
-This is the new version of the
+.Nm Config
+creates a kernel build directory from the file
+.Ar config-file ,
+which describes the system to configure.
+.Pp
+There are several different ways to run the
 .Nm config
-program.
-.\"It understands the more modern autoconfiguration scheme
-.\"used on the SPARC and i386 platforms.
-.\"The old version of config is still used with the
-.\"HP300, DECstation, and derivative platforms.
-.\"Only the version of
-.\".Nm config
-.\"applicable to the architecture that you are running
-.\"will be installed on your machine.
-.Pp
-.Nm Config
-builds a set of configuration files from the file
-.Ar system-name ,
-which describes
-the system to configure.
-.Pp
-.Nm Config
-should run from the
+program.  The traditional way is to run
+.Nm config
+from the
 .Pa conf
-subdirectory of the top-level machine-specific directory
-of the system source (usually
+subdirectory of the machine-specific directory of the system source
+(usually
 .Pa /sys/arch/MACHINE/conf ,
 where
 .Pa MACHINE
@@ -76,24 +68,53 @@ is one of
 .Pa vax ,
 .Pa tahoe ,
 .Pa hp300 ,
-and so forth).
+and so forth), and to specify as the
+.Ar config-file
+the name of a file located in that directory.
+.Nm config
+will by default create files in the directory
+.Pa ../compile/SYSTEMNAME ,
+where
+.Pa SYSTEMNAME
+is the last path component of
+.Ar config-file .
 .Nm Config
-assumes the directory
-.Pa ../compile
-exists; it places all output files in a subdirectory there,
-creating the subdirectory if necessary.
-The subdirectory name is taken from the
-.Ar system-name ;
-thus, configuring with
-.Dq Li config PICKLE
-will use the directory
-.Pa ../compile/PICKLE .
+will assume that the top-level kernel source directory is located four
+directories above the build directory.
+.Pp
+Another way is to create the build directory yourself, place the
+configuration file in the build directory with the name
+.Pa CONFIG ,
+and run
+.Nm config
+from within the build directory without specifying a
+.Ar config-file .
+.Nm Config
+will then by default create files in the current directory.  If you
+run
+.Nm config
+this way, you must specify the location of the top-level kernel source
+directory using the
+.Fl s
+option or by using the
+.Dq Li source
+directive at the beginning of the system configuration file.
+.Pp
+Finally, you can specify the build directory for
+.Nm config
+and run it from anywhere.  You can specify a build directory with the
+.Fl b
+option or by using the
+.Dq Li build
+directive at the beginning of the system configuration file.  You must
+specify the location of the top-level kernel source directory if you
+specify a build directory.
 .Pp
 If the
 .Fl p
 option is supplied,
 .Pa .PROF
-is appended to the compilation directory name, and
+is appended to the default compilation directory name, and
 .Nm config
 acts as if the lines
 .Dq Li makeoptions PROF="-pg"

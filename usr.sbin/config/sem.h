@@ -1,5 +1,5 @@
-/*	$OpenBSD: sem.h,v 1.4 1996/07/07 22:02:22 maja Exp $	*/
-/*	$NetBSD: sem.h,v 1.4 1996/03/17 06:29:40 cgd Exp $	*/
+/*	$OpenBSD: sem.h,v 1.5 1996/10/23 22:38:01 niklas Exp $	*/
+/*	$NetBSD: sem.h,v 1.5 1996/08/31 21:15:16 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,7 +53,7 @@ int		defattr __P((const char *, struct nvlist *));
 void		defdev __P((struct devbase *, int, struct nvlist *,
 			struct nvlist *));
 void		defdevattach __P((struct deva *, struct devbase *,
-			struct nvlist *, struct nvlist *, struct nvlist *));
+			struct nvlist *, struct nvlist *));
 struct devbase *getdevbase __P((const char *name));
 struct deva    *getdevattach __P((const char *name));
 struct attr    *getattr __P((const char *name));

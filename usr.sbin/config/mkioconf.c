@@ -1,5 +1,5 @@
-/*	$OpenBSD: mkioconf.c,v 1.6 1996/09/06 08:53:44 maja Exp $	*/
-/*	$NetBSD: mkioconf.c,v 1.38 1996/03/17 06:29:27 cgd Exp $	*/
+/*	$OpenBSD: mkioconf.c,v 1.7 1996/10/23 22:37:55 niklas Exp $	*/
+/*	$NetBSD: mkioconf.c,v 1.40 1996/08/31 21:15:10 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -64,10 +64,7 @@ static int emitlocnames __P((FILE *));
 static int emitpseudo __P((FILE *));
 static int emitpv __P((FILE *));
 static int emitroots __P((FILE *));
-static int emitvec __P((FILE *));
 static char *vecname __P((char *, const char *, int));
-
-static const char *s_i386;
 
 #define	SEP(pos, max)	(((u_int)(pos) % (max)) == 0 ? "\n\t" : " ")
 
@@ -81,33 +78,27 @@ int
 mkioconf()
 {
 	register FILE *fp;
-	register char *fname;
 	int v;
 
-	s_i386 = intern("i386");
-
-	fname = path("ioconf.c");
 	qsort(packed, npacked, sizeof *packed, cforder);
-	if ((fp = fopen(fname, "w")) == NULL) {
-		(void)fprintf(stderr, "config: cannot write %s: %s\n",
-		    fname, strerror(errno));
+	if ((fp = fopen("ioconf.c", "w")) == NULL) {
+		(void)fprintf(stderr, "config: cannot write ioconf.c: %s\n",
+		    strerror(errno));
 		return (1);
 	}
 	v = emithdr(fp);
-	if (v != 0 || emitvec(fp) || emitexterns(fp) || emitloc(fp) ||
+	if (v != 0 || emitexterns(fp) || emitloc(fp) ||
 	    emitlocnames(fp) || emitpv(fp) || emitcfdata(fp) ||
 	    emitroots(fp) || emitpseudo(fp)) {
 		if (v >= 0)
 			(void)fprintf(stderr,
-			    "config: error writing %s: %s\n",
-			    fname, strerror(errno));
+			    "config: error writing ioconf.c: %s\n",
+			    strerror(errno));
 		(void)fclose(fp);
-		/* (void)unlink(fname); */
-		free(fname);
+		/* (void)unlink("ioconf.c"); */
 		return (1);
 	}
 	(void)fclose(fp);
-	free(fname);
 	return (0);
 }
 
@@ -405,13 +396,8 @@ struct cfdata cfdata[] = {\n\
 				state = "NORM";
 			}
 		}
-		if (i->i_ivoff < 0) {
-			vs = "";
-			v = 0;
-		} else {
-			vs = "vec+";
-			v = i->i_ivoff;
-		}
+		vs = "";
+		v = 0;
 		if (i->i_locoff >= 0) {
 			(void)sprintf(locbuf, "loc+%3d", i->i_locoff);
 			loc = locbuf;
@@ -488,69 +474,4 @@ emitpseudo(fp)
 			return (1);
 	}
 	return (fputs("\t{ 0, 0 }\n};\n", fp) < 0);
-}
-
-/*
- * Emit interrupt vector declarations, and calculate offsets.
- */
-static int
-emitvec(fp)
-	register FILE *fp;
-{
-	register struct nvlist *head, *nv;
-	register struct devi **p, *i;
-	register int j, nvec, unit;
-	char buf[200];
-
-	nvec = 0;
-	for (p = packed; (i = *p) != NULL; p++) {
-		if ((head = i->i_atdeva->d_vectors) == NULL)
-			continue;
-		if ((unit = i->i_unit) == STAR)
-			panic("emitvec unit==STAR");
-		if (nvec == 0)
-			NEWLINE;
-		for (j = 0, nv = head; nv != NULL; j++, nv = nv->nv_next)
-			if (fprintf(fp,
-			    "/* IVEC %s %d */ extern void %s();\n",
-			    nv->nv_name, unit,
-			    vecname(buf, nv->nv_name, unit)) < 0)
-				return (1);
-		nvec += j + 1;
-	}
-	if (nvec == 0)
-		return (0);
-	if (fprintf(fp, "\nstatic void (*vec[%d]) __P((void)) = {", nvec) < 0)
-		return (1);
-	nvec = 0;
-	for (p = packed; (i = *p) != NULL; p++) {
-		if ((head = i->i_atdeva->d_vectors) == NULL)
-			continue;
-		i->i_ivoff = nvec;
-		unit = i->i_unit;
-		for (nv = head; nv != NULL; nv = nv->nv_next)
-			if (fprintf(fp, "%s%s,",
-			    SEP(nvec++, 4),
-			    vecname(buf, nv->nv_name, unit)) < 0)
-				return (1);
-		if (fprintf(fp, "%s0,", SEP(nvec++, 4)) < 0)
-			return (1);
-	}
-	return (fputs("\n};\n", fp) < 0);
-}
-
-static char *
-vecname(buf, name, unit)
-	char *buf;
-	const char *name;
-	int unit;
-{
-
-	/* @#%* 386 uses a different name format */
-	if (machine == s_i386) {
-		(void)sprintf(buf, "V%s%d", name, unit);
-		return (buf);
-	}
-	(void)sprintf(buf, "X%s%d", name, unit);
-	return (buf);
 }

@@ -1,5 +1,5 @@
-/*	$OpenBSD: config.h,v 1.5 1996/07/07 22:02:19 maja Exp $	*/
-/*	$NetBSD: config.h,v 1.23 1996/03/17 13:18:15 cgd Exp $	*/
+/*	$OpenBSD: config.h,v 1.6 1996/10/23 22:37:51 niklas Exp $	*/
+/*	$NetBSD: config.h,v 1.26 1996/08/31 21:15:05 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -137,7 +137,6 @@ struct deva {
 	int	d_isdef;		/* set once properly defined */
 	struct	devbase *d_devbase;	/* the base device */
 	struct	nvlist *d_atlist;	/* e.g., "at tg" (attr list) */
-	struct	nvlist *d_vectors;	/* interrupt vectors, if any */
 	struct	nvlist *d_attrs;	/* attributes, if any */
 	struct	devi *d_ihead;		/* first instance, if any */
 	struct	devi **d_ipp;		/* used for tacking on more instances */
@@ -179,7 +178,6 @@ struct devi {
 	short	i_pvlen;	/* number of parents */
 	short	i_pvoff;	/* offset in parents.vec */
 	short	i_locoff;	/* offset in locators.vec */
-	short	i_ivoff;	/* offset in interrupt vectors, if any */
 	struct	devi **i_parents;/* the parents themselves */
 	int	i_locnami;	/* my index into locnami[] */
 	int	i_plocnami;	/* parent's locnami[] index */
@@ -221,11 +219,9 @@ struct files {
 
 /* flags */
 #define	FI_SEL		0x01	/* selected */
-#define	FI_CONFIGDEP	0x02	/* config-dependent */
-#define	FI_DRIVER	0x04	/* device-driver */
-#define	FI_NEEDSCOUNT	0x08	/* needs-count */
-#define	FI_NEEDSFLAG	0x10	/* needs-flag */
-#define	FI_HIDDEN	0x20	/* obscured by other(s), base names overlap */
+#define	FI_NEEDSCOUNT	0x02	/* needs-count */
+#define	FI_NEEDSFLAG	0x04	/* needs-flag */
+#define	FI_HIDDEN	0x08	/* obscured by other(s), base names overlap */
 
 /*
  * Hash tables look up name=value pairs.  The pointer value of the name
@@ -237,9 +233,11 @@ struct files {
 struct hashtab;
 
 const char *conffile;		/* source file, e.g., "GENERIC.sparc" */
-const char *confdirbase;	/* basename of compile directory, usu. same */
 const char *machine;		/* machine type, e.g., "sparc" or "sun3" */
 const char *machinearch;	/* machine arch, e.g., "sparc" or "m68k" */
+const char *srcdir;		/* path to source directory (rel. to build) */
+const char *builddir;		/* path to build directory */
+const char *defbuilddir;	/* default build directory */
 int	errors;			/* counts calls to error() */
 int	minmaxusers;		/* minimum "maxusers" parameter */
 int	defmaxusers;		/* default "maxusers" parameter */
@@ -320,7 +318,7 @@ void	initsem __P((void));
 /* util.c */
 void	*emalloc __P((size_t));
 void	*erealloc __P((void *, size_t));
-char	*path __P((const char *));
+char	*sourcepath __P((const char *));
 void	error __P((const char *, ...));			/* immediate errs */
 void	xerror __P((const char *, int, const char *, ...)); /* delayed errs */
 __dead void panic __P((const char *, ...));
