@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.84 1998/04/07 22:48:50 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.85 1998/04/07 23:24:06 ryker Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -213,10 +213,10 @@ release: distribution snap_pre snap_md
 	-cp ${DESTDIR}/snapshot/*BOOT* ${RELEASEDIR}
 	-cp ${DESTDIR}/snapshot/INSTALL.* ${RELEASEDIR}
 	-cp ${DESTDIR}/snapshot/*.fs ${DESTDIR}/snapshot/*.fs.gz ${RELEASEDIR}
-	-cd ${RELEASEDIR}; md5 bsd* *boot* *BOOT* INSTALL.* *.fs *.gz | \
-	    sort | uniq > MD5
-	-cd ${RELEASEDIR}; cksum bsd* *boot* *BOOT* INSTALL.* *.fs *.gz | \
-	    sort | uniq > CKSUM
+	-cd ${RELEASEDIR}; \
+		md5 bsd!(*.gz) *boot* *BOOT* INSTALL.* *.fs *.gz > MD5
+	-cd ${RELEASEDIR}; \
+		cksum bsd!(*.gz) *boot* *BOOT* INSTALL.* *.fs *.gz > CKSUM
 .endif
 
 snapshot: distribution snap_pre snap_tar snap_md
