@@ -1,4 +1,4 @@
-.\"	$OpenBSD: passwd.5,v 1.26 2003/06/06 13:28:13 jmc Exp $
+.\"	$OpenBSD: passwd.5,v 1.27 2003/06/27 22:57:00 millert Exp $
 .\"	$NetBSD: passwd.5,v 1.4 1995/07/28 06:46:05 phil Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
@@ -95,13 +95,16 @@ and/or identical user IDs, it is usually a mistake to do so.
 Routines that manipulate these files will often return only one of the
 multiple entries, and that one by random selection.
 .Pp
+The login name may be up to 31 characters long.
+For compatibility with legacy software, a login name should start
+with a letter and consist solely of letters, numbers, dashes and
+underscores.
 The login name must never begin with a hyphen
 .Pq Ql \&- ;
 also, it is strongly
 suggested that neither uppercase characters nor dots
 .Pq Ql \&.
-be part
-of the name, as this tends to confuse mailers.
+be part of the name, as this tends to confuse mailers.
 No field may contain a colon
 as this has been used historically to separate the fields
 in the user database.
