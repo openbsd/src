@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_vnops.c,v 1.3 1996/04/21 22:28:19 deraadt Exp $	*/
+/*	$OpenBSD: procfs_vnops.c,v 1.4 1997/08/01 05:58:57 millert Exp $	*/
 /*	$NetBSD: procfs_vnops.c,v 1.40 1996/03/16 23:52:55 christos Exp $	*/
 
 /*
@@ -56,8 +56,12 @@
 #include <sys/dirent.h>
 #include <sys/resourcevar.h>
 #include <sys/ptrace.h>
+#include <sys/stat.h>
+
 #include <vm/vm.h>	/* for PAGE_SIZE */
+
 #include <machine/reg.h>
+
 #include <miscfs/procfs/procfs.h>
 
 /*
@@ -549,19 +553,18 @@ procfs_getattr(v)
 	TIMEVAL_TO_TIMESPEC(&tv, &vap->va_ctime);
 	vap->va_atime = vap->va_mtime = vap->va_ctime;
 
-	/*
-	 * If the process has exercised some setuid or setgid
-	 * privilege, then rip away read/write permission so
-	 * that only root can gain access.
-	 */
 	switch (pfs->pfs_type) {
 	case Pmem:
 	case Pregs:
 	case Pfpregs:
+		/*
+		 * If the process has exercised some setuid or setgid
+		 * privilege, then rip away read/write permission so
+		 * that only root can gain access.
+		 */
 		if (procp->p_flag & P_SUGID)
-			vap->va_mode &= ~((VREAD|VWRITE)|
-					  ((VREAD|VWRITE)>>3)|
-					  ((VREAD|VWRITE)>>6));
+			vap->va_mode &= ~(S_IRUSR|S_IWUSR);
+		/* FALLTHROUGH */
 	case Pctl:
 	case Pstatus:
 	case Pnote:

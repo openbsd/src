@@ -1,4 +1,4 @@
-/*	$OpenBSD: union.h,v 1.2 1996/02/27 08:08:59 niklas Exp $	*/
+/*	$OpenBSD: union.h,v 1.3 1997/08/01 05:58:57 millert Exp $	*/
 /*	$NetBSD: union.h,v 1.9 1996/02/09 22:41:08 christos Exp $	*/
 
 /*
@@ -63,10 +63,8 @@ struct union_mount {
 /*
  * DEFDIRMODE is the mode bits used to create a shadow directory.
  */
-#define VRWXMODE (VREAD|VWRITE|VEXEC)
-#define VRWMODE (VREAD|VWRITE)
-#define UN_DIRMODE ((VRWXMODE)|(VRWXMODE>>3)|(VRWXMODE>>6))
-#define UN_FILEMODE ((VRWMODE)|(VRWMODE>>3)|(VRWMODE>>6))
+#define UN_DIRMODE	(S_IRWXU|S_IRWXG|S_IRWXO)
+#define UN_FILEMODE	(S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH)
 
 /*
  * A cache of vnode references

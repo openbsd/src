@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_node.c,v 1.2 1996/02/29 10:12:19 niklas Exp $	*/
+/*	$OpenBSD: cd9660_node.c,v 1.3 1997/08/01 05:58:55 millert Exp $	*/
 /*	$NetBSD: cd9660_node.c,v 1.15 1996/02/09 21:31:58 christos Exp $	*/
 
 /*-
@@ -312,25 +312,26 @@ cd9660_defattr(isodir, inop, bp)
 		ap = (struct iso_extended_attributes *)bp->b_data;
 		
 		if (isonum_711(ap->version) == 1) {
-			if (!(ap->perm[0]&0x40))
-				inop->inode.iso_mode |= VEXEC >> 6;
-			if (!(ap->perm[0]&0x10))
-				inop->inode.iso_mode |= VREAD >> 6;
-			if (!(ap->perm[0]&4))
-				inop->inode.iso_mode |= VEXEC >> 3;
-			if (!(ap->perm[0]&1))
-				inop->inode.iso_mode |= VREAD >> 3;
-			if (!(ap->perm[1]&0x40))
-				inop->inode.iso_mode |= VEXEC;
 			if (!(ap->perm[1]&0x10))
-				inop->inode.iso_mode |= VREAD;
+				inop->inode.iso_mode |= S_IRUSR;
+			if (!(ap->perm[1]&0x40))
+				inop->inode.iso_mode |= S_IXUSR;
+			if (!(ap->perm[0]&0x01))
+				inop->inode.iso_mode |= S_IRGRP;
+			if (!(ap->perm[0]&0x04))
+				inop->inode.iso_mode |= S_IXGRP;
+			if (!(ap->perm[0]&0x10))
+				inop->inode.iso_mode |= S_IROTH;
+			if (!(ap->perm[0]&0x40))
+				inop->inode.iso_mode |= S_IXOTH;
 			inop->inode.iso_uid = isonum_723(ap->owner); /* what about 0? */
 			inop->inode.iso_gid = isonum_723(ap->group); /* what about 0? */
 		} else
 			ap = NULL;
 	}
 	if (!ap) {
-		inop->inode.iso_mode |= VREAD|VEXEC|(VREAD|VEXEC)>>3|(VREAD|VEXEC)>>6;
+		inop->inode.iso_mode |=
+		    S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH;
 		inop->inode.iso_uid = (uid_t)0;
 		inop->inode.iso_gid = (gid_t)0;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: union_vfsops.c,v 1.2 1996/02/27 08:09:02 niklas Exp $	*/
+/*	$OpenBSD: union_vfsops.c,v 1.3 1997/08/01 05:58:58 millert Exp $	*/
 /*	$NetBSD: union_vfsops.c,v 1.10 1995/06/18 14:47:47 cgd Exp $	*/
 
 /*
@@ -55,6 +55,8 @@
 #include <sys/malloc.h>
 #include <sys/filedesc.h>
 #include <sys/queue.h>
+#include <sys/stat.h>
+
 #include <miscfs/union/union.h>
 
 int union_mount __P((struct mount *, char *, caddr_t, struct nameidata *,
