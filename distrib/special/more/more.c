@@ -1,4 +1,4 @@
-/*	$OpenBSD: more.c,v 1.12 2003/05/28 19:25:18 deraadt Exp $	*/
+/*	$OpenBSD: more.c,v 1.13 2003/05/28 20:05:41 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1980 The Regents of the University of California.
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)more.c	5.28 (Berkeley) 3/1/93";
 #else
-static const char rcsid[] = "$OpenBSD: more.c,v 1.12 2003/05/28 19:25:18 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: more.c,v 1.13 2003/05/28 20:05:41 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -99,10 +99,7 @@ static const char rcsid[] = "$OpenBSD: more.c,v 1.12 2003/05/28 19:25:18 deraadt
 #define	DUM_ERROR	"[Press 'h' for instructions.]"
 #define	QUIT_IT		"[Use q or Q to quit]"
 
-const char *more_help[] = {
 #include "morehelp.h"
-	NULL
-};
 
 struct termios	otty, osavetty;
 long		file_pos, file_size;
@@ -904,7 +901,6 @@ command(char *filename, FILE *f)
 	char colonch;
 	int done;
 	char comchar, cmdbuf[80], *p;
-	const char **q;
 
 #define ret(val) retval=val;done++;break
 
@@ -1083,8 +1079,7 @@ command(char *filename, FILE *f)
 		case 'h':
 			if (noscroll)
 				doclear();
-			for (q = more_help; *q; q++)
-				puts(*q);
+			fputs(more_help, stdout);
 			prompt(filename);
 			break;
 		case 'v':	/* This case should go right before default */
