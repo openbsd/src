@@ -1,0 +1,116 @@
+.\" $OpenBSD: vga.4,v 1.1 2000/11/15 21:03:00 aaron Exp $
+.\" $NetBSD: vga.4,v 1.2.4.1 2000/08/09 07:48:40 drochner Exp $
+.Dd March 20, 1999
+.Os
+.Dt VGA 4
+.Sh NAME
+.Nm vga
+.Nd VGA graphics driver for wscons
+.Sh SYNOPSIS
+.Cd "vga0 at isa?"
+.Cd "vga* at pci?"
+.Cd "wsdisplay* at vga? console ?"
+.Sh DESCRIPTION
+This driver handles VGA graphics hardware within the
+.Xr wscons 4
+console framework.
+It doesn't provide direct device driver entry points but makes its
+functions available via the internal
+.Xr wsdisplay 4
+interface.
+.Pp
+The
+.Nm
+driver supports multiple virtual screens on one physical display.
+The screens allocated on one display can be of different
+.Dq types ,
+where a type refers to various display properties.
+The type is determined at the time the virtual screen is created and can't
+be changed later.
+Screens are either created at kernel startup (then the default type is used)
+or later with help of the
+.Xr wsconscfg 8
+utility.
+.Pp
+Currently, the following screen types are supported:
+.Bl -hang
+.It 80x25
+This is the standard VGA text mode with 80 columns and 25 rows.
+16 different colors can be displayed at the same time.
+Characters are 8 x 16 pixels large, and a font consists of 256 characters.
+A built-in font of this size is always present on a VGA card.
+It's also possible to use a downloaded font instead.
+.It 80x25bf
+A modified version of the previous.
+It only allows 8 colors to be displayed.
+In exchange, it can access two fonts at the same time, so that 512
+different characters can be displayed.
+.It 80x40
+A text mode with 80 colums and 40 rows.
+Similar to the standard mode, 16 colors and 256 characters are available.
+Characters are 8 x 10 pixels large.
+For this mode to be useful, a font of that character size must be downloaded.
+.It 80x40bf
+A modified version of the previous.
+It only allows 8 colors to be displayed.
+In exchange, it can access two fonts at the same time, so that 512
+different characters can be displayed.
+.It 80x50
+A text mode with 80 colums and 50 rows.
+Similar to the standard mode, 16 colors and 256 characters are available.
+Characters are 8 x 8 pixels large.
+For this mode to be useful, a font of that character size must be downloaded.
+.It 80x50bf
+A modified version of the previous.
+It only allows 8 colors to be displayed.
+In exchange, it can access two fonts at the same time, so that 512
+different characters can be displayed.
+.It 80x24
+A variant of the
+.Dq 80x25
+screen type which displays 24 lines only.
+It uses the standard 8x16 VGA font.
+This mode might be useful for applications which depend on closer
+DEC VT100 compatibility.
+.It 80x24bf
+A modified version of the previous.
+It only allows 8 colors to be displayed.
+In exchange, it can access two fonts at the same time, so that 512
+different characters can be displayed.
+.El
+.Pp
+The
+.Nm
+driver can display fonts of the original IBM type and ISO-8859-1 encoded fonts.
+As an experimental feature, the
+.Dq higher half
+fonts of the former OpenBSD/i386
+.Xr pcvt 4
+driver distribution can be used too if
+.Em option WSCONS_SUPPORT_PCVTFONTS
+was set at kernel compile time.
+This is only useful with the
+.Dq *bf
+screen types; a font containing the ASCII
+range of characters must be available too on this screen.
+.Sh SEE ALSO
+.Xr isa 4 ,
+.Xr pcdisplay 4 ,
+.Xr pci 4 ,
+.Xr wscons 4 ,
+.Xr wsconscfg 8 ,
+.Xr wsfontload 8
+.Sh BUGS
+Only a subset of the possible text modes is supported.
+.Pp
+VGA cards are supposed to emulate an MDA if a monochrome display is connected.
+In this case, the device will naturally not support colors at all, but
+offer the capability to display underlined characters instead.
+The
+.Dq 80x25bf ,
+.Dq 80x40bf ,
+.Dq 80x50bf ,
+and
+.Dq 80x24bf
+screen types will not be available.
+This mode of operation is not tested.
