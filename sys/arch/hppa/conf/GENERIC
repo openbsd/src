@@ -1,29 +1,24 @@
-#	$OpenBSD: GENERIC,v 1.27 2003/02/17 23:07:40 miod Exp $
-#
-# Diskless kernel config
-#
+#	$OpenBSD: GENERIC,v 1.28 2003/02/18 15:24:04 deraadt Exp $
 
-machine	hppa
+# Machine architecture; required by config(8)
+machine		hppa
 
 include "../../../conf/GENERIC"
 
 # Support for various CPU types
-option	HP7000_CPU			# PCX
-option	HP7100_CPU,HP7150_CPU		# PCXS
-option	HP7100LC_CPU,HP7300LC_CPU	# PCXL, PCXL2
-option	HP7200_CPU,HP7250_CPU		# PCXT, PCXT'
-#option	HP8000_CPU			# PCXU
-#option	HP8200_CPU			# PCXU2
-#option	HP8500_CPU			# PCXW
+option		HP7000_CPU			# PCX
+option		HP7100_CPU,HP7150_CPU		# PCXS
+option		HP7100LC_CPU,HP7300LC_CPU	# PCXL, PCXL2
+option		HP7200_CPU,HP7250_CPU		# PCXT, PCXT'
+#option		HP8000_CPU			# PCXU
+#option		HP8200_CPU			# PCXU2
+#option		HP8500_CPU			# PCXW
 
 option		FPEMUL
 option		USELEDS		# blink 'em
 
 # Need to set locally
 maxusers	32
-
-option		TIMEZONE=0	# time zone to adjust RTC time by
-option		DST=0		# daylight saving time used by RTC
 
 config	bsd swap generic
 
@@ -125,6 +120,8 @@ wsmouse*	at hilms? mux 0
 
 #fd*	at fdc?	drive ?	# floppy drives
 
+# These entries find devices on all SCSI busses and assign
+# unit numers dynamically.
 sd*	at scsibus? target ? lun ?
 st*	at scsibus? target ? lun ?
 cd*	at scsibus? target ? lun ?
