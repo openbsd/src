@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkeyv2_convert.c,v 1.3 2001/06/25 05:14:00 angelos Exp $	*/
+/*	$OpenBSD: pfkeyv2_convert.c,v 1.4 2001/06/26 06:10:20 angelos Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@keromytis.org)
  *
@@ -109,35 +109,34 @@
 void
 import_sa(struct tdb *tdb, struct sadb_sa *sadb_sa, struct ipsecinit *ii)
 {
-    if (!sadb_sa)
-      return;
+	if (!sadb_sa)
+		return;
 
-    if (ii)
-    {
-	ii->ii_encalg = sadb_sa->sadb_sa_encrypt;
-	ii->ii_authalg = sadb_sa->sadb_sa_auth;
+	if (ii) {
+		ii->ii_encalg = sadb_sa->sadb_sa_encrypt;
+		ii->ii_authalg = sadb_sa->sadb_sa_auth;
 
-	tdb->tdb_spi = sadb_sa->sadb_sa_spi;
-	tdb->tdb_wnd = sadb_sa->sadb_sa_replay;
+		tdb->tdb_spi = sadb_sa->sadb_sa_spi;
+		tdb->tdb_wnd = sadb_sa->sadb_sa_replay;
 
-	if (sadb_sa->sadb_sa_flags & SADB_SAFLAGS_PFS)
-	  tdb->tdb_flags |= TDBF_PFS;
+		if (sadb_sa->sadb_sa_flags & SADB_SAFLAGS_PFS)
+			tdb->tdb_flags |= TDBF_PFS;
 
-	if (sadb_sa->sadb_sa_flags & SADB_X_SAFLAGS_HALFIV)
-	  tdb->tdb_flags |= TDBF_HALFIV;
+		if (sadb_sa->sadb_sa_flags & SADB_X_SAFLAGS_HALFIV)
+			tdb->tdb_flags |= TDBF_HALFIV;
 
-	if (sadb_sa->sadb_sa_flags & SADB_X_SAFLAGS_TUNNEL)
-	  tdb->tdb_flags |= TDBF_TUNNELING;
+		if (sadb_sa->sadb_sa_flags & SADB_X_SAFLAGS_TUNNEL)
+			tdb->tdb_flags |= TDBF_TUNNELING;
 
-	if (sadb_sa->sadb_sa_flags & SADB_X_SAFLAGS_RANDOMPADDING)
-	  tdb->tdb_flags |= TDBF_RANDOMPADDING;
+		if (sadb_sa->sadb_sa_flags & SADB_X_SAFLAGS_RANDOMPADDING)
+			tdb->tdb_flags |= TDBF_RANDOMPADDING;
 
-	if (sadb_sa->sadb_sa_flags & SADB_X_SAFLAGS_NOREPLAY)
-	  tdb->tdb_flags |= TDBF_NOREPLAY;
-    }
+		if (sadb_sa->sadb_sa_flags & SADB_X_SAFLAGS_NOREPLAY)
+			tdb->tdb_flags |= TDBF_NOREPLAY;
+	}
 
-    if (sadb_sa->sadb_sa_state != SADB_SASTATE_MATURE)
-      tdb->tdb_flags |= TDBF_INVALID;
+	if (sadb_sa->sadb_sa_state != SADB_SASTATE_MATURE)
+		tdb->tdb_flags |= TDBF_INVALID;
 }
 
 /*
@@ -146,89 +145,85 @@ import_sa(struct tdb *tdb, struct sadb_sa *sadb_sa, struct ipsecinit *ii)
 void
 export_sa(void **p, struct tdb *tdb)
 {
-    struct sadb_sa *sadb_sa = (struct sadb_sa *) *p;
+	struct sadb_sa *sadb_sa = (struct sadb_sa *) *p;
 
-    sadb_sa->sadb_sa_len = sizeof(struct sadb_sa) / sizeof(uint64_t);
+	sadb_sa->sadb_sa_len = sizeof(struct sadb_sa) / sizeof(uint64_t);
 
-    sadb_sa->sadb_sa_spi = tdb->tdb_spi;
-    sadb_sa->sadb_sa_replay = tdb->tdb_wnd;
+	sadb_sa->sadb_sa_spi = tdb->tdb_spi;
+	sadb_sa->sadb_sa_replay = tdb->tdb_wnd;
 
-    if (tdb->tdb_flags & TDBF_INVALID)
-      sadb_sa->sadb_sa_state = SADB_SASTATE_LARVAL;
+	if (tdb->tdb_flags & TDBF_INVALID)
+		sadb_sa->sadb_sa_state = SADB_SASTATE_LARVAL;
 
-    if (tdb->tdb_authalgxform)
-    {
-	switch (tdb->tdb_authalgxform->type)
-	{
-	    case CRYPTO_MD5_HMAC:
-		sadb_sa->sadb_sa_auth = SADB_AALG_MD5HMAC;
-		break;
+	if (tdb->tdb_authalgxform) {
+		switch (tdb->tdb_authalgxform->type) {
+		case CRYPTO_MD5_HMAC:
+			sadb_sa->sadb_sa_auth = SADB_AALG_MD5HMAC;
+			break;
 
-	    case CRYPTO_SHA1_HMAC:
-		sadb_sa->sadb_sa_auth = SADB_AALG_SHA1HMAC;
-		break;
+		case CRYPTO_SHA1_HMAC:
+			sadb_sa->sadb_sa_auth = SADB_AALG_SHA1HMAC;
+			break;
 
-	    case CRYPTO_RIPEMD160_HMAC:
-		sadb_sa->sadb_sa_auth = SADB_AALG_RIPEMD160HMAC;
-		break;
+		case CRYPTO_RIPEMD160_HMAC:
+			sadb_sa->sadb_sa_auth = SADB_AALG_RIPEMD160HMAC;
+			break;
 
-	    case CRYPTO_MD5_KPDK:
-		sadb_sa->sadb_sa_auth = SADB_X_AALG_MD5;
-		break;
+		case CRYPTO_MD5_KPDK:
+			sadb_sa->sadb_sa_auth = SADB_X_AALG_MD5;
+			break;
 
-	    case CRYPTO_SHA1_KPDK:
-		sadb_sa->sadb_sa_auth = SADB_X_AALG_SHA1;
-		break;
+		case CRYPTO_SHA1_KPDK:
+			sadb_sa->sadb_sa_auth = SADB_X_AALG_SHA1;
+			break;
+		}
 	}
-    }
 
-    if (tdb->tdb_encalgxform)
-    {
-	switch (tdb->tdb_encalgxform->type)
-	{
-	    case CRYPTO_DES_CBC:
-		sadb_sa->sadb_sa_encrypt = SADB_EALG_DESCBC;
-		break;
+	if (tdb->tdb_encalgxform) {
+		switch (tdb->tdb_encalgxform->type) {
+		case CRYPTO_DES_CBC:
+			sadb_sa->sadb_sa_encrypt = SADB_EALG_DESCBC;
+			break;
 
-	    case CRYPTO_3DES_CBC:
-		sadb_sa->sadb_sa_encrypt = SADB_EALG_3DESCBC;
-		break;
+		case CRYPTO_3DES_CBC:
+			sadb_sa->sadb_sa_encrypt = SADB_EALG_3DESCBC;
+			break;
 
-	    case CRYPTO_AES_CBC:
-		sadb_sa->sadb_sa_encrypt = SADB_X_EALG_AES;
-		break;
+		case CRYPTO_AES_CBC:
+			sadb_sa->sadb_sa_encrypt = SADB_X_EALG_AES;
+			break;
 
-	    case CRYPTO_CAST_CBC:
-		sadb_sa->sadb_sa_encrypt = SADB_X_EALG_CAST;
-		break;
+		case CRYPTO_CAST_CBC:
+			sadb_sa->sadb_sa_encrypt = SADB_X_EALG_CAST;
+			break;
 
-	    case CRYPTO_BLF_CBC:
-		sadb_sa->sadb_sa_encrypt = SADB_X_EALG_BLF;
-		break;
+		case CRYPTO_BLF_CBC:
+			sadb_sa->sadb_sa_encrypt = SADB_X_EALG_BLF;
+			break;
 
-	    case CRYPTO_SKIPJACK_CBC:
-		sadb_sa->sadb_sa_encrypt = SADB_X_EALG_SKIPJACK;
-		break;
+		case CRYPTO_SKIPJACK_CBC:
+			sadb_sa->sadb_sa_encrypt = SADB_X_EALG_SKIPJACK;
+			break;
+		}
 	}
-    }
 
-    if (tdb->tdb_flags & TDBF_PFS)
-      sadb_sa->sadb_sa_flags |= SADB_SAFLAGS_PFS;
+	if (tdb->tdb_flags & TDBF_PFS)
+		sadb_sa->sadb_sa_flags |= SADB_SAFLAGS_PFS;
 
-    /* Only relevant for the "old" IPsec transforms */
-    if (tdb->tdb_flags & TDBF_HALFIV)
-      sadb_sa->sadb_sa_flags |= SADB_X_SAFLAGS_HALFIV;
+	/* Only relevant for the "old" IPsec transforms. */
+	if (tdb->tdb_flags & TDBF_HALFIV)
+		sadb_sa->sadb_sa_flags |= SADB_X_SAFLAGS_HALFIV;
 
-    if (tdb->tdb_flags & TDBF_TUNNELING)
-      sadb_sa->sadb_sa_flags |= SADB_X_SAFLAGS_TUNNEL;
+	if (tdb->tdb_flags & TDBF_TUNNELING)
+		sadb_sa->sadb_sa_flags |= SADB_X_SAFLAGS_TUNNEL;
 
-    if (tdb->tdb_flags & TDBF_RANDOMPADDING)
-      sadb_sa->sadb_sa_flags |= SADB_X_SAFLAGS_RANDOMPADDING;
+	if (tdb->tdb_flags & TDBF_RANDOMPADDING)
+		sadb_sa->sadb_sa_flags |= SADB_X_SAFLAGS_RANDOMPADDING;
 
-    if (tdb->tdb_flags & TDBF_NOREPLAY)
-      sadb_sa->sadb_sa_flags |= SADB_X_SAFLAGS_NOREPLAY;
+	if (tdb->tdb_flags & TDBF_NOREPLAY)
+		sadb_sa->sadb_sa_flags |= SADB_X_SAFLAGS_NOREPLAY;
 
-    *p += sizeof(struct sadb_sa);
+	*p += sizeof(struct sadb_sa);
 }
 
 /*
@@ -237,81 +232,78 @@ export_sa(void **p, struct tdb *tdb)
 void
 import_lifetime(struct tdb *tdb, struct sadb_lifetime *sadb_lifetime, int type)
 {
-    if (!sadb_lifetime)
-      return;
+	if (!sadb_lifetime)
+		return;
 
-    switch (type)
-    {
+	switch (type) {
 	case PFKEYV2_LIFETIME_HARD:
-	    if ((tdb->tdb_exp_allocations =
-		 sadb_lifetime->sadb_lifetime_allocations) != 0)
-	      tdb->tdb_flags |= TDBF_ALLOCATIONS;
-	    else
-	      tdb->tdb_flags &= ~TDBF_ALLOCATIONS;
+		if ((tdb->tdb_exp_allocations =
+		    sadb_lifetime->sadb_lifetime_allocations) != 0)
+			tdb->tdb_flags |= TDBF_ALLOCATIONS;
+		else
+			tdb->tdb_flags &= ~TDBF_ALLOCATIONS;
 
-	    if ((tdb->tdb_exp_bytes = sadb_lifetime->sadb_lifetime_bytes) != 0)
-	      tdb->tdb_flags |= TDBF_BYTES;
-	    else
-	      tdb->tdb_flags &= ~TDBF_BYTES;
+		if ((tdb->tdb_exp_bytes =
+		    sadb_lifetime->sadb_lifetime_bytes) != 0)
+			tdb->tdb_flags |= TDBF_BYTES;
+		else
+			tdb->tdb_flags &= ~TDBF_BYTES;
 
-	    if ((tdb->tdb_exp_timeout =
-		 sadb_lifetime->sadb_lifetime_addtime) != 0)
-	    {
-		tdb->tdb_flags |= TDBF_TIMER;
-		timeout_add(&tdb->tdb_timer_tmo, hz * tdb->tdb_exp_timeout);
-	    } else
-	        tdb->tdb_flags &= ~TDBF_TIMER;
+		if ((tdb->tdb_exp_timeout =
+		    sadb_lifetime->sadb_lifetime_addtime) != 0) {
+			tdb->tdb_flags |= TDBF_TIMER;
+			timeout_add(&tdb->tdb_timer_tmo,
+			    hz * tdb->tdb_exp_timeout);
+		} else
+			tdb->tdb_flags &= ~TDBF_TIMER;
 
-	    if ((tdb->tdb_exp_first_use =
-		 sadb_lifetime->sadb_lifetime_usetime) != 0)
-	    {
-	        tdb->tdb_flags |= TDBF_FIRSTUSE;
-	        timeout_add(&tdb->tdb_first_tmo, hz * tdb->tdb_exp_first_use);
-	    }
-	    else
-	        tdb->tdb_flags &= ~TDBF_FIRSTUSE;
-	    break;
+		if ((tdb->tdb_exp_first_use =
+		    sadb_lifetime->sadb_lifetime_usetime) != 0)	{
+			tdb->tdb_flags |= TDBF_FIRSTUSE;
+			timeout_add(&tdb->tdb_first_tmo,
+			    hz * tdb->tdb_exp_first_use);
+		} else
+			tdb->tdb_flags &= ~TDBF_FIRSTUSE;
+		break;
 
 	case PFKEYV2_LIFETIME_SOFT:
-	    if ((tdb->tdb_soft_allocations =
-		 sadb_lifetime->sadb_lifetime_allocations) != 0)
-	      tdb->tdb_flags |= TDBF_SOFT_ALLOCATIONS;
-	    else
-	      tdb->tdb_flags &= ~TDBF_SOFT_ALLOCATIONS;
+		if ((tdb->tdb_soft_allocations =
+		    sadb_lifetime->sadb_lifetime_allocations) != 0)
+			tdb->tdb_flags |= TDBF_SOFT_ALLOCATIONS;
+		else
+			tdb->tdb_flags &= ~TDBF_SOFT_ALLOCATIONS;
 
-	    if ((tdb->tdb_soft_bytes =
-		 sadb_lifetime->sadb_lifetime_bytes) != 0)
-	      tdb->tdb_flags |= TDBF_SOFT_BYTES;
-	    else
-	      tdb->tdb_flags &= ~TDBF_SOFT_BYTES;
+		if ((tdb->tdb_soft_bytes =
+		    sadb_lifetime->sadb_lifetime_bytes) != 0)
+			tdb->tdb_flags |= TDBF_SOFT_BYTES;
+		else
+			tdb->tdb_flags &= ~TDBF_SOFT_BYTES;
 
-	    if ((tdb->tdb_soft_timeout =
-		 sadb_lifetime->sadb_lifetime_addtime) != 0)
-	    {
-		tdb->tdb_flags |= TDBF_SOFT_TIMER;
-		timeout_add(&tdb->tdb_stimer_tmo, hz * tdb->tdb_soft_timeout);
-	    }
-	    else
-	      tdb->tdb_flags &= ~TDBF_SOFT_TIMER;
+		if ((tdb->tdb_soft_timeout =
+		    sadb_lifetime->sadb_lifetime_addtime) != 0) {
+			tdb->tdb_flags |= TDBF_SOFT_TIMER;
+			timeout_add(&tdb->tdb_stimer_tmo,
+			    hz * tdb->tdb_soft_timeout);
+		} else
+			tdb->tdb_flags &= ~TDBF_SOFT_TIMER;
 
-	    if ((tdb->tdb_soft_first_use =
-		 sadb_lifetime->sadb_lifetime_usetime) != 0)
-	    {
-	        tdb->tdb_flags |= TDBF_SOFT_FIRSTUSE;
-	        timeout_add(&tdb->tdb_sfirst_tmo, hz *
+		if ((tdb->tdb_soft_first_use =
+		    sadb_lifetime->sadb_lifetime_usetime) != 0)	{
+			tdb->tdb_flags |= TDBF_SOFT_FIRSTUSE;
+			timeout_add(&tdb->tdb_sfirst_tmo, hz *
 			    tdb->tdb_soft_first_use);
-	    }
-	    else
-	        tdb->tdb_flags &= ~TDBF_SOFT_FIRSTUSE;
-	    break;
+		}
+		else
+			tdb->tdb_flags &= ~TDBF_SOFT_FIRSTUSE;
+		break;
 
-	case PFKEYV2_LIFETIME_CURRENT:  /* Nothing fancy here */
-	    tdb->tdb_cur_allocations =
-				      sadb_lifetime->sadb_lifetime_allocations;
-	    tdb->tdb_cur_bytes = sadb_lifetime->sadb_lifetime_bytes;
-	    tdb->tdb_established = sadb_lifetime->sadb_lifetime_addtime;
-	    tdb->tdb_first_use = sadb_lifetime->sadb_lifetime_usetime;
-    }
+	case PFKEYV2_LIFETIME_CURRENT:  /* Nothing fancy here. */
+		tdb->tdb_cur_allocations =
+		    sadb_lifetime->sadb_lifetime_allocations;
+		tdb->tdb_cur_bytes = sadb_lifetime->sadb_lifetime_bytes;
+		tdb->tdb_established = sadb_lifetime->sadb_lifetime_addtime;
+		tdb->tdb_first_use = sadb_lifetime->sadb_lifetime_usetime;
+	}
 }
 
 /*
@@ -320,53 +312,58 @@ import_lifetime(struct tdb *tdb, struct sadb_lifetime *sadb_lifetime, int type)
 void
 export_lifetime(void **p, struct tdb *tdb, int type)
 {
-    struct sadb_lifetime *sadb_lifetime = (struct sadb_lifetime *) *p;
+	struct sadb_lifetime *sadb_lifetime = (struct sadb_lifetime *) *p;
 
-    sadb_lifetime->sadb_lifetime_len = sizeof(struct sadb_lifetime) /
-				       sizeof(uint64_t);
+	sadb_lifetime->sadb_lifetime_len = sizeof(struct sadb_lifetime) /
+	    sizeof(uint64_t);
 
-    switch (type)
-    {
+	switch (type) {
 	case PFKEYV2_LIFETIME_HARD:
-	    if (tdb->tdb_flags & TDBF_ALLOCATIONS)
-	      sadb_lifetime->sadb_lifetime_allocations =
-						     tdb->tdb_exp_allocations;
+		if (tdb->tdb_flags & TDBF_ALLOCATIONS)
+			sadb_lifetime->sadb_lifetime_allocations =
+			    tdb->tdb_exp_allocations;
 
-	    if (tdb->tdb_flags & TDBF_BYTES)
-	      sadb_lifetime->sadb_lifetime_bytes = tdb->tdb_exp_bytes;
+		if (tdb->tdb_flags & TDBF_BYTES)
+			sadb_lifetime->sadb_lifetime_bytes =
+			    tdb->tdb_exp_bytes;
 
-	    if (tdb->tdb_flags & TDBF_TIMER)
-	      sadb_lifetime->sadb_lifetime_addtime = tdb->tdb_exp_timeout;
+		if (tdb->tdb_flags & TDBF_TIMER)
+			sadb_lifetime->sadb_lifetime_addtime =
+			    tdb->tdb_exp_timeout;
 
-	    if (tdb->tdb_flags & TDBF_FIRSTUSE)
-	      sadb_lifetime->sadb_lifetime_usetime = tdb->tdb_exp_first_use;
-	    break;
+		if (tdb->tdb_flags & TDBF_FIRSTUSE)
+			sadb_lifetime->sadb_lifetime_usetime =
+			    tdb->tdb_exp_first_use;
+		break;
 
 	case PFKEYV2_LIFETIME_SOFT:
-	    if (tdb->tdb_flags & TDBF_SOFT_ALLOCATIONS)
-	      sadb_lifetime->sadb_lifetime_allocations =
-						    tdb->tdb_soft_allocations;
+		if (tdb->tdb_flags & TDBF_SOFT_ALLOCATIONS)
+			sadb_lifetime->sadb_lifetime_allocations =
+			    tdb->tdb_soft_allocations;
 
-	    if (tdb->tdb_flags & TDBF_SOFT_BYTES)
-	      sadb_lifetime->sadb_lifetime_bytes = tdb->tdb_soft_bytes;
+		if (tdb->tdb_flags & TDBF_SOFT_BYTES)
+			sadb_lifetime->sadb_lifetime_bytes =
+			    tdb->tdb_soft_bytes;
 
-	    if (tdb->tdb_flags & TDBF_SOFT_TIMER)
-	      sadb_lifetime->sadb_lifetime_addtime = tdb->tdb_soft_timeout;
+		if (tdb->tdb_flags & TDBF_SOFT_TIMER)
+			sadb_lifetime->sadb_lifetime_addtime =
+			    tdb->tdb_soft_timeout;
 
-	    if (tdb->tdb_flags & TDBF_SOFT_FIRSTUSE)
-	      sadb_lifetime->sadb_lifetime_usetime = tdb->tdb_soft_first_use;
-	    break;
+		if (tdb->tdb_flags & TDBF_SOFT_FIRSTUSE)
+			sadb_lifetime->sadb_lifetime_usetime =
+			    tdb->tdb_soft_first_use;
+		break;
 
 	case PFKEYV2_LIFETIME_CURRENT:
-	    sadb_lifetime->sadb_lifetime_allocations =
-						      tdb->tdb_cur_allocations;
-	    sadb_lifetime->sadb_lifetime_bytes = tdb->tdb_cur_bytes;
-	    sadb_lifetime->sadb_lifetime_addtime = tdb->tdb_established;
-	    sadb_lifetime->sadb_lifetime_usetime = tdb->tdb_first_use;
-	    break;
-    }
+		sadb_lifetime->sadb_lifetime_allocations =
+		    tdb->tdb_cur_allocations;
+		sadb_lifetime->sadb_lifetime_bytes = tdb->tdb_cur_bytes;
+		sadb_lifetime->sadb_lifetime_addtime = tdb->tdb_established;
+		sadb_lifetime->sadb_lifetime_usetime = tdb->tdb_first_use;
+		break;
+	}
 
-    *p += sizeof(struct sadb_lifetime);
+	*p += sizeof(struct sadb_lifetime);
 }
 
 /*
@@ -375,36 +372,35 @@ export_lifetime(void **p, struct tdb *tdb, int type)
 void
 import_address(struct sockaddr *sa, struct sadb_address *sadb_address)
 {
-    int salen;
-    struct sockaddr *ssa = (struct sockaddr *)((void *) sadb_address +
-					       sizeof(struct sadb_address));
+	int salen;
+	struct sockaddr *ssa = (struct sockaddr *)((void *) sadb_address +
+	    sizeof(struct sadb_address));
 
-    if (!sadb_address)
-      return;
+	if (!sadb_address)
+		return;
 
-    if (ssa->sa_len)
-      salen = ssa->sa_len;
-    else
-      switch(ssa->sa_family)
-      {
+	if (ssa->sa_len)
+		salen = ssa->sa_len;
+	else
+		switch(ssa->sa_family) {
 #ifdef INET
-	  case AF_INET:
-	      salen = sizeof(struct sockaddr_in);
-	      break;
+		case AF_INET:
+			salen = sizeof(struct sockaddr_in);
+			break;
 #endif /* INET */
 
 #if INET6
-	  case AF_INET6:
-	      salen = sizeof(struct sockaddr_in6);
-	      break;
+		case AF_INET6:
+			salen = sizeof(struct sockaddr_in6);
+			break;
 #endif /* INET6 */
 
-	  default:
-	      return;
-    }
+		default:
+			return;
+		}
 
-    bcopy(ssa, sa, salen);
-    sa->sa_len = salen;
+	bcopy(ssa, sa, salen);
+	sa->sa_len = salen;
 }
 
 /*
@@ -413,15 +409,15 @@ import_address(struct sockaddr *sa, struct sadb_address *sadb_address)
 void
 export_address(void **p, struct sockaddr *sa)
 {
-    struct sadb_address *sadb_address = (struct sadb_address *) *p;
+	struct sadb_address *sadb_address = (struct sadb_address *) *p;
 
-    sadb_address->sadb_address_len = (sizeof(struct sadb_address) +
-				      PADUP(SA_LEN(sa))) / sizeof(uint64_t);
+	sadb_address->sadb_address_len = (sizeof(struct sadb_address) +
+	    PADUP(SA_LEN(sa))) / sizeof(uint64_t);
 
-    *p += sizeof(struct sadb_address);
-    bcopy(sa, *p, SA_LEN(sa));
-    ((struct sockaddr *) *p)->sa_family = sa->sa_family;
-    *p += PADUP(SA_LEN(sa));
+	*p += sizeof(struct sadb_address);
+	bcopy(sa, *p, SA_LEN(sa));
+	((struct sockaddr *) *p)->sa_family = sa->sa_family;
+	*p += PADUP(SA_LEN(sa));
 }
 
 /*
@@ -430,37 +426,37 @@ export_address(void **p, struct sockaddr *sa)
 void
 import_auth(struct tdb *tdb, struct sadb_x_cred *sadb_auth, int dstauth)
 {
-    struct ipsec_ref **ipr;
+	struct ipsec_ref **ipr;
 
-    if (!sadb_auth)
-      return;
+	if (!sadb_auth)
+		return;
 
-    if (dstauth == PFKEYV2_AUTH_REMOTE)
-      ipr = &tdb->tdb_remote_auth;
-    else
-      ipr = &tdb->tdb_local_auth;
+	if (dstauth == PFKEYV2_AUTH_REMOTE)
+		ipr = &tdb->tdb_remote_auth;
+	else
+		ipr = &tdb->tdb_local_auth;
 
-    MALLOC(*ipr, struct ipsec_ref *, EXTLEN(sadb_auth) -
-	   sizeof(struct sadb_x_cred) + sizeof(struct ipsec_ref),
-	   M_CREDENTIALS, M_WAITOK);
-    (*ipr)->ref_len = EXTLEN(sadb_auth) - sizeof(struct sadb_x_cred);
-    switch (sadb_auth->sadb_x_cred_type)
-    {
+	MALLOC(*ipr, struct ipsec_ref *, EXTLEN(sadb_auth) -
+	    sizeof(struct sadb_x_cred) + sizeof(struct ipsec_ref),
+	    M_CREDENTIALS, M_WAITOK);
+	(*ipr)->ref_len = EXTLEN(sadb_auth) - sizeof(struct sadb_x_cred);
+
+	switch (sadb_auth->sadb_x_cred_type) {
 	case SADB_X_AUTHTYPE_PASSPHRASE:
-	    (*ipr)->ref_type = IPSP_AUTH_PASSPHRASE;
-	    break;
+		(*ipr)->ref_type = IPSP_AUTH_PASSPHRASE;
+		break;
 	case SADB_X_AUTHTYPE_RSA:
-	    (*ipr)->ref_type = IPSP_AUTH_RSA;
-	    break;
+		(*ipr)->ref_type = IPSP_AUTH_RSA;
+		break;
 	default:
-	    FREE(*ipr, M_CREDENTIALS);
-	    *ipr = NULL;
-	    return;
-    }
-    (*ipr)->ref_count = 1;
-    (*ipr)->ref_malloctype = M_CREDENTIALS;
-    bcopy((void *) sadb_auth + sizeof(struct sadb_x_cred),
-	  (*ipr) + 1, (*ipr)->ref_len);
+		FREE(*ipr, M_CREDENTIALS);
+		*ipr = NULL;
+		return;
+	}
+	(*ipr)->ref_count = 1;
+	(*ipr)->ref_malloctype = M_CREDENTIALS;
+	bcopy((void *) sadb_auth + sizeof(struct sadb_x_cred),
+	    (*ipr) + 1, (*ipr)->ref_len);
 }
 
 /*
@@ -469,37 +465,37 @@ import_auth(struct tdb *tdb, struct sadb_x_cred *sadb_auth, int dstauth)
 void
 import_credentials(struct tdb *tdb, struct sadb_x_cred *sadb_cred, int dstcred)
 {
-    struct ipsec_ref **ipr;
+	struct ipsec_ref **ipr;
 
-    if (!sadb_cred)
-      return;
+	if (!sadb_cred)
+		return;
 
-    if (dstcred == PFKEYV2_CRED_REMOTE)
-      ipr = &tdb->tdb_remote_cred;
-    else
-      ipr = &tdb->tdb_local_cred;
+	if (dstcred == PFKEYV2_CRED_REMOTE)
+		ipr = &tdb->tdb_remote_cred;
+	else
+		ipr = &tdb->tdb_local_cred;
 
-    MALLOC(*ipr, struct ipsec_ref *, EXTLEN(sadb_cred) -
-	   sizeof(struct sadb_x_cred) + sizeof(struct ipsec_ref),
-	   M_CREDENTIALS, M_WAITOK);
-    (*ipr)->ref_len = EXTLEN(sadb_cred) - sizeof(struct sadb_x_cred);
-    switch (sadb_cred->sadb_x_cred_type)
-    {
+	MALLOC(*ipr, struct ipsec_ref *, EXTLEN(sadb_cred) -
+	    sizeof(struct sadb_x_cred) + sizeof(struct ipsec_ref),
+	    M_CREDENTIALS, M_WAITOK);
+	(*ipr)->ref_len = EXTLEN(sadb_cred) - sizeof(struct sadb_x_cred);
+
+	switch (sadb_cred->sadb_x_cred_type) {
 	case SADB_X_CREDTYPE_X509:
-	    (*ipr)->ref_type = IPSP_CRED_X509;
-	    break;
+		(*ipr)->ref_type = IPSP_CRED_X509;
+		break;
 	case SADB_X_CREDTYPE_KEYNOTE:
-	    (*ipr)->ref_type = IPSP_CRED_KEYNOTE;
-	    break;
+		(*ipr)->ref_type = IPSP_CRED_KEYNOTE;
+		break;
 	default:
-	    FREE(*ipr, M_CREDENTIALS);
-	    *ipr = NULL;
-	    return;
-    }
-    (*ipr)->ref_count = 1;
-    (*ipr)->ref_malloctype = M_CREDENTIALS;
-    bcopy((void *) sadb_cred + sizeof(struct sadb_x_cred),
-	  (*ipr) + 1, (*ipr)->ref_len);
+		FREE(*ipr, M_CREDENTIALS);
+		*ipr = NULL;
+		return;
+	}
+	(*ipr)->ref_count = 1;
+	(*ipr)->ref_malloctype = M_CREDENTIALS;
+	bcopy((void *) sadb_cred + sizeof(struct sadb_x_cred),
+	    (*ipr) + 1, (*ipr)->ref_len);
 }
 
 /*
@@ -508,176 +504,168 @@ import_credentials(struct tdb *tdb, struct sadb_x_cred *sadb_cred, int dstcred)
 void
 import_identity(struct tdb *tdb, struct sadb_ident *sadb_ident, int type)
 {
-    struct ipsec_ref **ipr;
+	struct ipsec_ref **ipr;
 
-    if (!sadb_ident)
-      return;
+	if (!sadb_ident)
+		return;
 
-    if (type == PFKEYV2_IDENTITY_SRC)
-      ipr = &tdb->tdb_srcid;
-    else
-      ipr = &tdb->tdb_dstid;
+	if (type == PFKEYV2_IDENTITY_SRC)
+		ipr = &tdb->tdb_srcid;
+	else
+		ipr = &tdb->tdb_dstid;
 
-    MALLOC(*ipr, struct ipsec_ref *, EXTLEN(sadb_ident) -
-	   sizeof(struct sadb_ident) + sizeof(struct ipsec_ref), M_CREDENTIALS,
-	   M_WAITOK);
-    (*ipr)->ref_len = EXTLEN(sadb_ident) - sizeof(struct sadb_ident);
-    switch (sadb_ident->sadb_ident_type)
-    {
+	MALLOC(*ipr, struct ipsec_ref *, EXTLEN(sadb_ident) -
+	    sizeof(struct sadb_ident) + sizeof(struct ipsec_ref),
+	    M_CREDENTIALS, M_WAITOK);
+	(*ipr)->ref_len = EXTLEN(sadb_ident) - sizeof(struct sadb_ident);
+
+	switch (sadb_ident->sadb_ident_type) {
 	case SADB_IDENTTYPE_PREFIX:
-	    (*ipr)->ref_type = IPSP_IDENTITY_PREFIX;
-	    break;
+		(*ipr)->ref_type = IPSP_IDENTITY_PREFIX;
+		break;
 	case SADB_IDENTTYPE_FQDN:
-	    (*ipr)->ref_type = IPSP_IDENTITY_FQDN;
-	    break;
+		(*ipr)->ref_type = IPSP_IDENTITY_FQDN;
+		break;
 	case SADB_IDENTTYPE_USERFQDN:
-	    (*ipr)->ref_type = IPSP_IDENTITY_USERFQDN;
-	    break;
+		(*ipr)->ref_type = IPSP_IDENTITY_USERFQDN;
+		break;
 	case SADB_X_IDENTTYPE_CONNECTION:
-	    (*ipr)->ref_type = IPSP_IDENTITY_CONNECTION;
-	    break;
+		(*ipr)->ref_type = IPSP_IDENTITY_CONNECTION;
+		break;
 	default:
-	    FREE(*ipr, M_CREDENTIALS);
-	    *ipr = NULL;
-	    return;
-    }
-    (*ipr)->ref_count = 1;
-    (*ipr)->ref_malloctype = M_CREDENTIALS;
-    bcopy((void *) sadb_ident + sizeof(struct sadb_ident), (*ipr) + 1,
-	  (*ipr)->ref_len);
+		FREE(*ipr, M_CREDENTIALS);
+		*ipr = NULL;
+		return;
+	}
+	(*ipr)->ref_count = 1;
+	(*ipr)->ref_malloctype = M_CREDENTIALS;
+	bcopy((void *) sadb_ident + sizeof(struct sadb_ident), (*ipr) + 1,
+	    (*ipr)->ref_len);
 }
 
 void
 export_credentials(void **p, struct tdb *tdb, int dstcred)
 {
-    struct ipsec_ref **ipr;
-    struct sadb_x_cred *sadb_cred = (struct sadb_x_cred *) *p;
+	struct ipsec_ref **ipr;
+	struct sadb_x_cred *sadb_cred = (struct sadb_x_cred *) *p;
 
-    if (dstcred == PFKEYV2_CRED_REMOTE)
-      ipr = &tdb->tdb_remote_cred;
-    else
-      ipr = &tdb->tdb_local_cred;
+	if (dstcred == PFKEYV2_CRED_REMOTE)
+		ipr = &tdb->tdb_remote_cred;
+	else
+		ipr = &tdb->tdb_local_cred;
 
-    sadb_cred->sadb_x_cred_len = (sizeof(struct sadb_x_cred) +
-				  PADUP((*ipr)->ref_len)) / sizeof(uint64_t);
+	sadb_cred->sadb_x_cred_len = (sizeof(struct sadb_x_cred) +
+	    PADUP((*ipr)->ref_len)) / sizeof(uint64_t);
 
-    switch ((*ipr)->ref_type)
-    {
+	switch ((*ipr)->ref_type) {
 	case IPSP_CRED_KEYNOTE:
-	    sadb_cred->sadb_x_cred_type = SADB_X_CREDTYPE_KEYNOTE;
-	    break;
+		sadb_cred->sadb_x_cred_type = SADB_X_CREDTYPE_KEYNOTE;
+		break;
 	case IPSP_CRED_X509:
-	    sadb_cred->sadb_x_cred_type = SADB_X_CREDTYPE_X509;
-	    break;
-    }
-    *p += sizeof(struct sadb_x_cred);
-    bcopy((*ipr) + 1, *p, (*ipr)->ref_len);
-    *p += PADUP((*ipr)->ref_len);
+		sadb_cred->sadb_x_cred_type = SADB_X_CREDTYPE_X509;
+		break;
+	}
+	*p += sizeof(struct sadb_x_cred);
+	bcopy((*ipr) + 1, *p, (*ipr)->ref_len);
+	*p += PADUP((*ipr)->ref_len);
 }
 
 void
 export_auth(void **p, struct tdb *tdb, int dstauth)
 {
-    struct ipsec_ref **ipr;
-    struct sadb_x_cred *sadb_auth = (struct sadb_x_cred *) *p;
+	struct ipsec_ref **ipr;
+	struct sadb_x_cred *sadb_auth = (struct sadb_x_cred *) *p;
 
-    if (dstauth == PFKEYV2_AUTH_REMOTE)
-      ipr = &tdb->tdb_remote_auth;
-    else
-      ipr = &tdb->tdb_local_auth;
+	if (dstauth == PFKEYV2_AUTH_REMOTE)
+		ipr = &tdb->tdb_remote_auth;
+	else
+		ipr = &tdb->tdb_local_auth;
 
-    sadb_auth->sadb_x_cred_len = (sizeof(struct sadb_x_cred) +
-				  PADUP((*ipr)->ref_len)) / sizeof(uint64_t);
+	sadb_auth->sadb_x_cred_len = (sizeof(struct sadb_x_cred) +
+	    PADUP((*ipr)->ref_len)) / sizeof(uint64_t);
 
-    switch ((*ipr)->ref_type)
-    {
+	switch ((*ipr)->ref_type) {
 	case IPSP_CRED_KEYNOTE:
-	    sadb_auth->sadb_x_cred_type = SADB_X_CREDTYPE_KEYNOTE;
-	    break;
+		sadb_auth->sadb_x_cred_type = SADB_X_CREDTYPE_KEYNOTE;
+		break;
 	case IPSP_CRED_X509:
-	    sadb_auth->sadb_x_cred_type = SADB_X_CREDTYPE_X509;
-	    break;
-    }
-    *p += sizeof(struct sadb_x_cred);
-    bcopy((*ipr) + 1, *p, (*ipr)->ref_len);
-    *p += PADUP((*ipr)->ref_len);
+		sadb_auth->sadb_x_cred_type = SADB_X_CREDTYPE_X509;
+		break;
+	}
+	*p += sizeof(struct sadb_x_cred);
+	bcopy((*ipr) + 1, *p, (*ipr)->ref_len);
+	*p += PADUP((*ipr)->ref_len);
 }
 
 void
 export_identity(void **p, struct tdb *tdb, int type)
 {
-    struct ipsec_ref **ipr;
-    struct sadb_ident *sadb_ident = (struct sadb_ident *) *p;
+	struct ipsec_ref **ipr;
+	struct sadb_ident *sadb_ident = (struct sadb_ident *) *p;
 
-    if (type == PFKEYV2_IDENTITY_SRC)
-      ipr = &tdb->tdb_srcid;
-    else
-      ipr = &tdb->tdb_dstid;
+	if (type == PFKEYV2_IDENTITY_SRC)
+		ipr = &tdb->tdb_srcid;
+	else
+		ipr = &tdb->tdb_dstid;
 
-    sadb_ident->sadb_ident_len = (sizeof(struct sadb_ident) +
-				  PADUP((*ipr)->ref_len)) / sizeof(uint64_t);
-    switch ((*ipr)->ref_type)
-    {
+	sadb_ident->sadb_ident_len = (sizeof(struct sadb_ident) +
+	    PADUP((*ipr)->ref_len)) / sizeof(uint64_t);
+
+	switch ((*ipr)->ref_type) {
 	case IPSP_IDENTITY_PREFIX:
-	    sadb_ident->sadb_ident_type = SADB_IDENTTYPE_PREFIX;
-	    break;
+		sadb_ident->sadb_ident_type = SADB_IDENTTYPE_PREFIX;
+		break;
 	case IPSP_IDENTITY_FQDN:
-	    sadb_ident->sadb_ident_type = SADB_IDENTTYPE_FQDN;
-	    break;
+		sadb_ident->sadb_ident_type = SADB_IDENTTYPE_FQDN;
+		break;
 	case IPSP_IDENTITY_USERFQDN:
-	    sadb_ident->sadb_ident_type = SADB_IDENTTYPE_USERFQDN;
-	    break;
+		sadb_ident->sadb_ident_type = SADB_IDENTTYPE_USERFQDN;
+		break;
 	case IPSP_IDENTITY_CONNECTION:
-	    sadb_ident->sadb_ident_type = SADB_X_IDENTTYPE_CONNECTION;
-	    break;
-    }
-    *p += sizeof(struct sadb_ident);
-    bcopy((*ipr) + 1, *p, (*ipr)->ref_len);
-    *p += PADUP((*ipr)->ref_len);
+		sadb_ident->sadb_ident_type = SADB_X_IDENTTYPE_CONNECTION;
+		break;
+	}
+	*p += sizeof(struct sadb_ident);
+	bcopy((*ipr) + 1, *p, (*ipr)->ref_len);
+	*p += PADUP((*ipr)->ref_len);
 }
 
 /* ... */
 void
 import_key(struct ipsecinit *ii, struct sadb_key *sadb_key, int type)
 {
-    if (!sadb_key)
-      return;
+	if (!sadb_key)
+		return;
 
-    if (type == PFKEYV2_ENCRYPTION_KEY)
-    { /* Encryption key */
-	ii->ii_enckeylen = sadb_key->sadb_key_bits / 8;
-	ii->ii_enckey = (void *)sadb_key + sizeof(struct sadb_key);
-    }
-    else
-    {
-	ii->ii_authkeylen = sadb_key->sadb_key_bits / 8;
-	ii->ii_authkey = (void *)sadb_key + sizeof(struct sadb_key);
-    }
+	if (type == PFKEYV2_ENCRYPTION_KEY) { /* Encryption key */
+		ii->ii_enckeylen = sadb_key->sadb_key_bits / 8;
+		ii->ii_enckey = (void *)sadb_key + sizeof(struct sadb_key);
+	} else {
+		ii->ii_authkeylen = sadb_key->sadb_key_bits / 8;
+		ii->ii_authkey = (void *)sadb_key + sizeof(struct sadb_key);
+	}
 }
 
 void
 export_key(void **p, struct tdb *tdb, int type)
 {
-    struct sadb_key *sadb_key = (struct sadb_key *) *p;
+	struct sadb_key *sadb_key = (struct sadb_key *) *p;
 
-    if (type == PFKEYV2_ENCRYPTION_KEY)
-    {
-	sadb_key->sadb_key_len = (sizeof(struct sadb_key) +
-				  PADUP(tdb->tdb_emxkeylen)) /
-				 sizeof(uint64_t);
-	sadb_key->sadb_key_bits = tdb->tdb_emxkeylen * 8;
-	*p += sizeof(struct sadb_key);
-	bcopy(tdb->tdb_emxkey, *p, tdb->tdb_emxkeylen);
-	*p += PADUP(tdb->tdb_emxkeylen);
-    }
-    else
-    {
-	sadb_key->sadb_key_len = (sizeof(struct sadb_key) +
-				  PADUP(tdb->tdb_amxkeylen)) /
-				 sizeof(uint64_t);
-	sadb_key->sadb_key_bits = tdb->tdb_amxkeylen * 8;
-	*p += sizeof(struct sadb_key);
-	bcopy(tdb->tdb_amxkey, *p, tdb->tdb_amxkeylen);
-	*p += PADUP(tdb->tdb_amxkeylen);
-    }
+	if (type == PFKEYV2_ENCRYPTION_KEY) {
+		sadb_key->sadb_key_len = (sizeof(struct sadb_key) +
+		    PADUP(tdb->tdb_emxkeylen)) /
+		    sizeof(uint64_t);
+		sadb_key->sadb_key_bits = tdb->tdb_emxkeylen * 8;
+		*p += sizeof(struct sadb_key);
+		bcopy(tdb->tdb_emxkey, *p, tdb->tdb_emxkeylen);
+		*p += PADUP(tdb->tdb_emxkeylen);
+	} else {
+		sadb_key->sadb_key_len = (sizeof(struct sadb_key) +
+		    PADUP(tdb->tdb_amxkeylen)) /
+		    sizeof(uint64_t);
+		sadb_key->sadb_key_bits = tdb->tdb_amxkeylen * 8;
+		*p += sizeof(struct sadb_key);
+		bcopy(tdb->tdb_amxkey, *p, tdb->tdb_amxkeylen);
+		*p += PADUP(tdb->tdb_amxkeylen);
+	}
 }
