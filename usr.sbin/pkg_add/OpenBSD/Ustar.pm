@@ -1,4 +1,4 @@
-# $OpenBSD: Ustar.pm,v 1.4 2003/12/19 00:29:20 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.5 2004/01/27 23:25:31 espie Exp $
 #
 # Copyright (c) 2002 Marc Espie.
 # 
@@ -212,11 +212,12 @@ sub create
 {
 	my $self = shift;
 	$self->make_basedir($self->{name});
+	my $linkname = $self->{linkname};
 	if (defined $self->{cwd}) {
-		link $self->{cwd}."/".$self->{linkname}, $self->{name};
-	} else {
-		link $self->{linkname}, $self->{name};
+		$linkname=$self->{cwd}.'/'.$linkname;
 	}
+	link $linkname, $self->{name} or
+	    die "Can't link $linkname to $self->{name}: $!";
 }
 
 sub isLink() { 1 }
@@ -229,7 +230,8 @@ sub create
 {
 	my $self = shift;
 	$self->make_basedir($self->{name});
-	symlink $self->{linkname}, $self->{name};
+	symlink $self->{linkname}, $self->{name} or 
+	    die "Can't symlink $self->{linkname} to $self->{name}: $!";
 }
 
 sub isLink() { 1 }
@@ -238,28 +240,30 @@ sub isHardLink() { 1 }
 package OpenBSD::Ustar::File;
 our @ISA=qw(OpenBSD::Ustar::Object);
 
-use IO::File;
-
 sub create
 {
 	my $self = shift;
 	$self->make_basedir($self->{name});
-	my $out = new IO::File $self->{name}, "w";
+	open (my $out, '>', $self->{name});
 	if (!defined $out) {
-		print "Can't write to ", $self->{name}, "\n";
-		return;
+		die "Can't write to $self->{name}: $!";
 	}
 	my $buffer;
 	my $toread = $self->{size};
 	while ($toread > 0) {
 		my $maxread = $buffsize;
 		$maxread = $toread if $maxread > $toread;
-		read($self->{archive}->{fh}, $buffer, $maxread);
+		if (!defined read($self->{archive}->{fh}, $buffer, $maxread)) {
+			die "Error reading from archive: $!";
+		}
 		$self->{archive}->{swallow} -= $maxread;
-		print $out $buffer;
+		unless (print $out $buffer) {
+			die "Error writing to $self->{name}: $!";
+		}
+			
 		$toread -= $maxread;
 	}
-	$out->close();
+	$out->close() or die "Error closing $self->{name}: $!";
 	$self->SUPER::set_modes();
 }
 

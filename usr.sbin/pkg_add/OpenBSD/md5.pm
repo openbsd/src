@@ -1,4 +1,4 @@
-# $OpenBSD: md5.pm,v 1.1.1.1 2003/10/16 17:43:34 espie Exp $
+# $OpenBSD: md5.pm,v 1.2 2004/01/27 23:25:31 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -32,12 +32,11 @@ use Digest::MD5;
 sub fromfile
 {
 	my $fname = shift;
-	die "No such file: \"$fname\"\n" unless -f $fname;
-	open(my $file, '<', $fname) or return;
+	open(my $file, '<', $fname) or die "can't open $fname: $!";
 	my $md5 = new Digest::MD5;
 
 	$md5->addfile($file);
-	close($file);
+	close($file) or die "problem closing $fname: $!";
 	return $md5->hexdigest();
 }
 1;
