@@ -1,29 +1,22 @@
-/*	$OpenBSD: db_disasm.c,v 1.16 2004/04/07 18:24:19 mickey Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.17 2005/01/23 16:26:43 mickey Exp $	*/
+
+/* TODO parse 64bit insns or rewrite */
 
 /*
- * Copyright (c) 1999 Michael Shalayeff
+ * Copyright (c) 1999,2005 Michael Shalayeff
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR OR HIS RELATIVES BE LIABLE FOR ANY DIRECT,
- * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF MIND, USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
- * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
- * THE POSSIBILITY OF SUCH DAMAGE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF MIND, USE, DATA OR PROFITS, WHETHER IN
+ * AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+ * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 /*
  *  (c) Copyright 1992 HEWLETT-PACKARD COMPANY
@@ -938,7 +931,6 @@ int ariDasm(const struct inst *i, OFS, int);
 /*##################### Globals - Exports ##################################*/
 /*##################### Local Variables ####################################*/
 
-static	const char	fcoprUndef[] = "copr\t(rsvd or undef.)";
 static	const char	fmtStrTbl[][5] = { "sgl", "dbl", "sgl", "quad" };
 static	const char	condStrTbl[][7] = {
 	    "false?", "false", "?", "!<=>", "=", "=t", "?=", "!<>",
@@ -1867,10 +1859,9 @@ scDasm(i, ofs, w)
 			db_printf("\t(%%sr%d,%%r%d),%%r%d",Dss(w),Rsb(w),Rtc(w));
 		else
 			db_printf("\t(%%r%d),%%r%d",Rsb(w),Rtc(w));
-	} else {
-		db_printf("?????");
+	} else
 		return (0);
-	}
+
 	return (1);
 }
 
@@ -1927,10 +1918,9 @@ mmgtDasm(i, ofs, w)
 	}
 	else if (Match("iitlb"))
 		db_printf("\t%%r%d,(%%sr%d,%%r%d)",Rsa(w),Sr(w),Rsb(w));
-	else {
-		db_printf("?????");
+	else
 		return (0);
-	}
+
 	return(1);
 }
 
@@ -1983,7 +1973,6 @@ floatDasm(i, ofs, w)
 				p = "cmp";
 				break;
 			default:
-				db_printf(fcoprUndef);
 				return(0);
 			}
 			db_printf("%s,%s",p,fmtStrTbl[fmt]);
@@ -2004,7 +1993,7 @@ floatDasm(i, ofs, w)
 		case 2: p = (Fpi(w)) ? "mpyi" : "mpy"; break;
 		case 3: p = "div"; break;
 		case 4: p = "rem"; break;
-		default: db_printf(fcoprUndef); return (0);
+		default: return (0);
 		}
 		db_printf("%s,%s", p, fmtStrTbl[fmt]);
 		db_printf("\t%%f%s,%%f%s,%%f%s",ST(r1),ST(r2),ST(t));
@@ -2041,7 +2030,7 @@ floatDasm(i, ofs, w)
 		case 3: p = "abs"; break;
 		case 4: p = "sqrt"; break;
 		case 5: p = "rnd"; break;
-		default: db_printf(fcoprUndef); return (0);
+		default: return (0);
 		}
 		db_printf("%s,%s",p,fmtStrTbl[fmt]);
 		db_printf("\t%%f%s,%%f%s",ST(r1),ST(t));
@@ -2081,7 +2070,7 @@ fcoprDasm(w, op1, op2)
 		case 3: p = "abs"; break;
 		case 4: p = "sqrt"; break;
 		case 5: p = "rnd"; break;
-		default: db_printf(fcoprUndef); return(0);
+		default: return(0);
 		}
 		db_printf("f%s,%s\t%%fr%d,%%fr%d", p, fmtStrTbl[fmt], r1, t);
 		break;
@@ -2104,7 +2093,7 @@ fcoprDasm(w, op1, op2)
 		fmt = (op1 >> 2) & 3;
 		switch((op1 >> 4) & 7) {
 		case 0: p = "fcmp"; break;
-		default: db_printf(fcoprUndef); return (0);
+		default: return (0);
 		}
 		db_printf("%s,%s,%s\t%%fr%d,%%fr%d",
 		    p,fmtStrTbl[fmt],condStrTbl[op2],r1,r2);
@@ -2119,13 +2108,12 @@ fcoprDasm(w, op1, op2)
 		case 2: p = "mpy"; break;
 		case 3: p = "div"; break;
 		case 4: p = "rem"; break;
-		default: db_printf(fcoprUndef); return (0);
+		default: return (0);
 		}
 		db_printf("f%s,%s\t%%fr%d,%%fr%d,%%fr%d",
 		    p, fmtStrTbl[fmt], r1, r2, t);
 		break;
 	    default:
-		    db_printf(fcoprUndef);
 		    return(0);
 	}
 	return (1);
@@ -2163,10 +2151,9 @@ coprDasm(i, ofs, w)
 		db_printf("%sstd",pfx);
 	} else if (Match("cstw"))
 		db_printf("%sstw",pfx);
-	else {
-		db_printf("copr???");
+	else
 		return (0);
-	}
+
 	if (ShortDisp(w)) {
 		db_printf("s");
 		if (AstNu(w))
@@ -2271,10 +2258,8 @@ diagDasm(i, ofs, w)
 		db_printf(i->mnem);
 		if (Match("diag"))
 			db_printf("\t0x%X",w & 0x03ffffff);
-		else {
-			db_printf("?????");
+		else
 			return (0);
-		}
 	}
 	return (1);
 }
@@ -2327,11 +2312,11 @@ db_disasm(loc, flag)
 	register const struct inst *i;
 	register const struct majoropcode *m;
 	register u_int ext;
-	int instruct;
+	int ok, instruct;
 	OFS ofs = 0;
 
 	iExInit();
-	if (loc == ddb_regs.tf_iioq_head && ddb_regs.tf_iir)
+	if (loc == PC_REGS(&ddb_regs) && ddb_regs.tf_iir)
 		instruct = ddb_regs.tf_iir;
 	else if (USERMODE(loc)) {
 		if (copyin((caddr_t)(loc &~ HPPA_PC_PRIV_MASK),
@@ -2340,6 +2325,7 @@ db_disasm(loc, flag)
 	} else
 		instruct = *(int *)loc;
 
+	ok = 0;
 	m = &majopcs[Opcode(instruct)];
 	ext = OpExt(instruct, m);
 	if (ext <= m->maxsubop) {
@@ -2349,16 +2335,18 @@ db_disasm(loc, flag)
 		else
 			i = m->subops[ext];
 
-		if (i->dasmfcn != coprDasm && i->dasmfcn != diagDasm &&
-		    i->dasmfcn != ariDasm && i->dasmfcn != scDasm &&
-		    i->dasmfcn != ldDasm)
-			db_printf(i->mnem);
-		if (i->dasmfcn)
-			(*i->dasmfcn)(i, ofs, instruct);
-		else if (i->mnem[0] == '?')
-			db_printf(illeg.mnem);
-	} else
-		db_printf(illeg.mnem);
+		if (i && i->mnem[0] != '?') {
+			if (i->dasmfcn != coprDasm && i->dasmfcn != diagDasm &&
+			    i->dasmfcn != ariDasm && i->dasmfcn != scDasm &&
+			    i->dasmfcn != ldDasm)
+				db_printf(i->mnem);
+			if (i->dasmfcn)
+				ok = (*i->dasmfcn)(i, ofs, instruct);
+		}
+	}
+
+	if (!ok)
+		db_printf("<%08x>", instruct);
 
 	db_printf("\n");
 	return (loc + sizeof(instruct));
