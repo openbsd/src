@@ -1,4 +1,4 @@
-/*	$OpenBSD: login.c,v 1.28 1999/12/30 01:07:23 ericj Exp $	*/
+/*	$OpenBSD: login.c,v 1.29 2000/07/17 16:43:14 millert Exp $	*/
 /*	$NetBSD: login.c,v 1.13 1996/05/15 23:50:16 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: login.c,v 1.28 1999/12/30 01:07:23 ericj Exp $";
+static char rcsid[] = "$OpenBSD: login.c,v 1.29 2000/07/17 16:43:14 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -264,8 +264,7 @@ main(argc, argv)
 				badlogin(tbuf);
 			failures = 0;
 		}
-		(void)strncpy(tbuf, username, sizeof tbuf-1);
-		tbuf[sizeof tbuf-1] = '\0';
+		(void)strlcpy(tbuf, username, sizeof tbuf);
 
 		if ((pwd = getpwnam(username)))
 			salt = pwd->pw_passwd;
@@ -273,7 +272,7 @@ main(argc, argv)
 			salt = "xx";
 
 		/*
-		 * if we have a valid account name, and it doesn't have a
+		 * If we have a valid account name, and it doesn't have a
 		 * password, or the -f option was specified and the caller
 		 * is root or the caller isn't changing their uid, don't
 		 * authenticate.
@@ -343,26 +342,31 @@ main(argc, argv)
 #if defined(KERBEROS) || defined(KERBEROS5)
 		if (authok == 0)
 #endif
-		if (pwd && !rval && rootlogin && !rootterm(tty)) {
+		/* if logging in as root, user must be on a secure tty */
+		if (pwd && !rval && (!rootlogin || rootterm(tty)))
+			break;
+
+		/*
+		 * We don't want to give out info to an attacker trying
+		 * to guess root's password so we always say "login refused"
+		 * in that case, not "Login incorrect".
+		 */
+		if (rootlogin && !rootterm(tty)) {
 			(void)fprintf(stderr,
 			    "%s login refused on this terminal.\n",
-			    pwd->pw_name);
+			    pwd ? pwd->pw_name : "root");
 			if (hostname)
 				syslog(LOG_NOTICE,
 				    "LOGIN %s REFUSED FROM %s%s%s ON TTY %s",
-				    pwd->pw_name, rusername ? rusername : "",
+				    pwd ? pwd->pw_name : "root",
+				    rusername ? rusername : "",
 				    rusername ? "@" : "", hostname, tty);
 			else
 				syslog(LOG_NOTICE,
 				    "LOGIN %s REFUSED ON TTY %s",
-				     pwd->pw_name, tty);
-			continue;
-		}
-
-		if (pwd && !rval)
-			break;
-
-		(void)printf("Login incorrect\n");
+				     pwd ? pwd->pw_name : "root", tty);
+		} else
+			(void)printf("Login incorrect\n");
 		failures++;
 		if (pwd)
 			log_failedlogin(pwd->pw_uid, hostname, rusername, tty);
@@ -463,6 +467,8 @@ main(argc, argv)
 
 		for (cpp2 = cpp = environ; *cpp; cpp++) {
 			if (strncmp(*cpp, "LD_", 3) &&
+			    strncmp(*cpp, "ENV=", 4) &&
+			    strncmp(*cpp, "BASH_ENV=", 9) &&
 			    strncmp(*cpp, "IFS=", 4))
 				*cpp2++ = *cpp;
 		}
@@ -471,7 +477,7 @@ main(argc, argv)
 	(void)setenv("HOME", pwd->pw_dir, 1);
 	(void)setenv("SHELL", pwd->pw_shell, 1);
 	if (term[0] == '\0')
-		(void)strncpy(term, stypeof(tty), sizeof(term));
+		(void)strlcpy(term, stypeof(tty), sizeof(term));
 	(void)setenv("TERM", term, 0);
 	(void)setenv("LOGNAME", pwd->pw_name, 1);
 	(void)setenv("USER", pwd->pw_name, 1);
@@ -525,9 +531,8 @@ main(argc, argv)
 	(void)signal(SIGTSTP, SIG_IGN);
 
 	tbuf[0] = '-';
-	(void)strncpy(tbuf + 1, (p = strrchr(pwd->pw_shell, '/')) ?
-	    p + 1 : pwd->pw_shell, sizeof tbuf - 1 - 1);
-	tbuf[sizeof tbuf - 1] = '\0';
+	(void)strlcpy(tbuf + 1, (p = strrchr(pwd->pw_shell, '/')) ?
+	    p + 1 : pwd->pw_shell, sizeof tbuf - 1);
 
 	if (setlogin(pwd->pw_name) < 0)
 		syslog(LOG_ERR, "setlogin() failure: %m");

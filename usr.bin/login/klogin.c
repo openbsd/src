@@ -1,4 +1,4 @@
-/*	$OpenBSD: klogin.c,v 1.9 1999/11/24 16:08:18 art Exp $	*/
+/*	$OpenBSD: klogin.c,v 1.10 2000/07/17 16:43:14 millert Exp $	*/
 /*	$NetBSD: klogin.c,v 1.7 1996/05/21 22:07:04 mrg Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)klogin.c	8.3 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: klogin.c,v 1.9 1999/11/24 16:08:18 art Exp $";
+static char rcsid[] = "$OpenBSD: klogin.c,v 1.10 2000/07/17 16:43:14 millert Exp $";
 #endif /* not lint */
 
 #ifdef KERBEROS
@@ -158,8 +158,7 @@ klogin(pw, instance, localhost, password)
 	if (chown(TKT_FILE, pw->pw_uid, pw->pw_gid) < 0)
 		syslog(LOG_ERR, "chown tkfile (%s): %m", TKT_FILE);
 
-	(void)strncpy(savehost, krb_get_phost(localhost), sizeof(savehost));
-	savehost[sizeof(savehost)-1] = NULL;
+	(void)strlcpy(savehost, krb_get_phost(localhost), sizeof(savehost));
 
 	/*
 	 * if the "VERIFY_SERVICE" doesn't exist in the KDC for this host,
