@@ -1,4 +1,4 @@
-/*	$OpenBSD: stub.c,v 1.5 1997/01/16 04:04:32 kstailey Exp $	*/
+/*	$OpenBSD: stub.c,v 1.6 1998/08/21 13:42:31 millert Exp $	*/
 /*	$NetBSD: stub.c,v 1.13 1996/11/20 18:57:37 gwr Exp $	*/
 
 /*-
@@ -46,6 +46,10 @@
 
 #include <machine/machdep.h>
 
+#ifndef DDB
+void  Debugger __P((void));
+#endif
+
 /* Called by autoconf.c */
 #ifndef	GENERIC
 void swapgeneric() {}
@@ -66,4 +70,3 @@ Debugger()
 	__asm ("trap #15");
 }
 #endif	/* !DDB */
-
