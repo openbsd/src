@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldd.1,v 1.5 1998/04/28 07:37:20 deraadt Exp $
+.\"	$OpenBSD: ldd.1,v 1.6 2000/05/25 21:49:02 deraadt Exp $
 .\"	$NetBSD: ldd.1,v 1.2 1995/10/08 23:39:58 pk Exp $
 .\"
 .\" Copyright (c) 1993 Paul Kranenburg
@@ -51,11 +51,11 @@ depend on yet other shared objects.
 Zero, one or two
 .Fl f
 options may be given. The argument is a format string passed to
-.Xr rtld 1
+.Xr ld.so 1
 and allows customization of
 .Nm ldd Ns 's
 output. See
-.Xr rtld 1
+.Xr ld.so 1
 for a list of recognised conversion characters.
 .Sh SEE ALSO
 .Xr ld 1 ,
