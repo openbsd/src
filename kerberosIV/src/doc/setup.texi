@@ -74,8 +74,8 @@ logs.
 @node Install the configuration files, Install the /etc/services, Choose a kerberos server, How to set up the kerberos server
 @subsection Install the configuration files
 
-There are two important configuration files: @file{/etc/krb.conf} and
-@file{/etc/krb.realms}.
+There are two important configuration files: @file{/etc/kerberosIV/krb.conf} and
+@file{/etc/kerberosIV/krb.realms}.
 @pindex krb.conf
 @pindex krb.realms
 
@@ -94,6 +94,10 @@ ANOTHER.REALM           kerberos.another.realm
 The first line defines the name of the local realm. The next few lines
 optionally defines supplementary local realms. 
 @cindex supplementary local realms
+
+If the first character on the first line of @file{krb.conf} is `#', the
+KerberosIV subsystem is disabled. (This is an OpenBSD specific addition)
+
 The rest of the file
 defines the names of the kerberos servers and the database
 administration servers for all known realms. You can define any number
@@ -191,7 +195,7 @@ The plain vanilla version of Kerberos doesn't have any fancy methods of
 getting realms and servers so it is generally a good idea to keep
 @file{krb.conf} and @file{krb.realms} up to date.
 
-In addition to these commonly used files, @file{/etc/krb.extra}
+In addition to these commonly used files, @file{/etc/kerberosIV/krb.extra}
 @pindex krb.extra
 holds some things that are not normally used. It consists of a number of
 @samp{@var{variable} = @var{value}} pairs, blank lines and lines
@@ -225,7 +229,7 @@ The default prefix for ticket files.  The default is @file{/tmp/tkt}.
 Normally the uid or tty is appended to this prefix.
 @item krb_default_keyfile
 @cindex krb_default_keyfile
-The file where the server keys are stored, the default is @file{/etc/srvtab}.
+The file where the server keys are stored, the default is @file{/etc/kerberosIV/srvtab}.
 @item nat_in_use
 @cindex nat_in_use
 If the client is behind a Network Address Translator (NAT).
@@ -242,14 +246,8 @@ firewalls.
 @node Install the /etc/services, Install the kerberos server, Install the configuration files, How to set up the kerberos server
 @subsection Updating /etc/services
 
-You should append or merge the contents of @file{services.append} to
-your @file{/etc/services} files or NIS-map. Remove any unused factory
-installed kerberos port definitions to avoid possible conflicts.
-@pindex services
-
-Most of the programs will fall back to the default ports if the port
-numbers are not found in @file{/etc/services}, but it is convenient to
-have them there anyway.
+The @file{/etc/services} in OpenBSD has the standard services defined, so
+if, for some reason, you would need to change it you can do that here.
 
 @node Install the kerberos server, Set up the server, Install the /etc/services, How to set up the kerberos server
 @subsection Install the kerberos server
@@ -263,16 +261,13 @@ for the realm @samp{FOO.SE} on a machine called @samp{hemlig.foo.se}.
 @node Set up the server, Add a few important principals, Install the kerberos server, How to set up the kerberos server
 @subsection Setup the server
 
-Login as root on the console of the kerberos server.  Add
-@file{/usr/athena/bin} and @file{/usr/athena/sbin} to your path.  Create
-the directory @file{/var/kerberos} (@kbd{mkdir /var/kerberos}), which is
-where the database will be stored.  Then, to create the database, run
+Login as root on the console of the kerberos server. Then, to create the
+database, run
 @kbd{kdb_init}:
 @pindex kdb_init
 
 @example
 @cartouche
-hemlig# mkdir /var/kerberos
 hemlig# kdb_init
 Realm name [default  FOO.SE ]: 
 You will be prompted for the database Master Password.
@@ -303,12 +298,12 @@ Enter Kerberos master password:
 Current Kerberos master key version is 1.
 
 Master key entered.  BEWARE!
-Wrote master key to /.k
+Wrote master key to /etc/kerberosIV/master_key
 @end cartouche
 @end example
 
 After entering the same master password it will be saved in the file
-@file{/.k} and the kerberos server will read it when needed. Write down
+@file{/etc/kerberosIV/master_key} and the kerberos server will read it when needed. Write down
 the master password and put it in a sealed envelope in a safe, you might
 need it if your disk crashes or should you want to set up a slave
 server.
@@ -329,14 +324,14 @@ values you want new entries to have, particularly the expiry date.
 
 @item K.M
 This is the master key and it is only used to verify that the master key
-that is saved un-encrypted in @file{/.k} is correct and corresponds to
+that is saved un-encrypted in @file{/etc/kerberosIV/master_key} is correct and corresponds to
 this database.
 
 @end table
 
 @code{kstash} only reads the master password and writes it to
-@file{/.k}.  This enables the kerberos server to start without you
-having to enter the master password.  This file (@file{/.k}) is only
+@file{/etc/kerberosIV/master_key}.  This enables the kerberos server to start without you
+having to enter the master password.  This file (@file{/etc/kerberosIV/master_key}) is only
 readable by root and resides on a ``secure'' machine.
 
 @node Add a few important principals, Start the server, Set up the server, How to set up the kerberos server
@@ -399,7 +394,7 @@ Principal name: <>
 @pindex kerberos
 @example
 @cartouche
-hemlig# /usr/athena/libexec/kerberos &
+hemlig# /usr/libexec/kerberos &
 Kerberos server starting
 Sleep forever on error
 Log file is /var/log/kerberos.log
@@ -461,10 +456,10 @@ the contents.
 
 @example
 @cartouche
-hemlig# echo "nisse.admin@@FOO.SE" >> /var/kerberos/admin_acl.add
-hemlig# echo "nisse.admin@@FOO.SE" >> /var/kerberos/admin_acl.get
-hemlig# echo "nisse.admin@@FOO.SE" >> /var/kerberos/admin_acl.mod
-hemlig# echo "nisse.admin@@FOO.SE" >> /var/kerberos/admin_acl.del
+hemlig# echo "nisse.admin@@FOO.SE" >> /etc/kerberosIV/admin_acl.add
+hemlig# echo "nisse.admin@@FOO.SE" >> /etc/kerberosIV/admin_acl.get
+hemlig# echo "nisse.admin@@FOO.SE" >> /etc/kerberosIV/admin_acl.mod
+hemlig# echo "nisse.admin@@FOO.SE" >> /etc/kerberosIV/admin_acl.del
 @end cartouche
 @end example
 
@@ -478,7 +473,7 @@ and add them to the admin server ACL.
 @pindex kadmind
 @example
 @cartouche
-hemlig# /usr/athena/libexec/kadmind &
+hemlig# /usr/libexec/kadmind &
 KADM Server KADM0.0A initializing
 Please do not use 'kill -9' to kill this job, use a
 regular kill instead
@@ -529,8 +524,9 @@ Cleaning up and exiting.
 @node Automate the startup of the servers,  , Add users to the database, How to set up the kerberos server
 @subsection Automate the startup of the servers
 
-Add the lines that were used to start the kerberos server and the
-admin server to your startup scripts (@file{/etc/rc} or similar).
+To automatically startup the servers on system boot, change the line
+@samp{kerberos_server=NO} to @samp{kerberos_server=YES} in the file
+@file{/etc/rc.conf}
 @pindex rc
 
 @node Install the client programs, Install the kerberised services, How to set up the kerberos server, How to set up a realm
@@ -538,11 +534,7 @@ admin server to your startup scripts (@file{/etc/rc} or similar).
 
 Making a machine a kerberos client only requires a few steps.  First you
 might need to change the configuration files as with the kerberos
-server.  (@pxref{Install the configuration files} and @pxref{Install the
-/etc/services}.) Also you need to make the programs in
-@file{/usr/athena/bin} available.  This can be done by adding the
-@file{/usr/athena/bin} directory to the users' paths, by making symbolic
-links, or even by copying the programs.
+server.  (@pxref{Install the configuration files}
 
 You should also verify that the local time on the client is synchronised
 with the time on the kerberos server by some means. The maximum allowed
@@ -550,7 +542,7 @@ time difference between the participating servers and a client is 5
 minutes.
 @cindex NTP.
 One good way to synchronize the time is NTP (Network Time Protocol), see
-@url{http://www.eecis.udel.edu/~ntp/}.
+/usr/ports/sysutils/xntpd.
 
 If you need to run the client programs on a machine where you do not
 have root-access, you can hopefully just use the binaries and no
@@ -596,10 +588,8 @@ These includes @code{rsh}, @code{rlogin}, @code{telnet}, @code{ftp},
 
 First follow the steps mentioned in the prior section to make it a
 client and verify its operation.  Change @file{inetd.conf} next to use
-the new daemons.  Look at the file
-@pindex inetd.conf
-@file{etc/inetd.conf.changes} to see the changes that we recommend you
-perform on @file{inetd.conf}.
+the new daemons.  
+@c XXX Samples here
 
 You should at this point decide what services you want to run on
 each machine.
@@ -676,12 +666,6 @@ hub.
 encrypted connection.  This program is used by @code{rxtelnet},
 @code{tenletxr}, and @code{rxterm}.
 
-If you have some strange kind of operating system with X libraries that
-do not allow you to use unix-sockets, you need to specify the @samp{-t}
-@pindex kxd
-option to @code{kxd}.  Otherwise it should be sufficient by adding the
-daemon in @file{inetd.conf}.
-
 @subsection kauth
 @pindex kauth
 
@@ -694,7 +678,7 @@ enable it just insert the corresponding line in @file{inetd.conf}.
 In the same way every user needs to have a password registered with
 the kerberos server, every service needs to have a shared key with the
 kerberos server.  The service keys are stored in a file, usually called
-@file{/etc/srvtab}.  This file should not be readable to anyone but
+@file{/etc/kerberosIV/srvtab}.  This file should not be readable to anyone but
 root, in order to keep the key from being divulged.  The name of this principal
 in the kerberos database is usually the service name and the hostname.  Examples
 of such principals are @samp{pop.@var{hostname}} and
@@ -738,7 +722,7 @@ Add more keys? (y,n) [n] <>
 Password for nisse.admin@@FOO.SE: <nisse.admin's password>
 Written rcmd.bar
 rcmd.bar@@FOO.SE
-Old keyfile in /etc/srvtab.old.
+Old keyfile in /etc/kerberosIV/srvtab.old.
 @end cartouche
 @end example
 
@@ -803,7 +787,7 @@ the slave one for @samp{rcmd.hostname}.
 
 The slave will need the same master key as you used at the master.
 
-On your master server, create a file, e.g. @file{/var/kerberos/slaves},
+On your master server, create a file, e.g. @file{/etc/kerberosIV/slaves},
 that contains the hostnames of your kerberos slave servers.
 
 Start @code{kpropd} with @samp{kpropd -i} on your slave servers.
@@ -812,7 +796,7 @@ On your master server, create a dump of the database and then propagate
 it.
 
 @example
-foo# kdb_util slave_dump /var/kerberos/slave_dump
+foo# kdb_util slave_dump /etc/kerberosIV/slave_dump
 foo# kprop
 @end example
 
@@ -844,7 +828,7 @@ and then propagated to the slaves, so you should @strong{not} run
 @code{kadmind} on the slaves.
 
 Finally add the slave servers to
-@file{/etc/krb.conf}. The clients will ask the servers in the order
+@file{/etc/kerberosIV/krb.conf}. The clients will ask the servers in the order
 specified by that file.
 
 Consider adding CNAMEs to your slave servers, see @ref{Install the

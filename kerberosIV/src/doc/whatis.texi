@@ -134,4 +134,4 @@ A less technical description can be found in @cite{Designing an
 Authentication System: a Dialogue in Four Scenes} by Bill Bryant, also
 from 1988.
 
-These and several other documents can be found on our web-page.
+These and several other documents can be found on the KTH-KRB web-page.

@@ -2,168 +2,12 @@
 @chapter Resolving frequent problems
 
 @menu
-* Problems compiling Kerberos::  
 * Problems with firewalls::     
 * Common error messages::       
 * Is Kerberos year 2000 safe?::  
 @end menu
 
 @node Problems compiling Kerberos, Problems with firewalls, Resolving frequent problems, Resolving frequent problems
-@section Problems compiling Kerberos
-
-Many compilers require a switch to become ANSI compliant. Since krb4
-is written in ANSI C it is necessary to specify the name of the compiler
-to be used and the required switch to make it ANSI compliant. This is
-most easily done when running configure using the @kbd{env} command. For
-instance to build under HP-UX using the native compiler do:
-
-@cartouche
-@example
-datan$ env CC="cc -Ae" ./configure
-@end example
-@end cartouche
-
-@cindex GCC
-In general @kbd{gcc} works. The following combinations have also been
-verified to successfully compile the distribution:
-
-@table @asis
-
-@item @samp{HP-UX}
-@kbd{cc -Ae}
-@item @samp{Digital UNIX}
-@kbd{cc -std1}
-@item @samp{AIX}
-@kbd{xlc}
-@item @samp{Solaris 2.x}
-@kbd{cc} (unbundled one)
-@item @samp{IRIX}
-@kbd{cc}
-
-@end table
-
-@subheading Linux problems
-
-The libc functions gethostby*() under RedHat4.2 can sometimes cause
-core dumps. If you experience these problems make sure that the file
-@file{/etc/nsswitch.conf} contains a hosts entry no more complex than
-the line
-
-@cartouche
-hosts: files dns
-@end cartouche
-
-Some systems have lost @file{/usr/include/ndbm.h} which is necessary to
-build krb4 correctly. There is a @file{ndbm.h.Linux} right next to
-the source distribution.
-
-@cindex Linux
-There has been reports of non-working @file{libdb} on some Linux
-distributions.  If that happens, use the @kbd{--without-berkeley-db}
-when configuring.
-
-@subheading SunOS 5 (aka Solaris 2) problems
-
-@cindex SunOS 5
-
-When building shared libraries and using some combinations of GNU gcc/ld
-you better set the environment variable RUN_PATH to /usr/athena/lib
-(your target libdir). If you don't, then you will have to set
-LD_LIBRARY_PATH during runtime and the PAM module will not work.
-
-@subheading HP-UX problems
-
-@cindex HP-UX
-The shared library @file{/usr/lib/libndbm.sl} doesn't exist on all
-systems.  To make problems even worse, there is never an archive version
-for static linking either. Therefore, when building ``truly portable''
-binaries first install GNU gdbm or Berkeley DB, and make sure that you
-are linking against that library.
-
-@subheading Cray problems
-
-@kbd{rlogind} won't work on Crays until @code{forkpty()} has been
-ported, in the mean time use @kbd{telnetd}.
-
-@subheading IRIX problems
-
-@cindex IRIX
-
-IRIX has three different ABI:s (Application Binary Interface), there's
-an old 32 bit interface (known as O32, or just 32), a new 32 bit
-interface (N32), and a 64 bit interface (64). O32 and N32 are both 32
-bits, but they have different calling conventions, and alignment
-constraints, and similar. The N32 format is the default format from IRIX
-6.4.
-
-You select ABI at compile time, and you can do this with the
-@samp{--with-mips-abi} configure option. The valid arguments are
-@samp{o32}, @samp{n32}, and @samp{64}, N32 is the default. Libraries for
-the three different ABI:s are normally installed installed in different
-directories (@samp{lib}, @samp{lib32}, and @samp{lib64}). If you want
-more than one set of libraries you have to reconfigure and recompile for
-each ABI, but you should probably install only N32 binaries.
-
-@cindex GCC
-GCC had had some known problems with the different ABI:s. Old GCC could
-only handle O32, newer GCC can handle N32, and 64, but not O32, but in
-some versions of GCC the structure alignment was broken in N32.
-
-This confusion with different ABI:s can cause some trouble. For
-instance, the @file{afskauthlib.so} library has to use the same ABI as
-@file{xdm}, and @file{login}. The easiest way to check what ABI to use
-is to run @samp{file} on @file{/usr/bin/X11/xdm}.
-
-@cindex AFS
-Another problem that you might encounter if you run AFS is that Transarc
-apparently doesn't support the 64-bit ABI, and because of this you can't
-get tokens with a 64 bit application. If you really need to do this,
-there is a kernel module that provides this functionality at
-@url{ftp://ftp.pdc.kth.se/home/joda/irix-afs64.tar.gz}.
-
-@subheading AIX problems
-
-@cindex GCC
-@kbd{gcc} version 2.7.2.* has a bug which makes it miscompile
-@file{appl/telnet/telnetd/sys_term.c} (and possibily
-@file{appl/bsd/forkpty.c}), if used with too much optimization.
-
-Some versions of the @kbd{xlc} preprocessor doesn't recognise the
-(undocumented) @samp{-qnolm} option. If this option is passed to the
-preprocessor (like via the configuration file @file{/etc/ibmcxx.cfg},
-configure will fail.
-
-The solution is to remove this option from the configuration file,
-either globally, or for just the preprocessor:
-
-@example
-$ cp /etc/ibmcxx.cfg /tmp
-$ed /tmp/ibmcxx.cfg
-8328
-/nolm
-        options   = -D_AIX,-D_AIX32,-D_AIX41,-D_AIX43,-D_IBMR2,-D_POWER,-bpT:0x10000000,-bpD:0x20000000,-qnolm
-s/,-qnolm//p 
-        options   = -D_AIX,-D_AIX32,-D_AIX41,-D_AIX43,-D_IBMR2,-D_POWER,-bpT:0x10000000,-bpD:0x20000000
-w
-8321
-q
-$ env CC=xlc CPP="xlc -E -F/tmp/ibmcxx.cfg" configure
-@end example
-
-There is a bug in AFS 3.4 version 5.38 for AIX 4.3 that causes the
-kernel to panic in some cases. There is a hack for this in @kbd{login},
-but other programs could be affected also. This seems to be fixed in
-version 5.55.
-
-@subheading C2 problems
-
-@cindex C2
-The programs that checks passwords works with @file{passwd}, OTP, and
-Kerberos paswords. This is problem if you use C2 security (or use some
-other password database), that normally keeps passwords in some obscure
-place. If you want to use Kerberos with C2 security you will have to
-think about what kind of changes are necessary. See also the discussion
-about Digital's SIA and C2 security, see @ref{Digital SIA}.
 
 @node Problems with firewalls, Common error messages, Problems compiling Kerberos, Resolving frequent problems
 @section Problems with firewalls
@@ -222,7 +66,7 @@ talk to sees a different address than the KDC did. If you experience
 this kind of trouble, the easiest way to solve them is probably to try
 some other mechanism to fetch tickets. You might also be able to
 convince the administrator of the server that the two different
-addresses should be added to the @file{/etc/krb.equiv} file.
+addresses should be added to the @file{/etc/kerberosIV/krb.equiv} file.
 
 @node Common error messages, Is Kerberos year 2000 safe?, Problems with firewalls, Resolving frequent problems
 @section Common error messages
@@ -268,7 +112,7 @@ was encrypted with
 The address in the ticket does not match the address you sent the
 request from. This happens on systems with more than one network
 address, either physically or logically. You can list addresses which
-should be considered equal in @file{/etc/krb.equiv} on your servers. 
+should be considered equal in @file{/etc/kerberosIV/krb.equiv} on your servers. 
 
 A note to programmers: a server should not pass @samp{*} as the instance
 to @samp{krb_rd_req}. It should try to figure out on which interface the
@@ -293,7 +137,7 @@ There is some problem contacting the kerberos server. Either the server
 is down, or it is using the wrong port (compare the entries for
 @samp{kerberos-iv} in @file{/etc/services}). The client might also have
 failed to guess what kerberos server to talk to (check
-@file{/etc/krb.conf} and @file{/etc/krb.realms}).
+@file{/etc/kerberosIV/krb.conf} and @file{/etc/kerberosIV/krb.realms}).
 
 One reason you can't contact the kerberos server might be because you're
 behind a firewall that doesn't allow kerberos packets to pass. For
@@ -309,8 +153,6 @@ error message.
 @item @samp{ftp: User foo access denied}
 
 This usually happens because the user's shell is not listed in
-@file{/etc/shells}.  Note that @kbd{ftpd} checks this file even on
-systems where the system version does not and there is no
 @file{/etc/shells}.
 
 @item @samp{Generic kerberos error}

@@ -26,6 +26,9 @@ A web-page is available at @url{http://www.pdc.kth.se/kth-krb/}.
 
 @heading Bug reports
 
+If you find bugs in the version shipped with OpenBSD, please submit
+a bug report using the @code{sendbug} utility.
+
 If you cannot build the programs or they do not behave as you think they
 should, please send us a bug report.  The bug report should be sent to
 @code{<kth-krb-bugs@@pdc.kth.se>}.  Please include information on what
