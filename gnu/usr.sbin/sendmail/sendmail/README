@@ -1,4 +1,4 @@
-# Copyright (c) 1998-2003 Sendmail, Inc. and its suppliers.
+# Copyright (c) 1998-2004 Sendmail, Inc. and its suppliers.
 #	All rights reserved.
 # Copyright (c) 1983, 1995-1997 Eric P. Allman.  All rights reserved.
 # Copyright (c) 1988
@@ -9,7 +9,7 @@
 # the sendmail distribution.
 #
 #
-#	$Sendmail: README,v 8.383 2004/03/26 19:01:08 ca Exp $
+#	$Sendmail: README,v 8.384 2004/07/26 18:03:55 ca Exp $
 #
 
 This directory contains the source files for sendmail(TM).
@@ -498,6 +498,7 @@ NEEDINTERRNO	Set this if <errno.h> does not declare errno, i.e., if an
 		application needs to use
 		extern int errno;
 USE_TTYPATH	Set this to 1 to enable ErrorMode=write.
+USESYSCTL	Use sysctl(3) to determine the number of CPUs in a system.
 
 
 +-----------------------+
@@ -1822,4 +1823,4 @@ util.c		Some general purpose routines used by sendmail.
 version.c	The version number and information about this
 		version of sendmail.
 
-(Version $Revision: 1.20 $, last update $Date: 2004/06/24 03:59:26 $ )
+(Version $Revision: 1.21 $, last update $Date: 2004/09/18 04:08:34 $ )

@@ -13,8 +13,9 @@
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)$Sendmail: headers.c,v 8.284 2004/04/29 00:05:59 msk Exp $")
+SM_RCSID("@(#)$Sendmail: headers.c,v 8.286 2004/07/08 17:57:32 ca Exp $")
 
+static HDR	*allocheader __P((char *, char *, int, SM_RPOOL_T *));
 static size_t	fix_mime_header __P((HDR *, ENVELOPE *));
 static int	priencode __P((char *));
 static void	put_vanilla_header __P((HDR *, char *, MCI *));
@@ -358,17 +359,10 @@ hse:
 			(void) sm_snprintf(qval, sizeof qval, "%d", k);
 			macdefine(&e->e_macro, A_TEMP, macid("{hdrlen}"), qval);
 #if _FFR_HDR_TYPE
-			/*
-			**  XXX: h isn't set yet
-			**  If we really want to be precise then we have
-			**  to lookup the header (see below).
-			**  It's probably not worth the effort.
-			*/
-
-			if (bitset(H_FROM, h->h_flags))
+			if (bitset(H_FROM, hi->hi_flags))
 				macdefine(&e->e_macro, A_PERM,
 					macid("{addr_type}"), "h s");
-			else if (bitset(H_RCPT, h->h_flags))
+			else if (bitset(H_RCPT, hi->hi_flags))
 				macdefine(&e->e_macro, A_PERM,
 					macid("{addr_type}"), "h r");
 			else
@@ -572,7 +566,7 @@ insheader(idx, field, value, flags, e)
 	int flags;
 	ENVELOPE *e;
 {
-	HDR *h, *srch, *last;
+	HDR *h, *srch, *last = NULL;
 
 	/* allocate space for new header */
 	h = allocheader(field, value, flags, e->e_rpool);
@@ -589,6 +583,7 @@ insheader(idx, field, value, flags, e)
 	}
 	else if (srch == NULL)
 	{
+		SM_ASSERT(last != NULL);
 		last->h_link = h;
 		h->h_link = NULL;
 	}

@@ -7,7 +7,7 @@
  * the sendmail distribution.
  *
  *
- *	$Sendmail: mfdef.h,v 8.20 2004/06/16 17:45:49 ca Exp $
+ *	$Sendmail: mfdef.h,v 8.21 2004/07/07 21:41:31 ca Exp $
  */
 
 /*
@@ -21,6 +21,7 @@
 # define MILTER_LEN_BYTES	4	/* length of 32 bit integer in bytes */
 # define MILTER_OPTLEN	(MILTER_LEN_BYTES * 3) /* length of options */
 # define MILTER_CHUNK_SIZE	65535	/* body chunk size */
+# define MILTER_MAX_DATA_SIZE	65535	/* default milter command data limit */
 
 /* These apply to SMFIF_* flags */
 #define SMFI_V1_ACTS	0x0000000FL	/* The actions of V1 filter */

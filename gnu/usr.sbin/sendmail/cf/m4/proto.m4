@@ -13,7 +13,7 @@ divert(-1)
 #
 divert(0)
 
-VERSIONID(`$Sendmail: proto.m4,v 8.709 2004/06/02 22:48:51 ca Exp $')
+VERSIONID(`$Sendmail: proto.m4,v 8.710 2004/07/27 17:32:48 ca Exp $')
 
 # level CF_LEVEL config file format
 V`'CF_LEVEL/ifdef(`VENDOR_NAME', `VENDOR_NAME', `Berkeley')
@@ -662,7 +662,7 @@ _OPTION(ServerKeyFile, `confSERVER_KEY', `')
 _OPTION(ClientCertFile, `confCLIENT_CERT', `')
 # Client private key
 _OPTION(ClientKeyFile, `confCLIENT_KEY', `')
-# File containing certificate revokation lists 
+# File containing certificate revocation lists 
 _OPTION(CRLFile, `confCRL', `')
 # DHParameters (only required if DSA/DH is used)
 _OPTION(DHParameters, `confDH_PARAMETERS', `')

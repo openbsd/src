@@ -131,8 +131,8 @@ definition appropriate for your environment.
 
 These describe the mailers used at the default CS site.  The local
 mailer is always included automatically.  Beware: MAILER declarations
-should always be at the end of the configuration file.  The general
-rules are that the order should be:
+should only be followed by LOCAL_* sections.  The general rules are
+that the order should be:
 
 	VERSIONID
 	OSTYPE
@@ -1486,8 +1486,13 @@ greet_pause	Adds the greet_pause ruleset which enables open proxy
 
 		When using FEATURE(`access_db'), the optional
 		FEATURE(`greet_pause') argument becomes the default if
-		nothing is found in the access database.
+		nothing is found in the access database.  A ruleset called
+		Local_greet_pause can be used for local modifications, e.g.,
 
+			LOCAL_RULESETS
+			SLocal_greet_pause
+			R$*		$: $&{daemon_flags}
+			R$* a $*	$# 0
 
 +-------+
 | HACKS |
@@ -2793,6 +2798,8 @@ to $&{currHeader}.
 2. There are no default rulesets coming with this distribution of
 sendmail.  You can either write your own or you can search the
 WWW for examples, e.g.,  http://www.digitalanswers.org/check_local/
+3. When using a default ruleset for headers, the name of the header 
+currently being checked can be found in the $&{hdr_name} macro.
 
 After all of the headers are read, the check_eoh ruleset will be called for
 any final header-related checks.  The ruleset is called with the number of
@@ -4580,4 +4587,4 @@ M4 DIVERSIONS
    8	DNS based blacklists
    9	special local rulesets (1 and 2)
 
-$Revision: 1.21 $, Last updated $Date: 2004/06/24 03:59:24 $
+$Revision: 1.22 $, Last updated $Date: 2004/09/18 04:08:34 $

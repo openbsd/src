@@ -52,7 +52,7 @@
 
 #ifdef _DEFINE
 # ifndef lint
-SM_UNUSED(static char SmailId[]) = "@(#)$Sendmail: sendmail.h,v 8.982 2004/06/03 18:21:45 ca Exp $";
+SM_UNUSED(static char SmailId[]) = "@(#)$Sendmail: sendmail.h,v 8.984 2004/07/14 21:54:22 ca Exp $";
 # endif /* ! lint */
 #endif /* _DEFINE */
 
@@ -1852,6 +1852,9 @@ EXTERN char	*RandFile;	/* source of random data */
 EXTERN char	*SrvCertFile;	/* file with server certificate */
 EXTERN char	*SrvKeyFile;	/* file with server private key */
 EXTERN char	*CRLFile;	/* file CRLs */
+#if _FFR_CRLPATH
+EXTERN char	*CRLPath;	/* path to CRLs (dir. with hashes) */
+#endif /* _FFR_CRLPATH */
 EXTERN unsigned long	TLS_Srv_Opts;	/* TLS server options */
 #endif /* STARTTLS */
 
@@ -2265,6 +2268,9 @@ EXTERN char	*FallbackMX;	/* fall back MX host */
 EXTERN char	*FallbackSmartHost;	/* fall back smart host */
 EXTERN char	*FileName;	/* name to print on error messages */
 EXTERN char	*ForwardPath;	/* path to search for .forward files */
+#if _FFR_HELONAME
+EXTERN char	*HeloName;	/* hostname to announce in HELO */
+#endif /* _FFR_HELONAME */
 EXTERN char	*HelpFile;	/* location of SMTP help file */
 EXTERN char	*HostStatDir;	/* location of host status information */
 EXTERN char	*HostsFile;	/* path to /etc/hosts file */

@@ -13,7 +13,7 @@
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)$Sendmail: readcf.c,v 8.638 2004/06/02 22:48:51 ca Exp $")
+SM_RCSID("@(#)$Sendmail: readcf.c,v 8.641 2004/07/23 20:45:02 gshapiro Exp $")
 
 #if NETINET || NETINET6
 # include <arpa/inet.h>
@@ -1187,6 +1187,8 @@ makemailer(line)
 	}
 	m->m_name = newstr(line);
 	m->m_qgrp = NOQGRP;
+	m->m_uid = NO_UID;
+	m->m_gid = NO_GID;
 
 	/* now scan through and assign info from the fields */
 	while (*p != '\0')
@@ -2180,6 +2182,14 @@ static struct optioninfo
 	{ "FallbackSmartHost",		O_FALLBACKSMARTHOST,	OI_NONE	},
 #define O_SASLREALM	0xd6
 	{ "AuthRealm",		O_SASLREALM,	OI_NONE	},
+#if _FFR_CRLPATH
+# define O_CRLPATH	0xd7
+	{ "CRLPath",		O_CRLPATH,	OI_NONE	},
+#endif /* _FFR_CRLPATH */
+#if _FFR_HELONAME
+# define O_HELONAME 0xd8
+	{ "HeloName",   O_HELONAME,     OI_NONE },
+#endif /* _FFR_HELONAME */
 
 	{ NULL,				'\0',		OI_NONE	}
 };
@@ -3502,6 +3512,18 @@ setoption(opt, val, safe, sticky, e)
 		break;
 # endif /* OPENSSL_VERSION_NUMBER > 0x00907000L */
 
+# if _FFR_CRLPATH
+	  case O_CRLPATH:
+#  if OPENSSL_VERSION_NUMBER > 0x00907000L
+		SET_STRING_EXP(CRLPath);
+#  else /* OPENSSL_VERSION_NUMBER > 0x00907000L */
+		(void) sm_io_fprintf(smioout, SM_TIME_DEFAULT,
+				     "Warning: Option: %s requires at least OpenSSL 0.9.7\n",
+				     OPTNAME);
+		break;
+#  endif /* OPENSSL_VERSION_NUMBER > 0x00907000L */
+# endif /* _FFR_CRLPATH */
+
 	/*
 	**  XXX How about options per daemon/client instead of globally?
 	**  This doesn't work well for some options, e.g., no server cert,
@@ -3570,6 +3592,9 @@ setoption(opt, val, safe, sticky, e)
 	  case O_CIPHERLIST:
 # endif /* _FFR_TLS_1 */
 	  case O_CRLFILE:
+# if _FFR_CRLPATH
+	  case O_CRLPATH:
+# endif /* _FFR_CRLPATH */
 	  case O_RANDFILE:
 		(void) sm_io_fprintf(smioout, SM_TIME_DEFAULT,
 				     "Warning: Option: %s requires TLS support\n",
@@ -3678,6 +3703,12 @@ setoption(opt, val, safe, sticky, e)
 		if (val[0] != '\0')
 			FallbackSmartHost = newstr(val);
 		break;
+
+#if _FFR_HELONAME
+	  case O_HELONAME:
+	        HeloName = newstr(val);
+	        break;
+#endif /* _FFR_HELONAME */
 
 	  default:
 		if (tTd(37, 1))

@@ -13,7 +13,7 @@
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)$Sendmail: map.c,v 8.662 2004/06/08 17:26:21 ca Exp $")
+SM_RCSID("@(#)$Sendmail: map.c,v 8.664 2004/06/28 17:46:13 ca Exp $")
 
 #if LDAPMAP
 # include <sm/ldap.h>
@@ -3701,6 +3701,7 @@ ldapmap_parseargs(map, args)
 	char *args;
 {
 	bool secretread = true;
+	bool attrssetup = false;
 	int i;
 	register char *p = args;
 	SM_LDAP_STRUCT *lmap;
@@ -3784,6 +3785,7 @@ ldapmap_parseargs(map, args)
 			lmap->ldap_attr[4] = NULL;
 			lmap->ldap_attr_type[4] = SM_LDAP_ATTR_NONE;
 			lmap->ldap_attr_needobjclass[4] = NULL;
+			attrssetup = true;
 		}
 	}
 	else if (bitset(MF_FILECLASS, map->map_mflags))
@@ -4298,7 +4300,7 @@ ldapmap_parseargs(map, args)
 		}
 	}
 
-	if (lmap->ldap_attr[0] != NULL)
+	if (!attrssetup && lmap->ldap_attr[0] != NULL)
 	{
 		bool recurse = false;
 		bool normalseen = false;
@@ -4429,6 +4431,7 @@ ldapmap_parseargs(map, args)
 			}
 		}
 		lmap->ldap_attr[i] = NULL;
+		attrssetup = true;
 		if (recurse && !normalseen)
 		{
 			syserr("LDAP recursion requested in %s but no returnable attribute given",
@@ -7544,7 +7547,7 @@ socket_map_lookup(map, name, av, statp)
 	char **av;
 	int *statp;
 {
-	size_t nettolen, replylen, recvlen;
+	unsigned int nettolen, replylen, recvlen;
 	char *replybuf, *rval, *value, *status;
 	SM_FILE_T *f;
 
@@ -7556,6 +7559,8 @@ socket_map_lookup(map, name, av, statp)
 			map->map_mname, name, map->map_file);
 
 	nettolen = strlen(map->map_mname) + 1 + strlen(name);
+	SM_ASSERT(nettolen > strlen(map->map_mname));
+	SM_ASSERT(nettolen > strlen(name));
 	if ((sm_io_fprintf(f, SM_TIME_DEFAULT, "%u:%s %s,",
 			   nettolen, map->map_mname, name) == SM_IO_EOF) ||
 	    (sm_io_flush(f, SM_TIME_DEFAULT) != 0) ||

@@ -45,7 +45,7 @@
  */
 
 #include <sendmail.h>
-SM_RCSID("@(#)$Sendmail: ratectrl.c,v 8.8 2004/03/09 17:56:28 ca Exp $")
+SM_RCSID("@(#)$Sendmail: ratectrl.c,v 8.9 2004/07/07 21:23:57 ca Exp $")
 
 /*
 **  stuff included - given some warnings (inet_ntoa)
@@ -144,6 +144,7 @@ connection_rate_check(hostaddr, e)
 
 static int CollTime = 60;
 
+/* this should be a power of 2, otherwise CPMHMASK doesn't work well */
 #ifndef CPMHSIZE
 # define CPMHSIZE	1024
 #endif /* CPMHSIZE */

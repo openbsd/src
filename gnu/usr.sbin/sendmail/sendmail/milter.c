@@ -10,7 +10,7 @@
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)$Sendmail: milter.c,v 8.223 2004/06/11 05:04:04 ca Exp $")
+SM_RCSID("@(#)$Sendmail: milter.c,v 8.225 2004/07/08 21:52:20 ca Exp $")
 
 #if MILTER
 # include <libmilter/mfapi.h>
@@ -40,6 +40,7 @@ static char *MilterEnvFromMacros[MAXFILTERMACROS + 1];
 static char *MilterEnvRcptMacros[MAXFILTERMACROS + 1];
 static char *MilterDataMacros[MAXFILTERMACROS + 1];
 static char *MilterEOMMacros[MAXFILTERMACROS + 1];
+static size_t MilterMaxDataSize = MILTER_MAX_DATA_SIZE;
 
 # define MILTER_CHECK_DONE_MSG() \
 	if (*state == SMFIR_REPLYCODE || \
@@ -472,7 +473,7 @@ milter_write(m, cmd, buf, len, to, e)
 	**  The first is the size/command and the second is the command data.
 	*/
 
-	if (len < 0 || len > MILTER_CHUNK_SIZE)
+	if (len < 0 || len > MilterMaxDataSize)
 	{
 		if (tTd(64, 5))
 			sm_dprintf("milter_write(%s): length %ld out of range\n",
@@ -1427,6 +1428,10 @@ static struct milteropt
 	{ "macros.eom",			MO_MACROS_EOM			},
 # define MO_LOGLEVEL			0x07
 	{ "loglevel",			MO_LOGLEVEL			},
+# if _FFR_MAXDATASIZE
+#  define MO_MAXDATASIZE			0x08
+	{ "maxdatasize",		MO_MAXDATASIZE			},
+# endif /* _FFR_MAXDATASIZE */
 	{ NULL,				0				},
 };
 
@@ -1481,6 +1486,12 @@ milter_set_option(name, val, sticky)
 	  case MO_LOGLEVEL:
 		MilterLogLevel = atoi(val);
 		break;
+
+#if _FFR_MAXDATASIZE
+	  case MO_MAXDATASIZE:
+		MilterMaxDataSize = (size_t)atol(val);
+		break;
+#endif /* _FFR_MAXDATASIZE */
 
 	  case MO_MACROS_CONNECT:
 		if (macros == NULL)
@@ -1575,9 +1586,8 @@ milter_reopen_df(e)
 	**  read only again).
 	**
 	**  In SuperSafe != SAFE_REALLY mode, e->e_dfp still points at the
-	**  buffered file I/O descriptor, still open for writing
-	**  so there isn't as much work to do, just truncate it
-	**  and go.
+	**  buffered file I/O descriptor, still open for writing so there
+	**  isn't any work to do here (except checking for consistency).
 	*/
 
 	if (SuperSafe == SAFE_REALLY)
@@ -1631,7 +1641,7 @@ milter_reset_df(e)
 		MILTER_DF_ERROR("milter_reset_df: error writing/flushing %s: %s");
 		return -1;
 	}
-	else if (SuperSafe != SAFE_REALLY && SuperSafe != SAFE_REALLY_POSTMILTER)
+	else if (SuperSafe != SAFE_REALLY)
 	{
 		/* skip next few clauses */
 		/* EMPTY */

@@ -7,7 +7,7 @@
  * the sendmail distribution.
  *
  *
- *	$Sendmail: mfapi.h,v 8.58 2004/04/29 18:04:48 gshapiro Exp $
+ *	$Sendmail: mfapi.h,v 8.59 2004/07/07 21:41:31 ca Exp $
  */
 
 /*
@@ -147,6 +147,9 @@ LIBMILTER_API int smfi_setdbg __P((int));
 LIBMILTER_API int smfi_settimeout __P((int));
 LIBMILTER_API int smfi_setconn __P((char *));
 LIBMILTER_API int smfi_stop __P((void));
+#if _FFR_MAXDATASIZE
+LIBMILTER_API size_t smfi_setmaxdatasize __P((size_t));
+#endif /* _FFR_MAXDATASIZE */
 
 /*
 **  What the filter might do -- values to be ORed together for

@@ -10,12 +10,14 @@ divert(-1)
 #
 
 divert(0)
-VERSIONID(`$Sendmail: greet_pause.m4,v 1.1 2004/02/23 21:36:04 gshapiro Exp $')
+VERSIONID(`$Sendmail: greet_pause.m4,v 1.4 2004/07/06 20:49:51 ca Exp $')
 divert(-1)
 
 ifelse(len(X`'_ARG_),`1',`ifdef(`_ACCESS_TABLE_', `',
 	`errprint(`*** ERROR: FEATURE(`greet_pause') requires FEATURE(`access_db')
 ')')')
+
+define(`_GREET_PAUSE_', `')
 
 LOCAL_RULESETS
 ######################################################################
@@ -25,7 +27,11 @@ LOCAL_RULESETS
 ###		$1: {client_name}
 ###		$2: {client_addr}
 ######################################################################
+SLocal_greet_pause
 Sgreet_pause
+R$*			$: <$1><?> $| $>"Local_greet_pause" $1
+R<$*><?> $| $#$*	$#$2
+R<$*><?> $| $*		$: $1
 ifdef(`_ACCESS_TABLE_', `dnl
 R$+ $| $+		$: $>D < $1 > <?> <! GreetPause> < $2 >
 R   $| $+		$: $>A < $1 > <?> <! GreetPause> <>	empty client_name

@@ -13,7 +13,7 @@
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)$Sendmail: daemon.c,v 8.647 2004/06/17 16:29:47 ca Exp $")
+SM_RCSID("@(#)$Sendmail: daemon.c,v 8.649 2004/07/14 21:57:52 ca Exp $")
 
 #if defined(SOCK_STREAM) || defined(__GNU_LIBRARY__)
 # define USE_SOCK_STREAM	1
@@ -2762,6 +2762,13 @@ nextaddr:
 		macdefine(&BlankEnvelope.e_macro, A_PERM,
 			macid("{if_family_out}"), NULL);
 	}
+
+#if _FFR_HELONAME
+	/* Use the configured HeloName as appropriate */
+	if (HeloName != NULL && HeloName[0] != '\0')
+		mci->mci_heloname = newstr(HeloName);
+#endif /* _FFR_HELONAME */
+
 	mci_setstat(mci, EX_OK, NULL, NULL);
 	return EX_OK;
 }

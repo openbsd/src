@@ -9,9 +9,9 @@
 .\" the sendmail distribution.
 .\"
 .\"
-.\"     $Sendmail: aliases.5,v 8.17 2000/12/14 23:09:46 gshapiro Exp $
+.\"     $Sendmail: aliases.5,v 8.19 2004/07/12 05:39:21 ca Exp $
 .\"
-.Dd December 14, 2000
+.Dd July 12, 2004
 .Dt ALIASES 5
 .Os
 .Sh NAME
@@ -87,6 +87,17 @@ are comments.
 .Pp
 Aliasing occurs only on local names.
 Loops can not occur, since no message will be sent to any person more than once.
+.Pp
+If an alias is found for
+.Em name ,
+sendmail then checks for an alias for
+.Em owner-name .
+If it is found and the result of the lookup expands to a single
+address, the envelope sender address of the message is rewritten to
+that address.
+If it is found and the result expands to more than one address, the
+envelope sender address is changed to
+.Em owner-name .
 .Pp
 After aliasing has been done, local and valid recipients who have a
 .Dq Pa .forward

@@ -1,10 +1,51 @@
 			SENDMAIL RELEASE NOTES
-      $Sendmail: RELEASE_NOTES,v 8.1664 2004/06/20 17:04:51 ca Exp $
+      $Sendmail: RELEASE_NOTES,v 8.1679 2004/07/30 18:03:07 ca Exp $
 
 
 This listing shows the version of the sendmail binary, the version
 of the sendmail configuration files, the date of release, and a
 summary of the changes in that release.
+
+8.13.1/8.13.1	2004/07/30
+	Using the default AliasFile ldap: specification would cause the
+		objectClasses of the LDAP response to be included in the
+		alias expansion.  Problem noted by Brenden Conte of
+		Rensselaer Polytechnic Institute.
+	Fix support for a fallback smart host for system where DNS is
+		(partially) available. From John Beck of Sun Microsystems.
+	Fix SuperSafe=PostMilter behavior when a milter replaces a body
+		but the data file is not yet stored on disk because it is
+		smaller than the size of the memory buffer.  Problem noted
+		by David Russell.
+	Fix certificate revocation list support; if a CRL was specified
+		but the other side presented a cert that was signed by
+		a different (trusted) CA than the one which issued the CRL,
+		verification would always fail.  Problem noted by Al Smith.
+	Run mailer programs as the RunAsUser when RunAsUser is set and
+		the F=S mailer flag is set without a U= mailer equate.
+		Problem noted by John Gardiner Myers of Proofpoint.
+	${nbadrcpts} was off by one if BadRcptThrottle is zero.
+		Patch from Sung-hoon Choi of DreamWiz Inc.
+	CONFIG: Emit a warning if FEATURE(`access_db') is used after
+		FEATURE(`greet_pause') because then the latter will not
+		use the access map.  Note: if no default value is given
+		for FEATURE(`greet_pause') then it issues an error if
+		FEATURE(`access_db') is not specified before it.
+		Problem noted by Alexander Dalloz of University of
+		Bielefeld.
+	CONFIG: Invoke ruleset Local_greet_pause if FEATURE(`greet_pause')
+		is used to give more flexibility for local changes.
+	Portability:
+		Fix a 64 bit problem in the socket map code.  Problem
+			noted by Geoff Adams.
+		NetBSD 2.0F has closefrom(3).  Patch from Andrew Brown.
+		NetBSD can use sysctl(3) to get the number of CPUs in
+			a system.  Patch from Andrew Brown.
+		Add a README file in doc/op/ to explain potential
+			incompatibilities with various *roff related
+			tools.  Problem tracked down by Per Hedeland.
+	New Files:
+		doc/op/README
 
 8.13.0/8.13.0	2004/06/20
 	Do not include AUTH data in a bounce to avoid leaking confidential
@@ -60,7 +101,7 @@ summary of the changes in that release.
 		during that connection.
 	If 32 NOOP (or unknown/bad) commands are issued by a client the SMTP
 		server could sleep for a very long time.  Fix based on
-		patch from T. Kobayashi.
+		patch from Tadashi Kobayashi of IIJ.
 	Fix a potential memory leak in persistent queue runners if the
 		number of entries in the queue exceeds the limit of jobs.
 		Problem noted by Steve Hubert of University of Washington.

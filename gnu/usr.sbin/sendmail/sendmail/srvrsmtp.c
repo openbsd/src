@@ -17,7 +17,7 @@
 # include <libmilter/mfdef.h>
 #endif /* MILTER */
 
-SM_RCSID("@(#)$Sendmail: srvrsmtp.c,v 8.898 2004/06/17 17:30:09 ca Exp $")
+SM_RCSID("@(#)$Sendmail: srvrsmtp.c,v 8.900 2004/07/08 23:29:33 ca Exp $")
 
 #include <sys/time.h>
 #include <sm/fdset.h>
@@ -111,7 +111,7 @@ extern ENVELOPE	BlankEnvelope;
 	{							\
 		char buf[16];					\
 		(void) sm_snprintf(buf, sizeof buf, "%d",	\
-			n_badrcpts > BadRcptThrottle		\
+			BadRcptThrottle > 0 && n_badrcpts > BadRcptThrottle \
 				? n_badrcpts - 1 : n_badrcpts);	\
 		macdefine(&e->e_macro, A_TEMP, macid("{nbadrcpts}"), buf); \
 	} while (0)
@@ -354,6 +354,7 @@ static bool	smtp_data __P((SMTP_T *, ENVELOPE *));
 
 /* clear all SMTP state (for HELO/EHLO/RSET) */
 #define CLEAR_STATE(cmd)					\
+do								\
 {								\
 	/* abort milter filters */				\
 	MILTER_ABORT(e);					\
@@ -384,7 +385,22 @@ static bool	smtp_data __P((SMTP_T *, ENVELOPE *));
 	/* put back discard bit */				\
 	if (smtp.sm_discard)					\
 		e->e_flags |= EF_DISCARD;			\
-}
+								\
+	/* restore connection quarantining */			\
+	if (smtp.sm_quarmsg == NULL)				\
+	{							\
+		e->e_quarmsg = NULL;				\
+		macdefine(&e->e_macro, A_PERM,			\
+			macid("{quarantine}"), "");		\
+	}							\
+	else							\
+	{							\
+		e->e_quarmsg = sm_rpool_strdup_x(e->e_rpool,	\
+						smtp.sm_quarmsg);	\
+		macdefine(&e->e_macro, A_PERM, macid("{quarantine}"),	\
+			  e->e_quarmsg);			\
+	}							\
+} while (0)
 
 /* sleep to flatten out connection load */
 #define MIN_DELAY_LOG	15	/* wait before logging this again */
@@ -1978,22 +1994,6 @@ tlsfail:
 			if (gothello)
 			{
 				CLEAR_STATE(cmdbuf);
-
-				/* restore connection quarantining */
-				if (smtp.sm_quarmsg == NULL)
-				{
-					e->e_quarmsg = NULL;
-					macdefine(&e->e_macro, A_PERM,
-						  macid("{quarantine}"), "");
-				}
-				else
-				{
-					e->e_quarmsg = sm_rpool_strdup_x(e->e_rpool,
-									 smtp.sm_quarmsg);
-					macdefine(&e->e_macro, A_PERM,
-						  macid("{quarantine}"),
-						  e->e_quarmsg);
-				}
 			}
 
 #if MILTER
@@ -2669,21 +2669,6 @@ tlsfail:
 			else
 				message("250 2.0.0 Reset state");
 			CLEAR_STATE(cmdbuf);
-
-			/* restore connection quarantining */
-			if (smtp.sm_quarmsg == NULL)
-			{
-				e->e_quarmsg = NULL;
-				macdefine(&e->e_macro, A_PERM,
-					  macid("{quarantine}"), "");
-			}
-			else
-			{
-				e->e_quarmsg = sm_rpool_strdup_x(e->e_rpool,
-								 smtp.sm_quarmsg);
-				macdefine(&e->e_macro, A_PERM,
-					  macid("{quarantine}"), e->e_quarmsg);
-			}
 			break;
 
 		  case CMDVRFY:		/* vrfy -- verify address */

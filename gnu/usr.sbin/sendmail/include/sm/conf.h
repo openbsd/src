@@ -10,7 +10,7 @@
  * the sendmail distribution.
  *
  *
- *	$Sendmail: conf.h,v 1.115 2004/06/07 23:53:43 ca Exp $
+ *	$Sendmail: conf.h,v 1.116 2004/07/26 18:08:35 ca Exp $
  */
 
 /*
@@ -910,6 +910,14 @@ extern unsigned int sleepX __P((unsigned int seconds));
 #  endif /* defined(__NetBSD__) && ((__NetBSD_Version__ > 102070000) || (NetBSD1_2 > 8) || defined(NetBSD1_4) || defined(NetBSD1_3)) */
 #  if defined(__NetBSD__) && defined(__NetBSD_Version__) && __NetBSD_Version__ >= 104170000
 #   define HASSETUSERCONTEXT	1	/* BSDI-style login classes */
+#  endif
+#  if defined(__NetBSD__) && defined(__NetBSD_Version__) && __NetBSD_Version__ >= 200060000
+#   define HASCLOSEFROM	1	/* closefrom(3) added in 2.0F */
+#  endif
+#  if defined(__NetBSD__)
+#   define USESYSCTL		1	/* use sysctl(3) for getting ncpus */
+#   include <sys/param.h>
+#   include <sys/sysctl.h>
 #  endif
 #  if defined(__FreeBSD__)
 #   define HASSETLOGIN	1	/* has setlogin(2) */

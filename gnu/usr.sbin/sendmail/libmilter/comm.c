@@ -9,11 +9,36 @@
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)$Sendmail: comm.c,v 8.64 2004/04/30 22:02:57 ca Exp $")
+SM_RCSID("@(#)$Sendmail: comm.c,v 8.65 2004/07/07 21:41:30 ca Exp $")
 
 #include "libmilter.h"
 #include <sm/errstring.h>
 #include <sys/uio.h>
+
+static size_t Maxdatasize = MILTER_MAX_DATA_SIZE;
+
+#if _FFR_MAXDATASIZE
+/*
+**  SMFI_SETMAXDATASIZE -- set limit for milter data read/write.
+**
+**	Parameters:
+**		sz -- new limit.
+**
+**	Returns:
+**		old limit
+*/
+
+size_t
+smfi_setmaxdatasize(sz)
+	size_t sz;
+{
+	size_t old;
+
+	old = Maxdatasize;
+	Maxdatasize = sz;
+	return old;
+}
+#endif /* _FFR_MAXDATASIZE */
 
 /*
 **  MI_RD_CMD -- read a command
@@ -108,7 +133,7 @@ mi_rd_cmd(sd, timeout, cmd, rlen, name)
 	expl = ntohl(expl) - 1;
 	if (expl <= 0)
 		return NULL;
-	if (expl > MILTER_CHUNK_SIZE)
+	if (expl > Maxdatasize)
 	{
 		*cmd = SMFIC_TOOBIG;
 		return NULL;
@@ -307,7 +332,7 @@ mi_wr_cmd(sd, timeout, cmd, buf, len)
 	struct iovec iov[2];
 	char data[MILTER_LEN_BYTES + 1];
 
-	if (len > MILTER_CHUNK_SIZE || (len > 0 && buf == NULL))
+	if (len > Maxdatasize || (len > 0 && buf == NULL))
 		return MI_FAILURE;
 
 	nl = htonl(len + 1);	/* add 1 for the cmd char */

@@ -13,7 +13,7 @@
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)$Sendmail: conf.c,v 8.1044 2004/06/11 21:38:16 ca Exp $")
+SM_RCSID("@(#)$Sendmail: conf.c,v 8.1047 2004/07/14 21:54:23 ca Exp $")
 
 #include <sendmail/pathnames.h>
 #if NEWDB
@@ -6016,6 +6016,10 @@ char	*FFRCompileOptions[] =
 	/* Extended daemon status. */
 	"_FFR_CONTROL_MSTAT",
 #endif /* _FFR_CONTROL_MSTAT */
+#if _FFR_CRLPATH
+	/* CRLPath; needs documentation; Al Smith */
+	"_FFR_CRLPATH",
+#endif /* _FFR_CRLPATH */
 #if _FFR_DAEMON_NETUNIX
 	/* Allow local (not just TCP) socket connection to server. */
 	"_FFR_DAEMON_NETUNIX",
@@ -6104,6 +6108,10 @@ char	*FFRCompileOptions[] =
 	/* Set 'h' in {addr_type} for headers. */
 	"_FFR_HDR_TYPE",
 #endif /* _FFR_HDR_TYPE */
+#if _FFR_HELONAME
+	/* option to set heloname; Nik Clayton of FreeBSD */
+	"_FFR_HELONAME",
+#endif /* _FFR_HELONAME */
 #if _FFR_HPUX_NSSWITCH
 	/* Use nsswitch on HP-UX */
 	"_FFR_HPUX_NSSWITCH",
@@ -6116,6 +6124,16 @@ char	*FFRCompileOptions[] =
 	/* Ignore extensions offered in response to HELO */
 	"_FFR_IGNORE_EXT_ON_HELO",
 #endif /* _FFR_IGNORE_EXT_ON_HELO */
+#if _FFR_MAXDATASIZE
+	/*
+	**  It is possible that a header is larger than MILTER_CHUNK_SIZE,
+	**  hence this shouldn't be used as limit for milter communication.
+	**  see also libmilter/comm.c
+	**  Gurusamy Sarathy of ActiveState
+	*/
+
+	"_FFR_MAXDATASIZE"
+#endif /* _FFR_MAXDATASIZE */
 #if _FFR_MAX_FORWARD_ENTRIES
 	/* Try to limit number of .forward entries */
 	/* (doesn't work) */

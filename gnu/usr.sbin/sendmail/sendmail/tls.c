@@ -10,7 +10,7 @@
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)$Sendmail: tls.c,v 8.92 2004/06/07 23:54:59 ca Exp $")
+SM_RCSID("@(#)$Sendmail: tls.c,v 8.95 2004/07/13 21:37:33 ca Exp $")
 
 #if STARTTLS
 #  include <openssl/err.h>
@@ -28,6 +28,10 @@ static int	tls_verify_cb __P((X509_STORE_CTX *));
 #  else /* !defined() || OPENSSL_VERSION_NUMBER < 0x00907000L */
 static int	tls_verify_cb __P((X509_STORE_CTX *, void *));
 #  endif /* !defined() || OPENSSL_VERSION_NUMBER < 0x00907000L */
+
+# if OPENSSL_VERSION_NUMBER > 0x00907000L
+static int x509_verify_cb __P((int, X509_STORE_CTX *));
+# endif /* OPENSSL_VERSION_NUMBER > 0x00907000L */
 
 # if !defined(OPENSSL_VERSION_NUMBER) || OPENSSL_VERSION_NUMBER < 0x00907000L
 #  define CONST097
@@ -694,6 +698,8 @@ inittls(ctx, req, srv, certfile, keyfile, cacertpath, cacertfile, dhparam)
 				X509_CRL_free(crl);
 				X509_STORE_set_flags(store,
 					X509_V_FLAG_CRL_CHECK|X509_V_FLAG_CRL_CHECK_ALL);
+				X509_STORE_set_verify_cb_func(store,
+						x509_verify_cb);
 			}
 			else
 			{
@@ -714,6 +720,27 @@ inittls(ctx, req, srv, certfile, keyfile, cacertpath, cacertfile, dhparam)
 			sm_syslog(LOG_WARNING, NOQID,
 				  "STARTTLS=%s, error: BIO_new=failed", who);
 	}
+#  if _FFR_CRLPATH
+	if (CRLPath != NULL)
+	{
+		X509_LOOKUP *lookup;
+
+		lookup = X509_STORE_add_lookup(store, X509_LOOKUP_hash_dir());
+		if (lookup == NULL)
+		{
+			if (LogLevel > 9)
+			{
+				sm_syslog(LOG_WARNING, NOQID,
+					  "STARTTLS=%s, error: X509_STORE_add_lookup(hash)=failed",
+					  who, CRLFile);
+			}
+			return false;
+		}
+		X509_LOOKUP_add_dir(lookup, CRLPath, X509_FILETYPE_PEM);
+		X509_STORE_set_flags(store,
+			X509_V_FLAG_CRL_CHECK|X509_V_FLAG_CRL_CHECK_ALL);
+	}
+#  endif /* _FFR_CRLPATH */
 # endif /* OPENSSL_VERSION_NUMBER > 0x00907000L */
 
 # if TLS_NO_RSA
@@ -1451,9 +1478,10 @@ apps_ssl_info_cb(s, where, ret)
 */
 
 static int
-tls_verify_log(ok, ctx)
+tls_verify_log(ok, ctx, name)
 	int ok;
 	X509_STORE_CTX *ctx;
+	char *name;
 {
 	SSL *ssl;
 	X509 *cert;
@@ -1476,10 +1504,11 @@ tls_verify_log(ok, ctx)
 
 	X509_NAME_oneline(X509_get_subject_name(cert), buf, sizeof buf);
 	sm_syslog(LOG_INFO, NOQID,
-		  "STARTTLS: cert verify: depth=%d %s, state=%d, reason=%s",
-		  depth, buf, ok, X509_verify_cert_error_string(reason));
+		  "STARTTLS: %s cert verify: depth=%d %s, state=%d, reason=%s",
+		  name, depth, buf, ok, X509_verify_cert_error_string(reason));
 	return 1;
 }
+
 /*
 **  TLS_VERIFY_CB -- verify callback for TLS certificates
 **
@@ -1507,7 +1536,7 @@ tls_verify_cb(ctx, unused)
 	if (ok == 0)
 	{
 		if (LogLevel > 13)
-			return tls_verify_log(ok, ctx);
+			return tls_verify_log(ok, ctx, "TLS");
 		return 1;	/* override it */
 	}
 	return ok;
@@ -1544,4 +1573,35 @@ tlslogerr(who)
 			  bitset(ERR_TXT_STRING, flags) ? data : "");
 	}
 }
+
+# if OPENSSL_VERSION_NUMBER > 0x00907000L
+/*
+**  X509_VERIFY_CB -- verify callback
+**
+**	Parameters:
+**		ctx -- x509 context
+**
+**	Returns:
+**		accept connection?
+**		currently: always yes.
+*/
+
+static int
+x509_verify_cb(ok, ctx)
+	int ok;
+	X509_STORE_CTX *ctx;
+{
+	if (ok == 0)
+	{
+		if (LogLevel > 13)
+			tls_verify_log(ok, ctx, "x509");
+		if (ctx->error == X509_V_ERR_UNABLE_TO_GET_CRL)
+		{
+			ctx->error = 0;
+			return 1;	/* override it */
+		}
+	}
+	return ok;
+}
+# endif /* OPENSSL_VERSION_NUMBER > 0x00907000L */
 #endif /* STARTTLS */

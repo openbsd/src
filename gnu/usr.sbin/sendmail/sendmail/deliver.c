@@ -14,7 +14,7 @@
 #include <sendmail.h>
 #include <sys/time.h>
 
-SM_RCSID("@(#)$Sendmail: deliver.c,v 8.973 2004/06/03 18:21:44 ca Exp $")
+SM_RCSID("@(#)$Sendmail: deliver.c,v 8.976 2004/07/23 20:45:01 gshapiro Exp $")
 
 #if HASSETUSERCONTEXT
 # include <login_cap.h>
@@ -1177,6 +1177,50 @@ coloncmp(a, b)
 
 	return ret;
 }
+
+/*
+**  SHOULD_TRY_FBSH -- Should try FallbackSmartHost?
+**
+**	Parameters:
+**		e -- envelope
+**		tried_fallbacksmarthost -- has been tried already? (in/out)
+**		hostbuf -- buffer for hostname (expand FallbackSmartHost) (out)
+**		hbsz -- size of hostbuf
+**		status -- current delivery status
+**
+**	Returns:
+**		true iff FallbackSmartHost should be tried.
+*/
+
+static bool
+should_try_fbsh(e, tried_fallbacksmarthost, hostbuf, hbsz, status)
+	ENVELOPE *e;
+	bool *tried_fallbacksmarthost;
+	char *hostbuf;
+	size_t hbsz;
+	int status;
+{
+	/*
+	**  If the host was not found and a FallbackSmartHost is defined
+	**  (and we have not yet tried it), then make one last try with
+	**  it as the host.
+	*/
+
+	if (status == EX_NOHOST && FallbackSmartHost != NULL &&
+	    !*tried_fallbacksmarthost)
+	{
+		*tried_fallbacksmarthost = true;
+		expand(FallbackSmartHost, hostbuf, hbsz, e);
+		if (!wordinclass(hostbuf, 'w'))
+		{
+			if (tTd(11, 1))
+				sm_dprintf("one last try with FallbackSmartHost %s\n",
+					   hostbuf);
+			return true;
+		}
+	}
+	return false;
+}
 /*
 **  DELIVER -- Deliver a message to a list of addresses.
 **
@@ -1237,13 +1281,6 @@ coloncmp(a, b)
 **	Side Effects:
 **		The standard input is passed off to someone.
 */
-
-#ifndef NO_UID
-# define NO_UID		-1
-#endif /* ! NO_UID */
-#ifndef NO_GID
-# define NO_GID		-1
-#endif /* ! NO_GID */
 
 static int
 deliver(e, firstto)
@@ -2058,6 +2095,13 @@ tryhost:
 			{
 				if (mci->mci_exitstat == EX_TEMPFAIL)
 					goodmxfound = true;
+
+				/* Try FallbackSmartHost? */
+				if (should_try_fbsh(e, &tried_fallbacksmarthost,
+						    hostbuf, sizeof hostbuf,
+						    mci->mci_exitstat))
+					goto one_last_try;
+
 				continue;
 			}
 
@@ -2144,28 +2188,11 @@ tryhost:
 			}
 			else
 			{
-				/*
-				**  If the host was not found and a Fallback-
-				**  SmartHost is defined (and we have not yet
-				**  tried it), then make one last try with it
-				**  as the host.
-				*/
+				/* Try FallbackSmartHost? */
+				if (should_try_fbsh(e, &tried_fallbacksmarthost,
+						    hostbuf, sizeof hostbuf, i))
+					goto one_last_try;
 
-				if (i == EX_NOHOST &&
-				    FallbackSmartHost != NULL &&
-				    !tried_fallbacksmarthost)
-				{
-					tried_fallbacksmarthost = true;
-					expand(FallbackSmartHost, hostbuf,
-					       sizeof hostbuf, e);
-					if (!wordinclass(hostbuf, 'w'))
-					{
-						if (tTd(11, 1))
-							sm_dprintf("one last try with FallbackSmartHost %s",
-								   hostbuf);
-						goto one_last_try;
-					}
-				}
 				if (tTd(11, 1))
 					sm_dprintf("openmailer: makeconnection => stat=%d, errno=%d\n",
 						   i, errno);
@@ -2406,7 +2433,12 @@ tryhost:
 
 			/* reset group id */
 			if (bitnset(M_SPECIFIC_UID, m->m_flags))
-				new_gid = m->m_gid;
+			{
+				if (m->m_gid == NO_GID)
+					new_gid = RunAsGid;
+				else
+					new_gid = m->m_gid;
+			}
 			else if (bitset(S_ISGID, stb.st_mode))
 				new_gid = stb.st_gid;
 			else if (ctladdr != NULL && ctladdr->q_gid != 0)
@@ -2465,7 +2497,7 @@ tryhost:
 						exit(EX_TEMPFAIL);
 					}
 				}
-				if (m->m_gid == 0)
+				if (m->m_gid == NO_GID)
 					new_gid = DefGid;
 				else
 					new_gid = m->m_gid;
@@ -2517,7 +2549,10 @@ tryhost:
 			sm_mbdb_terminate();
 			if (bitnset(M_SPECIFIC_UID, m->m_flags))
 			{
-				new_euid = m->m_uid;
+				if (m->m_uid == NO_UID)
+					new_euid = RunAsUid;
+				else
+					new_euid = m->m_uid;
 
 				/*
 				**  Undo the effects of the uid change in main
@@ -2547,7 +2582,7 @@ tryhost:
 				new_ruid = stb.st_uid;
 			else if (ctladdr != NULL && ctladdr->q_uid != 0)
 				new_ruid = ctladdr->q_uid;
-			else if (m->m_uid != 0)
+			else if (m->m_uid != NO_UID)
 				new_ruid = m->m_uid;
 			else
 				new_ruid = DefUid;
@@ -5225,7 +5260,10 @@ mailfile(filename, mailer, ctladdr, sfflags, e)
 			if (bitnset(M_SPECIFIC_UID, mailer->m_flags))
 			{
 				RealUserName = NULL;
-				RealUid = mailer->m_uid;
+				if (mailer->m_uid == NO_UID)
+					RealUid = RunAsUid;
+				else
+					RealUid = mailer->m_uid;
 				if (RunAsUid != 0 && RealUid != RunAsUid)
 				{
 					/* Only root can change the uid */
@@ -5247,7 +5285,7 @@ mailfile(filename, mailer, ctladdr, sfflags, e)
 					RealUserName = ctladdr->q_user;
 				RealUid = ctladdr->q_uid;
 			}
-			else if (mailer != NULL && mailer->m_uid != 0)
+			else if (mailer != NULL && mailer->m_uid != NO_UID)
 			{
 				RealUserName = DefUser;
 				RealUid = mailer->m_uid;
@@ -5261,7 +5299,10 @@ mailfile(filename, mailer, ctladdr, sfflags, e)
 			/* select a new group to run as */
 			if (bitnset(M_SPECIFIC_UID, mailer->m_flags))
 			{
-				RealGid = mailer->m_gid;
+				if (mailer->m_gid == NO_GID)
+					RealGid = RunAsGid;
+				else
+					RealGid = mailer->m_gid;
 				if (RunAsUid != 0 &&
 				    (RealGid != getgid() ||
 				     RealGid != getegid()))
@@ -5290,7 +5331,7 @@ mailfile(filename, mailer, ctladdr, sfflags, e)
 			}
 			else if (ctladdr != NULL && ctladdr->q_uid != 0)
 				RealGid = ctladdr->q_gid;
-			else if (mailer != NULL && mailer->m_gid != 0)
+			else if (mailer != NULL && mailer->m_gid != NO_GID)
 				RealGid = mailer->m_gid;
 			else
 				RealGid = DefGid;
