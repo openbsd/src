@@ -1,4 +1,4 @@
-/*	$OpenBSD: net.c,v 1.8 1997/05/05 02:49:49 millert Exp $	*/
+/*	$OpenBSD: net.c,v 1.9 1998/02/23 20:32:27 niklas Exp $	*/
 /*	$NetBSD: net.c,v 1.14 1996/10/13 02:29:02 christos Exp $	*/
 
 /*
@@ -117,9 +117,9 @@ sendudp(d, pkt, len)
 		ea = arpwhohas(d, gateip);
 
 	cc = sendether(d, ip, len, ea, ETHERTYPE_IP);
-	if (cc == -1)
+	if (cc < 0)
 		return (-1);
-	if (cc != len)
+	if ((size_t)cc != len)
 		panic("sendudp: bad write (%d != %d)", cc, len);
 	return (cc - (sizeof(*ip) + sizeof(*uh)));
 }
@@ -152,7 +152,7 @@ readudp(d, pkt, len, tleft)
 	ip = (struct ip *)uh - 1;
 
 	n = readether(d, ip, len + sizeof(*ip) + sizeof(*uh), tleft, &etype);
-	if (n == -1 || n < sizeof(*ip) + sizeof(*uh))
+	if (n < 0 || (size_t)n < sizeof(*ip) + sizeof(*uh))
 		return -1;
 
 	/* Ethernet address checks now in readether() */
@@ -304,7 +304,7 @@ sendrecv(d, sproc, sbuf, ssize, rproc, rbuf, rsize)
 				return -1;
 			}
 			cc = (*sproc)(d, sbuf, ssize);
-			if (cc == -1 || cc < ssize)
+			if (cc < 0 || (size_t)cc < ssize)
 				panic("sendrecv: short write! (%d < %d)",
 				    cc, ssize);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs.c,v 1.11 1997/04/02 05:28:30 mickey Exp $	*/
+/*	$OpenBSD: ufs.c,v 1.12 1998/02/23 20:32:31 niklas Exp $	*/
 /*	$NetBSD: ufs.c,v 1.16 1996/09/30 16:01:22 ws Exp $	*/
 
 /*-
@@ -129,7 +129,7 @@ read_inode(inumber, f)
 		buf, &rsize);
 	if (rc)
 		goto out;
-	if (rsize != fs->fs_bsize) {
+	if (rsize != (size_t)fs->fs_bsize) {
 		rc = EIO;
 		goto out;
 	}
@@ -241,7 +241,7 @@ block_map(f, file_block, disk_block_p)
 				&fp->f_blksize[level]);
 			if (rc)
 				return (rc);
-			if (fp->f_blksize[level] != fs->fs_bsize)
+			if (fp->f_blksize[level] != (size_t)fs->fs_bsize)
 				return (EIO);
 			fp->f_blkno[level] = ind_block_num;
 		}

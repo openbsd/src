@@ -1,4 +1,4 @@
-/*	$OpenBSD: ether.c,v 1.4 1996/12/08 15:15:49 niklas Exp $	*/
+/*	$OpenBSD: ether.c,v 1.5 1998/02/23 20:32:23 niklas Exp $	*/
 /*	$NetBSD: ether.c,v 1.8 1996/10/13 02:29:00 christos Exp $	*/
 
 /*
@@ -79,7 +79,7 @@ sendether(d, pkt, len, dea, etype)
 	eh->ether_type = htons(etype);
 
 	n = netif_put(d, eh, len);
-	if (n == -1 || n < sizeof(*eh))
+	if (n < 0 || (size_t)n < sizeof(*eh))
 		return (-1);
 
 	n -= sizeof(*eh);
@@ -111,7 +111,7 @@ readether(d, pkt, len, tleft, etype)
 	len += sizeof(*eh);
 
 	n = netif_get(d, eh, len, tleft);
-	if (n == -1 || n < sizeof(*eh))
+	if (n < 0 || (size_t)n < sizeof(*eh))
 		return (-1);
 
 	/* Validate Ethernet address. */
@@ -138,7 +138,7 @@ char *
 ether_sprintf(ap)
         register u_char *ap;
 {
-	register i;
+	register int i;
 	static char etherbuf[18];
 	register char *cp = etherbuf;
 

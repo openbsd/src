@@ -1,4 +1,4 @@
-/*	$OpenBSD: rarp.c,v 1.5 1996/12/08 15:15:55 niklas Exp $	*/
+/*	$OpenBSD: rarp.c,v 1.6 1998/02/23 20:32:28 niklas Exp $	*/
 /*	$NetBSD: rarp.c,v 1.13 1996/10/13 02:29:05 christos Exp $	*/
 
 /*
@@ -168,7 +168,7 @@ rarprecv(d, pkt, len, tleft)
 
 	n = readether(d, pkt, len, tleft, &etype);
 	errno = 0;	/* XXX */
-	if (n == -1 || n < sizeof(struct ether_arp)) {
+	if (n < 0 || (size_t)n < sizeof(struct ether_arp)) {
 #ifdef RARP_DEBUG
 		if (debug)
 			printf("bad len=%d\n", n);

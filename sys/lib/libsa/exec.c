@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.18 1997/09/28 22:46:02 weingart Exp $	*/
+/*	$OpenBSD: exec.c,v 1.19 1998/02/23 20:32:25 niklas Exp $	*/
 /*	$NetBSD: exec.c,v 1.15 1996/10/13 02:29:01 christos Exp $	*/
 
 /*-
@@ -58,7 +58,8 @@ exec(path, loadaddr, howto)
 	struct stat sb;
 #endif
 	struct exec x;
-	int i;
+	u_int i;
+	ssize_t sz;
 	char *addr;
 #ifdef EXEC_DEBUG
 	char *daddr, *etxt;
@@ -72,9 +73,8 @@ exec(path, loadaddr, howto)
 	if (sb.st_mode & 2)
 		printf("non-secure file, check permissions!\n");
 
-	i = read(io, (char *)&x, sizeof(x));
-	if (i != sizeof(x) ||
-	    N_BADMAG(x)) {
+	sz = read(io, (char *)&x, sizeof(x));
+	if (sz != sizeof(x) || N_BADMAG(x)) {
 		errno = EFTYPE;
 		return;
 	}
@@ -88,15 +88,15 @@ exec(path, loadaddr, howto)
         /* Text */
 	printf("%ld", x.a_text);
 	addr = loadaddr;
-	i = x.a_text;
+	sz = x.a_text;
 	if (N_GETMAGIC(x) == ZMAGIC) {
 		bcopy((char *)&x, addr, sizeof x);
 		addr += sizeof x;
-		i -= sizeof x;
+		sz -= sizeof x;
 	}
-	if (read(io, (char *)addr, i) != i)
+	if (read(io, (char *)addr, sz) != sz)
 		goto shread;
-	addr += i;
+	addr += sz;
 #ifdef EXEC_DEBUG
 	printf("\ntext {%x, %x, %x, %x}\n",
 	    addr[0], addr[1], addr[2], addr[3]);
@@ -111,7 +111,7 @@ exec(path, loadaddr, howto)
 	daddr = addr;
 #endif
 	printf("+%ld", x.a_data);
-	if (read(io, addr, x.a_data) != x.a_data)
+	if (read(io, addr, x.a_data) != (ssize_t)x.a_data)
 		goto shread;
 	addr += x.a_data;
 
@@ -126,24 +126,24 @@ exec(path, loadaddr, howto)
 		bcopy(&x.a_syms, addr, sizeof(x.a_syms));
 		addr += sizeof(x.a_syms);
 		printf("+[%ld", x.a_syms);
-		if (read(io, addr, x.a_syms) != x.a_syms)
+		if (read(io, addr, x.a_syms) != (ssize_t)x.a_syms)
 			goto shread;
 		addr += x.a_syms;
 
-		if (read(io, &i, sizeof(int)) != sizeof(int))
+		if (read(io, &i, sizeof(u_int)) != sizeof(u_int))
 			goto shread;
 
-		bcopy(&i, addr, sizeof(int));
+		bcopy(&i, addr, sizeof(u_int));
 		if (i) {
-			i -= sizeof(int);
+			sz = i - sizeof(int);
 			addr += sizeof(int);
-			if (read(io, addr, i) != i)
+			if (read(io, addr, sz) != sz)
                 	goto shread;
-			addr += i;
+			addr += sz;
 		}
 
 		/* and that many bytes of string table */
-		printf("+%d]", i);
+		printf("+%d]", sz);
 		esym = addr;
 	} else {
 		ssym = 0;

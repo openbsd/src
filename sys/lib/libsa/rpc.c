@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc.c,v 1.9 1997/02/06 19:35:52 mickey Exp $	*/
+/*	$OpenBSD: rpc.c,v 1.10 1998/02/23 20:32:30 niklas Exp $	*/
 /*	$NetBSD: rpc.c,v 1.16 1996/10/13 02:29:06 christos Exp $	*/
 
 /*
@@ -190,10 +190,10 @@ rpc_call(d, prog, vers, proc, sdata, slen, rdata, rlen)
 	if (debug)
 		printf("callrpc: cc=%d rlen=%d\n", cc, rlen);
 #endif
-	if (cc == -1)
+	if (cc < -1)
 		return (-1);
 
-	if (cc <= sizeof(*reply)) {
+	if ((size_t)cc <= sizeof(*reply)) {
 		errno = EBADRPC;
 		return (-1);
 	}
@@ -426,7 +426,7 @@ rpc_getport(d, prog, vers)
 
 	cc = rpc_call(d, PMAPPROG, PMAPVERS, PMAPPROC_GETPORT,
 		args, sizeof(*args), res, sizeof(*res));
-	if (cc < sizeof(*res)) {
+	if (cc < 0 || (size_t)cc < sizeof(*res)) {
 		printf("getport: %s", strerror(errno));
 		errno = EBADRPC;
 		return (-1);
