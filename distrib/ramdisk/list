@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.7 1998/09/21 23:23:00 deraadt Exp $
+#	$OpenBSD: list,v 1.8 1998/10/09 11:20:50 deraadt Exp $
 #	$NetBSD: list,v 1.4.4.1 1996/06/20 20:30:26 pk Exp $
 
 SRCDIRS distrib/special
@@ -65,5 +65,4 @@ SPECIAL sed "/^VERSION=/s/=.*/=${REV}/" < ${CURDIR}/../miniroot/install.sub > in
 SPECIAL	chmod 755 install upgrade
 
 # dhcp things
-COPY	${CURDIR}/../miniroot/dhclient.conf etc/dhclient.conf
 COPY	${DESTDIR}/sbin/dhclient-script sbin/dhclient-script
