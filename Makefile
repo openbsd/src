@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.107 2004/10/26 05:01:02 mickey Exp $
+#	$OpenBSD: Makefile,v 1.108 2004/11/30 15:46:01 mickey Exp $
 
 #
 # For more information on building in tricky environments, please see
@@ -169,8 +169,10 @@ ${CROSSINCLUDES}:	${CROSSOBJ}
 	@-mkdir -p ${CROSSDIR}/usr/include
 	@(cd ${.CURDIR}/include && \
 	    MACHINE=${TARGET} MACHINE_ARCH=`cat ${CROSSDIR}/TARGET_ARCH` \
+	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	    ${MAKE} prereq && \
 	    MACHINE=${TARGET} MACHINE_ARCH=`cat ${CROSSDIR}/TARGET_ARCH` \
+	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	    ${MAKE} DESTDIR=${CROSSDIR} includes)
 	@touch ${CROSSINCLUDES}
 
