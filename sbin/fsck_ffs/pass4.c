@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass4.c,v 1.6 2002/06/09 08:13:05 todd Exp $	*/
+/*	$OpenBSD: pass4.c,v 1.7 2002/08/23 09:09:04 gluk Exp $	*/
 /*	$NetBSD: pass4.c,v 1.11 1996/09/27 22:45:17 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass4.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: pass4.c,v 1.6 2002/06/09 08:13:05 todd Exp $";
+static const char rcsid[] = "$OpenBSD: pass4.c,v 1.7 2002/08/23 09:09:04 gluk Exp $";
 #endif
 #endif /* not lint */
 
@@ -57,16 +57,14 @@ static char rcsid[] = "$OpenBSD: pass4.c,v 1.6 2002/06/09 08:13:05 todd Exp $";
 static ino_t info_inumber;
 
 static int
-pass4_info(buf, buflen)
-        char * buf;
-	int buflen;
+pass4_info(char *buf, int buflen)
 {
 	return snprintf(buf, buflen, "phase 4, inode %d/%d",
 		info_inumber, lastino);
 }
 
 void
-pass4()
+pass4(void)
 {
 	ino_t inumber;
 	struct zlncnt *zlnp;
@@ -128,8 +126,7 @@ pass4()
 }
 
 int
-pass4check(idesc)
-	struct inodesc *idesc;
+pass4check(struct inodesc *idesc)
 {
 	struct dups *dlp;
 	int nfrags, res = KEEPON;
@@ -145,7 +142,7 @@ pass4check(idesc)
 				dlp->dup = duplist->dup;
 				dlp = duplist;
 				duplist = duplist->next;
-				free((char *)dlp);
+				free(dlp);
 				break;
 			}
 			if (dlp == 0) {

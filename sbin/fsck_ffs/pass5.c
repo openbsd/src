@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass5.c,v 1.14 2001/12/01 19:04:41 deraadt Exp $	*/
+/*	$OpenBSD: pass5.c,v 1.15 2002/08/23 09:09:04 gluk Exp $	*/
 /*	$NetBSD: pass5.c,v 1.16 1996/09/27 22:45:18 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass5.c	8.6 (Berkeley) 11/30/94";
 #else
-static char rcsid[] = "$OpenBSD: pass5.c,v 1.14 2001/12/01 19:04:41 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: pass5.c,v 1.15 2002/08/23 09:09:04 gluk Exp $";
 #endif
 #endif /* not lint */
 
@@ -62,15 +62,13 @@ static int info_cg;
 static int info_maxcg;
 
 static int
-pass5_info(buf, buflen)
-	char *buf;
-	int buflen;
+pass5_info(char *buf, int buflen)
 {
 	return snprintf(buf, buflen, "phase 5, cg %d/%d", info_cg, info_maxcg);
 }
 
 void
-pass5()
+pass5(void)
 {
 	int c, blk, frags, basesize, sumsize, mapsize, savednrpos=0;
 	int inomapsize, blkmapsize;

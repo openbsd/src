@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.c,v 1.20 2002/05/22 08:21:02 deraadt Exp $	*/
+/*	$OpenBSD: inode.c,v 1.21 2002/08/23 09:09:04 gluk Exp $	*/
 /*	$NetBSD: inode.c,v 1.23 1996/10/11 20:15:47 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.5 (Berkeley) 2/8/95";
 #else
-static char rcsid[] = "$OpenBSD: inode.c,v 1.20 2002/05/22 08:21:02 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: inode.c,v 1.21 2002/08/23 09:09:04 gluk Exp $";
 #endif
 #endif /* not lint */
 
@@ -63,9 +63,7 @@ static ino_t startinum;
 static int iblock(struct inodesc *, long, u_int64_t);
 
 int
-ckinode(dp, idesc)
-	struct dinode *dp;
-	struct inodesc *idesc;
+ckinode(struct dinode *dp, struct inodesc *idesc)
 {
 	ufs_daddr_t *ap;
 	long ret, n, ndb, offset;
@@ -153,10 +151,7 @@ ckinode(dp, idesc)
 }
 
 static int
-iblock(idesc, ilevel, isize)
-	struct inodesc *idesc;
-	long ilevel;
-	u_int64_t isize;
+iblock(struct inodesc *idesc, long ilevel, u_int64_t isize)
 {
 	daddr_t *ap;
 	daddr_t *aplim;
@@ -241,9 +236,7 @@ iblock(idesc, ilevel, isize)
  * Return 0 if in range, 1 if out of range.
  */
 int
-chkrange(blk, cnt)
-	daddr_t blk;
-	int cnt;
+chkrange(daddr_t blk, int cnt)
 {
 	int c;
 
@@ -278,8 +271,7 @@ chkrange(blk, cnt)
  * General purpose interface for reading inodes.
  */
 struct dinode *
-ginode(inumber)
-	ino_t inumber;
+ginode(ino_t inumber)
 {
 	daddr_t iblk;
 
@@ -305,8 +297,7 @@ long readcnt, readpercg, fullcnt, inobufsize, partialcnt, partialsize;
 struct dinode *inodebuf;
 
 struct dinode *
-getnextinode(inumber)
-	ino_t inumber;
+getnextinode(ino_t inumber)
 {
 	long size;
 	daddr_t dblk;
@@ -331,7 +322,7 @@ getnextinode(inumber)
 }
 
 void
-resetinodebuf()
+resetinodebuf(void)
 {
 
 	startinum = 0;
@@ -350,18 +341,18 @@ resetinodebuf()
 		partialsize = inobufsize;
 	}
 	if (inodebuf == NULL &&
-	    (inodebuf = (struct dinode *)malloc((unsigned)inobufsize)) == NULL)
+	    (inodebuf = malloc((unsigned)inobufsize)) == NULL)
 		errexit("Cannot allocate space for inode buffer\n");
 	while (nextino < ROOTINO)
 		(void)getnextinode(nextino);
 }
 
 void
-freeinodebuf()
+freeinodebuf(void)
 {
 
 	if (inodebuf != NULL)
-		free((char *)inodebuf);
+		free(inodebuf);
 	inodebuf = NULL;
 }
 
@@ -373,9 +364,7 @@ freeinodebuf()
  * Enter inodes into the cache.
  */
 void
-cacheino(dp, inumber)
-	struct dinode *dp;
-	ino_t inumber;
+cacheino(struct dinode *dp, ino_t inumber)
 {
 	struct inoinfo *inp;
 	struct inoinfo **inpp;
@@ -384,8 +373,7 @@ cacheino(dp, inumber)
 	blks = howmany(dp->di_size, sblock.fs_bsize);
 	if (blks > NDADDR)
 		blks = NDADDR + NIADDR;
-	inp = (struct inoinfo *)
-		malloc(sizeof(*inp) + (blks ? blks - 1 : 0) * sizeof(daddr_t));
+	inp = malloc(sizeof(*inp) + (blks ? blks - 1 : 0) * sizeof(daddr_t));
 	if (inp == NULL)
 		errexit("cannot allocate memory for inode cache");
 	inpp = &inphead[inumber % numdirs];
@@ -395,15 +383,15 @@ cacheino(dp, inumber)
 	if (inumber == ROOTINO)
 		inp->i_parent = ROOTINO;
 	else
-		inp->i_parent = (ino_t)0;
-	inp->i_dotdot = (ino_t)0;
+		inp->i_parent = 0;
+	inp->i_dotdot = 0;
 	inp->i_number = inumber;
 	inp->i_isize = dp->di_size;
 	inp->i_numblks = blks * sizeof(daddr_t);
 	memcpy(&inp->i_blks[0], &dp->di_db[0], (size_t)inp->i_numblks);
 	if (inplast == listmax) {
 		listmax += 100;
-		inpsort = (struct inoinfo **)realloc((char *)inpsort,
+		inpsort = realloc(inpsort,
 		    (unsigned)listmax * sizeof(struct inoinfo *));
 		if (inpsort == NULL)
 			errexit("cannot increase directory list");
@@ -415,8 +403,7 @@ cacheino(dp, inumber)
  * Look up an inode cache structure.
  */
 struct inoinfo *
-getinoinfo(inumber)
-	ino_t inumber;
+getinoinfo(ino_t inumber)
 {
 	struct inoinfo *inp;
 
@@ -433,31 +420,27 @@ getinoinfo(inumber)
  * Clean up all the inode cache structure.
  */
 void
-inocleanup()
+inocleanup(void)
 {
 	struct inoinfo **inpp;
 
 	if (inphead == NULL)
 		return;
 	for (inpp = &inpsort[inplast - 1]; inpp >= inpsort; inpp--)
-		free((char *)(*inpp));
-	free((char *)inphead);
-	free((char *)inpsort);
+		free(*inpp);
+	free(inphead);
+	free(inpsort);
 	inphead = inpsort = NULL;
 }
-	
+
 void
-inodirty()
+inodirty(void)
 {
-	
 	dirty(pbp);
 }
 
 void
-clri(idesc, type, flag)
-	struct inodesc *idesc;
-	char *type;
-	int flag;
+clri(struct inodesc *idesc, char *type, int flag)
 {
 	struct dinode *dp;
 
@@ -479,8 +462,7 @@ clri(idesc, type, flag)
 }
 
 int
-findname(idesc)
-	struct inodesc *idesc;
+findname(struct inodesc *idesc)
 {
 	struct direct *dirp = idesc->id_dirp;
 
@@ -491,8 +473,7 @@ findname(idesc)
 }
 
 int
-findino(idesc)
-	struct inodesc *idesc;
+findino(struct inodesc *idesc)
 {
 	struct direct *dirp = idesc->id_dirp;
 
@@ -507,8 +488,7 @@ findino(idesc)
 }
 
 void
-pinode(ino)
-	ino_t ino;
+pinode(ino_t ino)
 {
 	struct dinode *dp;
 	char *p;
@@ -536,10 +516,7 @@ pinode(ino)
 }
 
 void
-blkerror(ino, type, blk)
-	ino_t ino;
-	char *type;
-	daddr_t blk;
+blkerror(ino_t ino, char *type, daddr_t blk)
 {
 
 	pfatal("%d %s I=%u", blk, type, ino);
@@ -568,9 +545,7 @@ blkerror(ino, type, blk)
  * allocate an unused inode
  */
 ino_t
-allocino(request, type)
-	ino_t request;
-	int type;
+allocino(ino_t request, int type)
 {
 	ino_t ino;
 	struct dinode *dp;
@@ -608,7 +583,7 @@ allocino(request, type)
 	}
 	cgdirty();
 	dp = ginode(ino);
-	dp->di_db[0] = allocblk((long)1);
+	dp->di_db[0] = allocblk(1);
 	if (dp->di_db[0] == 0) {
 		statemap[ino] = USTATE;
 		return (0);
@@ -631,8 +606,7 @@ allocino(request, type)
  * deallocate an inode
  */
 void
-freeino(ino)
-	ino_t ino;
+freeino(ino_t ino)
 {
 	struct inodesc idesc;
 	struct dinode *dp;

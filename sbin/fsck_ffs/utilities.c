@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.16 2002/08/20 21:57:56 deraadt Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.17 2002/08/23 09:09:04 gluk Exp $	*/
 /*	$NetBSD: utilities.c,v 1.18 1996/09/27 22:45:20 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: utilities.c,v 1.16 2002/08/20 21:57:56 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: utilities.c,v 1.17 2002/08/23 09:09:04 gluk Exp $";
 #endif
 #endif /* not lint */
 
@@ -67,8 +67,7 @@ long	diskreads, totalreads;	/* Disk cache statistics */
 static void rwerror(char *, daddr_t);
 
 int
-ftypeok(dp)
-	struct dinode *dp;
+ftypeok(struct dinode *dp)
 {
 	switch (dp->di_mode & IFMT) {
 
@@ -89,8 +88,7 @@ ftypeok(dp)
 }
 
 int
-reply(question)
-	char *question;
+reply(char *question)
 {
 	int persevere;
 	int c;
@@ -130,7 +128,7 @@ reply(question)
  * Malloc buffers and set up cache.
  */
 void
-bufinit()
+bufinit(void)
 {
 	struct bufarea *bp;
 	long bufcnt, i;
@@ -147,7 +145,7 @@ bufinit()
 	if (bufcnt < MINBUFS)
 		bufcnt = MINBUFS;
 	for (i = 0; i < bufcnt; i++) {
-		bp = (struct bufarea *)malloc(sizeof(struct bufarea));
+		bp = malloc(sizeof(struct bufarea));
 		bufp = malloc((unsigned int)sblock.fs_bsize);
 		if (bp == NULL || bufp == NULL) {
 			if (i >= MINBUFS)
@@ -168,9 +166,7 @@ bufinit()
  * Manage a cache of directory blocks.
  */
 struct bufarea *
-getdatablk(blkno, size)
-	daddr_t blkno;
-	long size;
+getdatablk(daddr_t blkno, long size)
 {
 	struct bufarea *bp;
 
@@ -197,10 +193,7 @@ foundit:
 }
 
 void
-getblk(bp, blk, size)
-	struct bufarea *bp;
-	daddr_t blk;
-	long size;
+getblk(struct bufarea *bp, daddr_t blk, long size)
 {
 	daddr_t dblk;
 
@@ -215,9 +208,7 @@ getblk(bp, blk, size)
 }
 
 void
-flush(fd, bp)
-	int fd;
-	struct bufarea *bp;
+flush(int fd, struct bufarea *bp)
 {
 	int i, j;
 
@@ -241,9 +232,7 @@ flush(fd, bp)
 }
 
 static void
-rwerror(mesg, blk)
-	char *mesg;
-	daddr_t blk;
+rwerror(char *mesg, daddr_t blk)
 {
 
 	if (preen == 0)
@@ -254,8 +243,7 @@ rwerror(mesg, blk)
 }
 
 void
-ckfini(markclean)
-	int markclean;
+ckfini(int markclean)
 {
 	struct bufarea *bp, *nbp;
 	int cnt = 0;
@@ -278,7 +266,7 @@ ckfini(markclean)
 		flush(fswritefd, bp);
 		nbp = bp->b_prev;
 		free(bp->b_un.b_buf);
-		free((char *)bp);
+		free(bp);
 	}
 	if (bufhead.b_size != cnt)
 		errexit("Panic: lost %d buffers\n", bufhead.b_size - cnt);
@@ -305,11 +293,7 @@ ckfini(markclean)
 }
 
 int
-bread(fd, buf, blk, size)
-	int fd;
-	char *buf;
-	daddr_t blk;
-	long size;
+bread(int fd, char *buf, daddr_t blk, long size)
 {
 	char *cp;
 	int i, errs;
@@ -344,11 +328,7 @@ bread(fd, buf, blk, size)
 }
 
 void
-bwrite(fd, buf, blk, size)
-	int fd;
-	char *buf;
-	daddr_t blk;
-	long size;
+bwrite(int fd, char *buf, daddr_t blk, long size)
 {
 	int i;
 	char *cp;
@@ -381,8 +361,7 @@ bwrite(fd, buf, blk, size)
  * allocate a data block with the specified number of fragments
  */
 int
-allocblk(frags)
-	long frags;
+allocblk(long frags)
 {
 	int i, j, k, cg, baseblk;
 	struct cg *cgp = &cgrp;
@@ -425,9 +404,7 @@ allocblk(frags)
  * Free a previously allocated block
  */
 void
-freeblk(blkno, frags)
-	daddr_t blkno;
-	long frags;
+freeblk(daddr_t blkno, long frags)
 {
 	struct inodesc idesc;
 
@@ -440,9 +417,7 @@ freeblk(blkno, frags)
  * Find a pathname
  */
 void
-getpathname(namebuf, curdir, ino)
-	char *namebuf;
-	ino_t curdir, ino;
+getpathname(char *namebuf, ino_t curdir, ino_t ino)
 {
 	int len;
 	char *cp;
@@ -496,8 +471,7 @@ getpathname(namebuf, curdir, ino)
 }
 
 void
-catch(n)
-	int n;
+catch(int n)
 {
 	/* XXX signal race */
 	if (!doinglevel2)
@@ -511,8 +485,7 @@ catch(n)
  * so that reboot sequence may be interrupted.
  */
 void
-catchquit(n)
-	int n;
+catchquit(int n)
 {
 	extern volatile sig_atomic_t returntosingle;
 	char buf[1024];
@@ -529,8 +502,7 @@ catchquit(n)
  * Used by child processes in preen.
  */
 void
-voidquit(n)
-	int n;
+voidquit(int n)
 {
 
 	sleep(1);
@@ -542,11 +514,8 @@ voidquit(n)
  * determine whether an inode should be fixed.
  */
 int
-dofix(idesc, msg)
-	struct inodesc *idesc;
-	char *msg;
+dofix(struct inodesc *idesc, char *msg)
 {
-
 	switch (idesc->id_fix) {
 
 	case DONTKNOW:
@@ -583,8 +552,7 @@ int (* info_fn)(char *, int) = NULL;
 char *info_filesys = "?";
 
 void
-catchinfo(n)
-	int n;
+catchinfo(int n)
 {
 	int save_errno = errno;
 	char buf[1024];

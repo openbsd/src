@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass1.c,v 1.11 2002/02/16 21:27:34 millert Exp $	*/
+/*	$OpenBSD: pass1.c,v 1.12 2002/08/23 09:09:04 gluk Exp $	*/
 /*	$NetBSD: pass1.c,v 1.16 1996/09/27 22:45:15 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: pass1.c,v 1.11 2002/02/16 21:27:34 millert Exp $";
+static const char rcsid[] = "$OpenBSD: pass1.c,v 1.12 2002/08/23 09:09:04 gluk Exp $";
 #endif
 #endif /* not lint */
 
@@ -63,16 +63,14 @@ static void checkinode(ino_t, struct inodesc *);
 static ino_t info_inumber;
 
 static int
-pass1_info(buf, buflen)
-	char * buf;
-	int buflen;
+pass1_info(char *buf, int buflen)
 {
 	return snprintf(buf, buflen, "phase 1, inode %d/%d",
 		info_inumber, sblock.fs_ipg * sblock.fs_ncg);
 }
 
 void
-pass1()
+pass1(void)
 {
 	struct inodesc idesc;
 	ino_t inumber;
@@ -118,9 +116,7 @@ pass1()
 }
 
 static void
-checkinode(inumber, idesc)
-	ino_t inumber;
-	struct inodesc *idesc;
+checkinode(ino_t inumber, struct inodesc *idesc)
 {
 	struct dinode *dp;
 	struct zlncnt *zlnp;
@@ -228,7 +224,7 @@ checkinode(inumber, idesc)
 	n_files++;
 	lncntp[inumber] = dp->di_nlink;
 	if (dp->di_nlink <= 0) {
-		zlnp = (struct zlncnt *)malloc(sizeof *zlnp);
+		zlnp =  malloc(sizeof *zlnp);
 		if (zlnp == NULL) {
 			pfatal("LINK COUNT TABLE OVERFLOW");
 			if (reply("CONTINUE") == 0) {
@@ -250,8 +246,7 @@ checkinode(inumber, idesc)
 	} else
 		statemap[inumber] = FSTATE;
 	typemap[inumber] = IFTODT(mode);
-	if (doinglevel2 &&
-	    (dp->di_ouid != (u_short)-1 || dp->di_ogid != (u_short)-1)) {
+	if (doinglevel2 && (dp->di_ouid != (u_short)-1 || dp->di_ogid != (u_short)-1)) {
 		dp = ginode(inumber);
 		dp->di_uid = dp->di_ouid;
 		dp->di_ouid = -1;
@@ -287,8 +282,7 @@ unknown:
 }
 
 int
-pass1check(idesc)
-	struct inodesc *idesc;
+pass1check(struct inodesc *idesc)
 {
 	int res = KEEPON;
 	int anyout, nfrags;
@@ -329,7 +323,7 @@ pass1check(idesc)
 				}
 				return (STOP);
 			}
-			new = (struct dups *)malloc(sizeof(struct dups));
+			new = malloc(sizeof(struct dups));
 			if (new == NULL) {
 				pfatal("DUP TABLE OVERFLOW.");
 				if (reply("CONTINUE") == 0) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass3.c,v 1.6 2001/11/05 07:39:16 mpech Exp $	*/
+/*	$OpenBSD: pass3.c,v 1.7 2002/08/23 09:09:04 gluk Exp $	*/
 /*	$NetBSD: pass3.c,v 1.8 1995/03/18 14:55:54 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass3.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: pass3.c,v 1.6 2001/11/05 07:39:16 mpech Exp $";
+static const char rcsid[] = "$OpenBSD: pass3.c,v 1.7 2002/08/23 09:09:04 gluk Exp $";
 #endif
 #endif /* not lint */
 
@@ -53,16 +53,14 @@ static char rcsid[] = "$OpenBSD: pass3.c,v 1.6 2001/11/05 07:39:16 mpech Exp $";
 static int info_pos;
 
 static int
-pass3_info(buf, buflen)
-	char *buf;
-	int buflen;
+pass3_info(char *buf, int buflen)
 {
 	return snprintf(buf, buflen, "phase 3, directory %d/%ld",
 		info_pos, inplast);
 }
 
 void
-pass3()
+pass3(void)
 {
 	struct inoinfo **inpp, *inp, *pinp;
 	ino_t orphan;

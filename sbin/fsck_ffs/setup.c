@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.16 2002/06/09 08:13:05 todd Exp $	*/
+/*	$OpenBSD: setup.c,v 1.17 2002/08/23 09:09:04 gluk Exp $	*/
 /*	$NetBSD: setup.c,v 1.27 1996/09/27 22:45:19 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.5 (Berkeley) 11/23/94";
 #else
-static char rcsid[] = "$OpenBSD: setup.c,v 1.16 2002/06/09 08:13:05 todd Exp $";
+static char rcsid[] = "$OpenBSD: setup.c,v 1.17 2002/08/23 09:09:04 gluk Exp $";
 #endif
 #endif /* not lint */
 
@@ -72,8 +72,7 @@ static struct disklabel *getdisklabel(char *, int);
 static int readsb(int);
 
 int
-setup(dev)
-	char *dev;
+setup(char *dev)
 {
 	long cg, size, asked, i, j;
 	long bmapsize;
@@ -118,7 +117,7 @@ setup(dev)
 	asblk.b_un.b_buf = malloc(SBSIZE);
 	if (sblk.b_un.b_buf == NULL || asblk.b_un.b_buf == NULL)
 		errexit("cannot allocate space for superblock\n");
-	if ((lp = getdisklabel((char *)NULL, fsreadfd)) != NULL)
+	if ((lp = getdisklabel(NULL, fsreadfd)) != NULL)
 		dev_bsize = secsize = lp->d_secsize;
 	else
 		dev_bsize = secsize = DEV_BSIZE;
@@ -352,7 +351,7 @@ setup(dev)
 	 * allocate and initialize the necessary maps
 	 */
 	bmapsize = roundup(howmany(maxfsblock, NBBY), sizeof(int16_t));
-	blockmap = calloc((unsigned)bmapsize, sizeof (char));
+	blockmap = calloc((unsigned)bmapsize, sizeof(char));
 	if (blockmap == NULL) {
 		printf("cannot alloc %u bytes for blockmap\n",
 		    (unsigned)bmapsize);
@@ -370,7 +369,7 @@ setup(dev)
 		    (unsigned)(maxino + 1));
 		goto badsblabel;
 	}
-	lncntp = (int16_t *)calloc((unsigned)(maxino + 1), sizeof(int16_t));
+	lncntp = calloc((unsigned)(maxino + 1), sizeof(int16_t));
 	if (lncntp == NULL) {
 		printf("cannot alloc %lu bytes for lncntp\n",
 		    (unsigned long)(maxino + 1) * sizeof(int16_t));
@@ -379,10 +378,8 @@ setup(dev)
 	numdirs = sblock.fs_cstotal.cs_ndir;
 	inplast = 0;
 	listmax = numdirs + 10;
-	inpsort = (struct inoinfo **)calloc((unsigned)listmax,
-	    sizeof(struct inoinfo *));
-	inphead = (struct inoinfo **)calloc((unsigned)numdirs,
-	    sizeof(struct inoinfo *));
+	inpsort = calloc((unsigned)listmax, sizeof(struct inoinfo *));
+	inphead = calloc((unsigned)numdirs, sizeof(struct inoinfo *));
 	if (inpsort == NULL || inphead == NULL) {
 		printf("cannot alloc %lu bytes for inphead\n",
 		    (unsigned long)numdirs * sizeof(struct inoinfo *));
@@ -404,8 +401,7 @@ badsblabel:
  * Read in the super block and its summary info.
  */
 static int
-readsb(listerr)
-	int listerr;
+readsb(int listerr)
 {
 	daddr_t super = bflag ? bflag : SBOFF / dev_bsize;
 
@@ -509,9 +505,7 @@ readsb(listerr)
 }
 
 void
-badsb(listerr, s)
-	int listerr;
-	char *s;
+badsb(int listerr, char *s)
 {
 
 	if (!listerr)
@@ -528,10 +522,7 @@ badsb(listerr, s)
  * their needed information is available!
  */
 int
-calcsb(dev, devfd, fs)
-	char *dev;
-	int devfd;
-	struct fs *fs;
+calcsb(char *dev, int devfd, struct fs *fs)
 {
 	struct disklabel *lp;
 	struct partition *pp;
@@ -582,15 +573,13 @@ calcsb(dev, devfd, fs)
 }
 
 static struct disklabel *
-getdisklabel(s, fd)
-	char *s;
-	int	fd;
+getdisklabel(char *s, int fd)
 {
 	static struct disklabel lab;
 
 	if (ioctl(fd, DIOCGDINFO, (char *)&lab) < 0) {
 		if (s == NULL)
-			return ((struct disklabel *)NULL);
+			return (NULL);
 		pwarn("ioctl (GCINFO): %s\n", strerror(errno));
 		errexit("%s: can't read disk label\n", s);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass1b.c,v 1.6 2002/02/16 21:27:34 millert Exp $	*/
+/*	$OpenBSD: pass1b.c,v 1.7 2002/08/23 09:09:04 gluk Exp $	*/
 /*	$NetBSD: pass1b.c,v 1.10 1996/09/23 16:18:37 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1b.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: pass1b.c,v 1.6 2002/02/16 21:27:34 millert Exp $";
+static const char rcsid[] = "$OpenBSD: pass1b.c,v 1.7 2002/08/23 09:09:04 gluk Exp $";
 #endif
 #endif /* not lint */
 
@@ -53,21 +53,19 @@ static char rcsid[] = "$OpenBSD: pass1b.c,v 1.6 2002/02/16 21:27:34 millert Exp 
 #include "extern.h"
 
 static int	pass1bcheck(struct inodesc *);
-static  struct dups *duphead;
+static struct dups *duphead;
 
 static ino_t info_inumber;
 
 static int
-pass1b_info(buf, buflen)
-	char * buf;
-	int buflen;
+pass1b_info(char *buf, int buflen)
 {
 	return snprintf(buf, buflen, "phase 1b, inode %d/%d",
 		info_inumber, sblock.fs_ipg * sblock.fs_ncg);
 }
 
 void
-pass1b()
+pass1b(void)
 {
 	int c, i;
 	struct dinode *dp;
@@ -98,8 +96,7 @@ pass1b()
 }
 
 static int
-pass1bcheck(idesc)
-	struct inodesc *idesc;
+pass1bcheck(struct inodesc *idesc)
 {
 	struct dups *dlp;
 	int nfrags, res = KEEPON;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass2.c,v 1.13 2002/06/09 08:13:05 todd Exp $	*/
+/*	$OpenBSD: pass2.c,v 1.14 2002/08/23 09:09:04 gluk Exp $	*/
 /*	$NetBSD: pass2.c,v 1.17 1996/09/27 22:45:15 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass2.c	8.6 (Berkeley) 10/27/94";
 #else
-static char rcsid[] = "$OpenBSD: pass2.c,v 1.13 2002/06/09 08:13:05 todd Exp $";
+static const char rcsid[] = "$OpenBSD: pass2.c,v 1.14 2002/08/23 09:09:04 gluk Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,7 +56,7 @@ static char rcsid[] = "$OpenBSD: pass2.c,v 1.13 2002/06/09 08:13:05 todd Exp $";
 #include "fsutil.h"
 #include "extern.h"
 
-#define MINDIRSIZE	(sizeof (struct dirtemplate))
+#define MINDIRSIZE	(sizeof(struct dirtemplate))
 
 static int pass2check(struct inodesc *);
 static int blksort(const void *, const void *);
@@ -65,25 +65,21 @@ static int info_max;
 static int info_pos;
 
 static int
-pass2_info1(buf, buflen)
-	char	*buf;
-	int	buflen;
+pass2_info1(char *buf, int buflen)
 {
 	return snprintf(buf, buflen, "phase 2, directory %d/%d",
 		info_pos, info_max);
 }
 
 static int
-pass2_info2(buf, buflen)
-	char	*buf;
-	int	buflen;
+pass2_info2(char *buf, int buflen)
 {
 	return snprintf(buf, buflen, "phase 2, parent directory %d/%d",
 		info_pos, info_max);
 }
 
 void
-pass2()
+pass2(void)
 {
 	struct dinode *dp;
 	struct inoinfo **inpp, *inp, *pinp;
@@ -151,7 +147,7 @@ pass2()
 	/*
 	 * Sort the directory list into disk block order.
 	 */
-	qsort((char *)inpsort, (size_t)inplast, sizeof *inpsort, blksort);
+	qsort(inpsort, (size_t)inplast, sizeof *inpsort, blksort);
 	/*
 	 * Check the integrity of each directory.
 	 */
@@ -256,8 +252,7 @@ pass2()
 }
 
 static int
-pass2check(idesc)
-	struct inodesc *idesc;
+pass2check(struct inodesc *idesc)
 {
 	struct direct *dirp = idesc->id_dirp;
 	struct inoinfo *inp;
@@ -382,11 +377,11 @@ chk1:
 		fileerror(inp->i_parent, idesc->id_number, "MISSING '..'");
 		pfatal("CANNOT FIX, SECOND ENTRY IN DIRECTORY CONTAINS %s\n",
 			dirp->d_name);
-		inp->i_dotdot = (ino_t)-1;
+		inp->i_dotdot = -1;
 	} else if (dirp->d_reclen < entrysize) {
 		fileerror(inp->i_parent, idesc->id_number, "MISSING '..'");
 		pfatal("CANNOT FIX, INSUFFICIENT SPACE TO ADD '..'\n");
-		inp->i_dotdot = (ino_t)-1;
+		inp->i_dotdot = -1;
 	} else if (inp->i_parent != 0) {
 		/*
 		 * We know the parent, so fix now.
@@ -515,8 +510,7 @@ again:
  * Routine to sort disk blocks.
  */
 static int
-blksort(inpp1, inpp2)
-	const void *inpp1, *inpp2;
+blksort(const void *inpp1, const void *inpp2)
 {
 	return ((* (struct inoinfo **) inpp1)->i_blks[0] -
 		(* (struct inoinfo **) inpp2)->i_blks[0]);
