@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.40 2001/07/17 16:12:51 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.41 2001/07/18 16:20:24 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -332,7 +332,11 @@ gnu configure style.
 Add
 .Sq dest
 if port does not handle DESTDIR correctly, and needs to be configured to
-add DESTDIR to prefixes.
+add DESTDIR to prefixes
+.Po
+see also
+.Ev DESTDIRNAME 
+.Pc .
 Add
 .Sq old
 if port is an older autoconf port, that does not recognize --sysconfdir.
@@ -353,6 +357,8 @@ conventions.
 Supplementary options appended to ${CFLAGS} for building.
 Since most ports ignore the COPTS convention, they are actually told to use
 ${CFLAGS} ${COPTS} as CFLAGS.
+.It Ev CXXOPTS
+Supplementary options appended to ${CXXFLAGS} for building.
 .It Ev DEF_UMASK
 Correct value of umask for the port to build and package correctly.
 Tested against the actual umask at
@@ -360,6 +366,13 @@ Tested against the actual umask at
 time.
 Default is 022.
 Don't override.
+.It Ev DESTDIRNAME
+Name of variable to set to ${WRKINST} while faking.
+Usually DESTDIR.
+To be used in the rare cases where a port heeds DESTDIR in a few
+directories and needs to be configured with 
+.Sq gnu dest ,
+so that those few directories do not get in the way.
 .It Ev DISTDIR
 Directory where all ports distfiles and patchfiles are stashed.
 Defaults to
