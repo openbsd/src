@@ -1,4 +1,4 @@
-/*	$OpenBSD: akbdmap.h,v 1.8 2003/10/30 05:33:59 nordin Exp $	*/
+/*	$OpenBSD: akbdmap.h,v 1.9 2004/02/27 21:32:45 claudio Exp $	*/
 /*	$NetBSD: akbdmap.h,v 1.3 2000/09/01 16:00:39 tsubai Exp $	*/
 
 /*-
@@ -352,6 +352,59 @@ static const keysym_t akbd_keydesc_us_dvorak[] = {
     KC(47),			KS_v,
 };
 
+static const keysym_t akbd_keydesc_sg[] = {
+/*  pos		normal		shifted		altgr		shift-altgr */
+    KC(0),	KS_a,		KS_A,		KS_aring,	KS_Aring,
+    KC(1),	KS_s,		KS_S,		KS_ssharp,	KS_voidSymbol,
+    KC(3),	KS_f,		KS_F,		KS_section,	KS_voidSymbol,
+    KC(4),	KS_h,		KS_H,		KS_ordfeminine,	KS_periodcentered,
+    KC(5),	KS_g,		KS_G,		KS_at,		KS_comma,
+    KC(6),	KS_y,		KS_Y,		KS_yen,		KS_ydiaeresis,
+    KC(7),	KS_x,		KS_X,		KS_voidSymbol,	KS_ydiaeresis,
+    KC(8),	KS_c,		KS_C,		KS_copyright,
+    KC(10),	KS_section,	KS_degree,
+    KC(12),	KS_q,		KS_Q,
+    KC(15),	KS_r,		KS_R,		KS_registered,	KS_Egrave,
+    KC(16),	KS_z,		KS_Z,		KS_voidSymbol,	KS_Aacute,
+    KC(18),	KS_1,		KS_plus,	KS_plusminus,	KS_onesuperior,
+    KC(19),	KS_2,		KS_quotedbl,	KS_twosuperior,
+    KC(20),	KS_3,		KS_asterisk,	KS_numbersign,	KS_threesuperior,
+    KC(21),	KS_4,		KS_ccedilla,	KS_Ccedilla,
+    KC(22),	KS_6,		KS_ampersand,	KS_bracketright,
+    KC(23),	KS_5,		KS_percent,	KS_bracketleft,
+    KC(24),	KS_dead_circumflex,KS_dead_grave,KS_dead_acute,	KS_asciitilde,
+    KC(25),	KS_9,		KS_parenright,	KS_braceright,	KS_Ocircumflex,
+    KC(26),	KS_7,		KS_slash,	KS_bar,		KS_backslash,
+    KC(27),	KS_apostrophe,	KS_question,	KS_questiondown,
+    KC(28),	KS_8,		KS_parenleft,	KS_braceleft,	KS_Ograve,
+    KC(29),	KS_0,		KS_equal,	KS_voidSymbol,	KS_Uacute,
+    KC(30),	KS_dead_diaeresis,KS_exclam,	KS_bracketright
+    KC(31),	KS_o,		KS_O,		KS_oslash,
+    KC(32),	KS_u,		KS_U,		KS_degree,	KS_Ugrave,
+    KC(33),	KS_udiaeresis,	KS_egrave,	KS_bracketleft
+    KC(34),	KS_i,		KS_I,		KS_exclamdown,
+    KC(37),	KS_l,		KS_L,		KS_notsign,
+    KC(38),	KS_j,		KS_J,		KS_masculine,
+    KC(39),	KS_adiaeresis,	KS_agrave,	KS_ae,		KS_AE,
+    KC(41),	KS_odiaeresis,	KS_eacute,	KS_cent,
+    KC(42),	KS_dollar,	KS_sterling,	KS_paragraph,
+    KC(43),	KS_comma,	KS_semicolon,	KS_guillemotleft,KS_guillemotright,
+    KC(44),	KS_minus,	KS_underscore,
+    KC(45),	KS_n,		KS_N,		KS_dead_tilde,
+    KC(46),	KS_m,		KS_M,		KS_mu,
+    KC(47),	KS_period,	KS_colon,	KS_voidSymbol,	KS_division,
+    KC(50),	KS_less,	KS_greater,
+    KC(52),	KS_Multi_key,
+    KC(58),	KS_Mode_switch,
+};
+
+static const keysym_t akbd_keydesc_sg_nodead[] = {
+/*  pos		normal		shifted		altgr		shift-altgr */
+    KC(24),	KS_asciicircum,	KS_grave,	KS_acute,	KS_asciitilde,
+    KC(30),	KS_diaeresis,	KS_exclam,	KS_bracketright,KS_braceright,
+    KC(45),	KS_n,		KS_N,		KS_asciitilde,
+};
+
 #define KBD_MAP(name, base, map) \
 			{ name, base, sizeof(map)/sizeof(keysym_t), map }
 
@@ -364,6 +417,8 @@ static const struct wscons_keydesc akbd_keydesctab[] = {
 	KBD_MAP(KB_SV | KB_NODEAD,	KB_SV,	akbd_keydesc_sv_nodead),
 	KBD_MAP(KB_DE,			KB_US,	akbd_keydesc_de),
 	KBD_MAP(KB_DE | KB_NODEAD,	KB_DE,	akbd_keydesc_de_nodead),
+	KBD_MAP(KB_SG,			KB_US,	akbd_keydesc_sg),
+	KBD_MAP(KB_SG | KB_NODEAD,	KB_SG,	akbd_keydesc_sg_nodead),
 	KBD_MAP(KB_UK,			KB_US,	akbd_keydesc_uk),
 	{0, 0, 0, 0}
 };
