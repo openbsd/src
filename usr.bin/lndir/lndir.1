@@ -1,4 +1,4 @@
-.\" $OpenBSD: lndir.1,v 1.8 1999/06/05 01:21:31 aaron Exp $
+.\" $OpenBSD: lndir.1,v 1.9 2000/03/08 03:11:31 aaron Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -82,10 +82,13 @@ except that the shadow is not
 populated with real files but instead with symbolic links pointing at
 the real files in the
 .Ar fromdir
-directory tree.  This is usually useful for maintaining source code for
-different machine architectures.  You create a shadow directory
+directory tree.
+This is usually useful for maintaining source code for
+different machine architectures.
+You create a shadow directory
 containing links to the real source, which you will have usually
-mounted from a remote machine.  You can build in the shadow tree, and
+mounted from a remote machine.
+You can build in the shadow tree, and
 the object files will be in the shadow directory, while the
 source files in the shadow directory are just symlinks to the real
 files.
@@ -97,9 +100,12 @@ to the shadow directory and recompile away.
 .Pp
 The
 .Ar todir
-argument is optional and defaults to the current directory.  The
+argument is optional and defaults to the current directory.
+The
 .Ar fromdir
-argument may be relative (e.g., ../src) and is relative to
+argument may be relative (e.g.,
+.Pa \&.\&./src )
+and is relative to
 .Ar todir
 (not the current directory).
 .Pp
@@ -111,7 +117,9 @@ arguments.
 .Pp
 If you add files, simply run
 .Nm lndir
-again.  New files will be silently added.  Old files will be
+again.
+New files will be silently added.
+Old files will be
 checked that they have the correct link.
 .Pp
 Deleting files is a more painful problem; the symlinks will
@@ -128,10 +136,12 @@ rather than making a link back to the (symbolic link) entry in
 The
 .Fl i
 flag changes this behavior.
-.Sh OPTIONS
+.Pp
+The options are as follows:
 .Bl -tag -width XxXXXXXXXXXXXX
 .It Fl e Ar exceptfile
-Add the specified file to the list of excluded files/directories.  This is
+Add the specified file to the list of excluded files/directories.
+This is
 effective in all directories searched by
 .Nm lndir .
 This option may be specified as many times as needed.
@@ -142,7 +152,8 @@ descends into each subdirectory.
 .It Fl i
 Causes the program to not treat symbolic links in
 .Ar fromdir
-specially.  The link created in
+specially.
+The link created in
 .Ar todir
 will point back to the corresponding (symbolic link) file in
 .Ar fromdir .
@@ -150,11 +161,13 @@ If the link is to a directory, this is almost certainly the wrong thing.
 .Pp
 This option exists mostly to emulate the behavior the C version of
 .Nm lndir
-had in X11R6.  Its use is not recommended.
+had in X11R6.
+Its use is not recommended.
 .El
 .Sh DIAGNOSTICS
 The program displays the name of each subdirectory it enters, followed
-by a colon.  The
+by a colon.
+The
 .Fl s
 option suppresses these messages.
 .Pp
@@ -167,7 +180,8 @@ program prints the link name and the location where it does point.
 .Sh BUGS
 The
 .Xr patch 1
-program gets upset if it cannot change the files.  You should never run
+program gets upset if it cannot change the files.
+You should never run
 .Xr patch 1
 from a shadow directory anyway.
 .Pp

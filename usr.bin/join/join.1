@@ -1,3 +1,5 @@
+.\"	$OpenBSD: join.1,v 1.9 2000/03/08 03:11:29 aaron Exp $
+.\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -105,7 +107,7 @@ each line with matching join fields.
 Each element of
 .Ar list
 has the form
-.Ql file_number.field ,
+.Dq file_number.field ,
 where
 .Ar file_number
 is a file number and
@@ -165,8 +167,10 @@ If one of the arguments
 or
 .Ar file2
 is
-.Ql \&- ,
+.Dq - ,
 the standard input is used.
+.\" XXX - use .br as a work-around for an apparent bug in mdoc
+.br
 .Pp
 The
 .Nm

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: locate.1,v 1.11 2000/03/05 00:28:53 aaron Exp $
+.\"	$OpenBSD: locate.1,v 1.12 2000/03/08 03:11:31 aaron Exp $
 .\"
 .\" Copyright (c) 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 .\" Copyright (c) 1990, 1993
@@ -33,7 +33,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	@(#)locate.1	8.1 (Berkeley) 6/6/93
-.\"	$Id: locate.1,v 1.11 2000/03/05 00:28:53 aaron Exp $
+.\"	$Id: locate.1,v 1.12 2000/03/08 03:11:31 aaron Exp $
 .\"
 .Dd June 6, 1993
 .Dt LOCATE 1
@@ -48,8 +48,9 @@
 .Op Fl d Ar database
 .Ar pattern Op Ar ...
 .Sh DESCRIPTION
+The
 .Nm
-searches a database for all pathnames which match the specified
+utility searches a database for all pathnames which match the specified
 .Ar pattern .
 The database is recomputed periodically (usually weekly or daily),
 and contains the pathnames
@@ -79,8 +80,8 @@ is matched as though it were
 .Pp
 Historically,
 .Nm
-stores only characters between 32 and 127.  The
-current implementation stores all characters except newline
+stores only characters between 32 and 127.
+The current implementation stores all characters except newline
 .Pq Ql \en
 and
 NUL
@@ -88,8 +89,8 @@ NUL
 The 8-bit character support does not waste extra space for
 plain
 .Tn ASCII
-file names.  Characters less than 32 or greater than 127
-are stored as 2 bytes.
+file names.
+Characters less than 32 or greater than 127 are stored as 2 bytes.
 .Pp
 The options are as follows:
 .Bl -tag -width 10n indent
@@ -103,7 +104,8 @@ Search in
 instead the default file name database.
 Multiple
 .Fl d
-options are allowed.  Each additional
+options are allowed.
+Each additional
 .Fl d
 option adds the specified database to the list
 of databases to be searched.
@@ -206,7 +208,8 @@ option was specified.
 .Sh BUGS
 .Nm
 may fail to list some files that are present, or may
-list files that have been removed from the system.  This is because
+list files that have been removed from the system.
+This is because
 .Nm
 only reports files that are present in a periodically reconstructed
 database (typically rebuilt once a week by the
@@ -240,7 +243,8 @@ to share the databases between machines with different byte order.
 The current
 .Nm
 implementation understands databases in host byte order or
-network byte order.  So a little-endian machine can't understand
+network byte order.
+So a little-endian machine can't understand
 a locate database which was built on an big-endian machine.
 .Sh HISTORY
 The

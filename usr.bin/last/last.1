@@ -1,4 +1,4 @@
-.\"	$OpenBSD: last.1,v 1.12 2000/03/06 03:17:38 aaron Exp $
+.\"	$OpenBSD: last.1,v 1.13 2000/03/08 03:11:30 aaron Exp $
 .\"	$NetBSD: last.1,v 1.3 1994/12/21 22:41:23 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -42,31 +42,34 @@
 .Nd indicate last logins of users and ttys
 .Sh SYNOPSIS
 .Nm last
-.Op Fl Ns Ar c
+.Op Fl csT
 .Op Fl Ns Ar n
-.Op Fl Ns Ar s
-.Op Fl Ns Ar T
 .Op Fl f Ar file
 .Op Fl h Ar host
 .Op Fl t Ar tty
 .Op Fl d Ar [[yy]yy[mm[dd[hh]]]]mm[.ss]
 .Op Ar user ...
 .Sh DESCRIPTION
+The
 .Nm last
-will either (1) list the sessions of specified
+utility will either (1) list the sessions of specified
 .Ar users ,
 .Ar ttys ,
 and
 .Ar hosts ,
 in reverse time order,
 or (2) list the users logged in at a specified snapshot date & time
-in reverse time order.  Each line of output contains
+in reverse time order.
+Each line of output contains
 the user name, the tty from which the session was conducted, any
 hostname, the start and stop times for the session, and the duration
-of the session.  If the session is still continuing or was cut short by
+of the session.
+If the session is still continuing or was cut short by
 a crash or shutdown,
 .Nm last
 will so indicate.
+.Pp
+The options are as follows:
 .Bl -tag -width indent-two
 .It Fl c
 Calculates the total time displayed and prints it after the output.
@@ -80,16 +83,16 @@ instead of the default,
 Limits the report to
 .Ar n
 lines.
-.It Fl Ar s
+.It Fl s
 Display time values in seconds since the epoch, instead of formatted dates.
 .It Fl t Ar tty
 Specify the
 .Ar tty .
 tty names may be given fully or abbreviated, for example,
-.Dq Li "last -t 03"
+.Ic last -t 03
 is
 equivalent to
-.Dq Li "last -t tty03" .
+.Ic last -t tty03 .
 .It Fl h Ar host
 .Ar host
 names may be names or internet numbers.
@@ -155,25 +158,26 @@ If
 multiple arguments are given, and a snapshot time is not specified, the
 information which applies to any of the
 arguments is printed, e.g.,
-.Dq Li "last root -t console"
+.Ic last root -t console
 would list all of
-.Dq Li root Ns 's
+.Li root Ns 's
 sessions as well as all sessions on the console terminal. If no
-users, hostnames or terminals are specified,
+users, hostnames, or terminals are specified,
 .Nm last
 prints a record of
 all logins and logouts.
 .Pp
 The pseudo-user
-.Ar reboot
+.Dq reboot
 logs in at reboots of the system; thus
-.Dq Li last reboot
+.Ic last reboot
 will give an indication of mean time between reboot.
 .Pp
 If
 .Nm last
 is interrupted, it indicates to what date the search has
-progressed.  If interrupted with a quit signal
+progressed.
+If interrupted with a quit signal
 .Nm last
 indicates how
 far the search has progressed and then continues.

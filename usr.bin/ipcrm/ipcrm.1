@@ -1,4 +1,5 @@
-.\" $OpenBSD: ipcrm.1,v 1.5 1999/07/04 11:53:55 aaron Exp $
+.\" $OpenBSD: ipcrm.1,v 1.6 2000/03/08 03:11:28 aaron Exp $
+.\"
 .\" Copyright (c) 1994 Adam Glass
 .\" All rights reserved.
 .\"
@@ -42,10 +43,11 @@ segments
 .Sh DESCRIPTION
 .Nm
 removes the specified message queues, semaphores and shared memory
-segments.  These System V IPC objects can be specified by their
+segments.
+These System V IPC objects can be specified by their
 creation ID or any associated key.
 .Pp
-The following options are used to specify which IPC objects will be removed.  Any number and combination of these options can be used:
+The options are as follows:
 .Bl -tag -width indent
 .It Fl q Ar msqid
 Remove the message queue associated with the ID
@@ -78,6 +80,5 @@ from the system.
 The identifiers and keys associated with these System V IPC objects can be
 determined by using
 .Xr ipcs 1 .
-.
 .Sh SEE ALSO
 .Xr ipcs 1

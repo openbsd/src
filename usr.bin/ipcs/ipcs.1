@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipcs.1,v 1.9 1999/10/05 20:53:09 aaron Exp $
+.\"	$OpenBSD: ipcs.1,v 1.10 2000/03/08 03:11:29 aaron Exp $
 .\"
 .\" Copyright (c) 1994 SigmaSoft, Th. Lockert
 .\" All rights reserved.
@@ -61,7 +61,8 @@ and
 options.)
 .It Fl b
 Show the maximum allowed sizes for active semaphores, message queues,
-and shared memory segments.  The
+and shared memory segments.
+The
 .Dq maximum allowed size
 is the maximum number of bytes in a message on a message queue,
 the size of a shared memory segment,
@@ -73,13 +74,15 @@ and shared memory segments.
 Display information about active shared memory segments.
 .It Fl o
 Show outstanding usage for active message queues,
-and shared memory segments.  The
+and shared memory segments.
+The
 .Dq outstanding usage
 is the number of messages in a message queue, or the number
 of processes attached to a shared memory segment.
 .It Fl p
 Show the process ID information for active semaphores, message queues,
-and shared memory segments.  The
+and shared memory segments.
+The
 .Dq process ID information
 is the last process to send a message to or receive a message from
 a message queue,
@@ -91,7 +94,8 @@ Display information about active message queues.
 Display information about active semaphores.
 .It Fl t
 Show access times for active semaphores, message queues,
-and shared memory segments.  The access times is the time
+and shared memory segments.
+The access times is the time
 of the last control operation on an IPC object,
 the last send or receive of a message,
 the last attach or detach of a shared memory segment,
