@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxpreg.h,v 1.1 2000/04/18 18:44:27 jason Exp $	*/
+/*	$OpenBSD: fxpreg.h,v 1.2 2000/04/26 19:12:08 chris Exp $	*/
 
 /*
  * Copyright (c) 1995, David Greenman
@@ -161,7 +161,8 @@ struct fxp_cb_config {
 	volatile u_int		stripping:1,
 				padding:1,
 				rcv_crc_xfer:1,
-				:5;
+				long_rx:1,		/* 82558/82559 */
+				:4;
 	volatile u_int		:6,
 				force_fdx:1,
 				fdx_pin_en:1;

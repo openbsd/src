@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.2 2000/04/26 12:48:53 aaron Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.3 2000/04/26 19:12:08 chris Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -1152,6 +1152,7 @@ fxp_init(xsc)
 	cbp->stripping =	!prm;	/* truncate rx packet to byte count */
 	cbp->padding =		1;	/* (do) pad short tx packets */
 	cbp->rcv_crc_xfer =	0;	/* (don't) xfer CRC to host */
+	cbp->long_rx =		sc->not_82557; /* (enable) long packets */
 	cbp->force_fdx =	0;	/* (don't) force full duplex */
 	cbp->fdx_pin_en =	1;	/* (enable) FDX# pin */
 	cbp->multi_ia =		0;	/* (don't) accept multiple IAs */

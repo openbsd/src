@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxp_pci.c,v 1.1 2000/04/18 18:44:31 jason Exp $	*/
+/*	$OpenBSD: if_fxp_pci.c,v 1.2 2000/04/26 19:12:08 chris Exp $	*/
 
 /*
  * Copyright (c) 1995, David Greenman
@@ -138,6 +138,7 @@ fxp_pci_attach(parent, self, aux)
 	bus_space_tag_t iot = pa->pa_iot;
 	bus_addr_t iobase;
 	bus_size_t iosize;
+	pcireg_t rev = PCI_REVISION(pa->pa_class);
 
 	if (pci_io_find(pc, pa->pa_tag, FXP_PCI_IOBA, &iobase, &iosize)) {
 		printf(": can't find i/o space\n");
@@ -169,6 +170,14 @@ fxp_pci_attach(parent, self, aux)
 		printf("\n");
 		return;
 	}
+
+	/*
+	 * revisions
+	 * 2 = 82557
+	 * 4, 6 = 82558
+	 * 8 = 82559
+	 */
+	sc->not_82557 = (rev >= 4) ? 1 : 0;
 
 	/* Do generic parts of attach. */
 	if (fxp_attach_common(sc, enaddr, intrstr)) {
