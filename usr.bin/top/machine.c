@@ -1,4 +1,4 @@
-/*	$OpenBSD: machine.c,v 1.4 1997/08/22 07:39:27 downsj Exp $	*/
+/*	$OpenBSD: machine.c,v 1.5 1997/08/24 18:37:46 millert Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -482,7 +482,7 @@ char *(*get_userid)();
 	    p_wait = EP(pp, e_wmesg);
 	else {
 	    snprintf(waddr, sizeof(waddr), "%lx", 
-		(unsigned int)(PP(pp, p_wchan)) & ~KERNBASE);
+		(unsigned long)(PP(pp, p_wchan)) & ~KERNBASE);
 	    p_wait = waddr;
         }
     else
