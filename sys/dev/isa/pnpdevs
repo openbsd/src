@@ -1,4 +1,4 @@
-#	$OpenBSD: pnpdevs,v 1.106 2002/01/02 19:41:11 mickey Exp $
+#	$OpenBSD: pnpdevs,v 1.107 2002/08/28 21:20:48 mickey Exp $
 
 #
 # NOTE: All `com' devices also need pccom identifiers.
@@ -471,6 +471,8 @@ wss		OPT9310	# OPTi Audio 16
 wss		CDC0000	# OPL3-SAx Sound Board
 ym		@@@1001 # ALS100+
 ym		YMH0021	# OPL3-SA2 Sound Board
+
+rt		MFRAD10 # FM Radio Tuner at Creative ViBRA16C PnP
 
 wdc		AZT0500 # AZT1008 PnP SOUND DEVICE (IDE CDROM DISAB)
 wdc		CSC0004	# CX4237B-SIDE CD (?)

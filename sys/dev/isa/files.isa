@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.77 2002/05/06 16:37:43 mickey Exp $
+#	$OpenBSD: files.isa,v 1.78 2002/08/28 21:20:48 mickey Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config file and device description for machine-independent ISA code.
@@ -355,8 +355,10 @@ file	dev/isa/aztech.c		az
 
 # AIMS Lab Radiotrack & compatible
 device	rt: radiobus, lm700x
-attach	rt at isa
-file	dev/isa/radiotrack.c		rt
+file	dev/isa/radiotrack.c		rt & (rt_isa | rt_isapnp)
+
+attach	rt at isa with rt_isa
+file	dev/isa/rt_isa.c		rt_isa
 
 # AIMS Lab Radiotrack II FM Radio Card
 device	rtii: radiobus, tea5757

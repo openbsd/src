@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.315 2002/07/24 22:47:11 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.316 2002/08/28 21:20:48 mickey Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -465,17 +465,18 @@ bktr0	at pci? dev ? function ?
 #sf2r0	at isa? port 0x384	# SoundForte RadioLink SF16-FMR2 FM Radio Card
 #az0	at isa? port 0x350	# Aztech/PackardBell FM Radio Card
 #rt0	at isa? port 0x30c	# AIMS Lab Radiotrack FM Radio Card
+#rt*	at isapnp?
 #rtii0	at isa? port 0x30c	# AIMS Lab Radiotrack II FM Radio Card
 
 # FM-Radio support
 radio*	at bktr?
 radio*	at fms?
 #radio*	at gtp?
-#radio*	at sfr0
-#radio*	at sf2r0
-#radio*	at az0
-#radio*	at rt0
-#radio*	at rtii0
+#radio*	at sfr?
+#radio*	at sf2r?
+#radio*	at az?
+#radio*	at rt?
+#radio*	at rtii?
 
 # Joystick driver. Probe is a little strange; add only if you have one.
 #joy0	at isa? port 0x201
