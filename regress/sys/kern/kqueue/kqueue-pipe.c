@@ -1,4 +1,4 @@
-/*	$OpenBSD: kqueue-pipe.c,v 1.1 2002/01/07 00:01:00 provos Exp $	*/
+/*	$OpenBSD: kqueue-pipe.c,v 1.2 2002/01/07 00:11:07 provos Exp $	*/
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -50,10 +50,7 @@ main(int argc, char **argv)
         if (fcntl(fd[1], F_SETFL, O_NONBLOCK) == -1)
                 exit(1);
 
-        while ((n = write(fd[1], buf, sizeof(buf))) == sizeof(buf))
-                ;
-
-        if ((kq = kqueue()) == -1)
+	if ((kq = kqueue()) == -1)
                 exit(1);
 
         ev.ident = fd[1];
@@ -63,7 +60,16 @@ main(int argc, char **argv)
         if (n == -1)
                 exit(1);
         
-        read(fd[0], buf, sizeof(buf));
+        while ((n = write(fd[1], buf, sizeof(buf))) == sizeof(buf))
+                ;
+
+        ts.tv_sec = 0;
+        ts.tv_nsec = 0;
+        n = kevent(kq, NULL, 0, &ev, 1, &ts);
+        if (n != 0)
+                exit(1);
+
+	read(fd[0], buf, sizeof(buf));
 
         ts.tv_sec = 0;
         ts.tv_nsec = 0;
