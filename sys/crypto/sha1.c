@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha1.c,v 1.4 2004/03/31 23:41:53 brad Exp $	*/
+/*	$OpenBSD: sha1.c,v 1.5 2004/04/28 20:39:35 hshoexer Exp $	*/
 
 /*
  * SHA-1 in C
@@ -46,19 +46,20 @@
 
 /* Hash a single 512-bit block. This is the core of the algorithm. */
 
-void SHA1Transform(u_int32_t state[5], unsigned char buffer[64])
+void
+SHA1Transform(u_int32_t state[5], unsigned char buffer[SHA1_BLOCK_LENGTH])
 {
-u_int32_t a, b, c, d, e;
-typedef union {
-    unsigned char c[64];
-    unsigned int l[16];
-} CHAR64LONG16;
-CHAR64LONG16* block;
+    u_int32_t a, b, c, d, e;
+    typedef union {
+        unsigned char c[64];
+        unsigned int l[16];
+    } CHAR64LONG16;
+    CHAR64LONG16* block;
 #ifdef SHA1HANDSOFF
-    static unsigned char workspace[64];
+    static unsigned char workspace[SHA1_BLOCK_LENGTH];
 
     block = (CHAR64LONG16 *)workspace;
-    bcopy(buffer, block, 64);
+    bcopy(buffer, block, SHA1_BLOCK_LENGTH);
 #else
     block = (CHAR64LONG16 *)buffer;
 #endif
@@ -104,30 +105,31 @@ CHAR64LONG16* block;
 
 /* SHA1Init - Initialize new context */
 
-void SHA1Init(SHA1_CTX *context)
+void
+SHA1Init(SHA1_CTX *context)
 {
     /* SHA1 initialization constants */
+    context->count = 0;
     context->state[0] = 0x67452301;
     context->state[1] = 0xEFCDAB89;
     context->state[2] = 0x98BADCFE;
     context->state[3] = 0x10325476;
     context->state[4] = 0xC3D2E1F0;
-    context->count[0] = context->count[1] = 0;
 }
 
 
 /* Run your data through this. */
 
-void SHA1Update(SHA1_CTX *context, unsigned char *data, unsigned int len)
+void
+SHA1Update(SHA1_CTX *context, unsigned char *data, unsigned int len)
 {
-unsigned int i;
-unsigned int j;
+    unsigned int i;
+    unsigned int j;
 
-    j = context->count[0];
-    if ((context->count[0] += len << 3) < j) context->count[1] += (len>>29)+1;
-    j = (j >> 3) & 63;
+    j = (u_int32_t)((context->count >> 3) & 63);
+    context->count += (len << 3);
     if ((j + len) > 63) {
-        bcopy(data, &context->buffer[j], (i = 64-j));
+        bcopy(data, &context->buffer[j], (i = 64 - j));
         SHA1Transform(context->state, context->buffer);
         for ( ; i + 63 < len; i += 64) {
             SHA1Transform(context->state, &data[i]);
@@ -141,25 +143,26 @@ unsigned int j;
 
 /* Add padding and return the message digest. */
 
-void SHA1Final(unsigned char digest[20], SHA1_CTX *context)
+void
+SHA1Final(unsigned char digest[SHA1_DIGEST_LENGTH], SHA1_CTX *context)
 {
-unsigned int i;
-unsigned char finalcount[8];
+    unsigned int i;
+    unsigned char finalcount[8];
 
     for (i = 0; i < 8; i++) {
-        finalcount[i] = (unsigned char)((context->count[(i >= 4 ? 0 : 1)]
-         >> ((3-(i & 3)) * 8) ) & 255);  /* Endian independent */
+        finalcount[i] = (unsigned char)((context->count >>
+            ((7 - (i & 7)) * 8)) & 255);  /* Endian independent */
     }
     SHA1Update(context, (unsigned char *)"\200", 1);
-    while ((context->count[0] & 504) != 448) {
+    while ((context->count & 504) != 448) {
         SHA1Update(context, (unsigned char *)"\0", 1);
     }
     SHA1Update(context, finalcount, 8);  /* Should cause a SHA1Transform() */
 
     if (digest)
-      for (i = 0; i < 20; i++) {
-          digest[i] = (unsigned char)
-           ((context->state[i>>2] >> ((3-(i & 3)) * 8) ) & 255);
+        for (i = 0; i < SHA1_DIGEST_LENGTH; i++) {
+            digest[i] = (unsigned char)((context->state[i >> 2] >>
+                ((3 - (i & 3)) * 8)) & 255);
       }
 #if 0	/* We want to use this for "keyfill" */
     /* Wipe variables */
