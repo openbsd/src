@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: daily,v 1.5 1996/06/16 14:39:24 deraadt Exp $
+#	$OpenBSD: daily,v 1.6 1996/06/17 09:09:39 deraadt Exp $
 #
 PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/local
 host=`hostname -s`
@@ -38,11 +38,11 @@ echo "Removing scratch and junk files:"
 #	    >/dev/null 2>&1; }
 #fi
 
-if [ -d /var/rwho -a ! -h /var/rwho ] ; then
-	cd /var/rwho && {
+#if [ -d /var/rwho -a ! -h /var/rwho ] ; then
+#	cd /var/rwho && {
 # XXX NOT REMOVING UNTIL SECURITY BUG IS FIXED 
 #	find . ! -name . -mtime +7 -exec rm -f -- {} \; ; }
-fi
+#fi
 
 # XXX NOT REMOVING UNTIL SECURITY BUG IS FIXED 
 #cd /tmp
