@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-802_11.c,v 1.1 2005/03/07 16:13:38 reyk Exp $	*/
+/*	$OpenBSD: print-802_11.c,v 1.2 2005/03/08 14:55:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@vantronix.net>
@@ -483,8 +483,9 @@ ieee802_11_radio_if_print(u_char *user, const struct pcap_pkthdr *h,
 	}
 
 	if (RADIOTAP(FLAGS)) {
-		TCHECK2(*t, 1);
 		u_int8_t flags = *(u_int8_t*)t;
+		TCHECK2(*t, 1);
+
 		if (flags & IEEE80211_RADIOTAP_F_CFP)
 			printf(", CFP");
 		if (flags & IEEE80211_RADIOTAP_F_SHORTPRE)
