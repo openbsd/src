@@ -1,4 +1,4 @@
-/* $OpenBSD: if_wi_pcmcia.c,v 1.57 2005/01/11 22:07:58 drahn Exp $ */
+/* $OpenBSD: if_wi_pcmcia.c,v 1.58 2005/01/20 00:44:28 millert Exp $ */
 /* $NetBSD: if_wi_pcmcia.c,v 1.14 2001/11/26 04:34:56 ichiro Exp $ */
 
 /*
@@ -446,11 +446,6 @@ wi_pcmcia_detach(dev, flags)
 	struct wi_pcmcia_softc *psc = (struct wi_pcmcia_softc *)dev;
 	struct wi_softc *sc = &psc->sc_wi;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-
-	if (!(sc->wi_flags & WI_FLAGS_ATTACHED)) {
-		printf("%s: already detached\n", sc->sc_dev.dv_xname);
-		return (0);
-	}
 
 	wi_detach(sc);
 
