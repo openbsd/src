@@ -1087,6 +1087,7 @@
 ./usr/share/man/cat4/macppc/aed.0
 ./usr/share/man/cat4/macppc/akbd.0
 ./usr/share/man/cat4/macppc/ams.0
+./usr/share/man/cat4/macppc/apm.0
 ./usr/share/man/cat4/macppc/autoconf.0
 ./usr/share/man/cat4/macppc/awacs.0
 ./usr/share/man/cat4/macppc/bm.0
@@ -1206,14 +1207,18 @@
 ./usr/share/man/cat4/sparc64/audiocs.0
 ./usr/share/man/cat4/sparc64/autoconf.0
 ./usr/share/man/cat4/sparc64/be.0
+./usr/share/man/cat4/sparc64/esp.0
 ./usr/share/man/cat4/sparc64/gem.0
 ./usr/share/man/cat4/sparc64/hme.0
 ./usr/share/man/cat4/sparc64/intro.0
 ./usr/share/man/cat4/sparc64/kmem.0
+./usr/share/man/cat4/sparc64/le.0
 ./usr/share/man/cat4/sparc64/mem.0
 ./usr/share/man/cat4/sparc64/openprom.0
+./usr/share/man/cat4/sparc64/pcons.0
 ./usr/share/man/cat4/sparc64/qe.0
 ./usr/share/man/cat4/sparc64/qec.0
+./usr/share/man/cat4/sparc64/zs.0
 ./usr/share/man/cat4/spp.0
 ./usr/share/man/cat4/sppp.0
 ./usr/share/man/cat4/sqphy.0
