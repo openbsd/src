@@ -3,14 +3,10 @@ may be supported to varying degrees.
 
 
 TODO:
-	* Stability analysis. Find that lurking memory mapping error.
-	* Share harddrives between BSD and MacOS
-	  Use pdisk from Apple as basis of disklabel editor
-	  Allow BSD disklabel to exist inside Apple Partition.
-	* Legagcy machine support
-	  adb keyboard/mouse support
+	* Legacy machine support
 	  esp ethernet
 	  - other legacy support.
+	  Openfirmware 1.x (xcoff bootloader)
 
 Dale
 drahn@cvs.openbsd.org
