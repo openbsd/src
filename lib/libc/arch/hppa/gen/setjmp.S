@@ -1,4 +1,4 @@
-/*	$OpenBSD: setjmp.S,v 1.1 2002/02/06 18:50:26 mickey Exp $	*/
+/*	$OpenBSD: setjmp.S,v 1.2 2002/02/07 20:24:59 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,7 +44,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	.text
-	.asciz	"$OpenBSD: setjmp.S,v 1.1 2002/02/06 18:50:26 mickey Exp $"
+	.asciz	"$OpenBSD: setjmp.S,v 1.2 2002/02/07 20:24:59 mickey Exp $"
 	.align	4
 #endif /* LIBC_SCCS and not lint */
 
@@ -76,7 +76,6 @@ ALTENTRY(setjmp)
 	bl	sigblock, %rp
 	copy	%r0, %arg0
 
-	ldo	HPPA_FRAME_SIZE(%r3),%sp
 	ldwm	-HPPA_FRAME_SIZE(%sp),%r3
 	ldw	HPPA_FRAME_CRP(%sp), %rp
 	ldw	HPPA_FRAME_ARG(0)(%sp), %arg0
@@ -90,8 +89,8 @@ ALTENTRY(_setjmp)
 	stw	%r0, 0(%arg0)		; no onstack
 	stw	%r0, 4(%arg0)		; mask
 _setjmp$dosaves
-	stw	%sp, 8(%arg0)		; sc.sc_sp = %sp
-	stw	%r0, 12(%arg0)		; set sc.sc_ps
+	stw	%r0, 8(%arg0)		; set sc.sc_ps
+	stw	%sp, 12(%arg0)		; sc.sc_sp = %sp
 	stw	%r0, 16(%arg0)		; sc.sc_fp
 	ldo	4(%rp), %r1
 	stw	%rp, 20(%arg0)		; sc.sc_pcoqh = %rp
@@ -123,7 +122,7 @@ EXIT(_setjmp)
 
 ENTRY(siglongjmp,64)
 	/* XXX have to dup this from below */
-	sub,<<=	%sp, %arg0, %r0		/* botch if jbuf was on stack */
+	sub,>>	%sp, %arg0, %r0		/* botch if jbuf was on stack */
 	bl,n	longjmperror, %rp
 	nop
 	ldw	16(%arg0), %r1		/* botch if it's a real signal frame */
@@ -133,11 +132,12 @@ ENTRY(siglongjmp,64)
 
 	ldw	44(%arg0), %arg2
 	sub,=	%r0, %arg2, %r0
-	b	_setjmp
+	b	_longjmp
+	nop
 
 ALTENTRY(longjmp)
 	/* XXX have to dup this from below */
-	sub,<<=	%sp, %arg0, %r0		/* botch if jbuf was on stack */
+	sub,>>	%sp, %arg0, %r0		/* botch if jbuf was on stack */
 	bl,n	longjmperror, %rp
 	nop
 	ldw	16(%arg0), %r1		/* botch if it's a real signal frame */
@@ -156,7 +156,6 @@ ALTENTRY(longjmp)
 	bl	sigsetmask, %rp
 	ldw	4(%arg0), %arg0
 
-	ldo	HPPA_FRAME_SIZE(%r3),%sp
 	ldwm	-HPPA_FRAME_SIZE(%sp),%r3
 	ldw	HPPA_FRAME_CRP(%sp), %rp
 	ldw	HPPA_FRAME_ARG(0)(%sp), %arg0
@@ -164,7 +163,7 @@ ALTENTRY(longjmp)
 	ldw	HPPA_FRAME_ARG(1)(%sp), %arg1
 
 ALTENTRY(_longjmp)
-	sub,<<=	%sp, %arg0, %r0		/* botch if jbuf was on stack */
+	sub,>>	%sp, %arg0, %r0		/* botch if jbuf was on stack */
 	bl,n	longjmperror, %rp
 	nop
 	ldw	16(%arg0), %r1		/* botch if it's a real signal frame */
