@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.1 2004/02/07 06:00:49 drahn Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.2 2004/02/09 02:33:48 drahn Exp $ */
 
 /*
  * Copyright (c) 2004 Dale Rahn
@@ -340,7 +340,10 @@ resolve_failed:
 void
 _dl_md_reloc_got(elf_object_t *object, int lazy)
 {
+#define DISABLE_LAZY
+#ifndef DISABLE_LAZY
 	Elf_Addr *pltgot = (Elf_Addr *)object->Dyn.info[DT_PLTGOT];
+#endif
 	Elf_Addr ooff;
 	Elf_Addr plt_addr;
 	const Elf_Sym *this;
@@ -389,12 +392,17 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	}
 #endif
 
+#define DISABLE_LAZY
+#ifndef DISABLE_LAZY
 	if (!lazy) {
+#endif
 		_dl_md_reloc(object, DT_JMPREL, DT_PLTRELSZ);
+#ifndef DISABLE_LAZY
 	} else {
 		pltgot[1] = (Elf_Addr)object;
 		pltgot[2] = (Elf_Addr)_dl_bind_start;
 	}
+#endif
 	if (object->got_size != 0)
 		_dl_mprotect((void*)object->got_addr, object->got_size,
 		    PROT_READ);
