@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.65 2004/04/01 23:56:05 tedu Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.66 2004/04/17 10:18:12 mcbride Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -683,7 +683,8 @@ m_pullup2(n, len)
 		if (n->m_flags & M_PKTHDR) {
 			/* Too many adverse side effects. */
 			/* M_MOVE_PKTHDR(m, n); */
-			m->m_flags = (n->m_flags & M_COPYFLAGS) | M_EXT;
+			m->m_flags = (n->m_flags & M_COPYFLAGS) | 
+			    M_EXT | M_CLUSTER;
 			M_MOVE_HDR(m, n);
 			/* n->m_data is cool. */
 		}
