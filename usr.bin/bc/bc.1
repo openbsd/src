@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bc.1,v 1.13 2003/11/12 19:35:54 jmc Exp $
+.\"	$OpenBSD: bc.1,v 1.14 2003/11/17 11:21:00 otto Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -113,12 +113,65 @@ The sequence
 is ignored within numbers.
 .Pp
 Operators
-.Bd -unfilled -offset indent -compact
-+  \-  *  /  %  ^ (`%' is remainder; `^' is power)
-++   \-\-         (prefix and postfix; apply to names)
-==  <=  >=  !=  <  >
-=  +=  \-=  *=  /=  %=  ^=
-.Ed
+.Pp
+The following arithmetic and logical operators can be used.
+The semantics of the operators is the same as in the C language.
+They are listed in order of decreasing precedence.
+Operators in the same group have the same precedence.
+.Bl -column -offset indent "= += \-= *= /= %= ^=" "Associativity" \
+"multiply, divide, modulus"
+.It Sy "Operator" Ta Sy "Associativity" Ta Sy "Description"
+.It "++ \-\-" Ta "none" Ta "increment, decrement"
+.It "\-" Ta "none" Ta "unary minus"
+.It "^" Ta "right" Ta "power"
+.It "* / %" Ta "left" Ta "multiply, divide, modulus"
+.It "+ \-" Ta "left" Ta "plus, minus"
+.It "= += -= *= /= %= ^=" Ta "right" Ta "assignment"
+.It "== <= >= != < >" Ta "none" Ta "relational"
+.It "!" Ta "none" Ta "boolean not"
+.It "&&" Ta "left" Ta "boolean and"
+.It "||" Ta "left" Ta "boolean or"
+.El
+.Pp
+Note the following:
+.Bl -bullet -offset indent
+.It
+The relational operators may appear in any expression.
+The
+.St -p1003.2
+standard only allows them in the conditional expression of an
+.Sq if ,
+.Sq while
+or
+.Sq for
+statement.
+.It
+The relational operators have a lower precedence than the assignment
+operators.
+This has the consequence that the expression
+.Sy a = b < c
+is interpreted as
+.Sy (a = b) < c ,
+which is probably not what the programmer intended.
+.It
+In contrast with the C language, the relational operators all have
+the same precedence, and are non-associative.
+The expression
+.Sy a < b < c
+will produce a syntax error.
+.It
+The boolean operators (!, && and ||) are non-portable extensions.
+.It
+The boolean not
+(!) operator has much lower precedence than the same operator in the
+C language.
+This has the consquence that the expression
+.Sy !a < b
+is interpeted as
+.Sy !(a < b) .
+Prudent programmers use parentheses when writing expressions involving
+boolean operators.
+.El
 .Pp
 Statements
 .Bd -unfilled -offset indent -compact
@@ -272,8 +325,7 @@ option is specified on the command line.
 .Sh SEE ALSO
 .Xr dc 1
 .Rs
-.%B USD
-.%V 06
+.%B USD:06
 .%A L. L. Cherry
 .%A R. Morris
 .%T "BC \- An arbitrary precision desk-calculator language"
@@ -305,13 +357,6 @@ The current version of the
 utility was written by
 .An Otto Moerbeek .
 .Sh BUGS
-No
-.Sq && ,
-.Sq \(or\(or ,
-or
-.Sq \&!
-operators.
-.Pp
 .Ql Quit
 is interpreted when read, not when executed.
 .Pp
