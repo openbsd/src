@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.65 2002/05/19 22:26:27 deraadt Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.66 2002/05/23 09:47:20 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -72,7 +72,7 @@ int	 pfctl_gettimeout(int, const char *);
 int	 pfctl_settimeout(int, const char *, int);
 int	 pfctl_limit(int, char *, int);
 int	 pfctl_getlimit(int, const char *);
-int	 pfctl_setlimit(int, const char *, unsigned);
+int	 pfctl_setlimit(int, const char *, unsigned int);
 int	 pfctl_debug(int, u_int32_t, int);
 int	 pfctl_clear_rule_counters(int, int);
 
@@ -187,7 +187,6 @@ usage(void)
 	fprintf(stderr, "             ");
 	fprintf(stderr, "[-l interface] [-m modifier] [-s modifier] ");
 	fprintf(stderr, "[-t modifier] [-x level]\n");
-
 	exit(1);
 }
 
@@ -711,7 +710,7 @@ int
 pfctl_limit(int dev, char *opt, int opts)
 {
 	char *arg, *serr = NULL;
-	unsigned limit;
+	unsigned int limit;
 
 	arg = index(opt, '=');
 	if (arg == NULL)
@@ -761,7 +760,7 @@ pfctl_getlimit(int dev, const char *opt)
 }
 
 int
-pfctl_setlimit(int dev, const char *opt, unsigned limit)
+pfctl_setlimit(int dev, const char *opt, unsigned int limit)
 {
 	struct pfioc_limit pl;
 	int i;
@@ -892,18 +891,18 @@ pfctl_debug(int dev, u_int32_t level, int opts)
 	if ((opts & PF_OPT_QUIET) == 0) {
 		printf("debug level set to '");
 		switch (level) {
-			case PF_DEBUG_NONE:
-				printf("none");
-				break;
-			case PF_DEBUG_URGENT:
-				printf("urgent");
-				break;
-			case PF_DEBUG_MISC:
-				printf("misc");
-				break;
-			default:
-				printf("<invalid>");
-				break;
+		case PF_DEBUG_NONE:
+			printf("none");
+			break;
+		case PF_DEBUG_URGENT:
+			printf("urgent");
+			break;
+		case PF_DEBUG_MISC:
+			printf("misc");
+			break;
+		default:
+			printf("<invalid>");
+			break;
 		}
 		printf("'\n");
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.72 2002/05/19 22:26:27 deraadt Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.73 2002/05/23 09:47:20 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -92,7 +92,6 @@ struct icmptypeent icmp_type[] = {
 	{ "mobregrep",	ICMP_MOBILE_REGREPLY },
 	{ "skip",	ICMP_SKIP },
 	{ "photuris",	ICMP_PHOTURIS }
-
 };
 
 struct icmptypeent icmp6_type[] = {
@@ -175,17 +174,17 @@ struct icmpcodeent icmp6_code[] = {
 struct icmptypeent *
 geticmptypebynumber(u_int8_t type, u_int8_t af)
 {
-	unsigned i;
+	unsigned int i;
 
 	if (af != AF_INET6) {
-		for(i=0; i < (sizeof (icmp_type) / sizeof(icmp_type[0])); i++) {
-			if(type == icmp_type[i].type)
+		for (i=0; i < (sizeof (icmp_type) / sizeof(icmp_type[0])); i++) {
+			if (type == icmp_type[i].type)
 				return (&icmp_type[i]);
 		}
 	} else {
-		for(i=0; i < (sizeof (icmp6_type) /
+		for (i=0; i < (sizeof (icmp6_type) /
 		    sizeof(icmp6_type[0])); i++) {
-			if(type == icmp6_type[i].type)
+			if (type == icmp6_type[i].type)
 				 return (&icmp6_type[i]);
 		}
 	}
@@ -195,17 +194,17 @@ geticmptypebynumber(u_int8_t type, u_int8_t af)
 struct icmptypeent *
 geticmptypebyname(char *w, u_int8_t af)
 {
-	unsigned i;
+	unsigned int i;
 
 	if (af != AF_INET6) {
-		for(i=0; i < (sizeof (icmp_type) / sizeof(icmp_type[0])); i++) {
-			if(!strcmp(w, icmp_type[i].name))
+		for (i=0; i < (sizeof (icmp_type) / sizeof(icmp_type[0])); i++) {
+			if (!strcmp(w, icmp_type[i].name))
 				return (&icmp_type[i]);
 		}
 	} else {
-		for(i=0; i < (sizeof (icmp6_type) /
+		for (i=0; i < (sizeof (icmp6_type) /
 		    sizeof(icmp6_type[0])); i++) {
-			if(!strcmp(w, icmp6_type[i].name))
+			if (!strcmp(w, icmp6_type[i].name))
 				return (&icmp6_type[i]);
 		}
 	}
@@ -215,16 +214,16 @@ geticmptypebyname(char *w, u_int8_t af)
 struct icmpcodeent *
 geticmpcodebynumber(u_int8_t type, u_int8_t code, u_int8_t af)
 {
-	unsigned i;
+	unsigned int i;
 
 	if (af != AF_INET6) {
-		for(i=0; i < (sizeof (icmp_code) / sizeof(icmp_code[0])); i++) {
+		for (i=0; i < (sizeof (icmp_code) / sizeof(icmp_code[0])); i++) {
 			if (type == icmp_code[i].type &&
 			    code == icmp_code[i].code)
 				return (&icmp_code[i]);
 		}
 	} else {
-		for(i=0; i < (sizeof (icmp6_code) /
+		for (i=0; i < (sizeof (icmp6_code) /
 		   sizeof(icmp6_code[0])); i++) {
 			if (type == icmp6_code[i].type &&
 			    code == icmp6_code[i].code)
@@ -237,16 +236,16 @@ geticmpcodebynumber(u_int8_t type, u_int8_t code, u_int8_t af)
 struct icmpcodeent *
 geticmpcodebyname(u_long type, char *w, u_int8_t af)
 {
-	unsigned i;
+	unsigned int i;
 
 	if (af != AF_INET6) {
-		for(i=0; i < (sizeof (icmp_code) / sizeof(icmp_code[0])); i++) {
+		for (i=0; i < (sizeof (icmp_code) / sizeof(icmp_code[0])); i++) {
 			if (type == icmp_code[i].type &&
 			    !strcmp(w, icmp_code[i].name))
 				return (&icmp_code[i]);
 		}
 	} else {
-		for(i=0; i < (sizeof (icmp6_code) /
+		for (i=0; i < (sizeof (icmp6_code) /
 		    sizeof(icmp6_code[0])); i++) {
 			if (type == icmp6_code[i].type &&
 			    !strcmp(w, icmp6_code[i].name))
@@ -267,8 +266,8 @@ unmask(struct pf_addr *m, u_int8_t af)
 	else
 		msize = 4;
 	while (j < msize && m->addr32[j] == 0xffffffff) {
-			b += 32;
-			j++;
+		b += 32;
+		j++;
 	}
 	if (j < msize) {
 		tmp = ntohl(m->addr32[j]);
@@ -446,6 +445,7 @@ print_nat(struct pf_nat *n)
 	}
 	if (n->proto) {
 		struct protoent *p = getprotobynumber(n->proto);
+
 		if (p != NULL)
 			printf("proto %s ", p->p_name);
 		else
@@ -492,6 +492,7 @@ print_binat(struct pf_binat *b)
 	}
 	if (b->proto) {
 		struct protoent *p = getprotobynumber(b->proto);
+
 		if (p != NULL)
 			printf("proto %s ", p->p_name);
 		else
@@ -535,6 +536,7 @@ print_rdr(struct pf_rdr *r)
 	}
 	if (r->proto) {
 		struct protoent *p = getprotobynumber(r->proto);
+
 		if (p != NULL)
 			printf("proto %s ", p->p_name);
 		else
@@ -580,7 +582,6 @@ char *pf_fcounters[FCNT_MAX+1] = FCNT_NAMES;
 void
 print_status(struct pf_status *s)
 {
-
 	time_t t = time(NULL);
 	int i;
 
@@ -588,15 +589,15 @@ print_status(struct pf_status *s)
 	    s->running ? "Enabled" : "Disabled",
 	    t, s->since);
 	switch (s->debug) {
-		case 0:
-			printf("None");
-			break;
-		case 1:
-			printf("Urgent");
-			break;
-		case 2:
-			printf("Misc");
-			break;
+	case 0:
+		printf("None");
+		break;
+	case 1:
+		printf("Urgent");
+		break;
+	case 2:
+		printf("Misc");
+		break;
 	}
 	printf("\nBytes In IPv4: %-10llu  Bytes Out: %-10llu\n",
 	    s->bcounters[0][PF_IN], s->bcounters[0][PF_OUT]);
@@ -769,6 +770,7 @@ print_rule(struct pf_rule *r)
 	}
 	if (r->proto) {
 		struct protoent *p = getprotobynumber(r->proto);
+
 		if (p != NULL)
 			printf("proto %s ", p->p_name);
 		else

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.68 2002/05/23 07:47:05 itojun Exp $	*/
+/*	$OpenBSD: parse.y,v 1.69 2002/05/23 09:47:20 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1952,11 +1952,13 @@ top:
 		lungetc(lookahead[i], fin);
 		lookahead[i] = '\0';
 
-		if(!notv6addr && inet_pton(AF_INET6, lookahead, &addr) == 1) {
+		if (!notv6addr && inet_pton(AF_INET6, lookahead, &addr) == 1) {
 			node = calloc(1, sizeof(struct node_host));
+			if (node == NULL)
+				err(1, "yylex: calloc");
 			node->af = AF_INET6;
 			node->addr.addr_dyn = NULL;
-			memcpy (&node->addr.addr, &addr, sizeof(addr));
+			memcpy(&node->addr.addr, &addr, sizeof(addr));
 			yylval.v.host = node;
 			return IPV6ADDR;
 		} else {
