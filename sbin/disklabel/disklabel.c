@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.24 1996/11/12 07:04:49 downsj Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.25 1996/12/07 10:09:24 deraadt Exp $	*/
 /*	$NetBSD: disklabel.c,v 1.30 1996/03/14 19:49:24 ghudson Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: disklabel.c,v 1.24 1996/11/12 07:04:49 downsj Exp $";
+static char rcsid[] = "$OpenBSD: disklabel.c,v 1.25 1996/12/07 10:09:24 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1266,6 +1266,10 @@ getasciilabel(f, lp)
 				errors++;
 			} else
 				pp->p_offset = v;
+			if (tp == NULL) {
+				pp->p_fstype = FS_UNUSED;
+				goto gottype;
+			}
 			cp = tp, tp = word(cp);
 			cpp = fstypenames;
 			for (; cpp < &fstypenames[FSMAXTYPES]; cpp++)
@@ -1287,6 +1291,8 @@ getasciilabel(f, lp)
 			switch (pp->p_fstype) {
 
 			case FS_UNUSED:				/* XXX */
+				if (tp == NULL)	/* ok to skip fsize/bsize */
+					break;
 				NXTNUM(pp->p_fsize);
 				if (pp->p_fsize == 0)
 					break;
