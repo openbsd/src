@@ -1,4 +1,4 @@
-/*	$Id: cl.c,v 1.7 1995/12/01 19:26:41 deraadt Exp $ */
+/*	$Id: cl.c,v 1.8 1995/12/01 20:39:26 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -1593,6 +1593,9 @@ cl_rxintr(sc)
 	int i;
 	u_char reoir;
 	u_char buffer[CL_FIFO_MAX +1];
+#ifdef CONSOLEBREAKDDB
+	int wantddb = 0;
+#endif
 	
 	rir = sc->cl_reg->cl_rir;
 	if((rir & 0x40) == 0x0) {
@@ -1625,6 +1628,10 @@ cl_rxintr(sc)
 		reoir = 0x08;
 	} else
 	if (risrl & 0x01) {
+#ifdef CONSOLEBREAKDDB
+		if (sc->sc_cl[channel].cl_consio)
+			wantddb = 1;
+#endif
 		cl_break(sc, channel);
 		reoir = 0x08;
 	}
@@ -1740,6 +1747,10 @@ channel, nbuf, cnt, status);
 		reoir = 0x08;
 		sc->cl_reg->cl_reoir = reoir;
 	}
+#ifdef CONSOLEBREAKDDB
+	if (wantddb)
+		Debugger();
+#endif
 	return 1;
 }
 
@@ -1783,10 +1794,6 @@ cl_break (sc, channel)
 	struct clsoftc *sc;
 	int channel;
 {
-#ifdef CONSOLEBREAKDDB
-	if (sc->sc_cl[channel].cl_consio)
-		Debugger();
-#endif
 	log(LOG_WARNING, "%s%d[%d]: break detected\n", clcd.cd_name, 0, channel);
 	return;
 }
