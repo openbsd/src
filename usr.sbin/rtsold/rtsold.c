@@ -1,5 +1,5 @@
-/*	$OpenBSD: rtsold.c,v 1.24 2002/06/10 19:57:35 espie Exp $	*/
-/*	$KAME: rtsold.c,v 1.51 2002/05/31 22:00:11 itojun Exp $	*/
+/*	$OpenBSD: rtsold.c,v 1.25 2002/09/08 01:33:35 itojun Exp $	*/
+/*	$KAME: rtsold.c,v 1.55 2002/09/08 01:26:03 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -97,7 +97,7 @@ static struct timeval *rtsol_check_timer(void);
 static void TIMEVAL_ADD(struct timeval *, struct timeval *, struct timeval *);
 static void TIMEVAL_SUB(struct timeval *, struct timeval *, struct timeval *);
 
-static void rtsold_set_dump_file(void);
+static void rtsold_set_dump_file(int);
 static void usage(char *);
 
 int
@@ -189,10 +189,7 @@ main(argc, argv)
 		warnx("kernel is configured as a router, not a host");
 
 	/* initialization to dump internal status to a file */
-	if (signal(SIGUSR1, (void *)rtsold_set_dump_file) < 0) {
-		errx(1, "failed to set signal for dump status");
-		/*NOTREACHED*/
-	}
+	signal(SIGUSR1, rtsold_set_dump_file);
 
 	if (!fflag)
 		daemon(0, 0);		/* act as a daemon */
@@ -701,7 +698,7 @@ TIMEVAL_SUB(struct timeval *a, struct timeval *b, struct timeval *result)
 }
 
 static void
-rtsold_set_dump_file()
+rtsold_set_dump_file(int sig)
 {
 	do_dump = 1;
 }
