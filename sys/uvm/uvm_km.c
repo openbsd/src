@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.39 2004/05/27 04:55:28 tedu Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.40 2004/05/31 22:53:49 tedu Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -903,8 +903,19 @@ uvm_km_free_poolpage1(map, addr)
 #endif /* PMAP_UNMAP_POOLPAGE */
 }
 
-int uvm_km_pages_lowat = 128;
-int uvm_km_pages_free;
+/*
+ * uvm_km_page allocator
+ * This is a special allocator that uses a reserve of free pages
+ * to fulfill requests.  It is fast and interrupt safe, but can only
+ * return page sized regions.  Its primary use is as a backend for pool.
+ *
+ * The memory returned is allocated from the larger kernel_map, sparing
+ * pressure on the small interrupt-safe kmem_map.  It is wired, but
+ * not zero filled.
+ */
+
+int uvm_km_pages_lowat = 128; /* allocate more when reserve drops below this */
+int uvm_km_pages_free; /* number of pages currently on free list */
 struct km_page {
 	struct km_page *next;
 } *uvm_km_pages_head;
@@ -912,6 +923,12 @@ struct km_page {
 void uvm_km_createthread(void *);
 void uvm_km_thread(void *);
 
+/*
+ * Allocate the initial reserve, and create the thread which will
+ * keep the reserve full.  For bootstrapping, we allocate more than
+ * the lowat amount, because it may be a while before the thread is
+ * running.
+ */
 void
 uvm_km_page_init(void)
 {
@@ -951,6 +968,12 @@ uvm_km_createthread(void *arg)
 	kthread_create(uvm_km_thread, NULL, NULL, "kmthread");
 }
 
+/*
+ * Endless loop.  We grab pages in increments of 16 pages, then
+ * quickly swap them into the list.  At some point we can consider
+ * returning memory to the system if we have too many free pages,
+ * but that's not implemented yet.
+ */
 void
 uvm_km_thread(void *arg)
 {
@@ -993,6 +1016,10 @@ uvm_km_thread(void *arg)
 }
 
 
+/*
+ * Allocate one page.  We can sleep for more if the caller
+ * permits it.  Wake up the thread if we've dropped below lowat.
+ */
 void *
 uvm_km_getpage(boolean_t waitok)
 {
