@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.6 1996/09/12 07:51:17 mickey Exp $	*/
+/*	$OpenBSD: main.c,v 1.7 1996/09/13 04:25:41 mickey Exp $	*/
 /*	$NetBSD: main.c,v 1.17 1996/03/17 11:50:13 cgd Exp $	*/
 
 /*
@@ -59,7 +59,6 @@ static char copyright[] =
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <machine/disklabel.h>
 #include "config.h"
 
 int	firstfile __P((const char *));
@@ -146,7 +145,6 @@ usage:
 	 */
 	minmaxusers = 1;
 	maxmaxusers = 10000;
-	maxpartitions = MAXPARTITIONS;
 	initintern();
 	initfiles();
 	initsem();
