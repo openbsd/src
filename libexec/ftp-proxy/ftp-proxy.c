@@ -1,4 +1,4 @@
-/* $OpenBSD: ftp-proxy.c,v 1.4 2001/08/19 13:43:09 deraadt Exp $ */
+/* $OpenBSD: ftp-proxy.c,v 1.5 2001/08/19 15:02:02 beck Exp $ */
 
 /*
  * Copyright (c) 1996-2001
@@ -313,10 +313,6 @@ show_xfer_stats()
  logit:
 	syslog(LOG_INFO, "%s", tbuf);
 }
-
-/*
- * Are we in PORT mode, PASV mode or unknown mode?
- */
 
 void
 log_control_command (char *cmd, int client)
@@ -987,19 +983,32 @@ main(int argc, char **argv)
 	}
 
 	while (client_iob.alive || server_iob.alive) {
-		fd_set fds;
-
-		/*
-		 * we use a static fd_set here, any individual
-		 * instance of this program can't possibly have too
-		 * many open files for FD_SETSIZE - we deal here only
-		 * with one ftp connection
-		 */
+		int maxfd = 0;
+		fd_set *fdsp;
+		
+		if (client_iob.fd > maxfd)
+			maxfd = client_iob.fd;
+		if (client_listen_socket > maxfd)
+			maxfd = client_listen_socket;
+		if (client_data_socket > maxfd)
+			maxfd = client_data_socket;
+		if (server_iob.fd > maxfd)
+			maxfd = server_iob.fd;
+		if (server_listen_socket > maxfd)
+			maxfd = server_data_socket;
+		if (server_data_socket > maxfd)
+			maxfd = server_data_socket;
+		
 		debuglog(3, "client is %s, server is %s\n",
 		    client_iob.alive ? "alive" : "dead",
 		    server_iob.alive ? "alive" : "dead");
 
-		FD_ZERO(&fds);
+		fdsp = (fd_set *)calloc(howmany(maxfd+1, NFDBITS), 
+		    sizeof(fd_mask));
+		if (fdsp == NULL) {
+			syslog(LOG_NOTICE, "Insufficient memory");
+			exit(EX_UNAVAILABLE);
+		}
 
 		if (client_iob.alive && telnet_getline(&client_iob,
 		    &server_iob)) {
@@ -1015,24 +1024,24 @@ main(int argc, char **argv)
 				do_server_reply(&server_iob, &client_iob);
 		} else {
 			if (client_iob.alive) {
-				FD_SET(client_iob.fd, &fds);
+				FD_SET(client_iob.fd, fdsp);
 				if (client_listen_socket >= 0)
-					FD_SET(client_listen_socket, &fds);
+					FD_SET(client_listen_socket, fdsp);
 				if (client_data_socket >= 0)
-					FD_SET(client_data_socket, &fds);
+					FD_SET(client_data_socket, fdsp);
 			}
 			if (server_iob.alive) {
-				FD_SET(server_iob.fd, &fds);
+				FD_SET(server_iob.fd, fdsp);
 				if (server_listen_socket >= 0)
-					FD_SET(server_listen_socket, &fds);
+					FD_SET(server_listen_socket, fdsp);
 				if (server_data_socket >= 0)
-					FD_SET(server_data_socket, &fds);
+					FD_SET(server_data_socket, fdsp);
 			}
 			tv.tv_sec = timeout_seconds;
 			tv.tv_usec = 0;
 
 		doselect:
-			switch (sval = select(FD_SETSIZE, &fds, NULL, NULL,
+			switch (sval = select(FD_SETSIZE, fdsp, NULL, NULL,
 			    (tv.tv_sec == 0) ? NULL : &tv)) {
 			case 0:
 				/*
@@ -1056,7 +1065,7 @@ main(int argc, char **argv)
 
 			default:
 				if (client_data_socket >= 0 &&
-				    FD_ISSET(client_data_socket,&fds)) {
+				    FD_ISSET(client_data_socket,fdsp)) {
 					int rval;
 
 					debuglog(3, "xfer client to server\n");
@@ -1077,7 +1086,7 @@ main(int argc, char **argv)
 						client_data_bytes += rval;
 				}
 				if (server_data_socket >= 0 &&
-				    FD_ISSET(server_data_socket,&fds)) {
+				    FD_ISSET(server_data_socket,fdsp)) {
 					int rval;
 
 					debuglog(3, "xfer server to client\n");
@@ -1098,7 +1107,7 @@ main(int argc, char **argv)
 						server_data_bytes += rval;
 				}
 				if (server_listen_socket >= 0 &&
-				    FD_ISSET(server_listen_socket,&fds)) {
+				    FD_ISSET(server_listen_socket,fdsp)) {
 					struct sockaddr_in listen_sa;
 
 					/*
@@ -1107,7 +1116,8 @@ main(int argc, char **argv)
 					 * This is a PORT or EPRT data
 					 * connection.
 					 */
-					debuglog(2, "server listen socket ready\n");
+					debuglog(2, 
+					    "server listen socket ready\n");
 
 					if (server_data_socket >= 0) {
 						shutdown(server_data_socket,2);
@@ -1169,7 +1179,7 @@ main(int argc, char **argv)
 					xfer_start_time = wallclock_time();
 				}
 				if (client_listen_socket >= 0 &&
-				    FD_ISSET(client_listen_socket,&fds)) {
+				    FD_ISSET(client_listen_socket,fdsp)) {
 					struct sockaddr_in listen_sa;
 					int salen;
 
@@ -1229,16 +1239,17 @@ main(int argc, char **argv)
 					xfer_start_time = wallclock_time();
 				}
 				if (client_iob.alive &&
-				    FD_ISSET(client_iob.fd,&fds)) {
+				    FD_ISSET(client_iob.fd,fdsp)) {
 					client_iob.data_available = 1;
 				}
 
 				if (server_iob.alive &&
-				    FD_ISSET(server_iob.fd,&fds)) {
+				    FD_ISSET(server_iob.fd,fdsp)) {
 					server_iob.data_available = 1;
 				}
 
 			}
+			free(fdsp);
 		}
 
 		if (client_iob.got_eof) {
