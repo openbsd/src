@@ -1,4 +1,4 @@
-/*	$OpenBSD: pw.c,v 1.1.1.1 2001/08/15 14:37:12 fgsch Exp $	*/
+/*	$OpenBSD: pw.c,v 1.2 2002/06/23 03:11:09 deraadt Exp $	*/
 /*
  * Copyright (c) 1993, 1994, 1995, 1996 by Chris Provenzano and contributors, 
  * proven@mit.edu All rights reserved.
@@ -47,8 +47,8 @@ main()
 	char name[16];
 
 	CHECKn(pw = getpwuid(getuid()));
-	printf("getpwuid(%d) => %p\n", getuid(), pw);
-	printf(" name: %s\n  uid: %d\n  gid: %d\n"
+	printf("getpwuid(%u) => %p\n", getuid(), pw);
+	printf(" name: %s\n  uid: %u\n  gid: %u\n"
 	    "class: %s\ngecos: %s\n  dir: %s\nshell: %s\n",
 	    pw->pw_name, pw->pw_uid, pw->pw_gid,
 	    pw->pw_class, pw->pw_gecos, pw->pw_dir, pw->pw_shell);

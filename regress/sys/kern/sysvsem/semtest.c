@@ -298,7 +298,7 @@ print_semid_ds(sp, mode)
 	uid_t uid = geteuid();
 	gid_t gid = getegid();
 
-	printf("PERM: uid %d, gid %d, cuid %d, cgid %d, mode 0%o\n",
+	printf("PERM: uid %u, gid %u, cuid %u, cgid %u, mode 0%o\n",
 	    sp->sem_perm.uid, sp->sem_perm.gid,
 	    sp->sem_perm.cuid, sp->sem_perm.cgid,
 	    sp->sem_perm.mode & 0777);

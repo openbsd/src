@@ -1,4 +1,4 @@
-/*	$OpenBSD: msgtest.c,v 1.3 2002/06/11 06:16:36 jsyn Exp $	*/
+/*	$OpenBSD: msgtest.c,v 1.4 2002/06/23 03:11:09 deraadt Exp $	*/
 /*	$NetBSD: msgtest.c,v 1.6 2001/02/19 22:44:41 cgd Exp $	*/
 
 /*-
@@ -289,7 +289,7 @@ print_msqid_ds(mp, mode)
 	uid_t uid = geteuid();
 	gid_t gid = getegid();
 
-	printf("PERM: uid %d, gid %d, cuid %d, cgid %d, mode 0%o\n",
+	printf("PERM: uid %u, gid %u, cuid %u, cgid %u, mode 0%o\n",
 	    mp->msg_perm.uid, mp->msg_perm.gid,
 	    mp->msg_perm.cuid, mp->msg_perm.cgid,
 	    mp->msg_perm.mode & 0777);

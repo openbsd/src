@@ -1,4 +1,4 @@
-/*	$OpenBSD: tokendb.c,v 1.3 2001/05/30 20:15:57 markus Exp $	*/
+/*	$OpenBSD: tokendb.c,v 1.4 2002/06/23 03:11:09 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995 Migration Associates Corp. All Rights Reserved
@@ -176,8 +176,8 @@ tokendb_open(void)
 			printf("Authentication disabled\n");
 			fflush(stdout);
 			syslog(LOG_ALERT,
-			    "POTENTIAL COMPROMISE of %s. Owner was %d, "
-			    "Group was %d", tt->db, statb.st_uid, statb.st_gid);
+			    "POTENTIAL COMPROMISE of %s. Owner was %u, "
+			    "Group was %u", tt->db, statb.st_uid, statb.st_gid);
 			return (-1);
 #else
 			must_set_perms++;

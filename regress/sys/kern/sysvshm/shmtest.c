@@ -263,7 +263,7 @@ print_shmid_ds(sp, mode)
 	uid_t uid = geteuid();
 	gid_t gid = getegid();
 
-	printf("PERM: uid %d, gid %d, cuid %d, cgid %d, mode 0%o\n",
+	printf("PERM: uid %u, gid %u, cuid %u, cgid %u, mode 0%o\n",
 	    sp->shm_perm.uid, sp->shm_perm.gid,
 	    sp->shm_perm.cuid, sp->shm_perm.cgid,
 	    sp->shm_perm.mode & 0777);
