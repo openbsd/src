@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.86 2002/06/11 01:58:00 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.87 2002/06/11 02:12:37 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -425,6 +425,14 @@ print_nat(struct pf_nat *n)
 	if (!n->no) {
 		printf("-> ");
 		print_addr(&n->raddr, NULL, n->af);
+		if (n->proxy_port[0] != PF_NAT_PROXY_PORT_LOW ||
+		    n->proxy_port[1] != PF_NAT_PROXY_PORT_HIGH) {
+			if (n->proxy_port[0] == n->proxy_port[1])
+				printf(" port %u", n->proxy_port[0]);
+			else
+				printf(" port %u:%u", n->proxy_port[0],
+				    n->proxy_port[1]);
+		}
 	}
 	printf("\n");
 }

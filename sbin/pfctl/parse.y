@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.94 2002/06/10 23:07:46 kjell Exp $	*/
+/*	$OpenBSD: parse.y,v 1.95 2002/06/11 02:12:37 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1150,6 +1150,11 @@ rport		: port				{
 			$$.a = $1;
 			$$.b = $$.t = 0;
 		}
+		| port ':' port			{
+			$$.a = $1;
+			$$.b = $3;
+			$$.t = PF_RPORT_RANGE;
+		}
 		| port ':' '*'			{
 			$$.a = $1;
 			$$.b = 0;
@@ -1232,6 +1237,15 @@ natrule		: no NAT interface af proto fromto redirection
 				nat.af = $7->address->af;
 				memcpy(&nat.raddr, &$7->address->addr,
 				    sizeof(nat.raddr));
+				nat.proxy_port[0] = ntohs($7->rport.a);
+				nat.proxy_port[1] = ntohs($7->rport.b);
+				if (!nat.proxy_port[0] && !nat.proxy_port[1]) {
+					nat.proxy_port[0] =
+					    PF_NAT_PROXY_PORT_LOW;
+					nat.proxy_port[1] =
+					    PF_NAT_PROXY_PORT_HIGH;
+				} else if (!nat.proxy_port[1])
+					nat.proxy_port[1] = nat.proxy_port[0];
 				free($7->address);
 				free($7);
 			}

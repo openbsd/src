@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.83 2002/06/11 01:58:00 henning Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.84 2002/06/11 02:12:37 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -334,6 +334,7 @@ struct pf_nat {
 	char			 ifname[IFNAMSIZ];
 	struct ifnet		*ifp;
 	TAILQ_ENTRY(pf_nat)	 entries;
+	u_int16_t		 proxy_port[2];
 	u_int8_t		 af;
 	u_int8_t		 proto;
 	u_int8_t		 ifnot;

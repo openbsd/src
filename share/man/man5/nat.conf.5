@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nat.conf.5,v 1.26 2002/06/10 19:31:44 dhartmei Exp $
+.\"	$OpenBSD: nat.conf.5,v 1.27 2002/06/11 02:12:37 dhartmei Exp $
 .\"
 .\" Copyright (c) 2001 Ian Darwin.  All rights reserved.
 .\"
@@ -83,7 +83,8 @@ Syntax for filter rules in BNF:
 .Bd -literal
 rule      = [ "no" ] ( nat_rule | binat_rule | rdr_rule ) .
 
-nat_rule  = "nat" "on" [ "!" ] ifname [ protospec ] hosts [ "->" address ] .
+nat_rule  = "nat" "on" [ "!" ] ifname [ protospec ] hosts
+            [ "->" address [ portspec ] ] .
 
 binat_rule = "binat" "on" ifname [ protospec ] "from" address
              "to" ipspec [ "->" address ] .

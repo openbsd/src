@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.232 2002/06/11 02:02:21 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.233 2002/06/11 02:12:37 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1410,6 +1410,15 @@ pf_get_sport(u_int8_t proto, u_int16_t low, u_int16_t high, u_int16_t *port)
 	int			step;
 	u_int16_t		cut;
 
+	if (low == 0 && high == 0) {
+		NTOHS(*port);
+		return (0);
+	}
+	if (low == high) {
+		*port = low;
+		return (0);
+	}
+
 	if (proto == IPPROTO_TCP)
 		plist = &pf_tcp_ports;
 	else if (proto == IPPROTO_UDP)
@@ -1661,11 +1670,16 @@ pf_test_tcp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		/* check outgoing packet for NAT */
 		else if ((nat = pf_get_nat(ifp, IPPROTO_TCP,
 		    saddr, th->th_sport, daddr, th->th_dport, af)) != NULL) {
-			bport = th->th_sport;
-			error = pf_get_sport(IPPROTO_TCP, 50001,
-			    65535, &nport);
-			if (error)
+			bport = nport = th->th_sport;
+			error = pf_get_sport(IPPROTO_TCP, nat->proxy_port[0],
+			    nat->proxy_port[1], &nport);
+			if (error) {
+				DPFPRINTF(PF_DEBUG_MISC,
+				    ("pf: NAT proxy port allocation "
+				    "(tcp %u-%u) failed\n",
+				    nat->proxy_port[0], nat->proxy_port[1]));
 				return (PF_DROP);
+			}
 			PF_ACPY(&baddr, saddr, af);
 			pf_change_ap(saddr, &th->th_sport, pd->ip_sum,
 			    &th->th_sum, &nat->raddr.addr, htons(nport),
@@ -1920,11 +1934,16 @@ pf_test_udp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		/* check outgoing packet for NAT */
 		else if ((nat = pf_get_nat(ifp, IPPROTO_UDP,
 		    saddr, uh->uh_sport, daddr, uh->uh_dport, af)) != NULL) {
-			bport = uh->uh_sport;
-			error = pf_get_sport(IPPROTO_UDP, 50001,
-			    65535, &nport);
-			if (error)
+			bport = nport = uh->uh_sport;
+			error = pf_get_sport(IPPROTO_UDP, nat->proxy_port[0],
+			    nat->proxy_port[1], &nport);
+			if (error) {
+				DPFPRINTF(PF_DEBUG_MISC,
+				    ("pf: NAT proxy port allocation "
+				    "(udp %u-%u) failed\n",
+				    nat->proxy_port[0], nat->proxy_port[1]));
 				return (PF_DROP);
+			}
 			PF_ACPY(&baddr, saddr, af);
 			pf_change_ap(saddr, &uh->uh_sport, pd->ip_sum,
 			    &uh->uh_sum, &nat->raddr.addr, htons(nport),
