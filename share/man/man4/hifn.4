@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hifn.4,v 1.6 2000/04/28 06:57:39 deraadt Exp $
+.\"	$OpenBSD: hifn.4,v 1.7 2000/04/30 18:53:15 deraadt Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt
 .\" All rights reserved.
@@ -37,16 +37,23 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver supports various cards containing the Hi/fn 7751 chipset, including
-boards sold by
+driver supports various cards containing the Hi/fn 7751 chipset, such as
+.Bl -tag -width namenamenamename -offset indent
+.It Invertex AEON
+(no longer made)
+.It Hifn 7751
+Reference board
+.It PowerCrypt
+See
 .Pa www.powercrypt.com
-and others.
-The Invertex AEON card is also supported, though that company no longer
-exists.
+.It NetSec 7751
+See
+.Pa www.netsec.net
+.El
 .Pp
 The
 .Nm
-driver works registers itself to accelerate DES, Triple-DES, MD5-HMAC96,
+driver registers itself to accelerate DES, Triple-DES, MD5-HMAC96,
 and SHA1-HMAC96 operations in
 .Xr ipsec 4 .
 .Sh BUGS
