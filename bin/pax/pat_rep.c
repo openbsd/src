@@ -1,4 +1,4 @@
-/*	$OpenBSD: pat_rep.c,v 1.13 2001/05/26 00:32:21 millert Exp $	*/
+/*	$OpenBSD: pat_rep.c,v 1.14 2001/07/04 21:59:53 millert Exp $	*/
 /*	$NetBSD: pat_rep.c,v 1.4 1995/03/21 09:07:33 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)pat_rep.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: pat_rep.c,v 1.13 2001/05/26 00:32:21 millert Exp $";
+static char rcsid[] = "$OpenBSD: pat_rep.c,v 1.14 2001/07/04 21:59:53 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -78,7 +78,7 @@ static int tty_rename __P((register ARCHD *));
 static int fix_path __P((char *, int *, char *, int));
 static int fn_match __P((register char *, register char *, char **));
 static char * range_match __P((register char *, register int));
-static int resub __P((regex_t *, regmatch_t *, char *, char *, char *));
+static int resub __P((regex_t *, regmatch_t *, char *, char *, char *, char *));
 
 /*
  * rep_add()
@@ -984,7 +984,7 @@ rep_name(name, nlen, prnt)
 			 * replacement string and place it the prefix in the
 			 * final output. If we have problems, skip it.
 			 */
-			if ((res = resub(&(pt->rcmp),pm,pt->nstr,outpt,endpt))
+			if ((res = resub(&(pt->rcmp),pm,pt->nstr,inpt,outpt,endpt))
 			    < 0) {
 				if (prnt)
 					paxwarn(1, "Replacement name error %s",
@@ -1071,14 +1071,15 @@ rep_name(name, nlen, prnt)
 
 #ifdef __STDC__
 static int
-resub(regex_t *rp, register regmatch_t *pm, char *src, char *dest,
+resub(regex_t *rp, register regmatch_t *pm, char *src, char *inpt, char *dest,
 	register char *destend)
 #else
 static int
-resub(rp, pm, src, dest, destend)
+resub(rp, pm, src, inpt, dest, destend)
 	regex_t *rp;
 	register regmatch_t *pm;
 	char *src;
+	char *inpt;
 	char *dest;
 	register char *destend;
 #endif
@@ -1130,7 +1131,7 @@ resub(rp, pm, src, dest, destend)
 		 */
 		if (len > (destend - dpt))
 			return (-1);
-		strncpy(dpt, src + pmpt->rm_so, len);
+		strncpy(dpt, inpt + pmpt->rm_so, len);
 		dpt += len;
 	}
 	return(dpt - dest);
