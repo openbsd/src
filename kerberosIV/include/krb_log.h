@@ -1,5 +1,5 @@
-/*	$OpenBSD: krb_log.h,v 1.2 1998/02/18 11:53:36 art Exp $	*/
-/* $KTH krb_log.h,v 1.2 1997/09/26 17:40:33 joda Exp $ */
+/*	$OpenBSD: krb_log.h,v 1.3 1998/07/05 18:55:50 art Exp $	*/
+/*	$KTH krb_log.h,v 1.2 1997/09/26 17:40:33 joda Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
@@ -78,7 +78,3 @@ char *klog __P((int, const char*, ...))
 __END_DECLS
 
 #endif /* __KRB_LOG_H__ */
-
-
-
-
