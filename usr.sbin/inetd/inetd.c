@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.4 1996/06/12 07:23:26 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.5 1996/06/28 17:50:09 deraadt Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.4 1996/06/12 07:23:26 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.5 1996/06/28 17:50:09 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -480,6 +480,7 @@ main(argc, argv, envp)
 						syslog(LOG_ERR,"setrlimit: %m");
 				}
 #endif
+				closelog();
 				for (tmpint = rlim_ofile_cur-1; --tmpint > 2; )
 					(void)close(tmpint);
 				execv(sep->se_server, sep->se_argv);
