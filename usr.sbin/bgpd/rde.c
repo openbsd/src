@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.91 2004/02/27 20:53:56 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.92 2004/03/01 16:02:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -317,6 +317,15 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 				default:
 					break;
 				}
+			}
+			if ((nconf->flags & BGPD_FLAG_NO_EVALUATE)
+			    != (conf->flags & BGPD_FLAG_NO_EVALUATE)) {
+				log_warnx( "change to/from route-collector "
+				    "mode ignored");
+				if (conf->flags & BGPD_FLAG_NO_EVALUATE)
+					nconf->flags |= BGPD_FLAG_NO_EVALUATE;
+				else
+					nconf->flags &= ~BGPD_FLAG_NO_EVALUATE;
 			}
 			memcpy(conf, nconf, sizeof(struct bgpd_config));
 			free(nconf);
@@ -782,12 +791,6 @@ rde_generate_updates(struct prefix *new, struct prefix *old)
 	}
 }
 
-u_int16_t
-rde_local_as(void)
-{
-	return conf->as;
-}
-
 void
 rde_update_queue_runner(void)
 {
@@ -832,6 +835,20 @@ rde_update_queue_runner(void)
 	} while (sent != 0);
 }
 
+/*
+ * generic helper function
+ */
+u_int16_t
+rde_local_as(void)
+{
+	return (conf->as);
+}
+
+int
+rde_noevaluate(void)
+{
+	return (conf->flags & BGPD_FLAG_NO_EVALUATE);
+}
 
 /*
  * peer functions
@@ -953,6 +970,14 @@ peer_up(u_int32_t id, struct session_up *sup)
 	    sizeof(peer->remote_addr));
 	peer->state = PEER_UP;
 	up_init(peer);
+
+	if (rde_noevaluate())
+		/*
+		 * no need to dump the table to the peer, there are no active
+		 * prefixes anyway. This is a speed up hack.
+		 */
+		return;
+
 	pt_dump(up_dump_upcall, peer);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.39 2004/02/27 20:53:56 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.40 2004/03/01 16:02:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -455,6 +455,10 @@ prefix_updateall(struct rde_aspath *asp, enum nexthop_state state)
 
 	RIB_STAT(prefix_updateall);
 	ENSURE(asp != NULL);
+
+	if (rde_noevaluate())
+		/* if the decision process is turned off this is a no-op */
+		return;
 
 	LIST_FOREACH(p, &asp->prefix_h, path_l) {
 		/* redo the route decision */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.63 2004/02/26 14:00:33 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.64 2004/03/01 16:02:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -102,7 +102,7 @@ typedef struct {
 %token	REMOTEAS DESCR LOCALADDR MULTIHOP PASSIVE MAXPREFIX ANNOUNCE
 %token	ENFORCE NEIGHBORAS
 %token	DUMP TABLE IN OUT
-%token	LOG
+%token	LOG ROUTECOLL
 %token	TCP MD5SIG PASSWORD KEY
 %token	ALLOW DENY MATCH
 %token	QUICK
@@ -207,6 +207,12 @@ conf_main	: AS number		{
 				conf->flags |= BGPD_FLAG_NO_FIB_UPDATE;
 			else
 				conf->flags &= ~BGPD_FLAG_NO_FIB_UPDATE;
+		}
+		| ROUTECOLL yesno	{
+			if ($2 == 1)
+				conf->flags |= BGPD_FLAG_NO_EVALUATE;
+			else
+				conf->flags &= ~BGPD_FLAG_NO_EVALUATE;
 		}
 		| LOG string		{
 			if (!strcmp($2, "updates"))
@@ -718,6 +724,7 @@ lookup(char *s)
 		{ "prepend-self",	PREPEND},
 		{ "quick",		QUICK},
 		{ "remote-as",		REMOTEAS},
+		{ "route-collector",	ROUTECOLL},	
 		{ "router-id",		ROUTERID},
 		{ "set",		SET},
 		{ "source-AS",		SOURCEAS},
