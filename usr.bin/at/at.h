@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.h,v 1.8 2003/02/20 20:38:08 millert Exp $	*/
+/*	$OpenBSD: at.h,v 1.9 2003/03/14 04:15:04 millert Exp $	*/
 
 /*
  *  at.h -  header for at(1)
@@ -37,6 +37,8 @@ enum { ATQ, ATRM, AT, BATCH, CAT };	/* what are we running as? */
 struct atjob {
 	time_t runtimer;
 	time_t ctime;
+	uid_t uid;
+	mode_t mode;
 	char queue;
 };
 
