@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.alpha/MAKEDEV.md,v 1.12 2002/05/16 21:11:20 miod Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.49 2002/06/18 00:53:45 fgsch Exp 
+#	OpenBSD: etc.alpha/MAKEDEV.md,v 1.13 2002/08/24 17:21:44 matthieu Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.50 2002/08/12 10:45:04 miod Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.7 2002/02/16 01:19:52 deraadt Exp 
 #
 #
@@ -224,6 +224,7 @@ std)
 	M ksyms		c 39 0 640 kmem
 	M drum		c 3 0 640 kmem
 	M klog		c 6 0 600
+	M xf86		c 2 4 600
 	;;
 
 ttyB*|ttyc*)
