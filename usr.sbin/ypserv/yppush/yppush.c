@@ -1,4 +1,4 @@
-/*	$OpenBSD: yppush.c,v 1.13 2001/01/11 23:38:07 deraadt Exp $ */
+/*	$OpenBSD: yppush.c,v 1.14 2001/02/05 14:46:38 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: yppush.c,v 1.13 2001/01/11 23:38:07 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: yppush.c,v 1.14 2001/02/05 14:46:38 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -100,7 +100,7 @@ _svc_run()
 		bcopy(__svc_fdset, readfdsp, howmany(__svc_fdsetsize, NFDBITS) *
 		    sizeof(fd_mask));
 
-		switch (select(svc_maxfd, readfdsp, NULL,
+		switch (select(svc_maxfd+1, readfdsp, NULL,
 		    NULL, &timeout)) {
 		case -1:
 			if (errno == EINTR)
@@ -111,7 +111,7 @@ _svc_run()
 			fprintf(stderr, "yppush: Callback timed out.\n");
 			exit(0);
 		default:
-			svc_getreqset(readfdsp);
+			svc_getreqset2(readfdsp, svc_maxfd+1);
 			break;
 		}
 	}
