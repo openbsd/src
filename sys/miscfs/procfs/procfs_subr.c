@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_subr.c,v 1.14 2001/11/15 07:00:31 art Exp $	*/
+/*	$OpenBSD: procfs_subr.c,v 1.15 2001/11/15 07:04:21 art Exp $	*/
 /*	$NetBSD: procfs_subr.c,v 1.15 1996/02/12 15:01:42 christos Exp $	*/
 
 /*
@@ -181,7 +181,7 @@ loop:
 
 	/* add to procfs vnode list */
 	TAILQ_INSERT_TAIL(&pfshead, pfs, list);
-
+	uvm_vnp_setsize(vp, 0);
 out:
 	lockmgr(&pfs_vlock, LK_RELEASE, NULL, p);
 
