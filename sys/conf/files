@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.315 2004/09/14 23:49:28 henning Exp $
+#	$OpenBSD: files,v 1.316 2004/09/15 21:32:42 mickey Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -191,7 +191,7 @@ file	dev/ic/siop_common.c		siop_common
 
 # Symbios/NCR 53c720/53c8xx SCSI controllers
 device	siop: scsi,siop_common
-file	dev/ic/siop.c			siop
+file	dev/ic/siop.c			siop & (siop_pci | siop_gedoens)
 
 # Symbios/NCR 53c710 SCSI controllers
 device	osiop: scsi
@@ -304,7 +304,7 @@ file	dev/ic/lpt.c		lpt & (lpt_isa | lpt_localbus | lpt_gsc | lpt_puc | lpt_apio 
 
 # STI (hp graphics)
 device	sti: wsemuldisplaydev
-file	dev/ic/sti.c		sti & (sti_pci | sti_sgc | sti_phantom)
+file	dev/ic/sti.c		sti & (sti_pci | sti_gedoens)
 
 # Initio ULTRA WIDE/ULTRA2 WIDE SCSI Controllers
 device	iha: scsi

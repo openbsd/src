@@ -1,31 +1,31 @@
-#	$OpenBSD: RAMDISK,v 1.36 2004/08/19 08:13:05 mickey Exp $
+#	$OpenBSD: RAMDISK,v 1.37 2004/09/15 21:32:42 mickey Exp $
 #
 # Diskless kernel config
 #
 
 # Machine architecture; required by config(8)
-machine	hppa
+machine		hppa
 
-option		DDB		# in-kernel debugger
-option		DIAGNOSTIC	# internal consistency checks
+option		DDB			# in-kernel debugger
+option		DIAGNOSTIC		# internal consistency checks
 
-option		FFS		# UFS
-option		NFSCLIENT	# Network File System client
-option		CD9660		# ISO 9660 + Rock Ridge file system
-option		FDESC		# /dev/fd
-option		FIFO		# FIFOs; RECOMMENDED
-option		INET		# IP + ICMP + TCP + UDP
-option		INET6		# IPv6 (needs INET)
+option		FFS			# UFS
+option		NFSCLIENT		# Network File System client
+option		CD9660			# ISO 9660 + Rock Ridge file system
+option		FDESC			# /dev/fd
+option		FIFO			# FIFOs; RECOMMENDED
+option		INET			# IP + ICMP + TCP + UDP
+option		INET6			# IPv6 (needs INET)
 
 # Support for various CPU types
-option	HP7000_CPU		# PCXS
-option	HP7100_CPU	# PCXT
-option	HP7200_CPU	# PCXT'
-option	HP7100LC_CPU	# PCXL
-option	HP7300LC_CPU	# PCXL2
-#option	HP8000_CPU	# PCXU  (in 32bit mode)
-#option	HP8200_CPU	# PCXU2 (in 32bit mode)
-#option	HP8500_CPU	# PCXW  (in 32bit mode)
+option		HP7000_CPU		# PCXS
+option		HP7100_CPU		# PCXT
+option		HP7200_CPU		# PCXT'
+option		HP7100LC_CPU		# PCXL
+option		HP7300LC_CPU		# PCXL2
+option		HP8000_CPU		# PCXU  (in 32bit mode)
+option		HP8200_CPU		# PCXU2 (in 32bit mode)
+option		HP8500_CPU		# PCXW  (in 32bit mode)
 
 option		FPEMUL
 option		USELEDS		# blink 'em
@@ -51,16 +51,22 @@ cpu*	at mainbus0 irq 31	# HP PA-RISC cpu
 #fpu*	at mainbus0		# HP PA-RISC fpu (iv N/A)
 #pmu*	at mainbus0 irq 29	# HP PA-RISC perfomance monitor unit
 phantomas0 at mainbus0		# Phantom PseudoBC GSC+ Port
+uturn0	at mainbus0		# U2/UTurn Runway IOA
+uturn1	at mainbus0
 
 lasi0	at mainbus0 offset 0x100000 irq 28	# LASI host adapter
 lasi0	at mainbus0 offset 0xfd00000 irq 28	# LASI on C1[01]0, J2[01]0
-lasi0	at phantomas0 offset 0xfd00000 irq 28	# LASI on [ABC]*
+lasi0	at phantomas0 offset 0xfd00000 irq 28	# LASI on [AB]*
+lasi0	at uturn? offset 0xfd00000 irq 28	# LASI on [CJ]*
 lasi1	at mainbus0 offset 0x500000 irq 27	# 712 GIO card
 asp*	at mainbus0 irq 28	# this one comes w/ Viper and LEDs
 wax*	at mainbus0 irq 24	# Wax may host EISA as well
 mongoose* at mainbus0 irq 17	# EISA Bus Adapter (i82350 or TI???)
 #vmeb*	at mainbus0 irq ?	# VME bus adapter
-dino*	at phantomas? irq 26	# PCI bus bridge
+dino0	at phantomas? irq 26	# PCI bus bridge on [AB]*
+dino1	at phantomas? irq 25
+dino0	at uturn0 irq 26	# PCI bus bridge on [CJ]*
+dino1	at uturn1 irq 25
 pci*	at dino?
 option	PCIVERBOSE
 #pckbc0	at dino? irq 9
@@ -138,6 +144,7 @@ sti0	at mainbus0 irq 11	# [H]CRX-{8,24,48}[Z] graphics
 sti0	at phantomas0 irq 11	# builtin graphics on BC*
 sti1	at mainbus0 irq 12
 sti1	at phantomas0 irq 12
+#sti*	at pci?			# EG-PCI, FX*
 
 #medusa* at mainbus? irq 4	# FDDI
 #venus* at mainbus? irq 5	# ATM J2498A/J3420A

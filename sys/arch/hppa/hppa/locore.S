@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.139 2004/09/15 00:25:43 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.140 2004/09/15 21:32:43 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -897,7 +897,7 @@ $syscall_end
 	ldi	num, r1			! \
 	b	__CONCAT($name,_t)+8	! \
 	b	__CONCAT($name,_s)+12	! \
-	nop /*b	__CONCAT($name,_u)+16 */
+	b	__CONCAT($name,_u)+16
 
 #define	ITLBPRE \
 	mfctl	pcoq,r9 ! \
@@ -1307,7 +1307,7 @@ $dtlbna_t
 	dep	r8, 30, 15, r25		/* mix0r the pid from the sid */! \
 	dep	r0, 31, 12, r17		/* needed ? */			! \
 	addi	2, r25, r25						! \
-	extru	r17, 24, 25, r17					! \
+	extru	r17, 24, 25, r17	/* tlbbtop(r17) */		! \
 	sync
 
 	.align	32
@@ -1403,6 +1403,60 @@ $dtlb_done_l
 	rfir
 	nop
 #endif /* HP7100LC_CPU */
+
+#if defined(HP8000_CPU) || defined(HP8200_CPU) || defined(HP8500_CPU)
+	.level	2.0
+
+	/* xlate 32bit->64bit pte */
+#define	TLB_PCX2PCXU \
+	extrw,u	r25, 14, 13, r16		! \
+	depdi	0, 31, 32, r17			! \
+		/* fix io mappings */		! \
+	extrd,s	r17, 42, 4, r1			! \
+	addi,<>	1, r1, r0			! \
+	depdi	-1, 38, 32, r17			! \
+		/* fix prom mappings */		! \
+	extrd,s	r17, 46, 8, r1			! \
+	addi,<>	0x10, r1, r0			! \
+	depdi	0, 42, 8, r17			! \
+		/* weak ordering, dyn bp */	! \
+	depwi	1, 31, 2, r16			! \
+	depdi	0, 44, 30, r25			! \
+	depd	r16, 14, 15, r25
+
+$tlbd_u
+	TLB_STATS_PRE(tlbd)
+	TLB_PULL_L(1)
+	TLB_PCX2PCXU
+	idtlbt	r17, r25
+	TLB_STATS_AFT(tlbd)
+	rfir
+	nop
+
+$itlb_u
+$itlbna_u
+	TLB_STATS_PRE(itlb)
+	TLB_PULL_L(0)
+	extru,=	r25, 5, 1, r0	/* gate needs a kernel pid */
+	depi	0, 30, 15, r25
+	TLB_PCX2PCXU
+	iitlbt	r17, r25
+	TLB_STATS_AFT(itlb)
+	rfir
+	nop
+
+$dtlbna_u
+$dtlb_u
+	TLB_STATS_PRE(dtlb)
+	TLB_PULL_L(0)
+	TLB_PCX2PCXU
+	idtlbt	r17, r25
+	TLB_STATS_AFT(dtlb)
+	rfir
+	nop
+
+	.level	1.1
+#endif /* HP8000_CPU */
 
 	.export	$tlb_missend, entry
 $tlb_missend
@@ -1832,6 +1886,25 @@ LEAF_ENTRY(desidhash_l)
 EXIT(desidhash_l)
 
 #endif /* HP7100LC_CPU */
+
+#if defined(HP8000_CPU) || defined(HP8200_CPU) || defined(HP8500_CPU)
+LEAF_ENTRY(desidhash_u)
+	bv	r0(rp)
+	nop
+EXIT(desidhash_u)
+
+LEAF_ENTRY(ibtlb_u)
+	/* TODO insert a locked large tlb entry */
+	bv	0(rp)
+	nop
+EXIT(ibtlb_u)
+
+LEAF_ENTRY(pbtlb_u)
+	/* TODO purge a locked tlb entry */
+	bv	0(rp)
+	nop
+EXIT(pbtlb_u)
+#endif /* HP8000_CPU */
 
 /*
  * High Priority Machine Check Interrupt

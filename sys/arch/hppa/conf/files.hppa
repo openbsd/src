@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.53 2004/08/19 08:13:05 mickey Exp $
+#	$OpenBSD: files.hppa,v 1.54 2004/09/15 21:32:42 mickey Exp $
 #
 # hppa-specific configuration info
 
@@ -81,64 +81,67 @@ define	gscbus	{ }
 # Mainbus
 #
 
-define	mainbus {[offset = -1], [irq = -1]}
-device	mainbus
+define	gedoens {[offset = -1], [irq = -1]}
+device	mainbus: gedoens
 attach	mainbus at root
 file	arch/hppa/hppa/mainbus.c	mainbus
 
 device	pdc
-attach	pdc at mainbus
+attach	pdc at gedoens
 file	arch/hppa/dev/pdc.c		pdc
 
 device	power
-attach	power at mainbus
+attach	power at gedoens
 file	arch/hppa/dev/power.c		power needs-flag
 
 device	mem
-attach	mem at mainbus
+attach	mem at gedoens
 file	arch/hppa/dev/mem.c		mem
 
 device	cpu
-attach	cpu at mainbus
+attach	cpu at gedoens
 file	arch/hppa/dev/cpu.c		cpu
 
 device	fpu
-attach	fpu at mainbus
+attach	fpu at gedoens
 file	arch/hppa/dev/fpu.c		fpu
 
 # Phantom PseudoBC GSC+ Port
-define	phantomas {[offset = -1], [irq = -1]}
-device	phantomas
-attach	phantomas at mainbus
+device	phantomas: gedoens
+attach	phantomas at gedoens
 file	arch/hppa/dev/phantomas.c	phantomas
+
+# U2/Uturn, Runway to GSC Bus bridge & IOA.
+device	uturn: gedoens
+attach	uturn at gedoens
+file	arch/hppa/dev/uturn.c		uturn
 
 # 1FT1-0002, 1FU2-0002
 # as goes w/ 7100LC, 7300LC, 7200, 8000, 8200, 8500
 device	lasi: gscbus
-attach	lasi at mainbus with lasi_mainbus
-attach	lasi at phantomas with lasi_phantomas
+attach	lasi at gedoens
 file	arch/hppa/dev/lasi.c		lasi
 
 # all the older systems
 device	asp: gscbus
-attach	asp at mainbus
+attach	asp at gedoens
 file	arch/hppa/dev/asp.c		asp
 
 # 1FT4-0001, ASIC used on gecko cards
 device	wax: gscbus, isabus, eisabus
-attach	wax at mainbus
+attach	wax at gedoens
 file	arch/hppa/dev/wax.c		wax
 
 device	mongoose: isabus, eisabus
-attach	mongoose at mainbus
+attach	mongoose at gedoens
 file	arch/hppa/dev/mongoose.c	mongoose
 
 define	dinobus {[offset = -1], [irq = -1]}
 
-# Dino, GSC to PCI bridge. Includes ps/2, serial, and flying toaster interfaces
+# Dino, GSC-PCI bridge. Includes ps/2, cereal and a flying toaster interfaces
 # Cujo is a 64-bit data path Dino
 device	dino: pcibus, dinobus
-attach	dino at phantomas
+attach	dino at gedoens
 file	arch/hppa/dev/dino.c		dino
 
 attach	com at dinobus with com_dino
@@ -147,21 +150,18 @@ file	arch/hppa/dev/com_dino.c	com_dino
 # EPIC, Excalibur PCI Interface Chip. Integrated IOA
 # SAGA is a 64-bit data path EPIC
 #device	epic: pcibus
-#attach	epic at mainbus
+#attach	epic at gedoens
 #file	arch/hppa/dev/epic.c		epic
 
 # Astro, integrated Runway to Ropes bridge, Memory controller, and IOA.
 
 # Elroy, Ropes to PCI Bridge. Supports 4X PCI and dual address cycle.
 
-# U2/Uturn, Runway to GSC Bus bridge & IOA.
+attach	sti at gedoens with sti_gedoens
+file	arch/hppa/dev/sti_sgc.c		sti_gedoens
 
-attach	sti at mainbus with sti_sgc
-attach	sti at phantomas with sti_phantom
-file	arch/hppa/dev/sti_sgc.c		sti_sgc | sti_phantom
-
-#attach	siop at mainbus with siop_sgc
-#file	arch/hppa/dev/siop_sgc.c	siop_sgc
+attach	siop at gedoens with siop_sgc
+file	arch/hppa/dev/siop_sgc.c	siop_sgc
 
 ###
 

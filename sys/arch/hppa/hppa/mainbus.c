@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.57 2004/09/15 20:11:29 mickey Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.58 2004/09/15 21:32:43 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -1015,10 +1015,10 @@ mbattach(parent, self, aux)
 		panic("mbattach: cannot map mainbus IO space");
 
 	/*
-	 * Local-Broadcast the HPA to all modules on the bus
+	 * Local-Broadcast the HPA to all modules on this bus
 	 */
-	((struct iomod *)(pdc_hpa.hpa & HPPA_FLEX_MASK))[FPA_IOMOD].io_flex =
-		(void *)((pdc_hpa.hpa & HPPA_FLEX_MASK) | DMA_ENABLE);
+	((struct iomod *)LBCAST_ADDR)->io_flex =
+	    (void *)((pdc_hpa.hpa & HPPA_FLEX_MASK) | DMA_ENABLE);
 
 	sc->sc_hpa = pdc_hpa.hpa;
 
