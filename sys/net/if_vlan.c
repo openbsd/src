@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.6 2000/10/18 15:55:48 chris Exp $ */
+/*	$OpenBSD: if_vlan.c,v 1.7 2000/12/02 14:46:34 jason Exp $ */
 /*
  * Copyright 1998 Massachusetts Institute of Technology
  *
@@ -194,6 +194,16 @@ vlan_start(struct ifnet *ifp)
 		IF_DEQUEUE(&ifp->if_snd, m);
 		if (m == 0)
 			break;
+
+		if ((p->if_flags & (IFF_UP|IFF_RUNNING)) !=
+		    (IFF_UP|IFF_RUNNING)) {
+			IF_DROP(&p->if_snd);
+				/* XXX stats */
+			ifp->if_oerrors++;
+			m_freem(m);
+			continue;
+		}
+
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m);
@@ -267,10 +277,9 @@ vlan_start(struct ifnet *ifp)
 		if (m->m_flags & M_MCAST)
 			p->if_omcasts++;
 		IF_ENQUEUE(&p->if_snd, m);
-		if ((p->if_flags & IFF_OACTIVE) == 0) {
+		ifp->if_opackets++;
+		if ((p->if_flags & IFF_OACTIVE) == 0)
 			p->if_start(p);
-			ifp->if_opackets++;
-		}
 	}
 	ifp->if_flags &= ~IFF_OACTIVE;
 
