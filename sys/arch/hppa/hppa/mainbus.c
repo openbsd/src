@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.46 2003/07/15 17:04:33 mickey Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.47 2003/07/29 20:49:29 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -724,7 +724,7 @@ int
 mbus_dmamap_load(void *v, bus_dmamap_t map, void *addr, bus_size_t size,
 		 struct proc *p, int flags)
 {
-	bus_addr_t lastaddr;
+	paddr_t lastaddr;
 	int seg, error;
 
 	/*
@@ -860,6 +860,8 @@ mbus_dmamap_load_raw(void *v, bus_dmamap_t map, bus_dma_segment_t *segs,
 
 	bcopy(segs, map->dm_segs, nsegs * sizeof(*segs));
 	map->dm_nsegs = nsegs;
+	map->dm_mapsize = size;
+	map->_dm_va = segs->ds_addr;
 	return (0);
 }
 
@@ -886,33 +888,22 @@ mbus_dmamem_alloc(void *v, bus_size_t size, bus_size_t alignment,
 	extern paddr_t avail_end;
 	struct pglist pglist;
 	struct vm_page *pg;
-	vaddr_t va;
 
 	size = round_page(size);
 
 	TAILQ_INIT(&pglist);
 	if (uvm_pglistalloc(size, 0, avail_end, alignment, boundary,
-	    &pglist, nsegs, flags & BUS_DMA_NOWAIT))
+	    &pglist, 1, flags & BUS_DMA_NOWAIT))
 		return (ENOMEM);
 
-	if (uvm_map(kernel_map, &va, size, NULL, UVM_UNKNOWN_OFFSET, 0,
-	    UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW, UVM_INH_NONE,
-	    UVM_ADV_RANDOM, 0))) {
-		uvm_pglistfree(&pglist);
-		return (ENOMEM);
-	}
-
-	segs[0].ds_addr = va;
+	pg = TAILQ_FIRST(&pglist);
+	segs[0].ds_addr = VM_PAGE_TO_PHYS(pg);
 	segs[0].ds_len = size;
 	*rsegs = 1;
 
-	TAILQ_FOREACH(pg, &pglist, pageq) {
-
-		pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg), UVM_PROT_RW);
+	for(; pg; pg = TAILQ_NEXT(pg, pageq))
 		/* XXX for now */
 		pmap_changebit(pg, PTE_PROT(TLB_UNCACHABLE), 0);
-		va += PAGE_SIZE;
-	}
 	pmap_update(pmap_kernel());
 
 	return (0);
@@ -921,7 +912,19 @@ mbus_dmamem_alloc(void *v, bus_size_t size, bus_size_t alignment,
 void
 mbus_dmamem_free(void *v, bus_dma_segment_t *segs, int nsegs)
 {
-	uvm_km_free(kernel_map, segs[0].ds_addr, segs[0].ds_len);
+	struct pglist pglist;
+	paddr_t pa, epa;
+
+	TAILQ_INIT(&pglist);
+	for(; nsegs--; segs++)
+		for (pa = segs->ds_addr, epa = pa + segs->ds_len;
+		     pa < epa; pa += PAGE_SIZE) {
+			struct vm_page *pg = PHYS_TO_VM_PAGE(pa);
+			if (!pg)
+				panic("mbus_dmamem_free: no page for pa");
+			TAILQ_INSERT_TAIL(&pglist, pg, pageq);
+		}
+	uvm_pglistfree(&pglist);
 }
 
 int
