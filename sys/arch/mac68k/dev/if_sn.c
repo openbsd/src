@@ -1,5 +1,5 @@
 /*	$NetBSD: if_sn.c,v 1.7 1997/03/20 17:47:51 scottr Exp $	*/
-/*	$OpenBSD: if_sn.c,v 1.17 1997/03/29 23:26:48 briggs Exp $	*/
+/*	$OpenBSD: if_sn.c,v 1.18 1997/04/10 02:35:02 briggs Exp $	*/
 
 /*
  * National Semiconductor  SONIC Driver
@@ -61,7 +61,7 @@ typedef unsigned char uchar;
 static void snwatchdog __P((struct ifnet *));
 static int sninit __P((struct sn_softc *sc));
 static int snstop __P((struct sn_softc *sc));
-static int sonicput __P((struct sn_softc *sc, struct mbuf *m0));
+static inline int sonicput __P((struct sn_softc *sc, struct mbuf *m0));
 static int snioctl __P((struct ifnet *ifp, u_long cmd, caddr_t data));
 static void snstart __P((struct ifnet *ifp));
 static void snreset __P((struct sn_softc *sc));
@@ -207,9 +207,8 @@ snsetup(sc)
 
 	p = pp + NBPG;
 
-	for (i = 0; i < NRBA; i+=2) {
+	for (i = 0; i < NRBA; i++) {
 		sc->rbuf[i] = (caddr_t) p;
-		sc->rbuf[i+1] = (caddr_t)(p + (NBPG/2));
 		p += NBPG;
 	}
 
@@ -543,7 +542,7 @@ snwatchdog(ifp)
 /*
  * stuff packet into sonic (at splnet)
  */
-static int 
+static inline int 
 sonicput(sc, m0)
 	struct sn_softc *sc;
 	struct mbuf *m0;
@@ -633,8 +632,8 @@ sonicput(sc, m0)
 static void sonictxint __P((struct sn_softc *));
 static void sonicrxint __P((struct sn_softc *));
 
-static int sonic_read __P((struct sn_softc *, caddr_t, int));
-static struct mbuf *sonic_get __P((struct sn_softc *, struct ether_header *, int));
+static inline int sonic_read __P((struct sn_softc *, caddr_t, int));
+static inline struct mbuf *sonic_get __P((struct sn_softc *, struct ether_header *, int));
 
 /*
  * CAM support
@@ -831,10 +830,11 @@ initialise_rra(sc)
 	unsigned int	v;
 	int		bitmode = sc->bitmode;
 
-	if (bitmode)	/* eobc must be >= MAXETHERPKT */
+	if (bitmode)
 		NIC_PUT(sc, SNR_EOBC, RBASIZE(sc) / 2 - 2);
 	else
 		NIC_PUT(sc, SNR_EOBC, RBASIZE(sc) / 2 - 1);
+
 	NIC_PUT(sc, SNR_URRA, UPPER(sc->v_rra[0]));
 	NIC_PUT(sc, SNR_RSA, LOWER(sc->v_rra[0]));
 	/* rea must point just past the end of the rra space */
@@ -846,8 +846,8 @@ initialise_rra(sc)
 		v = kvtop(sc->rbuf[i]);
 		SWO(bitmode, sc->p_rra[i], RXRSRC_PTRHI, UPPER(v));
 		SWO(bitmode, sc->p_rra[i], RXRSRC_PTRLO, LOWER(v));
-		SWO(bitmode, sc->p_rra[i], RXRSRC_WCHI, UPPER(RBASIZE(sc) / 2));
-		SWO(bitmode, sc->p_rra[i], RXRSRC_WCLO, LOWER(RBASIZE(sc) / 2));
+		SWO(bitmode, sc->p_rra[i], RXRSRC_WCHI, UPPER(NBPG/2));
+		SWO(bitmode, sc->p_rra[i], RXRSRC_WCLO, LOWER(NBPG/2));
 	}
 	sc->sc_rramark = NRBA;
 	NIC_PUT(sc, SNR_RWP, LOWER(sc->v_rra[sc->sc_rramark]));
@@ -876,11 +876,11 @@ snintr(arg, slot)
 		NIC_PUT(sc, SNR_ISR, isr);
 		wbflush();
 
-		if (isr & (ISR_BR | ISR_LCD | ISR_PINT | ISR_TC))
+		if (isr & (ISR_BR | ISR_LCD | ISR_TC))
 			printf("%s: unexpected interrupt status 0x%x\n",
 			    sc->sc_dev.dv_xname, isr);
 
-		if (isr & (ISR_TXDN | ISR_TXER))
+		if (isr & (ISR_TXDN | ISR_TXER | ISR_PINT))
 			sonictxint(sc);
 
 		if (isr & ISR_PKTRX)
@@ -997,22 +997,20 @@ sonicrxint(sc)
 	int			rramark;
 	int			rdamark;
 	int			bitmode = sc->bitmode;
-	void			*tmp1;
-	void			*tmp2;
+	u_int16_t		rxpkt_ptr;
 
 	rda = sc->p_rda[sc->sc_rxmark];
 
 	while (SRO(bitmode, rda, RXPKT_INUSE) == 0) {
 		unsigned status = SRO(bitmode, rda, RXPKT_STATUS);
-		if ((status & RCR_LPKT) == 0)
-			printf("%s: more than one packet in RBA!\n",
-			    sc->sc_dev.dv_xname);
 
 		orra = RBASEQ(SRO(bitmode, rda, RXPKT_SEQNO)) & RRAMASK;
+		rxpkt_ptr = SRO(bitmode, rda, RXPKT_PTRLO);
 		len = SRO(bitmode, rda, RXPKT_BYTEC) -
 			sizeof(struct ether_header) - FCSSIZE;
 		if (status & RCR_PRX) {
-			if (sonic_read(sc, sc->rbuf[orra & RBAMASK], len)) {
+			caddr_t pkt = sc->rbuf[orra & RBAMASK] + (rxpkt_ptr & PGOFSET);
+			if (sonic_read(sc, pkt, len)) {
 				sc->sc_if.if_ipackets++;
 				sc->sc_sum.ls_ipacks++;
 				sc->sc_missed = 0;
@@ -1023,8 +1021,9 @@ sonicrxint(sc)
 		/*
 		 * give receive buffer area back to chip.
 		 *
-		 * orra is now empty of packets and can be freed if
-		 * sonic read didnt copy it out then we would have to
+		 * If this was the last packet in the RRA, give the RRA to
+		 * the chip again.
+		 * If sonic read didnt copy it out then we would have to
 		 * wait !!
 		 * (dont bother add it back in again straight away)
 		 *
@@ -1032,25 +1031,29 @@ sonicrxint(sc)
 		 * we have to use the macros because SONIC might be in
 		 * 16 or 32 bit mode.
 		 */
-		rramark = sc->sc_rramark;
-		tmp1 = sc->p_rra[rramark];
-		tmp2 = sc->p_rra[orra];
-		SWO(bitmode, tmp1, RXRSRC_PTRLO,
-			SRO(bitmode, tmp2, RXRSRC_PTRLO));
-		SWO(bitmode, tmp1, RXRSRC_PTRHI,
-			SRO(bitmode, tmp2, RXRSRC_PTRHI));
-		SWO(bitmode, tmp1, RXRSRC_WCLO,
-			SRO(bitmode, tmp2, RXRSRC_WCLO));
-		SWO(bitmode, tmp1, RXRSRC_WCHI,
-			SRO(bitmode, tmp2, RXRSRC_WCHI));
+		if (status & RCR_LPKT) {
+			void *tmp1, *tmp2;
 
-		/* zap old rra for fun */
-		SWO(bitmode, tmp2, RXRSRC_WCHI, 0);
-		SWO(bitmode, tmp2, RXRSRC_WCLO, 0);
+			rramark = sc->sc_rramark;
+			tmp1 = sc->p_rra[rramark];
+			tmp2 = sc->p_rra[orra];
+			SWO(bitmode, tmp1, RXRSRC_PTRLO,
+				SRO(bitmode, tmp2, RXRSRC_PTRLO));
+			SWO(bitmode, tmp1, RXRSRC_PTRHI,
+				SRO(bitmode, tmp2, RXRSRC_PTRHI));
+			SWO(bitmode, tmp1, RXRSRC_WCLO,
+				SRO(bitmode, tmp2, RXRSRC_WCLO));
+			SWO(bitmode, tmp1, RXRSRC_WCHI,
+				SRO(bitmode, tmp2, RXRSRC_WCHI));
 
-		sc->sc_rramark = (++rramark) & RRAMASK;
-		NIC_PUT(sc, SNR_RWP, LOWER(sc->v_rra[rramark]));
-		wbflush();
+			/* zap old rra for fun */
+			SWO(bitmode, tmp2, RXRSRC_WCHI, 0);
+			SWO(bitmode, tmp2, RXRSRC_WCLO, 0);
+
+			sc->sc_rramark = (++rramark) & RRAMASK;
+			NIC_PUT(sc, SNR_RWP, LOWER(sc->v_rra[rramark]));
+			wbflush();
+		}
 
 		/*
 		 * give receive descriptor back to chip simple
@@ -1074,7 +1077,7 @@ sonicrxint(sc)
  * sonic_read -- pull packet off interface and forward to
  * appropriate protocol handler
  */
-static int 
+static inline int 
 sonic_read(sc, pkt, len)
 	struct sn_softc *sc;
 	caddr_t pkt;
@@ -1131,7 +1134,7 @@ sonic_read(sc, pkt, len)
  * because we are using stupid buffer management this
  * is slow.
  */
-static struct mbuf *
+static inline struct mbuf *
 sonic_get(sc, eh, datalen)
 	struct sn_softc *sc;
 	struct ether_header *eh;

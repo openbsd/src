@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_snvar.h,v 1.3 1997/03/29 23:26:50 briggs Exp $       */
+/*      $OpenBSD: if_snvar.h,v 1.4 1997/04/10 02:35:03 briggs Exp $       */
 
 /*
  * Copyright (c) 1991   Algorithmics Ltd (http://www.algor.co.uk)
@@ -47,12 +47,12 @@
  * 1 Rda   is 4 words == 16 bytes
  */
 
-#define NRBA    16		/* # receive buffers < NRRA */
-#define RBAMASK 0x0f
-#define NRDA    NRBA
+#define NRBA    8		/* # receive buffers < NRRA */
+#define RBAMASK (NRBA-1)
+#define NRDA    NRBA*4
 #define NTDA    4		/* # transmit descriptors */
 #define NRRA    32		/* # receive resource descriptors */
-#define RRAMASK 0x1f		/* the reason why it must be power of two */
+#define RRAMASK (NRRA-1)	/* the reason why it must be power of two */
 
 #define FCSSIZE 4		/* size of FCS appended to packets */
 
@@ -204,7 +204,7 @@ typedef struct sn_softc {
  * Transmit Descriptor
  * This structure holds information about packets to be transmitted.
  */
-#define FRAGMAX	16		/* maximum number of fragments in a packet */
+#define FRAGMAX	8		/* maximum number of fragments in a packet */
 
 #define	TXP_STATUS	0	/* + transmitted packet status */
 #define	TXP_CONFIG	1	/* transmission configuration */
@@ -217,7 +217,7 @@ typedef struct sn_softc {
 #define	TXP_FPTRHI	1	/* ptr to packet fragment HI */
 #define	TXP_FSIZE	2	/* fragment size */
 
-#define	TXP_WORDS	TXP_FRAGOFF + FRAGMAX*TXP_FSIZE + 1	/* 1 for tlink */
+#define	TXP_WORDS	TXP_FRAGOFF + (FRAGMAX*TXP_FRAGSIZE) + 1	/* 1 for tlink */
 #define	TXP_SIZE(sc)	((sc->bitmode) ? (TXP_WORDS*4) : (TXP_WORDS*2))
 
 #define EOL	0x0001		/* end of list marker for link fields */
