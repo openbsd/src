@@ -394,10 +394,10 @@ uvm_swap_initcrypt(struct swapdev *sdp, int npages)
 	 * 8KB memory for a 256MB swap partition.
 	 */
 	sdp->swd_decrypt = malloc(SWD_DCRYPT_SIZE(npages), M_VMSWAP, M_WAITOK);
-	bzero(sdp->swd_decrypt, SWD_DCRYPT_SIZE(npages));
+	memset(sdp->swd_decrypt, 0, SWD_DCRYPT_SIZE(npages));
 	sdp->swd_keys = malloc((npages >> SWD_KEY_SHIFT) * sizeof(struct swap_key),
 			       M_VMSWAP, M_WAITOK);
-	bzero(sdp->swd_keys, (npages >> SWD_KEY_SHIFT) * sizeof(struct swap_key));
+	memset(sdp->swd_keys, 0, (npages >> SWD_KEY_SHIFT) * sizeof(struct swap_key));
 	sdp->swd_nkeys = 0;
 }
 
@@ -861,7 +861,7 @@ sys_swapctl(p, v, retval)
 			malloc(sizeof *sdp, M_VMSWAP, M_WAITOK);
 		spp = (struct swappri *)
 			malloc(sizeof *spp, M_VMSWAP, M_WAITOK);
-		bzero(sdp, sizeof(*sdp));
+		memset(sdp, 0, sizeof(*sdp));
 		sdp->swd_flags = SWF_FAKE;	/* placeholder only */
 		sdp->swd_vp = vp;
 		sdp->swd_dev = (vp->v_type == VBLK) ? vp->v_rdev : NODEV;
@@ -1258,7 +1258,7 @@ swap_off(p, sdp)
 #ifdef UVM_SWAP_ENCRYPT
 	if (sdp->swd_decrypt) {
 		free(sdp->swd_decrypt);
-		bzero(sdp->swd_keys, (sdp->swd_npages >> SWD_KEY_SHIFT) * sizeof(struct swap_key));
+		memset(sdp->swd_keys, 0, (sdp->swd_npages >> SWD_KEY_SHIFT) * sizeof(struct swap_key));
 		free(sdp->swd_keys);
 	}
 #endif
@@ -1851,7 +1851,7 @@ uvm_swap_free(startslot, nslots)
 			uvm_swap_markdecrypt(sdp, startslot, nslots, 0);
 		}
 	}
-#endif UVM_SWAP_ENCRYPT
+#endif /* UVM_SWAP_ENCRYPT */
 	simple_unlock(&uvm.swap_data_lock);
 }
 
@@ -2073,7 +2073,7 @@ uvm_swap_io(pps, startslot, npages, flags)
 	 * assumes that all gets are SYNCIO.  Just make sure here.
 	 */
 	if (flags & B_READ)
-	  flags &= ~B_ASYNC;
+		flags &= ~B_ASYNC;
 #endif
 	/*
 	 * fill in the bp/sbp.   we currently route our i/o through
@@ -2327,7 +2327,7 @@ swapmount()
 
 	sdp = malloc(sizeof(*sdp), M_VMSWAP, M_WAITOK);
 	spp = malloc(sizeof(*spp), M_VMSWAP, M_WAITOK);
-	bzero(sdp, sizeof(*sdp));
+	memset(sdp, 0, sizeof(*sdp));
 
 	sdp->swd_flags = SWF_FAKE;
 	sdp->swd_dev = swap_dev;

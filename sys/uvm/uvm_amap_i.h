@@ -99,7 +99,7 @@ amap_lookups(aref, offset, anons, npages)
 	if ((slot + (npages - 1)) >= amap->am_nslot)
 		panic("amap_lookups: offset out of range");
 
-	bcopy(&amap->am_anon[slot], anons, npages * sizeof(struct vm_anon *));
+	memcpy(anons, &amap->am_anon[slot], npages * sizeof(struct vm_anon *));
 
 	UVMHIST_LOG(maphist, "<- done", 0, 0, 0, 0);
 	return;

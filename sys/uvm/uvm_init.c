@@ -89,7 +89,7 @@ uvm_init()
 	 * step 1: zero the uvm structure
 	 */
 
-	bzero(&uvm, sizeof(uvm));
+	memset(&uvm, 0, sizeof(uvm));
 	averunnable.fscale = FSCALE;
 
 	/*

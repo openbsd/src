@@ -155,7 +155,7 @@ do { \
 	(NAME).e = (struct uvm_history_ent *) \
 		malloc(sizeof(struct uvm_history_ent) * (N), M_TEMP, \
 		    M_WAITOK); \
-	bzero((NAME).e, sizeof(struct uvm_history_ent) * (N)); \
+	memset((NAME).e, 0, sizeof(struct uvm_history_ent) * (N)); \
 	LIST_INSERT_HEAD(&uvm_histories, &(NAME), list); \
 } while (0)
 
@@ -167,7 +167,7 @@ do { \
 	(NAME).f = 0; \
 	simple_lock_init(&(NAME).l); \
 	(NAME).e = (struct uvm_history_ent *) (BUF); \
-	bzero((NAME).e, sizeof(struct uvm_history_ent) * (NAME).n); \
+	memset((NAME).e, 0, sizeof(struct uvm_history_ent) * (NAME).n); \
 	LIST_INSERT_HEAD(&uvm_histories, &(NAME), list); \
 } while (0)
 

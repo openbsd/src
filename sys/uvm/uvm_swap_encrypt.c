@@ -112,7 +112,7 @@ swap_key_delete(struct swap_key *key)
 	/* Make sure that this key gets removed if we just used it */
 	swap_key_cleanup(key);
 
-	bzero(key, sizeof(*key));
+	memset(key, 0, sizeof(*key));
 	uvm_swpkeysdeleted++;
 }
 
@@ -236,7 +236,7 @@ swap_key_cleanup(struct swap_key *key)
 		return;
 
 	/* Zero out the subkeys */
-	bzero(&swap_key, sizeof(swap_key));
+       	memset(&swap_key, 0, sizeof(swap_key));
 
 	kcur = NULL;
 }

@@ -277,7 +277,7 @@ uvm_page_init(kvm_startp, kvm_endp)
 	    (PAGE_SIZE + sizeof(struct vm_page));
 	pagearray = (vm_page_t)uvm_pageboot_alloc(pagecount *
 	    sizeof(struct vm_page));
-	bzero(pagearray, pagecount * sizeof(struct vm_page));
+	memset(pagearray, 0, pagecount * sizeof(struct vm_page));
 					 
 	/*
 	 * step 4: init the vm_page structures and put them in the correct
@@ -621,7 +621,7 @@ uvm_page_physload(start, end, avail_start, avail_end, free_list)
 			return;
 		}
 		/* zero data, init phys_addr and free_list, and free pages */
-		bzero(pgs, sizeof(struct vm_page) * npages);
+		memset(pgs, 0, sizeof(struct vm_page) * npages);
 		for (lcv = 0, paddr = ptoa(start) ;
 				 lcv < npages ; lcv++, paddr += PAGE_SIZE) {
 			pgs[lcv].phys_addr = paddr;

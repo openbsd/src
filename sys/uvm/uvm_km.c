@@ -983,7 +983,7 @@ uvm_km_alloc1(map, size, zeroit)
 	 */
 
 	if (zeroit)
-		bzero((caddr_t)kva, loopva - kva);
+		memset((caddr_t)kva, 0, loopva - kva);
 
 	UVMHIST_LOG(maphist,"<- done (kva=0x%x)", kva,0,0,0);
 	return(kva);

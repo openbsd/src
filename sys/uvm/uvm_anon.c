@@ -69,7 +69,7 @@ uvm_anon_init()
 		panic("uvm_anon_init");
 	}
 
-	bzero(anon, sizeof(*anon) * nanon);
+	memset(anon, 0, sizeof(*anon) * nanon);
 	uvm.afree = NULL;
 	uvmexp.nanon = uvmexp.nfreeanon = nanon;
 	for (lcv = 0 ; lcv < nanon ; lcv++) {
@@ -100,7 +100,7 @@ uvm_anon_add(pages)
 	}
 
 	simple_lock(&uvm.afreelock);
-	bzero(anon, sizeof(*anon) * pages);
+	memset(anon, 0, sizeof(*anon) * pages);
 	uvmexp.nanon += pages;
 	uvmexp.nfreeanon += pages;
 	for (lcv = 0; lcv < pages; lcv++) {

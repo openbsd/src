@@ -184,7 +184,7 @@ uvm_total(totalp)
 	int paging;
 #endif
 
-	bzero(totalp, sizeof *totalp);
+	memset(totalp, 0, sizeof *totalp);
 
 	/*
 	 * calculate process statistics

@@ -278,7 +278,7 @@ uvm_mapent_copy(src, dst)
 	vm_map_entry_t dst;
 {
 
-	bcopy(src, dst, ((char *)&src->uvm_map_entry_stop_copy) - ((char*)src));
+	memcpy(dst, src, ((char *)&src->uvm_map_entry_stop_copy) - ((char*)src));
 }
 
 /*
@@ -2375,7 +2375,7 @@ uvmspace_init(vm, pmap, min, max, pageable)
 {
 	UVMHIST_FUNC("uvmspace_init"); UVMHIST_CALLED(maphist);
 
-	bzero(vm, sizeof(*vm));
+	memset(vm, 0, sizeof(*vm));
 
 	uvm_map_setup(&vm->vm_map, min, max, pageable ? VM_MAP_PAGEABLE : 0);
 
@@ -2595,7 +2595,7 @@ uvmspace_fork(vm1)
 
 	vm2 = uvmspace_alloc(old_map->min_offset, old_map->max_offset,
 		      (old_map->flags & VM_MAP_PAGEABLE) ? TRUE : FALSE);
-	bcopy(&vm1->vm_startcopy, &vm2->vm_startcopy,
+	memcpy(&vm2->vm_startcopy, &vm1->vm_startcopy,
 	(caddr_t) (vm1 + 1) - (caddr_t) &vm1->vm_startcopy);
 	new_map = &vm2->vm_map;		  /* XXX */
 	new_pmap = new_map->pmap;

@@ -263,7 +263,7 @@ uao_find_swhash_elt(aobj, pageidx, create)
 	LIST_INSERT_HEAD(swhash, elt, list);
 	elt->tag = page_tag;
 	elt->count = 0;
-	bzero(elt->slots, sizeof(elt->slots));
+	memset(elt->slots, 0, sizeof(elt->slots));
 
 	return(elt);
 }
@@ -540,7 +540,7 @@ uao_create(size, flags)
 			    M_UVMAOBJ, mflags);
 			if (aobj->u_swslots == NULL)
 				panic("uao_create: malloc swslots failed");
-			bzero(aobj->u_swslots, pages * sizeof(int));
+			memset(aobj->u_swslots, 0, pages * sizeof(int));
 		}
 
 		if (flags) {

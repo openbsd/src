@@ -232,7 +232,7 @@ amap_alloc(sz, padsz, waitf)
 
 	amap = amap_alloc1(slots, padslots, waitf);
 	if (amap)
-		bzero(amap->am_anon, (slots + padslots) * sizeof(struct vm_anon *));
+		memset(amap->am_anon, 0, (slots + padslots) * sizeof(struct vm_anon *));
 
 	UVMHIST_LOG(maphist,"<- done, amap = 0x%x, sz=%d", amap, sz, 0, 0);
 	return(amap);
@@ -393,27 +393,27 @@ amap_extend(entry, addsize)
 
 	/* do am_slots */
 	oldsl = amap->am_slots;
-	bcopy(oldsl, newsl, sizeof(int) * amap->am_nused);
+	memcpy(newsl, oldsl, sizeof(int) * amap->am_nused);
 	amap->am_slots = newsl;
 
 	/* do am_anon */
 	oldover = amap->am_anon;
-	bcopy(oldover, newover, sizeof(struct vm_anon *) * amap->am_nslot);
-	bzero(newover + amap->am_nslot, sizeof(struct vm_anon *) * slotadded);
+	memcpy(newover, oldover, sizeof(struct vm_anon *) * amap->am_nslot);
+	memset(newover + amap->am_nslot, 0, sizeof(struct vm_anon *) * slotadded);
 	amap->am_anon = newover;
 
 	/* do am_bckptr */
 	oldbck = amap->am_bckptr;
-	bcopy(oldbck, newbck, sizeof(int) * amap->am_nslot);
-	bzero(newbck + amap->am_nslot, sizeof(int) * slotadded); /* XXX: needed? */
+	memcpy(newbck, oldbck, sizeof(int) * amap->am_nslot);
+	memset(newbck + amap->am_nslot, 0, sizeof(int) * slotadded); /* XXX: needed? */
 	amap->am_bckptr = newbck;
 
 #ifdef UVM_AMAP_PPREF
 	/* do ppref */
 	oldppref = amap->am_ppref;
 	if (newppref) {
-		bcopy(oldppref, newppref, sizeof(int) * amap->am_nslot);
-		bzero(newppref + amap->am_nslot, sizeof(int) * slotadded);
+		memcpy(newppref, oldppref, sizeof(int) * amap->am_nslot);
+		memset(newppref + amap->am_nslot, 0, sizeof(int) * slotadded);
 		amap->am_ppref = newppref;
 		if ((slotoff + slotmapped) < amap->am_nslot)
 			amap_pp_adjref(amap, slotoff + slotmapped, 
@@ -914,7 +914,7 @@ amap_pp_establish(amap)
 	/*
 	 * init ppref
 	 */
-	bzero(amap->am_ppref, sizeof(int) * amap->am_maxslot);
+	memset(amap->am_ppref, 0, sizeof(int) * amap->am_maxslot);
 	pp_setreflen(amap->am_ppref, 0, amap->am_ref, amap->am_nslot);
 	return;
 }
