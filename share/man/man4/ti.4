@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ti.4,v 1.14 2001/06/22 12:15:47 mpech Exp $
+.\"	$OpenBSD: ti.4,v 1.15 2001/07/21 06:37:41 jason Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -132,12 +132,12 @@ or
 .Ar half-duplex
 modes.
 .It 1000baseSX
-Set 1000Mbps (Gigabit Ethernet) operation.
+Set 1000Mbps (Gigabit Ethernet) on fiber operation.
 Only
 .Ar full-duplex
 mode is supported at this speed.
 .It 1000baseTX
-Set 1000Mbps (Gigabit Ethernet) operation.
+Set 1000Mbps (Gigabit Ethernet) on copper operation.
 .El
 .Pp
 The
@@ -192,10 +192,6 @@ the network connection (cable).
 .Xr ifmedia 4 ,
 .Xr netintro 4 ,
 .Xr ifconfig 8
-.Rs
-.%T Alteon Gigabit Ethernet/PCI NIC manuals
-.%O http://sanjose.alteon.com/open.shtml
-.Re
 .Sh HISTORY
 The
 .Nm
