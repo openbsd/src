@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pppoe.c,v 1.2 2004/11/29 20:15:40 pat Exp $ */
+/* $OpenBSD: if_pppoe.c,v 1.3 2005/01/01 00:30:31 canacar Exp $ */
 /* $NetBSD: if_pppoe.c,v 1.51 2003/11/28 08:56:48 keihan Exp $ */
 
 /*
@@ -272,6 +272,7 @@ pppoe_clone_destroy(struct ifnet *ifp)
 
 	s = splimp();
 	LIST_REMOVE(sc, sc_list);
+	timeout_del(&sc->sc_timeout);
 	splx(s);
 	
 #if NBPFILTER > 0
