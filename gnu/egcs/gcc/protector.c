@@ -1493,7 +1493,29 @@ change_arg_use_in_operand (x, orig, new, size)
     case REG:
     case ADDRESSOF:
       return;
-	    
+
+    case MEM:
+      /* Handle special case of MEM (incoming_args)  */
+      if (GET_CODE (orig) == MEM
+	  && XEXP (x, 0) == virtual_incoming_args_rtx)
+	{
+	  offset = 0;
+
+	  /* the operand related to the sweep variable */
+	  if (AUTO_OFFSET(XEXP (orig, 0)) <= offset &&
+	      offset < AUTO_OFFSET(XEXP (orig, 0)) + size) {
+
+	    offset = AUTO_OFFSET(XEXP (new, 0))
+	      + (offset - AUTO_OFFSET(XEXP (orig, 0)));
+
+	    XEXP (x, 0) = plus_constant (virtual_stack_vars_rtx, offset);
+	    XEXP (x, 0)->used = 1;
+
+	    return;
+	  }
+	}
+      break;
+      
     case PLUS:
       /* Handle special case of frame register plus constant.  */
       if (GET_CODE (orig) == MEM /* skip if orig is register variable in the optimization */
