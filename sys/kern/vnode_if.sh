@@ -33,7 +33,7 @@ copyright="\
  * SUCH DAMAGE.
  */
 "
-SCRIPT_ID='$OpenBSD: vnode_if.sh,v 1.11 2003/05/01 21:13:05 tedu Exp $'
+SCRIPT_ID='$OpenBSD: vnode_if.sh,v 1.12 2003/05/01 21:41:35 tedu Exp $'
 # SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.9 1996/02/29 20:58:22 cgd Exp $'
 
 # Script to produce VFS front-end sugar.
@@ -123,8 +123,7 @@ awk_parser='
 	} else
 		willrele[argc] = 0;
 
-
-    if ($2 == "SHOULDBELOCKED") {
+	if ($2 == "SHOULDBELOCKED") {
 	   shouldbelocked[argc] = 1;
 	   i++;
 	} else
