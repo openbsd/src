@@ -1,4 +1,4 @@
-.\" $OpenBSD: strtonum.3,v 1.5 2004/05/06 06:19:01 tedu Exp $
+.\" $OpenBSD: strtonum.3,v 1.6 2004/08/03 19:38:01 millert Exp $
 .\"
 .\" Copyright (c) 2004 Ted Unangst
 .\"
@@ -23,11 +23,11 @@
 .Sh SYNOPSIS
 .Fd #include <stdlib.h>
 .Fd #include <limits.h>
-.Ft unsigned long long
+.Ft long long
 .Fo strtonum
 .Fa "const char *nptr"
 .Fa "long long minval"
-.Fa "unsigned long long maxval"
+.Fa "long long maxval"
 .Fa "const char **errstr"
 .Fc
 .Sh DESCRIPTION
@@ -35,10 +35,9 @@ The
 .Fn strtonum
 function converts the string in
 .Fa nptr
-to an
-.Li unsigned long long
+to a
+.Li long long
 value.
-Negative values may be obtained by casting the result.
 The
 .Fn strtonum
 function was designed to facilitate safe, robust programming
@@ -57,8 +56,8 @@ or
 .Ql -
 sign.
 .Pp
-The remainder of the string is converted to an
-.Li unsigned long long
+The remainder of the string is converted to a
+.Li long long
 value according to base 10.
 .Pp
 The value obtained is then checked against the provided
@@ -102,6 +101,10 @@ The above example will guarantee that the value of iterations is between
 The given string was out of range.
 .It Bq Er EINVAL
 The given string did not consist solely of digit characters.
+.It Bq Er EINVAL
+.Ar minval
+was larger than
+.Ar maxval .
 .El
 .Pp
 If an error occurs, errstr will be set to one of the following strings.
