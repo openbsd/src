@@ -1,4 +1,4 @@
-/*	$OpenBSD: room.c,v 1.5 2002/07/18 07:13:57 pjanzen Exp $	*/
+/*	$OpenBSD: room.c,v 1.6 2003/04/27 21:27:00 tdeval Exp $	*/
 /*	$NetBSD: room.c,v 1.3 1995/04/22 10:28:17 cgd Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)room.c	8.1 (Berkeley) 5/31/93";
 #else
-static const char rcsid[] = "$OpenBSD: room.c,v 1.5 2002/07/18 07:13:57 pjanzen Exp $";
+static const char rcsid[] = "$OpenBSD: room.c,v 1.6 2003/04/27 21:27:00 tdeval Exp $";
 #endif
 #endif /* not lint */
 
@@ -605,7 +605,8 @@ CH:
 					 * allocated to hold MAX_OPT_LEN+2
 					 * bytes. This is arranged in init.c.
 					 */
-					(void) strcpy(*(options[i].strval), buf);
+					(void) strlcpy(*(options[i].strval),
+					    buf, MAX_OPT_LEN+2);
 				}
 				opt_show(i);
 				goto CH;
