@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.10 1996/08/07 03:04:22 downsj Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.11 1996/08/07 03:17:58 downsj Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -1760,7 +1760,7 @@ gunique(local)
 	}
 	if (cp)
 		*cp = '/';
-	(void) strcpy(new, local);
+	(void) strncpy(new, local, sizeof(new));
 	cp = new + strlen(new);
 	*cp++ = '.';
 	for (count = 1; count < 100; count++) {

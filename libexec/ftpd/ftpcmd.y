@@ -808,7 +808,6 @@ struct tab sitetab[] = {
 	{ NULL,   0,    0,    0,	0 }
 };
 
-static char	*copy __P((char *));
 static void	 help __P((struct tab *, char *));
 static struct tab *
 		 lookup __P((struct tab *, char *));
@@ -1031,7 +1030,9 @@ yylex()
 			 */
 			if (n > 1 && cbuf[cpos] == '\n') {
 				cbuf[cpos] = '\0';
-				yylval.s = copy(cp);
+				yylval.s = strdup(cp);
+				if (yylval.s == NULL)
+					fatal("Ran out of memory.");
 				cbuf[cpos] = '\n';
 				state = ARGS;
 				return (STRING);
@@ -1149,19 +1150,6 @@ upper(s)
 			*s = toupper(*s);
 		s++;
 	}
-}
-
-static char *
-copy(s)
-	char *s;
-{
-	char *p;
-
-	p = malloc((unsigned) strlen(s) + 1);
-	if (p == NULL)
-		fatal("Ran out of memory.");
-	(void) strcpy(p, s);
-	return (p);
 }
 
 static void
