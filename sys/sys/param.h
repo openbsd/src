@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.18 1997/11/06 05:59:10 csapuntz Exp $	*/
+/*	$OpenBSD: param.h,v 1.19 1998/03/07 22:41:37 deraadt Exp $	*/
 /*	$NetBSD: param.h,v 1.23 1996/03/17 01:02:29 thorpej Exp $	*/
 
 /*-
@@ -45,8 +45,8 @@
 #define BSD4_3	1
 #define BSD4_4	1
 
-#define OpenBSD	199711		/* OpenBSD version (year & month). */
-#define OpenBSD2_2 1		/* OpenBSD 2.2 */
+#define OpenBSD	199806		/* OpenBSD version (year & month). */
+#define OpenBSD2_3 1		/* OpenBSD 2.3 */
 
 #ifndef NULL
 #define	NULL	0
