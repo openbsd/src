@@ -1,4 +1,4 @@
-/*	$NetBSD: zbus.c,v 1.12 1995/10/09 02:08:50 chopps Exp $	*/
+/*	$NetBSD: zbus.c,v 1.13 1995/12/27 07:31:58 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -58,13 +58,15 @@ static struct aconfdata aconftab[] = {
 	{ "atfsc",	514,	84 },
 	{ "atzee",	513,	1 },
 	{ "atzsc",	514,	3 },
+	{ "bah",	514,	9 },	/* A2060 */
 	{ "le",		514,	112 },
 	{ "ql",		514,	69 },
 	{ "ql",		514,	70 },
 	/* Ameristar */
 	{ "le",		1053,	1 },
+	{ "bah",	1053,	9 },	/* A2060 */
 	{ "es",		1053,	10 },
-	/* Univeristy of lowell */
+	/* University of Lowell */
 	{ "grful",	1030,	0 },
 	/* Macrosystems */
 	{ "grfrt",	18260,	6 },
