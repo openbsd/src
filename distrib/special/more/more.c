@@ -1,4 +1,4 @@
-/*	$OpenBSD: more.c,v 1.22 2003/06/04 03:49:53 millert Exp $	*/
+/*	$OpenBSD: more.c,v 1.23 2003/06/04 23:50:35 millert Exp $	*/
 
 /*-
  * Copyright (c) 1980 The Regents of the University of California.
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)more.c	5.28 (Berkeley) 3/1/93";
 #else
-static const char rcsid[] = "$OpenBSD: more.c,v 1.22 2003/06/04 03:49:53 millert Exp $";
+static const char rcsid[] = "$OpenBSD: more.c,v 1.23 2003/06/04 23:50:35 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -50,6 +50,12 @@ static const char rcsid[] = "$OpenBSD: more.c,v 1.22 2003/06/04 03:49:53 millert
  *
  *	modified by Geoff Peck, UCB to add underlining, single spacing
  *	modified by John Foderaro, UCB to add -c and MORE environment variable
+ */
+
+/*
+ * TODO (millert)
+ *  o deal with large files (use off_t and ftello(), fseeko())
+ *  o POSIX compliance
  */
 
 #include <sys/param.h>
@@ -122,7 +128,8 @@ char		**fnames;	/* The list of file names */
 int		nfiles;		/* Number of files left to process */
 char		*shell;		/* The name of the shell to use */
 int		shellp;		/* A previous shell command exists */
-char		Line[LINSIZ];	/* Line buffer */
+char		Lineb[LINSIZ];	/* Line buffer */
+char		*Line = Lineb;	/* Line pointer */
 int		Lpp = 24;	/* lines per page */
 char		*Clear;		/* clear screen */
 char		*eraseln;	/* erase line */
@@ -140,6 +147,7 @@ int		soglitch;	/* terminal has standout mode glitch */
 int		ulglitch;	/* terminal has underline mode glitch */
 int		pstate = 0;	/* current UL state */
 int		altscr = 0;	/* terminal supports an alternate screen */
+size_t		linsize = LINSIZ;
 
 volatile sig_atomic_t signo;	/* signal received */
 
@@ -181,6 +189,7 @@ void  set_tty(void);
 void  show(int);
 void  skipf(int);
 void  skiplns(int, FILE *);
+char *resize_line(char *);
 FILE *checkf(char *, int *);
 __dead void usage(void);
 struct sigaction sa;
@@ -648,19 +657,24 @@ prompt(char *filename)
 int
 getline(FILE *f, int *length)
 {
-	int		ch;
-	char		*p;
+	int		ch, lastch;
+	char		*p, *ep;
 	int		column;
 	static int	colflg;
 
 	p = Line;
+	ep = Line + linsize - 1;
 	column = 0;
 	ch = Getc(f);
 	if (colflg && ch == '\n') {
 		Currline++;
 		ch = Getc(f);
 	}
-	while (p < &Line[LINSIZ - 1]) {
+	for (;;) {
+		if (p >= ep) {
+			p = resize_line(p);
+			ep = Line + linsize - 1;
+		}
 		if (ch == EOF) {
 			if (p > Line) {
 				*p = '\0';
@@ -682,7 +696,11 @@ getline(FILE *f, int *length)
 					tputs(eraseln, 1, putch);
 					promptlen = 0;
 				} else {
-					for (--p; p < &Line[LINSIZ - 1];) {
+					for (--p;;) {
+						if (p >= ep) {
+							p = resize_line(p);
+							ep = Line + linsize - 1;
+						}
 						*p++ = ' ';
 						if ((++column & 7) == 0)
 							break;
@@ -694,8 +712,6 @@ getline(FILE *f, int *length)
 				column = 1 + (column | 7);
 		} else if (ch == '\b' && column > 0)
 			column--;
-		else if (ch == '\r')
-			column = 0;
 		else if (ch == '\f' && stop_opt) {
 			p[-1] = '^';
 			*p++ = 'L';
@@ -708,15 +724,27 @@ getline(FILE *f, int *length)
 			column++;
 		if (column >= Mcol && fold_opt)
 			break;
+		lastch = ch;
 		ch = Getc(f);
+		if (lastch == '\r') {
+			/*
+			 * Reset column to 0 for carriage return unless
+			 * immediately followed by a newline.
+			 */
+			if (ch != '\n')
+				column = 0;
+			else
+				p--;
+		}
 	}
+	/* XXX - potential oflow */
 	if (column >= Mcol && Mcol > 0 && !Wrap)
 		*p++ = '\n';
 	colflg = (column == Mcol && fold_opt);
 	if (colflg && eatnl && Wrap)
 		*p++ = '\n';	/* simulate normal wrap */
 	*length = p - Line;
-	*p = 0;
+	*p = '\0';
 	return (column);
 }
 
@@ -1222,7 +1250,7 @@ search(char *buf, FILE *file, int n)
 		line3 = line2;
 		line2 = line1;
 		line1 = Ftell(file);
-		rdline (file);
+		rdline(file);
 		lncount++;
 		if ((rv = regexec(&reg, Line, 0, NULL, 0)) == 0) {
 			if (--n == 0) {
@@ -1784,14 +1812,42 @@ void
 rdline(FILE *f)
 {
 	int ch;
-	char *p;
+	char *p, *ep;
 
 	p = Line;
-	while ((ch = Getc(f)) != '\n' && ch != EOF && p - Line < LINSIZ - 1)
+	ep = Line + linsize - 1;
+	while ((ch = Getc(f)) != '\n' && ch != EOF) {
+		if (p >= ep) {
+			p = resize_line(p);
+			ep = Line + linsize - 1;
+		}
 		*p++ = (char)ch;
+	}
 	if (ch == '\n')
 		Currline++;
 	*p = '\0';
+}
+
+char *
+resize_line(char *pos)
+{
+	char *np;
+
+	linsize *= 2;
+	if (Line != Lineb)
+		np = realloc(Line, linsize); 
+	else if ((np = malloc(linsize)) != NULL)
+		memcpy(np, Lineb, sizeof(Lineb));
+	if (np == NULL) {
+		kill_line();
+		fputs("out of memory!\n", stdout);
+		reset_tty();
+		exit(1);
+	}
+	pos = np + (pos - Line);
+	Line = np;
+
+	return (pos);
 }
 
 /*
