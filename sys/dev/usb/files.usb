@@ -1,4 +1,4 @@
-#	$OpenBSD: files.usb,v 1.29 2002/07/10 03:58:08 nate Exp $
+#	$OpenBSD: files.usb,v 1.30 2002/11/30 19:09:59 nate Exp $
 #	$NetBSD: files.usb,v 1.16 2000/02/14 20:29:54 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
@@ -157,12 +157,17 @@ file	dev/usb/uftdi.c			uftdi
 # Prolific PL2303 serial driver
 device	uplcom: ucombus
 attach	uplcom at uhub
-file	dev/usb/uplcom.c                uplcom
+file	dev/usb/uplcom.c		uplcom
 
 # MCT USB-232 serial driver
 device	umct: ucombus
 attach	umct at uhub
 file	dev/usb/umct.c			umct
+
+# SUNTAC Slipper U VS-10U driver
+device	uvscom: ucombus
+attach	uvscom at uhub
+file	dev/usb/uvscom.c		uvscom
 
 
 # Scanners
