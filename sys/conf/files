@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.99 1998/11/17 06:14:47 downsj Exp $
+#	$OpenBSD: files,v 1.100 1998/11/28 04:06:04 mickey Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -101,7 +101,7 @@ file	dev/ic/com.c		com & (com_isa | com_commulti | com_pcmcia | com_pica | com_a
 device	cy: tty
 file	dev/ic/cy.c		cy & (cy_isa | cy_pci)	needs-flag
 
-# PC parallel ports (XXX what chip?)
+# PC parallel ports (IEEE 1284)
 device	lpt
 file	dev/ic/lpt.c		lpt & (lpt_isa | lpt_pica | lpt_algor | lpt_gsc) needs-flag
 
