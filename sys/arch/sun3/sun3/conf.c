@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.44 1995/10/08 23:46:27 gwr Exp $	*/
+/*	$NetBSD: conf.c,v 1.44.2.1 1995/10/29 04:22:44 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1994 Adam Glass, Gordon W. Ross
@@ -180,7 +180,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 10: systech multi-terminal board */
 	cdev_notdef(),			/* 11: DES encryption chip */
 	cdev_tty_init(NZS,zs),		/* 12: Zilog 8350 serial port */
-	cdev_mouse_init(NZS-1,ms),	/* 13: Sun mouse */
+	cdev_mouse_init(NKD,ms),	/* 13: Sun mouse */
 	cdev_notdef(),			/* 14: cgone */
 	cdev_notdef(),			/* 15: /dev/winXXX */
 	cdev_log_init(1,log),		/* 16: /dev/klog */
@@ -196,7 +196,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 26: bwone */
 	cdev_fb_init(NBWTWO,bw2),	/* 27: bwtwo */
 	cdev_notdef(),			/* 28: Systech VPC-2200 versatec/centronics */
-	cdev_mouse_init(NZS-1,kbd),	/* 29: Sun keyboard */
+	cdev_mouse_init(NKD,kbd),	/* 29: Sun keyboard */
 	cdev_tape_init(NXT,xt),		/* 30: Xylogics tape */
 	cdev_fb_init(NCGTWO,cg2),	/* 31: cgtwo */
 	cdev_notdef(),			/* 32: /dev/gpone */
@@ -388,7 +388,7 @@ struct	consdev constab[] = {
 	{ zscnprobe_a, zscninit, zscngetc, zscnputc, zscnpollc },
 	{ zscnprobe_b, zscninit, zscngetc, zscnputc, zscnpollc },
 #endif
-#if NKD > 1
+#if NKD > 0
 	cons_init(kd),
 #endif
 	{ 0 },	/* REQIURED! */
