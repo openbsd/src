@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_output.c,v 1.11 2001/05/28 05:30:29 angelos Exp $ */
+/*	$OpenBSD: ipsec_output.c,v 1.12 2001/05/29 01:19:37 angelos Exp $ */
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -293,6 +293,8 @@ ipsp_process_done(struct mbuf *m, struct tdb *tdb, struct tdb *tdb2)
 
     struct tdb_ident *tdbi;
     struct m_tag *mtag;
+
+    tdb->tdb_last_used = time.tv_sec;
 
     switch (tdb->tdb_dst.sa.sa_family)
     {

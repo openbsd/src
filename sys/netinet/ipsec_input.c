@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.40 2001/05/27 03:49:14 angelos Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.41 2001/05/29 01:19:37 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -267,6 +267,8 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff,
 
     af = tdbp->tdb_dst.sa.sa_family;
     sproto = tdbp->tdb_sproto;
+
+    tdbp->tdb_last_used = time.tv_sec;
 
     /* Sanity check */
     if (m == NULL)
