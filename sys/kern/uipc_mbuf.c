@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.3 1996/06/20 10:50:22 deraadt Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.4 1996/09/02 18:14:15 dm Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -53,6 +53,7 @@
 extern	vm_map_t mb_map;
 struct	mbuf *mbutl;
 char	*mclrefcnt;
+int	needqueuedrain;
 
 void
 mbinit()
@@ -120,6 +121,11 @@ m_retry(i, t)
 {
 	register struct mbuf *m;
 
+	if (i & M_DONTWAIT) {
+		needqueuedrain = 1;
+		setsoftnet ();
+		return (NULL);
+	}
 	m_reclaim();
 #define m_retry(i, t)	(struct mbuf *)0
 	MGET(m, i, t);
@@ -136,6 +142,11 @@ m_retryhdr(i, t)
 {
 	register struct mbuf *m;
 
+	if (i & M_DONTWAIT) {
+		needqueuedrain = 1;
+		setsoftnet ();
+		return (NULL);
+	}
 	m_reclaim();
 #define m_retryhdr(i, t) (struct mbuf *)0
 	MGETHDR(m, i, t);
@@ -150,6 +161,7 @@ m_reclaim()
 	register struct protosw *pr;
 	int s = splimp();
 
+	needqueuedrain = 0;
 	for (dp = domains; dp; dp = dp->dom_next)
 		for (pr = dp->dom_protosw; pr < dp->dom_protoswNPROTOSW; pr++)
 			if (pr->pr_drain)

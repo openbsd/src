@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.16 1996/08/14 07:50:13 deraadt Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.17 1996/09/02 18:14:19 dm Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -182,6 +182,8 @@ ipintr()
 	struct ipqent *ipqe;
 	int hlen, mff, s;
 
+	if (needqueuedrain)
+		m_reclaim ();
 next:
 	/*
 	 * Get next datagram off input queue and get IP header

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.2 1996/03/03 12:12:00 niklas Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.3 1996/09/02 18:14:21 dm Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -360,6 +360,8 @@ int	max_protohdr;			/* largest protocol header */
 int	max_hdr;			/* largest link+protocol header */
 int	max_datalen;			/* MHLEN - max_hdr */
 extern	int mbtypes[];			/* XXX */
+extern	int needqueuedrain;		/* True if allocation failed at */
+					/* interrupt level */
 
 void	mbinit __P((void));
 struct	mbuf *m_copym __P((struct mbuf *, int, int, int));
