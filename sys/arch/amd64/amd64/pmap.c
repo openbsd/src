@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.4 2004/06/25 11:03:27 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.5 2004/07/19 15:09:05 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -283,6 +283,11 @@ long nbpd[] = NBPD_INITIALIZER;
 pd_entry_t *normal_pdes[] = PDES_INITIALIZER;
 pd_entry_t *alternate_pdes[] = APDES_INITIALIZER;
 
+/*
+ * Direct map.
+ */
+paddr_t DMPDpa;
+
 /* int nkpde = NKPTP; */
 
 struct simplelock pvalloc_lock;
@@ -373,15 +378,6 @@ struct pmap kernel_pmap_store;	/* the kernel's pmap (proc0) */
  */
 
 int pmap_pg_g = 0;
-
-#ifdef LARGEPAGES
-/*
- * pmap_largepages: if our processor supports PG_PS and we are
- * using it, this is set to TRUE.
- */
-
-int pmap_largepages;
-#endif
 
 /*
  * i386 physical memory comes in a big contig chunk with a small
@@ -860,8 +856,7 @@ pmap_kremove(va, len)
  */
 
 void
-pmap_bootstrap(kva_start)
-	vaddr_t kva_start;
+pmap_bootstrap(vaddr_t kva_start, paddr_t max_pa)
 {
 	vaddr_t kva, kva_end;
 	struct pmap *kpm;
@@ -869,6 +864,8 @@ pmap_bootstrap(kva_start)
 	int i;
 	unsigned long p1i;
 	pt_entry_t pg_nx = (cpu_feature & CPUID_NXE? PG_NX : 0);
+	long ndmpdp;
+	paddr_t dmpd, dmpdp;
 
 	/*
 	 * define the voundaries of the managed kernel virtual address
@@ -927,65 +924,24 @@ pmap_bootstrap(kva_start)
 	curpcb->pcb_pmap = kpm;	/* proc0's pcb */
 
 	/*
-	 * enable global TLB entries if they are supported
+	 * enable global TLB entries.
 	 */
+	lcr4(rcr4() | CR4_PGE);	/* enable hardware (via %cr4) */
+	tlbflush();
+	pmap_pg_g = PG_G;		/* enable software */
 
-	if (cpu_feature & CPUID_PGE) {
-		lcr4(rcr4() | CR4_PGE);	/* enable hardware (via %cr4) */
-		pmap_pg_g = PG_G;		/* enable software */
-
-		/* add PG_G attribute to already mapped kernel pages */
+	/* add PG_G attribute to already mapped kernel pages */
 #if KERNBASE == VM_MIN_KERNEL_ADDRESS
-		for (kva = VM_MIN_KERNEL_ADDRESS ; kva < virtual_avail ;
+	for (kva = VM_MIN_KERNEL_ADDRESS ; kva < virtual_avail ;
 #else
-		kva_end = roundup((vaddr_t)&end, PAGE_SIZE);
-		for (kva = KERNBASE; kva < kva_end ;
+	kva_end = roundup((vaddr_t)&end, PAGE_SIZE);
+	for (kva = KERNBASE; kva < kva_end ;
 #endif
-		     kva += PAGE_SIZE) {
-			p1i = pl1_i(kva);
-			if (pmap_valid_entry(PTE_BASE[p1i]))
-				PTE_BASE[p1i] |= PG_G;
-		}
+	     kva += PAGE_SIZE) {
+		p1i = pl1_i(kva);
+		if (pmap_valid_entry(PTE_BASE[p1i]))
+			PTE_BASE[p1i] |= PG_G;
 	}
-
-#if defined(LARGEPAGES) && 0	/* XXX non-functional right now */
-	/*
-	 * enable large pages of they are supported.
-	 */
-
-	if (cpu_feature & CPUID_PSE) {
-		paddr_t pa;
-		pd_entry_t *pde;
-		extern char _etext;
-
-		lcr4(rcr4() | CR4_PSE);	/* enable hardware (via %cr4) */
-		pmap_largepages = 1;	/* enable software */
-
-		/*
-		 * the TLB must be flushed after enabling large pages
-		 * on Pentium CPUs, according to section 3.6.2.2 of
-		 * "Intel Architecture Software Developer's Manual,
-		 * Volume 3: System Programming".
-		 */
-		tlbflush();
-
-		/*
-		 * now, remap the kernel text using large pages.  we
-		 * assume that the linker has properly aligned the
-		 * .data segment to a 4MB boundary.
-		 */
-		kva_end = roundup((vaddr_t)&_etext, NBPD);
-		for (pa = 0, kva = KERNBASE; kva < kva_end;
-		     kva += NBPD, pa += NBPD) {
-			pde = &kpm->pm_pdir[pdei(kva)];
-			*pde = pa | pmap_pg_g | PG_PS |
-			    PG_KR | PG_V;	/* zap! */
-			tlbflush();
-		}
-	}
-#endif /* LARGEPAGES */
-
-#if VM_MIN_KERNEL_ADDRESS != KERNBASE
 	/*
 	 * zero_pte is stuck at the end of mapped space for the kernel
 	 * image (disjunct from kva space). This is done so that it
@@ -996,7 +952,59 @@ pmap_bootstrap(kva_start)
 
 	early_zerop = (caddr_t)(KERNBASE + NKL2_KIMG_ENTRIES * NBPD_L2);
 	early_zero_pte = PTE_BASE + pl1_i((unsigned long)early_zerop);
-#endif
+
+	/*
+	 * Enable large pages.
+	 */
+	lcr4(rcr4() | CR4_PSE);
+	tlbflush();
+
+	/*
+	 * Map the direct map. We steal pages for the page tables from
+	 * avail_start, then we create temporary mappings using the
+	 * early_zerop. Scary, slow, but we only do it once.
+	 */
+	ndmpdp = (max_pa + NBPD_L3 - 1) >> L3_SHIFT;
+	if (ndmpdp < 4)
+		ndmpdp = 4;	/* At least 4GB */
+
+	dmpdp = avail_start;	avail_start += PAGE_SIZE;
+	dmpd = avail_start;	avail_start += ndmpdp * PAGE_SIZE;
+
+	for (i = 0; i < NPDPG * ndmpdp; i++) {
+		paddr_t pdp;
+		paddr_t off;
+		vaddr_t va;
+
+		pdp = (paddr_t)&(((pd_entry_t *)dmpd)[i]);
+		off = pdp - trunc_page(pdp);
+		*early_zero_pte = (trunc_page(pdp) & PG_FRAME) | PG_V | PG_RW;
+		pmap_update_pg((vaddr_t)early_zerop);
+
+		va = (vaddr_t)early_zerop + off;
+		*((pd_entry_t *)va) = (paddr_t)i << L2_SHIFT;
+		*((pd_entry_t *)va) |= PG_RW | PG_V | PG_PS | PG_G;
+	}
+
+	for (i = 0; i < ndmpdp; i++) {
+		paddr_t pdp;
+		paddr_t off;
+		vaddr_t va;
+
+		pdp = (paddr_t)&(((pd_entry_t *)dmpdp)[i]);
+		off = pdp - trunc_page(pdp);
+		*early_zero_pte = (trunc_page(pdp) & PG_FRAME) | PG_V | PG_RW;
+		pmap_update_pg((vaddr_t)early_zerop);
+
+		va = (vaddr_t)early_zerop + off;
+		*((pd_entry_t *)va) = dmpd + (i << PAGE_SHIFT);
+		*((pd_entry_t *)va) |= PG_RW | PG_V | PG_U;
+	}
+	
+	DMPDpa = dmpdp;
+	kpm->pm_pdir[PDIR_SLOT_DIRECT] = DMPDpa | PG_V | PG_KW | PG_U;
+
+	tlbflush();
 
 	/*
 	 * now we allocate the "special" VAs which are used for tmp mappings
@@ -1866,7 +1874,7 @@ pmap_pdp_ctor(void *arg, void *object, int flags)
 	/* zero init area */
 	memset(pdir, 0, PDIR_SLOT_PTE * sizeof(pd_entry_t));
 
-	/* put in recursibve PDE to map the PTEs */
+	/* put in recursive PDE to map the PTEs */
 	pdir[PDIR_SLOT_PTE] = pdirpa | PG_V | PG_KW;
 
 	npde = nkptp[PTP_LEVELS - 1];
@@ -1878,6 +1886,8 @@ pmap_pdp_ctor(void *arg, void *object, int flags)
 	/* zero the rest */
 	memset(&pdir[PDIR_SLOT_KERN + npde], 0,
 	    (NTOPLEVEL_PDES - (PDIR_SLOT_KERN + npde)) * sizeof(pd_entry_t));
+
+	pdir[PDIR_SLOT_DIRECT] = DMPDpa | PG_V | PG_KW | PG_U;
 
 #if VM_MIN_KERNEL_ADDRESS != KERNBASE
 	pdir[pl4_pi(KERNBASE)] = PDP_BASE[pl4_pi(KERNBASE)];
@@ -2192,22 +2202,26 @@ pmap_extract(pmap, va, pap)
 	pt_entry_t *ptes, pte;
 	pd_entry_t pde, **pdes;
 
+	if (pmap == pmap_kernel() && va >= PMAP_DIRECT_BASE &&
+	    va < PMAP_DIRECT_END) {
+		*pap = va - PMAP_DIRECT_BASE;
+		return (TRUE);
+	}
+
 	pmap_map_ptes(pmap, &ptes, &pdes);
 	if (pmap_pdes_valid(va, pdes, &pde) == FALSE) {
-		pmap_unmap_ptes(pmap);
 		return FALSE;
 	}
-	pte = ptes[pl1_i(va)];
-	pmap_unmap_ptes(pmap);
 
-#ifdef LARGEPAGES
 	if (pde & PG_PS) {
 		if (pap != NULL)
 			*pap = (pde & PG_LGFRAME) | (va & 0x1fffff);
+		pmap_unmap_ptes(pmap);
 		return (TRUE);
 	}
-#endif
 
+	pte = ptes[pl1_i(va)];
+	pmap_unmap_ptes(pmap);
 
 	if (__predict_true((pte & PG_V) != 0)) {
 		if (pap != NULL)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.28 2004/07/08 04:23:04 david Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.29 2004/07/19 15:09:05 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -1383,7 +1383,8 @@ init_x86_64(first_avail)
 	 * Call pmap initialization to make new kernel address space.
 	 * We must do this before loading pages into the VM system.
 	 */
-	pmap_bootstrap(VM_MIN_KERNEL_ADDRESS);
+	pmap_bootstrap(VM_MIN_KERNEL_ADDRESS,
+	    IOM_END + trunc_page(KBTOB(biosextmem)));
 
 	if (avail_start != PAGE_SIZE)
 		pmap_prealloc_lowmem_ptps();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.3 2004/05/20 09:20:41 kettenis Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.4 2004/07/19 15:09:05 art Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 2003/04/26 18:39:46 fvdl Exp $	*/
 
 /*
@@ -156,10 +156,12 @@
 #define L4_SLOT_KERN		256
 #define L4_SLOT_KERNBASE	511
 #define L4_SLOT_APTE		510
+#define L4_SLOT_DIRECT		509
 
-#define PDIR_SLOT_KERN	L4_SLOT_KERN
-#define PDIR_SLOT_PTE	L4_SLOT_PTE
-#define PDIR_SLOT_APTE	L4_SLOT_APTE
+#define PDIR_SLOT_KERN		L4_SLOT_KERN
+#define PDIR_SLOT_PTE		L4_SLOT_PTE
+#define PDIR_SLOT_APTE		L4_SLOT_APTE
+#define PDIR_SLOT_DIRECT	L4_SLOT_DIRECT
 
 /*
  * the following defines give the virtual addresses of various MMU
@@ -172,6 +174,8 @@
 
 #define PTE_BASE  ((pt_entry_t *) (L4_SLOT_PTE * NBPD_L4))
 #define APTE_BASE ((pt_entry_t *) (VA_SIGN_NEG((L4_SLOT_APTE * NBPD_L4))))
+#define PMAP_DIRECT_BASE	(VA_SIGN_NEG((L4_SLOT_DIRECT * NBPD_L4)))
+#define PMAP_DIRECT_END		(VA_SIGN_NEG(((L4_SLOT_DIRECT + 1) * NBPD_L4)))
 
 #define L1_BASE		PTE_BASE
 #define AL1_BASE	APTE_BASE
@@ -427,7 +431,7 @@ extern pd_entry_t *pdes[];
  * prototypes
  */
 
-void		pmap_bootstrap(vaddr_t);
+void		pmap_bootstrap(vaddr_t, paddr_t);
 boolean_t	pmap_clear_attrs(struct vm_page *, unsigned);
 static void	pmap_page_protect(struct vm_page *, vm_prot_t);
 void		pmap_page_remove (struct vm_page *);
@@ -590,6 +594,13 @@ void	pmap_ldt_cleanup(struct proc *);
  * Hooks for the pool allocator.
  */
 /* #define	POOL_VTOPHYS(va)	vtophys((vaddr_t) (va)) */
+
+#define pmap_map_direct(pg)	\
+	((vaddr_t)PMAP_DIRECT_BASE + VM_PAGE_TO_PHYS(pg))
+#define pmap_unmap_direct(va)	\
+	PHYS_TO_VM_PAGE(va - PMAP_DIRECT_BASE)
+
+#define __HAVE_PMAP_DIRECT
 
 #endif /* _KERNEL && !_LOCORE */
 #endif	/* _AMD64_PMAP_H_ */
