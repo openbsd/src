@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.34 1999/02/25 20:21:07 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.35 1999/02/25 22:37:29 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -760,6 +760,7 @@ int
 ipsp_kern(int off, char **bufp, int len)
 {
     static char buffer[IPSEC_KERNFS_BUFSIZE];
+    struct flow *flow;
     struct tdb *tdb;
     int l, i;
 
@@ -890,15 +891,16 @@ ipsp_kern(int off, char **bufp, int len)
 			   ipsp_address(tdb->tdb_inext->tdb_dst),
 			   tdb->tdb_inext->tdb_sproto);
 
-	    if (tdb->tdb_flow)
-	      l+= sprintf(buffer + l,
-			  "\tCurrently used by at least one flow\n");
+	    for (i = 0, flow = tdb->tdb_flow; flow; flow = flow->flow_next)
+	      i++;
 
-	    l += sprintf(buffer + l, "\t\tCurrently %qu bytes processed\n",
-			 tdb->tdb_cur_bytes);
-	    
-	    l += sprintf(buffer + l, "\t\t%u flows processed so far\n",
+	    l+= sprintf(buffer + l, "\tCurrently used by %d flows\n", i);
+
+	    l += sprintf(buffer + l, "\t%u flows have used this SA\n",
 			 tdb->tdb_cur_allocations);
+	    
+	    l += sprintf(buffer + l, "\t%qu bytes processed by this SA\n",
+			 tdb->tdb_cur_bytes);
 	    
 	    l += sprintf(buffer + l, "\tExpirations:\n");
 
