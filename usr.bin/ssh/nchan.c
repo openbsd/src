@@ -28,7 +28,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: nchan.c,v 1.15 2000/05/02 12:44:38 markus Exp $");
+RCSID("$Id: nchan.c,v 1.16 2000/05/03 10:19:18 markus Exp $");
 
 #include "ssh.h"
 
@@ -139,6 +139,25 @@ static void
 chan_rcvd_ieof1(Channel *c)
 {
 	debug("channel %d: rcvd ieof", c->self);
+	if (c->type != SSH_CHANNEL_OPEN) {
+		debug("channel %d: non-open", c->self);
+		if (c->istate == CHAN_INPUT_OPEN) {
+			debug("channel %d: non-open: input open -> wait_oclose", c->self);
+			chan_shutdown_read(c);
+			chan_send_ieof1(c);
+			c->istate = CHAN_INPUT_WAIT_OCLOSE;
+		} else {
+			error("channel %d: istate %d != open", c->self, c->istate);
+		}
+		if (c->ostate == CHAN_OUTPUT_OPEN) {
+			debug("channel %d: non-open: output open -> closed", c->self);
+			chan_send_oclose1(c);
+			c->ostate = CHAN_OUTPUT_CLOSED;
+		} else {
+			error("channel %d: ostate %d != open", c->self, c->ostate);
+		}
+		return;
+	}
 	switch (c->ostate) {
 	case CHAN_OUTPUT_OPEN:
 		debug("channel %d: output open -> drain", c->self);
