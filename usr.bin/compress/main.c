@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.35 2003/07/14 18:57:31 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.36 2003/07/15 19:01:46 millert Exp $	*/
 
 static const char copyright[] =
 "@(#) Copyright (c) 1992, 1993\n\
@@ -35,7 +35,7 @@ static const char license[] =
 #if 0
 static char sccsid[] = "@(#)compress.c	8.2 (Berkeley) 1/7/94";
 #else
-static const char main_rcsid[] = "$OpenBSD: main.c,v 1.35 2003/07/14 18:57:31 millert Exp $";
+static const char main_rcsid[] = "$OpenBSD: main.c,v 1.36 2003/07/15 19:01:46 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -94,7 +94,8 @@ int compress(const char *, const char *, const struct compressor *,
 int decompress(const char *, const char *, const struct compressor *,
     int, struct stat *);
 const struct compressor *check_method(int, struct stat *, const char *);
-char *set_outfile(char *, char *, size_t);
+const char *check_suffix(const char *);
+char *set_outfile(const char *, char *, size_t);
 
 #define	OPTSTRING	"123456789ab:cdfghlLnNOo:qrS:tvV"
 const struct option longopts[] = {
@@ -127,7 +128,8 @@ main(int argc, char *argv[])
 	FTSENT *entry;
 	struct stat osb;
 	const struct compressor *method;
-	char *p, *s, *infile;
+	const char *s;
+	char *p, *infile;
 	char outfile[MAXPATHLEN], _infile[MAXPATHLEN], suffix[16];
 	char *nargv[512];	/* some estimate based on ARG_MAX */
 	int exists, oreg, ch, error, i, rc, oflag;
@@ -159,11 +161,11 @@ main(int argc, char *argv[])
 	strlcpy(suffix, method->suffix, sizeof(suffix));
 
 	nargv[0] = NULL;
-	if ((s = getenv("GZIP")) != NULL) {
+	if ((p = getenv("GZIP")) != NULL) {
 		char *last;
 
 		nargv[0] = *argv++;
-		for (i = 1, (p = strtok_r(s, " ", &last)); p;
+		for (i = 1, (p = strtok_r(p, " ", &last)); p != NULL;
 		    (p = strtok_r(NULL, " ", &last)), i++)
 			if (i < sizeof(nargv)/sizeof(nargv[1]) - argc - 1)
 				nargv[i] = p;
@@ -340,6 +342,12 @@ main(int argc, char *argv[])
 				continue;
 			}
 			break;
+		}
+
+		if (!decomp && !pipin && (s = check_suffix(infile)) != NULL) {
+			warnx("%s already has %s suffix -- unchanged",
+			    infile, s);
+			continue;
 		}
 
 		if (testmode)
@@ -630,42 +638,54 @@ permission(const char *fname)
 }
 
 /*
+ * Check infile for a known suffix and return the suffix portion or NULL.
+ */
+const char *
+check_suffix(const char *infile)
+{
+	int i;
+	char *suf, *sep, *separators = ".-_";
+	static char *suffixes[] = { "Z", "gz", "z", "tgz", "taz", NULL };
+
+	for (sep = separators; *sep != '\0'; sep++) {
+		if ((suf = strrchr(infile, *sep)) == NULL)
+			continue;
+		suf++;
+
+		for (i = 0; suffixes[i] != NULL; i++) {
+			if (strcmp(suf, suffixes[i]) == 0)
+				return (suf - 1);
+		}
+	}
+	return (NULL);
+}
+
+/*
  * Set outfile based on the suffix.  In most cases we just strip
  * off the suffix but things like .tgz and .taz are special.
  */
 char *
-set_outfile(char *infile, char *outfile, size_t osize)
+set_outfile(const char *infile, char *outfile, size_t osize)
 {
-	int i;
-	char *s;
-	static char *suffixes[] = { ".Z", ".gz", ".z", ".tgz", ".taz",
-				    "-Z", "-gz", "-z", "_Z", "_gz", "_z",
-				    NULL };
+	const char *s;
+	char *cp;
 
-	if ((s = strrchr(infile, '.')) == NULL &&
-	    (s = strrchr(infile, '-')) == NULL &&
-	    (s = strrchr(infile, '_')) == NULL)
+	if ((s = check_suffix(infile)) == NULL)
 		return (NULL);
 
-	for (i = 0; suffixes[i] != NULL; i++) {
-		if (strcmp(s, suffixes[i]) == 0) {
-			(void)strlcpy(outfile, infile, osize);
-			s = outfile + (s - infile);
-			/*
-			 * Convert .tgz and .taz -> .tar,
-			 * else drop the suffix.
-			 */
-			if (strcmp(s, ".tgz") == 0) {
-				s[2] = 'a';
-				s[3] = 'r';
-			} else if (strcmp(s, ".taz") == 0)
-				s[3] = 'r';
-			else
-				s[0] = '\0';
-			return (outfile);
-		}
-	}
-	return (NULL);
+	(void)strlcpy(outfile, infile, osize);
+	cp = outfile + (s - infile) + 1;
+	/*
+	 * Convert tgz and taz -> tar, else drop the suffix.
+	 */
+	if (strcmp(cp, "tgz") == 0) {
+		cp[1] = 'a';
+		cp[2] = 'r';
+	} else if (strcmp(cp, "taz") == 0)
+		cp[2] = 'r';
+	else
+		cp[-1] = '\0';
+	return (outfile);
 }
 
 __dead void
