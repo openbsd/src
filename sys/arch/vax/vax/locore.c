@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.c,v 1.17 2001/04/01 17:15:22 hugh Exp $	*/
+/*	$OpenBSD: locore.c,v 1.18 2001/08/26 11:48:06 hugh Exp $	*/
 /*	$NetBSD: locore.c,v 1.43 2000/03/26 11:39:45 ragge Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -146,7 +146,10 @@ start()
 #if VAX46
 	case VAX_BTYP_46:
 		dep_call = &ka46_calls;
-		strcat(cpu_model, "4000/60");
+		if (vax_confdata & 0x80)
+			strcat(cpu_model, "3100/80");
+		else
+			strcat(cpu_model, "4000/60");
 		break;
 #endif
 #if VAX48
