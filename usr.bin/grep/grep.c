@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.7 2003/06/22 23:12:38 deraadt Exp $	*/
+/*	$OpenBSD: grep.c,v 1.8 2003/06/22 23:51:22 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -86,7 +86,7 @@ int	 first;		/* flag whether or not this is our fist match */
 int	 tail;		/* lines left to print */
 int	 lead;		/* number of lines in leading context queue */
 
-char	*progname;
+extern char *__progname;
 
 static void
 usage(void)
@@ -97,7 +97,7 @@ usage(void)
 #else
 	    "usage: %s [-[AB] num] [-CEFGHLPRSVZabchilnoqsvwx]"
 #endif
-	    " [-e pattern] [-f file] [file ...]\n", progname);
+	    " [-e pattern] [-f file] [file ...]\n", __progname);
 	exit(2);
 }
 
@@ -194,11 +194,6 @@ main(int argc, char *argv[])
 {
 	char *tmp;
 	int c, i;
-
-	if ((progname = strrchr(*argv, '/')) != NULL)
-		++progname;
-	else
-		progname = *argv;
 
 	while ((c = getopt_long(argc, argv, optstr,
 				long_options, (int *)NULL)) != -1) {
@@ -330,7 +325,7 @@ main(int argc, char *argv[])
 		++argv;
 	}
 
-	switch (*progname) {
+	switch (__progname[0]) {
 	case 'e':
 		Eflag++;
 		break;
@@ -343,7 +338,7 @@ main(int argc, char *argv[])
 #ifndef NOZ
 	case 'z':
 		Zflag++;
-		switch(progname[1]) {
+		switch(__progname[1]) {
 		case 'e':
 			Eflag++;
 			break;
