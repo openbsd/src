@@ -1,4 +1,4 @@
-/*	$OpenBSD: ichreg.h,v 1.2 2004/09/25 13:58:44 grange Exp $	*/
+/*	$OpenBSD: ichreg.h,v 1.3 2004/10/05 18:58:40 grange Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -30,6 +30,8 @@
  * PCI configuration registers
  */
 #define ICH_PMBASE	0x40		/* ACPI base address */
+#define ICH_ACPI_CNTL	0x44		/* ACPI control */
+#define ICH_ACPI_CNTL_ACPI_EN	(1 << 4)	/* ACPI enable */
 #define ICH_GEN_PMCON1	0xa0		/* general PM configuration */
 /* ICHx-M only */
 #define ICH_GEN_PMCON1_SS_EN	0x08		/* enable SpeedStep */

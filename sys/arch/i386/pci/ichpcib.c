@@ -1,4 +1,4 @@
-/*	$OpenBSD: ichpcib.c,v 1.5 2004/09/26 18:37:54 grange Exp $	*/
+/*	$OpenBSD: ichpcib.c,v 1.6 2004/10/05 18:58:40 grange Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -32,9 +32,9 @@
 
 #include <machine/bus.h>
 
-#include <dev/pci/pcidevs.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
+#include <dev/pci/pcidevs.h>
 
 #include <dev/pci/ichreg.h>
 
@@ -82,31 +82,24 @@ static void *ichss_cookie;	/* XXX */
 extern int setperf_prio;
 #endif	/* !SMALL_KERNEL */
 
+const struct pci_matchid ichpcib_devices[] = {
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AA_LPC },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AB_LPC },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_LPC },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BAM_LPC },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_LPC },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CAM_LPC },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_LPC },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DBM_LPC },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_LPC }
+};
+
 int
 ichpcib_match(struct device *parent, void *match, void *aux)
 {
-	struct pci_attach_args *pa = aux;
-
-	if (PCI_CLASS(pa->pa_class) != PCI_CLASS_BRIDGE ||
-	    PCI_SUBCLASS(pa->pa_class) != PCI_SUBCLASS_BRIDGE_ISA) {
-		return (0);
-	}
-
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_INTEL) {
-		switch (PCI_PRODUCT(pa->pa_id)) {
-		case PCI_PRODUCT_INTEL_82801AA_LPC:	/* ICH */
-		case PCI_PRODUCT_INTEL_82801AB_LPC:	/* ICH0 */
-		case PCI_PRODUCT_INTEL_82801BA_LPC:	/* ICH2 */
-		case PCI_PRODUCT_INTEL_82801BAM_LPC:	/* ICH2-M */
-		case PCI_PRODUCT_INTEL_82801CA_LPC:	/* ICH3-S */
-		case PCI_PRODUCT_INTEL_82801CAM_LPC:	/* ICH3-M */
-		case PCI_PRODUCT_INTEL_82801DB_LPC:	/* ICH4 */
-		case PCI_PRODUCT_INTEL_82801DBM_LPC:	/* ICH4-M */
-		case PCI_PRODUCT_INTEL_82801EB_LPC:	/* ICH5 */
-			return (2);	/* supersede pcib(4) */
-		}
-	}
-
+	if (pci_matchbyid((struct pci_attach_args *)aux, ichpcib_devices,
+	    sizeof(ichpcib_devices) / sizeof(ichpcib_devices[0])))
+		return (2);	/* supersede pcib(4) */
 	return (0);
 }
 
@@ -115,7 +108,14 @@ ichpcib_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ichpcib_softc *sc = (struct ichpcib_softc *)self;
 	struct pci_attach_args *pa = aux;
-	pcireg_t pmbase;
+	pcireg_t cntl, pmbase;
+
+	/* Check if power management I/O space is enabled */
+	cntl = pci_conf_read(pa->pa_pc, pa->pa_tag, ICH_ACPI_CNTL);
+	if ((cntl & ICH_ACPI_CNTL_ACPI_EN) == 0) {
+		printf(": PM disabled");
+		goto corepcib;
+	}
 
 	/* Map power management I/O space */
 	sc->sc_pm_iot = pa->pa_iot;
@@ -127,9 +127,13 @@ ichpcib_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 #ifdef __HAVE_TIMECOUNTER
-	/* Hook into the kern_tc */
+	/* Register new timecounter */
 	ichpcib_timecounter.tc_priv = sc;
 	tc_init(&ichpcib_timecounter);
+
+	printf(": %s-bit timer at %lluHz",
+	    (ichpcib_timecounter.tc_counter_mask == 0xffffffff ? "32" : "24"),
+	    (unsigned long long)ichpcib_timecounter.tc_frequency);
 #endif	/* __HAVE_TIMECOUNTER */
 
 #ifndef SMALL_KERNEL
