@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_ipcomp.c,v 1.12 2003/03/31 17:16:56 millert Exp $ */
+/* $OpenBSD: ip_ipcomp.c,v 1.13 2003/03/31 20:52:06 millert Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -231,10 +231,11 @@ ipcomp_input_cb(op)
 	s = spltdb();
 
 	tdb = gettdb(tc->tc_spi, &tc->tc_dst, tc->tc_proto);
-	FREE(tc, M_XDATA);
 	if (tdb == NULL) {
+		FREE(tc, M_XDATA);
 		ipcompstat.ipcomps_notdb++;
 		DPRINTF(("ipcomp_input_cb(): TDB expired while in crypto"));
+		error = EPERM;
 		goto baddone;
 	}
 	ipcompx = (struct comp_algo *) tdb->tdb_compalgxform;
@@ -246,6 +247,7 @@ ipcomp_input_cb(op)
 	/* Hard expiration */
 	if ((tdb->tdb_flags & TDBF_BYTES) &&
 	    (tdb->tdb_cur_bytes >= tdb->tdb_exp_bytes)) {
+		FREE(tc, M_XDATA);
 		pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_HARD);
 		tdb_delete(tdb);
 		splx(s);
@@ -261,19 +263,22 @@ ipcomp_input_cb(op)
 
 	/* Check for crypto errors */
 	if (crp->crp_etype) {
-		/* Reset the session ID */
-		if (tdb->tdb_cryptoid != 0)
-			tdb->tdb_cryptoid = crp->crp_sid;
 		if (crp->crp_etype == EAGAIN) {
+			/* Reset the session ID */
+			if (tdb->tdb_cryptoid != 0)
+				tdb->tdb_cryptoid = crp->crp_sid;
 			splx(s);
 			return crypto_dispatch(crp);
 		}
+		FREE(tc, M_XDATA);
 		ipcompstat.ipcomps_noxform++;
 		DPRINTF(("ipcomp_input_cb(): crypto error %d\n",
 		    crp->crp_etype));
 		error = crp->crp_etype;
 		goto baddone;
 	}
+	FREE(tc, M_XDATA);
+
 	/* Shouldn't happen... */
 	if (m == NULL) {
 		ipcompstat.ipcomps_crypto++;
@@ -638,22 +643,21 @@ ipcomp_output_cb(cp)
 
 	/* Check for crypto errors. */
 	if (crp->crp_etype) {
-		/* Reset session ID */
-		if (tdb->tdb_cryptoid != 0)
-			tdb->tdb_cryptoid = crp->crp_sid;
-
 		if (crp->crp_etype == EAGAIN) {
+			/* Reset the session ID */
+			if (tdb->tdb_cryptoid != 0)
+				tdb->tdb_cryptoid = crp->crp_sid;
 			splx(s);
 			return crypto_dispatch(crp);
 		}
-
 		FREE(tc, M_XDATA);
 		ipcompstat.ipcomps_noxform++;
 		DPRINTF(("ipcomp_output_cb(): crypto error %d\n",
 		    crp->crp_etype));
+		error = crp->crp_etype;
 		goto baddone;
-	} else
-		FREE(tc, M_XDATA);
+	}
+	FREE(tc, M_XDATA);
 
 	/* Shouldn't happen... */
 	if (m == NULL) {

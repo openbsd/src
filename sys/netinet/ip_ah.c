@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.72 2003/02/28 21:42:56 jason Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.73 2003/03/31 20:52:06 millert Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -721,16 +721,14 @@ ah_input_cb(void *op)
 
 	/* Check for crypto errors. */
 	if (crp->crp_etype) {
-		FREE(tc, M_XDATA);
-
-		if (tdb->tdb_cryptoid != 0)
-			tdb->tdb_cryptoid = crp->crp_sid;
-
 		if (crp->crp_etype == EAGAIN) {
+			/* Reset the session ID */
+			if (tdb->tdb_cryptoid != 0)
+				tdb->tdb_cryptoid = crp->crp_sid;
 			splx(s);
 			return crypto_dispatch(crp);
 		}
-
+		FREE(tc, M_XDATA);
 		ahstat.ahs_noxform++;
 		DPRINTF(("ah_input_cb(): crypto error %d\n", crp->crp_etype));
 		error = crp->crp_etype;
@@ -1244,14 +1242,13 @@ ah_output_cb(void *op)
 
 	/* Check for crypto errors. */
 	if (crp->crp_etype) {
-		if (tdb->tdb_cryptoid != 0)
-			tdb->tdb_cryptoid = crp->crp_sid;
-
 		if (crp->crp_etype == EAGAIN) {
+			/* Reset the session ID */
+			if (tdb->tdb_cryptoid != 0)
+				tdb->tdb_cryptoid = crp->crp_sid;
 			splx(s);
 			return crypto_dispatch(crp);
 		}
-
 		FREE(tc, M_XDATA);
 		ahstat.ahs_noxform++;
 		DPRINTF(("ah_output_cb(): crypto error %d\n", crp->crp_etype));
