@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.15 1998/03/26 12:38:39 niklas Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.16 1998/03/26 12:41:28 niklas Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.27 1996/10/13 03:06:34 christos Exp $	*/
 
 /*
@@ -427,7 +427,7 @@ done:
 		clp->rdblock = RDBNULL;
 	bp->b_flags = B_INVAL | B_AGE | B_READ;
 	brelse(bp);
-	return(msg);
+	return (msg);
 }
 
 /*
@@ -489,16 +489,16 @@ writedisklabel(dev, strat, lp, clp)
 	struct buf *bp;
 	bp = NULL;	/* XXX */
 
-	return(EINVAL);
+	return (EINVAL);
 	/*
 	 * get write out partition list iff cpu_label is valid.
 	 */
 	if (clp->valid == 0 ||
 	    (clp->rdblock <= 0 || clp->rdblock >= RDB_MAXBLOCKS))
-		return(EINVAL);
+		return (EINVAL);
 
 	bmap = getrdbmap(dev, strat, lp, clp);
-	return(EINVAL);
+	return (EINVAL);
 }
 
 int
@@ -551,7 +551,7 @@ rdbchksum(bdata)
 
 	while (cnt--)
 		val += *blp++;
-	return(val);
+	return (val);
 }
 
 struct adostype 
@@ -569,18 +569,18 @@ getadostype(dostype)
 	switch (t3) {
 	case DOST_NBR:
 		adt.archtype = ADT_NETBSDROOT;
-		return(adt);
+		return (adt);
 	case DOST_NBS:
 		adt.archtype = ADT_NETBSDSWAP;
-		return(adt);
+		return (adt);
 	case DOST_NBU:
 		adt.archtype = ADT_NETBSDUSER;
-		return(adt);
+		return (adt);
 	case DOST_MUFS:
 		/* check for 'muFS'? */
 		adt.archtype = ADT_AMIGADOS;
 		adt.fstype = FS_ADOS;
-		return(adt);
+		return (adt);
 	case DOST_DOS:
 		adt.archtype = ADT_AMIGADOS;
                 if (b1 > 5)
@@ -597,14 +597,14 @@ getadostype(dostype)
 			    "although it's unknown\n", dostype);
 #endif
 		adt.fstype = FS_ADOS;
-		return(adt);
+		return (adt);
 	case DOST_AMIX:
 		adt.archtype = ADT_AMIX;
 		if (b1 == 2)
 			adt.fstype = FS_BSDFFS;
 		else
 			goto unknown;
-		return(adt);
+		return (adt);
 	case DOST_XXXBSD:
 #ifdef DIAGNOSTIC
 		printf("found dostype: 0x%x which is deprecated", dostype);
@@ -622,7 +622,7 @@ getadostype(dostype)
 #ifdef DIAGNOSTIC
 		printf(" using: 0x%x instead\n", dostype);
 #endif
-		return(getadostype(dostype));
+		return (getadostype(dostype));
 	default:
 	unknown:
 #ifdef DIAGNOSTIC
@@ -631,7 +631,7 @@ getadostype(dostype)
 #endif
 		adt.archtype = ADT_UNKNOWN;
 		adt.fstype = FS_UNUSED;
-		return(adt);
+		return (adt);
 	}	
 }
 
@@ -656,6 +656,6 @@ getrdbmap(dev, strat, lp, clp)
 	bp->b_dev = MAKEDISKDEV(major(dev), DISKUNIT(dev), RAW_PART);
 	/* XXX finish */
 	brelse(bp);
-	return(NULL);
+	return (NULL);
 }
 
