@@ -9,6 +9,13 @@
 ./etc/firmware/atu-rfmd2958-int
 ./etc/firmware/atu-rfmd2958smc-ext
 ./etc/firmware/atu-rfmd2958smc-int
+./etc/firmware/fxp-d101a
+./etc/firmware/fxp-d101b0
+./etc/firmware/fxp-d101ma
+./etc/firmware/fxp-d101s
+./etc/firmware/fxp-d102
+./etc/firmware/fxp-d102c
+./etc/firmware/fxp-license
 ./etc/firmware/uyap
 ./etc/firmware/uyap-license
 ./sbin/fdisk
