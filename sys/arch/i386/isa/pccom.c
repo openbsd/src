@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccom.c,v 1.45 2003/10/03 16:44:49 miod Exp $	*/
+/*	$OpenBSD: pccom.c,v 1.46 2004/12/23 17:50:24 markus Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -1947,7 +1947,18 @@ comcninit(cp)
 	XXX NEEDS TO BE FIXED XXX
 	comconsiot = ???;
 #endif
+
+#ifdef CONADDR_OVERRIDE
 	comconsaddr = CONADDR;
+#else
+	const int comports[4] = { 0x3f8, 0x2f8, 0x3e8, 0x2e8 };
+	int unit = minor(cp->cn_dev);
+
+	if (unit >= 0 && unit < 4)
+		comconsaddr = comports[unit];
+	else
+		comconsaddr = CONADDR;
+#endif
 
 	if (bus_space_map(comconsiot, comconsaddr, COM_NPORTS, 0, &comconsioh))
 		panic("comcninit: mapping failed");
