@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.c,v 1.4 1998/10/30 19:40:22 mickey Exp $	*/
+/*	$OpenBSD: pdc.c,v 1.5 1998/12/13 06:41:43 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -81,13 +81,11 @@
  */
 
 pdcio_t pdc;
-int	pdcbuf[64]		/* PDC return buffer */
-		__attribute ((aligned(8)));
+int	pdcbuf[64] PDC_ALIGNMENT;/* PDC return buffer */
 struct	stable_storage sstor;	/* contents of Stable Storage */
 int	sstorsiz;		/* size of Stable Storage */
 struct bootdata bd;
 int bdsize = sizeof(struct bootdata);
-u_int chasdata;
 
 /*
  * Initialize PDC and related variables.
@@ -120,8 +118,8 @@ pdc_init()
 	/*
 	 * Clear the FAULT light (so we know when we get a real one)
 	 */
-	chasdata = PDC_OSTAT(PDC_OSTAT_BOOT) | 0xCEC0;
-	(void) (*pdc)(PDC_CHASSIS, PDC_CHASSIS_DISP, chasdata);
+	(void) (*pdc)(PDC_CHASSIS, PDC_CHASSIS_DISP,
+		      PDC_OSTAT(PDC_OSTAT_BOOT) | 0xCEC0);
 }
 
 /*
