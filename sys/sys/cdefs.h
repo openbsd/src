@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdefs.h,v 1.6 2001/08/07 19:13:23 art Exp $	*/
+/*	$OpenBSD: cdefs.h,v 1.7 2001/08/07 21:33:03 millert Exp $	*/
 /*	$NetBSD: cdefs.h,v 1.16 1996/04/03 20:46:39 christos Exp $	*/
 
 /*
@@ -123,9 +123,9 @@
  * GCC1 and some versions of GCC2 declare dead (non-returning) and
  * pure (no side effects) functions using "volatile" and "const";
  * unfortunately, these then cause warnings under "-ansi -pedantic".
- * GCC2 uses a new, peculiar __attribute__((attrs)) style.  All of
- * these work for GNU C++ (modulo a slight glitch in the C++ grammar
- * in the distribution version of 2.5.5).
+ * GCC >= 2.5 uses the __attribute__((attrs)) style.  All of these
+ * work for GNU C++ (modulo a slight glitch in the C++ grammar in
+ * the distribution version of 2.5.5).
  */
 
 #if !__GNUC_PREREQ__(2, 5)
@@ -134,6 +134,9 @@
 #define	__dead		__volatile
 #define	__pure		__const
 #endif
+#elif !defined(__STRICT_ANSI__)
+#define __dead		__attribute__((__noreturn__))
+#define __pure		__attribute__((__const__))
 #endif
 
 /*
