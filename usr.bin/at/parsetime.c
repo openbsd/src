@@ -1,4 +1,4 @@
-/*	$OpenBSD: parsetime.c,v 1.4 1997/03/01 23:40:10 millert Exp $	*/
+/*	$OpenBSD: parsetime.c,v 1.5 1998/06/26 03:20:11 millert Exp $	*/
 /*	$NetBSD: parsetime.c,v 1.3 1995/03/25 18:13:36 glass Exp $	*/
 
 /* 
@@ -137,7 +137,7 @@ static int sc_tokid;	/* scanner - token id */
 static int sc_tokplur;	/* scanner - is token plural? */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: parsetime.c,v 1.4 1997/03/01 23:40:10 millert Exp $";
+static char rcsid[] = "$OpenBSD: parsetime.c,v 1.5 1998/06/26 03:20:11 millert Exp $";
 #endif
 
 /* Local functions */
@@ -594,7 +594,13 @@ parsetime(argc, argv)
 
 	switch (token()) {
 	case NOW:	/* now is optional prefix for PLUS tree */
-		expect(PLUS);
+		token();
+		if (sc_tokid == EOF) {
+			runtime = nowtime;
+			break;
+		}
+		else if (sc_tokid != PLUS)
+			plonk(sc_tokid);
 	case PLUS:
 		plus(&runtime);
 		break;
