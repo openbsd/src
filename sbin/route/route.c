@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.62 2004/01/15 10:50:49 markus Exp $	*/
+/*	$OpenBSD: route.c,v 1.63 2004/01/18 12:26:16 markus Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)route.c	8.3 (Berkeley) 3/19/94";
 #else
-static const char rcsid[] = "$OpenBSD: route.c,v 1.62 2004/01/15 10:50:49 markus Exp $";
+static const char rcsid[] = "$OpenBSD: route.c,v 1.63 2004/01/18 12:26:16 markus Exp $";
 #endif
 #endif /* not lint */
 
@@ -1475,6 +1475,7 @@ print_rtmsg(struct rt_msghdr *rtm, int msglen)
 	struct if_msghdr *ifm;
 	struct ifa_msghdr *ifam;
 	struct if_announcemsghdr *ifan;
+	const char *state = "unknown";
 
 	if (verbose == 0)
 		return;
@@ -1487,7 +1488,16 @@ print_rtmsg(struct rt_msghdr *rtm, int msglen)
 	switch (rtm->rtm_type) {
 	case RTM_IFINFO:
 		ifm = (struct if_msghdr *)rtm;
-		(void) printf("if# %d, flags:", ifm->ifm_index);
+		(void) printf("if# %d, ", ifm->ifm_index);
+		switch (ifm->ifm_data.ifi_link_state) {
+		case LINK_STATE_DOWN:
+			state = "down";
+			break;
+		case LINK_STATE_UP:
+			state = "up";
+			break;
+		}
+		(void) printf("link: %s, flags:", state);
 		bprintf(stdout, ifm->ifm_flags, ifnetflags);
 		pmsg_addrs((char *)(ifm + 1), ifm->ifm_addrs);
 		break;
@@ -1635,17 +1645,17 @@ pmsg_addrs(char *cp, int addrs)
 	struct sockaddr *sa;
 	int i;
 
-	if (addrs == 0)
-		return;
-	(void) printf("\nsockaddrs: ");
-	bprintf(stdout, addrs, addrnames);
-	(void) putchar('\n');
-	for (i = 1; i; i <<= 1)
-		if (i & addrs) {
-			sa = (struct sockaddr *)cp;
-			(void) printf(" %s", routename(sa));
-			ADVANCE(cp, sa);
-		}
+	if (addrs != 0) {
+		(void) printf("\nsockaddrs: ");
+		bprintf(stdout, addrs, addrnames);
+		(void) putchar('\n');
+		for (i = 1; i; i <<= 1)
+			if (i & addrs) {
+				sa = (struct sockaddr *)cp;
+				(void) printf(" %s", routename(sa));
+				ADVANCE(cp, sa);
+			}
+	}
 	(void) putchar('\n');
 	(void) fflush(stdout);
 }
