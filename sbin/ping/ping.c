@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.15 1997/02/04 14:52:56 kstailey Exp $	*/
+/*	$OpenBSD: ping.c,v 1.16 1997/02/04 16:44:14 kstailey Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: ping.c,v 1.15 1997/02/04 14:52:56 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: ping.c,v 1.16 1997/02/04 16:44:14 kstailey Exp $";
 #endif
 #endif /* not lint */
 
@@ -887,7 +887,7 @@ pr_icmph(icp)
 		case ICMP_UNREACH_SRCFAIL:
 			(void)printf("Source Route Failed\n");
 			break;
-		case ICMP_UNREACH_ADM_PROHIB:
+		case ICMP_UNREACH_FILTER_PROHIB:
 			(void)printf("Route administratively prohibited\n");
 			break;
 		default:

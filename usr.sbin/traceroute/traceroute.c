@@ -537,8 +537,8 @@ main(argc, argv)
 						++unreachable;
 						Printf(" !S");
 						break;
-					case ICMP_UNREACH_ADM_PROHIB:
-					case ICMP_UNREACH_NET_PROHIB:
+					case ICMP_UNREACH_FILTER_PROHIB:
+					case ICMP_UNREACH_NET_PROHIB: /*misuse*/
 						++unreachable;
 						Printf(" !A");
 						break;

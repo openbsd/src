@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.h,v 1.5 1997/01/30 17:05:46 kstailey Exp $	*/
+/*	$OpenBSD: ip_icmp.h,v 1.6 1997/02/04 16:44:13 kstailey Exp $	*/
 /*	$NetBSD: ip_icmp.h,v 1.10 1996/02/13 23:42:28 christos Exp $	*/
 
 /*
@@ -128,22 +128,22 @@ struct icmp {
  */
 #define	ICMP_ECHOREPLY		0		/* echo reply */
 #define	ICMP_UNREACH		3		/* dest unreachable, codes: */
-#define		ICMP_UNREACH_NET	0		/* bad net */
-#define		ICMP_UNREACH_HOST	1		/* bad host */
-#define		ICMP_UNREACH_PROTOCOL	2		/* bad protocol */
-#define		ICMP_UNREACH_PORT	3		/* bad port */
-#define		ICMP_UNREACH_NEEDFRAG	4		/* IP_DF caused drop */
-#define		ICMP_UNREACH_SRCFAIL	5		/* src route failed */
-#define		ICMP_UNREACH_NET_UNKNOWN 6		/* unknown net */
-#define		ICMP_UNREACH_HOST_UNKNOWN 7		/* unknown host */
-#define		ICMP_UNREACH_ISOLATED	8		/* src host isolated */
-#define		ICMP_UNREACH_NET_PROHIB	9		/* prohibited access */
-#define		ICMP_UNREACH_HOST_PROHIB 10		/* ditto */
-#define		ICMP_UNREACH_TOSNET	11		/* bad tos for net */
-#define		ICMP_UNREACH_TOSHOST	12		/* bad tos for host */
-#define		ICMP_UNREACH_ADM_PROHIB	13		/* prohibited access */
-#define		ICMP_UNREACH_PREC_VIOLATN 14		/* precedence violat'n*/
-#define		ICMP_UNREACH_PREC_CUTOFF 15		/* precedence cutoff */
+#define		ICMP_UNREACH_NET		0	/* bad net */
+#define		ICMP_UNREACH_HOST		1	/* bad host */
+#define		ICMP_UNREACH_PROTOCOL		2	/* bad protocol */
+#define		ICMP_UNREACH_PORT		3	/* bad port */
+#define		ICMP_UNREACH_NEEDFRAG		4	/* IP_DF caused drop */
+#define		ICMP_UNREACH_SRCFAIL		5	/* src route failed */
+#define		ICMP_UNREACH_NET_UNKNOWN 	6	/* unknown net */
+#define		ICMP_UNREACH_HOST_UNKNOWN 	7	/* unknown host */
+#define		ICMP_UNREACH_ISOLATED		8	/* src host isolated */
+#define		ICMP_UNREACH_NET_PROHIB		9	/* prohibited access */
+#define		ICMP_UNREACH_HOST_PROHIB 	10	/* ditto */
+#define		ICMP_UNREACH_TOSNET		11	/* bad tos for net */
+#define		ICMP_UNREACH_TOSHOST		12	/* bad tos for host */
+#define		ICMP_UNREACH_FILTER_PROHIB	13	/* prohibited access */
+#define		ICMP_UNREACH_HOST_PRECEDENCE 	14	/* precedence violat'n*/
+#define		ICMP_UNREACH_PRECEDENCE_CUTOFF 	15	/* precedence cutoff */
 #define	ICMP_SOURCEQUENCH	4		/* packet lost, slow down */
 #define	ICMP_REDIRECT		5		/* shorter route, codes: */
 #define		ICMP_REDIRECT_NET	0		/* for network */
