@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.384 2003/05/16 17:15:17 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.385 2003/05/17 02:04:24 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -171,6 +171,7 @@ struct filter_opts {
 	struct node_qassign	 queues;
 	char			*tag;
 	char			*match_tag;
+	u_int8_t		 match_tag_not;
 } filter_opts;
 
 struct antispoof_opts {
@@ -1297,6 +1298,7 @@ pfrule		: action dir logquick interface route af proto fromto
 					    PF_TAG_NAME_SIZE - 1);
 					YYERROR;
 				}
+			r.match_tag_not = $9.match_tag_not;
 			r.flags = $9.flags.b1;
 			r.flagset = $9.flags.b2;
 			if (rule_label(&r, $9.label))
@@ -1489,8 +1491,9 @@ filter_opt	: USER uids {
 		| TAG string				{
 			filter_opts.tag = $2;
 		}
-		| TAGGED string			{
-			filter_opts.match_tag = $2;
+		| not TAGGED string			{
+			filter_opts.match_tag = $3;
+			filter_opts.match_tag_not = $1;
 		}
 		;
 
