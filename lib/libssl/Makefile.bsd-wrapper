@@ -1,9 +1,9 @@
 # Build wrapper for OpenSSL
-# $OpenBSD: Makefile.bsd-wrapper,v 1.28 2001/01/22 06:14:09 deraadt Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.29 2001/01/31 20:49:10 brad Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
-LNDIR=          /usr/bin/lndir
+LNDIR=	/usr/bin/lndir
 
 # Figure out what flag we use to OpenSSL's configure. This
 # needs to be tested on all architectures.
@@ -35,13 +35,18 @@ SSLCONF=	--openssldir=/etc/ssl OpenBSD
 .endif
 .endif
 
-MUNGEDFILES =  	${.OBJDIR}/${SSL_SRC}/crypto/opensslconf.h ${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_dat.h ${.OBJDIR}/${SSL_SRC}/Makefile.ssl ${.OBJDIR}/${SSL_SRC}/Makefile ${.OBJDIR}/${SSL_SRC}/apps/der_chop ${.OBJDIR}/${SSL_SRC}/tools/c_rehash
+MUNGEDFILES= \
+	${.OBJDIR}/${SSL_SRC}/crypto/opensslconf.h \
+	${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_dat.h \
+	${.OBJDIR}/${SSL_SRC}/Makefile.ssl \
+	${.OBJDIR}/${SSL_SRC}/Makefile \
+	${.OBJDIR}/${SSL_SRC}/apps/der_chop \
+	${.OBJDIR}/${SSL_SRC}/tools/c_rehash
 
 .include <bsd.own.mk>		# for NOMAN
 
 .ifndef NOMAN
 MANALL=	ssl.cat3 SSL_get_error.cat3 \
-	\
 	BN_CTX_new.cat3 OPENSSL_VERSION_NUMBER.cat3 BN_CTX_start.cat3 \
 	OpenSSL_add_all_algorithms.cat3 BN_add.cat3 RAND_add.cat3 BN_add_word.cat3 \
 	RAND_bytes.cat3 BN_bn2bin.cat3 RAND_cleanup.cat3 BN_cmp.cat3 RAND_egd.cat3 \
@@ -68,9 +73,7 @@ MANALL=	ssl.cat3 SSL_get_error.cat3 \
 	EVP_EncryptInit.cat3 BUF_MEM_new.cat3 \
 	EVP_OpenInit.cat3 EVP_SealInit.cat3 \
 	EVP_SignInit.cat3 EVP_VerifyInit.cat3 \
-	\
 	openssl.cat1 \
-	\
 	BUF_MEM_new.cat3 RC4.cat3 \
 	RIPEMD160.cat3 CRYPTO_set_locking_callback.cat3
 
@@ -518,7 +521,6 @@ maninstall:
 	  --center='OpenSSL' --release="OpenBSD `uname -r`" \
 	  `basename ${.ALLSRC}` ) | nroff -Tascii -man > ${.TARGET}
 
-
 .pod.ps3:
 	( cd `dirname ${.ALLSRC}` && pod2man --section=3 --official \
 	  --center='OpenSSL' --release="OpenBSD `uname -r`" \
@@ -532,43 +534,40 @@ maninstall:
 	  --center='OpenSSL' --release="OpenBSD `uname -r`" \
 	  `basename ${.ALLSRC}` ) | nroff -Tps -man > ${.TARGET}
 
-.if exists(src-patent)
-SSL_SRC=src-patent
-.else
 SSL_SRC=src
-.endif 	  
 
 all: 	prereq ${MANALL} ${PSALL}
-	cd ${.OBJDIR} && ${MAKE}
+	@cd ${.OBJDIR} && ${MAKE}
 
 includes: prereq
-	cd ${.OBJDIR} && ${MAKE} includes
+	@cd ${.OBJDIR} && ${MAKE} includes
 
 prereq:	${.OBJDIR}/${SSL_SRC}/Makefile.ssl ${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_dat.h
 
 install: maninstall
-	cd ${.OBJDIR} && ${MAKE} install
+	@cd ${.OBJDIR} && ${MAKE} install
 
 #${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_dat.h: ${.OBJDIR}/${SSL_SRC}/crypto/objects/objects.h
 #	/usr/bin/perl ${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_dat.pl ${.OBJDIR}/${SSL_SRC}/crypto/objects/objects.h ${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_dat.h
 # Stupid ssl 0.9.6 fucks this up completely, won't even build if you
 # try to regenerate obj_dat.h - even with a stock distrib. 
 ${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_dat.h: ${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_dat.h.src
-	cp ${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_dat.h.src ${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_dat.h
+	@cp ${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_dat.h.src \
+		${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_dat.h
 
 ${.OBJDIR}/${SSL_SRC}/Makefile.ssl : ${.OBJDIR}/${SSL_SRC}/Makefile.org
-	cd ${.OBJDIR}/${SSL_SRC} && /usr/bin/perl Configure ${SSLCONF}
+	@cd ${.OBJDIR}/${SSL_SRC} && /usr/bin/perl Configure ${SSLCONF}
 
 .if !exists(${.OBJDIR}/${SSL_SRC}/Makefile.org)
 ${.OBJDIR}/${SSL_SRC}/Makefile.org: ${.CURDIR}/${SSL_SRC}/Makefile.org
-	${LNDIR} -s -e obj -e obj.${MACHINE_ARCH} -e Makefile.bsd-wrapper ${.CURDIR}
+	@${LNDIR} -s -e obj -e obj.${MACHINE_ARCH} -e Makefile.bsd-wrapper ${.CURDIR}
 .endif
 
 clean:
-	cd ${.OBJDIR} && ${MAKE} clean
+	@cd ${.OBJDIR} && ${MAKE} clean
 
 cleandir: clean
-	cd ${.OBJDIR} && rm -f ${MUNGEDFILES}
+	@cd ${.OBJDIR} && rm -f ${MUNGEDFILES}
 
 test:
 	# Nothing here so far...

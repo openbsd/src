@@ -1,10 +1,7 @@
 .include <bsd.own.mk>
+
 ECHO= /bin/echo
 
-.if exists(${.OBJDIR}/src-patent)
-SUBDIR= crypto-patent ssl-patent
-.else
-SUBDIR= crypto ssl
-.endif
+SUBDIR=	crypto ssl
 
 .include <bsd.subdir.mk>
