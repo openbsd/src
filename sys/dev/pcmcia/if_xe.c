@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xe.c,v 1.8 1999/08/13 20:36:38 fgsch Exp $	*/
+/*	$OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist, C Stone, Job de Haas
@@ -112,6 +112,7 @@
 #define XED_CONFIG	0x1
 #define XED_MII		0x2
 #define XED_INTR	0x4
+#define XED_FIFO	0x8
 
 #ifndef XEDEBUG_DEF
 #define XEDEBUG_DEF	(XED_CONFIG|XED_INTR)
@@ -1111,6 +1112,7 @@ xe_start(ifp)
 	bus_addr_t offset = sc->sc_offset;
 	unsigned int s, len, pad = 0;
 	struct mbuf *m0, *m;
+	u_int16_t space;
 
 	/* Don't transmit if interface is busy or not running. */
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
@@ -1125,17 +1127,26 @@ xe_start(ifp)
 	if (!(m0->m_flags & M_PKTHDR))
 		panic("xe_start: no header mbuf");
 
-	IF_DEQUEUE(&ifp->if_snd, m0);
 	len = m0->m_pkthdr.len;
+
+	/* Pad to ETHER_MIN_LEN - ETHER_CRC_LEN. */
+	if (len < ETHER_MIN_LEN - ETHER_CRC_LEN)
+		pad = ETHER_MIN_LEN - ETHER_CRC_LEN - len;
+
+	space = bus_space_read_2(bst, bsh, offset + TSO0) & 0x7fff;
+	if (len + pad + 2 > space) {
+		DPRINTF(XED_FIFO,
+		    ("%s: not enough space in output FIFO (%d > %d)\n",
+		    sc->sc_dev.dv_xname, len + pad + 2, space));
+		return;
+	}
+
+	IF_DEQUEUE(&ifp->if_snd, m0);
 
 #if NBPFILTER > 0
 	if (ifp->if_bpf)
 		bpf_mtap(ifp->if_bpf, m0);
 #endif
-
-	/* Pad to ETHER_MIN_LEN - ETHER_CRC_LEN. */
-	if (len < ETHER_MIN_LEN - ETHER_CRC_LEN)
-		pad = ETHER_MIN_LEN - ETHER_CRC_LEN - len;
 
 	/*
 	 * Do the output at splhigh() so that an interrupt from another device
@@ -1156,11 +1167,15 @@ xe_start(ifp)
 		MFREE(m, m0);
 		m = m0;
 	}
-	for (; pad > 0; pad--)
-		bus_space_write_1(bst, bsh, offset + EDP, 0);
-
 	if (sc->sc_flags & XEF_MOHAWK)
 		bus_space_write_1(bst, bsh, offset + CR, TX_PKT | ENABLE_INT);
+	else {
+		for (; pad > 1; pad -= 2)
+			bus_space_write_2(bst, bsh, offset + EDP, 0);
+		if (pad == 1)
+			bus_space_write_1(bst, bsh, offset + EDP, 0);
+	}
+
 	splx(s);
 
 	ifp->if_timer = 5;
