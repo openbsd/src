@@ -1,4 +1,4 @@
-/*	$OpenBSD: p9100.c,v 1.19 2003/06/13 06:44:55 miod Exp $	*/
+/*	$OpenBSD: p9100.c,v 1.20 2003/06/13 19:02:13 miod Exp $	*/
 
 /*
  * Copyright (c) 2003, Miodrag Vallat.
@@ -346,7 +346,7 @@ struct p9100_cmd {
 #define	P9100_RASTER_MASK	0x00ff
 
 /*
- * On the tadpole, the first write to a register group is ignored until
+ * On the Tadpole, the first write to a register group is ignored until
  * the proper group address is latched, which can be done by reading from the
  * register group first.
  *
@@ -783,12 +783,12 @@ p9100_ras_init(struct p9100_softc *sc)
 	/* Unclip */
 	sc->sc_cmd->de.winmin = 0;
 	sc->sc_cmd->de.winmax =
-	    P9100_COORDS(sc->sc_sunfb.sf_width - 1, sc->sc_sunfb.sf_height);
+	    P9100_COORDS(sc->sc_sunfb.sf_width - 1, sc->sc_sunfb.sf_height - 1);
 
 	P9100_SELECT_DE_HIGH(sc);
 	sc->sc_cmd->de.bwinmin = 0;
 	sc->sc_cmd->de.bwinmax =
-	    P9100_COORDS(sc->sc_sunfb.sf_width - 1, sc->sc_sunfb.sf_height);
+	    P9100_COORDS(sc->sc_sunfb.sf_width - 1, sc->sc_sunfb.sf_height - 1);
 
 	P9100_SELECT_PE(sc);
 	sc->sc_cmd->pe.winoffset = 0;
@@ -868,7 +868,6 @@ p9100_ras_erasecols(void *v, int row, int col, int n, long int attr)
 	rasops_unpack_attr(attr, &fg, &bg, NULL);
 
 	n *= ri->ri_font->fontwidth;
-	n--;
 	col *= ri->ri_font->fontwidth;
 	col += ri->ri_xorigin;
 	row *= ri->ri_font->fontheight;
@@ -882,7 +881,7 @@ p9100_ras_erasecols(void *v, int row, int col, int n, long int attr)
 	P9100_SELECT_COORD(sc,lc.rect);
 	sc->sc_cmd->lc.rect.abs_x16y16 = P9100_COORDS(col, row);
 	sc->sc_cmd->lc.rect.abs_x16y16 =
-	    P9100_COORDS(col + n, row + ri->ri_font->fontheight - 1);
+	    P9100_COORDS(col + n, row + ri->ri_font->fontheight);
 
 	sc->sc_junk = sc->sc_cmd->pe.quad;
 
@@ -906,17 +905,16 @@ p9100_ras_eraserows(void *v, int row, int n, long int attr)
 	if (n == ri->ri_rows && ISSET(ri->ri_flg, RI_FULLCLEAR)) {
 		sc->sc_cmd->lc.rect.abs_x16y16 = P9100_COORDS(0, 0);
 		sc->sc_cmd->lc.rect.abs_x16y16 =
-		    P9100_COORDS(ri->ri_width - 1, ri->ri_height - 1);
+		    P9100_COORDS(ri->ri_width, ri->ri_height);
 	} else {
 		n *= ri->ri_font->fontheight;
-		n--;
 		row *= ri->ri_font->fontheight;
 		row += ri->ri_yorigin;
 
 		sc->sc_cmd->lc.rect.abs_x16y16 =
 		    P9100_COORDS(ri->ri_xorigin, row);
 		sc->sc_cmd->lc.rect.abs_x16y16 =
-		    P9100_COORDS(ri->ri_xorigin + ri->ri_emuwidth - 1, row + n);
+		    P9100_COORDS(ri->ri_xorigin + ri->ri_emuwidth, row + n);
 	}
 
 	sc->sc_junk = sc->sc_cmd->pe.quad;
