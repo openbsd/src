@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_atmsubr.c,v 1.2 1996/06/21 21:35:19 chuck Exp $       */
+/*      $OpenBSD: if_atmsubr.c,v 1.3 1996/06/26 04:21:32 chuck Exp $       */
 
 /*
  *
@@ -15,8 +15,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Charles D. Cranor and
- * 	Washington University.
+ *      This product includes software developed by Charles D. Cranor and 
+ *	Washington University.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
@@ -72,6 +72,11 @@
  *     "dst" = the sockaddr to send to (either IP addr, or raw VPI/VCI)
  *     "rt0" = the route to use
  *   returns: error code   [0 == ok]
+ *
+ *   note: special semantic: if (dst == NULL) then we assume "m" already
+ *		has an atm_pseudohdr on it and just send it directly.
+ *		[for native mode ATM output]   if dst is null, then
+ *		rt0 must also be NULL.
  */
 
 int
@@ -119,38 +124,49 @@ atm_output(ifp, m0, dst, rt0)
 		/* XXX: put RTF_REJECT code here if doing ATMARP */
 
 	}
-	switch (dst->sa_family) {
+
+	/*
+	 * check for non-native ATM traffic   (dst != NULL)
+	 */
+	if (dst) {
+		switch (dst->sa_family) {
 #ifdef INET
-	case AF_INET:
-		if (!atmresolve(rt, m, dst, &atmdst)) {
-			m = NULL; /* XXX: atmresolve already free'd it */
-			senderr(EHOSTUNREACH);
-			/* XXX: ATMARP stuff here, watch who frees m on fail */
-		}
-		etype = htons(ETHERTYPE_IP);
-		break;
+		case AF_INET:
+			if (!atmresolve(rt, m, dst, &atmdst)) {
+				m = NULL; 
+				/* XXX: atmresolve already free'd it */
+				senderr(EHOSTUNREACH);
+				/* XXX: put ATMARP stuff here */
+				/* XXX: watch who frees m on failure */
+			}
+			etype = htons(ETHERTYPE_IP);
+			break;
 #endif
 
-	/* case AF_ATM: XXX: need raw ATM handle here? */
+		default:
+			printf("%s: can't handle af%d\n", ifp->if_xname, 
+				dst->sa_family);
+			senderr(EAFNOSUPPORT);
+		}
 
-	default:
-		printf("%s: can't handle af%d\n", ifp->if_xname, 
-			dst->sa_family);
-		senderr(EAFNOSUPPORT);
-	}
-
-	sz = sizeof(atmdst);
-	atm_flags = ATM_PH_FLAGS(&atmdst);
-	if (atm_flags & ATM_PH_LLCSNAP) sz += 8; /* sizeof snap == 8 */
-	M_PREPEND(m, sz, M_DONTWAIT);
-	if (m == 0)
-		senderr(ENOBUFS);
-	ad = mtod(m, struct atm_pseudohdr *);
-	*ad = atmdst;
-	if (atm_flags & ATM_PH_LLCSNAP) {
-		atmllc = (struct atmllc *)(ad + 1);
-		bcopy(ATMLLC_HDR, atmllc->llchdr, sizeof(atmllc->llchdr));
-		ATM_LLC_SETTYPE(atmllc, etype); /* already in network order */
+		/*
+		 * must add atm_pseudohdr to data
+		 */
+		sz = sizeof(atmdst);
+		atm_flags = ATM_PH_FLAGS(&atmdst);
+		if (atm_flags & ATM_PH_LLCSNAP) sz += 8; /* sizeof snap == 8 */
+		M_PREPEND(m, sz, M_DONTWAIT);
+		if (m == 0)
+			senderr(ENOBUFS);
+		ad = mtod(m, struct atm_pseudohdr *);
+		*ad = atmdst;
+		if (atm_flags & ATM_PH_LLCSNAP) {
+			atmllc = (struct atmllc *)(ad + 1);
+			bcopy(ATMLLC_HDR, atmllc->llchdr, 
+						sizeof(atmllc->llchdr));
+			ATM_LLC_SETTYPE(atmllc, etype); 
+					/* note: already in network order */
+		}
 	}
 
 	/*
