@@ -1,4 +1,4 @@
-/*	$OpenBSD: stand.h,v 1.18 1997/02/06 02:56:47 downsj Exp $	*/
+/*	$OpenBSD: stand.h,v 1.19 1997/02/07 07:08:12 mickey Exp $	*/
 /*	$NetBSD: stand.h,v 1.18 1996/11/30 04:35:51 gwr Exp $	*/
 
 /*-
@@ -53,7 +53,7 @@ struct open_file;
  * Useful macros
  */
 #define NENTS(x)	sizeof(x)/sizeof(x[0])
-/* don't define if libker included */
+/* don't define if libkern included */
 #ifndef LIBKERN_INLINE
 #define	max(a,b)	(((a)>(b))? (a) : (b))
 #define	min(a,b)	(((a)>(b))? (b) : (a))
@@ -161,7 +161,6 @@ char	*strncpy __P((char *, const char *, size_t));
 char	*strcpy __P((char *, const char *));
 void	*memset __P((void *, int, size_t));
 void	exec __P((char *, void *, int));
-void	execz __P((void *, void *, int));
 int	open __P((const char *, int));
 int	close __P((int));
 void	closeall __P((void));
@@ -169,8 +168,7 @@ ssize_t	read __P((int, void *, size_t));
 ssize_t	write __P((int, void *, size_t));
 int	stat __P((const char *path, struct stat *sb));
 int	fstat __P((int fd, struct stat *sb));
-ssize_t	zread __P((int, void *, size_t));	/* for execz */
-    
+int	readdir __P((int fd, char *));
 int	nodev __P((void));
 int	noioctl __P((struct open_file *, u_long, void *));
 void	nullsys __P((void));
@@ -184,6 +182,10 @@ ssize_t	null_write __P((struct open_file *f, void *buf,
 off_t	null_seek __P((struct open_file *f, off_t offset, int where));
 int	null_stat __P((struct open_file *f, struct stat *sb));
 int	null_readdir __P((struct open_file *f, char *name));
+int	cons_probe __P((void));
+void	putc __P((int));    
+int	getc __P((void));
+int	ischar __P((void));
 
 void	putchar __P((int));    
 int	getchar __P((void));
@@ -197,9 +199,6 @@ off_t	olseek __P((int, off_t, int));
 
 /* Machine dependent functions */
 int	devopen __P((struct open_file *, const char *, char **));
-void	machdep_exec __P((char *, int, char *, char *, char *));
+void	machdep_start __P((char *, int, char *, char *, char *));
 time_t	getsecs __P((void));
-void	putc __P((int));    
-int	getc __P((void));
-int	ischar __P((void));
 
