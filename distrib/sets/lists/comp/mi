@@ -672,6 +672,7 @@
 ./usr/include/dev/sbus/asioreg.h
 ./usr/include/dev/sbus/bereg.h
 ./usr/include/dev/sbus/cgsixreg.h
+./usr/include/dev/sbus/cgtwelvereg.h
 ./usr/include/dev/sbus/cs4231var.h
 ./usr/include/dev/sbus/lebuffervar.h
 ./usr/include/dev/sbus/magmareg.h
@@ -684,6 +685,8 @@
 ./usr/include/dev/sbus/stp4020reg.h
 ./usr/include/dev/sbus/stp4020var.h
 ./usr/include/dev/sbus/uperf_sbusreg.h
+./usr/include/dev/sbus/xboxreg.h
+./usr/include/dev/sbus/xboxvar.h
 ./usr/include/dev/sbus/zxreg.h
 ./usr/include/dev/sequencervar.h
 ./usr/include/dev/std

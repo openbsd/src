@@ -1535,6 +1535,7 @@
 ./usr/share/man/cat4/sparc64/central.0
 ./usr/share/man/cat4/sparc64/cgsix.0
 ./usr/share/man/cat4/sparc64/cgthree.0
+./usr/share/man/cat4/sparc64/cgtwelve.0
 ./usr/share/man/cat4/sparc64/clkbrd.0
 ./usr/share/man/cat4/sparc64/clock.0
 ./usr/share/man/cat4/sparc64/comkbd.0
@@ -1567,6 +1568,7 @@
 ./usr/share/man/cat4/sparc64/uperf.0
 ./usr/share/man/cat4/sparc64/vgafb.0
 ./usr/share/man/cat4/sparc64/vigra.0
+./usr/share/man/cat4/sparc64/xbox.0
 ./usr/share/man/cat4/sparc64/zs.0
 ./usr/share/man/cat4/sparc64/zskbd.0
 ./usr/share/man/cat4/sparc64/zstty.0
