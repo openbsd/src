@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.57 2003/10/03 21:22:32 itojun Exp $	*/
+/*	$OpenBSD: route.c,v 1.58 2003/10/04 21:18:57 deraadt Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: route.c,v 1.57 2003/10/03 21:22:32 itojun Exp $";
+static char *rcsid = "$OpenBSD: route.c,v 1.58 2003/10/04 21:18:57 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -73,7 +73,6 @@ static char *rcsid = "$OpenBSD: route.c,v 1.57 2003/10/03 21:22:32 itojun Exp $"
 #define INET
 #endif
 
-#include <sys/socket.h>
 #include <netinet/ip_ipsp.h>
 #include "netstat.h"
 
@@ -395,10 +394,8 @@ ntreestuff(void)
 		perror("route-sysctl-estimate");
 		exit(1);
 	}
-	if ((buf = malloc(needed)) == 0) {
-		printf("out of space\n");
-		exit(1);
-	}
+	if ((buf = malloc(needed)) == NULL)
+		errx(1, NULL);
 	if (sysctl(mib, 6, buf, &needed, NULL, 0) < 0) {
 		perror("sysctl of routing table");
 		exit(1);
