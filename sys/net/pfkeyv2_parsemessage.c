@@ -454,7 +454,7 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 	    if (*(char *)(p + i - 1))
 	      return EINVAL;
 
-	    j = ((strlen(c) + sizeof(uint64_t) - 1) & ~(sizeof(uint64_t)-1)) +
+	    j = ((strlen(c) + sizeof(uint64_t)) & ~(sizeof(uint64_t)-1)) +
 		sizeof(struct sadb_ident);
 
 	    if (i != j)
