@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.6 2001/07/03 13:03:44 ian Exp $	*/
+/*	$OpenBSD: boot.c,v 1.7 2002/02/14 02:53:36 aaron Exp $	*/
 /*	$NetBSD: boot.c,v 1.5 1997/10/17 11:19:23 ws Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
 
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: boot.c,v 1.6 2001/07/03 13:03:44 ian Exp $";
+static char rcsid[] = "$OpenBSD: boot.c,v 1.7 2002/02/14 02:53:36 aaron Exp $";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -166,13 +166,8 @@ readboot(dosfs, boot)
 		/* Check backup FSInfo?					XXX */
 	}
 
-	boot->ClusterOffset = (boot->RootDirEnts * 32 + boot->BytesPerSec - 1)
-	    / boot->BytesPerSec
-	    + boot->ResSectors
-	    + boot->FATs * boot->FATsecs
-	    - CLUST_FIRST * boot->SecPerClust;
-
-	if (boot->BytesPerSec % DOSBOOTBLOCKSIZE != 0) {
+	if (boot->BytesPerSec == 0 || boot->BytesPerSec % DOSBOOTBLOCKSIZE
+	    != 0) {
 		pfatal("Invalid sector size: %u\n", boot->BytesPerSec);
 		return (FSFATAL);
 	}
@@ -180,6 +175,13 @@ readboot(dosfs, boot)
 		pfatal("Invalid cluster size: %u\n", boot->SecPerClust);
 		return (FSFATAL);
 	}
+
+	boot->ClusterOffset = (boot->RootDirEnts * 32 + boot->BytesPerSec - 1)
+	    / boot->BytesPerSec
+	    + boot->ResSectors
+	    + boot->FATs * boot->FATsecs
+	    - CLUST_FIRST * boot->SecPerClust;
+
 	if (boot->Sectors) {
 		boot->HugeSectors = 0;
 		boot->NumSectors = boot->Sectors;
