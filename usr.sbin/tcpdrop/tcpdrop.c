@@ -1,4 +1,4 @@
-/* $OpenBSD: tcpdrop.c,v 1.3 2004/05/09 03:22:39 deraadt Exp $ */
+/* $OpenBSD: tcpdrop.c,v 1.4 2004/05/22 23:55:22 deraadt Exp $ */
 
 /*
  * Copyright (c) 2004 Markus Friedl <markus@openbsd.org>
@@ -29,6 +29,7 @@
 #include <err.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include <netdb.h>
 
 extern char *__progname;
