@@ -5,12 +5,6 @@ This is a list of things that still need to be done:
   some usages of ENTRY to SYSENTRY in some .S files and add
   the new macros to their SYS.h. 
 
-* Find a better way of doing the _sys_aliases stuff; ideally by
-  using the linker. jmp's and branches (current implementation) are ugly, but
-  I don't want to have to hack ../libc/sys/Makefile.inc just to
-  partition the syscalls into wrapped and non-wrapped. The `.set'
-  assembler directive just doesn't work as I thought it would.
-
 * Test that thread_init is automatically called on every arch, regardless
   of whether the exe is statically linked or not.
 
@@ -40,6 +34,6 @@ This is a list of things that still need to be done:
   its in the database routines mostly. We will need to rip their code.
 
 * Figure out what to do with the configuration system variables (_SC_*)
-  that are defined by POSIX 1003.1c
+  that are defined by POSIX 1003.1c (at least update sysconf(3))
 
-$OpenBSD: TODO,v 1.4 1998/12/22 22:30:35 d Exp $
+$OpenBSD: TODO,v 1.5 1999/01/10 22:51:14 d Exp $

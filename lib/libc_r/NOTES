@@ -85,6 +85,17 @@ Errno
   to worry about in comparison to the huge penalty hit of handling a
   signal and restoring the rest of a thread's context.
 
+  It has been pointed out that this technique will not work in a
+  mutiprocessor environment, and this is quite true. However the following
+  reasons are quite persuasive:
+
+    - OpenBSD does not do MP (yet)
+    - This (FreeBSD uthread) implementation will not work in an MP 
+      environment anyway because _thread_run is not a cpu-local variable.
+    - There is a lot of coupling between binary ports and old libc and
+      other libraries that is quite a big headache to resolve in a
+      friendly manner.
+
 Compiler Support
 
   The in-tree gcc had its config/openbsd.h modified to support a
@@ -93,6 +104,13 @@ Compiler Support
 
   The objective-C component was also made aware of posix threads, via
   the configure switch --enable-threads=posix.
+
+Changes to FreeBSD uthreads
+
+  The following significant changes have been made to John Birrell's
+  uthreads implementation:
+
+    - the SIGINFO handler generates much more friendly output
 
 Caveats
 
@@ -122,4 +140,4 @@ References
        San Antionio, Texas, 1992. pp. 185-198
 
 David Leonard <leonard@csee.uq.edu.au>
-$OpenBSD: NOTES,v 1.1 1998/08/27 09:00:32 d Exp $
+$OpenBSD: NOTES,v 1.2 1999/01/10 22:50:07 d Exp $
