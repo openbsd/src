@@ -1,4 +1,4 @@
-/* $OpenBSD: util.c,v 1.39 2004/05/23 18:17:56 hshoexer Exp $	 */
+/* $OpenBSD: util.c,v 1.40 2004/05/24 14:54:50 hshoexer Exp $	 */
 /* $EOM: util.c,v 1.23 2000/11/23 12:22:08 niklas Exp $	 */
 
 /*
@@ -502,7 +502,7 @@ check_file_secrecy(char *name, size_t *file_size)
 		return -1;
 	}
 	if ((st.st_mode & (S_IRWXG | S_IRWXO)) != 0) {
-		log_print("conf_file_secrecy: not loading %s - too open "
+		log_print("check_file_secrecy: not loading %s - too open "
 		    "permissions", name);
 		errno = EPERM;
 		return -1;
@@ -523,19 +523,19 @@ check_file_secrecy_fd(int fd, char *name, size_t *file_size)
 		return -1;
 	}
 	if (st.st_uid != 0 && st.st_uid != getuid()) {
-		log_print("check_file_secrecy: "
+		log_print("check_file_secrecy_fd: "
 		    "not loading %s - file owner is not process user", name);
 		errno = EPERM;
 		return -1;
 	}
 	if ((st.st_mode & (S_IRWXG | S_IRWXO)) != 0) {
-		log_print("conf_file_secrecy: not loading %s - too open permissions",
-		    name);
+		log_print("check_file_secrecy_fd: not loading %s - too open "
+		    "permissions", name);
 		errno = EPERM;
 		return -1;
 	}
 	if (file_size)
-		*file_size = (size_t) st.st_size;
+		*file_size = (size_t)st.st_size;
 
 	return 0;
 }
