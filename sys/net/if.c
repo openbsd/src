@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.13 1997/07/11 23:37:52 provos Exp $	*/
+/*	$OpenBSD: if.c,v 1.14 1997/07/11 23:43:00 provos Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -229,7 +229,7 @@ ifa_ifwithnet(addr)
 		for (ifa = ifp->if_addrlist.tqh_first; ifa != 0; ifa = ifa->ifa_list.tqe_next) {
 			register char *cp, *cp2, *cp3;
 
-			if (!ifa->ifa_addr || ifa->ifa_addr->sa_family != af ||
+			if (ifa->ifa_addr->sa_family != af ||
 			    ifa->ifa_netmask == 0)
 				next: continue;
 			cp = addr_data;
