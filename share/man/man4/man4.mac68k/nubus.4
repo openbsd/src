@@ -1,0 +1,42 @@
+.\"	$OpenBSD: nubus.4,v 1.1 2005/02/27 22:11:03 martin Exp $
+.\"
+.\" Copyright (c) 2004 Martin Reindl <martin@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd February 24, 2005
+.Dt NUBUS 4 mac68k
+.Os
+.Sh NAME
+.Nm nubus
+.Nd Mac68k nubus support and drivers
+.Sh SYNOPSIS
+.Cd "nubus0 at mainbus?"
+.Sh DESCRIPTION
+The
+.Nm
+is a simple backplane bus found on numerous mac68k machines.
+Only extension boards are supported.
+The
+.Nm
+90 IEEE Std 1196-1987 defines the bus protocol as well as the electrical and
+mechanical properties of the extension slots.
+.Sh SEE ALSO
+.Xr ae 4 ,
+.\" .Xr macvid 4 ,
+.Xr sn 4
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Ox 1.2 .
