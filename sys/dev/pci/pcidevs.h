@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.728 2004/05/05 14:09:42 brad Exp 
+ *	OpenBSD: pcidevs,v 1.729 2004/05/05 22:16:31 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -2201,7 +2201,7 @@
 #define	PCI_PRODUCT_TI_TLAN	0x0500		/* TLAN */
 #define	PCI_PRODUCT_TI_PERMEDIA	0x3d04		/* 3DLabs Permedia */
 #define	PCI_PRODUCT_TI_PERMEDIA2	0x3d07		/* 3DLabs Permedia 2 */
-#define	PCI_PRODUCT_TI_TSB12LV21	0x8000		/* TSB12LB21 FireWire */
+#define	PCI_PRODUCT_TI_TSB12LV21	0x8000		/* TSB12LV21 FireWire */
 #define	PCI_PRODUCT_TI_TSB12LV22	0x8009		/* TSB12LV22 FireWire */
 #define	PCI_PRODUCT_TI_PCI4450_FW	0x8011		/* PCI4450 FireWire */
 #define	PCI_PRODUCT_TI_PCI4410_FW	0x8017		/* PCI4410 FireWire */
