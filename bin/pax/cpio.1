@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: cpio.1,v 1.4 1998/07/20 00:45:31 espie Exp $
+.\"	$OpenBSD: cpio.1,v 1.5 1998/09/14 22:13:52 aaron Exp $
 .\"
 .Dd February 16, 1997
 .Dt CPIO 1
@@ -36,7 +36,7 @@
 .Nm cpio
 .Nd copy file archives in and out
 .Sh SYNOPSIS
-.Nm
+.Nm cpio
 .Fl o
 .Op Fl aABcLvzZ
 .Op Fl C Ar bytes
@@ -45,7 +45,7 @@
 .Op Fl O Ar archive
 .Ar "< name-list"
 .Op Ar "> archive"
-.Nm
+.Nm cpio
 .Fl i
 .Op Fl bBcdfmrsStuvzZ6
 .Op Fl C Ar bytes
@@ -55,7 +55,7 @@
 .Op Fl I Ar archive
 .Op Ar "pattern ..."
 .Op Ar "< archive"
-.Nm
+.Nm cpio
 .Fl p
 .Op Fl adlLmuv
 .Ar destination-directory
@@ -75,7 +75,7 @@ archive from standard input, and writes the archive on standard
 output.
 .Bl -tag -width Fl
 .It Fl a
-Reset the access times on files that has been copied to the
+Reset the access times on files that have been copied to the
 archive.
 .It Fl A
 Append to the specified archive.
@@ -127,15 +127,15 @@ standard input and extracts files matching the
 that were specified on the command line.
 .Bl -tag -width Fl
 .It Fl b
-Do byte- and word swapping after reading in data from the
+Do byte and word swapping after reading in data from the
 archive, for restoring archives created on systems with
-different byte order.
+a different byte order.
 .It Fl B
 Set the block size of the archive being read to 5120 bytes.
 .It Fl c
 Expect the archive headers to be in ASCII format.
 .It Fl C Ar bytes
-Read archive written with a blocksize of
+Read archive written with a block size of
 .Ar bytes .
 .It Fl d
 Create any intermediate directories as needed during
@@ -195,13 +195,13 @@ Process old-style \*Qcpio\*U format archives.
 .El
 .It Fl p
 Copy files from one location to another in a single pass.
-The list of files to copy are read from standard in and
+The list of files to copy are read from standard input and
 written out to a directory relative to the specified
 .Ar directory
 argument.
 .Bl -tag -width Fl
 .It Fl a
-Reset the access times on files that has been copied.
+Reset the access times on files that have been copied.
 .It Fl d
 Create any intermediate directories as needed to write
 the files at the new location.
@@ -227,7 +227,7 @@ will exit with one of the following values:
 .It 0
 All files were processed successfully.
 .It 1
-An error occured.
+An error occurred.
 .El
 .Pp
 Whenever
@@ -236,7 +236,7 @@ cannot create a file or a link when extracting an archive or cannot
 find a file while writing an archive, or cannot preserve the user
 ID, group ID, file mode or access and modification times when the
 .Fl p
-options is specified, a diagnostic message is written to standard
+option is specified, a diagnostic message is written to standard
 error and a non-zero exit value will be returned, but processing
 will continue.  In the case where
 .Nm
@@ -267,4 +267,4 @@ and
 .Fl S
 options are currently not implemented.
 .Sh AUTHOR
-Keith Muller at the University of California, San Diego
+Keith Muller at the University of California, San Diego.

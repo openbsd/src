@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: tar.1,v 1.15 1998/03/31 17:14:23 millert Exp $
+.\"	$OpenBSD: tar.1,v 1.16 1998/09/14 22:13:53 aaron Exp $
 .\"
 .Dd June 11, 1996
 .Dt TAR 1
@@ -48,7 +48,7 @@
 .Ar replstr
 .No ]
 .Ar file1
-.Op Ar file2...
+.Op Ar file2 ...
 .Sh DESCRIPTION
 The
 .Nm
@@ -71,7 +71,7 @@ List contents of archive.  If any files are named on the
 command line, only those files will be listed.
 .It Fl u
 Alias for
-.Fl r
+.Fl r .
 .It Fl x
 Extract files from archive.  If any files are named on the
 command line, only those files will be extracted from the
@@ -86,7 +86,7 @@ In addition to the flags mentioned above, any of the following
 flags may be used:
 .Bl -tag -width Ar
 .It Fl b Ar "blocking factor"
-Set blocking factor to use for the archive,
+Set blocking factor to use for the archive.
 .Nm
 uses 512 byte blocks.  The default is 20, the maximum is 126.
 Archives with a blocking factor larger 63 violate the
@@ -96,7 +96,7 @@ standard and will not be portable to all systems.
 Stop after first error.
 .It Fl f Ar archive
 Filename where the archive is stored.  Defaults to
-.Pa /dev/rst0
+.Pa /dev/rst0 .
 .It Fl h
 Follow symbolic links as if they were normal files
 or directories.
@@ -112,7 +112,7 @@ This implies the
 .Fl O
 flag.
 .It Fl p
-Preserve user and group id as well as file mode regardless of
+Preserve user and group ID as well as file mode regardless of
 the current
 .Xr umask 2 .
 The setuid and setgid bits are only preserved if the user is
@@ -198,13 +198,13 @@ can be used to select one of the compiled-in backup devices,
 .Sh FILES
 .Bl -tag -width "/dev/rst0"
 .It Pa /dev/rst0
-The default archive name
+default archive name
 .El
 .Sh SEE ALSO
 .Xr pax 1 ,
 .Xr cpio 1
 .Sh AUTHOR
-Keith Muller at the University of California, San Diego
+Keith Muller at the University of California, San Diego.
 .Sh ERRORS
 .Nm
 will exit with one of the following values:
@@ -221,7 +221,7 @@ cannot create a file or a link when extracting an archive or cannot
 find a file while writing an archive, or cannot preserve the user
 ID, group ID, file mode or access and modification times when the
 .Fl p
-options is specified, a diagnostic message is written to standard
+option is specified, a diagnostic message is written to standard
 error and a non-zero exit value will be returned, but processing
 will continue.  In the case where
 .Nm

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: expr.1,v 1.3 1997/08/19 06:36:30 denny Exp $
+.\"	$OpenBSD: expr.1,v 1.4 1998/09/14 22:13:47 aaron Exp $
 .\"	$NetBSD: expr.1,v 1.9 1995/04/28 23:27:13 jtc Exp $
 .\"
 .\" Written by J.T. Conklin <jtc@netbsd.org>.
@@ -57,7 +57,7 @@ operator matches
 against 
 .Ar expr2 ,
 which must be a regular expression.  The regular expression is anchored
-to the beginning of  the string with an implicit 
+to the beginning of the string with an implicit 
 .Dq ^ .
 .Pp
 If the match succeeds and the pattern contains at least one regular
@@ -91,15 +91,16 @@ The following example returns the number of characters in variable a.
 The
 .Nm expr 
 utility exits with one of the following values:
+.Pp
 .Bl -tag -width Ds -compact
 .It 0
-the expression is neither an empty string nor 0.
+The expression is neither an empty string nor 0.
 .It 1
-the expression is an empty string or 0.
+The expression is an empty string or 0.
 .It 2
-the expression is invalid.
+The expression is invalid.
 .It >2
-an error occurred (such as memory allocation failure).
+An error occurred (such as memory allocation failure).
 .El
 .Sh STANDARDS
 The

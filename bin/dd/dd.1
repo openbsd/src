@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dd.1,v 1.3 1997/04/17 10:14:36 deraadt Exp $
+.\"	$OpenBSD: dd.1,v 1.4 1998/09/14 22:13:43 aaron Exp $
 .\"	$NetBSD: dd.1,v 1.5 1995/03/21 09:04:04 cgd Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -111,13 +111,13 @@ Any regular output file is truncated unless the
 conversion value is specified.
 If an initial portion of the output file is skipped (see the
 .Cm seek
-operand)
+operand),
 the output file is truncated at that point.
 .It Cm seek= Ns Ar n
 Seek
 .Va n
 blocks from the beginning of the output before copying.
-On non-tape devices, a
+On non-tape devices, an
 .Xr lseek 2
 operation is used.
 Otherwise, existing blocks are read and the data discarded.
@@ -133,7 +133,7 @@ bytes.
 Skip
 .Va n
 blocks from the beginning of the input before copying.
-On input which supports seeks, a
+On input which supports seeks, an
 .Xr lseek 2
 operation is used.
 Otherwise, input data is read and discarded.
@@ -327,7 +327,7 @@ will exit.
 .Pp
 The
 .Nm dd
-utility exits 0 on success and >0 if an error occurred.
+utility exits 0 on success or >0 if an error occurred.
 .Sh SEE ALSO
 .Xr cp 1 ,
 .Xr mt 1 ,

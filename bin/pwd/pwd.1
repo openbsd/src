@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pwd.1,v 1.3 1997/03/25 20:20:51 deraadt Exp $
+.\"	$OpenBSD: pwd.1,v 1.4 1998/09/14 22:13:54 aaron Exp $
 .\"	$NetBSD: pwd.1,v 1.10 1995/09/07 06:47:30 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -46,11 +46,11 @@
 .Sh SYNOPSIS
 .Nm pwd
 .Sh DESCRIPTION
-.Nm Pwd
+.Nm pwd
 writes the absolute pathname of the current working directory to
 the standard output.
 .Pp
-The pwd utility exits 0 on success, and >0 if an error occurs.
+The pwd utility exits 0 on success or >0 if an error occurred.
 .Sh STANDARDS
 The
 .Nm pwd
@@ -63,7 +63,7 @@ compatible.
 .Xr getcwd 3
 .Sh BUGS
 In
-.Xr csh  1
+.Xr csh 1 ,
 the command
 .Ic dirs
 is always faster (although it can give a different answer in the rare case

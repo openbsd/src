@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cp.1,v 1.3 1997/11/08 23:07:25 todd Exp $
+.\"	$OpenBSD: cp.1,v 1.4 1998/09/14 22:13:37 aaron Exp $
 .\"	$NetBSD: cp.1,v 1.9 1995/07/25 19:36:45 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
@@ -68,7 +68,7 @@ to the
 In the second synopsis form,
 the contents of each named
 .Ar source_file
-is copied to the destination
+are copied to the destination
 .Ar target_directory .
 The names of the files themselves are not changed.
 If
@@ -101,10 +101,10 @@ indirected through, and for
 .Nm cp
 to create special files rather than copying them as normal files.
 Created directories have the same mode as the corresponding source
-directory, unmodified by the process' umask.
+directory, unmodified by the process's umask.
 .It Fl f
 For each existing destination pathname, remove it and
-create a new file, without prompting for confirmation
+create a new file, without prompting for confirmation,
 regardless of its permissions.
 (The
 .Fl i
@@ -128,15 +128,15 @@ file flags, file mode, user ID, and group ID as allowed by permissions.
 If the user ID and group ID cannot be preserved, no error message
 is displayed and the exit value is not altered.
 .Pp
-If the source file has its set user ID bit on and the user ID cannot
-be preserved, the set user ID bit is not preserved
+If the source file has its set-user-ID bit on and the user ID cannot
+be preserved, the set-user-ID bit is not preserved
 in the copy's permissions.
-If the source file has its set group ID bit on and the group ID cannot
-be preserved, the set group ID bit is not preserved
+If the source file has its set-group-ID bit on and the group ID cannot
+be preserved, the set-group-ID bit is not preserved
 in the copy's permissions.
-If the source file has both its set user ID and set group ID bits on,
+If the source file has both its set-user-ID and set-group-ID bits on,
 and either the user ID or group ID cannot be preserved, neither
-the set user ID or set group ID bits are preserved in the copy's
+the set-user-ID nor set-group-ID bits are preserved in the copy's
 permissions.
 .El
 .Pp
@@ -157,13 +157,13 @@ used as modified by the file mode creation mask
 .Pf ( Ic umask ,
 see
 .Xr csh 1 ) .
-If the source file has its set user ID bit on, that bit is removed
+If the source file has its set-user-ID bit on, that bit is removed
 unless both the source file and the destination file are owned by the
 same user.
-If the source file has its set group ID bit on, that bit is removed
+If the source file has its set-group-ID bit on, that bit is removed
 unless both the source file and the destination file are in the same
 group and the user is a member of that group.
-If both the set user ID and set group ID bits are set, all of the above
+If both the set-user-ID and set-group-ID bits are set, all of the above
 conditions must be fulfilled or both bits are removed.
 .Pp
 Appropriate permissions are required for file creation or overwriting.
@@ -189,8 +189,9 @@ option is specified.
 In addition, these options override each other and the
 command's actions are determined by the last one specified.
 .Pp
-.Nm Cp
-exits 0 on success, >0 if an error occurred.
+The
+.Nm cp
+utility exits 0 on success or >0 if an error occurred.
 .Sh COMPATIBILITY
 Historic versions of the
 .Nm cp
@@ -199,7 +200,7 @@ utility had a
 option.
 This implementation supports that option, however, its use is strongly
 discouraged, as it does not correctly copy special files, symbolic links
-or fifo's.
+or FIFOs.
 .Sh SEE ALSO
 .Xr mv 1 ,
 .Xr rcp 1 ,

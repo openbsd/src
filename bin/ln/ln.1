@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ln.1,v 1.2 1996/06/23 14:20:15 deraadt Exp $
+.\"	$OpenBSD: ln.1,v 1.3 1998/09/14 22:13:49 aaron Exp $
 .\"	$NetBSD: ln.1,v 1.10 1995/07/25 19:37:04 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -66,7 +66,7 @@ to the original copy.
 There are two types of links; hard links and symbolic links.
 How a link
 .Dq points
-to a file is one of the differences between a hard or symbolic link.
+to a file is one of the differences between a hard and symbolic link.
 .Pp
 The options are as follows:
 .Bl -tag -width flag
@@ -76,13 +76,13 @@ Unlink any already existing file, permitting the link to occur.
 Create a symbolic link.
 .El
 .Pp
-By default
+By default,
 .Nm ln
 makes
 .Em hard
 links.
 A hard link to a file is indistinguishable from the original directory entry;
-any changes to a file are effective independent of the name used to reference
+any changes to a file are effectively independent of the name used to reference
 the file.
 Hard links may not normally refer to directories and may not span file systems.
 .Pp
@@ -128,7 +128,7 @@ The links made will have the same name as the files being linked to.
 .Xr symlink 2 ,
 .Xr symlink 7
 .Sh HISTORY
-A
+An
 .Nm ln
 utility appeared in
 .At v6 .

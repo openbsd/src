@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chio.1,v 1.6 1997/11/08 23:22:40 todd Exp $
+.\"	$OpenBSD: chio.1,v 1.7 1998/09/14 22:13:37 aaron Exp $
 .\"	$NetBSD: chio.1,v 1.1.1.1 1996/04/03 00:34:38 thorpej Exp $
 .\"
 .\" Copyright (c) 1996 Jason R. Thorpe <thorpej@and.com>
@@ -44,11 +44,11 @@
 .Ar arg1
 .Ar arg2
 .Oo
-.Ar arg3 Oo ...
+.Ar arg3 Oo Ar ...
 .Oc
 .Oc
 .Sh DESCRIPTION
-.Nm Chio
+.Nm chio
 is used to control the operation of medium changers, such as those found
 in tape and optical disk jukeboxes.
 .Pp
@@ -62,7 +62,7 @@ rather than the default device
 .El
 .Pp
 The default changer may be overridden by setting the environment variable
-.Nm CHANGER
+.Ev CHANGER
 to the desired changer device.
 .Pp
 A medium changer apparatus is made up of
@@ -189,16 +189,20 @@ Element supports receiving media (importing) from an outside human operator.
 Moves the media in slot 3 (fourth slot) to drive 0 (first drive).
 .Pp
 .Nm chio setpicker 2
+.Pp
 Configures the changer to use picker 2 (third picker) for operations.
 .Pp
 .Sh FILES
-/dev/ch0 - default changer device
+.Bl -tag -width /dev/ch0 -compact
+.It Pa /dev/ch0
+default changer device
+.El
 .Sh SEE ALSO
 .Xr mt 1 ,
 .Xr ch 4 ,
-.Xr mount 8 .
+.Xr mount 8
 .Sh AUTHOR
 The
 .Nm chio
 program and SCSI changer driver were written by Jason R. Thorpe
-<thorpej@and.com> for And Communications, http://www.and.com/
+<thorpej@and.com> for And Communications (http://www.and.com/).

@@ -1,6 +1,6 @@
-.\"	$OpenBSD: ed.1,v 1.11 1998/09/01 16:38:14 deraadt Exp $
+.\"	$OpenBSD: ed.1,v 1.12 1998/09/14 22:13:46 aaron Exp $
 .\"
-.Dd May 2 1993
+.Dd May 2, 1993
 .Dt ED 1
 .Os BSD 4
 .Sh NAME
@@ -32,13 +32,13 @@ any changes not explicitly saved with a
 command are lost.
 .Pp
 Editing is done in two distinct modes:
-.Pa command
+.Em command
 and
-.Pa input No .
+.Em input .
 When first invoked,
 .Nm
 is in command mode.
-In this mode commands are read from the standard input and
+In this mode, commands are read from the standard input and
 executed to manipulate the contents of the editor buffer.
 .Pp
 A typical command might look like:
@@ -49,14 +49,14 @@ A typical command might look like:
 which replaces all occurrences of the string
 .Pa old
 with
-.Pa new No .
+.Pa new .
 .Pp
 When an input command, such as
 .Em a
 (append),
 .Em i
 (insert) or
-.em c
+.Em c
 (change), is given,
 .Nm
 enters input mode.  This is the primary means
@@ -69,7 +69,7 @@ including a
 character.
 Input mode is terminated by
 entering a single period
-.No ( Em \&. Ns No )
+.Pq Ql \&.
 on a line.
 .Pp
 All
@@ -81,7 +81,7 @@ command deletes lines; the
 .Em m
 command moves lines, and so on.
 It is possible to modify only a portion of a line by means of replacement,
-as in the example above.  However even here, the
+as in the example above.  However, even here, the
 .Em s
 command is applied to whole lines at a time.
 .Pp
@@ -117,16 +117,17 @@ command.
 Specifies the name of a file to read.  If
 .Ar file
 is prefixed with a
-bang (!), then it is interpreted as a shell command.  In this case,
+bang
+.Pq Ql \&! ,
+then it is interpreted as a shell command.  In this case,
 what is read is
 the standard output of
 .Ar file
 executed via
 .Xr sh 1 .
 To read a file whose name begins with a bang, prefix the
-name with a
-.Em \e
-(backslash).
+name with a backslash
+.Pq Ql \e .
 The default filename is set to
 .Ar file
 only if it is not prefixed with a bang.
@@ -440,9 +441,8 @@ All
 commands are single characters, though some require additional parameters.
 If a command's parameters extend over several lines, then
 each line except for the last
-must be terminated with a
-.Em \e
-(backslash).
+must be terminated with a backslash
+.Pq Ql \e .
 .Pp
 In general, at most one command is allowed per line.
 However, most commands accept a print suffix, which is any of
@@ -565,7 +565,9 @@ repeats the last non-null command list.
 .It Em H
 Toggles the printing of error explanations.
 By default, explanations are not printed.
-It is recommended that ed scripts begin with this command to
+It is recommended that
+.Nm
+scripts begin with this command to
 aid in debugging.
 .It Em h
 Prints an explanation of the last error.
@@ -617,9 +619,12 @@ Unless a prompt was specified by with command-line option
 .Fl p Ar string Ns No ,
 the command prompt is by default turned off.
 .It Em q
-Quits ed.
+Quits
+.Nm ed .
 .It Em Q
-Quits ed unconditionally.
+Quits
+.Nm
+unconditionally.
 This is similar to the
 .Em q
 command,
@@ -841,20 +846,20 @@ is printed to the standard output.
 The current line is unchanged.
 .El
 .Sh FILES
-.Bl -tag -width /etc/passwd -compact
+.Bl -tag -width /tmp/ed.* -compact
 .It Pa /tmp/ed.*
-Buffer file
+buffer file
 .It Pa ed.hup
-The file to which
+file to which
 .Nm
-attempts to write the buffer if the terminal hangs up.
+attempts to write the buffer if the terminal hangs uo
 .El
 .Sh SEE ALSO
 .Xr vi 1 ,
 .Xr sed 1 ,
 .Xr regex 3 ,
 .Xr bdes 1 ,
-.Xr sh 1 .
+.Xr sh 1
 .Pp
 USD:12-13
 .Pp
@@ -866,7 +871,9 @@ Addison-Wesley, 1981.
 processes
 .Em file
 arguments for backslash escapes, i.e., in a filename,
-any characters preceded by a backslash (\\) are
+any characters preceded by a backslash
+.Pq Ql \e
+are
 interpreted literally.
 .Pp
 If a text (non-binary) file is not terminated by a newline character,

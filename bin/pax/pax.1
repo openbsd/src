@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pax.1,v 1.5 1997/04/06 06:11:13 millert Exp $
+.\"	$OpenBSD: pax.1,v 1.6 1998/09/14 22:13:52 aaron Exp $
 .\"	$NetBSD: pax.1,v 1.3 1995/03/21 09:07:37 cgd Exp $
 .\"
 .\" Copyright (c) 1992 Keith Muller.
@@ -181,10 +181,10 @@
 .Op Ar file ...
 .Ar directory
 .Sh DESCRIPTION
-.Nm Pax
+.Nm pax
 will read, write, and list the members of an archive file,
 and will copy directory hierarchies.
-.Nm Pax 
+.Nm pax 
 operation is independent of the specific archive format,
 and supports a wide variety of different archive formats.
 A list of supported archive formats can be found under the description of the
@@ -200,26 +200,26 @@ options specifies which of the following functional modes
 will operate under:
 .Em list , read , write ,
 and
-.Em copy.
+.Em copy .
 .Bl -tag -width 6n
 .It <none>
 .Em List .
-.Nm Pax
+.Nm pax
 will write to
 .Dv standard output
 a table of contents of the members of the archive file read from
 .Dv standard input ,
 whose pathnames match the specified
-.Ar patterns.
+.Ar patterns .
 The table of contents contains one filename per line
 and is written using single line buffering.
 .It Fl r
 .Em Read .
-.Nm Pax
+.Nm pax
 extracts the members of the archive file read from the
 .Dv standard input ,
 with pathnames matching the specified 
-.Ar patterns.
+.Ar patterns .
 The archive format and blocking is automatically determined on input.
 When an extracted file is a directory, the entire file hierarchy
 rooted at that directory is extracted.
@@ -230,7 +230,7 @@ the extracted files are discussed in more detail under the
 option.
 .It Fl w
 .Em Write .
-.Nm Pax
+.Nm pax
 writes an archive containing the 
 .Ar file
 operands to
@@ -246,7 +246,7 @@ operand is also a directory, the entire file hierarchy rooted
 at that directory will be included.
 .It Fl r Fl w
 .Em Copy .
-.Nm Pax
+.Nm pax
 copies the
 .Ar file
 operands to the destination
@@ -292,7 +292,6 @@ to locate and process the largest number of archive members possible (see the
 .Fl E
 option for more details on error handling).
 .Sh OPERANDS
-.Pp
 The
 .Ar directory
 operand specifies a destination directory pathname.
@@ -300,7 +299,7 @@ If the
 .Ar directory
 operand does not exist, or it is not writable by the user,
 or it is not of type directory,
-.Nm Pax
+.Nm pax
 will exit with a non-zero exit status.
 .Pp
 The
@@ -339,7 +338,6 @@ operand pathnames in a diagnostic message to
 .Dv standard error
 and then exit with a non-zero exit status.
 .Sh OPTIONS
-.Pp
 The following options are supported:
 .Bl -tag -width 4n
 .It Fl r
@@ -412,14 +410,14 @@ standard and will not be portable to all systems.
 A
 .Ar blocksize
 can end with
-.Li k
+.Sq Li k
 or
-.Li b
+.Sq Li b
 to specify multiplication by 1024 (1K) or 512, respectively.
 A pair of
 .Ar blocksizes
 can be separated by
-.Li x
+.Sq Li x
 to indicate a product.
 A specific archive device may impose additional restrictions on the size
 of blocking it will support.
@@ -469,14 +467,14 @@ operand,
 will prompt to
 .Pa /dev/tty
 giving the name of the file, its file mode and its modification time.
-.Nm Pax
+.Nm pax
 will then read a line from
 .Pa /dev/tty .
 If this line is blank, the file or archive member is skipped.
 If this line consists of a single period, the
 file or archive member is processed with no modification to its name.
 Otherwise, its name is replaced with the contents of the line.
-.Nm Pax
+.Nm pax
 will immediately exit with a non-zero exit status if 
 .Dv <EOF>
 is encountered when reading a response or if
@@ -485,12 +483,11 @@ cannot be opened for reading and writing.
 .It Fl k
 Do not overwrite existing files.
 .It Fl l
-Link files. (The letter ell).
+(The lowercase letter ``ell.'') Link files.
 In the
 .Em copy
-mode (
-.Fl r
-.Fl w ) ,
+mode
+.Pq Fl r Fl w ,
 hard links are made between the source and destination file hierarchies
 whenever possible.
 .It Fl n
@@ -510,7 +507,7 @@ which is specific to the archive format specified by
 In general,
 .Ar options
 take the form:
-.Cm name=value
+.Cm name=value .
 .It Fl p Ar string
 Specify one or more file characteristic options (privileges).
 The
@@ -678,10 +675,9 @@ Where <ls -l listing> is the output format specified by the
 utility when used with the
 .Fl l
 option.
-Otherwise for all the other operational modes (
-.Em read , write ,
-and
-.Em copy ) ,
+Otherwise for all the other operational modes
+.Po Em read , write , Li and Em copy
+.Pc ,
 pathnames are written and flushed to
 .Dv standard error
 without a trailing
@@ -694,7 +690,7 @@ is not buffered, and is written only after the file has been read or written.
 .It Fl x Ar format
 Specify the output archive format, with the default format being
 .Ar ustar .
-.Nm Pax
+.Nm pax
 currently supports the following formats:
 .Bl -tag -width "sv4cpio"
 .It Ar cpio
@@ -753,27 +749,28 @@ The default blocksize for this format is 10240 bytes.
 Pathnames stored by this format must be 250 characters or less in length.
 .El
 .Pp
-.Nm Pax
+.Nm pax
 will detect and report any file that it is unable to store or extract
 as the result of any specific archive format restrictions.
 The individual archive formats may impose additional restrictions on use.
 Typical archive format restrictions include (but are not limited to):
-file pathname length, file size, link pathname length and the type of the file.
+file pathname length, file size, link pathname length, and the type of the
+file.
 .It Fl B Ar bytes
 Limit the number of bytes written to a single archive volume to
 .Ar bytes .
 The
 .Ar bytes
 limit can end with
-.Li m ,
-.Li k ,
+.Sq Li m ,
+.Sq Li k ,
 or
-.Li b
+.Sq Li b
 to specify multiplication by 1048576 (1M), 1024 (1K) or 512, respectively.
 A pair of
 .Ar bytes
 limits can be separated by
-.Li x
+.Sq Li x
 to indicate a product.
 .Pp
 .Em Warning :
@@ -787,11 +784,11 @@ This option is the same as the
 option, except that the file inode change time is checked instead of the
 file modification time.
 The file inode change time can be used to select files whose inode information
-(e.g. uid, gid, etc.) is newer than a copy of the file in the destination
+(e.g. UID, GID, etc.) is newer than a copy of the file in the destination
 .Ar directory .
 .It Fl E Ar limit
 Limit the number of consecutive read faults while trying to read a flawed
-archives to
+archive to
 .Ar limit .
 With a positive
 .Ar limit ,
@@ -936,7 +933,7 @@ Select a file based on its
 .Ar user
 name, or when starting with a
 .Cm # ,
-a numeric uid.
+a numeric UID.
 A '\\' can be used to escape the
 .Cm # .
 Multiple 
@@ -949,7 +946,7 @@ See the
 .Li st_dev 
 field as described in
 .Xr stat 2
-for more information about device ID's.
+for more information about device IDs.
 .It Fl Y
 This option is the same as the
 .Fl D
@@ -962,8 +959,8 @@ option, except that the modification time is checked using the
 pathname created after all the file name modifications have completed.
 .El
 .Pp
-The options that operate on the names of files or archive members (
-.Fl c ,
+The options that operate on the names of files or archive members
+.Po Fl c ,
 .Fl i ,
 .Fl n ,
 .Fl s ,
@@ -975,7 +972,8 @@ The options that operate on the names of files or archive members (
 .Fl U ,
 .Fl Y ,
 and
-.Fl Z )
+.Fl Z
+.Pc
 interact as follows.
 .Pp
 When extracting files during a
@@ -1001,7 +999,7 @@ Then the
 and
 .Fl Z
 options will be applied based on the final pathname.
-Finally the 
+Finally, the 
 .Fl v
 option will write the names resulting from these modifications.
 .Pp
@@ -1034,7 +1032,7 @@ operation the
 and the
 .Fl Z
 options will be applied based on the final pathname.
-Finally the
+Finally, the
 .Fl v
 option will write the names resulting from these modifications.
 .Pp
@@ -1130,7 +1128,7 @@ standard.
 .Xr tar 1 ,
 .Xr cpio 1
 .Sh AUTHOR
-Keith Muller at the University of California, San Diego
+Keith Muller at the University of California, San Diego.
 .Sh ERRORS
 .Nm pax
 will exit with one of the following values:
@@ -1150,7 +1148,9 @@ group ID, or file mode when the
 option is specified, a diagnostic message is written to
 .Dv standard error
 and a non-zero exit status will be returned, but processing will continue.
-In the case where pax cannot create a link to a file,
+In the case where
+.Nm pax
+cannot create a link to a file,
 .Nm pax
 will not create a second copy of the file.
 .Pp

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chmod.1,v 1.4 1997/11/17 06:54:59 deraadt Exp $
+.\"	$OpenBSD: chmod.1,v 1.5 1998/09/14 22:13:38 aaron Exp $
 .\"	$NetBSD: chmod.1,v 1.8 1995/03/21 09:02:07 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
@@ -50,7 +50,7 @@
 .Op Fl H | Fl L | Fl P
 .Oc
 .Ar mode
-.Ar file ...
+.Ar file Op Ar ...
 .Sh DESCRIPTION
 The
 .Nm chmod
@@ -102,7 +102,7 @@ the mode of a file.
 .Pp
 The
 .Nm chmod
-utility exits 0 on success, and >0 if an error occurs.
+utility exits 0 on success or >0 if an error occurred.
 .Sh MODES
 Modes may be absolute or symbolic.
 An absolute mode is an octal number constructed by
@@ -186,7 +186,7 @@ The other permission bits in the mode of the original file.
 The
 .Ar op
 symbols represent the operation performed, as follows:
-.Bl -tag -width 4n
+.Bl -tag -width 4n -offset indent
 .It +
 If no value is supplied for
 .Ar perm ,
@@ -220,7 +220,9 @@ values are cleared.
 .It =
 The mode bits specified by the
 .Ar who
-value are cleared, or, if no who value is specified, the owner, group
+value are cleared, or, if no
+.Ar who
+value is specified, the owner, group
 and other mode bits are cleared.
 Then, if no value is supplied for
 .Ar who ,
@@ -248,29 +250,29 @@ symbols ``s'' or ``t'', are ignored.
 .Sh EXAMPLES
 .Bl -tag -width "u=rwx,go=u-w" -compact
 .It Li 644
-make a file readable by anyone and writable by the owner only.
+Make a file readable by anyone and writable by the owner only.
 .Pp
 .It Li go-w
-deny write permission to group and others.
+Deny write permission to group and others.
 .Pp
 .It Li =rw,+X
-set the read and write permissions to the usual defaults, but
+Set the read and write permissions to the usual defaults, but
 retain any execute permissions that are currently set.
 .Pp
 .It Li +X
-make a directory or file searchable/executable by everyone if it is
+Make a directory or file searchable/executable by everyone if it is
 already searchable/executable by anyone.
 .Pp
 .It Li 755
 .It Li u=rwx,go=rx
 .It Li u=rwx,go=u-w
-make a file readable/executable by everyone and writable by the owner only.
+Make a file readable/executable by everyone and writable by the owner only.
 .Pp
 .It Li go=
-clear all mode bits for group and others.
+Clear all mode bits for group and others.
 .Pp
 .It Li g=u-w
-set the group bits equal to the user bits, but clear the group write bit.
+Set the group bits equal to the user bits, but clear the group write bit.
 .El
 .Sh BUGS
 There's no

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: stty.1,v 1.7 1998/06/03 05:57:47 deraadt Exp $
+.\"	$OpenBSD: stty.1,v 1.8 1998/09/14 22:13:59 aaron Exp $
 .\"	$NetBSD: stty.1,v 1.10 1995/09/07 06:57:14 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
@@ -152,6 +152,7 @@ control.
 Enable (disable) RTS/CTS flow control.
 .El
 .Ss Input Modes:
+.Pp
 This corresponds to the c_iflag in the termios structure.
 .Bl -tag -width Fl
 .It Cm ignbrk Pq Fl ignbrk
@@ -232,6 +233,7 @@ is unset and the input queue is full, the next input character causes
 the entire input and output queues to be discarded.
 .El
 .Ss Output Modes:
+.Pp
 This corresponds to the c_oflag of the termios structure.
 .Bl -tag -width Fl
 .It Cm opost Pq Fl opost
@@ -349,13 +351,13 @@ It also skips the first preceding character in its classification
 (as a convenience since the one preceding character could have been
 erased with simply an
 .Dv ERASE
-character.)
+character).
 .It Cm mdmbuf Pq Fl mdmbuf
 If set, flow control output based on condition of Carrier Detect.  Otherwise
 writes return an error if Carrier Detect is low (and Carrier is not being
 ignored with the
 .Dv CLOCAL
-flag.)
+flag).
 .It Cm flusho Pq Fl flusho
 Indicates output is (is not) being discarded.
 .It Cm pendin Pq Fl pendin
@@ -416,7 +418,7 @@ number.
 and
 .Dv TIME
 are used in
-Non-Canonical mode input processing
+non-canonical mode input processing
 (-icanon).
 .El
 .Ss Combination Modes:
@@ -460,7 +462,7 @@ processing a
 character (usually set to ^T).  The status line consists of the
 system load average, the current command name, its process ID, the
 event the process is waiting on (or the status of the process), the user
-and system times, percent cpu, and current memory usage.
+and system times, percent CPU, and current memory usage.
 .It Cm columns Ar number
 The terminal size is recorded as having
 .Ar number
@@ -483,7 +485,7 @@ characters are set to ^?, ^U, and ^C;
 .Dv ixany
 is disabled, and
 .Dv crt
-is enabled.)
+is enabled).
 .It Cm extproc Pq Fl extproc
 If set, this flag indicates that some amount of terminal processing is being
 performed by either the terminal hardware or by the remote side connected
@@ -592,7 +594,7 @@ Same as the control character
 Same as the control character
 .Cm reprint .
 .El
-.Ss Control operations:
+.Ss Control Operations:
 .Pp
 These operations are not modes, but rather commands to be performed by
 the tty layer.
@@ -611,7 +613,7 @@ is set.
 .Pp
 The
 .Nm stty
-utility exits with a value of 0 if successful, and >0 if an error occurs.
+utility exits 0 on success or >0 if an error occurred.
 .Sh SEE ALSO
 .Xr termios 4
 .Sh STANDARDS

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ls.1,v 1.8 1998/08/07 19:44:53 deraadt Exp $
+.\"	$OpenBSD: ls.1,v 1.9 1998/09/14 22:13:49 aaron Exp $
 .\"	$NetBSD: ls.1,v 1.14 1995/12/05 02:44:01 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1991, 1993, 1994
@@ -170,7 +170,7 @@ options all override each other; the last one specified determines
 the format used.
 .Pp
 The
-.Fl c ,
+.Fl c
 and
 .Fl u
 options override each other; the last one specified determines
@@ -212,11 +212,11 @@ directory.
 If the owner or group names are not a known user or group name,
 or the
 .Fl n
-option is given, the numeric ID's are displayed.
+option is given, the numeric IDs are displayed.
 .Pp
 If the file is a character special or block special file,
 the major and minor device numbers for the file are displayed
-in the size field. If the file is a symbolic link the pathname of the
+in the size field. If the file is a symbolic link, the pathname of the
 linked-to file is preceded by
 .Dq \-> .
 .Pp
@@ -230,21 +230,21 @@ follows:
 .Pp
 .Bl -tag -width 4n -offset indent -compact
 .It Sy b
-Block special file.
+block special file
 .It Sy c
-Character special file.
+character special file
 .It Sy d
-Directory.
+directory
 .It Sy l
-Symbolic link.
+symbolic link
 .It Sy s
-Socket link.
+socket link
 .\" .It Sy p
 .\" .Tn FIFO .
 .It Sy w
-Whiteout.
+whiteout
 .It Sy \-
-Regular file.
+regular file
 .El
 .Pp
 The next three fields
@@ -294,7 +294,7 @@ These next two apply only to the third character in the last group
 The sticky bit is set
 (mode
 .Li 1000 ) ,
-but not execute or search permission. (See
+but neither executable nor searchable. (See
 .Xr chmod 1
 or
 .Xr sticky 8 . )
@@ -311,10 +311,11 @@ or
 .Pp
 In addition, if the
 .Fl o
-option was specified, the file flags (See 
-.Xr chflags 1 . )
+option was specified, the file flags (see 
+.Xr chflags 1 )
 are displayed as comma-separated strings in front of the file name,
-abbreviated as follows
+abbreviated as follows:
+.Pp
 .Bl -tag -width 8n -offset indent -compact
 .It Sy -
 no flags
@@ -336,7 +337,7 @@ system immutable
 .Pp
 The
 .Nm ls
-utility exits 0 on success, and >0 if an error occurs.
+utility exits 0 on success or >0 if an error occurred.
 .Sh ENVIRONMENT
 The following environment variables affect the execution of
 .Nm ls :
