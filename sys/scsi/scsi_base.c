@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.33 2002/03/14 01:27:13 millert Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.34 2002/04/21 10:42:40 art Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -111,7 +111,7 @@ scsi_get_xs(sc_link, flags)
 	}
 	SC_DEBUG(sc_link, SDEV_DB3, ("calling pool_get\n"));
 	xs = pool_get(&scsi_xfer_pool,
-	    ((flags & SCSI_NOSLEEP) != 0 ? M_NOWAIT : M_WAITOK));
+	    ((flags & SCSI_NOSLEEP) != 0 ? PR_NOWAIT : PR_WAITOK));
 	if (xs != NULL) {
 		sc_link->openings--;
 		xs->flags = flags;
