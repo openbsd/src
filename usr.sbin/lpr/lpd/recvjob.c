@@ -1,4 +1,4 @@
-/*	$OpenBSD: recvjob.c,v 1.10 1997/07/20 19:04:18 deraadt Exp $	*/
+/*	$OpenBSD: recvjob.c,v 1.11 1997/07/25 20:12:13 mickey Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)recvjob.c	8.2 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: recvjob.c,v 1.10 1997/07/20 19:04:18 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: recvjob.c,v 1.11 1997/07/25 20:12:13 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -342,14 +342,14 @@ rcleanup(signo)
 	dfname[0] = '\0';
 }
 
-#if __STDC__
+#ifdef __STDC__
 #include <stdarg.h>
 #else
 #include <varargs.h>
 #endif
 
 static void
-#if __STDC__
+#ifdef __STDC__
 frecverr(const char *msg, ...)
 #else
 frecverr(msg, va_alist)
@@ -359,7 +359,7 @@ frecverr(msg, va_alist)
 {
 	extern char fromb[];
 	va_list ap;
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, msg);
 #else
 	va_start(ap);

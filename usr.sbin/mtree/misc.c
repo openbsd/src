@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.7 1997/07/18 05:49:03 millert Exp $	*/
+/*	$OpenBSD: misc.c,v 1.8 1997/07/25 20:12:14 mickey Exp $	*/
 /*	$NetBSD: misc.c,v 1.4 1995/03/07 21:26:23 cgd Exp $	*/
 
 /*-
@@ -99,14 +99,14 @@ keycompare(a, b)
 	return (strcmp(((KEY *)a)->name, ((KEY *)b)->name));
 }
 
-#if __STDC__
+#ifdef __STDC__
 #include <stdarg.h>
 #else
 #include <varargs.h>
 #endif
 
 void
-#if __STDC__
+#ifdef __STDC__
 error(const char *fmt, ...)
 #else
 error(fmt, va_alist)
@@ -115,7 +115,7 @@ error(fmt, va_alist)
 #endif
 {
 	va_list ap;
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, fmt);
 #else
 	va_start(ap);

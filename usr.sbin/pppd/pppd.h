@@ -1,4 +1,4 @@
-/*	$OpenBSD: pppd.h,v 1.4 1996/12/23 13:22:48 mickey Exp $	*/
+/*	$OpenBSD: pppd.h,v 1.5 1997/07/25 20:12:17 mickey Exp $	*/
 
 /*
  * pppd.h - PPP daemon global declarations.
@@ -32,7 +32,7 @@
 #include <sys/time.h>		/* for struct timeval */
 #include <net/ppp_defs.h>
 
-#if __STDC__
+#ifdef __STDC__
 #include <stdarg.h>
 #define __V(x)        x
 #else

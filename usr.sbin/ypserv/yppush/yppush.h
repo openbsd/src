@@ -1,4 +1,4 @@
-/*	$OpenBSD: yppush.h,v 1.2 1996/05/30 09:53:20 deraadt Exp $ */
+/*	$OpenBSD: yppush.h,v 1.3 1997/07/25 20:12:32 mickey Exp $ */
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -58,7 +58,7 @@ enum yppush_status {
 typedef enum yppush_status yppush_status;
 #ifdef __cplusplus 
 extern "C" bool_t xdr_yppush_status(XDR *, yppush_status*);
-#elif __STDC__ 
+#elif defined(__STDC__)
 extern  bool_t xdr_yppush_status(XDR *, yppush_status*);
 #else /* Old Style C */ 
 bool_t xdr_yppush_status();
@@ -72,7 +72,7 @@ struct yppushresp_xfr {
 typedef struct yppushresp_xfr yppushresp_xfr;
 #ifdef __cplusplus 
 extern "C" bool_t xdr_yppushresp_xfr(XDR *, yppushresp_xfr*);
-#elif __STDC__ 
+#elif defined(__STDC__)
 extern  bool_t xdr_yppushresp_xfr(XDR *, yppushresp_xfr*);
 #else /* Old Style C */ 
 bool_t xdr_yppushresp_xfr();
@@ -90,7 +90,7 @@ extern "C" void * yppushproc_null_1_svc(void *, struct svc_req *);
 extern "C" void * yppushproc_xfrresp_1(yppushresp_xfr *, CLIENT *);
 extern "C" void * yppushproc_xfrresp_1_svc(yppushresp_xfr *, struct svc_req *);
 
-#elif __STDC__
+#elif defined(__STDC__)
 #define YPPUSHPROC_NULL ((u_long)0)
 extern  void * yppushproc_null_1(void *, CLIENT *);
 extern  void * yppushproc_null_1_svc(void *, struct svc_req *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: printjob.c,v 1.15 1997/07/23 10:12:43 deraadt Exp $ */
+/*	$OpenBSD: printjob.c,v 1.16 1997/07/25 20:12:12 mickey Exp $ */
 /*	$NetBSD: printjob.c,v 1.9.4.3 1996/07/12 22:31:39 jtc Exp $	*/
 
 /*
@@ -1537,14 +1537,14 @@ setty()
 	return;
 }
 
-#if __STDC__
+#ifdef __STDC__
 #include <stdarg.h>
 #else
 #include <varargs.h>
 #endif
 
 static void
-#if __STDC__
+#ifdef __STDC__
 pstatus(const char *msg, ...)
 #else
 pstatus(msg, va_alist)
@@ -1555,7 +1555,7 @@ pstatus(msg, va_alist)
 	register int fd;
 	char buf[BUFSIZ];
 	va_list ap;
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, msg);
 #else
 	va_start(ap);

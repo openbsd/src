@@ -21,7 +21,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-sl.c,v 1.6 1996/12/12 16:22:27 bitblt Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-sl.c,v 1.7 1997/07/25 20:12:27 mickey Exp $ (LBL)";
 #endif
 
 #ifdef HAVE_NET_SLIP_H
@@ -33,7 +33,7 @@ static const char rcsid[] =
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 
-#if __STDC__
+#ifdef __STDC__
 struct rtentry;
 #endif
 #include <net/if.h>

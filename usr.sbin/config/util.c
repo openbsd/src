@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.5 1996/10/23 22:38:02 niklas Exp $	*/
+/*	$OpenBSD: util.c,v 1.6 1997/07/25 20:12:10 mickey Exp $	*/
 /*	$NetBSD: util.c,v 1.5 1996/08/31 20:58:29 mycroft Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#if __STDC__
+#ifdef __STDC__
 #include <stdarg.h>
 #else
 #include <varargs.h>
@@ -172,7 +172,7 @@ nvfreel(nv)
  * and line number.
  */
 void
-#if __STDC__
+#ifdef __STDC__
 error(const char *fmt, ...)
 #else
 error(fmt, va_alist)
@@ -183,7 +183,7 @@ error(fmt, va_alist)
 	va_list ap;
 	extern const char *yyfile;
 
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, fmt);
 #else
 	va_start(ap);
@@ -197,7 +197,7 @@ error(fmt, va_alist)
  * find out about it until later).
  */
 void
-#if __STDC__
+#ifdef __STDC__
 xerror(const char *file, int line, const char *fmt, ...)
 #else
 xerror(file, line, fmt, va_alist)
@@ -209,7 +209,7 @@ xerror(file, line, fmt, va_alist)
 {
 	va_list ap;
 
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, fmt);
 #else
 	va_start(ap);
@@ -239,7 +239,7 @@ vxerror(file, line, fmt, ap)
  * Internal error, abort.
  */
 __dead void
-#if __STDC__
+#ifdef __STDC__
 panic(const char *fmt, ...)
 #else
 panic(fmt, va_alist)
@@ -249,7 +249,7 @@ panic(fmt, va_alist)
 {
 	va_list ap;
 
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, fmt);
 #else
 	va_start(ap);

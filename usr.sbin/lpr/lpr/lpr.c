@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpr.c,v 1.18 1997/07/19 07:11:44 deraadt Exp $ */
+/*	$OpenBSD: lpr.c,v 1.19 1997/07/25 20:12:13 mickey Exp $ */
 /*	$NetBSD: lpr.c,v 1.10 1996/03/21 18:12:25 jtc Exp $	*/
 
 /*
@@ -50,7 +50,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)lpr.c	8.4 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: lpr.c,v 1.18 1997/07/19 07:11:44 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: lpr.c,v 1.19 1997/07/25 20:12:13 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -745,14 +745,14 @@ lmktemp(id, num, len)
 	return(s);
 }
 
-#if __STDC__
+#ifdef __STDC__
 #include <stdarg.h>
 #else
 #include <varargs.h>
 #endif
 
 static void
-#if __STDC__
+#ifdef __STDC__
 fatal2(const char *msg, ...)
 #else
 fatal2(msg, va_alist)
@@ -761,7 +761,7 @@ fatal2(msg, va_alist)
 #endif
 {
 	va_list ap;
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, msg);
 #else
 	va_start(ap);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.15 1997/03/29 04:17:22 dgregor Exp $	*/
+/*	$OpenBSD: main.c,v 1.16 1997/07/25 20:12:16 mickey Exp $	*/
 
 /*
  * main.c - Point-to-Point Protocol main module
@@ -20,7 +20,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: main.c,v 1.15 1997/03/29 04:17:22 dgregor Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.16 1997/07/25 20:12:16 mickey Exp $";
 #endif
 
 #include <stdio.h>
@@ -1228,7 +1228,7 @@ pr_log __V((void *arg, char *fmt, ...))
     va_list pvar;
     char buf[256];
 
-#if __STDC__
+#ifdef __STDC__
     va_start(pvar, fmt);
 #else
     void *arg;
@@ -1314,7 +1314,7 @@ fmtmsg __V((char *buf, int buflen, char *fmt, ...))
     va_list args;
     int n;
                 
-#if __STDC__
+#ifdef __STDC__
     va_start(args, fmt);
 #else
     char *buf;
