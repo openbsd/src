@@ -33,15 +33,15 @@ completely, and balanced decisions need to be made.
 
 First, it is important that none of the popa3d users get a false sense
 of security just because it was the primary design goal.  The POP3
-protocol transmits passwords in plaintext, and thus, if you care about
+protocol transmits passwords in plaintext and thus, if you care about
 the security of your individual user accounts, should only be used
-either in trusted networks, or tunneled over encrypted channels.
+either in trusted networks or tunneled over encrypted channels.
 There exist extensions to the protocol that are supposed to fix this
 problem.  I am not supporting them yet, partly because this isn't
 going to fully fix the problem.  In fact, APOP and the weaker defined
 SASL mechanisms such as CRAM-MD5 may potentially be even less secure
 than transmission of plaintext passwords because of the requirement
-that plaintext equivalents are stored on the server.
+that plaintext equivalents be stored on the server.
 
 It is also important to understand that nothing can be perfectly
 secure.  I can make mistakes.  While the design of popa3d makes it

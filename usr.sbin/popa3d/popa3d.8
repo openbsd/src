@@ -1,10 +1,10 @@
-.\"	$OpenBSD: popa3d.8,v 1.4 2001/09/24 19:08:01 camield Exp $
+.\"	$OpenBSD: popa3d.8,v 1.5 2002/03/27 14:08:43 camield Exp $
 .Dd August 15, 2001
 .Dt POPA3D 8
 .Os
 .Sh NAME
 .Nm popa3d
-.Nd "Post Office Protocol server"
+.Nd "Post Office Protocol (POP3) server"
 .Sh SYNOPSIS
 .Nm
 .Op Fl D
@@ -25,7 +25,7 @@ users.
 Users can connect at any time to check their mailbox and fetch the
 mail that has accumulated.
 The advantage of this ``pull'' approach is that any user with a simple
-POP3-capable mailreader program can receive mail, eschewing the need
+POP3-capable mail reader program can receive mail, eschewing the need
 for a full-fledged Mail Transfer Agent (MTA) and a permanent network
 connection.
 .Pp
@@ -57,7 +57,7 @@ Alternatively,
 .Nm
 can be used through
 .Xr inetd 8 .
-This requires the following entry to be added to
+This requires the following entry to be activated in
 .Pa /etc/inetd.conf :
 .Pp
 .Pa pop3 stream tcp nowait root /usr/sbin/popa3d popa3d
@@ -69,10 +69,11 @@ for TCP-wrappers access control:
 .Pa pop3 stream tcp nowait root /usr/libexec/tcpd /usr/sbin/popa3d
 .Pp
 For access to a mailbox through the POP3 service, the username must
-be in the password database and the password field must not be
-empty.
-Authentication for super-users like root will always fail, even if the
-password is correct.
+be in the password database.
+Additionally,
+.Nm
+does not permit null passwords and will refuse to serve mail for
+root (uid 0) users.
 .Sh COMMANDS
 A normal POP3 session progresses through three states: authorization,
 transaction and update.

@@ -1,4 +1,4 @@
-/* $OpenBSD: mailbox.c,v 1.2 2001/09/21 20:22:06 camield Exp $ */
+/* $OpenBSD: mailbox.c,v 1.3 2002/03/27 14:08:43 camield Exp $ */
 
 /*
  * Mailbox access.
@@ -313,7 +313,7 @@ int mailbox_open(char *spool, char *mailbox)
 		return 0;
 	}
 
-	mailbox_fd = open(pathname, O_RDWR | O_NOCTTY);
+	mailbox_fd = open(pathname, O_RDWR | O_NOCTTY | O_NONBLOCK);
 
 	free(pathname);
 

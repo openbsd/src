@@ -1,4 +1,4 @@
-/* $OpenBSD: virtual.c,v 1.2 2001/09/21 20:22:06 camield Exp $ */
+/* $OpenBSD: virtual.c,v 1.3 2002/03/27 14:08:43 camield Exp $ */
 
 /*
  * Virtual domain support.
@@ -25,6 +25,10 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+
+#ifndef NAME_MAX
+#define NAME_MAX			255
+#endif
 
 extern int log_error(char *s);
 

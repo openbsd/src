@@ -1,4 +1,4 @@
-/* $OpenBSD: params.h,v 1.6 2001/09/25 01:01:12 deraadt Exp $ */
+/* $OpenBSD: params.h,v 1.7 2002/03/27 14:08:43 camield Exp $ */
 
 /*
  * Global POP daemon parameters.
@@ -36,7 +36,7 @@
  * Should libwrap be used?
  *
  * This may make things slower and also adds to code running as root,
- * so it is recommended that you use a packet filter instead.  This
+ * so it is recommended that you use a packet filter instead. This
  * option is provided primarily as a way to meet conventions of certain
  * systems where all services obey libwrap access controls.
  */
@@ -189,6 +189,8 @@
 /*
  * Locking method your system uses for user mailboxes. It is important
  * that you set this correctly.
+ *
+ * *BSD's use flock(2), others typically use fcntl(2).
  */
 #define LOCK_FCNTL			0
 #define LOCK_FLOCK			1

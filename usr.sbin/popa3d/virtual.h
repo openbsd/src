@@ -1,4 +1,4 @@
-/* $OpenBSD: virtual.h,v 1.2 2001/09/21 20:22:06 camield Exp $ */
+/* $OpenBSD: virtual.h,v 1.3 2002/03/27 14:08:43 camield Exp $ */
 
 /*
  * Virtual domain support.
@@ -29,7 +29,7 @@ extern int virtual_startup(void);
  * on fd 0), or as a part of the username. If the virtual domain is known,
  * virtual_domain and virtual_spool are set appropriately. If the username
  * is known as well, known is set. Returns the template user to run as if
- * authentication is succeeds, or NULL otherwise.
+ * authentication succeeds, or NULL otherwise.
  */
 extern struct passwd *virtual_userpass(char *user, char *pass, int *known);
 
