@@ -1,5 +1,5 @@
-/*	$OpenBSD: fetch.c,v 1.5 1997/03/21 20:59:29 millert Exp $	*/
-/*	$NetBSD: fetch.c,v 1.4 1997/03/16 14:24:18 lukem Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.6 1997/04/10 00:17:08 millert Exp $	*/
+/*	$NetBSD: fetch.c,v 1.5 1997/04/05 03:27:36 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: fetch.c,v 1.5 1997/03/21 20:59:29 millert Exp $";
+static char rcsid[] = "$OpenBSD: fetch.c,v 1.6 1997/04/10 00:17:08 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -68,6 +68,7 @@ static char rcsid[] = "$OpenBSD: fetch.c,v 1.5 1997/03/21 20:59:29 millert Exp $
 
 #define	FTP_URL		"ftp://"	/* ftp URL prefix */
 #define	HTTP_URL	"http://"	/* http URL prefix */
+#define FTP_PROXY	"ftp_proxy"	/* env var with ftp proxy location */
 #define HTTP_PROXY	"http_proxy"	/* env var with http proxy location */
 
 
@@ -76,32 +77,39 @@ static char rcsid[] = "$OpenBSD: fetch.c,v 1.5 1997/03/21 20:59:29 millert Exp $
 jmp_buf	httpabort;
 
 /*
- * Retrieve an http:// URL, via a proxy if necessary.
+ * Retrieve URL, via the proxy in $proxyvar if necessary.
  * Modifies the string argument given.
  * Returns -1 on failure, 0 on success
  */
 int
-http_get(line)
+url_get(line, proxyenv)
 	char *line;
+	char *proxyenv;
 {
 	struct sockaddr_in sin;
 	int i, out, port, s;
 	size_t buflen, len;
 	char c, *cp, *cp2, *savefile, *portnum, *path, buf[4096];
-	char *proxyenv, *proxy, *host;
+	char *proxy, *host;
 	sig_t oldintr;
 	off_t hashbytes;
 
 	s = -1;
 	proxy = NULL;
 
-	host = line + sizeof(HTTP_URL) - 1;
+	if (strncmp(line, HTTP_URL, sizeof(HTTP_URL) - 1) == 0)
+		host = line + sizeof(HTTP_URL) - 1;
+	else if (strncmp(line, FTP_URL, sizeof(FTP_URL) - 1) == 0)
+		host = line + sizeof(FTP_URL) - 1;
+	else
+		errx(1, "url_get: invalid url '%s'", line);
+
 	path = strchr(host, '/');		/* find path */
 	if (EMPTYSTRING(path))
-		goto cleanup_http_get;
+		goto cleanup_url_get;
 	*path++ = '\0';
 	if (EMPTYSTRING(path))
-		goto cleanup_http_get;
+		goto cleanup_url_get;
 
 	savefile = strrchr(path, '/');			/* find savefile */
 	if (savefile != NULL)
@@ -109,20 +117,22 @@ http_get(line)
 	else
 		savefile = path;
 	if (EMPTYSTRING(savefile))
-		goto cleanup_http_get;
+		goto cleanup_url_get;
 
-	proxyenv = getenv(HTTP_PROXY);
 	if (proxyenv != NULL) {				/* use proxy */
-		if (strncmp(proxyenv, HTTP_URL, sizeof(HTTP_URL) - 1) != 0) {
-			warnx("Malformed proxy url: %s", proxyenv);
-			goto cleanup_http_get;
-		}
 		proxy = strdup(proxyenv);
 		if (proxy == NULL)
 			errx(1, "Can't allocate memory for proxy url.");
-		host = proxy + sizeof(HTTP_URL) - 1;
+		if (strncmp(proxy, HTTP_URL, sizeof(HTTP_URL) - 1) == 0)
+			host = proxy + sizeof(HTTP_URL) - 1;
+		else if (strncmp(proxy, FTP_URL, sizeof(FTP_URL) - 1) == 0)
+			host = proxy + sizeof(FTP_URL) - 1;
+		else {
+			warnx("Malformed proxy url: %s", proxy);
+			goto cleanup_url_get;
+		}
 		if (EMPTYSTRING(host))
-			goto cleanup_http_get;
+			goto cleanup_url_get;
 		*--path = '/';			/* add / back to real path */
 		path = strchr(host, '/');	/* remove trailing / on host */
 		if (! EMPTYSTRING(path))
@@ -144,7 +154,7 @@ http_get(line)
 	if (isdigit(host[0])) {
 		if (inet_aton(host, &sin.sin_addr) == 0) {
 			warnx("invalid IP address: %s", host);
-			goto cleanup_http_get;
+			goto cleanup_url_get;
 		}
 	} else {
 		struct hostent *hp;
@@ -152,11 +162,11 @@ http_get(line)
 		hp = gethostbyname(host);
 		if (hp == NULL) {
 			warnx("%s: %s", host, hstrerror(h_errno));
-			goto cleanup_http_get;
+			goto cleanup_url_get;
 		}
 		if (hp->h_addrtype != AF_INET) {
 			warnx("%s: not an Internet address?", host);
-			goto cleanup_http_get;
+			goto cleanup_url_get;
 		}
 		memcpy(&sin.sin_addr, hp->h_addr, hp->h_length);
 	}
@@ -165,7 +175,7 @@ http_get(line)
 		port = atoi(portnum);
 		if (port < 1 || (port & 0xffff) != port) {
 			warnx("invalid port: %s", portnum);
-			goto cleanup_http_get;
+			goto cleanup_url_get;
 		}
 		port = htons(port);
 	} else
@@ -175,12 +185,12 @@ http_get(line)
 	s = socket(AF_INET, SOCK_STREAM, 0);
 	if (s == -1) {
 		warnx("Can't create socket");
-		goto cleanup_http_get;
+		goto cleanup_url_get;
 	}
 
 	if (connect(s, (struct sockaddr *)&sin, sizeof(sin)) == -1) {
 		warn("Can't connect to %s", host);
-		goto cleanup_http_get;
+		goto cleanup_url_get;
 	}
 
 	/*
@@ -196,7 +206,7 @@ http_get(line)
 	buflen = strlen(buf);
 	if (write(s, buf, buflen) < buflen) {
 		warn("write");
-		goto cleanup_http_get;
+		goto cleanup_url_get;
 	}
 	memset(buf, 0, sizeof(buf));
 	for (i = 0, buflen = sizeof(buf), cp = buf; i < buflen; cp++, i++) {
@@ -215,7 +225,7 @@ http_get(line)
 		cp++;
 	if (strncmp(cp, "200", 3)) {
 		warnx("Error retrieving file: %s", cp);
-		goto cleanup_http_get;
+		goto cleanup_url_get;
 	}
 
 	/*
@@ -259,7 +269,7 @@ http_get(line)
 	out = open(savefile, O_CREAT | O_WRONLY | O_TRUNC, 0666);
 	if (out < 0) {
 		warn("Can't open %s", savefile);
-		goto cleanup_http_get;
+		goto cleanup_url_get;
 	}
 
 	/* Trap signals */
@@ -267,7 +277,7 @@ http_get(line)
 	if (setjmp(httpabort)) {
 		if (oldintr)
 			(void)signal(SIGINT, oldintr);
-		goto cleanup_http_get;
+		goto cleanup_url_get;
 	}
 	oldintr = signal(SIGINT, aborthttp);
 
@@ -282,7 +292,7 @@ http_get(line)
 		for (cp = buf; len > 0; len -= i, cp += i) {
 			if ((i = write(out, cp, len)) == -1) {
 				warn("Writing %s", savefile);
-				goto cleanup_http_get;
+				goto cleanup_url_get;
 			}
 			else if (i == 0)
 				break;
@@ -303,7 +313,7 @@ http_get(line)
 	}
 	if (len != 0) {
 		warn("Reading from socket");
-		goto cleanup_http_get;
+		goto cleanup_url_get;
 	}
 	progressmeter(1);
 	if (verbose)
@@ -318,7 +328,7 @@ http_get(line)
 
 improper:
 	warnx("improper response from %s", host);
-cleanup_http_get:
+cleanup_url_get:
 	if (s != -1)
 		close(s);
 	if (proxy)
@@ -362,6 +372,7 @@ auto_fetch(argc, argv)
 	static char lasthost[MAXHOSTNAMELEN];
 	char *xargv[5];
 	char *cp, *line, *host, *dir, *file, *portnum;
+	char *ftpproxy, *httpproxy;
 	int rval, xargc, argpos;
 	int dirhasglob, filehasglob;
 	char rempath[MAXPATHLEN];
@@ -375,6 +386,9 @@ auto_fetch(argc, argv)
 	}
 	(void)signal(SIGINT, (sig_t)intr);
 	(void)signal(SIGPIPE, (sig_t)lostpeer);
+
+	ftpproxy = getenv(FTP_PROXY);
+	httpproxy = getenv(HTTP_PROXY);
 
 	/*
 	 * Loop through as long as there's files to fetch.
@@ -395,16 +409,23 @@ auto_fetch(argc, argv)
 		 * Try HTTP URL-style arguments first.
 		 */
 		if (strncmp(line, HTTP_URL, sizeof(HTTP_URL) - 1) == 0) {
-			if (http_get(line) == -1)
+			if (url_get(line, httpproxy) == -1)
 				rval = argpos + 1;
 			continue;
 		}
 
 		/*
-		 * Try FTP URL-style arguments next, then host:file.
+		 * Try FTP URL-style arguments next. If ftpproxy is
+		 * set, use url_get() instead of standard ftp.
+		 * Finally, try host:file.
 		 */
 		host = line;
 		if (strncmp(line, FTP_URL, sizeof(FTP_URL) - 1) == 0) {
+			if (ftpproxy) {
+				if (url_get(line, ftpproxy) == -1)
+					rval = argpos + 1;
+				continue;
+			}
 			host += sizeof(FTP_URL) - 1;
 			cp = strchr(host, '/');
 

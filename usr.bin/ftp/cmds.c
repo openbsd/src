@@ -1,5 +1,5 @@
-/*	$OpenBSD: cmds.c,v 1.17 1997/03/21 20:59:26 millert Exp $	*/
-/*	$NetBSD: cmds.c,v 1.21 1997/03/16 14:24:14 lukem Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.18 1997/04/10 00:17:07 millert Exp $	*/
+/*	$NetBSD: cmds.c,v 1.22 1997/04/05 03:27:32 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: cmds.c,v 1.17 1997/03/21 20:59:26 millert Exp $";
+static char rcsid[] = "$OpenBSD: cmds.c,v 1.18 1997/04/10 00:17:07 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -731,6 +731,7 @@ setedit(argc, argv)
 {
 
 	code = togglevar(argc, argv, &editing, "Editing mode");
+	controlediting();
 }
 #endif /* !SMALL */
 

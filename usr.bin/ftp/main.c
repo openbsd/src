@@ -1,5 +1,5 @@
-/*	$OpenBSD: main.c,v 1.27 1997/04/05 19:53:10 kstailey Exp $	*/
-/*	$NetBSD: main.c,v 1.20 1997/03/16 14:24:21 lukem Exp $	*/
+/*	$OpenBSD: main.c,v 1.28 1997/04/10 00:17:10 millert Exp $	*/
+/*	$NetBSD: main.c,v 1.21 1997/04/05 03:27:39 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.27 1997/04/05 19:53:10 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.28 1997/04/10 00:17:10 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -74,7 +74,7 @@ main(argc, argv)
 	int ch, top, port, rval;
 	struct passwd *pw = NULL;
 	char *cp, homedir[MAXPATHLEN];
-	int from_emacs;
+	int dumb_terminal = 0;
 
 	sp = getservbyname("ftp", "tcp");
 	if (sp == 0)
@@ -95,6 +95,8 @@ main(argc, argv)
 	progress = 0;
 #ifndef SMALL
 	editing = 0;
+	el = NULL;
+	hist = NULL;
 #endif
 	mark = HASHBYTES;
 	marg_sl = sl_init();
@@ -104,16 +106,17 @@ main(argc, argv)
 	if (strcmp(cp, "pftp") == 0)
 		passivemode = 1;
 
-	from_emacs = !strcmp(getenv("TERM"), "dumb");
+	dumb_terminal =
+	    (!strcmp(getenv("TERM"), "dumb") || !strcmp(getenv("TERM"), "su"));
 	fromatty = isatty(fileno(stdin));
 	if (fromatty) {
 		verbose = 1;		/* verbose if from a tty */
 #ifndef SMALL
-		if (!from_emacs)
+		if (!dumb_terminal)
 			editing = 1;	/* editing mode on if from a tty */
 #endif
 	}
-	if (isatty(fileno(stdout)) && !from_emacs)
+	if (isatty(fileno(stdout)) && !dumb_terminal)
 		progress = 1;		/* progress bar on if going to a tty */
 
 	while ((ch = getopt(argc, argv, "adeginpPr:tvV")) != -1) {
@@ -127,8 +130,8 @@ main(argc, argv)
 			debug++;
 			break;
 
-		case 'e':	/* XXX should TERM=dumb be the only way to */
-#ifndef SMALL			/* turn off editing or not? */
+		case 'e':
+#ifndef SMALL
 			editing = 0;
 #endif
 			break;
@@ -201,35 +204,8 @@ main(argc, argv)
 		(void)strcpy(home, pw->pw_dir);
 	}
 
-#ifndef SMALL
-	if (argc > 0)				/* batch mode */
-		editing = 0;
-	if (editing) {
-		el = el_init(__progname, stdin, stdout); /* init editline */
-
-		hist = history_init();		/* init the builtin history */
-		history(hist, H_EVENT, 100);	/* remember 100 events */
-		el_set(el, EL_HIST, history, hist);	/* use history */
-
-		el_set(el, EL_EDITOR, "emacs");	/* default editor is emacs */
-		el_set(el, EL_PROMPT, prompt);	/* set the prompt function */
-
-		/* add local file completion, bind to TAB */
-		el_set(el, EL_ADDFN, "ftp-complete",
-		    "Context sensitive argument completion",
-		    complete);
-		el_set(el, EL_BIND, "^I", "ftp-complete", NULL);
-
-		el_source(el, NULL);	/* read ~/.editrc */
-	}
-#endif /* !SMALL */
-
 	setttywidth(0);
 	(void)signal(SIGWINCH, setttywidth);
-#ifndef SMALL
-	if (editing)
-		el_set(el, EL_SIGNAL, 1);
-#endif /* !SMALL */
 
 	if (argc > 0) {
 		if (strchr(argv[0], ':') != NULL) {
@@ -261,6 +237,9 @@ main(argc, argv)
 			} while (!connected);
 		}
 	}
+#ifndef SMALL
+	controlediting();
+#endif /* !SMALL */
 	top = setjmp(toplevel) == 0;
 	if (top) {
 		(void)signal(SIGINT, (sig_t)intr);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pathnames.h,v 1.5 1997/02/03 01:05:43 millert Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.6 1997/04/10 00:17:10 millert Exp $	*/
 /*	$NetBSD: pathnames.h,v 1.7 1997/01/09 20:19:40 tls Exp $	*/
 
 /*
@@ -38,4 +38,4 @@
 
 #include <paths.h>
 
-#define	TMPFILE		"ftpXXXXXX"
+#define	TMPFILE		"ftpXXXXXXXXXX"

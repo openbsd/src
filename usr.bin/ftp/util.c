@@ -1,5 +1,5 @@
-/*	$OpenBSD: util.c,v 1.4 1997/03/14 04:32:18 millert Exp $	*/
-/*	$NetBSD: util.c,v 1.5 1997/03/13 06:23:21 lukem Exp $	*/
+/*	$OpenBSD: util.c,v 1.5 1997/04/10 00:17:11 millert Exp $	*/
+/*	$NetBSD: util.c,v 1.6 1997/04/05 03:27:39 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: util.c,v 1.4 1997/03/14 04:32:18 millert Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.5 1997/04/10 00:17:11 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -635,7 +635,6 @@ setttywidth(a)
 /*
  * Set the SIGALRM interval timer for wait seconds, 0 to disable.
  */
-
 void
 alarmtimer(wait)
 	int wait;
@@ -647,3 +646,40 @@ alarmtimer(wait)
 	itv.it_interval = itv.it_value;
 	setitimer(ITIMER_REAL, &itv, NULL);
 }
+
+/*
+ * Setup or cleanup EditLine structures
+ */
+#ifndef SMALL
+void
+controlediting()
+{
+	if (editing && el == NULL && hist == NULL) {
+		el = el_init(__progname, stdin, stdout); /* init editline */
+		hist = history_init();		/* init the builtin history */
+		history(hist, H_EVENT, 100);	/* remember 100 events */
+		el_set(el, EL_HIST, history, hist);	/* use history */
+
+		el_set(el, EL_EDITOR, "emacs");	/* default editor is emacs */
+		el_set(el, EL_PROMPT, prompt);	/* set the prompt function */
+
+		/* add local file completion, bind to TAB */
+		el_set(el, EL_ADDFN, "ftp-complete",
+		    "Context sensitive argument completion",
+		    complete);
+		el_set(el, EL_BIND, "^I", "ftp-complete", NULL);
+
+		el_source(el, NULL);	/* read ~/.editrc */
+		el_set(el, EL_SIGNAL, 1);
+	} else if (!editing) {
+		if (hist) {
+			history_end(hist);
+			hist = NULL;
+		}
+		if (el) {
+			el_end(el);
+			el = NULL;
+		}
+	}
+}
+#endif /* !SMALL */

@@ -1,5 +1,5 @@
-.\" 	$OpenBSD: ftp.1,v 1.9 1997/03/14 04:32:15 millert Exp $
-.\" 	$NetBSD: ftp.1,v 1.18 1997/03/13 06:23:16 lukem Exp $
+.\" 	$OpenBSD: ftp.1,v 1.10 1997/04/10 00:17:09 millert Exp $
+.\" 	$NetBSD: ftp.1,v 1.19 1997/04/05 03:27:37 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -392,6 +392,9 @@ If
 no
 .Ar directory
 is specified, the user's home directory is used.
+.It Ic less Ar file
+A synonym for
+.Ic page .
 .It Ic lpwd
 Print the working directory on the local machine.
 .It Ic \&ls Op Ar remote-directory Op Ar local-file
@@ -491,6 +494,9 @@ to
 The default mode is \*(Lqstream\*(Rq mode.
 .It Ic modtime Ar file-name
 Show the last modification time of the file on the remote machine.
+.It Ic more Ar file
+A synonym for
+.Ic page .
 .It Ic mput Ar local-files
 Expand wild cards in the list of local files given as arguments
 and do a
@@ -1011,7 +1017,11 @@ The following formats are valid syntax for an auto-fetch element:
 .Dq Classic
 ftp format
 .It ftp://host[:port]/file
-FTP URL, using the ftp protocol.
+FTP URL, using the ftp protocol if
+.Ev ftp_proxy
+isn't defined.
+Otherwise, transfer using http via the proxy defined in
+.Ev ftp_proxy .
 .It http://host[:port]/file
 HTTP URL, using the http protocol.
 If
@@ -1311,8 +1321,11 @@ Used by
 to display files.
 .It Ev SHELL
 For default shell.
+.It Ev ftp_proxy
+URL of FTP proxy to use when making FTP URL requests
+(if not defined, use the standard ftp protocol).
 .It Ev http_proxy
-URL of HTTP proxy to use when making HTTP requests.
+URL of HTTP proxy to use when making HTTP URL requests.
 .El
 .Sh SEE ALSO
 .Xr editrc 5 ,
