@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipf.8,v 1.5 1999/03/06 23:18:23 deraadt Exp $
+.\"	$OpenBSD: ipf.8,v 1.6 1999/04/02 16:21:35 aaron Exp $
 .Dd February 6, 1999
 .Dt IPF 8
 .Os
@@ -12,9 +12,10 @@
 .Op Fl F Ar i|o|a|s|S
 .Op Fl f Ar filename
 .Sh DESCRIPTION
-.Pp
 .Nm
-opens the filenames listed (treating "\-" as stdin) and parses the
+opens the filenames listed (treating
+.Sq \-
+as stdin) and parses the
 file for a set of rules which are to be added or removed from the packet
 filter rule set.
 .Pp
@@ -98,17 +99,17 @@ affect fragment or state statistics).
 .Sh FILES
 .Bl -tag -width /usr/share/ipf -compact
 .It Pa /usr/share/ipf
-Location of sample configuration files
+location of sample configuration files
 .It Pa /dev/ipauth
-Name of the 
+name of the 
 .Nm
 auth socket
 .It Pa /dev/ipl
-Name of the 
+name of the 
 .Nm
 logging socket
 .It Pa /dev/ipstate
-Name of the 
+name of the 
 .Nm
 state socket
 .Sh SEE ALSO

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: keycap.5,v 1.4 1999/01/13 07:26:05 niklas Exp $
+.\"	$OpenBSD: keycap.5,v 1.5 1999/04/02 16:21:35 aaron Exp $
 .\"
 .\"
 .\" Copyright (c) 1992,1993,1994 Hellmuth Michaelis
@@ -62,7 +62,6 @@ should be in lower case and contain no blanks;
 the last name may well contain
 upper case and blanks for readability.
 .Sh CAPABILITIES
-.Pp
 .Bl -column indent indent
 .Sy Name	Type	Description
 .It "de	bool	Resets Keyboard mapping to compiled-in default"
@@ -105,15 +104,15 @@ tt\||test\||Test entry which swaps y and z:\e
 .Pp
 Entries may continue onto multiple lines by giving a \e as the last
 character of a line. Comments may be included on lines beginning with
-.Dq # .
+.Sq # .
 .Sh FILES
 .Bl -tag -width /usr/share/misc/keycap.pcvt -compact
 .It Pa /usr/share/misc/keycap.pcvt
-File containing keyboard mapping descriptions.
+contains keyboard mapping descriptions
 .El
 .Sh SEE ALSO
 .Xr kcon 1 ,
-.Xr keycap 3 ,
+.Xr keycap 3
 .Sh EXAMPLES
 The entry
 .Dq Li l1#60
