@@ -1,4 +1,4 @@
-/*	$OpenBSD: error_message.c,v 1.2 1996/11/11 09:49:47 downsj Exp $	*/
+/*	$OpenBSD: error_message.c,v 1.3 1996/12/14 06:55:56 tholo Exp $	*/
 
 /*-
  * Copyright 1987, 1988 by the Student Information Processing Board
@@ -22,10 +22,12 @@
 #include <errno.h>
 #include "error_table.h"
 
+#ifndef lint
 static const char rcsid[] =
-    "$Id: error_message.c,v 1.2 1996/11/11 09:49:47 downsj Exp $";
+    "$OpenBSD: error_message.c,v 1.3 1996/12/14 06:55:56 tholo Exp $";
 static const char copyright[] =
     "Copyright 1986, 1987, 1988 by the Student Information Processing Board\nand the department of Information Systems\nof the Massachusetts Institute of Technology";
+#endif
 
 static char buffer[25];
 
@@ -41,8 +43,8 @@ error_message (code)
     int started = 0;
     char *cp;
 
-    offset = code & ((1<<ERRCODE_RANGE)-1);
-    table_num = code - offset;
+    offset = (int)(code & ((1<<ERRCODE_RANGE)-1));
+    table_num = (int)code - offset;
     if (!table_num) {
 #ifdef HAS_SYS_ERRLIST
 	if (offset < sys_nerr)
