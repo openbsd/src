@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.49 2001/04/30 09:39:27 art Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.50 2001/04/30 12:07:30 art Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -119,7 +119,9 @@ struct nlist namelist[] = {
 	{ "_forkstat" },
 #define X_POOLHEAD	14
 	{ "_pool_head" },
-#define X_END		15
+#define X_NSELCOLL	16
+	{ "_nselcoll" },
+#define X_END		16
 #if defined(__pc532__)
 #define	X_IVT		(X_END)
 	{ "_ivt" },
@@ -173,6 +175,8 @@ char	**choosedrives __P((char **));
 
 /* Namelist and memory file names. */
 char	*nlistf, *memf;
+
+extern char *__progname;
 
 int
 main(argc, argv)
@@ -238,11 +242,8 @@ main(argc, argv)
 	}
 
 	kd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY, errbuf);
-	if (kd == 0) {
-		(void)fprintf(stderr,
-		    "vmstat: kvm_openfiles: %s\n", errbuf);
-		exit(1);
-	}
+	if (kd == 0)
+		errx(1, "kvm_openfiles: %s", errbuf);
 
 	if ((c = kvm_nlist(kd, namelist)) != 0) {
 
@@ -251,17 +252,16 @@ main(argc, argv)
 
 		if (c > 0) {
 			(void)fprintf(stderr,
-			    "vmstat: undefined symbols:");
+			    "%s: undefined symbols:", __progname);
 			for (c = 0;
 			    c < sizeof(namelist)/sizeof(namelist[0]); c++)
 				if (namelist[c].n_type == 0)
 					fprintf(stderr, " %s",
 					    namelist[c].n_name);
 			(void)fputc('\n', stderr);
+			exit(1);
 		} else
-			(void)fprintf(stderr, "vmstat: kvm_nlist: %s\n",
-			    kvm_geterr(kd));
-		exit(1);
+			errx(1, "kvm_nlist: %s", kvm_geterr(kd));
 	}
 
 	if (todo & VMSTAT) {
@@ -352,16 +352,28 @@ getuptime()
 	static time_t now;
 	static struct timeval boottime;
 	time_t uptime;
+	int mib[2];
+	size_t size;
 
-	if (boottime.tv_sec == 0)
-		kread(X_BOOTTIME, &boottime, sizeof(boottime));
+	if (boottime.tv_sec == 0) {
+		if (nlist == NULL && memf == NULL) {
+			kread(X_BOOTTIME, &boottime, sizeof(boottime));
+		} else {
+			size = sizeof(boottime);
+			mib[0] = CTL_KERN;
+			mib[1] = KERN_BOOTTIME;
+			if (sysctl(mib, 2, &boottime, &size, NULL, 0) < 0) {
+				printf("Can't get kerninfo: %s\n",
+				       strerror(errno));
+				bzero(&boottime, sizeof(boottime));
+			}
+		}
+	}
 	(void)time(&now);
 	uptime = now - boottime.tv_sec;
-	if (uptime <= 0 || uptime > 60*60*24*365*10) {
-		(void)fprintf(stderr,
-		    "vmstat: time makes no sense; namelist must be wrong.\n");
-		exit(1);
-	}
+	if (uptime <= 0 || uptime > 60*60*24*365*10)
+		errx(1, "time makes no sense; namelist must be wrong");
+
 	return(uptime);
 }
 
@@ -376,16 +388,21 @@ dovmstat(interval, reps)
 	time_t uptime, halfuptime;
 	void needhdr();
 	int mib[2];
+	struct clockinfo clkinfo;
 	size_t size;
 
 	uptime = getuptime();
 	halfuptime = uptime / 2;
 	(void)signal(SIGCONT, needhdr);
 
-	if (namelist[X_STATHZ].n_type != 0 && namelist[X_STATHZ].n_value != 0)
-		kread(X_STATHZ, &hz, sizeof(hz));
-	if (!hz)
-		kread(X_HZ, &hz, sizeof(hz));
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_CLOCKRATE;
+	size = sizeof(clkinfo);
+	if (sysctl(mib, 2, &clkinfo, &size, NULL, 0) < 0) {
+		printf("Can't get kerninfo: %s\n", strerror(errno));
+		return;
+	}
+	hz = clkinfo.stathz;
 
 	for (hdrcnt = 1;;) {
 		if (!--hdrcnt)
@@ -542,6 +559,7 @@ dosum()
 {
 	struct nchstats nchstats;
 	long nchtotal;
+	int nselcoll;
 
 #ifdef UVM
 	kread(X_UVMEXP, &uvmexp, sizeof(uvmexp));
@@ -637,6 +655,8 @@ dosum()
 	    PCT(nchstats.ncs_badhits, nchtotal),
 	    PCT(nchstats.ncs_falsehits, nchtotal),
 	    PCT(nchstats.ncs_long, nchtotal));
+	kread(X_NSELCOLL, &nselcoll, sizeof(nselcoll));
+	(void)printf("%11d select collisions\n", nselcoll);
 }
 
 void
@@ -719,9 +739,7 @@ dointr()
 		for (j = 0; j < 16; j++, ivp++) {
 			if (ivp->iv_vec && ivp->iv_use && ivp->iv_cnt) {
 				if (kvm_read(kd, (u_long)ivp->iv_use, iname, 63) != 63) {
-					(void)fprintf(stderr, "vmstat: iv_use: %s\n",
-					    kvm_geterr(kd));
-					exit(1);
+					errx(1, "iv_use: %s", kvm_geterr(kd));
 				}
 				(void)printf("%-12s %10ld %8ld\n", iname,
 				    ivp->iv_cnt, ivp->iv_cnt / uptime);
@@ -741,9 +759,9 @@ void
 dointr()
 {
 	struct intrhand *intrhand[16], *ihp, ih;
-	long inttotal;
+	u_long inttotal;
 	time_t uptime;
-	int intrstray[16];
+	u_long intrstray[16];
 	char iname[17], fname[31];
 	int i;
 
@@ -762,7 +780,7 @@ dointr()
 			if (kvm_read(kd, (u_long)ih.ih_what, iname, 16) != 16)
 				errx(1, "vmstat: ih_what: %s", kvm_geterr(kd));
 			snprintf(fname, sizeof fname, "irq%d/%s", i, iname);
-			printf("%-16.16s %10ld %8ld\n", fname, ih.ih_count,
+			printf("%-16.16s %10lu %8lu\n", fname, ih.ih_count,
 			    ih.ih_count / uptime);
 			inttotal += ih.ih_count;
 			ihp = ih.ih_next;
@@ -770,11 +788,11 @@ dointr()
 	}
 	for (i = 0; i < 16; i++)
 		if (intrstray[i]) {
-			printf("Stray irq %-2d     %10d %8d\n",
+			printf("Stray irq %-2d     %10lu %8lu\n",
 			       i, intrstray[i], intrstray[i] / uptime);
 			inttotal += intrstray[i];
 		}
-	printf("Total            %10ld %8ld\n", inttotal, inttotal / uptime);
+	printf("Total            %10lu %8lu\n", inttotal, inttotal / uptime);
 }
 #else
 void
@@ -794,10 +812,8 @@ dointr()
 	    namelist[X_EINTRNAMES].n_value - namelist[X_INTRNAMES].n_value;
 	intrcnt = malloc((size_t)nintr);
 	intrname = malloc((size_t)inamlen);
-	if (intrcnt == NULL || intrname == NULL) {
-		(void)fprintf(stderr, "vmstat: %s.\n", strerror(errno));
-		exit(1);
-	}
+	if (intrcnt == NULL || intrname == NULL)
+		err(1, "malloc");
 	kread(X_INTRCNT, intrcnt, (size_t)nintr);
 	kread(X_INTRNAMES, intrname, (size_t)inamlen);
 	(void)printf("interrupt             total     rate\n");
@@ -814,18 +830,12 @@ dointr()
 	evptr = allevents.tqh_first;
 	while (evptr) {
 		if (kvm_read(kd, (long)evptr, (void *)&evcnt,
-		    sizeof evcnt) != sizeof evcnt) {
-			(void)fprintf(stderr, "vmstat: event chain trashed: %s\n",
-			    kvm_geterr(kd));
-			exit(1);
-		}
+		    sizeof evcnt) != sizeof evcnt)
+			errx(1, "event chain trashed: %s", kvm_geterr(kd));
 		if (strcmp(evcnt.ev_name, "intr") == 0) {
 			if (kvm_read(kd, (long)evcnt.ev_dev, (void *)&dev,
-			    sizeof dev) != sizeof dev) {
-				(void)fprintf(stderr, "vmstat: event chain trashed: %s\n",
-				    kvm_geterr(kd));
-				exit(1);
-			}
+			    sizeof dev) != sizeof dev)
+				errx(1, "event chain trashed: %s", kvm_geterr(kd));
 			if (evcnt.ev_count)
 				(void)printf("%-14s %12d %8ld\n", dev.dv_xname,
 				    evcnt.ev_count, (long)(evcnt.ev_count / uptime));
@@ -849,12 +859,43 @@ domem()
 	register struct kmemstats *ks;
 	register int i, j;
 	int len, size, first;
-	long totuse = 0, totfree = 0, totreq = 0;
+	u_long totuse = 0, totfree = 0;
+	quad_t totreq = 0;
 	char *name;
 	struct kmemstats kmemstats[M_LAST];
 	struct kmembuckets buckets[MINBUCKET + 16];
+	int mib[4];
+	size_t siz;
+	char buf[BUFSIZ], *bufp, *ap;
 
-	kread(X_KMEMBUCKETS, buckets, sizeof(buckets));
+	if (memf == NULL && nlistf == NULL) {
+	        mib[0] = CTL_KERN;
+		mib[1] = KERN_MALLOCSTATS;
+		mib[2] = KERN_MALLOC_BUCKETS;
+		siz = sizeof(buf);
+		if (sysctl(mib, 3, buf, &siz, NULL, 0) < 0) {
+		        printf("Could not acquire information on kernel memory bucket sizes.\n");
+			return;
+		}
+
+		bufp = buf;
+		mib[2] = KERN_MALLOC_BUCKET;
+		siz = sizeof(struct kmembuckets);
+		i = 0;
+		while ((ap = strsep(&bufp, ",")) != NULL) {
+		        mib[3] = atoi(ap);
+
+			if (sysctl(mib, 4, &buckets[MINBUCKET + i], &siz,
+				   NULL, 0) < 0) {
+			        printf("Failed to read statistics for bucket %d.\n", mib[3]);
+				return;
+			}
+			i++;
+		}
+	} else {
+	        kread(X_KMEMBUCKETS, buckets, sizeof(buckets));
+	}
+
 	for (first = 1, i = MINBUCKET, kp = &buckets[i]; i < MINBUCKET + 16;
 	     i++, kp++) {
 		if (kp->kb_calls == 0)
@@ -862,11 +903,11 @@ domem()
 		if (first) {
 			(void)printf("Memory statistics by bucket size\n");
 			(void)printf(
-	    	"    Size   In Use   Free   Requests  HighWater  Couldfree\n");
+		"    Size   In Use   Free           Requests  HighWater  Couldfree\n");
 			first = 0;
 		}
 		size = 1 << i;
-		(void)printf("%8d %8ld %6ld %10ld %7ld %10ld\n", size, 
+		(void)printf("%8d %8qu %6qu %18qu %7qu %10qu\n", size,
 			kp->kb_total - kp->kb_totalfree,
 			kp->kb_totalfree, kp->kb_calls,
 			kp->kb_highwat, kp->kb_couldfree);
@@ -942,7 +983,7 @@ domem()
 		totreq += ks->ks_calls;
 	}
 	(void)printf("\nMemory Totals:  In Use    Free    Requests\n");
-	(void)printf("              %7ldK %6ldK    %8ld\n",
+	(void)printf("              %7luK %6luK    %8qu\n",
 	     (totuse + 1023) / 1024, (totfree + 1023) / 1024, totreq);
 }
 
@@ -1051,25 +1092,21 @@ kread(nlx, addr, size)
 		sym = namelist[nlx].n_name;
 		if (*sym == '_')
 			++sym;
-		(void)fprintf(stderr,
-		    "vmstat: symbol %s not defined\n", sym);
-		exit(1);
+		errx(1, "symbol %s not defined", sym);
 	}
 	if (kvm_read(kd, namelist[nlx].n_value, addr, size) != size) {
 		sym = namelist[nlx].n_name;
 		if (*sym == '_')
 			++sym;
-		(void)fprintf(stderr, "vmstat: %s: %s\n", sym, kvm_geterr(kd));
-		exit(1);
+		errx(1, "%s: %s", sym, kvm_geterr(kd));
 	}
 }
 
 void
 usage()
 {
-	(void)fprintf(stderr,
-	    "usage: vmstat [-fimst] [-c count] [-M core] \
-[-N system] [-w wait] [disks]\n");
+	(void)fprintf(stderr, "usage: %s [-fimst] [-c count] [-M core] "
+	    "[-N system] [-w wait] [disks]\n", __progname);
 	exit(1);
 }
 
