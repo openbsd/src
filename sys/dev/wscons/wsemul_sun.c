@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_sun.c,v 1.11 2002/09/23 18:10:09 miod Exp $ */
+/* $OpenBSD: wsemul_sun.c,v 1.12 2004/02/24 22:07:58 miod Exp $ */
 /* $NetBSD: wsemul_sun.c,v 1.11 2000/01/05 11:19:36 drochner Exp $ */
 
 /*
@@ -89,9 +89,6 @@ struct wsemul_sun_emuldata {
 	u_int args[SUN_EMUL_NARGS];	/* command args, if CONTROL */
 	int nargs;			/* number of args */
 
-	int flags;			/* current processing flags */
-#define	SUNFL_LASTCHAR	0x0001		/* printed last char on line */
-
 	u_int scrolldist;		/* distance to scroll */
 	long curattr, bkgdattr;		/* currently used attribute */
 	long kernattr;			/* attribute for kernel output */
@@ -119,8 +116,8 @@ struct wsemul_sun_emuldata wsemul_sun_console_emuldata;
 /* some useful utility macros */
 #define	ARG(n)			(edp->args[(n)])
 #define	NORMALIZE_ARG(n)	(ARG(n) ? ARG(n) : 1)
-#define	COLS_LEFT		(edp->ncols - edp->ccol - 1)
-#define	ROWS_LEFT		(edp->nrows - edp->crow - 1)
+#define	COLS_LEFT		(edp->ncols - 1 - edp->ccol)
+#define	ROWS_LEFT		(edp->nrows - 1 - edp->crow)
 
 /*
  * wscons color codes
@@ -155,7 +152,6 @@ wsemul_sun_reset(edp)
 	struct wsemul_sun_emuldata *edp;
 {
 	edp->state = SUN_EMUL_STATE_NORMAL;
-	edp->flags = 0;
 	edp->bkgdattr = edp->curattr = edp->defattr;
 	edp->attrflags = 0;
 	edp->fgcol = WSCOL_BLACK;
@@ -260,15 +256,12 @@ wsemul_sun_output_lowchars(edp, c, kernel)
 		break;
 
 	case ASCII_BS:		/* "Backspace (BS)" */
-		if (edp->ccol > 0) {
+		if (edp->ccol > 0)
 			edp->ccol--;
-			CLR(edp->flags, SUNFL_LASTCHAR);
-		}
 		break;
 
 	case ASCII_CR:		/* "Return (CR)" */
 		edp->ccol = 0;
-		CLR(edp->flags, SUNFL_LASTCHAR);
 		break;
 
 	case ASCII_HT:		/* "Tab (TAB)" */
@@ -277,15 +270,12 @@ wsemul_sun_output_lowchars(edp, c, kernel)
 				edp->ccol, n,
 				kernel ? edp->kernattr : edp->bkgdattr);
 		edp->ccol += n;
-		if (COLS_LEFT == 0)
-			SET(edp->flags, SUNFL_LASTCHAR);
 		break;
 
 	case ASCII_FF:		/* "Form Feed (FF)" */
 		(*edp->emulops->eraserows)(edp->emulcookie, 0, edp->nrows,
 		    edp->bkgdattr);
 		edp->ccol = edp->crow = 0;
-		CLR(edp->flags, SUNFL_LASTCHAR);
 		break;
 
 	case ASCII_VT:		/* "Reverse Line Feed" */
@@ -319,23 +309,18 @@ wsemul_sun_output_normal(edp, c, kernel)
 	u_char c;
 	int kernel;
 {
-	if (ISSET(edp->flags, SUNFL_LASTCHAR)) {
+
+	(*edp->emulops->putchar)(edp->emulcookie, edp->crow, edp->ccol,
+	    c, kernel ? edp->kernattr : edp->curattr);
+
+	if (++edp->ccol >= edp->ncols) {
                 /* if the cur line isn't the last, incr and leave. */
 		if (ROWS_LEFT > 0)
 			edp->crow++;
 		else
 			wsemul_sun_scrollup(edp);
 		edp->ccol = 0;
-		CLR(edp->flags, SUNFL_LASTCHAR);
 	}
-
-	(*edp->emulops->putchar)(edp->emulcookie, edp->crow, edp->ccol,
-	    c, kernel ? edp->kernattr : edp->curattr);
-
-	if (COLS_LEFT)
-		edp->ccol++;
-	else
-		SET(edp->flags, SUNFL_LASTCHAR);
 }
 
 u_int
@@ -430,7 +415,7 @@ wsemul_sun_control(edp, c)
 			    src, dst, edp->nrows - dst);
 		}
 		(*edp->emulops->eraserows)(edp->emulcookie,
-		    src, dst - src, edp->bkgdattr);
+		    src, n, edp->bkgdattr);
 		break;
 
 	case 'M':		/* "Delete Line (DL)" */
@@ -442,7 +427,7 @@ wsemul_sun_control(edp, c)
 			    src, dst, edp->nrows - src);
 		}
 		(*edp->emulops->eraserows)(edp->emulcookie,
-		    dst + edp->nrows - src, src - dst, edp->bkgdattr);
+		    dst + edp->nrows - src, n, edp->bkgdattr);
 		break;
 
 	case 'P':		/* "Delete Character (DCH)" */
@@ -536,11 +521,6 @@ setattr:
 		wsemul_sun_reset(edp);
 		break;
 	}
-
-	if (COLS_LEFT)
-		CLR(edp->flags, SUNFL_LASTCHAR);
-	else
-		SET(edp->flags, SUNFL_LASTCHAR);
 }
 
 u_int
@@ -831,7 +811,6 @@ wsemul_sun_resetop(cookie, op)
 		(*edp->emulops->eraserows)(edp->emulcookie, 0, edp->nrows,
 		    edp->bkgdattr);
 		edp->ccol = edp->crow = 0;
-		CLR(edp->flags, SUNFL_LASTCHAR);
 		(*edp->emulops->cursor)(edp->emulcookie, 1, 0, 0);
 		break;
 	default:
