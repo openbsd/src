@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getopt_long.3,v 1.5 2003/02/24 03:09:07 deraadt Exp $
+.\"	$OpenBSD: getopt_long.3,v 1.6 2003/05/10 06:48:30 jmc Exp $
 .\"	$NetBSD: getopt_long.3,v 1.11 2002/10/02 10:54:19 wiz Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
@@ -44,10 +44,10 @@
 .Sh SYNOPSIS
 .Fd #include <getopt.h>
 .Vt extern char *optarg;
-.Vt extern int   optind;
-.Vt extern int   optopt;
-.Vt extern int   opterr;
-.Vt extern int   optreset;
+.Vt extern int optind;
+.Vt extern int optopt;
+.Vt extern int opterr;
+.Vt extern int optreset;
 .Ft int
 .Fn getopt_long "int argc" "char * const *argv" "const char *optstring" "const struct option *longopts" "int *index"
 .Ft int
@@ -241,7 +241,7 @@ arguments to option '\e1'.
 honors POSIXLY_CORRECT and stops at the first non-option.
 .El
 .It Li o
-handling of - within the option string (not the first character).
+handling of - within the option string (not the first character):
 .Bl -tag -width "OpenBSD"
 .It Li GNU
 treats a
@@ -283,8 +283,8 @@ handling of --a in getopt:
 .It Li GNU
 parses this as option '-', option 'a'.
 .It Li OpenBSD
-parses this as '--', and returns -1 (ignoring the a).  (Because
-the original getopt does.)
+parses this as '--', and returns \-1 (ignoring the a).
+(Because the original getopt does.)
 .El
 .It Li o
 setting of optopt for long options with flag !=

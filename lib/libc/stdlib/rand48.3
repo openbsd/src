@@ -1,4 +1,4 @@
-\" Copyright (c) 1993 Martin Birgmeier
+.\" Copyright (c) 1993 Martin Birgmeier
 .\" All rights reserved.
 .\"
 .\" You may redistribute unmodified or modified versions of this source
@@ -9,7 +9,7 @@
 .\" of any kind. I shall in no event be liable for anything that happens
 .\" to anyone/anything when using this software.
 .\"
-.\"	$OpenBSD: rand48.3,v 1.8 2001/08/06 10:42:26 mpech Exp $
+.\"	$OpenBSD: rand48.3,v 1.9 2003/05/10 06:48:30 jmc Exp $
 .\"
 .Dd October 8, 1993
 .Dt RAND48 3
@@ -24,7 +24,7 @@
 .Nm srand48 ,
 .Nm seed48 ,
 .Nm lcong48
-.Nd pseudo random number generators and initialization routines
+.Nd pseudo-random number generators and initialization routines
 .Sh SYNOPSIS
 .Fd #include <stdlib.h>
 .Ft double
@@ -67,7 +67,7 @@ and
 return values of type double.
 The full 48 bits of r(n+1) are
 loaded into the mantissa of the returned value, with the exponent set
-such that the values produced lie in the interval [0.0, 1.0).
+such that the values produced lie in the interval [0.0, 1.0].
 .Pp
 .Fn lrand48
 and
@@ -156,7 +156,7 @@ always also set the multiplicand and addend for any of the six
 generator calls.
 .Pp
 For a more powerful random number generator, see
-.Xr random 3
+.Xr random 3 .
 .Sh AUTHORS
 Martin Birgmeier
 .Sh SEE ALSO

@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: random.3,v 1.14 2001/09/06 15:04:34 mpech Exp $
+.\"	$OpenBSD: random.3,v 1.15 2003/05/10 06:48:30 jmc Exp $
 .\"
 .Dd April 19, 1991
 .Dt RANDOM 3
@@ -60,7 +60,7 @@ function uses a non-linear additive feedback random number generator employing
 a default table of size 31 long integers to return successive pseudo-random
 numbers in the range from 0 to (2**31)\-1.
 The period of this random number generator is very large, approximately
-16*((2**31)\-1.
+16*((2**31)\-1).
 .Pp
 The
 .Fn random
@@ -68,7 +68,7 @@ and
 .Fn srandom
 functions have (almost) the same calling sequence and initialization
 properties as
-.Xr rand 3 Ns / Xr srand 3 .
+.Xr rand 3 Ns / Ns Xr srand 3 .
 The difference is that
 .Xr rand
 produces a much less random sequence \(em in fact, the low dozen bits
@@ -93,7 +93,7 @@ as the seed.
 .Pp
 The
 .Fn srandomdev
-routine initialize a state array using the
+routine initializes a state array using the
 .Xr arandom 4
 random number device which returns good random numbers,
 suitable for cryptographic use.

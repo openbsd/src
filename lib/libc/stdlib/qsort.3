@@ -33,7 +33,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: qsort.3,v 1.9 2002/02/23 19:51:46 miod Exp $
+.\"	$OpenBSD: qsort.3,v 1.10 2003/05/10 06:48:30 jmc Exp $
 .\"
 .Dd June 4, 1993
 .Dt QSORT 3
@@ -185,7 +185,7 @@ were unable to allocate memory.
 Previous versions of
 .Fn qsort
 did not permit the comparison routine itself to call
-.Fn qsort 3 .
+.Fn qsort .
 This is no longer true.
 .Sh SEE ALSO
 .Xr sort 1 ,
