@@ -1,3 +1,4 @@
+$OpenBSD: TODO,v 1.15 2001/09/05 02:51:19 fgsch Exp $
 
 This is a list of things that still need to be done:
 
@@ -70,18 +71,21 @@ This is a list of things that still need to be done:
 	- ssl (in-tree) [triv]
 	- gdb
 	- ports
-		- lang/python [yes, but a SIGCONT problem?]
+		- audio/xmms
+		- bechmarks/iozone
 		- databases/mysql
-		- net/mrtd
 		- devel/glib [yes]
-		- www/squid
 		- devel/sdl [yes]
-
-* Make getaddrinfo(3) thread-safe.
-
-* What to do with gethostby*_r(3)?
-
-* Look into getpw*_r.
+		- graphics/ggi
+		- graphics/gii
+		- lang/tcl/8.3
+		- lang/python [yes, but a SIGCONT problem?]
+		- lang/python15
+		- net/icecast [partially]
+		- net/mrtd
+		- net/xchat
+		- net/pdnsd
+		- www/squid
 
 * Some ideas:
   + http://www.cs.wustl.edu/~schmidt/locking-patterns.ps.gz
@@ -95,4 +99,9 @@ This is a list of things that still need to be done:
 
 * Clean up the way that signals are delivered to threads. Yuk.
 
-$OpenBSD: TODO,v 1.14 2001/09/05 02:41:13 fgsch Exp $
+* Make getaddrinfo(3) thread-safe.
+
+* What to do with gethostby*_r(3)?
+
+* Look into getpw*_r(3).
+
