@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_tc.c,v 1.6 1997/04/16 11:56:05 downsj Exp $	*/
+/*	$OpenBSD: grf_tc.c,v 1.7 1999/05/28 09:36:19 downsj Exp $	*/
 /*	$NetBSD: grf_tc.c,v 1.11 1997/03/31 07:34:18 scottr Exp $	*/
 
 /*
@@ -409,7 +409,11 @@ tc_mode(gp, cmd, data)
 				bcopy("HP98547", fi->name, 8);
 				break;
 			case 16:
-				bcopy("HP98545", fi->name, 8);
+				if (gi->gd_dheight == 400) {
+					bcopy("HP98543", fi->name, 8);
+				} else {
+					bcopy("HP98545", fi->name, 8);
+				}
 				break;
 			case 2:
 				bcopy("HP98544", fi->name, 8);
