@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctl.c,v 1.8 2003/06/10 22:20:52 deraadt Exp $	*/
+/*	$OpenBSD: ctl.c,v 1.9 2004/03/02 21:04:42 tedu Exp $	*/
 /*	$NetBSD: ctl.c,v 1.3 1994/12/09 02:14:10 jtc Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)ctl.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: ctl.c,v 1.8 2003/06/10 22:20:52 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: ctl.c,v 1.9 2004/03/02 21:04:42 tedu Exp $";
 #endif /* not lint */
 
 /*
@@ -66,12 +66,12 @@ CTL_MSG msg;
 void
 open_sockt(void)
 {
-	int length;
+	socklen_t length;
 
 	my_addr.sin_addr = my_machine_addr;
 	my_addr.sin_port = 0;
 	sockt = socket(AF_INET, SOCK_STREAM, 0);
-	if (sockt <= 0)
+	if (sockt == -1)
 		quit("Bad socket", 1);
 	if (bind(sockt, (struct sockaddr *)&my_addr, sizeof(my_addr)) != 0)
 		quit("Binding local socket", 1);
@@ -84,12 +84,12 @@ open_sockt(void)
 void
 open_ctl(void)
 {
-	int length;
+	socklen_t length;
 
 	ctl_addr.sin_port = 0;
 	ctl_addr.sin_addr = my_machine_addr;
 	ctl_sockt = socket(AF_INET, SOCK_DGRAM, 0);
-	if (ctl_sockt <= 0)
+	if (ctl_sockt == -1)
 		quit("Bad socket", 1);
 	if (bind(ctl_sockt,
 	    (struct sockaddr *)&ctl_addr, sizeof(ctl_addr)) != 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: get_addrs.c,v 1.5 2003/06/03 02:56:17 millert Exp $	*/
+/*	$OpenBSD: get_addrs.c,v 1.6 2004/03/02 21:04:42 tedu Exp $	*/
 /*	$NetBSD: get_addrs.c,v 1.3 1994/12/09 02:14:14 jtc Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)get_addrs.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: get_addrs.c,v 1.5 2003/06/03 02:56:17 millert Exp $";
+static const char rcsid[] = "$OpenBSD: get_addrs.c,v 1.6 2004/03/02 21:04:42 tedu Exp $";
 #endif /* not lint */
 
 #include "talk.h"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: invite.c,v 1.11 2003/09/26 04:41:48 deraadt Exp $	*/
+/*	$OpenBSD: invite.c,v 1.12 2004/03/02 21:04:42 tedu Exp $	*/
 /*	$NetBSD: invite.c,v 1.3 1994/12/09 02:14:18 jtc Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)invite.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: invite.c,v 1.11 2003/09/26 04:41:48 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: invite.c,v 1.12 2004/03/02 21:04:42 tedu Exp $";
 #endif /* not lint */
 
 #include "talk.h"
@@ -70,7 +70,7 @@ invite_remote(void)
 	struct itimerval itimer;
 	CTL_RESPONSE response;
 	struct sockaddr rp;
-	int rplen = sizeof(struct sockaddr);
+	socklen_t rplen = sizeof(struct sockaddr);
 	struct hostent *rphost;
 	char rname[STRING_LENGTH];
 
@@ -101,7 +101,7 @@ invite_remote(void)
 	message("Waiting for your party to respond");
 	signal(SIGALRM, re_invite);
 	(void) setjmp(invitebuf);
-	while ((new_sockt = accept(sockt, &rp, &rplen)) < 0) {
+	while ((new_sockt = accept(sockt, &rp, &rplen)) == -1) {
 		if (errno == EINTR || errno == ECONNABORTED)
 			continue;
 		quit("Unable to connect with your party", 1);

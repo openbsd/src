@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctl_transact.c,v 1.9 2003/08/11 21:10:54 deraadt Exp $	*/
+/*	$OpenBSD: ctl_transact.c,v 1.10 2004/03/02 21:04:42 tedu Exp $	*/
 /*	$NetBSD: ctl_transact.c,v 1.3 1994/12/09 02:14:12 jtc Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)ctl_transact.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: ctl_transact.c,v 1.9 2003/08/11 21:10:54 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: ctl_transact.c,v 1.10 2004/03/02 21:04:42 tedu Exp $";
 #endif /* not lint */
 
 #include "talk.h"
