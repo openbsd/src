@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_mkdb.c,v 1.8 1999/03/24 05:25:55 millert Exp $	*/
+/*	$OpenBSD: kvm_mkdb.c,v 1.9 1999/03/29 20:42:50 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)kvm_mkdb.c	8.3 (Berkeley) 5/4/95";
 #else
-static char *rcsid = "$OpenBSD: kvm_mkdb.c,v 1.8 1999/03/24 05:25:55 millert Exp $";
+static char *rcsid = "$OpenBSD: kvm_mkdb.c,v 1.9 1999/03/29 20:42:50 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -149,10 +149,10 @@ kvm_mkdb(fd, nlistpath, nlistname, verbose)
 
 	/* If the existing db file matches the currently running kernel, exit */
 	if (testdb(dbname)) {
-		warnx("%s already up to date", dbname);
+		if (verbose)
+			warnx("%s already up to date", dbname);
 		return(0);
-	}
-	else if (verbose)
+	} else if (verbose)
 		warnx("rebuilding %s", dbname);
 
 	(void)umask(0);
