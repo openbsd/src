@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.3 2004/08/10 19:18:23 henning Exp $ */
+/*	$OpenBSD: buffer.c,v 1.4 2004/09/15 00:05:29 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -28,7 +28,6 @@
 
 #include "ntpd.h"
 
-int	buf_write(int, struct buf *);
 void	buf_enqueue(struct msgbuf *, struct buf *);
 void	buf_dequeue(struct msgbuf *, struct buf *);
 
@@ -64,31 +63,6 @@ buf_close(struct msgbuf *msgbuf, struct buf *buf)
 {
 	buf_enqueue(msgbuf, buf);
 	return (1);
-}
-
-int
-buf_write(int sock, struct buf *buf)
-{
-	ssize_t	n;
-
-	if ((n = write(sock, buf->buf + buf->rpos,
-	    buf->size - buf->rpos)) == -1) {
-		if (errno == EAGAIN)	/* cannot write immediately */
-			return (0);
-		else
-			return (-1);
-	}
-
-	if (n == 0) {			/* connection closed */
-		errno = 0;
-		return (-2);
-	}
-
-	if (n < buf->size - buf->rpos) {	/* not all data written yet */
-		buf->rpos += n;
-		return (0);
-	} else
-		return (1);
 }
 
 void
