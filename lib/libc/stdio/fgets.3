@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fgets.3,v 1.14 2002/07/20 18:30:23 pvalchev Exp $
+.\"	$OpenBSD: fgets.3,v 1.15 2003/03/06 20:48:35 jmc Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -52,7 +52,7 @@
 The
 .Fn fgets
 function reads at most one less than the number of characters specified by
-.Xr size
+.Ar size
 from the given
 .Fa stream
 and stores them in the string
@@ -69,7 +69,7 @@ The
 function is equivalent to
 .Fn fgets
 with an infinite
-.Xr size
+.Ar size
 and a
 .Fa stream
 of
