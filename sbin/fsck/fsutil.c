@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsutil.c,v 1.12 2003/07/29 18:38:35 deraadt Exp $	*/
+/*	$OpenBSD: fsutil.c,v 1.13 2003/09/25 04:15:29 deraadt Exp $	*/
 /*	$NetBSD: fsutil.c,v 1.2 1996/10/03 20:06:31 christos Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: fsutil.c,v 1.12 2003/07/29 18:38:35 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: fsutil.c,v 1.13 2003/09/25 04:15:29 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -246,12 +246,17 @@ emalloc(size_t s)
 void *
 erealloc(void *p, size_t s)
 {
+	void *newp;
+
 	if (s == 0)
 		err(1, "realloc failed");
-	p = realloc(p, s);
-	if (p == NULL)
+	newp = realloc(p, s);
+	if (newp == NULL) {
+		if (p)
+			free(p);
 		err(1, "realloc failed");
-	return p;
+	}
+	return newp;
 }
 
 
