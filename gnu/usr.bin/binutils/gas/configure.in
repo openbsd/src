@@ -148,7 +148,7 @@ changequote([,])dnl
       alpha*-*-linux-gnu*)  fmt=elf em=linux ;;
       alpha*-*-freebsd*)    fmt=elf em=freebsd ;;
       alpha*-*-netbsd*)     fmt=elf em=nbsd ;;
-      alpha*-*-openbsd*)     fmt=elf em=obsd ;;
+      alpha*-*-openbsd*)    fmt=elf em=obsd ;;
 
       arc-*-elf*)           fmt=elf bfd_gas=yes ;;
 
