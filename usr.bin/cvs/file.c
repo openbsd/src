@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.40 2004/12/07 18:14:04 jfb Exp $	*/
+/*	$OpenBSD: file.c,v 1.41 2004/12/08 19:44:28 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -762,9 +762,9 @@ cvs_file_sort(struct cvs_flist *flp, u_int nfiles)
 static int
 cvs_file_cmp(const void *f1, const void *f2)
 {
-	CVSFILE *cf1, *cf2;
-	cf1 = *(CVSFILE **)f1;
-	cf2 = *(CVSFILE **)f2;
+	const CVSFILE *cf1, *cf2;
+	cf1 = *(const CVSFILE **)f1;
+	cf2 = *(const CVSFILE **)f2;
 	return cvs_file_cmpname(CVS_FILE_NAME(cf1), CVS_FILE_NAME(cf2));
 }
 
@@ -813,6 +813,7 @@ cvs_file_alloc(const char *path, u_int type)
 	if (type == DT_DIR) {
 		ddat = (struct cvs_dir *)malloc(sizeof(*ddat));
 		if (ddat == NULL) {
+			cvs_log(LP_ERRNO, "failed to allocate directory data");
 			cvs_file_free(cfp);
 			return (NULL);
 		}
@@ -850,10 +851,8 @@ cvs_file_lget(const char *path, int flags, CVSFILE *parent)
 	}
 
 	cfp = cvs_file_alloc(path, IFTODT(st.st_mode));
-	if (cfp == NULL) {
-		cvs_log(LP_ERRNO, "failed to allocate CVS file data");
+	if (cfp == NULL)
 		return (NULL);
-	}
 	cfp->cf_parent = parent;
 	cfp->cf_mode = st.st_mode & ACCESSPERMS;
 	cfp->cf_mtime = st.st_mtime;
