@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.36 2001/01/17 05:00:59 fgsch Exp $	*/
+/*	$OpenBSD: parse.c,v 1.37 2001/01/20 06:36:52 fgsch Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -1103,7 +1103,7 @@ struct	frentry	*fp;
 	if (fp->fr_ip.fi_fl & FI_TCPUDP) {
 			printf("proto tcp/udp ");
 			pr = -1;
-	} else if ((pr = fp->fr_mip.fi_p)) {
+	} else if ((pr = fp->fr_ip.fi_p)) {
 		if ((p = getprotobynumber(fp->fr_proto)))
 			printf("proto %s ", p->p_name);
 		else
