@@ -1,6 +1,6 @@
 /* Obtuse smtpd SMTP store daemon header file
  *
- * $Id: smtpd.h,v 1.1.1.1 1997/12/12 05:50:27 beck Exp $ 
+ * $Id: smtpd.h,v 1.2 1998/06/03 08:57:12 beck Exp $ 
  * 
  * Copyright (c) 1996, 1997 Obtuse Systems Corporation. All rights
  * reserved.
@@ -164,13 +164,9 @@ extern int smtpd_addr_check(const char *, struct peer_info *, const char *, cons
 #define m554msg "This daemon finds you amusing.. Go read the forging FAQ.."
 #define m554norcpt "I gotta know who gets this masterpiece of forgery!"
 #define m554nofrom "Yeesh! Ya gotta give a FROM when forging mail, that's the whole point!"
-
-#ifdef USE_521
-#define m521msg "doesn't talk SMTP, Sorry"
-#define m521first "Sorry, I've been told I can't talk to you"
-#endif
+#define m521msg "says \"Go away or I shall taunt you a second time you second-hand electric donkey-bottom biters..\""
 #else  /* Boring sendmail/RFC821-ish messages */
-#define m220msg "Sendmail ready. " 
+#define m220msg "Sendmail 4.1/SMI-4.1 ready."
 #define m221msg "Closing connection" 
 #define m250helook "pleased to meet you,"
 #define m250fromok "sender OK"
@@ -202,9 +198,5 @@ extern int smtpd_addr_check(const char *, struct peer_info *, const char *, cons
 #define m554msg "Transaction failed"
 #define m554norcpt "Transaction failed"
 #define m554nofrom "Transaction failed"
-
-#ifdef USE_521
 #define m521msg "Doesn't talk SMTP, Sorry"
-#define m521first "Doesn't talk SMTP, Sorry"
-#endif
 #endif

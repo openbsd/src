@@ -1,5 +1,5 @@
 /*
- * $Id: address_check.c,v 1.2 1997/12/14 01:42:27 beck Exp $ 
+ * $Id: address_check.c,v 1.3 1998/06/03 08:57:05 beck Exp $ 
  * 
  * Copyright (c) 1996, 1997 Obtuse Systems Corporation. All rights
  * reserved.
@@ -241,12 +241,21 @@ rfc931_ident(struct peer_info *pi, int ident)
 
     sprintf(tbuf, "%u,%u\r\n", ntohs(pi->peer_sa->sin_port),
 	    ntohs(pi->my_sa->sin_port));
-    if (write(fd, tbuf, strlen(tbuf)) != strlen(tbuf)) {
-      alarm(0);
-      signal(SIGALRM, SIG_DFL);
-      close(fd);
-      return(0);
-    }
+    i=0;
+    while (i < strlen(tbuf)) { 
+      int j;
+      j=write(fd, tbuf+i, (strlen(tbuf+i)));
+      if (j < 0) {
+	syslog(LOG_DEBUG, "write error sending ident request (%m)");
+	alarm(0);
+	signal(SIGALRM, SIG_DFL);
+	close(fd);
+	return(0);
+      }
+      else if (j > 0){
+	i+=j;
+      }
+    } 
 
     /* read the answer back */
 
@@ -480,10 +489,10 @@ int masked_ip_match(char *tok, char *string)
 
   char *p, *tbuf;
   int period_cnt, non_digit;
-  unsigned long adt, mat, madt;
-  unsigned long *addr, *mask;
+  in_addr_t adt, mat, madt;
+  in_addr_t *addr, *mask;
 
-  mat=0xffffffff;
+  mat=INADDR_BROADCAST;
   addr=&adt;
   mask=&mat;
 
@@ -516,7 +525,7 @@ int masked_ip_match(char *tok, char *string)
   if ( period_cnt == 3 ) {
     int a1, a2, a3, a4;
     
-    sscanf(tbuf,"%d.%d.%d.%d",&a1,&a2,&a3,&a4);
+    sscanf(tbuf,"%u.%u.%u.%u",&a1,&a2,&a3,&a4);
     if ( a1 > 255 || a2 > 255 || a3 > 255 || a4 > 255 ) {
       return(0);
     }
@@ -529,10 +538,10 @@ int masked_ip_match(char *tok, char *string)
   } else if ( strcmp(tbuf,"0") == 0 ) {
     
     ((char *)addr)[0] = 0;
-      ((char *)addr)[1] = 0;
-      ((char *)addr)[2] = 0;
-      ((char *)addr)[3] = 0;
-      
+    ((char *)addr)[1] = 0;
+    ((char *)addr)[2] = 0;
+    ((char *)addr)[3] = 0;
+    
   } else {
     /* not a masked address  */
     return(match_case_pattern(tok, string));
@@ -540,7 +549,7 @@ int masked_ip_match(char *tok, char *string)
   
   free(tbuf);
   if (*p == '/'){
-    int bits;
+    long bits;
     char *end;
     
     p += 1;

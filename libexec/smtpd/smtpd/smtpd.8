@@ -1,4 +1,4 @@
-.\"	$Id: smtpd.8,v 1.6 1997/12/14 01:05:30 deraadt Exp $
+.\"	$Id: smtpd.8,v 1.7 1998/06/03 08:56:58 beck Exp $
 .Dd Dec 10, 1997
 .Dt SMTPD 8
 .Os OpenBSD
@@ -8,13 +8,16 @@
 Obtuse Systems SMTPD message storing daemon
 .Sh SYNOPSIS
 .Nm smtpd
-.Op Fl HPDL
+.Op Fl HPDLq
 .Op Fl c Ar chrootdir
 .Op Fl d Ar spooldir
 .Op Fl u Ar user
 .Op Fl g Ar group
 .Op Fl m Ar myname
 .Op Fl s Ar maxsize
+.Op Fl l Ar listenip
+.Op Fl p Ar listenport
+.Op Fl i Ar pidfile
 .Sh DESCRIPTION
 The
 .Nm smtpd
@@ -57,6 +60,27 @@ Disable host checking against the DNS. By default
 .Nm smtpd
 checks and will complain in the syslogs if the DNS information for
 a host seems to indicate a possible spoof or misconfiguration.
+.It Fl i
+specify a filename that
+.Nm smtpd 
+should lock and write it's pid to when running as a daemon. 
+Doesn't do anything if running from inetd. Default pid file
+in daemon mode is 
+.Pa /var/run/smtpd.pid
+On BSD systems, or
+.Pa /usr/spool/smtpd/smtpd.pid 
+on non-BSD systems.
+.It Fl l
+specify an ip address in dotted quad format for 
+.Nm smtpd
+to accept connections to. In daemon mode this limits the address
+that
+.Nm smtpd
+listens on. In inetd mode, smtpd will issue a 521 error
+code and exit if connected to on an address other than the specified
+one. By default,
+.Nm smtpd
+accepts a connection no matter what address it is connected to on.
 .It Fl L
 Suppress children in daemon mode (above) from doing an
 openlog() call. This means your syslogs won't have pid
@@ -69,6 +93,11 @@ Specify
 .Ar myname ,
 the hostname the daemon should announce itself
 as. the default is whatever gethostname() returns.
+.It Fl p
+specify a decimal port number for
+.Nm smtpd 
+to listen when running as a daemon. Doesn't do anything if running 
+from inetd.
 .It Fl P
 Enable paranoid mode of operation, in this mode connections are
 dropped from any client feeding
@@ -77,6 +106,11 @@ a suspicious hostname, FROM:, or RCPT: line containing characters
 indicative of an attempt to do something evil, or any message headers
 that aren't 8bit clean. The default is to log such occurances and
 substitute for the offending characters, but not drop the connection.
+.It Fl q
+Tell 
+.Nm smtpd
+to be quieter. By default smtpd emits very verbose syslog messages. With
+this option it will emit one line of log for each normal message exchange.
 .It Fl s
 Specify 
 .Ar maxsize

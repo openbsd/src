@@ -120,3 +120,10 @@ What: Bug where smtpd wouldn't catch sigpipe if client goes away while
       sending message body - could make smtpd exit and leave an incomplete
       spool file sitting in the spool dir. 
 
+Who: Simon J. Gerraty <sjg@quick.com.au>
+What: Contributed new -q logging format and fixes for spaces within
+      quoted local-part so smtpd doesn't smack X400 messages.
+
+Who: Henning P. Schmiedehausen <hps@tanstaafl.de>
+What: Contributed -l option to allow for smtpd to be restricted to
+      answering on only one address on a box with many addresses.

@@ -346,15 +346,17 @@ CFLAGS = -g -O -Wall -DUSE_FLOCK -DUSE_MKSTEMP $(OPTIONS)
 
 all: smtpd smtpfwdd
 
-smtpd:	smtpd.o address_check.o
+smtpd:	smtpd.o address_check.o accumlog.o
 	$(CC) -o smtpd smtpd.o address_check.o $(LD_LIBS)
 
-smtpfwdd:	smtpfwdd.o
+smtpfwdd:	smtpfwdd.o accumlog.o
 	$(CC) -o smtpfwdd smtpfwdd.o $(LD_LIBS)
 
 smtpd.o:	smtpd.c smtpd.h smtp.h 
 
 smtpfwdd.o:	smtpfwdd.c smtp.h
+
+accumlog.o:	accumlog.c
 
 indent:
 	indent $(INDENT_ARGS) smtpd.c

@@ -1,4 +1,4 @@
-.\"	$Id: smtpfwdd.8,v 1.5 1997/12/13 20:20:00 deraadt Exp $
+.\"	$Id: smtpfwdd.8,v 1.6 1998/06/03 08:57:01 beck Exp $
 .Dd Dec 10, 1997
 .Dt SMTPFWDD 8
 .Os OpenBSD
@@ -8,7 +8,7 @@
 Obtuse Systems SMTPFWDD message forwarding daemon
 .Sh SYNOPSIS
 .Nm smtpfwdd
-.Op Fl HPDL
+.Op Fl q
 .Op Fl d Ar spooldir
 .Op Fl u Ar user
 .Op Fl g Ar group
@@ -55,6 +55,11 @@ seconds indicating how often the master
 .Nm smtpfwdd
 process should wake up and check the spool directory for new mail
 to forward. Default is 10 seconds.
+.It Fl q
+Tell
+.Nm smtpfwdd
+to be quieter. By default smtpfwdd emits very verbose syslog messages. With
+this option it will emit one line of log for each normal message exchange.
 .It Fl s
 Specify a different mail program to use to forward
 mail. The default is 
