@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.136 2001/08/22 14:18:36 niklas Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.137 2001/08/26 21:12:06 niklas Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -566,7 +566,7 @@ sendit:
 		if ((ip->ip_off & IP_DF) && tdb->tdb_mtu &&
 		    (u_int16_t)ip->ip_len > tdb->tdb_mtu &&
 		    tdb->tdb_mtutimeout > time.tv_sec) {
-			struct rtentry *rt;
+			struct rtentry *rt = NULL;
 			
 			icmp_mtu = tdb->tdb_mtu;
 			splx(s);
