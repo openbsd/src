@@ -1,4 +1,5 @@
 #
+#	$OpenBSD: disktab,v 1.4 1996/05/09 07:01:56 niklas Exp $
 #	$NetBSD: disktab,v 1.4 1995/11/28 05:40:23 jtc Exp $
 #
 # Disk geometry and partition layout tables. 

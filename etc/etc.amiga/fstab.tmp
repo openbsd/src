@@ -1,4 +1,5 @@
 #
+#	$OpenBSD: fstab.tmp,v 1.2 1996/05/09 07:02:41 niklas Exp $
 #	$NetBSD: fstab.tmp,v 1.8 1995/10/09 02:25:44 chopps Exp $
 #
 #	fast file system on / root partition (NBR\7) lowest scsi disk unit
