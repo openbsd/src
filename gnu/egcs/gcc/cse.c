@@ -4702,6 +4702,17 @@ simplify_plus_minus (code, mode, op0, op1)
 		    ops[i] = plus_constant (ops[i], fp_offset);
 		  }
 	      }
+            /* buf[BUFSIZE]: buf is the first local variable (+ (+ fp -S) S)
+	       or (+ (fp 0) r) ==> ((+ (+fp 1) r) -1) */
+            else if (fp_offset != 0)
+              return 0;
+#ifndef FRAME_GROWS_DOWNWARD
+	    /*
+	     * For the case of buf[i], i: REG, buf: (plus fp 0),
+	     */
+	    else if (fp_offset == 0)
+	      return 0;
+#endif
 	    break;
 	  }
     }
