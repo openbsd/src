@@ -1,5 +1,5 @@
-/* $OpenBSD: main.c,v 1.5 2001/12/05 10:12:50 deraadt Exp $ */
-/* $NetBSD: main.c,v 1.1 1999/12/24 09:08:50 agc Exp $ */
+/* $OpenBSD: main.c,v 1.6 2003/06/08 22:13:01 millert Exp $ */
+/* $NetBSD: main.c,v 1.3 2002/07/09 10:34:16 tron Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -45,9 +45,9 @@ enum {
 
 /* this struct describes a command */
 typedef struct cmd_t {
-	int	c_wc;					/* word count */
-	char	*c_word[MaxCmdWords];			/* command words */
-	int	(*c_func)(int argc, char **argv);	/* called function */
+	int		c_wc;				/* word count */
+	const char	*c_word[MaxCmdWords];		/* command words */
+	int		(*c_func)(int, char **);	/* called function */
 } cmd_t;
 
 /* despatch table for commands */
