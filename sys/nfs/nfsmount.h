@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsmount.h,v 1.9 2001/06/25 03:28:14 csapuntz Exp $	*/
+/*	$OpenBSD: nfsmount.h,v 1.10 2001/06/30 08:35:27 csapuntz Exp $	*/
 /*	$NetBSD: nfsmount.h,v 1.10 1996/02/18 11:54:03 fvdl Exp $	*/
 
 /*
@@ -103,7 +103,7 @@ struct	nfsmount {
 int	nfs_mount __P((struct mount *mp, const char *path, void *data,
 		struct nameidata *ndp, struct proc *p));
 int	mountnfs __P((struct nfs_args *argp, struct mount *mp,
-		struct mbuf *nam, char *pth, char *hst, struct vnode **vpp));
+		struct mbuf *nam, char *pth, char *hst));
 int	nfs_mountroot __P((void));
 void	nfs_decode_args __P((struct nfsmount *, struct nfs_args *, struct nfs_args *));
 int	nfs_start __P((struct mount *mp, int flags, struct proc *p));

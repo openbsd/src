@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.35 2001/06/25 03:28:12 csapuntz Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.36 2001/06/30 08:35:27 csapuntz Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -104,7 +104,7 @@ extern u_int32_t nfs_procids[NFS_NPROCS];
 extern u_int32_t nfs_prog, nfs_vers;
 
 struct mount *nfs_mount_diskless
-    __P((struct nfs_dlmount *, char *, int, struct vnode **));
+    __P((struct nfs_dlmount *, char *, int));
 
 #define TRUE	1
 #define	FALSE	0
@@ -287,7 +287,8 @@ nfs_mountroot()
 	 * Create the root mount point.
 	 */
 	nfs_boot_getfh(&nd.nd_boot, "root", &nd.nd_root);
-	mp = nfs_mount_diskless(&nd.nd_root, "/", 0, &vp);
+	mp = nfs_mount_diskless(&nd.nd_root, "/", 0);
+	nfs_root(mp, &rootvp);
 	printf("root on %s\n", nd.nd_root.ndm_host);
 
 	/*
@@ -296,11 +297,10 @@ nfs_mountroot()
 	simple_lock(&mountlist_slock);
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 	simple_unlock(&mountlist_slock);
-	rootvp = vp;
 	vfs_unbusy(mp, procp);
 
 	/* Get root attributes (for the time). */
-	error = VOP_GETATTR(vp, &attr, procp->p_ucred, procp);
+	error = VOP_GETATTR(rootvp, &attr, procp->p_ucred, procp);
 	if (error) panic("nfs_mountroot: getattr for root");
 	n = attr.va_mtime.tv_sec;
 #ifdef	DEBUG
@@ -343,7 +343,8 @@ nfs_mountroot()
 	 * swap file can be on a different server from the rootfs.
 	 */
 	nfs_boot_getfh(&nd.nd_boot, "swap", &nd.nd_swap);
-	mp = nfs_mount_diskless(&nd.nd_swap, "/swap", 0, &vp);
+	mp = nfs_mount_diskless(&nd.nd_swap, "/swap", 0);
+	nfs_root(mp, &vp);
 	vfs_unbusy(mp, procp);
 	printf("swap on %s\n", nd.nd_swap.ndm_host);
 
@@ -380,11 +381,10 @@ nfs_mountroot()
  * Internal version of mount system call for diskless setup.
  */
 struct mount *
-nfs_mount_diskless(ndmntp, mntname, mntflag, vpp)
+nfs_mount_diskless(ndmntp, mntname, mntflag)
 	struct nfs_dlmount *ndmntp;
 	char *mntname;
 	int mntflag;
-	struct vnode **vpp;
 {
 	struct nfs_args args;
 	struct mount *mp;
@@ -423,7 +423,7 @@ nfs_mount_diskless(ndmntp, mntname, mntflag, vpp)
 	bcopy((caddr_t)args.addr, mtod(m, caddr_t),
 	    (m->m_len = args.addr->sa_len));
 
-	error = mountnfs(&args, mp, m, mntname, args.hostname, vpp);
+	error = mountnfs(&args, mp, m, mntname, args.hostname);
 	if (error)
 		panic("nfs_mountroot: mount %s failed: %d", mntname, error);
 
@@ -603,7 +603,6 @@ nfs_mount(mp, path, data, ndp, p)
 	int error;
 	struct nfs_args args;
 	struct mbuf *nam;
-	struct vnode *vp;
 	char pth[MNAMELEN], hst[MNAMELEN];
 	size_t len;
 	u_char nfh[NFSX_V3FHMAX];
@@ -660,7 +659,7 @@ nfs_mount(mp, path, data, ndp, p)
 	if (error)
 		return (error);
 	args.fh = nfh;
-	error = mountnfs(&args, mp, nam, pth, hst, &vp);
+	error = mountnfs(&args, mp, nam, pth, hst);
 	return (error);
 }
 
@@ -668,12 +667,11 @@ nfs_mount(mp, path, data, ndp, p)
  * Common code for mount and mountroot
  */
 int
-mountnfs(argp, mp, nam, pth, hst, vpp)
+mountnfs(argp, mp, nam, pth, hst)
 	register struct nfs_args *argp;
 	register struct mount *mp;
 	struct mbuf *nam;
 	char *pth, *hst;
-	struct vnode **vpp;
 {
 	register struct nfsmount *nmp;
 	int error;
