@@ -38,6 +38,8 @@
 ./etc/magic
 ./etc/mail.rc
 ./etc/man.conf
+./etc/ssl
+./etc/ssl/private
 ./etc/master.passwd
 ./etc/monthly
 ./etc/motd
