@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_fil.c,v 1.42 2001/03/07 05:43:17 aaron Exp $	*/
+/*	$OpenBSD: ip_fil.c,v 1.43 2001/04/22 19:44:34 gluk Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -273,6 +273,7 @@ int iplattach()
 #   ifdef USE_INET6
 		goto pfil_error;
 #   else
+		SPL_X(s);
 		appr_unload();
 		ip_natunload();
 		fr_stateunload();
@@ -289,6 +290,7 @@ int iplattach()
 		pfil_remove_hook((void *)fr_check, PFIL_IN|PFIL_OUT,
 				 &inetsw[ip_protox[IPPROTO_IP]].pr_pfh);
 pfil_error:
+		SPL_X(s);
 		appr_unload();
 		ip_natunload();
 		fr_stateunload();
@@ -400,16 +402,20 @@ int ipldetach()
 #  if __NetBSD_Version__ >= 104200000
 	error = pfil_remove_hook((void *)fr_check, PFIL_IN|PFIL_OUT,
 				 &inetsw[ip_protox[IPPROTO_IP]].pr_pfh);
-	if (error)
+	if (error) {
+		SPL_X(s);
 		return error;
+	}
 #  else
 	pfil_remove_hook((void *)fr_check, PFIL_IN|PFIL_OUT);
 #  endif
 #  ifdef USE_INET6
 	error = pfil_remove_hook((void *)fr_check, PFIL_IN|PFIL_OUT,
 				 &inetsw[ip_protox[IPPROTO_IPV6]].pr_pfh);
-	if (error)
+	if (error) {
+		SPL_X(s);
 		return error;
+	}
 #  endif
 # endif
 
@@ -512,9 +518,10 @@ int mode;
 		return error;
 	}
 	if (unit == IPL_LOGAUTH) {
-		if (!fr_running)
-			return EIO;
-		error = fr_auth_ioctl(data, cmd, NULL, NULL);
+		if (fr_running)
+			error = fr_auth_ioctl(data, cmd, NULL, NULL);
+		else
+			error = EIO;
 		SPL_X(s);
 		return error;
 	}
@@ -588,7 +595,7 @@ int mode;
 		fr_getstat(&fio);
 		error = IWCOPYPTR((caddr_t)&fio, data, sizeof(fio));
 		if (error)
-			return EFAULT;
+			error = EFAULT;
 		break;
 	}
 	case	SIOCFRZST :
@@ -631,7 +638,7 @@ int mode;
 		error = IWCOPYPTR((caddr_t)ipfr_fragstats(), data,
 				  sizeof(ipfrstat_t));
 		if (error)
-			return EFAULT;
+			error = EFAULT;
 		break;
 	case SIOCAUTHW :
 	case SIOCAUTHR :
