@@ -1,4 +1,4 @@
-.\"	$OpenBSD: diskless.8,v 1.6 1996/10/07 20:59:25 deraadt Exp $
+.\"	$OpenBSD: diskless.8,v 1.7 1996/12/10 18:37:53 deraadt Exp $
 .\"	$NetBSD: diskless.8,v 1.7.4.1 1996/05/30 18:58:10 cgd Exp $
 .\"
 .\"
@@ -60,9 +60,10 @@ The kernel does NFS mounts for root and swap.
 .Pp
 Each of these phases are described in further detail below.
 .Pp
-In phase 1, the PROM loads a boot program.  PROM designs
-vary widely, so this phase is inherently machine-specific.
-Sun machines use
+In phase 1, the PROM loads a boot program.
+PROM designs vary widely, so this phase is inherently
+machine-specific.
+Sun and Motorola machines use
 .Tn RARP
 to determine the client's
 .Tn IP
@@ -70,16 +71,16 @@ address and then use
 .Tn TFTP
 to download a boot program from whoever sent the
 .Tn RARP
-reply.  HP 300-series machines use the
+reply.
+HP 300-series machines use the
 .Tn HP Remote Maintenance Protocol
 to download a boot program.
-Typical personal computers may load a
+Other machines may load a
 network boot program either from diskette or
 using a special PROM on the network card.
 .Pp
 In phase 2, the boot program loads a kernel.  Operation in
 this phase depends on the design of the boot program.
-(The design described here is the one used by Sun and OpenBSD/hp300.)
 The boot program:
 .Pp
 .Bl -tag -width 2.2 -compact
@@ -169,7 +170,7 @@ or DNS database:
 .Ed
 .Pp
 .It 3.
-If booting a Sun machine, ensure that
+If booting a Sun or Motorola client, ensure that
 .Pa /etc/inetd.conf
 is configured to run
 .Xr tftpd 8
@@ -189,8 +190,8 @@ See the
 manual page for more information.
 .Pp
 .It 4.
-If booting a Sun machine, install a copy of the appropriate diskless boot
-loader (such as
+If booting a Sun or Motorola client, install a copy of the
+appropriate diskless boot loader (such as
 .Pa boot.sun4.sunos.4.1.1
 from the SunOS media) in the
 .Pa /tftpboot
