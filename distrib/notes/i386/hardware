@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.91 2002/10/14 21:00:25 gluk Exp $
+dnl	$OpenBSD: hardware,v 1.92 2002/10/20 17:02:00 henning Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PC's and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -324,6 +324,7 @@ Supported hardware {:-include-:}:
 		    Intel EtherExpress PRO/100+ "Management Adapter"
 		    Intel EtherExpress PRO/100 Dual Port
 		    Intel PRO/100 VE, PRO/100 VM, and PRO/100 S
+		Intel 21145-based PCI adapters
 		Kawasaki LSI KL5KUSB101B-based USB adapters, including: [A]
 		  [B] [C]
 		    3Com 3c19250
