@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.76 2001/02/11 16:25:37 fgsch Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.77 2001/02/12 06:57:19 deraadt Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -395,9 +395,6 @@ htonq(u_int64_t q)
 #endif                                          
 
 #ifdef _KERNEL
-#ifndef CRYPTO
-#error "Must define CRYPTO in kernel config"
-#endif
 
 /*
  * Protects all tdb lists.
