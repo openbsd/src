@@ -1,9 +1,17 @@
-/* GNU C varargs support for the PowerPC with V.4 calling sequence */
+/* GNU C varargs support for the PowerPC with V.4 calling */
 
+/* System V.4 support */
 /* Define __gnuc_va_list.  */
 
 #ifndef __GNUC_VA_LIST
 #define __GNUC_VA_LIST
+
+#ifndef _SYS_VA_LIST_H
+#define _SYS_VA_LIST_H		/* Solaris sys/va_list.h */
+
+/* Solaris decided to rename overflow_arg_area to input_arg_area,
+   so handle it via a macro.  */
+#define __va_overflow(AP) (AP)->overflow_arg_area
 
 /* Note that the names in this structure are in the user's namespace, but
    that the V.4 abi explicitly states that these names should be used.  */
@@ -17,7 +25,14 @@ typedef struct __gnuc_va_list__ {
   char *overflow_arg_area;	/* location on stack that holds the next
 				   overflow argument */
   char *reg_save_area;		/* where r3:r10 and f1:f8, if saved are stored */
-} *__gnuc_va_list;
+} __va_list[1], __gnuc_va_list[1];
+
+#else /* _SYS_VA_LIST */
+
+typedef __va_list __gnuc_va_list;
+#define __va_overflow(AP) (AP)->input_arg_area
+
+#endif /* not _SYS_VA_LIST */
 #endif /* not __GNUC_VA_LIST */
 
 /* If this is for internal libc use, don't define anything but
@@ -25,6 +40,8 @@ typedef struct __gnuc_va_list__ {
 #if defined (_STDARG_H) || defined (_VARARGS_H)
 
 /* Register save area located below the frame pointer */
+#ifndef __VA_PPC_H__
+#define __VA_PPC_H__
 typedef struct {
   long   __gp_save[8];		/* save area for GP registers */
   double __fp_save[8];		/* save area for FP registers */
@@ -59,15 +76,15 @@ typedef struct {
 #define __va_start_common(AP, FAKE)					\
 __extension__ ({							\
    register int __words = __va_words - FAKE;				\
-   (AP) = (__gnuc_va_list)__builtin_alloca(sizeof(__gnuc_va_list *));	\
+   (AP) = (struct __gnuc_va_list__ *)__builtin_alloca(sizeof(struct __gnuc_va_list__));   \
 									\
    (AP)->gpr = (__words < 8) ? __words : 8;				\
    (AP)->fpr = __va_fregno - 33;					\
    (AP)->reg_save_area = (((char *) __builtin_frame_address (0))	\
 			  + __va_varargs_offset);			\
-   (AP)->overflow_arg_area = ((char *)__builtin_saveregs ()		\
-			      + (((__words >= 8) ? __words - 8 : 0)	\
-				 * sizeof (long)));			\
+   __va_overflow(AP) = ((char *)__builtin_saveregs ()			\
+			+ (((__words >= 8) ? __words - 8 : 0)		\
+			   * sizeof (long)));				\
    (void)0;								\
 })
 
@@ -92,6 +109,9 @@ __extension__ ({							\
 #define __va_float_p(TYPE)	(__builtin_classify_type(*(TYPE *)0) == 8)
 #endif
 
+#define __va_longlong_p(TYPE) \
+  ((__builtin_classify_type(*(TYPE *)0) == 1) && (sizeof(TYPE) == 8))
+
 #define __va_aggregate_p(TYPE)	(__builtin_classify_type(*(TYPE *)0) >= 12)
 #define __va_size(TYPE)		((sizeof(TYPE) + sizeof (long) - 1) / sizeof (long))
 
@@ -112,8 +132,13 @@ __extension__ (*({							\
     }									\
 									\
   else if (!__va_float_p (TYPE) && !__va_aggregate_p (TYPE)		\
-	   && (AP)->gpr + __va_size(TYPE) <= 8)				\
+	   && (AP)->gpr + __va_size(TYPE) <= 8				\
+	   && (!__va_longlong_p(TYPE)					\
+	       || (AP)->gpr + __va_size(TYPE) <= 7))			\
     {									\
+      if (__va_longlong_p(TYPE) && ((AP)->gpr & 1) != 0)		\
+	(AP)->gpr++;							\
+									\
       __ptr = __VA_GP_REGSAVE (AP, TYPE);				\
       (AP)->gpr += __va_size (TYPE);					\
     }									\
@@ -122,19 +147,22 @@ __extension__ (*({							\
 	   && (AP)->gpr < 8)						\
     {									\
       (AP)->gpr = 8;							\
-      __ptr = (TYPE *) (void *) ((AP)->overflow_arg_area);		\
-      (AP)->overflow_arg_area += __va_size (TYPE) * sizeof (long);	\
+      __ptr = (TYPE *) (void *) (__va_overflow(AP));			\
+      __va_overflow(AP) += __va_size (TYPE) * sizeof (long);		\
     }									\
 									\
   else if (__va_aggregate_p (TYPE))					\
     {									\
-      __ptr = * (TYPE **) (void *) ((AP)->overflow_arg_area);		\
-      (AP)->overflow_arg_area += sizeof (TYPE *);			\
+      __ptr = * (TYPE **) (void *) (__va_overflow(AP));			\
+      __va_overflow(AP) += sizeof (TYPE *);				\
     }									\
   else									\
     {									\
-      __ptr = (TYPE *) (void *) ((AP)->overflow_arg_area);		\
-      (AP)->overflow_arg_area += __va_size (TYPE) * sizeof (long);	\
+      if (__va_longlong_p(TYPE) && ((long)__va_overflow(AP) & 4) != 0)	\
+	__va_overflow(AP) += 4;						\
+									\
+      __ptr = (TYPE *) (void *) (__va_overflow(AP));			\
+      __va_overflow(AP) += __va_size (TYPE) * sizeof (long);		\
     }									\
 									\
   __ptr;								\
@@ -142,4 +170,8 @@ __extension__ (*({							\
 
 #define va_end(AP)	((void)0)
 
+/* Copy __gnuc_va_list into another variable of this type.  */
+#define __va_copy(dest, src) *(dest) = *(src)
+
+#endif /* __VA_PPC_H__ */
 #endif /* defined (_STDARG_H) || defined (_VARARGS_H) */
