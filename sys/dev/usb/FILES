@@ -5,6 +5,8 @@ Makefile		to install .h files
 Makefile.usbdevs	to run devlist2h.awk
 TODO			just a list of things to do
 devlist2h.awk		script to generate usbdevs*.h
+ezload.c		EZ-USB firmware download subroutines
+ezload.h		API for ezload.c
 files.usb		config include file
 hid.c			subroutines to parse and access HID data
 hid.h			API for hid.c
@@ -61,3 +63,5 @@ uscanner.c		minimal USB scanner driver
 usscanner.c		driver for some SCSI-over-USB scanners
 usbhid.h		USB HID class definitions
 uvisor.c		USB Handsping Visor driver
+uyap.c			Initial firmware downloader for Y@P phones
+uyap_firmware.h		Firmware for the Y@P phone
