@@ -1,4 +1,4 @@
-/*	$OpenBSD: pl_1.c,v 1.4 1999/01/18 06:20:53 pjanzen Exp $	*/
+/*	$OpenBSD: pl_1.c,v 1.5 1999/01/18 21:53:22 pjanzen Exp $	*/
 /*	$NetBSD: pl_1.c,v 1.3 1995/04/22 10:37:07 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_1.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: pl_1.c,v 1.4 1999/01/18 06:20:53 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: pl_1.c,v 1.5 1999/01/18 21:53:22 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -47,6 +47,10 @@ static char rcsid[] = "$OpenBSD: pl_1.c,v 1.4 1999/01/18 06:20:53 pjanzen Exp $"
 #include <errno.h>
 #include <sys/wait.h>
 #include <unistd.h>
+
+#ifndef __GNUC__
+#define __attribute__(x)
+#endif
 
 /*
  * If we get here before a ship is chosen, then ms == 0 and
@@ -122,14 +126,14 @@ leave(conditions)
 
 void
 choke(n)
-	int n;
+	int n __attribute__((unused));
 {
 	leave(LEAVE_QUIT);
 }
 
 void
 child(n)
-	int n;
+	int n __attribute__((unused));
 {
 	union wait status;
 	int pid;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.1 1999/01/18 21:14:15 pjanzen Exp $	*/
+/*	$OpenBSD: extern.h,v 1.2 1999/01/18 21:53:22 pjanzen Exp $	*/
 /*	$NetBSD: extern.h,v 1.8 1998/09/13 15:27:30 hubertf Exp $ */
 
 /*
@@ -43,6 +43,10 @@
 #include <setjmp.h>
 #include <sys/types.h>
 #include "machdep.h"
+
+#ifndef __GNUC__
+#define __attribute__(x)
+#endif
 
 	/* program mode */
 int mode;
