@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.761 2004/09/20 18:50:05 mickey Exp 
+ *	OpenBSD: pcidevs,v 1.762 2004/09/20 20:45:54 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1009,6 +1009,18 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_AMI, PCI_PRODUCT_AMI_MEGARAID434,
 	    "MegaRAID Series 434",
+	},
+	{
+	    PCI_VENDOR_AD, PCI_PRODUCT_AD_SP21535,
+	    "ADSP 21535 DSP",
+	},
+	{
+	    PCI_VENDOR_AD, PCI_PRODUCT_AD_1889,
+	    "AD1889 Audio",
+	},
+	{
+	    PCI_VENDOR_AD, PCI_PRODUCT_AD_SP2141,
+	    "SafeNet ADSP 2141",
 	},
 	{
 	    PCI_VENDOR_ANTARES, PCI_PRODUCT_ANTARES_TC9021,
@@ -3937,10 +3949,6 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ITT, PCI_PRODUCT_ITT_ITT3204,
 	    "ITT3204 MPEG Decoder",
-	},
-	{
-	    PCI_VENDOR_IRE, PCI_PRODUCT_IRE_ADSP2141,
-	    "ADSP 2141",
 	},
 	{
 	    PCI_VENDOR_ITEXPRESS, PCI_PRODUCT_ITEXPRESS_IT8212F,
@@ -8207,8 +8215,8 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	    "Mesa Ridge (MAGMA)",
 	},
 	{
-	    PCI_VENDOR_IRE,
-	    "IRE",
+	    PCI_VENDOR_AD,
+	    "Analog Devices",
 	},
 	{
 	    PCI_VENDOR_ZORAN,

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.761 2004/09/20 18:50:05 mickey Exp 
+ *	OpenBSD: pcidevs,v 1.762 2004/09/20 20:45:54 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -172,7 +172,7 @@
 #define	PCI_VENDOR_LUCENT	0x11c1		/* AT&T/Lucent */
 #define	PCI_VENDOR_DOLPHIN	0x11c8		/* Dolphin */
 #define	PCI_VENDOR_MRTMAGMA	0x11c9		/* Mesa Ridge (MAGMA) */
-#define	PCI_VENDOR_IRE	0x11d4		/* IRE */
+#define	PCI_VENDOR_AD	0x11d4		/* Analog Devices */
 #define	PCI_VENDOR_ZORAN	0x11de		/* Zoran */
 #define	PCI_VENDOR_PIJNENBURG	0x11e3		/* Pijnenburg */
 #define	PCI_VENDOR_COMPEX	0x11f6		/* Compex */
@@ -564,6 +564,11 @@
 #define	PCI_PRODUCT_AMI_MEGARAID	0x1960		/* MegaRAID */
 #define	PCI_PRODUCT_AMI_MEGARAID428	0x9010		/* MegaRAID Series 428 */
 #define	PCI_PRODUCT_AMI_MEGARAID434	0x9060		/* MegaRAID Series 434 */
+
+/* Analog Devices */
+#define	PCI_PRODUCT_AD_SP21535	0x1535		/* ADSP 21535 DSP */
+#define	PCI_PRODUCT_AD_1889	0x1889		/* AD1889 Audio */
+#define	PCI_PRODUCT_AD_SP2141	0x2f44		/* SafeNet ADSP 2141 */
 
 /* Antares Microsystems products */
 #define	PCI_PRODUCT_ANTARES_TC9021	0x1021		/* Antares Gigabit */
@@ -1445,9 +1450,6 @@
 /* I. T. T. products */
 #define	PCI_PRODUCT_ITT_AGX016	0x0001		/* AGX016 */
 #define	PCI_PRODUCT_ITT_ITT3204	0x0002		/* ITT3204 MPEG Decoder */
-
-/* IRE */
-#define	PCI_PRODUCT_IRE_ADSP2141	0x2f44		/* ADSP 2141 */
 
 /* ITExpress */
 #define	PCI_PRODUCT_ITEXPRESS_IT8212F	0x8212		/* IT8212F */
