@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systrace.1,v 1.17 2002/06/18 01:54:31 deraadt Exp $
+.\"	$OpenBSD: systrace.1,v 1.18 2002/06/20 05:59:28 provos Exp $
 .\"
 .\" Copyright 2002 Niels Provos <provos@citi.umich.edu>
 .\" All rights reserved.
@@ -179,6 +179,16 @@ user specified policies
 .El
 .Sh SEE ALSO
 .Xr systrace 4
+.Sh BUGS
+Applications that use
+.Xr rfork 2 ,
+.Xr mmap 2 ,
+or
+.Xr shmat 2
+to create shared memory between processes may be able to replace
+system call arguments after they have been evaluated by
+.Nm
+and escape policy enforcement.
 .Sh AUTHORS
 The
 .Nm
