@@ -1,5 +1,7 @@
 .nr _C \n(.C
 .cp 0
+.nr DVI 1
+.ftr CB CW
 .ftr CR CW
 .ftr C CW
 .ftr TT CW
