@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootp.c,v 1.3 2004/04/15 21:57:04 henning Exp $	*/
+/*	$OpenBSD: bootp.c,v 1.4 2004/04/18 00:43:27 deraadt Exp $	*/
 
 /*
  * BOOTP Protocol support.
@@ -47,19 +47,17 @@
 void
 bootp(struct packet *packet)
 {
-	int result;
-	struct host_decl *hp;
-	struct host_decl *host = (struct host_decl *)0;
+	struct host_decl *hp, *host = NULL;
 	struct packet outgoing;
 	struct dhcp_packet raw;
 	struct sockaddr_in to;
 	struct in_addr from;
 	struct hardware hto;
-	struct tree_cache *options [256];
-	struct subnet *subnet;
+	struct tree_cache *options[256];
+	struct subnet *subnet = NULL;
 	struct lease *lease;
 	struct iaddr ip_address;
-	int i;
+	int result, i;
 
 	if (packet->raw->op != BOOTREQUEST)
 		return;
@@ -85,8 +83,6 @@ bootp(struct packet *packet)
 	if (hp)
 		subnet = find_host_for_network(&hp, &ip_address,
 		    packet->shared_network);
-	else
-		subnet = (struct subnet *)0;
 
 	if (!subnet) {
 		/*
@@ -197,8 +193,8 @@ lose:
 		 * available, try to snag one.
 		 */
 		for (lease = packet->shared_network->last_lease;
-		     lease && lease->ends <= cur_time;
-		     lease = lease->prev) {
+		    lease && lease->ends <= cur_time;
+		    lease = lease->prev) {
 			if ((lease->flags & DYNAMIC_BOOTP_OK)) {
 				lease->host = host;
 				ack_lease(packet, lease, 0, 0);
@@ -260,7 +256,7 @@ lose:
 			netmask_tree.len = lease->subnet->netmask.len;
 			netmask_tree.buf_size = lease->subnet->netmask.len;
 			netmask_tree.timeout = 0xFFFFFFFF;
-			netmask_tree.tree = (struct tree *)0;
+			netmask_tree.tree = NULL;
 		}
 
 		/*
@@ -269,7 +265,7 @@ lose:
 		 */
 
 		outgoing.packet_length = cons_options(packet, outgoing.raw,
-		    0, options, 0, 0, 1, (u_int8_t *)0, 0);
+		    0, options, 0, 0, 1, NULL, 0);
 
 		if (outgoing.packet_length < BOOTP_MIN_LEN)
 			outgoing.packet_length = BOOTP_MIN_LEN;
@@ -337,9 +333,8 @@ lose:
 		to.sin_port = local_port;
 
 		if (fallback_interface) {
-			result = send_packet(fallback_interface,
-			    (struct packet *)0, &raw, outgoing.packet_length,
-			    from, &to, &hto);
+			result = send_packet(fallback_interface, NULL, &raw,
+			    outgoing.packet_length, from, &to, &hto);
 			return;
 		}
 
@@ -353,8 +348,8 @@ lose:
 	else if (!(raw.flags & htons(BOOTP_BROADCAST))) {
 		to.sin_addr = raw.yiaddr;
 		to.sin_port = remote_port;
-	/* Otherwise, broadcast it on the local network. */
 	} else {
+		/* Otherwise, broadcast it on the local network. */
 		to.sin_addr.s_addr = INADDR_BROADCAST;
 		to.sin_port = remote_port; /* XXX */
 	}

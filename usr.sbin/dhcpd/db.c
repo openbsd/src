@@ -1,4 +1,4 @@
-/*	$OpenBSD: db.c,v 1.5 2004/04/15 23:20:23 henning Exp $	*/
+/*	$OpenBSD: db.c,v 1.6 2004/04/18 00:43:27 deraadt Exp $	*/
 
 /*
  * Persistent database management routines for DHCPD.
@@ -57,7 +57,7 @@ int
 write_lease(struct lease *lease)
 {
 	struct tm *t;
-	char tbuf [64];
+	char tbuf[64];
 	int errors = 0;
 	int i;
 
@@ -143,9 +143,9 @@ write_lease(struct lease *lease)
 
 bad_client_hostname:
 	if (lease->hostname) {
-		for (i = 0; lease->hostname [i]; i++)
-			if (lease->hostname [i] < 33 ||
-			    lease->hostname [i] > 126)
+		for (i = 0; lease->hostname[i]; i++)
+			if (lease->hostname[i] < 33 ||
+			    lease->hostname[i] > 126)
 				goto bad_hostname;
 		errno = 0;
 		fprintf(db_file, "\n\thostname \"%s\";",

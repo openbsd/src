@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.4 2004/04/15 22:22:21 hshoexer Exp $	*/
+/*	$OpenBSD: parse.c,v 1.5 2004/04/18 00:43:27 deraadt Exp $	*/
 
 /* Common parser code for dhcpd and dhclient. */
 
@@ -43,7 +43,7 @@
 #include "dhcpd.h"
 #include "dhctoken.h"
 
-/* 
+/*
  * Skip to the semicolon ending the current statement.   If we encounter
  * braces, the matching closing brace terminates the statement.   If we
  * encounter a right brace but haven't encountered a left brace, return
@@ -96,8 +96,8 @@ skip_to_semi(FILE *cfile)
 int
 parse_semi(FILE *cfile)
 {
-	int             token;
-	char           *val;
+	int token;
+	char *val;
 
 	token = next_token(&val, cfile);
 	if (token != SEMI) {
@@ -114,9 +114,8 @@ parse_semi(FILE *cfile)
 char *
 parse_string(FILE *cfile)
 {
-	char           *val;
-	int             token;
-	char           *s;
+	char *val, *s;
+	int token;
 
 	token = next_token(&val, cfile);
 	if (token != STRING) {
@@ -140,12 +139,9 @@ parse_string(FILE *cfile)
 char *
 parse_host_name(FILE *cfile)
 {
-	char           *val;
-	int             token;
-	int             len = 0;
-	char           *s;
-	char           *t;
-	pair            c = NULL;
+	char *val, *s, *t;
+	int token, len = 0;
+	pair c = NULL;
 
 	/* Read a dotted hostname... */
 	do {
@@ -177,8 +173,9 @@ parse_host_name(FILE *cfile)
 	t = s + len;
 	*--t = '\0';
 	while (c) {
-		pair            cdr = c->cdr;
-		int             l = strlen((char *)c->car);
+		pair cdr = c->cdr;
+		int l = strlen((char *)c->car);
+
 		t -= l;
 		memcpy(t, (char *)c->car, l);
 		/* Free up temp space. */
@@ -208,10 +205,9 @@ parse_ip_addr(FILE *cfile, struct iaddr *addr)
 void
 parse_hardware_param(FILE *cfile, struct hardware *hardware)
 {
-	char           *val;
-	int             token;
-	int             hlen;
-	unsigned char  *t;
+	char *val;
+	int token, hlen;
+	unsigned char *t;
 
 	token = next_token(&val, cfile);
 	switch (token) {
@@ -248,8 +244,7 @@ parse_hardware_param(FILE *cfile, struct hardware *hardware)
 		parse_warn("hardware address too long");
 	} else {
 		hardware->hlen = hlen;
-		memcpy((unsigned char *)&hardware->haddr[0], t,
-		     hardware->hlen);
+		memcpy((unsigned char *)&hardware->haddr[0], t, hardware->hlen);
 		if (hlen < sizeof(hardware->haddr))
 			memset(&hardware->haddr[hlen], 0,
 			    sizeof(hardware->haddr) - hlen);
@@ -269,8 +264,8 @@ parse_hardware_param(FILE *cfile, struct hardware *hardware)
 void
 parse_lease_time(FILE *cfile, time_t *timep)
 {
-	char           *val;
-	int             token;
+	char *val;
+	int token;
 
 	token = next_token(&val, cfile);
 	if (token != NUMBER) {
@@ -297,12 +292,10 @@ unsigned char *
 parse_numeric_aggregate(FILE *cfile, unsigned char *buf, int *max,
     int separator, int base, int size)
 {
-	char           *val;
-	int             token;
-	unsigned char  *bufp = buf, *s = NULL;
-	char           *t;
-	int             count = 0;
-	pair            c = NULL;
+	char *val, *t;
+	int token, count = 0;
+	unsigned char *bufp = buf, *s = NULL;
+	pair c = NULL;
 
 	if (!bufp && *max) {
 		bufp = malloc(*max * size / 8);
@@ -378,11 +371,9 @@ parse_numeric_aggregate(FILE *cfile, unsigned char *buf, int *max,
 void
 convert_num(unsigned char *buf, char *str, int base, int size)
 {
-	char           *ptr = str;
-	int             negative = 0;
-	u_int32_t       val = 0;
-	int             tval;
-	int             max;
+	int negative = 0, tval, max;
+	char *ptr = str;
+	u_int32_t val = 0;
 
 	if (*ptr == '-') {
 		negative = 1;
@@ -443,7 +434,7 @@ convert_num(unsigned char *buf, char *str, int base, int size)
 			break;
 		}
 	}
-	if (negative)
+	if (negative) {
 		switch (size) {
 		case 8:
 			*buf = -(unsigned long)val;
@@ -458,7 +449,7 @@ convert_num(unsigned char *buf, char *str, int base, int size)
 			warn("Unexpected integer size: %d", size);
 			break;
 		}
-	else
+	} else {
 		switch (size) {
 		case 8:
 			*buf = (u_int8_t)val;
@@ -473,6 +464,7 @@ convert_num(unsigned char *buf, char *str, int base, int size)
 			warn("Unexpected integer size: %d", size);
 			break;
 		}
+	}
 }
 
 /*
@@ -486,11 +478,10 @@ convert_num(unsigned char *buf, char *str, int base, int size)
 time_t
 parse_date(FILE * cfile)
 {
-	struct tm       tm;
-	int             guess;
-	char           *val;
-	int             token;
-	static int      months[11] = {31, 59, 90, 120, 151, 181,
+	struct tm tm;
+	int guess, token;
+	char *val;
+	static int months[11] = {31, 59, 90, 120, 151, 181,
 	    212, 243, 273, 304, 334};
 
 	/* Day of week... */

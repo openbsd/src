@@ -99,7 +99,7 @@ extern int h_errno;
 #include "dhcp.h"
 #include "tree.h"
 
-#define LOCAL_PORT      68
+#define LOCAL_PORT	68
 
 struct iaddr {
 	int len;
@@ -194,13 +194,13 @@ struct lease {
 	struct hardware hardware_addr;
 
 	int flags;
-#       define STATIC_LEASE		1
-#       define BOOTP_LEASE		2
-#	define DYNAMIC_BOOTP_OK		4
-#	define PERSISTENT_FLAGS		(DYNAMIC_BOOTP_OK)
-#	define EPHEMERAL_FLAGS		(BOOTP_LEASE)
-#	define MS_NULL_TERMINATION	8
-#	define ABANDONED_LEASE		16
+#define STATIC_LEASE		1
+#define BOOTP_LEASE		2
+#define DYNAMIC_BOOTP_OK	4
+#define PERSISTENT_FLAGS	(DYNAMIC_BOOTP_OK)
+#define EPHEMERAL_FLAGS		(BOOTP_LEASE)
+#define MS_NULL_TERMINATION	8
+#define ABANDONED_LEASE		16
 
 	struct lease_state *state;
 	u_int8_t releasing;
@@ -325,17 +325,17 @@ struct class {
 
 /* DHCP client lease structure... */
 struct client_lease {
-	struct client_lease *next;		      /* Next lease in list. */
-	time_t expiry, renewal, rebind;			  /* Lease timeouts. */
-	struct iaddr address;			    /* Address being leased. */
-	char *server_name;			     /* Name of boot server. */
-	char *filename;		     /* Name of file we're supposed to boot. */
-	struct string_list *medium;			  /* Network medium. */
+	struct client_lease *next;		/* Next lease in list. */
+	time_t expiry, renewal, rebind;		/* Lease timeouts. */
+	struct iaddr address;			/* Address being leased. */
+	char *server_name;			/* Name of boot server. */
+	char *filename;				/* File to boot. */
+	struct string_list *medium;		/* Network medium. */
 
-	unsigned int is_static : 1;    /* If set, lease is from config file. */
-	unsigned int is_bootp: 1;   /* If set, lease was aquired with BOOTP. */
+	unsigned int is_static : 1;	/* If set, lease is from config file. */
+	unsigned int is_bootp: 1;	/* If set, lease was aquired with BOOTP. */
 
-	struct option_data options [256];    /* Options supplied with lease. */
+	struct option_data options [256];	/* Options supplied with lease. */
 };
 
 /* Possible states in which the client can be. */

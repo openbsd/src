@@ -1,4 +1,4 @@
-/*	$Id: tree.c,v 1.6 2004/04/16 04:30:09 deraadt Exp $	*/
+/*	$Id: tree.c,v 1.7 2004/04/18 00:43:27 deraadt Exp $	*/
 
 /* Routines for manipulating parse trees... */
 
@@ -67,7 +67,7 @@ tree_cache(struct tree *tree)
 	tc = new_tree_cache("tree_cache");
 	if (!tc)
 		return 0;
-	tc->value = (unsigned char *)0;
+	tc->value = NULL;
 	tc->len = tc->buf_size = 0;
 	tc->timeout = 0;
 	tc->tree = tree;
@@ -98,7 +98,7 @@ enter_dns_host(char *name)
 	    !(dh->hostname = dmalloc(len, "enter_dns_host")))
 		error("Can't allocate space for new host.");
 	strlcpy(dh->hostname, name, len);
-	dh->data = (unsigned char *)0;
+	dh->data = NULL;
 	dh->data_len = 0;
 	dh->buf_len = 0;
 	dh->timeout = 0;
@@ -124,7 +124,7 @@ tree_concat(struct tree *left, struct tree *right)
 {
 	struct tree	*nt;
 
-	/* 
+	/*
 	 * If we're concatenating a null tree to a non-null tree, just
 	 * return the non-null tree; if both trees are null, return
 	 * a null tree.
@@ -177,7 +177,7 @@ tree_limit(struct tree *tree, int limit)
 	/* Otherwise, put in a node which enforces the limit on evaluation. */
 	rv = new_tree("tree_limit");
 	if (!rv)
-		return(struct tree *)0;
+		return NULL;
 	rv->op = TREE_LIMIT;
 	rv->data.limit.tree = tree;
 	rv->data.limit.limit = limit;
@@ -191,7 +191,7 @@ tree_evaluate(struct tree_cache *tree_cache)
 	int		 bc = tree_cache->buf_size;
 	int		 bufix = 0;
 
-	/* 
+	/*
 	 * If there's no tree associated with this cache, it evaluates to a
 	 * constant and that was detected at startup.
 	 */
@@ -219,7 +219,7 @@ tree_evaluate(struct tree_cache *tree_cache)
 	bc = bufix;
 	bufix = 0;
 
-	/* 
+	/*
 	 * Note that the size of the result shouldn't change on the
 	 * second call to tree_evaluate_recurse, since we haven't
 	 * changed the ``current'' time.
@@ -314,7 +314,7 @@ do_host_lookup(int *bufix, unsigned char **bufp, int *bufcount,
 			break;
 		case TRY_AGAIN:
 			warn("%s: temporary name server failure",
-			      dns->hostname);
+			    dns->hostname);
 			break;
 		case NO_RECOVERY:
 			warn("%s: name server failed", dns->hostname);
@@ -328,8 +328,7 @@ do_host_lookup(int *bufix, unsigned char **bufp, int *bufcount,
 	}
 
 #ifdef DEBUG_EVAL
-	debug("Lookup succeeded; first address is %x",
-	       h->h_addr_list[0]);
+	debug("Lookup succeeded; first address is %x", h->h_addr_list[0]);
 #endif
 
 	/* Count the number of addresses we got... */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tables.c,v 1.2 2004/04/14 01:27:49 henning Exp $	*/
+/*	$OpenBSD: tables.c,v 1.3 2004/04/18 00:43:27 deraadt Exp $	*/
 
 /* Tables of information... */
 
@@ -665,7 +665,6 @@ char *hardware_types[] = {
 	"unknown-254",
 	"unknown-255"
 };
-
 
 
 struct hash_table universe_hash;

@@ -848,7 +848,7 @@ dump_subnets(void)
 	struct shared_network *s;
 	struct subnet *n;
 
-	note ("Subnets:");
+	note("Subnets:");
 	for (n = subnets; n; n = n->next_subnet) {
 		debug("  Subnet %s", piaddr(n->net));
 		debug("     netmask %s", piaddr(n->netmask));

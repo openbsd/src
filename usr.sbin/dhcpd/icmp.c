@@ -1,6 +1,6 @@
 /*
  * icmp.c
- * 
+ *
  * ICMP Protocol engine - for sending out pings and receiving responses.
  */
 
@@ -53,7 +53,7 @@ static int icmp_protocol_fd;
 /* Initialize the ICMP protocol. */
 
 void
-icmp_startup(int routep, void (*handler) (struct iaddr, u_int8_t *, int))
+icmp_startup(int routep, void (*handler)(struct iaddr, u_int8_t *, int))
 {
 	struct protoent *proto;
 	int protocol = 1, state;
@@ -76,14 +76,14 @@ icmp_startup(int routep, void (*handler) (struct iaddr, u_int8_t *, int))
 	/* Make sure it does routing... */
 	state = 0;
 	if (setsockopt(icmp_protocol_fd, SOL_SOCKET, SO_DONTROUTE,
-	    (char *) &state, sizeof state) < 0)
+	    (char *)&state, sizeof state) < 0)
 		error("Unable to disable SO_DONTROUTE on ICMP socket: %m");
 
 	add_protocol("icmp", icmp_protocol_fd, icmp_echoreply,
-	    (void *) handler);
+	    (void *)handler);
 }
 
-int 
+int
 icmp_echorequest(struct iaddr *addr)
 {
 	struct sockaddr_in to;
@@ -110,12 +110,12 @@ icmp_echorequest(struct iaddr *addr)
 	icmp.icmp_id = (u_int32_t) addr;
 #endif
 
-	icmp.icmp_cksum = wrapsum(checksum((unsigned char *) &icmp,
+	icmp.icmp_cksum = wrapsum(checksum((unsigned char *)&icmp,
 	    sizeof icmp, 0));
 
 	/* Send the ICMP packet... */
-	status = sendto(icmp_protocol_fd, (char *) &icmp, sizeof icmp, 0,
-	    (struct sockaddr *) & to, sizeof to);
+	status = sendto(icmp_protocol_fd, (char *)&icmp, sizeof icmp, 0,
+	    (struct sockaddr *)& to, sizeof to);
 	if (status < 0)
 		warn("icmp_echorequest %s: %m", inet_ntoa(to.sin_addr));
 
@@ -124,7 +124,7 @@ icmp_echorequest(struct iaddr *addr)
 	return 1;
 }
 
-void 
+void
 icmp_echoreply(struct protocol *protocol)
 {
 	void (*handler)(struct iaddr, u_int8_t *, int);
@@ -148,7 +148,7 @@ icmp_echoreply(struct protocol *protocol)
 		return;
 
 	len = status - sizeof(struct ip);
-	icfrom = (struct icmp *) (icbuf + sizeof(struct ip));
+	icfrom = (struct icmp *)(icbuf + sizeof(struct ip));
 
 	/* Silently discard ICMP packets that aren't echoreplies. */
 	if (icfrom->icmp_type != ICMP_ECHOREPLY)

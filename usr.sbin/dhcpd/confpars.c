@@ -227,9 +227,9 @@ int parse_statement (cfile, group, type, host_decl, declaration)
 		}
 
 		/* If we're in a subnet declaration, just do the parse. */
-		if (group -> shared_network) {
+		if (group->shared_network) {
 			parse_subnet_declaration (cfile,
-						  group -> shared_network);
+						  group->shared_network);
 			break;
 		}
 
@@ -239,28 +239,28 @@ int parse_statement (cfile, group, type, host_decl, declaration)
 		share = new_shared_network ("parse_statement");
 		if (!share)
 			error ("No memory for shared subnet");
-		share -> group = clone_group (group, "parse_statement:subnet");
-		share -> group -> shared_network = share;
+		share->group = clone_group (group, "parse_statement:subnet");
+		share->group->shared_network = share;
 
 		parse_subnet_declaration (cfile, share);
 
-		/* share -> subnets is the subnet we just parsed. */
-		if (share -> subnets) {
-			share -> interface =
-				share -> subnets -> interface;
+		/* share->subnets is the subnet we just parsed. */
+		if (share->subnets) {
+			share->interface =
+				share->subnets->interface;
 
 			/* Make the shared network name from network number. */
-			n = piaddr (share -> subnets -> net);
+			n = piaddr (share->subnets->net);
 			t = malloc (strlen (n) + 1);
 			if (!t)
 				error ("no memory for subnet name");
 			strlcpy (t, n, (strlen(n) + 1));
-			share -> name = t;
+			share->name = t;
 
 			/* Copy the authoritative parameter from the subnet,
 			   since there is no opportunity to declare it here. */
-			share -> group -> authoritative =
-				share -> subnets -> group -> authoritative;
+			share->group->authoritative =
+				share->subnets->group->authoritative;
 			enter_shared_network (share);
 		}
 		return 1;
@@ -274,51 +274,51 @@ int parse_statement (cfile, group, type, host_decl, declaration)
 		return 1;
 
 	      case DEFAULT_LEASE_TIME:
-		parse_lease_time (cfile, &group -> default_lease_time);
+		parse_lease_time (cfile, &group->default_lease_time);
 		break;
 
 	      case MAX_LEASE_TIME:
-		parse_lease_time (cfile, &group -> max_lease_time);
+		parse_lease_time (cfile, &group->max_lease_time);
 		break;
 
 	      case DYNAMIC_BOOTP_LEASE_CUTOFF:
-		group -> bootp_lease_cutoff = parse_date (cfile);
+		group->bootp_lease_cutoff = parse_date (cfile);
 		break;
 
 	      case DYNAMIC_BOOTP_LEASE_LENGTH:
-		parse_lease_time (cfile, &group -> bootp_lease_length);
+		parse_lease_time (cfile, &group->bootp_lease_length);
 		break;
 
 	      case BOOT_UNKNOWN_CLIENTS:
 		if (type == HOST_DECL)
 			parse_warn ("boot-unknown-clients not allowed here.");
-		group -> boot_unknown_clients = parse_boolean (cfile);
+		group->boot_unknown_clients = parse_boolean (cfile);
 		break;
 
 	      case ONE_LEASE_PER_CLIENT:
 		if (type == HOST_DECL)
 			parse_warn ("one-lease-per-client not allowed here.");
-		group -> one_lease_per_client = parse_boolean (cfile);
+		group->one_lease_per_client = parse_boolean (cfile);
 		break;
 
 	      case GET_LEASE_HOSTNAMES:
 		if (type == HOST_DECL)
 			parse_warn ("get-lease-hostnames not allowed here.");
-		group -> get_lease_hostnames = parse_boolean (cfile);
+		group->get_lease_hostnames = parse_boolean (cfile);
 		break;
 
 	      case ALWAYS_REPLY_RFC1048:
-		group -> always_reply_rfc1048 = parse_boolean (cfile);
+		group->always_reply_rfc1048 = parse_boolean (cfile);
 		break;
 
 	      case USE_HOST_DECL_NAMES:
 		if (type == HOST_DECL)
 			parse_warn ("use-host-decl-names not allowed here.");
-		group -> use_host_decl_names = parse_boolean (cfile);
+		group->use_host_decl_names = parse_boolean (cfile);
 		break;
 
 	      case USE_LEASE_ADDR_FOR_DEFAULT_ROUTE:
-		group -> use_lease_addr_for_default_route =
+		group->use_lease_addr_for_default_route =
 			parse_boolean (cfile);
 		break;
 
@@ -328,7 +328,7 @@ int parse_statement (cfile, group, type, host_decl, declaration)
 		      case AUTHORITATIVE:
 			if (type == HOST_DECL)
 			    parse_warn ("authority makes no sense here.");
-			group -> authoritative = 0;
+			group->authoritative = 0;
 			parse_semi (cfile);
 			break;
 		      default:
@@ -341,7 +341,7 @@ int parse_statement (cfile, group, type, host_decl, declaration)
 	      case AUTHORITATIVE:
 		if (type == HOST_DECL)
 		    parse_warn ("authority makes no sense here.");
-		group -> authoritative = 1;
+		group->authoritative = 1;
 		parse_semi (cfile);
 		break;
 
@@ -352,9 +352,9 @@ int parse_statement (cfile, group, type, host_decl, declaration)
 		cache = tree_cache (tree);
 		if (!tree_evaluate (cache))
 			error ("next-server is not known");
-		group -> next_server.len = 4;
-		memcpy (group -> next_server.iabuf,
-			cache -> value, group -> next_server.len);
+		group->next_server.len = 4;
+		memcpy (group->next_server.iabuf,
+			cache->value, group->next_server.len);
 		parse_semi (cfile);
 		break;
 
@@ -366,23 +366,23 @@ int parse_statement (cfile, group, type, host_decl, declaration)
 		tree = parse_ip_addr_or_hostname (cfile, 0);
 		if (!tree)
 			return declaration;
-		group -> options [DHO_DHCP_SERVER_IDENTIFIER] =
+		group->options[DHO_DHCP_SERVER_IDENTIFIER] =
 			tree_cache (tree);
 		token = next_token (&val, cfile);
 		break;
 
 	      case FILENAME:
-		group -> filename = parse_string (cfile);
+		group->filename = parse_string (cfile);
 		break;
 
 	      case SERVER_NAME:
-		group -> server_name = parse_string (cfile);
+		group->server_name = parse_string (cfile);
 		break;
 
 	      case HARDWARE:
 		parse_hardware_param (cfile, &hardware);
 		if (host_decl)
-			host_decl -> interface = hardware;
+			host_decl->interface = hardware;
 		else
 			parse_warn ("hardware address parameter %s",
 				    "not allowed here.");
@@ -391,19 +391,19 @@ int parse_statement (cfile, group, type, host_decl, declaration)
 	      case FIXED_ADDR:
 		cache = parse_fixed_addr_param (cfile);
 		if (host_decl)
-			host_decl -> fixed_addr = cache;
+			host_decl->fixed_addr = cache;
 		else
 			parse_warn ("fixed-address parameter not %s",
 				    "allowed here.");
 		break;
 
 	      case RANGE:
-		if (type != SUBNET_DECL || !group -> subnet) {
+		if (type != SUBNET_DECL || !group->subnet) {
 			parse_warn ("range declaration not allowed here.");
 			skip_to_semi (cfile);
 			return declaration;
 		}
-		parse_address_range (cfile, group -> subnet);
+		parse_address_range (cfile, group->subnet);
 		return declaration;
 
 	      case ALLOW:
@@ -447,19 +447,19 @@ void parse_allow_deny (cfile, group, flag)
 	token = next_token (&val, cfile);
 	switch (token) {
 	      case BOOTP:
-		group -> allow_bootp = flag;
+		group->allow_bootp = flag;
 		break;
 
 	      case BOOTING:
-		group -> allow_booting = flag;
+		group->allow_booting = flag;
 		break;
 
 	      case DYNAMIC_BOOTP:
-		group -> dynamic_bootp = flag;
+		group->dynamic_bootp = flag;
 		break;
 
 	      case UNKNOWN_CLIENTS:
-		group -> boot_unknown_clients = flag;
+		group->boot_unknown_clients = flag;
 		break;
 
 	      default:
@@ -534,8 +534,8 @@ void parse_host_declaration (cfile, group)
 	if (!host)
 		error ("can't allocate host decl struct %s.", name);
 
-	host -> name = name;
-	host -> group = clone_group (group, "parse_host_declaration");
+	host->name = name;
+	host->group = clone_group (group, "parse_host_declaration");
 
 	if (!parse_lbrace (cfile))
 		return;
@@ -551,26 +551,26 @@ void parse_host_declaration (cfile, group)
 			parse_warn ("unexpected end of file");
 			break;
 		}
-		declaration = parse_statement (cfile, host -> group,
+		declaration = parse_statement (cfile, host->group,
 					       HOST_DECL, host,
 					       declaration);
 	} while (1);
 
-	if (!host -> group -> options [DHO_HOST_NAME] &&
-	    host -> group -> use_host_decl_names) {
-		host -> group -> options [DHO_HOST_NAME] =
+	if (!host->group->options[DHO_HOST_NAME] &&
+	    host->group->use_host_decl_names) {
+		host->group->options[DHO_HOST_NAME] =
 			new_tree_cache ("parse_host_declaration");
-		if (!host -> group -> options [DHO_HOST_NAME])
+		if (!host->group->options[DHO_HOST_NAME])
 			error ("can't allocate a tree cache for hostname.");
-		host -> group -> options [DHO_HOST_NAME] -> len =
+		host->group->options[DHO_HOST_NAME]->len =
 			strlen (name);
-		host -> group -> options [DHO_HOST_NAME] -> value =
+		host->group->options[DHO_HOST_NAME]->value =
 			(unsigned char *)name;
-		host -> group -> options [DHO_HOST_NAME] -> buf_size =
-			host -> group -> options [DHO_HOST_NAME] -> len;
-		host -> group -> options [DHO_HOST_NAME] -> timeout =
+		host->group->options[DHO_HOST_NAME]->buf_size =
+			host->group->options[DHO_HOST_NAME]->len;
+		host->group->options[DHO_HOST_NAME]->timeout =
 			0xFFFFFFFF;
-		host -> group -> options [DHO_HOST_NAME] -> tree =
+		host->group->options[DHO_HOST_NAME]->tree =
 			(struct tree *)0;
 	}
 
@@ -600,7 +600,7 @@ void parse_class_declaration (cfile, group, type)
 	class = add_class (type, val);
 	if (!class)
 		error ("No memory for class %s.", val);
-	class -> group = clone_group (group, "parse_class_declaration");
+	class->group = clone_group (group, "parse_class_declaration");
 
 	if (!parse_lbrace (cfile))
 		return;
@@ -615,7 +615,7 @@ void parse_class_declaration (cfile, group, type)
 			parse_warn ("unexpected end of file");
 			break;
 		} else {
-			declaration = parse_statement (cfile, class -> group,
+			declaration = parse_statement (cfile, class->group,
 						       CLASS_DECL,
 						       (struct host_decl *)0,
 						       declaration);
@@ -639,20 +639,20 @@ void parse_shared_net_declaration (cfile, group)
 	share = new_shared_network ("parse_shared_net_declaration");
 	if (!share)
 		error ("No memory for shared subnet");
-	share -> leases = (struct lease *)0;
-	share -> last_lease = (struct lease *)0;
-	share -> insertion_point = (struct lease *)0;
-	share -> next = (struct shared_network *)0;
-	share -> interface = (struct interface_info *)0;
-	share -> group = clone_group (group, "parse_shared_net_declaration");
-	share -> group -> shared_network = share;
+	share->leases = (struct lease *)0;
+	share->last_lease = (struct lease *)0;
+	share->insertion_point = (struct lease *)0;
+	share->next = (struct shared_network *)0;
+	share->interface = (struct interface_info *)0;
+	share->group = clone_group (group, "parse_shared_net_declaration");
+	share->group->shared_network = share;
 
 	/* Get the name of the shared network... */
 	token = peek_token (&val, cfile);
 	if (token == STRING) {
 		token = next_token (&val, cfile);
 
-		if (val [0] == 0) {
+		if (val[0] == 0) {
 			parse_warn ("zero-length shared network name");
 			val = "<no-name-given>";
 		}
@@ -665,7 +665,7 @@ void parse_shared_net_declaration (cfile, group)
 		if (!name)
 			return;
 	}
-	share -> name = name;
+	share->name = name;
 
 	if (!parse_lbrace (cfile))
 		return;
@@ -674,7 +674,7 @@ void parse_shared_net_declaration (cfile, group)
 		token = peek_token (&val, cfile);
 		if (token == RBRACE) {
 			token = next_token (&val, cfile);
-			if (!share -> subnets) {
+			if (!share->subnets) {
 				parse_warn ("empty shared-network decl");
 				return;
 			}
@@ -686,7 +686,7 @@ void parse_shared_net_declaration (cfile, group)
 			break;
 		}
 
-		declaration = parse_statement (cfile, share -> group,
+		declaration = parse_statement (cfile, share->group,
 					       SHARED_NET_DECL,
 					       (struct host_decl *)0,
 					       declaration);
@@ -704,24 +704,24 @@ void parse_subnet_declaration (cfile, share)
 	int token;
 	struct subnet *subnet, *t, *u;
 	struct iaddr iaddr;
-	unsigned char addr [4];
+	unsigned char addr[4];
 	int len = sizeof addr;
 	int declaration = 0;
 
 	subnet = new_subnet ("parse_subnet_declaration");
 	if (!subnet)
 		error ("No memory for new subnet");
-	subnet -> shared_network = share;
-	subnet -> group = clone_group (share -> group,
+	subnet->shared_network = share;
+	subnet->group = clone_group (share->group,
 				       "parse_subnet_declaration");
-	subnet -> group -> subnet = subnet;
+	subnet->group->subnet = subnet;
 
 	/* Get the network number... */
 	if (!parse_numeric_aggregate (cfile, addr, &len, DOT, 10, 8))
 		return;
 	memcpy (iaddr.iabuf, addr, len);
 	iaddr.len = len;
-	subnet -> net = iaddr;
+	subnet->net = iaddr;
 
 	token = next_token (&val, cfile);
 	if (token != NETMASK) {
@@ -735,7 +735,7 @@ void parse_subnet_declaration (cfile, share)
 		return;
 	memcpy (iaddr.iabuf, addr, len);
 	iaddr.len = len;
-	subnet -> netmask = iaddr;
+	subnet->netmask = iaddr;
 
 	enter_subnet (subnet);
 
@@ -752,7 +752,7 @@ void parse_subnet_declaration (cfile, share)
 			parse_warn ("unexpected end of file");
 			break;
 		}
-		declaration = parse_statement (cfile, subnet -> group,
+		declaration = parse_statement (cfile, subnet->group,
 					       SUBNET_DECL,
 					       (struct host_decl *)0,
 					       declaration);
@@ -760,28 +760,28 @@ void parse_subnet_declaration (cfile, share)
 
 	/* If this subnet supports dynamic bootp, flag it so in the
 	   shared_network containing it. */
-	if (subnet -> group -> dynamic_bootp)
-		share -> group -> dynamic_bootp = 1;
-	if (subnet -> group -> one_lease_per_client)
-		share -> group -> one_lease_per_client = 1;
+	if (subnet->group->dynamic_bootp)
+		share->group->dynamic_bootp = 1;
+	if (subnet->group->one_lease_per_client)
+		share->group->one_lease_per_client = 1;
 
 	/* Add the subnet to the list of subnets in this shared net. */
-	if (!share -> subnets)
-		share -> subnets = subnet;
+	if (!share->subnets)
+		share->subnets = subnet;
 	else {
 		u = (struct subnet *)0;
-		for (t = share -> subnets; t; t = t -> next_sibling) {
+		for (t = share->subnets; t; t = t->next_sibling) {
 			if (subnet_inner_than (subnet, t, 0)) {
 				if (u)
-					u -> next_sibling = subnet;
+					u->next_sibling = subnet;
 				else
-					share -> subnets = subnet;
-				subnet -> next_sibling = t;
+					share->subnets = subnet;
+				subnet->next_sibling = t;
 				return;
 			}
 			u = t;
 		}
-		u -> next_sibling = subnet;
+		u->next_sibling = subnet;
 	}
 }
 
@@ -830,7 +830,7 @@ struct tree *parse_ip_addr_or_hostname (cfile, uniform)
 {
 	char *val;
 	int token;
-	unsigned char addr [4];
+	unsigned char addr[4];
 	int len = sizeof addr;
 	char *name;
 	struct tree *rv;
@@ -902,7 +902,7 @@ void parse_option_param (cfile, group)
 {
 	char *val;
 	int token;
-	unsigned char buf [4];
+	unsigned char buf[4];
 	char *vendor;
 	char *fmt;
 	struct universe *universe;
@@ -955,7 +955,7 @@ void parse_option_param (cfile, group)
 	}
 
 	/* Look up the actual option info... */
-	option = (struct option *)hash_lookup (universe -> hash,
+	option = (struct option *)hash_lookup (universe->hash,
 					       (unsigned char *)val, 0);
 
 	/* If we didn't get an option structure, it's an undefined option. */
@@ -977,9 +977,9 @@ void parse_option_param (cfile, group)
 		/* Set a flag if this is an array of a simple type (i.e.,
 		   not an array of pairs of IP addresses, or something
 		   like that. */
-		int uniform = option -> format [1] == 'A';
+		int uniform = option->format[1] == 'A';
 
-		for (fmt = option -> format; *fmt; fmt++) {
+		for (fmt = option->format; *fmt; fmt++) {
 			if (*fmt == 'A')
 				break;
 			switch (*fmt) {
@@ -1080,10 +1080,10 @@ void parse_option_param (cfile, group)
 				}
 				if (!strcasecmp (val, "true")
 				    || !strcasecmp (val, "on"))
-					buf [0] = 1;
+					buf[0] = 1;
 				else if (!strcasecmp (val, "false")
 					 || !strcasecmp (val, "off"))
-					buf [0] = 0;
+					buf[0] = 0;
 				else {
 					parse_warn ("expecting boolean.");
 					goto bad_flag;
@@ -1113,7 +1113,7 @@ void parse_option_param (cfile, group)
 		skip_to_semi (cfile);
 		return;
 	}
-	group -> options [option -> code] = tree_cache (tree);
+	group->options[option->code] = tree_cache (tree);
 }
 
 /* timestamp :== date
@@ -1152,11 +1152,11 @@ struct lease *parse_lease_declaration (cfile)
 {
 	char *val;
 	int token;
-	unsigned char addr [4];
+	unsigned char addr[4];
 	int len = sizeof addr;
 	int seenmask = 0;
 	int seenbit;
-	char tbuf [32];
+	char tbuf[32];
 	static struct lease lease;
 
 	/* Zap the lease structure... */
@@ -1329,7 +1329,7 @@ void parse_address_range (cfile, subnet)
 	struct subnet *subnet;
 {
 	struct iaddr low, high;
-	unsigned char addr [4];
+	unsigned char addr[4];
 	int len = sizeof addr;
 	int token;
 	char *val;
@@ -1337,7 +1337,7 @@ void parse_address_range (cfile, subnet)
 
 	if ((token = peek_token (&val, cfile)) == DYNAMIC_BOOTP) {
 		token = next_token (&val, cfile);
-		subnet -> group -> dynamic_bootp = dynamic = 1;
+		subnet->group->dynamic_bootp = dynamic = 1;
 	}
 
 	/* Get the bottom address in the range... */

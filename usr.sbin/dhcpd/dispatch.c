@@ -106,7 +106,7 @@ discover_interfaces(int state)
 		if ((ifa->ifa_flags & IFF_LOOPBACK) ||
 		    (ifa->ifa_flags & IFF_POINTOPOINT) ||
 		    (!(ifa->ifa_flags & IFF_UP) &&
-		     state != DISCOVER_UNCONFIGURED))
+		    state != DISCOVER_UNCONFIGURED))
 			continue;
 
 		/* See if we've seen an interface that matches this one. */
@@ -216,7 +216,7 @@ discover_interfaces(int state)
 		return;
 
 	/* Weed out the interfaces that did not have IP addresses. */
-	last = (struct interface_info *)0;
+	last = NULL;
 	for (tmp = interfaces; tmp; tmp = next) {
 		next = tmp->next;
 		if ((tmp->flags & INTERFACE_AUTOMATIC) &&
@@ -388,10 +388,10 @@ another:
 
 		i = 0;
 		for (l = protocols; l; l = l->next) {
-		        struct interface_info *ip = l->local;
+			struct interface_info *ip = l->local;
 
-			if ((fds [i].revents & POLLIN)) {
-				fds [i].revents = 0;
+			if ((fds[i].revents & POLLIN)) {
+				fds[i].revents = 0;
 				if (ip && (l->handler != got_one ||
 				    !ip->dead))
 					(*(l->handler))(l);
@@ -413,7 +413,7 @@ got_one(struct protocol *l)
 	struct iaddr ifrom;
 	size_t result;
 	union {
-		unsigned char packbuf [4095];
+		unsigned char packbuf[4095];
 		struct dhcp_packet packet;
 	} u;
 	struct interface_info *ip = l->local;
@@ -460,8 +460,7 @@ interface_status(struct interface_info *ifinfo)
 	memset(&ifr, 0, sizeof(ifr));
 	strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
 	if (ioctl(ifsock, SIOCGIFFLAGS, &ifr) < 0) {
-		syslog(LOG_ERR, "ioctl(SIOCGIFFLAGS) on %s: %m",
-		       ifname);
+		syslog(LOG_ERR, "ioctl(SIOCGIFFLAGS) on %s: %m", ifname);
 		goto inactive;
 	}
 	/*
@@ -538,7 +537,7 @@ add_timeout(time_t when, void (*where)(void *), void *what)
 	struct timeout *t, *q;
 
 	/* See if this timeout supersedes an existing timeout. */
-	t = (struct timeout *)0;
+	t = NULL;
 	for (q = timeouts; q; q = q->next) {
 		if (q->func == where && q->what == what) {
 			if (t)
@@ -598,7 +597,7 @@ cancel_timeout(void (*where)(void *), void *what)
 	struct timeout *t, *q;
 
 	/* Look for this timeout on the list, and unlink it if we find it. */
-	t = (struct timeout *)0;
+	t = NULL;
 	for (q = timeouts; q; q = q->next) {
 		if (q->func == where && q->what == what) {
 			if (t)

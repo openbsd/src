@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.c,v 1.13 2004/04/18 00:30:33 henning Exp $ */
+/*	$OpenBSD: dhcpd.c,v 1.14 2004/04/18 00:43:27 deraadt Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -61,15 +61,14 @@ char *path_dhcpd_db = _PATH_DHCPD_DB;
 int
 main(int argc, char *argv[])
 {
-	int		 ch, status;
-	int		 cftest = 0, quiet = 0, daemonize = 1;
+	int ch, status, cftest = 0, quiet = 0, daemonize = 1;
 	struct servent	*ent;
 	struct passwd	*pw;
 	extern char *__progname;
 
 	/* Initially, log errors to stderr as well as to syslogd. */
 	openlog(__progname, LOG_NDELAY, DHCPD_LOG_FACILITY);
-	setlogmask(LOG_UPTO (LOG_INFO));
+	setlogmask(LOG_UPTO(LOG_INFO));
 
 	while ((ch = getopt(argc, argv, "c:dfl:p:tq")) != -1)
 		switch (ch) {
@@ -125,9 +124,9 @@ main(int argc, char *argv[])
 
 	/* Default to the DHCP/BOOTP port. */
 	if (!local_port) {
-		ent = getservbyname ("dhcp", "udp");
+		ent = getservbyname("dhcp", "udp");
 		if (!ent)
-			local_port = htons (67);
+			local_port = htons(67);
 		else
 			local_port = ent->s_port;
 		endservent();
@@ -135,7 +134,7 @@ main(int argc, char *argv[])
 
 	remote_port = htons(ntohs(local_port) + 1);
 	time(&cur_time);
-	if (!readconf ())
+	if (!readconf())
 		error("Configuration file errors encountered -- exiting");
 
 	if (cftest)
@@ -183,7 +182,7 @@ usage(void)
 void
 lease_pinged(struct iaddr from, u_int8_t *packet, int length)
 {
-	struct lease	*lp;
+	struct lease *lp;
 
 	/*
 	 * Don't try to look up a pinged lease if we aren't trying to

@@ -1,4 +1,4 @@
-/*	$Id: print.c,v 1.4 2004/04/16 04:30:09 deraadt Exp $	 */
+/*	$Id: print.c,v 1.5 2004/04/18 00:43:27 deraadt Exp $	 */
 
 /* Turn data structures into printable text. */
 
@@ -73,7 +73,7 @@ bad:
 
 }
 
-void 
+void
 print_lease(struct lease *lease)
 {
 	struct tm	*t;
@@ -99,7 +99,7 @@ print_lease(struct lease *lease)
 	debug("        host %s  ", lease->host ? lease->host->name : "<none>");
 }
 
-void 
+void
 dump_packet(struct packet *tp)
 {
 	struct dhcp_packet *tdp = tp->raw;
@@ -114,7 +114,7 @@ dump_packet(struct packet *tp)
 	debug("siaddr = %s", inet_ntoa(tdp->siaddr));
 	debug("giaddr = %s", inet_ntoa(tdp->giaddr));
 	debug("chaddr = %02x:%02x:%02x:%02x:%02x:%02x",
-    	    ((unsigned char *)(tdp->chaddr))[0],
+	    ((unsigned char *)(tdp->chaddr))[0],
 	    ((unsigned char *)(tdp->chaddr))[1],
 	    ((unsigned char *)(tdp->chaddr))[2],
 	    ((unsigned char *)(tdp->chaddr))[3],
@@ -135,7 +135,7 @@ dump_packet(struct packet *tp)
 	debug("%s", "");
 }
 
-void 
+void
 dump_raw(unsigned char *buf, int len)
 {
 	char	lbuf[80];
@@ -146,7 +146,7 @@ dump_raw(unsigned char *buf, int len)
 	for (i = 0; i < len; i++) {
 		if ((i & 15) == 0) {
 			if (lbix)
-				note(lbuf);
+				note("%s", lbuf);
 			j = snprintf(lbuf, llen, "%03x:", i);
 			if (j >= llen)
 				return;
@@ -162,10 +162,10 @@ dump_raw(unsigned char *buf, int len)
 		lbix += j;
 		llen -= j;
 	}
-	note(lbuf);
+	note("%s", lbuf);
 }
 
-void 
+void
 hash_dump(struct hash_table *table)
 {
 	struct hash_bucket *bp;
@@ -182,7 +182,7 @@ hash_dump(struct hash_table *table)
 			if (bp->len)
 				dump_raw(bp->name, bp->len);
 			else
-				note((char *) bp->name);
+				note("%s", (char *)bp->name);
 		}
 	}
 }
