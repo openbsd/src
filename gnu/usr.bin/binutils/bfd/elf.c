@@ -3103,7 +3103,7 @@ get_program_header_size (abfd)
      longer true. Now there can be several PT_LOAD sections. 6 seems
      to be enough with BSS_PLT, where we have text, data, GOT, dynamic,
      PLT, bss */
-  segs = 6;
+  segs = 7;
 
   s = bfd_get_section_by_name (abfd, ".interp");
   if (s != NULL && (s->flags & SEC_LOAD) != 0)

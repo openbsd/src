@@ -70,6 +70,7 @@ DYNAMIC=".dynamic     ${RELOCATING-0} : { *(.dynamic) }"
 RODATA=".rodata ${RELOCATING-0} : { *(.rodata) ${RELOCATING+*(.rodata.*)} ${RELOCATING+*(.gnu.linkonce.r.*)} }"
 SBSS2=".sbss2 ${RELOCATING-0} : { *(.sbss2) ${RELOCATING+*(.sbss2.*)} ${RELOCATING+*(.gnu.linkonce.sb2.*)} }"
 SDATA2=".sdata2 ${RELOCATING-0} : { *(.sdata2) ${RELOCATING+*(.sdata2.*)} ${RELOCATING+*(.gnu.linkonce.s2.*)} }"
+test "$LD_FLAG" = "N" || test "$LD_FLAG" = "Z" || PAD_RO0="${RELOCATING+. = ALIGN(${MAXPAGESIZE}) + (. & (${MAXPAGESIZE} - 1));}"
 test "$LD_FLAG" = "N" || test "$LD_FLAG" = "Z" || PAD_PLT0="${RELOCATING+. = ALIGN(${MAXPAGESIZE}) + (. & (${MAXPAGESIZE} - 1));} .pltpad0 ${RELOCATING-0} : { ${RELOCATING+__plt_start = .;} }"
 test "$LD_FLAG" = "N" || test "$LD_FLAG" = "Z" || PAD_PLT1=".pltpad1 ${RELOCATING-0} : { ${RELOCATING+__plt_end = .;}} ${RELOCATING+. = ALIGN(${MAXPAGESIZE}) + (. & (${MAXPAGESIZE} - 1));}"
 test "$LD_FLAG" = "N" || test "$LD_FLAG" = "Z" || PAD_GOT0="${RELOCATING+. = ALIGN(${MAXPAGESIZE}) + (. & (${MAXPAGESIZE} - 1));} .gotpad0 ${RELOCATING-0} : { ${RELOCATING+__got_start = .;} }"
@@ -289,6 +290,7 @@ SECTIONS
   ${RELOCATING+PROVIDE (__etext = .);}
   ${RELOCATING+PROVIDE (_etext = .);}
   ${RELOCATING+PROVIDE (etext = .);}
+  ${PAD_RO+${PAD_RO0}}
   ${WRITABLE_RODATA-${RODATA}}
   .rodata1 ${RELOCATING-0} : { *(.rodata1) }
   ${CREATE_SHLIB-${SDATA2}}
