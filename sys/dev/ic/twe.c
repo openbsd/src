@@ -1,4 +1,4 @@
-/*	$OpenBSD: twe.c,v 1.8 2001/03/09 17:06:12 mickey Exp $	*/
+/*	$OpenBSD: twe.c,v 1.9 2001/03/14 02:21:32 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff.  All rights reserved.
@@ -201,7 +201,7 @@ twe_attach(sc)
 		if (errstr)
 			TWE_DPRINTF(TWE_D_MISC, ("%s ", errstr));
 
-		for (i = 60000; i--; DELAY(100)) {
+		for (i = 350000; i--; DELAY(100)) {
 			status = bus_space_read_4(sc->iot, sc->ioh, TWE_STATUS);
 			if (status & TWE_STAT_CPURDY)
 				break;
@@ -219,7 +219,7 @@ twe_attach(sc)
 		    TWE_CTRL_MCMDI | TWE_CTRL_MRDYI |
 		    TWE_CTRL_MINT);
 
-		for (i = 45000; i--; DELAY(100)) {
+		for (i = 350000; i--; DELAY(100)) {
 			status = bus_space_read_4(sc->iot, sc->ioh, TWE_STATUS);
 			if (status & TWE_STAT_ATTNI)
 				break;
