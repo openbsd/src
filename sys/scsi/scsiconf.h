@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.16 1998/08/04 22:35:05 millert Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.17 1999/07/18 22:49:41 csapuntz Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -158,6 +158,8 @@ struct scsi_link {
 #define	SDEV_NOMODESENSE	0x10	/* removable media/optical drives */
 #define	SDEV_NOSTARTUNIT	0x20	/* do not issue start unit requests in sd.c */
 #define	SDEV_NOTAGS		0x40	/* lies about having tagged queueing */
+#define SDEV_NOSENSE            0x80    /* No request sense - ATAPI */
+
 	u_int8_t inquiry_flags;		/* copy of flags from probe INQUIRY */
 	struct	scsi_device *device;	/* device entry points etc. */
 	void	*device_softc;		/* needed for call to foo_start */
