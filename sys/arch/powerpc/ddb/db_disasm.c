@@ -1,5 +1,5 @@
 /*	$NetBSD: db_disasm.c,v 1.8 2001/06/12 05:31:44 simonb Exp $	*/
-/*	$OpenBSD: db_disasm.c,v 1.1 2002/06/08 16:02:14 miod Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.2 2002/06/09 05:39:01 drahn Exp $	*/
 /*
  * Copyright (c) 1996 Dale Rahn. All rights reserved.
  *
@@ -985,7 +985,7 @@ disasm_fields(u_int32_t addr, const struct opcode *popcode, instr_t instr, char 
 	char *pfmt;
 	char *poutput;
 	disasm_str[0] = '\0';
-	if(popcode->decode_str == NULL || popcode->decode_str[0] == '0') {
+	if (popcode->decode_str == NULL || popcode->decode_str[0] == '0') {
 		return;
 	}
 	pfmt = popcode->decode_str;
@@ -1059,10 +1059,9 @@ dis_ppc(u_int32_t addr, const struct opcode *opcodeset, instr_t instr)
 	int i;
 	char disasm_str[30];
 
-	for (   i=0, op = &opcodeset[0];
-		found == 0 && op->mask != 0;
-		i++, op= &opcodeset[i] )
-	{
+	for (i=0, op = &opcodeset[0];
+	    found == 0 && op->mask != 0;
+	    i++, op= &opcodeset[i] ) {
 		if ((instr & op->mask) == op->code) {
 			found = 1;
 			disasm_fields(addr, op, instr, disasm_str);
