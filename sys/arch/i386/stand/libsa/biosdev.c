@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.18 1997/07/18 00:30:15 mickey Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.19 1997/07/21 15:33:32 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -36,6 +36,7 @@
 #include <sys/reboot.h>
 #include <sys/disklabel.h>
 #include <machine/biosvar.h>
+#include <lib/libsa/saerrno.h>
 #include "libsa.h"
 #include "biosdev.h"
 
@@ -86,14 +87,14 @@ biosopen(struct open_file *f, ...)
 			cp++;
 	}
 
-	for (maj = 0; maj < NENTS(bdevs) && 
+	for (maj = 0; maj < nbdevs && 
 	     strncmp(*file, bdevs[maj], cp - *file); maj++);
-	if (maj >= NENTS(bdevs)) {
+	if (maj >= nbdevs) {
 		printf("Unknown device: ");
 		for (cp = *file; *cp != ':'; cp++)
 			putchar(*cp);
 		putchar('\n');
-		return ENXIO;
+		return EADAPT;
 	}
 
 	/* get unit */
@@ -101,14 +102,14 @@ biosopen(struct open_file *f, ...)
 		unit = *cp++ - '0';
 	else {
 		printf("Bad unit number\n");
-		return ENXIO;
+		return EUNIT;
 	}
 	/* get partition */
 	if ('a' <= *cp && *cp <= 'p')
 		part = *cp++ - 'a';
 	else {
 		printf("Bad partition id\n");
-		return ENXIO;
+		return EPART;
 	}
 		
 	cp++;	/* skip ':' */
@@ -126,6 +127,7 @@ biosopen(struct open_file *f, ...)
 	case 0:  /* wd */
 	case 4:  /* sd */
 	case 17: /* hd */
+		maj = 17;
 		bd->biosdev = (u_int8_t)(unit | 0x80);
 		break;
 	case 2:  /* fd */
@@ -159,7 +161,7 @@ biosopen(struct open_file *f, ...)
 	}
 #endif
 
-	if (maj == 0 || maj == 4) {	/* wd, sd */
+	if (maj == 17) {	/* hd, wd, sd */
 		if ((errno = biosstrategy(bd, F_READ, DOSBBSECTOR,
 		    DEV_BSIZE, &bd->mbr, NULL)) != 0) {
 #ifdef DEBUG
@@ -177,12 +179,19 @@ biosopen(struct open_file *f, ...)
 				printf("bad MBR signature\n");
 #endif
 			free(bd, 0);
-			return EINVAL;
+			return ERDLAB;
 		}
 
 		for (off = 0, i = 0; off == 0 && i < NDOSPART; i++)
 			if (bd->mbr.dparts[i].dp_typ == DOSPTYP_OPENBSD)
 				off = bd->mbr.dparts[i].dp_start + LABELSECTOR;
+
+		/* just in case */
+		if (off == 0)
+			for (off = 0, i = 0; off == 0 && i < NDOSPART; i++)
+				if (bd->mbr.dparts[i].dp_typ == DOSPTYP_NETBSD)
+					off = bd->mbr.dparts[i].dp_start +
+						LABELSECTOR;
 
 		if (off == 0) {
 #ifdef DEBUG
@@ -190,7 +199,7 @@ biosopen(struct open_file *f, ...)
 				printf("no BSD partition\n");
 #endif
 			free(bd, 0);
-			return EINVAL;
+			return ERDLAB;
 		}
 	}
 
@@ -207,7 +216,7 @@ biosopen(struct open_file *f, ...)
 			printf("failed to read disklabel\n");
 #endif
 		free(bd, 0);
-		return errno;
+		return ERDLAB;
 	}
 
 	if ((cp = getdisklabel(buf, &bd->disklabel)) != NULL) {
@@ -216,7 +225,7 @@ biosopen(struct open_file *f, ...)
 			printf("%s\n", cp);
 #endif
 		free(bd, 0);
-		return EINVAL;
+		return EUNLAB;
 	}
 
 	f->f_devdata = bd;
@@ -240,13 +249,13 @@ const struct bd_error {
 	{ 0x07, EIO    , "drive parameter activity failed" },
 	{ 0x08, EINVAL , "DMA overrun" },
 	{ 0x09, EINVAL , "data boundary error" },
-	{ 0x0A, EIO    , "bad sector detected" },
-	{ 0x0B, EIO    , "bad track detected" },
+	{ 0x0A, EBSE   , "bad sector detected" },
+	{ 0x0B, EBSE   , "bad track detected" },
 	{ 0x0C, ENXIO  , "unsupported track or invalid media" },
 	{ 0x0D, EINVAL , "invalid number of sectors on format" },
 	{ 0x0E, EIO    , "control data address mark detected" },
 	{ 0x0F, EIO    , "DMA arbitration level out of range" },
-	{ 0x10, EIO    , "uncorrectable CRC or ECC error on read" },
+	{ 0x10, EECC   , "uncorrectable CRC or ECC error on read" },
 	{ 0x11, 0      , "data ECC corrected" },
 	{ 0x20, EIO    , "controller failure" },
 	{ 0x31, ENXIO  , "no media in drive" },
