@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKB,v 1.51 2002/04/10 03:54:18 deraadt Exp $
+#	$OpenBSD: RAMDISKB,v 1.52 2002/04/15 06:23:07 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -244,7 +244,6 @@ dc*	at pci? dev ? function ?		# 21143, "tulip" clone ethernet
 #ti*	at pci? dev ? function ?		# Alteon Tigon 1Gb ethernet
 #skc*	at pci? dev ? function ?		# SysKonnect GEnesis 984x
 #sk*	at skc?					#  each port of above
-#wx*	at pci? dev ? function ?		# Intel Pro/1000 ethernet
 
 # Wireless network cards
 wi*	at pci? dev ? function ?		# WaveLAN IEEE 802.11DS
