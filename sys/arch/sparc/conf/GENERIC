@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.38 1999/03/01 04:56:03 jason Exp $
+#	$OpenBSD: GENERIC,v 1.39 1999/03/05 02:02:29 deraadt Exp $
 # 	$NetBSD: GENERIC,v 1.48 1997/08/23 19:19:01 mjacob Exp $
 
 # Machine architecture; required by config(8)
@@ -252,7 +252,6 @@ cgfourteen0	at obio0			# sun4m
 # SCSI bus layer.  SCSI devices attach to the SCSI bus, which attaches
 # to the underlying hardware controller.
 scsibus* at esp?
-#scsibus* at isp?
 scsibus* at si?
 scsibus* at sw?
 
