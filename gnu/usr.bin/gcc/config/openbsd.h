@@ -1,4 +1,4 @@
-/* $OpenBSD: openbsd.h,v 1.16 1999/02/17 12:54:27 espie Exp $	*/
+/* $OpenBSD: openbsd.h,v 1.17 1999/02/17 12:57:52 espie Exp $	*/
 
 /* common OpenBSD configuration. 
    All OpenBSD architectures include this file, which is intended as
@@ -272,4 +272,8 @@ do {									 \
 	fixed yet, so DON'T activate it by default.
  */
 /* #define DEFAULT_VTABLE_THUNKS 1 */
-
+
+/* Otherwise, since we support weak, gthr.h erroneously tries to use
+   #pragma weak
+ */
+#define GTHREAD_USE_WEAK 0
