@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsecvar.h,v 1.5 2000/06/19 02:51:29 jason Exp $	*/
+/*	$OpenBSD: ubsecvar.h,v 1.6 2000/07/29 23:42:00 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Theo de Raadt
@@ -35,7 +35,6 @@ struct ubsec_softc {
 	bus_dma_tag_t		sc_dmat;	/* dma tag */
 	int			sc_5601;	/* device is 5601 */
 	int32_t			sc_cid;		/* crypto tag */
-	u_int32_t		sc_intrmask;	/* interrupt mask */
 	SIMPLEQ_HEAD(,ubsec_q)	sc_queue;	/* packet queue */
 	int			sc_nqueue;	/* count enqueued */
 	SIMPLEQ_HEAD(,ubsec_q)	sc_qchip;	/* on chip */

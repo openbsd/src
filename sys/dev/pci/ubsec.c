@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.17 2000/07/20 21:45:19 deraadt Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.18 2000/07/29 23:42:00 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -131,15 +131,12 @@ ubsec_attach(parent, self, aux)
 
 	SIMPLEQ_INIT(&sc->sc_queue);
 	SIMPLEQ_INIT(&sc->sc_qchip);
-	sc->sc_intrmask = BS_CTRL_MCR1INT | BS_CTRL_DMAERR;
 
 	if ((PCI_VENDOR(pa->pa_id) == PCI_VENDOR_BLUESTEEL &&
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BLUESTEEL_5601) ||
 	    (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_BROADCOM &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5805)) {
-		sc->sc_intrmask |= BS_CTRL_MCR2INT;
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5805))
 		sc->sc_5601 = 1;
-	}
 
 	cmd = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 	cmd |= PCI_COMMAND_MEM_ENABLE | PCI_COMMAND_MASTER_ENABLE;
@@ -189,7 +186,9 @@ ubsec_attach(parent, self, aux)
 	crypto_register(sc->sc_cid, CRYPTO_MD5_HMAC96, NULL, NULL, NULL);
 	crypto_register(sc->sc_cid, CRYPTO_SHA1_HMAC96, NULL, NULL, NULL);
 
-	WRITE_REG(sc, BS_CTRL, BS_CTRL_MCR1INT | BS_CTRL_DMAERR);
+	WRITE_REG(sc, BS_CTRL,
+	    READ_REG(sc, BS_CTRL) | BS_CTRL_MCR1INT | BS_CTRL_DMAERR |
+	    (sc->sc_5601 ? BS_CTRL_MCR2INT : 0));
 
 	printf(": %s\n", intrstr);
 }
