@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.162 2004/02/18 09:49:04 grange Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.163 2004/03/12 19:10:07 grange Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -2282,9 +2282,11 @@ amd756_chip_map(sc, pa)
 	sc->sc_wdcdev.PIO_cap = 4;
 	sc->sc_wdcdev.DMA_cap = 2;
 	switch (sc->sc_pp->ide_product) {
+	case PCI_PRODUCT_AMD_8111_IDE:
+		sc->sc_wdcdev.UDMA_cap = 6;
+		break;
 	case PCI_PRODUCT_AMD_766_IDE:
 	case PCI_PRODUCT_AMD_PBC768_IDE:
-	case PCI_PRODUCT_AMD_8111_IDE:
 		sc->sc_wdcdev.UDMA_cap = 5;
 		break;
 	default:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide_amd_reg.h,v 1.6 2003/09/28 21:01:43 grange Exp $ 	*/
+/*	$OpenBSD: pciide_amd_reg.h,v 1.7 2004/03/12 19:10:07 grange Exp $ 	*/
 /*	$NetBSD: pciide_amd_reg.h,v 1.2 2000/07/06 15:08:11 bouyer Exp $	*/
 
 /*
@@ -80,4 +80,5 @@ static const int8_t amd756_pio_rec[] = {0x08, 0x08, 0x08, 0x02, 0x00};
 #define AMD756_UDMA_EN_MTH(channel, drive) (0x80 << \
 	(((1 - (channel)) << 4) + ((1 - (drive)) << 3)))
 
-static const int8_t amd756_udma_tim[] = {0x02, 0x01, 0x00, 0x04, 0x05, 0x06};
+static const int8_t amd756_udma_tim[] =
+    {0x02, 0x01, 0x00, 0x04, 0x05, 0x06, 0x07};
