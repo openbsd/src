@@ -137,7 +137,7 @@ des_cblock (*key);
 		 * this section very often :-(, thanks to
 		 * engineering@MorningStar.Com for the fix
 		 * eay 93/06/29 */
-		if (memcmp(weak_keys[i],key,sizeof(key)) == 0) return(1);
+		if (memcmp(weak_keys[i],key,sizeof(des_cblock)) == 0) return(1);
 	return(0);
 	}
 
