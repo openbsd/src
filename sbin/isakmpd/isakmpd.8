@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.60 2004/01/23 23:08:46 jmc Exp $
+.\" $OpenBSD: isakmpd.8,v 1.61 2004/03/24 16:44:24 hshoexer Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.
@@ -87,6 +87,19 @@ manual page describes how to set up
 for a simple VPN.
 For other uses, some more knowledge of IKE as a protocol is required.
 One source of information are the RFCs mentioned below.
+.Pp
+On startup
+.Nm
+forks into two processes for privilege separation.
+The unprivileged child jails itself with
+.Xr chroot 8
+to
+.Pa /var/empty .
+The privileged process communicates with the child, reads configuration files
+and PKI information and binds to privileged ports on its behalf.
+See 
+.Sx CAVEATS
+section below.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -542,6 +555,11 @@ must be used or the matching will fail.
 uses the output from
 .Xr getnameinfo 3
 for the address-to-name translation.
+The privileged process only allows binding to the default port 500 or
+unprivileged ports (>1024).
+It is not possible to change the interfaces
+.Nm
+listens on without a restart.
 .Sh BUGS
 The
 .Fl P
