@@ -316,9 +316,9 @@ cpu_startup()
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
 #endif
-	printf("avail memory = %s\n", uvmexp.free);
-	printf("using %d buffers containing %s of memory\n", nbuf,
-		bufpages * PAGE_SIZE);
+	printf("avail memory = %ld\n", (long)uvmexp.free * PAGE_SIZE);
+	printf("using %d buffers containing %ld of memory\n", nbuf,
+		(long)bufpages * PAGE_SIZE);
 
 	/*
 	 * Set up buffers, so they can be used to read disk labels.
