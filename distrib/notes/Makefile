@@ -1,9 +1,11 @@
-#	$OpenBSD: Makefile,v 1.21 2003/10/31 04:03:15 drahn Exp $
+#	$OpenBSD: Makefile,v 1.22 2004/02/07 21:30:26 miod Exp $
 
 NOPROG=
 NOMAN=
 
 M?=	$(MACHINE)
+
+.if exists(${M}/contents)
 
 TARG=	INSTALL.$M
 SRC=	$(.CURDIR)/INSTALL
@@ -23,10 +25,14 @@ $(TARG): $(DEP)
 	m4 -DOSREV=$(OSREV) -DOSrev=$(OSrev) -DINCLUDE=$(.CURDIR)/$M \
 	-DMACHINE=$M -Uunix $(SRC) > $@
 
-clean:
-	-/bin/rm -f INSTALL.*
-
 beforeinstall:
 	cp ${TARG} ${DESTDIR}/snapshot/
+
+.else
+all:
+.endif
+
+clean:
+	-/bin/rm -f INSTALL.*
 
 .include <bsd.prog.mk>
