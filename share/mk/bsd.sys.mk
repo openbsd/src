@@ -1,5 +1,5 @@
-#	$OpenBSD: bsd.sys.mk,v 1.4 1996/02/25 19:02:36 mickey Exp $
-#
+#	$OpenBSD: bsd.sys.mk,v 1.5 1996/03/05 11:13:04 mickey Exp $
+#	$NetBSD: bsd.sys.mk,v 1.2 1995/12/13 01:25:07 cgd Exp $
 # Overrides used for NetBSD source tree builds.
 
 #CFLAGS+= -Werror

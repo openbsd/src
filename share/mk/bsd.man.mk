@@ -1,4 +1,5 @@
-#	$OpenBSD: bsd.man.mk,v 1.7 1996/02/25 19:02:34 mickey Exp $
+#	$OpenBSD: bsd.man.mk,v 1.8 1996/03/05 11:12:48 mickey Exp $
+#	$NetBSD: bsd.man.mk,v 1.23 1996/02/10 07:49:33 jtc Exp $
 #	@(#)bsd.man.mk	5.2 (Berkeley) 5/11/90
 
 MANTARGET?=	cat

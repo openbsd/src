@@ -1,3 +1,4 @@
+#	$OpenBSD: bsd.prog.mk,v 1.2 1996/03/05 11:12:59 mickey Exp $
 #	$NetBSD: bsd.prog.mk,v 1.53 1995/06/25 22:29:02 cgd Exp $
 #	@(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
 

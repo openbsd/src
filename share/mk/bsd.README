@@ -1,4 +1,5 @@
-#	$OpenBSD: bsd.README,v 1.6 1996/02/25 19:02:31 mickey Exp $
+#	$OpenBSD: bsd.README,v 1.7 1996/03/05 11:12:34 mickey Exp $
+#	$NetBSD: bsd.README,v 1.15 1996/01/22 22:46:06 cgd Exp $
 #	@(#)bsd.README	5.1 (Berkeley) 5/11/90
 
 This is the README file for the new make "include" files for the BSD
@@ -396,6 +397,11 @@ LKMGRP		Module group.
 LKMOWN		Module owner.
 
 LKMMODE		Module mode.
+
+POSTINSTALL	Program to pass with '-p' flag to the modload.
+		If not defined,
+			POSTINSTALL=${LKM}install
+		is assumed.
 
 The include file <bsd.lkm.mk> includes the file named "../Makefile.inc"
 if it exists, as well as the include file <bsd.man.mk>.

@@ -1,4 +1,5 @@
-#	$NetBSD: bsd.obj.mk,v 1.7 1995/06/10 20:46:35 mycroft Exp $
+#	$OpenBSD: bsd.obj.mk,v 1.2 1996/03/05 11:12:53 mickey Exp $
+#	$NetBSD: bsd.obj.mk,v 1.8 1996/02/21 10:02:00 pk Exp $
 
 .if !target(obj)
 .if defined(NOOBJ)
@@ -25,7 +26,7 @@ __usrobjdirpf=
 
 obj: _SUBDIRUSE
 	@cd ${.CURDIR}; rm -f ${__objdir} > /dev/null 2>&1 || true; \
-	here=`pwd`; subdir=`echo $$here | sed 's,^${BSDSRCDIR}/,,'`; \
+	here=`pwd`; subdir=$${here#${BSDSRCDIR}/}; \
 	if test $$here != $$subdir ; then \
 		dest=${__usrobjdir}/$$subdir${__usrobjdirpf} ; \
 		echo "$$here/${__objdir} -> $$dest"; \
