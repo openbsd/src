@@ -1,4 +1,4 @@
-/*	$OpenBSD: isakmpd.c,v 1.38 2001/12/10 03:34:51 ho Exp $	*/
+/*	$OpenBSD: isakmpd.c,v 1.39 2001/12/11 01:54:34 ho Exp $	*/
 /*	$EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	*/
 
 /*
@@ -297,7 +297,8 @@ daemon_shutdown (void)
 	}
       sigtermed++;
     }
-  else if (transport_prio_sendqs_empty ())
+
+  if (transport_prio_sendqs_empty ())
     {
       /*
        * When the prioritized transport sendq:s are empty, i.e all 
@@ -312,7 +313,7 @@ daemon_shutdown (void)
     }
 }
 
-/* called on SIGTERM */
+/* Called on SIGTERM, or by ui_shutdown_daemon().  */
 void
 daemon_shutdown_now (int sig)
 {
