@@ -1185,7 +1185,6 @@
 ./usr/share/man/man8/vax
 ./usr/share/man/man9
 ./usr/share/man/whatis.db
-./usr/share/me
 ./usr/share/misc
 ./usr/share/misc/airport
 ./usr/share/misc/ascii
@@ -1211,7 +1210,6 @@
 ./usr/share/mk/bsd.port.mk
 ./usr/share/mk/bsd.port.subdir.mk
 ./usr/share/mk/sys.mk
-./usr/share/ms
 ./usr/share/nls
 ./usr/share/nls/C
 ./usr/share/nls/C/libc.cat
