@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.3 2004/02/10 01:31:20 millert Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.4 2004/02/13 23:34:21 miod Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
@@ -49,7 +49,6 @@ _DEV(wskbd, 68)
 _DEV(wsmouse, 69)
 _DEV(wsmux, 70)
 _TITLE(term)
-_DEV(ttyE)
 _DEV(com, 7)
 _TITLE(pty)
 _DEV(tty, 4)
@@ -89,14 +88,6 @@ _std(1, 2, 43, 3, 6)
 	M xf86		c 2 4 600
 	M reload	c 2 20 640 kmem
 	;;
-
-ttyE*)
-	type=E
-	case $type in
-	E)	major=25; minor=$unit ;;
-	esac
-	M tty$type$unit c $major $minor 660
-	;;
 dnl
 dnl *** pegasos specific targets
 dnl
@@ -120,6 +111,5 @@ target(ramd, wd, 0, 1, 2, 3, 4)dnl
 target(ramd, st, 0, 1)dnl
 target(ramd, cd, 0, 1)dnl)dnl
 target(ramd, rd, 0)dnl
-target(ramd, ttyE, 0)dnl
 target(ramd, tty0, 0, 1)dnl
 target(ramd, pty, 0)dnl

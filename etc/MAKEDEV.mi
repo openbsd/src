@@ -1,6 +1,6 @@
 include(MAKEDEV.sub)dnl
 dnl
-vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.69 2004/02/13 16:51:27 miod Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.70 2004/02/13 23:34:13 miod Exp $-})dnl
 dnl
 divert(1)dnl
 {-#-}
@@ -503,12 +503,6 @@ __devitem(ttyz, tty[a-d], onboard zs serial ports)dnl
 __devitem(cuaz, cua[a-d], onboard zs serial ports)dnl
 __devitem(ttyB, ttyB?, DEC 3000 ZS8530 ("scc") serial ports)dnl
 __devitem(scc, scc*, 82530 serial interface)dnl
-__devitem(arc_ttyC, ttyC0, pccons)dnl
-__devitem(i386_ttyC, ttyC*, pcvt)dnl
-__devitem(ttyC, ttyC?, {-AlphaStation NS16550 ("com serial ports")-})dnl
-__devitem(ttyE, ttyE?, Workstation console (framebuffer & keyboard) tty emulators)dnl
-__devitem(ser02, ser02, {-serial2 port (channel A on 8530)-})dnl
-__devitem(mdm02, mdm02, {-modem2 port (channel B on 8530)-})dnl
 __devtitle(spec, Special purpose devices)dnl
 __devitem(apm, apm	, power management device)dnl
 _mkdev(apm, apm*, {-M apm	c major_apm_c 0 644
