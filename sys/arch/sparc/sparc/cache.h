@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache.h,v 1.3 1997/08/08 08:27:04 downsj Exp $	*/
+/*	$OpenBSD: cache.h,v 1.4 2000/02/19 21:45:56 art Exp $	*/
 /*	$NetBSD: cache.h,v 1.16 1997/07/06 21:15:14 pk Exp $ */
 
 /*
@@ -169,6 +169,12 @@ void	srmmu_vcache_flush_region __P((int));	/* flush region in cur ctx */
 void	srmmu_vcache_flush_segment __P((int, int));/* flush seg in cur ctx */
 void	srmmu_vcache_flush_page __P((int va));	/* flush page in cur ctx */
 void	srmmu_cache_flush __P((caddr_t, u_int));/* flush region */
+void	hypersparc_pure_vcache_flush __P((void));
+
+void	ms1_cache_flush_all __P((void));
+void	srmmu_cache_flush_all __P((void));
+void	cypress_cache_flush_all __P((void));
+void	hypersparc_cache_flush_all __P((void));
 
 void	ms1_cache_flush __P((caddr_t, u_int));
 void	viking_cache_flush __P((caddr_t, u_int));
@@ -189,7 +195,10 @@ extern void sparc_noop __P((void));
 	(void (*)__P((caddr_t, u_int))) sparc_noop
 #define noop_pcache_flush_line \
 	(void (*)__P((int, int))) sparc_noop
-
+#define noop_pure_vcache_flush \
+	(void (*)__P((void))) sparc_noop
+#define noop_cache_flush_all \
+	(void (*)__P((void))) sparc_noop
 
 #define cache_flush_page(va)		cpuinfo.vcache_flush_page(va)
 #define cache_flush_segment(vr,vs)	cpuinfo.vcache_flush_segment(vr,vs)

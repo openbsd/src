@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache.c,v 1.9 1999/07/20 11:07:09 art Exp $	*/
+/*	$OpenBSD: cache.c,v 1.10 2000/02/19 21:45:55 art Exp $	*/
 /*	$NetBSD: cache.c,v 1.34 1997/09/26 22:17:23 pk Exp $	*/
 
 /*
@@ -615,6 +615,12 @@ srmmu_vcache_flush_page(va)
 		sta(p, ASI_IDCACHELFP, 0);
 }
 
+void
+srmmu_cache_flush_all()
+{
+	srmmu_vcache_flush_context();
+}
+
 /*
  * Flush a range of virtual addresses (in the current context).
  * The first byte is at (base&~PGOFSET) and the last one is just
@@ -695,6 +701,42 @@ ms1_cache_flush(base, len)
 
 	/* XXX investigate other methods instead of blowing the entire cache */
 	sta(0, ASI_DCACHECLR, 0);
+}
+
+/*
+ * Flush entire cache.
+ */
+void
+ms1_cache_flush_all()
+{
+
+	/* Flash-clear both caches */
+	sta(0, ASI_ICACHECLR, 0);
+	sta(0, ASI_DCACHECLR, 0);
+}
+
+void
+hypersparc_cache_flush_all()
+{
+
+	srmmu_vcache_flush_context();
+	/* Flush instruction cache */
+	hypersparc_pure_vcache_flush();
+}
+
+void
+cypress_cache_flush_all()
+{
+	extern char kernel_text[];
+	char *p;
+	int i, ls;
+
+	/* Fill the cache with known read-only content */
+	p = (char *)kernel_text;
+	ls = CACHEINFO.c_linesize;
+	i = CACHEINFO.c_totalsize >> CACHEINFO.c_l2linesize;
+	for (; --i >= 0; p += ls)
+		(*(volatile char *)p);
 }
 
 void

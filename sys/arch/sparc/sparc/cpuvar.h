@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpuvar.h,v 1.2 2000/01/31 16:06:58 art Exp $	*/
+/*	$OpenBSD: cpuvar.h,v 1.3 2000/02/19 21:45:56 art Exp $	*/
 /*	$NetBSD: cpuvar.h,v 1.4 1997/07/06 21:14:25 pk Exp $ */
 
 /*
@@ -70,6 +70,8 @@ struct module_info {
 	void (*vcache_flush_region) __P((int));
 	void (*vcache_flush_context) __P((void));
 	void (*pcache_flush_line) __P((int, int));
+	void (*pure_vcache_flush) __P((void));
+	void (*cache_flush_all)__P((void));
 	void (*memerr) __P((unsigned, u_int, u_int, u_int, u_int,
 			   struct trapframe *));
 };
@@ -175,6 +177,8 @@ struct cpu_softc {
 	void	(*vcache_flush_region)__P((int));
 	void	(*vcache_flush_context)__P((void));
 	void	(*pcache_flush_line)__P((int, int));
+	void	(*pure_vcache_flush) __P((void));
+	void	(*cache_flush_all)__P((void));
 
 #ifdef SUN4M
 	/* hardware-assisted block operation routines */

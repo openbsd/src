@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.31 2000/02/18 18:57:13 art Exp $	*/
+/*	$OpenBSD: locore.s,v 1.32 2000/02/19 21:45:56 art Exp $	*/
 /*	$NetBSD: locore.s,v 1.73 1997/09/13 20:36:48 pk Exp $	*/
 
 /*
@@ -5828,6 +5828,14 @@ ALTENTRY(hypersparc_get_fltstatus)
 	retl
 	 lda	[%o4] ASI_SRMMU, %o4	! get async fault address
 
+ALTENTRY(hypersparc_pure_vcache_flush)
+	/*
+	 * Flush entire on-chip instruction cache, which is
+	 * a pure vitually-indexed/virtually-tagged cache.
+	 */
+	retl
+	 sta    %g0, [%g0] ASI_HICACHECLR
+	
 #endif /* SUN4M */
 
 /*

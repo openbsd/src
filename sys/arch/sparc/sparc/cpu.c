@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.23 2000/02/18 18:57:14 art Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.24 2000/02/19 21:45:56 art Exp $	*/
 /*	$NetBSD: cpu.c,v 1.56 1997/09/15 20:52:36 pk Exp $ */
 
 /*
@@ -425,6 +425,8 @@ struct module_info module_sun4 = {
 	sun4_vcache_flush_region,
 	sun4_vcache_flush_context,
 	noop_pcache_flush_line,
+	noop_pure_vcache_flush,
+	noop_cache_flush_all,
 	0
 };
 
@@ -548,6 +550,8 @@ struct module_info module_sun4c = {
 	sun4_vcache_flush_region,
 	sun4_vcache_flush_context,
 	noop_pcache_flush_line,
+	noop_pure_vcache_flush,
+	noop_cache_flush_all,
 	0
 };
 
@@ -743,6 +747,8 @@ struct module_info module_ms1 = {
 	noop_vcache_flush_region,
 	noop_vcache_flush_context,
 	noop_pcache_flush_line,
+	noop_pure_vcache_flush,
+	ms1_cache_flush_all,
 	memerr4m
 };
 
@@ -768,6 +774,8 @@ struct module_info module_ms2 = {		/* UNTESTED */
 	srmmu_vcache_flush_region,
 	srmmu_vcache_flush_context,
 	noop_pcache_flush_line,
+	noop_pure_vcache_flush,
+	srmmu_cache_flush_all,
 	memerr4m
 };
 
@@ -788,6 +796,8 @@ struct module_info module_swift = {		/* UNTESTED */
 	srmmu_vcache_flush_region,
 	srmmu_vcache_flush_context,
 	srmmu_pcache_flush_line,
+	noop_pure_vcache_flush,
+	srmmu_cache_flush_all,
 	memerr4m
 };
 
@@ -833,6 +843,8 @@ struct module_info module_viking = {		/* UNTESTED */
 	noop_vcache_flush_region,
 	noop_vcache_flush_context,
 	viking_pcache_flush_line,
+	noop_pure_vcache_flush,
+	noop_cache_flush_all,
 	viking_memerr
 };
 
@@ -913,6 +925,8 @@ struct module_info module_hypersparc = {		/* UNTESTED */
 	srmmu_vcache_flush_region,
 	srmmu_vcache_flush_context,
 	srmmu_pcache_flush_line,
+	hypersparc_pure_vcache_flush,
+	hypersparc_cache_flush_all,
 	hypersparc_memerr
 };
 
@@ -959,6 +973,8 @@ struct module_info module_cypress = {		/* UNTESTED */
 	srmmu_vcache_flush_region,
 	srmmu_vcache_flush_context,
 	srmmu_pcache_flush_line,
+	noop_pure_vcache_flush,
+	cypress_cache_flush_all,
 	memerr4m
 };
 
@@ -979,6 +995,8 @@ struct module_info module_turbosparc = {	/* UNTESTED */
 	srmmu_vcache_flush_region,
 	srmmu_vcache_flush_context,
 	srmmu_pcache_flush_line,
+	noop_pure_vcache_flush,
+	srmmu_cache_flush_all,
 	memerr4m
 };
 
@@ -1201,6 +1219,8 @@ getcpuinfo(sc, node)
 		MPCOPY(vcache_flush_region);
 		MPCOPY(vcache_flush_context);
 		MPCOPY(pcache_flush_line);
+		MPCOPY(pure_vcache_flush);
+		MPCOPY(cache_flush_all);
 		MPCOPY(memerr);
 #undef MPCOPY
 		return;
