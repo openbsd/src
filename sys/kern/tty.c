@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.9 1996/08/01 14:17:20 mickey Exp $	*/
+/*	$OpenBSD: tty.c,v 1.10 1996/08/29 07:46:35 deraadt Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -63,8 +63,8 @@
 
 #include <vm/vm.h>
 
-#include "rnd.h"
-#if NRND
+#include "random.h"
+#if NRANDOM > 0
 #include <dev/rndvar.h>
 #endif
 
@@ -235,7 +235,7 @@ ttyinput(c, tp)
 	register u_char *cc;
 	int i, error;
 
-#if NRND
+#if NRANDOM > 0
 	add_tty_randomness(tp->t_dev, c);
 #endif
 	/*

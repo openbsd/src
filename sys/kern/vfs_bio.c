@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.10 1996/07/21 08:05:34 tholo Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.11 1996/08/29 07:46:37 deraadt Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -63,8 +63,8 @@
 
 #include <vm/vm.h>
 
-#include "rnd.h"
-#if	NRND > 0
+#include "random.h"
+#if NRANDOM > 0
 #include <dev/rndvar.h>
 #endif
 
@@ -964,7 +964,7 @@ biodone(bp)
 		panic("biodone already");
 	SET(bp->b_flags, B_DONE);		/* note that it's done */
 
-#if	NRND > 0
+#if NRANDOM > 0
 	add_blkdev_randomness(bp->b_dev);
 #endif
 
