@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.72 2001/08/31 13:49:17 art Exp $
+#	$OpenBSD: Makefile,v 1.73 2001/08/31 14:13:50 art Exp $
 
 #
 # For more information on building in tricky environments, please see
@@ -160,12 +160,12 @@ cross-includes:	cross-dirs
 
 .if ${TARGET} == "powerpc" || ${TARGET} == "alpha" || ${TARGET} == "hppa" || \
     ${TARGET} == "sparc64"
-cross-binutils: cross-binutils-new
+cross-binutils: cross-binutils-new cross-binutils-links
 .else
-cross-binutils: cross-binutils-old
+cross-binutils: cross-binutils-old cross-binutils-links
 .endif
 
-cross-binutils-new:	cross-dirs
+cross-binutils-new:	cross-dirs 
 	export BSDSRCDIR=`pwd`; \
 	    (cd ${.CURDIR}/gnu/usr.bin/binutils; \
 	    BSDOBJDIR=${CROSSDIR}/usr/obj \
@@ -183,9 +183,17 @@ cross-binutils-new:	cross-dirs
 
 cross-binutils-old: cross-gas cross-ar cross-ld cross-strip cross-size \
 	cross-ranlib cross-nm
+
+cross-binutils-links: cross-dirs
 	for cmd in ar as ld nm ranlib size strip; do \
-	    ln -sf $$cmd \
-	    ${CROSSDIR}/usr/bin/`cat ${CROSSDIR}/TARGET_CANON`-$$cmd; done
+	    if [ ! -e ${CROSSDIR}/usr/bin/$$cmd -a -e ${CROSSDIR}/usr/bin/`cat ${CROSSDIR}/TARGET_CANON`-$$cmd ]; then \
+		ln -sf ${CROSSDIR}/usr/bin/`cat ${CROSSDIR}/TARGET_CANON`-$$cmd \
+		${CROSSDIR}/usr/bin/$$cmd ;\
+	    elif [ -e ${CROSSDIR}/usr/bin/$$cmd -a ! -e ${CROSSDIR}/usr/bin/`cat ${CROSSDIR}/TARGET_CANON`-$$cmd ]; then \
+		ln -sf ${CROSSDIR}/usr/bin/$$cmd \
+		${CROSSDIR}/usr/bin/`cat ${CROSSDIR}/TARGET_CANON`-$$cmd; \
+	    fi ;\
+	done
 
 cross-gas:	cross-dirs
 	(cd ${.CURDIR}/gnu/usr.bin/gas; \
