@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.h,v 1.2 2004/05/21 11:58:32 henning Exp $ */
+/*	$OpenBSD: log.h,v 1.3 2004/05/21 16:01:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-static const char *statenames[] = {
+static const char * const statenames[] = {
 	"None",
 	"Idle",
 	"Connect",
@@ -26,7 +26,7 @@ static const char *statenames[] = {
 	"Established"
 };
 
-static const char *eventnames[] = {
+static const char * const eventnames[] = {
 	"None",
 	"Start",
 	"Stop",
@@ -43,7 +43,7 @@ static const char *eventnames[] = {
 	"NOTIFICATION received"
 };
 
-static const char *errnames[] = {
+static const char * const errnames[] = {
 	"none",
 	"Header error",
 	"error in OPEN message",
@@ -53,14 +53,14 @@ static const char *errnames[] = {
 	"Cease"
 };
 
-static const char *suberr_header_names[] = {
+static const char * const suberr_header_names[] = {
 	"none",
 	"synchronization error",
 	"wrong length",
 	"unknown message type"
 };
 
-static const char *suberr_open_names[] = {
+static const char * const suberr_open_names[] = {
 	"none",
 	"version mismatch",
 	"AS unacceptable",
@@ -71,7 +71,7 @@ static const char *suberr_open_names[] = {
 	"unsupported capability"
 };
 
-static const char *suberr_update_names[] = {
+static const char * const suberr_update_names[] = {
 	"none",
 	"attribute list error",
 	"unknown well-known attribute",
@@ -86,7 +86,7 @@ static const char *suberr_update_names[] = {
 	"AS-Path unacceptable"
 };
 
-static const char *procnames[] = {
+static const char * const procnames[] = {
 	"parent",
 	"SE",
 	"RDE"
