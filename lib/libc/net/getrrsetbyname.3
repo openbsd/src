@@ -1,4 +1,4 @@
-.\" $OpenBSD: getrrsetbyname.3,v 1.3 2001/08/06 15:10:23 jakob Exp $
+.\" $OpenBSD: getrrsetbyname.3,v 1.4 2001/08/08 16:28:43 jakob Exp $
 .\"
 .\" Copyright (C) 2000, 2001  Internet Software Consortium.
 .\"
@@ -151,3 +151,13 @@ The data in
 should be returned in uncompressed wire format.
 Currently, the data is in compressed format and the caller can't
 uncompress since it doesn't have the full message.
+.Sh CAVEATS
+The
+.Dv RRSET_VALIDATED
+flag in
+.Li rri_flags
+is set if the AD (autenticated data) bit in the DNS answer is
+set. This flag
+.Em should not
+be trusted unless the transport between the nameserver and the resolver
+is secure (e.g. IPsec, trusted network, loopback communication).
