@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.57 2004/11/22 04:14:17 deraadt Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.58 2004/12/08 07:04:12 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1519,7 +1519,7 @@ int ti_gibinit(sc)
 	TI_RING_DMASYNC(sc, ti_info, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
 	/* Set up tuneables */
-	if (ifp->if_mtu > (ETHERMTU + ETHER_HDR_LEN + ETHER_CRC_LEN))
+	if (ifp->if_mtu > ETHER_MAX_LEN)
 		CSR_WRITE_4(sc, TI_GCR_RX_COAL_TICKS,
 		    (sc->ti_rx_coal_ticks / 10));
 	else
@@ -2395,7 +2395,7 @@ void ti_init2(sc)
 		panic("not enough mbufs for rx ring");
 
 	/* Init jumbo RX ring. */
-	if (ifp->if_mtu > (ETHERMTU + ETHER_HDR_LEN + ETHER_CRC_LEN))
+	if (ifp->if_mtu > ETHER_MAX_LEN)
 		ti_init_rx_ring_jumbo(sc);
 
 	/*
