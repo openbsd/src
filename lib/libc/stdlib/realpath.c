@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: realpath.c,v 1.10 2003/08/01 21:04:59 millert Exp $";
+static char *rcsid = "$OpenBSD: realpath.c,v 1.11 2004/11/30 15:12:59 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -62,7 +62,8 @@ realpath(path, resolved)
 
 	/* Save the starting point. */
 	if ((fd = open(".", O_RDONLY)) < 0) {
-		(void)strlcpy(resolved, ".", MAXPATHLEN);
+		resolved[0] = '.';
+		resolved[1] = '\0';
 		return (NULL);
 	}
 
@@ -78,7 +79,10 @@ realpath(path, resolved)
 	 *     if it is a directory, then change to that directory.
 	 * get the current directory name and append the basename.
 	 */
-	strlcpy(resolved, path, MAXPATHLEN);
+	if (strlcpy(resolved, path, MAXPATHLEN) >= MAXPATHLEN) {
+		serrno = ENAMETOOLONG;
+		goto err2;
+	}
 loop:
 	q = strrchr(resolved, '/');
 	if (q != NULL) {
@@ -104,8 +108,7 @@ loop:
 				errno = ELOOP;
 				goto err1;
 			}
-			n = readlink(p, resolved, MAXPATHLEN-1);
-			if (n < 0)
+			if ((n = readlink(p, resolved, MAXPATHLEN-1)) < 0)
 				goto err1;
 			resolved[n] = '\0';
 			goto loop;
@@ -121,8 +124,11 @@ loop:
 	 * Save the last component name and get the full pathname of
 	 * the current directory.
 	 */
-	(void)strlcpy(wbuf, p, sizeof wbuf);
-	if (getcwd(resolved, MAXPATHLEN) == 0)
+	if (strlcpy(wbuf, p, sizeof(wbuf)) >= sizeof(wbuf)) {
+		errno = ENAMETOOLONG;
+		goto err1;
+	}
+	if (getcwd(resolved, MAXPATHLEN) == NULL)
 		goto err1;
 
 	/*
@@ -139,9 +145,16 @@ loop:
 			errno = ENAMETOOLONG;
 			goto err1;
 		}
-		if (needslash)
-			strlcat(resolved, "/", MAXPATHLEN);
-		strlcat(resolved, wbuf, MAXPATHLEN);
+		if (needslash) {
+			if (strlcat(resolved, "/", MAXPATHLEN) >= MAXPATHLEN) {
+				errno = ENAMETOOLONG;
+				goto err1;
+			}
+		}
+		if (strlcat(resolved, wbuf, MAXPATHLEN) >= MAXPATHLEN) {
+			errno = ENAMETOOLONG;
+			goto err1;
+		}
 	}
 
 	/* Go back to where we came from. */
