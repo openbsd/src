@@ -1,6 +1,7 @@
-/*	$Id: kdestroy.c,v 1.1.1.1 1995/12/14 06:52:50 tholo Exp $	*/
+/*	$OpenBSD: kdestroy.c,v 1.2 1997/12/17 09:18:37 art Exp $	*/
+/* $KTH: kdestroy.c,v 1.8 1997/03/30 16:15:03 joda Exp $");
 
-/*-
+/*
  * Copyright 1987, 1988 by the Massachusetts Institute of Technology. 
  *
  * For copying and distribution information, please see the file
@@ -11,44 +12,47 @@
  *
  *   -q[uiet]	- no bell even if tickets not destroyed
  *   -f[orce]	- no message printed at all 
+ *   -t		- do not destroy tokens
  */
 
-#include <kuser_locl.h>
+#include "kuser_locl.h"
+#include <kerberosIV/kafs.h>
 
-static char *pname;
+char progname[] = "kdestroy";
 
 static void
-usage()
+usage(void)
 {
-    fprintf(stderr, "Usage: %s [-f] [-q]\n", pname);
+    fprintf(stderr, "Usage: %s [-f] [-q] [-t]\n", progname);
     exit(1);
 }
 
 int
-main(argc, argv)
-    int argc;
-    char   *argv[];
+main(int argc, char **argv)
 {
-    int     fflag=0, qflag=0, k_errno;
-    register char *cp;
+    int fflag=0, tflag = 0, k_errno;
+    int c;
 
-    cp = strrchr (argv[0], '/');
-    if (cp == NULL)
-	pname = argv[0];
-    else
-	pname = cp+1;
-
-    if (argc > 2)
-	usage();
-    else if (argc == 2) {
-	if (!strcmp(argv[1], "-f"))
-	    ++fflag;
-	else if (!strcmp(argv[1], "-q"))
-	    ++qflag;
-	else usage();
+    while((c = getopt(argc, argv, "fqt")) >= 0){
+	switch(c){
+	case 'f':
+	case 'q':
+	    fflag++;
+	    break;
+	case 't':
+	    tflag++;
+	    break;
+	default:
+	    usage();
+	}
     }
+    if(argc - optind > 0)
+	usage();
 
     k_errno = dest_tkt();
+
+    if(!tflag && k_hasafs())
+	k_unlog();
 
     if (fflag) {
 	if (k_errno != 0 && k_errno != RET_TKFIL)
@@ -59,11 +63,9 @@ main(argc, argv)
 	if (k_errno == 0)
 	    printf("Tickets destroyed.\n");
 	else if (k_errno == RET_TKFIL)
-	    fprintf(stderr, "No tickets to destroy.\n");
+	    printf("No tickets to destroy.\n");
 	else {
-	    fprintf(stderr, "Tickets NOT destroyed.\n");
-	    if (!qflag)
-		fprintf(stderr, "\007");
+	    printf("Tickets NOT destroyed.\n");
 	    exit(1);
 	}
     }
