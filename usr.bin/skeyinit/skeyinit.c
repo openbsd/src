@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyinit.c,v 1.45 2003/11/26 00:05:27 espie Exp $	*/
+/*	$OpenBSD: skeyinit.c,v 1.46 2004/06/04 18:18:20 otto Exp $	*/
 
 /* OpenBSD S/Key (skeyinit.c)
  *
@@ -412,7 +412,7 @@ normal_mode(char *username, int n, char *key, char *seed)
 		if (i > 2)
 			errx(1, "S/Key entry not updated");
 
-		if (readpassphrase("Enter secret passphrase: ", passwd,
+		if (readpassphrase("Enter new secret passphrase: ", passwd,
 		    sizeof(passwd), 0) == NULL || passwd[0] == '\0')
 			exit(1);
 

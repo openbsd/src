@@ -1,4 +1,4 @@
-.\" $OpenBSD: skey.1,v 1.23 2003/08/08 10:13:33 jmc Exp $
+.\" $OpenBSD: skey.1,v 1.24 2004/06/04 18:18:20 otto Exp $
 .\"	@(#)skey.1	1.1 	10/28/93
 .\"
 .Dd October 28, 1993
@@ -15,7 +15,7 @@
 .Fl rmd160
 .Oc
 .Op Fl n Ar count
-.Op Fl p Ar passwd
+.Op Fl p Ar passphrase
 <sequence#>[/] key
 .Sh DESCRIPTION
 .Nm S/Key
@@ -29,6 +29,16 @@ This implementation of
 .Nm S/Key
 is RFC 2289 compliant.
 .Pp
+Before using
+.Nm skey
+the system needs to be initialized using
+.Xr skeyinit 1 ;
+this will establish a secret passphrase.
+After that, one-time passwords can be generated using
+.Nm skey ,
+which will prompt for the secret passphrase.
+After a one-time password has been used to log in, it can no longer be used.
+.Pp
 When
 .Nm skey
 is invoked as
@@ -40,9 +50,9 @@ as the hash function where
 .Ar method
 is currently one of md4, md5, sha1, or rmd160.
 .Pp
-If you misspell your password while running
+If you misspell your secret passphrase while running
 .Nm skey ,
-you will get a list of passwords
+you will get a list of one-time passwords
 that will not work, and no indication of the problem.
 .Pp
 Password sequence numbers count backwards.
@@ -57,12 +67,12 @@ Prints out
 .Ar count
 one-time passwords.
 The default is to print one.
-.It Fl p Ar password
+.It Fl p Ar passphrase
 Uses
-.Ar password
-as the secret password.
+.Ar passphrase
+as the secret passphrase.
 Use of this option is discouraged as
-your secret password could be visible in a process listing.
+your secret passphrase could be visible in a process listing.
 .It Fl x
 Causes output to be in hexadecimal instead of ASCII.
 .It Fl md4
@@ -78,7 +88,7 @@ Selects RMD-160 (160 bit Ripe Message Digest) as the hash algorithm.
 .sp 0
     % skey 99 th91334
 .sp 0
-    Enter secret password: <your secret password is entered here>
+    Enter secret passphrase: <your secret passphrase is entered here>
 .sp 0
     OMEN US HORN OMIT BACK AHOY
 .sp 0
