@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.84 2004/01/11 02:35:14 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.85 2004/01/11 18:42:25 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -142,6 +142,7 @@ session_main(struct bgpd_config *config, struct peer *cpeers, int pipe_m2s[2],
 	struct peer	*p, *peer_l[OPEN_MAX], *last, *next;
 	struct pollfd	 pfd[OPEN_MAX];
 	struct ctl_conn	*ctl_conn;
+	short		 events;
 
 	conf = config;
 	peers = cpeers;
@@ -269,14 +270,14 @@ session_main(struct bgpd_config *config, struct peer *cpeers, int pipe_m2s[2],
 				nextaction = p->IdleHoldResetTimer;
 
 			/* are we waiting for a write? */
-			p->events = POLLIN;
+			events = POLLIN;
 			if (p->wbuf.queued > 0 || p->state == STATE_CONNECT)
-				p->events |= POLLOUT;
+				events |= POLLOUT;
 
 			/* poll events */
-			if (p->sock != -1 && p->events != 0) {
+			if (p->sock != -1 && events != 0) {
 				pfd[i].fd = p->sock;
-				pfd[i].events = p->events;
+				pfd[i].events = events;
 				peer_l[i] = p;
 				i++;
 			}
@@ -367,7 +368,6 @@ bgp_fsm(struct peer *peer, enum session_events event)
 		case EVNT_START:
 			peer->HoldTimer = 0;
 			peer->KeepaliveTimer = 0;
-			peer->events = 0;
 			peer->IdleHoldTimer = 0;
 
 			/* allocate read buffer */
@@ -633,7 +633,6 @@ change_state(struct peer *peer, enum session_state state,
 		 * session was not established successfully before, the
 		 * starttimerinterval needs to be exponentially increased
 		 */
-		peer->events = 0;
 		if (peer->IdleHoldTime == 0)
 			peer->IdleHoldTime = INTERVAL_IDLE_HOLD_INITIAL;
 		peer->holdtime = INTERVAL_HOLD_INITIAL;
@@ -655,19 +654,14 @@ change_state(struct peer *peer, enum session_state state,
 		}
 		break;
 	case STATE_CONNECT:
-		peer->events = (POLLIN|POLLOUT);
 		break;
 	case STATE_ACTIVE:
-		peer->events = (POLLIN|POLLOUT);
 		break;
 	case STATE_OPENSENT:
-		peer->events = POLLIN;
 		break;
 	case STATE_OPENCONFIRM:
-		peer->events = POLLIN;
 		break;
 	case STATE_ESTABLISHED:
-		peer->events = POLLIN;
 		if (peer->IdleHoldTime > INTERVAL_IDLE_HOLD_INITIAL)
 			peer->IdleHoldResetTimer =
 			    time(NULL) + peer->IdleHoldTime;

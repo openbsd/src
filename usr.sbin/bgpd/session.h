@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.18 2004/01/11 01:04:43 henning Exp $ */
+/*	$OpenBSD: session.h,v 1.19 2004/01/11 18:42:25 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -144,7 +144,6 @@ struct peer {
 	time_t			 IdleHoldResetTimer;
 	u_int			 IdleHoldTime;
 	int			 sock;
-	int			 events;
 	struct sockaddr_storage	 sa_local;
 	struct sockaddr_storage	 sa_remote;
 	struct msgbuf		 wbuf;
