@@ -3,18 +3,20 @@ Return-Path: root
 Date: Tue Dec  1 04:50:00 MDT 1999
 From: deraadt@do-not-reply.openbsd.org (Theo de Raadt)
 To: root
-Subject: Welcome to OpenBSD 2.6
+Subject: Welcome to OpenBSD 2.6!  Secure by Default!
 
-This message attempts to describe the most basic first questions that a
+This message attempts to describe the most basic initial questions that a
 system administrator of an OpenBSD box might have.  You are urged to save
 this message for later reference.
 
 For more information on how to setup your OpenBSD system, refer to the
-"afterboot" man page.  If you are not familiar with how to read man pages,
-type "man man" at a shell prompt and read the entire thing.  Pay specific
+"afterboot" man page (ie. after you exit the mail subsystem, type
+"man afterboot" ).  If you are not familiar with how to read man pages, type
+"man man" at a shell prompt and read the entire thing.  Pay specific
 attention to the "man -k keyword" option, which will permit you to find the
 man page you are looking for easier.  The GNU "info" subsystem is also
 installed with further documentation resources; to read info pages type "info".
+(The info subsystem behaves like the popular emacs editor).
 
 If you have installed the X11 packages during the install process, you can find
 further information regarding configuration in the file /usr/X11R6/README.
@@ -49,8 +51,10 @@ nearest FTP mirror site.
 
 Select your architecture and download the tarballs of your choice.  For example
 to install the emacs package for i386, execute
-   # mount /dev/cd0a /cdrom; pkg_add /cdrom/2.6/packages/i386/emacs-20.3.tgz
-or # pkg_add ftp://ftp.openbsd.org/pub/OpenBSD/2.6/packages/i386/emacs-20.3.tgz
+  # mount /dev/cd0a /cdrom
+  # pkg_add /cdrom/2.6/packages/i386/emacs-20.3.tgz
+or alternatively install them via FTP thus
+  # pkg_add ftp://ftp.openbsd.org/pub/OpenBSD/2.6/packages/i386/emacs-20.3.tgz
 
 Other important packages which are not permitted on the CD (due to patents) are
 available on our FTP servers (as described above).  In particular, we provide
@@ -59,8 +63,8 @@ the USA and international versions of PGP.  The filenames are:
 
 You are STRONGLY urged to use ssh instead of telnet, rlogin, or rsh! ssh is
 included in OpenBSD, and relies on the libssl26.tar.gz package, which
-contains the patented RSA code.  This package is NOT included on the CD,
-but is available on all our FTP servers.
+contains the patented RSA code.  This package is available on all our FTP
+servers, but NOT included on the CD. [MORE DETAILS NEEDED]
 
 Significant efforts were made to centralize all system configuration in the
 /etc directory.  You should be able to find each of the configuration files
@@ -95,5 +99,5 @@ kernel, unless you're unable to boot the GENERIC kernel).  The device driver
 information we get from this helps us fix existing drivers. Thank you!
 
 (If you used 'mail' to read this message and it scrolled by too quickly,
-type "more .")
+type "more ."  If you wish to save it, use the "x" command.)
 
