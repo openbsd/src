@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.61 2000/03/04 01:10:06 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.62 2000/06/19 01:28:45 itojun Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.61 2000/03/04 01:10:06 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.62 2000/06/19 01:28:45 itojun Exp $";
 #endif /* not lint */
 
 /*
@@ -1116,6 +1116,10 @@ matchconf (old, new)
 	    bcmp(&old->se_ctrladdr_in6.sin6_addr,
 	    &new->se_ctrladdr_in6.sin6_addr,
 	    sizeof(new->se_ctrladdr_in6.sin6_addr)) != 0)
+		return (0);
+	if (old->se_family == AF_INET6 && new->se_family == AF_INET6 &&
+	    old->se_ctrladdr_in6.sin6_scope_id !=
+	    new->se_ctrladdr_in6.sin6_scope_id)
 		return (0);
 
 	return (1);
