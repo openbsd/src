@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf.c,v 1.6 1997/03/08 16:16:50 briggs Exp $	*/
+/*	$OpenBSD: grf.c,v 1.7 1997/03/12 13:36:57 briggs Exp $	*/
 /*	$NetBSD: grf.c,v 1.41 1997/02/24 06:20:04 scottr Exp $	*/
 
 /*
@@ -83,7 +83,7 @@
 #define	iteoff(u,f)
 #endif
 
-int	grfmatch __P((struct device *, struct cfdata *, void *));
+int	grfmatch __P((struct device *, void *, void *));
 void	grfattach __P((struct device *, struct device *, void *));
 
 struct cfdriver grf_cd = {
@@ -103,9 +103,9 @@ static int grfdebug = (GDB_DEVNO|GDB_MMAP|GDB_IOMAP|GDB_LOCK);
 #endif
 
 int
-grfmatch(parent, cf, aux)
+grfmatch(parent, vcf, aux)
 	struct device *parent;
-	struct cfdata *cf;
+	void *vcf;
 	void *aux;
 {
 	struct grfbus_attach_args *ga = aux;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.8 1997/03/11 21:03:03 gene Exp $	*/
+/*	$OpenBSD: zs.c,v 1.9 1997/03/12 13:36:59 briggs Exp $	*/
 /*	$NetBSD: zs.c,v 1.12 1996/12/18 05:04:22 scottr Exp $	*/
 
 /*
@@ -204,9 +204,9 @@ int	zssoft __P((void *));
  * Is the zs chip present?
  */
 static int
-zsc_match(parent, cf, aux)
+zsc_match(parent, vcf, aux)
 	struct device *parent;
-	void *cf;
+	void *vcf;
 	void *aux;
 {
 	return 1;

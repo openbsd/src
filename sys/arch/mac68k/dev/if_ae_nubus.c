@@ -1,4 +1,5 @@
 /*	$NetBSD: if_ae_nubus.c,v 1.5 1997/02/28 08:56:06 scottr Exp $	*/
+/*	$OpenBSD: if_ae_nubus.c,v 1.2 1997/03/12 13:36:58 briggs Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -101,7 +102,6 @@ ae_nubus_match(parent, vcf, aux)
 
 	bus_space_unmap(na->na_tag, bsh, NBMEMSIZE);
 
-printf("ae_nubus_match returning %d\n", rv);
 	return rv;
 }
 
@@ -123,7 +123,6 @@ ae_nubus_attach(parent, self, aux)
 	int i;
 #endif
 
-printf("ae_nubus_attach\n");
 	bst = na->na_tag;
 	if (bus_space_map(bst, NUBUS_SLOT2PA(na->slot), NBMEMSIZE,
 	    0, &bsh)) {
@@ -143,7 +142,6 @@ printf("ae_nubus_attach\n");
 
 	success = 0;
 
-printf("ae_nubus_attach vendor switch\n");
 	switch (sc->vendor) {
 	case AE_VENDOR_APPLE:	/* Apple-compatible cards */
 	case AE_VENDOR_ASANTE:
@@ -299,7 +297,6 @@ printf("ae_nubus_attach vendor switch\n");
 	default:
 		break;
 	}
-printf("ae_nubus_attach vendor switch done\n");
 
 	if (!success) {
 		bus_space_unmap(bst, bsh, NBMEMSIZE);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.5 1997/03/11 21:03:04 gene Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.6 1997/03/12 13:37:01 briggs Exp $	*/
 /*	$NetBSD: mainbus.c,v 1.7 1996/12/17 06:47:41 scottr Exp $	*/
 
 /*
@@ -54,9 +54,9 @@ struct cfdriver mainbus_cd = {
 };
 
 static int
-mainbus_match(parent, cf, aux)
+mainbus_match(parent, vcf, aux)
 	struct device *parent;
-	void *cf;
+	void *vcf;
 	void *aux;
 {
 	static int mainbus_matched = 0;
@@ -86,7 +86,7 @@ mainbus_search(parent, vcf, aux)
 	void *vcf;
 	void *aux;
 {
-	struct cfdata *cf = vcf;
+	struct cfdata *cf = (struct cfdata *) vcf;
 
 	if ((*cf->cf_attach->ca_match)(parent, cf, NULL) > 0)
 		config_attach(parent, cf, NULL, NULL);

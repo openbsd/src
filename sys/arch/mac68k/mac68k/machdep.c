@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.31 1997/03/08 16:17:04 briggs Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.32 1997/03/12 13:37:00 briggs Exp $	*/
 /*	$NetBSD: machdep.c,v 1.134 1997/02/14 06:15:30 scottr Exp $	*/
 
 /*
@@ -2493,6 +2493,9 @@ setmachdep()
 		break;
 	case MACH_CLASSQ:
         case MACH_CLASSQ2:
+		mac68k_vidlog = mac68k_vidphys = 0xf9000000;
+		/* Not really, but using too little memory would be wrong */
+		mac68k_vidlen = 2 * 1024 * 1024;
 	case MACH_CLASSAV:
 		VIA2 = 1;
 		IOBase = 0x50f00000;
@@ -2502,10 +2505,6 @@ setmachdep()
 		mac68k_machine.sccClkConst = 115200;
 		via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
 		via_reg(VIA2, vIER) = 0x7f;	/* disable VIA2 int */
-		if (cpui->machineid == MACH_MACQ700) {
-			mac68k_vidlog = mac68k_vidphys = 0xf9000000;
-			mac68k_vidlen = 2 * 1024 * 1024;
-		}
 		break;
 	case MACH_CLASSIIci:
 		VIA2 = 0x13;

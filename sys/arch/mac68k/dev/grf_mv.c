@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_mv.c,v 1.7 1997/03/08 16:16:51 briggs Exp $	*/
+/*	$OpenBSD: grf_mv.c,v 1.8 1997/03/12 13:36:57 briggs Exp $	*/
 /*	$NetBSD: grf_mv.c,v 1.17 1997/02/24 06:20:06 scottr Exp $	*/
 
 /*
@@ -60,7 +60,7 @@ static char zero = 0;
 
 static int	grfmv_mode __P((struct grf_softc *gp, int cmd, void *arg));
 static caddr_t	grfmv_phys __P((struct grf_softc *gp, vm_offset_t addr));
-static int	grfmv_match __P((struct device *, struct cfdata *, void *));
+static int	grfmv_match __P((struct device *, void *, void *));
 static void	grfmv_attach __P((struct device *, struct device *, void *));
 
 struct cfdriver macvid_cd = {
@@ -162,9 +162,9 @@ grfmv_intr(vsc, slot)
 }
 
 static int
-grfmv_match(parent, cf, aux)
+grfmv_match(parent, vcf, aux)
 	struct device *parent;
-	struct cfdata *cf;
+	void *vcf;
 	void *aux;
 {
 	struct nubus_attach_args *na = (struct nubus_attach_args *) aux;

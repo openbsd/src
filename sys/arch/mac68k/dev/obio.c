@@ -1,4 +1,4 @@
-/*	$OpenBSD: obio.c,v 1.3 1997/03/08 16:16:57 briggs Exp $	*/
+/*	$OpenBSD: obio.c,v 1.4 1997/03/12 13:36:58 briggs Exp $	*/
 /*	$NetBSD: obio.c,v 1.7 1997/02/13 19:01:07 scottr Exp $	*/
 
 /*
@@ -45,10 +45,10 @@
 
 #include <mac68k/dev/obiovar.h>
 
-static int	obio_match __P((struct device *, struct cfdata *, void *));
+static int	obio_match __P((struct device *, void *, void *));
 static void	obio_attach __P((struct device *, struct device *, void *));
 static int	obio_print __P((void *, const char *));
-static int	obio_search __P((struct device *, struct cfdata *, void *));
+static int	obio_search __P((struct device *, void *, void *));
 
 struct cfattach obio_ca = {
 	sizeof(struct device), obio_match, obio_attach
@@ -59,9 +59,9 @@ struct cfdriver obio_cd = {
 };
 
 static int
-obio_match(parent, cf, aux)
+obio_match(parent, vcf, aux)
 	struct device *parent;
-	struct cfdata *cf;
+	void *vcf;
 	void *aux;
 {
 	static int obio_matched = 0;
@@ -100,12 +100,13 @@ obio_print(args, name)
 }
 
 int
-obio_search(parent, cf, aux)
+obio_search(parent, vcf, aux)
 	struct device *parent;
-	struct cfdata *cf;
+	void *vcf;
 	void *aux;
 {
 	struct obio_attach_args oa;
+	struct cfdata	*cf = (struct cfdata *) vcf;
 
 	oa.oa_addr = cf->cf_loc[0];
 	oa.oa_drq = cf->cf_loc[1];

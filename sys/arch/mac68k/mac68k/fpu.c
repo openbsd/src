@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.8 1997/03/11 21:03:04 gene Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.9 1997/03/12 13:37:00 briggs Exp $	*/
 /*	$NetBSD: fpu.c,v 1.21 1996/12/16 16:17:16 scottr Exp $	*/
 
 /*-
@@ -72,9 +72,9 @@ struct cfdriver fpu_cd = {
 };
 
 static int
-fpu_match(parent, cf, aux)
+fpu_match(parent, vcf, aux)
 	struct device *parent;
-	void *cf;
+	void *vcf;
 	void *aux;
 {
 	return 1;
