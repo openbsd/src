@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypbind.c,v 1.13 1996/12/21 05:52:31 deraadt Exp $ */
+/*	$OpenBSD: ypbind.c,v 1.14 1997/01/22 08:54:14 deraadt Exp $ */
 
 /*
  * Copyright (c) 1996 Theo de Raadt <deraadt@theos.com>
@@ -34,7 +34,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypbind.c,v 1.13 1996/12/21 05:52:31 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypbind.c,v 1.14 1997/01/22 08:54:14 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -631,10 +631,10 @@ broadcast(ypdb)
 {
 	domainname dom = ypdb->dom_domain;
 	struct rpc_msg msg;
-	char buf[1400], inbuf[8192];
+	char buf[1400], *inbuf = NULL;
 	char path[MAXPATHLEN];
 	enum clnt_stat st;
-	int outlen, i, sock, len;
+	int outlen, i, sock, len, inlen = 8192;
 	struct sockaddr_in bindsin;
 	struct ifconf ifc;
 	struct ifreq ifreq, *ifr;
@@ -712,13 +712,24 @@ broadcast(ypdb)
 		return -1;
 	}
 	
-	ifc.ifc_len = sizeof inbuf;
-	ifc.ifc_buf = inbuf;
-	if (ioctl(sock, SIOCGIFCONF, &ifc) < 0) {
-		close(sock);
-		perror("ioctl(SIOCGIFCONF)");
-		return -1;
+	while (1) {
+		ifc.ifc_len = inlen;
+		ifc.ifc_buf = inbuf = realloc(inbuf, inlen);
+		if (inbuf == NULL) {
+			close(sock);
+			return (-1);
+		}
+		if (ioctl(sock, SIOCGIFCONF, (char *)&ifc) < 0) {
+			(void) close(sock);
+			free(inbuf);
+			perror("ioctl(SIOCGIFCONF)");
+			return (-1);
+		}
+		if (ifc.ifc_len + sizeof(ifreq) < inlen)
+			break;
+		inlen *= 2;
 	}
+
 	ifr = ifc.ifc_req;
 	ifreq.ifr_name[0] = '\0';
 	for (i = 0; i < ifc.ifc_len; i += len,
@@ -759,6 +770,7 @@ broadcast(ypdb)
 			perror("sendto");
 	}
 	close(sock);
+	free(inbuf);
 	return 0;
 }
 
