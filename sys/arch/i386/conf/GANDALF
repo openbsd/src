@@ -1,7 +1,7 @@
 #
 #	GANDALF -- Dual Tyan P5/133 PCI/EISA bus
 #
-#	$OpenBSD: GANDALF,v 1.13 1996/09/20 06:45:05 deraadt Exp $
+#	$OpenBSD: GANDALF,v 1.14 1996/10/21 10:20:29 mickey Exp $
 #
 
 machine		i386		# architecture, used by config; REQUIRED
@@ -133,4 +133,3 @@ pseudo-device	ppp		1	# PPP
 pseudo-device	pty		64	# pseudo-terminals
 #pseudo-device	tb		1	# tablet line discipline
 pseudo-device	vnd		4	# paging to files
-pseudo-device	random		1	# random

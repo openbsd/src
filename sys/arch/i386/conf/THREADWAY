@@ -1,7 +1,7 @@
 #
 #	THREADWAY: threadway.teeny.org
 #
-#	$OpenBSD: THREADWAY,v 1.15 1996/10/04 07:29:20 downsj Exp $
+#	$OpenBSD: THREADWAY,v 1.16 1996/10/21 10:20:32 mickey Exp $
 #
 
 machine		i386
@@ -120,5 +120,4 @@ pseudo-device	tun	2
 
 pseudo-device	pty	64
 pseudo-device	vnd	8
-pseudo-device	random	1
 pseudo-device	pctr	1
