@@ -1,4 +1,4 @@
-.\"	$OpenBSD: safe.4,v 1.3 2003/08/15 20:10:57 jason Exp $
+.\"	$OpenBSD: safe.4,v 1.4 2003/08/20 20:24:44 jason Exp $
 .\\"-
 .\\" Copyright (c) 2003	Sam Leffler, Errno Consulting
 .\\" All rights reserved.
@@ -55,7 +55,10 @@ and SHA1-HMAC operations for
 and
 .Xr crypto 4 .
 .Pp
-On all models, the driver registers itself to provide random data to the
+Additionally, the driver registers with
+.Xr crypto 4
+to accelerate modular exponentiation of up to 2048 bit operands and provides
+input to the
 .Xr random 4
 subsystem.
 .Sh DIAGNOSTICS
@@ -75,5 +78,4 @@ There is no easy workaround.
 .Xr random 4 ,
 .Xr crypto 9
 .Sh BUGS
-Public key support is not implemented and early silicon revisions can
-wedge the PCI bus.
+Early silicon revisions can wedge the PCI bus.
