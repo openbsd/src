@@ -4,7 +4,7 @@
 # generated from:
 #
 #	OpenBSD: etc.mvme88k/MAKEDEV.md,v 1.14 2004/04/11 18:05:23 millert Exp 
-#	OpenBSD: MAKEDEV.common,v 1.7 2004/04/11 18:14:59 millert Exp 
+#	OpenBSD: MAKEDEV.common,v 1.8 2004/05/29 04:07:30 deraadt Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.72 2004/02/16 18:58:53 miod Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.12 2004/02/20 19:13:01 miod Exp 
 #
