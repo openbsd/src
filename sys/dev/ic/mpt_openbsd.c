@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt_openbsd.c,v 1.9 2004/04/12 13:24:27 marco Exp $	*/
+/*	$OpenBSD: mpt_openbsd.c,v 1.10 2004/04/25 03:55:25 krw Exp $	*/
 /*	$NetBSD: mpt_netbsd.c,v 1.7 2003/07/14 15:47:11 lukem Exp $	*/
 
 /*
@@ -425,12 +425,11 @@ mpt_attach(mpt_softc_t *mpt)
 	if (mpt->is_fc) {
 		lptr->adapter_buswidth = 256;
 		lptr->adapter_target = 256;
-		lptr->openings = 4; /* 1024 requests / 256 targets = 4 each */
 	} else {
 		lptr->adapter_buswidth = 16;
 		lptr->adapter_target = mpt->mpt_ini_id;
-		lptr->openings = 16; /* 1024 requests / 16 targets = 16 each */
 	}
+	lptr->openings = MPT_MAX_REQUESTS(mpt) / lptr->adapter_buswidth;
 
 #ifdef MPT_DEBUG
 	mpt->verbose = 2;
