@@ -1,4 +1,4 @@
-/*	$OpenBSD: fio.c,v 1.12 1997/08/31 14:32:13 millert Exp $	*/
+/*	$OpenBSD: fio.c,v 1.13 1997/09/04 20:44:04 millert Exp $	*/
 /*	$NetBSD: fio.c,v 1.8 1997/07/07 22:57:55 phil Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fio.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: fio.c,v 1.12 1997/08/31 14:32:13 millert Exp $";
+static char rcsid[] = "$OpenBSD: fio.c,v 1.13 1997/09/04 20:44:04 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -109,6 +109,15 @@ setptr(ibuf, offset)
 			return;
 		}
 		count = strlen(linebuf);
+		/*
+		 * Transforms lines ending in <CR><LF> to just <LF>.
+		 * This allows mail to be able to read Eudora mailboxes
+		 * that reside on a DOS partition.
+		 */
+		if (count >= 2 && linebuf[count-1] == '\n' &&
+		    linebuf[count - 2] == '\r')
+			linebuf[count - 2] = linebuf[--count];
+
 		(void)fwrite(linebuf, sizeof(*linebuf), count, otf);
 		if (ferror(otf))
 			err(1, "/tmp");
@@ -178,7 +187,7 @@ putline(obuf, linebuf, outlf)
 /*
  * Read up a line from the specified input into the line
  * buffer.  Return the number of characters read.  Do not
- * include the newline at the end.
+ * include the newline (or carriage return) at the end.
  */
 int
 readline(ibuf, linebuf, linesize)
@@ -194,6 +203,8 @@ readline(ibuf, linebuf, linesize)
 
 	n = strlen(linebuf);
 	if (n > 0 && linebuf[n - 1] == '\n')
+		linebuf[--n] = '\0';
+	if (n > 0 && linebuf[n - 1] == '\r')
 		linebuf[--n] = '\0';
 	return(n);
 }
