@@ -1,5 +1,7 @@
+/*	$OpenBSD: ksyms.c,v 1.6 2001/02/03 21:25:26 art Exp $	*/
 /*
  * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -10,26 +12,19 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
+ * 3. The name of the authors may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
  * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL
- * THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * THE AUTHORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
  * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
  * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
  * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
-
-/*
- * kernel symbols special file (masquerades as a ZMAGIC a.out file)
- *
- * TODO: get boot loaders to put symbols on a page boundary so we
- *       can mmap them too (also requires minor change to db_aout.c).
  */
 
 #include <sys/param.h>
@@ -40,6 +35,10 @@
 #include <sys/malloc.h>
 #include <sys/fcntl.h>
 
+#ifdef _NLIST_DO_ELF
+#include <sys/exec_elf.h>
+#endif
+
 #include <machine/cpu.h>
 
 #include <vm/vm.h>
@@ -47,13 +46,19 @@
 extern char *esym;				/* end of symbol table */
 extern long end;				/* end of kernel */
 
-static struct exec *k1;				/* first page of /dev/ksyms */
-static caddr_t symtab = (caddr_t)(&end + 1);	/* start of symbol table */
+static caddr_t ksym_head;
+static caddr_t ksym_syms;
+static size_t ksym_head_size;
+static size_t ksym_syms_size;
 
 void	ksymsattach __P((int));
 int	ksymsopen __P((dev_t, int, int));
 int	ksymsclose __P((dev_t, int, int));
 int	ksymsread __P((dev_t, struct uio *, int));
+
+/*
+ * We assume __LDPGSZ is a multiple of PAGE_SIZE (it is)
+ */
 
 /*ARGSUSED*/
 void
@@ -61,22 +66,79 @@ ksymsattach(num)
 	int num;
 {
 
-	if (esym > (char *)&end) {
+	if (esym <= (char *)&end) {
+		printf("/dev/ksyms: Symbol table not valid.\n");
+		return;
+	}
+
+#ifdef _NLIST_DO_ELF
+	do {
+		caddr_t symtab = (caddr_t)&end;
+		Elf_Ehdr *elf;
+		Elf_Shdr *shdr;
+		int i;
+
+		elf = (Elf_Ehdr *)symtab;
+		if (memcmp(elf->e_ident, ELFMAG, SELFMAG) != 0 ||
+		    elf->e_ident[EI_CLASS] != ELFCLASS ||
+		    elf->e_machine != ELF_TARG_MACH)
+			break;
+
+		shdr = (Elf_Shdr *)&symtab[elf->e_shoff];
+		for (i = 0; i < elf->e_shnum; i++) {
+			if (shdr[i].sh_type == SHT_SYMTAB) {
+				break;
+  			}
+		}
+
 		/*
-		 * If we have a symbol table, fake up a struct exec.
+		 * No symbol table found.
+		 */
+		if (i == elf->e_shnum)
+			break;
+
+		printf("symbols at: %p\n", symtab);
+		/*
+		 * No additional header.
+		 */
+		ksym_head_size = 0;
+		ksym_syms = symtab;
+		ksym_syms_size = (size_t)(esym - symtab);
+
+		return;
+	} while (0);
+#endif
+
+#ifdef _NLIST_DO_AOUT
+	{
+		/*
+		 * a.out header.
+		 * Fake up a struct exec.
 		 * We only fill in the following non-zero entries:
 		 *	a_text - fake text segment (struct exec only)
 		 *	a_syms - size of symbol table
-		 *
-		 * We assume __LDPGSZ is a multiple of PAGE_SIZE (it is)
 		 */
-		k1 = (struct exec *)malloc(__LDPGSZ, M_TEMP, M_WAITOK);
-		bzero(k1, __LDPGSZ);
+		caddr_t symtab = (char *)(&end + 1);
+		struct exec *k1;
+
+		ksym_head_size = __LDPGSZ;
+		ksym_head = malloc(ksym_head_size, M_DEVBUF, M_NOWAIT);
+		if (ksym_head == NULL) {
+			printf("failed to allocate memory for /dev/ksyms\n");
+			return;
+		}
+		bzero(ksym_head, ksym_head_size);
+
+		k1 = (struct exec *)ksym_head;
+
 		N_SETMAGIC(*k1, ZMAGIC, MID_MACHINE, 0);
 		k1->a_text = __LDPGSZ;
 		k1->a_syms = end;
+
+		ksym_syms = symtab;
+		ksym_syms_size = (size_t)(esym - symtab);
 	}
-	return;
+#endif
 }
 
 /*ARGSUSED*/
@@ -93,9 +155,9 @@ ksymsopen(dev, flag, mode)
 	/* This device is read-only */
 	if ((flag & FWRITE))
 		return (EPERM);
-		
-	/* Must have symbols at the end of the kernel to work */
-	if (esym <= (char *)&end)
+
+	/* ksym_syms must be initialized */
+	if (ksym_syms == NULL)
 		return (ENXIO);
 
 	return (0);
@@ -118,70 +180,58 @@ ksymsread(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	register vaddr_t v;
-	register size_t c, len;
-	int error = 0;
+	int error;
+	size_t len;
+	caddr_t v;
+	size_t off;
 
-#define iov	(uio->uio_iov)
-	while (uio->uio_resid > 0 && error == 0) {
-		/* Done with this iov?  Fill the next one... */
-		if (iov->iov_len == 0) {
-			uio->uio_iov++;
-			uio->uio_iovcnt--;
-			if (uio->uio_iovcnt < 0)
-				panic("ksymread");
-		}
-
-		/* Can't read past size of symbol table... */
-		if (uio->uio_offset >= (vaddr_t)(esym - symtab) + k1->a_text)
+	while (uio->uio_resid > 0) {
+		if (uio->uio_offset >= ksym_head_size + ksym_syms_size)
 			break;
 
-		if (uio->uio_offset < k1->a_text) {
-			/*
-			 * If they asked for more that a_text,
-			 * read the part of k1 first, then the
-			 * part of symtab next time throug the loop.
-			 */
-			if (iov->iov_len + (size_t)uio->uio_offset >
-			    k1->a_text)
-				len = k1->a_text;
-			else
-				len = iov->iov_len;
-
-			/* Make offset relative to struct exec */
-			v = uio->uio_offset + (vaddr_t)k1;
-			c = min(len, MAXPHYS);
-			error = uiomove((caddr_t)v, c, uio);
+		if (uio->uio_offset < ksym_head_size) {
+			v = ksym_head + uio->uio_offset;
+			len = ksym_head_size - uio->uio_offset;
 		} else {
-			/* Make offset relative to symtab */
-			v = uio->uio_offset - k1->a_text + (vaddr_t)symtab;
-			c = min(iov->iov_len, MAXPHYS);
-
-			/* Don't read past esym, truncate. */
-			if (v + c > (vaddr_t)esym)
-				c = (vaddr_t)esym - v;
-			error = uiomove((caddr_t)v, c, uio);
+			off = uio->uio_offset - ksym_head_size;
+			v = ksym_syms + off;
+			len = ksym_syms_size - off;
 		}
+
+		if (len > uio->uio_resid)
+			len = uio->uio_resid;
+
+		if ((error = uiomove(v, len, uio)) != 0)
+			return (error);
 	}
-	return (error);
+
+	return (0);
 }
 
-/* XXX - can't do mmap until boot loaders make the symbol table page aligned */
+/* XXX - not yet */
 #if 0
 int
 ksymsmmap(dev, off, prot)
 	dev_t dev;
 	int off, prot;
 {
-#define ksyms_btop(x)	((vaddr_t)(x) >> PGSHIFT
+	vaddr_t va;
+	paddr_t pa;
+
 	if (off < 0)
 		return (-1);
-	if ((unsigned)off >= (unsigned)(esym - symtab) + k1->a_text)
+	if (off >= ksym_head_size + ksym_syms_size)
 		return (-1);
 
-	if ((unsigned)off < k1->a_text)
-		return (ksyms_btop(off + (unsigned)k1));
-	else
-		return (ksyms_btop(off + (unsigned)symtab - k1->a_text));
+	if ((vaddr_t)off < ksym_head_size) {
+		va = (vaddr_t)ksym_head + off;
+	} else {
+		va = (vaddr_t)ksym_syms + off;
+	}
+
+	if ((pa = pmap_extract(pmap_kernel, va)) == 0)
+		panic("ksymsmmap: null pa");
+
+	return atop(pa);
 }
 #endif
