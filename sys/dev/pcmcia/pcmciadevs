@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.35 2000/04/24 15:20:26 fgsch Exp $
+	$OpenBSD: pcmciadevs,v 1.36 2000/05/29 17:04:00 fgsch Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -77,6 +77,7 @@ vendor CONTEC			0xc001	Contec
 vendor COREGA			0xc00f	Corega K.K.
 vendor ALLIEDTELESIS		0xc00f	Allied Telesis K.K.
 vendor HAGIWARASYSCOM		0xc012	Hagiwara SYS-COM
+vendor RATOC			0xc015	RATOC System Inc.
 
 /*
  * List of known products.  Grouped by vendor.
@@ -184,6 +185,7 @@ product MOTOROLA MONTANA_336	0x0505 Motorola Montana 33.6
 
 /* NewMedia */
 product NEWMEDIA BASICS		0x0019 NewMedia BASICS
+product NEWMEDIA LANSURFER	0x0021 NewMedia LANSurfer
 product NEWMEDIA MULTIMEDIA	0x100b NewMedia Multimedia
 product NEWMEDIA BUSTOASTER	0xc102 NewMedia BusToaster
 
@@ -203,6 +205,9 @@ product QUATECH DSP_225		0x0008 Quatech Dual Serial Port
 
 /* Raylink/WebGear */
 product RAYTHEON WLAN		0x0000 WLAN Adapter
+
+/* RATOC System Inc. */
+product RATOC REX_R280		0x0001 RATOC REX-R280
 
 /* Sandisk */
 product SANDISK SDCFB		0x0401 Sandisk CompactFlash Card
