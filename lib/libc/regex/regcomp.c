@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)regcomp.c	8.5 (Berkeley) 3/20/94";
 #else
-static char rcsid[] = "$OpenBSD: regcomp.c,v 1.11 2003/12/07 06:17:17 otto Exp $";
+static char rcsid[] = "$OpenBSD: regcomp.c,v 1.12 2004/05/08 06:33:41 otto Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -670,7 +670,7 @@ static void
 p_bracket(p)
 register struct parse *p;
 {
-	register cset *cs = allocset(p);
+	register cset *cs;
 	register int invert = 0;
 
 	/* Dept of Truly Sickening Special-Case Kludges */
@@ -685,6 +685,8 @@ register struct parse *p;
 		return;
 	}
 
+	cs = allocset(p);
+
 	if (EAT('^'))
 		invert++;	/* make note to invert set at end */
 	if (EAT(']'))
@@ -697,8 +699,10 @@ register struct parse *p;
 		CHadd(cs, '-');
 	MUSTEAT(']', REG_EBRACK);
 
-	if (p->error != 0)	/* don't mess things up further */
+	if (p->error != 0) {	/* don't mess things up further */
+		freeset(p, cs);
 		return;
+	}
 
 	if (p->g->cflags&REG_ICASE) {
 		register int i;
