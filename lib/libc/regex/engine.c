@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.6 2002/05/25 09:11:02 deraadt Exp $	*/
+/*	$OpenBSD: engine.c,v 1.7 2003/06/02 20:18:36 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -16,11 +16,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -40,7 +36,7 @@
  */
 
 #if defined(SNAMES) && defined(LIBC_SCCS) && !defined(lint)
-static char enginercsid[] = "$OpenBSD: engine.c,v 1.6 2002/05/25 09:11:02 deraadt Exp $";
+static char enginercsid[] = "$OpenBSD: engine.c,v 1.7 2003/06/02 20:18:36 millert Exp $";
 #endif /* SNAMES and LIBC_SCCS and not lint */
 
 /*

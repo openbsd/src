@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.9 2003/05/01 21:11:21 avsm Exp $	*/
+/*	$OpenBSD: history.c,v 1.10 2003/06/02 20:18:40 millert Exp $	*/
 /*	$NetBSD: history.c,v 1.5 1997/04/11 17:52:46 christos Exp $	*/
 
 /*-
@@ -16,11 +16,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -41,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)history.c	8.1 (Berkeley) 6/4/93";
 #else
-static const char rcsid[] = "$OpenBSD: history.c,v 1.9 2003/05/01 21:11:21 avsm Exp $";
+static const char rcsid[] = "$OpenBSD: history.c,v 1.10 2003/06/02 20:18:40 millert Exp $";
 #endif
 #endif /* not lint && not SCCSID */
 

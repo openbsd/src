@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_init.c,v 1.28 2003/01/28 04:58:00 marc Exp $	*/
+/*	$OpenBSD: res_init.c,v 1.29 2003/06/02 20:18:36 millert Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1989, 1993
@@ -14,11 +14,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- * 	This product includes software developed by the University of
- * 	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -64,7 +60,7 @@
 static char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
 static char rcsid[] = "$From: res_init.c,v 8.7 1996/09/28 06:51:07 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: res_init.c,v 1.28 2003/01/28 04:58:00 marc Exp $";
+static char rcsid[] = "$OpenBSD: res_init.c,v 1.29 2003/06/02 20:18:36 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
