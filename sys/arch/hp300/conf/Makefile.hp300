@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.hp300,v 1.10 1997/01/12 15:12:14 downsj Exp $
+#	$OpenBSD: Makefile.hp300,v 1.11 1997/01/18 15:30:10 niklas Exp $
 #	$NetBSD: Makefile.hp300,v 1.45 1996/12/01 06:12:30 jonathan Exp $
 
 # Makefile for OpenBSD
@@ -41,7 +41,7 @@ AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-n -Ttext 0 -e start
 STRIPFLAGS=	-d
 
-HOSTED_CC=	${CC}
+HOSTCC=	${CC}
 HOSTED_CPPFLAGS=${CPPFLAGS:S/^-nostdinc$//}
 HOSTED_CFLAGS=	${CFLAGS}
 
@@ -70,7 +70,7 @@ LIBCOMPAT=	${COMPATLIB_PROF}
 NORMAL_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
 NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
 
-HOSTED_C=	${HOSTED_CC} ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} -c $<
+HOSTED_C=	${HOSTCC} ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} -c $<
 
 %OBJS
 
@@ -107,7 +107,7 @@ assym.h: genassym
 	./genassym >assym.h
 
 genassym: genassym.o
-	${CC} -o $@ genassym.o
+	${HOSTCC} -o $@ genassym.o
 
 genassym.o: ${HP300}/hp300/genassym.c
 	${HOSTED_C}
