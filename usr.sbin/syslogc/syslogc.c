@@ -1,4 +1,4 @@
-/* $OpenBSD: syslogc.c,v 1.5 2004/04/13 01:10:05 djm Exp $ */
+/* $OpenBSD: syslogc.c,v 1.6 2004/06/25 19:11:38 djm Exp $ */
 
 /*
  * Copyright (c) 2004 Damien Miller
@@ -31,14 +31,34 @@
 
 #define MAX_MEMBUF_NAME	64	/* Max length of membuf log name */
 
+/*
+ * Client protocol NB. all numeric fields in network byte order
+ */
+#define CTL_VERSION		0
+
+/* Request */
 struct ctl_cmd {
+	u_int32_t	version;
 #define CMD_READ	1	/* Read out log */
 #define CMD_READ_CLEAR	2	/* Read and clear log */
 #define CMD_CLEAR	3	/* Clear log */
 #define CMD_LIST	4	/* List available logs */
-	int	cmd;
-	char	logname[MAX_MEMBUF_NAME];
+#define CMD_FLAGS	5	/* Query flags only */
+	u_int32_t	cmd;
+	char		logname[MAX_MEMBUF_NAME];
 };
+
+/* Reply */
+struct ctl_reply_hdr {
+	u_int32_t	version;
+#define CTL_HDR_FLAG_OVERFLOW	0x01
+	u_int32_t	flags;
+	/* Reply text follows, up to MAX_MEMBUF long */
+};
+
+/* Protocol parameters - must match syslogd */
+#define CTL_VERSION		0
+#define CTL_HDR_LEN		8
 
 static void
 usage(void)
@@ -56,16 +76,19 @@ main(int argc, char **argv)
 	char buf[8192];
 	struct sockaddr_un ctl;
 	socklen_t ctllen;
-	int ctlsock, ch;
+	int ctlsock, ch, oflag, rval;
 	FILE *ctlf;
 	extern char *optarg;
 	extern int optind;
 	struct ctl_cmd cc;
+	struct ctl_reply_hdr rr;
+	u_int32_t header[2];
 
 	memset(&cc, '\0', sizeof(cc));
 
 	ctlsock_path = DEFAULT_CTLSOCK;
-	while ((ch = getopt(argc, argv, "Cchqs:")) != -1) {
+	rval = oflag = 0;
+	while ((ch = getopt(argc, argv, "Cchoqs:")) != -1) {
 		switch (ch) {
 		case 'C':
 			cc.cmd = CMD_CLEAR;
@@ -75,6 +98,10 @@ main(int argc, char **argv)
 			break;
 		case 'h':
 			usage();
+			break;
+		case 'o':
+			cc.cmd = CMD_FLAGS;
+			oflag = 1;
 			break;
 		case 'q':
 			cc.cmd = CMD_LIST;
@@ -112,6 +139,9 @@ main(int argc, char **argv)
 		err(1, "connect: %s", ctl.sun_path);
 	if ((ctlf = fdopen(ctlsock, "r+")) == NULL)
 		err(1, "fdopen");
+
+	cc.version = htonl(CTL_VERSION);
+	cc.cmd = htonl(cc.cmd);
 	/* Send command */
 	if (fwrite(&cc, sizeof(cc), 1, ctlf) != 1)
 		err(1, "fwrite");
@@ -119,12 +149,24 @@ main(int argc, char **argv)
 	fflush(ctlf);
 	setlinebuf(ctlf);
 
+	/* Fetch header */
+	if (fread(&rr, sizeof(rr), 1, ctlf) != 1)
+		err(1, "fread header");
+
+	if (ntohl(rr.version) != CTL_VERSION)
+		err(1, "unsupported syslogd version");
+
 	/* Write out reply */
 	while((fgets(buf, sizeof(buf), ctlf)) != NULL)
 		fputs(buf, stdout);
 
+	if (oflag && (ntohl(rr.flags) & CTL_HDR_FLAG_OVERFLOW)) {
+		printf("%s has overflowed\n", cc.logname);
+		rval = 1;
+	}
+
 	fclose(ctlf);
 	close(ctlsock);
 
-	exit(0);
+	exit(rval);
 }

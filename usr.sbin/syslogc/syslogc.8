@@ -1,4 +1,4 @@
-.\"	$OpenBSD: syslogc.8,v 1.1 2004/01/04 08:30:21 djm Exp $
+.\"	$OpenBSD: syslogc.8,v 1.2 2004/06/25 19:11:38 djm Exp $
 .\"
 .\" Copyright (c) 2004 Damien Miller
 .\"
@@ -21,7 +21,7 @@
 .Nd collect messages from syslog memory buffer
 .Sh SYNOPSIS
 .Nm syslogc
-.Op Fl Ccq
+.Op Fl Ccoq
 .Op Fl s Ar reporting_socket
 .Ar logname
 .Nm syslogc
@@ -59,6 +59,11 @@ The options are as follows:
 Request that the log buffer be cleared without reading it.
 .It Fl c
 Request that the log buffer be cleared once it has been read.
+.It Fl o
+Check whether the specified log has overflowed.
+If the log has overflowed, then a message will be printed to
+.Xr stdout 4
+and the exit status will be set to 1.
 .It Fl q
 Request a list of available logs.
 .It Fl s Ar reporting_socket
