@@ -1,4 +1,4 @@
-#	$OpenBSD: inter.phone,v 1.17 2001/07/14 01:51:25 maja Exp $
+#	$OpenBSD: inter.phone,v 1.18 2001/07/15 19:42:17 mickey Exp $
 #	@(#)inter.phone	8.1 (Berkeley) 6/9/93
 #	$FreeBSD-Id: inter.phone,v 1.15 1997/02/22 13:56:06 peter Exp $
 #
@@ -1251,13 +1251,27 @@
 370:58:Kretinga:Lithuania
 370:59:Nida:Lithuania
 370:60:Varena:Lithuania
+370:610:cellular mobile (GSM-1, Omnitel):Lithuania
+370:611:cellular mobile (GSM-1, Omnitel):Lithuania
+370:650:cellular mobile (GSM-2, Bite):Lithuania
+370:670:cellular mobile (GSM-3, Tele2):Lithuania
 370:66:Snieckus, Visaginas:Lithuania
 370:68:Lazdijai:Lithuania
 370:69:Silale:Lithuania
 370:70:Zarasai:Lithuania
 370:71:Pasvalys:Lithuania
 370:78:Rokiskis:Lithuania
-370:90:cellular mobile (NMT-450):Lithuania
+370:80:cellular mobile (GSM-1, Omnitel):Lithuania
+370:81:cellular mobile (GSM-2, Bite):Lithuania
+370:82:cellular mobile (GSM-1, Omnitel):Lithuania
+370:83:cellular mobile (GSM-3, Tele2):Lithuania
+370:84:cellular mobile (GSM-3, Tele2):Lithuania
+370:85:cellular mobile (GSM-2, Bite):Lithuania
+370:86:cellular mobile (GSM-1, Omnitel):Lithuania
+370:87:cellular mobile (GSM-1, Omnitel):Lithuania
+370:88:cellular mobile (GSM-1, Omnitel):Lithuania
+370:89:cellular mobile (GSM-2, Bite):Lithuania
+370:90:cellular mobile (NMT-450, Comliet):Lithuania
 370:91:Pakruojis:Lithuania
 370:92:Radviliskis:Lithuania
 370:93:Mazeikiai:Lithuania
@@ -1265,8 +1279,8 @@
 370:95:Naujoji Akmene:Lithuania
 370:96:Joniskis:Lithuania
 370:97:Kelme:Lithuania
-370:98:cellular mobile (GSM-2; 5D numbers):Lithuania
-370:99:cellular mobile (GSM-1; 5D numbers):Lithuania
+370:98:cellular mobile (GSM-1, Omnitel):Lithuania
+370:99:cellular mobile (GSM-2, Bite):Lithuania
 371:2:Riga:Latvia
 371:2:Jurmala:Latvia
 371:2:Olaine:Latvia
