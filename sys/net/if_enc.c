@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_enc.c,v 1.30 2000/04/18 06:41:23 angelos Exp $	*/
+/*	$OpenBSD: if_enc.c,v 1.31 2000/06/20 04:17:31 itojun Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -71,6 +71,7 @@
 #endif
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
+#include <netinet6/nd6.h>
 #endif /* INET6 */
 
 #ifdef ISO
@@ -129,6 +130,9 @@ encattach(int nenc)
 
 #if NBPFILTER > 0
 	bpfattach(&encif[i].sc_if.if_bpf, ifp, DLT_ENC, ENC_HDRLEN);
+#endif
+#ifdef INET6
+	nd6_ifattach(ifp);
 #endif
     }
 }
