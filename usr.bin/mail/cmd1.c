@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd1.c,v 1.24 2003/06/03 02:56:11 millert Exp $	*/
+/*	$OpenBSD: cmd1.c,v 1.25 2003/12/03 20:59:45 millert Exp $	*/
 /*	$NetBSD: cmd1.c,v 1.9 1997/07/09 05:29:48 mikel Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static const char sccsid[] = "@(#)cmd1.c	8.2 (Berkeley) 4/20/95";
 #else
-static const char rcsid[] = "$OpenBSD: cmd1.c,v 1.24 2003/06/03 02:56:11 millert Exp $";
+static const char rcsid[] = "$OpenBSD: cmd1.c,v 1.25 2003/12/03 20:59:45 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -187,11 +187,12 @@ void
 printhead(int mesg)
 {
 	struct message *mp;
-	char headline[LINESIZE], wcount[LINESIZE], *subjline, dispc, curind;
-	char visline[LINESIZE];
-	char pbuf[BUFSIZ];
+	char headline[LINESIZE], *subjline, dispc, curind;
+	char visname[LINESIZE], vissub[LINESIZE];
+	char pbuf[LINESIZE];
+	char fmtline[LINESIZE];
+	const char *fmt;
 	struct headline hl;
-	int subjlen;
 	char *name;
 	char *to, *from;
 	struct name *np;
@@ -199,8 +200,9 @@ printhead(int mesg)
 
 	mp = &message[mesg-1];
 	(void)readline(setinput(mp), headline, LINESIZE, NULL);
-	if ((subjline = hfield("subject", mp)) == NULL)
-		subjline = hfield("subj", mp);
+	if ((subjline = hfield("subject", mp)) == NULL &&
+	    (subjline = hfield("subj", mp)) == NULL)
+		subjline = "";
 	/*
 	 * Bletch!
 	 */
@@ -217,9 +219,6 @@ printhead(int mesg)
 	if (mp->m_flag & MBOX)
 		dispc = 'M';
 	parse(headline, &hl, pbuf);
-	(void)snprintf(wcount, sizeof(wcount), "%4d/%-5d", mp->m_lines,
-	    mp->m_size);
-	subjlen = screenwidth - 44 - strlen(wcount);
 	from = nameof(mp, 0);
 	to = skin(hfield("to", mp));
 	np = extract(from, GTO);
@@ -233,19 +232,16 @@ printhead(int mesg)
 	else
 		/* from me - show TO */
 		name = value("showto") != NULL && to ? to : from;
-	if (subjline == NULL || subjlen < 0) { /* pretty pathetic */
-		subjline="";
-		subjlen=0;
-	}
-	printf("%c%c%3d ", curind, dispc, mesg);
-	strnvis(visline, name, sizeof(visline), VIS_SAFE|VIS_NOSLASH);
+	strnvis(visname, name, sizeof(visname), VIS_SAFE|VIS_NOSLASH);
 	if (name == to)
-		printf("TO %-14.14s", visline);
+		fmt = "%c%c%3d TO %-14.14s  %16.16s %4d/%-5d %s";
 	else
-		printf("%-17.17s", visline);
-	/* hl.l_date was sanity-checked when read in.  wcount we just made. */
-	strnvis(visline, subjline, sizeof(visline), VIS_SAFE|VIS_NOSLASH);
-	printf("  %16.16s %s %.*s\n", hl.l_date, wcount, subjlen, visline);
+		fmt = "%c%c%3d %-17.17s  %16.16s %4d/%-5d %s";
+	strnvis(vissub, subjline, sizeof(vissub), VIS_SAFE|VIS_NOSLASH);
+	/* hl.l_date was sanity-checked when read in.  */
+	snprintf(fmtline, sizeof(fmtline), fmt, curind, dispc, mesg, visname,
+	    hl.l_date, mp->m_lines, mp->m_size, vissub);
+	printf("%.*s\n", screenwidth, fmtline);
 }
 
 /*
