@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_exec.c,v 1.6 1998/02/22 01:07:56 niklas Exp $	*/
+/*	$OpenBSD: linux_exec.c,v 1.7 1998/03/06 22:14:01 niklas Exp $	*/
 /*	$NetBSD: linux_exec.c,v 1.13 1996/04/05 00:01:10 christos Exp $	*/
 
 /*
@@ -387,7 +387,8 @@ linux_elf_probe(p, epp, itp, pos, os)
 	}
 	epp->ep_emul = &emul_linux_elf;
 	*pos = ELF32_NO_ADDR;
-	*os = OOS_LINUX;
+	if (*os == OOS_NULL)
+		*os = OOS_LINUX;
 	return (0);
 }
 
