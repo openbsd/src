@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.38 2000/03/31 05:18:46 rahnds Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.39 2000/04/01 15:30:00 rahnds Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -35,7 +35,6 @@
 
 #include <sys/param.h>
 #include <sys/buf.h>
-#include <sys/timeout.h>
 #include <sys/exec.h>
 #include <sys/malloc.h>
 #include <sys/map.h>
@@ -44,6 +43,9 @@
 #include <sys/msgbuf.h>
 #include <sys/proc.h>
 #include <sys/reboot.h>
+#include <sys/conf.h>
+#include <sys/file.h>
+#include <sys/callout.h>
 #include <sys/syscallargs.h>
 #include <sys/syslog.h>
 #include <sys/extent.h>
@@ -515,9 +517,12 @@ cpu_startup()
 #endif
 	
 	/*
-	 * Initialize timeouts.
+	 * Initialize callouts
 	 */
-	timeout_init();
+	callfree = callout;
+	for (i = 1; i < ncallout; i++) {
+		callout[i-1].c_next = &callout[i];
+	}
 	
 #ifdef UVM
 	printf("avail mem = %d\n", ptoa(uvmexp.free));
@@ -562,7 +567,7 @@ allocsys(v)
 #define	valloc(name, type, num) \
 	v = (caddr_t)(((name) = (type *)v) + (num))
 
-	valloc(timeouts, struct timeout, ntimeout);
+        valloc(callout, struct callout, ncallout);
 #ifdef	SYSVSHM
 	valloc(shmsegs, struct shmid_ds, shminfo.shmmni);
 #endif
