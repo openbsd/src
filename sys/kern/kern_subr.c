@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_subr.c,v 1.5 1998/05/11 05:41:59 deraadt Exp $	*/
+/*	$OpenBSD: kern_subr.c,v 1.6 1998/07/28 00:13:08 millert Exp $	*/
 /*	$NetBSD: kern_subr.c,v 1.15 1996/04/09 17:21:56 ragge Exp $	*/
 
 /*
@@ -111,11 +111,19 @@ ureadc(c, uio)
 {
 	register struct iovec *iov;
 
-	if (uio->uio_resid <= 0)
-		panic("ureadc: non-positive resid");
+	if (uio->uio_resid == 0)
+#ifdef DIAGNOSTIC
+		panic("ureadc: zero resid");
+#else
+		return (EINVAL);
+#endif
 again:
 	if (uio->uio_iovcnt <= 0)
+#ifdef DIAGNOSTIC
 		panic("ureadc: non-positive iovcnt");
+#else
+		return (EINVAL);
+#endif
 	iov = uio->uio_iov;
 	if (iov->iov_len <= 0) {
 		uio->uio_iovcnt--;

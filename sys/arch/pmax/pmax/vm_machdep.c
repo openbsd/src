@@ -217,7 +217,7 @@ cpu_coredump(p, vp, cred, chdr)
 
 	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cseg, chdr->c_seghdrsize,
 	    (off_t)chdr->c_hdrsize, UIO_SYSSPACE,
-	    IO_NODELOCKED|IO_UNIT, cred, (int *)NULL, p);
+	    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
 	if (error)
 		return error;
 
@@ -225,8 +225,7 @@ cpu_coredump(p, vp, cred, chdr)
 			(caddr_t)(&(p -> p_addr -> u_pcb.pcb_regs)),
 			(off_t)chdr -> c_cpusize,
 	    		(off_t)(chdr->c_hdrsize + chdr->c_seghdrsize),
-			UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT,
-			cred, (int *)NULL, p);
+			UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, NULL, p);
 
 	if (!error)
 		chdr->c_nseg++;

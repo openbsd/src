@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.21 1998/02/14 10:55:09 deraadt Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.22 1998/07/28 00:13:07 millert Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -341,7 +341,8 @@ sosend(so, addr, uio, top, control, flags)
 	struct proc *p = curproc;		/* XXX */
 	struct mbuf **mp;
 	register struct mbuf *m;
-	register long space, len, resid;
+	register long space, len;
+	register quad_t resid;
 	int clen = 0, error, s, dontroute, mlen;
 	int atomic = sosendallatonce(so) || top;
 
@@ -350,7 +351,7 @@ sosend(so, addr, uio, top, control, flags)
 	else
 		resid = top->m_pkthdr.len;
 	/*
-	 * In theory resid should be unsigned.
+	 * In theory resid should be unsigned (since uio->uio_resid is).
 	 * However, space must be signed, as it might be less than 0
 	 * if we over-committed, and we must use a signed comparison
 	 * of space and resid.  On the other hand, a negative resid
@@ -523,7 +524,7 @@ soreceive(so, paddr, uio, mp0, controlp, flagsp)
 	struct protosw *pr = so->so_proto;
 	struct mbuf *nextrecord;
 	int moff, type = 0;
-	int orig_resid = uio->uio_resid;
+	size_t orig_resid = uio->uio_resid;
 
 	mp = mp0;
 	if (paddr)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.1.1.1 1997/02/06 16:02:46 pefo Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.2 1998/07/28 00:13:58 millert Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  * from: Utah Hdr: vm_machdep.c 1.21 91/04/06
  *
  *	from: @(#)vm_machdep.c	8.3 (Berkeley) 1/4/94
- *      $Id: vm_machdep.c,v 1.1.1.1 1997/02/06 16:02:46 pefo Exp $
+ *      $Id: vm_machdep.c,v 1.2 1998/07/28 00:13:58 millert Exp $
  */
 
 
@@ -197,8 +197,7 @@ cpu_coredump(p, vp, cred, core)
 		CPU_SaveCurFPState(p);
 
 	return (vn_rdwr(UIO_WRITE, vp, (caddr_t)p->p_addr, ctob(UPAGES),
-	    (off_t)0, UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, (int *)NULL,
-	    p));
+	    (off_t)0, UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, NULL, p));
 }
 
 /*

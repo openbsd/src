@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_exec.c,v 1.7 1998/03/06 22:14:01 niklas Exp $	*/
+/*	$OpenBSD: linux_exec.c,v 1.8 1998/07/28 00:13:23 millert Exp $	*/
 /*	$NetBSD: linux_exec.c,v 1.13 1996/04/05 00:01:10 christos Exp $	*/
 
 /*
@@ -424,7 +424,8 @@ linux_sys_uselib(p, v, retval)
 	struct vnode *vp;
 	struct exec hdr;
 	struct exec_vmcmd_set vcset;
-	int rem, i, magic, error;
+	int i, magic, error;
+	size_t rem;
 
 	sg = stackgap_init(p->p_emul);
 	LINUX_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));

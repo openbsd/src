@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.15 1998/01/15 01:24:40 csapuntz Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.16 1998/07/28 00:13:04 millert Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -228,7 +228,7 @@ vn_rdwr(rw, vp, base, len, offset, segflg, ioflg, cred, aresid, p)
 	enum uio_seg segflg;
 	int ioflg;
 	struct ucred *cred;
-	int *aresid;
+	size_t *aresid;
 	struct proc *p;
 {
 	struct uio auio;
@@ -271,7 +271,8 @@ vn_read(fp, uio, cred)
 	struct ucred *cred;
 {
 	register struct vnode *vp = (struct vnode *)fp->f_data;
-	int count, error = 0;
+	int error = 0;
+	size_t count;
 	struct proc *p = uio->uio_procp;
 
 	VOP_LEASE(vp, uio->uio_procp, cred, LEASE_READ);
@@ -297,7 +298,8 @@ vn_write(fp, uio, cred)
 {
 	register struct vnode *vp = (struct vnode *)fp->f_data;
 	struct proc *p = uio->uio_procp;
-	int count, error, ioflag = IO_UNIT;
+	int error, ioflag = IO_UNIT;
+	size_t count;
 
 	if (vp->v_type == VREG && (fp->f_flag & O_APPEND))
 		ioflag |= IO_APPEND;

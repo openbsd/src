@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.12 1998/02/09 06:29:07 tholo Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.13 1998/07/28 00:12:58 millert Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -102,8 +102,6 @@ sys_read(p, v, retval)
 	auio.uio_rw = UIO_READ;
 	auio.uio_segflg = UIO_USERSPACE;
 	auio.uio_procp = p;
-	if (auio.uio_resid < 0)
-		return EINVAL;
 #ifdef KTRACE
 	/*
 	 * if tracing, save a copy of iovec
@@ -157,6 +155,8 @@ sys_readv(p, v, retval)
 	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL ||
 	    (fp->f_flag & FREAD) == 0)
 		return (EBADF);
+	if (SCARG(uap, iovcnt) <= 0)
+		return (EINVAL);
 	/* note: can't use iovlen until iovcnt is validated */
 	iovlen = SCARG(uap, iovcnt) * sizeof (struct iovec);
 	if (SCARG(uap, iovcnt) > UIO_SMALLIOV) {
@@ -252,8 +252,6 @@ sys_write(p, v, retval)
 	auio.uio_rw = UIO_WRITE;
 	auio.uio_segflg = UIO_USERSPACE;
 	auio.uio_procp = p;
-	if (auio.uio_resid < 0)
-		return EINVAL;
 #ifdef KTRACE
 	/*
 	 * if tracing, save a copy of iovec
@@ -310,6 +308,8 @@ sys_writev(p, v, retval)
 	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL ||
 	    (fp->f_flag & FWRITE) == 0)
 		return (EBADF);
+	if (SCARG(uap, iovcnt) <= 0)
+		return (EINVAL);
 	/* note: can't use iovlen until iovcnt is validated */
 	iovlen = SCARG(uap, iovcnt) * sizeof (struct iovec);
 	if (SCARG(uap, iovcnt) > UIO_SMALLIOV) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.8 1997/03/31 00:24:17 downsj Exp $ */
+/*	$OpenBSD: vm_machdep.c,v 1.9 1998/07/28 00:13:44 millert Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -144,8 +144,7 @@ cpu_coredump(p, vp, cred, chdr)
 	struct core *chdr;
 {
 	return (vn_rdwr(UIO_WRITE, vp, (caddr_t) p->p_addr, USPACE,
-	    (off_t)0, UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, (int *) NULL,
-	    p));
+	    (off_t)0, UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, NULL, p));
 }
 
 /*

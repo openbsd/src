@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_unix.c,v 1.8 1997/11/06 05:59:39 csapuntz Exp $	*/
+/*	$OpenBSD: vm_unix.c,v 1.9 1998/07/28 00:13:21 millert Exp $	*/
 /*	$NetBSD: vm_unix.c,v 1.19 1996/02/10 00:08:14 christos Exp $	*/
 
 /*
@@ -234,7 +234,7 @@ vm_coredump(p, vp, cred, chdr)
 		error = vn_rdwr(UIO_WRITE, vp,
 		    (caddr_t)&cseg, chdr->c_seghdrsize,
 		    offset, UIO_SYSSPACE,
-		    IO_NODELOCKED|IO_UNIT, cred, (int *) NULL, p);
+		    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
 		if (error)
 			break;
 
@@ -242,7 +242,7 @@ vm_coredump(p, vp, cred, chdr)
 		error = vn_rdwr(UIO_WRITE, vp,
 		    (caddr_t)cseg.c_addr, (int)cseg.c_size,
 		    offset, UIO_USERSPACE,
-		    IO_NODELOCKED|IO_UNIT, cred, (int *) NULL, p);
+		    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
 		if (error)
 			break;
 

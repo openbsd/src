@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.14 1998/03/14 19:33:03 millert Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.15 1998/07/28 00:13:10 millert Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -469,7 +469,7 @@ int	vrecycle __P((struct vnode *vp, struct simplelock *inter_lkp,
 	    struct proc *p));
 int 	vn_rdwr __P((enum uio_rw rw, struct vnode *vp, caddr_t base,
 	    int len, off_t offset, enum uio_seg segflg, int ioflg,
-	    struct ucred *cred, int *aresid, struct proc *p));
+	    struct ucred *cred, size_t *aresid, struct proc *p));
 int	vn_lock __P((struct vnode *vp, int flags, struct proc *p));
 int	vop_noislocked __P((void *));
 int	vop_nolock __P((void *));

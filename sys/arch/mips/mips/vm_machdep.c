@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.2 1998/03/18 12:07:46 pefo Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.3 1998/07/28 00:13:42 millert Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -213,7 +213,7 @@ cpu_coredump(p, vp, cred, chdr)
 
 	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cseg, chdr->c_seghdrsize,
 	    (off_t)chdr->c_hdrsize, UIO_SYSSPACE,
-	    IO_NODELOCKED|IO_UNIT, cred, (int *)NULL, p);
+	    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
 	if (error)
 		return error;
 
@@ -222,7 +222,7 @@ cpu_coredump(p, vp, cred, chdr)
 			(off_t)chdr -> c_cpusize,
 	    		(off_t)(chdr->c_hdrsize + chdr->c_seghdrsize),
 			UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT,
-			cred, (int *)NULL, p);
+			cred, NULL, p);
 
 	if (!error)
 		chdr->c_nseg++;

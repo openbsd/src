@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.18 1997/12/11 04:25:46 csapuntz Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.19 1998/07/28 00:13:18 millert Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -1463,7 +1463,7 @@ ufs_symlink(v)
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	} else
 		error = vn_rdwr(UIO_WRITE, vp, ap->a_target, len, (off_t)0,
-		    UIO_SYSSPACE, IO_NODELOCKED, ap->a_cnp->cn_cred, (int *)0,
+		    UIO_SYSSPACE, IO_NODELOCKED, ap->a_cnp->cn_cred, NULL,
 		    (struct proc *)0);
 	vput(vp);
 	return (error);

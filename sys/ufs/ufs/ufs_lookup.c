@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_lookup.c,v 1.10 1997/12/11 04:25:45 csapuntz Exp $	*/
+/*	$OpenBSD: ufs_lookup.c,v 1.11 1998/07/28 00:13:17 millert Exp $	*/
 /*	$NetBSD: ufs_lookup.c,v 1.7 1996/02/09 22:36:06 christos Exp $	*/
 
 /*
@@ -1026,7 +1026,8 @@ ufs_dirempty(ip, parentino, cred)
 	off_t off, m;
 	struct dirtemplate dbuf;
 	struct direct *dp = (struct direct *)&dbuf;
-	int error, count, namlen;
+	int error, namlen;
+	size_t count;
 #define	MINDIRSIZ (sizeof (struct dirtemplate) / 2)
 
 	m = ip->i_ffs_size;
@@ -1103,7 +1104,7 @@ ufs_checkpath(source, target, cred)
 		}
 		error = vn_rdwr(UIO_READ, vp, (caddr_t)&dirbuf,
 			sizeof (struct dirtemplate), (off_t)0, UIO_SYSSPACE,
-			IO_NODELOCKED, cred, (int *)0, (struct proc *)0);
+			IO_NODELOCKED, cred, NULL, (struct proc *)0);
 		if (error != 0)
 			break;
 #		if (BYTE_ORDER == LITTLE_ENDIAN)

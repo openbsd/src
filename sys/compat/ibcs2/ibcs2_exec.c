@@ -1,4 +1,4 @@
-/*	$OpenBSD: ibcs2_exec.c,v 1.7 1997/02/01 21:49:48 deraadt Exp $	*/
+/*	$OpenBSD: ibcs2_exec.c,v 1.8 1998/07/28 00:13:24 millert Exp $	*/
 /*	$NetBSD: ibcs2_exec.c,v 1.12 1996/10/12 02:13:52 thorpej Exp $	*/
 
 /*
@@ -285,7 +285,8 @@ coff_find_section(p, vp, fp, sh, s_type)
 	struct coff_scnhdr *sh;
 	int s_type;
 {
-	int i, pos, resid, siz, error;
+	int i, pos, error;
+	size_t siz, resid;
 	
 	pos = COFF_HDR_SIZE;
 	for (i = 0; i < fp->f_nscns; i++, pos += sizeof(struct coff_scnhdr)) {
@@ -299,7 +300,7 @@ coff_find_section(p, vp, fp, sh, s_type)
 		}
 		siz -= resid;
 		if (siz != sizeof(struct coff_scnhdr)) {
-			DPRINTF(("incomplete read: hdr %d ask=%d, rem=%d got %d\n",
+			DPRINTF(("incomplete read: hdr %d ask=%d, rem=%u got %u\n",
 				 s_type, sizeof(struct coff_scnhdr),
 				 resid, siz));
 			return ENOEXEC;
@@ -415,7 +416,7 @@ n	 */
 	/* load any shared libraries */
 	error = coff_find_section(p, epp->ep_vp, fp, &sh, COFF_STYP_SHLIB);
 	if (!error) {
-		int resid;
+		size_t resid;
 		struct coff_slhdr *slhdr;
 		char buf[128], *bufp;	/* FIXME */
 		int len = sh.s_size, path_index, entry_len;
@@ -467,8 +468,8 @@ coff_load_shlib(p, path, epp)
 	char *path;
 	struct exec_package *epp;
 {
-	int error, siz, resid;
-	int taddr, tsize, daddr, dsize, offset;
+	int error, taddr, tsize, daddr, dsize, offset;
+	size_t siz, resid;
 	struct nameidata nd;
 	struct coff_filehdr fh, *fhp = &fh;
 	struct coff_scnhdr sh, *shp = &sh;
@@ -497,7 +498,7 @@ coff_load_shlib(p, path, epp)
 	}
 	siz -= resid;
 	if (siz != sizeof(struct coff_filehdr)) {
-	    DPRINTF(("coff_load_shlib: incomplete read: ask=%d, rem=%d got %d\n",
+	    DPRINTF(("coff_load_shlib: incomplete read: ask=%d, rem=%u got %u\n",
 		     sizeof(struct coff_filehdr), resid, siz));
 	    vrele(nd.ni_vp);
 	    return ENOEXEC;
@@ -603,7 +604,8 @@ exec_ibcs2_xout_prep_nmagic(p, epp, xp, xep)
 	struct xexec *xp;
 	struct xext *xep;
 {
-	int error, resid, nseg, i;
+	int error, nseg, i;
+	size_t resid;
 	long baddr, bsize;
 	struct xseg *xs;
 

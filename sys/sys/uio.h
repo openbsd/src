@@ -1,4 +1,4 @@
-/*	$OpenBSD: uio.h,v 1.4 1998/05/11 08:00:46 deraadt Exp $	*/
+/*	$OpenBSD: uio.h,v 1.5 1998/07/28 00:13:12 millert Exp $	*/
 /*	$NetBSD: uio.h,v 1.12 1996/02/09 18:25:45 christos Exp $	*/
 
 /*
@@ -57,7 +57,7 @@ struct uio {
 	struct	iovec *uio_iov;
 	int	uio_iovcnt;
 	off_t	uio_offset;
-	int	uio_resid;
+	size_t	uio_resid;
 	enum	uio_seg uio_segflg;
 	enum	uio_rw uio_rw;
 	struct	proc *uio_procp;

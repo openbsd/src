@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_lookup.c,v 1.4 1998/01/12 00:45:06 csapuntz Exp $	*/
+/*	$OpenBSD: ext2fs_lookup.c,v 1.5 1998/07/28 00:13:14 millert Exp $	*/
 /*	$NetBSD: ext2fs_lookup.c,v 1.1 1997/06/11 09:33:59 bouyer Exp $	*/
 
 /* 
@@ -992,7 +992,8 @@ ext2fs_dirempty(ip, parentino, cred)
 	register off_t off;
 	struct ext2fs_dirtemplate dbuf;
 	register struct ext2fs_direct *dp = (struct ext2fs_direct *)&dbuf;
-	int error, count, namlen;
+	int error, namlen;
+	size_t count;
 		 
 #define	MINDIRSIZ (sizeof (struct ext2fs_dirtemplate) / 2)
 
@@ -1062,7 +1063,7 @@ ext2fs_checkpath(source, target, cred)
 		}
 		error = vn_rdwr(UIO_READ, vp, (caddr_t)&dirbuf,
 			sizeof (struct ext2fs_dirtemplate), (off_t)0, UIO_SYSSPACE,
-			IO_NODELOCKED, cred, (int *)0, (struct proc *)0);
+			IO_NODELOCKED, cred, NULL, (struct proc *)0);
 		if (error != 0)
 			break;
 		namlen = dirbuf.dotdot_namlen;

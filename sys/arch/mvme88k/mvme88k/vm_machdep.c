@@ -40,7 +40,7 @@
  *	from: Utah $Hdr: vm_machdep.c 1.21 91/04/06$
  *	from: @(#)vm_machdep.c	7.10 (Berkeley) 5/7/91
  *	vm_machdep.c,v 1.3 1993/07/07 07:09:32 cgd Exp
- *	$Id: vm_machdep.c,v 1.3 1997/03/03 20:21:54 rahnds Exp $
+ *	$Id: vm_machdep.c,v 1.4 1998/07/28 00:13:46 millert Exp $
  */
 
 #include <sys/param.h>
@@ -174,8 +174,7 @@ cpu_coredump(struct proc *p, struct vnode *vp, struct ucred *cred, struct core *
 {
 
 	return (vn_rdwr(UIO_WRITE, vp, (caddr_t) p->p_addr, ctob(UPAGES),
-	    (off_t)0, UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, (int *)NULL,
-	    p));
+	    (off_t)0, UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, NULL, p));
 }
 
 /*

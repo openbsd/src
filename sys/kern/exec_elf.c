@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.21 1998/03/06 21:49:50 niklas Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.22 1998/07/28 00:13:02 millert Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -317,7 +317,7 @@ elf_read_from(p, vp, off, buf, size)
 	int size;
 {
 	int error;
-	int resid;
+	size_t resid;
 
 	if ((error = vn_rdwr(UIO_READ, vp, buf, size, off, UIO_SYSSPACE,
 	    IO_NODELOCKED, p->p_ucred, &resid, p)) != 0)
