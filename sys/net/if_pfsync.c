@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.10 2003/12/15 21:49:38 deraadt Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.11 2003/12/16 08:17:56 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -508,6 +508,14 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 		if (pfsyncr.pfsyncr_syncif[0] == 0) {
 			sc->sc_sync_ifp = NULL;
+			if (sc->sc_mbuf_net != NULL) {
+				/* Don't keep stale pfsync packets around. */
+				s = splnet();
+				m_freem(sc->sc_mbuf_net);
+				sc->sc_mbuf_net = NULL;
+				sc->sc_statep_net.s = NULL;
+				splx(s);
+			}
 			break;
 		}
 		if ((sifp = ifunit(pfsyncr.pfsyncr_syncif)) == NULL)
@@ -643,6 +651,20 @@ pfsync_pack_state(u_int8_t action, struct pf_state *st)
 	u_long secs;
 	int s, ret = 0;
 	u_int8_t i = 255, newaction = 0;
+
+	/*
+	 * If a packet falls in the forest and there's nobody around to
+	 * hear, does it make a sound?
+	 */
+	if (ifp->if_bpf == NULL && sc->sc_sync_ifp == NULL) {
+		/* Don't leave any stale pfsync packets hanging around. */
+		if (sc->sc_mbuf != NULL) {
+			m_freem(sc->sc_mbuf);
+			sc->sc_mbuf = NULL;
+			sc->sc_statep.s = NULL;
+		}
+		return (0);
+	} 
 
 	if (action >= PFSYNC_ACT_MAX)
 		return (EINVAL);
