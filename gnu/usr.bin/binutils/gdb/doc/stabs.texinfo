@@ -43,7 +43,7 @@ regarded as a program in the language TeX).
 @page
 @tex
 \def\$#1${{#1}}  % Kluge: collect RCS revision info without $...$
-\xdef\manvers{\$Revision: 1.2 $}  % For use in headers, footers too
+\xdef\manvers{\$Revision: 1.3 $}  % For use in headers, footers too
 {\parskip=0pt
 \hfill Cygnus Support\par
 \hfill \manvers\par
@@ -852,9 +852,9 @@ produces the following stabs:
 .stabn 224,0,0,LBE2             # @r{224 is N_RBRAC}
 @end example
 
-@xref{Procedures} for more information on the @code{N_FUN} stab, and
-@ref{Block Structure} for more information on the @code{N_LBRAC} and
-@code{N_RBRAC} stabs.
+For more information on the @code{N_FUN} stab, see @xref{Procedures},
+and for more information on the @code{N_LBRAC} and
+@code{N_RBRAC} stabs, see @ref{Block Structure}.
 
 @node Global Variables
 @section Global Variables
@@ -2016,8 +2016,8 @@ definition narrows the symbol type to structure.
 
 Following the @samp{s} type descriptor is the number of bytes the
 structure occupies, followed by a description of each structure element.
-The structure element descriptions are of the form @var{name:type, bit
-offset from the start of the struct, number of bits in the element}.
+The structure element descriptions are of the form @var{name:type}, @var{bit
+offset from the start of the struct}, @var{number of bits in the element}.
 
 @c FIXME: phony line break.  Can probably be fixed by using an example
 @c with fewer fields.
@@ -2114,8 +2114,8 @@ the stab describes an enumeration, structure, or union tag.  The type
 descriptor @samp{u}, following the @samp{23=} of the type definition,
 narrows it down to a union type definition.  Following the @samp{u} is
 the number of bytes in the union.  After that is a list of union element
-descriptions.  Their format is @var{name:type, bit offset into the
-union, number of bytes for the element;}.
+descriptions.  Their format is @var{name:type}, @var{bit offset into the
+union}, @var{number of bytes for the element;}.
 
 The stab for the union variable is:
 
@@ -3344,7 +3344,7 @@ for more information about their use.
 Variable on the stack; see @ref{Stack Variables}.
 
 @item :
-C++ nested symbol; see @xref{Nested Symbols}
+C++ nested symbol; see @xref{Nested Symbols}.
 
 @item a
 Parameter passed by reference in register; see @ref{Reference Parameters}.

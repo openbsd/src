@@ -1,6 +1,6 @@
 \input texinfo
 @setfilename gdbint.info
-@c $Id: gdbint.texinfo,v 1.3 2002/05/28 09:01:16 mpech Exp $
+@c $Id: gdbint.texinfo,v 1.4 2002/11/06 07:24:03 miod Exp $
 
 @ifinfo
 @format
@@ -42,7 +42,7 @@ regarded as a program in the language TeX).
 @page
 @tex
 \def\$#1${{#1}}  % Kluge: collect RCS revision info without $...$
-\xdef\manvers{\$Revision: 1.3 $}  % For use in headers, footers too
+\xdef\manvers{\$Revision: 1.4 $}  % For use in headers, footers too
 {\parskip=0pt
 \hfill Cygnus Support\par
 \hfill \manvers\par
@@ -1660,7 +1660,7 @@ are compiled in.
 
 @item MALLOC_INCOMPATIBLE
 Define this if the system's prototype for @code{malloc} differs from the
-@sc{ANSI} definition.
+ANSI definition.
 
 @item MMAP_BASE_ADDRESS
 When using HAVE_MMAP, the first mapping should go at this address.

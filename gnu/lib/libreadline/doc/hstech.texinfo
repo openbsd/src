@@ -426,7 +426,7 @@ character.  The default value is 0.
 This should be set to the address of a function that takes two arguments:
 a @code{char *} (@var{string}) and an integer index into that string (@var{i}).
 It should return a non-zero value if the history expansion starting at
-@var{string[i]} should not be performed; zero if the expansion should
+@var{string}[@var{i}] should not be performed; zero if the expansion should
 be done.
 It is intended for use by applications like Bash that use the history
 expansion character for additional purposes.
