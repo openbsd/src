@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.15 1999/06/11 15:51:35 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.16 1999/06/30 18:59:06 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -713,8 +713,14 @@ pmap_bootstrap(vstart, vend)
 	   NB: It sez CR_VTOP, but we (and the TLB handlers) know better ... */
 	mtctl(hpt_table, CR_VTOP);
 
+	/*
+	 * we know that btlb_insert() will round it up to the next
+	 * power of two at least anyway
+	 */
+	for (physmem = 1; physmem < btoc(addr); physmem *= 2);
+
 	/* map the kernel space, which will give us virtual_avail */
-	*vstart = hppa_round_page(addr + totalphysmem *
+	*vstart = hppa_round_page(addr + (totalphysmem - physmem) *
 				  (sizeof(struct pv_entry) * maxproc / 8 +
 				   sizeof(struct vm_page)));
 	if (btlb_insert(kernel_pmap->pmap_space, 0, 0, vstart,
