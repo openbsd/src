@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.78 2001/05/17 17:45:15 jason Exp $
+#	$OpenBSD: GENERIC,v 1.79 2001/06/24 21:19:09 art Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
@@ -298,3 +298,5 @@ hifn*	at pci? dev ? function ?	# Hi/fn 7751 crypto card
 
 #pseudo-device	raid		4	# RAIDframe disk driver
 pseudo-device	crypto		1
+pseudo-device	pf		1	# packetfilter
+

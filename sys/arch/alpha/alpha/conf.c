@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.23 2001/03/08 02:36:01 ericj Exp $	*/
+/*	$OpenBSD: conf.c,v 1.24 2001/06/24 21:19:08 art Exp $	*/
 /*	$NetBSD: conf.c,v 1.16 1996/10/18 21:26:57 cgd Exp $	*/
 
 /*-
@@ -138,6 +138,8 @@ cdev_decl(ulpt);
 cdev_decl(ucom);
 #include "ugen.h"
 cdev_decl(ugen);
+#include "pf.h"
+cdev_decl(pf);
 
 struct cdevsw	cdevsw[] =
 {
@@ -197,6 +199,7 @@ struct cdevsw	cdevsw[] =
 #else
 	cdev_notdef(),			/* 51 */
 #endif
+	cdev_pf_init(NPF, pf),		/* 52: packet filter */
 };
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
 
