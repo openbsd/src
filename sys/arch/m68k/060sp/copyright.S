@@ -1,4 +1,5 @@
 #
+# $OpenBSD: copyright.S,v 1.2 1996/05/30 22:14:01 niklas Exp $
 # $NetBSD: copyright.S,v 1.2 1996/05/16 15:37:49 is Exp $
 #
 

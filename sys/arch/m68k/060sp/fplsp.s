@@ -1,4 +1,5 @@
 #
+# $OpenBSD: fplsp.s,v 1.2 1996/05/30 22:14:11 niklas Exp $
 # $NetBSD: fplsp.s,v 1.2 1996/05/15 19:47:41 is Exp $
 #
 

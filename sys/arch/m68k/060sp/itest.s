@@ -1,4 +1,5 @@
 #
+# $OpenBSD: itest.s,v 1.2 1996/05/30 22:14:54 niklas Exp $
 # $NetBSD: itest.s,v 1.2 1996/05/15 19:48:53 is Exp $
 #
 

@@ -1,4 +1,5 @@
 #
+# $OpenBSD: fskeletn.s,v 1.2 1996/05/30 22:14:31 niklas Exp $
 # $NetBSD: fskeletn.s,v 1.2 1996/05/15 19:48:30 is Exp $
 #
 

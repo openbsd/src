@@ -1,4 +1,5 @@
 #
+# $OpenBSD: ftest.s,v 1.2 1996/05/30 22:14:33 niklas Exp $
 # $NetBSD: ftest.s,v 1.2 1996/05/15 19:48:32 is Exp $
 #
 

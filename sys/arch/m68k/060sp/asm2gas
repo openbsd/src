@@ -1,4 +1,5 @@
 #!/bin/sh
+#	$OpenBSD: asm2gas,v 1.2 1996/05/30 22:13:58 niklas Exp $
 #	$NetBSD: asm2gas,v 1.3 1994/10/26 07:48:49 cgd Exp $
 
 #
