@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftp-proxy.8,v 1.21 2002/07/24 03:22:42 deraadt Exp $
+.\"	$OpenBSD: ftp-proxy.8,v 1.22 2002/10/04 02:47:28 deraadt Exp $
 .\"
 .\" Copyright (c) 1996-2001
 .\"	Obtuse Systems Corporation, All rights reserved.
@@ -45,10 +45,10 @@ Internet File Transfer Protocol proxy server.
 .Op Fl u Ar user
 .Sh DESCRIPTION
 .Nm
-is a proxy for the Internet file transfer protocol.
+is a proxy for the Internet File Transfer Protocol.
 The proxy uses
 .Xr pf 4
-and expects to have the ftp control connection as described in
+and expects to have the FTP control connection as described in
 .Xr services 5
 redirected to it via a
 .Xr pf 4
@@ -59,7 +59,7 @@ An example of how to do that is further down in this document.
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl A
-Permit only anonymous ftp connections.
+Permit only anonymous FTP connections.
 The proxy will allow connections to log in to other sites as the user
 "ftp" or "anonymous" only.
 Any attempt to log in as another user will be blocked by the proxy.
@@ -102,9 +102,9 @@ The proxy only ignores passive mode data connections when using this flag,
 it will still proxy PORT and EPRT mode data connections.
 Without this flag,
 .Nm ftp-proxy
-does not require any ip forwarding or NAT beyond the
+does not require any IP forwarding or NAT beyond the
 .Em rdr
-necessary to capture the ftp control connection.
+necessary to capture the FTP control connection.
 .It Fl V
 Be verbose.
 With this option the proxy logs the control commands
@@ -120,7 +120,7 @@ and
 files.
 The proxy does libwrap operations after determining the destination
 of the captured control connection, so that tcp wrapper rules may
-be written based on the destination as well as the source of ftp connections.
+be written based on the destination as well as the source of FTP connections.
 .It Fl r
 Use reverse host (reverse DNS) lookups for logging and libwrap use.
 By default the proxy does not look up hostnames for libwrap or logging
@@ -156,12 +156,12 @@ Meaningful values of debuglevel are 0-3, where 0 is no debug output and
 .Nm ftp-proxy
 is run from
 .Xr inetd 8
-and requires that ftp connections are redirected to it using a
+and requires that FTP connections are redirected to it using a
 .Em rdr
 rule.
 A typical way to do this would be to use a rule such as
 .Pp
-rdr on xl0 from any to any port 21 -> 127.0.0.1 port 8081
+rdr on xl0 from any to any port 21 -> 127.0.0.1 port 2021 
 .Pp
 in
 .Xr pf.conf 5
@@ -171,7 +171,7 @@ must then be configured to run
 .Nm ftp-proxy
 on the port from above using
 .Pp
-127.0.0.1:8081 stream tcp nowait root /usr/libexec/ftp-proxy ftp-proxy
+127.0.0.1:2021 stream tcp nowait root /usr/libexec/ftp-proxy ftp-proxy
 .Pp
 in
 .Xr inetd.conf 5 .
