@@ -1,4 +1,4 @@
-/* $OpenBSD: extern.h,v 1.1 1999/09/27 21:40:03 espie Exp $ */
+/* $OpenBSD: extern.h,v 1.2 1999/10/04 21:46:27 espie Exp $ */
 /*-
  * Copyright (c) 1999 Marc Espie.
  *
@@ -28,23 +28,56 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* Convention: all functions that operate on a FILE * also take a filename
+   for diagnostic purposes.  The file can be connected to a pipe, so
+	- don't rewind
+	- don't reopen from filename.
+ */
+
 struct mygzip_header;
+struct signature;
 
-extern int read_header_and_diagnose
-	__P((FILE *file, /*@out@*/struct mygzip_header *h, /*@null@*/char sign[], const char *filename));
-extern int check_helpers __P((void));
+/* common.c */
+extern int read_header_and_diagnose __P((FILE *file, \
+	/*@out@*/struct mygzip_header *h, /*@null@*/struct signature **sign, \
+	const char *filename));
+extern int reap __P((pid_t pid));
 
-extern int sign 
-	__P((/*@observer@*/const char *filename, /*@null@*/const char *userid, char *envp[]));
+extern int terminate_pipe __P((int fd));
+extern void close_dangling_pipes __P((void));
+extern void register_pipe __P((int fd, pid_t pid));
 
-extern int check_signature
-	__P((/*@dependent@*/FILE *file, /*@null@*/const char *userid, char *envp[], /*@observer@*/const char *filename));
-extern void handle_passphrase __P((void));
+
+/* sign.c */
+extern int sign __P((/*@observer@*/const char *filename, int type, \
+	/*@null@*/const char *userid, char *envp[]));
+
+/* check.c */
+extern int check_signature __P((/*@dependent@*/FILE *file, \
+	/*@null@*/const char *userid, char *envp[], \
+	/*@observer@*/const char *filename));
 
 #define PKG_BADSIG 0
 #define PKG_GOODSIG 1
 #define PKG_UNSIGNED 2
 #define PKG_SIGNED 4
 #define PKG_SIGERROR 8
+#define PKG_SIGUNKNOWN	16
 
-extern int simple_check __P((const char *pkg_name));
+typedef /*@observer@*/char *pchar;
+
+#define MAXID	512
+/* sha1.c */
+#define SHA1_DB_NAME	"/var/db/pkg/SHA1"
+
+extern void *new_sha1_checker __P((struct mygzip_header *h, \
+	struct signature *sign, const char *userid, char *envp[], \
+	const char *filename));
+
+extern void sha1_add __P((void *arg, const char *buffer, \
+	size_t length));
+
+extern int sha1_sign_ok __P((void *arg));
+
+extern int retrieve_sha1_marker __P((const char *filename, \
+	struct signature **sign, const char *userid));

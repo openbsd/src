@@ -1,4 +1,4 @@
-/* $OpenBSD: check.c,v 1.1 1999/09/27 21:40:03 espie Exp $ */
+/* $OpenBSD: check.c,v 1.2 1999/10/04 21:46:27 espie Exp $ */
 /*-
  * Copyright (c) 1999 Marc Espie.
  *
@@ -32,77 +32,20 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <stdio.h>
-#include <fcntl.h>
-#include <paths.h>
-#include <errno.h>
 #include "stand.h"
 #include "pgp.h"
 #include "gzip.h"
 #include "extern.h"
 
-#ifndef _PATH_DEVNULL
-#define _PATH_DEVNULL	"/dev/null"
-#endif
+struct checker {
+	void *context;
+	void (*add)(void *, const char *, size_t);
+	int (*get)(void *);
+	int status;
+};
 
-typedef /*@observer@*/char *pchar;
-
-static void 
-gzcat(fdin, fdout, envp) 
-	int fdin, fdout;
-	char *envp[];
-{
-	pchar argv[2];
-
-	argv[0] = GZCAT;
-	argv[1] = NULL;
-	if (dup2(fdin, fileno(stdin)) == -1 || 
-	    dup2(fdout, fileno(stdout)) == -1 ||
-	    execve(GZCAT, argv, envp) == -1)
-		exit(errno);
-}
-
-static void 
-pgpcheck(fd, userid, envp) 
-	int fd;
-	const char *userid;
-	char *envp[];
-{
-	int fdnull;
-	pchar argv[6];
-
-	argv[0] = PGP;
-	argv[1] = "+batchmode";
-	argv[2] = "-f";
-
-	if (userid) {
-		argv[3] = "-u";
-		argv[4] = (char *)userid;
-		argv[5] = NULL;
-	} else
-		argv[3] = NULL;
-
-	fdnull = open(_PATH_DEVNULL, O_RDWR);
-	if (fdnull == -1 ||
-	    dup2(fd, fileno(stdin)) == -1 || 
-	    dup2(fdnull, fileno(stdout)) == -1 ||
-	    execve(PGP, argv, envp)  == -1)
-		exit(errno);
-}
-
-static int 
-reap(pid)
-	pid_t pid;
-{
-	pid_t result;
-	int pstat;
-
-	do {
-		result = waitpid(pid, &pstat, 0);
-	} while (result == -1 && errno == EINTR);
-	return result == -1 ? -1 : pstat;
-}
+#define MAX_CHECKERS 20
 
 int 
 check_signature(file, userid, envp, filename)
@@ -111,96 +54,53 @@ check_signature(file, userid, envp, filename)
 	char *envp[];
 	/*@observer@*/const char *filename;
 {
-	FILE *file2;
-	int c;
-	char sign[SIGNSIZE];
+	struct signature *sign;
 	struct mygzip_header h;
 	int status;
-	int togzcat[2], topgpcheck[2];
-	pid_t pgpid, gzcatid;
+	char buffer[1024];
+	size_t length;
+	struct checker checker[MAX_CHECKERS];
+	struct signature *sweep;
+	int i, j;
 
-	status = read_header_and_diagnose(file, &h, sign, filename);
+	status = read_header_and_diagnose(file, &h, &sign, filename);
 	if (status != 1)
 		return PKG_UNSIGNED;
 
-	if (pipe(topgpcheck) == -1) {
-		fprintf(stderr, "Error creating pipe\n");
-		return PKG_SIGERROR;
-	}
-	switch(pgpid = fork()) {
-	case -1:
-		fprintf(stderr, "Error creating pgp process\n");
-		return PKG_SIGERROR;
-	case 0:
-		if (close(topgpcheck[1]) == -1)
-			exit(errno);
-		pgpcheck(topgpcheck[0], userid, envp);
-		/*@notreached@*/
-		break;
-	default:
-		(void)close(topgpcheck[0]);
-		break;
-	}
-	if (write(topgpcheck[1], sign, sizeof(sign)) != sizeof(sign)) {
-		fprintf(stderr, "Error writing to pgp pipe\n");
-		(void)close(topgpcheck[1]);
-		(void)reap(pgpid);
-		return PKG_SIGERROR;
-	}
-	if (pipe(togzcat) == -1) {
-		fprintf(stderr, "Error creating pipe\n");
-		(void)close(topgpcheck[1]);
-		(void)reap(pgpid);
-		return PKG_SIGERROR;
-	}
-	switch (gzcatid=fork()) {
-	case -1:
-		fprintf(stderr, "Error creating gzcat process\n");
-		(void)reap(pgpid);
-		return PKG_SIGERROR;
-	case 0:
-		if (close(togzcat[1]) == -1)
-			exit(errno);
-		gzcat(togzcat[0], topgpcheck[1], envp);
-		/*@notreached@*/
-		break;
-	default:
-		(void)close(topgpcheck[1]);
-		(void)close(togzcat[0]);
-	}
-
-	file2 = fdopen(togzcat[1], "w");
-	if (file2 == NULL) {
-		(void)close(togzcat[1]);
-		(void)reap(gzcatid);
-		(void)reap(pgpid);
-		fprintf(stderr, "Error turning fd into FILE *\n");
-		return PKG_SIGERROR;
-	}
-
-	if (gzip_write_header(file2, &h, NULL) != 1) {
-		(void)fclose(file2);
-		(void)reap(pgpid);
-		(void)reap(gzcatid);
-		fprintf(stderr, "Error writing gzip header\n");
-		return PKG_SIGERROR;
-	}
-	while((c = fgetc(file)) != EOF) {
-		if (fputc(c, file2) == EOF) {
-		 	fprintf(stderr, "Problem writing to zcat\n");
-			(void)fclose(file2);
-			(void)reap(pgpid);
-			(void)reap(gzcatid);
-			return PKG_SIGERROR;
+	for (sweep = sign, i = 0;  
+		sweep != NULL && i < MAX_CHECKERS;
+		sweep=sweep->next, i++) {
+		switch(sweep->type) {
+		case TAG_OLD:
+			fprintf(stderr, "File %s uses old signatures, no longer supported\n",
+				filename);
+			checker[i].context = NULL;
+			break;
+		case TAG_SHA1: 
+			checker[i].context = new_sha1_checker(&h, sweep, userid, envp, filename);
+			checker[i].add = sha1_add;
+			checker[i].get = sha1_sign_ok;
+			break;
+		case TAG_PGP: 
+			checker[i].context = new_pgp_checker(&h, sweep, userid, envp, filename);
+			checker[i].add = pgp_add;
+			checker[i].get = pgp_sign_ok;
+			break;
+		default:
+			abort();
 		}
-
 	}
-	status = PKG_GOODSIG;
-	if (fclose(file2) != 0)
-		status = PKG_SIGERROR;
-	if (reap(gzcatid) != 0)
-		status = PKG_SIGERROR;
-	if (reap(pgpid) != 0)
-		status = PKG_BADSIG;
-	return status;
+	while ((length = fread(buffer, 1, sizeof buffer, file)) > 0) 
+		for (j = 0; j < i; j++)
+			if (checker[j].context)
+				(*checker[j].add)(checker[j].context, buffer, length);
+//	for (j = i-1; j >= 0; j--)
+	for (j = 0; j < i; j++)
+		if (checker[j].context)
+			checker[j].status = (*checker[j].get)(checker[j].context);
+		else 
+			checker[j].status = PKG_SIGERROR;
+	free_signature(sign);
+	return checker[0].status;
 }
+

@@ -1,5 +1,4 @@
 # define PGP to be the path to pgp (default: /usr/local/bin/pgp)
-# and GZCAT to be the path to gzcat (default: /usr/bin/gzcat)
 
 # Use the check_sign target if your system can't handle pipes or getpass
 all: pkg_sign 

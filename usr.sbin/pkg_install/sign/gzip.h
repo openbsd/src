@@ -1,4 +1,4 @@
-/* $OpenBSD: gzip.h,v 1.1 1999/09/27 21:40:04 espie Exp $ */
+/* $OpenBSD: gzip.h,v 1.2 1999/10/04 21:46:28 espie Exp $ */
 /*-
  * Copyright (c) 1999 Marc Espie.
  *
@@ -38,26 +38,52 @@
    This structure should not be fiddled with outside of gzip_read_header
    and gzip_write_header 
  */
-struct mygzip_header
-	{
+struct mygzip_header {
 	char method;
 	char flags;
 	char stamp[6];
 	char part[2];
-	};
+		/* remaining extra, after know signs have been read */
+	unsigned int  remaining;
+};
 	
+#define TAGSIZE 8
+#define TAGCHECK 6
+
+typedef unsigned char SIGNTAG[8];
+
+/* stack of signatures */
+struct signature {
+	SIGNTAG tag;
+	int  type;
+	int  length;
+	char *data;
+	struct signature *next;
+};
+
 /* returns from gzip_read_header */
 #define GZIP_UNSIGNED 		0	/* gzip file, no signature */
 #define GZIP_SIGNED 		1	/* gzip file, signature parsed ok */
 #define GZIP_NOT_GZIP 		2	/* not a proper gzip file */
 #define GZIP_NOT_PGPSIGNED 	3	/* gzip file, unknown extension */
-extern int gzip_read_header 
-	__P((FILE *f, /*@out@*/struct mygzip_header *h, /*@null@*/char sign[]));
+extern int gzip_read_header __P((FILE *f, /*@out@*/struct mygzip_header *h, \
+	/*@null@*/struct signature **sign));
 /* gzip_write_header returns 1 for success */
-extern int gzip_write_header
-	__P((FILE *f, const struct mygzip_header *h, /*@null@*/const char sign[]));
+extern int gzip_write_header __P((FILE *f, const struct mygzip_header *h, \
+	/*@null@*/struct signature *sign));
+/* writing header to memory. Returns size needed, or 0 if buffer too small
+   buffer must be at least 14 characters */
+extern int gzip_copy_header __P((const struct mygzip_header *h, \
+	/*@null@*/struct signature *sign, \
+	void (*add)(void *, const char *, size_t), void *data));
 
-#ifndef GZCAT
-#define GZCAT "/usr/bin/gzcat"
-#endif
-
+extern void free_signature __P((/*@null@*/struct signature *sign));
+extern void sign_fill_tag __P((struct signature *sign));
+#define KNOWN_TAGS 3
+#define TAG_PGP 0
+#define TAG_SHA1 1
+#define TAG_OLD 2
+#define TAG_ANY -1
+#define pgptag (known_tags[TAG_PGP])
+#define sha1tag (known_tags[TAG_SHA1])
+extern SIGNTAG known_tags[KNOWN_TAGS];

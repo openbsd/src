@@ -1,4 +1,4 @@
-/* $OpenBSD: main.c,v 1.1 1999/09/27 21:40:04 espie Exp $ */
+/* $OpenBSD: main.c,v 1.2 1999/10/04 21:46:28 espie Exp $ */
 /*-
  * Copyright (c) 1999 Marc Espie.
  *
@@ -29,12 +29,14 @@
  */
 
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
 #include "stand.h"
 #include "gzip.h"
+#include "pgp.h"
 #include "extern.h"
 
 #ifdef __OpenBSD__
@@ -56,9 +58,11 @@ usage()
 #define SIGN 0
 #define CHECK 1
 
+/* wrapper for the check_signature function (open file if needed) */
 static int
-check(filename, userid, envp)
+check(filename, type, userid, envp)
 	/*@observer@*/const char *filename;
+	int type;
 	/*@null@*/const char *userid;
 	char *envp[];
 {
@@ -73,9 +77,12 @@ check(filename, userid, envp)
 		return 0;
 	}
 	result = check_signature(file, userid, envp, filename);
-	if (fclose(file) == 0)
-		return result;
-	else
+	if (fclose(file) == 0) {
+		if (result == PKG_BADSIG || result == PKG_SIGERROR)
+			return 0;
+		else
+			return 1;
+	} else
 		return 0;
 }
 
@@ -90,7 +97,11 @@ main(argc, argv, envp)
 	char *userid = NULL;
 	int mode;
 	int i;
+	int type = TAG_ANY;
 
+#ifndef BSD4_4
+	set_program_name(argv[0]);
+#endif
 #ifdef CHECKER_ONLY
 	mode = CHECK;
 #else
@@ -106,10 +117,16 @@ main(argc, argv, envp)
 		mode = CHECK;
 #endif
 
-	if (check_helpers() == 0)
-		exit(EXIT_FAILURE);
-	while ((ch = getopt(argc, argv, "u:sc")) != -1) {
+	while ((ch = getopt(argc, argv, "u:t:sc")) != -1) {
 		switch(ch) {
+		case 't':
+			if (strcmp(optarg, "pgp") == 0) 
+				type = TAG_PGP;
+			else if (strcmp(optarg, "sha1") == 0)
+				type = TAG_SHA1;
+			else
+				usage();
+			break;
 		case 'u':
 			userid = strdup(optarg);
 			break;
@@ -135,10 +152,12 @@ main(argc, argv, envp)
 	}
 	
 #ifndef CHECKER_ONLY
-	if (mode == SIGN)
-		handle_passphrase();
+	if (mode == SIGN && type == TAG_ANY)
+		type = TAG_PGP;
+	if (mode == SIGN && type == TAG_PGP)
+		handle_pgp_passphrase();
 #endif
 	for (i = 0; i < argc; i++)
-		success &= (mode == SIGN ? sign : check)(argv[i], userid, envp);
+		success &= (mode == SIGN ? sign : check)(argv[i], type, userid, envp);
 	exit(success == 1 ? EXIT_SUCCESS : EXIT_FAILURE);
 }

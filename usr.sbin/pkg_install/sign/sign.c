@@ -1,4 +1,4 @@
-/* $OpenBSD: sign.c,v 1.2 1999/09/28 21:31:23 espie Exp $ */
+/* $OpenBSD: sign.c,v 1.3 1999/10/04 21:46:29 espie Exp $ */
 /*-
  * Copyright (c) 1999 Marc Espie.
  *
@@ -31,60 +31,28 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <errno.h>
 #include <signal.h>
 #include <pwd.h>
+#include <assert.h>
 #include "stand.h"
 #include "pgp.h"
 #include "gzip.h"
 #include "extern.h"
 
-#define SIGN_TEMPLATE "%s %s | %s +batchmode +compress=off -f -s"
-#define SIGN2_TEMPLATE "%s %s | %s +batchmode +compress=off -f -u %s -s"
 #define COPY_TEMPLATE "%s.sign"
-
-static int
-retrieve_signature(filename, sign, userid)
-	const char *filename; 
-	char sign[];
-	const char *userid;
-{
-	char *buffer;
-	FILE *cmd;
-
-	if (userid) {
-		buffer = malloc(strlen(GZCAT) + strlen(filename) +
-		    strlen(PGP) + strlen(userid) + sizeof(SIGN2_TEMPLATE));
-		if (!buffer)
-			return 0;
-		sprintf(buffer, SIGN2_TEMPLATE, GZCAT, filename, PGP, userid);
-    	} else {
-		buffer = malloc(strlen(GZCAT) + strlen(filename) +
-		    strlen(PGP) + sizeof(SIGN_TEMPLATE));
-		if (!buffer)
-			return 0;
-		sprintf(buffer, SIGN_TEMPLATE, GZCAT, filename, PGP);
-	}
-	cmd = popen(buffer, "r");
-	free(buffer);
-	if (!cmd)
-		return 0;
-	if (fread(sign, 1, SIGNSIZE, cmd) != SIGNSIZE)
-		return 0;
-	(void)pclose(cmd);
-	return 1;
-}
 
 static int 
 embed_signature_FILE(orig, dest, sign, filename)
 	/*@temp@*/FILE *orig;
 	/*@temp@*/FILE *dest; 
-	const char sign[]; 
+	struct signature *sign;
 	const char *filename;
 {
 	struct mygzip_header h;
 	int c;
 
-	if (read_header_and_diagnose(orig, &h, NULL, filename) == 0)
+	if (gzip_read_header(orig, &h, NULL) == GZIP_NOT_GZIP)
 		return 0;
 
 	if (gzip_write_header(dest, &h, sign) == 0)
@@ -100,7 +68,7 @@ static int
 embed_signature(filename, copy, sign)
 	const char *filename;
 	const char *copy; 
-	const char sign[];
+	struct signature *sign;
 {
 	FILE *orig, *dest;
 	int success;
@@ -121,22 +89,35 @@ embed_signature(filename, copy, sign)
 }
 
 int 
-sign(filename, userid, envp)
+sign(filename, type, userid, envp)
 	const char *filename;
 	const char *userid;
-	/*@unused@*/char *envp[] __attribute__((unused));
+	int type;
+	char *envp[];
 {
-	char sign[SIGNSIZE];
 	char *copy;
 	int result;
+	struct signature *sign;
+	int success;
 
-	if (retrieve_signature(filename, sign, userid) == 0) {
+	switch(type) {
+	case TAG_PGP:
+		success = retrieve_pgp_signature(filename, &sign, userid, envp);
+		break;
+	case TAG_SHA1:
+		success =retrieve_sha1_marker(filename, &sign, userid);
+		break;
+	}
+
+	if (!success) {
 		fprintf(stderr, "Problem signing %s\n", filename);
+		free_signature(sign);
 		return 0;
 	}
 	copy = malloc(strlen(filename)+sizeof(COPY_TEMPLATE));
 	if (copy == NULL) {
 		fprintf(stderr, "Can't allocate memory\n");
+		free_signature(sign);
 		return 0;
 	}
 	sprintf(copy, COPY_TEMPLATE, filename);
@@ -151,50 +132,7 @@ sign(filename, userid, envp)
 		result = 0;
 	}
 	free(copy);
+	free_signature(sign);
 	return result;
-}
-
-void
-handle_passphrase()
-{
-	pid_t pid;
-	int fd[2];
-	char *p;
-
-		/* Retrieve the pgp passphrase */
-	p = getpass("Enter passphrase:");
-
-		/* somewhat kludgy code to get the passphrase to pgp, see 
-		   pgp documentation for the gore
-		 */
-	if (pipe(fd) != 0)	{
-		perror("pkg_sign");
-		exit(EXIT_FAILURE);
-	}
-	switch(pid = fork()) {
-	case -1:
-		perror("pkg_sign");
-		exit(EXIT_FAILURE);
-	case 0:
-		{
-			(void)close(fd[0]);
-				/* the child fills the pipe with copies of the passphrase.
-				   Expect violent death when father exits.
-				 */
-			for(;;) {
-				char c = '\n';
-				(void)write(fd[1], p, strlen(p));
-				(void)write(fd[1], &c, 1);
-			}
-		}
-	default:
-		{
-			char buf[10];
-
-			(void)close(fd[1]);
-			(void)sprintf(buf, "%d", fd[0]);
-			(void)setenv("PGPPASSFD", buf, 1);
-		}
-	}
 }
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: common.c,v 1.1 1999/09/27 21:40:03 espie Exp $ */
+/* $OpenBSD: common.c,v 1.2 1999/10/04 21:46:27 espie Exp $ */
 /*-
  * Copyright (c) 1999 Marc Espie.
  *
@@ -29,8 +29,11 @@
  */
 
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <sys/stat.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <errno.h>
 #include "stand.h"
 #include "gzip.h"
 #include "pgp.h"
@@ -41,7 +44,7 @@ int
 read_header_and_diagnose(file, h, sign, filename)
 	FILE *file;
 	struct mygzip_header *h;
-	char sign[];
+	struct signature **sign;
 	const char *filename;
 {
 	switch(gzip_read_header(file, h, sign)) {
@@ -69,20 +72,82 @@ read_header_and_diagnose(file, h, sign, filename)
 	}
 }
 
-/* Check command existence */
-int check_helpers()
-{
-	struct stat sbuf;
+struct reg_fd {
+	int fd;
+	pid_t pid;
+	struct reg_fd *next;
+};
 
-	if (stat(GZCAT, &sbuf) == -1) {
-		fprintf(stderr, "Tool %s does not exist\n", GZCAT);
-		return 0;
+static struct reg_fd *first = NULL;
+
+void
+register_pipe(fd, pid)
+	int fd;
+	pid_t pid;
+{
+	struct reg_fd *n;
+
+	n = malloc(sizeof *n);
+	if (n) {
+		n->fd = fd;
+		n->pid = pid;
+		n->next = first;
+		first = n;
 	}
-	if (stat(PGP, &sbuf) == -1) {
-		fprintf(stderr, "Tool %s does not exist\n", PGP);
-		return 0;
-	}
-	return 1;
 }
 
+void
+close_dangling_pipes()
+{
+	while (first) {
+		close(first->fd);
+		first = first->next;
+	}
+}
+
+static struct reg_fd *
+retrieve_reg(fd)
+	int fd;
+{
+	struct reg_fd **i, *cur;
+
+	for (i = &first; *i ; i = &((*i)->next))
+		if ((*i)->fd == fd)
+			break;
+	cur = *i;
+	*i = cur->next;
+	return cur;
+}
+
+int 
+reap(pid)
+	pid_t pid;
+{
+	int pstat;
+	pid_t result;
+
+	do {
+		result = waitpid(pid, &pstat, 0);
+	} while (result == -1 && errno == EINTR);
+	return result == -1 ? -1 : pstat;
+}
+
+/* kill process and reap status
+ */
+int 
+terminate_pipe(fd)
+	int fd;
+{
+	pid_t result;
+	int close_result;
+	struct reg_fd *cur;
+
+	cur = retrieve_reg(fd);
+	if (!cur)
+		return -1;
+	close_result = close(cur->fd);
+	result = reap(cur->pid);
+	free(cur);
+	return close_result == -1 ? -1 : result;
+}
 
