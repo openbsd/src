@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_cardbus.c,v 1.1 2000/10/26 20:50:44 aaron Exp $	*/
+/*	$OpenBSD: if_dc_cardbus.c,v 1.2 2000/10/26 22:37:04 aaron Exp $	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,6 +66,7 @@ struct cfattach dc_cardbus_ca = {
 struct dc_type dc_cardbus_devs[] = {
 	{ PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21142 },
 	{ PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_X3201_3_21143 },
+	{ PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_AN985 },
 	{ 0 }
 };
 
@@ -126,6 +127,13 @@ dc_cardbus_attach(parent, self, aux)
 			bcopy(ca->ca_cis.funce.network.netid,
 			    &sc->arpcom.ac_enaddr,
 			    sizeof sc->arpcom.ac_enaddr);
+		}
+		break;
+	case PCI_VENDOR_ADMTEK:
+		if (PCI_PRODUCT(ca->ca_id) == PCI_PRODUCT_ADMTEK_AN985) {
+			sc->dc_type = DC_TYPE_AN983;
+			sc->dc_flags |= DC_TX_USE_TX_INTR|DC_TX_ADMTEK_WAR;
+			sc->dc_pmode = DC_PMODE_MII;
 		}
 		break;
 	default:
