@@ -4026,8 +4026,7 @@
 ./usr/src
 ./var
 ./var/account
-./var/at
-./var/at/jobs
+./var/cron/atjobs
 ./var/audit
 ./var/authpf
 ./var/backups

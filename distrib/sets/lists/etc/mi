@@ -118,7 +118,8 @@
 ./root/.klogin
 ./root/.login
 ./root/.profile
-./var/at/at.deny
+./var/cron/at.deny
+./var/cron/cron.deny
 ./var/crash/minfree
 ./var/cron/log
 ./var/cron/tabs/root

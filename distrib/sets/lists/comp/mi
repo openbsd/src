@@ -2439,6 +2439,7 @@
 ./usr/share/man/cat3/SLIST_INSERT_AFTER.0
 ./usr/share/man/cat3/SLIST_INSERT_HEAD.0
 ./usr/share/man/cat3/SLIST_NEXT.0
+./usr/share/man/cat3/SLIST_REMOVE.0
 ./usr/share/man/cat3/SLIST_REMOVE_HEAD.0
 ./usr/share/man/cat3/SPLAY_EMPTY.0
 ./usr/share/man/cat3/SPLAY_ENTRY.0
@@ -3978,6 +3979,7 @@
 ./usr/share/man/cat3/pcap_dump_open.0
 ./usr/share/man/cat3/pcap_file.0
 ./usr/share/man/cat3/pcap_fileno.0
+./usr/share/man/cat3/pcap_freecode.0
 ./usr/share/man/cat3/pcap_geterr.0
 ./usr/share/man/cat3/pcap_inject.0
 ./usr/share/man/cat3/pcap_is_swapped.0
@@ -4346,7 +4348,7 @@
 ./usr/share/man/cat3/signal.0
 ./usr/share/man/cat3/signal_add.0
 ./usr/share/man/cat3/signal_del.0
-./usr/share/man/cat3/signal_initalized.0
+./usr/share/man/cat3/signal_initialized.0
 ./usr/share/man/cat3/signal_pending.0
 ./usr/share/man/cat3/signal_set.0
 ./usr/share/man/cat3/significand.0
@@ -4419,6 +4421,7 @@
 ./usr/share/man/cat3/strcspn.0
 ./usr/share/man/cat3/strdup.0
 ./usr/share/man/cat3/strerror.0
+./usr/share/man/cat3/strerror_r.0
 ./usr/share/man/cat3/strftime.0
 ./usr/share/man/cat3/string.0
 ./usr/share/man/cat3/strlcat.0
@@ -4582,6 +4585,7 @@
 ./usr/share/man/cat3/uu_unlock.0
 ./usr/share/man/cat3/uucplock.0
 ./usr/share/man/cat3/va_arg.0
+./usr/share/man/cat3/va_copy.0
 ./usr/share/man/cat3/va_end.0
 ./usr/share/man/cat3/va_start.0
 ./usr/share/man/cat3/valloc.0
