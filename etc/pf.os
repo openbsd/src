@@ -1,4 +1,4 @@
-# $OpenBSD: pf.os,v 1.1 2003/08/21 19:10:19 frantzen Exp $
+# $OpenBSD: pf.os,v 1.2 2003/08/27 13:53:02 avsm Exp $
 # passive OS fingerprinting
 # -------------------------
 #
@@ -362,9 +362,9 @@ S12:64:1:48:N,N,S,M1460:		@Checkpoint:::Checkpoint (unknown 2)
 5840:64:1:52:M1460,N,N,S,N,W0:		AOL:web cache::AOL web cache
 
 32850:64:1:64:N,W1,N,N,T,N,N,S,M*:	NetApp:5.x::NetApp Data OnTap 5.x
-16384:64:1:64:M1460,N,N,S,N,W0,N:	NetApp:5.3:1:NetApp 5.3.1
+16384:64:1:64:M1460,N,N,S,N,W0,N:	NetApp:5.3:1:NetApp NetCache 5.3.1
 65535:64:0:60:M1460,N,W0,N,N,T:		NetApp:CacheFlow::NetApp CacheFlow
-8192:64:1:64:M1460,N,N,S,N,W0,N,N,T:	NetApp:5.2:1:NetApp 5.2.1 (OpenBSD-based)
+8192:64:1:64:M1460,N,N,S,N,W0,N,N,T:	NetApp:5.2:1:NetApp NetCache 5.2.1
 
 5840:64:0:48:M1460,N,N,S:		Cisco:Content Engine::Cisco Content Engine
 
