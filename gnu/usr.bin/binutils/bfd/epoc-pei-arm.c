@@ -1,5 +1,5 @@
 /* BFD back-end for ARM EPOC PE IMAGE COFF files.
-   Copyright 1999 Free Software Foundation, Inc.
+   Copyright 1999, 2000 Free Software Foundation, Inc.
 
 This file is part of BFD, the Binary File Descriptor library.
 
@@ -25,5 +25,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define TARGET_BIG_SYM       arm_epoc_pei_big_vec
 #define TARGET_BIG_NAME      "epoc-pei-arm-big"
 
-#include "pei-arm.c"
+#define EXTRA_S_FLAGS (SEC_CODE | SEC_READONLY | SEC_DATA)
 
+#include "pei-arm.c"

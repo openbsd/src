@@ -5,12 +5,12 @@
 
 Contents of section .text:
 Contents of section .data:
- 0000 000000                               ...             
+ 0+000 00 ?00 ?00 ?00 ?00 ?00 ?00 ?00 ?00 ?00 ?00 ?00 ?00 ?00 ?00 ?00.*
 # The MIPS includes a 'section .reginfo' and such here.
 #...
 Contents of section A:
- 0000 01010101 0101                        ......          
+ 0+000 01 ?01 ?01 ?01 ?01 ?01 ?01 ?01 ?01 ?01 ?01 ?01 ?01 ?01 ?01 ?01.*
 Contents of section B:
- 0000 02020202 02                          .....           
+ 0+000 02 ?02 ?02 ?02 ?02 ?02 ?02 ?02 ?02 ?02 ?02 ?02 ?02 ?02 ?02 ?02.*
 Contents of section C:
- 0000 0303                                 ..              
+ 0+000 03 ?03 ?03 ?03 ?03 ?03 ?03 ?03 ?03 ?03 ?03 ?03 ?03 ?03 ?03 ?03.*

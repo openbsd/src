@@ -57,8 +57,8 @@
 	ADD #1,@B
 !ENTRY	JMP	@MAIN
 ENTRY:	JMP	@MAIN
-!L00001	ADD 	#1,@HL
-L00001:	ADD 	#1,@HL
+!L1	ADD 	#1,@HL
+L1:	ADD 	#1,@HL
 !	MOV	#0,@C	
 	MOV	#0,@C	
 !	ADD	#2,@C

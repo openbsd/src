@@ -1,7 +1,7 @@
 /* m88k-opcode.h -- Instruction information for the Motorola 88000
    Contributed by Devon Bowen of Buffalo University
    and Torbjorn Granlund of the Swedish Institute of Computer Science.
-   Copyright (C) 1989, 1990, 1991 Free Software Foundation, Inc.
+   Copyright 1989, 1990, 1991, 1993, 2000 Free Software Foundation, Inc.
 
 This file is part of GAS, the GNU Assembler.
 
@@ -54,7 +54,7 @@ struct m88k_opcode
   char *op_spec;
 };
 
-/* and introducing... the Motorola 88100 and 88110 instruction sets... */
+/* and introducing... the Motorola 88100 and 88110 instruction sets...  */
 
 /* By default, include the 88110 instructions.  */
 #define MC88110

@@ -1,11 +1,11 @@
 The section .debug_info contains:
 
-  Compilation Unit:
+  Compilation Unit @ .*:
    Length:        .*
    Version:       2
    Abbrev Offset: 0
    Pointer Size:  4
- <.><.*>: Abbrev Number: 1 \(DW_TAG_compile_unit\)
+ <.><.*>: Abbrev Number: .* \(DW_TAG_compile_unit\)
      DW_AT_name        : .*/testprog.c	
      DW_AT_comp_dir    : .*/binutils	
      DW_AT_producer    : GNU C .*	

@@ -1,6 +1,6 @@
 /*-
    tc-pj.c -- Assemble code for Pico Java
-   Copyright (C) 1999 Free Software Foundation.
+   Copyright 1999, 2000 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -19,11 +19,10 @@
    the Free Software Foundation, 59 Temple Place - Suite 330,
    Boston, MA 02111-1307, USA.  */
 
-/* Contributed by Steve Chamberlain of Transmeta, sac@pobox.com */
+/* Contributed by Steve Chamberlain of Transmeta <sac@pobox.com>.  */
 
 #include "as.h"
 #include "opcode/pj.h"
-
 
 extern const pj_opc_info_t pj_opc_info[512];
 
@@ -33,7 +32,6 @@ const char line_comment_chars[] = "/!#";
 
 static int pending_reloc;
 static struct hash_control *opcode_hash_control;
-						
 
 static void
 little (ignore)
@@ -49,13 +47,11 @@ big (ignore)
   target_big_endian = 1;
 }
 
-
 const pseudo_typeS md_pseudo_table[] = {
   {"ml",    little, 0},
   {"mb",    big,    0},
   {0, 0, 0}
 };
-
 
 const char FLT_CHARS[] = "rRsSfFdDxXpP";
 const char EXP_CHARS[] = "eE";
@@ -67,7 +63,7 @@ md_operand (op)
   if (strncmp (input_line_pointer, "%hi16", 5) == 0)
     {
       if (pending_reloc)
-	as_bad (_ ("confusing relocation expressions"));
+	as_bad (_("confusing relocation expressions"));
       pending_reloc = BFD_RELOC_PJ_CODE_HI16;
       input_line_pointer += 5;
       expression (op);
@@ -75,14 +71,14 @@ md_operand (op)
   if (strncmp (input_line_pointer, "%lo16", 5) == 0)
     {
       if (pending_reloc)
-	as_bad (_ ("confusing relocation expressions"));
+	as_bad (_("confusing relocation expressions"));
       pending_reloc = BFD_RELOC_PJ_CODE_LO16;
       input_line_pointer += 5;
       expression (op);
     }
 }
 
-/* Parse an expression and then restore the input line pointer. */
+/* Parse an expression and then restore the input line pointer.  */
 
 static char *
 parse_exp_save_ilp (s, op)
@@ -108,23 +104,22 @@ pj_cons_fix_new_pj (frag, where, nbytes, exp)
      int nbytes;
      expressionS *exp;
 {
-  static int rv[5][2] = 
+  static int rv[5][2] =
   { { 0, 0 },
     { BFD_RELOC_8, BFD_RELOC_8 },
     { BFD_RELOC_PJ_CODE_DIR16, BFD_RELOC_16 },
     { 0, 0 },
     { BFD_RELOC_PJ_CODE_DIR32, BFD_RELOC_32 }};
 
-  fix_new_exp (frag, where, nbytes, exp, 0, 
+  fix_new_exp (frag, where, nbytes, exp, 0,
 	       pending_reloc ? pending_reloc
-	       : rv [nbytes][(now_seg->flags & SEC_CODE) ? 0 : 1]);
+	       : rv[nbytes][(now_seg->flags & SEC_CODE) ? 0 : 1]);
 
   pending_reloc = 0;
 }
 
-
 /* Turn a reloc description character from the pj-opc.h table into
-   code which BFD can handle. */
+   code which BFD can handle.  */
 
 static int
 c_to_r (x)
@@ -151,39 +146,36 @@ c_to_r (x)
   return 0;
 }
 
-
-
-
 /* Handler for the ipush fake opcode,
-   turns ipush <foo> into sipush lo16<foo>, sethi hi16<foo>. */
+   turns ipush <foo> into sipush lo16<foo>, sethi hi16<foo>.  */
 
 static void
 ipush_code (opcode, str)
-     pj_opc_info_t *opcode ATTRIBUTE_UNUSED; 
+     pj_opc_info_t *opcode ATTRIBUTE_UNUSED;
      char *str;
 {
   int mod = 0;
   char *b = frag_more (6);
   expressionS arg;
+
   b[0] = 0x11;
   b[3] = 0xed;
   parse_exp_save_ilp (str + 1, &arg, &mod);
   if (mod)
-    as_bad (_ ("can't have relocation for ipush"));
+    as_bad (_("can't have relocation for ipush"));
 
-
-  fix_new_exp (frag_now, b - frag_now->fr_literal + 1, 2, 
-	       &arg,  0, BFD_RELOC_PJ_CODE_DIR16);
+  fix_new_exp (frag_now, b - frag_now->fr_literal + 1, 2,
+	       &arg, 0, BFD_RELOC_PJ_CODE_DIR16);
   fix_new_exp (frag_now, b - frag_now->fr_literal + 4, 2,
-	       &arg,  0, BFD_RELOC_PJ_CODE_HI16);
+	       &arg, 0, BFD_RELOC_PJ_CODE_HI16);
 }
 
 /* Insert names into the opcode table which are really mini macros,
-   not opcodes.  The fakeness is inidicated with an opcode of -1. */
+   not opcodes.  The fakeness is inidicated with an opcode of -1.  */
 
 static void
-     fake_opcode (name, func) const char *
-       name;
+fake_opcode (name, func)
+     const char *name;
      void (*func) ();
 {
   pj_opc_info_t *fake = (pj_opc_info_t *) xmalloc (sizeof (pj_opc_info_t));
@@ -194,22 +186,21 @@ static void
   hash_insert (opcode_hash_control, name, (char *) fake);
 }
 
-
 /* Enter another entry into the opcode hash table so the same opcode
-   can have another name. */
+   can have another name.  */
+
 static void
-     alias (new, old) const char *
-       new;
+alias (new, old)
+     const char *new;
      const char *old;
 {
   hash_insert (opcode_hash_control, new,
 	       (char *) hash_find (opcode_hash_control, old));
 }
 
-
 /* This function is called once, at assembler startup time.  It sets
    up the hash table with all the opcodes in it, and also initializes
-   some aliases for compatibility with other assemblers. */
+   some aliases for compatibility with other assemblers.  */
 
 void
 md_begin ()
@@ -217,14 +208,14 @@ md_begin ()
   const pj_opc_info_t *opcode;
   opcode_hash_control = hash_new ();
 
-  /* Insert names into hash table */
+  /* Insert names into hash table.  */
   for (opcode = pj_opc_info; opcode->name; opcode++)
     hash_insert (opcode_hash_control, opcode->name, (char *) opcode);
 
-  /* Insert the only fake opcode. */
+  /* Insert the only fake opcode.  */
   fake_opcode ("ipush", ipush_code);
 
-  /* Add some aliases for opcode names. */
+  /* Add some aliases for opcode names.  */
   alias ("ifeq_s", "ifeq");
   alias ("ifne_s", "ifne");
   alias ("if_icmpge_s", "if_icmpge");
@@ -236,10 +227,9 @@ md_begin ()
   bfd_set_arch_mach (stdoutput, TARGET_ARCH, 0);
 }
 
-/* This is the guts of the machine-dependent assembler.  STR points to a
-   machine dependent instruction.  This function is supposed to emit
-   the frags/bytes it assembles to.
- */
+/* This is the guts of the machine-dependent assembler.  STR points to
+   a machine dependent instruction.  This function is supposed to emit
+   the frags/bytes it assembles to.  */
 
 void
 md_assemble (str)
@@ -248,7 +238,9 @@ md_assemble (str)
   unsigned char *op_start;
   unsigned char *op_end;
 
-  //  pj_operan_info operand[3];
+#if 0
+  pj_operan_info operand[3];
+#endif
   pj_opc_info_t *opcode;
   char *output;
   int idx = 0;
@@ -256,38 +248,36 @@ md_assemble (str)
 
   int nlen = 0;
 
-  /* Drop leading whitespace */
+  /* Drop leading whitespace.  */
   while (*str == ' ')
     str++;
 
-  /* find the op code end */
+  /* Find the op code end.  */
   for (op_start = op_end = (unsigned char *) (str);
        *op_end && !is_end_of_line[*op_end] && *op_end != ' ';
-       op_end++) 
+       op_end++)
     nlen++;
 
   pend = *op_end;
   *op_end = 0;
 
   if (nlen == 0)
-    {
-      as_bad (_ ("can't find opcode "));
-    }
+    as_bad (_("can't find opcode "));
 
   opcode = (pj_opc_info_t *) hash_find (opcode_hash_control, op_start);
   *op_end = pend;
 
   if (opcode == NULL)
     {
-      as_bad (_ ("unknown opcode %s"), op_start);
+      as_bad (_("unknown opcode %s"), op_start);
       return;
     }
 
   if (opcode->opcode == -1)
     {
-      /* It's a fake opcode.. dig out the args and pretend that was
-         what we were passed */
-      ((void (*)()) opcode->name) (opcode, op_end);
+      /* It's a fake opcode.  Dig out the args and pretend that was
+         what we were passed.  */
+      ((void (*) ()) opcode->name) (opcode, op_end);
     }
   else
     {
@@ -311,11 +301,11 @@ md_assemble (str)
 
 	  op_end = parse_exp_save_ilp (op_end, &arg);
 
-	  fix_new_exp (frag_now, 
+	  fix_new_exp (frag_now,
 		       output - frag_now->fr_literal + idx,
 		       ASIZE (opcode->arg[an]),
 		       &arg,
-		       PCREL (opcode->arg[an]), 
+		       PCREL (opcode->arg[an]),
 		       pending_reloc ? pending_reloc : c_to_r (opcode->arg[an]));
 
 	  idx += ASIZE (opcode->arg[an]);
@@ -335,10 +325,11 @@ md_assemble (str)
 
 }
 
-/* Turn a string in input_line_pointer into a floating point constant of type
-   type, and store the appropriate bytes in *litP.  The number of LITTLENUMS
-   emitted is stored in *sizeP .  An error message is returned, or NULL on OK.
- */
+/* Turn a string in input_line_pointer into a floating point constant
+   of type type, and store the appropriate bytes in *LITP.  The number
+   of LITTLENUMS emitted is stored in *SIZEP .  An error message is
+   returned, or NULL on OK.  */
+
 char *
 md_atof (type, litP, sizeP)
      int type;
@@ -362,7 +353,7 @@ md_atof (type, litP, sizeP)
 
     default:
       *sizeP = 0;
-      return _ ("bad call to md_atof");
+      return _("bad call to md_atof");
     }
 
   t = atof_ieee (input_line_pointer, type, words);
@@ -391,7 +382,6 @@ md_atof (type, litP, sizeP)
   return NULL;
 }
 
-
 CONST char *md_shortopts = "";
 
 struct option md_longopts[] = {
@@ -408,7 +398,7 @@ size_t md_longopts_size = sizeof (md_longopts);
 int
 md_parse_option (c, arg)
      int c;
-     char *arg ATTRIBUTE_UNUSED; 
+     char *arg ATTRIBUTE_UNUSED;
 {
   switch (c)
     {
@@ -428,16 +418,13 @@ void
 md_show_usage (stream)
      FILE *stream;
 {
-  fprintf (stream, _ ("\
+  fprintf (stream, _("\
 PJ options:\n\
 -little			generate little endian code\n\
 -big			generate big endian code\n"));
 }
 
-
-
 /* Apply a fixup to the object file.  */
-
 
 int
 md_apply_fix (fixP, valp)
@@ -448,7 +435,6 @@ md_apply_fix (fixP, valp)
   long val = *valp;
   long max, min;
   int shift;
-
 
   /* adjust_reloc_syms won't convert a reloc against a weak symbol
      into a reloc against a section, but bfd_install_relocation will
@@ -469,7 +455,7 @@ md_apply_fix (fixP, valp)
 
     case BFD_RELOC_PJ_CODE_REL16:
       if (val < -0x8000 || val >= 0x7fff)
-	as_bad_where (fixP->fx_file, fixP->fx_line, _ ("pcrel too far"));
+	as_bad_where (fixP->fx_file, fixP->fx_line, _("pcrel too far"));
       buf[0] |= (val >> 8) & 0xff;
       buf[1] = val & 0xff;
       break;
@@ -510,7 +496,7 @@ md_apply_fix (fixP, valp)
 	  *buf++ = val >> 8;
 	  *buf++ = val >> 0;
 	}
-      else 
+      else
 	{
 	  *buf++ = val >> 0;
 	  *buf++ = val >> 8;
@@ -532,19 +518,18 @@ md_apply_fix (fixP, valp)
 	}
       break;
 
-
     default:
       abort ();
     }
 
   if (max != 0 && (val < min || val > max))
-    as_bad_where (fixP->fx_file, fixP->fx_line, _ ("offset out of range"));
+    as_bad_where (fixP->fx_file, fixP->fx_line, _("offset out of range"));
 
   return 0;
 }
 
 /* Put number into target byte order.  Always put values in an
-   executable section into big endian order. */
+   executable section into big endian order.  */
 
 void
 md_number_to_chars (ptr, use, nbytes)
@@ -558,10 +543,8 @@ md_number_to_chars (ptr, use, nbytes)
     number_to_chars_littleendian (ptr, use, nbytes);
 }
 
-
-
 /* Translate internal representation of relocation info to BFD target
-   format. */
+   format.  */
 
 arelent *
 tc_gen_reloc (section, fixp)
@@ -583,7 +566,7 @@ tc_gen_reloc (section, fixp)
   if (rel->howto == NULL)
     {
       as_bad_where (fixp->fx_file, fixp->fx_line,
-		    _ ("Cannot represent relocation type %s"),
+		    _("Cannot represent relocation type %s"),
 		    bfd_get_reloc_code_name (r_type));
       /* Set howto to a garbage value so that we can keep going.  */
       rel->howto = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_32);

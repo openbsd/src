@@ -1,5 +1,5 @@
 /* Special version of <a.out.h> for use under hp-ux.
-   Copyright (C) 1988,1993 Free Software Foundation, Inc. */
+   Copyright 1988, 1993, 1995 Free Software Foundation, Inc. */
 
 struct hp300hpux_exec_bytes
 {

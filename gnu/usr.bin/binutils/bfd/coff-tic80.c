@@ -1,5 +1,5 @@
 /* BFD back-end for Texas Instruments TMS320C80 Multimedia Video Processor (MVP).
-   Copyright 1996, 1997, 1998, 1999 Free Software Foundation, Inc.
+   Copyright 1996, 1997, 1999, 2000 Free Software Foundation, Inc.
 
    Written by Fred Fish (fnf@cygnus.com)
 
@@ -424,7 +424,7 @@ local16_reloc (abfd, reloc_entry, symbol_in, data, input_section, output_bfd,
 
 /* Code to turn an external r_type into a pointer to an entry in the howto_table.
    If passed an r_type we don't recognize the abort rather than silently failing
-   to generate an output file. */
+   to generate an output file.  */
 
 static void
 rtype2howto (cache_ptr, dst)
@@ -465,7 +465,7 @@ coff_tic80_rtype_to_howto (abfd, sec, rel, h, sym, addendp)
     {
       /* This is a TI "internal relocation", which means that the relocation
 	 amount is the amount by which the current section is being relocated
-	 in the output section. */
+	 in the output section.  */
       *addendp = (sec -> output_section -> vma + sec -> output_offset) - sec -> vma;
     }
   RTYPE2HOWTO (&genrel, rel);
@@ -518,7 +518,7 @@ coff_tic80_relocate_section (output_bfd, info, input_bfd,
 	  sym = NULL;
 	}
       else
-	{    
+	{
 	  h = obj_coff_sym_hashes (input_bfd)[symndx];
 	  sym = syms + symndx;
 	}
@@ -649,7 +649,7 @@ coff_tic80_relocate_section (output_bfd, info, input_bfd,
 	    contents[addr + 1] |= hold & 0x80;
 	    break;
 	  }
-	
+
 	case R_PPBASE:
 	  /* Parameter RAM is from 0x1000000 to 0x1000800.  */
 	  contents[addr] &=~ 0x3;

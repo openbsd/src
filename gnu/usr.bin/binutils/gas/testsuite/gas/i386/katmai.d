@@ -135,7 +135,7 @@ Disassembly of section .text:
  1e4:	0f e0 0a [ 	]*pavgb  \(%edx\),%mm1
  1e7:	0f e3 d3 [ 	]*pavgw  %mm3,%mm2
  1ea:	0f e3 1c 24 [ 	]*pavgw  \(%esp,1\),%mm3
- 1ee:	0f c5 c8 00 [ 	]*pextrw \$0x0,%mm1,%eax
+ 1ee:	0f c5 c1 00 [ 	]*pextrw \$0x0,%mm1,%eax
  1f2:	0f c4 09 01 [ 	]*pinsrw \$0x1,\(%ecx\),%mm1
  1f6:	0f c4 d2 02 [ 	]*pinsrw \$0x2,%edx,%mm2
  1fa:	0f ee c1 [ 	]*pmaxsw %mm1,%mm0
@@ -146,7 +146,7 @@ Disassembly of section .text:
  20a:	0f ea 2e [ 	]*pminsw \(%esi\),%mm5
  20d:	0f da f7 [ 	]*pminub %mm7,%mm6
  210:	0f da 38 [ 	]*pminub \(%eax\),%mm7
- 213:	0f d7 e8 [ 	]*pmovmskb %mm5,%eax
+ 213:	0f d7 c5 [ 	]*pmovmskb %mm5,%eax
  216:	0f e4 e5 [ 	]*pmulhuw %mm5,%mm4
  219:	0f e4 2e [ 	]*pmulhuw \(%esi\),%mm5
  21c:	0f f6 f7 [ 	]*psadbw %mm7,%mm6

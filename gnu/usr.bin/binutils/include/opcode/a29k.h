@@ -1,5 +1,5 @@
 /* Table of opcodes for the AMD 29000 family.
-   Copyright 1990, 1991, 1992, 1993 Free Software Foundation, Inc.
+   Copyright 1990, 1991, 1993, 1994 Free Software Foundation, Inc.
 
 This file is part of GDB and GAS.
 

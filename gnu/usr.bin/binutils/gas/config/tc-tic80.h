@@ -1,5 +1,5 @@
 /* This file is tc-tic80.h
-   Copyright (C) 1996, 1997, 1999 Free Software Foundation, Inc.
+   Copyright 1996, 1997, 2000 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -26,19 +26,19 @@
 #define TARGET_FORMAT	"coff-tic80"
 #define BFD_ARCH	TARGET_ARCH
 
-/* We need the extra field in the fixup struct to put the relocation in. */
+/* We need the extra field in the fixup struct to put the relocation in.  */
 
 #define NEED_FX_R_TYPE
 
 /* Define md_number_to_chars as the appropriate standard big endian or
    little endian function.  Should we someday support endianness as a
-   runtime decision, this will need to change. */
+   runtime decision, this will need to change.  */
 
 #define md_number_to_chars number_to_chars_littleendian
 
 /* Define away the call to md_operand in the expression parsing code.
    This is called whenever the expression parser can't parse the input
-   and gives the assembler backend a chance to deal with it instead. */
+   and gives the assembler backend a chance to deal with it instead.  */
 
 #define md_operand(x)
 
@@ -59,5 +59,3 @@
 extern short tc_coff_fix2rtype ();
 
 #endif	/* OBJ_COFF */
-
-/* end of tc-tic80.h */

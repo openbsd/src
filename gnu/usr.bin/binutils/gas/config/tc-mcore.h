@@ -1,6 +1,6 @@
 /* This file is tc-mcore.h
 
-   Copyright (C) 1999, 2000 Free Software Foundation, Inc.
+   Copyright 1999, 2000 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -49,19 +49,17 @@
 
 /* We want local label support.  */
 #define LOCAL_LABELS_FB 1
-     
+
 #define TC_COFF_SIZEMACHDEP(frag) tc_coff_sizemachdep (frag)
-  
+
 extern const struct relax_type md_relax_table[];
 #define TC_GENERIC_RELAX_TABLE md_relax_table
 #define md_end	md_mcore_end
 
-/* Want the section information too... */
+/* Want the section information too...  */
 #define MD_PCREL_FROM_SECTION(FIXP, SEC) md_pcrel_from_section (FIXP, SEC)
 
 #define MD_APPLY_FIX3  /* We want the segment as well.  */
-
-
 
 #ifdef  OBJ_COFF
 
@@ -79,7 +77,6 @@ struct mcore_tc_sy
 # endif
 
 #endif /* OBJ_COFF */
-
 
 #ifdef OBJ_ELF
 
@@ -105,7 +102,7 @@ extern boolean mcore_fix_adjustable PARAMS ((struct fix *));
 #endif
 
 #include "write.h"        /* For definition of fixS */
-  
+
 extern void      md_begin            PARAMS ((void));
 extern void      md_assemble         PARAMS ((char *));
 extern symbolS * md_undefined_symbol PARAMS ((char *));
@@ -113,7 +110,7 @@ extern void      md_mcore_end        PARAMS ((void));
 extern char *    md_atof             PARAMS ((int, char *, int *));
 extern int       md_parse_option     PARAMS ((int, char *));
 extern void      md_show_usage       PARAMS ((FILE *));
-extern void      md_create_short_jump 
+extern void      md_create_short_jump
   PARAMS ((char *, addressT, addressT, fragS *, symbolS *));
 extern void      md_create_long_jump
   PARAMS ((char *, addressT, addressT, fragS *, symbolS *));

@@ -4,7 +4,7 @@
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 - the resultant file is machine generated, cgen-dis.in isn't
 
-Copyright (C) 1996, 1997, 1998, 1999 Free Software Foundation, Inc.
+Copyright 1996, 1997, 1998, 1999, 2000, 2001 Free Software Foundation, Inc.
 
 This file is part of the GNU Binutils and GDB, the GNU debugger.
 
@@ -96,60 +96,60 @@ print_register_list (dis_info, value, offset, load_store)
 
 static void
 print_hi_register_list_ld (cd, dis_info, value, attrs, pc, length)
-     CGEN_CPU_DESC cd;
+     CGEN_CPU_DESC cd ATTRIBUTE_UNUSED;
      PTR dis_info;
      long value;
-     unsigned int attrs;
-     bfd_vma pc;
-     int length;
+     unsigned int attrs ATTRIBUTE_UNUSED;
+     bfd_vma pc ATTRIBUTE_UNUSED;
+     int length ATTRIBUTE_UNUSED;
 {
   print_register_list (dis_info, value, 8, 0/*load*/);
 }
 
 static void
 print_low_register_list_ld (cd, dis_info, value, attrs, pc, length)
-     CGEN_CPU_DESC cd;
+     CGEN_CPU_DESC cd ATTRIBUTE_UNUSED;
      PTR dis_info;
      long value;
-     unsigned int attrs;
-     bfd_vma pc;
-     int length;
+     unsigned int attrs ATTRIBUTE_UNUSED;
+     bfd_vma pc ATTRIBUTE_UNUSED;
+     int length ATTRIBUTE_UNUSED;
 {
   print_register_list (dis_info, value, 0, 0/*load*/);
 }
 
 static void
 print_hi_register_list_st (cd, dis_info, value, attrs, pc, length)
-     CGEN_CPU_DESC cd;
+     CGEN_CPU_DESC cd ATTRIBUTE_UNUSED;
      PTR dis_info;
      long value;
-     unsigned int attrs;
-     bfd_vma pc;
-     int length;
+     unsigned int attrs ATTRIBUTE_UNUSED;
+     bfd_vma pc ATTRIBUTE_UNUSED;
+     int length ATTRIBUTE_UNUSED;
 {
   print_register_list (dis_info, value, 8, 1/*store*/);
 }
 
 static void
 print_low_register_list_st (cd, dis_info, value, attrs, pc, length)
-     CGEN_CPU_DESC cd;
+     CGEN_CPU_DESC cd ATTRIBUTE_UNUSED;
      PTR dis_info;
      long value;
-     unsigned int attrs;
-     bfd_vma pc;
-     int length;
+     unsigned int attrs ATTRIBUTE_UNUSED;
+     bfd_vma pc ATTRIBUTE_UNUSED;
+     int length ATTRIBUTE_UNUSED;
 {
   print_register_list (dis_info, value, 0, 1/*store*/);
 }
 
 static void
 print_m4 (cd, dis_info, value, attrs, pc, length)
-     CGEN_CPU_DESC cd;
+     CGEN_CPU_DESC cd ATTRIBUTE_UNUSED;
      PTR dis_info;
      long value;
-     unsigned int attrs;
-     bfd_vma pc;
-     int length;
+     unsigned int attrs ATTRIBUTE_UNUSED;
+     bfd_vma pc ATTRIBUTE_UNUSED;
+     int length ATTRIBUTE_UNUSED;
 {
   disassemble_info *info = (disassemble_info *) dis_info;
   (*info->fprintf_func) (info->stream, "%ld", value);
@@ -178,7 +178,7 @@ fr30_cgen_print_operand (cd, opindex, xinfo, fields, attrs, pc, length)
      int opindex;
      PTR xinfo;
      CGEN_FIELDS *fields;
-     void const *attrs;
+     void const *attrs ATTRIBUTE_UNUSED;
      bfd_vma pc;
      int length;
 {
@@ -324,12 +324,21 @@ fr30_cgen_init_dis (cd)
 
 static void
 print_normal (cd, dis_info, value, attrs, pc, length)
+#ifdef CGEN_PRINT_NORMAL
      CGEN_CPU_DESC cd;
+#else
+     CGEN_CPU_DESC cd ATTRIBUTE_UNUSED;
+#endif
      PTR dis_info;
      long value;
      unsigned int attrs;
+#ifdef CGEN_PRINT_NORMAL
      bfd_vma pc;
      int length;
+#else
+     bfd_vma pc ATTRIBUTE_UNUSED;
+     int length ATTRIBUTE_UNUSED;
+#endif
 {
   disassemble_info *info = (disassemble_info *) dis_info;
 
@@ -350,12 +359,21 @@ print_normal (cd, dis_info, value, attrs, pc, length)
 
 static void
 print_address (cd, dis_info, value, attrs, pc, length)
+#ifdef CGEN_PRINT_NORMAL
      CGEN_CPU_DESC cd;
+#else
+     CGEN_CPU_DESC cd ATTRIBUTE_UNUSED;
+#endif
      PTR dis_info;
      bfd_vma value;
      unsigned int attrs;
+#ifdef CGEN_PRINT_NORMAL
      bfd_vma pc;
      int length;
+#else
+     bfd_vma pc ATTRIBUTE_UNUSED;
+     int length ATTRIBUTE_UNUSED;
+#endif
 {
   disassemble_info *info = (disassemble_info *) dis_info;
 
@@ -380,11 +398,11 @@ print_address (cd, dis_info, value, attrs, pc, length)
 
 static void
 print_keyword (cd, dis_info, keyword_table, value, attrs)
-     CGEN_CPU_DESC cd;
+     CGEN_CPU_DESC cd ATTRIBUTE_UNUSED;
      PTR dis_info;
      CGEN_KEYWORD *keyword_table;
      long value;
-     unsigned int attrs;
+     unsigned int attrs ATTRIBUTE_UNUSED;
 {
   disassemble_info *info = (disassemble_info *) dis_info;
   const CGEN_KEYWORD_ENTRY *ke;
@@ -435,6 +453,48 @@ print_insn_normal (cd, dis_info, insn, fields, pc, length)
     }
 }
 
+/* Subroutine of print_insn. Reads an insn into the given buffers and updates
+   the extract info.
+   Returns 0 if all is well, non-zero otherwise.  */
+static int
+read_insn (cd, pc, info, buf, buflen, ex_info, insn_value)
+     CGEN_CPU_DESC cd ATTRIBUTE_UNUSED;
+     bfd_vma pc;
+     disassemble_info *info;
+     char *buf;
+     int buflen;
+     CGEN_EXTRACT_INFO *ex_info;
+     unsigned long *insn_value;
+{
+  int status = (*info->read_memory_func) (pc, buf, buflen, info);
+  if (status != 0)
+    {
+      (*info->memory_error_func) (status, pc, info);
+      return -1;
+    }
+
+  ex_info->dis_info = info;
+  ex_info->valid = (1 << buflen) - 1;
+  ex_info->insn_bytes = buf;
+
+  switch (buflen)
+    {
+    case 1:
+      *insn_value = buf[0];
+      break;
+    case 2:
+      *insn_value = info->endian == BFD_ENDIAN_BIG ? bfd_getb16 (buf) : bfd_getl16 (buf);
+      break;
+    case 4:
+      *insn_value = info->endian == BFD_ENDIAN_BIG ? bfd_getb32 (buf) : bfd_getl32 (buf);
+      break;
+    default:
+      abort ();
+    }
+
+  return 0;
+}
+
 /* Utility to print an insn.
    BUF is the base part of the insn, target byte order, BUFLEN bytes long.
    The result is the size of the insn in bytes or zero for an unknown insn
@@ -453,24 +513,9 @@ print_insn (cd, pc, info, buf, buflen)
   const CGEN_INSN_LIST *insn_list;
   CGEN_EXTRACT_INFO ex_info;
 
-  ex_info.dis_info = info;
-  ex_info.valid = (1 << (cd->base_insn_bitsize / 8)) - 1;
-  ex_info.insn_bytes = buf;
-
-  switch (buflen)
-    {
-    case 1:
-      insn_value = buf[0];
-      break;
-    case 2:
-      insn_value = info->endian == BFD_ENDIAN_BIG ? bfd_getb16 (buf) : bfd_getl16 (buf);
-      break;
-    case 4:
-      insn_value = info->endian == BFD_ENDIAN_BIG ? bfd_getb32 (buf) : bfd_getl32 (buf);
-      break;
-    default:
-      abort ();
-    }
+  int rc = read_insn (cd, pc, info, buf, buflen, & ex_info, & insn_value);
+  if (rc != 0)
+    return rc;
 
   /* The instructions are stored in hash lists.
      Pick the first one and keep trying until we find the right one.  */
@@ -482,10 +527,14 @@ print_insn (cd, pc, info, buf, buflen)
       CGEN_FIELDS fields;
       int length;
 
-#if 0 /* not needed as insn shouldn't be in hash lists if not supported */
+#ifdef CGEN_VALIDATE_INSN_SUPPORTED 
+      /* not needed as insn shouldn't be in hash lists if not supported */
       /* Supported by this cpu?  */
       if (! fr30_cgen_insn_supported (cd, insn))
-	continue;
+        {
+          insn_list = CGEN_DIS_NEXT_INSN (insn_list);
+	  continue;
+        }
 #endif
 
       /* Basic bit mask must be correct.  */
@@ -498,8 +547,24 @@ print_insn (cd, pc, info, buf, buflen)
 	     machine insn and extracts the fields.  The second pass prints
 	     them.  */
 
-	  length = CGEN_EXTRACT_FN (cd, insn)
-	    (cd, insn, &ex_info, insn_value, &fields, pc);
+	  /* Make sure the entire insn is loaded into insn_value, if it
+	     can fit.  */
+	  if ((unsigned) CGEN_INSN_BITSIZE (insn) > cd->base_insn_bitsize &&
+	      (unsigned) (CGEN_INSN_BITSIZE (insn) / 8) <= sizeof (unsigned long))
+	    {
+	      unsigned long full_insn_value;
+	      int rc = read_insn (cd, pc, info, buf,
+				  CGEN_INSN_BITSIZE (insn) / 8,
+				  & ex_info, & full_insn_value);
+	      if (rc != 0)
+		return rc;
+	      length = CGEN_EXTRACT_FN (cd, insn)
+		(cd, insn, &ex_info, full_insn_value, &fields, pc);
+	    }
+	  else
+	    length = CGEN_EXTRACT_FN (cd, insn)
+	      (cd, insn, &ex_info, insn_value, &fields, pc);
+
 	  /* length < 0 -> error */
 	  if (length < 0)
 	    return length;
@@ -556,7 +621,9 @@ print_insn_fr30 (pc, info)
      disassemble_info *info;
 {
   static CGEN_CPU_DESC cd = 0;
-  static prev_isa,prev_mach,prev_endian;
+  static int prev_isa;
+  static int prev_mach;
+  static int prev_endian;
   int length;
   int isa,mach;
   int endian = (info->endian == BFD_ENDIAN_BIG

@@ -4,7 +4,7 @@ struct A
   virtual void bar();
 };
 
-void A::foo() { }			// loose
+void A::foo() { }			// lose
 void A::bar() { }			// keep
 
 struct B : public A
@@ -12,7 +12,7 @@ struct B : public A
   virtual void foo();
 };
 
-void B::foo() { }			// loose
+void B::foo() { }			// lose
 
 void _start() __asm__("_start");	// keep
 

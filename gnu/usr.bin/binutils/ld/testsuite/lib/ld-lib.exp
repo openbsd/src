@@ -1,3 +1,21 @@
+# Support routines for LD testsuite.
+#   Copyright 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001
+#   Free Software Foundation, Inc.
+#
+# This file is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+#
 #
 # default_ld_version 
 #	extract and print the version number of ld
@@ -43,6 +61,23 @@ proc default_ld_relocate { ld target objects } {
     }
 }
 
+# Check to see if ld is being invoked with a non-endian output format
+
+proc is_endian_output_format { object_flags } {
+
+    if {[string match "*-oformat binary*" $object_flags] ||      \
+        [string match "*-oformat ieee*" $object_flags] ||        \
+	[string match "*-oformat ihex*" $object_flags] ||        \
+	[string match "*-oformat netbsd-core*" $object_flags] || \
+	[string match "*-oformat srec*" $object_flags] ||        \
+	[string match "*-oformat tekhex*" $object_flags] ||      \
+	[string match "*-oformat trad-core*" $object_flags] } then {
+        return 0
+    } else {
+	return 1
+    }
+}
+
 # Look for big-endian or little-endian switches in the multlib
 # options and translate these into a -EB or -EL switch.  Note
 # we cannot rely upon proc process_multilib_options to do this
@@ -59,11 +94,11 @@ proc big_or_little_endian {} {
 
 	foreach x $tmp_flags {
 	    case $x in {
-		{*big*endian eb EB} {
+		{*big*endian eb EB -eb -EB} {
 		    set flags " -EB"
 		    return $flags
 		}
-		{*little*endian el EL} {
+		{*little*endian el EL -el -EL} {
 		    set flags " -EL"
 		    return $flags
 		}
@@ -94,9 +129,12 @@ proc default_ld_link { ld target objects } {
 	perror "$ld does not exist"
 	return 0
     }
-    
-    set flags [big_or_little_endian]
-    
+
+    if [is_endian_output_format $objects] then {
+	set flags [big_or_little_endian]
+    } else {
+	set flags ""
+    }
     verbose -log "$ld $HOSTING_EMU $flags -o $target $objs $libs"
     
     catch "exec $ld $HOSTING_EMU $flags -o $target $objs $libs" link_output
@@ -122,7 +160,11 @@ proc default_ld_simple_link { ld target objects } {
 	return 0
     }
     
-    set flags [big_or_little_endian]
+    if [is_endian_output_format $objects] then {
+	set flags [big_or_little_endian]
+    } else {
+	set flags ""
+    }
     
     verbose -log "$ld $flags -o $target $objects"
     

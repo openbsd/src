@@ -1,5 +1,6 @@
 /* BFD i370 CPU definition
-   Copyright (C) 1994, 95, 96, 98, 99, 2000 Free Software Foundation, Inc.
+   Copyright 1994, 1995, 1996, 1998, 1999, 2000
+   Free Software Foundation, Inc.
    Contributed by Ian Lance Taylor, Cygnus Support.
    Hacked by Linas Vepstas <linas@linas.org> in 1998, 1999
 
@@ -46,7 +47,7 @@ i370_compatible (a, b)
 
 static const bfd_arch_info_type arch_info_struct[] =
 {
-  /* hack alert: old old machines are really 16 and 24 bit arch ... */
+  /* hack alert: old old machines are really 16 and 24 bit arch ...  */
   {
     32, /* 32 bits in a word */
     32, /* 32 bits in an address */

@@ -1,5 +1,5 @@
 /* BFD support for the M32R processor.
-   Copyright (C) 1996, 1997, 1998, 1999 Free Software Foundation, Inc.
+   Copyright 1996, 1999, 2000 Free Software Foundation, Inc.
 
 This file is part of BFD, the Binary File Descriptor library.
 
@@ -27,7 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #define NEXT NULL
 
-static const bfd_arch_info_type arch_info_struct[] = 
+static const bfd_arch_info_type arch_info_struct[] =
 {
   N (bfd_mach_m32rx, "m32rx", false, NULL)
 };

@@ -1,10 +1,21 @@
+TORS=".tors :
+  {
+    ___ctors = . ;
+    *(.ctors)
+    ___ctors_end = . ;
+    ___dtors = . ;
+    *(.dtors)
+    ___dtors_end = . ;
+  } > ram"
+
 cat <<EOF
 OUTPUT_FORMAT("${OUTPUT_FORMAT}")
 OUTPUT_ARCH(${ARCH})
 
-MEMORY {
+MEMORY
+{
 	ram   : o = 0x1000, l = 512k
-	}
+}
 
 SECTIONS 				
 { 					
@@ -12,44 +23,40 @@ SECTIONS
 	{ 					
 	  *(.text) 				
 	  *(.strings)
-   	 ${RELOCATING+ _etext = . ; }
+   	  ${RELOCATING+ _etext = . ; }
 	} ${RELOCATING+ > ram}
 
-
-.tors   : {
-	___ctors = . ;
-	*(.ctors)
-	___ctors_end = . ;
-	___dtors = . ;
-	*(.dtors)
-	___dtors_end = . ;
-}  ${RELOCATING+ > ram}
+	${CONSTRUCTING+${TORS}}
 
 .data  :
 	{
-	*(.data)
-	${RELOCATING+ _edata = . ; }
+	  *(.data)
+	  ${RELOCATING+ _edata = . ; }
 	} ${RELOCATING+ > ram}
+	
 .bss  :
 	{
-	${RELOCATING+ _bss_start = . ; }
-	*(.bss)
-	*(COMMON)
-	${RELOCATING+ _end = . ;  }
+	  ${RELOCATING+ _bss_start = . ; }
+	  *(.bss)
+	  *(COMMON)
+	  ${RELOCATING+ _end = . ;  }
 	} ${RELOCATING+ >ram}
-.stack ${RELOCATING+ 0x30000 }  : 
+	
+.stack ${RELOCATING+ 0x30000 } :
 	{
-	${RELOCATING+ _stack = . ; }
-	*(.stack)
+	  ${RELOCATING+ _stack = . ; }
+	  *(.stack)
 	} ${RELOCATING+ > ram}
-  .stab  . (NOLOAD) : 
-  {
-    [ .stab ]
-  }
-  .stabstr  . (NOLOAD) :
-  {
-    [ .stabstr ]
-  }
+	
+.stab  . (NOLOAD) :
+	{
+	  [ .stab ]
+	}
+	
+.stabstr  . (NOLOAD) :
+	{
+	  [ .stabstr ]
+	}
 }
 EOF
 

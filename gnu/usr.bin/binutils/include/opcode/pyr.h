@@ -1,5 +1,22 @@
-/* pyramid.opcode.h -- gdb initial attempt. */
+/* pyramid.opcode.h -- gdb initial attempt.
 
+   Copyright 2001 Free Software Foundation, Inc.
+   
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2, or (at your option)
+   any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 59 Temple Place - Suite 330,
+   Boston, MA 02111-1307, USA.  */
+   
 /* pyramid opcode table: wot to do with this
    particular opcode */
 
@@ -12,7 +29,8 @@ struct pyr_datum
   unsigned char     code;	/* op-code (always 6(?) bits */
 };
 
-typedef struct pyr_insn_format {
+typedef struct pyr_insn_format
+{
     unsigned int mode :4;
     unsigned int operator :8;
     unsigned int index_scale :2;

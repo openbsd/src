@@ -1,5 +1,5 @@
 /* picoJava specific support for 32-bit ELF
-   Copyright 1999 Free Software Foundation, Inc.
+   Copyright 1999, 2000 Free Software Foundation, Inc.
    Contributed by Steve Chamberlan of Transmeta (sac@pobox.com).
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -131,7 +131,6 @@ static reloc_howto_type pj_elf_howto_table[] =
 	 0xffff,		/* dst_mask */
 	 true),			/* pcrel_offset */
 
-
     HOWTO (R_PJ_CODE_HI16,	/* type */
 	 16,			/* rightshift */
 	 1,			/* size (0 = byte, 1 = short, 2 = long) */
@@ -176,7 +175,6 @@ static reloc_howto_type pj_elf_howto_table[] =
          0,                     /* dst_mask */
          false),                /* pcrel_offset */
 
-
 };
 
 /* This function is used for normal relocs.  This is like the COFF
@@ -213,8 +211,8 @@ pj_elf_reloc (abfd, reloc_entry, symbol_in, data, input_section, output_bfd,
     return bfd_reloc_undefined;
 
   if (bfd_is_com_section (symbol_in->section))
-    sym_value = 0;                           
-  else 
+    sym_value = 0;
+  else
     sym_value = (symbol_in->value +
 		 symbol_in->section->output_section->vma +
 		 symbol_in->section->output_offset);
@@ -228,7 +226,7 @@ pj_elf_reloc (abfd, reloc_entry, symbol_in, data, input_section, output_bfd,
       break;
 
       /* Relocations in code are always bigendian, no matter what the
-	 data endianness is. */
+	 data endianness is.  */
 
     case R_PJ_CODE_DIR32:
       insn = bfd_getb32 (hit_data);
@@ -254,7 +252,7 @@ pj_elf_reloc (abfd, reloc_entry, symbol_in, data, input_section, output_bfd,
       insn += (sym_value + reloc_entry->addend) >> 16;
       bfd_putb16 (insn, hit_data);
       break;
-      
+
     default:
       abort ();
       break;
@@ -296,7 +294,7 @@ pj_elf_reloc_type_lookup (abfd, code)
      bfd_reloc_code_real_type code;
 {
   unsigned int i;
-  
+
   for (i = 0; i < sizeof (pj_reloc_map) / sizeof (struct elf_reloc_map); i++)
     {
       if (pj_reloc_map[i].bfd_reloc_val == code)
@@ -324,7 +322,7 @@ pj_elf_info_to_howto (abfd, cache_ptr, dst)
 }
 
 /* Take this moment to fill in the special picoJava bits in the
-   e_flags field. */
+   e_flags field.  */
 
 static void
 pj_elf_final_write_processing (abfd, linker)

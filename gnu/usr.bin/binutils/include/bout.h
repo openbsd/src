@@ -1,40 +1,53 @@
-/*
- * This file is a modified version of 'a.out.h'.  It is to be used in all
- * GNU tools modified to support the i80960 (or tools that operate on
- * object files created by such tools).
- *
- * All i80960 development is done in a CROSS-DEVELOPMENT environment.  I.e.,
- * object code is generated on, and executed under the direction of a symbolic
- * debugger running on, a host system.  We do not want to be subject to the
- * vagaries of which host it is or whether it supports COFF or a.out format,
- * or anything else.  We DO want to:
- *
- *	o always generate the same format object files, regardless of host.
- *
- *	o have an 'a.out' header that we can modify for our own purposes
- *	  (the 80960 is typically an embedded processor and may require
- *	  enhanced linker support that the normal a.out.h header can't
- *	  accommodate).
- *
- * As for byte-ordering, the following rules apply:
- *
- *	o Text and data that is actually downloaded to the target is always
- *	  in i80960 (little-endian) order.
- *
- *	o All other numbers (in the header, symbols, relocation directives)
- *	  are in host byte-order:  object files CANNOT be lifted from a
- *	  little-end host and used on a big-endian (or vice versa) without
- *	  modification.
- * ==> THIS IS NO LONGER TRUE USING BFD.  WE CAN GENERATE ANY BYTE ORDER
- *     FOR THE HEADER, AND READ ANY BYTE ORDER.  PREFERENCE WOULD BE TO
- *     USE LITTLE-ENDIAN BYTE ORDER THROUGHOUT, REGARDLESS OF HOST.  <==
- *
- *	o The downloader ('comm960') takes care to generate a pseudo-header
- *	  with correct (i80960) byte-ordering before shipping text and data
- *	  off to the NINDY monitor in the target systems.  Symbols and
- *	  relocation info are never sent to the target.
- */
+/* This file is a modified version of 'a.out.h'.  It is to be used in all
+   GNU tools modified to support the i80960 (or tools that operate on
+   object files created by such tools).
+   
+   Copyright 2001 Free Software Foundation, Inc.
 
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2 of the License, or
+   (at your option) any later version.
+   
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+   
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+ 
+/* All i80960 development is done in a CROSS-DEVELOPMENT environment.  I.e.,
+   object code is generated on, and executed under the direction of a symbolic
+   debugger running on, a host system.  We do not want to be subject to the
+   vagaries of which host it is or whether it supports COFF or a.out format,
+   or anything else.  We DO want to:
+  
+  	o always generate the same format object files, regardless of host.
+ 
+ 	o have an 'a.out' header that we can modify for our own purposes
+ 	  (the 80960 is typically an embedded processor and may require
+ 	  enhanced linker support that the normal a.out.h header can't
+ 	  accommodate).
+ 
+  As for byte-ordering, the following rules apply:
+ 
+ 	o Text and data that is actually downloaded to the target is always
+ 	  in i80960 (little-endian) order.
+ 
+ 	o All other numbers (in the header, symbols, relocation directives)
+ 	  are in host byte-order:  object files CANNOT be lifted from a
+ 	  little-end host and used on a big-endian (or vice versa) without
+ 	  modification.
+  ==> THIS IS NO LONGER TRUE USING BFD.  WE CAN GENERATE ANY BYTE ORDER
+      FOR THE HEADER, AND READ ANY BYTE ORDER.  PREFERENCE WOULD BE TO
+      USE LITTLE-ENDIAN BYTE ORDER THROUGHOUT, REGARDLESS OF HOST.  <==
+ 
+ 	o The downloader ('comm960') takes care to generate a pseudo-header
+ 	  with correct (i80960) byte-ordering before shipping text and data
+ 	  off to the NINDY monitor in the target systems.  Symbols and
+ 	  relocation info are never sent to the target.  */
 
 #define BMAGIC	0415
 /* We don't accept the following (see N_BADMAG macro).

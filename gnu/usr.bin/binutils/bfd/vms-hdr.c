@@ -1,6 +1,6 @@
 /* vms-hdr.c -- BFD back-end for VMS/VAX (openVMS/VAX) and
    EVAX (openVMS/Alpha) files.
-   Copyright 1996, 1997, 1998, 1999 Free Software Foundation, Inc.
+   Copyright 1996, 1997, 1998, 1999, 2000 Free Software Foundation, Inc.
 
    HDR record handling functions
    EMH record handling functions
@@ -33,8 +33,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #include "vms.h"
 
+#ifdef HAVE_ALLOCA_H
+#include <alloca.h>
+#endif
 /*---------------------------------------------------------------------------*/
-
 
 /* Read & process emh record
    return 0 on success, -1 on error  */
@@ -196,10 +198,8 @@ _bfd_vms_slurp_hdr (abfd, objtype)
   return 0;
 }
 
-
 /*-----------------------------------------------------------------------------*/
 /* Output routines.  */
-
 
 /* Manufacure a VMS like time on a unix based system.
    stolen from obj-vms.c  */
@@ -240,7 +240,6 @@ get_vms_time_string ()
   return tbuf;
 }
 
-
 /* write object header for bfd abfd  */
 
 int
@@ -252,7 +251,6 @@ _bfd_vms_write_hdr (abfd, objtype)
   unsigned int symnum;
   int had_case = 0;
   int had_file = 0;
-
 
 #if VMS_DEBUG
   vms_debug (2, "vms_write_hdr (%p)\n", abfd);
@@ -392,7 +390,7 @@ _bfd_vms_slurp_eom (abfd, objtype)
 
   vms_rec = PRIV(vms_rec);
 
-  if ((objtype == OBJ_S_C_EOM) 
+  if ((objtype == OBJ_S_C_EOM)
      || (objtype == OBJ_S_C_EOMW))
     {
     }
@@ -420,7 +418,6 @@ _bfd_vms_slurp_eom (abfd, objtype)
   return 0;
 }
 
-
 /* Write eom record for bfd abfd  */
 
 int
@@ -433,7 +430,7 @@ _bfd_vms_write_eom (abfd, objtype)
 #endif
 
   _bfd_vms_output_begin (abfd, objtype, -1);
-  _bfd_vms_output_long (abfd, (unsigned long)(PRIV(vms_linkage_index) >> 1));
+  _bfd_vms_output_long (abfd, (unsigned long) (PRIV(vms_linkage_index) >> 1));
   _bfd_vms_output_byte (abfd, 0);	/* completion code */
   _bfd_vms_output_byte (abfd, 0);	/* fill byte */
 
@@ -448,7 +445,7 @@ _bfd_vms_write_eom (abfd, objtype)
 	  return -1;
 	}
       _bfd_vms_output_short (abfd, 0);
-      _bfd_vms_output_long (abfd, (unsigned long)(section->index));
+      _bfd_vms_output_long (abfd, (unsigned long) (section->index));
       _bfd_vms_output_long (abfd,
 			     (unsigned long) bfd_get_start_address (abfd));
       _bfd_vms_output_long (abfd, 0);

@@ -2,7 +2,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright (C) 1996, 1997, 1998, 1999 Free Software Foundation, Inc.
+Copyright 1996, 1997, 1998, 1999, 2000, 2001 Free Software Foundation, Inc.
 
 This file is part of the GNU Binutils and/or GDB, the GNU debugger.
 
@@ -32,6 +32,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "m32r-desc.h"
 #include "m32r-opc.h"
 #include "opintl.h"
+#include "libiberty.h"
 
 /* Attributes.  */
 
@@ -69,7 +70,7 @@ static const CGEN_ATTR_ENTRY PIPE_attr[] =
 
 const CGEN_ATTR_TABLE m32r_cgen_ifield_attr_table[] =
 {
-  { "MACH", & MACH_attr[0] },
+  { "MACH", & MACH_attr[0], & MACH_attr[0] },
   { "VIRTUAL", &bool_attr[0], &bool_attr[0] },
   { "PCREL-ADDR", &bool_attr[0], &bool_attr[0] },
   { "ABS-ADDR", &bool_attr[0], &bool_attr[0] },
@@ -82,7 +83,7 @@ const CGEN_ATTR_TABLE m32r_cgen_ifield_attr_table[] =
 
 const CGEN_ATTR_TABLE m32r_cgen_hardware_attr_table[] =
 {
-  { "MACH", & MACH_attr[0] },
+  { "MACH", & MACH_attr[0], & MACH_attr[0] },
   { "VIRTUAL", &bool_attr[0], &bool_attr[0] },
   { "CACHE-ADDR", &bool_attr[0], &bool_attr[0] },
   { "PC", &bool_attr[0], &bool_attr[0] },
@@ -92,7 +93,7 @@ const CGEN_ATTR_TABLE m32r_cgen_hardware_attr_table[] =
 
 const CGEN_ATTR_TABLE m32r_cgen_operand_attr_table[] =
 {
-  { "MACH", & MACH_attr[0] },
+  { "MACH", & MACH_attr[0], & MACH_attr[0] },
   { "VIRTUAL", &bool_attr[0], &bool_attr[0] },
   { "PCREL-ADDR", &bool_attr[0], &bool_attr[0] },
   { "ABS-ADDR", &bool_attr[0], &bool_attr[0] },
@@ -108,8 +109,8 @@ const CGEN_ATTR_TABLE m32r_cgen_operand_attr_table[] =
 
 const CGEN_ATTR_TABLE m32r_cgen_insn_attr_table[] =
 {
-  { "MACH", & MACH_attr[0] },
-  { "PIPE", & PIPE_attr[0] },
+  { "MACH", & MACH_attr[0], & MACH_attr[0] },
+  { "PIPE", & PIPE_attr[0], & PIPE_attr[0] },
   { "ALIAS", &bool_attr[0], &bool_attr[0] },
   { "VIRTUAL", &bool_attr[0], &bool_attr[0] },
   { "UNCOND-CTI", &bool_attr[0], &bool_attr[0] },
@@ -128,8 +129,8 @@ const CGEN_ATTR_TABLE m32r_cgen_insn_attr_table[] =
 /* Instruction set variants.  */
 
 static const CGEN_ISA m32r_cgen_isa_table[] = {
-  { "m32r", 32, 32, 16, 32,  },
-  { 0 }
+  { "m32r", 32, 32, 16, 32 },
+  { 0, 0, 0, 0, 0 }
 };
 
 /* Machine variants.  */
@@ -137,81 +138,84 @@ static const CGEN_ISA m32r_cgen_isa_table[] = {
 static const CGEN_MACH m32r_cgen_mach_table[] = {
   { "m32r", "m32r", MACH_M32R },
   { "m32rx", "m32rx", MACH_M32RX },
-  { 0 }
+  { 0, 0, 0 }
 };
 
 static CGEN_KEYWORD_ENTRY m32r_cgen_opval_gr_names_entries[] =
 {
-  { "fp", 13 },
-  { "lr", 14 },
-  { "sp", 15 },
-  { "r0", 0 },
-  { "r1", 1 },
-  { "r2", 2 },
-  { "r3", 3 },
-  { "r4", 4 },
-  { "r5", 5 },
-  { "r6", 6 },
-  { "r7", 7 },
-  { "r8", 8 },
-  { "r9", 9 },
-  { "r10", 10 },
-  { "r11", 11 },
-  { "r12", 12 },
-  { "r13", 13 },
-  { "r14", 14 },
-  { "r15", 15 }
+  { "fp", 13, {0, {0}}, 0, 0 },
+  { "lr", 14, {0, {0}}, 0, 0 },
+  { "sp", 15, {0, {0}}, 0, 0 },
+  { "r0", 0, {0, {0}}, 0, 0 },
+  { "r1", 1, {0, {0}}, 0, 0 },
+  { "r2", 2, {0, {0}}, 0, 0 },
+  { "r3", 3, {0, {0}}, 0, 0 },
+  { "r4", 4, {0, {0}}, 0, 0 },
+  { "r5", 5, {0, {0}}, 0, 0 },
+  { "r6", 6, {0, {0}}, 0, 0 },
+  { "r7", 7, {0, {0}}, 0, 0 },
+  { "r8", 8, {0, {0}}, 0, 0 },
+  { "r9", 9, {0, {0}}, 0, 0 },
+  { "r10", 10, {0, {0}}, 0, 0 },
+  { "r11", 11, {0, {0}}, 0, 0 },
+  { "r12", 12, {0, {0}}, 0, 0 },
+  { "r13", 13, {0, {0}}, 0, 0 },
+  { "r14", 14, {0, {0}}, 0, 0 },
+  { "r15", 15, {0, {0}}, 0, 0 }
 };
 
 CGEN_KEYWORD m32r_cgen_opval_gr_names =
 {
   & m32r_cgen_opval_gr_names_entries[0],
-  19
+  19,
+  0, 0, 0, 0
 };
 
 static CGEN_KEYWORD_ENTRY m32r_cgen_opval_cr_names_entries[] =
 {
-  { "psw", 0 },
-  { "cbr", 1 },
-  { "spi", 2 },
-  { "spu", 3 },
-  { "bpc", 6 },
-  { "bbpsw", 8 },
-  { "bbpc", 14 },
-  { "cr0", 0 },
-  { "cr1", 1 },
-  { "cr2", 2 },
-  { "cr3", 3 },
-  { "cr4", 4 },
-  { "cr5", 5 },
-  { "cr6", 6 },
-  { "cr7", 7 },
-  { "cr8", 8 },
-  { "cr9", 9 },
-  { "cr10", 10 },
-  { "cr11", 11 },
-  { "cr12", 12 },
-  { "cr13", 13 },
-  { "cr14", 14 },
-  { "cr15", 15 }
+  { "psw", 0, {0, {0}}, 0, 0 },
+  { "cbr", 1, {0, {0}}, 0, 0 },
+  { "spi", 2, {0, {0}}, 0, 0 },
+  { "spu", 3, {0, {0}}, 0, 0 },
+  { "bpc", 6, {0, {0}}, 0, 0 },
+  { "bbpsw", 8, {0, {0}}, 0, 0 },
+  { "bbpc", 14, {0, {0}}, 0, 0 },
+  { "cr0", 0, {0, {0}}, 0, 0 },
+  { "cr1", 1, {0, {0}}, 0, 0 },
+  { "cr2", 2, {0, {0}}, 0, 0 },
+  { "cr3", 3, {0, {0}}, 0, 0 },
+  { "cr4", 4, {0, {0}}, 0, 0 },
+  { "cr5", 5, {0, {0}}, 0, 0 },
+  { "cr6", 6, {0, {0}}, 0, 0 },
+  { "cr7", 7, {0, {0}}, 0, 0 },
+  { "cr8", 8, {0, {0}}, 0, 0 },
+  { "cr9", 9, {0, {0}}, 0, 0 },
+  { "cr10", 10, {0, {0}}, 0, 0 },
+  { "cr11", 11, {0, {0}}, 0, 0 },
+  { "cr12", 12, {0, {0}}, 0, 0 },
+  { "cr13", 13, {0, {0}}, 0, 0 },
+  { "cr14", 14, {0, {0}}, 0, 0 },
+  { "cr15", 15, {0, {0}}, 0, 0 }
 };
 
 CGEN_KEYWORD m32r_cgen_opval_cr_names =
 {
   & m32r_cgen_opval_cr_names_entries[0],
-  23
+  23,
+  0, 0, 0, 0
 };
 
 static CGEN_KEYWORD_ENTRY m32r_cgen_opval_h_accums_entries[] =
 {
-  { "a0", 0 },
-  { "a1", 1 }
+  { "a0", 0, {0, {0}}, 0, 0 },
+  { "a1", 1, {0, {0}}, 0, 0 }
 };
 
 CGEN_KEYWORD m32r_cgen_opval_h_accums =
 {
   & m32r_cgen_opval_h_accums_entries[0],
-  2
+  2,
+  0, 0, 0, 0
 };
 
 
@@ -240,7 +244,7 @@ const CGEN_HW_ENTRY m32r_cgen_hw_table[] =
   { "h-bpsw", HW_H_BPSW, CGEN_ASM_NONE, 0, { 0, { (1<<MACH_BASE) } } },
   { "h-bbpsw", HW_H_BBPSW, CGEN_ASM_NONE, 0, { 0, { (1<<MACH_BASE) } } },
   { "h-lock", HW_H_LOCK, CGEN_ASM_NONE, 0, { 0, { (1<<MACH_BASE) } } },
-  { 0 }
+  { 0, 0, CGEN_ASM_NONE, 0, {0, {0}} }
 };
 
 #undef A
@@ -277,7 +281,7 @@ const CGEN_IFLD m32r_cgen_ifld_table[] =
   { M32R_F_BITS67, "f-bits67", 0, 32, 6, 2, { 0, { (1<<MACH_BASE) } }  },
   { M32R_F_BIT14, "f-bit14", 0, 32, 14, 1, { 0, { (1<<MACH_BASE) } }  },
   { M32R_F_IMM1, "f-imm1", 0, 32, 15, 1, { 0, { (1<<MACH_BASE) } }  },
-  { 0 }
+  { 0, 0, 0, 0, 0, 0, {0, {0}} }
 };
 
 #undef A
@@ -367,7 +371,7 @@ const CGEN_OPERAND m32r_cgen_operand_table[] =
 /* accum: accumulator */
   { "accum", M32R_OPERAND_ACCUM, HW_H_ACCUM, 0, 0,
     { 0|A(SEM_ONLY), { (1<<MACH_BASE) } }  },
-  { 0 }
+  { 0, 0, 0, 0, 0, {0, {0}} }
 };
 
 #undef A
@@ -382,7 +386,7 @@ static const CGEN_IBASE m32r_cgen_insn_table[MAX_INSNS] =
   /* Special null first entry.
      A `num' value of zero is thus invalid.
      Also, the special `invalid' insn resides here.  */
-  { 0, 0, 0 },
+  { 0, 0, 0, 0, {0, {0}} },
 /* add $dr,$sr */
   {
     M32R_INSN_ADD, "add", "add", 16,
@@ -1175,9 +1179,11 @@ static void
 m32r_cgen_rebuild_tables (cd)
      CGEN_CPU_TABLE *cd;
 {
-  int i,n_isas,n_machs;
+  int i,n_isas;
   unsigned int isas = cd->isas;
+#if 0
   unsigned int machs = cd->machs;
+#endif
 
   cd->int_insn_p = CGEN_INT_INSN_P;
 
@@ -1219,6 +1225,7 @@ m32r_cgen_rebuild_tables (cd)
 	++n_isas;
       }
 
+#if 0 /* Does nothing?? */
   /* Data derived from the mach spec.  */
   for (i = 0; i < MAX_MACHS; ++i)
     if (((1 << i) & machs) != 0)
@@ -1227,6 +1234,7 @@ m32r_cgen_rebuild_tables (cd)
 
 	++n_machs;
       }
+#endif
 
   /* Determine which hw elements are used by MACH.  */
   build_hw_table (cd);
@@ -1338,7 +1346,7 @@ m32r_cgen_cpu_open (enum cgen_cpu_open_arg arg_type, ...)
   cd->rebuild_tables = m32r_cgen_rebuild_tables;
   m32r_cgen_rebuild_tables (cd);
 
-  /* Initialise flags.  */
+  /* Default to not allowing signed overflow.  */
   cd->signed_overflow_ok_p = 0;
   
   return (CGEN_CPU_DESC) cd;

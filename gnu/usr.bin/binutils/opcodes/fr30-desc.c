@@ -2,7 +2,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright (C) 1996, 1997, 1998, 1999 Free Software Foundation, Inc.
+Copyright 1996, 1997, 1998, 1999, 2000, 2001 Free Software Foundation, Inc.
 
 This file is part of the GNU Binutils and/or GDB, the GNU debugger.
 
@@ -32,6 +32,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "fr30-desc.h"
 #include "fr30-opc.h"
 #include "opintl.h"
+#include "libiberty.h"
 
 /* Attributes.  */
 
@@ -59,7 +60,7 @@ static const CGEN_ATTR_ENTRY ISA_attr[] =
 
 const CGEN_ATTR_TABLE fr30_cgen_ifield_attr_table[] =
 {
-  { "MACH", & MACH_attr[0] },
+  { "MACH", & MACH_attr[0], & MACH_attr[0] },
   { "VIRTUAL", &bool_attr[0], &bool_attr[0] },
   { "PCREL-ADDR", &bool_attr[0], &bool_attr[0] },
   { "ABS-ADDR", &bool_attr[0], &bool_attr[0] },
@@ -71,7 +72,7 @@ const CGEN_ATTR_TABLE fr30_cgen_ifield_attr_table[] =
 
 const CGEN_ATTR_TABLE fr30_cgen_hardware_attr_table[] =
 {
-  { "MACH", & MACH_attr[0] },
+  { "MACH", & MACH_attr[0], & MACH_attr[0] },
   { "VIRTUAL", &bool_attr[0], &bool_attr[0] },
   { "CACHE-ADDR", &bool_attr[0], &bool_attr[0] },
   { "PC", &bool_attr[0], &bool_attr[0] },
@@ -81,7 +82,7 @@ const CGEN_ATTR_TABLE fr30_cgen_hardware_attr_table[] =
 
 const CGEN_ATTR_TABLE fr30_cgen_operand_attr_table[] =
 {
-  { "MACH", & MACH_attr[0] },
+  { "MACH", & MACH_attr[0], & MACH_attr[0] },
   { "VIRTUAL", &bool_attr[0], &bool_attr[0] },
   { "PCREL-ADDR", &bool_attr[0], &bool_attr[0] },
   { "ABS-ADDR", &bool_attr[0], &bool_attr[0] },
@@ -96,7 +97,7 @@ const CGEN_ATTR_TABLE fr30_cgen_operand_attr_table[] =
 
 const CGEN_ATTR_TABLE fr30_cgen_insn_attr_table[] =
 {
-  { "MACH", & MACH_attr[0] },
+  { "MACH", & MACH_attr[0], & MACH_attr[0] },
   { "ALIAS", &bool_attr[0], &bool_attr[0] },
   { "VIRTUAL", &bool_attr[0], &bool_attr[0] },
   { "UNCOND-CTI", &bool_attr[0], &bool_attr[0] },
@@ -114,130 +115,137 @@ const CGEN_ATTR_TABLE fr30_cgen_insn_attr_table[] =
 /* Instruction set variants.  */
 
 static const CGEN_ISA fr30_cgen_isa_table[] = {
-  { "fr30", 16, 16, 16, 48,  },
-  { 0 }
+  { "fr30", 16, 16, 16, 48 },
+  { 0, 0, 0, 0, 0 }
 };
 
 /* Machine variants.  */
 
 static const CGEN_MACH fr30_cgen_mach_table[] = {
   { "fr30", "fr30", MACH_FR30 },
-  { 0 }
+  { 0, 0, 0 }
 };
 
 static CGEN_KEYWORD_ENTRY fr30_cgen_opval_gr_names_entries[] =
 {
-  { "r0", 0 },
-  { "r1", 1 },
-  { "r2", 2 },
-  { "r3", 3 },
-  { "r4", 4 },
-  { "r5", 5 },
-  { "r6", 6 },
-  { "r7", 7 },
-  { "r8", 8 },
-  { "r9", 9 },
-  { "r10", 10 },
-  { "r11", 11 },
-  { "r12", 12 },
-  { "r13", 13 },
-  { "r14", 14 },
-  { "r15", 15 },
-  { "ac", 13 },
-  { "fp", 14 },
-  { "sp", 15 }
+  { "r0", 0, {0, {0}}, 0, 0 },
+  { "r1", 1, {0, {0}}, 0, 0 },
+  { "r2", 2, {0, {0}}, 0, 0 },
+  { "r3", 3, {0, {0}}, 0, 0 },
+  { "r4", 4, {0, {0}}, 0, 0 },
+  { "r5", 5, {0, {0}}, 0, 0 },
+  { "r6", 6, {0, {0}}, 0, 0 },
+  { "r7", 7, {0, {0}}, 0, 0 },
+  { "r8", 8, {0, {0}}, 0, 0 },
+  { "r9", 9, {0, {0}}, 0, 0 },
+  { "r10", 10, {0, {0}}, 0, 0 },
+  { "r11", 11, {0, {0}}, 0, 0 },
+  { "r12", 12, {0, {0}}, 0, 0 },
+  { "r13", 13, {0, {0}}, 0, 0 },
+  { "r14", 14, {0, {0}}, 0, 0 },
+  { "r15", 15, {0, {0}}, 0, 0 },
+  { "ac", 13, {0, {0}}, 0, 0 },
+  { "fp", 14, {0, {0}}, 0, 0 },
+  { "sp", 15, {0, {0}}, 0, 0 }
 };
 
 CGEN_KEYWORD fr30_cgen_opval_gr_names =
 {
   & fr30_cgen_opval_gr_names_entries[0],
-  19
+  19,
+  0, 0, 0, 0
 };
 
 static CGEN_KEYWORD_ENTRY fr30_cgen_opval_cr_names_entries[] =
 {
-  { "cr0", 0 },
-  { "cr1", 1 },
-  { "cr2", 2 },
-  { "cr3", 3 },
-  { "cr4", 4 },
-  { "cr5", 5 },
-  { "cr6", 6 },
-  { "cr7", 7 },
-  { "cr8", 8 },
-  { "cr9", 9 },
-  { "cr10", 10 },
-  { "cr11", 11 },
-  { "cr12", 12 },
-  { "cr13", 13 },
-  { "cr14", 14 },
-  { "cr15", 15 }
+  { "cr0", 0, {0, {0}}, 0, 0 },
+  { "cr1", 1, {0, {0}}, 0, 0 },
+  { "cr2", 2, {0, {0}}, 0, 0 },
+  { "cr3", 3, {0, {0}}, 0, 0 },
+  { "cr4", 4, {0, {0}}, 0, 0 },
+  { "cr5", 5, {0, {0}}, 0, 0 },
+  { "cr6", 6, {0, {0}}, 0, 0 },
+  { "cr7", 7, {0, {0}}, 0, 0 },
+  { "cr8", 8, {0, {0}}, 0, 0 },
+  { "cr9", 9, {0, {0}}, 0, 0 },
+  { "cr10", 10, {0, {0}}, 0, 0 },
+  { "cr11", 11, {0, {0}}, 0, 0 },
+  { "cr12", 12, {0, {0}}, 0, 0 },
+  { "cr13", 13, {0, {0}}, 0, 0 },
+  { "cr14", 14, {0, {0}}, 0, 0 },
+  { "cr15", 15, {0, {0}}, 0, 0 }
 };
 
 CGEN_KEYWORD fr30_cgen_opval_cr_names =
 {
   & fr30_cgen_opval_cr_names_entries[0],
-  16
+  16,
+  0, 0, 0, 0
 };
 
 static CGEN_KEYWORD_ENTRY fr30_cgen_opval_dr_names_entries[] =
 {
-  { "tbr", 0 },
-  { "rp", 1 },
-  { "ssp", 2 },
-  { "usp", 3 },
-  { "mdh", 4 },
-  { "mdl", 5 }
+  { "tbr", 0, {0, {0}}, 0, 0 },
+  { "rp", 1, {0, {0}}, 0, 0 },
+  { "ssp", 2, {0, {0}}, 0, 0 },
+  { "usp", 3, {0, {0}}, 0, 0 },
+  { "mdh", 4, {0, {0}}, 0, 0 },
+  { "mdl", 5, {0, {0}}, 0, 0 }
 };
 
 CGEN_KEYWORD fr30_cgen_opval_dr_names =
 {
   & fr30_cgen_opval_dr_names_entries[0],
-  6
+  6,
+  0, 0, 0, 0
 };
 
 static CGEN_KEYWORD_ENTRY fr30_cgen_opval_h_ps_entries[] =
 {
-  { "ps", 0 }
+  { "ps", 0, {0, {0}}, 0, 0 }
 };
 
 CGEN_KEYWORD fr30_cgen_opval_h_ps =
 {
   & fr30_cgen_opval_h_ps_entries[0],
-  1
+  1,
+  0, 0, 0, 0
 };
 
 static CGEN_KEYWORD_ENTRY fr30_cgen_opval_h_r13_entries[] =
 {
-  { "r13", 0 }
+  { "r13", 0, {0, {0}}, 0, 0 }
 };
 
 CGEN_KEYWORD fr30_cgen_opval_h_r13 =
 {
   & fr30_cgen_opval_h_r13_entries[0],
-  1
+  1,
+  0, 0, 0, 0
 };
 
 static CGEN_KEYWORD_ENTRY fr30_cgen_opval_h_r14_entries[] =
 {
-  { "r14", 0 }
+  { "r14", 0, {0, {0}}, 0, 0 }
 };
 
 CGEN_KEYWORD fr30_cgen_opval_h_r14 =
 {
   & fr30_cgen_opval_h_r14_entries[0],
-  1
+  1,
+  0, 0, 0, 0
 };
 
 static CGEN_KEYWORD_ENTRY fr30_cgen_opval_h_r15_entries[] =
 {
-  { "r15", 0 }
+  { "r15", 0, {0, {0}}, 0, 0 }
 };
 
 CGEN_KEYWORD fr30_cgen_opval_h_r15 =
 {
   & fr30_cgen_opval_h_r15_entries[0],
-  1
+  1,
+  0, 0, 0, 0
 };
 
 
@@ -273,7 +281,7 @@ const CGEN_HW_ENTRY fr30_cgen_hw_table[] =
   { "h-ccr", HW_H_CCR, CGEN_ASM_NONE, 0, { 0, { (1<<MACH_BASE) } } },
   { "h-scr", HW_H_SCR, CGEN_ASM_NONE, 0, { 0, { (1<<MACH_BASE) } } },
   { "h-ilm", HW_H_ILM, CGEN_ASM_NONE, 0, { 0, { (1<<MACH_BASE) } } },
-  { 0 }
+  { 0, 0, CGEN_ASM_NONE, 0, {0, {0}} }
 };
 
 #undef A
@@ -285,6 +293,7 @@ const CGEN_HW_ENTRY fr30_cgen_hw_table[] =
 const CGEN_IFLD fr30_cgen_ifld_table[] =
 {
   { FR30_F_NIL, "f-nil", 0, 0, 0, 0, { 0, { (1<<MACH_BASE) } }  },
+  { FR30_F_ANYOF, "f-anyof", 0, 0, 0, 0, { 0, { (1<<MACH_BASE) } }  },
   { FR30_F_OP1, "f-op1", 0, 16, 0, 4, { 0, { (1<<MACH_BASE) } }  },
   { FR30_F_OP2, "f-op2", 0, 16, 4, 4, { 0, { (1<<MACH_BASE) } }  },
   { FR30_F_OP3, "f-op3", 0, 16, 8, 4, { 0, { (1<<MACH_BASE) } }  },
@@ -324,7 +333,7 @@ const CGEN_IFLD fr30_cgen_ifld_table[] =
   { FR30_F_REGLIST_LOW_ST, "f-reglist_low_st", 0, 16, 8, 8, { 0, { (1<<MACH_BASE) } }  },
   { FR30_F_REGLIST_HI_LD, "f-reglist_hi_ld", 0, 16, 8, 8, { 0, { (1<<MACH_BASE) } }  },
   { FR30_F_REGLIST_LOW_LD, "f-reglist_low_ld", 0, 16, 8, 8, { 0, { (1<<MACH_BASE) } }  },
-  { 0 }
+  { 0, 0, 0, 0, 0, 0, {0, {0}} }
 };
 
 #undef A
@@ -483,7 +492,7 @@ const CGEN_OPERAND fr30_cgen_operand_table[] =
 /* ilm: interrupt level mask */
   { "ilm", FR30_OPERAND_ILM, HW_H_ILM, 0, 0,
     { 0|A(SEM_ONLY), { (1<<MACH_BASE) } }  },
-  { 0 }
+  { 0, 0, 0, 0, 0, {0, {0}} }
 };
 
 #undef A
@@ -498,7 +507,7 @@ static const CGEN_IBASE fr30_cgen_insn_table[MAX_INSNS] =
   /* Special null first entry.
      A `num' value of zero is thus invalid.
      Also, the special `invalid' insn resides here.  */
-  { 0, 0, 0 },
+  { 0, 0, 0, 0, {0, {0}} },
 /* add $Rj,$Ri */
   {
     FR30_INSN_ADD, "add", "add", 16,
@@ -1446,9 +1455,11 @@ static void
 fr30_cgen_rebuild_tables (cd)
      CGEN_CPU_TABLE *cd;
 {
-  int i,n_isas,n_machs;
+  int i,n_isas;
   unsigned int isas = cd->isas;
+#if 0
   unsigned int machs = cd->machs;
+#endif
 
   cd->int_insn_p = CGEN_INT_INSN_P;
 
@@ -1490,6 +1501,7 @@ fr30_cgen_rebuild_tables (cd)
 	++n_isas;
       }
 
+#if 0 /* Does nothing?? */
   /* Data derived from the mach spec.  */
   for (i = 0; i < MAX_MACHS; ++i)
     if (((1 << i) & machs) != 0)
@@ -1498,6 +1510,7 @@ fr30_cgen_rebuild_tables (cd)
 
 	++n_machs;
       }
+#endif
 
   /* Determine which hw elements are used by MACH.  */
   build_hw_table (cd);
@@ -1609,6 +1622,9 @@ fr30_cgen_cpu_open (enum cgen_cpu_open_arg arg_type, ...)
   cd->rebuild_tables = fr30_cgen_rebuild_tables;
   fr30_cgen_rebuild_tables (cd);
 
+  /* Default to not allowing signed overflow.  */
+  cd->signed_overflow_ok_p = 0;
+  
   return (CGEN_CPU_DESC) cd;
 }
 

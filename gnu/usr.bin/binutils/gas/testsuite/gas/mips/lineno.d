@@ -51,8 +51,11 @@ main\(\):
 .*lineno.s:32
 .*58:.*b.*
 .*5c:.*nop
-
-0000000000000060 <\$L1>:
+# Objdump puts an '$L1' symbol here for ELF, but not for ECOFF.  For
+# ELF, $L1 is in the .text section so objdump picks it for this location.
+# For ECOFF, it's in the *DEBUG* section, so objdump prefers the .text
+# symbol over $L1.
+#...
 .*lineno.s:34
 .*60:.*move.*
 .*lineno.s:35
@@ -65,7 +68,7 @@ main\(\):
 .*70:.*jr.*
 .*74:.*nop
 
-0000000000000078 <g>:
+0+0078 <g>:
 g\(\):
 .*lineno.s:47
 .*78:.*addiu.*
@@ -84,8 +87,8 @@ g\(\):
 .*lineno.s:54
 .*94:.*b.*
 .*98:.*nop
-
-000000000000009c <\$L2>:
+# Objdump puts an '$L2' symbol here for ELF, but not for ECOFF.
+#...
 .*lineno.s:56
 .*9c:.*move.*
 .*lineno.s:57

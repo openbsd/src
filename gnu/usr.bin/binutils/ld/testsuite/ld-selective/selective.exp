@@ -1,5 +1,5 @@
 # Expect script for LD selective linking tests
-#   Copyright (C) 1998, 1999 Free Software Foundation
+#   Copyright 1998, 1999, 2000, 2001 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,154 +21,159 @@
 
 # COFF based ports do not support selective linking
 if {[istarget "*-*-coff"]} {
-  return
+    return
 }
 if {[istarget "*-*-pe"]} {
-  return
+    return
 }
 
-set test1 "selective1"
-set test2 "selective2"
-set test3 "selective3"
-set test4 "selective4"
-set test5 "selective5"
+# selective linking is not yet implemented for 68hc11/68hc12
+if {[istarget "m6811-*-*"] || [istarget "m6812-*-*"]} {
+    return
+}
 
-set cflags "-w -O2 -ffunction-sections -fdata-sections" 
+# List contains test-items with three items followed by four lists:
+# 1:name 2:test-type (CC or C++; add as needed) 3:filename 4:ld-flags
+# 5:must-have-symbols 6:must-not-have-symbols 7:xfail-targets.
+#
+# If a must(-not)-have symbol is a list, then that list must have two
+# items; the symbol name and a value the symbol must (not) have.
+#
+# Note: ld_nm trims leading `_' from _start
+#
+# FIXME: Instead of table, read settings from each source-file.
+set seltests {
+  {selective1 C 1.c {} {} {dropme1 dropme2} {}}
+  {selective2 C 2.c {} {} {foo} {mips*-*}}
+  {selective3 C 2.c {-u foo} {foo} {{foo 0}} {mips*-*}}
+  {selective4 C++ 3.cc {} {start foo__1A foo__1B} {bar__1A} {mips*-*}}
+  {selective5 C++ 4.cc {} {} {foo__1B foo__1A} {mips*-*}}
+  {selective6 C++ 5.cc {} {} {foo__1B foo__1A dropme1__Fv dropme2__Fv} {*-*-*}}
+}
+
+set cflags "-w -O -ffunction-sections -fdata-sections"
 set cxxflags "-fvtable-gc -fno-exceptions -fno-rtti"
 set ldflags "--gc-sections -Bstatic"
 
+# If we don't have g++ for the target, mark all tests as untested.
 if { [which $CXX] == 0 } {
-    untested $test1
-    untested $test2
-    untested $test3
-    untested $test4
-    untested $test5
+    foreach testitem $seltests {
+	untested "[lindex $testitem 0]"
+    }
     return
 }
 
-if { ![ld_compile "$CC $cflags" $srcdir/$subdir/1.c tmpdir/1.o]} {
-    unresolved $test1
-    return
-}
+foreach testitem $seltests {
+    set testname [lindex $testitem 0]
+    set testtype [lindex $testitem 1]
+    set testfile [lindex $testitem 2]
+    set objfile "tmpdir/[file rootname $testfile].o"
+    set ldfile "tmpdir/[file rootname $testfile].x"
+    set failed 0
 
-if ![ld_simple_link $ld tmpdir/1.x "$ldflags tmpdir/1.o"] {
-    fail $test1
-} else {
-    if ![ld_nm $nm tmpdir/1.x] {
-	unresolved $test1
-    } else {
-	if {[info exists nm_output(dropme1)]} {
-		send_log "dropme1 == $nm_output(dropme1)\n"
-		verbose "dropme1 == $nm_output(dropme1)"
-		fail $test1
-	    } else {
-		if {[info exists nm_output(dropme2)]} {
-		    send_log "dropme2 == $nm_output(dropme2)\n"
-		    verbose "dropme2 == $nm_output(dropme2)"
-		    fail $test1
-		} else {
-		    pass $test1
+    set ldargs [lindex $testitem 3]
+    set mustsyms [lindex $testitem 4]
+    set mustnotsyms [lindex $testitem 5]
+    set xfails [lindex $testitem 6]
+
+    foreach xfail_target $xfails {
+	setup_xfail $xfail_target
+    }
+
+    # It's either C or C++ at the moment.
+    if { $testtype == "C++" } {
+	set testflags "$cflags $cxxflags"
+    } {
+	set testflags "$cflags"
+    }
+
+    # Note that we do not actually *use* CXX; we just add cxxflags for C++
+    # tests.  It might have been a buglet originally; now I think better
+    # leave as is.
+    if { ![ld_compile "$CC $testflags" $srcdir/$subdir/$testfile $objfile] } {
+	unresolved $testname
+	return
+    }
+
+    # V850 targets need libgcc.a
+    if [istarget v850*-*-elf] {
+	set objfile "$objfile -L ../gcc -lgcc"
+    }
+    
+    # m6811/m6812 code has references to soft registers.
+    if {[istarget m6811-*-*] || [istarget m6812-*-*]} {
+	set objfile "$objfile --defsym _.frame=0 --defsym _.d1=0"
+	set objfile "$objfile --defsym _.d2=0"
+    }
+
+    if ![ld_simple_link $ld $ldfile "$ldflags [join $ldargs] $objfile"] {
+	fail $testname
+	continue
+    }
+
+    if ![ld_nm $nm $ldfile] {
+	unresolved $testname
+	continue
+    }
+
+    # Check each mandated symbol and optionally mandated values. 
+    foreach mustsym $mustsyms {
+	if { [llength [concat $mustsym]] == 1 } {
+	    if { ![info exists nm_output($mustsym)] } {
+		verbose -log "$testname: missing $mustsym"
+		fail $testname
+		set failed 1
+		break
+	    }
+	} {
+	    set mustsymname [lindex $mustsym 0]
+	    set mustsymvalue [lindex $mustsym 1]
+	    if { ![info exists nm_output($mustsymname)] } {
+		verbose -log "$testname: missing $mustsymname"
+		fail $testname
+		set failed 1
+		break
+	    } {
+		if { $nm_output($mustsymname) != $mustsymvalue } {
+		    verbose -log "$testname: $mustsymname != $mustsymvalue"
+		    verbose -log "is instead $nm_output($mustsymname)"
+		    fail $testname
+		    set failed 1
+		    break
 		}
 	    }
 	}
     }
 
-if { ![ld_compile "$CC $cflags" $srcdir/$subdir/2.c tmpdir/2.o]} {
-    unresolved $test2
-    return
-}
+    if { $failed != 0 } {
+	continue
+    }
 
-if ![ld_simple_link $ld tmpdir/2.x "$ldflags tmpdir/2.o"] {
-    fail $test2
-} else {
-    if ![ld_nm $nm tmpdir/2.x] {
-	unresolved $test2
-    } else {
-	if {[info exists nm_output(foo)] } {
-            send_log "foo == $nm_output(foo)\n"
-            verbose "foo== $nm_output(foo)"
-            fail $test2
-	} else {
-            pass $test2
-	    } 
-	 }
-     }
-
-if { ![ld_compile "$CC $cflags" $srcdir/$subdir/2.c tmpdir/2.o]} {
-    unresolved $test3
-    return
-}
-
-if ![ld_simple_link $ld tmpdir/2.x "$ldflags -u foo tmpdir/2.o"] {
-    fail $test3
-} else {
-    if ![ld_nm $nm tmpdir/2.x] {
-	unresolved $test3
-    } else {
-	if {![info exists nm_output(foo)] } {
-	    send_log "bad output from nm\n"
-	    verbose "bad output from nm"
-	    fail $test3
-	} else {
-	    if {$nm_output(foo) == 0} {
-		send_log "foo == $nm_output(foo)\n"
-		verbose "foo== $nm_output(foo)"
-		fail $test3
-	    } else {
-                pass $test3
-		}
-	 }
-     }
-}
-
-setup_xfail "v850*-*-elf"
-
-if { ![ld_compile "$CC $cflags $cxxflags" $srcdir/$subdir/3.cc tmpdir/3.o]} {
-    unresolved $test4
-    return
-}
-
-setup_xfail "v850*-*-elf"
-
-if ![ld_simple_link $ld tmpdir/3.x "$ldflags tmpdir/3.o"] {
-   fail $test4
-} else {
-    if ![ld_nm $nm tmpdir/3.x] {
-       unresolved $test4
-    } else {
-	if {[ info exists nm_output(bar__1A)]} {
-	    send_log "bar__1A== $nm_output(_bar__1A)\n"
-	    verbose "bar__1A == $nm_output(_bar__1A)"
-	    fail $test4
-	} else {
-	    pass $test4
+    # Check each unwanted symbol, or that symbols do not have specific
+    # values.
+    foreach mustnotsym $mustnotsyms {
+	if { [llength [concat $mustnotsym]] == 1 } {
+	    if { [info exists nm_output($mustnotsym)] } {
+		verbose -log "$testname: $mustnotsym == $nm_output($mustnotsym)"
+		fail $testname
+		set failed 1
+		break
+	    }
+	} {
+	    set mustnotsymname [lindex $mustnotsym 0]
+	    set mustnotsymvalue [lindex $mustnotsym 1]
+	    if { [info exists nm_output($mustnotsymname)] \
+		    && $nm_output($mustnotsymname) == $mustnotsymvalue} {
+		verbose -log "$testname: $mustnotsymname == $mustnotsymvalue"
+		fail $testname
+		set failed 1
+		break
+	    }
 	}
+    }
+
+    if { $failed == 0 } {
+	pass $testname
     }
 }
 
-if { ![ld_compile "$CC $cflags $cxxflags" $srcdir/$subdir/4.cc tmpdir/4.o]} {
-    unresolved $test5
-    return
-}
-
-if ![ld_simple_link $ld tmpdir/4.x "$ldflags tmpdir/4.o"] {
-    fail $test5
-} else {
-    if ![ld_nm $nm tmpdir/4.x] {
-	unresolved $test5
-    } else {
-	if {[info exists nm_output(foo__1B)]} { 
-            send_log "foo__1B == $nm_output(foo__1B)\n"
-            verbose "foo__1B == $nm_output(foo__1B)"
-	    fail $test5
-	} else {
-          if {[info exists nm_output(foo__1A)]} {
-	        send_log "foo__1A== $nm_output(foo__1A)\n"
-		verbose "foo__1A == $nm_output(foo__1A)"
-		fail $test5
-          } else {
-	      pass $test5
-             }
-	}
-    }
-}

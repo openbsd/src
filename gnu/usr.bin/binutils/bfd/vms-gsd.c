@@ -1,6 +1,6 @@
 /* vms-gsd.c -- BFD back-end for VAX (openVMS/VAX) and
    EVAX (openVMS/Alpha) files.
-   Copyright 1996, 1997, 1998, 1999 Free Software Foundation Inc.
+   Copyright 1996, 1997, 1998, 1999, 2000 Free Software Foundation, Inc.
 
    go and read the openVMS linker manual (esp. appendix B)
    if you don't know what's going on here :-)
@@ -20,7 +20,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
-
 
 #include <ctype.h>
 
@@ -84,7 +83,6 @@ static struct sec_flags_struct vax_section_flags[] = {
 	(GPS_S_M_PIC|GPS_S_M_OVR|GPS_S_M_REL|GPS_S_M_GBL|GPS_S_M_RD|GPS_S_M_WRT),
 	(SEC_IN_MEMORY|SEC_DATA|SEC_HAS_CONTENTS|SEC_ALLOC|SEC_LOAD) }
 };
-
 
 /* These flags are deccrtl/vaxcrtl (openVMS 6.2 Alpha) compatible  */
 
@@ -169,7 +167,6 @@ vms_secflag_by_name (abfd, section_flags, name, size)
     return section_flags[i].flags_hassize;
   return section_flags[i].flags_always;
 }
-
 
 /* Retrieve vms section flags by name and size  */
 
@@ -653,7 +650,7 @@ _bfd_vms_slurp_gsd (abfd, objtype)
 		    new_flags |= BSF_FUNCTION;
 		  }
 		symbol->value = bfd_getl64 (vms_rec+8);
-		symbol->section = (asection *)((unsigned long) bfd_getl32 (vms_rec+28));
+		symbol->section = (asection *) ((unsigned long) bfd_getl32 (vms_rec+28));
 #if VMS_DEBUG
 		vms_debug(4, "egsd sym def #%d (%s, %d, %04x=%s)\n", abfd->symcount,
 			   symbol->name, (int)symbol->section, old_flags, flag2str(gsyflagdesc, old_flags));
@@ -899,9 +896,9 @@ _bfd_vms_write_gsd (abfd, objtype)
 	    {
 	      _bfd_vms_output_quad (abfd, symbol->value);
 	      _bfd_vms_output_quad (abfd,
-				     ((asymbol *)(symbol->udata.p))->value);
+				     ((asymbol *) (symbol->udata.p))->value);
 	      _bfd_vms_output_long (abfd,
-				     (((asymbol *)(symbol->udata.p))
+				     (((asymbol *) (symbol->udata.p))
 				      ->section->index));
 	      _bfd_vms_output_long (abfd, symbol->section->index);
 	    }
@@ -921,7 +918,7 @@ _bfd_vms_write_gsd (abfd, objtype)
 
   _bfd_vms_output_alignment (abfd, 8);
   _bfd_vms_output_pop (abfd);
-  _bfd_vms_output_end (abfd); 
+  _bfd_vms_output_end (abfd);
 
   return 0;
 }

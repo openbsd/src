@@ -1,6 +1,7 @@
 /* This file is tc-tahoe.h
 
-   Copyright (C) 1987-1992 Free Software Foundation, Inc.
+   Copyright 1987, 1988, 1989, 1990, 1991, 1992, 1995, 2000
+   Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -15,8 +16,9 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with GAS; see the file COPYING.  If not, write to
-   the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   along with GAS; see the file COPYING.  If not, write to the Free
+   Software Foundation, 59 Temple Place - Suite 330, Boston, MA
+   02111-1307, USA.  */
 
 #define TC_TAHOE 1
 
@@ -24,8 +26,8 @@
 
 #define NO_LISTING
 
-#define tc_headers_hook(a)		{;}	/* don't need it. */
-#define tc_crawl_symbol_chain(a)	{;}	/* don't need it. */
+#define tc_headers_hook(a)		{;}	/* don't need it.  */
+#define tc_crawl_symbol_chain(a)	{;}	/* don't need it.  */
 #define tc_aout_pre_write_hook(a)	{;}
 
 #define md_operand(x)
@@ -39,5 +41,3 @@ extern const struct relax_type md_relax_table[];
  * fill-column: 131
  * End:
  */
-
-/* end of tc-tahoe.h */

@@ -1,5 +1,5 @@
-/* BFD back-end for Intel 386 COFF files (go32 variant with a stub).
-   Copyright 1997, 1998, 1999, 2000 Free Software Foundation, Inc.
+/* BFD back-end for Intel 386 COFF files (DJGPP variant with a stub).
+   Copyright 1997, 1998, 1999, 2000, 2001 Free Software Foundation, Inc.
    Written by Robert Hoehne.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -41,13 +41,12 @@
 #define COFF_GO32_EXE
 #define COFF_LONG_SECTION_NAMES
 #define COFF_SUPPORT_GNU_LINKONCE
+#define COFF_LONG_FILENAMES
 
 #define COFF_SECTION_ALIGNMENT_ENTRIES \
 { COFF_SECTION_NAME_EXACT_MATCH (".data"), \
   COFF_ALIGNMENT_FIELD_EMPTY, COFF_ALIGNMENT_FIELD_EMPTY, 4 }, \
 { COFF_SECTION_NAME_EXACT_MATCH (".text"), \
-  COFF_ALIGNMENT_FIELD_EMPTY, COFF_ALIGNMENT_FIELD_EMPTY, 4 }, \
-{ COFF_SECTION_NAME_EXACT_MATCH (".bss"), \
   COFF_ALIGNMENT_FIELD_EMPTY, COFF_ALIGNMENT_FIELD_EMPTY, 4 }
 
 #include "bfd.h"
@@ -111,7 +110,7 @@ static boolean
 
 /* This macro is used, because I cannot assume the endianess of the
    host system */
-#define _H(index) (bfd_h_get_16(abfd, (bfd_byte *)(header+index*2)))
+#define _H(index) (bfd_h_get_16(abfd, (bfd_byte *) (header+index*2)))
 
 /* These bytes are a 2048-byte DOS executable, which loads the COFF
    image into memory and then runs it. It is called 'stub' */

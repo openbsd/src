@@ -1,5 +1,5 @@
 /* ns32k-opcode.h -- Opcode table for National Semi 32k processor
-   Copyright (C) 1987 Free Software Foundation, Inc.
+   Copyright 1987, 1991, 1994 Free Software Foundation, Inc.
 
 This file is part of GAS, the GNU Assembler.
 

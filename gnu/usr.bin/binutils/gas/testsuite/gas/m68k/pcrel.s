@@ -56,4 +56,4 @@ lbl_a:	nop
 	nop
 	lea	undef,%a0
 	nop
-	.long 0
+	.p2align 3

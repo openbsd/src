@@ -1,2 +1,2 @@
-.text
-.vtable_entry vtbl_a, 16
+ .text
+ .vtable_entry vtbl_a, 16

@@ -1,5 +1,5 @@
 /* This file is obj-hp300.h
-   Copyright (C) 1993 Free Software Foundation, Inc.
+   Copyright 1993, 2000 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -14,8 +14,9 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with GAS; see the file COPYING.  If not, write to
-   the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   along with GAS; see the file COPYING.  If not, write to the Free
+   Software Foundation, 59 Temple Place - Suite 330, Boston, MA
+   02111-1307, USA.  */
 
 #include "config/obj-aout.c"
 
@@ -36,17 +37,17 @@ hp300_header_append (where, headers)
   DO (a_info);
   DO (a_spare1);
   DO (a_spare2);
-  DO (a_text);      
-  DO (a_data);     
-  DO (a_bss);     
-  DO (a_trsize); 
+  DO (a_text);
+  DO (a_data);
+  DO (a_bss);
+  DO (a_trsize);
   DO (a_drsize);
   DO (a_spare3);
   DO (a_spare4);
   DO (a_spare5);
-  DO (a_entry); 
+  DO (a_entry);
   DO (a_spare6);
   DO (a_spare7);
-  DO (a_syms);  
+  DO (a_syms);
   DO (a_spare8);
 }

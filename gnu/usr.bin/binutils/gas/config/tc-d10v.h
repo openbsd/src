@@ -1,5 +1,5 @@
 /* tc-d10v.h -- Header file for tc-d10v.c.
-   Copyright (C) 1996, 1997 Free Software Foundation, Inc.
+   Copyright 1996, 1997, 1998, 2000 Free Software Foundation, Inc.
    Written by Martin Hunt, Cygnus Support.
 
    This file is part of GAS, the GNU Assembler.
@@ -17,7 +17,9 @@
    You should have received a copy of the GNU General Public License
    along with GAS; see the file COPYING.  If not, write to the Free
    Software Foundation, 59 Temple Place - Suite 330, Boston, MA
-   02111-1307, USA. */
+   02111-1307, USA.  */
+
+#include "write.h" /* For the definition of fixS.  */
 
 #define TC_D10V
 
@@ -35,7 +37,8 @@
 #define MD_APPLY_FIX3
 
 /* call md_pcrel_from_section, not md_pcrel_from */
-#define MD_PCREL_FROM_SECTION(FIXP, SEC) md_pcrel_from_section(FIXP, SEC)   
+#define MD_PCREL_FROM_SECTION(FIXP, SEC) md_pcrel_from_section(FIXP, SEC)
+long md_pcrel_from_section PARAMS ((fixS *, segT));
 
 /* Permit temporary numeric labels.  */
 #define LOCAL_LABELS_FB 1
@@ -53,11 +56,13 @@ int d10v_cleanup PARAMS ((void));
 #define md_do_align(a,b,c,d,e)	     d10v_cleanup()
 #define tc_frob_label(sym) do {\
   d10v_cleanup(); \
-  S_SET_VALUE (sym, (valueT) frag_now_fix ()); \
+  symbol_set_frag (sym, frag_now);					\
+  S_SET_VALUE (sym, (valueT) frag_now_fix ());				\
 } while (0)
 
 #define obj_fix_adjustable(fixP) d10v_fix_adjustable(fixP)
+boolean d10v_fix_adjustable PARAMS ((fixS *));
 #define TC_FORCE_RELOCATION(fixp) d10v_force_relocation(fixp)
-extern int d10v_force_relocation PARAMS ((struct fix *));
+extern int d10v_force_relocation PARAMS ((fixS *));
 
 #define md_flush_pending_output  d10v_cleanup

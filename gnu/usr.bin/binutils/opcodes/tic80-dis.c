@@ -1,5 +1,5 @@
 /* Print TI TMS320C80 (MVP) instructions
-   Copyright 1996, 1997, 1998, 1999 Free Software Foundation, Inc.
+   Copyright 1996, 1997, 1998, 2000 Free Software Foundation, Inc.
 
 This file is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -36,13 +36,12 @@ static int print_instruction PARAMS ((struct disassemble_info *, bfd_vma, unsign
 				      const struct tic80_opcode *));
 static int fill_instruction PARAMS ((struct disassemble_info *, bfd_vma,
 				     unsigned long *));
-
 
 /* Print an integer operand.  Try to be somewhat smart about the
    format by assuming that small positive or negative integers are
    probably loop increment values, structure offsets, or similar
    values that are more meaningful printed as signed decimal values.
-   Larger numbers are probably better printed as hex values. */
+   Larger numbers are probably better printed as hex values.  */
 
 static void
 print_operand_integer (info, value)
@@ -51,18 +50,17 @@ print_operand_integer (info, value)
 {
   if ((value > 9999 || value < -9999))
     {
-      (*info -> fprintf_func) (info -> stream, "%#lx", value);
+      (*info->fprintf_func) (info->stream, "%#lx", value);
     }
   else
     {
-      (*info -> fprintf_func) (info -> stream, "%ld", value);
+      (*info->fprintf_func) (info->stream, "%ld", value);
     }
 }
-
 
 /* FIXME: depends upon sizeof (long) == sizeof (float) and
    also upon host floating point format matching target
-   floating point format. */
+   floating point format.  */
 
 static void
 print_operand_float (info, value)
@@ -72,9 +70,8 @@ print_operand_float (info, value)
   union { float f; long l; } fval;
 
   fval.l = value;
-  (*info -> fprintf_func) (info -> stream, "%g", fval.f);
+  (*info->fprintf_func) (info->stream, "%g", fval.f);
 }
-
 
 static void
 print_operand_control_register (info, value)
@@ -86,14 +83,13 @@ print_operand_control_register (info, value)
   tmp = tic80_value_to_symbol (value, TIC80_OPERAND_CR);
   if (tmp != NULL)
     {
-      (*info -> fprintf_func) (info -> stream, "%s", tmp);
+      (*info->fprintf_func) (info->stream, "%s", tmp);
     }
   else
     {
-      (*info -> fprintf_func) (info -> stream, "%#lx", value);
+      (*info->fprintf_func) (info->stream, "%#lx", value);
     }
 }
-
 
 static void
 print_operand_condition_code (info, value)
@@ -105,14 +101,13 @@ print_operand_condition_code (info, value)
   tmp = tic80_value_to_symbol (value, TIC80_OPERAND_CC);
   if (tmp != NULL)
     {
-      (*info -> fprintf_func) (info -> stream, "%s", tmp);
+      (*info->fprintf_func) (info->stream, "%s", tmp);
     }
   else
     {
-      (*info -> fprintf_func) (info -> stream, "%ld", value);
+      (*info->fprintf_func) (info->stream, "%ld", value);
     }
 }
-
 
 static void
 print_operand_bitnum (info, value)
@@ -126,20 +121,19 @@ print_operand_bitnum (info, value)
   tmp = tic80_value_to_symbol (bitnum, TIC80_OPERAND_BITNUM);
   if (tmp != NULL)
     {
-      (*info -> fprintf_func) (info -> stream, "%s", tmp);
+      (*info->fprintf_func) (info->stream, "%s", tmp);
     }
   else
     {
-      (*info -> fprintf_func) (info -> stream, "%ld", bitnum);
+      (*info->fprintf_func) (info->stream, "%ld", bitnum);
     }
 }
-
 
 /* Print the operand as directed by the flags.  */
 
-#define M_SI(insn,op) ((((op) -> flags & TIC80_OPERAND_M_SI) != 0) && ((insn) & (1 << 17)))
-#define M_LI(insn,op) ((((op) -> flags & TIC80_OPERAND_M_LI) != 0) && ((insn) & (1 << 15)))
-#define R_SCALED(insn,op) ((((op) -> flags & TIC80_OPERAND_SCALED) != 0) && ((insn) & (1 << 11)))
+#define M_SI(insn,op) ((((op)->flags & TIC80_OPERAND_M_SI) != 0) && ((insn) & (1 << 17)))
+#define M_LI(insn,op) ((((op)->flags & TIC80_OPERAND_M_LI) != 0) && ((insn) & (1 << 15)))
+#define R_SCALED(insn,op) ((((op)->flags & TIC80_OPERAND_SCALED) != 0) && ((insn) & (1 << 11)))
 
 static void
 print_operand (info, value, insn, operand, memaddr)
@@ -149,61 +143,60 @@ print_operand (info, value, insn, operand, memaddr)
      const struct tic80_operand *operand;
      bfd_vma memaddr;
 {
-  if ((operand -> flags & TIC80_OPERAND_GPR) != 0)
+  if ((operand->flags & TIC80_OPERAND_GPR) != 0)
     {
-      (*info -> fprintf_func) (info -> stream, "r%ld", value);
+      (*info->fprintf_func) (info->stream, "r%ld", value);
       if (M_SI (insn, operand) || M_LI (insn, operand))
 	{
-	  (*info -> fprintf_func) (info -> stream, ":m");
+	  (*info->fprintf_func) (info->stream, ":m");
 	}
     }
-  else if ((operand -> flags & TIC80_OPERAND_FPA) != 0)
+  else if ((operand->flags & TIC80_OPERAND_FPA) != 0)
     {
-      (*info -> fprintf_func) (info -> stream, "a%ld", value);
+      (*info->fprintf_func) (info->stream, "a%ld", value);
     }
-  else if ((operand -> flags & TIC80_OPERAND_PCREL) != 0)
+  else if ((operand->flags & TIC80_OPERAND_PCREL) != 0)
     {
-      (*info -> print_address_func) (memaddr + 4 * value, info);
+      (*info->print_address_func) (memaddr + 4 * value, info);
     }
-  else if ((operand -> flags & TIC80_OPERAND_BASEREL) != 0)
+  else if ((operand->flags & TIC80_OPERAND_BASEREL) != 0)
     {
-      (*info -> print_address_func) (value, info);
+      (*info->print_address_func) (value, info);
     }
-  else if ((operand -> flags & TIC80_OPERAND_BITNUM) != 0)
+  else if ((operand->flags & TIC80_OPERAND_BITNUM) != 0)
     {
       print_operand_bitnum (info, value);
     }
-  else if ((operand -> flags & TIC80_OPERAND_CC) != 0)
+  else if ((operand->flags & TIC80_OPERAND_CC) != 0)
     {
       print_operand_condition_code (info, value);
     }
-  else if ((operand -> flags & TIC80_OPERAND_CR) != 0)
+  else if ((operand->flags & TIC80_OPERAND_CR) != 0)
     {
       print_operand_control_register (info, value);
     }
-  else if ((operand -> flags & TIC80_OPERAND_FLOAT) != 0)
+  else if ((operand->flags & TIC80_OPERAND_FLOAT) != 0)
     {
       print_operand_float (info, value);
     }
-  else if ((operand -> flags & TIC80_OPERAND_BITFIELD))
+  else if ((operand->flags & TIC80_OPERAND_BITFIELD))
     {
-      (*info -> fprintf_func) (info -> stream, "%#lx", value);
+      (*info->fprintf_func) (info->stream, "%#lx", value);
     }
   else
     {
       print_operand_integer (info, value);
     }
 
-  /* If this is a scaled operand, then print the modifier */
+  /* If this is a scaled operand, then print the modifier.  */
 
   if (R_SCALED (insn, operand))
     {
-      (*info -> fprintf_func) (info -> stream, ":s");
+      (*info->fprintf_func) (info->stream, ":s");
     }
 }
-
 
-/* We have chosen an opcode table entry */
+/* We have chosen an opcode table entry.  */
 
 static int
 print_one_instruction (info, memaddr, insn, opcode)
@@ -218,18 +211,18 @@ print_one_instruction (info, memaddr, insn, opcode)
   const unsigned char *opindex;
   int close_paren;
 
-  (*info -> fprintf_func) (info -> stream, "%-10s", opcode -> name);
+  (*info->fprintf_func) (info->stream, "%-10s", opcode->name);
 
-  for (opindex = opcode -> operands; *opindex != 0; opindex++)
+  for (opindex = opcode->operands; *opindex != 0; opindex++)
     {
       operand = tic80_operands + *opindex;
 
       /* Extract the value from the instruction.  */
-      if (operand -> extract)
+      if (operand->extract)
 	{
-	  value = (*operand -> extract) (insn, (int *) NULL);
+	  value = (*operand->extract) (insn, (int *) NULL);
 	}
-      else if (operand -> bits == 32)
+      else if (operand->bits == 32)
 	{
 	  status = fill_instruction (info, memaddr, (unsigned long *) &value);
 	  if (status == -1)
@@ -239,52 +232,50 @@ print_one_instruction (info, memaddr, insn, opcode)
 	}
       else
 	{
-	  value = (insn >> operand -> shift) & ((1 << operand -> bits) - 1);
-	  if ((operand -> flags & TIC80_OPERAND_SIGNED) != 0
-	      && (value & (1 << (operand -> bits - 1))) != 0)
+	  value = (insn >> operand->shift) & ((1 << operand->bits) - 1);
+	  if ((operand->flags & TIC80_OPERAND_SIGNED) != 0
+	      && (value & (1 << (operand->bits - 1))) != 0)
 	    {
-	      value -= 1 << operand -> bits;
+	      value -= 1 << operand->bits;
 	    }
 	}
 
       /* If this operand is enclosed in parenthesis, then print
 	 the open paren, otherwise just print the regular comma
-	 separator, except for the first operand. */
+	 separator, except for the first operand.  */
 
-      if ((operand -> flags & TIC80_OPERAND_PARENS) == 0)
+      if ((operand->flags & TIC80_OPERAND_PARENS) == 0)
 	{
 	  close_paren = 0;
-	  if (opindex != opcode -> operands)
+	  if (opindex != opcode->operands)
 	    {
-	      (*info -> fprintf_func) (info -> stream, ",");
+	      (*info->fprintf_func) (info->stream, ",");
 	    }
 	}
       else
 	{
 	  close_paren = 1;
-	  (*info -> fprintf_func) (info -> stream, "(");
+	  (*info->fprintf_func) (info->stream, "(");
 	}
 
       print_operand (info, value, insn, operand, memaddr);
 
       /* If we printed an open paren before printing this operand, close
-	 it now. The flag gets reset on each loop. */
+	 it now. The flag gets reset on each loop.  */
 
       if (close_paren)
 	{
-	  (*info -> fprintf_func) (info -> stream, ")");
+	  (*info->fprintf_func) (info->stream, ")");
 	}
     }
   return (length);
 }
-
 
-
 /* There are no specific bits that tell us for certain whether a vector
    instruction opcode contains one or two instructions.  However since
    a destination register of r0 is illegal, we can check for nonzero
    values in both destination register fields.  Only opcodes that have
-   two valid instructions will have non-zero in both */
+   two valid instructions will have non-zero in both.  */
 
 #define TWO_INSN(insn) ((((insn) & (0x1F << 27)) != 0) && (((insn) & (0x1F << 22)) != 0))
 
@@ -302,12 +293,12 @@ print_instruction (info, memaddr, insn, vec_opcode)
      opcodes (vec_opcode != NULL) find the first match that is not the
      previously found match.  FIXME: there should be faster ways to
      search (hash table or binary search), but don't worry too much
-     about it until other TIc80 support is finished. */
+     about it until other TIc80 support is finished.  */
 
   opcode_end = tic80_opcodes + tic80_num_opcodes;
   for (opcode = tic80_opcodes; opcode < opcode_end; opcode++)
     {
-      if ((insn & opcode -> mask) == opcode -> opcode &&
+      if ((insn & opcode->mask) == opcode->opcode &&
 	  opcode != vec_opcode)
 	{
 	  break;
@@ -316,19 +307,19 @@ print_instruction (info, memaddr, insn, vec_opcode)
 
   if (opcode == opcode_end)
     {
-      /* No match found, just print the bits as a .word directive */
-      (*info -> fprintf_func) (info -> stream, ".word %#08lx", insn);
+      /* No match found, just print the bits as a .word directive.  */
+      (*info->fprintf_func) (info->stream, ".word %#08lx", insn);
     }
   else
     {
       /* Match found, decode the instruction.  */
       length = print_one_instruction (info, memaddr, insn, opcode);
-      if (opcode -> flags & TIC80_VECTOR && vec_opcode == NULL && TWO_INSN (insn))
+      if (opcode->flags & TIC80_VECTOR && vec_opcode == NULL && TWO_INSN (insn))
 	{
 	  /* There is another instruction to print from the same opcode.
 	     Print the separator and then find and print the other
-	     instruction. */
-	  (*info -> fprintf_func) (info -> stream, "   ||   ");
+	     instruction.  */
+	  (*info->fprintf_func) (info->stream, "   ||   ");
 	  length = print_instruction (info, memaddr, insn, opcode);
 	}
     }
@@ -337,7 +328,7 @@ print_instruction (info, memaddr, insn, vec_opcode)
 
 /* Get the next 32 bit word from the instruction stream and convert it
    into internal format in the unsigned long INSN, for which we are
-   passed the address.  Return 0 on success, -1 on error. */
+   passed the address.  Return 0 on success, -1 on error.  */
 
 static int
 fill_instruction (info, memaddr, insnp)
@@ -348,37 +339,36 @@ fill_instruction (info, memaddr, insnp)
   bfd_byte buffer[4];
   int status;
 
-  /* Get the bits for the next 32 bit word and put in buffer */
+  /* Get the bits for the next 32 bit word and put in buffer.  */
 
-  status = (*info -> read_memory_func) (memaddr + length, buffer, 4, info);
+  status = (*info->read_memory_func) (memaddr + length, buffer, 4, info);
   if (status != 0)
     {
-      (*info -> memory_error_func) (status, memaddr, info);
+      (*info->memory_error_func) (status, memaddr, info);
       return (-1);
     }
 
   /* Read was successful, so increment count of bytes read and convert
-     the bits into internal format. */
-     
+     the bits into internal format.  */
+
   length += 4;
-  if (info -> endian == BFD_ENDIAN_LITTLE)
+  if (info->endian == BFD_ENDIAN_LITTLE)
     {
       *insnp = bfd_getl32 (buffer);
     }
-  else if (info -> endian == BFD_ENDIAN_BIG)
+  else if (info->endian == BFD_ENDIAN_BIG)
     {
       *insnp = bfd_getb32 (buffer);
     }
   else
     {
-      /* FIXME: Should probably just default to one or the other */
+      /* FIXME: Should probably just default to one or the other.  */
       abort ();
     }
   return (0);
 }
-
 
-int 
+int
 print_insn_tic80 (memaddr, info)
      bfd_vma memaddr;
      struct disassemble_info *info;

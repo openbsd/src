@@ -1,5 +1,5 @@
 /* bfd back-end for TI TMS320C80 (MVP) support
-   Copyright (C) 1996, 1999 Free Software Foundation, Inc.
+   Copyright 1996 Free Software Foundation, Inc.
    Written by Fred Fish at Cygnus support (fnf@cygnus.com)
 
 This file is part of BFD, the Binary File Descriptor library.

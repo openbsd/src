@@ -1,5 +1,5 @@
 /* te-sun3.h -- Sun-3 target environment declarations.
-   Copyright (C) 1987, 1990, 1991, 1992 Free Software Foundation, Inc.
+   Copyright 1987, 1990, 1991, 1992, 2000 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -15,7 +15,8 @@
 
    You should have received a copy of the GNU General Public License
    along with GAS; see the file COPYING.  If not, write to
-   the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA
+   02111-1307, USA.  */
 
 /* This header file contains the #defines specific
    to SUN computer SUN 3 series computers.  (The only kind
@@ -23,7 +24,6 @@
 
    Rumor has it that this file will work on the Sun-2 if the assembler
    is called with -m68010  This is not tested.  */
-
 
 #define TE_SUN3	1
 

@@ -8,7 +8,7 @@
 
 #define GLOBAL_OFFSET_TABLE_NAME "__GLOBAL_OFFSET_TABLE_"
 
-/* Both architectures use these */
+/* Both architectures use these.  */
 #ifndef LOCAL_LABELS_FB
 #define LOCAL_LABELS_FB 1
 #endif

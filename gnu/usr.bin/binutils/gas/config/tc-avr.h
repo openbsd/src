@@ -1,5 +1,5 @@
 /* This file is tc-avr.h
-   Copyright (C) 1999, 2000 Free Software Foundation, Inc.
+   Copyright 1999, 2000 Free Software Foundation, Inc.
 
    Contributed by Denis Chertykov <denisc@overta.ru>
 
@@ -24,36 +24,35 @@
  #error AVR support requires BFD_ASSEMBLER
 #endif
 
-
 #define TC_AVR
 /*   By convention, you should define this macro in the `.h' file.  For
      example, `tc-m68k.h' defines `TC_M68K'.  You might have to use this
      if it is necessary to add CPU specific code to the object format
-     file. */
+     file.  */
 
 #define TARGET_FORMAT "elf32-avr"
 /*   This macro is the BFD target name to use when creating the output
-     file.  This will normally depend upon the `OBJ_FMT' macro. */
+     file.  This will normally depend upon the `OBJ_FMT' macro.  */
 
 #define TARGET_ARCH bfd_arch_avr
-/*   This macro is the BFD architecture to pass to `bfd_set_arch_mach'. */
+/*   This macro is the BFD architecture to pass to `bfd_set_arch_mach'.  */
 
 #define TARGET_MACH 0
 /*   This macro is the BFD machine number to pass to
-     `bfd_set_arch_mach'.  If it is not defined, GAS will use 0. */
+     `bfd_set_arch_mach'.  If it is not defined, GAS will use 0.  */
 
 #define TARGET_BYTES_BIG_ENDIAN 0
 /*   You should define this macro to be non-zero if the target is big
-     endian, and zero if the target is little endian. */
+     endian, and zero if the target is little endian.  */
 
 #define ONLY_STANDARD_ESCAPES
 /*   If you define this macro, GAS will warn about the use of
-     nonstandard escape sequences in a string. */
+     nonstandard escape sequences in a string.  */
 
 #define md_operand(x)
 /*   GAS will call this function for any expression that can not be
      recognized.  When the function is called, `input_line_pointer'
-     will point to the start of the expression. */
+     will point to the start of the expression.  */
 
 void avr_parse_cons_expression (expressionS *exp, int nbytes);
 
@@ -67,14 +66,14 @@ void avr_cons_fix_new(fragS *frag,int where, int nbytes, expressionS *exp);
 
 #define TC_CONS_FIX_NEW(FRAG,WHERE,N,EXP) avr_cons_fix_new(FRAG,WHERE,N,EXP)
 /*   You may define this macro to generate a fixup for a data
-     allocation pseudo-op. */
+     allocation pseudo-op.  */
 
 #define md_number_to_chars number_to_chars_littleendian
 /*   This should just call either `number_to_chars_bigendian' or
      `number_to_chars_littleendian', whichever is appropriate.  On
      targets like the MIPS which support options to change the
      endianness, which function to call is a runtime decision.  On
-     other targets, `md_number_to_chars' can be a simple macro. */
+     other targets, `md_number_to_chars' can be a simple macro.  */
 
 #define WORKING_DOT_WORD
 /*
@@ -89,7 +88,7 @@ void avr_cons_fix_new(fragS *frag,int where, int nbytes, expressionS *exp);
      `md_long_jump_size' to the size of a long jump (a jump that can go
      anywhere in the function), You should define
      `md_create_short_jump' to create a short jump around a long jump,
-     and define `md_create_long_jump' to create a long jump. */
+     and define `md_create_long_jump' to create a long jump.  */
 
 #define MD_APPLY_FIX3
 
@@ -99,20 +98,31 @@ void avr_cons_fix_new(fragS *frag,int where, int nbytes, expressionS *exp);
 /*   If you define this macro, it means that `tc_gen_reloc' may return
      multiple relocation entries for a single fixup.  In this case, the
      return value of `tc_gen_reloc' is a pointer to a null terminated
-     array. */
+     array.  */
 
-#define MD_PCREL_FROM_SECTION(FIXP, SEC) md_pcrel_from_section(FIXP, SEC)   
+#define MD_PCREL_FROM_SECTION(FIXP, SEC) md_pcrel_from_section(FIXP, SEC)
 /*   If you define this macro, it should return the offset between the
      address of a PC relative fixup and the position from which the PC
      relative adjustment should be made.  On many processors, the base
      of a PC relative instruction is the next instruction, so this
-     macro would return the length of an instruction. */
+     macro would return the length of an instruction.  */
+
+extern long md_pcrel_from_section PARAMS ((struct fix *, segT));
 
 #define LISTING_WORD_SIZE 2
 /*   The number of bytes to put into a word in a listing.  This affects
      the way the bytes are clumped together in the listing.  For
      example, a value of 2 might print `1234 5678' where a value of 1
-     would print `12 34 56 78'.  The default value is 4. */
+     would print `12 34 56 78'.  The default value is 4.  */
 
 #define LEX_DOLLAR 0
 /* AVR port uses `$' as a logical line separator */
+
+#define TC_IMPLICIT_LCOMM_ALIGNMENT(SIZE, P2VAR) (P2VAR) = 0
+/*   An `.lcomm' directive with no explicit alignment parameter will
+     use this macro to set P2VAR to the alignment that a request for
+     SIZE bytes will have.  The alignment is expressed as a power of
+     two.  If no alignment should take place, the macro definition
+     should do nothing.  Some targets define a `.bss' directive that is
+     also affected by this macro.  The default definition will set
+     P2VAR to the truncated power of two of sizes up to eight bytes.  */

@@ -1,5 +1,5 @@
 /* windres.h -- header file for windres program.
-   Copyright 1997, 1998 Free Software Foundation, Inc.
+   Copyright 1997, 1998, 2000 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
 
    This file is part of GNU Binutils.
@@ -812,6 +812,10 @@ extern struct dialog_control *define_control
   PARAMS ((const char *, unsigned long, unsigned long, unsigned long,
 	   unsigned long, unsigned long, unsigned long, unsigned long,
 	   unsigned long));
+extern struct dialog_control *define_icon_control
+  PARAMS ((struct res_id, unsigned long, unsigned long,
+	   unsigned long, unsigned long, unsigned long, unsigned long,
+	   struct rcdata_item *, struct dialog_ex *));
 extern void define_font
   PARAMS ((struct res_id, const struct res_res_info *, const char *));
 extern void define_icon

@@ -1,5 +1,5 @@
 /* AVR-specific support for 32-bit ELF
-   Copyright (C) 1999, 2000 Free Software Foundation, Inc.
+   Copyright 1999, 2000 Free Software Foundation, Inc.
    Contributed by Denis Chertykov <denisc@overta.ru>
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -17,7 +17,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
-
 
 #include "bfd.h"
 #include "sysdep.h"
@@ -46,7 +45,6 @@ static boolean elf32_avr_relocate_section
 	   Elf_Internal_Rela *, Elf_Internal_Sym *, asection **));
 static void bfd_elf_avr_final_write_processing PARAMS ((bfd *, boolean));
 static boolean elf32_avr_object_p PARAMS ((bfd *));
-
 
 /* Use RELA instead of REL */
 #undef USE_REL
@@ -369,7 +367,7 @@ struct avr_reloc_map
 
 static reloc_howto_type *
 bfd_elf32_bfd_reloc_type_lookup (abfd, code)
-     bfd *abfd;
+     bfd *abfd ATTRIBUTE_UNUSED;
      bfd_reloc_code_real_type code;
 {
   unsigned int i;
@@ -389,7 +387,7 @@ bfd_elf32_bfd_reloc_type_lookup (abfd, code)
 
 static void
 avr_info_to_howto_rela (abfd, cache_ptr, dst)
-     bfd *abfd;
+     bfd *abfd ATTRIBUTE_UNUSED;
      arelent *cache_ptr;
      Elf32_Internal_Rela *dst;
 {
@@ -403,7 +401,7 @@ avr_info_to_howto_rela (abfd, cache_ptr, dst)
 static asection *
 elf32_avr_gc_mark_hook (abfd, info, rel, h, sym)
      bfd *abfd;
-     struct bfd_link_info *info;
+     struct bfd_link_info *info ATTRIBUTE_UNUSED;
      Elf_Internal_Rela *rel;
      struct elf_link_hash_entry *h;
      Elf_Internal_Sym *sym;
@@ -442,10 +440,10 @@ elf32_avr_gc_mark_hook (abfd, info, rel, h, sym)
 
 static boolean
 elf32_avr_gc_sweep_hook (abfd, info, sec, relocs)
-     bfd *abfd;
-     struct bfd_link_info *info;
-     asection *sec;
-     const Elf_Internal_Rela *relocs;
+     bfd *abfd ATTRIBUTE_UNUSED;
+     struct bfd_link_info *info ATTRIBUTE_UNUSED;
+     asection *sec ATTRIBUTE_UNUSED;
+     const Elf_Internal_Rela *relocs ATTRIBUTE_UNUSED;
 {
   /* We don't use got and plt entries for avr.  */
   return true;
@@ -472,7 +470,7 @@ elf32_avr_check_relocs (abfd, info, sec, relocs)
 
   symtab_hdr = &elf_tdata (abfd)->symtab_hdr;
   sym_hashes = elf_sym_hashes (abfd);
-  sym_hashes_end = sym_hashes + symtab_hdr->sh_size/sizeof(Elf32_External_Sym);
+  sym_hashes_end = sym_hashes + symtab_hdr->sh_size/sizeof (Elf32_External_Sym);
   if (!elf_bad_symtab (abfd))
     sym_hashes_end -= symtab_hdr->sh_info;
 
@@ -516,7 +514,7 @@ avr_final_link_relocate (howto, input_bfd, input_section,
       srel = (bfd_signed_vma) relocation;
       srel += rel->r_addend;
       srel -= rel->r_offset;
-      srel -= 2;	/* Branch instructions add 2 to the PC... */
+      srel -= 2;	/* Branch instructions add 2 to the PC...  */
       srel -= (input_section->output_section->vma +
 	       input_section->output_offset);
 
@@ -534,7 +532,7 @@ avr_final_link_relocate (howto, input_bfd, input_section,
       srel = (bfd_signed_vma) relocation;
       srel += rel->r_addend;
       srel -= rel->r_offset;
-      srel -= 2;	/* Branch instructions add 2 to the PC... */
+      srel -= 2;	/* Branch instructions add 2 to the PC...  */
       srel -= (input_section->output_section->vma +
 	       input_section->output_offset);
 
@@ -548,15 +546,15 @@ avr_final_link_relocate (howto, input_bfd, input_section,
       if (srel < -2048 || srel > 2047)
 	{
 	  /* Apply WRAPAROUND if possible.  */
-	  if (bfd_get_mach (input_bfd) == bfd_mach_avr2)
+	  switch (bfd_get_mach (input_bfd))
 	    {
-	      if (srel > 2047)
-		srel -= 4096;
-	      else
-		srel += 4096;
+	    case bfd_mach_avr2:
+	    case bfd_mach_avr4:
+	      break;
+
+	    default:
+	      return bfd_reloc_overflow;
 	    }
-	  else
-	    return bfd_reloc_overflow;
 	}
 
       x = bfd_get_16 (input_bfd, contents);
@@ -717,7 +715,7 @@ avr_final_link_relocate (howto, input_bfd, input_section,
 static boolean
 elf32_avr_relocate_section (output_bfd, info, input_bfd, input_section,
 			    contents, relocs, local_syms, local_sections)
-     bfd *output_bfd;
+     bfd *output_bfd ATTRIBUTE_UNUSED;
      struct bfd_link_info *info;
      bfd *input_bfd;
      asection *input_section;
@@ -899,6 +897,9 @@ bfd_elf_avr_final_write_processing (abfd, linker)
       val = E_AVR_MACH_AVR4;
       break;
 
+    case bfd_mach_avr5:
+      val = E_AVR_MACH_AVR5;
+      break;
     }
 
   elf_elfheader (abfd)->e_machine = EM_AVR;
@@ -934,12 +935,15 @@ elf32_avr_object_p (abfd)
 	case E_AVR_MACH_AVR4:
 	  e_set = bfd_mach_avr4;
 	  break;
+
+	case E_AVR_MACH_AVR5:
+	  e_set = bfd_mach_avr5;
+	  break;
 	}
     }
   return bfd_default_set_arch_mach (abfd, bfd_arch_avr,
 				    e_set);
 }
-
 
 #define ELF_ARCH		bfd_arch_avr
 #define ELF_MACHINE_CODE	EM_AVR
@@ -958,6 +962,5 @@ elf32_avr_object_p (abfd)
 #define elf_backend_final_write_processing \
 					bfd_elf_avr_final_write_processing
 #define elf_backend_object_p		elf32_avr_object_p
-
 
 #include "elf32-target.h"

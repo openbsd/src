@@ -177,7 +177,7 @@ SECTIONS
   .debug_pubnames 0 ${RELOCATING+(NOLOAD)} : { *(.debug_pubnames) }
 
   /* DWARF 2 */
-  .debug_info     0 ${RELOCATING+(NOLOAD)} : { *(.debug_info) }
+  .debug_info     0 ${RELOCATING+(NOLOAD)} : { *(.debug_info) *(.gnu.linkonce.wi.*) }
   .debug_abbrev   0 ${RELOCATING+(NOLOAD)} : { *(.debug_abbrev) }
   .debug_line     0 ${RELOCATING+(NOLOAD)} : { *(.debug_line) }
   .debug_frame    0 ${RELOCATING+(NOLOAD)} : { *(.debug_frame) }

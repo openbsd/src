@@ -1,3 +1,7 @@
+2001-06-07  Alan Modra  <amodra@bigpond.net.au>
+
+	* Many files: Update copyright notices.
+
 Fri May  6 13:31:04 1994  Ian Lance Taylor  (ian@tweedledumb.cygnus.com)
 
 	* external.h (nlmNAME(External_Custom_Header)): Add length,

@@ -1,5 +1,5 @@
 /* This file is obj-hp300.h
-   Copyright (C) 1993 Free Software Foundation, Inc.
+   Copyright 1993, 2000 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -14,8 +14,9 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with GAS; see the file COPYING.  If not, write to
-   the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   along with GAS; see the file COPYING.  If not, write to the Free
+   Software Foundation, 59 Temple Place - Suite 330, Boston, MA
+   02111-1307, USA.  */
 
 #define __STRUCT_EXEC_OVERRIDE__
 
@@ -47,18 +48,18 @@ struct exec
   unsigned long a_info;
   unsigned long a_spare1;
   unsigned long a_spare2;
-  unsigned long a_text;      
-  unsigned long a_data;     
-  unsigned long a_bss;     
-  unsigned long a_trsize; 
+  unsigned long a_text;
+  unsigned long a_data;
+  unsigned long a_bss;
+  unsigned long a_trsize;
   unsigned long a_drsize;
   unsigned long a_spare3;
   unsigned long a_spare4;
   unsigned long a_spare5;
-  unsigned long a_entry; 
+  unsigned long a_entry;
   unsigned long a_spare6;
   unsigned long a_spare7;
-  unsigned long a_syms;  
+  unsigned long a_syms;
   unsigned long a_spare8;
 };
 
@@ -66,6 +67,6 @@ struct exec
 #define AOUT_VERSION	0x02
 #define AOUT_MACHTYPE	0x0c
 #define OMAGIC		0x106
-    
+
 #define obj_header_append	hp300_header_append
 #include "config/obj-aout.h"

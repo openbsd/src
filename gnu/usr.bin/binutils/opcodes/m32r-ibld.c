@@ -3,7 +3,7 @@
 THIS FILE IS MACHINE GENERATED WITH CGEN: Cpu tools GENerator.
 - the resultant file is machine generated, cgen-ibld.in isn't
 
-Copyright (C) 1996, 1997, 1998, 1999, 2000 Free Software Foundation, Inc.
+Copyright 1996, 1997, 1998, 1999, 2000, 2001 Free Software Foundation, Inc.
 
 This file is part of the GNU Binutils and GDB, the GNU debugger.
 
@@ -57,6 +57,9 @@ static int extract_normal
 static int extract_insn_normal
      PARAMS ((CGEN_CPU_DESC, const CGEN_INSN *, CGEN_EXTRACT_INFO *,
 	      CGEN_INSN_INT, CGEN_FIELDS *, bfd_vma));
+static void put_insn_int_value
+     PARAMS ((CGEN_CPU_DESC, CGEN_INSN_BYTES_PTR, int, int, CGEN_INSN_INT));
+
 
 /* Operand insertion.  */
 
@@ -183,9 +186,11 @@ insert_normal (cd, value, attrs, word_offset, start, length, word_length,
   if (length == 0)
     return NULL;
 
+#if 0
   if (CGEN_INT_INSN_P
       && word_offset != 0)
     abort ();
+#endif
 
   if (word_length > 32)
     abort ();
@@ -237,9 +242,9 @@ insert_normal (cd, value, attrs, word_offset, start, length, word_length,
     int shift;
 
     if (CGEN_INSN_LSB0_P)
-      shift = (start + 1) - length;
+      shift = (word_offset + start + 1) - length;
     else
-      shift = word_length - (start + length);
+      shift = total_length - (word_offset + start + length);
     *buffer = (*buffer & ~(mask << shift)) | ((value & mask) << shift);
   }
 
@@ -283,7 +288,8 @@ insert_insn_normal (cd, insn, fields, buffer, pc)
 
 #if CGEN_INT_INSN_P
 
-  *buffer = value;
+  put_insn_int_value (cd, buffer, cd->base_insn_bitsize,
+		      CGEN_FIELDS_BITSIZE (fields), value);
 
 #else
 
@@ -312,6 +318,30 @@ insert_insn_normal (cd, insn, fields, buffer, pc)
     }
 
   return NULL;
+}
+
+/* Cover function to store an insn value into an integral insn.  Must go here
+ because it needs <prefix>-desc.h for CGEN_INT_INSN_P.  */
+
+static void
+put_insn_int_value (cd, buf, length, insn_length, value)
+     CGEN_CPU_DESC cd;
+     CGEN_INSN_BYTES_PTR buf;
+     int length;
+     int insn_length;
+     CGEN_INSN_INT value;
+{
+  /* For architectures with insns smaller than the base-insn-bitsize,
+     length may be too big.  */
+  if (length > insn_length)
+    *buf = value;
+  else
+    {
+      int shift = insn_length - length;
+      /* Written this way to avoid undefined behaviour.  */
+      CGEN_INSN_INT mask = (((1L << (length - 1)) - 1) << 1) | 1;
+      *buf = (*buf & ~(mask << shift)) | ((value & mask) << shift);
+    }
 }
 
 /* Operand extraction.  */
@@ -444,11 +474,19 @@ static int
 extract_normal (cd, ex_info, insn_value, attrs, word_offset, start, length,
 		word_length, total_length, pc, valuep)
      CGEN_CPU_DESC cd;
+#if ! CGEN_INT_INSN_P
      CGEN_EXTRACT_INFO *ex_info;
+#else
+     CGEN_EXTRACT_INFO *ex_info ATTRIBUTE_UNUSED;
+#endif
      CGEN_INSN_INT insn_value;
      unsigned int attrs;
      unsigned int word_offset, start, length, word_length, total_length;
+#if ! CGEN_INT_INSN_P
      bfd_vma pc;
+#else
+     bfd_vma pc ATTRIBUTE_UNUSED;
+#endif
      long *valuep;
 {
   CGEN_INSN_INT value;
@@ -461,9 +499,11 @@ extract_normal (cd, ex_info, insn_value, attrs, word_offset, start, length,
       return 1;
     }
 
+#if 0
   if (CGEN_INT_INSN_P
       && word_offset != 0)
     abort ();
+#endif
 
   if (word_length > 32)
     abort ();
@@ -479,15 +519,15 @@ extract_normal (cd, ex_info, insn_value, attrs, word_offset, start, length,
 
   /* Does the value reside in INSN_VALUE?  */
 
-  if (word_offset == 0)
+  if (CGEN_INT_INSN_P || word_offset == 0)
     {
       /* Written this way to avoid undefined behaviour.  */
       CGEN_INSN_INT mask = (((1L << (length - 1)) - 1) << 1) | 1;
 
       if (CGEN_INSN_LSB0_P)
-	value = insn_value >> ((start + 1) - length);
+	value = insn_value >> ((word_offset + start + 1) - length);
       else
-	value = insn_value >> (word_length - (start + length));
+	value = insn_value >> (total_length - ( word_offset + start + length));
       value &= mask;
       /* sign extend? */
       if (CGEN_BOOL_ATTR (attrs, CGEN_IFLD_SIGNED)

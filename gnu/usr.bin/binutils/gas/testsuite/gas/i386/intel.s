@@ -566,3 +566,53 @@ foo:
  bsr    dx, 0x90909090[eax]
  movsx  dx, byte ptr 0x90909090[eax]
  xadd   0x90909090[eax], dx
+
+gs_foo:
+ ret
+
+short_foo:
+ ret
+
+bar:
+ call	gs_foo
+ call	short_foo
+ fstp   QWORD PTR [eax+edx*8]
+ mov	ecx, OFFSET FLAT:ss
+ mov	BYTE PTR [esi+edx], al
+ mov	BYTE PTR [edx+esi], al
+ mov	BYTE PTR [edx*2+esi], al
+ mov	BYTE PTR [esi+edx*2], al
+ jmp	short rot5
+ ins    byte ptr es:[edi], dx
+ xadd   0x90909090[eax], dx
+ and	%eax, -8
+rot5:
+ mov	%eax, DWORD PTR [%esi+4+%ecx*8]
+ ins    BYTE PTR es:[edi], dx
+ or     al, 0x90
+ or     eax, 0x90909090
+ push   cs
+ mov	eax, [ebx*2]
+ adc    BYTE PTR [eax*4+0x90909090], dl
+ das
+ jmp    0x9090,0x90909090
+ movs   WORD PTR es:[edi], WORD PTR ds:[esi]
+ jo     .+2-0x70
+
+1:
+ jne	1b
+ movq	mm6, [DWORD PTR .LC5+40]		 
+ add	edi, dword ptr [ebx+8*eax]
+ movd	mm0, dword ptr [ebx+8*eax+4]
+ add	edi, dword ptr [ebx+8*ecx+((4095+1)*8)]
+ movd	mm1, dword ptr [ebx+8*ecx+((4095+1)*8)+4]
+ movd	mm2, dword ptr [ebx+8*eax+(2*(4095+1)*8)+4]
+ add	edi, dword ptr [ebx+8*eax+(2*(4095+1)*8)]
+ mov	ax,  word ptr [ebx+2*eax]
+ mov	cx,  word ptr [ebx+2*ecx+((4095+1)*2)]
+ mov	ax,  word ptr [ebx+2*eax+(2*(4095+1)*2)]
+ jmp 	eax
+ jmp	[eax]
+ jmp	[bar]
+ jmp	bar
+ .p2align 4,0

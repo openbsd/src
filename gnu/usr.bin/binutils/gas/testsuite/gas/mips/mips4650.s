@@ -6,3 +6,4 @@ stuff:
 	madu $5,$6
 	mul $6,$7,$8
 	nop
+	.end stuff

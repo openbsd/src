@@ -1,8 +1,3 @@
-2000-06-04  Philippe De Muyter  <phdm@macqel.be>
-
-	* explodename.c: Include stdlib.h and string.h only if they exist.
-	Use strings.h eventually. (already in gettext-0.10.35 since 1998-04-27)
-
 1997-09-06 02:10  Ulrich Drepper  <drepper@cygnus.com>
 
 	* intlh.inst.in: Reformat copyright.

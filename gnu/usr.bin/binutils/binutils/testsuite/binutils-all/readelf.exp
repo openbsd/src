@@ -1,4 +1,4 @@
-#   Copyright (C) 1999 Free Software Foundation, Inc.
+#   Copyright 1999, 2000 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 # Please email any bugs, comments, and/or additions to this file to:
 # bug-dejagnu@prep.ai.mit.edu
 
-# Written by Nick Clifto  <nickc@cygnus.com>
+# Written by Nick Clifton <nickc@cygnus.com>
 # Based on scripts written by Ian Lance Taylor <ian@cygnus.com>
 # and Ken Raeburn <raeburn@cygnus.com>.
 
@@ -76,6 +76,20 @@ proc regexp_diff { file_1 file_2 } {
 		set end_2 1
 		set diff_pass 1
 		break
+	    } elseif [ string match "#..." $line_b ] {
+		if { [gets $file_b line_b] == $eof } {
+		    set end_2 1
+		    break
+		}
+		verbose "looking for \"^$line_b$\"" 3
+		while { ![regexp "^$line_b$" "$line_a"] } {
+		    verbose "skipping    \"$line_a\"" 3
+		    if { [gets $file_a line_a] == $eof } {
+			set end_1 1
+			break
+		    }
+		}
+		break
 	    }
 	    if { [gets $file_b line_b] == $eof } {
 		set end_2 1
@@ -103,7 +117,6 @@ proc regexp_diff { file_1 file_2 } {
 		send_log "regexp_diff match failure\n"
 		send_log "regexp \"^$line_b$\"\nline   \"$line_a\"\n"
 		set differences 1
-                break
             }
         }
     }
@@ -120,29 +133,78 @@ proc regexp_diff { file_1 file_2 } {
     return $differences
 }
 
+# Find out the size by reading the output of the EI_CLASS field.
+# Similar to the test for readelf -h, but we're just looking for the
+# EI_CLASS line here.
+proc readelf_find_size { binary_file } {
+    global READELF
+    global READELFFLAGS
+    global readelf_size
+
+    set readelf_size ""
+    set testname "finding out ELF size with readelf -h"
+    catch "exec $READELF $READELFFLAGS -h $binary_file > readelf.out" got
+
+    if ![string match "" $got] then {
+	send_log $got
+	fail $testname
+	return
+    }
+
+    if { ! [regexp "\n\[ \]*Class:\[ \]*ELF(\[0-9\]+)\n" \
+	    [file_contents readelf.out] nil readelf_size] } {
+	verbose -log "EI_CLASS field not found in output"
+	verbose -log "output is \n[file_contents readelf.out]"
+	fail $testname
+	return
+    } else {
+	verbose -log "ELF size is $readelf_size"
+    }
+
+    pass $testname
+}
+
 # Run an individual readelf test.
 # Basically readelf is run on the binary_file with the given options.
 # Readelf's output is captured and then compared against the contents
-# of the regexp_file.
+# of the regexp_file-readelf_size if it exists, else regexp_file.
 
 proc readelf_test { options binary_file regexp_file xfails } {
 
     global READELF
     global READELFFLAGS
+    global readelf_size
     global srcdir
     global subdir
     
-    send_log "exec $READELF $READELFFLAGS $options $binary_file > readelf.out"
+    send_log "exec $READELF $READELFFLAGS $options $binary_file > readelf.out\n"
     catch "exec $READELF $READELFFLAGS $options $binary_file > readelf.out" got
 
-    if { [llength $xfails] != 0 } then {
-	setup_xfail $xfails
+    foreach xfail $xfails {
+	setup_xfail $xfail
     }
     
     if ![string match "" $got] then {
 	send_log $got
 	fail "readelf $options"
 	return
+    }
+
+    set target_machine ""
+    if [istarget "mips*-*-*"] then {
+	if { [istarget mips*el-*-*] || [istarget "mips*-*-*linux*"] } then {
+	    set target_machine tmips
+	} else {
+	    set target_machine mips
+	}
+    }
+
+    if { $target_machine != "" && [file exists $srcdir/$subdir/$regexp_file-$readelf_size-$target_machine] } then {
+	set regexp_file $regexp_file-$readelf_size-$target_machine
+    } elseif { $target_machine != "" && [file exists $srcdir/$subdir/$regexp_file-$target_machine] } then {
+	set regexp_file $regexp_file-$target_machine
+    } elseif { [file exists $srcdir/$subdir/$regexp_file-$readelf_size] } then {
+	set regexp_file $regexp_file-$readelf_size
     }
 
     if { [regexp_diff readelf.out $srcdir/$subdir/$regexp_file] } then {
@@ -160,8 +222,21 @@ proc readelf_test { options binary_file regexp_file xfails } {
 # For now be paranoid and assume that if ELF is not mentioned
 # in the target string, then the target is not an ELF based port.
 
-if ![istarget "*-*elf"] then {
-    verbose "$READELF is only intenteded for ELF targets" 2
+if { ![istarget *-*-elf*] \
+     && ![istarget *-*-linux*] \
+     && ![istarget i?86-*-sysv4*] \
+     && ![istarget i?86-*-unixware] \
+     && ![istarget mips*-*-irix5*] \
+     && ![istarget mips*-*-irix6*] \
+     && ![istarget powerpc-*-sysv4*] \
+     && ![istarget sparc*-*-solaris2*] } {
+    verbose "$READELF is only intended for ELF targets" 2
+    return
+}
+
+if { [istarget *-*-linux*oldld*] \
+     || [istarget *-*-linux*aout*] } {
+    verbose "$READELF is only intended for ELF targets" 2
     return
 }
 
@@ -187,15 +262,13 @@ if ![is_remote host] {
     set tempfile [remote_download host tmpdir/bintest.o]
 }
 
-# Run the tests
+# First, determine the size, so specific output matchers can be used.
+readelf_find_size $tempfile
+
+# Run the tests.
 readelf_test -h $tempfile readelf.h  {}
-
-# The v850 fails the next two tests because it creates two special
-# sections of its own: .call_table_data and .call_table_text
-# The regexp scripts are not expecting these sections...
-
-readelf_test -S $tempfile readelf.s  {v850*-*-*}
-readelf_test -s $tempfile readelf.ss {v850*-*-*}
+readelf_test -S $tempfile readelf.s  {}
+readelf_test -s $tempfile readelf.ss {}
 readelf_test -r $tempfile readelf.r  {}
 
 
@@ -214,4 +287,4 @@ if [is_remote host] {
 # The xfail targets here do not default to DWARF2 format debug information
 # The symptom is that the output of 'readelf -wi' is empty.
 
-readelf_test -wi $tempfile readelf.wi {v850*-*-*}
+readelf_test -wi $tempfile readelf.wi {v850*-*-* cris-*-* *-*-linux*}

@@ -1,5 +1,5 @@
 # Expect script for ld-visibility tests
-#   Copyright (C) 2000 Free Software Foundation
+#   Copyright 2000, 2001 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,12 +26,13 @@ if ![isnative] then {return}
 
 # This test can only be run on a couple of ELF platforms.
 # Square bracket expressions seem to confuse istarget.
-if { ![istarget i386-*-linux*] \
-     && ![istarget i486-*-linux*] \
-     && ![istarget i586-*-linux*] \
-     && ![istarget i686-*-linux*] \
+if { ![istarget i?86-*-linux*] \
+     && ![istarget ia64-*-linux*] \
      && ![istarget m68k-*-linux*] \
+     && ![istarget mips*-*-linux*] \
      && ![istarget powerpc-*-linux*] \
+     && ![istarget arm*-*-linux*] \
+     && ![istarget alpha*-*-linux*] \
      && ![istarget sparc*-*-linux*] } {
     return
 }
@@ -220,7 +221,7 @@ proc visibility_run {visibility} {
 	     || ![ld_compile "$CC -g $CFLAGS $SHCFLAG $VSBCFLAG" $srcdir/$subdir/sh2.c $tmpdir/sh2np.o] } {
 	    unresolved "visibility ($visibility) (non PIC)"
 	} else { if { [istarget rs6000*-*-aix*] || [istarget powerpc*-*-aix*] } {
-	    visibility_test $visibility vnp "visibility ($visibility) (nonPIC)" mainnp.o sh1np.o sh2np.o xcoff
+	    visibility_test $visibility vnp "visibility ($visibility) (non PIC)" mainnp.o sh1np.o sh2np.o xcoff
 	} else {
 	    # SunOS non PIC shared libraries don't permit some cases of
 	    # overriding.
@@ -231,6 +232,14 @@ proc visibility_run {visibility} {
 		}
 	    } else {
 		setup_xfail "*-*-sunos4*"
+	    }
+	    if { [ string match $visibility "hidden_weak" ]
+		 || [ string match $visibility "protected_weak" ] } {
+		setup_xfail "powerpc-*-linux*"
+	    }
+	    if { ![ string match $visibility "hidden_undef" ]
+		 && ![ string match $visibility "protected_undef" ] } {
+		setup_xfail "ia64-*-linux*"
 	    }
 	    visibility_test $visibility vnp "visibility ($visibility) (non PIC)" mainnp.o sh1np.o sh2np.o elfvsb
 
@@ -246,6 +255,19 @@ proc visibility_run {visibility} {
 	    } else {
 		setup_xfail "*-*-sunos4*"
 		setup_xfail "*-*-linux*libc1"
+	    }
+	    if { [ string match $visibility "hidden_normal" ]
+		 || [ string match $visibility "hidden_weak" ]
+		 || [ string match $visibility "protected" ]
+		 || [ string match $visibility "protected_undef_def" ]
+		 || [ string match $visibility "protected_weak" ]
+		 || [ string match $visibility "normal" ] } {
+		setup_xfail "powerpc-*-linux*"
+	    }
+	    if { ![ string match $visibility "hidden_undef" ]
+		 && ![ string match $visibility "protected_undef" ] } {
+		setup_xfail "ia64-*-linux*"
+		setup_xfail "mips*-*-linux*"
 	    }
 	    visibility_test $visibility vnp "visibility ($visibility) (non PIC, load offset)" \
 		mainnp.o sh1np.o sh2np.o elfvsb \
@@ -293,6 +315,14 @@ proc visibility_run {visibility} {
 		    }
 		} else {
 		    setup_xfail "*-*-sunos4*"
+		}
+		if { [ string match $visibility "hidden_weak" ]
+		     || [ string match $visibility "protected_weak" ] } {
+		    setup_xfail "powerpc-*-linux*"
+		}
+		if { ![ string match $visibility "hidden_undef" ]
+		     && ![ string match $visibility "protected_undef" ] } {
+		    setup_xfail "ia64-*-linux*"
 		}
 		visibility_test $visibility vmpnp "visibility ($visibility) (PIC main, non PIC so)" mainp.o sh1np.o sh2np.o elfvsb
 	    }

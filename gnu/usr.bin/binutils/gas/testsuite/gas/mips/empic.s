@@ -40,9 +40,10 @@ l5:
 	b	2f		# R_MIPS_GNU_REL16_S2	.text 32
 	b	2f+4		# R_MIPS_GNU_REL16_S2	.text 33
 	la	$3,2f-l5	# R_MIPS_GNU_REL_HI16	.text 0
-				# R_MIPS_GNU_REL_HI16	.text D8
+	                        # R_MIPS_GNU_REL_LO16   .text D8
 	la	$3,2f+8-l5	# R_MIPS_GNU_REL_HI16	.text 0
-				# R_MIPS_GNU_REL_HI16	.text E8
+	                        # R_MIPS_GNU_REL_LO16   .text E8
+
 
 	.word	2f		# R_MIPS_32	.text CC
 	.word	2f-l5		# R_MIPS_PC32	.text EC  or 34
@@ -52,16 +53,17 @@ l5:
 2:				# at address 0xCC.
 	b	2b		# R_MIPS_GNU_REL16_S2	.text 32
 	b	2b+4		# R_MIPS_GNU_REL16_S2	.text 33
-	la	$3,2b-l5	# R_MIPS_GNU_REL_HI16	.text 0
-				# R_MIPS_GNU_REL_HI16	.text 10C
-	la	$3,2b+8-l5	# R_MIPS_GNU_REL_HI16	.text 0
-				# R_MIPS_GNU_REL_HI16	.text 11C
+	la      $3,2b-l5        # 34
+	la      $3,2b+8-l5      # 3C
 	.word	2b		# R_MIPS_32	.text CC
 	.word	2b-l5		# R_MIPS_PC32	.text 11C  or 34
 	nop
 	.dword	2b		# R_MIPS_64	.text CC
 	.dword	2b-l5		# R_MIPS_PC64	.text 98  or 34
-	
+
+# align section end to 16-byte boundary for easier testing on multiple targets
+	.p2align 4
+
 	.section ".foo","ax",@progbits
 	nop
 l4:	
@@ -110,3 +112,6 @@ l4:
 l1:
 
 	nop
+
+# align section end to 16-byte boundary for easier testing on multiple targets
+	.p2align 4

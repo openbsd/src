@@ -1,5 +1,5 @@
 # Expect script for LD section checks tests
-#   Copyright (C) 1999 Free Software Foundation
+#   Copyright 1999, 2001 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,6 +24,11 @@ proc section_check {} {
     global srcdir
     global subdir
     
+    # The usage of .lcomm in asm.s is incompatible with ia64.
+    if { [istarget ia64-*-elf*]
+	 || [istarget ia64-*-linux*] } {
+	return
+    }
     set test "check sections 1"
     
     set ldflags "--check-sections"

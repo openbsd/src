@@ -1,5 +1,5 @@
 # Expect script for ld-version tests
-#   Copyright (C) 1997, 1998, 1999 Free Software Foundation
+#   Copyright 1997, 1998, 1999, 2001 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,6 +29,8 @@ if { ![istarget i?86-*-sysv4*] \
      && ![istarget i?86-*-unixware] \
      && ![istarget i?86-*-elf*] \
      && ![istarget i?86-*-linux*] \
+     && ![istarget ia64-*-elf*] \
+     && ![istarget ia64-*-linux*] \
      && ![istarget m68k-*-linux*] \
      && ![istarget mips*-*-irix5*] \
      && ![istarget powerpc-*-elf*] \
@@ -37,13 +39,15 @@ if { ![istarget i?86-*-sysv4*] \
      && ![istarget sparc*-*-elf] \
      && ![istarget sparc*-*-solaris2*] \
      && ![istarget sparc*-*-linux*] \
+     && ![istarget arm*-*-linux*] \
+     && ![istarget mips*-*-linux*] \
      && ![istarget alpha*-*-linux*] } {
     return
 }
 
-if { [istarget i?86-*-linuxaout*] \
-     || [istarget i?86-*-linuxoldld*] \
-     || [istarget m68k-*-linuxaout*] } {
+if { [istarget i?86-*-linux*aout*] \
+     || [istarget i?86-*-linux*oldld*] \
+     || [istarget m68k-*-linux*aout*] } {
     return
 }
 

@@ -1,5 +1,5 @@
 /* BFD back-end for Motorola m88k a.out (Mach 3) binaries.
-   Copyright (C) 1990, 1991, 1993, 1994 Free Software Foundation, Inc.
+   Copyright 1990, 1991, 1993, 1994, 1995 Free Software Foundation, Inc.
 
 This file is part of BFD, the Binary File Descriptor library.
 

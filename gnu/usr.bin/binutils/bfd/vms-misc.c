@@ -1,6 +1,7 @@
 /* vms-misc.c -- Miscellaneous functions for VAX (openVMS/VAX) and
    EVAX (openVMS/Alpha) files.
-   Copyright 1996, 1997, 1998, 1999 Free Software Foundation, Inc.
+   Copyright 1996, 1997, 1998, 1999, 2000, 2001
+   Free Software Foundation, Inc.
 
    Written by Klaus K"ampf (kkaempf@rmi.de)
 
@@ -17,7 +18,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
-
 
 #if __STDC__
 #include <stdarg.h>
@@ -38,7 +38,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
    evaluates environment variable VMS_DEBUG for a
    numerical value on the first call
    all error levels below this value are printed
-  
+
    levels:
    1	toplevel bfd calls (functions from the bfd vector)
    2	functions called by bfd calls
@@ -74,10 +74,10 @@ _bfd_vms_debug (int level, char *format, ...)
   if (abslvl > min_level)
     return;
 
-  while(--level>0)
-    fprintf(output, " ");
+  while (--level>0)
+    fprintf (output, " ");
   va_start(args, format);
-  vfprintf(output, format, args);
+  vfprintf (output, format, args);
   fflush(output);
   va_end(args);
 
@@ -112,15 +112,14 @@ _bfd_vms_debug (level, format, a1, a2, a3, a4, a5, a6)
   if (level > min_level)
     return;
 
-  while(--level>0)
-    fprintf(output, " ");
-  fprintf(output, format, a1, a2, a3, a4, a5, a6);
+  while (--level>0)
+    fprintf (output, " ");
+  fprintf (output, format, a1, a2, a3, a4, a5, a6);
   fflush(output);
 
   return;
 }
 #endif /* __STDC__ */
-
 
 /* a debug function
    hex dump 'size' bytes starting at 'ptr'  */
@@ -168,7 +167,6 @@ _bfd_hexdump (level, ptr, size, offset)
   return;
 }
 #endif
-
 
 /* hash functions
 
@@ -212,7 +210,6 @@ _bfd_vms_hash_newfunc (entry, table, string)
 
   return (struct bfd_hash_entry *)ret;
 }
-
 
 /* object file input functions */
 
@@ -235,43 +232,41 @@ _bfd_vms_get_header_values (abfd, buf, type, length)
   vms_debug (10, "_bfd_vms_get_header_values type %x, length %x\n", (type?*type:0), (length?*length:0));
 #endif
 
-
   return;
 }
 
-
 /* Get next record from object file to vms_buf
    set PRIV(buf_size) and return it
-  
+
    this is a little tricky since it should be portable.
-  
+
    the openVMS object file has 'variable length' which means that
    read() returns data in chunks of (hopefully) correct and expected
    size. The linker (and other tools on vms) depend on that. Unix doesn't
    know about 'formatted' files, so reading and writing such an object
    file in a unix environment is not trivial.
-  
+
    With the tool 'file' (available on all vms ftp sites), one
    can view and change the attributes of a file. Changing from
    'variable length' to 'fixed length, 512 bytes' reveals the
    record length at the first 2 bytes of every record. The same
    happens during the transfer of object files from vms to unix,
    at least with ucx, dec's implementation of tcp/ip.
-  
+
    The vms format repeats the length at bytes 2 & 3 of every record.
-  
+
    On the first call (file_format == FF_UNKNOWN) we check if
    the first and the third byte pair (!) of the record match.
    If they do it's an object file in an unix environment or with
    wrong attributes (FF_FOREIGN), else we should be in a vms
    environment where read() returns the record size (FF_NATIVE).
-  
+
    reading is always done in 2 steps.
    first just the record header is read and the length extracted
    by get_header_values
    then the read buffer is adjusted and the remaining bytes are
    read in.
-  
+
    all file i/o is always done on even file positions  */
 
 int
@@ -291,19 +286,19 @@ _bfd_vms_get_record (abfd)
      on VAX there's no length information in the record
      so start with OBJ_S_C_MAXRECSIZ  */
 
-  if (PRIV(buf_size) == 0)
+  if (PRIV (buf_size) == 0)
     {
-      if (PRIV(is_vax))
+      if (PRIV (is_vax))
 	{
-	  PRIV(vms_buf) = (unsigned char *) malloc (OBJ_S_C_MAXRECSIZ);
-	  PRIV(buf_size) = OBJ_S_C_MAXRECSIZ;
-	  PRIV(file_format) = FF_VAX;
+	  PRIV (vms_buf) = (unsigned char *) malloc (OBJ_S_C_MAXRECSIZ);
+	  PRIV (buf_size) = OBJ_S_C_MAXRECSIZ;
+	  PRIV (file_format) = FF_VAX;
 	}
       else
-	PRIV(vms_buf) = (unsigned char *) malloc (6);
+	PRIV (vms_buf) = (unsigned char *) malloc (6);
     }
 
-  vms_buf = PRIV(vms_buf);
+  vms_buf = PRIV (vms_buf);
 
   if (vms_buf == 0)
     {
@@ -311,30 +306,31 @@ _bfd_vms_get_record (abfd)
       return -1;
     }
 
-  switch (PRIV(file_format))
+  switch (PRIV (file_format))
     {
-      case FF_UNKNOWN:
-      case FF_FOREIGN:
-	test_len = 6;			/* probe 6 bytes */
-	test_start = 2;			/* where the record starts */
+    case FF_UNKNOWN:
+    case FF_FOREIGN:
+      test_len = 6;			/* probe 6 bytes */
+      test_start = 2;			/* where the record starts */
       break;
 
-      case FF_NATIVE:
-	test_len = 4;
-	test_start = 0;
+    case FF_NATIVE:
+      test_len = 4;
+      test_start = 0;
       break;
 
-      case FF_VAX:
-	test_len = 0;
-	test_start = 0;
+    default:
+    case FF_VAX:
+      test_len = 0;
+      test_start = 0;
       break;
-  }
+    }
 
   /* skip odd alignment byte  */
 
   if (bfd_tell (abfd) & 1)
     {
-      if (bfd_read (PRIV(vms_buf), 1, 1, abfd) != 1)
+      if (bfd_read (PRIV (vms_buf), 1, 1, abfd) != 1)
 	{
 	  bfd_set_error (bfd_error_file_truncated);
 	  return 0;
@@ -344,7 +340,7 @@ _bfd_vms_get_record (abfd)
   /* read the record header on Alpha.  */
 
   if ((test_len != 0)
-      && (bfd_read (PRIV(vms_buf), 1, test_len, abfd)
+      && (bfd_read (PRIV (vms_buf), 1, test_len, abfd)
 	  != (bfd_size_type) test_len))
     {
       bfd_set_error (bfd_error_file_truncated);
@@ -353,39 +349,39 @@ _bfd_vms_get_record (abfd)
 
   /* check file format on first call  */
 
-  if (PRIV(file_format) == FF_UNKNOWN)
+  if (PRIV (file_format) == FF_UNKNOWN)
     {						/* record length repeats ? */
       if ( (vms_buf[0] == vms_buf[4])
         && (vms_buf[1] == vms_buf[5]))
 	{
-	  PRIV(file_format) = FF_FOREIGN;	/* Y: foreign environment */
+	  PRIV (file_format) = FF_FOREIGN;	/* Y: foreign environment */
 	  test_start = 2;
 	}
       else
 	{
-	  PRIV(file_format) = FF_NATIVE;	/* N: native environment */
+	  PRIV (file_format) = FF_NATIVE;	/* N: native environment */
 	  test_start = 0;
 	}
     }
 
-  if (PRIV(is_vax))
+  if (PRIV (is_vax))
     {
-      PRIV(rec_length) = bfd_read (vms_buf, 1, PRIV(buf_size), abfd);
-      if (PRIV(rec_length) <= 0)
+      PRIV (rec_length) = bfd_read (vms_buf, 1, PRIV (buf_size), abfd);
+      if (PRIV (rec_length) <= 0)
 	{
 	  bfd_set_error (bfd_error_file_truncated);
 	  return 0;
 	}
-      PRIV(vms_rec) = vms_buf;
+      PRIV (vms_rec) = vms_buf;
     }
   else		/* Alpha  */
     {
       /* extract vms record length  */
 
       _bfd_vms_get_header_values (abfd, vms_buf+test_start, NULL,
-				  &PRIV(rec_length));
+				  &PRIV (rec_length));
 
-      if (PRIV(rec_length) <= 0)
+      if (PRIV (rec_length) <= 0)
 	{
 	  bfd_set_error (bfd_error_file_truncated);
 	  return 0;
@@ -393,7 +389,7 @@ _bfd_vms_get_record (abfd)
 
       /* that's what the linker manual says  */
 
-      if (PRIV(rec_length) > EOBJ_S_C_MAXRECSIZ)
+      if (PRIV (rec_length) > EOBJ_S_C_MAXRECSIZ)
 	{
 	  bfd_set_error (bfd_error_file_truncated);
 	  return 0;
@@ -401,21 +397,21 @@ _bfd_vms_get_record (abfd)
 
       /* adjust the buffer  */
 
-      if (PRIV(rec_length) > PRIV(buf_size))
+      if (PRIV (rec_length) > PRIV (buf_size))
 	{
-	  PRIV(vms_buf) = (unsigned char *) realloc (vms_buf, PRIV(rec_length));
-	  vms_buf = PRIV(vms_buf);
+	  PRIV (vms_buf) = (unsigned char *) realloc (vms_buf, PRIV (rec_length));
+	  vms_buf = PRIV (vms_buf);
 	  if (vms_buf == 0)
 	    {
 	      bfd_set_error (bfd_error_no_memory);
 	      return -1;
 	    }
-	  PRIV(buf_size) = PRIV(rec_length);
+	  PRIV (buf_size) = PRIV (rec_length);
 	}
 
       /* read the remaining record  */
 
-      remaining = PRIV(rec_length) - test_len + test_start;
+      remaining = PRIV (rec_length) - test_len + test_start;
 
 #if VMS_DEBUG
       vms_debug (10, "bfd_read remaining %d\n", remaining);
@@ -426,16 +422,15 @@ _bfd_vms_get_record (abfd)
 	  bfd_set_error (bfd_error_file_truncated);
 	  return 0;
 	}
-      PRIV(vms_rec) = vms_buf + test_start;
+      PRIV (vms_rec) = vms_buf + test_start;
     }
 
 #if VMS_DEBUG
-  vms_debug (11, "bfd_read rec_length %d\n", PRIV(rec_length));
+  vms_debug (11, "bfd_read rec_length %d\n", PRIV (rec_length));
 #endif
 
-  return PRIV(rec_length);
+  return PRIV (rec_length);
 }
-
 
 /* get next vms record from file
    update vms_rec and rec_length to new (remaining) values  */
@@ -446,12 +441,12 @@ _bfd_vms_next_record (abfd)
 {
 #if VMS_DEBUG
   vms_debug (8, "_bfd_vms_next_record (len %d, size %d)\n",
-	      PRIV(rec_length), PRIV(rec_size));
+	      PRIV (rec_length), PRIV (rec_size));
 #endif
 
-  if (PRIV(rec_length) > 0)
+  if (PRIV (rec_length) > 0)
     {
-      PRIV(vms_rec) += PRIV(rec_size);
+      PRIV (vms_rec) += PRIV (rec_size);
     }
   else
     {
@@ -459,28 +454,30 @@ _bfd_vms_next_record (abfd)
 	return -1;
     }
 
-  if (PRIV(is_vax))
+  if (!PRIV (vms_rec) || !PRIV (vms_buf)
+      || PRIV (vms_rec) >= (PRIV (vms_buf) + PRIV (buf_size)))
+    return -1;
+
+  if (PRIV (is_vax))
     {
-      PRIV(rec_type) = *(PRIV(vms_rec));
-      PRIV(rec_size) = PRIV(rec_length);
+      PRIV (rec_type) = *(PRIV (vms_rec));
+      PRIV (rec_size) = PRIV (rec_length);
     }
   else
     {
-      _bfd_vms_get_header_values (abfd, PRIV(vms_rec), &PRIV(rec_type),
-				  &PRIV(rec_size));
+      _bfd_vms_get_header_values (abfd, PRIV (vms_rec), &PRIV (rec_type),
+				  &PRIV (rec_size));
     }
-  PRIV(rec_length) -= PRIV(rec_size);
+  PRIV (rec_length) -= PRIV (rec_size);
 
 #if VMS_DEBUG
   vms_debug (8, "_bfd_vms_next_record: rec %p, size %d, length %d, type %d\n",
-	      PRIV(vms_rec), PRIV(rec_size), PRIV(rec_length),
-	      PRIV(rec_type));
+	      PRIV (vms_rec), PRIV (rec_size), PRIV (rec_length),
+	      PRIV (rec_type));
 #endif
 
-  return PRIV(rec_type);
+  return PRIV (rec_type);
 }
-
-
 
 /* Copy sized string (string with fixed length) to new allocated area
    size is string length (size of record)  */
@@ -511,7 +508,6 @@ _bfd_vms_save_counted_string (ptr)
 
   return _bfd_vms_save_sized_string (ptr, len);
 }
-
 
 /* stack routines for vms ETIR commands */
 
@@ -526,24 +522,23 @@ _bfd_vms_push (abfd, val, psect)
   static int last_psect;
 
 #if VMS_DEBUG
-  vms_debug (4, "<push %016lx(%d) at %d>\n", val, psect, PRIV(stackptr));
+  vms_debug (4, "<push %016lx(%d) at %d>\n", val, psect, PRIV (stackptr));
 #endif
 
   if (psect >= 0)
     last_psect = psect;
 
-  PRIV(stack[PRIV(stackptr)]).value = val;
-  PRIV(stack[PRIV(stackptr)]).psect = last_psect;
-  PRIV(stackptr)++;
-  if (PRIV(stackptr) >= STACKSIZE)
+  PRIV (stack[PRIV (stackptr)]).value = val;
+  PRIV (stack[PRIV (stackptr)]).psect = last_psect;
+  PRIV (stackptr)++;
+  if (PRIV (stackptr) >= STACKSIZE)
     {
       bfd_set_error (bfd_error_bad_value);
-      (*_bfd_error_handler) (_("Stack overflow (%d) in _bfd_vms_push"), PRIV(stackptr));
+      (*_bfd_error_handler) (_("Stack overflow (%d) in _bfd_vms_push"), PRIV (stackptr));
       exit (1);
     }
   return;
 }
-
 
 /* Pop value and section index  */
 
@@ -554,24 +549,23 @@ _bfd_vms_pop (abfd, psect)
 {
   uquad value;
 
-  if (PRIV(stackptr) == 0)
+  if (PRIV (stackptr) == 0)
     {
       bfd_set_error (bfd_error_bad_value);
       (*_bfd_error_handler) (_("Stack underflow in _bfd_vms_pop"));
       exit (1);
     }
-  PRIV(stackptr)--;
-  value = PRIV(stack[PRIV(stackptr)]).value;
-  if ((psect != NULL) && (PRIV(stack[PRIV(stackptr)]).psect >= 0))
-    *psect = PRIV(stack[PRIV(stackptr)]).psect;
+  PRIV (stackptr)--;
+  value = PRIV (stack[PRIV (stackptr)]).value;
+  if ((psect != NULL) && (PRIV (stack[PRIV (stackptr)]).psect >= 0))
+    *psect = PRIV (stack[PRIV (stackptr)]).psect;
 
 #if VMS_DEBUG
-  vms_debug (4, "<pop %016lx(%d)>\n", value, PRIV(stack[PRIV(stackptr)]).psect);
+  vms_debug (4, "<pop %016lx(%d)>\n", value, PRIV (stack[PRIV (stackptr)]).psect);
 #endif
 
   return value;
 }
-
 
 /* object file output functions */
 
@@ -589,7 +583,7 @@ add_new_contents (abfd, section)
 {
   vms_section *sptr, *newptr;
 
-  sptr = PRIV(vms_section_table)[section->index];
+  sptr = PRIV (vms_section_table)[section->index];
   if (sptr != NULL)
     return sptr;
 
@@ -602,10 +596,9 @@ add_new_contents (abfd, section)
   newptr->offset = 0;
   newptr->size = section->_raw_size;
   newptr->next = 0;
-  PRIV(vms_section_table)[section->index] = newptr;
+  PRIV (vms_section_table)[section->index] = newptr;
   return newptr;
 }
-
 
 /* Save section data & offset to an vms_section structure
    vms_section_table[] holds the vms_section chain  */
@@ -635,7 +628,6 @@ _bfd_save_vms_section (abfd, section, data, offset, count)
   return true;
 }
 
-
 /* Get vms_section pointer to saved contents for section # index  */
 
 vms_section *
@@ -648,9 +640,8 @@ _bfd_get_vms_section (abfd, index)
       bfd_set_error (bfd_error_nonrepresentable_section);
       return NULL;
     }
-  return PRIV(vms_section_table)[index];
+  return PRIV (vms_section_table)[index];
 }
-
 
 /* Object output routines  */
 
@@ -674,12 +665,12 @@ _bfd_vms_output_begin (abfd, rectype, rechead)
 
   /* save current output position to fill in lenght later  */
 
-  if (PRIV(push_level) > 0)
-    PRIV(length_pos) = PRIV(output_size);
+  if (PRIV (push_level) > 0)
+    PRIV (length_pos) = PRIV (output_size);
 
 #if VMS_DEBUG
   vms_debug (6, "_bfd_vms_output_begin: length_pos = %d\n",
-	      PRIV(length_pos));
+	      PRIV (length_pos));
 #endif
 
   _bfd_vms_output_short (abfd,0);		/* placeholder for length */
@@ -689,7 +680,6 @@ _bfd_vms_output_begin (abfd, rectype, rechead)
 
   return;
 }
-
 
 /* Set record/subrecord alignment  */
 
@@ -702,10 +692,9 @@ _bfd_vms_output_alignment (abfd, alignto)
   vms_debug (6, "_bfd_vms_output_alignment(%d)\n", alignto);
 #endif
 
-  PRIV(output_alignment) = alignto;
+  PRIV (output_alignment) = alignto;
   return;
 }
-
 
 /* Prepare for subrecord fields  */
 
@@ -714,14 +703,13 @@ _bfd_vms_output_push (abfd)
      bfd *abfd;
 {
 #if VMS_DEBUG
-  vms_debug (6, "vms_output_push(pushed_size = %d)\n", PRIV(output_size));
+  vms_debug (6, "vms_output_push(pushed_size = %d)\n", PRIV (output_size));
 #endif
 
-  PRIV(push_level)++;
-  PRIV(pushed_size) = PRIV(output_size);
+  PRIV (push_level)++;
+  PRIV (pushed_size) = PRIV (output_size);
   return;
 }
-
 
 /* End of subrecord fields  */
 
@@ -730,21 +718,20 @@ _bfd_vms_output_pop (abfd)
      bfd *abfd;
 {
 #if VMS_DEBUG
-  vms_debug (6, "vms_output_pop(pushed_size = %d)\n", PRIV(pushed_size));
+  vms_debug (6, "vms_output_pop(pushed_size = %d)\n", PRIV (pushed_size));
 #endif
 
   _bfd_vms_output_flush (abfd);
-  PRIV(length_pos) = 2;
+  PRIV (length_pos) = 2;
 
 #if VMS_DEBUG
-  vms_debug (6, "vms_output_pop: length_pos = %d\n", PRIV(length_pos));
+  vms_debug (6, "vms_output_pop: length_pos = %d\n", PRIV (length_pos));
 #endif
 
-  PRIV(pushed_size) = 0;
-  PRIV(push_level)--;
+  PRIV (pushed_size) = 0;
+  PRIV (push_level)--;
   return;
 }
-
 
 /* Flush unwritten output, ends current record  */
 
@@ -752,64 +739,63 @@ void
 _bfd_vms_output_flush (abfd)
      bfd *abfd;
 {
-  int real_size = PRIV(output_size);
+  int real_size = PRIV (output_size);
   int aligncount;
   int length;
 
 #if VMS_DEBUG
   vms_debug (6, "_bfd_vms_output_flush(real_size = %d, pushed_size %d at lenpos %d)\n",
-	      real_size, PRIV(pushed_size), PRIV(length_pos));
+	      real_size, PRIV (pushed_size), PRIV (length_pos));
 #endif
 
-  if (PRIV(push_level) > 0)
-    length = real_size - PRIV(pushed_size);
+  if (PRIV (push_level) > 0)
+    length = real_size - PRIV (pushed_size);
   else
     length = real_size;
 
   if (length == 0)
     return;
-  aligncount = (PRIV(output_alignment)
-		- (length % PRIV(output_alignment))) % PRIV(output_alignment);
+  aligncount = (PRIV (output_alignment)
+		- (length % PRIV (output_alignment))) % PRIV (output_alignment);
 
 #if VMS_DEBUG
   vms_debug (6, "align: adding %d bytes\n", aligncount);
 #endif
 
-  while(aligncount-- > 0)
+  while (aligncount-- > 0)
     {
-      PRIV(output_buf)[real_size++] = 0;
+      PRIV (output_buf)[real_size++] = 0;
 #if 0
       /* this is why I *love* vms: inconsistency :-}
 	 alignment is added to the subrecord length
 	 but not to the record length  */
-      if (PRIV(push_level) > 0)
+      if (PRIV (push_level) > 0)
 #endif
 	length++;
     }
 
   /* put length to buffer  */
-  PRIV(output_size) = PRIV(length_pos);
+  PRIV (output_size) = PRIV (length_pos);
   _bfd_vms_output_short (abfd, (unsigned int)length);
 
-  if (PRIV(push_level) == 0)
+  if (PRIV (push_level) == 0)
     {
 #ifndef VMS
 	/* write length first, see FF_FOREIGN in the input routines */
-      fwrite (PRIV(output_buf)+2, 2, 1, (FILE *)abfd->iostream);
+      fwrite (PRIV (output_buf)+2, 2, 1, (FILE *)abfd->iostream);
 #endif
-      fwrite (PRIV(output_buf), real_size, 1, (FILE *)abfd->iostream);
+      fwrite (PRIV (output_buf), real_size, 1, (FILE *)abfd->iostream);
 
-      PRIV(output_size) = 0;
+      PRIV (output_size) = 0;
     }
   else
     {
-      PRIV(output_size) = real_size;
-      PRIV(pushed_size) = PRIV(output_size);
+      PRIV (output_size) = real_size;
+      PRIV (pushed_size) = PRIV (output_size);
     }
 
   return;
 }
-
 
 /* End record output  */
 
@@ -826,7 +812,6 @@ _bfd_vms_output_end (abfd)
   return;
 }
 
-
 /* check remaining buffer size
 
    return what's left.  */
@@ -840,9 +825,8 @@ _bfd_vms_output_check (abfd, size)
   vms_debug (6, "_bfd_vms_output_check(%d)\n", size);
 #endif
 
-  return (MAX_OUTREC_SIZE - (PRIV(output_size) + size + MIN_OUTREC_LUFT));
+  return (MAX_OUTREC_SIZE - (PRIV (output_size) + size + MIN_OUTREC_LUFT));
 }
-
 
 /* Output byte (8 bit) value  */
 
@@ -855,11 +839,10 @@ _bfd_vms_output_byte (abfd, value)
   vms_debug (6, "_bfd_vms_output_byte(%02x)\n", value);
 #endif
 
-  bfd_put_8 (abfd, value & 0xff, PRIV(output_buf) + PRIV(output_size));
-  PRIV(output_size) += 1;
+  bfd_put_8 (abfd, value & 0xff, PRIV (output_buf) + PRIV (output_size));
+  PRIV (output_size) += 1;
   return;
 }
-
 
 /* Output short (16 bit) value  */
 
@@ -872,11 +855,10 @@ _bfd_vms_output_short (abfd, value)
   vms_debug (6, "_bfd_vms_output_short (%04x)\n", value);
 #endif
 
-  bfd_put_16 (abfd, value & 0xffff, PRIV(output_buf) + PRIV(output_size));
-  PRIV(output_size) += 2;
+  bfd_put_16 (abfd, value & 0xffff, PRIV (output_buf) + PRIV (output_size));
+  PRIV (output_size) += 2;
   return;
 }
-
 
 /* Output long (32 bit) value  */
 
@@ -889,11 +871,10 @@ _bfd_vms_output_long (abfd, value)
   vms_debug (6, "_bfd_vms_output_long (%08lx)\n", value);
 #endif
 
-  bfd_put_32 (abfd, value, PRIV(output_buf) + PRIV(output_size));
-  PRIV(output_size) += 4;
+  bfd_put_32 (abfd, value, PRIV (output_buf) + PRIV (output_size));
+  PRIV (output_size) += 4;
   return;
 }
-
 
 /* Output quad (64 bit) value  */
 
@@ -906,11 +887,10 @@ _bfd_vms_output_quad (abfd, value)
   vms_debug (6, "_bfd_vms_output_quad(%016lx)\n", value);
 #endif
 
-  bfd_put_64(abfd, value, PRIV(output_buf) + PRIV(output_size));
-  PRIV(output_size) += 8;
+  bfd_put_64(abfd, value, PRIV (output_buf) + PRIV (output_size));
+  PRIV (output_size) += 8;
   return;
 }
-
 
 /* Output c-string as counted string  */
 
@@ -940,7 +920,6 @@ int len;
   _bfd_vms_output_dump (abfd, (unsigned char *)value, len);
 }
 
-
 /* Output character area  */
 
 void
@@ -956,12 +935,11 @@ _bfd_vms_output_dump (abfd, data, length)
   if (length == 0)
     return;
 
-  memcpy (PRIV(output_buf) + PRIV(output_size), data, length);
-  PRIV(output_size) += length;
+  memcpy (PRIV (output_buf) + PRIV (output_size), data, length);
+  PRIV (output_size) += length;
 
   return;
 }
-
 
 /* Output count bytes of value  */
 
@@ -977,8 +955,8 @@ _bfd_vms_output_fill (abfd, value, count)
 
   if (count == 0)
     return;
-  memset (PRIV(output_buf) + PRIV(output_size), value, count);
-  PRIV(output_size) += count;
+  memset (PRIV (output_buf) + PRIV (output_size), value, count);
+  PRIV (output_size) += count;
 
   return;
 }
@@ -1043,7 +1021,7 @@ _bfd_vms_length_hash_symbol (abfd, in, maxlen)
     }
   else
     {
-      if (PRIV(flag_hash_long_names))
+      if (PRIV (flag_hash_long_names))
 	i = maxlen-9;
       else
 	i = maxlen;
@@ -1054,7 +1032,7 @@ _bfd_vms_length_hash_symbol (abfd, in, maxlen)
   out += i;
 
   if ((in_len > maxlen)
-      && PRIV(flag_hash_long_names))
+      && PRIV (flag_hash_long_names))
     sprintf (out, "_%08lx", result);
   else
     *out = 0;
@@ -1064,13 +1042,12 @@ _bfd_vms_length_hash_symbol (abfd, in, maxlen)
 #endif
 
   if (in_len > maxlen
-	&& PRIV(flag_hash_long_names)
-	&& PRIV(flag_show_after_trunc))
+	&& PRIV (flag_hash_long_names)
+	&& PRIV (flag_show_after_trunc))
     printf (_("Symbol %s replaced by %s\n"), old_name, new_name);
 
   return outbuf;
 }
-
 
 /* Allocate and initialize a new symbol.  */
 
@@ -1094,7 +1071,6 @@ new_symbol (abfd, name)
   return symbol;
 }
 
-
 /* Allocate and enter a new private symbol.  */
 
 vms_symbol_entry *
@@ -1109,13 +1085,13 @@ _bfd_vms_enter_symbol (abfd, name)
 #endif
 
   entry = (vms_symbol_entry *)
-	  bfd_hash_lookup (PRIV(vms_symbol_table), name, false, false);
+	  bfd_hash_lookup (PRIV (vms_symbol_table), name, false, false);
   if (entry == 0)
     {
 #if VMS_DEBUG
       _bfd_vms_debug (8,  "creating hash entry for %s\n", name);
 #endif
-      entry = (vms_symbol_entry *)bfd_hash_lookup (PRIV(vms_symbol_table), name, true, false);
+      entry = (vms_symbol_entry *)bfd_hash_lookup (PRIV (vms_symbol_table), name, true, false);
       if (entry != 0)
 	{
 	  asymbol *symbol;
@@ -1123,7 +1099,7 @@ _bfd_vms_enter_symbol (abfd, name)
 	  if (symbol != 0)
 	    {
 	      entry->symbol = symbol;
-	      PRIV(gsd_sym_count)++;
+	      PRIV (gsd_sym_count)++;
 	      abfd->symcount++;
 	    }
 	  else

@@ -1,5 +1,5 @@
 /* D30V-specific support for 32-bit ELF
-   Copyright (C) 1997, 1998, 1999 Free Software Foundation, Inc.
+   Copyright 1997, 1998, 1999, 2000 Free Software Foundation, Inc.
    Contributed by Martin Hunt (hunt@cygnus.com).
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -22,6 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "sysdep.h"
 #include "libbfd.h"
 #include "elf-bfd.h"
+#include "elf/d30v.h"
 
 static reloc_howto_type *bfd_elf32_bfd_reloc_type_lookup
   PARAMS ((bfd *abfd, bfd_reloc_code_real_type code));
@@ -45,24 +46,6 @@ static bfd_reloc_status_type bfd_elf_d30v_reloc_21 PARAMS ((
      asection *input_section,
      bfd *output_bfd,
      char **error_message));
-
-enum reloc_type
-{
-  R_D30V_NONE = 0,
-  R_D30V_6,
-  R_D30V_9_PCREL,
-  R_D30V_9_PCREL_R,
-  R_D30V_15,
-  R_D30V_15_PCREL,
-  R_D30V_15_PCREL_R,
-  R_D30V_21,
-  R_D30V_21_PCREL,
-  R_D30V_21_PCREL_R,
-  R_D30V_32,
-  R_D30V_32_PCREL,
-  R_D30V_32_NORMAL,
-  R_D30V_max
-};
 
 static reloc_howto_type elf_d30v_howto_table[] =
 {
@@ -263,8 +246,8 @@ static reloc_howto_type elf_d30v_howto_table[] =
 
 };
 
-#define MIN32 (long long)0xffffffff80000000LL
-#define MAX32 0x7fffffffLL
+#define MAX32 ((bfd_signed_vma) 0x7fffffff)
+#define MIN32 (- MAX32 - 1)
 
 static bfd_reloc_status_type
 bfd_elf_d30v_reloc (abfd, reloc_entry, symbol, data, input_section, output_bfd, error_message)
@@ -276,7 +259,7 @@ bfd_elf_d30v_reloc (abfd, reloc_entry, symbol, data, input_section, output_bfd, 
      bfd *output_bfd;
      char **error_message;
 {
-  long long relocation;
+  bfd_signed_vma relocation;
   bfd_vma in1, in2, num;
   bfd_vma tmp_addr = 0;
   bfd_reloc_status_type r;
@@ -287,10 +270,17 @@ bfd_elf_d30v_reloc (abfd, reloc_entry, symbol, data, input_section, output_bfd, 
   reloc_howto_type *howto = reloc_entry->howto;
   int make_absolute = 0;
 
+  if (output_bfd != (bfd *) NULL)
+    {
+      /* Partial linking -- do nothing.  */
+      reloc_entry->address += input_section->output_offset;
+      return bfd_reloc_ok;
+    }
+
   r = bfd_elf_generic_reloc (abfd, reloc_entry, symbol, data,
                              input_section, output_bfd, error_message);
   if (r != bfd_reloc_continue)
-    return r; 
+    return r;
 
   /* a hacked-up version of bfd_perform_reloc() follows */
  if (bfd_is_und_section (symbol->section)
@@ -314,11 +304,7 @@ bfd_elf_d30v_reloc (abfd, reloc_entry, symbol, data, input_section, output_bfd, 
   reloc_target_output_section = symbol->section->output_section;
 
   /* Convert input-section-relative symbol value to absolute.  */
-  if (output_bfd)
-    output_base = 0;
-  else
-    output_base = reloc_target_output_section->vma;
-
+  output_base = reloc_target_output_section->vma;
   relocation += output_base + symbol->section->output_offset;
 
   /* Add in supplied addend.  */
@@ -329,23 +315,11 @@ bfd_elf_d30v_reloc (abfd, reloc_entry, symbol, data, input_section, output_bfd, 
 
   if (howto->pc_relative == true)
     {
-      tmp_addr = input_section->output_section->vma + input_section->output_offset 
+      tmp_addr = input_section->output_section->vma + input_section->output_offset
 	+ reloc_entry->address;
       relocation -= tmp_addr;
     }
-  
-  if (output_bfd != (bfd *) NULL)
-    {
-      /* This is a partial relocation, and we want to apply the relocation
-	 to the reloc entry rather than the raw data. Modify the reloc
-	 inplace to reflect what we now know.  */
-      reloc_entry->addend = relocation;
-      reloc_entry->address += input_section->output_offset;
-      return flag;
-    }
-  else
-    reloc_entry->addend = 0;
-  
+
   in1 = bfd_get_32 (abfd, (bfd_byte *) data + addr);
   in2 = bfd_get_32 (abfd, (bfd_byte *) data + addr + 4);
 
@@ -355,30 +329,25 @@ bfd_elf_d30v_reloc (abfd, reloc_entry, symbol, data, input_section, output_bfd, 
 	 | ((in1 & 0x3F) << 26));
   in1 &= 0xFFFFFFC0;
   in2 = 0x80000000;
-  
+
   relocation += num;
 
   if (howto->pc_relative == true && howto->bitsize == 32)
     {
-      /* the D30V has a PC that doesn't wrap and PC-relative jumps */
-      /* are signed, so a PC-relative jump can'tbe more than +/- 2^31 byrtes */
-      /* if one exceeds this, change it to an absolute jump */
-      if (relocation > MAX32)
-	{
-	  relocation = (relocation + tmp_addr) & 0xffffffff;
-	  make_absolute = 1;
-	}
-      else if (relocation < MIN32)
+      /* The D30V has a PC that doesn't wrap and PC-relative jumps are
+	 signed, so a PC-relative jump can't be more than +/- 2^31 bytes.
+	 If one exceeds this, change it to an absolute jump.  */
+      if (relocation > MAX32 || relocation < MIN32)
 	{
 	  relocation = (relocation + tmp_addr) & 0xffffffff;
 	  make_absolute = 1;
 	}
     }
-  
+
   in1 |= (relocation >> 26) & 0x3F;	/* top 6 bits */
-  in2 |= ((relocation & 0x03FC0000) << 2);  /* next 8 bits */ 
+  in2 |= ((relocation & 0x03FC0000) << 2);  /* next 8 bits */
   in2 |= relocation & 0x0003FFFF;		/* bottom 18 bits */
-  
+
   /* change a PC-relative instruction to its absolute equivalent */
   /* with this simple hack */
   if (make_absolute)
@@ -386,10 +355,9 @@ bfd_elf_d30v_reloc (abfd, reloc_entry, symbol, data, input_section, output_bfd, 
 
   bfd_put_32 (abfd, in1, (bfd_byte *) data + addr);
   bfd_put_32 (abfd, in2, (bfd_byte *) data + addr + 4);
-  
-  return flag;
-}   
 
+  return flag;
+}
 
 static bfd_reloc_status_type
 bfd_elf_d30v_reloc_21 (abfd, reloc_entry, symbol, data, input_section, output_bfd, error_message)
@@ -411,10 +379,17 @@ bfd_elf_d30v_reloc_21 (abfd, reloc_entry, symbol, data, input_section, output_bf
   reloc_howto_type *howto = reloc_entry->howto;
   int mask, max;
 
+  if (output_bfd != (bfd *) NULL)
+    {
+      /* Partial linking -- do nothing.  */
+      reloc_entry->address += input_section->output_offset;
+      return bfd_reloc_ok;
+    }
+
   r = bfd_elf_generic_reloc (abfd, reloc_entry, symbol, data,
                              input_section, output_bfd, error_message);
   if (r != bfd_reloc_continue)
-    return r; 
+    return r;
 
   /* a hacked-up version of bfd_perform_reloc() follows */
  if (bfd_is_und_section (symbol->section)
@@ -438,11 +413,7 @@ bfd_elf_d30v_reloc_21 (abfd, reloc_entry, symbol, data, input_section, output_bf
   reloc_target_output_section = symbol->section->output_section;
 
   /* Convert input-section-relative symbol value to absolute.  */
-  if (output_bfd)
-    output_base = 0;
-  else
-    output_base = reloc_target_output_section->vma;
-
+  output_base = reloc_target_output_section->vma;
   relocation += output_base + symbol->section->output_offset;
 
   /* Add in supplied addend.  */
@@ -453,23 +424,12 @@ bfd_elf_d30v_reloc_21 (abfd, reloc_entry, symbol, data, input_section, output_bf
 
   if (howto->pc_relative == true)
     {
-      relocation -= input_section->output_section->vma + input_section->output_offset;
+      relocation -= (input_section->output_section->vma
+		     + input_section->output_offset);
       if (howto->pcrel_offset == true)
 	relocation -= reloc_entry->address;
     }
 
-  if (output_bfd != (bfd *) NULL)
-    {
-      /* This is a partial relocation, and we want to apply the relocation
-	 to the reloc entry rather than the raw data. Modify the reloc
-	 inplace to reflect what we now know.  */
-      reloc_entry->addend = relocation;
-      reloc_entry->address += input_section->output_offset;
-      return flag;
-    }
-  else
-    reloc_entry->addend = 0;
-  
   in1 = bfd_get_32 (abfd, (bfd_byte *) data + addr);
 
   mask =  (1 << howto->bitsize) - 1;
@@ -501,16 +461,16 @@ bfd_elf_d30v_reloc_21 (abfd, reloc_entry, symbol, data, input_section, output_bf
       if ((int)relocation > max)
 	flag = bfd_reloc_overflow;
     }
-  relocation >>= 3; 
+  relocation >>= 3;
   if (howto->bitsize == 6)
     in1 |= ((relocation & (mask >> 12)) << 12);
   else
     in1 |= relocation & mask;
 
   bfd_put_32 (abfd, in1, (bfd_byte *) data + addr);
-  
+
   return flag;
-}   
+}
 
 /* Map BFD reloc types to D30V ELF reloc types.  */
 
@@ -519,7 +479,6 @@ struct d30v_reloc_map
   bfd_reloc_code_real_type bfd_reloc_val;
   unsigned char elf_reloc_val;
 };
-
 
 static const struct d30v_reloc_map d30v_reloc_map[] =
 {

@@ -1,5 +1,6 @@
 /* Support for the generic parts of PE/PEI; common header information.
-   Copyright 1995, 1996, 1997, 1998, 1999 Free Software Foundation, Inc.
+   Copyright 1995, 1996, 1997, 1998, 1999, 2000, 2001
+   Free Software Foundation, Inc.
    Written by Cygnus Solutions.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -192,6 +193,72 @@ PE/PEI rearrangement (and code added): Donn Terry
 #define PUT_SCNHDR_LNNOPTR bfd_h_put_32
 #endif
 
+#ifdef COFF_WITH_pep
+
+#define GET_OPTHDR_IMAGE_BASE bfd_h_get_64
+#define PUT_OPTHDR_IMAGE_BASE bfd_h_put_64
+#define GET_OPTHDR_SIZE_OF_STACK_RESERVE bfd_h_get_64
+#define PUT_OPTHDR_SIZE_OF_STACK_RESERVE bfd_h_put_64
+#define GET_OPTHDR_SIZE_OF_STACK_COMMIT bfd_h_get_64
+#define PUT_OPTHDR_SIZE_OF_STACK_COMMIT bfd_h_put_64
+#define GET_OPTHDR_SIZE_OF_HEAP_RESERVE bfd_h_get_64
+#define PUT_OPTHDR_SIZE_OF_HEAP_RESERVE bfd_h_put_64
+#define GET_OPTHDR_SIZE_OF_HEAP_COMMIT bfd_h_get_64
+#define PUT_OPTHDR_SIZE_OF_HEAP_COMMIT bfd_h_put_64
+#define GET_PDATA_ENTRY bfd_get_64
+
+#define _bfd_XX_bfd_copy_private_bfd_data_common	_bfd_pep_bfd_copy_private_bfd_data_common
+#define _bfd_XX_bfd_copy_private_section_data		_bfd_pep_bfd_copy_private_section_data
+#define _bfd_XX_get_symbol_info				_bfd_pep_get_symbol_info
+#define _bfd_XX_only_swap_filehdr_out			_bfd_pep_only_swap_filehdr_out
+#define _bfd_XX_print_private_bfd_data_common		_bfd_pep_print_private_bfd_data_common
+#define _bfd_XXi_final_link_postscript			_bfd_pepi_final_link_postscript
+#define _bfd_XXi_final_link_postscript			_bfd_pepi_final_link_postscript
+#define _bfd_XXi_only_swap_filehdr_out			_bfd_pepi_only_swap_filehdr_out
+#define _bfd_XXi_swap_aouthdr_in			_bfd_pepi_swap_aouthdr_in
+#define _bfd_XXi_swap_aouthdr_out			_bfd_pepi_swap_aouthdr_out
+#define _bfd_XXi_swap_aux_in				_bfd_pepi_swap_aux_in
+#define _bfd_XXi_swap_aux_out				_bfd_pepi_swap_aux_out
+#define _bfd_XXi_swap_lineno_in				_bfd_pepi_swap_lineno_in
+#define _bfd_XXi_swap_lineno_out			_bfd_pepi_swap_lineno_out
+#define _bfd_XXi_swap_scnhdr_out			_bfd_pepi_swap_scnhdr_out
+#define _bfd_XXi_swap_sym_in				_bfd_pepi_swap_sym_in
+#define _bfd_XXi_swap_sym_out				_bfd_pepi_swap_sym_out
+
+#else /* !COFF_WITH_pep */
+
+#define GET_OPTHDR_IMAGE_BASE bfd_h_get_32
+#define PUT_OPTHDR_IMAGE_BASE bfd_h_put_32
+#define GET_OPTHDR_SIZE_OF_STACK_RESERVE bfd_h_get_32
+#define PUT_OPTHDR_SIZE_OF_STACK_RESERVE bfd_h_put_32
+#define GET_OPTHDR_SIZE_OF_STACK_COMMIT bfd_h_get_32
+#define PUT_OPTHDR_SIZE_OF_STACK_COMMIT bfd_h_put_32
+#define GET_OPTHDR_SIZE_OF_HEAP_RESERVE bfd_h_get_32
+#define PUT_OPTHDR_SIZE_OF_HEAP_RESERVE bfd_h_put_32
+#define GET_OPTHDR_SIZE_OF_HEAP_COMMIT bfd_h_get_32
+#define PUT_OPTHDR_SIZE_OF_HEAP_COMMIT bfd_h_put_32
+#define GET_PDATA_ENTRY bfd_get_32
+
+#define _bfd_XX_bfd_copy_private_bfd_data_common	_bfd_pe_bfd_copy_private_bfd_data_common
+#define _bfd_XX_bfd_copy_private_section_data		_bfd_pe_bfd_copy_private_section_data
+#define _bfd_XX_get_symbol_info				_bfd_pe_get_symbol_info
+#define _bfd_XX_only_swap_filehdr_out			_bfd_pe_only_swap_filehdr_out
+#define _bfd_XX_print_private_bfd_data_common		_bfd_pe_print_private_bfd_data_common
+#define _bfd_XXi_final_link_postscript			_bfd_pei_final_link_postscript
+#define _bfd_XXi_final_link_postscript			_bfd_pei_final_link_postscript
+#define _bfd_XXi_only_swap_filehdr_out			_bfd_pei_only_swap_filehdr_out
+#define _bfd_XXi_swap_aouthdr_in			_bfd_pei_swap_aouthdr_in
+#define _bfd_XXi_swap_aouthdr_out			_bfd_pei_swap_aouthdr_out
+#define _bfd_XXi_swap_aux_in				_bfd_pei_swap_aux_in
+#define _bfd_XXi_swap_aux_out				_bfd_pei_swap_aux_out
+#define _bfd_XXi_swap_lineno_in				_bfd_pei_swap_lineno_in
+#define _bfd_XXi_swap_lineno_out			_bfd_pei_swap_lineno_out
+#define _bfd_XXi_swap_scnhdr_out			_bfd_pei_swap_scnhdr_out
+#define _bfd_XXi_swap_sym_in				_bfd_pei_swap_sym_in
+#define _bfd_XXi_swap_sym_out				_bfd_pei_swap_sym_out
+
+#endif /* !COFF_WITH_pep */
+
 /* These functions are architecture dependent, and are in peicode.h:
    coff_swap_reloc_in
    int coff_swap_reloc_out
@@ -204,51 +271,51 @@ PE/PEI rearrangement (and code added): Donn Terry
    implementations architecture types, and actually appear in
    peigen.c.  */
 
-void _bfd_pei_swap_sym_in PARAMS ((bfd*, PTR, PTR));
-#define coff_swap_sym_in _bfd_pei_swap_sym_in
+void _bfd_XXi_swap_sym_in PARAMS ((bfd*, PTR, PTR));
+#define coff_swap_sym_in _bfd_XXi_swap_sym_in
 
-unsigned int _bfd_pei_swap_sym_out PARAMS ((bfd*, PTR, PTR));
-#define coff_swap_sym_out _bfd_pei_swap_sym_out
+unsigned int _bfd_XXi_swap_sym_out PARAMS ((bfd*, PTR, PTR));
+#define coff_swap_sym_out _bfd_XXi_swap_sym_out
 
-void _bfd_pei_swap_aux_in PARAMS ((bfd *, PTR, int, int, int, int, PTR));
-#define coff_swap_aux_in _bfd_pei_swap_aux_in
+void _bfd_XXi_swap_aux_in PARAMS ((bfd *, PTR, int, int, int, int, PTR));
+#define coff_swap_aux_in _bfd_XXi_swap_aux_in
 
-unsigned int _bfd_pei_swap_aux_out \
+unsigned int _bfd_XXi_swap_aux_out \
   PARAMS ((bfd *, PTR, int, int, int, int, PTR));
-#define coff_swap_aux_out _bfd_pei_swap_aux_out
+#define coff_swap_aux_out _bfd_XXi_swap_aux_out
 
-void _bfd_pei_swap_lineno_in PARAMS ((bfd*, PTR, PTR));
-#define coff_swap_lineno_in _bfd_pei_swap_lineno_in
+void _bfd_XXi_swap_lineno_in PARAMS ((bfd*, PTR, PTR));
+#define coff_swap_lineno_in _bfd_XXi_swap_lineno_in
 
-unsigned int _bfd_pei_swap_lineno_out PARAMS ((bfd*, PTR, PTR));
-#define coff_swap_lineno_out _bfd_pei_swap_lineno_out
+unsigned int _bfd_XXi_swap_lineno_out PARAMS ((bfd*, PTR, PTR));
+#define coff_swap_lineno_out _bfd_XXi_swap_lineno_out
 
-void _bfd_pei_swap_aouthdr_in PARAMS ((bfd*, PTR, PTR));
-#define coff_swap_aouthdr_in _bfd_pei_swap_aouthdr_in
+void _bfd_XXi_swap_aouthdr_in PARAMS ((bfd*, PTR, PTR));
+#define coff_swap_aouthdr_in _bfd_XXi_swap_aouthdr_in
 
-unsigned int _bfd_pei_swap_aouthdr_out PARAMS ((bfd *, PTR, PTR));
-#define coff_swap_aouthdr_out _bfd_pei_swap_aouthdr_out
+unsigned int _bfd_XXi_swap_aouthdr_out PARAMS ((bfd *, PTR, PTR));
+#define coff_swap_aouthdr_out _bfd_XXi_swap_aouthdr_out
 
-unsigned int _bfd_pei_swap_scnhdr_out PARAMS ((bfd *, PTR, PTR));
-#define coff_swap_scnhdr_out _bfd_pei_swap_scnhdr_out
+unsigned int _bfd_XXi_swap_scnhdr_out PARAMS ((bfd *, PTR, PTR));
+#define coff_swap_scnhdr_out _bfd_XXi_swap_scnhdr_out
 
-boolean _bfd_pe_print_private_bfd_data_common PARAMS ((bfd *, PTR));
+boolean _bfd_XX_print_private_bfd_data_common PARAMS ((bfd *, PTR));
 
-boolean _bfd_pe_bfd_copy_private_bfd_data_common PARAMS ((bfd *, bfd *));
+boolean _bfd_XX_bfd_copy_private_bfd_data_common PARAMS ((bfd *, bfd *));
 
-void _bfd_pe_get_symbol_info PARAMS ((bfd *, asymbol *, symbol_info *));
+void _bfd_XX_get_symbol_info PARAMS ((bfd *, asymbol *, symbol_info *));
 
-boolean _bfd_pei_final_link_postscript
+boolean _bfd_XXi_final_link_postscript
   PARAMS ((bfd *, struct coff_final_link_info *));
 
 #ifndef coff_final_link_postscript
-#define coff_final_link_postscript _bfd_pei_final_link_postscript
+#define coff_final_link_postscript _bfd_XXi_final_link_postscript
 #endif
 /* The following are needed only for ONE of pe or pei, but don't
    otherwise vary; peicode.h fixes up ifdefs but we provide the
    prototype.  */
 
-unsigned int _bfd_pe_only_swap_filehdr_out PARAMS ((bfd*, PTR, PTR));
-unsigned int _bfd_pei_only_swap_filehdr_out PARAMS ((bfd*, PTR, PTR));
-boolean _bfd_pe_bfd_copy_private_section_data
+unsigned int _bfd_XX_only_swap_filehdr_out PARAMS ((bfd*, PTR, PTR));
+unsigned int _bfd_XXi_only_swap_filehdr_out PARAMS ((bfd*, PTR, PTR));
+boolean _bfd_XX_bfd_copy_private_section_data
   PARAMS ((bfd *, asection *, bfd *, asection *));

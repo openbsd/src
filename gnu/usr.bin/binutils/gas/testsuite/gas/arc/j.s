@@ -1,15 +1,6 @@
 # j test
 	
 text_label:	
-	j	r0
-	j.d	r0
-	j.jd	r0
-	j.nd	r0
-
-	j.f	[r1]
-	j.d.f	[r1]
-	j.jd.f	[r1]
-	j.nd.f	[r1]
 
 	j	text_label
 	jal	text_label

@@ -2,7 +2,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright (C) 1996, 1997, 1998, 1999 Free Software Foundation, Inc.
+Copyright 1996, 1997, 1998, 1999, 2000, 2001 Free Software Foundation, Inc.
 
 This file is part of the GNU Binutils and/or GDB, the GNU debugger.
 
@@ -43,18 +43,16 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #define CGEN_INT_INSN_P 0
 
-/* FIXME: Need to compute CGEN_MAX_SYNTAX_BYTES.  */
+/* Maximum nymber of syntax bytes in an instruction.  */
+#define CGEN_ACTUAL_MAX_SYNTAX_BYTES 15
 
 /* CGEN_MNEMONIC_OPERANDS is defined if mnemonics have operands.
    e.g. In "b,a foo" the ",a" is an operand.  If mnemonics have operands
    we can't hash on everything up to the space.  */
 #define CGEN_MNEMONIC_OPERANDS
 
-/* Maximum number of operands any insn or macro-insn has.  */
-#define CGEN_MAX_INSN_OPERANDS 16
-
 /* Maximum number of fields in an instruction.  */
-#define CGEN_MAX_IFMT_OPERANDS 7
+#define CGEN_ACTUAL_MAX_IFMT_OPERANDS 7
 
 /* Enums.  */
 
@@ -157,17 +155,17 @@ typedef enum cgen_ifld_attr {
 
 /* Enum declaration for fr30 ifield types.  */
 typedef enum ifield_type {
-  FR30_F_NIL, FR30_F_OP1, FR30_F_OP2, FR30_F_OP3
- , FR30_F_OP4, FR30_F_OP5, FR30_F_CC, FR30_F_CCC
- , FR30_F_RJ, FR30_F_RI, FR30_F_RS1, FR30_F_RS2
- , FR30_F_RJC, FR30_F_RIC, FR30_F_CRJ, FR30_F_CRI
- , FR30_F_U4, FR30_F_U4C, FR30_F_I4, FR30_F_M4
- , FR30_F_U8, FR30_F_I8, FR30_F_I20_4, FR30_F_I20_16
- , FR30_F_I20, FR30_F_I32, FR30_F_UDISP6, FR30_F_DISP8
- , FR30_F_DISP9, FR30_F_DISP10, FR30_F_S10, FR30_F_U10
- , FR30_F_REL9, FR30_F_DIR8, FR30_F_DIR9, FR30_F_DIR10
- , FR30_F_REL12, FR30_F_REGLIST_HI_ST, FR30_F_REGLIST_LOW_ST, FR30_F_REGLIST_HI_LD
- , FR30_F_REGLIST_LOW_LD, FR30_F_MAX
+  FR30_F_NIL, FR30_F_ANYOF, FR30_F_OP1, FR30_F_OP2
+ , FR30_F_OP3, FR30_F_OP4, FR30_F_OP5, FR30_F_CC
+ , FR30_F_CCC, FR30_F_RJ, FR30_F_RI, FR30_F_RS1
+ , FR30_F_RS2, FR30_F_RJC, FR30_F_RIC, FR30_F_CRJ
+ , FR30_F_CRI, FR30_F_U4, FR30_F_U4C, FR30_F_I4
+ , FR30_F_M4, FR30_F_U8, FR30_F_I8, FR30_F_I20_4
+ , FR30_F_I20_16, FR30_F_I20, FR30_F_I32, FR30_F_UDISP6
+ , FR30_F_DISP8, FR30_F_DISP9, FR30_F_DISP10, FR30_F_S10
+ , FR30_F_U10, FR30_F_REL9, FR30_F_DIR8, FR30_F_DIR9
+ , FR30_F_DIR10, FR30_F_REL12, FR30_F_REGLIST_HI_ST, FR30_F_REGLIST_LOW_ST
+ , FR30_F_REGLIST_HI_LD, FR30_F_REGLIST_LOW_LD, FR30_F_MAX
 } IFIELD_TYPE;
 
 #define MAX_IFLD ((int) FR30_F_MAX)
@@ -227,7 +225,7 @@ typedef enum cgen_operand_type {
 } CGEN_OPERAND_TYPE;
 
 /* Number of operands types.  */
-#define MAX_OPERANDS ((int) FR30_OPERAND_MAX)
+#define MAX_OPERANDS 49
 
 /* Maximum number of operands referenced by any insn.  */
 #define MAX_OPERAND_INSTANCES 8

@@ -1,5 +1,6 @@
 /* Matsushita 10200 specific support for 32-bit ELF
-   Copyright (C) 1996, 1997, 1998, 1999 Free Software Foundation, Inc.
+   Copyright 1996, 1997, 1998, 1999, 2000, 2001
+   Free Software Foundation, Inc.
 
 This file is part of BFD, the Binary File Descriptor library.
 
@@ -35,8 +36,7 @@ static boolean mn10200_elf_symbol_address_p
    does absolutely nothing.  */
 #define USE_RELA
 
-enum reloc_type
-{
+enum reloc_type {
   R_MN10200_NONE = 0,
   R_MN10200_32,
   R_MN10200_16,
@@ -48,8 +48,7 @@ enum reloc_type
   R_MN10200_MAX
 };
 
-static reloc_howto_type elf_mn10200_howto_table[] =
-{
+static reloc_howto_type elf_mn10200_howto_table[] = {
   /* Dummy relocation.  Does nothing.  */
   HOWTO (R_MN10200_NONE,
 	 0,
@@ -165,20 +164,18 @@ static reloc_howto_type elf_mn10200_howto_table[] =
 	 true),
 };
 
-struct mn10200_reloc_map
-{
+struct mn10200_reloc_map {
   bfd_reloc_code_real_type bfd_reloc_val;
   unsigned char elf_reloc_val;
 };
 
-static const struct mn10200_reloc_map mn10200_reloc_map[] =
-{
-  { BFD_RELOC_NONE, R_MN10200_NONE, },
-  { BFD_RELOC_32, R_MN10200_32, },
-  { BFD_RELOC_16, R_MN10200_16, },
-  { BFD_RELOC_8, R_MN10200_8, },
-  { BFD_RELOC_24, R_MN10200_24, },
-  { BFD_RELOC_8_PCREL, R_MN10200_PCREL8, },
+static const struct mn10200_reloc_map mn10200_reloc_map[] = {
+  { BFD_RELOC_NONE    , R_MN10200_NONE   , },
+  { BFD_RELOC_32      , R_MN10200_32     , },
+  { BFD_RELOC_16      , R_MN10200_16     , },
+  { BFD_RELOC_8       , R_MN10200_8      , },
+  { BFD_RELOC_24      , R_MN10200_24     , },
+  { BFD_RELOC_8_PCREL , R_MN10200_PCREL8 , },
   { BFD_RELOC_16_PCREL, R_MN10200_PCREL16, },
   { BFD_RELOC_24_PCREL, R_MN10200_PCREL24, },
 };
@@ -250,7 +247,7 @@ mn10200_elf_final_link_relocate (howto, input_bfd, output_bfd,
     case R_MN10200_16:
       value += addend;
 
-      if ((long)value > 0x7fff || (long)value < -0x8000)
+      if ((long) value > 0x7fff || (long) value < -0x8000)
 	return bfd_reloc_overflow;
 
       bfd_put_16 (input_bfd, value, hit_data);
@@ -259,7 +256,7 @@ mn10200_elf_final_link_relocate (howto, input_bfd, output_bfd,
     case R_MN10200_8:
       value += addend;
 
-      if ((long)value > 0x7f || (long)value < -0x80)
+      if ((long) value > 0x7f || (long) value < -0x80)
 	return bfd_reloc_overflow;
 
       bfd_put_8 (input_bfd, value, hit_data);
@@ -268,7 +265,7 @@ mn10200_elf_final_link_relocate (howto, input_bfd, output_bfd,
     case R_MN10200_24:
       value += addend;
 
-      if ((long)value > 0x7fffff || (long)value < -0x800000)
+      if ((long) value > 0x7fffff || (long) value < -0x800000)
 	return bfd_reloc_overflow;
 
       value &= 0xffffff;
@@ -282,8 +279,8 @@ mn10200_elf_final_link_relocate (howto, input_bfd, output_bfd,
       value -= (offset + 1);
       value += addend;
 
-      if ((long)value > 0xff || (long)value < -0x100)
-        return bfd_reloc_overflow;
+      if ((long) value > 0xff || (long) value < -0x100)
+	return bfd_reloc_overflow;
 
       bfd_put_8 (input_bfd, value, hit_data);
       return bfd_reloc_ok;
@@ -294,8 +291,8 @@ mn10200_elf_final_link_relocate (howto, input_bfd, output_bfd,
       value -= (offset + 2);
       value += addend;
 
-      if ((long)value > 0xffff || (long)value < -0x10000)
-        return bfd_reloc_overflow;
+      if ((long) value > 0xffff || (long) value < -0x10000)
+	return bfd_reloc_overflow;
 
       bfd_put_16 (input_bfd, value, hit_data);
       return bfd_reloc_ok;
@@ -306,8 +303,8 @@ mn10200_elf_final_link_relocate (howto, input_bfd, output_bfd,
       value -= (offset + 3);
       value += addend;
 
-      if ((long)value > 0xffffff || (long)value < -0x1000000)
-        return bfd_reloc_overflow;
+      if ((long) value > 0xffffff || (long) value < -0x1000000)
+	return bfd_reloc_overflow;
 
       value &= 0xffffff;
       value |= (bfd_get_32 (input_bfd, hit_data) & 0xff000000);
@@ -318,7 +315,6 @@ mn10200_elf_final_link_relocate (howto, input_bfd, output_bfd,
       return bfd_reloc_notsupported;
     }
 }
-
 
 /* Relocate an MN10200 ELF section.  */
 static boolean
@@ -423,7 +419,7 @@ mn10200_elf_relocate_section (output_bfd, info, input_bfd, input_section,
       if (r != bfd_reloc_ok)
 	{
 	  const char *name;
-	  const char *msg = (const char *)0;
+	  const char *msg = (const char *) 0;
 
 	  if (h != NULL)
 	    name = h->root.root.string;
@@ -505,11 +501,11 @@ mn10200_elf_relocate_section (output_bfd, info, input_bfd, input_section,
 	abs24, imm24, d24 all look the same at the reloc level.  It
 	might make the code simpler if we had different relocs for
 	the various relaxable operand types.
-   
+
 	We don't handle imm16->imm8 or d16->d8 as they're very rare
 	and somewhat more difficult to support.  */
 
-static boolean 
+static boolean
 mn10200_elf_relax_section (abfd, sec, link_info, again)
      bfd *abfd;
      asection *sec;
@@ -654,7 +650,6 @@ mn10200_elf_relax_section (abfd, sec, link_info, again)
 	 that would be more work, but would require less memory when
 	 the linker is run.  */
 
-
       /* Try to turn a 24bit pc-relative branch/call into a 16bit pc-relative
 	 branch/call.  */
       if (ELF32_R_TYPE (irel->r_info) == (int) R_MN10200_PCREL24)
@@ -669,7 +664,7 @@ mn10200_elf_relax_section (abfd, sec, link_info, again)
 	  /* See if the value will fit in 16 bits, note the high value is
 	     0x7fff + 2 as the target will be two bytes closer if we are
 	     able to relax.  */
-	  if ((long)value < 0x8001 && (long)value > -0x8000)
+	  if ((long) value < 0x8001 && (long) value > -0x8000)
 	    {
 	      unsigned char code;
 
@@ -727,7 +722,7 @@ mn10200_elf_relax_section (abfd, sec, link_info, again)
 	  /* See if the value will fit in 8 bits, note the high value is
 	     0x7f + 1 as the target will be one bytes closer if we are
 	     able to relax.  */
-	  if ((long)value < 0x80 && (long)value > -0x80)
+	  if ((long) value < 0x80 && (long) value > -0x80)
 	    {
 	      unsigned char code;
 
@@ -774,7 +769,6 @@ mn10200_elf_relax_section (abfd, sec, link_info, again)
 	    bra lab2
 	   lab1:	       lab1:
 
-
 	 This happens when the bCC can't reach lab2 at assembly time,
 	 but due to other relaxations it can reach at link time.  */
       if (ELF32_R_TYPE (irel->r_info) == (int) R_MN10200_PCREL8)
@@ -814,7 +808,7 @@ mn10200_elf_relax_section (abfd, sec, link_info, again)
 	    continue;
 
 	  /* Now make sure we are a conditional branch.  This may not
-	     be necessary, but why take the chance. 
+	     be necessary, but why take the chance.
 
 	     Note these checks assume that R_MN10200_PCREL8 relocs
 	     only occur on bCC and bCCx insns.  If they occured
@@ -848,63 +842,63 @@ mn10200_elf_relax_section (abfd, sec, link_info, again)
 	  /* Reverse the condition of the first branch.  */
 	  switch (code)
 	    {
-	      case 0xfc:
-		code = 0xfd;
-		break;
-	      case 0xfd:
-		code = 0xfc;
-		break;
-	      case 0xfe:
-		code = 0xff;
-		break;
-	      case 0xff:
-		code = 0xfe;
-		break;
-	      case 0xe8:
-		code = 0xe9;
-		break;
-	      case 0xe9:
-		code = 0xe8;
-		break;
-	      case 0xe0:
-		code = 0xe2;
-		break;
-	      case 0xe2:
-		code = 0xe0;
-		break;
-	      case 0xe3:
-		code = 0xe1;
-		break;
-	      case 0xe1:
-		code = 0xe3;
-		break;
-	      case 0xe4:
-		code = 0xe6;
-		break;
-	      case 0xe6:
-		code = 0xe4;
-		break;
-	      case 0xe7:
-		code = 0xe5;
-		break;
-	      case 0xe5:
-		code = 0xe7;
-		break;
-	      case 0xec:
-		code = 0xed;
-		break;
-	      case 0xed:
-		code = 0xec;
-		break;
-	      case 0xee:
-		code = 0xef;
-		break;
-	      case 0xef:
-		code = 0xee;
-		break;
+	    case 0xfc:
+	      code = 0xfd;
+	      break;
+	    case 0xfd:
+	      code = 0xfc;
+	      break;
+	    case 0xfe:
+	      code = 0xff;
+	      break;
+	    case 0xff:
+	      code = 0xfe;
+	      break;
+	    case 0xe8:
+	      code = 0xe9;
+	      break;
+	    case 0xe9:
+	      code = 0xe8;
+	      break;
+	    case 0xe0:
+	      code = 0xe2;
+	      break;
+	    case 0xe2:
+	      code = 0xe0;
+	      break;
+	    case 0xe3:
+	      code = 0xe1;
+	      break;
+	    case 0xe1:
+	      code = 0xe3;
+	      break;
+	    case 0xe4:
+	      code = 0xe6;
+	      break;
+	    case 0xe6:
+	      code = 0xe4;
+	      break;
+	    case 0xe7:
+	      code = 0xe5;
+	      break;
+	    case 0xe5:
+	      code = 0xe7;
+	      break;
+	    case 0xec:
+	      code = 0xed;
+	      break;
+	    case 0xed:
+	      code = 0xec;
+	      break;
+	    case 0xee:
+	      code = 0xef;
+	      break;
+	    case 0xef:
+	      code = 0xee;
+	      break;
 	    }
 	  bfd_put_8 (abfd, code, contents + irel->r_offset - 1);
-	  
+
 	  /* Set the reloc type and symbol for the first branch
 	     from the second branch.  */
 	  irel->r_info = nrel->r_info;
@@ -929,10 +923,10 @@ mn10200_elf_relax_section (abfd, sec, link_info, again)
 	{
 	  bfd_vma value = symval;
 
-	  /* See if the value will fit in 16 bits. 
+	  /* See if the value will fit in 16 bits.
 	     We allow any 16bit match here.  We prune those we can't
 	     handle below.  */
-	  if ((long)value < 0x7fff && (long)value > -0x8000)
+	  if ((long) value < 0x7fff && (long) value > -0x8000)
 	    {
 	      unsigned char code;
 
@@ -991,7 +985,7 @@ mn10200_elf_relax_section (abfd, sec, link_info, again)
 		  *again = true;
 		  break;
 
-		/* mov imm24,an -> mov imm16,an 
+		/* mov imm24,an -> mov imm16,an
 		   cmp imm24,an -> cmp imm16,an
 		   mov (abs24),dn -> mov (abs16),dn
 		   mov dn,(abs24) -> mov dn,(abs16)
@@ -1053,7 +1047,7 @@ mn10200_elf_relax_section (abfd, sec, link_info, again)
 		   add imm24,dn -> add imm16,dn
 		   add imm24,an -> add imm16,an
 		   sub imm24,dn -> sub imm16,dn
-		   sub imm24,an -> sub imm16,an 
+		   sub imm24,an -> sub imm16,an
 		   And all d24->d16 in memory ops.  */
 		case 0x78:
 		case 0xd0:
@@ -1075,20 +1069,20 @@ mn10200_elf_relax_section (abfd, sec, link_info, again)
 		     move the value out of high mem and thus not fit
 		     in a signed 16bit value.  */
 		  if (((code & 0xfc) == 0x78
-			|| (code & 0xfc) == 0x60
-			|| (code & 0xfc) == 0x64
-			|| (code & 0xfc) == 0x68
-			|| (code & 0xfc) == 0x6c
-			|| (code & 0xfc) == 0x80
-			|| (code & 0xfc) == 0xf0
-			|| (code & 0xfc) == 0x00
-			|| (code & 0xfc) == 0x10
-			|| (code & 0xfc) == 0xb0
-			|| (code & 0xfc) == 0x30
-			|| (code & 0xfc) == 0xa0
-			|| (code & 0xfc) == 0x20
-			|| (code & 0xfc) == 0x90)
-		       && (value & 0x8000) != 0)
+		       || (code & 0xfc) == 0x60
+		       || (code & 0xfc) == 0x64
+		       || (code & 0xfc) == 0x68
+		       || (code & 0xfc) == 0x6c
+		       || (code & 0xfc) == 0x80
+		       || (code & 0xfc) == 0xf0
+		       || (code & 0xfc) == 0x00
+		       || (code & 0xfc) == 0x10
+		       || (code & 0xfc) == 0xb0
+		       || (code & 0xfc) == 0x30
+		       || (code & 0xfc) == 0xa0
+		       || (code & 0xfc) == 0x20
+		       || (code & 0xfc) == 0x90)
+		      && (value & 0x8000) != 0)
 		    continue;
 
 		  /* Note that we've changed the reldection contents, etc.  */
@@ -1505,7 +1499,6 @@ mn10200_elf_get_relocated_section_contents (output_bfd, link_info, link_order,
     free (sections);
   return NULL;
 }
-
 
 #define TARGET_LITTLE_SYM	bfd_elf32_mn10200_vec
 #define TARGET_LITTLE_NAME	"elf32-mn10200"

@@ -1,5 +1,5 @@
 /* Print VAX instructions.
-   Copyright (C) 1995, 1998 Free Software Foundation, Inc.
+   Copyright 1995, 1998, 2000, 2001 Free Software Foundation, Inc.
    Contributed by Pauline Middelink <middelin@polyware.iaf.nl>
 
 This program is free software; you can redistribute it and/or modify
@@ -126,7 +126,18 @@ print_insn_vax (memaddr, info)
       return -1;
     }
 
-  FETCH_DATA (info, buffer + 2);
+  /* Check if the info buffer has more than one byte left since
+     the last opcode might be a single byte with no argument data.  */
+  if (info->buffer_length - (memaddr - info->buffer_vma) > 1)
+    {
+      FETCH_DATA (info, buffer + 2);
+    }
+  else
+    {
+      FETCH_DATA (info, buffer + 1);
+      buffer[1] = 0;
+    }
+
   for (votp = &votstrs[0]; votp->name[0]; votp++)
     {
       register vax_opcodeT opcode = votp->detail.code;

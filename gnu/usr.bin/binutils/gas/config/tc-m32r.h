@@ -1,5 +1,6 @@
 /* tc-m32r.h -- Header file for tc-m32r.c.
-   Copyright (C) 1996, 1997, 1998 Free Software Foundation, Inc.
+   Copyright 1996, 1997, 1998, 1999, 2000, 2001
+   Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -16,7 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with GAS; see the file COPYING.  If not, write to
    the Free Software Foundation, 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA. */
+   Boston, MA 02111-1307, USA.  */
 
 #define TC_M32R
 
@@ -36,7 +37,7 @@
 
 /* call md_pcrel_from_section, not md_pcrel_from */
 long md_pcrel_from_section PARAMS ((struct fix *, segT));
-#define MD_PCREL_FROM_SECTION(FIXP, SEC) md_pcrel_from_section(FIXP, SEC)   
+#define MD_PCREL_FROM_SECTION(FIXP, SEC) md_pcrel_from_section(FIXP, SEC)
 
 /* Permit temporary numeric labels.  */
 #define LOCAL_LABELS_FB 1
@@ -54,18 +55,18 @@ extern void m32r_prepare_relax_scan ();
 #define md_prepare_relax_scan(fragP, address, aim, this_state, this_type) \
 m32r_prepare_relax_scan (fragP, address, aim, this_state, this_type)
 #else
-extern long m32r_relax_frag PARAMS ((fragS *, long));
-#define md_relax_frag(fragP, stretch) \
-m32r_relax_frag (fragP, stretch)
+extern long m32r_relax_frag PARAMS ((segT, fragS *, long));
+#define md_relax_frag(segment, fragP, stretch) \
+m32r_relax_frag (segment, fragP, stretch)
 #endif
 /* Account for nop if 32 bit insn falls on odd halfword boundary.  */
 #define TC_CGEN_MAX_RELAX(insn, len) (6)
 
-/* Alignments are used to ensure 32 bit insns live on 32 bit boundaries, so
-   we use a special alignment function to insert the correct nop pattern.  */
-extern int m32r_do_align PARAMS ((int, const char *, int, int));
-#define md_do_align(n, fill, len, max, l) \
-if (m32r_do_align (n, fill, len, max)) goto l
+/* Fill in rs_align_code fragments.  */
+extern void m32r_handle_align PARAMS ((fragS *));
+#define HANDLE_ALIGN(f)  m32r_handle_align (f)
+
+#define MAX_MEM_FOR_RS_ALIGN_CODE  (1 + 2 + 4)
 
 #define MD_APPLY_FIX3
 #define md_apply_fix3 gas_cgen_md_apply_fix3
@@ -99,4 +100,4 @@ int m32r_fill_insn PARAMS ((int));
 
 #define md_cleanup                 m32r_elf_section_change_hook
 #define md_elf_section_change_hook m32r_elf_section_change_hook
-extern void m32r_elf_section_change_hook ();    
+extern void m32r_elf_section_change_hook ();

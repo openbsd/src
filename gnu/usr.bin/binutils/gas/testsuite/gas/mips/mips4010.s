@@ -18,3 +18,4 @@ stuff:
 	addciu $14,$15,16
 	nop
 	nop
+	.end stuff

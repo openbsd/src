@@ -15,18 +15,23 @@ proc run_list_test { name opts } {
 }
 
 # Vtable bits are only supported by ELF targets.
-if { ([istarget "*-*-elf*"]		
-      || [istarget "*-*-linux*"])
+if { (   [istarget "*-*-elf*"] || [istarget "*-*-linux*"])
      && ![istarget *-*-linux*aout*]
      && ![istarget *-*-linux*oldld*] } then {
-
-    # not supported by D30V
-    if {[istarget "d30v-*-*"]} {
-      return
+	 
+    # These tests are not (yet) supported on some targets.
+    if {   [istarget "ia64-*"]
+        || [istarget "hppa*64*-*-*"]
+	|| [istarget "i960-*-*"]
+	|| [istarget "arc*-*-*"]
+	|| [istarget "alpha*-*-*"]
+	|| [istarget "avr-*-*"]
+	|| [istarget "d30v-*-*"] } then {
+        return
     }
 
-    # not yet supported by i960
-    if {[istarget "i960-*-*"]} {
+    # not yet supported by ARC
+    if {[istarget "arc*-*-*"]} {
       return
     }
 
@@ -35,9 +40,11 @@ if { ([istarget "*-*-elf*"]
 
     # The vtable entry results are different on Rel and Rela targets.
     if {[istarget "i*86-*-*"] 
+	|| [istarget "d10v-*-*"] 
 	|| [istarget "mips*-*-*"] 
 	|| [istarget "strongarm*-*-*"] 
-	|| [istarget "arm*-*-*"]} then {
+	|| [istarget "xscale*-*-*"] 
+	|| [istarget "arm*-*-*"] } then {
 
 	run_dump_test "entry0"
 

@@ -1,19 +1,18 @@
-# st/sr test
+# st test
+
+	st	r1,[r2]
+	st	r1,[r2,14]
+	stb	r1,[r2]
+	st.a	r1,[r3,14]
+	stw.a	r1,[r2,2]
+	st	r1,[900]
+	stb	0,[r2]
+	st	-8,[r2,-8]
+	st	80,[750]
+	st	r2,[foo]
+	st.di	r1,[r2,2]
+	st.a.di	r1,[r2,3]
+	stw.a.di r1,[r2,4]
 	
-	st	r0,[r1]
-	st	r5,[r6,1]
-	st	r7,[r8,-1]
-	st	r9,[r10,255]
-	st	r11,[r12,-256]
-	st	r19,[foo]
-	st	r20,[foo+4]
-
-	stb	r0,[0]
-	stw	r0,[0]
-	st.a	r0,[0]
-	st.di	r0,[0]
-	stb.a.di r0,[r0]
-
-	sr	r0,[r1]
-	sr	r2,[status]
-	sr	r3,[0x12345678]
+	sr	r1,[r2]
+	sr	r1,[14]

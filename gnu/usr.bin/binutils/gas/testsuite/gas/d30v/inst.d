@@ -71,26 +71,26 @@ Disassembly of section .text:
  1e8:	02d240c4 82d2d0c4 	cmpult.s	s, r3, r4	->	cmpule.s	v, r3, r4
  1f0:	01001008 81081020 	dbra.s	r1, r8	->	dbra.s	r1, 100	\(2f0 <start\+0x2f0>\)
  1f8:	81081037 8ab1f00d 	dbra.l	r1, -21520ff3	\(deadf205 <start\+0xdeadf205>\)
- 200:	0140201f 81482020 	dbrai.s	10, r31	->	dbrai.s	10, 100	\(300 <start\+0x300>\)
- 208:	81482037 8ab1f00d 	dbrai.l	10, -21520ff3	\(deadf215 <start\+0xdeadf215>\)
+ 200:	0140201f 81482020 	dbrai.s	10	\(.*\), r31	->	dbrai.s	10	\(.*\), 100	\(300 <start\+0x300>\)
+ 208:	81482037 8ab1f00d 	dbrai.l	10	\(.*\), -21520ff3	\(deadf215 <start\+0xdeadf215>\)
  210:	01201008 00f00000 	dbsr.s	r1, r8	||	nop	
  218:	01281020 00f00000 	dbsr.s	r1, 100	\(318 <start\+0x318>\)	||	nop	
  220:	81281037 8ab1f00d 	dbsr.l	r1, -21520ff3	\(deadf22d <start\+0xdeadf22d>\)
  228:	0160401f 00f00000 	dbsri.s	20, r31	||	nop	
  230:	01684020 00f00000 	dbsri.s	20, 100	\(330 <start\+0x330>\)	||	nop	
- 238:	81684037 8ab1f00d 	dbsri.l	20, -21520ff3	\(deadf245 <start\+0xdeadf245>\)
+ 238:	81684037 8ab1f00d 	dbsri.l	20	\(.*\), -21520ff3	\(deadf245 <start\+0xdeadf245>\)
  240:	01101020 00f00000 	djmp.s	r1, r32	||	nop	
  248:	81181000 8000f00d 	djmp.l	r1, f00d <start\+0xf00d>
  250:	81181037 8ab1f00d 	djmp.l	r1, deadf00d <start\+0xdeadf00d>
  258:	01506020 00f00000 	djmpi.s	30, r32	||	nop	
- 260:	81586000 8000f00d 	djmpi.l	30, f00d <start\+0xf00d>
- 268:	81586037 8ab1f00d 	djmpi.l	30, deadf00d <start\+0xdeadf00d>
+ 260:	81586000 8000f00d 	djmpi.l	30	\(.*\), f00d <start\+0xf00d>
+ 268:	81586037 8ab1f00d 	djmpi.l	30	\(.*\), deadf00d <start\+0xdeadf00d>
  270:	01301020 00f00000 	djsr.s	r1, r32	||	nop	
  278:	81381000 8000f00d 	djsr.l	r1, f00d <start\+0xf00d>
  280:	81381037 8ab1f00d 	djsr.l	r1, deadf00d <start\+0xdeadf00d>
  288:	01702020 00f00000 	djsri.s	10, r32	||	nop	
- 290:	81784000 8000f00d 	djsri.l	20, f00d <start\+0xf00d>
- 298:	81788037 8ab1f00d 	djsri.l	40, deadf00d <start\+0xdeadf00d>
+ 290:	81784000 8000f00d 	djsri.l	20	\(.*\), f00d <start\+0xf00d>
+ 298:	81788037 8ab1f00d 	djsri.l	40	\(.*\), deadf00d <start\+0xdeadf00d>
  2a0:	00100029 00f00000 	jmp.s	r41	||	nop	
  2a8:	00181e01 00f00000 	jmp.s	f008 <start\+0xf008>	||	nop	
  2b0:	80180037 8ab1f00d 	jmp.l	deadf00d <start\+0xdeadf00d>
@@ -167,90 +167,99 @@ Disassembly of section .text:
  4e8:	8b88108a 0b800044 	mulx	a1, r2, 0xa	<-	mulx	a0, r1, r4
  4f0:	8bf8204a 0bf01004 	mvfacc	r2, a1, 0xa	<-	mvfacc	r1, a0, r4
  4f8:	8b98108a 0a18808a 	mulxs	a1, r2, 0xa	<-	mulx2h	r8, r2, 0xa
- 500:	01e0a080 81e0a1c0 	mvfsys	r10, pc	->	mvfsys	r10, rpt_c
- 508:	01e0a000 81e0a002 	mvfsys	r10, psw	->	mvfsys	r10, pswh
- 510:	01e0a001 81e0a003 	mvfsys	r10, pswl	->	mvfsys	r10, f0
- 518:	01e0a103 8af01084 	mvfsys	r10, s	->	mvtacc	a1, r2, r4
- 520:	00e07280 80e00280 	mvtsys	rpt_c, r10	->	mvtsys	psw, r10
- 528:	00e00282 80e00281 	mvtsys	pswh, r10	->	mvtsys	pswl, r10
- 530:	00e00283 80e03283 	mvtsys	f0, r10	->	mvtsys	f3, r10
- 538:	00e04283 80e05283 	mvtsys	s, r10	->	mvtsys	v, r10
- 540:	00e06283 80e07283 	mvtsys	va, r10	->	mvtsys	c, r10
- 548:	00f00000 83901080 	nop		->	not	r1, r2
- 550:	02901080 83a01084 	notfg	f1, f2	->	or.s	r1, r2, r4
- 558:	03a8109a 00f00000 	or.s	r1, r2, 0x1a	||	nop	
- 560:	83a810b7 8ab1f00d 	or.l	r1, r2, 0xdeadf00d
- 568:	02a01084 82a84081 	orfg	f1, f2, s	->	orfg	s, f2, 0x1
- 570:	00800000 00f00000 	reit		||	nop	
- 578:	01801002 00f00000 	repeat.s	r1, r2	||	nop	
- 580:	81884000 8000dead 	repeat.l	r4, dead	\(e42d <start\+0xe42d>\)
- 588:	81884037 8ab1f00d 	repeat.l	r4, -21520ff3	\(deadf595 <start\+0xdeadf595>\)
- 590:	01a0a001 81a8a200 	repeati.s	a	\(59a <start\+0x59a>\), r1	->	repeati.s	a	\(59a <start\+0x59a>\), 1000	\(1590 <start\+0x1590>\)
- 598:	00f00000 00f00000 	nop		||	nop	
- 5a0:	03401084 8348108a 	rot	r1, r2, r4	->	rot	r1, r2, 0xa
- 5a8:	03501084 8358108a 	rot2h	r1, r2, r4	->	rot2h	r1, r2, 0xa
- 5b0:	8a88108a 0a801084 	sat	r1, r2, 0xa	<-	sat	r1, r2, r4
- 5b8:	8a98108a 0a901084 	sat2h	r1, r2, 0xa	<-	sat2h	r1, r2, r4
- 5c0:	8bc8108a 0bc01084 	sathl	r1, r2, 0xa	<-	sathl	r1, r2, r4
- 5c8:	8bd8108a 0bd01084 	sathh	r1, r2, 0xa	<-	sathh	r1, r2, r4
- 5d0:	8aa8108a 0aa01084 	satz	r1, r2, 0xa	<-	satz	r1, r2, r4
- 5d8:	8ab8108a 0ab01084 	satz2h	r1, r2, 0xa	<-	satz2h	r1, r2, r4
- 5e0:	03001084 8308108a 	sra	r1, r2, r4	->	sra	r1, r2, 0xa
- 5e8:	03101084 8318108a 	sra2h	r1, r2, r4	->	sra2h	r1, r2, 0xa
- 5f0:	03601084 8368108a 	src	r1, r2, r4	->	src	r1, r2, 0xa
- 5f8:	03201084 8328108a 	srl	r1, r2, r4	->	srl	r1, r2, 0xa
- 600:	03301084 8338108a 	srl2h	r1, r2, r4	->	srl2h	r1, r2, 0xa
- 608:	053061c8 853461c8 	st2h.s	r6, @\(r7, r8\)	->	st2h.s	r6, @\(r7\+, r8\)
- 610:	053c61c8 853861da 	st2h.s	r6, @\(r7-, r8\)	->	st2h.s	r6, @\(r7, 0x1a\)
- 618:	853861c0 80001234 	st2h.l	r6, @\(r7, 0x1234\)
- 620:	056061c8 856461c8 	st2w.s	r6, @\(r7, r8\)	->	st2w.s	r6, @\(r7\+, r8\)
- 628:	056c61c8 856861da 	st2w.s	r6, @\(r7-, r8\)	->	st2w.s	r6, @\(r7, 0x1a\)
- 630:	856861c0 80001234 	st2w.l	r6, @\(r7, 0x1234\)
- 638:	055061c8 855461c8 	st4hb.s	r6, @\(r7, r8\)	->	st4hb.s	r6, @\(r7\+, r8\)
- 640:	055c61c8 855861da 	st4hb.s	r6, @\(r7-, r8\)	->	st4hb.s	r6, @\(r7, 0x1a\)
- 648:	855861c0 80001234 	st4hb.l	r6, @\(r7, 0x1234\)
- 650:	050061c8 850461c8 	stb.s	r6, @\(r7, r8\)	->	stb.s	r6, @\(r7\+, r8\)
- 658:	050c61c8 850861da 	stb.s	r6, @\(r7-, r8\)	->	stb.s	r6, @\(r7, 0x1a\)
- 660:	850861c0 80001234 	stb.l	r6, @\(r7, 0x1234\)
- 668:	052061c8 852461c8 	sth.s	r6, @\(r7, r8\)	->	sth.s	r6, @\(r7\+, r8\)
- 670:	052c61c8 852861da 	sth.s	r6, @\(r7-, r8\)	->	sth.s	r6, @\(r7, 0x1a\)
- 678:	852861c0 80001234 	sth.l	r6, @\(r7, 0x1234\)
- 680:	051061c8 851461c8 	sthh.s	r6, @\(r7, r8\)	->	sthh.s	r6, @\(r7\+, r8\)
- 688:	051c61c8 851861da 	sthh.s	r6, @\(r7-, r8\)	->	sthh.s	r6, @\(r7, 0x1a\)
- 690:	851861c0 80001234 	sthh.l	r6, @\(r7, 0x1234\)
- 698:	054061c8 854461c8 	stw.s	r6, @\(r7, r8\)	->	stw.s	r6, @\(r7\+, r8\)
- 6a0:	054c61c8 854861da 	stw.s	r6, @\(r7-, r8\)	->	stw.s	r6, @\(r7, 0x1a\)
- 6a8:	854861c0 80001234 	stw.l	r6, @\(r7, 0x1234\)
- 6b0:	08201083 882b2cda 	sub.s	r1, r2, r3	->	sub.s	r50, r51, 0x1a
- 6b8:	882b2cf7 8ab1beef 	sub.l	r50, r51, 0xdeadbeef
- 6c0:	08301083 883b2cda 	sub2h.s	r1, r2, r3	->	sub2h.s	r50, r51, 0x1a
- 6c8:	883b2cf7 8ab1beef 	sub2h.l	r50, r51, 0xdeadbeef
- 6d0:	08501083 885b2cda 	subb.s	r1, r2, r3	->	subb.s	r50, r51, 0x1a
- 6d8:	885b2cf7 8ab1beef 	subb.l	r50, r51, 0xdeadbeef
- 6e0:	09801083 898b2cda 	subhlll.s	r1, r2, r3	->	subhlll.s	r50, r51, 0x1a
- 6e8:	898b2cf7 8ab1beef 	subhlll.l	r50, r51, 0xdeadbeef
- 6f0:	09901083 899b2cda 	subhllh.s	r1, r2, r3	->	subhllh.s	r50, r51, 0x1a
- 6f8:	899b2cf7 8ab1beef 	subhllh.l	r50, r51, 0xdeadbeef
- 700:	09a01083 89ab2cda 	subhlhl.s	r1, r2, r3	->	subhlhl.s	r50, r51, 0x1a
- 708:	89ab2cf7 8ab1beef 	subhlhl.l	r50, r51, 0xdeadbeef
- 710:	09b01083 89bb2cda 	subhlhh.s	r1, r2, r3	->	subhlhh.s	r50, r51, 0x1a
- 718:	89bb2cf7 8ab1beef 	subhlhh.l	r50, r51, 0xdeadbeef
- 720:	09c01083 89cb2cda 	subhhll.s	r1, r2, r3	->	subhhll.s	r50, r51, 0x1a
- 728:	89cb2cf7 8ab1beef 	subhhll.l	r50, r51, 0xdeadbeef
- 730:	09d01083 89db2cda 	subhhlh.s	r1, r2, r3	->	subhhlh.s	r50, r51, 0x1a
- 738:	89db2cf7 8ab1beef 	subhhlh.l	r50, r51, 0xdeadbeef
- 740:	09e01083 89eb2cda 	subhhhl.s	r1, r2, r3	->	subhhhl.s	r50, r51, 0x1a
- 748:	89eb2cf7 8ab1beef 	subhhhl.l	r50, r51, 0xdeadbeef
- 750:	09f01083 89fb2cda 	subhhhh.s	r1, r2, r3	->	subhhhh.s	r50, r51, 0x1a
- 758:	89fb2cf7 8ab1beef 	subhhhh.l	r50, r51, 0xdeadbeef
- 760:	00900001 00f00000 	trap.s	r1	||	nop	
- 768:	0098000a 00f00000 	trap.s	0xa	||	nop	
- 770:	03b01084 83b8108a 	xor.s	r1, r2, r4	->	xor.s	r1, r2, 0xa
- 778:	83b810b7 8ab1f00d 	xor.l	r1, r2, 0xdeadf00d
- 780:	02b01084 82b8110a 	xorfg	f1, f2, s	->	xorfg	f1, s, 0xa
- 788:	00f00000 80f00000 	nop		->	nop	
- 790:	00f00000 80f00000 	nop		->	nop	
- 798:	00f00000 00f00000 	nop		||	nop	
- 7a0:	80f00000 00f00000 	nop		<-	nop	
- 7a8:	03901080 00f00000 	not	r1, r2	||	nop	
- 7b0:	039020c0 80f00000 	not	r2, r3	->	nop	
+ 500:	01e0a080 00f00000 	mvfsys	r10, pc	||	nop	
+ 508:	01e0a1c0 00f00000 	mvfsys	r10, rpt_c	||	nop	
+ 510:	01e0a000 00f00000 	mvfsys	r10, psw	||	nop	
+ 518:	01e0a002 00f00000 	mvfsys	r10, pswh	||	nop	
+ 520:	01e0a001 00f00000 	mvfsys	r10, pswl	||	nop	
+ 528:	01e0a003 00f00000 	mvfsys	r10, f0	||	nop	
+ 530:	01e0a103 00f00000 	mvfsys	r10, s	||	nop	
+ 538:	80e07280 0af01084 	mvtsys	rpt_c, r10	<-	mvtacc	a1, r2, r4
+ 540:	00e00280 00f00000 	mvtsys	psw, r10	||	nop	
+ 548:	00e00282 00f00000 	mvtsys	pswh, r10	||	nop	
+ 550:	00e00281 00f00000 	mvtsys	pswl, r10	||	nop	
+ 558:	00e00283 00f00000 	mvtsys	f0, r10	||	nop	
+ 560:	00e03283 00f00000 	mvtsys	f3, r10	||	nop	
+ 568:	00e04283 00f00000 	mvtsys	s, r10	||	nop	
+ 570:	00e05283 00f00000 	mvtsys	v, r10	||	nop	
+ 578:	00e06283 00f00000 	mvtsys	va, r10	||	nop	
+ 580:	00e07283 00f00000 	mvtsys	c, r10	||	nop	
+ 588:	00f00000 83901080 	nop		->	not	r1, r2
+ 590:	02901080 83a01084 	notfg	f1, f2	->	or.s	r1, r2, r4
+ 598:	03a8109a 00f00000 	or.s	r1, r2, 0x1a	||	nop	
+ 5a0:	83a810b7 8ab1f00d 	or.l	r1, r2, 0xdeadf00d
+ 5a8:	02a01084 82a84081 	orfg	f1, f2, s	->	orfg	s, f2, 0x1
+ 5b0:	00800000 00f00000 	reit		||	nop	
+ 5b8:	01801002 00f00000 	repeat.s	r1, r2	||	nop	
+ 5c0:	81884000 8000dead 	repeat.l	r4, dead	\(e46d <start\+0xe46d>\)
+ 5c8:	81884037 8ab1f00d 	repeat.l	r4, -21520ff3	\(deadf5d5 <start\+0xdeadf5d5>\)
+ 5d0:	01a0a001 00f00000 	repeati.s	0xa, r1	||	nop	
+ 5d8:	01a8a200 00f00000 	repeati.s	0xa, 1000	\(15d8 <start\+0x15d8>\)	||	nop	
+ 5e0:	00f00000 00f00000 	nop		||	nop	
+ 5e8:	03401084 8348108a 	rot	r1, r2, r4	->	rot	r1, r2, 0xa
+ 5f0:	03501084 8358108a 	rot2h	r1, r2, r4	->	rot2h	r1, r2, 0xa
+ 5f8:	8a88108a 0a801084 	sat	r1, r2, 0xa	<-	sat	r1, r2, r4
+ 600:	8a98108a 0a901084 	sat2h	r1, r2, 0xa	<-	sat2h	r1, r2, r4
+ 608:	8bc8108a 0bc01084 	sathl	r1, r2, 0xa	<-	sathl	r1, r2, r4
+ 610:	8bd8108a 0bd01084 	sathh	r1, r2, 0xa	<-	sathh	r1, r2, r4
+ 618:	8aa8108a 0aa01084 	satz	r1, r2, 0xa	<-	satz	r1, r2, r4
+ 620:	8ab8108a 0ab01084 	satz2h	r1, r2, 0xa	<-	satz2h	r1, r2, r4
+ 628:	03001084 8308108a 	sra	r1, r2, r4	->	sra	r1, r2, 0xa
+ 630:	03101084 8318108a 	sra2h	r1, r2, r4	->	sra2h	r1, r2, 0xa
+ 638:	03601084 8368108a 	src	r1, r2, r4	->	src	r1, r2, 0xa
+ 640:	03201084 8328108a 	srl	r1, r2, r4	->	srl	r1, r2, 0xa
+ 648:	03301084 8338108a 	srl2h	r1, r2, r4	->	srl2h	r1, r2, 0xa
+ 650:	053061c8 853461c8 	st2h.s	r6, @\(r7, r8\)	->	st2h.s	r6, @\(r7\+, r8\)
+ 658:	053c61c8 853861da 	st2h.s	r6, @\(r7-, r8\)	->	st2h.s	r6, @\(r7, 0x1a\)
+ 660:	853861c0 80001234 	st2h.l	r6, @\(r7, 0x1234\)
+ 668:	056061c8 856461c8 	st2w.s	r6, @\(r7, r8\)	->	st2w.s	r6, @\(r7\+, r8\)
+ 670:	056c61c8 856861da 	st2w.s	r6, @\(r7-, r8\)	->	st2w.s	r6, @\(r7, 0x1a\)
+ 678:	856861c0 80001234 	st2w.l	r6, @\(r7, 0x1234\)
+ 680:	055061c8 855461c8 	st4hb.s	r6, @\(r7, r8\)	->	st4hb.s	r6, @\(r7\+, r8\)
+ 688:	055c61c8 855861da 	st4hb.s	r6, @\(r7-, r8\)	->	st4hb.s	r6, @\(r7, 0x1a\)
+ 690:	855861c0 80001234 	st4hb.l	r6, @\(r7, 0x1234\)
+ 698:	050061c8 850461c8 	stb.s	r6, @\(r7, r8\)	->	stb.s	r6, @\(r7\+, r8\)
+ 6a0:	050c61c8 850861da 	stb.s	r6, @\(r7-, r8\)	->	stb.s	r6, @\(r7, 0x1a\)
+ 6a8:	850861c0 80001234 	stb.l	r6, @\(r7, 0x1234\)
+ 6b0:	052061c8 852461c8 	sth.s	r6, @\(r7, r8\)	->	sth.s	r6, @\(r7\+, r8\)
+ 6b8:	052c61c8 852861da 	sth.s	r6, @\(r7-, r8\)	->	sth.s	r6, @\(r7, 0x1a\)
+ 6c0:	852861c0 80001234 	sth.l	r6, @\(r7, 0x1234\)
+ 6c8:	051061c8 851461c8 	sthh.s	r6, @\(r7, r8\)	->	sthh.s	r6, @\(r7\+, r8\)
+ 6d0:	051c61c8 851861da 	sthh.s	r6, @\(r7-, r8\)	->	sthh.s	r6, @\(r7, 0x1a\)
+ 6d8:	851861c0 80001234 	sthh.l	r6, @\(r7, 0x1234\)
+ 6e0:	054061c8 854461c8 	stw.s	r6, @\(r7, r8\)	->	stw.s	r6, @\(r7\+, r8\)
+ 6e8:	054c61c8 854861da 	stw.s	r6, @\(r7-, r8\)	->	stw.s	r6, @\(r7, 0x1a\)
+ 6f0:	854861c0 80001234 	stw.l	r6, @\(r7, 0x1234\)
+ 6f8:	08201083 882b2cda 	sub.s	r1, r2, r3	->	sub.s	r50, r51, 0x1a
+ 700:	882b2cf7 8ab1beef 	sub.l	r50, r51, 0xdeadbeef
+ 708:	08301083 883b2cda 	sub2h.s	r1, r2, r3	->	sub2h.s	r50, r51, 0x1a
+ 710:	883b2cf7 8ab1beef 	sub2h.l	r50, r51, 0xdeadbeef
+ 718:	08501083 885b2cda 	subb.s	r1, r2, r3	->	subb.s	r50, r51, 0x1a
+ 720:	885b2cf7 8ab1beef 	subb.l	r50, r51, 0xdeadbeef
+ 728:	09801083 898b2cda 	subhlll.s	r1, r2, r3	->	subhlll.s	r50, r51, 0x1a
+ 730:	898b2cf7 8ab1beef 	subhlll.l	r50, r51, 0xdeadbeef
+ 738:	09901083 899b2cda 	subhllh.s	r1, r2, r3	->	subhllh.s	r50, r51, 0x1a
+ 740:	899b2cf7 8ab1beef 	subhllh.l	r50, r51, 0xdeadbeef
+ 748:	09a01083 89ab2cda 	subhlhl.s	r1, r2, r3	->	subhlhl.s	r50, r51, 0x1a
+ 750:	89ab2cf7 8ab1beef 	subhlhl.l	r50, r51, 0xdeadbeef
+ 758:	09b01083 89bb2cda 	subhlhh.s	r1, r2, r3	->	subhlhh.s	r50, r51, 0x1a
+ 760:	89bb2cf7 8ab1beef 	subhlhh.l	r50, r51, 0xdeadbeef
+ 768:	09c01083 89cb2cda 	subhhll.s	r1, r2, r3	->	subhhll.s	r50, r51, 0x1a
+ 770:	89cb2cf7 8ab1beef 	subhhll.l	r50, r51, 0xdeadbeef
+ 778:	09d01083 89db2cda 	subhhlh.s	r1, r2, r3	->	subhhlh.s	r50, r51, 0x1a
+ 780:	89db2cf7 8ab1beef 	subhhlh.l	r50, r51, 0xdeadbeef
+ 788:	09e01083 89eb2cda 	subhhhl.s	r1, r2, r3	->	subhhhl.s	r50, r51, 0x1a
+ 790:	89eb2cf7 8ab1beef 	subhhhl.l	r50, r51, 0xdeadbeef
+ 798:	09f01083 89fb2cda 	subhhhh.s	r1, r2, r3	->	subhhhh.s	r50, r51, 0x1a
+ 7a0:	89fb2cf7 8ab1beef 	subhhhh.l	r50, r51, 0xdeadbeef
+ 7a8:	00900001 00f00000 	trap.s	r1	||	nop	
+ 7b0:	0098000a 00f00000 	trap.s	0xa	||	nop	
+ 7b8:	03b01084 83b8108a 	xor.s	r1, r2, r4	->	xor.s	r1, r2, 0xa
+ 7c0:	83b810b7 8ab1f00d 	xor.l	r1, r2, 0xdeadf00d
+ 7c8:	02b01084 82b8110a 	xorfg	f1, f2, s	->	xorfg	f1, s, 0xa
+ 7d0:	00f00000 80f00000 	nop		->	nop	
+ 7d8:	00f00000 80f00000 	nop		->	nop	
+ 7e0:	00f00000 00f00000 	nop		||	nop	
+ 7e8:	80f00000 00f00000 	nop		<-	nop	
+ 7f0:	03901080 00f00000 	not	r1, r2	||	nop	
+ 7f8:	039020c0 80f00000 	not	r2, r3	->	nop	

@@ -1,5 +1,5 @@
 /* This file is obj-evax.h
-   Copyright (C) 1996, 2000 Free Software Foundation, Inc.
+   Copyright 1996, 2000 Free Software Foundation, Inc.
    Contributed by Klaus Kämpf (kkaempf@progis.de) of
      proGIS Software, Aachen, Germany.
 
@@ -25,10 +25,10 @@
  * object format specific header files.
  */
 
-/* define an obj specific macro off which target cpu back ends may key. */
+/* define an obj specific macro off which target cpu back ends may key.  */
 #define OBJ_EVAX 1
 
-/* include whatever target cpu is appropriate. */
+/* include whatever target cpu is appropriate.  */
 #include "targ-cpu.h"
 
 #ifdef BFD_ASSEMBLER
@@ -60,7 +60,7 @@ typedef void *object_headers;
 
 #define DEFAULT_MAGIC_NUMBER_FOR_OBJECT_FILE (0)	/* your magic number */
 
-#define OBJ_EMIT_LINENO(a,b,c)	/* must be *something*.  This no-op's it out. */
+#define OBJ_EMIT_LINENO(a,b,c)	/* must be *something*.  This no-op's it out.  */
 
 #define obj_symbol_new_hook(s)        {;}
 
@@ -93,5 +93,3 @@ typedef void *object_headers;
  * fill-column: 131
  * End:
  */
-
-/* end of obj-evax.h */

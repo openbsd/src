@@ -4,7 +4,7 @@
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 - the resultant file is machine generated, cgen-asm.in isn't
 
-Copyright (C) 1996, 1997, 1998, 1999 Free Software Foundation, Inc.
+Copyright 1996, 1997, 1998, 1999, 2000, 2001 Free Software Foundation, Inc.
 
 This file is part of the GNU Binutils and GDB, the GNU debugger.
 
@@ -406,7 +406,7 @@ parse_insn_normal (cd, insn, strp, fields)
 	     first char after the mnemonic part is a space.  */
 	  /* FIXME: We also take inappropriate advantage of the fact that
 	     GAS's input scrubber will remove extraneous blanks.  */
-	  if (*str == CGEN_SYNTAX_CHAR (* syn))
+	  if (tolower (*str) == tolower (CGEN_SYNTAX_CHAR (* syn)))
 	    {
 #ifdef CGEN_MNEMONIC_OPERANDS
 	      if (* syn == ' ')
@@ -418,9 +418,11 @@ parse_insn_normal (cd, insn, strp, fields)
 	  else
 	    {
 	      /* Syntax char didn't match.  Can't be this insn.  */
-	      /* FIXME: would like to return something like
-		 "expected char `c'" */
-	      return _("syntax error");
+	      static char msg [80];
+	      /* xgettext:c-format */
+	      sprintf (msg, _("syntax error (expected char `%c', found `%c')"),
+		       *syn, *str);
+	      return msg;
 	    }
 	  continue;
 	}
@@ -486,7 +488,7 @@ m32r_cgen_assemble_insn (cd, str, fields, buf, errmsg)
 {
   const char *start;
   CGEN_INSN_LIST *ilist;
-  const char *tmp_errmsg;
+  const char *tmp_errmsg = NULL;
 
   /* Skip leading white space.  */
   while (isspace (* str))
@@ -521,19 +523,24 @@ m32r_cgen_assemble_insn (cd, str, fields, buf, errmsg)
       /* Allow parse/insert handlers to obtain length of insn.  */
       CGEN_FIELDS_BITSIZE (fields) = CGEN_INSN_BITSIZE (insn);
 
-      if (!(tmp_errmsg = CGEN_PARSE_FN (cd, insn) (cd, insn, & str, fields)))
-	{
-	  /* ??? 0 is passed for `pc' */
-	  if (CGEN_INSERT_FN (cd, insn) (cd, insn, fields, buf, (bfd_vma) 0)
-	      != NULL)
-	    continue;
-	  /* It is up to the caller to actually output the insn and any
-	     queued relocs.  */
-	  return insn;
-	}
+      tmp_errmsg = CGEN_PARSE_FN (cd, insn) (cd, insn, & str, fields);
+      if (tmp_errmsg != NULL)
+	continue;
 
-      /* Try the next entry.  */
+      /* ??? 0 is passed for `pc' */
+      tmp_errmsg = CGEN_INSERT_FN (cd, insn) (cd, insn, fields, buf,
+					      (bfd_vma) 0);
+      if (tmp_errmsg != NULL)
+        continue;
+
+      /* It is up to the caller to actually output the insn and any
+         queued relocs.  */
+      return insn;
     }
+
+  /* Make sure we leave this with something at this point. */
+  if (tmp_errmsg == NULL)
+    tmp_errmsg = "unknown mnemonic";
 
   {
     static char errbuf[150];

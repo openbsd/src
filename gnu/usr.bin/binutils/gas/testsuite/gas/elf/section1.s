@@ -1,32 +1,32 @@
-.data
+ .data
+	.byte 0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ .section A
+	.byte 1,1,1,1,1,1,1,1,1,1,1
+ .previous
 	.byte 0
-.section A
+ .previous
 	.byte 1
-.previous
-	.byte 0
-.previous
+ .pushsection B
+	.byte 2,2,2,2,2,2,2,2,2,2,2,2
+ .previous
 	.byte 1
-.pushsection B
+ .previous
 	.byte 2
-.previous
-	.byte 1
-.previous
+ .pushsection C
+	.byte 3,3,3,3,3,3,3,3,3,3,3,3,3,3,3
+ .previous
 	.byte 2
-.pushsection C
+ .previous
 	.byte 3
-.previous
+ .popsection
 	.byte 2
-.previous
-	.byte 3
-.popsection
-	.byte 2
-.previous
+ .previous
 	.byte 1
-.previous
+ .previous
 	.byte 2
-.popsection
+ .popsection
 	.byte 1
-.previous
+ .previous
 	.byte 0
-.previous
+ .previous
 	.byte 1

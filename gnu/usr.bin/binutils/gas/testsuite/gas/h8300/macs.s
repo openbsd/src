@@ -2,10 +2,10 @@
 	.text
 h8300s_mac:
 	clrmac
-	ldmac er0,mach
-	ldmac er1,macl
-	mac @er0+,@er1+
-	stmac mach,er0
-	stmac macl,er1
+	ldmac er4,mach
+	ldmac er5,macl
+	mac @er4+,@er5+
+	stmac mach,er4
+	stmac macl,er5
 	
 

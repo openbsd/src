@@ -1,5 +1,5 @@
 /* D10V-specific support for 32-bit ELF
-   Copyright (C) 1996, 1998, 1999 Free Software Foundation, Inc.
+   Copyright 1996, 1998, 1999, 2000 Free Software Foundation, Inc.
    Contributed by Martin Hunt (hunt@cygnus.com).
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -22,30 +22,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "sysdep.h"
 #include "libbfd.h"
 #include "elf-bfd.h"
-/* #include "elf/d10v.h" */
+#include "elf/d10v.h"
 
 static reloc_howto_type *bfd_elf32_bfd_reloc_type_lookup
   PARAMS ((bfd *abfd, bfd_reloc_code_real_type code));
 static void d10v_info_to_howto_rel
   PARAMS ((bfd *, arelent *, Elf32_Internal_Rel *));
 
-
 /* Use REL instead of RELA to save space */
 #define USE_REL
-
-enum reloc_type
-{
-  R_D10V_NONE = 0,
-  R_D10V_10_PCREL_R,
-  R_D10V_10_PCREL_L,
-  R_D10V_16,
-  R_D10V_18,
-  R_D10V_18_PCREL,
-  R_D10V_32,
-  R_D10V_GNU_VTINHERIT,
-  R_D10V_GNU_VTENTRY,
-  R_D10V_max
-};
 
 static reloc_howto_type elf_d10v_howto_table[] =
 {
@@ -185,7 +170,7 @@ static reloc_howto_type elf_d10v_howto_table[] =
          0,                     /* src_mask */
          0,                     /* dst_mask */
          false),                /* pcrel_offset */
- 
+
 };
 
 /* Map BFD reloc types to D10V ELF reloc types.  */
@@ -300,7 +285,7 @@ elf32_d10v_gc_sweep_hook (abfd, info, sec, relocs)
 /* Look through the relocs for a section during the first phase.
    Since we don't do .gots or .plts, we just need to consider the
    virtual table relocs for gc.  */
- 
+
 static boolean
 elf32_d10v_check_relocs (abfd, info, sec, relocs)
      bfd *abfd;
@@ -312,28 +297,28 @@ elf32_d10v_check_relocs (abfd, info, sec, relocs)
   struct elf_link_hash_entry **sym_hashes, **sym_hashes_end;
   const Elf_Internal_Rela *rel;
   const Elf_Internal_Rela *rel_end;
- 
+
   if (info->relocateable)
     return true;
- 
+
   symtab_hdr = &elf_tdata (abfd)->symtab_hdr;
   sym_hashes = elf_sym_hashes (abfd);
-  sym_hashes_end = sym_hashes + symtab_hdr->sh_size/sizeof(Elf32_External_Sym);
+  sym_hashes_end = sym_hashes + symtab_hdr->sh_size/sizeof (Elf32_External_Sym);
   if (!elf_bad_symtab (abfd))
     sym_hashes_end -= symtab_hdr->sh_info;
- 
+
   rel_end = relocs + sec->reloc_count;
   for (rel = relocs; rel < rel_end; rel++)
     {
       struct elf_link_hash_entry *h;
       unsigned long r_symndx;
- 
+
       r_symndx = ELF32_R_SYM (rel->r_info);
       if (r_symndx < symtab_hdr->sh_info)
         h = NULL;
       else
         h = sym_hashes[r_symndx - symtab_hdr->sh_info];
- 
+
       switch (ELF32_R_TYPE (rel->r_info))
         {
         /* This relocation describes the C++ object vtable hierarchy.
@@ -342,7 +327,7 @@ elf32_d10v_check_relocs (abfd, info, sec, relocs)
           if (!_bfd_elf32_gc_record_vtinherit (abfd, sec, h, rel->r_offset))
             return false;
           break;
- 
+
         /* This relocation describes which C++ vtable entries are actually
            used.  Record for later use during GC.  */
         case R_D10V_GNU_VTENTRY:
@@ -351,7 +336,7 @@ elf32_d10v_check_relocs (abfd, info, sec, relocs)
           break;
         }
     }
- 
+
   return true;
 }
 
@@ -464,7 +449,7 @@ elf32_d10v_relocate_section (output_bfd, info, input_bfd, input_section,
 	  if (name == NULL || *name == '\0')
 	    name = bfd_section_name (input_bfd, sec);
 	}
-      
+
       r = _bfd_final_link_relocate (howto, input_bfd, input_section,
                                     contents, rel->r_offset,
                                     relocation, rel->r_addend);

@@ -1,5 +1,5 @@
 /* d30v-opc.c -- D30V opcode list
-   Copyright (C) 1997, 1998, 2000 Free Software Foundation, Inc.
+   Copyright 1997, 1998, 1999, 2000 Free Software Foundation, Inc.
    Written by Martin Hunt, Cygnus Support
 
 This file is part of GDB, GAS, and the GNU binutils.
@@ -349,7 +349,9 @@ const struct d30v_operand d30v_operand_table[] =
   { 6, 6, 0, OPERAND_REG },
 #define Rb	(Ra3 + 1)
   { 6, 6, 6, OPERAND_REG },
-#define Rc	(Rb + 1)
+#define Rb2	(Rb + 1)
+  { 6, 6, 6, OPERAND_REG|OPERAND_DEST },
+#define Rc	(Rb2 + 1)
   { 6, 6, 12, OPERAND_REG },
 #define Aa	(Rc + 1)
   { 6, 1, 0, OPERAND_ACC|OPERAND_REG|OPERAND_DEST },
@@ -460,8 +462,8 @@ const struct d30v_format d30v_format_table[] =
   { SHORT_AA, 2, { Aa, Rb, IMM6 } },		/* Aa,Rb,imm6 */
   { SHORT_RA, 0, { Ra, Ab, Rc } },		/* Ra,Ab,Rc */
   { SHORT_RA, 2, { Ra, Ab, IMM6U2 } },		/* Ra,Ab,imm6u */
-  { SHORT_MODINC, 1, { Rb, IMM5 } },		/* Rb,imm5 (modinc) */
-  { SHORT_MODDEC, 3, { Rb, IMM5 } },		/* Rb,imm5 (moddec) */
+  { SHORT_MODINC, 1, { Rb2, IMM5 } },		/* Rb2,imm5 (modinc) */
+  { SHORT_MODDEC, 3, { Rb2, IMM5 } },		/* Rb2,imm5 (moddec) */
   { SHORT_C1, 0, { Ra, Cb, Fake } },		/* Ra,Cb (mvfsys) */
   { SHORT_C2, 0, { Ca, Rb, Fake } },		/* Ca,Rb (mvtsys) */
   { SHORT_UF, 0, { Fa, Fb } },			/* Fa,Fb  (notfg) */

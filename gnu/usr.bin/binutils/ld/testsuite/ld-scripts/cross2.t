@@ -1,6 +1,6 @@
 NOCROSSREFS ( .text .data )
 SECTIONS
 {
-  .text : { *(.text) *(.pr) }
-  .data : { *(.data) *(.sdata) *(.rw) *(.tc0) *(.tc) }
+  .text : { *(.text) *(.text.*) *(.pr) }
+  .data : { *(.data) *(.data.*) *(.sdata) *(.rw) *(.tc0) *(.tc) }
 }

@@ -2,7 +2,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright (C) 1996, 1997, 1998, 1999 Free Software Foundation, Inc.
+Copyright 1996, 1997, 1998, 1999, 2000, 2001 Free Software Foundation, Inc.
 
 This file is part of the GNU Binutils and/or GDB, the GNU debugger.
 
@@ -44,18 +44,16 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #define CGEN_INT_INSN_P 1
 
-/* FIXME: Need to compute CGEN_MAX_SYNTAX_BYTES.  */
+/* Maximum nymber of syntax bytes in an instruction.  */
+#define CGEN_ACTUAL_MAX_SYNTAX_BYTES 15
 
 /* CGEN_MNEMONIC_OPERANDS is defined if mnemonics have operands.
    e.g. In "b,a foo" the ",a" is an operand.  If mnemonics have operands
    we can't hash on everything up to the space.  */
 #define CGEN_MNEMONIC_OPERANDS
 
-/* Maximum number of operands any insn or macro-insn has.  */
-#define CGEN_MAX_INSN_OPERANDS 16
-
 /* Maximum number of fields in an instruction.  */
-#define CGEN_MAX_IFMT_OPERANDS 7
+#define CGEN_ACTUAL_MAX_IFMT_OPERANDS 7
 
 /* Enums.  */
 
@@ -191,7 +189,7 @@ typedef enum cgen_operand_type {
 } CGEN_OPERAND_TYPE;
 
 /* Number of operands types.  */
-#define MAX_OPERANDS ((int) M32R_OPERAND_MAX)
+#define MAX_OPERANDS 26
 
 /* Maximum number of operands referenced by any insn.  */
 #define MAX_OPERAND_INSTANCES 11

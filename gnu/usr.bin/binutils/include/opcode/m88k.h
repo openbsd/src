@@ -1,5 +1,5 @@
 /* Table of opcodes for the motorola 88k family.
-   Copyright 1989, 1990, 1991, 1992, 1993 Free Software Foundation, Inc.
+   Copyright 1989, 1990, 1991, 1993 Free Software Foundation, Inc.
 
 This file is part of GDB and GAS.
 

@@ -15,4 +15,18 @@
 	.long	4
 	.endc
 	.endc
+
+	.if	0
+	.long	5
+	.elseif	1
+	.if	0
+	.long	6
+	.elseif	1
+	.long	7
+	.endif
+	.elseif	1
+	.long	8
+	.else
+	.long	9
+	.endif
 	.p2align 5,0

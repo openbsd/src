@@ -8,3 +8,4 @@ stuff:
 	standby
 	suspend
 	nop
+	.end stuff
