@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: Makefile,v 1.23 2004/01/28 17:45:22 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.24 2004/01/29 03:42:19 deraadt Exp $
 #
 # Copyright (c) 1997 Tobias Weingartner
 # All rights reserved.
@@ -25,9 +25,9 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-.if ${MACHINE} == "i386" || ${MACHINE} == "amd64" || \
-    ${MACHINE} == "macppc" || ${MACHINE} == "pegasos" || \
-    ${MACHINE} == "alpha"
+.if (${MACHINE} == "i386") || (${MACHINE} == "amd64") || \
+    (${MACHINE} == "macppc") || (${MACHINE} == "pegasos") || \
+    (${MACHINE} == "alpha") || (${MACHINE} == "cats")
 PROG=	fdisk
 SRCS=	fdisk.c user.c misc.c disk.c mbr.c part.c cmd.c manual.c
 DPADD=	${LIBUTIL}
@@ -53,6 +53,6 @@ NOPROG=yes
 .endif
 
 MAN=	fdisk.8
-MANSUBDIR=i386 amd64 macppc pegosos alpha
+MANSUBDIR=i386 amd64 macppc pegosos alpha cats
 
 .include <bsd.prog.mk>
