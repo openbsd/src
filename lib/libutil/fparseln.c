@@ -1,4 +1,4 @@
-/*	$OpenBSD: fparseln.c,v 1.1 1999/07/20 16:38:56 jakob Exp $
+/*	$OpenBSD: fparseln.c,v 1.2 2001/08/16 18:34:40 millert Exp $
 /*	$NetBSD: fparseln.c,v 1.7 1999/07/02 15:49:12 simonb Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: fparseln.c,v 1.1 1999/07/20 16:38:56 jakob Exp $";
+static char rcsid[] = "$OpenBSD: fparseln.c,v 1.2 2001/08/16 18:34:40 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/cdefs.h>
@@ -39,7 +39,8 @@ static char rcsid[] = "$OpenBSD: fparseln.c,v 1.1 1999/07/20 16:38:56 jakob Exp 
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <util.h>
+
+#include "util.h"
 
 static int isescaped __P((const char *, const char *, int));
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: opendisk.c,v 1.1 1999/09/21 04:52:45 csapuntz Exp $	*/
+/*	$OpenBSD: opendisk.c,v 1.2 2001/08/16 18:34:40 millert Exp $	*/
 /*	$NetBSD: opendisk.c,v 1.4 1997/09/30 17:13:50 phil Exp $	*/
 
 /*-
@@ -42,10 +42,11 @@
 
 #include <errno.h>
 #include <fcntl.h>
-#include <util.h>
 #include <paths.h>
 #include <stdio.h>
 #include <string.h>
+
+#include "util.h"
 
 int
 opendisk(path, flags, buf, buflen, iscooked)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: readlabel.c,v 1.4 1997/11/18 19:57:29 millert Exp $	*/
+/*	$OpenBSD: readlabel.c,v 1.5 2001/08/16 18:34:40 millert Exp $	*/
 
 /*
  * Copyright (c) 1996, Jason Downs.  All rights reserved.
@@ -33,13 +33,14 @@
 #include <paths.h>
 #include <string.h>
 #include <unistd.h>
-#include <util.h>
 #include <sys/dkio.h>
 #define DKTYPENAMES
 #include <sys/disklabel.h>
 #include <sys/ioctl.h>
 #include <sys/param.h>
 #include <sys/stat.h>
+
+#include "util.h"
 
 /*
  * Try to get a disklabel for the specified device, and return mount_xxx
