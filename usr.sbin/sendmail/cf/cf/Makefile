@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 1997/01/22 01:06:49 downsj Exp $
+#	$OpenBSD: Makefile,v 1.8 1997/02/28 04:11:11 downsj Exp $
 #	@(#)Makefile	8.19 (Berkeley) 1/14/97
 
 #
@@ -23,8 +23,8 @@ RM=	rm -f
 	(cd ${.CURDIR} && $(M4) ${@:R}.mc > ${.OBJDIR}/$@)
 	$(CHMOD) $(ROMODE) $@
 
-ALL=	boat-anchor.cf chimera.cf pain.cf sun-lamp.cf trinity.cf \
-	clientproto.cf netbsd-proto.cf tcpproto.cf uucpproto.cf \
+ALL=	boat-anchor.cf trinity.cf \
+	clientproto.cf openbsd-proto.cf tcpproto.cf uucpproto.cf \
 	gandalf.cf saruman.cf nettan.cf waldorf.cf
 
 all: $(ALL)
@@ -35,7 +35,7 @@ clean cleandir:
 depend install: 
 
 distribution:
-	${INSTALL} ${COPY} -o root -g wheel -m 444 netbsd-proto.cf \
+	${INSTALL} ${COPY} -o root -g wheel -m 444 openbsd-proto.cf \
 	    ${DESTDIR}/etc/sendmail.cf
 
 # this is overkill, but....
