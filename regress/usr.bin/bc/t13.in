@@ -1,0 +1,11 @@
+#line comment
+#
+define f() {
+	return
+	return 1+2
+	return (1+2)
+	return ()
+}
+define f()
+{
+}
