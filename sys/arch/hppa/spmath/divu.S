@@ -1,4 +1,4 @@
-/*	$OpenBSD: divu.S,v 1.3 1998/07/02 19:05:14 mickey Exp $	*/
+/*	$OpenBSD: divu.S,v 1.4 2001/03/28 23:55:59 mickey Exp $	*/
 
 /*
  * Copyright 1996 1995 by Open Software Foundation, Inc.   
@@ -54,6 +54,8 @@ rem	.reg		%r3	/* remainder and upper part of dividend */
 quo	.reg		%r4	/* quotient and lower part of dividend */
 dvr	.reg		%r5	/* divisor */
 tp	.reg		%r6	/* temp. reg. */
+
+	.text
 
 /*****************************************************************************/
 ENTRY(divu)

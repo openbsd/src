@@ -1,4 +1,4 @@
-/*	$OpenBSD: impys.S,v 1.3 1998/07/02 19:05:32 mickey Exp $	*/
+/*	$OpenBSD: impys.S,v 1.4 2001/03/28 23:55:59 mickey Exp $	*/
 
 /*
  * Copyright 1996 1995 by Open Software Foundation, Inc.   
@@ -63,6 +63,8 @@ brindex	.equ		7		/* index into the br. table */
 sign	.equ		8		/* sign of product */
 pc	.equ		9		/* carry bit of product, = 00...01 */
 pm	.equ	       10		/* value of -1 used in shifting */
+
+	.text
 
 ENTRY(impys)
 	stws,ma		pu,4(sp)		; save registers on stack
