@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.112 2002/11/30 15:29:41 mickey Exp $
+.\"	$OpenBSD: options.4,v 1.113 2002/12/09 11:01:02 henning Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -1004,7 +1004,7 @@ Default value is 10.
 .It Cd option NMBCLUSTERS=value
 Size of kernel mbuf cluster map,
 .Em mb_map ,
-in CLBYTES-sized logical pages.
+in MCLBYTES-sized logical pages.
 Defaults to 2048 on i386, to 1024 on powerc and sparc64, and to 512 on
 other architectures (doubled when using
 .Dq option GATEWAY
