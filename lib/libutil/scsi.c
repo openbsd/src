@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi.c,v 1.1 1996/06/12 11:21:35 deraadt Exp $	*/
+/*	$OpenBSD: scsi.c,v 1.2 1996/07/31 09:25:48 niklas Exp $	*/
 
 /* Copyright (c) 1994 HD Associates
  * (contact: dufault@hda.com)
@@ -363,7 +363,7 @@ int scsireq_decode(scsireq_t *scsireq, char *fmt, ...)
 int scsireq_decode_visit(scsireq_t *scsireq, char *fmt,
 void (*arg_put)(void *, int , void *, int, char *), void *puthook)
 {
-	va_list ap = (va_list)0;
+	va_list ap;
 	return do_buff_decode(scsireq->databuf, (size_t)scsireq->datalen,
 	 arg_put, puthook, fmt, ap);
 }
@@ -378,7 +378,7 @@ int scsireq_buff_decode(u_char *buff, size_t len, char *fmt, ...)
 int scsireq_buff_decode_visit(u_char *buff, size_t len, char *fmt,
 void (*arg_put)(void *, int, void *, int, char *), void *puthook)
 {
-	va_list ap = (va_list)0;
+	va_list ap;
 	return do_buff_decode(buff, len, arg_put, puthook, fmt, ap);
 }
 
@@ -759,7 +759,7 @@ scsireq_t *scsireq_build(scsireq_t *scsireq,
 	u_long datalen, caddr_t databuf, u_long flags,
 	char *cmd_spec, ...)
 {
-	int cmdlen;
+	size_t cmdlen;
 	va_list ap;
 
 	if (scsireq == 0)
@@ -799,8 +799,8 @@ scsireq_t
 	u_long datalen, caddr_t databuf, u_long flags, char *cmd_spec,
 	int (*arg_get)(void *hook, char *field_name), void *gethook)
 {
-	int cmdlen;
-	va_list ap = (va_list) 0;
+	size_t cmdlen;
+	va_list ap;
 
 	if (scsireq == 0)
 		return 0;
@@ -850,7 +850,7 @@ int scsireq_encode(scsireq_t *scsireq, char *fmt, ...)
 int scsireq_buff_encode_visit(u_char *buff, size_t len, char *fmt,
 	int (*arg_get)(void *hook, char *field_name), void *gethook)
 {
-	va_list ap = (va_list)0;
+	va_list ap;
 	return do_encode(buff, len, 0,
 	arg_get, gethook, fmt, ap);
 }
@@ -858,7 +858,7 @@ int scsireq_buff_encode_visit(u_char *buff, size_t len, char *fmt,
 int scsireq_encode_visit(scsireq_t *scsireq, char *fmt,
 	int (*arg_get)(void *hook, char *field_name), void *gethook)
 {
-	va_list ap = (va_list)0;
+	va_list ap;
 	return do_encode(scsireq->databuf, scsireq->datalen, 0,
 	arg_get, gethook, fmt, ap);
 }
