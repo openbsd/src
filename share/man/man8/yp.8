@@ -1,8 +1,7 @@
 .\"	$NetBSD: yp.8,v 1.9 1995/08/11 01:16:52 thorpej Exp $
 .\"
-.\" Copyright (c) 1992/3 Theo de Raadt <deraadt@fsa.ca>
+.\" Copyright (c) 1992, 1993, 1996 Theo de Raadt <deraadt@theos.com>
 .\" All rights reserved.
-.\" Portions Copyright (c) 1994 Jason R. Thorpe.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -74,52 +73,93 @@
 .Oc
 .Nm ypwhich
 .Fl x
+.Pp
+.Nm ypserv
+.Op Fl a Ar aclfile
+.Op Fl d
+.Op Fl x
+.Pp
+.Nm ypxfr
+.Op Fl bcf
+.Op Fl d Ar domain
+.Op Fl h Ar host
+.Op Fl s Ar domain
+.Op Fl C Ar tid prog ipadd port
+.Ar mapname
+.Pp
+.Nm yppush
+.Op Fl d Ar domainname
+.Op Fl h Ar hostname
+.\" .Op Fl p Ar paralleljobs
+.\" .Op Fl t Ar timeout
+.Op Fl v
+.Ar mapname
 .Sh DESCRIPTION
 The
 .Nm YP
-subsystem allows network management of passwd and group file
-entries through the functions
-.Xr getpwent 3
+subsystem allows network management of passwd, group, and
+hosts file entries through the functions
+.Xr getpwent 3 ,
+.Xr getgrent 3
 and
-.Xr getgrent 3 .
+.Xr gethostbyname 3
+(as well as number of other databases and functions).
 .Nm YP
-also provides hooks for other client programs, such as
+also provides hooks for numerous other client programs
+such as
 .Xr amd 8
 and
-.Xr bootparamd 8 ,
-that can use
-.Nm YP
-maps.
+.Xr bootparamd 8
+to access distributed and shareable versions
+of their maps through
+.Nm YP .
 .Pp
 The
-.Nm YP 
-subsystem is started automatically in
+.Nm YP
+client subsystem is started automatically in
 .Pa /etc/rc
 if the directory
 .Pa /var/yp
 exists.
-.Sh BUGS
-Only
+.Pp
+The
 .Nm YP
-client functionality exists, there is no ypserv (yet).
+server subsystem is started automatically in
+.Pa /etc/rc
+if the directory
+.Pa /var/yp/DOMAINNAME
+exists.
+This directory is created when
+.Xr ypinit 8
+is run to initialize the machine as a
+.Nm YP
+server.
 .Pp
 If
-.Xr ypbind
-cannot find a server, the system behaves the same way as Sun's code:
-it hangs.
+.Nm ypbind
+cannot find a server, the system behaves the same way as Sun's code
+does: it hangs.
 .Sh SEE ALSO
 .Xr domainname 1 ,
 .Xr group 5 ,
 .Xr passwd 5 ,
 .Xr ypbind 8 ,
 .Xr ypcat 1 ,
+.Xr yppoll 8 ,
 .Xr ypmatch 1 ,
-.Xr yppoll 8 , 
 .Xr ypset 8 ,
 .Xr ypwhich 1 ,
-.Xr ypclnt 3
+.Xr ypclnt 3 ,
+.Xr ypserv 8 ,
+.Xr ypinit 8 ,
+.Xr yppush 8 ,
+.Xr ypxfr 8 ,
+.Xr rpc.yppasswdd 8
 .Sh HISTORY
 This free
 .Nm YP
-subsystem was written from scratch by Theo de Raadt to be compatible
-to Sun's implementation.
+subsystem is thought to be compatible with Sun's implementation.
+.Pp
+The ypbind, library components, and userland programs were implemented
+by Theo de Raadt <deraadt@theos.com>.
+The server component was implemented by Mats O Jansson <moj@stacken.kth.se>.
