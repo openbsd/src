@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.3 2001/04/02 23:11:20 drahn Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.4 2001/06/06 12:26:05 art Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -49,7 +49,6 @@ void _dl_show_objects(void);
 
 static int _dl_real_close(void *handle);
 static void _dl_unload_deps(elf_object_t *object);
-extern char *_dl_debug;
 
 void *
 dlopen(const char *libname, int how)
