@@ -7,6 +7,8 @@ SRCS=	gspa.c gsp_out.c gsp_sym.c gsp_lex.c gsp_act.c gsp_eval.c \
 	gsp_inst.c gsp_pseu.c
 OBJS+=	gsp_gram.o
 NOMAN=	noman
-CLEANFILES= y.tab.h
+CLEANFILES= gsp_gram.c y.tab.h
+
+beforedepend: gsp_gram.c
 
 .include <bsd.prog.mk>
