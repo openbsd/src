@@ -1,4 +1,4 @@
-/*	$OpenBSD: srt0.S,v 1.2 1997/11/06 19:42:45 millert Exp $	*/
+/*	$OpenBSD: srt0.S,v 1.3 1998/05/10 11:31:21 downsj Exp $	*/
 /*	$NetBSD: srt0.S,v 1.4 1997/05/12 07:56:00 thorpej Exp $	*/
 
 /*
@@ -176,6 +176,8 @@ not68030:
 	cmpb	#MMUID_425_T,d0		| are we a 425t?
 	jeq	isa425
 	cmpb	#MMUID_425_S,d0		| how about 425s?
+	jeq	isa425
+	cmpb	#MMUID_425_E,d0		| or maybe a 425e?
 	jeq	isa425
 	cmpb	#MMUID_433_T,d0		| or a 433t?
 	jeq	isa433

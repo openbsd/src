@@ -1,4 +1,4 @@
-/*	$OpenBSD: apci.c,v 1.1 1997/07/14 08:14:06 downsj Exp $	*/
+/*	$OpenBSD: apci.c,v 1.2 1998/05/10 11:31:17 downsj Exp $	*/
 /*	$NetBSD: apci.c,v 1.1 1997/05/12 07:41:55 thorpej Exp $	*/
 
 /*
@@ -99,16 +99,6 @@ apciinit(cp)
 	struct consdev *cp;
 {
 	struct apciregs *apci = (struct apciregs *)apcicnaddr;
-
-	/*
-	 * The only system on which this will happen is a 425e,
-	 * which does not currently have a framebuffer console
-	 * driver.  We use the ROM's output method to let the
-	 * operator know we're switching to the APCI.
-	 */
-	userom = 1;
-	printf("Switching to APCI console.\n");
-	userom = 0;
 
 	apci->ap_cfcr = CFCR_DLAB;
 	apci->ap_data = APCIBRD(9600) & 0xff;
