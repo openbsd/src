@@ -1,4 +1,4 @@
-/*	$NetBSD: net.h,v 1.9 1995/09/23 17:14:41 thorpej Exp $	*/
+/*	$NetBSD: net.h,v 1.10 1995/10/20 00:46:30 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass 
@@ -61,7 +61,7 @@
 
 /*
  * How much room to leave for headers:
- *	14: struct ether_header
+ *  14: struct ether_header
  *  20: struct ip
  *   8: struct udphdr
  * That's 42 but let's pad it out to 48 bytes.
