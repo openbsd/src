@@ -1,4 +1,4 @@
-/*	$OpenBSD: adw.c,v 1.12 2000/12/08 00:03:30 krw Exp $ */
+/*	$OpenBSD: adw.c,v 1.13 2001/01/15 16:27:53 krw Exp $ */
 /* $NetBSD: adw.c,v 1.23 2000/05/27 18:24:50 dante Exp $	 */
 
 /*
@@ -363,7 +363,6 @@ adw_init_ccb(sc, ccb)
 	hashnum = CCB_HASH(ccb->hashkey);
 	ccb->nexthash = sc->sc_ccbhash[hashnum];
 	sc->sc_ccbhash[hashnum] = ccb;
-	timeout_set( &ccb->to, adw_timeout, ccb );
 	adw_reset_ccb(ccb);
 	return (0);
 }
@@ -463,8 +462,10 @@ adw_queue_ccb(sc, ccb, retry)
 		TAILQ_REMOVE(&sc->sc_waiting_ccb, ccb, chain);
 		TAILQ_INSERT_TAIL(&sc->sc_pending_ccb, ccb, chain);
 
-		if ((ccb->xs->flags & SCSI_POLL) == 0)
-			timeout_add(&ccb->to, (ccb->timeout * hz) / 1000);
+		if ((ccb->xs->flags & SCSI_POLL) == 0) {
+			timeout_set(&ccb->xs->stimeout, adw_timeout, ccb);
+			timeout_add(&ccb->xs->stimeout, (ccb->timeout * hz) / 1000);
+		}
 	}
 
 	return(errcode);
@@ -1004,7 +1005,7 @@ adw_timeout(arg)
 	 * No more opportunities. Lets try resetting the bus and
 	 * reinitialize the host adapter.
 	 */
-		timeout_del( &ccb->to );
+		timeout_del(&xs->stimeout);
 		printf(" AGAIN. Resetting SCSI Bus\n");
 		adw_reset_bus(sc);
 		splx(s);
@@ -1040,7 +1041,7 @@ adw_timeout(arg)
 		 * by hand so the next time a timeout event will occour
 		 * we will reset the bus.
 		 */
-		timeout_add( &ccb->to, (ccb->timeout * hz) / 1000);
+		timeout_add(&xs->stimeout, (ccb->timeout * hz) / 1000);
 	} else {
 	/*
 	 * Abort the operation that has timed out.
@@ -1072,7 +1073,7 @@ adw_timeout(arg)
 		 * by hand so to give a second opportunity to the command
 		 * which timed-out.
 		 */
-		timeout_add( &ccb->to, (ccb->timeout * hz) / 1000);
+		timeout_add(&xs->stimeout, (ccb->timeout * hz) / 1000);
 	}
 
 	splx(s);
@@ -1090,7 +1091,7 @@ adw_reset_bus(sc)
 	AdwResetSCSIBus(sc); /* XXX - should check return value? */
 	while((ccb = TAILQ_LAST(&sc->sc_pending_ccb,
 			adw_pending_ccb)) != NULL) {
-	        timeout_del( &ccb->to );
+	        timeout_del(&ccb->xs->stimeout);
 		TAILQ_REMOVE(&sc->sc_pending_ccb, ccb, chain);
 		TAILQ_INSERT_HEAD(&sc->sc_waiting_ccb, ccb, chain);
 	}
@@ -1203,7 +1204,6 @@ adw_isr_callback(sc, scsiq)
 
 
 	ccb = adw_ccb_phys_kv(sc, scsiq->ccb_ptr);
-	timeout_del(&ccb->to);
 	TAILQ_REMOVE(&sc->sc_pending_ccb, ccb, chain);
 
 	if ((ccb->flags & CCB_ALLOC) == 0) {
@@ -1215,6 +1215,7 @@ adw_isr_callback(sc, scsiq)
 	}
 
 	xs = ccb->xs;
+	timeout_del(&xs->stimeout);
 
 	/*
          * If we were a data transfer, unload the map that described

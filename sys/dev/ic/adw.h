@@ -1,4 +1,4 @@
-/*	$OpenBSD: adw.h,v 1.5 2000/06/29 00:04:31 krw Exp $ */
+/*	$OpenBSD: adw.h,v 1.6 2001/01/15 16:27:53 krw Exp $ */
 /*      $NetBSD: adw.h,v 1.9 2000/05/26 15:13:43 dante Exp $        */
 
 /*
@@ -79,7 +79,6 @@ struct adw_ccb {
 	int			flags;	/* see below */
 
 	int			timeout;
-	struct timeout          to;
 
 	/*
 	 * This DMA map maps the buffer involved in the transfer.
