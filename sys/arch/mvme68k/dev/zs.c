@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.6 2000/01/27 03:06:50 smurph Exp $ */
+/*	$OpenBSD: zs.c,v 1.7 2000/01/27 03:28:38 smurph Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -172,7 +172,7 @@ zsmatch(parent, vcf, args)
     * this is what we test with for now. XXX - smurph
     */
    if (!badvaddr(ca->ca_vaddr, 1))
-      if (*zstest != 0xFF)
+      if (*zstest == 0xFF)
          return(0);
       else 
          return(1);
