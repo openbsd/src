@@ -48,7 +48,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.56 2003/06/02 20:18:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.57 2003/06/27 22:23:05 vincent Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -157,15 +157,12 @@ getanswer(answer, anslen, qname, qtype)
 	int qtype;
 {
 	struct __res_state *_resp = _THREAD_PRIVATE(_res, _res, &_res);
-	register const HEADER *hp;
-	register const u_char *cp;
-	register int n;
-	const u_char *eom;
-	char *bp, **ap, **hap, *ep;
-	int type, class, ancount, qdcount;
-	int haveanswer, had_error;
-	int toobig = 0;
+	const HEADER *hp;
+	const u_char *cp, *eom;
 	char tbuf[MAXDNAME];
+	char *bp, **ap, **hap, *ep;
+	int type, class, ancount, qdcount, n;
+	int haveanswer, had_error, toobig = 0;
 	const char *tname;
 	int (*name_ok)(const char *);
 
@@ -234,12 +231,20 @@ getanswer(answer, anslen, qname, qtype)
 			continue;
 		}
 		cp += n;			/* name */
+		if (cp > eom)
+			break;
 		type = _getshort(cp);
- 		cp += INT16SZ;			/* type */
+		cp += INT16SZ;			/* type */
+		if (cp > eom)
+			break;
 		class = _getshort(cp);
  		cp += INT16SZ + INT32SZ;	/* class, TTL */
+		if (cp > eom)
+			break;
 		n = _getshort(cp);
 		cp += INT16SZ;			/* len */
+		if (cp > eom)
+			break;
 		if (type == T_SIG) {
 			/* XXX - ignore signatures as we don't use them yet */
 			cp += n;
