@@ -1,4 +1,4 @@
-/*	$OpenBSD: biff.c,v 1.3 1997/01/15 23:42:14 millert Exp $	*/
+/*	$OpenBSD: biff.c,v 1.4 1998/07/22 09:25:28 deraadt Exp $	*/
 /*	$NetBSD: biff.c,v 1.3 1995/03/26 02:34:22 glass Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)biff.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: biff.c,v 1.3 1997/01/15 23:42:14 millert Exp $";
+static char rcsid[] = "$OpenBSD: biff.c,v 1.4 1998/07/22 09:25:28 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -85,23 +85,23 @@ main(argc, argv)
 		err(2, "stat");
 
 	if (*argv == NULL) {
-		(void)printf("is %s\n", sb.st_mode&0100 ? "y" : "n");
-		exit(sb.st_mode & 0100 ? 0 : 1);
+		(void)printf("is %s\n", sb.st_mode & S_IXUSR ? "y" : "n");
+		exit(sb.st_mode & S_IXUSR ? 0 : 1);
 	}
 
 	switch(argv[0][0]) {
 	case 'n':
-		if (chmod(name, sb.st_mode & ~0100) < 0)
+		if (chmod(name, sb.st_mode & ~S_IXUSR) < 0)
 			err(2, name);
 		break;
 	case 'y':
-		if (chmod(name, sb.st_mode | 0100) < 0)
+		if (chmod(name, sb.st_mode | S_IXUSR) < 0)
 			err(2, name);
 		break;
 	default:
 		usage();
 	}
-	exit(sb.st_mode & 0100 ? 0 : 1);
+	exit(sb.st_mode & S_IXUSR ? 0 : 1);
 }
 
 static void
