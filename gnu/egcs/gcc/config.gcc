@@ -211,6 +211,7 @@ alpha*-*-netbsd*)
 
 alpha*-*-openbsd*)
 	# default x-alpha is only appropriate for dec-osf.
+	tm_file="${tm_file} exec-stack.h"
 	target_cpu_default="MASK_GAS"
 	tmake_file="alpha/t-ieee"
 	gas=yes gnu_ld=yes
@@ -421,6 +422,7 @@ h8300-*-*)
 	float_format=i32
 	;;
 hppa*-*-openbsd*)
+#	tm_file="${tm_file} exec-stack.h"
 	target_cpu_default="MASK_PA_11"
 	tmake_file=pa/t-openbsd
 	;;
@@ -717,6 +719,7 @@ use_collect2=yes
 	;;
 i[34567]86-*-openbsd*)
 	# needed to unconfuse gdb
+	tm_file="${tm_file} exec-stack.h"
 	tmake_file="t-libc-ok t-openbsd i386/t-openbsd"
 	# we need collect2 until our bug is fixed...
 	use_collect2=yes
@@ -1527,6 +1530,7 @@ m68k*-*-netbsd*)
 use_collect2=yes
 	;;
 m68k*-*-openbsd*)
+#	tm_file="${tm_file} exec-stack.h"
 	tmake_file="t-libc-ok t-openbsd m68k/t-openbsd"
 	float_format=m68k
 	# we need collect2 until our bug is fixed...
@@ -1652,6 +1656,7 @@ m88k-*-luna*)
 	fi
 	;;
 m88k-*-openbsd*)
+#	tm_file="${tm_file} exec-stack.h"
 	tmake_file="${tmake_file} m88k/t-luna-gas"
 	;;
 m88k-*-sysv3*)
@@ -2493,12 +2498,13 @@ sparc-*-netbsd*)
 use_collect2=yes
 	;;
 sparc-*-openbsd*)
+	tm_file="${tm_file} exec-stack.h"
 	tmake_file="t-libc-ok t-openbsd sparc/t-openbsd"
 	gas=yes gnu_ld=yes
 	use_collect2=no
 	;;
 sparc64-*-openbsd*)
-	tm_file=sparc/openbsd64.h
+	tm_file="sparc/openbsd64.h exec-stack.h"
 	xm_file=sparc/xm-sp64.h
 	gas=yes gnu_ld=yes
 	;;
@@ -2739,6 +2745,7 @@ vax-*-netbsd*)
 use_collect2=yes
 	;;
 vax-*-openbsd*)
+	tm_file="${tm_file} exec-stack.h"
 	tmake_file="${tmake_file} vax/t-openbsd"
 	float_format=vax
 	use_collect2=yes

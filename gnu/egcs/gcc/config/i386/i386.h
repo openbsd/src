@@ -1577,6 +1577,13 @@ do {						\
 
 #define TRAMPOLINE_SIZE 10
 
+/* Targets redefine this to invoke code to either flush the cache,
+   or enable stack execution (or both).  */
+
+#ifndef FINALIZE_TRAMPOLINE
+#define FINALIZE_TRAMPOLINE(TRAMP)
+#endif
+
 /* Emit RTL insns to initialize the variable parts of a trampoline.
    FNADDR is an RTX for the address of the function's pure code.
    CXT is an RTX for the static chain value for the function.  */
@@ -1591,6 +1598,7 @@ do {						\
   emit_move_insn (gen_rtx_MEM (SImode, plus_constant (TRAMP, 1)), CXT); \
   emit_move_insn (gen_rtx_MEM (QImode, plus_constant (TRAMP, 5)), GEN_INT (0xe9));\
   emit_move_insn (gen_rtx_MEM (SImode, plus_constant (TRAMP, 6)), disp); \
+  FINALIZE_TRAMPOLINE(TRAMP);						\
 }
 
 /* Definitions for register eliminations.

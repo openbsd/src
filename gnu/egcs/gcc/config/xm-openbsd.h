@@ -32,4 +32,7 @@ Boston, MA 02111-1307, USA.  */
 #define alloca __builtin_alloca
 #endif
 
-
+#ifdef L_trampoline
+#include <sys/types.h>
+#include <sys/mman.h>
+#endif
