@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.75 1998/04/15 15:21:07 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.76 1998/04/28 16:25:03 millert Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -716,6 +716,61 @@ get_selection() {
 	getresp "$_next"
 }
 
+# Do globbing on the selection and parse +/-, sets _get_files and _setsdone
+# (which must exist in the local namespace) as side effects.
+glob_selection() {
+	local _selection="$1"
+	local _parent_dir="$2"
+	local _sets="$3"
+	local _action
+	local _matched
+	local _tfile
+	local _f
+
+	# Change +/- into add/remove
+	_action=add
+	case "$_selection" in
+		+*)	_selection="${_selection#?}"
+			;;
+		-*)	_selection="${_selection#?}"
+			_action=remove
+			;;
+	esac
+
+	# Major hack to allow the user to select globbing patterns
+	set -o noglob
+	_tfile=/tmp/install_case.$$	# safe in single user mode
+	cat >$_tfile << OOF
+	case \$_f in
+		$_selection)	# Add/remove file to extraction list
+			if [ "\$_action" = "add" ]; then
+				_get_files=\`addel \${_f} \${_get_files}\`
+				_setsdone=\`addel \${_f} \${_setsdone}\`
+			elif [ "\$_action" = "remove" ]; then
+				_get_files=\`rmel \${_f} \${_get_files}\`
+				_setsdone=\`rmel \${_f} \${_setsdone}\`
+			else
+				echo "Unknown action: \$_action"
+			fi
+			_matched=\$(( \$_matched + 1 ))
+			;;
+	esac
+OOF
+	set +o noglob
+
+	# Eww.
+	_matched=0
+	for _f in $_sets; do
+		. $_tfile
+	done
+	rm -f $_tfile
+
+	if [ $_matched -eq 0 ]; then
+		echo "File $_parent_dir/$_selection does not exist.  Check to make"
+		echo "sure you entered the information properly or enter 'list' for a file list."
+	fi
+}
+
 install_url() {
 # Get several parameters from the user, and xfer
 # files from the server.
@@ -731,9 +786,6 @@ local _failed_files
 local _osetsdone
 local _url_type
 local _url_base
-local _tfile
-local _matched
-local _action
 
 # Is this an ftp or http install?
 _url_type=$1; shift
@@ -957,48 +1009,7 @@ while : ; do
 		break
 	fi
 
-	# Change +/- into add/remove
-	_action=add
-	case "$resp" in
-		+*)	resp="${resp#?}"
-			;;
-		-*)	resp="${resp#?}"
-			_action=remove
-			;;
-	esac
-
-	# Major hack to allow the user to select globbing patterns
-	set -o noglob
-	_tfile=/tmp/install_case.$$	# safe in single user mode
-	cat >$_tfile << OOF
-	case \$_f in
-		$resp)	# Add/remove file to extraction list
-			if [ "\$_action" = "add" ]; then
-				_get_files=\`addel \${_f} \${_get_files}\`
-				_setsdone=\`addel \${_f} \${_setsdone}\`
-			elif [ "\$_action" = "remove" ]; then
-				_get_files=\`rmel \${_f} \${_get_files}\`
-				_setsdone=\`rmel \${_f} \${_setsdone}\`
-			else
-				echo "Unknown action: \$_action"
-			fi
-			_matched=\$(( \$_matched + 1 ))
-			;;
-	esac
-OOF
-	set +o noglob
-
-	# Eww.
-	_matched=0
-	for _f in $_sets $_kernel; do
-		. $_tfile
-	done
-	rm -f $_tfile
-
-	if [ $_matched -eq 0 ]; then
-		eval echo "File \$_${_url_type}_server_dir/$resp does not exist.  Check to make"
-		echo "sure you entered the information properly or enter 'list' for a file list."
-	fi
+	eval glob_selection \"$resp\" \$_${_url_type}_server_dir \"$_sets $_kernel\"
 done
 
 # User may have said "done" without selecting any files
@@ -1056,48 +1067,7 @@ while test -n "${_get_files}" ; do
 			continue
 		fi
 
-		# Change +/- into add/remove
-		_action=add
-		case "$resp" in
-			+*)	resp="${resp#?}"
-				;;
-			-*)	resp="${resp#?}"
-				_action=remove
-				;;
-		esac
-
-		# Major hack to allow the user to select globbing patterns
-		set -o noglob
-		_tfile=/tmp/install_case.$$	# safe in single user mode
-		cat >$_tfile << OOF
-		case \$_f in
-			$resp)	# Add/remove file to extraction list
-				if [ "\$_action" = "add" ]; then
-					_get_files=\`addel \${_f} \${_get_files}\`
-					_setsdone=\`addel \${_f} \${_setsdone}\`
-				elif [ "\$_action" = "remove" ]; then
-					_get_files=\`rmel \${_f} \${_get_files}\`
-					_setsdone=\`rmel \${_f} \${_setsdone}\`
-				else
-					echo "Unknown action: \$_action"
-				fi
-				_matched=\$(( \$_matched + 1 ))
-				;;
-		esac
-OOF
-		set +o noglob
-
-		# Eww.
-		_matched=0
-		for _f in $_failed_files; do
-			. $_tfile
-		done
-		rm -f $_tfile
-
-		if [ $_matched -eq 0 ]; then
-			eval echo "File \$_${_url_type}_server_dir/$resp does not exist.  Check to make"
-			echo "sure you entered the information properly or enter 'list' for a file list."
-		fi
+		eval glob_selection \"$resp\" \$_${_url_type}_server_dir \"$_failed_files\"
 	done
 done
 }
@@ -1110,9 +1080,6 @@ local _f
 local _get_files
 local _failed_files
 local _osetsdone
-local _tfile
-local _matched
-local _action
 
 if [ ! -d $1 ]; then
 	echo "No such directory: $1"
@@ -1205,48 +1172,7 @@ while : ; do
 		break
 	fi
 
-	# Change +/- into add/remove
-	_action=add
-	case "$resp" in
-		+*)	resp="${resp#?}"
-			;;
-		-*)	resp="${resp#?}"
-			_action=remove
-			;;
-	esac
-
-	# Major hack to allow the user to select globbing patterns
-	set -o noglob
-	_tfile=/tmp/install_case.$$	# safe in single user mode
-	cat >$_tfile << OOF
-	case \$_f in
-		$resp)	# Add/remove file to extraction list
-			if [ "\$_action" = "add" ]; then
-				_get_files=\`addel \${_f} \${_get_files}\`
-				_setsdone=\`addel \${_f} \${_setsdone}\`
-			elif [ "\$_action" = "remove" ]; then
-				_get_files=\`rmel \${_f} \${_get_files}\`
-				_setsdone=\`rmel \${_f} \${_setsdone}\`
-			else
-				echo "Unknown action: \$_action"
-			fi
-			_matched=\$(( \$_matched + 1 ))
-			;;
-	esac
-OOF
-	set +o noglob
-
-	# Eww.
-	_matched=0
-	for _f in $_sets $_kernel; do
-		. $_tfile
-	done
-	rm -f $_tfile
-
-	if [ $_matched = 0 ]; then
-	    echo "File $1/$resp does not exist.  Check to make"
-	    echo "sure you entered the information properly or enter 'list' for a file list."
-	fi
+	glob_selection "$resp" "$1" "$_sets $_kernel"
 done
 
 # User may have said "done" without selecting any files
@@ -1304,48 +1230,7 @@ while test -n "${_get_files}" ; do
 			continue
 		fi
 
-		# Change +/- into add/remove
-		_action=add
-		case "$resp" in
-			+*)	resp="${resp#?}"
-				;;
-			-*)	resp="${resp#?}"
-				_action=remove
-				;;
-		esac
-
-		# Major hack to allow the user to select globbing patterns
-		set -o noglob
-		_tfile=/tmp/install_case.$$	# safe in single user mode
-		cat >$_tfile << OOF
-		case \$_f in
-			$resp)	# Add/remove file to extraction list
-				if [ "\$_action" = "add" ]; then
-					_get_files=\`addel \${_f} \${_get_files}\`
-					_setsdone=\`addel \${_f} \${_setsdone}\`
-				elif [ "\$_action" = "remove" ]; then
-					_get_files=\`rmel \${_f} \${_get_files}\`
-					_setsdone=\`rmel \${_f} \${_setsdone}\`
-				else
-					echo "Unknown action: \$_action"
-				fi
-				_matched=\$(( \$_matched + 1 ))
-				;;
-		esac
-OOF
-		set +o noglob
-
-		# Eww.
-		_matched=0
-		for _f in $_failed_files; do
-			. $_tfile
-		done
-		rm -f $_tfile
-
-		if [ $_matched = 0 ]; then
-		    echo "File $1/$resp does not exist.  Check to make"
-		    echo "sure you entered the information properly or enter 'list' for a file list."
-		fi
+		glob_selection "$resp" "$1" "$_failed_files"
 	done
 done
 }
