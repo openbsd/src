@@ -1063,14 +1063,15 @@ eeprom_uio(uio)
 		return (ENODEV);
 
 	off = uio->uio_offset;
-	if (off > EEPROM_SIZE)
+	if (off > sizeof(struct eeprom))
 		return (EFAULT);
 
 	cnt = uio->uio_resid;
-	if (cnt > (EEPROM_SIZE - off))
-		cnt = (EEPROM_SIZE - off);
+	if (cnt > sizeof(struct eeprom) - off)
+		cnt = sizeof(struct eeprom) - off;
 
-	if ((error = eeprom_take()) != 0)
+	error = eeprom_take();
+	if (error != 0)
 		return (error);
 
 	if (eeprom_va == NULL) {
@@ -1084,14 +1085,14 @@ eeprom_uio(uio)
 	 * this, we byte-by-byte copy the eeprom contents into a
 	 * temporary buffer.
 	 */
-	buf = malloc(EEPROM_SIZE, M_DEVBUF, M_WAITOK);
+	buf = malloc(sizeof(struct eeprom), M_DEVBUF, M_WAITOK);
 	if (buf == NULL) {
 		error = EAGAIN;
 		goto out;
 	}
 
 	if (uio->uio_rw == UIO_READ)
-		for (bcnt = 0; bcnt < EEPROM_SIZE; ++bcnt)
+		for (bcnt = 0; bcnt < sizeof(struct eeprom); ++bcnt)
 			*(char *)(buf + bcnt) = *(char *)(eeprom_va + bcnt);
 
 	if ((error = uiomove(buf + off, (int)cnt, uio)) != 0)
