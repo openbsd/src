@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.16 2003/02/22 23:50:37 jason Exp $	*/
+/*	$OpenBSD: clock.c,v 1.17 2003/02/28 21:30:30 jason Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -763,7 +763,9 @@ clockintr(cap)
 {
 #ifdef DEBUG
 	static int64_t tick_base = 0;
-	int64_t t = (u_int64_t)tick();
+	int64_t t;
+
+	t = tick() & TICK_TICKS;
 
 	if (!tick_base) {
 		tick_base = (time.tv_sec * 1000000LL + time.tv_usec) 
@@ -788,6 +790,9 @@ clockintr(cap)
 #endif
 	/* Let locore.s clear the interrupt for us. */
 	hardclock((struct clockframe *)cap);
+
+	lasttick = tick() & TICK_TICKS;
+
 	return (1);
 }
 
