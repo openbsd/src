@@ -1,5 +1,5 @@
-#	$OpenBSD: files,v 1.20 1996/05/10 12:33:26 deraadt Exp $
-#	$NetBSD: files,v 1.84 1996/05/07 08:56:54 mycroft Exp $
+#	$OpenBSD: files,v 1.21 1996/05/22 12:08:17 deraadt Exp $
+#	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -10,7 +10,7 @@ define	tape
 define	ifnet
 define	tty
 define	audio
-
+define	scsi {}
 
 # audio device attributes
 define	mulaw
@@ -23,12 +23,15 @@ define	fddi
 
 # "Chipset" attributes.  These are the machine-independent portions
 # of device drivers.
-define	pdq		# DEC FDDI chipset
 define	ncr5380sbc	# NCR 5380 SCSI Bus Controller
-define	aic7xxx		# Adaptec aic7770 and aic7870 SCSI controllers
+define	pdq		# DEC FDDI chipset
 
 # "Chipset" drivers.  These are the bus-independent routines which
 # contain the cfdrivers.  Attachments are provided by files.<bus>
+
+# Adaptec 2[789]4X, 394X, aic7770 and aic78[5678]0 SCSI controllers
+device	ahc: scsi
+file	dev/ic/aic7xxx.c	ahc
 
 # 3Com Etherlink-III Ethernet controller
 device	ep: ether, ifnet
@@ -60,6 +63,7 @@ pseudo-device sl: ifnet
 pseudo-device ppp: ifnet
 pseudo-device tun: ifnet
 pseudo-device bpfilter: ifnet
+pseudo-device strip: ifnet
 pseudo-device rnd
 
 # XXX machine-independent SCSI files should live somewhere here, maybe
@@ -89,7 +93,6 @@ file ddb/db_usrreq.c			ddb
 file ddb/db_hangman.c			ddb
 file dev/audio.c			audio			needs-flag
 file dev/ccd.c				ccd			needs-flag
-file dev/ic/aic7xxx.c			aic7xxx
 file dev/ic/93cx6.c			aic7xxx
 file dev/ic/ncr5380sbc.c		ncr5380sbc
 file dev/ic/pdq.c			pdq
@@ -213,6 +216,7 @@ file net/if_ethersubr.c			ether | fddi		needs-flag
 file net/if_fddisubr.c			fddi
 file net/if_loop.c			loop			needs-count
 file net/if_sl.c			sl			needs-count
+file net/if_strip.c			strip			needs-count
 file net/if_ppp.c			ppp			needs-count
 file net/ppp_tty.c			ppp
 file net/bsd-comp.c			ppp_bsdcomp
@@ -224,7 +228,7 @@ file net/raw_cb.c
 file net/raw_usrreq.c
 file net/route.c
 file net/rtsock.c
-file net/slcompress.c			sl | ppp
+file net/slcompress.c			sl | ppp | strip
 file netccitt/ccitt_proto.c		ccitt
 file netccitt/hd_debug.c		hdlc
 file netccitt/hd_input.c		hdlc
