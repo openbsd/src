@@ -1,11 +1,11 @@
-# $OpenBSD: dot.cshrc,v 1.11 2003/03/20 01:43:31 david Exp $
+# $OpenBSD: dot.cshrc,v 1.12 2004/05/10 16:04:07 peter Exp $
 #
 # csh initialization
 
 umask 022
 alias mail Mail
 set history=1000
-set path=(/sbin /usr/sbin /bin /usr/bin /usr/local/bin /usr/X11R6/bin)
+set path=(/sbin /usr/sbin /bin /usr/bin /usr/X11R6/bin /usr/local/sbin /usr/local/bin)
 set filec
 
 # directory stuff: cdpath/cd/back
