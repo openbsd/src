@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.31 2000/02/18 08:13:31 itojun Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.32 2000/04/11 18:08:42 mickey Exp $	*/
 /*      $NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $      */
 
 /*
@@ -81,7 +81,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.31 2000/02/18 08:13:31 itojun Exp $";
+static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.32 2000/04/11 18:08:42 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -97,7 +97,9 @@ static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.31 2000/02/18 08:13:31 itojun Ex
 #include <netinet6/nd6.h>
 #include <arpa/inet.h>
 #include <netinet/ip_ipsp.h>
+#include <netinet/if_ether.h>
 #include <net/if_enc.h>
+#include <net/if_ieee80211.h>
 
 #include <netatalk/at.h>
 
@@ -158,6 +160,8 @@ void 	setifflags __P((char *, int));
 void 	setifbroadaddr __P((char *));
 void 	setifipdst __P((char *));
 void 	setifmetric __P((char *));
+void	setifmtu __P((char *, int));
+void	setifnwid __P((char *, int));
 void 	setifnetmask __P((char *));
 void	setifprefixlen __P((char *, int));
 void 	setnsellength __P((char *));
@@ -205,7 +209,7 @@ int	actions;			/* Actions performed */
 #define	NEXTARG		0xffffff
 #define NEXTARG2        0xfffffe
 
-struct	cmd {
+const struct	cmd {
 	char	*c_name;
 	int	c_parameter;		/* NEXTARG means next argv */
 	int	c_action;		/* defered action */
@@ -229,6 +233,8 @@ struct	cmd {
 #endif
 	{ "netmask",	NEXTARG,	0,		setifnetmask },
 	{ "metric",	NEXTARG,	0,		setifmetric },
+	{ "mtu",	NEXTARG,	0,		setifmtu },
+	{ "nwid",	NEXTARG,	0,		setifnwid },
 	{ "broadcast",	NEXTARG,	0,		setifbroadaddr },
 	{ "ipdst",	NEXTARG,	0,		setifipdst },
 	{ "prefixlen",  NEXTARG,	0,		setifprefixlen},
@@ -266,9 +272,9 @@ struct	cmd {
 	{ "-mediaopt",	NEXTARG,	A_MEDIAOPTCLR,	unsetmediaopt },
 	{ "instance",	NEXTARG,	A_MEDIAINST,	setmediainst },
 	{ "inst",	NEXTARG,	A_MEDIAINST,	setmediainst },
-	{ 0, /*src*/	0,		0,		setifaddr },
-	{ 0, /*dst*/	0,		0,		setifdstaddr },
-	{ 0, /*illegal*/0,		0,		NULL },	
+	{ NULL, /*src*/	0,		0,		setifaddr },
+	{ NULL, /*dst*/	0,		0,		setifdstaddr },
+	{ NULL, /*illegal*/0,		0,		NULL },	
 };
 
 void 	adjust_nsellength();
@@ -284,7 +290,7 @@ const char *get_media_type_string __P((int));
 const char *get_media_subtype_string __P((int));
 int	get_media_subtype __P((int, const char *));
 int	get_media_options __P((int, const char *));
-int	lookup_media_word __P((struct ifmedia_description *, int,
+int	lookup_media_word __P((const struct ifmedia_description *, int,
 	    const char *));
 void	print_media_word __P((int, int, int));
 void	process_media_commands __P((void));
@@ -311,9 +317,10 @@ void 	ipx_status __P((int));
 void 	ipx_getaddr __P((char *, int));
 void 	iso_status __P((int));
 void 	iso_getaddr __P((char *, int));
+void	ieee80211_status __P((void));
 
 /* Known address families */
-struct afswtch {
+const struct afswtch {
 	char *af_name;
 	short af_af;
 	void (*af_status)();
@@ -344,14 +351,14 @@ struct afswtch {
 	{ 0,	0,	    0,		0 }
 };
 
-struct afswtch *afp;	/*the address family being set or asked about*/
+const struct afswtch *afp;	/*the address family being set or asked about*/
 
 int
 main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register struct afswtch *rafp;
+	register const struct afswtch *rafp;
 	int aflag = 0;
 	int ifaliases = 0;
 	int i;
@@ -413,7 +420,7 @@ main(argc, argv)
 	if (getinfo(&ifr) < 0)
 		exit(1);
 	while (argc > 0) {
-		register struct cmd *p;
+		register const struct cmd *p;
 
 		for (p = cmds; p->c_name; p++)
 			if (strcmp(*argv, p->c_name) == 0)
@@ -548,6 +555,10 @@ getinfo(ifr)
 		metric = 0;
 	} else
 		metric = ifr->ifr_metric;
+	if (ioctl(s, SIOCGIFMTU, (caddr_t)ifr) < 0)
+		mtu = 0;
+	else
+		mtu = ifr->ifr_mtu;
 	return (0);
 }
 
@@ -607,7 +618,7 @@ printif(ifrm, ifaliases)
 		}
 		if (!strncmp(ifreq.ifr_name, ifrp->ifr_name,
 		    sizeof(ifrp->ifr_name))) {
-			register struct afswtch *p;
+			register const struct afswtch *p;
 
 #if 0
 			if (ifaliases == 0 && noinet == 0)
@@ -961,6 +972,45 @@ setifmetric(val)
 }
 
 void
+setifmtu(val, d)
+	char *val;
+	int d;
+{
+	(void) strncpy(ifr.ifr_name, name, sizeof (ifr.ifr_name));
+	ifr.ifr_mtu = atoi(val);
+	if (ioctl(s, SIOCSIFMTU, (caddr_t)&ifr) < 0)
+		warn("SIOCSIFMTU");
+}
+
+void
+setifnwid(val, d)
+	char *val;
+	int d;
+{
+	u_int8_t nwid[IEEE80211_NWID_LEN];
+
+	memset(&nwid, 0, sizeof(nwid));
+	(void)strncpy(nwid, val, sizeof(nwid));
+	(void)strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	ifr.ifr_data = (caddr_t)nwid;
+	if (ioctl(s, SIOCS80211NWID, (caddr_t)&ifr) < 0)
+		warn("SIOCS80211NWID");
+}
+
+void
+ieee80211_status()
+{
+	u_int8_t nwid[IEEE80211_NWID_LEN + 1];
+
+	memset(&ifr, 0, sizeof(ifr));
+	ifr.ifr_data = (caddr_t)nwid;
+	(void)strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	nwid[IEEE80211_NWID_LEN] = 0;
+	if (ioctl(s, SIOCG80211NWID, (caddr_t)&ifr) == 0)
+		printf("\tnwid %s\n", nwid);
+}
+
+void
 init_current_media()
 {
 	struct ifmediareq ifmr;
@@ -1124,20 +1174,20 @@ setmediainst(val, d)
 	/* Media will be set after other processing is complete. */
 }
 
-struct ifmedia_description ifm_type_descriptions[] =
+const struct ifmedia_description ifm_type_descriptions[] =
     IFM_TYPE_DESCRIPTIONS;
 
-struct ifmedia_description ifm_subtype_descriptions[] =
+const struct ifmedia_description ifm_subtype_descriptions[] =
     IFM_SUBTYPE_DESCRIPTIONS;
 
-struct ifmedia_description ifm_option_descriptions[] =
+const struct ifmedia_description ifm_option_descriptions[] =
     IFM_OPTION_DESCRIPTIONS;
 
 const char *
 get_media_type_string(mword)
 	int mword;
 {
-	struct ifmedia_description *desc;
+	const struct ifmedia_description *desc;
 
 	for (desc = ifm_type_descriptions; desc->ifmt_string != NULL;
 	     desc++) {
@@ -1151,7 +1201,7 @@ const char *
 get_media_subtype_string(mword)
 	int mword;
 {
-	struct ifmedia_description *desc;
+	const struct ifmedia_description *desc;
 
 	for (desc = ifm_subtype_descriptions; desc->ifmt_string != NULL;
 	     desc++) {
@@ -1208,7 +1258,7 @@ get_media_options(type, val)
 
 int
 lookup_media_word(desc, type, val)
-	struct ifmedia_description *desc;
+	const struct ifmedia_description *desc;
 	int type;
 	const char *val;
 {
@@ -1225,7 +1275,7 @@ void
 print_media_word(ifmw, print_type, as_syntax)
 	int ifmw, print_type, as_syntax;
 {
-	struct ifmedia_description *desc;
+	const struct ifmedia_description *desc;
 	int seen_option = 0;
 
 	if (print_type)
@@ -1301,6 +1351,11 @@ phys_status(force)
 	}
 }
 
+const int ifm_status_valid_list[] = IFM_STATUS_VALID_LIST;
+
+const struct ifmedia_status_description ifm_status_descriptions[] =
+	IFM_STATUS_DESCRIPTIONS;
+
 /*
  * Print the status of the interface.  If an address family was
  * specified, show it and it only; otherwise, show them all.
@@ -1309,7 +1364,7 @@ void
 status(link)
 	int link;
 {
-	register struct afswtch *p = afp;
+	register const struct afswtch *p = afp;
 	struct ifmediareq ifmr;
 	int *media_list, i;
 
@@ -1317,7 +1372,11 @@ status(link)
 	printb("flags", flags, IFFBITS);
 	if (metric)
 		printf(" metric %d", metric);
+	if (mtu)
+		printf(" mtu %d", mtu);
 	putchar('\n');
+
+	ieee80211_status();
 
 	(void) memset(&ifmr, 0, sizeof(ifmr));
 	(void) strncpy(ifmr.ifm_name, name, sizeof(ifmr.ifm_name));
@@ -1329,6 +1388,11 @@ status(link)
 		goto proto_status;
 	}
 
+	if (ifmr.ifm_count == 0) {
+		warnx("%s: no media types?", name);
+		goto proto_status;
+	}
+
 	media_list = (int *)malloc(ifmr.ifm_count * sizeof(int));
 	if (media_list == NULL)
 		err(1, "malloc");
@@ -1336,6 +1400,7 @@ status(link)
 
 	if (ioctl(s, SIOCGIFMEDIA, (caddr_t)&ifmr) < 0)
 		err(1, "SIOCGIFMEDIA");
+
 	printf("\tmedia: ");
 	print_media_word(ifmr.ifm_current, 1, 0);
 	if (ifmr.ifm_active != ifmr.ifm_current) {
@@ -1347,25 +1412,33 @@ status(link)
 	putchar('\n');
 
 	if (ifmr.ifm_status & IFM_AVALID) {
-		printf("\tstatus: ");
-		switch (IFM_TYPE(ifmr.ifm_active)) {
-		case IFM_ETHER:
-			if (ifmr.ifm_status & IFM_ACTIVE)
-				printf("active");
-			else
-				printf("no carrier");
-			break;
+		const struct ifmedia_status_description *ifms;
+		int bitno, found = 0;
 
-		case IFM_FDDI:
-		case IFM_TOKEN:
-			if (ifmr.ifm_status & IFM_ACTIVE)
-				printf("inserted");
-			else
-				printf("no ring");
-			break;
-		default:
-			printf("unknown");
+		printf("\tstatus: ");
+		for (bitno = 0; ifm_status_valid_list[bitno] != 0; bitno++) {
+			for (ifms = ifm_status_descriptions;
+			     ifms->ifms_valid != 0; ifms++) {
+				if (ifms->ifms_type !=
+				      IFM_TYPE(ifmr.ifm_current) ||
+				    ifms->ifms_valid !=
+				      ifm_status_valid_list[bitno])
+					continue;
+				printf("%s%s", found ? ", " : "",
+				    IFM_STATUS_DESC(ifms, ifmr.ifm_status));
+				found = 1;
+
+				/*
+				 * For each valid indicator bit, there's
+				 * only one entry for each media type, so
+				 * terminate the inner loop now.
+				 */
+				break;
+			}
 		}
+
+		if (found == 0)
+			printf("unknown");
 		putchar('\n');
 	}
 
@@ -2130,11 +2203,13 @@ adjust_nsellength()
 void
 usage()
 {
-	fprintf(stderr, "usage: ifconfig interface\n%s",
+	fprintf(stderr, "usage: ifconfig [ -m ] [ -a ] [ -A ] [ interface ]\n"
 		"\t[ [af] [ address [ dest_addr ] ] [ up ] [ down ] "
 		"[ netmask mask ] ]\n"
 		"\t[media media_type] [mediaopt media_option]\n"
 		"\t[ metric n ]\n"
+		"\t[ mtu n ]\n"
+		"\t[ nwid netword_id ]\n"
 		"\t[ dstsa address/spi/protocol ]\n"
 		"\t[ srcsa address/spi/protocol ]\n"
 		"\t[ clearsa address/spi/protocol ]\n"
