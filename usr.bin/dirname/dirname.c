@@ -1,4 +1,4 @@
-/*	$OpenBSD: dirname.c,v 1.5 2001/07/05 22:12:09 pjanzen Exp $	*/
+/*	$OpenBSD: dirname.c,v 1.6 2001/12/02 01:04:12 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: dirname.c,v 1.5 2001/07/05 22:12:09 pjanzen Exp $";                                         
+static char rcsid[] = "$OpenBSD: dirname.c,v 1.6 2001/12/02 01:04:12 millert Exp $";                                         
 #endif /* not lint */                                                      
 
 #include <err.h>
@@ -47,7 +47,7 @@ main(argc, argv)
 	setlocale(LC_ALL, "");
 
 	if (argc != 2) {
-		(void)fprintf(stderr, "Usage: %s dirname\n", __progname);
+		(void)fprintf(stderr, "Usage: %s pathname\n", __progname);
 		exit(1);
 	}
 

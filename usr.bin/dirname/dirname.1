@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dirname.1,v 1.1 2001/07/05 22:06:25 pjanzen Exp $
+.\"	$OpenBSD: dirname.1,v 1.2 2001/12/02 01:04:12 millert Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -44,14 +44,14 @@
 .Nd return directory portion of pathname
 .Sh SYNOPSIS
 .Nm dirname
-.Ar string
+.Ar pathname
 .Sh DESCRIPTION
 .Nm
 deletes the filename portion, beginning
 with the last slash
 .Pq Sq \&/
 character to the end of
-.Ar string ,
+.Ar pathname ,
 and writes the result to the standard output.
 .Pp
 The
