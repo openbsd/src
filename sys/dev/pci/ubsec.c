@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.18 2000/07/29 23:42:00 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.19 2000/07/31 21:57:49 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -32,7 +32,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define UBSEC_DEBUG
+#undef UBSEC_DEBUG
 
 
 /*
@@ -210,14 +210,17 @@ ubsec_intr(arg)
 
 	WRITE_REG(sc, BS_STAT, stat);		/* IACK */
 
-printf("ubsec intr %x\n", stat);
+#ifdef UBSEC_DEBUG
+	printf("ubsec intr %x\n", stat);
+#endif
 	if ((stat & BS_STAT_MCR1_DONE)) {
 		while (!SIMPLEQ_EMPTY(&sc->sc_qchip)) {
 			q = SIMPLEQ_FIRST(&sc->sc_qchip);
+#ifdef UBSEC_DEBUG
 			printf("mcr_flags %x %x %x\n", &q->q_mcr, q->q_mcr.mcr_flags,
 			    READ_REG(sc, BS_ERR));
-			if ((q->q_mcr.mcr_flags & UBS_MCR_DONE) == 0 &&
-			    READ_REG(sc, BS_ERR) != vtophys(&q->q_mcr))
+#endif
+			if ((q->q_mcr.mcr_flags & UBS_MCR_DONE) == 0)
 				break;
 			npkts++;
 			SIMPLEQ_REMOVE_HEAD(&sc->sc_qchip, q, q_next);
