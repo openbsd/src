@@ -1,4 +1,4 @@
-/*	$OpenBSD: ld.c,v 1.4 1996/06/17 00:15:37 deraadt Exp $	*/
+/*	$OpenBSD: ld.c,v 1.5 1996/12/22 20:54:16 tholo Exp $	*/
 
 /*-
  * This code is derived from software copyrighted by the Free Software
@@ -1364,7 +1364,8 @@ enter_global_ref(lsp, name, entry)
 			lsp->nzlist.nz_value = 0;
 			make_executable = 0;
 		} else {
-			global_alias_count++;
+			if ((entry->flags & E_DYNAMIC) == 0)
+				global_alias_count++;
 		}
 #if 0
 		if (sp->flags & GS_REFERENCED)
@@ -1400,7 +1401,8 @@ enter_global_ref(lsp, name, entry)
 			if (com)
 				common_defined_global_count--;
 			sp->common_size = 0;
-			sp->defined = 0;
+			if (sp != dynamic_symbol)
+				sp->defined = 0;
 		}
 
 		/*
