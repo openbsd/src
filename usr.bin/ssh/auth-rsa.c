@@ -16,7 +16,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: auth-rsa.c,v 1.16 1999/12/02 23:05:08 markus Exp $");
+RCSID("$Id: auth-rsa.c,v 1.17 2000/01/18 09:41:05 markus Exp $");
 
 #include "rsa.h"
 #include "packet.h"
@@ -409,7 +409,22 @@ auth_rsa(struct passwd *pw, BIGNUM *client_n)
 						packet_send_debug("Your host '%.200s' is not permitted to use this key for login.",
 						get_canonical_hostname());
 						xfree(patterns);
+						/* key invalid for this host, reset flags */
 						authenticated = 0;
+						no_agent_forwarding_flag = 0;
+						no_port_forwarding_flag = 0;
+						no_pty_flag = 0;
+						no_x11_forwarding_flag = 0;
+						while (custom_environment) {
+							struct envstring *ce = custom_environment;
+							custom_environment = ce->next;
+							xfree(ce->s);
+							xfree(ce);
+						}
+						if (forced_command) {
+							xfree(forced_command);
+							forced_command = NULL;
+						}
 						break;
 					}
 					xfree(patterns);
