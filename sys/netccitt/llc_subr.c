@@ -1,4 +1,4 @@
-/*	$OpenBSD: llc_subr.c,v 1.3 1996/05/10 12:31:16 deraadt Exp $	*/
+/*	$OpenBSD: llc_subr.c,v 1.4 1997/01/27 07:57:03 deraadt Exp $	*/
 /*	$NetBSD: llc_subr.c,v 1.5 1996/05/07 02:36:08 thorpej Exp $	*/
 
 /* 
@@ -299,19 +299,19 @@ llc_getsapinfo(sap, ifp)
 	struct ifnet *ifp;
 {
 	struct sockaddr_dl *ifdl_addr;
-	struct sockaddr_dl si_addr;
+	struct sockaddr_dl siaddr;
 	struct rtentry *sirt;
 	u_char          saploc;
 
 	USES_AF_LINK_RTS;
 
 	ifdl_addr = sdl_getaddrif(ifp);
-	sdl_copy(ifdl_addr, &si_addr);
-	saploc = LLSAPLOC(&si_addr, ifp);
-	si_addr.sdl_data[saploc] = sap;
-	si_addr.sdl_alen++;
+	sdl_copy(ifdl_addr, &siaddr);
+	saploc = LLSAPLOC(&siaddr, ifp);
+	siaddr.sdl_data[saploc] = sap;
+	siaddr.sdl_alen++;
 
-	if ((sirt = rtalloc1((struct sockaddr *) & si_addr, 0)))
+	if ((sirt = rtalloc1((struct sockaddr *) & siaddr, 0)))
 		sirt->rt_refcnt--;
 	else
 		return (0);
