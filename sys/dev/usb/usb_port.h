@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_port.h,v 1.10 2000/03/31 22:11:37 aaron Exp $ */
+/*	$OpenBSD: usb_port.h,v 1.11 2000/04/04 22:51:23 aaron Exp $ */
 /*	$NetBSD: usb_port.h,v 1.28 2000/03/30 08:53:31 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -65,6 +65,7 @@
 #define CUE_DEBUG 1
 #define KUE_DEBUG 1
 #define UMASS_DEBUG 1
+#define UVISOR_DEBUG 1
 #define Static
 #else
 #define Static static
@@ -183,10 +184,12 @@ __CONCAT(dname,_detach)(self, flags) \
 #define CUE_DEBUG 1
 #define KUE_DEBUG 1
 #define UMASS_DEBUG 1
+#define UVISOR_DEBUG 1
 #endif
 
 #define Static
 
+#define SCSI_MODE_SENSE		MODE_SENSE
 #define XS_STS_DONE		ITSDONE
 #define XS_CTL_POLL		SCSI_POLL
 #define XS_CTL_DATA_IN		SCSI_DATA_IN
