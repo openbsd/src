@@ -165,6 +165,9 @@ arla_start (char *device_file, const char *cache_dir)
     if (chroot (cache_dir) < 0)
 	arla_err (1, ADEBERROR, errno, "chroot %s", cache_dir);
 
+	if (chdir ("/") < 0)
+	    arla_err (1, ADEBERROR, errno, "chdir /");
+
     if (fork_flag)
 	kill(getppid(), SIGUSR1);
     
