@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.2 1999/02/07 20:24:51 mickey Exp $	*/
+/*	$OpenBSD: clock.c,v 1.3 1999/06/12 17:47:08 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -48,16 +48,6 @@
 struct timeval time;
 
 void startrtclock __P((void));
-
-/*
- * Return the best possible estimate of the current time.
- */
-void
-microtime(tvp)
-	struct timeval *tvp;
-{
-
-}
 
 void
 cpu_initclocks()
