@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 1997/02/03 07:19:01 downsj Exp $
+#	$OpenBSD: Makefile,v 1.6 1997/02/06 02:53:49 downsj Exp $
 #	$NetBSD: Makefile,v 1.22 1996/10/18 06:03:25 thorpej Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/10/93
 
@@ -33,10 +33,15 @@ INCPATH=-I${.CURDIR} -I${.CURDIR}/../.. -I${S} -I${S}/lib/libsa
 .include "${.CURDIR}/libkern/Makefile.inc"
 LIBKERN=	${KERN_LIB}
 
+### find out what to use for libz
+Z_AS=	library
+.include "${S}/lib/libz/Makefile.inc"
+LIBZ=	${ZLIB}
+
 .include "${.CURDIR}/libsa/Makefile.inc"
 LIBSA=	${SA_LIB}
 
-LIBS=	${OBJS} libdrive.a ${LIBSA} ${LIBKERN}
+LIBS=	${OBJS} libdrive.a ${LIBSA} ${LIBZ} ${LIBKERN}
 
 BOOTS=	uboot.lif inst.lif
 BOOTAOUTS=uboot inst
