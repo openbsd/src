@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfx.c,v 1.3 2004/03/01 11:57:51 miod Exp $	*/
+/*	$OpenBSD: rfx.c,v 1.4 2004/03/01 22:27:09 miod Exp $	*/
 
 /*
  * Copyright (c) 2004, Miodrag Vallat.
@@ -83,6 +83,7 @@ struct rfx_config {
 #define	RFX_CONTROL_SIZE	0x000000e0
 
 #define	RFX_INIT_ADDR		0x00018000
+#define	RFX_INIT_OFFSET		0x0000001c
 #define	RFX_INIT_SIZE		0x00008000
 
 #define	RFX_VRAM_ADDR		0x00100000
@@ -91,12 +92,9 @@ struct rfx_config {
  * Control registers
  */
 
-struct rfx_control {
-	u_int32_t	unknown0[(0x40 - 0x00) / sizeof(u_int32_t)];
-	u_int32_t	cr40;
+#define	RFX_VIDCTRL_REG		0x10
+#define	RFX_VSYNC_ENABLE	0x00000001
 #define	RFX_VIDEO_DISABLE	0x00000002
-	u_int32_t	unknown1[(RFX_CONTROL_SIZE - 0x44) / sizeof(u_int32_t)];
-};
 
 /*
  * Shadow colormap
@@ -115,7 +113,7 @@ struct rfx_softc {
 
 	struct rfx_cmap		 sc_cmap;
 	volatile u_int8_t	*sc_ramdac;
-	volatile struct rfx_control *sc_ctrl;
+	volatile u_int32_t	*sc_ctrl;
 
 	int			 sc_nscreens;
 };
@@ -143,6 +141,7 @@ int	rfx_show_screen(void *, void *, int, void (*cb)(void *, int, int),
 paddr_t	rfx_mmap(void *, off_t, int);
 
 int	rfx_getcmap(struct rfx_cmap *, struct wsdisplay_cmap *);
+void	rfx_initialize(struct rfx_softc *, struct rfx_config *);
 int	rfx_intr(void *);
 void	rfx_loadcmap(struct rfx_softc *, int, int);
 int	rfx_putcmap(struct rfx_cmap *, struct wsdisplay_cmap *);
@@ -246,6 +245,7 @@ rfxattach(struct device *parent, struct device *self, void *args)
 	if (cflen != sizeof cf) {
 		printf(", unknown %d bytes conf. structure", cflen);
 		/* fill in default values */
+		cf.version = 0;
 		cf.scanline = 2048;
 		cf.width = 1152;
 		cf.height = 900;
@@ -259,7 +259,7 @@ rfxattach(struct device *parent, struct device *self, void *args)
 	 */
 	sc->sc_ramdac = (u_int8_t *)
 	    mapiodev(ca->ca_ra.ra_reg, RFX_RAMDAC_ADDR, RFX_RAMDAC_SIZE);
-	sc->sc_ctrl = (struct rfx_control *)
+	sc->sc_ctrl = (u_int32_t *)
 	    mapiodev(ca->ca_ra.ra_reg, RFX_CONTROL_ADDR, RFX_CONTROL_SIZE);
 	sc->sc_phys = ca->ca_ra.ra_reg[0];
 
@@ -288,6 +288,13 @@ rfxattach(struct device *parent, struct device *self, void *args)
 	sc->sc_sunfb.sf_ro.ri_bits = mapiodev(ca->ca_ra.ra_reg,
 	    RFX_VRAM_ADDR, round_page(sc->sc_sunfb.sf_fbsize));
 	sc->sc_sunfb.sf_ro.ri_hw = sc;
+
+	/*
+	 * If we are not the console, the frame buffer has not been
+	 * initalized by the PROM - do this ourselves.
+	 */
+	if (!isconsole)
+		rfx_initialize(sc, &cf);
 
 	fbwscons_init(&sc->sc_sunfb, isconsole ? 0 : RI_CLEAR);
 
@@ -419,9 +426,12 @@ rfx_burner(void *v, u_int on, u_int flags)
 	struct rfx_softc *sc = v;
 
 	if (on) {
-		sc->sc_ctrl->cr40 &= ~RFX_VIDEO_DISABLE;
+		sc->sc_ctrl[RFX_VIDCTRL_REG] &= ~RFX_VIDEO_DISABLE;
+		sc->sc_ctrl[RFX_VIDCTRL_REG] |= RFX_VSYNC_ENABLE;
 	} else {
-		sc->sc_ctrl->cr40 |= RFX_VIDEO_DISABLE;
+		sc->sc_ctrl[RFX_VIDCTRL_REG] |= RFX_VIDEO_DISABLE;
+		if (flags & WSDISPLAY_BURN_VBLANK)
+			sc->sc_ctrl[RFX_VIDCTRL_REG] &= ~RFX_VSYNC_ENABLE;
 	}
 }
 
@@ -502,4 +512,63 @@ rfx_loadcmap(struct rfx_softc *sc, int start, int ncolors)
 		sc->sc_ramdac[BT463_REG_CMAP_DATA] = *g++;
 		sc->sc_ramdac[BT463_REG_CMAP_DATA] = *b++;
 	}
+}
+
+/*
+ * Initialization code parser
+ */
+
+void
+rfx_initialize(struct rfx_softc *sc, struct rfx_config *cf)
+{
+	u_int32_t *data, offset, value;
+	size_t cnt;
+
+	/*
+	 * Map the initialization data - this is a waste as we won't be
+	 * able to reclaim this mapping...
+	 */
+	data = (u_int32_t *)
+	    mapiodev(&sc->sc_phys, RFX_INIT_ADDR, RFX_INIT_SIZE);
+
+	/*
+	 * Skip copyright notice
+	 */
+	data += RFX_INIT_OFFSET / sizeof(u_int32_t);
+	cnt = RFX_INIT_SIZE - RFX_INIT_OFFSET / sizeof(u_int32_t);
+	cnt >>= 1;
+
+	/*
+	 * Parse and apply settings
+	 */
+	while (cnt != 0) {
+		offset = *data++;
+		value = *data++;
+
+		if (offset == (u_int32_t)-1 && value == (u_int32_t)-1)
+			break;
+
+		/* Old PROM are little-endian */
+		if (cf->version <= 1) {
+			offset = letoh32(offset);
+			value = letoh32(offset);
+		}
+
+		if (offset & (1 << 31)) {
+			offset = (offset & ~(1 << 31)) - RFX_RAMDAC_ADDR;
+			if (offset < RFX_RAMDAC_SIZE)
+				sc->sc_ramdac[offset] = value >> 24;
+		} else {
+			offset -= RFX_CONTROL_ADDR;
+			if (offset < RFX_CONTROL_SIZE)
+				sc->sc_ctrl[offset >> 2] = value;
+		}
+
+		cnt--;
+	}
+
+#ifdef DEBUG
+	if (cnt == 0)
+		printf("%s: incoherent initialization data!\n");
+#endif
 }
