@@ -1,4 +1,4 @@
-/* $OpenBSD: isp_target.c,v 1.9 2002/08/17 17:42:54 mjacob Exp $ */
+/* $OpenBSD: isp_target.c,v 1.10 2003/03/03 18:34:59 mjacob Exp $ */
 /*
  * Machine and OS Independent Target Mode Code for the Qlogic SCSI/FC adapters.
  *
@@ -386,6 +386,8 @@ isp_target_put_atio(struct ispsoftc *isp, void *arg)
 		} else {
 			atun._atio2.at_lun = (u_int8_t) aep->at_lun;
 		}
+		atun._atio2.at_iid = aep->at_iid;
+		atun._atio2.at_rxid = aep->at_rxid;
 		atun._atio2.at_status = CT_OK;
 	} else {
 		at_entry_t *aep = arg;
@@ -611,28 +613,28 @@ isp_got_msg_fc(struct ispsoftc *isp, int bus, in_fcentry_t *inp)
 
 		if (inp->in_task_flags & TASK_FLAGS_ABORT_TASK) {
 			isp_prt(isp, ISP_LOGINFO, f1, "ABORT TASK",
-			    inp->in_iid, msg.nt_lun, inp->in_seqid);
+			    inp->in_iid, lun, inp->in_seqid);
 			msg.nt_msg[0] = MSG_ABORT_TAG;
 		} else if (inp->in_task_flags & TASK_FLAGS_CLEAR_TASK_SET) {
 			isp_prt(isp, ISP_LOGINFO, f1, "CLEAR TASK SET",
-			    inp->in_iid, msg.nt_lun, inp->in_seqid);
+			    inp->in_iid, lun, inp->in_seqid);
 			msg.nt_msg[0] = MSG_CLEAR_QUEUE;
 		} else if (inp->in_task_flags & TASK_FLAGS_TARGET_RESET) {
 			isp_prt(isp, ISP_LOGINFO, f1, "TARGET RESET",
-			    inp->in_iid, msg.nt_lun, inp->in_seqid);
+			    inp->in_iid, lun, inp->in_seqid);
 			msg.nt_msg[0] = MSG_BUS_DEV_RESET;
 		} else if (inp->in_task_flags & TASK_FLAGS_CLEAR_ACA) {
 			isp_prt(isp, ISP_LOGINFO, f1, "CLEAR ACA",
-			    inp->in_iid, msg.nt_lun, inp->in_seqid);
+			    inp->in_iid, lun, inp->in_seqid);
 			/* ???? */
 			msg.nt_msg[0] = MSG_REL_RECOVERY;
 		} else if (inp->in_task_flags & TASK_FLAGS_TERMINATE_TASK) {
 			isp_prt(isp, ISP_LOGINFO, f1, "TERMINATE TASK",
-			    inp->in_iid, msg.nt_lun, inp->in_seqid);
+			    inp->in_iid, lun, inp->in_seqid);
 			msg.nt_msg[0] = MSG_TERM_IO_PROC;
 		} else {
 			isp_prt(isp, ISP_LOGWARN, f2, "task flag",
-			    inp->in_status, msg.nt_lun, inp->in_iid,
+			    inp->in_status, lun, inp->in_iid,
 			    inp->in_task_flags,  inp->in_seqid);
 		}
 		if (msg.nt_msg[0]) {
@@ -763,7 +765,7 @@ isp_handle_atio(struct ispsoftc *isp, at_entry_t *aep)
 
 	case AT_RESET:
 		/*
-		 * A bus reset came along an blew away this command. Why
+		 * A bus reset came along and blew away this command. Why
 		 * they do this in addition the async event code stuff,
 		 * I dunno.
 		 *
