@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mountd.8,v 1.4 1996/09/11 05:47:40 mickey Exp $
+.\"	$OpenBSD: mountd.8,v 1.5 1997/02/02 18:17:38 deraadt Exp $
 .\"	$NetBSD: mountd.8,v 1.11 1996/02/18 11:57:51 fvdl Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -73,6 +73,9 @@ Do not require that clients make mount requests from reserved ports.
 (Normally, only mount requsts from reserved ports are accepted.)
 This option should only be specified if there are clients, such as PC's,
 that need it.
+The use of
+.Fl n
+is STRONGLY discouraged, as it opens up a wide range of security problems.
 .It Ar exportsfile
 The
 .Ar exportsfile
