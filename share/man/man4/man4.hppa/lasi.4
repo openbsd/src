@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lasi.4,v 1.14 2003/04/02 08:01:59 jmc Exp $
+.\"	$OpenBSD: lasi.4,v 1.15 2003/04/02 21:10:41 mickey Exp $
 .\"
 .\"
 .\" Copyright (c) 1999 Michael Shalayeff
@@ -34,8 +34,8 @@
 .Os
 .Sh NAME
 .Nm lasi
-.Nd "Core" bus controller and I/O subsystem as present on HP9000
-712/*, 715/64/80/100/100XC, 725/64/80/100, 743/*, 744/*, 745/*
+.Nd "Core" bus controller and I/O subsystem as present on newer
+.Tn HP 9000/700
 workstations and single-board computers.
 .Sh SYNOPSIS
 .Cd "lasi0   at mainbus? irq 28"
@@ -75,6 +75,35 @@ Serial Interface for the CS4216 Audio Codec
 Interface for the WD37C65C floppy drive controller
 .It
 Optional Telephone interface (voice/modem/fax two channels)
+.El
+.Sh MACHINES
+An incomplete list of machines that use the 
+.Tn LASI
+bus controller:
+.Pp
+.Bl -bullet -compact
+.It
+712/*
+.It
+715/{64/80/100}[XC]
+.It
+725/{64/80/100}
+.It
+743/*
+.It
+744/*
+.It
+745/*
+.It
+A180[C]
+.It
+B132L[+], B160L, B180L+
+.It
+C100, C110
+.It
+J200, J210[XC]
+.It
+RDI PrecisionBook
 .El
 .Sh SEE ALSO
 .Xr asp 4 ,

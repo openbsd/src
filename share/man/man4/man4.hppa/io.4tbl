@@ -1,6 +1,6 @@
-.\" $OpenBSD: io.4tbl,v 1.2 2003/01/07 20:37:10 mickey Exp $
+.\" $OpenBSD: io.4tbl,v 1.3 2003/04/02 21:10:41 mickey Exp $
 .\"
-.\" Copyright (c) 2002 Paul Weissmann
+.\" Copyright (c) 2003 Paul Weissmann
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -39,7 +39,7 @@
 The following table lists the
 .Tn PA-RISC
 I/O subsystems and connected devices found in the supported
-.Tn HP9000/700
+.Tn HP 9000/700
 machines.
 .Pp
 .in +\n(dIu
@@ -67,6 +67,8 @@ Model:MBA:SCSI:Network:Video
 730:A:NCR53700 SE:i82596DX 10:SGC
 735:A:NCR53700 SE:i82596DX 10:SGC
    :   :NCR53720 FWD:Am78830 FDDI
+745i:A:NCR53700 SE:i82596DX 10:Stinger
+747i:A:NCR53700 SE:i82596DX 10:Stinger
 750:A:NCR53700 SE:i82596DX 10:SGC
 755:A:NCR53700 SE:i82596DX 10:SGC
    :   :NCR53720 FWD:Am78830 FDDI
@@ -119,7 +121,7 @@ interface speed:
 .It 100
 10/100Mb/s,
 .It FDDI
-AMD FORMAC SAS FDDI
+AMD Formac+ SAS FDDI
 .El
 .Pp
 .Sh SEE ALSO

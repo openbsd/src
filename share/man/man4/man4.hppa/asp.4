@@ -1,4 +1,4 @@
-.\"	$OpenBSD: asp.4,v 1.10 2003/04/02 08:01:59 jmc Exp $
+.\"	$OpenBSD: asp.4,v 1.11 2003/04/02 21:10:41 mickey Exp $
 .\"
 .\"
 .\" Copyright (c) 1999 Michael Shalayeff
@@ -34,9 +34,9 @@
 .Os
 .Sh NAME
 .Nm asp
-.Nd "Core" bus controller as present on HP9000
-715/33/50/75, 725/50/75, 735/*, 755/*
-workstations
+.Nd "Core" bus controller as present on older
+.Tn HP 9000/700
+machines.
 .Sh SYNOPSIS
 .Cd "asp0    at mainbus? irq 28"
 .Cd "gsc* at asp?"
@@ -62,6 +62,29 @@ RAM and EEPROM controllers
 The irq level supplied is hardwired to the cpu pin, so changing the value
 would not produce any noticeable results (except lost interrupts for the whole
 I/O subsystem).
+.Sh MACHINES
+An incomplete list of machines that use the 
+.Tn ASP
+bus controller:
+.Pp
+.Bl -bullet -compact
+.It
+705, 710
+.It
+715/{33,50,75}
+.It
+725/{50,75}
+.It
+720, 730, 750
+.It
+735/*
+.It
+745i/{50,75}
+.It
+747i/{50,75}
+.It
+755/*
+.El
 .Sh SEE ALSO
 .Xr gsc 4 ,
 .Xr intro 4 ,

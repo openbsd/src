@@ -1,4 +1,4 @@
-.\" $OpenBSD: cpu.4tbl,v 1.10 2003/04/01 18:10:20 mickey Exp $
+.\" $OpenBSD: cpu.4tbl,v 1.11 2003/04/02 21:10:41 mickey Exp $
 .\"
 .\" Copyright (c) 2002 Michael Shalayeff
 .\" All rights reserved.
@@ -43,7 +43,7 @@ The following table lists the
 .Tn PA-RISC
 CPU types and their characteristics, such as TLB, maximum
 cache sizes and
-.Tn HP9000/700
+.Tn HP 9000/700
 machines they were used in (see also
 .Xr intro 4
 for the reverse list).

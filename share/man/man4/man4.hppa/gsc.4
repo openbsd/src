@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gsc.4,v 1.12 2003/03/05 19:50:48 jmc Exp $
+.\"	$OpenBSD: gsc.4,v 1.13 2003/04/02 21:10:41 mickey Exp $
 .\"
 .\"
 .\" Copyright (c) 1999 Michael Shalayeff
@@ -34,13 +34,15 @@
 .Os
 .Sh NAME
 .Nm gsc
-.Nd General System Connect bus on HP9000 series 700 workstations
+.Nd General System Connect bus on 
+.Tn HP 9000/700
+machines
 .Sh SYNOPSIS
 .Cd "gsc* at lasi?"
 .Cd "gsc* at asp?"
 .Cd "gsc* at wax?"
 .Sh DESCRIPTION
-This is the core I/O bus for all HP9000/700 series workstations.
+This is the core I/O bus for all HP 9000/700 workstations.
 All I/O subsystems connect to this bus.
 The devices can be either on separate chips, expansion
 cards or on an integrated megacell, like the LASI MBA.

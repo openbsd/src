@@ -1,4 +1,4 @@
-.\" $OpenBSD: intro.4tbl,v 1.10 2003/04/01 18:10:20 mickey Exp $
+.\" $OpenBSD: intro.4tbl,v 1.11 2003/04/02 21:10:41 mickey Exp $
 .\"
 .\" Copyright (c) 2002 Paul Weissmann
 .\" All rights reserved.
@@ -145,7 +145,7 @@ PS/2 port keyboard and mouse
 .El
 .Pp
 Below a list of
-.Tn HP9000/700
+.Tn HP 9000/700
 models targetted for support is listed, including basic
 system characteristics.
 .Pp
@@ -224,7 +224,7 @@ i82596 CA/DX LAN coprocessor. Found in every 700, either included in the MBA
 or on an external chip on mainboard.
 .It Xr lasi 4
 LSI?, found in almost all
-.Tn HP9000/700
+.Tn HP 9000/700
 workstations. Integrates most of the bus and I/O functions into one chip.
 .It Xr lpt 4
 The Centronics printer port.
