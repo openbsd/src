@@ -50,13 +50,13 @@ SRCS+=	rmd_dgst.c rmd_one.c
 CFLAGS+= -I${LCRYPTO_SRC}/aes
 SRCS+= aes_cbc.c aes_cfb.c aes_ctr.c aes_ecb.c aes_ofb.c aes_misc.c aes_core.c
 CFLAGS+= -I${LCRYPTO_SRC}/des
-SRCS+=	cbc_cksm.c cbc_enc.c  cfb64enc.c cfb_enc.c  \
-	ecb3_enc.c ecb_enc.c  enc_read.c enc_writ.c \
-	fcrypt.c ofb64enc.c ofb_enc.c  pcbc_enc.c \
-	qud_cksm.c rand_key.c rpc_enc.c  set_key.c  \
+SRCS+=	cbc_cksm.c cbc_enc.c cfb64enc.c cfb_enc.c \
+	ecb3_enc.c ecb_enc.c enc_read.c enc_writ.c \
+	fcrypt.c ofb64enc.c ofb_enc.c pcbc_enc.c \
+	qud_cksm.c rand_key.c rpc_enc.c set_key.c \
 	des_enc.c des_old.c fcrypt_b.c \
 	fcrypt.c xcbc_enc.c ede_cbcm_enc.c \
-	str2key.c  cfb64ede.c ofb64ede.c \
+	str2key.c cfb64ede.c ofb64ede.c \
 	des_old.c read2pwd.c
 CFLAGS+= -I${LCRYPTO_SRC}/rc2
 SRCS+=	rc2_ecb.c rc2_skey.c rc2_cbc.c rc2cfb64.c
@@ -108,15 +108,15 @@ SRCS+=	err.c err_all.c err_prn.c
 CFLAGS+= -I${LCRYPTO_SRC}/objects
 SRCS+=	obj_dat.c obj_lib.c obj_err.c o_names.c
 CFLAGS+= -I${LCRYPTO_SRC}/evp
-SRCS+= bio_b64.c    e_bf.c   evp_test.c   m_sha.c      p_open.c
-SRCS+= bio_enc.c    e_cast.c     e_xcbc_d.c   m_dss.c      m_sha1.c     p_seal.c
-SRCS+= bio_md.c     e_des.c      encode.c     m_dss1.c     names.c      p_sign.c
-SRCS+= bio_ok.c     e_des3.c     evp_enc.c    m_md2.c     p_verify.c
-SRCS+= c_all.c      evp_err.c    m_md4.c      p5_crpt.c
-SRCS+= c_allc.c     evp_key.c    m_md5.c      p5_crpt2.c
-SRCS+= c_alld.c     e_null.c     evp_lib.c    m_mdc2.c     p_dec.c
-SRCS+= digest.c     e_rc2.c      evp_pbe.c    m_null.c     p_enc.c
-SRCS+= e_aes.c      e_rc4.c      evp_pkey.c   m_ripemd.c   p_lib.c
+SRCS+= bio_b64.c e_bf.c evp_test.c m_sha.c p_open.c
+SRCS+= bio_enc.c e_cast.c e_xcbc_d.c m_dss.c m_sha1.c p_seal.c
+SRCS+= bio_md.c e_des.c encode.c m_dss1.c names.c p_sign.c
+SRCS+= bio_ok.c e_des3.c evp_enc.c m_md2.c p_verify.c
+SRCS+= c_all.c evp_err.c m_md4.c p5_crpt.c
+SRCS+= c_allc.c evp_key.c m_md5.c p5_crpt2.c
+SRCS+= c_alld.c e_null.c evp_lib.c m_mdc2.c p_dec.c
+SRCS+= digest.c e_rc2.c evp_pbe.c m_null.c p_enc.c
+SRCS+= e_aes.c e_rc4.c evp_pkey.c m_ripemd.c p_lib.c
 CFLAGS+= -I${LCRYPTO_SRC}/md4
 SRCS+= md4_dgst.c md4_one.c
 CFLAGS+= -I${LCRYPTO_SRC}/pem
@@ -125,22 +125,22 @@ SRCS+=	pem_all.c pem_err.c pem_x509.c pem_pk8.c pem_oth.c pem_xaux.c
 CFLAGS+= -I${LCRYPTO_SRC}/ui
 SRCS+=	ui_err.c ui_lib.c ui_openssl.c ui_compat.c ui_util.c
 CFLAGS+= -I${LCRYPTO_SRC}/asn1
-SRCS+= a_bitstr.c a_mbstr.c  a_utctm.c  f_enum.c   t_bitst.c  x_name.c
-SRCS+= a_bool.c   a_meth.c   a_utf8.c   f_int.c    t_crl.c    tasn_typ.c x_pkey.c
-SRCS+= a_bytes.c  a_object.c a_verify.c f_string.c t_pkey.c   tasn_utl.c x_pubkey.c
-SRCS+= a_d2i_fp.c a_octet.c  asn1_err.c i2d_pr.c   t_req.c    x_algor.c  x_req.c
-SRCS+= a_digest.c a_print.c  asn1_lib.c i2d_pu.c   t_spki.c   x_attrib.c x_sig.c
-SRCS+= a_dup.c    a_set.c    asn1_par.c n_pkey.c   t_x509.c   x_bignum.c x_spki.c
-SRCS+= a_enum.c   a_sign.c   asn_pack.c nsseq.c    t_x509a.c  x_val.c
-SRCS+= a_gentm.c  a_strex.c  d2i_pr.c   p5_pbe.c   tasn_dec.c x_crl.c    x_x509.c
-SRCS+= a_hdr.c    a_strnid.c d2i_pu.c   p5_pbev2.c tasn_enc.c x_exten.c  x_x509a.c
-SRCS+= a_i2d_fp.c a_time.c   evp_asn1.c  tasn_fre.c x_info.c
+SRCS+= a_bitstr.c a_mbstr.c a_utctm.c f_enum.c t_bitst.c x_name.c
+SRCS+= a_bool.c a_meth.c a_utf8.c f_int.c t_crl.c tasn_typ.c x_pkey.c
+SRCS+= a_bytes.c a_object.c a_verify.c f_string.c t_pkey.c tasn_utl.c x_pubkey.c
+SRCS+= a_d2i_fp.c a_octet.c asn1_err.c i2d_pr.c t_req.c x_algor.c x_req.c
+SRCS+= a_digest.c a_print.c asn1_lib.c i2d_pu.c t_spki.c x_attrib.c x_sig.c
+SRCS+= a_dup.c a_set.c asn1_par.c n_pkey.c t_x509.c x_bignum.c x_spki.c
+SRCS+= a_enum.c a_sign.c asn_pack.c nsseq.c t_x509a.c x_val.c
+SRCS+= a_gentm.c a_strex.c d2i_pr.c p5_pbe.c tasn_dec.c x_crl.c x_x509.c
+SRCS+= a_hdr.c a_strnid.c d2i_pu.c p5_pbev2.c tasn_enc.c x_exten.c x_x509a.c
+SRCS+= a_i2d_fp.c a_time.c evp_asn1.c tasn_fre.c x_info.c
 SRCS+=a_int.c a_type.c p8_pkey.c tasn_new.c x_long.c asn_moid.c
 CFLAGS+= -I${LCRYPTO_SRC}/x509
-SRCS+= x509_d2.c  x509_lu.c  x509_set.c x509_vfy.c x509spki.c by_dir.c
+SRCS+= x509_d2.c x509_lu.c x509_set.c x509_vfy.c x509spki.c by_dir.c
 SRCS+= x509_def.c x509_obj.c x509_trs.c x509cset.c x509type.c by_file.c
 SRCS+= x509_att.c x509_err.c x509_r2x.c x509_txt.c x509name.c x_all.c
-SRCS+= x509_cmp.c x509_ext.c x509_req.c x509_v3.c  x509rset.c
+SRCS+= x509_cmp.c x509_ext.c x509_req.c x509_v3.c x509rset.c
 CFLAGS+= -I${LCRYPTO_SRC}/x509v3
 SRCS+=	v3_akey.c v3_alt.c v3_bcons.c v3_bitst.c v3_conf.c v3_cpols.c
 SRCS+=	v3_crld.c v3_enum.c v3_extku.c v3_genn.c v3_ia5.c v3_int.c
@@ -151,15 +151,15 @@ SRCS+=	conf_err.c conf_lib.c conf_def.c conf_api.c conf_mod.c conf_mall.c
 CFLAGS+= -I${LCRYPTO_SRC}/txt_db
 SRCS+=	txt_db.c							
 CFLAGS+= -I${LCRYPTO_SRC}/pkcs7
-SRCS+= pk7_lib.c    pkcs7err.c
-SRCS+= pk7_asn1.c   pk7_doit.c   pk7_mime.c  
-SRCS+= pk7_attr.c   pk7_smime.c
+SRCS+= pk7_lib.c pkcs7err.c
+SRCS+= pk7_asn1.c pk7_doit.c pk7_mime.c 
+SRCS+= pk7_attr.c pk7_smime.c
 CFLAGS+= -I${LCRYPTO_SRC}/comp
 SRCS+=	c_rle.c c_zlib.c comp_lib.c
 CFLAGS+= -I${LCRYPTO_SRC}/pkcs12
-SRCS+=	p12_add.c  p12_crpt.c p12_init.c p12_mutl.c p12_p8e.c
-SRCS+=	p12_asn.c  p12_crt.c  p12_key.c  p12_npas.c p12_utl.c
-SRCS+=	p12_attr.c p12_decr.c p12_kiss.c p12_p8d.c  pk12err.c
+SRCS+=	p12_add.c p12_crpt.c p12_init.c p12_mutl.c p12_p8e.c
+SRCS+=	p12_asn.c p12_crt.c p12_key.c p12_npas.c p12_utl.c
+SRCS+=	p12_attr.c p12_decr.c p12_kiss.c p12_p8d.c pk12err.c
 CFLAGS+= -I${LCRYPTO_SRC}/engine
 SRCS+= eng_all.c eng_openssl.c eng_ctrl.c eng_pkey.c
 SRCS+= eng_dyn.c eng_table.c tb_cipher.c eng_err.c tb_rsa.c
@@ -171,104 +171,40 @@ CFLAGS+= -I${LCRYPTO_SRC}/dso
 SRCS+= dso_dl.c dso_dlfcn.c dso_err.c dso_lib.c dso_null.c
 SRCS+= dso_openssl.c dso_win32.c dso_vms.c
 CFLAGS+= -I${LCRYPTO_SRC}/oscp
-SRCS+= ocsp_asn.c ocsp_err.c ocsp_ht.c  ocsp_prn.c ocsp_vfy.c
-SRCS+= ocsp_cl.c  ocsp_ext.c ocsp_lib.c ocsp_srv.c
+SRCS+= ocsp_asn.c ocsp_err.c ocsp_ht.c ocsp_prn.c ocsp_vfy.c
+SRCS+= ocsp_cl.c ocsp_ext.c ocsp_lib.c ocsp_srv.c
 CFLAGS+= -I${LCRYPTO_SRC}/ec
-SRCS+= ec_cvt.c   ec_lib.c   ecp_mont.c ecp_recp.c
-SRCS+= ec_err.c   ec_mult.c  ecp_nist.c ecp_smpl.c
+SRCS+= ec_cvt.c ec_lib.c ecp_mont.c ecp_recp.c
+SRCS+= ec_err.c ec_mult.c ecp_nist.c ecp_smpl.c
 
 
-
-#HDRS= asn1.h dh.h md5.h rc4.h stack.h asn1_mac.h dsa.h mdc2.h rc5.h	\
-#      tls1.h bio.h e_os.h objects.h ripemd.h tmdiff.h blowfish.h	\
-#      e_os2.h opensslconf.h rsa.h txt_db.h bn.h ebcdic.h opensslv.h	\
-#      rsaref.h x509.h buffer.h err.h pem.h safestack.h x509_vfy.h	\
-#      cast.h evp.h pem2.h sha.h x509v3.h comp.h hmac.h pkcs12.h ssl.h	\
-#      conf.h idea.h pkcs7.h ssl2.h crypto.h lhash.h rand.h ssl23.h	\
-#      des.h md2.h rc2.h ssl3.h
-
-HDRS= asn1.h \
-asn1_mac.h  \
-bio.h \
-blowfish.h \
-bn.h \
-buffer.h \
-cast.h \
-comp.h \
-conf.h \
-conf_api.h \
-crypto.h \
-des.h \
-dh.h \
-dsa.h \
-dso.h \
-e_os2.h \
-ebcdic.h \
-engine.h \
-err.h \
-evp.h \
-hmac.h \
-idea.h \
-lhash.h \
-md2.h \
-md4.h \
-md5.h \
-mdc2.h \
-obj_mac.h \
-objects.h \
-opensslconf.h \
-opensslv.h \
-pem.h \
-pem2.h \
-pkcs12.h \
-pkcs7.h \
-rand.h \
-rc2.h \
-rc4.h \
-rc5.h \
-ripemd.h \
-rsa.h \
-safestack.h \
-sha.h \
-ssl.h \
-ssl2.h \
-ssl23.h \
-ssl3.h \
-stack.h \
-symhacks.h \
-tls1.h \
-tmdiff.h \
-txt_db.h \
-x509.h \
-x509_vfy.h \
-ossl_typ.h \
-x509v3.h \
-asn1t.h \
-des_old.h \
-ossl_typ.h \
-ui.h \
-ui_compat.h \
-aes.h \
-ec.h \
-ocsp.h
+HDRS=	asn1.h asn1_mac.h bio.h blowfish.h bn.h buffer.h cast.h \
+	comp.h conf.h conf_api.h crypto.h des.h dh.h dsa.h dso.h \
+	e_os2.h ebcdic.h engine.h err.h evp.h hmac.h idea.h lhash.h \
+	md2.h md4.h md5.h mdc2.h obj_mac.h objects.h opensslconf.h \
+	opensslv.h pem.h pem2.h pkcs12.h pkcs7.h rand.h rc2.h rc4.h \
+	rc5.h ripemd.h rsa.h safestack.h sha.h ssl.h ssl2.h ssl23.h \
+	ssl3.h stack.h symhacks.h tls1.h tmdiff.h txt_db.h x509.h \
+	x509_vfy.h ossl_typ.h x509v3.h asn1t.h des_old.h ossl_typ.h \
+	ui.h ui_compat.h aes.h ec.h ocsp.h
 
 SRC_HDRS= e_os.h
 
 
-
-.PATH:	${LCRYPTO_SRC}/md2 ${LCRYPTO_SRC}/md5 ${LCRYPTO_SRC}/sha ${LCRYPTO_SRC}/mdc2	\
-	${LCRYPTO_SRC}/hmac ${LCRYPTO_SRC}/ripemd ${LCRYPTO_SRC}/des  ${LCRYPTO_SRC}/rc2 \
-	${LCRYPTO_SRC}/rc4 ${LCRYPTO_SRC}/rc5 ${LCRYPTO_SRC}/idea ${LCRYPTO_SRC}/bf    \
-	${LCRYPTO_SRC}/cast ${LCRYPTO_SRC}/bn  ${LCRYPTO_SRC}/rsa ${LCRYPTO_SRC}/dsa   \
-	${LCRYPTO_SRC}/dh ${LCRYPTO_SRC}/buffer ${LCRYPTO_SRC}/bio ${LCRYPTO_SRC}/stack \
-	${LCRYPTO_SRC}/lhash ${LCRYPTO_SRC}/rand ${LCRYPTO_SRC}/err ${LCRYPTO_SRC}/objects \
-	${LCRYPTO_SRC}/evp ${LCRYPTO_SRC}/pem ${LCRYPTO_SRC}/asn1  ${LCRYPTO_SRC}/asn1 \
-	${LCRYPTO_SRC}/x509 ${LCRYPTO_SRC}/conf txt_db/txt_db.c ${LCRYPTO_SRC}/pkcs7 \
-	${LCRYPTO_SRC}/x509v3 ${LCRYPTO_SRC}/pkcs12 ${LCRYPTO_SRC}/comp \
-	${LCRYPTO_SRC}/txt_db ${LCRYPTO_SRC}/md4 ${LCRYPTO_SRC}/engine \
-	${LCRYPTO_SRC}/dso ${LCRYPTO_SRC}/ui ${LCRYPTO_SRC}/ocsp \
-	${LCRYPTO_SRC}/ec ${LCRYPTO_SRC}/aes ${LCRYPTO_SRC}
-
+.PATH:	${LCRYPTO_SRC}/md2 ${LCRYPTO_SRC}/md5 ${LCRYPTO_SRC}/sha \
+	${LCRYPTO_SRC}/mdc2 ${LCRYPTO_SRC}/hmac ${LCRYPTO_SRC}/ripemd \
+	${LCRYPTO_SRC}/des ${LCRYPTO_SRC}/rc2 ${LCRYPTO_SRC}/rc4 \
+	${LCRYPTO_SRC}/rc5 ${LCRYPTO_SRC}/idea ${LCRYPTO_SRC}/bf \
+	${LCRYPTO_SRC}/cast ${LCRYPTO_SRC}/bn ${LCRYPTO_SRC}/rsa \
+	${LCRYPTO_SRC}/dsa ${LCRYPTO_SRC}/dh ${LCRYPTO_SRC}/buffer \
+	${LCRYPTO_SRC}/bio ${LCRYPTO_SRC}/stack ${LCRYPTO_SRC}/lhash \
+	${LCRYPTO_SRC}/rand ${LCRYPTO_SRC}/err ${LCRYPTO_SRC}/objects \
+	${LCRYPTO_SRC}/evp ${LCRYPTO_SRC}/pem ${LCRYPTO_SRC}/asn1 \
+	${LCRYPTO_SRC}/asn1 ${LCRYPTO_SRC}/x509 ${LCRYPTO_SRC}/conf \
+	${LCRYPTO_SRC}/pkcs7 ${LCRYPTO_SRC}/x509v3 ${LCRYPTO_SRC}/pkcs12 \
+	${LCRYPTO_SRC}/comp ${LCRYPTO_SRC}/txt_db ${LCRYPTO_SRC}/md4 \
+	${LCRYPTO_SRC}/engine ${LCRYPTO_SRC}/dso ${LCRYPTO_SRC}/ui \
+	${LCRYPTO_SRC}/ocsp ${LCRYPTO_SRC}/ec ${LCRYPTO_SRC}/aes ${LCRYPTO_SRC}
 
 includes:
 	@test -d ${DESTDIR}/usr/include/ssl || mkdir ${DESTDIR}/usr/include/ssl
