@@ -1,4 +1,4 @@
-.\"     $OpenBSD: intro.4,v 1.29 2003/11/14 18:32:46 jmc Exp $
+.\"     $OpenBSD: intro.4,v 1.30 2004/06/20 20:54:24 miod Exp $
 .\"
 .\" Copyright (c) 2001-2002 The OpenBSD Project
 .\" All Rights Reserved.
@@ -135,6 +135,10 @@ PS/2-style keyboard driver.
 PROM console input/output device.
 .It Xr pms/pmsi 4
 PS/2 auxiliary port mouse driver.
+.It Xr rfx 4
+Vitec/Connectware/AP&D
+.Tn RasterFlex
+framebuffer series.
 .It Xr qe 4
 Quad 10BaseT SBus Ethernet controller.
 .It Xr qec 4
@@ -169,6 +173,8 @@ PCI graphics frame buffer.
 xl 3Com EtherLink XL and Fast EtherLink XL Ethernet driver.
 .It Xr zs/zstty/zskbd 4
 Zilog 8530 serial controller (and serial keyboards).
+.It Xr zx 4
+24 bit accelerated SBus color frame buffer.
 .El
 .Sh SEE ALSO
 .Xr autoconf 4 ,
