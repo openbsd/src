@@ -2,9 +2,10 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD
+ *	OpenBSD: pcidevs,v 1.6 1996/04/18 23:48:04 niklas Exp 
  */
-/*	$NetBSD: pcidevs,v 1.6 1996/02/19 20:08:25 christos Exp $	*/
+/*	$NetBSD: pcidevs,v 1.7 1996/04/04 21:46:33 mycroft Exp $ */
+
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -453,7 +454,7 @@
 #define	PCI_PRODUCT_DIAMOND_vIPER	0x9001		/* Viper/PCI */
 
 /* CMD Technologies Products */
-#define	PCI_PRODUCT_CMDTECH_PCI0640	0x0640		/* PCI to IDE Controller */
+#define	PCI_PRODUCT_CMDTECH_PCI0640	0x0640		/* UNSUPP PCI to IDE Controller */
 
 /* FORE products */
 #define	PCI_PRODUCT_FORE_PCA200	0x0210		/* ATM PCA-200 */
