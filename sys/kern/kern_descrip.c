@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.54 2002/02/18 23:12:04 ericj Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.55 2002/02/19 06:12:13 nordin Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -228,6 +228,7 @@ restart:
 		return (EBADF);
 	FREF(fp);
 	if ((error = fdalloc(p, 0, &new)) != 0) {
+		FRELE(fp);
 		if (error == ENOSPC) {
 			fdexpand(p);
 			goto restart;
