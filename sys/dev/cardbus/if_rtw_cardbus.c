@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rtw_cardbus.c,v 1.3 2005/02/09 22:08:29 jsg Exp $	*/
+/*	$OpenBSD: if_rtw_cardbus.c,v 1.4 2005/02/10 12:14:53 jsg Exp $	*/
 /* $NetBSD: if_rtw_cardbus.c,v 1.4 2004/12/20 21:05:34 dyoung Exp $ */
 
 /*-
@@ -172,18 +172,11 @@ const struct rtw_cardbus_product *rtw_cardbus_lookup(
 const struct rtw_cardbus_product {
 	u_int32_t	 rcp_vendor;	/* PCI vendor ID */
 	u_int32_t	 rcp_product;	/* PCI product ID */
-	const char	*rcp_product_name;
 } rtw_cardbus_products[] = {
-	{ PCI_VENDOR_REALTEK,		PCI_PRODUCT_REALTEK_RT8180,
-	  "Realtek RTL8180 802.11 MAC/BBP" },
-
-	{ PCI_VENDOR_BELKIN2,		PCI_PRODUCT_BELKIN2_F5D6020V3,
-	  "Belkin F5D6020v3 802.11b (RTL8180 MAC/BBP)" },
-
-	{ PCI_VENDOR_DLINK,		PCI_PRODUCT_DLINK_DWL610,
-	  "D-Link DWL-610" },
-
-	{ 0,				0,	NULL },
+	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8180 },
+	{ PCI_VENDOR_BELKIN2, PCI_PRODUCT_BELKIN2_F5D6020V3 },
+	{ PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DWL610 },
+	{ 0, 0 }
 };
 
 const struct rtw_cardbus_product *
@@ -191,9 +184,7 @@ rtw_cardbus_lookup(const struct cardbus_attach_args *ca)
 {
 	const struct rtw_cardbus_product *rcp;
 
-	for (rcp = rtw_cardbus_products;
-	     rcp->rcp_product_name != NULL;
-	     rcp++) {
+	for (rcp = rtw_cardbus_products; rcp->rcp_product != 0; rcp++) {
 		if (PCI_VENDOR(ca->ca_id) == rcp->rcp_vendor &&
 		    PCI_PRODUCT(ca->ca_id) == rcp->rcp_product)
 			return (rcp);
@@ -206,10 +197,7 @@ rtw_cardbus_match(struct device *parent, void *match, void *aux)
 {
 	struct cardbus_attach_args *ca = aux;
 
-	if (rtw_cardbus_lookup(ca) != NULL)
-		return (1);
-
-	return (0);
+	return (rtw_cardbus_lookup(ca) != NULL);
 }
 
 void
