@@ -1,4 +1,4 @@
-;	$OpenBSD: milli.S,v 1.3 2000/04/24 19:44:01 mickey Exp $
+;	$OpenBSD: milli.S,v 1.4 2001/03/28 18:12:20 mickey Exp $
 ;
 ;  (c) Copyright 1986 HEWLETT-PACKARD COMPANY
 ;
@@ -317,7 +317,7 @@ previous_sp: .equ	64	; old stack pointer (locates previous frame)
 ; Statements commented out are used when building such things as operating
 ; system kernels.
 ;;;;;;;;;;;;;;;;
-	.SPACE	$TEXT$,		SPNUM=0,SORT=8
+	.SPACE	$TEXT$
 	.subspa $MILLICODE$,	QUAD=0,ALIGN=8,ACCESS=0x2c,SORT=8
 	.subspa $LIT$,		QUAD=0,ALIGN=8,ACCESS=0x2c,SORT=16
 	.subspa $CODE$,		QUAD=0,ALIGN=8,ACCESS=0x2c,SORT=24
@@ -328,7 +328,7 @@ previous_sp: .equ	64	; old stack pointer (locates previous frame)
 ; sort keys $GLOBAL$ -1 and $GLOBAL$ -2 are reserved for the $DLT$
 ; and $PLT$ subspaces respectively.
 ;;;;;;;;;;;;;;;
-	.SPACE $PRIVATE$,	SPNUM=1,PRIVATE,SORT=16
+	.SPACE $PRIVATE$
 	.subspa $GLOBAL$,	QUAD=1,ALIGN=8,ACCESS=0x1f,SORT=40
 	.import $global$
 	.subspa $DATA$,		QUAD=1,ALIGN=8,ACCESS=0x1f,SORT=16
