@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.55 2004/12/07 20:38:46 mcbride Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.56 2005/01/04 09:29:43 pascoe Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -350,7 +350,7 @@ arprequest(ifp, sip, tip, enaddr)
 	bcopy((caddr_t)enaddr, (caddr_t)ea->arp_sha, sizeof(ea->arp_sha));
 	bcopy((caddr_t)sip, (caddr_t)ea->arp_spa, sizeof(ea->arp_spa));
 	bcopy((caddr_t)tip, (caddr_t)ea->arp_tpa, sizeof(ea->arp_tpa));
-	sa.sa_family = AF_UNSPEC;
+	sa.sa_family = pseudo_AF_HDRCMPLT;
 	sa.sa_len = sizeof(sa);
 	(*ifp->if_output)(ifp, m, &sa, (struct rtentry *)0);
 }
@@ -698,7 +698,7 @@ reply:
 	bcopy(ea->arp_tha, eh->ether_dhost, sizeof(eh->ether_dhost));
 	bcopy(enaddr, eh->ether_shost, sizeof(eh->ether_shost));
 	eh->ether_type = htons(ETHERTYPE_ARP);
-	sa.sa_family = AF_UNSPEC;
+	sa.sa_family = pseudo_AF_HDRCMPLT;
 	sa.sa_len = sizeof(sa);
 	(*ac->ac_if.if_output)(&ac->ac_if, m, &sa, (struct rtentry *)0);
 	return;
@@ -910,7 +910,7 @@ revarprequest(ifp)
 	   sizeof(ea->arp_sha));
 	bcopy((caddr_t)ac->ac_enaddr, (caddr_t)ea->arp_tha,
 	   sizeof(ea->arp_tha));
-	sa.sa_family = AF_UNSPEC;
+	sa.sa_family = pseudo_AF_HDRCMPLT;
 	sa.sa_len = sizeof(sa);
 	ifp->if_output(ifp, m, &sa, (struct rtentry *)0);
 }
