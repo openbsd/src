@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_kue.c,v 1.30 2004/11/22 18:49:05 deraadt Exp $ */
+/*	$OpenBSD: if_kue.c,v 1.31 2004/11/22 18:59:39 dhartmei Exp $ */
 /*	$NetBSD: if_kue.c,v 1.50 2002/07/16 22:00:31 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -270,7 +270,7 @@ kue_load_fw(struct kue_softc *sc)
 	 */
 	if (usbd_get_device_desc(sc->kue_udev, &dd))
 		return (EIO);
-	if (UGETW(dd.bcdDevice) == KUE_WARM_REV) {
+	if (UGETW(dd.bcdDevice) >= KUE_WARM_REV) {
 		printf("%s: warm boot, no firmware download\n",
 		       USBDEVNAME(sc->kue_dev));
 		return (0);
