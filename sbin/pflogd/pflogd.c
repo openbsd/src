@@ -1,4 +1,4 @@
-/*	$OpenBSD: pflogd.c,v 1.21 2003/08/22 21:50:34 david Exp $	*/
+/*	$OpenBSD: pflogd.c,v 1.22 2003/09/26 16:14:33 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -363,7 +363,6 @@ main(int argc, char **argv)
 				logmsg(LOG_ERR, "Failed to open log file!");
 				break;
 			}
-			logmsg(LOG_NOTICE, "Reopened logfile");
 			gotsig_hup = 0;
 		}
 
