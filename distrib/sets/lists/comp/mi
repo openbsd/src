@@ -138,7 +138,6 @@
 ./usr/include/dev/ic/adwlib.h
 ./usr/include/dev/ic/aic6360reg.h
 ./usr/include/dev/ic/aic6360var.h
-./usr/include/dev/ic/aic7xxx.h
 ./usr/include/dev/ic/aic7xxxreg.h
 ./usr/include/dev/ic/aic7xxxvar.h
 ./usr/include/dev/ic/am7930reg.h
@@ -2219,12 +2218,14 @@
 ./usr/share/man/cat3/RAND_set_rand_method.0
 ./usr/share/man/cat3/RAND_status.0
 ./usr/share/man/cat3/RAND_write_file.0
+./usr/share/man/cat3/RB_EMPTY.0
 ./usr/share/man/cat3/RB_ENTRY.0
 ./usr/share/man/cat3/RB_FIND.0
 ./usr/share/man/cat3/RB_FOREACH.0
 ./usr/share/man/cat3/RB_GENERATE.0
 ./usr/share/man/cat3/RB_HEAD.0
 ./usr/share/man/cat3/RB_INIT.0
+./usr/share/man/cat3/RB_INITIALIZER.0
 ./usr/share/man/cat3/RB_INSERT.0
 ./usr/share/man/cat3/RB_LEFT.0
 ./usr/share/man/cat3/RB_MAX.0
@@ -2326,12 +2327,14 @@
 ./usr/share/man/cat3/SLIST_INSERT_HEAD.0
 ./usr/share/man/cat3/SLIST_NEXT.0
 ./usr/share/man/cat3/SLIST_REMOVE_HEAD.0
+./usr/share/man/cat3/SPLAY_EMPTY.0
 ./usr/share/man/cat3/SPLAY_ENTRY.0
 ./usr/share/man/cat3/SPLAY_FIND.0
 ./usr/share/man/cat3/SPLAY_FOREACH.0
 ./usr/share/man/cat3/SPLAY_GENERATE.0
 ./usr/share/man/cat3/SPLAY_HEAD.0
 ./usr/share/man/cat3/SPLAY_INIT.0
+./usr/share/man/cat3/SPLAY_INITIALIZER.0
 ./usr/share/man/cat3/SPLAY_INSERT.0
 ./usr/share/man/cat3/SPLAY_LEFT.0
 ./usr/share/man/cat3/SPLAY_MAX.0
