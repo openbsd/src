@@ -23,15 +23,17 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: if_tx.c,v 1.1 1998/09/21 05:24:54 jason Exp $
+ *	$Id: if_tx.c,v 1.2 1998/09/22 21:54:55 jason Exp $
  *
  */
 
 /*
  * EtherPower II 10/100  Fast Ethernet (tx0)
  * (aka SMC9432TX based on SMC83c170 EPIC chip)
+ * 
+ * Thanks are going to Steve Bauer and Jason Wright.
  *
- * TODO:
+ * todo:
  *	Deal with bus mastering, i.e. i realy don't know what to do with
  *	    it and how it can improve performance.
  *	Implement FULL IFF_MULTICAST support.
@@ -225,7 +227,10 @@ epic_openbsd_attach(
 	bus_space_tag_t iot = pa->pa_iot;
 	bus_addr_t iobase;
 	bus_size_t iosize; 
-	int i, tmp;
+	int i;
+#if !defined(EPIC_NOIFMEDIA)
+	int tmp;
+#endif
 
 	if( pci_io_find(pc, pa->pa_tag, PCI_CBIO, &iobase, &iosize)) {
 		printf(": can't find i/o space\n");
@@ -738,13 +743,11 @@ epic_ifstart(struct ifnet * const ifp){
 	struct epic_tx_buffer *buf;
 	struct epic_tx_desc *desc;
 	struct epic_frag_list *flist;
-	struct mbuf *m,*m0;
+	struct mbuf *m0;
+	register struct mbuf *m;
+	register int i;
 
-#if defined(EPIC_DEBUG)
-	if( ifp->if_flags & IFF_DEBUG ) epic_dump_state(sc);
-#endif
-	/* If no link is established,   */
-	/* simply free all mbufs in queue */
+	/* If no link is established, simply free all mbufs in queue */
 	PHY_READ_2( sc, DP83840_BMSR );
 	if( !(BMSR_LINK_STATUS & PHY_READ_2( sc, DP83840_BMSR )) ){
 		IF_DEQUEUE( &ifp->if_snd, m0 );
@@ -779,14 +782,15 @@ epic_ifstart(struct ifnet * const ifp){
 		}
 
 		/* Fill fragments list */
-		flist->numfrags = 0;
-		for(m=m0;(NULL!=m)&&(flist->numfrags<63);m=m->m_next) {
-			flist->frag[flist->numfrags].fraglen = m->m_len; 
-			flist->frag[flist->numfrags].fragaddr = vtophys( mtod(m, caddr_t) );
-			flist->numfrags++;
+		for( m=m0, i=0;
+		    (NULL != m) && (i < EPIC_MAX_FRAGS);
+		    m = m->m_next, i++ ) {
+			flist->frag[i].fraglen = m->m_len; 
+			flist->frag[i].fragaddr = vtophys( mtod(m, caddr_t) );
 		}
+		flist->numfrags = i;
 
-		/* If packet was more than 63 parts, */
+		/* If packet was more than EPIC_MAX_FRAGS parts, */
 		/* recopy packet to new allocated mbuf cluster */
 		if( NULL != m ){
 			EPIC_MGETCLUSTER(m);
@@ -798,7 +802,8 @@ epic_ifstart(struct ifnet * const ifp){
 			}
 
 			m_copydata( m0, 0, m0->m_pkthdr.len, mtod(m,caddr_t) );
-			flist->frag[0].fraglen = m->m_pkthdr.len = m->m_len = m0->m_pkthdr.len;
+			flist->frag[0].fraglen = 
+			     m->m_pkthdr.len = m->m_len = m0->m_pkthdr.len;
 			m->m_pkthdr.rcvif = ifp;
 
 			flist->numfrags = 1;
@@ -807,30 +812,14 @@ epic_ifstart(struct ifnet * const ifp){
 			m0 = m;
 		}
 
-		/* Save mbuf */
 		buf->mbuf = m0;
-
-		/* Packet queued successful */
 		sc->pending_txs++;
-
-		/* Switch to next descriptor */
-		sc->cur_tx = ( sc->cur_tx + 1 ) % TX_RING_SIZE;
-
-		/* Does not generate TXC */
+		sc->cur_tx = ( sc->cur_tx + 1 ) & TX_RING_MASK;
 		desc->control = 0x01;
-
-		/* Packet should be at least ETHER_MIN_LEN */
-		desc->txlength = max(m0->m_pkthdr.len,ETHER_MIN_LEN-ETHER_CRC_LEN);
-
-		/* Pass ownership to the chip */
+		desc->txlength = 
+		    max(m0->m_pkthdr.len,ETHER_MIN_LEN-ETHER_CRC_LEN);
 		desc->status = 0x8000;
-
-		/* Trigger an immediate transmit demand. */
 		CSR_WRITE_4( sc, COMMAND, COMMAND_TXQUEUED );
-
-#if defined(EPIC_DEBUG)
-		if( ifp->if_flags & IFF_DEBUG ) epic_dump_state(sc);
-#endif
 
 		/* Set watchdog timer */
 		ifp->if_timer = 8;
@@ -859,21 +848,18 @@ static __inline void
 epic_rx_done __P((
 	epic_softc_t *sc ))
 {
-        int i = 0;
 	u_int16_t len;
 	struct epic_rx_buffer *buf;
 	struct epic_rx_desc *desc;
 	struct mbuf *m;
 	struct ether_header *eh;
 
-	while( !(sc->rx_desc[sc->cur_rx].status & 0x8000) && \
-		i++ < RX_RING_SIZE ) {
-
+	while( !(sc->rx_desc[sc->cur_rx].status & 0x8000) ) { 
 		buf = sc->rx_buffer + sc->cur_rx;
 		desc = sc->rx_desc + sc->cur_rx;
 
 		/* Switch to next descriptor */
-		sc->cur_rx = (sc->cur_rx+1) % RX_RING_SIZE;
+		sc->cur_rx = (sc->cur_rx+1) & RX_RING_MASK;
 
 		/* Check for errors, this should happend */
 		/* only if SAVE_ERRORED_PACKETS is set, */
@@ -965,7 +951,7 @@ epic_tx_done __P((
 		/* Packet is transmitted. Switch to next and */
 		/* free mbuf */
 		sc->pending_txs--;
-		sc->dirty_tx = (sc->dirty_tx + 1) % TX_RING_SIZE;
+		sc->dirty_tx = (sc->dirty_tx + 1) & TX_RING_MASK;
 		m_freem( buf->mbuf );
 		buf->mbuf = NULL;
 
@@ -1087,12 +1073,12 @@ epic_intr (
 	    }
 
 	    if (status & INTSTAT_RXE) {
-		printf(EPIC_FORMAT ": CRC/Alignment error\n",EPIC_ARGS(sc));
+		dprintf((EPIC_FORMAT ": CRC/Alignment error\n",EPIC_ARGS(sc)));
 		sc->sc_if.if_ierrors++;
 	    }
 
-	    /* Tx FIFO underflow. Should not happend if */
-	    /* we don't use early tx, handle it anyway */
+	    /* Tx FIFO underflow. Increase tx threshold, */
+	    /* if it grown above 2048, disable EARLY_TX */
 	    if (status & INTSTAT_TXU) {
 		if( sc->tx_threshold > 0x800 ) {
 		    sc->txcon &= ~TXCON_EARLY_TRANSMIT_ENABLE;
@@ -1108,7 +1094,7 @@ epic_intr (
 		sc->sc_if.if_oerrors++;
 
 		/* Restart the transmit process. */
-		CSR_WRITE_4(sc, COMMAND, COMMAND_TXUGO | COMMAND_TXQUEUED);
+		/* CSR_WRITE_4(sc, COMMAND, COMMAND_TXUGO|COMMAND_TXQUEUED); */
 	    }
 	}
     }
@@ -1581,7 +1567,7 @@ epic_stop_activity __P((
 	sc->tx_desc[sc->cur_tx].control = 0x14;
 	sc->tx_desc[sc->cur_tx].txlength = ETHER_MIN_LEN-ETHER_CRC_LEN;
 	sc->tx_desc[sc->cur_tx].status = 0x8000;
-	sc->cur_tx = (sc->cur_tx + 1)%TX_RING_SIZE;
+	sc->cur_tx = (sc->cur_tx + 1) & TX_RING_MASK;
 	sc->pending_txs++;
 
 	CSR_WRITE_4( sc, COMMAND, COMMAND_TXQUEUED );
@@ -1690,7 +1676,7 @@ epic_init_rings(epic_softc_t * sc){
 		struct epic_rx_desc *desc = sc->rx_desc + i;
 
 		desc->status = 0;		/* Owned by driver */
-		desc->next = vtophys( sc->rx_desc + ((i+1)%RX_RING_SIZE) );
+		desc->next = vtophys( sc->rx_desc + ((i+1) & RX_RING_MASK) );
 
 		if( (desc->next & 3) || ((desc->next & 0xFFF) + sizeof(struct epic_rx_desc) > 0x1000 ) )
 			printf(EPIC_FORMAT ": WARNING! rx_desc is misbound or misaligned\n",EPIC_ARGS(sc));
@@ -1712,7 +1698,7 @@ epic_init_rings(epic_softc_t * sc){
 		struct epic_tx_desc *desc = sc->tx_desc + i;
 
 		desc->status = 0;
-		desc->next = vtophys( sc->tx_desc + ( (i+1)%TX_RING_SIZE ) );
+		desc->next = vtophys( sc->tx_desc + ( (i+1) & TX_RING_MASK ) );
 
 		if( (desc->next & 3) || ((desc->next & 0xFFF) + sizeof(struct epic_tx_desc) > 0x1000 ) )
 			printf(EPIC_FORMAT ": WARNING! tx_desc is misbound or misaligned\n",EPIC_ARGS(sc));

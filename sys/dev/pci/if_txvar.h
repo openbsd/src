@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      $Id: if_txvar.h,v 1.1 1998/09/21 05:24:55 jason Exp $
+ *      $Id: if_txvar.h,v 1.2 1998/09/22 21:54:55 jason Exp $
  *
  */
 
@@ -39,8 +39,11 @@
 #ifndef ETHER_CRC_LEN
 #define ETHER_CRC_LEN		4
 #endif
-#define TX_RING_SIZE		16
-#define RX_RING_SIZE		16
+#define TX_RING_SIZE		16		/* Leave this a power of 2 */
+#define RX_RING_SIZE		16		/* And this too, to do not */
+						/* confuse RX(TX)_RING_MASK */
+#define TX_RING_MASK		(TX_RING_SIZE - 1)
+#define RX_RING_MASK		(RX_RING_SIZE - 1)
 #define EPIC_FULL_DUPLEX	1
 #define EPIC_HALF_DUPLEX	0
 #define ETHER_MAX_FRAME_LEN	(ETHER_MAX_LEN + ETHER_CRC_LEN)
@@ -283,12 +286,13 @@ struct epic_rx_desc {
 /* This structure defines EPIC's fragment list, maximum number of frags */
 /* is 63. Let use maximum, becouse size of struct MUST be divisor of */
 /* PAGE_SIZE, and sometimes come mbufs with more then 30 frags */
+#define EPIC_MAX_FRAGS 63
 struct epic_frag_list {
 	volatile u_int32_t		numfrags;
 	struct {
 		volatile u_int32_t	fragaddr;
 		volatile u_int32_t	fraglen;
-	} frag[63]; 
+	} frag[EPIC_MAX_FRAGS]; 
 	volatile u_int32_t		pad;		/* align on 256 bytes */
 };
 
@@ -320,7 +324,9 @@ typedef struct {
 	caddr_t			csr;
 #endif
 #endif
+#if !defined(EPIC_NOIFMEDIA)
 	struct ifmedia 		ifmedia;
+#endif
 	struct arpcom		arpcom;
 	u_int32_t		unit;
 	struct epic_rx_buffer	rx_buffer[RX_RING_SIZE];
