@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.40 2004/07/08 00:34:47 deraadt Exp $	*/
+/*	$OpenBSD: auich.c,v 1.41 2004/07/21 04:05:33 tedu Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -441,7 +441,7 @@ auich_attach(parent, self, aux)
 	sc->suspend = PWR_RESUME;
 	sc->powerhook = powerhook_establish(auich_powerhook, sc);
 
-	sc->sc_ac97rate = auich_calibrate(sc);
+	sc->sc_ac97rate = -1;
 }
 
 int
@@ -540,6 +540,10 @@ auich_open(v, flags)
 	void *v;
 	int flags;
 {
+	struct auich_softc *sc = v;
+
+	if (sc->sc_ac97rate == -1)
+		sc->sc_ac97rate = auich_calibrate(sc);
 	return 0;
 }
 
@@ -1367,19 +1371,19 @@ auich_calibrate(struct auich_softc *sc)
 			  (0 - 1) & AUICH_LVI_MASK);
 
 	/* start */
-	microtime(&t1);
+	microuptime(&t1);
 	bus_space_write_1(sc->iot, sc->aud_ioh, AUICH_PCMI + AUICH_CTRL,
 	    AUICH_RPBM);
 
 	/* wait */
 	while (nciv == ociv) {
-		microtime(&t2);
+		microuptime(&t2);
 		if (t2.tv_sec - t1.tv_sec > 1)
 			break;
 		nciv = bus_space_read_1(sc->iot, sc->aud_ioh,
 					AUICH_PCMI + AUICH_CIV);
 	}
-	microtime(&t2);
+	microuptime(&t2);
 
 	/* reset */
 	bus_space_write_1(sc->iot, sc->aud_ioh, AUICH_PCMI + AUICH_CTRL, AUICH_RR);
