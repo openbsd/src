@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ypclnt.3,v 1.8 1999/03/11 01:35:02 pjanzen Exp $
+.\"	$OpenBSD: ypclnt.3,v 1.9 1999/07/09 13:35:21 aaron Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -121,7 +121,7 @@ All YP lookup calls (the functions
 .Fn yp_match ,
 .Fn yp_next ,
 .Fn yp_order )
-require a YP domain name and a YP map name.  The default domain name may be 
+require a YP domain name and a YP map name.  The default domain name may be
 obtained by calling
 .Fn yp_get_default_domain ,
 and should thus be used before all other YP calls in a client program.

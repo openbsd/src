@@ -1,4 +1,4 @@
-.\"	$OpenBSD: scsi.4,v 1.6 1999/06/05 13:18:32 aaron Exp $
+.\"	$OpenBSD: scsi.4,v 1.7 1999/07/09 13:35:47 aaron Exp $
 .\"
 .Dd August 4, 1996
 .Dt SCSI 4
@@ -21,7 +21,7 @@ The
 .Em scsi
 system provides a uniform and modular system for the implementation
 of drivers to control various scsi devices, and to utilize different
-scsi host adapters through host adapter drivers. When the system probes the 
+scsi host adapters through host adapter drivers. When the system probes the
 .Em SCSI
 busses, it attaches any devices it finds to the appropriate
 drivers. If no driver seems appropriate, then it attaches the device to the
@@ -66,7 +66,7 @@ type.  That is, if you have a disk wired down as
 then the first non-wired disk shall come on line as
 .Em sd2 .
 .Sh IOCTLS
-There are a number of ioctls that work on any 
+There are a number of ioctls that work on any
 .Em SCSI
 device. They are defined in
 .Em sys/scsiio.h
@@ -81,13 +81,13 @@ reset a device.
 Turn on debugging.. All scsi operations originating from this device's driver
 will be traced to the console, along with other information. Debugging is
 controlled by four bits, described in the header file. If no debugging is
-configured into the kernel, debugging will have no effect. 
+configured into the kernel, debugging will have no effect.
 .Em SCSI
 debugging is controlled by the configuration option
 .Em SCSIDEBUG.
 .It Dv SCIOCCOMMAND
 Take a scsi command and data from a user process and apply them to the scsi
-device. Return all status information and return data to the process. The 
+device. Return all status information and return data to the process. The
 ioctl will return a successful status even if the device rejected the
 command. As all status is returned to the user, it is up to the user
 process to examine this information to decide the success of the command.
@@ -112,23 +112,23 @@ already controlled by an explicit driver.
 .Sh ADAPTERS
 The system allows common device drivers to work through many different
 types of adapters. The adapters take requests from the upper layers and do
-all IO between the 
+all IO between the
 .Em SCSI
 bus and the system. The maximum size of a transfer is governed by the
 adapter. Most adapters can transfer 64KB in a single operation, and
 many can transfer larger amounts.
 .Sh TARGET MODE
-Some adapters support 
+Some adapters support
 .Em target mode
 in which the system is capable of operating as a device, responding to
 operations initiated by another system. Target mode will be supported for
 some adapters, but is not yet complete for this version of the scsi system.
 .Sh DIAGNOSTICS
-When the kernel is compiled with option SCSIDEBUG, the SCIOCDEBUG ioctl 
-can be used to enable various amounts of tracing information on any 
+When the kernel is compiled with option SCSIDEBUG, the SCIOCDEBUG ioctl
+can be used to enable various amounts of tracing information on any
 specific device. Devices not being traced will not produce trace information.
 The four bits that make up the debug level each control certain types
-of debugging information. 
+of debugging information.
 .Bl -tag -width "Bit 0"
 .It Dv Bit 0
 shows all scsi bus operations including scsi commands,

@@ -28,7 +28,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"	$NetBSD: lk201.4,v 1.2 1997/10/13 11:23:53 lukem Exp $
-.\"	$OpenBSD: lk201.4,v 1.2 1998/03/09 15:37:23 millert Exp $
+.\"	$OpenBSD: lk201.4,v 1.3 1999/07/09 13:35:41 aaron Exp $
 .\"
 .Dd August 6, 1996
 .Dt LK201 4 pmax
@@ -52,7 +52,7 @@ structure for keypress events and pointer (mouse) events.  The
 .Nm fb
 driver redirects mouse and keyboard input into this in-kernel
 structure, and updates the position of a framebuffer cursor sprite to
-track the mouse.  This is for compatibility with the 
+track the mouse.  This is for compatibility with the
 .Nm qv
 QVSS-style software interface used by X11 on  DECstation and Vaxstation
 framebuffers.   This design offers significantly better performance

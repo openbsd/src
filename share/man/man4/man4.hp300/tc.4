@@ -34,7 +34,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)tc.4	5.2 (Berkeley) 3/27/91
-.\"	$Id: tc.4,v 1.1.1.1 1995/10/18 08:44:28 deraadt Exp $
+.\"	$Id: tc.4,v 1.2 1999/07/09 13:35:46 aaron Exp $
 .\"
 .Dd March 27, 1991
 .Dt TC 4 hp300
@@ -67,7 +67,7 @@ series 300
 Terminal Emulator) defaults.  The device can also be used as a graphics output
 device.
 .Pp
-The 
+The
 .Xr ioctl 2
 calls supported by the
 .Bx
@@ -120,7 +120,7 @@ For more examples of the details on the behavior of the device, see the device
 dependent source files for the X Window System, in the
 .Pa /usr/src/new/X/libhp
 directory.
-.Bd -literal 
+.Bd -literal
 struct tcboxfb *tc;
 u_char *Addr, frame_buffer;
 struct grfinfo gi;

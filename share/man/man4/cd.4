@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cd.4,v 1.4 1999/07/03 02:11:12 aaron Exp $
+.\"	$OpenBSD: cd.4,v 1.5 1999/07/09 13:35:48 aaron Exp $
 .\"	$NetBSD: cd.4,v 1.3 1996/10/20 23:15:21 explorer Exp $
 .\"
 .\" Copyright (c) 1996
@@ -38,30 +38,30 @@
 .Sh DESCRIPTION
 The
 .Nm cd
-driver provides support for a 
+driver provides support for a
 .Tn SCSI
 .Tn CD-ROM
 (Compact Disc-Read Only Memory) drive.
-In an attempt to look like a regular disk, the 
+In an attempt to look like a regular disk, the
 .Nm
 driver synthesizes a partition table, with one partition covering the entire
 .Tn CD-ROM .
 It is possible to modify this partition table using
 .Xr disklabel 8 ,
-but it will only last until the 
+but it will only last until the
 .Tn CD-ROM
 is unmounted.
-In general the interfaces are similar to those described by 
-.Xr wd 4 
+In general the interfaces are similar to those described by
+.Xr wd 4
 and
 .Xr sd 4 .
 .Pp
 As the
 .Tn SCSI
-adapter is probed during boot, the 
+adapter is probed during boot, the
 .Tn SCSI
 bus is scanned for devices. Any devices found which answer as `Read-only'
-type devices will be `attached' to the 
+type devices will be `attached' to the
 .Nm
 driver.
 .Pp
@@ -69,7 +69,7 @@ The system utility
 .Xr disklabel 8
 may be used to read the synthesized
 disk label
-structure, which will contain correct figures for the size of the 
+structure, which will contain correct figures for the size of the
 .Tn CD-ROM
 should that information be required.
 .Sh KERNEL CONFIGURATION
@@ -78,7 +78,7 @@ Any number of
 devices may be attached to the system regardless of system
 configuration as all resources are dynamically allocated.
 .Sh IOCTLS
-The following 
+The following
 .Xr ioctl 2
 calls which apply to
 .Tn SCSI
@@ -164,7 +164,7 @@ the information printed at boot.  This structure is defined in
 .\"	/* The tray has dynamic debugging */
 .\"};
 .\".Ed
-.It Dv CDIOCPLAYTRACKS	
+.It Dv CDIOCPLAYTRACKS
 .Pq Li "struct ioc_play_track"
 Start audio playback given a track address and length.  The structure
 is defined as follows:
@@ -190,7 +190,7 @@ struct ioc_play_blocks
 };
 .Ed
 
-.It Dv CDIOCPLAYMSF	
+.It Dv CDIOCPLAYMSF
 .Pq Li "struct ioc_play_msf"
 Start audio playback given a `minutes-seconds-frames' address and
 length.  The structure is defined as follows:
@@ -206,7 +206,7 @@ struct ioc_play_msf
 };
 .Ed
 
-.It Dv CDIOCREADSUBCHANNEL 
+.It Dv CDIOCREADSUBCHANNEL
 .Pq Li "struct ioc_read_subchannel"
 Read information from the subchannel at the location specified by this
 structure:
@@ -228,7 +228,7 @@ struct ioc_read_subchannel {
 
 .It Dv CDIOREADTOCHEADER
 .Pq Li "struct ioc_toc_header"
-Return summary information about the table of contents for the mounted 
+Return summary information about the table of contents for the mounted
 .Tn CD-ROM .
 The information is returned into the following structure:
 .Bd -literal -offset indent
@@ -239,7 +239,7 @@ struct ioc_toc_header {
 };
 .Ed
 
-.It Dv CDIOREADTOCENTRYS 
+.It Dv CDIOREADTOCENTRYS
 .Pq Li "struct ioc_read_toc_entry"
 Return information from the table of contents entries mentioned.  (Yes, this
 command name is misspelled.)  The argument structure is defined as follows:
@@ -280,44 +280,44 @@ struct	ioc_vol
 };
 .Ed
 
-.It Dv CDIOCSETMONO	
+.It Dv CDIOCSETMONO
 Patch all output channels to all source channels.
 
 .It Dv CDIOCSETSTEREO
 Patch left source channel to the left output channel and the right
 source channel to the right output channel.
 
-.It Dv CDIOCSETMUTE	
+.It Dv CDIOCSETMUTE
 Mute output without changing the volume settings.
 
 .It Dv CDIOCSETLEFT
 .It Dv CDIOCSETRIGHT
 Attach both output channels to the left (right) source channel.
 
-.It Dv CDIOCSETDEBUG	
-.It Dv CDIOCCLRDEBUG	
+.It Dv CDIOCSETDEBUG
+.It Dv CDIOCCLRDEBUG
 Turn on (off) debugging for the appropriate device.
 
-.It Dv CDIOCPAUSE	
-.It Dv CDIOCRESUME	
+.It Dv CDIOCPAUSE
+.It Dv CDIOCRESUME
 Pause (resume) audio play, without resetting the location of the read-head.
 
-.It Dv CDIOCRESET	
+.It Dv CDIOCRESET
 Reset the drive.
 
-.It Dv CDIOCSTART	
-.It Dv CDIOCSTOP	
+.It Dv CDIOCSTART
+.It Dv CDIOCSTOP
 Tell the drive to spin-up (-down) the
 .Tn CD-ROM .
 
 .It Dv CDIOCALLOW
 .It Dv CDIOCPREVENT
-Tell the drive to allow (prevent) manual ejection of the 
+Tell the drive to allow (prevent) manual ejection of the
 .Tn CD-ROM
 disc.  Not all drives support this feature.
 
-.It Dv CDIOCEJECT	
-Eject the 
+.It Dv CDIOCEJECT
+Eject the
 .Tn CD-ROM .
 
 .\".It Dv CDIOCCLOSE
@@ -341,14 +341,14 @@ Eject the
 .\".Ed
 .El
 .Pp
-In addition the general 
+In addition the general
 .Xr scsi 4
-ioctls may be used with the 
+ioctls may be used with the
 .Nm
-driver, if used against the `whole disk' partition (i.e. 
+driver, if used against the `whole disk' partition (i.e.
 .Pa /dev/rcd0c ) .
 .Sh NOTES
-When a 
+When a
 .Tn CD-ROM
 is changed in a drive controlled by the
 .Nm
@@ -364,12 +364,12 @@ The audio code in the
 .Nm
 driver only supports
 .Tn SCSI-2
-standard audio commands. Because many 
+standard audio commands. Because many
 .Tn CD-ROM
 manufacturers have not followed the standard, there are many
 .Tn CD-ROM
 drives for which audio will not work. Some work is planned to support
-some of the more common `broken' 
+some of the more common `broken'
 .Tn CD-ROM
 drives; however, this is not yet under way.
 .Sh FILES
@@ -389,7 +389,7 @@ None.
 .Xr scsi 4 ,
 .Xr sd 4 ,
 .Xr disklabel 5 ,
-.Xr disklabel 8 
+.Xr disklabel 8
 .Sh BUGS
 The names of the structures used for the third argument to
 .Fn ioctl

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ch.4,v 1.4 1999/07/03 02:11:12 aaron Exp $
+.\"	$OpenBSD: ch.4,v 1.5 1999/07/09 13:35:48 aaron Exp $
 .\"	$FreeBSD$
 .\" Copyright (c) 1996
 .\"	Julian Elischer <julian@freebsd.org>.  All rights reserved.
@@ -36,7 +36,7 @@
 .Sh DESCRIPTION
 The
 .Xr ch
-driver provides support for a 
+driver provides support for a
 .Em scsi
 juke box. It allows many slots of media to be multiplexed between a number
 of drives.
@@ -44,15 +44,15 @@ of drives.
 A scsi adapter and a logical scsibuss must also be separately configured
 into the system before a scsi changer can be configured.
 .Pp
-As the scsi adapter is probed during boot, the 
+As the scsi adapter is probed during boot, the
 .Em SCSI
 bus is scanned for devices. Any devices found which answer as 'Changer'
-type devices will be 'attached' to the 
+type devices will be 'attached' to the
 .Nm
 driver.
 The first device found will be attached as
 .Em ch0
-and the next, 
+and the next,
 .Em ch1
 etc.
 It is also possible to specify what ch unit a device should
@@ -67,17 +67,17 @@ are configured; Most storage for them is allocated only when found
 so a large number of configured devices is cheap. (once the first
 has included the driver).
 .Sh IOCTLS
-The following 
+The following
 .Xr ioctl 2
 call applies to the changer. It is defined in
 the header file
 .Em sys/chio.h.
 .Bl -tag -width DIOCSDINFO
-CHIOOP	
+CHIOOP
 This appears to be a 'do-everything' call.
 .El
 .Sh NOTES
-The 
+The
 .Nm
 driver was added to the system by
 .Pp

@@ -52,7 +52,7 @@ Transport Protocol
 The
 .Tn TP
 protocol provides reliable, flow-controlled, two-way
-transmission of data and record boundaries. 
+transmission of data and record boundaries.
 It is a byte-stream protocol and is accessed according to
 the
 .Dv SOCK_SEQPACKET
@@ -81,7 +81,7 @@ system call must be used
 after binding the socket with the
 .Xr bind 2
 system call.  Only
-passive sockets may use the 
+passive sockets may use the
 .Xr accept 2
 call to accept incoming connections.  Only active sockets may
 use the
@@ -113,7 +113,7 @@ Transport Protocol implemented for
 .Tn AOS R2
 at the University of Wisconsin - Madison,
 and modified for inclusion in the Berkeley Software Distribution,
-includes classes 0 and 4 
+includes classes 0 and 4
 of the
 .Tn ISO
 transport protocols
@@ -129,7 +129,7 @@ Class 0 is essentially a null transport protocol, which is used
 when the underlying network service provides reliable, sequenced,
 flow-controlled, two-way data transmission.
 Class 0 does not provide the expedited data service.
-The protocols are implemented as a single transport layer entity 
+The protocols are implemented as a single transport layer entity
 that coexists with the Internet protocol suite.
 Class 0 may be used only in the
 .Tn ISO
@@ -158,13 +158,13 @@ and
 .Xr write 2
 system calls may be used.
 .Pp
-Through the 
+Through the
 .Xr getsockopt
 and
 .Xr setsockopt
 system calls,
 .Tn TP
-supports several options 
+supports several options
 to control such things as negotiable options
 in the protocol and protocol strategies.
 The options are defined in
@@ -174,7 +174,7 @@ and are described below.
 In the tables below,
 the options marked with a pound sign
 .Ql \&#
-may be used 
+may be used
 with
 .Xr setsockopt
 after a connection is established.
@@ -182,9 +182,9 @@ Others must be used before the connection
 is established, in other words,
 before calling
 .Xr connect
-or 
+or
 .Xr accept .
-All options may be used 
+All options may be used
 with
 .Xr getsockopt
 before or
@@ -247,7 +247,7 @@ the connection.
 (char *) [none]
 .br
 Data to send when confirming a connection.
-This may also be sent by a 
+This may also be sent by a
 .Xr setsockopt
 system call, or by issuing a
 .Xr sendmsg
@@ -260,13 +260,13 @@ Boolean.
 When
 .Xr true ,
 performance measurements will be kept
-for this connection.  
+for this connection.
 When set before a connection is established, the
 active side will use a locally defined parameter on the
 connect request packet; if the peer is another
 .Tn ARGO
 implementation, this will cause performance measurement to be
-turned 
+turned
 on the passive side as well.
 See
 .Xr tpperf 8 .
@@ -299,8 +299,8 @@ is the argument used with the
 .Xr getsockopt
 or
 .Xr setsockopt
-system call. 
-It is described in 
+system call.
+It is described in
 .Aq Pa netiso/tp_user.h .
 .Pp
 The fields of the
@@ -359,7 +359,7 @@ nonzero short integer [various]
 Number of clock ticks for which a reference will
 be considered frozen after the connection to which
 it applied is closed.
-This parameter applies to classes 4 and 0 in the 
+This parameter applies to classes 4 and 0 in the
 .Tn ARGO
 implementation, despite the fact that
 the frozen reference function is required only for
@@ -367,7 +367,7 @@ class 4.
 .It Ar p_inact_ticks
 nonzero short integer [various]
 .br
-Number of clock ticks without an incoming packet from the peer after which 
+Number of clock ticks without an incoming packet from the peer after which
 .Tn TP
 close the connection.
 This parameter applies only to class 4.
@@ -388,11 +388,11 @@ The actual window size at any time
 during the lifetime of a connection
 is a function of the buffer size limit, the negotiated
 maximum TPDU
-size, and the 
+size, and the
 rate at which the user program receives data.
 This parameter applies only to class 4.
 .It Ar p_tpdusize
-unsigned char between 0x7 and 0xd. 
+unsigned char between 0x7 and 0xd.
 [0xc for class 4] [0xb for class 0]
 .br
 Log 2 of the maximum TPDU size to be negotiated.
@@ -400,7 +400,7 @@ The
 .Tn TP
 standard
 .Pf ( Tn ISO
-8473) gives an upper bound of 
+8473) gives an upper bound of
 0xd for class 4 and 0xb for class 0.
 The
 .Tn ARGO
@@ -448,11 +448,11 @@ a retransmission occurs.
 .Dv TPRX_FASTSTART :
 Begin sending the maximum amount of data permitted
 by the peer (subject to availability).
-The alternative is to start sending slowly by 
+The alternative is to start sending slowly by
 pretending the peer's window is smaller than it is, and letting
 it slowly grow up to the peer window's real size.
 This is to smooth the effect of new connections on a congested network
-by preventing a transport connection from suddenly 
+by preventing a transport connection from suddenly
 overloading the network with a burst of packets.
 This strategy is also due to Van Jacobson.
 .It Ar p_class
@@ -476,7 +476,7 @@ This parameter applies only to class 4.
 Boolean.
 [true]
 .br
-Boolean indicating that 
+Boolean indicating that
 the expedited data transport service will be negotiated.
 This parameter applies only to class 4.
 .It Ar p_use_checksum
@@ -526,7 +526,7 @@ Indicates which network service is to be used.
 .Pp
 .Dv ISO_CLNS
 indicates the connectionless network service provided
-by CLNP 
+by CLNP
 .Pf ( Tn ISO
 8473).
 .Pp
@@ -539,16 +539,16 @@ by X.25
 8878.
 .Pp
 .Dv ISO_COSNS
-indicates the 
+indicates the
 connectionless network service running over a
-connection-oriented subnetwork service: CLNP 
+connection-oriented subnetwork service: CLNP
 .Pf ( Tn ISO
 8473) over X.25
 .Pf ( Tn ISO
 8208).
 .Pp
 .Dv IN_CLNS
-indicates the 
+indicates the
 DARPA Internet connectionless network service provided by IP (RFC 791).
 .It Ar p_dummy
 Reserved for future use.
@@ -568,7 +568,7 @@ The bit numbering used is that of the RT PC, which means that bit
 .Sy Description [Default]
 .It \&0
 .Dv TPFLAG_NLQOS_PDN :
-set when the quality of the 
+set when the quality of the
 network service is
 similar to that of a public data network.
 .It \&1
@@ -618,7 +618,7 @@ entity issues a
 .Dv SIGURG
 signal, indicating that
 disconnection has occurred.
-If the signal is issued during a 
+If the signal is issued during a
 a system call, the system call may be interrupted,
 in which case the
 .Va errno
@@ -648,7 +648,7 @@ A user program should take one of the following approaches:
 If the program is servicing
 only one connection, it can block or ignore
 .Dv SIGURG
-during connection 
+during connection
 establishment.
 The advantage of this is that the
 .Va errno
@@ -665,10 +665,10 @@ service
 .Dv SIGURG .
 It can use the
 .Fn getsockopt ...TPOPT_FLAGS...
-system 
+system
 call to see if the signal
 was due to the arrival of expedited data or due to a disconnection.
-In the latter case, 
+In the latter case,
 .Xr getsockopt
 will return
 .Er ENOTCONN .

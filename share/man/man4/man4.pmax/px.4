@@ -28,7 +28,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"	$NetBSD: px.4,v 1.1 1997/11/08 07:27:56 jonathan Exp $
-.\"	$OpenBSD: px.4,v 1.3 1999/04/02 16:21:37 aaron Exp $
+.\"	$OpenBSD: px.4,v 1.4 1999/07/09 13:35:41 aaron Exp $
 .\"
 .Dd November 11, 1997
 .Dt PX 4 pmax
@@ -49,12 +49,12 @@ video display option card.
 The
 .Nm
 driver does nothing except remove the requirement to remove
-.Tn PMAG-C 
+.Tn PMAG-C
 cards in order to boot
-.Nx . 
+.Nx .
 It offers no support for either raster consoles
 or X11 servers.
-To do either requires using the undocumented packet 
+To do either requires using the undocumented packet
 protocol used to talk to the on-board blitter chip.
 .Pp
 .Sh SEE ALSO
@@ -71,7 +71,7 @@ glass-tty raster framebuffer console driver assumes
 direct bit read/write access to a framebuffer. The
 .Nm
 hardware does not provide this.
-.Nm rcons 
+.Nm rcons
 should be replaced with a driver that allows a character-painting
 interface as well as direct blitting.
 .Pp
@@ -81,6 +81,6 @@ ABI. Work on this is in progress.
 .Sh HISTORY
 The
 .Nm
-driver 
+driver
 first appeared in
 .Nx 1.3 .

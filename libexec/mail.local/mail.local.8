@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)mail.local.8	6.8 (Berkeley) 4/27/91
-.\"	$Id: mail.local.8,v 1.16 1999/07/04 19:25:20 aaron Exp $
+.\"	$Id: mail.local.8,v 1.17 1999/07/09 13:35:50 aaron Exp $
 .\"
 .Dd April 27, 1991
 .Dt MAIL.LOCAL 8
@@ -60,12 +60,12 @@ The options are as follows:
 Specify the sender's name.
 .It Fl l
 For compatibility, request that
-files named 
+files named
 .Nm username.lock
 be used for locking.  (This is the default behavior.)
 .It Fl L
 Don't create a
-.Nm username.lock 
+.Nm username.lock
 file while locking the spool.
 .El
 .Pp
@@ -94,7 +94,7 @@ The mailbox is always locked using
 .Xr flock 2
 while mail is appended. Unless the
 .Fl L
-flag is specified, a 
+flag is specified, a
 .Nm username.lock
 file is also used.
 .Pp

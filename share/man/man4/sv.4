@@ -1,4 +1,4 @@
-.\" $OpenBSD: sv.4,v 1.3 1998/09/06 22:23:19 aaron Exp $
+.\" $OpenBSD: sv.4,v 1.4 1999/07/09 13:35:47 aaron Exp $
 .\" Copyright (c) 1998 Constantine Paul Sapuntzakis
 .\" All rights reserved
 .\"
@@ -13,7 +13,7 @@
 .\"    notice, this list of conditions and the following disclaimer in the
 .\"    documentation and/or other materials provided with the distribution.
 .\" 3. The author's name or those of the contributors may not be used to
-.\"    endorse or promote products derived from this software without 
+.\"    endorse or promote products derived from this software without
 .\"    specific prior written permission.
 .\"
 .\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR(S) AND CONTRIBUTORS
@@ -43,7 +43,7 @@ The
 driver provides support for S3 SonicVibes (S3-617) chipset-based
 cards. Disabling the SRS 3-D spatial feature of the chip is
 recommended for higher quality audio. This can be done in software
-by issuing the 
+by issuing the
 .Bd -literal -offset indent
 mixerctl -w outputs.spatial=off
 .Ed

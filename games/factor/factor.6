@@ -1,4 +1,4 @@
-.\"	$OpenBSD: factor.6,v 1.4 1998/12/15 19:18:30 pjanzen Exp $
+.\"	$OpenBSD: factor.6,v 1.5 1999/07/09 13:35:56 aaron Exp $
 .\"
 .\" Copyright (c) 1989, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -59,7 +59,7 @@ factor a number, generate primes
 The
 .Nm
 utility will factor integers between -2147483648 and 2147483647 inclusive.
-When a number is factored, it is printed, followed by a 
+When a number is factored, it is printed, followed by a
 .Dq \: ,
 and the list of factors on a single line.
 Factors are listed in ascending order, and are preceded by a space.
@@ -89,7 +89,7 @@ utility prints primes in ascending order, one per line, starting at or above
 and continuing until, but not including
 .Ar stop .
 The
-.Ar start 
+.Ar start
 value must be at least 0 and not greater than
 .Ar stop .
 The
@@ -115,7 +115,7 @@ value is terminated by a non-digit character (such as a newline).
 The input line must not be longer than 255 characters.
 .Sh BUGS
 .Nm factor
-cannot handle the 
+cannot handle the
 .Dq 10 most wanted
 factor list;
 .Nm primes

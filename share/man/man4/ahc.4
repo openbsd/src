@@ -1,7 +1,7 @@
-.\"	$OpenBSD: ahc.4,v 1.5 1998/09/05 17:41:48 deraadt Exp $
+.\"	$OpenBSD: ahc.4,v 1.6 1999/07/09 13:35:48 aaron Exp $
 .\"	$NetBSD: ahc.4,v 1.1.2.1 1996/08/25 17:22:14 thorpej Exp $
 .\"
-.\" Copyright (c) 1995, 1996 
+.\" Copyright (c) 1995, 1996
 .\" 	Justin T. Gibbs.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -70,7 +70,7 @@ For one or more SCSI busses:
 .Sh DESCRIPTION
 This driver provides access to the
 .Tn SCSI
-bus connected to an Adaptec 
+bus connected to an Adaptec
 274x, 284x, 2940, 3940, or controllers based on the
 .Tn AIC7770,
 .Tn AIC7850,
@@ -85,7 +85,7 @@ ultra
 two active commands at a time per non-tagged queuing target,
 tagged queuing,
 and SCB paging which allows up to 255 active commands on all adapters
-except those using 
+except those using
 .Tn AIC7770
 chips prior to revision E.
 Tagged queuing is enabled with the
@@ -95,19 +95,19 @@ SCB paging is enabled with the
 .Dq Dv AHC_SCBPAGING_ENABLE
 configuration option.
 .Pp
-Per target configuration performed in the 
+Per target configuration performed in the
 .Tn SCSI-Select
 menu, accessible at boot
-in 
+in
 .No non- Ns Tn EISA
-models or through an 
+models or through an
 .Tn EISA
-configuration utility for 
+configuration utility for
 .Tn EISA
 models,
-is honored by this driver with the stipulation that the 
+is honored by this driver with the stipulation that the
 .Tn BIOS
-must be enabled for 
+must be enabled for
 .Tn EISA
 adaptors.  This includes synchronous/asynchronous transfers,
 maximum synchronous negotiation rate,
@@ -118,8 +118,8 @@ Note that I/O addresses are determined automatically by the probe routines,
 but care should be taken when using a 284x
 .Pq Tn VESA No local bus controller
 in an
-.Tn EISA 
-system.  Ensure that the jumpers setting the I/O area for the 284x match the 
+.Tn EISA
+system.  Ensure that the jumpers setting the I/O area for the 284x match the
 .Tn EISA
 slot into which the card is inserted to prevent conflicts with other
 .Tn EISA
@@ -130,7 +130,7 @@ Some Quantum drives (at least the Empire 2100 and 1080s) will not run on an
 Rev B in synchronous mode at 10MHz.  Controllers with this problem have a
 42 MHz clock crystal on them and run slightly above 10MHz, causing the
 drive much confusion.  Setting a maximum synchronous negotiation rate of 8MHz
-in the 
+in the
 .Tn SCSI-Select
 utility
 will allow normal function.
@@ -143,18 +143,18 @@ Cannot handle SCSI ID greater than 7 with WIDE SCSI adapter.
 .Pp
 It is dangerous to simultaneously access SCSI devices more than half
 number of SCBs. It may cause fatal disk trouble. In this case,
-diagnostics message 
+diagnostics message
 .Dq not queued, error ...
 is displayed to console.
 For example, AHA-274x and AHA-284x have only 4 SCBs, so that using 3 SCSI
 devices is dangerous, using 2 devices is OK.
 .Pp
 When you suddenly access SCSI devices on free physical memory shortage
-conditions, and if there have been very few load on SCSI devices until 
+conditions, and if there have been very few load on SCSI devices until
 then, it may cause fatal disk trouble. In this case, diagnostics
-message 
+message
 .Dq ahc0: Can't malloc SCB
-and 
+and
 .Dq not queued, error ...
 is displayed to console.
 .Pp

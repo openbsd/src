@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftpd.8,v 1.21 1999/06/14 00:16:56 millert Exp $
+.\"	$OpenBSD: ftpd.8,v 1.22 1999/07/09 13:35:50 aaron Exp $
 .\"	$NetBSD: ftpd.8,v 1.8 1996/01/14 20:55:23 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1988, 1991, 1993
@@ -87,7 +87,7 @@ defines in <netinet/in.h>.  In
 .Ox
 they are set to 49152 and 65535 respectively.
 .It Fl l
-Each successful and failed 
+Each successful and failed
 .Xr ftp 1
 session is logged using syslog with a facility of LOG_FTP.
 If this option is specified twice, the retrieve (get), store (put), append,
@@ -154,7 +154,7 @@ If the file
 .Pa /etc/ftpwelcome
 exists,
 .Nm
-prints it before issuing the 
+prints it before issuing the
 .Dq ready
 message.
 If the file
@@ -250,7 +250,7 @@ This allows users to utilize the metacharacters
 .Dq Li \&*?[]{}~ .
 .Pp
 .Nm Ftpd
-authenticates users according to five rules. 
+authenticates users according to five rules.
 .Pp
 .Bl -enum -offset indent
 .It
@@ -271,7 +271,7 @@ Bellcore.
 The login name must not appear in the file
 .Pa /etc/ftpusers .
 .It
-The user must have a standard shell returned by 
+The user must have a standard shell returned by
 .Xr getusershell 3 .
 .It
 If the user name appears in the file
@@ -283,7 +283,7 @@ as for an
 or
 .Dq ftp
 account (see next item).  However, the user must still supply a password.
-This feature is intended as a compromise between a fully anonymous account 
+This feature is intended as a compromise between a fully anonymous account
 and a fully privileged account.  The account should also be set up as for an
 anonymous account.
 .It
@@ -300,10 +300,10 @@ to log in by specifying any password (by convention an email address for
 the user should be used as the password).
 .El
 .Pp
-In the last case, 
+In the last case,
 .Nm ftpd
 takes special measures to restrict the client's access privileges.
-The server performs a 
+The server performs a
 .Xr chroot 2
 to the home directory of the
 .Dq ftp
@@ -334,7 +334,7 @@ The files pwd.db (see
 .Xr pwd_mkdb 8 )
 and
 .Xr group 5
-must be present for the 
+must be present for the
 .Xr ls
 command to be able to produce owner names rather than numbers.
 The password field in

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: funopen.3,v 1.7 1999/05/12 13:26:47 aaron Exp $
+.\"	$OpenBSD: funopen.3,v 1.8 1999/07/09 13:35:23 aaron Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -55,7 +55,7 @@ The
 function
 associates a stream with up to four
 .Dq Tn I/O No functions .
-Either 
+Either
 .Fa readfn
 or
 .Fa writefn
@@ -70,7 +70,7 @@ close the new stream.
 .Pp
 In general, omitting a function means that any attempt to perform the
 associated operation on the resulting stream will fail.
-If the close function is omitted, closing the stream will flush 
+If the close function is omitted, closing the stream will flush
 any buffered output and then succeed.
 .Pp
 The calling conventions of
@@ -87,7 +87,7 @@ and
 .Xr close 2
 with the exceptions that they are passed the
 .Fa cookie
-argument specified to 
+argument specified to
 .Fn funopen
 in place of the traditional file descriptor argument and that
 the seek function takes an fpos_t argument and not an off_t
@@ -111,7 +111,7 @@ Additionally, all of the functions should set the external variable
 .Va errno
 appropriately if an error occurs.
 .Pp
-An error on 
+An error on
 .Fn closefn
 does not keep the stream open.
 .Pp
@@ -125,7 +125,7 @@ as calls to
 .Fn funopen
 with only a read or write function specified.
 .Sh RETURN VALUES
-Upon successful completion, 
+Upon successful completion,
 .Fn funopen
 returns a
 .Dv FILE

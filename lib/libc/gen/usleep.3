@@ -1,4 +1,4 @@
-.\"	$OpenBSD: usleep.3,v 1.9 1999/06/03 10:03:24 aaron Exp $
+.\"	$OpenBSD: usleep.3,v 1.10 1999/07/09 13:35:20 aaron Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -52,7 +52,7 @@ microseconds of time.
 System activity or time spent in processing the
 call may lengthen the sleep slightly.
 .Pp
-This routine is implemented using 
+This routine is implemented using
 .Xr nanosleep 2 ;
 it requires one system call each time it is invoked.
 A similar but less compatible function can be obtained with a single
@@ -64,12 +64,12 @@ with other uses of
 .Fn usleep
 interferes with interval timers anymore).
 .Sh RETURN VALUE
-If the 
+If the
 .Fn usleep
 function returns because the requested time has elapsed, the value
 returned will be zero.
 .Pp
-If the 
+If the
 .Fn usleep
 function returns due to the delivery of a signal, the value returned
 will be the \-1, and the global variable
@@ -107,5 +107,5 @@ function conforms to
 .Sh HISTORY
 The
 .Fn usleep
-function appeared in 
+function appeared in
 .Bx 4.3 .

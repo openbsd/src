@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tzset.3,v 1.10 1999/05/25 00:55:57 aaron Exp $
+.\"	$OpenBSD: tzset.3,v 1.11 1999/07/09 13:35:21 aaron Exp $
 .Dd May 24, 1999
 .Dt TZSET 3
 .Os
@@ -7,7 +7,7 @@
 .Nd initialize time conversion information
 .Sh SYNOPSIS
 .Fd #include <time.h>
-.Ft void 
+.Ft void
 .Fn tzset "void"
 .Sh DESCRIPTION
 .Fn tzset
@@ -34,13 +34,13 @@ correction).
 .Pp
 If
 .Ev TZ
-appears in the environment and its value begins with a colon, 
+appears in the environment and its value begins with a colon,
 it is used as a pathname of a file
 from which to read the time conversion information.
 .Pp
 If
 .Ev TZ
-appears in the environment and its value does not begin with a colon, 
+appears in the environment and its value does not begin with a colon,
 it is first used as the
 pathname of a file from which to read the time conversion information,
 and, if that file cannot be read, is used directly as a specification of
@@ -61,7 +61,7 @@ is used directly as a specification of the time conversion information,
 it must have the following syntax (spaces inserted for clarity):
 .Bd -ragged -offset indent
 .Ar std
-.Ar offset 
+.Ar offset
 .Op Ar dst Op Ar offset
 .Op , Ar rule
 .Ed
@@ -98,14 +98,14 @@ Coordinated Universal Time.
 has the form
 .Pq spaces inserted for clarity :
 .Bd -ragged -offset indent
-.Ar hh 
+.Ar hh
 .Op : Ar mm Op : Ar ss
 .Ed
 .Pp
 The minutes
 .Pq Ar mm
 and seconds
-.Pq Ar ss 
+.Pq Ar ss
 are optional.  The hour
 .Pq Ar hh
 is required and may be a single digit.  The
@@ -130,11 +130,11 @@ Indicates when to change to and back from summer time.
 has the form (spaces added for clarity):
 .Pp
 .Bd -ragged -offset indent
-.Ar date 
-/ 
-.Ar time , 
-.Ar date 
-/ 
+.Ar date
+/
+.Ar time ,
+.Ar date
+/
 .Ar time
 .Ed
 .Pp
@@ -171,7 +171,7 @@ The zero-based Julian day
 \&<\&= 365
 .Pc .
 Leap days are counted, and it is possible to refer to February 29.
-.It Xo M Ar m No . Ar n 
+.It Xo M Ar m No . Ar n
 .No . Ar d
 .Xc
 Day
@@ -185,7 +185,7 @@ of week
 .Ar n
 .Po
 1 \&<\&=
-.Ar n 
+.Ar n
 \&<\&= 5
 .Pc
 of month
@@ -195,11 +195,11 @@ of month
 .Ar m
 \&<\&= 12
 .Pc ,
-where week 5 means 
-.Do 
-the last 
-.Ar d 
-day in month 
+where week 5 means
+.Do
+the last
+.Ar d
+day in month
 .Ar m
 .Dc
 which may occur in either the fourth or the fifth week.  Week 1 is the
@@ -215,7 +215,7 @@ has the same format as
 except that no leading sign
 .Po
 .Dq \&-
-or 
+or
 .Dq \&+
 .Pc
 is allowed.  The default, if
@@ -242,7 +242,7 @@ values in
 .Ev TZ .
 .Pp
 For compatibility with System V Release 3.1, a semicolon
-.Pq Sq \&; 
+.Pq Sq \&;
 may be used to separate the
 .Ar rule
 from the rest of the specification.

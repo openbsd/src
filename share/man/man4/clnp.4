@@ -47,7 +47,7 @@
 .Fn socket AF_ISO SOCK_RAW 0
 .Sh DESCRIPTION
 .Tn CLNP
-is the connectionless-mode network protocol used by the 
+is the connectionless-mode network protocol used by the
 connectionless-mode network service. This protocol is specified in
 .Tn ISO
 8473.
@@ -64,11 +64,11 @@ and
 calls, though the
 .Xr connect 2
 call may also be used to fix the destination for future
-packets (in which case the 
+packets (in which case the
 .Xr read 2
 or
 .Xr recv 2
-and 
+and
 .Xr write 2
 or
 .Xr send 2
@@ -116,7 +116,7 @@ service option is added to the packet. The sequencing preferred bit and
 the low transit delay bit are set in this option.
 .Pp
 If a packet is forwarded containing the globally unique quality of
-service option, and the interface through which the packet will be 
+service option, and the interface through which the packet will be
 transmitted has a queue length greater than
 .Em congest_threshold ,
 then the congestion experienced bit is set in the quality of service option.
@@ -125,7 +125,7 @@ The threshold value stored in
 .Em congest_threshold
 may be tuned.
 .Pp
-When a packet is received with the 
+When a packet is received with the
 globally unique quality of service option present, and the
 congestion experienced bit is set, then the transport congestion
 control function is called.
@@ -144,7 +144,7 @@ connected;
 When the system runs out of memory for
 an internal data structure;
 .It Bq Er EADDRNOTAVAIL
-When an attempt is made to create a 
+When an attempt is made to create a
 socket with a network address for which no network interface
 exists;
 .It Bq Er EHOSTUNREACH

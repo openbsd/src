@@ -44,7 +44,7 @@
 .Fn gtty "int fd" "struct sgttyb *buf"
 .Sh DESCRIPTION
 .Bf -symbolic
-These interfaces are obsoleted by 
+These interfaces are obsoleted by
 .Xr ioctl 2 .
 They are available from the compatibility library, libcompat.
 .Ef
@@ -72,7 +72,7 @@ the
 .Fn gtty
 call is
 .Ql ioctl(fd, TIOCGETP, buf) .
-See 
+See
 .Xr ioctl 2
 and
 .Xr tty 4
@@ -90,5 +90,5 @@ The
 .Fn stty
 and
 .Fn gtty
-functions appeared in 
+functions appeared in
 .Bx 4.2 .

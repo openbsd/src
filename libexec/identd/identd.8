@@ -1,4 +1,4 @@
-.\"	$OpenBSD: identd.8,v 1.12 1999/06/11 16:56:21 aaron Exp $
+.\"	$OpenBSD: identd.8,v 1.13 1999/07/09 13:35:50 aaron Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -67,12 +67,12 @@ connections and returning the user name of the
 process owning the connection.
 .Sh OPTIONS
 .Bl -tag -width Ds
-.It Fl i 
-Tells 
+.It Fl i
+Tells
 .Nm identd
-to run as a process started from 
+to run as a process started from
 .Xr inetd 8
-with the "nowait" option in the  
+with the "nowait" option in the
 .Pa /etc/inetd.conf
 file. Use of this mode will make
 .Xr inetd 8
@@ -80,17 +80,17 @@ start one
 .Nm
 daemon for each connection request. This is the default mode of operation.
 .It Fl w
-Tells 
+Tells
 .Nm identd
-to run as a process started from 
+to run as a process started from
 .Xr inetd 8
-with the "wait" option in the  
+with the "wait" option in the
 .Pa /etc/inetd.conf
 file.  This mode of operation will start a copy of
 .Nm
 at the first connection request and then
 .Nm
-will handle subsequent requests. 
+will handle subsequent requests.
 Previous versions listed this as the preferred mode of
 operation due to the initial overhead of parsing the kernel nlist.
 This version does not use kmem or nlist parsing, so this reasoning
@@ -119,24 +119,24 @@ switch to after binding itself to the
 .Tn TCP/IP
 port if running as a stand alone daemon
 .It Fl p Ar port
-Specify an alternative port number or service name 
-on which to listen when running as a stand alone daemon 
+Specify an alternative port number or service name
+on which to listen when running as a stand alone daemon
 Default is "auth" (113).
 .It Fl a Ar address
-Specify a local IP address in dotted quad format 
-to bind the listen socket to if 
+Specify a local IP address in dotted quad format
+to bind the listen socket to if
 running as a standalone daemon. by default the daemon
 listens on all local IP addresses.
 .It Fl V
 Print the version number and the exit.
 .It Fl l
-Use 
+Use
 .Xr syslogd 8
 for logging purposes.
 .It Fl v
-Log every request to syslog if 
+Log every request to syslog if
 .Fl l
-above is specified. 
+above is specified.
 .It Fl o
 Do not reveal operating system type;
 always return
@@ -159,11 +159,11 @@ in upper case characters.
 .It Fl n
 Always return uid numbers instead of usernames.
 .It Fl N
-When replying with a user name or ID, first 
+When replying with a user name or ID, first
 check for a file
 .Pa .noident
-in the user's home directory. If this file is accessible, return 
-.Dq HIDDEN-USER 
+in the user's home directory. If this file is accessible, return
+.Dq HIDDEN-USER
 instead of the normal USERID response.
 .It Fl m
 Allow multiple requests to be
@@ -181,14 +181,14 @@ that should not be available to outsiders.
 .Xr inetd.conf 5
 .Sh NOTES
 .Nm
-uses the 
+uses the
 .Li LOG_DAEMON
 .Xr syslogd 8
 facility to log messages.
 .Pp
-Unlike previous versions of 
+Unlike previous versions of
 .Nm identd,
-this version uses 
+this version uses
 .Xr sysctl 3
 to obtain information from the kernel instead of parsing kmem. This
 version does not require privilege beyond what is needed to bind
@@ -196,7 +196,7 @@ the listen port if running as a standalone daemon.
 .Sh BUGS
 Since
 .Nm identd
-should typically not be run as a privileged user or group, 
+should typically not be run as a privileged user or group,
 .Pa .noident
 files for use when running with the
 .Fl N

@@ -1,4 +1,4 @@
-.\"	$Id: installboot.8,v 1.4 1999/07/08 22:56:09 deraadt Exp $
+.\"	$Id: installboot.8,v 1.5 1999/07/09 13:35:34 aaron Exp $
 .\"
 .Dd 31 May 1995
 .Dt INSTALLBOOT 8 mvme88k
@@ -46,7 +46,7 @@ on which the file system containing
 is mounted.
 .El
 .Sh EXAMPLE
-.Bd -literal -offset 
+.Bd -literal -offset
 cd /usr/mdec
 cp bootsd /
 installboot -v /bootsd ./bootxx /dev/rsd0a
@@ -58,7 +58,7 @@ the raw device, but that is not allowed with the kernel
 .Nm securelevel
 variable set to a value greater than zero (the default), so
 .Nm installboot
-only works in single-user mode (or insecure mode - see 
+only works in single-user mode (or insecure mode - see
 .Xr init 8 ).
 .Sh "SEE ALSO"
 .Xr disklabel 8 ,

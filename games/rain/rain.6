@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rain.6,v 1.8 1998/12/15 19:18:50 pjanzen Exp $
+.\"	$OpenBSD: rain.6,v 1.9 1999/07/09 13:35:57 aaron Exp $
 .\"
 .\" Copyright (c) 1989, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -37,15 +37,15 @@
 .Dt RAIN 6
 .Os
 .Sh NAME
-.Nm rain 
+.Nm rain
 .Nd animated raindrops display
 .Sh SYNOPSIS
 .Nm rain
 .Op Fl d Ar delay
 .Sh DESCRIPTION
 .Nm
-is modeled after the 
-.Tn VAX/VMS 
+is modeled after the
+.Tn VAX/VMS
 program of the same name.
 To obtain the proper effect, either the terminal must be set for 9600 baud
 or the
@@ -55,7 +55,7 @@ reasonable delay is 120; the default is 0.
 .Pp
 As with all programs that use
 .Tn termcap ,
-the 
+the
 .Ev TERM
 environment variable must be set (and exported) to the type of the
 terminal being used.

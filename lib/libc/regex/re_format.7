@@ -1,4 +1,4 @@
-.\"	$OpenBSD: re_format.7,v 1.6 1999/05/23 14:11:02 aaron Exp $
+.\"	$OpenBSD: re_format.7,v 1.7 1999/07/09 13:35:22 aaron Exp $
 .\"
 .\" Copyright (c) 1997, Phillip F Knaack. All rights reserved.
 .\"
@@ -60,24 +60,24 @@ they will be discussed at the end.
 `\(dg' marks decisions on these aspects that
 may not be fully portable to other 1003.2 implementations.
 .Pp
-A (modern) RE is one\(dg or more non-empty\(dg 
+A (modern) RE is one\(dg or more non-empty\(dg
 .Em branches ,
 separated by `|'. It matches anything that matches one of the branches.
 .Pp
-A branch is one\(dg or more 
+A branch is one\(dg or more
 .Em pieces ,
 concatenated.
 It matches a match for the first, followed by a match for the second, etc.
 .Pp
 A piece is an
 .Em atom
-possibly followed by a single\(dg `*', `+', `?', or 
+possibly followed by a single\(dg `*', `+', `?', or
 .Em bound .
 An atom followed by `*' matches a sequence of 0 or more matches of the atom.
 An atom followed by `+' matches a sequence of 1 or more matches of the atom.
 An atom followed by `?' matches a sequence of 0 or 1 matches of the atom.
 .Pp
-A 
+A
 .Em bound
 is `{' followed by an unsigned decimal integer,
 possibly followed by `,'
@@ -95,12 +95,12 @@ An atom followed by a bound
 containing two integers \fIi\fR and \fIj\fR matches
 a sequence of \fIi\fR through \fIj\fR (inclusive) matches of the atom.
 .Pp
-An 
+An
 .Em atom
 is a regular expression enclosed in `()'
 (matching a match for the regular expression),
 an empty set of `()' (matching the null string)\(dg,
-a 
+a
 .Em "bracket expression"
 (see below), `.'
 (matching any single character), `^' (matching the null string at the
@@ -116,7 +116,7 @@ A `{' followed by a character other than a digit is an ordinary
 character, not the beginning of a bound\(dg.
 It is illegal to end an RE with `\e'.
 .Pp
-A 
+A
 .Em "bracket expression"
 is a list of characters enclosed in `[]'.
 It normally matches any single character from the list (but see below).
@@ -126,7 +126,7 @@ it matches any single character
 .Em not
 from the rest of the list.
 If two characters in the list are separated by `\-', this is shorthand
-for the full 
+for the full
 .Em range
 of characters between those two (inclusive) in the
 collating sequence,
@@ -152,7 +152,7 @@ or a collating-sequence name for either)
 enclosed in `[.' and `.]' stands for the
 sequence of characters of that collating element.
 The sequence is a single element of the bracket expression's list.
-A bracket expression containing a multi-character collating element 
+A bracket expression containing a multi-character collating element
 can thus match more than one character,
 e.g. if the collating sequence includes a `ch' collating element,
 then the RE `[[.ch.]]*c' matches the first five characters
@@ -168,7 +168,7 @@ then `[[=o=]]', `[[=\o'o^'=]]', and `[o\o'o^']' are all synonymous.
 An equivalence class may not\(dg be an endpoint
 of a range.
 .Pp
-Within a bracket expression, the name of a 
+Within a bracket expression, the name of a
 .Em "character class"
 enclosed
 in `[:' and `:]' stands for the list of all characters belonging to that
@@ -261,7 +261,7 @@ RE or\(dg the end of a parenthesized subexpression,
 and `*' is an ordinary character if it appears at the beginning of the
 RE or the beginning of a parenthesized subexpression
 (after a possible leading `^').
-Finally, there is one new type of atom, a 
+Finally, there is one new type of atom, a
 .Em "back reference" :
 `\e' followed by a non-zero decimal digit
 .Em d

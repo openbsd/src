@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hier.7,v 1.10 1999/05/16 19:57:38 alex Exp $
+.\"	$OpenBSD: hier.7,v 1.11 1999/07/09 13:35:37 aaron Exp $
 .\"	$NetBSD: hier.7,v 1.7 1994/11/30 19:07:10 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -51,7 +51,7 @@ Alternate (backup) location for the root user's home directory.
 User utilities fundamental to both single and multi-user environments.
 .It Li /bsd
 Pure kernel executable (the operating system loaded into memory
-at boot-time).  
+at boot-time).
 .It Li /dev/
 Block and character device files.
 .Pp
@@ -59,7 +59,7 @@ Block and character device files.
 .It Li MAKEDEV
 Script for creating device files (see
 .Xr makedev 8 ) .
-.It Li fd/ 
+.It Li fd/
 File descriptor files (see
 .Xr fd 4 ) .
 .El
@@ -81,14 +81,14 @@ Local timezone information (see
 .It Li disklabels/
 Backup disklabels (see
 .Xr disklabel 8 ) .
-.It Li kerberosIV/ 
+.It Li kerberosIV/
 Configuration files for the Kerberos version IV system (see
 .Xr kerberos 1 ) .
-.It Li mtree/ 
+.It Li mtree/
 .Xr mtree
 configuration files (see
 .Xr mtree 8 ) .
-.It Li namedb/ 
+.It Li namedb/
 .Xr named
 configuration files (see
 .Xr named 8 ) .
@@ -109,7 +109,7 @@ System programs and administration utilities
 fundamental to both single and multi-user environments.
 .It Li /stand/
 Programs used in a stand-alone environment.
-.It Li /tmp/ 
+.It Li /tmp/
 Temporary files, usually an
 .Xr mfs 8
 memory-based filesystem (the contents
@@ -240,13 +240,13 @@ Example
 .Dq \&.
 (dot) files for new accounts.
 .It Li tabset/
-Tab description files for a variety of terminals; used in 
+Tab description files for a variety of terminals; used in
 the termcap file (see
 .Xr termcap 5 ) .
 .It Li tmac/
 Text processing macros (see
 .Xr nroff 1
-and 
+and
 .Xr troff 1 ) .
 .It Li zoneinfo/
 Timezone configuration information (see
@@ -302,7 +302,7 @@ Source for files in
 Multi-purpose log, temporary, transient, and spool files.
 .Pp
 .Bl -tag -width "preserve/" -compact
-.It Li account/ 
+.It Li account/
 System accounting files.
 .Pp
 .Bl -tag -width Fl -compact
@@ -317,11 +317,11 @@ command scheduling files (see
 .Xr at 1 ) .
 .It Li backups/
 Miscellaneous backup files.
-.It Li db/ 
+.It Li db/
 Miscellaneous automatically generated system-specific database files.
-.It Li games/ 
+.It Li games/
 Miscellaneous game status and log files.
-.It Li log/ 
+.It Li log/
 Miscellaneous system log files.
 .Pp
 .Bl -tag -width Fl -compact
@@ -330,13 +330,13 @@ Login/logout log (see
 .Xr wtmp 5 ) .
 .El
 .Pp
-.It Li mail/ 
+.It Li mail/
 User mailbox files.
 .It Li preserve/
 Temporary home of files preserved after an accidental death
 of an editor (see
 .Xr ex 1 ) .
-.It Li quotas/ 
+.It Li quotas/
 Filesystem quota information files.
 .It Li run/
 System information files describing various info about the
@@ -348,32 +348,32 @@ Database of current users (see
 .Xr utmp 5 ) .
 .El
 .Pp
-.It Li rwho/ 
+.It Li rwho/
 .Xr rwho
 data files (see
 .Xr rwhod 8 ,
 .Xr rwho 1 ,
 and
 .Xr ruptime 1 ) .
-.It Li spool/ 
+.It Li spool/
 Miscellaneous printer and mail system spooling directories.
 .Pp
 .Bl -tag -width Fl -compact
-.It Li ftp/ 
+.It Li ftp/
 Commonly ~ftp; the anonymous ftp root directory.
-.It Li mqueue/ 
+.It Li mqueue/
 Undelivered mail queue (see
 .Xr sendmail 8 ) .
 .It Li output/
 Line printer spooling directories.
-.It Li uucp/ 
+.It Li uucp/
 .Xr uucp
 spool directory.
 .It Li uucppublic/
 Commonly ~uucp; public uucp temporary directory.
 .El
 .Pp
-.It Li tmp/ 
+.It Li tmp/
 Temporary files that are kept between system reboots.
 .El
 .El
@@ -386,7 +386,7 @@ Temporary files that are kept between system reboots.
 .Xr whatis 1 ,
 .Xr whereis 1 ,
 .Xr which 1 ,
-.Xr fsck 8 
+.Xr fsck 8
 .Sh HISTORY
 A
 .Nm

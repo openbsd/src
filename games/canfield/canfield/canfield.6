@@ -1,4 +1,4 @@
-.\"	$OpenBSD: canfield.6,v 1.2 1999/03/20 18:54:43 pjanzen Exp $
+.\"	$OpenBSD: canfield.6,v 1.3 1999/07/09 13:35:55 aaron Exp $
 .\"	$NetBSD: canfield.6,v 1.4 1995/03/21 15:08:30 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1993
@@ -38,12 +38,12 @@
 .Dt CANFIELD 6
 .Os
 .Sh NAME
-.Nm canfield , 
+.Nm canfield ,
 .Nm cfscores
 .Nd the solitaire card game canfield
 .Sh SYNOPSIS
 .Nm canfield
-.Nm cfscores 
+.Nm cfscores
 .Op Fl a
 .Op Ar user
 .Sh DESCRIPTION
@@ -51,7 +51,7 @@ If you have never played solitaire before, it is recommended
 that you consult a solitaire instruction book. In
 Canfield, tableau cards may be built on each other downward
 in alternate colors. An entire pile must be moved as a unit
-in building. Top cards of the piles are available 
+in building. Top cards of the piles are available
 to be played on foundations, but never into empty spaces.
 .Pp
 Spaces must be filled from the stock. The top card of
@@ -63,19 +63,19 @@ keep them open until he wishes to use them.
 Cards are dealt from the hand to the talon by threes
 and this repeats until there are no more cards in the hand
 or the player quits. To have cards dealt onto the talon the
-player types 
-.Sq Ic ht 
+player types
+.Sq Ic ht
 for his move. Foundation base cards are
 also automatically moved to the foundation when they become
 available.
 .Pp
-The command 
+The command
 .Sq Ic c
 causes
 .Nm canfield
 to maintain card counting statistics
-on the bottom of the screen. 
-When properly used this can greatly increase one's chances of 
+on the bottom of the screen.
+When properly used this can greatly increase one's chances of
 winning.
 .Pp
 The rules for betting are somewhat less strict than
@@ -106,7 +106,7 @@ Playing time is charged at a rate of $1 per minute.
 With no arguments, the program
 .Nm cfscores
 prints out the current status of your canfield account.
-If a 
+If a
 .Ar user
 name is specified,
 it prints out the status of their canfield account.
@@ -129,5 +129,5 @@ It is impossible to cheat.
 .Sh AUTHORS
 Originally written: Steve Levine.
 .Pp
-Further random hacking by: Steve Feldman, Kirk McKusick, 
+Further random hacking by: Steve Feldman, Kirk McKusick,
 Mikey Olson, and Eric Allman.

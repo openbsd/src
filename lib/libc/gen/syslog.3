@@ -1,4 +1,4 @@
-.\"	$OpenBSD: syslog.3,v 1.6 1999/06/06 06:57:45 pjanzen Exp $
+.\"	$OpenBSD: syslog.3,v 1.7 1999/07/09 13:35:19 aaron Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -142,7 +142,7 @@ cannot pass the message to
 .Xr syslogd
 it will attempt to write the message to the console
 .Pq Pa /dev/console .
-.It Dv LOG_NDELAY 
+.It Dv LOG_NDELAY
 Open the connection to
 .Xr syslogd
 immediately.
@@ -211,7 +211,7 @@ Similarly for
 .Dv LOG_LOCAL1
 through
 .Dv LOG_LOCAL7 .
-.El 
+.El
 .Pp
 The
 .Fn closelog
@@ -267,5 +267,5 @@ syslog(LOG_INFO|LOG_LOCAL2, "foobar error: %m");
 .Xr syslogd 8
 .Sh HISTORY
 These
-functions appeared in 
+functions appeared in
 .Bx 4.2 .

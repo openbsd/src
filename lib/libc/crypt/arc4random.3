@@ -1,4 +1,4 @@
-.\" $OpenBSD: arc4random.3,v 1.10 1999/07/04 18:59:42 aaron Exp $
+.\" $OpenBSD: arc4random.3,v 1.11 1999/07/09 13:35:15 aaron Exp $
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -47,19 +47,19 @@
 .Fn arc4random_addrandom "u_char *dat" "int datlen"
 .Sh DESCRIPTION
 The
-.Fn arc4random 
+.Fn arc4random
 function uses the key stream generator employed by the
 arc4 cipher, which uses 8*8 8 bit S-Boxes. The S-Boxes
 can be in about (2**1700) states.
 .Pp
 The
 .Fn arc4random_stir
-function reads data from 
+function reads data from
 .Pa /dev/arandom
 and uses it to permute the S-Boxes via
 .Fn arc4random_addrandom .
 .Pp
-There is no need to call 
+There is no need to call
 .Fn arc4random_stir
 before using
 .Fn arc4random ,
@@ -72,7 +72,7 @@ automatically initializes itself.
 .Xr random 3
 .Sh HISTORY
 An algorithm call
-.Pa RC4 
+.Pa RC4
 was designed by RSA Data Security, Inc.  It was considered a trade secret,
 but not trademarked.
 A clone of this was posted anonymously to the USENET and was confirmed to
@@ -81,5 +81,5 @@ Because of the trade secret situation, RSA Data Security, Inc. can do
 nothing about the situation.
 Since
 .Pa RC4
-used to be a trade secret, the cipher is now referred to as 
+used to be a trade secret, the cipher is now referred to as
 .Pa ARC4 .

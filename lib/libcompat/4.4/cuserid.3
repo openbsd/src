@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)ctermid.3	5.2 (Berkeley) 4/19/91
-.\"	$Id: cuserid.3,v 1.2 1999/07/02 21:12:58 aaron Exp $
+.\"	$Id: cuserid.3,v 1.3 1999/07/09 13:35:23 aaron Exp $
 .\"
 .Dd November 28, 1993
 .Dt CUSERID 3
@@ -49,7 +49,7 @@ This interface is available from the compatibility library, libcompat.
 .Pp
 The
 .Fn cuserid
-function returns a character string representation of the user name 
+function returns a character string representation of the user name
 associated with the effective user ID of the calling process.
 .Pp
 If
@@ -68,25 +68,25 @@ file
 bytes long.
 Otherwise, the user name is copied to a static buffer.
 .Sh RETURN VALUES
-If 
+If
 .Fa buf
 is not the
-.Dv NULL 
+.Dv NULL
 pointer,
-.Fa buf 
+.Fa buf
 is returned;
 otherwise the address of the static buffer is returned.
 .Pp
-If the user name could not be determined, if 
+If the user name could not be determined, if
 .Fa buf
-is not the 
+is not the
 .Dv NULL
 pointer, the null character
 .Sq \e0
-will be stored at 
+will be stored at
 .Fa *buf ;
 otherwise
-the 
+the
 .Dv NULL
 pointer is returned.
 .Sh SEE ALSO
@@ -99,16 +99,16 @@ function conforms to
 .St -p1003.1-88 .
 .Sh BUGS
 Due to irreconcilable differences in historic implementations,
-.Fn cuserid 
+.Fn cuserid
 was removed from the
-.St -p1003.1-90 
+.St -p1003.1-90
 standard.
 This implementation exists purely for compatibility with existing programs.
-New programs should use one of the following three alternatives to 
+New programs should use one of the following three alternatives to
 obtain the user name:
 .Pp
 .Bl -enum -offset indent -compact
-.It 
+.It
 .Fn getlogin
 to return the user's login name.
 .It
@@ -123,10 +123,10 @@ The
 .Fn cuserid
 function uses
 .Fn getpwuid ;
-thus the results of a user's call to 
+thus the results of a user's call to
 .Fn getpwent ,
 .Fn getpwnam
 or
 .Fn getpwuid
-will be overwritten by subsequent calls to 
+will be overwritten by subsequent calls to
 .Fn cuserid .

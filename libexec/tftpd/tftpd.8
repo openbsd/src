@@ -1,4 +1,4 @@
-.\"   $OpenBSD: tftpd.8,v 1.6 1999/05/15 00:56:07 aaron Exp $
+.\"   $OpenBSD: tftpd.8,v 1.7 1999/07/09 13:35:51 aaron Exp $
 .\"
 .\" Copyright (c) 1983, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)tftpd.8	6.7 (Berkeley) 5/13/91
-.\"	$OpenBSD: tftpd.8,v 1.6 1999/05/15 00:56:07 aaron Exp $
+.\"	$OpenBSD: tftpd.8,v 1.7 1999/07/09 13:35:51 aaron Exp $
 .\"
 .Dd June 11, 1997
 .Dt TFTPD 8
@@ -68,7 +68,7 @@ The server is normally started by
 The use of
 .Xr tftp 1
 does not require an account or password on the remote system.
-Due to the lack of authentication information, 
+Due to the lack of authentication information,
 .Nm
 will allow only publicly readable files to be
 accessed.
@@ -91,7 +91,7 @@ names are prefixed by the one of the given directories.
 .Pp
 If the
 .Fl c
-flag is used, 
+flag is used,
 .Nm
 will allow new files to be created; otherwise uploaded files must already
 exist.  Files are created with default permissions allowing anyone to read

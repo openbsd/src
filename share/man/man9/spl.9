@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spl.9,v 1.2 1999/05/23 14:11:40 aaron Exp $
+.\"	$OpenBSD: spl.9,v 1.3 1999/07/09 13:35:35 aaron Exp $
 .\"	$NetBSD: spl.9,v 1.1 1997/03/11 06:15:05 mikel Exp $
 .\"
 .\" Copyright (c) 1997 Michael Long.
@@ -87,7 +87,7 @@ are:
 .Bl -tag -width splsoftserialXX
 .It Fn splhigh
 blocks all hard and soft interrupts.  It is used for code that cannot
-tolerate any interrupts, like hardware context switching code and 
+tolerate any interrupts, like hardware context switching code and
 the
 .Xr ddb 4
 in-kernel debugger.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compat_freebsd.8,v 1.5 1998/09/13 03:50:23 aaron Exp $
+.\"	$OpenBSD: compat_freebsd.8,v 1.6 1999/07/09 13:35:36 aaron Exp $
 .\"	$NetBSD: compat_linux.8,v 1.1 1995/03/05 23:30:36 fvdl Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -39,9 +39,9 @@
 .Sh DESCRIPTION
 OpenBSD supports running FreeBSD binaries. Most binaries should work,
 except programs that use FreeBSD-specific features. These include
-i386-specific calls, such as syscons utilities, and audio devices. 
+i386-specific calls, such as syscons utilities, and audio devices.
 .Pp
-The FreeBSD compatibility feature is active for kernels compiled 
+The FreeBSD compatibility feature is active for kernels compiled
 with the
 .Nm COMPAT_FREEBSD
 option enabled.
@@ -165,8 +165,8 @@ they don't conflict with their OpenBSD counterparts. A good idea
 would be to install them in /usr/local/bin as ldconfig-freebsd and
 ldd-freebsd.
 .Pp
-Run the FreeBSD ldconfig program with directory arguments in 
-which the FreeBSD runtime linker should look for shared libs. 
+Run the FreeBSD ldconfig program with directory arguments in
+which the FreeBSD runtime linker should look for shared libs.
 /usr/lib are standard, you could run like the following:
 .Pp
 .Bl -tag -width 123 -compact -offset indent
@@ -175,10 +175,10 @@ which the FreeBSD runtime linker should look for shared libs.
 .It me@openbsd% ldconfig-freebsd /usr/X11R6/lib /usr/local/lib
 .El
 .Pp
-Note that argument directories of ldconfig are 
+Note that argument directories of ldconfig are
 mapped to /emul/freebsd/XXXX by
 OpenBSD's compat code, and should exist as such on your system.
-Make sure /emul/freebsd/var/run/ld.so.hints exists when you run 
+Make sure /emul/freebsd/var/run/ld.so.hints exists when you run
 FreeBSD's ldconfig, if not, you may lose OpenBSD's /var/run/ld.so.hints.
 
 FreeBSD ldconfig should be statically
@@ -264,7 +264,7 @@ libXt.so.6.0           XFree86-3.1.1/X311bin.tgz
 .\" libXt.so.3             oldlibs
 .Ed
 .Pp
-The Files called ``bindist.??'' are tar-ed, gzipped and split, 
+The Files called ``bindist.??'' are tar-ed, gzipped and split,
 so you can extract contents by ``cat bindist.?? | tar zpxf -''.
 .Pp
 Extract the files from these gzipped tarfiles in your /emul/freebsd directory

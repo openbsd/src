@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.26 1999/07/04 18:59:42 aaron Exp $
+.\"	$OpenBSD: sysctl.3,v 1.27 1999/07/09 13:35:19 aaron Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -51,7 +51,7 @@ The information available from
 .Fn sysctl
 consists of integers, strings, and tables.
 Information may be retrieved and set from the command interface
-using the 
+using the
 .Xr sysctl 8
 utility.
 .Pp
@@ -90,7 +90,7 @@ and
 should be set to
 .Dv NULL .
 .Pp
-The size of the available data can be determined by calling 
+The size of the available data can be determined by calling
 .Fn sysctl
 with a
 .Dv NULL
@@ -171,9 +171,9 @@ Each time it runs,
 .Fn sysctl
 gets the list of debugging variables from the kernel and
 displays their current values.
-The system defines twenty 
+The system defines twenty
 .Li struct ctldebug
-variables named 
+variables named
 .Va debug0
 through
 .Va debug19 .
@@ -389,7 +389,7 @@ attempts to retrieve any of the
 .Dv KERN_PROF
 values will fail with
 .Er EOPNOTSUPP .
-The third level names for the string and integer profiling information 
+The third level names for the string and integer profiling information
 is detailed below.
 The changeable column shows whether a process with appropriate
 privileges may change the value.
@@ -484,7 +484,7 @@ privileges may change the value.
 Get or set various global information about the
 .Tn IP
 security protocols.
-The third level name is the protocol.   
+The third level name is the protocol.
 The fourth level name is the variable name.
 The currently defined protocols and names are:
 .Bl -column "Protocol name" "Variable name" "integer" -offset indent

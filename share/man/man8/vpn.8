@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.22 1999/07/07 20:04:31 kjell Exp $
+.\" $OpenBSD: vpn.8,v 1.23 1999/07/09 13:35:36 aaron Exp $
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -42,19 +42,19 @@ linked via a cryptographically secured tunnel to the security gateway of
 the other subnet.
 .Xr ipsec 4
 is used to provide the necessary network-layer cryptographic services.
-This document describes the configuration process for setting up a 
+This document describes the configuration process for setting up a
 .Nm VPN .
 .Pp
 Briefly, creating a VPN consists of the following steps
 .Bl -enum -compact
 .It
-Choose a key exchange method: manual keyed or 
+Choose a key exchange method: manual keyed or
 .Xr photurisd 8
 .It
 Create a Security Association (SA) for each endpoint
 .It
 Create the appropriate IPSec flows
-.It 
+.It
 Configure your firewall rules appropriately
 .El
 .Ss Choosing a key exchange method
@@ -68,7 +68,7 @@ manual (symmetric shared secret)
 .El
 .Pp
 At present VPNs between private (RFC 1918) networks must use
-manual keying, as  
+manual keying, as
 .Xr photurisd 8
 can only be used if the IP address of the security gateway actually
 falls within the range of addresses being tunnelled to.
@@ -76,11 +76,11 @@ This can clearly never occur if the addresses being tunnelled to
 are non-routable private networks.
 .Ss Generating Manual Keys
 The shared secret symmetric keys used to create a VPN can
-be any hexadecimal value, so long as both sides of the connection use 
-the same values. Since the security of the VPN is based on these keys 
+be any hexadecimal value, so long as both sides of the connection use
+the same values. Since the security of the VPN is based on these keys
 being unguessable, it is very important that the keys be chosen using a
 strong random source. One practical method of generating them
-is by using the 
+is by using the
 .Xr random 4
 device. To produce 160 bits of randomness, for example, do a:
 .Bd -literal
@@ -129,7 +129,7 @@ ipsecadm new esp -spi SPI_OUT -src A_EXTERNAL_IP
          -dst B_EXTERNAL_IP -forcetunnel
          -enc 3des -auth sha1
          -key ENCRYPTION_KEY -authkey AUTHENTICATION_KEY
-   
+
 ipsecadm new esp -spi SPI_IN -src B_EXTERNAL_IP
          -dst A_EXTERNAL_IP -forcetunnel
          -enc 3des -auth sha1
@@ -139,7 +139,7 @@ ipsecadm new esp -spi SPI_IN -src B_EXTERNAL_IP
 .Ss Creating IPSec Flows
 Both IPsec gateways need to configure
 .Xr ipsec 4
-routes with the 
+routes with the
 .Xr ipsecadm 8
 tool:
 .Pp
@@ -175,28 +175,28 @@ ipsecadm flow -dst A_EXTERNAL_IP -spi SPI_OUT -proto esp
                A_EXTERNAL_IP 255.255.255.255
 .Ed
 .Pp
-Furthermore, unless manual keying is used, 
+Furthermore, unless manual keying is used,
 both security gateways need to start the
 .Xr photurisd 8
 key management daemon with the
 .Fl v
-flag and make sure it is configured properly on both sides to 
+flag and make sure it is configured properly on both sides to
 provide the required security services (typically, encryption and
 authentication).
 .Ss Configuring Firewall Rules
 .Xr ipf 8
 needs to be configured such that all packets from the outside are blocked
-by default. Only successfully IPSec-processed packets (from the 
-.Nm enc0 
-interface), or 
-key management packets (for 
-.Xr photurisd 8 , 
+by default. Only successfully IPSec-processed packets (from the
+.Nm enc0
+interface), or
+key management packets (for
+.Xr photurisd 8 ,
 .Tn UDP
 packets with source and destination ports of 468) should be allowed to pass.
-.Pp 
+.Pp
 The
 .Xr ipf 5
-rules for a tunnel which uses encryption (the ESP IPsec protocol) and 
+rules for a tunnel which uses encryption (the ESP IPsec protocol) and
 .Xr photurisd 8
 on security gateway A might look like this:
 .Bd -literal
@@ -221,12 +221,12 @@ If there are no other
 .Xr ipf 5
 rules, the "quick" clause can be added to the last three rules.
 .Sh EXAMPLES
-To create a manual keyed VPN between two class C networks using 
+To create a manual keyed VPN between two class C networks using
 3DES encryption and the following IP addresses:
 .Pp
 .Bd -literal
  A_INTERNAL_IP = 10.0.50.1
- A_EXTERNAL_IP = 192.168.1.254 
+ A_EXTERNAL_IP = 192.168.1.254
  B_EXTERNAL_IP = 192.168.2.1
  B_INTERNAL_IP = 10.0.99.1
 .Ed
@@ -338,9 +338,9 @@ Firewall configuration file
 .El
 .Sh BUGS
 .Xr photurisd 8
-can not be used in VPN mode unless both of the security gateway IP addresses 
+can not be used in VPN mode unless both of the security gateway IP addresses
 lie within the network ranges being tunnelled to.
-In situations where the gateway IP is outside the desired netrange, such 
+In situations where the gateway IP is outside the desired netrange, such
 as with private (RFC 1918) networks, manual keying must be used.
 This should be fixed in the next release.
 .Sh SEE ALSO

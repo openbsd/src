@@ -1,4 +1,4 @@
-.\"   $OpenBSD: bah.4,v 1.5 1999/07/07 10:50:10 aaron Exp $
+.\"   $OpenBSD: bah.4,v 1.6 1999/07/09 13:35:45 aaron Exp $
 .\"	$NetBSD: bah.4,v 1.2 1995/06/06 23:41:37 cgd Exp $
 .\"
 .\" Copyright (c) 1995 Ignatios Souvatzis
@@ -41,7 +41,7 @@
 .Sh SYNOPSIS
 .Cd "bah* at zbus0"
 .Sh DESCRIPTION
-The 
+The
 .Nm
 interface provides access to the 2.5 Mb/s ARCnet network via the
 .Tn SMC
@@ -67,12 +67,12 @@ as one option.
 With the IFF_LINK0 flag cleared, IP encoding is done according to the
 deprecated, but popular among Amiga users, RFC 1051 encoding (that
 is, with simple header, packet type 240), and the MTU is 507.
-.Pp 
-With the IFF_LINK0 flag set, IP encoding is done according to RFC 1201 (that 
+.Pp
+With the IFF_LINK0 flag set, IP encoding is done according to RFC 1201 (that
 is, with Packet Header Definition Standard header and packet type 212). The MTU
 is normally 1500.
 .Pp
-When switching between the two modes, do a 
+When switching between the two modes, do a
 .Cd ifconfig interfacename down up
 to switch the mtu.
 .Sh HARDWARE
@@ -90,7 +90,7 @@ Ameristar's arcnet card, manufacturer\ 1053, product\ 9
 .Xr inet 4 ,
 .Xr intro 4 ,
 .Xr ifconfig 8
-.Xr RFC1051 
+.Xr RFC1051
 ,
 .Xr RFC1201
 .br

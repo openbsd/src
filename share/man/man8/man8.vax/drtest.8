@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)drtest.8	6.3 (Berkeley) 3/16/91
-.\"	$Id: drtest.8,v 1.3 1999/05/23 14:11:22 aaron Exp $
+.\"	$Id: drtest.8,v 1.4 1999/07/09 13:35:35 aaron Exp $
 .\"
 .Dd March 16, 1991
 .Dt DRTEST 8
@@ -40,19 +40,19 @@
 .Nd standalone disk test program
 .Sh DESCRIPTION
 .Nm Drtest
-is a standalone program used to read a disk 
-track by track. 
-It was primarily intended as a test program 
+is a standalone program used to read a disk
+track by track.
+It was primarily intended as a test program
 for new standalone drivers, but has shown
-useful in other contexts as well, such as 
+useful in other contexts as well, such as
 verifying disks and running speed
 tests. For example, when a disk has been formatted
 (by
 .Xr format 8 ) ,
 you can check that
-hard errors has been taken care of by running 
+hard errors has been taken care of by running
 .Nm drtest .
-No hard errors should be found, but in many cases 
+No hard errors should be found, but in many cases
 quite a few soft
 .Tn ECC
 errors will be reported.
@@ -62,10 +62,10 @@ While
 is running, the cylinder number is printed on
 the console for every 10th cylinder read.
 .Sh EXAMPLE
-A sample run of 
+A sample run of
 .Xr drtest
-is shown below.  
-In this example (using a 750), 
+is shown below.
+In this example (using a 750),
 .Nm drtest
 is loaded from the root file system;
 usually it
@@ -76,7 +76,7 @@ As usual, ``#'' and ``@'' may be used to edit input.
 .Bd -unfilled -offset indent -compact
 .Li \&>>> Ns Sy B/3
 .Li \&%%
-.Li \&loading hk(0,0)boot 
+.Li \&loading hk(0,0)boot
 .Li \&Boot
 .Li \&: Sy \&hk(0,0)drtest
 .Li Test program for stand-alone up and hp driver
@@ -94,11 +94,11 @@ As usual, ``#'' and ``@'' may be used to edit input.
 .Em (...to abort halt machine with \&^P)
 .Ed
 .Sh DIAGNOSTICS
-The diagnostics are intended to be self explanatory. Note, however, that 
+The diagnostics are intended to be self explanatory. Note, however, that
 the device number
 in the diagnostic messages is identified as
 .Em typeX
-instead of 
+instead of
 .Em type(a,u)
 where
 .Ar X

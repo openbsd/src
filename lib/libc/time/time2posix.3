@@ -1,4 +1,4 @@
-.\"	$OpenBSD: time2posix.3,v 1.8 1999/05/25 00:49:41 aaron Exp $
+.\"	$OpenBSD: time2posix.3,v 1.9 1999/07/09 13:35:21 aaron Exp $
 .Dd May 24, 1999
 .Dt TIME2POSIX 3
 .Os
@@ -30,8 +30,8 @@ however,
 no such adjustment is needed and
 .Fa time_t
 values continue to increase over leap events
-.Po 
-as a true 
+.Po
+as a true
 .Sq seconds since...
 value
 .Pc .
@@ -72,7 +72,7 @@ and
 functions are provided to address this
 .Fa time_t
 mismatch by converting
-between local 
+between local
 .Fa time_t
 values and their POSIX equivalents.
 This is done by accounting for the number of time-base changes that
@@ -85,15 +85,15 @@ or when communicating with POSIX-compliant systems.
 .Fn time2posix
 is single-valued.
 That is,
-every local 
+every local
 .Fa time_t
-corresponds to a single POSIX 
+corresponds to a single POSIX
 .Fa time_t .
 .Fn posix2time
 is less well-behaved:
 for a positive leap second hit the result is not unique,
 and for a negative leap second hit the corresponding
-POSIX 
+POSIX
 .Fa time_t
 doesn't exist so an adjacent value is returned.
 Both of these are good indicators of the inferiority of the

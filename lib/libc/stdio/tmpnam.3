@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tmpnam.3,v 1.5 1999/02/27 21:55:50 deraadt Exp $
+.\"	$OpenBSD: tmpnam.3,v 1.6 1999/07/09 13:35:23 aaron Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -95,7 +95,7 @@ In either case,
 .Fn tmpnam
 returns a pointer to the file name.
 .Pp
-The buffer referenced by 
+The buffer referenced by
 .Fa s
 is expected to be at least
 .Dv L_tmpnam
@@ -242,7 +242,7 @@ cannot depend on that.
 For these reasons,
 .Xr ld 8
 will output a warning message whenever it links code that uses the
-functions 
+functions
 .Fn tmpnam
 or
 .Fn tempnam .

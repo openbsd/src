@@ -1,4 +1,4 @@
-.\" $OpenBSD: crypt.3,v 1.12 1999/03/18 11:08:33 aaron Exp $
+.\" $OpenBSD: crypt.3,v 1.13 1999/07/09 13:35:15 aaron Exp $
 .\"
 .\" FreeSec: libcrypt
 .\"
@@ -94,42 +94,42 @@ and
 .Fa salt .
 .Ss "MD5" crypt:
 .Pp
-For 
-.Tn MD5 
-crypt the version number, 
-.Fa salt 
+For
+.Tn MD5
+crypt the version number,
+.Fa salt
 and the hashed password are separated
 by the ``$'' character. The maximum length of a password is limited by
 the length counter of the MD5 context, which is about
-2**64. A valid MD5 password entry looks like this: 
+2**64. A valid MD5 password entry looks like this:
 .Pp
 ``$1$caeiHQwX$hsKqOjrFRRN6K32OWkCBf1''.
 .Pp
-The whole MD5 password string is passed as 
+The whole MD5 password string is passed as
 .Fa setting
 for interpretation.
 .Ss "Blowfish" crypt:
 .Pp
-The 
-.Tn Blowfish 
-version of crypt has 128 bits of 
-.Fa salt 
+The
+.Tn Blowfish
+version of crypt has 128 bits of
+.Fa salt
 in order to make building
 dictionaries of common passwords space consuming. The initial state
-of the 
-.Tn Blowfish 
-cipher is expanded using the 
+of the
+.Tn Blowfish
+cipher is expanded using the
 .Fa salt
 and the
-.Fa password 
+.Fa password
 repeating the process a variable number of rounds, which is encoded in
 the password string. The maximum password length is 72. The final Blowfish
 password entry is created by encrypting
-the string ``OrpheanBeholderScryDoubt'' with the 
-.Tn Blowfish 
+the string ``OrpheanBeholderScryDoubt'' with the
+.Tn Blowfish
 state 64 times.
 .Pp
-The version number, the logarithm of the number of rounds and 
+The version number, the logarithm of the number of rounds and
 the concatenation of salt and
 hashed password are separated by the ``$'' character. An encoded ``8''
 would specify 256 rounds.
@@ -137,7 +137,7 @@ A valid Blowfish password looks like this:
 .Pp
 ``$2a$12$eIAq8PR8sIUnJ1HaohxX2O9x9Qlm2vK97LJ5dsXdmB.eXF42qjchC''.
 .Pp
-The whole Blowfish password string is passed as 
+The whole Blowfish password string is passed as
 .Fa setting
 for interpretation.
 .Ss "Traditional" crypt:
@@ -285,13 +285,13 @@ first appeared in
 This library (FreeSec 1.0) was developed outside the United States of America
 as an unencumbered replacement for the U.S.-only libcrypt encryption
 library.
-Programs linked against the 
+Programs linked against the
 .Fn crypt
-interface may be exported from the U.S.A. only if they use 
+interface may be exported from the U.S.A. only if they use
 .Fn crypt
 solely for authentication purposes and avoid use of
 the other programmer interfaces listed above. Special care has been taken
-in the library so that programs which only use the 
+in the library so that programs which only use the
 .Fn crypt
 interface do not pull in the other components.
 .Sh AUTHOR

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: editline.3,v 1.8 1999/07/07 14:22:25 aaron Exp $
+.\"	$OpenBSD: editline.3,v 1.9 1999/07/09 13:35:25 aaron Exp $
 .\"	$NetBSD: editline.3,v 1.4 1997/01/14 04:17:23 lukem Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -195,7 +195,7 @@ may be modified by
 .Fn el_parse .
 The colon between
 .Dq prog
-and the command, 
+and the command,
 .Ar command ,
 will be replaced with a NUL
 .Po
@@ -258,7 +258,7 @@ Otherwise, the current signal handlers will be used.
 Perform the
 .Ic bind
 built-in command.
-Refer to 
+Refer to
 .Xr editrc 5
 for more information.
 .It Dv EL_ECHOTC , Xo
@@ -269,7 +269,7 @@ for more information.
 Perform the
 .Ic echotc
 built-in command.
-Refer to 
+Refer to
 .Xr editrc 5
 for more information.
 .It Dv EL_SETTC , Xo
@@ -280,7 +280,7 @@ for more information.
 Perform the
 .Ic settc
 built-in command.
-Refer to 
+Refer to
 .Xr editrc 5
 for more information.
 .It Dv EL_SETTY , Xo
@@ -291,7 +291,7 @@ for more information.
 Perform the
 .Ic setty
 built-in command.
-Refer to 
+Refer to
 .Xr editrc 5
 for more information.
 .It Dv EL_TELLTC , Xo
@@ -302,7 +302,7 @@ for more information.
 Perform the
 .Ic telltc
 built-in command.
-Refer to 
+Refer to
 .Xr editrc 5
 for more information.
 .It Dv EL_ADDFN , Xo
@@ -362,7 +362,7 @@ should be the value returned by
 .It Fn el_source
 Initialise
 .Nm
-by reading the contents of 
+by reading the contents of
 .Fa file .
 .Fn el_parse
 is called for each line in
@@ -483,7 +483,7 @@ if there isn't one.
 .It Dv H_ENTER , Fa "const char *str"
 Add
 .Fa str
-as a new element to the history, and, if necessary, 
+as a new element to the history, and, if necessary,
 removing the oldest entry to keep the list to the created size.
 .It Dv H_PREV_STR , Fa "const char *str"
 Return the closest previous event that starts with

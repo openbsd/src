@@ -1,7 +1,7 @@
-.\"	$OpenBSD: options.4,v 1.36 1999/07/07 10:50:10 aaron Exp $
+.\"	$OpenBSD: options.4,v 1.37 1999/07/09 13:35:47 aaron Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
-.\" Copyright (c) 1998 Theo de Raadt 
+.\" Copyright (c) 1998 Theo de Raadt
 .\" Copyright (c) 1998 Todd Miller
 .\" Copyright (c) 1998 Gene Skonicki
 .\" Copyright (c) 1996
@@ -156,7 +156,7 @@ It also enables support for some older pre BSD 4.4 socket calls.
 .It Cd option DDB
 Compiles in a kernel debugger for diagnosing kernel problems. See
 .Xr ddb 4
-for details. 
+for details.
 .Em NOTE:
 not available on all architectures.
 .It Cd option KGDB
@@ -165,7 +165,7 @@ using the
 .Dq remote target
 feature of gdb. See
 .Xr gdb 1
-for details. 
+for details.
 .Em NOTE:
 not available on all architectures.
 .It Cd makeoptions DEBUG="-g"
@@ -178,7 +178,7 @@ is useful for debugging kernel crash dumps with gdb.
 Note that
 .Xr gdb Ns 's
 .Fl k
-flag 
+flag
 is obsolete and should not be used. Instead, the kernel can be debugged
 by starting
 .Xr gdb
@@ -193,7 +193,7 @@ This also turns on
 Turns on miscellaneous kernel debugging. Since options are turned into
 preprocessor defines (see above),
 .Em option DEBUG
-is equivalent to doing a 
+is equivalent to doing a
 .Em #define DEBUG
 throughout the kernel. Much of the kernel has
 .Em #ifdef DEBUG
@@ -210,7 +210,7 @@ code will cause the kernel to panic if corruption of internal data
 structures is detected.
 .It Cd option GPROF
 Adds code to the kernel for kernel profiling with
-.Xr kgmon 8 . 
+.Xr kgmon 8 .
 .It Cd makeoptions PROF="-pg"
 The -pg flag causes the kernel to be compiled with support for profiling.
 The
@@ -233,7 +233,7 @@ Includes code implementing the Second Extended File System
 .Em ( EXT2FS ) .
 This is the most commonly used file system on the Linux operating system,
 and is provided here for compatibility.  Some specific features of
-.Em EXT2FS 
+.Em EXT2FS
 like the "behavior on errors" are not implemented.  This file system
 can't be used with uid_t or gid_t values greater than 65535.  Also, the
 filesystem will not function correctly on architectures with differing
@@ -259,7 +259,7 @@ Include the client side of the
 Although the bulk of the code implementing
 .Em NFS
 is kernel based, several user level daemons are needed for it to
-work.  See 
+work.  See
 .Xr mount_nfs 8
 and
 .Xr nfsiod 8
@@ -274,7 +274,7 @@ for details.
 Includes support for the
 .Tn MS-DOS
 FAT file system.
-The kernel also implements the 
+The kernel also implements the
 .Tn Windows 95
 extensions which permit the use of longer, mixed-case file names.
 See
@@ -367,10 +367,10 @@ Include the server side of the
 Although the bulk of the code implementing
 .Em NFS
 is kernel based, several user level daemons are needed for it to
-work. See 
+work. See
 .Xr mountd 8
 and
-.Xr nfsd 8 
+.Xr nfsd 8
 for details.
 .It Cd option QUOTA
 Enables kernel support for file system quotas. See
@@ -383,7 +383,7 @@ for details. Note that quotas only work on
 .Dq ffs
 file systems, although
 .Xr rpc.rquotad 8
-permits them to be accessed over 
+permits them to be accessed over
 .Em NFS .
 .It Cd option FIFO
 Adds support for
@@ -409,7 +409,7 @@ the namei cache.
 .It Cd option EXT2FS_SYSTEM_FLAGS
 This option changes the behavior of the APPEND and IMMUTABLE flags
 for a file on an
-.Em EXT2FS 
+.Em EXT2FS
 filesystem. Without this option, the superuser or owner of the file
 can set and clear them.  With this option, only the superuser can set
 them, and they can't be cleared if the securelevel is greater than 0.
@@ -473,7 +473,7 @@ each component buffer.  It defaults to 8.
 The kernel memory allocator,
 .Xr malloc 9 ,
 will keep statistics on its performance if this option is enabled.
-Unfortunately, this option therefore essentially disables 
+Unfortunately, this option therefore essentially disables
 .Fn MALLOC
 and
 .Fn FREE
@@ -496,9 +496,9 @@ option.
 .Ss Networking Options
 .Bl -ohang
 .It Cd option GATEWAY
-Enables 
+Enables
 .Em IPFORWARDING
-and (on most ports) increases the size of 
+and (on most ports) increases the size of
 .Em NMBCLUSTERS.
 In general,
 .Em GATEWAY
@@ -547,7 +547,7 @@ BSD networking stack keeps network packets in a linked list, or chain,
 of kernel buffer objects called mbufs.  The system provides larger mbuf
 clusters as an optimization for large packets, instead of using long
 chains for large packets.  The mbuf cluster size, or
-.Em MCLBYTES, 
+.Em MCLBYTES,
 must be a power of two, and is computed as two raised to the power
 .Em MCLSHIFT.
 On systems with Ethernet network adaptors,
@@ -578,7 +578,7 @@ use by
 .It Cd option NETATALK
 Include kernel support for the AppleTalk family of protocols.  This suite
 of supporting code is sometimes called
-.Em netatalk 
+.Em netatalk
 support.
 .It Cd option TCP_COMPAT_42
 Use of this option is
@@ -617,14 +617,14 @@ together with
 .Em TCP_NEWRENO .
 .It Cd option TCP_FACK
 Turns on forward acknowledgements allowing a more precise estimate of
-outstanding data during the fast recovery phase by using 
-.Em SACK 
+outstanding data during the fast recovery phase by using
+.Em SACK
 information. This option can be used together with
 .Em TCP_SACK .
 .It Cd option TCP_SIGNATURE
 Turns on support for the TCP MD5 Signature option (RFC 2385). This is used by
 Internet backdone routers to provide per-packet authentication for the TCP
-packets used to communicate BGP routing information. You will also need a 
+packets used to communicate BGP routing information. You will also need a
 routing daemon that supports this option in order to actually use it.
 .It Cd option IPFILTER
 This option enables the IP filtering on the packet level using
@@ -642,7 +642,7 @@ This option turns on
 .Xr pcap 3
 based filtering for ppp connections. This option is used by
 .Xr pppd 8
-which needs to be compiled with 
+which needs to be compiled with
 .Em PPP_FILTER
 defined (the current default).
 .It Cd option IPSEC
@@ -715,7 +715,7 @@ for the default.
 .It Cd option SWAPPAGER
 Turns on paging.  (To be specific, this enables the virtual memory
 module responsible for handling page faults for
-.Dq anonymous 
+.Dq anonymous
 objects (i.e. BSS pages)).
 .Em MANDATORY
 -- the system cannot actually run without this
@@ -741,7 +741,7 @@ for exact default information.  Increase this value if
 messages appear.
 .It Cd option NKMEMCLUSTERS=value
 Size of kernel malloc area in CLBYTES-sized logical pages.  This area
-is covered by the kernel submap 
+is covered by the kernel submap
 .Em kmem_map .
 See
 .Pa /usr/include/machine/param.h

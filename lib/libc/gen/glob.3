@@ -1,4 +1,4 @@
-.\"	$OpenBSD: glob.3,v 1.11 1999/06/05 03:44:53 aaron Exp $
+.\"	$OpenBSD: glob.3,v 1.12 1999/07/09 13:35:16 aaron Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -44,7 +44,7 @@
 .Fd #include <glob.h>
 .Ft int
 .Fn glob "const char *pattern" "int flags" "const int (*errfunc)(const char *, int)" "glob_t *pglob"
-.Ft void 
+.Ft void
 .Fn globfree "glob_t *pglob"
 .Sh DESCRIPTION
 The
@@ -91,7 +91,7 @@ field, and a pointer to a list of pointers to pathnames in the
 .Fa gl_pathv
 field.
 The first pointer after the last pathname is
-.Dv NULL . 
+.Dv NULL .
 If the pattern does not match any pathnames, the returned number of
 matched paths is set to zero.
 .Pp
@@ -219,29 +219,29 @@ This extension is provided to allow programs such as
 .Xr restore 8
 to provide globbing from directories stored on tape.
 .It Dv GLOB_BRACE
-Pre-process the pattern string to expand 
-.Ql {pat,pat,...} 
-strings like 
+Pre-process the pattern string to expand
+.Ql {pat,pat,...}
+strings like
 .Xr csh 1 .
-The pattern 
+The pattern
 .Ql {}
 is left unexpanded for historical reasons.
-.Xr (csh 1 
-does the same thing to 
+.Xr (csh 1
+does the same thing to
 ease typing
-of 
-.Xr find 1 
+of
+.Xr find 1
 patterns.)
 .It Dv GLOB_MAGCHAR
 Set by the
 .Fn glob
 function if the pattern included globbing characters.
-See the description of the usage of the 
+See the description of the usage of the
 .Fa gl_matchc
 structure member for more details.
 .It Dv GLOB_NOMAGIC
-Is the same as 
-.Dv GLOB_NOCHECK 
+Is the same as
+.Dv GLOB_NOCHECK
 but it only appends the
 .Fa pattern
 if it does not contain any of the special characters
@@ -249,7 +249,7 @@ if it does not contain any of the special characters
 .Ql ? ,
 or
 .Ql [ .
-.Dv GLOB_NOMAGIC 
+.Dv GLOB_NOMAGIC
 is provided to simplify implementing the historic
 .Xr csh 1
 globbing behavior and should probably not be used anywhere else.
@@ -282,7 +282,7 @@ call to
 The error routine can suppress this action by testing for
 .Er ENOENT
 and
-.Er ENOTDIR ; 
+.Er ENOTDIR ;
 however, the
 .Dv GLOB_ERR
 flag will still cause an immediate
@@ -332,16 +332,16 @@ contain the values described below:
 .Bl -tag -width GLOB_NOCHECK
 .It Fa gl_pathc
 Contains the total number of matched pathnames so far.
-This includes other matches from previous invocations of 
+This includes other matches from previous invocations of
 .Fn glob
-if 
+if
 .Dv GLOB_APPEND
 was specified.
 .It Fa gl_matchc
 Contains the number of matched pathnames in the current invocation of
 .Fn glob .
 .It Fa gl_flags
-Contains a copy of the 
+Contains a copy of the
 .Fa flags
 parameter with the bit
 .Dv GLOB_MAGCHAR
@@ -365,9 +365,9 @@ are undefined.
 .Pp
 If
 .Fn glob
-terminates due to an error, it sets 
-.Va errno 
-and returns one of the following non-zero constants, which are defined 
+terminates due to an error, it sets
+.Va errno
+and returns one of the following non-zero constants, which are defined
 in the include file
 .Aq Pa glob.h :
 .Bl -tag -width GLOB_NOCHECK
@@ -427,9 +427,9 @@ Note, however, that the flags
 .Dv GLOB_QUOTE,
 and
 .Dv GLOB_TILDE,
-and the fields 
+and the fields
 .Fa gl_matchc
-and 
+and
 .Fa gl_flags
 should not be used by applications striving for strict
 standards conformance.
@@ -438,7 +438,7 @@ The
 .Fn glob
 and
 .Fn globfree
-functions first appeared in 
+functions first appeared in
 .Bx 4.4 .
 .Sh BUGS
 Patterns longer than
@@ -447,8 +447,8 @@ may cause unchecked errors.
 .Pp
 The
 .Fn glob
-function may fail and set 
-.Va errno 
+function may fail and set
+.Va errno
 for any of the errors specified for the library routines
 .Xr stat 2 ,
 .Xr closedir 3 ,

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ossaudio.3,v 1.3 1999/07/07 10:50:06 aaron Exp $
+.\"	$OpenBSD: ossaudio.3,v 1.4 1999/07/09 13:35:28 aaron Exp $
 .\"	$NetBSD: ossaudio.3,v 1.6 1998/02/05 18:52:19 perry Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -23,7 +23,7 @@
 .\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
 .\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 .\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS 
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
 .\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
 .\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
 .\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -53,14 +53,14 @@ library only for porting programs.
 .Sh SEE ALSO
 .Xr audio 4
 .Sh BUGS
-The emulation uses an #define for 
+The emulation uses an #define for
 .Va ioctl()
 so some obscure programs
 can fail to compile.
 .Pp
 The emulation is incomplete.
 .Pp
-The emulation only covers 
+The emulation only covers
 .Va ioctl() ,
 there are other differences as well.  E.g., on a write
 that would block in non-blocking mode Linux returns

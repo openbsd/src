@@ -1,4 +1,4 @@
-.\"	$OpenBSD: installboot.8,v 1.4 1999/07/08 22:56:01 deraadt Exp $
+.\"	$OpenBSD: installboot.8,v 1.5 1999/07/09 13:35:30 aaron Exp $
 .\"	$NetBSD: installboot.8,v 1.1.1.1 1996/11/29 23:36:30 is Exp $
 .\"
 .\" Copyright (c) 1995 Paul Kranenburg
@@ -54,13 +54,13 @@ DraCo) floppy disks in Amiga format (880K/1760k).
 .Pp
 In presence of more than one bootable partiton/floppy disk, the partition
 is chosen by the bootpriority (from the RDB), which can be overridden by
-the operator from the boot menu (on Amiga machines, hold down the outer 
+the operator from the boot menu (on Amiga machines, hold down the outer
 mouse buttons during boot; on DraCo machines, press the left mouse button
 when prompted).
 .Pp
-On RDB devices, the whole bootblock is loaded by the ROM. The number of 
+On RDB devices, the whole bootblock is loaded by the ROM. The number of
 boot blocks in the RDB partition entry must be correct.
-.Pp 
+.Pp
 On floppy disks, the ROM always loads the first two blocks (1024 bytes),
 and the bootblock allocates memory and loads the whole bootblock on startup.
 .Pp
@@ -84,7 +84,7 @@ The name of the character special device specifying the partition on which the
 bootstrap is to be installed.
 .El
 .Sh EXAMPLES
-The following command will install the 
+The following command will install the
 boot program in the bootblock area on
 .Dq sd0a :
 .Bd -literal -offset indent
@@ -95,8 +95,8 @@ If
 .Nm
 is used on the whole disk partition, the RDB will be overwritten.
 .Pp
-Some third-party accellerator boards are not auto-configuring. You won't 
-be able to use their memory when booting from the bootblock after a cold 
+Some third-party accellerator boards are not auto-configuring. You won't
+be able to use their memory when booting from the bootblock after a cold
 start.
 .Pp
 Some third-party disk controllers don't support bootblock booting.

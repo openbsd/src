@@ -89,7 +89,7 @@ be sent independently to different MAC addresses.  However,
 the "Star-mode" framing and MAC addressing are not in any way
 compatible with Ethernet.  Broadcast or multicast to more than one radio is not
 possible, due to the independent frequency-hopping operation of the radios.
-The interface flags 
+The interface flags
 .Dv IFF_POINTOPOINT
 and
 .Dv IFF_BROADCAST
@@ -100,7 +100,7 @@ interface.
 In other words,
 .Nm
 implements a multiple-access, non-broadcast device, accessed via
-an RS-232 serial line, using a proprietary packet framing scheme. 
+an RS-232 serial line, using a proprietary packet framing scheme.
 .Pp
 This version
 .Nm
@@ -110,13 +110,13 @@ map IP addresses of peer radios to the MAC-level addresses.
 The exact syntax of this mapping and an example are discussed below.
 The Internet Assigned Numbers Authority (IANA) has allocated an ARP
 type code for use with STRIP. A future version of this driver will
-support 
+support
 .Xr arp 4
 to obtain the IP address of reachable peer radios dynamically.
 .Sh ADDRESS CONFIGURATION
 This version of the STRIP driver requires static pre-configuration of
 the mapping from IP addresses to radio MAC addresses.
-The 
+The
 .Xr route 8
 command should be used to bind a peer STRIP host's radio IP address
 to the peer's  link-level radio address.   Radio addresses are encoded
@@ -169,7 +169,7 @@ has not been widely tested on a variety of lower-level tty drivers.
 .P
 The detection and resetting of radios that crash out of Starmode does
 not always work in this version of the driver.  One workaround
-is to kill the 
+is to kill the
 .Xr slattach
 process, ifconfig the
 .Nm
@@ -178,7 +178,7 @@ interface down, and then start a new slattach and rerun ifconfig.
 .Nm
 was originally developed  for the Linux kernel by Stuart
 Cheshire of  Stanford's Operating Systems and Networking group,
-as part of Mary Baker's  MosquitoNet 
+as part of Mary Baker's  MosquitoNet
 .Sy http://mosquitonet.stanford.edu/mosquitonet.html
 project.
 This

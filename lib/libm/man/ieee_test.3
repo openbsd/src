@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)ieee.3	6.4 (Berkeley) 5/6/91
-.\"	$Id: ieee_test.3,v 1.5 1999/07/07 10:50:06 aaron Exp $
+.\"	$Id: ieee_test.3,v 1.6 1999/07/09 13:35:27 aaron Exp $
 .\"
 .Dd March 10, 1994
 .Dt IEEE_TEST 3
@@ -45,11 +45,11 @@
 .Nd IEEE test functions
 .Sh SYNOPSIS
 .Fd #include <math.h>
-.Ft double 
+.Ft double
 .Fn logb "double x"
 .Ft float
 .Fn logbf "float x"
-.Ft double 
+.Ft double
 .Fn scalb "double x" "double n"
 .Ft float
 .Fn scalbf "float x" "float n"
@@ -58,7 +58,7 @@
 .Ft float
 .Fn significandf "float x"
 .Sh DESCRIPTION
-These functions allow users to test conformance to 
+These functions allow users to test conformance to
 .St -ieee754 .
 Their use is not otherwise recommended.
 .Pp
@@ -77,18 +77,18 @@ returns
 .Fa x Ns \(**(2** Ns Fa n )
 computed by exponent manipulation.
 .Pp
-.Fn significand x 
-returns 
+.Fn significand x
+returns
 .Fa sig ,
-where 
-.Fa x 
-:= 
+where
+.Fa x
+:=
 .Fa sig No \(** 2** Ns Fa n
-with 1 \(<= 
+with 1 \(<=
 .Fa sig
 < 2.
 .Fn significand x
-is not defined when 
+is not defined when
 .Fa x
 is 0, \*(Pm\*(If, or \*(Na.
 .Sh SEE ALSO

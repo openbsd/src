@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)ieee.3	6.4 (Berkeley) 5/6/91
-.\"	$Id: ieee.3,v 1.4 1999/07/02 17:04:16 aaron Exp $
+.\"	$Id: ieee.3,v 1.5 1999/07/09 13:35:27 aaron Exp $
 .\"
 .Dd February 25, 1994
 .Dt IEEE 3
@@ -51,11 +51,11 @@
 .Nd Functions for IEEE arithmetic
 .Sh SYNOPSIS
 .Fd #include <math.h>
-.Ft double 
+.Ft double
 .Fn copysign "double x" "double y"
 .Ft float
 .Fn copysignf "float x" "float y"
-.Ft int 
+.Ft int
 .Fn finite "double x"
 .Ft int
 .Fn finitef "float x"
@@ -63,7 +63,7 @@
 .Fn ilogb "double x"
 .Ft int
 .Fn ilogbf "float x"
-.Ft double 
+.Ft double
 .Fn nextafter "double x" "double y"
 .Ft float
 .Fn nextafterf "float x" "float y"
@@ -71,12 +71,12 @@
 .Fn remainder "double x" "double y"
 .Ft float
 .Fn remainderf "float x" "float y"
-.Ft double 
+.Ft double
 .Fn scalbn "double x" "int n"
 .Ft float
 .Fn scalbnf "float x" "int n"
 .Sh DESCRIPTION
-These functions are required or recommended by 
+These functions are required or recommended by
 .St -ieee754 .
 .Pp
 .Fn copysign
@@ -103,16 +103,16 @@ returns
 .Fa x Ns 's exponent
 .Fa n ,
 in integer format.
-.Fn ilogb \*(Pm\*(If 
-returns 
+.Fn ilogb \*(Pm\*(If
+returns
 .Dv INT_MAX
 and
 .Fn ilogb 0
-returns 
+returns
 .Dv INT_MIN .
 .Pp
-.Fn nextafter 
-returns the next machine representable number from 
+.Fn nextafter
+returns the next machine representable number from
 .Fa x
 in direction
 .Fa y .
@@ -164,7 +164,7 @@ computed by exponent manipulation.
 .Sh HISTORY
 The
 .Nm ieee
-functions appeared in 
+functions appeared in
 .Bx 4.3 .
 .Sh STANDARDS
 .St -ieee754

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: stab.5,v 1.6 1999/05/23 14:11:05 aaron Exp $
+.\"	$OpenBSD: stab.5,v 1.7 1999/07/09 13:35:39 aaron Exp $
 .\"	$NetBSD: stab.5,v 1.3 1994/11/30 19:31:33 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -96,7 +96,7 @@ struct nlist {
 The low bits of the
 .Fa n_type
 field are used to place a symbol into
-at most one segment, according to 
+at most one segment, according to
 the following masks, defined in
 .Aq Pa a.out.h .
 A symbol can be in none of these segments by having none of these segment
@@ -177,7 +177,7 @@ and
 .Fa n_value
 fields
 of the given
-.Fa n_type . 
+.Fa n_type .
 .Em sdb
 uses the
 .Fa n_desc

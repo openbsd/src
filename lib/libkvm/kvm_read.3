@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kvm_read.3,v 1.3 1999/07/07 14:22:25 aaron Exp $
+.\"	$OpenBSD: kvm_read.3,v 1.4 1999/07/09 13:35:26 aaron Exp $
 .\"	$NetBSD: kvm_read.3,v 1.2 1996/03/18 22:34:01 thorpej Exp $
 .\"
 .\" Copyright (c) 1992, 1993
@@ -66,19 +66,19 @@ for information regarding opening kernel virtual memory and crash dumps.
 The
 .Fn kvm_read
 function transfers
-.Fa nbytes 
+.Fa nbytes
 bytes of data from
 the kernel space address
 .Fa addr
 to
 .Fa buf .
-Conversely, 
+Conversely,
 .Fn kvm_write
 transfers data from
 .Fa buf
 to
 .Fa addr .
-Unlike their SunOS counterparts, these functions cannot be used to 
+Unlike their SunOS counterparts, these functions cannot be used to
 read or write process address spaces.
 .Sh RETURN VALUES
 Upon success, the number of bytes actually transferred is returned.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpc.rstatd.8,v 1.4 1999/05/23 14:11:12 aaron Exp $
+.\"	$OpenBSD: rpc.rstatd.8,v 1.5 1999/07/09 13:35:51 aaron Exp $
 .\"
 .\" Copyright (c) 1985, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -31,21 +31,21 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: rpc.rstatd.8,v 1.4 1999/05/23 14:11:12 aaron Exp $
+.\"	$Id: rpc.rstatd.8,v 1.5 1999/07/09 13:35:51 aaron Exp $
 .\"
 .Dd June 7, 1993
 .Dt RPC.RSTATD 8
 .Os
 .Sh NAME
 .Nm rstatd ,
-.Nm rpc.rstatd 
+.Nm rpc.rstatd
 .Nd kernel statistics server
 .Sh SYNOPSIS
 .Nm rpc.rstatd
 .Sh DESCRIPTION
 .Nm rpc.rstatd
 is a server which returns performance statistics obtained from the kernel.
-These statistics are usually read using the 
+These statistics are usually read using the
 .Xr rup 1
 command.  They are also used by the
 .Xr rpc.lockd 8
@@ -56,7 +56,7 @@ daemon is normally invoked by
 .Xr inetd 8 .
 .Pp
 .Nm rpc.rstatd
-uses an RPC protocol defined in 
+uses an RPC protocol defined in
 .Pa /usr/include/rpcsvc/rstat.x .
 .Sh SEE ALSO
 .Xr rup 1 ,

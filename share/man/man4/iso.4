@@ -59,7 +59,7 @@ abstraction through the
 .Tn TP
 protocol
 .Pf ( Tn ISO
-8073), 
+8073),
 for the
 .Dv SOCK_DGRAM
 abstraction through the connectionless transport
@@ -70,14 +70,14 @@ and for the
 .Dv SOCK_RAW
 abstraction
 by providing direct access (for debugging) to the
-.Tn CLNP 
+.Tn CLNP
 .Pf ( Tn ISO
 8473) network layer protocol.
 .Sh ADDRESSING
 .Tn ISO
 addresses are based upon
 .Tn ISO
-8348/AD2, 
+8348/AD2,
 .%T "Addendum to the Network Service Definition Covering Network Layer Addressing."
 .Pp
 Sockets bound to the OSI protocol family use
@@ -136,7 +136,7 @@ domain, this is called a
 .Em transport selector
 (also known at one time as a
 .Em transport suffix ) .
-While ports are always 16 bits, 
+While ports are always 16 bits,
 transport selectors may be
 of (almost) arbitrary size.
 .Pp
@@ -156,11 +156,11 @@ network addresses can take any format.
 .Sh PROTOCOLS
 The
 .Tn ARGO
-1.0 implementation of the 
+1.0 implementation of the
 .Tn ISO
 protocol family comprises
 the Connectionless-Mode Network Protocol
-.Pq Tn CLNP , 
+.Pq Tn CLNP ,
 and the Transport Protocol
 .Pq Tn TP ,
 classes 4 and 0,

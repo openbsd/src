@@ -1,4 +1,4 @@
-.\"	$OpenBSD: symlink.7,v 1.8 1999/07/04 18:59:37 aaron Exp $
+.\"	$OpenBSD: symlink.7,v 1.9 1999/07/09 13:35:58 aaron Exp $
 .\"	$NetBSD: symlink.7,v 1.4 1996/04/25 15:44:56 mycroft Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994
@@ -138,7 +138,7 @@ name arguments, to commands which are not traversing a file tree.
 .Pp
 Except as noted below, commands follow symbolic links named as
 command-line arguments.
-For example, if there were a symbolic link 
+For example, if there were a symbolic link
 .Dq Li slink
 which pointed to a file named
 .Dq Li afile ,
@@ -284,7 +284,7 @@ walk (where symbolic links referencing directories are followed).
 As consistently as possible, you can make commands doing a file tree
 walk follow any symbolic links named on the command line, regardless
 of the type of file they reference, by specifying the
-.Fl H 
+.Fl H
 (for
 .Dq half\-logical )
 flag.

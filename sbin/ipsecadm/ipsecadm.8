@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsecadm.8,v 1.10 1999/07/08 01:09:24 deraadt Exp $
+.\" $OpenBSD: ipsecadm.8,v 1.11 1999/07/09 13:35:49 aaron Exp $
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -40,11 +40,11 @@
 .Op command
 .Ar modifiers ...
 .Sh NOTE
-Before 
+Before
 .Xr ipsecadm 8
 can be used, IPSec must be enabled by setting one or more of the following
 .Xr sysctl 3
-variables: 
+variables:
 .Bl -tag -width xxxxxxxxxxxxxxxxxxxxx
 .It net.inet.esp.enable
 Enable the ESP IPSec protocol
@@ -52,7 +52,7 @@ Enable the ESP IPSec protocol
 Enable the AH IPSec protocol
 .El
 .Pp
-To enable these operations across reboots, see 
+To enable these operations across reboots, see
 .Pa /etc/sysctl.conf .
 .Pp
 .Sh DESCRIPTION

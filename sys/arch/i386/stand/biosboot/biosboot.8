@@ -1,4 +1,4 @@
-.\"	$OpenBSD: biosboot.8,v 1.9 1999/05/23 14:11:28 aaron Exp $
+.\"	$OpenBSD: biosboot.8,v 1.10 1999/07/09 13:35:33 aaron Exp $
 .\"
 .\" Copyright (c) 1997 Michael Shalayeff
 .\" All rights reserved.
@@ -17,8 +17,8 @@
 .\" 4. The name of the author may not be used to endorse or promote products
 .\"    derived from this software without specific prior written permission.
 .\"
-.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR 
-.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 .\" WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
 .\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
 .\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
@@ -48,17 +48,17 @@ In order for
 to load the second-stage bootstrap, it has a table inside it which
 describes
 .Xr boot 8 's
-location. 
+location.
 .Nm
 must be installed by, and have its block table filled in by, the
 .Xr installboot 8
-program.  As this data is BIOS dependant, you must re-run 
+program.  As this data is BIOS dependant, you must re-run
 .Xr installboot 8
 each time you reinstall
 .Xr boot 8
 or move your disk or software between machines and/or controllers.
 .Pp
-When 
+When
 .Nm
 receives control from either the BIOS or the MBR it will print the message:
 .Pp
@@ -90,7 +90,7 @@ has been used in
 for the device you are booting from.
 .Sh NOTES
 The practice of making OpenBSD use the whole disk (ie: having
-.Nm                                                                            
+.Nm
 as the MBR) has been deprecated, and will not work on certain BIOS versions.
 There is a lot of strange behaviour with different BIOS's, one of well
 known lobotomy cases is that the BIOS does not pass the right boot drive

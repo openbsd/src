@@ -1,4 +1,4 @@
-.\"	$OpenBSD: speaker.4,v 1.6 1999/01/07 22:32:58 niklas Exp $
+.\"	$OpenBSD: speaker.4,v 1.7 1999/07/09 13:35:44 aaron Exp $
 .\"	$NetBSD: speaker.4,v 1.9 1998/08/18 08:16:56 augustss Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
@@ -66,7 +66,7 @@ continuous sequence; this array must be terminated by a final member with
 a zero duration.
 .Pp
 The play-string language is modelled on the PLAY statement conventions of
-IBM BASIC 2.0. The MB, MF and X primitives of PLAY are not useful in a UNIX 
+IBM BASIC 2.0. The MB, MF and X primitives of PLAY are not useful in a UNIX
 environment and are omitted. The `octave-tracking' feature is also new.
 .Pp
 There are 84 accessible notes numbered 1-83 in 7 octaves, each running from
@@ -109,22 +109,22 @@ T <n> -- Sets the number of quarter notes per minute; default is 120. Musical
 names for common tempi are:
 .Bl -column Description Tempo BPM -offset indent
 .Em 	Tempo		Beats per Minute
-very slow	Larghissimo	
+very slow	Larghissimo
         	Largo	 	40-60
          	Larghetto	60-66
-        	Grave       	
-        	Lento       	
+        	Grave
+        	Lento
         	Adagio	 	66-76
-slow    	Adagietto    	
+slow    	Adagietto
         	Andante	 	76-108
-medium   	Andantino	
+medium   	Andantino
         	Moderato 	108-120
-fast    	Allegretto	
+fast    	Allegretto
         	Allegro	 	120-168
-        	Vivace    	
-        	Veloce    	
+        	Vivace
+        	Veloce
         	Presto	 	168-208
-very fast	Prestissimo	
+very fast	Prestissimo
 .El
 .Pp
 M[LNS] -- set articulation. MN (N for normal) is the default; the last 1/8th of
@@ -134,7 +134,7 @@ MS (staccato) 1/4 rest space.
 Notes (that is, CDEFGAB or N command character groups) may be followed by
 sustain dots. Each dot causes the note's value to be lengthened by one-half
 for each one. Thus, a note dotted once is held for 3/2 of its undotted value;
-dotted twice, it is held 9/4, and three times would give 27/8. 
+dotted twice, it is held 9/4, and three times would give 27/8.
 .Pp
 Whitespace in play strings is simply skipped and may be used to separate
 melody sections.

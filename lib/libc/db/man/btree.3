@@ -1,4 +1,4 @@
-.\"	$OpenBSD: btree.3,v 1.11 1999/07/07 10:50:04 aaron Exp $
+.\"	$OpenBSD: btree.3,v 1.12 1999/07/09 13:35:15 aaron Exp $
 .\"	$NetBSD: btree.3,v 1.6 1996/05/03 21:26:48 cgd Exp $
 .\"
 .\" Copyright (c) 1997, Phillip F Knaack. All rights reserved.
@@ -59,7 +59,7 @@ associated key/data pairs.
 .Pp
 The btree access method specific data structure provided to
 .Fn dbopen
-is defined in the 
+is defined in the
 .Em <db.h>
 include file as follows:
 .Pp
@@ -188,7 +188,7 @@ is
 and a comparison routine is specified, no prefix comparison is done.
 .It lorder
 The byte order for integers in the stored database metadata.
-The number should represent the order as an integer; for example, 
+The number should represent the order as an integer; for example,
 big endian order would be the number 4,321.
 If
 .Fa lorder

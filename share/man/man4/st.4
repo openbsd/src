@@ -67,17 +67,17 @@ tape can be configured.
 .Pp
 As the
 .Tn SCSI
-adapter is probed during boot, the 
+adapter is probed during boot, the
 .Tn SCSI
 bus is scanned for devices. Any devices found which answer as
 .Sq Em Sequential
-type devices will be attached to the 
+type devices will be attached to the
 .Nm
 driver.
 .Sh MOUNT SESSIONS
-The 
+The
 .Nm
-driver is based around the concept of a 
+driver is based around the concept of a
 .Dq Em mount session ,
 which is defined as the period between the time that a tape is
 mounted, and the time when it is unmounted.  Any parameters set
@@ -103,7 +103,7 @@ will be loaded freshly from the new mode.  (See below for more on
 modes.)
 .El
 .Sh MODES AND SUB-MODES
-There are several different 
+There are several different
 .Sq operation
 modes. These are controlled by bits 2 and 3 of the minor number
 and are designed to allow users to easily read and write different
@@ -143,11 +143,11 @@ Reserved.  Currently unused.
 .El
 .Sh BLOCKING MODES
 .Tn SCSI
-tapes may run in either 
+tapes may run in either
 .Sq Em variable
 or
 .Sq Em fixed
-block-size modes.  Most 
+block-size modes.  Most
 .Tn QIC Ns -type
 devices run in fixed block-size mode, where most nine-track tapes
 and many new cartridge formats allow variable block-size.  The
@@ -155,7 +155,7 @@ difference between the two is as follows:
 .Bl -inset
 .It Variable block-size:
 Each write made to the device results in a single logical record
-written to the tape.  One can never read or write 
+written to the tape.  One can never read or write
 .Em part
 of a record from tape (though you may request a larger block and
 read a smaller record); nor can one read multiple blocks.  Data
@@ -216,7 +216,7 @@ of densities and blocksizes for each of the modes, along with a
 set of `QUIRK' flags that can be used to enable or disable sections
 of code within the driver if a particular drive is recognized.
 .Sh IOCTLS
-The following 
+The following
 .Xr ioctl 2
 calls apply to
 .Tn SCSI
@@ -262,7 +262,7 @@ over
 file marks. Leave the head on the BOM (beginning of media)
 side of the last skipped file mark.
 .It Dv MTFSR
-Skip forwards over 
+Skip forwards over
 .Va mt_count
 records.
 .It Dv MTBSR
@@ -286,7 +286,7 @@ variable blocksize operation, and the blocksize is set to 0, then the drive
 will be driven in variable mode. This parameter is in effect for the present
 mount session only.
 .It Dv MTSETDNSTY
-Set the density value (see 
+Set the density value (see
 .Xr mt 1 )
 to use when running in the mode opened (minor bits 2 and 3).
 This parameter is in effect for the present
@@ -323,7 +323,7 @@ This
 .Nm
 driver was originally written for
 .Tn Mach
-2.5 by Julian Elischer, and was ported to 
+2.5 by Julian Elischer, and was ported to
 .Tn NetBSD
 by Charles Hannum.  This man page was edited for
 .Tn NetBSD

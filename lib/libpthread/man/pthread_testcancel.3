@@ -36,7 +36,7 @@ to the indicated
 .Fa type
 and returns the previous cancelability type at the location referenced by
 .Fa oldtype .
-Legal values for 
+Legal values for
 .Fa type
 are
 .Dv PTHREAD_CANCEL_DEFERRED
@@ -81,7 +81,7 @@ cancellation requests are held pending until a cancellation point (see
 below) is reached. If cancelability is disabled, the setting of the
 cancelability type has no immediate effect as all cancellation requests
 are held pending; however, once cancelability is enabled again the new
-type will be in effect. 
+type will be in effect.
 .El
 .Ss Cancellation Points
 Cancellation points will occur when a thread is executing the following
@@ -120,7 +120,7 @@ The
 .Fn pthread_setcancelstate
 and
 .Fn pthread_setcanceltype
-functions are used to control the points at which a thread may be 
+functions are used to control the points at which a thread may be
 asynchronously canceled. For cancellation control to be usable in modular
 fashion, some rules must be followed.
 .Pp

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount_null.8,v 1.10 1999/07/04 18:59:40 aaron Exp $
+.\"	$OpenBSD: mount_null.8,v 1.11 1999/07/09 13:35:49 aaron Exp $
 .\"	$NetBSD: mount_null.8,v 1.4 1996/04/10 20:57:19 thorpej Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994
@@ -140,7 +140,7 @@ are created as a result of vnode operations on
 this or other null vnode stacks.
 .Pp
 New vnode stacks come into existence as a result of
-an operation which returns a vnode. 
+an operation which returns a vnode.
 The bypass routine stacks a null-node above the new
 vnode before returning it to the caller.
 .Pp

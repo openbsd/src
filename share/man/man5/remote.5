@@ -1,4 +1,4 @@
-.\"	$OpenBSD: remote.5,v 1.4 1999/05/23 14:11:05 aaron Exp $
+.\"	$OpenBSD: remote.5,v 1.5 1999/07/09 13:35:39 aaron Exp $
 .\"	$NetBSD: remote.5,v 1.4 1997/04/20 00:05:27 mellon Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -72,11 +72,11 @@ Entries named
 .Dq tip\&*
 and
 .Dq cu\&*
-are used as default entries by 
+are used as default entries by
 .Xr tip ,
 and the
 .Xr cu
-interface to 
+interface to
 .Xr tip ,
 as follows.  When
 .Xr tip
@@ -91,7 +91,7 @@ interface is used, entries of the form
 are used.
 .Sh CAPABILITIES
 Capabilities are either strings (str), numbers (num), or boolean
-flags (bool).  A string capability is specified by 
+flags (bool).  A string capability is specified by
 .Em capability Ns Ar = Ns Em value ;
 for example,
 .Dq dv=/dev/harris .
@@ -109,7 +109,7 @@ Auto call unit type.
 (num)
 The baud rate used in establishing
 a connection to the remote host.
-This is a decimal number. 
+This is a decimal number.
 The default baud rate is 300 baud.
 .It Cm \&cm
 (str)
@@ -134,20 +134,20 @@ Disconnect message sent to the host when a
 disconnect is requested by the user.
 .It Cm \&du
 (bool)
-This host is on a dial-up line. 
+This host is on a dial-up line.
 .It Cm \&dv
 (str)
 .Tn UNIX
-device(s) to open to establish a connection. 
+device(s) to open to establish a connection.
 If this file refers to a terminal line,
 .Xr tip 1
 attempts to perform an exclusive open on the device to insure only
 one user at a time has access to the port.
 .It Cm \&el
 (str)
-Characters marking an end-of-line. 
+Characters marking an end-of-line.
 The default is
-.Dv NULL . 
+.Dv NULL .
 .Dq ~
 escapes are only
 recognized by
@@ -157,7 +157,7 @@ after one of the characters in
 or after a carriage-return.
 .It Cm \&fs
 (str)
-Frame size for transfers. 
+Frame size for transfers.
 The default frame size is equal to
 .Dv BUFSIZ .
 .It Cm \&hd
@@ -168,13 +168,13 @@ echo should be performed.
 (str)
 Input end-of-file marks.
 The default is
-.Dv NULL . 
+.Dv NULL .
 .It Cm \&oe
 (str)
 Output end-of-file string.
 The default is
-.Dv NULL . 
-When 
+.Dv NULL .
+When
 .Xr tip
 is transferring a file, this
 string is sent at end-of-file.
@@ -195,7 +195,7 @@ The default is even parity.
 (str)
 Telephone number(s) for this host.
 If the telephone number field contains
-an @ sign, 
+an @ sign,
 .Xr tip
 searches the file
 .Pa /etc/phones

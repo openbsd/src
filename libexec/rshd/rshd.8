@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)rshd.8	8.1 (Berkeley) 6/4/93
-.\"	$Id: rshd.8,v 1.4 1999/05/23 14:11:13 aaron Exp $
+.\"	$Id: rshd.8,v 1.5 1999/07/09 13:35:52 aaron Exp $
 .\"
 .Dd June 4, 1993
 .Dt RSHD 8
@@ -45,7 +45,7 @@
 The
 .Nm rshd
 server
-is the server for the 
+is the server for the
 .Xr rcmd 3
 routine and, consequently, for the
 .Xr rsh 1
@@ -89,7 +89,7 @@ number, base 10.
 .It
 If the number received in step 2 is non-zero,
 it is interpreted as the port number of a secondary
-stream to be used for the 
+stream to be used for the
 .Em stderr .
 A second connection is then created to the specified
 port on the client's machine.  The source port of this
@@ -128,7 +128,7 @@ machine.
 A null terminated command to be passed to a
 shell is retrieved on the initial socket.  The length of
 the command is limited by the upper bound on the size of
-the system's argument list.  
+the system's argument list.
 .It
 .Nm Rshd
 then validates the user using
@@ -144,7 +144,7 @@ option prevents
 from doing any validation based on the user's ``.rhosts'' file,
 unless the user is the superuser.
 .It
-If the file 
+If the file
 .Pa /etc/nologin
 exists and the user is not the superuser,
 the connection is closed.
@@ -189,17 +189,17 @@ longer than 16 characters.
 The command line passed exceeds the size of the argument
 list (as configured into the system).
 .It Sy Remote directory.
-The 
+The
 .Xr chdir
 command to the home directory failed.
 .It Sy Permission denied.
 The authentication procedure described above failed or
 there is no password file entry for the specified user.
 .It Sy Can't make pipe.
-The pipe needed for the 
+The pipe needed for the
 .Em stderr ,
 wasn't created.
-.It Sy Can't fork; try again. 
+.It Sy Can't fork; try again.
 A
 .Xr fork
 by the server failed.

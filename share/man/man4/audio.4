@@ -1,4 +1,4 @@
-.\"	$OpenBSD: audio.4,v 1.8 1998/09/05 17:41:48 deraadt Exp $
+.\"	$OpenBSD: audio.4,v 1.9 1999/07/09 13:35:48 aaron Exp $
 .\"	$NetBSD: audio.4,v 1.20 1998/05/28 17:27:15 augustss Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -327,7 +327,7 @@ is calculated to correspond to 50ms of sound and it is recalculated
 when the encoding parameter changes, but if the
 .Va blocksize
 is set explicitly this value becomes sticky, i.e., it is remains
-even when the encoding is changed. 
+even when the encoding is changed.
 The stickyness can be cleared by reopening the device or setting the
 .Va blocksize
 to 0.

@@ -1,30 +1,30 @@
-.\"	$OpenBSD: ddb.4,v 1.14 1999/05/16 19:56:21 alex Exp $
+.\"	$OpenBSD: ddb.4,v 1.15 1999/07/09 13:35:48 aaron Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
 .\" Copyright (c) 1991,1990 Carnegie Mellon University
 .\" All Rights Reserved.
-.\" 
+.\"
 .\" Permission to use, copy, modify and distribute this software and its
 .\" documentation is hereby granted, provided that both the copyright
 .\" notice and this permission notice appear in all copies of the
 .\" software, derivative works or modified versions, and any portions
 .\" thereof, and that both notices appear in supporting documentation.
-.\" 
+.\"
 .\" CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
 .\" CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
 .\" ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
-.\" 
+.\"
 .\" Carnegie Mellon requests users of this software to return to
-.\" 
+.\"
 .\"  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
 .\"  School of Computer Science
 .\"  Carnegie Mellon University
 .\"  Pittsburgh PA 15213-3890
-.\" 
+.\"
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
-.\" 
+.\"
 .Dd November 30, 1993
 .Dt DDB 4
 .Os
@@ -34,7 +34,7 @@
 .Sh DESCRIPTION
 The kernel debugger has most of the features of the old kdb,
 but with a more rational
-.No ( Xr gdb 1 
+.No ( Xr gdb 1
 \&- like) syntax.
 .Pp
 .Nm ddb
@@ -90,7 +90,7 @@ to be the same.
 .\" .Ar address
 .\" in a command sets
 .\" .Va dot .
-An expression can be used in place of 
+An expression can be used in place of
 .Ar address
 (see
 .Sx EXPRESSIONS . )
@@ -111,7 +111,7 @@ a
 of 1, and no modifiers.
 .Pp
 .Nm ddb
-has a feature like 
+has a feature like
 .Xr more 1
 for the output.  If the number of lines output in response to
 one command exceeds the number set in the
@@ -294,7 +294,7 @@ ecx = yyyyyy
 .Ed
 .\" --------------------
 .\" .It Xo Ic w Ns Op Cm /bhl
-.\" .Op Ar addr 
+.\" .Op Ar addr
 .\" .Ar expr Op expr ...
 .\" .Xc
 .It Xo
@@ -532,7 +532,7 @@ command is a synonym for
 .\" --------------------
 .It Xo
 .Ic trace
-.Op Cm /u 
+.Op Cm /u
 .Op Ar frameaddr Ns
 .Op Ic \&, Ns Ar count
 .Xc
@@ -542,7 +542,7 @@ modifier shows the stack trace of user space;
 If omitted, the kernel stack is traced instead.
 The
 .Ar count
-argument is the limit on the number of frames to be followed. 
+argument is the limit on the number of frames to be followed.
 If
 .Ar count
 is omitted, all frames are printed.
@@ -632,9 +632,9 @@ command.
 Display information on all processes.
 .Bl -tag -width foo -compact
 .It Cm /n
-(Default) Show process information in a 
+(Default) Show process information in a
 .Xr ps 1 Ns
-\&-like format.  Information printed includes process ID, parent 
+\&-like format.  Information printed includes process ID, parent
 process ID, process group, UID, process status, process flags, process
 command name, and process wait channel message.
 .It Cm /a
@@ -717,7 +717,7 @@ are:
 .It Ar identifier
 The name of a symbol.
 It is translated to the address (or value) of the symbol.
-.Ql \&. 
+.Ql \&.
 and
 .Ql \&:
 can be used in the identifier.
@@ -729,10 +729,10 @@ if supported by an object format dependent routine:
 .Oo Ar filename Li \&: Oc Ar func
 .Oo \&: Ar linenumber Oc
 .It
-.Op Ar filename \&: 
+.Op Ar filename \&:
 .Ar variable
 .It
-.Ar filename 
+.Ar filename
 .Op \&: Ar linenumber
 .Sm on
 .El
@@ -780,7 +780,7 @@ and modifiers as described above with
 A binary operator which rounds up the left hand side to the next
 multiple of right hand side.
 .It Li \&* Ns Ar expr
-Indirection. 
+Indirection.
 It may be followed by a ':' and  modifiers as described above.
 .Sh SEE ALSO
 .Xr gdb 1 ,

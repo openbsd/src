@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpc.yppasswdd.8,v 1.9 1999/05/16 19:56:08 alex Exp $
+.\"	$OpenBSD: rpc.yppasswdd.8,v 1.10 1999/07/09 13:35:52 aaron Exp $
 .\"
 .\" Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
@@ -42,7 +42,7 @@
 .Op Fl noshell
 .Op Fl nogecos
 .Op Fl nopw
-.Op Fl m Ar arg1 arg2 ... 
+.Op Fl m Ar arg1 arg2 ...
 .Sh DESCRIPTION
 .Nm rpc.yppasswdd
 must be running on the YP master server to allow users to change information
@@ -72,7 +72,7 @@ Don't allow changes of the gecos field in the passwd file.
 .It Fl nopw
 Don't allow changes of the password in the passwd file.
 .It Fl m Ar arg1 arg2 ...
-Don't use 
+Don't use
 .Ar /var/yp/securenet .
 Use another file with another file format. For futher information see
 man page for
@@ -84,7 +84,7 @@ man page for
 .It Pa /etc/master.passwd
 .El
 .Sh SEE ALSO
-.Xr ypbind 1 , 
+.Xr ypbind 1 ,
 .Xr securenet 5 ,
 .Xr ypserv.acl 5 ,
 .Xr yp 8

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rln.4,v 1.2 1999/07/07 10:50:10 aaron Exp $
+.\"	$OpenBSD: rln.4,v 1.3 1999/07/09 13:35:49 aaron Exp $
 .Dd 2 April, 1999
 .Dt RLN 4
 .Os
@@ -28,17 +28,17 @@ device driver supports at least the following cards:
 Digital RoamAbout FH 2400 PC-Card
 .El
 .Pp
-The Proxim RangeLAN2 air protocol is incompatible with the older 
+The Proxim RangeLAN2 air protocol is incompatible with the older
 RangeLAN(1) cards, Lucent Technologies' WaveLan cards, and with
 the newer 802.11 cards in general.
 .Pp
-The RangeLAN2 cards communicate using radio signals near the 2.4GHz 
+The RangeLAN2 cards communicate using radio signals near the 2.4GHz
 part of the spectrum.
-This frequency happens to co-incide with that of strong harmonics emitted 
+This frequency happens to co-incide with that of strong harmonics emitted
 by common consumer microwave ovens. You can guess the rest.
 .\" .Sh CONFIGURATION
-.\" Because there is no reliable way to determine between 
-.\" the different types of cards listed above, 
+.\" Because there is no reliable way to determine between
+.\" the different types of cards listed above,
 .\" the following flags can be specified in the kernel config file:
 .\" .Pp
 .\" .Bl -tag -offset indent -width 10n -compact
@@ -70,7 +70,7 @@ another.
 .It "rln0: lost sync"
 Synchronisation was lost. Check for microwave ovens being used.
 .It "rln0: nothing to sync to; now master"
-The card was unsuccessful in (re-)synchronising with any other unit, 
+The card was unsuccessful in (re-)synchronising with any other unit,
 and was configured as an alternate master.
 .It "rln0: packet too big (? > ?)"
 The card generate a message bigger than the maximum size allowable for Ethernet.
@@ -86,7 +86,7 @@ run. Check the cpu load.
 .It "rln0: lost message ?? seq ?"
 An expected response to the command did not appear within a reasonable time.
 .It "rln0: unknown RangeLAN2 wireless network card"
-The card model was not matched in the known-card tables. 
+The card model was not matched in the known-card tables.
 Please send output of
 .Xr dmesg 8
 and a description of your card in using
@@ -102,11 +102,11 @@ so that this can be rectified.
 .Xr ifconfig 8 ,
 .Pa "http://www.proxim.com/"
 .Sh AUTHOR
-David Leonard, 
+David Leonard,
 Dept Computer Science and Electrical Engineering, University of Queensland
 .Pa "<david.leonard@csee.uq.edu.au>"
 .Pp
-Information and ideas gleaned from disassembly of Dave Koberstein's 
+Information and ideas gleaned from disassembly of Dave Koberstein's
 .Pa "<davek@komacke.com>"
 Linux driver (which apparently uses Proxim code),
 from Yoichi Shinoda's
@@ -117,14 +117,14 @@ Geoff Voelker's
 Linux port of the same.
 .Sh BUGS
 This driver has not been tested with lots of cards, so there are bound
-to be subtle timing problems with different hardware. 
+to be subtle timing problems with different hardware.
 It should also work with the Symphony PC cards.
 .Pp
 I couldn't figure out how to make roaming work, nor how to interpret
 the RSSI link quality values.
 .Pp
 There is no way to change the channel or security ID on the card, or
-to make it a master, except through source code. 
+to make it a master, except through source code.
 This is because it is currently impossible under
 OpenBSD to trigger such changes through calls to
 .Xr ioctl 2

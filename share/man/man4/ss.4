@@ -1,4 +1,4 @@
-.\" $OpenBSD: ss.4,v 1.4 1999/07/08 09:41:43 hugh Exp $
+.\" $OpenBSD: ss.4,v 1.5 1999/07/09 13:35:47 aaron Exp $
 .\"
 .\" Copyright (c) 1998 Kenneth Stailey and Ian Darwin
 .\"
@@ -57,8 +57,8 @@ during operation.  You can use a second controller.)
 Obviously a SCSI host adapter must be present in the config file
 before this device can be configured.
 .Pp
-If a count is given, that many 
-.Nm ss 
+If a count is given, that many
+.Nm ss
 devices will be configured into the kernel.
 .Sh IOCTLS
 This device provides the
@@ -71,7 +71,7 @@ The third argument is the address of a scan_io structure;
 details of this structure can be found in the header file
 .Nm scanio.h.
 .Pp
-The 
+The
 .Nm SCIOCRESTART
 ioctl ignores the third parameter, and restarts the scan.
 The

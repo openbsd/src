@@ -1,6 +1,6 @@
-.\"	$OpenBSD: xd.4,v 1.2 1998/03/08 01:16:09 johns Exp $
+.\"	$OpenBSD: xd.4,v 1.3 1999/07/09 13:35:42 aaron Exp $
 .\"
-.\" Copyright (c) 1998 The OpenBSD Project 
+.\" Copyright (c) 1998 The OpenBSD Project
 .\" All rights reserved.
 .\"
 .\"
@@ -8,7 +8,7 @@
 .Dt XD 4 sparc
 .Os
 .Sh NAME
-.Nm xd 
+.Nm xd
 .Nd Xylogics 753 or 7053 VME SMD disk controller driver
 .Sh SYNOPSIS
 .Cd "xdc0    at vmel0 addr 0xffffee80 level 3 vect 0x44" Pq sun4
@@ -17,17 +17,17 @@
 .Cd "xdc3    at vmel0 addr 0xffffeeb0 level 3 vect 0x47" Pq sun4
 .Cd "xd*     at xdc? drive ?                           " Pq sun4
 .Sh DESCRIPTION
-The 
+The
 .Nm
 is a Xylogics 753 or 7053 SMD disk controller found on sun4 systems with
 the VME bus.  The Xylogics 753 and 7053 are programmed the same way, but
 are different sizes.  The 753 is a 6U VME card, while the 7053 is a 9U
-VME card.  
+VME card.
 .Sh SEE ALSO
 .Xr xy 4
 .Sh HISTORY
-The 
+The
 .Nm
-driver first appeared in NetBSD and was written by 
+driver first appeared in NetBSD and was written by
 .br
 Charles D. Cranor.

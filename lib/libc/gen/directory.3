@@ -1,4 +1,4 @@
-.\"	$OpenBSD: directory.3,v 1.9 1999/06/04 01:30:10 aaron Exp $
+.\"	$OpenBSD: directory.3,v 1.10 1999/07/09 13:35:16 aaron Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -113,7 +113,7 @@ are good only for the lifetime of the
 pointer,
 .Fa dirp ,
 from which they are derived.
-If the directory is closed and then reopened, the 
+If the directory is closed and then reopened, the
 .Fn telldir
 value may be invalidated due to undetected directory compaction.
 It is safe to use a previous

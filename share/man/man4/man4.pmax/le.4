@@ -28,7 +28,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"	$NetBSD: le.4,v 1.2 1997/10/31 02:53:46 jonathan Exp $
-.\"	$OpenBSD: le.4,v 1.4 1999/05/16 19:57:15 alex Exp $
+.\"	$OpenBSD: le.4,v 1.5 1999/07/09 13:35:41 aaron Exp $
 .\"
 .Dd August 6, 1996
 .Dt LE 4 pmax
@@ -52,7 +52,7 @@ driver provides access to a 10Mb/s Ethernet via the
 Ethernet chip.  All
 .Tn LANCE
 interfaces on
-.Tn DECstations  
+.Tn DECstations
 are supported, as are interfaces on
 .Tn "Alpha AXP"
 machines with a
@@ -60,7 +60,7 @@ machines with a
 bus.
 .Pp
 The
-.Nm 
+.Nm
 driver employs the Address Resolution Protocol described in
 .Xr arp 4
 to map between Internet and Ethernet addresses on the local
@@ -78,7 +78,7 @@ model 5000/200
 baseboard device provides only a BNC connector.
 The
 .Nm ioasic
-baseboard devices and  the 
+baseboard devices and  the
 .Tn PMAD-AA
 .Tn TurboChannel
 option card provide only an AUI port.
@@ -93,11 +93,11 @@ option card provide only an AUI port.
 On all front-ends, performance is impaired by hardware which forces
 a software copy of packets to and from DMA buffers.  The
 .Nm ioasic
-machines  and the DECstation 3100 must 
+machines  and the DECstation 3100 must
 copying packet to and from non-contiguous DMA buffers.
-The 
+The
 DECstation 5000/200  and the
-.Tn PMAD-AA 
+.Tn PMAD-AA
 must copy to and from an onboard SRAM DMA
 buffer.  The CPU overhead is noticeable, but all machines can sustain
 10Mbit media speed.

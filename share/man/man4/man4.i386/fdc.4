@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdc.4,v 1.9 1998/09/01 16:38:22 deraadt Exp $
+.\"	$OpenBSD: fdc.4,v 1.10 1999/07/09 13:35:43 aaron Exp $
 .\"	$NetBSD: fdc.4,v 1.6 1996/03/22 01:55:14 andrew Exp $
 .\"
 .\" Copyright (c) 1996 Andrew C. Wheadon
@@ -47,7 +47,7 @@
 .Sh DESCRIPTION
 The
 .Nm fdc
-driver supports the standard AT floppy 
+driver supports the standard AT floppy
 disk controllers. These include standard IDE, MFM, RLL,
 EIDE, ESDI and SCSI controllers with floppy attachment.
 .Pp
@@ -97,11 +97,11 @@ If the 0x20 bit is on, the drive will be attached even
 if it was not found by the probe routine.
 .Sh BUGS
 The
-.Nm fdc 
+.Nm fdc
 driver can interfere with other controllers, namely some WD/SMC
 network controllers fail to work when the probing mechanism
-in the 
-.Nm fdc 
+in the
+.Nm fdc
 driver probes for a missing second floppy drive.
 In this case you should try recompiling the kernel
 replacing the relevant line with

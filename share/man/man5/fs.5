@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fs.5,v 1.6 1999/05/23 14:11:05 aaron Exp $
+.\"	$OpenBSD: fs.5,v 1.7 1999/07/09 13:35:38 aaron Exp $
 .\"	$NetBSD: fs.5,v 1.3 1994/11/30 19:31:17 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -177,7 +177,7 @@ of
 .Dq blocks .
 File system blocks of at most size
 .Dv MAXBSIZE
-can 
+can
 be optionally broken into 2, 4, or 8 pieces, each of which is
 addressable; these pieces may be
 .Dv DEV_BSIZE ,
@@ -284,7 +284,7 @@ Note that super-blocks are never more than size
 The path name on which the file system is mounted is maintained in
 .Fa fs_fsmnt .
 .Dv MAXMNTLEN
-defines the amount of space allocated in 
+defines the amount of space allocated in
 the super-block for this name.
 The limit on the amount of summary information per file system
 is defined by
@@ -293,7 +293,7 @@ For a 4096 byte block size, it is currently parameterized for a
 maximum of two million cylinders.
 .Pp
 Per cylinder group information is summarized in blocks allocated
-from the first cylinder group's data blocks. 
+from the first cylinder group's data blocks.
 These blocks are read in from
 .Fa fs_csaddr
 (size

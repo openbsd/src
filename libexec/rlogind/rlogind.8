@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)rlogind.8	8.1 (Berkeley) 6/4/93
-.\"	$Id: rlogind.8,v 1.4 1999/05/23 14:11:13 aaron Exp $
+.\"	$Id: rlogind.8,v 1.5 1999/07/09 13:35:53 aaron Exp $
 .\"
 .Dd June 4, 1993
 .Dt RLOGIND 8
@@ -43,7 +43,7 @@
 .Op Fl aln
 .Sh DESCRIPTION
 .Nm Rlogind
-is the server for the 
+is the server for the
 .Xr rlogin 1
 program.  The server provides a remote login facility
 with authentication based on privileged port numbers from trusted hosts.
@@ -92,14 +92,14 @@ verifying that the name and address correspond.
 Normal authentication is bypassed if the address verification fails.
 .El
 .Pp
-Once the source port and address have been checked, 
+Once the source port and address have been checked,
 .Nm rlogind
 proceeds with the authentication process described in
 .Xr rshd 8 .
-It then allocates a pseudo terminal (see 
+It then allocates a pseudo terminal (see
 .Xr pty 4 ) ,
 and manipulates file descriptors so that the slave
-half of the pseudo terminal becomes the 
+half of the pseudo terminal becomes the
 .Em stdin ,
 .Em stdout ,
 and

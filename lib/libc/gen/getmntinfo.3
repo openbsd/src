@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getmntinfo.3,v 1.5 1999/05/16 19:54:52 alex Exp $
+.\"	$OpenBSD: getmntinfo.3,v 1.6 1999/07/09 13:35:17 aaron Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -69,20 +69,20 @@ The pointer to the array is stored into
 If an error occurs, zero is returned and the external variable
 .Va errno
 is set to indicate the error.
-Although the pointer 
+Although the pointer
 .Fa mntbufp
-will be unmodified, any information previously returned by 
+will be unmodified, any information previously returned by
 .Fn getmntinfo
 will be lost.
 .Sh ERRORS
 The
 .Fn getmntinfo
 function
-may fail and set 
-.Va errno 
+may fail and set
+.Va errno
 for any of the errors specified for the library routines
 .Xr getfsstat 2
-or 
+or
 .Xr malloc 3 .
 .Sh SEE ALSO
 .Xr getfsstat 2 ,

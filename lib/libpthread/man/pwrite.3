@@ -1,4 +1,4 @@
-.\" $OpenBSD: pwrite.3,v 1.6 1999/07/07 10:50:05 aaron Exp $
+.\" $OpenBSD: pwrite.3,v 1.7 1999/07/09 13:35:25 aaron Exp $
 .\" David Leonard <d@openbsd.org>, 1998. Public domain.
 .Dd September 7, 1998
 .Dt PWRITE 3
@@ -21,7 +21,7 @@ in the file opened on file descriptor
 .Fa filedes.
 .Pp
 This function is provided for use in a threaded, parallel I/O
-environment, where race conditions may exist between two threads 
+environment, where race conditions may exist between two threads
 non-atomically seeking and writing to the same file descriptor.
 .Sh RETURN VALUES
 The

@@ -6,7 +6,7 @@
 .\" this stuff is worth it, you can buy me a beer in return.   Poul-Henning Kamp
 .\" ----------------------------------------------------------------------------
 .\"
-.\" 	$OpenBSD: mdX.3,v 1.11 1999/05/10 17:56:29 aaron Exp $
+.\" 	$OpenBSD: mdX.3,v 1.12 1999/07/09 13:35:14 aaron Exp $
 .\"
 .Dd October 9, 1996
 .Dt MDX 3
@@ -37,7 +37,7 @@
 The MDX functions calculate a 128-bit cryptographic checksum (digest)
 for any number of input bytes.  A cryptographic checksum is a one-way
 hash-function, that is, you cannot find (except by exhaustive search)
-the input corresponding to a particular output.  This net result is 
+the input corresponding to a particular output.  This net result is
 a ``fingerprint'' of the input-data, which doesn't disclose the actual
 input.
 .Pp
@@ -64,7 +64,7 @@ and finally extract the result using
 .Fn MDXFinal .
 When a null pointer is passed to
 .Fn MDXFinal
-as first argument only the final padding will be applied and the 
+as first argument only the final padding will be applied and the
 current context can still be used with
 .Fn MDXUpdate .
 .Pp
@@ -77,7 +77,7 @@ which converts the return value to a 33-character
 string which represents the 128 bits in hexadecimal.
 .Pp
 .Fn MDXFile
-calculates the digest of a file, and uses 
+calculates the digest of a file, and uses
 .Fn MDXEnd
 to return the result.
 If the file cannot be opened, a null pointer is returned.
@@ -91,7 +91,7 @@ When using
 .Fn MDXFile ,
 or
 .Fn MDXData ,
-the 
+the
 .Ar buf
 argument can be a null pointer, in which case the returned string
 is allocated with
@@ -99,7 +99,7 @@ is allocated with
 and subsequently must be explicitly deallocated using
 .Xr free 3
 after use.
-If the 
+If the
 .Ar buf
 argument is non-null it must point to at least 33 characters of buffer space.
 .Sh SEE ALSO
@@ -121,7 +121,7 @@ argument is non-null it must point to at least 33 characters of buffer space.
 .%O RFC 1321
 .Re
 .Rs
-.%A RSA Laboratories 
+.%A RSA Laboratories
 .%T Frequently Asked Questions About today's Cryptography
 .%O \&<http://www.rsa.com/rsalabs/faq/>
 .Re
@@ -156,7 +156,7 @@ These functions appeared in
 .Ox 2.0 .
 .Sh BUGS
 Hans Dobbertin has shown collisions for the full version of MD4 and
-found a collision in the compress function of MD5. The use of SHA or 
+found a collision in the compress function of MD5. The use of SHA or
 RIPEMD-160 is recommended instead.
 .Pp
 MD2 has only been licensed for use in Privacy Enhanced Mail.

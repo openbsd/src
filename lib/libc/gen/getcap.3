@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getcap.3,v 1.15 1999/07/02 16:57:48 aaron Exp $
+.\"	$OpenBSD: getcap.3,v 1.16 1999/07/09 13:35:16 aaron Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -35,7 +35,7 @@
 .\" SUCH DAMAGE.
 .\"
 .Dd April 19, 1994
-.Dt GETCAP 3 
+.Dt GETCAP 3
 .Os
 .Sh NAME
 .Nm cgetent ,
@@ -82,10 +82,10 @@ file array
 .Fa db_array
 and returns a pointer to a
 copy of it in
-.Fa buf .  
+.Fa buf .
 .Fn cgetent
-will first look for files ending in 
-.Dq .db 
+will first look for files ending in
+.Dq .db
 (see
 .Xr cap_mkdb 1 )
 before accessing the
@@ -102,35 +102,35 @@ and
 but may then be
 .Xr free Ns \&'d.
 On success 0 is returned, 1 if the returned
-record contains an unresolved 
-.Ic tc 
+record contains an unresolved
+.Ic tc
 expansion,
 \-1 if the requested record couldn't be found,
 \-2 if a system error occurred (couldn't open or read a file,
 for example) also
 setting
-.Va errno , 
+.Va errno ,
 and \-3 if a potential reference loop is detected (see
 .Ic tc=
 comments below).
 .Pp
-.Fn cgetset 
+.Fn cgetset
 enables the addition of a character buffer containing a single capability
 record entry
-to the capability database.  
+to the capability database.
 Conceptually, the entry is added as the first
 .Dq file
 in the database, and
-is therefore searched first on the call to 
+is therefore searched first on the call to
 .Fn cgetent .
-The entry is passed in 
+The entry is passed in
 .Fa ent .
-If 
-.Fa ent 
+If
+.Fa ent
 is
 .Dv NULL ,
-the current entry is removed from the database.  
-.Fn cgetset 
+the current entry is removed from the database.
+.Fn cgetset
 must precede the database traversal.  It must be called before
 .Fn cgetent .
 If a sequential access is being performed (see below), it must be called
@@ -138,7 +138,7 @@ before the first sequential access call (
 .Fn cgetfirst
 or
 .Fn cgetnext
-), or be directly preceded by a 
+), or be directly preceded by a
 .Fn cgetclose
 call.
 On success 0 is returned and \-1 on failure.
@@ -207,8 +207,8 @@ be found, or \-2 if a system error was encountered (storage allocation
 failure).
 .Pp
 .Fn cgetustr
-is identical to 
-.Fn cgetstr 
+is identical to
+.Fn cgetstr
 except that it does not expand special characters, but rather returns each
 character of the capability string literally.
 .Pp
@@ -219,38 +219,38 @@ comprise a function group that provides for sequential
 access of the null-terminated
 array of file names,
 .Fa db_array .
-.Fn cgetfirst 
+.Fn cgetfirst
 returns the first record in the database and resets the access
 to the first record.
-.Fn cgetnext 
+.Fn cgetnext
 returns the next record in the database with respect to the
 record returned by the previous
 .Fn cgetfirst
 or
-.Fn cgetnext 
+.Fn cgetnext
 call.  If there is no such previous call, the first record in the database is
 returned.
 Each record is returned in a
-.Xr malloc Ns \&'d 
-copy pointed to by 
-.Fa buf .  
+.Xr malloc Ns \&'d
+copy pointed to by
+.Fa buf .
 .Ic tc
 expansion is done (see
-.Ic tc= 
+.Ic tc=
 comments below).
 Upon completion of the database 0 is returned,  1 is returned upon successful
-return of record with possibly more remaining (we haven't reached the end of 
+return of record with possibly more remaining (we haven't reached the end of
 the database yet), 2 is returned if the record contains an unresolved
-.Ic tc 
+.Ic tc
 expansion, \-1 is returned if an system error occurred, and \-2
-is returned if a potential reference loop is detected (see 
+is returned if a potential reference loop is detected (see
 .Ic tc=
 comments below).
 Upon completion of database (0 return) the database is closed.
 .Pp
-.Fn cgetclose 
-closes the sequential access and frees any memory and file descriptors 
-being used.  Note that it does not erase the buffer pushed by a call to 
+.Fn cgetclose
+closes the sequential access and frees any memory and file descriptors
+being used.  Note that it does not erase the buffer pushed by a call to
 .Fn cgetset .
 .Ss Capability database syntax
 Capability databases are normally
@@ -407,7 +407,7 @@ has value
 .Em number
 .It Em name No = Em string Ta "string capability"
 .Em name
-has value 
+has value
 .Em string
 .It Em name No \&#@ Ta "the numeric capability"
 .Em name
@@ -515,24 +515,24 @@ returns a character pointer on success and a
 on failure.
 .Pp
 .Fn cgetent
-and 
+and
 .Fn cgetset
-may fail and set 
+may fail and set
 .Va errno
 for any of the errors specified for the library functions
-.Xr fopen 3 , 
+.Xr fopen 3 ,
 .Xr fclose 3 ,
 .Xr open 2 ,
-and 
+and
 .Xr close 2 .
 .Pp
 .Fn cgetent ,
 .Fn cgetset ,
 .Fn cgetstr ,
 and
-.Fn cgetustr 
-may fail and set 
-.Va errno 
+.Fn cgetustr
+may fail and set
+.Va errno
 as follows:
 .Bl -tag -width Er
 .It Bq Er ENOMEM
@@ -551,6 +551,6 @@ There are no checks for
 loops in
 .Fn cgetent .
 .Pp
-The buffer added to the database by a call to 
-.Fn cgetset 
+The buffer added to the database by a call to
+.Fn cgetset
 is not unique to the database but is rather prepended to any database used.

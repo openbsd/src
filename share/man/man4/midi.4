@@ -1,4 +1,4 @@
-.\" $OpenBSD: midi.4,v 1.2 1999/05/16 19:56:30 alex Exp $
+.\" $OpenBSD: midi.4,v 1.3 1999/07/09 13:35:48 aaron Exp $
 .\" $NetBSD: midi.4,v 1.4 1998/08/22 14:45:35 augustss Exp $
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
 .\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 .\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS 
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
 .\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
 .\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
 .\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -73,13 +73,13 @@ a simple patchboard for MIDI devices.  For example, a MIDI keyboard could
 be connected to a synthesizer by the command
 .Cd "cat -u /dev/rmidi1 >/dev/rmidi2"
 .Pp
-The 
+The
 .Pa /dev/music
 device is a MIDI sequencer device.  Data sent to and from this device
 not only contains the information sent to the MIDI device, but also
 timing information.  The kernel will make sure that data is sent
 to the physical device at the indicated time.  The sequencer device
-uses the 
+uses the
 .Pa /dev/midiN
 devices internally and they are unavailable when used by the sequencer.
 .Pp

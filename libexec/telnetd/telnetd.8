@@ -1,4 +1,4 @@
-.\"	$OpenBSD: telnetd.8,v 1.10 1999/05/28 23:00:10 aaron Exp $
+.\"	$OpenBSD: telnetd.8,v 1.11 1999/07/09 13:35:51 aaron Exp $
 .\"	$NetBSD: telnetd.8,v 1.8 1996/03/20 04:25:55 tls Exp $
 .\"
 .\" Copyright (c) 1983, 1993
@@ -78,7 +78,7 @@ option may be used to start up
 .Nm
 manually, instead of through
 .Xr inetd 8 .
-If started up this way, 
+If started up this way,
 .Ar port
 may be specified to run
 .Nm
@@ -147,7 +147,7 @@ to print out debugging information
 to the connection, allowing the user to see what
 .Nm
 is doing.
-There are several possible values for 
+There are several possible values for
 .Ar debugmode:
 .Bl -tag -width exercise
 .It Cm options
@@ -155,7 +155,7 @@ Prints information about the negotiation of
 .Tn TELNET
 options.
 .It Cm report
-Prints the 
+Prints the
 .Cm options
 information, plus some additional information
 about what processing is going on.
@@ -312,7 +312,7 @@ a specific authentication type without having to recompile
 operates by allocating a pseudo-terminal device (see
 .Xr pty 4 )
 for a client, then creating a login process which has
-the slave side of the pseudo-terminal as 
+the slave side of the pseudo-terminal as
 .Dv stdin ,
 .Dv stdout
 and
@@ -326,7 +326,7 @@ between the remote client and the login process.
 .Pp
 When a
 .Tn TELNET
-session is started up, 
+session is started up,
 .Nm
 sends
 .Tn TELNET

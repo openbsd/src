@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hosts_access.3,v 1.3 1997/06/23 11:12:40 downsj Exp $
+.\"	$OpenBSD: hosts_access.3,v 1.4 1999/07/09 13:35:28 aaron Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -37,7 +37,7 @@
 .Nm hosts_access ,
 .Nm hosts_ctl ,
 .Nm request_init ,
-.Nm request_set 
+.Nm request_set
 .Nd access control library
 .Sh SYNOPSIS
 .Fd #include <tcpd.h>
@@ -52,7 +52,7 @@
 .Ft int
 .Fn hosts_ctl "char *daemon" "char *client_name" "char *client_addr" "char *client_user"
 .Sh DESCRIPTION
-The routines described in this document are part of the 
+The routines described in this document are part of the
 .Nm libwrap.a
 library.  They implement a rule-based access control language with
 optional shell commands that are executed when a rule fires.
@@ -109,7 +109,7 @@ arguments should contain valid data or STRING_UNKNOWN.
 .Fn hosts_ctl
 returns zero if access should be denied.
 .Pp
-The 
+The
 .Fa allow_severity
 and
 .Fa deny_severity
@@ -140,7 +140,7 @@ library function. This may interfere with other code that relies on
 Wietse Venema (wietse@wzv.win.tue.nl)
 Department of Mathematics and Computing Science
 Eindhoven University of Technology
-Den Dolech 2, P.O. Box 513, 
+Den Dolech 2, P.O. Box 513,
 5600 MB Eindhoven, The Netherlands
 .Ed
 \" @(#) hosts_access.3 1.8 96/02/11 17:01:26

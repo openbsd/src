@@ -1,4 +1,4 @@
-.\" $OpenBSD: keynote.3,v 1.8 1999/07/07 14:22:25 aaron Exp $
+.\" $OpenBSD: keynote.3,v 1.9 1999/07/09 13:35:29 aaron Exp $
 .\"
 .\" The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 .\"
@@ -6,11 +6,11 @@
 .\" in April-May 1998
 .\"
 .\" Copyright (C) 1998, 1999 by Angelos D. Keromytis.
-.\"      
+.\"
 .\" Permission to use, copy, and modify this software without fee
 .\" is hereby granted, provided that this entire notice is included in
 .\" all copies of any software which is or includes a copy or
-.\" modification of this software. 
+.\" modification of this software.
 .\" You may use this code under the GNU public license if you so wish. Please
 .\" contribute changes back to the author.
 .\"
@@ -101,7 +101,7 @@ struct keynote_binary
 .Va keynote_errno
 contains an error code if some library call failed. Failed calls
 return \-1 (if their return value is integer), or
-.Dv NULL 
+.Dv NULL
 (if their return value is a pointer) and set
 .Va keynote_errno .
 The defined error codes are:
@@ -151,7 +151,7 @@ session, and performs any necessary initializations. On success, this
 function returns the new session ID, which is used by all subsequent
 calls with a
 .Fa sessid
-argument. 
+argument.
 On failure, it returns \-1 and sets
 .Va keynote_errno
 to
@@ -247,7 +247,7 @@ attribute.
 In this case,
 .Fa name
 is a regular expression that may match more than one attribute.
-In case of conflict between a regular expression and a ``simple'' 
+In case of conflict between a regular expression and a ``simple''
 attribute, the latter will be given priority. In case of conflict
 between two regular expression attributes, the one added later will be
 given priority. A callback function should never change the current
@@ -335,7 +335,7 @@ and the highest-ordered value is
 .Fa returnvalues[numvalues - 1] .
 If
 .Fa returnvalues
-is 
+is
 .Dv NULL ,
 the
 .Fa returnvalues
@@ -380,7 +380,7 @@ for syntactic or semantic errors.
 .It KEYNOTE_ERROR_MEMORY
 for memory-related problems.
 .It KEYNOTE_ERROR_SIGNATURE
-if the assertion could be be cryptographically verified. 
+if the assertion could be be cryptographically verified.
 .El
 .Pp
 These values are defined in keynote.h. An application can then delete
@@ -409,7 +409,7 @@ and frees all related resources, deleting action attributes, action
 authorizers, and assertions. On success, this function returns 0. On
 failure, it returns \-1 and sets
 .Va keynote_errno
-to 
+to
 .Er ERROR_NOTFOUND
 if the session was not found.
 .Pp
@@ -608,7 +608,7 @@ in this implementation.
 describes how the key should be binary-encoded. This implementation
 supports
 .DV INTERNAL_ENC_PKCS1
-for RSA keys, 
+for RSA keys,
 .Dv INTERNAL_ENC_ASN1
 for DSA keys, and
 .Dv INTERNAL_ENC_NONE
@@ -658,7 +658,7 @@ and
 pointing to an algorithm-dependent structure. In this implementation,
 this is an SSLeay/OpenSSL-defined
 .Fa DSA *
-for DSA keys, 
+for DSA keys,
 .Fa RSA *
 for RSA keys, and a
 .Fa keynote_binary *
@@ -746,10 +746,10 @@ algorithm was not supported.
 .Xr keynote 1 ,
 .Xr keynote 4
 .Bl -tag -width "AAAAAAA"
-.It ``The KeyNote Trust-Management System'' 
+.It ``The KeyNote Trust-Management System''
 M. Blaze, J. Feigenbaum, A. D. Keromytis,
 Internet Drafts, draft-ietf-trustmgt-keynote-00.txt
-.It ``Decentralized Trust Management'' 
+.It ``Decentralized Trust Management''
 M. Blaze, J. Feigenbaum, J. Lacy,
 1996 IEEE Conference on Privacy and Security
 .It ``Compliance-Checking in the PolicyMaker Trust Management System''

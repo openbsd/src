@@ -42,7 +42,7 @@
 .Fn rexec ahost "int inport" "char *user" "char *passwd" "char *cmd" "int *fd2p"
 .Sh DESCRIPTION
 .Bf -symbolic
-This interface is obsoleted by 
+This interface is obsoleted by
 .Xr krcmd 3 .
 It is available from the compatibility library, libcompat.
 .Ef
@@ -73,7 +73,7 @@ specifies which well-known
 Internet port to use for
 the connection; the call
 .Ql getservbyname(\\*qexec\\*q, \\*qtcp\\*q)
-(see 
+(see
 .Xr getservent 3 )
 will return a pointer to a structure, which contains the
 necessary port.
@@ -105,10 +105,10 @@ as the secondary connection is set up after authorization has been
 verified.
 If
 .Fa fd2p
-is 0, then the 
+is 0, then the
 .Em stderr
 (unit 2 of the remote
-command) will be made the same as the 
+command) will be made the same as the
 .Em stdout
 and no
 provision is made for sending arbitrary signals to the remote process,
@@ -119,5 +119,5 @@ although you may be able to get its attention by using out-of-band data.
 .Sh HISTORY
 The
 .Fn rexec
-function appeared in 
+function appeared in
 .Bx 4.2 .

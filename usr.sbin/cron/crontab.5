@@ -15,8 +15,8 @@
 .\" * Paul Vixie          <paul@vix.com>          uunet!decwrl!vixie!paul
 .\" */
 .\"
-.\" $Id: crontab.5,v 1.7 1999/07/07 10:50:11 aaron Exp $
-.\" 
+.\" $Id: crontab.5,v 1.8 1999/07/09 13:35:53 aaron Exp $
+.\"
 .Dd June 8, 1999
 .Dt CRONTAB 5
 .Os
@@ -34,7 +34,7 @@ at these times on these dates run this command
 .Dc .
 There may be a system
 .Nm crontab
-.Pf ( Pa /etc/crontab ) 
+.Pf ( Pa /etc/crontab )
 and each user may have their own
 .Nm crontab
 .Pf ( Pa /var/cron/tabs/<user> ) .
@@ -68,7 +68,7 @@ non-space character is a pound sign
 .Pq Ql #
 are comments, and are ignored.
 Note that comments are not allowed on the same line as
-.Xr cron 8 
+.Xr cron 8
 commands, since
 they will be taken to be part of the command. Similarly, comments are not
 allowed on the same line as environment variable settings.
@@ -111,7 +111,7 @@ and
 and
 .Ev HOME
 are set from the
-.Pa /etc/passwd 
+.Pa /etc/passwd
 line of the
 .Nm crontab Ns \&'s
 owner.
@@ -151,7 +151,7 @@ commands in
 If
 .Ev MAILTO
 is defined (and non-empty),
-mail is sent to the user so named. If 
+mail is sent to the user so named. If
 .Ev MAILTO
 is defined but empty
 .Pq Ev MAILTO \&= Sq ,

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rmd160.3,v 1.9 1999/07/07 10:50:04 aaron Exp $
+.\"	$OpenBSD: rmd160.3,v 1.10 1999/07/09 13:35:20 aaron Exp $
 .\"
 .\" Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
 .\" All rights reserved.
@@ -64,7 +64,7 @@ of a message called a message digest.  The algorithm takes a
 message less than 2^64 bits as input and produces a 160-bit digest
 suitable for use as a digital signature.
 .Pp
-The RMD160 functions are considered to be more secure than the 
+The RMD160 functions are considered to be more secure than the
 .Xr md4 3
 and
 .Xr md5 3
@@ -96,7 +96,7 @@ and stores a message digest in the
 parameter.
 When a null pointer is passed to
 .Fn RMD160Final
-as first argument only the final padding will be applied and the 
+as first argument only the final padding will be applied and the
 current context can still be used with
 .Fn RMD160Update .
 .Pp

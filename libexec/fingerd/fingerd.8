@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fingerd.8,v 1.6 1999/05/23 14:11:10 aaron Exp $
+.\"	$OpenBSD: fingerd.8,v 1.7 1999/07/09 13:35:50 aaron Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)fingerd.8	8.1 (Berkeley) 6/4/93
-.\"	$Id: fingerd.8,v 1.6 1999/05/23 14:11:10 aaron Exp $ 
+.\"	$Id: fingerd.8,v 1.7 1999/07/09 13:35:50 aaron Exp $
 .\"
 .Dd June 4, 1993
 .Dt FINGERD 8
@@ -79,7 +79,7 @@ closes its connections as soon as the output is finished.
 .Pp
 If the line is null (i.e. just a
 .Aq Tn CRLF
-is sent) then 
+is sent) then
 .Xr finger
 returns a
 .Dq default
@@ -145,7 +145,7 @@ Use an alternate program as the local information provider.
 The default local program
 executed by
 .Nm fingerd
-is 
+is
 .Xr finger 1 .
 By specifying a customized local server,
 this option allows a system manager

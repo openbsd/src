@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vis.3,v 1.8 1999/06/05 03:44:54 aaron Exp $
+.\"	$OpenBSD: vis.3,v 1.9 1999/07/09 13:35:20 aaron Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,9 +43,9 @@
 .Fd #include <vis.h>
 .Ft char *
 .Fn vis "char *dst" "char c" "int flag" "char nextc"
-.Ft int 
+.Ft int
 .Fn strvis "char *dst" "char *src" "int flag"
-.Ft int 
+.Ft int
 .Fn strvisx "char *dst" "char *src" "int len" "int flag"
 .Sh DESCRIPTION
 The
@@ -112,7 +112,7 @@ forms return the number of characters in
 (not including the trailing NUL).
 .Pp
 The encoding is a unique, invertible representation composed entirely of
-graphic characters; it can be decoded back into the original form using 
+graphic characters; it can be decoded back into the original form using
 the
 .Xr unvis 3
 or
@@ -121,7 +121,7 @@ functions.
 .Pp
 There are two parameters that can be controlled: the range of
 characters that are encoded, and the type
-of representation used.  
+of representation used.
 By default, all non-graphic characters.
 except space, tab, and newline are encoded
 (see
@@ -131,25 +131,25 @@ alter this:
 .Bl -tag -width VIS_WHITEX
 .It Dv VIS_SP
 Also encode space.
-.It Dv VIS_TAB		
+.It Dv VIS_TAB
 Also encode tab.
 .It Dv VIS_NL
 Also encode newline.
-.It Dv VIS_WHITE	
+.It Dv VIS_WHITE
 Synonym for
 .Dv VIS_SP
 \&|
 .Dv VIS_TAB
 \&|
 .Dv VIS_NL .
-.It Dv VIS_SAFE	
+.It Dv VIS_SAFE
 Only encode
 .Dq unsafe
 characters.  These are control
 characters which may cause common terminals to perform
 unexpected functions.  Currently this form allows space,
 tab, newline, backspace, bell, and return -- in addition
-to all graphic characters -- unencoded. 
+to all graphic characters -- unencoded.
 .El
 .Pp
 There are three forms of encoding.

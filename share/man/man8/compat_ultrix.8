@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compat_ultrix.8,v 1.5 1999/05/23 14:11:27 aaron Exp $
+.\"	$OpenBSD: compat_ultrix.8,v 1.6 1999/07/09 13:35:36 aaron Exp $
 .\"
 .\" Copyright (c) 1997 Jonathan Stone
 .\" All rights reserved.
@@ -46,11 +46,11 @@ Most executables will work.  The exceptions include programs that use
 proprietary, Ultrix-specific features (LAT, CI support, DECnet
 support) and various system calls, ioctl()'s, or Ultrix kernel
 semantics that are difficult to emulate (e.g., Ultrix packetfilter) or
-buggy (e.g., Ultrix YP). 
+buggy (e.g., Ultrix YP).
 .Pp
 All Ultrix executables are static, so no shared libraries are required
 for Ultrix compatiblity. However, Ultrix is based on a
-.Bx 4.3 
+.Bx 4.3
 alpha
 release.  Ultrix commands and libraries are often much older than
 their OpenBSD or even SunOS 4.x equivalents, and may require incompatible
@@ -88,7 +88,7 @@ lookups for all Ultrix name services.
 .Sh BUGS
 RISC Ultrix YP(NIS) is known to not work.  The Ultrix YP libraries have
 a consistent endian-ness bug. Ultrix YP client will not inter-operate
-with the OpenBSD 
+with the OpenBSD
 .Xr ypbind 8
 process.  The only workaround is to use
 /etc/svc.conf to disable YP(NIS).
@@ -96,7 +96,7 @@ process.  The only workaround is to use
 The ndbm hashed-password file used by Ultrix are incompatible with the
 db hashed-password file used by OpenBSD. There is no good solution for
 this. (YP would be a good one, if Ultrix YP worked.)
-.Pp 
+.Pp
 The API used by Xservers to talk to the kernel is currently compatible
 with Ultrix 4.1.  An implementation of the Ultrix 4.2 Xws interface
 (used by X11R6) is in progress.

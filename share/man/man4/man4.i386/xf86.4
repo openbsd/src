@@ -1,4 +1,4 @@
-.\"	$OpenBSD: xf86.4,v 1.8 1999/07/07 10:50:10 aaron Exp $
+.\"	$OpenBSD: xf86.4,v 1.9 1999/07/09 13:35:44 aaron Exp $
 .\"
 .\" Copyright (c) 1998 Matthieu Herrb
 .\" All rights reserved.
@@ -35,21 +35,21 @@ XFree86 aperture driver
 .Sh SYNOPSIS
 .Cd "option APERTURE"
 .Sh DESCRIPTION
-The 
+The
 .Pa /dev/xf86
 driver provides access to the memory and I/O ports of a VGA board for
-use by the XFree86 X servers 
+use by the XFree86 X servers
 when running with a kernel security level > 0.
 .Pp
 The X servers require the use of this driver.
 .Sh ACCESS CONTROL
-Access to the 
-.Pa /dev/xf86 
+Access to the
+.Pa /dev/xf86
 device is allowed when the sysctl variable
-.Va machdep.allowaperture 
-= 1. This variable (which default value is 0) 
+.Va machdep.allowaperture
+= 1. This variable (which default value is 0)
 can only be manipulated when the security level is <= 0, so it should be
-set in 
+set in
 .Pa /etc/sysctl.conf .
 .Sh SEE ALSO
 .Xr XF86_Accel 1 ,
@@ -59,17 +59,17 @@ set in
 .Xr config 8 ,
 .Xr sysctl 8
 .Sh HISTORY
-.Pa /dev/xf86 
+.Pa /dev/xf86
 was introduced as a loadable kernel module for NetBSD 0.9C
 with XFree86 3.1. It was integrated as an in-kernel device on
 .Ox 2.3 .
 It is required in order to allow access to I/O ports for all X servers
-since 
+since
 .Ox 2.4 .
 .Sh AUTHOR
 The aperture driver was written by Matthieu Herrb.
 .Sh BUGS
 This driver allows access to all addresses above
-.Va physmem . 
+.Va physmem .
 It should be restricted to the actual address range of the video
-memory. 
+memory.

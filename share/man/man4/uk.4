@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uk.4,v 1.5 1999/07/03 02:11:12 aaron Exp $
+.\"	$OpenBSD: uk.4,v 1.6 1999/07/09 13:35:48 aaron Exp $
 .\"	$NetBSD: uk.4,v 1.3 1996/10/20 23:15:26 explorer Exp $
 .\"
 .\" Copyright (c) 1996
@@ -37,21 +37,21 @@
 .Sh DESCRIPTION
 The
 .Nm uk
-driver provides support for a 
+driver provides support for a
 process to address devices on the scsi bus for which there is no configured
-driver. 
+driver.
 .Pp
 A scsi adapter must also be separately configured into the system
 before this driver makes sense.
 .Sh KERNEL CONFIGURATION
 If a count is given that number of
-.Nm 
+.Nm
 devices will be configured into the kernel.
 .Sh IOCTLS
-The 
+The
 .Nm
 driver has no ioctls of its own but rather acts as a medium for the
-generic 
+generic
 .Xr scsi 4
 ioctls. These are described in
 .Em sys/scsiio.h.
@@ -63,7 +63,7 @@ uk{x} is the  'xth'unknown device found.
 .Sh DIAGNOSTICS
 All
 .Xr scsi 4
-debug ioctls work on 
+debug ioctls work on
 .Nm
 devices.
 .Sh SEE ALSO

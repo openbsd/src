@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: ahsc.4,v 1.4 1999/07/07 10:50:10 aaron Exp $
+.\"	$Id: ahsc.4,v 1.5 1999/07/09 13:35:44 aaron Exp $
 .\"
 .Dd August 31, 1994
 .Dt AHSC 4 amiga
@@ -41,7 +41,7 @@
 The
 .Tn Amiga
 architecture uses a common machine independent scsi sub-system
-provided in the kernel source.  The machine independent 
+provided in the kernel source.  The machine independent
 drivers that use this code access the hardware through a
 common interface. (see
 .Xr scsibus 4 )
@@ -51,11 +51,11 @@ such as
 which then handles the hardware specific issues.
 .Pp
 The
-.Nm 
+.Nm
 interface handles things such as DMA and interrupts as well as
 actually sending commands, negotiating synchronous or asynchronous
 transfers and handling disconnect/reconnect of SCSI targets.
-The hardware that 
+The hardware that
 .Nm
 uses is based on the WD33c93 SCSI chip.
 .Sh DIAGNOSTICS
@@ -89,6 +89,6 @@ expected durring DMA IO setup.
 .Xr scsibus 4
 .Sh HISTORY
 The
-.Nm 
+.Nm
 interface first appeared in
 .Nx 0.9a

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpdump.8,v 1.17 1999/07/07 10:50:14 aaron Exp $
+.\"	$OpenBSD: tcpdump.8,v 1.18 1999/07/09 13:35:54 aaron Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994, 1995, 1996
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1046,7 +1046,7 @@ arp who\&-has csam tell rtsg
 arp reply csam is\&-at CSAM
 .Ed
 .Pp
-In this example, Ethernet addresses are in caps and internet 
+In this example, Ethernet addresses are in caps and internet
 addresses in lower case.
 The first line says that rtsg sent an arp packet asking
 for the Ethernet address of internet host csam. csam
@@ -1268,7 +1268,7 @@ Host h2opolo asked the domain server on helios for an address record
 .Pq Ar qtype Ns \&=A
 associated with the name
 ucbvax.berkeley.edu.
-The query 
+The query
 .Ar id
 was 3.
 The
@@ -1282,7 +1282,7 @@ protocol headers. The query operation was the normal one
 .Pq Query
 so the
 .Ar op
-field was omitted. If 
+field was omitted. If
 .Ar op
 had been anything else, it would
 have been printed between the
@@ -1330,7 +1330,7 @@ Name server responses are formatted as
 .Bd -ragged -offset indent
 .Ar src No > Ar dst :
 .Ar id op rcode flags
-.Ar a 
+.Ar a
 /
 .Ar n
 /
@@ -1359,7 +1359,7 @@ and
 headers. The
 .Ar op
 .Pq Query
-and 
+and
 .Ar rcode
 .Pq NoError
 were omitted, as was the
@@ -1457,8 +1457,8 @@ on fh
 If one is lucky, as in this case, the file handle can be interpreted
 as a major,minor device number pair, followed by the inode number and
 generation number.
-Wrl replies with a 
-.Ar stat 
+Wrl replies with a
+.Ar stat
 of ok and the contents of the link.
 .Pp
 In the third line, sushi asks wrl to lookup the name
@@ -1487,7 +1487,7 @@ also prints the
 and fragmentation fields, which have been omitted from this example.
 In the first line, sushi asks wrl
 to read 8192 bytes from file 21,11/12.195,
-at byte offset 24576. Wrl replies with a 
+at byte offset 24576. Wrl replies with a
 .Ar stat of
 ok;
 the packet shown on the
@@ -1535,7 +1535,7 @@ keeps track of
 .Dq recent
 requests, and matches them to the
 replies using the
-.Ar xid 
+.Ar xid
 .Pq transaction ID .
 If a reply does not closely follow the
 corresponding request, it might not be parsable.
@@ -1584,7 +1584,7 @@ file may contain blank lines or comment lines
 .Pp
 AppleTalk addresses are printed in the form
 .Bd -ragged -offset indent
-.Ar net Ns . Ns Ar host Ns . 
+.Ar net Ns . Ns Ar host Ns .
 .Ns Ar port
 .Pp
 e.g.

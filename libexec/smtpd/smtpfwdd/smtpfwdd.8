@@ -1,4 +1,4 @@
-.\"	$Id: smtpfwdd.8,v 1.10 1999/07/02 20:11:49 aaron Exp $
+.\"	$Id: smtpfwdd.8,v 1.11 1999/07/09 13:35:52 aaron Exp $
 .Dd December 10, 1997
 .Dt SMTPFWDD 8
 .Os
@@ -20,13 +20,13 @@ The
 .Nm smtpfwdd
 daemon forwards mail messages from a spool directory to
 their eventual destinations. It regularly scans the spool directory in
-which its symboitic companion program 
+which its symboitic companion program
 .Xr smtpd 8
 stores messages and invokes
-a mail program (such as 
+a mail program (such as
 .Xr sendmail 8 )
 to forward them. It is the forward
-portion of an SMTP store and foward proxy. 
+portion of an SMTP store and foward proxy.
 .Nm smtpfwdd
 is a standalone daemon, usually invoked at system startup.
 .Sh OPTIONS
@@ -39,11 +39,11 @@ This should be the same directory in which
 is spooling files (usually
 .Pa /var/spool/smtpd )
 .It Fl g
-Specify a 
+Specify a
 .Ar group
 to run as. Same as user above.
 .It Fl M
-Specifies 
+Specifies
 .Ar maxchildren
 as the maximum number of children
 .Nm smtpfwdd
@@ -62,16 +62,16 @@ to be quieter. By default smtpfwdd emits very verbose syslog messages. With
 this option it will emit one line of log for each normal message exchange.
 .It Fl s
 Specify a different mail program to use to forward
-mail. The default is 
+mail. The default is
 .Pa /usr/sbin/sendmail
 Any replacement must be able to be invoked in the same manner as sendmail
 with a -f fromaddress, followed by one or more destination addresses
 on the command line.
 .It Fl u
-Specify a 
+Specify a
 .Ar user
 to run as. This user must not be root but
-should normally be a user that is able to run 
+should normally be a user that is able to run
 .Xr sendmail 8
 and use the
 .Fl f
@@ -82,7 +82,7 @@ option to specify the sender of a mail message.
 .Xr sendmail 8 ,
 .Xr smtpd 8
 .Sh BUGS
-Since 
+Since
 .Xr sendmail 8
 is not normally running as a daemon when using
 .Xr smtpd 8

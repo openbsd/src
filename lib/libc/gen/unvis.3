@@ -1,4 +1,4 @@
-.\"	$OpenBSD: unvis.3,v 1.8 1999/07/02 20:58:00 aaron Exp $
+.\"	$OpenBSD: unvis.3,v 1.9 1999/07/09 13:35:19 aaron Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,9 +40,9 @@
 .Nd decode a visual representation of characters
 .Sh SYNOPSIS
 .Fd #include <vis.h>
-.Ft int 
+.Ft int
 .Fn unvis "char *cp" "char c" "int *astate" "int flag"
-.Ft int 
+.Ft int
 .Fn strunvis "char *dst" "char *src"
 .Sh DESCRIPTION
 The
@@ -57,7 +57,7 @@ function, back into
 the original form.
 .Fn unvis
 is called with successive characters in
-.Fa c 
+.Fa c
 until a valid
 sequence is recognized, at which time the decoded character is
 available at the character pointed to by
@@ -108,7 +108,7 @@ has several return codes that must be handled properly.  They are:
 .Bl -tag -width UNVIS_VALIDPUSH
 .It Li \&0 (zero)
 Another character is necessary; nothing has been recognized yet.
-.It Dv UNVIS_VALID	
+.It Dv UNVIS_VALID
 A valid character has been recognized and is available at the location
 pointed to by
 .Fa cp .

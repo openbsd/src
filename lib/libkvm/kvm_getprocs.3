@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kvm_getprocs.3,v 1.5 1999/07/02 21:13:04 aaron Exp $
+.\"	$OpenBSD: kvm_getprocs.3,v 1.6 1999/07/09 13:35:25 aaron Exp $
 .\"	$NetBSD: kvm_getprocs.3,v 1.3 1996/05/20 16:58:03 mrg Exp $
 .\"
 .\" Copyright (c) 1992, 1993
@@ -44,7 +44,7 @@
 .Sh NAME
 .Nm kvm_getprocs ,
 .Nm kvm_getargv ,
-.Nm kvm_getenvv 
+.Nm kvm_getenvv
 .Nd access user process state
 .Sh SYNOPSIS
 .Fd #include <kvm.h>
@@ -97,13 +97,13 @@ The number of processes found is returned in the reference parameter
 .Fa cnt .
 The processes are returned as a contiguous array of kinfo_proc structures.
 This memory is locally allocated, and subsequent calls to
-.Fn kvm_getprocs 
-and 
+.Fn kvm_getprocs
+and
 .Fn kvm_close
 will overwrite this storage.
 .Pp
 .Fn kvm_getargv
-returns a null-terminated argument vector that corresponds to the 
+returns a null-terminated argument vector that corresponds to the
 command line arguments passed to process indicated by
 .Fa p .
 Most likely, these arguments correspond to the values passed to
@@ -116,7 +116,7 @@ in the
 field of the process structure returned by
 .Fn kvm_getprocs .
 .Pp
-The 
+The
 .Fa nchr
 argument indicates the maximum number of characters, including null bytes,
 to use in building the strings.  If this amount is exceeded, the string
@@ -129,13 +129,13 @@ that print only a one line summary of a command and should not copy
 out large amounts of text only to ignore it.
 If
 .Fa nchr
-is zero, no limit is imposed and all argument strings are returned in 
+is zero, no limit is imposed and all argument strings are returned in
 their entirety.
 .Pp
 The memory allocated to the argv pointers and string storage
-is owned by the kvm library.  Subsequent 
-.Fn kvm_getprocs 
-and 
+is owned by the kvm library.  Subsequent
+.Fn kvm_getprocs
+and
 .Xr kvm_close 3
 calls will clobber this storage.
 .Pp

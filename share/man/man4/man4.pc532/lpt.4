@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: lpt.4,v 1.4 1998/09/05 17:41:49 deraadt Exp $
+.\"	$Id: lpt.4,v 1.5 1999/07/09 13:35:40 aaron Exp $
 .\"
 .Dd December 1, 1994
 .Dt LPT 4 pc532
@@ -43,7 +43,7 @@
 This driver provides access to centronics ports. Bit 6 in the minor number
 selects wether to omit pulling /PRIME low on opens or not. If the minor has
 bit 5 set, AUTOLINEFEED will be asserted when transferring data to the printer.
-Addr and Irq default to 0xffc80030,7 for lpt0 and to 0xffc80034,6 for lpt1. 
+Addr and Irq default to 0xffc80030,7 for lpt0 and to 0xffc80034,6 for lpt1.
 .Sh FILES
 .Bl -tag -width Pa -compact
 .It Pa /dev/lpt0

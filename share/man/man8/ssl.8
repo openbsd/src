@@ -5,9 +5,9 @@
 .Nm ssl
 .Nd details for libssl and libcrypto
 .Sh DESCRIPTION
-This document describes some of the issues relating to the use of 
+This document describes some of the issues relating to the use of
 Eric Young's libssl and libcrypto libraries. This document
-is intended as an overview of what the libraries do, what uses them, 
+is intended as an overview of what the libraries do, what uses them,
 and the slightly unorthodox way of upgrading the library.
 .Pp
 The SSL libraries (libssl and libcrypto) implement the
@@ -23,7 +23,7 @@ are most
 commonly used by the
 .Ar https
 protocol for encrypted web transactions.
-Due to patent issues in the United States, there are 
+Due to patent issues in the United States, there are
 problems with shipping a fully functional implementation of these
 protocols anywhere in the world, as such shipment would include shipping
 .Ar into
@@ -69,7 +69,7 @@ is
 .Pp
 The
 .Ar https
-protocol used by web browsers (in modern incarnations), 
+protocol used by web browsers (in modern incarnations),
 allows for the use of
 .Ar SSL version 3
 and
@@ -115,8 +115,8 @@ The most common uses of
 will require you to generate a server certificate, which is provided by your
 host as evidence of its identity when clients make new connections. The
 certificates reside in the
-.Pa /etc/ssl 
-directory, with the keys in the 
+.Pa /etc/ssl
+directory, with the keys in the
 .Pa /etc/ssl/private
 directory.
 .Pp
@@ -124,7 +124,7 @@ Private keys can be encrypted using
 .Ar 3DES
 and a passphrase to protect their integrity should the encrypted file
 be disclosed, However it is
-important to note that encrypted server keys mean that the passphrase 
+important to note that encrypted server keys mean that the passphrase
 needs to be typed in every time the server is started. If a passphrase
 is not used, you will need to be absolutely sure your key file
 is kept secure.
@@ -170,11 +170,11 @@ shared libraries to support
 as described above. Once that is done,
 you can generate
 .Ar RSA
-certificates that will be usable by 
+certificates that will be usable by
 .Xr httpd 8
 for
 .Ar https
-transactions. 
+transactions.
 .Bd -literal -offset indent
 # ssleay genrsa -out /etc/ssl/private/server.key 1024
 .Ed
@@ -184,7 +184,7 @@ have to type in when starting servers
 .Bd -literal -offset indent
 # ssleay genrsa -des3 -out /etc/ssl/private/server.key 1024
 .Ed
-.Pp 
+.Pp
 The next step is to generate a
 .Ar Certificate Signing Request
 which is used
@@ -201,7 +201,7 @@ This
 .Pa server.csr
 file can then be given to
 .Ar Certifying Authority
-who will sign the key. One such CA is 
+who will sign the key. One such CA is
 .Ar Thawte Certification
 which you can reach at
 .Ar http://www.thawte.com/.
@@ -214,11 +214,11 @@ You can also sign the key yourself, using the command:
   -signkey /etc/ssl/private/server.key -out /etc/ssl/server.crt
 .Ed
 .Pp
-With 
+With
 .Pa /etc/ssl/server.crt
-and 
+and
 .Pa /etc/ssl/private/server.key
-in place, you should be able to start 
+in place, you should be able to start
 .Xr httpd 8
 with the
 .Ar -DSSL
@@ -228,13 +228,13 @@ transactions with your machine on port 443.
 .Sh BUGS
 .Pp
 .Nm ssleay
-and 
+and
 .Nm libssl
 have nearly nonexistent documentation.
 Most documentation consists of examples and README files in
 the sources.  Mail beck@openbsd.org to assist or
 encourage him to finish the job.
-.Pp 
+.Pp
 The world needs more
 .Ar DSA
 capable

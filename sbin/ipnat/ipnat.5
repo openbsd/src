@@ -1,4 +1,4 @@
-.\"      $OpenBSD: ipnat.5,v 1.9 1999/07/07 10:50:11 aaron Exp $
+.\"      $OpenBSD: ipnat.5,v 1.10 1999/07/09 13:35:49 aaron Exp $
 .Dd June 5, 1999
 .Dt IPNAT 5
 .Os
@@ -39,16 +39,16 @@ ifname      ::= <interface name>
 .Ed
 .Pp
 Elements in a rule are usually separated by whitespace (blanks or tabs).
-In the case of the 
+In the case of the
 .Ql \&/
 in
 .Fa host
-rule or the 
+rule or the
 .Ql \&:
 in the
 .Fa portrange
 rule, there must be no whitespace before or after it. In the case
-of the 
+of the
 .Ql \&/
 in the
 .Fa proxy
@@ -56,7 +56,7 @@ rule there must be whitespace before but no whitespace after.
 .Pp
 In the
 .Fa host
-and 
+and
 .Fa mask
 rules, the alternatives are evaluated in the order given.
 .Pp
@@ -66,11 +66,11 @@ rule, if the element begins with a non-digit the mask is taken to be all zeros.
 A
 .Ql \&.
 in the element causes the element to be interpreted as a numeric IP
-address of the form 1.2.3.4. An 
+address of the form 1.2.3.4. An
 .Ql x
 in the element causes the element to be interpreted as a 32 bit hex value. If all
 else fails the element is interpreted as the number of sequential 1's to place
-as the most significant bits in the 32 bit network mask. 
+as the most significant bits in the 32 bit network mask.
 Whatever the interpretation method, a result network mask of all 1's, indicating a
 hostname, is valid.  A network mask of 31 1's (255.255.255.254)
 is considered invalid as there is no space for allocating host
