@@ -1,4 +1,4 @@
-/*	$OpenBSD: http_protocol.c,v 1.20 2003/02/21 16:39:56 henning Exp $ */
+/*	$OpenBSD: http_protocol.c,v 1.21 2003/02/21 18:41:09 henning Exp $ */
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
@@ -3200,7 +3200,8 @@ int ap_create_etag_state(pool *pconf)
     filename = ap_server_root_relative(pconf, "logs/etag-state");
     ap_server_strip_chroot(filename, 0);
 
-    if ((fd = open(filename, O_CREAT|O_RDWR|O_NOFOLLOW, 0640)) == -1) {
+    if ((fd = open(filename, O_CREAT|O_WRONLY|O_TRUNC|O_NOFOLLOW, 0640)) ==
+      -1) {
         ap_log_error(APLOG_MARK, APLOG_CRIT, NULL,
           "could not create %s", filename);
         exit(-1);
@@ -3255,6 +3256,9 @@ int ap_read_etag_state(pool *pconf)
 
     if ((fd = open(filename, O_RDONLY|O_NOFOLLOW, 0640)) == -1)
 	return (-1);
+
+    fchmod(fd, S_IRUSR|S_IWUSR|S_IRGRP);
+    fchown(fd, -1, ap_group_id);
 
     if (fstat(fd, &st) == -1) {
         ap_log_error(APLOG_MARK, APLOG_CRIT, NULL,
