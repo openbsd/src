@@ -1,4 +1,4 @@
-/*	$OpenBSD: psycho.c,v 1.38 2003/12/20 20:08:17 miod Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.39 2004/12/18 03:05:24 brad Exp $	*/
 /*	$NetBSD: psycho.c,v 1.39 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -657,10 +657,11 @@ psycho_get_bus_range(node, brp)
 	int node;
 	int *brp;
 {
-	int n;
+	int n, error;
 
-	if (getprop(node, "bus-range", sizeof(*brp), &n, (void **)&brp))
-		panic("could not get psycho bus-range");
+	error = getprop(node, "bus-range", sizeof(*brp), &n, (void **)&brp);
+	if (error)
+		panic("could not get psycho bus-range, error %d", error);
 	if (n != 2)
 		panic("broken psycho bus-range");
 	DPRINTF(PDB_PROM,
