@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	$arla: fs.1,v 1.17 2003/06/06 12:53:48 hin Exp $
-.\"     $OpenBSD: fs.1,v 1.13 2004/08/25 21:59:59 jmc Exp $
+.\"     $OpenBSD: fs.1,v 1.14 2004/09/15 23:05:53 jmc Exp $
 .\"
 .Dd March 29, 2000
 .Dt FS 1
@@ -92,7 +92,7 @@ get fid
 .It Cm getserverprefs
 not yet implemented
 .It Cm getstatistics
-get statistics from the cachemanager
+get statistics from the cache manager
 .It Cm getpriority
 get priority of a file/dir
 .It Cm gp
@@ -344,7 +344,7 @@ Not yet implemented.
 .Pp
 .Ic fs getstatistics
 .Bd -filled -offset indent -compact
-Get statistics from the cachemanager.  Possible type to get statistics
+Get statistics from the cache manager.  Possible type to get statistics
 for are fetchstatus, fetchdata, storestatus, storedata, bulkstatus.
 .Ed
 .Pp
@@ -453,7 +453,7 @@ Not yet implemented.
 Create a mountpoint point to
 .Ar volume
 in optional
-.Ar cell.
+.Ar cell .
 If
 .Fl rw
 is given, a mountpoint to the readwrite volume is created.
@@ -522,14 +522,14 @@ Leave interactive mode.
 .Ar mountpoint
 .Bd -filled -offset indent -compact
 Delete
-.Ar mountpoint Ns .
+.Ar mountpoint .
 .Ed
 .Pp
 .Ic fs removepriority
 .Ar path
 .Bd -filled -offset indent -compact
 Remove priority from file or directory
-.Ar path Ns .
+.Ar path .
 .Ed
 .Pp
 .Ic fs rmp
@@ -661,10 +661,10 @@ Not yet implemented.
 .Ic fs setcrypt
 .Ar yes | no
 .Bd -filled -offset indent -compact
-If 
+If
 .Ar no
 is specified, encryption of the traffic to/from fileservers is
-disabled, and if 
+disabled, and if
 .Ar yes
 is specified, it is enabled.
 .Ed
