@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache.c,v 1.11 2000/02/21 14:43:35 art Exp $	*/
+/*	$OpenBSD: cache.c,v 1.12 2000/02/21 14:51:20 art Exp $	*/
 /*	$NetBSD: cache.c,v 1.34 1997/09/26 22:17:23 pk Exp $	*/
 
 /*
@@ -180,9 +180,7 @@ hypersparc_cache_enable()
 {
 	int i, ls, ts;
 	u_int pcr, v;
-#ifdef notyet
 	extern u_long dvma_cachealign;
-#endif
 
 	ls = CACHEINFO.c_linesize;
 	ts = CACHEINFO.c_totalsize;
@@ -194,9 +192,7 @@ hypersparc_cache_enable()
 	 */
 	cache_alias_dist = CACHEINFO.c_totalsize;
 	cache_alias_bits = (cache_alias_dist - 1) & ~PGOFSET;
-#ifdef notyet
 	dvma_cachealign = cache_alias_dist;
-#endif
 
 	/* Now reset cache tag memory if cache not yet enabled */
 	if ((pcr & HYPERSPARC_PCR_CE) == 0)

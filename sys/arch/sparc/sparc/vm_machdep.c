@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.15 2000/02/18 17:40:04 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.16 2000/02/21 14:51:20 art Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.30 1997/03/10 23:55:40 pk Exp $ */
 
 /*
@@ -164,6 +164,8 @@ dvma_free(dva, len, kaddr)
 	free((void *)kva, M_DEVBUF);
 }
 
+u_long dvma_cachealign = 0;
+
 /*
  * Map a range [va, va+len] of wired virtual addresses in the given map
  * to a kernel address in DVMA space.
@@ -177,22 +179,26 @@ dvma_mapin(map, va, len, canwait)
 	vaddr_t	kva, tva;
 	int npf, s;
 	paddr_t pa;
-	long off;
-	vaddr_t	ova;
-	int		olen;
+	vaddr_t off;
+	vaddr_t ova;
+	int olen;
 	int error;
+
+	if (dvma_cachealign == 0)
+	        dvma_cachealign = PAGE_SIZE;
 
 	ova = va;
 	olen = len;
 
-	off = (int)va & PGOFSET;
-	va -= off;
+	off = va & PAGE_MASK;
+	va &= ~PAGE_MASK;
 	len = round_page(len + off);
 	npf = btoc(len);
 
 	s = splhigh();
-	error = extent_alloc(dvmamap_extent, len, PAGE_SIZE, 0,
-			     canwait ? EX_WAITSPACE : 0, &tva);
+	error = extent_alloc1(dvmamap_extent, len, dvma_cachealign, 
+			      va & (dvma_cachealign - 1), 0,
+			      canwait ? EX_WAITSPACE : 0, &tva);
 	splx(s);
 	if (error)
 		return NULL;
