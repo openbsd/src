@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.83 2000/12/02 18:01:11 millert Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.84 2000/12/04 10:49:31 itojun Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -1964,15 +1964,21 @@ void
 replydirname(name, message)
 	const char *name, *message;
 {
+	char *p, *ep;
 	char npath[MAXPATHLEN];
-	int i;
 
-	for (i = 0; *name != '\0' && i < sizeof(npath) - 1; i++, name++) {
-		npath[i] = *name;
-		if (*name == '"')
-			npath[++i] = '"';
+	p = npath;
+	ep = &npath[sizeof(npath) - 1];
+	while (*name) {
+		if (*name == '"' && ep - p >= 2) {
+			*p++ = *name++;
+			*p++ = '"';
+		} else if (ep - p >= 1)
+			*p++ = *name++;
+		else
+			break;
 	}
-	npath[i] = '\0';
+	*p = '\0';
 	reply(257, "\"%s\" %s", npath, message);
 }
 
