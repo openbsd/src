@@ -3,11 +3,11 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.vax/MAKEDEV.md,v 1.3 2002/02/14 13:24:45 todd Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.29 2002/02/14 05:38:22 todd Exp 
+#	OpenBSD: etc.vax/MAKEDEV.md,v 1.4 2002/02/14 14:32:26 todd Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.30 2002/02/14 14:32:26 todd Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.6 2002/02/14 05:50:37 todd Exp 
 #
-#	$OpenBSD: MAKEDEV,v 1.38 2002/02/14 13:27:04 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.39 2002/02/14 14:32:50 todd Exp $
 #
 # Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -31,6 +31,7 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+
 
 # Device "make" file.  Valid arguments:
 #	all	makes all known devices, including local devices.
@@ -56,8 +57,8 @@
 #	sd*	SCSI disks
 #	cd*	SCSI cdrom drives
 #	ch*	SCSI media changer
-#	uk*	SCSI Unknown device
 #	ss*	SCSI scanners
+#	uk*	SCSI Unknown device
 #	xy*	Xylogic 450/451 disks
 #	rd*	"ramdisk" pseudo-disks
 #	xd*	Xylogic 753/7053 disks
@@ -69,6 +70,12 @@
 #	pty*	set of 16 master pseudo terminals
 # Printers:
 # Terminal ports:
+#	dhu*	unibus dhu11
+#	dh*	unibus dh11 and emulations (e.g. Able dmax, Emulex cs-11)
+#	dmf*	unibus dmf32
+#	dmz*	unibus dmz32
+#	vt*	console
+#	dz*	unibus dz11 and dz32
 # Special purpose devices:
 #	audio*	audio device
 #	openprom	
@@ -220,8 +227,8 @@ std)
 	M ttyg2		c 25 2
 	M ttyg3		c 25 3
 	M crl		c 35 0
-	M csa1		c 51 0
-	M csa2		c 51 1
+	M csa1		c 51 0 600
+	M csa2		c 51 1 600
 	M tu0		b 8 0
 	M tu1		b 8 1
 	M kUmem		c 3 3 660
@@ -305,17 +312,17 @@ magma*)
 	n=0
 	for pre in " " s u p a
 	do
-		M ${pre}random c 119 $n 644
+		M ${pre}random c 67 $n 644
 		n=$(($n+1))
 	done
 	;;
 
 tun*)
-	M tun$U c 111 $U 600
+	M tun$U c 57 $U 600
 	;;
 
 lkm)
-	M lkm c 112 0 640 kmem
+	M lkm c 28 0 640 kmem
 	;;
 
 altq)
@@ -349,6 +356,89 @@ audio*)
 	MKlist="$MKlist;[ -e audioctl ] || ln -s audioctl$U audioctl"
 	;;
 
+dz*)
+	unit=${i#dz};
+       case $unit in
+       [0-7])
+	       i=0
+	       while [ $i -lt 8 ]; do
+		       no=$(($unit * 8 + $i))
+		       if [ $no -lt 10 ]; then
+			       no="0${no}"
+		       fi
+		       rm -f tty${no}
+		       mknod tty${no} c 1 $no
+		       i=$(($i + 1))
+	       done
+	       ;;
+	*)
+	       echo bad unit for dz in: $i
+	       ;;
+       esac
+	;;
+
+dhu*|dmz*|dmf*|dh*)
+	set -A cnvtbl 0 1 2 3 4 5 6 7 8 9 a b c d e f g h i j k l m n o p q r s t u v
+	case $i in
+	vt*)    name=vt; major=68; count=8;
+		unit=${i#vt}
+		case $unit in
+		0) ch=w ;;
+		*) echo bad unit for $name in: $i ;;
+		esac;;
+	dmz*)   name=dmz; major=37; count=24;
+		unit=${i#dmz}
+		case $unit in
+		0) ch=a ;; 1) ch=b ;; 2) ch=c ;; 3) ch=e ;; 4) ch=f ;;
+		*) echo bad unit for $name in: $i ;;
+		esac;;
+	dmf*)   name=dmf; major=22; count=8;
+		unit=${i#dmf}
+		case $unit in
+		0) ch=A ;; 1) ch=B ;; 2) ch=C ;; 3) ch=E ;;
+		4) ch=F ;; 5) ch=G ;; 6) ch=H ;; 7) ch=I ;;
+		*) echo bad unit for $name in: $i ;;
+		esac;;
+	dhu*)   name=dhu; major=34; count=16;
+		unit=${i#dhu}
+		case $unit in
+		0) ch=S ;; 1) ch=T ;; 2) ch=U ;; 3) ch=V ;;
+		4) ch=W ;; 5) ch=X ;; 6) ch=Y ;; 7) ch=Z ;;
+		*) echo bad unit for $name in: $i ;;
+		esac;;
+	dh*)    name=dh; major=12; count=16;
+		unit=${i#dh}
+		case $unit in
+		0) ch=h ;; 1) ch=i ;; 2) ch=j ;; 3) ch=k ;;
+		4) ch=l ;; 5) ch=m ;; 6) ch=n ;; 7) ch=o ;;
+		*) echo bad unit for $name in: $i ;;
+		esac;;
+	esac
+	i=0
+	while [ $i -lt $count ]; do
+		let=${cnvtbl[$i]}
+		if [ -n "$let" ] ;then
+			rm -f tty${ch}${let}
+			mknod tty${ch}${let} c $major $(($unit * $count + $i))
+		else
+			echo bad count for ${name}: $unit, $count, $i
+		fi
+		i=$(($i + 1))
+	done
+	;;
+
+dl*)
+	unit=${i#dl}
+	major=66
+	let=${cnvtbl[$unit]}
+	if [ -n "$let" ] ;then
+		rm -f ttyJ${let}
+		mknod ttyJ${let} c $major $unit
+	else
+		echo bad number for ${name}: $unit
+	fi
+	;;
+
 pty*)
 	case $U in
 	0) off=0 name=p;;
@@ -380,8 +470,8 @@ pty*)
 	;;
 
 vnd*)
-	dodisk vnd $U 8 55 $U 0
-	dodisk svnd $U 8 55 $U 128
+	dodisk vnd $U 18 55 $U 0
+	dodisk svnd $U 18 55 $U 128
 	;;
 
 fd*)
@@ -416,22 +506,22 @@ rd*)
 	dodisk2 rd $U 23 106 $U 0
 	;;
 
+uk*)
+	M uk$U c 65 $U 640 operator
+	;;
+
 ss*)
-	M ss$U c 121 $U 440 operator
+	M ss$U c 64 $U 440 operator
 	RMlist="$RMlist scan$U"
 	MKlist="$MKlist;umask 77;ln -s ss$U scan$U"
 	;;
 
-uk*)
-	M uk$U c 120 $U 640 operator
-	;;
-
 ch*)
-	M ch$U c 19 $U 660 operator
+	M ch$U c 63 $U 660 operator
 	;;
 
 cd*)
-	dodisk2 cd $U 22 58 $U 0
+	dodisk2 cd $U 22 61 $U 0
 	;;
 
 st*)
@@ -449,15 +539,15 @@ local)
 	;;
 
 all)
-	R hd0 hd1 hd2 audio0 xfs0 ss0 ss1 uk0 ses0 rndrandom lkm pf
-	R altq tun0 tun1 tun2 tun3 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6
-	R bpf7 bpf8 bpf9 fd1 fd1B fd1C fd1D fd1E fd1F fd1G fd1H fd0
-	R fd0B fd0C fd0D fd0E fd0F fd0G fd0H xd0 xd1 xd2 xd3 xy0 xy1
-	R xy2 xy3 ut0 up0 up1 up2 up3 ts0 tm0 rx0 rx1 rl0 rl1 rl2 rl3
-	R rb0 rb1 rb2 rb3 ra0 ra1 ra2 ra3 ht0 hp0 hp1 hp2 hp3 hk0 hk1
-	R hk2 hk3 rd0 raid0 raid1 raid2 raid3 ccd0 ccd1 ccd2 ccd3 vnd0
-	R vnd1 vnd2 vnd3 std cd0 cd1 ch0 st0 st1 pty0 pty1 pty2 fd sd0
-	R sd1 sd2 sd3 sd4
+	R dz0 dh0 dmf0 dmz0 dhu0 mt0 hd0 hd1 hd2 audio0 xfs0 ss0 ss1
+	R uk0 ses0 rndrandom lkm pf altq tun0 tun1 tun2 tun3 bpf0 bpf1
+	R bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 fd1 fd1B fd1C fd1D
+	R fd1E fd1F fd1G fd1H fd0 fd0B fd0C fd0D fd0E fd0F fd0G fd0H
+	R xd0 xd1 xd2 xd3 xy0 xy1 xy2 xy3 ut0 up0 up1 up2 up3 ts0 tm0
+	R rx0 rx1 rl0 rl1 rl2 rl3 rb0 rb1 rb2 rb3 ra0 ra1 ra2 ra3 ht0
+	R hp0 hp1 hp2 hp3 hk0 hk1 hk2 hk3 rd0 raid0 raid1 raid2 raid3
+	R ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 std cd0 cd1 ch0 st0
+	R st1 pty0 pty1 pty2 fd sd0 sd1 sd2 sd3 sd4
 	;;
 
 up*|xd*|xy*|sd*|rx*|rl*|rb*|raid*|ra*|hp*|hk*|hd*|ccd*)
