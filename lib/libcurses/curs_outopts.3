@@ -1,4 +1,4 @@
-.\" $OpenBSD: curs_outopts.3,v 1.10 2001/02/25 18:32:34 millert Exp $
+.\" $OpenBSD: curs_outopts.3,v 1.11 2003/05/12 11:06:49 jmc Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -85,9 +85,9 @@ terminals so equipped.  Use of character insert/delete is enabled by default.
 Calling \fBidcok\fR with \fBTRUE\fR as second argument re-enables use
 of character insertion and deletion.
 
-If \fBimmedok\fR is called with \fBTRUE as argument\fR, any change
+If \fBimmedok\fR is called with \fBTRUE\fR as argument, any change
 in the window image, such as the ones caused by \fBwaddch, wclrtobot, wscrl\fR,
-\fIetc\fR., automatically cause a call to \fBwrefresh\fR.  However, it may
+etc., automatically cause a call to \fBwrefresh\fR.  However, it may
 degrade performance considerably, due to repeated calls to \fBwrefresh\fR.
 It is disabled by default.
 
@@ -144,7 +144,7 @@ ability to do the equivalent of \fBclearok(..., 1)\fR by saying
 \fBtouchwin(stdscr)\fR or \fBclear(stdscr)\fR.  This will not work under
 ncurses.
 
-Earlier System V curses implementations specified that with \fBscrollok\fR 
+Earlier System V curses implementations specified that with \fBscrollok\fR
 enabled, any window modification triggering a scroll also forced a physical
 refresh.  XSI Curses does not require this, and \fBncurses\fR avoids doing
 it in order to perform better vertical-motion optimization at \fBwrefresh\fR

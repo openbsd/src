@@ -1,4 +1,4 @@
-.\" $OpenBSD: curs_inopts.3,v 1.6 1998/09/13 19:16:19 millert Exp $
+.\" $OpenBSD: curs_inopts.3,v 1.7 2003/05/12 11:06:49 jmc Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -165,9 +165,9 @@ had not occurred, after the handler exits.
 
 The \fBtimeout\fR and \fBwtimeout\fR routines set blocking or
 non-blocking read for a given window.  If \fIdelay\fR is negative,
-blocking read is used (\fIi\fR.\fIe\fR., waits indefinitely for
+blocking read is used (i.e., waits indefinitely for
 input).  If \fIdelay\fR is zero, then non-blocking read is used
-(\fIi\fR.\fIe\fR., read returns \fBERR\fR if no input is waiting).  If
+(i.e., read returns \fBERR\fR if no input is waiting).  If
 \fIdelay\fR is positive, then read blocks for \fIdelay\fR
 milliseconds, and returns \fBERR\fR if there is still no input.
 Hence, these routines provide the same functionality as \fBnodelay\fR,
@@ -195,7 +195,7 @@ The ncurses library obeys the XPG4 standard and the historical practice of the
 AT&T curses implementations, in that the echo bit is cleared when curses
 initializes the terminal state.  BSD curses differed from this slightly; it
 left the echo bit on at initialization, but the BSD \fBraw\fR call turned it
-off as a side-effect.  For best portability, set echo or noecho explicitly 
+off as a side-effect.  For best portability, set echo or noecho explicitly
 just after initialization, even if your program remains in cooked mode.
 .SH NOTES
 Note that \fBecho\fR, \fBnoecho\fR, \fBhalfdelay\fR, \fBintrflush\fR,

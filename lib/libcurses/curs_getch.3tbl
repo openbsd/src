@@ -1,5 +1,5 @@
 '\" t 
-.\" $OpenBSD: curs_getch.3tbl,v 1.10 2001/02/28 22:58:53 millert Exp $
+.\" $OpenBSD: curs_getch.3tbl,v 1.11 2003/05/12 11:06:49 jmc Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
@@ -78,7 +78,7 @@ is read.
 If \fBkeypad\fR is \fBTRUE\fR, and a function key is pressed, the token for
 that function key is returned instead of the raw characters.  Possible function
 keys are defined in \fB<curses.h>\fR as macros with values outside the range
-of 8-bit characters whose names begin with \fBKEY_.\fR Thus, a variable
+of 8-bit characters whose names begin with \fBKEY_\fR. Thus, a variable
 intended to hold the return value of a function key must be of short size or
 larger.
 
@@ -136,7 +136,7 @@ KEY_ENTER/Enter or send
 KEY_SRESET/Soft (partial) reset
 KEY_RESET/Reset or hard reset
 KEY_PRINT/Print or copy
-KEY_LL/Home down or bottom (lower left).
+KEY_LL/Home down or bottom (lower left)
 KEY_A1/Upper left of keypad
 KEY_A3/Upper right of keypad
 KEY_B2/Center of keypad
@@ -213,8 +213,8 @@ c c c .
 .TE
 .sp
 The \fBhas_key\fR routine takes a key value from the above list, and
-returns TRUE or FALSE according as the current terminal type recognizes
-a key with that value.
+returns TRUE or FALSE according to whether the current terminal type
+recognizes a key with that value.
 
 .SH RETURN VALUE
 All routines return the integer \fBERR\fR upon failure and an integer value
@@ -231,7 +231,7 @@ Some curses implementations may differ according to whether they
 treat these control keys specially (and ignore the terminfo), or
 use the terminfo definitions.
 \fBNcurses\fR uses the terminfo definition.
-If it says that KEY_ENTER is control/M, \fBgetch\fR, will return KEY_ENTER
+If it says that KEY_ENTER is control/M, \fBgetch\fR will return KEY_ENTER
 when you press control/M.
 
 When using \fBgetch\fR, \fBwgetch\fR, \fBmvgetch\fR, or

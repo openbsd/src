@@ -1,4 +1,4 @@
-.\" $OpenBSD: curs_beep.3,v 1.5 1998/09/13 19:16:17 millert Exp $
+.\" $OpenBSD: curs_beep.3,v 1.6 2003/05/12 11:06:49 jmc Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -47,7 +47,7 @@ flashes the screen, and if that is not possible, sounds the alert.  If neither
 alert is possible, nothing happens.  Nearly all terminals have an audible alert
 (bell or beep), but only some can flash the screen.
 .SH RETURN VALUE
-These routines return \fBOK\fR if they succeed in beeping or flashing, 
+These routines return \fBOK\fR if they succeed in beeping or flashing,
 \fBERR\fR otherwise.
 .SH EXTENSIONS
 SVr4's beep and flash routines always returned \fBOK\fR, so it was not

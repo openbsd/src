@@ -1,4 +1,4 @@
-.\" $OpenBSD: curs_getstr.3,v 1.7 2000/07/10 03:06:06 millert Exp $
+.\" $OpenBSD: curs_getstr.3,v 1.8 2003/05/12 11:06:49 jmc Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
@@ -92,7 +92,7 @@ multi-byte characters is not yet present).
 
 SVr3 and early SVr4 curses implementations did not reject function keys;
 the SVr4.0 documentation claimed that "special keys" (such as function
-keys, "home" key, "clear" key, \fIetc\fR.) are interpreted" without
+keys, "home" key, "clear" key, etc.) are "interpreted", without
 giving details.  It lied.  In fact, the `character' value appended to the
 string by those implementations was predictable but not useful
 (being, in fact, the low-order eight bits of the key's KEY_ value).

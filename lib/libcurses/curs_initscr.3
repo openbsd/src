@@ -1,4 +1,4 @@
-.\" $OpenBSD: curs_initscr.3,v 1.7 2000/07/10 03:06:07 millert Exp $
+.\" $OpenBSD: curs_initscr.3,v 1.8 2003/05/12 11:06:49 jmc Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
@@ -113,7 +113,7 @@ once.
 
 Old versions of curses, e.g., BSD 4.4, may have returned a null pointer
 from \fBinitscr\fR when an error is detected, rather than exiting.
-It is safe but redundant to check the return value of \fBinitscr\fR 
+It is safe but redundant to check the return value of \fBinitscr\fR
 in XSI Curses.
 .SH SEE ALSO
 \fBcurses\fR(3), \fBcurs_kernel\fR(3), \fBcurs_refresh\fR(3),

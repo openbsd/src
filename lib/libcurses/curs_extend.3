@@ -1,4 +1,4 @@
-.\" $OpenBSD: curs_extend.3,v 1.4 2003/03/07 06:30:38 david Exp $
+.\" $OpenBSD: curs_extend.3,v 1.5 2003/05/12 11:06:49 jmc Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1999,2000 Free Software Foundation, Inc.                   *
@@ -59,11 +59,11 @@ function controls whether the calling application
 is able to use user-defined or nonstandard names
 which may be compiled into the terminfo
 description, i.e., via the terminfo or termcap interfaces.
-Normally these names are available for use, since the essential descision
+Normally these names are available for use, since the essential decision
 is made by using the \fB-x\fP option of \fItic\fP to compile
 extended terminal definitions.
 However you can disable this feature
-to ensure compatibility with other implementations of curses
+to ensure compatibility with other implementations of curses.
 ..
 .SH PORTABILITY
 These routines are specific to ncurses.  They were not supported on

@@ -1,5 +1,5 @@
 '\" t 
-.\" $OpenBSD: curs_addch.3tbl,v 1.9 2000/07/10 03:06:04 millert Exp $
+.\" $OpenBSD: curs_addch.3tbl,v 1.10 2003/05/12 11:06:49 jmc Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
@@ -62,7 +62,7 @@ If \fIch\fR is a tab, newline, or backspace, the cursor is moved appropriately
 within the window.  Backspace moves the cursor one character left; at the left
 edge of a window it does nothing.  Newline does a \fBclrtoeol\fR, then moves
 the cursor to the window left margin on the next line, scrolling the window if
-on the last line).  Tabs are considered to be at every eighth column.
+on the last line.  Tabs are considered to be at every eighth column.
 
 If \fIch\fR is any control character other than tab, newline, or backspace, it
 is drawn in \fB^\fR\fIX\fR notation.  Calling \fBwinch\fR after adding a
@@ -72,7 +72,7 @@ the ^-representation of the control character.
 Video attributes can be combined with a character argument passed to
 \fBaddch\fR or related functions by logical-ORing them into the character.
 (Thus, text, including attributes, can be copied from one place to another
-using \fBinch\fR and \fBaddch\fR.).  See the \fBcurs_attr\fR(3) page for
+using \fBinch\fR and \fBaddch\fR.)  See the \fBcurs_attr\fR(3) page for
 values of predefined video attribute constants that can be usefully OR'ed
 into characters.
 

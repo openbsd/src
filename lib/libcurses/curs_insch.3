@@ -1,4 +1,4 @@
-.\" $OpenBSD: curs_insch.3,v 1.6 2000/07/10 03:06:07 millert Exp $
+.\" $OpenBSD: curs_insch.3,v 1.7 2003/05/12 11:06:49 jmc Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
@@ -47,7 +47,7 @@
 \fBint mvwinsch(WINDOW *win, int y, int x, chtype ch);\fR
 .br
 .SH DESCRIPTION
-These routines, insert the character \fIch\fR before the character under the
+These routines insert the character \fIch\fR before the character under the
 cursor.  All characters to the right of the cursor are moved one space to the
 right, with the possibility of the rightmost character on the line being lost.
 The insertion operation does not change the cursor position.
