@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vnode.9,v 1.7 2002/02/28 19:22:05 csapuntz Exp $
+.\"     $OpenBSD: vnode.9,v 1.8 2002/05/28 09:07:07 mpech Exp $
 .Dd February 22, 2001
 .Dt vnode 9
 .Os OpenBSD 2.9
@@ -10,34 +10,36 @@ A vnode is an object that speaks the UNIX file interface (open,
 read, write, close, readdir, etc.). Vnodes can represent files, 
 directories, FIFOs, domain sockets, block devices, character devices.
 .Pp
-Each vnode has a set of methods which start with string 'VOP_'. These
-methods include VOP_OPEN, VOP_READ, VOP_WRITE, VOP_RENAME, VOP_CLOSE,
+Each vnode has a set of methods which start with string 'VOP_'.
+These methods include VOP_OPEN, VOP_READ, VOP_WRITE, VOP_RENAME, VOP_CLOSE,
 VOP_MKDIR. Many of these methods correspond closely to the equivalent
-file system call--open, read, write, rename, etc. Each file system (FFS,
-NFS, etc.) provides implementations for these methods.
+file system call--open, read, write, rename, etc.
+Each file system (FFS, NFS, etc.) provides implementations for these methods.
 .Pp
-The Virtual File System (VFS) library maintains a pool of vnodes. File systems
-cannot allocate their own vnodes; they must use the functions provided
-by the VFS to create and manage vnodes.
+The Virtual File System (VFS) library maintains a pool of vnodes.
+File systems cannot allocate their own vnodes; they must use the functions
+provided by the VFS to create and manage vnodes.
 .Ss Vnode state
-.Pp
 Vnodes have a reference count which corresponds to the number of kernel
 objects that hold references to the vnode. A positive reference count keeps
 the vnode off of the free list, which prevents the vnode from being recycled
 to refer to a different file.
 .Pp
 Vnodes that refer to a valid file and have a reference count of 1 or
-greater are "active". When a vnodes reference count drops to zero, it
-is "inactivated" and becomes "inactive". Inactive vnodes are placed on the
+greater are "active".
+When a vnodes reference count drops to zero, it
+is "inactivated" and becomes "inactive".
+Inactive vnodes are placed on the
 free list, to be re-used to represent other files.
 .Pp
 Before a struct vnode can be re-used to refer to another file, it must
-be cleaned out of all information pertaining to the old file. A vnode that
-doesn't refer to any file is called a "reclaimed" vnode.
+be cleaned out of all information pertaining to the old file.
+A vnode that doesn't refer to any file is called a "reclaimed" vnode.
 .Pp
 The VFS may "reclaim" a vnode with a positive reference count.
 This is done when the underlying file is revoked, as happens with the
-revoke system call or through a forceable unmount. Such a vnode is given
+revoke system call or through a forceable unmount.
+Such a vnode is given
 to the dead file system, which returns errors for most operations.
 The vnode will not be re-used for another file until its reference count
 hits zero.
@@ -53,8 +55,9 @@ The vnode returned has a reference count (v_usecount) of 1.
 .Pp
 The 
 .Xr vref 9 
-call increments the reference count on the vnode. It may only be
-on a vnode with reference count of 1 or greater. The
+call increments the reference count on the vnode.
+It may only be on a vnode with reference count of 1 or greater.
+The
 .Xr vrele 9
 and 
 .Xr vput 9 
@@ -66,16 +69,17 @@ call also releases the vnode lock.
 The
 .Xr vget 9
 call, when used on an inactive vnode, will make the vnode "active"
-by bumping the reference count to one. When called on an active vnode,
-vget increases the reference count by one. However, if the vnode
-is being reclaimed concurrently, then vget will fail and return an error.
+by bumping the reference count to one.
+When called on an active vnode, vget increases the reference count by one.
+However, if the vnode is being reclaimed concurrently, then vget will fail
+and return an error.
 .Pp
 The
 .Xr vgone 9 
 and 
 .Xr vgonel 9 
-orchestrate the reclamation of a vnode. They can be called on both
-active and inactive vnodes.
+orchestrate the reclamation of a vnode.
+They can be called on both active and inactive vnodes.
 .Pp
 While transitioning a vnode to the "reclaimed" state, the VFS will call
 .Xr vop_reclaim 9 

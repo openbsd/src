@@ -1,4 +1,4 @@
-.\"	$OpenBSD: crypto.9,v 1.16 2002/04/23 21:45:49 deraadt Exp $
+.\"	$OpenBSD: crypto.9,v 1.17 2002/05/28 09:07:07 mpech Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -123,8 +123,8 @@ descriptors that instruct the framework (and the drivers registered
 with it) of the operations that should be applied on the data (more
 than one cryptographic operation can be requested).
 .Pp
-Keying operations are supported as well.  Unlike the symmetric operators
-described above,
+Keying operations are supported as well.
+Unlike the symmetric operators described above,
 these sessionless commands perform mathematical operations using
 input and output parameters.
 .Pp
@@ -155,8 +155,10 @@ routine is called by consumers of cryptographic services (such as the
 stack) that wish to establish a new session with the framework.
 On success, the first argument will contain the Session Identifier (SID).
 The second argument contains all the necessary information for
-the driver to establish the session.  The third argument indicates whether a
-hardware driver (1) should be used or not (0).  The various fields in the
+the driver to establish the session.
+The third argument indicates whether a
+hardware driver (1) should be used or not (0).
+The various fields in the
 .Fa cryptoini
 structure are:
 .Bl -tag -width foobarmoocow
@@ -395,14 +397,16 @@ opaque field in the
 structure.
 .Pp
 .Fn crypto_kdispatch
-is called to perform a keying operation.  The various fields in the
+is called to perform a keying operation.
+The various fields in the
 .Fa crytokop
 structure are:
 .Bl -tag -width crp_alloctype
 .It Fa krp_op
 Operation code, such as CRK_MOD_EXP.
 .It Fa krp_status
-Return code.  This errno-style variable indicates whether lower level reasons
+Return code.
+This errno-style variable indicates whether lower level reasons
 for operation failure.
 .It Fa krp_iparams
 Number if input parameters to the specified operation.
@@ -439,8 +443,8 @@ For each algorithm the driver supports, it must then call
 The first two arguments are the driver and algorithm identifiers.
 The next two arguments specify the largest possible operator length (in bits,
 important for public key operations) and flags (e.g., whether an hardware RNG is
-available) for this algorithm.  The last three arguments must be provided in the
-first call to
+available) for this algorithm.
+The last three arguments must be provided in the first call to
 .Fn crypto_register
 and are ignored in all subsequent calls.
 They are pointers to three

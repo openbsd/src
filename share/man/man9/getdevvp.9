@@ -1,4 +1,4 @@
-.\"     $OpenBSD: getdevvp.9,v 1.1 2002/02/28 19:22:05 csapuntz Exp $
+.\"     $OpenBSD: getdevvp.9,v 1.2 2002/05/28 09:07:07 mpech Exp $
 .\"
 .\" Copyright (C) 2002 Peter A. Werner. All rights reserved.
 .\"
@@ -80,8 +80,9 @@ and swap areas, among other things.
 will create a vnode for a character device and is used in kernfs and in some
 console handling.
 .Sh RETURN VALUES
-All functions return 0 on success. If an error occurs, vpp will point to a
-NULLVP. See
+All functions return 0 on success.
+If an error occurs, vpp will point to a NULLVP.
+See
 .Xr getnewvnode 9
 for further return values.
 .Sh SEE ALSO

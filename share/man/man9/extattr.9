@@ -1,4 +1,4 @@
-.\"     $OpenBSD: extattr.9,v 1.2 2002/02/28 19:22:05 csapuntz Exp $
+.\"     $OpenBSD: extattr.9,v 1.3 2002/05/28 09:07:07 mpech Exp $
 .\"-
 .\" Copyright (c) 1999, 2000, 2001 Robert N. M. Watson
 .\" All rights reserved.
@@ -73,7 +73,8 @@ specific new attributes may be defined.
 .Pp
 Extended attributes are named using a null-terminated character string.
 Depending on underlying file system semantics, this name may or may not be
-case-sensitive.  Appropriate vnode extended attribute calls are:
+case-sensitive.
+Appropriate vnode extended attribute calls are:
 .Xr VOP_GETEXTATTR 9
 and
 .Xr VOP_SETEXTATTR 9 .

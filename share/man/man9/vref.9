@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vref.9,v 1.1 2002/02/28 19:22:05 csapuntz Exp $
+.\"     $OpenBSD: vref.9,v 1.2 2002/05/28 09:07:07 mpech Exp $
 .\" -*- nroff -*-
 .\"
 .\" Copyright (c) 1996 Doug Rabson
@@ -50,7 +50,8 @@ the vnode to increment
 .El
 .Pp
 Each vnode maintains a reference count of how many parts of the system
-are using the vnode.  This allows the system to detect when a vnode is
+are using the vnode.
+This allows the system to detect when a vnode is
 no longer being used and can be safely recycled for a different file.
 .Pp
 Any code in the system which is using a vnode (e.g. during the
@@ -65,4 +66,5 @@ call
 .Sh AUTHORS
 This man page was originally written by
 .An Doug Rabson
-for FreeBSD
+for
+.Fx .

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pool.9,v 1.18 2002/04/03 00:33:54 art Exp $
+.\"	$OpenBSD: pool.9,v 1.19 2002/05/28 09:07:07 mpech Exp $
 .\"	$NetBSD: pool.9,v 1.18 2001/06/21 11:59:01 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -162,7 +162,8 @@ allocator is much more efficient.
 .Ss DESTROYING A POOL
 The
 .Fn pool_destroy
-function destroys a resource pool. It takes a single argument
+function destroys a resource pool.
+It takes a single argument
 .Fa pp
 identifying the pool resource instance.
 .Ss SETTING DRAIN CALLBACK

@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vaccess.9,v 1.1 2002/02/28 19:22:05 csapuntz Exp $
+.\"     $OpenBSD: vaccess.9,v 1.2 2002/05/28 09:07:07 mpech Exp $
 .\"-
 .\" Copyright (c) 2001 Robert N. M. Watson
 .\" All rights reserved.
@@ -54,17 +54,20 @@ based on the
 .Fa uid ,
 and
 .Fa gid
-arguments. These arguments would typically be based on the vnode being
+arguments.
+These arguments would typically be based on the vnode being
 accessed.
 .Pp
 .Fa file_mode
-is the current mode of the file that is having access checked. The
+is the current mode of the file that is having access checked.
+The
 .Fa uid
 and
 .Fa gid
 arguments are the user id and group id representing the owner of the file.
 .Fa acc_mode
-describes the operation wanted to be performed. It should be one of
+describes the operation wanted to be performed.
+It should be one of
 .Dv VREAD ,
 .Dv VWRITE
 or
@@ -85,5 +88,9 @@ permissions.
 .Sh HISTORY
 This man page was originally written by
 .An Robert Watson
-for FreeBSD. It was modified to represent the OpenBSD implementation by
-.An Peter Werner
+for
+.Fx .
+It was modified to represent the
+.Ox 
+implementation by
+.An Peter Werner .

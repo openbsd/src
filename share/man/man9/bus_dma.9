@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bus_dma.9,v 1.10 2002/03/07 18:09:24 jason Exp $ 
+.\"	$OpenBSD: bus_dma.9,v 1.11 2002/05/28 09:07:07 mpech Exp $ 
 .\" $NetBSD: bus_dma.9,v 1.14 2000/06/14 06:49:19 cgd Exp $
 .\"
 .\" Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -329,24 +329,26 @@ the DMA transaction.
 This flag allows the use of this special hardware, provided that
 the device is doing sequential, unidirectional transfers which
 conform to certain alignment and size constraints defined by the
-platform.  If the platform does not support the feature, or if
+platform.
+If the platform does not support the feature, or if
 the buffer being loaded into the DMA map does not conform to the
 constraints required for use of the feature, then this flag will
-be silently ignored.  Also refer to the use of this flag with the
+be silently ignored.
+Also refer to the use of this flag with the
 .Fn bus_dmamem_alloc
 function.
 .It Dv BUS_DMA_READ
 This is a hint to the machine-dependent back-end that indicates the  
 mapping will be used only for a
 .Em "device -\*[Gt] memory"
-transaction.  The back-end may perform optimizations based on this
-information.
+transaction.
+The back-end may perform optimizations based on this information.
 .It Dv BUS_DMA_WRITE
 This is a hint to the machine-dependent back-end that indicates the
 mapping will be used only for a
 .Em "memory -\*[Gt] device"
-transaction.  The back-end may perform optimizations based on this
-information.
+transaction.
+The back-end may perform optimizations based on this information.
 .El
 .El
 .Pp
@@ -591,11 +593,13 @@ to conform to the platform-dependent requirements for the use of the
 .Dv BUS_DMA_STREAMING
 flag with the
 .Fn bus_dmamap_load
-function.  If the platform does not support the  
+function.
+If the platform does not support the  
 .Dv BUS_DMA_STREAMING
 feature, or if the size, alignment, and boundary constraints
 would already satisfy the platform's requirements, this flag
-is silently ignored.  The
+is silently ignored.
+The
 .Dv BUS_DMA_STREAMING
 flag will never relax the constraints specified in the call.
 .It Dv BUS_DMA_BUS[1-4]

@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vget.9,v 1.1 2002/02/28 19:22:05 csapuntz Exp $
+.\"     $OpenBSD: vget.9,v 1.2 2002/05/28 09:07:07 mpech Exp $
 .\" -*- nroff -*-
 .\"
 .\" Copyright (c) 1996 Doug Rabson
@@ -49,9 +49,11 @@ the vnode to remove from the free list
 if non-zero, the vnode will also be locked
 .El
 .Pp
-When not in use, vnodes are kept on a free list.  The vnodes still
+When not in use, vnodes are kept on a free list.
+The vnodes still
 reference valid files but may be reused to refer to a new file at any
-time.  Often, these vnodes are also held in caches in the system, such
+time.
+Often, these vnodes are also held in caches in the system, such
 as the name cache.
 .Pp
 When a vnode which is on the free list is used again, for instance if
@@ -67,6 +69,7 @@ The vnode
 .Fa vp
 is in the process of being cleaned out from the underlying
 filesystem.
+.El
 .Sh SEE ALSO
 .Xr vnode 9 ,
 .Xr vput 9 ,
@@ -75,4 +78,5 @@ filesystem.
 .Sh AUTHORS
 This man page was originally written by
 .An Doug Rabson
-for FreeBSD
+for
+.Fx .

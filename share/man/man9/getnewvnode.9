@@ -1,4 +1,4 @@
-.\"     $OpenBSD: getnewvnode.9,v 1.1 2002/02/28 19:22:05 csapuntz Exp $
+.\"     $OpenBSD: getnewvnode.9,v 1.2 2002/05/28 09:07:07 mpech Exp $
 .\"
 .\" Copyright (C) 2001 Chad David <davidc@acns.ab.ca>. All rights reserved.
 .\"
@@ -55,7 +55,8 @@ and be placed in the mount queue for the mount point represented by
 .Fa mp .
 .Pp
 The vnode is either freshly allocated, taken from the free list or taken from
-the hold list. If there are no vnodes on the free list, half the time a vnode
+the hold list.
+If there are no vnodes on the free list, half the time a vnode
 referencing buffers will be taken from the hold list, otherwise it will be
 freshly allocated.
 .Pp
@@ -78,4 +79,5 @@ returns 0 on success, or ENFILE if the vnode table is full.
 .Sh AUTHORS
 This man page was originally written by
 .An Chad David Aq davidc@acns.ab.ca
-for FreeBSD.
+for
+.Fx .
