@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbus_machdep.h,v 1.1 2002/07/23 17:53:24 drahn Exp $ */
+/*	$OpenBSD: rbus_machdep.h,v 1.2 2002/10/07 05:39:48 drahn Exp $ */
 /*	$NetBSD: rbus_machdep.h,v 1.2 1999/10/15 06:43:05 haya Exp $	*/
 
 /*
@@ -51,6 +51,9 @@ bus_addr_t bus_space_unmap_p(bus_space_tag_t t, bus_space_handle_t bsh,
 #define md_space_unmap(bt, bsh, size, adrp) \
 	do { \
 		*adrp = bus_space_unmap_p((bt), (bsh), (size)); \
+		if (bt->bus_io) { \
+			*adrp = *adrp & 0xffff; \
+		} \
 	} while (0)
 
 rbus_tag_t rbus_pccbb_parent_io(struct device *self,

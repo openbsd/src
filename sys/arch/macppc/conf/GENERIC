@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.32 2002/09/24 19:08:14 nate Exp $g
+#	$OpenBSD: GENERIC,v 1.33 2002/10/07 05:39:48 drahn Exp $g
 #
 # PPC GENERIC config file
 #
@@ -58,6 +58,7 @@ macobio0	at pci? dev ? function ?
 gem*		at pci? dev ? function ?	# GMAC ethernet
 hme*		at pci? dev ? function ?	# HME ethernet
 dc*		at pci? dev ? function ?	# DEC Tulip 21143 clones
+#xl*		at pci? dev ? function ?	# 3C9xx ethernet
 em*		at pci? dev ? function ?	# Intel Pro/1000 ethernet
 an*		at pci? dev ? function ?	# Cisco/Aironet
 wi*		at pci? dev ? function ?	# WaveLAN IEEE 802.11DS
@@ -171,11 +172,11 @@ pcmcia*		at cardslot?
 cbb*		at pci? dev ? function ?
 cardslot*	at cbb?
 wi*		at pcmcia? function ?		# WaveLAN IEEE 802.11DS
-#dc*		at cardbus? dev ? function ?	# 21143, "tulip" clone ethernet
+dc*		at cardbus? dev ? function ?	# 21143, "tulip" clone ethernet
 #fxp*		at cardbus? dev ? function ?	# Intel PRO/100 ethernet
 #xl*		at cardbus? dev ? function ?	# 3C575/3C656 ethernet
 #rl*		at cardbus? dev ? function ?	# RealTek 81[23]9 ethernet
-#wdc*		at pcmcia? function ?
+wdc*		at pcmcia? function ?
 
 wsdisplay*	at vgafb?
 wskbd*		at ukbd? console ? mux 1

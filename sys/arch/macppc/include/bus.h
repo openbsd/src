@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.8 2002/09/15 09:01:58 deraadt Exp $	*/
+/*	$OpenBSD: bus.h,v 1.9 2002/10/07 05:39:48 drahn Exp $	*/
 
 /*
  * Copyright (c) 1997 Per Fogelstrom.  All rights reserved.
@@ -56,6 +56,7 @@ struct ppc_bus_space {
 	u_int32_t	bus_base;
 	u_int32_t	bus_size;
 	u_int8_t	bus_reverse;	/* Reverse bytes */
+	u_int8_t	bus_io;		/* IO or memory */
 };
 #define POWERPC_BUS_TAG_BASE(x)  ((x)->bus_base)
 
