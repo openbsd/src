@@ -1,4 +1,4 @@
-# @(#)asia	7.17
+# @(#)asia	7.18
 
 # This data is by no means authoritative; if you think you know better,
 # go ahead and edit the file (and please send any changes to
@@ -499,7 +499,7 @@ Rule	Zion	1996	only	-	Sep	16	0:00	0:00	S
 Rule	Zion	1997	1998	-	Oct	Sun>=14	0:00	0:00	S
 
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
-Zone	Asia/Tel_Aviv	2:19:04 -	LMT	1880
+Zone	Asia/Jerusalem	2:20:56 -	LMT	1880
 			2:21	-	JMT	1918
 			2:00	Zion	I%sT
 

@@ -1,4 +1,4 @@
-# @(#)australasia	7.24
+# @(#)australasia	7.25
 # This file also includes Pacific islands.
 
 # Notes are at the end of this file
@@ -208,15 +208,21 @@ Zone Pacific/Johnston	-10:00	-	HST
 # uninhabited
 
 # Kiribati
+# From Paul Eggert (1996-01-22):
+# Today's _Wall Street Journal_ (page 1) reports that Kiribati
+# ``declared it the same day throught the country as of Jan. 1, 1995''
+# as part of the competition to be first into the 21st century.
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone Pacific/Tarawa	 11:32:04 -	LMT	1901		# Bairiki
 			 12:00	-	NZST
 Zone Pacific/Enderbury	-11:24:20 -	LMT	1901
 			-12:00	-	KJT	1979 Oct
-			-11:00	-	SST
+			-11:00	-	SST	1995
+			 13:00	-	TGT
 Zone Pacific/Kiritimati	-10:29:20 -	LMT	1901
 			-10:40	-	LIT	1979 Oct	# Line Is Time
-			-10:00	-	THT
+			-10:00	-	THT	1995
+			 14:00	-	KRT
 
 # N Mariana Is
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
@@ -362,6 +368,10 @@ Zone	Pacific/Fakaofo	-11:24:56 -	LMT	1901
 			-10:00	-	THT
 
 # Tonga
+# From Paul Eggert (1996-01-22):
+# Today's _Wall Street Journal_ (page 1) reports that ``Tonga has been plotting
+# to sneak ahead of [New Zealanders] by introducing daylight-saving time.''
+# But since Kiribati has moved the Date Line it's not clear what Tonga will do.
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone Pacific/Tongatapu	12:19:20 -	LMT	1901
 			12:20	-	TMT	1968 Oct
@@ -403,7 +413,7 @@ Zone	Pacific/Wallis	12:15:20 -	LMT	1901
 # go ahead and edit the file (and please send any changes to
 # tz@elsie.nci.nih.gov for general use in the future).
 
-# From Paul Eggert <eggert@twinsun.com> (August 18, 1994):
+# From Paul Eggert <eggert@twinsun.com> (1996-01-22);
 # A good source for time zone historical data outside the U.S. is
 # Thomas G. Shanks, The International Atlas (3rd edition),
 # San Diego: ACS Publications, Inc. (1991).
@@ -436,6 +446,7 @@ Zone	Pacific/Wallis	12:15:20 -	LMT	1901
 #	 12:00	NZST NZDT New Zealand
 #	 12:45	CHST CHDT Chatham*
 #	 13:00	TGT	Tongatapu*
+#	 14:00	KRT	Kiritimati*
 #	-12:00	KJT	Kwajalein (no longer used)*
 #	-11:00	SST	Samoa
 #	-10:40	LIT	Line Is (no longer used)*

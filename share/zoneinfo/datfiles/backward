@@ -1,4 +1,4 @@
-# @(#)backward	7.12
+# @(#)backward	7.13
 
 # This file provides links between current names for time zones
 # and their old names.  Many names changed in late 1993.
@@ -7,6 +7,7 @@ Link	America/Adak		America/Atka
 Link	America/Indianapolis	America/Fort_Wayne
 Link	America/Indiana/Knox	America/Knox_IN
 Link	America/St_Thomas	America/Virgin
+Link	Asia/Jerusalem		Asia/Tel_Aviv
 Link	Australia/Sydney	Australia/ACT
 Link	Australia/Sydney	Australia/Canberra
 Link	Australia/Lord_Howe	Australia/LHI
@@ -45,7 +46,7 @@ Link	Etc/Greenwich		Greenwich
 Link	Asia/Hong_Kong		Hongkong
 Link	Atlantic/Reykjavik	Iceland
 Link	Asia/Tehran		Iran
-Link	Asia/Tel_Aviv		Israel
+Link	Asia/Jerusalem		Israel
 Link	America/Jamaica		Jamaica
 Link	Asia/Tokyo		Japan
 Link	Pacific/Kwajalein	Kwajalein
