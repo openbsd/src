@@ -4709,6 +4709,7 @@
 ./usr/share/man/cat9/KASSERT.0
 ./usr/share/man/cat9/KDASSERT.0
 ./usr/share/man/cat9/KNOTE.0
+./usr/share/man/cat9/KTRPOINT.0
 ./usr/share/man/cat9/MALLOC.0
 ./usr/share/man/cat9/MCHTYPE.0
 ./usr/share/man/cat9/MCLGET.0
@@ -4725,6 +4726,7 @@
 ./usr/share/man/cat9/M_PREPEND.0
 ./usr/share/man/cat9/M_READONLY.0
 ./usr/share/man/cat9/M_TRAILINGSPACE.0
+./usr/share/man/cat9/NDINIT.0
 ./usr/share/man/cat9/UVM_MAPFLAG.0
 ./usr/share/man/cat9/VOP_CREATE.0
 ./usr/share/man/cat9/VOP_FSYNC.0
@@ -4919,6 +4921,14 @@
 ./usr/share/man/cat9/kthread_create.0
 ./usr/share/man/cat9/kthread_create_deferred.0
 ./usr/share/man/cat9/kthread_exit.0
+./usr/share/man/cat9/ktrace.0
+./usr/share/man/cat9/ktrcsw.0
+./usr/share/man/cat9/ktremul.0
+./usr/share/man/cat9/ktrgenio.0
+./usr/share/man/cat9/ktrnamei.0
+./usr/share/man/cat9/ktrpsig.0
+./usr/share/man/cat9/ktrsyscall.0
+./usr/share/man/cat9/ktrsysret.0
 ./usr/share/man/cat9/lmax.0
 ./usr/share/man/cat9/lmin.0
 ./usr/share/man/cat9/locc.0
@@ -4928,6 +4938,7 @@
 ./usr/share/man/cat9/lockmgr_printinfo.0
 ./usr/share/man/cat9/lockstatus.0
 ./usr/share/man/cat9/log.0
+./usr/share/man/cat9/lookup.0
 ./usr/share/man/cat9/m_adj.0
 ./usr/share/man/cat9/m_apply.0
 ./usr/share/man/cat9/m_cat.0
@@ -4963,6 +4974,7 @@
 ./usr/share/man/cat9/microtime.0
 ./usr/share/man/cat9/min.0
 ./usr/share/man/cat9/mono_time.0
+./usr/share/man/cat9/namei.0
 ./usr/share/man/cat9/panic.0
 ./usr/share/man/cat9/pfind.0
 ./usr/share/man/cat9/pgfind.0
@@ -5011,6 +5023,7 @@
 ./usr/share/man/cat9/rasops.0
 ./usr/share/man/cat9/ratecheck.0
 ./usr/share/man/cat9/readdisklabel.0
+./usr/share/man/cat9/relookup.0
 ./usr/share/man/cat9/resettodr.0
 ./usr/share/man/cat9/runtime.0
 ./usr/share/man/cat9/scanc.0
@@ -5055,6 +5068,11 @@
 ./usr/share/man/cat9/strncmp.0
 ./usr/share/man/cat9/strncpy.0
 ./usr/share/man/cat9/style.0
+./usr/share/man/cat9/syscall.0
+./usr/share/man/cat9/systrace.0
+./usr/share/man/cat9/systrace_exit.0
+./usr/share/man/cat9/systrace_fork.0
+./usr/share/man/cat9/systrace_redirect.0
 ./usr/share/man/cat9/tick.0
 ./usr/share/man/cat9/tickadj.0
 ./usr/share/man/cat9/time.0
@@ -5135,6 +5153,7 @@
 ./usr/share/man/cat9/vdevgone.0
 ./usr/share/man/cat9/vfinddev.0
 ./usr/share/man/cat9/vflush.0
+./usr/share/man/cat9/vfs.0
 ./usr/share/man/cat9/vget.0
 ./usr/share/man/cat9/vgone.0
 ./usr/share/man/cat9/vgonel.0
