@@ -1,4 +1,4 @@
-.\"	$OpenBSD: random.9,v 1.1 1996/12/17 22:56:04 millert Exp $
+.\"	$OpenBSD: random.9,v 1.2 1997/06/15 06:48:14 mickey Exp $
 .\"
 .\" Copyright (c) 1996	Michael Shalayeff
 .\" All rights reserved.
@@ -36,21 +36,31 @@
 .Nd device kernel interface
 .Sh SYNOPSIS
 .Fd #include <dev/rndvar.h>
-.Va void add_tty_randomness(dev_t dev);
+.Va void add_mouse_randomness(u_int32_t);
+.br
+.Va void add_tty_randomness(int);
 .br
 .Va void add_net_randomness(int isr);
 .br
-.Va void add_blkdev_randomness(dev_t dev);
+.Va void add_blkdev_randomness(u_int32_t);
 .br
 .Va void get_random_bytes(void *buf, size_t nbytes);
 .br
+.Va u_int32_t arc4random(void);
+.br
 .Sh DESCRIPTION
-add_{tty,net,blkdev}_randomness routines used to supply data
+add_{mouse,tty,net,blkdev}_randomness routines used to supply data
 for the random data source device for future processing.
 .Pp
-get_random_bytes maybe used to retrive strong random data, just
+.Nm get_random_bytes
+maybe used to retrive strong random data, just
 as it would by
 .Xr srandom 4
 device.
+.br
+.Nm arc4random
+will give you random 32 bit number hashed with aRC4 algorythm,
+wich appeared to be faster.
 .Sh SEE ALSO
-.Xr random 4
+.Xr random 4 ,
+.Xr arc4random 3
