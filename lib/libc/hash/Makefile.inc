@@ -1,11 +1,17 @@
-#	$OpenBSD: Makefile.inc,v 1.15 2004/04/26 19:38:12 millert Exp $
+#	$OpenBSD: Makefile.inc,v 1.16 2004/04/28 16:56:49 millert Exp $
 
 # hash functions
 .PATH: ${LIBCSRCDIR}/hash
 
-HELPER=	rmd160hl.c sha1hl.c sha256hl.c sha384hl.c sha512hl.c
-SRCS+=	rmd160.c sha1.c sha2.c ${HELPER}
-MAN+=	rmd160.3 sha1.3 sha2.3
+HELPER=	md4hl.c md5hl.c rmd160hl.c sha1hl.c sha256hl.c sha384hl.c sha512hl.c
+SRCS+=	md4.c md5.c rmd160.c sha1.c sha2.c ${HELPER}
+MAN+=	md4.3 md5.3 rmd160.3 sha1.3 sha2.3
+MLINKS+=md4.3 MD4Init.3 md4.3 MD4Update.3 md4.3 MD4Final.3
+MLINKS+=md4.3 MD4End.3  md4.3 MD4File.3   md4.3 MD4Data.3
+MLINKS+=md4.3 MD4Transform.3
+MLINKS+=md5.3 MD5Init.3 md5.3 MD5Update.3 md5.3 MD5Final.3
+MLINKS+=md5.3 MD5End.3  md5.3 MD5File.3   md5.3 MD5Data.3
+MLINKS+=md5.3 MD5Transform.3
 MLINKS+=rmd160.3 RMD160Init.3 rmd160.3 RMD160Update.3 rmd160.3 RMD160Final.3
 MLINKS+=rmd160.3 RMD160End.3  rmd160.3 RMD160File.3   rmd160.3 RMD160Data.3
 MLINKS+=rmd160.3 RMD160Transform.3
@@ -18,7 +24,23 @@ MLINKS+=sha2.3 SHA384_Init.3 sha2.3 SHA384_Update.3 sha2.3 SHA384_Final.3
 MLINKS+=sha2.3 SHA384_End.3  sha2.3 SHA384_File.3   sha2.3 SHA384_Data.3
 MLINKS+=sha2.3 SHA512_Init.3 sha2.3 SHA512_Update.3 sha2.3 SHA512_Final.3
 MLINKS+=sha2.3 SHA512_End.3  sha2.3 SHA512_File.3   sha2.3 SHA512_Data.3
-CLEANFILES+= ${HELPER}
+CLEANFILES+= ${HELPER} md[45].3
+
+.ifndef NOMAN
+all:	md4.3 md5.3
+
+md4.3:  mdX.3
+	sed -e 's/mdX/md4/g' -e 's/mdY/md5/g' -e 's/MDX/MD4/g' $> > $@
+
+md5.3:  mdX.3
+	sed -e 's/mdX/md5/g' -e 's/mdY/md4/g' -e 's/MDX/MD5/g' $> > $@
+.endif
+
+md4hl.c:	helper.c
+	sed -e 's/hashinc/md4.h/g' -e 's/HASH/MD4/g' $> > $@
+
+md5hl.c:	helper.c
+	sed -e 's/hashinc/md5.h/g' -e 's/HASH/MD5/g' $> > $@
 
 rmd160hl.c:	helper.c
 	sed -e 's/hashinc/rmd160.h/g' -e 's/HASH/RMD160/g' $> > $@
@@ -35,4 +57,4 @@ sha384hl.c:	helper.c
 sha512hl.c:	helper.c
 	sed -e 's/hashinc/sha2.h/g' -e 's/HASH_\{0,1\}/SHA512_/g' $> > $@
 
-beforedepend: rmd160hl.c sha1hl.c sha256hl.c sha384hl.c sha512hl.c
+beforedepend: md4hl.c md5hl.c rmd160hl.c sha1hl.c sha256hl.c sha384hl.c sha512hl.c
