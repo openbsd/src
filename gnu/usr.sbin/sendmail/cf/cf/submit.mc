@@ -20,4 +20,5 @@ define(`confCF_VERSION', `Submit')dnl
 define(`__OSTYPE__',`')dnl dirty hack to keep proto.m4 from complaining
 define(`_USE_DECNET_SYNTAX_', `1')dnl support DECnet
 define(`confBIND_OPTS', `WorkAroundBrokenAAAA')dnl
+FEATURE(`accept_unresolvable_domains')dnl
 FEATURE(`msp')dnl
