@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsa.c,v 1.6 2005/01/03 20:33:46 deraadt Exp $ 	*/
+/*	$OpenBSD: ubsa.c,v 1.7 2005/01/03 23:15:50 reyk Exp $ 	*/
 /*	$NetBSD: ubsa.c,v 1.5 2002/11/25 00:51:33 fvdl Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
@@ -230,6 +230,8 @@ Static const struct usb_devno ubsa_devs[] = {
 	{ USB_VENDOR_GOHUBS, USB_PRODUCT_GOHUBS_GOCOM232 },
 	/* Peracom */
 	{ USB_VENDOR_PERACOM, USB_PRODUCT_PERACOM_SERIAL1 },
+	/* Vodafone */
+	{ USB_VENDOR_VODAFONE, USB_PRODUCT_VODAFONE_MOBILE_3G }
 };
 #define ubsa_lookup(v, p) usb_lookup(ubsa_devs, v, p)
 
@@ -342,6 +344,9 @@ USB_ATTACH(ubsa)
 		sc->sc_dying = 1;
 		goto error;
 	}
+
+	/* keep interface for interrupt */
+	sc->sc_intr_iface = sc->sc_iface;
 
 	if (uca.bulkin == -1) {
 		printf("%s: Could not find data bulk in\n", devname);
