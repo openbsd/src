@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.4 1997/06/23 22:21:46 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.5 1997/07/15 13:42:05 kstailey Exp $	*/
 /*	$NetBSD: extern.h,v 1.3 1996/05/10 23:16:34 thorpej Exp $	*/
 
 /*-
@@ -92,7 +92,7 @@ int	 initmbufs __P((void));
 int	 initnetstat __P((void));
 int	 initpigs __P((void));
 int	 initswap __P((void));
-int	 keyboard __P((void));
+void	 keyboard __P((void));
 int	 kvm_ckread __P((void *, void *, int));
 void	 labeliostat __P((void));
 void	 labelkre __P((void));
