@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcrelay.8,v 1.1 2004/04/12 21:10:28 henning Exp $
+.\"	$OpenBSD: dhcrelay.8,v 1.2 2004/04/13 01:17:49 henning Exp $
 .\"
 .\" Copyright (c) 1997 The Internet Software Consortium.
 .\" All rights reserved.
@@ -36,32 +36,28 @@
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd January 1, 1997
+.Dd April 12, 2004
 .Dt DHCRELAY 8
 .Os
 .Sh NAME
 .Nm dhcrelay
 .Nd Dynamic Host Configuration Protocol Relay Agent
 .Sh SYNOPSIS
-.Nm dhcrelay
-.Op Fl p Ar port
+.Nm
 .Op Fl d
 .Op Fl q
-.Xo
-.Oo Fl i Ar if0 Oo Ar ...
-.Fl i Ar ifN Oc Oc
-.Xc
+.Op Fl p Ar port
+.Fl i Ar interface
 .Ar server0 Op Ar ... serverN
 .Sh DESCRIPTION
-The Internet Software Consortium DHCP Relay Agent,
-.Nm dhcrelay ,
-provides a means for relaying DHCP and BOOTP requests from a subnet to which
-no DHCP server is directly connected to one or more DHCP servers on other
-subnets.
+The
+.Nm
+utility provides a means for relaying DHCP and BOOTP requests from a subnet
+to which no DHCP server is directly connected to one or more DHCP servers on
+other subnets.
 .Sh OPERATION
-The DHCP Relay Agent listens for DHCP requests on all interfaces
-attached to a host, unless one or more interfaces are specified on the
-command line with the
+.Nm
+listens for DHCP requests on the interface given via the
 .Fl i
 flag.
 .Pp
@@ -71,25 +67,12 @@ forwards it to the list of DHCP servers specified on the command line.
 When a reply is received, it is broadcast or unicast on the network from
 whence the original request came.
 .Pp
-It is possible to specify a set of interfaces on which
-.Nm
-will listen, so that if
-.Nm
-is connected through one interface to a network on which there is no DHCP
-server, but is connected on another interface to a network on which there
-is a DHCP server, it will not relay DHCP and BOOTP requests from the network
-on which the server exists to that server.
-This is an imperfect solution.
 .Sh COMMAND LINE
-The names of the network interfaces that
+The name of the network interface that
 .Nm
-should attempt to configure may be specified on the command line using the
+should attempt to configure must be specified on the command line using the
 .Fl i
 option.
-If no interface names are specified on the command line,
-.Nm
-will identify all network interfaces, eliminating non-broadcast interfaces
-if possible, and attempt to configure each interface.
 .Pp
 If
 .Nm
@@ -120,9 +103,6 @@ To force
 to always run as a foreground process, the
 .Fl d
 flag should be specified.
-This is useful when running
-.Nm
-under a debugger, or when running it out of inittab on System V systems.
 .Pp
 .Nm
 will normally print its network configuration on startup.
@@ -140,13 +120,11 @@ should be relayed must be specified on the command line.
 RFC 2132, RFC 2131.
 .Sh AUTHORS
 .Nm
-has been written for the Internet Software Consortium by
-.An Ted Lemon Aq mellon@fugue.com
-in cooperation with Vixie Enterprises.
-To learn more about the Internet Software Consortium, see
-.Pa http://www.vix.com/isc .
-To learn more about Vixie Enterprises, see
-.Pa http://www.vix.com .
+was written by
+.An Ted Lemon Aq mellon@fugue.com .
+.Pp
+The current implementation was reworked by
+.An Henning Brauer Aq henning@openbsd.org .
 .Sh BUGS
 Relayed DHCP traffic could actually safely be protected by IPsec, but
 like
