@@ -1,4 +1,4 @@
-/*	$OpenBSD: zopen.c,v 1.3 1996/09/22 20:05:19 tholo Exp $	*/
+/*	$OpenBSD: zopen.c,v 1.4 1997/01/19 17:25:14 millert Exp $	*/
 /*	$NetBSD: zopen.c,v 1.5 1995/03/26 09:44:53 glass Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)zopen.c	8.1 (Berkeley) 6/27/93";
 #else
-static char rcsid[] = "$OpenBSD: zopen.c,v 1.3 1996/09/22 20:05:19 tholo Exp $";
+static char rcsid[] = "$OpenBSD: zopen.c,v 1.4 1997/01/19 17:25:14 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -394,7 +394,7 @@ output(zs, ocode)
 		 * Since ocode is always >= 8 bits, only need to mask the first
 		 * hunk on the left.
 		 */
-		*bp = (*bp & rmask[r_off]) | (ocode << r_off) & lmask[r_off];
+		*bp = (*bp & rmask[r_off]) | ((ocode << r_off) & lmask[r_off]);
 		bp++;
 		bits -= (8 - r_off);
 		ocode >>= 8 - r_off;
@@ -705,7 +705,7 @@ zdopen(fd, mode, bits)
 {
 	struct s_zstate *zs;
 
-	if (mode[0] != 'r' && mode[0] != 'w' || mode[1] != '\0' ||
+	if ((mode[0] != 'r' && mode[0] != 'w') || mode[1] != '\0' ||
 	    bits < 0 || bits > BITS) {
 		errno = EINVAL;
 		return (NULL);
@@ -754,7 +754,7 @@ zopen(fname, mode, bits)
 {
 	struct s_zstate *zs;
 
-	if (mode[0] != 'r' && mode[0] != 'w' || mode[1] != '\0' ||
+	if ((mode[0] != 'r' && mode[0] != 'w') || mode[1] != '\0' ||
 	    bits < 0 || bits > BITS) {
 		errno = EINVAL;
 		return (NULL);

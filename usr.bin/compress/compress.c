@@ -1,4 +1,4 @@
-/*	$OpenBSD: compress.c,v 1.4 1997/01/17 07:12:29 millert Exp $	*/
+/*	$OpenBSD: compress.c,v 1.5 1997/01/19 17:25:11 millert Exp $	*/
 /*	$NetBSD: compress.c,v 1.9 1995/03/26 09:44:38 glass Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)compress.c	8.2 (Berkeley) 1/7/94";
 #else
-static char rcsid[] = "$OpenBSD: compress.c,v 1.4 1997/01/17 07:12:29 millert Exp $";
+static char rcsid[] = "$OpenBSD: compress.c,v 1.5 1997/01/19 17:25:11 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -202,7 +202,7 @@ compress(in, out, bits)
 	struct stat isb, sb;
 	FILE *ifp, *ofp;
 	int exists, isreg, oreg;
-	u_char buf[1024];
+	u_char buf[BUFSIZ];
 
 	exists = !stat(out, &sb);
 	if (!force && exists && S_ISREG(sb.st_mode) && !permission(out))
@@ -292,7 +292,7 @@ decompress(in, out, bits)
 	struct stat sb;
 	FILE *ifp, *ofp;
 	int exists, isreg, oreg;
-	u_char buf[1024];
+	u_char buf[BUFSIZ];
 
 	exists = !stat(out, &sb);
 	if (!force && exists && S_ISREG(sb.st_mode) && !permission(out))
