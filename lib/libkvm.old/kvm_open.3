@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kvm_open.3,v 1.1 1996/03/19 23:15:38 niklas Exp $
+.\"	$OpenBSD: kvm_open.3,v 1.2 1998/08/24 06:15:56 millert Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -73,8 +73,11 @@ If this argument is
 .Dv NULL ,
 the currently running system is assumed,
 which is indicated by
-.Dv _PATH_UNIX
-in <paths.h>.
+.Dv _PATH_KSYMS ,
+if it exists, otherwise
+.Dv _PATH_UNIX 
+is used.
+Both are defined in <paths.h>.
 .Pp
 .Fa corefile 
 is the kernel memory device file.  It can be either /dev/mem
