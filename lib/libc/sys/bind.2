@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bind.2,v 1.8 1999/06/29 14:09:50 aaron Exp $
+.\"	$OpenBSD: bind.2,v 1.9 2000/01/26 08:40:14 deraadt Exp $
 .\"	$NetBSD: bind.2,v 1.8 1995/10/12 15:40:46 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1993
@@ -87,6 +87,10 @@ The specified address is not available from the local machine.
 The specified address is already in use.
 .It Bq Er EINVAL
 The socket is already bound to an address.
+.It Bq Er EINVAL
+The family of the socket and that requested in
+.Va name->sa_family
+are not equivalent.
 .It Bq Er EACCES
 The requested address is protected, and the current user
 has inadequate permission to access it.

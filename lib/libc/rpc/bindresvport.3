@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bindresvport.3,v 1.16 2000/01/26 07:02:57 itojun Exp $
+.\"	$OpenBSD: bindresvport.3,v 1.17 2000/01/26 08:40:15 deraadt Exp $
 .\"
 .Dd August 9, 1997
 .Dt BINDRESVPORT 3
@@ -82,6 +82,10 @@ The specified address is not available from the local machine.
 The specified address is already in use.
 .It Bq Er EINVAL
 The socket is already bound to an address.
+.It Bq Er EINVAL
+The family of the socket and that requested in
+.Va sa->sa_family
+are not equivalent.
 .It Bq Er EACCES
 The requested address is protected, and the current user
 has inadequate permission to access it.
