@@ -1233,6 +1233,21 @@ do_setshow_command (arg, from_tty, c)
 	    char *match;
 	    char *p;
 
+	    if (arg == NULL)
+	      {
+		char msg[1024];
+		strlcpy(msg, "Requires an argument. Valid arguments are ",
+		    sizeof msg);
+		for (i = 0; c->enums[i]; i++)
+		  {
+		     if (i != 0)
+		       strlcat(msg, ", ", sizeof msg);
+		     strlcat(msg, c->enums[i], sizeof msg);
+		   }
+		strlcat(msg, ".", sizeof msg);
+		error("%s", msg);
+	      }
+
 	    p = strchr (arg, ' ');
 
 	    if (p)
