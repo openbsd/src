@@ -1733,11 +1733,11 @@ PUBLIC int HTDoConnect ARGS4(
 	    FD_SET((unsigned) *s, &writefds);
 #ifdef SOCKS
 	    if (socks_flag)
-		ret = Rselect(FD_SETSIZE, NULL,
+		ret = Rselect(*s + 1, NULL,
 			      (void *)&writefds, NULL, &select_timeout);
 	    else
 #endif /* SOCKS */
-	    ret = select(FD_SETSIZE, NULL, (void *)&writefds, NULL, &select_timeout);
+	    ret = select(*s + 1, NULL, (void *)&writefds, NULL, &select_timeout);
 
 #ifdef SOCKET_DEBUG_TRACE
 	    if (tries == 1) {
@@ -2005,11 +2005,11 @@ PUBLIC int HTDoRead ARGS3(
 	    FD_SET((unsigned)fildes, &readfds);
 #ifdef SOCKS
 	    if (socks_flag)
-		ret = Rselect(FD_SETSIZE,
+		ret = Rselect(fildes + 1,
 			      (void *)&readfds, NULL, NULL, &select_timeout);
 	    else
 #endif /* SOCKS */
-		ret = select(FD_SETSIZE,
+		ret = select(fildes + 1,
 			     (void *)&readfds, NULL, NULL, &select_timeout);
 	} while ((ret == -1) && (errno == EINTR));
 
