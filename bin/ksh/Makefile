@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.16 2004/01/09 17:10:07 brad Exp $
+#	$OpenBSD: Makefile,v 1.17 2004/02/10 02:43:48 deraadt Exp $
 
 PROG=	ksh
 SRCS=	alloc.c c_ksh.c c_sh.c c_test.c c_ulimit.c edit.c emacs.c \
@@ -9,6 +9,10 @@ SRCS=	alloc.c c_ksh.c c_sh.c c_test.c c_ulimit.c edit.c emacs.c \
 DEFS=	-DHAVE_CONFIG_H -Wall -Wno-unused
 CFLAGS+=${DEFS} -I. -I${.CURDIR} -DKSH
 MAN=	ksh.1 sh.1
+
+.if (${MACHINE} == "amd64")
+CFLAGS+=-O0
+.endif
 
 CLEANFILES+=	siglist.out emacs.out
 
