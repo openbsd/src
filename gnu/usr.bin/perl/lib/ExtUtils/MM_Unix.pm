@@ -1414,8 +1414,7 @@ sub init_dirscan {	# --- File and Directory Lists (.xs .pm .pod etc)
     foreach my $man (qw(MAN1 MAN3)) {
 	unless ($self->{"${man}PODS"}) {
 	    $self->{"${man}PODS"} = {};
-	    $pods{$man} = 1 unless 
-              $self->{"INSTALL${man}DIR"} =~ /^(none|\s*)$/;
+	    $pods{$man} = 1 unless $self->{"INST_${man}DIR"} =~ /^(none|\s*)$/;
 	}
     }
 
@@ -1426,7 +1425,7 @@ sub init_dirscan {	# --- File and Directory Lists (.xs .pm .pod etc)
 		my($ispod)=0;
 		if (open(FH,"<$name")) {
 		    while (<FH>) {
-			if (/^=head1\s+\w+/) {
+			if (/^=(head|item|pod)\b/) {
 			    $ispod=1;
 			    last;
 			}
@@ -1455,7 +1454,7 @@ sub init_dirscan {	# --- File and Directory Lists (.xs .pm .pod etc)
 		my($ispod)=0;
 		if (open(FH,"<$name")) {
 		    while (<FH>) {
-			if (/^=head1\s+\w+/) {
+			if (/^=(head|item|pod)\b/) {
 			    $ispod=1;
 			    last;
 			}
