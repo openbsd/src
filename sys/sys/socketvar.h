@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.13 1999/01/21 03:27:43 millert Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.14 1999/02/15 19:30:49 millert Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -275,7 +275,7 @@ int	sosetopt __P((struct socket *so, int level, int optname,
 	    struct mbuf *m0));
 int	soshutdown __P((struct socket *so, int how));
 void	sowakeup __P((struct socket *so, struct sockbuf *sb));
-int	sockargs __P((struct mbuf **, caddr_t, int, int));
+int	sockargs __P((struct mbuf **, caddr_t, socklen_t, int));
 
 int	sendit __P((struct proc *, int, struct msghdr *, int, register_t *));
 int	recvit __P((struct proc *, int, struct msghdr *, caddr_t,
