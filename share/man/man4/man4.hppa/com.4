@@ -1,0 +1,99 @@
+.\"	$OpenBSD: com.4,v 1.1 1999/04/18 20:20:50 mickey Exp $
+.\"
+.\" Copyright (c) 1990, 1991 The Regents of the University of California.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to Berkeley by
+.\" the Systems Programming Group of the University of Utah Computer
+.\" Science Department.
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by the University of
+.\"	California, Berkeley and its contributors.
+.\" 4. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\" from: OpenBSD: com.4,v 1.6 1998/07/12 09:37:54 downsj Exp
+.\"
+.Dd April 14, 1999
+.Dt COM 4 hppa
+.Os
+.Sh NAME
+.Nm com
+.Nd
+serial communications interface
+.Sh SYNOPSIS
+.Cd "com0 at gsc? irq 5"
+.Cd "com1 at gsc? irq 6"
+.Pp
+.Cd "com0 at isa? port" \&"IO_COM1\&" irq 4
+.Cd "com1 at isa? port" \&"IO_COM2\&" irq 3
+.Sh DESCRIPTION
+The
+.Nm com
+driver provide support for NS8250-, NS16450-, NS16550-, WD16C552-
+and ST16650-based
+.Tn EIA
+.Tn RS-232C
+.Pf ( Tn CCITT
+.Tn V.28 )
+communications interfaces.
+.Pp
+The NS8250 and NS16450 have single
+character buffers, the NS16550 and WD16C552 have a 16 character buffer, while
+the ST16650 has a 32 character buffer.
+.Pp
+.Pp
+Input and output for each line may set to one of following baud rates;
+50, 75, 110, 134.5, 150, 300, 600, 1200, 1800, 2400, 4800, 9600,
+19200, 38400, 57600, or 115200, or any other baud rate which is a factor
+of 115200.
+.Sh FILES
+.Bl -tag -width Pa
+.It Pa /dev/tty00
+.It Pa /dev/tty01
+.It Pa /dev/cua00
+.It Pa /dev/cua01
+.El
+.Sh DIAGNOSTICS
+.Bl -diag
+.It com%d: %d silo overflows
+The input
+.Dq silo
+has overflowed and incoming data has been lost.
+.It com%d: weird interrupt: iir=%x
+The device has generated an unexpected interrupt
+with the code listed.
+.El
+.Sh SEE ALSO
+.Xr gsc 4 ,
+.Xr ast 4 ,
+.Xr tty 4
+.Sh HISTORY
+The
+.Nm
+driver for hppa port is based upon MI
+.Nm
+driver and first appeared in
+.Ox 2.4 .
