@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.49 2001/05/25 22:07:18 millert Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.50 2001/06/05 16:13:15 millert Exp $	*/
 /*	$NetBSD: machdep.c,v 1.121 1999/03/26 23:41:29 mycroft Exp $	*/
 
 /*
@@ -450,15 +450,15 @@ cpu_startup()
 	 * Tell the VM system that writing to kernel text isn't allowed.
 	 * If we don't, we might end up COW'ing the text segment!
 	 *
-	 * XXX Should be m68k_trunc_page(&kernel_text) instead
+	 * XXX Should be trunc_page(&kernel_text) instead
 	 * XXX of NBPG.
 	 */
 #if defined(UVM)
-	if (uvm_map_protect(kernel_map, NBPG, m68k_round_page(&etext),
+	if (uvm_map_protect(kernel_map, NBPG, round_page((vaddr_t)&etext),
 	    UVM_PROT_READ|UVM_PROT_EXEC, TRUE) != KERN_SUCCESS)
 		panic("can't protect kernel text");
 #else
-	if (vm_map_protect(kernel_map, NBPG, m68k_round_page(&etext),
+	if (vm_map_protect(kernel_map, NBPG, round_page((vaddr_t)&etext),
 	    VM_PROT_READ|VM_PROT_EXECUTE, TRUE) != KERN_SUCCESS)
 		panic("can't protect kernel text");
 #endif

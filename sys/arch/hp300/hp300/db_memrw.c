@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_memrw.c,v 1.4 2001/05/11 23:24:57 millert Exp $	*/
+/*	$OpenBSD: db_memrw.c,v 1.5 2001/06/05 16:13:14 millert Exp $	*/
 /*	$NetBSD: db_memrw.c,v 1.5 1997/06/10 18:48:47 veego Exp $	*/
 
 /*-
@@ -125,7 +125,7 @@ db_write_text(addr, size, data)
 		/*
 		 * Get the VA for the page.
 		 */
-		pgva = m68k_trunc_page((u_long)dst);
+		pgva = trunc_page((vaddr_t)dst);
 
 		/*
 		 * Save this destination address, for TLB

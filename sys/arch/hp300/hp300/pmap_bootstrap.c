@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_bootstrap.c,v 1.8 2001/05/11 23:24:57 millert Exp $	*/
+/*	$OpenBSD: pmap_bootstrap.c,v 1.9 2001/06/05 16:13:16 millert Exp $	*/
 /*	$NetBSD: pmap_bootstrap.c,v 1.13 1997/06/10 18:56:50 veego Exp $	*/
 
 /* 
@@ -326,7 +326,7 @@ pmap_bootstrap(nextpa, firstpa)
 	 * of kernel text remains invalid; see locore.s
 	 */
 	pte = &((u_int *)kptpa)[m68k_btop(KERNBASE + NBPG)];
-	epte = &pte[m68k_btop(m68k_trunc_page(&etext))];
+	epte = &pte[m68k_btop(trunc_page((vaddr_t)&etext))];
 	protopte = (firstpa + NBPG) | PG_RO | PG_V;
 	while (pte < epte) {
 		*pte++ = protopte;
@@ -438,7 +438,7 @@ pmap_bootstrap(nextpa, firstpa)
 	 */
 	RELOC(avail_start, paddr_t) = nextpa;
 	RELOC(avail_end, paddr_t) = m68k_ptob(RELOC(maxmem, int)) -
-	    (m68k_round_page(MSGBUFSIZE) + m68k_ptob(1));
+	    (round_page(MSGBUFSIZE) + m68k_ptob(1));
 	RELOC(mem_size, vsize_t) = m68k_ptob(RELOC(physmem, int));
 	RELOC(virtual_avail, vaddr_t) =
 		VM_MIN_KERNEL_ADDRESS + (nextpa - firstpa);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.21 2001/05/16 17:40:02 millert Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.22 2001/06/05 16:13:15 millert Exp $	*/
 /*	$NetBSD: pmap.c,v 1.80 1999/09/16 14:52:06 chs Exp $	*/
 
 /*-
@@ -1313,7 +1313,7 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 	if (!pmap_ste_v(pmap, va))
 		pmap_enter_ptpage(pmap, va);
 
-	pa = m68k_trunc_page(pa);
+	pa = trunc_page(pa);
 	pte = pmap_pte(pmap, va);
 	opa = pmap_pte_pa(pte);
 
