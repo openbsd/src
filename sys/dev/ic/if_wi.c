@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.58 2002/04/26 21:19:18 millert Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.59 2002/04/26 21:27:27 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -124,7 +124,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.58 2002/04/26 21:19:18 millert Exp $";
+	"$OpenBSD: if_wi.c,v 1.59 2002/04/26 21:27:27 millert Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -1399,6 +1399,10 @@ wi_ioctl(ifp, command, data)
 		error = copyin(ifr->ifr_data, &wreq, sizeof(wreq));
 		if (error)
 			break;
+		if (wreq.wi_len > WI_MAX_DATALEN) {
+			error = EINVAL;
+			break;
+		}
 		if (wreq.wi_type == WI_RID_IFACE_STATS) {
 			/* XXX native byte order */
 			bcopy((char *)&sc->wi_stats, (char *)&wreq.wi_val,
@@ -1425,6 +1429,8 @@ wi_ioctl(ifp, command, data)
 		if (error)
 			break;
 		error = EINVAL;
+		if (wreq.wi_len > WI_MAX_DATALEN)
+			break;
 		switch (wreq.wi_type) {
 		case WI_RID_IFACE_STATS:
 			break;
@@ -1478,7 +1484,7 @@ wi_ioctl(ifp, command, data)
 		break;
 	case SIOCS80211NWID:
 		error = copyin(ifr->ifr_data, &nwid, sizeof(nwid));
-		if (error != 0)
+		if (error)
 			break;
 		if (nwid.i_len > IEEE80211_NWID_LEN) {
 			error = EINVAL;
