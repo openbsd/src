@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.S,v 1.4 1995/09/16 23:20:37 pk Exp $	*/
+/*	$NetBSD: srt0.S,v 1.5 1995/12/13 23:35:18 pk Exp $	*/
 
 /*
  * Copyright (c) 1994 Paul Kranenburg
@@ -101,6 +101,14 @@ start:
 	set     _end, %o1
 	call    _bzero
 	 sub    %o1, %o0, %o1
+
+	/*
+	 * Enable interrupts.
+	 */
+	rd	%psr, %o0
+	andn	%o0, PSR_PIL, %o0
+	wr	%g0, %o0, %psr
+	nop; nop; nop
 
 	/*
 	 * Set CPU type that we are running on.
