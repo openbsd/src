@@ -1,5 +1,8 @@
+/*	$OpenBSD: ioctl_bt848.h,v 1.2 1998/10/10 06:40:21 downsj Exp $	*/
 /*
  * extensions to ioctl_meteor.h for the bt848 cards
+ *
+ * $FreeBSD: ioctl_bt848.h,v 1.19 1998/09/30 21:06:55 sos Exp $
  */
 
 /*
@@ -11,8 +14,9 @@
 #define CHNLSET_WEUROPE		4
 #define CHNLSET_JPNBCST         5
 #define CHNLSET_JPNCABLE        6
+#define CHNLSET_XUSSR           7
 #define CHNLSET_MIN	        CHNLSET_NABCST
-#define CHNLSET_MAX	        CHNLSET_JPNCABLE
+#define CHNLSET_MAX	        CHNLSET_XUSSR
 
 
 /*
@@ -192,6 +196,26 @@ struct _bktr_clip {
 /* set input format */
 #define BT848SFMT		_IOW('x', 67, unsigned long )
 #define BT848GFMT		_IOR('x', 67, unsigned long )
+
+/* set clear-buffer-on-start */
+#define BT848SCBUF	_IOW('x', 68, int)
+#define BT848GCBUF	_IOR('x', 68, int)
+
+/* set capture area */
+/* The capture area is the area of the video image which is grabbed */
+/* Usually the capture area is 640x480 (768x576 PAL) pixels */
+/* This area is then scaled to the dimensions the user requires */
+/* using the METEORGEO ioctl */
+/* However, the capture area could be 400x300 pixels from the top right */
+/* corner of the video image */
+struct bktr_capture_area {
+   int      x_offset;
+   int      y_offset;
+   int      x_size;
+   int      y_size;
+};
+#define BT848_SCAPAREA   _IOW('x', 69, struct bktr_capture_area)
+#define BT848_GCAPAREA   _IOR('x', 69, struct bktr_capture_area)
 
 /* Read/Write the BT848's I2C bus directly
  * b7-b0:    data (read/write)
