@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.c,v 1.26 2002/01/15 19:18:01 provos Exp $	*/
+/*	$OpenBSD: tcp_timer.c,v 1.27 2002/03/01 22:29:29 provos Exp $	*/
 /*	$NetBSD: tcp_timer.c,v 1.14 1996/02/13 23:44:09 christos Exp $	*/
 
 /*
@@ -36,13 +36,13 @@
  *	@(#)tcp_timer.c	8.1 (Berkeley) 6/10/93
  */
 
-#ifndef TUBA_INCLUDE
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/protosw.h>
+#include <sys/kernel.h>
 
 #include <net/route.h>
 
@@ -57,34 +57,55 @@
 #include <netinet/tcp_var.h>
 #include <netinet/ip_icmp.h>
 
-int	tcp_keepidle = TCPTV_KEEP_IDLE;
-int	tcp_keepintvl = TCPTV_KEEPINTVL;
-int	tcp_maxpersistidle = TCPTV_KEEP_IDLE;	/* max idle time in persist */
+int	tcp_keepidle;
+int	tcp_keepintvl;
+int	tcp_maxpersistidle;	/* max idle time in persist */
 int	tcp_maxidle;
-#endif /* TUBA_INCLUDE */
+
 /*
- * Fast timeout routine for processing delayed acks
+ * Time to delay the ACK.  This is initialized in tcp_init(), unless
+ * its patched.
+ */
+int	tcp_delack_ticks;
+
+/*
+ * Timer state initialization, called from tcp_init().
  */
 void
-tcp_fasttimo()
+tcp_timer_init(void)
 {
-	register struct inpcb *inp;
-	register struct tcpcb *tp;
+
+	if (tcp_keepidle == 0)
+		tcp_keepidle = TCPTV_KEEP_IDLE;
+
+	if (tcp_keepintvl == 0)
+		tcp_keepintvl = TCPTV_KEEPINTVL;
+
+	if (tcp_maxpersistidle == 0)
+		tcp_maxpersistidle = TCPTV_KEEP_IDLE;
+
+	if (tcp_delack_ticks == 0)
+		tcp_delack_ticks = TCP_DELACK_TICKS;
+}
+
+/*
+ * Callout to process delayed ACKs for a TCPCB.
+ */
+void
+tcp_delack(void *arg)
+{
+	struct tcpcb *tp = arg;
 	int s;
 
+	/*
+	 * If tcp_output() wasn't able to transmit the ACK
+	 * for whatever reason, it will restart the delayed
+	 * ACK callout.
+	 */
+
 	s = splsoftnet();
-	inp = tcbtable.inpt_queue.cqh_first;
-	if (inp)						/* XXX */
-	for (; inp != (struct inpcb *)&tcbtable.inpt_queue;
-	    inp = inp->inp_queue.cqe_next) {
-		if ((tp = (struct tcpcb *)inp->inp_ppcb) &&
-		    (tp->t_flags & TF_DELACK)) {
-			tp->t_flags &= ~TF_DELACK;
-			tp->t_flags |= TF_ACKNOW;
-			tcpstat.tcps_delack++;
-			(void) tcp_output(tp);
-		}
-	}
+	tp->t_flags |= TF_ACKNOW;
+	(void) tcp_output(tp);
 	splx(s);
 }
 

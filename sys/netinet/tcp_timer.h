@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.h,v 1.6 2002/01/14 19:26:10 provos Exp $	*/
+/*	$OpenBSD: tcp_timer.h,v 1.7 2002/03/01 22:29:29 provos Exp $	*/
 /*	$NetBSD: tcp_timer.h,v 1.6 1995/03/26 20:32:37 jtc Exp $	*/
 
 /*
@@ -109,6 +109,8 @@
 
 #define	TCP_MAXRXTSHIFT	12			/* maximum retransmits */
 
+#define	TCP_DELACK_TICKS (hz / PR_FASTHZ)	/* time to delay ACK */
+
 #ifdef	TCPTIMERS
 char *tcptimers[] =
     { "REXMT", "PERSIST", "KEEP", "2MSL" };
@@ -147,5 +149,7 @@ extern int tcp_keepintvl;		/* time between keepalive probes */
 extern int tcp_maxidle;			/* time to drop after starting probes */
 extern int tcp_ttl;			/* time to live for TCP segs */
 extern int tcp_backoff[];
+
+void	tcp_timer_init(void);
 #endif /* _KERNEL */
 #endif /* _NETINET_TCP_TIMER_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.47 2002/02/05 17:03:11 provos Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.48 2002/03/01 22:29:29 provos Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -1107,9 +1107,16 @@ out:
 			tp->t_softerror = error;
 			return (0);
 		}
+
+		/* Restart the delayed ACK timer, if necessary. */
+		if (tp->t_flags & TF_DELACK)
+			TCP_RESTART_DELACK(tp);
+
 		return (error);
 	}
 	tcpstat.tcps_sndtotal++;
+	if (tp->t_flags & TF_DELACK)
+		tcpstat.tcps_delack++;
 
 	/*
 	 * Data sent (as far as we can tell).
@@ -1120,7 +1127,8 @@ out:
 	if (win > 0 && SEQ_GT(tp->rcv_nxt+win, tp->rcv_adv))
 		tp->rcv_adv = tp->rcv_nxt + win;
 	tp->last_ack_sent = tp->rcv_nxt;
-	tp->t_flags &= ~(TF_ACKNOW|TF_DELACK);
+	tp->t_flags &= ~TF_ACKNOW;
+	TCP_CLEAR_DELACK(tp);
 #if defined(TCP_SACK)
 	if (sendalot && --maxburst)
 #else

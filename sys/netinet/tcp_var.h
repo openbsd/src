@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.38 2002/01/15 19:18:01 provos Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.39 2002/03/01 22:29:29 provos Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -83,6 +83,7 @@ struct tcpcb {
 
 	struct	mbuf *t_template;	/* skeletal packet for transmit */
 	struct	inpcb *t_inpcb;		/* back pointer to internet pcb */
+	struct	timeout t_delack_to;	/* delayed ACK callback */
 /*
  * The following fields are used as in the protocol specification.
  * See RFC783, Dec. 1981, page 21.
@@ -176,6 +177,33 @@ struct tcpcb {
 
 #define	intotcpcb(ip)	((struct tcpcb *)(ip)->inp_ppcb)
 #define	sototcpcb(so)	(intotcpcb(sotoinpcb(so)))
+
+#ifdef _KERNEL
+extern int tcp_delack_ticks;
+void	tcp_delack(void *);
+
+#define TCP_INIT_DELACK(tp)						\
+	timeout_set(&(tp)->t_delack_to, tcp_delack, tp)
+
+#define TCP_RESTART_DELACK(tp)						\
+	timeout_add(&(tp)->t_delack_to, tcp_delack_ticks)
+
+#define	TCP_SET_DELACK(tp)						\
+do {									\
+	if (((tp)->t_flags & TF_DELACK) == 0) {				\
+		(tp)->t_flags |= TF_DELACK;				\
+		TCP_RESTART_DELACK(tp);					\
+	}								\
+} while (/*CONSTCOND*/0)
+
+#define	TCP_CLEAR_DELACK(tp)						\
+do {									\
+	if ((tp)->t_flags & TF_DELACK) {				\
+		(tp)->t_flags &= ~TF_DELACK;				\
+		timeout_del(&(tp)->t_delack_to);			\
+	}								\
+} while (/*CONSTCOND*/0)
+#endif /* _KERNEL */
 
 /*
  * The smoothed round-trip time and estimated variance
@@ -345,7 +373,6 @@ struct tcpcb *
 void	 tcp_dooptions __P((struct tcpcb *, u_char *, int, struct tcphdr *,
 		int *, u_int32_t *, u_int32_t *)); 
 void	 tcp_drain __P((void));
-void	 tcp_fasttimo __P((void));
 void	 tcp_init __P((void));
 #if defined(INET6) && !defined(TCP6)
 int	 tcp6_input __P((struct mbuf **, int *, int));

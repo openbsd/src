@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.57 2002/01/24 22:42:49 provos Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.58 2002/03/01 22:29:29 provos Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -183,6 +183,9 @@ tcp_init()
 
 	icmp6_mtudisc_callback_register(tcp6_mtudisc_callback);
 #endif /* INET6 */
+
+	/* Initialize timer state. */
+	tcp_timer_init();
 }
 
 /*
@@ -472,6 +475,7 @@ tcp_newtcpcb(struct inpcb *inp)
 	tp->t_maxseg = tcp_mssdflt;
 	tp->t_maxopd = 0;
 
+	TCP_INIT_DELACK(tp);
 	for (i = 0; i < TCPT_NTIMERS; i++)
 		TCP_TIMER_INIT(tp, i);
 
@@ -664,6 +668,8 @@ tcp_close(struct tcpcb *tp)
 
 	/* free the reassembly queue, if any */
 	tcp_freeq(tp);
+
+	TCP_CLEAR_DELACK(tp);
 
 #ifdef TCP_SACK
 	/* Free SACK holes. */
