@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsecreg.h,v 1.5 2000/08/11 19:38:15 deraadt Exp $	*/
+/*	$OpenBSD: ubsecreg.h,v 1.6 2000/08/13 22:03:09 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000 Theo de Raadt
@@ -70,7 +70,8 @@
 #define	BS_ERR_READ		0x00000001	/* fault was on read */
 
 #define	UBSEC_CARD(sid)		(((sid) & 0xf0000000) >> 28)
-#define	UBSEC_SID(crd,ses)	(((crd) << 28) | ((ses) & 0x7ff))
+#define	UBSEC_SESSION(sid)	( (sid) & 0x0fffffff)
+#define	UBSEC_SID(crd,ses)	(((crd) << 28) | ((ses) & 0x0fffffff))
 #define	MAX_SCATTER		64
 
 struct ubsec_pktctx {

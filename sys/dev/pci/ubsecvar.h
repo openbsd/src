@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsecvar.h,v 1.7 2000/08/11 19:38:16 deraadt Exp $	*/
+/*	$OpenBSD: ubsecvar.h,v 1.8 2000/08/13 22:03:09 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000 Theo de Raadt
@@ -38,6 +38,8 @@ struct ubsec_softc {
 	SIMPLEQ_HEAD(,ubsec_q)	sc_queue;	/* packet queue */
 	int			sc_nqueue;	/* count enqueued */
 	SIMPLEQ_HEAD(,ubsec_q)	sc_qchip;	/* on chip */
+	int			sc_nsessions;	/* # of sessions */
+	struct ubsec_session	*sc_sessions;	/* sessions */
 };
 
 struct ubsec_q {
@@ -59,6 +61,15 @@ struct ubsec_q {
 	int				q_dst_packl[MAX_SCATTER];
 	int				q_dst_npa, q_dst_l;
 	u_int32_t			q_macbuf[5];
+	struct ubsec_session *		q_ses;
+};
+
+struct ubsec_session {
+	u_int32_t	ses_used;
+	u_int32_t	ses_deskey[6];		/* 3DES key */
+	u_int32_t       ses_hminner[5];		/* hmac inner state */
+	u_int32_t       ses_hmouter[5];		/* hmac outer state */
+	u_int32_t       ses_iv[2];		/* [3]DES iv */
 };
 
 /* Maximum queue length */
