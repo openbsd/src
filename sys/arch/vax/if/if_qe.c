@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_qe.c,v 1.8 1997/05/29 00:04:32 niklas Exp $ */
-/*	$NetBSD: if_qe.c,v 1.18 1996/10/13 03:34:55 christos Exp $ */
+/*	$OpenBSD: if_qe.c,v 1.9 1997/09/10 08:28:41 maja Exp $ */
+/*	$NetBSD: if_qe.c,v 1.22 1997/05/02 17:11:24 ragge Exp $ */
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -39,29 +39,29 @@
  *	@(#)if_qe.c	7.20 (Berkeley) 3/28/91
  */
 
-/* from  @(#)if_qe.c	1.15	(ULTRIX)	4/16/86 */
+/* from	 @(#)if_qe.c	1.15	(ULTRIX)	4/16/86 */
 
 /****************************************************************
  *								*
- *        Licensed from Digital Equipment Corporation 		*
- *                       Copyright (c) 				*
- *               Digital Equipment Corporation			*
- *                   Maynard, Massachusetts 			*
- *                         1985, 1986 				*
- *                    All rights reserved. 			*
+ *	  Licensed from Digital Equipment Corporation		*
+ *			 Copyright (c)				*
+ *		 Digital Equipment Corporation			*
+ *		     Maynard, Massachusetts			*
+ *			   1985, 1986				*
+ *		      All rights reserved.			*
  *								*
- *        The Information in this software is subject to change *
+ *	  The Information in this software is subject to change *
  *   without notice and should not be construed as a commitment *
- *   by  Digital  Equipment  Corporation.   Digital   makes  no *
+ *   by	 Digital  Equipment  Corporation.   Digital   makes  no *
  *   representations about the suitability of this software for *
  *   any purpose.  It is supplied "As Is" without expressed  or *
- *   implied  warranty. 					*
+ *   implied  warranty.						*
  *								*
- *        If the Regents of the University of California or its *
- *   licensees modify the software in a manner creating  	*
- *   derivative copyright rights, appropriate copyright  	*
- *   legends may be placed on the derivative work in addition   *
- *   to that set forth above. 					*
+ *	  If the Regents of the University of California or its *
+ *   licensees modify the software in a manner creating		*
+ *   derivative copyright rights, appropriate copyright		*
+ *   legends may be placed on the derivative work in addition	*
+ *   to that set forth above.					*
  *								*
  ****************************************************************/
 /* ---------------------------------------------------------------------
@@ -71,7 +71,7 @@
  *	Rename "unused_multi" to "qunused_multi" for extending Generic
  *	kernel to MicroVAXen.
  *
- * 18-mar-86  -- jaw     br/cvec changed to NOT use registers.
+ * 18-mar-86  -- jaw	 br/cvec changed to NOT use registers.
  *
  * 12 March 86 -- Jeff Chase
  *	Modified to handle the new MCLGET macro
@@ -80,11 +80,11 @@
  *
  * 19 Oct 85 -- rjl
  *	Changed the watch dog timer from 30 seconds to 3.  VMS is using
- * 	less than 1 second in their's. Also turned the printf into an
+ *	less than 1 second in their's. Also turned the printf into an
  *	mprintf.
  *
  *  09/16/85 -- Larry Cohen
- * 		Add 43bsd alpha tape changes for subnet routing
+ *		Add 43bsd alpha tape changes for subnet routing
  *
  *  1 Aug 85 -- rjl
  *	Panic on a non-existent memory interrupt and the case where a packet
@@ -93,8 +93,8 @@
  *	because we hang 2k input buffers on the device.
  *
  *  1 Aug 85 -- rich
- *      Fixed the broadcast loopback code to handle Clusters without
- *      wedging the system.
+ *	Fixed the broadcast loopback code to handle Clusters without
+ *	wedging the system.
  *
  *  27 Feb. 85 -- ejf
  *	Return default hardware address on ioctl request.
@@ -110,7 +110,7 @@
  *	Added watchdog timer to mask hardware bug that causes device lockup.
  *
  *  18 Dec. 84 -- rjl
- *	Reworked driver to use q-bus mapping routines.  MicroVAX-I now does
+ *	Reworked driver to use q-bus mapping routines.	MicroVAX-I now does
  *	copying instead of m-buf shuffleing.
  *	A number of deficencies in the hardware/firmware were compensated
  *	for. See comments in qestart and qerint.
@@ -137,7 +137,11 @@
 
 /*
  * Digital Q-BUS to NI Adapter
+ * supports DEQNA and DELQA in DEQNA-mode.
  */
+
+#include "bpfilter.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
@@ -174,20 +178,32 @@
 extern char all_es_snpa[], all_is_snpa[], all_l1is_snpa[], all_l2is_snpa[];
 #endif
 
+#if defined(CCITT) && defined(LLC)
+#include <sys/socketvar.h>
+#include <netccitt/x25.h>
+#include <netccitt/pk.h>
+#include <netccitt/pk_var.h>
+#include <netccitt/pk_extern.h>
+#endif
+
+#if NBPFILTER > 0
+#include <net/bpf.h>
+#include <net/bpfdesc.h>
+#endif
+ 
 #include <machine/pte.h>
 #include <machine/cpu.h>
-#include <machine/mtpr.h>
 
 #include <vax/if/if_qereg.h>
 #include <vax/if/if_uba.h>
 #include <vax/uba/ubareg.h>
 #include <vax/uba/ubavar.h>
 
-#define NRCV	15	 		/* Receive descriptors		*/
-#define NXMT	5	 		/* Transmit descriptors		*/
+#define NRCV	15			/* Receive descriptors		*/
+#define NXMT	5			/* Transmit descriptors		*/
 #define NTOT	(NXMT + NRCV)
 
-#define	QETIMEOUT	2		/* transmit timeout, must be > 1 */
+#define QETIMEOUT	2		/* transmit timeout, must be > 1 */
 #define QESLOWTIMEOUT	40		/* timeout when no xmits in progress */
 
 #define MINDATA 60
@@ -205,8 +221,8 @@ struct	qe_softc {
 #define	qe_if	qe_ac.ac_if		/* network-visible interface 	*/
 #define	qe_addr	qe_ac.ac_enaddr		/* hardware Ethernet address 	*/
 	struct	ifubinfo qe_uba;	/* Q-bus resources 		*/
-	struct	ifrw qe_ifr[NRCV]; /*	for receive buffers;	*/
-	struct	ifxmt qe_ifw[NXMT]; /*	for xmit buffers;	*/
+	struct	ifrw qe_ifr[NRCV];	/*	for receive buffers;	*/
+	struct	ifxmt qe_ifw[NXMT];	/*	for xmit buffers;	*/
 	struct	qedevice *qe_vaddr;
 	int	qe_flags;		/* software state		*/
 #define	QEF_RUNNING	0x01
@@ -216,15 +232,16 @@ struct	qe_softc {
 	int	ipl;			/* interrupt priority		*/
 	struct	qe_ring *rringaddr;	/* mapping info for rings	*/
 	struct	qe_ring *tringaddr;	/*       ""			*/
-	struct	qe_ring rring[NRCV+1]; /* Receive ring descriptors */
-	struct	qe_ring tring[NXMT+1]; /* Xmit ring descriptors */
+	struct	qe_ring rring[NRCV+1];	/* Receive ring descriptors	*/
+	struct	qe_ring tring[NXMT+1];	/* Xmit ring descriptors	*/
 	u_char	setup_pkt[16][8];	/* Setup packet			*/
 	int	rindex;			/* Receive index		*/
 	int	tindex;			/* Transmit index		*/
 	int	otindex;		/* Old transmit index		*/
 	int	qe_intvec;		/* Interrupt vector 		*/
-	struct	qedevice *addr; /* device addr		*/
+	struct	qedevice *addr;		/* device addr			*/
 	int 	setupqueued;		/* setup packet queued		*/
+	int	setuplength;		/* length if setup packet	*/
 	int	nxmit;			/* Transmits in progress	*/
 	int	qe_restarts;		/* timeouts			*/
 };
@@ -253,7 +270,7 @@ struct	cfattach qe_ca = {
 	sizeof(struct qe_softc), qematch, qeattach
 };
 
-#define	QEUNIT(x)	minor(x)
+#define QEUNIT(x)	minor(x)
 /*
  * The deqna shouldn't receive more than ETHERMTU + sizeof(struct ether_header)
  * but will actually take in up to 2048 bytes. To guard against the receiver
@@ -273,8 +290,8 @@ qematch(parent, match, aux)
 	struct	qe_softc *sc = match;
 	struct	uba_attach_args *ua = aux;
 	struct	uba_softc *ubasc = (struct uba_softc *)parent;
-	struct	qe_ring	*rp;
-	struct	qe_ring *prp;   /* physical rp          */
+	struct	qe_ring *rp;
+	struct	qe_ring *prp;	/* physical rp		*/
 	volatile struct qedevice *addr = (struct qedevice *)ua->ua_addr;
 	int i;
 
@@ -370,7 +387,8 @@ qeattach(parent, self, aux)
 	 * The Deqna is cable of transmitting broadcasts, but
 	 * doesn't listen to its own.
 	 */
-	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS |
+	    IFF_MULTICAST;
 
 	/*
 	 * Read the address from the prom and save it.
@@ -395,6 +413,10 @@ qeattach(parent, self, aux)
 	sc->qe_uba.iff_flags = UBA_CANTWAIT;
 	if_attach(ifp);
 	ether_ifattach(ifp);
+
+#if NBPFILTER > 0
+	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
+#endif
 }
 
 /*
@@ -444,7 +466,7 @@ qeinit(sc)
 		    sizeof(sc->setup_pkt), 0);
 		if (i == 0)
 			goto fail;
-		sc->setupaddr =	UBAI_ADDR(i);
+		sc->setupaddr = UBAI_ADDR(i);
 		/*
 		 * init buffers and maps
 		 */
@@ -541,7 +563,7 @@ qestart(ifp)
 		rp = &sc->tring[index];
 		if( sc->setupqueued ) {
 			buf_addr = sc->setupaddr;
-			len = 128;
+			len = sc->setuplength;
 			rp->qe_setup = 1;
 			sc->setupqueued = 0;
 		} else {
@@ -550,6 +572,10 @@ qestart(ifp)
 				splx(s);
 				return;
 			}
+#if NBPFILTER > 0
+			if (ifp->if_bpf)
+				bpf_mtap(ifp->if_bpf, m);
+#endif
 			buf_addr = sc->qe_ifw[index].ifw_info;
 			len = if_ubaput(&sc->qe_uba, &sc->qe_ifw[index], m);
 		}
@@ -769,6 +795,7 @@ qeioctl(ifp, cmd, data)
 {
 	struct qe_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
+	struct ifreq *ifr = (struct ifreq *)data;
 	int s = splnet(), error = 0;
 
 	switch (cmd) {
@@ -805,6 +832,28 @@ qeioctl(ifp, cmd, data)
 		} else if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) ==
 		    IFF_RUNNING && (sc->qe_flags & QEF_RUNNING) == 0)
 			qerestart(sc);
+		else
+			qeinit(sc);
+
+		break;
+
+	case SIOCADDMULTI:
+	case SIOCDELMULTI:
+		/*
+		 * Update our multicast list.
+		 */
+		error = (cmd == SIOCADDMULTI) ?
+			ether_addmulti(ifr, &sc->qe_ac):
+			ether_delmulti(ifr, &sc->qe_ac);
+
+		if (error == ENETRESET) {
+			/*
+			 * Multicast list has changed; set the hardware filter
+			 * accordingly.
+			 */
+			qeinit(sc);
+			error = 0;
+		}
 		break;
 
 	default:
@@ -840,7 +889,7 @@ qe_setaddr(physaddr, sc)
 void
 qeinitdesc(rp, addr, len)
 	register struct qe_ring *rp;
-	caddr_t addr; 			/* mapped address */
+	caddr_t addr;			/* mapped address */
 	int len;
 {
 	/*
@@ -880,11 +929,53 @@ qesetup(sc)
 	for (i = 0; i < 6; i++) {
 		sc->setup_pkt[i][2] = 0xff;
 #ifdef ISO
+		/*
+		 * XXX layer violation, should use SIOCADDMULTI.
+		 * Will definitely break with IPmulticast.
+		 */
+
 		sc->setup_pkt[i][3] = all_es_snpa[i];
 		sc->setup_pkt[i][4] = all_is_snpa[i];
 		sc->setup_pkt[i][5] = all_l1is_snpa[i];
 		sc->setup_pkt[i][6] = all_l2is_snpa[i];
 #endif
+	}
+	if (sc->qe_if.if_flags & IFF_PROMISC) {
+		sc->setuplength = QE_PROMISC;
+	/* XXX no IFF_ALLMULTI support in 4.4bsd */
+	} else if (sc->qe_if.if_flags & IFF_ALLMULTI) {
+		sc->setuplength = QE_ALLMULTI;
+	} else {
+		register k;
+		struct ether_multi *enm;
+		struct ether_multistep step;
+		/*
+		 * Step through our list of multicast addresses, putting them
+		 * in the third through fourteenth address slots of the setup
+		 * packet.  (See the DEQNA manual to understand the peculiar
+		 * layout of the bytes within the setup packet.)  If we have
+		 * too many multicast addresses, or if we have to listen to
+		 * a range of multicast addresses, turn on reception of all
+		 * multicasts.
+		 */
+		sc->setuplength = QE_SOMEMULTI;
+		i = 2;
+		k = 0;
+		ETHER_FIRST_MULTI(step, &sc->qe_ac, enm);
+		while (enm != NULL) {
+			if ((++i > 7 && k != 0) ||
+			    bcmp(enm->enm_addrlo, enm->enm_addrhi, 6) != 0) {
+				sc->setuplength = QE_ALLMULTI;
+				break;
+			}
+			if (i > 7) {
+				i = 1;
+				k = 8;
+			}
+			for (j = 0; j < 6; j++)
+				sc->setup_pkt[j+k][i] = enm->enm_addrlo[j];
+			ETHER_NEXT_MULTI(step, enm);
+		}
 	}
 	sc->setupqueued++;
 }
@@ -899,8 +990,9 @@ qeread(sc, ifrw, len)
 	struct ifrw *ifrw;
 	int len;
 {
+ 	struct	ifnet *ifp = (struct ifnet *)&sc->qe_if;
 	struct ether_header *eh;
-    	struct mbuf *m;
+	struct mbuf *m;
 
 	/*
 	 * Deal with trailer protocol: if type is INET trailer
@@ -925,8 +1017,41 @@ if (m) {
 *(((u_long *)m->m_data)+1),
 *(((u_long *)m->m_data)+2),
 *(((u_long *)m->m_data)+3)
-); }
+; }
 #endif
+
+#if NBPFILTER > 0
+	/*
+	 * Check for a BPF filter; if so, hand it up.
+	 * Note that we have to stick an extra mbuf up front, because
+	 * bpf_mtap expects to have the ether header at the front.
+	 * It doesn't matter that this results in an ill-formatted mbuf chain,
+	 * since BPF just looks at the data.  (It doesn't try to free the mbuf,
+	 * tho' it will make a copy for tcpdump.)
+	 */
+	if (sc->qe_if.if_bpf) {
+		struct mbuf m0;
+		m0.m_len = sizeof (struct ether_header);
+		m0.m_data = (caddr_t)eh;
+		m0.m_next = m;
+ 
+		/* Pass it up */
+		bpf_mtap(sc->qe_if.if_bpf, &m0);
+
+		/*
+		 * Note that the interface cannot be in promiscuous mode if
+		 * there are no BPF listeners.	And if we are in promiscuous
+		 * mode, we have to check if this packet is really ours.
+		 */
+		if ((ifp->if_flags & IFF_PROMISC) &&
+		    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
+		    bcmp(eh->ether_dhost, sc->qe_addr,
+			    sizeof(eh->ether_dhost)) != 0) {
+			m_freem(m);
+			return;
+		}
+	}
+#endif /* NBPFILTER > 0 */
 
 	if (m)
 		ether_input((struct ifnet *)&sc->qe_if, eh, m);

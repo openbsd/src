@@ -1,7 +1,6 @@
-/*	$OpenBSD: if_le.c,v 1.2 1997/05/29 00:04:32 niklas Exp $	*/
-/*	$NetBSD: if_le.c,v 1.3 1996/10/13 03:34:53 christos Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.3 1997/09/10 08:28:40 maja Exp $	*/
+/*	$NetBSD: if_le.c,v 1.8 1997/04/21 22:04:23 ragge Exp $	*/
 
-#define LEDEBUG	 1		/* debug-level: 0 or 1 */
 /* #define LE_CHIP_IS_POKEY	/* does VS2000 need this ??? */
 
 /*-
@@ -49,6 +48,7 @@
 #include <sys/syslog.h>
 #include <sys/socket.h>
 #include <sys/device.h>
+#include <sys/reboot.h>
 
 #include <net/if.h>
 
@@ -69,6 +69,7 @@
 #include <machine/uvax.h>
 #include <machine/ka410.h>
 #include <machine/vsbus.h>
+#include <machine/rpb.h>
 
 #include <dev/ic/am7990reg.h>
 #define LE_NEED_BUF_CONTIG
@@ -104,12 +105,15 @@ struct cfattach le_ca = {
 	sizeof(struct le_softc), lematch, leattach
 };
 
-integrate void
+hide void lewrcsr __P ((struct am7990_softc *, u_int16_t, u_int16_t));
+hide u_int16_t lerdcsr __P ((struct am7990_softc *, u_int16_t));
+
+hide void
 lewrcsr(sc, port, val)
-	struct le_softc *sc;
+	struct am7990_softc *sc;
 	u_int16_t port, val;
 {
-	struct lereg1 *ler1 = sc->sc_r1;
+	struct lereg1 *ler1 = ((struct le_softc *)sc)->sc_r1;
 
 #ifdef LE_CHIP_IS_POKEY
 	LEWREG(port, ler1->ler1_rap);
@@ -120,12 +124,12 @@ lewrcsr(sc, port, val)
 #endif
 }
 
-integrate u_int16_t
+hide u_int16_t
 lerdcsr(sc, port)
-	struct le_softc *sc;
+	struct am7990_softc *sc;
 	u_int16_t port;
 {
-	struct lereg1 *ler1 = sc->sc_r1;
+	struct lereg1 *ler1 = ((struct le_softc *)sc)->sc_r1;
 	u_int16_t val;
 
 #ifdef LE_CHIP_IS_POKEY
@@ -136,6 +140,12 @@ lerdcsr(sc, port)
 	val = ler1->ler1_rdp;
 #endif
 	return (val);
+}
+
+integrate void
+lehwinit(sc)
+	struct am7990_softc *sc;
+{
 }
 
 int
@@ -176,6 +186,10 @@ leattach(parent, self, aux)
 	sc->sc_am7990.sc_mem = le_iomem;
 	sc->sc_am7990.sc_addr = le_ioaddr;
 	sc->sc_am7990.sc_memsize = LE_IOSIZE;
+	sc->sc_am7990.sc_wrcsr = lewrcsr;
+	sc->sc_am7990.sc_rdcsr = lerdcsr;
+	sc->sc_am7990.sc_hwinit = lehwinit;
+	sc->sc_am7990.sc_nocarrier = NULL;
 
 	xdebug(("leattach: mem=%x, addr=%x, size=%x (%d)\n",
 	    sc->sc_am7990.sc_mem, sc->sc_am7990.sc_addr,
@@ -204,12 +218,14 @@ leattach(parent, self, aux)
 
 	vsbus_intr_register(ca, am7990_intr, &sc->sc_am7990);
 	vsbus_intr_enable(ca);
-}
 
-integrate void
-lehwinit(sc)
-	struct le_softc *sc;
-{
+	/*
+	 * Register this device as boot device if we booted from it.
+	 * This will fail if there are more than one le in a machine,
+	 * fortunately there may be only one.
+	 */
+	if (B_TYPE(bootdev) == BDEV_LE)
+		booted_from = self;
 }
 
 #ifdef LE_CHIP_IS_POKEY

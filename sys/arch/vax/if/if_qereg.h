@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_qereg.h,v 1.2 1997/05/29 00:04:33 niklas Exp $ */
-/*	$NetBSD: if_qereg.h,v 1.1 1995/03/30 20:26:41 ragge Exp $ */
+/*	$OpenBSD: if_qereg.h,v 1.3 1997/09/10 08:28:42 maja Exp $ */
+/*	$NetBSD: if_qereg.h,v 1.2 1997/05/15 20:10:23 ragge Exp $ */
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -171,3 +171,10 @@ struct qe_ring	{
 #define QE_NOTYET		0x8000	/* Descriptor not in use yet	*/
 #define QE_INUSE		0x4000	/* Descriptor being used by QNA	*/
 #define QE_MASK			0xc000	/* Lastnot/error/used mask	*/
+
+/*
+ * Values for the length of the setup packet that control reception filter.
+ */
+#define QE_SOMEMULTI		128	/* Receive up to 12 multicasts	*/
+#define QE_ALLMULTI		129	/* Receive all multicasts	*/
+#define QE_PROMISC		130	/* Receive all packets		*/
