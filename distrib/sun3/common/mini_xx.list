@@ -19,7 +19,7 @@ COPY	${OBJDIR}/vi			usr/bin
 
 # These are normally -static so just copy:
 
-COPY	${DESTDIR}/usr/bin/tar		usr/bin
+COPY	${DESTDIR}/bin/tar		bin
 
 COPY	${DESTDIR}/usr/bin/gzip		usr/bin
 LINK		   usr/bin/gzip		usr/bin/gunzip

@@ -166,13 +166,9 @@ The Install Procedure:
 	in a directory /gz.files, to extract base.tar.gz you would:
 
 	- cd / 
-	- tar -xpzf /gz.files/base.tar.gz --unlink
+	- tar -xpzf /gz.files/base.tar.gz
 
 	Add v to the flags if you want a verbose extract.
-	The --unlink is to make sure that the install versions
-	of sh, init, ... are replaced by their proper versons
-	in base.tar.gz.  I think it is wise to include the --unlink
-	for other things.
 
   j) Extract at least "base" and "etc" for a new installation.  For
 	"update" extracts, don't extract "etc" directly unless you 

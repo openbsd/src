@@ -31,6 +31,7 @@
 ./bin/sleep
 ./bin/stty
 ./bin/sync
+./bin/tar
 ./bin/test
 ./dev
 ./dev/MAKEDEV
@@ -276,7 +277,6 @@
 ./usr/bin/systat
 ./usr/bin/tail
 ./usr/bin/talk
-./usr/bin/tar
 ./usr/bin/tcopy
 ./usr/bin/tee
 ./usr/bin/telnet

@@ -20,12 +20,10 @@ To upgrade your system, follow the following instructions:
 	from /bin, /sbin and /usr/bin in some directory.  (Things like
 	sh, cp, ls, rm, tar, halt, and others.)
 
-	Extract the tar.gz files.  Remember to use the --unlink
-	option with tar so it can replace binaries currently in use.
-	For example, to extract base.tar.gz:
+	Extract the tar.gz files.  For example, to extract base.tar.gz:
 
 		cd / 
-		tar -xpzf /gz.files/base.tar.gz --unlink
+		tar -xpzf /gz.files/base.tar.gz
 
 	Extract all the tar.gz files you want.  You should carefully
 	work at upgrading /etc.  There may be changes to file formats

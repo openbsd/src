@@ -21,6 +21,7 @@ LINK	raminst			bin/sh
 LINK	raminst			bin/-sh
 LINK	raminst			bin/stty
 LINK	raminst			bin/sync
+LINK	raminst			bin/tar
 LINK	raminst			bin/test
 LINK	raminst			bin/[
 LINK	raminst			sbin/disklabel
@@ -48,7 +49,6 @@ LINK	raminst			usr/bin/more
 LINK	raminst			usr/bin/printf
 LINK	raminst			usr/bin/sed
 LINK	raminst			usr/bin/strings
-LINK	raminst			usr/bin/tar
 LINK	raminst			usr/bin/tip
 LINK	raminst			usr/sbin/chown
 LINK	raminst			usr/sbin/chroot

@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: dot.commonutils,v 1.4 1996/03/28 21:48:12 niklas Exp $
+#	$OpenBSD: dot.commonutils,v 1.5 1996/06/29 05:54:08 tholo Exp $
 #	$NetBSD: dot.commonutils,v 1.4 1996/02/28 10:06:40 leo Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -130,9 +130,9 @@ Extract()
 	if [ $snapshot = n ]
 	then
 		cat "$1".?? | gunzip |
-			(cd $dest_dir ; tar --unlink -xp"$tarverbose"f -)
+			(cd $dest_dir ; tar -xp"$tarverbose"f -)
 	else
 		cat "$1".tar.gz | gunzip |
-			(cd $dest_dir ; tar --unlink -xp"$tarverbose"f -)
+			(cd $dest_dir ; tar -xp"$tarverbose"f -)
 	fi
 }

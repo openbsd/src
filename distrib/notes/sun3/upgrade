@@ -41,9 +41,7 @@ Manual upgrade procedure:
 	  the `base' binary set:
 
 		cd /
-		tar --unlink -zxvpf /path/to/base11.tar.gz
-
-	  NOTE: the `--unlink' option is _very_ important!
+		tar -xzvpf /path/to/base11.tar.gz
 
 	* Install a new boot block:
 
@@ -63,7 +61,7 @@ Manual upgrade procedure:
 	  To extract these sets, use the following commands:
 
 		cd /
-		tar --unlink -zxvpf <path to set>
+		tar -xzvpf <path to set>
 
 NOTE: you SHOULD NOT extract the `etc' set if upgrading.  Instead,
 you should extract that set into another area and carefully merge

@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: upgrade.sh,v 1.3 1996/03/28 21:48:16 niklas Exp $
+#	$OpenBSD: upgrade.sh,v 1.4 1996/06/29 05:54:10 tholo Exp $
 #	$NetBSD: upgrade.sh,v 1.3 1996/02/28 00:44:06 thorpej Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -275,7 +275,7 @@ __install_ftp_2
 		fi
 
 		_ftp_file=`echo ${resp} | awk '{print $1}'`
-		echo "get ${_ftp_file} |\"tar --unlink -zxvpf -\"" >> \
+		echo "get ${_ftp_file} |\"tar -xzvpf -\"" >> \
 		    /tmp/ftp-script.sh
 	done
 
@@ -306,7 +306,7 @@ install_common_nfs_cdrom() {
 	fi
 
 	# Extract file
-	cat $_common_filename | (cd /mnt; tar --unlink -zxvpf -)
+	cat $_common_filename | (cd /mnt; tar -xzvpf -)
 	echo "Extraction complete."
 }
 
@@ -526,14 +526,14 @@ __install_tape_2
 			1)
 				(
 					cd /mnt
-					dd if=$TAPE | tar --unlink -zxvpf -
+					dd if=$TAPE | tar -xzvpf -
 				)
 				;;
 
 			2)
 				(
 					cd /mnt
-					dd if=$TAPE | tar --unlink -xvpf -
+					dd if=$TAPE | tar -xzvpf -
 				)
 				;;
 
@@ -908,7 +908,7 @@ if [ -f /base.tar.gz ]; then
 				getresp "y"
 				case "$resp" in
 				y*|Y*)
-				     cat $_f | (cd /mnt; tar --unlink -zxvpf -)
+				     cat $_f | (cd /mnt; tar -xzvpf -)
 					_yup="TRUE"
 					;;
 				*)

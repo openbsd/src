@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: upgrade.sh,v 1.3 1996/04/25 21:27:41 niklas Exp $
+#	$OpenBSD: upgrade.sh,v 1.4 1996/06/29 05:54:07 tholo Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -261,7 +261,7 @@ fi
 
 echo	""
 echo	"Copying bootstrapping binaries and config files to the hard drive..."
-$DONTDOIT tar -cf - sbin/mount_ffs | (cd /mnt ; tar --unlink -xpf - )
+$DONTDOIT tar -cf - sbin/mount_ffs | (cd /mnt ; tar -xpf - )
 
 echo	""
 echo	"Mounting remaining partitions..."

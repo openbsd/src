@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.2 1996/04/25 21:32:16 niklas Exp $
+#	$OpenBSD: list,v 1.3 1996/06/29 05:54:28 tholo Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/instbin	instbin
@@ -19,6 +19,7 @@ LINK	instbin			bin/sh
 LINK	instbin			bin/-sh
 LINK	instbin			bin/stty
 LINK	instbin			bin/sync
+LINK	instbin			bin/tar
 LINK	instbin			bin/test
 LINK	instbin			bin/[
 LINK	instbin			sbin/disklabel
@@ -45,7 +46,6 @@ LINK	instbin			usr/bin/gzip
 LINK	instbin			usr/bin/more
 LINK	instbin			usr/bin/sed
 LINK	instbin			usr/bin/strings
-LINK	instbin			usr/bin/tar
 # LINK	instbin			usr/sbin/bad144
 LINK	instbin			usr/sbin/chown
 LINK	instbin			usr/sbin/chroot

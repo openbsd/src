@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: upgrade.sh,v 1.2 1996/04/25 21:30:59 niklas Exp $
+#	$OpenBSD: upgrade.sh,v 1.3 1996/06/29 05:54:21 tholo Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -229,7 +229,7 @@ echo	"Done."
 echo	""
 echo	"Copying bootstrapping binaries and config files to the hard drive..."
 $DONTDOIT cp /mnt/.profile /mnt/.profile.bak
-$DONTDOIT tar --exclude etc --one-file-system -cf - . | (cd /mnt ; tar --unlink -xpf - )
+$DONTDOIT pax -rw -X -k . /mnt
 $DONTDOIT mv /mnt/etc/rc /mnt/etc/rc.bak
 $DONTDOIT cp /tmp/.hdprofile /mnt/.profile
 
