@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm.c,v 1.10 1997/07/25 20:30:17 mickey Exp $ */
+/*	$OpenBSD: kvm.c,v 1.11 1998/06/29 22:27:05 angelos Exp $ */
 /*	$NetBSD: kvm.c,v 1.43 1996/05/05 04:31:59 gwr Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-static char *rcsid = "$OpenBSD: kvm.c,v 1.10 1997/07/25 20:30:17 mickey Exp $";
+static char *rcsid = "$OpenBSD: kvm.c,v 1.11 1998/06/29 22:27:05 angelos Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -475,7 +475,7 @@ off_t	dump_off;
 	if ((CORE_GETMAGIC(cpu_hdr) != KCORE_MAGIC)
 		|| (CORE_GETMID(cpu_hdr) != MID_MACHINE)) {
 		_kvm_err(kd, 0, "invalid magic in cpu_hdr");
-		return (0);
+		return (-1);
 	}
 	hdr_size = ALIGN(sizeof(cpu_hdr));
 
@@ -639,7 +639,7 @@ kvm_openfiles(uf, mf, sf, flag, errout)
 
 	if ((kd = malloc(sizeof(*kd))) == NULL) {
 		(void)strncpy(errout, strerror(errno), _POSIX2_LINE_MAX - 1);
-		return (0);
+		return (-1);
 	}
 	kd->program = 0;
 	return (_kvm_open(kd, uf, mf, sf, flag, errout));
@@ -657,7 +657,7 @@ kvm_open(uf, mf, sf, flag, program)
 
 	if ((kd = malloc(sizeof(*kd))) == NULL && program != NULL) {
 		(void)fprintf(stderr, "%s: %s\n", strerror(errno));
-		return (0);
+		return (-1);
 	}
 	kd->program = program;
 	return (_kvm_open(kd, uf, mf, sf, flag, NULL));
@@ -875,19 +875,19 @@ kvm_read(kd, kva, buf, len)
 		if (lseek(kd->vmfd, (off_t)kva, SEEK_SET) == -1
 			&& errno != 0) {
 			_kvm_err(kd, 0, "invalid address (%lx)", kva);
-			return (0);
+			return (-1);
 		}
 		cc = read(kd->vmfd, buf, len);
 		if (cc < 0) {
 			_kvm_syserr(kd, 0, "kvm_read");
-			return (0);
+			return (-1);
 		} else if (cc < len)
 			_kvm_err(kd, kd->program, "short read");
 		return (cc);
 	} else {
 		if ((kd->kcore_hdr == NULL) || (kd->cpu_data == NULL)) {
 			_kvm_err(kd, kd->program, "no valid dump header");
-			return (0);
+			return (-1);
 		}
 		cp = buf;
 		while (len > 0) {
@@ -945,19 +945,19 @@ kvm_write(kd, kva, buf, len)
 		if (lseek(kd->vmfd, (off_t)kva, SEEK_SET) == -1
 			&& errno != 0) {
 			_kvm_err(kd, 0, "invalid address (%lx)", kva);
-			return (0);
+			return (-1);
 		}
 		cc = write(kd->vmfd, buf, len);
 		if (cc < 0) {
 			_kvm_syserr(kd, 0, "kvm_write");
-			return (0);
+			return (-1);
 		} else if (cc < len)
 			_kvm_err(kd, kd->program, "short write");
 		return (cc);
 	} else {
 		_kvm_err(kd, kd->program,
 		    "kvm_write not implemented for dead kernels");
-		return (0);
+		return (-1);
 	}
 	/* NOTREACHED */
 }

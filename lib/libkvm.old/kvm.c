@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm.c,v 1.4 1997/07/25 20:30:26 mickey Exp $	*/
+/*	$OpenBSD: kvm.c,v 1.5 1998/06/29 22:27:46 angelos Exp $	*/
 
 /*	$NetBSD: kvm.c,v 1.2 1996/05/13 02:30:22 thorpej Exp $	*/
 
@@ -287,7 +287,7 @@ kvm_openfiles(uf, mf, sf, flag, errout)
 
 	if ((kd = malloc(sizeof(*kd))) == NULL) {
 		(void)strcpy(errout, strerror(errno));
-		return (0);
+		return (-1);
 	}
 	kd->program = 0;
 	return (_kvm_open(kd, uf, mf, sf, flag, errout));
@@ -305,7 +305,7 @@ kvm_open(uf, mf, sf, flag, program)
 
 	if ((kd = malloc(sizeof(*kd))) == NULL && program != NULL) {
 		(void)fprintf(stderr, "%s: %s\n", strerror(errno));
-		return (0);
+		return (-1);
 	}
 	kd->program = program;
 	return (_kvm_open(kd, uf, mf, sf, flag, NULL));
@@ -480,12 +480,12 @@ kvm_read(kd, kva, buf, len)
 		errno = 0;
 		if (lseek(kd->vmfd, (off_t)kva, 0) == -1 && errno != 0) {
 			_kvm_err(kd, 0, "invalid address (%x)", kva);
-			return (0);
+			return (-1);
 		}
 		cc = read(kd->vmfd, buf, len);
 		if (cc < 0) {
 			_kvm_syserr(kd, 0, "kvm_read");
-			return (0);
+			return (-1);
 		} else if (cc < len)
 			_kvm_err(kd, kd->program, "short read");
 		return (cc);
@@ -542,19 +542,19 @@ kvm_write(kd, kva, buf, len)
 		errno = 0;
 		if (lseek(kd->vmfd, (off_t)kva, 0) == -1 && errno != 0) {
 			_kvm_err(kd, 0, "invalid address (%x)", kva);
-			return (0);
+			return (-1);
 		}
 		cc = write(kd->vmfd, buf, len);
 		if (cc < 0) {
 			_kvm_syserr(kd, 0, "kvm_write");
-			return (0);
+			return (-1);
 		} else if (cc < len)
 			_kvm_err(kd, kd->program, "short write");
 		return (cc);
 	} else {
 		_kvm_err(kd, kd->program,
 		    "kvm_write not implemented for dead kernels");
-		return (0);
+		return (-1);
 	}
 	/* NOTREACHED */
 }
