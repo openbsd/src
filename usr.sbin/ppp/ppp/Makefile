@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.12 2000/01/07 03:26:52 brian Exp $
+#	$Id: Makefile,v 1.13 2000/02/27 00:21:05 brian Exp $
 
 PROG=	ppp
 SRCS=	alias.c alias_cuseeme.c alias_db.c alias_ftp.c alias_irc.c \
@@ -9,7 +9,7 @@ SRCS=	alias.c alias_cuseeme.c alias_db.c alias_ftp.c alias_irc.c \
 	pap.c physical.c pred.c probe.c prompt.c proto.c radius.c radlib.c \
 	route.c server.c sig.c slcompress.c systems.c sync.c tcp.c \
 	throughput.c timer.c tty.c tun.c udp.c vjcomp.c
-CFLAGS+=-Wall -DHAVE_DES -DNO_FW_PUNCH -DNOI4B -DNONETGRAPH
+CFLAGS+=-Wall -DHAVE_DES -DNO_FW_PUNCH -DNOI4B -DNONETGRAPH -DLOCALNAT -DLOCALRAD
 LDADD+= -ldes -lutil -lz
 DPADD+=	${LIBDES} ${LIBUTIL} ${LIBZ}
 BINMODE=4554

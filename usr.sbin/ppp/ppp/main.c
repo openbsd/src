@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: main.c,v 1.15 2000/01/07 03:26:54 brian Exp $
+ * $Id: main.c,v 1.16 2000/02/27 00:21:08 brian Exp $
  *
  *	TODO:
  */
@@ -27,6 +27,8 @@
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <sys/un.h>
+#include <sys/socket.h>
+#include <net/route.h>
 
 #include <errno.h>
 #include <fcntl.h>
@@ -41,12 +43,13 @@
 #include <sys/stat.h>
 
 #ifndef NONAT
-#ifdef __FreeBSD__
-#include <alias.h>
-#else
+#ifdef LOCALNAT
 #include "alias.h"
+#else
+#include <alias.h>
 #endif
 #endif
+
 #include "layer.h"
 #include "probe.h"
 #include "mbuf.h"

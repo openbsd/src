@@ -17,12 +17,14 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: route.h,v 1.2 1999/02/06 03:22:47 brian Exp $
+ * $Id: route.h,v 1.3 2000/02/27 00:21:09 brian Exp $
  *
  */
 
 struct bundle;
 struct cmdargs;
+struct rt_msghdr;
+struct sockaddr;
 
 #define ROUTE_STATIC		0
 #define ROUTE_DSTMYADDR		1
@@ -52,3 +54,4 @@ extern void route_DeleteAll(struct sticky_route **);
 extern void route_Clean(struct bundle *, struct sticky_route *);
 extern void route_ShowSticky(struct prompt *, struct sticky_route *,
                              const char *, int);
+extern void route_ParseHdr(struct rt_msghdr *, struct sockaddr *[RTAX_MAX]);

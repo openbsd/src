@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: bundle.c,v 1.27 2000/01/07 03:26:53 brian Exp $
+ *	$Id: bundle.c,v 1.28 2000/02/27 00:21:05 brian Exp $
  */
 
 #include <sys/param.h>
@@ -426,7 +426,7 @@ bundle_FillQueues(struct bundle *bundle)
 }
 
 static int
-bundle_UpdateSet(struct descriptor *d, fd_set *r, fd_set *w, fd_set *e, int *n)
+bundle_UpdateSet(struct fdescriptor *d, fd_set *r, fd_set *w, fd_set *e, int *n)
 {
   struct bundle *bundle = descriptor2bundle(d);
   struct datalink *dl;
@@ -483,7 +483,7 @@ bundle_UpdateSet(struct descriptor *d, fd_set *r, fd_set *w, fd_set *e, int *n)
 }
 
 static int
-bundle_IsSet(struct descriptor *d, const fd_set *fdset)
+bundle_IsSet(struct fdescriptor *d, const fd_set *fdset)
 {
   struct bundle *bundle = descriptor2bundle(d);
   struct datalink *dl;
@@ -504,7 +504,7 @@ bundle_IsSet(struct descriptor *d, const fd_set *fdset)
 }
 
 static void
-bundle_DescriptorRead(struct descriptor *d, struct bundle *bundle,
+bundle_DescriptorRead(struct fdescriptor *d, struct bundle *bundle,
                       const fd_set *fdset)
 {
   struct datalink *dl;
@@ -584,7 +584,7 @@ bundle_DescriptorRead(struct descriptor *d, struct bundle *bundle,
 }
 
 static int
-bundle_DescriptorWrite(struct descriptor *d, struct bundle *bundle,
+bundle_DescriptorWrite(struct fdescriptor *d, struct bundle *bundle,
                        const fd_set *fdset)
 {
   struct datalink *dl;

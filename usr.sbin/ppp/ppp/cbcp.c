@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: cbcp.c,v 1.11 2000/01/07 03:26:53 brian Exp $
+ *	$Id: cbcp.c,v 1.12 2000/02/27 00:21:06 brian Exp $
  */
 
 #include <sys/param.h>
@@ -151,7 +151,7 @@ cbcpstate(int s)
 {
   if (s < sizeof cbcpname / sizeof cbcpname[0])
     return cbcpname[s];
-  return "???";
+  return HexStr(s, NULL, 0);
 }
 
 static void
@@ -214,7 +214,7 @@ cbcp_data_Type(int type)
   };
 
   if (type < 1 || type > sizeof types / sizeof types[0])
-    return "???";
+    return HexStr(type, NULL, 0);
   return types[type-1];
 }
 

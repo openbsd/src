@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: defs.c,v 1.7 2000/01/07 03:26:53 brian Exp $
+ *	$Id: defs.c,v 1.8 2000/02/27 00:21:07 brian Exp $
  */
 
 
@@ -35,6 +35,7 @@
 
 #include <ctype.h>
 #include <errno.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <termios.h>
@@ -314,4 +315,30 @@ MakeArgs(char *script, char **pvect, int maxargs, int flags)
   }
   *pvect = NULL;
   return nargs;
+}
+
+const char *
+NumStr(long val, char *buf, size_t sz)
+{
+  static char result[23];		/* handles 64 bit numbers */
+
+  if (buf == NULL || sz == 0) {
+    buf = result;
+    sz = sizeof result;
+  }
+  snprintf(buf, sz, "<%ld>", val);
+  return buf;
+}
+
+const char *
+HexStr(long val, char *buf, size_t sz)
+{
+  static char result[21];		/* handles 64 bit numbers */
+
+  if (buf == NULL || sz == 0) {
+    buf = result;
+    sz = sizeof result;
+  }
+  snprintf(buf, sz, "<0x%lx>", val);
+  return buf;
 }

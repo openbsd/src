@@ -16,7 +16,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- *  $Id: physical.h,v 1.14 2000/01/07 03:26:55 brian Exp $
+ *  $Id: physical.h,v 1.15 2000/02/27 00:21:09 brian Exp $
  *
  */
 
@@ -73,7 +73,7 @@ struct device {
 
 struct physical {
   struct link link;
-  struct descriptor desc;
+  struct fdescriptor desc;
   int type;                    /* What sort of PHYS_* link are we ? */
   struct async async;          /* Our async state */
   struct hdlc hdlc;            /* Our hdlc state */
@@ -148,10 +148,10 @@ extern void physical_SetDevice(struct physical *, const char *);
 
 extern ssize_t physical_Read(struct physical *, void *, size_t);
 extern ssize_t physical_Write(struct physical *, const void *, size_t);
-extern int physical_doUpdateSet(struct descriptor *, fd_set *, fd_set *,
+extern int physical_doUpdateSet(struct fdescriptor *, fd_set *, fd_set *,
                                 fd_set *, int *, int);
-extern int physical_IsSet(struct descriptor *, const fd_set *);
-extern void physical_DescriptorRead(struct descriptor *, struct bundle *,
+extern int physical_IsSet(struct fdescriptor *, const fd_set *);
+extern void physical_DescriptorRead(struct fdescriptor *, struct bundle *,
                                     const fd_set *);
 extern void physical_Login(struct physical *, const char *);
 extern int physical_RemoveFromSet(struct physical *, fd_set *, fd_set *,

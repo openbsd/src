@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: timer.c,v 1.6 2000/01/07 03:26:56 brian Exp $
+ * $Id: timer.c,v 1.7 2000/02/27 00:21:10 brian Exp $
  *
  *  TODO:
  */
@@ -34,6 +34,11 @@
 #include "timer.h"
 #include "descriptor.h"
 #include "prompt.h"
+
+
+#define RESTVAL(t) \
+    ((t).it_value.tv_sec * SECTICKS + (t).it_value.tv_usec / TICKUNIT + \
+     ((((t).it_value.tv_usec % TICKUNIT) >= (TICKUNIT >> 1)) ? 1 : 0))
 
 static struct pppTimer *TimerList = NULL, *ExpiredList = NULL;
 
@@ -80,8 +85,7 @@ timer_Start(struct pppTimer *tp)
 
   /* Adjust our first delta so that it reflects what's really happening */
   if (TimerList && getitimer(ITIMER_REAL, &itimer) == 0)
-    TimerList->rest = itimer.it_value.tv_sec * SECTICKS +
-                      itimer.it_value.tv_usec / TICKUNIT;
+    TimerList->rest = RESTVAL(itimer);
 
   pt = NULL;
   for (t = TimerList; t; t = t->next) {
@@ -133,15 +137,24 @@ StopTimerNoBlock(struct pppTimer *tp)
     pt = t;
 
   if (t) {
-    if (pt) {
+    if (pt)
       pt->next = t->next;
-    } else {
+    else {
       TimerList = t->next;
       if (TimerList == NULL)	/* Last one ? */
 	timer_TermService();	/* Terminate Timer Service */
     }
-    if (t->next)
-      t->next->rest += tp->rest;
+    if (t->next) {
+      if (!pt) {		/* t (tp) was the first in the list */
+        struct itimerval itimer;
+
+        if (getitimer(ITIMER_REAL, &itimer) == 0)
+          t->rest = RESTVAL(itimer);
+      }
+      t->next->rest += t->rest;
+      if (!pt)			/* t->next is now the first in the list */
+        timer_InitService(1);
+    }
   } else {
     /* Search for any pending expired timers */
     pt = NULL;
@@ -215,8 +228,7 @@ timer_Show(int LogLevel, struct prompt *prompt)
 
   /* Adjust our first delta so that it reflects what's really happening */
   if (TimerList && getitimer(ITIMER_REAL, &itimer) == 0)
-    TimerList->rest = itimer.it_value.tv_sec * SECTICKS +
-                      itimer.it_value.tv_usec / TICKUNIT;
+    TimerList->rest = RESTVAL(itimer);
 
 #define SECS(val)	((val) / SECTICKS)
 #define HSECS(val)	(((val) % SECTICKS) * 100 / SECTICKS)

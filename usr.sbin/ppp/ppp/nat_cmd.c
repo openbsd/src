@@ -2,7 +2,7 @@
  * The code in this file was written by Eivind Eklund <perhaps@yes.no>,
  * who places it in the public domain without restriction.
  *
- *	$Id: nat_cmd.c,v 1.1 2000/01/07 03:26:55 brian Exp $
+ *	$Id: nat_cmd.c,v 1.2 2000/02/27 00:21:08 brian Exp $
  */
 
 #include <sys/param.h>
@@ -19,11 +19,12 @@
 #include <string.h>
 #include <termios.h>
 
-#ifdef __FreeBSD__
-#include <alias.h>
-#else
+#ifdef LOCALNAT
 #include "alias.h"
+#else
+#include <alias.h>
 #endif
+
 #include "layer.h"
 #include "proto.h"
 #include "defs.h"

@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: chat.c,v 1.11 2000/01/07 03:26:53 brian Exp $
+ *	$Id: chat.c,v 1.12 2000/02/27 00:21:06 brian Exp $
  */
 
 #include <sys/param.h>
@@ -133,7 +133,7 @@ chat_NextChar(char *ptr, char ch)
 }
 
 static int
-chat_UpdateSet(struct descriptor *d, fd_set *r, fd_set *w, fd_set *e, int *n)
+chat_UpdateSet(struct fdescriptor *d, fd_set *r, fd_set *w, fd_set *e, int *n)
 {
   struct chat *c = descriptor2chat(d);
   int special, gotabort, gottimeout, needcr;
@@ -316,7 +316,7 @@ chat_UpdateSet(struct descriptor *d, fd_set *r, fd_set *w, fd_set *e, int *n)
 }
 
 static int
-chat_IsSet(struct descriptor *d, const fd_set *fdset)
+chat_IsSet(struct fdescriptor *d, const fd_set *fdset)
 {
   struct chat *c = descriptor2chat(d);
   return c->argptr && physical_IsSet(&c->physical->desc, fdset);
@@ -365,7 +365,7 @@ chat_UpdateLog(struct chat *c, int in)
 }
 
 static void
-chat_Read(struct descriptor *d, struct bundle *bundle, const fd_set *fdset)
+chat_Read(struct fdescriptor *d, struct bundle *bundle, const fd_set *fdset)
 {
   struct chat *c = descriptor2chat(d);
 
@@ -479,7 +479,7 @@ chat_Read(struct descriptor *d, struct bundle *bundle, const fd_set *fdset)
 }
 
 static int
-chat_Write(struct descriptor *d, struct bundle *bundle, const fd_set *fdset)
+chat_Write(struct fdescriptor *d, struct bundle *bundle, const fd_set *fdset)
 {
   struct chat *c = descriptor2chat(d);
   int result = 0;

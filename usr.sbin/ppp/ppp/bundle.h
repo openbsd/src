@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: bundle.h,v 1.9 2000/01/07 03:26:53 brian Exp $
+ *	$Id: bundle.h,v 1.10 2000/02/27 00:21:06 brian Exp $
  */
 
 #define	PHASE_DEAD		0	/* Link is dead */
@@ -61,7 +61,7 @@ struct prompt;
 struct iface;
 
 struct bundle {
-  struct descriptor desc;     /* really all our datalinks */
+  struct fdescriptor desc;    /* really all our datalinks */
   int unit;                   /* The device/interface unit number */
 
   struct {
@@ -161,8 +161,8 @@ extern void bundle_StopIdleTimer(struct bundle *);
 extern int bundle_IsDead(struct bundle *);
 extern struct datalink *bundle2datalink(struct bundle *, const char *);
 
-extern void bundle_RegisterDescriptor(struct bundle *, struct descriptor *);
-extern void bundle_UnRegisterDescriptor(struct bundle *, struct descriptor *);
+extern void bundle_RegisterDescriptor(struct bundle *, struct fdescriptor *);
+extern void bundle_UnRegisterDescriptor(struct bundle *, struct fdescriptor *);
 
 extern void bundle_SetTtyCommandMode(struct bundle *, struct datalink *);
 

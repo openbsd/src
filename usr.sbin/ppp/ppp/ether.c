@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: ether.c,v 1.1 2000/01/07 03:26:53 brian Exp $
+ *	$Id: ether.c,v 1.2 2000/02/27 00:21:07 brian Exp $
  */
 
 #include <sys/param.h>
@@ -319,7 +319,7 @@ ether_iov2device(int type, struct physical *p, struct iovec *iov, int *niov,
 }
 
 static int
-ether_UpdateSet(struct descriptor *d, fd_set *r, fd_set *w, fd_set *e, int *n)
+ether_UpdateSet(struct fdescriptor *d, fd_set *r, fd_set *w, fd_set *e, int *n)
 {
   struct physical *p = descriptor2physical(d);
   struct etherdevice *dev = device2ether(p->handler);
@@ -338,7 +338,7 @@ ether_UpdateSet(struct descriptor *d, fd_set *r, fd_set *w, fd_set *e, int *n)
 }
 
 static int
-ether_IsSet(struct descriptor *d, const fd_set *fdset)
+ether_IsSet(struct fdescriptor *d, const fd_set *fdset)
 {
   struct physical *p = descriptor2physical(d);
   struct etherdevice *dev = device2ether(p->handler);
@@ -351,7 +351,7 @@ ether_IsSet(struct descriptor *d, const fd_set *fdset)
 }
 
 static void
-ether_DescriptorRead(struct descriptor *d, struct bundle *bundle,
+ether_DescriptorRead(struct fdescriptor *d, struct bundle *bundle,
                      const fd_set *fdset)
 {
   struct physical *p = descriptor2physical(d);

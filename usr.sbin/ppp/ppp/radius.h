@@ -23,11 +23,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: radius.h,v 1.1 1999/02/06 03:22:44 brian Exp $
+ *	$Id: radius.h,v 1.2 2000/02/27 00:21:09 brian Exp $
  */
 
 struct radius {
-  struct descriptor desc;	/* We're a sort of (selectable) descriptor */
+  struct fdescriptor desc;	/* We're a sort of (selectable) fdescriptor */
   struct {
     int fd;			/* We're selecting on this */
     struct rad_handle *rad;	/* Using this to talk to our lib */

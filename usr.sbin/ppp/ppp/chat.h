@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: chat.h,v 1.4 2000/01/07 03:26:53 brian Exp $
+ *	$Id: chat.h,v 1.5 2000/02/27 00:21:06 brian Exp $
  */
 
 #define CHAT_EXPECT 0
@@ -36,7 +36,7 @@
 struct physical;
 
 struct chat {
-  struct descriptor desc;
+  struct fdescriptor desc;
   struct physical *physical;
 
   int state;				/* Our CHAT_* status */

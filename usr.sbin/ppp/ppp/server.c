@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: server.c,v 1.4 1999/03/08 22:35:37 brian Exp $
+ *	$Id: server.c,v 1.5 2000/02/27 00:21:09 brian Exp $
  */
 
 #include <sys/types.h>
@@ -46,7 +46,7 @@
 #include "prompt.h"
 
 static int
-server_UpdateSet(struct descriptor *d, fd_set *r, fd_set *w, fd_set *e, int *n)
+server_UpdateSet(struct fdescriptor *d, fd_set *r, fd_set *w, fd_set *e, int *n)
 {
   struct server *s = descriptor2server(d);
   struct prompt *p;
@@ -68,7 +68,7 @@ server_UpdateSet(struct descriptor *d, fd_set *r, fd_set *w, fd_set *e, int *n)
 }
 
 static int
-server_IsSet(struct descriptor *d, const fd_set *fdset)
+server_IsSet(struct fdescriptor *d, const fd_set *fdset)
 {
   struct server *s = descriptor2server(d);
   struct prompt *p;
@@ -84,11 +84,11 @@ server_IsSet(struct descriptor *d, const fd_set *fdset)
 }
 
 #define IN_SIZE sizeof(struct sockaddr_in)
-#define UN_SIZE sizeof(struct sockaddr_in)
+#define UN_SIZE sizeof(struct sockaddr_un)
 #define ADDRSZ (IN_SIZE > UN_SIZE ? IN_SIZE : UN_SIZE)
 
 static void
-server_Read(struct descriptor *d, struct bundle *bundle, const fd_set *fdset)
+server_Read(struct fdescriptor *d, struct bundle *bundle, const fd_set *fdset)
 {
   struct server *s = descriptor2server(d);
   char hisaddr[ADDRSZ];
@@ -162,7 +162,7 @@ server_Read(struct descriptor *d, struct bundle *bundle, const fd_set *fdset)
 }
 
 static int
-server_Write(struct descriptor *d, struct bundle *bundle, const fd_set *fdset)
+server_Write(struct fdescriptor *d, struct bundle *bundle, const fd_set *fdset)
 {
   /* We never want to write here ! */
   log_Printf(LogALERT, "server_Write: Internal error: Bad call !\n");
