@@ -1,4 +1,4 @@
-/*	$OpenBSD: route6d.c,v 1.39 2003/10/31 00:30:19 itojun Exp $	*/
+/*	$OpenBSD: route6d.c,v 1.40 2003/10/31 00:32:07 itojun Exp $	*/
 /*	$KAME: route6d.c,v 1.94 2002/10/26 20:08:55 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #if 0
-static char _rcsid[] = "$OpenBSD: route6d.c,v 1.39 2003/10/31 00:30:19 itojun Exp $";
+static char _rcsid[] = "$OpenBSD: route6d.c,v 1.40 2003/10/31 00:32:07 itojun Exp $";
 #endif
 
 #include <stdio.h>
@@ -1066,7 +1066,8 @@ riprecv(void)
 	struct	rip6 *rp;
 	struct	netinfo6 *np, *nq;
 	struct	riprt *rrt;
-	ssize_t	len, nn, need_trigger, idx;
+	ssize_t	len, nn;
+	unsigned int need_trigger, idx;
 	char	buf[4 * RIP6_MAXMTU];
 	time_t	t;
 	struct msghdr m;
