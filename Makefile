@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.30 1998/05/11 20:34:54 niklas Exp $
+#	$OpenBSD: Makefile,v 1.31 1998/05/14 21:43:02 niklas Exp $
 
 #
 # For more information on building in tricky environments, please see
@@ -253,6 +253,16 @@ cross-gcc:
 	    GCC_FOR_TARGET="./xgcc -B./ -I${CROSSDIR}/usr/include" && \
 	    ${MAKE} BISON=yacc LANGUAGES=c LDFLAGS=${LDSTATIC} \
 	    GCC_FOR_TARGET="./xgcc -B./ -I${CROSSDIR}/usr/include" install)
+	ln -sf ${CROSSDIR}/usr/bin/`cat ${CROSSDIR}/TARGET_CANON`-gcc \
+	    ${CROSSDIR}/usr/bin/cc
+	CPP=`${CROSSDIR}/usr/bin/cc -print-libgcc-file-name | \
+	    sed 's/libgcc\.a/cpp/'`; \
+	    sed -e 's#/usr/libexec/cpp#'$$CPP'#' \
+	    -e 's#/usr/include#${CROSSDIR}/usr/include#' usr.bin/cpp/cpp.sh \
+	    >${CROSSDIR}/usr/bin/cpp
+	chmod ${BINMODE} ${CROSSDIR}/usr/bin/cpp
+	chown ${BINOWN}.${BINGRP} ${CROSSDIR}/usr/bin/cpp
+
 .endif
 
 .include <bsd.subdir.mk>
