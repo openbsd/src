@@ -1,4 +1,4 @@
-#	$OpenBSD: special,v 1.48 2002/11/21 21:25:19 millert Exp $
+#	$OpenBSD: special,v 1.49 2002/11/22 00:32:26 marc Exp $
 #	$NetBSD: special,v 1.4 1996/05/08 21:30:18 pk Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
@@ -69,7 +69,7 @@ security	type=file mode=0644 uname=root gname=wheel
 shells		type=file mode=0644 uname=root gname=wheel
 skey		type=dir mode=01730 uname=root gname=auth optional
 ..	#skey
-spwd.db		type=file mode=0640 uname=root gname=shadow
+spwd.db		type=file mode=0640 uname=root gname=_shadow
 ssh		type=dir mode=0755 uname=root gname=wheel optional
 ssh_config	type=file mode=0644 uname=root gname=wheel
 ssh_host_dsa_key	type=file mode=0600 uname=root gname=wheel optional
