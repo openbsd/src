@@ -1,4 +1,4 @@
-$OpenBSD: eisadevs,v 1.15 2001/01/26 22:29:17 mickey Exp $
+$OpenBSD: eisadevs,v 1.16 2001/09/18 20:27:48 jason Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -125,6 +125,7 @@ product TCM 5092	3C579-TP Ethernet
 product TCM 5093	3C579 Ethernet
 product TCM 5094	3C509-Combo Ethernet
 product TCM 5095	3C509-TPO Ethernet
+product	TCM 5098	3C509-TP Ethernet
 product TCM 5920 	3C592 Etherlink III
 product TCM 5970 	3C597 Fast Etherlink TX
 product TCM 5971	3C597 Fast Etherlink T4
