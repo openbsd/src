@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.15 2004/12/13 13:55:10 jmc Exp $
+.\"	$OpenBSD: cvs.1,v 1.16 2004/12/14 00:12:31 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" All rights reserved.
@@ -57,21 +57,9 @@ from the home directory of the user who invoked it.
 This file is used to specify implicit options passed to
 .Nm
 or one of its commands whenever it is invoked.
-Each command should be specified on a separate line along with the arguments.
-For example, the following two lines:
-.Pp
-.Bl -item -compact -offset indent
-.It
-cvs -q
-.It
-diff -u
-.El
-.Pp
-specify that
-.Nm
-should always run in quiet mode and the
-.Ic diff
-command should always produce unified output.
+See
+.Xr cvsrc 5
+for further information.
 .Pp
 The following options are supported:
 .Bl -tag -width "-e editorXX"
@@ -365,6 +353,7 @@ post-commit logging.
 .Xr gzip 1 ,
 .Xr patch 1 ,
 .Xr rcs 1 ,
+.Xr cvsrc 5 ,
 .Xr cvsd 8
 .Sh HISTORY
 The OpenCVS project is a BSD-licensed rewrite of the original

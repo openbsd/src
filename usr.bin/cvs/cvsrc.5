@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvsrc.5,v 1.2 2004/07/26 17:29:49 jfb Exp $
+.\"	$OpenBSD: cvsrc.5,v 1.3 2004/12/14 00:12:31 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" All rights reserved.
@@ -30,12 +30,18 @@
 .Nm cvsrc
 .Nd startup resource file for CVS
 .Sh DESCRIPTION
-The cvsrc file provides a way to give the
+The
+.Nm
+file provides a way to give the
 .Xr cvs 1
 program implicit global options and command-specific options.
-The file is read on startup unless the
+Unless the
 .Fl f
-option is specified.
+option is specified,
+.Xr cvs 1
+reads its startup configuration file
+.Pa .cvsrc
+from the home directory of the user who invoked it.
 .Pp
 The format of each line is as follows:
 .Pp
@@ -60,6 +66,14 @@ or
 .Fl Q
 flags.
 .Sh EXAMPLES
-Need to put in some examples!
+Specify that
+.Xr cvs 1
+should always run in quiet mode and the
+.Ic diff
+internal command should always produce unified output:
+.Bd -literal -offset indent
+cvs -q
+diff -u
+.Ed
 .Sh SEE ALSO
 .Xr cvs 1
