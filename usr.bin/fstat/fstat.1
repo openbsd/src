@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fstat.1,v 1.28 2004/01/21 19:25:33 deraadt Exp $
+.\"	$OpenBSD: fstat.1,v 1.29 2004/05/09 06:17:15 otto Exp $
 .\"
 .\" Copyright (c) 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -113,8 +113,7 @@ The process ID.
 .It Li FD
 The file number in the per-process open file table or one of the following
 special names:
-.Pp
-.Bd -literal -offset indent -compact
+.Bd -literal -offset indent
 text	\- pure text inode
 wd 	\- current working directory
 root	\- root inode
@@ -266,6 +265,13 @@ The
 .Nm
 command appeared in
 .Bx 4.3 tahoe .
+.Sh CAVEATS
+Sockets in use by the kernel, such as those opened by
+.Xr nfsd 8 ,
+will not be seen by
+.Nm ,
+even though they appear in
+.Xr netstat 1 .
 .Sh BUGS
 Since
 .Nm
