@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet6.c,v 1.7 2000/06/16 02:10:50 itojun Exp $	*/
+/*	$OpenBSD: inet6.c,v 1.8 2000/07/06 10:16:56 itojun Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-/*__RCSID("$OpenBSD: inet6.c,v 1.7 2000/06/16 02:10:50 itojun Exp $");*/
+/*__RCSID("$OpenBSD: inet6.c,v 1.8 2000/07/06 10:16:56 itojun Exp $");*/
 /*__RCSID("KAME Id: inet6.c,v 1.10 2000/02/09 10:49:31 itojun Exp");*/
 #endif
 #endif /* not lint */
@@ -515,6 +515,9 @@ ip6_stats(off, name)
 			PRINT_SCOPESTAT(ip6s_sources_deprecated[i], i);
 		}
 	}
+
+	p1(ip6s_forward_cachehit, "\t%llu forward cache hit\n");
+	p1(ip6s_forward_cachemiss, "\t%llu forward cache miss\n");
 #undef p
 #undef p1
 }
@@ -852,6 +855,8 @@ icmp6_stats(off, name)
 
 #define	p(f, m) if (icmp6stat.f || sflag <= 1) \
     printf(m, icmp6stat.f, plural(icmp6stat.f))
+#define p_5(f, m) if (icmp6stat.f || sflag <= 1) \
+    printf(m, icmp6stat.f)
 
 	p(icp6s_error, "\t%qu call%s to icmp6_error\n");
 	p(icp6s_canterror,
@@ -880,7 +885,24 @@ icmp6_stats(off, name)
 			printf("\t\t%s: %qu\n", icmp6names[i],
 				icmp6stat.icp6s_inhist[i]);
 		}
+	printf("\tHistogram of error messages to be generated:\n");
+	p_5(icp6s_odst_unreach_noroute, "\t\t%qu no route\n");
+	p_5(icp6s_odst_unreach_admin, "\t\t%qu administratively prohibited\n");
+	p_5(icp6s_odst_unreach_beyondscope, "\t\t%qu beyond scope\n");
+	p_5(icp6s_odst_unreach_addr, "\t\t%qu address unreachable\n");
+	p_5(icp6s_odst_unreach_noport, "\t\t%qu port unreachable\n");
+	p_5(icp6s_opacket_too_big, "\t\t%qu packet too big\n");
+	p_5(icp6s_otime_exceed_transit, "\t\t%qu time exceed transit\n");
+	p_5(icp6s_otime_exceed_reassembly, "\t\t%qu time exceed reassembly\n");
+	p_5(icp6s_oparamprob_header, "\t\t%qu erroneous header field\n");
+	p_5(icp6s_oparamprob_nextheader, "\t\t%qu unrecognized next header\n");
+	p_5(icp6s_oparamprob_option, "\t\t%qu unrecognized option\n");
+	p_5(icp6s_oredirect, "\t\t%qu redirect\n");
+	p_5(icp6s_ounknown, "\t\t%qu unknown\n");
+
 	p(icp6s_reflect, "\t%qu message response%s generated\n");
+	p(icp6s_nd_toomanyopt, "\t%qu message%s with too many ND options\n");
+#undef p_5
 #undef p
 }
 
