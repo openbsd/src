@@ -1,5 +1,5 @@
 # Build wrapper for OpenSSL
-# $OpenBSD: Makefile.bsd-wrapper,v 1.26 2000/11/19 21:22:04 millert Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.27 2000/12/15 20:32:32 beck Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -505,8 +505,12 @@ prereq:	${.OBJDIR}/${SSL_SRC}/Makefile.ssl ${.OBJDIR}/${SSL_SRC}/crypto/objects/
 install: maninstall
 	cd ${.OBJDIR} && ${MAKE} install
 
-${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_dat.h: ${.OBJDIR}/${SSL_SRC}/crypto/objects/objects.h
-	/usr/bin/perl ${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_dat.pl ${.OBJDIR}/${SSL_SRC}/crypto/objects/objects.h ${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_dat.h
+#${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_dat.h: ${.OBJDIR}/${SSL_SRC}/crypto/objects/objects.h
+#	/usr/bin/perl ${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_dat.pl ${.OBJDIR}/${SSL_SRC}/crypto/objects/objects.h ${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_dat.h
+# Stupid ssl 0.9.6 fucks this up completely, won't even build if you
+# try to regenerate obj_dat.h - even with a stock distrib. 
+${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_dat.h: ${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_dat.h.src
+	cp ${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_dat.h.src ${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_dat.h
 
 ${.OBJDIR}/${SSL_SRC}/Makefile.ssl : ${.OBJDIR}/${SSL_SRC}/Makefile.org
 	cd ${.OBJDIR}/${SSL_SRC} && /usr/bin/perl Configure ${SSLCONF}
