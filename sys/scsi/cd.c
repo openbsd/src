@@ -631,8 +631,10 @@ cdstart(v)
 		if (scsi_scsi_cmd(sc_link, cmdp, cmdlen,
 		    (u_char *) bp->b_data, bp->b_bcount,
 		    CDRETRIES, 30000, bp, SCSI_NOSLEEP |
-		    ((bp->b_flags & B_READ) ? SCSI_DATA_IN : SCSI_DATA_OUT)))
+		    ((bp->b_flags & B_READ) ? SCSI_DATA_IN : SCSI_DATA_OUT))) {
+			disk_unbusy(&cd->sc_dk, 0);
 			printf("%s: not queued", cd->sc_dev.dv_xname);
+		}
 	}
 }
 

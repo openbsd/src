@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.17 1996/07/12 08:57:57 pefo Exp $	*/
+/*	$OpenBSD: sd.c,v 1.18 1996/08/07 00:09:17 deraadt Exp $	*/
 /*	$NetBSD: sd.c,v 1.100.4.1 1996/06/04 23:14:08 thorpej Exp $	*/
 
 /*
@@ -601,9 +601,11 @@ sdstart(v)
 		    (u_char *)bp->b_data, bp->b_bcount,
 		    SDRETRIES, 10000, bp, SCSI_NOSLEEP |
 		    ((bp->b_flags & B_READ) ? SCSI_DATA_IN : SCSI_DATA_OUT));
-		if (error)
+		if (error) {
+			disk_unbusy(&sd->sc_dk, 0);
 			printf("%s: not queued, error %d\n",
 			    sd->sc_dev.dv_xname, error);
+		}
 	}
 }
 
