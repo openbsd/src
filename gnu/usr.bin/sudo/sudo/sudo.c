@@ -1,4 +1,4 @@
-/*	$OpenBSD: sudo.c,v 1.8 1998/03/31 06:41:11 millert Exp $	*/
+/*	$OpenBSD: sudo.c,v 1.9 1998/06/27 20:21:55 millert Exp $	*/
 
 /*
  * CU sudo version 1.5.5 (based on Root Group sudo version 1.1)
@@ -128,7 +128,7 @@ static int  parse_args			__P((void));
 static void usage			__P((int));
 static void load_globals		__P((int));
 static int check_sudoers		__P((void));
-static void load_cmnd			__P((int));
+static int load_cmnd			__P((int));
 static void add_env			__P((int));
 static void clean_env			__P((char **, struct env_table *));
 extern int  user_is_exempt		__P((void));
@@ -191,7 +191,7 @@ int main(argc, argv)
     int argc;
     char **argv;
 {
-    int rtn;
+    int rtn, found_cmnd;
     int sudo_mode = MODE_RUN;
     extern char ** environ;
 
@@ -305,7 +305,7 @@ int main(argc, argv)
 #endif /* SECURE_PATH */
 
     if ((sudo_mode & MODE_RUN)) {
-	load_cmnd(sudo_mode);	/* load the cmnd global variable */
+	found_cmnd = load_cmnd(sudo_mode); /* load the cmnd global variable */
     } else if (sudo_mode == MODE_KILL) {
 	remove_timestamp();	/* remove the timestamp ticket file */
 	exit(0);
@@ -322,6 +322,14 @@ int main(argc, argv)
 	case VALIDATE_OK_NOPASS:
 	    if (rtn != VALIDATE_OK_NOPASS) 
 		check_user();
+
+	    /* finally tell the user if the command did not exist */
+	    if ((sudo_mode & MODE_RUN) && !found_cmnd) {
+		(void) fprintf(stderr, "%s: %s: command not found\n", Argv[0],
+			       cmnd);
+		exit(1);
+	    }
+
 	    log_error(ALL_SYSTEMS_GO);
 	    if (sudo_mode == MODE_VALIDATE)
 		exit(0);
@@ -751,9 +759,10 @@ static void add_env(contiguous)
  *  load_cmnd()
  *
  *  This function sets the cmnd global variable
+ *  Returns 1 on success, 0 on failure.
  */
 
-static void load_cmnd(sudo_mode)
+static int load_cmnd(sudo_mode)
     int sudo_mode;
 {
     if (strlen(NewArgv[0]) > MAXPATHLEN) {
@@ -767,10 +776,10 @@ static void load_cmnd(sudo_mode)
      * Resolve the path
      */
     if ((cmnd = find_path(NewArgv[0])) == NULL) {
-	(void) fprintf(stderr, "%s: %s: command not found\n", Argv[0],
-		       NewArgv[0]);
-	exit(1);
-    }
+	cmnd = NewArgv[0];
+	return(0);
+    } else
+	return(1);
 }
 
 
