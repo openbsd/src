@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.bsd-wrapper,v 1.60 2003/12/10 22:09:32 millert Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.61 2004/02/08 00:15:18 espie Exp $
 #
 # Build wrapper for Perl 5.8.2
 #
@@ -43,6 +43,10 @@ PICFLAG=-fPIC
 MANLOCALBUILD=	yes
 
 MANALL=
+_quick1=
+_quick3p=
+MANSRCALL=
+
 .for page sect file in \
     a2p 1 			x2p/a2p.pod \
     c2ph 1			utils/c2ph \
@@ -495,16 +499,26 @@ MANALL=
     warnings::register 3p	lib/warnings/register.pm
 .  ifndef NOMAN
 MANALL+= ${page}.cat${sect}
+MANSRCALL+= ${page}.${sect}
+MANSRC_COOKIE=stamp-mansrc.build
+_quick${sect}+=${file} ${page}.${sect}
 .    ifdef MANPS
 PSALL+= ${page}.ps${sect}
 .    endif
+.  else
+MANSRC_COOKIE=
 .  endif
-${page}.cat${sect}: ${file}
-	${POD2MAN} --section=${sect} --official ${.ALLSRC}|\
-	    ${NROFF} -man >${.TARGET}
-${page}.ps${sect}: ${file}
-	${POD2MAN} --section=${sect} --official ${.ALLSRC}|\
-	    ${NROFF} -man -Tps >${.TARGET}
+
+
+${page}.${sect}: ${file}
+	${POD2MAN} --section=${sect} --official ${.ALLSRC} $@
+.endfor
+
+mansrc.build:
+.for sect in 1 3p
+.  if !empty(_quick${sect})
+	cd ${.OBJDIR} && ${POD2MAN} --section=${sect} --official ${_quick${sect}}
+.  endif
 .endfor
 
 LIB=	perl
@@ -530,14 +544,18 @@ GENERATED=	config.sh config.h cflags makeaperl makedepend makedir \
 		myconfig writemain Makefile Policy.sh pod/Makefile \
 		x2p/Makefile x2p/cflags
 
-CLEANFILES=	config.sh Policy.sh ${MANALL} ${PSALL} ${MANSRCALL}
+CLEANFILES=	config.sh Policy.sh ${MANALL} ${PSALL} ${MANSRCALL} stamp-mansrc.build
 
 .if !exists(${.OBJDIR}/config.over)
 ${.OBJDIR}/config.over: ${.CURDIR}/config.over
 	${LNDIR} -s -e obj -e obj.${MACHINE_ARCH} -e Makefile.bsd-wrapper ${.CURDIR}
 .endif
 
-all:	perl.build man.build
+stamp-mansrc.build:
+	@cd ${.CURDIR} && exec ${MAKE} -f Makefile.bsd-wrapper mansrc.build
+	@touch $@
+
+all:	perl.build ${MANSRC_COOKIE} man.build
 
 man.build: ${MANALL} ${PSALL}
 
@@ -632,9 +650,9 @@ install: install.lib install.perl maninstall
 	-chmod -R a+rX ${DESTDIR}/usr/libdata/perl5
 
 install.perl:
-	(cd ${.OBJDIR}; INSTALL=${INSTALL} INSTALL_COPY=${INSTALL_COPY} \
+	cd ${.OBJDIR}; INSTALL=${INSTALL} INSTALL_COPY=${INSTALL_COPY} \
 	 STRIPFLAGS=${STRIPFLAGS} INSTALLFLAGS=-o NOLIBINSTALL=1 \
-	 ${MAKE} install.perl)
+	 LD_LIBRARY_PATH=${.OBJDIR} exec ./perl installperl --destdir=${DESTDIR} -o STRIPFLAGS=${STRIPFLAGS}
 
 test:
 	-@if [ -e Makefile ]; then ${MAKE} test; fi
@@ -682,4 +700,4 @@ install.lib:
 	${INSTALL} ${INSTALL_COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
 	    lib${LIB}.so.${major}.${minor} ${DESTDIR}${LIBDIR}
 .endif
-.PHONY: perl.lib install.lib perl.build install.perl man.build
+.PHONY: perl.lib install.lib perl.build install.perl man.build mansrc.build
