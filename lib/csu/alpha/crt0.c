@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.5 2001/02/03 23:08:41 art Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.6 2001/02/03 23:16:16 art Exp $	*/
 /*	$NetBSD: crt0.c,v 1.1 1996/09/12 16:59:02 cgd Exp $	*/
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -32,38 +32,15 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: crt0.c,v 1.5 2001/02/03 23:08:41 art Exp $";
+static char rcsid[] = "$OpenBSD: crt0.c,v 1.6 2001/02/03 23:16:16 art Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdlib.h>
-#include <sys/syscall.h>
-typedef void Obj_Entry;
-
-/*
- * Lots of the chunks of this file cobbled together from pieces of
- * other NetBSD crt files, including the common code.
- */
-
-extern int	__syscall __P((int, ...));
-#define	_exit(v)	__syscall(SYS_exit, (v))
-#define	write(fd, s, n)	__syscall(SYS_write, (fd), (s), (n))
-
-#define _FATAL(str)				\
-	do {					\
-		write(2, str, sizeof(str));	\
-		_exit(1);			\
-	} while (0)
 
 static char	*_strrchr __P((char *, char));
 
-
 char	**environ;
 char	*__progname = "";
-
-#ifndef ECOFF_COMPAT
-extern void	__init __P((void));
-extern void	__fini __P((void));
-#endif /* ECOFF_COMPAT */
 
 #ifdef MCRT0
 extern void	monstartup __P((u_long, u_long));
@@ -75,7 +52,7 @@ void
 __start(sp, cleanup, obj)
 	char **sp;
 	void (*cleanup) __P((void));		/* from shared loader */
-	const Obj_Entry *obj;			/* from shared loader */
+	const void *obj;			/* from shared loader */
 {
 	long argc;
 	char **argv, *namep;
@@ -96,9 +73,7 @@ __start(sp, cleanup, obj)
 	monstartup((u_long)&_eprol, (u_long)&_etext);
 #endif
 
-#ifndef ECOFF_COMPAT
 	__init();
-#endif /* ECOFF_COMPAT */
 
 	exit(main(argc, argv, environ));
 }
