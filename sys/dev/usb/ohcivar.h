@@ -1,5 +1,5 @@
-/*	$OpenBSD: ohcivar.h,v 1.6 1999/11/07 21:30:19 fgsch Exp $	*/
-/*	$NetBSD: ohcivar.h,v 1.11 1999/09/15 21:14:03 augustss Exp $	*/
+/*	$OpenBSD: ohcivar.h,v 1.7 2000/03/26 08:39:45 aaron Exp $	*/
+/*	$NetBSD: ohcivar.h,v 1.20 2000/02/22 11:30:55 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@ typedef struct ohci_soft_td {
 	struct ohci_soft_td *dnext; /* next in done list */
 	ohci_physaddr_t physaddr;
 	LIST_ENTRY(ohci_soft_td) hnext;
-	usbd_request_handle reqh;
+	usbd_xfer_handle xfer;
 	u_int16_t len;
 	u_int16_t flags;
 #define OHCI_CALL_DONE	0x0001
@@ -60,6 +60,14 @@ typedef struct ohci_soft_td {
 } ohci_soft_td_t;
 #define OHCI_STD_SIZE ((sizeof (struct ohci_soft_td) + OHCI_TD_ALIGN - 1) / OHCI_TD_ALIGN * OHCI_TD_ALIGN)
 #define OHCI_STD_CHUNK 128
+
+typedef struct ohci_soft_itd {
+	ohci_itd_t itd;
+	struct ohci_soft_itd *nextitd; /* mirrors nexttd in ITD */
+	ohci_physaddr_t physaddr;
+} ohci_soft_itd_t;
+#define OHCI_SITD_SIZE ((sizeof (struct ohci_soft_itd) + OHCI_ITD_ALIGN - 1) / OHCI_ITD_ALIGN * OHCI_ITD_ALIGN)
+#define OHCI_SITD_CHUNK 64
 
 #define OHCI_NO_EDS (2*OHCI_NO_INTRS-1)
 
@@ -76,6 +84,7 @@ typedef struct ohci_softc {
 	u_int sc_bws[OHCI_NO_INTRS];
 
 	u_int32_t sc_eintrs;
+	ohci_soft_ed_t *sc_isoc_head;
 	ohci_soft_ed_t *sc_ctrl_head;
 	ohci_soft_ed_t *sc_bulk_head;
 
@@ -87,19 +96,30 @@ typedef struct ohci_softc {
 
 	ohci_soft_ed_t *sc_freeeds;
 	ohci_soft_td_t *sc_freetds;
+	ohci_soft_itd_t *sc_freeitds;
 
-	usbd_request_handle sc_intrreqh;
+	SIMPLEQ_HEAD(, usbd_xfer) sc_free_xfers; /* free xfers */
+
+	usbd_xfer_handle sc_intrxfer;
+
+	ohci_physaddr_t sc_done;
 
 	char sc_vendor[16];
 	int sc_id_vendor;
 
-	void *sc_powerhook;
+#if defined(__NetBSD__) || defined(__OpenBSD__)
+	void *sc_powerhook;		/* cookie from power hook */
+	void *sc_shutdownhook;		/* cookie from shutdown hook */
+#endif
+
 	device_ptr_t sc_child;
 } ohci_softc_t;
 
 usbd_status	ohci_init __P((ohci_softc_t *));
 int		ohci_intr __P((void *));
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 int		ohci_detach __P((ohci_softc_t *, int));
 int		ohci_activate __P((device_ptr_t, enum devact));
+#endif
 
 #define MS_TO_TICKS(ms) ((ms) * hz / 1000)

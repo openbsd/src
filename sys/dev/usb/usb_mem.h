@@ -1,5 +1,5 @@
-/*	$OpenBSD: usb_mem.h,v 1.4 1999/11/07 21:30:19 fgsch Exp $	*/
-/*	$NetBSD: usb_mem.h,v 1.10 1999/10/13 18:52:54 augustss Exp $	*/
+/*	$OpenBSD: usb_mem.h,v 1.5 2000/03/26 08:39:46 aaron Exp $	*/
+/*	$NetBSD: usb_mem.h,v 1.12 2000/03/12 23:10:29 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@ typedef struct usb_dma_block {
 	LIST_ENTRY(usb_dma_block) next;
 } usb_dma_block_t;
 
-#define DMAADDR(dma) ((dma)->block->segs[0].ds_addr + (dma)->offs)
+#define DMAADDR(dma) ((dma)->block->map->dm_segs[0].ds_addr + (dma)->offs)
 #define KERNADDR(dma) ((void *)((dma)->block->kaddr + (dma)->offs))
 
 usbd_status	usb_allocmem __P((usbd_bus_handle,size_t,size_t, usb_dma_t *));

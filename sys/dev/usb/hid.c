@@ -1,5 +1,5 @@
-/*	$OpenBSD: hid.c,v 1.3 1999/11/07 21:30:18 fgsch Exp $	*/
-/*	$NetBSD: hid.c,v 1.7 1999/01/08 11:58:25 augustss Exp $	*/
+/*	$OpenBSD: hid.c,v 1.4 2000/03/26 08:39:45 aaron Exp $	*/
+/*	$NetBSD: hid.c,v 1.12 2000/03/17 18:16:18 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,11 +40,10 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/kernel.h>
-#include <sys/malloc.h>
-#if defined(__FreeBSD__)
-#include <sys/bus.h>
 #endif
+#include <sys/malloc.h>
  
 #include <dev/usb/usb.h>
 #include <dev/usb/usbhid.h>
@@ -112,7 +111,7 @@ void
 hid_end_parse(s)
 	struct hid_data *s;
 {
-	while (s->cur.next) {
+	while (s->cur.next != NULL) {
 		struct hid_item *hi = s->cur.next->next;
 		free(s->cur.next, M_TEMP);
 		s->cur.next = hi;
@@ -126,7 +125,8 @@ hid_get_item(s, h)
 	struct hid_item *h;
 {
 	struct hid_item *c = &s->cur;
-	int bTag, bType, bSize;
+	unsigned int bTag, bType, bSize;
+	struct hid_location oldloc;
 	u_char *data;
 	int32_t dval;
 	u_char *p;
@@ -134,7 +134,7 @@ hid_get_item(s, h)
 	int i;
 
  top:
-	if (s->multimax) {
+	if (s->multimax != 0) {
 		if (s->multi < s->multimax) {
 			c->usage = s->usages[min(s->multi, s->nu-1)];
 			s->multi++;
@@ -300,7 +300,9 @@ hid_get_item(s, h)
 				break;
 			case 11: /* Pop */
 				hi = c->next;
+				oldloc = c->loc;
 				s->cur = *hi;
+				c->loc = oldloc;
 				free(hi, M_TEMP);
 				break;
 			default:
@@ -381,11 +383,11 @@ hid_report_size(buf, len, k, idp)
 
 	id = 0;
 	for (d = hid_start_parse(buf, len, 1<<k); hid_get_item(d, &h); )
-		if (h.report_ID)
+		if (h.report_ID != 0)
 			id = h.report_ID;
 	hid_end_parse(d);
 	size = h.loc.pos;
-	if (id) {
+	if (id != 0) {
 		size += 8;
 		*idp = id;	/* XXX wrong */
 	} else
@@ -407,9 +409,9 @@ hid_locate(desc, size, u, k, loc, flags)
 
 	for (d = hid_start_parse(desc, size, 1<<k); hid_get_item(d, &h); ) {
 		if (h.kind == k && !(h.flags & HIO_CONST) && h.usage == u) {
-			if (loc)
+			if (loc != NULL)
 				*loc = h.loc;
-			if (flags)
+			if (flags != NULL)
 				*flags = h.flags;
 			hid_end_parse(d);
 			return (1);
@@ -457,15 +459,15 @@ hid_is_collection(desc, size, usage)
 {
 	struct hid_data *hd;
 	struct hid_item hi;
-	int r;
+	int err;
 
 	hd = hid_start_parse(desc, size, hid_input);
-	if (!hd)
+	if (hd == NULL)
 		return (0);
 
-	r = hid_get_item(hd, &hi) &&
+	err = hid_get_item(hd, &hi) &&
 	    hi.kind == hid_collection &&
 	    hi.usage == usage;
 	hid_end_parse(hd);
-	return (r);
+	return (err);
 }

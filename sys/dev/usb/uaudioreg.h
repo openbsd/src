@@ -1,5 +1,5 @@
-/*	$OpenBSD: uaudioreg.h,v 1.1 1999/11/11 15:54:59 ho Exp $	*/
-/*	$NetBSD: uaudioreg.h,v 1.2 1999/10/13 20:13:29 augustss Exp $	*/
+/*	$OpenBSD: uaudioreg.h,v 1.2 2000/03/26 08:39:45 aaron Exp $	*/
+/*	$NetBSD: uaudioreg.h,v 1.4 2000/01/16 09:32:56 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -156,14 +156,14 @@ struct usb_audio_mixer_unit {
 	uByte		bDescriptorSubtype;
 	uByte		bUnitId;
 	uByte		bNrInPins;
-	uByte		baSourceId[255]; /* length is really bNrInPins */
+	uByte		baSourceId[255]; /* [bNrInPins] */
 	/* struct usb_audio_mixer_unit_1 */
 };
 struct usb_audio_mixer_unit_1 {
 	uByte		bNrChannels;
 	uWord		wChannelConfig;
 	uByte		iChannelNames;
-	uByte		bmControls[255];
+	uByte		bmControls[255]; /* [bNrChannels] */
 	/*uByte		iMixer;*/
 };
 
@@ -174,7 +174,7 @@ struct usb_audio_selector_unit {
 	uByte		bDescriptorSubtype;
 	uByte		bUnitId;
 	uByte		bNrInPins;
-	uByte		baSourceId[255];
+	uByte		baSourceId[255]; /* [bNrInPins] */
 	/* uByte	iSelector; */
 };
 
@@ -198,7 +198,7 @@ struct usb_audio_processing_unit {
 	uByte		bUnitId;
 	uWord		wProcessType;
 	uByte		bNrInPins;
-	uByte		baSourceId[255];
+	uByte		baSourceId[255]; /* [bNrInPins] */
 	/* struct usb_audio_processing_unit_1 */
 };
 struct usb_audio_processing_unit_1{
@@ -206,8 +206,14 @@ struct usb_audio_processing_unit_1{
 	uWord		wChannelConfig;
 	uByte		iChannelNames;
 	uByte		bControlSize;
-	uByte		bmControls[255];
-	/*uByte		iProcessing;*/
+	uByte		bmControls[255]; /* [bControlSize] */
+#define UA_PROC_ENABLE_MASK 1
+};
+
+struct usb_audio_processing_unit_updown {
+	uByte		iProcessing;
+	uByte		bNrModes;
+	uWord		waModes[255]; /* [bNrModes] */
 };
 
 /* UDESCSUB_AC_EXTENSION */
@@ -218,7 +224,7 @@ struct usb_audio_extension_unit {
 	uByte		bUnitId;
 	uWord		wExtensionCode;
 	uByte		bNrInPins;
-	uByte		baSourceId[255];
+	uByte		baSourceId[255]; /* [bNrInPins] */
 	/* struct usb_audio_extension_unit_1 */
 };
 struct usb_audio_extension_unit_1 {
@@ -226,8 +232,9 @@ struct usb_audio_extension_unit_1 {
 	uWord		wChannelConfig;
 	uByte		iChannelNames;
 	uByte		bControlSize;
-	uByte		bmControls[255];
-#define UA_EXT_ENABLE 0
+	uByte		bmControls[255]; /* [bControlSize] */
+#define UA_EXT_ENABLE_MASK 1
+#define UA_EXT_ENABLE 1
 	/*uByte		iExtension;*/
 };
 
@@ -276,3 +283,39 @@ struct usb_audio_extension_unit_1 {
 #define FORMAT_TYPE_I 1
 #define FORMAT_TYPE_II 2
 #define FORMAT_TYPE_III 3
+
+#define UA_PROC_MASK(n)  (1 << ((n)-1))
+#define PROCESS_UNDEFINED		0
+#define XX_ENABLE_CONTROL		1
+
+#define UPDOWNMIX_PROCESS		1
+#define UD_ENABLE_CONTROL		1
+#define UD_MODE_SELECT_CONTROL		2
+
+#define DOLBY_PROLOGIC_PROCESS		2
+#define DP_ENABLE_CONTROL		1
+#define DP_MODE_SELECT_CONTROL		2
+
+#define P3D_STEREO_EXTENDER_PROCESS	3
+#define P3D_ENABLE_CONTROL		1
+#define P3D_SPACIOUSNESS_CONTROL	2
+
+#define REVERBATION_PROCESS		4
+#define RV_ENABLE_CONTROL		1
+#define RV_LEVEL_CONTROL		2
+#define RV_TIME_CONTROL			3
+#define RV_FEEDBACK_CONTROL		4
+
+#define CHORUS_PROCESS			5
+#define CH_ENABLE_CONTROL		1
+#define CH_LEVEL_CONTROL		2
+#define CH_RATE_CONTROL			3
+#define CH_DEPTH_CONTROL		4
+
+#define DYN_RANGE_COMP_PROCESS		6
+#define DR_ENABLE_CONTROL		1
+#define DR_COMPRESSION_RATE_CONTROL	2
+#define DR_MAXAMPL_CONTROL		3
+#define DR_THRESHOLD_CONTROL		4
+#define DR_ATTACK_TIME_CONTROL		5
+#define DR_RELEASE_TIME_CONTROL		6
