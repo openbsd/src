@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.85 2002/08/12 16:35:40 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.86 2002/10/24 19:37:00 fgsch Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -250,6 +250,8 @@ cpu_startup()
 			curbufsize -= PAGE_SIZE;
 		}
 	}
+	pmap_update(pmap_kernel());
+
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time.
@@ -995,6 +997,7 @@ mapdev(phys, virt, offset, size)
 		va += PAGE_SIZE;
 		pa += PAGE_SIZE;
 	} while ((size -= PAGE_SIZE) > 0);
+	pmap_update(pmap_kernel());
 	return (ret);
 }
 
