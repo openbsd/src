@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.49 1997/10/29 21:38:17 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.50 1998/01/10 02:22:57 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -296,6 +296,29 @@ __get_reldir_1
 		esac
 	    fi
 	done
+}
+
+getanotherdisk() {
+	cat << \__getanotherdisk_1
+
+Now you can select another disk to initialize.
+Available disks are:
+
+__getanotherdisk_1
+	_DKDEVS=`md_get_diskdevs`
+	echo	"$_DKDEVS"
+	echo	""
+	echo -n	"Which one? [done] "
+	getresp ""
+	if [ "X${resp}" = "X" ]; then
+		DISK=done
+	elif isin $resp $_DKDEVS ; then
+		DISK="$resp"
+	else
+		echo ""
+		echo "The disk $resp does not exist."
+		DISK=""
+	fi
 }
 
 getrootdisk() {
@@ -777,9 +800,9 @@ install_url() {
 "'all' to install all the standard sets, or 'list' to list the\\\\n"\
 "files avilable at \$_${_url_type}_server_ip:\$_${_url_type}_server_dir.\\\\n"\
 "When you are done selecting files, enter 'done'.\\\\n"\
-"Some of these sets are required for your ${MODE} and some are optional.\\\\n"\
-"Consult the intallation notes if you are not sure which sets are required!\\\\n"
-
+"Some of these sets are required for your ${MODE} and some are optional --\\\\n"\
+"You will want at least the base and bsd sets.\\\\n"
+"Consult the intallation notes if you are not sure which sets are required!\\\\n"\
 	_osetsdone="$_setsdone"
 	while : ; do
 		echo ""
@@ -1542,6 +1565,23 @@ __install_sets_1
 			esac
 		else
 			_yup="FALSE"	# So we'll ask next time
+		fi
+
+		if [ ! -f /mnt/bsd ]; then
+			cat << \__install_sets_2
+You still do not have a /bsd in your filesystem (ie. the kernel), which
+seems to indicate that you are still missing important distribution files.
+So please continue installing..
+__install_sets_2
+			resp=""
+		fi
+		if [ ! -f /mnt/bin/cat ]; then
+			cat << \__install_sets_3
+You still do not have a /bin/cat in your filesystem (ie. a sample random file
+which you probably want). This seems to indicate that you are still missing
+important distribution files. So please continue installing..
+__install_sets_3
+			resp=""
 		fi
 
 		# Give the user the opportunity to extract more sets. They
