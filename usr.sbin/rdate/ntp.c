@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.3 2002/05/16 11:00:53 deraadt Exp $	*/
+/*	$OpenBSD: ntp.c,v 1.4 2002/05/16 15:01:32 jakob Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 by N.M. Maclaren. All rights reserved.
@@ -158,7 +158,9 @@ ntp_client(const char *hostname, struct timeval *new, struct timeval *adjust)
 	if (error > NTP_INSANITY)
 		errx(1, "Unable to get a reasonable time estimate");
 
+#ifdef DEBUG
 	fprintf(stderr,"Correction: %.6f +/- %.6f\n", offset,error);
+#endif
 
 	create_timeval(offset, new, adjust);
 }
@@ -193,8 +195,10 @@ sync_ntp(int fd, const struct sockaddr *peer, double *offset, double *error)
 		} else
 			++accepts;
 
+#ifdef DEBUG
 		fprintf(stderr,"Offset: %.6f +/- %.6f disp=%.6f\n",
 		    x, y, dispersion);
+#endif
 
 		if ((a = x - *offset) < 0.0)
 			a = -a;
@@ -206,7 +210,9 @@ sync_ntp(int fd, const struct sockaddr *peer, double *offset, double *error)
 			*error = y;
 		}
 
+#ifdef DEBUG
 		fprintf(stderr,"Best: %.6f +/- %.6f\n", *offset, *error);
+#endif
 
 		if (a > b)
 			errx(1, "Inconsistent times recieved from NTP server");
