@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp.c,v 1.66 2004/03/19 14:04:43 hshoexer Exp $	*/
+/*	$OpenBSD: udp.c,v 1.67 2004/03/29 16:32:19 deraadt Exp $	*/
 /*	$EOM: udp.c,v 1.57 2001/01/26 10:09:57 niklas Exp $	*/
 
 /*
@@ -343,7 +343,9 @@ udp_bind_if (char *ifname, struct sockaddr *if_addr, void *arg)
    * address bound. If so, unmark the transport and skip it; this allows
    * us to call this function when we suspect a new address has appeared.
    */
-  memcpy (saddr, if_addr, sizeof saddr_st);
+  if (sysdep_sa_len (if_addr) > sizeof saddr_st)
+    return 0;
+  memcpy (saddr, if_addr, sysdep_sa_len (if_addr));
   switch (saddr->sa_family)  /* Add the port number to the sockaddr. */
     {
     case AF_INET:
