@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.14 2002/03/14 03:16:10 millert Exp $	*/
+/*	$OpenBSD: route.h,v 1.15 2003/01/17 17:48:25 camield Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -67,8 +67,8 @@ struct rt_metrics {
 	u_long	rmx_mtu;	/* MTU for this path */
 	u_long	rmx_hopcount;	/* max hops expected */
 	u_long	rmx_expire;	/* lifetime for route, e.g. redirect */
-	u_long	rmx_recvpipe;	/* inbound delay-bandwith product */
-	u_long	rmx_sendpipe;	/* outbound delay-bandwith product */
+	u_long	rmx_recvpipe;	/* inbound delay-bandwidth product */
+	u_long	rmx_sendpipe;	/* outbound delay-bandwidth product */
 	u_long	rmx_ssthresh;	/* outbound gateway buffer limit */
 	u_long	rmx_rtt;	/* estimated round trip time */
 	u_long	rmx_rttvar;	/* estimated rtt variance */
