@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.39 2004/12/08 08:05:44 dlg Exp $
+#	$OpenBSD: GENERIC,v 1.40 2004/12/13 23:30:12 millert Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -341,12 +341,12 @@ auvia*	at pci?				# VIA VT82C686A
 #fms*	at pci?				# Forte Media FM801
 #maestro* at pci?			# ESS Maestro PCI
 #esa*	at pci?				# ESS Maestro3 PCI
-#yds*	at pci? flags 0x0000		# Yamaha YMF Audio
+yds*	at pci? flags 0x0000		# Yamaha YMF Audio
 emu*	at pci?				# SB Live!
 
 # OPL[23] FM synthesizers
 #opl*	at eso?
-#opl*	at yds?
+opl*	at yds?
 
 # MIDI support
 #midi*	at pcppi?		# MIDI interface to the PC speaker
@@ -371,7 +371,7 @@ audio*	at auvia?
 audio*	at uaudio?
 #audio*	at maestro?
 #audio*	at esa?
-#audio*	at yds?
+audio*	at yds?
 audio*	at emu?
 
 #bktr0	at pci? dev ? function ?
