@@ -1,4 +1,4 @@
-/*	$OpenBSD: eap.c,v 1.2 1998/10/28 18:06:46 downsj Exp $	*/
+/*	$OpenBSD: eap.c,v 1.3 1998/11/03 21:06:39 downsj Exp $	*/
 /*	$NetBSD: eap.c,v 1.17 1998/08/25 04:56:01 thorpej Exp $	*/
 
 /*
@@ -349,10 +349,8 @@ struct audio_hw_if eap_hw_if = {
 	eap_round,
 	eap_mappage,
 	eap_get_props,
-#ifdef notyet
 	eap_trigger_output,
 	eap_trigger_input,
-#endif
 };
 
 struct audio_device eap_device = {
@@ -382,18 +380,18 @@ eap_write_codec(sc, a, d)
 	int a, d;
 {
 	int icss;
-	int timeo = 512;
+	int timeo = 4096;
 
 	do {
-		icss = EREAD4(sc, EAP_ICSS);
-		if (!(icss & EAP_CSTAT)) {
-			EWRITE4(sc, EAP_CODEC, EAP_SET_CODEC(a, d));
-			return;
-		}
+	        icss = EREAD4(sc, EAP_ICSS);
 		DPRINTFN(5,("eap: codec %d prog: icss=0x%08x\n", a, icss));
 		timeo--;
-	} while(timeo > 0);
-	DPRINTF(("eap: codec write timeout, %d prog: icss=0x%08x\n", a, icss));
+	} while((timeo > 0) && (icss & EAP_CWRIP));
+
+	if (timeo == 0)
+		DPRINTF(("eap: codec write timeout, %d prog: icss=0x%08x\n",
+		    a, icss));
+	EWRITE4(sc, EAP_CODEC, EAP_SET_CODEC(a, d));
 }
 
 void
@@ -450,7 +448,7 @@ eap_attach(parent, self, aux)
 
 	/* Enable interrupts and looping mode. */
 	EWRITE4(sc, EAP_SIC, EAP_P2_INTR_EN | EAP_R1_INTR_EN);
-	EWRITE4(sc, EAP_ICSC, EAP_CDC_EN|EAP_SERR_DISABLE|EAP_SET_PCLKDIV(EAP_XTAL_FREQ / 8000)); /* enable the parts we need */
+	EWRITE4(sc, EAP_ICSC, EAP_CDC_EN); /* enable the parts we need */
 
 	eap_write_codec(sc, AK_RESET, AK_PD); /* reset codec */
 	eap_write_codec(sc, AK_RESET, AK_PD | AK_NRST);	/* normal operation */
