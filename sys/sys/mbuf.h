@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.40 2001/06/23 02:23:01 angelos Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.41 2001/06/23 03:57:25 angelos Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -58,7 +58,7 @@
 
 /* Packet tags structure */
 struct m_tag {
-	LIST_ENTRY(m_tag)	m_tag_link;	/* List of packet tags */
+	DLIST_ENTRY(m_tag)	m_tag_link;	/* List of packet tags */
 	u_int16_t		m_tag_id;	/* Tag ID */
 	u_int16_t		m_tag_len;	/* Length of data */
 };
@@ -82,7 +82,7 @@ struct m_hdr {
 /* record/packet header in first mbuf of chain; valid if M_PKTHDR set */
 struct	pkthdr {
 	struct	ifnet *rcvif;		/* rcv interface */
-	LIST_HEAD(packet_tags, m_tag) tags; /* list of packet tags */
+	DLIST_HEAD(packet_tags, m_tag) tags; /* list of packet tags */
 	int	len;			/* total packet length */
 	int	csum;			/* Hardware checksum info */
 };
@@ -237,7 +237,7 @@ struct mbuf *_sk_mget(int, int);
 		(m)->m_nextpkt = (struct mbuf *)NULL; \
 		(m)->m_data = (m)->m_pktdat; \
 		(m)->m_flags = M_PKTHDR; \
-		LIST_INIT(&(m)->m_pkthdr.tags); \
+		DLIST_INIT(&(m)->m_pkthdr.tags); \
 		(m)->m_pkthdr.csum = 0; \
 	} else \
 		(m) = m_retryhdr((how), (type)); \
@@ -411,13 +411,9 @@ void _sk_mclget(struct mbuf *, int);
 
 /*
  * Copy just m_pkthdr from from to to.
- * XXX Ugly exposure of tag specifics, and it actually breaks tag copying.
  */
 #define M_COPY_HDR(to, from) { \
 	(to)->m_pkthdr = (from)->m_pkthdr; \
-	if (!LIST_EMPTY(&(to)->m_pkthdr.tags)) \
-		LIST_FIRST(&(to)->m_pkthdr.tags)->m_tag_link.le_prev = \
-		    &(to)->m_pkthdr.tags.lh_first; \
 }
 
 /*
@@ -425,7 +421,7 @@ void _sk_mclget(struct mbuf *, int);
  */
 #define M_DUP_HDR(to, from) { \
 	M_COPY_HDR((to), (from)); \
-	LIST_INIT(&(to)->m_pkthdr.tags); \
+	DLIST_INIT(&(to)->m_pkthdr.tags); \
 	m_tag_copy_chain((to), (from)); \
 }
 
