@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.36 2003/08/06 21:08:06 millert Exp $	*/
+/*	$OpenBSD: auich.c,v 1.37 2003/10/10 04:38:56 jason Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -136,6 +136,8 @@ struct auich_dmalist {
 #define	AUICH_DMAF_BUP	0x40000000	/* 0-retrans last, 1-transmit 0 */
 };
 
+#define	AUICH_FIXED_RATE 48000
+
 struct auich_dma {
 	bus_dmamap_t map;
 	caddr_t addr;
@@ -188,6 +190,7 @@ struct auich_softc {
 	int sc_sts_reg;
 	int sc_ignore_codecready;
 	int flags;
+	int sc_ac97rate;
 };
 
 #ifdef AUICH_DEBUG
@@ -290,6 +293,7 @@ int  auich_read_codec(void *, u_int8_t, u_int16_t *);
 int  auich_write_codec(void *, u_int8_t, u_int16_t);
 void auich_reset_codec(void *);
 enum ac97_host_flags auich_flags_codec(void *);
+unsigned int auich_calibrate(struct auich_softc *);
 
 int
 auich_match(parent, match, aux)
@@ -424,6 +428,8 @@ auich_attach(parent, self, aux)
 	/* Watch for power changes */
 	sc->suspend = PWR_RESUME;
 	sc->powerhook = powerhook_establish(auich_powerhook, sc);
+
+	sc->sc_ac97rate = auich_calibrate(sc);
 }
 
 int
@@ -598,6 +604,7 @@ auich_set_params(v, setmode, usemode, play, rec)
 {
 	struct auich_softc *sc = v;
 	int error;
+	u_int orate;
 
 	if (setmode & AUMODE_PLAY) {
 		play->factor = 1;
@@ -764,7 +771,13 @@ auich_set_params(v, setmode, usemode, play, rec)
 			return (EINVAL);
 		}
 
-		if ((error = ac97_set_rate(sc->codec_if, play, AUMODE_PLAY)))
+		orate = play->sample_rate;
+		if (sc->sc_ac97rate != 0)
+			play->sample_rate = orate * AUICH_FIXED_RATE /
+			    sc->sc_ac97rate;
+		error = ac97_set_rate(sc->codec_if, play, AUMODE_PLAY);
+		play->sample_rate = orate;
+		if (error)
 			return (error);
 	}
 
@@ -800,7 +813,13 @@ auich_set_params(v, setmode, usemode, play, rec)
 			return (EINVAL);
 		}
 
-		if ((error = ac97_set_rate(sc->codec_if, rec, AUMODE_RECORD)))
+		orate = rec->sample_rate;
+		if (sc->sc_ac97rate != 0)
+			rec->sample_rate = orate * AUICH_FIXED_RATE /
+			    sc->sc_ac97rate;
+		error = ac97_set_rate(sc->codec_if, rec, AUMODE_RECORD);
+		rec->sample_rate = orate;
+		if (error)
 			return (error);
 	}
 
@@ -1272,4 +1291,114 @@ auich_powerhook(why, self)
 		(sc->codec_if->vtbl->restore_ports)(sc->codec_if);
 		auich_write_codec(sc, AC97_REG_EXT_AUDIO_CTRL, sc->ext_ctrl);
 	}
+}
+
+
+
+/* -------------------------------------------------------------------- */
+/* Calibrate card (some boards are overclocked and need scaling) */
+
+unsigned int
+auich_calibrate(struct auich_softc *sc)
+{
+	struct timeval t1, t2;
+	u_int8_t ociv, nciv;
+	u_int32_t wait_us, actual_48k_rate, bytes, ac97rate;
+	void *temp_buffer;
+	struct auich_dma *p;
+	int i;
+
+	ac97rate = AUICH_FIXED_RATE;
+	/*
+	 * Grab audio from input for fixed interval and compare how
+	 * much we actually get with what we expect.  Interval needs
+	 * to be sufficiently short that no interrupts are
+	 * generated.
+	 */
+
+	/* Setup a buffer */
+	bytes = 16000;
+	temp_buffer = auich_allocm(sc, AUMODE_RECORD, bytes, M_DEVBUF,
+	    M_NOWAIT);
+	if (temp_buffer == NULL)
+		return (ac97rate);
+	for (p = sc->sc_dmas; p && p->addr != temp_buffer; p = p->next)
+		;
+	if (p == NULL) {
+		printf("auich_calibrate: bad address %p\n", temp_buffer);
+		return (ac97rate);
+	}
+
+	for (i = 0; i < AUICH_DMALIST_MAX; i++) {
+		sc->dmalist_pcmi[i].base = p->map->dm_segs[0].ds_addr;
+		sc->dmalist_pcmi[i].len = bytes / sc->sc_sample_size;
+	}
+
+	/*
+	 * our data format is stereo, 16 bit so each sample is 4 bytes.
+	 * assuming we get 48000 samples per second, we get 192000 bytes/sec.
+	 * we're going to start recording with interrupts disabled and measure
+	 * the time taken for one block to complete.  we know the block size,
+	 * we know the time in microseconds, we calculate the sample rate:
+	 *
+	 * actual_rate [bps] = bytes / (time [s] * 4)
+	 * actual_rate [bps] = (bytes * 1000000) / (time [us] * 4)
+	 * actual_rate [Hz] = (bytes * 250000) / time [us]
+	 */
+
+	/* prepare */
+	ociv = bus_space_read_1(sc->iot, sc->aud_ioh, AUICH_PCMI + AUICH_CIV);
+	nciv = ociv;
+	bus_space_write_4(sc->iot, sc->aud_ioh, AUICH_PCMI + AUICH_BDBAR,
+	    kvtop((caddr_t)sc->dmalist_pcmi));
+	bus_space_write_1(sc->iot, sc->aud_ioh, AUICH_PCMI + AUICH_LVI,
+			  (0 - 1) & AUICH_LVI_MASK);
+
+	/* start */
+	microtime(&t1);
+	bus_space_write_1(sc->iot, sc->aud_ioh, AUICH_PCMI + AUICH_CTRL,
+	    AUICH_RPBM);
+
+	/* wait */
+	while (nciv == ociv) {
+		microtime(&t2);
+		if (t2.tv_sec - t1.tv_sec > 1)
+			break;
+		nciv = bus_space_read_1(sc->iot, sc->aud_ioh,
+					AUICH_PCMI + AUICH_CIV);
+	}
+	microtime(&t2);
+
+	/* reset */
+	bus_space_write_1(sc->iot, sc->aud_ioh, AUICH_PCMI + AUICH_CTRL, AUICH_RR);
+	bus_space_write_1(sc->iot, sc->aud_ioh, AUICH_MICI + AUICH_CTRL, AUICH_RR);
+	DELAY(100);
+
+	/* turn time delta into us */
+	wait_us = ((t2.tv_sec - t1.tv_sec) * 1000000) + t2.tv_usec - t1.tv_usec;
+
+#if 0
+	auich_freem(sc, temp_buffer, M_DEVBUF);
+#endif
+
+	if (nciv == ociv) {
+		printf("%s: ac97 link rate calibration timed out after %d us\n",
+		       sc->sc_dev.dv_xname, wait_us);
+		return (ac97rate);
+	}
+
+	actual_48k_rate = (bytes * 250000) / wait_us;
+
+	if (actual_48k_rate <= 48500)
+		ac97rate = AUICH_FIXED_RATE;
+	else
+		ac97rate = actual_48k_rate;
+
+	printf("%s: measured ac97 link rate at %d Hz",
+	       sc->sc_dev.dv_xname, actual_48k_rate);
+	if (ac97rate != actual_48k_rate)
+		printf(", will use %d Hz", ac97rate);
+	printf("\n");
+
+	return (ac97rate);
 }
