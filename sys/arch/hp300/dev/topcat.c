@@ -1,4 +1,4 @@
-/*	$OpenBSD: topcat.c,v 1.7 2005/01/21 16:22:34 miod Exp $	*/
+/*	$OpenBSD: topcat.c,v 1.8 2005/01/21 16:24:12 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat.
@@ -387,7 +387,7 @@ topcat_ioctl(void *v, u_long cmd, caddr_t data, int flags, struct proc *p)
 		wdf->cmsize = 1 << fb->planes;
 		break;
 	case WSDISPLAYIO_LINEBYTES:
-		*(u_int *)data = fb->fbwidth;
+		*(u_int *)data = (fb->fbwidth * fb->planes) >> 3;
 		break;
 	case WSDISPLAYIO_GETCMAP:
 		return (topcat_getcmap(fb, (struct wsdisplay_cmap *)data));
