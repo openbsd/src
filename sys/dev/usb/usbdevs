@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.132 2005/02/12 10:08:36 jsg Exp $
+$OpenBSD: usbdevs,v 1.133 2005/02/18 06:40:08 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -400,6 +400,7 @@ vendor DLINK		0x2001	D-Link
 vendor MOTOROLA2	0x22b8	Motorola
 vendor TRIPPLITE	0x2478	Tripp-Lite
 vendor NHJ		0x2770  NHJ
+vendor ASUSTEK		0x2821	ASUSTeK Computer
 vendor PLANEX		0x2c02	Planex Communications
 vendor AEI		0x3334	AEI
 vendor PQI		0x3538	PQI
@@ -515,6 +516,9 @@ product AGFA SNAPSCANE52	0x20fd	SnapScan e52
 /* Aincomm products */
 product AINCOMM AWU2000B	0x1001	AWU2000B
 
+/* AirVast Technology products */
+product PHEENET WM168B		0x168b	WM-168b
+
 /* AKS products */
 product AKS USBHASP		0x0001	USB-HASP 0.06
 
@@ -561,6 +565,9 @@ product ASKEY WLL013		0x0321	WLL013
 
 /* ASIX Electronics products */
 product ASIX AX88172		0x1720	USB 2.0 10/100 ethernet controller
+
+/* ASUSTeK Computer products */
+product ASUSTEK WL140		0x3300	WL-140
 
 /* ATen products */
 product ATEN UC1284		0x2001	Parallel
@@ -736,7 +743,8 @@ product DIGITALSTREAM PS2	0x0001	PS/2 Active
 /*product DLINK DSBS25		0x0100	DSB-S25 serial */
 product DLINK DUBE100		0x1a00	10/100 ethernet
 product DLINK DSB650TX4		0x200c	10/100 ethernet
-product DLINK DWL122		0x3700	Wireless DWL122
+product DLINK DWL122		0x3700	DWL-122
+product DLINK DWL120F		0x3702	DWL-120 rev F
 product DLINK DSB650C		0x4000	10Mbps ethernet
 product DLINK DSB650TX1		0x4001	10/100 ethernet
 product DLINK DSB650TX		0x4002	10/100 ethernet
@@ -1114,7 +1122,8 @@ product	LINKSYS	WUSB12_11	0x2213	WUSB12 802.11b v1.1
 product LINKSYS2 USB200M	0x2226	USB 2.0 10/100 ethernet controller
 product LINKSYS USB10TX2	0x400b	USB10TX
 product LINKSYS2 WUSB11		0x2219	WUSB11
-product LINKSYS3 WUSB11V28	0x2233	WUSB11-V28
+product LINKSYS3 WUSB11V28	0x2233	WUSB11 v2.8
+product LINKSYS3 WUSB11V30	0x2236	WUSB11 v3.0
 
 /* Logitech products */
 product LOGITECH M2452		0x0203	M2452 keyboard
@@ -1736,7 +1745,8 @@ product YAMAHA RTA55I		0x4004	NetVolante RTA55i
 product YANO U640MO		0x0101	U640MO-03
 
 /* Z-Com products */
-product ZCOM 725		0x0002	725/726 Prism2.5 WLAN
+product ZCOM XI725		0x0002	XI-725/726
+product ZCOM XI735		0x0005	XI-735
 
 /* Zoom Telephonics, Inc. products */
 product ZOOM 2986L		0x9700	2986L Fax Modem
