@@ -1,3 +1,7 @@
+# $OpenBSD: dot.cshrc,v 1.11 2003/03/20 01:43:31 david Exp $
+#
+# csh initialization
+
 umask 022
 alias mail Mail
 set history=1000
