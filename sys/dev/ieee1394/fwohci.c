@@ -1,4 +1,4 @@
-/*	$OpenBSD: fwohci.c,v 1.11 2003/01/12 12:05:04 tdeval Exp $	*/
+/*	$OpenBSD: fwohci.c,v 1.12 2003/01/13 07:16:20 tdeval Exp $	*/
 /*	$NetBSD: fwohci.c,v 1.54 2002/03/29 05:06:42 jmc Exp $	*/
 
 /*
@@ -3454,24 +3454,20 @@ fwohci_if_input(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 	struct iovec *iov;
 	void (*handler)(struct device *, struct mbuf *) = arg;
 
-#if	defined(FWOHCI_DEBUG) && !defined(SMALL_KERNEL)
+#ifdef	FWOHCI_DEBUG
 	int i;
-	DPRINTF(DBG_LOG|DBG_TIME|DBG_FUNC|DBG_L_V1,
-	   ("tcode=0x%x, dlen=%d", pkt->fp_tcode, pkt->fp_dlen));
-	for (i = 0; (DBG_FLAGS_VAR(fwohci) & DBG_L_BUFFER) &&
-	     i < pkt->fp_hlen/4; i++)
-		DPRINTF(DBG_LOG|DBG_NOLF|DBG_L_BUFFER,
-		    ("%s %08x", i?"":"   ", pkt->fp_hdr[i]));
-	DPRINTF(DBG_LOG|DBG_L_BUFFER, (" $"));
+	DPRINTFN(1, ("tcode=0x%x, dlen=%d\n", pkt->fp_tcode, pkt->fp_dlen));
+	for (i = 0; fwohcidebug > 5 && i < pkt->fp_hlen/4; i++)
+		DPRINTFN(5, ("%s %08x", i?"":"   ", pkt->fp_hdr[i]));
+	DPRINTFN(5, (" $\n"));
 	if (pkt->fp_dlen) {
 		for (n = 0, len = pkt->fp_dlen; len > 0; len -= i, n++){
 			iov = &pkt->fp_iov[n];
-			for (i = 0; (DBG_FLAGS_VAR(fwohci) & DBG_L_BUFFER) &&
-			     i < iov->iov_len; i++)
-				DPRINTF(DBG_LOG|DBG_NOLF|DBG_L_BUFFER,
-				   ("%s%02x", i&31?i&3?"":" ":i?"\n    ":"    ",
+			for (i = 0; fwohcidebug > 5 && i < iov->iov_len; i++)
+				DPRINTFN(5, ("%s%02x",
+				    i&31?i&3?"":" ":i?"\n    ":"    ",
 				    ((u_int8_t *)iov->iov_base)[i]));
-			DPRINTF(DBG_LOG|DBG_L_BUFFER, (" $"));
+			DPRINTFN(5, (" $\n"));
 		}
 	}
 #endif	/* FWOHCI_DEBUG */

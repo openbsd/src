@@ -1,4 +1,4 @@
-/*	$OpenBSD: fwscsi.c,v 1.10 2003/01/13 01:55:46 tdeval Exp $	*/
+/*	$OpenBSD: fwscsi.c,v 1.11 2003/01/13 07:16:20 tdeval Exp $	*/
 
 /*
  * Copyright (c) 2002 Thierry Deval.  All rights reserved.
@@ -435,8 +435,7 @@ fwscsi_detach(struct device *self, int flags)
 	rv = 0;
 
 	if (sc->sc_bus) {
-		DPRINTF(("%s: detach %s\n", __func__,
-		    sc->sc_bus->dv_xname));
+		DPRINTF(("%s: detach %s\n", __func__, dev->dv_xname));
 		s = splbio();
 		rv += config_detach(dev, flags);
 		splx(s);
