@@ -17,8 +17,13 @@ MLINKS=	rtld.1 ld.so.1
 
 .PATH: $(LDDIR) $(LDDIR)/$(MACHINE_ARCH) ${.CURDIR}/../../../../lib/libc/stdio
 
+.if defined(DESTDIR)
+$(PROG):
+	$(LD) -o $(PROG) $(LDFLAGS) -nostdlib -L${DESTDIR}/usr/lib $(OBJS) $(LDADD)
+.else
 $(PROG):
 	$(LD) -o $(PROG) $(LDFLAGS) $(OBJS) $(LDADD)
+.endif
 
 .S.o:
 	${CPP} ${.IMPSRC} | ${AS} ${ASFLAGS} -o ${.TARGET} -
