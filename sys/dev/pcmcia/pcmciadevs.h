@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.71 2001/06/07 22:42:01 millert Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.72 2001/06/12 09:07:32 d Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.66 2001/06/07 22:41:00 millert Exp 
+ *		OpenBSD: pcmciadevs,v 1.67 2001/06/12 09:05:33 d Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -88,6 +88,7 @@
 #define	PCMCIA_VENDOR_NEWMEDIA2	0x10cd	/* NewMedia */
 #define	PCMCIA_VENDOR_LASAT	0x3401	/* Lasat */
 #define	PCMCIA_VENDOR_LEXARMEDIA	0x4e01	/* Lexar Media */
+#define	PCMCIA_VENDOR_ARCHOS	0x5241	/* Archos */
 #define	PCMCIA_VENDOR_DUAL	0x890f	/* Dual */
 #define	PCMCIA_VENDOR_COMPEX	0x8a01	/* Compex */
 #define	PCMCIA_VENDOR_MELCO	0x8a01	/* Melco Corporation */
@@ -141,6 +142,10 @@
 /* Allied Telesis K.K. */
 #define	PCMCIA_CIS_ALLIEDTELESIS_LA_PCM	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_ALLIEDTELESIS_LA_PCM	0x0002
+
+/* Archos */
+#define	PCMCIA_CIS_ARCHOS_ARC_ATAPI	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_ARCHOS_ARC_ATAPI	0x0043
 
 /* Bay Networks */
 #define	PCMCIA_CIS_BAY_STACK_650	{ NULL, NULL, NULL, NULL }
