@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.116 2001/07/05 08:31:48 jjbg Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.117 2001/07/05 08:42:57 angelos Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -93,7 +93,7 @@ union sockaddr_union {
 #define	IPSEC_DEFAULT_DEF_ENC			"aes"
 #define	IPSEC_DEFAULT_DEF_AUTH			"hmac-sha1"
 #define	IPSEC_DEFAULT_EXPIRE_ACQUIRE		30
-#define IPSEC_DEFAULT_DEF_COMP			"deflate"
+#define	IPSEC_DEFAULT_DEF_COMP			"deflate"
 
 struct sockaddr_encap {
 	u_int8_t	sen_len;		/* length */
@@ -402,12 +402,12 @@ struct xformsw {
 #define	XF_AH		2	/* AH */
 #define	XF_ESP		3	/* ESP */
 #define	XF_TCPSIGNATURE	5	/* TCP MD5 Signature option, RFC 2358 */
-#define XF_IPCOMP	6	/* IPCOMP */
+#define	XF_IPCOMP	6	/* IPCOMP */
 
 /* xform attributes */
 #define	XFT_AUTH	0x0001
 #define	XFT_CONF	0x0100
-#define XFT_COMP	0x1000
+#define	XFT_COMP	0x1000
 
 #define	IPSEC_ZEROES_SIZE	256	/* Larger than an IP6 extension hdr. */
 #define	IPSEC_KERNFS_BUFSIZE	4096

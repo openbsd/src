@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.53 2001/07/05 08:31:47 jjbg Exp $	*/
+/*	$OpenBSD: in.h,v 1.54 2001/07/05 08:40:12 angelos Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -464,7 +464,7 @@ struct ip_mreq {
 #define IPCTL_IPSEC_AUTH_ALGORITHM 26
 #define	IPCTL_MTUDISC		27	/* allow path MTU discovery */
 #define	IPCTL_MTUDISCTIMEOUT	28	/* allow path MTU discovery */
-#define IPCTL_IPSEC_IPCOMP_ALGORITHM	29
+#define	IPCTL_IPSEC_IPCOMP_ALGORITHM	29
 #define	IPCTL_MAXID		30
 
 #define	IPCTL_NAMES { \
