@@ -29,7 +29,7 @@
 /* XXX: copy between two remote sites */
 
 #include "includes.h"
-RCSID("$OpenBSD: sftp-client.c,v 1.5 2001/02/07 10:55:12 djm Exp $");
+RCSID("$OpenBSD: sftp-client.c,v 1.6 2001/02/07 18:01:18 itojun Exp $");
 
 #include "ssh.h"
 #include "buffer.h"
@@ -657,7 +657,7 @@ do_download(int fd_in, int fd_out, char *remote_path, char *local_path,
 			fatal("Received more data than asked for %d > %d",
 			    len, COPY_SIZE);
 
-		debug3("In read loop, got %d offset %lld", len,
+		debug3("In read loop, got %d offset %llu", len,
 		    (unsigned long long)offset);
 		if (atomicio(write, local_fd, data, len) != len) {
 			error("Couldn't write to \"%s\": %s", local_path,

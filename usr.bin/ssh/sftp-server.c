@@ -22,7 +22,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-RCSID("$OpenBSD: sftp-server.c,v 1.18 2001/02/04 22:21:19 stevesk Exp $");
+RCSID("$OpenBSD: sftp-server.c,v 1.19 2001/02/07 18:01:18 itojun Exp $");
 
 #include "buffer.h"
 #include "bufaux.h"
@@ -395,7 +395,7 @@ process_read(void)
 	off = get_int64();
 	len = get_int();
 
-	TRACE("read id %d handle %d off %qd len %d", id, handle,
+	TRACE("read id %d handle %d off %llu len %d", id, handle,
 	    (unsigned long long)off, len);
 	if (len > sizeof buf) {
 		len = sizeof buf;
@@ -436,7 +436,7 @@ process_write(void)
 	off = get_int64();
 	data = get_string(&len);
 
-	TRACE("write id %d handle %d off %qd len %d", id, handle,
+	TRACE("write id %d handle %d off %llu len %d", id, handle,
 	    (unsigned long long)off, len);
 	fd = handle_to_fd(handle);
 	if (fd >= 0) {
@@ -664,8 +664,8 @@ ls_file(char *name, struct stat *st)
 	}
 	if (sz == 0)
 		tbuf[0] = '\0';
-	snprintf(buf, sizeof buf, "%s %3d %-8.8s %-8.8s %8qd %s %s", mode,
-	    st->st_nlink, user, group, (long long)st->st_size, tbuf, name);
+	snprintf(buf, sizeof buf, "%s %3d %-8.8s %-8.8s %8llu %s %s", mode,
+	    st->st_nlink, user, group, (unsigned long long)st->st_size, tbuf, name);
 	return xstrdup(buf);
 }
 
