@@ -1,4 +1,4 @@
-/*	$OpenBSD: ls.c,v 1.3 1997/06/17 20:58:45 kstailey Exp $	*/
+/*	$OpenBSD: ls.c,v 1.4 1997/06/30 23:47:44 millert Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ls.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: ls.c,v 1.3 1997/06/17 20:58:45 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: ls.c,v 1.4 1997/06/30 23:47:44 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -63,7 +63,7 @@ printlong(name, accpath, sb)
 {
 	char modep[15], *user_from_uid(), *group_from_gid();
 
-	(void)printf("%6lu %4ld ", sb->st_ino, sb->st_blocks);
+	(void)printf("%6u %4qd ", sb->st_ino, sb->st_blocks);
 	(void)strmode(sb->st_mode, modep);
 	(void)printf("%s %3u %-*s %-*s ", modep, sb->st_nlink, UT_NAMESIZE,
 	    user_from_uid(sb->st_uid, 0), UT_NAMESIZE,
