@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.15 2000/09/19 18:43:48 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.16 2000/09/23 12:38:34 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -53,6 +53,11 @@ Default target. Build the port. Essentially invoke
 .Bd -literal -offset indent
     env -i ${MAKE_ENV} ${MAKE_PROGRAM} ${MAKE_FLAGS} -f ${MAKE_FILE} ${ALL_TARGET}
 .Ed
+.It Ar checkpatch
+Debugging version of the
+.Ar patch
+target that simulates invoking
+.Xr patch 1 .
 .It Ar configure
 Configure the port. Might be a no operation. Unless overridden,
 configure creates the ${WRKBUILD} directory (see SEPARATE_BUILD), runs
@@ -389,6 +394,14 @@ Location for patches applied by patch target (default: patches.${ARCH} or
 patches).
 .It Ev PATCH_ARGS
 Full list of options used while applying port's patches.
+.It Ev PATCH_CHECK_ONLY
+Set to Yes by the
+.Ar checkpatch
+target. Don't touch unless the default
+.Ar checkpatch
+target needs to be redefined.
+Ideally, user-defined patch subtargets ought to test checkpatch. In
+practice, they don't.
 .It Ev PATCH_DEBUG
 If set to
 .Sq Yes ,
