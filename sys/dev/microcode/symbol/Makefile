@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2004/11/22 09:22:08 deraadt Exp $
+# $OpenBSD: Makefile,v 1.3 2004/11/22 22:15:23 deraadt Exp $
 
 NOPROG=
 NOMAN=
@@ -10,9 +10,9 @@ NOMAN=
 
 afterinstall:
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 644 \
-	    ${.CURDIR}/eprimsym ${DESTDIR}/etc/firmware
+	    ${.CURDIR}/eprimsym ${DESTDIR}/etc/firmware/symbol-eprim
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 644 \
-	    ${.CURDIR}/esecsym ${DESTDIR}/etc/firmware
+	    ${.CURDIR}/esecsym ${DESTDIR}/etc/firmware/symbol-esec
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 644 \
 	    ${.CURDIR}/symbol-license ${DESTDIR}/etc/firmware
 .endif
