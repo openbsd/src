@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_sym.c,v 1.12 1996/08/04 01:27:46 niklas Exp $	*/
+/*	$OpenBSD: db_sym.c,v 1.13 1996/08/13 00:41:34 niklas Exp $	*/
 /*	$NetBSD: db_sym.c,v 1.12 1996/02/05 01:57:15 christos Exp $	*/
 
 /* 
@@ -268,11 +268,11 @@ db_search_symbol( val, strategy, offp)
 	db_symtab_t	st;
 	db_sym_t	ret = DB_SYM_NULL, sym;
 
-	newdiff = diff = ~0;
+	newdiff = diff = -1;
 	db_last_symtab = 0;
 	for (st = db_symtabs.tqh_first; st != NULL; st = st->list.tqe_next) {
 	    sym = X_db_search_symbol(st, val, strategy, &newdiff);
-	    if (newdiff < diff) {
+	    if (newdiff < diff || diff < 0) {
 		db_last_symtab = st;
 		diff = newdiff;
 		ret = sym;

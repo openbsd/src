@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_aout.c,v 1.8 1996/05/10 13:58:43 mickey Exp $	*/
+/*	$OpenBSD: db_aout.c,v 1.9 1996/08/13 00:41:33 niklas Exp $	*/
 /*	$NetBSD: db_aout.c,v 1.14 1996/02/27 20:54:43 gwr Exp $	*/
 
 /* 
@@ -186,7 +186,7 @@ X_db_search_symbol(symtab, off, strategy, diffp)
 	db_strategy_t	strategy;
 	db_expr_t	*diffp;		/* in/out */
 {
-	register unsigned int	diff = *diffp;
+	register db_expr_t	diff = *diffp;
 	register struct nlist	*symp = 0;
 	register struct nlist	*sp, *ep;
 
@@ -199,7 +199,7 @@ X_db_search_symbol(symtab, off, strategy, diffp)
 	    if ((sp->n_type & N_STAB) != 0 || (sp->n_type & N_TYPE) == N_FN)
 		continue;
 	    if (off >= sp->n_value) {
-		if (off - sp->n_value < diff) {
+		if (off - sp->n_value < diff || diff < 0) {
 		    diff = off - sp->n_value;
 		    symp = sp;
 		    if (diff == 0 &&
