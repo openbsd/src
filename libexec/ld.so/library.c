@@ -1,4 +1,4 @@
-/*	$OpenBSD: library.c,v 1.22 2002/08/08 17:17:12 art Exp $ */
+/*	$OpenBSD: library.c,v 1.23 2002/11/17 20:27:20 drahn Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -263,7 +263,7 @@ again:
 			if (req_sod.sod_minor < sod.sod_minor)
 				_dl_printf("warning: lib%s.so.%d.%d: "
 				    "minor version >= %d expected, "
-				    "using it anyway",
+				    "using it anyway\n",
 				    sod.sod_name, sod.sod_major,
 				    sod.sod_minor, req_sod.sod_minor);
 			object = _dl_tryload_shlib(hint, type);
@@ -284,7 +284,7 @@ again:
 			if (req_sod.sod_minor < sod.sod_minor)
 				_dl_printf("warning: lib%s.so.%d.%d: "
 				    "minor version >= %d expected, "
-				    "using it anyway",
+				    "using it anyway\n",
 				    sod.sod_name, sod.sod_major,
 				    sod.sod_minor, req_sod.sod_minor);
 			object = _dl_tryload_shlib(hint, type);
@@ -301,7 +301,7 @@ again:
 		if (req_sod.sod_minor < sod.sod_minor)
 			_dl_printf("warning: lib%s.so.%d.%d: "
 			    "minor version >= %d expected, "
-			    "using it anyway",
+			    "using it anyway\n",
 			    sod.sod_name, sod.sod_major,
 			    sod.sod_minor, req_sod.sod_minor);
 		object = _dl_tryload_shlib(hint, type);
