@@ -357,6 +357,8 @@ swapin(p)
 	p->p_flag |= P_INMEM;
 	splx(s);
 	p->p_swtime = 0;
+	cnt.v_swpin++;
+	cnt.v_pswpin += USPACE * CLSIZE / NBPG;
 }
 
 /*
@@ -545,6 +547,8 @@ swapout(p)
 		remrq(p);
 	splx(s);
 	p->p_swtime = 0;
+	cnt.v_swpin++;
+	cnt.v_pswpin += USPACE * CLSIZE / NBPG;
 }
 
 /*
