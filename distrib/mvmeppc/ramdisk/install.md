@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.19 2003/09/21 02:11:42 krw Exp $
+#	$OpenBSD: install.md,v 1.20 2003/09/22 01:31:39 krw Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -84,11 +84,8 @@ OpenFirmware manual -and- the PowerPC OpenBSD Installation Guide for doing
 setup this way.
 
 __EOT
-	ask "Do you want to initialize the MBR and the MSDOS partition?" y
-	case $resp in
-	n*|N*)	exit 0	;;
-	*)		;;
-	esac
+	ask_yn "Do you want to initialize the MBR and the MSDOS partition?" yes
+	[[ $resp == n ]] && exit
 
 	cat << __EOT
 An MBR record with an OpenBSD usable partition table will now be copied to your
@@ -149,16 +146,13 @@ __EOT
 md_checkforMBRdisklabel() {
 	local _disk=$1 rval=0
 
-	ask "Are you *sure* you want to put a MBR disklabel on the disk?" n
-	case $resp in
-	n*|N*)	echo "aborting install"
-		exit 0;;
-	esac
+	ask_yn "Are you *sure* you want to put a MBR disklabel on the disk?"
+	[[ $resp == n ]] && exit
 
-	ask "Have you initialized an MSDOS partition using OpenFirmware?" n
+	ask_yn "Have you initialized an MSDOS partition using OpenFirmware?"
 	case $resp in
-	n*|N*)	md_init_mbr $_disk;;
-	*)	cat << __EOT
+	n)	md_init_mbr $_disk;;
+	y)	cat << __EOT
 You may keep your current setup if you want to be able to use any already
 loaded OS. However you will be asked to prepare an empty partition for OpenBSD
 later. There must also be at least ~0.5MB free space in the boot partition to
@@ -168,10 +162,8 @@ Also note that the boot partition must be included as partition 'i' in the
 OpenBSD disklabel.
 
 __EOT
-		ask "Do you want to keep the current MSDOS partition setup?" y
-		case $resp in
-		n*|N*)	md_init_mbr $_disk;;
-		esac
+		ask_yn "Keep the current MSDOS partition setup?" yes
+		[[ $resp == n ]] && md_init_mbr $_disk
 		;;
 	esac
 
@@ -236,12 +228,8 @@ $(fdisk $_disk)
 (You will be permitted to edit this information again.)
 -------------------------------------------------------
 __EOT
-		ask "Is the above information correct?" n
-
-		case $resp in
-		n*|N*)	;;
-		*)	break ;;
-		esac
+		ask_yn "Is the above information correct?"
+		[[ $resp == y ]] && break
 	done
 
 	cat << __EOT
@@ -256,25 +244,25 @@ __EOT
 }
 
 md_prep_disklabel() {
-	local _disk=$1
+	local _disk=$1 _q
 
 	md_checkfordisklabel $_disk
 	case $? in
-	0)	ask "Do you wish to edit the existing disklabel on $_disk?" y
+	0)	_q="Do you wish to edit the existing disklabel on $_disk?"
 		;;
 	1)	md_prep_fdisk $_disk
 		echo "WARNING: $_disk has no label"
-		ask "Do you want to create one with the disklabel editor?" y
+		_q="Do you want to create one with the disklabel editor?"
 		;;
 	2)	echo "WARNING: The disklabel on $_disk is invalid."
-		ask "Do you want to try and repair the damage using the disklabel editor?" y
+		_q="Do you want to try and repair the damage using the disklabel editor?"
 		;;
 	esac
 
-	case $resp in
-	y*|Y*)	;;
-	*)	return ;;
-	esac
+	if [[ -n $_q ]]; then
+		ask_yn "$_q" yes
+		[[ $resp == n ]] && return
+	fi
 
 	# display example
 	cat << __EOT

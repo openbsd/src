@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.19 2003/09/21 02:11:42 krw Exp $
+#	$OpenBSD: install.md,v 1.20 2003/09/22 01:31:39 krw Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -47,15 +47,9 @@ ARCH=ARCH
 md_set_term() {
 	local _tables
 
-	ask "Do you wish to select a keyboard encoding table?" n
+	ask_yn "Do you wish to select a keyboard encoding table?"
+	[[ $resp == n ]] && return
 
-	case $resp in
-	Y*|y*)	;;
-	*)	return
-		;;
-	esac
-
-	resp=
 	while : ; do
 		ask "Select your keyboard type: (P)C-AT/XT, (U)SB or 'done'" P
 		case $resp in
@@ -119,11 +113,11 @@ md_checkfordisklabel() {
 	return $rval
 }
 
-md_prep_fdisk()
-{
-	local _disk=$1 _whole=$2
+md_prep_fdisk() {
+	local _disk=$1
 
-	if [ -n "$_whole" ]; then
+	ask_yn "Do you want to use *all* of $_disk for OpenBSD?"
+	if [[ $resp == y ]]; then
 		echo -n "Putting all of $_disk into an active OpenBSD MBR partition (type 'A6')..."
 		fdisk -e ${_disk} << __EOT > /dev/null
 reinit
@@ -155,15 +149,10 @@ $(fdisk ${_disk})
 __EOT
 }
 
-md_prep_disklabel()
-{
+md_prep_disklabel() {
 	local _disk=$1
 
-	ask "Do you want to use *all* of $_disk for OpenBSD?" no
-	case $resp in
-	y*|Y*)	md_prep_fdisk ${_disk} Y ;;
-	*)	md_prep_fdisk ${_disk} ;;
-	esac
+	md_prep_fdisk $_disk
 
 	cat << __EOT
 
