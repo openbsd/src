@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.14 2001/08/13 00:12:38 miod Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.15 2001/08/15 21:22:29 miod Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.16 1997/07/12 16:18:36 perry Exp $	*/
 
 /*
@@ -178,16 +178,5 @@ struct pmap_physseg {
  * number of kernel PT pages (initial only, can grow dynamically)
  */
 #define VM_KERNEL_PT_PAGES	((vm_size_t)8)
-
-/*
- * XXX Override MI values for number of kernel maps and entries to statically
- * allocate, as we seem to lose hanging in high IPL with the MI values.
- */
-#ifndef MAX_KMAP
-#define MAX_KMAP	10
-#endif
-#ifndef MAX_KMAPENT
-#define MAX_KMAPENT	500
-#endif
 
 #endif /* !_MACHINE_VMPARAM_H_ */
