@@ -1,4 +1,4 @@
-/*	$OpenBSD: fmt.c,v 1.5 1997/01/27 04:06:49 millert Exp $	*/
+/*	$OpenBSD: fmt.c,v 1.6 1997/02/08 10:23:39 deraadt Exp $	*/
 /*	$NetBSD: fmt.c,v 1.4 1995/09/01 01:29:41 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)fmt.c	8.1 (Berkeley) 7/20/93";
 #else
-static char rcsid[] = "$OpenBSD: fmt.c,v 1.5 1997/01/27 04:06:49 millert Exp $";
+static char rcsid[] = "$OpenBSD: fmt.c,v 1.6 1997/02/08 10:23:39 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -96,7 +96,7 @@ void oflush __P((void));
 void tabulate __P((char *));
 void leadin __P((void));
 char *savestr __P((char *));
-char *extstr __P((char *, int *, int));
+inline char *extstr __P((char *, int *, int));
 int  ispref __P((char *, char *));
 int  ishead __P((char *));
 
