@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcore.h,v 1.1 2001/08/06 20:48:22 miod Exp $	*/
+/*	$OpenBSD: kcore.h,v 1.2 2003/06/02 16:16:27 miod Exp $	*/
 
 /*
  * Copyright (c) 2001 Miodrag Vallat.
@@ -12,8 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
