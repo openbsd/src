@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hifn.4,v 1.5 2000/04/14 06:00:20 deraadt Exp $
+.\"	$OpenBSD: hifn.4,v 1.6 2000/04/28 06:57:39 deraadt Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt
 .\" All rights reserved.
@@ -56,6 +56,7 @@ unlock the cryptographic functionality of the chip.  It is possible for
 vendors to make boards which have an lock ID not known to the driver, but
 all vendors just use the obvious ID which is 13 bytes of 0.
 .Sh SEE ALSO
+.Xr crypt 9 ,
 .Xr crypt 3 ,
 .Xr ipsec 4
 .Sh CAVEATS
