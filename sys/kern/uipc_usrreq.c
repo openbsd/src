@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.10 1999/02/05 04:14:19 angelos Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.11 1999/10/11 19:49:39 deraadt Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -397,18 +397,19 @@ unp_bind(unp, nam, p)
 	struct sockaddr_un *soun = mtod(nam, struct sockaddr_un *);
 	register struct vnode *vp;
 	struct vattr vattr;
-	int error;
+	int error, namelen;
 	struct nameidata nd;
+	char buf[MLEN];
 
-	NDINIT(&nd, CREATE, FOLLOW | LOCKPARENT, UIO_SYSSPACE,
-	    soun->sun_path, p);
 	if (unp->unp_vnode != NULL)
 		return (EINVAL);
-	if (nam->m_len == MLEN) {
-		if (*(mtod(nam, caddr_t) + nam->m_len - 1) != 0)
-			return (EINVAL);
-	} else
-		*(mtod(nam, caddr_t) + nam->m_len) = 0;
+#define offsetof(s, e) ((char *)&((s *)0)->e - (char *)((s *)0))
+	namelen = soun->sun_len - offsetof(struct sockaddr_un, sun_path);
+	if (namelen <= 0 || namelen >= MLEN)
+		return EINVAL;
+	strncpy(buf, soun->sun_path, namelen);
+	buf[namelen] = 0;       /* null-terminate the string */
+	NDINIT(&nd, CREATE, NOFOLLOW | LOCKPARENT, UIO_SYSSPACE, buf, p);
 /* SHOULD BE ABLE TO ADOPT EXISTING AND wakeup() ALA FIFO's */
 	if ((error = namei(&nd)) != 0)
 		return (error);
