@@ -45,6 +45,7 @@ static int   done        = 0;
 static RETSIGTYPE
 childhandler (int sig)
 {
+     int save_errno = errno;
      pid_t pid;
      int status;
 
@@ -54,6 +55,7 @@ childhandler (int sig)
 	   done = 1;
      } while(pid > 0);
      signal (SIGCHLD, childhandler);
+     errno = save_errno;
      SIGRETURN(0);
 }
 

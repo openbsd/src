@@ -162,6 +162,7 @@ copy_packets (int tundev, int netdev, int mtu, des_cblock *iv,
 RETSIGTYPE
 childhandler (int sig)
 {
+     int save_errno = errno;
      pid_t pid;
      int status;
 
@@ -169,6 +170,7 @@ childhandler (int sig)
 	  pid = waitpid (-1, &status, WNOHANG|WUNTRACED);
      } while(pid > 0);
      signal (SIGCHLD, childhandler);
+     errno = save_errno;
      SIGRETURN(0);
 }
 
