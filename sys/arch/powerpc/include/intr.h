@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.8 2001/03/29 18:47:18 drahn Exp $ */
+/*	$OpenBSD: intr.h,v 1.9 2001/06/24 04:41:37 drahn Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom, Opsycon AB and RTMX Inc, USA.
@@ -73,8 +73,7 @@ extern int imask[7];
  * seems to detect and then doen't move instructions past....
  */
 static __inline int
-splraise(newcpl)
-	int newcpl;
+splraise(int newcpl)
 {
 	int oldcpl;
 
@@ -86,8 +85,7 @@ splraise(newcpl)
 }
 
 static __inline void
-splx(newcpl)
-	int newcpl;
+splx(int newcpl)
 {
 	__asm__ volatile("sync; eieio\n");	/* reorder protect */
 	cpl = newcpl;
@@ -97,8 +95,7 @@ splx(newcpl)
 }
 
 static __inline int
-spllower(newcpl)
-	int newcpl;
+spllower(int newcpl)
 {
 	int oldcpl;
 
@@ -114,8 +111,7 @@ spllower(newcpl)
 /* Following code should be implemented with lwarx/stwcx to avoid
  * the disable/enable. i need to read the manual once more.... */
 static __inline void
-set_sint(pending)
-	int	pending;
+set_sint(int pending)
 {
 	int	msrsave;
 
