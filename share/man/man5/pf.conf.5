@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.131 2002/11/28 14:58:58 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.132 2002/12/01 22:21:38 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -380,7 +380,7 @@ in absolute and percentage values.
 Between queues a
 .Pa priority
 level can be set.
-The range is 0..7 with a default of 1.
+For CBQ, the range is 0..7 with a default of 1.
 Queues with a higher priority level are preferred in the case of overload.
 .Pa qlimit
 specifies the maximum number of packets in this queue.
