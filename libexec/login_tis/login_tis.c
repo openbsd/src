@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_tis.c,v 1.2 2005/01/04 18:24:33 moritz Exp $	*/
+/*	$OpenBSD: login_tis.c,v 1.3 2005/03/08 22:02:08 cloder Exp $	*/
 
 /*
  * Copyright (c) 2004 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -184,7 +184,7 @@ main(int argc, char *argv[])
 	switch (mode) {
 	case MODE_LOGIN:
 		if (rtype == display) {
-			printf(chalbuf);
+			printf("%s", chalbuf);
 			exit(1);
 		}
 		alarm(TIS_PASSWD_TIMEOUT);
