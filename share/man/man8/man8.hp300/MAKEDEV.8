@@ -1,10 +1,10 @@
-.\" $OpenBSD: MAKEDEV.8,v 1.28 2005/01/10 07:58:01 dlg Exp $
+.\" $OpenBSD: MAKEDEV.8,v 1.29 2005/01/14 22:40:08 miod Exp $
 .\"
 .\" THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 .\" generated from:
 .\"
-.\"	OpenBSD: etc.hp300/MAKEDEV.md,v 1.22 2004/08/03 21:46:46 miod Exp 
-.\"	OpenBSD: MAKEDEV.common,v 1.13 2005/01/10 07:53:57 dlg Exp 
+.\"	OpenBSD: etc.hp300/MAKEDEV.md,v 1.23 2005/01/14 22:39:15 miod Exp 
+.\"	OpenBSD: MAKEDEV.common,v 1.14 2005/01/14 22:39:11 miod Exp 
 .\"	OpenBSD: MAKEDEV.man,v 1.3 2004/03/12 18:12:12 miod Exp 
 .\"	OpenBSD: MAKEDEV.mansub,v 1.2 2004/02/20 19:13:01 miod Exp 
 .\"
@@ -23,7 +23,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd January 10, 2005
+.Dd January 14, 2005
 .Dt MAKEDEV 8 hp300
 .Os
 .Sh NAME
@@ -141,12 +141,25 @@ Set of 62 slave pseudo terminals, see
 .Pp
 .Sy Console ports
 .Bl -tag -width tenletters -compact
-.It Ar grf*
-Raw interface to HP300 graphics devices, see
-.Xr grf 4 .
-.It Ar ite*
-Terminal emulator interface to HP300 graphics devices, see
-.Xr ite 4 .
+.It Ar ttyC0
+Minimal wscons devices, see
+.Xr wscons 4 .
+.It Ar ttyC-F*
+wscons display devices, see
+.Xr wsdisplay 4 .
+.It Ar wskbd*
+wscons keyboards, see
+.Xr wskbd 4 .
+.It Ar wsmux
+wscons keyboard/mouse mux devices, see
+.Xr wsmux 4 .
+.El
+.Pp
+.Sy Pointing devices
+.Bl -tag -width tenletters -compact
+.It Ar wsmouse*
+wscons mice, see
+.Xr wsmouse 4 .
 .El
 .Pp
 .Sy Printers
@@ -164,9 +177,6 @@ Berkeley Packet Filter, see
 .It Ar fd
 fd/* nodes for fdescfs, see
 .Xr mount_fdesc 8 .
-.It Ar hil
-HP-HIL input devices, see
-.Xr hil 4 .
 .It Ar lkm
 Loadable kernel modules interface, see
 .Xr lkm 4 .

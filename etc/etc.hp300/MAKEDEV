@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.hp300/MAKEDEV.md,v 1.22 2004/08/03 21:46:46 miod Exp 
-#	OpenBSD: MAKEDEV.common,v 1.13 2005/01/10 07:53:57 dlg Exp 
+#	OpenBSD: etc.hp300/MAKEDEV.md,v 1.23 2005/01/14 22:39:15 miod Exp 
+#	OpenBSD: MAKEDEV.common,v 1.14 2005/01/14 22:39:11 miod Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.72 2004/02/16 18:58:53 miod Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.12 2004/02/20 19:13:01 miod Exp 
 #
@@ -50,14 +50,17 @@
 #	pty*	Set of 62 master pseudo terminals
 #	tty*	Set of 62 slave pseudo terminals
 # Console ports:
-#	grf*	Raw interface to HP300 graphics devices
-#	ite*	Terminal emulator interface to HP300 graphics devices
+#	ttyC0	Minimal wscons devices
+#	ttyC-F*	wscons display devices
+#	wskbd*	wscons keyboards
+#	wsmux	wscons keyboard/mouse mux devices
+# Pointing devices:
+#	wsmouse*	wscons mice
 # Printers:
 #	ppi*	HP-IB plotters
 # Special purpose devices:
 #	bpf*	Berkeley Packet Filter
 #	fd	fd/* nodes for fdescfs
-#	hil	HP-HIL input devices
 #	lkm	Loadable kernel modules interface
 #	pf*	Packet Filter
 #	*random	In-kernel random data source
@@ -200,7 +203,7 @@ case $i in
 ramdisk)
 	R std ct0 ct1 st0 st1 hd0 hd1 hd2 hd3 hd4
 	R sd0 sd1 sd2 sd3 sd4 cd0 cd1 rd0 pty0
-	R hil grf0 apci0 ite0 dca0 dcm0 dcm1
+	R apci0 dca0 dcm0 dcm1
 	R bpf0 bpf1 tun0 tun1 lkm random
 	;;
 
@@ -279,37 +282,6 @@ ppi*)
 	esac
 	;;
 
-ite*)
-	case $U in
-	0|1|2|3)
-		M ttye$U c 13 $U 600
-		;;
-	*)
-		echo bad unit for ite in: $i
-		;;
-	esac
-	;;
-
-grf*)
-	case $U in
-	0|1|2|3)
-		M grf$U c 10 $U 600
-		;;
-	*)
-		echo bad unit for grf in: $i
-		;;
-	esac
-	;;
-
-hil)
-	for U in 0 1 2 3 4 5 6 7
-	do
-		M hil$U c 14 $U 600
-	done
-	MKlist="$MKlist;ln hil1 keyboard"
-	MKlist="$MKlist;ln hil3 locator"
-	RMlist="$RMlist keyboard locator"
-	;;
 
 xfs*)
 	M xfs$U c 51 $U 600
@@ -360,6 +332,40 @@ fd)
 
 bpf*)
 	M bpf$U c 22 $U 600
+	;;
+
+wsmouse*)
+	M wsmouse$U c 42 $U 600
+	;;
+
+wsmux|wsmouse|wskbd)
+	M wsmouse c 43 0 600
+	M wskbd c 43 1 600
+	;;
+
+wskbd*)
+	M wskbd$U c 41 $U 600
+	;;
+
+tty[C-F]*)
+	U=${i##tty[C-F]}
+	case $i in
+	ttyC*) n=C m=0;;
+	ttyD*) n=D m=256;;
+	ttyE*) n=E m=512;;
+	ttyF*) n=F m=768;;
+	esac
+	case $U in
+	[0-9a-f]) M tty$n$U c 40 $(( 16#$U + $m )) 600;;
+	cfg) M tty${n}cfg c 40 $((255+$m)) 600;;
+	*) echo bad unit $U for $i; exit 1;;
+	esac
+	;;
+
+wscons)
+	R wsmouse0 wsmouse1 wsmouse2 wsmouse3 wskbd0 wskbd1 wskbd2
+	R wskbd3 wsmux ttyCcfg ttyC0 ttyC1 ttyC2 ttyC3 ttyC4 ttyC5
+	R ttyC6 ttyC7 ttyC8 ttyC9 ttyCa ttyCb
 	;;
 
 pty*)
@@ -443,11 +449,11 @@ local)
 	;;
 
 all)
-	R ite0 ct0 ct1 hd0 hd1 hd2 dcm0 dcm1 dcm2 dcm3 dca0 dca1 hil
-	R grf0 ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3
-	R sd4 cd0 cd1 rd0 tun0 tun1 tun2 tun3 bpf0 bpf1 bpf2 bpf3 bpf4
-	R bpf5 bpf6 bpf7 bpf8 bpf9 pty0 xfs0 ss0 ch0 ptm local ppi0
-	R apci0 uk0 random lkm pf systrace std st0 st1 fd
+	R ct0 ct1 hd0 hd1 hd2 dcm0 dcm1 dcm2 dcm3 dca0 dca1 ccd0 ccd1
+	R ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4 cd0 cd1
+	R rd0 tun0 tun1 tun2 tun3 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6
+	R bpf7 bpf8 bpf9 pty0 xfs0 ss0 ch0 ptm local ppi0 apci0 wscons
+	R uk0 random lkm pf systrace std st0 st1 fd
 	;;
 
 sd*|hd*|ccd*)
