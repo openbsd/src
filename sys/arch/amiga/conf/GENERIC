@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.48 1995/10/09 15:23:22 chopps Exp $
+#	$NetBSD: GENERIC,v 1.49 1995/12/27 07:40:08 chopps Exp $
 
 #
 # GENERIC AMIGA
@@ -212,10 +212,11 @@ cd*	at scsibus? target ? lun ?	# scsi cd's
 
 pseudo-device	sl			# slip
 pseudo-device	ppp			# ppp
-pseudo-device	view 10			# views
-pseudo-device	pty 16			# pseudo terminals
+pseudo-device	view	10		# views
+pseudo-device	pty	16		# pseudo terminals
 pseudo-device	loop			# network loopback
-#pseudo-device	bpfilter 2		# berkeley packet filters
+pseudo-device	vnd	4
+#pseudo-device	bpfilter	2	# berkeley packet filters
 #pseudo-device	tun 2
 
 config	netbsd swap on generic
