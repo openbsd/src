@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.76 2004/03/11 17:12:51 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.77 2004/03/11 17:47:48 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -810,8 +810,8 @@ lookup(char *s)
 		{ "med",		MED},
 		{ "min",		YMIN},
 		{ "multihop",		MULTIHOP},
-		{ "neighbor-as",	NEIGHBORAS},
 		{ "neighbor",		NEIGHBOR},
+		{ "neighbor-as",	NEIGHBORAS},
 		{ "network",		NETWORK},
 		{ "nexthop",		NEXTHOP},
 		{ "on",			ON},
