@@ -7,30 +7,20 @@ ftp://melanoma.bf.rmit.edu.au/pub/OpenBSD ==
 
 France:
 
-ftp://ftp.univ-evry.fr/pub/system/OpenBSD ==
-	     ftp://ftp1.fr.openbsd.org/pub/system/OpenBSD
-
 ftp://ftp.ibp.fr/pub/OpenBSD == ftp://ftp2.fr.openbsd.org/pub/OpenBSD
 
 Germany:
 
-
 ftp://ftp.cs.tu-berlin.de/pub/OpenBSD
 
-Located at the Free University, Berlin:
-
-	ftp://ftp.fu-berlin.de/pub/unix/openbsd/mirrors/OpenBSD ==
-		ftp://ftp.de.openbsd.org/pub/unix/openbsd/mirrors/OpenBSD
+ftp://ftp.fu-berlin.de/pub/unix/openbsd/mirrors/OpenBSD ==
+	ftp://ftp.de.openbsd.org/pub/unix/openbsd/mirrors/OpenBSD
 
 Japan:
 
-Located at Toyohashi University of Technology, Aichi:
+ftp://ftp.tut.ac.jp/OpenBSD == ftp://ftp.jp.openbsd.org/OpenBSD
 
-	ftp://ftp.tut.ac.jp/OpenBSD == ftp://ftp.jp.openbsd.org/OpenBSD
-
-Located at Dream Train Internet:
-
-	ftp://ftp.dti.ad.jp/pub/OpenBSD
+ftp://ftp.dti.ad.jp/pub/OpenBSD
 
 Switzerland:
 
