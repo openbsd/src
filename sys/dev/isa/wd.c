@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.39 1999/02/25 17:14:12 millert Exp $	*/
+/*	$OpenBSD: wd.c,v 1.40 1999/05/09 20:40:43 weingart Exp $	*/
 /*	$NetBSD: wd.c,v 1.150 1996/05/12 23:54:03 mycroft Exp $ */
 
 /*
@@ -764,20 +764,30 @@ wdsize(dev)
 	dev_t dev;
 {
 	struct wd_softc *wd;
-	int part;
+	int part, unit, omask;
 	int size;
 
 	WDDEBUG_PRINT(("wdsize\n"));
 
-	if (wdopen(dev, 0, S_IFBLK, NULL) != 0)
+	unit = WDUNIT(dev);
+	if (unit >= wd_cd.cd_ndevs)
 		return -1;
-	wd = wd_cd.cd_devs[WDUNIT(dev)];
+	wd = wd_cd.cd_devs[unit];
+	if (wd == NULL)
+		return -1;
+
 	part = WDPART(dev);
-	if (wd->sc_dk.dk_label->d_partitions[part].p_fstype != FS_SWAP)
+	omask = wd->sc_dk.dk_openmask & (1 << part);
+
+	if (omask == 0 && wdopen(dev, 0, S_IFBLK, NULL) != 0)
+		return -1;
+	else if (wd->sc_dk.dk_label->d_partitions[part].p_fstype != FS_SWAP)
 		size = -1;
 	else
-		size = wd->sc_dk.dk_label->d_partitions[part].p_size;
-	if (wdclose(dev, 0, S_IFBLK, NULL) != 0)
+		size = wd->sc_dk.dk_label->d_partitions[part].p_size *
+			(wd->sc_dk.dk_label->d_secsize / DEV_BSIZE);
+
+	if (omask == 0 && wdclose(dev, 0, S_IFBLK, NULL) != 0)
 		return -1;
 	return size;
 }
