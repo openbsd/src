@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sysdep,v 1.1 2001/03/23 16:14:35 markus Exp $
+#	$OpenBSD: Makefile.sysdep,v 1.2 2001/07/18 20:52:39 markus Exp $
 
 #
 # Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -31,17 +31,20 @@
 # Override default features
 FEATURES=	tripledes des blowfish cast ec aggressive debug x509
 # Not yet
-#FEATURES+=	policy
-FEATURES+=	policy
+#FEATURES+=	policy isakmp_cfg
 
 LIBCRYPTO=	/usr/contrib/lib/libcrypto.a
 LIBSYSDEPDIR=	${.CURDIR}/sysdep/common/libsysdep
 
+CFLAGS+=	-DHAVE_PCAP
+
 LDADD+=		${LIBGMP} ${LIBSYSDEPDIR}/libsysdep.a -lipsec
 DPADD+=		${LIBGMP} ${LIBSYSDEPDIR}/libsysdep.a ${LIBIPSEC}
 
-.if exists(/usr/build/kame/bsdi4/sys/net/pfkeyv2.h)
-CFLAGS+=	-I/usr/build/kame/bsdi4/sys
+SYSSRC=/usr/build/kame/bsdi4/sys
+
+.if exists(${SYSSRC}/net/pfkeyv2.h)
+CFLAGS+=	-I${SYSSRC}
 .endif
 
 .if exists(/usr/build/keynote/keynote.h)
@@ -49,7 +52,7 @@ CFLAGS+=	-I/usr/build/keynote
 LDFLAGS+=	-L/usr/build/keynote
 .endif
 
-CFLAGS+=	-DNO_IDEA -DNO_RC5 \
+CFLAGS+=	-DNO_IDEA -DNO_RC5 -DHAVE_GETNAMEINFO \
 		-I${.CURDIR}/sysdep/common
 CFLAGS+=	-I/usr/include -I/usr/contrib/include
 
