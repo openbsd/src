@@ -1,3 +1,4 @@
+#	$OpenBSD: disktab,v 1.2 1997/02/03 07:02:11 downsj Exp $
 #	$NetBSD: disktab,v 1.3 1995/09/30 21:57:48 thorpej Exp $
 #
 #	@(#)disktab	5.5 (Berkeley) 2/27/91
@@ -24,7 +25,7 @@
 # with the same geometry.
 
 #
-# HP CS80 Drives on rd (new style partitioning).  These mapping support
+# HP CS80 Drives on hd (new style partitioning).  These mapping support
 # three basic layouts:
 #
 #	A/B/G:   This is the "traditional" setup for a bootable disk.
@@ -40,12 +41,12 @@
 #	         Good for second drives on a machine as either /usr/src
 #		 or a large /usr or user partition.
 
-# pseudo-geometry taken from rd7945
+# pseudo-geometry taken from hd7945
 miniroot:\
         :ty=winchester:ns#16:nt#7:nc#968:\
 	:pa#10240:ba#8192:fa#1024:
 
-rd7945|rd7946|rd7945A|rd7946A|HP7945A|HP7946A:\
+hd7945|hd7946|hd7945A|hd7946A|HP7945A|HP7946A:\
 	:ty=winchester:ns#16:nt#7:nc#968:\
 	:pa#15904:ba#8192:fa#1024:\
 	:pb#20160:\
@@ -53,7 +54,7 @@ rd7945|rd7946|rd7945A|rd7946A|HP7945A|HP7946A:\
 	:pd#40320:\
 	:pg#72240:bg#4096:fg#512:\
 	:ph#52080:bh#4096:fh#512:
-rd7957|rd7957A|HP7957A:\
+hd7957|hd7957A|HP7957A:\
 	:ty=winchester:ns#22:nt#7:nc#1036:\
 	:pa#16016:ba#8192:fa#1024:\
 	:pb#24640:\
@@ -63,7 +64,7 @@ rd7957|rd7957A|HP7957A:\
 	:pf#46200:bf#4096:ff#1024:\
 	:pg#118734:bg#4096:fg#1024:\
 	:ph#101024:bh#4096:fh#1024:
-rd7958|rd7958A|HP7958A:\
+hd7958|hd7958A|HP7958A:\
 	:ty=winchester:ns#36:nt#7:nc#1013:\
 	:pa#16128:ba#8192:fa#1024:\
 	:pb#32256:\
@@ -73,7 +74,7 @@ rd7958|rd7958A|HP7958A:\
 	:pf#89712:bf#4096:ff#1024:\
 	:pg#206640:bg#4096:fg#1024:\
 	:ph#190512:bh#4096:fh#1024:
-rd7933|rd7933H|HP7933H:\
+hd7933|hd7933H|HP7933H:\
 	:ty=winchester:ns#46:nt#13:nc#1321:\
 	:pa#16146:ba#8192:fa#1024:\
 	:pb#66976:\
@@ -83,7 +84,7 @@ rd7933|rd7933H|HP7933H:\
 	:pf#165646:bf#4096:ff#1024:\
 	:pg#706238:bg#4096:fg#1024:\
 	:ph#358800:bh#4096:fh#1024:
-rd7937|rd7937H|HP7937H:\
+hd7937|hd7937H|HP7937H:\
 	:ty=winchester:ns#123:nt#13:nc#698:\
 	:pa#15990:ba#8192:fa#1024:\
 	:pb#67158:\
@@ -93,7 +94,7 @@ rd7937|rd7937H|HP7937H:\
 	:pf#246246:bf#4096:ff#1024:\
 	:pg#1031355:bg#4096:fg#512:\
 	:ph#522873:bh#4096:fh#1024:
-rd9134|rd9134L|HP9134L:\
+hd9134|hd9134L|HP9134L:\
 	:ty=winchester:ns#16:nt#5:nc#973:\
 	:pa#15920:ba#8192:fa#1024:\
 	:pb#20000:\
@@ -101,7 +102,7 @@ rd9134|rd9134L|HP9134L:\
 	:pd#32000:\
 	:pg#41840:bg#4096:fg#512:\
 	:ph#29840:bh#4096:fh#512:
-rd7936|rd7937H|HP7936H:\
+hd7936|hd7937H|HP7936H:\
 	:ty=winchester:ns#123:nt#7:nc#698:\
 	:pa#16359:ba#8192:fa#1024:\
 	:pb#67158:\
@@ -111,7 +112,7 @@ rd7936|rd7937H|HP7936H:\
 	:pf#120540:bf#4096:ff#1024:\
 	:pg#516600:bg#4096:fg#512:\
 	:ph#259161:bh#4096:fh#1024
-rd7957B|HP7957B:\
+hd7957B|HP7957B:\
 	:ty=winchester:ns#18:nt#7:nc#1269:\
 	:pa#16002:ba#8192:fa#1024:\
 	:pb#32760:\
@@ -121,7 +122,7 @@ rd7957B|HP7957B:\
 	:pf#44226:bf#4096:ff#1024:\
 	:pg#111006:bg#4096:fg#1024:\
 	:ph#94626:bh#4096:fh#1024:
-rd7958B|rd7962|rd7962B|HP7958B|HP7962B:\
+hd7958B|hd7962|hd7962B|HP7958B|HP7962B:\
 	:ty=winchester:ns#42:nt#9:nc#786:\
 	:pa#16254:ba#8192:fa#1024:\
 	:pb#32886:\
@@ -131,7 +132,7 @@ rd7958B|rd7962|rd7962B|HP7958B|HP7962B:\
 	:pf#109620:bf#4096:ff#1024:\
 	:pg#247590:bg#4096:fg#1024:\
 	:ph#231336:bh#4096:fh#1024:
-rd7959B|rd7963|rd7963B|HP7959B|HP7963B:\
+hd7959B|hd7963|hd7963B|HP7959B|HP7963B:\
 	:ty=winchester:ns#42:nt#9:nc#1572:\
 	:pa#16254:ba#8192:fa#1024:\
 	:pb#49140:\
@@ -141,7 +142,7 @@ rd7959B|rd7963|rd7963B|HP7959B|HP7963B:\
 	:pf#207900:bf#4096:ff#1024:\
 	:pg#528444:bg#4096:fg#1024:\
 	:ph#511812:bh#4096:fh#1024:
-rd335H|rd335|HP2200A|2200A|HP335H|HP6000/335H:\
+hd335H|hd335|HP2200A|2200A|HP335H|HP6000/335H:\
 	:ty=winchester:ns#113:nt#4:nc#1449:\
 	:pa#16272:ba#8192:fa#1024:\
 	:pb#49720:\
@@ -151,7 +152,7 @@ rd335H|rd335|HP2200A|2200A|HP335H|HP6000/335H:\
 	:pf#267584:bf#4096:ff#1024:\
 	:pg#588504:bg#4096:fg#1024:\
 	:ph#572232:bh#4096:fh#1024:
-rd670H|rd670|HP2203A|2203A|HP670H|HP6000/670H:\
+hd670H|hd670|HP2203A|2203A|HP670H|HP6000/670H:\
 	:ty=winchester:ns#113:nt#8:nc#1449:\
 	:pa#16272:ba#8192:fa#1024:\
 	:pb#67800:\
@@ -164,7 +165,7 @@ rd670H|rd670|HP2203A|2203A|HP670H|HP6000/670H:\
 #
 # Utah derivatives
 #
-rd7937-utah|HP7937H with Utah partitions:\
+hd7937-utah|HP7937H with Utah partitions:\
 	:ty=winchester:ns#123:nt#13:nc#698:\
 	:pa#15990:ba#8192:fa#1024:\
 	:pb#67158:\
@@ -177,15 +178,15 @@ rd7937-utah|HP7937H with Utah partitions:\
 #
 # Antiques
 #
-rd9134D|HP9134D:\
+hd9134D|HP9134D:\
 	:ty=winchester:ns#16:nt#6:nc#303:\
 	:pa#15936:ba#8192:fa#1024:\
 	:pb#13056:\
 	:pc#29088:bc#8192:fc#1024:
-rd9122|rd9122S|rd9122D|HP9122S|HP9122D:\
+hd9122|hd9122S|hd9122D|HP9122S|HP9122D:\
 	:ty=winchester:ns#8:nt#2:nc#77:\
 	:pc#1232:bc#8192:fc#1024:
-rd7912|rd7912P|HP7912P:\
+hd7912|hd7912P|HP7912P:\
 	:ty=winchester:ns#32:nt#7:nc#572:\
 	:pa#15904:ba#8192:fa#1024:\
 	:pb#22400:\
@@ -193,7 +194,7 @@ rd7912|rd7912P|HP7912P:\
 	:pd#42560:\
 	:pg#89600:bg#4096:fg#1024:\
 	:ph#69440:bh#4096:fh#1024:
-rd7914|rd7914P|rd7914CT|HP7914P|HP7914CT:\
+hd7914|hd7914P|hd7914CT|HP7914P|HP7914CT:\
 	:ty=winchester:ns#32:nt#7:nc#1152:\
 	:pa#15904:ba#8192:fa#1024:\
 	:pb#40320:\
