@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass_scsi.c,v 1.3 2003/05/17 06:07:57 nate Exp $ */
+/*	$OpenBSD: umass_scsi.c,v 1.4 2003/05/17 18:25:51 krw Exp $ */
 /*	$NetBSD: umass_scsipi.c,v 1.9 2003/02/16 23:14:08 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -374,7 +374,8 @@ umass_scsi_cb(struct umass_softc *sc, void *priv, int residue, int status)
 		}
 		/* FALLTHROUGH */
 	case STATUS_CMD_FAILED:
-		printf("umass_scsi_cb: status cmd failed\n");
+		printf("umass_scsi_cb: status cmd failed for scsi op 0x%02x\n",
+		    xs->cmd->opcode);
 		/* fetch sense data */
 		memset(&scbus->sc_sense_cmd, 0, sizeof(scbus->sc_sense_cmd));
 		scbus->sc_sense_cmd.opcode = REQUEST_SENSE;
