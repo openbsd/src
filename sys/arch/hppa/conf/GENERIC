@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.7 1999/04/20 20:32:18 mickey Exp $
+#	$OpenBSD: GENERIC,v 1.8 2000/01/09 22:00:19 itojun Exp $
 #
 # Generic kernel config (all that is supportted)
 #
@@ -19,3 +19,6 @@ config	bsd swap generic
 sd*	at scsibus? target ? lun ?
 #cd*	at scsibus? target ? lun ?
 
+# for IPv6
+pseudo-device	gif		4
+#pseudo-device	faith		1

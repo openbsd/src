@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.15 1999/10/01 21:59:33 maja Exp $
+#	$OpenBSD: GENERIC,v 1.16 2000/01/09 22:00:22 itojun Exp $
 #
 # GENERIC kernel for the distribition simpleroot
 #
@@ -135,3 +135,6 @@ pseudo-device	vnd		4	# virtual disk ick
 pseudo-device   ccd             4       # concatenated disks
 pseudo-device	bpfilter	16	# packet filter ports
 pseudo-device	pty		64	# pseudo ptys
+# for IPv6
+pseudo-device	gif		4
+#pseudo-device	faith		1

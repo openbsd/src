@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.46 1999/10/29 14:14:27 art Exp $
+#	$OpenBSD: GENERIC,v 1.47 2000/01/09 22:00:24 itojun Exp $
 # 	$NetBSD: GENERIC,v 1.48 1997/08/23 19:19:01 mjacob Exp $
 
 # Machine architecture; required by config(8)
@@ -297,3 +297,6 @@ fd*	at fdc0					# the drive itself
 pseudo-device	kbd		# Sun keyboard
 #pseudo-device	strip	1	# radio clock
 pseudo-device	rd 2
+# for IPv6
+pseudo-device	gif		4
+#pseudo-device	faith		1

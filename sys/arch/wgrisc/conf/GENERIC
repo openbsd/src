@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.4 1997/08/24 12:01:12 pefo Exp $
+#	$OpenBSD: GENERIC,v 1.5 2000/01/09 22:00:26 itojun Exp $
 #
 #	Generic configuration file for Willowglen RISC-PC 9100
 #
@@ -124,3 +124,6 @@ pseudo-device	tb		 1	# tablet line discipline
 pseudo-device	vnd		 4	# paging to files
 #pseudo-device   ccd		 4	# concatenated disk devices
 
+# for IPv6
+pseudo-device	gif		4
+#pseudo-device	faith		1

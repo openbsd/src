@@ -106,6 +106,9 @@ pseudo-device	vnd	 3	# 3 pseudo disks (see vnconfig)
 pseudo-device	bpfilter 2	# berkeley packet filters
 pseudo-device	tun	 2	# network tunnel
 pseudo-device	ccd	 4	# concatenating disk driver
+# for IPv6
+pseudo-device	gif		4
+#pseudo-device	faith		1
 
 #
 #The following sections describe various hardware options.

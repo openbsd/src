@@ -1,7 +1,0 @@
-include	"arch/powerpc/conf/GENERIC"
-
-options 	INET6		# IPV6
-
-# for IPv6
-pseudo-device	gif		4
-#pseudo-device	faith		1

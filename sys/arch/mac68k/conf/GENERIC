@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.24 1998/05/08 22:21:34 gene Exp $
+#	$OpenBSD: GENERIC,v 1.25 2000/01/09 22:00:20 itojun Exp $
 #	$NetBSD: GENERIC,v 1.52 1997/01/13 23:34:07 scottr Exp $
 #
 # GENERIC - an all-in-one kernel for the mac68k
@@ -62,3 +62,7 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 ch*	at scsibus? target ? lun ?	# SCSI autochangers
 ss*	at scsibus? target ? lun ?	# SCSI scanners
 uk*	at scsibus? target ? lun ?	# SCSI unknown
+
+# for IPv6
+pseudo-device	gif		4
+#pseudo-device	faith		1

@@ -180,3 +180,7 @@ pseudo-device	tun	2		# network tunneling over tty
 
 pseudo-device	pty	64		# pseudo-terminals
 #pseudo-device	vnd	4		# paging to files
+
+# for IPv6
+pseudo-device	gif		4
+#pseudo-device	faith		1

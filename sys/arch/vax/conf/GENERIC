@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.13 1997/10/02 19:55:16 niklas Exp $
+#	$OpenBSD: GENERIC,v 1.14 2000/01/09 22:00:25 itojun Exp $
 #	$NetBSD: GENERIC,v 1.24 1997/08/23 19:19:31 ragge Exp $
 #
 # GENERIC VAX configuration file; all supported devices.
@@ -151,3 +151,6 @@ pseudo-device	tun	2
 pseudo-device	tb	1
 pseudo-device	vnd	4
 pseudo-device	ccd	4
+# for IPv6
+pseudo-device	gif		4
+#pseudo-device	faith		1

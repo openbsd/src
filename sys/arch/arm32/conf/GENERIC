@@ -192,6 +192,10 @@ pseudo-device	ccd	2		# concatenated disk devices
 
 pseudo-device	rd	1		# Ramdisk driver
 
+# for IPv6
+pseudo-device	gif		4
+#pseudo-device	faith		1
+
 makeoptions MONITOR="Taxan875+LR"
 #makeoptions MONITOR="AKF60"
 makeoptions MODES="1024,768,60 1024,768,70 800,600,60 640,480,60 1280,1024 1152,900"

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.27 1999/09/09 21:27:36 espie Exp $
+#	$OpenBSD: GENERIC,v 1.28 2000/01/09 22:00:17 itojun Exp $
 #	$NetBSD: GENERIC,v 1.85 1997/08/27 19:32:49 is Exp $
 
 #
@@ -271,5 +271,8 @@ sm*	at pcmcia? function ?			# PCMCIA based sm ethernet
 fd*	at fdc0 unit ?
 
 pseudo-device	view	10		# views
+# for IPv6
+pseudo-device	gif		4
+#pseudo-device	faith		1
 
 config	bsd swap on generic
