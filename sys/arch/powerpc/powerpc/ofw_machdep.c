@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.2 1996/12/28 06:22:09 rahnds Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.3 1997/02/24 12:51:54 deraadt Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -185,12 +185,7 @@ done:
 #endif
 
 /* These should probably be somewhere else!				XXX */
-extern int ffs_mountroot __P((void));
-extern int cd9660_mountroot __P((void));
 extern char *nfsbootdevname;
-extern int nfs_mountroot __P((void));
-
-extern int (*mountroot) __P((void));
 
 static void
 dk_setroot(od, part)
@@ -241,25 +236,8 @@ dk_setroot(od, part)
 			}
 		} else
 			rootdev = makedev(maj, min * MAXPARTITIONS + part);
-#if defined(FFS) && defined(CD9660)
-		/*
-		 * Find out whether to use ffs or cd9660.
-		 */
-		if (bdevsw[maj].d_open(rootdev, FREAD, S_IFBLK, 0) < 0)
-			panic("dk_setroot");
-		if (!dk_match_ffs())
-			mountroot = ffs_mountroot;
-		else							/* XXX */
-			mountroot = cd9660_mountroot;
-		bdevsw[maj].d_close(rootdev, FREAD, S_IFBLK, 0);
-#elif defined(FFS)
-		mountroot = ffs_mountroot;
-#elif defined(CD9660)
-		mountroot = cd9660_mountroot;
-#else				/* Cannot occur */
-		panic("dk_setroot: No disk filesystem");
-#endif
 
+		mountroot = dk_mountroot;
 		/*
 		 * Now setup the swap/dump device
 		 */
