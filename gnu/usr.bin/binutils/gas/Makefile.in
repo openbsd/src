@@ -2353,21 +2353,21 @@ cgen.o: cgen.c cgen.h cgen-desc.h subsegs.h \
 install-exec-local: install-exec-bindir @install_tooldir@
 
 install-exec-bindir: $(noinst_PROGRAMS)
-	$(mkinstalldirs) $(bindir)
+	$(mkinstalldirs) $(DESTDIR)$(bindir)
 	@list='$(noinst_PROGRAMS)'; for p in $$list; do \
 	  if test -f $$p; then \
 	    echo " $(LIBTOOL)  --mode=install $(INSTALL_PROGRAM) $$p $(bindir)/`echo $$p|sed -e 's/$(EXEEXT)$$//' -e 's/-new//'|sed '$(transform)'|sed 's/$$/$(EXEEXT)/'`"; \
-	    $(LIBTOOL)  --mode=install $(INSTALL_PROGRAM) $$p $(bindir)/`echo $$p|sed -e 's/$(EXEEXT)$$//' -e 's/-new//'|sed '$(transform)'|sed 's/$$/$(EXEEXT)/'`; \
+	    $(LIBTOOL)  --mode=install $(INSTALL_PROGRAM) $$p $(DESTDIR)$(bindir)/`echo $$p|sed -e 's/$(EXEEXT)$$//' -e 's/-new//'|sed '$(transform)'|sed 's/$$/$(EXEEXT)/'`; \
 	  else :; fi; \
 	done
 
 install-exec-tooldir: install-exec-bindir $(noinst_PROGRAMS)
-	$(mkinstalldirs) $(tooldir)/bin
+	$(mkinstalldirs) $(DESTDIR)$(tooldir)/bin
 	n=`echo as | sed '$(transform)'`; \
 	if [ "$(bindir)/$$n$(EXEEXT)" != "$(tooldir)/bin/as$(EXEEXT)" ]; then \
-	  rm -f $(tooldir)/bin/as$(EXEEXT); \
-	  ln $(bindir)/$$n$(EXEEXT) $(tooldir)/bin/as$(EXEEXT) >/dev/null 2>/dev/null \
-	    || $(LIBTOOL) --mode=install $(INSTALL_PROGRAM) as-new$(EXEEXT) $(tooldir)/bin/as$(EXEEXT); \
+	  rm -f $(DESTDIR)$(tooldir)/bin/as$(EXEEXT); \
+	  ln $(DESTDIR)$(bindir)/$$n$(EXEEXT) $(DESTDIR)$(tooldir)/bin/as$(EXEEXT) >/dev/null 2>/dev/null \
+	    || $(LIBTOOL) --mode=install $(INSTALL_PROGRAM) as-new$(EXEEXT) $(DESTDIR)$(tooldir)/bin/as$(EXEEXT); \
 	else \
 	  true ; \
 	fi

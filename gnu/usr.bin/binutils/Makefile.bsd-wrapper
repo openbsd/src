@@ -1,14 +1,20 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.37 2000/09/14 13:15:39 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.38 2000/09/14 16:48:09 espie Exp $
 
 NEW_BINUTILS=alpha mips powerpc hppa
 
-PREFIX=/usr
 
 SUBDIRS=	opcodes bfd
 ALL_X11_MODULES=
 INSTALL_X11_MODULES=
 
-MANDIR=${PREFIX}/man/cat
+
+# This allows moving the whole binutils installation around for 
+# testing purposes
+PREFIX=/usr
+.if ${PREFIX} != "/usr"
+MANDIR=${PREFIX}/share/man/cat
+.endif
+
 MAN=
 
 .if ${MACHINE_ARCH} != "unknown"
@@ -68,6 +74,7 @@ config.status: do-config
 install: maninstall
 	SUBDIRS='${SUBDIRS}' ${MAKE} DESTDIR='${DESTDIR}' INSTALL_MAN= \
 	    INSTALL_X11_MODULES="${INSTALL_X11_MODULES}" \
+	    INSTALL_MAN= \
 	    INSTALL_MODULES='${INSTALL_MODULES}' install install-info
 	cd ${.OBJDIR}/binutils && \
 		${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP} -o ${BINOWN} -g ${BINGRP} \

@@ -43,6 +43,8 @@ man9dir = $(mandir)/man9
 infodir = $(prefix)/share/info
 includedir = $(prefix)/include
 
+DESTDIR = 
+
 SHELL = /bin/sh
 
 INSTALL = install -c
@@ -181,17 +183,17 @@ readline.tar.Z:	readline.tar
 		compress -f readline.tar
 
 install:
-		$(INSTALL_DATA) libreadline.a $(libdir)/libreadline.a
-		$(RANLIB) $(libdir)/libreadline.a
-		$(INSTALL_DATA) $(srcdir)/readline.h $(includedir)/readline/readline.h
-		$(INSTALL_DATA) $(srcdir)/keymaps.h $(includedir)/readline/keymaps.h
-		$(INSTALL_DATA) $(srcdir)/chardefs.h $(includedir)/readline/chardefs.h
+		$(INSTALL_DATA) libreadline.a $(DESTDIR)$(libdir)/libreadline.a
+		$(RANLIB) $(DESTDIR)$(libdir)/libreadline.a
+		$(INSTALL_DATA) $(srcdir)/readline.h $(DESTDIR)$(includedir)/readline/readline.h
+		$(INSTALL_DATA) $(srcdir)/keymaps.h $(DESTDIR)$(includedir)/readline/keymaps.h
+		$(INSTALL_DATA) $(srcdir)/chardefs.h $(DESTDIR)$(includedir)/readline/chardefs.h
 
 includes:
-		$(INSTALL_FILE) $(srcdir)/readline.h $(includedir)/readline/readline.h
-		$(INSTALL_FILE) $(srcdir)/keymaps.h $(includedir)/readline/keymaps.h
-		$(INSTALL_FILE) $(srcdir)/chardefs.h $(includedir)/readline/chardefs.h
-		$(INSTALL_FILE) $(srcdir)/history.h $(includedir)/readline/history.h
+		$(INSTALL_FILE) $(srcdir)/readline.h $(DESTDIR)$(includedir)/readline/readline.h
+		$(INSTALL_FILE) $(srcdir)/keymaps.h $(DESTDIR)$(includedir)/readline/keymaps.h
+		$(INSTALL_FILE) $(srcdir)/chardefs.h $(DESTDIR)$(includedir)/readline/chardefs.h
+		$(INSTALL_FILE) $(srcdir)/history.h $(DESTDIR)$(includedir)/readline/history.h
 
 local-clean:
 	rm -f $(STAGESTUFF) *.a *.log *.cp *.tp *.vr *.fn

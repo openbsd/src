@@ -51,11 +51,11 @@ info: history.info readline.info
 dvi: history.dvi readline.dvi
 
 install-info: info
-	-parent=`echo $(infodir)|sed -e 's@/[^/]*$$@@'`; \
+	-parent=`echo $(DESTDIR)$(infodir)|sed -e 's@/[^/]*$$@@'`; \
 	if [ -d $$parent ] ; then true ; else mkdir $$parent ; fi
-	-if [ -d $(infodir) ] ; then true ; else mkdir $(infodir) ; fi
+	-if [ -d $(DESTDIR)$(infodir) ] ; then true ; else mkdir $(DESTDIR)$(infodir) ; fi
 	for i in *.info* ; do \
-		$(INSTALL_DATA) $$i $(infodir)/$$i ; \
+		$(INSTALL_DATA) $$i $(DESTDIR)$(infodir)/$$i ; \
 	done
 
 history.info: hist.texinfo hsuser.texinfo hstech.texinfo

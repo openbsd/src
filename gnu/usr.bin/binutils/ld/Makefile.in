@@ -1498,24 +1498,24 @@ mostlyclean-local:
 .PHONY: install-exec-local install-data-local
 
 install-exec-local: ld-new$(EXEEXT)
-	$(mkinstalldirs) $(bindir) $(tooldir)/bin
+	$(mkinstalldirs) $(DESTDIR)$(bindir) $(DESTDIR)$(tooldir)/bin
 	@list='$(noinst_PROGRAMS)'; for p in $$list; do \
 	  if test -f $$p; then \
 	    echo " $(LIBTOOL)  --mode=install $(INSTALL_PROGRAM) $$p $(bindir)/`echo $$p|sed -e 's/$(EXEEXT)$$//' -e 's/-new//'|sed '$(transform)'|sed 's/$$/$(EXEEXT)/'`"; \
-	    $(LIBTOOL)  --mode=install $(INSTALL_PROGRAM) $$p $(bindir)/`echo $$p|sed -e 's/$(EXEEXT)$$//' -e 's/-new//'|sed '$(transform)'|sed 's/$$/$(EXEEXT)/'`; \
+	    $(LIBTOOL)  --mode=install $(INSTALL_PROGRAM) $$p $(DESTDIR)$(bindir)/`echo $$p|sed -e 's/$(EXEEXT)$$//' -e 's/-new//'|sed '$(transform)'|sed 's/$$/$(EXEEXT)/'`; \
 	  else :; fi; \
 	done
 	n=`echo ld | sed '$(transform)'`; \
 	if [ "$(bindir)/$$n$(EXEEXT)" != "$(tooldir)/bin/ld$(EXEEXT)" ]; then \
-	  rm -f $(tooldir)/bin/ld$(EXEEXT); \
-	  ln $(bindir)/$$n$(EXEEXT) $(tooldir)/bin/ld$(EXEEXT) >/dev/null 2>/dev/null \
-	  || $(LIBTOOL) --mode=install $(INSTALL_PROGRAM) ld-new$(EXEEXT) $(tooldir)/bin/ld$(EXEEXT); \
+	  rm -f $(DESTDIR)$(tooldir)/bin/ld$(EXEEXT); \
+	  ln $(DESTDIR)$(bindir)/$$n$(EXEEXT) $(DESTDIR)$(tooldir)/bin/ld$(EXEEXT) >/dev/null 2>/dev/null \
+	  || $(LIBTOOL) --mode=install $(INSTALL_PROGRAM) ld-new$(EXEEXT) $(DESTDIR)$(tooldir)/bin/ld$(EXEEXT); \
 	fi
 
 install-data-local:
-	$(mkinstalldirs) $(scriptdir)/ldscripts
+	$(mkinstalldirs) $(DESTDIR)$(scriptdir)/ldscripts
 	for f in ldscripts/*; do \
-	  $(INSTALL_DATA) $$f $(scriptdir)/$$f ; \
+	  $(INSTALL_DATA) $$f $(DESTDIR)$(scriptdir)/$$f ; \
 	done
 diststuff: $(LDDISTSTUFF) info
 distclean-local:

@@ -46,6 +46,8 @@ man9dir =	$(mandir)/man9
 infodir =	@infodir@
 includedir =	@includedir@
 
+DESTDIR = 
+
 SHELL =		/bin/sh
 
 INSTALL =	@INSTALL@
@@ -106,7 +108,7 @@ mmalloc.dvi: mmalloc.texi
 
 install-info: info
 	if test ! -f mmalloc.info ; then cd $(srcdir); fi; \
-	$(INSTALL_DATA) mmalloc.info $(infodir)/mmalloc.info
+	$(INSTALL_DATA) mmalloc.info $(DESTDIR)$(infodir)/mmalloc.info
 
 check: test1.c
 #	$(CC) -g $(srcdir)/test1.c libmmalloc.a
@@ -116,9 +118,9 @@ check: test1.c
 #	./a.out
 
 install:	all
-		$(INSTALL_DATA) $(TARGETLIB) $(libdir)/$(TARGETLIB).n
-		$(RANLIB) $(libdir)/$(TARGETLIB).n
-		mv -f $(libdir)/$(TARGETLIB).n $(libdir)/$(TARGETLIB)
+		$(INSTALL_DATA) $(TARGETLIB) $(DESTDIR)$(libdir)/$(TARGETLIB).n
+		$(RANLIB) $(DESTDIR)$(libdir)/$(TARGETLIB).n
+		mv -f $(DESTDIR)$(libdir)/$(TARGETLIB).n $(DESTDIR)$(libdir)/$(TARGETLIB)
 
 $(TARGETLIB):	$(OFILES)
 		$(RM) -rf $@

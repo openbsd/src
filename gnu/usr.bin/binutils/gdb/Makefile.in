@@ -41,6 +41,8 @@ man9dir = $(mandir)/man9
 infodir = @infodir@
 includedir = @includedir@
 
+DESTDIR =
+
 SHELL = /bin/sh
 
 INSTALL = @INSTALL@
@@ -544,16 +546,16 @@ install-only: $(INSTALL_MAN)
 		else \
 		  true ; \
 		fi ; \
-		$(INSTALL_PROGRAM) gdb $(bindir)/$$transformed_name ; \
+		$(INSTALL_PROGRAM) gdb $(DESTDIR)$(bindir)/$$transformed_name ; \
 	if [ x"$(ENABLE_GDBTK)" != x ] ; then \
-		  $(INSTALL_DATA) $(srcdir)/gdbtk.tcl $(datadir)/gdbtk.tcl ; \
+		  $(INSTALL_DATA) $(srcdir)/gdbtk.tcl $(DESTDIR)$(datadir)/gdbtk.tcl ; \
 		else \
 		  true ; \
 		fi
 	@$(MAKE) DO=install "DODIRS=$(SUBDIRS)" $(FLAGS_TO_PASS) subdir_do 
 
 install-man:
-	$(INSTALL_DATA) $(srcdir)/gdb.1 $(man1dir)/$$transformed_name.1
+	$(INSTALL_DATA) $(srcdir)/gdb.1 $(DESTDIR)$(man1dir)/$$transformed_name.1
 
 uninstall: force
 	transformed_name=`t='$(program_transform_name)'; \

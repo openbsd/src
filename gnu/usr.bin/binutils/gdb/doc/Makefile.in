@@ -98,7 +98,7 @@ all-doc: info dvi ps
 
 install-info: info
 	for i in *.info* ; do \
-		$(INSTALL_DATA) $$i $(infodir)/$$i ; \
+		$(INSTALL_DATA) $$i $(DESTDIR)$(infodir)/$$i ; \
 	done
 
 STAGESTUFF = *.info* gdb-all.texi GDBvn.texi *.ps *.dvi

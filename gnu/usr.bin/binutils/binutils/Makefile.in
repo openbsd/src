@@ -1202,18 +1202,18 @@ install-exec-local: install-binPROGRAMS $(bin_PROGRAMS) $(noinst_PROGRAMS)
 	@list='$(noinst_PROGRAMS)'; for p in $$list; do \
 	  if test -f $$p; then \
 	    echo " $(LIBTOOL)  --mode=install $(INSTALL_PROGRAM) $$p $(bindir)/`echo $$p|sed -e 's/$(EXEEXT)$$//' -e 's/-new//' -e 's/cxxfilt/$(DEMANGLER_NAME)/'|sed '$(transform)'|sed 's/$$/$(EXEEXT)/'`"; \
-	    $(LIBTOOL)  --mode=install $(INSTALL_PROGRAM) $$p $(bindir)/`echo $$p|sed -e 's/$(EXEEXT)$$//' -e 's/-new//' -e 's/cxxfilt/$(DEMANGLER_NAME)/'|sed '$(transform)'|sed 's/$$/$(EXEEXT)/'`; \
+	    $(LIBTOOL)  --mode=install $(INSTALL_PROGRAM) $$p $(DESTDIR)$(bindir)/`echo $$p|sed -e 's/$(EXEEXT)$$//' -e 's/-new//' -e 's/cxxfilt/$(DEMANGLER_NAME)/'|sed '$(transform)'|sed 's/$$/$(EXEEXT)/'`; \
 	  else :; fi; \
 	done
-	$(mkinstalldirs) $(tooldir)/bin
+	$(mkinstalldirs) $(DESTDIR)$(tooldir)/bin
 	for i in $(TOOL_PROGS); do \
 	  if [ -f $$i$(EXEEXT) ]; then \
 	    j=`echo $$i | sed -e 's/-new//'`; \
 	    k=`echo $$j | sed '$(transform)'`; \
 	    if [ "$(bindir)/$$k$(EXEEXT)" != "$(tooldir)/bin/$$j$(EXEEXT)" ]; then \
-	      rm -f $(tooldir)/bin/$$j$(EXEEXT); \
-	      ln $(bindir)/$$k$(EXEEXT) $(tooldir)/bin/$$j$(EXEEXT) >/dev/null 2>/dev/null \
-		|| $(LIBTOOL) --mode=install $(INSTALL_PROGRAM) $$i$(EXEEXT) $(tooldir)/bin/$$j$(EXEEXT); \
+	      rm -f $(DESTDIR)$(tooldir)/bin/$$j$(EXEEXT); \
+	      ln $(DESTDIR)$(bindir)/$$k$(EXEEXT) $(DESTDIR)$(tooldir)/bin/$$j$(EXEEXT) >/dev/null 2>/dev/null \
+		|| $(LIBTOOL) --mode=install $(INSTALL_PROGRAM) $$i$(EXEEXT) $(DESTDIR)$(tooldir)/bin/$$j$(EXEEXT); \
 	    fi; \
 	  else true; \
 	  fi; \
