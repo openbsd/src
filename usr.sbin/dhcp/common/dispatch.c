@@ -41,6 +41,7 @@
  */
 
 #include "dhcpd.h"
+#include <ifaddrs.h>
 #include <sys/ioctl.h>
 #include <poll.h>
 #include <net/if_media.h>
@@ -72,17 +73,13 @@ void discover_interfaces (state)
 {
 	struct interface_info *tmp;
 	struct interface_info *last, *next;
-	char *buf, *new_buf;
-	int len;
-	struct ifconf ic;
-	struct ifreq ifr;
-	int i;
 	int sock;
 	struct subnet *subnet;
 	struct shared_network *share;
 	struct sockaddr_in foo;
 	int ir;
 	struct ifreq *tif;
+	struct ifaddrs *ifap, *ifa;
 #ifdef ALIAS_NAMES_PERMUTED
 	char *s;
 #endif
@@ -91,31 +88,8 @@ void discover_interfaces (state)
 	if ((sock = socket (AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
 		error ("Can't create addrlist socket");
 
-	/* Get the interface configuration information... */
-	len = sizeof (struct ifreq) * INITIAL_IFREQ_COUNT;
-	buf = 0;
-	while (1) {
-		/*
-		 * Allocate a larger buffer each time around the loop and get
-		 * the network interfaces configurations into it.
-		 */
-		ic.ifc_len = len;
-		new_buf = realloc (buf, len);
-		if (!new_buf)
-			error ("realloc: %m");
-		ic.ifc_buf = buf = new_buf;
-		if (ioctl (sock, SIOCGIFCONF, &ic) == -1)
-			error ("ioctl: SIOCGIFCONF: %m");
-
-		/*
-		 * If there is place for another ifreq we can be sure that
-		 * the buffer was big enough, otherwise double the size and
-		 * try again.
-		 */
-		if (len - ic.ifc_len >= sizeof (struct ifreq))
-			break;
-		len *= 2;
-	}
+	if (getifaddrs(&ifap) != 0)
+		error ("getifaddrs failed");
 
 	/* If we already have a list of interfaces, and we're running as
 	   a DHCP server, the interfaces were requested. */
@@ -129,32 +103,20 @@ void discover_interfaces (state)
 		ir = INTERFACE_REQUESTED;
 
 	/* Cycle through the list of interfaces looking for IP addresses. */
-	for (i = 0; i < ic.ifc_len;) {
-		struct ifreq *ifp = (struct ifreq *)((caddr_t)ic.ifc_req + i);
-		if (ifp -> ifr_addr.sa_len > sizeof (struct sockaddr))
-			i += (sizeof ifp -> ifr_name) + ifp -> ifr_addr.sa_len;
-		else
-			i += sizeof *ifp;
-
+	for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
 		/* See if this is the sort of interface we want to
-		   deal with. */
-		strlcpy (ifr.ifr_name, ifp -> ifr_name, IFNAMSIZ);
-		if (ioctl (sock, SIOCGIFFLAGS, &ifr) < 0)
-			error ("Can't get interface flags for %s: %m",
-			       ifr.ifr_name);
-
-		/* Skip loopback, point-to-point and down interfaces,
-		   except don't skip down interfaces if we're trying to
-		   get a list of configurable interfaces. */
-		if ((ifr.ifr_flags & IFF_LOOPBACK) ||
-		    (ifr.ifr_flags & IFF_POINTOPOINT) ||
-		    (!(ifr.ifr_flags & IFF_UP) &&
+		   deal with.  Skip loopback, point-to-point and down
+		   interfaces, except don't skip down interfaces if we're
+		   trying to get a list of configurable interfaces. */
+		if ((ifa->ifa_flags & IFF_LOOPBACK) ||
+		    (ifa->ifa_flags & IFF_POINTOPOINT) ||
+		    (!(ifa->ifa_flags & IFF_UP) &&
 		     state != DISCOVER_UNCONFIGURED))
 			continue;
 		
 		/* See if we've seen an interface that matches this one. */
 		for (tmp = interfaces; tmp; tmp = tmp -> next)
-			if (!strcmp (tmp -> name, ifp -> ifr_name))
+			if (!strcmp (tmp -> name, ifa -> ifa_name))
 				break;
 
 		/* If there isn't already an interface by this name,
@@ -164,8 +126,8 @@ void discover_interfaces (state)
 			       dmalloc (sizeof *tmp, "discover_interfaces"));
 			if (!tmp)
 				error ("Insufficient memory to %s %s",
-				       "record interface", ifp -> ifr_name);
-			strlcpy (tmp -> name, ifp -> ifr_name, sizeof(tmp->name));
+				       "record interface", ifa -> ifa_name);
+			strlcpy (tmp -> name, ifa -> ifa_name, sizeof(tmp->name));
 			tmp -> next = interfaces;
 			tmp -> flags = ir;
 			tmp -> noifmedia = tmp -> dead = tmp->errors = 0;
@@ -174,38 +136,35 @@ void discover_interfaces (state)
 
 		/* If we have the capability, extract link information
 		   and record it in a linked list. */
-		if (ifp -> ifr_addr.sa_family == AF_LINK) {
+		if (ifa -> ifa_addr->sa_family == AF_LINK) {
 			struct sockaddr_dl *foo = ((struct sockaddr_dl *)
-						   (&ifp -> ifr_addr));
+						   (ifa -> ifa_addr));
 			tmp -> hw_address.hlen = foo -> sdl_alen;
 			tmp -> hw_address.htype = HTYPE_ETHER; /* XXX */
 			memcpy (tmp -> hw_address.haddr,
 				LLADDR (foo), foo -> sdl_alen);
-		} else
-
-		if (ifp -> ifr_addr.sa_family == AF_INET) {
+		} else if (ifa -> ifa_addr->sa_family == AF_INET) {
 			struct iaddr addr;
-			void *ptr;
 
 			/* Get a pointer to the address... */
-			ptr = &ifp->ifr_addr;
-			memcpy(&foo, ptr, sizeof(ifp->ifr_addr));
+			bcopy(ifa->ifa_addr, &foo, sizeof(foo));
 
 			/* We don't want the loopback interface. */
 			if (foo.sin_addr.s_addr == htonl (INADDR_LOOPBACK))
 				continue;
 
-
 			/* If this is the first real IP address we've
 			   found, keep a pointer to ifreq structure in
 			   which we found it. */
 			if (!tmp -> ifp) {
-				int len = ((sizeof ifp -> ifr_name) +
-					   ifp -> ifr_addr.sa_len);
+				int len = (IFNAMSIZ +
+					   ifa -> ifa_addr->sa_len);
 				tif = (struct ifreq *)malloc (len);
 				if (!tif)
 					error ("no space to remember ifp.");
-				memcpy (tif, ifp, len);
+				strlcpy(tif->ifr_name, ifa->ifa_name, IFNAMSIZ);
+				memcpy(&tif->ifr_addr, ifa->ifa_addr,
+				    ifa->ifa_addr->sa_len);
 				tmp -> ifp = tif;
 				tmp -> primary_address = foo.sin_addr;
 			}
@@ -325,6 +284,7 @@ void discover_interfaces (state)
 	}
 
 	close (sock);
+	freeifaddrs(ifap);
 
 	maybe_setup_fallback ();
 }
