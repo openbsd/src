@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.8 2003/07/08 23:05:20 drahn Exp $	*/
+/*	$OpenBSD: clock.c,v 1.9 2003/07/14 18:56:12 drahn Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 1996/09/30 16:34:40 ws Exp $	*/
 
 /*
@@ -71,14 +71,20 @@ typedef int (clock_read_t)(int *sec, int *min, int *hour, int *day,
 typedef int (time_read_t)(u_int32_t *sec);
 typedef int (time_write_t)(u_int32_t sec);
 
-int power4e_getclock(int *, int *, int *, int *, int *, int *);
-
 clock_read_t *clock_read = NULL;
 time_read_t  *time_read  = NULL;
 time_write_t *time_write  = NULL;
 
 static u_int32_t chiptotime(int sec, int min, int hour, int day, int mon,
     int year);
+
+/* event tracking variables, when the next events of each time should occur */
+u_int64_t nexttimerevent, nextstatevent;
+
+/* vars for stats */
+int statint;
+u_int32_t statvar;
+u_int32_t statmin;
 
 /*
  * For now we let the machine run with boot time, not changing the clock
@@ -90,8 +96,7 @@ static u_int32_t chiptotime(int sec, int min, int hour, int day, int mon,
 
 /* ARGSUSED */
 void
-inittodr(base)
-	time_t base;
+inittodr(time_t base)
 {
 	int sec, min, hour, day, mon, year;
 
@@ -119,7 +124,7 @@ inittodr(base)
 	} else {
 		/* force failure */
 		time.tv_sec = 0;
-	} 
+	}
 
 	if (time.tv_sec == 0) {
 		printf("WARNING: unable to get date/time");
@@ -162,8 +167,7 @@ const short dayyr[12] =
     { 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334 };
 
 static u_int32_t
-chiptotime(sec, min, hour, day, mon, year)
-        int sec, min, hour, day, mon, year;
+chiptotime(int sec, int min, int hour, int day, int mon, int year)
 {
 	int days, yr;
 		
@@ -192,7 +196,7 @@ chiptotime(sec, min, hour, day, mon, year)
  * Similar to the above
  */
 void
-resettodr()
+resettodr(void)
 {
 	struct timeval curtime = time;
 	if (time_write != NULL) {
@@ -204,16 +208,16 @@ resettodr()
 	}
 }
 
+volatile int tickspending, statspending;
 
 void
-decr_intr(frame)
-	struct clockframe *frame;
+decr_intr(struct clockframe *frame)
 {
-	int msr;
 	u_int64_t tb;
-	int32_t tick;
+	u_int64_t nextevent;
 	int nticks;
-	int pri;
+	int nstats;
+	int s;
 
 	/*
 	 * Check whether we are initialized.
@@ -221,62 +225,132 @@ decr_intr(frame)
 	if (!ticks_per_intr)
 		return;
 
-	intrcnt[PPC_CLK_IRQ]++;
 
 	/*
 	 * Based on the actual time delay since the last decrementer reload,
 	 * we arrange for earlier interrupt next time.
 	 */
-	tb = ppc_mftb();
-	tick = ppc_mfdec();  
-	for (nticks = 0; tick < 0; nticks++)
-		tick += ticks_per_intr;
 
-	ppc_mtdec(tick);
+	tb = ppc_mftb();
+	for (nticks = 0; nexttimerevent <= tb; nticks++)
+		nexttimerevent += ticks_per_intr;
+
+	for (nstats = 0; nextstatevent <= tb; nstats++) {
+		int r;
+		do {
+			r = random() & (statvar -1);
+		} while (r == 0); /* random == 0 not allowed */
+		nextstatevent += statmin + r;
+	}
+
+	/* only count timer ticks for CLK_IRQ */
+	intrcnt[PPC_CLK_IRQ] += nticks;
+	intrcnt[PPC_STAT_IRQ] += nstats;
+
+	if (nexttimerevent < nextstatevent)
+		nextevent = nexttimerevent;
+	else
+		nextevent = nextstatevent;
+
+	/*
+	 * Need to work about the near constant skew this introduces???
+	 * reloading tb here could cause a missed tick.
+	 */
+	ppc_mtdec(nextevent - tb);
+
 	/*
 	 * lasttb is used during microtime. Set it to the virtual
 	 * start of this tick interval.
 	 */
-	lasttb = tb + tick - ticks_per_intr;
+	lasttb = nexttimerevent - ticks_per_intr;
 
-	pri = splclock();
-
-	if (pri & SPL_CLOCK) {
+	if (cpl & SPL_CLOCK) {
 		tickspending += nticks;
+		statspending += nstats;
 	} else {
-		nticks += tickspending;
-		tickspending = 0;
-		/*
-		 * Reenable interrupts
-		 */
-		asm volatile ("mfmsr %0; ori %0, %0, %1; mtmsr %0"
-			      : "=r"(msr) : "K"(PSL_EE));
-		
-		/*
-		 * Do standard timer interrupt stuff.
-		 * Do softclock stuff only on the last iteration.
-		 */
-		frame->pri = pri | SINT_CLOCK;
-		while (--nticks > 0)
-			hardclock(frame);
-		frame->pri = pri;
-		hardclock(frame);
+		do {
+			nticks += tickspending;
+			nstats += statspending;
+			tickspending = 0;
+			statspending = 0;
+
+			s = splclock();
+
+			/*
+			 * Reenable interrupts
+			 */
+			ppc_intr_enable(1);
+			
+			/*
+			 * Do standard timer interrupt stuff.
+			 * Do softclock stuff only on the last iteration.
+			 */
+			frame->pri = s | SINT_CLOCK;
+			if (nticks > 1)
+				while (--nticks > 1)
+					hardclock(frame);
+
+			frame->pri = s;
+			if (nticks)
+				hardclock(frame);
+
+			while (nstats-- > 0)
+				statclock(frame);
+
+			splx(s);
+			(void) ppc_intr_disable();
+
+			/* if a tick has occurred while dealing with these,
+			 * service it now, do not delay until the next tick.
+			 */
+			nstats = 0;
+			nticks = 0;
+		} while (tickspending != 0 || statspending != 0);
 	}
-	splx(pri);
 }
 
 void
 cpu_initclocks()
 {
-	int s;
-	s = ppc_intr_disable();
+	int intrstate;
+	int r;
+	int minint;
+	u_int64_t nextevent;
+
+	intrstate = ppc_intr_disable();
+
+	stathz = 100;
+	profhz = 1000; /* must be a multiple of stathz */
+
+	/* init secondary clock to stathz */
+	statint = ticks_per_sec / stathz;
+	statvar = 0x40000000; /* really big power of two */
+	/* find largest 2^n which is nearly smaller than statint/2  */
+	minint = statint / 2 + 100;
+	while (statvar > minint)
+		statvar >>= 1;
+
+	statmin = statint - (statvar >> 1);
+
+
 	lasttb = ppc_mftb();
-	ppc_mtdec(ticks_per_intr);
-	ppc_intr_enable(s);
+	nexttimerevent = lasttb + ticks_per_intr;
+	do {
+		r = random() & (statvar -1);
+	} while (r == 0); /* random == 0 not allowed */
+	nextstatevent = lasttb + statmin + r;
+
+	if (nexttimerevent < nextstatevent)
+		nextevent = nexttimerevent;
+	else
+		nextevent = nextstatevent;
+
+	ppc_mtdec(nextevent-lasttb);
+	ppc_intr_enable(intrstate);
 }
 
 void
-calc_delayconst()
+calc_delayconst(void)
 {
 	int qhandle, phandle;
 	char name[32];
@@ -289,7 +363,7 @@ calc_delayconst()
 		if (OF_getprop(qhandle, "device_type", name, sizeof name) >= 0
 		    && !strcmp(name, "cpu")
 		    && OF_getprop(qhandle, "timebase-frequency",
-		    & ticks_per_sec, sizeof ticks_per_sec) >= 0) {
+		    &ticks_per_sec, sizeof ticks_per_sec) >= 0) {
 			/*
 			 * Should check for correct CPU here?		XXX
 			 */
@@ -297,6 +371,10 @@ calc_delayconst()
 			ns_per_tick = 1000000000 / ticks_per_sec;
 			ticks_per_intr = ticks_per_sec / hz;
 			ppc_intr_enable(s);
+			printf("clock error tick %x tick/sec %x hz %x err %x\n",
+				ticks_per_intr, ticks_per_sec, hz,
+				ticks_per_sec - ticks_per_intr * hz);
+			
 			break;
 		}
 		if ((phandle = OF_child(qhandle)))
@@ -307,6 +385,7 @@ calc_delayconst()
 			qhandle = OF_parent(qhandle);
 		}
 	}
+
 	if (!phandle)
 		panic("no cpu node");
 }
@@ -315,8 +394,7 @@ calc_delayconst()
  * Fill in *tvp with current time with microsecond resolution.
  */
 void
-microtime(tvp)
-	struct timeval *tvp;
+microtime(struct timeval *tvp)
 {
 	u_int64_t tb;
 	u_int32_t ticks;
@@ -339,8 +417,7 @@ microtime(tvp)
  * Wait for about n microseconds (us) (at least!).
  */
 void
-delay(n)
-	unsigned n;
+delay(unsigned n)
 {
 	u_int64_t tb;
 	u_int32_t tbh, tbl, scratch;
@@ -348,20 +425,35 @@ delay(n)
 	tb = ppc_mftb();
 	tb += (n * 1000 + ns_per_tick - 1) / ns_per_tick;
 	tbh = tb >> 32;
-	tbl = tb;
+	tbl = (u_int32_t)tb;
 	asm ("1: mftbu %0; cmplw %0,%1; blt 1b; bgt 2f;"
 	     " mftb %0; cmplw %0,%2; blt 1b; 2:"
 	     :: "r"(scratch), "r"(tbh), "r"(tbl));
-
-	tb = ppc_mftb();
 }
 
 /*
  * Nothing to do.
  */
 void
-setstatclockrate(arg)
-	int arg;
+setstatclockrate(int newhz)
 {
-	/* Do nothing */
+	int minint;
+	int intrstate;
+
+	intrstate = ppc_intr_disable();
+
+	statint = ticks_per_sec / newhz;
+	statvar = 0x40000000; /* really big power of two */
+	/* find largest 2^n which is nearly smaller than statint/2 */
+	minint = statint / 2 + 100;
+	while (statvar > minint)
+		statvar >>= 1;
+
+	statmin = statint - (statvar >> 1);
+	ppc_intr_enable(intrstate);
+
+	/*
+	 * XXX this allows the next stat timer to occur then it switches
+	 * to the new frequency. Rather than switching instantly.
+	 */
 }

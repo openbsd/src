@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.53 2003/07/02 21:30:13 drahn Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.54 2003/07/14 18:56:12 drahn Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -833,7 +833,7 @@ dumpsys()
 	printf("dumpsys: TBD\n");
 }
 
-volatile int cpl, ipending, astpending, tickspending;
+volatile int cpl, ipending, astpending;
 int imask[7];
 
 /* 

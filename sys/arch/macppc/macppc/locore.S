@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.8 2002/11/17 20:36:53 drahn Exp $	*/
+/*	$OpenBSD: locore.S,v 1.9 2003/07/14 18:56:12 drahn Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
@@ -1313,6 +1313,7 @@ _C_LABEL(intrnames):
 	.string "irq56" "irq57" "irq58" "irq59"
 	.string "irq60" "irq61" "irq62" "irq63"
 	.string "clock" 
+	.string "stat" 
 	.space 512
 _C_LABEL(eintrnames):
 	.align 4
@@ -1337,6 +1338,7 @@ _C_LABEL(intrcnt):
 	.long 0,0,0,0
 	.long 0,0,0,0
 	.long 0,0,0,0
+	.long 0
 	.long 0
 _C_LABEL(eintrcnt):
 
