@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.local,v 1.20 1998/03/25 07:25:22 deraadt Exp $
+#	$OpenBSD: rc.local,v 1.21 1998/04/07 06:11:55 deraadt Exp $
 
 # site-specific startup actions, daemons, and other things which
 # can be done AFTER your system goes into securemode.  For actions
@@ -30,11 +30,6 @@ fi
 # set pcvt screen saver time to 5min (see scon(1) for more options)
 #if test -x /usr/sbin/ispcvt -a -x /usr/sbin/scon && /usr/sbin/ispcvt; then
 #	echo -n ' scon';	/usr/sbin/scon -t 300
-#fi
-
-# Alternatively, xdm may be started in /etc/ttys.
-#if [ -x /usr/X11R6/bin/xdm ]; then
-#	echo -n ' xdm';		/usr/X11R6/bin/xdm
 #fi
 
 echo '.'

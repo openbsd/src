@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.70 1998/03/25 23:07:21 deraadt Exp $
+#	$OpenBSD: rc,v 1.71 1998/04/07 06:11:52 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -416,4 +416,10 @@ fi
 . /etc/rc.local
 
 date
+
+# Alternatively, on some architectures, xdm may be started in /etc/ttys.
+if [ "X${xdm_flags}" != X"NO" ]; then
+	echo 'starting xdm...';		/usr/X11R6/bin/xdm
+fi
+
 exit 0
