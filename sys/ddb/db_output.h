@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_output.h,v 1.11 2002/05/14 16:12:33 art Exp $ */
+/*	$OpenBSD: db_output.h,v 1.12 2002/05/18 18:22:46 art Exp $ */
 /*	$NetBSD: db_output.h,v 1.9 1996/04/04 05:13:50 cgd Exp $	*/
 
 /* 
@@ -57,3 +57,6 @@ void db_end_line(int);
 #define DB_FORMAT_N	3
 #define DB_FORMAT_BUF_SIZE	64	/* should be plenty for all formats */
 char *db_format(char *, size_t, long, int, int, int);
+
+/* XXX - this is the wrong place, but we have no better. */
+void db_stack_dump(void);

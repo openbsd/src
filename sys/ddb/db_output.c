@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_output.c,v 1.18 2002/05/14 16:12:33 art Exp $	*/
+/*	$OpenBSD: db_output.c,v 1.19 2002/05/18 18:22:46 art Exp $	*/
 /*	$NetBSD: db_output.c,v 1.13 1996/04/01 17:27:14 christos Exp $	*/
 
 /* 
@@ -239,4 +239,24 @@ db_format(char *buf, size_t bufsize, long val, int format, int alt, int width)
 	snprintf(buf, bufsize, fmt, width, val);
 
 	return (buf);
+}
+
+void
+db_stack_dump(void)
+{
+	static int intrace;
+
+	if (intrace) {
+db_panic = 1;
+panic("foo");
+		printf("Faulted in traceback, aborting...\n");
+		return;
+	}
+
+	intrace = 1;
+	printf("Starting stack trace...\n");
+	db_stack_trace_print((db_expr_t)__builtin_frame_address(0), TRUE,
+	    256 /* low limit */, "", printf);
+	printf("End of stack trace.\n");
+	intrace = 0;
 }
