@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci_pci.c,v 1.8 2000/07/04 13:21:59 fgsch Exp $	*/
+/*	$OpenBSD: uhci_pci.c,v 1.9 2001/01/21 02:42:49 mickey Exp $	*/
 /*	$NetBSD: uhci_pci.c,v 1.14 2000/01/25 11:26:06 augustss Exp $	*/
 
 /*
@@ -120,24 +120,6 @@ uhci_pci_attach(parent, self, aux)
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
 		       csr | PCI_COMMAND_MASTER_ENABLE);
 
-	/* Map and establish the interrupt. */
-	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
-	    pa->pa_intrline, &ih)) {
-		printf(": couldn't map interrupt\n");
-		return;
-	}
-	intrstr = pci_intr_string(pc, ih);
-	sc->sc_ih = pci_intr_establish(pc, ih, IPL_USB, uhci_intr, sc,
-	    sc->sc.sc_bus.bdev.dv_xname);
-	if (sc->sc_ih == NULL) {
-		printf(": couldn't establish interrupt");
-		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
-		return;
-	}
-	printf(": %s\n", intrstr);
-
 	/* Verify that the PIRQD enable bit is set, some BIOS's don't do that*/
 	legsup = pci_conf_read(pc, pa->pa_tag, PCI_LEGSUP);
 	if (!(legsup & PCI_LEGSUP_USBPIRQDEN)) {
@@ -166,9 +148,27 @@ uhci_pci_attach(parent, self, aux)
 		return;
 	}
 
+	/* Map and establish the interrupt. */
+	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
+	    pa->pa_intrline, &ih)) {
+		printf(": couldn't map interrupt\n");
+		return;
+	}
+	intrstr = pci_intr_string(pc, ih);
+	sc->sc_ih = pci_intr_establish(pc, ih, IPL_USB, uhci_intr, sc,
+	    sc->sc.sc_bus.bdev.dv_xname);
+	if (sc->sc_ih == NULL) {
+		printf(": couldn't establish interrupt");
+		if (intrstr != NULL)
+			printf(" at %s", intrstr);
+		printf("\n");
+		return;
+	}
+	printf(": %s\n", intrstr);
+
 	/* Attach usb device. */
 	sc->sc.sc_child = config_found((void *)sc, &sc->sc.sc_bus,
-				       usbctlprint);
+	    usbctlprint);
 }
 
 int
