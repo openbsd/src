@@ -1,4 +1,4 @@
-.\"	$OpenBSD: le.4,v 1.6 2000/10/18 02:38:25 aaron Exp $
+.\"	$OpenBSD: le.4,v 1.7 2001/02/01 03:14:05 jason Exp $
 .\"
 .\" Copyright (c) 1994 James A. Jegers
 .\" All rights reserved.
@@ -30,18 +30,23 @@
 .Nd Lance Ethernet driver
 .Sh SYNOPSIS
 .Cd "le0 at isa? port 0x320 irq 10 drq 7"
+.Cd "le* at pci? dev ? function ?"
 .Cd "le* at isapnp?"
 .Sh DESCRIPTION
 The
 .Nm
 interface provides access to a 10 Mb/s Ethernet network via the
-Lance Ethernet chips.
+AMD Lance Ethernet chips.
 This includes the following models:
 .Pp
 .Bl -tag -width -offset indent -compact
+.It AT&T StarLAN 10, EN100, and StarLAN Fiber
 .It BICC Isolan
-.It Novell NE2100
+.It BOCALANcard/PCI
 .It Digital DEPCA
+.It Kingston 21xx
+.It Novell NE1500T
+.It Novell NE2100
 .El
 .Sh SEE ALSO
 .Xr ed 4 ,
