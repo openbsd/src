@@ -1,5 +1,5 @@
-/*	$OpenBSD: sa.h,v 1.12 1999/04/27 20:59:47 niklas Exp $	*/
-/*	$EOM: sa.h,v 1.51 1999/04/27 09:42:30 niklas Exp $	*/
+/*	$OpenBSD: sa.h,v 1.13 1999/06/02 06:31:22 niklas Exp $	*/
+/*	$EOM: sa.h,v 1.52 1999/05/29 15:11:07 ho Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -159,6 +159,9 @@ struct sa {
 
 /* This SA has seen a soft timeout and wants to be renegotiated on use.  */
 #define SA_FLAG_FADING		0x10
+
+/* This SA should always be actively renegotiated (with us as initiator).  */
+#define SA_FLAG_ACTIVE_ONLY	0x20
 
 extern void proto_free (struct proto *proto);
 extern int sa_add_transform (struct sa *, struct payload *, int,
