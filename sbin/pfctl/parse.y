@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.215 2002/11/25 18:11:34 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.216 2002/11/26 19:14:14 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -69,8 +69,8 @@ enum {
 	PFCTL_STATE_NONE = 0,
 	PFCTL_STATE_OPTION = 1,
 	PFCTL_STATE_SCRUB = 2,
-	PFCTL_STATE_NAT = 3,
-	PFCTL_STATE_QUEUE = 4,
+	PFCTL_STATE_QUEUE = 3,
+	PFCTL_STATE_NAT = 4,
 	PFCTL_STATE_FILTER = 5
 };
 
@@ -2878,8 +2878,8 @@ int
 check_rulestate(int desired_state)
 {
 	if (require_order && (rulestate > desired_state)) {
-		yyerror("Rules must be in order: options, normalization, "
-		    "translation, queue, filter");
+		yyerror("Rules must be in order: options, scrub, "
+		    "queue, NAT, filter");
 		return (1);
 	}
 	rulestate = desired_state;
