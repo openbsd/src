@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.13 2004/01/13 00:44:52 miod Exp $
+dnl	$OpenBSD: install,v 1.14 2004/01/28 13:02:38 miod Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk. The easiest way
@@ -81,10 +81,20 @@ using an MVME328 board.
 Note that OpenBSD/MACHINE can boot off any tape drive supported by the BUG,
 even if its controller is not supported by OpenBSD.
 
+Booting from Network:
 
-Installing using a diskless setup:
+OpenBSD/MACHINE can boot off any network card supported by the BUG, even
+if the card itself is not supported by OpenBSD. Two network boot loaders
+are provided: one for Sun-compatible diskless setup (bootparams and NFS
+root), and a simpler version limited to tftp support.
 
-First, a diskless client configuration should be setup on a server. If
+The Sun-compatible network bootloader currently only supports the MVME187
+on-board interface, and will not be able to boot from any other ethernet
+controller. The tftp bootloader does not have this limitation and will boot
+from any BUG-supported ethernet controller.
+
+If you plan to use the Sun-compatible bootloader, "netboot", it will be
+necessary to setup a complete diskless client configuration on a server. If
 the boot server is an OpenBSD system, the diskless(8) manual page will
 provide detailed information on the process.
 
@@ -94,9 +104,12 @@ SunOS systems, add_client(8) and the Sun System/Networks administrators
 guide constitute a good start; on Solaris systems, share(1M) is a good
 starting point as well).
 
-OpenBSD/MACHINE can boot off any network card supported by the BUG, even
-if the card itself is not supported by OpenBSD. The list of BUG-supported
-network controllers is available with the "NIOT;A" command. For example:
+Using the tftp-compatible bootloader, "tftpboot", only requires a tftp
+server to be installed on the network, with both the tftpboot file and
+the kernel image (usually bsd.rd) available from it.
+
+The list of BUG-supported ethernet controllers is available with the
+"NIOT;A" command. For example:
 
     187-Bug> NIOT;A
     Network Controllers/Nodes Supported
@@ -126,14 +139,14 @@ example, on an MVME187 system with no external network card:
 If the BUG does not support the NIOT command (MVME187 BUG prior to version
 1.3 doesn't), then it has no support for netbooting.
 
-Before netbooting, enter "NIOT" and fill the parametrs. Be sure to provide
+Before netbooting, enter "NIOT" and fill the parameters. Be sure to provide
 the correct values for Controller LUN and Device LUN (as listed in the
 "NIOT;A" output); also the "Boot File Load Address" and "Boot File
 Execution Address" need to be set to 00AF0000. The "Boot File Name" must
 match the name of the netboot file on the server (copying it as
-"netboot.mvme88k" is usually a wise choice). Finally, "Argument File Name"
-needs to be set to "bsd.rd" in order to boot the installation miniroot,
-rather than the regular kernel.
+"netboot.mvme88k" or "tftpboot.mvme88k" is usually a wise choice). Finally,
+"Argument File Name" needs to be set to "bsd.rd" in order to boot the
+installation miniroot, rather than the regular kernel.
 
 Here are acceptable values for a 187 card using the built-in controller:
 
@@ -170,24 +183,15 @@ address for the NIOT parameters block in this case. A valid setting is:
 for example.
 
 Once the NIOT parameters are set, it should be possible to boot the machine
-from the server with the NBO command. However, in some cases, netbooting
-will prevent the OpenBSD kernel from probing the built-in SCSI controller
-(if any) properly, so it is recommended to do a disk probe first:
+from the server with the NBO command:
 
-    187-Bug> IOI;C
-    187-Bug> IOI
-
-This can take up to a couple of minutes, depending how many SCSI controllers
-are found in the machine. Once the BUG prompt is back, you can safely
-netboot:
-	
     187-Bug> NBO 00 00
 
-or if you know the IP address for the MACHINE and the diskless server,
+or if you know the IP address for the MACHINE and the tftp server,
 you can directly provide the boot loader's filename and the kernel name
 on the commandline:
 
-     187-Bug> NBO 00 00 192.168.0.68 192.168.0.1 netboot.mvme88k bsd.rd
+     187-Bug> NBO 00 00 192.168.0.68 192.168.0.1 tftpboot.mvme88k bsd.rd
 
 where, in this example, 192.168.0.68 is the address of the MACHINE computer,
 and 192.168.0.1 the address of the diskless server.
