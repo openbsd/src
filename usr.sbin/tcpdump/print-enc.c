@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-enc.c,v 1.7 2002/02/19 19:39:40 millert Exp $	*/
+/*	$OpenBSD: print-enc.c,v 1.8 2004/11/17 13:27:55 markus Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-enc.c,v 1.7 2002/02/19 19:39:40 millert Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-enc.c,v 1.8 2004/11/17 13:27:55 markus Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -64,7 +64,6 @@ enc_if_print(u_char *user, const struct pcap_pkthdr *h,
 	register u_int length = h->len;
 	register u_int caplen = h->caplen;
 	int flags;
-	const struct ip *ip;
 	const struct enchdr *hdr;
 
 	ts_print(&h->ts);
@@ -94,11 +93,20 @@ enc_if_print(u_char *user, const struct pcap_pkthdr *h,
 	printf("SPI 0x%08x: ", ntohl(hdr->spi));
 
 	length -= ENC_HDRLEN;
-	ip = (struct ip *)(p + ENC_HDRLEN);
-	ip_print((const u_char *)ip, length);
+	p += ENC_HDRLEN;
+
+	switch (hdr->af) {
+	case AF_INET:
+	default:
+		ip_print(p, length);
+		break;
+	case AF_INET6:
+		ip6_print(p, length);
+		break;
+	}
 
 	if (xflag)
-		default_print((const u_char *)ip, caplen - ENC_HDRLEN);
+		default_print(p, caplen - ENC_HDRLEN);
 out:
 	putchar('\n');
 }
