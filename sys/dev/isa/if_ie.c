@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.25 2003/02/03 19:45:53 jason Exp $	*/
+/*	$OpenBSD: if_ie.c,v 1.26 2003/04/10 10:11:24 miod Exp $	*/
 /*	$NetBSD: if_ie.c,v 1.51 1996/05/12 23:52:48 mycroft Exp $	*/
 
 /*-
@@ -142,7 +142,6 @@ iomem, and to make 16-pointers, we subtract sc_maddr and and with 0xffff.
 #include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
-#include <machine/pio.h>		/* XXX convert this driver! */
 #include <machine/bus.h>
 #include <machine/intr.h>
 

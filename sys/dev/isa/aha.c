@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha.c,v 1.49 2002/10/07 18:35:57 mickey Exp $	*/
+/*	$OpenBSD: aha.c,v 1.50 2003/04/10 10:11:24 miod Exp $	*/
 /*	$NetBSD: aha.c,v 1.11 1996/05/12 23:51:23 mycroft Exp $	*/
 
 #undef AHADIAG
@@ -64,7 +64,6 @@
 #include <uvm/uvm_extern.h>
 
 #include <machine/intr.h>
-#include <machine/pio.h>
 #include <machine/bus.h>
 
 #include <scsi/scsi_all.h>

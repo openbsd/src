@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_eg.c,v 1.24 2003/01/27 19:09:12 jason Exp $	*/
+/*	$OpenBSD: if_eg.c,v 1.25 2003/04/10 10:11:24 miod Exp $	*/
 /*	$NetBSD: if_eg.c,v 1.26 1996/05/12 23:52:27 mycroft Exp $	*/
 
 /*
@@ -71,7 +71,6 @@
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
-#include <machine/pio.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/if_egreg.h>
