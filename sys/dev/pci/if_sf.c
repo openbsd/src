@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sf.c,v 1.1 1999/11/03 02:45:08 aaron Exp $ */
+/*	$OpenBSD: if_sf.c,v 1.2 1999/12/08 00:25:54 aaron Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -372,8 +372,10 @@ void sf_miibus_statchg(self)
 
 	if ((mii->mii_media_active & IFM_GMASK) == IFM_FDX) {
 		SF_SETBIT(sc, SF_MACCFG_1, SF_MACCFG1_FULLDUPLEX);
+		csr_write_4(sc, SF_BKTOBKIPG, SF_IPGT_FDX);
 	} else {
 		SF_CLRBIT(sc, SF_MACCFG_1, SF_MACCFG1_FULLDUPLEX);
+		csr_write_4(sc, SF_BKTOBKIPG, SF_IPGT_HDX);
 	}
 
 	return;
@@ -443,6 +445,13 @@ int sf_ifmedia_upd(ifp)
 
 	sc = ifp->if_softc;
 	mii = &sc->sc_mii;
+	sc->sf_link = 0;
+	if (mii->mii_instance) {
+		struct mii_softc	*miisc;
+		for (miisc = LIST_FIRST(&mii->mii_phys); miisc != NULL;
+		    miisc = LIST_NEXT(miisc, mii_list))
+			mii_phy_reset(miisc);
+	}
 	mii_mediachg(mii);
 
 	return(0);
@@ -501,11 +510,21 @@ int sf_ioctl(ifp, command, data)
 		break;
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
-			sf_init(sc);
+			if (ifp->if_flags & IFF_RUNNING &&
+			    ifp->if_flags & IFF_PROMISC &&
+			    !(sc->sf_if_flags & IFF_PROMISC)) {
+				SF_SETBIT(sc, SF_RXFILT, SF_RXFILT_PROMISC);
+			} else if (ifp->if_flags & IFF_RUNNING &&
+			    !(ifp->if_flags & IFF_PROMISC) &&
+			    sc->sf_if_flags & IFF_PROMISC) {
+				SF_CLRBIT(sc, SF_RXFILT, SF_RXFILT_PROMISC);
+			} else if (!(ifp->if_flags & IFF_RUNNING))
+				sf_init(sc);
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
 				sf_stop(sc);
 		}
+		sc->sf_if_flags = ifp->if_flags;
 		error = 0;
 		break;
 	case SIOCADDMULTI:
@@ -1107,13 +1126,6 @@ void sf_init(xsc)
 	/* Enable autopadding of short TX frames. */
 	SF_SETBIT(sc, SF_MACCFG_1, SF_MACCFG1_AUTOPAD);
 
-	/* Make sure the duplex mode is set correctly. */
-	if ((mii->mii_media.ifm_media & IFM_GMASK) == IFM_FDX) {
-		SF_SETBIT(sc, SF_MACCFG_1, SF_MACCFG1_FULLDUPLEX);
-	} else {
-		SF_CLRBIT(sc, SF_MACCFG_1, SF_MACCFG1_FULLDUPLEX);
-	}       
-
 	/* Enable interrupts. */
 	csr_write_4(sc, SF_IMR, SF_INTRS);
 	SF_SETBIT(sc, SF_PCI_DEVCFG, SF_PCIDEVCFG_INTR_ENB);
@@ -1122,7 +1134,7 @@ void sf_init(xsc)
 	SF_SETBIT(sc, SF_GEN_ETH_CTL, SF_ETHCTL_RX_ENB|SF_ETHCTL_RXDMA_ENB);
 	SF_SETBIT(sc, SF_GEN_ETH_CTL, SF_ETHCTL_TX_ENB|SF_ETHCTL_TXDMA_ENB);
 
-	mii_mediachg(mii);
+	sf_ifmedia_upd(ifp);
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -1207,6 +1219,9 @@ void sf_start(ifp)
 
 	sc = ifp->if_softc;
 
+	if (!sc->sf_link)
+		return;
+
 	if (ifp->if_flags & IFF_OACTIVE)
 		return;
 
@@ -1270,6 +1285,8 @@ void sf_stop(sc)
 	csr_write_4(sc, SF_TXDQ_CTL, 0);
 	sf_reset(sc);
 
+	sc->sf_link = 0;
+
 	for (i = 0; i < SF_RX_DLIST_CNT; i++) {
 		if (sc->sf_ldata->sf_rx_dlist_big[i].sf_mbuf != NULL) {
 			m_freem(sc->sf_ldata->sf_rx_dlist_big[i].sf_mbuf);
@@ -1325,6 +1342,14 @@ void sf_stats_update(xsc)
 	    stats.sf_tx_multi_colls + stats.sf_tx_excess_colls;
 
 	mii_tick(mii);
+	if (!sc->sf_link) {
+		mii_pollstat(mii);
+		if (mii->mii_media_status & IFM_ACTIVE &&
+		    IFM_SUBTYPE(mii->mii_media_active) != IFM_NONE)
+			sc->sf_link++;
+		if (ifp->if_snd.ifq_head != NULL)
+			sf_start(ifp);
+	}
 
 	timeout(sf_stats_update, sc, hz);
 
