@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.78 2002/01/19 21:15:37 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.79 2002/01/24 03:13:43 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -463,12 +463,8 @@ ubsec_feed(sc)
 	}
 	q->q_dma->d_dma->d_mcr.mcr_pkts = htole16(npkts);
 	SIMPLEQ_INSERT_TAIL(&sc->sc_qchip, q, q_next);
-#if 0
-	WRITE_REG(sc, BS_MCR1, (u_int32_t)vtophys(&q->q_dma->d_dma->d_mcr));
-#else
 	WRITE_REG(sc, BS_MCR1, q->q_dma->d_alloc.dma_paddr +
 	    offsetof(struct ubsec_dmachunk, d_mcr));
-#endif
 	return (0);
 
 feed1:
@@ -482,12 +478,8 @@ feed1:
 		}
 
 		q = SIMPLEQ_FIRST(&sc->sc_queue);
-#if 0
-		WRITE_REG(sc, BS_MCR1, (u_int32_t)vtophys(&q->q_dma->d_dma->d_mcr));
-#else
 		WRITE_REG(sc, BS_MCR1, q->q_dma->d_alloc.dma_paddr +
 		    offsetof(struct ubsec_dmachunk, d_mcr));
-#endif
 #ifdef UBSEC_DEBUG
 		printf("feed: q->chip %p %08x\n", q, (u_int32_t)vtophys(&q->q_dma->d_dma->d_mcr));
 #endif /* UBSEC_DEBUG */
