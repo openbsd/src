@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.19 2000/03/29 22:39:38 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.20 2000/03/30 05:56:31 jason Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -95,7 +95,16 @@ int	hifn_process __P((struct cryptop *));
 void	hifn_callback __P((struct hifn_command *));
 void	hifn_timeout __P((void *));
 void	hifn_print_stats __P((struct hifn_softc *));
-int hifn_crypto __P((struct hifn_softc *, hifn_command_t *));
+int	hifn_crypto __P((struct hifn_softc *, hifn_command_t *));
+
+struct hifn_stats {
+	u_int64_t hst_ibytes;
+	u_int64_t hst_obytes;
+	u_int32_t hst_ipackets;
+	u_int32_t hst_opackets;
+	u_int32_t hst_invalid;
+	u_int32_t hst_nomem;
+} hifnstats = { 0, 0, 0, 0, 0, 0 };
 
 int
 hifn_probe(parent, match, aux)
@@ -1089,6 +1098,7 @@ hifn_crypto(sc, cmd)
 	dma->cmdr[cmdi].l = cmdlen | HIFN_D_VALID | HIFN_D_LAST |
 	    HIFN_D_MASKDONEIRQ;
 	dma->cmdu++;
+	hifnstats.hst_ipackets++;
 
 	for (i = 0; i < cmd->src_npa; i++) {
 		int last = 0;
@@ -1105,6 +1115,7 @@ hifn_crypto(sc, cmd)
 		dma->srcr[srci].p = cmd->src_packp[i];
 		dma->srcr[srci].l = cmd->src_packl[i] | HIFN_D_VALID |
 		    HIFN_D_MASKDONEIRQ | last;
+		hifnstats.hst_ibytes += cmd->src_packl[i];
 	}
 	dma->srcu += cmd->src_npa;
 
@@ -1194,6 +1205,7 @@ hifn_intr(arg)
 		if (++dma->resk == HIFN_D_RES_RSIZE)
 			dma->resk = 0;
 		dma->resu--;
+		hifnstats.hst_opackets++;
 	}
 
 	/* clear the rings */
@@ -1208,6 +1220,7 @@ hifn_intr(arg)
 
 	i = dma->dstk; u = dma->dstu;
 	while (u != 0 && (dma->dstr[i].l & HIFN_D_VALID) == 0) {
+		hifnstats.hst_obytes += dma->dstr[i].l & 0xffff;
 		if (++i == HIFN_D_DST_RSIZE)
 			i = 0;
 		u--;
@@ -1287,32 +1300,42 @@ hifn_process(crp)
 	struct cryptop *crp;
 {
 	struct hifn_command *cmd = NULL;
-	int card, session;
+	int card, session, err;
 	struct hifn_softc *sc;
 	struct cryptodesc *crd;
 
-	if (crp == NULL)
-		goto errout;
+	if (crp == NULL || crp->crp_callback == NULL)
+		return (EINVAL);
+
 	card = HIFN_CARD(crp->crp_sid);
-	if (card >= hifn_cd.cd_ndevs)
+	if (card >= hifn_cd.cd_ndevs || hifn_cd.cd_devs[card] == NULL) {
+		err = EINVAL;
 		goto errout;
+	}
+
 	sc = hifn_cd.cd_devs[card];
 	session = HIFN_SESSION(crp->crp_sid);
-	if (session >= sc->sc_maxses)
+	if (session >= sc->sc_maxses) {
+		err = EINVAL;
 		goto errout;
+	}
 
 	cmd = (struct hifn_command *)malloc(sizeof(struct hifn_command),
 	    M_DEVBUF, M_NOWAIT);
-	if (cmd == NULL)
+	if (cmd == NULL) {
+		err = ENOMEM;
 		goto errout;
+	}
 	bzero(cmd, sizeof(struct hifn_command));
 
 	if (crp->crp_flags & CRYPTO_F_IMBUF) {
 		cmd->src_m = (struct mbuf *)crp->crp_buf;
 		cmd->dst_m = (struct mbuf *)crp->crp_buf;
 	}
-	else
+	else {
+		err = EINVAL;
 		goto errout;	/* XXX only handle mbufs right now */
+	}
 
 	for (crd = crp->crp_desc; crd != NULL; crd = crd->crd_next) {
 		if (crd->crd_flags & CRD_F_ENCRYPT)
@@ -1374,8 +1397,10 @@ hifn_process(crp)
 			cmd->ck = crd->crd_key;
 			cmd->ck_len = crd->crd_klen >> 3;
 		}
-		else
+		else {
+			err = EINVAL;
 			goto errout;
+		}
 	}
 
 	cmd->private_data = (u_long)crp;
@@ -1384,10 +1409,17 @@ hifn_process(crp)
 	if (hifn_crypto(sc, cmd) == 0)
 		return (0);
 
+	err = ENOMEM;
+
 errout:
 	if (cmd != NULL)
 		free(cmd, M_DEVBUF);
-	return (EINVAL);
+	if (err == EINVAL)
+		hifnstats.hst_invalid++;
+	else
+		hifnstats.hst_nomem++;
+	crp->crp_etype = err;
+	return (crp->crp_callback(crp));
 }
 
 void
