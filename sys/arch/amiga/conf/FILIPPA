@@ -1,4 +1,4 @@
-#	$OpenBSD: FILIPPA,v 1.12 1996/12/11 23:06:34 niklas Exp $
+#	$OpenBSD: FILIPPA,v 1.13 1997/01/04 12:45:45 niklas Exp $
 
 #
 # Niklas' AMIGA with ISA support
@@ -31,6 +31,7 @@ option		INET		# IP networking support (Required)
 #option		NS		# Xerox XNS
 #option		EON		# ISO CLNL over IP
 option		GATEWAY		# Packet forwarding
+option		IPFILTER	# Darren Reed's IP filter
 #option		DIRECTED_BROADCAST	# Broadcast across subnets
 #option		NSIP		# XNS over IP
 option		NTP		# Network time protocol syscalls
