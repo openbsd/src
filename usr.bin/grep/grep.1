@@ -1,7 +1,5 @@
-.\"	$OpenBSD: grep.1,v 1.5 2003/06/10 09:12:10 jmc Exp $
-.\"
-.\" Copyright (c) 2000 Carson Harding. All rights reserved.
-.\" This code was written and contributed to OpenBSD by Carson Harding.
+.\" Copyright (c) 1980, 1990, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -11,14 +9,18 @@
 .\" 2. Redistributions in binary form must reproduce the above copyright
 .\"    notice, this list of conditions and the following disclaimer in the
 .\"    documentation and/or other materials provided with the distribution.
-.\" 3. Neither the name of the author, or the names of contributors may be
-.\"    used to endorse or promote products derived from this software without
-.\"    specific prior written permission.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by the University of
+.\"	California, Berkeley and its contributors.
+.\" 4. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
 .\"
-.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
 .\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 .\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
 .\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
 .\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
 .\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -27,244 +29,256 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd May 10, 2001
+.\"	@(#)grep.1	8.3 (Berkeley) 4/18/94
+.\"
+.Dd July 3, 1999
 .Dt GREP 1
 .Os
 .Sh NAME
-.Nm grep , egrep , fgrep
-.Nd print lines matching a pattern
+.Nm grep, egrep, fgrep. zgrep
+.Nd file pattern searcher
 .Sh SYNOPSIS
 .Nm grep
-.Bk -words
-.Op Fl E | Fl F
-.Op Fl bchilnqsvwxz
-.Oo
-.Fl RXH
-.Op Fl L | Fl P
-.Oc
-.Op Fl e Ar pattern_list
-.Op Fl f Ar pattern_file
-.Op Ar pattern
-.Op Ar file
-.Ar ...
-.Ek
+.Op Fl AB Ar num
+.Op Fl CEFGHLPRSVZabchilnoqsvwx
+.Op Fl e Ar pattern
+.Op Fl f Ar file
+.Op Ar
 .Sh DESCRIPTION
 The
-.Nm
-utility searches for lines that contain the specified pattern
-or patterns.
-By default
-.Nm
-prints lines containing matches to the standard output.
-If no input files are specified,
-.Nm
-expects to read its input from the standard input.
-.Pp
-.Nm egrep
-is equivalent to
 .Nm grep
-.Fl E ;
-.Nm fgrep
-is equivalent to
-.Nm grep
-.Fl F .
+utilities search the given input files selecting lines that match one
+or more patterns.
+By default, a pattern matches an input line if any regular expression
+(RE) in the pattern matches the input line without its trailing
+newline.
+An empty expression matches every line.
+Each input line that matches at least one of the patterns is written
+to the standard output.
 .Pp
-The patterns are regular expressions, or in the case of
-.Nm fgrep ,
-fixed strings.
-More than one pattern may be specified on the command-line,
-either by repeated use of the
-.Fl e
-flag, or by separating patterns with newlines:
-.Pp
-.Bd -literal -offset indent
-grep \'Ishmael
-Ahab' mobydick.txt
-.Ed
-.Pp
-is the same as:
-.Pp
-.Dl grep -e Ishmael -e Ahab mobydick.txt
-.Pp
-Note that many regular expression special characters also have special
-meaning to the shell.
-It is best to enclose the regular expression in quotation marks.
-Note also that a null pattern ("" or a newline alone) matches all input.
-.Sh OPTIONS
-The options available are:
-.Bl -tag -width file Ds
-.It Fl E
-Use extended regular expressions, as if the program was invoked as
-.Nm egrep .
-.It Fl F
-Patterns are fixed strings, not regular expressions, as if the
-program was invoked as
-.Nm fgrep .
-.It Fl a
-Does nothing.
-In other greps this flag tells grep to treat the input as ASCII and turns off
-attempts to determine whether the input file is a binary file.
-This
-.Nm grep
-does not (yet) do that check, so behaves as if
-.Fl a
-is always specified.
-.It Fl b
-Prepend the byte-offset of the beginning of the line containing the match.
-.It Fl c
-Print only a count of the matches found.
-.It Fl e Ar pattern_list
-The argument to
-.Fl e
-is a list of patterns to search for.
-.Fl e
-may be used multiple times, each instance of which may have
-one or more patterns separated by new-lines.
-.It Fl f Ar pattern_file
-The argument to
-.Fl f
-is the name of a file from which to read patterns.
-.Fl f
-may be more than once.
-.It Fl h
-Suppress the prefixing of file names to matching lines when multiple
-files are searched.
-.It Fl i
-Ignore case in comparisons.
-.It Fl l
-Print only a list of the names of files in which matches were found.
-If the input is the standard input,
-.Nm
-prints "(standard input)".
-.It Fl n
-Prefix matching lines with their line number in the file in which
-they occur.
-.It Fl q
-Be quiet about errors accessing files, only return program status.
-The status returned is 0 if there was a match, 1 if there were no
-matches, even if there were errors accessing files.
-(Without the
-.Fl q
-flag, if there was an error
-accessing a file
-.Nm
-would return a status of 2 even
-if it found matches.)
-.It Fl s
-Suppress errors about accessing files.
-Note that unlike
-.Fl q
-the program is not quiet: matches are still output.
-.It Fl v
-Invert the sense of the match: return all lines that do not
-contain the pattern.
-.It Fl w
-The pattern is considered a word.
-A matching pattern in a line must not be immediately bordered by a letter,
-a number, or an underscore ('_').
-.It Fl x
-Match the line exactly.
-If a regular expression (invoked as
-.Nm grep ,
-or
-.Nm egrep )
-the pattern must match the whole line (as if
-the pattern was enclosed in ^ and $).
-If invoked as
-.Nm fgrep ,
-the string must match the entire line.
-.It Fl z
-When the
-.Fl l
-flag is also specified, print an ASCII NUL character (0) following
-the file name, rather than a newline.
-Like the
-.Fl print0
-option to
-.Nm find ,
-this may be used to pass file names containing unusual characters
-to programs such as
-.Nm xargs
-with the
-.Fl 0
-flag.
-.El
-.Sh FILESYSTEM TRAVERSAL OPTIONS
-The following options control recursive searchs:
-.Bl -tag -width file Ds
-.It Fl R
-Recursively descend through any specified directory arguments.
-.It Fl H
-If the
-.Fl R
-option is also specified, symbolic links on the command
-line are followed.
-(Symbolic links encountered in the tree traversal are not followed.)
-.It Fl L
-If the
-.Fl R
-option is also specified, all symbolic links are followed.
-.It Fl P
-If the
-.Fl R
-option is also specified, no symbolic links are followed.
-.It Fl X
-If the
-.Fl R
-option is also specified, searches are confined to the device on
-which the search started (file system mount points are not crossed).
-.El
-.Sh EXAMPLES
-To print all occurrences of the word Ishmael in mobydick.txt:
-.Dl grep Ishmael mobydick.txt
-.Pp
-To merely count all the lines in which the word Ishmael occurs:
-.Dl grep -c Ishmael mobydick.txt
-.Pp
-To print all occurrences of either of the words Ishmael or Ahab in
-mobydick.txt:
-.Dl grep 'Ishmael|Ahab' mobydick.txt
-.Pp
-To print all occurrences of the word whale in mobydick.txt, whether
-or not it is capitalised, and where it appears alone and not as part
-of a compound:
-.Dl grep -iw whale mobydick.txt
-.Pp
-To find all the empty lines and print the line numbers for where they occur:
-.Dl grep -nv \&. mobydick.txt
-.Sh DIAGNOSTICS
 The
-.Nm
+.Nm grep
+utility is used for simple patterns and
+.Xr ex 1
+or
+.Xr ed 1
+style regular expressions.
+The
+.Nm egrep
+utility can handle extended regular expressions and multi-line
+patterns.
+The
+.Nm fgrep
+utility is quick but can handle only fixed patterns consisting of one
+or more lines, allowing any of the pattern lines to match a portion of
+the input.
+The
+.Nm zgrep 
+utility acts like grep, but accepts input files compressed with the
+.Xr compress 1
+or
+.Xr gzip 1
+compression utilities.
+.Pp
+The following options are available:
+.Pp
+.Bl -tag -width indent
+.It Fl A Ar num
+Print 
+.Ar num
+lines of trailing context after each match.
+.It Fl B Ar num
+Print 
+.Ar num 
+lines of leading context before each match.
+.It Fl C
+Equivalent to 
+.Fl A
+.Ar 2
+.Fl B
+.Ar 2 .
+.It Fl E
+Force 
+.Nm grep 
+to behave as 
+.Nm egrep.
+.It Fl F
+Force 
+.Nm grep
+to behave as 
+.Nm fgrep.
+.It Fl G
+Force 
+.Nm grep
+to behave as 
+.Nm grep.
+.It Fl H
+If 
+.Fl R
+is specified, follow symbolic links only if they were explictly listed
+on the command line.
+.It Fl L
+Only the names of files not containing selected lines are written to
+standard output.
+Pathnames are listed once per file searched.
+If the standard input is searched, the pathname
+.Sq Fl
+is written.
+.It Fl P
+If 
+.Fl R
+is specified, no symbolic links are followed.
+.It Fl R
+Recursively search subdirectories listed.
+.It Fl S
+If 
+.Fl R
+is specified, all symbolic links are followed.
+.It Fl V
+Display version information.
+.It Fl Z
+Force
+.Nm grep
+to behave as
+.Nm zgrep .
+.It Fl a
+Do not search in binary files.
+.It Fl b
+The block number on the disk in which a matched pattern is located is
+displayed in front of the respective matched line.
+.It Fl c
+Only a count of selected lines is written to standard output.
+.It Fl e Ar expression 
+Specify a pattern used during the search of the input. Multiple
+.Fl e
+options can be used to specify multiple patterns; an input line is
+selected if it matches any of the specified patterns.
+.It Fl f Ar pattern_file 
+The pattern is read from the specified file. Trailing newlines in the
+pattern file are ignored.
+.Pf ( Nm Egrep
+and
+.Nm fgrep
+only).
+.It Fl h
+Never print filename headers with output lines.
+.It Fl i
+Perform case insensitive matching.
+.It Fl l
+Only the names of files containing selected lines are written to
+standard output. Pathnames are listed once per file searched. If the
+standard input is searched, the pathname
+.Sq -
+is written.
+.It Fl n
+Each output line is preceded by its relative line number in the file,
+starting at line 1.
+The line number counter is reset for each file processed.
+This option is ignored if
+.Fl c ,
+.Fl l ,
+or
+.Fl s
+is
+specified.
+.It Fl o
+Always print filename headers with output lines.
+.It Fl q
+Suppress normal output.
+.It Fl s
+Silent mode.  Nonexistent and unreadable files are ignored.
+.It Fl v
+Selected lines are those
+.Em not
+matching the specified
+patterns.
+.It Fl w
+The expression is searched for as a word (as if surrounded by `\e<'
+and `\e>', see
+.Xr ex 1 ) .
+.It Fl x
+Only input lines selected against an entire fixed string or regular
+expression are considered to be matching lines.
+.Pp
+.El
+If no file arguments are specified, the standard input is used.
+.Pp
+The
+.Nm grep
 utility exits with one of the following values:
 .Pp
 .Bl -tag -width flag -compact
-.It 0
-One or more matching lines was found.
-.It 1
-No matches were found.
-.It 2
-An error occurred (whether or not matches were found).
+.It Li 0
+One or more lines were selected.
+.It Li 1
+No lines were selected.
+.It Li >1
+An error occurred.
 .El
+.Sh EXTENDED REGULAR EXPRESSIONS
+The following characters are interpreted by
+.Nm egrep :
 .Pp
-Note that when the
-.Fl q
-flag is used, file access errors do not cause an exit value of 2,
-and in the absence of other errors (a bad regular expression)
-the exit value is determined only by whether or not matches
-were found.
-(XX Should -s do the same??)
+.Bl -tag -width flag -compact
+.It Cm \&$
+Align the match from the end of the line.
+.It Cm \&^
+Align the match from the beginning of the line.
+.It Cm \&|
+Add another pattern (see example below).
+.It Cm \&?
+Match 1 or less sequential repetitions of the pattern.
+.It Cm \&+
+Match 1 or more sequential repetitions of the pattern.
+.It Cm \&*
+Match 0 or more sequential repetitions of the pattern.
+.It Cm \&[]
+Match any single character or range of characters
+enclosed in the brackets.
+.It Cm \&\e
+Escape special characters which have meaning to
+.Nm egrep ,
+the set of {$,.,^,[,],|,?,+,*,(,)}.
+.El
+.Sh EXAMPLES
+To find all occurrences of the word patricia in a file:
+.Pp
+.Dl grep patricia myfile
+.Pp
+To find all occurrences of the pattern
+.Ql \&.Pp
+at the beginning of a line:
+.Pp
+.Dl grep '^\e.Pp'
+.Pp
+The apostrophes assure the entire expression is evaluated by
+.Nm grep
+instead of by the
+user's shell.
+The caret
+.Ql Li \&^
+matches the null string at the beginning of a line,
+and the
+.Ql Li \&\e
+escapes the
+.Ql Li \&.
+which would otherwise match any character.
+.Pp
+A simple example of an extended regular expression:
+.Pp
+.Dl egrep '19|20|25' calendar
+.Pp
+Peruses the file calendar looking for either 19, 20
+or 25.
 .Sh SEE ALSO
+.Xr ed 1 ,
+.Xr ex 1 ,
+.Xr sed 1 ,
+.Xr re_format 7 ,
 .Xr regex 3 ,
-.Xr re_format 7
+.Xr regexp 3
 .Sh HISTORY
-A
+The
 .Nm grep
 command appeared in
 .At v6 .
-This version is a re-implementation from the POSIX specification and
-inspection of the operation of several implementations of
-.Nm grep .
-.Sh NOTES
-.Nm grep
-has no limits on input line length (other than imposed by available
-memory).
