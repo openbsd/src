@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.31 1999/07/04 18:59:38 aaron Exp $
+.\"	$OpenBSD: disklabel.8,v 1.32 1999/08/14 15:11:11 millert Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -46,28 +46,28 @@
 .Sh SYNOPSIS
 .Nm disklabel
 .Op Fl n
-.Op Fl d Li \&| Fl r
+.Op Fl cd Li \&| Fl r
 .Op Fl t
 .Op Fl v
 .Ar disk
 .Nm disklabel
 .Fl w
 .Op Fl n
-.Op Fl d Li \&| Fl r
+.Op Fl cd Li \&| Fl r
 .Op Fl v
 .Ar disk Ar disktype
 .Oo Ar packid Oc
 .Nm disklabel
 .Fl e
 .Op Fl n
-.Op Fl d Li \&| Fl r
+.Op Fl cd Li \&| Fl r
 .Op Fl v
 .Ar disk
 .Nm disklabel
 .Fl E
 .Op Fl f Ar tempfile
 .Op Fl n
-.Op Fl d Li \&| Fl r
+.Op Fl cd Li \&| Fl r
 .Op Fl v
 .Ar disk
 .Nm disklabel
@@ -158,9 +158,15 @@ label.  This ignores any existing
 .Ox
 partitions on the disk.  Note that this option will only work for
 disks that are capable of reporting their geometry, such as SCSI,
-IDE, and ESDI.  Also note that the
+IDE, and ESDI.
+Additionally, the
+.Fl c
+flag may be used to clear the system's in-core copy of the label
+and update it based on the on-disk label.  Note that the
 .Fl d
-flag may not be used in conjuction with the
+and
+.Fl c
+flags may not be used in conjuction with the
 .Fl r
 flag.
 .Pp
