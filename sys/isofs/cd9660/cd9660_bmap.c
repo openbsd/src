@@ -1,5 +1,5 @@
-/*	$OpenBSD: cd9660_bmap.c,v 1.2 1996/02/29 10:12:14 niklas Exp $	*/
-/*	$NetBSD: cd9660_bmap.c,v 1.6 1996/02/09 21:31:50 christos Exp $	*/
+/*	$OpenBSD: cd9660_bmap.c,v 1.3 1997/11/08 17:21:05 niklas Exp $	*/
+/*	$NetBSD: cd9660_bmap.c,v 1.7 1997/01/24 00:27:29 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -49,6 +49,7 @@
 #include <sys/mount.h>
 
 #include <isofs/cd9660/iso.h>
+#include <isofs/cd9660/cd9660_extern.h>
 #include <isofs/cd9660/cd9660_node.h>
 
 /*

@@ -1,5 +1,5 @@
-/*	$OpenBSD: cd9660_util.c,v 1.3 1996/04/19 16:08:41 niklas Exp $	*/
-/*	$NetBSD: cd9660_util.c,v 1.10 1996/02/29 20:36:39 gwr Exp $	*/
+/*	$OpenBSD: cd9660_util.c,v 1.4 1997/11/08 17:21:07 niklas Exp $	*/
+/*	$NetBSD: cd9660_util.c,v 1.12 1997/01/24 00:27:33 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -53,12 +53,11 @@
 #include <sys/conf.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
-#include <miscfs/specfs/specdev.h> /* XXX */
-#include <miscfs/fifofs/fifo.h> /* XXX */
 #include <sys/malloc.h>
 #include <sys/dirent.h>
 
 #include <isofs/cd9660/iso.h>
+#include <isofs/cd9660/cd9660_extern.h>
 
 /*
  * translate and compare a filename
@@ -66,7 +65,7 @@
  */
 int
 isofncmp(fn, fnlen, isofn, isolen)
-	u_char *fn, *isofn;
+	const u_char *fn, *isofn;
 	int fnlen, isolen;
 {
 	int i, j;

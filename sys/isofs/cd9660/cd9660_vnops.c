@@ -1,5 +1,5 @@
-/*	$OpenBSD: cd9660_vnops.c,v 1.8 1997/11/06 05:58:12 csapuntz Exp $	*/
-/*	$NetBSD: cd9660_vnops.c,v 1.32 1996/03/16 20:25:40 ws Exp $	*/
+/*	$OpenBSD: cd9660_vnops.c,v 1.9 1997/11/08 17:21:08 niklas Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.42 1997/10/16 23:56:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -53,12 +53,14 @@
 #include <sys/conf.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
-#include <miscfs/specfs/specdev.h>
-#include <miscfs/fifofs/fifo.h>
 #include <sys/malloc.h>
 #include <sys/dirent.h>
 
+#include <miscfs/fifofs/fifo.h>
+#include <miscfs/specfs/specdev.h>
+
 #include <isofs/cd9660/iso.h>
+#include <isofs/cd9660/cd9660_extern.h>
 #include <isofs/cd9660/cd9660_node.h>
 #include <isofs/cd9660/iso_rrip.h>
 
@@ -144,41 +146,40 @@ cd9660_mknod(ndp, vap, cred, p)
  */
 int
 cd9660_setattr(v)
-       void *v;
-
+	void *v;
 {
-       struct vop_setattr_args /* {
-               struct vnodeop_desc *a_desc;
-               struct vnode *a_vp;
-               struct vattr *a_vap;
-               struct ucred *a_cred;
-               struct proc *a_p;
-       } */ *ap = v;
-       struct vnode *vp = ap->a_vp;
-       struct vattr *vap = ap->a_vap;
+	struct vop_setattr_args /* {
+		struct vnodeop_desc *a_desc;
+		struct vnode *a_vp;
+		struct vattr *a_vap;
+		struct ucred *a_cred;
+		struct proc *a_p;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	struct vattr *vap = ap->a_vap;
 
-       if (vap->va_flags != VNOVAL || vap->va_uid != (uid_t)VNOVAL ||
-           vap->va_gid != (gid_t)VNOVAL || vap->va_atime.tv_sec != VNOVAL ||
-           vap->va_mtime.tv_sec != VNOVAL || vap->va_mode != (mode_t)VNOVAL)
-               return (EROFS);
-       if (vap->va_size != VNOVAL) {
-               switch (vp->v_type) {
-               case VDIR:
-                       return (EISDIR);
-               case VLNK:
-               case VREG:
-                       return (EROFS);
-               case VCHR:
-               case VBLK:
-               case VSOCK:
-               case VFIFO:
-                       return (0);
-	       default:
-		       return (EINVAL);
-               }
-       }
+	if (vap->va_flags != VNOVAL || vap->va_uid != (uid_t)VNOVAL ||
+	    vap->va_gid != (gid_t)VNOVAL || vap->va_atime.tv_sec != VNOVAL ||
+	    vap->va_mtime.tv_sec != VNOVAL || vap->va_mode != (mode_t)VNOVAL)
+		return (EROFS);
+	if (vap->va_size != VNOVAL) {
+		switch (vp->v_type) {
+		case VDIR:
+			return (EISDIR);
+		case VLNK:
+		case VREG:
+			return (EROFS);
+		case VCHR:
+		case VBLK:
+		case VSOCK:
+		case VFIFO:
+			return (0);
+		default:
+			return (EINVAL);
+		}
+	}
 
-       return (EINVAL);
+	return (EINVAL);
 }
 
 /*
@@ -224,7 +225,7 @@ cd9660_access(v)
 	} */ *ap = v;
 	struct iso_node *ip = VTOI(ap->a_vp);
 
-	return (vaccess(ip->inode.iso_mode, ip->inode.iso_uid,
+	return (vaccess(ip->inode.iso_mode & ALLPERMS, ip->inode.iso_uid,
 	    ip->inode.iso_gid, ap->a_mode, ap->a_cred));
 }
 
@@ -245,7 +246,7 @@ cd9660_getattr(v)
 	vap->va_fsid	= ip->i_dev;
 	vap->va_fileid	= ip->i_number;
 
-	vap->va_mode	= ip->inode.iso_mode;
+	vap->va_mode	= ip->inode.iso_mode & ALLPERMS;
 	vap->va_nlink	= ip->inode.iso_links;
 	vap->va_uid	= ip->inode.iso_uid;
 	vap->va_gid	= ip->inode.iso_gid;
@@ -255,7 +256,7 @@ cd9660_getattr(v)
 	vap->va_rdev	= ip->inode.iso_rdev;
 
 	vap->va_size	= (u_quad_t) ip->i_size;
-	if (ip->i_size == 0 && (vap->va_mode & S_IFMT) == S_IFLNK) {
+	if (ip->i_size == 0 && vp->v_type  == VLNK) {
 		struct vop_readlink_args rdlnk;
 		struct iovec aiov;
 		struct uio auio;
@@ -286,15 +287,15 @@ cd9660_getattr(v)
 	return (0);
 }
 
-#if ISO_DEFAULT_BLOCK_SIZE >= NBPG
 #ifdef DEBUG
 extern int doclusterread;
 #else
 #define doclusterread 1
 #endif
-#else
-#define doclusterread 0
-#endif
+
+/* XXX until cluster routines can handle block sizes less than one page */
+#define cd9660_doclusterread \
+	(doclusterread && (ISO_DEFAULT_BLOCK_SIZE >= NBPG))
 
 /*
  * Vnode op for reading.
@@ -337,7 +338,7 @@ cd9660_read(v)
 			n = diff;
 		size = blksize(imp, ip, lbn);
 		rablock = lbn + 1;
-		if (doclusterread) {
+		if (cd9660_doclusterread) {
 			if (lblktosize(imp, rablock) <= ip->i_size)
 				error = cluster_read(vp, (off_t)ip->i_size,
 						     lbn, size, NOCRED, &bp);
@@ -364,7 +365,7 @@ cd9660_read(v)
                 if (n + on == imp->logical_block_size ||
 		    uio->uio_offset == (off_t)ip->i_size)
 			bp->b_flags |= B_AGE;
-	brelse(bp);
+		brelse(bp);
 	} while (error == 0 && uio->uio_resid > 0 && n != 0);
 	return (error);
 }
@@ -415,7 +416,6 @@ cd9660_seek(v)
 {
 	return (0);
 }
-
 
 int
 iso_uiodir(idp,dp,off)
@@ -684,7 +684,7 @@ cd9660_readdir(v)
 	}
 	
 	if (bp)
-	       brelse (bp);
+		brelse (bp);
 
 	uio->uio_offset = idp->uio_off;
 	*ap->a_eofflag = idp->eofflag;
@@ -720,7 +720,7 @@ cd9660_readlink(v)
 	u_short	symlen;
 	int	error;
 	char	*symname;
-	
+
 	ip  = VTOI(ap->a_vp);
 	imp = ip->i_mnt;
 	uio = ap->a_uio;
@@ -849,7 +849,7 @@ cd9660_lock(v)
 	void *v;
 {
 	struct vop_lock_args /* {
-		struct vnode *a_vp;	      
+		struct vnode *a_vp;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 

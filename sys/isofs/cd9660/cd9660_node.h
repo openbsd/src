@@ -1,5 +1,5 @@
-/*	$OpenBSD: cd9660_node.h,v 1.5 1997/11/06 05:58:11 csapuntz Exp $	*/
-/*	$NetBSD: cd9660_node.h,v 1.11 1996/02/09 21:32:00 christos Exp $	*/
+/*	$OpenBSD: cd9660_node.h,v 1.6 1997/11/08 17:21:07 niklas Exp $	*/
+/*	$NetBSD: cd9660_node.h,v 1.15 1997/04/11 21:52:01 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -108,47 +108,46 @@ struct iso_node {
 /*
  * Prototypes for ISOFS vnode operations
  */
-int cd9660_enotsupp __P((void *));
-int cd9660_lookup __P((void *));
-int cd9660_open __P((void *));
-int cd9660_close __P((void *));
-int cd9660_access __P((void *));
-int cd9660_getattr __P((void *));
-int cd9660_setattr __P((void *));
-int cd9660_read __P((void *));
-int cd9660_ioctl __P((void *));
-int cd9660_select __P((void *));
-int cd9660_mmap __P((void *));
-int cd9660_seek __P((void *));
-int cd9660_readdir __P((void *));
-int cd9660_readlink __P((void *));
-int cd9660_abortop __P((void *));
-int cd9660_inactive __P((void *));
-int cd9660_reclaim __P((void *));
-int cd9660_link __P((void *));
-int cd9660_symlink __P((void *));
-int cd9660_bmap __P((void *));
-int cd9660_lock __P((void *));
-int cd9660_unlock __P((void *));
-int cd9660_strategy __P((void *));
-int cd9660_print __P((void *));
-int cd9660_islocked __P((void *));
-int cd9660_pathconf __P((void *));
-int cd9660_blkatoff __P((void *));
+int	cd9660_lookup __P((void *));
+int	cd9660_open __P((void *));
+int	cd9660_close __P((void *));
+int	cd9660_access __P((void *));
+int	cd9660_getattr __P((void *));
+int	cd9660_setattr __P((void *));
+int	cd9660_read __P((void *));
+int	cd9660_ioctl __P((void *));
+int	cd9660_select __P((void *));
+int	cd9660_mmap __P((void *));
+int	cd9660_seek __P((void *));
+int	cd9660_readdir __P((void *));
+int	cd9660_readlink __P((void *));
+int	cd9660_abortop __P((void *));
+int	cd9660_inactive __P((void *));
+int	cd9660_reclaim __P((void *));
+int	cd9660_link __P((void *));
+int	cd9660_symlink __P((void *));
+int	cd9660_bmap __P((void *));
+int	cd9660_lock __P((void *));
+int	cd9660_unlock __P((void *));
+int	cd9660_strategy __P((void *));
+int	cd9660_print __P((void *));
+int	cd9660_islocked __P((void *));
+int	cd9660_pathconf __P((void *));
+int	cd9660_blkatoff __P((void *));
 
-void cd9660_defattr __P((struct iso_directory_record *,
-			struct iso_node *, struct buf *));
-void cd9660_deftstamp __P((struct iso_directory_record *,
-			struct iso_node *, struct buf *));
-struct vnode *cd9660_ihashget __P((dev_t, ino_t));
-void cd9660_ihashins __P((struct iso_node *));
-void cd9660_ihashrem __P((struct iso_node *));
-int cd9660_tstamp_conv7 __P((u_char *, struct timespec *));
-int cd9660_tstamp_conv17 __P((u_char *, struct timespec *));
-int cd9660_vget_internal __P((struct mount *, ino_t, struct vnode **, int,
-			      struct iso_directory_record *));
-ino_t isodirino __P((struct iso_directory_record *, struct iso_mnt *));
+void	cd9660_defattr __P((struct iso_directory_record *, struct iso_node *,
+    struct buf *));
+void	cd9660_deftstamp __P((struct iso_directory_record *, struct iso_node *,
+    struct buf *));
+struct	vnode *cd9660_ihashget __P((dev_t, ino_t));
+void	cd9660_ihashins __P((struct iso_node *));
+void	cd9660_ihashrem __P((struct iso_node *));
+int	cd9660_tstamp_conv7 __P((u_char *, struct timespec *));
+int	cd9660_tstamp_conv17 __P((u_char *, struct timespec *));
+int	cd9660_vget_internal __P((struct mount *, ino_t, struct vnode **, int,
+    struct iso_directory_record *));
+ino_t	isodirino __P((struct iso_directory_record *, struct iso_mnt *));
 #ifdef	ISODEVMAP
-struct iso_dnode *iso_dmap __P((dev_t, ino_t, int));
-void iso_dunmap __P((dev_t));
+struct	iso_dnode *iso_dmap __P((dev_t, ino_t, int));
+void	iso_dunmap __P((dev_t));
 #endif

@@ -1,5 +1,5 @@
-/*	$OpenBSD: cd9660_lookup.c,v 1.5 1997/11/06 05:58:09 csapuntz Exp $	*/
-/*	$NetBSD: cd9660_lookup.c,v 1.14 1996/02/09 21:31:56 christos Exp $	*/
+/*	$OpenBSD: cd9660_lookup.c,v 1.6 1997/11/08 17:21:06 niklas Exp $	*/
+/*	$NetBSD: cd9660_lookup.c,v 1.18 1997/05/08 16:19:59 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993, 1994
@@ -52,6 +52,7 @@
 #include <sys/systm.h>
 
 #include <isofs/cd9660/iso.h>
+#include <isofs/cd9660/cd9660_extern.h>
 #include <isofs/cd9660/cd9660_node.h>
 #include <isofs/cd9660/iso_rrip.h>
 #include <isofs/cd9660/cd9660_rrip.h>
@@ -75,7 +76,7 @@ struct	nchstats iso_nchstats;
  * be "."., but the caller must check to ensure it does an vrele and iput
  * instead of two iputs.
  *
- * Overall outline of ufs_lookup:
+ * Overall outline of cd9660_lookup:
  *
  *	check accessibility of directory
  *	look for name in cache, if found, then if at end of path
@@ -143,8 +144,6 @@ cd9660_lookup(v)
 	/*
 	 * Check accessiblity of directory.
 	 */
-	if (vdp->v_type != VDIR)
-		return (ENOTDIR);
 	if ((error = VOP_ACCESS(vdp, VEXEC, cred, cnp->cn_proc)) != 0)
 		return (error);
 

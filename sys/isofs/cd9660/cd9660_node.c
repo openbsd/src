@@ -1,5 +1,5 @@
-/*	$OpenBSD: cd9660_node.c,v 1.6 1997/11/06 05:58:10 csapuntz Exp $	*/
-/*	$NetBSD: cd9660_node.c,v 1.15 1996/02/09 21:31:58 christos Exp $	*/
+/*	$OpenBSD: cd9660_node.c,v 1.7 1997/11/08 17:21:06 niklas Exp $	*/
+/*	$NetBSD: cd9660_node.c,v 1.17 1997/05/05 07:13:57 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -54,6 +54,7 @@
 #include <sys/stat.h>
 
 #include <isofs/cd9660/iso.h>
+#include <isofs/cd9660/cd9660_extern.h>
 #include <isofs/cd9660/cd9660_node.h>
 #include <isofs/cd9660/iso_rrip.h>
 
@@ -74,6 +75,7 @@ u_long idvhash;
 int prtactive;	/* 1 => print out reclaim of active vnodes */
 
 static u_int cd9660_chars2ui __P((u_char *, int));
+
 /*
  * Initialize hash links for inodes and dnodes.
  */
@@ -247,7 +249,7 @@ cd9660_inactive(v)
 	if (ip->inode.iso_mode == 0)
 		vrecycle(vp, (struct simplelock *)0, p);
 
-	return error;
+	return (error);
 }
 
 /*
@@ -407,7 +409,7 @@ cd9660_tstamp_conv7(pi,pu)
 	if (y < 1970) {
 		pu->tv_sec  = 0;
 		pu->tv_nsec = 0;
-		return 0;
+		return (0);
 	} else {
 #ifdef	ORIGINAL
 		/* computes day number relative to Sept. 19th,1989 */
@@ -428,7 +430,7 @@ cd9660_tstamp_conv7(pi,pu)
 	}
 	pu->tv_sec  = crtime;
 	pu->tv_nsec = 0;
-	return 1;
+	return (1);
 }
 
 static u_int
@@ -442,7 +444,7 @@ cd9660_chars2ui(begin,len)
 		rc *= 10;
 		rc += *begin++ - '0';
 	}
-	return rc;
+	return (rc);
 }
 
 int
@@ -473,7 +475,7 @@ cd9660_tstamp_conv17(pi,pu)
 	/* difference of GMT */
 	buf[6] = pi[16];
 	
-	return cd9660_tstamp_conv7(buf,pu);
+	return (cd9660_tstamp_conv7(buf,pu));
 }
 
 ino_t
@@ -483,7 +485,7 @@ isodirino(isodir, imp)
 {
 	ino_t ino;
 
-	ino = (isonum_733(isodir->extent) + isonum_711(isodir->ext_attr_length))
-	      << imp->im_bshift;
+	ino = (isonum_733(isodir->extent) +
+	    isonum_711(isodir->ext_attr_length)) << imp->im_bshift;
 	return (ino);
 }
