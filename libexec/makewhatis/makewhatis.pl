@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 # ex:ts=8 sw=4:
 
-# $OpenBSD: makewhatis.pl,v 1.9 2000/04/29 20:40:04 espie Exp $
+# $OpenBSD: makewhatis.pl,v 1.10 2000/05/17 12:09:00 espie Exp $
 #
 # Copyright (c) 2000 Marc Espie.
 # 
@@ -32,6 +32,7 @@ use strict;
 use File::Find;
 use File::Temp qw/tempfile/;
 use File::Compare;
+
 use Getopt::Std;
 
 my ($picky, $testmode);
@@ -493,10 +494,11 @@ if ($#ARGV == -1) {
 }
 	
 for my $mandir (@ARGV) {
-    unless (-d $mandir) {
-	die "$0: $mandir: not a directory"
+    if (-d $mandir) {
+	build_index($mandir);
+    } else {
+    	print STDERR "$0: $mandir is not a directory\n";
     }
-    build_index($mandir);
 }
 
 
