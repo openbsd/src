@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.228 2002/06/10 19:50:16 krw Exp $
+#	$OpenBSD: install.sub,v 1.229 2002/06/10 21:09:51 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1084,6 +1084,8 @@ encode_for_url() {
 install_url() {
 	local _f _file_list _url_type=$1 _url_base _url_login _url_pass _oifs
 
+	[ "$_didnet" ] || donetconfig
+
 	cat << __EOT
 
 This is an automated ${_url_type}-based installation process. You will be asked
@@ -1524,6 +1526,8 @@ install_disk() {
 }
 
 install_nfs() {
+	[ "$_didnet" ] || donetconfig
+
 	# Get the IP address of the server
 	resp=
 	while [ -z "$resp" ] ; do
@@ -1783,12 +1787,10 @@ __EOT
 			d*|D*)	install_disk
 				resp=d
 				;;
-			f*|F*)	[ "$_didnet" ] || donetconfig
-				install_url ftp
+			f*|F*)	install_url ftp
 				resp=f
 				;;
-			h*|H*)	[ "$_didnet" ] || donetconfig
-				install_url http
+			h*|H*)	install_url http
 				resp=h
 				;;
 			t*|T*)	install_tape
@@ -1797,8 +1799,7 @@ __EOT
 			c*|C*)	install_cdrom
 				resp=c
 				;;
-			n*|N*)	[ "$_didnet" ] || donetconfig
-				if [ "$_have_nfs" ]; then
+			n*|N*)	if [ "$_have_nfs" ]; then
 					install_nfs
 					resp=n
 				else
