@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.1 2004/01/28 19:44:55 canacar Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.2 2004/01/31 15:13:03 otto Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -108,6 +108,8 @@ priv_init(int argc, char **argv)
 	char *WFileName = NULL;
 
 	closefrom(STDERR_FILENO + 1);
+	for (i = 1; i < _NSIG; i++)
+		signal(i, SIG_DFL);
 
 	/* Create sockets */
 	if (socketpair(AF_LOCAL, SOCK_STREAM, PF_UNSPEC, socks) == -1)
@@ -198,9 +200,6 @@ priv_init(int argc, char **argv)
 		cmdbuf = read_infile(infile);
 	else
 		cmdbuf = copy_argv(&argv[optind]);
-
-	for (i = 1; i < _NSIG; i++)
-		signal(i, SIG_DFL);
 
 	/* Pass ALRM/TERM/HUP through to child, and accept CHLD */
 	signal(SIGALRM, sig_pass_to_chld);
@@ -706,9 +705,8 @@ priv_getline(char *line, size_t line_len)
 static void
 sig_pass_to_chld(int sig)
 {
-	int save_err;
+	int save_err = errno;
 
-	save_err = errno;
 	if (child_pid != -1)
 		kill(child_pid, sig);
 	errno = save_err;
@@ -718,14 +716,18 @@ sig_pass_to_chld(int sig)
 static void
 sig_got_chld(int sig)
 {
-	int save_err;
 	pid_t pid;
 	int status;
+	int save_err = errno;
+	
+	do {
+		pid = waitpid(child_pid, &status, WNOHANG);
+	} while (pid == -1 && errno == EINTR);
 
-	save_err = errno;
-	pid = waitpid(child_pid, &status, WCONTINUED);
-	if ((pid == -1 || !WIFCONTINUED(status)) && cur_state < STATE_QUIT)
+	if (pid == child_pid && (WIFEXITED(status) || WIFSIGNALED(status)) &&
+	    cur_state < STATE_QUIT)
 		cur_state = STATE_QUIT;
+
 	errno = save_err;
 }
 

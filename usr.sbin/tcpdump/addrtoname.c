@@ -1,4 +1,4 @@
-/*	$OpenBSD: addrtoname.c,v 1.20 2004/01/28 19:44:55 canacar Exp $	*/
+/*	$OpenBSD: addrtoname.c,v 1.21 2004/01/31 15:13:03 otto Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -25,7 +25,7 @@
  */
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/addrtoname.c,v 1.20 2004/01/28 19:44:55 canacar Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/addrtoname.c,v 1.21 2004/01/31 15:13:03 otto Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>
@@ -224,8 +224,8 @@ getname(const u_char *ap)
 	    (addr & f_netmask) == f_localnet &&
 	    (aflag ||
 	    !((addr & ~netmask) == 0 || (addr | netmask) == 0xffffffff))) {
-		int n = priv_gethostbyaddr((char *)&addr, 4, AF_INET,
-		    host, sizeof(host));
+		size_t n = priv_gethostbyaddr((char *)&addr, sizeof(addr),
+		    AF_INET, host, sizeof(host));
 		if (n > 0) {
 			char *dotp;
 
@@ -283,7 +283,7 @@ getname6(const u_char *ap)
 	    !((addr & ~netmask) == 0 || (addr | netmask) == 0xffffffff))
 #endif
 	    ) {
-		int n = priv_gethostbyaddr((char *)&addr, sizeof(addr),
+		size_t n = priv_gethostbyaddr((char *)&addr, sizeof(addr),
 		    AF_INET6, host, sizeof(host));
 		if (n > 0) {
 			char *dotp;

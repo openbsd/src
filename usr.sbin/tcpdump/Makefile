@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.43 2004/01/28 19:44:55 canacar Exp $
+#	$OpenBSD: Makefile,v 1.44 2004/01/31 15:13:03 otto Exp $
 #
 #  Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
 # 	The Regents of the University of California.  All rights reserved.
@@ -33,9 +33,6 @@ CFLAGS+=-DLBL_ALIGN
 
 LDADD+=	-lpcap -ll -lcrypto
 DPADD+=	${LIBL} ${LIBPCAP} ${LIBCRYPTO}
-
-#BINMODE=4555
-#BINOWN= root
 
 SRCS=	tcpdump.c addrtoname.c privsep.c privsep_fdpass.c privsep_pcap.c \
 	print-ether.c print-ip.c print-arp.c print-tcp.c print-udp.c \

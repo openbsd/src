@@ -64,15 +64,14 @@ void	priv_getserventries(void);
 
 /* Retrieve a single service entry, should be called repeatedly after
    calling priv_getserventries() until it returns zero */
-size_t	priv_getserventry(char *name, size_t name_len, int *port, char *prot,
-    size_t prot_len);
+size_t	priv_getserventry(char *, size_t, int *, char *, size_t);
 
 /* Start getting ip protocol entries */
 void	priv_getprotoentries(void);
 
 /* Retrieve a single protocol entry, should be called repeatedly after
    calling priv_getprotoentries() until it returns zero */
-size_t	priv_getprotoentry(char *name, size_t name_len, int *num);
+size_t	priv_getprotoentry(char *, size_t, int *);
 
 /* Start getting lines from a file */
 void	priv_getlines(size_t);
@@ -94,7 +93,7 @@ void	must_write(int, const void *, size_t);
 size_t	read_block(int, char *, size_t, const char *);
 size_t	read_string(int, char *, size_t, const char *);
 void	write_block(int, size_t, const char *);
-void	write_command(int fd, int cmd);
+void	write_command(int, int);
 void	write_string(int, const char *);
 void	write_zero(int);
 
