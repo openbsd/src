@@ -5,6 +5,8 @@ block in inet proto icmp all
 block in inet6 proto ipv6-icmp all
 block return-rst in inet proto tcp all
 block return-rst in inet6 proto tcp all
+block return-rst(ttl 10) in inet proto tcp all
+block return-rst(ttl 10) in inet6 proto tcp all
 block return-icmp in inet proto icmp all
 block return-icmp(0) in inet proto icmp all
 block return-icmp(net-unr) in inet proto icmp all

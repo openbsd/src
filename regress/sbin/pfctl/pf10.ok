@@ -4,23 +4,25 @@
 @3 block in inet6 proto ipv6-icmp all 
 @4 block return-rst in inet proto tcp all 
 @5 block return-rst in inet6 proto tcp all 
-@6 block return-icmp in inet proto icmp all 
-@7 block return-icmp(net-unr) in inet proto icmp all 
-@8 block return-icmp(net-unr) in inet proto icmp all 
-@9 block return-icmp(srcfail) in inet proto icmp all 
-@10 block return-icmp(srcfail) in inet proto icmp all 
-@11 block return-icmp(host-prohib) in inet proto icmp all 
-@12 block return-icmp(host-prohib) in inet proto icmp all 
-@13 block return-icmp(cutoff-preced) in inet proto icmp all 
-@14 block return-icmp(cutoff-preced) in inet proto icmp all 
-@15 block return-icmp6 in inet6 proto ipv6-icmp all 
-@16 block return-icmp6(noroute-unr) in inet6 proto ipv6-icmp all 
-@17 block return-icmp6(noroute-unr) in inet6 proto ipv6-icmp all 
-@18 block return-icmp6(admin-unr) in inet6 proto ipv6-icmp all 
-@19 block return-icmp6(admin-unr) in inet6 proto ipv6-icmp all 
-@20 block return-icmp6(notnbr-unr) in inet6 proto ipv6-icmp all 
-@21 block return-icmp6(notnbr-unr) in inet6 proto ipv6-icmp all 
-@22 block return-icmp6(addr-unr) in inet6 proto ipv6-icmp all 
-@23 block return-icmp6(addr-unr) in inet6 proto ipv6-icmp all 
-@24 block return-icmp6 in inet6 proto ipv6-icmp all 
-@25 block return-icmp6 in inet6 proto ipv6-icmp all 
+@6 block return-rst(ttl 10) in inet proto tcp all 
+@7 block return-rst(ttl 10) in inet6 proto tcp all 
+@8 block return-icmp in inet proto icmp all 
+@9 block return-icmp(net-unr) in inet proto icmp all 
+@10 block return-icmp(net-unr) in inet proto icmp all 
+@11 block return-icmp(srcfail) in inet proto icmp all 
+@12 block return-icmp(srcfail) in inet proto icmp all 
+@13 block return-icmp(host-prohib) in inet proto icmp all 
+@14 block return-icmp(host-prohib) in inet proto icmp all 
+@15 block return-icmp(cutoff-preced) in inet proto icmp all 
+@16 block return-icmp(cutoff-preced) in inet proto icmp all 
+@17 block return-icmp6 in inet6 proto ipv6-icmp all 
+@18 block return-icmp6(noroute-unr) in inet6 proto ipv6-icmp all 
+@19 block return-icmp6(noroute-unr) in inet6 proto ipv6-icmp all 
+@20 block return-icmp6(admin-unr) in inet6 proto ipv6-icmp all 
+@21 block return-icmp6(admin-unr) in inet6 proto ipv6-icmp all 
+@22 block return-icmp6(notnbr-unr) in inet6 proto ipv6-icmp all 
+@23 block return-icmp6(notnbr-unr) in inet6 proto ipv6-icmp all 
+@24 block return-icmp6(addr-unr) in inet6 proto ipv6-icmp all 
+@25 block return-icmp6(addr-unr) in inet6 proto ipv6-icmp all 
+@26 block return-icmp6 in inet6 proto ipv6-icmp all 
+@27 block return-icmp6 in inet6 proto ipv6-icmp all 
