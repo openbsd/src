@@ -1,4 +1,4 @@
-# 	$OpenBSD: FLOPPY,v 1.17 1998/02/26 08:05:46 jason Exp $
+# 	$OpenBSD: FLOPPY,v 1.18 1998/02/26 10:50:10 johns Exp $
 # 	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -98,6 +98,7 @@ config		bsd	swap generic
 
 # Main bus and CPU .. all systems.
 mainbus0 at root
+cpu0	at mainbus0
 
 # Bus types found on SPARC systems.
 sbus0	at mainbus0				# sun4c

@@ -54,6 +54,7 @@ maxusers	16		# estimated number of users
 config		bsd	swap generic
 
 mainbus0 at root
+cpu0	at mainbus0
 
 sbus0	at mainbus0
 #obio0	at mainbus0
