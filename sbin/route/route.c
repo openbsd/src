@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.65 2004/04/26 06:24:20 cedric Exp $	*/
+/*	$OpenBSD: route.c,v 1.66 2004/05/15 07:43:34 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)route.c	8.3 (Berkeley) 3/19/94";
 #else
-static const char rcsid[] = "$OpenBSD: route.c,v 1.65 2004/04/26 06:24:20 cedric Exp $";
+static const char rcsid[] = "$OpenBSD: route.c,v 1.66 2004/05/15 07:43:34 claudio Exp $";
 #endif
 #endif /* not lint */
 
@@ -349,7 +349,7 @@ any_ntoa(const struct sockaddr *sa)
 	static char obuf[240];
 	const char *in = sa->sa_data;
 	char *out = obuf;
-	int len = sa->sa_len;
+	int len = sa->sa_len - 2;
 
 	*out++ = 'Q';
 	do {
