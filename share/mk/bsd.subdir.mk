@@ -18,10 +18,11 @@ _SUBDIRUSE: .USE
 		else \
 			_nextdir_="$${_THISDIR_}/$${_newdir_}"; \
 		fi; \
-                if [ -f $${_nextdir_}/Makefile.bsd-wrapper ]; then \
-                        _makefile_spec_="-f Makefile.bsd-wrapper"; \
-                fi; \
- 		echo "===> $${_nextdir_}"; \
+		_makefile_spec_=""; \
+		if [ -e $${_newdir_}/Makefile.bsd-wrapper ]; then \
+			_makefile_spec_="-f Makefile.bsd-wrapper"; \
+		fi; \
+		echo "===> $${_nextdir_}"; \
 		cd ${.CURDIR}/$${_newdir_}; \
 		${MAKE} $${_makefile_spec_} _THISDIR_="$${_nextdir_}" \
 		    ${.TARGET:S/realinstall/install/:S/.depend/depend/}); \
@@ -33,9 +34,10 @@ ${SUBDIR}::
 	else \
 		_newdir_=${.TARGET}; \
 	fi; \
-        if [ -f $${_newdir_}/Makefile.bsd-wrapper ]; then \
-                _makefile_spec_="-f Makefile.bsd-wrapper"; \
-        fi; \
+	_makefile_spec_=""; \
+	if [ -f $${_newdir_}/Makefile.bsd-wrapper ]; then \
+		_makefile_spec_="-f Makefile.bsd-wrapper"; \
+	fi; \
 	echo "===> $${_newdir_}"; \
 	cd ${.CURDIR}/$${_newdir_}; \
 	${MAKE} $${_makefile_spec_} _THISDIR_="$${_newdir_}" all
