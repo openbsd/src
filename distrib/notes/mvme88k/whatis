@@ -1,6 +1,3 @@
-OpenBSD/mvme88k 2.3 was written because the MVME187 existed in a computer
-company basement.  Nivas Madhur started the port.  Steve Murphree, Jr.
-finished the port in December 1998.  Code by Dale Rahn, Theo de Raadt,
-and Chuck Cranor was used as a starting point. Currently this port runs
-on MVME187 and perhaps other models also.
-
+dnl	$OpenBSD: whatis,v 1.3 2003/08/10 21:04:06 miod Exp $
+OpenBSD/MACHINE is an experimental port of OpenBSD to the Motorola 881x0
+processor-based VME boards.

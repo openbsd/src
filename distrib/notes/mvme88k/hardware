@@ -1,28 +1,30 @@
+dnl	$OpenBSD: hardware,v 1.3 2003/08/10 21:04:06 miod Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
-	- MVME187 - Motorola with 88100
+	- MVME187 - Single board computer with 88100 processor
+	- Motorola 8120 - non expandable MVME187
 
-The minimal configuration requires 4M of RAM and ~80M of disk space.
+The minimal configuration requires 8M of RAM and ~250M of disk space.
 To install the entire system requires much more disk space, and to
-compile the system, more RAM is recommended.  (OpenBSD with 4M of
-RAM feels like Solaris with 4M of RAM.) Note that until you have
-around 16M of RAM, getting more RAM is more important than getting a
-faster CPU.)
+compile the system, more RAM is recommended.
 
 Supported devices {:-include-:}:
 
-MVME187
-	serial:
+MVME187, Motorola 8120:
+	serial ports:
 		on-board tty00 - tty03 - Cirrus Logic CD2401
 	ethernet:
 		on-board Intel 82596CA ethernet ("ie0")
 	SCSI:
 		on-board SCSI controller NCR53c710
-
-	Parallel:
-		Not supported
-
-	VME:
-		drivers for short I/O access
-
 	SRAM:
 		supported
+	VMEbus:
+		supported (on MVME187 only, the 8120 does not have VME)
+
+Additional VMEbus devices supported by the OpenBSD/MACHINE port {:-include-:}:
+
+	MVME328 SCSI controller (vs)
+
+	MVME332 Serial controller (vx)
+
+	MVME376 Ethernet controller (ve)

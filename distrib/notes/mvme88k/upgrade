@@ -1,6 +1,2 @@
-To upgrade to OpenBSD OSREV from a previous version follow the instructions
-in the section "Installing OpenBSD", but run the script `upgrade.sh'
-in stead of `install.sh'.
-
-The upgrade script will use the existing disk partitions to install the
-new system in, and also preserves the files in `/etc'.
+dnl	$OpenBSD: upgrade,v 1.2 2003/08/10 21:04:06 miod Exp $
+OpenBSDUpgrade({:-an installation tape, or the miniroot over the network-:})

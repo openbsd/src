@@ -1,3 +1,4 @@
+dnl	$OpenBSD: contents,v 1.5 2003/08/10 21:04:06 miod Exp $
 TopPart
 
 OpenBSDdistsets
@@ -6,23 +7,36 @@ OpenBSDbsd
 
 OpenBSDrd
 
-DistributionDescription(nine)
+		installboot	The OpenBSD/MACHINE boot loader
+				installation program.
+		bootxx		The OpenBSD/MACHINE boot block.
+		bootsd		The OpenBSD/MACHINE disk boot loader.
+		bootst		The OpenBSD/MACHINE tape boot loader.
+		netboot		The OpenBSD/MACHINE network boot loader.
+		stboot		A VID tape block.
 
-OpenBSDbase(41.4M,125.8M)
+These files can be used to make a bootable tape suitable for installation.
+They can also be used to configure an NFS server to support installation
+over the network. See the section "Getting the OpenBSD system onto Useful
+Media" for more information.
 
-OpenBSDcomp(9.5M,34.9M)
+DistributionDescription(six)
 
-OpenBSDetc(140.9K,660.0K)
+OpenBSDbase(69.0M,174.9M)
 
-OpenBSDgame(6.5M,17.9M)
+OpenBSDcomp(12.7M,39.3M)
 
-OpenBSDman(3.4M,13.0M)
+OpenBSDetc(1.5M,5.5M)
 
-OpenBSDmisc(1.6M,5.4M)
+OpenBSDgame(6.7M,14.8M)
 
-OpenBSDxbase
+OpenBSDman(6.0M,21.3M)
 
-OpenBSDxshare
-
-OpenBSDxfont
-
+OpenBSDmisc(1.9M,6.4M)
+dnl Not there yet...
+dnl
+dnl OpenBSDxbase
+dnl
+dnl OpenBSDxshare
+dnl
+dnl OpenBSDxfont
