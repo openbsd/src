@@ -741,7 +741,7 @@ last_component (char *path)
         if (ISDIRSEP (*scan))
 	    last = scan;
 
-    if (last)
+    if (last && (last != path))
         return last + 1;
     else
         return path;
