@@ -1,7 +1,5 @@
-/*	$OpenBSD: xfs_vfsops-common.c,v 1.2 2000/03/03 00:54:59 todd Exp $	*/
-
 /*
- * Copyright (c) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -40,7 +38,7 @@
 
 #include <xfs/xfs_locl.h>
 
-RCSID("$OpenBSD: xfs_vfsops-common.c,v 1.2 2000/03/03 00:54:59 todd Exp $");
+RCSID("$Id: xfs_vfsops-common.c,v 1.3 2000/09/11 14:26:53 art Exp $");
 
 /*
  * XFS vfs operations.
@@ -53,6 +51,13 @@ RCSID("$OpenBSD: xfs_vfsops-common.c,v 1.2 2000/03/03 00:54:59 todd Exp $");
 #include <xfs/xfs_deb.h>
 #include <xfs/xfs_syscalls.h>
 #include <xfs/xfs_vfsops.h>
+
+#ifdef HAVE_KERNEL_UDEV2DEV
+#define VA_RDEV_TO_DEV(x) udev2dev(x, 0) /* XXX what is the 0 */
+#else
+#define VA_RDEV_TO_DEV(x) x
+#endif
+
 
 struct xfs xfs[NXFS];
 
@@ -69,19 +74,18 @@ xfs_mount_common(struct mount *mp,
     struct vattr vat;
     char path[MAXPATHLEN];
     char data[MAXPATHLEN];
-    size_t len;
 
-    error = copyinstr(user_path, path, MAXPATHLEN, &len);
+    error = copyinstr(user_path, path, MAXPATHLEN, NULL);
     if (error)
 	return error;
 
-    error = copyinstr(user_data, data, MAXPATHLEN, &len);
+    error = copyinstr(user_data, data, MAXPATHLEN, NULL);
     if (error)
 	return error;
 
     XFSDEB(XDEBVFOPS, ("xfs_mount: "
-		       "struct mount mp = %p path = '%s' data = '%s'\n",
-		       mp, path, data));
+		       "struct mount mp = %lx path = '%s' data = '%s'\n",
+		       (unsigned long)mp, path, data));
 
 #ifdef ARLA_KNFS
     XFSDEB(XDEBVFOPS, ("xfs_mount: mount flags = %x\n", mp->mnt_flag));
@@ -124,28 +128,16 @@ xfs_mount_common(struct mount *mp,
 	XFSDEB(XDEBVFOPS, ("VOP_GETATTR failed, error = %d\n", error));
 	return error;
     }
-    dev = vat.va_rdev;
+
+    dev = VA_RDEV_TO_DEV(vat.va_rdev);
+
     XFSDEB(XDEBVFOPS, ("dev = %d.%d\n", major(dev), minor(dev)));
 
-    /* Check that this device really is an xfs_dev */
-    if (major(dev) < 0 || major(dev) > nchrdev) {
-	XFSDEB(XDEBVFOPS, ("major out of range (0 < %d < %d)\n", 
-			   major(dev), nchrdev));
+    if (!xfs_is_xfs_dev (dev)) {
+	XFSDEB(XDEBVFOPS, ("%s is not a xfs device\n",
+			   data));
 	return ENXIO;
     }
-    if (minor(dev) < 0 || NXFS < minor(dev)) {
-	XFSDEB(XDEBVFOPS, ("minor out of range (0 < %d < %d)\n", 
-			   minor(dev), NXFS));
-	return ENXIO;
-    }
-#if defined(__NetBSD__) || defined(__OpenBSD__)
-    if(!xfs_func_is_devopen(cdevsw[major(dev)].d_open))
-	return ENXIO;
-#elif defined(__FreeBSD__)
-    if (cdevsw[major(dev)] == NULL
-	|| !xfs_func_is_devopen(cdevsw[major(dev)]->d_open))
-	return ENXIO;
-#endif
 
     if (xfs[minor(dev)].status & XFS_MOUNTED)
 	return EBUSY;
@@ -157,17 +149,10 @@ xfs_mount_common(struct mount *mp,
     xfs[minor(dev)].fd = minor(dev);
 
     VFS_TO_XFS(mp) = &xfs[minor(dev)];
-#if defined(HAVE_KERNEL_VFS_GETNEWFSID)
 #if defined(HAVE_TWO_ARGUMENT_VFS_GETNEWFSID)
     vfs_getnewfsid(mp, MOUNT_AFS);
 #else
     vfs_getnewfsid(mp);
-#endif
-#elif defined(__NetBSD__) || defined(__OpenBSD__)
-    getnewfsid(mp, makefstype(MOUNT_AFS));
-#elif defined(__FreeBSD__)
-    getnewfsid(mp, MOUNT_AFS);
-    mp->mnt_stat.f_type = MOUNT_AFS;
 #endif
 
     mp->mnt_stat.f_bsize = DEV_BSIZE;
@@ -202,15 +187,17 @@ xfs_mount_common(struct mount *mp,
 	    "arla",
 	    sizeof(mp->mnt_stat.f_mntfromname));
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
     strncpy(mp->mnt_stat.f_fstypename,
 	    "xfs",
 	    sizeof(mp->mnt_stat.f_fstypename));
-#endif
 #endif /* __osf__ */
 
     return 0;
 }
+
+#ifdef HAVE_KERNEL_DOFORCE
+extern int doforce;
+#endif
 
 int
 xfs_unmount_common(struct mount *mp, int mntflags)
@@ -221,7 +208,6 @@ xfs_unmount_common(struct mount *mp, int mntflags)
 
     if (mntflags & MNT_FORCE) {
 #ifdef HAVE_KERNEL_DOFORCE
-	extern int doforce;
 	if (!doforce)
 	    return EINVAL;
 #endif
@@ -248,7 +234,7 @@ xfs_root_common(struct mount *mp, struct vnode **vpp,
     do {
 	if (xfsp->root != NULL) {
 	    *vpp = XNODE_TO_VNODE(xfsp->root);
-	    xfs_do_vget(*vpp, LK_INTERLOCK|LK_EXCLUSIVE, proc);
+	    xfs_do_vget(*vpp, LK_EXCLUSIVE, proc);
 	    return 0;
 	}
 	msg.header.opcode = XFS_MSG_GETROOT;

@@ -1,6 +1,5 @@
-/* $OpenBSD: xfs_message.h,v 1.3 2000/03/03 00:54:58 todd Exp $ */
 /*
- * Copyright (c) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -37,12 +36,31 @@
  * SUCH DAMAGE.
  */
 
+/* $Id: xfs_message.h,v 1.4 2000/09/11 14:26:52 art Exp $ */
 
 #ifndef _xmsg_h
 #define _xmsg_h
 
-#if !defined(__LINUX__) && !defined(HAVE_GLIBC)
+/* bump this for any incompatible changes */
+
+#define XFS_VERSION 17
+
+#if defined(WIN32)
+#ifdef i386
+#ifndef __CYGWIN__
+typedef int int32_t;
+typedef unsigned int u_int32_t;
+typedef short int16_t;
+typedef unsigned char u_char;
+#endif
+#else
+#error not a i386
+#endif
+#elif !defined(__LINUX__) && !defined(HAVE_GLIBC)
 #include <sys/types.h>
+#if !defined(__OpenBSD__) && defined(_KERNEL)
+#include <atypes.h>
+#endif
 #include <sys/param.h>
 #else
 #include <linux/types.h>
@@ -54,18 +72,18 @@
 /* Temporary hack? */
 #define MAX_XMSG_SIZE (1024*64)
 
-typedef u_int32_t pag_t;
+typedef u_int32_t xfs_pag_t;
 
 /*
  * The xfs_cred, if pag == 0, use uid 
  */
 typedef struct xfs_cred {
-    __kernel_uid_t uid;
-    pag_t pag;
+    u_int32_t uid;
+    xfs_pag_t pag;
 } xfs_cred;
 
-typedef unsigned long xfs_locktype_t;
-typedef unsigned long xfs_lockid_t;
+typedef u_int32_t xfs_locktype_t;
+typedef u_int32_t xfs_lockid_t;
 
 
 #define MAXHANDLE (4*4)
@@ -74,7 +92,7 @@ typedef unsigned long xfs_lockid_t;
 #define XFS_ANONYMOUSID 32766
 
 typedef struct xfs_handle {
-    u_int a, b, c, d;
+    u_int32_t a, b, c, d;
 } xfs_handle;
 
 #define xfs_handle_eq(p, q) \
@@ -120,6 +138,7 @@ typedef struct xfs_cache_handle {
 /* xfs_node.flags */
 #define XFS_DATA_DIRTY	0x0001
 #define XFS_ATTR_DIRTY	0x0002
+#define XFS_AFSDIR	0x0004
 
 /* Are necessary tokens available? */
 #define XFS_TOKEN_GOT(xn, tok)		((xn)->tokens & (tok))
@@ -133,26 +152,34 @@ typedef struct xfs_cache_handle {
 
 struct xfs_msg_node {
     xfs_handle handle;
-    u_int tokens;
+    u_int32_t tokens;
+    u_int32_t pad1;
     struct xfs_attr attr;
-    pag_t id[MAXRIGHTS];
+    xfs_pag_t id[MAXRIGHTS];
     u_char rights[MAXRIGHTS];
     u_char anonrights;
+    u_int16_t pad2;
+    u_int32_t pad3;
 };
 
 /*
  * Messages passed through the  xfs_dev.
  */
 struct xfs_message_header {
-  u_int size;
-  u_int opcode;
-  u_int sequence_num;		/* Private */
+  u_int32_t size;
+  u_int32_t opcode;
+  u_int32_t sequence_num;		/* Private */
+  u_int32_t pad1;
 };
 
 /*
  * Used by putdata flag
  */
-enum { XFS_READ = 1, XFS_WRITE = 2, XFS_NONBLOCK = 4, XFS_APPEND = 8};
+enum { XFS_READ     = 0x01,
+       XFS_WRITE    = 0x02,
+       XFS_NONBLOCK = 0x04,
+       XFS_APPEND   = 0x08,
+       XFS_FSYNC    = 0x10};
 
 /*
  * Flags for inactivenode
@@ -163,7 +190,7 @@ enum { XFS_NOREFS = 1, XFS_DELETE = 2 };
  * Flags for installdata
  */
 
-enum { XFS_INVALID_DNLC = 1 };
+enum { XFS_ID_INVALID_DNLC = 0x01, XFS_ID_AFSDIR = 0x02 };
 
 /*
  * Defined message types and their opcodes.
@@ -210,13 +237,21 @@ enum { XFS_INVALID_DNLC = 1 };
 
 #define XFS_MSG_ADVLOCK		25
 
-#define XFS_MSG_COUNT		26
+#define XFS_MSG_GC_NODES	26
+
+#define XFS_MSG_COUNT		27
+
+/* XFS_MESSAGE_VERSION */
+struct xfs_message_version {
+  struct xfs_message_header header;
+  u_int32_t ret;
+};
 
 /* XFS_MESSAGE_WAKEUP */
 struct xfs_message_wakeup {
   struct xfs_message_header header;
-  int sleepers_sequence_num;	/* Where to send wakeup */
-  int error;			/* Return value */
+  u_int32_t sleepers_sequence_num;	/* Where to send wakeup */
+  u_int32_t error;			/* Return value */
 };
 
 /* XFS_MESSAGE_GETROOT */
@@ -265,7 +300,8 @@ struct xfs_message_getdata {
   struct xfs_message_header header;
   struct xfs_cred cred;
   xfs_handle handle;
-  u_int tokens;
+  u_int32_t tokens;
+  u_int32_t pad1;
 };
 
 /* XFS_MESSAGE_INSTALLDATA */
@@ -274,14 +310,16 @@ struct xfs_message_installdata {
   struct xfs_msg_node node;
   char cache_name[256];		/* XXX */
   struct xfs_cache_handle cache_handle;
-  u_int flag;
+  u_int32_t flag;
+  u_int32_t pad1;
 };
 
 /* XFS_MSG_INACTIVENODE */
 struct xfs_message_inactivenode {
   struct xfs_message_header header;
   xfs_handle handle;
-  u_int flag;
+  u_int32_t flag;
+  u_int32_t pad1;
 };
 
 /* XFS_MSG_INVALIDNODE */
@@ -295,7 +333,8 @@ struct xfs_message_open {
   struct xfs_message_header header;
   struct xfs_cred cred;
   xfs_handle handle;
-  u_int tokens;
+  u_int32_t tokens;
+  u_int32_t pad1;
 };
 
 /* XFS_MSG_PUTDATA */
@@ -304,7 +343,8 @@ struct xfs_message_putdata {
   xfs_handle handle;
   struct xfs_attr attr;		/* XXX ??? */
   struct xfs_cred cred;
-  u_int flag;
+  u_int32_t flag;
+  u_int32_t pad1;
 };
 
 /* XFS_MSG_PUTATTR */
@@ -321,7 +361,8 @@ struct xfs_message_create {
   xfs_handle parent_handle;
   char name[256];		/* XXX */
   struct xfs_attr attr;
-  int mode;
+  u_int32_t mode;
+  u_int32_t pad1;
   struct xfs_cred cred;
 };
 
@@ -382,10 +423,11 @@ struct xfs_message_rename {
 /* XFS_MSG_PIOCTL */
 struct xfs_message_pioctl {
   struct xfs_message_header header;
-  int opcode ;
+  u_int32_t opcode ;
+  u_int32_t pad1;
   xfs_cred cred;
-  int insize;
-  int outsize;
+  u_int32_t insize;
+  u_int32_t outsize;
   char msg[2048] ;    /* XXX */
   xfs_handle handle;
 };
@@ -394,9 +436,10 @@ struct xfs_message_pioctl {
 /* XFS_MESSAGE_WAKEUP_DATA */
 struct xfs_message_wakeup_data {
   struct xfs_message_header header;
-  int sleepers_sequence_num;	/* Where to send wakeup */
-  int error;			/* Return value */
-  int len;
+  u_int32_t sleepers_sequence_num;	/* Where to send wakeup */
+  u_int32_t error;			/* Return value */
+  u_int32_t len;
+  u_int32_t pad1;
   char msg[2048] ;    /* XXX */
 };
 
@@ -420,4 +463,12 @@ struct xfs_message_advlock {
   xfs_lockid_t lockid;
 };
 
+/* XFS_MESSAGE_GC_NODES */
+struct xfs_message_gc_nodes {
+  struct xfs_message_header header;
+#define XFS_GC_NODES_MAX_HANDLE 50
+  u_int32_t len;
+  u_int32_t pad1;
+  xfs_handle handle[XFS_GC_NODES_MAX_HANDLE];
+};
 #endif /* _xmsg_h */

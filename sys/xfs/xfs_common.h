@@ -1,6 +1,5 @@
-/* $OpenBSD: xfs_common.h,v 1.4 2000/03/03 00:54:58 todd Exp $ */
 /*
- * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -37,20 +36,37 @@
  * SUCH DAMAGE.
  */
 
+/* $Id: xfs_common.h,v 1.5 2000/09/11 14:26:51 art Exp $ */
 
 #ifndef _xfs_common_h
 #define _xfs_common_h
+
+#if defined(MALLOC_DECLARE)
+MALLOC_DECLARE(M_XFS);
+#elif !defined(M_XFS)
+#define M_XFS M_TEMP
+#endif
 
 #ifdef XFS_DEBUG
 void *xfs_alloc(u_int size);
 void xfs_free(void *, u_int size);
 #else
 #ifdef __osf__
-#define xfs_alloc(a) malloc((a), BUCKETINDEX(a), M_TEMP, M_WAITOK)
+#define xfs_alloc(a) malloc((a), BUCKETINDEX(a), M_XFS, M_WAITOK)
 #else
-#define xfs_alloc(a) malloc((a), M_TEMP, M_WAITOK)
+#define xfs_alloc(a) malloc((a), M_XFS, M_WAITOK)
 #endif
-#define xfs_free(a, size) free(a, M_TEMP)
+#define xfs_free(a, size) free(a, M_XFS)
 #endif /* XFS_DEBUG */
+
+int xfs_suser(struct proc *p);
+
+#ifndef HAVE_KERNEL_MEMCPY
+void *
+memcpy (void *s1, const void *s2, size_t n);
+#endif
+
+const char *
+xfs_devtoname_r (dev_t dev, char *buf, size_t sz);
 
 #endif /* _xfs_common_h */

@@ -1,6 +1,5 @@
-/* $OpenBSD: xfs_fs.h,v 1.4 2000/03/03 00:54:58 todd Exp $ */
 /*
- * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -37,6 +36,7 @@
  * SUCH DAMAGE.
  */
 
+/* $Id: xfs_fs.h,v 1.5 2000/09/11 14:26:52 art Exp $ */
 
 #ifndef _xfs_h
 #define _xfs_h
@@ -62,7 +62,11 @@ struct xfs {
 };
 
 #ifdef __osf__
+#ifdef HAVE_STRUCT_MOUNT_M_INFO
+#define VFS_TO_XFS(v)      ((struct xfs *) ((v)->m_info))
+#else
 #define VFS_TO_XFS(v)      ((struct xfs *) ((v)->m_data))
+#endif
 #else
 #define VFS_TO_XFS(v)      ((struct xfs *) ((v)->mnt_data))
 #endif
@@ -88,18 +92,9 @@ void xfs_dnlc_purge(struct vnode *);
 int xfs_dnlc_lookup(struct vnode *, xfs_componentname *, struct vnode **);
 int xfs_dnlc_lookup_name(struct vnode *, const char *, struct vnode **);
 
-void
-xfs_cnp_init (xfs_componentname *ndp,
-	      const char *name,
-	      struct vnode *vp,
-	      struct vnode *dvp,
-	      struct proc *proc,
-	      struct ucred *cred,
-	      int nameiop);
-
 void vattr2xfs_attr(const struct vattr *, struct xfs_attr *);
 void xfs_attr2vattr(const struct xfs_attr *, struct vattr *);
 
-int xfs_has_pag(const struct xfs_node *, pag_t);
+int xfs_has_pag(const struct xfs_node *, xfs_pag_t);
 
 #endif				       /* _xfs_h */

@@ -1,7 +1,5 @@
-/*	$OpenBSD: xfs_dev-bsd.c,v 1.2 2000/03/03 00:54:58 todd Exp $	*/
-
 /*
- * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -45,7 +43,7 @@
 #include <xfs/xfs_dev.h>
 #include <xfs/xfs_deb.h>
 
-RCSID("$OpenBSD: xfs_dev-bsd.c,v 1.2 2000/03/03 00:54:58 todd Exp $");
+RCSID("$Id: xfs_dev-bsd.c,v 1.3 2000/09/11 14:26:51 art Exp $");
 
 int
 xfs_devopen(dev_t dev, int flag, int devtype, struct proc *proc)
@@ -55,17 +53,16 @@ xfs_devopen(dev_t dev, int flag, int devtype, struct proc *proc)
     return xfs_devopen_common(dev);
 }
 
-/* XXX ugly function so we can keep xfs_devopen static */
-int
-xfs_func_is_devopen(void *func)
-{
-    return func == (void*)&xfs_devopen;
-}
-
 int
 xfs_devclose(dev_t dev, int flag, int devtype, struct proc *p)
 {
-    XFSDEB(XDEBDEV, ("xfs_devclose dev = %d, flag = %d\n", dev, flag));
+#ifdef XFS_DEBUG
+    char devname[64];
+#endif
+
+    XFSDEB(XDEBDEV, ("xfs_devclose dev = %s, flag = 0x%x\n",
+		     xfs_devtoname_r(dev, devname, sizeof(devname)),
+		     flag));
     return xfs_devclose_common(dev, p);
 }
 
@@ -75,16 +72,15 @@ xfs_devclose(dev_t dev, int flag, int devtype, struct proc *p)
 
 int
 xfs_devioctl(dev_t dev, 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 	     u_long cmd,
-#elif defined(__FreeBSD__)
-	     int cmd,
-#endif
-              caddr_t data, int flags, struct proc *p)
+	     caddr_t data,
+	     int flags,
+	     struct proc *p)
 {
     XFSDEB(XDEBDEV, ("xfs_devioctl dev = %d.%d, cmd = %lu, "
-		     "data = %p, flags = %x\n", 
-		     major(dev), minor(dev), (unsigned long)cmd, data, flags));
+		     "data = %lx, flags = %x\n", 
+		     major(dev), minor(dev), (unsigned long)cmd,
+		     (unsigned long)data, flags));
     return ENOTTY;
 }
 
@@ -105,7 +101,11 @@ xfs_realselect(dev_t dev, struct proc *p)
 static int
 xfs_devpoll(dev_t dev, int events, struct proc * p)
 {
-    XFSDEB(XDEBDEV, ("xfs_devpoll dev = %d, events = %d\n", dev, events));
+    char devname[64];
+
+    XFSDEB(XDEBDEV, ("xfs_devpoll dev = %s, events = 0x%x\n",
+		     xfs_devtoname_r (dev, devname, sizeof(devname)),
+		     events));
 
     if (!(events & POLLRDNORM))
 	return 0;
@@ -174,9 +174,16 @@ struct cdevsw xfs_dev = {
     xfs_devread,
     xfs_devwrite,
     xfs_devioctl,
+#ifdef HAVE_STRUCT_CDEVSW_D_STOP
     nostop,
+#endif
+#if defined(HAVE_STRUCT_CDEVSW_D_BOGORESET) \
+ || defined(HAVE_STRUCT_CDEVSW_D_RESET)
     noreset,
+#endif
+#ifdef HAVE_STRUCT_CDEVSW_D_DEVTOTTY
     nodevtotty,
+#endif
 #if defined(HAVE_VOP_SELECT)
     xfs_devselect,
 #elif defined(HAVE_VOP_POLL)
@@ -186,23 +193,82 @@ struct cdevsw xfs_dev = {
 #endif
     nommap,
     nostrategy,
-    NULL,
-    0
+    "xfs",
+#ifdef HAVE_STRUCT_CDEVSW_D_BOGOPARMS
+    noparms,			/* d_bogoparms */
+#endif
+#ifdef HAVE_STRUCT_CDEVSW_D_SPARE
+    NULL,			/* d_spare */
+#endif
+    128,			/* XXX */
+    nodump,
+    nopsize,
+    0,				/* flags */
+#ifdef HAVE_STRUCT_CDEVSW_D_MAXIO
+    0,				/* maxio */
+#endif
+#ifdef NOUDEV
+    NOUDEV			/* bmaj */
+#else
+    NODEV			/* bmaj */
+#endif
 };
 
-#endif /* FreeBSD */
+#elif defined(__APPLE__)
+static struct cdevsw xfs_dev = {
+      xfs_devopen,
+          xfs_devclose,
+          xfs_devread,
+          xfs_devwrite,
+          xfs_devioctl,
+          eno_stop,
+          eno_reset,
+          0,
+          xfs_devselect,
+          eno_mmap,
+          eno_strat,
+          eno_getc,
+          eno_putc,
+          0
+};
+#endif /* __APPLE__ */
+
+#if defined(__APPLE__)
+extern int xfs_dev_major;
+#include <miscfs/devfs/devfs.h>
+
+static void *devfs_handles[NXFS];
+
+#endif
 
 int
 xfs_install_device(void)
 {
     int i;
 
+#if defined(__APPLE__)
+    xfs_dev_major = cdevsw_add(-1, &xfs_dev);
+    if (xfs_dev_major == -1) {
+	XFSDEB(XDEBDEV, ("failed installing cdev\n"));
+	return ENFILE;
+    }
+
+    for (i = 0; i < NXFS; ++i)
+	devfs_handles[i] = devfs_make_node(makedev(xfs_dev_major, i),
+					   DEVFS_CHAR,
+					   UID_ROOT, GID_WHEEL, 0600,
+					   "xfs%d", i);
+
+    XFSDEB(XDEBDEV, ("done installing cdev !\n"));
+    XFSDEB(XDEBDEV, ("Char device number %d\n", xfs_dev_major));
+#endif
+
     for (i = 0; i < NXFS; i++) {
 	XFSDEB(XDEBDEV, ("before initq(messageq and sleepq)\n"));
 	xfs_initq(&xfs_channel[i].messageq);
 	xfs_initq(&xfs_channel[i].sleepq);
+	xfs_channel[i].status = 0;
     }
-
     return 0;
 }
 
@@ -211,6 +277,7 @@ xfs_uninstall_device(void)
 {
     int i;
     struct xfs_channel *chan;
+    int ret = 0;
 
     for (i = 0; i < NXFS; i++) {
 	chan = &xfs_channel[i];
@@ -218,7 +285,22 @@ xfs_uninstall_device(void)
 	    xfs_devclose(makedev(0, i), 0, 0, NULL);
     }
 
-    return 0;
+#if defined(__APPLE__)
+    for (i = 0; i < NXFS; ++i)
+	devfs_remove (devfs_handles[i]);
+
+    ret = cdevsw_remove(xfs_dev_major, &xfs_dev);
+    if (ret == -1) {
+	XFSDEB(XDEBLKM, ("xfs_uninstall_device error %d\n", ret));
+    } else if (ret == xfs_dev_major) {
+	ret = 0;
+    } else {
+	XFSDEB(XDEBLKM, ("xfs_uninstall_device unexpected error error %d\n",
+			 ret));
+    }
+#endif
+    XFSDEB(XDEBLKM, ("xfs_uninstall_device error %d\n", ret));
+    return ret;
 }
 
 int
@@ -226,3 +308,13 @@ xfs_stat_device(void)
 {
     return xfs_uprintf_device();
 }
+
+#if !defined(_LKM) && !defined(KLD_MODULE)
+int
+xfs_is_xfs_dev(dev_t dev)
+{
+    return major(dev) <= nchrdev &&
+	cdevsw[major(dev)].d_open == xfs_devopen &&
+	minor(dev) >= 0 && minor(dev) < NXFS;
+}
+#endif

@@ -1,7 +1,5 @@
-/*	$OpenBSD: xfs_syscalls-common.c,v 1.2 2000/03/03 00:54:58 todd Exp $	*/
-
 /*
- * Copyright (c) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -40,7 +38,7 @@
 
 #include <xfs/xfs_locl.h>
 
-RCSID("$OpenBSD: xfs_syscalls-common.c,v 1.2 2000/03/03 00:54:58 todd Exp $");
+RCSID("$Id: xfs_syscalls-common.c,v 1.3 2000/09/11 14:26:53 art Exp $");
 
 /*
  * XFS system calls.
@@ -60,16 +58,33 @@ RCSID("$OpenBSD: xfs_syscalls-common.c,v 1.2 2000/03/03 00:54:58 todd Exp $");
 #elif defined(HAVE_SYS_IOCTL_H)
 #include <sys/ioctl.h>
 #endif
+/*
+ * XXX - horrible kludge. If we're built without HAVE_CONFIG_H we assume that
+ *       we're built inside the kernel on OpenBSD.
+ */
+#ifdef HAVE_CONFIG_H
+#include <kafs.h>
+#else
 #include <xfs/xfs_pioctl.h>
+#endif
 
 /*
  * the syscall entry point
  */
 
+#if defined(_LKM) || defined(KLD_MODULE) || defined(__osf__)
+int
+xfspioctl(struct proc *proc, void *varg, register_t *return_value)
+#else
 int
 sys_xfspioctl(struct proc *proc, void *varg, register_t *return_value)
+#endif
 {
+#if defined(_LKM) || defined(KLD_MODULE) || defined(__osf__)
     struct sys_pioctl_args *arg = (struct sys_pioctl_args *) varg;
+#else
+    struct sys_xfspioctl_args *arg = (struct sys_xfspioctl_args *) varg;
+#endif
     int error = EINVAL;
 
     switch (SCARG(arg, operation)) {
@@ -126,7 +141,7 @@ xfs_is_pag(struct ucred *cred)
  * Return the pag used by `cred'
  */
 
-pag_t
+xfs_pag_t
 xfs_get_pag(struct ucred *cred)
 {
     if (xfs_is_pag(cred)) {
@@ -139,42 +154,111 @@ xfs_get_pag(struct ucred *cred)
 }
 
 /*
+ * Set the pag in `ret_cred' and return a new cred.
+ */
+
+static int
+store_pag (struct ucred **ret_cred, gid_t part1, gid_t part2)
+{
+    struct ucred *cred = *ret_cred;
+
+    if (!xfs_is_pag (cred)) {
+	int i;
+
+	if (cred->cr_ngroups + 2 >= NGROUPS)
+	    return E2BIG;
+
+	cred = crcopy (cred);
+
+	for (i = cred->cr_ngroups - 1; i > 0; i--) {
+	    cred->cr_groups[i + 2] = cred->cr_groups[i];
+	}
+	cred->cr_ngroups += 2;
+    } else {
+	cred = crcopy (cred);
+    }
+    cred->cr_groups[1] = part1;
+    cred->cr_groups[2] = part2;
+    *ret_cred = cred;
+
+    return 0;
+}
+
+/*
  * Acquire a new pag in `ret_cred'
  */
 
 int
 xfs_setpag_call(struct ucred **ret_cred)
 {
-    struct ucred *cred = *ret_cred;
-    int i;
+    int ret;
 
-    if (!xfs_is_pag(cred)) {
-
-	/* Check if it fits */
-	if (cred->cr_ngroups + 2 >= NGROUPS)
-	    return E2BIG;	       /* XXX Hmmm, better error ? */
-
-	cred = crcopy (cred);
-
-	/* Copy the groups */
-	for (i = cred->cr_ngroups - 1; i > 0; i--) {
-	    cred->cr_groups[i + 2] = cred->cr_groups[i];
-	}
-	cred->cr_ngroups += 2;
-
-    } else
-	cred = crcopy(cred);
-
-    cred->cr_groups[1] = pag_part_one;
-    cred->cr_groups[2] = pag_part_two++;
+    ret = store_pag (ret_cred, pag_part_one, pag_part_two++);
+    if (ret)
+	return ret;
 
     if (pag_part_two > XFS_PAG2_ULIM) {
 	pag_part_one++;
 	pag_part_two = XFS_PAG2_LLIM;
     }
-    *ret_cred = cred;
     return 0;
 }
+
+#if defined(_LKM) || defined(KLD_MODULE) || defined(__osf__)
+/*
+ * remove a pag
+ */
+
+static int
+xfs_unpag (struct ucred *cred)
+{
+    while (xfs_is_pag (cred)) {
+	int i;
+
+	for (i = 0; i < cred->cr_ngroups - 2; ++i)
+	    cred->cr_groups[i] = cred->cr_groups[i+2];
+	cred->cr_ngroups -= 2;
+    }
+    return 0;
+}
+
+/*
+ * A wrapper around setgroups that preserves the pag.
+ */
+
+int
+xfs_setgroups (struct proc *p,
+	       void *varg)
+{
+    struct xfs_setgroups_args *uap = (struct xfs_setgroups_args *)varg;
+    struct ucred **cred = &xfs_proc_to_cred(p);
+
+    if (xfs_is_pag (*cred)) {
+	gid_t part1, part2;
+	int ret;
+
+	if (SCARG(uap,gidsetsize) + 2 > NGROUPS)
+	    return EINVAL;
+
+	part1 = (*cred)->cr_groups[1];
+	part2 = (*cred)->cr_groups[2];
+	ret = (*old_setgroups_func) (p, uap);
+	if (ret)
+	    return ret;
+	return store_pag (cred, part1, part2);
+    } else {
+	int ret;
+
+	ret = (*old_setgroups_func) (p, uap);
+	/* don't support setting a PAG */
+	if (xfs_is_pag (*cred)) {
+	    xfs_unpag (*cred);
+	    return EINVAL;
+	}
+	return ret;
+    }
+}
+#endif
 
 /*
  * Return the vnode corresponding to `pathptr'
@@ -194,14 +278,13 @@ lookup_node (const char *pathptr,
     struct nameidata nd, *ndp = &nd;
 #endif
     struct vnode *vp;
-    size_t done;
 
-    XFSDEB(XDEBSYS, ("xfs_syscall: looking up: %p\n", pathptr));
+    XFSDEB(XDEBSYS, ("xfs_syscall: looking up: %lx\n",
+		     (unsigned long)pathptr));
 
-    error = copyinstr(pathptr, path, MAXPATHLEN, &done);
+    error = copyinstr((char *) pathptr, path, MAXPATHLEN, NULL);
 
-    XFSDEB(XDEBSYS, ("xfs_syscall: looking up: %s len: %lu error: %d\n", 
-		     path, (unsigned long)done, error));
+    XFSDEB(XDEBSYS, ("xfs_syscall: looking up: %s, error: %d\n", path, error));
 
     if (error)
 	return error;
@@ -233,25 +316,46 @@ fhget_call (struct proc *p,
 	    struct vnode *vp)
 {
     int error;
+#if !((defined(HAVE_GETFH) && defined(HAVE_FHOPEN)) || defined(__osf__))
     struct mount *mnt;
     struct vattr vattr;
     size_t len;
+    struct xfs_fhandle_t xfs_handle;
     struct xfs_fh_args fh_args;
+#endif
 
     XFSDEB(XDEBSYS, ("fhget_call\n"));
 
     if (vp == NULL)
 	return EBADF;
 
-    error = suser (xfs_proc_to_cred(p), NULL);
+    error = xfs_suser (p);
     if (error)
 	return error;
 
-#ifdef __osf__
-    VOP_GETATTR(vp, &vattr, p->p_rcred, error);
+#if (defined(HAVE_GETFH) && defined(HAVE_FHOPEN)) || defined(__osf__)
+    {
+	/* This is to be same as getfh */
+	fhandle_t fh;
+	
+	bzero((caddr_t)&fh, sizeof(fh));
+	fh.fh_fsid = vp->v_mount->mnt_stat.f_fsid;
+#if __osf__
+	VFS_VPTOFH(vp, &fh.fh_fid, error);
 #else
-    error = VOP_GETATTR(vp, &vattr, p->p_ucred, p);
+        error = VFS_VPTOFH(vp, &fh.fh_fid);
 #endif
+        if (error)
+	    return (error);
+
+	if (vice_ioctl->out_size < sizeof(fh))
+	    return EINVAL;
+	
+	error = copyout((caddr_t)&fh, vice_ioctl->out, sizeof (fh));
+	return (error);
+    }
+#else
+    xfs_vop_getattr(vp, &vattr, xfs_proc_to_cred(p), p, error);
     if (error)
 	goto out;
 
@@ -261,21 +365,25 @@ fhget_call (struct proc *p,
     SCARG(&fh_args, fileid) = vattr.va_fileid;
     SCARG(&fh_args, gen)    = vattr.va_gen;
     
-    len = sizeof(fh_args);
+    xfs_handle.len = sizeof(fh_args);
+    memcpy (xfs_handle.fhdata, &fh_args, sizeof(fh_args));
+    len = sizeof(xfs_handle);
 
     if (vice_ioctl->out_size < len) {
 	error = EINVAL;
 	goto out;
     }
 
-    error = copyout (&fh_args, vice_ioctl->out, len);
+    error = copyout (&xfs_handle, vice_ioctl->out, len);
     if (error) {
 	XFSDEB(XDEBSYS, ("fhget_call: copyout failed: %d\n", error));
     }
-
-out:
+    
+ out:
     vrele (vp);
     return error;
+#endif /* HAVE_GETFH && HAVE_FHOPEN */
+    
 }
 
 /*
@@ -289,8 +397,6 @@ fhopen_call (struct proc *p,
 	     int flags,
 	     register_t *retval)
 {
-    int error;
-    struct xfs_fh_args fh_args;
 
     XFSDEB(XDEBSYS, ("fhopen_call: flags = %d\n", flags));
 
@@ -299,19 +405,8 @@ fhopen_call (struct proc *p,
 	return EINVAL;
     }
 
-    if (vice_ioctl->in_size < sizeof(fh_args))
-	return EINVAL;
-
-    error = copyin (vice_ioctl->in,
-		    &fh_args,
-		    sizeof(fh_args));
-    if (error)
-	return error;
-
     return xfs_fhopen (p,
-		       SCARG(&fh_args, fsid),
-		       SCARG(&fh_args, fileid),
-		       SCARG(&fh_args, gen),
+		       (struct xfs_fhandle_t *)vice_ioctl->in,
 		       flags,
 		       retval);
 }
@@ -364,21 +459,16 @@ remote_pioctl (struct proc *p,
 
     msg.insize = vice_ioctl->in_size;
     msg.outsize = vice_ioctl->out_size;
-#ifdef __osf__
-    msg.cred.uid = p->p_ruid;
-    msg.cred.pag = xfs_get_pag(p->p_rcred);
-#else
-    msg.cred.uid = p->p_cred->p_ruid;
-    msg.cred.pag = xfs_get_pag(p->p_ucred);
-#endif
+    msg.cred.uid = xfs_proc_to_ruid(p);
+    msg.cred.pag = xfs_get_pag(xfs_proc_to_cred(p));
 
     error = xfs_message_rpc(0, &msg.header, sizeof(msg)); /* XXX */
     msg2 = (struct xfs_message_wakeup_data *) &msg;
 
     if (error == 0)
 	error = msg2->error;
-    else
-	error = EINVAL; /* return EINVAL to not confuse applications */
+    if (error == ENODEV)
+	error = EINVAL;
 
     if (error == 0 && msg2->header.opcode == XFS_MSG_WAKEUP_DATA)
 	error = copyout(msg2->msg, vice_ioctl->out, 
@@ -397,7 +487,7 @@ xfs_debug (struct proc *p,
 	if (vice_ioctl->in_size < sizeof(int32_t))
 	    return EINVAL;
 	
-	error = suser (xfs_proc_to_cred(p), NULL);
+	error = xfs_suser (p);
 	if (error)
 	    return error;
 
@@ -439,11 +529,11 @@ xfs_pioctl_call(struct proc *proc,
     char *pathptr;
     struct vnode *vp = NULL;
 
-    XFSDEB(XDEBSYS, ("xfs_syscall(%d, %p, %d, %p, %d)\n", 
+    XFSDEB(XDEBSYS, ("xfs_syscall(%d, %lx, %d, %lx, %d)\n", 
 		     SCARG(arg, operation),
-		     SCARG(arg, a_pathP),
+		     (unsigned long)SCARG(arg, a_pathP),
 		     SCARG(arg, a_opcode),
-		     SCARG(arg, a_paramsP),
+		     (unsigned long)SCARG(arg, a_paramsP),
 		     SCARG(arg, a_followSymlinks)));
 
     /* Copy in the data structure for us */

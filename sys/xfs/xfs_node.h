@@ -1,6 +1,5 @@
-/* 	$OpenBSD: xfs_node.h,v 1.5 2000/03/03 00:54:58 todd Exp $	 */
 /*
- * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -37,6 +36,7 @@
  * SUCH DAMAGE.
  */
 
+/* 	$Id: xfs_node.h,v 1.6 2000/09/11 14:26:53 art Exp $	 */
 
 #ifndef _xfs_xnode_h
 #define _xfs_xnode_h
@@ -53,6 +53,12 @@
 #include <xfs/xfs_attr.h>
 #include <xfs/xfs_message.h>
 
+#ifdef __APPLE__
+typedef struct lock__bsd__ xfs_vnode_lock;
+#else
+typedef struct lock xfs_vnode_lock;
+#endif
+
 struct xfs_node {
     struct vnode *vn;
     struct vnode *data;
@@ -60,13 +66,18 @@ struct xfs_node {
     u_int flags;
     u_int tokens;
     xfs_handle handle;
-    pag_t id[MAXRIGHTS];
+    xfs_pag_t id[MAXRIGHTS];
     u_char rights[MAXRIGHTS];
     u_char anonrights;
+#if defined(HAVE_KERNEL_LOCKMGR) || defined(HAVE_KERNEL_DEBUGLOCKMGR)
+    xfs_vnode_lock lock;
+#else
     int vnlocks;
+#endif
 #ifdef __NetBSD__
     struct   lockf *i_lockf;
 #endif
+    struct ucred *cred;
 };
 
 int xfs_getnewvnode(struct mount *mp, struct vnode **vpp,
@@ -80,12 +91,14 @@ int xfs_getnewvnode(struct mount *mp, struct vnode **vpp,
 #define XNODE_TO_VNODE(xp) ((xp)->vn)
 #define VNODE_TO_XNODE(vp) ((struct xfs_node *) (vp)->v_data)
 
-#if defined(HAVE_THREE_ARGUMENT_VGET)
-#define xfs_do_vget(vp, lockflag, proc) vget((vp), (lockflag), (proc))
-#elif !defined(__osf__)
-#define xfs_do_vget(vp, lockflag, proc) vget((vp), (lockflag))
-#else
+#if defined(HAVE_ONE_ARGUMENT_VGET)
 #define xfs_do_vget(vp, lockflag, proc) vget((vp))
+#elif defined(HAVE_TWO_ARGUMENT_VGET)
+#define xfs_do_vget(vp, lockflag, proc) vget((vp), (lockflag))
+#elif defined(HAVE_THREE_ARGUMENT_VGET)
+#define xfs_do_vget(vp, lockflag, proc) vget((vp), (lockflag), (proc))
+#else
+#error what kind of vget
 #endif
 
 #ifndef HAVE_VOP_T

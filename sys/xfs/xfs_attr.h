@@ -1,6 +1,5 @@
-/* $OpenBSD: xfs_attr.h,v 1.3 2000/03/03 00:54:57 todd Exp $ */
 /*
- * Copyright (c) 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1998, 1999 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -37,6 +36,7 @@
  * SUCH DAMAGE.
  */
 
+/* $Id: xfs_attr.h,v 1.4 2000/09/11 14:26:51 art Exp $ */
 
 #ifndef _XFS_ATTR_H
 #define _XFS_ATTR_H
@@ -53,9 +53,15 @@
 #define XA_V_FILEID	(1 <<  8)
 #define XA_V_TYPE       (1 <<  9)
 
-enum xfs_file_type { XFS_FILE_NON, XFS_FILE_REG, XFS_FILE_DIR,
-		     XFS_FILE_BLK, XFS_FILE_CHR, XFS_FILE_LNK,
-		     XFS_FILE_SOCK, XFS_FILE_FIFO, XFS_FILE_BAD };
+#define XFS_FILE_NON 1
+#define XFS_FILE_REG 2
+#define XFS_FILE_DIR 3
+#define XFS_FILE_BLK 4
+#define XFS_FILE_CHR 5
+#define XFS_FILE_LNK 6
+#define XFS_FILE_SOCK 7
+#define XFS_FILE_FIFO 8
+#define XFS_FILE_BAD 9
 
 #define XA_CLEAR(xa_p) \
         ((xa_p)->valid = XA_V_NONE)
@@ -102,31 +108,24 @@ enum xfs_file_type { XFS_FILE_NON, XFS_FILE_REG, XFS_FILE_DIR,
 #define XA_VALID_TYPE(xa_p) \
 	(((xa_p)->valid) & XA_V_TYPE)
 
-/*
- * Under glibc and Linux, foo_t in the kernel is not the same type as
- * foo_t in user-level.  Therefore we need these defines.
- */
-
-#if !defined(HAVE_LINUX_TYPES_H) && !defined(__KERNEL__)
-typedef mode_t __kernel_mode_t;
-typedef nlink_t __kernel_nlink_t;
-typedef off_t __kernel_off_t;
-typedef uid_t __kernel_uid_t;
-typedef gid_t __kernel_gid_t;
-#endif
-
 struct xfs_attr {
     u_int32_t		valid;
-    __kernel_mode_t	xa_mode;
-    __kernel_nlink_t	xa_nlink;
-    __kernel_off_t	xa_size;
-    __kernel_uid_t	xa_uid;
-    __kernel_gid_t	xa_gid;
-    time_t		xa_atime;
-    time_t		xa_mtime;
-    time_t		xa_ctime;
+    u_int32_t		xa_mode;
+
+    u_int32_t		xa_nlink;
+    u_int32_t		xa_size;
+
+    u_int32_t		xa_uid;
+    u_int32_t		xa_gid;
+
+    u_int32_t		xa_atime;
+    u_int32_t		xa_mtime;
+
+    u_int32_t		xa_ctime;
     u_int32_t		xa_fileid;
-    enum xfs_file_type  xa_type;
+
+    u_int32_t           xa_type;
+    u_int32_t           pad1;
 };
 
 #endif /* _XFS_ATTR_H */

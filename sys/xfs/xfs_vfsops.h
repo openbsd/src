@@ -1,4 +1,3 @@
-/* $OpenBSD: xfs_vfsops.h,v 1.2 2000/03/03 00:54:59 todd Exp $ */
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -37,6 +36,7 @@
  * SUCH DAMAGE.
  */
 
+/* $Id: xfs_vfsops.h,v 1.3 2000/09/11 14:26:54 art Exp $ */
 
 #ifndef _xfs_vfsops_h
 #define _xfs_vfsops_h
@@ -59,16 +59,12 @@ xfs_root_common(struct mount *mp,
 
 int
 xfs_fhlookup (struct proc *proc,
-	      fsid_t fsid,
-	      long fileid,
-	      long gen,
+	      struct xfs_fhandle_t *fhp,
 	      struct vnode **vpp);
 
 int
 xfs_fhopen (struct proc *proc,
-	    fsid_t fsid,
-	    long fileid,
-	    long gen,
+	    struct xfs_fhandle_t *fhp,
 	    int flags,
 	    register_t *retval);
 

@@ -1,7 +1,5 @@
-/*	$OpenBSD: xfs_vfsops-openbsd.c,v 1.3 2000/03/03 00:54:59 todd Exp $	*/
-
 /*
- * Copyright (c) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -40,7 +38,7 @@
 
 #include <xfs/xfs_locl.h>
 
-RCSID("$OpenBSD: xfs_vfsops-openbsd.c,v 1.3 2000/03/03 00:54:59 todd Exp $");
+RCSID("$Id: xfs_vfsops-openbsd.c,v 1.4 2000/09/11 14:26:53 art Exp $");
 
 #include <xfs/xfs_common.h>
 #include <xfs/xfs_message.h>
@@ -56,7 +54,8 @@ static vop_t **xfs_dead_vnodeop_p;
 int
 make_dead_vnode(struct mount *mp, struct vnode **vpp)
 {
-    XFSDEB(XDEBNODE, ("make_dead_vnode mp = %p\n", mp));
+    XFSDEB(XDEBNODE, ("make_dead_vnode mp = %lx\n",
+		      (unsigned long)mp));
 
     return getnewvnode(VT_NON, mp, xfs_dead_vnodeop_p, vpp);
 }
@@ -65,6 +64,9 @@ static struct vnodeopv_entry_desc xfs_dead_vnodeop_entries[] = {
     {&vop_default_desc, (vop_t *) xfs_eopnotsupp},
     {&vop_lookup_desc,	(vop_t *) xfs_dead_lookup},
     {&vop_reclaim_desc, (vop_t *) xfs_returnzero},
+    {&vop_lock_desc,	(vop_t *) vop_generic_lock},
+    {&vop_unlock_desc,	(vop_t *) vop_generic_unlock},
+    {&vop_islocked_desc,(vop_t *) vop_generic_islocked},
     {NULL, NULL}};
 
 static struct vnodeopv_desc xfs_dead_vnodeop_opv_desc =
@@ -83,22 +85,6 @@ xfs_init(struct vfsconf *vfs)
     return 0;
 }
 
-static int
-xfs_sysctl (int *name, u_int namelen, void *oldp, size_t *oldlenp,
-	    void *newp, size_t newlen, struct proc *p)
-{
-    XFSDEB(XDEBVFOPS, ("xfs_sysctl\n"));
-    return EOPNOTSUPP;
-}
-
-static int
-xfs_checkexp(struct mount *mp, struct mbuf *nam, int *exflagsp,
-	     struct ucred **credanonp)
-{
-    XFSDEB(XDEBVFOPS, ("xfs_checkexp\n"));
-    return (EOPNOTSUPP);
-}
-
 struct vfsops xfs_vfsops = {
     xfs_mount,
     xfs_start,
@@ -111,8 +97,10 @@ struct vfsops xfs_vfsops = {
     xfs_fhtovp,
     xfs_vptofh,
     xfs_init,
-    xfs_sysctl,
-    xfs_checkexp
+    NULL,
+#ifdef HAVE_STRUCT_VFSOPS_VFS_CHECKEXP
+    xfs_checkexp,               /* checkexp */
+#endif
 };
 
 static struct vfsconf xfs_vfc = {

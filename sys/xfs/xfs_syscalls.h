@@ -1,4 +1,3 @@
-/* $OpenBSD: xfs_syscalls.h,v 1.4 2000/03/03 00:54:58 todd Exp $ */
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -37,32 +36,13 @@
  * SUCH DAMAGE.
  */
 
+/* $Id: xfs_syscalls.h,v 1.5 2000/09/11 14:26:53 art Exp $ */
 
 #ifndef  __xfs_syscalls
 #define  __xfs_syscalls
 
 #include <xfs/xfs_common.h>
 #include <xfs/xfs_message.h>
-#ifdef HAVE_SYS_SYSCALLARGS_H
-#include <sys/syscallargs.h>
-#endif
-
-/*
- * XXX
- */
-
-#ifndef SCARG
-#define SCARG(a, b) ((a)->b.datum)
-#define syscallarg(x)   union { x datum; register_t pad; }
-#endif
-
-#ifndef syscallarg
-#define syscallarg(x)   x
-#endif
-
-#ifndef HAVE_REGISTER_T
-typedef int register_t;
-#endif
 
 struct sys_pioctl_args {
     syscallarg(int) operation;
@@ -70,6 +50,14 @@ struct sys_pioctl_args {
     syscallarg(int) a_opcode;
     syscallarg(struct ViceIoctl *) a_paramsP;
     syscallarg(int) a_followSymlinks;
+};
+
+#define XFS_FHMAXDATA 40
+
+struct xfs_fhandle_t {
+    u_short	len;
+    u_short	pad;
+    char	fhdata[XFS_FHMAXDATA];
 };
 
 struct xfs_fh_args {
@@ -81,13 +69,28 @@ struct xfs_fh_args {
 int xfs_install_syscalls(void);
 int xfs_uninstall_syscalls(void);
 int xfs_stat_syscalls(void);
-pag_t xfs_get_pag(struct ucred *);
+xfs_pag_t xfs_get_pag(struct ucred *);
 
 int xfs_setpag_call(struct ucred **ret_cred);
 int xfs_pioctl_call(struct proc *proc,
 		    struct sys_pioctl_args *args,
 		    register_t *return_value);
 
-int sys_xfspioctl(struct proc *proc, void *varg, register_t *retval);
+int xfspioctl(struct proc *proc, void *varg, register_t *retval);
+
+int xfs_setgroups (struct proc *p,
+		   void *varg);
+
+extern int (*old_setgroups_func)(struct proc *, void *);
+extern int xfs_syscall_num; /* The old syscall number */
+
+
+#ifndef HAVE_KERNEL_SYS_LKMNOSYS
+#define sys_lkmnosys nosys
+#endif
+
+#ifndef SYS_MAXSYSCALL
+#define SYS_MAXSYSCALL nsysent
+#endif
 
 #endif				       /* __xfs_syscalls */

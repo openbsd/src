@@ -1,7 +1,5 @@
-/*	$OpenBSD: xfs_message.c,v 1.6 2000/03/03 00:54:58 todd Exp $	*/
-
 /*
- * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -46,8 +44,9 @@
 #include <xfs/xfs_syscalls.h>
 #include <xfs/xfs_vfsops.h>
 #include <xfs/xfs_vnodeops.h>
+#include <xfs/xfs_dev.h>
 
-RCSID("$OpenBSD: xfs_message.c,v 1.6 2000/03/03 00:54:58 todd Exp $");
+RCSID("$Id: xfs_message.c,v 1.7 2000/09/11 14:26:52 art Exp $");
 
 int
 xfs_message_installroot(int fd,
@@ -57,7 +56,11 @@ xfs_message_installroot(int fd,
 {
     int error = 0;
 
-    XFSDEB(XDEBMSG, ("xfs_message_installroot\n"));
+    XFSDEB(XDEBMSG, ("xfs_message_installroot (%d,%d,%d,%d)\n",
+		     message->node.handle.a,
+		     message->node.handle.b,
+		     message->node.handle.c,
+		     message->node.handle.d));
 
     if (xfs[fd].root != NULL) {
 	printf("XFS PANIC WARNING! xfs_message_installroot: called again!\n");
@@ -80,13 +83,19 @@ xfs_message_installnode(int fd,
     int error = 0;
     struct xfs_node *n, *dp;
 
-    XFSDEB(XDEBMSG, ("xfs_message_installnode\n"));
+    XFSDEB(XDEBMSG, ("xfs_message_installnode (%d,%d,%d,%d)\n",
+		     message->node.handle.a,
+		     message->node.handle.b,
+		     message->node.handle.c,
+		     message->node.handle.d));
 
+retry:
     dp = xfs_node_find(&xfs[fd], &message->parent_handle);
     if (dp) {
 	struct vnode *t_vnode = XNODE_TO_VNODE(dp);
 
-	xfs_do_vget (t_vnode, LK_INTERLOCK|LK_SHARED, p);
+	if (xfs_do_vget(t_vnode, 0 /* LK_SHARED */, p))
+		goto retry;
 
 	error = new_xfs_node(&xfs[fd], &message->node, &n, p);
 	if (error) {
@@ -97,8 +106,8 @@ xfs_message_installnode(int fd,
 	xfs_dnlc_enter_name(t_vnode,
 			    message->name,
 			    XNODE_TO_VNODE(n));
-	vrele(XNODE_TO_VNODE(n));
-	vput (t_vnode);
+	vrele (XNODE_TO_VNODE(n));
+	vrele (t_vnode);
     } else {
 	printf("XFS PANIC WARNING! xfs_message_installnode: no parent\n");
 	error = ENOENT;
@@ -117,23 +126,26 @@ xfs_message_installattr(int fd,
     int error = 0;
     struct xfs_node *t;
 
+    XFSDEB(XDEBMSG, ("xfs_message_installattr (%d,%d,%d,%d) \n",
+		     message->node.handle.a,
+		     message->node.handle.b,
+		     message->node.handle.c,
+		     message->node.handle.d));
+
     t = xfs_node_find(&xfs[fd], &message->node.handle);
     if (t != 0) {
 	t->tokens = message->node.tokens;
+	if ((t->tokens & XFS_DATA_MASK) && DATA_FROM_XNODE(t) == NULL) {
+	    printf ("xfs_message_installattr: tokens and no data\n");
+	    t->tokens &= ~XFS_DATA_MASK;
+	}
 	xfs_attr2vattr(&message->node.attr, &t->attr);
-#ifdef UVM
-	uvm_vnp_setsize(XNODE_TO_VNODE(t), t->attr.va_size);
-#else
-#ifdef HAVE_KERNEL_VNODE_PAGER_SETSIZE
-	vnode_pager_setsize(XNODE_TO_VNODE(t), t->attr.va_size);
-#endif
-#endif
+	xfs_set_vp_size(XNODE_TO_VNODE(t), t->attr.va_size);
 	bcopy(message->node.id, t->id, sizeof(t->id));
 	bcopy(message->node.rights, t->rights, sizeof(t->rights));
 	t->anonrights = message->node.anonrights;
     } else {
-	printf("XFS PANIC WARNING! xfs_message_installattr: no node!\n");
-	error = ENOENT;
+	XFSDEB(XDEBMSG, ("xfs_message_installattr: no such node\n"));
     }
 
     return error;
@@ -148,28 +160,25 @@ xfs_message_installdata(int fd,
     struct xfs_node *t;
     int error = 0;
 
-    XFSDEB(XDEBMSG, ("xfs_message_installdata\n"));
+    XFSDEB(XDEBMSG, ("xfs_message_installdata (%d,%d,%d,%d)\n",
+		     message->node.handle.a,
+		     message->node.handle.b,
+		     message->node.handle.c,
+		     message->node.handle.d));
 
+retry:
     t = xfs_node_find(&xfs[fd], &message->node.handle);
-
     if (t != NULL) {
-	struct xfs_fh_args *fh_args = (struct xfs_fh_args *)&message->cache_handle;
+	struct xfs_fhandle_t *fh = (struct xfs_fhandle_t *)&message->cache_handle;
 	struct vnode *vp;
 	struct vnode *t_vnode = XNODE_TO_VNODE(t);
 
 	XFSDEB(XDEBMSG, ("cache_name = '%s'\n", message->cache_name));
-	XFSDEB(XDEBMSG, ("fileno = %ld, gen = %ld\n", 
-			 SCARG(fh_args, fileid),
-			 SCARG(fh_args, gen)));
 
-	xfs_do_vget (t_vnode, LK_INTERLOCK|LK_SHARED, p);
+	if (xfs_do_vget(t_vnode, 0 /* LK_SHARED */, p))
+		goto retry;
 
-	error = xfs_fhlookup (p,
-			      SCARG(fh_args,fsid),
-			      SCARG(fh_args,fileid),
-			      SCARG(fh_args,gen),
-			      &vp);
-
+	error = xfs_fhlookup (p, fh, &vp);
 	if (error != 0) {
 #ifdef __osf__
 	    struct nameidata *ndp = &u.u_nd;
@@ -189,36 +198,36 @@ xfs_message_installdata(int fd,
 	}
 
 	if (error == 0) {
+#ifndef __osf__
 	    xfs_vfs_unlock(vp, p);
+#endif
 	    if (DATA_FROM_XNODE(t))
 		vrele(DATA_FROM_XNODE(t));
 	    DATA_FROM_XNODE(t) = vp;
 
-	    XFSDEB(XDEBMSG, ("xfs_message_installdata: t = %p;"
+	    XFSDEB(XDEBMSG, ("xfs_message_installdata: t = %lx;"
 			     " tokens = %x\n",
-			     t, message->node.tokens));
+			     (unsigned long)t, message->node.tokens));
 
 	    t->tokens = message->node.tokens;
 	    xfs_attr2vattr(&message->node.attr, &t->attr);
-#ifdef UVM
-	    uvm_vnp_setsize(XNODE_TO_VNODE(t), t->attr.va_size);
-#else
-#ifdef HAVE_KERNEL_VNODE_PAGER_SETSIZE
-	    vnode_pager_setsize(XNODE_TO_VNODE(t), t->attr.va_size);
-#endif
-#endif
+	    xfs_set_vp_size(XNODE_TO_VNODE(t), t->attr.va_size);
 	    if (XNODE_TO_VNODE(t)->v_type == VDIR
-		&& (message->flag & XFS_INVALID_DNLC))
+		&& (message->flag & XFS_ID_INVALID_DNLC))
 		cache_purge (XNODE_TO_VNODE(t));
 	    bcopy(message->node.id, t->id, sizeof(t->id));
 	    bcopy(message->node.rights, t->rights, sizeof(t->rights));
 	    t->anonrights = message->node.anonrights;
+#if 0
+	    if (message->flag & XFS_ID_AFSDIR)
+		t->flags |= XFS_AFSDIR;
+#endif
 	} else {
 	    printf("XFS PANIC WARNING! xfs_message_installdata failed!\n");
 	    printf("Reason: lookup failed on cache file '%s', error = %d\n",
 		   message->cache_name, error);
 	}
-	vput (t_vnode);
+	vrele (t_vnode);
     } else {
 	printf("XFS PANIC WARNING! xfs_message_installdata failed\n");
 	printf("Reason: No node to install the data into!\n");
@@ -227,6 +236,12 @@ xfs_message_installdata(int fd,
 
     return error;
 }
+
+#ifdef __osf__
+#define xfs_writecount v_wrcnt
+#else
+#define xfs_writecount v_writecount
+#endif
 
 int
 xfs_message_invalidnode(int fd,
@@ -237,11 +252,35 @@ xfs_message_invalidnode(int fd,
     int error = 0;
     struct xfs_node *t;
 
-    XFSDEB(XDEBMSG, ("xfs_message_invalidnode\n"));
+    XFSDEB(XDEBMSG, ("xfs_message_invalidnode (%d,%d,%d,%d)\n",
+		     message->handle.a,
+		     message->handle.b,
+		     message->handle.c,
+		     message->handle.d));
 
     t = xfs_node_find(&xfs[fd], &message->handle);
     if (t != 0) {
-	/* XXX Really need to put back dirty data first. */
+	struct vnode *vp = XNODE_TO_VNODE(t);
+
+        /* If open for writing, return immediately. Last close:er wins! */
+	if (vp->v_usecount >= 0 && vp->xfs_writecount >= 1)
+            return 0;
+
+#ifdef __FreeBSD__
+	{
+	    vm_object_t obj = vp->v_object;
+
+	    if (obj != NULL
+		&& (obj->ref_count != 0
+#ifdef OBJ_MIGHTBEDIRTY
+		|| (obj->flags & OBJ_MIGHTBEDIRTY) != 0
+#endif
+		    ))
+		return 0;
+
+	}
+#endif /* __FreeBSD__ */
+
 	if (DATA_FROM_XNODE(t)) {
 	    vrele(DATA_FROM_XNODE(t));
 	    DATA_FROM_XNODE(t) = (struct vnode *) 0;
@@ -249,9 +288,17 @@ xfs_message_invalidnode(int fd,
 	XFS_TOKEN_CLEAR(t, ~0,
 			XFS_OPEN_MASK | XFS_ATTR_MASK |
 			XFS_DATA_MASK | XFS_LOCK_MASK);
-	cache_purge(XNODE_TO_VNODE(t));
+	/* Dir changed, must invalidate DNLC. */
+	if (vp->v_type == VDIR)
+	    xfs_dnlc_purge(vp);
+	if (vp->v_usecount == 0) {
+	    XFSDEB(XDEBVNOPS, ("xfs_message_invalidnode: vrecycle\n"));
+	    vrecycle(vp, 0, p);
+	}
     } else {
+#if 0
 	printf("XFS PANIC WARNING! xfs_message_invalidnode: no node!\n");
+#endif
 	error = ENOENT;
     }
 
@@ -267,7 +314,12 @@ xfs_message_updatefid(int fd,
     int error = 0;
     struct xfs_node *t;
 
-    XFSDEB(XDEBMSG, ("xfs_message_updatefid\n"));
+    XFSDEB(XDEBMSG, ("xfs_message_updatefid (%d,%d,%d,%d)\n",
+		     message->old_handle.a,
+		     message->old_handle.b,
+		     message->old_handle.c,
+		     message->old_handle.d));
+
     t = xfs_node_find (&xfs[fd], &message->old_handle);
     if (t != NULL) {
 	t->handle = message->new_handle;
@@ -276,4 +328,181 @@ xfs_message_updatefid(int fd,
 	error = ENOENT;
     }
     return error;
+}
+
+#if __osf__
+
+/*
+ * Try to clean out nodes for the userland daemon
+ */
+
+static void
+gc_vnode (struct vnode *vp,
+	  struct proc *p)
+{
+    /* This node is on the freelist */
+    if (vp->v_usecount <= 0) {
+	
+	/*  DIAGNOSTIC */
+	if (vp->v_usecount < 0) {
+		    vprint("vrele: bad ref count", vp);
+		    panic("vrele: ref cnt");
+	}
+	
+	XFSDEB(XDEBMSG, ("xfs_message_gc: success\n"));
+	
+	vgone(vp, VX_NOSLEEP, NULL);
+    } else {
+	XFSDEB(XDEBMSG, ("xfs_message_gc: used\n"));
+    }
+
+}
+
+int
+xfs_message_gc_nodes(int fd,
+		     struct xfs_message_gc_nodes *message,
+		     u_int size,
+		     struct proc *p)
+{
+    XFSDEB(XDEBMSG, ("xfs_message_gc\n"));
+
+    if (message->len == 0) {
+	struct vnode *vp;
+
+	/* XXX see comment in xfs_node_find */
+
+	for(vp = XFS_TO_VFS(&xfs[fd])->m_mounth;
+	    vp != NULL; 
+	    vp = vp->v_mountf) {
+	    gc_vnode (vp, p);
+	}
+
+    } else {
+	struct xfs_node *t;
+	int i;
+
+	for (i = 0; i < message->len; i++) {
+	    t = xfs_node_find (&xfs[fd], &message->handle[i]);
+	    if (t == NULL)
+		continue;
+
+	    gc_vnode(XNODE_TO_VNODE(t), p);
+	}
+    }
+
+    return 0;
+}
+
+#else /* !__osf__ */
+
+/*
+ * Try to clean out nodes for the userland daemon
+ */
+
+static void
+gc_vnode (struct vnode *vp,
+	  struct proc *p)
+{
+    simple_lock(&vp->v_interlock);
+    
+    /* This node is on the freelist */
+    if (vp->v_usecount <= 0) {
+#if __FreeBSD__
+	vm_object_t obj;
+
+	obj = vp->v_object;
+
+	if (obj != NULL
+	    && (obj->ref_count != 0
+#ifdef OBJ_MIGHTBEDIRTY
+		|| (obj->flags & OBJ_MIGHTBEDIRTY) != 0
+#endif
+		)) {
+	    simple_unlock (&vp->v_interlock);
+	    return;
+	}
+#endif /* __FreeBSD__ */
+	
+	/*  DIAGNOSTIC */
+	if (vp->v_usecount < 0 || vp->v_writecount != 0) {
+		    vprint("vrele: bad ref count", vp);
+		    panic("vrele: ref cnt");
+	}
+	
+	XFSDEB(XDEBMSG, ("xfs_message_gc: success\n"));
+	
+#ifdef HAVE_KERNEL_FUNC_VGONEL
+	vgonel (vp, p);
+#else
+	simple_unlock(&vp->v_interlock); 
+	vgone (vp);
+#endif
+
+    } else {
+	simple_unlock(&vp->v_interlock);
+	XFSDEB(XDEBMSG, ("xfs_message_gc: used\n"));
+    }
+
+}
+
+int
+xfs_message_gc_nodes(int fd,
+		     struct xfs_message_gc_nodes *message,
+		     u_int size,
+		     struct proc *p)
+{
+    XFSDEB(XDEBMSG, ("xfs_message_gc\n"));
+
+    if (message->len == 0) {
+	struct vnode *vp, *next;
+
+	/* XXX see comment in xfs_node_find */
+	/* XXXSMP do gone[l] need to get mntvnode_slock ? */
+
+	for(vp = XFS_TO_VFS(&xfs[fd])->mnt_vnodelist.lh_first;
+	    vp != NULL; 
+	    vp = next) {
+
+	    next = vp->v_mntvnodes.le_next;
+	    gc_vnode (vp, p);
+	}
+    } else {
+	struct xfs_node *t;
+	int i;
+
+	for (i = 0; i < message->len; i++) {
+	    t = xfs_node_find (&xfs[fd], &message->handle[i]);
+	    if (t == NULL)
+		continue;
+
+	    gc_vnode(XNODE_TO_VNODE(t), p);
+	}
+    }
+
+    return 0;
+}
+
+
+#endif
+
+/*
+ * Probe what version of xfs this support
+ */
+
+int
+xfs_message_version(int fd,
+		    struct xfs_message_version *message,
+		    u_int size,
+		    struct proc *p)
+{
+    struct xfs_message_wakeup msg;
+    int ret;
+
+    ret = XFS_VERSION;
+
+    msg.header.opcode = XFS_MSG_WAKEUP;
+    msg.sleepers_sequence_num = message->header.sequence_num;
+    msg.error = ret;
+
+    return xfs_message_send(fd, (struct xfs_message_header *) &msg, sizeof(msg));
 }

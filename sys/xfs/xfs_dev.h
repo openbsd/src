@@ -1,6 +1,5 @@
-/* $OpenBSD: xfs_dev.h,v 1.4 2000/03/03 00:54:58 todd Exp $ */
 /*
- * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -37,6 +36,7 @@
  * SUCH DAMAGE.
  */
 
+/* $Id: xfs_dev.h,v 1.5 2000/09/11 14:26:52 art Exp $ */
 
 #ifndef _xfs_dev_h
 #define _xfs_dev_h
@@ -76,7 +76,6 @@ extern struct xfs_channel xfs_channel[NXFS];
  * These are variant dependent
  */
 
-int xfs_func_is_devopen(void*);
 void xfs_select_wakeup(struct xfs_channel *);
 
 int xfs_install_device(void);
@@ -97,10 +96,10 @@ void
 xfs_initq(struct xfs_link *q);
 
 int
-xfs_emptyq(struct xfs_link *q);
+xfs_emptyq(const struct xfs_link *q);
 
 int
-xfs_onq(struct xfs_link *link);
+xfs_onq(const struct xfs_link *link);
 
 void
 xfs_appendq(struct xfs_link *q, struct xfs_link *p);
@@ -114,13 +113,8 @@ xfs_devopen_common(dev_t dev);
 #ifndef __osf__ /* XXX - we should do the same for osf */
 int xfs_devopen(dev_t dev, int flag, int devtype, struct proc *proc);
 int xfs_devclose(dev_t dev, int flag, int devtype, struct proc *proc);
-int xfs_devioctl(dev_t dev,
-#if  defined(__NetBSD__) || defined(__OpenBSD__)
-		 u_long cmd,
-#else /* if defined(__FreeBSD__) */
-		 int cmd,
-#endif
-		 caddr_t data, int flags, struct proc *p);
+int xfs_devioctl(dev_t dev, u_long cmd, caddr_t data, int flags,
+		 struct proc *p);
 int xfs_devselect(dev_t dev, int which, struct proc *p);
 #endif /* ! __osf__ */
 
@@ -159,5 +153,8 @@ xfs_message_wakeup_data(int fd,
 
 int
 xfs_uprintf_device(void);
+
+int
+xfs_is_xfs_dev (dev_t dev);
 
 #endif /* _xfs_dev_h */
