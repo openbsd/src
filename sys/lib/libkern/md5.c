@@ -1,9 +1,9 @@
-/*	$OpenBSD: md5.c,v 1.1 1996/04/17 05:03:08 mickey Exp $	*/
+/*	$OpenBSD: md5.c,v 1.2 1996/04/24 05:28:26 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff.
  *
- * This software derived from one contributed by Theodore Ts'o.
+ * This software derived from one contributed by Colin Plumb.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -15,7 +15,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Theodore Ts'o.
+ *	This product includes software developed by Colin Plumb.
  * 4. Neither the name of the University nor of the Laboratory may be used
  *    to endorse or promote products derived from this software without
  *    specific prior written permission.
@@ -77,8 +77,7 @@ MD5Init(buf)
 
 /*
  * The core of the MD5 algorithm, this alters an existing MD5 hash to
- * reflect the addition of 16 longwords of new data.  MD5Update blocks
- * the data and converts bytes into longwords for this routine.
+ * reflect the addition of 16 longwords of new data.
  */
 void
 MD5Transform(buf, in)
