@@ -1,4 +1,4 @@
-/*	$OpenBSD: library.c,v 1.6 2001/05/11 16:19:37 art Exp $ */
+/*	$OpenBSD: library.c,v 1.7 2001/05/31 13:47:20 art Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -293,7 +293,7 @@ _dl_tryload_shlib(const char *libname, int type)
 				_dl_load_list_free(load_list);
 				return(0);
 			}
-			if(phdp->p_flags & PF_W) {
+			if (phdp->p_flags & PF_W) {
 				if(size & align) {
 					_dl_memset(start + size, 0,
 						_dl_pagesz - (size & align));
@@ -324,8 +324,7 @@ _dl_tryload_shlib(const char *libname, int type)
 	if(object) {
 		object->load_size = maxva - minva;	/*XXX*/
 		object->load_list = load_list;
-	}
-	else {
+	} else {
 		_dl_munmap((void *)libaddr, maxva - minva);
 		_dl_load_list_free(load_list);
 	}
