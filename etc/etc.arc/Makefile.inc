@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.1 1997/01/24 00:15:06 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.2 1997/02/09 08:50:15 deraadt Exp $
 #
 #	etc.arc/Makefile.inc -- arc-specific etc Makefile targets
 
@@ -16,5 +16,7 @@ bsd:
 	    make clean && make depend && make
 	cp ${.CURDIR}/../sys/arch/arc/compile/GENERIC/bsd \
 	    ${DESTDIR}/snapshot/bsd
+	cp ${.CURDIR}/../sys/arch/arc/compile/GENERIC/bsd.ecoff \
+	    ${DESTDIR}/snapshot/bsd.ecoff
 
 .endif
