@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.141 2001/08/28 08:12:17 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.142 2001/08/31 23:05:22 frantzen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3193,6 +3193,12 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 	h = mtod(m, struct ip *);
 
 	off = h->ip_hl << 2;
+	if (off < sizeof(*h)) {
+		action = PF_DROP;
+		REASON_SET(&reason, PFRES_SHORT);
+		log = 1;
+		goto done;
+	}
 
 	switch (h->ip_p) {
 

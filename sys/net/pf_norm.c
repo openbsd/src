@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.6 2001/08/11 12:05:00 dhartmei Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.7 2001/08/31 23:05:22 frantzen Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -112,6 +112,7 @@ int			 pf_normalize_tcp(int, struct ifnet *, struct mbuf *,
 struct pf_tree_node	*tree_fragment;
 struct pool		 pf_frent_pl, pf_frag_pl;
 int			 pf_nfrents;
+extern int		 pftm_frag;	/* Fragment expire timeout */
 
 void
 pf_normalize_init(void)
@@ -127,8 +128,6 @@ pf_normalize_init(void)
 	TAILQ_INIT(&pf_fragqueue);
 }
 
-#define FRAG_EXPIRE	30
-
 void
 pf_purge_expired_fragments(void)
 {
@@ -138,7 +137,7 @@ pf_purge_expired_fragments(void)
 	microtime(&now);
 
 	timerclear(&expire);
-	expire.tv_sec = FRAG_EXPIRE;
+	expire.tv_sec = pftm_frag;
 	timersub(&now, &expire, &expire);
 
 	while ((frag = TAILQ_LAST(&pf_fragqueue, pf_fragqueue)) != NULL) {
