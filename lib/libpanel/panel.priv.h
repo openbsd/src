@@ -1,6 +1,5 @@
-/*	$OpenBSD: panel.priv.h,v 1.2 1997/12/03 05:17:57 millert Exp $	*/
-
-/* Id: panel.priv.h,v 1.8 1997/10/21 10:19:37 juergen Exp $ */
+/*	$OpenBSD: panel.priv.h,v 1.3 1998/07/24 17:08:24 millert Exp $	*/
+/* $From: panel.priv.h,v 1.8 1997/10/21 10:19:37 juergen Exp $ */
 
 #ifndef _PANEL_PRIV_H
 #define _PANEL_PRIV_H

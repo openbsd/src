@@ -1,5 +1,34 @@
-.\" $OpenBSD: panel.3,v 1.5 1997/12/14 23:19:07 millert Exp $
-.\" Id: panel.3x,v 1.8 1997/12/14 01:49:25 tom Exp $
+.\" $OpenBSD: panel.3,v 1.6 1998/07/24 17:08:21 millert Exp $
+.\"
+.\"***************************************************************************
+.\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
+.\"                                                                          *
+.\" Permission is hereby granted, free of charge, to any person obtaining a  *
+.\" copy of this software and associated documentation files (the            *
+.\" "Software"), to deal in the Software without restriction, including      *
+.\" without limitation the rights to use, copy, modify, merge, publish,      *
+.\" distribute, distribute with modifications, sublicense, and/or sell       *
+.\" copies of the Software, and to permit persons to whom the Software is    *
+.\" furnished to do so, subject to the following conditions:                 *
+.\"                                                                          *
+.\" The above copyright notice and this permission notice shall be included  *
+.\" in all copies or substantial portions of the Software.                   *
+.\"                                                                          *
+.\" THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS  *
+.\" OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF               *
+.\" MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.   *
+.\" IN NO EVENT SHALL THE ABOVE COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,   *
+.\" DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR    *
+.\" OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR    *
+.\" THE USE OR OTHER DEALINGS IN THE SOFTWARE.                               *
+.\"                                                                          *
+.\" Except as contained in this notice, the name(s) of the above copyright   *
+.\" holders shall not be used in advertising or otherwise to promote the     *
+.\" sale, use or other dealings in this Software without prior written       *
+.\" authorization.                                                           *
+.\"***************************************************************************
+.\"
+.\" $From: panel.3x,v 1.9 1998/03/11 21:12:53 juergen Exp $
 .TH panel 3 ""
 .ds n 5
 .ds d /usr/share/terminfo
@@ -8,7 +37,7 @@ panel - panel stack extension for curses
 .SH SYNOPSIS
 \fB#include <panel.h>\fR
 .P
-\fBcc [flags] sourcefiles -lpanel -lcurses -ltermlib\fR
+\fBcc [flags] sourcefiles -lpanel -lcurses\fR
 .P
 \fBPANEL *new_panel(WINDOW *win)\fR
 .br
@@ -98,7 +127,7 @@ to move a panel window.
 .TP
 \fBreplace_panel(pan,window)\fR
 replaces the current window of panel with \fBwindow\fR (useful, for
-example if you want to resize a panel; if you're using \fBcurses\fR,
+example if you want to resize a panel; if you're using \fBncurses\fR,
 you can call \fBreplace_panel\fR on the output of \fBwresize\fR(3)).
 It does not change the position of the panel in the stack.
 .TP
@@ -148,7 +177,7 @@ interface for the panels library
 libpanel.a
 the panels library itself
 .SH SEE ALSO
-\fBcurses\fR(3X)
+\fBcurses\fR(3)
 .SH AUTHOR
 Originally written by Warren Tucker <wht@n4hgf.mt-park.ga.us>,
 primarily to assist in porting u386mon to systems without a native
