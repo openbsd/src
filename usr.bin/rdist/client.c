@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.3 1996/06/26 05:38:08 deraadt Exp $	*/
+/*	$OpenBSD: client.c,v 1.4 1996/07/25 05:31:00 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 static char RCSid[] = 
-"$OpenBSD: client.c,v 1.3 1996/06/26 05:38:08 deraadt Exp $";
+"$OpenBSD: client.c,v 1.4 1996/07/25 05:31:00 millert Exp $";
 
 static char sccsid[] = "@(#)client.c";
 
@@ -531,6 +531,12 @@ static int rmchk(opts)
 				message(MT_INFO, "%s", s);
 			break;
 
+		case C_NOTEMSG:
+			if (n > 0)
+				message(MT_NOTICE, "%s", s);
+			break;
+			/* Goto top of loop */
+
 		case C_ERRMSG:
 			message(MT_NERROR, "%s", s);
 			return(didupdate);
@@ -706,6 +712,12 @@ static int sendlink(rname, opts, stb, user, group, destdir)
 			if (n > 0)
 				message(MT_INFO, "%s", s);
 			break;
+
+		case C_NOTEMSG:
+			if (n > 0)
+				message(MT_NOTICE, "%s", s);
+			break;
+			/* Goto top of loop */
 
 		case C_ERRMSG:
 			message(MT_NERROR, "%s", s);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.4 1996/06/26 05:38:24 deraadt Exp $	*/
+/*	$OpenBSD: server.c,v 1.5 1996/07/25 05:31:03 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -34,7 +34,7 @@
  */
 #ifndef lint
 static char RCSid[] = 
-"$OpenBSD: server.c,v 1.4 1996/06/26 05:38:24 deraadt Exp $";
+"$OpenBSD: server.c,v 1.5 1996/07/25 05:31:03 millert Exp $";
 
 static char sccsid[] = "@(#)server.c	5.3 (Berkeley) 6/7/86";
 
@@ -393,7 +393,13 @@ static int removefile(statb)
 		return(-1);
 	}
 removed:
-	message(MT_CHANGE|MT_REMOTE, "%s: removed", target);
+	/*
+	 * We use MT_NOTICE instead of MT_CHANGE because this function is
+	 * sometimes called by other functions that are suppose to return a
+	 * single ack() back to the client (rdist).  This is a kludge until
+	 * the Rdist protocol is re-done.  Sigh.
+	 */
+	message(MT_NOTICE|MT_REMOTE, "%s: removed", target);
 	return(0);
 }
 
@@ -750,6 +756,7 @@ static void recvfile(new, opts, mode, owner, group, mtime, atime, size)
 	off_t i;
 	register char *cp;
 	char *savefile = NULL;
+	static struct stat statbuff;
 
 	/*
 	 * Create temporary file
@@ -911,6 +918,18 @@ static void recvfile(new, opts, mode, owner, group, mtime, atime, size)
 			(void) unlink(new);
 			return;
 		}
+
+	/*
+	 * If the target is a directory, we need to remove it first
+	 * before we can rename the new file.
+	 */
+	if ((stat(target, &statbuff) == 0) && S_ISDIR(statbuff.st_mode)) {
+		char *saveptr = ptarget;
+
+		ptarget = &target[strlen(target)];
+		removefile(&statbuff);
+		ptarget = saveptr;
+	}
 
 	/*
 	 * Install new (temporary) file as the actual target
@@ -1339,7 +1358,7 @@ static void recvit(cmd, type)
 	time_t mtime, atime;
 	char *owner, *group, *file;
 	char new[MAXPATHLEN];
-	int freespace = -1, freefiles = -1;
+	long freespace = -1, freefiles = -1;
 	char *cp = cmd;
 
 	/*
@@ -1461,7 +1480,7 @@ static void recvit(cmd, type)
 	 */
 	if (min_freespace || min_freefiles) {
 		/* Convert file size to kilobytes */
-		int fsize = size / 1024;
+		long fsize = (long) (size / 1024);
 
 		if (getfilesysinfo(target, &freespace, &freefiles) != 0)
 			return;
