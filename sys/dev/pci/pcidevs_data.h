@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.410 2001/06/23 12:56:33 maja Exp 
+ *		OpenBSD: pcidevs,v 1.411 2001/06/25 23:32:20 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1525,6 +1525,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_DPT, PCI_PRODUCT_DPT_SC_RAID,
 	    "SmartCache/Raid",
+	},
+	{
+	    PCI_VENDOR_DPT, PCI_PRODUCT_DPT_I960_PPB,
+	    "PCI-PCI bridge",
 	},
 	{
 	    PCI_VENDOR_DPT, PCI_PRODUCT_DPT_RAID_I2O,
