@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.9 1999/09/26 18:24:52 smurph Exp $
+#       $OpenBSD: install.md,v 1.10 2000/01/24 04:50:26 smurph Exp $
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
@@ -69,8 +69,8 @@ md_set_term() {
 	if [ ! -z "$TERM" ]; then
 		return
 	fi
-	echo -n "Specify terminal type [xterm]: "
-	getresp "xterm"
+	echo -n "Specify terminal type [vt100]: "
+	getresp "vt100"
 	TERM="$resp"
 	export TERM
 }
@@ -80,11 +80,15 @@ md_machine_arch() {
 }
 
 md_get_diskdevs() {
-	egrep "^sd[0-9] " < /kern/msgbuf
+	# return available disk devices
+	cat /kern/msgbuf | egrep "^[sw]d[0-9]|ofdisk[0-9] " | sed -e "s/[ :(].*//" | sort -u
+	# egrep "^sd[0-9] " < /kern/msgbuf
 }
 
 md_get_cddevs() {
-	egrep "^cd[0-9] " < /kern/msgbuf
+	# return available CDROM devices
+	cat /kern/msgbuf | egrep "^cd[0-9] " | sed -e "s/[ :(].*//" | sort -u
+	# egrep "^cd[0-9] " < /kern/msgbuf
 }
 
 md_get_ifdevs() {                                                         
@@ -103,6 +107,9 @@ md_questions() {
 
 md_installboot() {
 	local _rawdev
+	
+	echo ""
+	echo "Installing boot blocks."
 
 	if [ "X${1}" = X"" ]; then
 		echo "No disk device specified, you must run installboot manually."
@@ -111,12 +118,12 @@ md_installboot() {
 	_rawdev=/dev/r${1}a
 
 	# use extracted mdec if it exists (may be newer)
-	if [ -d /mnt/usr/mdec ]; then
+	if [ -f /mnt/usr/mdec/installboot ]; then
 		cp /mnt/usr/mdec/bootsd /mnt/bootsd
-		/mnt/usr/mdec/installboot -v /mnt/bootsd /mnt/usr/mdec/bootxx _rawdev
-	elif [ -d /usr/mdec ]; then
+		/mnt/usr/mdec/installboot -v /mnt/bootsd /mnt/usr/mdec/bootxx ${_rawdev}
+	elif [ -f /usr/mdec/installboot ]; then
 		cp /usr/mdec/bootsd /mnt/bootsd
-		/usr/mdec/installboot -v /mnt/bootsd /usr/mdec/bootxx _rawdev
+		/usr/mdec/installboot -v /mnt/bootsd /usr/mdec/bootxx ${_rawdev}
 	else
 		echo "No boot block prototypes found, you must run installboot manually."
 	fi
@@ -199,9 +206,10 @@ __md_prep_disklabel_1
 }
 
 md_welcome_banner() {
+{
 	if [ "$MODE" = "install" ]; then
 		echo ""
-		echo "Welcome to the OpenBSD/mvme68k ${VERSION} installation program."
+		echo "Welcome to the OpenBSD/mvme68k ${VERSION_MAJOR}.${VERSION_MINOR} installation program."
 		cat << \__welcome_banner_1
 
 This program is designed to help you put OpenBSD on your disk,
@@ -212,7 +220,7 @@ __welcome_banner_1
 
 	else
 		echo ""
-		echo "Welcome to the OpenBSD/mvme68k ${VERSION} upgrade program."
+		echo "Welcome to the OpenBSD/mvme68k ${VERSION_MAJOR}.${VERSION_MINOR} upgrade program."
 		cat << \__welcome_banner_2
 
 This program is designed to help you upgrade your OpenBSD system in a
@@ -238,6 +246,7 @@ prompt, you may have to hit return.  Also, quitting in the middle of
 installation may leave your system in an inconsistent state.
 
 __welcome_banner_3
+} | more
 }
 
 md_not_going_to_install() {
@@ -267,8 +276,9 @@ __congratulations_1
 
 md_native_fstype() {
 }
-
 md_makerootwritable() {
+}
+md_makerootwritable2() {
 
 	if [ -e ${TMPWRITEABLE} ]
 	then

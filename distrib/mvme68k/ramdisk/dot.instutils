@@ -154,3 +154,25 @@ Configure()
 	echo	"Remember to erase the miniroot name from the booter's"
 	echo	"booting preferences dialog box before booting again."
 }
+
+Bootblocks() {
+	local _rawdev
+
+	if [ "X${1}" = X"" ]; then
+		echo "No disk device specified, you must run installboot manually."
+		return
+	fi
+	_rawdev=/dev/r${1}a
+
+	# use extracted mdec if it exists (may be newer)
+	if [ -f /mnt/usr/mdec/installboot ]; then
+		cp /mnt/usr/mdec/bootsd /mnt/bootsd
+		/mnt/usr/mdec/installboot -v /mnt/bootsd /mnt/usr/mdec/bootxx ${_rawdev}
+	elif [ -f /usr/mdec/installboot ]; then
+		cp /usr/mdec/bootsd /mnt/bootsd
+		/usr/mdec/installboot -v /mnt/bootsd /usr/mdec/bootxx ${_rawdev}
+	else
+		echo "No boot block prototypes found, you must run installboot manually."
+	fi
+}
+

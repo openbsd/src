@@ -1,90 +1,105 @@
-#	$OpenBSD: list,v 1.4 1997/05/12 03:25:19 deraadt Exp $
+#	$OpenBSD: list,v 1.5 2000/01/24 04:50:26 smurph Exp $
+SRCDIRS distrib/special
+SRCDIRS usr.bin bin sbin usr.sbin gnu/usr.bin
+SRCDIRS usr.sbin/pppd
+SRCDIRS usr.bin/vi
 
-COPY	${OBJDIR}/raminst		raminst
-LINK	raminst			bin/cat
-LINK	raminst			bin/chmod
-LINK	raminst			bin/cp
-LINK	raminst			bin/df
-LINK	raminst			bin/dd
-LINK	raminst			bin/ed
-LINK	raminst			bin/expr
-LINK	raminst			bin/ln
-LINK	raminst			bin/ls
-LINK	raminst			bin/kill
-LINK	raminst			bin/hostname
-LINK	raminst			bin/mkdir
-LINK	raminst			bin/mv
-LINK	raminst			bin/pwd
-LINK	raminst			bin/rm
-LINK	raminst			bin/sh
-LINK	bin/sh			bin/-sh
-LINK	raminst			bin/stty
-LINK	raminst			bin/sleep
-LINK	raminst			bin/sync
-LINK	raminst			bin/test
-LINK	raminst			bin/[
-LINK	raminst			sbin/disklabel
-LINK	raminst			sbin/fsck
-LINK	raminst			sbin/halt
-LINK	raminst			sbin/ifconfig
-LINK	raminst			sbin/init
-LINK	raminst			sbin/mknod
-LINK	raminst			sbin/mount
-LINK	raminst			sbin/mount_cd9660
-LINK	raminst			sbin/mount_ffs
-LINK	raminst			sbin/mount_kernfs
-LINK	raminst			sbin/mount_nfs
-LINK	raminst			sbin/mount_mfs
-LINK	raminst			sbin/newfs
-LINK	raminst			sbin/reboot
-LINK	raminst			sbin/route
-LINK	raminst			sbin/slattach
-LINK	raminst			sbin/umount
-LINK	raminst			usr/bin/chgrp
-LINK	raminst			usr/bin/cut
-LINK	raminst			usr/bin/ftp
-LINK	raminst			usr/bin/egrep
-LINK	raminst			usr/bin/grep
-LINK	raminst			usr/bin/gzip
-LINK	raminst			usr/bin/more
-LINK	raminst			usr/bin/less
-LINK	raminst			usr/bin/sed
-LINK	raminst			usr/bin/sort
-LINK	raminst			usr/bin/pax
-LINK	raminst			usr/bin/tip
-LINK	raminst			usr/sbin/chown
-SPECIAL	/bin/rm raminst
+# copy the crunched binary, link to it, and kill it
+COPY	${OBJDIR}/instbin	instbin
+LINK	instbin			bin/cat
+LINK	instbin			bin/chmod
+LINK	instbin			bin/cp
+LINK	instbin			bin/dd
+LINK	instbin			bin/df
+LINK	instbin			bin/ed
+LINK	instbin			bin/expr
+LINK	instbin			bin/hostname
+LINK	instbin			bin/ln
+LINK	instbin			bin/ls
+LINK	instbin			bin/mkdir
+LINK	instbin			bin/mt
+LINK	instbin			bin/mv
+LINK	instbin			bin/pax bin/tar bin/cpio
+LINK	instbin			bin/rm
+LINK	instbin			bin/ksh bin/sh
+ARGVLINK ksh			-sh
+#LINK	instbin			bin/sleep
+LINK	instbin			bin/stty
+#LINK	instbin			bin/sync
+LINK	instbin			bin/test bin/[
+#LINK	instbin			sbin/dhclient
+LINK	instbin			sbin/disklabel
+LINK	instbin			sbin/fsck
+LINK	instbin			sbin/fsck_ffs
+LINK	instbin			sbin/reboot sbin/halt
+LINK	instbin			sbin/ifconfig
+LINK	instbin			sbin/init
+LINK	instbin			sbin/mknod
+LINK	instbin			sbin/mount
+LINK	instbin			sbin/mount_cd9660
+LINK	instbin			sbin/mount_ffs
+LINK	instbin			sbin/mount_nfs
+LINK	instbin			sbin/mount_kernfs
+LINK	instbin			sbin/newfs
+LINK	instbin			sbin/ping
+#LINK	instbin			sbin/restore
+LINK	instbin			sbin/route
+#LINK	instbin			sbin/slattach
+#LINK	instbin			sbin/scsi
+LINK	instbin			sbin/umount
+LINK	instbin			usr/bin/awk
+LINK	instbin			usr/bin/grep usr/bin/fgrep usr/bin/egrep
+LINK	instbin			usr/bin/less usr/bin/more
+LINK	instbin			usr/bin/rsh
+LINK	instbin			usr/bin/sort
+#LINK	instbin			usr/bin/tip
+LINK	instbin			usr/bin/tr
+LINK	instbin			usr/sbin/chat
+LINK	instbin			usr/sbin/pppd
+SYMLINK ../../instbin           usr/bin/build usr/bin/vi
+SYMLINK	../../instbin		usr/sbin/chown usr/bin/chgrp
+SYMLINK	../../instbin		usr/bin/ftp
+SYMLINK	../../instbin		usr/bin/gzip usr/bin/gunzip usr/bin/gzcat
+SYMLINK	../../instbin		usr/bin/sed
 
 # copy the MAKEDEV script and make some devices
 COPY	${DESTDIR}/dev/MAKEDEV	dev/MAKEDEV
 SPECIAL	cd dev; sh MAKEDEV raminst
+SPECIAL	/bin/rm dev/MAKEDEV
 
-# we need the contents of /usr/mdec (XXX)
-# COPY	${DESTDIR}/usr/mdec/*	usr/mdec
+# we need the contents of /usr/mdec
+COPY	${DESTDIR}/usr/mdec/netboot	usr/mdec/netboot
+COPY	${DESTDIR}/usr/mdec/bootxx	usr/mdec/bootxx
+COPY	${DESTDIR}/usr/mdec/bootsd	usr/mdec/bootsd
+COPY	${DESTDIR}/usr/mdec/installboot	usr/mdec/installboot
 
 # various files that we need in /etc for the install
-COPY	${DESTDIR}/etc/group		etc
-COPY	${DESTDIR}/etc/master.passwd	etc
-COPY	${DESTDIR}/etc/passwd		etc
-COPY	${DESTDIR}/etc/protocols	etc
-COPY	${DESTDIR}/etc/pwd.db		etc
-COPY	${DESTDIR}/etc/services		etc
-COPY	${DESTDIR}/etc/spwd.db		etc
+COPY	${DESTDIR}/etc/group		etc/group
+COPY	${DESTDIR}/etc/protocols	etc/protocols
+COPY	${DESTDIR}/etc/services		etc/services
+COPY	${DESTDIR}/etc/spwd.db		etc/spwd.db
+COPY	${DESTDIR}/etc/disktab		etc/disktab
+COPY	disktab.preinstall		etc/disktab.preinstall
+SYMLINK	/tmp/disktab.shadow		etc/disktab      
+SYMLINK	/tmp/fstab.shadow		etc/fstab
+SYMLINK	/tmp/resolv.conf.shadow		etc/resolv.conf
+SYMLINK	/tmp/hosts			etc/hosts
+
+COPYDIR	${DESTDIR}/etc/ppp		etc/ppp
+
+# we strip comments from files since we need the space...
 
 # and the common installation tools
-COPY	${TOPDIR}/common/dot.commonutils	.commonutils
-COPY	${TOPDIR}/common/termcap.vt	usr/share/misc/termcap
-
-# the disktab explanation file
-COPY	disktab.preinstall		etc
+SPECIAL	sed -e '/^#[ 	].*$/d' < ${TOPDIR}/common/dot.commonutils > .commonutils
+SPECIAL	sed -e '/^#[ 	].*$/d' < ${TOPDIR}/common/termcap.vt > usr/share/misc/termcap
 
 # and the installation tools
-LINK    sbin/init                 	usr/bin/vi
-COPY	dot.profile			.profile
-COPY	dot.instutils			.instutils
-COPY	install.sh			install
-COPY	install.md			install.md
-COPY	install.sub			install.sub
-COPY	disktab.shadow			etc/disktab.shadow
+SPECIAL	sed -e '/^#[ 	].*$/d' < ${CURDIR}/dot.profile > .profile
+SPECIAL	sed -e '/^#[ 	].*$/d' < ${CURDIR}/dot.instutils > .instutils
+SPECIAL	sed -e '/^#[ 	].*$/d' < ${CURDIR}/install.md > install.md
+SPECIAL	sed -e '/^#[ 	].*$/d' < ${CURDIR}/../../miniroot/install.sh > install
+SPECIAL	sed -e '/^#[ 	].*$/d' < ${CURDIR}/../../miniroot/upgrade.sh > upgrade
+SPECIAL	sed -e '/^#[ 	].*$/d' < ${CURDIR}/install.sub > install.sub
+#SPECIAL sed -e "/^VERSION=/s/=.*/=${REV}/" -e '/^#[ 	].*$/d' < ${CURDIR}/../../miniroot/install.sub > install.sub
 
-SPECIAL	chmod 755 install
+SPECIAL	chmod 755 install upgrade

@@ -1,68 +1,51 @@
-#	$OpenBSDBSD: Makefile,v 1.1 1995/07/18 04:13:06 briggs Exp $
-#	$NetBSD: Makefile,v 1.1 1995/07/18 04:13:06 briggs Exp $
+#	$OpenBSD: Makefile,v 1.10 2000/01/24 04:50:26 smurph Exp $
 
 TOP=		${.CURDIR}/..
 
 .include "${TOP}/Makefile.inc"
+BSD_RD=		bsd.rd
 IMAGE=		mr.fs
-CRUNCHCONF?=	 ${.CURDIR}/${CBIN}.conf
-BASE=mr
+CBIN?=		instbin
+LISTS=		${.CURDIR}/list
+UTILS?=		${.CURDIR}/../../miniroot
 
 MOUNT_POINT=	/mnt
+MTREE=		${.CURDIR}/mtree.conf
 
-#FS=		ramdisk.fs
 VND?=		svnd0
 VND_DEV=	/dev/${VND}a
 VND_RDEV=	/dev/r${VND}a
 VND_CRDEV=	/dev/r${VND}c
 PID!=		echo $$$$
-REALIMAGE!=	echo /tmp/image.${PID}
-LISTFLOPPY=	${.CURDIR}/list_ramdisk
 
-.include "Makefile.inc"
 
-all:	bsd.rd
-
-#${FS}:	bsd.gz
-#	dd if=/dev/zero of=${REALIMAGE} count=4096
-#	vnconfig -v -c ${VND} ${REALIMAGE}
-#	disklabel -w ${VND} rdroot
-#	newfs -m 0 -o space -i 8192 -c 80 ${VND_RDEV}
-#	mount ${VND_DEV} ${MOUNT_POINT}
-#	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
-#	    TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${LISTFLOPPY}
-#	/usr/mdec/installboot -v /mnt/boot ${DESTDIR}/usr/mdec/biosboot ${VND_CRDEV}
-#	@echo ""
-#	@df -i ${MOUNT_POINT}
-#	@echo ""
-#	umount ${MOUNT_POINT}
-#	vnconfig -u ${VND}
-#	cp ${REALIMAGE} ${FS}
-
-DISKTYPE=	rdroot
-NBLKS=		4096
-# old format, minfree, opt, b/i  trks, sects, cpg
+DISKTYPE=       rdroot
+NBLKS=          4096
+# minfree, opt, b/i  trks, sects, cpg
 NEWFSARGS= -t ffs -m 0 -o space -u 32 -c 16
 
-bsd.gz: bsd.rd
-	gzip -c9 bsd.rd > bsd.gz
+all:	${BSD_RD}
 
-bsd.rd: ${IMAGE} bsd rdsetroot
-	cp bsd bsd.rd
-	${.CURDIR}/${__objdir}/rdsetroot bsd.rd < ${IMAGE}
+${BSD_RD}: ${CBIN} ${IMAGE} bsd rdsetroot
+	cp bsd ${BSD_RD}
+	${.OBJDIR}/rdsetroot ${BSD_RD} < ${IMAGE}
+
+${IMAGE}: rd_setup do_files rd_teardown
 
 bsd:
+.ifndef(NOBUILD)
 	cd ${.CURDIR}/../../../sys/arch/mvme68k/conf && config MINIROOT
 	cd ${.CURDIR}/../../../sys/arch/mvme68k/compile/MINIROOT && \
 	    make clean && make
+.endif
 	cp ${.CURDIR}/../../../sys/arch/mvme68k/compile/MINIROOT/bsd bsd
 
-${IMAGE}: ${CBIN} rd_setup do_files rd_teardown
+rd_test: rd_setup rd_teardown
 
-rd_setup: ${CBIN}
-	dd if=/dev/zero of=${REALIMAGE} bs=512 count=${NBLKS}
-	vnconfig -v -c ${VND} ${REALIMAGE}
-	disklabel -w ${VND} ${DISKTYPE}
+rd_setup: 
+	dd if=/dev/zero of=${IMAGE} bs=512 count=${NBLKS}
+	vnconfig -v -c ${VND} ${IMAGE}
+	disklabel -w -r ${VND} ${DISKTYPE}
 	newfs ${NEWFSARGS} ${VND_RDEV}
 	fsck ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
@@ -71,8 +54,6 @@ rd_teardown:
 	@df -i ${MOUNT_POINT}
 	-umount ${MOUNT_POINT}
 	-vnconfig -u ${VND}
-	cp ${REALIMAGE} ${IMAGE}
-	rm ${REALIMAGE}
 
 rdsetroot:	${TOP}/common/rdsetroot.c
 	${HOSTCC} -DDEBUG -o rdsetroot ${TOP}/common/rdsetroot.c
@@ -80,9 +61,30 @@ rdsetroot:	${TOP}/common/rdsetroot.c
 unconfig:
 	-umount -f ${MOUNT_POINT}
 	-vnconfig -u ${VND}
-	-/bin/rm -f ${IMAGE}
 
 .PRECIOUS:      ${IMAGE}
 
 install:
-	cp bsd.rd ${DESTDIR}/snapshot/bsd.rd
+	cp ${BSD_RD} ${DESTDIR}/snapshot/${BSD_RD}
+
+${CBIN}.conf: ${LISTS}
+	awk -f ${UTILS}/makeconf.awk CBIN=${CBIN} ${LISTS} > ${CBIN}.conf
+
+${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CBIN}.conf
+	crunchgen -D ${.CURDIR}/../../.. -L ${DESTDIR}/usr/lib ${CBIN}.conf
+
+${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
+	make -f ${CBIN}.mk all
+
+do_files:
+	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
+	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
+	    REV=${REV} TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${LISTS}
+
+clean cleandir:
+	/bin/rm -f core ${IMAGE} ${CBIN} ${CBIN}.conf ${CBIN}.mk ${CBIN}.cache \
+	*.o *.lo *.c bsd bsdmix bsdofw ${BSD_RD} ${BSDOFW_RD} ${BSDMIX_RD} \
+	rdsetroot
+
+.include <bsd.obj.mk>
+.include <bsd.subdir.mk>

@@ -4,21 +4,31 @@
 
 # TOP is assumed to be defined by Makefile including this one.
 
-CBIN?=		raminst
-COMMONDIR=	${TOP}/ramdisk
+CBIN?=		rmainst
+LISTS=		${.CURDIR}/list
+UTILS?=		${.CURDIR}/../../miniroot
 
+COMMONDIR=	${TOP}/ramdisk
 MOUNT_POINT?=	${TOP}/${BASE}/fs
 
-LISTS=		${.CURDIR}/list
 CRUNCHCONF?=	${COMMONDIR}/${CBIN}.conf
 MTREE=		${COMMONDIR}/mtree.conf
 RAWLABEL=	
 
-${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
-	crunchgen -D ${BSDSRCDIR} -L ${DESTDIR}/usr/lib ${CRUNCHCONF}
+${CBIN}.conf: ${LISTS}
+	awk -f ${UTILS}/makeconf.awk CBIN=${CBIN} ${LISTS} > ${CBIN}.conf
+
+${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CBIN}.conf
+	crunchgen -D ${BSDSRCDIR} -L ${DESTDIR}/usr/lib ${CBIN}.conf
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	make -f ${CBIN}.mk all
+
+#${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
+#	crunchgen -D ${BSDSRCDIR} -L ${DESTDIR}/usr/lib ${CRUNCHCONF}
+
+#${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
+#	make -f ${CBIN}.mk all
 
 do_files:
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
