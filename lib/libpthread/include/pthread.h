@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
  * SUCH DAMAGE.
  *
- * $OpenBSD: pthread.h,v 1.5 1999/01/18 00:00:31 d Exp $
+ * $OpenBSD: pthread.h,v 1.6 1999/03/10 10:00:47 d Exp $
  *
  */
 #ifndef _PTHREAD_H_
@@ -208,7 +208,7 @@ void		pthread_cleanup_push __P((void (*routine) (void *),
 			void *routine_arg));
 int		pthread_condattr_destroy __P((pthread_condattr_t *attr));
 int		pthread_condattr_init __P((pthread_condattr_t *attr));
-int		pthread_condattr_getpshared __P((pthread_condattr_t *attr,
+int		pthread_condattr_getpshared __P((const pthread_condattr_t *attr,
 			int *pshared));
 int		pthread_condattr_setpshared __P((pthread_condattr_t *attr,
 			int pshared));
