@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdcvar.h,v 1.26 2003/07/05 14:41:56 grange Exp $     */
+/*      $OpenBSD: wdcvar.h,v 1.27 2003/07/23 22:07:15 grange Exp $     */
 /*	$NetBSD: wdcvar.h,v 1.17 1999/04/11 20:50:29 bouyer Exp $	*/
 
 /*-
@@ -178,6 +178,7 @@ struct wdc_softc { /* Per controller state */
 /* flags passed to DMA functions */
 #define WDC_DMA_READ	0x01
 #define WDC_DMA_IRQW	0x02
+#define WDC_DMA_LBA48	0x04
 	int             dma_status; /* status return from dma_finish() */
 #define WDC_DMAST_NOIRQ 0x01    /* missing IRQ */
 #define WDC_DMAST_ERR   0x02    /* DMA error */

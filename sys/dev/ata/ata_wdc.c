@@ -1,4 +1,4 @@
-/*      $OpenBSD: ata_wdc.c,v 1.20 2003/02/21 20:10:33 grange Exp $	*/
+/*      $OpenBSD: ata_wdc.c,v 1.21 2003/07/23 22:07:15 grange Exp $	*/
 /*	$NetBSD: ata_wdc.c,v 1.21 1999/08/09 09:43:11 bouyer Exp $	*/
 
 /*
@@ -222,6 +222,8 @@ _wdc_ata_bio_start(chp, xfer)
 		if (drvp->n_xfers <= NXFER)
 			drvp->n_xfers++;
 		dma_flags = (ata_bio->flags & ATA_READ) ?  WDC_DMA_READ : 0;
+		if (ata_bio->flags & ATA_LBA48)
+			dma_flags |= WDC_DMA_LBA48;
 	}
 	if (ata_bio->flags & ATA_SINGLE)
 		ata_delay = ATA_DELAY;

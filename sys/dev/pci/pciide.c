@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.133 2003/07/20 22:26:50 tedu Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.134 2003/07/23 22:07:15 grange Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -257,6 +257,8 @@ void pdc202xx_setup_channel(struct channel_softc*);
 void pdc20268_setup_channel(struct channel_softc*);
 int  pdc202xx_pci_intr(void *);
 int  pdc20265_pci_intr(void *);
+void pdc20262_dma_start(void *, int, int);
+int  pdc20262_dma_finish(void *, int, int);
 
 void opti_chip_map(struct pciide_softc*, struct pci_attach_args*);
 void opti_setup_channel(struct channel_softc*);
@@ -4610,6 +4612,11 @@ pdc202xx_chip_map(sc, pa)
 	sc->sc_wdcdev.channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
 
+	if (PDC_IS_262(sc)) {
+		sc->sc_wdcdev.dma_start = pdc20262_dma_start;
+		sc->sc_wdcdev.dma_finish = pdc20262_dma_finish;
+	}
+
 	pciide_print_channels(sc->sc_wdcdev.nchannels, interface);
 	if (!PDC_IS_268(sc)) {
 		/* setup failsafe defaults */
@@ -4965,6 +4972,50 @@ pdc20265_pci_intr(arg)
 			rv = 1;
 	}
 	return rv;
+}
+
+void
+pdc20262_dma_start(void *v, int channel, int drive)
+{
+	struct pciide_softc *sc = v;
+	struct pciide_dma_maps *dma_maps =
+	    &sc->pciide_channels[channel].dma_maps[drive];
+	u_int8_t clock;
+	u_int32_t count;
+
+	if (dma_maps->dma_flags & WDC_DMA_LBA48) {
+		clock = bus_space_read_1(sc->sc_dma_iot, sc->sc_dma_ioh,
+		    PDC262_U66);
+		bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
+		    PDC262_U66, clock | PDC262_U66_EN(channel));
+		count = dma_maps->dmamap_xfer->dm_mapsize >> 1;
+		count |= dma_maps->dma_flags & WDC_DMA_READ ?
+		    PDC262_ATAPI_LBA48_READ : PDC262_ATAPI_LBA48_WRITE;
+		bus_space_write_4(sc->sc_dma_iot, sc->sc_dma_ioh,
+		    PDC262_ATAPI(channel), count);
+	}
+
+	pciide_dma_start(v, channel, drive);
+}
+
+int
+pdc20262_dma_finish(void *v, int channel, int drive)
+{
+	struct pciide_softc *sc = v;
+	struct pciide_dma_maps *dma_maps =
+	    &sc->pciide_channels[channel].dma_maps[drive];
+ 	u_int8_t clock;
+
+	if (dma_maps->dma_flags & WDC_DMA_LBA48) {
+		clock = bus_space_read_1(sc->sc_dma_iot, sc->sc_dma_ioh,
+		    PDC262_U66);
+		bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
+		    PDC262_U66, clock & ~PDC262_U66_EN(channel));
+		bus_space_write_4(sc->sc_dma_iot, sc->sc_dma_ioh,
+		    PDC262_ATAPI(channel), 0);
+	}
+
+	return (pciide_dma_finish(v, channel, drive));
 }
 
 /*
