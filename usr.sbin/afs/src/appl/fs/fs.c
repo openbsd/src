@@ -1966,7 +1966,7 @@ afs_getacl(char *path)
   
     if(oldacl->NumPositiveEntries)
 	for(i=0; i<oldacl->NumPositiveEntries; i++) {      
-	    sscanf(curptr, "%100s %d", tmpname, &tmprights);
+	    sscanf(curptr, "%99s %d", tmpname, &tmprights);
 	    skipline(&curptr);
 	    if(!i) {
 		pos=malloc(sizeof(struct AclEntry));
@@ -1983,7 +1983,7 @@ afs_getacl(char *path)
 
     if(oldacl->NumNegativeEntries)
 	for(i=0; i<oldacl->NumNegativeEntries; i++) {      
-	    sscanf(curptr, "%100s %d", tmpname, &tmprights);
+	    sscanf(curptr, "%99s %d", tmpname, &tmprights);
 	    skipline(&curptr);
 	    if(!i) {
 		neg=malloc(sizeof(struct AclEntry));
