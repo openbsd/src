@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: dhclient-script,v 1.1 2004/01/18 01:26:20 deraadt Exp $
+# $OpenBSD: dhclient-script,v 1.2 2004/04/12 20:29:16 henning Exp $
 #
 # Copyright (c) 2003 Kenneth R Westerback <krw@openbsd.org>
 #
@@ -68,7 +68,7 @@ delete_old_routes() {
 	fi
 
 	# XXX BOUND RENEW REBIND REBOOT did not /dev/null output before.
-	arp -n -a | sed -n -e 's/^.*(\(.*\)) at .*$/arp -d \1/p' | sh >/dev/null 2>&1
+	arp -dan
 }
 
 add_new_routes() {
