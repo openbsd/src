@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.15 2000/03/22 04:47:01 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.16 2000/03/22 05:30:47 jason Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -161,26 +161,26 @@ hifn_attach(parent, self, aux)
 	sc->sc_dmat = pa->pa_dmat;
 	if (bus_dmamem_alloc(sc->sc_dmat, sizeof(*sc->sc_dma), PAGE_SIZE, 0,
 	    &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
-		printf(": can't alloc dma buffer\n", sc->sc_dv.dv_xname);
+		printf(": can't alloc dma buffer\n");
 		return;
         }
 	if (bus_dmamem_map(sc->sc_dmat, &seg, rseg, sizeof(*sc->sc_dma), &kva,
 	    BUS_DMA_NOWAIT)) {
 		printf(": can't map dma buffers (%d bytes)\n",
-		    sc->sc_dv.dv_xname, sizeof(*sc->sc_dma));
+		    sizeof(*sc->sc_dma));
 		bus_dmamem_free(sc->sc_dmat, &seg, rseg);
 		return;
 	}
 	if (bus_dmamap_create(sc->sc_dmat, sizeof(*sc->sc_dma), 1,
 	    sizeof(*sc->sc_dma), 0, BUS_DMA_NOWAIT, &dmamap)) {
-		printf(": can't create dma map\n", sc->sc_dv.dv_xname);
+		printf(": can't create dma map\n");
 		bus_dmamem_unmap(sc->sc_dmat, kva, sizeof(*sc->sc_dma));
 		bus_dmamem_free(sc->sc_dmat, &seg, rseg);
 		return;
 	}
 	if (bus_dmamap_load(sc->sc_dmat, dmamap, kva, sizeof(*sc->sc_dma),
 	    NULL, BUS_DMA_NOWAIT)) {
-		printf(": can't load dma map\n", sc->sc_dv.dv_xname);
+		printf(": can't load dma map\n");
 		bus_dmamap_destroy(sc->sc_dmat, dmamap);
 		bus_dmamem_unmap(sc->sc_dmat, kva, sizeof(*sc->sc_dma));
 		bus_dmamem_free(sc->sc_dmat, &seg, rseg);
