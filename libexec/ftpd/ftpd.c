@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.36 1997/06/01 06:40:34 downsj Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.37 1997/06/05 09:22:41 deraadt Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -2065,7 +2065,7 @@ logxfer(name, size, start)
 	off_t size;
 	time_t start;
 {
-	char buf[2048];
+	char buf[400 + MAXHOSTNAMELEN*4 + MAXPATHLEN*4];
 	char path[MAXPATHLEN];
 	char vremotehost[MAXHOSTNAMELEN*4], vpath[MAXPATHLEN*4];
 	char *vname, *vpw;
