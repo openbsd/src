@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmvar.h,v 1.6 1998/07/27 23:16:36 marc Exp $	*/
+/*	$OpenBSD: apmvar.h,v 1.7 1998/07/27 23:24:10 marc Exp $	*/
 
 /*
  *  Copyright (c) 1995 John T. Kohl
@@ -137,8 +137,8 @@
 		       = 1 	Time units are minutes
 		Bits 14-0 =	Number of seconds or minutes */
 #define		BATT_REMAINING(regp) (((regp)->dx & 0x8000) ? \
-				      ((regp)->dx & 0x7fff) : \   
-				      ((regp)->dx & 0x7fff)/60)  
+				      ((regp)->dx & 0x7fff) : \
+				      ((regp)->dx & 0x7fff)/60)
 #define		BATT_REM_VALID(regp) (((regp)->dx & 0xffff) != 0xffff)
 
 #define	APM_GET_PM_EVENT	0x530b
