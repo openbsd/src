@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.22 2003/09/26 00:48:44 deraadt Exp $	*/
+/*	$OpenBSD: print.c,v 1.23 2005/01/10 20:16:15 otto Exp $	*/
 /*	$NetBSD: print.c,v 1.15 1996/12/11 03:25:39 thorpej Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.5 (Berkeley) 7/28/94";
 #else
-static char rcsid[] = "$OpenBSD: print.c,v 1.22 2003/09/26 00:48:44 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: print.c,v 1.23 2005/01/10 20:16:15 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -273,8 +273,7 @@ printacol(DISPLAY *dp)
 		return;
 
 	if (dp->list->fts_level != FTS_ROOTLEVEL && (f_longform || f_size))
-		(void)printf("total %llu\n",
-		    (long long)(howmany(dp->btotal, blocksize)));
+		(void)printf("total %lu\n", howmany(dp->btotal, blocksize));
 	col = 0;
 	for (p = dp->list; p; p = p->fts_link) {
 		if (IS_NOPRINT(p))
