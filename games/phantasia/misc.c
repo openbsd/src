@@ -1,10 +1,11 @@
-/*	$OpenBSD: misc.c,v 1.5 1998/11/29 19:56:58 pjanzen Exp $	*/
+/*	$OpenBSD: misc.c,v 1.6 2000/06/29 07:39:45 pjanzen Exp $	*/
 /*	$NetBSD: misc.c,v 1.2 1995/03/24 03:59:03 cgd Exp $	*/
 
 /*
  * misc.c  Phantasia miscellaneous support routines
  */
 
+#include <err.h>
 #include "include.h"
 
 
@@ -677,7 +678,7 @@ findname(name, playerp)
 {
 	long    loc = 0;	/* location in the file */
 
-	fseek(Playersfp, 0L, 0);
+	fseek(Playersfp, 0L, SEEK_SET);
 	while (fread((char *) playerp, SZ_PLAYERSTRUCT, 1, Playersfp) == 1) {
 		if (strcmp(playerp->p_name, name) == 0) {
 			if (playerp->p_status != S_NOTUSED || Wizard)
@@ -719,7 +720,7 @@ allocrecord()
 {
 	long    loc = 0L;	/* location in file */
 
-	fseek(Playersfp, 0L, 0);
+	fseek(Playersfp, 0L, SEEK_SET);
 	while (fread((char *) &Other, SZ_PLAYERSTRUCT, 1, Playersfp) == 1) {
 		if (Other.p_status == S_NOTUSED)
 			/* found an empty record */
@@ -898,10 +899,10 @@ death(how)
 		{
 			mvaddstr(4, 0,
 			    "Your ring has taken control of you and turned you into a monster!\n");
-			fseek(Monstfp, 13L * SZ_MONSTERSTRUCT, 0);
+			fseek(Monstfp, 13L * SZ_MONSTERSTRUCT, SEEK_SET);
 			fread((char *) &Curmonster, SZ_MONSTERSTRUCT, 1, Monstfp);
 			strcpy(Curmonster.m_name, Player.p_name);
-			fseek(Monstfp, 13L * SZ_MONSTERSTRUCT, 0);
+			fseek(Monstfp, 13L * SZ_MONSTERSTRUCT, SEEK_SET);
 			fwrite((char *) &Curmonster, SZ_MONSTERSTRUCT, 1, Monstfp);
 			fflush(Monstfp);
 		}
@@ -969,7 +970,7 @@ writerecord(playerp, place)
 	struct player *playerp;
 	long    place;
 {
-	fseek(Playersfp, place, 0);
+	fseek(Playersfp, place, SEEK_SET);
 	fwrite((char *) playerp, SZ_PLAYERSTRUCT, 1, Playersfp);
 	fflush(Playersfp);
 }
@@ -1152,7 +1153,7 @@ readrecord(playerp, loc)
 	struct player *playerp;
 	long    loc;
 {
-	fseek(Playersfp, loc, 0);
+	fseek(Playersfp, loc, SEEK_SET);
 	fread((char *) playerp, SZ_PLAYERSTRUCT, 1, Playersfp);
 }
 /**/
@@ -1382,7 +1383,7 @@ readmessage()
 {
 	move(3, 0);
 	clrtoeol();
-	fseek(Messagefp, 0L, 0);
+	fseek(Messagefp, 0L, SEEK_SET);
 	if (fgets(Databuf, SZ_DATABUF, Messagefp) != NULL)
 		addstr(Databuf);
 }
@@ -1420,8 +1421,8 @@ error(whichfile)
 		clear();
 	cleanup(FALSE);
 
-	printf("An unrecoverable error has occurred reading %s.  (errno = %d)\n", whichfile, errno);
-	printf("Please run 'setup' to determine the problem.\n");
+	warn("%s", whichfile);
+	fprintf(stderr, "Please run 'setup' to determine the problem.\n");
 	exit(1);
 	/* NOTREACHED */
 }
@@ -1667,7 +1668,7 @@ collecttaxes(gold, gems)
 		dtemp = 0.0;
 		fread((char *) &dtemp, sizeof(double), 1, fp);
 		dtemp += floor(taxes);
-		fseek(fp, 0L, 0);
+		fseek(fp, 0L, SEEK_SET);
 		fwrite((char *) &dtemp, sizeof(double), 1, fp);
 		fclose(fp);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fight.c,v 1.4 2000/04/07 04:31:45 pjanzen Exp $	*/
+/*	$OpenBSD: fight.c,v 1.5 2000/06/29 07:39:42 pjanzen Exp $	*/
 /*	$NetBSD: fight.c,v 1.2 1995/03/24 03:58:39 cgd Exp $	*/
 
 /*
@@ -1044,7 +1044,7 @@ callmonster(which)
 	which = MIN(which, 99);	/* make sure within range */
 
 	/* fill structure */
-	fseek(Monstfp, (long) which * (long) SZ_MONSTERSTRUCT, 0);
+	fseek(Monstfp, (long) which * (long) SZ_MONSTERSTRUCT, SEEK_SET);
 	fread((char *) &Curmonster, SZ_MONSTERSTRUCT, 1, Monstfp);
 
 	/* handle some special monsters */
@@ -1079,7 +1079,7 @@ callmonster(which)
 			/* pick another name */
 		{
 			which = (int) ROLL(0.0, 100.0);
-			fseek(Monstfp, (long) which * (long) SZ_MONSTERSTRUCT, 0);
+			fseek(Monstfp, (long) which * (long) SZ_MONSTERSTRUCT, SEEK_SET);
 			fread(&Othermonster, SZ_MONSTERSTRUCT, 1, Monstfp);
 			strcpy(Curmonster.m_name, Othermonster.m_name);
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.6 1998/11/29 19:56:57 pjanzen Exp $	*/
+/*	$OpenBSD: main.c,v 1.7 2000/06/29 07:39:45 pjanzen Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/04/24 12:24:37 cgd Exp $	*/
 
 /*
@@ -782,7 +782,7 @@ titlelist()
 		fclose(fp);
 	}
 	/* search for king */
-	fseek(Playersfp, 0L, 0);
+	fseek(Playersfp, 0L, SEEK_SET);
 	while (fread((char *) &Other, SZ_PLAYERSTRUCT, 1, Playersfp) == 1)
 		if (Other.p_specialtype == SC_KING &&
 		    Other.p_status != S_NOTUSED)
@@ -798,7 +798,7 @@ titlelist()
 		mvaddstr(4, 24, "There is no ruler at this time.");
 
 	/* search for valar */
-	fseek(Playersfp, 0L, 0);
+	fseek(Playersfp, 0L, SEEK_SET);
 	while (fread((char *) &Other, SZ_PLAYERSTRUCT, 1, Playersfp) == 1)
 		if (Other.p_specialtype == SC_VALAR && Other.p_status != S_NOTUSED)
 			/* found the valar */
@@ -808,7 +808,7 @@ titlelist()
 			break;
 		}
 	/* search for council of the wise */
-	fseek(Playersfp, 0L, 0);
+	fseek(Playersfp, 0L, SEEK_SET);
 	Lines = 10;
 	while (fread((char *) &Other, SZ_PLAYERSTRUCT, 1, Playersfp) == 1)
 		if (Other.p_specialtype == SC_COUNCIL && Other.p_status != S_NOTUSED)
@@ -827,7 +827,7 @@ titlelist()
 	hiexp = 0.0;
 	nxtlvl = hilvl = 0;
 
-	fseek(Playersfp, 0L, 0);
+	fseek(Playersfp, 0L, SEEK_SET);
 	while (fread((char *) &Other, SZ_PLAYERSTRUCT, 1, Playersfp) == 1)
 		if (Other.p_experience > hiexp && Other.p_specialtype <= SC_KING && Other.p_status != S_NOTUSED)
 			/* highest found so far */
