@@ -1,4 +1,4 @@
-define(_rcsid,``$OpenBSD: bcopy.m4,v 1.5 2001/09/20 18:34:52 mickey Exp $'')dnl
+define(_rcsid,``$OpenBSD: bcopy.m4,v 1.6 2002/02/07 13:52:40 mickey Exp $'')dnl
 dnl
 dnl
 dnl  This is the source file for bcopy.S, spcopy.S
@@ -214,6 +214,7 @@ ALTENTRY(ovbcopy)
 ALTENTRY(bcopy)
 ALTENTRY(mycopy)
 	add	arg0, arg2, t1
+	sub,>>=	arg0, arg1, r0
 	comb,>,n t1, arg1, L(bcopy, reverse)
 	hppa_copy(bcopy_f, sr0, arg0, sr0, arg1, arg2, `+')
 	b,n	L(bcopy, ret)
