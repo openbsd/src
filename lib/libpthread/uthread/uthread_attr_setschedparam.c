@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_attr_setschedparam.c,v 1.2 1999/11/25 07:01:32 d Exp $	*/
+/*	$OpenBSD: uthread_attr_setschedparam.c,v 1.3 2001/08/09 12:00:59 fgsch Exp $	*/
 /*
  * Copyright (c) 1998 Daniel Eischen <eischen@vigrid.com>.
  * All rights reserved.
@@ -42,9 +42,23 @@ pthread_attr_setschedparam(pthread_attr_t *attr, const struct sched_param *param
 {
 	int ret = 0;
 
-	if ((attr == NULL) || (*attr == NULL) || (param == NULL))
+	if ((attr == NULL) || (*attr == NULL))
 		ret = EINVAL;
-	else
+	else if (param == NULL) {
+#ifdef NOT_YET
+		ret = ENOTSUP;
+#else
+		ret = EOPNOTSUPP;
+#endif
+	} else if ((param->sched_priority < PTHREAD_MIN_PRIORITY) ||
+	    (param->sched_priority > PTHREAD_MAX_PRIORITY)) {
+		/* Return an unsupported value error. */
+#ifdef NOT_YET
+		ret = ENOTSUP;
+#else
+		ret = EOPNOTSUPP;
+#endif
+	} else
 		(*attr)->prio = param->sched_priority;
 
 	return(ret);
