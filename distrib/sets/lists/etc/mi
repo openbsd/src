@@ -105,7 +105,6 @@
 ./etc/skel/.mailrc
 ./etc/skel/.profile
 ./etc/skel/.rhosts
-./etc/skeykeys
 ./etc/sliphome/slip.hosts
 ./etc/sliphome/slip.login
 ./etc/spwd.db

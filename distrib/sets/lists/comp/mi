@@ -593,6 +593,7 @@
 ./usr/include/dev/sun/sunkbdreg.h
 ./usr/include/dev/sun/sunkbdvar.h
 ./usr/include/dev/sun/uperfio.h
+./usr/include/dev/systrace.h
 ./usr/include/dev/tc
 ./usr/include/dev/tc/ascvar.h
 ./usr/include/dev/tc/if_levar.h

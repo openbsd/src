@@ -980,6 +980,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/sun/sunkbdreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/sun/sunkbdvar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/sun/uperfio.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/systrace.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/tc
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/tc/ascvar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/tc/if_levar.ph

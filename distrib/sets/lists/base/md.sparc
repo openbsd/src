@@ -641,6 +641,7 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/sun/sunkbdreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/sun/sunkbdvar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/sun/uperfio.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/systrace.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/tc
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/tc/ascvar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/tc/if_levar.ph

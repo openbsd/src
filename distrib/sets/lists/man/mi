@@ -1494,6 +1494,7 @@
 ./usr/share/man/cat5/securenet.0
 ./usr/share/man/cat5/services.0
 ./usr/share/man/cat5/shells.0
+./usr/share/man/cat5/skey.0
 ./usr/share/man/cat5/sparc
 ./usr/share/man/cat5/sparc64
 ./usr/share/man/cat5/stab.0
