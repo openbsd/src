@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.9 1999/01/11 05:12:03 millert Exp $	*/
+/*	$OpenBSD: zs.c,v 1.10 2001/05/13 00:22:21 miod Exp $	*/
 /*	$NetBSD: zs.c,v 1.42 1996/11/20 18:57:03 gwr Exp $	*/
 
 /*-
@@ -65,6 +65,10 @@
 #include <machine/cpu.h>
 #include <machine/obio.h>
 #include <machine/mon.h>
+
+#ifdef DDB
+#include <ddb/db_var.h>
+#endif
 
 /*
  * XXX: Hard code this to make console init easier...
@@ -691,6 +695,7 @@ zs_abort()
 		ZS_DELAY();
 	} while (rr0 & ZSRR0_BREAK);
 #ifdef DDB
-	Debugger();
+	if (db_console)
+		Debugger();
 #endif
 }
