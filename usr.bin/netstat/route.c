@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.21 1998/02/26 10:06:13 peter Exp $	*/
+/*	$OpenBSD: route.c,v 1.22 1998/02/26 10:13:08 deraadt Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: route.c,v 1.21 1998/02/26 10:06:13 peter Exp $";
+static char *rcsid = "$OpenBSD: route.c,v 1.22 1998/02/26 10:13:08 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -575,9 +575,10 @@ routename(in)
 			cp = hp->h_name;
 		}
 	}
-	if (cp)
+	if (cp) {
 		strncpy(line, cp, sizeof(line) - 1);
-	else {
+		line[sizeof(line) - 1] = '\0';
+	} else {
 #define C(x)	((x) & 0xff)
 		in = ntohl(in);
 		sprintf(line, "%u.%u.%u.%u",
@@ -607,9 +608,10 @@ netname(in, mask)
 			cp = np->n_name;
 	}
 	mbits = mask ? 33 - ffs(mask) : 0;
-	if (cp)
+	if (cp) {
 		strncpy(line, cp, sizeof(line) - 1);
-	else if ((in & 0xffffff) == 0)
+		line[sizeof(line) - 1] = '\0';
+	} else if ((in & 0xffffff) == 0)
 		sprintf(line, "%u/%d", C(in >> 24), mbits);
 	else if ((in & 0xffff) == 0)
 		sprintf(line, "%u.%u/%d", C(in >> 24) , C(in >> 16), mbits);
