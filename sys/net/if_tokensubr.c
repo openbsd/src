@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tokensubr.c,v 1.17 2004/12/19 03:25:36 mcbride Exp $	*/
+/*	$OpenBSD: if_tokensubr.c,v 1.18 2005/01/18 23:26:52 mpf Exp $	*/
 /*	$NetBSD: if_tokensubr.c,v 1.7 1999/05/30 00:39:07 bad Exp $	*/
 
 /*
@@ -409,14 +409,13 @@ token_output(ifp0, m0, dst, rt0)
 #if 0
 send:
 #endif /* 0 */
+
 #if NCARP > 0
-	if (ifp->if_carp) {
-		error = carp_fix_lladdr(ifp0, m, dst, NULL);
-		if (error)
-			goto bad;
+	if (ifp0 != ifp && ifp0->if_type == IFT_CARP) {
+		bcopy((caddr_t)((struct arpcom *)ifp0)->ac_enaddr,
+		    (caddr_t)trh->token_shost, sizeof(trh->token_shost));
 	}
 #endif
-
 
 	mflags = m->m_flags;
 	len = m->m_pkthdr.len;

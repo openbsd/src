@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.87 2004/12/19 03:25:36 mcbride Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.88 2005/01/18 23:26:52 mpf Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -494,10 +494,9 @@ ether_output(ifp0, m0, dst, rt0)
 		    sizeof(eh->ether_shost));
 
 #if NCARP > 0
-	if (ifp->if_carp) {
-		error = carp_fix_lladdr(ifp0, m, dst, NULL);
-		if (error)
-			goto bad;
+	if (ifp0 != ifp && ifp0->if_type == IFT_CARP) {
+		bcopy((caddr_t)((struct arpcom *)ifp0)->ac_enaddr,
+		    (caddr_t)eh->ether_shost, sizeof(eh->ether_shost));
 	}
 #endif
 

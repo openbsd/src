@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.93 2005/01/06 21:45:35 deraadt Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.94 2005/01/18 23:26:52 mpf Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -803,9 +803,6 @@ carp_ifdetach(struct ifnet *ifp)
 int
 carp_prepare_ad(struct mbuf *m, struct carp_softc *sc, struct carp_header *ch)
 {
-	struct m_tag *mtag;
-	struct ifnet *ifp = &sc->sc_if;
-
 	if (sc->sc_init_counter) {
 		/* this could also be seconds since unix epoch */
 		sc->sc_counter = arc4random();
@@ -818,17 +815,6 @@ carp_prepare_ad(struct mbuf *m, struct carp_softc *sc, struct carp_header *ch)
 	ch->carp_counter[1] = htonl(sc->sc_counter&0xffffffff);
 
 	carp_hmac_generate(sc, ch->carp_counter, ch->carp_md);
-
-	/* Tag packet for carp_fix_lladdr */
-	mtag = m_tag_get(PACKET_TAG_CARP, sizeof(struct ifnet *), M_NOWAIT);
-	if (mtag == NULL) {
-		m_freem(m);
-		sc->sc_if.if_oerrors++;
-		carpstats.carps_onomem++;
-		return (ENOMEM);
-	}
-	bcopy(&ifp, (caddr_t)(mtag + 1), sizeof(struct ifnet *));
-	m_tag_prepend(m, mtag);
 
 	return (0);
 }
@@ -1212,41 +1198,6 @@ carp_iamatch6(void *v, struct in6_addr *taddr)
 			    ((vh->sc_if.if_flags & (IFF_UP|IFF_RUNNING)) ==
 			    (IFF_UP|IFF_RUNNING)) && vh->sc_state == MASTER)
 				return (ifa);
-		}
-	}
-
-	return (NULL);
-}
-
-void *
-carp_macmatch6(void *v, struct mbuf *m, struct in6_addr *taddr)
-{
-	struct m_tag *mtag;
-	struct carp_if *cif = v;
-	struct carp_softc *sc;
-	struct ifaddr *ifa;
-
-
-	TAILQ_FOREACH(sc, &cif->vhif_vrs, sc_list) {
-		TAILQ_FOREACH(ifa, &sc->sc_if.if_addrlist, ifa_list) {
-			if (IN6_ARE_ADDR_EQUAL(taddr,
-			    &ifatoia6(ifa)->ia_addr.sin6_addr) &&
-			    ((sc->sc_if.if_flags & (IFF_UP|IFF_RUNNING)) ==
-			    (IFF_UP|IFF_RUNNING))) {
-				struct ifnet *ifp = &sc->sc_if;
-
-				mtag = m_tag_get(PACKET_TAG_CARP,
-				    sizeof(struct ifnet *), M_NOWAIT);
-				if (mtag == NULL) {
-					/* better a bit than nothing */
-					return (sc->sc_ac.ac_enaddr);
-				}
-				bcopy(&ifp, (caddr_t)(mtag + 1),
-				    sizeof(struct ifnet *));
-				m_tag_prepend(m, mtag);
-
-				return (sc->sc_ac.ac_enaddr);
-			}
 		}
 	}
 
@@ -2011,101 +1962,13 @@ carp_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
     struct rtentry *rt)
 {
 	struct ifnet *ifp0 = ((struct carp_softc *)ifp->if_softc)->sc_carpdev;
-	if (ifp0) {
-		struct m_tag *mtag;
 
-		/* Tag packet for carp_fix_lladdr if not already tagged */
-		mtag = m_tag_find(m, PACKET_TAG_CARP, NULL);
-		if (mtag == NULL) {
-			mtag = m_tag_get(PACKET_TAG_CARP,
-			    sizeof(struct ifnet *), M_NOWAIT);
-			if (mtag == NULL) {
-				m_freem(m);
-				((struct carp_softc *)ifp->if_softc
-				    )->sc_if.if_oerrors++;
-				carpstats.carps_onomem++;
-				return (ENOBUFS);
-			}
-			bcopy(&ifp, (caddr_t)(mtag + 1),
-			    sizeof(struct ifnet *));
-			m_tag_prepend(m, mtag);
-		}
+	if (ifp0 != NULL)
 		return (ifp0->if_output(ifp, m, sa, rt));
-	} else {
+	else {
 		m_freem(m);
 		return (EINVAL);
 	}
-}
-
-int
-carp_fix_lladdr(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
-    struct rtentry *rt)
-{
-	struct m_tag *mtag;
-	struct carp_softc *sc;
-	struct ifnet *carp_ifp;
-
-	if (!sa)
-		return (0);
-
-	switch (sa->sa_family) {
-#ifdef INET
-	case AF_INET:
-		break;
-#endif /* INET */
-#ifdef INET6
-	case AF_INET6:
-		break;
-#endif /* INET6 */
-	default:
-		return (0);
-	}
-
-	mtag = m_tag_find(m, PACKET_TAG_CARP, NULL);
-	if (mtag == NULL)
-		return (0);
-	bcopy(mtag + 1, &carp_ifp, sizeof(struct ifnet *));
-	sc = carp_ifp->if_softc;
-
-	/* Set the source MAC address to Virtual Router MAC Address */
-	switch (sc->sc_carpdev->if_type) {
-#if NETHER > 0
-	case IFT_ETHER: {
-			struct ether_header *eh;
-
-			eh = mtod(m, struct ether_header *);
-			bcopy(&sc->sc_ac.ac_enaddr, eh->ether_shost,
-			    sizeof(eh->ether_shost));
-		}
-		break;
-#endif
-#if NFDDI > 0
-	case IFT_FDDI: {
-			struct fddi_header *fh;
-
-			fh = mtod(m, struct fddi_header *);
-			bcopy(&sc->sc_ac.ac_enaddr, fh->fddi_shost,
-			    sizeof(fh->fddi_shost));
-		}
-		break;
-#endif
-#if NTOKEN > 0
-	case IFT_ISO88025: {
-			struct token_header *th;
-
-			th = mtod(m, struct token_header *);
-			bcopy(&sc->sc_ac.ac_enaddr, fh->token_shost,
-			    sizeof(th->token_shost));
-		}
-		break;
-#endif
-	default:
-		printf("%s: carp is not supported for this interface type\n",
-		    sc->sc_carpdev->if_xname);
-		return (EOPNOTSUPP);
-	}
-
-	return (0);
 }
 
 void

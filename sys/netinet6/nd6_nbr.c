@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.35 2004/12/21 10:28:35 mcbride Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.36 2005/01/18 23:26:52 mpf Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -938,15 +938,7 @@ nd6_na_output(ifp, daddr6, taddr6, flags, tlladdr, sdl0)
 		 * my address) use lladdr configured for the interface.
 		 */
 		if (sdl0 == NULL) {
-#if NCARP > 0
-			if (ifp->if_carp && ifp->if_type != IFT_CARP) 
-				mac = carp_macmatch6(ifp->if_carp, m, taddr6);
-			if (mac == NULL)
-				mac = nd6_ifptomac(ifp);
-#else
-
 			mac = nd6_ifptomac(ifp);
-#endif
 		} else if (sdl0->sa_family == AF_LINK) {
 			struct sockaddr_dl *sdl;
 			sdl = (struct sockaddr_dl *)sdl0;

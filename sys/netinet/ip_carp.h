@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.h,v 1.15 2004/12/19 03:25:37 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.h,v 1.16 2005/01/18 23:26:52 mpf Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -156,12 +156,9 @@ void		 carp_ifdetach (struct ifnet *);
 void		 carp_proto_input (struct mbuf *, ...);
 void		 carp_carpdev_state(struct ifnet *);
 int		 carp6_proto_input(struct mbuf **, int *, int);
-int		 carp_fix_lladdr(struct ifnet *, struct mbuf *,
-		     struct sockaddr *, struct rtentry *);
 int		 carp_iamatch(void *, struct in_ifaddr *, struct in_addr *,
 		     u_int8_t **);
 struct ifaddr	*carp_iamatch6(void *, struct in6_addr *);
-void		*carp_macmatch6(void *, struct mbuf *, struct in6_addr *);
 struct ifnet	*carp_ourether(void *, struct ether_header *, u_char, int);
 int		 carp_input(struct mbuf *, u_int8_t *, u_int8_t *, u_int16_t);
 int		 carp_output(struct ifnet *, struct mbuf *, struct sockaddr *,

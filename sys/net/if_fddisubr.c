@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fddisubr.c,v 1.43 2004/12/19 03:25:36 mcbride Exp $	*/
+/*	$OpenBSD: if_fddisubr.c,v 1.44 2005/01/18 23:26:52 mpf Exp $	*/
 /*	$NetBSD: if_fddisubr.c,v 1.5 1996/05/07 23:20:21 christos Exp $	*/
 
 /*
@@ -414,10 +414,9 @@ fddi_output(ifp0, m0, dst, rt0)
  		bcopy((caddr_t)ac->ac_enaddr, (caddr_t)fh->fddi_shost,
 		    sizeof(fh->fddi_shost));
 #if NCARP > 0
-	if (ifp->if_carp) { 
-		error = carp_fix_lladdr(ifp0, m, dst, NULL);
-		if (error)
-			goto bad;
+	if (ifp0 != ifp && ifp0->if_type == IFT_CARP) {
+		bcopy((caddr_t)((struct arpcom *)ifp0)->ac_enaddr,
+		    (caddr_t)fh->fddi_shost, sizeof(fh->fddi_shost));
 	}
 #endif
 	mflags = m->m_flags;
