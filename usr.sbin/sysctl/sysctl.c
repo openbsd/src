@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.33 1998/02/17 20:51:24 matthieu Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.34 1998/03/15 17:48:48 millert Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -42,14 +42,15 @@ static char copyright[] =
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
+static char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.33 1998/02/17 20:51:24 matthieu Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.34 1998/03/15 17:48:48 millert Exp $";
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/gmon.h>
+#include <sys/mount.h>
 #include <sys/stat.h>
 #include <sys/sysctl.h>
 #include <sys/socket.h>
@@ -98,11 +99,13 @@ struct ctlname netname[] = CTL_NET_NAMES;
 struct ctlname hwname[] = CTL_HW_NAMES;
 struct ctlname username[] = CTL_USER_NAMES;
 struct ctlname debugname[CTL_DEBUG_MAXID];
+struct ctlname *vfsname;
 #ifdef CTL_MACHDEP_NAMES
 struct ctlname machdepname[] = CTL_MACHDEP_NAMES;
 #endif
 struct ctlname ddbname[] = CTL_DDB_NAMES;
 char names[BUFSIZ];
+int lastused;
 
 struct list {
 	struct	ctlname *list;
@@ -124,6 +127,7 @@ struct list secondlevel[] = {
 #endif
 	{ username, USER_MAXID },	/* CTL_USER_NAMES */
 	{ ddbname, DBCTL_MAXID },	/* CTL_DDB_NAMES */
+	{ 0, 0 },			/* CTL_VFS */
 };
 
 int	Aflag, aflag, nflag, wflag;
@@ -153,6 +157,7 @@ int sysctl_ipsec __P((char *, char **, int *, int, int *));
 int sysctl_ipx __P((char *, char **, int *, int, int *));
 int sysctl_fs __P((char *, char **, int *, int, int *));
 int sysctl_bios __P((char *, char **, int *, int, int *));
+void vfsinit __P((void));
 
 int
 main(argc, argv)
@@ -187,16 +192,17 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 
-	if (Aflag || aflag) {
+	if (argc == 0 && (Aflag || aflag)) {
 		debuginit();
+		vfsinit();
 		for (lvl1 = 1; lvl1 < CTL_MAXID; lvl1++)
 			listall(topname[lvl1].ctl_name, &secondlevel[lvl1]);
 		exit(0);
 	}
 	if (argc == 0)
 		usage();
-	while (argc-- > 0)
-		parse(*argv++, 1);
+	for (; *argv != NULL; ++argv)
+		parse(*argv, 1);
 	exit(0);
 }
 
@@ -236,12 +242,13 @@ parse(string, flags)
 	int flags;
 {
 	int indx, type, state, len;
+	size_t size;
 	int special = 0;
 	void *newval = 0;
 	int intval, newsize = 0;
 	quad_t quadval;
-	size_t size;
 	struct list *lp;
+	struct vfsconf vfc;
 	int mib[CTL_MAXNAME];
 	char *cp, *bufp, buf[BUFSIZ];
 
@@ -261,6 +268,8 @@ parse(string, flags)
 	if ((indx = findname(string, "top", &bufp, &toplist)) == -1)
 		return;
 	mib[0] = indx;
+	if (indx == CTL_VFS)
+		vfsinit();
 	if (indx == CTL_DEBUG)
 		debuginit();
 	lp = &secondlevel[indx];
@@ -445,6 +454,27 @@ parse(string, flags)
 		len = sysctl_fs(string, &bufp, mib, flags, &type);
 		if (len >= 0)
 			break;
+		return;
+
+	case CTL_VFS:
+		mib[3] = mib[1];
+		mib[1] = VFS_GENERIC;
+		mib[2] = VFS_CONF;
+		len = 4;
+		size = sizeof vfc;
+		if (sysctl(mib, 4, &vfc, &size, (void *)0, (size_t)0) < 0) {
+			if (errno != EOPNOTSUPP)
+				perror("vfs print");
+			return;
+		}
+		if (flags == 0 && vfc.vfc_refcount == 0)
+			return;
+		if (!nflag)
+			fprintf(stdout, "%s has %d mounted instance%s\n",
+			    string, vfc.vfc_refcount,
+			    vfc.vfc_refcount != 1 ? "s" : "");
+		else
+			fprintf(stdout, "%d\n", vfc.vfc_refcount);
 		return;
 
 	case CTL_USER:
@@ -723,7 +753,7 @@ debuginit()
 	secondlevel[CTL_DEBUG].list = debugname;
 	mib[0] = CTL_DEBUG;
 	mib[2] = CTL_DEBUG_NAME;
-	for (loc = 0, i = 0; i < CTL_DEBUG_MAXID; i++) {
+	for (loc = lastused, i = 0; i < CTL_DEBUG_MAXID; i++) {
 		mib[1] = i;
 		size = BUFSIZ - loc;
 		if (sysctl(mib, 3, &names[loc], &size, NULL, 0) == -1)
@@ -732,6 +762,51 @@ debuginit()
 		debugname[i].ctl_type = CTLTYPE_INT;
 		loc += size;
 	}
+	lastused = loc;
+}
+
+/*
+ * Initialize the set of filesystem names
+ */
+void
+vfsinit()
+{
+	int mib[4], maxtypenum, cnt, loc, size;
+	struct vfsconf vfc;
+	size_t buflen;
+
+	if (secondlevel[CTL_VFS].list != 0)
+		return;
+	mib[0] = CTL_VFS;
+	mib[1] = VFS_GENERIC;
+	mib[2] = VFS_MAXTYPENUM;
+	buflen = 4;
+	if (sysctl(mib, 3, &maxtypenum, &buflen, (void *)0, (size_t)0) < 0)
+		return;
+	if ((vfsname = malloc(maxtypenum * sizeof(*vfsname))) == 0)
+		return;
+	memset(vfsname, 0, maxtypenum * sizeof(*vfsname));
+	mib[2] = VFS_CONF;
+	buflen = sizeof vfc;
+	for (loc = lastused, cnt = 0; cnt < maxtypenum; cnt++) {
+		mib[3] = cnt;
+		if (sysctl(mib, 4, &vfc, &buflen, (void *)0, (size_t)0) < 0) {
+			if (errno == EOPNOTSUPP)
+				continue;
+			perror("vfsinit");
+			free(vfsname);
+			return;
+		}
+		strcat(&names[loc], vfc.vfc_name);
+		vfsname[cnt].ctl_name = &names[loc];
+		vfsname[cnt].ctl_type = CTLTYPE_INT;
+		size = strlen(vfc.vfc_name) + 1;
+		loc += size;
+	}
+	lastused = loc;
+	secondlevel[CTL_VFS].list = vfsname;
+	secondlevel[CTL_VFS].size = maxtypenum;
+	return;
 }
 
 struct ctlname posixname[] = CTL_FS_POSIX_NAMES;
