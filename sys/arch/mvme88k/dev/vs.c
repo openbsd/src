@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.32 2004/04/24 20:34:53 miod Exp $ */
+/*	$OpenBSD: vs.c,v 1.33 2004/04/30 19:08:02 miod Exp $ */
 
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -167,7 +167,7 @@ vsattach(parent, self, args)
 	sc->sc_link.adapter = &vs_scsiswitch;
 	sc->sc_link.device = &vs_scsidev;
 	sc->sc_link.luns = 1;
-	sc->sc_link.openings = roundup(NUM_IOPB, 8) / 8;
+	sc->sc_link.openings = NUM_IOPB / 8;
 
 	sc->sc_ih_n.ih_fn = vs_nintr;
 	sc->sc_ih_n.ih_arg = sc;
