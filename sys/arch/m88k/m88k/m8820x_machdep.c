@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x_machdep.c,v 1.1 2004/08/06 13:23:49 miod Exp $	*/
+/*	$OpenBSD: m8820x_machdep.c,v 1.2 2004/08/08 21:14:04 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -275,6 +275,9 @@ m8820x_cpu_configuration_print(int master)
 	int procvers = (pid & 0xe) >> 1;
 	int mmu, cnt, cpu = cpu_number();
 	struct simplelock print_lock;
+#ifdef M88200_HAS_SPLIT_ADDRESS
+	int aline, abit, amask;
+#endif
 
 	if (master)
 		simple_lock_init(&print_lock);
@@ -311,9 +314,28 @@ m8820x_cpu_configuration_print(int master)
 			printf("unknown model id 0x%x", mmuid);
 		else
 			printf("%s", mmutypes[mmuid]);
-		/* XXX print address lines */
-		printf(" rev 0x%x, %ccache",
-		    CMMU_VERSION(idr), CMMU_MODE(mmu) == INST_CMMU ? 'I' : 'D');
+		printf(" rev 0x%x,", CMMU_VERSION(idr));
+#ifdef M88200_HAS_SPLIT_ADDRESS
+		/*
+		 * Print address lines
+		 */
+		amask = cmmu->cmmu_addr_mask;
+		if (amask != 0) {
+			aline = 0;
+			while (amask != 0) {
+				abit = ff1(amask);
+				if ((cmmu->cmmu_addr & (1 << abit)) != 0)
+					printf("%cA%02d",
+					    aline != 0 ? '/' : ' ', abit);
+				else
+					printf("%cA%02d*",
+					    aline != 0 ? '/' : ' ', abit);
+				amask ^= 1 << abit;
+			}
+		} else
+#endif
+			printf(" full");
+		printf(" %ccache", CMMU_MODE(mmu) == INST_CMMU ? 'I' : 'D');
 	}
 	printf("\n");
 
@@ -392,11 +414,6 @@ m8820x_cmmu_init()
 	 */
 	if (max_cpus > 1) {
 		for (cpu = 0; cpu < max_cpus; cpu++) {
-#ifdef DIAGNOSTIC
-			if (cpu_sets[cpu] == 0)
-				continue;
-#endif
-
 			m8820x_cmmu_set(CMMU_SCTR, CMMU_SCTR_SE, MODE_VAL, cpu,
 			    DATA_CMMU, 0);
 			m8820x_cmmu_set(CMMU_SCTR, CMMU_SCTR_SE, MODE_VAL, cpu,
@@ -416,11 +433,6 @@ m8820x_cmmu_init()
 	 * set up yet.
 	 */
 	for (cpu = 0; cpu < max_cpus; cpu++) {
-#ifdef DIAGNOSTIC
-		if (cpu_sets[cpu] == 0)
-			continue;
-#endif
-
 		apr = ((0x00000 << PG_BITS) | CACHE_WT | CACHE_GLOBAL)
 		    & ~(CACHE_INH | APR_V);
 
