@@ -1,4 +1,4 @@
-/*	$OpenBSD: compile_et.c,v 1.8 2000/12/24 11:52:12 aaron Exp $	*/
+/*	$OpenBSD: compile_et.c,v 1.9 2000/12/24 11:53:11 aaron Exp $	*/
 /*
  * Copyright (c) 1998, 1999 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
@@ -180,7 +180,7 @@ generate(void)
 }
 
 static void
-usage(int code)
+usage()
 {
 	extern char *__progname;
 
@@ -194,7 +194,7 @@ main(int argc, char **argv)
 	char *p;
 
 	if (argc != 2)
-		usage(1);
+		usage();
 
 	filename = argv[1];
 	yyin = fopen(filename, "r");
