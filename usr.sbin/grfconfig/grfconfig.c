@@ -1,4 +1,4 @@
-/*	$OpenBSD: grfconfig.c,v 1.6 2002/05/29 09:47:20 deraadt Exp $	*/
+/*	$OpenBSD: grfconfig.c,v 1.7 2002/09/06 22:45:06 deraadt Exp $	*/
 /*	$NetBSD: grfconfig.c,v 1.6 1997/07/29 23:41:12 veego Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: grfconfig.c,v 1.6 2002/05/29 09:47:20 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: grfconfig.c,v 1.7 2002/09/06 22:45:06 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/file.h>
@@ -57,30 +57,27 @@ static char rcsid[] = "$OpenBSD: grfconfig.c,v 1.6 2002/05/29 09:47:20 deraadt E
 extern char *optarg;
 extern int optind;
 
-int main(int, char **);
-static void print_rawdata(struct grfvideo_mode *, int);    
+static void print_rawdata(struct grfvideo_mode *, int);
 
 static struct grf_flag {
 	u_short	grf_flag_number;
 	char	*grf_flag_name;
 } grf_flags[] = {
-	{GRF_FLAGS_DBLSCAN,		"doublescan"},
-	{GRF_FLAGS_LACE,		"interlace"},
-	{GRF_FLAGS_PHSYNC,		"+hsync"},
-	{GRF_FLAGS_NHSYNC,		"-hsync"},
-	{GRF_FLAGS_PVSYNC,		"+vsync"},
-	{GRF_FLAGS_NVSYNC,		"-vsync"},
-	{GRF_FLAGS_SYNC_ON_GREEN,	"sync-on-green"},
-	{0,				0}
+	{ GRF_FLAGS_DBLSCAN,		"doublescan" },
+	{ GRF_FLAGS_LACE,		"interlace" },
+	{ GRF_FLAGS_PHSYNC,		"+hsync" },
+	{ GRF_FLAGS_NHSYNC,		"-hsync" },
+	{ GRF_FLAGS_PVSYNC,		"+vsync" },
+	{ GRF_FLAGS_NVSYNC,		"-vsync" },
+	{ GRF_FLAGS_SYNC_ON_GREEN,	"sync-on-green" },
+	{ 0,				0 }
 };
 
 /*
  * Dynamic mode loader for OpenBSD/Amiga grf devices.
  */
 int
-main(ac, av)
-	int     ac;
-	char  **av;
+main(int argc, char *argv[])
 {
 	struct	grfvideo_mode gv[1];
 	struct	grf_flag *grf_flagp;
@@ -96,8 +93,7 @@ main(ac, av)
 	char	*p;
 	char	*errortext;
 
-
-	while ((c = getopt(ac, av, "rt")) != -1) {
+	while ((c = getopt(argc, argv, "rt")) != -1) {
 		switch (c) {
 		case 'r':	/* raw output */
 			rawdata = 1;
@@ -110,19 +106,19 @@ main(ac, av)
 			return (1);
 		}
 	}
-	ac -= optind;
-	av += optind;
+	argc -= optind;
+	argv += optind;
 
 
-	if (ac >= 1)
-		grfdevice = av[0];
+	if (argc >= 1)
+		grfdevice = argv[0];
 	else {
 		printf("grfconfig: No grf device specified.\n");
 		return (1);
 	}
 
-	if (ac >= 2)
-		modefile = av[1];
+	if (argc >= 2)
+		modefile = argv[1];
 
 	if ((grffd = open(grfdevice, O_RDWR)) < 0) {
 		printf("grfconfig: can't open grf device.\n");
@@ -202,7 +198,7 @@ main(ac, av)
 			    (gv->vtotal == 0)) {
 				printf("grfconfig: Illegal value in "
 				    "mode #%d:\n %s\n", gv->mode_num, obuf);
-				return (1);  
+				return (1);
 			}
 
 			if (strstr(obuf, "default") != NULL) {
@@ -361,8 +357,7 @@ main(ac, av)
 
 			printf("\t%ld.%ldkHz @ %ldHz",
 			    gv->pixel_clock / (gv->htotal * 1000),
-			    (gv->pixel_clock / (gv->htotal * 100)) 
-    	    	    	    	% 10,
+			    (gv->pixel_clock / (gv->htotal * 100)) % 10,
 			    gv->pixel_clock / (gv->htotal * gv->vtotal));
 			printf(" flags:");
 				
@@ -370,10 +365,12 @@ main(ac, av)
 				printf(" default");
 			} else {
 				for (grf_flagp = grf_flags;
-				  grf_flagp->grf_flag_number; grf_flagp++) {
-				    if (gv->disp_flags & grf_flagp->grf_flag_number) {
-					printf(" %s", grf_flagp->grf_flag_name);
-				    }
+				    grf_flagp->grf_flag_number; grf_flagp++) {
+					if (gv->disp_flags &
+					    grf_flagp->grf_flag_number) {
+						printf(" %s",
+						    grf_flagp->grf_flag_name);
+					}
 				}
 			}
 			printf("\n");
@@ -385,38 +382,33 @@ main(ac, av)
 }
 
 static void
-print_rawdata(gv, rawflags)
-	struct grfvideo_mode *gv;
-	int rawflags;
+print_rawdata(struct grfvideo_mode *gv, int rawflags)
 {
 	struct	grf_flag *grf_flagp;
 
 	printf("%ld %d %d %d %d %d %d %d %d %d %d %d",
-		gv->pixel_clock,
-		gv->disp_width,
-		gv->disp_height,
-		gv->depth,
-		gv->hblank_start,
-		gv->hsync_start,
-		gv->hsync_stop,
-		gv->htotal,
-		gv->vblank_start,
-		gv->vsync_start,
-		gv->vsync_stop,
-		gv->vtotal);
-		if (rawflags) {
-			printf(" 0x%.2x", gv->disp_flags);
+	    gv->pixel_clock, gv->disp_width,
+	    gv->disp_height, gv->depth,
+	    gv->hblank_start, gv->hsync_start,
+	    gv->hsync_stop, gv->htotal,
+	    gv->vblank_start, gv->vsync_start,
+	    gv->vsync_stop, gv->vtotal);
+
+	if (rawflags) {
+		printf(" 0x%.2x", gv->disp_flags);
+	} else {
+		if (gv->disp_flags == GRF_FLAGS_DEFAULT) {
+			printf(" default");
 		} else {
-			if (gv->disp_flags == GRF_FLAGS_DEFAULT) {
-				printf(" default");
-			} else {
-				for (grf_flagp = grf_flags;
-				  grf_flagp->grf_flag_number; grf_flagp++) {
-				    if (gv->disp_flags & grf_flagp->grf_flag_number) {
-					printf(" %s", grf_flagp->grf_flag_name);
-				    }
+			for (grf_flagp = grf_flags;
+			    grf_flagp->grf_flag_number; grf_flagp++) {
+				if (gv->disp_flags &
+				    grf_flagp->grf_flag_number) {
+					printf(" %s",
+					    grf_flagp->grf_flag_name);
 				}
 			}
 		}
-		printf("\n");
+	}
+	printf("\n");
 }
