@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.96 2001/11/22 09:08:32 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.97 2001/11/22 09:54:04 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -3432,7 +3432,7 @@ pmap_map(va, pa, endpa, prot)
 	int pgsize = PAGE_SIZE;
 
 	while (pa < endpa) {
-		pmap_enter(pmap_kernel(), va, pa, prot, PMAP_WIRED);
+		pmap_kenter_pa(va, pa, prot);
 		va += pgsize;
 		pa += pgsize;
 	}
@@ -5785,55 +5785,6 @@ pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
 	vsize_t len;
 	vaddr_t src_addr;
 {
-#if notyet
-	struct regmap *rm;
-	struct segmap *sm;
-
-	if (pmap_copy_disabled)
-		return;
-#ifdef DIAGNOSTIC
-	if (VA_OFF(src_addr) != 0)
-		printf("pmap_copy: addr not page aligned: 0x%lx\n", src_addr);
-	if ((len & (NBPG-1)) != 0)
-		printf("pmap_copy: length not page aligned: 0x%lx\n", len);
-#endif
-
-	if (src_pmap == NULL)
-		return;
-
-	if (CPU_ISSUN4M) {
-		int i, npg, pte;
-		paddr_t pa;
-
-		npg = len >> PGSHIFT;
-		for (i = 0; i < npg; i++) {
-			tlb_flush_page(src_addr);
-			if ((rm = src_pmap->pm_regmap) == NULL)
-				continue;
-			rm += VA_VREG(src_addr);
-
-			if ((sm = rm->rg_segmap) == NULL)
-				continue;
-			sm += VA_VSEG(src_addr);
-			if (sm->sg_npte == 0)
-				continue;
-
-			pte = sm->sg_pte[VA_SUN4M_VPG(src_addr)];
-			if ((pte & SRMMU_TETYPE) != SRMMU_TEPTE)
-				continue;
-
-			pa = ptoa((pte & SRMMU_PPNMASK) >> SRMMU_PPNSHIFT);
-			pmap_enter(dst_pmap, dst_addr,
-				   pa,
-				   (pte & PPROT_WRITE)
-					? (VM_PROT_WRITE | VM_PROT_READ)
-					: VM_PROT_READ,
-				   0);
-			src_addr += NBPG;
-			dst_addr += NBPG;
-		}
-	}
-#endif
 }
 
 /*
