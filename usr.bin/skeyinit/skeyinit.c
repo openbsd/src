@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyinit.c,v 1.8 1996/09/29 21:28:42 millert Exp $	*/
+/*	$OpenBSD: skeyinit.c,v 1.9 1996/09/29 23:11:04 millert Exp $	*/
 /*	$NetBSD: skeyinit.c,v 1.6 1995/06/05 19:50:48 pk Exp $	*/
 
 /* S/KEY v1.1b (skeyinit.c)
@@ -34,7 +34,7 @@
 #define SKEY_NAMELEN	4
 #endif
 #ifndef SKEY_MIN_PW_LEN
-#define SKEY_MIN_PW_LEN	4
+#define SKEY_MIN_PW_LEN	10
 #endif
 
 void	usage __P((char *));
