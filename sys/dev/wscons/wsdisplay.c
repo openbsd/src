@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.19 2001/04/14 04:44:01 aaron Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.20 2001/04/14 13:04:17 aaron Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.37.4.1 2000/06/30 16:27:53 simonb Exp $ */
 
 /*
@@ -2808,9 +2808,6 @@ mouse_copy_extend_after(void)
 			mouse_copy_extend_line();
 		mouse_copy_selection();
 	}
-	else  
-		/* no selection yet! */
-		sysbeep(1193182 /* PCVT_SYSBEEPF */ / 1500, hz / 4);
 }
 
 
@@ -2876,8 +2873,6 @@ mouse_paste(void)
 				(*current++, sc->sc_focus->scr_tty);
 		}
 	}
-	else 
-		sysbeep(1193182 /* PCVT_SYSBEEPF */ / 1500, hz / 4);
 }
 
 
