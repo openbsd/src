@@ -1,4 +1,4 @@
-This is Info file cvs.info, produced by Makeinfo-1.63 from the input
+This is Info file cvs.info, produced by Makeinfo-1.55 from the input
 file ./cvs.texinfo.
 
    Copyright (C) 1992, 1993 Signum Support AB Copyright (C) 1993, 1994
@@ -22,12 +22,12 @@ and this permission notice may be included in translations approved by
 the Free Software Foundation instead of in the original English.
 
 
-File: cvs.info,  Node: Top,  Next: Preface,  Up: (dir)
+File: cvs.info,  Node: Top,  Next: Preface,  Prev: (DIR),  Up: (DIR)
 
 
 
    This info manual describes how to use and administer CVS version
-1.8.1.
+1.9.
 
 * Menu:
 
@@ -41,8 +41,8 @@ File: cvs.info,  Node: Top,  Next: Preface,  Up: (dir)
 * Branches::                    Parallel development explained
 * Merging::                     How to move changes between branches
 * Recursive behavior::          CVS descends directories
-* Adding files::                Adding files to a module
-* Removing files::              Removing files from a module
+* Adding files::                Adding files
+* Removing files::              Removing files
 * Tracking sources::            Tracking third-party sources
 * Moving files::                Moving and renaming files
 * Moving directories::          Moving and renaming directories
@@ -135,7 +135,7 @@ Binary files
      *Note Keyword substitution::, for solutions.
 
 The `admin' command
-     Uncareful use of the `admin' command can cause CVS to cease
+     Careless use of the `admin' command can cause CVS to cease
      working.  *Note admin::, before trying to use it.
 
 
@@ -155,10 +155,10 @@ G. Grubbs <dgg@think.com>.
 
    Some text has been extracted from the man pages for RCS.
 
-   The CVS FAQ (*note What is CVS?::.) by David G. Grubbs has been used
-as a check-list to make sure that this manual is as complete as
-possible.  (This manual does however not include all of the material in
-the FAQ).  The FAQ contains a lot of useful information.
+   The CVS FAQ by David G. Grubbs has provided useful material.  The
+FAQ is no longer maintained, however, and this manual about the closest
+thing there is to a successor (with respect to documenting how to use
+CVS, at least).
 
    In addition, the following persons have helped by telling me about
 mistakes I've made: Roxanne Brunskill <rbrunski@datap.ca>, Kathy Dyer
@@ -215,7 +215,7 @@ exactly which change caused the bug.  This can sometimes be a big help.
 
    You could of course save every version of every file you have ever
 created.  This would however waste an enormous amount of disk space.
-CVS stores all the versions of a file in a single file in a clever way
+cVS stores all the versions of a file in a single file in a clever way
 that only stores the differences between versions.
 
    CVS also helps you if you are part of a group of people working on
@@ -240,12 +240,14 @@ support.
    You can get CVS via anonymous ftp from a number of sites, for
 instance prep.ai.mit.edu in `pub/gnu'.
 
-   There is a mailing list for CVS where bug reports can be sent,
-questions can be asked, an FAQ is posted, and discussion about future
-enhancements to CVS take place.  To submit a message to the list, write
-to <info-cvs@prep.ai.mit.edu>.  To subscribe or unsubscribe, write to
-<info-cvs-request@prep.ai.mit.edu>. Please be specific about your email
-address.
+   There is a mailing list, known as `info-cvs', devoted to CVS.  To
+subscribe or unsubscribe send a message to
+`info-cvs-request@prep.ai.mit.edu'.  Please be specific about your
+email address.  As of May 1996, subscription requests are handled by a
+busy human being, so you cannot expect to be added or removed
+immediately.  The usenet group `comp.software.config-mgmt' is also a
+suitable place for CVS discussions (along with other configuration
+management systems).
 
 CVS is not...
 =============
@@ -265,7 +267,7 @@ CVS is not a build system.
      working directories.  If you write your `Makefile's or scripts in
      every directory so they have to know the relative positions of
      everything else, you wind up requiring the entire repository to be
-     checked out.  That's simply bad planning.
+     checked out.
 
      If you modularize your work, and construct a build system that
      will share files (via links, mounts, `VPATH' in `Makefile's,
@@ -273,11 +275,15 @@ CVS is not a build system.
 
      But you have to remember that *any* such system is a lot of work
      to construct and maintain.  CVS does not address the issues
-     involved.  You must use your brain and a collection of other tools
-     to provide a build scheme to match your plans.
+     involved.
 
      Of course, you should place the tools created to support such a
      build system (scripts, `Makefile's, etc) under CVS.
+
+     Figuring out what files need to be rebuilt when something changes
+     is, again, something to be handled outside the scope of CVS.  One
+     traditional approach is to use `make' for building, and use some
+     automated tool for generating the depencies which `make' uses.
 
 CVS is not a substitute for management.
      Your managers and project leaders are expected to talk to you
@@ -311,37 +317,47 @@ CVS is not a substitute for developer communication.
 
      Acquire the habit of reading specs and talking to your peers.
 
-CVS is not a configuration management system.
-     CVS is a source control system.  The phrase "configuration
-     management" is a marketing term, not an industry-recognized set of
-     functions.
+CVS does not have change control
+     Change control refers to a number of things.  First of all it can
+     mean "bug-tracking", that is being able to keep a database of
+     reported bugs and the status of each one (is it fixed?  in what
+     release?  has the bug submitter agreed that it is fixed?).  For
+     interfacing CVS to an external bug-tracking system, see the
+     `rcsinfo' and `editinfo' files (*note Administrative files::.).
 
-     A true "configuration management system" would contain elements of
-     the following:
+     Another aspect of change control is keeping track of the fact that
+     changes to several files were in fact changed together as one
+     logical change.  If you check in several files in a single `cvs
+     commit' operation, CVS then forgets that those files were checked
+     in together, and the fact that they have the same log message is
+     the only thing tying them together.  Keeping a GNU style
+     `ChangeLog' can help somewhat.
 
-        * Source control.
+     Another aspect of change control, in some systems, is the ability
+     to keep track of the status of each change.  Some changes have
+     been written by a developer, others have been reviewed by a second
+     developer, and so on.  Generally, the way to do this with CVS is to
+     generate a diff (using `cvs diff' or `diff') and email it to
+     someone who can then apply it using the `patch' utility.  This is
+     very flexible, but depends on mechanisms outside CVS to make sure
+     nothing falls through the cracks.
 
-        * Dependency tracking.
+CVS is not an automated testing program
+     It should be possible to enforce mandatory use of a testsuite
+     using the `commitinfo' file.  I haven't heard a lot about projects
+     trying to do that or whether there are subtle gotchas, however.
 
-        * Build systems (i.e. What to build and how to find things
-          during a build.  What is shared?  What is local?)
-
-        * Bug tracking.
-
-        * Automated Testing procedures.
-
-        * Release Engineering documentation and procedures.
-
-        * Tape Construction.
-
-        * Customer Installation.
-
-        * A way for users to run different versions of the same
-          software on the same host at the same time.
-
-     CVS provides only the first.
-
-   This section is taken from release 2.3 of the CVS FAQ.
+CVS does not have a builtin process model
+     Some systems provide ways to ensure that changes or releases go
+     through various steps, with various approvals as needed.
+     Generally, one can accomplish this with CVS but it might be a
+     little more work.  In some cases you'll want to use the
+     `commitinfo', `loginfo', `rcsinfo', or `editinfo' files, to
+     require that certain steps be performed before cvs will allow a
+     checkin.  Also consider whether features such as branches and tags
+     can be used to perform tasks such as doing work in a development
+     tree and then merging certain changes over to a stable tree only
+     once they have been proven.
 
 
 File: cvs.info,  Node: Basic concepts,  Next: A sample session,  Prev: What is CVS?,  Up: Top
@@ -349,20 +365,13 @@ File: cvs.info,  Node: Basic concepts,  Next: A sample session,  Prev: What is C
 Basic concepts
 **************
 
-   CVS stores all files in a centralized "repository": a directory
-(such as `/usr/local/cvsroot' or `user@remotehost:/usr/local/cvsroot')
-which is populated with a hierarchy of files and directories.  (*note
-Remote repositories::. for information about keeping the repository on
-a remote machine.)
+   CVS stores all files in a centralized "repository" (*note
+Repository::.).
 
-   Normally, you never access any of the files in the repository
-directly.  Instead, you use CVS commands to get your own copy of the
-files, and then work on that copy.  When you've finished a set of
-changes, you check (or "commit") them back into the repository.
-
-   The files in the repository are organized in "modules".  Each module
-is made up of one or more files, and can include files from several
-directories.  A typical usage is to define one module per project.
+   The repository contains directories and files, in an arbitrary tree.
+The "modules" feature can be used to group together a set of
+directories or files into a single entity (*note modules::.).  A
+typical usage is to define one module per project.
 
 * Menu:
 
@@ -480,7 +489,7 @@ This will create a new directory called `tc' and populate it with the
 source files.
 
      $ cd tc
-     $ ls tc
+     $ ls
      CVS         Makefile    backend.c   driver.c    frontend.c  parser.c
 
    The `CVS' directory is used internally by CVS.  Normally, you should
@@ -597,8 +606,115 @@ File: cvs.info,  Node: Repository,  Next: Starting a new project,  Prev: A sampl
 The Repository
 **************
 
-   Figure 3 below shows a typical setup of a repository.  Only
-directories are shown below.
+   The CVS "repository" stores a complete copy of all the files and
+directories which are under version control.
+
+   Normally, you never access any of the files in the repository
+directly.  Instead, you use CVS commands to get your own copy of the
+files, and then work on that copy.  When you've finished a set of
+changes, you check (or "commit") them back into the repository.  The
+repository then contains the changes which you have made, as well as
+recording exactly what you changed, when you changed it, and other such
+information.
+
+   CVS can access a repository by a variety of means.  It might be on
+the local computer, or it might be on a computer across the room or
+across the world.  To distinguish various ways to access a repository,
+the repository name can start with an "access method".  For example,
+the access method `:local:' means to access a repository directory, so
+the repository `:local:/usr/local/cvsroot' means that the repository is
+in `/usr/local/cvsroot' on the computer running CVS.  For information
+on other access methods, see *Note Remote repositories::.
+
+   If the access method is omitted, then if the repository does not
+contain `:', then `:local:' is assumed.  If it does contain `:' than
+either `:ext:' or `:server:' is assumed.  For example, if you have a
+local repository in `/usr/local/cvsroot', you can use
+`/usr/local/cvsroot' instead of `:local:/usr/local/cvsroot'.  But if
+(under Windows NT, for example) your local repository is
+`c:\src\cvsroot', then you must specify the access method, as in
+`:local:c:\src\cvsroot'.
+
+   The repository is split in two parts.  `$CVSROOT/CVSROOT' contains
+administrative files for CVS.  The other directories contain the actual
+user-defined modules.
+
+* Menu:
+
+* Specifying a repository::     Telling CVS where your repository is
+* Repository storage::          The structure of the repository
+* Intro administrative files::  Defining modules
+* Multiple repositories::       Multiple repositories
+* Creating a repository::       Creating a repository
+* Remote repositories::         Accessing repositories on remote machines
+
+
+File: cvs.info,  Node: Specifying a repository,  Next: Repository storage,  Up: Repository
+
+Telling CVS where your repository is
+====================================
+
+   There are a couple of different ways to tell CVS where to find the
+repository.  You can name the repository on the command line
+explicitly, with the `-d' (for "directory") option:
+
+     cvs -d /usr/local/cvsroot checkout yoyodyne/tc
+
+   Or you can set the `$CVSROOT' environment variable to an absolute
+path to the root of the repository, `/usr/local/cvsroot' in this
+example.  To set `$CVSROOT', all `csh' and `tcsh' users should have
+this line in their `.cshrc' or `.tcshrc' files:
+
+     setenv CVSROOT /usr/local/cvsroot
+
+`sh' and `bash' users should instead have these lines in their
+`.profile' or `.bashrc':
+
+     CVSROOT=/usr/local/cvsroot
+     export CVSROOT
+
+   A repository specified with `-d' will override the `$CVSROOT'
+environment variable.  Once you've checked a working copy out from the
+repository, it will remember where its repository is (the information
+is recorded in the `CVS/Root' file in the working copy).
+
+   The `-d' option and the `CVS/Root' file both override the `$CVSROOT'
+environment variable.  If `-d' option differs from `CVS/Root', the
+former is used (and specifying `-d' will cause `CVS/Root' to be
+updated).  Of course, for proper operation they should be two ways of
+referring to the same repository.
+
+
+File: cvs.info,  Node: Repository storage,  Next: Intro administrative files,  Prev: Specifying a repository,  Up: Repository
+
+How data is stored in the repository
+====================================
+
+   For most purposes it isn't important *how* CVS stores information in
+the repository.  In fact, the format has changed in the past, and is
+likely to change in the future.  Since in almost all cases one accesses
+the repository via CVS commands; such changes need not be disruptive.
+
+   However, in some cases it may be necessary to understand how CVS
+stores data in the repository, for example you might need to track down
+CVS locks (*note Concurrency::.) or you might need to deal with the
+file permissions appropriate for the repository.
+
+* Menu:
+
+* Repository files::            What files are stored in the repository
+* File permissions::            File permissions
+
+
+File: cvs.info,  Node: Repository files,  Next: File permissions,  Up: Repository storage
+
+Where files are stored within the repository
+--------------------------------------------
+
+   The overall structure of the repository is a directory tree
+corresponding to the directories in the working directory.  For
+example, supposing the repository is in `/usr/local/cvsroot', here is a
+possible directory tree (showing only the directories):
 
      /usr
       |
@@ -630,56 +746,10 @@ directories are shown below.
                    |
                    +--(other Yoyodyne software)
 
-   There are a couple of different ways to tell CVS where to find the
-repository.  You can name the repository on the command line
-explicitly, with the `-d' (for "directory") option:
-
-     cvs -d /usr/local/cvsroot checkout yoyodyne/tc
-
-   Or you can set the `$CVSROOT' environment variable to an absolute
-path to the root of the repository, `/usr/local/cvsroot' in this
-example.  To set `$CVSROOT', all `csh' and `tcsh' users should have
-this line in their `.cshrc' or `.tcshrc' files:
-
-     setenv CVSROOT /usr/local/cvsroot
-
-`sh' and `bash' users should instead have these lines in their
-`.profile' or `.bashrc':
-
-     CVSROOT=/usr/local/cvsroot
-     export CVSROOT
-
-   A repository specified with `-d' will override the `$CVSROOT'
-environment variable.  Once you've checked a working copy out from the
-repository, it will remember where its repository is (the information
-is recorded in the `CVS/Root' file in the working copy).
-
-   The `-d' option and the `CVS/Root' file both override the `$CVSROOT'
-environment variable; however, CVS will complain if the `-d' argument
-and the `CVS/Root' file disagree.
-
-   There is nothing magical about the name `/usr/local/cvsroot'.  You
-can choose to place the repository anywhere you like.  *Note Remote
-repositories:: to learn how the repository can be on a different
-machine than your working copy of the sources.
-
-   The repository is split in two parts.  `$CVSROOT/CVSROOT' contains
-administrative files for CVS.  The other directories contain the actual
-user-defined modules.
-
-* Menu:
-
-* User modules::                The structure of the repository
-* Intro administrative files::  Defining modules
-* Multiple repositories::       Multiple repositories
-* Creating a repository::       Creating a repository
-* Remote repositories::         Accessing repositories on remote machines
-
-
-File: cvs.info,  Node: User modules,  Next: Intro administrative files,  Up: Repository
-
-User modules
-============
+   With the directories are "history files" for each file under version
+control.  The name of the history file is the name of the corresponding
+file with `,v' appended to the end.  Here is what the repository for
+the `yoyodyne/tc' directory might look like:
 
        `$CVSROOT'
          |
@@ -701,21 +771,18 @@ User modules
                       +--testpgm.t,v
                       +--test2.t,v
 
-   The figure above shows the contents of the `tc' module inside the
-repository.  As you can see all file names end in `,v'.  The files are
-"history files".  They contain, among other things, enough information
-to recreate any revision of the file, a log of all commit messages and
-the user-name of the person who committed the revision.  CVS uses the
-facilities of RCS, a simpler version control system, to maintain these
-files.  For a full description of the file format, see the `man' page
-`rcsfile(5)'.
-
-* Menu:
-
-* File permissions::            File permissions
+   The history files contain, among other things, enough information to
+recreate any revision of the file, a log of all commit messages and the
+user-name of the person who committed the revision.  The history files
+are known as "RCS files", because the first program to store files in
+that format was a version control system known as RCS.  For a full
+description of the file format, see the `man' page `rcsfile(5)',
+distributed with RCS.  This file format has become very common--many
+systems other than CVS or RCS can at least import history files in this
+format.
 
 
-File: cvs.info,  Node: File permissions,  Up: User modules
+File: cvs.info,  Node: File permissions,  Prev: Repository files,  Up: Repository storage
 
 File permissions
 ----------------
@@ -731,17 +798,32 @@ group that owns the directory.
    This means that you can only control access to files on a
 per-directory basis.
 
+   Note that users must also have write access to check out files,
+because CVS needs to create lock files (*note Concurrency::.).
+
+   Also note that users must have write access to the
+`CVSROOT/val-tags' file.  CVS uses it to keep track of what tags are
+valid tag names (it is sometimes updated when tags are used, as well as
+when they are created, though).
+
    CVS tries to set up reasonable file permissions for new directories
 that are added inside the tree, but you must fix the permissions
 manually when a new directory should have different permissions than its
-parent directory.
+parent directory.  If you set the `CVSUMASK' environment variable that
+will control the file permissions which CVS uses in creating directories
+and/or files in the repository.  `CVSUMASK' does not affect the file
+permissions in the working directory; such files have the permissions
+which are typical for newly created files, except that sometimes CVS
+creates them read-only (see the sections on watches, *Note Setting a
+watch::; -r, *Note Global options::; or CVSREAD, *Note Environment
+variables::).
 
    Since CVS was not written to be run setuid, it is unsafe to try to
 run it setuid.  You cannot use the setuid features of RCS together with
 CVS.
 
 
-File: cvs.info,  Node: Intro administrative files,  Next: Multiple repositories,  Prev: User modules,  Up: Repository
+File: cvs.info,  Node: Intro administrative files,  Next: Multiple repositories,  Prev: Repository storage,  Up: Repository
 
 The administrative files
 ========================
@@ -764,7 +846,7 @@ all modules in the repository.  This is a sample `modules' file.
    The `modules' file is line oriented.  In its simplest form each line
 contains the name of the module, whitespace, and the directory where
 the module resides.  The directory is a path relative to `$CVSROOT'.
-The last for lines in the example above are examples of such lines.
+The last four lines in the example above are examples of such lines.
 
    The line that defines the module called `modules' uses features that
 are not explained here.  *Note modules::, for a full explanation of all
@@ -793,12 +875,16 @@ repository, for instance if you have two development groups that work
 on separate projects without sharing any code.  All you have to do to
 have several repositories is to specify the appropriate repository,
 using the `CVSROOT' environment variable, the `-d' option to CVS, or
-(once you have checked out a working directories) by simply allowing
-CVS to use the repository that was used to check out the working
-directory (*note Repository::.).
+(once you have checked out a working directory) by simply allowing CVS
+to use the repository that was used to check out the working directory
+(*note Specifying a repository::.).
 
-   Notwithstanding, it can be confusing to have two or more
-repositories.
+   The big advantage of having multiple repositories is that they can
+reside on different servers.  The big disadvantage is that you cannot
+have a single CVS command recurse into directories which comes from
+different repositories.  Generally speaking, if you are thinking of
+setting up several repositories on the same machine, you might want to
+consider using several directories within the same repository.
 
    None of the examples in this manual show multiple repositories.
 
@@ -808,7 +894,27 @@ File: cvs.info,  Node: Creating a repository,  Next: Remote repositories,  Prev:
 Creating a repository
 =====================
 
-   See the instructions in the `INSTALL' file in the CVS distribution.
+   To set up a CVS repository, choose a directory with ample disk space
+available for the revision history of the source files.  It should be
+accessable (directly or via a networked file system) from all machines
+which want to use CVS in server or local mode; the client machines need
+not have any access to it other than via the CVS protocol.  It is not
+possible to use CVS to read from a repository which one only has read
+access to; CVS needs to be able to create lock files (*note
+Concurrency::.).
+
+   To create a repository, run the `cvs init' command.  It will set up
+an empty repository in the CVS root specified in the usual way (*note
+Repository::.).  For example,
+
+     cvs -d /usr/local/cvsroot init
+
+   `cvs init' is careful to never overwrite any existing files in the
+repository, so no harm is done if you run `cvs init' on an already
+set-up repository.
+
+   `cvs init' will enable history logging; if you don't want that,
+remove the history file after running `cvs init'.  *Note history file::.
 
 
 File: cvs.info,  Node: Remote repositories,  Prev: Creating a repository,  Up: Repository
@@ -820,10 +926,14 @@ Remote repositories
 the repository.  Generally, using a remote repository is just like
 using a local one, except that the format of the repository name is:
 
-             user@hostname:/path/to/repository
+     :METHOD:USER@HOSTNAME:/path/to/repository
 
    The details of exactly what needs to be set up depend on how you are
 connecting to the server.
+
+   If METHOD is not specified, and the repository name contains `:',
+then the default is `ext' or `server', depending on your platform; both
+are described in *Note Connecting via rsh::.
 
 * Menu:
 
@@ -850,7 +960,7 @@ file `.rhosts' in `bach''s home directory:
 
    Then test that `rsh' is working with
 
-     rsh -l bach chainsaw.brickyard.com echo $PATH
+     rsh -l bach chainsaw.brickyard.com 'echo $PATH'
 
    Next you have to make sure that `rsh' will be able to find the
 server.  Make sure that the path which `rsh' printed in the above
@@ -862,11 +972,27 @@ server you want to use, for example `/usr/local/bin/cvs-1.6'.
 
    There is no need to edit `inetd.conf' or start a CVS server daemon.
 
+   There are two access methods that you use in CVSROOT for rsh.
+`:server:' specifies an internal rsh client, which is supported only by
+some CVS ports.  `:ext:' specifies an external rsh program.  By default
+this is `rsh' but you may set the `CVS_RSH' environment variable to
+invoke another program which can access the remote server (for example,
+`remsh' on HP-UX 9 because `rsh' is something different).  It must be a
+program which can transmit data to and from the server without modifying
+it; for example the Windows NT `rsh' is not suitable since it by
+default translates between CRLF and LF.  The OS/2 CVS port has a hack
+to pass `-b' to `rsh' to get around this, but since this could
+potentially cause programs for programs other than the standard `rsh',
+it may change in the future.  If you set `CVS_RSH' to `SSH' or some
+other rsh replacement, the instructions in the rest of this section
+concerning `.rhosts' and so on are likely to be incorrect; consult the
+documentation for your rsh replacement.
+
    Continuing our example, supposing you want to access the module
 `foo' in the repository `/usr/local/cvsroot/', on machine
 `chainsaw.brickyard.com', you are ready to go:
 
-     cvs -d bach@chainsaw.brickyard.com:/user/local/cvsroot checkout foo
+     cvs -d :ext:bach@chainsaw.brickyard.com:/usr/local/cvsroot checkout foo
 
    (The `bach@' can be omitted if the username is the same on both the
 local and remote hosts.)
@@ -911,7 +1037,8 @@ sufficient:
      cvs -b /usr/local/bin pserver
 
    The `-b' option specifies the directory which contains the RCS
-binaries on the server.
+binaries on the server.  You could also use the `-T' option to specify
+a temporary directory.
 
    If your `inetd' wants a symbolic service name instead of a raw port
 number, then put this in `/etc/services':
@@ -968,7 +1095,7 @@ repository argument or the `CVSROOT' environment variable.
 
    `cvs login' is interactive -- it prompts for a password:
 
-     cvs -d bach@chainsaw.brickyard.com:/usr/local/cvsroot login
+     cvs -d :pserver:bach@chainsaw.brickyard.com:/usr/local/cvsroot login
      CVS password:
 
    The password is checked with the server; if it is correct, the
@@ -976,8 +1103,7 @@ repository argument or the `CVSROOT' environment variable.
 incorrect.
 
    Once you have logged in, you can force CVS to connect directly to
-the server and authenticate with the stored password by prefixing the
-repository with `:pserver:':
+the server and authenticate with the stored password:
 
      cvs -d :pserver:bach@chainsaw.brickyard.com:/usr/local/cvsroot checkout foo
 
@@ -1041,26 +1167,30 @@ Direct connection with kerberos
    The main disadvantage of using rsh is that all the data needs to
 pass through additional programs, so it may be slower.  So if you have
 kerberos installed you can connect via a direct TCP connection,
-authenticating with kerberos (note that the data transmitted is *not*
-encrypted).
+authenticating with kerberos.
 
    To do this, CVS needs to be compiled with kerberos support; when
 configuring CVS it tries to detect whether kerberos is present or you
 can use the `--with-krb4' flag to configure.
 
+   The data transmitted is *not* encrypted by default.  Encryption
+support must be compiled into both the client and server; use the
+`--enable-encryption' configure option to turn it on.  You must then
+use the `-x' global option to request encryption.
+
    You need to edit `inetd.conf' on the server machine to run `cvs
 kserver'.  The client uses port 1999 by default; if you want to use
 another port specify it in the `CVS_CLIENT_PORT' environment variable
-on the client.  Set `CVS_CLIENT_PORT' to `-1' to force an rsh
-connection.
+on the client.
 
    When you want to use CVS, get a ticket in the usual way (generally
 `kinit'); it must be a ticket which allows you to log into the server
 machine.  Then you are ready to go:
 
-     cvs -d chainsaw.brickyard.com:/user/local/cvsroot checkout foo
+     cvs -d :kserver:chainsaw.brickyard.com:/user/local/cvsroot checkout foo
 
-   If CVS fails to connect, it will fall back to trying rsh.
+   Previous versions of CVS would fall back to a connection via rsh;
+this version will not do so.
 
 
 File: cvs.info,  Node: Starting a new project,  Next: Multiple developers,  Prev: Repository,  Up: Top
@@ -1068,10 +1198,12 @@ File: cvs.info,  Node: Starting a new project,  Next: Multiple developers,  Prev
 Starting a project with CVS
 ***************************
 
-   Since CVS 1.x is bad at renaming files and moving them between
-directories, the first thing you do when you start a new project should
-be to think through your file organization.  It is not impossible--just
-awkward--to rename or move files.  *Note Moving files::.
+   Because renaming files and moving them between directories is
+somewhat inconvenient, the first thing you do when you start a new
+project should be to think through your file organization.  It is not
+impossible to rename or move files, but it does increase the potential
+for confusion and CVS does have some quirks particularly in the area of
+renaming directories.  *Note Moving files::.
 
    What to do next depends on the situation at hand.
 
@@ -1079,197 +1211,4 @@ awkward--to rename or move files.  *Note Moving files::.
 
 * Setting up the files::        Getting the files into the repository
 * Defining the module::         How to make a module of the files
-
-
-File: cvs.info,  Node: Setting up the files,  Next: Defining the module,  Up: Starting a new project
-
-Setting up the files
-====================
-
-   The first step is to create the files inside the repository.  This
-can be done in a couple of different ways.
-
-* Menu:
-
-* From files::                  This method is useful with old projects
-                                where files already exists.
-* From other version control systems::  Old projects where you want to
-                                        preserve history from another system.
-* From scratch::                Creating a module from scratch.
-
-
-File: cvs.info,  Node: From files,  Next: From other version control systems,  Up: Setting up the files
-
-Creating a module from a number of files
-----------------------------------------
-
-   When you begin using CVS, you will probably already have several
-projects that can be put under CVS control.  In these cases the easiest
-way is to use the `import' command.  An example is probably the easiest
-way to explain how to use it.  If the files you want to install in CVS
-reside in `DIR', and you want them to appear in the repository as
-`$CVSROOT/yoyodyne/DIR', you can do this:
-
-     $ cd DIR
-     $ cvs import -m "Imported sources" yoyodyne/DIR yoyo start
-
-   Unless you supply a log message with the `-m' flag, CVS starts an
-editor and prompts for a message.  The string `yoyo' is a "vendor tag",
-and `start' is a "release tag".  They may fill no purpose in this
-context, but since CVS requires them they must be present.  *Note
-Tracking sources::, for more information about them.
-
-   You can now verify that it worked, and remove your original source
-directory.
-
-     $ cd ..
-     $ mv DIR DIR.orig
-     $ cvs checkout yoyodyne/DIR       # Explanation below
-     $ ls -R yoyodyne
-     $ rm -r DIR.orig
-
-Erasing the original sources is a good idea, to make sure that you do
-not accidentally edit them in DIR, bypassing CVS.  Of course, it would
-be wise to make sure that you have a backup of the sources before you
-remove them.
-
-   The `checkout' command can either take a module name as argument (as
-it has done in all previous examples) or a path name relative to
-`$CVSROOT', as it did in the example above.
-
-   It is a good idea to check that the permissions CVS sets on the
-directories inside `$CVSROOT' are reasonable, and that they belong to
-the proper groups.  *Note File permissions::.
-
-
-File: cvs.info,  Node: From other version control systems,  Next: From scratch,  Prev: From files,  Up: Setting up the files
-
-Creating Files From Other Version Control Systems
--------------------------------------------------
-
-   If you have a project which you are maintaining with another version
-control system, such as RCS, you may wish to put the files from that
-project into CVS, and preserve the revision history of the files.
-
-From RCS
-     If you have been using RCS, find the RCS files--usually a file
-     named `foo.c' will have its RCS file in `RCS/foo.c,v' (but it
-     could be other places; consult the RCS documentation for details).
-     Then create the appropriate directories in CVS if they do not
-     already exist.  Then copy the files into the appropriate
-     directories in the CVS repository (the name in the repository must
-     be the name of the source file with `,v' added; the files go
-     directly in the appopriate directory of the repository, not in an
-     `RCS' subdirectory).  This is one of the few times when it is a
-     good idea to access the CVS repository directly, rather than using
-     CVS commands.  Then you are ready to check out a new working
-     directory.
-
-From another version control system
-     Many version control systems have the ability to export RCS files
-     in the standard format.  If yours does, export the RCS files and
-     then follow the above instructions.
-
-From SCCS
-     There is a script in the `contrib' directory of the CVS source
-     distribution called `sccs2rcs' which converts SCCS files to RCS
-     files.  Note: you must run it on a machine which has both SCCS and
-     RCS installed, and like everything else in contrib it is
-     unsupported (your mileage may vary).
-
-
-File: cvs.info,  Node: From scratch,  Prev: From other version control systems,  Up: Setting up the files
-
-Creating a module from scratch
-------------------------------
-
-   For a new project, the easiest thing to do is probably to create an
-empty directory structure, like this:
-
-     $ mkdir tc
-     $ mkdir tc/man
-     $ mkdir tc/testing
-
-   After that, you use the `import' command to create the corresponding
-(empty) directory structure inside the repository:
-
-     $ cd tc
-     $ cvs import -m "Created directory structure" yoyodyne/DIR yoyo start
-
-   Then, use `add' to add files (and new directories) as they appear.
-
-   Check that the permissions CVS sets on the directories inside
-`$CVSROOT' are reasonable.
-
-
-File: cvs.info,  Node: Defining the module,  Prev: Setting up the files,  Up: Starting a new project
-
-Defining the module
-===================
-
-   The next step is to define the module in the `modules' file.  This
-is not strictly necessary, but modules can be convenient in grouping
-together related files and directories.
-
-   In simple cases these steps are sufficient to define a module.
-
-  1. Get a working copy of the modules file.
-
-          $ cvs checkout modules
-          $ cd modules
-
-  2. Edit the file and insert a line that defines the module.  *Note
-     Intro administrative files::, for an introduction.  *Note
-     modules::, for a full description of the modules file.  You can
-     use the following line to define the module `tc':
-
-          tc   yoyodyne/tc
-
-  3. Commit your changes to the modules file.
-
-          $ cvs commit -m "Added the tc module." modules
-
-  4. Release the modules module.
-
-          $ cd ..
-          $ cvs release -d modules
-
-
-File: cvs.info,  Node: Multiple developers,  Next: Branches,  Prev: Starting a new project,  Up: Top
-
-Multiple developers
-*******************
-
-   When more than one person works on a software project things often
-get complicated.  Often, two people try to edit the same file
-simultaneously.  Some other version control systems (including RCS and
-SCCS) try to solve that particular problem by introducing "file
-locking", so that only one person can edit each file at a time.
-Unfortunately, file locking can be very counter-productive.  If two
-persons want to edit different parts of a file, there may be no reason
-to prevent either of them from doing so.
-
-   CVS does not use file locking.  Instead, it allows many people to
-edit their own "working copy" of a file simultaneously.  The first
-person that commits his changes has no automatic way of knowing that
-another has started to edit it.  Others will get an error message when
-they try to commit the file.  They must then use CVS commands to bring
-their working copy up to date with the repository revision.  This
-process is almost automatic, and explained in this chapter.
-
-   There are many ways to organize a team of developers.  CVS does not
-try to enforce a certain organization.  It is a tool that can be used
-in several ways.  It is often useful to inform the group of commits you
-have done.  CVS has several ways of automating that process.  *Note
-Informing others::.  *Note Revision management::, for more tips on how
-to use CVS.
-
-* Menu:
-
-* File status::                 A file can be in several states
-* Updating a file::             Bringing a file up-to-date
-* Conflicts example::           An informative example
-* Informing others::            To cooperate you must inform
-* Concurrency::                 Simultaneous repository access
-* Watches::                     Mechanisms to track who is editing files
 

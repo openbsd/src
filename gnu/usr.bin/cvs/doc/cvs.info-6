@@ -1,4 +1,4 @@
-This is Info file cvs.info, produced by Makeinfo-1.63 from the input
+This is Info file cvs.info, produced by Makeinfo-1.55 from the input
 file ./cvs.texinfo.
 
    Copyright (C) 1992, 1993 Signum Support AB Copyright (C) 1993, 1994
@@ -22,6 +22,189 @@ and this permission notice may be included in translations approved by
 the Free Software Foundation instead of in the original English.
 
 
+File: cvs.info,  Node: Environment variables,  Next: Troubleshooting,  Prev: Administrative files,  Up: Top
+
+All environment variables which affect CVS
+******************************************
+
+   This is a complete list of all environment variables that affect CVS.
+
+`$CVSIGNORE'
+     A whitespace-separated list of file name patterns that CVS should
+     ignore. *Note cvsignore::.
+
+`$CVSWRAPPERS'
+     A whitespace-separated list of file name patterns that CVS should
+     treat as wrappers. *Note Wrappers::.
+
+`$CVSREAD'
+     If this is set, `checkout' and `update' will try hard to make the
+     files in your working directory read-only.  When this is not set,
+     the default behavior is to permit modification of your working
+     files.
+
+`$CVSROOT'
+     Should contain the full pathname to the root of the CVS source
+     repository (where the RCS history files are kept).  This
+     information must be available to CVS for most commands to execute;
+     if `$CVSROOT' is not set, or if you wish to override it for one
+     invocation, you can supply it on the command line: `cvs -d cvsroot
+     cvs_command...' Once you have checked out a working directory, CVS
+     stores the appropriate root (in the file `CVS/Root'), so normally
+     you only need to worry about this when initially checking out a
+     working directory.
+
+`$EDITOR'
+`$CVSEDITOR'
+     Specifies the program to use for recording log messages during
+     commit.  If not set, the default is `/usr/ucb/vi'.  `$CVSEDITOR'
+     overrides `$EDITOR'.  `$CVSEDITOR' does not exist in CVS 1.3, but
+     the next release will probably include it.
+
+`$PATH'
+     If `$RCSBIN' is not set, and no path is compiled into CVS, it will
+     use `$PATH' to try to find all programs it uses.
+
+`$RCSBIN'
+     This is the value CVS is using for where to find RCS binaries.
+     *Note Global options::, for a description of how to specify this.
+     If not set, a compiled-in value is used, or your `$PATH' is
+     searched.
+
+`$HOME'
+`$HOMEPATH'
+     Used to locate the directory where the `.cvsrc' file is searched
+     (`$HOMEPATH' is used for Windows-NT).  *note ~/.cvsrc::.
+
+`$CVS_RSH'
+     Specifies the external program which CVS connects with, when
+     `:ext:' access method is specified.  *note Connecting via rsh::..
+
+`$CVS_SERVER'
+     Used in client-server mode when accessing a remote repository
+     using RSH.  It specifies the name of the program to start on the
+     server side when accessing a remote repository using RSH.  The
+     default value is `cvs'.  *note Connecting via rsh::.
+
+`$CVS_PASSFILE'
+     Used in client-server mode when accessing the `cvs login server'.
+     Default value is `$HOME/.cvspass'.  *note Password authentication
+     client::.
+
+`$CVS_PASSWORD'
+     Used in client-server mode when accessing the `cvs login server'.
+     *note Password authentication client::.
+
+`$CVS_CLIENT_PORT'
+     Used in client-server mode when accessing the server via Kerberos.
+     *note Kerberos authenticated::.
+
+`$CVS_RCMD_PORT'
+     Used in client-server mode.  If set, specifies the port number to
+     be used when accessing the RCMD demon on the server side.
+     (Currently not used for Unix clients).
+
+`$CVS_CLIENT_LOG'
+     Used for debugging only in client-server mode.  If set, everything
+     send to the server is logged into ``$CVS_CLIENT_LOG'.in' and
+     everything send from the server is logged into
+     ``$CVS_CLIENT_LOG'.out'.
+
+`$CVS_SERVER_SLEEP'
+     Used only for debugging the server side in client-server mode.  If
+     set, delays the start of the server child process the the
+     specified amount of seconds so that you can attach to it with a
+     debugger.
+
+`$CVS_IGNORE_REMOTE_ROOT'
+     (What is the purpose of this variable?)
+
+`$COMSPEC'
+     Used under OS/2 only.  It specifies the name of the command
+     interpreter and defaults to CMD.EXE.
+
+`$TMPDIR'
+`$TMP'
+`$TEMP'
+     Directory in which temporary files are located.  Those parts of
+     CVS which are implemented using RCS inspect the above variables in
+     the order they appear above and the first value found is taken; if
+     none of them are set, a host-dependent default is used, typically
+     `/tmp'.  The CVS server uses `TMPDIR'.  *Note Global options::,
+     for a description of how to specify this.  Some parts of CVS will
+     always use `/tmp' (via the `tmpnam' function provided by the
+     system).
+
+     On Windows NT, `TMP' is used (via the `_tempnam' function provided
+     by the system).
+
+     The `patch' program which is used by the CVS client uses `TMPDIR',
+     and if it is not set, uses `/tmp' (at least with GNU patch 2.1).
+
+   CVS invokes RCS to perform certain operations.  The following
+environment variables affect RCS.  Note that if you are using the
+client/server CVS, these variables need to be set on the server side
+(which may or not may be possible depending on how you are connecting).
+There is probably not any need to set any of them, however.
+
+`$LOGNAME'
+`$USER'
+     If set, they affect who RCS thinks you are.  If you have trouble
+     checking in files it might be because your login name differs from
+     the setting of e.g.  `$LOGNAME'.
+
+`$RCSINIT'
+     Options prepended to the argument list, separated by spaces.  A
+     backslash escapes spaces within an option.  The `$RCSINIT' options
+     are prepended to the argument lists of most RCS commands.
+
+
+File: cvs.info,  Node: Troubleshooting,  Next: Copying,  Prev: Environment variables,  Up: Top
+
+Troubleshooting
+***************
+
+* Menu:
+
+* Magic branch numbers::        Magic branch numbers
+
+
+File: cvs.info,  Node: Magic branch numbers,  Up: Troubleshooting
+
+Magic branch numbers
+====================
+
+   Externally, branch numbers consist of an odd number of dot-separated
+decimal integers.  *Note Revision numbers::.  That is not the whole
+truth, however.  For efficiency reasons CVS sometimes inserts an extra 0
+in the second rightmost position (1.2.3 becomes 1.2.0.3, 8.9.10.11.12
+becomes 8.9.10.11.0.12 and so on).
+
+   CVS does a pretty good job at hiding these so called magic branches,
+but in a few places the hiding is incomplete:
+
+   * The magic branch number appears in the output from `cvs log'.
+
+   * You cannot specify a symbolic branch name to `cvs admin'.
+
+   You can use the `admin' command to reassign a symbolic name to a
+branch the way RCS expects it to be.  If `R4patches' is assigned to the
+branch 1.4.2 (magic branch number 1.4.0.2) in file `numbers.c' you can
+do this:
+
+     $ cvs admin -NR4patches:1.4.2 numbers.c
+
+   It only works if at least one revision is already committed on the
+branch.  Be very careful so that you do not assign the tag to the wrong
+number.  (There is no way to see how the tag was assigned yesterday).
+
+
+File: cvs.info,  Node: Copying,  Next: Index,  Prev: Troubleshooting,  Up: Top
+
+GNU GENERAL PUBLIC LICENSE
+**************************
+
+
 File: cvs.info,  Node: Index,  Prev: Copying,  Up: Top
 
 Index
@@ -31,19 +214,25 @@ Index
 
 * -j (merging branches):                Merging a branch.
 * -k (RCS kflags):                      Substitution modes.
-* .bashrc:                              Repository.
-* .cshrc:                               Repository.
+* .# files:                             update output.
+* .bashrc, setting CVSROOT in:          Specifying a repository.
+* .cshrc, setting CVSROOT in:           Specifying a repository.
 * .cvsrc file:                          ~/.cvsrc.
-* .profile:                             Repository.
-* .tcshrc:                              Repository.
-* /usr/local/cvsroot:                   Repository.
+* .profile, setting CVSROOT in:         Specifying a repository.
+* .tcshrc, setting CVSROOT in:          Specifying a repository.
+* /usr/local/cvsroot, as example repository: Repository.
+* :ext::                                Connecting via rsh.
+* :kserver::                            Kerberos authenticated.
+* :local::                              Repository.
+* :pserver::                            Password authentication client.
+* :server::                             Connecting via rsh.
 * <<<<<<<:                              Conflicts example.
 * =======:                              Conflicts example.
 * >>>>>>>:                              Conflicts example.
 * A sample session:                     A sample session.
+* abandoning work:                      Editing files.
 * About this manual:                    Preface.
-* Add (subcommand):                     add.
-* Add options:                          add options.
+* add (subcommand):                     Adding files.
 * Adding a tag:                         Tags.
 * Adding files:                         Adding files.
 * Admin (subcommand):                   admin.
@@ -73,12 +262,15 @@ Index
 * Bugs, reporting (manual):             BUGS.
 * Changes, copying between branches:    Merging.
 * Changing a log message:               admin options.
+* checked out copy, keeping:            Keeping a checked out copy.
 * Checkin program:                      modules.
 * Checking commits:                     commitinfo.
 * Checking out source:                  Getting the source.
 * Checkout (subcommand):                checkout.
 * Checkout program:                     modules.
+* checkout, as term for getting ready to edit: Editing files.
 * Checkout, example:                    Getting the source.
+* choosing, reserved or unreserved checkouts: Choosing a model.
 * Cleaning up:                          Cleaning up.
 * Client/Server Operation:              Remote repositories.
 * Co (subcommand):                      checkout.
@@ -102,7 +294,7 @@ Index
 * Correcting a log message:             admin options.
 * Creating a branch:                    Creating a branch.
 * Creating a project:                   Starting a new project.
-* Creating a repository:                Setting up.
+* Creating a repository:                Creating a repository.
 * Credits (CVS program):                What is CVS?.
 * Credits (manual):                     Credits.
 * CVS 1.6, and watches:                 Watches Compatibility.
@@ -110,6 +302,23 @@ Index
 * CVS passwd file:                      Password authentication server.
 * CVS, history of:                      What is CVS?.
 * CVS, introduction to:                 What is CVS?.
+* CVSEDITOR:                            Environment variables.
+* CVSEDITOR, environment variable:      Committing your changes.
+* CVSIGNORE:                            Environment variables.
+* cvsignore (admin file), global:       cvsignore.
+* CVSREAD:                              Environment variables.
+* CVSREAD, overriding:                  Global options.
+* CVSROOT:                              Environment variables.
+* cvsroot:                              Repository.
+* CVSROOT (file):                       Administrative files.
+* CVSROOT, environment variable:        Specifying a repository.
+* CVSROOT, module name:                 Intro administrative files.
+* CVSROOT, multiple repositories:       Multiple repositories.
+* CVSROOT, overriding:                  Global options.
+* CVSUMASK:                             File permissions.
+* CVSWRAPPERS:                          Environment variables.
+* cvswrappers (admin file):             Wrappers.
+* CVSWRAPPERS, environment variable:    Wrappers.
 * CVS_CLIENT_LOG:                       Environment variables.
 * CVS_CLIENT_PORT:                      Kerberos authenticated.
 * CVS_IGNORE_REMOTE_ROOT:               Environment variables.
@@ -119,22 +328,6 @@ Index
 * CVS_RSH:                              Environment variables.
 * CVS_SERVER:                           Connecting via rsh.
 * CVS_SERVER_SLEEP:                     Environment variables.
-* CVSEDITOR:                            Environment variables.
-* CVSEDITOR, environment variable:      Committing your changes.
-* CVSIGNORE:                            Environment variables.
-* Cvsignore, global:                    cvsignore.
-* CVSREAD:                              Environment variables.
-* CVSREAD, overriding:                  Global options.
-* CVSROOT:                              Environment variables.
-* cvsroot:                              Repository.
-* CVSROOT (file):                       Administrative files.
-* CVSROOT, environment variable:        Repository.
-* CVSROOT, module name:                 Intro administrative files.
-* CVSROOT, multiple repositories:       Multiple repositories.
-* CVSROOT, overriding:                  Global options.
-* CVSWRAPPERS:                          Environment variables.
-* cvswrappers (admin file):             Wrappers.
-* CVSWRAPPERS, environment variable:    Wrappers.
 * Date keyword:                         Keyword list.
 * Dates:                                Common options.
 * Decimal revision number:              Revision numbers.
@@ -156,7 +349,7 @@ Index
 * Distributing log messages:            loginfo.
 * driver.c (merge example):             Conflicts example.
 * edit (subcommand):                    Editing files.
-* Editinfo:                             editinfo.
+* editinfo (admin file):                editinfo.
 * Editing administrative files:         Intro administrative files.
 * Editing the modules file:             Defining the module.
 * EDITOR:                               Environment variables.
@@ -183,7 +376,6 @@ Index
 * Forcing a tag match:                  Common options.
 * Form for log message:                 rcsinfo.
 * Format of CVS commands:               Structure.
-* Four states of a file:                File status.
 * Getting started:                      A sample session.
 * Getting the source:                   Getting the source.
 * Global cvsignore:                     cvsignore.
@@ -193,7 +385,7 @@ Index
 * History (subcommand):                 history.
 * History browsing:                     History browsing.
 * History file:                         history file.
-* History files:                        User modules.
+* History files:                        Repository files.
 * History of CVS:                       What is CVS?.
 * HOME:                                 Environment variables.
 * HOMEPATH:                             Environment variables.
@@ -209,10 +401,12 @@ Index
 * Index:                                Index.
 * Info files (syntax):                  syntax.
 * Informing others:                     Informing others.
+* init (subcommand):                    Creating a repository.
 * Introduction to CVS:                  What is CVS?.
 * Invoking CVS:                         Invoking CVS.
 * Isolation:                            History browsing.
 * Join:                                 Merging a branch.
+* keeping a checked out copy:           Keeping a checked out copy.
 * kerberos:                             Kerberos authenticated.
 * Keyword expansion:                    Keyword substitution.
 * Keyword substitution:                 Keyword substitution.
@@ -223,7 +417,9 @@ Index
 * Left-hand options:                    Global options.
 * Linear development:                   Revision numbers.
 * List, mailing list:                   What is CVS?.
-* Locally modified:                     File status.
+* Locally Added:                        File status.
+* Locally Modified:                     File status.
+* Locally Removed:                      File status.
 * Locker keyword:                       Keyword list.
 * Locking files:                        Multiple developers.
 * locks, cvs:                           Concurrency.
@@ -237,7 +433,7 @@ Index
 * Log messages:                         loginfo.
 * Log messages, editing:                editinfo.
 * Login (subcommand):                   Password authentication client.
-* Loginfo:                              loginfo.
+* loginfo (admin file):                 loginfo.
 * LOGNAME:                              Environment variables.
 * Mail, automatic mail on commit:       Informing others.
 * Mailing list:                         What is CVS?.
@@ -264,9 +460,13 @@ Index
 * Moving files:                         Moving files.
 * Multiple developers:                  Multiple developers.
 * Multiple repositories:                Multiple repositories.
+* Name keyword:                         Keyword list.
 * Name, symbolic (tag):                 Tags.
-* Needing merge:                        File status.
-* Needing update:                       File status.
+* Needs Checkout:                       File status.
+* Needs Merge:                          File status.
+* Needs Patch:                          File status.
+* Newsgroups:                           What is CVS?.
+* notify (admin file):                  Getting Notified.
 * Nroff (selecting comment leader):     admin examples.
 * Number, branch:                       Revision numbers.
 * Number, revision-:                    Revision numbers.
@@ -278,8 +478,9 @@ Index
 * Overriding CVSROOT:                   Global options.
 * Overriding EDITOR:                    Global options.
 * Overriding RCSBIN:                    Global options.
+* Overriding TMPDIR:                    Global options.
 * Parallel repositories:                Multiple repositories.
-* passwd file:                          Password authentication server.
+* passwd (admin file):                  Password authentication server.
 * password client, using:               Password authentication client.
 * password server, setting up:          Password authentication server.
 * PATH:                                 Environment variables.
@@ -288,19 +489,21 @@ Index
 * Precommit checking:                   commitinfo.
 * Preface:                              Preface.
 * Pserver (subcommand):                 Password authentication server.
-* RCS history files:                    User modules.
+* RCS history files:                    Repository files.
 * RCS keywords:                         Keyword list.
 * RCS revision numbers:                 Tags.
-* RCS, CVS uses RCS:                    User modules.
 * RCS, importing files from:            From other version control systems.
-* RCS-style locking:                    admin options.
+* RCS-style locking:                    Multiple developers.
 * RCSBIN:                               Environment variables.
 * RCSBIN, overriding:                   Global options.
 * RCSfile keyword:                      Keyword list.
-* Rcsinfo:                              rcsinfo.
+* rcsinfo (admin file):                 rcsinfo.
 * RCSINIT:                              Environment variables.
 * Rdiff (subcommand):                   rdiff.
-* Read-only files:                      Global options.
+* read-only files, and -r:              Global options.
+* read-only files, and CVSREAD:         Environment variables.
+* read-only files, and watches:         Setting a watch.
+* read-only files, in repository:       File permissions.
 * Read-only mode:                       Global options.
 * Recursive (directory descending):     Recursive behavior.
 * Reference manual (files):             Administrative files.
@@ -320,16 +523,17 @@ Index
 * Reporting bugs (manual):              BUGS.
 * Repositories, multiple:               Multiple repositories.
 * Repositories, remote:                 Remote repositories.
-* Repository (intro):                   Basic concepts.
+* Repository (intro):                   Repository.
 * Repository, example:                  Repository.
-* Repository, setting up:               Setting up.
-* Repository, user parts:               User modules.
-* Reserved checkouts:                   admin options.
+* Repository, how data is stored:       Repository storage.
+* Repository, setting up:               Creating a repository.
+* reserved checkouts:                   Multiple developers.
 * Resetting sticky tags:                Sticky tags.
 * Resolving a conflict:                 Conflicts example.
 * Restoring old version of removed file: Sticky tags.
 * Resurrecting old version of dead file: Sticky tags.
 * Retrieving an old revision using tags: Tags.
+* reverting to repository version:      Editing files.
 * Revision keyword:                     Keyword list.
 * Revision management:                  Revision management.
 * Revision numbers:                     Revision numbers.
@@ -345,7 +549,7 @@ Index
 * SCCS, importing files from:           From other version control systems.
 * Security:                             File permissions.
 * setgid:                               File permissions.
-* Setting up a repository:              Setting up.
+* Setting up a repository:              Creating a repository.
 * setuid:                               File permissions.
 * Signum Support:                       Preface.
 * Source keyword:                       Keyword list.
@@ -358,6 +562,7 @@ Index
 * Status (subcommand):                  status.
 * Status of a file:                     File status.
 * Status of a module:                   modules.
+* sticky date:                          Sticky tags.
 * Sticky tags:                          Sticky tags.
 * Sticky tags, resetting:               Sticky tags.
 * Storing log messages:                 loginfo.
@@ -379,25 +584,32 @@ Index
 * Team of developers:                   Multiple developers.
 * TEMP:                                 Environment variables.
 * Template for log message:             rcsinfo.
+* temporary files, location of:         Environment variables.
 * Third-party sources:                  Tracking sources.
 * Time:                                 Common options.
+* timezone, in input:                   Common options.
+* timezone, in output:                  log.
 * TMP:                                  Environment variables.
 * TMPDIR:                               Environment variables.
+* TMPDIR, overriding:                   Global options.
 * Trace:                                Global options.
 * Traceability:                         History browsing.
 * Tracking sources:                     Tracking sources.
 * Transactions, atomic, lack of:        Concurrency.
 * Trivial Compiler (example):           A sample session.
 * Typical repository:                   Repository.
+* umask, for repository files:          File permissions.
 * Undoing a change:                     Merging two revisions.
 * unedit (subcommand):                  Editing files.
+* Unknown:                              File status.
+* unreserved checkouts:                 Multiple developers.
+* Unresolved Conflict:                  File status.
 * Up-to-date:                           File status.
 * Update (subcommand):                  update.
 * Update program:                       modules.
 * update, introduction:                 Updating a file.
 * Updating a file:                      Updating a file.
 * USER:                                 Environment variables.
-* User modules:                         User modules.
 * users (admin file):                   Getting Notified.
 * Vendor:                               Tracking sources.
 * Vendor branch:                        Tracking sources.
@@ -418,5 +630,8 @@ Index
 * Working copy:                         Multiple developers.
 * Working copy, removing:               Cleaning up.
 * Wrappers:                             Wrappers.
+* zone, time, in input:                 Common options.
+* zone, time, in output:                log.
+* __ files (VMS):                       update output.
 
 

@@ -1,15 +1,15 @@
-This is Info file cvsclient.info, produced by Makeinfo-1.63 from the
+This is Info file cvsclient.info, produced by Makeinfo-1.55 from the
 input file ./cvsclient.texi.
 
 
-File: cvsclient.info,  Node: Top,  Next: Introduction,  Up: (dir)
+File: cvsclient.info,  Node: Top,  Next: Introduction,  Prev: (DIR),  Up: (DIR)
 
 CVS Client/Server
 *****************
 
    This document describes the client/server protocol used by CVS.  It
 does not describe how to use or administer client/server CVS; see the
-regular CVS manual for that.  This is version 1.8.1 of the protocol
+regular CVS manual for that.  This is version 1.9 of the protocol
 specification--*Note Introduction:: for more on what this version number
 means.
 
@@ -58,7 +58,7 @@ you are reading now) of this document, `cvsclient.texi', can be found
 at the usual GNU FTP sites, with a filename such as
 `cvs-VERSION.tar.gz'.
 
-   This is version 1.8.1 of the protocol specification.  This version
+   This is version 1.9 of the protocol specification.  This version
 number is intended only to aid in distinguishing different versions of
 this specification.  Although the specification is currently maintained
 in conjunction with the CVS implementation, and carries the same
@@ -82,7 +82,7 @@ Goals
      expected that it runs over TCP, UUCP, etc.
 
    * Security and authentication are handled outside this protocol (but
-     see below about `cvs kserver').
+     see below about `cvs kserver' and `cvs pserver').
 
    * This might be a first step towards adding transactions to CVS
      (i.e. a set of operations is either executed atomically or none of
@@ -110,21 +110,13 @@ Notes on the Current Implementation
 ***********************************
 
    The client is built in to the normal `cvs' program, triggered by a
-`CVSROOT' variable containing a colon, for example
-`cygnus.com:/rel/cvsfiles'.
+specially-formatted `CVSROOT' variable, for example
+`:server:cygnus.com:/rel/cvsfiles'.
 
    The client stores what is stored in checked-out directories
 (including `CVS').  The way these are stored is totally compatible with
 standard CVS.  The server requires no storage other than the repository,
 which also is totally compatible with standard CVS.
-
-   The server is started by `cvs server'.  There is no particularly
-compelling reason for this rather than making it a separate program
-which shares a lot of sources with cvs.
-
-   The server can also be started by `cvs kserver', in which case it
-does an initial Kerberos authentication on stdin.  If the authentication
-succeeds, it subsequently runs identically to `cvs server'.
 
    The current server implementation can use up huge amounts of memory
 when transmitting a lot of data over a slow link (i.e. the network is
@@ -142,10 +134,11 @@ Notes on the Protocol
 
    * The `Modified' request could be speeded up by sending diffs rather
      than entire files.  The client would need some way to keep the
-     version of the file which was originally checked out, which would
-     double client disk space requirements or require coordination with
-     editors (e.g. maybe it could use emacs numbered backups).  This
-     would also allow local operation of `cvs diff' without arguments.
+     version of the file which was originally checked out; probably
+     requiring the use of "cvs edit" in this case is the most sensible
+     course (the "cvs edit" could be handled by a package like VC for
+     emacs).  This would also allow local operation of `cvs diff'
+     without arguments.
 
    * Have the client keep a copy of some part of the repository.  This
      allows all of `cvs diff' and large parts of `cvs update' and `cvs
@@ -153,8 +146,6 @@ Notes on the Protocol
      master copy at night (but if the master copy has been updated since
      the latest nightly re-sync, then it would read what it needs to
      from the master).
-
-   * Provide encryption using kerberos.
 
    * The current procedure for `cvs update' is highly sub-optimal if
      there are many modified files.  One possible alternative would be
@@ -176,7 +167,7 @@ How to Connect to and Authenticate Oneself to the CVS server
    Connection and authentication occurs before the CVS protocol itself
 is started.  There are several ways to connect.
 
-rsh
+server
      If the client has a way to execute commands on the server, and
      provide input to the commands and output from them, then it can
      connect that way.  This could be the usual rsh (port 514)
@@ -313,14 +304,20 @@ File: cvsclient.info,  Node: Requests,  Next: Responses,  Prev: Filenames,  Up: 
 Requests
 ========
 
+   By convention, requests which begin with a capital letter do not
+elicit a response from the server, while all others do - save one.  The
+exception is `gzip-file-contents'.  Unrecognized requests will always
+elicit a response from the server, even if that request begins with a
+capital letter.
+
    File contents (noted below as FILE TRANSMISSION) can be sent in one
 of two forms.  The simpler form is a number of bytes, followed by a
 newline, followed by the specified number of bytes of file contents.
 These are the entire contents of the specified file.  Second, if both
 client and server support `gzip-file-contents', a `z' may precede the
 length, and the `file contents' sent are actually compressed with
-`gzip'.  The length specified is that of the compressed version of the
-file.
+`gzip' (RFC1952/1951) compression.  The length specified is that of the
+compressed version of the file.
 
    In neither case are the file content followed by any additional data.
 The transmission of a file will end with a newline iff that file (or its
@@ -328,11 +325,12 @@ compressed form) ends with a newline.
 
 `Root PATHNAME \n'
      Response expected: no.  Tell the server which `CVSROOT' to use.
-     PATHNAME must already exist; if creating a new root, use the
-     `init' request, not `Root'.  PATHNAME does not include the
-     hostname of the server, how to access the server, etc.; by the time
-     the CVS protocol is in use, connection, authentication, etc., are
-     already taken care of.
+     Note that PATHNAME is a local directory and *not* a fully
+     qualified `CVSROOT' variable.  PATHNAME must already exist; if
+     creating a new root, use the `init' request, not `Root'.  PATHNAME
+     does not include the hostname of the server, how to access the
+     server, etc.; by the time the CVS protocol is in use, connection,
+     authentication, etc., are already taken care of.
 
 `Valid-responses REQUEST-LIST \n'
      Response expected: no.  Tell the server what responses the client
@@ -352,21 +350,22 @@ compressed form) ends with a newline.
      directory, then the command.
 
 `Directory LOCAL-DIRECTORY \n'
-     Additional data: REPOSITORY \n.  This is like `Repository', but
-     the local name of the directory may differ from the repository
-     name.  If the client uses this request, it affects the way the
-     server returns pathnames; see *Note Responses::.  LOCAL-DIRECTORY
-     is relative to the top level at which the command is occurring
-     (i.e. the last `Directory' or `Repository' which is sent before
-     the command).
+     Additional data: REPOSITORY \n.  Response expected: no.  This is
+     like `Repository', but the local name of the directory may differ
+     from the repository name.  If the client uses this request, it
+     affects the way the server returns pathnames; see *Note
+     Responses::.  LOCAL-DIRECTORY is relative to the top level at
+     which the command is occurring (i.e. the last `Directory' or
+     `Repository' which is sent before the command); to indicate that
+     top level, `.' should be send for LOCAL-DIRECTORY.
 
 `Max-dotdot LEVEL \n'
-     Tell the server that LEVEL levels of directories above the
-     directory which `Directory' requests are relative to will be
-     needed.  For example, if the client is planning to use a
-     `Directory' request for `../../foo', it must send a `Max-dotdot'
-     request with a LEVEL of at least 2.  `Max-dotdot' must be sent
-     before the first `Directory' request.
+     Response expected: no.  Tell the server that LEVEL levels of
+     directories above the directory which `Directory' requests are
+     relative to will be needed.  For example, if the client is
+     planning to use a `Directory' request for `../../foo', it must
+     send a `Max-dotdot' request with a LEVEL of at least 2.
+     `Max-dotdot' must be sent before the first `Directory' request.
 
 `Static-directory \n'
      Response expected: no.  Tell the server that the directory most
@@ -436,10 +435,11 @@ compressed form) ends with a newline.
      files are nonexistent.
 
 `Notify FILENAME \n'
-     Tell the server that a `edit' or `unedit' command has taken place.
-     The server needs to send a `Notified' response, but such response
-     is deferred until the next time that the server is sending
-     responses.  Response expected: no.  Additional data:
+     Response expected: no.  Tell the server that a `edit' or `unedit'
+     command has taken place.  The server needs to send a `Notified'
+     response, but such response is deferred until the next time that
+     the server is sending responses.  Response expected: no.
+     Additional data:
           NOTIFICATION-TYPE \t TIME \t CLIENTHOST \t
           WORKING-DIR \t WATCHES \n
      where NOTIFICATION-TYPE is `E' for edit or `U' for unedit, TIME is
@@ -454,14 +454,17 @@ compressed form) ends with a newline.
      Response expected: no.  Additional data: no.  Tell the server to
      check whether FILENAME should be ignored, and if not, next time the
      server sends responses, send (in a `M' response) `?' followed by
-     the directory and filename.
+     the directory and filename.  FILENAME must not contain `/'; it
+     needs to be a file in the directory named by the most recent
+     `Directory' request.
 
 `Case \n'
-     Tell the server that filenames should be matched against ignore
-     patterns in a case-insensitive fashion.  Note that this does not
-     apply to other comparisons--for example the filenames given in
-     `Entry' and `Modified' requests for the same file must match in
-     case regardless of whether the `Case' request is sent.
+     Response expected: no.  Tell the server that filenames should be
+     matched against ignore patterns in a case-insensitive fashion.
+     Note that this does not apply to other comparisons--for example
+     the filenames given in `Entry' and `Modified' requests for the
+     same file must match in case regardless of whether the `Case'
+     request is sent.
 
 `Argument TEXT \n'
      Response expected: no.  Save argument for use in a subsequent
@@ -473,14 +476,35 @@ compressed form) ends with a newline.
      argument being saved.
 
 `Global_option OPTION \n'
-     Transmit one of the global options `-q', `-Q', `-l', `-t', `-r',
-     or `-n'.  OPTION must be one of those strings, no variations (such
-     as combining of options) are allowed.  For graceful handling of
-     `valid-requests', it is probably better to make new global options
-     separate requests, rather than trying to add them to this request.
+     Response expected: no.  Transmit one of the global options `-q',
+     `-Q', `-l', `-t', `-r', or `-n'.  OPTION must be one of those
+     strings, no variations (such as combining of options) are allowed.
+     For graceful handling of `valid-requests', it is probably better
+     to make new global options separate requests, rather than trying
+     to add them to this request.
+
+`Gzip-stream LEVEL \n'
+     Response expected: no.  Use zlib (RFC 1950/1951) compression to
+     compress all further communication between the client and the
+     server.  After this request is sent, all further communication
+     must be compressed.  All further data received from the server
+     will also be compressed.  The LEVEL argument suggests to the
+     server the level of compression that it should apply; it should be
+     an integer between 1 and 9, inclusive, where a higher number
+     indicates more compression.
+
+`Kerberos-encrypt \n'
+     Response expected: no.  Use Kerberos encryption to encrypt all
+     further communication between the client and the server.  This
+     will only work if the connection was made over Kerberos in the
+     first place.  If both the `Gzip-stream' and the `Kerberos-encrypt'
+     requests are used, the `Kerberos-encrypt' request should be used
+     first.  This will make the client and server encrypt the
+     compressed data, as opposed to compressing the encrypted data.
+     Encrypted data is generally incompressible.
 
 `Set VARIABLE=VALUE \n'
-     Set a user variable VARIABLE to VALUE.
+     Response expected: no.  Set a user variable VARIABLE to VALUE.
 
 `expand-modules \n'
      Response expected: yes.  Expand the modules which are specified in
@@ -514,8 +538,9 @@ compressed form) ends with a newline.
 
 `init ROOT-NAME \n'
      Response expected: yes.  If it doesn't already exist, create a CVS
-     repository ROOT-NAME.  The `Root' request need not have been
-     previously sent.
+     repository ROOT-NAME.  Note that ROOT-NAME is a local directory
+     and *not* a fully qualified `CVSROOT' variable.  The `Root'
+     request need not have been previously sent.
 
 `update \n'
      Response expected: yes.  Actually do a `cvs update' command.  This
@@ -559,16 +584,21 @@ compressed form) ends with a newline.
      to pending errors, pending `Notified' responses, etc.
 
 `update-patches \n'
-     This request does not actually do anything.  It is used as a
-     signal that the server is able to generate patches when given an
-     `update' request.  The client must issue the `-u' argument to
-     `update' in order to receive patches.
+     Response expected: yes.  This request does not actually do
+     anything.  It is used as a signal that the server is able to
+     generate patches when given an `update' request.  The client must
+     issue the `-u' argument to `update' in order to receive patches.
 
 `gzip-file-contents LEVEL \n'
-     This request asks the server to filter files it sends to the client
-     through the `gzip' program, using the specified level of
-     compression.  If this request is not made, the server must not do
-     any compression.
+     Response expected: no.  Note that this request does not follow the
+     response convention stated above.  `Gzip-stream' is suggested
+     instead of `gzip-file-contents' as it gives better compression; the
+     only reason to implement the latter is to provide compression with
+     CVS 1.8 and earlier.  The `gzip-file-contents' request asks the
+     server to compress files it sends to the client using `gzip'
+     (RFC1952/1951) compression, using the specified level of
+     compression.  If this request is not made, the server must not
+     compress files.
 
      This is only a hint to the server.  It may still decide (for
      example, in the case of very small files, or files that already
@@ -595,16 +625,21 @@ Responses
 =========
 
    After a command which expects a response, the server sends however
-many of the following responses are appropriate.  Pathnames are of the
-actual files operated on (i.e. they do not contain `,v' endings), and
-are suitable for use in a subsequent `Repository' request.  However, if
-the client has used the `Directory' request, then it is instead a local
-directory name relative to the directory in which the command was given
-(i.e. the last `Directory' before the command).  Then a newline and a
-repository name (the pathname which is sent if `Directory' is not
-used).  Then the slash and the filename.  For example, for a file
-`i386.mh' which is in the local directory `gas.clean/config' and for
-which the repository is `/rel/cvsfiles/devo/gas/config':
+many of the following responses are appropriate.  The server should not
+send data at other times (the current implementation may violate this
+principle in a few minor places, where the server is printing an error
+message and exiting--this should be investigated further).
+
+   Pathnames are of the actual files operated on (i.e. they do not
+contain `,v' endings), and are suitable for use in a subsequent
+`Repository' request.  However, if the client has used the `Directory'
+request, then it is instead a local directory name relative to the
+directory in which the command was given (i.e. the last `Directory'
+before the command).  Then a newline and a repository name (the
+pathname which is sent if `Directory' is not used).  Then the slash and
+the filename.  For example, for a file `i386.mh' which is in the local
+directory `gas.clean/config' and for which the repository is
+`/rel/cvsfiles/devo/gas/config':
 
      gas.clean/config/
      /rel/cvsfiles/devo/gas/config/i386.mh
@@ -634,6 +669,27 @@ the response is over.
      any other case in which the local (client-side) copy of the file
      needs to be updated, and after being updated it will be up to
      date.  If any directory in pathname does not exist, create it.
+     This response is not used if `Created' and `Update-existing' are
+     supported.
+
+`Created PATHNAME \n'
+     This is just like `Updated' and takes the same additional data, but
+     is used only if no `Entry', `Modified', or `Unchanged' request has
+     been sent for the file in question.  The distinction between
+     `Created' and `Update-existing' is so that the client can give an
+     error message in several cases: (1) there is a file in the working
+     directory, but not one for which `Entry', `Modified', or
+     `Unchanged' was sent (for example, a file which was ignored, or a
+     file for which `Questionable' was sent), (2) there is a file in
+     the working directory whose name differs from the one mentioned in
+     `Created' in ways that the client is unable to use to distinguish
+     files.  For example, the client is case-insensitive and the names
+     differ only in case.
+
+`Update-existing PATHNAME \n'
+     This is just like `Updated' and takes the same additional data, but
+     is used only if a `Entry', `Modified', or `Unchanged' request has
+     been sent for the file in question.
 
 `Merged PATHNAME \n'
      This is just like `Updated' and takes the same additional data,
@@ -644,11 +700,14 @@ the response is over.
 `Patched PATHNAME \n'
      This is just like `Updated' and takes the same additional data,
      with the one difference that instead of sending a new copy of the
-     file, the server sends a patch produced by `diff -u'.  This client
-     must apply this patch, using the `patch' program, to the existing
-     file.  This will only be used when the client has an exact copy of
-     an earlier revision of a file.  This response is only used if the
-     `update' command is given the `-u' argument.
+     file, the server sends a patch.  This patch is produced by `diff
+     -c' for CVS 1.6 and later (see POSIX.2 for a description of this
+     format), or `diff -u' for previous versions of CVS; clients are
+     encouraged to accept either format.  The client must apply this
+     patch to the existing file.  This will only be used when the
+     client has an exact copy of an earlier revision of a file.  This
+     response is only used if the `update' command is given the `-u'
+     argument.
 
 `Mode MODE \n'
      This MODE applies to the next file mentioned in `Checked-in'.  It
@@ -740,6 +799,11 @@ the response is over.
 `E TEXT \n'
      Same as `M' but send to stderr not stdout.
 
+`F \n'
+     Flush stderr.  That is, make it possible for the user to see what
+     has been written to stderr (it is up to the implementation to
+     decide exactly how far it should go to ensure this).
+
 `error ERRNO-CODE ` ' TEXT \n'
      The command completed with an error.  ERRNO-CODE is a symbolic
      error code (e.g. `ENOENT'); if the server doesn't support this
@@ -781,8 +845,9 @@ of the actual exchange.
      s> foo: foo.c
      s>         $(CC) -o foo $<
      s> ok
-     # In actual practice the next part would be a separate connection.
-     # Here it is shown as part of the same one.
+     # The current implementation would break the connection here and make a
+     # new connection for the next command.  However, the protocol allows it
+     # to keep the connection open and continue, which is what we show here.
      c> Repository /rel/cvsfiles/devo/foo
      # foo.c relative to devo/foo just set as Repository.
      c> Entry /foo.c/1.4/Mon Apr 19 15:36:47 1993 Mon Apr 19 15:36:47 1993//
@@ -830,18 +895,18 @@ communicating with a server which supports Directory and UseUnchanged.
 
 Tag Table:
 Node: Top99
-Node: Introduction924
-Node: Goals3458
-Node: Notes4964
-Node: Protocol Notes6208
-Node: Connection and Authentication7911
-Node: Protocol10514
-Node: Entries Lines10913
-Node: Modes11621
-Node: Filenames13144
-Node: Requests13895
-Node: Responses26668
-Node: Example34133
-Node: Requirements36079
+Node: Introduction936
+Node: Goals3468
+Node: Notes4992
+Node: Protocol Notes5865
+Node: Connection and Authentication7543
+Node: Protocol10149
+Node: Entries Lines10548
+Node: Modes11256
+Node: Filenames12779
+Node: Requests13530
+Node: Responses28620
+Node: Example37798
+Node: Requirements39854
 
 End Tag Table
