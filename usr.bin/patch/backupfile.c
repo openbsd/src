@@ -1,4 +1,4 @@
-/*	$OpenBSD: backupfile.c,v 1.8 2003/04/05 17:17:53 deraadt Exp $	*/
+/*	$OpenBSD: backupfile.c,v 1.9 2003/04/06 04:14:09 millert Exp $	*/
 
 /* backupfile.c -- make Emacs style backup file names
    Copyright (C) 1990 Free Software Foundation, Inc.
@@ -14,7 +14,7 @@
    Some algorithms adapted from GNU Emacs. */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: backupfile.c,v 1.8 2003/04/05 17:17:53 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: backupfile.c,v 1.9 2003/04/06 04:14:09 millert Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -155,13 +155,9 @@ make_version_name (file, version)
      int version;
 {
   char *backup_name;
-  size_t len;
 
-  len = strlen (file) + 16;
-  backup_name = malloc (len);
-  if (backup_name == 0)
+  if (asprintf (&backup_name, "%s.~%d~", file, version) == -1)
     return 0;
-  snprintf (backup_name, len, "%s.~%d~", file, version);
   return backup_name;
 }
 
