@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.19 2001/11/09 02:44:46 art Exp $ */
+/* $OpenBSD: pmap.c,v 1.20 2001/11/09 02:47:33 art Exp $ */
 /* $NetBSD: pmap.c,v 1.154 2000/12/07 22:18:55 thorpej Exp $ */
 
 /*-
@@ -2185,7 +2185,8 @@ boolean_t
 pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 {
 	pt_entry_t *l1pte, *l2pte, *l3pte;
-	paddr_t pa = 0;
+	boolean_t rv = FALSE;
+	paddr_t pa;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
@@ -2206,18 +2207,19 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 		goto out;
 
 	pa = pmap_pte_pa(l3pte) | (va & PGOFSET);
+	*pap = pa;
+	rv = TRUE;
  out:
 	PMAP_UNLOCK(pmap);
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW) {
-		if (pa)
+		if (rv)
 			printf("0x%lx\n", pa);
 		else
 			printf("failed\n");
 	}
 #endif
-	*pap = pa;
-	return (pa != 0);
+	return (rv);
 }
 
 /*
