@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc93cx6.c,v 1.15 2003/08/12 10:27:10 fgsch Exp $	*/
+/*	$OpenBSD: smc93cx6.c,v 1.16 2003/08/15 23:41:47 fgsch Exp $	*/
 /* $FreeBSD: sys/dev/aic7xxx/93cx6.c,v 1.5 2000/01/07 23:08:17 gibbs Exp $ */
 /*
  * Interface for the 93C66/56/46/26/06 serial eeprom parts.
@@ -58,8 +58,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <machine/bus.h>
-#include <dev/ic/aic7xxx_openbsd.h>
-#include <dev/ic/aic7xxx_inline.h>
 #include <dev/ic/smc93cx6var.h>
 
 /*
