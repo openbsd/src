@@ -1,7 +1,7 @@
 /*
  * Holiday
  *
- * $OpenBSD: calendar.holiday,v 1.11 2002/12/26 15:52:37 mickey Exp $
+ * $OpenBSD: calendar.holiday,v 1.12 2003/12/09 02:39:58 mickey Exp $
  */
 
 #ifndef _calendar_holiday_
@@ -23,7 +23,7 @@
 01/11	Armed Forces Day in Liberia
 01/12	Zanzibar Revolution Day in Tanzania
 01/13	National Liberation Day in Togo
-01/15	Adults Day in Japan
+01/SunSecond	Coming-of-Age Day
 01/15	Arbor Day in Jordan
 01/16	Martyrs Day in Benin
 01/18	Revolution Day in Tunisia
@@ -83,6 +83,7 @@
 03/12	Moshoeshoe's Birthday in Lesotho
 03/12	Renovation Day in Gabon
 03/13	National Day in Grenada
+03/15	Day of the 1848 revolution in Hungary
 03/16	Black Press Day; first Black newspaper founded in 1827
 03/17	Evacuation Day in Suffolk County, Massachusetts
 03/17	St. Patrick's Day
@@ -300,7 +301,7 @@
 08/16	Restoration Day in Dominican Republic
 08/17	Independence Day in Indonesia
 08/19	Independence Day in Afghanistan
-08/20	Constitution Day in Hungary
+08/20	Constitution Day in Hungary and birthday of King St. Istvan
 08/23	Liberation Days (2 days) in Romania
 08/24	National Flag Day in Liberia
 08/25	Constitution Day in Paragual
@@ -366,7 +367,7 @@
 10/09	Leif Erikson Day commemorates the discovery of North America in AD 1000
 10/09	Republic Day in Khmer Republic
 10/10	Fiji Day in Fiji
-10/10	Health-Sports Day in Japan
+10/MonSecond	Health-Sports Day in Japan
 10/10	National Day in Taiwan
 10/10	Oklahoma Historical Day in Oklahoma
 10/11	Day of the Revolution in Panama

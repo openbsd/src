@@ -1,7 +1,7 @@
 /*
  * Music
  *
- * $OpenBSD: calendar.music,v 1.14 2003/03/03 18:08:02 mickey Exp $
+ * $OpenBSD: calendar.music,v 1.15 2003/12/09 02:39:58 mickey Exp $
  */
 
 #ifndef _calendar_music_
@@ -36,6 +36,7 @@
 02/03	Felix Mendelssohn Bartholdy is born in Hamburg, Germany, 1809
 02/07	Beatles land at JFK airport to begin first U.S. tour, 1964
 02/07	Steven Stills makes the first digitally recorded rock album, 1979
+02/08	John Towner Williams born in New York City, 1932
 02/09	Carole King (Carole Klein) is born in Brooklyn, 1941
 02/12	The Beatles play Carnegie Hall in New York City, 1964
 02/13	Richard Wagner dies in Venice, Italy, 1883

@@ -1,14 +1,15 @@
 /*
  * Birthday
  *
- * $OpenBSD: calendar.birthday,v 1.24 2003/07/02 00:08:24 avsm Exp $
+ * $OpenBSD: calendar.birthday,v 1.25 2003/12/09 02:39:58 mickey Exp $
  */
 
 #ifndef _calendar_birthday_
 #define _calendar_birthday_
 
-01/01	J.D. Salinger born, 1919
 01/01	Paul Revere born in Boston, 1735
+01/01	J.D. Salinger born, 1919
+01/01	Heinz Zemanek born in Vienna, Austria, 1920
 01/02	Isaac Asimov born in Petrovichi, Russian SFSR (now part of USSR), 1920
 01/04	George Washington Carver born in Missouri, 1864
 01/04	Jakob Grimm born, 1785
@@ -63,6 +64,7 @@
 02/16	Pierre Bouguer born, 1698, founder of photometry
 02/17	Federic Eugene Ives born, 1856, pioneer of halftone process
 02/17	T. J. Watson, Sr. born, 1874
+02/17	Marion Anderson born, 1902
 02/18	Ernst Mach born, 1838, philosopher & optics pioneer
 02/19	Nicolas Copernicus born in Thorn, Poland, 1473
 02/20	Ludwig Boltzmann born, 1844, atomic physics pioneer
@@ -78,7 +80,7 @@
 02/27	Marian Anderson born, 1897
 02/28	Michel de Mantaigne born, 1533
 02/29	Herman Hollerith born, 1860
-03/01	David Niven born, 1909
+03/01	David Niven born, 1910
 03/02	Dr. Seuss born, 1904
 03/04	Casimir Pulaski born, 1747
 03/04	Gogol dies, 1852
@@ -110,6 +112,7 @@
 03/30	Sean O'Casey born, 1880
 03/30	Vincent Van Gogh born, 1853
 03/30	Adolph Hitler committed suicide, 1945
+03/30	Queen Elizabeth, the Queen Mother, died at the age of 101, 2002
 03/31	Rene Descartes born, 1596, mathematician & philosopher
 03/31	Nikolay Vasilyevich Gogol born, 1809
 04/03	Washington Irving born, 1783
@@ -169,6 +172,7 @@
 06/16	Hammurabi the Great dies, Babylon, 1686 BC
 06/17	M.C. Escher born, 1898
 06/22	Carl Hubbell born, 1903
+06/22	Konrad Zuse born in Berlin, Germany, 1910
 06/22	Meryl Streep born in Summit, New Jersey, 1949
 06/23	Alan Mathison Turing born, 1912
 06/25	Eric Arthur Blair (a.k.a. George Orwell) born, 1903
@@ -213,6 +217,7 @@
 09/08	King Richard I of England born, 1157
 09/08	Peter Sellers born in Southsea, England, 1925
 09/09	Chinese Communist Party Chairman Mao Tse-Tung dies at age 82, 1976
+09/09	Dennis Ritchie born, 1941
 09/12	Jesse Owens born, 1913
 09/12	Stanislaw Lem born in Lwow, Poland, 1921
 09/13	Walter Reed born, 1851
@@ -248,6 +253,7 @@
 10/15	Pelham Grenville Wodehouse born, 1881
 10/16	Noah Webster born, 1758
 10/16	Oscar (Fingal O'Flahertie Wills) Wilde born in Dublin, 1854
+10/16	Dr. Jonathan B. Postel dies at age 55, 1998
 10/17	Richard Mentor Johnson born, 1780, 9th V.P. of U.S.
 10/21	Alfred Nobel born in Stockholm, 1833
 10/27	Gerald M. Weinberg born, 1933

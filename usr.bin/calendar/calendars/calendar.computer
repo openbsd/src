@@ -1,21 +1,23 @@
 /*
  * Computer
  *
- * $OpenBSD: calendar.computer,v 1.7 2003/06/23 15:15:46 mickey Exp $
+ * $OpenBSD: calendar.computer,v 1.8 2003/12/09 02:39:58 mickey Exp $
  */
 
 #ifndef _calendar_computer_
 #define _calendar_computer_
 
-01/01	AT&T officially divests its local Bell companies, 1984
 01/01	The Epoch (Time 0 for UNIX systems, Midnight GMT, 1970)
-01/03	Apple Computer founded, 1977
+01/01	ARPANET converts from NCP to TCP/IP - the Internet is born, 1983
+01/01	AT&T officially divests its local Bell companies, 1984
+01/03	Apple Computer incorporated, 1977
 01/08	American Telephone and Telegraph loses antitrust case, 1982
 01/08	Herman Hollerith patents first data processing computer, 1889
 01/08	Justice Dept. drops IBM suit, 1982
 01/10	First CDC 1604 delivered to Navy, 1960
 01/16	Set uid bit patent issued, to Dennis Ritchie, 1979
 01/17	Justice Dept. begins IBM anti-trust suit, 1969 (drops it, 01/08/82)
+01/22	Apple airs "1984" commercial during Superbowl XVIII, 1984
 01/24	DG Nova introduced, 1969
 01/25	First U.S. meeting of ALGOL definition committee, 1958
 01/26	EDVAC demonstrated, 1952
@@ -24,16 +26,19 @@
 02/14	First micro-on-a-chip patented (TI), 1978
 02/15	ENIAC demonstrated, 1946
 03/01	First NPL (later PL/I) report published, 1964
-03/04	First Cray-1 shipped to Los Alamos
+03/04	First Cray-1 shipped to Los Alamos, 1976
 03/09	"GOTO considered harmful" (E.W. Dijkstra) published in CACM, 1968
 03/14	LISP introduced, 1960
+03/21	NetBSD project born, 1993
 03/28	DEC announces PDP-11, 1970
 03/31	Eckert-Mauchly Computer Corp. founded, Phila, 1946
 04/01	Yourdon, Inc. founded, 1974  (It figures.)
+04/01	Apple Computer founded, 1976
 04/03	IBM 701 introduced, 1953
 04/04	Tandy Corp. acquires Radio Shack, 1963 (9 stores)
 04/07	IBM announces System/360, 1964
 04/09	ENIAC Project begun, 1943
+04/20	Apple announces the Apple ][ at the 1st West Coast Computer Faire, 1977
 04/28	Zilog Z-80 introduced
 05/06	EDSAC demonstrated, 1949
 05/01	First BASIC program run at Dartmouth, 1964
@@ -47,6 +52,7 @@
 06/10	First Apple II shipped, 1977
 06/15	UNIVAC I delivered to the Census Bureau, 1951
 06/16	First programming error at Census Bureau, 1951 (apocryphal)
+06/19	FreeBSD project born, 1993
 06/23	IBM unbundles software, 1969
 06/30	First advanced degree on computer related topic: to H. Karamanian,
 	Temple Univ., Phila, 1948, for symbolic differentiation on the ENIAC

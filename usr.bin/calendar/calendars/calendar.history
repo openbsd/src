@@ -1,7 +1,7 @@
 /*
  * History
  *
- * $OpenBSD: calendar.history,v 1.27 2003/08/16 06:40:07 mickey Exp $
+ * $OpenBSD: calendar.history,v 1.28 2003/12/09 02:39:58 mickey Exp $
  */
 
 #ifndef _calendar_history_
@@ -28,6 +28,7 @@
 01/14	Julian Calendar New Year's Day
 01/14	The first "Be-In" is held in Golden Gate Park, 1967
 01/16	Prohibition begins, 1920
+01/18	Grey whale migration, California
 01/20	St. Agnes Eve (Ah, bitter chill it was...)
 01/24	Eskimo Pie patented by Christian Nelson, 1922
 01/24	Gold discovered in California at Sutter's Mill, 1848
@@ -71,6 +72,7 @@
 02/29	French and Indian raid on Deerfield MA, 1704
 03/01	Sarah Goode, Sarah Osborne, and Tituba arrested for witchcraft
 	in Salem, Massachusetts, 1692
+03/02	Blackthorn winds (New England) (Does anyone know what this is?)
 03/03	Gemini III launched with Virgil Grissom and John Young on board, 1965
 03/04	First meeting of Congress, 1789, in N.Y.C.
 03/06	Hindenburg explodes and burns upon landing at Lakehurst, NJ, 1939
@@ -160,6 +162,7 @@
 	bombers were readied for take off along with the President's
 	airborne command post before the error is detected, 1980
 06/03	Edward White becomes the first American to perform a "Space Walk", 1965
+06/04	Roquefort cheese developed, 1070
 06/05	Robert Kennedy assassinated, 1968
 06/05	US leaves the Gold Standard, 1933
 06/06	First drive-in movie, 1933
@@ -188,6 +191,7 @@
 06/24	Senate repeals Gulf of Tonkin resolution, 1970
 06/25	Custer's Last Stand at Little Big Horn, 1876
 06/25	North Korea invades South Korea, 1950
+06/26	Toothbrush invented, 1498
 06/26	Battle of Gettysburg, 1863
 06/26	St. Lawrence Seaway dedicated by Eisenhower & Queen Elizabeth II, 1959
 06/27	100 degrees, Fort Yukon, 1915
@@ -350,6 +354,7 @@
 10/07	Police stop Wilbur Mills car, Fanne Fox jumps into water, 1974
 10/08	Great Chicago Fire, 1871
 10/09	First two-way telephone conversation, 1876
+10/10	Mercury at Superior Conjunction with Sun.  Moves into night sky. (1984)
 10/10	Beginning of the Wars for Independence in Cuba
 10/10	Foundation of the Workers Party in North Korea
 10/10	Spiro T. Agnew resigns as Vice-President due to income tax fraud, 1973
