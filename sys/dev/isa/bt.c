@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt.c,v 1.23 1999/01/07 06:14:47 niklas Exp $	*/
+/*	$OpenBSD: bt.c,v 1.24 2001/01/29 07:17:00 mickey Exp $	*/
 /*	$NetBSD: bt.c,v 1.10 1996/05/12 23:51:54 mycroft Exp $	*/
 
 #undef BTDIAG
@@ -454,7 +454,7 @@ AGAIN:
 			goto next;
 		}
 
-		untimeout(bt_timeout, ccb);
+		timeout_del(&ccb->xs->stimeout);
 		bt_done(sc, ccb);
 
 	next:
@@ -718,8 +718,10 @@ bt_start_ccbs(sc)
 		/* Tell the card to poll immediately. */
 		outb(iobase + BT_CMD_PORT, BT_START_SCSI);
 
-		if ((ccb->xs->flags & SCSI_POLL) == 0)
-			timeout(bt_timeout, ccb, (ccb->timeout * hz) / 1000);
+		if ((ccb->xs->flags & SCSI_POLL) == 0) {
+			timeout_set(&ccb->xs->stimeout, bt_timeout, ccb);
+			timeout_add(&ccb->xs->stimeout, (ccb->timeout * hz) / 1000);
+		}
 
 		++sc->sc_mbofull;
 		bt_nextmbx(wmbo, wmbx, mbo);
