@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.16 1999/11/10 14:11:49 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.17 1999/12/06 22:20:34 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -49,7 +49,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.16 1999/11/10 14:11:49 espie Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.17 1999/12/06 22:20:34 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -933,7 +933,8 @@ Cmd_Exec(cmd, err)
     int		status;		/* command exit status */
     Buffer	buf;		/* buffer to store the result */
     char	*cp;
-    int		cc;
+    ssize_t	cc;
+    int 	length;
 
 
     *err = NULL;
@@ -1007,10 +1008,10 @@ Cmd_Exec(cmd, err)
 	while(((pid = wait(&status)) != cpid) && (pid >= 0))
 	    continue;
 
-	res = (char *)Buf_GetAll (buf, &cc);
+	res = (char *)Buf_GetAll (buf, &length);
 	Buf_Destroy (buf, FALSE);
 
-	if (cc == 0)
+	if (cc == -1)
 	    *err = "Couldn't read shell's output for \"%s\"";
 
 	if (status)
@@ -1020,8 +1021,8 @@ Cmd_Exec(cmd, err)
 	 * Null-terminate the result, convert newlines to spaces and
 	 * install it in the variable.
 	 */
-	res[cc] = '\0';
-	cp = &res[cc] - 1;
+	res[length] = '\0';
+	cp = res + length - 1;
 
 	if (*cp == '\n') {
 	    /*
