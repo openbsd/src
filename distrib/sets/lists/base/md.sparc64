@@ -1803,3 +1803,4 @@
 ./usr/mdec/installboot
 ./usr/mdec/ofwboot
 ./usr/mdec/ofwboot.net
+./usr/sbin/eeprom
