@@ -31,18 +31,34 @@
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 
 @8 pass in quick on tun0 route-to tun1 inet from 192.168.1.1 to 10.1.1.1 
-[ Skip steps: a=end i=end d=end p=end sp=end dp=end ]
+[ Skip steps: a=end i=end d=end p=10 sp=end dp=10 ]
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 
 @9 pass in quick on tun0 route-to tun1 inet6 from fec0::/64 to fec1::2 
+[ Skip steps: a=end i=end d=end sp=end ]
+[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+
+@10 block drop in on tun0 reply-to (tun1 192.168.1.1) inet proto tcp from any to any port = ftp 
+[ Skip steps: a=end i=end d=end p=12 sa=12 sp=end da=12 dp=12 ]
+[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+
+@11 block drop in on tun0 reply-to (tun1 fec0::1) inet6 proto tcp from any to any port = ftp 
+[ Skip steps: a=end i=end d=end sp=end ]
+[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+
+@12 pass in quick on tun0 reply-to tun1 inet from 192.168.1.1 to 10.1.1.1 
 [ Skip steps: a=end i=end d=end p=end sp=end dp=end ]
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 
-@10 pass in quick on tun0 dup-to (tun1 192.168.1.100) inet from 192.168.1.1 to 10.1.1.1 
+@13 pass in quick on tun0 reply-to tun1 inet6 from fec0::/64 to fec1::2 
 [ Skip steps: a=end i=end d=end p=end sp=end dp=end ]
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 
-@11 pass in quick on tun0 dup-to (tun1 fec1::2) inet6 from fec0::/64 to fec1::2 
+@14 pass in quick on tun0 dup-to (tun1 192.168.1.100) inet from 192.168.1.1 to 10.1.1.1 
+[ Skip steps: a=end i=end d=end p=end sp=end dp=end ]
+[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+
+@15 pass in quick on tun0 dup-to (tun1 fec1::2) inet6 from fec0::/64 to fec1::2 
 [ Skip steps: a=end i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 
