@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKB,v 1.65 2004/03/10 01:23:25 deraadt Exp $
+#	$OpenBSD: RAMDISKB,v 1.66 2004/04/10 08:33:04 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -251,7 +251,7 @@ dc*	at pci? dev ? function ?		# 21143, "tulip" clone ethernet
 em*	at pci? dev ? function ?		# Intel Pro/1000 ethernet
 #txp*	at pci? dev ? function ?		# 3com 3CR990
 #nge*	at pci? dev ? function ?		# NS DP83820/DP83821 GigE
-#bge*	at pci? dev ? function ?		# Broadcom BCM570x (aka Tigon3)
+bge*	at pci? dev ? function ?		# Broadcom BCM570x (aka Tigon3)
 #stge*	at pci? dev ? function ?		# Sundance TC9021 GigE
 #lge*	at pci? dev ? function ?		# Level1 LXT1001 GigE
 #hme*	at pci? dev ? function ?		# Sun Happy Meal
