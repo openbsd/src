@@ -46,7 +46,7 @@ or an external address.
 .Bl -tag
 .It Em Local Username
 username
-
+.Pp
 The username must be available via
 .Xr getpwnam 3 .
 .El
@@ -54,34 +54,34 @@ The username must be available via
 .It Em Local Filename
 username
 /path/name
-
+.Pp
 Messages are appended to the file specified by the full pathname
 (starting with a slash (/))
 .El
 .Bl -tag
 .It Em Command
 |command
-
+.Pp
 A command starts with a pipe symbol (|),
 it receives messages via standard input.
 .El
 .Bl -tag
 .It Em Include File
 :include: /path/name
-
+.Pp
 The aliases in pathname are added to the aliases for
 .Em name .
 .El
 .Bl -tag
 .It Em E-Mail Address
 user@domain
-
+.Pp
 An e-mail address in RFC 822 format.
 .El
 .Pp
 Lines beginning with whitespace are continuation lines.
-Another way to continue lines is by placing a backslash 
-directly before a newline.  
+Another way to continue lines is by placing a backslash
+directly before a newline.
 Lines beginning with
 .Ql #
 are comments.
@@ -118,6 +118,11 @@ change to take effect.
 .%V SMM
 .%N \&No. 9
 .Re
+.Sh HISTORY
+The
+.Nm
+file format appeared in
+.Bx 4.0 .
 .Sh BUGS
 If you have compiled
 .Xr sendmail
@@ -127,8 +132,3 @@ you may have encountered problems in
 restricting a single alias to about 1000 bytes of information.
 You can get longer aliases by ``chaining''; that is, make the last name in
 the alias be a dummy name which is a continuation alias.
-.Sh HISTORY
-The
-.Nm
-file format appeared in
-.Bx 4.0 .

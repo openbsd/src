@@ -55,10 +55,10 @@ Local addresses are looked up in a file
 and aliased appropriately.
 Aliasing can be prevented by preceding the address
 with a backslash.
-Beginning with 8.10, the sender is included in any alias 
-expansions, e.g., 
-if `john' sends to `group', 
-and `group' includes `john' in the expansion, 
+Beginning with 8.10, the sender is included in any alias
+expansions, e.g.,
+if `john' sends to `group',
+and `group' includes `john' in the expansion,
 then the letter will also be delivered to `john'.
 .Ss Parameters
 .Bl -tag -width Fl
@@ -94,9 +94,7 @@ listening on socket 25 for incoming
 connections.
 By default,
 .Nm Sendmail
-will also listen on socket 587 for
-.Tn RFC2476
-message submission.
+will also listen on socket 587 for RFC 2476 message submission.
 This is normally run from
 .Pa /etc/rc .
 .It Fl bD
@@ -119,8 +117,7 @@ only available with shared memory support.
 .It Fl bs
 Use the
 .Tn SMTP
-protocol as described in
-.Tn RFC821
+protocol as described in RFC 821
 on standard input and output.
 This flag implies all the operations of the
 .Fl ba
@@ -153,7 +150,7 @@ The envelope sender address is used as the recipient
 for delivery status notifications
 and may also appear in a Return-Path: header.
 .Fl f
-should only be used 
+should only be used
 by ``trusted'' users
 (normally
 .Em root ,
@@ -188,7 +185,7 @@ Set the identifier used in syslog messages to the supplied
 .Ar tag .
 .It Fl N Ar dsn
 Set delivery status notification conditions to
-.Ar dsn,
+.Ar dsn ,
 which can be
 .Ql never
 for no notifications
@@ -206,7 +203,8 @@ Set option
 .Ar option
 to the specified
 .Em value .
-This form uses long names.  See below for more details.
+This form uses long names.
+See below for more details.
 .It Fl o Ns Ar x Em value
 Set option
 .Ar x
@@ -226,7 +224,7 @@ Process saved messages in the queue at given intervals.
 If
 .Ar time
 is omitted, process the queue once.
-.Xr Time
+.Ar time
 is given as a tagged number,
 with
 .Ql s
@@ -271,7 +269,7 @@ only.
 .Xc
 Limit processed jobs to those containing
 .Ar substr
-as a substring of the queue id or not when
+as a substring of the queue ID or not when
 .Em !
 is specified.
 .It Xo Fl q Ns Op Ar ! Ns
@@ -523,7 +521,7 @@ msgs: "|/usr/bin/msgs -s"
 Aliases may also have the syntax
 .Dq :include: Ns Ar filename
 to ask
-.Xr sendmail
+.Nm sendmail
 to read the named file for a list of recipients.
 For example, an alias such as:
 .Pp
@@ -567,7 +565,8 @@ but was queued.
 If invoked as
 .Nm newaliases ,
 .Nm sendmail
-will rebuild the alias database.  If invoked as
+will rebuild the alias database.
+If invoked as
 .Nm mailq ,
 .Nm sendmail
 will print the contents of the mail queue.
@@ -594,13 +593,13 @@ and your system security reduced by setting the
 option,
 the permission problems should be fixed.
 For more information, see:
-
-.%T http://www.sendmail.org/tips/DontBlameSendmail.html
+.Pp
+.Pa http://www.sendmail.org/tips/DontBlameSendmail.html
 .Sh FILES
 Except for the file
 .Pa /etc/mail/sendmail.cf
 itself the following pathnames are all specified in
-.Pa /etc/mail/sendmail.cf.
+.Pa /etc/mail/sendmail.cf .
 Thus,
 these values are only approximations.
 .Pp
@@ -630,11 +629,8 @@ temp files
 .Xr rc 8 ,
 .Xr rmail 8
 .Pp
-DARPA
-Internet Request For Comments
-.%T RFC819 ,
-.%T RFC821 ,
-.%T RFC822 .
+DARPA Internet Request For Comments
+RFC 819, RFC 821, RFC 822.
 .Rs
 .%T "Sendmail \- An Internetwork Mail Router"
 .%V SMM
