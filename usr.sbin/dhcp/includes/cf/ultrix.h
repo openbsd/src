@@ -3,7 +3,8 @@
    System dependencies for Ultrix 4.2 (tested on 4.2a+multicast)... */
 
 /*
- * Copyright (c) 1996 The Internet Software Consortium.  All rights reserved.
+ * Copyright (c) 1996, 1999
+ * The Internet Software Consortium.    All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -69,6 +70,8 @@ extern int h_errno;
 #define u_int8_t	unsigned char		/* Not quite POSIX... */
 #define u_int16_t	unsigned short 
 #define u_int32_t	unsigned long 
+
+#define	ssize_t		size_t
 
 /* The jmp_buf type is an array on ultrix, so we can't dereference it
    and must declare it differently. */

@@ -3,7 +3,7 @@
    Packet assembly code, originally contributed by Archie Cobbs. */
 
 /*
- * Copyright (c) 1995, 1996 The Internet Software Consortium.
+ * Copyright (c) 1995, 1996, 1999 The Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -40,18 +40,11 @@
  * Enterprises, see ``http://www.vix.com''.
  */
 
-#ifndef lint
-static char copyright[] =
-"$Id: packet.c,v 1.3 2001/01/14 23:01:19 angelos Exp $ Copyright (c) 1996 The Internet Software Consortium.  All rights reserved.\n";
-#endif /* not lint */
-
 #include "dhcpd.h"
 
-#if defined (PACKET_ASSEMBLY) || defined (PACKET_DECODING)
-#include "includes/netinet/ip.h"
-#include "includes/netinet/udp.h"
-#include "includes/netinet/if_ether.h"
-#endif /* PACKET_ASSEMBLY || PACKET_DECODING */
+#include <netinet/in_systm.h>
+#include <netinet/ip.h>
+#include <netinet/udp.h>
 
 /* Compute the easy part of the checksum on a range of bytes. */
 
@@ -60,7 +53,7 @@ u_int32_t checksum (buf, nbytes, sum)
 	unsigned nbytes;
 	u_int32_t sum;
 {
-	unsigned i;
+	int i;
 
 #ifdef DEBUG_CHECKSUM
 	debug ("checksum (%x %d %x)", buf, nbytes, sum);
@@ -92,7 +85,7 @@ u_int32_t checksum (buf, nbytes, sum)
 	return sum;
 }
 
-/* Finish computing the checksum, and then put it into network byte order. */
+/* Finish computing the sum, and then put it into network byte order. */
 
 u_int32_t wrapsum (sum)
 	u_int32_t sum;
@@ -103,7 +96,7 @@ u_int32_t wrapsum (sum)
 
 	sum = ~sum & 0xFFFF;
 #ifdef DEBUG_CHECKSUM_VERBOSE
-	log_debug ("sum = %x", sum);
+	debug ("sum = %x", sum);
 #endif
 	
 #ifdef DEBUG_CHECKSUM
@@ -112,7 +105,6 @@ u_int32_t wrapsum (sum)
 	return htons(sum);
 }
 
-#ifdef PACKET_ASSEMBLY
 /* Assemble an hardware header... */
 /* XXX currently only supports ethernet; doesn't check for other types. */
 
@@ -122,26 +114,13 @@ void assemble_hw_header (interface, buf, bufix, to)
 	int *bufix;
 	struct hardware *to;
 {
-	struct ether_header eh;
-
-	if (to && to -> hlen == 6) /* XXX */
-		memcpy (eh.ether_dhost, to -> haddr, sizeof eh.ether_dhost);
+#if defined (HAVE_TR_SUPPORT)
+	if (interface -> hw_address.htype == HTYPE_IEEE802)
+		assemble_tr_header (interface, buf, bufix, to);
 	else
-		memset (eh.ether_dhost, 0xff, sizeof (eh.ether_dhost));
-	if (interface -> hw_address.hlen == sizeof (eh.ether_shost))
-		memcpy (eh.ether_shost, interface -> hw_address.haddr,
-			sizeof (eh.ether_shost));
-	else
-		memset (eh.ether_shost, 0x00, sizeof (eh.ether_shost));
-
-#ifdef BROKEN_FREEBSD_BPF /* Fixed in FreeBSD 2.2 */
-	eh.ether_type = ETHERTYPE_IP;
-#else
-	eh.ether_type = htons (ETHERTYPE_IP);
 #endif
+		assemble_ethernet_header (interface, buf, bufix, to);
 
-	memcpy (&buf [*bufix], &eh, sizeof eh);
-	*bufix += sizeof eh;
 }
 
 /* UDP header and IP header assembled together for convenience. */
@@ -153,7 +132,7 @@ void assemble_udp_ip_header (interface, buf, bufix,
 	int *bufix;
 	u_int32_t from;
 	u_int32_t to;
-	u_int16_t port;
+	unsigned int port;
 	unsigned char *data;
 	int len;
 {
@@ -189,7 +168,6 @@ void assemble_udp_ip_header (interface, buf, bufix,
 	/* Compute UDP checksums, including the ``pseudo-header'', the UDP
 	   header and the data. */
 
-#if 1
 	udp.uh_sum =
 		wrapsum (checksum ((unsigned char *)&udp, sizeof udp,
 				   checksum (data, len, 
@@ -199,17 +177,13 @@ void assemble_udp_ip_header (interface, buf, bufix,
 						       IPPROTO_UDP +
 						       (u_int32_t)
 						       ntohs (udp.uh_ulen)))));
-#endif
 
 	/* Copy the udp header into the buffer... */
 	memcpy (&buf [*bufix], &udp, sizeof udp);
 	*bufix += sizeof udp;
 }
-#endif /* PACKET_ASSEMBLY */
 
-#ifdef PACKET_DECODING
 /* Decode a hardware header... */
-/* XXX currently only supports ethernet; doesn't check for other types. */
 
 ssize_t decode_hw_header (interface, buf, bufix, from)
      struct interface_info *interface;
@@ -217,54 +191,56 @@ ssize_t decode_hw_header (interface, buf, bufix, from)
      int bufix;
      struct hardware *from;
 {
-  struct ether_header eh;
-
-  memcpy (&eh, buf + bufix, sizeof eh);
-
-#ifdef USERLAND_FILTER
-  if (ntohs (eh.ether_type) != ETHERTYPE_IP)
-	  return -1;
+#if defined (HAVE_TR_SUPPORT)
+	if (interface -> hw_address.htype == HTYPE_IEEE802)
+		return decode_tr_header (interface, buf, bufix, from);
+	else
 #endif
-  memcpy (from -> haddr, eh.ether_shost, sizeof (eh.ether_shost));
-  from -> htype = ARPHRD_ETHER;
-  from -> hlen = sizeof eh.ether_shost;
-
-  return sizeof eh;
+		return decode_ethernet_header (interface, buf, bufix, from);
 }
 
 /* UDP header and IP header decoded together for convenience. */
 
-ssize_t decode_udp_ip_header (interface, buf, bufix, from, data, len)
+ssize_t decode_udp_ip_header (interface, buf, bufix, from, data, buflen)
 	struct interface_info *interface;
 	unsigned char *buf;
 	int bufix;
 	struct sockaddr_in *from;
 	unsigned char *data;
-	int len;
+	int buflen;
 {
   struct ip *ip;
   struct udphdr *udp;
   u_int32_t ip_len = (buf [bufix] & 0xf) << 2;
+  u_int32_t sum, usum;
+  static int ip_packets_seen;
+  static int ip_packets_bad_checksum;
+  static int udp_packets_seen;
+  static int udp_packets_bad_checksum;
+  static int udp_packets_length_checked;
+  static int udp_packets_length_overflow;
+  int len = 0;
 
   ip = (struct ip *)(buf + bufix);
   udp = (struct udphdr *)(buf + bufix + ip_len);
 
-#ifdef USERLAND_FILTER
-  /* Is it a UDP packet? */
-  if (ip -> ip_p != IPPROTO_UDP)
-	  return -1;
-
-  /* Is it to the port we're serving? */
-  if (udp -> uh_dport != local_port)
-	  return -1;
-#endif /* USERLAND_FILTER */
-
   /* Check the IP header checksum - it should be zero. */
+  ++ip_packets_seen;
   if (wrapsum (checksum (buf + bufix, ip_len, 0))) {
-	  note ("Bad IP checksum: %x",
-		wrapsum (checksum (buf + bufix, sizeof *ip, 0)));
+	  ++ip_packets_bad_checksum;
+	  if (ip_packets_seen > 4 &&
+	      (ip_packets_seen / ip_packets_bad_checksum) < 2) {
+		  note ("%d bad IP checksums seen in %d packets",
+			ip_packets_bad_checksum, ip_packets_seen);
+		  ip_packets_seen = ip_packets_bad_checksum = 0;
+	  }
 	  return -1;
   }
+
+  /* Check the IP packet length. */
+  if (ntohs (ip -> ip_len) != buflen)
+	  debug ("ip length %d disagrees with bytes received %d.",
+		 ntohs (ip -> ip_len), buflen);
 
   /* Copy out the IP source address... */
   memcpy (&from -> sin_addr, &ip -> ip_src, 4);
@@ -275,10 +251,25 @@ ssize_t decode_udp_ip_header (interface, buf, bufix, from, data, len)
 
   if (!data) {
 	  data = buf + bufix + ip_len + sizeof *udp;
-	  len -= ip_len + sizeof *udp;
+	  len = ntohs (udp -> uh_ulen) - sizeof *udp;
+	  ++udp_packets_length_checked;
+	  if (len + data > buf + bufix + buflen) {
+		  ++udp_packets_length_overflow;
+		  if (udp_packets_length_checked > 4 &&
+		      (udp_packets_length_checked /
+		       udp_packets_length_overflow) < 2) {
+			  note ("%d udp packets in %d too long - dropped",
+				udp_packets_length_overflow,
+				udp_packets_length_checked);
+			  udp_packets_length_overflow =
+				  udp_packets_length_checked = 0;
+		  }
+		  return -1;
+	  }
+	  if (len + data != buf + bufix + buflen)
+		  debug ("accepting packet with data after udp payload.");
   }
 
-#if 0
   usum = udp -> uh_sum;
   udp -> uh_sum = 0;
 
@@ -286,20 +277,25 @@ ssize_t decode_udp_ip_header (interface, buf, bufix, from, data, len)
 			   checksum (data, len,
 				     checksum ((unsigned char *)
 					       &ip -> ip_src,
-					       sizeof ip -> ip_src,
+					       2 * sizeof ip -> ip_src,
 					       IPPROTO_UDP +
 					       (u_int32_t)
 					       ntohs (udp -> uh_ulen)))));
 
+  udp_packets_seen++;
   if (usum && usum != sum) {
-	  note ("Bad udp checksum: %x %x", usum, sum);
+	  udp_packets_bad_checksum++;
+	  if (udp_packets_seen > 4 &&
+	      (udp_packets_seen / udp_packets_bad_checksum) < 2) {
+		  note ("%d bad udp checksums in %d packets",
+			udp_packets_bad_checksum, udp_packets_seen);
+		  udp_packets_seen = udp_packets_bad_checksum = 0;
+	  }
 	  return -1;
   }
-#endif
 
   /* Copy out the port... */
   memcpy (&from -> sin_port, &udp -> uh_sport, sizeof udp -> uh_sport);
 
   return ip_len + sizeof *udp;
 }
-#endif /* PACKET_DECODING */

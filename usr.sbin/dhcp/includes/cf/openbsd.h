@@ -1,4 +1,4 @@
-/* OpenBSD.h
+/* netbsd.h
 
    System dependencies for OpenBSD... */
 

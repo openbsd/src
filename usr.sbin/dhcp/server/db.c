@@ -40,11 +40,6 @@
  * Enterprises, see ``http://www.vix.com''.
  */
 
-#ifndef lint
-static char copyright[] =
-"$Id: db.c,v 1.1 1998/08/18 03:43:34 deraadt Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
-#endif /* not lint */
-
 #include "dhcpd.h"
 
 FILE *db_file;
@@ -61,6 +56,7 @@ int write_lease (lease)
 	struct tm *t;
 	char tbuf [64];
 	int errors = 0;
+	int i;
 
 	if (counting)
 		++count;
@@ -71,7 +67,7 @@ int write_lease (lease)
 	}
 
 	t = gmtime (&lease -> starts);
-	sprintf (tbuf, "%d %d/%02d/%02d %02d:%02d:%02d;",
+	snprintf (tbuf, sizeof tbuf, "%d %d/%02d/%02d %02d:%02d:%02d;",
 		 t -> tm_wday, t -> tm_year + 1900,
 		 t -> tm_mon + 1, t -> tm_mday,
 		 t -> tm_hour, t -> tm_min, t -> tm_sec);
@@ -82,7 +78,7 @@ int write_lease (lease)
 	}
 
 	t = gmtime (&lease -> ends);
-	sprintf (tbuf, "%d %d/%02d/%02d %02d:%02d:%02d;",
+	snprintf (tbuf, sizeof tbuf,"%d %d/%02d/%02d %02d:%02d:%02d;",
 		 t -> tm_wday, t -> tm_year + 1900,
 		 t -> tm_mon + 1, t -> tm_mday,
 		 t -> tm_hour, t -> tm_min, t -> tm_sec);
@@ -134,6 +130,10 @@ int write_lease (lease)
 		}
 	}
 	if (lease -> client_hostname) {
+		for (i = 0; lease -> client_hostname [i]; i++)
+			if (lease -> client_hostname [i] < 33 ||
+			    lease -> client_hostname [i] > 126)
+				goto bad_client_hostname;
 		errno = 0;
 		fprintf (db_file, "\n\tclient-hostname \"%s\";",
 			 lease -> client_hostname);
@@ -141,7 +141,13 @@ int write_lease (lease)
 			++errors;
 		}
 	}
+       bad_client_hostname:
 	if (lease -> hostname) {
+		for (i = 0; lease -> hostname [i]; i++)
+			if (lease -> hostname [i] < 33 ||
+			    lease -> hostname [i] > 126)
+				goto bad_hostname;
+		errno = 0;
 		errno = 0;
 		fprintf (db_file, "\n\thostname \"%s\";",
 			 lease -> hostname);
@@ -149,6 +155,7 @@ int write_lease (lease)
 			++errors;
 		}
 	}
+       bad_hostname:
 	errno = 0;
 	fputs ("\n}\n", db_file);
 	if (errno) {
@@ -171,7 +178,7 @@ int commit_leases ()
 		note ("commit_leases: unable to commit: %m");
 		return 0;
 	}
-	if (fsync (fileno (db_file)) < 0) {
+	if (fsync (fileno (db_file)) == -1) {
 		note ("commit_leases: unable to commit: %m");
 		return 0;
 	}
@@ -198,8 +205,8 @@ void db_startup ()
 
 void new_lease_file ()
 {
-	char newfname [512];
-	char backfname [512];
+	char newfname [MAXPATHLEN];
+	char backfname [MAXPATHLEN];
 	TIME t;
 	int db_fd;
 
@@ -210,30 +217,37 @@ void new_lease_file ()
 
 	/* Make a temporary lease file... */
 	GET_TIME (&t);
-	sprintf (newfname, "%s.%d", path_dhcpd_db, (int)t);
+	snprintf (newfname, sizeof newfname,"%s.%d", path_dhcpd_db, (int)t);
 	db_fd = open (newfname, O_WRONLY | O_TRUNC | O_CREAT, 0664);
-	if (db_fd < 0) {
+	if (db_fd == -1) {
 		error ("Can't create new lease file: %m");
 	}
 	if ((db_file = fdopen (db_fd, "w")) == NULL) {
 		error ("Can't fdopen new lease file!");
 	}
 
+	/* Write an introduction so people don't complain about time
+	   being off. */
+	fprintf (db_file, "# All times in this file are in UTC (GMT), not %s",
+		 "your local timezone.\n");
+	fprintf (db_file, "# The format of this file is documented in the %s",
+		 "dhcpd.leases(5) manual page.\n\n");
+
 	/* Write out all the leases that we know of... */
 	counting = 0;
 	write_leases ();
 
 	/* Get the old database out of the way... */
-	sprintf (backfname, "%s~", path_dhcpd_db);
-	if (unlink (backfname) < 0 && errno != ENOENT)
+	snprintf (backfname, sizeof backfname, "%s~", path_dhcpd_db);
+	if (unlink (backfname) == -1 && errno != ENOENT)
 		error ("Can't remove old lease database backup %s: %m",
 		       backfname);
-	if (link (path_dhcpd_db, backfname) < 0)
+	if (link (path_dhcpd_db, backfname) == -1)
 		error ("Can't backup lease database %s to %s: %m",
 		       path_dhcpd_db, backfname);
 	
 	/* Move in the new file... */
-	if (rename (newfname, path_dhcpd_db) < 0)
+	if (rename (newfname, path_dhcpd_db) == -1)
 		error ("Can't install new lease database %s to %s: %m",
 		       newfname, path_dhcpd_db);
 

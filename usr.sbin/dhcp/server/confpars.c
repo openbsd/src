@@ -40,11 +40,6 @@
  * Enterprises, see ``http://www.vix.com''.
  */
 
-#ifndef lint
-static char copyright[] =
-"$Id: confpars.c,v 1.2 2000/11/10 15:33:14 provos Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
-#endif /* not lint */
-
 #include "dhcpd.h"
 #include "dhctoken.h"
 
@@ -73,9 +68,12 @@ int readconf ()
 	root_group.boot_unknown_clients = 1;
 	root_group.allow_bootp = 1;
 	root_group.allow_booting = 1;
+	root_group.authoritative = 1;
 
-	if ((cfile = fopen (path_dhcpd_conf, "r")) == NULL)
+	if ((cfile = fopen (path_dhcpd_conf, "r")) == NULL) {
 		error ("Can't open %s: %m", path_dhcpd_conf);
+	}
+
 	do {
 		token = peek_token (&val, cfile);
 		if (token == EOF)
@@ -112,10 +110,13 @@ void read_leases ()
 	   human has corrected the database problem, then we are left
 	   thinking that no leases have been assigned to anybody, which
 	   could create severe network chaos. */
-	if ((cfile = fopen (path_dhcpd_db, "r")) == NULL)
-		error ("Can't open lease database %s: %m -- %s",
-		       path_dhcpd_db,
-		       "check for failed database rewrite attempt!");
+	if ((cfile = fopen (path_dhcpd_db, "r")) == NULL) {
+		warn ("Can't open lease database %s: %m -- %s",
+		      path_dhcpd_db,
+		      "check for failed database rewrite attempt!");
+		warn ("Please read the dhcpd.leases manual page if you.");
+		error ("don't know what to do about this.");	}
+
 	do {
 		token = next_token (&val, cfile);
 		if (token == EOF)
@@ -155,6 +156,7 @@ void read_leases ()
 	       | fixed-address-parameter
 	       | ALLOW allow-deny-keyword
 	       | DENY allow-deny-keyword
+	       | USE_LEASE_ADDR_FOR_DEFAULT_ROUTE boolean
 
    declaration :== host-declaration
 		 | group-declaration
@@ -239,16 +241,24 @@ int parse_statement (cfile, group, type, host_decl, declaration)
 		share -> group -> shared_network = share;
 
 		parse_subnet_declaration (cfile, share);
+
+		/* share -> subnets is the subnet we just parsed. */
 		if (share -> subnets) {
 			share -> interface =
 				share -> subnets -> interface;
 
+			/* Make the shared network name from network number. */
 			n = piaddr (share -> subnets -> net);
 			t = malloc (strlen (n) + 1);
 			if (!t)
 				error ("no memory for subnet name");
-			strcpy (t, n);
+			strlcpy (t, n, (strlen(n) + 1));
 			share -> name = t;
+
+			/* Copy the authoritative parameter from the subnet,
+			   since there is no opportunity to declare it here. */
+			share -> group -> authoritative =
+				share -> subnets -> group -> authoritative;
 			enter_shared_network (share);
 		}
 		return 1;
@@ -295,10 +305,42 @@ int parse_statement (cfile, group, type, host_decl, declaration)
 		group -> get_lease_hostnames = parse_boolean (cfile);
 		break;
 
+	      case ALWAYS_REPLY_RFC1048:
+		group -> always_reply_rfc1048 = parse_boolean (cfile);
+		break;
+
 	      case USE_HOST_DECL_NAMES:
 		if (type == HOST_DECL)
 			parse_warn ("use-host-decl-names not allowed here.");
 		group -> use_host_decl_names = parse_boolean (cfile);
+		break;
+
+	      case USE_LEASE_ADDR_FOR_DEFAULT_ROUTE:
+		group -> use_lease_addr_for_default_route =
+			parse_boolean (cfile);
+		break;
+
+	      case TOKEN_NOT:
+		token = next_token (&val, cfile);
+		switch (token) {
+		      case AUTHORITATIVE:
+			if (type == HOST_DECL)
+			    parse_warn ("authority makes no sense here."); 
+			group -> authoritative = 0;
+			parse_semi (cfile);
+			break;
+		      default:
+			parse_warn ("expecting assertion");
+			skip_to_semi (cfile);
+			break;
+		}
+		break;
+			
+	      case AUTHORITATIVE:
+		if (type == HOST_DECL)
+		    parse_warn ("authority makes no sense here."); 
+		group -> authoritative = 1;
+		parse_semi (cfile);
 		break;
 
 	      case NEXT_SERVER:
@@ -319,17 +361,11 @@ int parse_statement (cfile, group, type, host_decl, declaration)
 		break;
 
 	      case SERVER_IDENTIFIER:
-		if (type != ROOT_GROUP)
-			parse_warn ("server-identifier only allowed at top %s",
-				    "level.");
 		tree = parse_ip_addr_or_hostname (cfile, 0);
 		if (!tree)
 			return declaration;
-		cache = tree_cache (tree);
-		if (type == ROOT_GROUP) {
-			if (!tree_evaluate (cache))
-				error ("server-identifier is not known");
-		}
+		group -> options [DHO_DHCP_SERVER_IDENTIFIER] =
+			tree_cache (tree);
 		token = next_token (&val, cfile);
 		break;
 			
@@ -621,7 +657,7 @@ void parse_shared_net_declaration (cfile, group)
 		name = malloc (strlen (val) + 1);
 		if (!name)
 			error ("no memory for shared network name");
-		strcpy (name, val);
+		strlcpy (name, val, strlen(val) + 1);
 	} else {
 		name = parse_host_name (cfile);
 		if (!name)
@@ -664,7 +700,7 @@ void parse_subnet_declaration (cfile, share)
 {
 	char *val;
 	int token;
-	struct subnet *subnet, *t;
+	struct subnet *subnet, *t, *u;
 	struct iaddr iaddr;
 	unsigned char addr [4];
 	int len = sizeof addr;
@@ -731,10 +767,19 @@ void parse_subnet_declaration (cfile, share)
 	if (!share -> subnets)
 		share -> subnets = subnet;
 	else {
-		for (t = share -> subnets;
-		     t -> next_sibling; t = t -> next_sibling)
-			;
-		t -> next_sibling = subnet;
+		u = (struct subnet *)0;
+		for (t = share -> subnets; t; t = t -> next_sibling) {
+			if (subnet_inner_than (subnet, t, 0)) {
+				if (u)
+					u -> next_sibling = subnet;
+				else
+					share -> subnets = subnet;
+				subnet -> next_sibling = t;
+				return;
+			}
+			u = t;
+		}
+		u -> next_sibling = subnet;
 	}
 }
 
@@ -873,7 +918,7 @@ void parse_option_param (cfile, group)
 	vendor = malloc (strlen (val) + 1);
 	if (!vendor)
 		error ("no memory for vendor token.");
-	strcpy (vendor, val);
+	strlcpy (vendor, val, strlen(val) + 1);
 	token = peek_token (&val, cfile);
 	if (token == DOT) {
 		/* Go ahead and take the DOT token... */
@@ -890,8 +935,9 @@ void parse_option_param (cfile, group)
 
 		/* Look up the option name hash table for the specified
 		   vendor. */
-		universe = (struct universe *)hash_lookup (&universe_hash,
-							   vendor, 0);
+		universe = ((struct universe *)
+			    hash_lookup (&universe_hash,
+					 (unsigned char *)vendor, 0));
 		/* If it's not there, we can't parse the rest of the
 		   declaration. */
 		if (!universe) {
@@ -907,7 +953,8 @@ void parse_option_param (cfile, group)
 	}
 
 	/* Look up the actual option info... */
-	option = (struct option *)hash_lookup (universe -> hash, val, 0);
+	option = (struct option *)hash_lookup (universe -> hash,
+					       (unsigned char *)val, 0);
 
 	/* If we didn't get an option structure, it's an undefined option. */
 	if (!option) {
@@ -958,7 +1005,8 @@ void parse_option_param (cfile, group)
 					token = next_token (&val, cfile);
 					tree = tree_concat
 						(tree,
-						 tree_const (val,
+						 tree_const ((unsigned char *)
+							     val,
 							     strlen (val)));
 				} else {
 					parse_warn ("expecting string %s.",
@@ -977,9 +1025,10 @@ void parse_option_param (cfile, group)
 						skip_to_semi (cfile);
 					return;
 				}
-				tree = tree_concat (tree,
-						    tree_const (val,
-								strlen (val)));
+				tree = tree_concat
+					(tree,
+					 tree_const ((unsigned char *)val,
+						     strlen (val)));
 				break;
 
 			      case 'I': /* IP address or hostname. */
@@ -1158,13 +1207,13 @@ struct lease *parse_lease_declaration (cfile)
 			}
 		} else {
 			switch (token) {
-				/* Colon-separated hexadecimal octets... */
+				/* Colon-seperated hexadecimal octets... */
 			      case UID:
 				seenbit = 8;
 				token = peek_token (&val, cfile);
 				if (token == STRING) {
 					token = next_token (&val, cfile);
-					lease.uid_len = strlen (val) + 1;
+					lease.uid_len = strlen (val);
 					lease.uid = (unsigned char *)
 						malloc (lease.uid_len);
 					if (!lease.uid) {
@@ -1172,6 +1221,7 @@ struct lease *parse_lease_declaration (cfile)
 						return (struct lease *)0;
 					}
 					memcpy (lease.uid, val, lease.uid_len);
+					parse_semi (cfile);
 				} else {
 					lease.uid_len = 0;
 					lease.uid = parse_numeric_aggregate

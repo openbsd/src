@@ -3,8 +3,8 @@
    BSD socket interface code... */
 
 /*
- * Copyright (c) 1995, 1996, 1997, 1998 The Internet Software Consortium.
- * All rights reserved.
+ * Copyright (c) 1995, 1996, 1997, 1998, 1999
+ * The Internet Software Consortium.   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -40,60 +40,8 @@
  * Enterprises, see ``http://www.vix.com''.
  */
 
-/* SO_BINDTODEVICE support added by Elliot Poger (poger@leland.stanford.edu).
- * This sockopt allows a socket to be bound to a particular interface,
- * thus enabling the use of DHCPD on a multihomed host.
- * If SO_BINDTODEVICE is defined in your system header files, the use of
- * this sockopt will be automatically enabled. 
- * I have implemented it under Linux; other systems should be doable also.
- */
-
-#ifndef lint
-static char copyright[] =
-"$Id: socket.c,v 1.2 2000/12/30 17:54:07 angelos Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
-#endif /* not lint */
-
 #include "dhcpd.h"
 
-#ifdef USE_SOCKET_FALLBACK
-#  define USE_SOCKET_SEND
-#  define if_register_send if_register_fallback
-#  define send_packet send_fallback
-#  define if_reinitialize_send if_reinitialize_fallback
-#endif
-
-static int once = 0;
-
-/* Reinitializes the specified interface after an address change.   This
-   is not required for packet-filter APIs. */
-
-#ifdef USE_SOCKET_SEND
-void if_reinitialize_send (info)
-	struct interface_info *info;
-{
-#if 0
-#ifndef USE_SOCKET_RECEIVE
-	once = 0;
-	close (info -> wfdesc);
-#endif
-	if_register_send (info);
-#endif
-}
-#endif
-
-#ifdef USE_SOCKET_RECEIVE
-void if_reinitialize_receive (info)
-	struct interface_info *info;
-{
-#if 0
-	once = 0;
-	close (info -> rfdesc);
-	if_register_receive (info);
-#endif
-}
-#endif
-
-#if defined (USE_SOCKET_SEND) || defined (USE_SOCKET_RECEIVE)
 /* Generic interface registration routine... */
 int if_register_socket (info)
 	struct interface_info *info;
@@ -101,14 +49,6 @@ int if_register_socket (info)
 	struct sockaddr_in name;
 	int sock;
 	int flag;
-
-#ifndef SO_BINDTODEVICE
-	/* Make sure only one interface is registered. */
-	if (once)
-		error ("The standard socket API can only support %s",
-		       "hosts with a single network interface.");
-	once = 1;
-#endif
 
 	/* Set up the address we're going to bind to. */
 	name.sin_family = AF_INET;
@@ -130,7 +70,7 @@ int if_register_socket (info)
 	flag = 1;
 	if (setsockopt (sock, SOL_SOCKET, SO_REUSEPORT,
 			(char *)&flag, sizeof flag) < 0)
-	        error ("Can't set SO_REUSEPORT option on dhcp socket: %m");
+		error ("Can't set SO_REUSEPORT option on dhcp socket: %m");
 
 	/* Set the BROADCAST option so that we can broadcast DHCP responses. */
 	if (setsockopt (sock, SOL_SOCKET, SO_BROADCAST,
@@ -141,53 +81,24 @@ int if_register_socket (info)
 	if (bind (sock, (struct sockaddr *)&name, sizeof name) < 0)
 		error ("Can't bind to dhcp address: %m");
 
-#ifdef SO_BINDTODEVICE
-	/* Bind this socket to this interface. */
-	if (setsockopt (sock, SOL_SOCKET, SO_BINDTODEVICE,
-			(char *)(info -> ifp), sizeof *(info -> ifp)) < 0) {
-		error("setting SO_BINDTODEVICE");
-	}
-#endif
-
 	return sock;
 }
-#endif /* USE_SOCKET_SEND || USE_SOCKET_RECEIVE */
 
-#ifdef USE_SOCKET_SEND
-void if_register_send (info)
+void if_register_fallback (info)
 	struct interface_info *info;
 {
-#ifndef USE_SOCKET_RECEIVE
+
 	info -> wfdesc = if_register_socket (info);
-#else
-	info -> wfdesc = info -> rfdesc;
-#endif
+
 	if (!quiet_interface_discovery)
-		note ("Sending on   Socket/%s/%s",
+		note ("Sending on   Socket/%s%s%s",
 		      info -> name,
+		      (info -> shared_network ? "/" : ""),
 		      (info -> shared_network ?
-		       info -> shared_network -> name : "unattached"));
-
+		       info -> shared_network -> name : ""));
 }
-#endif /* USE_SOCKET_SEND */
 
-#ifdef USE_SOCKET_RECEIVE
-void if_register_receive (info)
-	struct interface_info *info;
-{
-	/* If we're using the socket API for sending and receiving,
-	   we don't need to register this interface twice. */
-	info -> rfdesc = if_register_socket (info);
-	if (!quiet_interface_discovery)
-		note ("Listening on Socket/%s/%s",
-		      info -> name,
-		      (info -> shared_network ?
-		       info -> shared_network -> name : "unattached"));
-}
-#endif /* USE_SOCKET_RECEIVE */
-
-#ifdef USE_SOCKET_SEND
-ssize_t send_packet (interface, packet, raw, len, from, to, hto)
+ssize_t send_fallback (interface, packet, raw, len, from, to, hto)
 	struct interface_info *interface;
 	struct packet *packet;
 	struct dhcp_packet *raw;
@@ -197,51 +108,19 @@ ssize_t send_packet (interface, packet, raw, len, from, to, hto)
 	struct hardware *hto;
 {
 	int result;
-#ifdef IGNORE_HOSTUNREACH
-	int retry = 0;
-	do {
-#endif
-		result = sendto (interface -> wfdesc, (char *)raw, len, 0,
-				 (struct sockaddr *)to, sizeof *to);
-#ifdef IGNORE_HOSTUNREACH
-	} while (to -> sin_addr.s_addr == htonl (INADDR_BROADCAST) &&
-		 result < 0 &&
-		 (errno == EHOSTUNREACH ||
-		  errno == ECONNREFUSED) &&
-		 retry++ < 10);
-#endif
+
+	result = sendto (interface -> wfdesc, (char *)raw, len, 0,
+	  (struct sockaddr *)to, sizeof *to);
+
+	if (result == -1) {
+		warn ("send_fallback: %m");
+		if (errno == ENETUNREACH)
+			warn ("send_fallback: please consult README file %s",
+			  "regarding broadcast address.");
+	}
 	return result;
 }
-#endif /* USE_SOCKET_SEND */
 
-#ifdef USE_SOCKET_RECEIVE
-ssize_t receive_packet (interface, buf, len, from, hfrom)
-	struct interface_info *interface;
-	unsigned char *buf;
-	size_t len;
-	struct sockaddr_in *from;
-	struct hardware *hfrom;
-{
-	int flen = sizeof *from;
-	int result;
-
-#ifdef IGNORE_HOSTUNREACH
-	int retry = 0;
-	do {
-#endif
-		result = recvfrom (interface -> rfdesc, buf, len, 0,
-				   (struct sockaddr *)from, &flen);
-#ifdef IGNORE_HOSTUNREACH
-	} while (result < 0 &&
-		 (errno == EHOSTUNREACH ||
-		  errno == ECONNREFUSED) &&
-		 retry++ < 10);
-#endif
-	return result;
-}
-#endif /* USE_SOCKET_RECEIVE */
-
-#ifdef USE_SOCKET_FALLBACK
 /* This just reads in a packet and silently discards it. */
 
 void fallback_discard (protocol)
@@ -255,7 +134,6 @@ void fallback_discard (protocol)
 
 	status = recvfrom (interface -> wfdesc, buf, sizeof buf, 0,
 			   (struct sockaddr *)&from, &flen);
-	if (status < 0)
+	if (status == 0)
 		warn ("fallback_discard: %m");
 }
-#endif /* USE_SOCKET_RECEIVE */

@@ -5,7 +5,7 @@
    Based on a configuration originally supplied by Jonathan Stone. */
 
 /*
- * Copyright (c) 1996, 1998 The Internet Software Consortium.
+ * Copyright (c) 1996, 1998, 1999 The Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -48,6 +48,10 @@ typedef unsigned short u_int16_t;
 typedef unsigned long u_int32_t;
 #endif /* __BIT_TYPES_DEFINED__ */
 
+typedef u_int8_t u8;
+typedef u_int16_t u16;
+typedef u_int32_t u32;
+
 #include <syslog.h>
 #include <sys/types.h>
 #include <string.h>
@@ -63,7 +67,7 @@ extern int h_errno;
 #include <net/if.h>
 #include <net/route.h>
 
-#if defined (LINUX_1_X)
+#if LINUX_MAJOR == 1
 # include <linux/if_arp.h>
 # include <linux/time.h>		/* also necessary */
 #else
@@ -72,14 +76,19 @@ extern int h_errno;
 
 #include <sys/time.h>		/* gettimeofday()*/
 
-#ifndef _PATH_DHCPD_PID
-#define _PATH_DHCPD_PID	"/var/run/dhcpd.pid"
+/* Databases go in /var/state/dhcp.   It would also be valid to put them
+   in /var/state/misc - indeed, given that there's only one lease file, it
+   would probably be better.   However, I have some ideas for optimizing
+   the lease database that may result in a _lot_ of smaller files being
+   created, so in that context it makes more sense to have a seperate
+   directory. */
+
+#ifndef _PATH_DHCPD_DB
+#define _PATH_DHCPD_DB		"/var/state/dhcp/dhcpd.leases"
 #endif
-#ifndef _PATH_DHCLIENT_PID
-#define _PATH_DHCLIENT_PID "/var/run/dhclient.pid"
-#endif
+
 #ifndef _PATH_DHCLIENT_DB
-#define _PATH_DHCLIENT_DB "/var/db/dhclient.leases"
+#define _PATH_DHCLIENT_DB	"/var/state/dhcp/dhclient.leases"
 #endif
 
 /* Varargs stuff... */
@@ -102,9 +111,28 @@ extern int h_errno;
 #define TIME time_t
 #define GET_TIME(x)	time ((x))
 
-#if defined (USE_DEFAULT_NETWORK)
+#if (LINUX_MAJOR >= 2)
+# if (LINUX_MINOR >= 1)
+#  if defined (USE_DEFAULT_NETWORK)
+#   define USE_LPF
+#  endif
+#  define LINUX_SLASHPROC_DISCOVERY
+#  define PROCDEV_DEVICE "/proc/net/dev"
+#  define HAVE_ARPHRD_TUNNEL
+#  define HAVE_TR_SUPPORT
+# endif
+# define HAVE_ARPHRD_METRICOM
+# define HAVE_ARPHRD_IEEE802
+# define HAVE_ARPHRD_LOOPBACK
+# define HAVE_SO_BINDTODEVICE
+# define HAVE_SIOCGIFHWADDR
+#endif
+
+#if !defined (USE_LPF)
+# if defined (USE_DEFAULT_NETWORK)
 #  define USE_SOCKETS
-#  define IGNORE_HOSTUNREACH
+# endif
+# define IGNORE_HOSTUNREACH
 #endif
 
 #define ALIAS_NAMES_PERMUTED

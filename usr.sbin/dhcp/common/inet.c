@@ -64,8 +64,9 @@ struct iaddr subnet_number (addr, mask)
 }
 
 /* Combine a network number and a integer to produce an internet address.
-   This won't work for subnets with more than 32 bits of host address, but
-   maybe this isn't a problem. */
+ * This won't work for subnets with more than 32 bits of host address, but
+ * maybe this isn't a problem. 
+ */
 
 struct iaddr ip_addr (subnet, mask, host_address)
 	struct iaddr subnet;
@@ -163,16 +164,21 @@ int addr_eq (addr1, addr2)
 char *piaddr (addr)
 	struct iaddr addr;
 {
-	static char pbuf [4 * 16];
-	char *s = pbuf;
-	int i;
+	static char pbuf [32];
+	char *s;
+	struct in_addr a;
+	
+	memcpy(&a, &(addr.iabuf), sizeof(struct in_addr));
 
 	if (addr.len == 0) {
-		strcpy (s, "<null address>");
+		strlcpy (pbuf, "<null address>", sizeof(pbuf));
 	}
-	for (i = 0; i < addr.len; i++) {
-		sprintf (s, "%s%d", i ? "." : "", addr.iabuf [i]);
-		s += strlen (s);
-	}
-	return pbuf;
+	else {
+		s = inet_ntoa(a);
+		if (s != NULL)
+			strlcpy(pbuf, s, sizeof(pbuf));
+		else
+			strlcpy (pbuf, "<invalid address>", sizeof(pbuf));
+	}	
+	return(pbuf);
 }

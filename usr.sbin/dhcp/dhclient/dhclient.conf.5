@@ -248,7 +248,7 @@ statement.
 .PP
 If for some set of options the client should always use its own value
 rather than any value supplied by the server, these values can be
-defined in the
+defined in the 
 .B supersede
 statement.
 .PP
@@ -259,14 +259,15 @@ statement.
  \fBprepend { [ \fIoption declaration\fR ]
 [\fB,\fI ... \fIoption declaration\fR ]\fB}\fR
 .PP
-If for some set of options the client should first a value it
-supplies, and then use the values supplied by
+If for some set of options the client should use a value you
+supply, and then use the values supplied by
 the server, if any, these values can be defined in the
 .B prepend
 statement.   The
 .B prepend
 statement can only be used for options which
-allow more than one value to be given.
+allow more than one value to be given.   This restriction is not
+enforced - if violated, the results are unpredictable.
 .PP
 .I The
 .B append
@@ -275,14 +276,15 @@ allow more than one value to be given.
  \fBappend { [ \fIoption declaration\fR ]
 [\fB,\fI ... \fIoption declaration\fR ]\fB}\fR
 .PP
-If for some set of options the client should first a value it
-supplies, and then use the values supplied by
-the server, if any, these values can be defined in the
+If for some set of options the client should first use the values
+supplied by the server, if any, and then use values you supply, these
+values can be defined in the
 .B append
 statement.   The
 .B append
 statement can only be used for options which
-allow more than one value to be given.
+allow more than one value to be given.   This restriction is not
+enforced - if you ignore it, the behaviour will be unpredictable.
 .SH LEASE DECLARATIONS
 .PP
 .I The
@@ -292,7 +294,7 @@ allow more than one value to be given.
  \fBlease {\fR \fIlease-declaration\fR [ ... \fIlease-declaration ] \fB}\fR
 .PP
 The DHCP client may decide after some period of time (see \fBPROTOCOL
-TIMING\fR) that it is not going to succeed in contacting a
+TIMING\fR) decide that it is not going to succeed in contacting a
 server.   At that time, it consults its own database of old leases and
 tests each one that has not yet timed out by pinging the listed router
 for that lease to see if that lease could work.   It is possible to
@@ -378,7 +380,7 @@ interface's final configuration once a lease has been acquired.   If
 no lease is acquired, the script is used to test predefined leases, if
 any, and also called once if no valid lease can be identified.   For
 more information, see
-.B dhclient-script(8).
+.B dhclient-lease(8).
 .PP
  \fBmedium "\fImedia setup\fB";\fR
 .PP
@@ -389,7 +391,7 @@ automatically determine the type of network to which they are
 connected.  The media setup string is a system-dependent parameter
 which is passed to the dhcp client configuration script when
 initializing the interface.  On Unix and Unix-like systems, the
-argument is passed on the ifconfig command line when configuring the
+argument is passed on the ifconfig command line when configuring te
 interface.
 .PP
 The dhcp client automatically declares this parameter if it used a
@@ -430,8 +432,8 @@ specified as zero.  The year is specified with the century, so it
 should generally be four digits except for really long leases.  The
 month is specified as a number starting with 1 for January.  The day
 of the month is likewise specified starting with 1.  The hour is a
-number between 0 and 23, the minute a number between 0 and 60, and the
-second also a number between 0 and 60.
+number between 0 and 23, the minute a number between 0 and 69, and the
+second also a number between 0 and 69.
 .SH ALIAS DECLARATIONS
  \fBalias { \fI declarations ... \fB}\fR
 .PP
@@ -518,7 +520,7 @@ interface "ep0" {
     request subnet-mask, broadcast-address, time-offset, routers,
 	    domain-name, domain-name-servers, host-name;
     require subnet-mask, domain-name-servers;
-    script "/sbin/dhclient-script";
+    script "/etc/dhclient-script";
     media "media 10baseT/UTP", "media 10base2/BNC";
 }
 

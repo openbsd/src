@@ -37,7 +37,7 @@
 .\" Enterprises, see ``http://www.vix.com''.
 .TH dhcpd 8
 .SH NAME
-dhcpd - Dynamic Host Configuration Protocol (DHCP)Server
+dhcpd - Dynamic Host Configuration Protocol Server
 .SH SYNOPSIS
 .B dhcpd
 [
@@ -74,13 +74,6 @@ Protocol (BOOTP).  DHCP allows hosts on a TCP/IP network to request
 and be assigned IP addresses, and also to discover information about
 the network to which they are attached.  BOOTP provides similar
 functionality, with certain restrictions.
-.SH SYSTEM REQUIREMENTS
-There \fPmust\fR be a /etc/dhcpd.conf file.   There \fBmust\fR
-be a /var/db/dhcpd.leases file.   This file can initially be created by
-typing \fItouch /var/db/dhcpd.leases\fR.   You must have the Berkeley
-Packet Filter (bpf) configured in your kernel.   You must have
-at least one /dev/bpf* file for each broadcast network interface that
-is attached to your system.
 .SH OPERATION
 .PP
 The DHCP protocol allows a host which is unknown to the network
@@ -123,8 +116,8 @@ contain all the lease information, so there is no need for a special
 crash recovery process.
 .PP
 BOOTP support is also provided by this server.  Unlike DHCP, the BOOTP
-protocol does not provides a protocol for recovering
-dynamically assigned addresses once they are no longer needed.   It is
+protocol does not provide a protocol for recovering
+dynamically-assigned addresses once they are no longer needed.   It is
 still possible to dynamically assign addresses to BOOTP clients, but
 some administrative process for reclaiming addresses is required.   By
 default, leases are granted to BOOTP clients in perpetuity, although
@@ -138,7 +131,7 @@ BOOTP client, permanently assigning an address to each client.
 Whenever changes are made to the dhcpd.conf file, dhcpd must be
 restarted.   To restart dhcpd, send a SIGTERM (signal 15) to the
 process ID contained in
-.IR /var/run/dhcpd.pid ,
+.IR RUNDIR/dhcpd.pid ,
 and then re-invoke dhcpd.  Because the DHCP server database is not as
 lightweight as a BOOTP database, dhcpd does not automatically restart
 itself when it sees a change to the dhcpd.conf file.
@@ -157,7 +150,7 @@ broadcasts may be specified on the command line.  This should be done
 on systems where dhcpd is unable to identify non-broadcast interfaces,
 but should not be required on other systems.  If no interface names
 are specified on the command line dhcpd will identify all network
-interfaces which are up, eliminating non-broadcast interfaces if
+interfaces which are up, elimininating non-broadcast interfaces if
 possible, and listen for DHCP broadcasts on each interface.
 .PP
 If dhcpd should listen on a port other than the standard (port 67),
@@ -165,6 +158,18 @@ the
 .B -p
 flag may used.  It should be followed by the udp port number on which
 dhcpd should listen.  This is mostly useful for debugging purposes.
+If the
+.B -p
+flag is specified, the server will transmit responses to clients at a
+port number that is one greater than the one specified - i.e., if you
+specify
+.B -p
+67, then the server will listen on port 67 and transmit to port 68.
+Datagrams that must go through relay agents are sent to the port
+number specified with the
+.B -p
+flag - if you wish to use alternate port numbers, you must configure
+any relay agents you are using to use the same alternate port numbers.
 .PP
 To run dhcpd as a foreground process, rather than allowing it to run
 as a daemon in the background, the
@@ -195,7 +200,7 @@ startup.   To avoid printing this message, the
 .B -q
 flag may be specified.
 .SH CONFIGURATION
-The syntax of the dhcpd.conf(5) file is discussed separately.   This
+The syntax of the dhcpd.conf(5) file is discussed seperately.   This
 section should be used as an overview of the configuration process,
 and the dhcpd.conf(5) documentation should be consulted for detailed
 reference information.
@@ -279,7 +284,7 @@ client declaration might look like this:
 	}
 .fi
 .SH Options
-DHCP (and also BOOTP with Vendor Extensions) provide a mechanism
+DHCP (and also BOOTP with Vendor Extensions) provides a mechanism
 whereby the server can provide the client with information about how
 to configure its network interface (e.g., subnet mask), and also how
 the client can access various network services (e.g., DNS, IP routers,
@@ -320,10 +325,10 @@ use a different name server might be declared as follows:
 A more complete description of the dhcpd.conf file syntax is provided
 in dhcpd.conf(5).
 .SH FILES
-.B /etc/dhcpd.conf, /var/db/dhcpd.leases, /var/run/dhcpd.pid,
-.B /var/db/dhcpd.leases~.
+.B ETCDIR/dhcpd.conf, DBDIR/dhcpd.leases, RUNDIR/dhcpd.pid,
+.B DBDIR/dhcpd.leases~.
 .SH SEE ALSO
-dhclient(8), dhcrelay(8), dhcpd.conf(5), dhcpd.leases(5), bpf(4)
+dhclient(8), dhcrelay(8), dhcpd.conf(5), dhcpd.leases(5)
 .SH AUTHOR
 .B dhcpd(8)
 was written by Ted Lemon <mellon@vix.com>

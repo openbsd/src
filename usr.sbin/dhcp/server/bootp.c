@@ -3,7 +3,7 @@
    BOOTP Protocol support. */
 
 /*
- * Copyright (c) 1995, 1996 The Internet Software Consortium.
+ * Copyright (c) 1995, 1996, 1998, 1999 The Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -40,11 +40,6 @@
  * Enterprises, see ``http://www.vix.com''.
  */
 
-#ifndef lint
-static char copyright[] =
-"$Id: bootp.c,v 1.1 1998/08/18 03:43:34 deraadt Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
-#endif /* not lint */
-
 #include "dhcpd.h"
 
 void bootp (packet)
@@ -67,13 +62,14 @@ void bootp (packet)
 	if (packet -> raw -> op != BOOTREQUEST)
 		return;
 
-	note ("BOOTREQUEST from %s via %s",
+	note ("BOOTREQUEST from %s via %s%s",
 	      print_hw_addr (packet -> raw -> htype,
 			     packet -> raw -> hlen,
 			     packet -> raw -> chaddr),
 	      packet -> raw -> giaddr.s_addr
 	      ? inet_ntoa (packet -> raw -> giaddr)
-	      : packet -> interface -> name);
+	      : packet -> interface -> name,
+	      packet -> options_valid ? "" : " (non-rfc1048)");
 
 
 
@@ -110,13 +106,21 @@ void bootp (packet)
 
 		if (host && (!host -> group -> allow_booting)) {
 			note ("Ignoring excluded BOOTP client %s",
-			      host -> name);
+			      host -> name
+			      ? host -> name
+			      : print_hw_addr (packet -> raw -> htype,
+					       packet -> raw -> hlen,
+					       packet -> raw -> chaddr));
 			return;
 		}
 			
 		if (host && (!host -> group -> allow_bootp)) {
 			note ("Ignoring BOOTP request from client %s",
-			      host -> name);
+			      host -> name
+			      ? host -> name
+			      : print_hw_addr (packet -> raw -> htype,
+					       packet -> raw -> hlen,
+					       packet -> raw -> chaddr));
 			return;
 		}
 			
@@ -224,11 +228,15 @@ void bootp (packet)
 
 	/* If we didn't get a known vendor magic number on the way in,
 	   just copy the input options to the output. */
-	if (!packet -> options_valid) {
+	if (!packet -> options_valid &&
+	    !subnet -> group -> always_reply_rfc1048 &&
+	    (!hp || !hp -> group -> always_reply_rfc1048)) {
 		memcpy (outgoing.raw -> options,
 			packet -> raw -> options, DHCP_OPTION_LEN);
 		outgoing.packet_length = BOOTP_MIN_LEN;
 	} else {
+		struct tree_cache netmask_tree;   /*  -- RBF */
+
 		/* Come up with a list of options that we want to send
 		   to this client.  Start with the per-subnet options,
 		   and then override those with client-specific
@@ -241,12 +249,25 @@ void bootp (packet)
 				options [i] = hp -> group -> options [i];
 		}
 
+		/* Use the subnet mask from the subnet declaration if no other
+		   mask has been provided. */
+		if (!options [DHO_SUBNET_MASK]) {
+			options [DHO_SUBNET_MASK] = &netmask_tree;
+			netmask_tree.flags = TC_TEMPORARY;
+			netmask_tree.value = lease -> subnet -> netmask.iabuf;
+			netmask_tree.len = lease -> subnet -> netmask.len;
+			netmask_tree.buf_size = lease -> subnet -> netmask.len;
+			netmask_tree.timeout = 0xFFFFFFFF;
+			netmask_tree.tree = (struct tree *)0;
+		}
+
 		/* Pack the options into the buffer.  Unlike DHCP, we
 		   can't pack options into the filename and server
 		   name buffers. */
 
 		outgoing.packet_length =
-			cons_options (packet, outgoing.raw, options, 0, 0, 1);
+			cons_options (packet, outgoing.raw,
+				      0, options, 0, 0, 1, (u_int8_t *)0, 0);
 		if (outgoing.packet_length < BOOTP_MIN_LEN)
 			outgoing.packet_length = BOOTP_MIN_LEN;
 	}
@@ -255,13 +276,11 @@ void bootp (packet)
 	raw.op = BOOTREPLY;
 	raw.htype = packet -> raw -> htype;
 	raw.hlen = packet -> raw -> hlen;
-	memcpy (raw.chaddr, packet -> raw -> chaddr, raw.hlen);
-	memset (&raw.chaddr [raw.hlen], 0,
-		(sizeof raw.chaddr) - raw.hlen);
+	memcpy (raw.chaddr, packet -> raw -> chaddr, sizeof raw.chaddr);
 	raw.hops = packet -> raw -> hops;
 	raw.xid = packet -> raw -> xid;
 	raw.secs = packet -> raw -> secs;
-	raw.flags = 0;
+	raw.flags = packet -> raw -> flags;
 	raw.ciaddr = packet -> raw -> ciaddr;
 	memcpy (&raw.yiaddr, ip_address.iabuf, sizeof raw.yiaddr);
 
@@ -276,22 +295,21 @@ void bootp (packet)
 		raw.siaddr = packet -> interface -> primary_address;
 
 	raw.giaddr = packet -> raw -> giaddr;
-	if (hp -> group -> server_name) {
+	if (hp -> group -> server_name)
 		strncpy (raw.sname, hp -> group -> server_name,
-			 (sizeof raw.sname) - 1);
-		raw.sname [(sizeof raw.sname) - 1] = 0;
-	}
+			 (sizeof raw.sname));
+	else if (subnet -> group -> server_name)
+		strncpy (raw.sname, subnet -> group -> server_name,
+			 (sizeof raw.sname));
 
-	/* If the client requested a specific boot file, echo it 
-	   back per RFC951; some clients are unable to boot properly
-	   without this (e.g. DECstations). */
-	if (packet -> raw -> file[0] != '\0')
-		memcpy (raw.file, packet -> raw -> file, sizeof raw.file);
-	else if (hp -> group -> filename) {
+	if (hp -> group -> filename)
 		strncpy (raw.file, hp -> group -> filename,
-			(sizeof raw.file) - 1); 
-		raw.file [(sizeof raw.file) - 1] = 0;
-	}
+			 (sizeof raw.file));
+	else if (subnet -> group -> filename)
+		strncpy (raw.file, subnet -> group -> filename,
+			 (sizeof raw.file));
+	else
+		memcpy (raw.file, packet -> raw -> file, sizeof raw.file);
 
 	/* Set up the hardware destination address... */
 	hto.htype = packet -> raw -> htype;
@@ -322,15 +340,23 @@ void bootp (packet)
 		to.sin_addr = raw.giaddr;
 		to.sin_port = local_port;
 
-#ifdef USE_FALLBACK
-		result = send_fallback (&fallback_interface,
-					(struct packet *)0,
-					&raw, outgoing.packet_length,
-					from, &to, &hto);
-		if (result < 0)
-			warn ("send_fallback: %m");
-		return;
-#endif
+		if (fallback_interface) {
+			result = send_packet (fallback_interface,
+					      (struct packet *)0,
+					      &raw, outgoing.packet_length,
+					      from, &to, &hto);
+			return;
+		}
+
+	/* If it comes from a client that already knows its address
+	   and is not requesting a broadcast response, and we can
+	   unicast to a client without using the ARP protocol, sent it
+	   directly to that client. */
+	} else if (!(raw.flags & htons (BOOTP_BROADCAST)) &&
+		   can_unicast_without_arp ()) {
+		to.sin_addr = raw.yiaddr;
+		to.sin_port = remote_port;
+
 	/* Otherwise, broadcast it on the local network. */
 	} else {
 		to.sin_addr.s_addr = INADDR_BROADCAST;
@@ -341,6 +367,4 @@ void bootp (packet)
 	result = send_packet (packet -> interface,
 			      packet, &raw, outgoing.packet_length,
 			      from, &to, &hto);
-	if (result < 0)
-		warn ("send_packet: %m");
 }

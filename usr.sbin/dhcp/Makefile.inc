@@ -33,10 +33,15 @@
 .include <bsd.obj.mk>
 
 .PATH:	${.CURDIR}/../common
-SRCS+=	raw.c parse.c nit.c icmp.c dispatch.c conflex.c upf.c bpf.c socket.c \
-	packet.c memory.c print.c options.c inet.c convert.c sysconf.c \
-	tree.c tables.c hash.c alloc.c errwarn.c inet_addr.c dns.c resolv.c
-CPPFLAGS+= -I${.CURDIR}/.. -I${.CURDIR}/../includes
+
+CLIENT_PATH = '"PATH=/usr/bin:/usr/sbin:/bin:/sbin"'
+
+SRCS += alloc.c dispatch.c hash.c memory.c print.c bpf.c icmp.c options.c \
+	tree.c conflex.c errwarn.c inet.c packet.c socket.c convert.c \
+	ethernet.c parse.c tables.c
+
+CPPFLAGS+= -I${.CURDIR}/.. -I${.CURDIR}/../includes \
+	-DCLIENT_PATH=${CLIENT_PATH} -Wall -Werror
 
 .if exists(${.CURDIR}/../../Makefile.inc)
 .include "${.CURDIR}/../../Makefile.inc"

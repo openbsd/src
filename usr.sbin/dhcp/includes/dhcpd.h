@@ -3,8 +3,8 @@
    Definitions for dhcpd... */
 
 /*
- * Copyright (c) 1995, 1996, 1997 The Internet Software Consortium.
- * All rights reserved.
+ * Copyright (c) 1995, 1996, 1997, 1998, 1999
+ * The Internet Software Consortium.    All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -75,7 +75,7 @@ struct option_data {
 
 struct string_list {
 	struct string_list *next;
-	char string [1];
+	char *string;
 };
 
 /* A name server, from /etc/resolv.conf. */
@@ -106,6 +106,8 @@ struct packet {
 					   of local sender (maybe gateway). */
 	struct shared_network *shared_network;
 	struct option_data options [256];
+	int got_requested_address;	/* True if client sent the
+					   dhcp-requested-address option. */
 };
 
 struct hardware {
@@ -144,7 +146,7 @@ struct lease {
 #	define ABANDONED_LEASE		16
 
 	struct lease_state *state;
-        u_int8_t releasing;
+	u_int8_t releasing;
 };
 
 struct lease_state {
@@ -156,7 +158,20 @@ struct lease_state {
 
 	struct tree_cache *options [256];
 	u_int32_t expiry, renewal, rebind;
-	char *filename, *server_name;
+	char filename [DHCP_FILE_LEN];
+	char *server_name;
+
+	struct iaddr from;
+
+	int max_message_size;
+	u_int8_t *prl;
+	int prl_len;
+	int got_requested_address;	/* True if client sent the
+					   dhcp-requested-address option. */
+	int got_server_identifier;	/* True if client sent the
+					   dhcp-server-identifier option. */
+	struct shared_network *shared_network;	/* Shared network of interface
+						   on which request arrived. */
 
 	u_int32_t xid;
 	u_int16_t secs;
@@ -205,6 +220,9 @@ struct group {
 	int one_lease_per_client;
 	int get_lease_hostnames;
 	int use_host_decl_names;
+	int use_lease_addr_for_default_route;
+	int authoritative;
+	int always_reply_rfc1048;
 
 	struct tree_cache *options [256];
 };
@@ -328,6 +346,7 @@ struct client_state {
 	enum dhcp_state state;		/* Current state for this interface. */
 	struct iaddr destination;		    /* Where to send packet. */
 	u_int32_t xid;					  /* Transaction ID. */
+	u_int16_t secs;			    /* secs value from DHCPDISCOVER. */
 	TIME first_sending;			/* When was first copy sent? */
 	TIME interval;		      /* What's the current resend interval? */
 	struct string_list *medium;		   /* Last media type tried. */
@@ -338,6 +357,12 @@ struct client_state {
 	struct iaddr requested_address;	    /* Address we would like to get. */
 
 	struct client_config *config;	    /* Information from config file. */
+
+	char **scriptEnv;  /* Client script env */
+	int scriptEnvsize; /* size of the env table */
+
+	struct string_list *env;	       /* Client script environment. */
+	int envc;			/* Number of entries in environment. */
 };
 
 /* Information about each network interface. */
@@ -364,9 +389,9 @@ struct interface_info {
 
 	/* Only used by DHCP client code. */
 	struct client_state *client;
-        int noifmedia;
-        int errors;
-        int dead;
+	int noifmedia;
+	int errors;
+	int dead;
 };
 
 struct hardware_link {
@@ -456,15 +481,16 @@ typedef unsigned char option_mask [16];
 
 void parse_options PROTO ((struct packet *));
 void parse_option_buffer PROTO ((struct packet *, unsigned char *, int));
-int cons_options PROTO ((struct packet *, struct dhcp_packet *,
-			  struct tree_cache **, int, int, int));
+int cons_options PROTO ((struct packet *, struct dhcp_packet *, int,
+			 struct tree_cache **, int, int, int,
+			 u_int8_t *, int));
 int store_options PROTO ((unsigned char *, int, struct tree_cache **,
 			   unsigned char *, int, int, int, int));
 char *pretty_print_option PROTO ((unsigned int,
 				  unsigned char *, int, int, int));
 void do_packet PROTO ((struct interface_info *,
-		       unsigned char *, int,
-		       unsigned short, struct iaddr, struct hardware *));
+		       struct dhcp_packet *, int,
+		       unsigned int, struct iaddr, struct hardware *));
 
 /* errwarn.c */
 extern int warnings_occurred;
@@ -473,7 +499,6 @@ int warn PROTO ((char *, ...));
 int note PROTO ((char *, ...));
 int debug PROTO ((char *, ...));
 int parse_warn PROTO ((char *, ...));
-void write_pidfile PROTO((char *, pid_t));
 
 /* dhcpd.c */
 extern TIME cur_time;
@@ -483,10 +508,6 @@ extern u_int16_t local_port;
 extern u_int16_t remote_port;
 extern int log_priority;
 extern int log_perror;
-
-#ifdef USE_FALLBACK
-extern struct interface_info fallback_interface;
-#endif
 
 extern char *path_dhcpd_conf;
 extern char *path_dhcpd_db;
@@ -558,7 +579,7 @@ void dhcprelease PROTO ((struct packet *));
 void dhcpdecline PROTO ((struct packet *));
 void dhcpinform PROTO ((struct packet *));
 void nak_lease PROTO ((struct packet *, struct iaddr *cip));
-void ack_lease PROTO ((struct packet *, struct lease *, unsigned char, TIME));
+void ack_lease PROTO ((struct packet *, struct lease *, unsigned int, TIME));
 void dhcp_reply PROTO ((struct lease *));
 struct lease *find_lease PROTO ((struct packet *,
 				 struct shared_network *, int *));
@@ -582,6 +603,7 @@ extern struct subnet *find_grouped_subnet PROTO ((struct shared_network *,
 						  struct iaddr));
 extern struct subnet *find_subnet PROTO ((struct iaddr));
 void enter_shared_network PROTO ((struct shared_network *));
+int subnet_inner_than PROTO ((struct subnet *, struct subnet *, int));
 void enter_subnet PROTO ((struct subnet *));
 void enter_lease PROTO ((struct lease *));
 int supersede_lease PROTO ((struct lease *, struct lease *, int));
@@ -595,7 +617,7 @@ void uid_hash_delete PROTO ((struct lease *));
 void hw_hash_add PROTO ((struct lease *));
 void hw_hash_delete PROTO ((struct lease *));
 struct class *add_class PROTO ((int, char *));
-struct class *find_class PROTO ((int, char *, int));
+struct class *find_class PROTO ((int, unsigned char *, int));
 struct group *clone_group PROTO ((struct group *, char *));
 void write_leases PROTO ((void));
 void dump_subnets PROTO ((void));
@@ -619,6 +641,7 @@ struct protocol *new_protocol PROTO ((char *));
 struct lease_state *new_lease_state PROTO ((char *));
 struct domain_search_list *new_domain_search_list PROTO ((char *));
 struct name_server *new_name_server PROTO ((char *));
+struct string_list *new_string_list PROTO ((size_t size, char * name));
 void free_name_server PROTO ((struct name_server *, char *));
 void free_domain_search_list PROTO ((struct domain_search_list *, char *));
 void free_lease_state PROTO ((struct lease_state *, char *));
@@ -634,6 +657,7 @@ void free_tree_cache PROTO ((struct tree_cache *, char *));
 void free_packet PROTO ((struct packet *, char *));
 void free_dhcp_packet PROTO ((struct dhcp_packet *, char *));
 void free_tree PROTO ((struct tree *, char *));
+void free_string_list PROTO ((struct string_list *, char *));
 
 /* print.c */
 char *print_hw_addr PROTO ((int, int, unsigned char *));
@@ -648,14 +672,13 @@ void hash_dump PROTO ((struct hash_table *));
 int if_register_socket PROTO ((struct interface_info *));
 #endif
 
-#ifdef USE_SOCKET_FALLBACK
+#if defined (USE_SOCKET_FALLBACK) && !defined (USE_SOCKET_SEND)
 void if_reinitialize_fallback PROTO ((struct interface_info *));
 void if_register_fallback PROTO ((struct interface_info *));
 ssize_t send_fallback PROTO ((struct interface_info *,
 			      struct packet *, struct dhcp_packet *, size_t, 
 			      struct in_addr,
 			      struct sockaddr_in *, struct hardware *));
-void fallback_discard PROTO ((struct protocol *));
 #endif
 
 #ifdef USE_SOCKET_SEND
@@ -666,6 +689,9 @@ ssize_t send_packet PROTO ((struct interface_info *,
 			    struct in_addr,
 			    struct sockaddr_in *, struct hardware *));
 #endif
+#if defined (USE_SOCKET_FALLBACK)
+void fallback_discard PROTO ((struct protocol *));
+#endif
 #ifdef USE_SOCKET_RECEIVE
 void if_reinitialize_receive PROTO ((struct interface_info *));
 void if_register_receive PROTO ((struct interface_info *));
@@ -673,8 +699,10 @@ ssize_t receive_packet PROTO ((struct interface_info *,
 			       unsigned char *, size_t,
 			       struct sockaddr_in *, struct hardware *));
 #endif
-#if defined (USE_SOCKET_SEND) && !defined (USE_SOCKET_FALLBACK)
-void if_enable PROTO ((struct interface_info *));
+#if defined (USE_SOCKET_SEND)
+int can_unicast_without_arp PROTO ((void));
+int can_receive_unicast_unconfigured PROTO ((struct interface_info *));
+void maybe_setup_fallback PROTO ((void));
 #endif
 
 /* bpf.c */
@@ -697,7 +725,34 @@ ssize_t receive_packet PROTO ((struct interface_info *,
 			       struct sockaddr_in *, struct hardware *));
 #endif
 #if defined (USE_BPF_SEND)
-void if_enable PROTO ((struct interface_info *));
+int can_unicast_without_arp PROTO ((void));
+int can_receive_unicast_unconfigured PROTO ((struct interface_info *));
+void maybe_setup_fallback PROTO ((void));
+#endif
+
+/* lpf.c */
+#if defined (USE_LPF_SEND) || defined (USE_LPF_RECEIVE)
+int if_register_lpf PROTO ( (struct interface_info *));
+#endif
+#ifdef USE_LPF_SEND
+void if_reinitialize_send PROTO ((struct interface_info *));
+void if_register_send PROTO ((struct interface_info *));
+ssize_t send_packet PROTO ((struct interface_info *,
+			    struct packet *, struct dhcp_packet *, size_t,
+			    struct in_addr,
+			    struct sockaddr_in *, struct hardware *));
+#endif
+#ifdef USE_LPF_RECEIVE
+void if_reinitialize_receive PROTO ((struct interface_info *));
+void if_register_receive PROTO ((struct interface_info *));
+ssize_t receive_packet PROTO ((struct interface_info *,
+			       unsigned char *, size_t,
+			       struct sockaddr_in *, struct hardware *));
+#endif
+#if defined (USE_LPF_SEND)
+int can_unicast_without_arp PROTO ((void));
+int can_receive_unicast_unconfigured PROTO ((struct interface_info *));
+void maybe_setup_fallback PROTO ((void));
 #endif
 
 /* nit.c */
@@ -720,8 +775,31 @@ ssize_t receive_packet PROTO ((struct interface_info *,
 			       unsigned char *, size_t,
 			       struct sockaddr_in *, struct hardware *));
 #endif
-#if defined (USE_BPF_SEND)
-void if_enable PROTO ((struct interface_info *));
+#if defined (USE_NIT_SEND)
+int can_unicast_without_arp PROTO ((void));
+int can_receive_unicast_unconfigured PROTO ((struct interface_info *));
+void maybe_setup_fallback PROTO ((void));
+#endif
+
+#ifdef USE_DLPI_SEND
+void if_reinitialize_send PROTO ((struct interface_info *));
+void if_register_send PROTO ((struct interface_info *));
+ssize_t send_packet PROTO ((struct interface_info *,
+			    struct packet *, struct dhcp_packet *, size_t,
+			    struct in_addr,
+			    struct sockaddr_in *, struct hardware *));
+#endif
+#ifdef USE_DLPI_RECEIVE
+void if_reinitialize_receive PROTO ((struct interface_info *));
+void if_register_receive PROTO ((struct interface_info *));
+ssize_t receive_packet PROTO ((struct interface_info *,
+			       unsigned char *, size_t,
+			       struct sockaddr_in *, struct hardware *));
+#endif
+#if defined (USE_DLPI_SEND)
+int can_unicast_without_arp PROTO ((void));
+int can_receive_unicast_unconfigured PROTO ((struct interface_info *));
+void maybe_setup_fallback PROTO ((void));
 #endif
 
 /* raw.c */
@@ -732,24 +810,28 @@ ssize_t send_packet PROTO ((struct interface_info *,
 			    struct packet *, struct dhcp_packet *, size_t,
 			    struct in_addr,
 			    struct sockaddr_in *, struct hardware *));
+int can_unicast_without_arp PROTO ((void));
+int can_receive_unicast_unconfigured PROTO ((struct interface_info *));
+void maybe_setup_fallback PROTO ((void));
 #endif
 
 /* dispatch.c */
-extern struct interface_info *interfaces, *dummy_interfaces;
+extern struct interface_info *interfaces,
+	*dummy_interfaces, *fallback_interface;
 extern struct protocol *protocols;
 extern int quiet_interface_discovery;
 extern void (*bootp_packet_handler) PROTO ((struct interface_info *,
-				     unsigned char *, int, unsigned short,
-				     struct iaddr, struct hardware *));
+					    struct dhcp_packet *, int,
+					    unsigned int,
+					    struct iaddr, struct hardware *));
 extern struct timeout *timeouts;
 void discover_interfaces PROTO ((int));
+struct interface_info *setup_fallback PROTO ((void));
 void reinitialize_interfaces PROTO ((void));
 void dispatch PROTO ((void));
 int locate_network PROTO ((struct packet *));
+void got_one PROTO ((struct protocol *));
 void add_timeout PROTO ((TIME, void (*) PROTO ((void *)), void *));
-#if 0
-void add_fast_timeout PROTO ((UTIME, void (*) PROTO ((void *)), void *));
-#endif
 void cancel_timeout PROTO ((void (*) PROTO ((void *)), void *));
 void add_protocol PROTO ((char *, int,
 			  void (*) PROTO ((struct protocol *)), void *));
@@ -758,9 +840,10 @@ void remove_protocol PROTO ((struct protocol *));
 
 /* hash.c */
 struct hash_table *new_hash PROTO ((void));
-void add_hash PROTO ((struct hash_table *, char *, int, unsigned char *));
-void delete_hash_entry PROTO ((struct hash_table *, char *, int));
-unsigned char *hash_lookup PROTO ((struct hash_table *, char *, int));
+void add_hash PROTO ((struct hash_table *, unsigned char *,
+		      int, unsigned char *));
+void delete_hash_entry PROTO ((struct hash_table *, unsigned char *, int));
+unsigned char *hash_lookup PROTO ((struct hash_table *, unsigned char *, int));
 
 /* tables.c */
 extern struct option dhcp_options [256];
@@ -778,8 +861,8 @@ u_int16_t getUShort PROTO ((unsigned char *));
 int16_t getShort PROTO ((unsigned char *));
 void putULong PROTO ((unsigned char *, u_int32_t));
 void putLong PROTO ((unsigned char *, int32_t));
-void putUShort PROTO ((unsigned char *, u_int16_t));
-void putShort PROTO ((unsigned char *, int16_t));
+void putUShort PROTO ((unsigned char *, unsigned int));
+void putShort PROTO ((unsigned char *, int));
 
 /* inet.c */
 struct iaddr subnet_number PROTO ((struct iaddr, struct iaddr));
@@ -823,14 +906,19 @@ void make_release PROTO ((struct interface_info *, struct client_lease *));
 void free_client_lease PROTO ((struct client_lease *));
 void rewrite_client_leases PROTO ((void));
 void write_client_lease PROTO ((struct interface_info *,
-				 struct client_lease *));
-char *dhcp_option_ev_name PROTO ((struct option *));
+				 struct client_lease *, int));
 
 void script_init PROTO ((struct interface_info *, char *,
 			 struct string_list *));
 void script_write_params PROTO ((struct interface_info *,
 				 char *, struct client_lease *));
 int script_go PROTO ((struct interface_info *));
+void client_envadd PROTO ((struct client_state *,
+			   const char *, const char *, const char *, ...));
+void script_set_env (struct client_state *, const char *, const char *,
+		     const char *);
+void script_flush_env(struct client_state *);
+int dhcp_option_ev_name (char *, size_t, struct option *);
 
 struct client_lease *packet_to_lease PROTO ((struct packet *));
 void go_daemon PROTO ((void));
@@ -850,13 +938,27 @@ u_int32_t wrapsum PROTO ((u_int32_t));
 void assemble_hw_header PROTO ((struct interface_info *, unsigned char *,
 				int *, struct hardware *));
 void assemble_udp_ip_header PROTO ((struct interface_info *, unsigned char *,
-				    int *, u_int32_t, u_int32_t, u_int16_t,
+				    int *, u_int32_t, u_int32_t, unsigned int,
 				    unsigned char *, int));
 ssize_t decode_hw_header PROTO ((struct interface_info *, unsigned char *,
 				 int, struct hardware *));
 ssize_t decode_udp_ip_header PROTO ((struct interface_info *, unsigned char *,
 				     int, struct sockaddr_in *,
 				     unsigned char *, int));
+
+/* ethernet.c */
+void assemble_ethernet_header PROTO ((struct interface_info *, unsigned char *,
+				      int *, struct hardware *));
+ssize_t decode_ethernet_header PROTO ((struct interface_info *,
+				       unsigned char *,
+				       int, struct hardware *));
+
+/* tr.c */
+void assemble_tr_header PROTO ((struct interface_info *, unsigned char *,
+				int *, struct hardware *));
+ssize_t decode_tr_header PROTO ((struct interface_info *,
+				 unsigned char *,
+				 int, struct hardware *));
 
 /* dhxpxlt.c */
 void convert_statement PROTO ((FILE *));
@@ -917,8 +1019,8 @@ int parse_ip_addr PROTO ((FILE *, struct iaddr *));
 void parse_reject_statement PROTO ((FILE *, struct client_config *));
 
 /* dhcrelay.c */
-void relay PROTO ((struct interface_info *, u_int8_t *, int,
-		   unsigned short, struct iaddr, struct hardware *));
+void relay PROTO ((struct interface_info *, struct dhcp_packet *, int,
+		   unsigned int, struct iaddr, struct hardware *));
 
 /* icmp.c */
 void icmp_startup PROTO ((int, void (*) PROTO ((struct iaddr,
@@ -941,7 +1043,7 @@ struct sockaddr_in *pick_name_server PROTO ((void));
 
 /* inet_addr.c */
 #ifdef NEED_INET_ATON
-int inet_aton PROTO ((char *, struct in_addr *));
+int inet_aton PROTO ((const char *, struct in_addr *));
 #endif
 
 /* sysconf.c */

@@ -40,18 +40,12 @@
  * Enterprises, see ``http://www.vix.com''.
  */
 
-#ifndef lint
-static char copyright[] =
-"$Id: clparse.c,v 1.7 2001/01/06 22:02:23 angelos Exp $ Copyright (c) 1997 The Internet Software Consortium.  All rights reserved.\n";
-#endif /* not lint */
-
 #include "dhcpd.h"
 #include "dhctoken.h"
 
-static TIME parsed_time;
-
 struct client_config top_level_config;
-u_int32_t requested_lease_time;
+
+char client_script_name [] = "/sbin/dhclient-script";
 
 /* client-conf-file :== client-declarations EOF
    client-declarations :== <nil>
@@ -63,9 +57,7 @@ int read_client_conf ()
 	FILE *cfile;
 	char *val;
 	int token;
-	int declaration = 0;
 	struct client_config *config;
-	struct client_state *state;
 	struct interface_info *ip;
 
 	new_parse (path_dhclient_conf);
@@ -81,10 +73,10 @@ int read_client_conf ()
 	top_level_config.select_interval = 0;
 	top_level_config.reboot_timeout = 10;
 	top_level_config.retry_interval = 300;
-	top_level_config.backoff_cutoff = 120;
-	top_level_config.initial_interval = 10;
+	top_level_config.backoff_cutoff = 15;
+	top_level_config.initial_interval = 3;
 	top_level_config.bootp_policy = ACCEPT;
-	top_level_config.script_name = "/sbin/dhclient-script";
+	top_level_config.script_name = client_script_name;
 	top_level_config.requested_options
 		[top_level_config.requested_option_count++] =
 			DHO_SUBNET_MASK;
@@ -106,22 +98,19 @@ int read_client_conf ()
 	top_level_config.requested_options
 		[top_level_config.requested_option_count++] =
 			DHO_HOST_NAME;
-	requested_lease_time = htonl(7200);
-	top_level_config.send_options [DHO_DHCP_LEASE_TIME].data
-		= (unsigned char *)&requested_lease_time;
-	top_level_config.send_options [DHO_DHCP_LEASE_TIME].len
-		= sizeof requested_lease_time;
 
-	if ((cfile = fopen (path_dhclient_conf, "r")) == NULL)
-		error ("Can't open %s: %m", path_dhclient_conf);
-	do {
-		token = peek_token (&val, cfile);
-		if (token == EOF)
-			break;
-		parse_client_statement (cfile, (struct interface_info *)0,
-					&top_level_config);
-	} while (1);
-	token = next_token (&val, cfile); /* Clear the peek buffer */
+	if ((cfile = fopen (path_dhclient_conf, "r")) != NULL) {
+		do {
+			token = peek_token (&val, cfile);
+			if (token == EOF)
+				break;
+			parse_client_statement (cfile,
+						(struct interface_info *)0,
+						&top_level_config);
+		} while (1);
+		token = next_token (&val, cfile); /* Clear the peek buffer */
+		fclose (cfile);
+	}
 
 	/* Set up state and config structures for clients that don't
 	   have per-interface configuration declarations. */
@@ -331,7 +320,6 @@ int parse_X (cfile, buf, max)
 	int token;
 	char *val;
 	int len;
-	u_int8_t *s;
 
 	token = peek_token (&val, cfile);
 	if (token == NUMBER_OR_NAME || token == NUMBER) {
@@ -425,9 +413,7 @@ void parse_interface_declaration (cfile, outer_config)
 	int token;
 	char *val;
 
-	struct interface_info dummy_interface, *ip;
-	struct client_state dummy_state;
-	struct client_config dummy_config;
+	struct interface_info *ip;
 
 	token = next_token (&val, cfile);
 	if (token != STRING) {
@@ -662,7 +648,6 @@ void parse_client_lease_declaration (cfile, lease, ipp)
 {
 	int token;
 	char *val;
-	char *t, *n;
 	struct interface_info *ip;
 
 	switch (next_token (&val, cfile)) {
@@ -751,8 +736,10 @@ struct option *parse_option_decl (cfile, options)
 			skip_to_semi (cfile);
 		return (struct option *)0;
 	}
-	if ((vendor = (char *)strdup (val)) == NULL)
+	vendor = malloc (strlen (val) + 1);
+	if (!vendor)
 		error ("no memory for vendor information.");
+	strlcpy (vendor, val, strlen(val) + 1);
 	token = peek_token (&val, cfile);
 	if (token == DOT) {
 		/* Go ahead and take the DOT token... */
@@ -769,8 +756,9 @@ struct option *parse_option_decl (cfile, options)
 
 		/* Look up the option name hash table for the specified
 		   vendor. */
-		universe = (struct universe *)hash_lookup (&universe_hash,
-							   vendor, 0);
+		universe = ((struct universe *)
+			    hash_lookup (&universe_hash,
+					 (unsigned char *)vendor, 0));
 		/* If it's not there, we can't parse the rest of the
 		   declaration. */
 		if (!universe) {
@@ -786,7 +774,8 @@ struct option *parse_option_decl (cfile, options)
 	}
 
 	/* Look up the actual option info... */
-	option = (struct option *)hash_lookup (universe -> hash, val, 0);
+	option = (struct option *)hash_lookup (universe -> hash,
+					       (unsigned char *)val, 0);
 
 	/* If we didn't get an option structure, it's an undefined option. */
 	if (!option) {
@@ -804,11 +793,6 @@ struct option *parse_option_decl (cfile, options)
 
 	/* Parse the option data... */
 	do {
-		/* Set a flag if this is an array of a simple type (i.e.,
-		   not an array of pairs of IP addresses, or something
-		   like that. */
-		int uniform = option -> format [1] == 'A';
-
 		for (fmt = option -> format; *fmt; fmt++) {
 			if (*fmt == 'A')
 				break;
@@ -963,14 +947,17 @@ void parse_string_list (cfile, lp, multiple)
 			return;
 		}
 
+#ifdef OH_THE_HORROR
 		tmp = (struct string_list *)malloc (strlen (val) + 1 +
 						    sizeof
 						    (struct string_list *));
-		if (!tmp)
+#endif
+		tmp = new_string_list(strlen(val) + 1, "parse tmp"); 
+		if (tmp == NULL)
 			error ("no memory for string list entry.");
 
-		strcpy (tmp -> string, val);
-		tmp -> next = (struct string_list *)0;
+		strlcpy (tmp -> string, val, strlen(val) + 1);
+		tmp -> next = NULL;
 
 		/* Store this medium at the end of the media list. */
 		if (cur)

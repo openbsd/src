@@ -3,8 +3,8 @@
    BPF socket interface code, originally contributed by Archie Cobbs. */
 
 /*
- * Copyright (c) 1995, 1996 The Internet Software Consortium.
- * All rights reserved.
+ * Copyright (c) 1995, 1996, 1998, 1999
+ * The Internet Software Consortium.    All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -40,41 +40,28 @@
  * Enterprises, see ``http://www.vix.com''.
  */
 
-#ifndef lint
-static char copyright[] =
-"$Id: bpf.c,v 1.2 2001/01/03 16:04:38 ericj Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
-#endif /* not lint */
-
 #include "dhcpd.h"
-#if defined (USE_BPF_SEND) || defined (USE_BPF_RECEIVE)
 #include <sys/ioctl.h>
 #include <sys/uio.h>
-
 #include <net/bpf.h>
-#ifdef NEED_OSF_PFILT_HACKS
-#include <net/pfilt.h>
-#endif
+
 #include <netinet/in_systm.h>
-#include "includes/netinet/ip.h"
-#include "includes/netinet/udp.h"
-#include "includes/netinet/if_ether.h"
+#include <netinet/ip.h>
+#include <netinet/udp.h>
+#include <netinet/if_ether.h>
 
 /* Reinitializes the specified interface after an address change.   This
    is not required for packet-filter APIs. */
 
-#ifdef USE_BPF_SEND
 void if_reinitialize_send (info)
 	struct interface_info *info;
 {
 }
-#endif
 
-#ifdef USE_BPF_RECEIVE
 void if_reinitialize_receive (info)
 	struct interface_info *info;
 {
 }
-#endif
 
 /* Called by get_interface_list for each interface that's discovered.
    Opens a packet filter for each interface and adds it to the select
@@ -89,16 +76,17 @@ int if_register_bpf (info)
 
 	/* Open a BPF device */
 	for (b = 0; 1; b++) {
-#ifndef NO_SNPRINTF
 		snprintf(filename, sizeof(filename), BPF_FORMAT, b);
-#else
-		sprintf(filename, BPF_FORMAT, b);
-#endif
 		sock = open (filename, O_RDWR, 0);
 		if (sock < 0) {
 			if (errno == EBUSY) {
 				continue;
 			} else {
+				if (!b)
+					error ("No bpf devices.%s%s%s",
+					       "   Please read the README",
+					       " section for your operating",
+					       " system.");
 				error ("Can't find free bpf: %m");
 			}
 		} else {
@@ -113,36 +101,31 @@ int if_register_bpf (info)
 
 	return sock;
 }
-#endif /* USE_BPF_SEND || USE_BPF_RECEIVE */
 
-#ifdef USE_BPF_SEND
 void if_register_send (info)
 	struct interface_info *info;
 {
 	/* If we're using the bpf API for sending and receiving,
 	   we don't need to register this interface twice. */
-#ifndef USE_BPF_RECEIVE
-	info -> wfdesc = if_register_bpf (info, interface);
-#else
+
 	info -> wfdesc = info -> rfdesc;
-#endif
+
 	if (!quiet_interface_discovery)
-		note ("Sending on   BPF/%s/%s/%s",
+		note ("Sending on   BPF/%s/%s%s%s",
 		      info -> name,
 		      print_hw_addr (info -> hw_address.htype,
 				     info -> hw_address.hlen,
 				     info -> hw_address.haddr),
+		      (info -> shared_network ? "/" : ""),
 		      (info -> shared_network ?
-		       info -> shared_network -> name : "unattached"));
+		       info -> shared_network -> name : ""));
 }
-#endif /* USE_BPF_SEND */
 
-#ifdef USE_BPF_RECEIVE
 /* Packet filter program...
    XXX Changes to the filter program may require changes to the constant
    offsets used in if_register_send to patch the BPF program! XXX */
 
-struct bpf_insn filter [] = {
+struct bpf_insn dhcp_bpf_filter [] = {
 	/* Make sure this is an IP packet... */
 	BPF_STMT (BPF_LD + BPF_H + BPF_ABS, 12),
 	BPF_JUMP (BPF_JMP + BPF_JEQ + BPF_K, ETHERTYPE_IP, 0, 8),
@@ -169,6 +152,22 @@ struct bpf_insn filter [] = {
 	BPF_STMT(BPF_RET+BPF_K, 0),
 };
 
+int dhcp_bpf_filter_len = sizeof dhcp_bpf_filter / sizeof (struct bpf_insn);
+
+struct bpf_insn dhcp_bpf_tr_filter [] = {
+        /* accept all token ring packets due to variable length header */
+        /* if we want to get clever, insert the program here */
+
+	/* If we passed all the tests, ask for the whole packet. */
+	BPF_STMT(BPF_RET+BPF_K, (u_int)-1),
+
+	/* Otherwise, drop it. */
+	BPF_STMT(BPF_RET+BPF_K, 0),
+};
+
+int dhcp_bpf_tr_filter_len = (sizeof dhcp_bpf_tr_filter /
+			      sizeof (struct bpf_insn));
+
 void if_register_receive (info)
 	struct interface_info *info;
 {
@@ -193,21 +192,6 @@ void if_register_receive (info)
 	if (ioctl (info -> rfdesc, BIOCIMMEDIATE, &flag) < 0)
 		error ("Can't set immediate mode on bpf device: %m");
 
-#ifdef NEED_OSF_PFILT_HACKS
-	/* Allow the copyall flag to be set... */
-	if (ioctl(info -> rfdesc, EIOCALLOWCOPYALL, &flag) < 0)
-		error ("Can't set ALLOWCOPYALL: %m");
-
-	/* Clear all the packet filter mode bits first... */
-	bits = 0;
-	if (ioctl (info -> rfdesc, EIOCMBIS, &bits) < 0)
-		error ("Can't clear pfilt bits: %m");
-
-	/* Set the ENBATCH, ENCOPYALL, ENBPFHDR bits... */
-	bits = ENBATCH | ENCOPYALL | ENBPFHDR;
-	if (ioctl (info -> rfdesc, EIOCMBIS, &bits) < 0)
-		error ("Can't set ENBATCH|ENCOPYALL|ENBPFHDR: %m");
-#endif
 	/* Get the required BPF buffer length from the kernel. */
 	if (ioctl (info -> rfdesc, BIOCGBLEN, &info -> rbuf_max) < 0)
 		error ("Can't get bpf buffer length: %m");
@@ -218,28 +202,28 @@ void if_register_receive (info)
 	info -> rbuf_len = 0;
 
 	/* Set up the bpf filter program structure. */
-	p.bf_len = sizeof filter / sizeof (struct bpf_insn);
-	p.bf_insns = filter;
+	p.bf_len = dhcp_bpf_filter_len;
+	p.bf_insns = dhcp_bpf_filter;
 
         /* Patch the server port into the BPF  program...
 	   XXX changes to filter program may require changes
 	   to the insn number(s) used below! XXX */
-	filter [8].k = ntohs (local_port);
+	dhcp_bpf_filter [8].k = ntohs (local_port);
 
 	if (ioctl (info -> rfdesc, BIOCSETF, &p) < 0)
 		error ("Can't install packet filter program: %m");
 	if (!quiet_interface_discovery)
-		note ("Listening on BPF/%s/%s/%s",
+		note ("Listening on BPF/%s/%s%s%s",
 		      info -> name,
 		      print_hw_addr (info -> hw_address.htype,
 				     info -> hw_address.hlen,
 				     info -> hw_address.haddr),
+		      (info -> shared_network ? "/" : ""),
 		      (info -> shared_network ?
-		       info -> shared_network -> name : "unattached"));
+		       info -> shared_network -> name : ""));
 }
-#endif /* USE_BPF_RECEIVE */
 
-#ifdef USE_BPF_SEND
+
 ssize_t send_packet (interface, packet, raw, len, from, to, hto)
 	struct interface_info *interface;
 	struct packet *packet;
@@ -252,6 +236,11 @@ ssize_t send_packet (interface, packet, raw, len, from, to, hto)
 	int bufp = 0;
 	unsigned char buf [256];
 	struct iovec iov [2];
+	int result;
+
+	if (!strcmp (interface -> name, "fallback"))
+		return send_fallback (interface, packet, raw,
+				      len, from, to, hto);
 
 	/* Assemble the headers... */
 	assemble_hw_header (interface, buf, &bufp, hto);
@@ -265,11 +254,12 @@ ssize_t send_packet (interface, packet, raw, len, from, to, hto)
 	iov [1].iov_base = (char *)raw;
 	iov [1].iov_len = len;
 
-	return writev(interface -> wfdesc, iov, 2);
+	result = writev(interface -> wfdesc, iov, 2);
+	if (result < 0)
+		warn ("send_packet: %m");
+	return result;
 }
-#endif /* USE_BPF_SEND */
 
-#ifdef USE_BPF_RECEIVE
 ssize_t receive_packet (interface, buf, len, from, hfrom)
 	struct interface_info *interface;
 	unsigned char *buf;
@@ -381,4 +371,25 @@ ssize_t receive_packet (interface, buf, len, from, hfrom)
 	} while (!length);
 	return 0;
 }
-#endif
+
+int can_unicast_without_arp ()
+{
+	return 1;
+}
+
+int can_receive_unicast_unconfigured (ip)
+	struct interface_info *ip;
+{
+	return 1;
+}
+
+void maybe_setup_fallback ()
+{
+	struct interface_info *fbi;
+	fbi = setup_fallback ();
+	if (fbi) {
+		if_register_fallback (fbi);
+		add_protocol ("fallback", fallback_interface -> wfdesc,
+			      fallback_discard, fallback_interface);
+	}
+}

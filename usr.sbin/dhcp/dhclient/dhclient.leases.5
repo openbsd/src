@@ -1,4 +1,3 @@
-.\"	$OpenBSD: dhclient.leases.5,v 1.2 1999/05/30 02:42:22 pjanzen Exp $
 .\"	dhclient.conf.5
 .\"
 .\" Copyright (c) 1997 The Internet Software Consortium.
@@ -45,12 +44,12 @@ database of leases that it has acquired that are still valid.   The
 database is a free-form ASCII file containing one valid declaration
 per lease.   If more than one declaration appears for a given lease,
 the last one in the file is used.   The file is written as a log, so
-this is not an unusual occurrence.
+this is not an unusual occurrance.
 .PP
 The format of the lease declarations is described in
 .B dhclient.conf(5).
 .SH FILES
-.B /var/db/dhclient.leases
+.B DBDIR/dhclient.leases
 .SH SEE ALSO
 dhclient(8), dhcp-options(5), dhclient.conf(5), dhcpd(8),
 dhcpd.conf(5), RFC2132, RFC2131.

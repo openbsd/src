@@ -40,11 +40,6 @@
  * Enterprises, see ``http://www.vix.com''.
  */
 
-#ifndef lint
-static char copyright[] =
-"$Id: conflex.c,v 1.1 1998/08/18 03:43:25 deraadt Exp $ Copyright (c) 1995, 1996, 1997 The Internet Software Consortium.  All rights reserved.\n";
-#endif /* not lint */
-
 #include "dhcpd.h"
 #include "dhctoken.h"
 #include <ctype.h>
@@ -136,19 +131,10 @@ static int get_token (cfile)
 		u = ugflag;
 
 		c = get_char (cfile);
-#ifdef OLD_LEXER
-		if (c == '\n' && p == 1 && !u
-		    && comment_index < sizeof comments)
-			comments [comment_index++] = '\n';
-#endif
 
 		if (!(c == '\n' && eol_token) && isascii (c) && isspace (c))
 			continue;
 		if (c == '#') {
-#ifdef OLD_LEXER
-			if (comment_index < sizeof comments)
-				comments [comment_index++] = '#';
-#endif
 			skip_to_eol (cfile);
 			continue;
 		}
@@ -237,13 +223,8 @@ static void skip_to_eol (cfile)
 		c = get_char (cfile);
 		if (c == EOF)
 			return;
-#ifdef OLD_LEXER
-		if (comment_index < sizeof (comments))
-			comments [comment_index++] = c;
-#endif
-		if (c == EOL) {
+		if (c == EOL)
 			return;
-		}
 	} while (1);
 }
 
@@ -294,13 +275,6 @@ static int read_number (c, cfile)
 		c = get_char (cfile);
 		if (!seenx && c == 'x') {
 			seenx = 1;
-#ifndef OLD_LEXER
-		} else if (isascii (c) && !isxdigit (c) &&
-			   (c == '-' || c == '_' || isalpha (c))) {
-			token = NAME;
-		} else if (isascii (c) && !isdigit (c) && isxdigit (c)) {
-			token = NUMBER_OR_NAME;
-#endif
 		} else if (!isascii (c) || !isxdigit (c)) {
 			ungetc (c, cfile);
 			ugflag = 1;
@@ -354,6 +328,8 @@ static int intern (atom, dfv)
 
 	switch (tolower (atom [0])) {
 	      case 'a':
+		if (!strcasecmp (atom + 1, "lways-reply-rfc1048"))
+			return ALWAYS_REPLY_RFC1048;
 		if (!strcasecmp (atom + 1, "ppend"))
 			return APPEND;
 		if (!strcasecmp (atom + 1, "llow"))
@@ -362,6 +338,8 @@ static int intern (atom, dfv)
 			return ALIAS;
 		if (!strcasecmp (atom + 1, "bandoned"))
 			return ABANDONED;
+		if (!strcasecmp (atom + 1, "uthoritative"))
+			return AUTHORITATIVE;
 		break;
 	      case 'b':
 		if (!strcasecmp (atom + 1, "ackoff-cutoff"))
@@ -417,6 +395,8 @@ static int intern (atom, dfv)
 			return FILENAME;
 		if (!strcasecmp (atom + 1, "ixed-address"))
 			return FIXED_ADDR;
+		if (!strcasecmp (atom + 1, "ddi"))
+			return FDDI;
 		break;
 	      case 'g':
 		if (!strcasecmp (atom + 1, "iaddr"))
@@ -462,6 +442,8 @@ static int intern (atom, dfv)
 			return NETMASK;
 		if (!strcasecmp (atom + 1, "ext-server"))
 			return NEXT_SERVER;
+		if (!strcasecmp (atom + 1, "ot"))
+			return TOKEN_NOT;
 		break;
 	      case 'o':
 		if (!strcasecmp (atom + 1, "ption"))
@@ -526,12 +508,18 @@ static int intern (atom, dfv)
 			return TOKEN_RING;
 		break;
 	      case 'u':
+		if (!strncasecmp (atom + 1, "se", 2)) {
+			if (!strcasecmp (atom + 3, "r-class"))
+				return USER_CLASS;
+			if (!strcasecmp (atom + 3, "-host-decl-names"))
+				return USE_HOST_DECL_NAMES;
+			if (!strcasecmp (atom + 3,
+					 "-lease-addr-for-default-route"))
+				return USE_LEASE_ADDR_FOR_DEFAULT_ROUTE;
+			break;
+		}
 		if (!strcasecmp (atom + 1, "id"))
 			return UID;
-		if (!strcasecmp (atom + 1, "ser-class"))
-			return USER_CLASS;
-		if (!strcasecmp (atom + 1, "se-host-decl-names"))
-			return USE_HOST_DECL_NAMES;
 		if (!strcasecmp (atom + 1, "nknown-clients"))
 			return UNKNOWN_CLIENTS;
 		break;

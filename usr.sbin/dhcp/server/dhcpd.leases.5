@@ -1,7 +1,6 @@
-.\"	$OpenBSD: dhcpd.leases.5,v 1.2 1999/05/30 02:42:23 pjanzen Exp $
-.\"	dhcpd.conf.5
+.\"	dhcpd.leases.5
 .\"
-.\" Copyright (c) 1997 The Internet Software Consortium.
+.\" Copyright (c) 1997, 1998 The Internet Software Consortium.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -42,36 +41,128 @@ dhcpd.leases - DHCP client lease database
 .SH DESCRIPTION
 The Internet Software Consortium DHCP Server keeps a persistent
 database of leases that it has assigned.  This database is a free-form
-ASCII file containing one valid declaration per lease.  If more than
-one declaration appears for a given lease, the last one in the file is
-used.  The file is written as a log, so this is not an unusual
-occurrence.
+ASCII file containing a series of lease declarations.  Every time a
+lease is acquired, renewed or released, its new value is recorded at
+the end of the lease file.  So if more than one declaration appears
+for a given lease, the last one in the file is the current one.
 .PP
 When dhcpd is first installed, there is no lease database.   However,
 dhcpd requires that a lease database be present before it will start.
 To make the initial lease database, just create an empty file called
-/var/db/dhcpd.leases.
+DBDIR/dhcpd.leases.
 .PP
 In order to prevent the lease database from growing without bound, the
 file is rewritten from time to time.   First, a temporary lease
 database is created and all known leases are dumped to it.   Then, the
-old lease database is renamed /var/db/dhcpd.leases~.   Finally, the
+old lease database is renamed DBDIR/dhcpd.leases~.   Finally, the
 newly written lease database is moved into place.
 .PP
 There is a window of vulnerability where if the dhcpd process is
 killed or the system crashes after the old lease database has been
 renamed but before the new one has been moved into place, there will
-be no /var/db/dhcpd.leases.   In this case, dhcpd will refuse to start,
+be no DBDIR/dhcpd.leases.   In this case, dhcpd will refuse to start,
 and will require manual intervention.   \fBDO NOT\fR simply create a
 new lease file when this happens - if you do, you will lose all your
 old bindings, and chaos will ensue.   Instead, rename
-/var/db/dhcpd.leases~ to /var/db/dhcpd.leases, restoring the old, valid
+DBDIR/dhcpd.leases~ to DBDIR/dhcpd.leases, restoring the old, valid
 lease file, and then start dhcpd.   This guarantees that a valid lease
 file will be restored.
 .SH FORMAT
-The format of the lease declarations is not currently documented.
+Lease descriptions are stored in a format that is parsed by the same
+recursive descent parser used to read the
+.B dhcpd.conf(5)
+and
+.B dhclient.conf(5)
+files.   Currently, the only declaration that is
+used in the dhcpd.leases file is the 
+.B lease
+declaration.
+.PP
+ \fBlease \fIip-address\fB { \fIstatements...\fB }
+.PP
+Each lease declaration include the single IP address that has been
+leased to the client.   The statements within the braces define the
+duration of the lease and to whom it is assigned.
+.PP
+The start and end time of a lease are recorded using the ``starts''
+and ``ends'' statements:
+.PP
+ \fB starts \fIdate\fB;\fR
+ \fB ends \fIdate\fB;\fR
+.PP
+Dates are specified as follows:
+.PP
+ \fIweekday year\fB/\fImonth\fB/\fIday
+hour\fB:\fIminute\fB:\fIsecond\fR
+.PP
+The weekday is present to make it easy for a human to tell when a
+lease expires - it's specified as a number from zero to six, with zero
+being Sunday.  The day of week is ignored on input.  The year is
+specified with the century, so it should generally be four digits
+except for really long leases.  The month is specified as a number
+starting with 1 for January.  The day of the month is likewise
+specified starting with 1.  The hour is a number between 0 and 23, the
+minute a number between 0 and 59, and the second also a number between
+0 and 59.
+.PP
+Lease times are specified in Greenwich Mean Time (GMT), not in the
+local time zone.   Since Greenwich is actually on Daylight Savings
+Time part of the year, there is probably nowhere in the world where
+the times recorded on a lease are always the same as wall clock times.
+On a unix machine, one can often figure out the current time in GMT by
+typing \fBdate -u\fR.
+.PP
+The MAC address of the network interface that was used to acquire the
+lease is recorded with the \fBhardware\fR statement:
+.PP
+ \fBhardware \fIhardware-type mac-address\fB;\fR
+.PP
+The MAC address is specified as a series of hexadecimal octets,
+seperated by colons.
+.PP
+If the client used a client identifier to acquire its address, the
+client identifier is recorded using the \fBuid\fR statement:
+.PP
+ \fBuid \fIclient-identifier\fB;\fR
+.PP
+The client identifier is recorded as a series of hexadecimal octets,
+regardless of whether the client specifies an ASCII string or uses the
+newer hardware type/MAC address format.
+.PP
+If the client sends a hostname using the \fIClient Hostname\fR option,
+as specified in some versions of the DHCP-DNS Interaction draft, that
+hostname is recorded using the \fBclient-hostname\fR statement.
+.PP
+ \fBclient-hostname "\fIhostname\fB";\fR
+.PP
+If the client sends its hostname using the \fIHostname\fR option, as
+Windows 95 does, it is recorded using the \fBhostname\fR statement.
+.PP
+ \fBhostname "\fIhostname\fB";\fR
+.PP
+The DHCP server may determine that a lease has been misused in some
+way, either because a client that has been assigned a lease NAKs it,
+or because the server's own attempt to see if an address is in use
+prior to reusing it reveals that the address is in fact already in
+use.   In that case, the \fBabandoned\fR statement will be used to
+indicate that the lease should not be reassigned.
+.PP
+ \fBabandoned;\fR
+.PP
+Abandoned leases are reclaimed automatically.   When a client asks for
+a new address, and the server finds that there are no new addresses,
+it checks to see if there are any abandoned leases, and allocates the
+least recently abandoned lease.   The standard mechanisms for checking
+for lease address conflicts are still followed, so if the abandoned
+lease's IP address is still in use, it will be reabandoned.
+.PP
+If a client \fBrequests\fR an abandoned address, the server assumes
+that the reason the address was abandoned was that the lease file was
+corrupted, and that the client is the machine that responded when the
+lease was probed, causing it to be abandoned.   In that case, the
+address is immediately assigned to the client.
 .SH FILES
-.B /var/db/dhcpd.leases
+.B DBDIR/dhcpd.leases
 .SH SEE ALSO
 dhcpd(8), dhcp-options(5), dhcpd.conf(5), RFC2132, RFC2131.
 .SH AUTHOR

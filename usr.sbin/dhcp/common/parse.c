@@ -3,7 +3,7 @@
    Common parser code for dhcpd and dhclient. */
 
 /*
- * Copyright (c) 1995, 1996, 1997 The Internet Software Consortium.
+ * Copyright (c) 1995, 1996, 1997, 1998 The Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -39,11 +39,6 @@
  * see ``http://www.vix.com/isc''.  To learn more about Vixie
  * Enterprises, see ``http://www.vix.com''.
  */
-
-#ifndef lint
-static char copyright[] =
-"$Id: parse.c,v 1.3 2001/01/03 16:04:39 ericj Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
-#endif /* not lint */
 
 #include "dhcpd.h"
 #include "dhctoken.h"
@@ -127,7 +122,7 @@ char *parse_string (cfile)
 	s = (char *)malloc (strlen (val) + 1);
 	if (!s)
 		error ("no memory for string %s.", val);
-	strcpy (s, val);
+	strlcpy (s, val, strlen(val) + 1);
 
 	if (!parse_semi (cfile))
 		return (char *)0;
@@ -158,7 +153,7 @@ char *parse_host_name (cfile)
 		/* Store this identifier... */
 		if (!(s = (char *)malloc (strlen (val) + 1)))
 			error ("can't allocate temp space for hostname.");
-		strcpy (s, val);
+		strlcpy (s, val, strlen(val) + 1);
 		c = cons ((caddr_t)s, c);
 		len += strlen (s) + 1;
 		/* Look for a dot; if it's there, keep going, otherwise
@@ -219,6 +214,9 @@ void parse_hardware_param (cfile, hardware)
 	      case TOKEN_RING:
 		hardware -> htype = HTYPE_IEEE802;
 		break;
+	      case FDDI:
+		hardware -> htype = HTYPE_FDDI;
+		break;
 	      default:
 		parse_warn ("expecting a network hardware type");
 		skip_to_semi (cfile);
@@ -244,6 +242,9 @@ void parse_hardware_param (cfile, hardware)
 		hardware -> hlen = hlen;
 		memcpy ((unsigned char *)&hardware -> haddr [0],
 			t, hardware -> hlen);
+		if (hlen < sizeof hardware -> haddr)
+			memset (&hardware -> haddr [hlen], 0,
+				(sizeof hardware -> haddr) - hlen);
 		free (t);
 	}
 	
@@ -277,24 +278,25 @@ void parse_lease_time (cfile, timep)
 }
 
 /* No BNF for numeric aggregates - that's defined by the caller.  What
-   this function does is to parse a sequence of numbers separated by
-   the token specified in separator.  If max is zero, any number of
+   this function does is to parse a sequence of numbers seperated by
+   the token specified in seperator.  If max is zero, any number of
    numbers will be parsed; otherwise, exactly max numbers are
    expected.  Base and size tell us how to internalize the numbers
    once they've been tokenized. */
 
 unsigned char *parse_numeric_aggregate (cfile, buf,
-					max, separator, base, size)
+					max, seperator, base, size)
 	FILE *cfile;
 	unsigned char *buf;
 	int *max;
-	int separator;
+	int seperator;
 	int base;
 	int size;
 {
 	char *val;
 	int token;
-	unsigned char *bufp = buf, *s, *t;
+	unsigned char *bufp = buf, *s = NULL;
+	char *t;
 	int count = 0;
 	pair c = (pair)0;
 
@@ -308,7 +310,7 @@ unsigned char *parse_numeric_aggregate (cfile, buf,
 	do {
 		if (count) {
 			token = peek_token (&val, cfile);
-			if (token != separator) {
+			if (token != seperator) {
 				if (!*max)
 					break;
 				if (token != RBRACE && token != LBRACE)
@@ -340,10 +342,10 @@ unsigned char *parse_numeric_aggregate (cfile, buf,
 			convert_num (s, val, base, size);
 			s += size / 8;
 		} else {
-			t = (unsigned char *)malloc (strlen (val) + 1);
+			t = (char *)malloc (strlen (val) + 1);
 			if (!t)
 				error ("no temp space for number.");
-			strcpy (t, val);
+			strlcpy (t, val, strlen(val)+1);
 			c = cons (t, c);
 		}
 	} while (++count != *max);
@@ -516,10 +518,10 @@ TIME parse_date (cfile)
 	if (tm.tm_year > 1900)
 		tm.tm_year -= 1900;
 
-	/* Slash separating year from month... */
+	/* Slash seperating year from month... */
 	token = next_token (&val, cfile);
 	if (token != SLASH) {
-		parse_warn ("expected slash separating year from month.");
+		parse_warn ("expected slash seperating year from month.");
 		if (token != SEMI)
 			skip_to_semi (cfile);
 		return (TIME)0;
@@ -535,10 +537,10 @@ TIME parse_date (cfile)
 	}
 	tm.tm_mon = atoi (val) - 1;
 
-	/* Slash separating month from day... */
+	/* Slash seperating month from day... */
 	token = next_token (&val, cfile);
 	if (token != SLASH) {
-		parse_warn ("expected slash separating month from day.");
+		parse_warn ("expected slash seperating month from day.");
 		if (token != SEMI)
 			skip_to_semi (cfile);
 		return (TIME)0;
@@ -564,10 +566,10 @@ TIME parse_date (cfile)
 	}
 	tm.tm_hour = atoi (val);
 
-	/* Colon separating hour from minute... */
+	/* Colon seperating hour from minute... */
 	token = next_token (&val, cfile);
 	if (token != COLON) {
-		parse_warn ("expected colon separating hour from minute.");
+		parse_warn ("expected colon seperating hour from minute.");
 		if (token != SEMI)
 			skip_to_semi (cfile);
 		return (TIME)0;
@@ -583,10 +585,10 @@ TIME parse_date (cfile)
 	}
 	tm.tm_min = atoi (val);
 
-	/* Colon separating minute from second... */
+	/* Colon seperating minute from second... */
 	token = next_token (&val, cfile);
 	if (token != COLON) {
-		parse_warn ("expected colon separating hour from minute.");
+		parse_warn ("expected colon seperating hour from minute.");
 		if (token != SEMI)
 			skip_to_semi (cfile);
 		return (TIME)0;

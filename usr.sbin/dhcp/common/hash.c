@@ -3,7 +3,7 @@
    Routines for manipulating hash tables... */
 
 /*
- * Copyright (c) 1995, 1996 The Internet Software Consortium.
+ * Copyright (c) 1995, 1996, 1997, 1998 The Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -40,14 +40,9 @@
  * Enterprises, see ``http://www.vix.com''.
  */
 
-#ifndef lint
-static char copyright[] =
-"$Id: hash.c,v 1.1 1998/08/18 03:43:26 deraadt Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
-#endif /* not lint */
-
 #include "dhcpd.h"
 
-static INLINE int do_hash PROTO ((char *, int, int));
+static int do_hash PROTO ((unsigned char *, int, int));
 
 struct hash_table *new_hash ()
 {
@@ -59,31 +54,20 @@ struct hash_table *new_hash ()
 	return rv;
 }
 
-static INLINE int do_hash (name, len, size)
-	char *name;
+static int do_hash (name, len, size)
+	unsigned char *name;
 	int len;
 	int size;
 {
 	register int accum = 0;
-	register unsigned char *s = (unsigned char *)name;
+	register unsigned char *s = name;
 	int i = len;
-	if (i) {
-		while (i--) {
-			/* Add the character in... */
-			accum += *s++;
-			/* Add carry back in... */
-			while (accum > 255) {
-				accum = (accum & 255) + (accum >> 8);
-			}
-		}
-	} else {
-		while (*s) {
-			/* Add the character in... */
-			accum += *s++;
-			/* Add carry back in... */
-			while (accum > 255) {
-				accum = (accum & 255) + (accum >> 8);
-			}
+	while (i--) {
+		/* Add the character in... */
+		accum += *s++;
+		/* Add carry back in... */
+		while (accum > 255) {
+			accum = (accum & 255) + (accum >> 8);
 		}
 	}
 	return accum % size;
@@ -92,7 +76,7 @@ static INLINE int do_hash (name, len, size)
 void add_hash (table, name, len, pointer)
 	struct hash_table *table;
 	int len;
-	char *name;
+	unsigned char *name;
 	unsigned char *pointer;
 {
 	int hashno;
@@ -100,6 +84,8 @@ void add_hash (table, name, len, pointer)
 
 	if (!table)
 		return;
+	if (!len)
+		len = strlen ((char *)name);
 
 	hashno = do_hash (name, len, table -> hash_count);
 	bp = new_hash_bucket ("add_hash");
@@ -118,20 +104,23 @@ void add_hash (table, name, len, pointer)
 void delete_hash_entry (table, name, len)
 	struct hash_table *table;
 	int len;
-	char *name;
+	unsigned char *name;
 {
 	int hashno;
 	struct hash_bucket *bp, *pbp = (struct hash_bucket *)0;
 
 	if (!table)
 		return;
+	if (!len)
+		len = strlen ((char *)name);
 
 	hashno = do_hash (name, len, table -> hash_count);
 
 	/* Go through the list looking for an entry that matches;
 	   if we find it, delete it. */
 	for (bp = table -> buckets [hashno]; bp; bp = bp -> next) {
-		if ((!bp -> len && !strcmp (bp -> name, name)) ||
+		if ((!bp -> len &&
+		     !strcmp ((char *)bp -> name, (char *)name)) ||
 		    (bp -> len == len &&
 		     !memcmp (bp -> name, name, len))) {
 			if (pbp) {
@@ -148,7 +137,7 @@ void delete_hash_entry (table, name, len)
 
 unsigned char *hash_lookup (table, name, len)
 	struct hash_table *table;
-	char *name;
+	unsigned char *name;
 	int len;
 {
 	int hashno;
@@ -156,19 +145,15 @@ unsigned char *hash_lookup (table, name, len)
 
 	if (!table)
 		return (unsigned char *)0;
+
+	if (!len)
+		len = strlen ((char *)name);
+
 	hashno = do_hash (name, len, table -> hash_count);
 
-	if (len) {
-		for (bp = table -> buckets [hashno]; bp; bp = bp -> next) {
-			if (len == bp -> len
-			    && !memcmp (bp -> name, name, len))
-				return bp -> value;
-		}
-	} else {
-		for (bp = table -> buckets [hashno]; bp; bp = bp -> next)
-			if (!strcmp (bp -> name, name))
-				return bp -> value;
+	for (bp = table -> buckets [hashno]; bp; bp = bp -> next) {
+		if (len == bp -> len && !memcmp (bp -> name, name, len))
+			return bp -> value;
 	}
 	return (unsigned char *)0;
 }
-

@@ -3,7 +3,7 @@
    DHCP/BOOTP Relay Agent. */
 
 /*
- * Copyright (c) 1997 The Internet Software Consortium.
+ * Copyright (c) 1997, 1998, 1999 The Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -40,14 +40,10 @@
  * Enterprises, see ``http://www.vix.com''.
  */
 
-#ifndef lint
-static char copyright[] =
-"$Id: dhcrelay.c,v 1.2 2001/01/03 16:04:40 ericj Exp $ Copyright (c) 1997 The Internet Software Consortium.  All rights reserved.\n";
-#endif /* not lint */
-
 #include "dhcpd.h"
+#include "version.h"
 
-static void usage PROTO ((void));
+static void usage PROTO ((char *));
 
 TIME cur_time;
 TIME default_lease_time = 43200; /* 12 hours... */
@@ -56,9 +52,13 @@ struct tree_cache *global_options [256];
 
 int log_perror = 1;
 
-#ifdef USE_FALLBACK
-struct interface_info fallback_interface;
-#endif
+/* Needed to prevent linking against conflex.c. */
+int lexline;
+int lexchar;
+char *token_line;
+char *tlname;
+
+char *path_dhcrelay_pid = _PATH_DHCRELAY_PID;
 
 u_int16_t local_port;
 u_int16_t remote_port;
@@ -69,6 +69,13 @@ struct server_list {
 	struct sockaddr_in to;
 } *servers;
 
+static char copyright [] =
+"Copyright 1997, 1998, 1999 The Internet Software Consortium.";
+static char arr [] = "All rights reserved.";
+static char message [] = "Internet Software Consortium DHCP Relay Agent";
+static char contrib [] = "Please contribute if you find this software useful.";
+static char url [] = "For info, please visit http://www.isc.org/dhcp-contrib.html";
+
 int main (argc, argv, envp)
 	int argc;
 	char **argv, **envp;
@@ -78,25 +85,30 @@ int main (argc, argv, envp)
 	struct server_list *sp = (struct server_list *)0;
 	int no_daemon = 0;
 	int quiet = 0;
+	char *s;
 
-#ifdef SYSLOG_4_2
-	openlog ("dhcrelay", LOG_NDELAY);
-	log_priority = LOG_DAEMON;
-#else
-	openlog ("dhcrelay", LOG_NDELAY, LOG_DAEMON);
-#endif
+	s = strrchr (argv [0], '/');
+	if (!s)
+		s = argv [0];
+	else
+		s++;
 
-#if !(defined (DEBUG) || defined (SYSLOG_4_2))
+	/* Initially, log errors to stderr as well as to syslogd. */
+	openlog (s, LOG_NDELAY, DHCPD_LOG_FACILITY);
+
 	setlogmask (LOG_UPTO (LOG_INFO));
-#endif	
 
 	for (i = 1; i < argc; i++) {
 		if (!strcmp (argv [i], "-p")) {
 			if (++i == argc)
-				usage ();
+				usage (s);
 			local_port = htons (atoi (argv [i]));
 			debug ("binding to user-specified port %d",
 			       ntohs (local_port));
+		} else if (!strcmp (argv [i], "-pf")) {
+			if (++i == argc)
+				usage (s);
+			path_dhcrelay_pid = argv [i];
 		} else if (!strcmp (argv [i], "-d")) {
 			no_daemon = 1;
  		} else if (!strcmp (argv [i], "-i")) {
@@ -107,10 +119,10 @@ int main (argc, argv, envp)
 				error ("Insufficient memory to %s %s",
 				       "record interface", argv [i]);
 			if (++i == argc) {
-				usage ();
+				usage (s);
 			}
 			memset (tmp, 0, sizeof *tmp);
-			strlcpy (tmp -> name, argv [i], sizeof(tmp->name));
+			strcpy (tmp -> name, argv [i]);
 			tmp -> next = interfaces;
 			tmp -> flags = INTERFACE_REQUESTED;
 			interfaces = tmp;
@@ -118,7 +130,7 @@ int main (argc, argv, envp)
 			quiet = 1;
 			quiet_interface_discovery = 1;
  		} else if (argv [i][0] == '-') {
- 		    usage ();
+ 		    usage (s);
  		} else {
 			struct hostent *he;
 			struct in_addr ia, *iap = (struct in_addr *)0;
@@ -145,6 +157,17 @@ int main (argc, argv, envp)
  		}
 	}
 
+	if (!quiet) {
+		note ("%s %s", message, DHCP_VERSION);
+		note (copyright);
+		note (arr);
+		note ("");
+		note (contrib);
+		note (url);
+		note ("");
+	} else
+		log_perror = 0;
+
 	/* Default to the DHCP/BOOTP port. */
 	if (!local_port) {
 		ent = getservbyname ("dhcps", "udp");
@@ -158,16 +181,14 @@ int main (argc, argv, envp)
   
 	/* We need at least one server. */
 	if (!sp) {
-		usage ();
+		usage (s);
 	}
 
 	/* Set up the server sockaddrs. */
 	for (sp = servers; sp; sp = sp -> next) {
 		sp -> to.sin_port = local_port;
 		sp -> to.sin_family = AF_INET;
-#ifdef HAVE_SA_LEN
 		sp -> to.sin_len = sizeof sp -> to;
-#endif
 	}
 
 	/* Get the current time... */
@@ -192,7 +213,21 @@ int main (argc, argv, envp)
 		else if (pid)
 			exit (0);
 
-		write_pidfile(_PATH_DHCRELAY_PID, getpid());
+		pfdesc = open (path_dhcrelay_pid,
+			       O_CREAT | O_TRUNC | O_WRONLY, 0644);
+
+		if (pfdesc < 0) {
+			warn ("Can't create %s: %m", path_dhcrelay_pid);
+		} else {
+			pf = fdopen (pfdesc, "w");
+			if (!pf)
+				warn ("Can't fdopen %s: %m",
+				      path_dhcrelay_pid);
+			else {
+				fprintf (pf, "%ld\n", (long)getpid ());
+				fclose (pf);
+			}	
+		}
 
 		close (0);
 		close (1);
@@ -207,41 +242,42 @@ int main (argc, argv, envp)
 	return 0;
 }
 
-void relay (ip, packbuf, length, from_port, from, hfrom)
+void relay (ip, packet, length, from_port, from, hfrom)
 	struct interface_info *ip;
-	u_int8_t *packbuf;
+	struct dhcp_packet *packet;
 	int length;
-	u_int16_t from_port;
+	unsigned int from_port;
 	struct iaddr from;
 	struct hardware *hfrom;
 {
-	struct dhcp_packet *packet = (struct dhcp_packet *)packbuf;
 	struct server_list *sp;
 	struct sockaddr_in to;
 	struct interface_info *out;
 	struct hardware hto;
 
+	if (packet -> hlen > sizeof packet -> chaddr) {
+		note ("Discarding packet with invalid hlen.");
+		return;
+	}
+
 	/* If it's a bootreply, forward it to the client. */
 	if (packet -> op == BOOTREPLY) {
-#ifndef USE_FALLBACK
-		if (!(packet -> flags & htons (BOOTP_BROADCAST))) {
+		if (!(packet -> flags & htons (BOOTP_BROADCAST)) &&
+		    can_unicast_without_arp ()) {
 			to.sin_addr = packet -> yiaddr;
 			to.sin_port = remote_port;
-		} else
-#endif
-		{
+		} else {
 			to.sin_addr.s_addr = htonl (INADDR_BROADCAST);
 			to.sin_port = remote_port;
 		}
 		to.sin_family = AF_INET;
-#ifdef HAVE_SA_LEN
 		to.sin_len = sizeof to;
-#endif
 
-		memcpy (hto.haddr, packet -> chaddr,
-			(packet -> hlen > sizeof hto.haddr
-			 ? sizeof hto.haddr
-			 : packet -> hlen));
+		/* Set up the hardware destination address. */
+		hto.hlen = packet -> hlen;
+		if (hto.hlen > sizeof hto.haddr)
+			hto.hlen = sizeof hto.haddr;
+		memcpy (hto.haddr, packet -> chaddr, hto.hlen);
 		hto.htype = packet -> htype;
 
 		/* Find the interface that corresponds to the giaddr
@@ -258,12 +294,10 @@ void relay (ip, packbuf, length, from_port, from, hfrom)
 			return;
 		}
 
-		if (send_packet (out,
-				 (struct packet *)0,
-				 packet, length, out -> primary_address,
-				 &to, &hto) < 0)
-			debug ("sendpkt: %m");
-		else
+		if (!send_packet (out,
+				  (struct packet *)0,
+				  packet, length, out -> primary_address,
+				  &to, &hto) < 0)
 			debug ("forwarded BOOTREPLY for %s to %s",
 			       print_hw_addr (packet -> htype, packet -> hlen,
 					      packet -> chaddr),
@@ -288,21 +322,11 @@ void relay (ip, packbuf, length, from_port, from, hfrom)
 	/* Otherwise, it's a BOOTREQUEST, so forward it to all the
 	   servers. */
 	for (sp = servers; sp; sp = sp -> next) {
-		if (
-#ifdef USE_FALLBACK
-		    send_fallback (&fallback_interface,
-				   (struct packet *)0,
-				   packet, length, ip -> primary_address,
-				   &sp -> to, (struct hardware *)0)
-#else
-		    send_packet (interfaces,
-				 (struct packet *)0,
-				 packet, length, ip -> primary_address,
-				 &sp -> to, (struct hardware *)0)
-#endif
-		    < 0) {
-			debug ("send_packet: %m");
-		} else {
+		if (!send_packet ((fallback_interface
+				   ? fallback_interface : interfaces),
+				  (struct packet *)0,
+				  packet, length, ip -> primary_address,
+				  &sp -> to, (struct hardware *)0) < 0) {
 			debug ("forwarded BOOTREQUEST for %s to %s",
 			       print_hw_addr (packet -> htype, packet -> hlen,
 					      packet -> chaddr),
@@ -312,9 +336,19 @@ void relay (ip, packbuf, length, from_port, from, hfrom)
 				 
 }
 
-static void usage ()
+static void usage (appname)
+	char *appname;
 {
-	error ("Usage: dhcrelay [-c] [-p <port>] [server1 [... serverN]]");
+	note (message);
+	note (copyright);
+	note (arr);
+	note ("");
+	note (contrib);
+	note (url);
+	note ("");
+
+	warn ("Usage: %s [-i] [-d] [-i if0] [...-i ifN] [-p <port>]", appname);
+	error ("      [-pf pidfilename] [server1 [... serverN]]");
 }
 
 void cleanup ()

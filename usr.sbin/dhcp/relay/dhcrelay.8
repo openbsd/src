@@ -37,7 +37,7 @@
 .\" Enterprises, see ``http://www.vix.com''.
 .TH dhcrelay 8
 .SH NAME
-dhcrelay - Dynamic Host Configuration Protocol (DHCP) Relay Agent
+dhcrelay - Dynamic Host Configuration Protocol Relay Agent
 .SH SYNOPSIS
 .B dhcrelay
 [
@@ -66,13 +66,8 @@ dhcrelay - Dynamic Host Configuration Protocol (DHCP) Relay Agent
 .SH DESCRIPTION
 The Internet Software Consortium DHCP Relay Agent, dhcrelay, provides a
 means for relaying DHCP and BOOTP requests from a subnet to which
-no DHCP server is directly to one or more DHCP servers on other
+no DHCP server is directly connected to one or more DHCP servers on other
 subnets.
-.SH SYSTEM REQUIREMENTS
-You must have the Berkeley
-Packet Filter (bpf) configured in your kernel.   You must have
-at least one /dev/bpf* file for each broadcast network interface that
-is attached to your system.
 .SH OPERATION
 .PP
 The DHCP Relay Agent listens for DHCP requests on all interfaces
@@ -99,7 +94,7 @@ configure may be specified on the command line using the
 .I -i
 option.  If no interface names
 are specified on the command line dhcrelay will identify all network
-interfaces, eliminating non-broadcast interfaces if possible, and
+interfaces, elimininating non-broadcast interfaces if possible, and
 attempt to configure each interface.
 .PP
 If dhcrelay should listen and transmit on a port other than the
@@ -107,6 +102,17 @@ standard (port 67), the
 .B -p
 flag may used.  It should be followed by the udp port number that
 dhcrelay should use.  This is mostly useful for debugging purposes.
+If the
+.B -p
+flag is specified, the relay agent will transmit responses to clients
+at a port number that is one greater than the one specified - i.e., if
+you specify
+.B -p
+67, then the relay agent will listen on port 67 and transmit to port
+68.   Transmissions to servers will be sent to the same port number
+that it specified in the
+.B -p
+flag.
 .PP
 Dhcrelay will normally run in the foreground until it has configured
 an interface, and then will revert to running in the background.

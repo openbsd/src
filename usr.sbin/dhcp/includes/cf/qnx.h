@@ -86,6 +86,7 @@ extern int h_errno;
 typedef unsigned char	u_int8_t;
 typedef unsigned short	u_int16_t;
 typedef unsigned long	u_int32_t;
+typedef signed char	int8_t;
 typedef signed short	int16_t;
 typedef signed long	int32_t;
 
@@ -99,6 +100,13 @@ typedef signed long	int32_t;
 #define USE_SOCKETS
 #define NO_SNPRINTF
 #undef AF_LINK
+
+#ifndef LITTLE_ENDIAN
+#define LITTLE_ENDIAN 1234
+#endif
+#ifndef BYTE_ORDER
+#define BYTE_ORDER LITTLE_ENDIAN
+#endif
 
 /*
     NOTE: to get the routing of the 255.255.255.255 broadcasts to work

@@ -68,9 +68,19 @@ extern int h_errno;
 #define IPTOS_THROUGHPUT        0x08
 #define IPTOS_RELIABILITY       0x04
 #endif
-#define _PATH_DHCPD_PID	"/etc/dhcpd.pid"
-#define _PATH_DHCLIENT_PID "/etc/dhclient.pid"
-#define _PATH_DHCLIENT_PID "/etc/dhcrelay.pid"
+
+#if !defined (_PATH_DHCPD_PID)
+# define _PATH_DHCPD_PID	"/etc/dhcpd.pid"
+#endif
+
+#if !defined (_PATH_DHCLIENT_PID)
+# define _PATH_DHCLIENT_PID	"/etc/dhclient.pid"
+#endif
+
+#if !defined (_PATH_DHCRELAY_PID)
+# define _PATH_DHCRELAY_PID	"/etc/dhcrelay.pid"
+#endif
+
 /* Stdarg definitions for ANSI-compliant C compilers. */
 #import <stdarg.h>
 #define VA_DOTDOTDOT ...

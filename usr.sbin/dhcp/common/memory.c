@@ -3,7 +3,7 @@
    Memory-resident database... */
 
 /*
- * Copyright (c) 1995, 1996 The Internet Software Consortium.
+ * Copyright (c) 1995, 1996, 1997, 1998 The Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -39,11 +39,6 @@
  * see ``http://www.vix.com/isc''.  To learn more about Vixie
  * Enterprises, see ``http://www.vix.com''.
  */
-
-#ifndef lint
-static char copyright[] =
-"$Id: memory.c,v 1.3 2000/07/21 00:33:53 beck Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
-#endif /* not lint */
 
 #include "dhcpd.h"
 
@@ -206,7 +201,7 @@ void new_address_range (low, high, subnet, dynamic)
 
 	/* All subnets should have attached shared network structures. */
 	if (!share) {
-		strcpy (netbuf, piaddr (subnet -> net));
+		strlcpy (netbuf, piaddr (subnet -> net), sizeof(netbuf));
 		error ("No shared network for network %s (%s)",
 		       netbuf, piaddr (subnet -> netmask));
 	}
@@ -222,18 +217,18 @@ void new_address_range (low, high, subnet, dynamic)
 	/* Make sure that high and low addresses are in same subnet. */
 	net = subnet_number (low, subnet -> netmask);
 	if (!addr_eq (net, subnet_number (high, subnet -> netmask))) {
-		strcpy (lowbuf, piaddr (low));
-		strcpy (highbuf, piaddr (high));
-		strcpy (netbuf, piaddr (subnet -> netmask));
+		strlcpy (lowbuf, piaddr (low), sizeof(lowbuf));
+		strlcpy (highbuf, piaddr (high), sizeof(highbuf));
+		strlcpy (netbuf, piaddr (subnet -> netmask), sizeof(netbuf));
 		error ("Address range %s to %s, netmask %s spans %s!",
 		       lowbuf, highbuf, netbuf, "multiple subnets");
 	}
 
 	/* Make sure that the addresses are on the correct subnet. */
 	if (!addr_eq (net, subnet -> net)) {
-		strcpy (lowbuf, piaddr (low));
-		strcpy (highbuf, piaddr (high));
-		strcpy (netbuf, piaddr (subnet -> netmask));
+		strlcpy (lowbuf, piaddr (low), sizeof(lowbuf));
+		strlcpy (highbuf, piaddr (high), sizeof(highbuf));
+		strlcpy (netbuf, piaddr (subnet -> netmask), sizeof(netbuf));
 		error ("Address range %s to %s not on net %s/%s!",
 		       lowbuf, highbuf, piaddr (subnet -> net), netbuf);
 	}
@@ -251,8 +246,8 @@ void new_address_range (low, high, subnet, dynamic)
 	/* Get a lease structure for each address in the range. */
 	address_range = new_leases (max - min + 1, "new_address_range");
 	if (!address_range) {
-		strcpy (lowbuf, piaddr (low));
-		strcpy (highbuf, piaddr (high));
+		strlcpy (lowbuf, piaddr (low), sizeof(lowbuf));
+		strlcpy (highbuf, piaddr (high), sizeof(highbuf));
 		error ("No memory for address range %s-%s.", lowbuf, highbuf);
 	}
 	memset (address_range, 0, (sizeof *address_range) * (max - min + 1));
@@ -280,13 +275,14 @@ void new_address_range (low, high, subnet, dynamic)
 			if (!h)
 				warn ("No hostname for %s", inet_ntoa (ia));
 			else {
+				int len = strlen(h->h_name) + 1;
 				address_range [i].hostname =
-					malloc (strlen (h -> h_name) + 1);
+					malloc (len);
 				if (!address_range [i].hostname)
 					error ("no memory for hostname %s.",
 					       h -> h_name);
-				strcpy (address_range [i].hostname,
-					h -> h_name);
+				strlcpy (address_range [i].hostname,
+					h -> h_name, len);
 			}
 		}
 
@@ -357,36 +353,59 @@ struct subnet *find_grouped_subnet (share, addr)
 	return (struct subnet *)0;
 }
 
+int subnet_inner_than (subnet, scan, warnp)
+	struct subnet *subnet, *scan;
+	int warnp;
+{
+	if (addr_eq (subnet_number (subnet -> net, scan -> netmask),
+		     scan -> net) ||
+	    addr_eq (subnet_number (scan -> net, subnet -> netmask),
+		     subnet -> net)) {
+		char n1buf [16];
+		int i, j;
+		for (i = 0; i < 32; i++)
+			if (subnet -> netmask.iabuf [3 - (i >> 3)]
+			    & (1 << (i & 7)))
+				break;
+		for (j = 0; j < 32; j++)
+			if (scan -> netmask.iabuf [3 - (j >> 3)] &
+			    (1 << (j & 7)))
+				break;
+		strlcpy (n1buf, piaddr (subnet -> net), sizeof(n1buf));
+		if (warnp)
+			warn ("%ssubnet %s/%d conflicts with subnet %s/%d",
+			      "Warning: ", n1buf, 32 - i,
+			      piaddr (scan -> net), 32 - j);
+		if (i < j)
+			return 1;
+	}
+	return 0;
+}
+
 /* Enter a new subnet into the subnet list. */
 
 void enter_subnet (subnet)
 	struct subnet *subnet;
 {
-	struct subnet *scan;
+	struct subnet *scan, *prev = (struct subnet *)0;
 
 	/* Check for duplicates... */
 	for (scan = subnets; scan; scan = scan -> next_subnet) {
-		if (addr_eq (subnet_number (subnet -> net, scan -> netmask),
-			     scan -> net) ||
-		    addr_eq (subnet_number (scan -> net, subnet -> netmask),
-			     subnet -> net)) {
-			char n1buf [16];
-			int i, j;
-			for (i = 0; i < 32; i++)
-				if (subnet -> netmask.iabuf [3 - (i >> 3)]
-				    & (1 << (i & 7)))
-					break;
-			for (j = 0; j < 32; j++)
-				if (scan -> netmask.iabuf [3 - (j >> 3)]
-				    & (1 << (j & 7)))
-					break;
-			strcpy (n1buf, piaddr (subnet -> net));
-			error ("subnet %s/%d conflicts with subnet %s/%d",
-			       n1buf, i, piaddr (scan -> net), j);
+		/* When we find a conflict, make sure that the
+		   subnet with the narrowest subnet mask comes
+		   first. */
+		if (subnet_inner_than (subnet, scan, 1)) {
+			if (prev) {
+				prev -> next_subnet = subnet; 
+			} else
+				subnets = subnet;
+			subnet -> next_subnet = scan;
+			return;
 		}
+		prev = scan;
 	}
 
-	/* XXX Sort the nets into a balanced tree to make searching quicker. */
+	/* XXX use the BSD radix tree code instead of a linked list. */
 	subnet -> next_subnet = subnets;
 	subnets = subnet;
 }
@@ -421,9 +440,9 @@ void enter_lease (lease)
 			       piaddr (lease -> ip_addr));
 		}
 		*comp = *lease;
-		lease -> next = dangling_leases;
-		lease -> prev = (struct lease *)0;
-		dangling_leases = lease;
+		comp -> next = dangling_leases;
+		comp -> prev = (struct lease *)0;
+		dangling_leases = comp;
 	} else {
 		/* Record the hostname information in the lease. */
 		comp -> hostname = lease -> hostname;
@@ -504,7 +523,6 @@ int supersede_lease (comp, lease, commit)
 
 		/* Copy the data files, but not the linkages. */
 		comp -> starts = lease -> starts;
-		comp -> timestamp = lease -> timestamp;
 		if (lease -> uid) {
 			if (lease -> uid_len < sizeof (lease -> uid_buf)) {
 				memcpy (comp -> uid_buf,
@@ -626,11 +644,14 @@ void release_lease (lease)
 	struct lease lt;
 
 	lt = *lease;
-	lt.ends = cur_time;
-	supersede_lease (lease, &lt, 1);
-	note ("Released lease for IP address %s",
-	      piaddr (lease -> ip_addr));
+	if (lt.ends > cur_time) {
+		lt.ends = cur_time;
+		supersede_lease (lease, &lt, 1);
+		note ("Released lease for IP address %s",
+		      piaddr (lease -> ip_addr));
+	}
 }
+
 
 /* Abandon the specified lease for the specified time. sets it's 
    particulars to zero, the end time apropriately and re-hash it as
@@ -838,21 +859,23 @@ struct class *add_class (type, name)
 		return (struct class *)0;
 
 	memset (class, 0, sizeof *class);
-	strcpy (tname, name);
+	strlcpy (tname, name, strlen(name) + 1);
 	class -> name = tname;
 
 	if (type)
 		add_hash (user_class_hash,
-			  tname, strlen (tname), (unsigned char *)class);
+			  (unsigned char *)tname, strlen (tname),
+			  (unsigned char *)class);
 	else
 		add_hash (vendor_class_hash,
-			  tname, strlen (tname), (unsigned char *)class);
+			  (unsigned char *)tname, strlen (tname),
+			  (unsigned char *)class);
 	return class;
 }
 
 struct class *find_class (type, name, len)
 	int type;
-	char *name;
+	unsigned char *name;
 	int len;
 {
 	struct class *class =
@@ -899,16 +922,21 @@ void dump_subnets ()
 	struct shared_network *s;
 	struct subnet *n;
 
+	note ("Subnets:");
+	for (n = subnets; n; n = n -> next_subnet) {
+		debug ("  Subnet %s", piaddr (n -> net));
+		debug ("     netmask %s",
+		       piaddr (n -> netmask));
+	}
+	note ("Shared networks:");
 	for (s = shared_networks; s; s = s -> next) {
-		for (n = subnets; n; n = n -> next_sibling) {
-			debug ("Subnet %s", piaddr (n -> net));
-			debug ("   netmask %s",
-			       piaddr (n -> netmask));
-		}
+		note ("  %s", s -> name);
 		for (l = s -> leases; l; l = l -> next) {
 			print_lease (l);
 		}
-		debug ("Last Lease:");
-		print_lease (s -> last_lease);
+		if (s -> last_lease) {
+			debug ("    Last Lease:");
+			print_lease (s -> last_lease);
+		}
 	}
 }

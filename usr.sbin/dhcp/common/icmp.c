@@ -1,10 +1,10 @@
-/* dhcp.c
+/* icmp.c
 
    ICMP Protocol engine - for sending out pings and receiving
    responses. */
 
 /*
- * Copyright (c) 1997 The Internet Software Consortium.
+ * Copyright (c) 1997, 1998 The Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -41,14 +41,10 @@
  * Enterprises, see ``http://www.vix.com''.
  */
 
-#ifndef lint
-static char copyright[] =
-"$Id: icmp.c,v 1.2 2001/01/03 16:04:38 ericj Exp $ Copyright (c) 1997 The Internet Software Consortium.  All rights reserved.\n";
-#endif /* not lint */
-
 #include "dhcpd.h"
-#include "netinet/ip.h"
-#include "netinet/ip_icmp.h"
+#include <netinet/in_systm.h>
+#include <netinet/ip.h>
+#include <netinet/ip_icmp.h>
 
 static int icmp_protocol_initialized;
 static int icmp_protocol_fd;
@@ -84,7 +80,8 @@ void icmp_startup (routep, handler)
 			(char *)&state, sizeof state) < 0)
 		error ("Unable to disable SO_DONTROUTE on ICMP socket: %m");
 
-	add_protocol ("icmp", icmp_protocol_fd, icmp_echoreply, handler);
+	add_protocol ("icmp", icmp_protocol_fd, icmp_echoreply,
+		      (void *)handler);
 }
 
 int icmp_echorequest (addr)
@@ -97,9 +94,7 @@ int icmp_echorequest (addr)
 	if (!icmp_protocol_initialized)
 		error ("attempt to use ICMP protocol before initialization.");
 
-#ifdef HAVE_SA_LEN
 	to.sin_len = sizeof to;
-#endif
 	to.sin_family = AF_INET;
 	to.sin_port = 0; /* unused. */
 	memcpy (&to.sin_addr, addr -> iabuf, sizeof to.sin_addr); /* XXX */
@@ -134,14 +129,14 @@ void icmp_echoreply (protocol)
 {
 	struct icmp *icfrom;
 	struct sockaddr_in from;
-	unsigned char icbuf [1500];
+	u_int8_t icbuf [1500];
 	int status;
 	int len;
 	struct iaddr ia;
 	void (*handler) PROTO ((struct iaddr, u_int8_t *, int));
 
 	len = sizeof from;
-	status = recvfrom (protocol -> fd, icbuf, sizeof icbuf, 0,
+	status = recvfrom (protocol -> fd, (char *)icbuf, sizeof icbuf, 0,
 			  (struct sockaddr *)&from, &len);
 	if (status < 0) {
 		warn ("icmp_echoreply: %m");
@@ -163,7 +158,9 @@ void icmp_echoreply (protocol)
 
 	/* If we were given a second-stage handler, call it. */
 	if (protocol -> local) {
-		handler = protocol -> local;
+		handler = ((void (*) PROTO ((struct iaddr,
+					    u_int8_t *, int)))
+			   protocol -> local);
 		memcpy (ia.iabuf, &from.sin_addr, sizeof from.sin_addr);
 		ia.len = sizeof from.sin_addr;
 

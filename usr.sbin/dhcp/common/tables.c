@@ -40,11 +40,6 @@
  * Enterprises, see ``http://www.vix.com''.
  */
 
-#ifndef lint
-static char copyright[] =
-"$Id: tables.c,v 1.1 1998/08/18 03:43:27 deraadt Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
-#endif /* not lint */
-
 #include "dhcpd.h"
 
 /* DHCP Option names, formats and codes, from RFC1533.
@@ -78,7 +73,7 @@ struct option dhcp_options [256] = {
 	{ "lpr-servers", "IA",				&dhcp_universe, 9 },
 	{ "impress-servers", "IA",			&dhcp_universe, 10 },
 	{ "resource-location-servers", "IA",		&dhcp_universe, 11 },
-	{ "host-name", "t",				&dhcp_universe, 12 },
+	{ "host-name", "X",				&dhcp_universe, 12 },
 	{ "boot-size", "S",				&dhcp_universe, 13 },
 	{ "merit-dump", "t",				&dhcp_universe, 14 },
 	{ "domain-name", "t",				&dhcp_universe, 15 },
@@ -130,20 +125,20 @@ struct option dhcp_options [256] = {
 	{ "dhcp-client-identifier", "X",		&dhcp_universe, 61 },
 	{ "option-62", "X",				&dhcp_universe, 62 },
 	{ "option-63", "X",				&dhcp_universe, 63 },
-	{ "option-64", "X",				&dhcp_universe, 64 },
-	{ "option-65", "X",				&dhcp_universe, 65 },
-	{ "option-66", "X",				&dhcp_universe, 66 },
-	{ "option-67", "X",				&dhcp_universe, 67 },
-	{ "option-68", "X",				&dhcp_universe, 68 },
-	{ "option-69", "X",				&dhcp_universe, 69 },
-	{ "option-70", "X",				&dhcp_universe, 70 },
-	{ "option-71", "X",				&dhcp_universe, 71 },
-	{ "option-72", "X",				&dhcp_universe, 72 },
-	{ "option-73", "X",				&dhcp_universe, 73 },
-	{ "option-74", "X",				&dhcp_universe, 74 },
-	{ "option-75", "X",				&dhcp_universe, 75 },
-	{ "option-76", "X",				&dhcp_universe, 76 },
-	{ "dhcp-user-class-identifier", "t",		&dhcp_universe, 77 },
+	{ "nisplus-domain", "t",			&dhcp_universe, 64 },
+	{ "nisplus-servers", "IA",			&dhcp_universe, 65 },
+	{ "tftp-server-name", "t",			&dhcp_universe, 66 },
+	{ "bootfile-name", "t",				&dhcp_universe, 67 },
+	{ "mobile-ip-home-agent", "IA",			&dhcp_universe, 68 },
+	{ "smtp-server", "IA",				&dhcp_universe, 69 },
+	{ "pop-server", "IA",				&dhcp_universe, 70 },
+	{ "nntp-server", "IA",				&dhcp_universe, 71 },
+	{ "www-server", "IA",				&dhcp_universe, 72 },
+	{ "finger-server", "IA",			&dhcp_universe, 73 },
+	{ "irc-server", "IA",				&dhcp_universe, 74 },
+	{ "streettalk-server", "IA",			&dhcp_universe, 75 },
+	{ "streettalk-directory-assistance-server", "IA", &dhcp_universe, 76 },
+	{ "user-class", "t",				&dhcp_universe, 77 },
 	{ "option-78", "X",				&dhcp_universe, 78 },
 	{ "option-79", "X",				&dhcp_universe, 79 },
 	{ "option-80", "X",				&dhcp_universe, 80 },
@@ -418,7 +413,7 @@ char *hardware_types [] = {
 	"unknown-5",
 	"token-ring",
 	"unknown-7",
-	"unknown-8",
+	"fddi",
 	"unknown-9",
 	"unknown-10",
 	"unknown-11",
@@ -681,10 +676,12 @@ void initialize_universes()
 		error ("Can't allocate dhcp option hash table.");
 	for (i = 0; i < 256; i++) {
 		dhcp_universe.options [i] = &dhcp_options [i];
-		add_hash (dhcp_universe.hash, dhcp_options [i].name, 0,
+		add_hash (dhcp_universe.hash,
+			  (unsigned char *)dhcp_options [i].name, 0,
 			  (unsigned char *)&dhcp_options [i]);
 	}
 	universe_hash.hash_count = DEFAULT_HASH_SIZE;
-	add_hash (&universe_hash, dhcp_universe.name, 0,
+	add_hash (&universe_hash,
+		  (unsigned char *)dhcp_universe.name, 0,
 		  (unsigned char *)&dhcp_universe);
 }

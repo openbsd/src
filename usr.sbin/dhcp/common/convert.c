@@ -41,11 +41,6 @@
  * Enterprises, see ``http://www.vix.com''.
  */
 
-#ifndef lint
-static char copyright[] =
-"$Id: convert.c,v 1.1 1998/08/18 03:43:25 deraadt Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
-#endif /* not lint */
-
 #include "dhcpd.h"
 
 u_int32_t getULong (buf)
@@ -102,7 +97,7 @@ void putLong (obuf, val)
 
 void putUShort (obuf, val)
 	unsigned char *obuf;
-	u_int16_t val;
+	unsigned int val;
 {
 	u_int16_t tmp = htons (val);
 	memcpy (obuf, &tmp, sizeof tmp);
@@ -110,7 +105,7 @@ void putUShort (obuf, val)
 
 void putShort (obuf, val)
 	unsigned char *obuf;
-	int16_t val;
+	int val;
 {
 	int16_t tmp = htons (val);
 	memcpy (obuf, &tmp, sizeof tmp);

@@ -1,6 +1,6 @@
-/* hash.h
+/* packet.c
 
-   Definitions for hashing... */
+   Packet assembly code, originally contributed by Archie Cobbs. */
 
 /*
  * Copyright (c) 1995, 1996 The Internet Software Consortium.
@@ -40,17 +40,53 @@
  * Enterprises, see ``http://www.vix.com''.
  */
 
-#define DEFAULT_HASH_SIZE	97
+#include "dhcpd.h"
 
-struct hash_bucket {
-	struct hash_bucket *next;
-	unsigned char *name;
-	int len;
-	unsigned char *value;
-};
+#include <netinet/if_ether.h>
+#define ETHER_HEADER_SIZE (ETHER_ADDR_LEN * 2 + sizeof (u_int16_t))
 
-struct hash_table {
-	int hash_count;
-	struct hash_bucket *buckets [DEFAULT_HASH_SIZE];
-};
+/* Assemble an hardware header... */
+/* XXX currently only supports ethernet; doesn't check for other types. */
 
+void assemble_ethernet_header (interface, buf, bufix, to)
+	struct interface_info *interface;
+	unsigned char *buf;
+	int *bufix;
+	struct hardware *to;
+{
+	struct ether_header eh;
+
+	if (to && to -> hlen == 6) /* XXX */
+		memcpy (eh.ether_dhost, to -> haddr, sizeof eh.ether_dhost);
+	else
+		memset (eh.ether_dhost, 0xff, sizeof (eh.ether_dhost));
+	if (interface -> hw_address.hlen == sizeof (eh.ether_shost))
+		memcpy (eh.ether_shost, interface -> hw_address.haddr,
+			sizeof (eh.ether_shost));
+	else
+		memset (eh.ether_shost, 0x00, sizeof (eh.ether_shost));
+
+	eh.ether_type = htons (ETHERTYPE_IP);
+
+	memcpy (&buf [*bufix], &eh, ETHER_HEADER_SIZE);
+	*bufix += ETHER_HEADER_SIZE;
+}
+
+/* Decode a hardware header... */
+
+ssize_t decode_ethernet_header (interface, buf, bufix, from)
+     struct interface_info *interface;
+     unsigned char *buf;
+     int bufix;
+     struct hardware *from;
+{
+  struct ether_header eh;
+
+  memcpy (&eh, buf + bufix, ETHER_HEADER_SIZE);
+
+  memcpy (from -> haddr, eh.ether_shost, sizeof (eh.ether_shost));
+  from -> htype = ARPHRD_ETHER;
+  from -> hlen = sizeof eh.ether_shost;
+
+  return sizeof eh;
+}
