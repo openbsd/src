@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount_kernfs.8,v 1.8 1998/12/21 16:16:48 mickey Exp $
+.\"	$OpenBSD: mount_kernfs.8,v 1.9 1999/03/19 03:23:47 provos Exp $
 .\"	$NetBSD: mount_kernfs.8,v 1.6 1995/03/18 14:57:24 cgd Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994
@@ -102,6 +102,8 @@ A trailing newline will be stripped from the hostname being written.
 The domainname, with a trailing newline. Behaves like a hostname.
 .It Pa hz
 Frequency of the system clock (decimal ASCII).
+.It Pa ipsec
+The currently configured IPSec Security Associations.
 .It Pa loadavg
 The 1, 5 and 15 minute load average in kernel fixed-point format.
 The final integer is the fix-point scaling factor.
