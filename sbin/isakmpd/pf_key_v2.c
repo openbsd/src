@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.127 2003/05/14 17:37:22 ho Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.128 2003/05/14 23:44:48 kjell Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -2174,7 +2174,8 @@ pf_key_v2_convert_id (u_int8_t *id, int idlen, size_t *reslen, int *idtype)
       *reslen = idlen - ISAKMP_ID_DATA_OFF + ISAKMP_GEN_SZ;
       memcpy (res, id + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ, *reslen);
       *idtype = SADB_IDENTTYPE_FQDN;
-      LOG_DBG ((LOG_SYSDEP, 40, "pf_key_v2_convert_id: FQDN %s", res));
+      LOG_DBG ((LOG_SYSDEP, 40, "pf_key_v2_convert_id: FQDN %.*s",
+		   (int)*reslen, res));
       return res;
 
     case IPSEC_ID_USER_FQDN:
@@ -2186,7 +2187,8 @@ pf_key_v2_convert_id (u_int8_t *id, int idlen, size_t *reslen, int *idtype)
       *reslen = idlen - ISAKMP_ID_DATA_OFF + ISAKMP_GEN_SZ;
       memcpy (res, id + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ, *reslen);
       *idtype = SADB_IDENTTYPE_USERFQDN;
-      LOG_DBG ((LOG_SYSDEP, 40, "pf_key_v2_convert_id: UFQDN %s", res));
+      LOG_DBG ((LOG_SYSDEP, 40, "pf_key_v2_convert_id: UFQDN %.*s",
+		   (int)*reslen, res));
       return res;
 
     case IPSEC_ID_IPV4_ADDR: /* XXX CONNECTION ? */
