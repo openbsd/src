@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.2 2000/06/20 07:58:55 fgsch Exp $
+#	$OpenBSD: Makefile.inc,v 1.3 2000/06/20 08:01:20 fgsch Exp $
 
 CFLAGS+=	-I${.CURDIR}/..
 

@@ -1,3 +1,5 @@
+/*	$OpenBSD: unix_auth.c,v 1.4 2000/06/20 08:01:21 fgsch Exp $	*/
+
 /*
  *	Transparent Cryptographic File System (TCFS) for NetBSD 
  *	Author and mantainer: 	Luigi Catuogno [luicat@tcfs.unisa.it]
