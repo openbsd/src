@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_aout.c,v 1.4 2002/03/14 06:51:42 mpech Exp $ */
+/*	$OpenBSD: exec_aout.c,v 1.5 2003/03/12 21:04:04 miod Exp $ */
 
 /*
  * Copyright (c) 1999 Mats O Jansson.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: exec_aout.c,v 1.4 2002/03/14 06:51:42 mpech Exp $";
+static char rcsid[] = "$OpenBSD: exec_aout.c,v 1.5 2003/03/12 21:04:04 miod Exp $";
 #endif
 
 #include <err.h>
@@ -46,29 +46,65 @@ static char rcsid[] = "$OpenBSD: exec_aout.c,v 1.4 2002/03/14 06:51:42 mpech Exp
 #include "ukc.h"
 
 caddr_t		aout_p, aout_r;
-int		aout_psz = 0, aout_rsz = 0;
+unsigned long	aout_psz = 0, aout_rsz = 0;
 struct exec	aout_ex;
+unsigned long	aout_adjvalue = 0;
+unsigned long	aout_datashift = 0;
 
+void
+aout_computeadj()
+{
+	aout_adjvalue = (unsigned long)aout_p +
+	    N_TXTOFF(aout_ex) - nl[P_KERNEL_TEXT].n_value;
+
+	/*
+	 * On m68k a.out ZMAGIC kernel, kernel_text begins _after_ the a.out
+	 * header, so compensate for it.
+	 */
+	if (nl[P_KERNEL_TEXT].n_value & (__LDPGSZ - 1))
+		aout_adjvalue += sizeof(aout_ex);
+
+	/*
+	 * On NMAGIC kernel, we need an extra relocation for the data area
+	 */
+	aout_datashift = (N_DATADDR(aout_ex) - N_TXTADDR(aout_ex)) -
+	    aout_ex.a_text;
+}
+
+/* ``kernel'' vaddr -> in-memory address */
 caddr_t
 aout_adjust(x)
 	caddr_t x;
 {
-	unsigned long y;
 
-	y = (unsigned long)x - nl[P_KERNEL_TEXT].n_value + (unsigned long)aout_p +
-	    N_TXTOFF(aout_ex);
-	return((caddr_t)y);
+	if (aout_adjvalue == 0)
+		aout_computeadj();
+
+	if (aout_datashift != 0 &&
+	    (unsigned long)x >= N_DATADDR(aout_ex))
+		x -= aout_datashift;
+
+	return (x + aout_adjvalue);
 }
 
+/* in-memory address -> ``kernel'' vaddr */
 caddr_t
 aout_readjust(x)
 	caddr_t x;
 {
-	unsigned long y;
+	caddr_t y;
 
-	y = (unsigned long)x - (unsigned long)aout_p + nl[P_KERNEL_TEXT].n_value -
-	    N_TXTOFF(aout_ex);
-	return((caddr_t)y);
+#if 0	/* unnecessary, aout_adjust() is always invoked first */
+	if (aout_adjvalue == 0)
+		aout_computeadj();
+#endif
+
+	y = x - aout_adjvalue;
+	if (aout_datashift != 0 &&
+	    (unsigned long)y >= N_TXTADDR(aout_ex) + aout_ex.a_text)
+		y += aout_datashift;
+
+	return (y);
 }
 
 int
@@ -106,9 +142,10 @@ aout_loadkernel(file)
 	if (N_BADMAG(aout_ex))
 		errx(1, "bad a.out magic");
 
-	(void)lseek(fd, (off_t)0, SEEK_SET);
+	lseek(fd, (off_t)0, SEEK_SET);
 
-	aout_psz = (int)(aout_ex.a_text+aout_ex.a_data);
+	aout_psz = (int)(aout_ex.a_text + N_TXTOFF(aout_ex) +
+	    aout_ex.a_data);
 
 	aout_p = malloc(aout_psz);
 
