@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.36 2000/03/26 06:40:50 angelos Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.37 2000/08/08 21:26:52 angelos Exp $ */
 /*
 %%% copyright-nrl-97
 This software is Copyright 1997-1998 by Randall Atkinson, Ronald Lee,
@@ -250,11 +250,11 @@ export_sa(void **p, struct tdb *tdb)
 		break;
 
 	    case CRYPTO_CAST_CBC:
-		sadb_sa->sadb_sa_encrypt = SADB_X_EALG_BLF;
+		sadb_sa->sadb_sa_encrypt = SADB_X_EALG_CAST;
 		break;
 
 	    case CRYPTO_BLF_CBC:
-		sadb_sa->sadb_sa_encrypt = SADB_X_EALG_CAST;
+		sadb_sa->sadb_sa_encrypt = SADB_X_EALG_BLF;
 		break;
 
 	    case CRYPTO_SKIPJACK_CBC:
@@ -2140,11 +2140,11 @@ pfkeyv2_acquire(struct tdb *tdb, int rekey)
 		    break;
 
 		case CRYPTO_CAST_CBC:
-		    sadb_comb->sadb_comb_encrypt = SADB_X_EALG_BLF;
+		    sadb_comb->sadb_comb_encrypt = SADB_X_EALG_CAST;
 		    break;
 
 		case CRYPTO_BLF_CBC:
-		    sadb_comb->sadb_comb_encrypt = SADB_X_EALG_CAST;
+		    sadb_comb->sadb_comb_encrypt = SADB_X_EALG_BLF;
 		    break;
 
 		case CRYPTO_SKIPJACK_CBC:
