@@ -1,4 +1,4 @@
-.Dd 13 June, 1999
+.Dd June 13, 1999
 .Os
 .Dt IPL 4
 .Sh NAME
@@ -23,7 +23,7 @@ is
 and the second is
 .Fa ipflog .
 Both are declared in
-.Pa netinet/ip_fil.h .
+.Aq Pa netinet/ip_fil.h .
 and their formats are as follows:
 .Bd -literal -offset indent
 struct	iplog	{
@@ -46,15 +46,15 @@ struct	ipflog	{
 }
 .Ed
 .Pp
-In the case of the header causing the buffer to finish on a non-32bit
+In the case of the header causing the buffer to finish on a non-32-bit
 boundary, padding will be appended to ensure that the next log entry
-is aligned to a 32bit boundary.
+is aligned to a 32-bit boundary.
 .Pp
 If the packet content is more than 128 bytes, only
 the first 128 bytes of the
-packet content are logged. Should the packet content finish on a non-32bit
+packet content are logged. Should the packet content finish on a non-32-bit
 boundary, then the last few bytes are not logged to ensure the log entry
-is aligned to a 32bit boundary.
+is aligned to a 32-bit boundary.
 .Pp
 .Nm
 is a read-only (sequential) character pseudo-device.
@@ -70,10 +70,13 @@ This ioctl flushes the log buffer and returns the number of bytes flushed.
 There is currently no support for non-blocking IO with this device, meaning
 all read operations should be considered blocking in nature (if there is no
 data to read, it will sleep until some is made available).
+.Sh FILES
+.Bl -tag -width /dev/ipl -compact
+.It Pa /dev/ipl
+IP packet logging pseudo-device
+.El
 .Sh SEE ALSO
 .Xr ipf 4 ,
 .Xr ipmon 8
 .Sh BUGS
 Packet headers are dropped when the internal buffer (static size) fills.
-.Sh FILES
-.Pa /dev/ipl
