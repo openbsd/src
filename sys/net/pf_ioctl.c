@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.99 2004/01/05 12:54:47 cedric Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.100 2004/01/05 13:33:11 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1422,18 +1422,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	}
 
 	case DIOCCLRSTATUS: {
-		u_int32_t	running = pf_status.running;
-		u_int32_t	states = pf_status.states;
-		u_int32_t	src_nodes = pf_status.src_nodes;
-		u_int32_t	since = pf_status.since;
-		u_int32_t	debug = pf_status.debug;
-
-		bzero(&pf_status, sizeof(struct pf_status));
-		pf_status.running = running;
-		pf_status.states = states;
-		pf_status.src_nodes = src_nodes;
-		pf_status.since = since;
-		pf_status.debug = debug;
+		bzero(pf_status.counters, sizeof(pf_status.counters));
+		bzero(pf_status.fcounters, sizeof(pf_status.fcounters));
+		bzero(pf_status.scounters, sizeof(pf_status.scounters));
 		if (*pf_status.ifname)
 			pfi_clr_istats(pf_status.ifname, NULL, 0);
 		break;
