@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_specific.c,v 1.1 2002/05/03 10:08:55 wcobb Exp $	*/
+/*	$OpenBSD: pthread_specific.c,v 1.2 2002/06/16 23:05:14 marc Exp $	*/
 
 /*
  * Copyright (c) 2002 CubeSoft Communications, Inc.
@@ -42,7 +42,7 @@ run_thread(void *arg)
 {
 	int i;
 
-	fprintf(stderr, ".");
+	CHECKe(write(STDOUT_FILENO, ".", 1));
 	for (i = 0; i < 32767; i++) {
 		void *p;
 
@@ -77,7 +77,7 @@ main()
 	for (i = 0; i < NTHREADS; i++) {
 		CHECKr(pthread_join(threads[i], NULL));
 	}
-	fprintf(stderr, "\n");
+	CHECKe(write(STDOUT_FILENO, "\n", 1));
 	
 	CHECKr(pthread_key_delete(key));
 
