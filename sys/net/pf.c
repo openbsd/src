@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.163 2001/10/15 16:22:21 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.164 2001/10/24 09:07:38 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1885,6 +1885,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		    n = pf_tree_next(n))
 			n->state->expire = 0;
 		pf_purge_expired_states();
+		pf_status.states = 0;
 		splx(s);
 		break;
 	}
