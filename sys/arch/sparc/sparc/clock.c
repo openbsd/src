@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.11 1999/07/09 21:30:01 art Exp $	*/
+/*	$OpenBSD: clock.c,v 1.12 1999/07/09 21:40:20 art Exp $	*/
 /*	$NetBSD: clock.c,v 1.52 1997/05/24 20:16:05 pk Exp $ */
 
 /*
@@ -212,7 +212,7 @@ oclockmatch(parent, vcf, aux)
 	struct device *parent;
 	void *vcf, *aux;
 {
-	register struct confargs *ca = aux;
+	struct confargs *ca = aux;
 
 	/* Only these sun4s have oclock */
 	if (!CPU_ISSUN4 ||
@@ -241,7 +241,7 @@ oclockattach(parent, self, aux)
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
 	struct idprom *idp;
-	register int h;
+	int h;
 
 	oldclk = 1;  /* we've got an oldie! */
 
@@ -260,7 +260,7 @@ oclockattach(parent, self, aux)
 	ienab_bic(IE_L14 | IE_L10);	/* disable all clock intrs */
 	for (timerblurb = 1; ; timerblurb++) {
 		volatile register char *ireg = &i7->clk_intr_reg;
-		register int ival;
+		int ival;
 		*ireg = INTERSIL_INTER_CSECONDS; /* 1/100 sec */
 		intersil_enable(i7);		 /* enable clock */
 		while ((*ireg & INTERSIL_INTER_PENDING) == 0)
@@ -346,7 +346,7 @@ clockmatch(parent, vcf, aux)
 	struct device *parent;
 	void *vcf, *aux;
 {
-	register struct confargs *ca = aux;
+	struct confargs *ca = aux;
 
 	if (CPU_ISSUN4) {
 		/* Only these sun4s have "clock" (others have "oclock") */
@@ -373,9 +373,9 @@ clockattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	register int h;
-	register struct clockreg *cl;
-	register struct idprom *idp;
+	int h;
+	struct clockreg *cl;
+	struct idprom *idp;
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
 	char *prop = NULL;
@@ -447,7 +447,7 @@ timermatch(parent, vcf, aux)
 	struct device *parent;
 	void *vcf, *aux;
 {
-	register struct confargs *ca = aux;
+	struct confargs *ca = aux;
 
 	if (CPU_ISSUN4) {
 		if (cpuinfo.cpu_type != CPUTYP_4_300 &&
@@ -482,7 +482,7 @@ timerattach(parent, self, aux)
 	void *aux;
 {
 	struct confargs *ca = aux;
-	register struct romaux *ra = &ca->ca_ra;
+	struct romaux *ra = &ca->ca_ra;
 	volatile int *cnt = NULL, *lim = NULL;
 		/* XXX: must init to NULL to avoid stupid gcc -Wall warning */
 
@@ -524,7 +524,7 @@ timerattach(parent, self, aux)
 
 	for (timerblurb = 1; ; timerblurb++) {
 		volatile int discard;
-		register int t0, t1;
+		int t0, t1;
 
 		/* Reset counter register by writing some large limit value */
 		discard = *lim;
@@ -558,8 +558,8 @@ void
 clk_wenable(onoff)
 	int onoff;
 {
-	register int s;
-	register vm_prot_t prot;/* nonzero => change prot */
+	int s;
+	vm_prot_t prot;/* nonzero => change prot */
 	static int writers;
 
 	s = splhigh();
@@ -580,8 +580,8 @@ void
 myetheraddr(cp)
 	u_char *cp;
 {
-	register struct clockreg *cl = clockreg;
-	register struct idprom *idp = &cl->cl_idprom;
+	struct clockreg *cl = clockreg;
+	struct idprom *idp = &cl->cl_idprom;
 
 #if defined(SUN4)
 	if (CPU_ISSUN4)
@@ -605,7 +605,7 @@ myetheraddr(cp)
 void
 cpu_initclocks()
 {
-	register int statint, minint;
+	int statint, minint;
 
 #if defined(SUN4)
 	if (oldclk) {
@@ -690,7 +690,7 @@ int
 clockintr(cap)
 	void *cap;
 {
-	register volatile int discard;
+	volatile int discard;
 	int s;
 	extern int rom_console_input;
 
@@ -737,8 +737,8 @@ int
 statintr(cap)
 	void *cap;
 {
-	register volatile int discard;
-	register u_long newint, r, var;
+	volatile int discard;
+	u_long newint, r, var;
 
 #if defined(SUN4)
 	if (oldclk) {
@@ -809,9 +809,9 @@ const short dayyr[12] =
 
 int
 chiptotime(sec, min, hour, day, mon, year)
-	register int sec, min, hour, day, mon, year;
+	int sec, min, hour, day, mon, year;
 {
-	register int days, yr;
+	int days, yr;
 
 	sec = FROMBCD(sec);
 	min = FROMBCD(min);
@@ -845,9 +845,9 @@ struct chiptime {
 
 void
 timetochip(c)
-	register struct chiptime *c;
+	struct chiptime *c;
 {
-	register int t, t2, t3, now = time.tv_sec;
+	int t, t2, t3, now = time.tv_sec;
 
 	/* compute the year */
 	t2 = now / SECDAY;
@@ -896,7 +896,7 @@ void
 inittodr(base)
 	time_t base;
 {
-	register struct clockreg *cl = clockreg;
+	struct clockreg *cl = clockreg;
 	int sec, min, hour, day, mon, year;
 	int badbase = 0, waszero = base == 0;
 
@@ -963,7 +963,7 @@ forward:
 void
 resettodr()
 {
-	register struct clockreg *cl;
+	struct clockreg *cl;
 	struct chiptime c;
 
 #if defined(SUN4)
@@ -1095,8 +1095,8 @@ gmt_to_dt(tp, dt)
 	long *tp;
 	struct intersil_dt *dt;
 {
-        register int i;
-        register long days, secs;
+        int i;
+        long days, secs;
 
         days = *tp / SECDAY;
         secs = *tp % SECDAY;
@@ -1137,8 +1137,8 @@ dt_to_gmt(dt, tp)
 	struct intersil_dt *dt;
 	long *tp;
 {
-        register int i;
-        register long tmp;
+        int i;
+        long tmp;
         int year;
 
         /*
@@ -1195,7 +1195,7 @@ out:
  */
 void
 microtime(tvp)
-	register struct timeval *tvp;
+	struct timeval *tvp;
 {
 	int s;
 	static struct timeval lasttime;
