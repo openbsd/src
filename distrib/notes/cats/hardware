@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.9 2004/04/19 22:54:07 pvalchev Exp $
+dnl	$OpenBSD: hardware,v 1.10 2004/09/16 08:03:46 grange Exp $
 OpenBSD/MACHINE runs on the Chalice/Simtec StrongARM 110 Evaluation Board.
 
 Supported devices {:-include-:}:
@@ -12,6 +12,7 @@ Supported devices {:-include-:}:
 		    (RAID mode is not supported)
 		Intel PIIX, PIIX3, and PIIX4
 		Intel 82801 (ICH/ICH0/ICH2/ICH3/ICH4/ICH4-M/ICH5/ICH5R)
+		Intel 6300ESB
 		National Semiconductor PC87415
 		NVIDIA nForce/nForce2
 		Promise PDC20246, PDC20262, PDC20265, PDC20267, PDC20268,

@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.15 2004/08/11 01:30:32 nick Exp $
+dnl	$OpenBSD: hardware,v 1.16 2004/09/16 08:03:45 grange Exp $
 OpenBSD/MACHINE OSREV should work on all Athlon 64-based and
 compatible designs.
 
@@ -31,6 +31,7 @@ dnl		YENTA-compatible PCI-CardBus bridges
 		    (RAID mode is not supported)
 		Intel PIIX, PIIX3, and PIIX4
 		Intel 82801 (ICH/ICH0/ICH2/ICH3/ICH4/ICH4-M/ICH5/ICH5R)
+		Intel 6300ESB
 		ITE IT8212F (RAID mode is not supported)
 		National Semiconductor PC87415
 		National Semiconductor SCx200 (found on SC1100 SoC)

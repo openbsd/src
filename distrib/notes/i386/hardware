@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.159 2004/09/10 19:13:07 miod Exp $
+dnl	$OpenBSD: hardware,v 1.160 2004/09/16 08:03:46 grange Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -74,6 +74,7 @@ Supported hardware {:-include-:}:
 		    (RAID mode is not supported)
 		Intel PIIX, PIIX3, and PIIX4
 		Intel 82801 (ICH/ICH0/ICH2/ICH3/ICH4/ICH4-M/ICH5/ICH5R)
+		Intel 6300ESB
 		ITE IT8212F (RAID mode is not supported)
 		National Semiconductor PC87415
 		National Semiconductor SCx200 (found on SC1100 SoC)
