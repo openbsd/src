@@ -1,3 +1,4 @@
+/*	$OpenBSD: pom.c,v 1.5 1998/07/26 06:27:39 pjanzen Exp $	*/
 /*    $NetBSD: pom.c,v 1.6 1996/02/06 22:47:29 jtc Exp $      */
 
 /*
@@ -99,7 +100,7 @@ main()
 	days = (GMT->tm_yday + 1) + ((GMT->tm_hour +
 	    (GMT->tm_min / 60.0) + (GMT->tm_sec / 3600.0)) / 24.0);
 	for (cnt = EPOCH; cnt < GMT->tm_year; ++cnt)
-		days += isleap(cnt) ? 366 : 365;
+		days += isleap(cnt + 1900) ? 366 : 365;
 	today = potm(days) + .5;
 	(void)printf("The Moon is ");
 	if ((int)today == 100)
