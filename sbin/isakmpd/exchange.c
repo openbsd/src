@@ -1,4 +1,4 @@
-/*	$OpenBSD: exchange.c,v 1.34 2000/10/16 23:27:33 niklas Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.35 2000/12/02 02:08:17 angelos Exp $	*/
 /*	$EOM: exchange.c,v 1.134 2000/10/16 18:16:58 provos Exp $	*/
 
 /*
@@ -1407,7 +1407,6 @@ exchange_finalize (struct message *msg)
 	}
     }
 
-
   /*
    * There is no reason to keep the SAs connected to us anymore, in fact
    * it can hurt us if we have short lifetimes on the SAs and we try
@@ -1424,7 +1423,8 @@ exchange_finalize (struct message *msg)
 		      exchange->id_r_len);
 
       TAILQ_REMOVE (&exchange->sa_list, sa, next);
-      sa_release (sa);
+      if (sa->refcnt > 1)
+        sa_release (sa);
     }
 
   /* If we have nothing to retransmit we can safely remove ourselves.  */
