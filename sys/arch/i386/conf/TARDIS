@@ -1,13 +1,18 @@
 #
-#	SPARE-PARTS: spare-parts.downsj.com
+#	TARDIS: tardis.downsj.com
 #
-#	$OpenBSD: SPARE-PARTS,v 1.11 1997/03/03 04:09:16 downsj Exp $
+#	The headless gateway to the world.
+#
+#	Please note that before you use this kernel config as an example for
+#	anything, it currently requires special boot blocks.
+#
+#	$OpenBSD: TARDIS,v 1.1 1997/06/08 19:14:03 downsj Exp $
 #
 
 machine		i386
-option		I486_CPU
+option		I586_CPU
 
-maxusers	8
+maxusers	16
 option		TIMEZONE=480
 option		DST=0
 
@@ -21,10 +26,10 @@ option		BOOT_CONFIG
 option		DIAGNOSTIC
 option		KTRACE
 
-#option		SYSVMSG
-#option		SYSVSEM
-#option		SYSVSHM
-#option		SHMMAXPGS=1024
+option		SYSVMSG
+option		SYSVSEM
+option		SYSVSHM
+option		SHMMAXPGS=1024
 
 #option		COMPAT_NOMID
 #option		COMPAT_09
@@ -33,24 +38,24 @@ option		KTRACE
 #option		COMPAT_43
 #option		TCP_COMPAT_42
 
-#option		COMPAT_SVR4
-#option		COMPAT_IBCS2
-#option		COMPAT_LINUX
-#option		COMPAT_FREEBSD
+option		COMPAT_SVR4
+option		COMPAT_IBCS2
+option		COMPAT_LINUX
+option		COMPAT_FREEBSD
 
-#option		LKM
+option		LKM
 
 option		FFS
 #option		QUOTA
-#option		MFS
+option		MFS
 
 option		PPP_BSDCOMP,PPP_DEFLATE
 option		IPFILTER
 
 option		NFSCLIENT
-#option		NFSSERVER
+option		NFSSERVER
 
-option		CD9660
+#option		CD9660
 option		MSDOSFS
 option		FDESC
 option		FIFO
@@ -76,16 +81,10 @@ pci*	at ppb? bus ?
 npx0	at isa? port 0xf0 irq 13
 isadma0 at isa?
 
-pc0	at isa? port 0x60 irq 1
-
 pccom0	at isa? port 0x3f8 irq 4
 pccom1	at isa? port 0x2f8 irq 3
 
-rtfps0	at isa? port 0x1230 irq 9
-pccom*	at rtfps? slave ?
-
-lpt0	at isa? port 0x278 irq 7
-lpt1	at isa? port 0x3bc
+lpt0	at isa? port 0x278 irq 5
 
 de0	at pci? dev ? function ?
 
@@ -98,12 +97,10 @@ wdc0	at isa? port 0x1f0 irq 14
 wdc1	at isa? port 0x170 irq 15
 wd*	at wdc? drive ?
 
-atapibus* at wdc?
-acd*	at atapibus? drive?
-
 pseudo-device	loop	1
 pseudo-device	bpfilter 8
-pseudo-device	ppp	4
+pseudo-device	sl	2
+pseudo-device	ppp	2
 pseudo-device	tun	2
 
 pseudo-device	pty	64
