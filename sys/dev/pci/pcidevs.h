@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.546 2002/09/16 00:27:35 krw Exp 
+ *		OpenBSD: pcidevs,v 1.547 2002/09/23 17:20:51 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -816,6 +816,7 @@
 #define	PCI_PRODUCT_AMD_766_IDE	0x7411		/* 766 IDE */
 #define	PCI_PRODUCT_AMD_766_USB	0x7412		/* 766 USB */
 #define	PCI_PRODUCT_AMD_766_PMC	0x7413		/* 766 Power Mgmt */
+#define	PCI_PRODUCT_AMD_766_USB_HCI	0x7414		/* 766 USB OpenHCI */
 #define	PCI_PRODUCT_AMD_PBC768_ISA	0x7440		/* 768 PCI-ISA */
 #define	PCI_PRODUCT_AMD_PBC768_IDE	0x7441		/* 768 IDE */
 #define	PCI_PRODUCT_AMD_PBC768_PMC	0x7443		/* 768 Power Mgmt */

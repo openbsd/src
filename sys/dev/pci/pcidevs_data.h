@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.546 2002/09/16 00:27:35 krw Exp 
+ *		OpenBSD: pcidevs,v 1.547 2002/09/23 17:20:51 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -741,6 +741,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_766_PMC,
 	    "766 Power Mgmt",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_766_USB_HCI,
+	    "766 USB OpenHCI",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC768_ISA,
