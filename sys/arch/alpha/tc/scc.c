@@ -1,4 +1,4 @@
-/*	$OpenBSD: scc.c,v 1.9 2001/06/25 00:43:07 mickey Exp $	*/
+/*	$OpenBSD: scc.c,v 1.10 2001/06/25 00:56:10 ericj Exp $	*/
 /*	$NetBSD: scc.c,v 1.28 1996/12/05 01:39:43 cgd Exp $	*/
 
 /*
@@ -65,6 +65,7 @@
  */
 
 #include "scc.h"
+
 #if NSCC > 0
 /*
  * Intel 82530 dual usart chip driver. Supports the serial port(s) on the
@@ -90,16 +91,9 @@
 
 #include <dev/cons.h>
 
-#include <pmax/include/pmioctl.h>
-
-#include <pmax/dev/device.h>
-#include <pmax/dev/pdma.h>
 #include <dev/ic/z8530reg.h>
 #include <alpha/tc/sccreg.h>
 #include <alpha/tc/sccvar.h>
-#if 0
-#include <pmax/dev/fbreg.h>
-#endif
 
 #include <machine/autoconf.h>	/* For the badaddr() proto */
 #include <machine/rpb.h>
@@ -116,10 +110,6 @@
  * support from the tty drivers. This is ugly and broken and won't
  * compile on Alphas.
  */
-#ifdef pmax
-#define HAVE_RCONS
-extern int pending_remcons;
-#endif
 
 #define	NSCCLINE	(NSCC*2)
 #define	SCCUNIT(dev)	(minor(dev) >> 1)
@@ -132,6 +122,14 @@ void	(*sccMouseButtons) __P((int));	/* X windows mouse buttons event routine */
 #ifdef DEBUG
 int	debugChar;
 #endif
+
+struct pdma {
+        void	*p_addr;
+	char	*p_mem;
+	char	*p_end;
+	int	p_arg;
+	void	(*p_fcn) __P((struct tty *tp));
+};
 
 struct scc_softc {
 	struct device sc_dv;
@@ -281,40 +279,12 @@ scc_consinit(dev, sccaddr)
 	ctty.t_dev = dev;
 	scccons.cn_dev = dev;
 	cterm.c_cflag = CS8;
-#ifdef pmax
-	/* XXX -- why on pmax, not on Alpha? */
-	cterm.c_cflag  |= CLOCAL;
-#endif
 	cterm.c_ospeed = cterm.c_ispeed = 9600;
 	(void) cold_sccparam(&ctty, &cterm, sc);
 	*cn_tab = scccons;
 	DELAY(1000);
 	splx(s);
 }
-
-#ifndef alpha
-void
-scc_oconsinit(sc, dev)
-	struct scc_softc *sc;
-	dev_t dev;
-{
-	struct termios cterm;
-	struct tty ctty;
-	int s;
-
-	s = spltty();
-	ctty.t_dev = dev;
-	cterm.c_cflag = CS8;
-#ifdef pmax
-	/* XXX -- why on pmax, not on Alpha? */
-	cterm.c_cflag  |= CLOCAL;
-#endif
-	cterm.c_ospeed = cterm.c_ispeed = 9600;
-	(void) sccparam(&ctty, &cterm);
-	DELAY(1000);
-	splx(s);
-}
-#endif
 
 /*
  * Test to see if device is present.
@@ -367,7 +337,6 @@ sccmatch(parent, cf, aux)
 	return (1);
 }
 
-#ifdef alpha
 /*
  * Enable ioasic SCC interrupts and scc DMA engine interrupts.
  * XXX does not really belong here.
@@ -395,7 +364,6 @@ scc_alphaintr(onoff)
 	}
 	tc_mb();
 }
-#endif /* alpha */
 
 void
 sccattach(parent, self, aux)
@@ -465,10 +433,6 @@ sccattach(parent, self, aux)
 				s = spltty();
 				ctty.t_dev = makedev(SCCDEV, SCCKBD_PORT);
 				cterm.c_cflag = CS8;
-#ifdef pmax
-				/* XXX -- why on pmax, not on Alpha? */
-				cterm.c_cflag |= CLOCAL;
-#endif /* pmax */
 				cterm.c_ospeed = cterm.c_ispeed = 4800;
 				(void) sccparam(&ctty, &cterm);
 				DELAY(10000);
@@ -1008,9 +972,6 @@ sccintr(xxxsc)
 		dp = &sc->scc_pdma[chan];
 		if (dp->p_mem < dp->p_end) {
 			SCC_WRITE_DATA(regs, chan, *dp->p_mem++);
-#ifdef pmax	/* Alpha handles the 1.6 msec settle time in hardware */
-			DELAY(2);
-#endif
 			tc_mb();
 		} else {
 			tp->t_state &= ~TS_BUSY;
@@ -1182,9 +1143,6 @@ sccstart(tp)
 			panic("sccstart: No chars");
 #endif
 		SCC_WRITE_DATA(regs, chan, *dp->p_mem++);
-#ifdef pmax /* Alpha handles the 1.6 msec settle time in hardware */
-		DELAY(2);
-#endif
 	}
 	tc_mb();
 out:
@@ -1345,12 +1303,9 @@ sccGetc(dev)
 
 	if (!regs)
 		return (0);
-#ifdef pmax
-	/*s = spltty(); */	/* XXX  why different spls? */
+
 	s = splhigh();
-#else
-	s = splhigh();
-#endif
+
 	for (;;) {
 		SCC_READ_REG(regs, line, SCC_RR0, value);
 		if (value & ZSRR0_RX_READY) {
@@ -1385,11 +1340,8 @@ sccPutc(dev, c)
 	register u_char value;
 	int s;
 
-#ifdef pmax
-	s = spltty();	/* XXX  why different spls? */
-#else
 	s = splhigh();
-#endif
+
 	line = SCCLINE(dev);
 	if (cold && scc_cons_addr) {
 		regs = scc_cons_addr;
