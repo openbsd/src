@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.105 2003/12/31 11:18:24 cedric Exp $
+.\" $OpenBSD: pfctl.8,v 1.106 2004/02/12 02:05:32 beck Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -226,6 +226,11 @@ Other rules and options are ignored.
 .It Fl O
 Load only the options present in the rule file.
 Other rules and options are ignored.
+.It Fl p Ar device
+use the device file 
+.Ar device
+instead of the default
+.Pa /dev/pf .
 .It Fl s Ar modifier
 Show the filter parameters specified by
 .Ar modifier

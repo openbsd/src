@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.202 2004/02/10 22:26:55 dhartmei Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.203 2004/02/12 02:05:32 beck Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -85,6 +85,7 @@ char		*rulesopt;
 const char	*showopt;
 const char	*debugopt;
 char		*anchoropt;
+char		*pf_device = "/dev/pf";
 char		*tableopt;
 const char	*tblcmdopt;
 int		 state_killers;
@@ -190,9 +191,11 @@ usage(void)
 	fprintf(stderr, "usage: %s [-AdeghnNqrROvz] ", __progname);
 	fprintf(stderr, "[-a anchor[:ruleset]] [-D macro=value]\n");
 	fprintf(stderr, "             ");
-	fprintf(stderr, "[-f file] [-F modifier] [-k host] [-s modifier]\n");
+	fprintf(stderr, "[-f file] [-F modifier] [-k host] [-p device] \n");
 	fprintf(stderr, "             ");
-	fprintf(stderr, "[-t table] [-T command [address ...]] [-x level]\n");
+	fprintf(stderr, "[-s modifier] [-t table]\n");
+	fprintf(stderr, "             ");
+	fprintf(stderr, "[-T command [address ...]] [-x level]\n");
 	exit(1);
 }
 
@@ -1447,7 +1450,7 @@ main(int argc, char *argv[])
 	if (argc < 2)
 		usage();
 
-	while ((ch = getopt(argc, argv, "a:AdD:eqf:F:ghk:nNOrRs:t:T:vx:z")) !=
+	while ((ch = getopt(argc, argv, "a:AdD:eqf:F:ghk:nNOp:rRs:t:T:vx:z")) !=
 		-1) {
 		switch (ch) {
 		case 'a':
@@ -1510,6 +1513,9 @@ main(int argc, char *argv[])
 			break;
 		case 'O':
 			loadopt |= PFCTL_FLAG_OPTION;
+			break;
+		case 'p':
+			pf_device = optarg;
 			break;
 		case 's':
 			showopt = pfctl_lookup_option(optarg, showopt_list);
@@ -1600,12 +1606,12 @@ main(int argc, char *argv[])
 	}
 
 	if ((opts & PF_OPT_NOACTION) == 0) {
-		dev = open("/dev/pf", mode);
+		dev = open(pf_device, mode);
 		if (dev == -1)
-			err(1, "/dev/pf");
+			err(1, "%s", pf_device);
 		altqsupport = pfctl_test_altqsupport(dev, opts);
 	} else {
-		dev = open("/dev/pf", O_RDONLY);
+		dev = open(pf_device, O_RDONLY);
 		if (dev >= 0)
 			opts |= PF_OPT_DUMMYACTION;
 		/* turn off options */
