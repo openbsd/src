@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ed.c,v 1.45 2001/06/27 06:34:44 kjc Exp $	*/
+/*	$OpenBSD: if_ed.c,v 1.46 2001/07/08 23:38:07 fgsch Exp $	*/
 /*	$NetBSD: if_ed.c,v 1.105 1996/10/21 22:40:45 thorpej Exp $	*/
 
 /*
@@ -198,7 +198,6 @@ ed_pcmcia_isa_attach(parent, match, aux, pc_link)
 	struct isa_attach_args *ia = aux;
 	struct pcmciadevs *dev=pc_link->device;
 	int err;
-	extern int ifqmaxlen;
 	u_char enaddr[ETHER_ADDR_LEN];
 
 	if ((int)dev->param != -1)
@@ -230,7 +229,6 @@ ed_pcmcia_isa_attach(parent, match, aux, pc_link)
 		/* clear ED_NOTPRESENT, set ED_REATTACH if needed */
 		sc->spec_flags=pc_link->flags&PCMCIA_REATTACH?ED_REATTACH:0;
 		sc->type_str = dev->model;
-		IFQ_SET_MAXLEN(&sc->sc_arpcom.ac_if.if_snd, ifqmaxlen);
 		sc->sc_ic = ia->ia_ic;
 		return 1;
 	} else

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9.c,v 1.5 2001/06/27 06:34:43 kjc Exp $ */
+/*	$OpenBSD: rtl81x9.c,v 1.6 2001/07/08 23:38:06 fgsch Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -1275,7 +1275,6 @@ rl_attach(sc)
 	ifp->if_start = rl_start;
 	ifp->if_watchdog = rl_watchdog;
 	ifp->if_baudrate = 10000000;
-	IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
 	IFQ_SET_READY(&ifp->if_snd);
 
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);

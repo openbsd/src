@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fe.c,v 1.16 2001/06/27 06:34:46 kjc Exp $	*/
+/*	$OpenBSD: if_fe.c,v 1.17 2001/07/08 23:38:07 fgsch Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -1000,21 +1000,6 @@ feattach(parent, self, aux)
 	ifp->if_flags =
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
 	IFQ_SET_READY(&ifp->if_snd);
-
-	/*
-	 * Set maximum size of output queue, if it has not been set.
-	 * It is done here as this driver may be started after the
-	 * system intialization (i.e., the interface is PCMCIA.)
-	 *
-	 * I'm not sure this is really necessary, but, even if it is,
-	 * it should be done somewhere else, e.g., in if_attach(),
-	 * since it must be a common workaround for all network drivers.
-	 * FIXME.
-	 */
-	if (ifp->if_snd.ifq_maxlen == 0) {
-		extern int ifqmaxlen;		/* Don't be so shocked... */
-		ifp->if_snd.ifq_maxlen = ifqmaxlen;
-	}
 
 #if FE_DEBUG >= 3
 	log(LOG_INFO, "%s: feattach()\n", sc->sc_dev.dv_xname);

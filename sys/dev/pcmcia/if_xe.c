@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xe.c,v 1.21 2001/06/27 06:34:52 kjc Exp $	*/
+/*	$OpenBSD: if_xe.c,v 1.22 2001/07/08 23:38:07 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist, Brandon Creighton, Job de Haas
@@ -382,7 +382,6 @@ xe_pcmcia_attach(parent, self, aux)
 	ifp->if_ioctl = xe_ioctl;
 	ifp->if_start = xe_start;
 	ifp->if_watchdog = xe_watchdog;
-	IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Establish the interrupt. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: an.c,v 1.18 2001/06/25 21:11:16 mickey Exp $	*/
+/*	$OpenBSD: an.c,v 1.19 2001/07/08 23:38:05 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -237,7 +237,6 @@ an_attach(sc)
 	ifp->if_start = an_start;
 	ifp->if_watchdog = an_watchdog;
 	ifp->if_baudrate = 10000000;
-	ifp->if_snd.ifq_maxlen = IFQ_MAXLEN;
 
 	bzero(sc->an_config.an_nodename, sizeof(sc->an_config.an_nodename));
 	bcopy(AN_DEFAULT_NODENAME, sc->an_config.an_nodename,

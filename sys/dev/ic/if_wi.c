@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.15 2001/06/27 06:34:42 kjc Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.16 2001/07/08 23:38:05 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -120,7 +120,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.15 2001/06/27 06:34:42 kjc Exp $";
+	"$OpenBSD: if_wi.c,v 1.16 2001/07/08 23:38:05 fgsch Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -197,7 +197,6 @@ wi_attach(sc, print_cis)
 	ifp->if_start = wi_start;
 	ifp->if_watchdog = wi_watchdog;
 	ifp->if_baudrate = 10000000;
-	IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
 	IFQ_SET_READY(&ifp->if_snd);
 
 	bzero(sc->wi_node_name, sizeof(sc->wi_node_name));

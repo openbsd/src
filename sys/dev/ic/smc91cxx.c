@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc91cxx.c,v 1.12 2001/06/27 06:34:43 kjc Exp $	*/
+/*	$OpenBSD: smc91cxx.c,v 1.13 2001/07/08 23:38:06 fgsch Exp $	*/
 /*	$NetBSD: smc91cxx.c,v 1.11 1998/08/08 23:51:41 mycroft Exp $	*/
 
 /*-
@@ -248,7 +248,6 @@ smc91cxx_attach(sc, myea)
 	ifp->if_watchdog = smc91cxx_watchdog;
 	ifp->if_flags =
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
-	IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Attach the interface. */
