@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.269 2003/08/26 18:34:25 dhartmei Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.270 2003/08/28 09:41:22 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -440,16 +440,16 @@ Load fingerprints of known operating systems from the given filename.
 By default fingerprints of known operating systems are automatically
 loaded from
 .Xr pf.os 5
-in /etc but can be overridden via this option.
+in
+.Pa /etc
+but can be overridden via this option.
 Setting this option may leave a small period of time where the fingerprints
 referenced by the currently active ruleset are inconsistent until the new
 ruleset finishes loading.
 .Pp
 For example:
-.Bd -literal -offset indent
-set fingerprints "/etc/pf.os.devel"
-.Ed
 .Pp
+.Dl set fingerprints \&"/etc/pf.os.devel\&"
 .El
 .Sh TRAFFIC NORMALIZATION
 Traffic normalization is used to sanitize packet content in such
@@ -763,7 +763,6 @@ The
 can get additional parameters with
 .Ar <scheduler> Ns Li (\& Ar <parameters> No ) .
 Parameters are as follows:
-.Pp
 .Bl -tag -width Fl
 .It Ar default
 Packets not matched by another queue are assigned to this one.
@@ -1019,7 +1018,6 @@ evaluated in sequential order, from first to last.
 The last matching rule decides what action is taken.
 .Pp
 The following actions can be used in the filter:
-.Pp
 .Bl -tag -width xxxx
 .It Ar block
 The packet is blocked.
@@ -1151,7 +1149,10 @@ For a list of all the protocol name to number mappings used by
 .Xr pfctl 8 ,
 see the file
 .Em /etc/protocols .
-.It Ar from <source> port <source> os <source> to <dest> port <dest>
+.It Xo
+.Ar from <source> port <source> os <source>
+.Ar to <dest> port <dest>
+.Xc
 This rule applies only to packets with the specified source and destination
 addresses and ports.
 .Pp
@@ -1758,19 +1759,17 @@ and would be OpenBSD for the
 firewall itself.
 The version of the oldest available OpenBSD release on the main ftp site
 would be 2.6 and the fingerprint would be written
-.Bd -literal -offset indent
-"OpenBSD 2.6"
-.Ed
+.Pp
+.Dl \&"OpenBSD 2.6\&"
 .Pp
 The subtype of an operating system is typically used to describe the
 patchlevel if that patch led to changes in the TCP stack behavior.
 In the case of OpenBSD, the only subtype is for a fingerprint that was
 normalized by the
 .Ar no-df
-scrub option and would be specified like
-.Bd -literal -offset indent
-"OpenBSD 3.3 no-df"
-.Ed
+scrub option and would be specified as
+.Pp
+.Dl \&"OpenBSD 3.3 no-df\&"
 .Pp
 Fingerprints for most popular operating systems are provided by
 .Xr pf.os 5 .
@@ -1778,9 +1777,8 @@ Once
 .Xr pf 4
 is running, a complete list of known operating system fingerprints may
 be listed by running:
-.Bd -literal -offset indent
-# pfctl -so
-.Ed
+.Pp
+.Dl # pfctl -so
 .Pp
 Filter rules can enforce policy at any level of operating system specification
 assuming a fingerprint is present.
@@ -2241,7 +2239,7 @@ pass in on $ext_if proto tcp from any to 157.161.48.183 port >= 49152 \e
       flags S/SA keep state
 
 # Do not allow Windows 9x SMTP connections since they are typically
-# a viral worm.  Alternately we could limit these OSes to 1 connection each.
+# a viral worm. Alternately we could limit these OSes to 1 connection each.
 block in on $ext_if proto tcp from any os {"Windows 95", "Windows 98"} \e
       to any port smtp
 
@@ -2457,6 +2455,8 @@ sc-spec        = ( bandwidth-spec |
 Host name database.
 .It Pa /etc/pf.conf
 Default location of the ruleset file.
+.It Pa /etc/pf.os
+Default location of OS fingerprints.
 .It Pa /etc/protocols
 Protocol name database.
 .It Pa /etc/services
@@ -2473,6 +2473,7 @@ Example rulesets.
 .Xr tcp 4 ,
 .Xr udp 4 ,
 .Xr hosts 5 ,
+.Xr pf.os 5 ,
 .Xr protocols 5 ,
 .Xr services 5 ,
 .Xr ftp-proxy 8 ,

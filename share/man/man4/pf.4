@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.4,v 1.36 2003/08/22 21:50:34 david Exp $
+.\"	$OpenBSD: pf.4,v 1.37 2003/08/28 09:41:22 jmc Exp $
 .\"
 .\" Copyright (C) 2001, Kjell Wooding.  All rights reserved.
 .\"
@@ -579,10 +579,10 @@ to the name of the version (NT, 95, 98), and
 .Va fp_os.fp_subtype_nm
 to the name of the subtype or patchlevel.
 The members
-.Va fp_mss
-.Va fp_wsize
-.Va fp_psize
-.Va fp_ttl
+.Va fp_mss ,
+.Va fp_wsize ,
+.Va fp_psize ,
+.Va fp_ttl ,
 and
 .Va fp_wscale
 are set to the TCP MSS, the TCP window size, the IP length and the IP TTL of
@@ -618,7 +618,7 @@ struct pf_osfp_ioctl {
 .Pp
 Get the passive OS fingerprint number
 .Va fp_getnum
-from the kernels fingerprint list.
+from the kernel's fingerprint list.
 The rest of the structure members will come back filled.
 Get the whole list by repeatedly incrementing the
 .Va fp_getnum

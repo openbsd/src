@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.os.5,v 1.3 2003/08/22 21:50:34 david Exp $
+.\"	$OpenBSD: pf.os.5,v 1.4 2003/08/28 09:41:23 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Mike Frantzen <frantzen@w4g.org>
 .\"
@@ -25,9 +25,9 @@ The
 firewall and the
 .Xr tcpdump 8
 program can both fingerprint the operating system of hosts that
-originate a IPv4 TCP connection.
+originate an IPv4 TCP connection.
 The file consists of newline-separated records, one per fingerprint,
-containing twelve colon
+containing nine colon
 .Pq Ql \&:
 separated fields.
 These fields are as follows:
@@ -59,8 +59,11 @@ field corresponds to the th->th_win field in the TCP header and is the
 source host's advertised TCP window size.
 It may be between zero and 65,535 inclusive.
 The window size may be given as a multiple of a constant by prepending
-the size with a percent sign '%' and the value will be used as a modulus.
+the size with a percent sign
+.Sq %
+and the value will be used as a modulus.
 Three special values may be used for the window size:
+.Pp
 .Bl -tag -width xxx -offset indent -compact
 .It *
 An asterisk will wildcard the value so any window size will match.
@@ -96,11 +99,16 @@ SYN packet.
 Each option is described by a single character separated by a comma and
 certain ones may include a value.
 The options are:
+.Pp
 .Bl -tag -width Description -offset indent -compact
 .It Mnnn
 maximum segment size (MSS) option.
 The value is the maximum packet size of the network link which may
-include the '%' modulus or match all MSSes with the '*' value.
+include the
+.Sq %
+modulus or match all MSSes with the
+.Sq *
+value.
 .It N
 the NOP option (NO Operation).
 .It T[0]
@@ -112,15 +120,18 @@ the Selective ACKnowledgement OK (SACKOK) option.
 .It Wnnn
 window scaling option.
 The value is the size of the window scaling which may include the
-'%' modulus or match all window scalings with the '*' value.
+.Sq %
+modulus or match all window scalings with the
+.Sq *
+value.
 .El
 .Pp
-No TCP options in the fingerprint may be given with a single dot '.'.
+No TCP options in the fingerprint may be given with a single dot
+.Sq \&. .
 .Pp
 An example of OpenBSD's TCP options are:
-.Bd -literal
-	M*,N,N,S,N,W0,N,N,T
-.Ed
+.Pp
+.Dl M*,N,N,S,N,W0,N,N,T
 .Pp
 The first option
 .Ar M*
@@ -166,16 +177,19 @@ patches or tweaking.
 .Pp
 The
 .Ar description
-is is a general description of the operating system, it's version,
+is a general description of the operating system, its version,
 patchlevel and any further useful details.
 .Sh EXAMPLES
-The fingerprint of a plain OpenBSD 3.3 host is:
+The fingerprint of a plain
+.Ox 3.3
+host is:
 .Bd -literal
   16384:64:1:64:M*,N,N,S,N,W0,N,N,T:OpenBSD:3.3::OpenBSD 3.3
 .Ed
 .Pp
-The fingerprint of an OpenBSD 3.3 host behind a PF scrubbing firewall
-with a no-df rule would be:
+The fingerprint of an
+.Ox 3.3
+host behind a PF scrubbing firewall with a no-df rule would be:
 .Bd -literal
   16384:64:0:64:M*,N,N,S,N,W0,N,N,T:OpenBSD:3.3:!df:OpenBSD 3.3 scrub no-df
 .Ed
@@ -222,7 +236,7 @@ three bytes.
 .Pp
 In the above example, the packet size comes out to 44 bytes.
 .Sh SEE ALSO
-.Xr pf.conf 5 ,
 .Xr pf 4 ,
+.Xr pf.conf 5 ,
 .Xr pfctl 8 ,
 .Xr tcpdump 8

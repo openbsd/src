@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpdump.8,v 1.38 2003/08/21 19:14:23 frantzen Exp $
+.\"	$OpenBSD: tcpdump.8,v 1.39 2003/08/28 09:41:22 jmc Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994, 1995, 1996
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1249,8 +1249,9 @@ or a single
 .Pq no flags .
 .Ar src\&-os
 will list a guess of the source host's operating system if the
-.Ar -o
-command line flag was passed to tcpdump.
+.Fl o
+command line flag was passed to
+.Nm tcpdump .
 .Ar data\&-seqno
 describes the portion of sequence space covered
 by the data in this packet (see example below).
@@ -1941,7 +1942,7 @@ interrupt.
 .Sh SEE ALSO
 .\" traffic(1C), nit(4P),
 .Xr pcap 3 ,
-.Xr bpf 4
+.Xr bpf 4 ,
 .Xr pf.os 5
 .Sh AUTHORS
 Van Jacobson
