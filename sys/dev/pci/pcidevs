@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.168 1999/07/27 06:15:03 matthieu Exp $
+$OpenBSD: pcidevs,v 1.169 1999/08/05 17:36:52 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -493,7 +493,7 @@ vendor STALLION		0x124d	Stallion Technologies
 vendor LINEARSYS	0x1254	Linear Systems
 vendor ASIX		0x125b	ASIX
 vendor AURORA		0x125c	Aurora Technologies
-vendor ESSTECH		0x125d	ESS Technology Inc
+vendor ESSTECH		0x125d	ESS
 vendor ENSONIQ		0x1274	Ensoniq
 vendor NETAPP		0x1275	Network Appliance
 vendor ROCKWELL		0x127a	Rockwell Semiconductor Systems
