@@ -1,4 +1,4 @@
-.\"	$OpenBSD: setproctitle.3,v 1.10 2000/07/16 22:44:58 millert Exp $
+.\"	$OpenBSD: setproctitle.3,v 1.11 2000/08/25 17:43:14 aaron Exp $
 .\"
 .\" Copyright (c) 1994, 1995 Christopher G. Demetriou
 .\" All rights reserved.
@@ -75,15 +75,15 @@ function first appeared in
 .Nx 0.9a .
 .Sh CAVEATS
 It is important to never pass a string with user-supplied data as a 
-format without using %s.
+format without using
+.Ql %s .
 An attacker can put format specifiers in the string to mangle your stack, 
 leading to a possible security hole.
 This holds true even if you have built the string
 .Dq by hand
 using a function like
 .Fn snprintf ,
-as the attacker can escape the percent sign
-.Pq Sq %
+as the resulting string may still contain user-supplied conversion specifiers
 for later interpolation by
 .Fn setproctitle .
 .Pp
