@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsmux.c,v 1.8 2002/03/14 01:27:03 millert Exp $	*/
+/*	$OpenBSD: wsmux.c,v 1.9 2002/04/30 23:01:55 mickey Exp $	*/
 /*	$NetBSD: wsmux.c,v 1.9 2000/05/28 10:33:14 takemura Exp $	*/
 
 /*
@@ -92,8 +92,6 @@ int wsmux_set_display(struct device *, struct wsmux_softc *);
 int wsmux_isset_display(struct device *);
 
 #if NWSMUX > 0
-cdev_decl(wsmux);
-
 void wsmuxattach(int);
 
 struct wsmuxops wsmux_muxops = {

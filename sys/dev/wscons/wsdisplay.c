@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.42 2002/03/31 17:34:15 jason Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.43 2002/04/30 23:01:55 mickey Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.37.4.1 2000/06/30 16:27:53 simonb Exp $ */
 
 /*
@@ -210,9 +210,6 @@ struct cfattach wsdisplay_noemul_ca = {
 	sizeof(struct wsdisplay_softc), wsdisplay_noemul_match,
 	    wsdisplay_noemul_attach,
 };
-
-/* Exported tty- and cdevsw-related functions. */
-cdev_decl(wsdisplay);
 
 void wsdisplaystart(struct tty *);
 int wsdisplayparam(struct tty *, struct termios *);

@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmouse.c,v 1.9 2002/03/27 18:54:09 jbm Exp $ */
+/* $OpenBSD: wsmouse.c,v 1.10 2002/04/30 23:01:55 mickey Exp $ */
 /* $NetBSD: wsmouse.c,v 1.12 2000/05/01 07:36:58 takemura Exp $ */
 
 /*
@@ -163,8 +163,6 @@ struct cfattach wsmouse_ca = {
 #if NWSMOUSE > 0
 extern struct cfdriver wsmouse_cd;
 #endif /* NWSMOUSE > 0 */
-
-cdev_decl(wsmouse);
 
 #if NWSMUX > 0
 struct wsmuxops wsmouse_muxops = {

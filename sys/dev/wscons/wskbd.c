@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.31 2002/04/05 16:34:38 jason Exp $ */
+/* $OpenBSD: wskbd.c,v 1.32 2002/04/30 23:01:55 mickey Exp $ */
 /* $NetBSD: wskbd.c,v 1.38 2000/03/23 07:01:47 thorpej Exp $ */
 
 /*
@@ -275,8 +275,6 @@ struct wskbd_keyrepeat_data wskbd_default_keyrepeat_data = {
 	WSKBD_DEFAULT_KEYREPEAT_DEL1,
 	WSKBD_DEFAULT_KEYREPEAT_DELN,
 };
-
-cdev_decl(wskbd);
 
 #if NWSMUX > 0 || NWSDISPLAY > 0
 struct wsmuxops wskbd_muxops = {
