@@ -1,4 +1,4 @@
-/*	$OpenBSD: keyword.c,v 1.3 1996/06/23 14:20:49 deraadt Exp $	*/
+/*	$OpenBSD: keyword.c,v 1.4 1997/02/05 17:10:55 kstailey Exp $	*/
 /*	$NetBSD: keyword.c,v 1.12.6.1 1996/05/30 21:25:13 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)keyword.c	8.5 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: keyword.c,v 1.3 1996/06/23 14:20:49 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: keyword.c,v 1.4 1997/02/05 17:10:55 kstailey Exp $";
 #endif
 #endif /* not lint */
 
@@ -109,6 +109,7 @@ VAR var[] = {
 	{"cputime", "", "time"},
 	{"f", "F", NULL, 0, pvar, 7, POFF(p_flag), INT, "x"},
 	{"flags", "", "f"},
+	GID("gid", "GID", evar, EOFF(e_ucred.cr_gid)),
 	{"holdcnt", "HOLDCNT", NULL, 0, pvar, 8, POFF(p_holdcnt), INT, "d"},
 	{"ignored", "", "sigignore"},
 	{"inblk", "INBLK", NULL, USER, rvar, 4, ROFF(ru_inblock), LONG, "d"},
@@ -197,6 +198,7 @@ VAR var[] = {
 	{"cputime", "", "time"},
 	{"f", "F", NULL, 0, pvar, 7, POFF(p_flag), LONG, "x"},
 	{"flags", "", "f"},
+	{"gid", "GID", NULL, 0, pvar, UIDLEN, POFF(p_gid), USHORT, UIDFMT},
 	{"ignored", "", "sigignore"},
 	{"inblk", "INBLK", NULL, USER, rvar, 4, ROFF(ru_inblock), LONG, "d"},
 	{"inblock", "", "inblk"},
