@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpd.c,v 1.1 1997/02/26 06:17:05 downsj Exp $	*/
+/*	$OpenBSD: tcpd.c,v 1.2 2002/07/30 22:27:20 deraadt Exp $	*/
 
  /*
   * General front end for stream and datagram IP services. This program logs
@@ -16,7 +16,7 @@
 #if 0
 static char sccsid[] = "@(#) tcpd.c 1.10 96/02/11 17:01:32";
 #else
-static char rcsid[] = "$OpenBSD: tcpd.c,v 1.1 1997/02/26 06:17:05 downsj Exp $";
+static char rcsid[] = "$OpenBSD: tcpd.c,v 1.2 2002/07/30 22:27:20 deraadt Exp $";
 #endif
 #endif
 
@@ -66,10 +66,10 @@ char  **argv;
      */
 
     if (argv[0][0] == '/') {
-	strcpy(path, argv[0]);
+	strlcpy(path, argv[0], sizeof path);
 	argv[0] = strrchr(argv[0], '/') + 1;
     } else {
-	sprintf(path, "%s/%s", REAL_DAEMON_DIR, argv[0]);
+	snprintf(path, sizeof path, "%s/%s", REAL_DAEMON_DIR, argv[0]);
     }
 
     /*

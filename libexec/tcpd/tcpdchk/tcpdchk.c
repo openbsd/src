@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpdchk.c,v 1.6 2002/06/07 03:32:04 itojun Exp $	*/
+/*	$OpenBSD: tcpdchk.c,v 1.7 2002/07/30 22:27:20 deraadt Exp $	*/
 
  /*
   * tcpdchk - examine all tcpd access control rules and inetd.conf entries
@@ -20,7 +20,7 @@
 #if 0
 static char sccsid[] = "@(#) tcpdchk.c 1.8 97/02/12 02:13:25";
 #else
-static char rcsid[] = "$OpenBSD: tcpdchk.c,v 1.6 2002/06/07 03:32:04 itojun Exp $";
+static char rcsid[] = "$OpenBSD: tcpdchk.c,v 1.7 2002/07/30 22:27:20 deraadt Exp $";
 #endif
 #endif
 
@@ -287,7 +287,7 @@ char   *list;
     char   *next;
 
     fputs(title, stdout);
-    strcpy(buf, list);
+    strlcpy(buf, list, sizeof buf);
 
     for (cp = strtok(buf, sep); cp != 0; cp = next) {
 	fputs(cp, stdout);
@@ -308,7 +308,7 @@ char   *list;
     char   *host;
     int     daemons = 0;
 
-    strcpy(buf, list);
+    strlcpy(buf, list, sizeof buf);
 
     for (cp = strtok(buf, sep); cp != 0; cp = strtok((char *) 0, sep)) {
 	if (STR_EQ(cp, "EXCEPT")) {
@@ -339,7 +339,7 @@ char   *list;
     int l;
 #endif
 
-    strcpy(buf, list);
+    strlcpy(buf, list, sizeof buf);
 
     for (cp = strtok(buf, sep); cp != 0; cp = strtok((char *) 0, sep)) {
 #ifdef INET6
