@@ -1,4 +1,4 @@
-/*	$OpenBSD: rstat_proc.c,v 1.21 2002/02/16 21:27:31 millert Exp $	*/
+/*	$OpenBSD: rstat_proc.c,v 1.22 2002/06/28 22:40:33 deraadt Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -31,7 +31,7 @@
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rpc.rstatd.c 1.1 86/09/25 Copyr 1984 Sun Micro";*/
 /*static char sccsid[] = "from: @(#)rstat_proc.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char rcsid[] = "$OpenBSD: rstat_proc.c,v 1.21 2002/02/16 21:27:31 millert Exp $";
+static char rcsid[] = "$OpenBSD: rstat_proc.c,v 1.22 2002/06/28 22:40:33 deraadt Exp $";
 #endif
 
 /*
@@ -100,7 +100,7 @@ static int stat_is_init = 0;
 #endif
 
 void
-stat_init()
+stat_init(void)
 {
 	stat_is_init = 1;
 	setup();
@@ -110,9 +110,7 @@ stat_init()
 }
 
 statstime *
-rstatproc_stats_3_svc(arg, rqstp)
-	void *arg;
-	struct svc_req *rqstp;
+rstatproc_stats_3_svc(void *arg, struct svc_req *rqstp)
 {
 	if (!stat_is_init)
 		stat_init();
@@ -121,9 +119,7 @@ rstatproc_stats_3_svc(arg, rqstp)
 }
 
 statsswtch *
-rstatproc_stats_2_svc(arg, rqstp)
-	void *arg;
-	struct svc_req *rqstp;
+rstatproc_stats_2_svc(void *arg, struct svc_req *rqstp)
 {
 	if (!stat_is_init)
 		stat_init();
@@ -132,9 +128,7 @@ rstatproc_stats_2_svc(arg, rqstp)
 }
 
 stats *
-rstatproc_stats_1_svc(arg, rqstp)
-	void *arg;
-	struct svc_req *rqstp;
+rstatproc_stats_1_svc(void *arg, struct svc_req *rqstp)
 {
 	if (!stat_is_init)
 		stat_init();
@@ -143,9 +137,7 @@ rstatproc_stats_1_svc(arg, rqstp)
 }
 
 u_int *
-rstatproc_havedisk_3_svc(arg, rqstp)
-	void *arg;
-	struct svc_req *rqstp;
+rstatproc_havedisk_3_svc(void *arg, struct svc_req *rqstp)
 {
 	static u_int have;
 
@@ -157,17 +149,13 @@ rstatproc_havedisk_3_svc(arg, rqstp)
 }
 
 u_int *
-rstatproc_havedisk_2_svc(arg, rqstp)
-	void *arg;
-	struct svc_req *rqstp;
+rstatproc_havedisk_2_svc(void *arg, struct svc_req *rqstp)
 {
 	return (rstatproc_havedisk_3_svc(arg, rqstp));
 }
 
 u_int *
-rstatproc_havedisk_1_svc(arg, rqstp)
-	void *arg;
-	struct svc_req *rqstp;
+rstatproc_havedisk_1_svc(void *arg, struct svc_req *rqstp)
 {
 	return (rstatproc_havedisk_3_svc(arg, rqstp));
 }
@@ -179,7 +167,7 @@ updatestatsig(int sig)
 }
 
 void
-updatestat()
+updatestat(void)
 {
 	int i, mib[2], save_errno = errno;
 	struct uvmexp uvmexp;
@@ -283,22 +271,20 @@ updatestat()
 }
 
 void
-setup()
+setup(void)
 {
 	dkinit(0);
 }
 
 void
-rstat_service(rqstp, transp)
-	struct svc_req *rqstp;
-	SVCXPRT *transp;
+rstat_service(struct svc_req *rqstp, SVCXPRT *transp)
 {
+	char *(*local)(void *, struct svc_req *);
+	xdrproc_t xdr_argument, xdr_result;
 	union {
 		int fill;
 	} argument;
 	char *result;
-	xdrproc_t xdr_argument, xdr_result;
-	char *(*local)(void *, struct svc_req *);
 
 	switch (rqstp->rq_proc) {
 	case NULLPROC:

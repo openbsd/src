@@ -1,9 +1,9 @@
-/*	$OpenBSD: rusers_proc.c,v 1.15 2002/06/09 04:06:42 deraadt Exp $	*/
+/*	$OpenBSD: rusers_proc.c,v 1.16 2002/06/28 22:40:33 deraadt Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
  *  All rights reserved.
- * 
+ *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
  *  are met:
@@ -14,7 +14,7 @@
  *     documentation and/or other materials provided with the distribution.
  *  3. The name of the author may not be used to endorse or promote products
  *     derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR `AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -29,7 +29,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rusers_proc.c,v 1.15 2002/06/09 04:06:42 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rusers_proc.c,v 1.16 2002/06/28 22:40:33 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -40,16 +40,13 @@ static char rcsid[] = "$OpenBSD: rusers_proc.c,v 1.15 2002/06/09 04:06:42 deraad
 #include <utmp.h>
 #include <stdio.h>
 #include <syslog.h>
+#include <unistd.h>
 #include <string.h>
 #include <rpc/rpc.h>
 #include <rpcsvc/rusers.h>	/* New version */
 #include <rpcsvc/rnusers.h>	/* Old version */
 
-#define	IGNOREUSER	"sleeper"
-
-#ifndef _PATH_UTMP
-#define _PATH_UTMP "/etc/utmp"
-#endif
+extern int utmp_fd;
 
 #ifndef _PATH_DEV
 #define _PATH_DEV "/dev"
@@ -83,14 +80,13 @@ extern int from_inetd;
 FILE *ufp;
 
 static u_int
-getidle(tty, display)
-	char *tty, *display;
+getidle(char *tty, char *display)
 {
-	struct stat st;
 	char devname[PATH_MAX];
-	time_t now;
+	struct stat st;
 	u_long idle;
-	
+	time_t now;
+
 	/*
 	 * If this is an X terminal or console, then try the
 	 * XIdle extension
@@ -128,16 +124,21 @@ getidle(tty, display)
 
 	return (idle);
 }
-	
+
 int *
-rusers_num_svc(arg, rqstp)
-	void *arg;
-	struct svc_req *rqstp;
+rusers_num_svc(void *arg, struct svc_req *rqstp)
 {
 	static int num_users = 0;
 	struct utmp usr;
+	int fd;
 
-	ufp = fopen(_PATH_UTMP, "r");
+	fd = dup(utmp_fd);
+	if (fd == -1) {
+		syslog(LOG_ERR, "%m");
+		return (0);
+	}
+	lseek(fd, SEEK_SET, 0);
+	ufp = fdopen(fd, "r");
 	if (!ufp) {
 		syslog(LOG_ERR, "%m");
 		return (0);
@@ -145,15 +146,8 @@ rusers_num_svc(arg, rqstp)
 
 	/* only entries with both name and line fields */
 	while (fread((char *)&usr, sizeof(usr), 1, ufp) == 1)
-		if (*usr.ut_name && *usr.ut_line &&
-		    strncmp(usr.ut_name, IGNOREUSER,
-			    sizeof(usr.ut_name))
-#ifdef USER_PROCESS
-		    && usr.ut_type == USER_PROCESS
-#endif
-		    ) {
+		if (*usr.ut_name && *usr.ut_line)
 			num_users++;
-		}
 
 	fclose(ufp);
 	return (&num_users);
@@ -165,11 +159,18 @@ do_names_3(int all)
 	static utmp_array ut;
 	struct utmp usr;
 	int nusers = 0;
-	
+	int fd;
+
 	bzero((char *)&ut, sizeof(ut));
 	ut.utmp_array_val = &utmps[0];
-	
-	ufp = fopen(_PATH_UTMP, "r");
+
+	fd = dup(utmp_fd);
+	if (fd == -1) {
+		syslog(LOG_ERR, "%m");
+		return (0);
+	}
+	lseek(fd, SEEK_SET, 0);
+	ufp = fdopen(fd, "r");
 	if (!ufp) {
 		syslog(LOG_ERR, "%m");
 		return (NULL);
@@ -177,19 +178,11 @@ do_names_3(int all)
 
 	/* only entries with both name and line fields */
 	while (fread((char *)&usr, sizeof(usr), 1, ufp) == 1 &&
-	       nusers < MAXUSERS)
-		if (*usr.ut_name && *usr.ut_line &&
-		    strncmp(usr.ut_name, IGNOREUSER,
-			    sizeof(usr.ut_name))
-#ifdef USER_PROCESS
-		    && usr.ut_type == USER_PROCESS
-#endif
-		    ) {
+	    nusers < MAXUSERS)
+		if (*usr.ut_name && *usr.ut_line) {
 			utmps[nusers].ut_type = RUSERS_USER_PROCESS;
-			utmps[nusers].ut_time =
-				usr.ut_time;
-			utmps[nusers].ut_idle =
-				getidle(usr.ut_line, usr.ut_host);
+			utmps[nusers].ut_time = usr.ut_time;
+			utmps[nusers].ut_idle = getidle(usr.ut_line, usr.ut_host);
 			utmps[nusers].ut_line = line[nusers];
 			memset(line[nusers], 0, sizeof(line[nusers]));
 			strlcpy(line[nusers], usr.ut_line, sizeof(line[nusers]));
@@ -208,17 +201,13 @@ do_names_3(int all)
 }
 
 utmp_array *
-rusersproc_names_3_svc(arg, rqstp)
-	void *arg;
-	struct svc_req *rqstp;
+rusersproc_names_3_svc(void *arg, struct svc_req *rqstp)
 {
 	return (do_names_3(0));
 }
 
 utmp_array *
-rusersproc_allnames_3_svc(arg, rqstp)
-	void *arg;
-	struct svc_req *rqstp;
+rusersproc_allnames_3_svc(void *arg, struct svc_req *rqstp)
 {
 	return (do_names_3(1));
 }
@@ -229,12 +218,19 @@ do_names_2(int all)
 	static struct utmpidlearr ut;
 	struct utmp usr;
 	int nusers = 0;
-	
+	int fd;
+
 	bzero((char *)&ut, sizeof(ut));
 	ut.uia_arr = utmp_idlep;
 	ut.uia_cnt = 0;
-	
-	ufp = fopen(_PATH_UTMP, "r");
+
+	fd = dup(utmp_fd);
+	if (fd == -1) {
+		syslog(LOG_ERR, "%m");
+		return (0);
+	}
+	lseek(fd, SEEK_SET, 0);
+	ufp = fdopen(fd, "r");
 	if (!ufp) {
 		syslog(LOG_ERR, "%m");
 		return (NULL);
@@ -242,19 +238,11 @@ do_names_2(int all)
 
 	/* only entries with both name and line fields */
 	while (fread((char *)&usr, sizeof(usr), 1, ufp) == 1 &&
-	       nusers < MAXUSERS)
-		if (*usr.ut_name && *usr.ut_line &&
-		    strncmp(usr.ut_name, IGNOREUSER,
-			    sizeof(usr.ut_name))
-#ifdef USER_PROCESS
-		    && usr.ut_type == USER_PROCESS
-#endif
-		    ) {
+	    nusers < MAXUSERS)
+		if (*usr.ut_name && *usr.ut_line) {
 			utmp_idlep[nusers] = &utmp_idle[nusers];
-			utmp_idle[nusers].ui_utmp.ut_time =
-				usr.ut_time;
-			utmp_idle[nusers].ui_idle =
-				getidle(usr.ut_line, usr.ut_host);
+			utmp_idle[nusers].ui_utmp.ut_time = usr.ut_time;
+			utmp_idle[nusers].ui_idle = getidle(usr.ut_line, usr.ut_host);
 			utmp_idle[nusers].ui_utmp.ut_line = line[nusers];
 			memset(line[nusers], 0, sizeof(line[nusers]));
 			strlcpy(line[nusers], usr.ut_line, sizeof(line[nusers]));
@@ -273,17 +261,13 @@ do_names_2(int all)
 }
 
 struct utmpidlearr *
-rusersproc_names_2_svc(arg, rqstp)
-	void *arg;
-	struct svc_req *rqstp;
+rusersproc_names_2_svc(void *arg, struct svc_req *rqstp)
 {
 	return (do_names_2(0));
 }
 
 struct utmpidlearr *
-rusersproc_allnames_2_svc(arg, rqstp)
-	void *arg;
-	struct svc_req *rqstp;
+rusersproc_allnames_2_svc(void *arg, struct svc_req *rqstp)
 {
 	return (do_names_2(1));
 }
@@ -294,12 +278,19 @@ do_names_1(int all)
 	static struct utmparr ut;
 	struct utmp usr;
 	int nusers = 0;
-	
+	int fd;
+
 	bzero((char *)&ut, sizeof(ut));
 	ut.uta_arr = ru_utmpp;
 	ut.uta_cnt = 0;
-	
-	ufp = fopen(_PATH_UTMP, "r");
+
+	fd = dup(utmp_fd);
+	if (fd == -1) {
+		syslog(LOG_ERR, "%m");
+		return (0);
+	}
+	lseek(fd, SEEK_SET, 0);
+	ufp = fdopen(fd, "r");
 	if (!ufp) {
 		syslog(LOG_ERR, "%m");
 		return (NULL);
@@ -307,14 +298,8 @@ do_names_1(int all)
 
 	/* only entries with both name and line fields */
 	while (fread((char *)&usr, sizeof(usr), 1, ufp) == 1 &&
-	       nusers < MAXUSERS)
-		if (*usr.ut_name && *usr.ut_line &&
-		    strncmp(usr.ut_name, IGNOREUSER,
-			    sizeof(usr.ut_name))
-#ifdef USER_PROCESS
-		    && usr.ut_type == USER_PROCESS
-#endif
-		    ) {
+	    nusers < MAXUSERS)
+		if (*usr.ut_name && *usr.ut_line) {
 			ru_utmpp[nusers] = &ru_utmp[nusers];
 			ru_utmp[nusers].ut_time = usr.ut_time;
 			ru_utmp[nusers].ut_line = line[nusers];
@@ -332,32 +317,26 @@ do_names_1(int all)
 }
 
 struct utmparr *
-rusersproc_names_1_svc(arg, rqstp)
-	void *arg;
-	struct svc_req *rqstp;
+rusersproc_names_1_svc(void *arg, struct svc_req *rqstp)
 {
 	return (do_names_1(0));
 }
 
 struct utmparr *
-rusersproc_allnames_1_svc(arg, rqstp)
-	void *arg;
-	struct svc_req *rqstp;
+rusersproc_allnames_1_svc(void *arg, struct svc_req *rqstp)
 {
 	return (do_names_1(1));
 }
 
 void
-rusers_service(rqstp, transp)
-	struct svc_req *rqstp;
-	SVCXPRT *transp;
+rusers_service(struct svc_req *rqstp, SVCXPRT *transp)
 {
+	char *(*local)(void *, struct svc_req *);
+	xdrproc_t xdr_argument, xdr_result;
 	union {
 		int fill;
 	} argument;
 	char *result;
-	xdrproc_t xdr_argument, xdr_result;
-	char *(*local)(void *, struct svc_req *);
 
 	switch (rqstp->rq_proc) {
 	case NULLPROC:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rstatd.c,v 1.9 2002/03/24 04:39:38 deraadt Exp $	*/
+/*	$OpenBSD: rstatd.c,v 1.10 2002/06/28 22:40:33 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993, John Brezak
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rstatd.c,v 1.9 2002/03/24 04:39:38 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rstatd.c,v 1.10 2002/06/28 22:40:33 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -44,6 +44,7 @@ static char rcsid[] = "$OpenBSD: rstatd.c,v 1.9 2002/03/24 04:39:38 deraadt Exp 
 #include <string.h>
 #include <unistd.h>
 #include <signal.h>
+#include <pwd.h>
 #include <syslog.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -60,8 +61,17 @@ void my_svc_run(void);
 int from_inetd = 1;     /* started from inetd ? */
 int closedown = 20;	/* how long to wait before going dormant */
 
+volatile sig_atomic_t gotsig;
+
 void
-cleanup()
+getsig(int signo)
+{
+	gotsig = 1;
+}
+
+
+void
+cleanup(void)
 {
 	(void) pmap_unset(RSTATPROG, RSTATVERS_TIME);	/* XXX signal races */
 	(void) pmap_unset(RSTATPROG, RSTATVERS_SWTCH);
@@ -70,13 +80,27 @@ cleanup()
 }
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int sock = 0, proto = 0, fromlen;
+	struct passwd *pw;
 	struct sockaddr_in from;
 	SVCXPRT *transp;
+
+	pw = getpwnam("nobody");
+	if (chroot("/var/empty") == -1) {
+		syslog(LOG_ERR, "cannot chdir to /var/empty.");
+		exit(1);
+	}
+	chdir("/");
+
+	if (pw) {
+		setgroups(1, &pw->pw_gid);
+		setegid(pw->pw_gid);
+		setgid(pw->pw_gid);
+		seteuid(pw->pw_uid);
+		setegid(pw->pw_uid);
+	}
 
 	if (argc == 2)
 		closedown = atoi(argv[1]);
@@ -100,9 +124,9 @@ main(argc, argv)
 		(void)pmap_unset(RSTATPROG, RSTATVERS_SWTCH);
 		(void)pmap_unset(RSTATPROG, RSTATVERS_ORIG);
 
-		(void) signal(SIGINT, cleanup);
-		(void) signal(SIGTERM, cleanup);
-		(void) signal(SIGHUP, cleanup);
+		(void) signal(SIGINT, getsig);
+		(void) signal(SIGTERM, getsig);
+		(void) signal(SIGHUP, getsig);
 	}
 
 	openlog("rpc.rstatd", LOG_CONS|LOG_PID, LOG_DAEMON);
@@ -131,7 +155,7 @@ main(argc, argv)
 }
 
 void
-my_svc_run()
+my_svc_run(void)
 {
 	extern volatile sig_atomic_t wantupdatestat;
 	extern void updatestat(void);
@@ -142,6 +166,8 @@ my_svc_run()
 			updatestat();
 			wantupdatestat = 0;
 		}
+		if (gotsig)
+			cleanup();
 
 		if (__svc_fdset) {
 			int bytes = howmany(__svc_fdsetsize, NFDBITS) *
