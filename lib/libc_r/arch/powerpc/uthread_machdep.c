@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_machdep.c,v 1.2 2000/10/03 02:57:17 d Exp $	*/
+/*	$OpenBSD: uthread_machdep.c,v 1.3 2000/10/05 04:59:34 rahnds Exp $	*/
 /* David Leonard, <d@csee.uq.edu.au>. Public domain */
 
 #include <pthread.h>
@@ -43,22 +43,22 @@ _thread_machdep_init(statep, base, len, entry)
 
 	/* Initialise the new thread with all the state from this thread. */
 
-#define copyreg(x) __asm__("stw " #x ", %0" : "=m"(f->gp[x-14]))
+#define copyreg(x) __asm__ volatile ("stw " #x ", %0" : "=m"(f->gp[x-14]))
 	copyreg(14); copyreg(15); copyreg(16); copyreg(17); copyreg(18);
 	copyreg(19); copyreg(20); copyreg(21); copyreg(22); copyreg(23);
 	copyreg(24); copyreg(25); copyreg(26); copyreg(27); copyreg(28);
 	copyreg(29); copyreg(30); copyreg(31);
 
-#define copysreg(nm) __asm__("mf" #nm " %0" : "=r"(f->nm))
+#define copysreg(nm) __asm__ volatile ("mf" #nm " %0" : "=r"(f->nm))
 	copysreg(cr); copysreg(ctr); copysreg(xer);
 
-#define copyfreg(x) __asm__("stfd " #x ", %0" : "=m"(f->fp[x-14]))
+#define copyfreg(x) __asm__ volatile ("stfd " #x ", %0" : "=m"(f->fp[x-14]))
 	copyfreg(14); copyfreg(15); copyfreg(16); copyfreg(17); copyfreg(18);
 	copyfreg(19); copyfreg(20); copyfreg(21); copyfreg(22); copyfreg(23);
 	copyfreg(24); copyfreg(25); copyfreg(26); copyfreg(27); copyfreg(28);
 	copyfreg(29); copyfreg(30); copyfreg(31);
 
-	__asm__("mffs 0; stfd 0, %0" : "=m"(f->fs));
+	__asm__ volatile ("mffs 0; stfd 0, %0" : "=m"(f->fs));
 
 	statep->frame = (int)f;
 }
