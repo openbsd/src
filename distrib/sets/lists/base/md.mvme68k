@@ -1206,6 +1206,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/usb/ezload.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/usb/hid.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/usb/if_auereg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/usb/if_axereg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/usb/if_cuereg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/usb/if_kuereg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/usb/if_urlreg.ph

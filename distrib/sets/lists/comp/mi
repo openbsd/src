@@ -663,6 +663,7 @@
 ./usr/include/dev/usb/ezload.h
 ./usr/include/dev/usb/hid.h
 ./usr/include/dev/usb/if_auereg.h
+./usr/include/dev/usb/if_axereg.h
 ./usr/include/dev/usb/if_cuereg.h
 ./usr/include/dev/usb/if_kuereg.h
 ./usr/include/dev/usb/if_urlreg.h

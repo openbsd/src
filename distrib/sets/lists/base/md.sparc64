@@ -698,6 +698,7 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/usb/ezload.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/usb/hid.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/usb/if_auereg.ph
+./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/usb/if_axereg.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/usb/if_cuereg.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/usb/if_kuereg.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/usb/if_urlreg.ph

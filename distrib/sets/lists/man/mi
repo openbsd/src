@@ -1082,6 +1082,7 @@
 ./usr/share/man/cat4/autri.0
 ./usr/share/man/cat4/auvia.0
 ./usr/share/man/cat4/awi.0
+./usr/share/man/cat4/axe.0
 ./usr/share/man/cat4/az.0
 ./usr/share/man/cat4/bce.0
 ./usr/share/man/cat4/bge.0
@@ -1358,6 +1359,7 @@
 ./usr/share/man/cat4/pcdisplay.0
 ./usr/share/man/cat4/pchb.0
 ./usr/share/man/cat4/pci.0
+./usr/share/man/cat4/pcib.0
 ./usr/share/man/cat4/pcic.0
 ./usr/share/man/cat4/pciide.0
 ./usr/share/man/cat4/pckbc.0
