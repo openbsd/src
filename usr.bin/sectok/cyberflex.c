@@ -1,4 +1,4 @@
-/*	$OpenBSD: cyberflex.c,v 1.25 2003/04/19 23:55:05 dhartmei Exp $ */
+/*	$OpenBSD: cyberflex.c,v 1.26 2004/03/15 15:03:11 aaron Exp $ */
 
 /*
  * copyright 1999, 2000
@@ -287,8 +287,7 @@ jdata(int argc, char *argv[])
 			if (buf[21] == 0x0c)
 				printf("augmented ");
 			else
-				if (buf[21] == 0x0b);
-				else
+				if (buf[21] != 0x0b)
 					printf("unknown ");
 			printf("crypto %5.5s class %02x\n", &buf[14],
 			    cyberflex_inq_class(fd));
@@ -297,8 +296,7 @@ jdata(int argc, char *argv[])
 			if (buf[9] == 0x0c)
 				printf("augmented ");
 			else
-				if (buf[9] == 0x0b);
-				else
+				if (buf[9] != 0x0b)
 					printf("unknown ");
 			printf("crypto %9.9s class %02x\n", &buf[10], buf[19]);
 		}
