@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.14 1998/01/20 18:40:11 niklas Exp $	*/
+/*	$OpenBSD: bus.h,v 1.15 1999/08/11 23:15:21 niklas Exp $	*/
 
 /*
  * Copyright (c) 1997 Per Fogelstrom.  All rights reserved.
@@ -70,6 +70,9 @@ extern struct arc_bus_space arc_bus_io, arc_bus_mem;
 
 #define bus_space_unmap(t, bsh, size)
 
+#define bus_space_subregion(t, bsh, offset, size, nbshp)		      \
+    ((*(nbshp) = (bsh) + (offset)), 0)
+
 #define bus_space_read(n,m)						      \
 static __inline CAT3(u_int,m,_t)					      \
 CAT(bus_space_read_,n)(bus_space_tag_t bst, bus_space_handle_t bsh,	      \
@@ -97,6 +100,21 @@ bus_space_read(4,32)
 	} while(0)
 
 #define	bus_space_read_multi_8	!!! bus_space_read_multi_8 not implemented !!!
+
+#define bus_space_read_region(n,m)					      \
+static __inline void							      \
+CAT(bus_space_read_region_,n)(bus_space_tag_t bst, bus_space_handle_t bsh,    \
+     bus_addr_t ba, CAT3(u_int,m,_t) *x, size_t cnt)			      \
+{									      \
+	while (cnt--)							      \
+		*x++ = CAT(bus_space_read_,n)(bst, bsh, ba++);		      \
+}
+
+bus_space_read_region(1,8)
+bus_space_read_region(2,16)
+bus_space_read_region(4,32)
+
+#define	bus_space_read_region_8	!!! bus_space_read_region_8 not implemented !!!
 
 #define bus_space_write(n,m)						      \
 static __inline void							      \
@@ -126,6 +144,38 @@ bus_space_write(4,32)
 	} while(0)
 
 #define	bus_space_write_multi_8	!!! bus_space_write_multi_8 not implemented !!!
+
+#define bus_space_write_region(n,m)					      \
+static __inline void							      \
+CAT(bus_space_write_region_,n)(bus_space_tag_t bst, bus_space_handle_t bsh,   \
+     bus_addr_t ba, const CAT3(u_int,m,_t) *x, size_t cnt)		      \
+{									      \
+	while (cnt--)							      \
+		CAT(bus_space_write_,n)(bst, bsh, ba++, *x++);		      \
+}
+
+bus_space_write_region(1,8)
+bus_space_write_region(2,16)
+bus_space_write_region(4,32)
+
+#define	bus_space_write_region_8					      \
+    !!! bus_space_write_region_8 not implemented !!!
+
+#define bus_space_set_region(n,m)					      \
+static __inline void							      \
+CAT(bus_space_set_region_,n)(bus_space_tag_t bst, bus_space_handle_t bsh,     \
+     bus_addr_t ba, CAT3(u_int,m,_t) x, size_t cnt)			      \
+{									      \
+	while (cnt--)							      \
+		CAT(bus_space_write_,n)(bst, bsh, ba++, x);		      \
+}
+
+bus_space_set_region(1,8)
+bus_space_set_region(2,16)
+bus_space_set_region(4,32)
+
+#define	bus_space_write_8	!!! bus_space_write_8 unimplemented !!!
+
 
 /* These are OpenBSD extensions to the general NetBSD bus interface.  */
 #define	bus_space_read_raw_multi(n,m,l)					      \
