@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.62 1999/11/18 16:36:50 millert Exp $
+#	$OpenBSD: Makefile,v 1.63 2000/05/27 19:53:06 deraadt Exp $
 
 .include <bsd.own.mk>
 
@@ -11,7 +11,7 @@ SUBDIR= apply apropos arch asa at aucat audioctl awk banner basename bdes \
 	ktrace lam last lastcomm leave less lex lndir locate lock logger \
 	login logname look lorder m4 mail make man mesg midiplay mixerctl \
 	mkdep mkstr mktemp modstat msgs nc netstat newsyslog nfsstat nice \
-	nohup oldrdist pagesize passwd paste patch pr printenv printf quota \
+	nohup oldrdist pagesize passwd paste patch pctr pr printenv printf quota \
 	rdist rdistd readlink renice rev rlogin rpcgen rpcinfo rs rsh rup \
 	ruptime rusers rwall rwho script sed shar showmount skey skeyaudit \
 	skeyinfo skeyinit sort split ssh su sup systat sudo tail talk tcopy \
@@ -30,9 +30,9 @@ SUBDIR+= ar nm ranlib size strip strings
 .endif
 
 .if   make(clean) || make(cleandir) || make(obj)
-SUBDIR+= pctr elf2ecoff elf2aout
+SUBDIR+= elf2ecoff elf2aout
 .elif ${MACHINE_ARCH} == "i386"
-SUBDIR+= pctr
+SUBDIR+= 
 .elif ${MACHINE_ARCH} == "mips"
 SUBDIR+= elf2ecoff elf2aout
 .endif
