@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.73 2001/11/06 21:52:26 mickey Exp $
+	$OpenBSD: pcmciadevs,v 1.74 2001/11/20 23:31:20 mickey Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -77,6 +77,7 @@ vendor NOKIA			0x023d	Nokia Communications
 vendor SAMSUNG			0x0250	Samsung
 vendor SYMBOL			0x026c	Symbol
 vendor BUFFALO			0x026f	BUFFALO (Melco Corporation)
+vendor LINKSYS2			0x0274	The Linksys Group
 vendor IODATA2			0x028a	I-O DATA
 vendor BREEZECOM		0x0a02	BreezeCOM
 vendor NEWMEDIA2		0x10cd	NewMedia
@@ -203,6 +204,7 @@ product LINKSYS TRUST_COMBO_ECARD 0x021b Trust (Linksys)
 product LINKSYS ETHERFAST	0x0230 Linksys Etherfast 10/100 Ethernet
 product LINKSYS ECARD_1		0x0265 Linksys EthernetCard or D-Link DE-650
 product LINKSYS COMBO_ECARD	0xc1ab Linksys Combo EthernetCard
+product LINKSYS2 IWN		0x1612 Instant Wireless Network
 
 /* Lucent WaveLAN/IEEE */
 product LUCENT WAVELAN_IEEE	0x0002 WaveLAN/IEEE
