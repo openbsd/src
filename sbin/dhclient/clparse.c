@@ -677,11 +677,9 @@ parse_option_decl(FILE *cfile, struct option_data *options)
 			skip_to_semi(cfile);
 		return (NULL);
 	}
-	/* XXXFIX asprintf */
-	vendor = malloc(strlen(val) + 1);
-	if (!vendor)
+	if (asprintf(&vendor, "%s", val) == -1)
 		error("no memory for vendor information.");
-	strlcpy(vendor, val, strlen(val) + 1);
+	
 	token = peek_token (&val, cfile);
 	if (token == DOT) {
 		/* Go ahead and take the DOT token... */
@@ -876,7 +874,6 @@ parse_string_list (FILE *cfile, struct string_list **lp, int multiple)
 			return;
 		}
 
-		/* XXXFIX asprintf */
 		tmp = new_string_list(strlen(val) + 1, "parse tmp"); 
 		if (tmp == NULL)
 			error ("no memory for string list entry.");
