@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.21 1997/05/14 01:17:22 deraadt Exp $	*/
+/*	$OpenBSD: conf.h,v 1.22 1997/11/23 05:14:14 mickey Exp $	*/
 /*	$NetBSD: conf.h,v 1.33 1996/05/03 20:03:32 christos Exp $	*/
 
 /*-
@@ -436,6 +436,8 @@ cdev_decl(bpf);
 cdev_decl(tun);
 
 cdev_decl(random);
+
+cdev_decl(ipf);
 
 #ifdef COMPAT_SVR4
 # define NSVR4_NET	1
