@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mktemp.3,v 1.8 1998/03/09 23:24:27 deraadt Exp $
+.\"	$OpenBSD: mktemp.3,v 1.9 1998/03/12 20:03:52 deraadt Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -146,6 +146,22 @@ to any value specified by the
 .Xr mkdir 2
 function.
 .Sh BUGS
+For
+.Fn mktemp
+there is an obvious race between file name selection and file
+creation and deletion: the program is typically written to call
+.Xr tmpnam 3 ,
+.Xr tmpnam 3 , or Ns
+.Fn mktemp .
+Subsequently, the program calls
+.Xr open 2
+or
+.Xr fopen 3
+and erroneously opens a file (or symbolic link, fifo or other
+device) that the attacker has created in the expected file location.
+Hence
+.Fn mkstemp
+is recommended, since it atomically creates the file.
 An attacker can guess the filenames produced by
 .Fn mktemp .
 Whenever it is possible,
@@ -153,6 +169,11 @@ Whenever it is possible,
 or
 .Fn mkdtemp
 should be used instead.
+.Pp
+For this reason,
+.Xr ld 8
+will output a warning message whenever it links code that uses the
+.Fn mktemp .
 .Pp
 The
 .Fn mkdtemp
@@ -163,7 +184,10 @@ is required.
 .Xr getpid 2 ,
 .Xr mkdir 2 ,
 .Xr open 2 ,
-.Xr stat 2
+.Xr stat 2 ,
+.Xr tmpfile 3 ,
+.Xr tmpnam 3 ,
+.Xr tempnam 3
 .Sh HISTORY
 A
 .Fn mktemp

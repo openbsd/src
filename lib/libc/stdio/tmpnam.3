@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tmpnam.3,v 1.2 1996/08/19 08:33:09 tholo Exp $
+.\"	$OpenBSD: tmpnam.3,v 1.3 1998/03/12 20:03:54 deraadt Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -62,6 +62,15 @@ The created file is unlinked before
 .Fn tmpfile
 returns, causing the file to be automatically deleted when the last
 reference to it is closed.
+Since
+.Xr mkstemp 3
+creates the file with mode
+.Em "S_IRUSR|S_IWUSR",
+after the unlink
+.Xr fchown 2
+and
+.Xr umask 2
+are used to set the file mode to the expected value.
 The file is opened with the access value
 .Ql w+ .
 .Pp
@@ -184,9 +193,13 @@ functions
 conform to
 .St -ansiC .
 .Sh BUGS
-These interfaces are provided for System V and
+.Fn tmpnam
+and
+.Fn tempnam
+are provided for System V and
 .Tn ANSI
 compatibility only.
+These interfaces are typically not used in safe ways.
 The
 .Xr mkstemp 3
 interface is strongly preferred.
@@ -196,7 +209,20 @@ with the historic
 .Xr mktemp 3
 interface).
 First, there is an obvious race between file name selection and file
-creation and deletion.
+creation and deletion: the program is typically written to call
+.Fn tmpnam Ns ,
+.Fn tmpnam Ns , or
+.Xr mktemp 3 .
+Subsequently, the program calls
+.Xr open 2
+or
+.Xr fopen 3
+and erroneously opens a file (or symbolic link, or fifo or other
+device) that the attacker has placed in the expected file location.
+Hence
+.Xr mkstemp 3
+is recommended, since it atomically creates the file.
+.Pp
 Second, most historic implementations provide only a limited number
 of possible temporary file names (usually 26) before file names will
 start being recycled.
@@ -205,15 +231,18 @@ Third, the System V implementations of these functions (and of
 use the
 .Xr access 2
 function to determine whether or not the temporary file may be created.
-This has obvious ramifications for setuid or setgid programs, complicating
-the portable use of these interfaces in such programs.
+This has obvious ramifications for daemons or setuid/setgid programs,
+complicating the portable use of these interfaces in such programs.
 Finally, there is no specification of the permissions with which the
 temporary files are created.
 .Pp
 This implementation does not have these flaws, but portable software
 cannot depend on that.
-In particular, the
-.Fn tmpfile
-interface should not be used in software expected to be used on other systems
-if there is any possibility that the user does not wish the temporary file to
-be publicly readable and writable.
+.Pp
+For these reasons,
+.Xr ld 8
+will output a warning message whenever it links code that uses the
+functions 
+.Fn tmpnam
+or
+.Fn tempnam .
