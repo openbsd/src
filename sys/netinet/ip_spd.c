@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.17 2001/04/14 00:30:59 angelos Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.18 2001/04/23 10:00:09 art Exp $ */
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -893,6 +893,7 @@ ipsp_clear_acquire(struct tdb *tdb)
 			    if (IF_QFULL(ifq))
 			    {
 				IF_DROP(ifq);
+				splx(s);
 				break;
 			    }
 			    IF_ENQUEUE(ifq, ipa->ipa_packet);
@@ -922,6 +923,7 @@ ipsp_clear_acquire(struct tdb *tdb)
 			    if (IF_QFULL(ifq))
 			    {
 				IF_DROP(ifq);
+				splx(s);
 				break;
 			    }
 			    IF_ENQUEUE(ifq, ipa->ipa_packet);
