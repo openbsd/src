@@ -1,4 +1,4 @@
-/*	$OpenBSD: mquery.c,v 1.1 2003/04/18 16:02:11 drahn Exp $ */
+/*	$OpenBSD: mquery.c,v 1.2 2004/08/02 20:18:50 drahn Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -38,22 +38,24 @@ extern char edata;
 main()
 {
 	void *addr;
-	int ret;
+	void *ret;
+	void *bound_a;
+	void *bound_b;
 
 	/* check heap */
 
 	errno = 0;
 	addr = sbrk(0);
 	/* mquery fixed is not allowed in heap, check errno? */
-	ret = mquery(MAP_FIXED, &addr, 0x1000, -1, 0);
-	if (ret != -1) 
+	ret = mquery(addr, 0x1000, PROT_READ|PROT_WRITE, MAP_FIXED, -1, 0);
+	if (ret != MAP_FAILED) 
 		exit (1);
 
 	errno = 0;
 	addr = sbrk(0);
 	/* mquery should return next available address after heap. */
-	ret = mquery(0, &addr, 0x1000, -1, 0);
-	if (ret != 0) 
+	ret = mquery(addr, 0x1000, PROT_READ|PROT_WRITE, 0, -1, 0);
+	if (ret == MAP_FAILED) 
 		exit (2);
 
 
@@ -62,25 +64,29 @@ main()
 	errno = 0;
 	addr = &chardata;
 	/* mquery fixed is not allowed in heap, check errno? */
-	ret = mquery(MAP_FIXED, &addr, 0x1000, -1, 0);
-	if (ret != -1) 
+	ret = mquery(addr, 0x1000, PROT_READ|PROT_WRITE, MAP_FIXED, -1, 0);
+	if (ret != MAP_FAILED) 
 		exit (3);
 
 	errno = 0;
 	addr = &chardata;
 	/* mquery should return next available address after heap. */
-	ret = mquery(0, &addr, 0x1000, -1, 0);
-	if (ret != 0) 
+	ret = mquery(addr, 0x1000, PROT_READ|PROT_WRITE, 0, -1, 0);
+	if (ret == MAP_FAILED) 
 		exit (4);
-	if (addr < (void *)&edata) {
+	if (ret < (void *)&edata) {
+		printf("mquerry returned %p &edata %p\n",
+		    ret, (void *)&edata);
 		/* should always return above data*/
 		exit (5);
 	}
+#define PAD	(64 * 1024 * 8)
+	bound_a = (void *)&chardata;
+	bound_b = (void *)(&chardata + MAXDSIZ-PAD);
 	/* chardata + MAXDSIZ is valid??? */
-	if (addr >= (void *)&chardata && addr < (void *)(&chardata + MAXDSIZ)) {
-		printf("returned %p should be not be ~%p - %p\n",
-		    addr, (void *)&chardata,
-		    (void *)(&chardata + MAXDSIZ));
+	if (ret >= bound_a && ret < bound_b) {
+		printf("returned %p should be not be ~%p - ~%p\n",
+		    ret, bound_a, bound_b);
 		exit (6);
 	}
 
@@ -89,22 +95,22 @@ main()
 	errno = 0;
 	addr = &main;
 	/* mquery on text addresses should fail. */
-	ret = mquery(MAP_FIXED, &addr, 0x1000, -1, 0);
-	if (ret != -1)
+	ret = mquery(addr, 0x1000, PROT_READ|PROT_WRITE, MAP_FIXED, -1, 0);
+	if (ret != MAP_FAILED) 
 		exit (7);
 
 	errno = 0;
 	addr = &main;
 	/* mquery on text addresses should return below data or above heap. */
-	ret = mquery(0, &addr, 0x1000, -1, 0);
-	if (ret != 0)
+	ret = mquery(addr, 0x1000, PROT_READ|PROT_WRITE, 0, -1, 0);
+	if (ret == MAP_FAILED) 
 		exit (8);
-	if (addr < (void *)&etext) {
+	if (ret < (void *)&etext) {
 		/* should always return above text */
 		exit (9);
 	}
 	/* chardata + MAXDSIZ is valid??? */
-	if (addr >= (void *)&chardata && addr < (void *)(&chardata + MAXDSIZ))
+	if (ret >= (void *)&chardata && ret < (void *)(&chardata + MAXDSIZ))
 		exit (10);
 	
 	exit (0);
