@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.127 2003/12/16 20:33:25 markus Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.128 2003/12/16 21:35:28 henning Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -2056,7 +2056,7 @@ bridge_filterrule(struct brl_head *h, struct ether_header *eh, struct mbuf *m)
 		if (flags == (BRL_FLAG_SRCVALID|BRL_FLAG_DSTVALID)) {
 			if (bcmp(eh->ether_shost, &n->brl_src, ETHER_ADDR_LEN))
 				continue;
-			if (bcmp(eh->ether_dhost, &n->brl_src, ETHER_ADDR_LEN))
+			if (bcmp(eh->ether_dhost, &n->brl_dst, ETHER_ADDR_LEN))
 				continue;
 			goto return_action;
 		}
