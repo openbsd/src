@@ -1,4 +1,4 @@
-/*	$OpenBSD: pidfile.c,v 1.3 2002/01/02 10:22:18 mpech Exp $	*/
+/*	$OpenBSD: pidfile.c,v 1.4 2002/05/22 01:21:40 itojun Exp $	*/
 /*	$NetBSD: pidfile.c,v 1.4 2001/02/19 22:43:42 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$OpenBSD: pidfile.c,v 1.3 2002/01/02 10:22:18 mpech Exp $";
+static const char rcsid[] = "$OpenBSD: pidfile.c,v 1.4 2002/05/22 01:21:40 itojun Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -95,7 +95,15 @@ pidfile(const char *basename)
 	}
 
 	pidfile_pid = pid;
-	(void) atexit(pidfile_cleanup);
+	if (atexit(pidfile_cleanup) < 0) {
+		save_errno = errno;
+		(void) unlink(pidfile_path);
+		free(pidfile_path);
+		pidfile_path = NULL;
+		pidfile_pid = 0;
+		errno = save_errno;
+		return (-1);
+	}
 
 	return (0);
 }
