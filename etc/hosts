@@ -1,4 +1,4 @@
-#	$OpenBSD: hosts,v 1.7 2000/08/15 09:36:34 itojun Exp $
+#	$OpenBSD: hosts,v 1.8 2001/06/01 18:17:32 deraadt Exp $
 #
 # Host Database
 # This file should contain the addresses and aliases
@@ -6,8 +6,7 @@
 # It is used only for "ifconfig" and other operations
 # before the nameserver is started.
 #
-# RFC 1918 specifies that these networks are "internal". They can
-# be used behind an ipnat(4) redirector.
+# RFC 1918 specifies that these networks are "internal".
 # 10.0.0.0      10.255.255.255
 # 172.16.0.0    172.31.255.255
 # 192.168.0.0   192.168.255.255
