@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.8,v 1.32 2004/06/06 22:17:28 jmc Exp $
+.\"	$OpenBSD: route.8,v 1.33 2004/06/18 17:04:15 millert Exp $
 .\"	$NetBSD: route.8,v 1.6 1995/03/18 15:00:13 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -155,43 +155,52 @@ The optional modifiers
 .Fl net
 and
 .Fl host
-force the destination to be interpreted as a network or a host, respectively.
-Otherwise, if the
+cause the destination to be interpreted as a network or a host, respectively.
+Otherwise, type is chosen based on the following rules.
+.Pp
+The route is assumed to be to a network if any of the following apply to
+.Ar destination :
+.Bl -bullet -compact
+.It
+it is the word "default", equivalent to 0/0
+.It
+it is an IPv4 address with less than 3 dots
+.It
+it is an IPv4 address with a
+.Dq /XX
+suffix (where XX is the number of bits in the network portion of the address
+and is less than 32)
+.It
+it is the symbolic name of a network.
+.El
+.Pp
+If
 .Ar destination
-has a
-.Dq local address part
-of
-.Dv INADDR_ANY ,
-or if the
-.Ar destination
-is the symbolic name of a network, then the route is
-assumed to be to a network; otherwise, it is presumed to be a
-route to a host.
+is a valid IP address or host name it is presumed to be a route to a host.
+.Pp
+If none of the above apply
+.Nm
+prints an error message and exits.
 .Pp
 For example,
-.Li 128.32
+.Li 192.168.1.1
 is interpreted as
-.Fl host Li 128.0.0.32 ;
-.Li 128.32.130
-is interpreted as
-.Fl host Li 128.32.0.130 ;
-.Fl net Li 128.32
-is interpreted as
-.Li 128.32.0.0 ;
+.Fl host Li 192.168.1.1
 and
-.Fl net Li 128.32.130
+.Li 192.168.1
 is interpreted as
-.Li 128.32.130.0 .
-A more detailed syntax is also available, for example
-.Fl net Li 192.168.64.0/20
-is interpreted to specify that the high 20 bits of the address
-192.168.64.0 are the requested network.
-.Pp
-As a special case, the default route can be accessed using an
-argument of
-.Dq default
-for
-.Ar destination .
+.Fl net Li 192.168.1 .
+Note, however, that
+.Li 192.168.2.0
+will be interpreted as
+.Fl host Li 192.168.2.0
+since it is a complete IP address with 3 dots.
+In this case the number of bits in the network portion of the address must
+be explicitly listed, for example
+.Li 192.168.2.0/24 ,
+.Li 192.168.2/24
+or alternately
+.Li 192.168.2 .
 .Pp
 If the destination is directly reachable
 via an interface requiring
@@ -296,9 +305,9 @@ For example:
 .Nm route
 .Cm add
 .Fl src
-192.168.10.0/24
+192.168.10/24
 .Fl dst
-10.5.1.0/24
+10.5.1/24
 180.83.46.97
 .Ed
 .Pp
@@ -320,11 +329,11 @@ All symbolic names specified for a
 .Ar destination
 or
 .Ar gateway
-are looked up first as a host name using
-.Xr gethostbyname 3 .
+are looked up first as a network name using
+.Xr getnetbyname 3 .
 If this lookup fails,
-.Xr getnetbyname 3
-is then used to interpret the name as that of a network.
+.Xr gethostbyname 3
+is then used to interpret the name a valid host name.
 .Pp
 .Nm
 uses a routing socket and the new message types
