@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.5 2003/03/22 08:02:03 david Exp $
+.\" $OpenBSD: openssl.1,v 1.6 2003/04/25 12:43:10 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -7,7 +7,7 @@
 .\" are met:
 .\"
 .\" 1. Redistributions of source code must retain the above copyright
-.\"    notice, this list of conditions and the following disclaimer. 
+.\"    notice, this list of conditions and the following disclaimer.
 .\"
 .\" 2. Redistributions in binary form must reproduce the above copyright
 .\"    notice, this list of conditions and the following disclaimer in
@@ -51,28 +51,28 @@
 .\" (eay@cryptsoft.com).  This product includes software written by Tim
 .\" Hudson (tjh@cryptsoft.com).
 .\"
-.\" 
+.\"
 .\" Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
 .\" All rights reserved.
 .\"
 .\" This package is an SSL implementation written
 .\" by Eric Young (eay@cryptsoft.com).
 .\" The implementation was written so as to conform with Netscapes SSL.
-.\" 
+.\"
 .\" This library is free for commercial and non-commercial use as long as
 .\" the following conditions are aheared to.  The following conditions
 .\" apply to all code found in this distribution, be it the RC4, RSA,
 .\" lhash, DES, etc., code; not just the SSL code.  The SSL documentation
 .\" included with this distribution is covered by the same copyright terms
 .\" except that the holder is Tim Hudson (tjh@cryptsoft.com).
-.\" 
+.\"
 .\" Copyright remains Eric Young's, and as such any Copyright notices in
 .\" the code are not to be removed.
 .\" If this package is used in a product, Eric Young should be given attribution
 .\" as the author of the parts of the library used.
 .\" This can be in the form of a textual message at program startup or
 .\" in documentation (online or textual) provided with the package.
-.\" 
+.\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
 .\" are met:
@@ -87,12 +87,12 @@
 .\"     Eric Young (eay@cryptsoft.com)"
 .\"    The word 'cryptographic' can be left out if the rouines from the library
 .\"    being used are not cryptographic related :-).
-.\" 4. If you include any Windows specific code (or a derivative thereof) from 
+.\" 4. If you include any Windows specific code (or a derivative thereof) from
 .\"    the apps directory (application code) you must include an
 .\"    acknowledgement:
 .\"    "This product includes software written by Tim Hudson
 .\"     (tjh@cryptsoft.com)"
-.\" 
+.\"
 .\" THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
 .\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 .\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -104,7 +104,7 @@
 .\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
-.\" 
+.\"
 .\" The licence and distribution terms for any publically available version or
 .\" derivative of this code cannot be changed.  i.e. this code cannot simply be
 .\" copied and put under another distribution licence
@@ -148,14 +148,14 @@ program is a command line tool for using the various
 cryptography functions of
 .Nm OpenSSL Ns Li 's
 .Em crypto
-library from the shell. 
-It can be used for 
+library from the shell.
+It can be used for
 .Pp
 .Bl -bullet -compact
 .It
 Creation of RSA, DH and DSA key parameters
 .It
-Creation of X.509 certificates, CSRs and CRLs 
+Creation of X.509 certificates, CSRs and CRLs
 .It
 Calculation of Message Digests
 .It
@@ -401,6 +401,7 @@ Read the password from the file descriptor
 This can be used to send the data via a pipe for example.
 .It Ar stdin
 Read the password from standard input.
+.El
 .\"
 .\" ASN1PARSE
 .\"
@@ -423,7 +424,7 @@ command is a diagnostic utility that can parse ASN.1 structures.
 It can also be used to extract data from ASN.1 formatted data.
 .Pp
 The options are as follows:
-.Bl -tag -width Ds
+.Bl -tag -width "XXXX"
 .It Fl inform Ar DER|PEM
 The input format.
 .Ar DER
@@ -457,25 +458,26 @@ section below.
 Parse the contents octets of the ASN.1 object starting at
 .Ar offset .
 This option can be used multiple times to "drill down" into a nested structure.
+.El
 .Sh ASN1PARSE OUTPUT
 The output will typically contain lines like this:
 .Pp
 .Bd -literal
   0:d=0  hl=4 l= 681 cons: SEQUENCE
-.Pp
+
 \&.....
-.Pp
-  229:d=3  hl=3 l= 141 prim: BIT STRING        
-  373:d=2  hl=3 l= 162 cons: cont [ 3 ]        
-  376:d=3  hl=3 l= 159 cons: SEQUENCE          
-  379:d=4  hl=2 l=  29 cons: SEQUENCE          
+
+  229:d=3  hl=3 l= 141 prim: BIT STRING
+  373:d=2  hl=3 l= 162 cons: cont [ 3 ]
+  376:d=3  hl=3 l= 159 cons: SEQUENCE
+  379:d=4  hl=2 l=  29 cons: SEQUENCE
   381:d=5  hl=2 l=   3 prim: OBJECT            :X509v3 Subject Key Identifier
-  386:d=5  hl=2 l=  22 prim: OCTET STRING      
-  410:d=4  hl=2 l= 112 cons: SEQUENCE          
+  386:d=5  hl=2 l=  22 prim: OCTET STRING
+  410:d=4  hl=2 l= 112 cons: SEQUENCE
   412:d=5  hl=2 l=   3 prim: OBJECT            :X509v3 Authority Key Identifier
-  417:d=5  hl=2 l= 105 prim: OCTET STRING      
+  417:d=5  hl=2 l= 105 prim: OCTET STRING
   524:d=4  hl=2 l=  12 cons: SEQUENCE
-.Pp
+
 \&.....
 .Ed
 .Pp
@@ -493,7 +495,7 @@ The
 .Fl i
 option can be used to make the output more readable.
 .Pp
-Some knowledge of the ASN.1 structure is needed to interpret the output. 
+Some knowledge of the ASN.1 structure is needed to interpret the output.
 .Pp
 In this example the BIT STRING at offset 229 is the certificate public key.
 The contents octets of this will contain the public key information.
@@ -502,9 +504,10 @@ This can be examined using the option
 to yield:
 .Pp
 .Bd -literal
-\&    0:d=0  hl=3 l= 137 cons: SEQUENCE          
+\&    0:d=0  hl=3 l= 137 cons: SEQUENCE
 \&    3:d=1  hl=3 l= 129 prim: INTEGER           :E5D21E1F5C8D208EA7A2166C7FAF9F6BDF2059669C60876DDB70840F1A5AAFA59699FE471F379F1DD6A487E7D5409AB6A88D4A9746E24B91D8CF55DB3521015460C8EDE44EE8A4189F7A7BE77D6CD3A9AF2696F486855CF58BF0EDF2B4068058C7A947F52548DDF7E15E96B385F86422BEA9064A3EE9E1158A56E4A6F47E5897
 \&  135:d=1  hl=2 l=   3 prim: INTEGER           :010001
+.Ed
 .Sh ASN1PARSE NOTES
 If an OID is not part of
 .Nm OpenSSL Ns Li 's
@@ -575,7 +578,7 @@ It also maintains a text database of issued certificates and their status.
 .Pp
 The options descriptions will be divided into each purpose.
 .Sh CA OPTIONS
-.Bl -tag -width Ds
+.Bl -tag -width "XXXX"
 .It Fl config Ar filename
 Specifies the configuration file to use.
 .It Fl name Ar section
@@ -600,7 +603,7 @@ See the
 section for information on the required format.
 .It Fl infiles
 If present, this should be the last option; all subsequent arguments
-are assumed to be the names of files containing certificate requests. 
+are assumed to be the names of files containing certificate requests.
 .It Fl out Ar filename
 The output file to output certificates to.
 The default is standard output.
@@ -707,7 +710,7 @@ to read certificate extensions from
 option is also used).
 .El
 .Sh CRL OPTIONS
-.Bl -tag -width Ds
+.Bl -tag -width "XXXX"
 .It Fl gencrl
 This option generates a CRL based on information in the index file.
 .It Fl crldays Ar num
@@ -739,7 +742,7 @@ The CRL extensions specified are CRL extensions and
 .Em not
 CRL entry extensions.
 It should be noted that some software (for example Netscape)
-can't handle V2 CRLs. 
+can't handle V2 CRLs.
 .El
 .Sh CA CONFIGURATION FILE OPTIONS
 The section of the configuration file containing options for
@@ -774,12 +777,12 @@ the command line value is used.
 Where an option is described as mandatory, then it must be present in
 the configuration file or the command line equivalent (if any) used.
 .Pp
-.Bl -tag -width Ds
+.Bl -tag -width "XXXX"
 .It Ar oid_file
 This specifies a file containing additional OBJECT IDENTIFIERS.
 Each line of the file should consist of the numerical form of the
 object identifier followed by whitespace, then the short name followed
-by whitespace and finally the long name. 
+by whitespace and finally the long name.
 .It Ar oid_section
 This specifies a section in the configuration file containing extra
 object identifiers.
@@ -813,7 +816,7 @@ or an EGD socket (see
 The same as the
 .Fl days
 option.
-The number of days to certify a certificate for. 
+The number of days to certify a certificate for.
 .It Ar default_startdate
 The same as the
 .Fl startdate
@@ -945,7 +948,7 @@ The input to the
 command line option is a Netscape signed public key and challenge.
 This will usually come from the
 .Em KEYGEN
-tag in an HTML form to create a new private key. 
+tag in an HTML form to create a new private key.
 It is, however, possible to create SPKACs using the
 .Nm spkac
 utility.
@@ -1192,7 +1195,7 @@ cipher lists into ordered SSL cipher preference lists.
 It can be used as a test tool to determine the appropriate cipherlist.
 .Pp
 The options are as follows:
-.Bl -tag -width -Ds
+.Bl -tag -width "XXXX"
 .It Fl v
 Verbose option.
 List ciphers with a complete description of protocol version
@@ -1285,7 +1288,7 @@ can be used at any point to sort the current cipher list in order of
 encryption algorithm key length.
 .Sh CIPHERS STRINGS
 The following is a list of all permitted cipher strings and their meanings.
-.Bl -tag -width Ds
+.Bl -tag -width "XXXX"
 .It Ar DEFAULT
 The default cipher list.
 This is determined at compile time and is normally
@@ -1482,8 +1485,8 @@ These ciphers can also be used in SSL v3.
 .Ed
 .Pp
 .Cm SSL v2.0 cipher suites
-.Bd -literal
 .Pp
+.Bd -literal
 \& SSL_CK_RC4_128_WITH_MD5                 RC4-MD5
 \& SSL_CK_RC4_128_EXPORT40_WITH_MD5        EXP-RC4-MD5
 \& SSL_CK_RC2_128_CBC_WITH_MD5             RC2-MD5
@@ -1559,7 +1562,7 @@ or
 format.
 .Pp
 The options are as follows:
-.Bl -tag -width Ds
+.Bl -tag -width "XXXX"
 .It Fl inform Ar DER|PEM
 This specifies the input format.
 .Ar DER
@@ -1568,7 +1571,7 @@ format is DER encoded CRL structure.
 (the default) is a base64 encoded version of the DER form with header
 and footer lines.
 .It Fl outform Ar DER|PEM
-This specifies the output format; the options have the same meaning as the 
+This specifies the output format; the options have the same meaning as the
 .Fl inform
 option.
 .It Fl in Ar filename
@@ -1647,7 +1650,7 @@ certificates and converts them into a PKCS#7 degenerate
 "certificates only" structure.
 .Pp
 The options are as follows:
-.Bl -tag -width Ds
+.Bl -tag -width "XXXX"
 .It Fl inform Ar DER|PEM
 This specifies the CRL input format.
 .Ar DER
@@ -1695,7 +1698,7 @@ format with no CRL from several
 different certificates:
 .Pp
 .Bd -literal
-\& $ openssl crl2pkcs7 -nocrl -certfile newcert.pem 
+\& $ openssl crl2pkcs7 -nocrl -certfile newcert.pem
 \&         -certfile demoCA/cacert.pem -outform DER -out p7.der
 .Ed
 .Sh CRL2PKCS7 NOTES
@@ -1743,7 +1746,7 @@ in hexadecimal form.
 They can also be used for digital signing and verification.
 .Pp
 The options are as follows:
-.Bl -tag -width Ds
+.Bl -tag -width "XXXX"
 .It Fl c
 Print out the digest in two digit groups separated by colons, only relevant if
 .Em hex
@@ -1783,7 +1786,7 @@ for MS-Windows,
 .Cm \&,
 for OpenVMS, and
 .Cm \&:
-for all others. 
+for all others.
 .It Fl signature Ar filename
 The actual signature to verify.
 .It Ar file ...
@@ -1838,7 +1841,7 @@ The
 command is used to manipulate DH parameter files.
 .Pp
 The options are as follows:
-.Bl -tag -width Ds
+.Bl -tag -width "XXXX"
 .It Fl inform Ar DER|PEM
 This specifies the input format.
 The argument
@@ -1851,7 +1854,7 @@ form is the default format:
 it consists of the DER format base64 encoded with
 additional header and footer lines.
 .It Fl outform Ar DER|PEM
-This specifies the output format, the options have the same meaning as the 
+This specifies the output format, the options have the same meaning as the
 .Fl inform
 option.
 .It Fl in Ar filename
@@ -1905,7 +1908,7 @@ This argument specifies that a parameter set should be generated of size
 .Ar numbits .
 It must be the last option.
 If not present, then a value of 512 is used.
-If this value is present then the input file is ignored and 
+If this value is present then the input file is ignored and
 parameters are generated instead.
 .It Fl noout
 This option inhibits the output of the encoded version of the parameters.
@@ -1916,6 +1919,7 @@ This option converts the parameters into C code.
 The parameters can then be loaded by calling the
 .Cm get_dh Ns Ar numbits Ns Li ()
 function.
+.El
 .Sh DHPARAM WARNINGS
 The program
 .Nm dhparam
@@ -1931,7 +1935,7 @@ The
 .Nm dh
 and
 .Nm gendh
-programs are retained for now, but may have different purposes in future 
+programs are retained for now, but may have different purposes in future
 versions of
 .Nm OpenSSL .
 .Sh DHPARAM NOTES
@@ -1997,7 +2001,7 @@ newer applications should use the more secure PKCS#8 format using the
 command.
 .Pp
 The options are as follows:
-.Bl -tag -width Ds
+.Bl -tag -width "XXXX"
 .It Fl inform Ar DER|PEM
 This specifies the input format.
 The
@@ -2017,7 +2021,7 @@ It consists of the DER format base64
 encoded with additional header and footer lines.
 In the case of a private key, PKCS#8 format is also accepted.
 .It Fl outform Ar DER|PEM
-This specifies the output format, the options have the same meaning as the 
+This specifies the output format, the options have the same meaning as the
 .Fl inform
 option.
 .It Fl in Ar filename
@@ -2049,7 +2053,7 @@ see the
 .Sx PASS PHRASE ARGUMENTS
 section above.
 .It Cm -des|-des3|-idea
-These options encrypt the private key with the DES, triple DES, or the 
+These options encrypt the private key with the DES, triple DES, or the
 IDEA ciphers, respectively, before outputting it.
 A pass phrase is prompted for.
 If none of these options is specified, the key is written in plain text.
@@ -2075,6 +2079,7 @@ With this option a public key is read instead.
 By default a private key is output.
 With this option a public key will be output instead.
 This option is automatically set if the input is a public key.
+.El
 .Sh DSA NOTES
 The
 .Ar PEM
@@ -2102,7 +2107,7 @@ To encrypt a private key using triple DES:
 .Pp
 \& $ openssl dsa -in key.pem -des3 -out keyout.pem
 .Pp
-To convert a private key from PEM to DER format: 
+To convert a private key from PEM to DER format:
 .Pp
 \& $ openssl dsa -in key.pem -outform DER -out keyout.der
 .Pp
@@ -2134,7 +2139,7 @@ The
 command is used to manipulate or generate \s-1DSA\s0 parameter files.
 .Pp
 The options are as follows:
-.Bl -tag -width Ds
+.Bl -tag -width "XXXX"
 .It Fl inform Ar DER|PEM
 This specifies the input format.
 The
@@ -2147,7 +2152,7 @@ form is the default format:
 it consists of the DER format base64 encoded with additional header
 and footer lines.
 .It Fl outform Ar DER|PEM
-This specifies the output format; the options have the same meaning as the 
+This specifies the output format; the options have the same meaning as the
 .Fl inform
 option.
 .It Fl in Ar filename
@@ -2239,7 +2244,7 @@ or explicitly provided. Base64 encoding or decoding can also be performed
 either by itself or in addition to the encryption or decryption.
 .Pp
 The options are as follows:
-.Bl -tag -width Ds
+.Bl -tag -width "XXXX"
 .It Fl in Ar filename
 The input
 .Ar filename ,
@@ -2584,7 +2589,7 @@ command generates a DSA private key from a DSA parameter file
 command).
 .Pp
 The options are as follows:
-.Bl -tag -width Ds
+.Bl -tag -width "XXXX"
 .It Cm -des|-des3|-idea
 These options encrypt the private key with the DES, triple DES,
 or the IDEA ciphers, respectively, before outputting it.
@@ -2612,6 +2617,7 @@ The parameters in this file determine the size of the private key.
 DSA parameters can be generated and examined using the
 .Nm openssl dsaparam
 command.
+.El
 .Sh GENDSA NOTES
 DSA key generation is little more than random number generation so it is
 much quicker that RSA key generation for example.
@@ -2635,7 +2641,7 @@ The
 command generates an RSA private key.
 .Pp
 The options are as follows:
-.Bl -tag -width Ds
+.Bl -tag -width "XXXX"
 .It Fl out Ar filename
 The output
 .Ar filename .
@@ -2648,7 +2654,7 @@ see the
 .Sx PASS PHRASE ARGUMENTS
 section above.
 .It Cm -des|-des3|-idea
-These options encrypt the private key with the DES, triple DES, or the 
+These options encrypt the private key with the DES, triple DES, or the
 IDEA ciphers, respectively, before outputting it.
 If none of these options is specified, no encryption is used.
 If encryption is used a pass phrase is prompted for,
@@ -2678,6 +2684,7 @@ for all others.
 The size of the private key to generate in bits.
 This must be the last option specified.
 The default is 512.
+.El
 .Sh GENRSA NOTES
 RSA private key generation essentially involves the generation of two prime
 numbers.
@@ -2716,7 +2723,7 @@ file of certificates and converts it into a Netscape certificate
 sequence.
 .Pp
 The options are as follows:
-.Bl -tag -width Ds
+.Bl -tag -width "XXXX"
 .It Fl in Ar filename
 This specifies the input
 .Ar filename
@@ -2818,7 +2825,7 @@ create requests and send queries to an OCSP responder and behave like
 a mini OCSP server itself.
 .Pp
 The options are as follows:
-.Bl -tag -width Ds
+.Bl -tag -width "XXXX"
 .It Fl out Ar filename
 Specify output
 .Ar filename ,
@@ -2997,7 +3004,7 @@ By default this additional check is not performed.
 .El
 .Sh OCSP SERVER OPTIONS
 .Pp
-.Bl -tag -with DS
+.Bl -tag -width "XXXX"
 .It Fl index Ar indexfile
 .Ar indexfile
 is a text index file in
@@ -3058,7 +3065,7 @@ option.
 .It Fl nrequest Ar number
 The OCSP server will exit after receiving
 .Ar number
-requests, default unlimited. 
+requests, default unlimited.
 .It Fl nmin Ar minutes , Fl ndays Ar days
 Number of
 .Ar minutes
@@ -3240,7 +3247,7 @@ and its Apache variant
 are available.
 .Pp
 The options are as follows:
-.Bl -tag -width Ds
+.Bl -tag -width "XXXX"
 .It Fl crypt
 Use the
 .Em crypt
@@ -3273,7 +3280,7 @@ to each password hash.
 .El
 .Sh PASSWD EXAMPLES
 .Pp
-.Bl -tag -width Ds
+.Bl -tag -width "XXXX"
 .It $ openssl passwd -crypt -salt xx password
 prints
 .Em xxj31ZMTZzkVA .
@@ -3283,6 +3290,7 @@ prints
 .It $ openssl passwd -apr1 -salt xxxxxxxx password
 prints
 .Em $apr1$xxxxxxxx$dxHfLAsjHkDRmG83UXe8K0 .
+.El
 .\"
 .\" PKCS7
 .\"
@@ -3308,7 +3316,7 @@ or
 format.
 .Pp
 The options are as follows:
-.Bl -tag -width Ds
+.Bl -tag -width "XXXX"
 .It Fl inform Ar DER|PEM
 This specifies the input format.
 .Ar DER
@@ -3317,7 +3325,7 @@ format is DER encoded PKCS#7 v1.5 structure.
 (the default) is a base64 encoded version of the DER form with header
 and footer lines.
 .It Fl outform Ar DER|PEM
-This specifies the output format, the options have the same meaning as the 
+This specifies the output format, the options have the same meaning as the
 .Fl inform
 option.
 .It Fl in Ar filename
@@ -3339,6 +3347,7 @@ Don't output the encoded version of the PKCS#7 structure
 (or certificates if
 .Fl print_certs
 is set).
+.El
 .Sh PKCS7 EXAMPLES
 Convert a PKCS#7 file from
 .Em PEM
@@ -3401,7 +3410,7 @@ and EncryptedPrivateKeyInfo format with a variety of PKCS#5
 (v1.5 and v2.0) and PKCS#12 algorithms.
 .Pp
 The options are as follows:
-.Bl -tag -width Ds
+.Bl -tag -width "XXXX"
 .It Fl topk8
 Normally a PKCS#8 private key is expected on input and a traditional format
 private key will be written.
@@ -3423,7 +3432,7 @@ or
 .Em PEM
 format of the traditional format private key is used.
 .It Fl outform Ar DER|PEM
-This specifies the output format, the options have the same meaning as the 
+This specifies the output format, the options have the same meaning as the
 .Fl inform
 option.
 .It Fl in Ar filename
@@ -3513,6 +3522,7 @@ is used.
 .It Fl v1 Ar alg
 This option specifies a PKCS#5 v1.5 or PKCS#12 algorithm to use.
 A complete list of possible algorithms is included below.
+.El
 .Sh PKCS8 NOTES
 The encrypted form of a
 .Em PEM
@@ -3557,23 +3567,20 @@ Various algorithms can be used with the
 command line option, including PKCS#5 v1.5 and PKCS#12.
 These are described in more detail below.
 .Pp
-.Bd -literal -offset indent
-.It Ar \  \  PBE-MD2-DES PBE-MD5-DES
-.br
+.Bl -tag -width "XXXX"
+.It Ar PBE-MD2-DES PBE-MD5-DES
 These algorithms were included in the original PKCS#5 v1.5 specification.
 They only offer 56 bits of protection since they both use DES.
-.It Ar \  \  PBE-SHA1-RC2-64 PBE-MD2-RC2-64 PBE-MD5-RC2-64 PBE-SHA1-DES
-.br
+.It Ar PBE-SHA1-RC2-64 PBE-MD2-RC2-64 PBE-MD5-RC2-64 PBE-SHA1-DES
 These algorithms are not mentioned in the original PKCS#5 v1.5 specification
 but they use the same key derivation algorithm and are supported by some
 software.
 They are mentioned in PKCS#5 v2.0.
 They use either 64 bit RC2 or 56 bit DES.
-.It Ar \  \  PBE-SHA1-RC4-128 PBE-SHA1-RC4-40 PBE-SHA1-3DES PBE-SHA1-2DES PBE-SHA1-RC2-128 PBE-SHA1-RC2-40
-.br
+.It Ar PBE-SHA1-RC4-128 PBE-SHA1-RC4-40 PBE-SHA1-3DES PBE-SHA1-2DES PBE-SHA1-RC2-128 PBE-SHA1-RC2-40
 These algorithms use the PKCS#12 password based encryption algorithm and
 allow strong encryption algorithms like triple DES or 128 bit RC2 to be used.
-.Ed
+.El
 .Sh PKCS8 EXAMPLES
 Convert a private from traditional to PKCS#5 v2.0 format using triple DES:
 .Pp
@@ -3665,7 +3672,7 @@ a PKCS#12 file can be created by using the
 .Fl export
 option (see below).
 .Sh PKCS12 PARSING OPTIONS
-.Bd -ragged -offset indent
+.Bl -tag -width "XXXX"
 .It Fl in Ar filename
 This specifies the
 .Ar filename
@@ -3720,9 +3727,9 @@ Don't attempt to verify the integrity MAC before reading the file.
 Prompt for separate integrity and encryption passwords: most software
 always assumes these are the same so this option will render such
 PKCS#12 files unreadable.
-.Ed
+.El
 .Sh PKCS12 FILE CREATION OPTIONS
-.Bd -ragged -offset indent
+.Bl -tag -width "XXXX"
 .It Fl export
 This option specifies that a PKCS#12 file will be created rather than
 parsed.
@@ -3838,7 +3845,7 @@ for MS-Windows,
 for OpenVMS, and
 .Cm \&:
 for all others.
-.Ed
+.El
 .Sh PKCS12 NOTES
 Although there are a large number of options,
 most of them are very rarely used.
@@ -3989,7 +3996,7 @@ file will be written back if enough
 seeding was obtained from these sources.
 .Pp
 The options are as follows:
-.Bd -ragged -offset indent
+.Bl -tag -width "XXXX"
 .It Fl out Ar file
 Write to
 .Ar file
@@ -4064,7 +4071,7 @@ It can additionally create self-signed certificates,
 for use as root CAs, for example.
 .Pp
 The options are as follows:
-.Bd -ragged -offset indent
+.Bl -tag -width "XXXX"
 .It Fl inform Ar DER|PEM
 This specifies the input format.
 The
@@ -4077,7 +4084,7 @@ form is the default format:
 it consists of the DER format base64 encoded with additional header and
 footer lines.
 .It Fl outform Ar DER|PEM
-This specifies the output format, the options have the same meaning as the 
+This specifies the output format, the options have the same meaning as the
 .Fl inform
 option.
 .It Fl in Ar filename
@@ -4223,7 +4230,7 @@ This allows several different sections to
 be used in the same configuration file to specify requests for
 a variety of purposes.
 .It Fl utf8
-This option causes field values to be interpreted as UTF8 strings, by 
+This option causes field values to be interpreted as UTF8 strings, by
 default they are interpreted as ASCII.
 This means that the field values, whether prompted from a terminal or
 obtained from a configuration file, must be valid UTF8 strings.
@@ -4267,7 +4274,7 @@ Some software (Netscape certificate server) and some CAs need this.
 Non-interactive mode.
 .It Fl verbose
 Print extra details about the operations being performed.
-.Ed
+.El
 .Sh REQ CONFIGURATION FILE FORMAT
 The configuration options are specified in the
 .Em req
@@ -4280,7 +4287,7 @@ then the initial unnamed or
 section is searched too.
 .Pp
 The options available are described in detail below.
-.Bd -ragged -offset indent
+.Bl -tag -width "XXXX"
 .It Ar input_password output_password
 The passwords for the input private key file (if present) and
 the output private key file (if one will be created).
@@ -4308,7 +4315,7 @@ option.
 This specifies a file containing additional OBJECT IDENTIFIERS.
 Each line of the file should consist of the numerical form of the
 object identifier, followed by whitespace, then the short name followed
-by whitespace and finally the long name. 
+by whitespace and finally the long name.
 .It Ar oid_section
 This specifies a section in the configuration file containing extra
 object identifiers.
@@ -4353,7 +4360,7 @@ which is also the default option, uses
 .Em PrintableStrings , T61Strings
 and
 .Em BMPStrings ;
-if the 
+if the
 .Ar pkix
 value is used then only
 .Em PrintableStrings
@@ -4424,7 +4431,7 @@ request signing utilities, but some CAs might want them.
 This specifies the section containing the distinguished name fields to
 prompt for when generating a certificate or certificate request.
 The format is described in the next section.
-.Ed
+.El
 .Sh REQ DISTINGUISHED NAME AND ATTRIBUTE SECTION FORMAT
 There are two separate formats for the distinguished name and attribute
 sections.
@@ -4760,7 +4767,7 @@ newer applications should use the more secure PKCS#8 format using the
 utility.
 .Pp
 The options are as follows:
-.Bd -ragged -offset indent
+.Bl -tag -width "XXXX"
 .It Fl inform Ar DER|NET|PEM
 This specifies the input format.
 The
@@ -4779,7 +4786,7 @@ form is a format described in the
 .Sx RSA NOTES
 section.
 .It Fl outform Ar DER|NET|PEM
-This specifies the output format, the options have the same meaning as the 
+This specifies the output format, the options have the same meaning as the
 .Fl inform
 option.
 .It Fl in Ar filename
@@ -4815,7 +4822,7 @@ Use the modified
 .Em NET
 algorithm used with some versions of Microsoft IIS and SGC keys.
 .It Cm -des|-des3|-idea
-These options encrypt the private key with the DES, triple DES, or the 
+These options encrypt the private key with the DES, triple DES, or the
 IDEA ciphers, respectively, before outputting it.
 A pass phrase is prompted for.
 If none of these options is specified the key is written in plain text.
@@ -4829,7 +4836,7 @@ These options can only be used with
 format output files.
 .It Fl text
 Prints out the various public or private key components in
-plain text, in addition to the encoded version. 
+plain text, in addition to the encoded version.
 .It Fl noout
 This option prevents output of the encoded version of the key.
 .It Fl modulus
@@ -4843,7 +4850,7 @@ option a public key is read instead.
 By default a private key is output:
 with this option a public key will be output instead.
 This option is automatically set if the input is a public key.
-.Ed
+.El
 .Sh RSA NOTES
 The
 .Em PEM
@@ -4897,7 +4904,7 @@ To convert a private key from
 .Em PEM
 to
 .Em DER
-format: 
+format:
 .Pp
 \& $ openssl rsa -in key.pem -outform DER -out keyout.der
 .br
@@ -4942,7 +4949,7 @@ command can be used to sign, verify, encrypt and decrypt
 data using the RSA algorithm.
 .Pp
 The options are as follows:
-.Bd -ragged -offset indent
+.Bl -tag -width "XXXX"
 .It Fl in Ar filename
 This specifies the input
 .Ar filename
@@ -4956,9 +4963,9 @@ default.
 .It Fl inkey Ar file
 The input key file, by default it should be an RSA private key.
 .It Fl pubin
-The input file is an RSA public key. 
+The input file is an RSA public key.
 .It Fl certin
-The input is a certificate containing an RSA public key. 
+The input is a certificate containing an RSA public key.
 .It Fl sign
 Sign the input data and output the signed result.
 This requires an RSA private key.
@@ -5028,23 +5035,23 @@ as follows yields:
 \& $ openssl asn1parse -in pca-cert.pem
 .Pp
 .Bd -literal
-\&    0:d=0  hl=4 l= 742 cons: SEQUENCE          
-\&    4:d=1  hl=4 l= 591 cons:  SEQUENCE          
-\&    8:d=2  hl=2 l=   3 cons:   cont [ 0 ]        
+\&    0:d=0  hl=4 l= 742 cons: SEQUENCE
+\&    4:d=1  hl=4 l= 591 cons:  SEQUENCE
+\&    8:d=2  hl=2 l=   3 cons:   cont [ 0 ]
 \&   10:d=3  hl=2 l=   1 prim:    INTEGER           :02
 \&   13:d=2  hl=2 l=   1 prim:   INTEGER           :00
-\&   16:d=2  hl=2 l=  13 cons:   SEQUENCE          
+\&   16:d=2  hl=2 l=  13 cons:   SEQUENCE
 \&   18:d=3  hl=2 l=   9 prim:    OBJECT            :md5WithRSAEncryption
-\&   29:d=3  hl=2 l=   0 prim:    NULL              
-\&   31:d=2  hl=2 l=  92 cons:   SEQUENCE          
-\&   33:d=3  hl=2 l=  11 cons:    SET               
-\&   35:d=4  hl=2 l=   9 cons:     SEQUENCE          
+\&   29:d=3  hl=2 l=   0 prim:    NULL
+\&   31:d=2  hl=2 l=  92 cons:   SEQUENCE
+\&   33:d=3  hl=2 l=  11 cons:    SET
+\&   35:d=4  hl=2 l=   9 cons:     SEQUENCE
 \&   37:d=5  hl=2 l=   3 prim:      OBJECT            :countryName
 \&   42:d=5  hl=2 l=   2 prim:      PRINTABLESTRING   :AU
 \&  ....
-\&  599:d=1  hl=2 l=  13 cons:  SEQUENCE          
+\&  599:d=1  hl=2 l=  13 cons:  SEQUENCE
 \&  601:d=2  hl=2 l=   9 prim:   OBJECT            :md5WithRSAEncryption
-\&  612:d=2  hl=2 l=   0 prim:   NULL              
+\&  612:d=2  hl=2 l=   0 prim:   NULL
 \&  614:d=1  hl=3 l= 129 prim:  BIT STRING
 .Ed
 .Pp
@@ -5062,11 +5069,11 @@ The signature can be analysed with:
 \& $ openssl rsautl -in sig -verify -asn1parse -inkey pubkey.pem -pubin
 .Pp
 .Bd -literal
-\&    0:d=0  hl=2 l=  32 cons: SEQUENCE          
-\&    2:d=1  hl=2 l=  12 cons:  SEQUENCE          
+\&    0:d=0  hl=2 l=  32 cons: SEQUENCE
+\&    2:d=1  hl=2 l=  12 cons:  SEQUENCE
 \&    4:d=2  hl=2 l=   8 prim:   OBJECT            :md5
-\&   14:d=2  hl=2 l=   0 prim:   NULL              
-\&   16:d=1  hl=2 l=  16 prim:  OCTET STRING      
+\&   14:d=2  hl=2 l=   0 prim:   NULL
+\&   16:d=1  hl=2 l=  16 prim:  OCTET STRING
 \&      0000 - f3 46 9e aa 1a 4a 73 c9-37 ea 93 00 48 25 08 b5   .F...Js.7...H%..
 .Ed
 .Pp
@@ -5128,7 +5135,7 @@ It is a
 useful diagnostic tool for SSL servers.
 .Pp
 The options are as follows:
-.Bd -ragged -offset indent
+.Bl -tag -width "XXXX"
 .It Fl connect Ar host:port
 This specifies the
 .Ar host
@@ -5254,7 +5261,7 @@ for OpenVMS, and
 .Cm \&:
 for
 all others.
-.Ed
+.El
 .Sh S_CLIENT CONNECTED COMMANDS
 If a connection is established with an SSL server then any data received
 from the server is displayed and any key presses will be sent to the
@@ -5381,7 +5388,7 @@ command implements a generic SSL/TLS server which listens
 for connections on a given port using SSL/TLS.
 .Pp
 The options are as follows:
-.Bd -ragged -offset indent
+.Bl -tag -width "XXXX"
 .It Fl accept Ar port
 The TCP
 .Ar port
@@ -5544,19 +5551,19 @@ for MS-Windows,
 for OpenVMS, and
 .Cm \&:
 for all others.
-.Ed
+.El
 .Sh S_SERVER CONNECTED COMMANDS
 If a connection request is established with an SSL client and neither the
 .Fl www
 nor the
 .Fl WWW
 option has been used, then normally any data received
-from the client is displayed and any key presses will be sent to the client. 
+from the client is displayed and any key presses will be sent to the client.
 .Pp
 Certain single letter commands are also recognized which perform special
 operations: these are listed below.
 .Pp
-.Bd -ragged -offset indent
+.Bl -tag -width "XXXX"
 .It Ar q
 End the current SSL connection, but still accept new connections.
 .It Ar Q
@@ -5570,7 +5577,7 @@ Send some plain text down the underlying TCP connection: this should
 cause the client to disconnect due to a protocol violation.
 .It Ar S
 Print out some session cache status information.
-.Ed
+.El
 .Sh S_SERVER NOTES
 .Nm s_server
 can be used to debug SSL clients.
@@ -5641,7 +5648,7 @@ Since this is a diagnostic tool that needs some knowledge of the SSL
 protocol to use properly, most users will not need to use it.
 .Pp
 The options are as follows:
-.Bd -ragged -offset indent
+.Bl -tag -width "XXXX"
 .It Fl inform Ar DER|PEM
 This specifies the input format.
 The
@@ -5654,7 +5661,7 @@ The
 form is the default format: it consists of the DER
 format base64 encoded with additional header and footer lines.
 .It Fl outform Ar DER|PEM
-This specifies the output format, the options have the same meaning as the 
+This specifies the output format, the options have the same meaning as the
 .Fl inform
 option.
 .It Fl in Ar filename
@@ -5668,7 +5675,7 @@ to write session information to, or standard
 output if this option is not specified.
 .It Fl text
 Prints out the various public or private key components in
-plain text in addition to the encoded version. 
+plain text in addition to the encoded version.
 .It Fl cert
 If a certificate is present in the session it will be output using this option,
 if the
@@ -5684,7 +5691,7 @@ The
 .Ar ID
 can be any string of characters.
 This option won't normally be used.
-.Ed
+.El
 .Sh SESS_ID OUTPUT
 Typical output:
 .Pp
@@ -5702,7 +5709,7 @@ Typical output:
 .Ed
 .Pp
 These are described below in more detail.
-.Bd -ragged -offset indent
+.Bl -tag -width "XXXX"
 .It Ar Protocol
 This is the protocol in use: TLSv1, SSLv3 or SSLv2.
 .It Ar Cipher
@@ -5723,7 +5730,7 @@ in standard Unix format.
 The timeout in seconds.
 .It Ar Verify return code
 This is the return code when an SSL client certificate is verified.
-.Ed
+.El
 .Sh SESS_ID NOTES
 The
 .Em PEM
@@ -5789,7 +5796,7 @@ There are five operation options that set the type of operation to be performed.
 The meaning of the other options varies according to the operation type.
 .Pp
 The options are as follows:
-.Bd -ragged -offset indent
+.Bl -tag -width "XXXX"
 .It Fl encrypt
 Encrypt mail for the given recipient certificates.
 Input file is the message to be encrypted.
@@ -5879,7 +5886,7 @@ This option adds plain text (text/plain)
 headers to the supplied message if encrypting or signing.
 If decrypting or verifying it strips off text headers:
 if the decrypted or verified message is not of
-.Em MIME 
+.Em MIME
 type text/plain then an error occurs.
 .It Fl CAfile Ar file
 A
@@ -5994,7 +6001,7 @@ for OpenVMS, and
 for all others.
 .It Ar cert.pem ...
 One or more certificates of message recipients: used when encrypting
-a message. 
+a message.
 .It Fl to , from , subject
 The relevant mail headers.
 These are included outside the signed
@@ -6003,7 +6010,7 @@ If signing, then many
 .Em S/MIME
 mail clients check the signer's certificate email
 address matches that specified in the From: address.
-.Ed
+.El
 .Sh SMIME NOTES
 The
 .Em MIME
@@ -6048,7 +6055,7 @@ clients.
 Strictly speaking these process PKCS#7 enveloped data: PKCS#7
 encrypted data is used for other purposes.
 .Sh SMIME EXIT CODES
-.Bd -ragged -offset indent
+.Bl -tag -width "XXXX"
 .It Ar 0
 The operation was completely successful.
 .It Ar 1
@@ -6064,7 +6071,7 @@ An error occurred decrypting or verifying the message.
 .It Ar 5
 The message was verified correctly, but an error occurred writing out
 the signers certificates.
-.Ed
+.El
 .Sh SMIME EXAMPLES
 Create a cleartext signed message:
 .Pp
@@ -6222,7 +6229,7 @@ The
 .Nm speed
 command is used to test the performance of cryptographic algorithms.
 .Pp
-.Bd -ragged -offset indent
+.Bl -tag -width "XXXX"
 .It Fl engine Ar id
 Specifying an engine (by it's unique
 .Ar id
@@ -6236,7 +6243,7 @@ for all available algorithms.
 If any options are given,
 .Nm speed
 tests those algorithms, otherwise all of the above are tested.
-.Ed
+.El
 .\"
 .\" SPKAC
 .\"
@@ -6261,7 +6268,7 @@ It can print out their contents, verify the signature and
 produce its own SPKACs from a supplied private key.
 .Pp
 The options are as follows:
-.Bd -ragged -offset indent
+.Bl -tag -width "XXXX"
 .It Fl in Ar filename
 This specifies the input
 .Ar filename
@@ -6307,7 +6314,7 @@ Output the public key of an SPKAC (not used if an SPKAC is
 being created).
 .It Fl verify
 Verifies the digital signature on the supplied SPKAC.
-.Ed
+.El
 .Sh SPKAC EXAMPLES
 Print out the contents of an SPKAC:
 .Pp
@@ -6361,7 +6368,7 @@ to be used in a "replay attack".
 .Op Fl help
 .Op Fl issuer_checks
 .Op Fl verbose
-.Op Fl 
+.Op Fl
 .Op Ar certificates
 .Pp
 The
@@ -6369,7 +6376,7 @@ The
 command verifies certificate chains.
 .Pp
 The options are as follows:
-.Bd -ragged -offset indent
+.Bl -tag -width "XXXX"
 .It Fl CApath directory
 A
 .Ar directory
@@ -6423,7 +6430,7 @@ This shows why each candidate issuer certificate was rejected.
 However the presence of rejection messages
 does not itself imply that anything is wrong: during the normal
 verify process several rejections may take place.
-.It Fl 
+.It Fl
 Marks the last option.
 All arguments following this are assumed to be certificate files.
 This is useful if the first certificate filename begins with a
@@ -6437,7 +6444,7 @@ a certificate from standard input.
 They should all be in
 .Em PEM
 format.
-.Ed
+.El
 .Sh VERIFY OPERATION
 The
 .Nm verify
@@ -6459,7 +6466,7 @@ and ending in the root CA.
 It is an error if the whole chain cannot be built up.
 The chain is built up by looking up the issuers certificate of the current
 certificate.
-If a certificate is found which is its own issuer it is assumed 
+If a certificate is found which is its own issuer it is assumed
 to be the root CA.
 .Pp
 The process of 'looking up the issuers certificate' itself involves a number
@@ -6504,7 +6511,7 @@ For compatibility with previous versions of
 and
 .Nm OpenSSL ,
 a certificate with no trust settings is considered to be valid for
-all purposes. 
+all purposes.
 .Pp
 The final operation is to check the validity of the certificate chain.
 The validity period is checked against the current system time and the
@@ -6540,7 +6547,7 @@ includes the name of the error code as defined in the header file
 Some of the error codes are defined but never returned: these are described
 as "unused".
 .Pp
-.Bd -ragged -offset indent
+.Bl -tag -width "XXXX"
 .It Ar "0 X509_V_OK: ok"
 The operation was successful.
 .It Ar 2 X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT: unable to get issuer certificate
@@ -6662,7 +6669,7 @@ extension does not permit certificate signing.
 .It Ar 50 X509_V_ERR_APPLICATION_VERIFICATION: application verification failure
 An application specific error.
 Unused.
-.Ed
+.El
 .Sh VERIFY BUGS
 Although the issuer checks are a considerable improvement over the old
 technique, they still suffer from limitations in the underlying
@@ -6697,7 +6704,7 @@ command is used to print out version information about
 .Nm OpenSSL .
 .Pp
 The options are as follows:
-.Bd -ragged -offset indent
+.Bl -tag -width "XXXX"
 .It Fl a
 All information: this is the same as setting all the other flags.
 .It Fl v
@@ -6717,7 +6724,7 @@ Platform setting.
 .It Fl d
 .Em OPENSSLDIR
 setting.
-.Ed
+.El
 .Sh VERSION NOTES
 The output of
 .Nm openssl version -a
@@ -6788,7 +6795,7 @@ certificate trust settings.
 Since there are a large number of options, they are split up into
 various sections.
 .Sh X509 INPUT, OUTPUT AND GENERAL PURPOSE OPTIONS
-.Bd -ragged -offset indent
+.Bl -tag -width "XXXX"
 .It Fl inform Ar DER|PEM|NET
 This specifies the input format.
 Normally the command will expect an X509 certificate,
@@ -6806,7 +6813,7 @@ option is an obscure Netscape server format that is now
 obsolete.
 .It Fl outform Ar DER|PEM|NET
 This specifies the output format;
-the options have the same meaning as the 
+the options have the same meaning as the
 .Fl inform
 option.
 .It Fl in Ar filename
@@ -6828,7 +6835,7 @@ options.
 If not specified then MD5 is used.
 If the key being used to sign with is a DSA key then
 this option has no effect: SHA1 is always used with DSA keys.
-.Ed
+.El
 .Sh X509 DISPLAY OPTIONS
 .Sy Note :
 The
@@ -6838,7 +6845,7 @@ and
 options are also display options but are described in the
 .Sx X509 TRUST OPTIONS
 section.
-.Bd -ragged -offset indent
+.Bl -tag -width "XXXX"
 .It Fl text
 Prints out the certificate in text form.
 Full details are output including the public key, signature algorithms,
@@ -6902,7 +6909,7 @@ Prints out the digest of the DER encoded version of the whole certificate
 .Sx DIGEST OPTIONS ) .
 .It Fl C
 This outputs the certificate in the form of a C source file.
-.Ed
+.El
 .Sh X509 TRUST SETTINGS
 Please note these options are currently experimental and may well change.
 .Pp
@@ -6930,7 +6937,7 @@ utility for more information on the meaning of trust settings.
 Future versions of
 .Nm OpenSSL
 will recognize trust settings on any certificate: not just root CAs.
-.Bd -ragged -offset indent
+.Bl -tag -width "XXXX"
 .It Fl trustout
 This causes
 .Nm x509
@@ -6984,17 +6991,17 @@ the results.
 For a more complete description see the
 .Sx X509 CERTIFICATE EXTENSIONS
 section.
-.Ed
+.El
 .Sh X509 SIGNING OPTIONS
 The
 .Nm x509
 utility can be used to sign certificates and requests: it
 can thus behave like a "mini CA".
 .Pp
-.Bd -ragged -offset indent
+.Bl -tag -width "XXXX"
 .It Fl signkey Ar filename
 This option causes the input file to be self-signed using the supplied
-private key. 
+private key.
 .Pp
 If the input file is a certificate, it sets the issuer name to the
 subject name (i.e. makes it self-signed), changes the public key to the
@@ -7091,7 +7098,7 @@ to the file again.
 The default filename consists of the CA certificate file base name with
 .Pa .srl
 appended.
-For example if the CA certificate file is called 
+For example if the CA certificate file is called
 .Pa mycacert.pem ,
 it expects to find a serial number file called
 .Pa mycacert.srl .
@@ -7110,7 +7117,7 @@ The section to add certificate extensions from.
 If this option is not specified then the extensions should either be
 contained in the unnamed (default) section or the default section should
 contain a variable called "extensions" which contains the section to use.
-.Ed
+.El
 .Sh X509 NAME OPTIONS
 The
 .Fl nameopt
@@ -7126,7 +7133,7 @@ a
 .Cm \&-
 to turn the option off.
 Only the first four will normally be used.
-.Bd -ragged -offset indent
+.Bl -tag -width "XXXX"
 .It Ar compat
 Use the old format.
 This is equivalent to specifying no name options at all.
@@ -7253,7 +7260,7 @@ Only usable with
 Places spaces round the
 .Cm \&=
 character which follows the field name.
-.Ed
+.El
 .Sh X509 TEXT OPTIONS
 As well as customising the name output format, it is also possible to
 customise the actual fields printed using the
@@ -7262,7 +7269,7 @@ options when the
 .Fl text
 option is present.
 The default behaviour is to print all fields.
-.Bd -ragged -offset indent
+.Bl -tag -width "XXXX"
 .It Ar compatible
 Use the old format.
 This is equivalent to specifying no output options at all.
@@ -7310,7 +7317,7 @@ utility, equivalent to
 .Ar no_version , no_sigdump
 and
 .Ar no_signame .
-.Ed
+.El
 .Sh X509 EXAMPLES
 .Sy Note :
 In these examples the '\e' means the example should be all on one
@@ -7487,7 +7494,7 @@ and V1 certificates above apply to
 .Em all
 CA certificates.
 .Pp
-.Bd -ragged -offset indent
+.Bl -tag -width "XXXX"
 .It Ar SSL Client
 The extended key usage extension must be absent or include the
 "web client authentication" OID.
@@ -7566,7 +7573,7 @@ Netscape certificate type must be absent or must have the
 .Em S/MIME CA
 bit set: this is used as a work around if the
 .Em basicConstraints
-extension is absent. 
+extension is absent.
 .It Ar CRL Signing
 The
 .Em keyUsage
@@ -7578,6 +7585,7 @@ The normal CA tests apply.
 Except in this case the
 .Em basicConstraints
 extension must be present.
+.El
 .Sh X509 BUGS
 Extensions in certificates are not transferred to certificate requests and
 vice versa.
