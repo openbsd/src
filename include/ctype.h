@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctype.h,v 1.9 2002/12/14 14:26:19 millert Exp $	*/
+/*	$OpenBSD: ctype.h,v 1.10 2002/12/15 13:53:39 millert Exp $	*/
 /*	$NetBSD: ctype.h,v 1.14 1994/10/26 00:55:47 cgd Exp $	*/
 
 /*
@@ -89,57 +89,57 @@ __END_DECLS
 
 static __inline int isalnum(int c)
 {
-	return (c == EOF ? 0 : (_ctype_ + 1)[(unsigned int)c] & (_U|_L|_N));
+	return (c == EOF ? 0 : ((_ctype_ + 1)[(unsigned char)(c & 0xff)] & (_U|_L|_N)));
 }
 
 static __inline int isalpha(int c)
 {
-	return (c == EOF ? 0 : (_ctype_ + 1)[(unsigned int)c] & (_U|_L));
+	return (c == EOF ? 0 : ((_ctype_ + 1)[(unsigned char)(c & 0xff)] & (_U|_L)));
 }
 
 static __inline int iscntrl(int c)
 {
-	return (c == EOF ? 0 : (_ctype_ + 1)[(unsigned int)c] & _C);
+	return (c == EOF ? 0 : ((_ctype_ + 1)[(unsigned char)(c & 0xff)] & _C));
 }
 
 static __inline int isdigit(int c)
 {
-	return (c == EOF ? 0 : (_ctype_ + 1)[(unsigned int)c] & _N);
+	return (c == EOF ? 0 : ((_ctype_ + 1)[(unsigned char)(c & 0xff)] & _N));
 }
 
 static __inline int isgraph(int c)
 {
-	return (c == EOF ? 0 : (_ctype_ + 1)[(unsigned int)c] & (_P|_U|_L|_N));
+	return (c == EOF ? 0 : ((_ctype_ + 1)[(unsigned char)(c & 0xff)] & (_P|_U|_L|_N)));
 }
 
 static __inline int islower(int c)
 {
-	return (c == EOF ? 0 : (_ctype_ + 1)[(unsigned int)c] & _L);
+	return (c == EOF ? 0 : ((_ctype_ + 1)[(unsigned char)(c & 0xff)] & _L));
 }
 
 static __inline int isprint(int c)
 {
-	return (c == EOF ? 0 : (_ctype_ + 1)[(unsigned int)c] & (_P|_U|_L|_N|_B));
+	return (c == EOF ? 0 : ((_ctype_ + 1)[(unsigned char)(c & 0xff)] & (_P|_U|_L|_N|_B)));
 }
 
 static __inline int ispunct(int c)
 {
-	return (c == EOF ? 0 : (_ctype_ + 1)[(unsigned int)c] & _P);
+	return (c == EOF ? 0 : ((_ctype_ + 1)[(unsigned char)(c & 0xff)] & _P));
 }
 
 static __inline int isspace(int c)
 {
-	return (c == EOF ? 0 : (_ctype_ + 1)[(unsigned int)c] & _S);
+	return (c == EOF ? 0 : ((_ctype_ + 1)[(unsigned char)(c & 0xff)] & _S));
 }
 
 static __inline int isupper(int c)
 {
-	return (c == EOF ? 0 : (_ctype_ + 1)[(unsigned int)c] & _U);
+	return (c == EOF ? 0 : ((_ctype_ + 1)[(unsigned char)(c & 0xff)] & _U));
 }
 
 static __inline int isxdigit(int c)
 {
-	return (c == EOF ? 0 : (_ctype_ + 1)[(unsigned int)c] & (_N|_X));
+	return (c == EOF ? 0 : ((_ctype_ + 1)[(unsigned char)(c & 0xff)] & (_N|_X)));
 }
 
 static __inline int tolower(int c)
