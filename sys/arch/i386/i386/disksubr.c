@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.23 1997/05/08 00:04:06 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.24 1997/05/08 00:05:51 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -175,11 +175,9 @@ readdisklabel(dev, strat, lp, osdep)
 donot:
 			/*
 			 * In case the disklabel read below fails, we want to
-			 * provide a fake label in which m/n/o/p are MBR 
-			 * partitions 0/1/2/3
+			 * provide a fake label in i-p.
 			 */
-			for (dp2=dp, i=0; i < NDOSPART && !wander && n < 8;
-			    i++, dp2++) {
+			for (dp2=dp, i=0; i < NDOSPART && n < 8; i++, dp2++) {
 				struct partition *pp = &lp->d_partitions[8+n];
 
 				if (dp2->dp_size)
