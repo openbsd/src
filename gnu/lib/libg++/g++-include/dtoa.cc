@@ -179,7 +179,8 @@ char* dtoa(double fpnum,  char cvt, int width, int prec)
           if (ch > '5') // properly round: unavoidable propagation
           {
             int carry = 1;
-            for (char* p = f - 1; p >= fwork && carry; --p)
+	    char *p;
+            for (p = f - 1; p >= fwork && carry; --p)
             {
               ++*p;
               if (*p > '9')
@@ -313,7 +314,8 @@ char* dtoa(double fpnum,  char cvt, int width, int prec)
   char* fmtbase = (char *) _libgxx_fmtq.alloc(fmtwidth + pad + 1);
   char* fmt = fmtbase;
   
-  for (int i = 0; i < pad; ++i) *fmt++ = ' ';
+  int i;
+  for (i = 0; i < pad; ++i) *fmt++ = ' ';
   
   if (is_neg) *fmt++ = '-';
   

@@ -1882,7 +1882,8 @@ IntRep* gcd(const IntRep* x, const IntRep* y)
   long k = 0;
   int l = (ul <= vl)? ul : vl;
   int cont = 1;
-  for (int i = 0;  i < l && cont; ++i)
+  int i;
+  for (i = 0;  i < l && cont; ++i)
   {
     unsigned long a =  (i < ul)? u->s[i] : 0;
     unsigned long b =  (i < vl)? v->s[i] : 0;

@@ -16,7 +16,7 @@ You should have received a copy of the GNU Library General Public
 License along with this library; if not, write to the Free Software
 Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: Fix24.h,v 1.1.1.1 1995/10/18 08:38:16 deraadt Exp $
+	$Id: Fix24.h,v 1.2 1995/12/21 11:09:11 niklas Exp $
 */
 
 #ifndef _Fix24_h
@@ -355,7 +355,7 @@ inline Fix24 operator<<(const Fix24& a, int b)
 
 inline Fix24 operator>>(const Fix24& a, int b) 	
 { 
-  return (a.m >> b) & 0xffffff00L; 
+  return (a.m >> b) & (long)0xffffff00L; 
 }
 
 inline  Fix24&  Fix24:: operator+=(const Fix24&  f)

@@ -188,7 +188,8 @@ ACG::ACG(unsigned long seed, int size)
     //	Determine the size of the state table
     //
     
-    for (register int l = 0;
+    register int l;
+    for (l = 0;
 	 randomStateTable[l][0] != -1 && randomStateTable[l][1] < size;
 	 l++);
     

@@ -20,7 +20,7 @@ Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 #endif
 #include <builtin.h>
 
-extern "C" _VOLATILE_VOID abort();
+extern "C" void abort();
 
 _VOLATILE_VOID default_one_arg_error_handler(const char* msg)
 {

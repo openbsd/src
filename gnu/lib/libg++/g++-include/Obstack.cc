@@ -85,7 +85,8 @@ void* Obstack::finish()
 
 int Obstack::contains(void* obj) // true if obj somewhere in Obstack
 {
-  for (_obstack_chunk* ch = chunk; 
+  _obstack_chunk* ch;
+  for (ch = chunk; 
        ch != 0 && (obj < (void*)ch || obj >= (void*)(ch->limit)); 
        ch = ch->prev);
 

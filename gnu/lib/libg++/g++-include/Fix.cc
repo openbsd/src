@@ -225,7 +225,8 @@ _Fix add(_Fix x, _Fix y, _Fix r)
     longer = y, shorter = x;
   if ( r == NULL )
     r = new_Fix(longer->len);
-  for ( int i=r->siz-1; i >= longer->siz; i-- )
+  int i;
+  for ( i=r->siz-1; i >= longer->siz; i-- )
     r->s[i] = 0;
   for ( ; i >= shorter->siz; i-- )
     r->s[i] = longer->s[i];
@@ -251,7 +252,8 @@ _Fix subtract(_Fix x, _Fix y, _Fix r)
     longer = y, shorter = x;
   if ( r == NULL )
     r = new_Fix(longer->len);
-  for ( int i=r->siz-1; i >= longer->siz; i-- )
+  int i;
+  for ( i=r->siz-1; i >= longer->siz; i-- )
     r->s[i] = 0;
   for ( ; i >= shorter->siz; i-- )
     r->s[i] = (longer == x ? x->s[i] : -y->s[i]);
@@ -279,7 +281,8 @@ _Fix multiply(_Fix x, _Fix y, _Fix r)
     x = negate(x,X.rep);
   if ( ysign )
     y = negate(y,Y.rep);
-  for ( int i=0; i < r->siz; i++ )
+  int i;
+  for ( i=0; i < r->siz; i++ )
     r->s[i] = 0;
   for ( i=x->siz-1; i >= 0; i-- )
   {
@@ -310,7 +313,8 @@ _Fix multiply(_Fix x, int y, _Fix r)
     (*Fix_range_error_handler)("multiply by int -- int too large");
   if ( r == NULL )
     r = new_Fix(x->len);
-  for ( int i=r->siz-1; i >= x->siz; i-- )
+  int i;
+  for ( i=r->siz-1; i >= x->siz; i-- )
     r->s[i] = 0;
   int32 a, carry = 0;
   for ( ; i > 0; i-- )
@@ -418,7 +422,8 @@ _Fix shift(_Fix x, int y, _Fix r)
 
   int xr = 16 - xl;
   uint16 xrmask = 0xffffL >> xr;
-  for ( int i=0; i < ilow; i++, rs+=u, xsl+=u, xsr+=u )
+  int i;
+  for ( i=0; i < ilow; i++, rs+=u, xsl+=u, xsr+=u )
     *rs = 0;
   for ( ; i < ihigh; i++, rs+=u, xsl+=u, xsr+=u )
     *rs = (*xsl << xl) + ((*xsr >> xr) & xrmask);
@@ -434,7 +439,8 @@ _Fix negate(_Fix x, _Fix r)
   if ( r == NULL )
     r = new_Fix(x->len);
   uint32 carry = 1;
-  for ( int i=r->siz-1; i >= x->siz; i-- )
+  int i;
+  for ( i=r->siz-1; i >= x->siz; i-- )
     r->s[i] = 0;
   for ( ; i >= 0; i-- )
   {

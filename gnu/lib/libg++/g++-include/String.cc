@@ -965,7 +965,8 @@ String join(String src[], int n, const String& separator) return x;
 {
   String sep = separator;
   int xlen = 0;
-  for (int i = 0; i < n; ++i)
+  int i;
+  for (i = 0; i < n; ++i)
     xlen += src[i].length();
   xlen += (n - 1) * sep.length();
 
@@ -1117,7 +1118,8 @@ String common_prefix(const String& x, const String& y, int startpos) return r;
   const char* topx = &(xchars[x.length()]);
   const char* ys = &(ychars[startpos]);
   const char* topy = &(ychars[y.length()]);
-  for (int l = 0; xs < topx && ys < topy && *xs++ == *ys++; ++l);
+  int l;
+  for (l = 0; xs < topx && ys < topy && *xs++ == *ys++; ++l);
   r.rep = Salloc(r.rep, ss, l, l);
 }
 
@@ -1129,7 +1131,8 @@ String common_suffix(const String& x, const String& y, int startpos) return r;
   const char* botx = xchars;
   const char* ys = &(ychars[y.length() + startpos]);
   const char* boty = ychars;
-  for (int l = 0; xs >= botx && ys >= boty && *xs == *ys ; --xs, --ys, ++l);
+  int l;
+  for (l = 0; xs >= botx && ys >= boty && *xs == *ys ; --xs, --ys, ++l);
   r.rep = Salloc(r.rep, ++xs, l, l);
 }
 
