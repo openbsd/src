@@ -1,4 +1,4 @@
-.\"	$OpenBSD: inet_net.3,v 1.6 2000/04/21 15:38:17 aaron Exp $
+.\"	$OpenBSD: inet_net.3,v 1.7 2002/10/26 22:01:15 marc Exp $
 .\"	$NetBSD: inet_net.3,v 1.1 1997/06/18 02:25:27 lukem Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -82,6 +82,14 @@ It will be set to
 .Er ENOENT
 if the Internet network number was not valid).
 .Pp
+Caution:
+The
+.Fa dst
+field should be zeroed before calling
+.Fn inet_net_pton
+as the function will only fill the number of bytes necessary to
+encode the network number in network byte order.
+.Pp
 The only value for
 .Fa af
 currently supported is
@@ -90,42 +98,66 @@ currently supported is
 is the size of the result buffer
 .Fa dst .
 .Sh NETWORK NUMBERS (IP VERSION 4)
-Internet network numbers may be specified in one of the following forms:
+The external representation of Internet network numbers may be specified in
+one of the following forms:
 .Bd -literal -offset indent
-a.b.c.d/bits
-a.b.c.d
-a.b.c
-a.b
 a
+a.b
+a.b.c
+a.b.c.d
 .Ed
 .Pp
-When four parts are specified, each is interpreted
-as a byte of data and assigned, from left to right,
-to the four bytes of an Internet network number.
-Note that when an Internet network number is viewed as a 32-bit
-integer quantity on a system that uses little-endian
-byte order (such as the Intel 386, 486, and Pentium processors)
-the bytes referred to above appear as
-.Dq Li d.c.b.a .
-That is, little-endian bytes are ordered from right to left.
+Any of the above four forms may have
+.Dq Li /bits
+appended where
+.Dq Li bits
+is in the range
+.Li 0-32
+and is used to explicitly specify the number of bits in the network address.
+When
+.Dq Li /bits
+is not specified the number of bits in the network address is calculated
+as the larger of the number of bits in the class to which the address
+belongs and the number of bits provided rounded up modulo 8.
+Examples:
+.Bl -tag -width 10.1.2.3/24
+.It Li 10
+an 8 bit network number (class A), value
+.Li 10.0.0.0 .
+.It Li 192
+a 24 bit network number (class C), value
+.Li 192.0.0.0 .
+.It Li 10.10
+a 16 bit network number, value
+.Li 10.10.0.0 .
+.It Li 10.1.2.0
+a 24 bit network number, value
+.Li 10.1.2.0 .
+.It Li 10.1.2.3
+a 32 bit network number, value
+.Li 10.1.2.3 .
+.It Li 10.1.2.3/24
+a 24 bit network number (explicit), value
+.Li 10.1.2.3 .
+.El
 .Pp
-When a three part number is specified, the last
-part is interpreted as a 16-bit quantity and placed
-in the rightmost two bytes of the Internet network number.
-This makes the three part number format convenient
-for specifying Class B network numbers as
-.Dq Li 128.net.host .
-.Pp
-When a two part number is supplied, the last part
-is interpreted as a 24-bit quantity and placed in
-the rightmost three bytes of the Internet network number.
-This makes the two part number format convenient
-for specifying Class A network numbers as
-.Dq Li net.host .
-.Pp
-When only one part is given, the value is stored
-directly in the Internet network number without any byte
-rearrangement.
+Note that when the number of bits is especified using
+.Dq Li /bits
+notation the value of the address still includes all bits suplied
+in the external representation, even those bits which are the host
+part of an internet address.
+Also, unlike
+.Xr inet_pton 3
+where the external representation is assumed to be an internet address, the
+external representation for
+.Fn inet_net_pton
+is assumed to be a network address.
+Thus
+.Dq Li 10.1
+is assumed to be
+.Dq Li 10.1.0.0
+not
+.Dq Li 10.0.0.1
 .Pp
 All numbers supplied as
 .Dq parts
@@ -139,6 +171,7 @@ otherwise, the number is interpreted as decimal).
 .Sh SEE ALSO
 .Xr byteorder 3 ,
 .Xr inet 3 ,
+.Xr inet_pton 3,
 .Xr networks 5
 .Sh HISTORY
 The
