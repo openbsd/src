@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.5 1997/09/22 05:13:23 millert Exp $
+.\"	$OpenBSD: options.4,v 1.6 1998/03/16 01:26:00 gene Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1996
@@ -13,7 +13,7 @@
 .\"    notice, this list of conditions and the following disclaimer in the
 .\"    documentation and/or other materials provided with the distribution.
 .\" 3. All advertising materials mentioning features or use of this software
-.\"    must display the following acknowledgement:
+.\"    must display the following acknowledgment:
 .\"	This product includes software developed for the NetBSD Project
 .\"	by Perry E. Metzger.
 .\" 4. The name of the author may not be used to endorse or promote products
@@ -58,7 +58,7 @@ This enables support for
 32-bit identifiers),
 It also allows the use of the deprecated getdomainname, setdomainname,
 and uname syscalls.
-This option also allows using numeric fileystem identifiers rather
+This option also allows using numeric filesystem identifiers rather
 than strings.  Post 0.9 versions use string identifiers.
 .It Cd option COMPAT_10
 Enable binary compatibility with
@@ -78,7 +78,7 @@ architectures.  This option also enables
 .Dq sgtty
 compatibility, without which programs using the old interface produce
 an
-.Dq inapropriate ioctl
+.Dq inappropriate ioctl
 error.
 .It Cd option COMPAT_43
 Use of this option is discouraged.
@@ -88,7 +88,7 @@ This adds an old syscall for lseek.  It also adds the ioctls for
 TIOCGETP and TIOCSETP.  The return values for getpid, getgid, and
 getuid syscalls are modified as well, to return the parent's pid and
 uid as well as the current process's.  It also enables the deprecated
-NTTYDISC terminal line disipline.
+NTTYDISC terminal line discipline.
 It also provides backwards compatibility with 
 .Dq old
 SIOC[GS]IF{ADDR,DSTADDR,BRDADDR,NETMASK} interface ioctls, including
@@ -182,7 +182,7 @@ is equivalent to doing a
 .Em #define DEBUG
 throughout the kernel. Much of the kernel has
 .Em #ifdef DEBUG
-conditionalized debugging code. Note that many parts of the kernel
+conditional debugging code. Note that many parts of the kernel
 (typically device drivers) include their own
 .Em #ifdef XXX_DEBUG
 conditionals instead.
@@ -195,7 +195,7 @@ code will cause the kernel to panic if corruption of internal data
 structures is detected.
 .It Cd option KTRACE
 Add hooks for the system call tracing facility, which allows users to
-watch the system call invokation behavior of processes. See
+watch the system call invocation behavior of processes. See
 .Xr ktrace 1
 for details.
 .El
@@ -213,7 +213,7 @@ and is provided here for compatibility. Some of the specific features
 of
 .Em EXT2FS 
 like the "behavior on errors" are not implemented. This file system can't be
-used with UID or GID greather than 65535. See
+used with UID or GID greater than 65535. See
 .Xr mount_ext2fs 8
 for details.
 .It Cd option MFS
@@ -384,7 +384,7 @@ for a file on an
 .Em EXT2FS 
 filesystem. Without this option, the superuser or owner of the file can
 set and clear them. With this option, only the superuser can set them, and
-they can't be cleared if the securelevel is greather than 0. See also
+they can't be cleared if the securelevel is greater than 0. See also
 .Xr chflags 1 .
 .El
 .Ss Miscellaneous Options
@@ -560,11 +560,11 @@ This option turns on the packet filter interface hooks.  See
 for details.
 .It Cd option IPFILTER
 This option enables the IP filtering on the packet level using the
-ip-filter package.  This option requies that the
+ip-filter package.  This option requires that the
 .Em PFIL_HOOK
 option also be included.
 .It Cd option IPFILTER_LOG
-This option, in conjuction with
+This option, in conjunction with
 .Em IPFILTER ,
 enables logging of IP packets using ip-filter.
 .It Cd option IPFILTER_DEFAULT_BLOCK
@@ -666,7 +666,7 @@ panics.
 .It Cd option NBUF=value
 .It Cd option BUFPAGES=value
 These option set the number of pages available for the buffer cache.
-Their default value is a machine depedant value, often calculated as
+Their default value is a machine dependent value, often calculated as
 between 5% and 10% of total available RAM.
 .El
 .\" The following requests should be uncommented and used where appropriate.
