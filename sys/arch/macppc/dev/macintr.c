@@ -1,4 +1,4 @@
-/*	$OpenBSD: macintr.c,v 1.6 2001/11/06 19:53:15 miod Exp $	*/
+/*	$OpenBSD: macintr.c,v 1.7 2002/01/17 16:17:23 drahn Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -510,11 +510,8 @@ mac_ext_intr()
 	struct intrhand *ih;
 	volatile unsigned long int_state;
 
-	pcpl = splhigh();	/* Turn off all */
+	pcpl = cpl;	/* Turn off all */
 
-#if 0
-printf("mac_intr \n");
-#endif
 	int_state = read_irq();
 	if (int_state == 0)
 		goto out;
@@ -526,19 +523,24 @@ start:
 	o_imen = imen;
 	r_imen = 1 << irq;
 
-	if ((pcpl & r_imen) != 0) {
+	if ((cpl & r_imen) != 0) {
 		ipending |= r_imen;	/* Masked! Mark this as pending */
 		imen |= r_imen;
 		enable_irq(~imen);
 	} else {
+		splraise(intrmask[irq]);
+
+		/*
+		 * enable interrupts for the duration of the
+		 * interrupt handler 
+		 */
+		ppc_intr_enable(1);
 		ih = intrhand[irq];
 		while (ih) {
-#if 0
-printf("calling handler %x\n", ih->ih_fun);
-#endif
 			(*ih->ih_fun)(ih->ih_arg);
 			ih = ih->ih_next;
 		}
+		ppc_intr_disable();
 
 		uvmexp.intrs++;
 		evirq[hwirq[irq]].ev_count++;
@@ -548,7 +550,9 @@ printf("calling handler %x\n", ih->ih_fun);
 		goto start;
 
 out:
+	ppc_intr_enable(1);
 	splx(pcpl);	/* Process pendings. */
+	ppc_intr_disable();
 }
 
 void
