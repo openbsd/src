@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rc.8,v 1.9 1999/12/09 01:13:44 aaron Exp $
+.\"	$OpenBSD: rc.8,v 1.10 2000/01/08 01:58:31 hugh Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -118,8 +118,9 @@ is executed by
 to start daemons that must run before the security level changes.
 Following this,
 .Nm rc
-then sets the security level to the values specified in
-.Nm rc.conf .
+then sets the security level to the value specified in the
+.Va securelevel
+variable in that file.
 .Pp
 .Nm rc.local
 is executed towards the end of
