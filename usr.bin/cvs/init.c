@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.4 2004/07/30 23:12:13 jfb Exp $	*/
+/*	$OpenBSD: init.c,v 1.5 2004/08/06 14:09:24 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -82,7 +82,6 @@ cvs_init(int argc, char **argv)
 	u_int i;
 	char path[MAXPATHLEN];
 	RCSFILE *rfp;
-	struct stat st;
 	struct cvsroot *root;
 
 	if (argc != 1)
