@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.3 1999/02/25 19:16:02 mickey Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.4 1999/04/20 20:43:25 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -98,10 +98,14 @@ mbattach(parent, self, aux)
 	register struct mainbus_softc *sc = (struct mainbus_softc *)self;
 	struct pdc_hpa pdc_hpa PDC_ALIGNMENT;
 	struct confargs nca;
+	bus_space_handle_t ioh;
 
 	/* fetch the "default" cpu hpa */
 	if (pdc_call((iodcio_t)pdc, 0, PDC_HPA, PDC_HPA_DFLT, &pdc_hpa) < 0)
 		panic("mbattach: PDC_HPA failed");
+
+	if (bus_space_map(0, pdc_hpa.hpa, IOMOD_HPASIZE, 0, &ioh))
+		panic("mbattach: cannot map mainbus IO space");
 
 	/* 
 	 * Local-Broadcast the HPA to all modules on the bus
