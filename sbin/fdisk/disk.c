@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.c,v 1.2 1997/09/29 23:33:34 mickey Exp $	*/
+/*	$OpenBSD: disk.c,v 1.3 1997/10/04 00:15:48 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -108,7 +108,6 @@ DISK_getrealmetrics(name)
 	return(lm);
 }
 
-
 #ifdef CPU_BIOSDEV
 /* Routine to go after sysctl info for BIOS
  * geometry.  This should only really work on PC
@@ -122,38 +121,38 @@ DISK_getbiosmetrics(name)
 	char *name;
 {
 	DISK_metrics *bm = NULL;
-	int biosdev, biosgeo;
-	int mib[3], size;
+	int biosdev;
+	u_int biosgeo;
+	int mib[4], size;
 
 	/* Get BIOS metrics */
 	mib[0] = CTL_MACHDEP;
-	mib[1] = CPU_BIOSDEV;
-	size = sizeof(int);
+	mib[1] = CPU_BIOS;
+	mib[2] = BIOS_DEV;
+	size = sizeof(biosdev);
 
-	if(sysctl(mib, 2, &biosdev, &size, NULL, 0) < 0){
+	if(sysctl(mib, 3, &biosdev, &size, NULL, 0) < 0){
 		warn("sysctl");
-		return(NULL);
+		return (NULL);
 	}
 
-	mib[1] = CPU_BIOSGEOMETRY;
-	size = sizeof(int);
+	mib[2] = BIOS_GEOMETRY;
+	size = sizeof(biosgeo);
 
-	if(sysctl(mib, 2, &biosgeo, &size, NULL, 0) < 0){
+	if(sysctl(mib, 3, &biosgeo, &size, NULL, 0) < 0){
 		warn("sysctl");
-		return(NULL);
+		return (NULL);
 	}
 
 	bm = malloc(sizeof(DISK_metrics));
 	bm->cylinders = BIOSNTRACKS(biosgeo);
 	bm->heads = BIOSNHEADS(biosgeo);
 	bm->sectors = BIOSNSECTS(biosgeo);
-	bm->size = BIOSNTRACKS(biosgeo) * BIOSNHEADS(biosgeo)
-		* BIOSNSECTS(biosgeo);
-
+	bm->size = BIOSNTRACKS(biosgeo) * BIOSNHEADS(biosgeo) *
+	    BIOSNSECTS(biosgeo);
 	return(bm);
 }
-#endif /* CPU_BIOSDEV */
-
+#endif
 
 /* This is ugly, and convoluted.  All the magic
  * for disk geo/size happens here.  Basically,
