@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.76 2004/06/13 21:49:15 niklas Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.77 2004/06/23 17:42:46 niklas Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -3514,6 +3514,9 @@ pmap_tlb_shootnow(int32_t cpumask)
 
 #ifdef MULTIPROCESSOR
 	splx(s);
+
+	if (cold)
+		return;
 
 	/*
 	 * Send the TLB IPI to other CPUs pending shootdowns.
