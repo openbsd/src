@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.106 2003/01/16 01:17:23 grange Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.107 2003/01/16 12:31:01 grange Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -828,8 +828,8 @@ pciide_mapregs_native(pa, cp, cmdsizep, ctlsizep, pci_intr)
 
 	maptype = pci_mapreg_type(pa->pa_pc, pa->pa_tag,
 	    PCIIDE_REG_CMD_BASE(wdc_cp->channel));
-	WDCDEBUG_PRINT(("%s: cmd regs mapping: %s\n",
-	    sc->sc_wdcdev.sc_dev.dv_xname,
+	WDCDEBUG_PRINT(("%s: %s cmd regs mapping: %s\n",
+	    sc->sc_wdcdev.sc_dev.dv_xname, cp->name,
 	    (maptype == PCI_MAPREG_TYPE_IO ? "I/O" : "memory")), DEBUG_PROBE);
 	if (pci_mapreg_map(pa, PCIIDE_REG_CMD_BASE(wdc_cp->channel),
 	    maptype, 0,
@@ -841,8 +841,8 @@ pciide_mapregs_native(pa, cp, cmdsizep, ctlsizep, pci_intr)
 
 	maptype = pci_mapreg_type(pa->pa_pc, pa->pa_tag,
 	    PCIIDE_REG_CTL_BASE(wdc_cp->channel));
-	WDCDEBUG_PRINT(("%s: ctl regs mapping: %s\n",
-	    sc->sc_wdcdev.sc_dev.dv_xname,
+	WDCDEBUG_PRINT(("%s: %s ctl regs mapping: %s\n",
+	    sc->sc_wdcdev.sc_dev.dv_xname, cp->name,
 	    (maptype == PCI_MAPREG_TYPE_IO ? "I/O": "memory")), DEBUG_PROBE);
 	if (pci_mapreg_map(pa, PCIIDE_REG_CTL_BASE(wdc_cp->channel),
 	    maptype, 0,
