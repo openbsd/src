@@ -33,17 +33,17 @@
 
 #if defined(SYSLIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: brk.S,v 1.2 1996/08/19 08:18:57 tholo Exp $"
+	.asciz "$OpenBSD: brk.S,v 1.3 1998/05/17 10:06:30 niklas Exp $"
 #endif /* SYSLIBC_SCCS */
 
 #include "SYS.h"
 
 	.globl	curbrk
 	.globl	minbrk
-ENTRY(_brk)
+ENTRY(_brk, 0)
 	jbr	ok
 
-ENTRY(brk)
+ENTRY(brk, 0)
 	cmpl	4(ap),minbrk
 	bgeq	ok
 	movl	minbrk,4(ap)

@@ -33,7 +33,7 @@
 
 #if defined(SYSLIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: sigprocmask.S,v 1.2 1996/08/19 08:19:07 tholo Exp $"
+	.asciz "$OpenBSD: sigprocmask.S,v 1.3 1998/05/17 10:06:36 niklas Exp $"
 #endif /* SYSLIBC_SCCS */
 
 #include "SYS.h"
@@ -41,7 +41,7 @@
 err:
 	jmp	cerror
 
-ENTRY(sigprocmask)
+ENTRY(sigprocmask, 0)
 	tstl	8(ap)			# check new sigset pointer
 	bneq	1f			# if not null, indirect
 /*	movl	$0,8(ap)		# null mask pointer: block empty set */

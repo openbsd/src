@@ -33,12 +33,12 @@
 
 #if defined(SYSLIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: ptrace.S,v 1.2 1996/08/19 08:19:02 tholo Exp $"
+	.asciz "$OpenBSD: ptrace.S,v 1.3 1998/05/17 10:06:33 niklas Exp $"
 #endif /* SYSLIBC_SCCS */
 
 #include "SYS.h"
 
-ENTRY(ptrace)
+ENTRY(ptrace, 0)
 	clrl	_errno
 	chmk	$ SYS_ptrace
 	jcs	err

@@ -33,7 +33,7 @@
 
 #if defined(SYSLIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: sigreturn.S,v 1.2 1996/08/19 08:19:09 tholo Exp $"
+	.asciz "$OpenBSD: sigreturn.S,v 1.3 1998/05/17 10:06:37 niklas Exp $"
 #endif /* SYSLIBC_SCCS */
 
 #include "SYS.h"
@@ -43,7 +43,7 @@
  */
 #ifdef PROF
 #undef ENTRY
-#define	ENTRY(x) \
+#define	ENTRY(x, y) \
 	.globl _ ## x; .align 2; _ ## x ## : .word 0; pushr $0x3f; \
 	.data; 1:; .long 0; .text; moval 1b,r0; jsb mcount; popr $0x3f;
 #endif PROF
