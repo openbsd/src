@@ -1,4 +1,4 @@
-/*	$OpenBSD: kgmon.c,v 1.5 2001/05/05 07:32:39 mickey Exp $	*/
+/*	$OpenBSD: kgmon.c,v 1.6 2001/09/17 13:42:35 art Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)kgmon.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: kgmon.c,v 1.5 2001/05/05 07:32:39 mickey Exp $";
+static char *rcsid = "$OpenBSD: kgmon.c,v 1.6 2001/09/17 13:42:35 art Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -158,8 +158,8 @@ main(int argc, char **argv)
 		reset(&kvmvars);
 	if (accessmode == O_RDWR)
 		setprof(&kvmvars, disp);
-	printf("%s: kernel profiling is %s.\n",
-	    disp == GMON_PROF_OFF ? "off" : "running", __progname);
+	printf("%s: kernel profiling is %s.\n", __progname,
+	    disp == GMON_PROF_OFF ? "off" : "running");
 	return (0);
 }
 
