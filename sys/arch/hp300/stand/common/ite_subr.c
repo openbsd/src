@@ -1,4 +1,4 @@
-/*	$OpenBSD: ite_subr.c,v 1.2 2003/06/02 23:27:46 millert Exp $	*/
+/*	$OpenBSD: ite_subr.c,v 1.3 2005/01/19 17:09:30 miod Exp $	*/
 /*	$NetBSD: ite_subr.c,v 1.8 1996/03/03 04:23:40 thorpej Exp $	*/
 
 /*
@@ -46,8 +46,7 @@
 #include <sys/param.h>
 
 #include "itevar.h"
-
-#include <hp300/dev/itereg.h>
+#include "itereg.h"
 
 ite_fontinfo(ip)
 	struct ite_data *ip;

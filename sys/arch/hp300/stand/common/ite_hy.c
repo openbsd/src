@@ -1,4 +1,4 @@
-/*	$OpenBSD: ite_hy.c,v 1.3 2003/06/02 23:27:46 millert Exp $	*/
+/*	$OpenBSD: ite_hy.c,v 1.4 2005/01/19 17:09:30 miod Exp $	*/
 /*	$NetBSD: ite_hy.c,v 1.3 1996/03/03 04:23:37 thorpej Exp $	*/
 
 /*
@@ -46,9 +46,8 @@
 #include <sys/param.h>
 
 #include "itevar.h"
-
-#include <hp300/dev/itereg.h>
-#include <hp300/dev/grf_hyreg.h>
+#include "itereg.h"
+#include "grf_hyreg.h"
 
 #define REGBASE	    	((struct hyboxfb *)(ip->regbase))
 #define WINDOWMOVER     hyper_windowmove
@@ -305,14 +304,14 @@ hyper_windowmove(ip, sy, sx, dy, dx, h, w, func)
 
 	    while(h--)
 	    {
-                getandputrop(psrc, srcBit, dstBit, w, pdst, func)
+                getandputrop(psrc, srcBit, dstBit, w, pdst, func);
 	        pdst += width;
 		psrc += width;
 	    }
 	}
 	else
         {
-	    maskbits(dx, w, startmask, endmask, nlMiddle)
+	    maskbits(dx, w, startmask, endmask, nlMiddle);
 	    if (startmask)
 	      nstart = 32 - (dx & 0x1f);
 	    else
@@ -336,7 +335,7 @@ hyper_windowmove(ip, sy, sx, dy, dx, h, w, func)
 		if (startmask)
 		{
 		    getandputrop(psrc, (sx & 0x1f),
-				 (dx & 0x1f), nstart, pdst, func)
+				 (dx & 0x1f), nstart, pdst, func);
 		    pdst++;
 		    if (srcStartOver)
 		        psrc++;
@@ -357,7 +356,7 @@ hyper_windowmove(ip, sy, sx, dy, dx, h, w, func)
 		    nl = nlMiddle + 1;
 		    while (--nl)
 		    {
-		        getunalignedword (psrc, xoffSrc, tmpSrc)
+		        getunalignedword (psrc, xoffSrc, tmpSrc);
 			DoRop (*pdst, func, tmpSrc, *pdst);
 			pdst++;
 			psrc++;

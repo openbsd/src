@@ -1,4 +1,4 @@
-/*	$OpenBSD: ite.c,v 1.3 2003/06/02 23:27:46 millert Exp $	*/
+/*	$OpenBSD: ite.c,v 1.4 2005/01/19 17:09:30 miod Exp $	*/
 /*	$NetBSD: ite.c,v 1.12 1997/01/30 10:32:55 thorpej Exp $	*/
 
 /*
@@ -48,8 +48,7 @@
 #include <sys/param.h>
 #include <dev/cons.h>
 
-#include <hp300/dev/grfreg.h>
-
+#include "grfreg.h"
 #include "device.h"
 #include "itevar.h"
 #include "consdefs.h"

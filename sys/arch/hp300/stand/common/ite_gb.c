@@ -1,4 +1,4 @@
-/*	$OpenBSD: ite_gb.c,v 1.3 2003/06/02 23:27:46 millert Exp $	*/
+/*	$OpenBSD: ite_gb.c,v 1.4 2005/01/19 17:09:30 miod Exp $	*/
 /*	$NetBSD: ite_gb.c,v 1.8 1996/03/03 04:23:36 thorpej Exp $	*/
 
 /*
@@ -46,9 +46,8 @@
 #include <sys/param.h>
 
 #include "itevar.h"
-
-#include <hp300/dev/itereg.h>
-#include <hp300/dev/grf_gbreg.h>
+#include "itereg.h"
+#include "grf_gbreg.h"
 
 #define REGBASE     	((struct gboxfb *)(ip->regbase))
 #define WINDOWMOVER 	gbox_windowmove

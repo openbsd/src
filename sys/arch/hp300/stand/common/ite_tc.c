@@ -1,4 +1,4 @@
-/*	$OpenBSD: ite_tc.c,v 1.3 2003/06/02 23:27:46 millert Exp $	*/
+/*	$OpenBSD: ite_tc.c,v 1.4 2005/01/19 17:09:30 miod Exp $	*/
 /*	$NetBSD: ite_tc.c,v 1.8 1996/03/03 04:23:41 thorpej Exp $	*/
 
 /*
@@ -46,10 +46,9 @@
 #include <sys/param.h>
 
 #include "itevar.h"
-
-#include <hp300/dev/itereg.h>
-#include <hp300/dev/grfreg.h>
-#include <hp300/dev/grf_tcreg.h>
+#include "itereg.h"
+#include "grfreg.h"
+#include "grf_tcreg.h"
 
 #define REGBASE	    	((struct tcboxfb *)(ip->regbase))
 #define WINDOWMOVER 	topcat_windowmove

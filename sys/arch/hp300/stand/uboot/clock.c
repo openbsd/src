@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.3 2003/06/02 23:27:46 millert Exp $	*/
+/*	$OpenBSD: clock.c,v 1.4 2005/01/19 17:09:34 miod Exp $	*/
 /*	$NetBSD: clock.c,v 1.3 1995/02/20 00:12:09 mycroft Exp $	*/
 
 /*
@@ -42,8 +42,7 @@
 #include <sys/param.h>
 
 #include "samachdep.h"
-
-#include <hp300/dev/hilreg.h>
+#include "hilreg.h"
 #include <hp300/hp300/clockreg.h>
 
 static int month_days[12] = {
@@ -53,7 +52,7 @@ static int month_days[12] = {
 u_char bbc_registers[13];
 void read_bbc();
 u_char read_bbc_reg();
-struct hil_dev *bbcaddr = BBCADDR;
+struct hil_dev *bbcaddr = (struct hil_dev *)BBCADDR;
 
 u_long
 getsecs()

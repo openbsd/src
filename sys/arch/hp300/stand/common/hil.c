@@ -1,4 +1,4 @@
-/*	$OpenBSD: hil.c,v 1.2 2003/06/02 23:27:46 millert Exp $	*/
+/*	$OpenBSD: hil.c,v 1.3 2005/01/19 17:09:30 miod Exp $	*/
 /*	$NetBSD: hil.c,v 1.2 1997/04/14 19:00:10 thorpej Exp $	*/
 
 /*
@@ -49,10 +49,9 @@
 #include <sys/param.h>
 #include <sys/device.h>			/* XXX */
 
-#include <hp300/dev/hilreg.h>
-#include <hp300/dev/kbdmap.h>
-#include <hp300/dev/itevar.h>
-
+#include "hilreg.h"
+#include "kbdmap.h"
+#include "itevar.h"
 #include "samachdep.h"
 #include "kbdvar.h"
 
