@@ -1,4 +1,4 @@
-/*	$NetBSD: sw-kbdmap.c,v 1.1 1996/01/28 20:19:51 chopps Exp $	*/
+/*	$NetBSD: sw-kbdmap.c,v 1.2 1996/05/05 22:25:00 veego Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -29,7 +29,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#include <amiga/dev/kbdmap.h>
+#include "../../dev/kbdmap.h"
 
 /* define a default keymap. This can be changed by keyboard ioctl's 
    (later at least..) */
@@ -48,8 +48,7 @@
 #define C KBD_MODE_CAPS
 #define K KBD_MODE_KPAD
 
-struct kbdmap kbdmap;
-struct kbdmap ascii_kbdmap = {
+struct kbdmap kbdmap = {
 	/* normal map */
 	{
 	   0, '`',	/* 0x00 */
@@ -507,5 +506,8 @@ unsigned char acctable[KBD_NUM_ACC][64] = {
 	"`äbcdëfghïjklmnöpqrstüvwxyz{|}~\177"},	/* KBD_ACC_DIER */
 };
 
-	
 
+main()
+{
+  write (1, &kbdmap, sizeof (kbdmap));
+}
