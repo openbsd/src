@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.21 1996/08/29 12:58:30 deraadt Exp $	*/
+/*	$OpenBSD: com.c,v 1.22 1996/10/16 12:31:58 deraadt Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*-
@@ -225,16 +225,15 @@ com_pcmcia_mod(pc_link, self, pc_cf, cf)
     struct pcmcia_conf *pc_cf; 
     struct cfdata *cf;
 {               
-    int err; 
-    struct pcmciadevs *dev = pc_link->device;
-    struct ed_softc *sc = (void *)self; 
-    if (!(err = PCMCIA_BUS_CONFIG(pc_link->adapter, pc_link, self,
-				  pc_cf, cf))) {
-        pc_cf->memwin = 0;
-	if (pc_cf->cfgtype == 0) 
-	    pc_cf->cfgtype = CFGENTRYID; /* determine from ioaddr */
-    }
-    return err;
+	int err; 
+
+	if (!(err = PCMCIA_BUS_CONFIG(pc_link->adapter, pc_link, self,
+	    pc_cf, cf))) {
+		pc_cf->memwin = 0;
+		if (pc_cf->cfgtype == 0) 
+		pc_cf->cfgtype = CFGENTRYID; /* determine from ioaddr */
+	}
+	return err;
 }
 
 int com_pcmcia_isa_attach __P((struct device *, void *, void *,
@@ -242,27 +241,27 @@ int com_pcmcia_isa_attach __P((struct device *, void *, void *,
 int com_pcmcia_remove __P((struct pcmcia_link *, struct device *));
 
 static struct pcmcia_com {
-    struct pcmcia_device pcd;
+	struct pcmcia_device pcd;
 } pcmcia_com =  {
-    {"PCMCIA Modem card", com_pcmcia_mod, com_pcmcia_isa_attach,
-     NULL, com_pcmcia_remove}
+	{"PCMCIA Modem card", com_pcmcia_mod, com_pcmcia_isa_attach,
+	 NULL, com_pcmcia_remove}
 };          
 
 
 struct pcmciadevs pcmcia_com_devs[] = {
-  { "com", 0,
-  NULL, "*MODEM*", NULL, NULL,
-  NULL, (void *)&pcmcia_com 
-  },
-  { "com", 0,
-  NULL, NULL, "*MODEM*", NULL,
-  NULL, (void *)&pcmcia_com 
-  },
-  { "com", 0,
-  NULL, NULL, NULL, "*MODEM*",
-  NULL, (void *)&pcmcia_com 
-  },
-  {NULL}
+	{ "com", 0,
+	NULL, "*MODEM*", NULL, NULL,
+	NULL, (void *)&pcmcia_com 
+	},
+	{ "com", 0,
+	NULL, NULL, "*MODEM*", NULL,
+	NULL, (void *)&pcmcia_com 
+	},
+	{ "com", 0,
+	NULL, NULL, NULL, "*MODEM*",
+	NULL, (void *)&pcmcia_com 
+	},
+	{NULL}
 };
 #define ncom_pcmcia_devs sizeof(pcmcia_com_devs)/sizeof(pcmcia_com_devs[0])
 
@@ -272,7 +271,7 @@ com_pcmcia_match(parent, match, aux)
 	void *match, *aux;
 {
 	return pcmcia_slave_match(parent, match, aux, pcmcia_com_devs,
-				  ncom_pcmcia_devs);
+	    ncom_pcmcia_devs);
 }
 
 int
@@ -284,9 +283,9 @@ com_pcmcia_isa_attach(parent, match, aux, pc_link)
 {
 	struct isa_attach_args *ia = aux;
 	struct com_softc *sc = match;
-
 	int rval;
-	if (rval = comprobe(parent, sc->sc_dev.dv_cfdata, ia)) {
+
+	if ((rval = comprobe(parent, sc->sc_dev.dv_cfdata, ia))) {
 		if (ISSET(pc_link->flags, PCMCIA_REATTACH)) {
 #ifdef COM_DEBUG
 			printf("comreattach, hwflags=%x\n", sc->sc_hwflags);
