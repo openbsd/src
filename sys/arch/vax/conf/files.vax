@@ -331,7 +331,7 @@ file	arch/vax/uba/uba_dma.c		uba
 # builtin NCR53C95 SCSI Controller on VAXstation 4000 VLC/60/9x
 device asc: scsi, ncr53c9x
 attach asc at vsbus with asc_vsbus
-file   arch/vax/vsa/asc_vsbus.c        asc needs-flag
+file	arch/vax/vsa/asc_vsbus.c	asc needs-flag
 
 include "compat/ultrix/files.ultrix"
 #include "compat/vax1k/files.vax1k"
