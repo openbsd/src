@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ypserv.8,v 1.8 1997/04/12 00:14:28 deraadt Exp $
+.\"	$OpenBSD: ypserv.8,v 1.9 1997/09/04 00:43:19 deraadt Exp $
 .\" Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
 .\"
@@ -80,9 +80,17 @@ can be found in the file
 If a host isn't secure all queries to the server will result in a YP_NODOM
 result.
 .Pp
-IF the file
+If the file
 .Nm /var/yp/ypserv.log
 exists then messages will be written to the file.
+.Pp
+If a directory named the same as the system domainname exists in
+.Nm /var/yp/
+(ie. the domainname is
+.Nm foo
+and directory
+.Nm /var/yp/foo
+exists), then ypserv will be automatically started at boot time.
 .Pp
 The options are as follows:
 .Bl -tag -width indent
