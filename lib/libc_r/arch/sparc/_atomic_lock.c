@@ -1,4 +1,4 @@
-/*	$OpenBSD: _atomic_lock.c,v 1.2 1998/12/18 05:59:18 d Exp $	*/
+/*	$OpenBSD: _atomic_lock.c,v 1.3 1998/12/21 07:37:01 d Exp $	*/
 /*
  * Atomic lock for sparc
  */
@@ -15,5 +15,5 @@ int
 _atomic_is_locked(volatile register_t * lock)
 {
 	
-	return *lock;
+	return _thread_slow_atomic_is_locked(lock);
 }

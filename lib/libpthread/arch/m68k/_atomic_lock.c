@@ -1,14 +1,14 @@
-/*	$OpenBSD: _atomic_lock.c,v 1.2 1998/12/18 05:59:17 d Exp $	*/
+/*	$OpenBSD: _atomic_lock.c,v 1.3 1998/12/21 07:36:59 d Exp $	*/
 /*
  * Atomic lock for m68k
  */
 
 #include "spinlock.h"
 
-register_t
-_atomic_lock(volatile register_t *lock)
+int
+_atomic_lock(volatile _spinlock_lock_t *lock)
 {
-	register_t old;
+	_spinlock_lock_t old;
 
 	/*
 	 * The Compare And Swap instruction (mc68020 and above)
@@ -19,17 +19,17 @@ _atomic_lock(volatile register_t *lock)
 	 *
 	 *      old = 0;
 	 *	CAS(old, 1, *lock);
-	 *	return old;
+	 *	if (old == 1) { lock was acquired }
 	 */
-	old = 0;
+	old = _SPINLOCK_UNLOCKED;
 	__asm__("casl %0, %2, %1" : "=d"(old), "=m"(*lock)
-				  : "d"(1), "0"(old));
-	return old;
+				  : "d"(_SPINLOCK_LOCKED), "0"(old));
+	return (old != _SPINLOCK_UNLOCKED);
 }
 
 int
-_atomic_lock(volatile register_t *lock)
+_atomic_lock(volatile _spinlock_lock_t *lock)
 {
 
-	return *lock;
+	return (*lock != _SPINLOCK_UNLOCKED);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: _atomic_lock.c,v 1.2 1998/12/18 05:59:18 d Exp $	*/
+/*	$OpenBSD: _atomic_lock.c,v 1.3 1998/12/21 07:37:00 d Exp $	*/
 /*
  * Atomic lock for mips
  */
@@ -12,12 +12,12 @@
  * 	attempt to acquire a lock (by giving it a non-zero value).
  *	Return zero on success, or the lock's value on failure
  */
-register_t
-_atomic_lock(volatile register_t *lock)
+int
+_atomic_lock(volatile _spinlock_lock_t *lock)
 {
-	register_t old;
 #if __mips >= 2
-	register_t temp;
+	_spinlock_lock_t old;
+	_spinlock_lock_t temp;
 
 	do {
 		/*
@@ -27,7 +27,7 @@ _atomic_lock(volatile register_t *lock)
 		 * physical address of lock for diagnostic purposes);
 		 */
 		__asm__("ll %0, %1" : "=r"(old) : "m"(*lock));
-		if (old) 
+		if (old != _SPINLOCK_UNLOCKED) 
 			break; /* already locked */
 		/*
 		 * Try and store a 1 at the tagged lock address.  If
@@ -35,25 +35,29 @@ _atomic_lock(volatile register_t *lock)
 		 * line will have been wiped, and temp will be set to zero
 		 * by the 'store conditional' instruction.
 		 */
-		temp = 1;
+		temp = _SPINLOCK_LOCKED;
 		__asm__("sc  %0, %1" : "=r"(temp), "=m"(*lock)
 				     : "0"(temp));
 	} while (temp == 0);
+
+	return (old != _SPINLOCK_UNLOCKED);
 #else
 	/*
 	 * Older MIPS cpus have no way of doing an atomic lock
 	 * without some kind of shift to supervisor mode.
 	 */
 
-	old = _thread_slow_atomic_lock(lock);
-
+	return (_thread_slow_atomic_lock(lock));
 #endif
-	return old;
 }
 
 int
-_atomic_is_locked(volatile register_t * lock)
+_atomic_is_locked(volatile register_t *lock)
 {
 	
-	return *lock;
+#if __mips >= 2
+	return (*lock != _SPINLOCK_UNLOCKED);
+#else
+	return (_thread_slow_atomic_is_locked(lock));
+#endif
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: slow_atomic_lock.c,v 1.2 1998/11/21 14:02:10 d Exp $	*/
+/*	$OpenBSD: slow_atomic_lock.c,v 1.3 1998/12/21 07:38:43 d Exp $	*/
 
 #include <pthread.h>
 #include "pthread_private.h"
@@ -12,10 +12,10 @@
  *	This uses signal masking to make sure that no other thread
  *	can modify the lock while processing, hence it is very slow.
  */
-register_t
-_thread_slow_atomic_lock(volatile register_t *lock)
+int
+_thread_slow_atomic_lock(volatile _spinlock_lock_t *lock)
 {
-	register_t old;
+	_spinlock_lock_t old;
 	sigset_t oldset, newset = (sigset_t)~0;
 
 	/* block signals - incurs a context switch */
@@ -23,12 +23,19 @@ _thread_slow_atomic_lock(volatile register_t *lock)
 		PANIC("_atomic_lock block");
 
 	old = *lock;
-	if (old == 0)
-		*lock = 1;
+	if (old == _SPINLOCK_UNLOCKED)
+		*lock = _SPINLOCK_LOCKED;
 
 	/* restore signal mask to what it was */
 	if (_thread_sys_sigprocmask(SIG_SETMASK, &oldset, NULL) < 0)
 		PANIC("_atomic_lock restore");
 
-	return old;
+	return (old != _SPINLOCK_UNLOCKED);
+}
+
+int
+_thread_slow_atomic_is_locked(volatile _spinlock_lock_t *lock)
+{
+
+	return (*lock != _SPINLOCK_UNLOCKED);
 }
