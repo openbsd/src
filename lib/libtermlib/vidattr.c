@@ -1,4 +1,4 @@
-/*	$OpenBSD: vidattr.c,v 1.3 1996/09/21 21:47:50 tholo Exp $	*/
+/*	$OpenBSD: vidattr.c,v 1.4 1996/09/21 22:06:55 tholo Exp $	*/
 
 /*
  * Copyright (c) 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: vidattr.c,v 1.3 1996/09/21 21:47:50 tholo Exp $";
+static char rcsid[] = "$OpenBSD: vidattr.c,v 1.4 1996/09/21 22:06:55 tholo Exp $";
 #endif
 
 #include <sys/cdefs.h>
@@ -39,6 +39,9 @@ static char rcsid[] = "$OpenBSD: vidattr.c,v 1.3 1996/09/21 21:47:50 tholo Exp $
 #ifdef __indr_reference
 __indr_reference(_vidattr, vidattr);
 #else
+
+#include <stdlib.h>
+#include "term.h"
 
 #undef vidattr
 
