@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_svcout.c,v 1.6 2001/11/07 18:44:28 deraadt Exp $	*/
+/*	$OpenBSD: rpc_svcout.c,v 1.7 2001/11/24 17:59:22 miod Exp $	*/
 /*	$NetBSD: rpc_svcout.c,v 1.7 1995/06/24 14:59:59 pk Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -168,7 +168,7 @@ write_netid_register(transp)
 	f_print(fout, "%s\t\texit(1);\n", sp);
 	f_print(fout, "%s\t}\n", sp);
 	f_print(fout, "%s\t%s = svc_tli_create(RPC_ANYFD, nconf, 0, 0, 0);\n",
-			sp, TRANSP, transp);
+			sp, TRANSP);
 	f_print(fout, "%s\tif (%s == NULL) {\n", sp, TRANSP);
 	(void) sprintf(_errbuf, "cannot create %s service.", transp);
 	print_err_message(tmpbuf);
