@@ -35,7 +35,7 @@
 
 #include "includes.h"
 #include <sys/queue.h>
-RCSID("$OpenBSD: ssh-agent.c,v 1.105 2002/10/01 20:34:12 markus Exp $");
+RCSID("$OpenBSD: ssh-agent.c,v 1.106 2003/01/21 18:14:36 marc Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/md5.h>
@@ -101,6 +101,9 @@ int locked = 0;
 char *lock_passwd = NULL;
 
 extern char *__progname;
+
+/* Default lifetime (0 == forever) */
+static int lifetime = 0;
 
 static void
 close_socket(SocketEntry *e)
@@ -464,6 +467,8 @@ process_add_identity(SocketEntry *e, int version)
 			break;
 		}
 	}
+	if (lifetime && !death)
+		death = time(NULL) + lifetime;
 	if (lookup_identity(k, version) == NULL) {
 		Identity *id = xmalloc(sizeof(Identity));
 		id->key = k;
@@ -926,6 +931,7 @@ usage(void)
 	fprintf(stderr, "  -k          Kill the current agent.\n");
 	fprintf(stderr, "  -d          Debug mode.\n");
 	fprintf(stderr, "  -a socket   Bind agent socket to given name.\n");
+	fprintf(stderr, "  -t life     Default identity lifetime (seconds).\n");
 	exit(1);
 }
 
@@ -948,7 +954,7 @@ main(int ac, char **av)
 
 	SSLeay_add_all_algorithms();
 
-	while ((ch = getopt(ac, av, "cdksa:")) != -1) {
+	while ((ch = getopt(ac, av, "cdksa:t:")) != -1) {
 		switch (ch) {
 		case 'c':
 			if (s_flag)
@@ -970,6 +976,12 @@ main(int ac, char **av)
 			break;
 		case 'a':
 			agentsocket = optarg;
+			break;
+		case 't':
+			if ((lifetime = convtime(optarg)) == -1) {
+				fprintf(stderr, "Invalid lifetime\n");
+				usage();
+			}
 			break;
 		default:
 			usage();
