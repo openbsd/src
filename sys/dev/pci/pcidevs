@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.513 2002/05/29 05:34:40 mickey Exp $
+	$OpenBSD: pcidevs,v 1.514 2002/06/02 10:07:54 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -540,7 +540,6 @@ vendor TAMARACK		0x143d	Tamarack Microelectronics
 vendor OXFORD		0x14d2	Oxford
 vendor AIRONET		0x14b9	Aironet
 vendor COMPAL		0x14c0	COMPAL
-vendor TITAN		0x14d2	Titan
 vendor INVERTEX		0x14e1	Invertex
 vendor BROADCOM		0x14e4	Broadcom
 vendor CONEXANT		0x14f1	Conexant
