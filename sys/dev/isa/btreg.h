@@ -139,7 +139,6 @@ struct bt_ccb {
 	/*------------------------------------longword boundary */
 	struct bt_scat_gath scat_gath[BT_NSEG];
 	/*------------------------------------longword boundary */
-#define CCB_PHYS_SIZE ((int)&((struct bt_ccb *)0)->chain)
 	TAILQ_ENTRY(bt_ccb) chain;
 	struct bt_ccb *nexthash;
 	long hashkey;
@@ -151,9 +150,6 @@ struct bt_ccb {
 #define	CCB_SENDING	0x04
 #endif
 	int timeout;
-	struct isadma_seg ccb_phys[1];	/* phys segment of this ccb */
-	struct isadma_seg data_phys[BT_NSEG];	/* phys segments of data */
-	int data_nseg;			/* number of phys segments of data */
 };
 
 /*
