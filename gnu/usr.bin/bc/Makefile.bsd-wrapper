@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.12 2002/12/10 01:49:10 miod Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.13 2002/12/11 18:16:43 millert Exp $
 
 SUBDIR=bcwrap
 
@@ -6,7 +6,7 @@ MAN=	doc/bc.1 doc/dc.1
 MLINKS=	bc.1 gnubc.1
 LDFLAGS+=	-s ${LDSTATIC}
 GNUCFLAGS=	CC="${CC}" CFLAGS="${CFLAGS} ${COPTS}" LDFLAGS="${LDFLAGS}"
-CLEANFILES+=	bc/libmath.h doc/dc.info
+CLEANFILES+=	doc/dc.info
 
 all:	config.status
 	${MAKE} ${GNUCFLAGS}
