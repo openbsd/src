@@ -1,4 +1,5 @@
-/*	$NetBSD: fpu_fmovecr.c,v 1.2 1995/11/05 00:35:23 briggs Exp $	*/
+/*	$OpenBSD: fpu_fmovecr.c,v 1.2 1996/02/27 11:03:20 niklas Exp $	*/
+/*	$NetBSD: fpu_fmovecr.c,v 1.3 1996/02/04 02:17:42 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata
@@ -31,10 +32,8 @@
  *	@(#)fpu_fmovecr.c	10/8/95
  */
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include <machine/frame.h>
-
-#include <stddef.h>
 
 #include "fpu_emulate.h"
 

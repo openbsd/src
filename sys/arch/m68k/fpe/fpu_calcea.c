@@ -1,4 +1,5 @@
-/*	$NetBSD: fpu_calcea.c,v 1.2 1995/11/05 00:35:15 briggs Exp $	*/
+/*	$OpenBSD: fpu_calcea.c,v 1.2 1996/02/27 11:03:17 niklas Exp $	*/
+/*	$NetBSD: fpu_calcea.c,v 1.3 1996/02/04 02:17:38 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -31,8 +32,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stddef.h>
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/signal.h>
 #include <machine/frame.h>
 
