@@ -1,5 +1,5 @@
 #  $NetBSD: Makefile,v 1.28 1995/11/20 22:06:19 jtc Exp $
-#  $OpenBSD: Makefile,v 1.12 1998/03/02 23:34:43 millert Exp $
+#  $OpenBSD: Makefile,v 1.13 1998/11/16 06:04:53 deraadt Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
 # 
@@ -43,7 +43,7 @@
 #					    default standard
 # 
 
-CFLAGS+= -D__LIBM_PRIVATE
+CFLAGS+= -D__LIBM_PRIVATE -D_USE_WRITE
 
 .if (${MACHINE_ARCH} == "i386")
 .PATH:	${.CURDIR}/arch/i387
