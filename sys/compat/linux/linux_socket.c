@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_socket.c,v 1.11 1998/02/10 04:32:41 deraadt Exp $	*/
+/*	$OpenBSD: linux_socket.c,v 1.12 1998/04/25 00:12:45 millert Exp $	*/
 /*	$NetBSD: linux_socket.c,v 1.14 1996/04/05 00:01:50 christos Exp $	*/
 
 /*
@@ -488,6 +488,14 @@ linux_shutdown(p, uap, retval)
 
 	if ((error = copyin((caddr_t) uap, (caddr_t) &lsa, sizeof lsa)))
 		return error;
+	/*
+	 * XXX - Linux gets the ``how'' argument wrong.  It is reversed!
+	 *       Hopefully they will fix this someday.
+	 */
+	if (lsa.how == SHUT_RD)
+		lsa.how = SHUT_WR;
+	else if (lsa.how == SHUT_WR)
+		lsa.how = SHUT_RD;
 
 	SCARG(&bsa, s) = lsa.s;
 	SCARG(&bsa, how) = lsa.how;
