@@ -1441,6 +1441,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/wscons/wsemul_vt100var.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/wscons/wsemulvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/wscons/wseventvar.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/wscons/wskbdraw.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/wscons/wskbdvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/wscons/wsksymdef.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/wscons/wsksymvar.ph

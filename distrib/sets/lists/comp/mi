@@ -760,6 +760,7 @@
 ./usr/include/dev/wscons/wsemul_vt100var.h
 ./usr/include/dev/wscons/wsemulvar.h
 ./usr/include/dev/wscons/wseventvar.h
+./usr/include/dev/wscons/wskbdraw.h
 ./usr/include/dev/wscons/wskbdvar.h
 ./usr/include/dev/wscons/wsksymdef.h
 ./usr/include/dev/wscons/wsksymvar.h
