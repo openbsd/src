@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.108 2002/07/08 19:41:29 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.109 2002/09/03 20:10:00 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -144,7 +144,9 @@ ubsec_probe(parent, match, aux)
 	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BLUESTEEL_5601))
 		return (1);
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_BROADCOM &&
-	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5805 ||
+	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5801 ||
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5802 ||
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5805 ||
 	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5820 ||
 	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5821))
 		return (1);
@@ -178,7 +180,9 @@ ubsec_attach(parent, self, aux)
 		sc->sc_flags |= UBS_FLAGS_KEY | UBS_FLAGS_RNG;
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_BROADCOM &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5805)
+	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5801 ||
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5802 ||
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5805))
 		sc->sc_flags |= UBS_FLAGS_KEY | UBS_FLAGS_RNG;
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_BROADCOM &&
