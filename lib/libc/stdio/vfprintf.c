@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: vfprintf.c,v 1.20 2003/06/02 20:18:37 millert Exp $";
+static char *rcsid = "$OpenBSD: vfprintf.c,v 1.21 2004/09/14 22:20:21 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -1080,7 +1080,7 @@ __grow_type_table(typetable, tablesize)
 		/* XXX unchecked */
 		bcopy(oldtable, *typetable, *tablesize);
 	} else {
-		char *new = (unsigned char *)mmap(NULL,
+		unsigned char *new = (unsigned char *)mmap(NULL,
 		    sizeof (unsigned char) * newsize, PROT_WRITE|PROT_READ,
 		    MAP_ANON|MAP_PRIVATE, -1, 0);
 		memmove(new, *typetable, *tablesize);
