@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.11 1997/07/25 21:56:23 millert Exp $	*/
+/*	$OpenBSD: util.c,v 1.12 1997/08/25 21:41:55 jkatz Exp $	*/
 /*	$NetBSD: util.c,v 1.11 1997/07/21 14:03:49 lukem Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: util.c,v 1.11 1997/07/25 21:56:23 millert Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.12 1997/08/25 21:41:55 jkatz Exp $";
 #endif /* not lint */
 
 /*
@@ -437,6 +437,15 @@ confirm(cmd, file)
 		case 'a':
 			confirmrest = 1;
 			fprintf(ttyout, "Prompting off for duration of %s.\n", cmd);
+			break;
+		case 'y':
+			return(1);
+			break;
+		default:
+			fprintf(ttyout, "n, y, p, a, are the only acceptable commands!\n");
+			fprintf(ttyout, "%s %s? ", cmd, file);
+			fgets(line, sizeof(line), stdin);
+			confirm(cmd, file);
 			break;
 	}
 	return (1);
