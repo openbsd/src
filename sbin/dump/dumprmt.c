@@ -1,4 +1,4 @@
-/*	$OpenBSD: dumprmt.c,v 1.3 1996/08/06 17:02:06 deraadt Exp $	*/
+/*	$OpenBSD: dumprmt.c,v 1.4 1996/09/01 15:31:02 deraadt Exp $	*/
 /*	$NetBSD: dumprmt.c,v 1.10 1996/03/15 22:39:26 scottr Exp $	*/
 
 /*-
@@ -91,8 +91,6 @@ static	void rmtgets __P((char *, int));
 static	int rmtreply __P((char *));
 
 extern	int ntrec;		/* blocking factor on tape */
-extern	uid_t uid;		/* real uid */
-extern	uid_t euid;		/* effective uid */
 
 int
 rmthost(host)
@@ -148,10 +146,8 @@ rmtgetconn()
 	} else
 		tuser = pwd->pw_name;
 
-	(void) seteuid(euid);
 	rmtape = rcmd(&rmtpeer, (u_short)sp->s_port, pwd->pw_name, tuser,
 	    _PATH_RMT, (int *)0);
-	(void) setuid(uid);	/* Just to be Really Really safe */
 
 	size = ntrec * TP_BSIZE;
 	if (size > 60 * 1024)		/* XXX */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: optr.c,v 1.8 1996/09/01 15:30:18 deraadt Exp $	*/
+/*	$OpenBSD: optr.c,v 1.9 1996/09/01 15:31:03 deraadt Exp $	*/
 /*	$NetBSD: optr.c,v 1.4 1996/05/18 16:16:17 jtk Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)optr.c	8.2 (Berkeley) 1/6/94";
 #else
-static char rcsid[] = "$OpenBSD: optr.c,v 1.8 1996/09/01 15:30:18 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: optr.c,v 1.9 1996/09/01 15:31:03 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -71,6 +71,8 @@ static char rcsid[] = "$OpenBSD: optr.c,v 1.8 1996/09/01 15:30:18 deraadt Exp $"
 void	alarmcatch __P((/* int, int */));
 int	datesort __P((const void *, const void *));
 static	void sendmes __P((char *, char *));
+
+extern gid_t gid, egid;
 
 /*
  *	Query the operator; This previously-fascist piece of code
@@ -272,6 +274,7 @@ sendmes(tty, message)
 	(void) strcpy(t, _PATH_DEV);
 	(void) strncat(t, tty, sizeof t - strlen(_PATH_DEV));
 
+	setegid(egid);
 	if ((f_tty = fopen(t, "w")) != NULL) {
 		setbuf(f_tty, buf);
 		(void) fprintf(f_tty,
@@ -295,6 +298,7 @@ DUMP: NEEDS ATTENTION: ",
 		}
 		(void) fclose(f_tty);
 	}
+	setegid(gid);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.7 1996/08/10 22:26:47 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.8 1996/09/01 15:31:02 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.8 1996/03/15 22:39:32 scottr Exp $	*/
 
 /*-
@@ -89,8 +89,7 @@ int	cartridge = 0;	/* Assume non-cartridge tape */
 long	dev_bsize = 1;	/* recalculated below */
 long	blocksperfile;	/* output blocks per file */
 char	*host = NULL;	/* remote host (if any) */
-uid_t	uid;		/* real uid */
-uid_t	euid;		/* effective uid */
+gid_t	gid, egid;	/* real, effective gid */
 
 static long numarg __P((char *, long, long));
 static void obsolete __P((int *, char **[]));
@@ -110,9 +109,9 @@ main(argc, argv)
 	int i, anydirskipped, bflag = 0, Tflag = 0, honorlevel = 1;
 	ino_t maxino;
 
-	uid = getuid();
-	euid = geteuid();
-	(void) seteuid(uid);
+	gid = getgid();
+	egid = getegid();
+	setegid(gid);
 
 	spcl.c_date = 0;
 	(void)time((time_t *)&spcl.c_date);
@@ -251,7 +250,6 @@ main(argc, argv)
 		exit(X_ABORT);
 #endif
 	}
-	(void) setuid(uid); /* rmthost() is the only reason to be setuid */
 
 	if (signal(SIGHUP, SIG_IGN) != SIG_IGN)
 		signal(SIGHUP, sig);
