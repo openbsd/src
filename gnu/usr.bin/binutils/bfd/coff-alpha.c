@@ -424,6 +424,23 @@ static reloc_howto_type alpha_howto_table[] =
 	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0,			/* dst_mask */
+	 false),			/* pcrel_offset */
+
+  /* Used for an instruction that refers to memory off the GP
+     register.  The offset is 16 bits of the 32 bit instruction.  This
+     reloc always seems to be against the .lita section.  */
+  HOWTO (ALPHA_R_LITERALSLEAZY,	/* type */
+	 2,			/* rightshift */
+	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 16,			/* bitsize */
+	 false,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_signed, /* complain_on_overflow */
+	 0,			/* special_function */
+	 "LITERALSLEAZY",	/* name */
+	 true,			/* partial_inplace */
+	 0xffff,		/* src_mask */
+	 0xffff,		/* dst_mask */
 	 false)			/* pcrel_offset */
 };
 
@@ -645,6 +662,7 @@ alpha_adjust_reloc_in (abfd, intern, rptr)
 
     case ALPHA_R_GPREL32:
     case ALPHA_R_LITERAL:
+    case ALPHA_R_LITERALSLEAZY:
       /* Copy the gp value for this object file into the addend, to
 	 ensure that we are not confused by the linker.  */
       if (! intern->r_extern)
@@ -880,6 +898,7 @@ alpha_ecoff_get_relocated_section_contents (abfd, link_info, link_order,
 	  break;
 
 	case ALPHA_R_LITERAL:
+	case ALPHA_R_LITERALSLEAZY:
 	  /* This is a reference to a literal value, generally
 	     (always?) in the .lita section.  This is a 16 bit GP
 	     relative relocation.  Sometimes the subsequent reloc is a
@@ -1192,6 +1211,9 @@ alpha_bfd_reloc_type_lookup (abfd, code)
       break;
     case BFD_RELOC_ALPHA_LITERAL:
       alpha_type = ALPHA_R_LITERAL;
+      break;
+    case BFD_RELOC_ALPHA_LITERALSLEAZY:
+      alpha_type = ALPHA_R_LITERALSLEAZY;
       break;
     case BFD_RELOC_ALPHA_LITUSE:
       alpha_type = ALPHA_R_LITUSE;
@@ -1581,6 +1603,7 @@ alpha_relocate_section (output_bfd, info, input_bfd, input_section,
 	  break;
 
 	case ALPHA_R_LITERAL:
+	case ALPHA_R_LITERALSLEAZY:
 	  /* This is a reference to a literal value, generally
 	     (always?) in the .lita section.  This is a 16 bit GP
 	     relative relocation.  Sometimes the subsequent reloc is a
@@ -1597,6 +1620,10 @@ alpha_relocate_section (output_bfd, info, input_bfd, input_section,
 	     use.  This would not be particularly difficult, but it is
 	     not currently implemented.  */
 
+#if 0
+	  /* Apparently the belief mentioned just below is in error on
+	     BSD systems.  */
+
 	  /* I believe that the LITERAL reloc will only apply to a ldq
 	     or ldl instruction, so check my assumption.  */
 	  {
@@ -1607,6 +1634,7 @@ alpha_relocate_section (output_bfd, info, input_bfd, input_section,
 	    BFD_ASSERT (((insn >> 26) & 0x3f) == 0x29
 			|| ((insn >> 26) & 0x3f) == 0x28);
 	  }
+#endif
 
 	  relocatep = true;
 	  addend = ecoff_data (input_bfd)->gp - gp;

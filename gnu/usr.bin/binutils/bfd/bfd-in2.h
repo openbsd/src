@@ -1628,6 +1628,7 @@ of instruction using the register:
 
 The GNU linker currently doesn't do any of this optimizing. */
   BFD_RELOC_ALPHA_LITERAL,
+  BFD_RELOC_ALPHA_LITERALSLEAZY,
   BFD_RELOC_ALPHA_LITUSE,
 
 /* The HINT relocation indicates a value that should be filled into the

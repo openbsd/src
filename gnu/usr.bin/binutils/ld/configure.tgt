@@ -142,7 +142,8 @@ alpha-*-linuxecoff*)	targ_emul=alpha targ_extra_emuls=elf64alpha
 alpha-*-linux*)		targ_emul=elf64alpha targ_extra_emuls=alpha
 			tdir_alpha=`echo ${targ_alias} | sed -e 's/linux/linuxecoff/'`
 			;;
-alpha-*-openbsd*)	targ_emul=alpha ;;
+alpha-*-netbsd*)	targ_emul=alphabsd targ_extra_emuls="alpha elf64alpha";;
+alpha-*-openbsd*)	targ_emul=alphabsd targ_extra_emuls="alpha elf64alpha";;
 alpha-*-osf*)		targ_emul=alpha ;;
 alpha-*-netware*)	targ_emul=alpha ;;
 z8k-*-coff) 		targ_emul=z8002; targ_extra_emuls=z8001 ;;

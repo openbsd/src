@@ -230,6 +230,7 @@ static int
 ecoff_get_magic (abfd)
      bfd *abfd;
 {
+  extern const bfd_target bsd_ecoffalpha_little_vec;
   int big, little;
 
   switch (bfd_get_arch (abfd))

@@ -122,6 +122,7 @@ struct external_reloc {
 #define ALPHA_R_OP_PRSHIFT     15
 #define ALPHA_R_GPVALUE	       16
 #define ALPHA_R_GPRELHIGH      17
+#define ALPHA_R_LITERALSLEAZY  17 /* The *BSD ELF uses this */
 #define ALPHA_R_GPRELLOW       18
 #define ALPHA_R_IMMED          19
 
