@@ -1,4 +1,4 @@
-.\"	$OpenBSD: setuid.2,v 1.10 2000/10/18 05:12:11 aaron Exp $
+.\"	$OpenBSD: setuid.2,v 1.11 2002/01/24 21:18:36 mickey Exp $
 .\"	$NetBSD: setuid.2,v 1.3 1995/02/27 12:37:06 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -105,6 +105,10 @@ these functions return \-1.
 .Xr getgid 2 ,
 .Xr getuid 2 ,
 .Xr issetugid 2
+A
+.Fn setuid
+function appeared in
+.At v2 .
 .Sh STANDARDS
 The
 .Fn setuid
