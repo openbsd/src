@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.9 2000/06/13 05:15:19 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.10 2000/06/13 06:11:13 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -318,7 +318,7 @@ int
 ubsec_process(crp)
 	struct cryptop *crp;
 {
-	struct ubsec_q *q;
+	struct ubsec_q *q = NULL;
 	int card, err, i, j, s;
 	struct ubsec_softc *sc;
 	struct cryptodesc *crd1, *crd2, *maccrd, *enccrd;
