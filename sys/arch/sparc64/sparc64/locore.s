@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.17 2002/06/09 05:55:24 art Exp $	*/
+/*	$OpenBSD: locore.s,v 1.18 2002/06/15 00:38:37 art Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -424,48 +424,9 @@ _C_LABEL(cpcb):	POINTER	_C_LABEL(u0)
 	.globl	romp
 romp:	POINTER	0
 
-
-/* NB:	 Do we really need the following around? */
-/*
- * _cputyp is the current cpu type, used to distinguish between
- * the many variations of different sun4* machines. It contains
- * the value CPU_SUN4, CPU_SUN4C, or CPU_SUN4M.
- */
-	.globl	_C_LABEL(cputyp)
-_C_LABEL(cputyp):
-	.word	1
-/*
- * _cpumod is the current cpu model, used to distinguish between variants
- * in the Sun4 and Sun4M families. See /sys/arch/sparc64/include/param.h
- * for possible values.
- */
-	.globl	_C_LABEL(cpumod)
-_C_LABEL(cpumod):
-	.word	1
-/*
- * _mmumod is the current mmu model, used to distinguish between the
- * various implementations of the SRMMU in the sun4m family of machines.
- * See /sys/arch/sparc64/include/param.h for possible values.
- */
-	.globl	_C_LABEL(mmumod)
-_C_LABEL(mmumod):
-	.word	0
-
 	.globl _C_LABEL(cold)
 _C_LABEL(cold):
 	.word 1
-
-/*
- * There variables are pointed to by the cpp symbols PGSHIFT, NBPG,
- * and PGOFSET.
- */
-	.globl	_C_LABEL(pgshift), _C_LABEL(nbpg), _C_LABEL(pgofset)
-_C_LABEL(pgshift):
-	.word	0
-_C_LABEL(nbpg):
-	.word	0
-_C_LABEL(pgofset):
-	.word	0
 
 	_ALIGN
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.9 2002/06/12 01:49:43 art Exp $	*/
+/*	$OpenBSD: param.h,v 1.10 2002/06/15 00:38:37 art Exp $	*/
 /*	$NetBSD: param.h,v 1.25 2001/05/30 12:28:51 mrg Exp $ */
 
 /*
@@ -255,10 +255,6 @@ extern int nbpg, pgofset, pgshift;
 
 extern void	delay(unsigned int);
 #define	DELAY(n)	delay(n)
-
-extern int cputyp;
-extern int cpumod;
-extern int mmumod;
 
 #endif /* _LOCORE */
 #endif /* _KERNEL */
