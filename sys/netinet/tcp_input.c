@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.58 2000/04/14 04:20:57 itojun Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.59 2000/04/27 20:53:08 provos Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -894,12 +894,12 @@ findpcb:
 			 * to socket buffer.
 			 */
 			m_adj(m, iphlen + off);
-			sbappend(&so->so_rcv, m);
-			sorwakeup(so);
 			if (th->th_flags & TH_PUSH)
 				tp->t_flags |= TF_ACKNOW;
 			else
 				tp->t_flags |= TF_DELACK;
+			sbappend(&so->so_rcv, m);
+			sorwakeup(so);
 			return;
 		}
 	}
