@@ -1,4 +1,4 @@
-/*	$OpenBSD: emacs.c,v 1.10 1999/07/14 13:37:23 millert Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.11 1999/08/04 19:11:13 millert Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -272,6 +272,7 @@ static	struct x_defbindings const x_defbindings[] = {
 	{ XFUNC_transpose,		0, CTRL('T') },
 #endif
 	{ XFUNC_complete,		1, CTRL('[') },
+	{ XFUNC_complete,		0, CTRL('I') },
         { XFUNC_comp_list,		1,	'='  },
 	{ XFUNC_enumerate,		1,	'?'  },
         { XFUNC_expand,			1,	'*'  },

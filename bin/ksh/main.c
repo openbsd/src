@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.16 1999/07/15 20:39:40 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.17 1999/08/04 19:11:13 millert Exp $	*/
 
 /*
  * startup, main loop, environments and error handling
@@ -211,10 +211,14 @@ main(argc, argv)
 		Flag(FSH) = 1;
 
 	/* Set edit mode to emacs by default, may be overridden
-	 * by the environment or the user. */
+	 * by the environment or the user.  Also, we want tab completion
+	 * on in vi by default. */
 #if defined(EDIT) && defined(EMACS)
 	change_flag(FEMACS, OF_SPECIAL, 1);
 #endif /* EDIT && EMACS */
+#if defined(EDIT) && defined(VI)
+	Flag(FVITABCOMPLETE) = 1;
+#endif /* EDIT && VI */
 
 	/* import environment */
 	if (environ != NULL)
