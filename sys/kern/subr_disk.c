@@ -371,7 +371,7 @@ disk_unbusy(diskp, bcount)
 	struct timeval dv_time, diff_time;
 
 	if (diskp->dk_busy-- == 0)
-		panic("disk_unbusy: %s: dk_busy < 0", diskp->dk_name);
+		printf("disk_unbusy: %s: dk_busy < 0\n", diskp->dk_name);
 
 	s = splclock();
 	dv_time = mono_time;
