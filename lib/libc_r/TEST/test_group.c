@@ -1,4 +1,5 @@
-/*	$OpenBSD: test_group.c,v 1.2 2000/01/08 09:01:29 d Exp $	*/
+/*	$OpenBSD: test_group.c,v 1.3 2001/08/12 12:05:45 d Exp $	*/
+/* David Leonard <d@openbsd.org>, 2001. Public Domain. */
 
 /*
  * Test getgrgid_r() across multiple threads to see if the members list changes.
