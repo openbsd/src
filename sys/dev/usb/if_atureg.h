@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atureg.h,v 1.2 2004/11/09 14:42:26 dlg Exp $ */
+/*	$OpenBSD: if_atureg.h,v 1.3 2004/11/12 12:12:29 deraadt Exp $ */
 /*
  * Copyright (c) 2003
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -32,7 +32,7 @@
  *
  */
 
-/* $ATUWI: $Id: if_atureg.h,v 1.2 2004/11/09 14:42:26 dlg Exp $ */
+/* $ATUWI: $Id: if_atureg.h,v 1.3 2004/11/12 12:12:29 deraadt Exp $ */
 
 /************ 		driver options 		************/
 
@@ -236,6 +236,7 @@
 #define ATU_QUIRK_FW_DELAY	0x0002
 
 #define ATU_DEFAULT_SSID	""
+#define ATU_DEFAULT_CHANNEL	10
 
 
 
@@ -351,6 +352,7 @@ struct atu_softc {
 	u_int8_t		atu_ssid[MAX_SSID_LEN];
 	u_int8_t		atu_ssidlen;
 	u_int8_t		atu_channel;
+	u_int16_t		atu_desired_channel;
 	u_int8_t		atu_mode;
 #define NO_MODE_YET		0
 #define AD_HOC_MODE		1
@@ -668,7 +670,7 @@ struct tlv {
 
 
 
-#define NR(x)		(void *)(x)
+#define NR(x)		(void *)((long)x)
 
 /*
  * The linux driver uses seperate routines for every mib request they do

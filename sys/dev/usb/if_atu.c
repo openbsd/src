@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.12 2004/11/12 11:56:34 deraadt Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.13 2004/11/12 12:12:29 deraadt Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -52,6 +52,7 @@
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/socket.h>
+#include <sys/device.h>
 
 #include <sys/sockio.h>
 #include <sys/malloc.h>
@@ -364,7 +365,7 @@ atu_wait_completion(struct atu_softc *sc, u_int8_t cmd, u_int8_t *status)
 
 int
 atu_send_mib(struct atu_softc *sc, u_int8_t type, u_int8_t size,
-u_int8_t index, void *data)
+    u_int8_t index, void *data)
 {
 	int				err;
 	struct atu_cmd_set_mib	request;
@@ -391,11 +392,11 @@ u_int8_t index, void *data)
 	case 0:
 		break;
 	case 1:
-		request.data[0]=(u_int32_t)data & 0x000000ff;
+		request.data[0]=(long)data & 0x000000ff;
 		break;
 	case 2:
-		request.data[0]=(u_int32_t)data & 0x000000ff;
-		request.data[1]=(u_int32_t)data >> 8;
+		request.data[0]=(long)data & 0x000000ff;
+		request.data[1]=(long)data >> 8;
 		break;
 	default:
 		memcpy(request.data, data, size);
@@ -435,7 +436,10 @@ atu_start_ibss(struct atu_softc *sc)
 	memset(Request.SSID, 0x00, sizeof(Request.SSID));
 	memcpy(Request.SSID, sc->atu_ssid, sc->atu_ssidlen);
 	Request.SSIDSize = sc->atu_ssidlen;
-	Request.Channel = sc->atu_channel;
+	if (sc->atu_desired_channel != IEEE80211_CHAN_ANY)
+		Request.Channel = (u_int8_t)sc->atu_desired_channel;
+	else
+		Request.Channel = ATU_DEFAULT_CHANNEL;
 	Request.BSSType = AD_HOC_MODE;
 	memset(Request.Res, 0x00, sizeof(Request.Res));
 
@@ -489,7 +493,10 @@ atu_start_scan(struct atu_softc *sc)
 
 	/* default values for scan */
 	Scan.ScanType = ATU_SCAN_ACTIVE;
-	Scan.Channel = sc->atu_channel;
+	if (sc->atu_desired_channel != IEEE80211_CHAN_ANY)
+		Scan.Channel = (u_int8_t)sc->atu_desired_channel;
+	else
+		Scan.Channel = sc->atu_channel;
 	Scan.ProbeDelay = 3550;
 	Scan.MinChannelTime = 250;
 	Scan.MaxChannelTime = 3550;
@@ -595,7 +602,10 @@ atu_initial_config(struct atu_softc *sc)
 	cmd.Reserved = 0;
 	cmd.Size = sizeof(cmd) - 4;
 
-	cmd.Channel = sc->atu_channel;
+	if (sc->atu_desired_channel != IEEE80211_CHAN_ANY)
+		cmd.Channel = (u_int8_t)sc->atu_desired_channel;
+	else
+		cmd.Channel = sc->atu_channel;
 	cmd.AutoRateFallback = 1;
 	memcpy(cmd.BasicRateSet, rates, 4);
 
@@ -1322,9 +1332,10 @@ atu_mgmt_state_machine(struct atu_softc *sc)
 		vars->retry = 0;
 	}
 
-	DPRINTFN(5, ("%s: [state=%s, retry=%d, chan=%d enc=%d]\n",
+	DPRINTFN(5, ("%s: [state=%s, retry=%d, chan=%d d-chan=%d enc=%d]\n",
 	    USBDEVNAME(sc->atu_dev), atu_mgmt_statename[vars->state],
-	    vars->retry, sc->atu_channel, sc->atu_encrypt));
+	    vars->retry, sc->atu_channel, sc->atu_desired_channel,
+	    sc->atu_encrypt));
 
 	/* Fall back to authentication if needed */
 	/* TODO: should we only allow this when in infra-mode? */
@@ -1584,7 +1595,7 @@ USB_ATTACH(atu)
 	char				devinfo[1024];
 	struct ifnet			*ifp;
 	usbd_status			err;
-	usbd_device_handle	 	dev = uaa->device;
+	usbd_device_handle		dev = uaa->device;
 	usb_interface_descriptor_t	*id;
 	usb_endpoint_descriptor_t	*ed;
 	int				i, s;
@@ -1735,7 +1746,8 @@ USB_ATTACH(atu)
 	bzero(sc->atu_bssid, ETHER_ADDR_LEN);
 	sc->atu_ssidlen = strlen(ATU_DEFAULT_SSID);
 	memcpy(sc->atu_ssid, ATU_DEFAULT_SSID, sc->atu_ssidlen);
-	sc->atu_channel = 10;
+	sc->atu_channel = ATU_DEFAULT_CHANNEL;
+	sc->atu_desired_channel = IEEE80211_CHAN_ANY;
 	sc->atu_mode = INFRASTRUCTURE_MODE;
 	sc->atu_encrypt = ATU_WEP_OFF;
 
@@ -2235,20 +2247,29 @@ atu_handle_mgmt_packet(struct atu_softc *sc, struct atu_rxpkt *pkt)
 		beacon = (struct wi_80211_beacon *)&pkt->WiHeader.addr4;
 		if (match) {
 			if ((sc->atu_mode == AD_HOC_MODE) &&
-			    (beacon->flags & IEEE80211_CAPINFO_ESS))
+			    (beacon->flags & IEEE80211_CAPINFO_ESS)) {
 				match = 0;
+				DPRINTF(("%s: SSID matches, but we're in "
+				    "adhoc mode instead of infra\n",
+				    USBDEVNAME(sc->atu_dev)));
+			}
 			if ((sc->atu_mode == INFRASTRUCTURE_MODE) &&
-			    (!(beacon->flags & IEEE80211_CAPINFO_ESS)))
+			    (!(beacon->flags & IEEE80211_CAPINFO_ESS))) {
 				match = 0;
+				DPRINTF(("%s: SSID matches, but we're in "
+				    "infra mode instead of adhoc\n",
+				    USBDEVNAME(sc->atu_dev)));
+			}
+			if ((sc->atu_desired_channel != IEEE80211_CHAN_ANY) &&
+			    (match_channel != sc->atu_desired_channel)) {
+				match = 0;
+				DPRINTF(("%s: SSID matches, but the channel "
+				    "doesn't (%d != %d)\n",
+				    USBDEVNAME(sc->atu_dev), match_channel,
+				    sc->atu_desired_channel));
+			}
 
 			if (!match) {
-				DPRINTF(("%s: SSID matches, "
-				    "but we're in %s mode instead of %s\n",
-				    USBDEVNAME(sc->atu_dev),
-				    (sc->atu_mode == AD_HOC_MODE) ?
-				    "adhoc" : "infra",
-				    (sc->atu_mode == AD_HOC_MODE) ?
-				    "infra" : "adhoc"));
 				break;
 			}
 		}
@@ -2962,19 +2983,22 @@ atu_set_wepkey(struct atu_softc *sc, int nr, u_int8_t *key, int len)
 int
 atu_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 {
-	struct atu_softc	*sc = ifp->if_softc;
+	struct atu_softc		*sc = ifp->if_softc;
 
-	struct ifreq		*ifr = (struct ifreq *)data;
-	struct ifaddr		*ifa = (struct ifaddr *)data;
-	struct ieee80211req	*ireq;
-	int			err = 0;
+	struct ifreq			*ifr = (struct ifreq *)data;
+	struct ifaddr			*ifa = (struct ifaddr *)data;
+	struct ieee80211req		*ireq;
+	struct ieee80211_bssid		*bssid;
+	struct ieee80211chanreq		*chanreq;
+	struct ieee80211_power		*power;
+	int				err = 0;
 #if 0
-	u_int8_t		tmp[32] = "";
-	int			len = 0;
+	u_int8_t			tmp[32] = "";
+	int				len = 0;
 #endif
-	struct ieee80211_nwid   nwid;
-	struct wi_req		wreq;
-	int			change, s;
+	struct ieee80211_nwid		nwid;
+	struct wi_req			wreq;
+	int				change, s;
 
 	s = splnet();
 	ireq = (struct ieee80211req *)data;
@@ -2998,7 +3022,6 @@ atu_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 #endif /* INET */
 		}
 		break;
-		
 
 	case SIOCSIFMTU:
 		if (ifr->ifr_mtu > ATU_MAX_MTU)
@@ -3086,6 +3109,48 @@ atu_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		if (atudebug > 20)
 			atu_print_a_bunch_of_debug_things(sc);
 #endif /* ATU_DEBUG */
+		break;
+
+	case SIOCG80211BSSID:
+		DPRINTF(("%s: ioctl 80211 get BSSID\n",
+		    USBDEVNAME(sc->atu_dev)));
+		bssid = (struct ieee80211_bssid *)data;
+		IEEE80211_ADDR_COPY(bssid->i_bssid, sc->atu_bssid);
+		DPRINTF(("%s: returned %s\n", USBDEVNAME(sc->atu_dev),
+		    ether_sprintf(sc->atu_bssid)));
+		break;
+	case SIOCS80211CHANNEL:
+		chanreq = (struct ieee80211chanreq *)data;
+		DPRINTF(("%s: ioctl 80211 set CHANNEL (%d)\n",
+		    USBDEVNAME(sc->atu_dev), chanreq->i_channel));
+
+		if (((chanreq->i_channel < 1) || (chanreq->i_channel > 14)) &&
+		    (chanreq->i_channel != IEEE80211_CHAN_ANY)) {
+			err = EINVAL;
+			break;
+		}
+		/* restart scan / join / etc now */
+		sc->atu_desired_channel = chanreq->i_channel;
+		sc->atu_mgmt_flags |= ATU_CHANGED_SETTINGS;
+		wakeup(sc);
+		break;
+	case SIOCG80211CHANNEL:
+		DPRINTF(("%s: ioctl 80211 get CHANNEL\n",
+		    USBDEVNAME(sc->atu_dev)));
+		chanreq = (struct ieee80211chanreq *)data;
+		if ((sc->atu_desired_channel == IEEE80211_CHAN_ANY) &&
+		    (!(sc->atu_mgmt_flags & ATU_NETWORK_OK)))
+			chanreq->i_channel = IEEE80211_CHAN_ANY;
+		else
+			chanreq->i_channel = sc->atu_channel;
+		break;
+	case SIOCG80211POWER:
+		DPRINTF(("%s: ioctl 80211 get POWER\n",
+		    USBDEVNAME(sc->atu_dev)));
+		power = (struct ieee80211_power *)data;
+		/* Dummmy, we don't do power saving at the moment */
+		power->i_enabled = 0;
+		power->i_maxsleep = 0;
 		break;
 
 #if 0
