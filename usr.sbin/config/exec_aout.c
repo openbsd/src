@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_aout.c,v 1.7 2003/06/28 04:55:07 deraadt Exp $ */
+/*	$OpenBSD: exec_aout.c,v 1.8 2003/09/26 17:00:27 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999 Mats O Jansson.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: exec_aout.c,v 1.7 2003/06/28 04:55:07 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: exec_aout.c,v 1.8 2003/09/26 17:00:27 deraadt Exp $";
 #endif
 
 #include <err.h>
@@ -38,6 +38,7 @@ static char rcsid[] = "$OpenBSD: exec_aout.c,v 1.7 2003/06/28 04:55:07 deraadt E
 #include <sys/exec.h>
 #include <sys/types.h>
 
+#include "config.h"
 #include "ukc.h"
 
 caddr_t		aout_p, aout_r;
@@ -140,7 +141,7 @@ aout_loadkernel(char *file)
 	aout_psz = (int)(aout_ex.a_text + N_TXTOFF(aout_ex) +
 	    aout_ex.a_data);
 
-	aout_p = malloc(aout_psz);
+	aout_p = emalloc(aout_psz);
 
 	if (read(fd, aout_p, aout_psz) != aout_psz)
 		errx(1, "can't read a.out text and data");
@@ -151,7 +152,7 @@ aout_loadkernel(char *file)
 
 	aout_rsz = (int)(end - cur);
 
-	aout_r = malloc(aout_rsz);
+	aout_r = emalloc(aout_rsz);
 
 	if (read(fd, aout_r, aout_rsz) != aout_rsz)
 		errx(1, "can't read rest of file %s", file);

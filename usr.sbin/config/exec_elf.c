@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.8 2003/06/28 04:55:07 deraadt Exp $ */
+/*	$OpenBSD: exec_elf.c,v 1.9 2003/09/26 17:00:27 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999 Mats O Jansson.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: exec_elf.c,v 1.8 2003/06/28 04:55:07 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: exec_elf.c,v 1.9 2003/09/26 17:00:27 deraadt Exp $";
 #endif
 
 #include <err.h>
@@ -40,6 +40,7 @@ static char rcsid[] = "$OpenBSD: exec_elf.c,v 1.8 2003/06/28 04:55:07 deraadt Ex
 #include <sys/types.h>
 
 #include "ukc.h"
+#include "config.h"
 
 caddr_t		ptr, rest, pre;
 Elf_Ehdr	elf_ex;
@@ -137,7 +138,7 @@ elf_loadkernel(char *file)
 
 	elf_size = lseek(fd, 0L, SEEK_END);
 	(void)lseek(fd, 0L, SEEK_SET);
-	elf_total = malloc(elf_size);
+	elf_total = emalloc(elf_size);
 
 	if (read(fd, elf_total, elf_size) != elf_size)
 		errx(1, "can't read elf kernel");

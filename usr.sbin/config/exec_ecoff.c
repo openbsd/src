@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_ecoff.c,v 1.8 2003/06/28 04:55:07 deraadt Exp $ */
+/*	$OpenBSD: exec_ecoff.c,v 1.9 2003/09/26 17:00:27 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999 Mats O Jansson.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: exec_ecoff.c,v 1.8 2003/06/28 04:55:07 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: exec_ecoff.c,v 1.9 2003/09/26 17:00:27 deraadt Exp $";
 #endif
 
 #include <err.h>
@@ -39,6 +39,7 @@ static char rcsid[] = "$OpenBSD: exec_ecoff.c,v 1.8 2003/06/28 04:55:07 deraadt 
 #include <sys/exec_ecoff.h>
 #include <sys/types.h>
 
+#include "config.h"
 #include "ukc.h"
 
 caddr_t		ecoff_p, ecoff_r, ecoff_b;
@@ -104,9 +105,9 @@ ecoff_loadkernel(char *file)
 	beg = lseek(fd, ECOFF_TXTOFF(&ecoff_ex), SEEK_SET);
 
 	ecoff_bsz = (int)beg;
-	ecoff_b = malloc(ecoff_bsz);
+	ecoff_b = emalloc(ecoff_bsz);
 
-	ecoff_p = malloc(ecoff_psz);
+	ecoff_p = emalloc(ecoff_psz);
 
 	if (read(fd, ecoff_p, ecoff_psz) != ecoff_psz)
 		errx(1, "can't read ecoff text and data");
@@ -120,7 +121,7 @@ ecoff_loadkernel(char *file)
 
 	ecoff_rsz = (int)(end - cur);
 
-	ecoff_r = malloc(ecoff_rsz);
+	ecoff_r = emalloc(ecoff_rsz);
 
 	if (read(fd, ecoff_r, ecoff_rsz) != ecoff_rsz)
 		errx(1, "can't read rest of file %s", file);
