@@ -1,5 +1,5 @@
-/*	$OpenBSD: main.c,v 1.2 1996/03/25 15:55:21 niklas Exp $	*/
-/*	$NetBSD: main.c,v 1.2 1996/02/28 01:13:26 thorpej Exp $	*/
+/*	$OpenBSD: main.c,v 1.3 1996/05/24 09:20:44 deraadt Exp $	*/
+/*	$NetBSD: main.c,v 1.3 1996/05/16 16:00:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -188,7 +188,7 @@ main(argc, argv)
 		}
 
 		while (argc) {
-			action(argv[argc - 1]);
+			action(*argv);
 			++argv;
 			--argc;
 		}
