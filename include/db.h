@@ -1,4 +1,4 @@
-/*	$OpenBSD: db.h,v 1.3 1997/09/21 10:45:29 niklas Exp $	*/
+/*	$OpenBSD: db.h,v 1.4 1999/11/15 01:47:54 aaron Exp $	*/
 /*	$NetBSD: db.h,v 1.13 1994/10/26 00:55:48 cgd Exp $	*/
 
 /*-
@@ -170,7 +170,7 @@ typedef struct {
 	u_int	psize;		/* page size */
 	int	lorder;		/* byte order */
 	size_t	reclen;		/* record length (fixed-length records) */
-	u_char	bval;		/* delimiting byte (variable-length records */
+	u_char	bval;		/* delimiting byte (variable-length records) */
 	char	*bfname;	/* btree file name */ 
 } RECNOINFO;
 
