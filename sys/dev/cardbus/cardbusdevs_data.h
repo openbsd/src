@@ -1,10 +1,10 @@
-/*	$OpenBSD: cardbusdevs_data.h,v 1.5 2000/09/17 03:50:40 aaron Exp $	*/
+/*	$OpenBSD: cardbusdevs_data.h,v 1.6 2000/10/26 22:27:35 deraadt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: cardbusdevs,v 1.4 2000/07/01 14:43:26 aaron Exp 
+ *	OpenBSD: cardbusdevs,v 1.6 2000/10/26 22:27:28 deraadt Exp 
  */
 /*	$NetBSD: cardbusdevs,v 1.7 1999/12/11 22:22:34 explorer Exp $	*/
 
@@ -44,31 +44,31 @@ struct cardbus_knowndev cardbus_knowndevs[] = {
 	    CARDBUS_VENDOR_3COM, CARDBUS_PRODUCT_3COM_3C575,
 	    0,
 	    "3Com",
-	    "3C575 100Base-TX",
+	    "3C575",
 	},
 	{
 	    CARDBUS_VENDOR_3COM, CARDBUS_PRODUCT_3COM_3CCFE575BT,
 	    0,
 	    "3Com",
-	    "3CCFE575BT 100Base-TX",
+	    "3CCFE575BT",
 	},
 	{
 	    CARDBUS_VENDOR_3COM, CARDBUS_PRODUCT_3COM_3CCFE575CT,
 	    0,
 	    "3Com",
-	    "3CCFE575CT 100Base-TX",
+	    "3CCFE575CT",
 	},
 	{
 	    CARDBUS_VENDOR_3COM, CARDBUS_PRODUCT_3COM_3CCFEM656,
 	    0,
 	    "3Com",
-	    "3CCFEM656 100Base-TX",
+	    "3CCFEM656",
 	},
 	{
 	    CARDBUS_VENDOR_3COM, CARDBUS_PRODUCT_3COM_3CCFEM656B,
 	    0,
 	    "3Com",
-	    "3CCFEM656B 100Base-TX",
+	    "3CCFEM656B",
 	},
 	{
 	    CARDBUS_VENDOR_3COM, CARDBUS_PRODUCT_3COM_MODEM56,
@@ -80,13 +80,13 @@ struct cardbus_knowndev cardbus_knowndevs[] = {
 	    CARDBUS_VENDOR_3COM, CARDBUS_PRODUCT_3COM_3CCFEM656C,
 	    0,
 	    "3Com",
-	    "3CCFEM656C 100Base-TX",
+	    "3CCFEM656C",
 	},
 	{
 	    CARDBUS_VENDOR_ADMTEK, CARDBUS_PRODUCT_ADMTEK_AN985,
 	    0,
 	    "ADMtek",
-	    "AN985 100Base-TX",
+	    "AN985",
 	},
 	{
 	    CARDBUS_VENDOR_ADP, CARDBUS_PRODUCT_ADP_1480,
@@ -97,14 +97,14 @@ struct cardbus_knowndev cardbus_knowndevs[] = {
 	{
 	    CARDBUS_VENDOR_DEC, CARDBUS_PRODUCT_DEC_21142,
 	    0,
-	    "Digital Equipment",
-	    "DECchip 21142/3",
+	    "DEC",
+	    "21142/3",
 	},
 	{
 	    CARDBUS_VENDOR_INTEL, CARDBUS_PRODUCT_INTEL_82557,
 	    0,
 	    "Intel",
-	    "82557 Fast Ethernet LAN Controller",
+	    "82557",
 	},
 	{
 	    CARDBUS_VENDOR_INTEL, CARDBUS_PRODUCT_INTEL_MODEM56,
@@ -116,19 +116,19 @@ struct cardbus_knowndev cardbus_knowndevs[] = {
 	    CARDBUS_VENDOR_OPTI, CARDBUS_PRODUCT_OPTI_82C861,
 	    0,
 	    "Opti",
-	    "82C861 USB Host Controller (OHCI)",
+	    "82C861",
 	},
 	{
 	    CARDBUS_VENDOR_XIRCOM, CARDBUS_PRODUCT_XIRCOM_X3201_3,
 	    0,
 	    "Xircom",
-	    "X3201-3 Fast Ethernet Controller",
+	    "X3201-3",
 	},
 	{
 	    CARDBUS_VENDOR_XIRCOM, CARDBUS_PRODUCT_XIRCOM_X3201_3_21143,
 	    0,
 	    "Xircom",
-	    "X3201-3 Fast Ethernet Controller (21143)",
+	    "X3201-3 (21143)",
 	},
 	{
 	    CARDBUS_VENDOR_XIRCOM, CARDBUS_PRODUCT_XIRCOM_MODEM56,
@@ -139,7 +139,7 @@ struct cardbus_knowndev cardbus_knowndevs[] = {
 	{
 	    CARDBUS_VENDOR_DEC, 0,
 	    CARDBUS_KNOWNDEV_NOPROD,
-	    "Digital Equipment",
+	    "DEC",
 	    NULL,
 	},
 	{
@@ -181,13 +181,13 @@ struct cardbus_knowndev cardbus_knowndevs[] = {
 	{
 	    CARDBUS_VENDOR_ADP2, 0,
 	    CARDBUS_KNOWNDEV_NOPROD,
-	    "Adaptec (2nd PCI Vendor ID)",
+	    "Adaptec(2)",
 	    NULL,
 	},
 	{
 	    CARDBUS_VENDOR_INVALID, 0,
 	    CARDBUS_KNOWNDEV_NOPROD,
-	    "INVALID VENDOR ID",
+	    "INVALID",
 	    NULL,
 	},
 	{ 0, 0, 0, NULL, NULL, }
