@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.76 2001/10/28 19:21:58 mickey Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.77 2001/11/06 21:54:14 mickey Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.71 2001/10/28 19:21:37 mickey Exp 
+ *		OpenBSD: pcmciadevs,v 1.73 2001/11/06 21:52:26 mickey Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -550,6 +550,8 @@
 #define	PCMCIA_PRODUCT_ZOOM_AIR4000	PCMCIA_PRODUCT_INVALID
 #define	PCMCIA_CIS_TAMARACK_NE2000	{ "TAMARACK", "Ethernet", NULL, NULL }
 #define	PCMCIA_PRODUCT_TAMARACK_NE2000	PCMCIA_PRODUCT_INVALID
+#define	PCMCIA_CIS_LINKSYS_PCM100	{ "Linksys", "EtherFast 10/100 Integrated PC Card (PCM100)", "Ver 1.0", NULL }
+#define	PCMCIA_PRODUCT_LINKSYS_PCM100	PCMCIA_PRODUCT_INVALID
 #define	PCMCIA_CIS_SARAMNCOM_NS_1100M	{ "NANOSPEED", "HFA384x/IEEE", NULL, NULL }
 #define	PCMCIA_PRODUCT_SARAMNCOM_NS_1100M	PCMCIA_PRODUCT_INVALID
 #define	PCMCIA_CIS_INTERSIL_PRISM2	{ "INTERSIL", "HFA384x/IEEE", "Version 01.02", NULL }
