@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.58 2001/01/04 22:02:02 angelos Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.59 2001/01/22 23:10:33 deraadt Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.58 2001/01/04 22:02:02 angelos Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.59 2001/01/22 23:10:33 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -568,7 +568,7 @@ parse(string, flags)
 		}
 	}
 	size = BUFSIZ;
-	if (sysctl(mib, len, buf, &size, newsize ? newval : 0, newsize) == -1) {
+	if (sysctl(mib, len, buf, &size, newval, newsize) == -1) {
 		if (flags == 0)
 			return;
 		switch (errno) {
@@ -744,7 +744,7 @@ parse(string, flags)
 		return;
 
 	case CTLTYPE_STRING:
-		if (newsize == 0) {
+		if (newval == NULL) {
 			if (!nflag)
 				(void)printf("%s = ", string);
 			(void)puts(buf);
