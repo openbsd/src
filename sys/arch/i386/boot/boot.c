@@ -63,7 +63,7 @@ int cflag;
 #endif
 char *name;
 char *names[] = {
-	"/netbsd", "/onetbsd", "/netbsd.old",
+	"/bsd", "/obsd", "/bsd.old",
 };
 #define NUMNAMES	(sizeof(names)/sizeof(char *))
 
@@ -84,8 +84,8 @@ boot(drive)
 	char *t;
 		
 	printf("\n"
-	       ">> NetBSD BOOT: %d/%d k [%s]\n"
-	       "use hd(1,a)/netbsd to boot sd0 when wd0 is also installed\n",
+	       ">> OpenBSD BOOT: %d/%d k [%s]\n"
+	       "use hd(1,a)/bsd to boot sd0 when wd0 is also installed\n",
 		argv[7] = memsize(0),
 		argv[8] = memsize(1),
 		version);
