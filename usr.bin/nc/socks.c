@@ -1,4 +1,4 @@
-*	$OpenBSD: socks.c,v 1.2 2001/10/28 19:45:17 jakob Exp $	*/
+/*	$OpenBSD: socks.c,v 1.3 2001/10/28 19:46:12 jakob Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
