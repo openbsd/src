@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.98 1999/01/08 12:44:30 jason Exp $
+#	$OpenBSD: GENERIC,v 1.99 1999/01/10 22:31:29 downsj Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -193,6 +193,7 @@ rl*	at pci? dev ? function ?		# RealTek 81[23]9 ethernet
 tx*	at pci? dev ? function ?		# SMC 83C170 EPIC ethernet cards
 tl*	at pci? dev ? function ?		# Compaq Thunderlan ethernet cards
 mx*	at pci? dev ? function ?		# Macronix PMAC ethernet cards
+vr*	at pci? dev ? function ?		# VIA Rhine ethernet cards
 
 # Media Independent Interface (mii) drivers
 #exphy*	at mii? phy ?				# 3Com internal PHYs
