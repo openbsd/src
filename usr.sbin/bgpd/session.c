@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.70 2004/01/06 20:44:15 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.71 2004/01/06 21:48:19 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -53,7 +53,7 @@
 void	session_sighdlr(int);
 int	setup_listener(void);
 void	init_conf(struct bgpd_config *);
-void	init_peers(void);
+void	init_peer(struct peer *);
 void	bgp_fsm(struct peer *, enum session_events);
 int	timer_due(time_t);
 void	start_timer_holdtime(struct peer *);
@@ -182,7 +182,6 @@ session_main(struct bgpd_config *config, struct peer *cpeers, int pipe_m2s[2],
 	imsg_init(&ibuf_main, pipe_m2s[1]);
 	TAILQ_INIT(&ctl_conns);
 	csock = control_listen();
-	init_peers();
 
 	while (session_quit == 0) {
 		bzero(&pfd, sizeof(pfd));
@@ -208,7 +207,7 @@ session_main(struct bgpd_config *config, struct peer *cpeers, int pipe_m2s[2],
 			if (!pending_reconf) {
 				/* needs init? */
 				if (p->state == STATE_NONE)
-					change_state(p, STATE_IDLE, EVNT_NONE);
+					init_peer(p);
 
 				/* reinit due? */
 				if (p->conf.reconf_action == RECONF_REINIT) {
@@ -344,20 +343,17 @@ init_conf(struct bgpd_config *c)
 }
 
 void
-init_peers(void)
+init_peer(struct peer *p)
 {
-	struct peer	*p;
+	p->sock = -1;
 
-	for (p = peers; p != NULL; p = p->next) {
-		if (p->state == STATE_NONE) {
-			change_state(p, STATE_IDLE, EVNT_NONE);
-			p->IdleHoldTimer = time(NULL);	/* start ASAP */
-		}
-		if (!p->conf.holdtime)
-			p->conf.holdtime = conf->holdtime;
-		if (!p->conf.min_holdtime)
-			p->conf.min_holdtime = conf->min_holdtime;
-	}
+	change_state(p, STATE_IDLE, EVNT_NONE);
+	p->IdleHoldTimer = time(NULL);	/* start ASAP */
+	
+	if (!p->conf.holdtime)
+		p->conf.holdtime = conf->holdtime;
+	if (!p->conf.min_holdtime)
+		p->conf.min_holdtime = conf->min_holdtime;
 }
 
 void
@@ -1364,7 +1360,6 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx)
 				    NULL)
 					fatal("new_peer");
 				p->state = STATE_NONE;
-				p->sock = -1;
 				p->next = npeers;
 				npeers = p;
 				reconf = RECONF_REINIT;
@@ -1390,11 +1385,6 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx)
 			p->conf.reconf_action = reconf;
 			if (pconf->reconf_action > reconf)
 				p->conf.reconf_action = pconf->reconf_action;
-
-			if (!p->conf.holdtime)
-				p->conf.holdtime = nconf->holdtime;
-			if (!p->conf.min_holdtime)
-				p->conf.min_holdtime = nconf->min_holdtime;
 
 			if (p->state >= STATE_OPENSENT) {
 				if (p->holdtime == conf->holdtime &&
