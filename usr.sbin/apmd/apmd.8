@@ -1,0 +1,175 @@
+.\" Copyright (c) 1995 John T. Kohl
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR `AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+.\" WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+.\" DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
+.\" INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+.\" (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+.\" SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+.\" STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+.\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\"	$Id: apmd.8,v 1.1 1996/04/29 13:08:45 hvozda Exp $
+.\"
+.Dd March 24, 1996
+.Dt APMD 8
+.Os OpenBSD
+.Sh NAME
+.Nm apmd
+.Nd Advanced Power Management monitor daemon
+.Sh SYNOPSIS
+.Nm
+.Op Fl d
+.Op Fl s
+.Op Fl a
+.Op Fl q
+.Op Fl t Ar seconds
+.Op Fl S Ar sockname
+.Op Fl f Ar devname
+.Sh DESCRIPTION
+.Nm
+monitors the advanced power management (APM) pseudo-device, acting on
+signaled events and upon user requests as sent by the
+.Xr apm 8 
+program.
+For suspend and standby request events delivered by the BIOS, or via
+.Xr apm 8 ,
+.Nm
+runs the appropriate configuration program (if one exists),
+syncs the buffer cache to disk and initiates the requested mode.
+When resuming after suspend or standby,
+.Nm
+runs the appropriate configuration program (if one exists).
+For power status change events,
+.Nm
+fetches the current status and reports it via
+.Xr syslog 3 
+with logging facility
+.Dv LOG_DAEMON .
+.Pp
+.Nm
+announces the transition to standby mode with a single high tone on the
+speaker (using the
+.Pa /dev/speaker
+device).
+Suspends are announced with two high tones.
+.Pp
+.Nm
+periodically polls the APM driver for the current power state.  
+If the battery charge level changes substantially or the external power
+status changes, the new status is logged.  The polling rate defaults to
+once per 10 minutes, but may be specified using the
+.Fl t
+command-line flag.
+.Pp
+If the
+.Fl s
+flag is specified, the current battery statistics are reported via
+.Xr syslog 3
+and
+.Nm
+exits without monitoring the APM status.
+.Pp
+If the
+.Fl a
+flag is specified, any BIOS-initiated suspend or standby requests are
+ignored if the system is connected to line current and not running from
+batteries (user requests are still honored).
+.Pp
+If the
+.Fl d
+flag is specified,
+.Nm
+enters debug mode, logging to facility
+.Dv LOG_LOCAL1
+and staying in the foreground on the controlling terminal.
+.Pp
+If the
+.Fl q
+flag is specified,
+.Nm
+does not announce suspend and standby requests on the speaker.
+.Pp
+When a client requests a suspend or stand-by mode,
+.Nm
+does not wait for positive confirmation that the requested
+mode has been entered before replying to the client; to do so would mean
+the client does not get a reply until the system resumes from its sleep state.
+Rather,
+.Nm
+replies with the intended state to the client and then places the system
+in the requested mode after running the configuration script and
+flushing the buffer cache.
+.Pp
+Actions can be configured for the three transitions:
+.Cm suspend ,
+.Cm standby
+and
+.Cm resume .
+The suspend and standby actions are run prior to
+.Nm
+performing any other actions (such as disk syncs) and entering the new
+mode.  The resume program is run after resuming from a stand-by or
+suspended state.
+.Sh FILES
+.Pa /etc/apm/suspend ,
+.Pa /etc/apm/standby
+and
+.Pa /etc/apm/resume
+are the files that contain the host's customized actions.
+Each file must be an executable binary or shell script suitable
+for execution by the
+.Xr execve 2 
+function.
+If you wish to have the same program or script control all transitions, it
+may determine which transition is in progress by examining its 
+.Va argv[0]
+which is set to one of
+.Ar suspend ,
+.Ar standby ,
+or
+.Ar resume .
+.Pp
+.Pa /var/run/apmdev
+is the default UNIX-domain socket used for communication with
+.Xr apm 8 .
+The
+.Fl S
+flag may be used to specify an alternate socket name.
+The socket is protected to mode 0660, UID 0, GID 0; this protects access
+to suspend requests to authorized users only.
+.Pp
+.Pa /dev/apmctl
+is the default device used to control the APM kernel driver.
+The
+.Fl f
+flag may be used to specify an alternate device file name.
+.Sh SEE ALSO
+.Xr apm 4 ,
+.Xr apm 8 ,
+.Xr execv 2 ,
+.Xr speaker 4 ,
+.Xr syslog 3 ,
+.Xr syslogd 8 .
+.Sh REFERENCES
+Advanced Power Management (APM) BIOS Interface Specification (revision
+1.1), Intel Corporation and Microsoft Corporation.
+.Sh HISTORY
+The
+.Nm apmd
+command appeared in OpenBSD 1.1B.

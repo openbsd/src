@@ -1,0 +1,11 @@
+The progams here are ports of Barry Jaspan's stuff.
+
+From the original README:
+
+Copyright 1993 Barry Jaspan.  Everything contained in this release
+(with the exception of some #defines in pcmcia.h) is original work.
+Permission is granted to distribute this system under the terms of the
+GNU General Public License.
+
+Barry Jaspan, bjaspan@gza.com
+

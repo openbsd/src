@@ -1,0 +1,114 @@
+.\" Copyright (c) 1996 John T. Kohl
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR `AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+.\" WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+.\" DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
+.\" INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+.\" (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+.\" SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+.\" STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+.\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\"	$Id: apm.8,v 1.1 1996/04/29 13:08:40 hvozda Exp $
+.\"
+.Dd March 18, 1996
+.Dt APM 8
+.Os OpenBSD
+.Sh NAME
+.Nm apm
+.Nd Advanced Power Management control program
+.Sh SYNOPSIS
+.Nm zzz
+.Op Fl S
+.Op Fl z
+.Op Fl f Ar sockname
+.Br
+.Nm apm
+.Op Fl z
+.Op Fl S
+.Op Fl s
+.Op Fl l
+.Op Fl b
+.Op Fl a
+.Op Fl v
+.Op Fl f Ar sockname
+.Sh DESCRIPTION
+.Nm
+communicates with the Advanced Power Management daemon,
+.Xr apmd 8 ,
+making requests of it for current power status or to place the system
+int a suspend or stand-by state.
+With no flags,
+.Nm
+displays the current power management state in verbose form.
+.Pp
+Available command-line flags are:
+.Bl -tag -width indent -compact
+.It Fl z
+Put the system into suspend (deep sleep) mode.
+.It Fl S
+Put the system into stand-by (light sleep) mode.
+.It Fl l
+Display the estimated battery lifetime (in percent).
+.It Fl b
+Display the battery status.  0 means high, 1 means low, 2 means
+critical, 3 means charging, 4 means absent, and 255 means unknown.
+.It Fl a
+Display the external charger (A/C status).  0 means disconnected, 1
+means connected, 2 means backup power source, and 255 means unknown.
+.It Fl v
+Request more verbose description of the displayed states.
+.It Fl f Ar sockname
+Set the name of the socket via which to contact 
+.Xr apmd 8
+to
+.Pa sockname .
+.El
+.Pp
+The
+.Nm zzz
+variant on this command is an alternative for suspending the system.
+With no arguments,
+.Nm
+places the system into suspend mode.
+The command line flags serve the same purpose as for the
+.Nm apm
+variant of this command.
+.Pp
+This command does not wait for positive confirmation that the requested
+mode has been entered; to do so would mean the command does not return
+until the system resumes from its sleep state.
+.Sh FILES
+.Pa /var/run/apmdev
+is the default UNIX-domain socket used for communication with
+.Xr apm 8 .
+The
+.Fl f
+flag may be used to specify an alternate socket name.
+The protection modes on this socket govern which users may access the
+APM functions.
+.Sh SEE ALSO
+.Xr apmd 8 ,
+.Xr apm 4 .
+.Sh REFERENCES
+Advanced Power Management (APM) BIOS Interface Specification (revision
+1.1), Intel Corporation and Microsoft Corporation
+.Sh HISTORY
+The
+.Nm apm
+command appeared in OpenBSD 1.1B.

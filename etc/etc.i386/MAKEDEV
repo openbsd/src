@@ -73,6 +73,7 @@
 #	speaker	pc speaker				(XXX - installed)
 #	lkm	loadable kernel modules interface
 #	audio	audio device
+#	apm	power management device
 #	tun*	network tunnel driver
 #	joy*	joystick driver
 #	pcmcia*	PCMCIA card drivers
@@ -89,7 +90,7 @@ all)
 	sh MAKEDEV st0 st1 ch0 cd0 cd1 mcd0 vnd0 vnd1 lpa0 lpa1
 	sh MAKEDEV ccd0 ccd1 ccd2 ccd3
 	sh MAKEDEV lpt0 lpt1 lpt2 ttyv0 bpf0 bpf1 bpf2 bpf3 ipl tun0 tun1 tun2
-	sh MAKEDEV speaker lkm mms0 lms0 pms0 audio joy0 joy1 local
+	sh MAKEDEV speaker lkm mms0 lms0 pms0 audio joy0 joy1 apm pcmcia local
 # MISSING:
 #	sh MAKEDEV mouse-?
 	;;
@@ -374,13 +375,53 @@ pcmcia*)
 	chmod 700 pcmcia
 	chmod 600 pcmcia/*
 	;;
-
+	
 joy*)
 	unit=`expr $i : 'joy\(.*\)'`
 	rm -f joy$unit
 	mknod joy$unit c 26 $unit
 	chown root.wheel joy$unit
 	chmod 666 joy$unit
+	;;
+	
+apm*)
+	rm -f apm apmctl
+	mknod apm c 21 0
+	mknod apmctl c 21 8
+	chown root.wheel apm apmctl
+	chmod 644 apm apmctl
+	;;
+
+pcmcia*)
+	rm -f pcmcia/bus? pcmcia/chip? pcmcia/slot*
+	mkdir -p pcmcia
+	mknod pcmcia/bus0 c 26 128
+	mknod pcmcia/bus1 c 26 129
+	mknod pcmcia/bus2 c 26 130
+	mknod pcmcia/bus3 c 26 131
+	mknod pcmcia/chip0 c 26 64
+	mknod pcmcia/chip1 c 26 65
+	mknod pcmcia/chip2 c 26 66
+	mknod pcmcia/chip3 c 26 67
+	mknod pcmcia/slot0 c 26 0
+	mknod pcmcia/slot1 c 26 1
+	mknod pcmcia/slot2 c 26 2
+	mknod pcmcia/slot3 c 26 3
+	mknod pcmcia/slot4 c 26 4
+	mknod pcmcia/slot5 c 26 5
+	mknod pcmcia/slot6 c 26 6
+	mknod pcmcia/slot7 c 26 7
+	mknod pcmcia/slot8 c 26 8
+	mknod pcmcia/slot9 c 26 9
+	mknod pcmcia/slot10 c 26 10
+	mknod pcmcia/slot11 c 26 11
+	mknod pcmcia/slot12 c 26 12
+	mknod pcmcia/slot13 c 26 13
+	mknod pcmcia/slot14 c 26 14
+	mknod pcmcia/slot15 c 26 15
+	chown -R root.wheel pcmcia
+	chmod 700 pcmcia
+	chmod 600 pcmcia/*
 	;;
 
 local)

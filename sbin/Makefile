@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 1996/04/22 20:21:52 hannken Exp $
+#	$OpenBSD: Makefile,v 1.6 1996/04/29 13:07:00 hvozda Exp $
 #	$NetBSD: Makefile,v 1.28 1996/04/05 01:44:24 cgd Exp $
 #	@(#)Makefile	8.5 (Berkeley) 3/31/94
 
@@ -27,9 +27,11 @@ SUBDIR+= mount_umap
 SUBDIR+= mount_union
 
 .if   make(clean) || make(cleandir)
-SUBDIR+= bim edlabel fdisk
+SUBDIR+= bim config_slot edlabel fdisk pcmcia_cntrl
 .elif ${MACHINE} == "i386"
+SUBDIR+= config_slot
 SUBDIR+= fdisk
+SUBDIR+= pcmcia_cntrl
 .elif ${MACHINE} == "pc532"
 SUBDIR+= bim
 .elif ${MACHINE} == "sun3"
