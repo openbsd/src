@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.275 2004/02/03 18:38:49 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.276 2004/02/04 22:54:10 grange Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1103,7 +1103,7 @@ winchip_cpu_setup(cpu_device, model, step)
 		/* Disable RDTSC instruction from user-level. */
 		lcr4(rcr4() | CR4_TSD);
 
-		printf("%s: broken TSC disabled\n", cpu_device);
+		printf("%s: TSC disabled\n", cpu_device);
 		break;
 	}
 #endif
@@ -1545,6 +1545,7 @@ cyrix6x86_cpu_setup(cpu_device, model, step)
 	case 4:
 		clock_broken_latch = 1;
 		cpu_feature &= ~CPUID_TSC;
+		printf("%s: TSC disabled\n", cpu_device);
 		break;
 	}
 #endif
@@ -1575,6 +1576,7 @@ natsem6x86_cpu_setup(cpu_device, model, step)
 	switch (model) {
 	case 4:
 		cpu_feature &= ~CPUID_TSC;
+		printf("%s: TSC disabled\n", cpu_device);
 		break;
 	}
 	cpuresetfn = natsem6x86_cpureset;
