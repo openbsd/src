@@ -1,4 +1,4 @@
-/* $Id: sectok.h,v 1.9 2001/06/27 22:33:36 rees Exp $ */
+/* $Id: sectok.h,v 1.10 2001/06/28 21:27:54 rees Exp $ */
 
 /*
 copyright 1997, 2000
@@ -120,16 +120,18 @@ char *lookup_cmdname(int ins);
 
 /* Common card routines */
 void sectok_fmt_fid(char *fname, int f0, int f1);
-int sectok_selectfile(int fd, int cla, unsigned char *fid, int verbose);
+int sectok_selectfile(int fd, int cla, unsigned char *fid, int *r1p, int *r2p);
 void sectok_parse_fname(char *buf, unsigned char *fid);
 
 /* Cyberflex */
-int cyberflex_create_file(int fd, int cla, unsigned char *fid, int size);
-int cyberflex_delete_file(int fd, int cla, int f0, int f1, int verbose);
+int cyberflex_create_file(int fd, int cla, unsigned char *fid, int size, int ftype,
+			  int *r1p, int *r2p);
+int cyberflex_delete_file(int fd, int cla, int f0, int f1, int *r1p, int *r2p);
 int cyberflex_load_rsa_pub(int fd, int cla, unsigned char *key_fid,
-			   int key_len, unsigned char *key_data);
+			   int key_len, unsigned char *key_data, int *r1p, int *r2p);
 int cyberflex_load_rsa_priv(int fd, int cla, unsigned char *key_fid,
-			    int nkey_elems, int keylen, unsigned char *key_elems[]);
+			    int nkey_elems, int keylen, unsigned char *key_elems[],
+			    int *r1p, int *r2p);
 int cyberflex_verify_AUT0(int fd, int cla, unsigned char *aut0, int aut0len);
 int cyberflex_inq_class(int fd);
 void cyberflex_fill_key_block (unsigned char *dst, int key_num,

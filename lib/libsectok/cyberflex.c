@@ -1,4 +1,4 @@
-/* $Id: cyberflex.c,v 1.5 2001/06/27 22:33:35 rees Exp $ */
+/* $Id: cyberflex.c,v 1.6 2001/06/28 21:27:54 rees Exp $ */
 
 /*
 copyright 2000
@@ -56,9 +56,10 @@ such damages.
 #define KEY_FILE_HEADER_SIZE 8
 #define BLOCK_SIZE 8
 
-int cyberflex_create_file(int fd, int cla, unsigned char *fid, int size)
+int cyberflex_create_file(int fd, int cla, unsigned char *fid, int size, int ftype,
+			  int *r1p, int *r2p)
 {
-    int i, n, r1, r2;
+    int i, n;
     unsigned char data[16];
 
     size += 16;
@@ -67,41 +68,32 @@ int cyberflex_create_file(int fd, int cla, unsigned char *fid, int size)
     data[1] = (size & 0xff);
     data[2] = fid[0];
     data[3] = fid[1];
-    data[4] = 0x02;		/* file type = 2 (binary file) */
+    data[4] = ftype;
     data[5] = 0x01;		/* status = 1 */
     data[6] = data[7] = 0x00;	/* record related */
     data[8] = 0xff;		/* ACL can do everything with AUT0 */
     for (i = 9; i < 16; i++ )
 	data[i] = 0x00;		/* ACL : cannot do anything without AUT0 */
 
-    n = scwrite(fd, cla, 0xe0, 0, 0, 0x10, data, &r1, &r2);
-    if (n < 0 || (r1 != 0x90 && r1 != 0x61))
+    n = scwrite(fd, cla, 0xe0, 0, 0, 0x10, data, r1p, r2p);
+    if (n < 0 || (*r1p != 0x90 && *r1p != 0x61))
 	return -1;
 
-    sectok_selectfile(fd, cla, fid, 0);
-
-    return 0;
+    return sectok_selectfile(fd, cla, fid, r1p, r2p);
 }
 
 int
-cyberflex_delete_file(int fd, int cla, int f0, int f1, int verbose)
+cyberflex_delete_file(int fd, int cla, int f0, int f1, int *r1p, int *r2p)
 {
-    int n, r1, r2;
+    int n;
     unsigned char buf[2];
-    char fname[5];
 
     buf[0] = f0;
     buf[1] = f1;
 
-    n = scwrite(fd, cla, 0xe4, 0, 0, 0x02, buf, &r1, &r2);
-    if (n < 0)
-	return -1;
-    if (r1 != 0x90 && r1 != 0x61) {
+    n = scwrite(fd, cla, 0xe4, 0, 0, 0x02, buf, r1p, r2p);
+    if (n < 0 || (*r1p != 0x90 && *r1p != 0x61)) {
 	/* error */
-	if (verbose) {
-	    sectok_fmt_fid(fname, f0, f1);
-	    printf("delete_file %s: %s\n", fname, get_r1r2s(r1, r2));
-	}
 	return -1;
     }
     return 0;
@@ -109,74 +101,49 @@ cyberflex_delete_file(int fd, int cla, int f0, int f1, int verbose)
 
 int
 cyberflex_load_rsa_pub(int fd, int cla, unsigned char *key_fid,
-		       int key_len, unsigned char *key_data)
+		       int key_len, unsigned char *key_data, int *r1p, int *r2p)
 {
-    int rv, r1, r2;
-    char kfname[5];
+    int rv;
 
-    rv = sectok_selectfile(fd, cla, root_fid, 0);
-    if (rv < 0)
-	return rv;
+    if (sectok_selectfile(fd, cla, root_fid, r1p, r2p) < 0)
+	return -1;
 
-    sectok_fmt_fid(kfname, key_fid[0], key_fid[1]);
-    rv = sectok_selectfile(fd, cla, key_fid, 0);
-    if (rv < 0) {
-	printf ("public key file does not exist.  create it.\n");
-	cyberflex_create_file(fd, cla, key_fid, key_len);
+    if (sectok_selectfile(fd, cla, key_fid, r1p, r2p)) {
+	if (cyberflex_create_file(fd, cla, key_fid, key_len, 3, r1p, r2p) < 0)
+	    return -1;
     }
 
     /* Write the key data */
-    rv = scwrite(fd, cla, 0xd6, 0, 0, key_len, key_data, &r1, &r2);
-    if (r1 != 0x90 && r1 != 0x61) {
-	/* error */
-	printf("creating file %s: %s\n", kfname, get_r1r2s(r1, r2));
+    rv = scwrite(fd, cla, 0xd6, 0, 0, key_len, key_data, r1p, r2p);
+    if (rv < 0 || (*r1p != 0x90 && *r1p != 0x61))
 	return -1;
-    }
+
     return rv;
 }
 
 /* download RSA private key into 3f.00/00.12 */
 int
 cyberflex_load_rsa_priv(int fd, int cla, unsigned char *key_fid,
-			int nkey_elems, int key_len, unsigned char *key_elems[])
+			int nkey_elems, int key_len, unsigned char *key_elems[],
+			int *r1p, int *r2p)
 {
-    int i, j, rv, r1, r2, offset=0, size;
+    int i, j, rv, offset = 0, size;
     unsigned char data[MAX_KEY_FILE_SIZE];
     static unsigned char key_file_header[KEY_FILE_HEADER_SIZE] =
     {0xC2, 0x06, 0xC1, 0x08, 0x13, 0x00, 0x00, 0x05};
     static unsigned char key_header[3] = {0xC2, 0x41, 0x00};
-    char kfname[5];
 
     /* select 3f.00 */
-    rv = sectok_selectfile(fd, cla, root_fid, 0);
+    rv = sectok_selectfile(fd, cla, root_fid, r1p, r2p);
     if (rv < 0) return rv;
 
     /* select 00.12 */
-    sectok_fmt_fid(kfname, key_fid[0], key_fid[1]);
-    rv = sectok_selectfile(fd, cla, key_fid, 0);
+    rv = sectok_selectfile(fd, cla, key_fid, r1p, r2p);
     if (rv < 0) {
 	/* rv != 0, 00.12 does not exist.  create it. */
 	printf ("private key file does not exist.  create it.\n");
-
-	/* create private key file */
-	data[0] = (PRV_KEY_SIZE + 16) / 256; /* size, upper byte */
-	data[1] = (PRV_KEY_SIZE + 16) % 256; /* size, lower byte */
-	data[2] = key_fid[0];
-	data[3] = key_fid[1];
-	data[4] = 0x03;		/* file type */
-	data[5] = 0x01;		/* status = 1 */
-	data[6] = data[7] = 0x00; /* record related */
-	data[8] = 0xff;		/* ACL can do everything with AUT0 */
-	for (i = 9; i < 16; i++ ) {
-	    data[i] = 0x00;	/* ACL : cannot do anything without AUT0 */
-	}
-
-	rv = scwrite(fd, cla, 0xe0, 0, 0, 0x10, data, &r1, &r2);
-	if (r1 != 0x90 && r1 != 0x61) {
-	    /* error */
-	    printf("creating file %s: %s\n", kfname, get_r1r2s(r1, r2));
+	if (cyberflex_create_file(fd, cla, key_fid, PRV_KEY_SIZE, 3, r1p, r2p) < 0)
 	    return -1;
-	}
     }
 
     /* burn the key */
@@ -208,8 +175,8 @@ cyberflex_load_rsa_priv(int fd, int cla, unsigned char *key_fid,
 
     /* now send this to the card */
     /* select private key file */
-    rv = sectok_selectfile(fd, cla, key_fid, 0);
-    if (rv < 0) return rv;
+    if (sectok_selectfile(fd, cla, key_fid, r1p, r2p) < 0)
+	return -1;
 
     /* update binary */
     size = offset;
@@ -226,13 +193,10 @@ cyberflex_load_rsa_priv(int fd, int cla, unsigned char *key_fid,
 		     i % 256,	/* offset, lower byte */
 		     send_size,
 		     data + i,	/* key file */
-		     &r1, &r2);
+		     r1p, r2p);
 
-	if (r1 != 0x90 && r1 != 0x61) {
-	    /* error */
-	    printf("updating binary %s: %s\n", kfname, get_r1r2s(r1, r2));
+	if (*r1p != 0x90 && *r1p != 0x61)
 	    return -1;
-	}
     }
 
     printf ("rsa key loading done! :)\n");
