@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.27 1999/12/16 16:41:42 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.28 1999/12/16 16:52:11 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: parse.c,v 1.27 1999/12/16 16:41:42 espie Exp $";
+static char rcsid[] = "$OpenBSD: parse.c,v 1.28 1999/12/16 16:52:11 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -2130,7 +2130,6 @@ ParseSkipLine(skip)
             lastc = c;
         }
 
-        Buf_AddChar(buf, '\0');
         line = Buf_Retrieve(buf);
         lineno++;
 	    /* allow for non-newline terminated lines while skipping */
@@ -2336,10 +2335,8 @@ test_char:
     line_read:
 	lineno++;
 
-	if (lastc != '\0') {
+	if (lastc != '\0') 
 	    Buf_AddChar(buf, lastc);
-	}
-	Buf_AddChar(buf, '\0');
 	line = Buf_Retrieve(buf);
 	Buf_Destroy(buf, FALSE);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.21 1999/12/16 16:41:42 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.22 1999/12/16 16:52:11 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -70,7 +70,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: var.c,v 1.21 1999/12/16 16:41:42 espie Exp $";
+static char rcsid[] = "$OpenBSD: var.c,v 1.22 1999/12/16 16:52:11 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -1278,7 +1278,6 @@ VarModify (str, modProc, datum)
 
     free(as);
     free(av);
-    Buf_AddChar(buf, '\0');
     str = Buf_Retrieve(buf);
     Buf_Destroy(buf, FALSE);
     return (str);
@@ -1369,8 +1368,6 @@ VarGetPattern(ctxt, err, tstr, delim, flags, length, pattern)
 	    Buf_AddChar(buf, *cp);
     }
 
-    Buf_AddChar(buf, '\0');
-
     if (*cp != delim) {
 	*tstr = cp;
 	*length = 0;
@@ -1380,7 +1377,6 @@ VarGetPattern(ctxt, err, tstr, delim, flags, length, pattern)
 	*tstr = ++cp;
 	cp = Buf_Retrieve(buf);
 	*length = Buf_Size(buf);
-	*length -= 1;	/* Don't count the NULL */
 	Buf_Destroy(buf, FALSE);
 	return cp;
     }
@@ -1414,7 +1410,6 @@ VarQuote(str)
 	    Buf_AddChar(buf, '\\');
 	Buf_AddChar(buf, *str);
     }
-    Buf_AddChar(buf, '\0');
     str = Buf_Retrieve(buf);
     Buf_Destroy(buf, FALSE);
     return str;
@@ -2257,7 +2252,6 @@ Var_Subst (var, str, ctxt, undefErr)
 	}
     }
 
-    Buf_AddChar(buf, '\0');
     str = Buf_Retrieve(buf);
     Buf_Destroy(buf, FALSE);
     return (str);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cond.c,v 1.8 1999/12/16 16:41:41 espie Exp $	*/
+/*	$OpenBSD: cond.c,v 1.9 1999/12/16 16:52:11 espie Exp $	*/
 /*	$NetBSD: cond.c,v 1.7 1996/11/06 17:59:02 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: cond.c,v 1.8 1999/12/16 16:41:41 espie Exp $";
+static char rcsid[] = "$OpenBSD: cond.c,v 1.9 1999/12/16 16:52:11 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -245,6 +245,7 @@ CondGetArg(linePtr, argPtr, func, parens)
 	}
     }
 
+    /* XXX */
     Buf_AddChar(buf, '\0');
     *argPtr = Buf_Retrieve(buf);
     argLen = Buf_Size(buf);
@@ -556,9 +557,7 @@ CondToken(doEval)
 			 condExpr++)
 			Buf_AddChar(buf, *condExpr);
 
-		    Buf_AddChar(buf, '\0');
 		    lhs = Buf_Retrieve(buf);
-		    varSpecLen = Buf_Size(buf);
 		    Buf_Destroy(buf, FALSE);
 
 		    doFree = TRUE;
@@ -652,8 +651,6 @@ do_string_compare:
 			    Buf_AddChar(buf, *cp);
 			}
 		    }
-
-		    Buf_AddChar(buf, '\0');
 
 		    string = Buf_Retrieve(buf);
 		    Buf_Destroy(buf, FALSE);
