@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.4 2004/07/30 01:49:24 jfb Exp $	*/
+/*	$OpenBSD: update.c,v 1.5 2004/07/30 20:55:35 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -126,8 +126,6 @@ cvs_update_file(CVSFILE *cf, void *arg)
 	RCSFILE *rf;
 	struct cvsroot *root;
 	struct cvs_ent *entp;
-
-	cvs_log(LP_DEBUG, "%s: updating %s", __func__, cf->cf_path);
 
 	if (cf->cf_type == DT_DIR) {
 		root = cf->cf_ddat->cd_root;
