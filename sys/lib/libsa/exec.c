@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.8 1997/01/18 03:28:50 downsj Exp $	*/
+/*	$OpenBSD: exec.c,v 1.9 1997/02/05 11:14:24 downsj Exp $	*/
 /*	$NetBSD: exec.c,v 1.15 1996/10/13 02:29:01 christos Exp $	*/
 
 /*-
@@ -48,12 +48,6 @@ static char *ssym, *esym;
 
 extern u_int opendev;
 
-#ifdef hp300
-#undef N_PAGSIZ
-/* XXX - force padding of the text segment to 4k, not 8k. */
-#define N_PAGSIZ(_x)	0x1000
-#endif
-
 void
 exec(path, loadaddr, howto)
 	char *path;
@@ -67,6 +61,9 @@ exec(path, loadaddr, howto)
 	struct exec x;
 	int i;
 	register char *addr;
+#ifdef EXEC_DEBUG
+	char *daddr, *etxt;
+#endif
 
 	io = open(path, 0);
 	if (io < 0)
@@ -102,11 +99,17 @@ exec(path, loadaddr, howto)
 	if (read(io, (char *)addr, x.a_text) != x.a_text)
 		goto shread;
 	addr += x.a_text;
+#ifdef EXEC_DEBUG
+	etxt = addr;
+#endif
 	if (N_GETMAGIC(x) == ZMAGIC || N_GETMAGIC(x) == NMAGIC)
 		while ((long)addr & (N_PAGSIZ(x) - 1))
 			*addr++ = 0;
 
         /* Data */
+#ifdef EXEC_DEBUG
+	daddr = addr;
+#endif
 	printf("+%ld", x.a_data);
 	if (read(io, addr, x.a_data) != x.a_data)
 		goto shread;
@@ -155,7 +158,8 @@ exec(path, loadaddr, howto)
 	printf(" start=0x%lx\n", x.a_entry);
 
 #ifdef EXEC_DEBUG
-        printf("ssym=0x%x esym=0x%x\n", ssym, esym);
+        printf("loadaddr = 0x%x etxt = 0x%x daddr = 0x%x ssym=0x%x esym=0x%x\n",
+	    loadaddr, etxt, daddr, ssym, esym);
         printf("\n\nReturn to boot...\n");
         getchar();
 #endif
