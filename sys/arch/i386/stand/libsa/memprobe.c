@@ -1,4 +1,4 @@
-/*	$OpenBSD: memprobe.c,v 1.35 2002/02/15 19:55:15 mickey Exp $	*/
+/*	$OpenBSD: memprobe.c,v 1.36 2002/05/03 13:58:11 espie Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -360,8 +360,9 @@ dump_biosmem(tm)
 		tm = bios_memmap;
 
 	for(p = tm; p->type != BIOS_MAP_END; p++) {
-		printf("Region %d: type %u at 0x%x for %uKB\n", p - tm,
-			p->type, (u_int)p->addr, (u_int)(p->size / 1024));
+		printf("Region %ld: type %u at 0x%x for %uKB\n", 
+		    (long)(p - tm), p->type, (u_int)p->addr, 
+		    (u_int)(p->size / 1024));
 
 		if(p->type == BIOS_MAP_FREE)
 			total += p->size / 1024;
