@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgtwelve.c,v 1.7 2003/05/12 20:18:39 jason Exp $	*/
+/*	$OpenBSD: cgtwelve.c,v 1.8 2003/06/06 19:42:47 miod Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Miodrag Vallat.  All rights reserved.
@@ -173,7 +173,6 @@ cgtwelveattach(parent, self, args)
 	int isconsole = 0;
 	char *ps;
 
-	sc->sc_sunfb.sf_flags = self->dv_cfdata->cf_flags & FB_USERMASK;
 	node = ca->ca_ra.ra_node;
 
 	printf(": %s", getpropstring(node, "model"));

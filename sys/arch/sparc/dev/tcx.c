@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcx.c,v 1.16 2003/04/06 17:02:32 miod Exp $	*/
+/*	$OpenBSD: tcx.c,v 1.17 2003/06/06 19:42:47 miod Exp $	*/
 /*	$NetBSD: tcx.c,v 1.8 1997/07/29 09:58:14 fair Exp $ */
 
 /*
@@ -213,8 +213,6 @@ tcxattach(parent, self, args)
 	int isconsole = 0;
 	char *nam = NULL;
 
-	sc->sc_sunfb.sf_flags = self->dv_cfdata->cf_flags & FB_USERMASK;
-
 	node = ca->ca_ra.ra_node;
 	nam = getpropstring(node, "model");
 	printf(": %s\n", nam);
@@ -276,12 +274,11 @@ tcxattach(parent, self, args)
 	tcx_stdscreen.ncols = sc->sc_sunfb.sf_ro.ri_cols;
 	tcx_stdscreen.textops = &sc->sc_sunfb.sf_ro.ri_ops;
 
-	if (ISSET(sc->sc_sunfb.sf_flags, TCX_INTR)) {
-		sc->sc_ih.ih_fun = tcx_intr;
-		sc->sc_ih.ih_arg = sc;
-		intr_establish(ca->ca_ra.ra_intr[0].int_pri, &sc->sc_ih,
-		    IPL_FB);
-	}
+#if 0
+	sc->sc_ih.ih_fun = tcx_intr;
+	sc->sc_ih.ih_arg = sc;
+	intr_establish(ca->ca_ra.ra_intr[0].int_pri, &sc->sc_ih, IPL_FB);
+#endif
 
 	if (isconsole) {
 		fbwscons_console_init(&sc->sc_sunfb, &tcx_stdscreen, -1,
@@ -355,12 +352,11 @@ tcx_ioctl(dev, cmd, data, flags, p)
 		error = bt_putcmap(&sc->sc_cmap, cm);
 		if (error)
 			return (error);
-		if (ISSET(sc->sc_sunfb.sf_flags, TCX_INTR)) {
-			tcx_loadcmap_deferred(sc, cm->index, cm->count);
-		} else {
-			bt_loadcmap(&sc->sc_cmap, sc->sc_bt,
-			    cm->index, cm->count, 1);
-		}
+#if 0
+		tcx_loadcmap_deferred(sc, cm->index, cm->count);
+#else
+		bt_loadcmap(&sc->sc_cmap, sc->sc_bt, cm->index, cm->count, 1);
+#endif
 		break;
 
 	case WSDISPLAYIO_SMODE:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: agten.c,v 1.2 2003/03/06 22:17:49 miod Exp $	*/
+/*	$OpenBSD: agten.c,v 1.3 2003/06/06 19:42:47 miod Exp $	*/
 /*
  * Copyright (c) 2002, 2003, Miodrag Vallat.
  * All rights reserved.
@@ -157,14 +157,8 @@ struct cfdriver agten_cd = {
 int
 agtenmatch(struct device *parent, void *vcf, void *aux)
 {
-	struct cfdata *cf = vcf;
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
-
-	/*
-	 * Mask out invalid flags from the user.
-	 */
-	cf->cf_flags &= FB_USERMASK;
 
 	if (strcmp(ra->ra_name, "PFU,aga") != 0)
 		return (0);
@@ -180,8 +174,6 @@ agtenattach(struct device *parent, struct device *self, void *args)
 	struct wsemuldisplaydev_attach_args waa;
 	int node, isconsole;
 	char *nam;
-
-	sc->sc_sunfb.sf_flags = self->dv_cfdata->cf_flags;
 
 	node = ca->ca_ra.ra_node;
 	nam = getpropstring(node, "model");

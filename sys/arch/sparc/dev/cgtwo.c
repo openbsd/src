@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgtwo.c,v 1.27 2003/06/02 23:27:54 millert Exp $	*/
+/*	$OpenBSD: cgtwo.c,v 1.28 2003/06/06 19:42:47 miod Exp $	*/
 /*	$NetBSD: cgtwo.c,v 1.22 1997/05/24 20:16:12 pk Exp $ */
 
 /*
@@ -173,11 +173,6 @@ cgtwomatch(parent, vcf, aux)
 	struct romaux *ra = &ca->ca_ra;
 	caddr_t tmp;
 
-	/*
-	 * Mask out invalid flags from the user.
-	 */
-	cf->cf_flags &= FB_USERMASK;
-
 	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
 		return (0);
 
@@ -207,8 +202,6 @@ cgtwoattach(parent, self, args)
 	int node = 0;
 	int isconsole = 0;
 	char *nam = NULL;
-
-	sc->sc_sunfb.sf_flags = self->dv_cfdata->cf_flags;
 
 	switch (ca->ca_bustype) {
 	case BUS_VME16:

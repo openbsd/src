@@ -1,4 +1,4 @@
-/*	$OpenBSD: zx.c,v 1.2 2003/03/09 02:30:02 miod Exp $	*/
+/*	$OpenBSD: zx.c,v 1.3 2003/06/06 19:42:47 miod Exp $	*/
 /*	$NetBSD: zx.c,v 1.5 2002/10/02 16:52:46 thorpej Exp $	*/
 
 /*
@@ -200,15 +200,9 @@ struct cfdriver zx_cd = {
 int
 zx_match(struct device *parent, void *vcf, void *aux)
 {
-	struct cfdata *cf = vcf;
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
 	
-	/*
-	 * Mask out invalid flags from the user.
-	 */
-	cf->cf_flags &= FB_USERMASK;
-
 	if (strcmp(ra->ra_name, "SUNW,leo") == 0)
 		return (1);
 
@@ -225,7 +219,6 @@ zx_attach(struct device *parent, struct device *self, void *args)
 	int node, isconsole = 0;
 	const char *nam;
 
-	sc->sc_sunfb.sf_flags = self->dv_cfdata->cf_flags;
 	ri = &sc->sc_sunfb.sf_ro;
 	node = ca->ca_ra.ra_node;
 

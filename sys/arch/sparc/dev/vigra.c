@@ -1,4 +1,4 @@
-/*	$OpenBSD: vigra.c,v 1.7 2003/05/25 21:43:09 miod Exp $	*/
+/*	$OpenBSD: vigra.c,v 1.8 2003/06/06 19:42:47 miod Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, Miodrag Vallat.
@@ -242,14 +242,8 @@ struct cfdriver vigra_cd = {
 int
 vigramatch(struct device *parent, void *vcf, void *aux)
 {
-	struct cfdata *cf = vcf;
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
-
-	/*
-	 * Mask out invalid flags from the user.
-	 */
-	cf->cf_flags &= FB_USERMASK;
 
 	if (strcmp("vs10", ra->ra_name) != 0 &&
 	    strcmp("vs11", ra->ra_name) != 0 &&
@@ -270,8 +264,6 @@ vigraattach(struct device *parent, struct device *self, void *args)
 	struct wsemuldisplaydev_attach_args waa;
 	int node, row, isconsole = 0;
 	char *nam;
-
-	sc->sc_sunfb.sf_flags = self->dv_cfdata->cf_flags;
 
 	node = ca->ca_ra.ra_node;
 	nam = getpropstring(node, "model");

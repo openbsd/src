@@ -1,4 +1,4 @@
-/*	$OpenBSD: p9100.c,v 1.16 2003/06/05 22:32:09 miod Exp $	*/
+/*	$OpenBSD: p9100.c,v 1.17 2003/06/06 19:42:47 miod Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -243,14 +243,8 @@ p9100match(parent, vcf, aux)
 	struct device *parent;
 	void *vcf, *aux;
 {
-	struct cfdata *cf = vcf;
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
-
-	/*
-	 * Mask out invalid flags from the user.
-	 */
-	cf->cf_flags &= FB_USERMASK;
 
 	if (strcmp("p9100", ra->ra_name))
 		return (0);
@@ -280,7 +274,6 @@ p9100attach(parent, self, args)
 	}
 #endif
 
-	sc->sc_sunfb.sf_flags = self->dv_cfdata->cf_flags;
 	sc->sc_phys = ca->ca_ra.ra_reg[P9100_REG_VRAM];
 
 	sc->sc_ctl = mapiodev(&(ca->ca_ra.ra_reg[P9100_REG_CTL]), 0,

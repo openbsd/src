@@ -1,4 +1,4 @@
-/*	$OpenBSD: mgx.c,v 1.3 2003/05/18 20:29:16 miod Exp $	*/
+/*	$OpenBSD: mgx.c,v 1.4 2003/06/06 19:42:47 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -168,7 +168,6 @@ mgxattach(struct device *parent, struct device *self, void *args)
 	int node, fbsize;
 	int isconsole;
 
-	sc->sc_sunfb.sf_flags = self->dv_cfdata->cf_flags & FB_USERMASK;
 	node = ca->ca_ra.ra_node;
 
 	printf(": %s", getpropstring(node, "model"));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcxreg.h,v 1.3 2002/10/01 20:55:14 miod Exp $	*/
+/*	$OpenBSD: tcxreg.h,v 1.4 2003/06/06 19:42:47 miod Exp $	*/
 /*	$NetBSD: tcxreg.h,v 1.1 1996/06/19 13:17:35 pk Exp $ */
 
 /*
@@ -36,11 +36,6 @@
  *  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  */
-
-/*
- * User flags for tcx.
- */
-#define	TCX_INTR		0x00000002	/* use retrace interrupt */
 
 /*
  * A TCX is composed of numerous groups of control registers, all with TLAs:

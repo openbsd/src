@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgfourteen.c,v 1.24 2003/04/28 13:19:58 miod Exp $	*/
+/*	$OpenBSD: cgfourteen.c,v 1.25 2003/06/06 19:42:47 miod Exp $	*/
 /*	$NetBSD: cgfourteen.c,v 1.7 1997/05/24 20:16:08 pk Exp $ */
 
 /*
@@ -239,8 +239,6 @@ cgfourteenattach(parent, self, args)
 	u_int32_t *lut;
 	int isconsole = 0;
 	char *nam;
-
-	sc->sc_sunfb.sf_flags = self->dv_cfdata->cf_flags & FB_USERMASK;
 
 	printf(": ");
 	node = ca->ca_ra.ra_node;
