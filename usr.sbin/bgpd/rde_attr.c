@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.22 2004/03/12 18:09:23 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.23 2004/03/12 21:14:35 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -907,7 +907,10 @@ aspath_strlen(void *data, u_int16_t len)
 		seg_size = 2 + 2 * seg_len;
 
 		if (seg_type == AS_SET)
-			total_size += 2;
+			if (total_size != 0)
+				total_size += 3;
+			else
+				total_size += 2;
 		else if (total_size != 0)
 			total_size += 1;
 
