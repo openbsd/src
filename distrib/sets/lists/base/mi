@@ -55,6 +55,7 @@
 ./etc/sliphome
 ./etc/termcap
 ./etc/uucp
+./etc/mail
 ./home
 ./mnt
 ./root

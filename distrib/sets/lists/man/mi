@@ -1666,3 +1666,7 @@
 ./usr/share/man/man4/alpha
 ./usr/share/man/man4/pmax
 ./usr/share/man/man4/powerpc
+./usr/share/man/cat4/isa.0
+./usr/share/man/cat4/pci.0
+./usr/share/man/cat4/umass.0
+./usr/share/man/cat8/UKC.0

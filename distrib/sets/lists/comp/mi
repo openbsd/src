@@ -1211,7 +1211,6 @@
 ./usr/include/uvm/uvm_stat.h
 ./usr/include/uvm/uvm_swap.h
 ./usr/include/uvm/uvm_swap_encrypt.h
-./usr/include/uvm/uvm_uio.h
 ./usr/include/uvm/uvm_vnode.h
 ./usr/include/varargs.h
 ./usr/include/vis.h
@@ -3774,3 +3773,5 @@
 ./usr/share/man/cat3/sqr.0
 ./usr/include/dev/ic/anreg.h
 ./usr/include/dev/ic/anvar.h
+./usr/share/man/cat3/srandomdev.0
+./usr/include/dev/usb/ucomvar.h
