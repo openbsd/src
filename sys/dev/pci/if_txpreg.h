@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txpreg.h,v 1.17 2001/04/15 21:03:22 jason Exp $ */
+/*	$OpenBSD: if_txpreg.h,v 1.18 2001/04/30 05:04:08 jason Exp $ */
 
 /*
  * Copyright (c) 2001 Aaron Campbell <aaron@monkey.org>.
@@ -248,7 +248,8 @@ struct txp_tx_desc {
 #define	TX_PFLAGS_UDPCKSUM	0x00000080	/* udp checksum */
 #define	TX_PFLAGS_PADFRAME	0x00000100	/* pad frame */
 #define	TX_PFLAGS_VLANTAG_M	0x000ff000	/* vlan tag mask */
-#define	TX_PFLAGS_VLANPRI_M	0x00300000	/* vlan priority mask */
+#define	TX_PFLAGS_VLANPRI_M	0x00700000	/* vlan priority mask */
+#define	TX_PFLAGS_VLANTAG_S	16		/* amount to shift tag */
 
 struct txp_rx_desc {
 	volatile u_int8_t	rx_flags;	/* type/descriptor flags */
@@ -485,7 +486,7 @@ struct txp_hostvar {
 #define	STAT_ROM_EEPROM_LOAD		0x00000002
 #define	STAT_WAITING_FOR_BOOT		0x00000007
 #define	STAT_RUNNING			0x00000009
-#define	STAT_WAITING_FOR_HOST_REQUEST	0x0000000D
+#define	STAT_WAITING_FOR_HOST_REQUEST	0x0000000d
 #define	STAT_WAITING_FOR_SEGMENT	0x00000010
 #define	STAT_SLEEPING			0x00000011
 #define	STAT_HALTED			0x00000014
@@ -538,11 +539,6 @@ struct txp_rx_ring {
 	struct txp_rx_desc	*r_desc;	/* base address of descs */
 	volatile u_int32_t	*r_roff;	/* hv read offset ptr */
 	volatile u_int32_t	*r_woff;	/* hv write offset ptr */
-};
-
-/* Software transmit list */
-struct txp_swtx {
-	struct mbuf		*tx_mbuf;
 };
 
 struct txp_softc {
