@@ -30,10 +30,13 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
-export PATH
-TERM=vt200
-export TERM
+export PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
+export HISTFILE=/.sh_history
+export TERM=vt200
+
+umask 022
+
+set -o emacs # emacs-style command line editing
 
 # set up some sane defaults
 echo 'erase ^?, werase ^H, kill ^U, intr ^C'
@@ -47,5 +50,4 @@ echo ''
 mount -u /dev/rd0a /
 
 # run the installation script.
-umask 022
 install

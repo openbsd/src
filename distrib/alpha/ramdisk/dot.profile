@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: dot.profile,v 1.4 1997/07/31 17:10:13 millert Exp $
+#	$OpenBSD: dot.profile,v 1.5 1997/10/20 22:23:59 millert Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -30,10 +30,12 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
-export PATH
+export PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
+export HISTFILE=/.sh_history
 
 umask 022
+
+set -o emacs # emacs-style command line editing
 
 # XXX
 # the TERM/EDITOR stuff is really well enough parameterized to be moved

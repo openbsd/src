@@ -30,12 +30,13 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
-export PATH
-TERM=vt220
-export TERM
+export PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
+export HISTFILE=/.sh_history
+export TERM=vt220
 
 umask 022
+
+set -o emacs # emacs-style command line editing
 
 if [ "X${DONEPROFILE}" = "X" ]; then
 	DONEPROFILE=YES

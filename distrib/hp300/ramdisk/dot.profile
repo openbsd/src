@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: dot.profile,v 1.4 1997/10/13 07:47:21 downsj Exp $
+#	$OpenBSD: dot.profile,v 1.5 1997/10/20 22:24:06 millert Exp $
 #	$NetBSD: dot.profile,v 1.1 1995/07/18 04:13:09 briggs Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -31,12 +31,14 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
-export PATH
-TERM=hp300h
-export TERM
-HOME=/
-export HOME
+export PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
+export HISTFILE=/.sh_history
+export TERM=hp300h
+export HOME=/
+
+umask 022
+
+set -o emacs # emacs-style command line editing
 
 TMPWRITEABLE=/tmp/writeable
 
@@ -61,5 +63,4 @@ fi
 . /.instutils
 
 # run the installation script.
-umask 022
 install

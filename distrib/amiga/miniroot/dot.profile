@@ -1,4 +1,4 @@
-#	$OpenBSD: dot.profile,v 1.2 1997/05/13 16:02:44 niklas Exp $
+#	$OpenBSD: dot.profile,v 1.3 1997/10/20 22:24:01 millert Exp $
 #	$NetBSD: dot.profile,v 1.1 1995/12/18 22:54:43 pk Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
@@ -31,10 +31,12 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
-export PATH
+export PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
+export HISTFILE=/.sh_history
 
 umask 022
+
+set -o emacs # emacs-style command line editing
 
 # XXX
 # the TERM/EDITOR stuff is really well enough parameterized to be moved
