@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.52 2003/02/24 02:17:22 deraadt Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.53 2003/05/01 21:13:05 tedu Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -113,6 +113,7 @@ struct vnode {
 	} v_un;
 
 	struct  simplelock v_interlock;		/* lock on usecount and flag */
+	struct 	lock v_lock;
 	struct  lock *v_vnlock;			/* used for non-locking fs's */
 	enum	vtagtype v_tag;			/* type of underlying data */
 	void 	*v_data;			/* private data for fs */
@@ -136,6 +137,7 @@ struct vnode {
 #define	VXLOCK		0x0100	/* vnode is locked to change underlying type */
 #define	VXWANT		0x0200	/* process is waiting for vnode */
 #define	VALIASED	0x0800	/* vnode has an alias */
+#define VLAYER		0x2000	/* vnode is on a layer file system */
 #define VLOCKSWORK	0x4000	/* FS supports locking discipline */
 
 /*
@@ -286,12 +288,20 @@ extern	struct vattr va_null;		/* predefined null vattr structure */
  */
 #define VDESC_MAX_VPS		16
 /* Low order 16 flag bits are reserved for willrele flags for vp arguments. */
-#define VDESC_VP0_WILLRELE	0x0001
-#define VDESC_VP1_WILLRELE	0x0002
-#define VDESC_VP2_WILLRELE	0x0004
-#define VDESC_VP3_WILLRELE	0x0008
-#define VDESC_NOMAP_VPP		0x0100
-#define VDESC_VPP_WILLRELE	0x0200
+#define VDESC_VP0_WILLRELE      0x00000001
+#define VDESC_VP1_WILLRELE      0x00000002
+#define VDESC_VP2_WILLRELE      0x00000004
+#define VDESC_VP3_WILLRELE      0x00000008
+#define VDESC_VP0_WILLUNLOCK    0x00000100
+#define VDESC_VP1_WILLUNLOCK    0x00000200
+#define VDESC_VP2_WILLUNLOCK    0x00000400
+#define VDESC_VP3_WILLUNLOCK    0x00000800
+#define VDESC_VP0_WILLPUT       0x00000101
+#define VDESC_VP1_WILLPUT       0x00000202
+#define VDESC_VP2_WILLPUT       0x00000404
+#define VDESC_VP3_WILLPUT       0x00000808
+#define VDESC_NOMAP_VPP         0x00010000
+#define VDESC_VPP_WILLRELE      0x00020000
 
 /*
  * VDESC_NO_OFFSET is used to identify the end of the offset list

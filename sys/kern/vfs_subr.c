@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.89 2003/04/06 18:54:20 ho Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.90 2003/05/01 21:13:05 tedu Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -409,12 +409,19 @@ getnewvnode(tag, mp, vops, vpp)
 		simple_unlock(&vnode_free_list_slock);
 		vp = pool_get(&vnode_pool, PR_WAITOK);
 		bzero((char *)vp, sizeof *vp);
+		simple_lock_init(&vp->v_interlock);
 		numvnodes++;
 	} else {
 		for (vp = TAILQ_FIRST(listhd); vp != NULLVP;
 		    vp = TAILQ_NEXT(vp, v_freelist)) {
-			if (simple_lock_try(&vp->v_interlock))
-				break;
+			if (simple_lock_try(&vp->v_interlock)) {
+				if ((vp->v_flag & VLAYER) == 0)
+					break;
+				if (VOP_ISLOCKED(vp) == 0)
+					break;
+				else
+					simple_unlock(&vp->v_interlock);
+			}
 		}
 		/*
 		 * Unless this is a bad time of the month, at most
@@ -457,6 +464,8 @@ getnewvnode(tag, mp, vops, vpp)
 	}
 	vp->v_type = VNON;
 	cache_purge(vp);
+	vp->v_vnlock = NULL;
+	lockinit(&vp->v_lock, PVFS, "v_lock", 0, 0);
 	vp->v_tag = tag;
 	vp->v_op = vops;
 	insmntque(vp, mp);
@@ -633,6 +642,8 @@ loop:
 	VOP_UNLOCK(vp, 0, p);
 	simple_lock(&vp->v_interlock);
 	vclean(vp, 0, p);
+	vp->v_vnlock = NULL;
+	lockinit(&vp->v_lock, PVFS, "v_lock", 0, 0);
 	vp->v_op = nvp->v_op;
 	vp->v_tag = nvp->v_tag;
 	nvp->v_type = VNON;
@@ -1060,12 +1071,6 @@ vclean(vp, flags, p)
 		simple_unlock(&vp->v_interlock);
 	}
 	cache_purge(vp);
-	if (vp->v_vnlock) {
-		if ((vp->v_vnlock->lk_flags & LK_DRAINED) == 0)
-			vprint("vclean: lock not drained", vp);
-		FREE(vp->v_vnlock, M_VNODE);
-		vp->v_vnlock = NULL;
-	}
 
 	/*
 	 * Done with purge, notify sleepers of the grim news.

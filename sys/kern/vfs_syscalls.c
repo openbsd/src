@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.100 2003/04/11 01:48:41 tedu Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.101 2003/05/01 21:13:05 tedu Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -2603,7 +2603,7 @@ sys_revoke(p, v, retval)
 	if (p->p_ucred->cr_uid != vattr.va_uid &&
 	    (error = suser(p->p_ucred, &p->p_acflag)))
 		goto out;
-	if (vp->v_usecount > 1 || (vp->v_flag & VALIASED))
+	if (vp->v_usecount > 1 || (vp->v_flag & (VALIASED | VLAYER)))
 		VOP_REVOKE(vp, REVOKEALL);
 out:
 	vrele(vp);
