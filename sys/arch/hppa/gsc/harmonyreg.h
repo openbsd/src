@@ -1,4 +1,4 @@
-/*	$OpenBSD: harmonyreg.h,v 1.2 2003/01/30 01:23:24 jason Exp $	*/
+/*	$OpenBSD: harmonyreg.h,v 1.3 2003/02/05 08:47:05 jason Exp $	*/
 
 /*
  * Copyright (c) 2003 Jason L. Wright (jason@thought.net)
@@ -35,6 +35,9 @@
  * Harmony CS4215/AD1849 register definitions based on:
  *  "712 I/O Subsystem ERS", Revision 1.1, 12 February 1993
  */
+
+/* harmony always uses a 4K buffer */
+#define	HARMONY_BUFSIZE			4096
 
 #define	HARMONY_NREGS	0x40
 
@@ -121,6 +124,12 @@
 #define	GAINCTL_OUTPUT_RIGHT_M	0x0000003f	/* right out gain (inverted) */
 #define	GAINCTL_OUTPUT_RIGHT_S	0
 #define	GAINCTL_OUTPUT_BITS	6
+
+/* HARMONY_PCURADD */
+#define	PCURADD_BUFMASK		(~(HARMONY_BUFSIZE - 1))
+
+/* HARMONY_RCURADD */
+#define	PCURADD_BUFMASK		(~(HARMONY_BUFSIZE - 1))
 
 /* HARMONY_DSTATUS */
 #define	DSTATUS_IE		0x80000000	/* interrupt enable */
