@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.70 2001/09/29 03:28:11 jason Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.71 2001/09/29 04:46:49 jason Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -3022,8 +3022,7 @@ natsemi_chip_map(sc, pa)
 
 	printf(": DMA");
 	pciide_mapreg_dma(sc, pa);
-	sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
-	    WDC_CAPABILITY_MODE;
+	sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA16;
 
 	if (sc->sc_dma_ok) {
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_IRQACK;
