@@ -1,4 +1,4 @@
-/* $OpenBSD: locore.s,v 1.24 2004/07/03 18:18:26 deraadt Exp $ */
+/* $OpenBSD: locore.s,v 1.25 2004/07/03 18:24:42 deraadt Exp $ */
 /* $NetBSD: locore.s,v 1.94 2001/04/26 03:10:44 ross Exp $ */
 
 /*-
@@ -1640,39 +1640,3 @@ EXPORT(esym)
 
 
 /**************************************************************************/
-From deraadt Sat Jul  3 12:18:12 2004
-To: alpha/locore.s
-Subject: {e,}intr{names,cnt} are extinct
-
-Index: alpha/locore.s
-===================================================================
-RCS file: /cvs/src/sys/arch/alpha/alpha/locore.s,v
-retrieving revision 1.23
-diff -u -r1.23 locore.s
---- alpha/locore.s	28 Jun 2004 02:28:42 -0000	1.23
-+++ alpha/locore.s	3 Jul 2004 18:01:10 -0000
-@@ -1455,23 +1455,6 @@
- 	RET
- END(copyerr)
- 
--/**************************************************************************/
--
--	.data
--/* Some bogus data, to keep vmstat happy, for now. */
--EXPORT(intrnames)
--	.type intrnames,@object
--EXPORT(eintrnames)
--	.type eintrnames,@object
--	.align 3
--EXPORT(intrcnt)
--	.type intrcnt,@object
--EXPORT(eintrcnt)
--	.type eintrcnt,@object
--	.text
--
--/**************************************************************************/
--
- /*
-  * console 'restart' routine to be placed in HWRPB.
-  */
-
