@@ -51,6 +51,7 @@
 ./etc/isakmpd
 ./etc/isakmpd/ca
 ./etc/isakmpd/certs
+./etc/isakmpd/crls
 ./etc/isakmpd/keynote
 ./etc/isakmpd/private
 ./etc/kerberosIV
@@ -2039,7 +2040,6 @@
 ./usr/share/misc/man.template
 ./usr/share/misc/map3270
 ./usr/share/misc/mdoc.template
-./usr/share/misc/more.help
 ./usr/share/misc/na.phone
 ./usr/share/misc/scsi_modes
 ./usr/share/misc/termcap
