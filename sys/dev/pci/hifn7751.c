@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.23 2000/03/31 05:49:08 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.24 2000/04/04 20:16:33 jason Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -33,6 +33,10 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * Driver for the Hi/Fn 7751 encryption processor.
  */
 
 #include <sys/param.h>
@@ -92,7 +96,7 @@ u_int32_t hifn_next_signature __P((u_int a, u_int cnt));
 int	hifn_newsession __P((u_int32_t *, struct cryptoini *));
 int	hifn_freesession __P((u_int32_t));
 int	hifn_process __P((struct cryptop *));
-void	hifn_callback __P((struct hifn_command *));
+void	hifn_callback __P((struct hifn_command *, u_int8_t *));
 int	hifn_crypto __P((struct hifn_softc *, hifn_command_t *));
 
 struct hifn_stats {
@@ -274,13 +278,10 @@ hifn_attach(parent, self, aux)
 		    hifn_newsession, hifn_freesession, hifn_process);
 		/*FALLTHROUGH*/
 	case HIFN_PUSTAT_ENA_1:
-#if 0
-		/* Can't do md5/sha1 yet */
 		crypto_register(sc->sc_cid, CRYPTO_MD5_HMAC96,
 		    hifn_newsession, hifn_freesession, hifn_process);
 		crypto_register(sc->sc_cid, CRYPTO_SHA1_HMAC96,
 		    NULL, NULL, NULL);
-#endif
 		crypto_register(sc->sc_cid, CRYPTO_DES_CBC,
 		    hifn_newsession, hifn_freesession, hifn_process);
 	}
@@ -720,7 +721,7 @@ hifn_write_command(const struct hifn_command_buf_data *cmd_data,
 	}
 
 	/* write MAC key */
-	if (mac_cmd->masks & HIFN_MAC_NEW_KEY) {
+	if (mac_cmd->masks & HIFN_MAC_CMD_NEW_KEY) {
 		bcopy(cmd_data->mac, command_buf_pos, HIFN_MAC_KEY_LENGTH);
 		command_buf_pos += HIFN_MAC_KEY_LENGTH;
 	}
@@ -873,7 +874,7 @@ hifn_build_command(const struct hifn_command *cmd,
 		 * on encodes, and order auth/encryption engines as needed by
 		 * IPSEC
 		 */
-		mac_cmd->masks |= HIFN_MAC_CMD_MODE_HMAC | HIFN_MAC_CMD_APPEND |
+		mac_cmd->masks |= HIFN_MAC_CMD_MODE_HMAC | HIFN_MAC_CMD_RESULT |
 		    HIFN_MAC_CMD_POS_IPSEC;
 
 		/*
@@ -888,8 +889,6 @@ hifn_build_command(const struct hifn_command *cmd,
 		 */
 		mac_cmd->header_skip = cmd->mac_header_skip;
 		mac_cmd->source_count = cmd->mac_process_len;
-		if (flags & HIFN_DECODE)
-			mac_cmd->source_count -= mac_length;
 	}
 
 	if (HIFN_USING_CRYPT(flags)) {
@@ -915,9 +914,6 @@ hifn_build_command(const struct hifn_command *cmd,
 		 */
 		crypt_cmd->header_skip = cmd->crypt_header_skip;
 		crypt_cmd->source_count = cmd->crypt_process_len;
-		if (flags & HIFN_DECODE)
-			crypt_cmd->source_count -= mac_length;
-
 
 #ifdef HIFN_COMMAND_CHECKING
 		if (crypt_cmd->source_count % 8 != 0) {
@@ -929,7 +925,6 @@ hifn_build_command(const struct hifn_command *cmd,
 	}
 	cmd_buf_data->iv = cmd->iv;
 
-
 #if 0
 	printf("hifn: command parameters"
 	    " -- session num %u"
@@ -937,10 +932,10 @@ hifn_build_command(const struct hifn_command *cmd,
 	    " -- base t.d.c: %u"
 	    " -- mac h.s. %u  s.c. %u"
 	    " -- crypt h.s. %u  s.c. %u\n",
-	    base_cmd->session_num, base_cmd->total_source_count,
-	    base_cmd->total_dest_count, mac_cmd->header_skip,
-	    mac_cmd->source_count, crypt_cmd->header_skip,
-	    crypt_cmd->source_count);
+	    base_cmd->session_num,
+	    base_cmd->total_source_count, base_cmd->total_dest_count,
+	    mac_cmd->header_skip, mac_cmd->source_count,
+	    crypt_cmd->header_skip, crypt_cmd->source_count);
 #endif
 
 	return 0;		/* success */
@@ -1185,6 +1180,7 @@ hifn_intr(arg)
 
 	while (dma->resu > 0) {
 		struct hifn_command *cmd;
+		u_int8_t *macbuf = NULL;
 
 		cmd = dma->hifn_commands[dma->resk];
 
@@ -1192,15 +1188,13 @@ hifn_intr(arg)
 		if (dma->resr[dma->resk].l & HIFN_D_VALID)
 			break;
 
-		if (HIFN_USING_MAC(cmd->flags) && (cmd->flags & HIFN_DECODE)) {
-			u_int8_t *result_buf = dma->result_bufs[dma->resk];
-	
-			cmd->result_flags = (result_buf[8] & 0x2) ?
-			    HIFN_MAC_BAD : 0;
+		if (HIFN_USING_MAC(cmd->flags)) {
+			macbuf = dma->result_bufs[dma->resk];
+			macbuf += 12;
 		}
-	
+
 		/* position is done, notify producer with callback */
-		cmd->dest_ready_callback(cmd);
+		cmd->dest_ready_callback(cmd, macbuf);
 	
 		if (++dma->resk == HIFN_D_RES_RSIZE)
 			dma->resk = 0;
@@ -1314,7 +1308,7 @@ hifn_process(crp)
 	struct hifn_command *cmd = NULL;
 	int card, session, err;
 	struct hifn_softc *sc;
-	struct cryptodesc *crd;
+	struct cryptodesc *crd1, *crd2, *maccrd, *enccrd;
 
 	if (crp == NULL || crp->crp_callback == NULL) {
 		hifnstats.hst_invalid++;
@@ -1351,74 +1345,100 @@ hifn_process(crp)
 		goto errout;	/* XXX only handle mbufs right now */
 	}
 
-	for (crd = crp->crp_desc; crd != NULL; crd = crd->crd_next) {
-		if (crd->crd_flags & CRD_F_ENCRYPT)
-			cmd->flags |= HIFN_ENCODE;
-		else
-			cmd->flags |= HIFN_DECODE;
+	crd1 = crp->crp_desc;
+	if (crd1 == NULL) {
+		err = EINVAL;
+		goto errout;
+	}
+	crd2 = crd1->crd_next;
 
-		if (crd->crd_alg == CRYPTO_MD5_HMAC96) {
-			/* XXX not right */
-			cmd->flags |= HIFN_MAC_MD5 | HIFN_MAC_TRUNC |
-			    HIFN_MAC_NEW_KEY;
-			cmd->mac_header_skip = crd->crd_skip;
-			cmd->mac_process_len = crd->crd_len;
-			cmd->mac = crd->crd_key;
-			cmd->mac_len = crd->crd_klen >> 3;
+	if (crd2 == NULL) {
+		if (crd1->crd_alg == CRYPTO_MD5_HMAC96 ||
+		    crd1->crd_alg == CRYPTO_SHA1_HMAC96) {
+			maccrd = crd1;
+			enccrd = NULL;
+			cmd->flags |= HIFN_ENCODE | HIFN_MAC_TRUNC |
+				HIFN_MAC_NEW_KEY;
 		}
-		else if (crd->crd_alg == CRYPTO_SHA1_HMAC96) {
-			/* XXX not right */
-			cmd->flags |= HIFN_MAC_SHA1 | HIFN_MAC_TRUNC |
-			    HIFN_MAC_NEW_KEY;
-			cmd->mac_header_skip = crd->crd_skip;
-			cmd->mac_process_len = crd->crd_len;
-			cmd->mac = crd->crd_key;
-			cmd->mac_len = crd->crd_klen >> 3;
-		}
-		else if (crd->crd_alg == CRYPTO_DES_CBC) {
-			if ((crd->crd_flags &
-			     (CRD_F_ENCRYPT | CRD_F_IV_PRESENT)) ==
-			    CRD_F_ENCRYPT) {
-				get_random_bytes(cmd->iv, HIFN_IV_LENGTH);
-				m_copyback(cmd->src_m, crd->crd_inject,
-				    HIFN_IV_LENGTH, cmd->iv);
-			}
+		else if (crd1->crd_alg == CRYPTO_DES_CBC ||
+			 crd1->crd_alg == CRYPTO_3DES_CBC) {
+			if (crd1->crd_flags & CRD_F_ENCRYPT)
+				cmd->flags |= HIFN_ENCODE | HIFN_CRYPT_NEW_KEY;
 			else
-				m_copydata(cmd->src_m, crd->crd_inject,
-				    HIFN_IV_LENGTH, cmd->iv);
-
-			cmd->flags |= HIFN_CRYPT_DES | HIFN_CRYPT_NEW_KEY;
-			cmd->crypt_header_skip = crd->crd_skip;
-			cmd->crypt_process_len = crd->crd_len;
-			cmd->ck = crd->crd_key;
-			cmd->ck_len = crd->crd_klen >> 3;
-		}
-		else if (crd->crd_alg == CRYPTO_3DES_CBC) {
-			if ((crd->crd_flags &
-			     (CRD_F_ENCRYPT | CRD_F_IV_PRESENT)) ==
-			    CRD_F_IV_PRESENT) {
-				get_random_bytes(cmd->iv, HIFN_IV_LENGTH);
-				m_copyback(cmd->src_m, crd->crd_inject,
-				    HIFN_IV_LENGTH, cmd->iv);
-			}
-			else
-				m_copydata(cmd->src_m, crd->crd_inject,
-				    HIFN_IV_LENGTH, cmd->iv);
-
-			cmd->flags |= HIFN_CRYPT_3DES | HIFN_CRYPT_NEW_KEY;
-			cmd->crypt_header_skip = crd->crd_skip;
-			cmd->crypt_process_len = crd->crd_len;
-			cmd->ck = crd->crd_key;
-			cmd->ck_len = crd->crd_klen >> 3;
+				cmd->flags |= HIFN_DECODE | HIFN_CRYPT_NEW_KEY;
+			maccrd = NULL;
+			enccrd = crd1;
 		}
 		else {
 			err = EINVAL;
 			goto errout;
 		}
 	}
+	else {
+		if ((crd1->crd_alg == CRYPTO_MD5_HMAC96 ||
+		    crd1->crd_alg == CRYPTO_SHA1_HMAC96) &&
+		    (crd2->crd_alg == CRYPTO_DES_CBC ||
+			crd2->crd_alg == CRYPTO_3DES_CBC) &&
+		    ((crd2->crd_flags & CRD_F_ENCRYPT) == 0)) {
+			cmd->flags |= HIFN_DECODE | HIFN_MAC_TRUNC |
+			    HIFN_MAC_NEW_KEY | HIFN_CRYPT_NEW_KEY;
+			maccrd = crd1;
+			enccrd = crd2;
+		}
+		else if ((crd1->crd_alg == CRYPTO_DES_CBC ||
+		    crd1->crd_alg == CRYPTO_3DES_CBC) &&
+		    (crd2->crd_alg == CRYPTO_MD5_HMAC96 ||
+			crd2->crd_alg == CRYPTO_SHA1_HMAC96) &&
+		    (crd1->crd_flags & CRD_F_ENCRYPT)) {
+			cmd->flags |= HIFN_ENCODE | HIFN_MAC_TRUNC |
+			    HIFN_MAC_NEW_KEY | HIFN_CRYPT_NEW_KEY;
+			enccrd = crd1;
+			maccrd = crd2;
+		}
+		else {
+			/*
+			 * We cannot order the 7751 as requested
+			 */
+			err = EINVAL;
+			goto errout;
+		}
+	}
 
-	cmd->private_data = (u_long)crp;
+	if (enccrd) {
+		if ((enccrd->crd_flags & (CRD_F_ENCRYPT | CRD_F_IV_PRESENT)) ==
+		    CRD_F_ENCRYPT) {
+			get_random_bytes(cmd->iv, HIFN_IV_LENGTH);
+			m_copyback(cmd->src_m, enccrd->crd_inject,
+				   HIFN_IV_LENGTH, cmd->iv);
+		}
+		else
+			m_copydata(cmd->src_m, enccrd->crd_inject,
+				   HIFN_IV_LENGTH, cmd->iv);
+
+		if (enccrd->crd_alg == CRYPTO_DES_CBC)
+			cmd->flags |= HIFN_CRYPT_DES;
+		else
+			cmd->flags |= HIFN_CRYPT_3DES;
+		cmd->crypt_header_skip = enccrd->crd_skip;
+		cmd->crypt_process_len = enccrd->crd_len;
+		cmd->ck = enccrd->crd_key;
+		cmd->ck_len = enccrd->crd_klen >> 3;
+	}
+
+	if (maccrd) {
+		if (maccrd->crd_alg == CRYPTO_MD5_HMAC96)
+			cmd->flags |= HIFN_MAC_MD5;
+		else
+			cmd->flags |= HIFN_MAC_SHA1;
+		cmd->mac_header_skip = maccrd->crd_skip;
+		cmd->mac_process_len = maccrd->crd_len;
+		bcopy(maccrd->crd_key, cmd->mac, maccrd->crd_klen >> 3);
+		bzero(cmd->mac + (maccrd->crd_klen >> 3),
+		      HIFN_MAC_KEY_LENGTH - (maccrd->crd_klen >> 3));
+	}
+
 	cmd->dest_ready_callback = hifn_callback;
+	cmd->private_data = (u_long)crp;
 
 	if (hifn_crypto(sc, cmd) == 0)
 		return (0);
@@ -1437,19 +1457,27 @@ errout:
 }
 
 void
-hifn_callback(cmd)
+hifn_callback(cmd, macbuf)
 	struct hifn_command *cmd;
+	u_int8_t *macbuf;
 {
 	struct cryptop *crp = (struct cryptop *)cmd->private_data;
-
-	if (HIFN_USING_MAC(cmd->flags) && !HIFN_MAC_OK(cmd->result_flags))
-		crp->crp_etype = EIO;
-	else
-		crp->crp_etype = 0;
+	struct cryptodesc *crd;
 
 	if ((crp->crp_flags & CRYPTO_F_IMBUF) && (cmd->src_m != cmd->dst_m)) {
 		m_freem(cmd->src_m);
 		crp->crp_buf = (caddr_t)cmd->dst_m;
+	}
+
+	if (macbuf != NULL) {
+		for (crd = crp->crp_desc; crd; crd = crd->crd_next) {
+			if (crd->crd_alg != CRYPTO_MD5_HMAC96 &&
+			    crd->crd_alg != CRYPTO_SHA1_HMAC96)
+				continue;
+			m_copyback((struct mbuf *)crp->crp_buf,
+				   crd->crd_inject, 12, macbuf);
+			break;
+		}
 	}
 
 	free(cmd, M_DEVBUF);
