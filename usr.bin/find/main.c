@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.13 2002/02/16 21:27:46 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.14 2002/05/17 15:04:32 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: main.c,v 1.13 2002/02/16 21:27:46 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.14 2002/05/17 15:04:32 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -83,7 +83,7 @@ main(argc, argv)
 	sigaction(SIGINFO, &sa, NULL);
 
 	ftsoptions = FTS_NOSTAT|FTS_PHYSICAL;
-	while ((ch = getopt(argc, argv, "Hdf:hXxW")) != -1)
+	while ((ch = getopt(argc, argv, "Hdf:hLXxW")) != -1)
 		switch(ch) {
 		case 'H':
 			ftsoptions |= FTS_COMFOLLOW;
@@ -95,6 +95,7 @@ main(argc, argv)
 			*p++ = optarg;
 			break;
 		case 'h':
+		case 'L':
 			ftsoptions &= ~FTS_PHYSICAL;
 			ftsoptions |= FTS_LOGICAL;
 			break;
@@ -145,6 +146,6 @@ static void
 usage()
 {
 	(void)fprintf(stderr,
-	    "usage: find [-HdhXxW] [-f file] file [...] [expression]\n");
+	    "usage: find [-dHhLXxW] [-f file] file [...] [expression]\n");
 	exit(1);
 }
