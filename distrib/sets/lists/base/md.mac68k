@@ -5,7 +5,7 @@
 ./usr/bin/objdump
 ./usr/include/m68k
 ./usr/include/mac68k
-./usr/lib/gcc-lib/m68k-unknown-openbsd2.5
+./usr/lib/gcc-lib/m68k-unknown-openbsd2.6
 ./usr/lib/libacl.so.4.1
 ./usr/lib/libc.so.23.1
 ./usr/lib/libc_r.so.1.1
@@ -658,6 +658,6 @@
 ./usr/libdata/perl5/m68k-openbsd/5.00503/.packlist
 ./usr/local/libdata/perl5/site_perl/m68k-openbsd
 ./usr/libexec/ld.so
-./usr/lib/gcc-lib/m68k-unknown-openbsd2.5/2.95.1
-./usr/lib/gcc-lib/m68k-unknown-openbsd2.5/2.95.1/include
+./usr/lib/gcc-lib/m68k-unknown-openbsd2.6/2.95.1
+./usr/lib/gcc-lib/m68k-unknown-openbsd2.6/2.95.1/include
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/sched.ph

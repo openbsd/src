@@ -11,7 +11,7 @@
 ./usr/bin/objdump
 ./usr/include/readline
 ./usr/include/sparc
-./usr/lib/gcc-lib/sparc-unknown-openbsd2.5
+./usr/lib/gcc-lib/sparc-unknown-openbsd2.6
 ./usr/lib/libacl.so.4.1
 ./usr/lib/libc.so.23.1
 ./usr/lib/libc_r.so.1.1
@@ -684,6 +684,6 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/machine/fgaio.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/machine/scfio.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/net/if_sppp.ph
-./usr/lib/gcc-lib/sparc-unknown-openbsd2.5/2.95.1
-./usr/lib/gcc-lib/sparc-unknown-openbsd2.5/2.95.1/include
+./usr/lib/gcc-lib/sparc-unknown-openbsd2.6/2.95.1
+./usr/lib/gcc-lib/sparc-unknown-openbsd2.6/2.95.1/include
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/sched.ph

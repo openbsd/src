@@ -7,7 +7,7 @@
 ./usr/bin/objdump
 ./usr/bin/pctr
 ./usr/include/i386
-./usr/lib/gcc-lib/i386-unknown-openbsd2.5
+./usr/lib/gcc-lib/i386-unknown-openbsd2.6
 ./usr/lib/libacl.so.4.1
 ./usr/lib/libc.so.23.1
 ./usr/lib/libc_r.so.1.1
@@ -706,8 +706,8 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/net/if_sppp.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/pcap-int.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/ataio.ph
-./usr/lib/gcc-lib/i386-unknown-openbsd2.5/2.95.1
-./usr/lib/gcc-lib/i386-unknown-openbsd2.5/2.95.1/include
+./usr/lib/gcc-lib/i386-unknown-openbsd2.6/2.95.1
+./usr/lib/gcc-lib/i386-unknown-openbsd2.6/2.95.1/include
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/sched.ph
 ./sbin/wicontrol
 ./usr/share/misc/pcvtfonts/koi8-8x10
