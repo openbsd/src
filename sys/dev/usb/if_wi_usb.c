@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_usb.c,v 1.12 2004/07/16 19:54:20 pedro Exp $ */
+/*	$OpenBSD: if_wi_usb.c,v 1.13 2004/08/05 05:17:58 dlg Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -220,6 +220,8 @@ const struct wi_usb_type {
 } wi_usb_devs[] = {
 	{{ USB_VENDOR_ACERW, USB_PRODUCT_ACERW_WARPLINK }, 0 },
 	{{ USB_VENDOR_ACTIONTEC, USB_PRODUCT_ACTIONTEC_PRISM_25A }, 0 },
+	{{ USB_VENDOR_COMPAQ, USB_PRODUCT_COMPAQ_W100 }, 0 },
+	{{ USB_VENDOR_COMPAQ, USB_PRODUCT_COMPAQ_W200 }, 0 },
 	{{ USB_VENDOR_COREGA, USB_PRODUCT_COREGA_WLANUSB }, 0 },
 	{{ USB_VENDOR_DLINK, USB_PRODUCT_DLINK_DWL122 }, 0 },
 	{{ USB_VENDOR_INTEL, USB_PRODUCT_INTEL_I2011B }, 0 },
