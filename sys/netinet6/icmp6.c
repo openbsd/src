@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.58 2002/05/29 23:38:58 itojun Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.59 2002/05/31 04:27:00 itojun Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -1206,13 +1206,10 @@ icmp6_mtudisc_update(ip6cp, validated)
 	/* sin6.sin6_scope_id = XXX: should be set if DST is a scoped addr */
 	rt = icmp6_mtudisc_clone((struct sockaddr *)&sin6);
 
-	if (rt && (rt->rt_flags & RTF_HOST)
-	    && !(rt->rt_rmx.rmx_locks & RTV_MTU)) {
-		if (mtu < IPV6_MMTU) {
-				/* xxx */
-			rt->rt_rmx.rmx_locks |= RTV_MTU;
-		} else if (mtu < rt->rt_ifp->if_mtu &&
-			   rt->rt_rmx.rmx_mtu > mtu) {
+	if (rt && (rt->rt_flags & RTF_HOST) &&
+	    !(rt->rt_rmx.rmx_locks & RTV_MTU) &&
+	    (rt->rt_rmx.rmx_mtu > mtu || rt->rt_rmx.rmx_mtu == 0)) {
+		if (mtu < IN6_LINKMTU(rt->rt_ifp)) {
 			icmp6stat.icp6s_pmtuchg++;
 			rt->rt_rmx.rmx_mtu = mtu;
 		}
