@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxe_call.S,v 1.1 2004/03/19 13:48:18 tom Exp $ */
+/*	$OpenBSD: pxe_call.S,v 1.2 2005/03/12 21:52:02 tom Exp $ */
 /*	$NetBSD: pxe_call.S,v 1.2 2002/03/27 17:24:22 kanaoka Exp $	*/
 
 /*
@@ -172,9 +172,9 @@ p2r16real:
 real_to_prot:
 	.code16
 
-	xorw	%ax, %ax
-	movw	%ax, %ds		/* Load %ds so we can get at Gdtr */
-	data32 addr32 lgdt Gdtr		/* Load the GDT */
+	movw	$LINKADDR >> 4, %ax	/* We're linked to LINKADDR/16:0000 */
+	movw	%ax, %ds
+	addr32 lgdt (Gdtr - LINKADDR)	/* Reload the GDT */
 
 	movl	%cr0, %eax		/* Enable protected mode */
 	orl	$CR0_PE, %eax
