@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.23 2004/01/03 14:08:54 espie Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.24 2004/04/22 18:01:15 itojun Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -190,7 +190,7 @@ rip6_input(mp, offp, proto)
 			continue;
 		if (in6p->in6p_cksum != -1) {
 			rip6stat.rip6s_isum++;
-			if (in6_cksum(m, ip6->ip6_nxt, *offp,
+			if (in6_cksum(m, proto, *offp,
 			    m->m_pkthdr.len - *offp)) {
 				rip6stat.rip6s_badsum++;
 				continue;
