@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.19 1997/08/19 06:42:42 millert Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.20 1997/08/19 22:38:31 millert Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.19 1997/08/19 06:42:42 millert Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.20 1997/08/19 22:38:31 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -133,23 +133,22 @@ int	Aflag, aflag, nflag, wflag;
 #define BADDYNAMIC	0x00000020
 
 /* prototypes */
-void usage();
-void debuginit();
-void parse __P((	char *string, int flags));
-void listall __P((char *prefix, 	struct list *lp));
-int findname __P((char *string, 	char *level, char **bufp, struct list *namelist));
-int sysctl_inet __P((char *string, char **bufpp, 	int mib[], int flags, int *typep));
-int sysctl_ipsec __P((char *string, char **bufpp, 	int mib[], int flags, int *typep));
-int sysctl_ipx __P((char *string, char **bufpp, 	int mib[], int flags, int *typep));
-int sysctl_fs __P((char *string, char **bufpp, 	int mib[], int flags, int *typep));
+void usage __P((void));
+void debuginit __P((void));
+void parse __P((char *string, int flags));
+void parse_baddynamic __P((int mib[CTL_MAXNAME], size_t len, char *string, void **newvalp, size_t *newsizep, int flags, int nflag));
+void listall __P((char *prefix, struct list *lp));
+int findname __P((char *string, char *level, char **bufp, struct list *namelist));
+int sysctl_inet __P((char *string, char **bufpp, int mib[], int flags, int *typep));
+int sysctl_ipsec __P((char *string, char **bufpp, int mib[], int flags, int *typep));
+int sysctl_ipx __P((char *string, char **bufpp, int mib[], int flags, int *typep));
+int sysctl_fs __P((char *string, char **bufpp, int mib[], int flags, int *typep));
 
 int
 main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	extern char *optarg;
-	extern int optind;
 	int ch, lvl1;
 
 	while ((ch = getopt(argc, argv, "Aanw")) != -1) {
@@ -354,71 +353,17 @@ parse(string, flags)
 			len = sysctl_inet(string, &bufp, mib, flags, &type);
 			if (len < 0)
 				return;
+
 			if ((mib[2] == IPPROTO_TCP &&
 			     mib[3] == TCPCTL_BADDYNAMIC) ||
 			    (mib[2] == IPPROTO_UDP &&
 			     mib[3] == UDPCTL_BADDYNAMIC)) {
-				u_int32_t newbaddynamic[DP_MAPSIZE];
-				in_port_t port;
-				char action;
 
 				special |= BADDYNAMIC;
-				if (newval == NULL)
-					break;
 
-				if (strchr((char *)newval, '+') ||
-				    strchr((char *)newval, '-')) {
-					size = sizeof(newbaddynamic);
-					if (sysctl(mib, len, newbaddynamic,
-					    &size, 0, 0) < 0) {
-						if (flags == 0)
-							return;
-						if (!nflag)
-							printf("%s: ", string);
-						printf("kernel does not have "
-						    "bad dynamic port tables "
-						    "in it\n");
-						return;
-					}
-					while (newval &&
-					    (cp = strsep((char **)&newval,
-					    ", \t")) && *cp) {
-						if (*cp != '+' && *cp != '-')
-							errx(1, "cannot mix +/-"
-							    " with full list");
-						action = *cp++;
-						port = atoi(cp);
-						if (port < IPPORT_RESERVED/2 ||
-						    port >= IPPORT_RESERVED)
-							errx(1, "invalid port, "
-							    "range is %d to %d",
-							    IPPORT_RESERVED/2,
-							    IPPORT_RESERVED-1);
-						if (action == '+')
-							DP_SET(newbaddynamic,
-							    port);
-						else
-							DP_CLR(newbaddynamic,
-							    port);
-					}
-				} else {
-					(void)memset((void *)newbaddynamic, 0,
-					    sizeof(newbaddynamic));
-					while (newval &&
-					    (cp = strsep((char **)&newval,
-					    ", \t")) && *cp) {
-						port = atoi(cp);
-						if (port < IPPORT_RESERVED/2 ||
-						    port >= IPPORT_RESERVED)
-							errx(1, "invalid port, "
-							    "range is %d to %d",
-							    IPPORT_RESERVED/2,
-							    IPPORT_RESERVED-1);
-						DP_SET(newbaddynamic, port);
-					}
-				}
-				newval = (void *)newbaddynamic;
-				newsize = sizeof(newbaddynamic);
+				if (newval != NULL)
+					parse_baddynamic(mib, len, string,
+					    &newval, &newsize, flags, nflag);
 			}
 			break;
 		}
@@ -631,6 +576,60 @@ parse(string, flags)
 		    string);
 		return;
 	}
+}
+
+void
+parse_baddynamic(mib, len, string, newvalp, newsizep, flags, nflag)
+	int mib[CTL_MAXNAME];
+	size_t len;
+	char *string;
+	void **newvalp;
+	size_t *newsizep;
+	int flags;
+	int nflag;
+{
+	static u_int32_t newbaddynamic[DP_MAPSIZE];
+	in_port_t port;
+	size_t size;
+	char action, *cp;
+
+	if (strchr((char *)*newvalp, '+') || strchr((char *)*newvalp, '-')) {
+		size = sizeof(newbaddynamic);
+		if (sysctl(mib, len, newbaddynamic, &size, 0, 0) < 0) {
+			if (flags == 0)
+				return;
+			if (!nflag)
+				printf("%s: ", string);
+			printf("kernel does contain bad dynamic port tables\n");
+			return;
+		}
+
+		while (*newvalp && (cp = strsep((char **)newvalp, ", \t")) && *cp) {
+			if (*cp != '+' && *cp != '-')
+				errx(1, "cannot mix +/- with full list");
+			action = *cp++;
+			port = atoi(cp);
+			if (port < IPPORT_RESERVED/2 || port >= IPPORT_RESERVED)
+				errx(1, "invalid port, range is %d to %d",
+				    IPPORT_RESERVED/2, IPPORT_RESERVED-1);
+			if (action == '+')
+				DP_SET(newbaddynamic, port);
+			else
+				DP_CLR(newbaddynamic, port);
+		}
+	} else {
+		(void)memset((void *)newbaddynamic, 0, sizeof(newbaddynamic));
+		while (*newvalp && (cp = strsep((char **)newvalp, ", \t")) && *cp) {
+			port = atoi(cp);
+			if (port < IPPORT_RESERVED/2 || port >= IPPORT_RESERVED)
+				errx(1, "invalid port, range is %d to %d",
+				    IPPORT_RESERVED/2, IPPORT_RESERVED-1);
+			DP_SET(newbaddynamic, port);
+		}
+	}
+
+	*newvalp = (void *)newbaddynamic;
+	*newsizep = sizeof(newbaddynamic);
 }
 
 /*
