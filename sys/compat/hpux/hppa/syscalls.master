@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.6 2004/07/14 15:54:56 mickey Exp $
+	$OpenBSD: syscalls.master,v 1.7 2004/07/15 20:07:41 mickey Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -296,9 +296,11 @@
 191	UNIMPL		getfh
 192	NOARGS		{ int compat_09_sys_getdomainname(char *domainname, \
 			    int len); }
-193	UNIMPL		setdomainname
+193	NOARGS		{ int compat_09_sys_setdomainname(char *domainname, \
+			    int len); }
 194	UNIMPL		async_daemon
-195	UNIMPL		getdirentries
+195	NOARGS		{ int compat_43_sys_getdirentries(int fd, char *buf, \
+			    u_int count, long *basep); }
 196	UNIMPL		statfs
 197	UNIMPL		fstatfs
 198	UNIMPL		vfsmount
