@@ -35,7 +35,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)rwhod.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: rwhod.c,v 1.27 2003/06/02 23:36:54 millert Exp $";
+static char rcsid[] = "$OpenBSD: rwhod.c,v 1.28 2003/06/08 17:05:36 mickey Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -64,6 +64,7 @@ static char rcsid[] = "$OpenBSD: rwhod.c,v 1.27 2003/06/02 23:36:54 millert Exp 
 #include <syslog.h>
 #include <unistd.h>
 #include <utmp.h>
+#include <err.h>
 
 /*
  * Alarm interval. Don't forget to change the down time check in ruptime
@@ -118,7 +119,8 @@ hup(int signo)
 void
 usage(void)
 {
-	fprintf(stderr, "usage: rwhod [-d]\n");
+	extern char *__progname;
+	fprintf(stderr, "usage: %s [-d]\n", __progname);
 	exit(1);
 }
 
@@ -141,20 +143,13 @@ main(int argc, char *argv[])
 		}
 	}
 
-	if (getuid()) {
-		fprintf(stderr, "rwhod: not super user\n");
-		exit(1);
-	}
+	if (getuid())
+		errx(1, "not super user");
 	sp = getservbyname("who", "udp");
-	if (sp == NULL) {
-		fprintf(stderr, "rwhod: udp/who: unknown service\n");
-		exit(1);
-	}
-	if (chdir(_PATH_RWHODIR) < 0) {
-		(void)fprintf(stderr, "rwhod: %s: %s\n",
-		    _PATH_RWHODIR, strerror(errno));
-		exit(1);
-	}
+	if (sp == NULL)
+		errx(1, "udp/who: unknown service");
+	if (chdir(_PATH_RWHODIR) < 0)
+		err(1, "%s", _PATH_RWHODIR);
 	if (!debug)
 		daemon(1, 0);
 
@@ -366,7 +361,7 @@ timer(void)
 			else
 				nutmp = (struct utmp *)malloc(utmpsize);
 			if (!nutmp) {
-				fprintf(stderr, "rwhod: malloc failed\n");
+				warnx("malloc failed");
 				if (utmp)
 					free(utmp);
 				utmpsize = 0;
@@ -377,8 +372,7 @@ timer(void)
 		(void) lseek(utmpf, (off_t)0, SEEK_SET);
 		cc = read(utmpf, (char *)utmp, stb.st_size);
 		if (cc < 0) {
-			fprintf(stderr, "rwhod: %s: %s\n",
-			    _PATH_UTMP, strerror(errno));
+			warnx("%s", _PATH_UTMP);
 			return;
 		}
 		wlast = &mywd.wd_we[1024 / sizeof(struct whoent) - 1];
