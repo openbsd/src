@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.32 2001/01/03 19:19:52 angelos Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.33 2001/01/04 06:03:59 angelos Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -40,17 +40,25 @@
 #define	_SYS_MALLOC_H_
 
 #define KERN_MALLOC_BUCKETS   1
-#define KERN_MALLOC_CALLS     2
-#define KERN_MALLOC_ALLOC     3
-#define KERN_MALLOC_FREE      4
-#define KERN_MALLOC_ELEMENTS  5
-#define KERN_MALLOC_HIWAT     6
-#define KERN_MALLOC_COULDFREE 7
-#define KERN_MALLOC_MAXID     8
+#define KERN_MALLOC_BUCKET    2
+#define KERN_MALLOC_MAXID     3
+
+#define KERN_MALLOC_CALLS		1
+#define KERN_MALLOC_ALLOC		2
+#define KERN_MALLOC_FREE		3
+#define KERN_MALLOC_ELEMENTS		4
+#define KERN_MALLOC_HIWAT		5
+#define KERN_MALLOC_COULDFREE		6
+#define KERN_MALLOC_BUCKET_MAXID	7
 
 #define CTL_KERN_MALLOC_NAMES { \
            {0, 0 }, \
            { "buckets", CTLTYPE_STRING }, \
+           { "bucket", CTLTYPE_NODE }, \
+}
+
+#define CTL_KERN_MALLOC_BUCKET_NAMES { \
+           { 0, 0 }, \
            { "calls", CTLTYPE_QUAD }, \
            { "total_allocated", CTLTYPE_QUAD }, \
            { "total_free", CTLTYPE_QUAD }, \
