@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.6 1997/04/20 20:49:42 tholo Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.7 1997/04/23 09:52:03 tholo Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -217,6 +217,8 @@ sys_nanosleep(p, v, retval)
 		error = 0;
 
 	if (SCARG(uap, rmtp)) {
+		int error;
+
 		s = splclock();
 		utv = time;
 		splx(s);
@@ -228,6 +230,8 @@ sys_nanosleep(p, v, retval)
 		TIMEVAL_TO_TIMESPEC(&utv,&rmt);
 		error = copyout((caddr_t)&rmt, (caddr_t)SCARG(uap,rmtp),
 			sizeof(rmt));		
+		if (error)
+			return (error);
 	}
 
 	return error;
