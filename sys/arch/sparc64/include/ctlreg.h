@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctlreg.h,v 1.5 2002/04/02 15:14:23 jason Exp $	*/
+/*	$OpenBSD: ctlreg.h,v 1.6 2002/06/09 23:04:38 mdw Exp $	*/
 /*	$NetBSD: ctlreg.h,v 1.28 2001/08/06 23:55:34 eeh Exp $ */
 
 /*
@@ -234,6 +234,7 @@
 /* 
  * The following are the control registers 
  * They work on both MMUs unless noted.
+ * III = cheetah only
  *
  * Register contents are defined later on individual registers.
  */
@@ -247,6 +248,9 @@
 #define	TLB_TAG_ACCESS		0x30
 #define	VIRTUAL_WATCHPOINT	0x38
 #define	PHYSICAL_WATCHPOINT	0x40
+#define TSB_PEXT		0x48	/* III primary ext */
+#define TSB_SEXT		0x50	/* III 2ndary ext -- DMMU only */
+#define TSB_NEXT		0x58	/* III nucleus ext */
 
 /* Tag Target bits */
 #define	TAG_TARGET_VA_MASK	0x03ffffffffffffffffLL
