@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.20 2001/11/09 02:47:33 art Exp $ */
+/* $OpenBSD: pmap.c,v 1.21 2001/11/09 02:50:08 art Exp $ */
 /* $NetBSD: pmap.c,v 1.154 2000/12/07 22:18:55 thorpej Exp $ */
 
 /*-
@@ -3281,10 +3281,9 @@ pmap_physpage_alloc(int usage, paddr_t *pap)
 	 * properly initialize it in the constructor.
 	 */
 
-	pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_USERESERVE);
+	pg = uvm_pagealloc(NULL, 0, NULL, usage == PGU_L1PT ?
+	    UVM_PGA_USERESERVE : UVM_PGA_USERESERVE|UVM_PGA_ZERO);
 	if (pg != NULL) {
-		if (usage != PGU_L1PT)
-			uvm_pagezero(pg);
 		pa = VM_PAGE_TO_PHYS(pg);
 
 		pvh = pa_to_pvh(pa);
