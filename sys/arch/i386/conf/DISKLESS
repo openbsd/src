@@ -1,4 +1,4 @@
-#	$OpenBSD: DISKLESS,v 1.53 2004/09/16 09:14:03 mickey Exp $
+#	$OpenBSD: DISKLESS,v 1.54 2004/09/17 11:32:53 msf Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
 # This kernel can be loaded from a bootable floppy (i.e. kernel-copy)
@@ -91,8 +91,6 @@ option		IPSEC		# IPsec
 #option		IPXIP		# IPX tunneling over IP
 #option		NETATALK	# AppleTalk
 #option		NSIP		# XNS tunneling over IP
-#option		ISO,TPIP	# OSI
-#option		EON		# OSI tunneling over IP
 #option		CCITT,LLC,HDLC	# X.25
 option		PPP_BSDCOMP	# PPP BSD compression
 option		PPP_DEFLATE
