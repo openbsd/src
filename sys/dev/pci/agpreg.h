@@ -1,4 +1,4 @@
-/*	$OpenBSD: agpreg.h,v 1.2 2003/03/19 20:06:28 millert Exp $	*/
+/*	$OpenBSD: agpreg.h,v 1.3 2004/01/20 19:30:41 grange Exp $	*/
 /*	$NetBSD: agpreg.h,v 1.1 2001/09/10 10:01:02 fvdl Exp $	*/
 
 /*-
@@ -169,5 +169,21 @@
 #define AGP_I830_GCC1_GMASIZE           0x01
 #define AGP_I830_GCC1_GMASIZE_64        0x01
 #define AGP_I830_GCC1_GMASIZE_128       0x00
+
+
+/*
+ * Config registers for 852GM/855GM/865G device 0
+ */
+#define AGP_I855_GCC1			0x52
+#define AGP_I855_GCC1_DEV2		0x08
+#define AGP_I855_GCC1_DEV2_ENABLED	0x00
+#define AGP_I855_GCC1_DEV2_DISABLED	0x08
+#define AGP_I855_GCC1_GMS		0x70
+#define AGP_I855_GCC1_GMS_STOLEN_0M	0x00
+#define AGP_I855_GCC1_GMS_STOLEN_1M	0x10
+#define AGP_I855_GCC1_GMS_STOLEN_4M	0x20
+#define AGP_I855_GCC1_GMS_STOLEN_8M	0x30
+#define AGP_I855_GCC1_GMS_STOLEN_16M	0x40
+#define AGP_I855_GCC1_GMS_STOLEN_32M	0x50
 
 #endif /* !_PCI_AGPREG_H_ */

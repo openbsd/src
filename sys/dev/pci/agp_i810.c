@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_i810.c,v 1.6 2004/01/20 19:23:06 grange Exp $	*/
+/*	$OpenBSD: agp_i810.c,v 1.7 2004/01/20 19:30:40 grange Exp $	*/
 /*	$NetBSD: agp_i810.c,v 1.15 2003/01/31 00:07:39 thorpej Exp $	*/
 
 /*-
@@ -56,6 +56,7 @@
 
 #define CHIP_I810 0	/* i810/i815 */
 #define CHIP_I830 1	/* i830/i845 */
+#define CHIP_I855 2	/* i852GM/i855GM/i865G */
 
 struct agp_i810_softc {
 	struct agp_gatt *gatt;
@@ -129,6 +130,10 @@ agp_i810_attach(struct vga_pci_softc *sc, struct pci_attach_args *pa,
 	case PCI_PRODUCT_INTEL_82845G_IGD:
 		isc->chiptype = CHIP_I830;
 		break;
+	case PCI_PRODUCT_INTEL_82852GM_AGP:
+	case PCI_PRODUCT_INTEL_82865_IGD:
+		isc->chiptype = CHIP_I855;
+		break;
 	}
 
 	error = pci_mapreg_map(pa, AGP_I810_MMADR,
@@ -170,7 +175,7 @@ agp_i810_attach(struct vga_pci_softc *sc, struct pci_attach_args *pa,
 		agp_flush_cache();
 		/* Install the GATT. */
 		WRITE4(AGP_I810_PGTBL_CTL, gatt->ag_physical | 1);
-	} else {
+	} else if (isc->chiptype == CHIP_I830) {
 		/* The i830 automatically initializes the 128k gatt on boot. */
 		pcireg_t reg;
 		u_int32_t pgtblctl;
@@ -188,6 +193,51 @@ agp_i810_attach(struct vga_pci_softc *sc, struct pci_attach_args *pa,
 			break;
 		case AGP_I830_GCC1_GMS_STOLEN_8192:
 			isc->stolen = (8192 - 132) * 1024 / 4096;
+			break;
+		default:
+			isc->stolen = 0;
+			printf(
+			    ": unknown memory configuration, disabling\n");
+			agp_generic_detach(sc);
+			return (EINVAL);
+		}
+#ifdef DEBUG
+		if (isc->stolen > 0) {
+			printf(": detected %dk stolen memory",
+			    isc->stolen * 4);
+		}
+#endif
+
+		/* GATT address is already in there, make sure it's enabled */
+		pgtblctl = READ4(AGP_I810_PGTBL_CTL);
+		pgtblctl |= 1;
+		WRITE4(AGP_I810_PGTBL_CTL, pgtblctl);
+
+		gatt->ag_physical = pgtblctl & ~1;
+	} else {	/* CHIP_I855 */
+		/* The 855GM automatically initializes the 128k gatt on boot. */
+		pcireg_t reg;
+		u_int32_t pgtblctl;
+		u_int16_t gcc1;
+
+		reg = pci_conf_read(isc->bridge_pa.pa_pc,
+		    isc->bridge_pa.pa_tag, AGP_I855_GCC1);
+		gcc1 = (u_int16_t)(reg >> 16);
+		switch (gcc1 & AGP_I855_GCC1_GMS) {
+		case AGP_I855_GCC1_GMS_STOLEN_1M:
+			isc->stolen = (1024 - 132) * 1024 / 4096;
+			break;
+		case AGP_I855_GCC1_GMS_STOLEN_4M:
+			isc->stolen = (4096 - 132) * 1024 / 4096;
+			break;
+		case AGP_I855_GCC1_GMS_STOLEN_8M:
+			isc->stolen = (8192 - 132) * 1024 / 4096;
+			break;
+		case AGP_I855_GCC1_GMS_STOLEN_16M:
+			isc->stolen = (16384 - 132) * 1024 / 4096;
+			break;
+		case AGP_I855_GCC1_GMS_STOLEN_32M:
+			isc->stolen = (32768 - 132) * 1024 / 4096;
 			break;
 		default:
 			isc->stolen = 0;
@@ -236,7 +286,7 @@ agp_i810_get_aperture(struct vga_pci_softc *sc)
 			return (32 * 1024 * 1024);
 		else
 			return (64 * 1024 * 1024);
-	} else {		/* I830 */
+	} else if (isc->chiptype == CHIP_I830) {
 		u_int16_t gcc1;
 
 		reg = pci_conf_read(isc->bridge_pa.pa_pc,
@@ -246,6 +296,8 @@ agp_i810_get_aperture(struct vga_pci_softc *sc)
 			return (64 * 1024 * 1024);
 		else
 			return (128 * 1024 * 1024);
+	} else {	/* CHIP_I855 */
+		return (128 * 1024 * 1024);
 	}
 }
 
@@ -280,7 +332,7 @@ agp_i810_set_aperture(struct vga_pci_softc *sc, u_int32_t aperture)
 		reg |= ((pcireg_t)miscc) << 16;
 		pci_conf_write(isc->bridge_pa.pa_pc,
 		    isc->bridge_pa.pa_tag, AGP_I810_SMRAM, reg);
-	} else {		/* I830 */
+	} else if (isc->chiptype == CHIP_I830) {
 		u_int16_t gcc1;
 
 		if (aperture != (64 * 1024 * 1024) &&
@@ -301,6 +353,11 @@ agp_i810_set_aperture(struct vga_pci_softc *sc, u_int32_t aperture)
 		reg |= ((pcireg_t)gcc1) << 16;
 		pci_conf_write(isc->bridge_pa.pa_pc,
 		    isc->bridge_pa.pa_tag, AGP_I830_GCC0, reg);
+	} else {	/* CHIP_I855 */
+		if (aperture != (128 * 1024 * 1024)) {
+			printf("agp: bad aperture size %d\n", aperture);
+			return (EINVAL);
+		}
 	}
 
 	return (0);
@@ -376,11 +433,17 @@ agp_i810_alloc_memory(struct vga_pci_softc *sc, int type, vsize_t size)
 	struct agp_memory *mem;
 	int error;
 
+	if ((size & (AGP_PAGE_SIZE - 1)) != 0)
+		return 0;
+
+	if (sc->sc_allocated + size > sc->sc_maxmem)
+		return 0;
+
 	if (type == 1) {
 		/*
 		 * Mapping local DRAM into GATT.
 		 */
-		if (isc->chiptype == CHIP_I830 )
+		if (isc->chiptype != CHIP_I810 )
 			return (NULL);
 		if (size != isc->dcache_size)
 			return (NULL);
@@ -405,6 +468,10 @@ agp_i810_alloc_memory(struct vga_pci_softc *sc, int type, vsize_t size)
 		 */
 		mem->am_dmaseg = malloc(sizeof *mem->am_dmaseg, M_DEVBUF,
 		    M_WAITOK);
+		if (mem->am_dmaseg == NULL) {
+			free(mem, M_DEVBUF);
+			return (NULL);
+		}
 		if ((error = agp_alloc_dmamem(sc->sc_dmat, size, 0,
 		    &mem->am_dmamap, &mem->am_virtual, &mem->am_physical,
 		    mem->am_dmaseg, 1, &mem->am_nseg)) != 0) {
