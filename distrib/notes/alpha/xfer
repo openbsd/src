@@ -133,7 +133,7 @@ NFS, you must do the following:
 	its mount daemon (mountd).  (Both of these actions will
 	probably require superuser privileges on the server.)
 
-	You need to know the the numeric IP address of the NFS
+	You need to know the numeric IP address of the NFS
 	server, and, if the server is not on a network directly
 	connected to the machine on which you're installing or
 	upgrading OpenBSD, you need to know the numeric IP address

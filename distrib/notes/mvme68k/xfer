@@ -1,7 +1,10 @@
 Installation is supported from several media types, including:
-	NFS partitions
-	FTP
+
+	FFS partitions
 	Tape
+	Remote NFS partitions
+	FTP
+	HTTP
 
 The steps necessary to prepare the distribution sets
 for installation depend on which method of installation

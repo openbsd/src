@@ -1,1 +1,4 @@
-[Upgrades may not be well supported currently for the alpha port]
+Be warned that upgrades may not be well supported currently for the
+MACHINE port.
+
+OpenBSDUpgrade({:- or the installation floppy-:})

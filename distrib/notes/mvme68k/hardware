@@ -6,10 +6,10 @@ OpenBSD/MACHINE OSREV runs on the following classes of machines:
 
 The minimal configuration requires 4M of RAM and ~60M of disk space.
 To install the entire system requires much more disk space, and to 
-compile the system, more RAM is recommended.  (OpenBSD with 4M of
-RAM feels like Solaris with 4M of RAM.) Note that until you have
+compile the system, more RAM is recommended (OpenBSD with 4M of
+RAM feels like Solaris with 4M of RAM). Note that until you have
 around 16M of RAM, getting more RAM is more important than getting a
-faster CPU.)
+faster CPU).
 
 Supported devices {:-include-:}:
 
@@ -23,7 +23,7 @@ MVME147:
 	SCSI:
 		on-board 
 
-	Parallel:
+	parallel:
 		a driver exists, but it is not integrated.
 
 MVME162:
@@ -32,13 +32,9 @@ MVME162:
 
 	ethernet:
 		on-board Intel 82596CA ethernet ("ie0")
-		MVME376 VME bus ehternet ("le*")
 
 	SCSI:
 		on-board SCSI controller NCR53c710
-
-	Parallel:
-		Not available for this board
 
 	VME:
 		drivers for short I/O access
@@ -58,16 +54,15 @@ MVME162:
 	IP:
 		untested
 
-MVME167
+MVME167:
 	serial:
 		on-board tty00 - tty03 - Cirrus Logic CD2401
 	ethernet: 
 		on-board Intel 82596CA ethernet ("ie0")
-		MVME376 VME bus ehternet ("le*")
 	SCSI: 
 		on-board SCSI controller NCR53c710
 
-	Parallel:
+	parallel:
 		Not supported
 
 	SRAM:
@@ -76,16 +71,17 @@ MVME167
 	VMEbus:
 		supported
 		
-MVME177
+MVME177:
 	serial:
 		on-board tty00 - tty03 - Cirrus Logic CD2401
+
 	ethernet: 
 		on-board Intel 82596CA ethernet ("ie0")
-		MVME376 VME bus ehternet ("le*")
+
 	SCSI: 
 		on-board SCSI controller NCR53c710
 
-	Parallel:
+	parallel:
 		Not supported
 
 	SRAM:
@@ -94,3 +90,9 @@ MVME177
 	VMEbus:
 		supported
 		
+
+Additional VMEbus devices {:-include-:}:
+
+	MVME328 SCSI controller ("vs")
+
+	MVME376 VME bus ethernet ("le*")

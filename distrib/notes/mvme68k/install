@@ -1,5 +1,4 @@
-Installing OpenBSD is a relatively complex process, but if you have
-this document in hand it shouldn't be too much trouble.
+OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk. The easiest way
 in terms of preliminary setup is to use the OpenBSD ramdisk kernel that can
@@ -92,7 +91,7 @@ A few configuration files need to be edited:
 			server:/export/root/client       /     nfs  rw 0 0
 			server:/export/exec/sun4.OpenBSD /usr  nfs  rw 0 0
 
-Now you must populate the the `/dev' directory for your client. If you server
+Now you must populate the `/dev' directory for your client. If you server
 runs SunOS 4.x, you can simply change your working directory to `<root>/dev'
 and run the MAKEDEV script: `sh MAKEDEV all'.
 
@@ -160,30 +159,34 @@ the editor), then try setting it to `8 partitions:'.
 
 <BEGIN SAMPLE DISKLABEL SCREEN>
 OpenBSD# disklabel sd2
- # /dev/rsd2c:
-type: SCSI 
+# /dev/rsd2c:
+type: SCSI
 disk: SCSI disk
 label: Hold Your Breath
 flags:
 bytes/sector: 512
-sectors/track: 64
-tracks/cylinder: 7  
-sectors/cylinder: 448
-cylinders: 1429
+sectors/track: 124
+tracks/cylinder: 8
+sectors/cylinder: 992
+cylinders: 4177
+total sectors: 4165271
 rpm: 3600
 interleave: 1
 trackskew: 0
 cylinderskew: 0
-headswitch: 0           # milliseconds
-track-to-track seek: 0  # milliseconds
+headswitch: 0           # microseconds
+track-to-track seek: 0  # microseconds
 drivedata: 0
 
 8 partitions:
 #        size   offset    fstype   [fsize bsize   cpg]
-  a:    50176        0    4.2BSD        0     0     0   # (Cyl.    0 - 111)
-  b:    64512    50176      swap                        # (Cyl.  112 - 255)
-  c:   640192        0   unknown                        # (Cyl.    0 - 1428)
-  d:   525504   114688    4.2BSD        0     0     0   # (Cyl.  256 - 1428)
+  a:    80000        0    4.2BSD     1024  8192    16   # (Cyl.    0 - 80*)
+  b:   256000    80000      swap                        # (Cyl.   80*- 338*)
+  c:  4165271        0    unused        0     0         # (Cyl.    0 - 4198*)
+  d:  3229271   936000    4.2BSD     1024  8192    16   # (Cyl.  943*- 4198*)
+  f:   100000   336000    4.2BSD     1024  8192    16   # (Cyl.  338*- 439*)
+  g:   100000   436000    4.2BSD     1024  8192    16   # (Cyl.  439*- 540*)
+  h:   400000   536000    4.2BSD     1024  8192    16   # (Cyl.  540*- 943*)
 <END SAMPLE DISKLABEL SCREEN>
 
 
@@ -214,6 +217,21 @@ The installation script goes through the following phases:
 	- extraction of the distribution tar files
 	- installation of boot programs
 
+OpenBSDFTPInstall
+
+OpenBSDHTTPInstall
+
+OpenBSDTAPEInstall
+
+OpenBSDNFSInstall
+
+OpenBSDDISKInstall(,{:-only-:})
+
+OpenBSDCommonFS
+
+OpenBSDCommonURL
+
+After completing an installation:
 
 Now try a reboot.  (If needed, swap your scsi id's first).  Initially
 I'd suggest you "bo bsd -bs", then try multiuser after that.
