@@ -1,0 +1,41 @@
+.Dd Nov 3, 1999
+.Dt MOUNT_TCFS 8
+.Os
+.Sh NAME
+.Nm mount_tcfs
+.Nd mount a tcfs filesystem sub-tree;
+.Sh SYNOPSIS
+.Nm
+.Op Fl o Ar options
+.Ar target
+.Ar mount-point
+.Sh DESCRIPTION
+The
+.Nm
+command creates a
+Transparent Cryptographic File System (TCFS) layer, mapping a sub-tree of the file system
+name space into another part of the global file system where
+some cryptographic features are provided.
+.Pp 
+Access to objects existing on the new file system can be allowed only to
+users who own a proper key.
+.Sh EXAMPLES
+The following example mounts the ffs 
+file system on mountpoint
+.Ar /mnt2
+as TCFS file system using cipher 2.
+.Bd -literal
+mount_tcfs -o cipher=2 /mnt2 /mnt/tcfs
+.Pp
+.Sh FILES
+.Bl -tag -width /etc/fstab -compact
+.It Pa /etc/fstab
+file system information
+.El
+.Sh BUGS
+This is a preliminary version, only for developers. Each other use is discouraged.
+.Pp
+Sorry, no docs.
+.Sh SEE ALSO
+.Xr mount 8 ,
+.Xr fstab 5
