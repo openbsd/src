@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: parse.c,v 1.59 2001/05/03 13:41:08 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.60 2001/05/15 12:52:15 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -131,7 +131,7 @@
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
 UNUSED
-static char rcsid[] = "$OpenBSD: parse.c,v 1.59 2001/05/03 13:41:08 espie Exp $";
+static char rcsid[] = "$OpenBSD: parse.c,v 1.60 2001/05/15 12:52:15 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -1284,7 +1284,10 @@ Parse_DoVar(line, ctxt)
 	    break;
 
 	case ':':
-	    type = VAR_SUBST;
+	    if (FEATURES(FEATURE_SUNSHCMD) && strncmp(end, ":sh", 3) == 0)
+		type = VAR_SHELL;
+	    else 
+		type = VAR_SUBST;
 	    break;
 
 	case '!':
@@ -1292,10 +1295,7 @@ Parse_DoVar(line, ctxt)
 	    break;
 
 	default:
-	    if (FEATURES(FEATURE_SUNSHCMD) && strncmp(end, ":sh", 3) == 0)
-		type = VAR_SHELL;
-	    else
-		type = VAR_NORMAL;
+	    type = VAR_NORMAL;
 	    break;
     }
 
