@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipcs.c,v 1.5 1996/08/11 00:24:32 deraadt Exp $	*/
+/*	$OpenBSD: ipcs.c,v 1.6 1996/12/22 03:25:54 tholo Exp $	*/
 /*	$NetBSD: ipcs.c,v 1.10.6.1 1996/06/07 01:53:47 thorpej Exp $	*/
 
 /*
@@ -192,8 +192,10 @@ main(argc, argv)
 	 * Discard setgid privileges if not the running kernel so that bad
 	 * guys can't print interesting stuff from kernel memory.
 	 */
-	if (namelist != NULL || core != NULL)
+	if (namelist != NULL || core != NULL) {
+		setegid(getgid());
 		setgid(getgid());
+	}
 	if ((kd = kvm_open(namelist, core, NULL, O_RDONLY, "ipcs")) == NULL)
 		exit(1);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: login.c,v 1.14 1996/12/04 04:04:41 millert Exp $	*/
+/*	$OpenBSD: login.c,v 1.15 1996/12/22 03:25:55 tholo Exp $	*/
 /*	$NetBSD: login.c,v 1.13 1996/05/15 23:50:16 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: login.c,v 1.14 1996/12/04 04:04:41 millert Exp $";
+static char rcsid[] = "$OpenBSD: login.c,v 1.15 1996/12/22 03:25:55 tholo Exp $";
 #endif /* not lint */
 
 /*
@@ -411,6 +411,7 @@ main(argc, argv)
 	if (krbtkfile_env)
 	    dofork();
 #endif
+	(void)setegid(pwd->pw_gid);
 	(void)setgid(pwd->pw_gid);
 
 	initgroups(username, pwd->pw_gid);
@@ -496,8 +497,10 @@ main(argc, argv)
 	/* Discard permissions last so can't get killed and drop core. */
 	if (rootlogin)
 		(void) setuid(0);
-	else
+	else {
+		(void) seteuid(pwd->pw_uid);
 		(void) setuid(pwd->pw_uid);
+	}
 
 	execlp(pwd->pw_shell, tbuf, 0);
 	err(1, "%s", pwd->pw_shell);

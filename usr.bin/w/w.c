@@ -1,4 +1,4 @@
-/*	$OpenBSD: w.c,v 1.10 1996/08/22 09:37:19 deraadt Exp $	*/
+/*	$OpenBSD: w.c,v 1.11 1996/12/22 03:26:10 tholo Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -173,8 +173,10 @@ main(argc, argv)
 	 * Discard setgid privileges if not the running kernel so that bad
 	 * guys can't print interesting stuff from kernel memory.
 	 */
-	if (nlistf != NULL || memf != NULL)
+	if (nlistf != NULL || memf != NULL) {
+		setegid(getgid());
 		setgid(getgid());
+	}
 
 	if ((kd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY, errbuf)) == NULL)
 		errx(1, "%s", errbuf);

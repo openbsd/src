@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.8 1996/12/06 15:21:53 robin Exp $	*/
+/*	$OpenBSD: commands.c,v 1.9 1996/12/22 03:26:08 tholo Exp $	*/
 /*	$NetBSD: commands.c,v 1.14 1996/03/24 22:03:48 jtk Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 static char sccsid[] = "@(#)commands.c	8.4 (Berkeley) 5/30/95";
 static char rcsid[] = "$NetBSD: commands.c,v 1.14 1996/03/24 22:03:48 jtk Exp $";
 #else
-static char rcsid[] = "$OpenBSD: commands.c,v 1.8 1996/12/06 15:21:53 robin Exp $";
+static char rcsid[] = "$OpenBSD: commands.c,v 1.9 1996/12/22 03:26:08 tholo Exp $";
 #endif
 #endif /* not lint */
 
@@ -2144,6 +2144,7 @@ tn(argc, argv)
 
     if (connected) {
 	printf("?Already connected to %s\n", hostname);
+	seteuid(getuid());
 	setuid(getuid());
 	return 0;
     }
@@ -2193,6 +2194,7 @@ tn(argc, argv)
 	}
     usage:
 	printf("usage: %s [-l user] [-a] host-name [port]\n", cmd);
+	seteuid(getuid());
 	setuid(getuid());
 	return 0;
     }
@@ -2208,10 +2210,12 @@ tn(argc, argv)
 	temp = sourceroute(hostp, &srp, &srlen);
 	if (temp == 0) {
 	    herror(srp);
+	    seteuid(getuid());
 	    setuid(getuid());
 	    return 0;
 	} else if (temp == -1) {
 	    printf("Bad source route option: %s\n", hostp);
+	    seteuid(getuid());
 	    setuid(getuid());
 	    return 0;
 	} else {
@@ -2245,6 +2249,7 @@ tn(argc, argv)
 		hostname = _hostname;
 	    } else {
 		herror(hostp);
+		seteuid(getuid());
 		setuid(getuid());
 		return 0;
 	    }
@@ -2265,6 +2270,7 @@ tn(argc, argv)
 		sin.sin_port = sp->s_port;
 	    else {
 		printf("%s: bad port number\n", portp);
+		seteuid(getuid());
 		setuid(getuid());
 		return 0;
 	    }
@@ -2279,6 +2285,7 @@ tn(argc, argv)
 	    sp = getservbyname("telnet", "tcp");
 	    if (sp == 0) {
 		fprintf(stderr, "telnet: tcp/telnet: unknown service\n");
+		seteuid(getuid());
 		setuid(getuid());
 		return 0;
 	    }
@@ -2289,6 +2296,7 @@ tn(argc, argv)
     printf("Trying %s...\n", inet_ntoa(sin.sin_addr));
     do {
 	net = socket(AF_INET, SOCK_STREAM, 0);
+	seteuid(getuid());
 	setuid(getuid());
 	if (net < 0) {
 	    perror("telnet: socket");

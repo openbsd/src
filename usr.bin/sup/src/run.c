@@ -1,4 +1,4 @@
-/*	$OpenBSD: run.c,v 1.2 1996/06/26 05:39:45 deraadt Exp $	*/
+/*	$OpenBSD: run.c,v 1.3 1996/12/22 03:26:04 tholo Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -50,6 +50,9 @@
  **********************************************************************
  * HISTORY
  * $Log: run.c,v $
+ * Revision 1.3  1996/12/22 03:26:04  tholo
+ * Deal with _POSIX_SAVED_IDS when relinquishing privileges
+ *
  * Revision 1.2  1996/06/26 05:39:45  deraadt
  * rcsid
  *
@@ -170,7 +173,9 @@ int usepath;
 		return(-1);	/* no more process's, so exit with error */
 
 	if (pid == 0) {			/* child process */
+		setegid (getgid());
 		setgid (getgid());
+		seteuid (getuid());
 		setuid (getuid());
 		(*execrtn) (name,argv);
 		fprintf (stderr,"run: can't exec %s\n",name);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: su.c,v 1.16 1996/10/27 16:49:17 millert Exp $	*/
+/*	$OpenBSD: su.c,v 1.17 1996/12/22 03:26:03 tholo Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)su.c	5.26 (Berkeley) 7/6/91";*/
-static char rcsid[] = "$OpenBSD: su.c,v 1.16 1996/10/27 16:49:17 millert Exp $";
+static char rcsid[] = "$OpenBSD: su.c,v 1.17 1996/12/22 03:26:03 tholo Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -220,10 +220,14 @@ badlogin:
 		iscsh = strcmp(avshell, "csh") ? NO : YES;
 
 	/* set permissions */
+	if (setegid(pwd->pw_gid) < 0)
+		err(1, "setegid");
 	if (setgid(pwd->pw_gid) < 0)
 		err(1, "setgid");
 	if (initgroups(user, pwd->pw_gid))
 		err(1, "initgroups failed");
+	if (seteuid(pwd->pw_uid) < 0)
+		err(1, "seteuid");
 	if (setuid(pwd->pw_uid) < 0)
 		err(1, "setuid");
 
