@@ -42,7 +42,7 @@ static char sccsid[] = "@(#)timed.c	5.1 (Berkeley) 5/11/93";
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.4 $"
+#ident "$Revision: 1.5 $"
 #endif /* sgi */
 
 #define TSPTYPES
@@ -137,7 +137,7 @@ main(int argc, char **argv)
 	int nflag, iflag;
 	struct timeval ntime;
 	struct servent *srvp;
-	char buf[BUFSIZ], *cp, *cplim;
+	char *inbuf = NULL, *cp, *cplim;
 	struct ifconf ifc;
 	struct ifreq ifreq, ifreqf, *ifr;
 	register struct netinfo *ntp;
@@ -147,6 +147,7 @@ main(int argc, char **argv)
 	struct nets *nt;
 	struct sockaddr_in server;
 	u_short port;
+	int inlen = 8192;
 	int c;
 	extern char *optarg;
 	extern int optind, opterr;
@@ -384,20 +385,32 @@ main(int argc, char **argv)
 		if (0 == (nt->net & 0xff000000))
 		    nt->net <<= 8;
 	}
-	ifc.ifc_len = sizeof(buf);
-	ifc.ifc_buf = buf;
-	if (ioctl(sock, SIOCGIFCONF, (char *)&ifc) < 0) {
-		perror("timed: get interface configuration");
-		exit(1);
+	while (1) {
+		ifc.ifc_len = inlen;
+		ifc.ifc_buf = inbuf = realloc(inbuf, inlen);
+		if (inbuf == NULL) {
+			close(sock);
+			return (-1);
+		}
+		if (ioctl(sock, SIOCGIFCONF, (char *)&ifc) < 0) {
+			(void) close(sock);
+			free(inbuf);
+			perror("timed: get interface configuration");
+			exit(1);
+		}
+		if (ifc.ifc_len + sizeof(ifreq) < inlen)
+			break;
+		inlen *= 2;
 	}
+
 	ntp = NULL;
 #ifdef sgi
 #define size(p)	(sizeof(*ifr) - sizeof(ifr->ifr_name))  /* XXX hack. kludge */
 #else
 #define size(p)	max((p).sa_len, sizeof(p))
 #endif
-	cplim = buf + ifc.ifc_len; /*skip over if's with big ifr_addr's */
-	for (cp = buf; cp < cplim;
+	cplim = inbuf + ifc.ifc_len; /*skip over if's with big ifr_addr's */
+	for (cp = inbuf; cp < cplim;
 			cp += sizeof (ifr->ifr_name) + size(ifr->ifr_addr)) {
 		ifr = (struct ifreq *)cp;
 		if (ifr->ifr_addr.sa_family != AF_INET)
@@ -467,13 +480,14 @@ main(int argc, char **argv)
 		ntip = ntp;
 		ntp = NULL;
 	}
+
 	if (ntp)
 		(void) free((char *)ntp);
 	if (nettab == NULL) {
 		fprintf(stderr, "timed: no network usable\n");
 		exit(1);
 	}
-
+	free(inbuf);
 
 #ifdef sgi
 	(void)schedctl(RENICE,0,10);	   /* run fast to get good time */

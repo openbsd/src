@@ -1,4 +1,4 @@
-/*	$OpenBSD: rarpd.c,v 1.6 1997/01/15 23:44:15 millert Exp $ */
+/*	$OpenBSD: rarpd.c,v 1.7 1997/01/22 09:22:01 deraadt Exp $ */
 /*	$NetBSD: rarpd.c,v 1.12 1996/03/21 18:28:23 jtc Exp $	*/
 
 /*
@@ -28,7 +28,7 @@ char    copyright[] =
 #endif				/* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rarpd.c,v 1.6 1997/01/15 23:44:15 millert Exp $";
+static char rcsid[] = "$OpenBSD: rarpd.c,v 1.7 1997/01/22 09:22:01 deraadt Exp $";
 #endif
 
 
@@ -224,10 +224,10 @@ init_one(ifname)
 void
 init_all()
 {
-	char inbuf[8192];
+	char *inbuf = NULL;
 	struct ifconf ifc;
 	struct ifreq *ifr;
-	int fd;
+	int fd, inlen = 8192;
 	int i, len;
 
 	if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
@@ -235,18 +235,30 @@ init_all()
 		/* NOTREACHED */
 	}
 
-	ifc.ifc_len = sizeof(inbuf);
-	ifc.ifc_buf = inbuf;
-	if (ioctl(fd, SIOCGIFCONF, (caddr_t)&ifc) < 0 ||
-	    ifc.ifc_len < sizeof(struct ifreq)) {
-		err(FATAL, "init_all: SIOCGIFCONF: %s", strerror(errno));
-		/* NOTREACHED */
+	while (1) {
+		ifc.ifc_len = inlen;
+		ifc.ifc_buf = inbuf = realloc(inbuf, inlen);
+		if (inbuf == NULL) {
+			close(fd);
+			err(FATAL, "init_all: malloc: %s", strerror(errno));
+		}
+		if (ioctl(fd, SIOCGIFCONF, (char *)&ifc) < 0) {
+			(void) close(fd);
+			free(inbuf);
+			err(FATAL, "init_all: SIOCGIFCONF: %s", strerror(errno));
+			/* NOTREACHED */
+		}
+		if (ifc.ifc_len + sizeof(*ifr) < inlen)
+			break;
+		inlen *= 2;
 	}
+
 	ifr = ifc.ifc_req;
 	for (i = 0; i < ifc.ifc_len;
 	     i += len, ifr = (struct ifreq *)((caddr_t)ifr + len)) {
 		len = sizeof(ifr->ifr_name) + ifr->ifr_addr.sa_len;
 		if (ioctl(fd, SIOCGIFFLAGS, (caddr_t)ifr) < 0) {
+			free(inbuf);
 			err(FATAL, "init_all: SIOCGIFFLAGS: %s",
 			    strerror(errno));
 			/* NOTREACHED */
@@ -256,6 +268,7 @@ init_all()
 			continue;
 		init_one(ifr->ifr_name);
 	}
+	free(inbuf);
 	(void) close(fd);
 }
 
