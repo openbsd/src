@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.32 2000/03/18 01:06:56 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.33 2000/07/02 01:13:07 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.12 1997/02/08 23:54:49 cgd Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.32 2000/03/18 01:06:56 espie Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.33 2000/07/02 01:13:07 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -488,10 +488,20 @@ inspect(c, tp)
 	while ((isalnum(c = gpbc()) || c == '_') && tp < etp)
 		h = (h << 5) + h + (*tp++ = c);
 	putback(c);
-	if (tp == etp)
-		errx(1, "token too long");
-
 	*tp = EOS;
+	/* token is too long, it won't match anything, but it can still
+	 * be output. */
+	if (tp == ep) {
+		outputstr(name);
+		while (isalnum(c = gpbc()) || c == '_') {
+			if (sp < 0)
+				putc(c, active);
+			else
+				chrsave(c);
+		}
+		*name = EOS;
+		return nil;
+	}
 
 	for (p = hashtab[h % HASHSIZE]; p != nil; p = p->nxtptr)
 		if (h == p->hv && STREQ(name, p->name))
