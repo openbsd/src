@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx_pcb.c,v 1.3 1999/04/28 09:28:16 art Exp $	*/
+/*	$OpenBSD: ipx_pcb.c,v 1.4 2000/01/11 01:25:01 fgsch Exp $	*/
 
 /*-
  *
@@ -59,16 +59,17 @@
 struct	ipx_addr zeroipx_addr;
 
 #define	IPXPCBHASH(table, faddr, fport, laddr, lport) \
-	&(table)->ipxpt_hashtbl[(ntohl((faddr)->ipx_net.l_net) \
-				+ ntohs((fport)) \
-				+ ntohs((lport))) & (table->ipxpt_hash)]
+	&(table)->ipxpt_hashtbl[(ntohl((faddr)->ipx_net.l_net) + \
+	ntohs((fport)) + ntohs((lport))) & (table->ipxpt_hash)]
+
 void
 ipx_pcbinit(table, hashsize)
-	struct ipxpcbtable	*table;
-	int	hashsize;
+	struct ipxpcbtable *table;
+	int hashsize;
 {
 	CIRCLEQ_INIT(&table->ipxpt_queue);
-	table->ipxpt_hashtbl = hashinit(hashsize, M_PCB, M_WAITOK, &table->ipxpt_hash);
+	table->ipxpt_hashtbl =
+	    hashinit(hashsize, M_PCB, M_WAITOK, &table->ipxpt_hash);
 	table->ipxpt_lport = 0;
 }
 
@@ -78,6 +79,7 @@ ipx_pcballoc(so, head)
 	struct ipxpcbtable *head;
 {
 	register struct ipxpcb *ipxp;
+	int s;
 
 	ipxp = malloc(sizeof(*ipxp), M_PCB, M_DONTWAIT);
 	if (ipxp == NULL)
@@ -85,9 +87,11 @@ ipx_pcballoc(so, head)
 	bzero((caddr_t)ipxp, sizeof(*ipxp));
 	ipxp->ipxp_socket = so;
 	ipxp->ipxp_table = head;
+	s = splnet();
 	CIRCLEQ_INSERT_HEAD(&head->ipxpt_queue, ipxp, ipxp_queue);
 	LIST_INSERT_HEAD(IPXPCBHASH(head, &ipxp->ipxp_faddr, ipxp->ipxp_fport,
 	    &ipxp->ipxp_laddr, ipxp->ipxp_lport), ipxp, ipxp_hash);
+	splx(s);
 	so->so_pcb = (caddr_t)ipxp;
 	return (0);
 }
