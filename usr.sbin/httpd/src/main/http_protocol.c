@@ -284,7 +284,7 @@ static int byterange_boundary(request_rec *r, long start, long end, int output)
 API_EXPORT(int) ap_set_byterange(request_rec *r)
 {
     const char *range, *if_range, *match;
-    char *bbuf;
+    char *bbuf, *b;
     u_int32_t rbuf[12]; /* 48 bytes yields 64 base64 chars */
     long length, start, end, one_start = 0, one_end = 0;
     size_t u;
@@ -338,6 +338,11 @@ API_EXPORT(int) ap_set_byterange(request_rec *r)
 
     bbuf = ap_palloc(r->pool, ap_base64encode_len(sizeof(rbuf)));
     ap_base64encode(bbuf, (const unsigned char *)rbuf, sizeof(rbuf));
+    for (b = bbuf; *b != '\0'; b++) {
+        if (!isalnum(*b))
+            *b = 'a';
+    }
+
     r->boundary = bbuf;
 
     length = 0;
