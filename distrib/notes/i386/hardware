@@ -103,8 +103,9 @@ Supported hardware {:-include-:}:
 		BusLogic 445, 74x, 9xx  (But not the new "FlashPoint" series
 			of BusLogic SCSI adapters)
 		Initio INIC-940 and INIC-950 based PCI SCSI host
-			adapters, including the Initio INI-9090U and
-			Initio INI-9100U/UW, and the Iwill 2935UW
+			adapters, including the Initio INI-9090U,
+			Initio INI-9100U/UW, Iwill 2935UW, and
+			DTC Domex 3194U Plus
 		QLogic PCI SCSI controllers
 		Seagate/Future Domain ISA SCSI adapter cards, including:
 			ST01/02
