@@ -1,4 +1,4 @@
-/* $Id: cyberflex.c,v 1.20 2001/08/24 17:27:57 rees Exp $ */
+/* $Id: cyberflex.c,v 1.21 2002/03/14 20:28:04 rees Exp $ */
 
 /*
 copyright 1999, 2000
@@ -380,7 +380,7 @@ sectok_fmt_aidname(char *aidname, int aidlen, unsigned char *aid)
 
 int ls(int ac, char *av[])
 {
-    int i, p2, f0, f1, lflag = 0, buflen, sw;
+    int i, p2, fid, lflag = 0, buflen, sw;
     int isdir, fsize;
     char ftype[32], fname[6], aidname[34];
     unsigned char buf[JDIRSIZE];
@@ -402,9 +402,10 @@ int ls(int ac, char *av[])
 	buflen = sectok_apdu(fd, cla, 0xa8, 0, p2, 0, NULL, JDIRSIZE, buf, &sw);
 	if (!sectok_swOK(sw))
 	    break;
-	f0 = buf[4];
-	f1 = buf[5];
-	if (f0 == 0xff || f0 + f1 == 0)
+
+	/* Don't show reserved fids */
+	fid = sectok_mksw(buf[4], buf[5]);
+	if (fid == 0x3f11 || fid == 0x3fff || fid == 0xffff)
 	    continue;
 
 	/* Format name */
