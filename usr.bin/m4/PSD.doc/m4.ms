@@ -1,4 +1,4 @@
-.\"	$OpeBSD$
+.\"	$OpenBSD: m4.ms,v 1.2 2003/06/26 16:18:48 mickey Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
