@@ -1,4 +1,4 @@
-/*	$OpenBSD: yds.c,v 1.4 2001/08/25 10:13:30 art Exp $	*/
+/*	$OpenBSD: yds.c,v 1.5 2001/08/25 14:52:57 jason Exp $	*/
 /*	$NetBSD: yds.c,v 1.5 2001/05/21 23:55:04 minoura Exp $	*/
 
 /*
@@ -89,6 +89,14 @@ int	ydsdebug = 0;
 int	yds_match __P((struct device *, void *, void *));
 void	yds_attach __P((struct device *, struct device *, void *));
 int	yds_intr __P((void *));
+
+#ifdef __HAS_NEW_BUS_DMAMAP_SYNC
+#define yds_bus_dmamap_sync(t, m, o, l, f) \
+    bus_dmamap_sync((t), (m), (o), (l), (f))
+#else
+#define yds_bus_dmamap_sync(t, m, o, l, f) \
+    bus_dmamap_sync((t), (m), (f))
+#endif
 
 #define DMAADDR(p) ((p)->map->dm_segs[0].ds_addr)
 #define KERNADDR(p) ((void *)((p)->addr))
@@ -477,7 +485,9 @@ yds_allocate_slots(sc)
                 cb += pcs;
         }
 	/* Sync play control data table */
-	bus_dmamap_sync(sc->sc_dmatag, p->map, BUS_DMASYNC_PREWRITE);
+	yds_bus_dmamap_sync(sc->sc_dmatag, p->map, sc->ptbloff,
+	    (N_PLAY_SLOT_CTRL+1) * sizeof(u_int32_t),
+	    BUS_DMASYNC_PREWRITE);
 
 	return 0;
 }
@@ -994,7 +1004,10 @@ yds_intr(p)
 			u_int dma, cpu, blk, len;
 
 			/* Sync play slot control data */
-			bus_dmamap_sync(sc->sc_dmatag, sc->sc_ctrldata.map,
+			yds_bus_dmamap_sync(sc->sc_dmatag, sc->sc_ctrldata.map,
+			    sc->sc_pbankoff,
+			    sizeof(struct play_slot_ctrl_bank) * (*sc->ptbl)*
+			    N_PLAY_SLOT_CTRL_BANK,
 			    BUS_DMASYNC_POSTWRITE|BUS_DMASYNC_POSTREAD);
 			dma = sc->pbankp[nbank]->pgstart * sc->sc_play.factor;
 			cpu = sc->sc_play.offset;
@@ -1005,8 +1018,9 @@ yds_intr(p)
 			    ((cpu > dma) && (dma + len - cpu > blk * 2))) {
 				/* We can fill the next block */
 				/* Sync ring buffer first for previous write */
-				bus_dmamap_sync(sc->sc_dmatag,
+				yds_bus_dmamap_sync(sc->sc_dmatag,
 				    sc->sc_play.dma->map,
+				    cpu, blk,
 				    BUS_DMASYNC_POSTWRITE);
 				sc->sc_play.intr(sc->sc_play.intr_arg);
 				sc->sc_play.offset += blk;
@@ -1018,8 +1032,8 @@ yds_intr(p)
 #endif
 				}
 				/* Sync ring buffer for next write */
-				bus_dmamap_sync(sc->sc_dmatag,
-				    sc->sc_play.dma->map,
+				yds_bus_dmamap_sync(sc->sc_dmatag,
+				    sc->sc_play.dma->map, cpu, blk,
 				    BUS_DMASYNC_PREWRITE);
 			}
 		}
@@ -1027,7 +1041,9 @@ yds_intr(p)
 			u_int dma, cpu, blk, len;
 
 			/* Sync rec slot control data */
-			bus_dmamap_sync(sc->sc_dmatag, sc->sc_ctrldata.map,
+			yds_bus_dmamap_sync(sc->sc_dmatag, sc->sc_ctrldata.map,
+			    sc->rbankoff, sizeof(struct rec_slot_ctrl_bank)*
+			    N_REC_SLOT_CTRL * N_REC_SLOT_CTRL_BANK,
 			    BUS_DMASYNC_POSTWRITE|BUS_DMASYNC_POSTREAD);
 			dma = sc->rbank[YDS_INPUT_SLOT*2 + nbank].pgstartadr;
 			cpu = sc->sc_rec.offset;
@@ -1038,8 +1054,9 @@ yds_intr(p)
 			    ((cpu > dma) && (dma + len - cpu > blk * 2))) {
 				/* We can drain the current block */
 				/* Sync ring buffer first */
-				bus_dmamap_sync(sc->sc_dmatag,
-				    sc->sc_rec.dma->map, BUS_DMASYNC_POSTREAD);
+				yds_bus_dmamap_sync(sc->sc_dmatag,
+				    sc->sc_rec.dma->map, cpu, blk,
+				    BUS_DMASYNC_POSTREAD);
 				sc->sc_rec.intr(sc->sc_rec.intr_arg);
 				sc->sc_rec.offset += blk;
 				if (sc->sc_rec.offset >= len) {
@@ -1050,8 +1067,9 @@ yds_intr(p)
 #endif
 				}
 				/* Sync ring buffer for next read */
-				bus_dmamap_sync(sc->sc_dmatag,
-				    sc->sc_rec.dma->map, BUS_DMASYNC_PREREAD);
+				yds_bus_dmamap_sync(sc->sc_dmatag,
+				    sc->sc_rec.dma->map, cpu, blk,
+				    BUS_DMASYNC_PREREAD);
 			}
 		}
 	}
@@ -1471,10 +1489,12 @@ yds_trigger_output(addr, start, end, blksize, intr, arg, param)
 
 	/* Now the play slot for the next frame is set up!! */
 	/* Sync play slot control data for both directions */
-	bus_dmamap_sync(sc->sc_dmatag, sc->sc_ctrldata.map,
-	    BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
+	yds_bus_dmamap_sync(sc->sc_dmatag, sc->sc_ctrldata.map,
+	    sc->ptbloff, sizeof(struct play_slot_ctrl_bank) * channels *
+	    NPLAY_SLOT_CTRL_BANK, BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
 	/* Sync ring buffer */
-	bus_dmamap_sync(sc->sc_dmatag, p->map, BUS_DMASYNC_PREWRITE);
+	yds_bus_dmamap_sync(sc->sc_dmatag, p->map, 0, blksize,
+	    BUS_DMASYNC_PREWRITE);
 	/* HERE WE GO!! */
 	YWRITE4(sc, YDS_MODE,
 		YREAD4(sc, YDS_MODE) | YDS_MODE_ACTV | YDS_MODE_ACTV2);
@@ -1569,10 +1589,11 @@ yds_trigger_input(addr, start, end, blksize, intr, arg, param)
 #endif
 	/* Now the rec slot for the next frame is set up!! */
 	/* Sync record slot control data */
-	bus_dmamap_sync(sc->sc_dmatag, sc->sc_ctrldata.map,
-	    BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
+	yds_bus_dmamap_sync(sc->sc_dmatag, sc->sc_ctrldata.map, sc->sc_rbankoff,
+	    sizeof(struct rec_slot_ctrl_bank) * N_REC_SLOT_CTRL *
+	    N_REC_SLOT_CTRL_BANK, BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
 	/* Sync ring buffer */
-	bus_dmamap_sync(sc->sc_dmatag, p->map, BUS_DMASYNC_PREREAD);
+	yds_bus_dmamap_sync(sc->sc_dmatag, p->map, 0, blksize, BUS_DMASYNC_PREREAD);
 	/* HERE WE GO!! */
 	YWRITE4(sc, YDS_MODE,
 		YREAD4(sc, YDS_MODE) | YDS_MODE_ACTV | YDS_MODE_ACTV2);
@@ -1611,7 +1632,9 @@ yds_halt_output(addr)
 	if (sc->sc_play.intr) {
 		sc->sc_play.intr = 0;
 		/* Sync play slot control data */
-		bus_dmamap_sync(sc->sc_dmatag, sc->sc_ctrldata.map,
+		yds_bus_dmamap_sync(sc->sc_dmatag, sc->sc_ctrldata.map,
+		    sc->pbankoff, sizeof(struct play_slot_ctrl_bank) *
+		    (*sc->ptbl)*N_PLAY_SLOT_CTRL_BANK,
 		    BUS_DMASYNC_POSTWRITE|BUS_DMASYNC_POSTREAD);
 		/* Stop the play slot operation */
 		sc->pbankp[0]->status =
@@ -1619,8 +1642,8 @@ yds_halt_output(addr)
 		sc->pbankp[2]->status =
 		sc->pbankp[3]->status = 1;
 		/* Sync ring buffer */
-		bus_dmamap_sync(sc->sc_dmatag, sc->sc_play.dma->map,
-		    BUS_DMASYNC_POSTWRITE);
+		yds_bus_dmamap_sync(sc->sc_dmatag, sc->sc_play.dma->map, 0,
+		    sc->sc_play.length, BUS_DMASYNC_POSTWRITE);
 	}
 
 	return 0;
@@ -1639,11 +1662,13 @@ yds_halt_input(addr)
 		YWRITE4(sc, YDS_MAPOF_REC, 0);
 		sc->sc_rec.intr = 0;
 		/* Sync rec slot control data */
-		bus_dmamap_sync(sc->sc_dmatag, sc->sc_ctrldata.map,
+		yds_bus_dmamap_sync(sc->sc_dmatag, sc->sc_ctrldata.map,
+		    sc->sc_rbankoff, sizeof(struct rec_slot_ctrl_bank)*
+		    N_REC_SLOT_CTRL*N_REC_SLOT_CTRL_BANK,
 		    BUS_DMASYNC_POSTWRITE|BUS_DMASYNC_POSTREAD);
 		/* Sync ring buffer */
-		bus_dmamap_sync(sc->sc_dmatag, sc->sc_rec.dma->map,
-		    BUS_DMASYNC_POSTREAD);
+		yds_bus_dmamap_sync(sc->sc_dmatag, sc->sc_rec.dma->map, 0,
+		    sc->sc_rec.length, BUS_DMASYNC_POSTREAD);
 	}
 
 	return 0;

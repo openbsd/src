@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcscp.c,v 1.4 2001/08/25 10:13:30 art Exp $	*/
+/*	$OpenBSD: pcscp.c,v 1.5 2001/08/25 14:52:57 jason Exp $	*/
 /*	$NetBSD: pcscp.c,v 1.11 2000/11/14 18:42:58 thorpej Exp $	*/
 
 /*-
@@ -148,6 +148,14 @@ struct ncr53c9x_glue pcscp_glue = {
 	pcscp_dma_isactive,
 	NULL,			/* gl_clear_latched_intr */
 };
+
+#ifdef __HAS_NEW_BUS_DMAMAP_SYNC
+#define pcscp_bus_dmamap_sync(t, m, o, l, f) \
+    bus_dmamap_sync((t), (m), (o), (l), (f))
+#else
+#define pcscp_bus_dmamap_sync(t, m, o, l, f) \
+    bus_dmamap_sync((t), (m), (f))
+#endif
 
 int
 pcscp_match(parent, match, aux)
@@ -486,7 +494,7 @@ pcscp_dma_intr(sc)
 
 	WRITE_DMAREG(esc, DMA_CMD, DMACMD_IDLE | (datain ? DMACMD_DIR : 0));
 
-	bus_dmamap_sync(esc->sc_dmat, dmap,
+	pcscp_bus_dmamap_sync(esc->sc_dmat, dmap, 0, dmap_>dm_mapsize,
 	    datain ? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
 	bus_dmamap_unload(esc->sc_dmat, dmap);
 
@@ -635,11 +643,11 @@ pcscp_dma_go(sc)
 		return;
 
 	/* sync transfer buffer */
-	bus_dmamap_sync(esc->sc_dmat, dmap,
+	pcscp_bus_dmamap_sync(esc->sc_dmat, dmap, 0, dmap->dm_mapsize,
 	    datain ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
 
 	/* sync MDL */
-	bus_dmamap_sync(esc->sc_dmat, mdldmap,
+	pcscp_bus_dmamap_sync(esc->sc_dmat, mdldmap, 0, mdldmap->dm_mapsize,
 	    BUS_DMASYNC_PREWRITE);
 
 	/* set Starting MDL Address */
