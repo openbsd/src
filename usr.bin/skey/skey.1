@@ -1,4 +1,4 @@
-.\" $OpenBSD: skey.1,v 1.15 1999/06/05 01:21:40 aaron Exp $
+.\" $OpenBSD: skey.1,v 1.16 1999/07/03 13:01:54 aaron Exp $
 .\"	@(#)skey.1	1.1 	10/28/93
 .\"
 .Dd 28 October 1993
@@ -10,7 +10,10 @@
 .Sh SYNOPSIS
 .Nm skey
 .Op Fl x
-.Op Fl md4 | Fl md5 | Fl sha1 | Fl rmd160
+.Oo
+.Fl md4 | Fl md5 | Fl sha1 |
+.Fl rmd160
+.Oc
 .Op Fl n Ar count
 .Op Fl p Ar passwd
 <sequence#>[/] key
