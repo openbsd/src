@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.13 1997/07/06 17:18:50 niklas Exp $	*/
+/*	$OpenBSD: trap.c,v 1.14 1997/07/19 21:05:04 niklas Exp $	*/
 /*	$NetBSD: trap.c,v 1.19 1996/11/27 01:28:30 cgd Exp $	*/
 
 /*
@@ -157,6 +157,9 @@ trap(a0, a1, a2, entry, framep)
 	v = 0;
 	ucode = 0;
 	user = (framep->tf_regs[FRAME_PS] & ALPHA_PSL_USERMODE) != 0;
+#ifdef DDB
+	framep->tf_regs[FRAME_SP] = (long)framep + FRAME_SIZE*8;
+#endif
 	if (user)  {
 		sticks = p->p_sticks;
 		p->p_md.md_tf = framep;
@@ -230,16 +233,16 @@ sigfpe:			i = SIGFPE;
 				goto sigfpe;
 		case ALPHA_IF_CODE_BPT:
 		case ALPHA_IF_CODE_BUGCHK:
-			/* XXX is a0 trap type or address? */
-			v = (caddr_t)a0;
+			/* XXX what is the address?  Guess on a1 for now */
+			v = (caddr_t)a1;
 			ucode = 0;		/* XXX determine */
 			i = SIGTRAP;
 			typ = TRAP_BRKPT;
 			break;
 
 		case ALPHA_IF_CODE_OPDEC:
-			/* XXX is a0 trap type or address? */
-			v = (caddr_t)a0;
+			/* XXX what is the address?  Guess on a1 for now */
+			v = (caddr_t)a1;
 			ucode = 0;		/* XXX determine */
 #ifdef NEW_PMAP
 {
@@ -438,7 +441,7 @@ panic("foo");
 	default:
 	we_re_toast:
 #ifdef DDB
-		if (kdb_trap(entry, 0, framep))
+		if (kdb_trap(entry, a0, framep))
 			return;
 #endif
 		goto dopanic;
