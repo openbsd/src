@@ -1,5 +1,5 @@
-/*	$OpenBSD: parse.c,v 1.9 1996/09/02 16:04:17 briggs Exp $	*/
-/*	$NetBSD: parse.c,v 1.24 1996/08/13 16:42:13 christos Exp $	*/
+/*	$OpenBSD: parse.c,v 1.10 1996/09/21 05:03:37 briggs Exp $	*/
+/*	$NetBSD: parse.c,v 1.25 1996/09/13 04:22:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	5.18 (Berkeley) 2/19/91";
 #else
-static char rcsid[] = "$NetBSD: parse.c,v 1.24 1996/08/13 16:42:13 christos Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.25 1996/09/13 04:22:09 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -2018,8 +2018,7 @@ ParseSkipLine(skip)
 	 * special char.
 	 */
 	while ((c != '.') && (c != EOF)) {
-	    while (((c != '\n') || (lastc == '\\')) && (c != EOF))
-	    {
+	    while (((c != '\n') || (lastc == '\\')) && (c != EOF)) {
 		/*
 		 * Advance to next unescaped newline
 		 */
@@ -2045,10 +2044,18 @@ ParseSkipLine(skip)
      */
     buf = Buf_Init (MAKE_BSIZE);
     if (c != '\n') {
+	lastc = '\0';
 	do {
-	    Buf_AddByte (buf, (Byte)c);
+	    if (lastc != '\0' && lastc != '\n')
+		Buf_AddByte (buf, (Byte) lastc);
+	    if ((lastc = c) == '\n')
+		lineno++;
 	    c = ParseReadc();
-	} while ((c != '\n') && (c != EOF));
+	    if (c == '\n' && lastc == '\\')
+		lastc = '\0';
+	} while (((c != '\n') || (lastc == '\0')) && (c != EOF));
+	if (lastc != '\0' && lastc != '\n')
+	    Buf_AddByte (buf, (Byte) lastc);
     }
     lineno++;
     
@@ -2435,7 +2442,7 @@ Parse_File(name, stream)
 			continue;
 		    } else {
 			Parse_Error (PARSE_FATAL,
-				     "Unassociated shell command \"%.20s\"",
+				     "Unassociated shell command \"%s\"",
 				     cp);
 		    }
 		}
