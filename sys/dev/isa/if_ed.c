@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ed.c,v 1.26 1997/02/21 10:52:09 niklas Exp $	*/
+/*	$OpenBSD: if_ed.c,v 1.27 1997/03/20 23:59:58 niklas Exp $	*/
 /*	$NetBSD: if_ed.c,v 1.105 1996/10/21 22:40:45 thorpej Exp $	*/
 
 /*
@@ -141,7 +141,7 @@ void ed_shared_readmem __P((struct ed_softc *, int, caddr_t, int));
 
 #define inline	/* XXX for debugging porpoises */
 
-void ed_getmcaf __P((struct arpcom *, u_long *));
+void ed_getmcaf __P((struct arpcom *, u_int32_t *));
 void edread __P((struct ed_softc *, int, int));
 struct mbuf *edget __P((struct ed_softc *, int, int));
 static __inline void ed_rint __P((struct ed_softc *));
@@ -1606,7 +1606,7 @@ edinit(sc)
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	int nicbase = sc->nic_base, asicbase = sc->asic_base;
 	int i;
-	u_long mcaf[2];
+	u_int32_t mcaf[2];
 
 	/*
 	 * Initialize the NIC in the exact order outlined in the NS manual.
@@ -1684,7 +1684,8 @@ edinit(sc)
 	/* Set multicast filter on chip. */
 	ed_getmcaf(&sc->sc_arpcom, mcaf);
 	for (i = 0; i < 8; i++)
-		NIC_PUT(iot, ioh, nicbase, ED_P1_MAR0 + i, ((u_char *)mcaf)[i]);
+		NIC_PUT(iot, ioh, nicbase, ED_P1_MAR0 + i,
+		    ((u_char *)mcaf)[i]);
 
 	/*
 	 * Set current page pointer to one page after the boundary pointer, as
@@ -2705,12 +2706,12 @@ edget(sc, src, totlen)
 void
 ed_getmcaf(ac, af)
 	struct arpcom *ac;
-	u_long *af;
+	u_int32_t *af;
 {
 	struct ifnet *ifp = &ac->ac_if;
 	struct ether_multi *enm;
 	register u_char *cp, c;
-	register u_long crc;
+	register u_int32_t crc;
 	register int i, len;
 	struct ether_multistep step;
 
@@ -2751,7 +2752,8 @@ ed_getmcaf(ac, af)
 		for (len = sizeof(enm->enm_addrlo); --len >= 0;) {
 			c = *cp++;
 			for (i = 8; --i >= 0;) {
-				if (((crc & 0x80000000) ? 1 : 0) ^ (c & 0x01)) {
+				if (((crc & 0x80000000) ? 1 : 0)
+				    ^ (c & 0x01)) {
 					crc <<= 1;
 					crc ^= 0x04c11db6 | 1;
 				} else
