@@ -70,7 +70,7 @@ char *print_hw_addr (htype, hlen, data)
 	}
 	return habuf;
  bad:	
-	strcpy (habuf, "<null>");
+	strlcpy (habuf, "<null>", sizeof habuf);
 	return habuf;
 
 }
