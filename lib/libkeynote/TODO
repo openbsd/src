@@ -1,0 +1,14 @@
+# $OpenBSD: TODO,v 1.1.1.1 1999/05/23 22:11:03 angelos Exp $
+
+Short term TODOs:
+	- More interesting/comprehensive testsuite
+	- Add the proper RFC reference to the manpages and README
+	- Write key/signature algorithm draft(s)
+	- autoconf
+	- Document X509 support
+
+Long term TODOs:
+	- Some sort of tcl/tk GUI
+	- PalmPilot support
+	- PGPlib support
+	- ElGamal support

@@ -1,0 +1,31 @@
+#	$OpenBSD: Makefile,v 1.1.1.1 1999/05/23 22:11:04 angelos Exp $
+
+LIB=	keynote
+MAN=	man/keynote.3 man/keynote.4
+
+CFLAGS+= -DCRYPTO
+LEXFLAGS = -Cr -Pkn -s -i
+YACCFLAGS = -d -p kn -b k
+
+HDRS=	keynote.h
+SRCS=	k.tab.c lex.kn.c environment.c parse_assertion.c signature.c aux.c \
+	base64.c
+
+CLEANFILES+= k.tab.c lex.kn.c k.tab.h
+
+k.tab.c: keynote.y environment.h signature.h
+	$(YACC) $(YACCFLAGS) keynote.y
+
+lex.kn.c: keynote.l k.tab.h environment.h assertion.h signature.h
+	$(LEX.l) $(LEXFLAGS) keynote.l
+
+includes:
+	@cd ${.CURDIR}; for i in $(HDRS); do \
+	    j="cmp -s $$i ${DESTDIR}/usr/include/$$i || \
+		${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444 $$i \
+		${DESTDIR}/usr/include"; \
+	    echo $$j; \
+	    eval "$$j"; \
+	done
+
+.include <bsd.lib.mk>

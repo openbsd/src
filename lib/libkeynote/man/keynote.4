@@ -1,0 +1,266 @@
+.\" $OpenBSD: keynote.4,v 1.1.1.1 1999/05/23 22:11:08 angelos Exp $
+.\"
+.\" The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
+.\"
+.\" This code was written by Angelos D. Keromytis in Philadelphia, PA, USA,
+.\" in April-May 1998
+.\"
+.\" Copyright (C) 1998, 1999 by Angelos D. Keromytis.
+.\"      
+.\" Permission to use, copy, and modify this software without fee
+.\" is hereby granted, provided that this entire notice is included in
+.\" all copies of any software which is or includes a copy or
+.\" modification of this software. 
+.\" You may use this code under the GNU public license if you so wish. Please
+.\" contribute changes back to the author.
+.\"
+.\" THIS SOFTWARE IS BEING PROVIDED "AS IS", WITHOUT ANY EXPRESS OR
+.\" IMPLIED WARRANTY. IN PARTICULAR, THE AUTHORS MAKES NO
+.\" REPRESENTATION OR WARRANTY OF ANY KIND CONCERNING THE
+.\" MERCHANTABILITY OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR
+.\" PURPOSE.
+.\"
+.Dd May 22, 1999
+.Dt KeyNote 3
+.Os
+.\" .TH KeyNote 4 local
+.Sh NAME
+.Nm KeyNote
+.Nd A Trust-Management System
+.Sh SYNOPSIS
+.Fd #include <keynote.h>
+.Fd Link options: -lkeynote -lm -lcrypto
+.Sh DESCRIPTION
+For more details on
+.Nm KeyNote ,
+see the web page 
+.Bd -literal -offset indent
+ http://www.cis.upenn.edu/~keynote
+.Ed
+.Pp
+Additional details on the API and the various tools are given in the
+man pages listed at the end of this manual.
+.Pp
+Trust management, introduced in the PolicyMaker system, is a unified
+approach to specifying and interpreting security policies,
+credentials, and relationships; it allows direct authorization of
+security-critical actions. A trust-management system provides
+standard, general-purpose mechanisms for specifying application
+security policies and credentials. Trust-management credentials
+describe a specific delegation of trust and subsume the role of public
+key certificates; unlike traditional certificates, which bind keys to
+names, credentials can bind keys directly to the authorization to
+perform specific tasks.
+
+A trust-management system has five basic components:
+
+.nf
+* A language for describing `actions,' which are operations with
+  security consequences that are to be controlled by the system.
+
+* A mechanism for identifying `principals,' which are entities that
+  can be authorized to perform actions.
+
+* A language for specifying application `policies,' which govern the
+  actions that principals are authorized to perform.
+
+* A language for specifying `credentials,' which allow principals
+  to delegate authorization to other principals.
+
+* A `compliance checker,' which provides a service to applications
+  for determining how an action requested by principals should be
+  handled, given a policy and a set of credentials.
+.fi
+
+The trust-management approach has a number of advantages over other
+mechanisms for specifying and controlling authorization, especially
+when security policy is distributed over a network or is otherwise
+decentralized.
+
+Trust management unifies the notions of security policy, credentials,
+access control, and authorization. An application that uses a
+trust-management system can simply ask the compliance checker whether
+a requested action should be allowed. Furthermore, policies and
+credentials are written in standard languages that are shared by all
+trust-managed applications; the security configuration mechanism for
+one application carries exactly the same syntactic and semantic
+structure as that of another, even when the semantics of the
+applications themselves are quite different.
+
+Trust-management policies are easy to distribute across networks,
+helping to avoid the need for application-specific distributed policy
+configuration mechanisms, access control lists, and certificate
+parsers and interpreters.
+
+For a general discussion of the use of trust management in distributed
+system security, see the papers listed at the end of this manual.
+
+KeyNote is a simple and flexible trust-management system designed to
+work well for a variety of large- and small- scale Internet-based
+applications. It provides a single, unified language for both local
+policies and credentials. KeyNote policies and credentials, called
+`assertions,' contain predicates that describe the trusted actions
+permitted by the holders of specific public keys. KeyNote assertions
+are essentially small, highly-structured programs. A signed assertion,
+which can be sent over an untrusted network, is also called a
+`credential assertion.' Credential assertions, which also serve the
+role of certificates, have the same syntax as policy assertions but
+are also signed by the principal delegating the trust.
+
+In KeyNote:
+
+.nf
+* Actions are specified as a collection of name-value pairs.
+
+* Principal names can be any convenient string and can directly
+  represent cryptographic public keys.
+
+* The same language is used for both policies and credentials.
+
+* The policy and credential language is concise, highly expressive,
+  human readable and writable, and compatible with a variety of
+  storage and transmission media, including electronic mail.
+
+* The compliance checker returns an application-configured `policy
+  compliance value' that describes how a request should be handled
+  by the application.  Policy compliance values are always
+  positively derived from policy and credentials, facilitating
+  analysis of KeyNote-based systems.
+
+* Compliance checking is efficient enough for high-performance and
+  real-time applications.
+.fi
+
+In KeyNote, the authority to perform trusted actions is associated
+with one or more `principals.' A principal may be a physical entity, a
+process in an operating system, a public key, or any other convenient
+abstraction. KeyNote principals are identified by a string called a
+`Principal Identifier.' In some cases, a Principal Identifier will
+contain a cryptographic key interpreted by the KeyNote system (e.g.,
+for credential signature verification). In other cases, Principal
+Identifiers may have a structure that is opaque to KeyNote.
+
+Principals perform two functions of concern to KeyNote: They request
+`actions' and they issue `assertions.' Actions are any trusted
+operations that an application places under KeyNote control.
+Assertions delegate the authorization to perform actions to other
+principals.
+
+Actions are described to the KeyNote compliance checker in terms of a
+collection of name-value pairs called an `action attribute set.' The
+action attribute set is created by the invoking application. Its
+structure and format are described in detail in Section 3 of this
+document.
+
+KeyNote provides advice to applications on the interpretation of
+policy with regard to specific requested actions. Applications invoke
+the KeyNote compliance checker by issuing a `query' containing a
+proposed action attribute set and identifying the principal(s)
+requesting it. The KeyNote system determines and returns an
+appropriate `policy compliance value' from an ordered set of possible
+responses.
+
+The policy compliance value returned from a KeyNote query advises the
+application how to process the requested action. In the simplest case,
+the compliance value is Boolean (e.g., "reject" or "approve").
+Assertions can also be written to select from a range of possible
+compliance values, when appropriate for the application (e.g., "no
+access", "restricted access", "full access"). Applications can
+configure the relative ordering (from `weakest' to `strongest') of
+compliance values at query time.
+
+Assertions are the basic programming unit for specifying policy and
+delegating authority. Assertions describe the conditions under which a
+principal authorizes actions requested by other principals. An
+assertion identifies the principal that made it, which other
+principals are being authorized, and the conditions under which the
+authorization applies. The syntax of assertions is given in Section 4.
+
+A special principal, whose identifier is "POLICY", provides the root
+of trust in KeyNote. "POLICY" is therefore considered to be authorized
+to perform any action.
+
+Assertions issued by the "POLICY" principal are called `policy
+assertions' and are used to delegate authority to otherwise untrusted
+principals. The KeyNote security policy of an application consists of
+a collection of policy assertions.
+
+When a principal is identified by a public key, it can digitally sign
+assertions and distribute them over untrusted networks for use by
+other KeyNote compliance checkers. These signed assertions are also
+called `credentials,' and serve a role similar to that of traditional
+public key certificates. Policies and credentials share the same
+syntax and are evaluated according to the same semantics. A principal
+can therefore convert its policy assertions into credentials simply by
+digitally signing them.
+
+KeyNote is designed to encourage the creation of human-readable
+policies and credentials that are amenable to transmission and storage
+over a variety of media. Its assertion syntax is inspired by the
+format of RFC822-style message headers. A KeyNote assertion contains a
+sequence of sections, called `fields,' each of which specifying one
+aspect of the assertion's semantics. Fields start with an identifier
+at the beginning of a line and continue until the next field is
+encountered. For example:
+
+.nf
+  KeyNote-Version: 2
+  Comment: A simple, if contrived, email certificate for user mab
+  Local-Constants:  ATT_CA_key = "RSA:acdfa1df1011bbac"
+                    mab_key = "DSA:deadbeefcafe001a"
+  Authorizer: ATT_CA_key
+  Licensees: mab_key
+  Conditions: ((app_domain == "email")  # valid for email only
+            && (address == "mab@research.att.com"));
+  Signature: "RSA-SHA1:f00f2244"
+.fi
+
+For the exact meanings of all the fields, see the RFC reference at the
+end of this manual.
+
+KeyNote semantics resolve the relationship between an application's
+policy and actions requested by other principals, as supported by
+credentials. The KeyNote compliance checker processes the assertions
+against the action attribute set to determine the policy compliance
+value of a requested action. These semantics are defined in Section 5.
+
+An important principle in KeyNote's design is `assertion
+monotonicity'; the policy compliance value of an action is always
+positively derived from assertions made by trusted principals.
+Removing an assertion never results in increasing the compliance value
+returned by KeyNote for a given query. The monotonicity property can
+simplify the design and analysis of complex network-based security
+protocols; network failures that prevent the transmission of
+credentials can never result in spurious authorization of dangerous
+actions.
+.Pp
+.Sh FILES
+.Fd keynote.h
+.Fd libkeynote.a
+.Sh SEE ALSO
+.Xr keynote 3 ,
+.Xr keynote-keygen 1 , 
+.Xr keynote-sign 1 , 
+.Xr keynote-sigver 1 ,
+.Xr keynote-verify 1
+.Bl -tag -width "AAAAAAA"
+.It ``The KeyNote Trust-Management System'' 
+M. Blaze, J. Feigenbaum, A. D. Keromytis,
+Internet Drafts, draft-ietf-trustmgt-keynote-00.txt
+.It ``Decentralized Trust Management'' 
+M. Blaze, J. Feigenbaum, J. Lacy,
+1996 IEEE Conference on Privacy and Security
+.It ``Compliance-Checking in the PolicyMaker Trust Management System''
+M. Blaze, J. Feigenbaum, M. Strauss,
+1998 Financial Crypto Conference
+.El
+.Sh AUTHOR
+Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
+.Sh WEB PAGE
+http://www.cis.upenn.edu/~keynote
+.Sh BUGS
+None that we know of.
+If you find any, please report them at
+.Bd -literal -offset indent -compact
+keynote@research.att.com
+.Ed

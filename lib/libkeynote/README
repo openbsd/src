@@ -1,0 +1,97 @@
+# $OpenBSD: README,v 1.1.1.1 1999/05/23 22:11:03 angelos Exp $
+
+This is release 2-beta2 of the KeyNote trust management library reference
+implementation.
+
+For details on the KeyNote spec, read the file keynote-spec, included in
+this distribution (in the doc/ directory).
+
+To build the distribution, just type "make" or "make crypt". To test the
+distribution, type "make test". The query should evaluate to "true" (look
+at the last few lines of output). To build without crypto support, use
+"make nocrypto".
+
+Compile tips:
+- You need the SSLeay/OpenSSL library if you compile with crypto
+  (default), version 0.8.1b or later. You can find it in various
+  crypto software repositories, or at:
+	   ftp://ftp.psy.uq.oz.au/pub/Crypto/SSL/
+
+  OpenSSL can be found at:
+	   http://www.openssl.com/
+
+  Edit this distribution's Makefile, changing the variables SSLINC and
+  SSLLIB to reflect the location of the include files and libraries
+  respectively for SSLeay/OpenSSL.
+
+- Similarly, if you compile with -DPGPLIB you will need PGPlib-1.1
+  from ftp://dslab1.cs.uit.no/pub/PGPlib-1.1.tar.gz
+  ** Notice: there is no support for PGPLIB yet **
+
+  Make sure PGPINC and PGPLIB (in Makefile) point at the right
+  locations for the include files and the library respectively.
+
+- You may need to add support for initialization of the random
+  generator routines. There is currently support for most BSDs and
+  Linux. Look in keynote-keygen.c and environment.c for calls to
+  RAND_seed(). Bear in mind that you need high-quality
+  (cryptographic-grade) randomness.
+
+- If your system does not have snprintf(), uncomment the -DNO_SNPRINTF
+  in the Makefile (NOCRYPTODEFS variable).
+
+- If your system does not have getopt(), move the files getopt.c and
+  getopt.h from Misc/ and uncomment the GETOPT line in the Makefile, and
+  enable the -DNEED_GETOPT flag in NOCRYPTODEFS (you do not need to
+  for Windows).
+
+- For Windows, you should be able to compile using Visual C++ without
+  too much trouble (thanks to Dave Clark for testing release 0.1). You
+  can get a copy of a regular expression library from the KeyNote web
+  page (see below).
+
+The Makefile creates the libkeynote.a library and the keynote-verify,
+keynote-keygen, keynote-sigver, and keynote-sign programs. There's a
+man page for the library calls (keynote.3) and one for each of the
+utilities in the man/ directory. There is also a man page about KeyNote
+itself (keynote.4), which contains some text from the spec.
+
+To view them, use:
+
+  nroff -mandoc keynote.3 | more
+  nroff -mandoc keynote.4 | more
+  nroff -mandoc keynote-verify.1 | more
+  nroff -mandoc keynote-keygen.1 | more
+  nroff -mandoc keynote-sign.1 | more
+  nroff -mandoc keynote-sigver.1 | more
+
+Alternatively, you can just install them in your manpath. If your
+nroff does not support the -mandoc flag, use -man instead. For those
+systems that do not have nroff, the text version of the man pages are
+provided as well (the files with .0 suffixes in the same directory).
+
+The keynote-verify program can be used to verify a request, given a
+set of assertions and an environment file. The directory testsuite/
+has some examples assertions. The keynote-keygen program can
+be used to generate keys. The keynote-sign and keynote-sigver can be
+used to sign assertions, and verify signed assertions respectively.
+
+The file base64.c was taken from the OpenBSD libc and was slightly
+modified.
+
+Read the TODO file to see what's missing (and eventually coming).
+
+When in doubt on how to use a library call (despite the man pages),
+consult the implementation of the various utilities.
+
+For any questions, comments, bug reports, praise, or anything else,
+contact us at keynote@research.att.com
+
+There is also a users mailing list at keynote-users@nsa.research.att.com
+To subscribe, send a message to majordomo@nsa.research.att.com with the word
+"subscribe keynote-users" (without the quotes) in the message body.
+
+Finally, there is a web page for KeyNote at
+  http://www.cis.upenn.edu/~keynote
+
+Angelos D. Keromytis

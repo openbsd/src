@@ -1,0 +1,21 @@
+/* $OpenBSD: LICENSE,v 1.1.1.1 1999/05/23 22:11:07 angelos Exp $ */
+
+/*
+ * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
+ *
+ * This code was written by Angelos D. Keromytis in Philadelphia, PA, USA,
+ * in April-May 1998
+ *
+ * Copyright (C) 1998, 1999 by Angelos D. Keromytis.
+ *	
+ * Permission to use, copy, and modify this software without fee
+ * is hereby granted, provided that this entire notice is included in
+ * all copies of any software which is or includes a copy or
+ * modification of this software. 
+ *
+ * THIS SOFTWARE IS BEING PROVIDED "AS IS", WITHOUT ANY EXPRESS OR
+ * IMPLIED WARRANTY. IN PARTICULAR, THE AUTHORS MAKES NO
+ * REPRESENTATION OR WARRANTY OF ANY KIND CONCERNING THE
+ * MERCHANTABILITY OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR
+ * PURPOSE.
+ */
