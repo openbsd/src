@@ -1,4 +1,4 @@
-/*	$OpenBSD */
+/*	$OpenBSD: cardbusvar.h,v 1.2 2000/04/26 14:05:34 brad Exp $	*/
 /*	$NetBSD: cardbusvar.h,v 1.17 2000/04/02 19:11:37 mycroft Exp $	*/
 
 /*
