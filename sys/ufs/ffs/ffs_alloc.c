@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.20 2001/03/20 16:56:12 art Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.21 2001/03/20 16:58:43 art Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
@@ -788,7 +788,7 @@ ffs_hashalloc(ip, cg, pref, size, allocator)
 		if (cg == fs->fs_ncg)
 			cg = 0;
 	}
-	return (NULL);
+	return (0);
 }
 
 /*
