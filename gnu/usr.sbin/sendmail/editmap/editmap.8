@@ -83,27 +83,28 @@ flag in the
 line in sendmail.cf.
 The value is never case folded.
 .It Fl q
-Query the map for the specified key.  If found, print value to standard
-output and exit with 0.  If not found then print an error
-message to stdout and exit with
+Query the map for the specified key.
+If found, print value to standard output and exit with 0.
+If not found then print an error message to stdout and exit with
 .Dv EX_UNAVAILABLE .
 .It Fl u
 Updates the record for
 .Ar key
 with
 .Ar value
-or inserts a new record if one doesn't exist.  Exits with 0 on success
-or
+or inserts a new record if one doesn't exist.
+Exits with 0 on success or
 .Dv EX_IOERR
 on failure.
 .It Fl x
-Deletes the specific key from the map.  Exits with 0 on success or
+Deletes the specific key from the map.
+Exits with 0 on success or
 .Dv EX_IOERR
 on failure.
 .El
 .Sh SEE ALSO
-.Xr sendmail 8 ,
-.Xr makemap 8
+.Xr makemap 8 ,
+.Xr sendmail 8
 .Sh HISTORY
 The
 .Nm
