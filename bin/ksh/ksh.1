@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ksh.1,v 1.61 2003/12/12 22:35:07 naddy Exp $
+.\"	$OpenBSD: ksh.1,v 1.62 2003/12/22 11:54:02 jmc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"     The Regents of the University of California.  All rights reserved.
@@ -409,6 +409,19 @@ have equal precedence which is higher than that of
 and
 .Ql \&; ,
 which also have equal precedence.
+Note that the
+.Ql &&
+and
+.Ql ||
+operators are
+.Qq left-associative .
+For example, both of these commands will print only
+.Qq bar :
+.Bd -literal -offset indent
+false && echo foo || echo bar
+true || echo foo && echo bar
+.Ed
+.Pp
 The
 .Ql &
 token causes the preceding command to be executed asynchronously; that is,
