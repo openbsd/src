@@ -1,4 +1,4 @@
-# 	$OpenBSD: RAMDISK,v 1.19 1999/02/16 21:30:21 art Exp $
+# 	$OpenBSD: RAMDISK,v 1.20 1999/03/05 02:55:34 deraadt Exp $
 # 	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -64,6 +64,7 @@ sbus0	at iommu0				# sun4m
 
 audioamd0 at mainbus0				# sun4c
 audioamd0 at obio0				# sun4m
+audioamd0 at sbus0 slot ? offset ?		# sun4m
 audio*	at audioamd?
 
 auxreg0	at mainbus0				# sun4c
@@ -158,6 +159,11 @@ le0	at obio0 addr 0xf9000000 level 6		# sun4/300
 ie0	at obio0 addr 0xf6000000 level 6		# sun4/200 on-board
 ie0	at obio0 addr 0x06000000 level 6		# sun4/100 on-board
 
+ie1	at vmes0 addr 0xffe88000 level 5 vect 0x75
+ie2	at vmes0 addr 0xff31ff02 level 5 vect 0x76
+ie3	at vmes0 addr 0xff35ff02 level 5 vect 0x77
+ie4	at vmes0 addr 0xff2dff02 level 5 vect 0x7c
+
 # HappyMeal ethernet
 hme*	at sbus? slot ? offset ?
 # Media Independent Interface (mii) drivers (required for hme)
@@ -168,11 +174,6 @@ qsphy*	at mii? phy ?				# Quality Semi QS6612 PHYs
 qec*	at sbus0 slot ? offset ?
 qe*	at qec?
 be*	at qec?
-
-ie1	at vmes0 addr 0xffe88000 level 5 vect 0x75
-ie2	at vmes0 addr 0xff31ff02 level 5 vect 0x76
-ie3	at vmes0 addr 0xff35ff02 level 5 vect 0x77
-ie4	at vmes0 addr 0xff2dff02 level 5 vect 0x7c
 
 # Xylogics 753 or 7053 VME SMD disk controllers and disks, found
 # on sun4 systems.
@@ -243,6 +244,13 @@ cgsix0	at obio0 addr 0x0b000000 level 4	# sun4/100 P4
 # Sun "cgeight" 24-bit framebuffer
 cgeight0 at obio0 addr 0xfb300000 level 4	# sun4/300 P4
 cgeight0 at obio0 addr 0x0b300000 level 4	# sun4/100 P4
+
+# Sun "tcx" accelerated color framebuffer.
+tcx0	at sbus? slot ? offset ?
+tcx*	at sbus? slot ? offset ?
+
+# Sun "cgfourteen" accelerated 24-bit framebuffer.
+cgfourteen0	at obio0			# sun4m
 
 # SCSI bus layer.  SCSI devices attach to the SCSI bus, which attaches
 # to the underlying hardware controller.
