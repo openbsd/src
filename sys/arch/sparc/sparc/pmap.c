@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.81 2001/05/09 15:31:27 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.82 2001/05/10 08:43:56 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -5783,10 +5783,9 @@ pmap_kremove4m(va, len)
  */
 /* ARGSUSED */
 void
-pmap_unwire(pm, va, wired)
+pmap_unwire(pm, va)
 	struct pmap *pm;
 	vaddr_t va;
-	int wired;
 {
 
 	pmap_stats.ps_useless_changewire++;
