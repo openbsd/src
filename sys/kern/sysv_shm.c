@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_shm.c,v 1.38 2003/08/21 05:20:07 kevlo Exp $	*/
+/*	$OpenBSD: sysv_shm.c,v 1.39 2003/10/12 23:44:39 millert Exp $	*/
 /*	$NetBSD: sysv_shm.c,v 1.50 1998/10/21 22:24:29 tron Exp $	*/
 
 /*
@@ -209,6 +209,12 @@ sys_shmdt(struct proc *p, void *v, register_t *retval)
 int
 sys_shmat(struct proc *p, void *v, register_t *retval)
 {
+	return (sys_shmat1(p, v, retval, 0));
+}
+
+int
+sys_shmat1(struct proc *p, void *v, register_t *retval, int findremoved)
+{
 	struct sys_shmat_args /* {
 		syscallarg(int) shmid;
 		syscallarg(const void *) shmaddr;
@@ -235,7 +241,7 @@ sys_shmat(struct proc *p, void *v, register_t *retval)
 			shmmap_s->shmid = -1;
 		p->p_vmspace->vm_shm = (caddr_t)shmmap_h;
 	}
-	shmseg = shm_find_segment_by_shmid(SCARG(uap, shmid), 0);
+	shmseg = shm_find_segment_by_shmid(SCARG(uap, shmid), findremoved);
 	if (shmseg == NULL)
 		return (EINVAL);
 	error = ipcperm(cred, &shmseg->shm_perm,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: shm.h,v 1.14 2002/12/17 23:11:31 millert Exp $	*/
+/*	$OpenBSD: shm.h,v 1.15 2003/10/12 23:44:39 millert Exp $	*/
 /*	$NetBSD: shm.h,v 1.20 1996/04/09 20:55:35 cgd Exp $	*/
 
 /*
@@ -156,6 +156,7 @@ void shmfork(struct vmspace *, struct vmspace *);
 void shmexit(struct vmspace *);
 void shmid_n2o(struct shmid_ds *, struct oshmid_ds *);
 int sysctl_sysvshm(int *, u_int, void *, size_t *, void *, size_t);
+int sys_shmat1(struct proc *, void *, register_t *, int);
 
 #else /* !_KERNEL */
 
