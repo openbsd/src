@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.14 2003/06/11 23:42:12 deraadt Exp $	*/
+/*	$OpenBSD: buf.c,v 1.15 2003/08/07 22:13:43 millert Exp $	*/
 /*	$NetBSD: buf.c,v 1.15 1995/04/23 10:07:28 cgd Exp $	*/
 
 /* buf.c: This file contains the scratch-file buffer rountines for the
@@ -33,7 +33,7 @@
 #if 0
 static char *rcsid = "@(#)buf.c,v 1.4 1994/02/01 00:34:35 alm Exp";
 #else
-static char rcsid[] = "$OpenBSD: buf.c,v 1.14 2003/06/11 23:42:12 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: buf.c,v 1.15 2003/08/07 22:13:43 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -102,6 +102,7 @@ put_sbuf_line(char *cs)
 		;
 	if (s - cs >= LINECHARS) {
 		seterrmsg("line too long");
+		free(lp);
 		return NULL;
 	}
 	len = s - cs;
@@ -110,6 +111,7 @@ put_sbuf_line(char *cs)
 		if (fseek(sfp, 0L, SEEK_END) < 0) {
 			perror(NULL);
 			seterrmsg("cannot seek temp file");
+			free(lp);
 			return NULL;
 		}
 		sfseek = ftell(sfp);
@@ -120,6 +122,7 @@ put_sbuf_line(char *cs)
 		sfseek = -1;
 		perror(NULL);
 		seterrmsg("cannot write temp file");
+		free(lp);
 		return NULL;
 	}
 	lp->len = len;
