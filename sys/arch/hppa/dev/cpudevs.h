@@ -1,7 +1,7 @@
 /*
  * THIS FILE AUTOMATICALLY GENERATED. DO NOT EDIT.
  * generated from:
- *	OpenBSD: cpudevs,v 1.10 1999/06/18 03:16:50 mickey Exp 
+ *	OpenBSD: cpudevs,v 1.11 1999/06/22 23:48:15 mickey Exp 
  */
 
 #define	HPPA_TYPE_NPROC	0x00
@@ -205,6 +205,7 @@
 #define	HPPA_ADMA_MRTI	0x04c
 #define	HPPA_ADMA_ACCMUX	0x04d
 #define	HPPA_ADMA_L8023	0x050
+#define	HPPA_ADMA_GTR	0x05e
 #define	HPPA_ADMA_FWSCSI	0x089
 #define	HPPA_ADMA_NETFC	0x091
 #define	HPPA_ADMA_YATM	0x092

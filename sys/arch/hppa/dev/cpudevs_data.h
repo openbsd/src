@@ -1,7 +1,7 @@
 /*
  * THIS FILE AUTOMATICALLY GENERATED. DO NOT EDIT.
  * generated from:
- *	OpenBSD: cpudevs,v 1.10 1999/06/18 03:16:50 mickey Exp 
+ *	OpenBSD: cpudevs,v 1.11 1999/06/22 23:48:15 mickey Exp 
  */
 
 static const struct hppa_mod_info hppa_knownmods[] = {
@@ -186,6 +186,7 @@ static const struct hppa_mod_info hppa_knownmods[] = {
 	{HPPA_TYPE_ADMA,	HPPA_ADMA_MRTI,	"Martian RTI" },
 	{HPPA_TYPE_ADMA,	HPPA_ADMA_ACCMUX,	"ACC Mux" },
 	{HPPA_TYPE_ADMA,	HPPA_ADMA_L8023,	"Lanbrusca 802.3" },
+	{HPPA_TYPE_ADMA,	HPPA_ADMA_GTR,	"TI TokenRing" },
 	{HPPA_TYPE_ADMA,	HPPA_ADMA_FWSCSI,	"FW SCSI" },
 	{HPPA_TYPE_ADMA,	HPPA_ADMA_NETFC,	"Net FC" },
 	{HPPA_TYPE_ADMA,	HPPA_ADMA_YATM,	"GSC+ YLIASTER ATM" },
