@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.19 1999/12/12 12:10:43 itojun Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.20 1999/12/27 06:40:38 itojun Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -184,21 +184,29 @@ struct inpcbtable {
 #define INP_IPV6_MCAST	0x800	/* Set if inp_moptions points to ipv6 ones */
 
 #if 1	/*KAME*/
-/* flags in in6p_flags */
-#define IN6P_RECVOPTS	INP_RECVOPTS	/* receive incoming IP6 options */
-#define IN6P_RECVRETOPTS INP_RECVRETOPTS /* receive IP6 options for reply */
-#define IN6P_RECVDSTADDR INP_RECVDSTADDR /* receive IP6 dst address */
-#define IN6P_HIGHPORT	INP_HIGHPORT	/* user wants "high" port binding */
-#define IN6P_LOWPORT	INP_LOWPORT	/* user wants "low" port binding */
-#define IN6P_ANONPORT	0x40		/* port chosen for user */
-#define IN6P_FAITH	0x80		/* accept FAITH'ed connections */
-#define IN6P_PKTINFO	0x010000
-#define IN6P_HOPLIMIT	0x020000
-#define IN6P_NEXTHOP	0x040000
-#define IN6P_HOPOPTS	0x080000
-#define IN6P_DSTOPTS	0x100000
-#define IN6P_RTHDR	0x200000
-#define IN6P_CONTROLOPTS	(0x3f0000 | IN6P_RECVOPTS | IN6P_RECVRETOPTS | IN6P_RECVDSTADDR)
+/*
+ * Flags in in6p_flags
+ * We define KAME's original flags in higher 16 bits as much as possible
+ * for compatibility with *bsd*s.
+ * XXX: Should IN6P_HIGHPORT and IN6P_LOWPORT be moved as well?  
+ */
+#define IN6P_RECVOPTS		INP_RECVOPTS	/* recv incoming IP6 options */
+#define IN6P_RECVRETOPTS	INP_RECVRETOPTS /* recv IP6 options for reply */
+#define IN6P_RECVDSTADDR	INP_RECVDSTADDR /* recv IP6 dst address */
+#define IN6P_HIGHPORT		INP_HIGHPORT	/* user wants "high" port */
+#define IN6P_LOWPORT		INP_LOWPORT	/* user wants "low" port */
+#define IN6P_PKTINFO		0x010000 /* receive IP6 dst and I/F */
+#define IN6P_HOPLIMIT		0x020000 /* receive hoplimit */
+#define IN6P_HOPOPTS		0x040000 /* receive hop-by-hop options */
+#define IN6P_DSTOPTS		0x080000 /* receive dst options after rthdr */
+#define IN6P_RTHDR		0x100000 /* receive routing header */
+#define IN6P_RTHDRDSTOPTS	0x200000 /* receive dstoptions before rthdr */
+
+#define IN6P_ANONPORT		0x4000000 /* port chosen for user */
+#define IN6P_FAITH		0x8000000 /* accept FAITH'ed connections */
+
+#define IN6P_CONTROLOPTS	(IN6P_PKTINFO|IN6P_HOPLIMIT|IN6P_HOPOPTS|\
+				 IN6P_DSTOPTS|IN6P_RTHDR|IN6P_RTHDRDSTOPTS)
 #endif
 
 #define	INPLOOKUP_WILDCARD	1
