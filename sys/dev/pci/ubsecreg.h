@@ -1,7 +1,8 @@
-/*	$OpenBSD: ubsecreg.h,v 1.15 2001/11/14 00:29:25 jason Exp $	*/
+/*	$OpenBSD: ubsecreg.h,v 1.16 2002/01/19 21:15:37 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Theo de Raadt
+ * Copyright (c) 2001 Patrik Lindergren (patrik@ipunplugged.com)
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,6 +37,16 @@
 #define BS_BAR			0x10	/* DMA base address register */
 #define	BS_TRDY_TIMEOUT		0x40	/* TRDY timeout */
 #define	BS_RETRY_TIMEOUT	0x41	/* DMA retry timeout */
+
+#define	UBS_PCI_RTY_SHIFT			8
+#define	UBS_PCI_RTY_MASK			0xff
+#define	UBS_PCI_RTY(misc) \
+    (((misc) >> UBS_PCI_RTY_SHIFT) & UBS_PCI_RTY_MASK)
+
+#define	UBS_PCI_TOUT_SHIFT			0
+#define	UBS_PCI_TOUT_MASK			0xff
+#define	UBS_PCI_TOUT(misc) \
+    (((misc) >> PCI_TOUT_SHIFT) & PCI_TOUT_MASK)
 
 /*
  * DMA Control & Status Registers (offset from BS_BAR)

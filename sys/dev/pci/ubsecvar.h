@@ -1,7 +1,8 @@
-/*	$OpenBSD: ubsecvar.h,v 1.22 2001/07/02 04:34:47 jason Exp $	*/
+/*	$OpenBSD: ubsecvar.h,v 1.23 2002/01/19 21:15:37 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Theo de Raadt
+ * Copyright (c) 2001 Patrik Lindergren (patrik@ipunplugged.com)
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,11 +34,18 @@
 #endif
 
 #define	UBS_MAX_SCATTER		64	/* Maximum scatter/gather depth */
+
+#ifndef UBS_MAX_AGGR
 #define	UBS_MAX_AGGR		5	/* Maximum aggregation count */
+#endif
 
 #define	UBSEC_CARD(sid)		(((sid) & 0xf0000000) >> 28)
 #define	UBSEC_SESSION(sid)	( (sid) & 0x0fffffff)
 #define	UBSEC_SID(crd, sesn)	(((crd) << 28) | ((sesn) & 0x0fffffff))
+
+#define UBS_DEF_RTY		0xff	/* PCI Retry Timeout */
+#define UBS_DEF_TOUT		0xff	/* PCI TRDY Timeout */
+#define UBS_DEF_CACHELINE	0x01	/* Cache Line setting */
 
 struct ubsec_dma_alloc {
 	u_int32_t		dma_paddr;
@@ -62,10 +70,8 @@ struct ubsec_q2_rng {
 #define	UBSEC_RNG_BUFSIZ	16		/* measured in 32bit words */
 
 struct ubsec_dmachunk {
-#if 0
 	struct ubsec_mcr	d_mcr;
 	struct ubsec_mcr_add	d_mcradd[UBS_MAX_AGGR-1];
-#endif
 	struct ubsec_pktbuf	d_sbuf[UBS_MAX_SCATTER-1];
 	struct ubsec_pktbuf	d_dbuf[UBS_MAX_SCATTER-1];
 	u_int32_t		d_macbuf[5];
@@ -81,42 +87,19 @@ struct ubsec_dma {
 	struct ubsec_dma_alloc		d_alloc;
 };
 
-struct ubsec_softc {
-	struct	device		sc_dv;		/* generic device */
-	void			*sc_ih;		/* interrupt handler cookie */
-	bus_space_handle_t	sc_sh;		/* memory handle */
-	bus_space_tag_t		sc_st;		/* memory tag */
-	bus_dma_tag_t		sc_dmat;	/* dma tag */
-	int			sc_flags;	/* device specific flags */
-	u_int32_t		sc_statmask;	/* interrupt status mask */
-	int32_t			sc_cid;		/* crypto tag */
-	SIMPLEQ_HEAD(,ubsec_q)	sc_queue;	/* packet queue, mcr1 */
-	int			sc_nqueue;	/* count enqueued, mcr1 */
-	SIMPLEQ_HEAD(,ubsec_q)	sc_qchip;	/* on chip, mcr1 */
-	SIMPLEQ_HEAD(,ubsec_q2)	sc_queue2;	/* packet queue, mcr2 */
-	int			sc_nqueue2;	/* count enqueued, mcr2 */
-	SIMPLEQ_HEAD(,ubsec_q2)	sc_qchip2;	/* on chip, mcr2 */
-	int			sc_nsessions;	/* # of sessions */
-	struct ubsec_session	*sc_sessions;	/* sessions */
-	struct timeout		sc_rngto;	/* rng timeout */
-	int			sc_rnghz;	/* rng poll time */
-	struct ubsec_q2_rng	sc_rng;
-	struct ubsec_dma	sc_dmaa[UBS_MAX_NQUEUE];
-	SIMPLEQ_HEAD(,ubsec_dma) sc_dma;
-};
-
 #define	UBS_FLAGS_KEY		0x01		/* has key accelerator */
 #define	UBS_FLAGS_LONGCTX	0x02		/* uses long ipsec ctx */
 
 struct ubsec_q {
 	SIMPLEQ_ENTRY(ubsec_q)		q_next;
+	int				q_nstacked_mcrs;
+	struct ubsec_q			*q_stacked_mcr[UBS_MAX_AGGR-1];
 	struct cryptop			*q_crp;
-	struct ubsec_mcr		*q_mcr;
 	struct ubsec_pktbuf		q_srcpkt[UBS_MAX_SCATTER-1];
 	struct ubsec_pktbuf		q_dstpkt[UBS_MAX_SCATTER-1];
 	struct ubsec_dma		*q_dma;
 
-	struct mbuf 		      	*q_src_m, *q_dst_m;
+	struct mbuf			*q_src_m, *q_dst_m;
 	struct uio			*q_src_io, *q_dst_io;
 
 	long				q_src_packp[UBS_MAX_SCATTER];
@@ -129,12 +112,52 @@ struct ubsec_q {
 	int				q_sesn;
 	int				q_flags;
 };
+
+struct ubsec_softc {
+	struct	device		sc_dv;		/* generic device */
+	void			*sc_ih;		/* interrupt handler cookie */
+	bus_space_handle_t	sc_sh;		/* memory handle */
+	bus_space_tag_t		sc_st;		/* memory tag */
+	bus_dma_tag_t		sc_dmat;	/* dma tag */
+	int			sc_flags;	/* device specific flags */
+	u_int32_t		sc_statmask;	/* interrupt status mask */
+	int32_t			sc_cid;		/* crypto tag */
+	SIMPLEQ_HEAD(,ubsec_q)	sc_queue;	/* packet queue, mcr1 */
+	int			sc_nqueue;	/* count enqueued, mcr1 */
+	SIMPLEQ_HEAD(,ubsec_q)	sc_qchip;	/* on chip, mcr1 */
+	SIMPLEQ_HEAD(,ubsec_q)	sc_freequeue;	/* list of free queue elements */
+	SIMPLEQ_HEAD(,ubsec_q2)	sc_queue2;	/* packet queue, mcr2 */
+	int			sc_nqueue2;	/* count enqueued, mcr2 */
+	SIMPLEQ_HEAD(,ubsec_q2)	sc_qchip2;	/* on chip, mcr2 */
+	int			sc_nsessions;	/* # of sessions */
+	struct ubsec_session	*sc_sessions;	/* sessions */
+	struct timeout		sc_rngto;	/* rng timeout */
+	int			sc_rnghz;	/* rng poll time */
+	struct ubsec_q2_rng	sc_rng;
+	struct ubsec_dma	sc_dmaa[UBS_MAX_NQUEUE];
+	struct ubsec_q		*sc_queuea[UBS_MAX_NQUEUE];
+};
+
 #define	UBSEC_QFLAGS_COPYOUTIV		0x1
 
 struct ubsec_session {
 	u_int32_t	ses_used;
 	u_int32_t	ses_deskey[6];		/* 3DES key */
-	u_int32_t       ses_hminner[5];		/* hmac inner state */
-	u_int32_t       ses_hmouter[5];		/* hmac outer state */
-	u_int32_t       ses_iv[2];		/* [3]DES iv */
+	u_int32_t	ses_hminner[5];		/* hmac inner state */
+	u_int32_t	ses_hmouter[5];		/* hmac outer state */
+	u_int32_t	ses_iv[2];		/* [3]DES iv */
 };
+
+struct ubsec_stats {
+	u_int64_t hst_ibytes;
+	u_int64_t hst_obytes;
+	u_int32_t hst_ipackets;
+	u_int32_t hst_opackets;
+	u_int32_t hst_invalid;
+	u_int32_t hst_nomem;
+	u_int32_t hst_queuefull;
+	u_int32_t hst_dmaerr;
+	u_int32_t hst_mcrerr;
+	u_int32_t hst_nodmafree;
+};
+
