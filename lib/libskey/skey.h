@@ -11,7 +11,7 @@
  *
  * Main client header
  *
- * $Id: skey.h,v 1.3 1996/09/27 15:38:59 millert Exp $
+ * $Id: skey.h,v 1.4 1996/09/29 21:27:01 millert Exp $
  */
 
 #if	defined(__TURBOC__) || defined(__STDC__) || defined(LATTICE)
@@ -73,5 +73,5 @@ int getskeyprompt __ARGS ((struct skey *, char *, char *));
 int atob8 __ARGS((char *, char *));
 int btoa8 __ARGS((char *, char *));
 int htoi __ARGS((char));
-int skey_get_MDX __ARGS(());
-int skey_set_MDX __ARGS((int));
+const char * skey_get_algorithm __ARGS((void));
+char * skey_set_algorithm __ARGS((char *));

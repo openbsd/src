@@ -8,7 +8,7 @@
  *
  * S/KEY verification check, lookups, and authentication.
  * 
- * $Id: skeylogin.c,v 1.4 1996/09/29 04:30:39 millert Exp $
+ * $Id: skeylogin.c,v 1.5 1996/09/29 21:27:01 millert Exp $
  */
 
 #include <sys/param.h>
@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <time.h>
@@ -52,12 +53,12 @@ getskeyprompt(mp, name, prompt)
 
 	sevenbit(name);
 	rval = skeylookup(mp, name);
-	(void)strcpy(prompt, "skey MD0 55 latour1\n");
+	(void)strcpy(prompt, "otp-md0 55 latour1\n");
 	switch (rval) {
 	case -1:	/* File error */
 		return -1;
 	case 0:		/* Lookup succeeded, return challenge */
-		(void)sprintf(prompt, "skey MD%d %d %s\n", skey_get_MDX(),
+		(void)sprintf(prompt, "otp-%s %d %s\n", skey_get_algorithm(),
 			      mp->n - 1, mp->seed);
 		return 0;
 	case 1:		/* User not found */
@@ -87,7 +88,7 @@ skeychallenge(mp,name, ss)
 	case -1:	/* File error */
 		return -1;
 	case 0:		/* Lookup succeeded, issue challenge */
-		(void)sprintf(ss, "skey MD%d %d %s", skey_get_MDX(),
+		(void)sprintf(ss, "otp-%s %d %s", skey_get_algorithm(),
 			      mp->n - 1, mp->seed);
 		return 0;
 	case 1:		/* User not found */
@@ -139,13 +140,14 @@ skeylookup(mp,name)
 			continue;
 		if ((cp = strtok(NULL, " \t")) == NULL)
 			continue;
-		/* Set MDX if specified, else use MD4 */
-		if (cp[0] == 'M' && cp[1] == 'D') {
-			skey_set_MDX(atoi(&cp[2]));
+		/* Set hash type if specified, else use md4 */
+		if (isalpha(*cp)) {
+			/* XXX - return val */
+			skey_set_algorithm(cp);
 			if ((cp = strtok(NULL, " \t")) == NULL)
 				continue;
 		} else {
-			skey_set_MDX(4);
+			skey_set_algorithm("md4");
 		}
 		mp->n = atoi(cp);
 		if ((mp->seed = strtok(NULL, " \t")) == NULL)
@@ -248,8 +250,8 @@ skeyverify(mp,response)
 	btoa8(mp->val,key);
 	mp->n--;
 	(void)fseek(mp->keyfile, mp->recstart, SEEK_SET);
-	(void)fprintf(mp->keyfile, "%s MD%d %04d %-16s %s %-21s\n",
-	    mp->logname, skey_get_MDX(), mp->n, mp->seed, mp->val, tbuf);
+	(void)fprintf(mp->keyfile, "%s %s %04d %-16s %s %-21s\n",
+	    mp->logname, skey_get_algorithm(), mp->n, mp->seed, mp->val, tbuf);
 
 	(void)fclose(mp->keyfile);
 	
