@@ -1,4 +1,4 @@
-/*	$OpenBSD: hp.c,v 1.3 1997/05/29 00:04:22 niklas Exp $ */
+/*	$OpenBSD: hp.c,v 1.4 1998/05/13 07:30:22 niklas Exp $ */
 /*	$NetBSD: hp.c,v 1.5 1996/02/17 18:23:22 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -63,7 +63,7 @@ struct	hp_softc {
 
 struct	disklabel hplabel;
 struct	hp_softc hp_softc;
-char io_buf[MAXBSIZE];
+char io_buf[DEV_BSIZE];
 daddr_t part_offset;
 
 hpopen(f, adapt, ctlr, unit, part)

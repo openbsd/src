@@ -1,4 +1,4 @@
-/*	$OpenBSD: ra.c,v 1.4 1997/05/29 00:04:24 niklas Exp $ */
+/*	$OpenBSD: ra.c,v 1.5 1998/05/13 07:30:24 niklas Exp $ */
 /*	$NetBSD: ra.c,v 1.5 1996/08/02 11:22:18 ragge Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
@@ -85,7 +85,7 @@ volatile struct uda *ubauda;
 volatile struct udadevice *udacsr;
 struct	disklabel ralabel;
 struct ra_softc ra_softc;
-char io_buf[MAXBSIZE];
+char io_buf[DEV_BSIZE];
 
 raopen(f, adapt, ctlr, unit, part)
 	struct open_file *f;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.2 1997/05/29 00:04:26 niklas Exp $	*/
+/*	$OpenBSD: sd.c,v 1.3 1998/05/13 07:30:27 niklas Exp $	*/
 /*	$NetBSD: sd.c,v 1.1 1996/08/02 11:22:36 ragge Exp $	*/
 
 /*
@@ -135,7 +135,7 @@ sdreset(ctlr, unit)
 {
 }
 
-char io_buf[MAXBSIZE];
+char io_buf[DEV_BSIZE];
 
 sdgetinfo(ss)
 	register struct sd_softc *ss;

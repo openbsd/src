@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfm.c,v 1.3 1998/02/03 11:48:27 maja Exp $	*/
+/*	$OpenBSD: mfm.c,v 1.4 1998/05/13 07:30:23 niklas Exp $	*/
 /*	$NetBSD: mfm.c,v 1.2 1997/03/15 13:04:28 ragge Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -72,7 +72,7 @@ struct mfm_softc {
 int	mfmstrategy(), mfmopen();
 struct disklabel mfmlabel;
 struct mfm_softc mfm_softc;
-char		io_buf[MAXBSIZE];
+char		io_buf[DEV_BSIZE];
 
 /*
  * These should probably be somewhere else, but ka410 is the only
@@ -384,7 +384,7 @@ mfmopen(f, adapt, ctlr, unit, part)
 		struct mfm_xbn *xp;
 
 		/* mfmstrategy(msc, F_READ, -16, 8192, io_buf, &i); */
-		mfmstrategy(msc, F_READ, -16, 512, io_buf, &i);
+		mfmstrategy(msc, F_READ, -16, DEV_BSIZE, io_buf, &i);
 #ifdef verbose
 		printf("dumping raw disk-block #0:\n");
 		ucp = io_buf;
