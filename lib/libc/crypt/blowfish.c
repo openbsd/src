@@ -1,4 +1,4 @@
-/* $OpenBSD: blowfish.c,v 1.17 2003/04/09 21:46:02 markus Exp $ */
+/* $OpenBSD: blowfish.c,v 1.18 2004/11/02 17:23:26 hshoexer Exp $ */
 /*
  * Blowfish block cipher for OpenBSD
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -64,10 +64,7 @@
 #define BLFRND(s,p,i,j,n) (i ^= F(s,j) ^ (p)[n])
 
 void
-Blowfish_encipher(c, xl, xr)
-	blf_ctx *c;
-	u_int32_t *xl;
-	u_int32_t *xr;
+Blowfish_encipher(blf_ctx *c, u_int32_t *xl, u_int32_t *xr)
 {
 	u_int32_t Xl;
 	u_int32_t Xr;
@@ -92,10 +89,7 @@ Blowfish_encipher(c, xl, xr)
 }
 
 void
-Blowfish_decipher(c, xl, xr)
-	blf_ctx *c;
-	u_int32_t *xl;
-	u_int32_t *xr;
+Blowfish_decipher(blf_ctx *c, u_int32_t *xl, u_int32_t *xr)
 {
 	u_int32_t Xl;
 	u_int32_t Xr;
@@ -120,14 +114,11 @@ Blowfish_decipher(c, xl, xr)
 }
 
 void
-Blowfish_initstate(c)
-	blf_ctx *c;
+Blowfish_initstate(blf_ctx *c)
 {
-
-/* P-box and S-box tables initialized with digits of Pi */
+	/* P-box and S-box tables initialized with digits of Pi */
 
 	static const blf_ctx initstate =
-
 	{ {
 		{
 			0xd1310ba6, 0x98dfb5ac, 0x2ffd72db, 0xd01adfb7,
@@ -399,11 +390,11 @@ Blowfish_initstate(c)
 	} };
 
 	*c = initstate;
-
 }
 
 u_int32_t
-Blowfish_stream2word(const u_int8_t *data, u_int16_t databytes, u_int16_t *current)
+Blowfish_stream2word(const u_int8_t *data, u_int16_t databytes,
+    u_int16_t *current)
 {
 	u_int8_t i;
 	u_int16_t j;
@@ -462,7 +453,7 @@ Blowfish_expand0state(blf_ctx *c, const u_int8_t *key, u_int16_t keybytes)
 
 void
 Blowfish_expandstate(blf_ctx *c, const u_int8_t *data, u_int16_t databytes,
-		     const u_int8_t *key, u_int16_t keybytes)
+    const u_int8_t *key, u_int16_t keybytes)
 {
 	u_int16_t i;
 	u_int16_t j;
