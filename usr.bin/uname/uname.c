@@ -1,4 +1,4 @@
-/*	$OpenBSD: uname.c,v 1.2 1996/06/26 05:42:07 deraadt Exp $	*/
+/*	$OpenBSD: uname.c,v 1.3 1998/02/24 00:06:00 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1994 Winning Strategies, Inc.
@@ -32,13 +32,15 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: uname.c,v 1.2 1996/06/26 05:42:07 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: uname.c,v 1.3 1998/02/24 00:06:00 deraadt Exp $";
 #endif /* not lint */
 
+#include <sys/param.h>
 #include <stdio.h>
 #include <locale.h>
 #include <unistd.h>
 #include <sys/utsname.h>
+#include <sys/sysctl.h>
 #include <err.h>
 
 static void usage();
@@ -49,6 +51,7 @@ static void usage();
 #define	PRINT_VERSION	0x08
 #define	PRINT_MACHINE	0x10
 #define	PRINT_ALL	0x1f
+#define PRINT_PROCESSOR	0x20
 
 int
 main(argc, argv) 
@@ -62,7 +65,7 @@ main(argc, argv)
 
 	setlocale(LC_ALL, "");
 
-	while ((c = getopt(argc,argv,"amnrsv")) != -1 ) {
+	while ((c = getopt(argc,argv,"amnrsvp")) != -1 ) {
 		switch ( c ) {
 		case 'a':
 			print_mask |= PRINT_ALL;
@@ -81,6 +84,9 @@ main(argc, argv)
 			break;
 		case 'v':
 			print_mask |= PRINT_VERSION;
+			break;
+		case 'p':
+			print_mask |= PRINT_PROCESSOR;
 			break;
 		default:
 			usage();
@@ -122,6 +128,19 @@ main(argc, argv)
 		if (space++) putchar(' ');
 		fputs(u.machine, stdout);
 	}
+	if (print_mask & PRINT_PROCESSOR) {
+		char buf[1024];
+		size_t len;
+		int mib[2];
+
+		if (space++) putchar(' ');
+		mib[0] = CTL_HW;
+		mib[1] = HW_MODEL;
+		len = sizeof(buf);
+		if (sysctl(mib, 2, &buf, &len, NULL, 0) == -1)
+			err(1, "sysctl");
+		printf("%.*s", len, buf);
+	}		
 	putchar('\n');
 
 	exit(0);

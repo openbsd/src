@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uname.1,v 1.2 1996/06/26 05:42:06 deraadt Exp $
+.\"	$OpenBSD: uname.1,v 1.3 1998/02/24 00:05:59 deraadt Exp $
 .\" Copyright (c) 1990 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -40,7 +40,7 @@
 .Nd Print operating system name
 .Sh SYNOPSIS
 .Nm uname
-.Op Fl amnsrv
+.Op Fl amnpsrv
 .Sh DESCRIPTION
 The
 .Nm uname
@@ -59,6 +59,8 @@ print the machine hardware name.
 print the nodename (the nodename may be a name
 that the system is known by to a communications
 network).
+.It Fl p
+print the processor type in more detail.
 .It Fl s
 print the operating system name.
 .It Fl r
