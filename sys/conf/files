@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.161 2000/04/26 19:04:59 chris Exp $
+#	$OpenBSD: files,v 1.162 2000/05/17 18:20:19 mickey Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -47,7 +47,11 @@ define	rtl80x9		# RealTek 8019/8029 NE2000-compatible
 
 # a wscons output device; used later, but needs to be near the top for
 # common file (e.g. vga) definitions.
-define  wsconsdev {[console = -1]}
+define	wsdisplaydev {}
+define	wsemuldisplaydev {[console = -1]}
+define	wskbddev {[console = -1], [mux = -1]}
+define	wsmousedev {[mux = -1]}
+define	wsrasteremulops
 
 define  wdc_base
 define  ata {[channel = -1], [drive = -1]}
@@ -167,11 +171,11 @@ device	lpt
 file	dev/ic/lpt.c		lpt & (lpt_isa | lpt_pica | lpt_algor | lpt_gsc | lpt_puc) needs-flag
 
 # VGA
-device	vga: wsconsdev
+device	vga: wsemuldisplaydev
 file	dev/ic/vga.c		vga & (vga_isa | vga_pci)
 
 # VGA framebuffer
-device	vgafb: wsconsdev
+device	vgafb: wsdisplaydev
 file	dev/ic/vgafb.c		vgafb & (vgafb_isa | vgafb_pci)
 file	dev/ic/font_8x16.c	vgafb & (vgafb_isa | vgafb_pci)
 
