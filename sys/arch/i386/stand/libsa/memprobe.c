@@ -1,4 +1,4 @@
-/*	$OpenBSD: memprobe.c,v 1.4 1997/04/15 06:43:15 mickey Exp $	*/
+/*	$OpenBSD: memprobe.c,v 1.5 1997/04/17 17:21:16 weingart Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -47,7 +47,7 @@ memprobe()
 
 	/* probe extended memory
 	 *
-	 * There is no need to do this in assembly language.  This are
+	 * There is no need to do this in assembly language.  This is
 	 * much easier to debug in C anyways.
 	 */
 	for(ram = 1024; ram < 512*1024; ram += 4){
@@ -64,6 +64,12 @@ memprobe()
  *
  * This is a hack, but it seems to work ok.  Maybe this is
  * the *real* way that you are supposed to do probing???
+ *
+ * Modify the original a bit.  We write everything first, and
+ * then test for the values.  This should croak on machines that
+ * return values just written on non-existent memory...
+ *
+ * BTW: These machines are pretty boken IMHO.
  */
 static int addrprobe(int kloc){
 	volatile int *loc, i;
@@ -80,6 +86,16 @@ static int addrprobe(int kloc){
 	for(i = 0; i < sizeof(pat)/sizeof(pat[0]); i++){
 		*loc = pat[i];
 		if(*loc != pat[i]) return(1);
+	}
+
+	/* Write address */
+	for(i = 0; i < sizeof(pat)/sizeof(pat[0]); i++){
+		loc[i] = pat[i];
+	}
+
+	/* Read address */
+	for(i = 0; i < sizeof(pat)/sizeof(pat[0]); i++){
+		if(loc[i] != pat[i]) return(1);
 	}
 
 	return(0);
