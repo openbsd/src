@@ -200,6 +200,13 @@ struct st_quirk_inquiry_pattern st_quirk_patterns[] = {
 		0, 0, 0,				/* minor 8-11 */
 		0, 0, 0,				/* minor 12-15 */
 	}},
+	{T_SEQUENTIAL, T_REMOV,
+	 "EXABYTE ", "EXB-8200        ", "263H", 0, 5, {
+		0, 0, 0,				/* minor 0-3 */
+		0, 0, 0,				/* minor 4-7 */
+		0, 0, 0,				/* minor 8-11 */
+		0, 0, 0					/* minor 12-15 */
+	}},
 #if 0
 	{T_SEQUENTIAL, T_REMOV,
 	 "EXABYTE ", "EXB-8200        ", "",     0, 12, {
