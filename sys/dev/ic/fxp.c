@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.14 2001/05/24 03:32:51 art Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.15 2001/05/24 04:24:36 art Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -995,10 +995,11 @@ fxp_stop(sc, drain)
 	/*
 	 * Release any xmit buffers.
 	 */
-	for (txp = sc->cbl_first; txp != NULL && txp->mb_head != NULL;
-	    txp = txp->next) {
-		m_freem(txp->mb_head);
-		txp->mb_head = NULL;
+	txp = sc->cbl_base;
+	for (i = 0; i < FXP_NTXCB; i++) {
+		if (txp[i].mb_head != NULL)
+			m_freem(txp[i].mb_head);
+		txp[i].mb_head = NULL;
 	}
 	sc->tx_queued = 0;
 
