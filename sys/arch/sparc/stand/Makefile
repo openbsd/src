@@ -5,6 +5,7 @@ SUBDIR= boot bootxx installboot
 ### find out what to use for libkern and libsa
 SAREL=
 KERNREL=
+TOPLEVEL=1
 .include "Makefile.inc"
 .include "$S/lib/libkern/Makefile.inc"
 .include "$S/lib/libsa/Makefile.inc"

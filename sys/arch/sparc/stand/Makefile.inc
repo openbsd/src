@@ -5,9 +5,11 @@ __stand_makefile_inc=1
 
 S= ${.CURDIR}/../../../${R}
 
+.ifndef TOPLEVEL
 .if !make(libdep) && !make(sadep) && !make(salibdir) && !make(kernlibdir)
 .BEGIN:
 	-@([ -h machine ] || ln -s ${S}/arch/${MACHINE}/include machine)
+.endif
 .endif
 
 RELOC_SUN4=	0x240000
@@ -25,6 +27,6 @@ srt0.o: srt0.S
 	${CC} ${CFLAGS} -D_LOCORE -c ${.IMPSRC}
 
 cleandir:
-	rm -rf lib machine
+	-@rm -rf lib machine
 
 .endif
