@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_bootstrap.c,v 1.1 2002/02/23 04:58:28 miod Exp $	*/
+/*	$OpenBSD: pmap_bootstrap.c,v 1.2 2002/02/27 20:51:01 miod Exp $	*/
 
 /* 
  * Copyright (c) 1995 Theo de Raadt
@@ -284,7 +284,7 @@ pmap_bootstrap(nextpa, firstpa)
 		 */
 		epte = &(PA2VA(kptmpa, u_int *))[NPTEPG-1];
 		while (pte < epte) {
-			*pte++ = PG_NV | PG_U;
+			*pte++ = PG_NV;
 		}
 		/*
 		 * Initialize the last to point to the page
@@ -346,7 +346,7 @@ pmap_bootstrap(nextpa, firstpa)
 	pte = PA2VA(kptpa, u_int *);
 	epte = &pte[nptpages * NPTEPG];
 	while (pte < epte)
-		*pte++ = PG_NV | PG_U;
+		*pte++ = PG_NV;
 
 	/*
 	 * Validate PTEs for kernel text (RO).  The first page
@@ -435,7 +435,7 @@ pmap_bootstrap(nextpa, firstpa)
 	pte = PA2VA(p0upa, u_int *);
 	epte = (u_int *)(PA2VA(p0upa, u_int) + USPACE);
 	while (pte < epte)
-		*pte++ = 0;
+		*pte++ = PG_NV;
 	/*
 	 * Remember the u-area address so it can be loaded in the
 	 * proc struct p_addr field later.
