@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamdb.c,v 1.6 2004/03/11 18:09:43 beck Exp $	*/
+/*	$OpenBSD: spamdb.c,v 1.7 2004/03/11 18:14:21 beck Exp $	*/
 
 /*
  * Copyright (c) 2004 Bob Beck.  All rights reserved.
@@ -197,6 +197,7 @@ dblist(char *dbname)
 			to = strchr(from, '\n');
 			if (to == NULL) {
 				warnx("No from part in grey key %s", a);
+				free(a);
 				goto bad;
 			}
 			*to = '\0';
@@ -205,6 +206,7 @@ dblist(char *dbname)
 			    a, from, to, gd.first, gd.pass, gd.expire,
 			    gd.bcount, gd.pcount);
 		}
+		free(a);
 	}
 	db->close(db);
 	db = NULL;
