@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.4 2003/12/20 18:32:22 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.5 2003/12/20 18:50:40 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -18,6 +18,7 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/wait.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <err.h>
@@ -267,6 +268,10 @@ main(int argc, char *argv[])
 
 	if (rde_pid)
 		kill(rde_pid, SIGTERM);
+
+        do {
+                i = waitpid(-1, NULL, WNOHANG);
+        } while (i > 0 || (i == -1 && errno == EINTR));
 
 	logit(LOG_CRIT, "Terminating");
 	return (0);
