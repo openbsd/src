@@ -24,7 +24,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: dbsym.c,v 1.1.1.1 1995/10/18 08:47:31 deraadt Exp $
+ *	$Id: dbsym.c,v 1.2 1997/11/17 11:36:33 kstailey Exp $
  */
 
 /* Copy the symbol table into the space reserved for it. */
@@ -174,11 +174,7 @@ main(argc,argv)
 	*ip++ = head.a_syms;
 	memcpy((char*)ip, symbols, head.a_syms + strtab_len);
 
-	msync(dataseg - data_pgoff, file_len - data_off
-#ifdef	sun
-		  ,0
-#endif
-		  );
+	msync(dataseg - data_pgoff, file_len - data_off ,0);
 
 #ifdef	DEBUG
 	printf("...done\n");
