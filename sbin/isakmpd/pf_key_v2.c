@@ -1,5 +1,5 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.39 2000/12/02 01:56:04 angelos Exp $  */
-/*	$EOM: pf_key_v2.c,v 1.67 2000/11/17 05:10:14 angelos Exp $	*/
+/*      $OpenBSD: pf_key_v2.c,v 1.40 2000/12/12 01:46:55 niklas Exp $  */
+/*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -1153,17 +1153,22 @@ pf_key_v2_mask_to_bits (u_int32_t mask)
  */
 static int
 pf_key_v2_flow (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
-		in_addr_t rmask, u_int8_t *spi, u_int8_t proto,
-		in_addr_t dst, in_addr_t src, int delete, int ingress)
+		in_addr_t rmask, u_int8_t tproto, u_int16_t sport,
+		u_int16_t dport, u_int8_t *spi, u_int8_t proto,
+		in_addr_t dst, in_addr_t src, int delete, int ingress,
+		u_int8_t srcid_type, u_int8_t *srcid, int srcid_len,
+		u_int8_t dstid_type, u_int8_t *dstid, int dstid_len)
 {
 #if defined (SADB_X_ADDFLOW) && defined (SADB_X_DELFLOW)
   struct sadb_msg msg;
 #ifdef SADB_X_EXT_FLOW_TYPE
   struct sadb_protocol flowtype;
+  struct sadb_ident *sid = 0;
 #else
   struct sadb_sa ssa;
 #endif
   struct sadb_address *addr = 0;
+  struct sadb_protocol tprotocol;
   struct pf_key_v2_msg *flow = 0, *ret = 0;
   size_t len;
   int err;
@@ -1192,6 +1197,53 @@ pf_key_v2_flow (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
     goto cleanup;
 
 #ifdef SADB_X_EXT_FLOW_TYPE
+  if (!delete)
+    {
+      /* Setup the source ID, if provided */
+      if (srcid)
+        {
+	  sid = calloc (PF_KEY_V2_ROUND (srcid_len) + sizeof *sid,
+			sizeof (u_int8_t));
+	  if (!sid)
+	    goto cleanup;
+
+	  sid->sadb_ident_len = ((sizeof *sid) / PF_KEY_V2_CHUNK)
+	    + PF_KEY_V2_ROUND (srcid_len) / PF_KEY_V2_CHUNK;
+	  sid->sadb_ident_exttype = SADB_EXT_IDENTITY_SRC;
+	  sid->sadb_ident_type = srcid_type;
+
+	  memcpy (sid + 1, srcid, srcid_len);
+
+	  if (pf_key_v2_msg_add (flow, (struct sadb_ext *)sid,
+				 PF_KEY_V2_NODE_MALLOCED) == -1)
+	    goto cleanup;
+
+	  sid = 0;
+	}
+
+      /* Setup the destination ID, if provided */
+      if (dstid)
+        {
+	  sid = calloc (PF_KEY_V2_ROUND (dstid_len) + sizeof *sid,
+			sizeof (u_int8_t));
+	  if (!sid)
+	    goto cleanup;
+
+	  sid->sadb_ident_len = ((sizeof *sid) / PF_KEY_V2_CHUNK)
+	    + PF_KEY_V2_ROUND (dstid_len) / PF_KEY_V2_CHUNK;
+	  sid->sadb_ident_exttype = SADB_EXT_IDENTITY_DST;
+	  sid->sadb_ident_type = dstid_type;
+
+	  memcpy (sid + 1, dstid, dstid_len);
+
+	  if (pf_key_v2_msg_add (flow, (struct sadb_ext *)sid,
+				 PF_KEY_V2_NODE_MALLOCED) == -1)
+	    goto cleanup;
+
+	  sid = 0;
+	}
+    }
+
   /* Setup the flow type extension.  */
   bzero (&flowtype, sizeof flowtype);
   flowtype.sadb_protocol_exttype = SADB_X_EXT_FLOW_TYPE;
@@ -1270,7 +1322,7 @@ pf_key_v2_flow (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
   ((struct sockaddr_in *)(addr + 1))->sin_len = sizeof (struct sockaddr_in);
   ((struct sockaddr_in *)(addr + 1))->sin_family = AF_INET;
   ((struct sockaddr_in *)(addr + 1))->sin_addr.s_addr = laddr;
-  ((struct sockaddr_in *)(addr + 1))->sin_port = 0;
+  ((struct sockaddr_in *)(addr + 1))->sin_port = sport;
   if (pf_key_v2_msg_add (flow, (struct sadb_ext *)addr,
 			 PF_KEY_V2_NODE_MALLOCED) == -1)
     goto cleanup;
@@ -1286,7 +1338,7 @@ pf_key_v2_flow (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
   ((struct sockaddr_in *)(addr + 1))->sin_len = sizeof (struct sockaddr_in);
   ((struct sockaddr_in *)(addr + 1))->sin_family = AF_INET;
   ((struct sockaddr_in *)(addr + 1))->sin_addr.s_addr = lmask;
-  ((struct sockaddr_in *)(addr + 1))->sin_port = 0;
+  ((struct sockaddr_in *)(addr + 1))->sin_port = sport ? 0xffff : 0;
   if (pf_key_v2_msg_add (flow, (struct sadb_ext *)addr,
 			 PF_KEY_V2_NODE_MALLOCED) == -1)
     goto cleanup;
@@ -1302,7 +1354,7 @@ pf_key_v2_flow (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
   ((struct sockaddr_in *)(addr + 1))->sin_len = sizeof (struct sockaddr_in);
   ((struct sockaddr_in *)(addr + 1))->sin_family = AF_INET;
   ((struct sockaddr_in *)(addr + 1))->sin_addr.s_addr = raddr;
-  ((struct sockaddr_in *)(addr + 1))->sin_port = 0;
+  ((struct sockaddr_in *)(addr + 1))->sin_port = dport;
   if (pf_key_v2_msg_add (flow, (struct sadb_ext *)addr,
 			 PF_KEY_V2_NODE_MALLOCED) == -1)
     goto cleanup;
@@ -1318,14 +1370,25 @@ pf_key_v2_flow (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
   ((struct sockaddr_in *)(addr + 1))->sin_len = sizeof (struct sockaddr_in);
   ((struct sockaddr_in *)(addr + 1))->sin_family = AF_INET;
   ((struct sockaddr_in *)(addr + 1))->sin_addr.s_addr = rmask;
-  ((struct sockaddr_in *)(addr + 1))->sin_port = 0;
+  ((struct sockaddr_in *)(addr + 1))->sin_port = dport ? 0xffff : 0;
   if (pf_key_v2_msg_add (flow, (struct sadb_ext *)addr,
 			 PF_KEY_V2_NODE_MALLOCED) == -1)
     goto cleanup;
   addr = 0;
 
-  LOG_DBG ((LOG_SYSDEP, 50, "pf_key_v2_flow: src %x %x dst %x %x",
-	    ntohl (laddr), ntohl (lmask), ntohl (raddr), ntohl (rmask)));
+  /* Setup the protocol extension.  */
+  bzero (&tprotocol, sizeof tprotocol);
+  tprotocol.sadb_protocol_exttype = SADB_X_EXT_PROTOCOL;
+  tprotocol.sadb_protocol_len = sizeof tprotocol / PF_KEY_V2_CHUNK;
+  tprotocol.sadb_protocol_proto = tproto;;
+
+  if (pf_key_v2_msg_add (flow, (struct sadb_ext *)&tprotocol, 0) == -1)
+    goto cleanup;
+
+  LOG_DBG ((LOG_SYSDEP, 50,
+	    "pf_key_v2_flow: src %x %x dst %x %x proto %u sport %u dport %u",
+	    ntohl (laddr), ntohl (lmask), ntohl (raddr), ntohl (rmask),
+	    tproto, ntohs (sport), ntohs (dport)));
 
   ret = pf_key_v2_call (flow);
   pf_key_v2_msg_free (flow);
@@ -1350,6 +1413,10 @@ pf_key_v2_flow (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
   return 0;
 
  cleanup:
+#ifdef SADB_X_EXT_FLOW_TYPE
+  if (sid)
+    free (sid);
+#endif /* SADB_X_EXT_FLOW_TYPE */
   if (addr)
     free (addr);
   if (flow)
@@ -1511,14 +1578,63 @@ pf_key_v2_flow (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
 #endif
 }
 
+#ifdef SADB_X_EXT_FLOW_TYPE
+static u_int8_t *
+pf_key_v2_convert_id (u_int8_t *id, int idlen, int *reslen, int *idtype)
+{
+  u_int8_t *res = 0;
+
+  switch (id[0])
+    {
+    case IPSEC_ID_FQDN:
+      res = calloc (idlen - ISAKMP_ID_DATA_OFF + ISAKMP_GEN_SZ,
+		    sizeof (u_int8_t));
+      if (!res)
+	return 0;
+
+      *reslen = idlen - ISAKMP_ID_DATA_OFF + ISAKMP_GEN_SZ;
+      memcpy (res, id + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ, *reslen);
+      *idtype = SADB_IDENTTYPE_FQDN;
+      return res;
+
+    case IPSEC_ID_USER_FQDN:
+      res = calloc (idlen - ISAKMP_ID_DATA_OFF + ISAKMP_GEN_SZ,
+		    sizeof (u_int8_t));
+      if (!res)
+	return 0;
+
+      *reslen = idlen - ISAKMP_ID_DATA_OFF + ISAKMP_GEN_SZ;
+      memcpy (res, id + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ, *reslen);
+      *idtype = SADB_IDENTTYPE_MBOX;
+      return res;
+
+    case IPSEC_ID_IPV4_ADDR:
+    case IPSEC_ID_IPV4_RANGE:
+    case IPSEC_ID_IPV4_ADDR_SUBNET:
+    case IPSEC_ID_IPV6_ADDR:
+    case IPSEC_ID_IPV6_RANGE:
+    case IPSEC_ID_IPV6_ADDR_SUBNET:
+    case IPSEC_ID_DER_ASN1_DN:
+    case IPSEC_ID_DER_ASN1_GN:
+    case IPSEC_ID_KEY_ID:
+      /* XXX Not implemented yet.  */
+      return 0;
+    }
+
+  return 0;
+}
+#endif /* SADB_X_EXT_FLOW_TYPE */
+
 /* Enable a flow given a SA.  */
 int
-pf_key_v2_enable_sa (struct sa *sa)
+pf_key_v2_enable_sa (struct sa *sa, struct sa *isakmp_sa)
 {
   struct ipsec_sa *isa = sa->data;
   struct sockaddr *dst, *src;
   int dstlen, srclen, error;
   struct proto *proto = TAILQ_FIRST (&sa->protos);
+  int sidtype = 0, didtype = 0, sidlen = 0, didlen = 0;
+  u_int8_t *sid = 0, *did = 0;
 #ifndef SADB_X_EXT_FLOW_TYPE
   in_addr_t hostmask = 0xffffffff; /* XXX IPv4 specific */
 #endif /* SADB_X_EXT_FLOW_TYPE */
@@ -1526,11 +1642,35 @@ pf_key_v2_enable_sa (struct sa *sa)
   sa->transport->vtbl->get_dst (sa->transport, &dst, &dstlen);
   sa->transport->vtbl->get_src (sa->transport, &src, &srclen);
 
+#ifdef SADB_X_EXT_FLOW_TYPE
+  if (isakmp_sa->id_i)
+    {
+      if (isakmp_sa->initiator)
+	sid = pf_key_v2_convert_id (isakmp_sa->id_i, isakmp_sa->id_i_len,
+				    &sidlen, &sidtype);
+      else
+	did = pf_key_v2_convert_id (isakmp_sa->id_i, isakmp_sa->id_i_len,
+				    &didlen, &didtype);
+    }
+
+  if (isakmp_sa->id_r)
+    {
+      if (isakmp_sa->initiator)
+	did = pf_key_v2_convert_id (isakmp_sa->id_r, isakmp_sa->id_r_len,
+				    &didlen, &didtype);
+      else
+	sid = pf_key_v2_convert_id (isakmp_sa->id_r, isakmp_sa->id_r_len,
+				    &sidlen, &sidtype);
+    }
+#endif /* SADB_X_EXT_FLOW_TYPE */
+
   /* XXX IPv4 specific */
   error = pf_key_v2_flow (isa->src_net, isa->src_mask, isa->dst_net,
-			  isa->dst_mask, proto->spi[0], proto->proto,
+			  isa->dst_mask, isa->tproto, isa->sport, isa->dport,
+			  proto->spi[0], proto->proto,
 			  ((struct sockaddr_in *)dst)->sin_addr.s_addr,
-			  ((struct sockaddr_in *)src)->sin_addr.s_addr, 0, 0);
+			  ((struct sockaddr_in *)src)->sin_addr.s_addr, 0, 0,
+			  sidtype, sid, sidlen, didtype, did, didlen);
   if (error)
     return error;
 
@@ -1541,10 +1681,10 @@ pf_key_v2_enable_sa (struct sa *sa)
       error = pf_key_v2_flow (((struct sockaddr_in *)dst)->sin_addr.s_addr,
 			      hostmask,
 			      ((struct sockaddr_in *)src)->sin_addr.s_addr,
-			      hostmask, proto->spi[1], proto->proto,
+			      hostmask, 0, 0, 0, proto->spi[1], proto->proto,
 			      ((struct sockaddr_in *)src)->sin_addr.s_addr,
 			      ((struct sockaddr_in *)dst)->sin_addr.s_addr,
-			      0, 1);
+			      0, 1, 0, 0, 0, 0, 0, 0);
       if (error)
 	return error;
       proto = TAILQ_NEXT (proto, link);
@@ -1552,9 +1692,11 @@ pf_key_v2_enable_sa (struct sa *sa)
 #endif /* SADB_X_EXT_FLOW_TYPE */
 
   return pf_key_v2_flow (isa->dst_net, isa->dst_mask, isa->src_net,
-			 isa->src_mask, proto->spi[1], proto->proto,
+			 isa->src_mask, isa->tproto, isa->dport, isa->sport,
+			 proto->spi[1], proto->proto,
 			 ((struct sockaddr_in *)src)->sin_addr.s_addr,
-			 ((struct sockaddr_in *)dst)->sin_addr.s_addr, 0, 1);
+			 ((struct sockaddr_in *)dst)->sin_addr.s_addr, 0, 1,
+			 sidtype, sid, sidlen, didtype, did, didlen);
 }
 
 /* Disable a flow given a SA.  */
@@ -1575,9 +1717,11 @@ pf_key_v2_disable_sa (struct sa *sa, int incoming)
 
   if (!incoming)
     return pf_key_v2_flow (isa->src_net, isa->src_mask, isa->dst_net,
-			   isa->dst_mask, proto->spi[0], proto->proto,
+			   isa->dst_mask, isa->tproto, isa->sport, isa->dport,
+			   proto->spi[0], proto->proto,
 			   ((struct sockaddr_in *)dst)->sin_addr.s_addr,
-			   ((struct sockaddr_in *)src)->sin_addr.s_addr, 1, 0);
+			   ((struct sockaddr_in *)src)->sin_addr.s_addr, 1, 0,
+			   0, 0, 0, 0, 0, 0);
   else
     {
 #ifndef SADB_X_EXT_FLOW_TYPE
@@ -1587,10 +1731,11 @@ pf_key_v2_disable_sa (struct sa *sa, int incoming)
           error = pf_key_v2_flow (((struct sockaddr_in *)dst)->sin_addr.s_addr,
 				  hostmask,
 				  ((struct sockaddr_in *)src)->sin_addr.s_addr,
-				  hostmask, proto->spi[1], proto->proto,
+				  hostmask, 0, 0, 0,
+				  proto->spi[1], proto->proto,
 				  ((struct sockaddr_in *)src)->sin_addr.s_addr,
 				  ((struct sockaddr_in *)dst)->sin_addr.s_addr,
-				  1, 1);
+				  1, 1, 0, 0, 0, 0, 0, 0);
           if (error)
 	    return error;
           proto = TAILQ_NEXT (proto, link);
@@ -1598,10 +1743,11 @@ pf_key_v2_disable_sa (struct sa *sa, int incoming)
 #endif /* SADB_X_EXT_FLOW_TYPE */
 
       return pf_key_v2_flow (isa->dst_net, isa->dst_mask, isa->src_net,
-			     isa->src_mask, proto->spi[1], proto->proto,
+			     isa->src_mask, isa->tproto, isa->dport,
+			     isa->sport, proto->spi[1], proto->proto,
 			     ((struct sockaddr_in *)src)->sin_addr.s_addr,
 			     ((struct sockaddr_in *)dst)->sin_addr.s_addr,
-                             1, 1);
+                             1, 1, 0, 0, 0, 0, 0, 0);
     }
 }
 
@@ -1840,13 +1986,11 @@ pf_key_v2_expire (struct pf_key_v2_msg *pmsg)
     return;
 
   /*
-   * If we want this connection to stay "forever", we should renegotiate
-   * already at the soft expire, and certainly at the hard expire if we
-   * haven't started a negotiation by then.  However, do not renegotiate
-   * if this SA is already obsoleted by another.
+   * If we got a notification, try to renegotiate the SA -- unless of
+   * course it has already been replaced by another.
+   * Also, ignore SAs that were not dynamically established.
    */
-  if ((sa->flags & (SA_FLAG_STAYALIVE | SA_FLAG_REPLACED))
-      == SA_FLAG_STAYALIVE)
+  if (!(sa->flags & SA_FLAG_REPLACED) && (sa->flags & SA_FLAG_ONDEMAND))
     exchange_establish (sa->name, 0, 0);
 
   if (life->sadb_lifetime_exttype == SADB_EXT_LIFETIME_HARD)
@@ -1885,11 +2029,15 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
   struct sadb_protocol *sproto;
   char ssflow[ADDRESS_MAX], sdflow[ADDRESS_MAX];
   char sdmask[ADDRESS_MAX], ssmask[ADDRESS_MAX];
-  char lname[90], dname[90], configname[30];
+  char lname[100], dname[100], configname[30];
   int shostflag = 0, dhostflag = 0;
   struct pf_key_v2_node *ext;
   struct passwd *pwd = NULL;
+  u_int16_t sport = 0, dport = 0;
+  u_int8_t tproto = 0;
+  char tmbuf[sizeof sport * 3 + 1];
 
+  
   msg = (struct sadb_msg *)TAILQ_FIRST (pmsg)->seg;
 
   ext = pf_key_v2_find_ext (pmsg, SADB_EXT_ADDRESS_DST);
@@ -1953,7 +2101,6 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
       goto fail;
     }
   dflow = (struct sockaddr *)(((struct sadb_address *)ext->seg) + 1);
-
   ext = pf_key_v2_find_ext (ret, SADB_X_EXT_SRC_MASK);
   if (!ext)
     {
@@ -1977,6 +2124,7 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
       goto fail;
     }
   sproto = ext->seg;
+  tproto = sproto->sadb_protocol_proto;
 
   bzero (ssflow, sizeof ssflow);
   bzero (sdflow, sizeof sdflow);
@@ -1992,12 +2140,14 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
 	  log_error ("pf_key_v2_acquire: inet_ntop failed");
 	  goto fail;
 	}
+      sport = ((struct sockaddr_in *)sflow)->sin_port;
       if (inet_ntop (AF_INET, &((struct sockaddr_in *)dflow)->sin_addr, sdflow,
 		     ADDRESS_MAX) == NULL)
 	{
 	  log_error ("pf_key_v2_acquire: inet_ntop failed");
 	  goto fail;
 	}
+      dport = ((struct sockaddr_in *)dflow)->sin_port;
       if (inet_ntop (AF_INET, &((struct sockaddr_in *)smask)->sin_addr, ssmask,
 		     ADDRESS_MAX) == NULL)
 	{
@@ -2023,12 +2173,14 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
 	  log_error ("pf_key_v2_acquire: inet_ntop failed");
 	  goto fail;
 	}
+      sport = ((struct sockaddr_in6 *)sflow)->sin6_port;
       if (inet_ntop (AF_INET6, &((struct sockaddr_in6 *)dflow)->sin6_addr,
 		     sdflow, ADDRESS_MAX) == NULL)
 	{
 	  log_error ("pf_key_v2_acquire: inet_ntop failed");
 	  goto fail;
 	}
+      dport = ((struct sockaddr_in6 *)dflow)->sin6_port;
       if (inet_ntop (AF_INET6, &((struct sockaddr_in6 *)smask)->sin6_addr,
 		     ssmask, ADDRESS_MAX) == NULL)
 	{
@@ -2370,7 +2522,7 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
     }
 
   /* Set Phase 2 IDs -- this is the Local-ID section */
-  sprintf (lname, "Phase2-ID:%s/%s", ssflow, ssmask);
+  sprintf (lname, "Phase2-ID:%s/%s/%d/%d", ssflow, ssmask, tproto, sport);
   if (conf_set (af, conn, "Local-ID", lname, 0, 0))
     {
       conf_end (af, 0);
@@ -2398,10 +2550,29 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
 	      goto fail;
 	    }
 	}
+      if (tproto)
+        {
+	  sprintf (tmbuf, "%d", tproto);
+	  if (conf_set (af, lname, "Protocol", tmbuf, 0, 0))
+	    {
+	      conf_end (af, 0);
+	      goto fail;
+	    }
+
+	  if (sport)
+	    {
+	      sprintf (tmbuf, "%d", ntohs (sport));
+	      if (conf_set (af, lname, "Port", tmbuf, 0, 0))
+	        {
+		  conf_end (af, 0);
+		  goto fail;
+		}
+	    }
+	}
     }
 
   /* Set Remote-ID section */
-  sprintf (dname, "Phase2-ID:%s/%s", sdflow, sdmask);
+  sprintf (dname, "Phase2-ID:%s/%s/%d/%d", sdflow, sdmask, tproto, dport);
   if (conf_set (af, conn, "Remote-ID", dname, 0, 0))
     {
       conf_end (af, 0);
@@ -2427,6 +2598,26 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
 	    {
 	      conf_end (af, 0);
 	      goto fail;
+	    }
+	}
+
+      if (tproto)
+        {
+	  sprintf (tmbuf, "%d", tproto);
+	  if (conf_set (af, dname, "Protocol", tmbuf, 0, 0))
+	    {
+	      conf_end (af, 0);
+	      goto fail;
+	    }
+
+	  if (dport)
+	    {
+	      sprintf (tmbuf, "%d", ntohs (dport));
+	      if (conf_set (af, dname, "Port", tmbuf, 0, 0))
+	        {
+		  conf_end (af, 0);
+		  goto fail;
+		}
 	    }
 	}
     }
