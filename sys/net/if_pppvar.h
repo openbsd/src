@@ -104,3 +104,4 @@ int	pppioctl __P((struct ppp_softc *sc, u_long cmd, caddr_t data,
 		      int flag, struct proc *p));
 void	ppppktin __P((struct ppp_softc *sc, struct mbuf *m, int lost));
 struct	mbuf *ppp_dequeue __P((struct ppp_softc *sc));
+void	ppp_restart __P((struct ppp_softc *sc));
