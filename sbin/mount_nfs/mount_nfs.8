@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount_nfs.8,v 1.24 2001/07/13 18:19:24 csapuntz Exp $
+.\"	$OpenBSD: mount_nfs.8,v 1.25 2001/10/03 18:50:07 hin Exp $
 .\"	$NetBSD: mount_nfs.8,v 1.3 1996/02/18 11:59:10 fvdl Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994, 1995
@@ -42,14 +42,13 @@
 .Nd mount nfs file systems
 .Sh SYNOPSIS
 .Nm mount_nfs
-.Op Fl 23KPTUbcdilqs
+.Op Fl 23PTUbcdilqs
 .Op Fl D Ar deadthresh
 .Op Fl I Ar readdirsize
 .Op Fl L Ar leaseterm
 .Op Fl R Ar retrycnt
 .Op Fl a Ar maxreadahead
 .Op Fl g Ar maxgroups
-.Op Fl m Ar realm
 .Op Fl o Ar options
 .Op Fl r Ar readsize
 .Op Fl t Ar timeout
@@ -83,13 +82,6 @@ fall back to version 2 if the mount fails.
 Set the readdir read size to the specified value.
 The value should normally
 be a multiple of DIRBLKSIZ that is <= the read size for the mount.
-.It Fl K
-Pass Kerberos authenticators to the server for client-to-server
-user-credential mapping.
-This requires that the kernel be built with the NFSKERB option.
-(Refer to the INTERNET-DRAFT titled
-.%T "Authentication Mechanisms for ONC RPC" ,
-for more information.)
 .It Fl P
 The kernel always uses a reserved port number to communicate with
 clients.
@@ -151,11 +143,6 @@ Try this option and see whether performance improves or degrades.
 Probably
 most useful for client to server network interconnects with a large bandwidth
 times delay product.
-.It Fl m Ar realm
-Set the Kerberos realm to the string argument.
-Used with the
-.Fl K
-option for mounts to other realms.
 .It Fl o Ar options
 Options are specified with a
 .Fl o
