@@ -1,4 +1,4 @@
-/*	$OpenBSD: swapgeneric.c,v 1.9 1999/03/17 22:55:08 deraadt Exp $	*/
+/*	$OpenBSD: swapgeneric.c,v 1.10 1999/07/18 22:40:52 csapuntz Exp $	*/
 /*	$NetBSD: swapgeneric.c,v 1.12 1996/05/03 19:42:28 christos Exp $	*/
 
 /*-
@@ -52,7 +52,6 @@
 #include <machine/pte.h>
 #include <machine/cpu.h>
 
-#include "wdc.h"
 #include "fdc.h"
 #include "sd.h"
 #include "cd.h"
