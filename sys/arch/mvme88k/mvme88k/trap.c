@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.21 2001/08/31 01:52:22 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.22 2001/09/14 14:58:44 art Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -136,7 +136,6 @@ static inline void
 userret(struct proc *p, struct m88100_saved_state *frame, u_quad_t oticks)
 {
 	int sig;
-	int s;
 
 	/* take pending signals */
 	while ((sig = CURSIG(p)) != 0)
@@ -145,18 +144,9 @@ userret(struct proc *p, struct m88100_saved_state *frame, u_quad_t oticks)
 
 	if (want_resched) {
 		/*
-		 * Since we are curproc, clock will normally just change
-		 * our priority without moving us from one queue to another
-		 * (since the running process is not on a queue.)
-		 * If that happened after we put ourselves on the run queue
-		 * but before we switched, we might not be on the queue
-		 * indicated by our priority.
+		 * We're being preempted.
 		 */
-		s = splstatclock();
-		setrunqueue(p);
-		p->p_stats->p_ru.ru_nivcsw++;
-		mi_switch();
-		(void) splx(s);
+		preempt(NULL);
 		while ((sig = CURSIG(p)) != 0)
 			postsig(sig);
 	}

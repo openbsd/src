@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.29 2001/07/09 02:07:49 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.30 2001/09/14 14:58:44 art Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -430,21 +430,12 @@ for (i = 0; i < errnum; i++) {
 
 	p->p_priority = p->p_usrpri;
 	if (want_resched) {
-		int s, sig;
+		int sig;
 
 		/*
-		 * Since we are curproc, a clock interrupt could
-		 * change our priority without changing run queues
-		 * (the running process is not kept on a run queue).
-		 * If this happened after we setrunqueue ourselves but
-		 * before switch()'ed, we might not be on the queue
-		 * indicated by our priority.
+		 * We're being preempted.
 		 */
-		s = splstatclock();
-		setrunqueue(p);
-		p->p_stats->p_ru.ru_nivcsw++;
-		mi_switch();
-		splx(s);
+		preempt(NULL);
 		while ((sig = CURSIG(p)))
 			postsig(sig);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.28 2001/05/05 20:56:37 art Exp $	*/
+/*	$OpenBSD: trap.c,v 1.29 2001/09/14 14:58:44 art Exp $	*/
 
 /*
  * Copyright (c) 1998-2000 Michael Shalayeff
@@ -116,20 +116,10 @@ userret (struct proc *p, register_t pc, u_quad_t oticks)
 
 	p->p_priority = p->p_usrpri;
 	if (want_resched) {
-		register int s;
 		/*
-		 * Since we are curproc, a clock interrupt could
-		 * change our priority without changing run queues
-		 * (the running process is not kept on a run queue).
-		 * If this happened after we setrunqueue ourselves but
-		 * before we switch()'ed, we might not be on the queue
-		 * indicated by our priority.
+		 * We're being preempted.
 		 */
-		s = splstatclock();
-		setrunqueue(p);
-		p->p_stats->p_ru.ru_nivcsw++;
-		mi_switch();
-		splx(s);
+		preempt(NULL);
 		while ((sig = CURSIG(p)) != 0)
 			postsig(sig);
 	}
