@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amiga,v 1.28 1998/04/26 22:31:01 niklas Exp $
+#	$OpenBSD: files.amiga,v 1.29 1998/10/04 23:26:38 niklas Exp $
 #	$NetBSD: files.amiga,v 1.62 1997/08/27 19:32:47 is Exp $
 
 
@@ -332,12 +332,6 @@ define	pcmcia {}
 include	"../../../dev/isa/files.isa"
 
 file	arch/amiga/isa/isadma.c		isadma needs-flag
-
-# XXX should really use if_ed instead, but can't for the moment due to
-# name clashes with the amiga variant.
-device	isaed: ifnet, ether
-attach	isaed at isa with isaed_isa
-file	arch/amiga/isa/if_isaed.c	isaed & isaed_isa needs-flag
 
 # ISA PnP
 include "../../../dev/isa/files.isapnp"

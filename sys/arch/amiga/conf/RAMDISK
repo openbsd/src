@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.4 1997/09/19 17:16:17 niklas Exp $
+#	$OpenBSD: RAMDISK,v 1.5 1998/10/04 23:26:38 niklas Exp $
 
 #
 # A ramdisk kernel
@@ -229,10 +229,12 @@ wd*	at wdc? drive ?
 atapibus* at wdc?
 acd*	at atapibus? drive ?
 
-# XXX should be ed but clashes with Zorro ed device
-isaed0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC, 3C503, and NE[12]000
-isaed1	at isa? port 0x250 iomem 0xd8000 irq 9	#   ethernet cards
-isaed2	at isa? port 0x300 iomem 0xcc000 irq 10
+we0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC 80x3 ethernet series
+we1	at isa? port 0x300 iomem 0xcc000 irq 10	#
+ec0	at isa? port 0x250 iomem 0xd8000 irq 9	# 3C503 ethernet cards
+ne0	at isa? port 0x240 iomem 0xd8000 irq 9	# NE[12]000 ethernet cards
+ne1	at isa? port 0x300 irq 10		# NE[12]000 ethernet cards
+#ne*	at isapnp?				# NE[12]000 PnP ethernet cards
 
 fd*	at fdc0 unit ?
 
