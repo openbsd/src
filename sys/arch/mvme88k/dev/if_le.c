@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.2 2003/12/28 19:43:35 miod Exp $ */
+/*	$OpenBSD: if_le.c,v 1.3 2003/12/30 21:25:59 miod Exp $ */
 
 /*-
  * Copyright (c) 1982, 1992, 1993
@@ -265,6 +265,7 @@ leattach(parent, self, aux)
 	struct am7990_softc *sc = &lesc->sc_am7990;
 	struct confargs *ca = aux;
 	caddr_t addr;
+	int card;
 
 	/* Are we the boot device? */
 	if (ca->ca_paddr == bootaddr)
@@ -273,32 +274,46 @@ leattach(parent, self, aux)
 	/* 
 	 * get the first available etherbuf.  MVME376 uses its own dual-ported 
 	 * RAM for etherbuf.  It is set by dip switches on board.  We support 
-	 * the four Motorola address locations, however, the board can be set up
-	 * at any other address. We must map this space into the extio map. 
-	 * XXX-smurph.
+	 * the six Motorola address locations, however, the board can be set up
+	 * at any other address.
+	 * XXX These physical addresses should be mapped in extio!!!
 	 */
 	switch ((int)ca->ca_paddr) {
-	case 0xFFFF1200:
-		addr = (caddr_t)0xFD6C0000;
+	case 0xffff1200:
+		card = 0;
 		break;
-	case 0xFFFF1400:
-		addr = (caddr_t)0xFD700000;
+	case 0xffff1400:
+		card = 1;
 		break;
-	case 0xFFFF1600:
-		addr = (caddr_t)0xFD740000;
+	case 0xffff1600:
+		card = 2;
 		break;
-	case 0xFFFFD200:
-		addr = (caddr_t)0xFD780000;
+	case 0xffff5400:
+		card = 3;
+		break;
+	case 0xffff5600:
+		card = 4;
+		break;
+	case 0xffffa400:
+		card = 5;
 		break;
 	default:
 		printf(": unsupported address\n");
 		return;
 	}
 
+	addr = (caddr_t)(VLEMEMBASE - (card * VLEMEMSIZE));
+
 	sc->sc_mem = (void *)mapiodev(addr, VLEMEMSIZE);
 	if (sc->sc_mem == NULL) {
-		printf("\n%s: no more memory in external I/O map",
+		printf("\n%s: no more memory in external I/O map\n",
 		    sc->sc_dev.dv_xname);
+		return;
+	}
+	sc->sc_addr = kvtop((vaddr_t)sc->sc_mem);
+	if (sc->sc_addr == 0L) {
+		printf("\n%s: kvtop() failed!\n", sc->sc_dev.dv_xname);
+		return;
 	}
 
 	lesc->sc_r1 = (void *)ca->ca_vaddr;
@@ -306,7 +321,6 @@ leattach(parent, self, aux)
 	lesc->sc_vec = ca->ca_vec;
 	sc->sc_memsize = VLEMEMSIZE;
 	sc->sc_conf3 = LE_C3_BSWP;
-	sc->sc_addr = kvtop((vaddr_t)sc->sc_mem);
 	sc->sc_hwreset = vlereset;
 	sc->sc_rdcsr = vlerdcsr;
 	sc->sc_wrcsr = vlewrcsr;

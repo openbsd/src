@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lereg.h,v 1.1 2003/12/27 23:58:11 miod Exp $ */
+/*	$OpenBSD: if_lereg.h,v 1.2 2003/12/30 21:25:59 miod Exp $ */
 
 /*-
  * Copyright (c) 1982, 1992, 1993
@@ -31,7 +31,8 @@
  * @(#)if_lereg.h	8.2 (Berkeley) 10/30/93
  */
 
-#define VLEMEMSIZE 0x40000 
+#define	VLEMEMSIZE	0x00040000 
+#define	VLEMEMBASE	0xfd6c0000
 
 /*
  * LANCE registers for MVME376

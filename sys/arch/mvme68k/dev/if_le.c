@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.24 2003/10/14 19:23:11 miod Exp $ */
+/*	$OpenBSD: if_le.c,v 1.25 2003/12/30 21:25:58 miod Exp $ */
 
 /*-
  * Copyright (c) 1982, 1992, 1993
@@ -299,6 +299,7 @@ leattach(parent, self, aux)
 	int pri = ca->ca_ipl;
 	extern void *etherbuf;
 	caddr_t addr;
+	int card;
 
 	/* XXX the following declarations should be elsewhere */
 	extern void myetheraddr(u_char *);
@@ -312,37 +313,55 @@ leattach(parent, self, aux)
 	switch (lebustype) {
 	case BUS_VMES:
 		/* 
-		 * get the first available etherbuf.  MVME376 uses its own dual-ported 
-		 * RAM for etherbuf.  It is set by dip switches on board.  We support 
-		 * the four Motorola address locations, however, the board can be set up 
-		 * at any other address. We must map this space into the extio map. 
-		 * XXX-smurph.
+		 * get the first available etherbuf.  MVME376 uses its own
+		 * dual-ported RAM for etherbuf.  It is set by dip switches
+		 * on board.  We support the six Motorola address locations,
+		 * however, the board can be set up at any other address.
+		 * XXX These physical addresses should be mapped in extio!!!
 		 */
 		switch ((int)ca->ca_paddr) {
-		case 0xFFFF1200:
-			addr = (caddr_t)0xFD6C0000;
+		case 0xffff1200:
+			card = 0;
 			break;
-		case 0xFFFF1400:
-			addr = (caddr_t)0xFD700000;
+		case 0xffff1400:
+			card = 1;
 			break;
-		case 0xFFFF1600:
-			addr = (caddr_t)0xFD740000;
+		case 0xffff1600:
+			card = 2;
 			break;
-		case 0xFFFFD200:
-			addr = (caddr_t)0xFD780000;
+		case 0xffff5400:
+			card = 3;
+			break;
+		case 0xffff5600:
+			card = 4;
+			break;
+		case 0xffffa400:
+			card = 5;
 			break;
 		default:
-			panic("le: invalid address");
+			printf(": unsupported address\n");
+			return;
 		}
+
+		addr = (caddr_t)(VLEMEMBASE - (card * VLEMEMSIZE));
+
 		sc->sc_mem = (void *)mapiodev(addr, VLEMEMSIZE);
-		if (sc->sc_mem == NULL)
-			panic("le: no more memory in external I/O map");
+		if (sc->sc_mem == NULL) {
+			printf("\n%s: no more memory in external I/O map\n",
+			    sc->sc_dev.dv_xname);
+			return;
+		}
+		sc->sc_addr = kvtop((vaddr_t)sc->sc_mem);
+		if (sc->sc_addr == 0L) {
+			printf("\n%s: kvtop() failed!\n", sc->sc_dev.dv_xname);
+			return;
+		}
+
 		lesc->sc_r1 = (void *)ca->ca_vaddr;
 		lesc->sc_ipl = ca->ca_ipl;
 		lesc->sc_vec = ca->ca_vec;
 		sc->sc_memsize = VLEMEMSIZE;
 		sc->sc_conf3 = LE_C3_BSWP;
-		sc->sc_addr = kvtop((vaddr_t)sc->sc_mem);
 		sc->sc_hwreset = vlereset;
 		sc->sc_rdcsr = vlerdcsr;
 		sc->sc_wrcsr = vlewrcsr;
@@ -374,7 +393,8 @@ leattach(parent, self, aux)
 		myetheraddr(sc->sc_arpcom.ac_enaddr);
 		break;
 	default:
-		panic("le: unknown bus type.");
+		printf(": unknown bus type\n");
+		return;
 	}
 	evcnt_attach(&sc->sc_dev, "intr", &lesc->sc_intrcnt);
 	evcnt_attach(&sc->sc_dev, "errs", &lesc->sc_errcnt);
