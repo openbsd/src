@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_ops.c,v 1.8 2001/06/25 21:29:31 niklas Exp $	*/
+/*	$OpenBSD: nfs_ops.c,v 1.9 2002/02/13 22:32:33 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -40,7 +40,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)nfs_ops.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: nfs_ops.c,v 1.8 2001/06/25 21:29:31 niklas Exp $";
+static char *rcsid = "$OpenBSD: nfs_ops.c,v 1.9 2002/02/13 22:32:33 deraadt Exp $";
 #endif /* not lint */
 
 #include "am.h"
@@ -390,7 +390,7 @@ voidp wchan;
 			&mnt_msg, (voidp) &fp->fh_path, xdr_nfspath,  nfs_auth);
 
 	/*
-	 * XXX EVIL!  We case fh_id to a pointer, then back to an int
+	 * XXX EVIL!  We cast fh_id to a pointer, then back to an int
 	 * XXX later.
 	 */
 	if (len > 0) {
