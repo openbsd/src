@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.1.1.1 1995/10/18 08:43:10 deraadt Exp $
+#	$Id: Makefile,v 1.2 1996/05/04 09:16:14 deraadt Exp $
 
 
 RPCSRCS=	bootparam_prot.x klm_prot.x mount.x nfs_prot.x\
@@ -15,7 +15,7 @@ NOPIC=
 all:		${HDRS}
 beforedepend:	${HDRS}
 
-beforeinstall:
+includes:
 	install -d -o ${BINOWN} -g ${BINGRP} -m 755 \
 		${DESTDIR}/usr/include/rpcsvc
 	@for i in $(HDRS); do \
