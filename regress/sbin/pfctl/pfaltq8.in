@@ -1,0 +1,7 @@
+# queuespec limited to interface(s)
+
+altq on { ppp0 ppp1 tun0 tun1 } priq bandwidth 10Mb queue { one two }
+queue one priority 1 priq(default)
+queue two on ppp0 priority 15
+queue two on { ppp1 tun0 tun1 } priority 0
+
