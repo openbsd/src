@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.37 2001/11/06 19:53:15 miod Exp $ */
+/*	$OpenBSD: trap.c,v 1.38 2001/11/25 17:15:20 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -167,9 +167,6 @@ void *sir_args[NSIR];
 u_char next_sir;
 
 int  writeback __P((struct frame *fp, int docachepush));
-
-void userret __P((struct proc *p, struct frame *fp,
-										  u_quad_t oticks, u_int faultaddr, int fromtrap));
 
 /*
  * trap and syscall both need the following work done before returning
@@ -1096,7 +1093,7 @@ bad:
 	if (error == ERESTART && (p->p_md.md_flags & MDP_STACKADJ))
 		frame.f_regs[SP] -= sizeof (int);
 #endif
-	userret(p, &frame, sticks, (u_int)0, 0);
+	userret(p, &frame, sticks, 0, 0);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p, code, error, rval[0]);

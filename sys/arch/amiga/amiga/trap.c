@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.24 2001/11/06 19:53:14 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.25 2001/11/25 17:15:15 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.56 1997/07/16 00:01:47 is Exp $	*/
 
 /*
@@ -181,7 +181,6 @@ extern char fubail[], subail[];
 extern void    regdump __P((struct trapframe *, int));
 
 int	_write_back __P((u_int, u_int, u_int, u_int, vm_map_t));
-void	userret __P((struct proc *, int, u_quad_t));
 void	panictrap __P((int, u_int, u_int, struct frame *));
 void	trapcpfault __P((struct proc *, struct frame *));
 void	trapmmufault __P((int, u_int, u_int, struct frame *, struct proc *,
@@ -194,11 +193,14 @@ int	db_trap __P((int, db_regs_t *));
 void	syscall __P((register_t, struct frame));
 void	_wb_fault __P((void));
 
+/*ARGSUSED*/
 void
-userret(p, pc, oticks)
+userret(p, f, oticks, faultaddr, fromtrap)
 	struct proc *p;
-	int pc;
+	struct frame *fp;
 	u_quad_t oticks;
+	u_int faultaddr;
+	int fromtrap;
 {
 	int sig;
 
@@ -221,7 +223,7 @@ userret(p, pc, oticks)
 	if (p->p_flag & P_PROFIL) {
 		extern int psratio;
 		
-		addupc_task(p, pc, (int)(p->p_sticks - oticks) * psratio);
+		addupc_task(p, fp->f_pc, (int)(p->p_sticks - oticks) * psratio);
 	}
 	curpriority = p->p_priority;
 }
@@ -405,55 +407,8 @@ trapmmufault(type, code, v, fp, p, sticks)
 			goto nogo;
 		}
 
-		/*	
-		 * The 68040 doesn't re-run instructions that cause
-		 * write page faults (unless due to a move16 isntruction).
-		 * So once the page is repaired, we have to write the
-		 * value of WB2D out to memory ourselves.  Because
-		 * the writeback could possibly span two pages in
-		 * memory, so we need to check both "ends" of the
-		 * address to see if they are in the same page or not.
-		 * If not, then we need to make sure the second page
-		 * is valid, and bring it into memory if it's not.
-		 * 	
-		 * This whole process needs to be repeated for WB3 as well.
-		 * <sigh>
-		 */	
-
-		/* Check WB1 */
-		if (fp->f_fmt7.f_wb1s & WBS_VALID) {
-			printf ("trap: wb1 was valid, not handled yet\n");
-			panictrap(type, code, v, fp);
-		}
-
-		/*
-		 * Check WB2
-		 * skip if it's for a move16 instruction 
-		 */
-		if (fp->f_fmt7.f_wb2s & WBS_VALID &&
-		   ((fp->f_fmt7.f_wb2s & WBS_TTMASK)==WBS_TT_MOVE16) == 0) {
-			if (_write_back(2, fp->f_fmt7.f_wb2s, 
-			    fp->f_fmt7.f_wb2d, fp->f_fmt7.f_wb2a, map)
-			    != KERN_SUCCESS)
-				goto nogo;
-			if ((fp->f_fmt7.f_wb2s & WBS_TMMASK) 
-			    != (code & SSW_TMMASK))
-				panictrap(type, code, v, fp);
-		}
-
-		/* Check WB3 */
-		if(fp->f_fmt7.f_wb3s & WBS_VALID) {
-			vm_map_t wb3_map;
-
-			if ((fp->f_fmt7.f_wb3s & WBS_TMMASK) == WBS_TM_SDATA)
-				wb3_map = kernel_map;
-			else
-				wb3_map = &vm->vm_map;
-			if (_write_back(3, fp->f_fmt7.f_wb3s, 
-			    fp->f_fmt7.f_wb3d, fp->f_fmt7.f_wb3a, wb3_map)
-			    != KERN_SUCCESS)
-				goto nogo;
-		}
+		if (writeback(fp, 1) != 0)
+			goto nogo;
 	}
 
 #ifdef no_386bsd_code
@@ -476,7 +431,7 @@ trapmmufault(type, code, v, fp, p, sticks)
 	if (rv == KERN_SUCCESS) {
 		if (type == T_MMUFLT)
 			return;
-		userret(p, fp->f_pc, sticks); 
+		userret(p, fp, sticks, 0, 0); 
 		return;
 	}
 #else /* use hacky 386bsd_code */
@@ -488,7 +443,7 @@ trapmmufault(type, code, v, fp, p, sticks)
 			vm->vm_ssize = nss;
 		if (type == T_MMUFLT)
 			return;
-		userret(p, fp->f_pc, sticks); 
+		userret(p, fp, sticks, 0, 0); 
 		return;
 	}
 nogo:
@@ -506,7 +461,7 @@ nogo:
 	trapsignal(p, SIGSEGV, vftype, SEGV_MAPERR, sv);
 	if ((type & T_USER) == 0)
 		return;
-	userret(p, fp->f_pc, sticks); 
+	userret(p, fp, sticks, 0, 0); 
 }
 
 /*
@@ -749,7 +704,7 @@ trap(type, code, v, frame)
 			p->p_flag &= ~P_OWEUPC;
 			ADDUPROF(p);
 		}
-		userret(p, frame.f_pc, sticks); 
+		userret(p, &frame, sticks, 0, 0); 
 		return;
 
 	/*
@@ -780,7 +735,7 @@ trap(type, code, v, frame)
 	}
 	if ((type & T_USER) == 0)
 		return;
-	userret(p, frame.f_pc, sticks); 
+	userret(p, &frame, sticks, 0, 0); 
 }
 
 /*
@@ -935,7 +890,7 @@ syscall(code, frame)
 	if (error == ERESTART && (p->p_md.md_flags & MDP_STACKADJ))
 		frame.f_regs[SP] -= sizeof (int);
 #endif
-	userret(p, frame.f_pc, sticks);
+	userret(p, &frame, sticks, 0, 0);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p, code, error, rval[0]);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.28 2001/11/06 19:53:16 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.29 2001/11/25 17:15:21 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.63-1.65ish 1997/01/16 15:41:40 gwr Exp $	*/
 
 /*
@@ -86,8 +86,6 @@ int  nodb_trap __P((int type, struct frame *));
 int astpending;
 int want_resched;
 
-void userret __P((struct proc *, struct frame *, u_quad_t));
-
 char	*trap_type[] = {
 	"Bus error",
 	"Address error",
@@ -147,11 +145,14 @@ int mmupid = -1;
  * trap and syscall both need the following work done before
  * returning to user mode.
  */
+/*ARGSUSED*/
 void
-userret(p, fp, oticks)
-	register struct proc *p;
-	register struct frame *fp;
+userret(p, fp, oticks, faultaddr, fromtrap)
+	struct proc *p;
+	struct frame *fp;
 	u_quad_t oticks;
+	u_int faultaddr;
+	int fromtrap;
 {
 	int sig;
 
@@ -590,7 +591,7 @@ finish:
 		trapsignal(p, sig, ucode, si_type, sv);
 	}
 douret:
-	userret(p, &frame, sticks);
+	userret(p, &frame, sticks, 0, 0);
 }
 
 /*
@@ -740,7 +741,7 @@ syscall(code, frame)
 			frame.f_regs[SP] -= sizeof (int);
 	}
 #endif
-	userret(p, &frame, sticks);
+	userret(p, &frame, sticks, 0, 0);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p, code, error, rval[0]);
