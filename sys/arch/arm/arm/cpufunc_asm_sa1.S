@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc_asm_sa1.S,v 1.1 2004/02/01 05:09:48 drahn Exp $	*/
+/*	$OpenBSD: cpufunc_asm_sa1.S,v 1.2 2004/08/04 20:20:18 miod Exp $	*/
 /*	$NetBSD: cpufunc_asm_sa1.S,v 1.8 2002/08/17 16:36:32 thorpej Exp $	*/
 
 /*
@@ -39,9 +39,6 @@
 #include <machine/cpu.h>
 #include <machine/asm.h>
 
-.Lblock_userspace_access:
-	.word	_C_LABEL(block_userspace_access)
-
 /*
  * Functions to set the MMU Translation Table Base register
  *
@@ -53,11 +50,6 @@ ENTRY(sa1_setttb)
 	mrs	r3, cpsr_all
 	orr	r1, r3, #(I32_bit | F32_bit)
 	msr	cpsr_all, r1
-#else
-	ldr	r3, .Lblock_userspace_access
-	ldr	r2, [r3]
-	orr	r1, r2, #1 
-	str	r1, [r3]
 #endif
 	stmfd	sp!, {r0-r3, lr}
 	bl	_C_LABEL(sa1_cache_cleanID)
@@ -79,8 +71,6 @@ ENTRY(sa1_setttb)
 	mov	r0, r0
 #ifdef CACHE_CLEAN_BLOCK_INTR
 	msr	cpsr_all, r3
-#else
-	str	r2, [r3]
 #endif
 	mov	pc, lr
 
@@ -151,14 +141,8 @@ _C_LABEL(sa1_cache_clean_size):
 #define	SA1_CACHE_CLEAN_UNBLOCK						\
 	msr	cpsr_all, r3
 #else
-#define	SA1_CACHE_CLEAN_BLOCK						\
-	ldr	r3, .Lblock_userspace_access			;	\
-	ldr	ip, [r3]					;	\
-	orr	r0, ip, #1					;	\
-	str	r0, [r3]
-
-#define	SA1_CACHE_CLEAN_UNBLOCK						\
-	str	ip, [r3]
+#define	SA1_CACHE_CLEAN_BLOCK
+#define	SA1_CACHE_CLEAN_UNBLOCK
 #endif /* CACHE_CLEAN_BLOCK_INTR */
 
 #ifdef DOUBLE_CACHE_CLEAN_BANK

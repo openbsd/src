@@ -1,4 +1,4 @@
-/*	$OpenBSD: fault.c,v 1.4 2004/02/23 19:09:57 drahn Exp $	*/
+/*	$OpenBSD: fault.c,v 1.5 2004/08/04 20:20:18 miod Exp $	*/
 /*	$NetBSD: fault.c,v 1.46 2004/01/21 15:39:21 skrll Exp $	*/
 
 /*
@@ -108,8 +108,6 @@
 #include <arch/arm/arm/disassem.h>
 #include <arm/machdep.h>
  
-extern char fusubailout[];
-
 #ifdef DEBUG
 int last_fault_code;	/* For the benefit of pmap_fault_fixup() */
 #endif
@@ -253,13 +251,6 @@ data_abort_handler(trapframe_t *tf)
 	 * These are the main virtual memory-related faults signalled by
 	 * the MMU.
 	 */
-
-	/* fusubailout is used by [fs]uswintr to avoid page faulting */
-	if (__predict_false(pcb->pcb_onfault == fusubailout)) {
-		tf->tf_r0 = EFAULT;
-		tf->tf_pc = (register_t)pcb->pcb_onfault;
-		return;
-	}
 
 	if (user)
 		p->p_addr->u_pcb.pcb_tf = tf;
