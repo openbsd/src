@@ -1,4 +1,4 @@
-/*	$OpenBSD: wrap-anything.c,v 1.1 1999/07/15 19:23:23 deraadt Exp $	*/
+/*	$OpenBSD: wrap-anything.c,v 1.2 1999/07/28 17:16:05 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Theo de Raadt <deraadt@theos.com>
@@ -98,7 +98,7 @@ main(argc, argv)
 		if (waitpid(pid, &stat, WNOHANG) > 0)
 			exit(WEXITSTATUS(stat));
 
-		switch (poll(pfd, 2, 0)) {
+		switch (poll(pfd, 2, -1)) {
 		case -1:
 		case 0:
 			break;
