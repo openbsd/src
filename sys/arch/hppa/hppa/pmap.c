@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.88 2002/10/30 23:55:58 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.89 2002/11/07 19:18:18 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -237,12 +237,10 @@ pmap_pde_release(struct pmap *pmap, vaddr_t va, struct vm_page *ptp)
 	if (pmap != pmap_kernel() && --ptp->wire_count <= 1) {
 		DPRINTF(PDB_FOLLOW|PDB_PV,
 		    ("pmap_pde_release: disposing ptp %p\n", ptp));
-#if 1
 		pmap_pde_set(pmap, va, 0);
 		pmap->pm_stats.resident_count--;
 		ptp->wire_count = 0;
 		uvm_pagefree(ptp);
-#endif
 		if (pmap->pm_ptphint == ptp)
 			pmap->pm_ptphint = TAILQ_FIRST(&pmap->pm_obj.memq);
 	}
@@ -267,18 +265,22 @@ pmap_pte_set(pt_entry_t *pde, vaddr_t va, pt_entry_t pte)
 	if (pte && pmap_initialized && pte < physical_end &&
 	    hppa_trunc_page(pte) != (paddr_t)&gateway_page)
 		panic("pmap_pte_set: invalid pte 0x%x", pte);
-#if 0
-	if (pte && !(pte & PTE_PROT(TLB_UNCACHABLE)) &&
-	    hppa_trunc_page(pte) != (paddr_t)&gateway_page) {
-		printf("pmap_pte_set: cached pte\n");
-		Debugger();
-	}
-#endif
 	if ((paddr_t)pde & PGOFSET)
 		panic("pmap_pte_set, unaligned pde %p", pde);
 #endif
 
 	pde[(va >> 12) & 0x3ff] = pte;
+}
+
+void
+pmap_pte_flush(struct pmap *pmap, vaddr_t va, pt_entry_t pte)
+{
+	if (pte & PTE_PROT(TLB_EXECUTE)) {
+		ficache(pmap->pm_space, va, PAGE_SIZE);
+		pitlb(pmap->pm_space, va);
+	}
+	fdcache(pmap->pm_space, va, PAGE_SIZE);
+	pdtlb(pmap->pm_space, va);
 }
 
 static __inline pt_entry_t
@@ -735,12 +737,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 		DPRINTF(PDB_ENTER,
 		    ("pmap_enter: remapping 0x%x -> 0x%x\n", pte, pa));
 
-		if (pte & PTE_PROT(TLB_EXECUTE))
-			ficache(pmap->pm_space, va, PAGE_SIZE);
-		pitlb(pmap->pm_space, va);
-		fdcache(pmap->pm_space, va, PAGE_SIZE);
-		pdtlb(pmap->pm_space, va);
-
+		pmap_pte_flush(pmap, va, pte);
 		if (wired && !(pte & PTE_PROT(TLB_WIRED)) == 0)
 			pmap->pm_stats.wired_count++;
 		else if (!wired && (pte & PTE_PROT(TLB_WIRED)) != 0)
@@ -820,26 +817,19 @@ pmap_remove(pmap, sva, eva)
 				sva += ~PDE_MASK + 1 - PAGE_SIZE;
 				continue;
 			}
-			/* XXX not until ptp acct works
 			batch = pdemask == sva && sva + ~PDE_MASK + 1 < eva;
-			*/
 		}
 
 		if ((pte = pmap_pte_get(pde, sva))) {
-
-			if (pte & PTE_PROT(TLB_WIRED))
-				pmap->pm_stats.wired_count--;
-			pmap->pm_stats.resident_count--;
 
 			/* TODO measure here the speed tradeoff
 			 * for flushing whole 4M vs per-page
 			 * in case of non-complete pde fill
 			 */
-			if (pte & PTE_PROT(TLB_EXECUTE))
-				ficache(pmap->pm_space, sva, PAGE_SIZE);
-			pitlb(pmap->pm_space, sva);
-			fdcache(pmap->pm_space, sva, PAGE_SIZE);
-			pdtlb(pmap->pm_space, sva);
+			pmap_pte_flush(pmap, sva, pte);
+			if (pte & PTE_PROT(TLB_WIRED))
+				pmap->pm_stats.wired_count--;
+			pmap->pm_stats.resident_count--;
 
 			/* iff properly accounted pde will be dropped anyway */
 			if (!batch)
@@ -907,12 +897,7 @@ pmap_write_protect(pmap, sva, eva, prot)
 			pg->mdpage.pvh_attrs |= pmap_pvh_attrs(pte);
 			simple_unlock(&pg->mdpage.pvh_lock);
 
-			if (pte & PTE_PROT(TLB_EXECUTE))
-				ficache(pmap->pm_space, sva, PAGE_SIZE);
-			pitlb(pmap->pm_space, sva);
-			fdcache(pmap->pm_space, sva, PAGE_SIZE);
-			pdtlb(pmap->pm_space, sva);
-
+			pmap_pte_flush(pmap, sva, pte);
 			if (!(tlbprot & TLB_WRITE))
 				pte &= ~PTE_PROT(TLB_DIRTY);
 			pte &= ~PTE_PROT(TLB_AR_MASK);
@@ -929,7 +914,6 @@ pmap_page_remove(pg)
 	struct vm_page *pg;
 {
 	struct pv_entry *pve, *ppve;
-	pt_entry_t *pde, pte;
 
 	DPRINTF(PDB_FOLLOW|PDB_PV, ("pmap_page_remove(%p)\n", pg));
 
@@ -938,19 +922,24 @@ pmap_page_remove(pg)
 
 	simple_lock(&pg->mdpage.pvh_lock);
 	for (pve = pg->mdpage.pvh_list; pve; ) {
-		simple_lock(&pve->pv_pmap->pm_obj.vmobjlock);
+		struct pmap *pmap = pve->pv_pmap;
+		vaddr_t va = pve->pv_va;
+		pt_entry_t *pde, pte;
 
-		pde = pmap_pde_get(pve->pv_pmap->pm_pdir, pve->pv_va);
-		pte = pmap_pte_get(pde, pve->pv_va);
-		pmap_pte_set(pde, pve->pv_va, 0);
+		simple_lock(&pmap->pm_obj.vmobjlock);
 
-		if (pte & PTE_PROT(TLB_WIRED))
-			pve->pv_pmap->pm_stats.wired_count--;
-		pve->pv_pmap->pm_stats.resident_count--;
-
-		simple_unlock(&pve->pmap->pm_obj.vmobjlock);
-
+		pde = pmap_pde_get(pmap->pm_pdir, va);
+		pte = pmap_pte_get(pde, va);
 		pg->mdpage.pvh_attrs |= pmap_pvh_attrs(pte);
+
+		pmap_pte_flush(pmap, va, pte);
+		if (pte & PTE_PROT(TLB_WIRED))
+			pmap->pm_stats.wired_count--;
+		pmap->pm_stats.resident_count--;
+
+		pmap_pte_set(pde, va, 0);
+		simple_unlock(&pmap->pm_obj.vmobjlock);
+
 		ppve = pve;
 		pve = pve->pv_next;
 		pmap_pv_free(ppve);
@@ -995,7 +984,7 @@ boolean_t
 pmap_changebit(struct vm_page *pg, u_int set, u_int clear)
 {
 	struct pv_entry *pve;
-	pt_entry_t *pde, pte, res;
+	pt_entry_t res;
 
 	DPRINTF(PDB_FOLLOW|PDB_BITS,
 	    ("pmap_changebit(%p, %x, %x)\n", pg, set, clear));
@@ -1003,34 +992,29 @@ pmap_changebit(struct vm_page *pg, u_int set, u_int clear)
 	simple_lock(&pg->mdpage.pvh_lock);
 	res = pg->mdpage.pvh_attrs = 0;
 	for(pve = pg->mdpage.pvh_list; pve; pve = pve->pv_next) {
-		simple_lock(&pve->pv_pmap->pm_obj.vmobjlock);
-		if ((pde = pmap_pde_get(pve->pv_pmap->pm_pdir, pve->pv_va))) {
-			pte = pmap_pte_get(pde, pve->pv_va);
+		struct pmap *pmap = pve->pv_pmap;
+		vaddr_t va = pve->pv_va;
+		pt_entry_t *pde, pte;
+
+		simple_lock(&pmap->pm_obj.vmobjlock);
+		if ((pde = pmap_pde_get(pmap->pm_pdir, va))) {
+			pte = pmap_pte_get(pde, va);
 #ifdef PMAPDEBUG
 			if (!pte) {
 				printf("pmap_changebit: zero pte for 0x%x\n",
-				    pve->pv_va);
+				    va);
 				continue;
 			}
 #endif
-			if (pte & PTE_PROT(TLB_EXECUTE)) {
-				ficache(pve->pv_pmap->pm_space,
-				    pve->pv_va, PAGE_SIZE);
-				pitlb(pve->pv_pmap->pm_space, pve->pv_va);
-			}
-
-			/* XXX flush only if there was mod ? */
-			fdcache(pve->pv_pmap->pm_space, pve->pv_va, PAGE_SIZE);
-			pdtlb(pve->pv_pmap->pm_space, pve->pv_va);
-
+			pmap_pte_flush(pmap, va, pte);
 			res |= pmap_pvh_attrs(pte);
 			pte &= ~clear;
 			pte |= set;
-			pg->mdpage.pvh_attrs = pmap_pvh_attrs(pte);
+			pg->mdpage.pvh_attrs |= pmap_pvh_attrs(pte);
 
-			pmap_pte_set(pde, pve->pv_va, pte);
+			pmap_pte_set(pde, va, pte);
 		}
-		simple_unlock(&pve->pv_pmap->pm_obj.vmobjlock);
+		simple_unlock(&pmap->pm_obj.vmobjlock);
 	}
 	simple_unlock(&pg->mdpage.pvh_lock);
 
@@ -1205,12 +1189,7 @@ pmap_kremove(va, size)
 			continue;
 		}
 
-		if (pte & PTE_PROT(TLB_EXECUTE))
-			ficache(HPPA_SID_KERNEL, va, PAGE_SIZE);
-		pitlb(HPPA_SID_KERNEL, va);
-		fdcache(HPPA_SID_KERNEL, va, PAGE_SIZE);
-		pdtlb(HPPA_SID_KERNEL, va);
-
+		pmap_pte_flush(pmap_kernel(), va, pte);
 		pmap_pte_set(pde, va, 0);
 		if (pmap_initialized) {
 			struct vm_page *pg;
