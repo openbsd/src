@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.6 2004/08/11 17:06:14 pefo Exp $ */
+/*	$OpenBSD: machdep.c,v 1.7 2004/08/23 14:28:39 pefo Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -168,11 +168,12 @@ mips_init(int argc, int32_t *argv)
 	unsigned firstaddr;
 	caddr_t sd;
 	struct tlb tlb;
-	extern char edata[], end[];
+	extern char start[], edata[], end[];
 	extern char tlb_miss[], e_tlb_miss[];
 	extern char tlb_miss_tramp[], e_tlb_miss_tramp[];
 	extern char xtlb_miss_tramp[], e_xtlb_miss_tramp[];
 	extern char exception[], e_exception[];
+	char xxx[100];
 
 	/*
 	 *  Clean up any mess.
@@ -249,17 +250,32 @@ mips_init(int argc, int32_t *argv)
 	uvm_setpagesize();
 
 	for(i = 0; i < MAXMEMSEGS && mem_layout[i].mem_first_page != 0; i++) {
-		vaddr_t fp, lp;
-		u_int32_t lastkernpage = atop(ekern);
+		u_int32_t fp, lp;
+		u_int32_t firstkernpage = atop(KSEG0_TO_PHYS(start));
+		u_int32_t lastkernpage = atop(KSEG0_TO_PHYS(ekern));
 
 		fp = mem_layout[i].mem_first_page;
 		lp = mem_layout[i].mem_last_page - 1;
 
-		/* Account for expansion from kernel symbol table */
-		if (fp < lastkernpage && lp >= lastkernpage)
-			fp = lastkernpage + 1;
+		/* Account for kernel and kernel symbol table */
+		if (fp >= firstkernpage && lp < lastkernpage)
+			continue;	/* In kernel */
 
-		if (fp <= lp)
+		if (lp < firstkernpage || fp > lastkernpage) {
+			uvm_page_physload(fp, lp, fp, lp, VM_FREELIST_DEFAULT);
+			continue;	/* Outside kernel */
+		}
+
+		if (fp > firstkernpage) 
+			fp = lastkernpage + 1;
+		else if (lp < lastkernpage)
+			lp = firstkernpage - 1;
+		else { /* Need to split! */
+			u_int32_t xp = firstkernpage - 1;
+			uvm_page_physload(fp, xp, fp, xp, VM_FREELIST_DEFAULT);
+			fp = lastkernpage + 1;
+		}
+		if (lp >= fp)
 			uvm_page_physload(fp, lp, fp, lp, VM_FREELIST_DEFAULT);
 	}
 
