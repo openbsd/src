@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.103 1999/03/04 00:00:47 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.104 1999/03/05 10:38:14 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -239,7 +239,6 @@ audio*  at sb?
 audio*  at gus?
 audio*  at pas?
 audio*  at sp?
-#option	CONFIG_CS4232 /* horrible hack for "wss0 at isapnp"
 audio*  at wss?
 audio*  at ym?
 audio*  at eap?
