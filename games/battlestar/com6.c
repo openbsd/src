@@ -1,4 +1,4 @@
-/*	$OpenBSD: com6.c,v 1.12 2000/07/03 05:23:44 pjanzen Exp $	*/
+/*	$OpenBSD: com6.c,v 1.13 2000/09/21 00:23:43 pjanzen Exp $	*/
 /*	$NetBSD: com6.c,v 1.5 1995/04/27 21:30:23 mycroft Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com6.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: com6.c,v 1.12 2000/07/03 05:23:44 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: com6.c,v 1.13 2000/09/21 00:23:43 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -149,7 +149,8 @@ rate()
 			return ("junior voyeur");
 		else if (score < 35)
 			return ("Don Juan");
-		else return ("Marquis De Sade");
+		else
+			return ("Marquis De Sade");
 	} else
 		if (score == power) {
 			if (score < 5)
@@ -160,7 +161,8 @@ rate()
 				return ("Klingon");
 			else if (score < 22)
 				return ("Darth Vader");
-			else return ("Sauron the Great");
+			else
+				return ("Sauron the Great");
 		} else{
 			if (score < 5)
 				return ("Polyanna");
@@ -168,7 +170,8 @@ rate()
 				return ("philanthropist");
 			else if (score < 20)
 				return ("Tattoo");
-			else return ("Mr. Roarke");
+			else
+				return ("Mr. Roarke");
 		}
 }
 
