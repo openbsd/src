@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.17 1997/02/03 12:48:52 deraadt Exp $ */
+/*	$OpenBSD: machdep.c,v 1.18 1997/02/03 15:04:58 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -631,9 +631,8 @@ struct sigstate {
  */
 struct sigframe {
 	int	sf_signum;		/* signo for handler */
-	int	sf_code;		/* additional info for handler */
-	struct	sigcontext *sf_scp;	/* context ptr for handler */
 	siginfo_t *sf_sip;
+	struct	sigcontext *sf_scp;	/* context ptr for handler */
 	sig_t	sf_handler;		/* handler addr for u_sigc */
 	struct	sigstate sf_state;	/* state of the hardware */
 	struct	sigcontext sf_sc;	/* actual context */
@@ -751,10 +750,9 @@ sendsig(catcher, sig, mask, code, type, val)
 	 * Build the argument list for the signal handler.
 	 */
 	kfp->sf_signum = sig;
-	kfp->sf_code = code;
+	kfp->sf_sip = NULL;
 	kfp->sf_scp = &fp->sf_sc;
 	kfp->sf_handler = catcher;
-	kfp->sf_sip = NULL;
 
 	/*
 	 * Save necessary hardware state.  Currently this includes:

@@ -3711,7 +3711,7 @@ noplab:	 nop
  * When this code is run, the stack looks like:
  *	[%sp]		64 bytes to which registers can be dumped
  *	[%sp + 64]	signal number (goes in %o0)
- *	[%sp + 64 + 4]	signal code (goes in %o1)
+ *	[%sp + 64 + 4]	siginfo_t pointer (goes in %o1)
  *	[%sp + 64 + 8]	placeholder
  *	[%sp + 64 + 12]	argument for %o3, currently unsupported (always 0)
  *	[%sp + 64 + 16]	first word of saved state (sigcontext)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.16 1997/02/03 13:09:14 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.17 1997/02/03 15:05:02 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.61 1996/12/07 01:54:49 cgd Exp $	*/
 
 /*
@@ -1145,14 +1145,20 @@ sendsig(catcher, sig, mask, code, type, val)
 	struct sigcontext *scp, ksc;
 	struct trapframe *frame;
 	struct sigacts *psp = p->p_sigacts;
-	int oonstack, fsize, rndfsize;
+	int oonstack, fsize, rndfsize, kscsize;
 	extern char sigcode[], esigcode[];
 	extern struct proc *fpcurproc;
+	siginfo_t *sip, ksi;
 
 	frame = p->p_md.md_tf;
 	oonstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
 	fsize = sizeof ksc;
 	rndfsize = ((fsize + 15) / 16) * 16;
+	kscsize = rndfsize;
+	if (psp->ps_siginfo & sigmask(sig)) {
+		fsize += sizeof ksi;
+		rndfsize = ((fsize + 15) / 16) * 16;
+	}
 	/*
 	 * Allocate and validate space for the signal handler
 	 * context. Note that if the stack is in P0 space, the
@@ -1227,10 +1233,16 @@ sendsig(catcher, sig, mask, code, type, val)
 	 */
 #endif
 
+	if (psp->ps_siginfo & sigmask(sig)) {
+		initsiginfo(&ksi, sig, code, type, val);
+		sip = (void *)scp + kscsize;
+		(void) copyout((caddr_t)&ksi, (caddr_t)sip, fsize - kscsize);
+	}
+
 	/*
 	 * copy the frame out to userland.
 	 */
-	(void) copyout((caddr_t)&ksc, (caddr_t)scp, fsize);
+	(void) copyout((caddr_t)&ksc, (caddr_t)scp, kscsize);
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
 		printf("sendsig(%d): sig %d scp %p code %lx\n", p->p_pid, sig,
@@ -1243,7 +1255,8 @@ sendsig(catcher, sig, mask, code, type, val)
 	frame->tf_regs[FRAME_PC] =
 	    (u_int64_t)PS_STRINGS - (esigcode - sigcode);
 	frame->tf_regs[FRAME_A0] = sig;
-	frame->tf_regs[FRAME_A1] = code;
+	frame->tf_regs[FRAME_A1] = (psp->ps_siginfo & sigmask(sig)) ?
+	    (u_int64_t)sip : NULL;
 	frame->tf_regs[FRAME_A2] = (u_int64_t)scp;
 	frame->tf_regs[FRAME_T12] = (u_int64_t)catcher;		/* t12 is pv */
 	alpha_pal_wrusp((unsigned long)scp);

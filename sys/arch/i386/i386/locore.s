@@ -2040,7 +2040,7 @@ IDTVEC(fpu)
 	pushl	%esp
 	incl	_cnt+V_TRAP
 	call	_npxintr
-	addl	$4,%esp
+	addl	$8,%esp
 	INTRFASTEXIT
 #else
 	ZTRAP(T_ARITHTRAP)

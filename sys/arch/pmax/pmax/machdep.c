@@ -925,10 +925,11 @@ setregs(p, pack, stack, retval)
  */
 struct sigframe {
 	int	sf_signum;		/* signo for handler */
-	int	sf_code;		/* additional info for handler */
+	siginfo_t *sf_sip;		/* pointer to siginfo_t */
 	struct	sigcontext *sf_scp;	/* context ptr for handler */
 	sig_t	sf_handler;		/* handler addr for u_sigc */
 	struct	sigcontext sf_sc;	/* actual context */
+	siginfo_t sf_si;
 };
 
 #ifdef DEBUG
@@ -968,6 +969,8 @@ sendsig(catcher, sig, mask, code, type, val)
 	 * the space with a `brk'.
 	 */
 	fsize = sizeof(struct sigframe);
+	if (!(psp->ps_siginfo & sigmask(sig)))
+		fsize -= sizeof(siginfo_t);
 	if ((psp->ps_flags & SAS_ALTSTACK) &&
 	    (psp->ps_sigstk.ss_flags & SS_ONSTACK) == 0 &&
 	    (psp->ps_sigonstack & sigmask(sig))) {
@@ -1005,7 +1008,17 @@ sendsig(catcher, sig, mask, code, type, val)
 		bcopy((caddr_t)&p->p_md.md_regs[F0], (caddr_t)ksc.sc_fpregs,
 			sizeof(ksc.sc_fpregs));
 	}
+
+	if (psp->ps_siginfo & sigmask(sig)) {
+		siginfo_t si;
+
+		initsiginfo(&si, sig, code, type, val);
+		if (copyout((caddr_t)&si, (caddr_t)&fp->sf_si, sizeof si))
+			goto bail;
+	}
+
 	if (copyout((caddr_t)&ksc, (caddr_t)&fp->sf_sc, sizeof(ksc))) {
+bail:
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
@@ -1022,7 +1035,7 @@ sendsig(catcher, sig, mask, code, type, val)
 	 * Build the argument list for the signal handler.
 	 */
 	regs[A0] = sig;
-	regs[A1] = code;
+	regs[A1] = (psp->ps_siginfo & sigmask(sig)) ? (int)&fp->sf_si : NULL;
 	regs[A2] = (int)&fp->sf_sc;
 	regs[A3] = (int)catcher;
 

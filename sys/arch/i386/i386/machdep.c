@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.40 1997/02/03 12:48:58 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.41 1997/02/03 15:04:50 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.202 1996/05/18 15:54:59 christos Exp $	*/
 
 /*-
@@ -631,10 +631,9 @@ sendsig(catcher, sig, mask, code, type, val)
 		fp = (struct sigframe *)tf->tf_esp - 1;
 	}
 
-	frame.sf_code = code;
 	frame.sf_scp = &fp->sf_sc;
-	frame.sf_handler = catcher;
 	frame.sf_sip = NULL;
+	frame.sf_handler = catcher;
 
 	/*
 	 * Build the signal context to be used by sigreturn.

@@ -420,16 +420,13 @@ int sigpid = 0;
 
 struct sigframe {
 	int	sf_signo;		/* signal number */
-	int	sf_code;		/* code */
+	siginfo_t *sf_sip;		/* points to siginfo_t */
 #ifdef COMPAT_SUNOS
 	struct	sigcontext *sf_scp;	/* points to user addr of sigcontext */
 #else
 	int	sf_xxx;			/* placeholder */
 #endif
-	union {
-		caddr_t	sfu_addr;	/* SunOS compat */
-		siginfo_t *sfu_sip;	/* native */
-	} sf_u;
+	caddr_t	sf_addr;		/* SunOS compat */
 	struct	sigcontext sf_sc;	/* actual sigcontext */
 	siginfo_t sf_si;
 };
@@ -509,12 +506,12 @@ sendsig(catcher, sig, mask, code, type, val)
 	 * directly in user space....
 	 */
 	sf.sf_signo = sig;
-	sf.sf_code = code;
-	sf.sf_u.sfu_sip = NULL;
+	sf.sf_sip = NULL;
 #ifdef COMPAT_SUNOS
 	if (p->p_emul == &emul_sunos) {
+		sf.sf_sip = (void *)code;	/* SunOS has "int code" */
 		sf.sf_scp = &fp->sf_sc;
-		sf.sf_u.sfu_addr = val.sival_ptr;
+		sf.sf_addr = val.sival_ptr;
 	}
 #endif
 
@@ -531,7 +528,7 @@ sendsig(catcher, sig, mask, code, type, val)
 	sf.sf_sc.sc_o0 = tf->tf_out[0];
 
 	if (psp->ps_siginfo & sigmask(sig)) {
-		sf.sf_u.sfu_sip = &fp->sf_si;
+		sf.sf_sip = &fp->sf_si;
 		initsiginfo(&sf.sf_si, sig, code, type, val);
 	}
 
