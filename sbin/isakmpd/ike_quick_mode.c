@@ -1,9 +1,10 @@
-/*	$OpenBSD: ike_quick_mode.c,v 1.36 2000/08/03 07:23:44 niklas Exp $	*/
-/*	$EOM: ike_quick_mode.c,v 1.127 2000/07/01 20:06:23 angelos Exp $	*/
+/*	$OpenBSD: ike_quick_mode.c,v 1.37 2000/10/07 07:01:19 niklas Exp $	*/
+/*	$EOM: ike_quick_mode.c,v 1.133 2000/10/06 23:45:27 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
  * Copyright (c) 1999, 2000 Angelos D. Keromytis.  All rights reserved.
+ * Copyright (c) 2000 Håkan Olsson.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -123,7 +124,7 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
 	  return 0;
 	}
     }
-  
+
   /* Add the callback that will handle attributes.  */
   if (LK (kn_add_action, (isakmp_sa->policy_id, ".*",
 			  (char *) policy_callback,
@@ -246,7 +247,7 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
 
       principal = calloc (2, sizeof(*principal));
       if (principal == NULL)
-        {  
+        {
 	  log_print ("check_policy: failed to get memory for principal");
 	  goto policydone;
 	}
@@ -278,7 +279,7 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
 	{
 	  log_print ("check_policy: failed to allocate memory for principal");
 	  free (principal[0]);
-	  free(principal);
+	  free (principal);
 	  LC (RSA_free, (key));
 	  goto policydone;
 	}
@@ -303,10 +304,10 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
 	}
       break;
 #endif
-	
+
     /* XXX Eventually handle these.  */
     case ISAKMP_CERTENC_PKCS:
-    case ISAKMP_CERTENC_PGP:	
+    case ISAKMP_CERTENC_PGP:
     case ISAKMP_CERTENC_DNS:
     case ISAKMP_CERTENC_X509_KE:
     case ISAKMP_CERTENC_KERBEROS:
@@ -321,7 +322,7 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
       goto policydone;
     }
 
-  /* 
+  /*
    * Add the authorizer (who is requesting the SA/ID);
    * this may be a public or a secret key, depending on
    * what mode of authentication we used in Phase 1.
@@ -342,7 +343,7 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
 	  for (; j < nprinc; j++)
 	    free (principal[j]);
 
-	  free(principal);
+	  free (principal);
 	  log_print ("check_policy: kn_add_authorizer failed");
 	  goto policydone;
 	}
@@ -388,7 +389,7 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
     }
 
   if (keynote_ids)
-    free (keynote_ids);  
+    free (keynote_ids);
 
   if (x509_ids)
     free (x509_ids);
@@ -397,7 +398,7 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
    * XXX Currently, check_policy() is only called from message_negotiate_sa(),
    *     and so this log message reflects this. Change to something better?
    */
-  if (result == 0)  
+  if (result == 0)
     log_print ("check_policy: negotiated SA failed policy check");
 
   /*
@@ -440,7 +441,7 @@ initiator_send_HASH_SA_NONCE (struct message *msg)
 
   if (!ipsec_add_hash_payload (msg, hash->hashsize))
     return -1;
-    
+
   /* Get the list of protocol suites.  */
   suite_conf = conf_get_list (exchange->policy, "Suites");
   if (!suite_conf)
@@ -601,13 +602,25 @@ initiator_send_HASH_SA_NONCE (struct message *msg)
 					      ipsec_duration_cst,
 					      IPSEC_ATTR_SA_LIFE_TYPE, &attr);
 
-		      /* XXX Does only handle 16-bit entities!  */
+                      /* XXX Deals with 16 and 32 bit lifetimes only */
 		      value = conf_get_num (life->field, "LIFE_DURATION", 0);
 		      if (value)
-			attr
-			  = attribute_set_basic (attr,
-						 IPSEC_ATTR_SA_LIFE_DURATION,
-						 value);
+                        {
+                          if (value <= 0xffff)
+			    attr =
+                              attribute_set_basic (attr,
+						   IPSEC_ATTR_SA_LIFE_DURATION,
+	              				   value);
+                          else
+                            {
+                              value = htonl (value);
+                              attr =
+                                attribute_set_var (attr,
+                                                   IPSEC_ATTR_SA_LIFE_DURATION,
+                                                   (char *)&value,
+						   sizeof value);
+                            }
+                        }
 		    }
 		  conf_free_list (life_conf);
 		}
@@ -919,6 +932,8 @@ initiator_recv_HASH_SA_NONCE (struct message *msg)
   size_t hashsize = hash->hashsize;
   u_int8_t *rest;
   size_t rest_len;
+  struct sockaddr *src, *dst;
+  socklen_t srclen, dstlen;
 
   /*
    * As we are getting an answer on our transform offer, only one transform
@@ -950,7 +965,7 @@ initiator_recv_HASH_SA_NONCE (struct message *msg)
 	  message_drop (msg, ISAKMP_NOTIFY_PAYLOAD_MALFORMED, 0, 1, 0);
 	  return -1;
 	}
-	  
+
       /* XXX We should really compare, not override.  */
       ie->id_ci_sz = GET_ISAKMP_GEN_LENGTH (idp->p);
       ie->id_ci = malloc (ie->id_ci_sz);
@@ -982,6 +997,54 @@ initiator_recv_HASH_SA_NONCE (struct message *msg)
 		    "initiator_recv_HASH_SA_NONCE: IDcr",
 		    ie->id_cr + ISAKMP_GEN_SZ, ie->id_cr_sz
 		    - ISAKMP_GEN_SZ));
+    }
+  else
+    {
+      /*
+       * If client identifiers are not present in the exchange,
+       * we fake them. RFC 2409 states:
+       *    The identities of the SAs negotiated in Quick Mode are
+       *    implicitly assumed to be the IP addresses of the ISAKMP
+       *    peers, without any constraints on the protocol or port
+       *    numbers allowed, unless client identifiers are specified
+       *    in Quick Mode.
+       *
+       * -- Michael Paddon (mwp@aba.net.au)
+       */
+
+      ie->flags = IPSEC_EXCH_FLAG_NO_ID;
+
+      /* Get responder address.  */
+      msg->transport->vtbl->get_dst (msg->transport, &dst, &dstlen);
+      ie->id_cr_sz = ISAKMP_ID_DATA_OFF
+	+ sizeof ((struct sockaddr_in *)dst)->sin_addr.s_addr;
+      ie->id_cr = calloc (ie->id_cr_sz, sizeof (char));
+      if (!ie->id_cr)
+	{
+	  log_error ("initiator_recv_HASH_SA_NONCE: malloc (%d) failed",
+		     ie->id_cr_sz);
+	  return -1;
+	}
+      SET_ISAKMP_ID_TYPE (ie->id_cr, IPSEC_ID_IPV4_ADDR);
+      memcpy (ie->id_cr + ISAKMP_ID_DATA_OFF,
+	      &((struct sockaddr_in *)dst)->sin_addr.s_addr,
+	      sizeof ((struct sockaddr_in *)dst)->sin_addr.s_addr);
+
+      /* Get initiator address.  */
+      msg->transport->vtbl->get_src (msg->transport, &src, &srclen);
+      ie->id_ci_sz = ISAKMP_ID_DATA_OFF
+	+ sizeof ((struct sockaddr_in *)dst)->sin_addr.s_addr;
+      ie->id_ci = calloc (ie->id_ci_sz, sizeof (char));
+      if (!ie->id_ci)
+	{
+	  log_error ("initiator_recv_HASH_SA_NONCE: malloc (%d) failed",
+		     ie->id_ci_sz);
+	  return -1;
+	}
+      SET_ISAKMP_ID_TYPE (ie->id_ci, IPSEC_ID_IPV4_ADDR);
+      memcpy (ie->id_ci + ISAKMP_ID_DATA_OFF,
+	      &((struct sockaddr_in *)src)->sin_addr.s_addr,
+	      sizeof ((struct sockaddr_in *)src)->sin_addr.s_addr);
     }
 
   /* Build the protection suite in our SA.  */
@@ -1126,7 +1189,7 @@ initiator_send_HASH (struct message *msg)
 
   if (ie->group)
     message_register_post_send (msg, gen_g_xy);
-  sa_reference (msg->isakmp_sa);
+
   message_register_post_send (msg, post_quick_mode);
 
   return 0;
@@ -1238,6 +1301,7 @@ post_quick_mode (struct message *msg)
 	}
     }
   sa_release (isakmp_sa);
+  msg->isakmp_sa = NULL;
 }
 
 /*
@@ -1332,7 +1396,7 @@ responder_recv_HASH_SA_NONCE (struct message *msg)
 	  message_drop (msg, ISAKMP_NOTIFY_PAYLOAD_MALFORMED, 0, 1, 0);
 	  return -1;
 	}
-	  
+
       ie->id_ci_sz = GET_ISAKMP_GEN_LENGTH (idp->p);
       ie->id_ci = malloc (ie->id_ci_sz);
       if (!ie->id_ci)
@@ -1384,7 +1448,7 @@ responder_recv_HASH_SA_NONCE (struct message *msg)
       msg->transport->vtbl->get_dst (msg->transport, &dst, &dstlen);
       ie->id_ci_sz = ISAKMP_ID_DATA_OFF
 	+ sizeof ((struct sockaddr_in *)dst)->sin_addr.s_addr;
-      ie->id_ci = malloc (ie->id_ci_sz);
+      ie->id_ci = calloc (ie->id_ci_sz, sizeof (char));
       if (!ie->id_ci)
 	{
 	  log_error ("responder_recv_HASH_SA_NONCE: malloc (%d) failed",
@@ -1400,7 +1464,7 @@ responder_recv_HASH_SA_NONCE (struct message *msg)
       msg->transport->vtbl->get_src (msg->transport, &src, &srclen);
       ie->id_cr_sz = ISAKMP_ID_DATA_OFF
 	+ sizeof ((struct sockaddr_in *)dst)->sin_addr.s_addr;
-      ie->id_cr = malloc (ie->id_cr_sz);
+      ie->id_cr = calloc (ie->id_cr_sz, sizeof (char));
       if (!ie->id_cr)
 	{
 	  log_error ("responder_recv_HASH_SA_NONCE: malloc (%d) failed",
@@ -1510,7 +1574,7 @@ responder_recv_HASH_SA_NONCE (struct message *msg)
       exchange->name = strdup (name);
       if (!exchange->name)
 	{
-	  log_error ("responder_recv_HASH_SA_NONCE: strdup (\"%s\") failed", 
+	  log_error ("responder_recv_HASH_SA_NONCE: strdup (\"%s\") failed",
 		     name);
 	  goto cleanup;
 	}
@@ -1526,7 +1590,7 @@ responder_recv_HASH_SA_NONCE (struct message *msg)
        * This code is no longer necessary, as policy determines acceptance
        * of IDs/SAs. (angelos@openbsd.org)
        *
-       * XXX Keep it if not USE_POLICY for now, though. 
+       * XXX Keep it if not USE_POLICY for now, though.
        */
 
       /* XXX Notify peer and log.  */
@@ -1579,7 +1643,7 @@ responder_send_HASH_SA_NONCE (struct message *msg)
       free (buf);
       return -1;
     }
-    
+
   /* Add the SA payload(s) with the transform(s) that was/were chosen.  */
   if (message_add_sa_payload (msg))
     return -1;
@@ -1744,7 +1808,6 @@ responder_recv_HASH (struct message *msg)
     }
   free (my_hash);
 
-  sa_reference (msg->isakmp_sa);
   post_quick_mode (msg);
 
   return 0;
