@@ -1,4 +1,4 @@
-.\"	$OpenBSD: glob.3,v 1.7 1998/02/03 18:25:55 millert Exp $
+.\"	$OpenBSD: glob.3,v 1.8 1999/05/29 19:11:11 aaron Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -54,9 +54,9 @@ is a pathname generator that implements the rules for file name pattern
 matching used by the shell.
 .Pp
 The include file
-.Pa glob.h
+.Aq Pa glob.h
 defines the structure type
-.Fa glob_t ,
+.Em glob_t ,
 which contains at least the following fields:
 .Bd -literal
 typedef struct {
@@ -71,9 +71,7 @@ typedef struct {
 The argument
 .Fa pattern
 is a pointer to a pathname pattern to be expanded.
-The
 .Fn glob
-argument
 matches all accessible pathnames against the pattern and creates
 a list of the pathnames that match.
 In order to have access to a pathname,
@@ -87,12 +85,9 @@ that contains any of the special characters
 or
 .Ql [ .
 .Pp
-The
-.Fn glob
-argument
-stores the number of matched pathnames into the
+The number of matched pathnames is stored in the
 .Fa gl_pathc
-field, and a pointer to a list of pointers to pathnames into the
+field, and a pointer to a list of pointers to pathnames in the
 .Fa gl_pathv
 field.
 The first pointer after the last pathname is
@@ -115,10 +110,10 @@ is used to modify the behavior of
 The value of
 .Fa flags
 is the bitwise inclusive
-.Tn OR
+.Em OR
 of any of the following
 values defined in
-.Pa glob.h :
+.Aq Pa glob.h :
 .Bl -tag -width GLOB_ALTDIRFUNC
 .It Dv GLOB_APPEND
 Append pathnames generated to the ones from a previous call (or calls)
@@ -208,8 +203,12 @@ however, they are non-standard extensions to
 .St -p1003.2 .
 .Bl -tag -width GLOB_ALTDIRFUNC
 .It Dv GLOB_ALTDIRFUNC
-The following additional fields in the pglob structure have been
-initialized with alternate functions for glob to use to open, read,
+The following additional fields in the
+.Fa pglob
+structure have been
+initialized with alternate functions for
+.Fn glob
+to use to open, read,
 and close directories and to get stat information on names found
 in those directories.
 .Bd -literal
@@ -231,7 +230,7 @@ strings like
 The pattern 
 .Ql {}
 is left unexpanded for historical reasons.
-.Xr (Csh 1 
+.Xr (csh 1 
 does the same thing to 
 ease typing
 of 
@@ -249,7 +248,11 @@ Is the same as
 .Dv GLOB_NOCHECK 
 but it only appends the
 .Fa pattern
-if it does not contain any of the special characters ``*'', ``?'' or ``[''.
+if it does not contain any of the special characters
+.Ql * ,
+.Ql ? ,
+or
+.Ql [ .
 .Dv GLOB_NOMAGIC 
 is provided to simplify implementing the historic
 .Xr csh 1
@@ -272,19 +275,19 @@ is
 calls
 .Fa (*errfunc)(path, errno) .
 This may be unintuitive: a pattern like
-.Ql */Makefile
+.Dq */Makefile
 will try to
 .Xr stat 2
-.Ql foo/Makefile
+.Dq foo/Makefile
 even if
-.Ql foo
+.Dq foo
 is not a directory, resulting in a
 call to
 .Fa errfunc .
 The error routine can suppress this action by testing for
-.Dv ENOENT
+.Er ENOENT
 and
-.Dv ENOTDIR ; 
+.Er ENOTDIR ; 
 however, the
 .Dv GLOB_ERR
 flag will still cause an immediate
@@ -333,26 +336,30 @@ In addition the fields of
 contain the values described below:
 .Bl -tag -width GLOB_NOCHECK
 .It Fa gl_pathc
-contains the total number of matched pathnames so far.
+Contains the total number of matched pathnames so far.
 This includes other matches from previous invocations of 
 .Fn glob
 if 
 .Dv GLOB_APPEND
 was specified.
 .It Fa gl_matchc
-contains the number of matched pathnames in the current invocation of
+Contains the number of matched pathnames in the current invocation of
 .Fn glob .
 .It Fa gl_flags
-contains a copy of the 
+Contains a copy of the 
 .Fa flags
 parameter with the bit
 .Dv GLOB_MAGCHAR
 set if
 .Fa pattern
-contained any of the special characters ``*'', ``?'' or ``['', cleared
-if not.
+contained any of the special characters
+.Ql * ,
+.Ql ? ,
+or
+.Ql [ ,
+cleared if not.
 .It Fa gl_pathv
-contains a pointer to a
+Contains a pointer to a
 .Dv NULL Ns -terminated 
 list of matched pathnames.
 However, if

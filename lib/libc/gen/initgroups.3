@@ -1,4 +1,4 @@
-.\"	$OpenBSD: initgroups.3,v 1.5 1999/05/23 14:11:00 aaron Exp $
+.\"	$OpenBSD: initgroups.3,v 1.6 1999/05/29 19:11:11 aaron Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -69,7 +69,7 @@ the later groups are ignored.
 The
 .Fn initgroups
 function
-returns \-1 if it was not invoked by the super-user.
+returns -1 if it was not invoked by the super-user.
 .Sh SEE ALSO
 .Xr setgroups 2 ,
 .Xr getgrouplist 3
@@ -80,7 +80,7 @@ function appeared in
 .Bx 4.2 .
 .Sh BUGS
 The
-.Fn getgrouplist
+.Xr getgrouplist 3
 function called by
 .Fn initgroups
 uses the routines based on

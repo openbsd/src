@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getusershell.3,v 1.4 1999/05/23 14:11:00 aaron Exp $
+.\"	$OpenBSD: getusershell.3,v 1.5 1999/05/29 19:11:11 aaron Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -58,7 +58,7 @@ If
 .Pa /etc/shells
 is unreadable or does not exist,
 .Fn getusershell
-behaves as if
+behaves as if only
 .Pa /bin/sh
 and
 .Pa /bin/csh
@@ -80,7 +80,9 @@ closes it.
 .Sh DIAGNOSTICS
 The routine
 .Fn getusershell
-returns a null pointer (0) on
+returns a
+.Dv NULL
+pointer on
 .Dv EOF .
 .Sh SEE ALSO
 .Xr shells 5

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getttyent.3,v 1.5 1999/05/25 01:50:57 aaron Exp $
+.\"	$OpenBSD: getttyent.3,v 1.6 1999/05/29 19:11:11 aaron Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -79,13 +79,13 @@ struct ttyent {
 The fields are as follows:
 .Bl -tag -width ty_comment
 .It Fa ty_name
-The name of the character-special file.
+Name of the character-special file.
 .It Fa ty_getty
-The name of the command invoked by
+Name of the command invoked by
 .Xr init 8
 to initialize tty line characteristics.
 .It Fa ty_type
-The name of the default terminal type connected to this tty line.
+Name of the default terminal type connected to this tty line.
 .It Fa ty_status
 A mask of bit fields which indicate various actions allowed on this
 tty line.
@@ -98,11 +98,11 @@ will start the command referenced by
 .Fa ty_getty
 on this entry).
 .It Dv TTY_SECURE
-Allow users with a uid of 0 to login on this terminal.
+Allow users with a UID of 0 to login on this terminal.
 .It Dv TTY_LOCAL
 If the terminal port's driver supports it, cause the line
 to be treated as
-.Dq local.
+.Dq local .
 .It Dv TTY_MDMBUF
 If the terminal port's driver supports it, use
 DTR/DCD hardware flow control on the line by default.
@@ -115,7 +115,7 @@ If the terminal port's driver supports it, ignore hardware
 carrier on the line.
 .El
 .It Fa ty_window
-The command to execute for a window system associated with the line.
+Command to execute for a window system associated with the line.
 .It Fa ty_comment
 Any trailing comment field, with any leading hash marks
 .Pq Sq \&#
@@ -123,7 +123,9 @@ or whitespace removed.
 .El
 .Pp
 If any of the fields pointing to character strings are unspecified,
-they are returned as null pointers.
+they are returned as
+.Dv NULL
+pointers.
 The field
 .Fa ty_status
 will be zero if no flag values are specified.
@@ -137,18 +139,12 @@ The
 .Fn getttyent
 function
 reads the next line from the ttys file, opening the file if necessary.
-The
 .Fn setttyent
-function
 rewinds the file if open, or opens the file if it is unopened.
-The
 .Fn endttyent
-function
 closes any open files.
 .Pp
-The
 .Fn getttynam
-function
 searches from the beginning of the file until a matching
 .Fa name
 is found
@@ -160,7 +156,9 @@ The routines
 .Fn getttyent
 and
 .Fn getttynam
-return a null pointer on
+return a
+.Dv NULL
+pointer on
 .Dv EOF
 or error.
 The
@@ -168,7 +166,7 @@ The
 function
 and
 .Fn endttyent
-return 0 on failure and 1 on success.
+return 0 on failure or 1 on success.
 .Sh FILES
 .Bl -tag -width /etc/ttys -compact
 .It Pa /etc/ttys

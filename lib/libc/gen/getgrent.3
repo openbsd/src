@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getgrent.3,v 1.2 1996/08/19 08:23:27 tholo Exp $
+.\"	$OpenBSD: getgrent.3,v 1.3 1999/05/29 19:11:11 aaron Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -67,7 +67,7 @@ which is described
 in
 .Xr group 5 .
 Each line of the database is defined by the structure
-.Ar group
+.Em group
 found in the include
 file
 .Aq Pa grp.h :
@@ -85,35 +85,29 @@ The functions
 and
 .Fn getgrgid
 search the group database for the given group name pointed to by
-.Ar name
-or the group id pointed to by
-.Ar gid ,
+.Fa name
+or the group ID pointed to by
+.Fa gid ,
 respectively, returning the first one encountered.  Identical group
-names or group gids may result in undefined behavior.
+names or group GIDs may result in undefined behavior.
 .Pp
-The
 .Fn getgrent
-function
 sequentially reads the group database and is intended for programs
 that wish to step through the complete list of groups.
 .Pp
 All three routines will open the group file for reading, if necessary.
 .Pp
-The
 .Fn setgroupent
-function
 opens the file, or rewinds it if it is already open.  If
 .Fa stayopen
 is non-zero, file descriptors are left open, significantly speeding
-functions subsequent calls.  This functionality is unnecessary for
+subsequent function calls.  This functionality is unnecessary for
 .Fn getgrent
 as it doesn't close its file descriptors by default.  It should also
 be noted that it is dangerous for long-running programs to use this
 functionality as the group file may be updated.
 .Pp
-The
 .Fn setgrent
-function
 is equivalent to
 .Fn setgroupent
 with an argument of zero.
@@ -127,13 +121,14 @@ The functions
 .Fn getgrent ,
 .Fn getgrnam ,
 and
-.Fn getgrgid ,
+.Fn getgrgid
 return a pointer to the group entry if successful; if end-of-file
-is reached or an error occurs a null pointer is returned.
+is reached or an error occurs a
+.Dv NULL
+pointer is returned.
 The
 .Fn setgroupent
-function returns the value 1 if successful, otherwise the value
-0 is returned.
+function returns the value 1 if successful, otherwise 0.
 The 
 .Fn endgrent
 and
@@ -165,7 +160,7 @@ appeared in
 .Bx 4.3 Reno .
 .Sh COMPATIBILITY
 The historic function
-.Fn setgrfile ,
+.Xr setgrfile 3 ,
 which allowed the specification of alternate password databases, has
 been deprecated and is no longer available.
 .Sh BUGS

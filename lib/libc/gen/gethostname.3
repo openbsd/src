@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gethostname.3,v 1.10 1999/05/23 14:10:59 aaron Exp $
+.\"	$OpenBSD: gethostname.3,v 1.11 1999/05/29 19:11:11 aaron Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -45,16 +45,18 @@
 .Ft int
 .Fn sethostname "const char *name" "size_t namelen"
 .Sh DESCRIPTION
+The
 .Fn gethostname
-returns the standard host name for the current processor, as
-previously set by
+function returns the standard host name for the current
+processor, as previously set by
 .Fn sethostname .
 The parameter
 .Fa namelen
 specifies the size of the 
 .Fa name
 array.  If insufficient space is provided, the returned name is truncated.
-The returned name is always null-terminated.
+The returned name is always
+.Dv NULL Ns -terminated.
 .Pp
 .Fn sethostname
 sets the name of the host machine to be
@@ -66,7 +68,7 @@ is normally used only when the system is bootstrapped.
 .Sh RETURN VALUES
 If the call succeeds a value of 0 is returned.  If the call
 fails, a value of -1 is returned and an error code is
-placed in the global location
+placed in the global variable
 .Va errno .
 .Sh ERRORS
 The following errors may be returned by these calls:
@@ -82,9 +84,12 @@ invalid address.
 The caller tried to set the hostname and was not the super-user.
 .El
 .Sh SEE ALSO
+.Xr hostname 1 ,
+.Xr getdomainname 3 ,
 .Xr gethostid 3 ,
 .Xr sysctl 3 ,
-.Xr sysctl 8
+.Xr sysctl 8 ,
+.Xr yp 8
 .Sh BUGS
 Host names are limited to
 .Dv MAXHOSTNAMELEN
@@ -93,17 +98,17 @@ Host names are limited to
 characters, currently 256.  This includes the terminating NUL character.
 .Pp
 If the buffer passed to
-.Fn getdomainname
+.Fn gethostname
 is smaller than
 .Dv MAXHOSTNAMELEN ,
 other operating systems may not guarantee termination with NUL.
 .Sh HISTORY
 The
-.Nm
+.Fn gethostname
 function call appeared in
 .Bx 4.2 .
 .Sh STANDARDS
 The
-.Nm
+.Fn gethostname
 function call conforms to
 .St -xpg4.2 .

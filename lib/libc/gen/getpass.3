@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getpass.3,v 1.3 1998/06/08 17:17:07 deraadt Exp $
+.\"	$OpenBSD: getpass.3,v 1.4 1999/05/29 19:11:11 aaron Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -48,21 +48,28 @@ The
 function displays a prompt to, and reads in a password from,
 .Pa /dev/tty .
 If this file is not accessible,
-.Nm getpass
+.Fn getpass
 displays the prompt on the standard error output and reads from the standard
 input.
 .Pp
-The password may be up to _PASSWORD_LEN (currently 128)
+The password may be up to _PASSWORD_LEN (currently 128, as defined in
+the include file
+.Aq Pa pwd.h )
 characters in length.
 Any additional
 characters and the terminating newline character are discarded.
 .Pp
-.Nm getpass
+.Fn getpass
 turns off character echoing while reading the password.
 .Pp
+The calling process should zero the password as soon as possible to
+avoid leaving the cleartext password visible in the process's address
+space.
 .Sh RETURN VALUES
-.Nm getpass
-returns a pointer to the null terminated password.
+.Fn getpass
+returns a pointer to the
+.Dv NULL Ns -terminated
+password.
 .Sh FILES
 .Bl -tag -width /dev/tty -compact
 .It Pa /dev/tty
@@ -71,18 +78,14 @@ returns a pointer to the null terminated password.
 .Xr crypt 3
 .Sh HISTORY
 A
-.Nm getpass
+.Fn getpass
 function appeared in
 .At v7 .
 .Sh BUGS
 The
-.Nm getpass
+.Fn getpass
 function leaves its result in an internal static object and returns
 a pointer to that object.
 Subsequent calls to
-.Nm getpass
+.Fn getpass
 will modify the same object.
-.Pp
-The calling process should zero the password as soon as possible to
-avoid leaving the cleartext password visible in the process's address
-space.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getpagesize.3,v 1.6 1999/05/23 14:10:59 aaron Exp $
+.\"	$OpenBSD: getpagesize.3,v 1.7 1999/05/29 19:11:11 aaron Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -49,13 +49,13 @@ Use
 .Fn sysconf _SC_PAGESIZE .
 .Ef 
 .Pp 
+The
 .Fn getpagesize
-returns the number of bytes in a page.
+function returns the number of bytes in a page.
 Page granularity is the granularity of many of the memory
 management calls.
 .Pp
-The page size is a 
-.Xr system
+The page size is a system
 page size and may not be the same as the underlying
 hardware page size.
 .Sh SEE ALSO
@@ -64,6 +64,6 @@ hardware page size.
 .Xr sysconf 3
 .Sh HISTORY
 The
-.Nm
+.Fn getpagesize
 function call appeared in
 .Bx 4.2 .
