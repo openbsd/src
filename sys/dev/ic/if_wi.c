@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.26 2002/03/29 02:43:34 millert Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.27 2002/03/30 00:15:24 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -124,7 +124,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.26 2002/03/29 02:43:34 millert Exp $";
+	"$OpenBSD: if_wi.c,v 1.27 2002/03/30 00:15:24 millert Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -1341,6 +1341,7 @@ wi_ioctl(ifp, command, data)
 		    memcmp(sc->wi_net_name.i_nwid, nwid.i_nwid, nwid.i_len) == 0)
 			break;
 		wi_set_ssid(&sc->wi_net_name, nwid.i_nwid, nwid.i_len);
+		WI_SETSTR(WI_RID_DESIRED_SSID, sc->wi_net_name);
 		if (ifp->if_flags & IFF_UP)
 			/* Reinitialize WaveLAN. */
 			wi_init(ifp);
