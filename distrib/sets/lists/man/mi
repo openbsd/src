@@ -408,8 +408,6 @@
 ./usr/share/man/cat1/rmdir.0
 ./usr/share/man/cat1/rs.0
 ./usr/share/man/cat1/rsh.0
-./usr/share/man/cat1/rt.0
-./usr/share/man/cat1/rtdelete.0
 ./usr/share/man/cat1/rup.0
 ./usr/share/man/cat1/ruptime.0
 ./usr/share/man/cat1/rusers.0
@@ -981,3 +979,4 @@
 ./usr/share/man/cat9/splx.0
 ./usr/share/man/man4/alpha
 ./usr/share/man/man4/pmax
+./usr/share/man/cat8/vpn.0

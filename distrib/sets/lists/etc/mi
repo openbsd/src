@@ -47,9 +47,6 @@
 ./etc/mtree/BSD.x11.dist
 ./etc/mtree/special
 ./etc/myname
-./etc/namedb/localhost.rev
-./etc/namedb/named.boot
-./etc/namedb/root.cache
 ./etc/netstart
 ./etc/networks
 ./etc/newsyslog.conf

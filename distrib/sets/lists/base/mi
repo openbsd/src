@@ -48,8 +48,6 @@
 ./etc/disklabels
 ./etc/kerberosIV
 ./etc/mtree
-./etc/namedb
-./etc/namedb/tmp
 ./etc/ppp
 ./etc/sliphome
 ./etc/termcap
@@ -115,8 +113,6 @@
 ./sbin/route
 ./sbin/routed
 ./sbin/rrestore
-./sbin/rt
-./sbin/rtdelete
 ./sbin/rtquery
 ./sbin/savecore
 ./sbin/scan_ffs
@@ -703,7 +699,6 @@
 ./usr/libexec/mail.local
 ./usr/libexec/makekey
 ./usr/libexec/makewhatis
-./usr/libexec/named-xfer
 ./usr/libexec/ntalkd
 ./usr/libexec/rexecd
 ./usr/libexec/rlogind
@@ -2144,3 +2139,9 @@
 ./usr/share/sendmail/siteconfig/uucp.old.arpa.m4
 ./usr/share/sendmail/siteconfig/uucp.ucbarpa.m4
 ./usr/share/sendmail/siteconfig/uucp.ucbvax.m4
+./var/named
+./var/named/dev
+./var/named/localhost.rev
+./var/named/named-xfer
+./var/named/named.boot
+./var/named/root.cache
