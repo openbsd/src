@@ -1,4 +1,4 @@
-/*       $OpenBSD: vfs_sync.c,v 1.7 1999/12/05 06:12:38 art Exp $  */
+/*       $OpenBSD: vfs_sync.c,v 1.8 1999/12/05 06:29:30 art Exp $  */
 
 
 /*
@@ -338,8 +338,10 @@ sync_inactive(v)
 
 	struct vnode *vp = ap->a_vp;
 
-	if (vp->v_usecount == 0)
+	if (vp->v_usecount == 0) {
+		VOP_UNLOCK(vp, 0, ap->a_p);
 		return (0);
+	}
 	vp->v_mount->mnt_syncer = NULL;
 	LIST_REMOVE(vp, v_synclist);
 	vp->v_writecount = 0;
