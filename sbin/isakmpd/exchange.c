@@ -1,4 +1,4 @@
-/*	$OpenBSD: exchange.c,v 1.56 2001/07/01 19:48:43 niklas Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.57 2001/07/03 12:51:39 markus Exp $	*/
 /*	$EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	*/
 
 /*
@@ -1263,11 +1263,12 @@ exchange_check_old_sa (struct sa *sa, void *v_arg)
     return 0;
 
   if (sa->initiator)
-    strlcpy (res1, ipsec_decode_ids ("%s %s", sa->id_i, sa->id_i_len, sa->id_r,
+    strncpy (res1, ipsec_decode_ids ("%s %s", sa->id_i, sa->id_i_len, sa->id_r,
 				     sa->id_r_len, 0), sizeof res1);
   else
-    strlcpy (res1, ipsec_decode_ids ("%s %s", sa->id_r, sa->id_r_len, sa->id_i,
+    strncpy (res1, ipsec_decode_ids ("%s %s", sa->id_r, sa->id_r_len, sa->id_i,
 				     sa->id_i_len, 0), sizeof res1);
+  res1[sizeof res1 - 1] = '\0';
 
   LOG_DBG ((LOG_EXCHANGE, 30,
 	    "checking whether new SA replaces existing SA with IDs %s", res1));
