@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.30 1998/08/30 18:18:00 deraadt Exp $
+;	$OpenBSD: syscalls.master,v 1.31 1998/09/17 20:54:04 art Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -391,13 +391,9 @@
 206	STD		{ int sys_futimes(int fd, \
 			    const struct timeval *tptr); }
 207	STD		{ int sys_getpgid(pid_t pid); }
-#ifdef XFS
 208	STD		{ int sys_xfspioctl(int operation, char *a_pathP, \
 			    int a_opcode, struct ViceIoctl *a_paramsP, \
 			    int a_followSymlinks); }
-#else
-208	UNIMPL		xfspioctl
-#endif
 209	UNIMPL
 ;
 ; Syscalls 210-219 are reserved for dynamically loaded syscalls
