@@ -1,4 +1,4 @@
-.\"	$NetBSD: ahc.4,v 1.1 1996/07/10 22:58:35 explorer Exp $
+.\"	$NetBSD: ahc.4,v 1.1.2.1 1996/08/25 17:22:14 thorpej Exp $
 .\"
 .\" Copyright (c) 1995, 1996 
 .\" 	Justin T. Gibbs.  All rights reserved.
@@ -27,8 +27,10 @@
 .\"
 .\"
 .Dd April 20, 1996
-.Dt AHC 4 i386
-.Os FreeBSD
+.\".Dt AHC 4 i386
+.\".Os FreeBSD
+.Dt AHC 4
+.Os
 .Sh NAME
 .Nm ahc
 .Nd Adaptec VL/EISA/PCI SCSI host adapter driver
@@ -39,8 +41,7 @@ For one or more VL/EISA cards:
 .Cd controller ahc0
 \}
 \{For VL cards:
-.Cd ahc*	at eisa? slot ?
-.Cd options	AHA284X_HACK
+.Cd ahc0	at isa? port ? irq ?
 .Pp
 For EISA cards:
 .Cd ahc*	at eisa? slot ?\}
@@ -132,6 +133,32 @@ in the
 .Tn SCSI-Select
 utility
 will allow normal function.
+.if 1 \{
+.Pp
+There are four problems known this version of this driver as follows.
+All of these problems relate to MI SCSI system.
+.Pp
+Cannot handle SCSI ID greater than 7 with WIDE SCSI adapter.
+.Pp
+It is dangerous to simultaneously access SCSI devices more than half
+number of SCBs. It may cause fatal disk trouble. In this case,
+diagnostics message 
+.Dq not queued, error ...
+is displayed to console.
+For example, AHA-274x and AHA-284x have only 4 SCBs, so that using 3 SCSI
+devices is dangerous, using 2 devices is OK.
+.Pp
+When you suddenly access SCSI devices on free physical memory shortage
+conditions, and if there have been very few load on SCSI devices until 
+then, it may cause fatal disk trouble. In this case, diagnostics
+message 
+.Dq ahc0: Can't malloc SCB
+and 
+.Dq not queued, error ...
+is displayed to console.
+.Pp
+SCSI residual handling is not complete.
+\}
 .Sh SEE ALSO
 .Xr aha 4 ,
 .Xr ahb 4
@@ -148,30 +175,3 @@ driver was written by Justin Gibbs.  The
 .Tn AIC7xxx
 sequencer-code assembler was
 written by John Aycock.
-.if 1 \{NetBSD porting is done by Stefan Grefen, Charles M. Hannum,
-Michael Graff, Pete Bentley and Noriyuki Soda.
-.Sh BUGS
-There are four problems known in NetBSD version of this driver.
-All of these problems relate to NetBSD MI SCSI system.
-.Pp
-Cannot handle SCSI ID greater than 7 with WIDE SCSI adapter.
-.Pp
-It is dangerous to use SCSI devices more than half of SCBs.
-For example, AHA-274x and AHA-284x have only 4 SCBs, so that using 3 SCSI
-devices is dangerous, using 2 devices is OK.
-.Pp
-There is possibility of causing "Can't malloc SCB" error.
-.Pp
-SCSI residual handling is not complete.
-\}
-.Sh HISTORY
-The
-.Nm
-driver appeared in
-.Tn FreeBSD
-2.1
-.if 1 \{and 
-.Tn NetBSD
-1.1.
-\}
-
