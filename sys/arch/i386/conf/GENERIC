@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.342 2003/06/01 13:04:03 miod Exp $
+#	$OpenBSD: GENERIC,v 1.343 2003/06/08 00:42:23 miod Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -443,7 +443,7 @@ ess*	at isapnp?				# ESS Tech ES188[78], ES888
 wss0	at isa? port 0x530 irq 10 drq 0		# Windows Sound System
 wss*	at isapnp?
 pas0	at isa? port 0x220 irq 7 drq 1		# ProAudio Spectrum
-gus0	at isa? disable port 0x220 irq 7 drq 1 drq2 6 # Gravis (drq2 is record drq)
+gus0	at isa? port 0x220 irq 7 drq 1 drq2 6	# Gravis (drq2 is record drq)
 ym*	at isapnp?
 mpu*	at isapnp?
 mpu*	at isa? port 0x300 			# generic MPU, Yamaha SW60XG
