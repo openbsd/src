@@ -1,5 +1,5 @@
-$OpenBSD: README.PKI,v 1.4 1999/07/18 09:43:09 niklas Exp $
-$EOM: README.PKI,v 1.4 1999/07/18 09:44:58 niklas Exp $
+$OpenBSD: README.PKI,v 1.5 1999/08/05 22:41:47 niklas Exp $
+$EOM: README.PKI,v 1.5 1999/07/18 21:46:07 niklas Exp $
 
 1	Create your own CA as root.
 
@@ -47,7 +47,7 @@ $EOM: README.PKI,v 1.4 1999/07/18 09:44:58 niklas Exp $
 
 3	See to that your config files will point out the directories where
 	you keep certificates.  I.e. add something like this to
-	/etc/isakmp/conf:
+	/etc/isakmpd/isakmpd.conf:
 
 	# Certificates stored in PEM format
 	[X509-certificates]
