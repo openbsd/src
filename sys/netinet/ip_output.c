@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.10 1997/03/02 07:32:15 angelos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.11 1997/03/02 07:59:40 tholo Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -160,10 +160,12 @@ ip_output(m0, va_alist)
 		dst->sen_ip_src = ip->ip_src;
 		dst->sen_ip_dst = ip->ip_dst;
 		dst->sen_proto = ip->ip_p;
-		
-		if ((m->m_len < hlen + 2*sizeof(u_int16_t)) &&
-		    ((m = m_pullup(m, hlen + 2*sizeof(u_int16_t))) == 0))
+
+		if (m->m_len < hlen + 2*sizeof(u_int16_t)) {
+		    if ((m = m_pullup(m, hlen + 2*sizeof(u_int16_t))) == 0)
 			goto bad;
+		    ip = mtod(m, struct ip *);
+		}
 
 		switch (ip->ip_p) {
 		case IPPROTO_TCP:
