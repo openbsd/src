@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.72 2000/06/12 12:02:55 itojun Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.73 2000/06/14 15:15:06 itojun Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -1690,7 +1690,7 @@ statcmd()
 	if (data != -1)
 		printf("     Data connection open\r\n");
 	else if (pdata != -1) {
-		printf("     in Passive mode");
+		printf("     in Passive mode\r\n");
 		su = (union sockunion *)&pasv_addr;
 		ispassive++;
 		goto printaddr;
@@ -1739,8 +1739,8 @@ printaddr:
 				printf("211- LPRT ");
 			printf("(%u,%u", af, alen);
 			for (i = 0; i < alen; i++)
-				printf("%u,", a[alen]);
-			printf("%u,%u,%u)\r\n", 2, p[0], p[1]);
+				printf(",%u", a[i]);
+			printf(",%u,%u,%u)\r\n", 2, p[0], p[1]);
 		}
 	    }
 
@@ -1766,9 +1766,9 @@ epsvonly:
 			    hbuf, sizeof(hbuf), pbuf, sizeof(pbuf),
 			    NI_NUMERICHOST) == 0) {
 				if (ispassive)
-					printf("211 - EPSV ");
+					printf("211- EPSV ");
 				else
-					printf("211 - EPRT ");
+					printf("211- EPRT ");
 				printf("(|%u|%s|%s|)\r\n",
 					af, hbuf, pbuf);
 			}
