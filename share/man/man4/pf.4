@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.4,v 1.15 2002/03/26 09:38:30 dhartmei Exp $
+.\"	$OpenBSD: pf.4,v 1.16 2002/07/15 12:57:27 pb Exp $
 .\"
 .\" Copyright (C) 2001, Kjell Wooding.  All rights reserved.
 .\"
@@ -273,6 +273,17 @@ struct pfioc_tm {
 .It Dv DIOCGETTIMEOUT  Fa "struct pfioc_tm"
 .It Dv DIOCCLRRULECTRS
 Clear per-rule statistics.
+.It Dv DIOCSETLIMIT   Fa "struct pfioc_limit"
+Sets hard limits on the memory pools used by the packet filter.
+.Bd -literal
+struct pfioc_limit {
+	int			psk_af;
+	int			psk_proto;
+	struct pf_rule_addr	psk_src;
+	struct pf_rule_addr	psk_dst;
+};
+.Ed
+.It Dv DIOCGETLIMIT   Fa "struct pfioc_limit"
 .El
 .Sh EXAMPLES
 The following example demonstrates how to use the DIOCNATLOOK command
