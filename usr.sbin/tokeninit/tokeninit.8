@@ -1,4 +1,4 @@
-.\" $OpenBSD: tokeninit.8,v 1.5 2003/02/14 23:20:36 jmc Exp $
+.\" $OpenBSD: tokeninit.8,v 1.6 2003/06/12 12:59:53 jmc Exp $
 .\"
 .\" Copyright (c) 1995 Migration Associates Corporation. All rights reserved.
 .\"
@@ -140,8 +140,8 @@ This list should be kept secret.
 This list can then take the place of an actual token until
 the system has issued all the challenges printed.
 Challenges are predicted by the following algorithm:
-.nf
-.sp
+.Pp
+.Bd -unfilled -offset indent
 * Encrypt the last challenge with the shared secret key
 
 * AND each byte of the response with 0x0f
@@ -149,11 +149,9 @@ Challenges are predicted by the following algorithm:
 * Modulo each byte by 10 (0x0a)
 
 * ADD 0x30 (ASCII value of '0') to each byte
-.fi
-.sp
+.Ed
+.Pp
 The resulting 8 bytes are all ASCII decimal digits and are the next challenge.
-.Sh DIAGNOSTICS
-Diagnostic messages are logged via syslog(3) with the LOG_AUTH facility.
 .Sh FILES
 .Bl -tag -width xetcxcrypto.db -compact
 .It Pa /etc/activ.db
@@ -163,62 +161,48 @@ database of information for CRYPTOCard system
 .It Pa /etc/snk.db
 database of information for SNK-004 system
 .El
+.Sh DIAGNOSTICS
+Diagnostic messages are logged via syslog(3) with the LOG_AUTH facility.
 .Sh COMMENTS
 A supplier for ActivCard tokens may be obtained by contacting:
 .Pp
-.Bl -inset -offset indent
-.It ActivCard, Inc.
-.br
+.Bd -unfilled -offset indent
+ActivCard, Inc.
 303 Twin Dolphin Dr., Ste 420
-.br
 Redwood City, CA 94065
-.br
 Tel: (415) 654-1700
-.br
 Fax: (415) 654-1701
-.El
+.Ed
 .Pp
 CRYPTOCard tokens may be obtained by contacting:
 .Pp
-.Bl -inset -offset indent
-.It CRYPTOCard Incorporated
-.br
+.Bd -unfilled -offset indent
+CRYPTOCard Incorporated
 Attn: Wade Clark
-.br
 1649 Barclay Blvd.
-.br
 Buffalo Grove, Illinois 60089
-.br
 Tel: (800) 307-7042 / (708) 459-6500
-.br
 Fax: (708) 459-6599
-.br
 <token@cryptocard.com>
-.El
+.Ed
 .Pp
 SNK-004 tokens may be obtained by contacting:
-.Bl -inset -offset indent
-.It Digital Pathways, Inc.
-.br
+.Pp
+.Bd -unfilled -offset indent
+Digital Pathways, Inc.
 Attn: Paul Kamian
-.br
 201 Ravendale Drive
-.br
 Mountain View, CA  94043-5216
-.br
 Tel: (415) 964-0707
-.br
 Fax: (415) 961-7487
-.br
 <paul@digpath.com>
-.El
-.Sh BUGS
-Not all modes of all cards are supported.
+.Ed
 .Sh SEE ALSO
 .Xr x99token 1 ,
 .Xr syslog 3 ,
 .Xr login_token 8 ,
 .Xr tokenadm 8
 .Sh AUTHORS
-Jack Flory
-.Aq jpf@mig.com
+.An Jack Flory Aq jpf@mig.com
+.Sh BUGS
+Not all modes of all cards are supported.

@@ -1,3 +1,4 @@
+.\"	$OpenBSD: fsinfo.8,v 1.7 2003/06/12 12:59:49 jmc Exp $
 .\" Copyright (c) 1993 Jan-Simon Pendry.
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +28,6 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)fsinfo.8	8.1 (Berkeley) 6/28/93
-.\"	$Id: fsinfo.8,v 1.6 2003/06/02 23:36:52 millert Exp $
 .\"
 .Dd June 28, 1993
 .Dt FSINFO 8
@@ -37,6 +37,7 @@
 .Nd co-ordinate site-wide filesystem information
 .Sh SYNOPSIS
 .Nm fsinfo
+.Bk -words
 .Op Fl v
 .Op Fl a Ar autodir
 .Op Fl b Ar bootparams
@@ -49,6 +50,7 @@
 .Op Fl D Ar string[=string]]
 .Op Fl U Ar string[=string]]
 .Ar config ...
+.Ek
 .Sh DESCRIPTION
 The
 .Nm fsinfo

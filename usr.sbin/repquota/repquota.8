@@ -1,4 +1,4 @@
-.\"	$OpenBSD: repquota.8,v 1.7 2003/06/02 23:36:54 millert Exp $
+.\"	$OpenBSD: repquota.8,v 1.8 2003/06/12 12:59:52 jmc Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -31,7 +31,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)repquota.8	8.1 (Berkeley) 6/6/93
-.\"	$Id: repquota.8,v 1.7 2003/06/02 23:36:54 millert Exp $
+.\"	$Id: repquota.8,v 1.8 2003/06/12 12:59:52 jmc Exp $
 .\"
 .Dd June 6, 1993
 .Dt REPQUOTA 8
@@ -86,6 +86,8 @@ at the filesystem root with group quotas
 .It Pa /etc/fstab
 for file system names and locations
 .El
+.Sh DIAGNOSTICS
+Various messages about inaccessible files; self-explanatory.
 .Sh SEE ALSO
 .Xr quota 1 ,
 .Xr quotactl 2 ,
@@ -93,8 +95,6 @@ for file system names and locations
 .Xr edquota 8 ,
 .Xr quotacheck 8 ,
 .Xr quotaon 8
-.Sh DIAGNOSTICS
-Various messages about inaccessible files; self-explanatory.
 .Sh HISTORY
 The
 .Nm

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpdump.8,v 1.34 2003/05/14 08:50:37 canacar Exp $
+.\"	$OpenBSD: tcpdump.8,v 1.35 2003/06/12 12:59:53 jmc Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994, 1995, 1996
 .\"	The Regents of the University of California.  All rights reserved.
@@ -88,7 +88,8 @@ interface (excluding loopback).
 Ties are broken by choosing the earliest match.
 .It Fl l
 Make stdout line buffered.
-Useful if you want to see the data while capturing it. e.g.,
+Useful if you want to see the data while capturing it.
+E.g.,
 .Bd -ragged -offset indent
 .Nm
 .Fl l
@@ -316,7 +317,8 @@ E.g.,
 .Dq tcp port 21 .
 If there is
 no protocol qualifier, all protocols consistent with the type are
-assumed. e.g.,
+assumed.
+E.g.,
 .Dq src foo
 means
 .Do
@@ -656,7 +658,7 @@ source or destination address is
 .It Cm ifname Ar interface
 True if the packet was logged as coming from the specified interface (applies
 only to packets logged by
-.Xr pf 4 ).
+.Xr pf 4 ) .
 .It Cm on Ar interface
 Synonymous with the
 .Ar ifname
@@ -664,14 +666,14 @@ modifier.
 .It Cm rnr Ar num
 True if the packet was logged as matching the specified PF rule number
 in the main ruleset (applies only to packets logged by
-.Xr pf 4 ).
+.Xr pf 4 ) .
 .It Cm rulenum Ar num
 Synonomous with the
 .Ar rnr
 modifier.
 .It Cm reason Ar code
-True if the packet was logged with the specified PF reason code.  The known
-codes are:
+True if the packet was logged with the specified PF reason code.
+The known codes are:
 .Ar match ,
 .Ar bad-offset ,
 .Ar fragment ,
@@ -680,11 +682,11 @@ codes are:
 and
 .Ar memory .
 (applies only to packets logged by
-.Xr pf 4 ).
+.Xr pf 4 ) .
 .It Cm rset Ar name
 True if the packet was logged as matching the specified PF ruleset
 name of an anchored ruleset (applies only to packets logged by
-.Xr pf 4 ).
+.Xr pf 4 ) .
 .It Cm ruleset Ar name
 Synonomous with the
 .Ar rset
@@ -692,19 +694,19 @@ modifier.
 .It Cm srnr Ar num
 True if the packet was logged as matching the specified PF rule number
 of an anchored ruleset (applies only to packets logged by
-.Xr pf 4 ).
+.Xr pf 4 ) .
 .It Cm subrulenum Ar num
 Synonomous with the
 .Ar srnr
 modifier.
 .It Cm action Ar act
-True if PF took the specified action when the packet was logged.  Known actions
-are:
+True if PF took the specified action when the packet was logged.
+Known actions are:
 .Ar pass ,
 and
 .Ar block .
 (applies only to packets logged by
-.Xr pf 4 ).
+.Xr pf 4 ) .
 .It Xo Cm ip ,
 .Cm arp ,
 .Cm rarp ,
@@ -1133,8 +1135,8 @@ arp reply csam is\&-at CSAM
 In this example, Ethernet addresses are in caps and internet
 addresses in lower case.
 The first line says that rtsg sent an arp packet asking
-for the Ethernet address of internet host csam. csam
-replies with its Ethernet address CSAM.
+for the Ethernet address of internet host csam.
+csam replies with its Ethernet address CSAM.
 .Pp
 This would look less redundant if we had done
 .Nm
@@ -1892,8 +1894,8 @@ serviced the
 interrupt.
 .Sh SEE ALSO
 .\" traffic(1C), nit(4P),
-.Xr bpf 4 ,
-.Xr pcap 3
+.Xr pcap 3 ,
+.Xr bpf 4
 .Sh AUTHORS
 Van Jacobson
 .Pq van@ee.lbl.gov ,

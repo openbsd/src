@@ -1,4 +1,4 @@
-.\" $OpenBSD: pppstats.8,v 1.8 2003/02/18 07:43:36 jmc Exp $
+.\" $OpenBSD: pppstats.8,v 1.9 2003/06/12 12:59:52 jmc Exp $
 .\"
 .\" Contributed by Van Jacobson (van@ee.lbl.gov), Dec 31, 1989.
 .\"
@@ -28,7 +28,7 @@
 .\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
-.\" 
+.\"
 .Dd September 1, 1997
 .Dt PPPSTATS 8
 .Os
@@ -62,8 +62,8 @@ transmitted by the interface.
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl a
-Display absolute values rather than deltas.  If this option is
-specified with the
+Display absolute values rather than deltas.
+If this option is specified with the
 .Fl c
 and/or
 .Fl w
@@ -72,7 +72,8 @@ show statistics for the time since the link was initiated.
 .It Fl c Ar count
 Repeat the display
 .Ar count
-times. The first display is for the time since the link was initiated
+times.
+The first display is for the time since the link was initiated
 (that is, since the corresponding
 .Xr pppd 8
 was started), and each
@@ -125,12 +126,13 @@ Not reported when the
 option is specified.
 .It Li VJTOSS
 The number of VJ header-compressed TCP packets dropped on reception by
-this interface because of preceding errors.  Only reported when the
+this interface because of preceding errors.
+Only reported when the
 .Fl v
 option is specified.
 .It Li NON-VJ
-The total number of non-VJ packets received by this interface. Only
-reported when the
+The total number of non-VJ packets received by this interface.
+Only reported when the
 .Fl v
 option is specified.
 .It Li RATIO
@@ -142,7 +144,8 @@ Only reported when the
 option is specified.
 .It Li UBYTE
 The total number of bytes received, after decompression of compressed
-packets.  Only reported when the
+packets.
+Only reported when the
 .Fl r
 option is specified.
 .El
@@ -169,12 +172,14 @@ Not reported when the
 option is specified.
 .It Li VJSRCH
 The number of searches for the cached header entry for a VJ header
-compressed TCP packet.  Only reported when the
+compressed TCP packet.
+Only reported when the
 .Fl v
 option is specified.
 .It Li VJMISS
 The number of failed searches for the cached header entry for a
-VJ header compressed TCP packet.  Only reported when the
+VJ header compressed TCP packet.
+Only reported when the
 .Fl v
 option is specified.
 .It Li RATIO
@@ -186,7 +191,8 @@ Only reported when the
 option is specified.
 .It Li UBYTE
 The total number of bytes to be transmitted, before packet compression
-is applied.  Only reported when the
+is applied.
+Only reported when the
 .Fl r
 option is specified.
 .El
@@ -196,9 +202,9 @@ When the
 option is specified,
 .B pppstats
 instead displays the following fields, relating to the packet
-compression algorithm currently in use.  If packet compression is not
-in use, these fields will all display zeroes.  The fields displayed on
-the input side are:
+compression algorithm currently in use.
+If packet compression is not in use, these fields will all display zeroes.
+The fields displayed on the input side are:
 .Bl -tag -width search
 .It Li COMPRESSED BYTE
 The number of bytes of compressed packets received.

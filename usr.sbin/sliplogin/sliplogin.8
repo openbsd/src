@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sliplogin.8,v 1.8 2003/06/02 23:36:54 millert Exp $
+.\"	$OpenBSD: sliplogin.8,v 1.9 2003/06/12 12:59:53 jmc Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)sliplogin.8	5.4 (Berkeley) 8/5/91
-.\"	$Id: sliplogin.8,v 1.8 2003/06/02 23:36:54 millert Exp $
+.\"	$Id: sliplogin.8,v 1.9 2003/06/12 12:59:53 jmc Exp $
 .\"
 .Dd August 5, 1991
 .Dt SLIPLOGIN 8
@@ -153,7 +153,7 @@ Sfoo	`hostname`	foo	netmask
 where
 .Em `hostname`
 will be evaluated by
-.Xr sh
+.Xr sh 1
 to the local host name and
 .Em netmask
 is the local host IP netmask.
@@ -162,8 +162,8 @@ Note that
 .Nm
 must be setuid to root and is only executable by users in group
 .Va network .
-To permit use, place a user into that group.  Users in that group
-are of course also able to use
+To permit use, place a user into that group.
+Users in that group are of course also able to use
 .Nm
 to place terminal lines in an unusable state and/or deny
 access to legitimate users of a remote slip line.

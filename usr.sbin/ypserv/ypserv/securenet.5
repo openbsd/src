@@ -1,4 +1,4 @@
-.\"	$OpenBSD: securenet.5,v 1.9 2003/06/02 21:58:27 maja Exp $
+.\"	$OpenBSD: securenet.5,v 1.10 2003/06/12 12:59:54 jmc Exp $
 .\"
 .\" Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
@@ -43,6 +43,13 @@ The format is rather simple.
 Each row consists of two items.
 The first item is the network mask.
 The second item is the network.
+.Sh FILES
+.Bl -tag -width /var/yp/securenet -compact
+.It Pa /var/yp/securenet
+a
+.Xr ypserv 8
+configuration file
+.El
 .Sh EXAMPLES
 A configuration file might look like the following:
 .Bd -literal
@@ -51,20 +58,13 @@ A configuration file might look like the following:
 #
 255.255.255.0 139.58.253.0
 .Ed
-.Sh FILES
-.Bl -tag -width /var/yp/securenet -compact
-.It Pa /var/yp/securenet
-a
-.Xr ypserv 8
-configuration file
-.El
 .Sh SEE ALSO
 .Xr ypserv.acl 5 ,
 .Xr yp 8 ,
 .Xr ypserv 8
 .Sh HISTORY
 The
-.Xr securenet 5
+.Nm securenet
 file was added to
 .Tn NIS
 by Sun Microsystems, Inc. as a bugfix for weak security.

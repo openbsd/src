@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rdconfig.8,v 1.7 2002/11/14 02:57:28 deraadt Exp $
+.\"	$OpenBSD: rdconfig.8,v 1.8 2003/06/12 12:59:52 jmc Exp $
 .\"	$NetBSD: rdconfig.8,v 1.1.1.1 1995/10/08 22:40:41 gwr Exp $
 .\"
 .\" Copyright (c) 1995 Gordon W. Ross
@@ -65,11 +65,11 @@ process started earlier.
 Configures the RAM disk
 .Pa rd0a
 with one megabyte of user-space memory.
-.Sh BUGS
-The special device will become inoperative if the
-.Nm rdconfig
-process is killed while the special device is open.
 .Sh SEE ALSO
 .Xr mount 8 ,
 .Xr swapon 8 ,
 .Xr umount 8
+.Sh BUGS
+The special device will become inoperative if the
+.Nm rdconfig
+process is killed while the special device is open.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ypserv.acl.5,v 1.18 2003/06/02 21:58:27 maja Exp $
+.\"	$OpenBSD: ypserv.acl.5,v 1.19 2003/06/12 12:59:54 jmc Exp $
 .\"
 .\" Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
@@ -116,6 +116,13 @@ class A, B or C net depending on the net number.
 .Ic all
 .Pp
 A line containing one of these commands will always match any host.
+.Sh FILES
+.Bl -tag -width /var/yp/ypserv.acl -compact
+.It Pa /var/yp/ypserv.acl
+a
+.Xr ypserv 8
+configuration file
+.El
 .Sh EXAMPLES
 A configuration file might look like the following:
 .Bd -literal
@@ -166,16 +173,9 @@ allow net mojathome netmask 255.255.255.0
 deny all
 
 .Ed
-.Sh FILES
-.Bl -tag -width /var/yp/ypserv.acl -compact
-.It Pa /var/yp/ypserv.acl
-a
-.Xr ypserv 8
-configuration file
-.El
 .Sh SEE ALSO
 .Xr securenet 5 ,
 .Xr yp 8 ,
 .Xr ypserv 8
 .Sh AUTHORS
-Mats O Jansson <moj@stacken.kth.se>
+.An Mats O Jansson Aq moj@stacken.kth.se

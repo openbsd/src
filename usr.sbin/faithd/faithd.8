@@ -1,4 +1,4 @@
-.\"	$OpenBSD: faithd.8,v 1.24 2003/04/14 06:51:49 jmc Exp $
+.\"	$OpenBSD: faithd.8,v 1.25 2003/06/12 12:59:50 jmc Exp $
 .\"	$KAME: faithd.8,v 1.36 2002/05/09 13:59:16 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@ destination.
 For example, if
 .Li 3ffe:0501:4819:ffff::
 is reserved for
-.Nm Ns ,
+.Nm faithd ,
 and the
 .Tn TCPv6
 destination address is
@@ -146,7 +146,7 @@ Local daemons can be run on the router
 by specifying a
 .Ar serverpath
 to
-.Nm Ns .
+.Nm faithd .
 .Nm
 will invoke a local daemon at
 .Ar serverpath
@@ -249,7 +249,7 @@ on success, and
 on error.
 .Sh EXAMPLES
 Before invoking
-.Nm Ns ,
+.Nm faithd ,
 the
 .Xr faith 4
 interface has to be configured properly:
@@ -327,7 +327,7 @@ command first appeared in WIDE Hydrangea IPv6 protocol stack kit.
 .\"
 .Sh SECURITY CONSIDERATIONS
 It is very insecure to use IP-address based authentication, for connections relayed by
-.Nm Ns ,
+.Nm faithd ,
 and any other TCP relaying services.
 .Pp
 Administrators are advised to limit accesses to
@@ -343,7 +343,7 @@ carefully configuring routing entries that point to
 .Xr faith 4 ,
 using
 .Xr route 8 .
-IPv6 source addresses need to be filtered  using a packet filter.
+IPv6 source addresses need to be filtered using a packet filter.
 Documents listed in
 .Sx SEE ALSO
 have more discussions on this topic.

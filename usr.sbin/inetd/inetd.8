@@ -1,3 +1,4 @@
+.\"	$OpenBSD: inetd.8,v 1.25 2003/06/12 12:59:50 jmc Exp $
 .\" Copyright (c) 1985, 1991 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -26,7 +27,6 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)inetd.8	6.7 (Berkeley) 3/16/91
-.\"	$Id: inetd.8,v 1.24 2003/06/02 23:36:53 millert Exp $
 .\"
 .Dd March 16, 1991
 .Dt INETD 8
@@ -329,7 +329,7 @@ that contains its process identifier.
 .Ss IPv6 TCP/UDP behavior
 If you wish to run a server for IPv4 and IPv6 traffic,
 you'll need to run two separate processes for the same server program,
-specified as two separate lines in 
+specified as two separate lines in
 .Pa inetd.conf ,
 for
 .Dq tcp4
@@ -359,6 +359,25 @@ If you have only one server on
 .Dq tcp6 ,
 only IPv6 traffic will be routed to the server.
 .El
+.Sh SEE ALSO
+.Xr comsat 8 ,
+.Xr fingerd 8 ,
+.Xr ftp-proxy 8 ,
+.Xr ftpd 8 ,
+.Xr identd 8 ,
+.Xr rshd 8 ,
+.Xr talkd 8 ,
+.Xr telnetd 8 ,
+.Xr tftpd 8
+.Sh HISTORY
+The
+.Nm
+command appeared in
+.Bx 4.3 .
+Support for Sun-RPC
+based services is modelled after that
+provided by SunOS 4.1.
+IPv6 support and IPsec hack was made by KAME project, in 1999.
 .Sh BUGS
 Host address specifiers, while they make conceptual sense for RPC
 services, do not work entirely correctly.
@@ -376,22 +395,3 @@ or
 .Dq tcpmux
 on IPv6 is not tested enough.
 Kerberos support on IPv6 is not tested.
-.Sh SEE ALSO
-.Xr comsat 8 ,
-.Xr fingerd 8 ,
-.Xr ftpd 8 ,
-.Xr ftp-proxy 8 ,
-.Xr identd 8 ,
-.Xr rshd 8 ,
-.Xr talkd 8 ,
-.Xr telnetd 8 ,
-.Xr tftpd 8
-.Sh HISTORY
-The
-.Nm
-command appeared in
-.Bx 4.3 .
-Support for Sun-RPC
-based services is modelled after that
-provided by SunOS 4.1.
-IPv6 support and IPsec hack was made by KAME project, in 1999.

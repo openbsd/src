@@ -1,3 +1,4 @@
+.\"	$OpenBSD: netgroup_mkdb.8,v 1.6 2003/06/12 12:59:51 jmc Exp $
 .\"
 .\" Copyright (c) 1994 Christos Zoulas
 .\" All rights reserved.
@@ -27,8 +28,6 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: netgroup_mkdb.8,v 1.5 2000/11/09 17:53:19 aaron Exp $
-.\"
 .Dd February 3, 1994
 .Dt NETGROUP_MKDB 8
 .Os
@@ -38,12 +37,13 @@
 .Sh SYNOPSIS
 .Nm netgroup_mkdb
 .Op Fl o Ar database
-.Op file
+.Op Ar file
 .Sh DESCRIPTION
 .Nm netgroup_mkdb
 creates
 .Xr db 3
-style databases for the specified file.
+style databases for the specified
+.Ar file .
 If no file is specified,
 .Pa /etc/netgroup
 is used.
@@ -72,6 +72,10 @@ a temporary file
 .It Pa /etc/netgroup
 current netgroup file
 .El
+.Sh SEE ALSO
+.Xr db 3 ,
+.Xr getnetgrent 3 ,
+.Xr netgroup 5
 .Sh BUGS
 Because
 .Nm netgroup_mkdb
@@ -83,7 +87,3 @@ to install over the destination file.
 If
 .Nm netgroup_mkdb
 fails it will leave the previous version of the destination file intact.
-.Sh SEE ALSO
-.Xr db 3 ,
-.Xr getnetgrent 3 ,
-.Xr netgroup 5

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rtsold.8,v 1.15 2001/07/09 22:37:33 itojun Exp $
+.\"	$OpenBSD: rtsold.8,v 1.16 2003/06/12 12:59:53 jmc Exp $
 .\"	$KAME: rtsold.8,v 1.17 2001/07/09 22:30:37 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -201,7 +201,7 @@ command is based on the
 command, which first appeared in WIDE/KAME IPv6 protocol stack kit.
 .Nm rtsol
 is now integrated into
-.Xr rtsold 8 .
+.Nm rtsold .
 .\"
 .Sh BUGS
 In some operating systems, when a PCMCIA network card is removed
@@ -209,7 +209,8 @@ and reinserted, the corresponding interface index is changed.
 However,
 .Nm
 assumes such changes will not occur, and always uses the index that
-it got at invocation. As a result,
+it got at invocation.
+As a result,
 .Nm
 may not work if you reinsert a network card.
 In such a case,

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lpr.1,v 1.8 2003/06/02 23:36:53 millert Exp $
+.\"	$OpenBSD: lpr.1,v 1.9 2003/06/12 12:59:51 jmc Exp $
 .\"	$NetBSD: lpr.1,v 1.10 2002/01/19 03:23:26 wiz Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -262,13 +262,6 @@ will say that the daemon cannot be started.
 Diagnostics may be printed in the daemon's log file
 regarding missing spool files by
 .Xr lpd 8 .
-.Sh BUGS
-Fonts for
-.Xr troff 1
-and
-.Ic tex
-reside on the host with the printer.
-It is currently not possible to use local font libraries.
 .Sh SEE ALSO
 .Xr lpq 1 ,
 .Xr lprm 1 ,
@@ -282,3 +275,10 @@ The
 .Nm
 command appeared in
 .Bx 3 .
+.Sh BUGS
+Fonts for
+.Xr troff 1
+and
+.Xr tex
+reside on the host with the printer.
+It is currently not possible to use local font libraries.

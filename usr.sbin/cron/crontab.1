@@ -17,7 +17,7 @@
 .\" ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 .\" SOFTWARE.
 .\"
-.\" $OpenBSD: crontab.1,v 1.20 2003/03/10 15:37:30 jmc Exp $
+.\" $OpenBSD: crontab.1,v 1.21 2003/06/12 12:59:50 jmc Exp $
 .\"
 .Dd June 8, 1999
 .Dt CRONTAB 1
@@ -127,6 +127,9 @@ list of users prohibited from using crontab
 .It Pa /var/cron/tabs
 directory of individual crontabs
 .El
+.Sh DIAGNOSTICS
+A fairly informative usage message appears if you run it with a bad command
+line.
 .Sh SEE ALSO
 .Xr at 1 ,
 .Xr crontab 5 ,
@@ -137,8 +140,5 @@ The
 utility is compliant with the
 .St -p1003.2
 specification.
-.Sh DIAGNOSTICS
-A fairly informative usage message appears if you run it with a bad command
-line.
 .Sh AUTHORS
-Paul Vixie <vixie@isc.org>
+.An Paul Vixie Aq vixie@isc.org

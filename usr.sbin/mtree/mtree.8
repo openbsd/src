@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mtree.8,v 1.24 2003/06/02 23:36:54 millert Exp $
+.\"	$OpenBSD: mtree.8,v 1.25 2003/06/12 12:59:51 jmc Exp $
 .\"	$NetBSD: mtree.8,v 1.4 1995/03/07 21:26:25 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -85,7 +85,7 @@ Use the
 keyword plus the specified (whitespace or comma separated)
 keywords instead of the current set of keywords.
 .It Fl l
-Do 
+Do
 .Dq loose
 permissions checks, in which more stringent permissions
 will match less stringent ones.
@@ -274,7 +274,7 @@ Specifying a directory will cause subsequent files to be searched
 for in that directory hierarchy.
 Which brings us to the last type of line in a specification: a line
 containing only the string
-.Dq Nm \&..
+.Dq \&..
 causes the current directory
 path to ascend one level.
 .Pp
@@ -290,6 +290,11 @@ and 2 if the file hierarchy did not match the specification.
 A status of 2 is converted to a status of 0 if the
 .Fl U
 option is used.
+.Sh FILES
+.Bl -tag -width /etc/mtree -compact
+.It Pa /etc/mtree
+system specification directory
+.El
 .Sh EXAMPLES
 To detect system binaries that have been
 .Dq trojan horsed ,
@@ -322,11 +327,6 @@ for distributions and other such things; the files in
 .Pa /etc/mtree
 were used to create almost all directories in a normal binary
 distribution.
-.Sh FILES
-.Bl -tag -width /etc/mtree -compact
-.It Pa /etc/mtree
-system specification directory
-.El
 .Sh SEE ALSO
 .Xr chgrp 1 ,
 .Xr chmod 1 ,

@@ -26,7 +26,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)syslog.conf.5	8.1 (Berkeley) 6/9/93
-.\"     $OpenBSD: syslog.conf.5,v 1.10 2003/06/02 23:36:54 millert Exp $
+.\"     $OpenBSD: syslog.conf.5,v 1.11 2003/06/12 12:59:53 jmc Exp $
 .\"	$NetBSD: syslog.conf.5,v 1.4 1996/01/02 17:41:46 perry Exp $
 .\"
 .Dd June 9, 1993
@@ -208,6 +208,13 @@ Selected messages are written to all logged-in users.
 Blank lines and lines whose first non-blank character is a hash
 .Pq Ql #
 character are ignored.
+.Sh FILES
+.Bl -tag -width /etc/syslog.conf -compact
+.It Pa /etc/syslog.conf
+The
+.Xr syslogd 8
+configuration file.
+.El
 .Sh EXAMPLES
 A configuration file might appear as follows:
 .Bd -literal
@@ -243,13 +250,16 @@ uucp,news.crit						/var/log/spoolerr
 !ftpd
 *.*                                                     /var/log/spoolerr
 .Ed
-.Sh FILES
-.Bl -tag -width /etc/syslog.conf -compact
-.It Pa /etc/syslog.conf
-The
+.Sh SEE ALSO
+.Xr syslog 3 ,
 .Xr syslogd 8
-configuration file.
-.El
+.Sh HISTORY
+The
+.Nm
+file appeared in
+.Bx 4.3 ,
+along with
+.Xr syslogd 8 .
 .Sh BUGS
 The effects of multiple selectors are sometimes not intuitive.
 For example
@@ -261,13 +271,3 @@ facility messages at the level of
 or higher, not at the level of
 .Dq crit
 or higher.
-.Sh SEE ALSO
-.Xr syslog 3 ,
-.Xr syslogd 8
-.Sh HISTORY
-The
-.Nm
-file appeared in
-.Bx 4.3 ,
-along with
-.Xr syslogd 8 .

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: syslogd.8,v 1.17 2003/06/04 16:08:08 deraadt Exp $
+.\"	$OpenBSD: syslogd.8,v 1.18 2003/06/12 12:59:53 jmc Exp $
 .\"
 .\" Copyright (c) 1983, 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -68,8 +68,9 @@ Print source addresses numerically rather than symbolically.
 This saves an address-to-name lookup for each incoming message,
 which can be useful when combined with the
 .Fl u
-option on a loghost with no DNS cache.  Messages from the local
-host will still be logged with the symbolic local host name.
+option on a loghost with no DNS cache.
+Messages from the local host will still be logged with
+the symbolic local host name.
 .It Fl u
 Select the historical
 .Dq insecure
@@ -165,4 +166,3 @@ The
 .Nm
 command appeared in
 .Bx 4.3 .
-

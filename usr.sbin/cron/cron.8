@@ -13,7 +13,7 @@
 .\" OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
 .\" CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\" $OpenBSD: cron.8,v 1.22 2003/06/03 01:20:39 millert Exp $
+.\" $OpenBSD: cron.8,v 1.23 2003/06/12 12:59:50 jmc Exp $
 .\"
 .Dd July 6, 2002
 .Dt CRON 8
@@ -93,8 +93,8 @@ In this case, mail will be sent even if the job produces no output.
 Local time changes of less than three hours, such as those caused
 by the start or end of Daylight Saving Time, are handled specially.
 This only applies to jobs that run at a specific time and jobs that
-are run with a granularity greater than one hour.  Jobs that run
-more frequently are scheduled normally.
+are run with a granularity greater than one hour.
+Jobs that run more frequently are scheduled normally.
 .Pp
 If time has moved forward, those jobs that would have run in the
 interval that has been skipped will be run immediately.
@@ -197,7 +197,7 @@ to check for crontab changes immediately
 .Xr syslog 3 ,
 .Xr crontab 5
 .Sh AUTHORS
-Paul Vixie <vixie@isc.org>
+.An Paul Vixie Aq vixie@isc.org
 .Sh CAVEATS
 All
 .Xr crontab 5

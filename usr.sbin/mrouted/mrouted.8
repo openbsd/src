@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mrouted.8,v 1.12 2003/03/05 21:18:10 jmc Exp $
+.\"	$OpenBSD: mrouted.8,v 1.13 2003/06/12 12:59:51 jmc Exp $
 .\" The mrouted program is covered by the license in the accompanying file
 .\" named "LICENSE".  Use of the mrouted program represents acceptance of
 .\" the terms and conditions listed in that file.
@@ -336,6 +336,13 @@ For convenience in sending signals,
 writes its pid to
 .Pa /var/run/mrouted.pid
 upon startup.
+.Sh FILES
+.Bl -tag -width /var/tmp/mrouted.cache -compact
+.It Pa /etc/mrouted.conf
+.It Pa /var/run/mrouted.pid
+.It Pa /var/tmp/mrouted.dump
+.It Pa /var/tmp/mrouted.cache
+.El
 .Sh EXAMPLES
 The routing tables look like this:
 .Pp
@@ -444,18 +451,11 @@ traffic will not be forwarded on the scoped address on that interface.
 An additional line with a ">" as the first character is printed for
 each source on the subnet.
 Note that there can be many sources in one subnet.
-.Sh FILES
-.Bl -tag -width /var/tmp/mrouted.cache -compact
-.It Pa /etc/mrouted.conf
-.It Pa /var/run/mrouted.pid
-.It Pa /var/tmp/mrouted.dump
-.It Pa /var/tmp/mrouted.cache
-.El
 .Sh SEE ALSO
 .Xr map-mbone 8 ,
 .Xr mrinfo 8 ,
 .Xr mtrace 8
-.sp
+.Pp
 DVMRP is described, along with other multicast routing algorithms, in the
 paper "Multicast Routing in Internetworks and Extended LANs" by S. Deering,
 in the Proceedings of the ACM SIGCOMM '88 Conference.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mkalias.8,v 1.7 2003/06/02 21:58:26 maja Exp $
+.\"	$OpenBSD: mkalias.8,v 1.8 2003/06/12 12:59:54 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
@@ -45,7 +45,6 @@
 is used to convert a mail.aliases map to a mail.byaddr map.
 This is an inverse map of user@host (or user!host) back to alias.
 .Pp
-.Pp
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl v
@@ -80,14 +79,14 @@ Can be useful together with
 or
 .Fl E .
 .El
+.Sh SEE ALSO
+.Xr yp 8 ,
+.Xr ypserv 8
+.Sh AUTHORS
+.An Mats O Jansson Aq moj@stacken.kth.se
 .Sh BUGS
 .Nm
 on SunOS 4.1.x seems to have a
 .Fl s .
 Since I don't know what it is supposed to do I haven't implemented it.
 But it is accepted by the program.
-.Sh SEE ALSO
-.Xr yp 8 ,
-.Xr ypserv 8
-.Sh AUTHORS
-Mats O Jansson <moj@stacken.kth.se>

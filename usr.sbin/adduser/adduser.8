@@ -1,4 +1,4 @@
-.\"	$OpenBSD: adduser.8,v 1.29 2003/06/10 21:55:02 millert Exp $
+.\"	$OpenBSD: adduser.8,v 1.30 2003/06/12 12:59:48 jmc Exp $
 .\"
 .\" Copyright (c) 1995-1996 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 .\" All rights reserved.
@@ -63,7 +63,8 @@
 .Op Fl unencrypted
 .Ek
 .Pp
-.Nm rmuser Op Ar username
+.Nm rmuser
+.Op Ar username
 .Sh DESCRIPTION
 The
 .Nm adduser
@@ -225,8 +226,9 @@ politely refuses to remove users whose UID is 0 (typically root).
 .Bl -tag -width Ds
 .It Sy username
 It is recommended that login names contain only lowercase characters
-and digits. They may also contain uppercase characters, non-leading
-hyphens, periods, and a trailing '$'.
+and digits.
+They may also contain uppercase characters, non-leading hyphens,
+periods, and a trailing '$'.
 Login names may not be longer than 31 characters (see BUGS section of
 .Xr setlogin 2 ) .
 .\" The reasons for this limit are "Historical".
@@ -297,14 +299,13 @@ access to it.
 follows these steps to extract its configuration
 information:
 .Pp
-.Bl -tag -width Ds -compact
-.It Sy 1.
+.Bl -enum -offset indent -compact
+.It
 Read internal variables.
-.It Sy 2.
+.It
 Read configuration file
-.Po Ns Pa /etc/adduser.conf
-.Pc .
-.It Sy 3.
+.Pq Pa /etc/adduser.conf .
+.It
 Parse command-line options.
 .El
 .Pp
@@ -324,6 +325,28 @@ format is explained within that file and is quite straightforward.
 .\" Eval variables in this file. See /etc/adduser.message for more
 .\" details.
 .\" .El
+.Sh FILES
+.Bl -tag -width /etc/adduser.messageX -compact
+.It Pa /etc/master.passwd
+user database
+.It Pa /etc/group
+group database
+.It Pa /etc/shells
+shell database
+.It Pa /etc/ptmp
+lock file for the passwd database
+.It Pa /etc/adduser.conf
+configuration file for
+.Nm adduser
+.It Pa /etc/adduser.message
+message file for
+.Nm
+.It Pa /etc/skel
+skeletal login directory
+.It Pa /var/log/adduser
+log file for
+.Nm
+.El
 .Sh EXAMPLES
 # adduser
 .Pp
@@ -363,28 +386,6 @@ in login group
 Start the free UID search at 5000.
 No other groups, no realname, no password.
 Do not send a welcome message.
-.Sh FILES
-.Bl -tag -width /etc/adduser.messageX -compact
-.It Pa /etc/master.passwd
-user database
-.It Pa /etc/group
-group database
-.It Pa /etc/shells
-shell database
-.It Pa /etc/ptmp
-lock file for the passwd database
-.It Pa /etc/adduser.conf
-configuration file for
-.Nm adduser
-.It Pa /etc/adduser.message
-message file for
-.Nm
-.It Pa /etc/skel
-skeletal login directory
-.It Pa /var/log/adduser
-log file for
-.Nm
-.El
 .Sh SEE ALSO
 .Xr chpass 1 ,
 .Xr finger 1 ,

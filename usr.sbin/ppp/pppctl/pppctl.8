@@ -1,5 +1,5 @@
-.\" $Id: pppctl.8,v 1.11 2003/03/06 04:07:38 david Exp $
-.\" 
+.\"	$OpenBSD: pppctl.8,v 1.12 2003/06/12 12:59:52 jmc Exp $
+.\"
 .\" Copyright (c) 1997 Brian Somers <brian@Awfulhak.org>
 .\" All rights reserved.
 .\"
@@ -32,6 +32,7 @@
 .Nd PPP control program
 .Sh SYNOPSIS
 .Nm pppctl
+.Bk -words
 .Op Fl v
 .Op Fl t Ar n
 .Op Fl p Ar passwd
@@ -40,6 +41,7 @@
 .Ar LocalSocket
 .Xc
 .Op Ar command Op ; Ns Ar command ...
+.Ek
 .Sh DESCRIPTION
 This program provides command line control of the
 .Xr ppp 8
@@ -49,12 +51,12 @@ control a running daemon.
 .Pp
 .Nm
 is passed at least one argument, specifying the socket on which
-.Nm ppp
+.Xr ppp 8
 is listening.
 Refer to the
 .Ic set server
 command of
-.Nm ppp
+.Xr ppp 8
 for details.
 If the socket contains a leading
 .Sq / ,
@@ -75,7 +77,7 @@ or don't have an entry for the given port in
 .Pp
 All remaining arguments are concatenated to form the command(s)
 that will be sent to the
-.Nm ppp
+.Xr ppp 8
 daemon.
 If any semi-colon characters are found, they are treated as
 .Ar command
@@ -108,7 +110,7 @@ The following command line options are available:
 .Bl -tag -width Ds
 .It Fl v
 Display all data sent to and received from the
-.Nm ppp
+.Xr ppp 8
 daemon.
 Normally,
 .Nm
@@ -122,22 +124,45 @@ This may be required
 if you wish to control a daemon over a slow (or even a dialup) link.
 .It Fl p Ar passwd
 Specify the password required by the
-.Nm ppp
+.Xr ppp 8
 daemon.
 If this switch is not used,
 .Nm
 will prompt for a password once it has successfully connected to
-.Nm ppp .
+.Xr ppp 8 .
+.El
+.Sh ENVIRONMENT
+The following environment variables are understood by
+.Nm
+when in interactive mode:
+.Bl -tag -width XXXXXXXXXX
+.It Ev EL_SIZE
+The number of history lines.
+The default is 20.
+.It Ev EL_EDITOR
+The edit mode.
+Only values of
+.Dq emacs
+and
+.Dq vi
+are accepted.
+Other values are silently ignored.
+This environment variable will override the
+.Dq bind -v
+and
+.Dq bind -e
+commands in
+.Pa ~/.editrc .
 .El
 .Sh EXAMPLES
 If you run
-.Nm ppp
+.Xr ppp 8
 in
 .Fl auto
 mode,
 .Nm
 can be used to automate many frequent tasks (you can actually control
-.Nm ppp
+.Xr ppp 8
 in any mode except interactive mode).
 Use of the
 .Fl p
@@ -156,10 +181,10 @@ set server /var/run/internet "" 0177
 .Ed
 .Pp
 This will instruct
-.Nm ppp
+.Xr ppp
 to create a local domain socket, with srw------- permissions and no
 password, allowing access only to the user that invoked
-.Nm ppp .
+.Xr ppp .
 Refer to the
 .Xr ppp 8
 man page for further details.
@@ -194,29 +219,6 @@ You can even make a generic script:
 #! /bin/sh
 exec pppctl /var/run/internet "$@"
 .Ed
-.Sh ENVIRONMENT
-The following environment variables are understood by
-.Nm
-when in interactive mode:
-.Bl -tag -width XXXXXXXXXX
-.It Ev EL_SIZE
-The number of history lines.
-The default is 20.
-.It Ev EL_EDITOR
-The edit mode.
-Only values of
-.Dq emacs
-and
-.Dq vi
-are accepted.
-Other values are silently ignored.
-This environment variable will override the
-.Nm bind -v
-and
-.Nm bind -e
-commands in
-.Pa ~/.editrc .
-.El
 .Sh SEE ALSO
 .Xr ps 1 ,
 .Xr editline 3 ,

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mailer.conf.5,v 1.7 2002/09/18 07:33:48 deraadt Exp $
+.\"	$OpenBSD: mailer.conf.5,v 1.8 2003/06/12 12:59:51 jmc Exp $
 .\"	$NetBSD: mailer.conf.5,v 1.1 1999/03/25 16:40:17 is Exp $
 .\"
 .\" Copyright (c) 1998
@@ -56,6 +56,10 @@ actually execute when the first name is invoked.
 The file may also contain comments, denoted by a
 .Ql #
 character in the first column of any line.
+.Sh FILES
+.Bl -tag -width /etc/mailer.conf -compact
+.It Pa /etc/mailer.conf
+.El
 .Sh EXAMPLES
 The following is an example of how to set up
 .Nm
@@ -83,10 +87,6 @@ send-mail	/usr/local/sbin/sendmail
 mailq		/usr/local/sbin/sendmail
 newaliases	/usr/local/sbin/sendmail
 .Ed
-.Sh FILES
-.Bl -tag -width /etc/mailer.conf -compact
-.It Pa /etc/mailer.conf
-.El
 .Sh SEE ALSO
 .Xr mail 1 ,
 .Xr mailq 8 ,
@@ -94,10 +94,11 @@ newaliases	/usr/local/sbin/sendmail
 .Xr newaliases 8 ,
 .Xr sendmail 8
 .Sh AUTHORS
-Perry E. Metzger <perry@piermont.com>
+.An Perry E. Metzger Aq perry@piermont.com
 .Sh BUGS
-The entire reason this program exists is a crock. Instead, a command
-for how to submit mail should be standardized, and all the "behave
-differently if invoked with a different name" behavior of things like
+The entire reason this program exists is a crock.
+Instead, a command for how to submit mail should be standardized,
+and all the "behave differently if invoked with a different name"
+behavior of things like
 .Xr mailq 8
 should go away.

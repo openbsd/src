@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vnconfig.8,v 1.18 2003/06/02 23:36:55 millert Exp $
+.\"	$OpenBSD: vnconfig.8,v 1.19 2003/06/12 12:59:54 jmc Exp $
 .\"
 .\" Copyright (c) 1993 University of Utah.
 .\" Copyright (c) 1980, 1989, 1991, 1993
@@ -88,7 +88,7 @@ This is the default operation.
 .It Fl k
 Associate an encryption key with the device.
 All data will be encrypted before it is written to the disk.
-Encryption only works with 
+Encryption only works with
 .Pa svnd .
 .It Fl u
 Unconfigures the device.
@@ -113,11 +113,11 @@ Configure the vnode disk
 Unconfigure the same device:
 .Pp
 .Dl # vnconfig -u svnd0
-.Sh BUGS
-This command should really be named
-.Nm vndconfig .
 .Sh SEE ALSO
 .Xr vnd 4 ,
 .Xr mount 8 ,
 .Xr swapon 8 ,
 .Xr umount 8
+.Sh BUGS
+This command should really be named
+.Nm vndconfig .

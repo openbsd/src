@@ -1,4 +1,4 @@
-.\"	$OpenBSD: netid.5,v 1.9 2003/06/02 21:58:26 maja Exp $
+.\"	$OpenBSD: netid.5,v 1.10 2003/06/12 12:59:54 jmc Exp $
 .\"
 .\" Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 network credential file
 .Sh DESCRIPTION
 Files in
-.Xr netid 5
+.Nm netid
 format are rare.
 One lives in the
 .Nm YP
@@ -57,22 +57,22 @@ unix.<hostname>@<yp-domain> 0:<hostname>
 .Ed
 .Pp
 The third type refers to records from a
-.Xr netid 5
+.Nm netid
 file other than the two types above.
-.Sh EXAMPLES
-A configuration file might look like the following:
-.Bd -literal
-unix.10714@kaka 10714:400,10
-unix.jodie@kaka 0:jodie
-.Ed
 .Sh FILES
 .Bl -tag -width /etc/netid -compact
 .It Pa /etc/netid
 for lines not generated automatically by
 .Xr mknetid 8 .
 .El
+.Sh EXAMPLES
+A configuration file might look like the following:
+.Bd -literal
+unix.10714@kaka 10714:400,10
+unix.jodie@kaka 0:jodie
+.Ed
 .Sh SEE ALSO
 .Xr mknetid 8 ,
 .Xr yp 8
 .Sh AUTHORS
-Mats O Jansson <moj@stacken.kth.se>
+.An Mats O Jansson Aq moj@stacken.kth.se

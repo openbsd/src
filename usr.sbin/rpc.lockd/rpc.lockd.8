@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpc.lockd.8,v 1.9 2002/11/09 18:44:19 fgsch Exp $
+.\"	$OpenBSD: rpc.lockd.8,v 1.10 2003/06/12 12:59:53 jmc Exp $
 .\"
 .\" Copyright (c) 1995 A.R.Gordon, andrew.gordon@net-tel.co.uk
 .\" All rights reserved.
@@ -85,6 +85,9 @@ RPC protocol specification for the network lock manager protocol.
 .Sh SEE ALSO
 .Xr syslog 3 ,
 .Xr rc 8
+.Sh STANDARDS
+The implementation is based on the specification in X/Open CAE Specification
+C218, "Protocols for X/Open PC Interworking: XNFS, Issue 4", ISBN 1 872630 66 9
 .Sh BUGS
 The current implementation provides only the server side of the protocol
 (i.e., clients running other OS types can establish locks on an
@@ -99,6 +102,3 @@ However, only versions
 2 (Unix systems) and 3 (PC-NFS clients) seem to be in common use - the version
 1 support has not been tested due to the lack of version 1 clients against
 which to test.
-.Sh STANDARDS
-The implementation is based on the specification in X/Open CAE Specification
-C218, "Protocols for X/Open PC Interworking: XNFS, Issue 4", ISBN 1 872630 66 9
