@@ -1,4 +1,5 @@
-.\"	$OpenBSD: ping6.8,v 1.9 2000/04/15 11:45:58 aaron Exp $
+.\"	$OpenBSD: ping6.8,v 1.10 2000/05/18 13:28:06 itojun Exp $
+.\"	$KAME: ping6.8,v 1.19 2000/05/18 13:19:09 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -26,8 +27,6 @@
 .\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
-.\"
-.\"     KAME Id: ping6.8,v 1.13 2000/02/28 13:33:19 itojun Exp
 .\"
 .Dd May 17, 1998
 .Dt PING6 8
@@ -75,11 +74,12 @@ The options are as follows:
 .Bl -tag -width Ds
 .\" old ipsec
 .\" .It Fl A
-.\" Enables transport-mode IPsec authentication header. (experimental)
+.\" Enables transport-mode IPsec authentication header
+.\" .Pq experimental .
 .It Fl a Ar addrtype
 Generate ICMPv6 Node Information Node Addresses query, rather than echo-request.
 .Ar addrtype
-must be a string constructed of the following charaters.
+must be a string constructed of the following characters.
 .Bl -tag -width Ds -compact
 .It Ic a
 requests all the responder's unicast addresses.
@@ -96,8 +96,7 @@ requests responder's site-local addresses.
 requests responder's link-local addresses.
 .It Ic A
 requests responder's anycast addresses.
-Without this character, the responder
-will return unicast addresses only.
+Without this character, the responder will return unicast addresses only.
 With this character, the responder will return anycast addresses only.
 Note that the specification does not specify how to get responder's
 anycast addresses.
@@ -116,7 +115,8 @@ Set the
 .Dv SO_DEBUG
 option on the socket being used.
 .\" .It Fl E
-.\" Enables transport-mode IPsec encapsulated security payload. (experimental)
+.\" Enables transport-mode IPsec encapsulated security payload
+.\" .Pq experimental .
 .It Fl f
 Flood ping.
 Outputs packets as fast as they come back or one hundred times per second,
@@ -337,20 +337,14 @@ using the
 option of
 .Nm Ns .
 .Sh RETURN VALUES
-The
 .Nm
-command returns an exit status of zero if at least one response was
-heard from the specified
-.Ar host ;
-a status of two if the transmission was successful but no responses
-were received; or another value
-.Pq from Aq Pa sysexits.h
-if an error occurred.
+returns 0 on success (the host is alive),
+and non-zero if the arguments are incorrect or the host is not responding.
 .Sh SEE ALSO
 .Xr netstat 1 ,
 .Xr ifconfig 8 ,
-.Xr routed 8 ,
 .Xr ping 8 ,
+.Xr routed 8 ,
 .Xr traceroute 8 ,
 .Xr traceroute6 8
 .Rs
@@ -360,13 +354,19 @@ if an error occurred.
 .%N RFC2463
 .%D December 1998
 .Re
+.Rs
+.%A Matt Crawford
+.%T "IPv6 Node Information Queries"
+.%N draft-ietf-ipngwg-icmp-name-lookups-05.txt
+.%D October 22, 1999
+.%O work in progress material
+.Re
 .Sh HISTORY
 The
 .Nm ping
 command appeared in
 .Bx 4.3 .
-.Nm Ping6
+The
+.Nm
 command with IPv6 support first appeared in WIDE Hydrangea IPv6 protocol stack
 kit.
-.\" .Sh BUGS
-.\" (to be written)
