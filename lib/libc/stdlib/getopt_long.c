@@ -1,4 +1,4 @@
-/*	$OpenBSD: getopt_long.c,v 1.5 2002/12/06 16:03:29 millert Exp $	*/
+/*	$OpenBSD: getopt_long.c,v 1.6 2002/12/07 19:15:59 millert Exp $	*/
 /*	$NetBSD: getopt_long.c,v 1.15 2002/01/31 22:43:40 tv Exp $	*/
 
 /*
@@ -64,7 +64,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: getopt_long.c,v 1.5 2002/12/06 16:03:29 millert Exp $";
+static char *rcsid = "$OpenBSD: getopt_long.c,v 1.6 2002/12/07 19:15:59 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <err.h>
@@ -173,12 +173,11 @@ permute_args(int panonopt_start, int panonopt_end, int opt_end,
 /*
  * parse_long_options --
  *	Parse long options in argc/argv argument vector.
- *  Returns -1 if long_only is set and the current option could be a short
- *	(single character) option instead.
+ * Returns -1 if short_too is set and the option does not match long_options.
  */
 static int
 parse_long_options(char * const *nargv, const char *options,
-	const struct option *long_options, int *idx, int long_only)
+	const struct option *long_options, int *idx, int short_too)
 {
 	char *current_argv, *has_equal;
 	size_t current_argv_len;
@@ -208,11 +207,10 @@ parse_long_options(char * const *nargv, const char *options,
 			break;
 		}
 		/*
-		 * Don't try a partial match of a short option when in
-		 * long_only mode.  Otherwise there is a potential conflict
-		 * between partial matches and short options.
+		 * If this is a known short option, don't allow
+		 * a partial match of a single character.
 		 */
-		if (long_only && current_argv_len == 1)
+		if (short_too && current_argv_len == 1)
 			continue;
 
 		if (match == -1)	/* partial match */
@@ -273,7 +271,7 @@ parse_long_options(char * const *nargv, const char *options,
 			return (BADARG);
 		}
 	} else {			/* unknown option */
-		if (long_only) {
+		if (short_too) {
 			--optind;
 			return (-1);
 		}
@@ -300,8 +298,7 @@ getopt_internal(int nargc, char * const *nargv, const char *options,
 	const struct option *long_options, int *idx, int flags)
 {
 	char *oli;				/* option letter list index */
-	int optchar;
-	int long_only;
+	int optchar, short_too;
 	static int posixly_correct = -1;
 
 	optarg = NULL;
@@ -320,12 +317,13 @@ getopt_internal(int nargc, char * const *nargv, const char *options,
 		options++;
 
 	/*
-	 * XXX Some programs (like rsyncd) expect to be able to
-	 * XXX re-initialize optind to 0 and have getopt_long(3)
-	 * XXX properly function again.  Work around this braindamage.
+	 * XXX Some GNU programs (like cvs) set optind to 0 instead of
+	 * XXX using optreset.  Work around this braindamage.
 	 */
-	if (optind == 0)
+	if (optind == 0) {
 		optind = 1;
+		optreset = 1;
+	}
 
 	if (optreset)
 		nonopt_start = nonopt_end = -1;
@@ -384,7 +382,10 @@ start:
 		}
 		if (nonopt_start != -1 && nonopt_end == -1)
 			nonopt_end = optind;
-		if (strcmp(place, "--") == 0) {
+
+		/* check for "--" or "--foo" with no long options */
+		if (*++place == '-' &&
+		    (place[1] == '\0' || long_options == NULL)) {
 			optind++;
 			place = EMSG;
 			/*
@@ -399,38 +400,32 @@ start:
 			nonopt_start = nonopt_end = -1;
 			return (-1);
 		}
-		place++;
 	}
 
-	/* Check long options if we have any */
-	long_only = 0;
-	if (long_options != NULL) {
-		if (*place == '-' ||
-		    (long_only = (flags & FLAG_LONGONLY))) {
-			if (!long_only)
-				place++;
-			optchar = parse_long_options(nargv, options,
-			    long_options, idx, long_only);
-			if (optchar != -1) {
-				place = EMSG;
-				return (optchar);
-			}
+	/* check long options if we have any */
+	if (long_options != NULL &&
+	    (*place == '-' || (flags & FLAG_LONGONLY))) {
+		short_too = 0;
+		if (*place == '-')
+			place++;		/* --foo long option */
+		else if (*place != ':' && strchr(options, optchar) != NULL)
+			short_too = 1;		/* could be short option too */
+
+		optchar = parse_long_options(nargv, options, long_options,
+		    idx, short_too);
+		if (optchar != -1) {
+			place = EMSG;
+			return (optchar);
 		}
 	}
+
 	if ((optchar = (int)*place++) == (int)':' ||
 	    (oli = strchr(options, optchar)) == NULL) {
 		/* option letter unknown or ':' */
-		if (PRINT_ERROR) {
-			if (long_only)
-				warnx(illoptstring, place - 1);
-			else
-				warnx(illoptchar, optchar);
-		}
-		if (!*place || long_only) {
+		if (!*place)
 			++optind;
-			if (*place)
-				place = EMSG;
-		}
+		if (PRINT_ERROR)
+			warnx(illoptchar, optchar);
 		optopt = optchar;
 		return (BADCH);
 	}
