@@ -1,7 +1,7 @@
-/*	$OpenBSD: db_interface.c,v 1.24 2002/08/13 03:44:48 mickey Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.25 2002/09/17 19:15:31 mickey Exp $	*/
 
 /*
- * Copyright (c) 1999-2000 Michael Shalayeff
+ * Copyright (c) 1999-2002 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -92,6 +92,8 @@ struct db_variable db_regs[] = {
 	{ "r31",   (long *)&ddb_regs.tf_r31,   FCN_NULL },
 	{ "sar",   (long *)&ddb_regs.tf_sar,   FCN_NULL },
 
+	{ "rctr",  (long *)&ddb_regs.tf_rctr,  FCN_NULL },
+	{ "ccr",   (long *)&ddb_regs.tf_ccr,   FCN_NULL },
 	{ "eirr",  (long *)&ddb_regs.tf_eirr,  FCN_NULL },
 	{ "eiem",  (long *)&ddb_regs.tf_eiem,  FCN_NULL },
 	{ "iir",   (long *)&ddb_regs.tf_iir,   FCN_NULL },
