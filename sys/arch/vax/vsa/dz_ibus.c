@@ -1,4 +1,4 @@
-/*	$OpenBSD: dz_ibus.c,v 1.5 2001/05/16 22:15:19 hugh Exp $	*/
+/*	$OpenBSD: dz_ibus.c,v 1.6 2001/06/15 22:45:34 miod Exp $	*/
 /*	$NetBSD: dz_ibus.c,v 1.15 1999/08/27 17:50:42 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
@@ -86,6 +86,8 @@ static volatile struct ss_dz {/* base address of DZ-controller: 0x200A0000 */
 
 cons_decl(dz);
 cdev_decl(dz);
+
+extern int getmajor __P((void *));	/* conf.c */
 
 #if NDZKBD > 0 || NDZMS > 0
 static int

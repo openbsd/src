@@ -1,4 +1,4 @@
-/*	$OpenBSD: smg.c,v 1.3 2001/05/16 22:15:19 hugh Exp $	*/
+/*	$OpenBSD: smg.c,v 1.4 2001/06/15 22:45:34 miod Exp $	*/
 /*	$NetBSD: smg.c,v 1.21 2000/03/23 06:46:44 thorpej Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
@@ -197,6 +197,8 @@ struct	smg_screen {
 
 static	struct smg_screen smg_conscreen;
 static	struct smg_screen *curscr;
+
+extern int getmajor __P((void *));	/* conf.c */
 
 int
 smg_match(struct device *parent, struct cfdata *match, void *aux)
@@ -427,14 +429,14 @@ setcursor(struct wsdisplay_cursor *v)
 	}
 	if (v->which & WSDISPLAY_CURSOR_DOCMAP) {
 		/* First background */
-		red = fusword(v->cmap.red);
-		green = fusword(v->cmap.green);
-		blue = fusword(v->cmap.blue);
+		red = fuswintr(v->cmap.red);
+		green = fuswintr(v->cmap.green);
+		blue = fuswintr(v->cmap.blue);
 		bgmask = (((30L * red + 59L * green + 11L * blue) >> 8) >=
 		    (((1<<8)-1)*50)) ? ~0 : 0;
-		red = fusword(v->cmap.red+2);
-		green = fusword(v->cmap.green+2);
-		blue = fusword(v->cmap.blue+2);
+		red = fuswintr(v->cmap.red+2);
+		green = fuswintr(v->cmap.green+2);
+		blue = fuswintr(v->cmap.blue+2);
 		fgmask = (((30L * red + 59L * green + 11L * blue) >> 8) >=
 		    (((1<<8)-1)*50)) ? ~0 : 0;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.12 2001/05/05 22:34:28 art Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.13 2001/06/15 22:45:33 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.45 1999/10/23 14:56:05 ragge Exp $	*/
 
 /*
@@ -59,7 +59,9 @@
 
 #include <vax/bi/bireg.h>
 
+void	cpu_dumpconf __P((void));	/* machdep.c */
 void	gencnslask __P((void));
+void	setroot __P((void));		/* rootfil.c */
 
 struct cpu_dep *dep_call;
 int	mastercpu;	/* chief of the system */
@@ -72,8 +74,6 @@ extern int cold; 	/* cold-start flag */
 void
 cpu_configure()
 {
-	extern int boothowto;
-
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("mainbus not configured");
 
