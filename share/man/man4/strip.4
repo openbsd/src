@@ -1,4 +1,4 @@
-.\"	$OpenBSD: strip.4,v 1.20 2004/06/20 17:37:15 aaron Exp $
+.\"	$OpenBSD: strip.4,v 1.21 2004/06/26 14:13:18 jmc Exp $
 .\"
 .\" Copyright 1996 The Board of Trustees of The Leland Stanford
 .\" Junior University. All Rights Reserved.
@@ -27,7 +27,7 @@ Configures
 interfaces, named
 .Sy st Ns Ar 0 ,
 .Sy st Ns Ar 1 ,
-etc, into a kernel built from a config file containing the
+etc., into a kernel built from a config file containing the
 given entry.
 .Pp
 Each
@@ -127,13 +127,13 @@ For example, the following route command will
 configure a routing entry to a radio with a MAC address of 1234-5678,
 and an IP address 10.11.12.13:
 .Pp
-.Dl route add -host 10.11.12.13 -link 1:2:3:4:5:6:7:8
+.Dl "# route add -host 10.11.12.13 -link 1:2:3:4:5:6:7:8"
 .Pp
 Generalising from this example to other IP addresses and to other 8-digit MAC addresses
 should be clear.
 .Sh RADIO CONFIGURATION
 The Metricom radios can auto-baud at speeds up to 38.4k baud.
-At higher speeds -- 57600 or 115200 -- the radio cannot autobaud.
+At higher speeds \(em 57600 or 115200 \(em the radio cannot autobaud.
 When running at high speeds, the radio's serial port should be
 manually configured to permanently run at the desired speed.
 Use a terminal emulator and the Hayes command
@@ -151,7 +151,6 @@ driver automatically detects if the radio has fallen out of starmode,
 and resets it back into starmode, if the baud rate was set correctly
 by
 .Xr slattach 8 .
-.\" Why isn't .Ss documented in mdoc(7) and mdoc.samples(7)?
 .\" .Sh DIAGNOSTICS
 .Sh SEE ALSO
 .Xr arp 4 ,
