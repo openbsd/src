@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.31 2002/05/28 00:23:57 deraadt Exp $ */
+/*	$OpenBSD: loader.c,v 1.32 2002/05/28 00:30:19 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -47,7 +47,8 @@
 /*
  *  Local decls.
  */
-static char *_dl_getenv(const char *var, const char **env);
+static char *_dl_getenv(const char *var, char **env);
+static void _dl_unsetenv(const char *var, char **env);
 
 const char *_dl_progname;
 int  _dl_pagesz;
@@ -95,7 +96,7 @@ _dl_dtors(void)
  *  to do is to dig out all information we need to accomplish out task.
  */
 unsigned long
-_dl_boot(const char **argv, const char **envp, const long loff,
+_dl_boot(const char **argv, char **envp, const long loff,
 	Elf_Dyn *dynp, long *dl_data)
 {
 	int		n;
@@ -129,10 +130,23 @@ _dl_boot(const char **argv, const char **envp, const long loff,
 	 *  a suid program without credentials high enough.
 	 */
 	if (_dl_issetugid()) {	/* Zap paths if s[ug]id... */
-		if (_dl_preload)
-			*_dl_preload = '\0';
-		if (_dl_libpath)
-			*_dl_libpath = '\0';
+		if (_dl_preload) {
+			_dl_preload = NULL;
+			_dl_unsetenv("LD_PRELOAD", envp);
+		}
+		if (_dl_libpath) {
+			_dl_libpath = NULL;
+			_dl_unsetenv("LD_LIBRARY_PATH", envp);
+		}
+		if (_dl_bindnow) {
+			_dl_bindnow = NULL;
+			_dl_unsetenv("LD_BIND_NOW", envp);
+		}
+		if (_dl_debug) {
+			_dl_debug = NULL;
+			_dl_unsetenv("LD_DEBUG", envp);
+		}
+
 	}
 
 	/*
@@ -521,7 +535,7 @@ _dl_call_init(elf_object_t *object)
 }
 
 static char *
-_dl_getenv(const char *var, const char **env)
+_dl_getenv(const char *var, char **env)
 {
 	const char *ep;
 
@@ -536,4 +550,28 @@ _dl_getenv(const char *var, const char **env)
 			return((char *)ep);
 	}
 	return(0);
+}
+static void
+_dl_unsetenv(const char *var, char **env)
+{
+	char *ep;
+
+	while ((ep = *env)) {
+		const char *vp = var;
+		char *lep = ep;
+
+		while (*vp && *vp == *ep) {
+			vp++;
+			ep++;
+		}
+		if (*vp == '\0' && *ep++ == '=') {
+			char **P;
+
+			for (P = env;; ++P)
+				if (!(*P = *(P + 1)))
+					break;
+		}
+		env++;
+	}
+
 }
