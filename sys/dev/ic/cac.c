@@ -1,4 +1,4 @@
-/*	$OpenBSD: cac.c,v 1.3 2001/02/07 04:47:26 mickey Exp $	*/
+/*	$OpenBSD: cac.c,v 1.4 2001/04/11 15:43:24 mickey Exp $	*/
 /*	$NetBSD: cac.c,v 1.15 2000/11/08 19:20:35 ad Exp $	*/
 
 /*
@@ -223,6 +223,11 @@ cac_init(struct cac_softc *sc, int startfw)
 	    CAC_CCB_DATA_IN, NULL)) {
 		printf("%s: CAC_CMD_GET_CTRL_INFO failed\n", 
 		    sc->sc_dv.dv_xname);
+		return (-1);
+	}
+
+	if (!cinfo.num_drvs) {
+		printf("%s: no volumes defined\n", sc->sc_dv.dv_xname);
 		return (-1);
 	}
 
