@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.48 2002/09/23 23:28:15 itojun Exp $	*/
+/*	$OpenBSD: in6.c,v 1.49 2002/10/17 00:09:39 itojun Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -704,7 +704,7 @@ in6_control(so, cmd, data, ifp, p)
 		pr0.ndpr_vltime = ifra->ifra_lifetime.ia6t_vltime;
 		pr0.ndpr_pltime = ifra->ifra_lifetime.ia6t_pltime;
 
-		/* add the prefix if there's one. */
+		/* add the prefix if not yet. */
 		if ((pr = nd6_prefix_lookup(&pr0)) == NULL) {
 			/*
 			 * nd6_prelist_add will install the corresponding
@@ -718,8 +718,9 @@ in6_control(so, cmd, data, ifp, p)
 				return (EINVAL); /* XXX panic here? */
 			}
 		}
-		if ((ia->ia6_flags & IN6_IFF_AUTOCONF) &&
-		    ia->ia6_ndpr == NULL) { /* new autoconfed addr */
+
+		/* relate the address to the prefix */
+		if (ia->ia6_ndpr == NULL) {
 			ia->ia6_ndpr = pr;
 			pr->ndpr_refcnt++;
 		}
@@ -759,20 +760,12 @@ in6_control(so, cmd, data, ifp, p)
 			pr0.ndpr_prefix.sin6_addr.s6_addr32[i] &=
 			    ia->ia_prefixmask.sin6_addr.s6_addr32[i];
 		}
-		/*
-		 * The logic of the following condition is a bit complicated.
-		 * We expire the prefix when
-		 * 1. the address obeys autoconfiguration and it is the
-		 *    only owner of the associated prefix, or
-		 * 2. the address does not obey autoconf and there is no
-		 *    other owner of the prefix.
-		 */
 		if ((pr = nd6_prefix_lookup(&pr0)) != NULL &&
-		    (((ia->ia6_flags & IN6_IFF_AUTOCONF) != 0 &&
-		      pr->ndpr_refcnt == 1) ||
-		     ((ia->ia6_flags & IN6_IFF_AUTOCONF) == 0 &&
-		      pr->ndpr_refcnt == 0)))
-			purgeprefix = 1;
+		    pr == ia->ia6_ndpr) {
+			pr->ndpr_refcnt--;
+			if (pr->ndpr_refcnt == 0)
+				purgeprefix = 1;
+		}
 
 	  purgeaddr:
 		in6_purgeaddr(&ia->ia_ifa);
