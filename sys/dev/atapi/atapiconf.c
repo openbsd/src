@@ -1,4 +1,4 @@
-/*	$OpenBSD: atapiconf.c,v 1.16 1997/07/07 19:48:50 niklas Exp $	*/
+/*	$OpenBSD: atapiconf.c,v 1.17 1997/08/17 22:00:04 millert Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -96,6 +96,9 @@ struct atapi_quirk_inquiry_pattern atapi_quirk_inquiry_patterns[] = {
 	/* GoldStar 8X */
 	{ATAPI_DEVICE_TYPE_CD, ATAPI_REMOVABLE,
 	 "GCD-R580B", "1.00", AQUIRK_LITTLETOC},
+	/* MATSHITA CR-574 */
+	{ATAPI_DEVICE_TYPE_CD, ATAPI_REMOVABLE,
+	 "MATSHITA CR-574", "1.06", AQUIRK_NOCAPACITY},
 	/* NEC Multispin 2Vi */
 	{ATAPI_DEVICE_TYPE_DAD, ATAPI_REMOVABLE,
 	 "NEC                 CD-ROM DRIVE:260", "3.04", AQUIRK_CDROM},
