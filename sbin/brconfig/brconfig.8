@@ -1,4 +1,4 @@
-.\"	$OpenBSD: brconfig.8,v 1.13 2000/09/06 07:38:16 mickey Exp $
+.\"	$OpenBSD: brconfig.8,v 1.14 2000/10/24 17:38:36 beck Exp $
 .\"
 .\" Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -292,7 +292,7 @@ start allowing traffic on the interface:
 Bring up the internal interface (if not already up) and encapsulation
 interface:
 .Bd -literal
-# ifconfig fxp0 up
+# ifconfig fxp1 up
 # ifconfig enc1 up
 .Ed
 .Pp
@@ -302,7 +302,7 @@ frames:
 # brconfig bridge0 up
 .Ed
 .Pp
-The internal interface, ie. fxp0, on each bridge need not have an IP
+The internal interface, ie. fxp1, on each bridge need not have an IP
 address; the bridge can function without it.
 .Pp
 Note:  It is possible to put all the following commands the
