@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.4 1996/05/09 22:30:11 niklas Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.5 1996/09/21 04:26:38 briggs Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.16 1996/04/29 20:50:29 leo Exp $	*/
 
 /* 
@@ -174,9 +174,7 @@ stacktop(regs, sp)
 #define JSRPC	0x4eba0000	/* jsr PC@( )    */
 #define LONGBIT 0x00010000
 #define BSR	0x61000000	/* bsr x	 */
-#ifdef	mc68020
 #define BSRL	0x61ff0000	/* bsrl x	 */
-#endif	mc68020
 #define BYTE3	0x0000ff00
 #define LOBYTE	0x000000ff
 #define ADQMSK	0xf1ff0000
@@ -307,12 +305,10 @@ findentry(sp)
 		/* longword offset here */
 		sp->k_caller = addr - 6;
 		sp->k_entry  = nextword;
-#ifdef	mc68020
 	} else if ((instruc & HIWORD) == BSRL) {
 		/* longword self-relative offset */
 		sp->k_caller = addr - 6;
 		sp->k_entry  = nextword + (addr - 4);
-#endif	mc68020
 	} else {
 		instruc = nextword;
 		if ((instruc & HIWORD) == JSR) {
