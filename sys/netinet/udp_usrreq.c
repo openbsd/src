@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.90 2003/06/02 23:28:15 millert Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.91 2003/07/09 22:03:16 itojun Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -949,7 +949,7 @@ udp_output(struct mbuf *m, ...)
 		    sizeof (struct udphdr) + IPPROTO_UDP));
 	} else
 		ui->ui_sum = 0;
-	((struct ip *)ui)->ip_len = sizeof (struct udpiphdr) + len;
+	((struct ip *)ui)->ip_len = htons(sizeof (struct udpiphdr) + len);
 	((struct ip *)ui)->ip_ttl = inp->inp_ip.ip_ttl;
 	((struct ip *)ui)->ip_tos = inp->inp_ip.ip_tos;
 

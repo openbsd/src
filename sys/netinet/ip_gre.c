@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_gre.c,v 1.21 2003/05/03 01:43:07 itojun Exp $ */
+/*      $OpenBSD: ip_gre.c,v 1.22 2003/07/09 22:03:16 itojun Exp $ */
 /*	$NetBSD: ip_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -341,8 +341,7 @@ gre_mobile_input(struct mbuf *m, ...)
 	      m->m_len - msiz - (ip->ip_hl << 2));
 
 	m->m_len -= msiz;
-	ip->ip_len -= msiz;
-	HTONS(ip->ip_len);
+	ip->ip_len = htons(ntohs(ip->ip_len) - msiz);
 	m->m_pkthdr.len -= msiz;
 
 	ip->ip_sum = 0;

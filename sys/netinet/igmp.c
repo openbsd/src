@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp.c,v 1.17 2003/02/12 14:41:07 jason Exp $	*/
+/*	$OpenBSD: igmp.c,v 1.18 2003/07/09 22:03:16 itojun Exp $	*/
 /*	$NetBSD: igmp.c,v 1.15 1996/02/13 23:41:25 christos Exp $	*/
 
 /*
@@ -140,7 +140,7 @@ igmp_input(struct mbuf *m, ...)
 
 	++igmpstat.igps_rcv_total;
 
-	igmplen = ip->ip_len;
+	igmplen = ntohs(ip->ip_len) - iphlen;
 
 	/*
 	 * Validate lengths
@@ -516,7 +516,7 @@ igmp_sendpkt(inm, type, addr)
 
 	ip = mtod(m, struct ip *);
 	ip->ip_tos = 0;
-	ip->ip_len = sizeof(struct ip) + IGMP_MINLEN;
+	ip->ip_len = htons(sizeof(struct ip) + IGMP_MINLEN);
 	ip->ip_off = 0;
 	ip->ip_p = IPPROTO_IGMP;
 	ip->ip_src.s_addr = INADDR_ANY;

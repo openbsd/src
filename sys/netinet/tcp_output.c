@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.57 2003/06/09 07:40:25 itojun Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.58 2003/07/09 22:03:16 itojun Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -1104,7 +1104,7 @@ send:
 			struct ip *ip;
 
 			ip = mtod(m, struct ip *);
-			ip->ip_len = m->m_pkthdr.len;
+			ip->ip_len = htons(m->m_pkthdr.len);
 			ip->ip_ttl = tp->t_inpcb->inp_ip.ip_ttl;
 			ip->ip_tos = tp->t_inpcb->inp_ip.ip_tos;
 #ifdef TCP_ECN

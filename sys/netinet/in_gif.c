@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_gif.c,v 1.26 2002/08/28 15:43:03 pefo Exp $	*/
+/*	$OpenBSD: in_gif.c,v 1.27 2003/07/09 22:03:16 itojun Exp $	*/
 /*	$KAME: in_gif.c,v 1.50 2001/01/22 07:27:16 itojun Exp $	*/
 
 /*
@@ -71,7 +71,6 @@ in_gif_output(ifp, family, m, rt)
 	struct xformsw xfs;
 	int error;
 	int hlen, poff;
-	u_int16_t plen;
 	struct mbuf *mp;
 
 	if (sin_src == NULL || sin_dst == NULL ||
@@ -149,12 +148,6 @@ in_gif_output(ifp, family, m, rt)
 #if NBRIDGE > 0
  sendit:
 #endif /* NBRIDGE */
-	/* ip_output needs host-order length.  it should be nuked */
-	m_copydata(m, offsetof(struct ip, ip_len), sizeof(u_int16_t),
-		   (caddr_t) &plen);
-	NTOHS(plen);
-	m_copyback(m, offsetof(struct ip, ip_len), sizeof(u_int16_t),
-		   (caddr_t) &plen);
 
 	return ip_output(m, (void *)NULL, (void *)NULL, 0, (void *)NULL, (void *)NULL);
 }

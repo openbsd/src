@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_output.c,v 1.26 2003/02/19 19:15:13 jason Exp $ */
+/*	$OpenBSD: ipsec_output.c,v 1.27 2003/07/09 22:03:16 itojun Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -180,7 +180,7 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 			 * This is not a bridge packet, remember if we
 			 * had IP_DF.
 			 */
-			setdf = ntohs(ip->ip_off) & IP_DF;
+			setdf = ip->ip_off & htons(IP_DF);
 #endif /* INET */
 
 #ifdef INET6
@@ -262,9 +262,7 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 						return ENOBUFS;
 
 				ip = mtod(m, struct ip *);
-				NTOHS(ip->ip_off);
-				ip->ip_off |= IP_DF;
-				HTONS(ip->ip_off);
+				ip->ip_off |= htons(IP_DF);
 			}
 
 			/* Remember that we appended a tunnel header. */
@@ -410,9 +408,6 @@ ipsp_process_done(struct mbuf *m, struct tdb *tdb)
 	switch (tdb->tdb_dst.sa.sa_family) {
 #ifdef INET
 	case AF_INET:
-		NTOHS(ip->ip_len);
-		NTOHS(ip->ip_off);
-
 		return ip_output(m, (void *)NULL, (void *)NULL, IP_RAWOUTPUT, (void *)NULL, (void *)NULL);
 #endif /* INET */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.131 2003/06/09 07:40:25 itojun Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.132 2003/07/09 22:03:16 itojun Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -519,11 +519,7 @@ tcp_input(struct mbuf *m, ...)
 		struct tcpiphdr *ti;
 
 		ip = mtod(m, struct ip *);
-#if 1
 		tlen = m->m_pkthdr.len - iphlen;
-#else
-		tlen = ((struct ip *)ti)->ip_len;
-#endif
 		ti = mtod(m, struct tcpiphdr *);
 
 #ifdef TCP_ECN

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.32 2003/07/09 03:23:26 itojun Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.33 2003/07/09 22:03:16 itojun Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.27 1996/05/07 02:40:50 thorpej Exp $	*/
 
 /*
@@ -1292,7 +1292,7 @@ ip_mdq(m, ifp, rt)
 	register struct ip  *ip = mtod(m, struct ip *);
 	register vifi_t vifi;
 	register struct vif *vifp;
-	register int plen = ip->ip_len;
+	register int plen = ntohs(ip->ip_len) - (ip->ip_hl << 2);
 
 /*
  * Macro to send packet on vif.  Since RSVP packets don't get counted on
@@ -1436,7 +1436,8 @@ phyint_send(ip, vifp, m)
 	if (vifp->v_rate_limit <= 0)
 		tbf_send_packet(vifp, mb_copy);
 	else
-		tbf_control(vifp, mb_copy, mtod(mb_copy, struct ip *), ip->ip_len);
+		tbf_control(vifp, mb_copy, mtod(mb_copy, struct ip *),
+		    ntohs(ip->ip_len));
 }
 
 static void
@@ -1447,7 +1448,7 @@ encap_send(ip, vifp, m)
 {
 	register struct mbuf *mb_copy;
 	register struct ip *ip_copy;
-	register int i, len = ip->ip_len + sizeof(multicast_encap_iphdr);
+	register int i, len = ntohs(ip->ip_len) + sizeof(multicast_encap_iphdr);
 
 	/*
 	 * copy the old packet & pullup it's IP header into the
@@ -1478,7 +1479,7 @@ encap_send(ip, vifp, m)
 	ip_copy = mtod(mb_copy, struct ip *);
 	*ip_copy = multicast_encap_iphdr;
 	ip_copy->ip_id = htons(ip_randomid());
-	ip_copy->ip_len = len;
+	ip_copy->ip_len = htons(len);
 	ip_copy->ip_src = vifp->v_lcl_addr;
 	ip_copy->ip_dst = vifp->v_rmt_addr;
 
@@ -1487,8 +1488,6 @@ encap_send(ip, vifp, m)
 	 */
 	ip = (struct ip *)((caddr_t)ip_copy + sizeof(multicast_encap_iphdr));
 	--ip->ip_ttl;
-	HTONS(ip->ip_len);
-	HTONS(ip->ip_off);
 	ip->ip_sum = 0;
 #if defined(LBL) && !defined(ultrix) && !defined(i386)
 	ip->ip_sum = ~oc_cksum((caddr_t)ip, ip->ip_hl << 2, 0);
@@ -1501,7 +1500,7 @@ encap_send(ip, vifp, m)
 	if (vifp->v_rate_limit <= 0)
 		tbf_send_packet(vifp, mb_copy);
 	else
-		tbf_control(vifp, mb_copy, ip, ip_copy->ip_len);
+		tbf_control(vifp, mb_copy, ip, ntohs(ip_copy->ip_len));
 }
 
 /*
@@ -1641,7 +1640,7 @@ tbf_queue(vifp, m, ip)
 	ql = vifp->v_tbf.q_len;
 
 	qtable[index][ql].pkt_m = m;
-	qtable[index][ql].pkt_len = (mtod(m, struct ip *))->ip_len;
+	qtable[index][ql].pkt_len = ntohs((mtod(m, struct ip *))->ip_len);
 	qtable[index][ql].pkt_ip = ip;
 
 	vifp->v_tbf.q_len++;
@@ -1698,7 +1697,7 @@ tbf_dequeue(vifp, j)
 		qtable[index][i-1] = qtable[index][i];
 	}
 	qtable[index][i-1].pkt_m = NULL;
-	qtable[index][i-1].pkt_len = NULL;
+	qtable[index][i-1].pkt_len = 0;
 	qtable[index][i-1].pkt_ip = NULL;
 
 	vifp->v_tbf.q_len--;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.66 2003/07/08 11:01:20 markus Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.67 2003/07/09 22:03:16 itojun Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -306,8 +306,6 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff,
 		}
 
 		ip = mtod(m, struct ip *);
-		ip->ip_len = htons(m->m_pkthdr.len);
-		HTONS(ip->ip_off);
 		ip->ip_sum = 0;
 		ip->ip_sum = in_cksum(m, ip->ip_hl << 2);
 		prot = ip->ip_p;

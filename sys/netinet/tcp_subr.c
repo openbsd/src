@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.67 2003/06/02 23:28:14 millert Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.68 2003/07/09 22:03:16 itojun Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -451,7 +451,7 @@ tcp_respond(tp, template, m, ack, seq, flags)
 		 */
 		th->th_sum = 0;
 		th->th_sum = in_cksum(m, tlen);
-		((struct ip *)ti)->ip_len = tlen;
+		((struct ip *)ti)->ip_len = htons(tlen);
 		((struct ip *)ti)->ip_ttl = ip_defttl;
 		ip_output(m, (void *)NULL, ro, ip_mtudisc ? IP_MTUDISC : 0,
 			(void *)NULL, tp ? tp->t_inpcb : (void *)NULL);

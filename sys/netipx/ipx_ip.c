@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx_ip.c,v 1.15 2003/06/02 23:28:16 millert Exp $	*/
+/*	$OpenBSD: ipx_ip.c,v 1.16 2003/07/09 22:03:16 itojun Exp $	*/
 
 /*-
  *
@@ -204,8 +204,8 @@ ipxip_input( struct mbuf *m, ...)
 	len = ntohs(ipx->ipx_len);
 	if (len & 1)
 		len++;		/* Preserve Garbage Byte */
-	if (ip->ip_len != len) {
-		if (len > ip->ip_len) {
+	if (ntohs(ip->ip_len) - (ip->ip_hl << 2) != len) {
+		if (len > ntohs(ip->ip_len) - (ip->ip_hl << 2)) {
 			ipxipif.if_ierrors++;
 			if (ipxip_badlen)
 				m_freem(ipxip_badlen);
@@ -290,7 +290,11 @@ ipxipoutput(ifp, m, dst, rt)
 	ip->ip_p = IPPROTO_IDP;
 	ip->ip_src = ifn->ifen_src;
 	ip->ip_dst = ifn->ifen_dst;
-	ip->ip_len = (u_short)len + sizeof(struct ip);
+	if (len + sizeof(struct ip) > IP_MAXPACKET) {
+		m_freem(m);
+		return EMSGSIZE;
+	}
+	ip->ip_len = htons(len + sizeof(struct ip));
 	ip->ip_ttl = MAXTTL;
 
 	/*

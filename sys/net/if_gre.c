@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.c,v 1.26 2003/03/25 18:10:06 millert Exp $ */
+/*      $OpenBSD: if_gre.c,v 1.27 2003/07/09 22:03:15 itojun Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -302,8 +302,7 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 			/* Copy Mobility header */
 			inp = mtod(m, struct ip *);
 			bcopy(&mob_h, (caddr_t)(inp + 1), (unsigned) msiz);
-			NTOHS(inp->ip_len);
-			inp->ip_len += msiz;
+			inp->ip_len = htons(ntohs(inp->ip_len) + msiz);
 		} else {  /* AF_INET */
 			IF_DROP(&ifp->if_snd);
 			m_freem(m);

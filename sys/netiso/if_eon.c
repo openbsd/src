@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_eon.c,v 1.19 2003/06/02 23:28:17 millert Exp $	*/
+/*	$OpenBSD: if_eon.c,v 1.20 2003/07/09 22:03:16 itojun Exp $	*/
 /*	$NetBSD: if_eon.c,v 1.15 1996/05/09 22:29:37 scottr Exp $	*/
 
 /*-
@@ -417,8 +417,9 @@ send:
 	m = mh;
 	MH_ALIGN(m, sizeof(struct eon_iphdr));
 	m->m_len = sizeof(struct eon_iphdr);
-	ifp->if_obytes +=
-		(ei->ei_ip.ip_len = (u_short) (m->m_pkthdr.len = datalen));
+	m->m_pkthdr.len = datalen;
+	ei->ei_ip.ip_len = htons(datalen);
+	ifp->if_obytes += datalen;
 	*mtod(m, struct eon_iphdr *) = *ei;
 
 #ifdef ARGO_DEBUG

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.375 2003/07/04 10:57:27 markus Exp $ */
+/*	$OpenBSD: pf.c,v 1.376 2003/07/09 22:03:15 itojun Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1191,8 +1191,8 @@ pf_send_tcp(const struct pf_rule *r, sa_family_t af,
 		h->ip_v = 4;
 		h->ip_hl = sizeof(*h) >> 2;
 		h->ip_tos = IPTOS_LOWDELAY;
-		h->ip_len = len;
-		h->ip_off = ip_mtudisc ? IP_DF : 0;
+		h->ip_len = htons(len);
+		h->ip_off = htons(ip_mtudisc ? IP_DF : 0);
 		h->ip_ttl = ttl ? ttl : ip_defttl;
 		h->ip_sum = 0;
 		ip_output(m, (void *)NULL, (void *)NULL, 0, (void *)NULL,
@@ -3844,7 +3844,7 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 			 * ICMP error messages don't refer to non-first
 			 * fragments
 			 */
-			if (ntohs(h2.ip_off) & IP_OFFMASK)
+			if (h2.ip_off & htons(IP_OFFMASK))
 				return (PF_DROP);
 
 			/* offset of protocol header that follows h2 */
@@ -4327,7 +4327,7 @@ pf_pull_hdr(struct mbuf *m, int off, void *p, int len,
 #ifdef INET
 	case AF_INET: {
 		struct ip	*h = mtod(m, struct ip *);
-		u_int16_t	 fragoff = (h->ip_off & IP_OFFMASK) << 3;
+		u_int16_t	 fragoff = (ntohs(h->ip_off) & IP_OFFMASK) << 3;
 
 		if (fragoff) {
 			if (fragoff >= len)
@@ -4338,7 +4338,7 @@ pf_pull_hdr(struct mbuf *m, int off, void *p, int len,
 			}
 			return (NULL);
 		}
-		if (m->m_pkthdr.len < off + len || h->ip_len < off + len) {
+		if (m->m_pkthdr.len < off + len || ntohs(h->ip_len) < off + len) {
 			ACTION_SET(actionp, PF_DROP);
 			REASON_SET(reasonp, PFRES_SHORT);
 			return (NULL);
@@ -4493,7 +4493,7 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 	}
 
 	/* Copied from ip_output. */
-	if (ip->ip_len <= ifp->if_mtu) {
+	if (ntohs(ip->ip_len) <= ifp->if_mtu) {
 		ip->ip_len = htons((u_int16_t)ip->ip_len);
 		ip->ip_off = htons((u_int16_t)ip->ip_off);
 		if ((ifp->if_capabilities & IFCAP_CSUM_IPv4) &&
@@ -4517,7 +4517,7 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 	 * Too large for interface; fragment if possible.
 	 * Must be able to put at least 8 bytes per fragment.
 	 */
-	if (ip->ip_off & IP_DF) {
+	if (ip->ip_off & htons(IP_DF)) {
 		ipstat.ips_cantfrag++;
 		if (r->rt != PF_DUPTO) {
 			icmp_error(m0, ICMP_UNREACH, ICMP_UNREACH_NEEDFRAG, 0,
@@ -4824,10 +4824,10 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 	pd.proto = h->ip_p;
 	pd.af = AF_INET;
 	pd.tos = h->ip_tos;
-	pd.tot_len = h->ip_len;
+	pd.tot_len = ntohs(h->ip_len);
 
 	/* handle fragments that didn't get reassembled by normalization */
-	if (h->ip_off & (IP_MF | IP_OFFMASK)) {
+	if (h->ip_off & htons(IP_MF | IP_OFFMASK)) {
 		action = pf_test_fragment(&r, dir, ifp, m, h,
 		    &pd, &a, &ruleset);
 		goto done;
@@ -4845,7 +4845,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 			goto done;
 		}
 		if (dir == PF_IN && pf_check_proto_cksum(m, off,
-		    h->ip_len - off, IPPROTO_TCP, AF_INET)) {
+		    ntohs(h->ip_len) - off, IPPROTO_TCP, AF_INET)) {
 			action = PF_DROP;
 			goto done;
 		}
@@ -4876,7 +4876,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 			goto done;
 		}
 		if (dir == PF_IN && uh.uh_sum && pf_check_proto_cksum(m,
-		    off, h->ip_len - off, IPPROTO_UDP, AF_INET)) {
+		    off, ntohs(h->ip_len) - off, IPPROTO_UDP, AF_INET)) {
 			action = PF_DROP;
 			goto done;
 		}
@@ -4901,7 +4901,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 			goto done;
 		}
 		if (dir == PF_IN && pf_check_proto_cksum(m, off,
-		    h->ip_len - off, IPPROTO_ICMP, AF_INET)) {
+		    ntohs(h->ip_len) - off, IPPROTO_ICMP, AF_INET)) {
 			action = PF_DROP;
 			goto done;
 		}
@@ -4909,11 +4909,11 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 		if (action == PF_PASS) {
 			r = s->rule.ptr;
 			r->packets++;
-			r->bytes += h->ip_len;
+			r->bytes += ntohs(h->ip_len);
 			a = s->anchor.ptr;
 			if (a != NULL) {
 				a->packets++;
-				a->bytes += h->ip_len;
+				a->bytes += ntohs(h->ip_len);
 			}
 			log = s->log;
 		} else if (s == NULL)
