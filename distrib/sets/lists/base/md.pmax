@@ -1789,3 +1789,4 @@
 ./usr/local/libdata/perl5/site_perl/mips-openbsd
 ./usr/mdec/bootrz
 ./usr/mdec/rzboot
+./usr/libdata/perl5/site_perl/mips-openbsd/sys/pciio.ph
