@@ -2074,6 +2074,7 @@ calltrap:
 	sti
 	movl	$T_ASTFLT,TF_TRAPNO(%esp)
 	call	_trap
+	j	2b
 #ifndef DIAGNOSTIC
 1:	INTRFASTEXIT
 #else /* DIAGNOSTIC */
@@ -2140,6 +2141,7 @@ syscall1:
 	sti
 	/* Pushed T_ASTFLT into tf_trapno on entry. */
 	call	_trap
+	j	2b
 #ifndef DIAGNOSTIC
 1:	INTRFASTEXIT
 #else /* DIAGNOSTIC */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: icu.s,v 1.6 1996/07/28 05:07:05 downsj Exp $	*/
+/*	$OpenBSD: icu.s,v 1.7 1996/08/16 02:51:31 deraadt Exp $	*/
 /*	$NetBSD: icu.s,v 1.45 1996/01/07 03:59:34 mycroft Exp $	*/
 
 /*-
@@ -119,6 +119,7 @@ IDTVEC(doreti)
 	sti
 	/* Pushed T_ASTFLT into tf_trapno on entry. */
 	call	_trap
+	j	2b
 3:	INTRFASTEXIT
 
 
