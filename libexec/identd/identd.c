@@ -1,4 +1,4 @@
-/*	$OpenBSD: identd.c,v 1.16 2001/03/28 21:48:31 fgsch Exp $	*/
+/*	$OpenBSD: identd.c,v 1.17 2001/04/13 20:16:53 millert Exp $	*/
 
 /*
  * This program is in the public domain and may be used freely by anyone
@@ -45,6 +45,7 @@ int     other_flag = 0;
 int     unknown_flag = 0;
 int     number_flag = 0;
 int     noident_flag = 0;
+int	userident_flag = 0;
 int	token_flag = 0;
 
 int     lport = 0;
@@ -65,7 +66,7 @@ usage()
 {
 	syslog(LOG_ERR,
 	    "identd [-i | -w | -b] [-t seconds] [-u uid] [-g gid] [-p port] "
-	    "[-a address] [-c charset] [-noelVvmNdh]");
+	    "[-a address] [-c charset] [-noelVvmNUdh]");
 	exit(2);
 }
 
@@ -152,7 +153,7 @@ main(argc, argv)
 	/*
 	 * Parse the command line arguments
 	 */
-	while ((ch = getopt(argc, argv, "hbwit:p:a:u:g:c:r:loenVvdmN")) != -1) {
+	while ((ch = getopt(argc, argv, "hbwit:p:a:u:g:c:r:loenVvdmNU")) != -1) {
 		switch (ch) {
 		case 'h':
 			token_flag = 1;
@@ -219,7 +220,7 @@ main(argc, argv)
 			number_flag = 1;
 			break;
 		case 'V':	/* Give version of this daemon */
-			printf("[in.identd, version %s]\r\n", version);
+			printf("[identd version %s]\r\n", version);
 			exit(0);
 			break;
 		case 'v':	/* Be verbose */
@@ -233,6 +234,9 @@ main(argc, argv)
 			break;
 		case 'N':	/* Enable users ".noident" files */
 			noident_flag++;
+			break;
+		case 'U':	/* Enable user ".ident" files */
+			userident_flag++;
 			break;
 		default:
 			usage();

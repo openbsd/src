@@ -1,4 +1,4 @@
-.\"	$OpenBSD: identd.8,v 1.16 2000/11/08 19:37:37 aaron Exp $
+.\"	$OpenBSD: identd.8,v 1.17 2001/04/13 20:16:53 millert Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -49,7 +49,7 @@
 .Op Fl p Ar port
 .Op Fl a Ar address
 .Op Fl c Ar charset
-.Op Fl noelVvmNdh
+.Op Fl noelVvmNUdh
 .Sh DESCRIPTION
 .Nm
 is a server which implements the
@@ -171,6 +171,14 @@ in the user's home directory.
 If this file is accessible, return
 .Dq HIDDEN-USER
 instead of the normal USERID response.
+.It Fl U
+When replying with a user name or ID, first
+check for a file
+.Pa .ident
+in the user's home directory.
+If this file is accessible, return
+the contents of the file 
+instead of the normal USERID response.
 .It Fl m
 Allow multiple requests to be processed per session.
 Each request is specified one per line and the responses will be returned
@@ -204,7 +212,12 @@ the listen port if running as a standalone daemon.
 Since
 .Nm identd
 should typically not be run as a privileged user or group,
-.Pa .noident
+.Pa .ident
 files for use when running with the
-.Fl N
+.Fl U
 flag will need to be world accessible.
+The same applies for
+.Pa .noident
+files when running with the 
+.Fl N
+flag.
