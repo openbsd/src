@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.16 1998/05/23 12:15:20 deraadt Exp $	*/
+/*	$OpenBSD: commands.c,v 1.17 1998/07/01 19:31:12 deraadt Exp $	*/
 /*	$NetBSD: commands.c,v 1.14 1996/03/24 22:03:48 jtk Exp $	*/
 
 /*
@@ -2428,8 +2428,6 @@ tn(argc, argv)
 		    herror(hostp);
 		    seteuid(getuid());
 		    setuid(getuid());
-		    fprintf (stderr, "%s: %s\r\n", hostp ? hostp : "",
-			     "unknown error");
 		    return 0;
 		}
 	    }
