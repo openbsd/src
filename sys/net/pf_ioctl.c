@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.8 2002/08/12 16:41:25 dhartmei Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.9 2002/10/07 14:53:00 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1260,7 +1260,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		splx(s);
 		secs = time.tv_sec;
 		ps->state.creation = secs - ps->state.creation;
-		if (ps->state.expire <= secs)
+		if (ps->state.expire <= (unsigned)secs)
 			ps->state.expire = 0;
 		else
 			ps->state.expire -= secs;
@@ -1288,7 +1288,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		RB_FOREACH(n, pf_state_tree, &tree_ext_gwy) {
 			int secs = time.tv_sec;
 
-			if ((nr + 1) * sizeof(*p) > ps->ps_len)
+			if ((nr + 1) * sizeof(*p) > (unsigned)ps->ps_len)
 				break;
 
 			bcopy(n->state, &pstore, sizeof(pstore));
@@ -1297,7 +1297,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			else
 				pstore.rule.nr = n->state->rule.ptr->nr;
 			pstore.creation = secs - pstore.creation;
-			if (pstore.expire <= secs)
+			if (pstore.expire <= (unsigned)secs)
 				pstore.expire = 0;
 			else
 				pstore.expire -= secs;

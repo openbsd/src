@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.35 2002/06/28 00:08:23 deraadt Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.36 2002/10/07 14:53:00 dhartmei Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -633,7 +633,7 @@ pf_fragcache(struct mbuf **m0, struct ip *h, struct pf_fragment *frag, int mff,
 
 				h = mtod(m, struct ip *);
 
-				KASSERT(m->m_len == h->ip_len - precut);
+				KASSERT((int)m->m_len == h->ip_len - precut);
 
 				h->ip_off += precut >> 3;
 				h->ip_len -= precut;
@@ -689,7 +689,7 @@ pf_fragcache(struct mbuf **m0, struct ip *h, struct pf_fragment *frag, int mff,
 					m->m_pkthdr.len = plen;
 				}
 				h = mtod(m, struct ip *);
-				KASSERT(m->m_len == h->ip_len - aftercut);
+				KASSERT((int)m->m_len == h->ip_len - aftercut);
 				h->ip_len -= aftercut;
 			} else {
 				hosed++;
@@ -841,7 +841,7 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct ifnet *ifp, u_short *reason)
 		return (PF_PASS);
 
 	/* Check for illegal packets */
-	if (hlen < sizeof(struct ip))
+	if (hlen < (int)sizeof(struct ip))
 		goto drop;
 
 	if (hlen > h->ip_len)

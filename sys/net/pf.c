@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.252 2002/10/07 13:23:45 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.253 2002/10/07 14:53:00 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -630,7 +630,7 @@ pf_purge_expired_states(void)
 	for (cur = RB_MIN(pf_state_tree, &tree_ext_gwy); cur; cur = next) {
 		next = RB_NEXT(pf_state_tree, &tree_ext_gwy, cur);
 
-		if (cur->state->expire <= time.tv_sec) {
+		if (cur->state->expire <= (unsigned)time.tv_sec) {
 			RB_REMOVE(pf_state_tree, &tree_ext_gwy, cur);
 
 			/* Need this key's peer (in the other tree) */
@@ -3587,7 +3587,8 @@ pf_pull_hdr(struct mbuf *m, int off, void *p, int len,
 	case AF_INET6: {
 		struct ip6_hdr *h = mtod(m, struct ip6_hdr *);
 		if (m->m_pkthdr.len < off + len ||
-		    (ntohs(h->ip6_plen) + sizeof(struct ip6_hdr)) < off + len) {
+		    (ntohs(h->ip6_plen) + sizeof(struct ip6_hdr)) <
+		    (unsigned)(off + len)) {
 			ACTION_SET(actionp, PF_DROP);
 			REASON_SET(reasonp, PFRES_SHORT);
 			return (NULL);
@@ -3833,7 +3834,7 @@ pf_route6(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp)
 	 * If the packet is too large for the outgoing interface,
 	 * send back an icmp6 error.
 	 */
-	if (m0->m_pkthdr.len <= ifp->if_mtu) {
+	if ((u_long)m0->m_pkthdr.len <= ifp->if_mtu) {
 		error = (*ifp->if_output)(ifp, m0, (struct sockaddr *)dst,
 		    NULL);
 	} else {
@@ -3876,7 +3877,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 		panic("non-M_PKTHDR is passed to pf_test");
 #endif
 
-	if (m->m_pkthdr.len < sizeof(*h)) {
+	if (m->m_pkthdr.len < (int)sizeof(*h)) {
 		action = PF_DROP;
 		REASON_SET(&reason, PFRES_SHORT);
 		log = 1;
@@ -3892,7 +3893,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 	h = mtod(m, struct ip *);
 
 	off = h->ip_hl << 2;
-	if (off < sizeof(*h)) {
+	if (off < (int)sizeof(*h)) {
 		action = PF_DROP;
 		REASON_SET(&reason, PFRES_SHORT);
 		log = 1;
@@ -4042,7 +4043,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 		panic("non-M_PKTHDR is passed to pf_test");
 #endif
 
-	if (m->m_pkthdr.len < sizeof(*h)) {
+	if (m->m_pkthdr.len < (int)sizeof(*h)) {
 		action = PF_DROP;
 		REASON_SET(&reason, PFRES_SHORT);
 		log = 1;
