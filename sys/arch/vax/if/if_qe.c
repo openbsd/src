@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qe.c,v 1.7 1995/12/01 19:37:59 ragge Exp $ */
+/*	$NetBSD: if_qe.c,v 1.8 1995/12/24 02:30:55 mycroft Exp $ */
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -495,7 +495,7 @@ qeinit(unit)
 	 * Take the interface out of reset, program the vector,
 	 * enable interrupts, and tell the world we are up.
 	 */
-	s = splimp();
+	s = splnet();
 	addr->qe_vector = sc->qe_intvec;
 	sc->addr = addr;
 	addr->qe_csr = QE_RCV_ENABLE | QE_INT_ENABLE | QE_XMIT_INT |
@@ -527,7 +527,7 @@ qestart(ifp)
 	int buf_addr, len, s;
 
 
-	s = splimp();
+	s = splnet();
 	/*
 	 * The deqna doesn't look at anything but the valid bit
 	 * to determine if it should transmit this packet. If you have
@@ -773,7 +773,7 @@ qeioctl(ifp, cmd, data)
 {
 	struct qe_softc *sc = qecd.cd_devs[ifp->if_unit];
 	struct ifaddr *ifa = (struct ifaddr *)data;
-	int s = splimp(), error = 0;
+	int s = splnet(), error = 0;
 
 	switch (cmd) {
 

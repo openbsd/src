@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qn.c,v 1.1.2.1 1995/11/10 16:39:12 chopps Exp $	*/
+/*	$NetBSD: if_qn.c,v 1.3 1995/12/24 02:30:02 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Mika Kortelainen
@@ -358,7 +358,7 @@ qnreset(sc)
 {
 	int s;
 
-	s = splimp();
+	s = splnet();
 	qnstop(sc);
 	qninit(sc);
 	splx(s);
@@ -866,7 +866,7 @@ qnioctl(ifp, command, data)
 #endif
 	int s, error = 0;
 
-	s = splimp();
+	s = splnet();
 
 	switch (command) {
 

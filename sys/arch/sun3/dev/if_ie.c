@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.5 1995/04/11 06:05:11 mycroft Exp $ */
+/*	$NetBSD: if_ie.c,v 1.6 1995/12/24 02:30:48 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -92,7 +92,7 @@
    shall have the I (IE_CMD_INTR) bit set in the command.  This way,
    when an interrupt arrives at ieintr(), it is immediately possible
    to tell what precisely caused it.  ANY OTHER command-sending
-   routines should run at splimp(), and should post an acknowledgement
+   routines should run at splnet(), and should post an acknowledgement
    to every interrupt they generate.
 */
 
@@ -1084,7 +1084,7 @@ ie_setupram(sc)
 	volatile struct ie_sys_ctl_block *scb;
 	int     s;
 
-	s = splimp();
+	s = splnet();
 
 	scp = sc->scp;
 	(sc->sc_bzero)((char *) scp, sizeof *scp);
@@ -1124,7 +1124,7 @@ void
 iereset(sc)
 	struct ie_softc *sc;
 {
-	int s = splimp();
+	int s = splnet();
 
 	printf("%s: reset\n", sc->sc_dev.dv_xname);
 
@@ -1191,7 +1191,7 @@ command_and_wait(sc, cmd, pcmd, mask)
 		/*
 		 * XXX
 		 * I don't think this timeout works on suns.
-		 * we are at splimp() in the loop, and the timeout
+		 * we are at splnet() in the loop, and the timeout
 		 * stuff runs at software spl (so it is masked off?).
 		 */
 
@@ -1413,7 +1413,7 @@ setup_bufs(sc)
 
 /*
  * Run the multicast setup command.
- * Called at splimp().
+ * Called at splnet().
  */
 static int
 mc_setup(sc, ptr)
@@ -1447,7 +1447,7 @@ mc_setup(sc, ptr)
  * This includes executing the CONFIGURE, IA-SETUP, and MC-SETUP commands,
  * starting the receiver unit, and clearing interrupts.
  *
- * THIS ROUTINE MUST BE CALLED AT splimp() OR HIGHER.
+ * THIS ROUTINE MUST BE CALLED AT splnet() OR HIGHER.
  */
 int
 ieinit(sc)
@@ -1550,7 +1550,7 @@ ieioctl(ifp, cmd, data)
 	struct ifreq *ifr = (struct ifreq *) data;
 	int     s, error = 0;
 
-	s = splimp();
+	s = splnet();
 
 	switch (cmd) {
 

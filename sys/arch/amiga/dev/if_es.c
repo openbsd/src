@@ -1,4 +1,4 @@
-/*	$NetBSD: if_es.c,v 1.7 1995/08/18 15:27:57 chopps Exp $	*/
+/*	$NetBSD: if_es.c,v 1.8 1995/12/24 02:29:59 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -257,7 +257,7 @@ esinit(sc)
 	union smcregs *smc = sc->sc_base;
 	int s;
 
-	s = splimp();
+	s = splnet();
 
 #ifdef ESDEBUG
 	if (ifp->if_flags & IFF_RUNNING)
@@ -305,7 +305,7 @@ esintr(sc)
 	int i;
 	u_short intsts, intact;
 	union smcregs *smc;
-	int s = splimp();
+	int s = splnet();
 
 	smc = sc->sc_base;
 #ifdef ESDEBUG
@@ -934,7 +934,7 @@ esioctl(ifp, command, data)
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
-	s = splimp();
+	s = splnet();
 
 	switch (command) {
 
@@ -1035,7 +1035,7 @@ esreset(sc)
 {
 	int s;
 
-	s = splimp();
+	s = splnet();
 	esstop(sc);
 	esinit(sc);
 	splx(s);

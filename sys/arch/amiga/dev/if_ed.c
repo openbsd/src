@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.16 1995/10/01 19:30:22 chopps Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.17 1995/12/24 02:29:57 mycroft Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -277,7 +277,7 @@ ed_reset(sc)
 {
 	int s;
 
-	s = splimp();
+	s = splnet();
 	ed_stop(sc);
 	ed_init(sc);
 	splx(s);
@@ -337,7 +337,7 @@ ed_init(sc)
 	 * This init procedure is "mandatory"...don't change what or when
 	 * things happen.
 	 */
-	s = splimp();
+	s = splnet();
 
 	/* Reset transmitter flags. */
 	sc->xmit_busy = 0;
@@ -476,7 +476,7 @@ ed_xmit(sc)
 /*
  * Start output on interface.
  * We make two assumptions here:
- *  1) that the current priority is set to splimp _before_ this code
+ *  1) that the current priority is set to splnet _before_ this code
  *     is called *and* is returned to the appropriate priority after
  *     return
  *  2) that the IFF_OACTIVE flag is checked before this code is called
@@ -850,7 +850,7 @@ ed_ioctl(ifp, command, data)
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
-	s = splimp();
+	s = splnet();
 
 	switch (command) {
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae.c,v 1.36 1995/09/24 14:13:58 briggs Exp $	*/
+/*	$NetBSD: if_ae.c,v 1.37 1995/12/24 02:30:37 mycroft Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -451,7 +451,7 @@ aereset(sc)
 {
 	int     s;
 
-	s = splimp();
+	s = splnet();
 	aestop(sc);
 	aeinit(sc);
 	splx(s);
@@ -664,7 +664,7 @@ ae_xmit(sc)
 /*
  * Start output on interface.
  * We make two assumptions here:
- *  1) that the current priority is set to splimp _before_ this code
+ *  1) that the current priority is set to splnet _before_ this code
  *     is called *and* is returned to the appropriate priority after
  *     return
  *  2) that the IFF_OACTIVE flag is checked before this code is called
@@ -1025,7 +1025,7 @@ aeioctl(ifp, cmd, data)
 	struct ifreq *ifr = (struct ifreq *) data;
 	int     s, error = 0;
 
-	s = splimp();
+	s = splnet();
 
 	switch (cmd) {
 

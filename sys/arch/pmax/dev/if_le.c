@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.16 1995/08/13 00:07:17 mycroft Exp $	*/
+/*	$NetBSD: if_le.c,v 1.17 1995/12/24 02:30:42 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -528,7 +528,7 @@ leinit(unit)
 	int s;
 
 	if ((ifp->if_flags & IFF_RUNNING) == 0) {
-		s = splimp();
+		s = splnet();
 		ifp->if_flags |= IFF_RUNNING;
 		lereset(unit);
 	        lestart(ifp);
@@ -968,7 +968,7 @@ leioctl(ifp, cmd, data)
 	volatile struct lereg1 *ler1 = le->sc_r1;
 	int s, error = 0;
 
-	s = splimp();
+	s = splnet();
 	switch (cmd) {
 
 	case SIOCSIFADDR:

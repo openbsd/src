@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.10 1995/12/01 19:37:55 ragge Exp $	*/
+/*	$NetBSD: if_de.c,v 1.11 1995/12/24 02:30:52 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
@@ -345,7 +345,7 @@ deinit(unit)
 	}
 
 	/* start up the board (rah rah) */
-	s = splimp();
+	s = splnet();
 	ds->ds_rindex = ds->ds_xindex = ds->ds_xfree = ds->ds_nxmit = 0;
 	ds->ds_if.if_flags |= IFF_RUNNING;
 	addr->pclow = PCSR0_INTE;		/* avoid interlock */
@@ -584,7 +584,7 @@ deioctl(ifp, cmd, data)
 {
 	register struct ifaddr *ifa = (struct ifaddr *)data;
 	register struct de_softc *ds = decd.cd_devs[ifp->if_unit];
-	int s = splimp(), error = 0;
+	int s = splnet(), error = 0;
 
 	switch (cmd) {
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bah.c,v 1.12 1995/10/09 15:20:25 chopps Exp $ */
+/*	$NetBSD: if_bah.c,v 1.13 1995/12/24 02:29:55 mycroft Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -309,7 +309,7 @@ bah_init(sc)
 	ifp = &sc->sc_arccom.ac_if;
 
 	if ((ifp->if_flags & IFF_RUNNING) == 0) {
-		s = splimp();
+		s = splnet();
 		ifp->if_flags |= IFF_RUNNING;
 		bah_reset(sc);
 		bah_start(ifp);
@@ -548,7 +548,7 @@ bah_start(ifp)
 	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		return;
 
-	s = splimp();
+	s = splnet();
 
 	if (sc->sc_tx_fillcount >= 2) {
 		splx(s);
@@ -643,7 +643,7 @@ bah_start(ifp)
 	sc->sc_retransmits[buffer] = (m->m_flags & M_BCAST) ? 1 : 5;
 
 	/* actually transmit the packet */
-	s = splimp();
+	s = splnet();
 
 	if (++sc->sc_tx_fillcount > 1) { 
 		/*
@@ -780,7 +780,7 @@ bah_srint(sc, dummy)
 	head = 0;
 	ifp = &sc->sc_arccom.ac_if;
 
-	s = splimp();
+	s = splnet();
 	if (sc->sc_rx_fillcount <= 1)
 		buffer = sc->sc_rx_act ^ 1;
 	else {
@@ -909,7 +909,7 @@ cleanup:
 	if (head == NULL)
 		m_freem(head);
 
-	s = splimp();
+	s = splnet();
 
 	if (--sc->sc_rx_fillcount == 1) {
 
@@ -1152,7 +1152,7 @@ bah_ioctl(ifp, command, data)
 	error = 0;
 	sc = bahcd.cd_devs[ifp->if_unit];
 	ifa = (struct ifaddr *)data;
-	s = splimp();
+	s = splnet();
 
 #if defined(BAH_DEBUG) && (BAH_DEBUG > 2) 
 	printf("%s: ioctl() called, cmd = 0x%x\n",
@@ -1215,7 +1215,7 @@ bah_ioctl(ifp, command, data)
  * and the int handler will have to decide not to retransmit (in case
  * retransmission is implemented).
  *
- * This one assumes being called inside splimp(), and that imp >= ipl2
+ * This one assumes being called inside splnet(), and that imp >= ipl2
  */
 
 void

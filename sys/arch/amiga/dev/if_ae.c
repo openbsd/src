@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae.c,v 1.3 1995/10/07 18:12:42 chopps Exp $	*/
+/*	$NetBSD: if_ae.c,v 1.4 1995/12/24 02:29:52 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Bernd Ernesti and Klaus Burkert. All rights reserved.
@@ -338,7 +338,7 @@ aereset(sc)
 {
 	int s;
 
-	s = splimp();
+	s = splnet();
 	aeinit(sc);
 	splx(s);
 }
@@ -958,7 +958,7 @@ aeioctl(ifp, cmd, data)
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
-	s = splimp();
+	s = splnet();
 
 	switch (cmd) {
 
