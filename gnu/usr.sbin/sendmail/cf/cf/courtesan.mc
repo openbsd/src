@@ -3,7 +3,8 @@ divert(-1)
 # Sendmail 8 configuration file for courtesan.com.
 #
 
-VERSIONID(`$OpenBSD: courtesan.mc,v 1.1 2000/04/02 19:48:11 millert Exp $')
+divert(0)dnl
+VERSIONID(`$OpenBSD: courtesan.mc,v 1.2 2000/05/15 03:38:25 millert Exp $')
 OSTYPE(openbsd)
 dnl
 dnl First, we override some default values
@@ -20,8 +21,13 @@ FEATURE(redirect)dnl
 MASQUERADE_AS(courtesan.com)dnl
 FEATURE(masquerade_envelope)dnl
 FEATURE(mailnametable)dnl
+dnl Spam blocking features
 FEATURE(access_db)dnl
 FEATURE(blacklist_recipients)dnl
+FEATURE(dnsbl, `rbl.maps.vix.com', `Rejected - see http://www.mail-abuse.org/rbl/')dnl
+FEATURE(dnsbl, `dul.maps.vix.com', `Dialup - see http://www.mail-abuse.org/dul/')dnl
+FEATURE(dnsbl, `relays.mail-abuse.org', `Open spam relay - see http://www.mail-abuse.org/rss/')dnl
+dnl FEATURE(dnsbl, `relays.orbs.org', `Open spam relay - see http://www.orbs.org/')dnl
 dnl
 dnl Then, we enumerate which mailers we support
 MAILER(local)

@@ -4,7 +4,8 @@ divert(-1)
 # an RFC1597 internal net (ie: no direct connection to outside world).
 #
 
-VERSIONID(`$OpenBSD: courtesan-nonet.mc,v 1.1 2000/04/02 19:48:11 millert Exp $')
+divert(0)dnl
+VERSIONID(`$OpenBSD: courtesan-nonet.mc,v 1.2 2000/05/15 03:38:25 millert Exp $')
 OSTYPE(openbsd)
 dnl
 dnl Pass everything to xerxes.courtesan.com for processing
