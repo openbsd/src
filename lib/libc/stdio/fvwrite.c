@@ -35,10 +35,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: fvwrite.c,v 1.4 1996/10/26 08:16:07 tholo Exp $";
+static char rcsid[] = "$OpenBSD: fvwrite.c,v 1.5 1997/11/29 19:54:48 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 #include "local.h"
@@ -109,6 +110,21 @@ __sfvwrite(fp, uio)
 		 */
 		do {
 			GETIOV(;);
+			if ((fp->_flags & (__SALC | __SSTR)) ==
+			    (__SALC | __SSTR) && fp->_w < len) {
+				size_t blen = fp->_p - fp->_bf._base;
+
+				/*
+				 * Alloc an extra 128 bytes (+ 1 for NULL)
+				 * so we don't call realloc(3) so often.
+				 */
+				fp->_w = len + 128;
+				fp->_bf._size = blen + len + 128;
+				/* XXX - check return val */
+				fp->_bf._base =
+				    realloc(fp->_bf._base, fp->_bf._size + 1);
+				fp->_p = fp->_bf._base + blen;
+			}
 			w = fp->_w;
 			if (fp->_flags & __SSTR) {
 				if (len < w)

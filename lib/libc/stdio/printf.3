@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printf.3,v 1.4 1997/06/30 03:22:08 millert Exp $
+.\"	$OpenBSD: printf.3,v 1.5 1997/11/29 19:54:49 millert Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -35,6 +35,8 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
+.\"     @(#)printf.3	8.1 (Berkeley) 6/4/93
+.\"
 .Dd June 4, 1993
 .Dt PRINTF 3
 .Os
@@ -43,10 +45,12 @@
 .Nm fprintf ,
 .Nm sprintf ,
 .Nm snprintf ,
+.Nm asprintf ,
 .Nm vprintf ,
 .Nm vfprintf,
 .Nm vsprintf ,
-.Nm vsnprintf
+.Nm vsnprintf ,
+.Nm vasprintf
 .Nd formatted output conversion
 .Sh SYNOPSIS
 .Fd #include <stdio.h>
@@ -58,19 +62,19 @@
 .Fn sprintf "char *str" "const char *format" ...
 .Ft int
 .Fn snprintf "char *str" "size_t size" "const char *format" ...
-.\" .Ft int
-.\" .Fn smprintf "const char *format" ...
+.Ft int
+.Fn asprintf "char **ret" "const char *format" ...
 .Fd #include <stdarg.h>
 .Ft int
 .Fn vprintf "const char *format" "va_list ap"
 .Ft int
 .Fn vfprintf "FILE *stream" "const char *format" "va_list ap"
 .Ft int
-.Fn vsprintf "char *str" "char *format" "va_list ap"
+.Fn vsprintf "char *str" "const char *format" "va_list ap"
 .Ft int
 .Fn vsnprintf "char *str" "size_t size" "const char *format" "va_list ap"
-.\" .Ft int
-.\" .Fn vsmprintf "const char *format" "va_list ap"
+.Ft int
+.Fn vasprintf "char **ret" "const char *format" "va_list ap"
 .Sh DESCRIPTION
 The
 .Fn printf
@@ -94,45 +98,50 @@ write output to the given output
 and
 .Fn vsnprintf
 write to the character string
-.Fa str .
-.\" .IR str ;
-.\" and
-.\" .I smprintf
-.\" and
-.\" .I vsmprintf
-.\" dynamically allocate a new string with
-.\" .IR malloc .
+.Fa str ;
+.Fn asprintf
+and
+.Fn vasprintf
+write to a dynamically allocated string that is stored in
+.Fa ret .
+.Pp
 These functions write the output under the control of a
 .Fa format
 string that specifies how subsequent arguments
 (or arguments accessed via the variable-length argument facilities of
 .Xr stdarg 3 )
 are converted for output.
-.\" Except for
-.\" .I smprintf
-.\" and
-.\" .IR vsmprintf ,
-.\" all of these functions return
+.Pp
 These functions return
 the number of characters printed
 (not including the trailing
 .Ql \e0
 used to end output to strings).
-.\" .I Smprintf
-.\" and
-.\" .I vsmprintf
-.\" return a pointer to a string of an appropriate length;
-.\" this pointer should be passed to
-.\" .I free
-.\" to release the associated storage
-.\" when it is no longer needed.
-.\" If sufficient space is not avaliable,
-.\" .I smprintf
-.\" and
-.\" .I vsmprintf
-.\" will return
-.\" .SM
-.\" .BR
+.Fn Snprintf
+and
+.Fn vsnprintf
+will return -1 if the
+.Fa size
+parameter is 0.
+.Pp
+.Fn Asprintf
+and
+.Fn vasprintf
+return a pointer to a buffer sufficiently large to hold the
+string in the
+.Fa ret
+argument;
+This pointer should be passed to
+.Xr free 3
+to release the allocated storage when it is no longer needed.
+If sufficient space cannot be allocated,
+.Fn asprintf
+and
+.Fn vasprintf
+will return -1 and set
+.Fa ret
+to be a NULL pointer.
+.Pp
 .Fn Snprintf
 and
 .Fn vsnprintf
@@ -147,6 +156,7 @@ if the return value is greater than or equal to the
 .Fa size
 argument, the string was too short
 and some of the printed characters were discarded.
+.Pp
 .Fn Sprintf
 and
 .Fn vsprintf
@@ -180,7 +190,6 @@ Arguments are numbered starting at
 .Cm 1 .
 If unaccessed arguments in the format string are interspersed with
 ones that are accessed the results will be indeterminate.
-
 .It
 Zero or more of the following flags:
 .Bl -hyphen
@@ -189,7 +198,7 @@ A
 .Cm #
 character
 specifying that the value should be converted to an ``alternate form''.
-For 
+For
 .Cm c ,
 .Cm d ,
 .Cm i ,
@@ -199,7 +208,7 @@ For
 and
 .Cm u ,
 conversions, this option has no effect.
-For 
+For
 .Cm o
 conversions, the precision of the number is increased to force the first
 character of the output string to a zero (except if a zero value is printed
@@ -239,7 +248,7 @@ For all conversions except
 .Cm n ,
 the converted value is padded on the left with zeros rather than blanks.
 If a precision is given with a numeric conversion
-.Pf ( Mc d ,
+.Pf ( Cm d ,
 .Cm i ,
 .Cm o ,
 .Cm u ,
@@ -615,6 +624,14 @@ The functions
 and
 .Fn vsnprintf
 are new to this release.
+.Pp
+The functions
+.Fn asprintf
+and
+.Fn vasprintf
+first appeared in the GNU C library.  This implementation first appeared in
+.Bx Open
+2.3.
 .Sh BUGS
 The conversion formats
 .Cm \&%D ,
@@ -649,6 +666,12 @@ callers must be careful not to overflow the actual space;
 this is often impossible to assure.
 For safety, programmers should use the
 .Fn snprintf
-interface instead.
-Unfortunately, this interface is not available on older
-systems.
+and
+.Fn vasprintf
+family of interfaces instead.
+Unfortunately, the
+.Fn snprintf
+interface is not available on older
+systems and the
+.Fn vasprintf
+interface is not portable.
