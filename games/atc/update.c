@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.8 2003/06/03 03:01:38 millert Exp $	*/
+/*	$OpenBSD: update.c,v 1.9 2004/11/29 08:52:28 jsg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -45,15 +45,14 @@
 #if 0
 static char sccsid[] = "@(#)update.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: update.c,v 1.8 2003/06/03 03:01:38 millert Exp $";
+static char rcsid[] = "$OpenBSD: update.c,v 1.9 2004/11/29 08:52:28 jsg Exp $";
 #endif
 #endif /* not lint */
 
 #include "include.h"
 
 void
-update(dummy)
-	int dummy;
+update(int dummy)
 {
 	int	i, dir_diff, unclean;
 	PLANE	*pp, *p1, *p2;
@@ -219,8 +218,7 @@ update(dummy)
 }
 
 const char *
-command(pp)
-	PLANE	*pp;
+command(PLANE *pp)
 {
 	static char	buf[50], *bp, *comm_start;
 
@@ -254,8 +252,7 @@ command(pp)
 }
 
 char
-name(p)
-	const PLANE	*p;
+name(const PLANE *p)
 {
 	if (p->plane_type == 0)
 		return ('A' + p->plane_no);
@@ -264,8 +261,7 @@ name(p)
 }
 
 int
-number(l)
-	char l;
+number(char l)
 {
 	if (l < 'a' && l > 'z' && l < 'A' && l > 'Z')
 		return (-1);
@@ -276,7 +272,7 @@ number(l)
 }
 
 int
-next_plane()
+next_plane(void)
 {
 	static int	last_plane = -1;
 	PLANE		*pp;
@@ -305,7 +301,7 @@ next_plane()
 }
 
 int
-addplane()
+addplane(void)
 {
 	PLANE	p, *pp, *p1;
 	int	i, num_starts, close, rnd, rnd2, pnum;
@@ -376,8 +372,7 @@ addplane()
 }
 
 PLANE	*
-findplane(n)
-	int n;
+findplane(int n)
 {
 	PLANE	*pp;
 
@@ -391,9 +386,7 @@ findplane(n)
 }
 
 int
-too_close(p1, p2, dist)
-	const PLANE	*p1, *p2;
-	int	dist;
+too_close(const PLANE *p1, const PLANE *p2, int dist)
 {
 	if (ABS(p1->altitude - p2->altitude) <= dist &&
 	    ABS(p1->xpos - p2->xpos) <= dist && ABS(p1->ypos - p2->ypos) <= dist)
@@ -403,8 +396,7 @@ too_close(p1, p2, dist)
 }
 
 int
-dir_deg(d)
-	int d;
+dir_deg(int d)
 {
 	switch (d) {
 	case 0: return (0);

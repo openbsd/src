@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.11 2003/06/03 03:01:38 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.12 2004/11/29 08:52:28 jsg Exp $	*/
 /*	$NetBSD: main.c,v 1.4 1995/04/27 21:22:25 mycroft Exp $	*/
 
 /*-
@@ -52,7 +52,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.11 2003/06/03 03:01:38 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.12 2004/11/29 08:52:28 jsg Exp $";
 #endif
 #endif /* not lint */
 
@@ -60,9 +60,7 @@ static char rcsid[] = "$OpenBSD: main.c,v 1.11 2003/06/03 03:01:38 millert Exp $
 #include "pathnames.h"
 
 int
-main(ac, av)
-	int	ac;
-	char	*av[];
+main(int ac, char *av[])
 {
 	int			f_usage = 0, f_list = 0, f_showscore = 0;
 	int			f_printpath = 0;
@@ -230,8 +228,7 @@ main(ac, av)
 }
 
 int
-read_file(s)
-	const char	*s;
+read_file(const char *s)
 {
 	extern FILE	*yyin;
 	int		retval;
@@ -252,7 +249,7 @@ read_file(s)
 }
 
 const char	*
-default_game()
+default_game(void)
 {
 	FILE		*fp;
 	static char	file[256];
@@ -281,8 +278,7 @@ default_game()
 }
 
 const char	*
-okay_game(s)
-	const char	*s;
+okay_game(const char *s)
 {
 	FILE		*fp;
 	static char	file[256];
@@ -321,7 +317,7 @@ okay_game(s)
 }
 
 int
-list_games()
+list_games(void)
 {
 	FILE		*fp;
 	char		line[256], games[256];

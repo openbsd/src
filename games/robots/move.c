@@ -1,4 +1,4 @@
-/*	$OpenBSD: move.c,v 1.7 2003/06/03 03:01:41 millert Exp $	*/
+/*	$OpenBSD: move.c,v 1.8 2004/11/29 08:52:28 jsg Exp $	*/
 /*	$NetBSD: move.c,v 1.4 1995/04/22 10:08:58 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)move.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: move.c,v 1.7 2003/06/03 03:01:41 millert Exp $";
+static char rcsid[] = "$OpenBSD: move.c,v 1.8 2004/11/29 08:52:28 jsg Exp $";
 #endif
 #endif /* not lint */
 
@@ -47,7 +47,7 @@ static char rcsid[] = "$OpenBSD: move.c,v 1.7 2003/06/03 03:01:41 millert Exp $"
  *	Get and execute a move from the player
  */
 void
-get_move()
+get_move(void)
 {
 	int	c;
 	int retval;
@@ -230,7 +230,7 @@ ret:
  * being eaten?
  */
 bool
-must_telep()
+must_telep(void)
 {
 	int		x, y;
 	static COORD	newpos;
@@ -262,8 +262,7 @@ must_telep()
  *	Execute a move
  */
 bool
-do_move(dy, dx)
-	int	dy, dx;
+do_move(int dy, int dx)
 {
 	static COORD	newpos;
 
@@ -298,8 +297,7 @@ do_move(dy, dx)
  *	Player would get eaten at this place
  */
 bool
-eaten(pos)
-	COORD	*pos;
+eaten(COORD *pos)
 {
 	int	x, y;
 
@@ -321,7 +319,7 @@ eaten(pos)
  *	Reset the count variables
  */
 void
-reset_count()
+reset_count(void)
 {
 	Count = 0;
 	Running = FALSE;
@@ -334,7 +332,7 @@ reset_count()
  *	See if we are jumping, i.e., we should not refresh.
  */
 bool
-jumping()
+jumping(void)
 {
 	return (Jump && (Count || Running || Waiting));
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.14 2003/09/26 15:52:16 deraadt Exp $	*/
+/*	$OpenBSD: log.c,v 1.15 2004/11/29 08:52:28 jsg Exp $	*/
 /*	$NetBSD: log.c,v 1.3 1995/03/21 15:04:21 cgd Exp $	*/
 
 /*-
@@ -46,7 +46,7 @@
 #if 0
 static char sccsid[] = "@(#)log.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: log.c,v 1.14 2003/09/26 15:52:16 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: log.c,v 1.15 2004/11/29 08:52:28 jsg Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,8 +56,7 @@ static char rcsid[] = "$OpenBSD: log.c,v 1.14 2003/09/26 15:52:16 deraadt Exp $"
 static FILE *score_fp;
 
 int
-compar(va, vb)
-	const void *va, *vb;
+compar(const void *va, const void *vb)
 {
 	const SCORE *a, *b;
 
@@ -80,8 +79,7 @@ compar(va, vb)
 #define SEC(t)		((t) % SECAMIN)
 
 const char	*
-timestr(t)
-	int t;
+timestr(int t)
 {
 	static char	s[80];
 
@@ -101,7 +99,7 @@ timestr(t)
 }
 
 int
-open_score_file()
+open_score_file(void)
 {
 	mode_t old_mode;
 	int score_fd;
@@ -126,8 +124,7 @@ open_score_file()
 }
 
 int
-log_score(list_em)
-	int list_em;
+log_score(int list_em)
 {
 	int		i, num_scores = 0, good, changed = 0, found = 0;
 	struct passwd	*pw;
@@ -263,8 +260,7 @@ log_score(list_em)
 }
 
 void
-log_score_quit(dummy)
-	int dummy;
+log_score_quit(int dummy)
 {
 	(void)log_score(0);
 	exit(0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: move_robs.c,v 1.6 2003/06/03 03:01:41 millert Exp $	*/
+/*	$OpenBSD: move_robs.c,v 1.7 2004/11/29 08:52:28 jsg Exp $	*/
 /*	$NetBSD: move_robs.c,v 1.3 1995/04/22 10:08:59 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)move_robs.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: move_robs.c,v 1.6 2003/06/03 03:01:41 millert Exp $";
+static char rcsid[] = "$OpenBSD: move_robs.c,v 1.7 2004/11/29 08:52:28 jsg Exp $";
 #endif
 #endif /* not lint */
 
@@ -45,7 +45,7 @@ static char rcsid[] = "$OpenBSD: move_robs.c,v 1.6 2003/06/03 03:01:41 millert E
  *	Move the robots around
  */
 void
-move_robots()
+move_robots(void)
 {
 	COORD	*rp;
 
@@ -117,8 +117,7 @@ move_robots()
  *	Add a score to the overall point total
  */
 void
-add_score(add)
-	int	add;
+add_score(int add)
 {
 	Score += add;
 	move(Y_SCORE, X_SCORE);
@@ -130,8 +129,7 @@ add_score(add)
  *	Return the sign of the number
  */
 int
-sign(n)
-	int	n;
+sign(int n)
 {
 	if (n < 0)
 		return -1;

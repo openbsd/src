@@ -1,4 +1,4 @@
-/*	$OpenBSD: score.c,v 1.8 2003/06/03 03:01:41 millert Exp $	*/
+/*	$OpenBSD: score.c,v 1.9 2004/11/29 08:52:29 jsg Exp $	*/
 /*	$NetBSD: score.c,v 1.3 1995/04/22 10:09:12 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)score.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: score.c,v 1.8 2003/06/03 03:01:41 millert Exp $";
+static char rcsid[] = "$OpenBSD: score.c,v 1.9 2004/11/29 08:52:29 jsg Exp $";
 #endif
 #endif /* not lint */
 
@@ -57,8 +57,7 @@ static SCORE	Top[MAXSCORES];
  *	top list.
  */
 void
-score(score_wfd)
-     int score_wfd;
+score(int score_wfd)
 {
 	int	inf = score_wfd;
 	SCORE	*scp;
@@ -137,8 +136,7 @@ score(score_wfd)
 }
 
 void
-set_name(scp)
-	SCORE	*scp;
+set_name(SCORE *scp)
 {
 	PASSWD	*pp;
 
@@ -152,8 +150,7 @@ set_name(scp)
  *	Compare two scores.
  */
 int
-cmp_sc(s1, s2)
-	const void	*s1, *s2;
+cmp_sc(const void *s1, const void *s2)
 {
 	return ((SCORE *)s2)->s_score - ((SCORE *)s1)->s_score;
 }
@@ -163,7 +160,7 @@ cmp_sc(s1, s2)
  *	Show the score list for the '-s' option.
  */
 void
-show_score()
+show_score(void)
 {
 	SCORE	*scp;
 	int	inf;

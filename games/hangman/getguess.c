@@ -1,4 +1,4 @@
-/*	$OpenBSD: getguess.c,v 1.5 2003/06/03 03:01:40 millert Exp $	*/
+/*	$OpenBSD: getguess.c,v 1.6 2004/11/29 08:52:28 jsg Exp $	*/
 /*	$NetBSD: getguess.c,v 1.5 1995/03/23 08:32:43 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getguess.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: getguess.c,v 1.5 2003/06/03 03:01:40 millert Exp $";
+static char rcsid[] = "$OpenBSD: getguess.c,v 1.6 2004/11/29 08:52:28 jsg Exp $";
 #endif
 #endif /* not lint */
 
@@ -46,7 +46,7 @@ static char rcsid[] = "$OpenBSD: getguess.c,v 1.5 2003/06/03 03:01:40 millert Ex
  *	Get another guess
  */
 void
-getguess()
+getguess(void)
 {
 	int	i;
 	int	ch;
@@ -92,7 +92,7 @@ getguess()
  *	Read a character from the input
  */
 int
-readch()
+readch(void)
 {
 	int	cnt;
 	char	ch;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: play_level.c,v 1.7 2003/06/03 03:01:41 millert Exp $	*/
+/*	$OpenBSD: play_level.c,v 1.8 2004/11/29 08:52:28 jsg Exp $	*/
 /*	$NetBSD: play_level.c,v 1.3 1995/04/22 10:09:03 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)play_level.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: play_level.c,v 1.7 2003/06/03 03:01:41 millert Exp $";
+static char rcsid[] = "$OpenBSD: play_level.c,v 1.8 2004/11/29 08:52:28 jsg Exp $";
 #endif
 #endif /* not lint */
 
@@ -45,7 +45,7 @@ static char rcsid[] = "$OpenBSD: play_level.c,v 1.7 2003/06/03 03:01:41 millert 
  *	Let the player play the current level
  */
 void
-play_level()
+play_level(void)
 {
 	COORD	*cp;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: list.c,v 1.5 2003/11/08 19:17:27 jmc Exp $	*/
+/*	$OpenBSD: list.c,v 1.6 2004/11/29 08:52:28 jsg Exp $	*/
 /*	$NetBSD: list.c,v 1.3 1995/03/21 15:04:18 cgd Exp $	*/
 
 /*-
@@ -46,14 +46,14 @@
 #if 0
 static char sccsid[] = "@(#)list.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: list.c,v 1.5 2003/11/08 19:17:27 jmc Exp $";
+static char rcsid[] = "$OpenBSD: list.c,v 1.6 2004/11/29 08:52:28 jsg Exp $";
 #endif
 #endif /* not lint */
 
 #include "include.h"
 
 PLANE	*
-newplane()
+newplane(void)
 {
 	PLANE *p;
 	
@@ -63,9 +63,7 @@ newplane()
 }
 
 void
-append(l, p)
-	LIST	*l;
-	PLANE	*p;
+append(LIST *l, PLANE *p)
 {
 	PLANE 	*q = NULL, *r = NULL;
 
@@ -102,9 +100,7 @@ append(l, p)
 }
 
 void
-delete(l, p)
-	LIST	*l;
-	PLANE	*p;
+delete(LIST *l, PLANE *p)
 {
 	if (l->head == NULL)
 		loser(p, "deleted a non-existent plane! Get help!");

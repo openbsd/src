@@ -1,4 +1,4 @@
-/*	$OpenBSD: worms.c,v 1.16 2004/01/08 20:38:29 millert Exp $	*/
+/*	$OpenBSD: worms.c,v 1.17 2004/11/29 08:52:29 jsg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)worms.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: worms.c,v 1.16 2004/01/08 20:38:29 millert Exp $";
+static char rcsid[] = "$OpenBSD: worms.c,v 1.17 2004/11/29 08:52:29 jsg Exp $";
 #endif
 #endif /* not lint */
 
@@ -183,9 +183,7 @@ void	 nomem(void);
 void	 onsig(int);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int x, y, h, n;
 	struct worm *w;
@@ -341,14 +339,13 @@ main(argc, argv)
 }
 
 void
-onsig(signo)
-	int signo;
+onsig(int signo)
 {
 	sig_caught = 1;
 }
 
 void
-nomem()
+nomem(void)
 {
 	errx(1, "not enough memory.");
 }

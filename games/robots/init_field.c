@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_field.c,v 1.5 2003/06/03 03:01:40 millert Exp $	*/
+/*	$OpenBSD: init_field.c,v 1.6 2004/11/29 08:52:28 jsg Exp $	*/
 /*	$NetBSD: init_field.c,v 1.3 1995/04/22 10:08:52 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)init_field.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: init_field.c,v 1.5 2003/06/03 03:01:40 millert Exp $";
+static char rcsid[] = "$OpenBSD: init_field.c,v 1.6 2004/11/29 08:52:28 jsg Exp $";
 #endif
 #endif /* not lint */
 
@@ -46,7 +46,7 @@ static char rcsid[] = "$OpenBSD: init_field.c,v 1.5 2003/06/03 03:01:40 millert 
  *	and initialize all the global variables.
  */
 void
-init_field()
+init_field(void)
 {
 	int	i;
 	static bool	first = TRUE;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.7 2003/06/03 03:01:40 millert Exp $	*/
+/*	$OpenBSD: setup.c,v 1.8 2004/11/29 08:52:28 jsg Exp $	*/
 /*	$NetBSD: setup.c,v 1.3 1995/03/23 08:32:59 cgd Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: setup.c,v 1.7 2003/06/03 03:01:40 millert Exp $";
+static char rcsid[] = "$OpenBSD: setup.c,v 1.8 2004/11/29 08:52:28 jsg Exp $";
 #endif
 #endif /* not lint */
 
@@ -46,7 +46,7 @@ static char rcsid[] = "$OpenBSD: setup.c,v 1.7 2003/06/03 03:01:40 millert Exp $
  *	Set up the strings on the screen.
  */
 void
-setup()
+setup(void)
 {
 	const char		*const *sp;
 	static struct stat	sbuf;

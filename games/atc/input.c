@@ -1,4 +1,4 @@
-/*	$OpenBSD: input.c,v 1.9 2003/06/03 03:01:38 millert Exp $	*/
+/*	$OpenBSD: input.c,v 1.10 2004/11/29 08:52:28 jsg Exp $	*/
 /*	$NetBSD: input.c,v 1.4 1995/04/27 21:22:24 mycroft Exp $	*/
 
 /*-
@@ -46,7 +46,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: input.c,v 1.9 2003/06/03 03:01:38 millert Exp $";
+static char rcsid[] = "$OpenBSD: input.c,v 1.10 2004/11/29 08:52:28 jsg Exp $";
 #endif
 #endif /* not lint */
 
@@ -173,7 +173,7 @@ int	tval;
 int	dest_type, dest_no, dir;
 
 int
-pop()
+pop(void)
 {
 	if (level == 0)
 		return (-1);
@@ -188,7 +188,7 @@ pop()
 }
 
 void
-rezero()
+rezero(void)
 {
 	iomove(0);
 
@@ -201,8 +201,7 @@ rezero()
 }
 
 void
-push(ruleno, ch)
-	int ruleno, ch;
+push(int ruleno, int ch)
 {
 	int	newstate, newpos;
 
@@ -224,7 +223,7 @@ push(ruleno, ch)
 }
 
 int
-getcommand()
+getcommand(void)
 {
 	int	c, i, done;
 	const char	*s, *(*func)(char);
@@ -283,7 +282,7 @@ getcommand()
 }
 
 void
-noise()
+noise(void)
 {
 	if (makenoise)
 		putchar('\07');
@@ -291,7 +290,7 @@ noise()
 }
 
 int
-gettoken()
+gettoken(void)
 {
 	while ((tval = getAChar()) == REDRAWTOKEN)
 	{
@@ -307,8 +306,7 @@ gettoken()
 }
 
 const char	*
-setplane(c)
-	char c;
+setplane(char c)
 {
 	PLANE	*pp;
 
@@ -321,8 +319,7 @@ setplane(c)
 }
 
 const char	*
-turn(c)
-	char c;
+turn(char c)
 {
 	if (p.altitude == 0)
 		return ("Planes at airports may not change direction");
@@ -330,8 +327,7 @@ turn(c)
 }
 
 const char	*
-circle(c)
-	char c;
+circle(char c)
 {
 	if (p.altitude == 0)
 		return ("Planes cannot circle on the ground");
@@ -340,8 +336,7 @@ circle(c)
 }
 
 const char	*
-left(c)
-	char c;
+left(char c)
 {
 	dir = D_LEFT;
 	p.new_dir = p.dir - 1;
@@ -351,8 +346,7 @@ left(c)
 }
 
 const char	*
-right(c)
-	char c;
+right(char c)
 {
 	dir = D_RIGHT;
 	p.new_dir = p.dir + 1;
@@ -362,8 +356,7 @@ right(c)
 }
 
 const char	*
-Left(c)
-	char c;
+Left(char c)
 {
 	p.new_dir = p.dir - 2;
 	if (p.new_dir < 0)
@@ -372,8 +365,7 @@ Left(c)
 }
 
 const char	*
-Right(c)
-	char c;
+Right(char c)
 {
 	p.new_dir = p.dir + 2;
 	if (p.new_dir >= MAXDIR)
@@ -382,8 +374,7 @@ Right(c)
 }
 
 const char	*
-delayb(c)
-	char c;
+delayb(char c)
 {
 	int	xdiff, ydiff;
 
@@ -432,48 +423,42 @@ delayb(c)
 }
 
 const char	*
-beacon(c)
-	char c;
+beacon(char c)
 {
 	dest_type = T_BEACON;
 	return (NULL);
 }
 
 const char	*
-ex_it(c)
-	char c;
+ex_it(char c)
 {
 	dest_type = T_EXIT;
 	return (NULL);
 }
 
 const char	*
-airport(c)
-	char c;
+airport(char c)
 {
 	dest_type = T_AIRPORT;
 	return (NULL);
 }
 
 const char	*
-climb(c)
-	char c;
+climb(char c)
 {
 	dir = D_UP;
 	return (NULL);
 }
 
 const char	*
-descend(c)
-	char c;
+descend(char c)
 {
 	dir = D_DOWN;
 	return (NULL);
 }
 
 const char	*
-setalt(c)
-	char c;
+setalt(char c)
 {
 	if ((p.altitude == c - '0') && (p.new_altitude == p.altitude))
 		return ("Already at that altitude");
@@ -482,8 +467,7 @@ setalt(c)
 }
 
 const char	*
-setrelalt(c)
-	char c;
+setrelalt(char c)
 {
 	if (c == 0)
 		return ("altitude not changed");
@@ -507,8 +491,7 @@ setrelalt(c)
 }
 
 const char	*
-benum(c)
-	char c;
+benum(char c)
 {
 	dest_no = c -= '0';
 
@@ -539,16 +522,14 @@ benum(c)
 }
 
 const char	*
-to_dir(c)
-	char c;
+to_dir(char c)
 {
 	p.new_dir = dir_no(c);
 	return (NULL);
 }
 
 const char	*
-rel_dir(c)
-	char c;
+rel_dir(char c)
 {
 	int	angle;
 
@@ -572,8 +553,7 @@ rel_dir(c)
 }
 
 const char	*
-mark(c)
-	char c;
+mark(char c)
 {
 	if (p.altitude == 0)
 		return ("Cannot mark planes on the ground");
@@ -584,8 +564,7 @@ mark(c)
 }
 
 const char	*
-unmark(c)
-	char c;
+unmark(char c)
 {
 	if (p.altitude == 0)
 		return ("Cannot unmark planes on the ground");
@@ -596,8 +575,7 @@ unmark(c)
 }
 
 const char	*
-ignore(c)
-	char c;
+ignore(char c)
 {
 	if (p.altitude == 0)
 		return ("Cannot ignore planes on the ground");
@@ -608,8 +586,7 @@ ignore(c)
 }
 
 int
-dir_no(ch)
-	char	ch;
+dir_no(char ch)
 {
 	int	dir;
 

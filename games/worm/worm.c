@@ -1,4 +1,4 @@
-/*	$OpenBSD: worm.c,v 1.21 2003/06/03 03:01:42 millert Exp $	*/
+/*	$OpenBSD: worm.c,v 1.22 2004/11/29 08:52:29 jsg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)worm.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: worm.c,v 1.21 2003/06/03 03:01:42 millert Exp $";
+static char rcsid[] = "$OpenBSD: worm.c,v 1.22 2004/11/29 08:52:29 jsg Exp $";
 #endif
 #endif /* not lint */
 
@@ -178,7 +178,7 @@ main(int argc, char **argv)
 }
 
 void
-life()
+life(void)
 {
 	struct body *bp, *np;
 	int i,j = 1;
@@ -242,7 +242,7 @@ newpos(struct body *bp)
 }
 
 void
-prize()
+prize(void)
 {
 	int value;
 
@@ -333,7 +333,7 @@ process(int ch)
 }
 
 struct body *
-newlink()
+newlink(void)
 {
 	struct body *tmp;
 
@@ -345,7 +345,7 @@ newlink()
 }
 
 void
-crash()
+crash(void)
 {
 	sleep(2);
 	clear();
@@ -362,7 +362,7 @@ suspend(int dummy)
 }
 
 void
-setup()
+setup(void)
 {
 	clear();
 	refresh();

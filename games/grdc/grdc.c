@@ -1,4 +1,4 @@
-/*	$OpenBSD: grdc.c,v 1.12 2002/07/26 20:32:38 pjanzen Exp $	*/
+/*	$OpenBSD: grdc.c,v 1.13 2004/11/29 08:52:28 jsg Exp $	*/
 /*
  *
  * Copyright 2002 Amos Shapir.  Public domain.
@@ -45,16 +45,13 @@ void movto(int, int);
 void usage(void);
 
 void
-sighndl(signo)
-	int signo;
+sighndl(int signo)
 {
 	sigtermed=signo;
 }
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	long t, a;
 	int i, j, s, k;
@@ -238,7 +235,7 @@ movto(int line, int col)
 }
 
 void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr, "usage: grdc [-s] [number_of_seconds]\n");
 	exit(1);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: graphics.c,v 1.6 2003/06/03 03:01:38 millert Exp $	*/
+/*	$OpenBSD: graphics.c,v 1.7 2004/11/29 08:52:28 jsg Exp $	*/
 /*	$NetBSD: graphics.c,v 1.3 1995/03/21 15:04:04 cgd Exp $	*/
 
 /*-
@@ -46,7 +46,7 @@
 #if 0
 static char sccsid[] = "@(#)graphics.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: graphics.c,v 1.6 2003/06/03 03:01:38 millert Exp $";
+static char rcsid[] = "$OpenBSD: graphics.c,v 1.7 2004/11/29 08:52:28 jsg Exp $";
 #endif
 #endif /* not lint */
 
@@ -64,7 +64,7 @@ static char rcsid[] = "$OpenBSD: graphics.c,v 1.6 2003/06/03 03:01:38 millert Ex
 WINDOW	*radar, *cleanradar, *credit, *input, *planes;
 
 int
-getAChar()
+getAChar(void)
 {
 	int c;
 #ifdef BSD
@@ -79,7 +79,7 @@ getAChar()
 }
 
 void
-erase_all()
+erase_all(void)
 {
 	PLANE	*pp;
 
@@ -94,7 +94,7 @@ erase_all()
 }
 
 void
-draw_all()
+draw_all(void)
 {
 	PLANE	*pp;
 
@@ -114,8 +114,7 @@ draw_all()
 }
 
 void
-setup_screen(scp)
-	const C_SCREEN	*scp;
+setup_screen(const C_SCREEN *scp)
 {
 	static char	buffer[BUFSIZ];
 	int	i, j;
@@ -223,10 +222,7 @@ setup_screen(scp)
 }
 
 void
-draw_line(w, x, y, lx, ly, s)
-	WINDOW	*w;
-	int	x, y, lx, ly;
-	const char	*s;
+draw_line(WINDOW *w, int x, int y, int lx, int ly, const char *s)
 {
 	int	dx, dy;
 
@@ -243,8 +239,7 @@ draw_line(w, x, y, lx, ly, s)
 }
 
 void
-ioclrtoeol(pos)
-	int pos;
+ioclrtoeol(int pos)
 {
 	wmove(input, 0, pos);
 	wclrtoeol(input);
@@ -253,8 +248,7 @@ ioclrtoeol(pos)
 }
 
 void
-iomove(pos)
-	int pos;
+iomove(int pos)
 {
 	wmove(input, 0, pos);
 	wrefresh(input);
@@ -262,9 +256,7 @@ iomove(pos)
 }
 
 void
-ioaddstr(pos, str)
-	int		pos;
-	const char	*str;
+ioaddstr(int pos, const char *str)
 {
 	wmove(input, 0, pos);
 	waddstr(input, str);
@@ -273,7 +265,7 @@ ioaddstr(pos, str)
 }
 
 void
-ioclrtobot()
+ioclrtobot(void)
 {
 	wclrtobot(input);
 	wrefresh(input);
@@ -281,9 +273,7 @@ ioclrtobot()
 }
 
 void
-ioerror(pos, len, str)
-	int		pos, len;
-	const char	*str;
+ioerror(int pos, int len, const char *str)
 {
 	int	i;
 
@@ -297,8 +287,7 @@ ioerror(pos, len, str)
 }
 
 void
-quit(dummy)
-	int dummy;
+quit(int dummy)
 {
 	int			c, y, x;
 #ifdef BSD
@@ -338,7 +327,7 @@ quit(dummy)
 }
 
 void
-planewin()
+planewin(void)
 {
 	PLANE	*pp;
 	int	warning = 0;
@@ -381,9 +370,7 @@ planewin()
 }
 
 void
-loser(p, s)
-	const PLANE	*p;
-	const char	*s;
+loser(const PLANE *p, const char *s)
 {
 	int			c;
 #ifdef BSD
@@ -419,7 +406,7 @@ loser(p, s)
 }
 
 void
-redraw()
+redraw(void)
 {
 	clear();
 	refresh();
@@ -438,7 +425,7 @@ redraw()
 }
 
 void
-done_screen()
+done_screen(void)
 {
 	clear();
 	refresh();

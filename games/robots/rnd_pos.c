@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd_pos.c,v 1.3 2003/06/03 03:01:41 millert Exp $	*/
+/*	$OpenBSD: rnd_pos.c,v 1.4 2004/11/29 08:52:29 jsg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,7 +33,7 @@
 #if 0
 static char sccsid[] = "@(#)rnd_pos.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: rnd_pos.c,v 1.3 2003/06/03 03:01:41 millert Exp $";
+static char rcsid[] = "$OpenBSD: rnd_pos.c,v 1.4 2004/11/29 08:52:29 jsg Exp $";
 #endif
 #endif /* not lint */
 
@@ -46,7 +46,7 @@ static char rcsid[] = "$OpenBSD: rnd_pos.c,v 1.3 2003/06/03 03:01:41 millert Exp
  *	Pick a random, unoccupied position
  */
 COORD *
-rnd_pos()
+rnd_pos(void)
 {
 	static COORD	pos;
 	static int	call = 0;
@@ -61,8 +61,7 @@ rnd_pos()
 }
 
 int
-rnd(range)
-	int	range;
+rnd(int range)
 {
 	return (int)random() % range;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.13 2003/06/03 03:01:40 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.14 2004/11/29 08:52:28 jsg Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1995/04/22 10:08:54 cgd Exp $	*/
 
 /*
@@ -40,23 +40,21 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.13 2003/06/03 03:01:40 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.14 2004/11/29 08:52:28 jsg Exp $";
 #endif
 #endif /* not lint */
 
 #include	"robots.h"
 
 void
-usage()
+usage(void)
 {
 	fprintf(stderr, "usage: robots [-sjtar] [scorefile]\n");
 	exit(1);
 }
 
 int
-main(ac, av)
-	int	ac;
-	char	**av;
+main(int ac, char *av[])
 {
 	bool		show_only;
 	extern char	*Scorefile;
@@ -172,8 +170,7 @@ main(ac, av)
  *	Leave the program elegantly.
  */
 void
-quit(dummy)
-	int dummy;
+quit(int dummy)
 {
 	endwin();
 	exit(0);
@@ -184,7 +181,7 @@ quit(dummy)
  *	See if another game is desired
  */
 bool
-another()
+another(void)
 {
 	int	y;
 
