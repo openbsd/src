@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.29 2004/04/21 22:14:34 mickey Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.30 2004/05/20 09:20:42 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -109,6 +109,8 @@ extern struct pdc_hwtlb pdc_hwtlb;
 #define pmap_is_modified(pg)	pmap_testbit(pg, PTE_PROT(TLB_DIRTY))
 #define pmap_is_referenced(pg)	pmap_testbit(pg, PTE_PROT(TLB_REFTRAP))
 #define pmap_phys_address(ppn)	((ppn) << PAGE_SHIFT)
+
+#define pmap_proc_iflush(p,va,len)	/* nothing */
 
 void pmap_bootstrap(vaddr_t);
 boolean_t pmap_changebit(struct vm_page *, u_int, u_int);

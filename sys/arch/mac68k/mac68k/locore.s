@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.33 2004/03/08 23:48:26 xsa Exp $	*/
+/*	$OpenBSD: locore.s,v 1.34 2004/05/20 09:20:42 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.103 1998/07/09 06:02:50 scottr Exp $	*/
 
 /*
@@ -674,8 +674,9 @@ ENTRY_NOPROFILE(trap12)
 	movl	d1,sp@-			| push length
 	movl	a1,sp@-			| push addr
 	movl	d0,sp@-			| push command
+	movl	_C_LABEL(curproc),sp@-	| push proc pointer
 	jbsr	_C_LABEL(cachectl)	| do it
-	lea	sp@(12),sp		| pop args
+	lea	sp@(16),sp		| pop args
 	jra	_ASM_LABEL(rei)		| all done
 
 /*

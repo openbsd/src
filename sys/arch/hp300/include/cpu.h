@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.22 2003/06/02 23:27:45 millert Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.23 2004/05/20 09:20:41 kettenis Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 1998/02/13 07:41:51 scottr Exp $	*/
 
 /*
@@ -180,7 +180,7 @@ int	badbaddr(caddr_t);
 void	dumpconf(void);
 
 /* sys_machdep.c functions */
-int	cachectl(int, vaddr_t, int);
+int	cachectl(struct proc *, int, vaddr_t, int);
 
 /* vm_machdep.c functions */
 void	physaccess(caddr_t, caddr_t, int, int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.14 2003/06/02 23:27:51 millert Exp $ */
+/*	$OpenBSD: sys_machdep.c,v 1.15 2004/05/20 09:20:42 kettenis Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -57,8 +57,6 @@
 #define CC_EXTPURGE	0x80000000
 /* XXX end should be */
 
-int	cachectl(int, vaddr_t, int);
-
 /*
  * Note that what we do here for a 68040 is different than HP-UX.
  *
@@ -71,7 +69,8 @@ int	cachectl(int, vaddr_t, int);
  */
 /*ARGSUSED1*/
 int
-cachectl(req, addr, len)
+cachectl(p, req, addr, len)
+	struct proc *p;
 	int req;
 	vaddr_t addr;
 	int len;
@@ -119,7 +118,7 @@ cachectl(req, addr, len)
 			if (!doall &&
 			    (pa == 0 || ((int)addr & PGOFSET) == 0)) {
 				if (pmap_extract(
-				    curproc->p_vmspace->vm_map.pmap,
+				    p->p_vmspace->vm_map.pmap,
 				    addr, &pa) == FALSE)
 					doall = 1;
 			}

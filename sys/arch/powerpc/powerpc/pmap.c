@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.86 2004/01/25 13:22:10 miod Exp $ */
+/*	$OpenBSD: pmap.c,v 1.87 2004/05/20 09:20:42 kettenis Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Dale Rahn.
@@ -1941,6 +1941,26 @@ pmap_init()
 		attr += sz;
 	}
 	pmap_initialized = 1;
+}
+
+void
+pmap_proc_iflush(struct proc *p, vaddr_t addr, vsize_t len)
+{
+	paddr_t pa;
+	vsize_t clen;
+
+	while (len > 0) {
+		clen = round_page(addr) - addr;
+		if (clen > len)
+			clen = len;
+
+		if (pmap_extract(p->p_vmspace->vm_map.pmap, addr, &pa)) {
+			syncicache((void *)pa, clen);
+		}
+
+		len -= clen;
+		addr += clen;
+	}
 }
 
 /* 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_mem.c,v 1.21 2004/05/05 23:52:10 tedu Exp $	*/
+/*	$OpenBSD: procfs_mem.c,v 1.22 2004/05/20 09:20:41 kettenis Exp $	*/
 /*	$NetBSD: procfs_mem.c,v 1.8 1996/02/09 22:40:50 christos Exp $	*/
 
 /*
@@ -66,18 +66,26 @@ procfs_domem(curp, p, pfs, uio)
 	struct uio *uio;
 {
 	int error;
+	vaddr_t addr;
+	vsize_t len;
 
-	if (uio->uio_resid == 0)
+	len = uio->uio_resid;
+	if (len == 0)
 		return (0);
 
 	if ((error = procfs_checkioperm(curp, p)) != 0)
 		return (error);
+
 	/* XXXCDC: how should locking work here? */
 	if ((p->p_flag & P_WEXIT) || (p->p_vmspace->vm_refcnt < 1)) 
 		return(EFAULT);
+	addr = uio->uio_offset;
 	p->p_vmspace->vm_refcnt++;  /* XXX */
 	error = uvm_io(&p->p_vmspace->vm_map, uio);
 	uvmspace_free(p->p_vmspace);
+
+	if (error == 0 && uio->uio_rw == UIO_WRITE)
+		pmap_proc_iflush(p, addr, len);
 
 	return error;
 }

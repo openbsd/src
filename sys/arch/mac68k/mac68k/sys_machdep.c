@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.8 2003/06/02 23:27:49 millert Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.9 2004/05/20 09:20:42 kettenis Exp $	*/
 /*	$NetBSD: sys_machdep.c,v 1.9 1996/05/05 06:18:58 briggs Exp $	*/
 
 /*
@@ -92,11 +92,10 @@
 #define CC_EXTPURGE	0x80000000
 /* XXX end should be */
 
-int	cachectl(int, vaddr_t, int);
-
 /*ARGSUSED1*/
 int
-cachectl(req, addr, len)
+cachectl(p, req, addr, len)
+	struct proc *p;
 	int req;
 	vaddr_t	addr;
 	int len;
@@ -133,7 +132,7 @@ cachectl(req, addr, len)
 			if (!doall &&
 			    (pa == 0 || ((int)addr & PGOFSET) == 0)) {
 				if (pmap_extract(
-				    curproc->p_vmspace->vm_map.pmap,
+				    p->p_vmspace->vm_map.pmap,
 				    addr, &pa) == FALSE)
 					doall = 1;
 			}

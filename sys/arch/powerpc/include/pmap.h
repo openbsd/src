@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.34 2004/01/15 05:53:13 drahn Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.35 2004/05/20 09:20:42 kettenis Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 1996/09/30 16:34:29 ws Exp $	*/
 
 /*-
@@ -132,6 +132,8 @@ void switchexit(struct proc *);
 
 int pte_spill_v(struct pmap *pm, u_int32_t va, u_int32_t dsisr, int exec_fault);
 #define pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr) ;
+
+void pmap_proc_iflush(struct proc *proc, vaddr_t va, vsize_t len);
 
 #endif	/* _KERNEL */
 #endif	/* _LOCORE */

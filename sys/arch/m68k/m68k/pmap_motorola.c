@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_motorola.c,v 1.33 2004/01/01 01:12:54 miod Exp $ */
+/*	$OpenBSD: pmap_motorola.c,v 1.34 2004/05/20 09:20:42 kettenis Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -2694,6 +2694,15 @@ pmap_ptpage_delref(ptpva)
 	    ("ptpage delref: pg %p now %d\n", pg, pg->wire_count));
 	simple_unlock(&uvm.kernel_object->vmobjlock);
 	return (rv);
+}
+
+void
+pmap_proc_iflush(p, va, len)
+	struct proc	*p;
+	vaddr_t		va;
+	vsize_t		len;
+{
+	(void)cachectl(p, 0x80000004, va, len);
 }
 
 #ifdef DEBUG

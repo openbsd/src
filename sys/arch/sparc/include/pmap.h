@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.36 2003/11/14 19:05:36 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.37 2004/05/20 09:20:41 kettenis Exp $	*/
 /*	$NetBSD: pmap.h,v 1.30 1997/08/04 20:00:47 pk Exp $ */
 
 /*
@@ -302,6 +302,8 @@ void		pmap_writetext(unsigned char *, int);
 
 #define		pmap_update(pm)		/* nothing */
 #define		pmap_copy(DP,SP,D,L,S)	/* nothing */
+
+#define		pmap_proc_iflush(p,va,len)	/* nothing */
 
 /* SUN4/SUN4C SPECIFIC DECLARATIONS */
 
