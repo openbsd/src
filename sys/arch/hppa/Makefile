@@ -1,6 +1,8 @@
-#	$OpenBSD: Makefile,v 1.1 1998/06/23 20:23:29 mickey Exp $
+#	$OpenBSD: Makefile,v 1.2 2000/05/31 19:44:57 mickey Exp $
 
 # Makefile for hppa tags file and boot blocks
+
+.include "../../kern/Make.tags.inc"
 
 NOPROG=	noprog
 NOMAN=	noman
@@ -8,11 +10,12 @@ NOMAN=	noman
 SUBDIR=	stand
 
 THPPA=	../hppa/tags
-SHPPA=	../hppa/hppa/*.[ch] ../hppa/include/*.h ../hppa/dev/*.[ch]
+SHPPA=	../hppa/hppa/*.[ch] ../hppa/include/*.h ../hppa/dev/*.[ch] \
+	../hppa/gsc/*.[ch]
 AHPPA=	../hppa/hppa/*.S
 
 # Directories in which to place hppa tags links
-DHPPA=	dev hppa include
+DHPPA=	conf dev gsc hppa include
 
 tags:
 	-ctags -dtf ${THPPA} ${COMM} ${SHPPA}
