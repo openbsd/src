@@ -1064,7 +1064,11 @@ static struct {
   {"SIGVTALRM", "Virtual timer expired"},
   {"SIGPROF", "Profiling timer expired"},
   {"SIGWINCH", "Window size changed"},
+#if defined(SIGINFO)
+  {"SIGINFO", "Information request"},
+#else
   {"SIGLOST", "Resource lost"},
+#endif
   {"SIGUSR1", "User defined signal 1"},
   {"SIGUSR2", "User defined signal 2"},
   {"SIGPWR", "Power fail/restart"},
@@ -1244,6 +1248,9 @@ target_signal_from_host (hostsig)
 #endif
 #if defined (SIGWINCH)
   if (hostsig == SIGWINCH) return TARGET_SIGNAL_WINCH;
+#endif
+#if defined (SIGINFO)
+  if (hostsig == SIGINFO) return TARGET_SIGNAL_INFO;
 #endif
 #if defined (SIGURG)
   if (hostsig == SIGURG) return TARGET_SIGNAL_URG;
@@ -1463,6 +1470,9 @@ target_signal_to_host (oursig)
 #endif
 #if defined (SIGLOST)
     case TARGET_SIGNAL_LOST: return SIGLOST;
+#endif
+#if defined (SIGINFO)
+    case TARGET_SIGNAL_INFO: return SIGINFO;
 #endif
 #if defined (SIGWAITING)
     case TARGET_SIGNAL_WAITING: return SIGWAITING;
