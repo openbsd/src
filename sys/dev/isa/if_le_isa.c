@@ -365,6 +365,7 @@ le_isa_attach(parent, self, aux)
 /*
  * Controller interrupt.
  */
+int
 le_isa_intredge(arg)
 	void *arg;
 {
