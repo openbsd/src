@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_private.h,v 1.37 2002/10/30 20:05:11 marc Exp $	*/
+/*	$OpenBSD: pthread_private.h,v 1.38 2002/11/12 20:12:45 marc Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -1087,9 +1087,9 @@ void	_pq_remove(struct pq_queue *pq, struct pthread *);
 void	_pq_insert_head(struct pq_queue *pq, struct pthread *);
 void	_pq_insert_tail(struct pq_queue *pq, struct pthread *);
 struct pthread *_pq_first(struct pq_queue *pq);
-#if defined(_PTHREADS_INVARIANTS)
 void	_waitq_insert(pthread_t pthread);
 void	_waitq_remove(pthread_t pthread);
+#if defined(_PTHREADS_INVARIANTS)
 void	_waitq_setactive(void);
 void	_waitq_clearactive(void);
 #endif

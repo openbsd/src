@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_fd.c,v 1.14 2002/11/05 22:19:56 marc Exp $	*/
+/*	$OpenBSD: uthread_fd.c,v 1.15 2002/11/12 20:12:45 marc Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -279,7 +279,6 @@ _thread_fd_unlock(int fd, int lock_type, const char *fname, int lineno)
 void
 _thread_fd_unlock_owned(pthread_t pthread)
 {
-	struct pthread	*saved_thread = _get_curthread();
 	struct fd_table_entry *entry;
 	int do_unlock;
 	int fd;

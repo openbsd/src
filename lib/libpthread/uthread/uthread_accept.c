@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_accept.c,v 1.6 2002/10/30 19:11:56 marc Exp $	*/
+/*	$OpenBSD: uthread_accept.c,v 1.7 2002/11/12 20:12:45 marc Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -89,13 +89,14 @@ accept(int fd, struct sockaddr * name, socklen_t *namelen)
 		 * child if it is on in the parent.   This is done
 		 * as _thread_fd_table_init *may* have turned the flag on.
 		 */
-		if (ret != -1)
+		if (ret != -1) {
 			if (_thread_fd_table_init(ret) != 0) {
 				/* Quietly close the socket: */
 				_thread_sys_close(ret);
 				ret = -1;
 			} else if ((_thread_fd_table[fd]->flags & O_NONBLOCK) == 0)
 				_thread_fd_table[ret]->flags &= ~O_NONBLOCK;
+		}
 
 		/* Unlock the file descriptor: */
 		_FD_UNLOCK(fd, FD_RDWR);
