@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.220 2003/03/04 22:45:53 jakob Exp $
+#	$OpenBSD: rc,v 1.221 2003/03/04 23:37:15 jakob Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -204,19 +204,19 @@ if [ X"${pf}" != X"NO" -a X"${pflogd_flags}" != X"NO" ]; then
 	pflogd ${pflogd_flags}
 fi
 
-if ! cmp -s /etc/rndc.key /var/named/etc/rndc.key ; then
-	echo -n "rndc-confgen: generating new shared secret... "
-	if /usr/sbin/rndc-confgen -a -t /var/named >/dev/null 2>&1; then
-		chmod 0640 /var/named/etc/rndc.key >/dev/null 2>&1
-		echo done.
-	else
-		echo failed.
-	fi
-fi
-
 # $named_flags are imported from /etc/rc.conf;
 # if $named_flags != NO, named is run.
 if [ "X${named_flags}" != X"NO" ]; then
+	if ! cmp -s /etc/rndc.key /var/named/etc/rndc.key ; then
+		echo -n "rndc-confgen: generating new shared secret... "
+		if /usr/sbin/rndc-confgen -a -t /var/named >/dev/null 2>&1; then
+			chmod 0640 /var/named/etc/rndc.key >/dev/null 2>&1
+			echo done.
+		else
+			echo failed.
+		fi
+	fi
+
 	echo 'starting named';		named $named_flags
 fi
 
