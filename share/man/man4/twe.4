@@ -1,0 +1,65 @@
+.\"	$OpenBSD: twe.4,v 1.1 2000/09/15 18:08:01 mickey Exp $
+.\"
+.\" Copyright (c) 2000 Michael Shalayeff.  All rights reserved.
+.\"
+.\"
+.Dd September 15, 2000
+.Dt TWE 4
+.Os
+.Sh NAME
+.Nm twe
+.Nd
+.Tn 3ware Escalade RAID driver
+.Sh SYNOPSIS
+.Cd "twe* at pci? dev ? function ?"
+.Cd "scsibus* at twe?"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides support for Escalade family of raid controllers,
+including the
+.Tn 3W-5x000 and
+.Tn 3W-6x000
+models.
+.Pp
+Controllers support RAID 0, RAID 1, RAID 10 and JBOD
+configurations. All the RAID set volume management is done
+through the cards BIOS.
+.Pp
+Even though the card uses IDE drives, this driver makes drives
+and/or RAID sets appear as
+.Xr sd 4 .
+.Sh SEE ALSO
+.Xr intro 4 ,
+.Xr scsi 4 ,
+.Xr sd 4
+.Sh AUTHOR
+The
+.Nm
+driver was written by
+.An Michale Shalayeff Aq mickey@opensbd.org ,
+inspired by the FreeBSD driver by
+.An Mike Smith Aq msmith@freebsd.org .
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Ox 2.8 .
+.Sh BUGS
+The card's BIOS seem to conflict w/ other disk controllers with
+own BIOS if later are configured earlier than this one.
+To avoid that put the card in the lowest slot before other
+SCSI or RAID disk controllers, if possible.
+.Pp
+The card provides mechanism to receive asynchronous notifications
+about RAID set status change and so forth, unfortunately this
+information is not public.
+.Pp
+The card requires data buffers to be aligned to 512 bytes, which
+is not always provided by the
+.Ox
+kernel.
+To work around that double-buffering is used, allocating aligned
+buffer when required and copying data back and forth as needed.
+Unaligned buffers are very rare occasion, but if not handled properly
+makes the card comatose.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci.4,v 1.12 2000/07/20 21:45:20 deraadt Exp $
+.\"	$OpenBSD: pci.4,v 1.13 2000/09/15 18:08:01 mickey Exp $
 .\"	$NetBSD: pci.4,v 1.29 2000/04/01 00:32:23 tsarna Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -96,7 +96,7 @@ interfaces.
 DPT SmartCache/SmartRAID III and IV SCSI interfaces.
 .It Xr gdt 4
 ICP-Vortex GDT
-.Tn Raid
+.Tn RAID
 interface.
 .It Xr isp 4
 QLogic ISP-1020, ISP-1040, and ISP-2100
@@ -107,6 +107,10 @@ interfaces.
 .It Xr ncr 4
 Symbios Logic/NCR 53c8xx-family
 .Tn SCSI
+interfaces.
+.It Xr twe 4
+3ware Escalade
+.Tn RAID
 interfaces.
 .El
 .Pp
