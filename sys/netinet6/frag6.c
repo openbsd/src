@@ -1,4 +1,4 @@
-/*	$OpenBSD: frag6.c,v 1.18 2002/09/11 03:15:36 itojun Exp $	*/
+/*	$OpenBSD: frag6.c,v 1.19 2002/09/11 03:27:30 itojun Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -586,7 +586,7 @@ insert:
 	 * Store NXT to the original.
 	 */
 	{
-		char *prvnxtp = ip6_get_prevhdr(m, offset); /* XXX */
+		u_int8_t *prvnxtp = ip6_get_prevhdr(m, offset); /* XXX */
 		*prvnxtp = nxt;
 	}
 

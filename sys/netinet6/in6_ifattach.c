@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.30 2002/09/11 03:15:36 itojun Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.31 2002/09/11 03:27:30 itojun Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -126,7 +126,7 @@ get_hw_ifid(ifp, in6)
 {
 	struct ifaddr *ifa;
 	struct sockaddr_dl *sdl;
-	u_int8_t *addr;
+	char *addr;
 	size_t addrlen;
 	static u_int8_t allzero[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 	static u_int8_t allone[8] =
@@ -518,11 +518,11 @@ in6_nigroup(ifp, name, namelen, sa6)
 	struct sockaddr_in6 *sa6;
 {
 	const char *p;
-	u_char *q;
+	u_int8_t *q;
 	MD5_CTX ctxt;
 	u_int8_t digest[16];
-	char l;
-	char n[64];	/* a single label must not exceed 63 chars */
+	u_int8_t l;
+	u_int8_t n[64];	/* a single label must not exceed 63 chars */
 
 	if (!namelen || !name)
 		return -1;
@@ -533,7 +533,7 @@ in6_nigroup(ifp, name, namelen, sa6)
 	if (p - name > sizeof(n) - 1)
 		return -1;	/* label too long */
 	l = p - name;
-	strncpy(n, name, l);
+	strncpy((char *)n, name, l);
 	n[(int)l] = '\0';
 	for (q = n; *q; q++) {
 		if ('A' <= *q && *q <= 'Z')

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.45 2002/09/11 03:15:36 itojun Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.46 2002/09/11 03:27:30 itojun Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -1241,7 +1241,7 @@ ip6_pullexthdr(m, off, nxt)
  * carefully. Moreover, it will not be used in the near future when
  * we develop `neater' mechanism to process extension headers.
  */
-char *
+u_int8_t *
 ip6_get_prevhdr(m, off)
 	struct mbuf *m;
 	int off;
