@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.39 2004/06/25 20:05:40 henning Exp $	*/
+/*	$OpenBSD: if.c,v 1.40 2005/03/02 16:47:56 dhartmei Exp $	*/
 /*	$NetBSD: if.c,v 1.16.4.2 1996/06/07 21:46:46 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-static char *rcsid = "$OpenBSD: if.c,v 1.39 2004/06/25 20:05:40 henning Exp $";
+static char *rcsid = "$OpenBSD: if.c,v 1.40 2005/03/02 16:47:56 dhartmei Exp $";
 #endif
 #endif /* not lint */
 
@@ -366,14 +366,14 @@ intpr(int interval, u_long ifnetaddr)
 #define	MAXIF	100
 struct	iftot {
 	char	ift_name[IFNAMSIZ];	/* interface name */
-	int	ift_ip;			/* input packets */
-	int	ift_ib;			/* input bytes */
-	int	ift_ie;			/* input errors */
-	int	ift_op;			/* output packets */
-	int	ift_ob;			/* output bytes */
-	int	ift_oe;			/* output errors */
-	int	ift_co;			/* collisions */
-	int	ift_dr;			/* drops */
+	u_long	ift_ip;			/* input packets */
+	u_long	ift_ib;			/* input bytes */
+	u_long	ift_ie;			/* input errors */
+	u_long	ift_op;			/* output packets */
+	u_long	ift_ob;			/* output bytes */
+	u_long	ift_oe;			/* output errors */
+	u_long	ift_co;			/* collisions */
+	u_long	ift_dr;			/* drops */
 } iftot[MAXIF];
 
 volatile sig_atomic_t signalled;	/* set if alarm goes off "early" */
