@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$OpenBSD: devlist2h.awk,v 1.3 1997/12/21 14:41:21 downsj Exp $
+#	$OpenBSD: devlist2h.awk,v 1.4 1998/12/28 09:15:16 hugh Exp $
 #	$NetBSD: devlist2h.awk,v 1.2 1996/01/22 21:08:09 cgd Exp $
 #
 # Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -55,12 +55,17 @@ NR == 1 {
 		next
 	if (substr($2,0,1) == "#")
 		next
-	nproducts++
-	products[nproducts, 1] = $1;		# driver name
-	products[nproducts, 2] = $2;		# pnp id
-#	if ($3 && substr($3,0,1) == "#")
-#		products[nproducts, 3] = substr($3, 1);
-#	printf("%s %s %s\n", $1, $2, products[nproducts, 3]);
+	do {
+		nproducts++
+		if ((x = index($1, "/")))
+			products[nproducts, 1] = substr($1, 1, x - 1);
+		else
+			products[nproducts, 1] = $1;		# driver name
+		products[nproducts, 2] = $2;		# pnp id
+#		if ($3 && substr($3,0,1) == "#")
+#			products[nproducts, 3] = substr($3, 1);
+#		printf("%s %s %s\n", $1, $2, products[nproducts, 3]);
+	} while (x && ($1 = substr($1, x + 1, length($1) - x)));
 
 	next
 }
