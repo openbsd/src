@@ -1,4 +1,4 @@
-/*	$OpenBSD: bioscons.c,v 1.11 1997/10/07 07:59:59 mickey Exp $	*/
+/*	$OpenBSD: bioscons.c,v 1.12 1997/10/07 08:18:48 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -63,9 +63,6 @@ cnspeed(dev, sp)
 #define PRESENT_MASK 0
 #endif
 
-int com_setsp __P((int));
-static const int comports[4] = { 0x3f8, 0x2f8, 0x3e8, 0x2e8 };
-
 void
 pc_probe(cn)
 	struct consdev *cn;
@@ -111,6 +108,8 @@ pc_putc(dev, c)
 	__asm __volatile(DOINT(0x10) : : "a" (c | 0xe00), "b" (1) :
 	    "%ecx", "%edx", "cc" );
 }
+
+static const int comports[4] = { 0x3f8, 0x2f8, 0x3e8, 0x2e8 };
 
 void
 com_probe(cn)
@@ -170,7 +169,6 @@ comspeed(dev, sp)
 {
 	static int com_speed = 9600;  /* default speed is 9600 baud */
 	int i, newsp;
-	time_t tt;
         int err;
 
 	if (sp <= 0)
@@ -201,9 +199,7 @@ comspeed(dev, sp)
 		       "com%d: change your terminal to match!\n\a"
 		       "com%d: will change speed in 5 seconds....\n\a",
 		       minor(dev), sp, minor(dev), minor(dev));
-		/* let the \n get out and the
-		   user change the terminal */
-		for (tt = getsecs() + 5; getsecs() < tt;);
+		sleep(5);
 	}
 
 	outb(comports[minor(dev)] + com_cfcr, LCR_DLAB);
