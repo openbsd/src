@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl.c,v 1.21 1999/02/27 23:54:42 jason Exp $	*/
+/*	$OpenBSD: if_xl.c,v 1.22 1999/03/02 02:25:39 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -314,6 +314,7 @@ static void xl_wait(sc)
 	register int		i;
 
 	for (i = 0; i < XL_TIMEOUT; i++) {
+		DELAY(10);
 		if (!(CSR_READ_2(sc, XL_STATUS) & XL_STAT_CMDBUSY))
 			break;
 	}
