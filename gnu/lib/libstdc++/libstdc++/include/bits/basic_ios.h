@@ -145,6 +145,19 @@ namespace std
       setstate(iostate __state) 
       { this->clear(this->rdstate() | __state); }
 
+      // Flip the internal state on for the proper state bits, then re
+      // throws the propagated exception if bit also set in
+      // exceptions().
+      void
+      _M_setstate(iostate __state) 
+      { 
+	// 27.6.1.2.1 Common requirements.
+	// Turn this on without causing an ios::failure to be thrown.
+	_M_streambuf_state |= __state; 
+	if (this->exceptions() & __state)
+	  __throw_exception_again;
+      }
+
       /**
        *  @brief  Fast error checking.
        *  @return  True if no error flags are set.
@@ -242,7 +255,8 @@ namespace std
        *  The parameter is passed by derived streams.
       */
       explicit 
-      basic_ios(basic_streambuf<_CharT, _Traits>* __sb) : ios_base() 
+      basic_ios(basic_streambuf<_CharT, _Traits>* __sb) 
+      : ios_base(), _M_fctype(0), _M_fnumput(0), _M_fnumget(0)
       { this->init(__sb); }
 
       /**
@@ -443,11 +457,6 @@ namespace std
       void
       _M_cache_facets(const locale& __loc);
 #endif
- 
-       // Internal state setter that won't throw, only set the state bits.
-       // Used to guarantee we don't throw when setting badbit.
-       void
-       _M_setstate(iostate __state) { _M_streambuf_state |= __state; }
     };
 } // namespace std
 

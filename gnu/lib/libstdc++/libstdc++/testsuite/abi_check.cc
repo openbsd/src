@@ -1,6 +1,6 @@
 // Utility for libstdc++ ABI analysis -*- C++ -*-
 
-// Copyright (C) 2002, 2003 Free Software Foundation, Inc.
+// Copyright (C) 2002, 2003, 2004 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -87,8 +87,10 @@ check_version(const symbol_info& test, bool added = false)
       known_versions.push_back("GLIBCPP_3.2.1");
       known_versions.push_back("GLIBCPP_3.2.2");
       known_versions.push_back("GLIBCPP_3.2.3"); // gcc-3.3.0
+      known_versions.push_back("GLIBCPP_3.2.4"); // gcc-3.3.4
       known_versions.push_back("CXXABI_1.2");
       known_versions.push_back("CXXABI_1.2.1");
+      known_versions.push_back("CXXABI_1.2.2");
     }
   compat_list::iterator begin = known_versions.begin();
   compat_list::iterator end = known_versions.end();

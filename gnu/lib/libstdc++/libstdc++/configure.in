@@ -13,7 +13,7 @@ ORIGINAL_LD_FOR_MULTILIBS=$LD
 PACKAGE=libstdc++
 AC_SUBST(PACKAGE)
 # For libtool versioning info, format is CURRENT:REVISION:AGE
-libtool_VERSION=5:5:0
+libtool_VERSION=5:7:0
 AC_SUBST(libtool_VERSION)
 
 GLIBCPP_TOPREL_CONFIGURE
@@ -127,6 +127,12 @@ if test -n "$with_cross_host" || test x"$build" != x"$host"; then
       GLIBCPP_CHECK_LINKER_FEATURES
       GLIBCPP_CHECK_COMPLEX_MATH_SUPPORT
       GLIBCPP_CHECK_WCHAR_T_SUPPORT
+
+      # For showmanyc_helper().
+      AC_CHECK_HEADERS(sys/ioctl.h sys/filio.h)
+      GLIBCPP_CHECK_POLL
+      GLIBCPP_CHECK_S_ISREG_OR_S_IFREG
+
       AC_DEFINE(HAVE_COPYSIGN)
       AC_DEFINE(HAVE_COPYSIGNF)
       AC_DEFINE(HAVE_FINITE)
@@ -270,6 +276,10 @@ changequote([,])dnl
       AC_DEFINE(HAVE_HYPOT)
       ;;
   esac
+
+if test x"$with_newlib" = "xyes"; then
+   os_include_dir="os/newlib"
+fi
 
   case "$target" in
     *-mingw32*)

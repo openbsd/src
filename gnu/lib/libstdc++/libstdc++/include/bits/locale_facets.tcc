@@ -1,6 +1,6 @@
 // Locale support -*- C++ -*-
 
-// Copyright (C) 1997, 1998, 1999, 2000, 2001, 2002, 2003
+// Copyright (C) 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004
 // Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
@@ -51,7 +51,15 @@ namespace std
     locale::combine(const locale& __other) const
     {
       _Impl* __tmp = new _Impl(*_M_impl, 1);
-      __tmp->_M_replace_facet(__other._M_impl, &_Facet::id);
+      try
+	{
+	  __tmp->_M_replace_facet(__other._M_impl, &_Facet::id);
+	}
+      catch(...)
+	{
+	  __tmp->_M_remove_reference();
+	  __throw_exception_again;
+	}
       return locale(__tmp);
     }
 
@@ -876,21 +884,12 @@ namespace std
       _M_convert_float(_OutIter __s, ios_base& __io, _CharT __fill, char __mod,
 		       _ValueT __v) const
       {
-	// Note: digits10 is rounded down: add 1 to ensure the maximum
-	// available precision.  Then, in general, one more 1 needs to
-	// be added since, when the %{g,G} conversion specifiers are
-	// chosen inside _S_format_float, the precision field is "the
-	// maximum number of significant digits", *not* the "number of
-	// digits to appear after the decimal point", as happens for
-	// %{e,E,f,F} (C99, 7.19.6.1,4).
-	const int __max_digits = numeric_limits<_ValueT>::digits10 + 2;
-
 	// Use default precision if out of range.
 	streamsize __prec = __io.precision();
-	if (__prec > static_cast<streamsize>(__max_digits))
-	  __prec = static_cast<streamsize>(__max_digits);
-	else if (__prec < static_cast<streamsize>(0))
+	if (__prec < static_cast<streamsize>(0))
 	  __prec = static_cast<streamsize>(6);
+
+	const int __max_digits = numeric_limits<_ValueT>::digits10;	
 
 	typedef numpunct<_CharT>  __facet_type;
 	typedef __locale_cache<numpunct<_CharT> > __cache_type;
@@ -903,7 +902,7 @@ namespace std
 	char __fbuf[16];
 
 #ifdef _GLIBCPP_USE_C99
-	// First try a buffer perhaps big enough (for sure sufficient
+	// First try a buffer perhaps big enough (most probably sufficient
 	// for non-ios_base::fixed outputs)
 	int __cs_size = __max_digits * 3;
 	char* __cs = static_cast<char*>(__builtin_alloca(__cs_size));
@@ -925,13 +924,13 @@ namespace std
 	const bool __fixed = __io.flags() & ios_base::fixed;
 	const int __max_exp = numeric_limits<_ValueT>::max_exponent10;
 
-	// ios_base::fixed outputs may need up to __max_exp+1 chars
-	// for the integer part + up to __max_digits chars for the
-	// fractional part + 3 chars for sign, decimal point, '\0'. On
-	// the other hand, for non-fixed outputs __max_digits*3 chars
-	// are largely sufficient.
-	const int __cs_size = __fixed ? __max_exp + __max_digits + 4 
-	                              : __max_digits * 3;
+	// ios_base::fixed outputs may need up to __max_exp + 1 chars
+	// for the integer part + __prec chars for the fractional part
+	// + 3 chars for sign, decimal point, '\0'. On the other hand,
+	// for non-fixed outputs __max_digits * 2 chars + __prec are
+	// largely sufficient.
+	const int __cs_size = __fixed ? __max_exp + __prec + 4 
+	                              : __max_digits * 2 + __prec;
 	char* __cs = static_cast<char*>(__builtin_alloca(__cs_size));
 
 	_S_format_float(__io, __fbuf, __mod, __prec);
@@ -1099,12 +1098,12 @@ namespace std
       string_type __str;
       __beg = this->do_get(__beg, __end, __intl, __io, __err, __str); 
 
-      const int __n = numeric_limits<long double>::digits10;
-      char* __cs = static_cast<char*>(__builtin_alloca(__n));
+      const int __cs_size = __str.size() + 1;
+      char* __cs = static_cast<char*>(__builtin_alloca(__cs_size));
       const locale __loc = __io.getloc();
       const ctype<_CharT>& __ctype = use_facet<ctype<_CharT> >(__loc); 
       const _CharT* __wcs = __str.c_str();
-      __ctype.narrow(__wcs, __wcs + __str.size() + 1, char(), __cs);      
+      __ctype.narrow(__wcs, __wcs + __cs_size, char(), __cs);      
       __convert_to_v(__cs, __units, __err, _S_c_locale);
       return __beg;
     }
@@ -1317,27 +1316,28 @@ namespace std
       // First try a buffer perhaps big enough.
       int __cs_size = 64;
       char* __cs = static_cast<char*>(__builtin_alloca(__cs_size));
-      int __len = __convert_from_v(__cs, __cs_size, "%.01Lf", __units, 
+      // _GLIBCXX_RESOLVE_LIB_DEFECTS
+      // 328. Bad sprintf format modifier in money_put<>::do_put()
+      int __len = __convert_from_v(__cs, __cs_size, "%.0Lf", __units, 
 				   _S_c_locale);
       // If the buffer was not large enough, try again with the correct size.
       if (__len >= __cs_size)
 	{
 	  __cs_size = __len + 1;
 	  __cs = static_cast<char*>(__builtin_alloca(__cs_size));
-	  __len = __convert_from_v(__cs, __cs_size, "%.01Lf", __units, 
+	  __len = __convert_from_v(__cs, __cs_size, "%.0Lf", __units, 
 				   _S_c_locale);
 	}
 #else
-      // max_exponent10 + 1 for the integer part, + 4 for sign, decimal point,
-      // decimal digit, '\0'. 
-      const int __cs_size = numeric_limits<long double>::max_exponent10 + 5;
+      // max_exponent10 + 1 for the integer part, + 2 for sign and '\0'.
+      const int __cs_size = numeric_limits<long double>::max_exponent10 + 3;
       char* __cs = static_cast<char*>(__builtin_alloca(__cs_size));
-      int __len = __convert_from_v(__cs, 0, "%.01Lf", __units, _S_c_locale);
+      int __len = __convert_from_v(__cs, 0, "%.0Lf", __units, _S_c_locale);
 #endif
       _CharT* __ws = static_cast<_CharT*>(__builtin_alloca(sizeof(_CharT) 
 							   * __cs_size));
       __ctype.widen(__cs, __cs + __len, __ws);
-      string_type __digits(__ws);
+      const string_type __digits(__ws, __len);
       return this->do_put(__s, __intl, __io, __fill, __digits); 
     }
 
@@ -2169,99 +2169,75 @@ namespace std
 				   const streamsize __newlen, 
 				   const streamsize __oldlen, const bool __num)
     {
-      size_t __plen = static_cast<size_t>(__newlen - __oldlen);
-      _CharT* __pads = static_cast<_CharT*>(__builtin_alloca(sizeof(_CharT) 
-							     * __plen));
-      _Traits::assign(__pads, __plen, __fill); 
+      const size_t __plen = static_cast<size_t>(__newlen - __oldlen);
+      const ios_base::fmtflags __adjust = __io.flags() & ios_base::adjustfield;
 
-      _CharT* __beg;
-      _CharT* __end;
-      size_t __mod = 0;
-      size_t __beglen; //either __plen or __oldlen
-      ios_base::fmtflags __adjust = __io.flags() & ios_base::adjustfield;
-
+      // Padding last.
       if (__adjust == ios_base::left)
 	{
-	  // Padding last.
-	  __beg = const_cast<_CharT*>(__olds);
-	  __beglen = __oldlen;
-	  __end = __pads;
+	  _Traits::copy(__news, const_cast<_CharT*>(__olds), __oldlen);
+	  _Traits::assign(__news + __oldlen, __plen, __fill);
+	  return;
 	}
-      else if (__adjust == ios_base::internal && __num)
+
+      size_t __mod = 0;
+      if (__adjust == ios_base::internal && __num)
 	{
 	  // Pad after the sign, if there is one.
 	  // Pad after 0[xX], if there is one.
 	  // Who came up with these rules, anyway? Jeeze.
-          locale __loc = __io.getloc();
+          const locale& __loc = __io.getloc();
 	  const ctype<_CharT>& __ctype = use_facet<ctype<_CharT> >(__loc); 
 	  const _CharT __minus = __ctype.widen('-');
 	  const _CharT __plus = __ctype.widen('+');
-	  bool __testsign = _Traits::eq(__olds[0], __minus)
-	    		    || _Traits::eq(__olds[0], __plus);
+	  const bool __testsign = _Traits::eq(__olds[0], __minus)
+	                          || _Traits::eq(__olds[0], __plus);
 
-	  bool __testhex = _Traits::eq(__ctype.widen('0'), __olds[0]) 
-	    		   && (_Traits::eq(__ctype.widen('x'), __olds[1]) 
-			       || _Traits::eq(__ctype.widen('X'), __olds[1]));
+	  const bool __testhex = (_Traits::eq(__ctype.widen('0'), __olds[0])
+				  && __oldlen > 1
+				  && (_Traits::eq(__ctype.widen('x'), __olds[1]) 
+				      || _Traits::eq(__ctype.widen('X'),
+						     __olds[1])));
 	  if (__testhex)
 	    {
 	      __news[0] = __olds[0]; 
 	      __news[1] = __olds[1];
-	      __mod += 2;
+	      __mod = 2;
 	      __news += 2;
-	      __beg = __pads;
-	      __beglen = __plen;
-	      __end = const_cast<_CharT*>(__olds + __mod);
 	    }
 	  else if (__testsign)
 	    {
-	      _Traits::eq((__news[0] = __olds[0]), __plus) ? __plus : __minus;
-	      ++__mod;
+	      __news[0] = __olds[0];
+	      __mod = 1;
 	      ++__news;
-	      __beg = __pads;
-	      __beglen = __plen;
-	      __end = const_cast<_CharT*>(__olds + __mod);
 	    }
-	  else
-	    {
-	      // Padding first.
-	      __beg = __pads;
-	      __beglen = __plen;
-	      __end = const_cast<_CharT*>(__olds);
-	    }
+	  // else Padding first.
 	}
-      else
-	{
-	  // Padding first.
-	  __beg = __pads;
-	  __beglen = __plen;
-	  __end = const_cast<_CharT*>(__olds);
-	}
-      _Traits::copy(__news, __beg, __beglen);
-      _Traits::copy(__news + __beglen, __end, 
-			  __newlen - __beglen - __mod);
+      _Traits::assign(__news, __plen, __fill);
+      _Traits::copy(__news + __plen, const_cast<_CharT*>(__olds + __mod),
+		    __oldlen - __mod);
     }
 
   template<typename _CharT>
     bool
     __verify_grouping(const basic_string<_CharT>& __grouping, 
 		      basic_string<_CharT>& __grouping_tmp)
-    {         
-      int __i = 0;
-      int __j = 0;
-      const int __len = __grouping.size();
-      const int __n = __grouping_tmp.size();
+    { 
+      const size_t __n = __grouping_tmp.size() - 1;
+      const size_t __min = std::min(__n, __grouping.size() - 1);
+      size_t __i = __n;
       bool __test = true;
-      
+
       // Parsed number groupings have to match the
       // numpunct::grouping string exactly, starting at the
       // right-most point of the parsed sequence of elements ...
-      while (__test && __i < __n - 1)
-	for (__j = 0; __test && __j < __len && __i < __n - 1; ++__j,++__i)
-	  __test &= __grouping[__j] == __grouping_tmp[__n - __i - 1];
+      for (size_t __j = 0; __j < __min && __test; --__i, ++__j)
+	__test = __grouping_tmp[__i] == __grouping[__j];
+      for (; __i && __test; --__i)
+	__test = __grouping_tmp[__i] == __grouping[__min];
       // ... but the last parsed grouping can be <= numpunct
       // grouping.
-      __j == __len ? __j = 0 : __j;
-      __test &= __grouping[__j] >= __grouping_tmp[__n - __i - 1];
+      __test &= __grouping_tmp[0] <= __grouping[__min];
       return __test;
     }
 

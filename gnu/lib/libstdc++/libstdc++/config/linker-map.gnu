@@ -1,6 +1,6 @@
 ## Linker script for GNU ld 2.11.94+ only.
 ##
-## Copyright (C) 2002, 2003 Free Software Foundation, Inc.
+## Copyright (C) 2002, 2003, 2004 Free Software Foundation, Inc.
 ##
 ## This file is part of the libstdc++ version 3 distribution.
 ##
@@ -395,6 +395,11 @@ GLIBCPP_3.2.3 {
 
 } GLIBCPP_3.2.2;
 
+GLIBCPP_3.2.4 {
+
+  _ZNSt9basic_iosI[cw]St11char_traitsI[cw]EE11_M_setstateESt12_Ios_Iostate;
+
+} GLIBCPP_3.2.3;
 
 # Symbols in the support library (libsupc++) have their own tag.
 CXXABI_1.2 {
@@ -463,3 +468,28 @@ CXXABI_1.2.1 {
     __cxa_guard_abort;
 
 } CXXABI_1.2;
+
+CXXABI_1.2.2 {
+
+    # *_type_info classes, ctor and dtor
+    _ZN10__cxxabiv117__array_type_info*;
+    _ZN10__cxxabiv117__class_type_info*;
+    _ZN10__cxxabiv116__enum_type_info*;
+    _ZN10__cxxabiv120__function_type_info*;
+    _ZN10__cxxabiv123__fundamental_type_info*;
+    _ZN10__cxxabiv117__pbase_type_info*;
+    _ZN10__cxxabiv129__pointer_to_member_type_info*;
+    _ZN10__cxxabiv119__pointer_type_info*;
+    _ZN10__cxxabiv120__si_class_type_info*;
+    _ZN10__cxxabiv121__vmi_class_type_info*;
+
+    # *_type_info classes, member functions
+    _ZNK10__cxxabiv117__class_type_info*;
+    _ZNK10__cxxabiv120__function_type_info*;
+    _ZNK10__cxxabiv117__pbase_type_info*;
+    _ZNK10__cxxabiv129__pointer_to_member_type_info*;
+    _ZNK10__cxxabiv119__pointer_type_info*;
+    _ZNK10__cxxabiv120__si_class_type_info*;
+    _ZNK10__cxxabiv121__vmi_class_type_info*;
+
+} CXXABI_1.2.1;

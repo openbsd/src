@@ -1,3 +1,310 @@
+2004-09-30  Release Manager
+
+	* GCC 3.3.5 Released.
+
+2004-08-25  Jonathan Wakely  <redi@gcc.gnu.org>
+
+	* include/ext/enc_filebuf.h: Move concept-check macro to class scope.
+
+2004-07-27  Benjamin Kosnik  <bkoz@redhat.com>
+
+	* config/linker-map.gnu: Export typeinfo information.
+	* configure.in (libtool_VERSION): To 5:7:0.
+	* configure: Regenerate.
+	* testsuite/abi_check.cc (check_version): Add CXXABI_1.2.2.
+	
+2004-07-25  Kaz Kojima  <kkojima@gcc.gnu.org>
+
+	PR bootstrap/15120
+	* configure: Rebuilt.
+
+2004-07-08  Ulrich Weigand  <uweigand@de.ibm.com>
+
+	* testsuite/22_locale/time_put_members_char.cc (test01): Allow either 
+	"Son" or "So" as abbreviated name for Sunday in de_DE locale.
+	* testsuite/22_locale/time_put_members_wchar_t.cc (test01): Likewise.
+
+2004-06-28  David Asher  <david.asher@cavium.com>
+
+	PR libstdc++/11352
+	* include/bits/locale_facets.tcc (__pad<>::_S_pad): Don't
+	access __olds beyond __oldlen.
+
+2004-05-31  Release Manager
+
+	* GCC 3.3.4 Released.
+
+2004-05-24  Ronald Landheer-Cieslak  <ronald@landheer.com>
+
+	PR libstdc++/11171
+	* acinclude.m4: Deal with --with-newlib.
+	* aclocal.m4: Regenerate.
+	* configure.in: Set os_include_dir correctly when --with-newlib.
+	* configure: Regenerate.
+	
+2004-05-13  Benjamin Kosnik  <bkoz@redhat.com>
+
+	PR libstdc++/14720
+	* config/linker-map.gnu: Export basic_ios::_M_setstate.
+	* testsuite/abi_check.cc (check_version): Add GLIBCXX_3.2.4
+	to known versions.
+	* configure.in (libtool_VERSION): To 5:6:0. 
+	* configure: Regenerated.
+
+2004-05-07  Matthias Klose  <doko@debian.org>
+
+	* include/backward/iterator.h: Add GPL copyright info,
+	with exception clause.
+	* config/cpu/hppa/atomicity.h: Likewise.
+	* config/io/c_io_libio_codecvt.c: Likewise.
+	* include/bits/boost_concept_check.h: Likewise.
+	* include/backward/iterator.h: Likewise.
+	* libsupc++/tinfo.h: Likewise.
+	* po/string_literals.cc: Likewise.
+	* src/wstring-inst.cc: Likewise.
+	* libio/_G_config.h: Likewise.
+	* libio/iolibio.h: Likewise.
+
+2004-02-22  Paolo Carlini  <pcarlini@suse.de>
+
+	PR libstdc++/14220
+	* include/bits/locale_facets.tcc (num_put<>::_M_convert_float):
+	Don't clip the precision passed down to __convert_from_v:
+	22.2.2.2.2 nowhere says so.
+
+2004-02-14  Release Manager
+
+	* GCC 3.3.3 Released.
+
+2004-02-04  Benjamin Kosnik  <bkoz@redhat.com>
+	    Zack Weinberg  <zack@codesourcery.com>
+
+	* config/io/basic_file_stdio.cc (__gnu_internal::fopen_mode):
+	New function.
+	(__basic_file<char>::sys_open, __basic_file<char>::open): Use it.
+	(__basic_file<char>::_M_open_mode): Use it.  Mark deprecated.
+
+	* testsuite/27_io/filebuf_members.cc (test_06, test_07):
+	Correct flags to filebuf::open calls.
+
+2004-01-29  Paolo Carlini  <pcarlini@suse.de>
+
+	PR libstdc++/12657
+	* include/bits/basic_ios.tcc (copyfmt(const basic_ios&)):
+	Implement resolution of DR 292 (WP).
+
+2004-01-28  Paolo Carlini  <pcarlini@suse.de>
+
+	PR libstdc++/13369
+	* include/bits/locale_facets.tcc (__verify_grouping):
+	Fix to deal properly with __grouping_tmp.size() >
+	__grouping.size().
+
+2004-01-29  Paolo Carlini  <pcarlini@suse.de>
+
+	* Reverting Sylvain Pion's patch to libstdc++/10783, backported
+	from mainline: probably not safe for the ABI.
+
+2004-01-28  Andrew Pinski  <pinskia@physics.uc.edu>
+
+	PR libstdc++/13462
+	* include/bits/stl_multiset.h (std::multiset): Define pointer
+	as allocator's pointer, likewise for reference, const_pointer, and
+	const_reference.
+	* include/bits/stl_set.h (std::set): Likewise.
+	* include/ext/hash_set (__gnu_cxx::hash_set): Likewise.
+	(__gnu_cxx::hash_multiset): Likewise.
+
+2004-01-28  Sylvain Pion  <Sylvain.Pion@mpi-sb.mpg.de>
+
+	PR libstdc++/10783
+	* include/bits/stl_iterator.h (class __normal_iterator):
+	Don't inherit from iterator, add missing typedefs.
+
+2004-01-27  Paolo Carlini  <pcarlini@suse.de>
+
+	PR libstdc++/12967
+	* include/bits/list.tcc (merge): Implement resolution of
+	DR 300 [WP].
+
+2004-01-27  Paolo Carlini  <pcarlini@suse.de>
+
+	PR libstdc++/13884
+	* include/bits/sstream.tcc: Guard use of extern template.
+
+2004-01-27  Paolo Carlini  <pcarlini@suse.de>
+
+	* include/bits/locale_facets.tcc
+	(money_put::do_put(..., long double)): Use the basic_string
+	constructor for char arrays, not that for C-strings, to pass
+	__digits to do_put(..., const string_type&): __ws isn't
+	null-terminated.
+
+2004-01-27  Paolo Carlini  <pcarlini@suse.de>
+
+	* include/bits/locale_facets.tcc (__pad<>::_S_pad):
+	Improve performance-wise: avoid one traits::copy, avoid
+	the __builtin_alloca, streamline.
+
+2004-01-26  Paolo Carlini  <pcarlini@suse.de>
+
+	PR libstdc++/12971
+	* include/bits/locale_facets.tcc
+	(money_put::do_put(..., long double)): Fix conversion
+	specification as per DR 328 [WP].
+
+2004-01-26  Paolo Carlini  <pcarlini@suse.de>
+
+	PR libstdc++/12540
+	* config/locale/gnu/monetary_members.cc: Don't leak memory
+	on exception.
+
+2004-01-26  Andreas Schwab  <schwab@suse.de>
+
+	* config/locale/gnu/monetary_members.cc: Restore locale before
+	rethrowing exception.
+
+2004-01-25  Paolo Carlini  <pcarlini@suse.de>
+
+	PR libstdc++/13650
+	* include/bits/basic_string.tcc (compare(size_type, size_type,
+	const _CharT*, size_type)): Implement correctly the resolution
+	of DR 5: basically, s is a char array, -not- a C string.
+
+	* include/bits/basic_string.tcc (_M_clone): Null-terminate.
+
+2004-01-19  Paolo Carlini  <pcarlini@suse.de>
+
+	PR libstdc++/12352
+	PR libstdc++/12438
+	* include/bits/locale_classes.h (locale::locale(const locale&,
+	_Facet*)): Don't leak memory on exception.
+	* include/bits/locale_facets.tcc (locale::combine(const locale&)):
+	Likewise.
+	* src/locale.cc (locale::locale(const char*)): Likewise.
+	* src/localename.cc (locale::_Impl::~_Impl(),
+	locale::_Impl::_Impl(const _Impl&, size_t),
+	locale::_Impl::_Impl(const char*, size_t)): Likewise.
+	(locale::_Impl::_M_replace_categories(const _Impl*, category):
+	Tweak.
+
+2004-01-12  Marc Espie <espie@openbsd.org>
+
+	* src/Makefile.am (version.dep): backport from HEAD.
+	* src/Makefile.in: regen.
+
+2004-01-12  Gernot Hillier  <gernot.hillier@siemens.com>
+
+	* configure.in: GLIBCXX->GLIBCPP.
+	* configure: Regenerated.
+	* aclocal.m4: Regenerated.
+
+2004-01-07  Benjamin Kosnik  <bkoz@redhat.com>
+
+	* configure.in: Add io bits to linux cross config.
+	* configure: Regenerate.
+
+2004-01-07  Paolo Carlini  <pcarlini@suse.de>
+	    Petur Runolfsson  <peturr02@ru.is>
+
+	PR libstdc++/13007
+	* include/bits/fstream.tcc (imbue): Don't touch the stored
+	locale.
+	* include/std/std_streambuf.h (imbue): According to the
+	standard, base class version does nothing.
+	(pubimbue): Store the locale.
+
+2003-12-10  Benjamin Kosnik  <bkoz@redhat.com>
+
+	PR libstdc++/6243
+	* testsuite/lib/libstdc++.exp (v3-init): Add
+	original_ld_library_path, calculate ld_library path, set
+	LD_LIBRARY_PATH to both. Based on libjava.exp.
+
+2003-12-10  Benjamin Kosnik  <bkoz@redhat.com>
+	    Alexandre Oliva  <aoliva@redhat.com>
+
+	PR libstdc++/11612
+	* testsuite/Makefile.am (GLIBCXX_DIR): New.
+	(GLIBGCC_DIR): New.
+	(CXXLINK): Use both with -R so libtool links the correct libs.
+
+2003-12-08  David S. Miller  <davem@redhat.com>
+
+	PR libstdc++/12496
+	* config/cpu/sparc/atomicity.h (__exchange_and_add, __atomic_add):
+	Extend increment to _Atomic_word before giving to assembler.
+
+2003-12-04  Christopher Saunders  <ctsa@u.washington.edu>
+
+	PR libstdc++/13290
+	* include/bits/stl_algo.h (generate_n): Fix typo.
+
+2003-12-03  Benjamin Kosnik  <bkoz@redhat.com>
+
+	* include/bits/basic_ios.h (basic_ios::setstate): Revert.
+	* include/bits/istream.tcc: Only call setstate if __err != goodbit.
+	* include/bits/ostream.tcc: Same.
+	* testsuite/27_io/basic_ios/exceptions/char/2.cc: New.
+
+2003-12-03  Benjamin Kosnik  <bkoz@redhat.com>
+
+	PR libstdc++/9371
+	PR libstdc++/9546
+	PR libstdc++/10093
+	PR libstdc++/10095
+	* include/bits/basic_ios.h (basic_ios::setstate): Elide if goodbit.
+	(basic_ios::_M_setstate): Consolidate common error handling code.
+	* include/bits/basic_ios.tcc: Tweak.
+	* include/bits/fstream.tcc: Tweak.
+	* include/bits/istream.tcc: Use _M_setstate for common exception
+	handling. Move setstate calls after catch.
+	(basic_istream::tellg): Check for exceptions thrown by streambuf
+	virtual functions.
+	(basic_istream::seekg): Same.
+	* include/bits/ostream.tcc: Same, but for ostream.
+	(basic_ostream::flush): Check for exceptions thrown by streambuf
+	virtual functions.
+	(basic_istream::tellp): Same.
+	(basic_istream::seekp): Same.
+	* include/bits/locale_facets.tcc: Tweak.
+	* include/bits/streambuf.tcc: Tweak.
+	(__copy_streambufs): Propagate exceptions.
+
+2003-11-26  Benjamin Kosnik  <bkoz@redhat.com>
+
+	PR libstdc++/12297
+	* include/bits/istream.tcc
+	(basic_istream::sentry::sentry): Set failbit and eofbit when eof.
+
+2003-11-26  Petur Runolfsson  <peturr02@ru.is>
+
+	PR libstdc++/12594
+	* include/bits/ostream.tcc
+	(basic_ostream::operator<<(basic_ostream& (*)(basic_ostream&)),
+	basic_ostream::operator<<(basic_ios& (*)(basic_ios&)),
+	basic_ostream::operator<<(ios_base& (*)(ios_base&))):
+	Implement the resolution of DR 60 (TC): These are not formatted
+	output functions so don't construct sentry objects and don't
+	catch exceptions.
+	(basic_ostream::put, basic_ostream::write): Implement the
+	resolution of DR 63 (TC) by catching exceptions and setting
+	badbit.
+	(basic_ostream::flush): Implement the resolution of DR 60 (TC):
+	This is not an unformatted output function so don't construct
+	a sentry object.
+
+2003-10-25  Paolo Carlini  <pcarlini@suse.de>
+
+	* include/bits/locale_facets.tcc (money_get::do_get(...,
+	long double&): Properly size the temporary buffer.
+
+2003-10-20  Benjamin Kosnik  <bkoz@redhat.com>
+
+	PR libstdc++/10081
+	* include/bits/basic_ios.h (basic_ios::basic_ios): Initialize
+	_M_fctype, _M_fnumput, _M_fnumget.
+
 2003-10-16  Release Manager
 
 	* GCC 3.3.2 Released.
@@ -13,7 +320,7 @@
 
 	PR libstdc++/12451
 	* libsupc++/cxxabi.h: Move forward declaration of __class_type_info.
-	
+
 2003-10-01  Rainer Orth  <ro@TechFak.Uni-Bielefeld.DE>
 
 	* configure.target: Handle Solaris 2.5 micro releases explicitly.
@@ -28,7 +335,7 @@
 	returns eof.
 
 2003-09-30  Nathan Myers  <ncm@cantrip.org>
-            Paolo Carlini  <pcarlini@unitus.it>
+	    Paolo Carlini  <pcarlini@unitus.it>
 
 	PR libstdc++/11400
 	* include/bits/stl_algo.h (search_n):
