@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.39 2000/06/07 22:25:47 mickey Exp $	*/
+/*	$OpenBSD: apm.c,v 1.40 2000/07/26 03:39:45 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Michael Shalayeff. All rights reserved.
@@ -142,7 +142,9 @@ int apm_op_inprog;
 u_int apm_flags;
 u_char apm_majver;
 u_char apm_minver;
-int apm_dobusy;
+int apm_dobusy = 1;
+int apm_doidle = 1;
+
 struct {
 	u_int32_t entry;
 	u_int16_t seg;
@@ -600,13 +602,11 @@ apm_set_powstate(dev, state)
 	return 0;
 }
 
-int apmidleon = 1;
-
 void
 apm_cpu_busy()
 {
 	struct apmregs regs;
-	if (!apm_cd.cd_ndevs || !apmidleon)
+	if (!apm_cd.cd_ndevs || !apm_doidle)
 		return;
 	bzero(&regs, sizeof(regs));
 	if ((apm_flags & APM_IDLE_SLOWS) &&
@@ -615,7 +615,6 @@ apm_cpu_busy()
 #ifdef DIAGNOSTIC
 		apm_perror("set CPU busy", &regs);
 #endif
-		apmidleon = 0;
 	}
 }
 
@@ -623,7 +622,7 @@ void
 apm_cpu_idle()
 {
 	struct apmregs regs;
-	if (!apm_cd.cd_ndevs || !apmidleon)
+	if (!apm_cd.cd_ndevs || !apm_doidle)
 		return;
 
 	bzero(&regs, sizeof(regs));
@@ -632,7 +631,6 @@ apm_cpu_idle()
 #ifdef DIAGNOSTIC
 		apm_perror("set CPU idle", &regs);
 #endif
-		apmidleon = 0;
 	}
 }
 
@@ -679,9 +677,7 @@ apm_set_ver(self)
 	}
 	printf(": Power Management spec V%d.%d", apm_majver, apm_minver);
 	if (apm_flags & APM_IDLE_SLOWS) {
-		/* not relevant much */
 		DPRINTF((" (slowidle)"));
-		apm_dobusy = 1;
 	} else
 		apm_dobusy = 0;
 #ifdef DIAGNOSTIC
