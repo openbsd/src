@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.119 2002/12/04 18:08:40 ho Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.120 2002/12/06 20:28:20 ho Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -2879,7 +2879,7 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
   struct passwd *pwd = 0;
   u_int16_t sport = 0, dport = 0;
   u_int8_t tproto = 0;
-  char tmbuf[sizeof sport * 3 + 1];
+  char tmbuf[sizeof sport * 3 + 1], *xform;
 #if defined (SADB_X_CREDTYPE_NONE)
   struct sadb_x_cred *cred = 0, *sauth = 0;
 #endif
@@ -3915,12 +3915,16 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
 	    }
 	  else /* Fall through */
 #endif /* SADB_X_EXT_LOCAL_AUTH */
-	  /* XXX Default transform set should be settable. */
-	  if (conf_set (af, confname, "Transforms", "3DES-SHA-RSA_SIG", 0, 0))
-	    {
-	      conf_end (af, 0);
-	      goto fail;
-	    }
+	  {
+	    xform = conf_get_str ("Default-phase-1-configuration",
+				  "Transforms");
+	    if (conf_set (af, confname, "Transforms",
+			  xform ? xform : "3DES-SHA-RSA_SIG", 0, 0))
+	      {
+		conf_end (af, 0);
+		goto fail;
+	      }
+	  }
 
 	  if (conf_set (af, confname, "Exchange_Type", "ID_PROT", 0, 0)
 	      || conf_set (af, confname, "DOI", "IPSEC", 0, 0)
