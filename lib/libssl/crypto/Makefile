@@ -164,6 +164,7 @@ HDRS= 	asn1/asn1.h asn1/asn1_mac.h bf/blowfish.h bio/bio.h \
 	${LCRYPTO_SRC}/txt_db ${LCRYPTO_SRC}
 
 includes:
+	@test -d ${DESTDIR}/usr/include/ssl || mkdir ${DESTDIR}/usr/include/ssl
 	@d=`mktemp -d /tmp/libsslXXXXXXXXXX`; \
 	cd ${LCRYPTO_SRC}; for i in $(HDRS); do \
 		f=`basename $$i`; \

@@ -73,6 +73,7 @@ HDRS=	ssl.h ssl2.h ssl3.h ssl23.h tls1.h
 .PATH:	${LSSL_SRC}
 
 includes:
+	@test -d ${DESTDIR}/usr/include/ssl || mkdir ${DESTDIR}/usr/include/ssl
 	@d=`mktemp -d /tmp/libsslXXXXXXXXXX`; \
 	cd ${LSSL_SRC}; for i in $(HDRS); do \
 		f=`basename $$i`; \
