@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.10 1997/08/13 04:03:29 mickey Exp $
+#	$OpenBSD: Makefile,v 1.11 1997/08/22 20:16:27 mickey Exp $
 
 PROG=	boot
-SRCS=	srt0.S boot.c cmd.c kentry.c conf.c
+SRCS=	srt0.S boot.c cmd.c conf.c
 #AFLAGS+=-Wa,-R
 # AFLAGS+=-Wa,-a
 LD=ld
