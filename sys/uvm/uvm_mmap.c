@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.8 2001/03/09 15:11:46 art Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.9 2001/03/09 17:49:34 art Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.23 1999/06/16 17:25:39 minoura Exp $	*/
 
 /*
@@ -256,7 +256,7 @@ sys_mincore(p, v, retval)
 		}
 
 		if (uobj != NULL)
-			simple_unlock(&obj->vmobjlock);
+			simple_unlock(&uobj->vmobjlock);
 		if (amap != NULL)
 			amap_unlock(amap);
 	}
