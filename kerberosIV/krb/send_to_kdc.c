@@ -1,4 +1,4 @@
-/*	$OpenBSD: send_to_kdc.c,v 1.7 1997/12/14 21:41:07 art Exp $	*/
+/*	$OpenBSD: send_to_kdc.c,v 1.8 1997/12/16 12:00:08 deraadt Exp $	*/
 /* $KTH: send_to_kdc.c,v 1.47 1997/11/07 17:31:38 bg Exp $ */
 
 /* 
@@ -355,6 +355,8 @@ send_recv(KTEXT pkt, KTEXT rpkt, int proto, struct sockaddr_in *adr,
     int s;
     unsigned char buf[2048];
     int offset = 0;
+    fd_set *fdsp = NULL;
+    int fdsn;
     
     for(i = 0; i < sizeof(protos) / sizeof(protos[0]); i++){
 	if(protos[i].proto == proto)
@@ -372,22 +374,28 @@ send_recv(KTEXT pkt, KTEXT rpkt, int proto, struct sockaddr_in *adr,
 	close(s);
 	return FALSE;
     }
+    fdsn = howmany(s+1, NFDBITS) * sizeof(fd_mask);
+    if ((fdsp = (fd_set *)malloc(fdsn)) == NULL) {
+	close(s);
+	return FALSE;
+    }
     do{
-	fd_set readfds;
 	struct timeval timeout;
 	int len;
 	timeout.tv_sec = CLIENT_KRB_TIMEOUT;
 	timeout.tv_usec = 0;
-	FD_ZERO(&readfds);
-	FD_SET(s, &readfds);
+
+	memset(fdsp, 0, fdsn);
+	FD_SET(s, fdsp);
 	
 	/* select - either recv is ready, or timeout */
 	/* see if timeout or error or wrong descriptor */
-	if(select(s + 1, &readfds, 0, 0, &timeout) < 1 
-	   || !FD_ISSET(s, &readfds)) {
+	if(select(s + 1, fdsp, 0, 0, &timeout) < 1 
+	   || !FD_ISSET(s, fdsp)) {
 	    if (krb_debug)
 		krb_warning("select failed: errno = %d\n", errno);
 	    close(s);
+	    free(fdsp);
 	    return FALSE;
 	}
 	len = recv(s, buf + offset, sizeof(buf) - offset, 0);
@@ -395,6 +403,7 @@ send_recv(KTEXT pkt, KTEXT rpkt, int proto, struct sockaddr_in *adr,
 	    break;
 	offset += len;
     }while(protos[i].stream_flag);
+    free(fdsp);
     close(s);
     if((*protos[i].recv)(buf, offset, rpkt) < 0)
 	return FALSE;
