@@ -22,6 +22,7 @@ Boston, MA 02111-1307, USA.  */
 /* declaration of GUARD variable */
 #define GUARD_m		Pmode
 #define UNITS_PER_GUARD MAX(BIGGEST_ALIGNMENT / BITS_PER_UNIT, GET_MODE_SIZE (GUARD_m))
+#define SSP_DUMMY_FILE	"_ssp_"
 
 #ifndef L_stack_smash_handler
 

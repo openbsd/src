@@ -883,7 +883,7 @@ rtl_epilogue (insn)
   /* Mark the end of the function body.
      If control reaches this insn, the function can drop through
      without returning a value.  */
-  emit_note (NULL_PTR, NOTE_INSN_FUNCTION_END);
+  emit_note (SSP_DUMMY_FILE, NOTE_INSN_FUNCTION_END);
   
   if (end_label)
     emit_label (end_label);
