@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.c,v 1.41 2004/06/11 05:29:28 deraadt Exp $	 */
+/* $OpenBSD: machine.c,v 1.42 2004/06/11 16:08:54 deraadt Exp $	 */
 
 /*-
  * Copyright (c) 1994 Thorsten Lockert <tholo@sigmasoft.com>
@@ -377,7 +377,7 @@ state_abbr(struct kinfo_proc2 *pp)
 {
 	static char buf[10];
 
-	if (ncpu > 1)
+	if (ncpu > 1 && pp->p_cpuid != KI_NOCPU)
 		snprintf(buf, sizeof buf, "%s/%d",
 		    state_abbrev[(unsigned char)pp->p_stat], pp->p_cpuid);
 	else
