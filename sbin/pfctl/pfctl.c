@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.75 2002/06/11 02:26:10 henning Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.76 2002/06/11 06:12:15 kjell Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -87,6 +87,7 @@ char	*limitopt;
 char	*debugopt;
 int	 state_killers;
 char	*state_kill[2];
+int 	 loadopt = PFCTL_FLAG_ALL;
 
 char	*infile;
 
@@ -500,52 +501,60 @@ pfctl_show_status(int dev)
 int
 pfctl_add_rule(struct pfctl *pf, struct pf_rule *r)
 {
-	memcpy(&pf->prule->rule, r, sizeof(pf->prule->rule));
-	if ((pf->opts & PF_OPT_NOACTION) == 0) {
-		if (ioctl(pf->dev, DIOCADDRULE, pf->prule))
-			err(1, "DIOCADDRULE");
+	if ((loadopt & (PFCTL_FLAG_FILTER | PFCTL_FLAG_ALL)) != 0) {
+		memcpy(&pf->prule->rule, r, sizeof(pf->prule->rule));
+		if ((pf->opts & PF_OPT_NOACTION) == 0) {
+			if (ioctl(pf->dev, DIOCADDRULE, pf->prule))
+				err(1, "DIOCADDRULE");
+		}
+		if (pf->opts & PF_OPT_VERBOSE)
+			print_rule(&pf->prule->rule);
 	}
-	if (pf->opts & PF_OPT_VERBOSE)
-		print_rule(&pf->prule->rule);
 	return (0);
 }
 
 int
 pfctl_add_nat(struct pfctl *pf, struct pf_nat *n)
 {
-	memcpy(&pf->pnat->nat, n, sizeof(pf->pnat->nat));
-	if ((pf->opts & PF_OPT_NOACTION) == 0) {
-		if (ioctl(pf->dev, DIOCADDNAT, pf->pnat))
-			err(1, "DIOCADDNAT");
+	if ((loadopt & (PFCTL_FLAG_NAT | PFCTL_FLAG_ALL)) != 0) {
+		memcpy(&pf->pnat->nat, n, sizeof(pf->pnat->nat));
+		if ((pf->opts & PF_OPT_NOACTION) == 0) {
+			if (ioctl(pf->dev, DIOCADDNAT, pf->pnat))
+				err(1, "DIOCADDNAT");
+		}
+		if (pf->opts & PF_OPT_VERBOSE)
+			print_nat(&pf->pnat->nat);
 	}
-	if (pf->opts & PF_OPT_VERBOSE)
-		print_nat(&pf->pnat->nat);
 	return (0);
 }
 
 int
 pfctl_add_binat(struct pfctl *pf, struct pf_binat *b)
 {
-	memcpy(&pf->pbinat->binat, b, sizeof(pf->pbinat->binat));
-	if ((pf->opts & PF_OPT_NOACTION) == 0) {
-		if (ioctl(pf->dev, DIOCADDBINAT, pf->pbinat))
-			err(1, "DIOCADDBINAT");
+	if ((loadopt & (PFCTL_FLAG_NAT | PFCTL_FLAG_ALL)) != 0) {
+		memcpy(&pf->pbinat->binat, b, sizeof(pf->pbinat->binat));
+		if ((pf->opts & PF_OPT_NOACTION) == 0) {
+			if (ioctl(pf->dev, DIOCADDBINAT, pf->pbinat))
+				err(1, "DIOCADDBINAT");
+		}
+		if (pf->opts & PF_OPT_VERBOSE)
+			print_binat(&pf->pbinat->binat);
 	}
-	if (pf->opts & PF_OPT_VERBOSE)
-		print_binat(&pf->pbinat->binat);
 	return (0);
 }
 
 int
 pfctl_add_rdr(struct pfctl *pf, struct pf_rdr *r)
 {
-	memcpy(&pf->prdr->rdr, r, sizeof(pf->prdr->rdr));
-	if ((pf->opts & PF_OPT_NOACTION) == 0) {
-		if (ioctl(pf->dev, DIOCADDRDR, pf->prdr))
-			err(1, "DIOCADDRDR");
+	if ((loadopt & (PFCTL_FLAG_NAT | PFCTL_FLAG_ALL)) != 0) {
+		memcpy(&pf->prdr->rdr, r, sizeof(pf->prdr->rdr));
+		if ((pf->opts & PF_OPT_NOACTION) == 0) {
+			if (ioctl(pf->dev, DIOCADDRDR, pf->prdr))
+				err(1, "DIOCADDRDR");
+		}
+		if (pf->opts & PF_OPT_VERBOSE)
+			print_rdr(&pf->prdr->rdr);
 	}
-	if (pf->opts & PF_OPT_VERBOSE)
-		print_rdr(&pf->prdr->rdr);
 	return (0);
 }
 
@@ -571,13 +580,16 @@ pfctl_rules(int dev, char *filename, int opts)
 		return (1);
 	}
 	if ((opts & PF_OPT_NOACTION) == 0) {
-		if (ioctl(dev, DIOCBEGINNATS, &pn.ticket))
-			err(1, "DIOCBEGINNATS");
-		if (ioctl(dev, DIOCBEGINRDRS, &pr.ticket))
-			err(1, "DIOCBEGINRDRS");
-		if (ioctl(dev, DIOCBEGINBINATS, &pb.ticket))
-			err(1, "DIOCBEGINBINATS");
-		if (ioctl(dev, DIOCBEGINRULES, &pl.ticket))
+		if ((loadopt & (PFCTL_FLAG_NAT | PFCTL_FLAG_ALL)) != 0) {
+			if (ioctl(dev, DIOCBEGINNATS, &pn.ticket))
+				err(1, "DIOCBEGINNATS");
+			if (ioctl(dev, DIOCBEGINRDRS, &pr.ticket))
+				err(1, "DIOCBEGINRDRS");
+			if (ioctl(dev, DIOCBEGINBINATS, &pb.ticket))
+				err(1, "DIOCBEGINBINATS");
+		}
+		if (((loadopt & (PFCTL_FLAG_FILTER | PFCTL_FLAG_ALL)) != 0) &&
+		    ioctl(dev, DIOCBEGINRULES, &pl.ticket))
 			err(1, "DIOCBEGINRULES");
 	}
 	/* fill in callback data */
@@ -591,13 +603,16 @@ pfctl_rules(int dev, char *filename, int opts)
 	if (parse_rules(fin, &pf) < 0)
 		errx(1, "Syntax error in file: pf rules not loaded");
 	if ((opts & PF_OPT_NOACTION) == 0) {
-		if (ioctl(dev, DIOCCOMMITNATS, &pn.ticket))
-			err(1, "DIOCCOMMITNATS");
-		if (ioctl(dev, DIOCCOMMITRDRS, &pr.ticket))
-			err(1, "DIOCCOMMITRDRS");
-		if (ioctl(dev, DIOCCOMMITBINATS, &pb.ticket))
-			err(1, "DIOCCOMMITBINATS");
-		if (ioctl(dev, DIOCCOMMITRULES, &pl.ticket))
+		if ((loadopt & (PFCTL_FLAG_NAT | PFCTL_FLAG_ALL)) != 0) {
+			if (ioctl(dev, DIOCCOMMITNATS, &pn.ticket))
+				err(1, "DIOCCOMMITNATS");
+			if (ioctl(dev, DIOCCOMMITRDRS, &pr.ticket))
+				err(1, "DIOCCOMMITRDRS");
+			if (ioctl(dev, DIOCCOMMITBINATS, &pb.ticket))
+				err(1, "DIOCCOMMITBINATS");
+		}
+		if (((loadopt & (PFCTL_FLAG_FILTER | PFCTL_FLAG_ALL)) != 0) &&
+		    ioctl(dev, DIOCCOMMITRULES, &pl.ticket))
 			err(1, "DIOCCOMMITRULES");
 #if 0
 		if ((opts & PF_OPT_QUIET) == 0) {
@@ -872,7 +887,7 @@ main(int argc, char *argv[])
 	if (argc < 2)
 		usage();
 
-	while ((ch = getopt(argc, argv, "deqf:F:hk:l:m:nO:rs:t:vx:z")) != -1) {
+	while ((ch = getopt(argc, argv, "deqf:F:hk:l:m:nNO:rRs:St:vx:z")) != -1) {
 		switch (ch) {
 		case 'd':
 			opts |= PF_OPT_DISABLE;
@@ -910,6 +925,10 @@ main(int argc, char *argv[])
 		case 'n':
 			opts |= PF_OPT_NOACTION;
 			break;
+		case 'N':
+			loadopt &= ~PFCTL_FLAG_ALL;
+			loadopt |= PFCTL_FLAG_NAT;
+			break;
 		case 'O':
 			hintopt = optarg;
 			mode = O_RDWR;
@@ -920,6 +939,10 @@ main(int argc, char *argv[])
 		case 'f':
 			rulesopt = optarg;
 			mode = O_RDWR;
+			break;
+		case 'R':
+			loadopt &= ~PFCTL_FLAG_ALL;
+			loadopt |= PFCTL_FLAG_FILTER;
 			break;
 		case 's':
 			showopt = optarg;
