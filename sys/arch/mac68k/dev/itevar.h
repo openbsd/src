@@ -1,4 +1,4 @@
-/*	$OpenBSD: itevar.h,v 1.3 2002/03/14 01:26:35 millert Exp $	*/
+/*	$OpenBSD: itevar.h,v 1.4 2002/06/11 05:13:37 miod Exp $	*/
 /*	$NetBSD: itevar.h,v 1.1 1996/05/05 06:16:49 briggs Exp $	*/
 
 /*
@@ -53,4 +53,4 @@ struct tty	*itetty(dev_t dev);
 int	itecnprobe(struct consdev * cp);
 int	itecninit(struct consdev * cp);
 int	itecngetc(dev_t dev);
-int	itecnputc(dev_t dev, int c);
+void	itecnputc(dev_t dev, int c);

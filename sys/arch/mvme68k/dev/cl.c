@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl.c,v 1.26 2002/04/27 23:21:05 miod Exp $ */
+/*	$OpenBSD: cl.c,v 1.27 2002/06/11 05:13:39 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -165,7 +165,7 @@ struct {
 int clcnprobe(struct consdev *cp);
 int clcninit(struct consdev *cp);
 int clcngetc(dev_t dev);
-int clcnputc(dev_t dev, u_char c);
+void clcnputc(dev_t dev, u_char c);
 u_char cl_clkdiv(int speed);
 u_char cl_clknum(int speed);
 u_char cl_clkrxtimeout(int speed);
@@ -1075,7 +1075,7 @@ clcngetc(dev)
 	return data;
 }
 
-int
+void
 clcnputc(dev, c)
 	dev_t dev;
 	u_char c;
@@ -1085,7 +1085,6 @@ clcnputc(dev, c)
 		clputc(0, 0, '\r');
 
 	clputc(0, 0, c);
-	return 0;
 }
 
 void
