@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_ray.c,v 1.3 2000/04/24 19:43:35 niklas Exp $	*/
-/*	$NetBSD: if_ray.c,v 1.17 2000/03/23 07:01:42 thorpej Exp $	*/
+/*	$OpenBSD: if_ray.c,v 1.4 2000/04/29 08:20:54 mickey Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.19 2000/04/22 22:36:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps
@@ -139,7 +139,7 @@
 
 /* ammount of time to consider start/join failed */
 #ifndef	RAY_START_TIMEOUT
-#define	RAY_START_TIMEOUT	(90 * hz)
+#define	RAY_START_TIMEOUT	(10 * hz)
 #endif
 
 /* reset reschedule timeout */
@@ -170,7 +170,7 @@
  * spins for the reset
  */
 #ifndef	RAY_MAX_RESETS
-#define	RAY_MAX_RESETS	3
+#define	RAY_MAX_RESETS	10
 #endif
 
 /*
@@ -345,7 +345,6 @@ int ray_media_change __P((struct ifnet *));
 void ray_media_status __P((struct ifnet *, struct ifmediareq *));
 void ray_power __P((int, void *));
 ray_cmd_func_t ray_rccs_intr __P((struct ray_softc *, bus_size_t));
-void ray_read_region __P((struct ray_softc *, bus_size_t,void *,size_t));
 void ray_recv __P((struct ray_softc *, bus_size_t));
 void ray_report_params __P((struct ray_softc *));
 void ray_reset __P((struct ray_softc *));
@@ -370,7 +369,16 @@ int ray_user_report_params __P((struct ray_softc *,
     struct ray_param_req *));
 int ray_user_update_params __P((struct ray_softc *,
     struct ray_param_req *));
+
+#ifdef __NetBSD__
 void ray_write_region __P((struct ray_softc *,bus_size_t,void *,size_t));
+void ray_read_region __P((struct ray_softc *, bus_size_t,void *,size_t));
+#elif defined(__OpenBSD__)
+#define	ray_read_region(sc,off,p,c) \
+	bus_space_read_region_1((sc)->sc_memt, (sc)->sc_memh, (off), (p), (c))
+#define	ray_write_region(sc,off,p,c) \
+	bus_space_write_region_1((sc)->sc_memt, (sc)->sc_memh, (off), (p), (c))
+#endif
 
 #ifdef RAY_DO_SIGLEV
 void ray_update_siglev __P((struct ray_softc *, u_int8_t *, u_int8_t));
@@ -1443,7 +1451,7 @@ ray_recv(sc, ccs)
 	struct ieee80211_frame *frame;
 	struct ether_header *eh;
 	struct mbuf *m;
-	size_t pktlen, len, lenread;
+	size_t pktlen, fudge, len, lenread;
 	bus_size_t bufp, ebufp, tmp;
 	struct ifnet *ifp;
 	u_int8_t *src, *d;
@@ -1463,6 +1471,15 @@ ray_recv(sc, ccs)
 	nofrag = 0;	/* XXX unused */
 	m = 0;
 	ifp = &sc->sc_if;
+
+	/*
+	 * If we're expecting the E2-in-802.11 encapsulation that the
+	 * WebGear Windows driver produces, fudge the packet forward
+	 * in the mbuf by 2 bytes so that the payload after the
+	 * Ethernet header will be aligned.  If we end up getting a
+	 * packet that's not of this type, we'll just drop it anyway.
+	 */
+	fudge = ifp->if_flags & IFF_LINK0? 2 : 0;
 
 	/* it looks like at least with build 4 there is no CRC in length */
 	first = RAY_GET_INDEX(ccs);
@@ -1487,7 +1504,7 @@ ray_recv(sc, ccs)
 		ifp->if_ierrors++;
 		goto done;
 	}
-	if (pktlen > MHLEN) {
+	if ((pktlen + fudge) > MHLEN) {
 		/* XXX should allow chaining? */
 		MCLGET(m, M_DONTWAIT);
 		if ((m->m_flags & M_EXT) == 0) {
@@ -1501,6 +1518,7 @@ ray_recv(sc, ccs)
 	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.len = pktlen;
 	m->m_len = pktlen;
+	m->m_data += fudge;
 	d = mtod(m, u_int8_t *);
 
 	RAY_DPRINTF(("%s: recv ccs index %d\n", sc->sc_xname, first));
@@ -3041,7 +3059,7 @@ ray_user_report_params(sc, pr)
  * as it seems to mess with gcc.  the line numbers get offset
  * presumably this is related to the inline asm on i386.
  */
-
+#ifndef ray_read_region
 void
 ray_read_region(sc, off, vp, c)
 	struct ray_softc *sc;
@@ -3096,7 +3114,9 @@ ray_read_region(sc, off, vp, c)
 	bus_space_read_region_1(sc->sc_memt, sc->sc_memh, off, vp, c);
 #endif
 }
+#endif
 
+#ifndef ray_write_region
 /*
  * this is a temporary wrapper around bus_space_write_region_1
  * as it seems to mess with gcc.  the line numbers get offset
@@ -3155,6 +3175,7 @@ ray_write_region(sc, off, vp, c)
 	bus_space_write_region_1(sc->sc_memt, sc->sc_memh, off, vp, c);
 #endif
 }
+#endif
 
 #ifdef RAY_DEBUG
 
