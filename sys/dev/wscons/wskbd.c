@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.16 2001/05/08 22:28:43 mickey Exp $ */
+/* $OpenBSD: wskbd.c,v 1.17 2001/06/08 03:20:31 mickey Exp $ */
 /* $NetBSD: wskbd.c,v 1.38 2000/03/23 07:01:47 thorpej Exp $ */
 
 /*
@@ -1488,43 +1488,43 @@ wskbd_translate(id, type, value)
 	switch (kp->group1[0]) {
 	case KS_Shift_L:
 		update_modifier(id, type, 0, MOD_SHIFT_L);
-		goto kbrep;
+		break;
 
 	case KS_Shift_R:
 		update_modifier(id, type, 0, MOD_SHIFT_R);
-		goto kbrep;
+		break;
 
 	case KS_Shift_Lock:
 		update_modifier(id, type, 1, MOD_SHIFTLOCK);
-		goto kbrep;
+		break;
 
 	case KS_Caps_Lock:
 		update_modifier(id, type, 1, MOD_CAPSLOCK);
-		goto kbrep;
+		break;
 
 	case KS_Control_L:
 		update_modifier(id, type, 0, MOD_CONTROL_L);
-		goto kbrep;
+		break;
 
 	case KS_Control_R:
 		update_modifier(id, type, 0, MOD_CONTROL_R);
-		goto kbrep;
+		break;
 
 	case KS_Alt_L:
 		update_modifier(id, type, 0, MOD_META_L);
-		goto kbrep;
+		break;
 
 	case KS_Alt_R:
 		update_modifier(id, type, 0, MOD_META_R);
-		goto kbrep;
+		break;
 
 	case KS_Mode_switch:
 		update_modifier(id, type, 0, MOD_MODESHIFT);
-		goto kbrep;
+		break;
 
 	case KS_Num_Lock:
 		update_modifier(id, type, 1, MOD_NUMLOCK);
-		goto kbrep;
+		break;
 
 #if NWSDISPLAY > 0
 	case KS_Hold_Screen:
@@ -1532,26 +1532,24 @@ wskbd_translate(id, type, value)
 			update_modifier(id, type, 1, MOD_HOLDSCREEN);
 			wskbd_holdscreen(sc, id->t_modifiers & MOD_HOLDSCREEN);
 		}
-		goto kbrep;
+		break;
+
+	default:
+		if (sc != NULL && sc->sc_repeating &&
+		    ((type == WSCONS_EVENT_KEY_UP && value != sc->sc_repkey) ||
+		     (type == WSCONS_EVENT_KEY_DOWN && value == sc->sc_repkey)))
+				return (0);
 #endif
 	}
 
 #if NWSDISPLAY > 0
-	if (sc != NULL && sc->sc_repeating) {
-		if ((type == WSCONS_EVENT_KEY_UP && value != sc->sc_repkey) ||
-		    (type == WSCONS_EVENT_KEY_DOWN && value == sc->sc_repkey))
-			return (0);
-	}
-
-kbrep:
-	if (sc != NULL && sc->sc_repeating) {
-		sc->sc_repeating = 0;
-		timeout_del(&sc->sc_repeat_ch);
-	}
-	if (sc != NULL)
+	if (sc != NULL) {
+		if (sc->sc_repeating) {
+			sc->sc_repeating = 0;
+			timeout_del(&sc->sc_repeat_ch);
+		}
 		sc->sc_repkey = value;
-#else
-kbrep:
+	}
 #endif
 
 	/* If this is a key release or we are in command mode, we are done */
@@ -1566,29 +1564,12 @@ kbrep:
 	else
 		group = & kp->group1[0];
 
-	if ((id->t_modifiers & MOD_NUMLOCK) != 0 &&
-	    KS_GROUP(group[1]) == KS_GROUP_Keypad) {
-		if (MOD_ONESET(id, MOD_ANYSHIFT))
-			ksym = group[0];
-		else
-			ksym = group[1];
-	} else if (! MOD_ONESET(id, MOD_ANYSHIFT | MOD_CAPSLOCK)) {
-		ksym = group[0];
-	} else if (MOD_ONESET(id, MOD_CAPSLOCK)) {
-		if (! MOD_ONESET(id, MOD_SHIFT_L | MOD_SHIFT_R))
-			ksym = group[0];
-		else
-			ksym = group[1];
-		if (ksym >= KS_a && ksym <= KS_z)
-			ksym += KS_A - KS_a;
-		else if (ksym >= KS_agrave && ksym <= KS_thorn &&
-			 ksym != KS_division)
-			ksym += KS_Agrave - KS_agrave;
-	} else if (MOD_ONESET(id, MOD_ANYSHIFT)) {
-		ksym = group[1];
-	} else {
-		ksym = group[0];
-	}
+	if ((id->t_modifiers & MOD_NUMLOCK) &&
+	    KS_GROUP(group[1]) == KS_GROUP_Keypad)
+		ksym = group[!MOD_ONESET(id, MOD_ANYSHIFT)];
+	else
+		ksym = group[MOD_ONESET(id, MOD_CAPSLOCK) ^
+		    MOD_ONESET(id, MOD_ANYSHIFT)];
 
 	/* Process compose sequence and dead accents */
 	res = KS_voidSymbol;
@@ -1653,7 +1634,7 @@ kbrep:
 				return (2);
 			} else
 			res |= 0x80;
-	}
+		}
 	}
 
 	id->t_symbols[0] = res;
