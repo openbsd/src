@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ste.c,v 1.1 1999/12/07 01:45:29 aaron Exp $ */
+/*	$OpenBSD: if_ste.c,v 1.2 1999/12/07 20:42:54 jason Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -61,12 +61,6 @@
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
-
-#if 0
-#ifdef BRIDGE
-#include <net/bridge.h>
-#endif
 #endif
 
 #include <vm/vm.h>              /* for vtophys */
@@ -688,38 +682,6 @@ again:
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m);
-#endif
-
-#if 0
-#ifdef BRIDGE
-		if (do_bridge) {
-			struct ifnet *bdg_ifp ;
-			bdg_ifp = bridge_in(m);
-			if (bdg_ifp != BDG_LOCAL && bdg_ifp != BDG_DROP)
-				bdg_forward(&m, bdg_ifp);
-			if (((bdg_ifp != BDG_LOCAL) && (bdg_ifp != BDG_BCAST) &&
-			    (bdg_ifp != BDG_MCAST)) || bdg_ifp == BDG_DROP) {
-				m_freem(m);
-				continue;
-			}
-		}
-#endif
-#endif
-
-#if NBPFILTER > 0
-		/*
-		 * Don't pass packet up to the ether_input() layer unless it's
-		 * a broadcast packet, multicast packet, matches our ethernet
-		 * address or the interface is in promiscuous mode.
-		 */
-		if (ifp->if_bpf) {
-			if (ifp->if_flags & IFF_PROMISC &&
-			    (bcmp(eh->ether_dhost, sc->arpcom.ac_enaddr,
-			    ETHER_ADDR_LEN) && (eh->ether_dhost[0] & 1) == 0)){
-				m_freem(m);
-				continue;
-			}
-		}
 #endif
 
 		/* Remove header from mbuf and pass it on. */
