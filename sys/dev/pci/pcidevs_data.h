@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.246 2000/04/14 06:05:50 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.247 2000/04/14 09:05:42 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -979,6 +979,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Bit3 Computer Corp.",
 	    "PCI-VME Interface Mod. 2706",
+	},
+	{
+	    PCI_VENDOR_BLUESTEEL, PCI_PRODUCT_BLUESTEEL_5501,
+	    0,
+	    "Bluesteel Networks",
+	    "5501",
+	},
+	{
+	    PCI_VENDOR_BLUESTEEL, PCI_PRODUCT_BLUESTEEL_5601,
+	    0,
+	    "Bluesteel Networks",
+	    "5601",
 	},
 	{
 	    PCI_VENDOR_BROOKTREE, PCI_PRODUCT_BROOKTREE_BT848,
@@ -7524,6 +7536,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_DELTA, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Delta",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_BLUESTEEL, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Bluesteel Networks",
 	    NULL,
 	},
 	{
