@@ -1,4 +1,4 @@
-/*	$OpenBSD: dirname.c,v 1.4 1998/06/21 22:13:57 millert Exp $	*/
+/*	$OpenBSD: dirname.c,v 1.5 2001/07/05 22:12:09 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -28,9 +28,10 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: dirname.c,v 1.4 1998/06/21 22:13:57 millert Exp $";                                         
+static char rcsid[] = "$OpenBSD: dirname.c,v 1.5 2001/07/05 22:12:09 pjanzen Exp $";                                         
 #endif /* not lint */                                                      
 
+#include <err.h>
 #include <libgen.h>
 #include <locale.h>
 #include <stdio.h>
