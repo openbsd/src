@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.108 2000/04/26 20:56:30 markus Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.109 2000/04/26 22:15:59 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -422,7 +422,6 @@ main(int ac, char **av)
 	struct sockaddr_storage from;
 	const char *remote_ip;
 	int remote_port;
-	char *comment;
 	FILE *f;
 	struct linger linger;
 	struct addrinfo *ai;
@@ -550,14 +549,13 @@ main(int ac, char **av)
 		k.type = KEY_RSA;
 		k.rsa = sensitive_data.host_key;
 		errno = 0;
-		if (!load_private_key(options.host_key_file, "", &k, &comment)) {
+		if (!load_private_key(options.host_key_file, "", &k, NULL)) {
 			error("Could not load host key: %.200s: %.100s",
 			    options.host_key_file, strerror(errno));
 			log("Disabling protocol version 1");
 			options.protocol &= ~SSH_PROTO_1;
 		}
 		k.rsa = NULL;
-		xfree(comment);
 	}
 	if (options.protocol & SSH_PROTO_2) {
 		sensitive_data.dsa_host_key = key_new(KEY_DSA);
