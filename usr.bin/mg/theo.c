@@ -1,4 +1,4 @@
-/*	$OpenBSD: theo.c,v 1.53 2003/05/18 02:29:54 todd Exp $	*/
+/*	$OpenBSD: theo.c,v 1.54 2003/05/18 02:35:47 henning Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -138,7 +138,7 @@ static const char *talk[] = {
 	"You guys are about four days behind on theo.c",
 	"I'm just talking.",
 	"Vegetarian my ass",
-	"Hey, that's a McNallys!",
+	"Wait a minute, that's a McNallys!",
 	"Your connection is breaking up."
 };
 
