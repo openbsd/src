@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtree.h,v 1.7 2001/08/10 02:33:46 millert Exp $	*/
+/*	$OpenBSD: mtree.h,v 1.8 2002/03/04 19:56:39 millert Exp $	*/
 /*	$NetBSD: mtree.h,v 1.7 1995/03/07 21:26:27 cgd Exp $	*/
 
 /*-
@@ -61,26 +61,27 @@ typedef struct _node {
 	nlink_t	st_nlink;			/* link count */
 	u_int32_t file_flags;			/* file flags */
 
-#define	F_CKSUM		0x00001			/* check sum */
-#define	F_DONE		0x00002			/* directory done */
-#define	F_GID		0x00004			/* gid */
-#define	F_GNAME		0x00008			/* group name */
-#define	F_IGN		0x00010			/* ignore */
-#define	F_MAGIC		0x00020			/* name has magic chars */
-#define	F_MD5		0x00040			/* MD5 digest */
-#define	F_MODE		0x00080			/* mode */
-#define	F_NLINK		0x00100			/* number of links */
-#define F_OPT		0x00200			/* existence optional */
-#define	F_RMD160	0x00400			/* RIPEMD-160 digest */
-#define	F_SHA1		0x00800			/* SHA-1 digest */
-#define	F_SIZE		0x01000			/* size */
-#define	F_SLINK		0x02000			/* link count */
-#define	F_TIME		0x04000			/* modification time */
-#define	F_TYPE		0x08000			/* file type */
-#define	F_UID		0x10000			/* uid */
-#define	F_UNAME		0x20000			/* user name */
-#define	F_VISIT		0x40000			/* file visited */
-#define	F_FLAGS		0x80000			/* file flags */
+#define	F_CKSUM		0x000001		/* checksum */
+#define	F_DONE		0x000002		/* directory done */
+#define	F_GID		0x000004		/* gid */
+#define	F_GNAME		0x000008		/* group name */
+#define	F_IGN		0x000010		/* ignore */
+#define	F_MAGIC		0x000020		/* name has magic chars */
+#define	F_MD5		0x000040		/* MD5 digest */
+#define	F_MODE		0x000080		/* mode */
+#define	F_NLINK		0x000100		/* number of links */
+#define F_OPT		0x000200		/* existence optional */
+#define	F_RMD160	0x000400		/* RIPEMD-160 digest */
+#define	F_SHA1		0x000800		/* SHA-1 digest */
+#define	F_SIZE		0x001000		/* size */
+#define	F_SLINK		0x002000		/* link count */
+#define	F_TIME		0x004000		/* modification time */
+#define	F_TYPE		0x008000		/* file type */
+#define	F_UID		0x010000		/* uid */
+#define	F_UNAME		0x020000		/* user name */
+#define	F_VISIT		0x040000		/* file visited */
+#define	F_FLAGS		0x080000		/* file flags */
+#define	F_PRESERVE	0x100000		/* preserve attributes */
 	u_int32_t flags;			/* items set */
 
 #define	F_BLOCK	0x001				/* block special */
