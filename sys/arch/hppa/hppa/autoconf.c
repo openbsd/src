@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.22 2002/10/07 15:32:37 mickey Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.23 2002/12/17 21:54:25 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -69,7 +69,6 @@ int findblkmajor(struct device *dv);
 const char *findblkname(int maj);
 
 void (*cold_hook)(int); /* see below */
-register_t	kpsw = PSL_Q | PSL_P | PSL_C | PSL_D;
 
 /*
  * LED blinking thing
@@ -93,15 +92,12 @@ cpu_configure()
 	if (config_rootfound("mainbus", "mainbus") == NULL)
 		panic("no mainbus found");
 
-	/* in spl*() we trust */
-	__asm __volatile("ssm %0, %%r0" :: "i" (PSL_I));
-	kpsw |= PSL_I;
+	cpu_intr_init();
 	spl0();
 
 	setroot();
 	swapconf();
 	dumpconf();
-	cold = 0;
 	if (cold_hook)
 		(*cold_hook)(HPPA_COLD_HOT);
 

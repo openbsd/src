@@ -1,106 +1,148 @@
-/*	$OpenBSD: intr.h,v 1.13 2002/04/29 07:35:18 miod Exp $	*/
+/*	$OpenBSD: intr.h,v 1.14 2002/12/17 21:54:25 mickey Exp $	*/
 
-/* 
- * Copyright (c) 1990,1991,1992,1994 The University of Utah and
- * the Computer Systems Laboratory at the University of Utah (CSL).
+/*
+ * Copyright (c) 2002 Michael Shalayeff
  * All rights reserved.
  *
- * Permission to use, copy, modify and distribute this software is hereby
- * granted provided that (1) source code retains these copyright, permission,
- * and disclaimer notices, and (2) redistributions including binaries
- * reproduce the notices in supporting documentation, and (3) all advertising
- * materials mentioning features or use of this software display the following
- * acknowledgement: ``This product includes software developed by the
- * Computer Systems Laboratory at the University of Utah.''
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by Michael Shalayeff.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
  *
- * THE UNIVERSITY OF UTAH AND CSL ALLOW FREE USE OF THIS SOFTWARE IN ITS "AS
- * IS" CONDITION.  THE UNIVERSITY OF UTAH AND CSL DISCLAIM ANY LIABILITY OF
- * ANY KIND FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- *
- * CSL requests users of this software to return to csl-dist@cs.utah.edu any
- * improvements that they make and grant CSL redistribution rights.
- *
- * 	Utah $Hdr: machspl.h 1.16 94/12/14$
- *	Author: Jeff Forys, Bob Wheeler, University of Utah CSL
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR OR HIS RELATIVES BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF MIND, USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+ * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+ * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_MACHINE_INTR_H_
-#define	_MACHINE_INTR_H_
+#ifndef _MACHINE_INTR_H_
+#define _MACHINE_INTR_H_
 
 #include <machine/psl.h>
 
 #define	CPU_NINTS	32
-#define	CPU_INTITMR	(0x80000000)
+#define	CPU_INTITMR	0x80000000
+#define	NIPL		16
 
-#define	IPL_NONE	(0xffffffff)
-#define	IPL_BIO		(0x80000000)
-#define	IPL_NET		(0x80000000)
-#define	IPL_TTY		(0x80000000)
-#define	IPL_IO		(IPL_BIO|IPL_NET|IPL_TTY)
-#define	IPL_CLOCK	(0)
-#define	IPL_HIGH	(0)
+#define	IPL_NONE	0
+#define	IPL_SOFTCLOCK	1
+#define	IPL_SOFTNET	2
+#define	IPL_BIO		3
+#define	IPL_NET		4
+#define	IPL_SOFTTTY	5
+#define	IPL_TTY		6
+#define	IPL_VM		7
+#define	IPL_IMP		IPL_VM
+#define	IPL_AUDIO	8
+#define	IPL_CLOCK	9
+#define	IPL_STATCLOCK	10
+#define	IPL_HIGH	10
+#define	IPL_NESTED	11	/* pseudo-level for sub-tables */
 
 #define	IST_NONE	0
 #define	IST_PULSE	1
 #define	IST_EDGE	2
 #define	IST_LEVEL	3
 
-#if !defined(_LOCORE)
+#if !defined(_LOCORE) && defined(_KERNEL)
 
-/* SPL asserts */
-#define	splassert(wantipl)	/* nothing */
-
-/*
- * Define the machine-independent SPL routines in terms of splx().
- */
-#define splraise(splhval)	({					\
-	register u_int _ctl_r;						\
-	__asm __volatile("mfctl	%%cr15,%0\n\t"				\
-			 "mtctl	%1,%%cr15"				\
-			: "=&r" (_ctl_r): "r" (splhval));		\
-	_ctl_r;								\
-})
-
-#define spllower(spllval)	({					\
-	register u_int _ctl_r;						\
-	__asm __volatile("mfctl	%%cr15,%0\n\t"				\
-			 "mtctl	%1,%%cr15"				\
-			: "=&r" (_ctl_r): "r" (spllval));		\
-	_ctl_r;								\
-})
-
-#define	splx(splval)		({					\
-	register u_int _ctl_r;						\
-	__asm __volatile("mfctl   %%cr15,%0\n\t"			\
-			 "mtctl   %1,%%cr15\n\t"			\
-			 : "=&r" (_ctl_r): "r" (splval));		\
-	_ctl_r;								\
-})
-
-#define	spl0()			spllower(IPL_NONE)
-#define	splsoft()		spllower(IPL_CLOCK)
-#define	splsoftnet()		splsoft()
-#define	spllowersoftclock()	splsoft()
-#define	splsoftclock()		splsoft()
-#define	splbio()		spllower(IPL_BIO)
-#define	splnet()		spllower(IPL_NET)
-#define	spltty()		spllower(IPL_TTY)
-#define	splimp()		spllower(IPL_CLOCK)
-#define	splclock()		spllower(IPL_CLOCK)
-#define	splstatclock()		spllower(IPL_CLOCK)
-#define	splvm()			spllower(IPL_CLOCK)
-#define	splhigh()		splraise(IPL_HIGH)
-
-/* software interrupt register */
-extern u_int32_t sir;
+extern volatile int cpl;
+extern volatile u_long ipending, imask[NIPL];
 extern int astpending;
 
-#define	SIR_CLOCK	0x01
-#define	SIR_NET		0x02
+#ifdef DIAGNOSTIC
+void splassert_fail(int, int, const char *);
+extern int splassert_ctl;
+void splassert_check(int, const char *);
+#define splassert(__wantipl) do {			\
+	if (__predict_false(splassert_ctl > 0)) {	\
+		splassert_check(__wantipl, __func__);	\
+	}						\
+} while (0)
+#else
+#define	splassert(__wantipl)	do { /* nada */ } while (0)
+#endif /* DIAGNOSTIC */
 
-#define	setsoftclock()		(sir |= SIR_CLOCK)
-#define	setsoftnet()		(sir |= SIR_NET)
-#define	setsoftast()		(astpending = 1)
+void	cpu_intr_init(void);
+void	cpu_intr(void *);
 
-#endif	/* !_LOCORE */
-#endif	/* _MACHINE_INTR_H_ */
+static __inline int
+spllower(int ncpl)
+{
+	register int ocpl asm("r28") = ncpl;
+	__asm __volatile("copy  %0, %%arg0\n\tbreak %1, %2"
+	    : "+r" (ocpl) : "i" (HPPA_BREAK_KERNEL), "i" (HPPA_BREAK_SPLLOWER)
+	    : "r26", "memory");
+	return (ocpl);
+}
+
+static __inline int
+splraise(int ncpl)
+{
+	int ocpl = cpl;
+
+	if (ocpl < ncpl)
+		cpl = ncpl;
+	__asm __volatile ("nop" : "+r" (cpl));
+
+	return (ocpl);
+}
+
+static __inline void
+splx(int ncpl)
+{
+	(void)spllower(ncpl);
+}
+
+#define	spllowersoftclock() spllower(IPL_SOFTCLOCK)
+#define	splsoftclock()	splraise(IPL_SOFTCLOCK)
+#define	splsoftnet()	splraise(IPL_SOFTNET)
+#define	splbio()	splraise(IPL_BIO)
+#define	splnet()	splraise(IPL_NET)
+#define	splsofttty()	splraise(IPL_SOFTTTY)
+#define	spltty()	splraise(IPL_TTY)
+#define	splvm()		splimp()
+#define	splimp()	splraise(IPL_IMP)
+#define	splaudio()	splraise(IPL_AUDIO)
+#define	splclock()	splraise(IPL_CLOCK)
+#define	splhigh()	splraise(IPL_HIGH)
+#define	splstatclock()	splhigh()
+#define	spl0()		spllower(IPL_NONE)
+
+static __inline void
+softintr(u_long mask)
+{
+	register_t eiem;
+
+	__asm __volatile("mfctl	%%cr15, %0": "=r" (eiem));
+	__asm __volatile("mtctl	%r0, %cr15");
+	ipending |= mask;
+	__asm __volatile("mtctl	%0, %%cr15":: "r" (eiem));
+}
+
+#define	SOFTINT_MASK ((1 << (IPL_SOFTCLOCK - 1)) | \
+    (1 << (IPL_SOFTNET - 1)) | (1 << (IPL_SOFTTTY - 1)))
+
+#define	setsoftast()	(astpending = 1)
+#define	setsoftclock()	softintr(1 << (IPL_SOFTCLOCK - 1))
+#define	setsoftnet()	softintr(1 << (IPL_SOFTNET - 1))
+#define	setsofttty()	softintr(1 << (IPL_SOFTTTY - 1))
+
+#endif /* !_LOCORE && _KERNEL */
+#endif /* _MACHINE_INTR_H_ */

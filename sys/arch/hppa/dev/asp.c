@@ -1,7 +1,7 @@
-/*	$OpenBSD: asp.c,v 1.7 2002/04/22 01:48:37 mickey Exp $	*/
+/*	$OpenBSD: asp.c,v 1.8 2002/12/17 21:54:20 mickey Exp $	*/
 
 /*
- * Copyright (c) 1998,1999 Michael Shalayeff
+ * Copyright (c) 1998-2002 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -138,11 +138,6 @@ struct cfdriver asp_cd = {
 	NULL, "asp", DV_DULL
 };
 
-void asp_intr_establish(void *v, u_int32_t mask);
-void asp_intr_disestablish(void *v, u_int32_t mask);
-u_int32_t asp_intr_check(void *v);
-void asp_intr_ack(void *v, u_int32_t mask);
-
 int
 aspmatch(parent, cfdata, aux)   
 	struct device *parent;
@@ -203,58 +198,11 @@ aspattach(parent, self, aux)
 
 	sc->sc_ic.gsc_type = gsc_asp;
 	sc->sc_ic.gsc_dv = sc;
-	sc->sc_ic.gsc_intr_establish = asp_intr_establish;
-	sc->sc_ic.gsc_intr_disestablish = asp_intr_disestablish;
-	sc->sc_ic.gsc_intr_check = asp_intr_check;
-	sc->sc_ic.gsc_intr_ack = asp_intr_ack;
+	sc->sc_ic.gsc_base = sc->sc_trs;
 
 	ga.ga_ca = *ca;	/* clone from us */
 	ga.ga_hpamask = ASP_IOMASK;
 	ga.ga_name = "gsc";
 	ga.ga_ic = &sc->sc_ic;
 	config_found(self, &ga, gscprint);
-}
-
-void
-asp_intr_establish(v, mask)
-	void *v;
-	u_int32_t mask;
-{
-	register struct asp_softc *sc = v;
-
-	sc->sc_trs->asp_imr |= mask;
-}
-
-void
-asp_intr_disestablish(v, mask)
-	void *v;
-	u_int32_t mask;
-{
-	register struct asp_softc *sc = v;
-
-	sc->sc_trs->asp_imr &= ~mask;
-}
-
-u_int32_t
-asp_intr_check(v)
-	void *v;
-{
-	register struct asp_softc *sc = v;
-	register u_int32_t irr, imr;
-
-	imr = sc->sc_trs->asp_imr;
-	irr = sc->sc_trs->asp_irr;
-	sc->sc_trs->asp_imr = imr & ~irr;
-
-	return irr;
-}
-
-void
-asp_intr_ack(v, mask)
-	void *v;
-	u_int32_t mask;
-{
-	register struct asp_softc *sc = v;
-
-	sc->sc_trs->asp_imr |= mask;
 }

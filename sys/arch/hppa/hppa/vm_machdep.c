@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.45 2002/11/08 21:42:12 mickey Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.46 2002/12/17 21:54:25 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -199,7 +199,7 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	 * but just in case.
 	 */
 	tf->tf_sr7 = HPPA_SID_KERNEL;
-	tf->tf_eiem = ~0;
+	mfctl(CR_EIEM, tf->tf_eiem);
 	tf->tf_ipsw = PSL_C | PSL_Q | PSL_P | PSL_D | PSL_I /* | PSL_L */;
 
 	/*
@@ -226,6 +226,7 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	*(register_t*)(osp) = (sp - HPPA_FRAME_SIZE);
 	*(register_t*)(sp + HPPA_FRAME_PSP) = osp;
 	*(register_t*)(osp + HPPA_FRAME_CRP) = (register_t)&switch_trampoline;
+	*(register_t*)(osp + HPPA_FRAME_SL) = 0;	/* cpl */
 	tf->tf_sp = sp;
 	fdcache(HPPA_SID_KERNEL, (vaddr_t)p2->p_addr, sp - (vaddr_t)p2->p_addr);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.98 2002/12/09 18:36:33 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.99 2002/12/17 21:54:25 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -66,7 +66,7 @@
  * CSL requests users of this software to return to csl-dist@cs.utah.edu any
  * improvements that they make and grant CSL redistribution rights.
  *
- * 	Utah $Hdr: locore.s 1.63 95/01/20$
+ *	Utah $Hdr: locore.s 1.63 95/01/20$
  */
 
 #include <sys/errno.h>
@@ -77,7 +77,6 @@
 #include <machine/trap.h>
 #include <machine/iomod.h>
 #include <machine/pdc.h>
-#include <machine/intr.h>
 #include <machine/frame.h>
 #include <machine/reg.h>
 #ifdef	GPROF
@@ -130,16 +129,19 @@ intrnames
 	.asciz	"lev6"
 	.asciz	"lev7"
 	.asciz	"lev8"
-	.asciz	"lev9"
+	.asciz	"clock"
 	.asciz	"lev10"
 	.asciz	"lev11"
 	.asciz	"lev12"
 	.asciz	"lev13"
 	.asciz	"lev14"
 	.asciz	"lev15"
-	.asciz	"clock"
 eintrnames
-	.align	NBPG
+	.export netisr, data
+	.align 16
+netisr
+	.word	0
+	.align	16
 
 	BSS(pdc_stack, 4)	/* temp stack for PDC call */
 	BSS(emrg_stack, 4)	/* stack for HPMC/TOC/PWRF */
@@ -155,14 +157,6 @@ eintrnames
 	BSS(fpu_enable, 4)	/* bits to set in the ccr to enable fpu */
 	.export hppa_vtop, data
 	BSS(hppa_vtop, 4)	/* a vtop translation table addr (pa=va) */
-	.export netisr, data
-	.align 16
-netisr
-	.word	0
-	.export sir, data
-	.align 16
-sir
-	.word	0
 
 	.text
 	.import	$kernel_setup, entry
@@ -301,7 +295,6 @@ $virtual_mode
 	nop
 
 	break	HPPA_BREAK_KERNEL, HPPA_BREAK_KGDB
-	nop
 $noddb
 #endif
 
@@ -350,7 +343,7 @@ LEAF_ENTRY($kernel_setup)
 	 * spl level into eiem, and reset any pending interrupts
 	 */
 	ldi	-1, r1
-	mtctl	r0, eiem	/* IPL_NONE */
+	mtctl	r0, eiem
 	mtctl	r1, eirr
 
 	/*
@@ -467,7 +460,6 @@ pdc_call_unmapped1
 	copy	arg0, t4
 	ldi	PSL_Q, arg0 /* (!pdc_flag && args[0] == PDC_PIM)? PSL_M:0) */
 	break	HPPA_BREAK_KERNEL, HPPA_BREAK_SET_PSW
-	nop
 	stw	ret0, HPPA_FRAME_ARG(23)(sp)
 	copy	t4, arg0
 
@@ -503,7 +495,6 @@ pdc_call_unmapped2
 	copy	ret0, t3
 	ldw	HPPA_FRAME_ARG(23)(sp), arg0
 	break	HPPA_BREAK_KERNEL, HPPA_BREAK_SET_PSW
-	nop
 	copy	t3, ret0
 
 pdc_call_unmapped3
@@ -746,7 +737,6 @@ $syscall
 	.entry
 $syscall_return
 	/* t3 == VA trapframe */
-	/* check for AST ? XXX */
 
 	/* splhigh(), just in case */
 	mtctl	r0, eiem
@@ -977,7 +967,7 @@ hpmc_v
 	CTRAP(hpmc,T_HPMC,HPMCPRE)	/*  1. high priority machine check */
 	ATRAP(power,T_POWERFAIL)	/*  2. power failure */
 	ATRAP(recnt,T_RECOVERY)		/*  3. recovery counter trap */
-	ATRAP(intr,T_INTERRUPT)		/*  4. external interrupt */
+	CTRAP(intr,T_INTERRUPT,)	/*  4. external interrupt */
 	ATRAP(lpmc,T_LPMC)		/*  5. low-priority machine check */
 	STRAP(itlb,T_ITLBMISS,ITLBPRE)	/*  6. instruction TLB miss fault */
 	ATRAP(iprot,T_IPROT)		/*  7. instruction protection trap */
@@ -1897,7 +1887,99 @@ ALTENTRY(hppa_pfr_end)
 	.word	0
 EXIT(hppa_pfr)
 
-	.align	32
+	.export	TLABEL(intr), entry
+	.import	cpl, data
+	.import	ipending, data
+	.import	imask, data
+	.import	intr_table, data
+ENTRY(TLABEL(intr),0)
+
+	mfctl	eirr, r8
+	mtctl	r8, eirr	/* ack now */
+
+	ldil	L%ipending, r17
+	ldw	R%ipending(r17), r24
+	ldil	L%intr_table, r1
+	ldo	R%intr_table(r1), r1
+$intr_ffs
+	addi	16, r1, r1
+	bb,>=	r8, 31, $intr_ffs
+	shd	r0, r8, 1, r8
+
+	ldb	2-16(r1), r17
+	ldw	4-16(r1), r9
+	subi,<>	1, r17, r0
+	bv,n	r0(r9)
+	nop
+
+	mfctl	sar, r25
+	ldb	1-16(r1), r9
+	mtsar	r9
+	vdepi	1, 1, r24
+	mtsar	r25
+
+	ldb	0-16(r1), r9
+	ldil	L%intrcnt, r25
+	ldo	R%intrcnt(r25), r25
+	sh2add	r9, r25, r25
+	ldw	0(r25), r17
+	addi	1, r17, r17
+	stw	r17, 0(r25)
+
+$intr_cont
+	comb,<>	r0, r8, $intr_ffs
+	nop
+
+	ldil	L%ipending, r17
+	stw	r24, R%ipending(r17)
+	ldil	L%cpl, r17
+	ldw	R%cpl(r17), r17
+	ldil	L%imask, r9
+	ldo	R%imask(r9), r9
+	ldwx,s	r17(r9), r16
+	ldi	T_INTERRUPT, r1
+	andcm,=	r24, r16, r0
+	b	TLABEL(all)
+	nop
+
+	rfir
+	nop
+EXIT(TLABEL(intr))
+
+	.export	gsc_intr, entry
+ENTRY(gsc_intr,0)
+
+	ldw	8-16(r1), r9	/* arg: ioreg */
+	mtctl	r1, tr7
+	ldw	0(r9), r16	/* irr */
+
+	ldw	12-16(r1), r1	/* next: sub-intr_table */
+$gsc_ffs
+	addi	16, r1, r1
+	bb,>=	r16, 31, $gsc_ffs
+	shd	r0, r16, 1, r16
+
+	mfctl	sar, r25
+	ldb	1-16(r1), r17
+	mtsar	r17
+	vdepi	1, 1, r24
+	mtsar	r25
+
+	ldb	0-16(r1), r17
+	ldil	L%intrcnt, r25
+	ldo	R%intrcnt(r25), r25
+	sh2add	r17, r25, r25
+	ldw	0(r25), r17
+	addi	1, r17, r17
+	stw	r17, 0(r25)
+
+	comb,<>	r0, r16, $gsc_ffs
+	nop
+
+	b	$intr_cont
+	mfctl	tr7, r1
+EXIT(gsc_intr)
+
 	.export	TLABEL(ibrk), entry
 ENTRY(TLABEL(ibrk),0)
 	/* If called by a user process then always pass it to trap() */
@@ -1919,6 +2001,7 @@ ENTRY(TLABEL(ibrk),0)
 	extru	r8, 18, 13, r9
 	comib,=,n HPPA_BREAK_GET_PSW, r9, $ibrk_getpsw
 	comib,=,n HPPA_BREAK_SET_PSW, r9, $ibrk_setpsw
+	comib,=,n HPPA_BREAK_SPLLOWER, r9, $ibrk_spllower
 
 $ibrk_bad
 	/* illegal (unimplemented) break entry point */
@@ -1934,10 +2017,28 @@ $ibrk_setpsw
 	b	$ibrk_exit
 	mtctl	arg0, ipsw
 
-$ibrk_setpsw_tovirt
+$ibrk_spllower
+	/* skip the break */
+	mtctl	r0, pcoq
+	mfctl	pcoq, r9
+	mtctl	r9, pcoq
+	ldo	4(r9), r9
+	mtctl	r9, pcoq
 
-	b	$ibrk_exit
-	ldw	HPPA_FRAME_PSP(sp), sp
+	ldil	L%ipending, r8
+	ldw	R%ipending(r8), r8
+	ldil	L%imask, r9
+	ldo	R%imask(r9), r9
+	ldil	L%cpl, r17
+	ldw	R%cpl(r17), ret0
+	ldwx,s	arg0(r9), r16
+	stw	arg0, R%cpl(r17)
+	ldi	T_INTERRUPT, r1
+	andcm,=	r8, r16, r0
+	b	TLABEL(all)
+	nop
+	rfir
+	nop
 
 	/* insert other fast breaks here */
 	nop ! nop
@@ -1945,10 +2046,11 @@ $ibrk_setpsw_tovirt
 $ibrk_exit
 	/* skip the break */
 	mtctl	r0, pcoq
-	mfctl	pcoq, r8
-	mtctl	r8, pcoq
-	ldo	4(r8), r8
-	mtctl	r8, pcoq
+	mfctl	pcoq, r9
+	mtctl	r9, pcoq
+	ldo	4(r9), r9
+	mtctl	r9, pcoq
+
 	rfir
 	nop
 EXIT(TLABEL(ibrk))
@@ -2336,7 +2438,7 @@ LEAF_ENTRY(longjmp)
 EXIT(longjmp)
 
 
-	.align	NBPG	/* let's fit 'em on a single page */
+	.align	32
 
 #define	FUSUX(name)				  \
 LEAF_ENTRY(name)				! \
@@ -2385,7 +2487,7 @@ SUX(susword,  sth)
 SUX(suword,   stw)
 SUX(suswintr, sth)
 
-	.align	64
+	.align	32
 
 LEAF_ENTRY(copy_on_fault)
 	mtsp	r0, sr1
@@ -2538,6 +2640,10 @@ EXIT(remrunqueue)
  */
 	.align	32
 ENTRY(cpu_switch,128)
+	ldil	L%cpl, t1
+	ldw	R%cpl(t1), ret0
+	stw	ret0, HPPA_FRAME_SL(sp)
+	stw	rp, HPPA_FRAME_CRP(sp)
 
 	/*
 	 * Clear curproc so that we don't accumulate system time while idle.
@@ -2548,31 +2654,26 @@ ENTRY(cpu_switch,128)
 	/* remain on the old (curproc)'s stack until we have a better choice */
 
 	/*
-	 * arg3: spl
-	 * t1:	&whichqs
-	 * t2:	old curproc
+	 * t1:   &whichqs
+	 * arg2: old curproc
 	 *
 	 */
 
 switch_search
-	/* arg3 = splhigh() */
-	mfctl	eiem, arg3
 	ldil	L%whichqs, t1
-	ldi	-1, t2
-idle_loop
-	mtctl	r0, eiem
 	ldw	R%whichqs(t1), t3
-
 	comb,<>	r0, t3, gotprocs
 	nop
 
-	mtctl	t2, eiem
+	copy	r0, arg0
+	break	HPPA_BREAK_KERNEL, HPPA_BREAK_SPLLOWER
 
 	/* XXX do idle work here */
 	nop ! nop ! nop ! nop ! nop ! nop ! nop ! nop
 
-	b	idle_loop
-	nop
+	ldil	L%cpl, arg0
+	b	switch_search
+	stw	ret0, R%cpl(arg0)
 
 gotprocs
 	ldi	0, t4
@@ -2655,7 +2756,6 @@ kstack_ok
 	 * arg2: old proc
 	 */
 	ldw	P_MD_REGS(arg2), t1
-	stw	rp, HPPA_FRAME_CRP(sp)
 	ldw	TF_R30(t1), t3
 	copy	sp, t2
 	stw,ma	r3, HPPA_FRAME_SIZE+20*4(sp)
@@ -2698,6 +2798,7 @@ switch_exited
 	ldw	HPPA_FRAME_ARG(0)(sp), t3
 	ldw	HPPA_FRAME_ARG(1)(sp), t4 /* in case we're on trampoline */
 	ldw	HPPA_FRAME_ARG(2)(sp), arg0
+	ldw	HPPA_FRAME_SL(t2), ret0
 	ldw	HPPA_FRAME_CRP(t2), rp
 	ldw	 0*4(t2), r3
 	ldw	 1*4(t2), r4
@@ -2717,9 +2818,10 @@ switch_exited
 	ldw	15*4(t2), r18
 	stw	t3, TF_R30(t1)
 	copy	t2, sp
+	ldil	L%cpl, t1
+	stw	ret0, R%cpl(t1)
 
 switch_return
-	mtctl	arg3, eiem
 	ldil	L%curproc, t1
 	bv	0(rp)
 	stw	arg1, R%curproc(t1)

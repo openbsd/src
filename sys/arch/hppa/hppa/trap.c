@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.53 2002/10/18 19:48:54 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.54 2002/12/17 21:54:25 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -91,10 +91,8 @@ int trap_types = sizeof(trap_type)/sizeof(trap_type[0]);
 
 int want_resched, astpending;
 
-void syscall(struct trapframe *frame);
-
-static __inline void
-userret (struct proc *p, register_t pc, u_quad_t oticks)
+void
+userret(struct proc *p, register_t pc, u_quad_t oticks)
 {
 	int sig;
 
@@ -103,6 +101,13 @@ userret (struct proc *p, register_t pc, u_quad_t oticks)
 		postsig(sig);
 
 	p->p_priority = p->p_usrpri;
+	if (astpending) {
+		astpending = 0;
+		if (p->p_flag & P_OWEUPC) {
+			p->p_flag &= ~P_OWEUPC;
+			ADDUPROF(p);
+		}
+	}
 	if (want_resched) {
 		/*
 		 * We're being preempted.
@@ -129,7 +134,6 @@ trap(type, frame)
 	int type;
 	struct trapframe *frame;
 {
-	extern u_int32_t sir;
 	struct proc *p = curproc;
 	vaddr_t va;
 	struct vm_map *map;
@@ -138,9 +142,12 @@ trap(type, frame)
 	register pa_space_t space;
 	union sigval sv;
 	u_int opcode;
-	int ret, s, si, trapnum;
+	int ret, trapnum;
 	const char *tts;
 	vm_fault_t fault = VM_FAULT_INVALID;
+#ifdef DIAGNOSTIC
+	int oldcpl = cpl;
+#endif
 
 	trapnum = type & ~T_USER;
 	opcode = frame->tf_iir;
@@ -187,6 +194,9 @@ trap(type, frame)
 		}
 	}
 #endif
+	if (trapnum != T_INTERRUPT)
+		mtctl(frame->tf_eiem, CR_EIEM);
+
 	switch (type) {
 	case T_NONEXIST:
 	case T_NONEXIST|T_USER:
@@ -434,37 +444,13 @@ if (kdb_trap (type, va, frame))
 	case T_INTERRUPT:
 	case T_INTERRUPT|T_USER:
 		cpu_intr(frame);
-#if 0
-if (kdb_trap (type, va, frame))
-return;
-#endif
-		/* FALLTHROUGH */
-	case T_LOWERPL:
-		__asm __volatile (
-		    "ldcws 0(%1), %0" : "=&r" (si) : "r" (&sir) : "memory");
-		if (si & SIR_CLOCK) {
-			s = splsoftclock();
-			softclock();
-			splx(s);
-		}
-
-		if (si & SIR_NET) {
-			register int ni;
-			/* use atomic "load & clear" */
-			__asm __volatile (
-			    "ldcws 0(%1), %0"
-			    : "=&r" (ni) : "r" (&netisr) : "memory");
-			s = splnet();
-#define	DONETISR(m,c) if (ni & (1 << (m))) c()
-#include <net/netisr_dispatch.h>
-			splx(s);
-		}
 		break;
 
 	case T_CONDITION:
 		panic("trap: divide by zero in the kernel");
 		break;
 
+	case T_LOWERPL:
 	case T_DPROT:
 	case T_IPROT:
 	case T_OVERFLOW:
@@ -484,11 +470,20 @@ return;
 if (kdb_trap (type, va, frame))
 	return;
 #endif
-		panic("trap: unimplemented \'%s\' (%d)", tts, type);
+		panic("trap: unimplemented \'%s\' (%d)", tts, trapnum);
 	}
 
+#ifdef DIAGNOSTIC
+	if (cpl != oldcpl)
+		printf("WARNING: SPL (%d) NOT LOWERED ON "
+		    "TRAP (%d) EXIT\n", cpl, trapnum);
+#endif
+
+	if (trapnum != T_INTERRUPT)
+		splx(cpl);	/* process softints */
+
 	if (type & T_USER)
-		userret(p, p->p_md.md_regs->tf_iioq_head, 0);
+		userret(p, frame->tf_iioq_head, 0);
 }
 
 void
@@ -508,13 +503,15 @@ child_return(arg)
  * call actual syscall routine
  */
 void
-syscall(frame)
-	struct trapframe *frame;
+syscall(struct trapframe *frame)
 {
 	register struct proc *p = curproc;
 	register const struct sysent *callp;
 	int retq, nsys, code, argsize, argoff, oerror, error;
 	register_t args[8], rval[2];
+#ifdef DIAGNOSTIC
+	int oldcpl = cpl;
+#endif
 
 	uvmexp.syscalls++;
 
@@ -651,8 +648,15 @@ syscall(frame)
 	scdebug_ret(p, code, oerror, rval);
 #endif
 	userret(p, frame->tf_iioq_head, 0);
+	splx(cpl);	/* process softints */
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p, code, oerror, rval[0]);
+#endif
+#ifdef DIAGNOSTIC
+	if (cpl != oldcpl)
+		printf("WARNING: SPL (0x%x) NOT LOWERED ON "
+		    "syscall(0x%x, 0x%x, 0x%x, 0x%x...) EXIT, PID %d\n",
+		    cpl, code, args[0], args[1], args[2], p->p_pid);
 #endif
 }

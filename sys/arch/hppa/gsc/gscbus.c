@@ -1,4 +1,4 @@
-/*	$OpenBSD: gscbus.c,v 1.19 2002/03/14 01:26:31 millert Exp $	*/
+/*	$OpenBSD: gscbus.c,v 1.20 2002/12/17 21:54:25 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -134,13 +134,11 @@ gscattach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	register struct gsc_softc *sc = (struct gsc_softc *)self;
-	register struct gsc_attach_args *ga = aux;
+	struct gsc_softc *sc = (struct gsc_softc *)self;
+	struct gsc_attach_args *ga = aux;
 
 	sc->sc_iot = ga->ga_iot;
 	sc->sc_ic = ga->ga_ic;
-	sc->sc_intrmask = 0;
-	bzero(sc->sc_intrvs, sizeof(sc->sc_intrvs));
 
 #ifdef USELEDS
 	if (machine_ledaddr)
@@ -148,8 +146,9 @@ gscattach(parent, self, aux)
 #endif
 	printf ("\n");
 
-	sc->sc_ih = cpu_intr_establish(IPL_IO, ga->ga_irq,
-				       gsc_intr, sc, &sc->sc_dev);
+	sc->sc_ih = cpu_intr_establish(IPL_NESTED, ga->ga_irq,
+	    gsc_intr, (void *)sc->sc_ic->gsc_base, &sc->sc_dev);
+
 	/* DMA guts */
 	sc->sc_dmatag._cookie = sc;
 	sc->sc_dmatag._dmamap_create = gsc_dmamap_create;
@@ -183,7 +182,6 @@ gscprint(aux, pnp)
 	return (UNCONF);
 }
 
-
 void *
 gsc_intr_establish(sc, pri, irq, handler, arg, dv)
 	struct gsc_softc *sc;
@@ -193,29 +191,19 @@ gsc_intr_establish(sc, pri, irq, handler, arg, dv)
 	void *arg;
 	struct device *dv;
 {
-	register struct gscbus_intr *iv;
-	register u_int32_t mask;
+	volatile u_int32_t *r = sc->sc_ic->gsc_base;
+	void *iv;
 
-	mask = 1 << irq;
-	if (sc->sc_intrmask & mask) {
+	if ((iv = cpu_intr_map(sc->sc_ih, pri, irq, handler, arg, dv)))
+		r[1] |= (1 << irq);
+	else {
 #ifdef GSCDEBUG
 		printf("%s: attaching irq %d, already occupied\n",
 		       sc->sc_dev.dv_xname, irq);
 #endif
-		return NULL;
 	}
-	sc->sc_intrmask |= mask;
-	iv = &sc->sc_intrvs[irq];
-	iv->pri = pri;
-	iv->handler = handler;
-	iv->arg = arg;
-	evcnt_attach(dv, dv->dv_xname, &iv->evcnt);
-	(sc->sc_ic->gsc_intr_establish)(sc->sc_ic->gsc_dv, mask);
-#ifdef GSCDEBUG
-	printf("gsc_intr_establish: mask=0x%08x irq=%d iv=%p\n", mask, irq, iv);
-#endif
 
-	return &sc->sc_intrvs[irq];
+	return (iv);
 }
 
 void
@@ -223,61 +211,13 @@ gsc_intr_disestablish(sc, v)
 	struct gsc_softc *sc;
 	void *v;
 {
-	register u_int32_t mask;
+#if notyet
+	volatile u_int32_t *r = sc->sc_ic->gsc_base;
 
-	mask = 1 << (sc->sc_intrvs - (struct gscbus_intr *)v);
-	sc->sc_intrmask &= ~mask;
-	((struct gscbus_intr *)v)->handler = NULL;
-	/* evcnt_detach(); */
-	(sc->sc_ic->gsc_intr_disestablish)(sc->sc_ic->gsc_dv, mask);
-}
+	r[1] &= ~(1 << irq);
 
-int
-gsc_intr(v)
-	void *v;
-{
-	register struct gsc_softc *sc = v;
-	register struct gscbus_ic *ic = sc->sc_ic;
-	register u_int32_t mask;
-	int ret;
-
-#ifdef GSCDEBUG_INTR
-	printf("gsc_intr(%p)\n", v);
+	cpu_intr_unmap(sc->sc_ih, v);
 #endif
-	ret = 0;
-	while ((mask = (ic->gsc_intr_check)(ic->gsc_dv))) {
-		register int i;
-		register struct gscbus_intr *iv;
-
-		i = ffs(mask) - 1;
-		iv = &sc->sc_intrvs[i];
-
-#ifdef GSCDEBUG_INTR
-		printf("gsc_intr: got mask=0x%08x i=%d iv=%p\n", mask, i, iv);
-#endif
-		if (iv->handler) {
-			int s;
-#ifdef GSCDEBUG_INTR
-			printf("gsc_intr: calling %p for irq %d\n", v, i);
-#endif
-			iv->evcnt.ev_count++;
-			s = splraise(iv->pri);
-			ret = (iv->handler)(iv->arg);
-			splx(s);
-#ifdef GSCDEBUG_INTR
-			if (!ret)
-				printf ("%s: can't handle interrupt\n",
-					iv->evcnt.ev_name);
-#endif
-			ret = 1;
-		} else
-			printf("%s: stray interrupt %d\n",
-			       sc->sc_dev.dv_xname, i);
-
-		(ic->gsc_intr_ack)(ic->gsc_dv, 1 << i);
-	}
-
-	return ret;
 }
 
 int
