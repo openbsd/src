@@ -38,7 +38,7 @@
 
 #if defined(SYSLIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: brk.S,v 1.2 1996/08/19 08:13:28 tholo Exp $"
+	.asciz "$OpenBSD: brk.S,v 1.3 1997/09/17 17:23:38 weingart Exp $"
 #endif /* SYSLIB_SCCS */
 
 	.globl	_end
@@ -56,7 +56,7 @@ ENTRY(brk)
 	movl	PIC_GOT(minbrk),%edx
 	PIC_EPILOGUE
 	cmpl	%ecx,(%edx)
-	jl	1f
+	jb	1f
 	movl	(%edx),%ecx
 	movl	%ecx,4(%esp)
 1:
@@ -76,7 +76,7 @@ err:
 
 	movl	4(%esp),%ecx
 	cmpl	%ecx,minbrk
-	jl	1f
+	jb	1f
 	movl	minbrk,%ecx
 	movl	%ecx,4(%esp)
 1:
