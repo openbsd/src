@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.7 2003/07/08 21:46:19 drahn Exp $	*/
+/*	$OpenBSD: clock.c,v 1.8 2003/07/08 23:05:20 drahn Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 1996/09/30 16:34:40 ws Exp $	*/
 
 /*
@@ -318,7 +318,7 @@ void
 microtime(tvp)
 	struct timeval *tvp;
 {
-	u_int32_t tb;
+	u_int64_t tb;
 	u_int32_t ticks;
 	int s;
 	
