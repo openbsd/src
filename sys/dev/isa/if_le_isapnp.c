@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_isapnp.c,v 1.6 1998/09/16 22:41:21 jason Exp $	*/
+/*	$OpenBSD: if_le_isapnp.c,v 1.7 1999/03/08 11:17:08 deraadt Exp $	*/
 /*	$NetBSD: if_le_isa.c,v 1.2 1996/05/12 23:52:56 mycroft Exp $	*/
 
 /*-
@@ -113,8 +113,7 @@ le_isapnp_attach(parent, self, aux)
 
 	sc->sc_mem = malloc(16384, M_DEVBUF, M_NOWAIT);
 	if (sc->sc_mem == 0) {
-		printf("%s: couldn't allocate memory for card\n",
-		    sc->sc_dev.dv_xname);
+		printf(": couldn't allocate memory for card\n");
 		return;
 	}
 
