@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gem.4,v 1.6 2003/06/02 16:16:26 miod Exp $
+.\"	$OpenBSD: gem.4,v 1.7 2003/06/27 16:05:09 brad Exp $
 .\"
 .\" Copyright (c) 2001 Miodrag Vallat.
 .\" All rights reserved.
@@ -34,9 +34,8 @@
 .Cd "gem* at pci? dev ? function ?"
 .Cd "bmtphy* at mii? phy ?"
 .Cd "brgphy* at mii? phy ?"
+.Cd "eephy* at mii? phy ?"
 .Cd "lxtphy* at mii? phy ?"
-.\" .Cd "nsphy* at mii? phy ?"
-.\" .Cd "qsphy* at mii? phy ?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -98,14 +97,13 @@ Use 10baseT, half duplex
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr bmtphy 4 ,
-.xr brgphy 4 ,
+.Xr brgphy 4 ,
+.Xr eephy 4 ,
 .Xr ifmedia 4 ,
 .Xr inet 4 ,
 .Xr intro 4 ,
 .Xr lxtphy 4 ,
 .Xr netintro 4 ,
-.\" .Xr nsphy 4
-.\" .Xr qsphy 4
 .Xr hostname.if 5 ,
 .Xr ifconfig 8
 .Sh HISTORY
