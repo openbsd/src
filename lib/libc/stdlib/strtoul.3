@@ -33,7 +33,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: strtoul.3,v 1.4 1999/07/20 10:18:21 aaron Exp $
+.\"	$OpenBSD: strtoul.3,v 1.5 1999/09/14 03:59:55 pjanzen Exp $
 .\"
 .Dd June 25, 1992
 .Dt STRTOUL 3
@@ -134,11 +134,18 @@ on return, the entire string was valid.)
 The
 .Fn strtoul
 function
-returns either the result of the conversion
-or, if there was a leading minus sign,
-the negation of the result of the conversion,
-unless the original (non-negated) value would overflow;
-in the latter case,
+returns the result of the conversion,
+unless the value would overflow, in which case
+.Dv ULONG_MAX
+is returned and
+.Va errno
+is set to
+.Er ERANGE .
+If there was a leading minus sign,
+.Fn strtoul
+returns the (unsigned) negation of the absolute value of the number, unless
+the absolute value would overflow.
+In this case,
 .Fn strtoul
 returns
 .Dv ULONG_MAX
@@ -146,12 +153,55 @@ and sets the global variable
 .Va errno
 to
 .Er ERANGE .
+.Pp
+There is no way to determine if
+.Fn strtoul
+has processed a negative number (and returned an unsigned value) short of
+examining the string in
+.Fa nptr
+directly.
+.Sh EXAMPLES
+Ensuring that a string is a valid number (i.e., in range and containing no
+trailing characters) requires clearing
+.Va errno
+beforehand explicitly since
+.Va errno
+is not changed on a successful call to
+.Fn strtoul ,
+and the return value of
+.Fn strtoul
+cannot be used unambiguously to signal an error:
+.Bd -literal -offset indent
+char *ep;
+unsigned long ulval;
+
+\&...
+
+errno = 0;
+ulval = strtoul(buf, &ep, 10);
+if (buf[0] == '\e0' || *ep != '\e0')
+	goto not_a_number;
+if (errno == ERANGE && ulval == ULONG_MAX)
+	goto out_of_range;
+.Ed
+.Pp
+This example will accept
+.Dq 12
+but not
+.Dq 12foo
+or
+.Dq 12\en .
+If trailing whitespace is acceptable, further checks must be done on
+.Va *ep ;
+alternately, use
+.Xr sscanf 3 .
 .Sh ERRORS
 .Bl -tag -width Er
 .It Bq Er ERANGE
 The given string was out of range; the value converted has been clamped.
 .El
 .Sh SEE ALSO
+.Xr sscanf 3 ,
 .Xr strtol 3
 .Sh STANDARDS
 The
