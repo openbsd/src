@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.60 2001/05/07 01:24:55 drahn Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.61 2001/05/17 18:41:50 provos Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -549,12 +549,6 @@ cpu_startup()
 #endif
 	ppc_malloc_ok = 1;
 	
-	/*
-	 * Allocate mbuf pool.
-	 */
-	mclrefcnt = (char *)malloc(NMBCLUSTERS + PAGE_SIZE/MCLBYTES, M_MBUF,
-	    M_NOWAIT);
-	bzero(mclrefcnt, NMBCLUSTERS + PAGE_SIZE/MCLBYTES);
 #ifdef UVM
 	mb_map = uvm_km_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
 	    VM_MBUF_SIZE, FALSE, FALSE, NULL);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.28 2001/05/16 08:59:04 art Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.29 2001/05/17 18:41:44 provos Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -59,6 +59,7 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <sys/syslog.h>
 #include <sys/domain.h>
 #include <sys/protosw.h>
+#include <sys/pool.h>
 
 #include <machine/cpu.h>
 
@@ -68,71 +69,75 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <uvm/uvm_extern.h>
 #endif
 
+struct	pool mbpool;		/* mbuf pool */
+struct	pool mclpool;		/* mbuf cluster pool */
+
 extern	vm_map_t mb_map;
 struct	mbuf *mbutl;
-char	*mclrefcnt;
 int	needqueuedrain;
 
+void	*mclpool_alloc __P((unsigned long, int, int));
+void	mclpool_release __P((void *, unsigned long, int));
+struct mbuf *m_copym0 __P((struct mbuf *, int, int, int, int));
+
+const char *mclpool_warnmsg =
+    "WARNING: mclpool limit reached; increase NMBCLUSTERS";
+
+/*
+ * Initialize the mbuf allcator.
+ */
 void
 mbinit()
 {
-	int s;
+	pool_init(&mbpool, MSIZE, 0, 0, 0, "mbpl", 0, NULL, NULL, 0);
+	pool_init(&mclpool, MCLBYTES, 0, 0, 0, "mclpl", 0, mclpool_alloc,
+	    mclpool_release, 0);
 
-	s = splimp();
-	if (m_clalloc(max(4096 / PAGE_SIZE, 1), M_DONTWAIT) == 0)
-		goto bad;
-	splx(s);
-	return;
-bad:
-	splx(s);
-	panic("mbinit");
+	/*
+	 * Set the hard limit on the mclpool to the number of
+	 * mbuf clusters the kernel is to support.  Log the limit
+	 * reached message max once a minute.
+	 */
+	pool_sethardlimit(&mclpool, nmbclusters, mclpool_warnmsg, 60);
+
+	/*
+	 * Set a low water mark for both mbufs and clusters.  This should
+	 * help ensure that they can be allocated in a memory starvation
+	 * situation.  This is important for e.g. diskless systems which
+	 * must allocate mbufs in order for the pagedaemon to clean pages.
+	 */
+	pool_setlowat(&mbpool, mblowat);
+	pool_setlowat(&mclpool, mcllowat);
 }
 
-/*
- * Allocate some number of mbuf clusters
- * and place on cluster free list.
- * Must be called at splimp.
- */
-/* ARGSUSED */
-int
-m_clalloc(ncl, nowait)
-	register int ncl;
-	int nowait;
-{
-	volatile static struct timeval lastlogged;
-	struct timeval curtime, logdiff;
-	register caddr_t p;
-	register int i;
-	int npg, s;
 
-	npg = ncl;
+void *
+mclpool_alloc(sz, flags, mtype)
+	unsigned long sz;
+	int flags;
+	int mtype;
+{
 #if defined(UVM)
-	p = (caddr_t)uvm_km_kmemalloc(mb_map, uvmexp.mb_object, ctob(npg),
-	    nowait ? 0 : UVM_KMF_NOWAIT);
+	boolean_t waitok = (flags & PR_WAITOK) ? TRUE : FALSE;
+
+	return ((void *)uvm_km_alloc_poolpage1(mb_map, uvmexp.mb_object,
+	    waitok));
 #else
-	p = (caddr_t)kmem_malloc(mb_map, ctob(npg), !nowait);
+	return pool_page_alloc(sz, flags, mtype);
 #endif
-	if (p == NULL) {
-		s = splclock();
-		curtime = time;
-		splx(s);
-		timersub(&curtime, &lastlogged, &logdiff);
-		if (logdiff.tv_sec >= 60) {
-			lastlogged = curtime;
-			log(LOG_ERR, "mb_map full\n");
-		}
-		m_reclaim();
-		return (mclfree != NULL);
-	}
-	ncl = ncl * PAGE_SIZE / MCLBYTES;
-	for (i = 0; i < ncl; i++) {
-		((union mcluster *)p)->mcl_next = mclfree;
-		mclfree = (union mcluster *)p;
-		p += MCLBYTES;
-		mbstat.m_clfree++;
-	}
-	mbstat.m_clusters += ncl;
-	return (1);
+}
+
+void
+mclpool_release(v, sz, mtype)
+	void *v;
+	unsigned long sz;
+	int mtype;
+{
+#if defined(UVM)
+	uvm_km_free_poolpage1(mb_map, (vaddr_t)v);
+#else
+	pool_page_free(v, sz, mtype);
+#endif
 }
 
 /*
@@ -154,6 +159,10 @@ m_retry(i, t)
 #define m_retry(i, t)	NULL
 	MGET(m, i, t);
 #undef m_retry
+	if (m != NULL)
+		mbstat.m_wait++;
+	else
+		mbstat.m_drops++;
 	return (m);
 }
 
@@ -175,6 +184,10 @@ m_retryhdr(i, t)
 #define m_retryhdr(i, t) NULL
 	MGETHDR(m, i, t);
 #undef m_retryhdr
+	if (m != NULL)
+		mbstat.m_wait++;
+	else
+		mbstat.m_drops++;
 	return (m);
 }
 
@@ -228,7 +241,7 @@ m_getclr(nowait, type)
 	MGET(m, nowait, type);
 	if (m == NULL)
 		return (NULL);
-	bzero(mtod(m, caddr_t), MLEN);
+	memset(mtod(m, caddr_t), 0, MLEN);
 	return (m);
 }
 
@@ -298,40 +311,61 @@ int MCFail;
 
 struct mbuf *
 m_copym(m, off0, len, wait)
-	register struct mbuf *m;
+	struct mbuf *m;
 	int off0, wait;
-	register int len;
+	int len;
 {
-	register struct mbuf *n, **np;
-	register int off = off0;
+	return m_copym0(m, off0, len, wait, 0);	/* shallow copy on M_EXT */
+}
+
+/*
+ * m_copym2() is like m_copym(), except it COPIES cluster mbufs, instead
+ * of merely bumping the reference count.
+ */
+struct mbuf *
+m_copym2(m, off0, len, wait)
+	struct mbuf *m;
+	int off0, wait;
+	int len;
+{
+	return m_copym0(m, off0, len, wait, 1);	/* deep copy */
+}
+
+struct mbuf *
+m_copym0(m, off0, len, wait, deep)
+	struct mbuf *m;
+	int off0, wait;
+	int len;
+	int deep;	/* deep copy */
+{
+	struct mbuf *n, **np;
+	int off = off0;
 	struct mbuf *top;
 	int copyhdr = 0;
 
-	if (off < 0)
-		panic("m_copym: off %d < 0", off);
-	if (len < 0)
-		panic("m_copym: len %d < 0", len);
+	if (off < 0 || len < 0)
+		panic("m_copym0: off %d, len %d", off, len);
 	if (off == 0 && m->m_flags & M_PKTHDR)
 		copyhdr = 1;
 	while (off > 0) {
-		if (m == NULL)
-			panic("m_copym: null mbuf");
+		if (m == 0)
+			panic("m_copym0: null mbuf");
 		if (off < m->m_len)
 			break;
 		off -= m->m_len;
 		m = m->m_next;
 	}
 	np = &top;
-	top = NULL;
+	top = 0;
 	while (len > 0) {
-		if (m == NULL) {
+		if (m == 0) {
 			if (len != M_COPYALL)
-				panic("m_copym: %d not M_COPYALL", len);
+				panic("m_copym0: m == 0 and not COPYALL");
 			break;
 		}
 		MGET(n, wait, m->m_type);
 		*np = n;
-		if (n == NULL)
+		if (n == 0)
 			goto nospace;
 		if (copyhdr) {
 			M_DUP_PKTHDR(n, m);
@@ -343,105 +377,46 @@ m_copym(m, off0, len, wait)
 		}
 		n->m_len = min(len, m->m_len - off);
 		if (m->m_flags & M_EXT) {
-			n->m_data = m->m_data + off;
-			if (!m->m_ext.ext_ref)
-				mclrefcnt[mtocl(m->m_ext.ext_buf)]++;
-			else
-				(*(m->m_ext.ext_ref))(m);
-			n->m_ext = m->m_ext;
-			n->m_flags |= M_EXT;
-		} else
-			bcopy(mtod(m, caddr_t)+off, mtod(n, caddr_t),
-			    (unsigned)n->m_len);
-		if (len != M_COPYALL)
-			len -= n->m_len;
-		off = 0;
-		m = m->m_next;
-		np = &n->m_next;
-	}
-	if (top == NULL)
-		MCFail++;
-	return (top);
-nospace:
-	m_freem(top);
-	MCFail++;
-	return (NULL);
-}
-
-/*
- * m_copym2() is like m_copym(), except it COPIES cluster mbufs, instead
- * of merely bumping the reference count.
- */
-struct mbuf *
-m_copym2(m, off0, len, wait)
-	register struct mbuf *m;
-	int off0, wait;
-	register int len;
-{
-	register struct mbuf *n, **np;
-	register int off = off0;
-	struct mbuf *top;
-	int copyhdr = 0;
-
-	if (len < 0)
-		panic("m_copym2: len %d < 0", len);
-	if (off < 0)
-		panic("m_copym2: off %d < 0", off);
-	if (off == 0 && m->m_flags & M_PKTHDR)
-		copyhdr = 1;
-	while (off > 0) {
-		if (m == NULL)
-			panic("m_copym2: null mbuf");
-		if (off < m->m_len)
-			break;
-		off -= m->m_len;
-		m = m->m_next;
-	}
-	np = &top;
-	top = NULL;
-	while (len > 0) {
-		if (m == NULL) {
-			if (len != M_COPYALL)
-				panic("m_copym2: %d != M_COPYALL", len);
-			break;
-		}
-		MGET(n, wait, m->m_type);
-		*np = n;
-		if (n == NULL)
-			goto nospace;
-		if (copyhdr) {
-			M_DUP_PKTHDR(n, m);
-			if (len == M_COPYALL)
-				n->m_pkthdr.len -= off0;
-			else
-				n->m_pkthdr.len = len;
-			copyhdr = 0;
-		}
-		n->m_len = min(len, m->m_len - off);
-		if ((m->m_flags & M_EXT) && (n->m_len > MHLEN)) {
-			/* This is a cheesy hack. */
-			MCLGET(n, wait);
-			if (n->m_flags & M_EXT)
-				bcopy(mtod(m, caddr_t) + off, mtod(n, caddr_t),
+			if (!deep) {
+				n->m_data = m->m_data + off;
+				n->m_ext = m->m_ext;
+				MCLADDREFERENCE(m, n);
+			} else {
+				/*
+				 * we are unsure about the way m was allocated.
+				 * copy into multiple MCLBYTES cluster mbufs.
+				 */
+				MCLGET(n, wait);
+				n->m_len = 0;
+				n->m_len = M_TRAILINGSPACE(n);
+				n->m_len = min(n->m_len, len);
+				n->m_len = min(n->m_len, m->m_len - off);
+				memcpy(mtod(n, caddr_t), mtod(m, caddr_t) + off,
 				    (unsigned)n->m_len);
-			else
-				goto nospace;
+			}
 		} else
-			bcopy(mtod(m, caddr_t) + off, mtod(n, caddr_t),
+			memcpy(mtod(n, caddr_t), mtod(m, caddr_t)+off,
 			    (unsigned)n->m_len);
 		if (len != M_COPYALL)
 			len -= n->m_len;
-		off = 0;
-		m = m->m_next;
+		off += n->m_len;
+#ifdef DIAGNOSTIC
+		if (off > m->m_len)
+			panic("m_copym0 overrun");
+#endif
+		if (off == m->m_len) {
+			m = m->m_next;
+			off = 0;
+		}
 		np = &n->m_next;
 	}
-	if (top == NULL)
+	if (top == 0)
 		MCFail++;
 	return (top);
 nospace:
 	m_freem(top);
 	MCFail++;
-	return (NULL);
+	return (0);
 }
 
 /*
@@ -875,12 +850,7 @@ m_split(m0, len0, wait)
 extpacket:
 	if (m->m_flags & M_EXT) {
 		n->m_flags |= M_EXT;
-		n->m_ext = m->m_ext;
-		if(!m->m_ext.ext_ref)
-			mclrefcnt[mtocl(m->m_ext.ext_buf)]++;
-		else
-			(*(m->m_ext.ext_ref))(m);
-		m->m_ext.ext_size = 0; /* For Accounting XXXXXX danger */
+		MCLADDREFERENCE(m, n);
 		n->m_data = m->m_data + len;
 	} else {
 		bcopy(mtod(m, caddr_t) + len, mtod(n, caddr_t), remain);
@@ -973,14 +943,14 @@ m_zero(m)
 {
 	while (m) {
 		if (m->m_flags & M_PKTHDR)
-			bzero((void *)m + sizeof(struct m_hdr) +
-			    sizeof(struct pkthdr), MHLEN);
+			memset((void *)m + sizeof(struct m_hdr) +
+			    sizeof(struct pkthdr), 0, MHLEN);
 		else
-			bzero((void *)m + sizeof(struct m_hdr), MLEN);
+			memset((void *)m + sizeof(struct m_hdr), 0, MLEN);
 		if ((m->m_flags & M_EXT) &&
 		    (m->m_ext.ext_free == NULL) &&
-		    !mclrefcnt[mtocl((m)->m_ext.ext_buf)])
-			bzero(m->m_ext.ext_buf, m->m_ext.ext_size);
+		    !MCLISREFERENCED(m))
+			memset(m->m_ext.ext_buf, 0, m->m_ext.ext_size);
 		m = m->m_next;
 	}
 }

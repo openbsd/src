@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sl.c,v 1.10 2001/03/13 05:16:06 mickey Exp $	*/
+/*	$OpenBSD: if_sl.c,v 1.11 2001/05/17 18:41:46 provos Exp $	*/
 /*	$NetBSD: if_sl.c,v 1.39.4.1 1996/06/02 16:26:31 thorpej Exp $	*/
 
 /*
@@ -227,21 +227,23 @@ static int
 slinit(sc)
 	register struct sl_softc *sc;
 {
-	register caddr_t p;
-
 	if (sc->sc_ep == (u_char *) 0) {
-		MCLALLOC(p, M_WAIT);
-		if (p)
-			sc->sc_ep = (u_char *)p + SLBUFSIZE;
-		else {
+		MGETHDR(sc->sc_mbuf, M_WAIT, MT_DATA);
+		if (sc->sc_mbuf)
+			MCLGET(sc->sc_mbuf, M_WAIT);
+		if (sc->sc_mbuf == NULL || sc->sc_mbuf->m_ext.ext_buf == NULL) {
 			printf("sl%d: can't allocate buffer\n", sc->sc_unit);
 			sc->sc_if.if_flags &= ~IFF_UP;
 			return (0);
 		}
 	}
-	sc->sc_buf = sc->sc_ep - SLMAX;
-	sc->sc_mp = sc->sc_buf;
+	sc->sc_ep = (u_char *) sc->sc_mbuf->m_ext.ext_buf +
+	    sc->sc_mbuf->m_ext.ext_size;
+	sc->sc_mp = sc->sc_pktstart = (u_char *) sc->sc_mbuf->m_ext.ext_buf +
+	    BUFOFFSET;
+
 	sl_compress_init(&sc->sc_comp);
+
 	return (1);
 }
 
@@ -317,26 +319,28 @@ slclose(tp)
 	int s;
 
 	ttywflush(tp);
-	s = splimp();		/* actually, max(spltty, splsoftnet) */
 	tp->t_line = 0;
 	sc = (struct sl_softc *)tp->t_sc;
 	if (sc != NULL) {
+		s = splimp();		/* actually, max(spltty, splsoftnet) */
+
 		if_down(&sc->sc_if);
 		sc->sc_ttyp = NULL;
 		tp->t_sc = NULL;
-		MCLFREE((caddr_t)(sc->sc_ep - SLBUFSIZE));
-		sc->sc_ep = 0;
-		sc->sc_mp = 0;
-		sc->sc_buf = 0;
-	}
+
+		m_freem(sc->sc_mbuf);
+		sc->sc_mbuf = NULL;
+		sc->sc_ep = sc->sc_mp = sc->sc_pktstart = NULL;
+
 #if defined(__NetBSD__) || defined(__OpenBSD__)
-	/* if necessary, install a new outq buffer of the appropriate size */
-	if (sc->sc_oldbufsize != 0) {
-		clfree(&tp->t_outq);
-		clalloc(&tp->t_outq, sc->sc_oldbufsize, sc->sc_oldbufquot);
-	}
+		/* if necessary, install a new outq buffer of the appropriate size */
+		if (sc->sc_oldbufsize != 0) {
+			clfree(&tp->t_outq);
+			clalloc(&tp->t_outq, sc->sc_oldbufsize, sc->sc_oldbufquot);
+		}
 #endif
-	splx(s);
+		splx(s);
+	}
 }
 
 /*
@@ -652,34 +656,31 @@ sl_btom(sc, len)
 	register struct sl_softc *sc;
 	register int len;
 {
-	register struct mbuf *m;
-
-	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m == NULL)
-		return (NULL);
+	struct mbuf *m;
 
 	/*
-	 * If we have more than MHLEN bytes, it's cheaper to
-	 * queue the cluster we just filled & allocate a new one
-	 * for the input buffer.  Otherwise, fill the mbuf we
-	 * allocated above.  Note that code in the input routine
-	 * guarantees that packet will fit in a cluster.
+	 * Allocate a new input buffer and swap.
 	 */
-	if (len >= MHLEN) {
-		MCLGET(m, M_DONTWAIT);
-		if ((m->m_flags & M_EXT) == 0) {
-			/*
-			 * we couldn't get a cluster - if memory's this
-			 * low, it's time to start dropping packets.
-			 */
-			(void) m_free(m);
-			return (NULL);
-		}
-		sc->sc_ep = mtod(m, u_char *) + SLBUFSIZE;
-		m->m_data = (caddr_t)sc->sc_buf;
-		m->m_ext.ext_buf = (caddr_t)((long)sc->sc_buf &~ MCLOFSET);
-	} else
-		bcopy((caddr_t)sc->sc_buf, mtod(m, caddr_t), len);
+	m = sc->sc_mbuf;
+	MGETHDR(sc->sc_mbuf, M_DONTWAIT, MT_DATA);
+	if (sc->sc_mbuf == NULL) {
+		sc->sc_mbuf = m;
+		return (NULL);
+	}
+	MCLGET(sc->sc_mbuf, M_DONTWAIT);
+	if ((sc->sc_mbuf->m_flags & M_EXT) == 0) {
+		/*
+		 * we couldn't get a cluster - if memory's this
+		 * low, it's time to start dropping packets.
+		 */
+		m_freem(sc->sc_mbuf);
+		sc->sc_mbuf = m;
+		return (NULL);
+	}
+	sc->sc_ep = (u_char *) sc->sc_mbuf->m_ext.ext_buf +
+		sc->sc_mbuf->m_ext.ext_size;
+	
+	m->m_data = sc->sc_pktstart;
 
 	m->m_len = len;
 	m->m_pkthdr.len = len;
@@ -763,7 +764,7 @@ slinput(c, tp)
 			sc->sc_flags &= ~SC_ERROR;
 			goto newpack;
 		}
-		len = sc->sc_mp - sc->sc_buf;
+		len = sc->sc_mp - sc->sc_pktstart;
 		if (len < 3)
 			/* less than min length packet - ignore */
 			goto newpack;
@@ -778,15 +779,15 @@ slinput(c, tp)
 			 * where the buffer started so we can
 			 * compute the new header length.
 			 */
-			bcopy(sc->sc_buf, chdr, CHDR_LEN);
+			bcopy(sc->sc_pktstart, chdr, CHDR_LEN);
 		}
 #endif
 
-		if ((c = (*sc->sc_buf & 0xf0)) != (IPVERSION << 4)) {
+		if ((c = (*sc->sc_pktstart & 0xf0)) != (IPVERSION << 4)) {
 			if (c & 0x80)
 				c = TYPE_COMPRESSED_TCP;
 			else if (c == TYPE_UNCOMPRESSED_TCP)
-				*sc->sc_buf &= 0x4f; /* XXX */
+				*sc->sc_pktstart &= 0x4f; /* XXX */
 			/*
 			 * We've got something that's not an IP packet.
 			 * If compression is enabled, try to decompress it.
@@ -795,13 +796,13 @@ slinput(c, tp)
 			 * enable compression.  Otherwise, drop it.
 			 */
 			if (sc->sc_if.if_flags & SC_COMPRESS) {
-				len = sl_uncompress_tcp(&sc->sc_buf, len,
+				len = sl_uncompress_tcp(&sc->sc_pktstart, len,
 							(u_int)c, &sc->sc_comp);
 				if (len <= 0)
 					goto error;
 			} else if ((sc->sc_if.if_flags & SC_AUTOCOMP) &&
 			    c == TYPE_UNCOMPRESSED_TCP && len >= 40) {
-				len = sl_uncompress_tcp(&sc->sc_buf, len,
+				len = sl_uncompress_tcp(&sc->sc_pktstart, len,
 							(u_int)c, &sc->sc_comp);
 				if (len <= 0)
 					goto error;
@@ -809,24 +810,36 @@ slinput(c, tp)
 			} else
 				goto error;
 		}
+
+		m = sl_btom(sc, len);
+		if (m == NULL)
+			goto error;
+
 #if NBPFILTER > 0
 		if (sc->sc_bpf) {
 			/*
 			 * Put the SLIP pseudo-"link header" in place.
-			 * We couldn't do this any earlier since
-			 * decompression probably moved the buffer
-			 * pointer.  Then, invoke BPF.
+			 * Note this M_PREPEND() should bever fail,
+			 * since we know we always have enough space
+			 * in the input buffer.
 			 */
-			register u_char *hp = sc->sc_buf - SLIP_HDRLEN;
+			u_char *hp;
 
+			M_PREPEND(m, SLIP_HDRLEN, M_DONTWAIT);
+			if (m == NULL)
+				goto error;
+
+			hp = mtod(m, u_char *);
 			hp[SLX_DIR] = SLIPDIR_IN;
-			bcopy(chdr, &hp[SLX_CHDR], CHDR_LEN);
-			bpf_tap(sc->sc_bpf, hp, len + SLIP_HDRLEN);
+			memcpy(&hp[SLX_CHDR], chdr, CHDR_LEN);
+
+			s = splnet();
+			bpf_mtap(sc->sc_bpf, m);
+			splx(s);
+
+			m_adj(m, SLIP_HDRLEN);
 		}
 #endif
-		m = sl_btom(sc, len);
-		if (m == NULL)
-			goto error;
 
 		sc->sc_if.if_ipackets++;
 		sc->sc_if.if_lastchange = time;
@@ -855,7 +868,8 @@ slinput(c, tp)
 error:
 	sc->sc_if.if_ierrors++;
 newpack:
-	sc->sc_mp = sc->sc_buf = sc->sc_ep - SLMAX;
+	sc->sc_mp = sc->sc_pktstart = (u_char *) sc->sc_mbuf->m_ext.ext_buf +
+	    BUFOFFSET;
 	sc->sc_escape = 0;
 }
 

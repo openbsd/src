@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.c,v 1.11 2001/05/05 20:56:57 art Exp $	*/
+/*	$OpenBSD: param.c,v 1.12 2001/05/17 18:41:47 provos Exp $	*/
 /*	$NetBSD: param.c,v 1.16 1996/03/12 03:08:40 mrg Exp $	*/
 
 /*
@@ -103,6 +103,18 @@ int	ntimeout = (16 + NPROC) * 2;
 int	nclist = 60 + 12 * MAXUSERS;
 #endif
 int	nmbclusters = NMBCLUSTERS;
+
+#ifndef MBLOWAT
+#define MBLOWAT		16
+#endif
+int	mblowat = MBLOWAT;
+
+#ifndef MCLLOWAT
+#define MCLLOWAT	8
+#endif
+int	mcllowat = MCLLOWAT;
+
+
 int	fscale = FSCALE;	/* kernel uses `FSCALE', user uses `fscale' */
 
 /*

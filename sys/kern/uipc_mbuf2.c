@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf2.c,v 1.6 2001/03/28 20:03:00 angelos Exp $	*/
+/*	$OpenBSD: uipc_mbuf2.c,v 1.7 2001/05/17 18:41:45 provos Exp $	*/
 /*	$KAME: uipc_mbuf2.c,v 1.29 2001/02/14 13:42:10 itojun Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.40 1999/04/01 00:23:25 thorpej Exp $	*/
 
@@ -74,7 +74,7 @@
 
 #define M_SHAREDCLUSTER(m) \
 	(((m)->m_flags & M_EXT) != 0 && \
-	 ((m)->m_ext.ext_free || mclrefcnt[mtocl((m)->m_ext.ext_buf)] > 1))
+	 ((m)->m_ext.ext_free || MCLISREFERENCED((m))))
 
 /* can't call it m_dup(), as freebsd[34] uses m_dup() with different arg */
 static struct mbuf *m_dup1 __P((struct mbuf *, int, int, int));

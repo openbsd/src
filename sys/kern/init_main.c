@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.64 2001/05/16 12:49:45 art Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.65 2001/05/17 18:41:44 provos Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -222,6 +222,13 @@ main(framep)
 	disk_init();		/* must come before autoconfiguration */
 	tty_init();		/* initialise tty's */
 	cpu_startup();
+
+	/*
+	 * Initialize mbuf's.  Do this now because we might attempt to
+	 * allocate mbufs or mbuf clusters during autoconfiguration.
+	 */
+	mbinit();
+
 	cpu_configure();
 
 	/* Initialize sysctls (must be done before any processes run) */
@@ -338,9 +345,6 @@ main(framep)
 
 	/* Start real time and statistics clocks. */
 	initclocks();
-
-	/* Initialize mbuf's. */
-	mbinit();
 
 #ifdef REAL_CLISTS
 	/* Initialize clists. */

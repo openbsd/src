@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.19 2001/05/07 18:48:31 jason Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.20 2001/05/17 18:41:46 provos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -166,8 +166,7 @@ void ti_cmd_ext		__P((struct ti_softc *, struct ti_cmd_desc *,
 void ti_handle_events	__P((struct ti_softc *));
 int ti_alloc_jumbo_mem	__P((struct ti_softc *));
 void *ti_jalloc		__P((struct ti_softc *));
-void ti_jfree		__P((struct mbuf *));
-void ti_jref		__P((struct mbuf *));
+void ti_jfree		__P((caddr_t, u_int, void *));
 int ti_newbuf_std		__P((struct ti_softc *, int, struct mbuf *));
 int ti_newbuf_mini		__P((struct ti_softc *, int, struct mbuf *));
 int ti_newbuf_jumbo		__P((struct ti_softc *, int, struct mbuf *));
@@ -641,61 +640,23 @@ void *ti_jalloc(sc)
 }
 
 /*
- * Adjust usage count on a jumbo buffer. In general this doesn't
- * get used much because our jumbo buffers don't get passed around
- * too much, but it's implemented for correctness.
- */
-void
-ti_jref(m)
-	struct mbuf *m;
-{
-	caddr_t buf = m->m_ext.ext_buf;
-	u_int size = m->m_ext.ext_size;
-	struct ti_softc *sc;
-	register int i;
-
-	/* Extract the softc struct pointer. */
-	sc = (struct ti_softc *)m->m_ext.ext_handle;
-
-	if (sc == NULL)
-		panic("ti_jref: can't find softc pointer!");
-
-	if (size != TI_JUMBO_FRAMELEN)
-		panic("ti_jref: adjusting refcount of buf of wrong size!");
-
-	/* calculate the slot this buffer belongs to */
-	i = ((vaddr_t)buf - (vaddr_t)sc->ti_cdata.ti_jumbo_buf) / TI_JLEN;
-
-	if ((i < 0) || (i >= TI_JSLOTS))
-		panic("ti_jref: asked to reference buffer "
-		    "that we don't manage!");
-	else if (sc->ti_cdata.ti_jslots[i].ti_inuse == 0)
-		panic("ti_jref: buffer already free!");
-	else
-		sc->ti_cdata.ti_jslots[i].ti_inuse++;
-}
-
-/*
  * Release a jumbo buffer.
  */
 void
-ti_jfree(m)
-	struct mbuf *m;
+ti_jfree(buf, size, arg)
+	caddr_t			buf;
+	u_int			size;
+	void *arg;
 {
-	caddr_t buf = m->m_ext.ext_buf;
-	u_int size = m->m_ext.ext_size;
 	struct ti_softc *sc;
 	int i;
 	struct ti_jpool_entry *entry;
 
 	/* Extract the softc struct pointer. */
-	sc = (struct ti_softc *)m->m_ext.ext_handle;
+	sc = (struct ti_softc *)arg;
 
 	if (sc == NULL)
 		panic("ti_jfree: can't find softc pointer!");
-
-	if (size != TI_JUMBO_FRAMELEN)
-		panic("ti_jfree: freeing buffer of wrong size!");
 
 	/* calculate the slot this buffer belongs to */
 	i = ((vaddr_t)buf - (vaddr_t)sc->ti_cdata.ti_jumbo_buf) / TI_JLEN;
@@ -846,14 +807,13 @@ int ti_newbuf_jumbo(sc, i, m)
 		m_new->m_len = m_new->m_pkthdr.len =
 		    m_new->m_ext.ext_size = TI_JUMBO_FRAMELEN;
 		m_new->m_ext.ext_free = ti_jfree;
-		m_new->m_ext.ext_ref = ti_jref;
+		m_new->m_ext.ext_arg = sc;
+		MCLINITREFERENCE(m_new);
 	} else {
 		m_new = m;
 		m_new->m_data = m_new->m_ext.ext_buf;
 		m_new->m_ext.ext_size = TI_JUMBO_FRAMELEN;
 	}
-
-	m_new->m_ext.ext_handle = sc;
 
 	m_adj(m_new, ETHER_ALIGN);
 	/* Set up the descriptor. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.57 2001/05/10 10:34:47 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.58 2001/05/17 18:41:50 provos Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -279,13 +279,6 @@ cpu_startup()
 	if (dvmamap_extent == 0)
 		panic("unable to allocate extent for dvma");
 
-	/*
-	 * Finally, allocate mbuf pool.  Since mclrefcnt is an off-size
-	 * we use the more space efficient malloc in place of kmem_alloc.
-	 */
-	mclrefcnt = (char *)malloc(NMBCLUSTERS+PAGE_SIZE/MCLBYTES,
-				   M_MBUF, M_NOWAIT);
-	bzero(mclrefcnt, NMBCLUSTERS+PAGE_SIZE/MCLBYTES);
 	mb_map = uvm_km_suballoc(kernel_map, (vaddr_t *)&mbutl, &maxaddr,
 				 VM_MBUF_SIZE, VM_MAP_INTRSAFE, FALSE, NULL);
 	/*

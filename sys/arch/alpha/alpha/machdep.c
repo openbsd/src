@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.45 2001/05/05 22:33:23 art Exp $ */
+/* $OpenBSD: machdep.c,v 1.46 2001/05/17 18:41:47 provos Exp $ */
 /* $NetBSD: machdep.c,v 1.206 2000/05/23 05:12:54 thorpej Exp $ */
 
 /*-
@@ -983,13 +983,6 @@ cpu_startup()
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				   VM_PHYS_SIZE, 0, FALSE, NULL);
 
-	/*
-	 * Finally, allocate mbuf pool.  Since mclrefcnt is an off-size
-	 * we use the more space efficient malloc in place of kmem_alloc.
-	 */
-	mclrefcnt = (char *)malloc(NMBCLUSTERS+PAGE_SIZE/MCLBYTES,
-			M_MBUF, M_NOWAIT);
-	bzero(mclrefcnt, NMBCLUSTERS+PAGE_SIZE/MCLBYTES);
 	mb_map = uvm_km_suballoc(kernel_map, (vaddr_t *)&mbutl, &maxaddr,
 			VM_MBUF_SIZE, VM_MAP_INTRSAFE, FALSE, NULL);
 

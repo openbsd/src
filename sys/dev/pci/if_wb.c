@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wb.c,v 1.8 2001/02/20 19:39:44 mickey Exp $	*/
+/*	$OpenBSD: if_wb.c,v 1.9 2001/05/17 18:41:46 provos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -136,7 +136,7 @@
 int wb_probe		__P((struct device *, void *, void *));
 void wb_attach		__P((struct device *, struct device *, void *));
 
-void wb_bfree		__P((struct mbuf *));
+void wb_bfree		__P((caddr_t, u_int, void *));
 int wb_newbuf		__P((struct wb_softc *, struct wb_chain_onefrag *,
     struct mbuf *));
 int wb_encap		__P((struct wb_softc *, struct wb_chain *,
@@ -1007,8 +1007,10 @@ int wb_list_rx_init(sc)
 }
 
 void
-wb_bfree(m)
-	struct mbuf *m;
+wb_bfree(buf, size, arg)
+	caddr_t			buf;
+	u_int			size;
+	void *arg;
 {
 }
 
@@ -1032,7 +1034,8 @@ wb_newbuf(sc, c, m)
 		m_new->m_ext.ext_size = m_new->m_pkthdr.len =
 		    m_new->m_len = WB_BUFBYTES;
 		m_new->m_ext.ext_free = wb_bfree;
-		m_new->m_ext.ext_ref = wb_bfree;
+		m_new->m_ext.ext_arg = NULL;
+		MCLINITREFERENCE(m_new);
 	} else {
 		m_new = m;
 		m_new->m_len = m_new->m_pkthdr.len = WB_BUFBYTES;

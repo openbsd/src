@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.52 2001/05/13 15:39:27 deraadt Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.53 2001/05/17 18:41:46 provos Exp $ */
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -967,9 +967,7 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
      */
     mi = m;
     while (mi != NULL &&
-	   (!(mi->m_flags & M_EXT) ||
-	    (mi->m_ext.ext_ref == NULL &&
-	     mclrefcnt[mtocl(mi->m_ext.ext_buf)] <= 1)))
+	   (!(mi->m_flags & M_EXT) || !MCLISREFERENCED(mi)))
     {
         mo = mi;
         mi = mi->m_next;
