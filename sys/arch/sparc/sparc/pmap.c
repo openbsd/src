@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.75 2000/02/04 19:16:13 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.76 2000/02/18 17:05:33 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -534,7 +534,7 @@ static u_long segfixmask = 0xffffffff; /* all bits valid to start */
 				    ASI_SRMMUFP)
 u_int	*getptep4m __P((struct pmap *, vaddr_t));
 static __inline void	setpgt4m __P((int *, int));
-__inline void	setpte4m __P((vaddr_t va, int pte));
+void	setpte4m __P((vaddr_t va, int pte));
 #endif
 
 #if defined(SUN4) || defined(SUN4C)
@@ -739,18 +739,17 @@ setpgt4m(ptep, pte)
 	swap(ptep, pte);
 }
 
-/* Set the page table entry for va to pte. */
-__inline void
+/*
+ * Set the page table entry for va to pte. Only legal for kernel mappings.
+ */
+void
 setpte4m(va, pte)
 	vaddr_t va;
 	int pte;
 {
-	struct pmap *pm;
 	int *ptep;
 
-	pm = cpuinfo.ctxinfo[getcontext4m()].c_pmap;
-
-	ptep = getptep4m(pm, va);
+	ptep = getptep4m(pmap_kernel(), va);
 	tlb_flush_page(va);
 	setpgt4m(ptep, pte);
 }
