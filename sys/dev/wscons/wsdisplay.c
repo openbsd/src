@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.4 2000/08/01 13:51:17 mickey Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.5 2000/08/01 16:35:34 mickey Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.37.4.1 2000/06/30 16:27:53 simonb Exp $ */
 
 /*
@@ -1773,7 +1773,9 @@ wsdisplay_set_cons_kbd(get, poll, bell)
 	void (*bell) __P((dev_t, u_int, u_int, u_int));
 {
 	wsdisplay_cons.cn_getc = get;
+#if 0
 	wsdisplay_cons.cn_bell = bell;
+#endif
 	wsdisplay_cons_kbd_pollc = poll;
 }
 
@@ -1781,7 +1783,9 @@ void
 wsdisplay_unset_cons_kbd()
 {
 	wsdisplay_cons.cn_getc = wsdisplay_getc_dummy;
+#if 0
 	wsdisplay_cons.cn_bell = NULL;
+#endif
 	wsdisplay_cons_kbd_pollc = 0;
 }
 
