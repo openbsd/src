@@ -1,4 +1,4 @@
-#	$OpenBSD: inter.phone,v 1.3 1997/03/01 23:28:41 kstailey Exp $
+#	$OpenBSD: inter.phone,v 1.4 1997/04/11 17:24:21 gene Exp $
 #	@(#)inter.phone	8.1 (Berkeley) 6/9/93
 #	$FreeBSD-Id: inter.phone,v 1.15 1997/02/22 13:56:06 peter Exp $
 #
@@ -35,6 +35,8 @@
 31:13:Tilburg:Netherlands
 31:15:Delft:Netherlands
 31:20:Amsterdam:Netherlands
+31:24:Nijmegen:Netherlands
+31:26:Arnhem:Netherlands
 31:30:Utrecht:Netherlands
 31:35:Hilversum:Netherlands
 31:40:Eindhoven:Netherlands
@@ -43,7 +45,6 @@
 31:55:Apeldoorn:Netherlands
 31:70:The Hague:Netherlands
 31:76:Breda:Netherlands
-31:85:Arnhem:Netherlands
 32:15:Malines (Mechelen):Belgium
 32:2:Brussels:Belgium
 32:3:Antwerp:Belgium
