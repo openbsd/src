@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.19 2001/12/20 19:02:26 miod Exp $	*/
+/*	$OpenBSD: param.h,v 1.20 2002/02/23 00:31:11 miod Exp $	*/
 /*	$NetBSD: param.h,v 1.35 1997/07/10 08:22:36 veego Exp $	*/
 
 /*
@@ -59,15 +59,6 @@
 #define	PAGE_MASK	(PAGE_SIZE - 1)
 
 #define	KERNBASE	0x00000000	/* start of kernel virtual */
-
-#define	SEGSHIFT	24		/* LOG2(NBSEG) [68030 value] */
-/* bytes/segment */
-/* (256 * (1 << PGSHIFT)) == (1 << SEGSHIFT) */
-#define NBSEG		((mmutype == MMU_68040) \
-			    ? (32 * (1 << PGSHIFT)) : (256 * (1 << PGSHIFT)))
-#define	SEGOFSET	(NBSEG-1)	/* byte offset into segment */
-
-#define	UPAGES		2		/* pages of u-area */
 
 #include <m68k/param.h>
 
