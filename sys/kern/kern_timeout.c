@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.16 2003/04/13 21:04:52 tedu Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.17 2003/05/17 14:02:06 grange Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -126,7 +126,7 @@ struct simplelock _timeout_lock;
  * scheduled to timeout further in time than INT_MAX, but to->to_time can
  * be positive or negative so comparing it with anything is dangerous.
  * The only way we can use the to->to_time value in any predictable way
- * is when we caluculate how far in the future `to' will timeout -
+ * is when we calculate how far in the future `to' will timeout -
  * "to->to_time - ticks". The result will always be positive for future
  * timeouts and 0 or negative for due timeouts.
  */
