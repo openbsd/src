@@ -1,4 +1,4 @@
-/*	$OpenBSD: readpassphrase.c,v 1.11 2001/12/07 23:55:35 millert Exp $	*/
+/*	$OpenBSD: readpassphrase.c,v 1.12 2001/12/15 05:41:00 millert Exp $	*/
 
 /*
  * Copyright (c) 2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$OpenBSD: readpassphrase.c,v 1.11 2001/12/07 23:55:35 millert Exp $";
+static const char rcsid[] = "$OpenBSD: readpassphrase.c,v 1.12 2001/12/15 05:41:00 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <ctype.h>
@@ -53,7 +53,8 @@ readpassphrase(const char *prompt, char *buf, size_t bufsiz, int flags)
 	int input, output, save_errno;
 	char ch, *p, *end;
 	struct termios term, oterm;
-	struct sigaction sa, saveint, savehup, savequit, saveterm, savetstp;
+	struct sigaction sa, saveint, savehup, savequit, saveterm;
+	struct sigaction savetstp, savettin, savettou;
 
 	/* I suppose we could alloc on demand in this case (XXX). */
 	if (bufsiz == 0) {
@@ -88,6 +89,8 @@ restart:
 	(void)sigaction(SIGQUIT, &sa, &savequit);
 	(void)sigaction(SIGTERM, &sa, &saveterm);
 	(void)sigaction(SIGTSTP, &sa, &savetstp);
+	(void)sigaction(SIGTTIN, &sa, &savettin);
+	(void)sigaction(SIGTTOU, &sa, &savettou);
 
 	/* Turn off echo if possible. */
 	if (tcgetattr(input, &oterm) == 0) {
@@ -130,6 +133,8 @@ restart:
 	(void)sigaction(SIGQUIT, &savequit, NULL);
 	(void)sigaction(SIGTERM, &saveterm, NULL);
 	(void)sigaction(SIGTSTP, &savetstp, NULL);
+	(void)sigaction(SIGTTIN, &savettin, NULL);
+	(void)sigaction(SIGTTOU, &savettou, NULL);
 	if (input != STDIN_FILENO)
 		(void)close(input);
 
@@ -139,7 +144,10 @@ restart:
 	 */
 	if (signo) {
 		kill(getpid(), signo); 
-		if (signo == SIGTSTP) {
+		switch (signo) {
+		case SIGTSTP:
+		case SIGTTIN:
+		case SIGTTOU:
 			signo = 0;
 			goto restart;
 		}
