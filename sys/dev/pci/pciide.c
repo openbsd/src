@@ -1,4 +1,4 @@
-/*      $OpenBSD: pciide.c,v 1.17 2000/01/10 23:28:35 chris Exp $     */
+/*      $OpenBSD: pciide.c,v 1.18 2000/01/11 01:14:52 chris Exp $     */
 /*	$NetBSD: pciide.c,v 1.48 1999/11/28 20:05:18 bouyer Exp $	*/
 
 /*
@@ -2184,11 +2184,14 @@ sis_chip_map(sc, pa)
 {
 	struct pciide_channel *cp;
 	int channel;
-	u_int32_t rev;
 	u_int8_t sis_ctr0 = pciide_pci_read(sc->sc_pc, sc->sc_tag, SIS_CTRL0);
 	pcireg_t interface = PCI_INTERFACE(pci_conf_read(sc->sc_pc,
 				    sc->sc_tag, PCI_CLASS_REG));
+	pcireg_t rev = PCI_REVISION(pci_conf_read(sc->sc_pc, sc->sc_tag,
+			    PCI_CLASS_REG));
 	bus_size_t cmdsize, ctlsize;
+
+	printf("\nrevision: i:%i h:%x i:%i h:%x i:%i h:%x\n",rev,rev,interface,interface,interface & PCI_REVISION_MASK, interface & PCI_REVISION_MASK);
 
 	if (pciide_chipen(sc, pa) == 0)
 		return;
@@ -2203,10 +2206,7 @@ sis_chip_map(sc, pa)
 	    WDC_CAPABILITY_MODE;
 	sc->sc_wdcdev.PIO_cap = 4;
 	sc->sc_wdcdev.DMA_cap = 2;
-
-	rev = pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_CLASS_REG) & PCI_REVISION_MASK;
 	sc->sc_wdcdev.UDMA_cap = (rev >= 0xd0) ? 2 : 0;
-
 	sc->sc_wdcdev.set_modes = sis_setup_channel;
 	sc->sc_wdcdev.channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
