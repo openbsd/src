@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_quick_mode.c,v 1.37 2000/10/07 07:01:19 niklas Exp $	*/
-/*	$EOM: ike_quick_mode.c,v 1.133 2000/10/06 23:45:27 niklas Exp $	*/
+/*	$OpenBSD: ike_quick_mode.c,v 1.38 2000/10/16 23:29:07 niklas Exp $	*/
+/*	$EOM: ike_quick_mode.c,v 1.135 2000/10/16 18:16:59 provos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -109,7 +109,6 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
   int i, result = 0, nprinc = 0;
   int *x509_ids = NULL, *keynote_ids = NULL;
 #ifdef USE_X509
-  char cn[259];
   struct keynote_deckey dc;
   X509_NAME *subject;
   RSA *key;
@@ -295,9 +294,17 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
       subject = LC (X509_get_subject_name, (isakmp_sa->recv_cert));
       if (subject)
 	{
-	  strcpy (cn, "DN:");
-	  LC (X509_NAME_oneline, (subject, cn + 3, 256));
-	  principal[1] = cn;
+          principal[1] = calloc (259, sizeof (char));
+          if (principal[1] == NULL)
+            {
+	      log_print ("check_policy: failed to allocate memory for principal[1]");
+	      free (principal[0]);
+	      free (principal);
+	      LC (RSA_free, (key));
+	      goto policydone;
+            }
+	  strcpy (principal[1], "DN:");
+	  LC (X509_NAME_oneline, (subject, principal[1] + 3, 256));
 	  nprinc = 2;
 	} else {
 	  nprinc = 1;
@@ -1300,8 +1307,6 @@ post_quick_mode (struct message *msg)
 	    }
 	}
     }
-  sa_release (isakmp_sa);
-  msg->isakmp_sa = NULL;
 }
 
 /*
