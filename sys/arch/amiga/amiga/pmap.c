@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.22 2000/05/28 03:55:21 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.23 2000/05/30 10:39:33 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.39 1997/06/10 18:26:41 veego Exp $	*/
 
 /* 
@@ -2539,7 +2539,7 @@ pmap_enter_ptpage(pmap, va)
 			printf("enter_pt: about to fault UPT pg at %lx\n", va);
 #endif
 #if defined(UVM)
-		if (uvm_fault(pt_map, va, VM_PROT_READ|VM_PROT_WRITE, FALSE)
+		if (uvm_fault(pt_map, va, 0, VM_PROT_READ|VM_PROT_WRITE)
 		    != KERN_SUCCESS)
 			panic("pmap_enter: uvm_fault failed");
 #else
