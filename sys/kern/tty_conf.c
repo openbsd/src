@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_conf.c,v 1.4 1997/04/04 01:46:03 deraadt Exp $	*/
+/*	$OpenBSD: tty_conf.c,v 1.5 1997/09/02 08:48:32 downsj Exp $	*/
 /*	$NetBSD: tty_conf.c,v 1.18 1996/05/19 17:17:55 jonathan Exp $	*/
 
 /*-
@@ -107,7 +107,7 @@ struct	linesw linesw[] =
 	{ ttynodisc, ttyerrclose, ttyerrio, ttyerrio, nullioctl,
 	  ttyerrinput, ttyerrstart, nullmodem },	/* 1- defunct */
 
-#if defined(COMPAT_43) || defined(COMPAT_FREEBSD)
+#if defined(COMPAT_43) || defined(COMPAT_FREEBSD) || defined(COMPAT_BSDOS)
 	{ ttyopen, ttylclose, ttread, ttwrite, nullioctl,
 	  ttyinput, ttstart, ttymodem },		/* 2- old NTTYDISC */
 #else

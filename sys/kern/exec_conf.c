@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_conf.c,v 1.8 1997/01/13 11:07:47 niklas Exp $	*/
+/*	$OpenBSD: exec_conf.c,v 1.9 1997/09/02 08:48:30 downsj Exp $	*/
 /*	$NetBSD: exec_conf.c,v 1.16 1995/12/09 05:34:47 cgd Exp $	*/
 
 /*
@@ -55,6 +55,10 @@
 #include <compat/linux/linux_exec.h>
 #endif
 
+#ifdef COMPAT_BSDOS
+#include <compat/bsdos/bsdos_exec.h>
+#endif
+
 #ifdef COMPAT_FREEBSD
 #include <compat/freebsd/freebsd_exec.h>
 #endif
@@ -91,6 +95,9 @@ struct execsw execsw[] = {
 #ifdef COMPAT_IBCS2
 	{ COFF_HDR_SIZE, exec_ibcs2_coff_makecmds, },	/* coff binaries */
 	{ XOUT_HDR_SIZE, exec_ibcs2_xout_makecmds, },	/* x.out binaries */
+#endif
+#ifdef COMPAT_BSDOS
+	{ BSDOS_AOUT_HDR_SIZE, exec_bsdos_aout_makecmds, },	/* bsdos */
 #endif
 #ifdef COMPAT_FREEBSD
 	{ FREEBSD_AOUT_HDR_SIZE, exec_freebsd_aout_makecmds, },	/* freebsd */
