@@ -2326,6 +2326,11 @@
 ./usr/share/man/cat8/ypxfr_2perday.0
 ./usr/share/man/cat8/zaurus
 ./usr/share/man/cat8/zaurus/MAKEDEV.0
+./usr/share/man/cat8/zaurus/fdisk.0
+./usr/share/man/cat8/zaurus/kbd.0
+./usr/share/man/cat8/zaurus/wsconscfg.0
+./usr/share/man/cat8/zaurus/wsconsctl.0
+./usr/share/man/cat8/zaurus/wsfontload.0
 ./usr/share/man/cat8/zdump.0
 ./usr/share/man/cat8/zic.0
 ./usr/share/man/cat9
