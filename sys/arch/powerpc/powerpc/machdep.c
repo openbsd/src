@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.11 1997/10/21 11:00:10 pefo Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.12 1997/10/21 18:01:45 pefo Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -87,6 +87,7 @@ int astpending;
 
 int system_type = POWER4e;	/* XXX Hardwire it for now */
 
+char ofw_eth_addr[6];		/* Save address of first network ifc found */
 char *bootpath;
 char bootpathbuf[512];
 
@@ -99,6 +100,7 @@ struct msgbuf *msgbufp = (struct msgbuf *)0x3000;
 int msgbufmapped = 1;		/* message buffer is always mapped */
 
 caddr_t allocsys __P((caddr_t));
+int power4e_get_eth_addr __P((void));
 
 
 void
@@ -282,6 +284,11 @@ initppc(startkernel, endkernel, args)
 	 * Initialize pmap module.
 	 */
 	pmap_bootstrap(startkernel, endkernel);
+
+	/*
+	 * Figure out ethernet address.
+	 */
+	(void)power4e_get_eth_addr();
 }
 
 
@@ -769,4 +776,31 @@ boot(howto)
 		*ap1 = 0;
 #endif
 	ppc_boot(str);
+}
+
+/*
+ *  Get Ethernet address for the onboard ethernet chip.
+ */
+int
+power4e_get_eth_addr()
+{
+	int qhandle, phandle;
+	char name[32];
+
+	for (qhandle = OF_peer(0); qhandle; qhandle = phandle) {
+		if (OF_getprop(qhandle, "device_type", name, sizeof name) >= 0
+		    && !strcmp(name, "network")
+		    && OF_getprop(qhandle, "local-mac-address",
+				  &ofw_eth_addr, sizeof ofw_eth_addr) >= 0) {
+			return(0);
+		}
+		if (phandle = OF_child(qhandle))
+			continue;
+		while (qhandle) {
+			if (phandle = OF_peer(qhandle))
+				break;
+			qhandle = OF_parent(qhandle);
+		}
+	}
+	return(-1);
 }

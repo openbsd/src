@@ -1,6 +1,17 @@
-This port is heavily based on the NetBSD powerpc port by
-Wolfgang Solfrank. All of the kernel code is derived from there.
-Some modifications have been made, primarily to support ELF.
+
+This port is partly based on the NetBSD powerpc port by Wolfgang Solfrank.
+The NetBSD code was imported by Dale Rahn who also added support for ELF.
+
+The current shape of the PowerPC port is a result of a work performed by
+Per Fogelstrom, Opsycon AB. The work was sponsored by RTMX Inc, North
+Carolina, USA.
+
+A lot of code has been removed and a lot of new code has been added to
+create a monolithic kernel that uses OpenFirmware or any other boot plattform
+as little possible.
+
+The current kernel supports only V.I Power.4e PowerPC 604 based VME board.
+More will come in the future.
 
 
 Other notes:
@@ -13,6 +24,8 @@ Other notes:
 TODO:
 	ptrace support (that works)
 	fp (setround, getround, getmask, setmask, setsticky, getsticky)
-	cleaner installation 
+
 Dale
 rahnds@cvs.openbsd.org
+Per
+pefo@cvs.openbsd.org

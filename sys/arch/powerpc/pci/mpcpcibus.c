@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpcpcibus.c,v 1.2 1997/10/20 19:52:42 pefo Exp $ */
+/*	$OpenBSD: mpcpcibus.c,v 1.3 1997/10/21 18:01:44 pefo Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -56,6 +56,7 @@
 #include <powerpc/pci/mpc106reg.h>
 
 extern vm_map_t phys_map;
+extern ofw_eth_addr[];
 
 int	 mpcpcibrmatch __P((struct device *, void *, void *));
 void	 mpcpcibrattach __P((struct device *, struct device *, void *));
@@ -216,12 +217,9 @@ mpc_ether_hw_addr(p)
 		p[i] = 0x00;
 	p[18] = 0x03;	/* Srom version. */
 	p[19] = 0x01;	/* One chip. */
-/*XXX*/	p[20] = 0x00;	/* Next six, ethernet address. */
-/*XXX*/	p[21] = 0xa0;	/* XXX Should be read from OFW */
-/*XXX*/	p[22] = 0xf7;
-/*XXX*/	p[23] = 0x04;
-/*XXX*/	p[24] = 0x00;
-/*XXX*/	p[25] = 0x4b;
+	/* Next six, ethernet address. */
+	bcopy(ofw_eth_addr, &p[20], 6);
+
 	p[26] = 0x00;	/* Chip 0 device number */
 	p[27] = 30;		/* Descriptor offset */
 	p[28] = 00;
