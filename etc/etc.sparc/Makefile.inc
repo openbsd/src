@@ -1,10 +1,10 @@
 #
 #	etc.sparc/Makefile.inc -- sparc-specific etc Makefile targets
 #
-#	$Id: Makefile.inc,v 1.5 1997/05/13 08:00:58 deraadt Exp $
+#	$Id: Makefile.inc,v 1.6 1997/05/14 22:06:41 deraadt Exp $
 
 .ifdef DESTDIR
-snap_md: bsd bsd.scsi3 floppies miniroot bootblocks
+snap_md: bsd bsd.scsi3 floppies miniroot bootblocks ramdisk
 	cp ${.CURDIR}/../sys/arch/sparc/compile/GENERIC/bsd \
 	    ${DESTDIR}/snapshot/bsd
 	cp ${.CURDIR}/../sys/arch/sparc/compile/GENERIC_SCSI3/bsd \
@@ -26,6 +26,10 @@ floppies:
 
 miniroot:
 	cd ${.CURDIR}/../distrib/miniroot && make cleandir && \
+	    make && make install
+
+ramdisk:
+	cd ${.CURDIR}/../distrib/ramdisk && make cleandir && \
 	    make && make install
 
 bootblocks:
