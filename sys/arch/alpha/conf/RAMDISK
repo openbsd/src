@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.50 2002/01/16 20:55:42 miod Exp $
+#	$OpenBSD: RAMDISK,v 1.51 2002/02/09 07:08:30 ericj Exp $
 #	$NetBSD: RAMDISK,v 1.9 1996/12/03 17:25:33 cgd Exp $
 
 machine	alpha			# architecture, used by config; REQUIRED
@@ -70,7 +70,7 @@ de*	at	pci? dev ? function ?		# 21x4[012]-based Ethernet
 #fpa*	at	pci? dev ? function ?		# DEC DEFPA FDDI cards
 #le*	at	pci? dev ? function ?		# PCI LANCE Ethernet (untested)
 siop*	at	pci? dev ? function ?		# NCR 53c8xx SCSI
-pceb*	at	pci? dev ? function ?		# Intel PCI-EISA brige
+pceb*	at	pci? dev ? function ?		# Intel PCI-EISA bridge
 vga*	at	pci? dev ? function ?		# PCI VGA graphics
 ppb*	at	pci? dev ? function ?		# PCI-PCI bridges
 sio*	at	pci? dev ? function ?		# Intel PCI-ISA bridge
