@@ -1,5 +1,5 @@
-/*	$OpenBSD: in6_prefix.c,v 1.9 2001/03/25 06:46:00 csapuntz Exp $	*/
-/*	$KAME: in6_prefix.c,v 1.45 2001/02/08 11:33:32 itojun Exp $	*/
+/*	$OpenBSD: in6_prefix.c,v 1.10 2001/03/25 09:24:26 itojun Exp $	*/
+/*	$KAME: in6_prefix.c,v 1.47 2001/03/25 08:41:39 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
