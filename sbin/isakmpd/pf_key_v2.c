@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.51 2001/05/05 00:55:13 angelos Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.52 2001/05/30 16:46:33 angelos Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -65,6 +65,11 @@
 #include "sa.h"
 #include "timer.h"
 #include "transport.h"
+#include "cert.h"
+
+#ifdef USE_KEYNOTE
+#include "policy.h"
+#endif
 
 #define IN6_IS_ADDR_FULL(a)						\
   ((*(u_int32_t *)(void *)(&(a)->s6_addr[0]) == 0xffff)			\
@@ -754,6 +759,9 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming,
   int dstlen, srclen, keylen, hashlen, err;
   struct pf_key_v2_msg *update = 0, *ret = 0;
   struct ipsec_proto *iproto = proto->data;
+#ifdef SADB_CREDTYPE_NONE
+  struct sadb_cred *cred;
+#endif
   size_t len;
 #ifdef KAME
   struct sadb_x_sa2 ssa2;
@@ -1124,17 +1132,18 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming,
 	  memcpy (sid + 1,
 		  isakmp_sa->id_i + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ,
 		  len - 1);
-	  sid->sadb_ident_type = SADB_IDENTTYPE_MBOX;
+	  sid->sadb_ident_type = SADB_IDENTTYPE_USERFQDN;
 	  break;
 
-	case IPSEC_ID_KEY_ID:
 	case IPSEC_ID_IPV4_ADDR:
+	case IPSEC_ID_IPV6_ADDR:
+	    /* XXX CONNECTION/PREFIX ? */
 	case IPSEC_ID_IPV4_RANGE:
 	case IPSEC_ID_IPV4_ADDR_SUBNET:
-	case IPSEC_ID_IPV6_ADDR:
 	case IPSEC_ID_IPV6_RANGE:
 	case IPSEC_ID_IPV6_ADDR_SUBNET:
 	    /* XXX PREFIX */
+	case IPSEC_ID_KEY_ID:
 	case IPSEC_ID_DER_ASN1_DN:
 	    /* XXX FQDN ? */
 	default:
@@ -1179,17 +1188,18 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming,
 	  memcpy (sid + 1,
 		  isakmp_sa->id_r + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ,
 		  len - 1);
-	  sid->sadb_ident_type = SADB_IDENTTYPE_MBOX;
+	  sid->sadb_ident_type = SADB_IDENTTYPE_USERFQDN;
 	  break;
 
-	case IPSEC_ID_KEY_ID:
 	case IPSEC_ID_IPV4_ADDR:
+	case IPSEC_ID_IPV6_ADDR:
+	    /* XXX CONNECTION/PREFIX */
 	case IPSEC_ID_IPV4_RANGE:
 	case IPSEC_ID_IPV4_ADDR_SUBNET:
-	case IPSEC_ID_IPV6_ADDR:
 	case IPSEC_ID_IPV6_RANGE:
 	case IPSEC_ID_IPV6_ADDR_SUBNET:
 	    /* XXX PREFIX */
+	case IPSEC_ID_KEY_ID:
 	case IPSEC_ID_DER_ASN1_DN:
 	    /* XXX FQDN ? */
 	default:
@@ -1206,7 +1216,169 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming,
 	free (sid);
     }
 
-  /* XXX Setup credentials */
+  printf("%p %p %p %p\n",isakmp_sa->recv_cert, isakmp_sa->sent_cert,
+	 isakmp_sa->sent_key, isakmp_sa->recv_key);
+
+#ifdef SADB_CREDTYPE_NONE
+  /* Setup credentials */
+  if (isakmp_sa->recv_cert)
+    {
+      switch (isakmp_sa->recv_certtype)
+	{
+	case ISAKMP_CERTENC_NONE:
+	  /* Nothing to be done */
+	  break;
+
+	case ISAKMP_CERTENC_KEYNOTE:
+	  len = strlen (isakmp_sa->recv_cert);
+	  cred = calloc (PF_KEY_V2_ROUND (len) + sizeof *cred,
+			 sizeof(u_int8_t));
+	  if (!cred)
+	    goto cleanup;
+
+	  cred->sadb_cred_len = ((sizeof *cred) / PF_KEY_V2_CHUNK) +
+	    PF_KEY_V2_ROUND (len) / PF_KEY_V2_CHUNK;
+	  cred->sadb_cred_exttype = SADB_X_EXT_REMOTE_CREDENTIALS;
+	  cred->sadb_cred_type = SADB_CREDTYPE_KEYNOTE;
+	  memcpy(cred + 1, isakmp_sa->recv_cert, len);
+
+	  if (pf_key_v2_msg_add (update, (struct sadb_ext *)cred,
+				 PF_KEY_V2_NODE_MALLOCED) == -1)
+	    goto cleanup;
+	  break;
+
+	case ISAKMP_CERTENC_X509_SIG:
+#ifdef USE_X509
+	  {
+	    u_int8_t *data;
+	    u_int32_t datalen;
+	    struct cert_handler *handler;
+
+	    /* We do it this way to avoid weird includes */
+	    handler = cert_get (ISAKMP_CERTENC_X509_SIG);
+	    if (!handler)
+	      break;
+	    handler->cert_serialize (isakmp_sa->recv_cert, &data, &datalen);
+	    if (!data)
+	      break;
+
+	    len = datalen;
+	    cred = calloc (PF_KEY_V2_ROUND (len) + sizeof *cred,
+			   sizeof(u_int8_t));
+	    if (!cred)
+	      {
+		free (data);
+		goto cleanup;
+	      }
+
+	    cred->sadb_cred_len = ((sizeof *cred) / PF_KEY_V2_CHUNK) +
+	      PF_KEY_V2_ROUND (len) / PF_KEY_V2_CHUNK;
+	    cred->sadb_cred_exttype = SADB_X_EXT_REMOTE_CREDENTIALS;
+	    cred->sadb_cred_type = SADB_CREDTYPE_X509;
+	    memcpy(cred + 1, data, len);
+
+	    if (pf_key_v2_msg_add (update, (struct sadb_ext *)cred,
+				   PF_KEY_V2_NODE_MALLOCED) == -1)
+	      goto cleanup;
+	  }
+#endif /* USE_X509 */
+	  break;
+	}
+    }
+
+  if (isakmp_sa->sent_cert)
+    {
+      switch (isakmp_sa->sent_certtype)
+	{
+	case ISAKMP_CERTENC_NONE:
+	  /* Nothing to be done */
+	  break;
+
+	case ISAKMP_CERTENC_KEYNOTE:
+	  len = strlen (isakmp_sa->sent_cert);
+	  cred = calloc (PF_KEY_V2_ROUND (len) + sizeof *cred,
+			 sizeof (u_int8_t));
+	  if (!cred)
+	    goto cleanup;
+
+	  cred->sadb_cred_len = ((sizeof *cred) / PF_KEY_V2_CHUNK) +
+	    PF_KEY_V2_ROUND (len) / PF_KEY_V2_CHUNK;
+	  cred->sadb_cred_exttype = SADB_X_EXT_LOCAL_CREDENTIALS;
+	  cred->sadb_cred_type = SADB_CREDTYPE_KEYNOTE;
+	  memcpy(cred + 1, isakmp_sa->sent_cert, len);
+
+	  if (pf_key_v2_msg_add (update, (struct sadb_ext *)cred,
+				 PF_KEY_V2_NODE_MALLOCED) == -1)
+	    goto cleanup;
+	  break;
+
+	case ISAKMP_CERTENC_X509_SIG:
+	  /* XXX */
+	  break;
+	}
+    }
+#endif /* SADB_CREDTYPE_NONE */
+
+#ifdef SADB_AUTHTYPE_NONE
+  /* Setup authentication information */
+  if (isakmp_sa->recv_key)
+    {
+      len = strlen (isakmp_sa->recv_key);
+      cred = calloc (PF_KEY_V2_ROUND(len) + sizeof *cred, sizeof (u_int8_t));
+      if (!cred)
+	goto cleanup;
+
+      cred->sadb_cred_len = ((sizeof *cred) / PF_KEY_V2_CHUNK) +
+	PF_KEY_V2_ROUND (len) / PF_KEY_V2_CHUNK;
+      cred->sadb_cred_exttype = SADB_X_EXT_REMOTE_AUTH;
+      memcpy(cred + 1, isakmp_sa->recv_key, len);
+
+      switch (isakmp_sa->recv_certtype)
+	{
+	case ISAKMP_CERTENC_NONE:
+	  cred->sadb_cred_type = SADB_AUTHTYPE_PASSPHRASE;
+	  break;
+	case ISAKMP_CERTENC_KEYNOTE:
+	case ISAKMP_CERTENC_X509_SIG:
+	  cred->sadb_cred_type = SADB_AUTHTYPE_RSA;
+	  break;
+	}
+
+      if (pf_key_v2_msg_add (update, (struct sadb_ext *)cred,
+			     PF_KEY_V2_NODE_MALLOCED) == -1)
+	goto cleanup;
+    }
+
+  if (isakmp_sa->sent_key)
+    {
+      len = strlen (isakmp_sa->sent_key);
+      cred = calloc (PF_KEY_V2_ROUND(len) + sizeof *cred, sizeof (u_int8_t));
+      if (!cred)
+	goto cleanup;
+
+      cred->sadb_cred_len = ((sizeof *cred) / PF_KEY_V2_CHUNK) +
+	PF_KEY_V2_ROUND (len) / PF_KEY_V2_CHUNK;
+      cred->sadb_cred_exttype = SADB_X_EXT_LOCAL_AUTH;
+      memcpy(cred + 1, isakmp_sa->sent_key, len);
+
+      switch (isakmp_sa->sent_certtype)
+	{
+	case ISAKMP_CERTENC_NONE:
+	  cred->sadb_cred_type = SADB_AUTHTYPE_PASSPHRASE;
+	  break;
+	case ISAKMP_CERTENC_KEYNOTE:
+	case ISAKMP_CERTENC_X509_SIG:
+	  cred->sadb_cred_type = SADB_AUTHTYPE_RSA;
+	  break;
+	}
+
+      if (pf_key_v2_msg_add (update, (struct sadb_ext *)cred,
+			     PF_KEY_V2_NODE_MALLOCED) == -1)
+	goto cleanup;
+    }
+#endif /* SADB_AUTHTYPE_NONE */
+
+  /* Send authentication information */
 
   /* XXX Here can sensitivity extensions be setup.  */
 
@@ -1735,7 +1907,7 @@ pf_key_v2_convert_id (u_int8_t *id, int idlen, int *reslen, int *idtype)
 
       *reslen = idlen - ISAKMP_ID_DATA_OFF + ISAKMP_GEN_SZ;
       memcpy (res, id + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ, *reslen);
-      *idtype = SADB_IDENTTYPE_MBOX;
+      *idtype = SADB_IDENTTYPE_USERFQDN;
       return res;
 
     case IPSEC_ID_IPV4_ADDR:
@@ -2554,7 +2726,7 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
 	  prefstring = "FQDN";
 	  /* Fall through */
 
-	case SADB_IDENTTYPE_MBOX:
+	case SADB_IDENTTYPE_USERFQDN:
 	  slen = (srcident->sadb_ident_len * sizeof (u_int64_t))
 	    - sizeof (struct sadb_ident);
 	  if (!prefstring)
@@ -2660,7 +2832,7 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
 	  prefstring = "FQDN";
 	  /* Fall through */
 
-	case SADB_IDENTTYPE_MBOX:
+	case SADB_IDENTTYPE_USERFQDN:
 	  slen = (dstident->sadb_ident_len * sizeof (u_int64_t))
 	    - sizeof (struct sadb_ident);
 	  if (!prefstring)
