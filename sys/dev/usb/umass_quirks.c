@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass_quirks.c,v 1.4 2003/05/18 18:13:01 nate Exp $	*/
+/*	$OpenBSD: umass_quirks.c,v 1.5 2003/05/18 18:22:23 nate Exp $	*/
 /*	$NetBSD: umass_quirks.c,v 1.39 2003/05/08 15:19:47 augustss Exp $	*/
 
 /*
@@ -109,6 +109,14 @@ Static const struct umass_quirk umass_quirks[] = {
 	  0,
 	  PQUIRK_NOSENSE | PQUIRK_NOMODESENSE,
 	  UMATCH_VENDOR_PRODUCT,
+	  NULL, NULL
+	},
+
+	{ { USB_VENDOR_IMATION, USB_PRODUCT_IMATION_FLASHGO },
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
+	  0,
+	  PQUIRK_NODOORLOCK,
+	  UMATCH_DEVCLASS_DEVSUBCLASS_DEVPROTO,
 	  NULL, NULL
 	},
 
