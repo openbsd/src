@@ -1,5 +1,5 @@
-.\"	$OpenBSD: getnameinfo.3,v 1.10 2000/12/21 17:34:33 aaron Exp $
-.\"	$KAME: getnameinfo.3,v 1.17 2000/08/09 21:16:17 itojun Exp $
+.\"	$OpenBSD: getnameinfo.3,v 1.11 2001/01/05 13:43:02 itojun Exp $
+.\"	$KAME: getnameinfo.3,v 1.20 2001/01/05 13:37:37 itojun Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -142,7 +142,7 @@ the numeric form of the host's address is returned instead of its name
 e.g., by calling
 .Fn inet_ntop
 instead of
-.Fn getnodebyaddr
+.Fn gethostbyaddr
 .Pc .
 If the
 .Fa flag
@@ -177,7 +177,7 @@ These
 flags are defined in
 .Aq Pa netdb.h .
 .\"
-.Sh EXTENSION
+.Ss Extension for scoped IPv6 address
 The implementation allows experimental numeric IPv6 address notation with
 scope identifier.
 IPv6 link-local address will appear as string like
@@ -232,24 +232,24 @@ The function indicates successful completion by a zero return value;
 a non-zero return value indicates failure.
 Error codes are as below:
 .Bl -tag -width Er
-.It Bq Er EAI_AGAIN
+.It Dv EAI_AGAIN
 The name could not be resolved at this time.
 Future attempts may succeed.
-.It Bq Er EAI_BADFLAGS
+.It Dv EAI_BADFLAGS
 The flags had an invalid value.
-.It Bq Er EAI_FAIL
+.It Dv EAI_FAIL
 A non-recoverable error occurred.
-.It Bq Er EAI_FAMILY
+.It Dv EAI_FAMILY
 The address family was not recognized or the address length was invalid
 for the specified family.
-.It Bq Er EAI_MEMORY
+.It Dv EAI_MEMORY
 There was a memory allocation failure.
-.It Bq Er EAI_NONAME
+.It Dv EAI_NONAME
 The name does not resolve for the supplied parameters.
 .Dv NI_NAMEREQD
 is set and the host's name cannot be located,
 or both nodename and servname were null.
-.It Bq Er EAI_SYSTEM
+.It Dv EAI_SYSTEM
 A system error occurred.
 The error code can be found in errno.
 .El
