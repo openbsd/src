@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: vwarn.c,v 1.4 2002/06/08 04:52:55 fgsch Exp $";
+static char rcsid[] = "$OpenBSD: vwarn.c,v 1.5 2002/06/12 03:16:20 fgsch Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/cdefs.h>
@@ -41,12 +41,6 @@ static char rcsid[] = "$OpenBSD: vwarn.c,v 1.4 2002/06/08 04:52:55 fgsch Exp $";
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
-
-#ifdef __indr_reference
-__indr_reference(_vwarn, vwarn);
-#else
-__weak_alias(vwarn, _vwarn);
-#endif
 
 extern char *__progname;		/* Program name, from crt0. */
 
@@ -65,3 +59,6 @@ _vwarn(fmt, ap)
 	}
 	(void)fprintf(stderr, "%s\n", strerror(sverrno));
 }
+
+__weak_alias(vwarn, _vwarn);
+

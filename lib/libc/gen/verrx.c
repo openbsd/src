@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: verrx.c,v 1.4 2002/06/08 04:52:55 fgsch Exp $";
+static char rcsid[] = "$OpenBSD: verrx.c,v 1.5 2002/06/12 03:16:20 fgsch Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/cdefs.h>
@@ -40,12 +40,6 @@ static char rcsid[] = "$OpenBSD: verrx.c,v 1.4 2002/06/08 04:52:55 fgsch Exp $";
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
-
-#ifdef __indr_reference
-__indr_reference(_verrx, verrx);
-#else
-__weak_alias(verrx, _verrx);
-#endif
 
 extern char *__progname;		/* Program name, from crt0. */
 
@@ -61,3 +55,6 @@ _verrx(eval, fmt, ap)
 	(void)fprintf(stderr, "\n");
 	exit(eval);
 }
+
+__weak_alias(verrx, _verrx);
+

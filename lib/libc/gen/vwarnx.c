@@ -32,19 +32,13 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: vwarnx.c,v 1.4 2002/06/08 04:52:55 fgsch Exp $";
+static char rcsid[] = "$OpenBSD: vwarnx.c,v 1.5 2002/06/12 03:16:20 fgsch Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/cdefs.h>
 #include <err.h>
 #include <stdio.h>
 #include <stdarg.h>
-
-#ifdef __indr_reference
-__indr_reference(_vwarnx, vwarnx);
-#else
-__weak_alias(vwarnx, _vwarnx);
-#endif
 
 extern char *__progname;		/* Program name, from crt0. */
 
@@ -58,3 +52,6 @@ _vwarnx(fmt, ap)
 		(void)vfprintf(stderr, fmt, ap);
 	(void)fprintf(stderr, "\n");
 }
+
+__weak_alias(vwarnx, _vwarnx);
+
