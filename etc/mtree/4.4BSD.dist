@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.99 2000/10/16 14:28:11 deraadt Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.100 2000/11/10 00:22:29 deraadt Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -1276,6 +1276,243 @@ vax
 ..
 
 # ./usr/share/man/cat9
+..
+
+# ./usr/share/man/ps1
+ps1
+
+alpha
+..
+amiga
+..
+arc
+..
+hp300
+..
+hppa
+..
+i386
+..
+mac68k
+..
+mvme68k
+..
+mvme88k
+..
+pmax
+..
+powerpc
+..
+sparc
+..
+sun3
+..
+vax
+..
+
+# ./usr/share/man/ps1
+..
+
+# ./usr/share/man/ps2
+ps2
+
+# ./usr/share/man/ps2/i386
+i386
+
+# ./usr/share/man/ps2/i386
+..
+
+# ./usr/share/man/ps2
+..
+
+# ./usr/share/man/ps3
+ps3
+
+alpha
+..
+amiga
+..
+arc
+..
+hp300
+..
+hppa
+..
+i386
+..
+mac68k
+..
+mvme68k
+..
+mvme88k
+..
+pmax
+..
+powerpc
+..
+sparc
+..
+sun3
+..
+vax
+..
+
+# ./usr/share/man/ps3
+..
+
+# ./usr/share/man/ps3p
+ps3p
+# ./usr/share/man/ps3p
+..
+
+# ./usr/share/man/ps4
+ps4
+
+alpha
+..
+amiga
+..
+arc
+..
+hp300
+..
+hppa
+..
+i386
+..
+mac68k
+..
+mvme68k
+..
+mvme88k
+..
+pmax
+..
+powerpc
+..
+sparc
+..
+sun3
+..
+vax
+..
+
+# ./usr/share/man/ps4
+..
+
+# ./usr/share/man/ps5
+ps5
+
+alpha
+..
+amiga
+..
+arc
+..
+hp300
+..
+hppa
+..
+i386
+..
+mac68k
+..
+mvme68k
+..
+mvme88k
+..
+pmax
+..
+powerpc
+..
+sparc
+..
+sun3
+..
+vax
+..
+
+# ./usr/share/man/ps5
+..
+
+# ./usr/share/man/ps6
+ps6
+# ./usr/share/man/ps6
+..
+
+# ./usr/share/man/ps7
+ps7
+# ./usr/share/man/ps7
+..
+
+# ./usr/share/man/ps8
+ps8
+
+alpha
+..
+amiga
+..
+arc
+..
+hp300
+..
+hppa
+..
+i386
+..
+mac68k
+..
+mvme68k
+..
+mvme88k
+..
+pmax
+..
+powerpc
+..
+sparc
+..
+sun3
+..
+vax
+..
+
+# ./usr/share/man/ps8
+..
+
+# ./usr/share/man/ps9
+ps9
+
+alpha
+..
+amiga
+..
+arc
+..
+hp300
+..
+hppa
+..
+i386
+..
+mac68k
+..
+mvme68k
+..
+mvme88k
+..
+pmax
+..
+powerpc
+..
+sparc
+..
+sun3
+..
+vax
+..
+
+# ./usr/share/man/ps9
 ..
 
 # ./usr/share/man/man1
