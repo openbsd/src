@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.42 2003/01/05 22:14:23 dhartmei Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.43 2003/01/06 18:43:02 deraadt Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -107,19 +107,19 @@ main(int argc, char *argv[])
 
 	if ((n = snprintf(rulesetname, sizeof(rulesetname), "%ld",
 	    (long)getpid())) < 0 || n >= sizeof(rulesetname)) {
-		syslog(LOG_ERR, "PID too large for ruleset name");
+		syslog(LOG_ERR, "pid too large for ruleset name");
 		exit(1);
 	}
 
 	config = fopen(PATH_CONFFILE, "r");
 
 	if ((cp = getenv("SSH_TTY")) == NULL) {
-		syslog(LOG_ERR, "Non-interactive session connection for authpf");
+		syslog(LOG_ERR, "non-interactive session connection for authpf");
 		exit(1);
 	}
 
 	if ((cp = getenv("SSH_CLIENT")) == NULL) {
-		syslog(LOG_ERR, "Can't determine connection source");
+		syslog(LOG_ERR, "cannot determine connection source");
 		exit(1);
 	}
 
@@ -129,27 +129,27 @@ main(int argc, char *argv[])
 	}
 	cp = strchr(ipsrc, ' ');
 	if (!cp) {
-		syslog(LOG_ERR, "Corrupt SSH_CLIENT variable %s", ipsrc);
+		syslog(LOG_ERR, "corrupt SSH_CLIENT variable %s", ipsrc);
 		exit(1);
 	}
 	*cp = '\0';
 	if (inet_pton(AF_INET, ipsrc, &ina) != 1) {
 		syslog(LOG_ERR,
-		    "Cannot determine IP from SSH_CLIENT %s", ipsrc);
+		    "cannot determine IP from SSH_CLIENT %s", ipsrc);
 		exit(1);
 	}
 
 	/* open the pf device */
 	dev = open(PATH_DEVFILE, O_RDWR);
 	if (dev == -1) {
-		syslog(LOG_ERR, "Can't open filter device (%m)");
+		syslog(LOG_ERR, "cannot open filter device (%m)");
 		goto die;
 	}
 
 	uid = getuid();
 	pw = getpwuid(uid);
 	if (pw == NULL) {
-		syslog(LOG_ERR, "can't find user for uid %u", uid);
+		syslog(LOG_ERR, "cannot find user for uid %u", uid);
 		goto die;
 	}
 	if (strcmp(pw->pw_shell, PATH_AUTHPF_SHELL)) {
@@ -197,7 +197,7 @@ main(int argc, char *argv[])
 		    (pidfp = fdopen(pidfd, "r+")) == NULL) {
 			if (pidfd != -1)
 				close(pidfd);
-			syslog(LOG_ERR, "can't open or create %s: %s", pidfile,
+			syslog(LOG_ERR, "cannot open or create %s: %s", pidfile,
 			    strerror(errno));
 			goto die;
 		}
@@ -212,7 +212,7 @@ main(int argc, char *argv[])
 		/* 31 == MAXLOGNAME - 1 */
 		if (fscanf(pidfp, "%d\n%31s\n", &otherpid, otherluser) != 2)
 			otherpid = -1;
-		syslog(LOG_DEBUG, "Tried to lock %s, in use by pid %d: %s",
+		syslog(LOG_DEBUG, "tried to lock %s, in use by pid %d: %s",
 		    pidfile, otherpid, strerror(save_errno));
 
 		if (otherpid > 0) {
@@ -221,7 +221,7 @@ main(int argc, char *argv[])
 			    otherpid, ipsrc, otherluser);
 			if (kill((pid_t) otherpid, SIGTERM) == -1) {
 				syslog(LOG_INFO,
-				    "Couldn't kill process %d: (%m)",
+				    "could not kill process %d: (%m)",
 				    otherpid);
 			}
 		}
@@ -232,7 +232,7 @@ main(int argc, char *argv[])
 		 * 10 attempts we log an error and give up
 		 */
 		if (++lockcnt > 10) {
-			syslog(LOG_ERR, "Can't kill previous authpf (pid %d)",
+			syslog(LOG_ERR, "cannot kill previous authpf (pid %d)",
 			    otherpid);
 			goto dogdeath;
 		}
@@ -416,7 +416,7 @@ allowed_luser(char *luser)
 		 * the file even though it's there. probably a config
 		 * problem.
 		 */
-		syslog(LOG_ERR, "Can't open allowed users file %s (%s)",
+		syslog(LOG_ERR, "cannot open allowed users file %s (%s)",
 		    PATH_ALLOWFILE, strerror(errno));
 		return (0);
 	} else {
@@ -449,11 +449,11 @@ allowed_luser(char *luser)
 			if (matched)
 				return (1); /* matched an allowed username */
 		}
-		syslog(LOG_INFO, "Denied access to %s: not listed in %s",
+		syslog(LOG_INFO, "denied access to %s: not listed in %s",
 		    luser, PATH_ALLOWFILE);
 
 		/* reuse buf */
-		buf = "\n\nSorry, you aren't allowed to use this facility!\n";
+		buf = "\n\nSorry, you are not allowed to use this facility!\n";
 		fputs(buf, stdout);
 	}
 	fflush(stdout);
@@ -479,7 +479,7 @@ check_luser(char *luserdir, char *luser)
 
 	n = snprintf(tmp, sizeof(tmp), "%s/%s", luserdir, luser);
 	if (n < 0 || (u_int)n >= sizeof(tmp)) {
-		syslog(LOG_ERR, "Provided banned directory line too long (%s)",
+		syslog(LOG_ERR, "provided banned directory line too long (%s)",
 		    luserdir);
 		return (0);
 	}
@@ -496,7 +496,7 @@ check_luser(char *luserdir, char *luser)
 			 * file even though it's there. probably a config
 			 * problem.
 			 */
-			syslog(LOG_ERR, "Can't open banned file %s (%s)",
+			syslog(LOG_ERR, "cannot open banned file %s (%s)",
 			    tmp, strerror(errno));
 			return (0);
 		}
@@ -505,7 +505,7 @@ check_luser(char *luserdir, char *luser)
 		 * luser is banned - spit the file at them to
 		 * tell what they can do and where they can go.
 		 */
-		syslog(LOG_INFO, "Denied access to %s: %s exists",
+		syslog(LOG_INFO, "denied access to %s: %s exists",
 		    luser, tmp);
 
 		/* reuse tmp */
@@ -550,7 +550,7 @@ change_filter(int add, const char *luser, const char *ipsrc)
 			goto error;
 		}
 		if ((f = fopen(fn, "r")) == NULL && errno != ENOENT) {
-			syslog(LOG_ERR, "can't open %s (%m)", fn);
+			syslog(LOG_ERR, "cannot open %s (%m)", fn);
 			goto error;
 		}
 		if (f == NULL) {
@@ -560,7 +560,7 @@ change_filter(int add, const char *luser, const char *ipsrc)
 				goto error;
 			}
 			if ((f = fopen(fn, "r")) == NULL) {
-				syslog(LOG_ERR, "can't open %s (%m)", fn);
+				syslog(LOG_ERR, "cannot open %s (%m)", fn);
 				goto error;
 			}
 		}
@@ -610,10 +610,10 @@ change_filter(int add, const char *luser, const char *ipsrc)
 
 	if (add) {
 		gettimeofday(&Tstart, NULL);
-		syslog(LOG_INFO, "Allowing %s, user %s", ipsrc, luser);
+		syslog(LOG_INFO, "allowing %s, user %s", ipsrc, luser);
 	} else {
 		gettimeofday(&Tend, NULL);
-		syslog(LOG_INFO, "Removed %s, user %s - duration %ld seconds",
+		syslog(LOG_INFO, "removed %s, user %s - duration %ld seconds",
 		    ipsrc, luser, Tend.tv_sec - Tstart.tv_sec);
 	}
 	return (0);
@@ -681,7 +681,7 @@ do_death(int active)
 		ftruncate(fileno(pidfp), 0);
 	if (pidfile[0])
 		if (unlink(pidfile) == -1)
-			syslog(LOG_ERR, "can't unlink %s (%m)", pidfile);
+			syslog(LOG_ERR, "cannot unlink %s (%m)", pidfile);
 	exit(ret);
 }
 
