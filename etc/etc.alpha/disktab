@@ -1,4 +1,4 @@
-#	$OpenBSD: disktab,v 1.6 1997/05/07 21:45:18 niklas Exp $
+#	$OpenBSD: disktab,v 1.7 1997/05/08 00:52:29 niklas Exp $
 #	$NetBSD: disktab,v 1.2 1995/10/13 03:09:39 cgd Exp $
 
 # A DEC RZ25, configured so that all of the free partition IDs are at
@@ -10,8 +10,14 @@ rz25|RZ25|DEC RZ25 SCSI:\
 	:pc#823608:oc#0:\
 	:pd#600408:od#223200:bd#8192:fd#1024:td=4.2BSD:
 
+floppy|floppy3|3in|3.5in High Density Floppy:\
+	:ty=floppy:se#512:nt#2:rm#300:ns#18:nc#80:\
+	:pa#2880:oa#0:ta=4.2BSD:ba#8192:fa#1024: \
+	:pb#2880:ob#0:\
+	:pc#2880:oc#0:
+
 rdroot:\
-	:ty=winchester:se#512:nt#2:rm#300:ns#5:nc#1024:\
+	:ty=ramdisk:se#512:nt#2:rm#300:ns#8:nc#1024:\
 	:pa#8192:oa#0:ta=4.2BSD:ba#8192:fa#1024: \
 	:pc#8192:oc#0:
 
