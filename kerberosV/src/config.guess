@@ -223,23 +223,8 @@ EOF
     *:[Aa]miga[Oo][Ss]:*:*)
 	echo ${UNAME_MACHINE}-unknown-amigaos
 	exit 0 ;;
-    arc64:OpenBSD:*:*)
-	echo mips64el-unknown-openbsd${UNAME_RELEASE}
-	exit 0 ;;
-    arc:OpenBSD:*:*)
-	echo mipsel-unknown-openbsd${UNAME_RELEASE}
-	exit 0 ;;
-    hkmips:OpenBSD:*:*)
-	echo mips-unknown-openbsd${UNAME_RELEASE}
-	exit 0 ;;
-    pmax:OpenBSD:*:*)
-	echo mipsel-unknown-openbsd${UNAME_RELEASE}
-	exit 0 ;;
     sgi:OpenBSD:*:*)
-	echo mips-unknown-openbsd${UNAME_RELEASE}
-	exit 0 ;;
-    wgrisc:OpenBSD:*:*)
-	echo mipsel-unknown-openbsd${UNAME_RELEASE}
+	echo mips64-unknown-openbsd${UNAME_RELEASE}
 	exit 0 ;;
     *:OS/390:*:*)
 	echo i370-ibm-openedition

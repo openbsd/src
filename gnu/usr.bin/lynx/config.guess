@@ -203,9 +203,6 @@ case "${UNAME_MACHINE}:${UNAME_SYSTEM}:${UNAME_RELEASE}:${UNAME_VERSION}" in
     amiga:OpenBSD:*:*)
 	echo m68k-unknown-openbsd${UNAME_RELEASE}
 	exit 0 ;;
-    arc:OpenBSD:*:*)
-	echo mipsel-unknown-openbsd${UNAME_RELEASE}
-	exit 0 ;;
     cats:OpenBSD:*:*)
 	echo arm-unknown-openbsd${UNAME_RELEASE}
 	exit 0 ;;
@@ -230,17 +227,11 @@ case "${UNAME_MACHINE}:${UNAME_SYSTEM}:${UNAME_RELEASE}:${UNAME_VERSION}" in
     mvmeppc:OpenBSD:*:*)
 	echo powerpc-unknown-openbsd${UNAME_RELEASE}
 	exit 0 ;;
-    pmax:OpenBSD:*:*)
-	echo mipsel-unknown-openbsd${UNAME_RELEASE}
-	exit 0 ;;
     sgi:OpenBSD:*:*)
-	echo mipseb-unknown-openbsd${UNAME_RELEASE}
+	echo mips64-unknown-openbsd${UNAME_RELEASE}
 	exit 0 ;;
     sun3:OpenBSD:*:*)
 	echo m68k-unknown-openbsd${UNAME_RELEASE}
-	exit 0 ;;
-    wgrisc:OpenBSD:*:*)
-	echo mipsel-unknown-openbsd${UNAME_RELEASE}
 	exit 0 ;;
     *:OpenBSD:*:*)
 	echo ${UNAME_MACHINE}-unknown-openbsd${UNAME_RELEASE}
@@ -315,6 +306,9 @@ case "${UNAME_MACHINE}:${UNAME_SYSTEM}:${UNAME_RELEASE}:${UNAME_VERSION}" in
 	exit 0;;
     *:[Aa]miga[Oo][Ss]:*:*)
 	echo ${UNAME_MACHINE}-unknown-amigaos
+	exit 0 ;;
+    sgi:OpenBSD:*:*)
+	echo mips64-unknown-openbsd${UNAME_RELEASE}
 	exit 0 ;;
     *:[Mm]orph[Oo][Ss]:*:*)
 	echo ${UNAME_MACHINE}-unknown-morphos
