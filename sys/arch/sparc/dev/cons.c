@@ -278,7 +278,10 @@ cnstart(tp)
 	register struct tty *tp;
 {
 	register int c, s;
-	register void (*putc)__P((...));
+	register union {
+		void (*v1)__P((int));
+		void (*v3)__P((int, u_char *, int));
+	} putc;
 	register int fd, v;
 
 	s = spltty();
@@ -287,10 +290,10 @@ cnstart(tp)
 		return;
 	}
 	if ((v = promvec->pv_romvec_vers) > 2) {
-		putc = (void (*))promvec->pv_v2devops.v2_write;
+		putc.v3 = (void (*))promvec->pv_v2devops.v2_write;
 		fd = *promvec->pv_v2bootargs.v2_fd1;
 	} else
-		putc = promvec->pv_putchar;
+		putc.v1 = promvec->pv_putchar;
 	while (tp->t_outq.c_cc) {
 		c = getc(&tp->t_outq);
 		/*
@@ -300,10 +303,10 @@ cnstart(tp)
 		 */
 		(void) splhigh();
 		if (v > 2) {
-			unsigned char c0 = c & 0177;
-			(*putc)(fd, &c0, 1);
+			u_char c0 = c & 0177;
+			(*putc.v3)(fd, &c0, 1);
 		} else
-			(*putc)(c & 0177);
+			(*putc.v1)(c & 0177);
 		(void) spltty();
 	}
 	if (tp->t_state & TS_ASLEEP) {		/* can't happen? */
