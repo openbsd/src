@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.18 2003/11/04 03:19:22 mickey Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.19 2003/11/04 17:16:24 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -155,7 +155,6 @@ int	carp_prepare_ad(struct mbuf *, struct carp_softc *,
 void	carp_send_ad(void *);
 void	carp_send_arp(struct carp_softc *);
 void	carp_master_down(void *);
-int	carp_sluggish(struct carp_softc *, struct carp_header *);
 int	carp_ioctl(struct ifnet *, u_long, caddr_t);
 void	carp_start(struct ifnet *);
 void	carp_setrun(struct carp_softc *, sa_family_t);
@@ -412,7 +411,7 @@ carp_input_c(struct mbuf *m, struct carp_softc *sc,
 		 * try to free it or keep a pointer to it).
 		 */
 		struct mbuf m0;
-		u_int32_t af = htonl(AF_INET6);
+		u_int32_t af = htonl(af);
 
 		m0.m_next = m;
 		m0.m_len = sizeof(af);
