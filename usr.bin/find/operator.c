@@ -1,4 +1,4 @@
-/*	$OpenBSD: operator.c,v 1.8 2003/06/26 07:27:29 deraadt Exp $	*/
+/*	$OpenBSD: operator.c,v 1.9 2004/06/02 15:00:51 tom Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)operator.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: operator.c,v 1.8 2003/06/26 07:27:29 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: operator.c,v 1.9 2004/06/02 15:00:51 tom Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -91,7 +91,7 @@ yankexpr(PLAN **planp)		/* pointer to top of plan (modified) */
 	if (node->type == N_OPENPAREN)
 		for (tail = subplan = NULL;;) {
 			if ((next = yankexpr(planp)) == NULL)
-				err(1, "(: missing closing ')'");
+				errx(1, "(: missing closing ')'");
 			/*
 			 * If we find a closing ')' we store the collected
 			 * subplan in our '(' node and convert the node to
