@@ -1,4 +1,4 @@
-.\" $OpenBSD: packages.7,v 1.16 2003/05/07 06:53:06 jmc Exp $
+.\" $OpenBSD: packages.7,v 1.17 2003/07/09 20:30:43 jmc Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -38,9 +38,8 @@ to be compiled and installed on a new machine.
 As an alternative, most of these ports are also available as binary
 packages.
 Adding a new package is as simple as
-.Bd -literal -offset indent
-pkg_add foo-1.0-vanilla.tgz
-.Ed
+.Pp
+.Dl pkg_add foo-1.0-vanilla.tgz
 .Pp
 In appearance, packages seem to be .tgz archives, and as such, can be
 examined on almost any computer system, but there is a bit more to it:
@@ -98,8 +97,7 @@ or need some working directory under
 to function correctly (e.g.,
 .Nm squid ,
 or
-.Nm mysql
-).
+.Nm mysql ) .
 .Pp
 The current package system has some major limitations.
 .Ss "The package system is not aware of shared network installations"
@@ -216,9 +214,9 @@ Installs through
 are supported:  pointing
 .Ev PKG_PATH
 to a distant package repository, e.g.,
-.Bd -literal -width indent
-setenv PKG_PATH ftp://ftp.openbsd.org/pub/OpenBSD/2.9/packages/i386
-.Ed
+.Pp
+.Dl setenv PKG_PATH ftp://ftp.openbsd.org/pub/OpenBSD/2.9/packages/i386
+.Pp
 will let
 .Xr pkg_add 1
 automatically download dependencies as well.
