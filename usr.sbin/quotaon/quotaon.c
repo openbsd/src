@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)quotaon.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: quotaon.c,v 1.8 1997/01/17 07:14:19 millert Exp $";
+static char *rcsid = "$Id: quotaon.c,v 1.9 1997/06/04 04:18:37 dm Exp $";
 #endif /* not lint */
 
 /*
@@ -121,19 +121,23 @@ main(argc, argv)
 		    strcmp(fs->fs_vfstype, "mfs"))
 			continue;
 		if (aflag) {
-			if (gflag && hasquota(fs, GRPQUOTA, &qfnp))
+			if (gflag && hasquota(fs, GRPQUOTA, &qfnp, 0))
 				errs += quotaonoff(fs, offmode, GRPQUOTA, qfnp);
-			if (uflag && hasquota(fs, USRQUOTA, &qfnp))
+			if (uflag && hasquota(fs, USRQUOTA, &qfnp, 0))
 				errs += quotaonoff(fs, offmode, USRQUOTA, qfnp);
 			continue;
 		}
 		if ((argnum = oneof(fs->fs_file, argv, argc)) >= 0 ||
 		    (argnum = oneof(fs->fs_spec, argv, argc)) >= 0) {
 			done |= 1 << argnum;
-			if (gflag)
+			if (gflag) {
+				hasquota(fs, GRPQUOTA, &qfnp, 1);
 				errs += quotaonoff(fs, offmode, GRPQUOTA, qfnp);
-			if (uflag)
+			}
+			if (uflag) {
+				hasquota(fs, USRQUOTA, &qfnp, 1);
 				errs += quotaonoff(fs, offmode, USRQUOTA, qfnp);
+			}
 		}
 	}
 	endfsent();
@@ -158,7 +162,6 @@ quotaonoff(fs, offmode, type, qfpathname)
 	int offmode, type;
 	char *qfpathname;
 {
-
 	if (strcmp(fs->fs_file, "/") && readonly(fs))
 		return (1);
 	if (offmode) {
@@ -200,10 +203,11 @@ oneof(target, list, cnt)
 /*
  * Check to see if a particular quota is to be enabled.
  */
-hasquota(fs, type, qfnamep)
+hasquota(fs, type, qfnamep, force)
 	register struct fstab *fs;
 	int type;
 	char **qfnamep;
+	int force;
 {
 	register char *opt;
 	char *cp;
@@ -224,7 +228,7 @@ hasquota(fs, type, qfnamep)
 		if (type == GRPQUOTA && strcmp(opt, grpname) == 0)
 			break;
 	}
-	if (!opt)
+	if (!force && !opt)
 		return (0);
 	if (cp) {
 		*qfnamep = cp;
