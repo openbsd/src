@@ -1,4 +1,4 @@
-/*	$OpenBSD: sockio.h,v 1.14 2000/01/08 05:40:39 angelos Exp $	*/
+/*	$OpenBSD: sockio.h,v 1.15 2000/01/25 22:06:28 jason Exp $	*/
 /*	$NetBSD: sockio.h,v 1.5 1995/08/23 00:40:47 thorpej Exp $	*/
 
 /*-
@@ -111,6 +111,10 @@
 #define SIOCSENCDSTSA	_IOW('i', 74, struct ifsa)	/* set enc sa */
 #define SIOCSENCSRCSA	_IOW('i', 75, struct ifsa)	/* set enc sa */
 #define SIOCSENCCLEARSA	_IOW('i', 76, struct ifsa)	/* set enc sa */
+
+#define SIOCBRDGARL	_IOWR('i', 77, struct ifbrlreq)	/* add bridge rule */
+#define SIOCBRDGFRL	_IOWR('i', 78, struct ifbrlreq)	/* flush brdg rules */
+#define SIOCBRDGGRL	_IOWR('i', 79, struct ifbrlconf)/* get bridge rules */
 
 #define GRESADDRS       _IOW('i', 101, struct ifreq)
 #define GRESADDRD       _IOW('i', 102, struct ifreq)   

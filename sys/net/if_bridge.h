@@ -1,7 +1,7 @@
-/*	$OpenBSD: if_bridge.h,v 1.11 2000/01/10 22:18:29 angelos Exp $	*/
+/*	$OpenBSD: if_bridge.h,v 1.12 2000/01/25 22:06:27 jason Exp $	*/
 
 /*
- * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
+ * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -42,7 +42,7 @@ struct ifbreq {
 /* SIOCBRDGIFFLGS, SIOCBRDGIFFLGS */
 #define	IFBIF_LEARNING	0x1	/* ifs can learn */
 #define	IFBIF_DISCOVER	0x2	/* ifs sends packets w/unknown dest */
-#define IFBIF_BLOCKNONIP 0x04	/* ifs does not allow non-IP/ARP traffic in/out */
+#define IFBIF_BLOCKNONIP 0x04	/* ifs blocks non-IP/ARP traffic in/out */
 /* SIOCBRDGFLUSH */
 #define	IFBF_FLUSHDYN	0x0	/* flush dynamic addresses only */
 #define	IFBF_FLUSHALL	0x1	/* flush all addresses from cache */
@@ -103,6 +103,35 @@ struct ifbcachetoreq {
 	u_int32_t		ifbct_time;		/* cache time (sec) */
 };
 
+/*
+ * Bridge mac rules
+ */
+struct ifbrlreq {
+	char			ifbr_name[IFNAMSIZ];	/* bridge ifs name */
+	char			ifbr_ifsname[IFNAMSIZ];	/* member ifs name */
+	u_int8_t		ifbr_action;		/* disposition */
+	u_int8_t		ifbr_flags;		/* flags */
+	struct ether_addr	ifbr_src;		/* source mac */
+	struct ether_addr	ifbr_dst;		/* destination mac */
+};
+#define	BRL_ACTION_BLOCK	0x01			/* block frame */
+#define	BRL_ACTION_PASS		0x02			/* pass frame */
+#define	BRL_FLAG_IN		0x08			/* input rule */
+#define	BRL_FLAG_OUT		0x04			/* output rule */
+#define	BRL_FLAG_SRCVALID	0x02			/* src valid */
+#define	BRL_FLAG_DSTVALID	0x01			/* dst valid */
+
+struct ifbrlconf {
+	char		ifbrl_name[IFNAMSIZ];	/* bridge ifs name */
+	char		ifbrl_ifsname[IFNAMSIZ];/* member ifs name */
+	u_int32_t	ifbrl_len;		/* buffer size */
+	union {
+		caddr_t	ifbrlu_buf;
+		struct	ifbrlreq *ifbrlu_req;
+	} ifbrl_ifbrlu;
+#define	ifbrl_buf	ifbrl_ifbrlu.ifbrlu_buf
+#define	ifbrl_req	ifbrl_ifbrlu.ifbrlu_req
+};
 
 #ifdef _KERNEL
 void	bridge_ifdetach __P((struct ifnet *));

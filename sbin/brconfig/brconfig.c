@@ -1,7 +1,7 @@
-/*	$OpenBSD: brconfig.c,v 1.4 2000/01/10 22:14:25 angelos Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.5 2000/01/25 22:06:27 jason Exp $	*/
 
 /*
- * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
+ * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -70,6 +70,12 @@ int bridge_status __P((int, char *));
 int is_bridge __P((int, char *));
 int bridge_show_all __P((int));
 void printb __P((char *, unsigned short, char *));
+int bridge_rule __P((int, char *, int, char **, int));
+int bridge_rules __P((int, char *, char *));
+int bridge_flushrule __P((int, char *, char *));
+void bridge_badrule __P((int, char **, int));
+void bridge_showrule __P((struct ifbrlreq *));
+int bridge_rulefile __P((int, char *, char *));
 
 /* if_flags bits: borrowed from ifconfig.c */
 #define	IFFBITS \
@@ -291,6 +297,40 @@ main(argc, argv)
 				return (EX_USAGE);
 			}
 			error = bridge_maxaddr(sock, brdg, argv[0]);
+			if (error)
+				return (error);
+		}
+		else if (strcmp("rules", argv[0]) == 0) {
+			argc--; argv++;
+			if (argc == 0) {
+				warnx("rules requires an argument");
+				return (EX_USAGE);
+			}
+			error = bridge_rules(sock, brdg, argv[0]);
+			if (error)
+				return (error);
+		}
+		else if (strcmp("rule", argv[0]) == 0) {
+			argc--; argv++;
+			return (bridge_rule(sock, brdg, argc, argv, -1));
+		}
+		else if (strcmp("rulefile", argv[0]) == 0) {
+			argc--; argv++;
+			if (argc == 0) {
+				warnx("rulefile requires an argument");
+				return (EX_USAGE);
+			}
+			error = bridge_rulefile(sock, brdg, argv[0]);
+			if (error)
+				return (error);
+		}
+		else if (strcmp("flushrule", argv[0]) == 0) {
+			argc--; argv++;
+			if (argc == 0) {
+				warnx("flushrule requires an argument");
+				return (EX_USAGE);
+			}
+			error = bridge_flushrule(sock, brdg, argv[0]);
 			if (error)
 				return (error);
 		}
@@ -766,8 +806,246 @@ bridge_status(s, brdg)
 	return (err);
 }
 
+int
+bridge_flushrule(s, brdg, ifname)
+	int s;
+	char *brdg, *ifname;
+{
+	struct ifbrlreq req;
+
+	strlcpy(req.ifbr_name, brdg, sizeof(req.ifbr_name));
+	strlcpy(req.ifbr_ifsname, ifname, sizeof(req.ifbr_ifsname));
+	if (ioctl(s, SIOCBRDGFRL, &req) < 0) {
+		warn("%s: %s", brdg, ifname);
+		return (EX_USAGE);
+	}
+	return (0);
+}
+
+int
+bridge_rules(s, brdg, ifname)
+	int s;
+	char *brdg, *ifname;
+{
+	char *inbuf = NULL;
+	struct ifbrlconf ifc;
+	struct ifbrlreq *ifrp, ifreq;
+	int len = 8192, i;
+
+	while (1) {
+		ifc.ifbrl_len = len;
+		ifc.ifbrl_buf = inbuf = realloc(inbuf, len);
+		strlcpy(ifc.ifbrl_name, brdg, sizeof(ifc.ifbrl_name));
+		strlcpy(ifc.ifbrl_ifsname, ifname, sizeof(ifc.ifbrl_ifsname));
+		if (inbuf == NULL)
+			err(1, "malloc");
+		if (ioctl(s, SIOCBRDGGRL, &ifc) < 0)
+			err(1, "ioctl(SIOCBRDGGRL)");
+		if (ifc.ifbrl_len + sizeof(ifreq) < len)
+			break;
+		len *= 2;
+	}
+	ifrp = ifc.ifbrl_req;
+	for (i = 0; i < ifc.ifbrl_len; i += sizeof(ifreq)) {
+		ifrp = (struct ifbrlreq *)((caddr_t)ifc.ifbrl_req + i);
+		bridge_showrule(ifrp);
+	}
+	return (0);
+}
+
+void
+bridge_showrule(r)
+	struct ifbrlreq *r;
+{
+	printf("%s: ", r->ifbr_name);
+
+	if (r->ifbr_action == BRL_ACTION_BLOCK)
+		printf("block ");
+	else if (r->ifbr_action == BRL_ACTION_PASS)
+		printf("pass ");
+	else
+		printf("[neither block nor pass?]\n");
+
+	if ((r->ifbr_flags & (BRL_FLAG_IN | BRL_FLAG_OUT)) ==
+	    (BRL_FLAG_IN | BRL_FLAG_OUT))
+		printf("in/out ");
+	else if (r->ifbr_flags & BRL_FLAG_IN)
+		printf("in ");
+	else if (r->ifbr_flags & BRL_FLAG_OUT)
+		printf("out ");
+	else
+		printf("[neither in nor out?]\n");
+
+	printf("on %s", r->ifbr_ifsname);
+
+	if (r->ifbr_flags & BRL_FLAG_SRCVALID)
+		printf(" src %s", ether_ntoa(&r->ifbr_src));
+	if (r->ifbr_flags & BRL_FLAG_DSTVALID)
+		printf(" dst %s", ether_ntoa(&r->ifbr_dst));
+
+	printf("\n");
+}
+
 /*
- * Print a value a la the %b format of the kernel's printf
+ * Parse a rule definition and send it upwards.
+ *
+ * Syntax:
+ *	{block|pass} {in|out|in/out} on {ifs} [src {mac}] [dst {mac}]
+ */
+int
+bridge_rule(int s, char *brdg, int targc, char **targv, int ln)
+{
+	char **argv = targv;
+	int argc = targc;
+	struct ifbrlreq rule;
+	struct ether_addr *ea, *dea;
+
+	if (argc == 0) {
+		fprintf(stderr, "invalid rule\n");
+		return (EX_USAGE);
+	}
+	rule.ifbr_flags = 0;
+	rule.ifbr_action = 0;
+	strlcpy(rule.ifbr_name, brdg, sizeof(rule.ifbr_name));
+
+	if (strcmp(argv[0], "block") == 0)
+		rule.ifbr_action = BRL_ACTION_BLOCK;
+	else if (strcmp(argv[0], "pass") == 0)
+		rule.ifbr_action = BRL_ACTION_PASS;
+	else
+		goto bad_rule;
+	argc--;	argv++;
+
+	if (argc == 0) {
+		bridge_badrule(targc, targv, ln);
+		return (EX_USAGE);
+	}
+	if (strcmp(argv[0], "in") == 0)
+		rule.ifbr_flags |= BRL_FLAG_IN;
+	else if (strcmp(argv[0], "out") == 0)
+		rule.ifbr_flags |= BRL_FLAG_OUT;
+	else if (strcmp(argv[0], "in/out") == 0)
+		rule.ifbr_flags |= BRL_FLAG_IN | BRL_FLAG_OUT;
+	else
+		goto bad_rule;
+	argc--; argv++;
+
+	if (argc == 0 || strcmp(argv[0], "on"))
+		goto bad_rule;
+	argc--; argv++;
+
+	if (argc == 0)
+		goto bad_rule;
+	strlcpy(rule.ifbr_ifsname, argv[0], sizeof(rule.ifbr_ifsname));
+	argc--; argv++;
+
+	while (argc) {
+		if (strcmp(argv[0], "dst") == 0) {
+			if (rule.ifbr_flags & BRL_FLAG_DSTVALID)
+				goto bad_rule;
+			rule.ifbr_flags |= BRL_FLAG_DSTVALID;
+			dea = &rule.ifbr_dst;
+		}
+		else if (strcmp(argv[0], "src") == 0) {
+			if (rule.ifbr_flags & BRL_FLAG_SRCVALID)
+				goto bad_rule;
+			rule.ifbr_flags |= BRL_FLAG_SRCVALID;
+			dea = &rule.ifbr_src;
+		}
+		else
+			goto bad_rule;
+
+		argc--; argv++;
+
+		if (argc == 0)
+			goto bad_rule;
+		ea = ether_aton(argv[0]);
+		if (ea == NULL) {
+			warnx("Invalid address: %s", argv[0]);
+			return (EX_USAGE);
+		}
+		bcopy(ea, dea, sizeof(*dea));
+		argc--; argv++;
+	}
+
+	if (ioctl(s, SIOCBRDGARL, &rule) < 0) {
+		warn("%s", brdg);
+		return (EX_IOERR);
+	}
+	return (0);
+
+bad_rule:
+	bridge_badrule(targc, targv, ln);
+	return (EX_USAGE);
+}
+
+#define MAXRULEWORDS 8
+
+int
+bridge_rulefile(s, brdg, fname)
+	int s;
+	char *brdg, *fname;
+{
+	FILE *f;
+	char *str, *argv[MAXRULEWORDS], buf[1024], xbuf[1024];
+	int ln = 1, argc = 0, err = 0, xerr;
+
+	f = fopen(fname, "r");
+	if (f == NULL) {
+		warn("%s", fname);
+		return (EX_IOERR);
+	}
+
+	while (1) {
+		fgets(buf, sizeof(buf), f);
+		if (feof(f))
+			break;
+		ln++;
+		if (buf[0] == '#')
+			continue;
+
+		argc = 0;
+		str = strtok(buf, "\n\t\r ");
+		strlcpy(xbuf, buf, sizeof(xbuf));
+		while (str != NULL) {
+			argv[argc++] = str;
+			if (argc > MAXRULEWORDS) {
+				fprintf(stderr, "invalid rule: %d: %s\n",
+				    ln, xbuf);
+				break;
+			}
+			str = strtok(NULL, "\n\t\r ");
+		}
+
+		if (argc > MAXRULEWORDS)
+			continue;
+
+		xerr = bridge_rule(s, brdg, argc, argv, ln);
+		if (xerr)
+			err = xerr;
+	}
+	fclose(f);
+	return (err);
+}
+
+void
+bridge_badrule(argc, argv, ln)
+	int argc, ln;
+	char **argv;
+{
+	int i;
+
+	fprintf(stderr, "invalid rule: ");
+	if (ln != -1)
+		fprintf(stderr, "%d: ", ln);
+	for (i = 0; i < argc; i++) {
+		fprintf(stderr, "%s ", argv[i]);
+	}
+	fprintf(stderr, "\n");
+}
+
+/*
+ * Print a value ala the %b format of the kernel's printf
  * (borrowed from ifconfig.c)
  */
 void

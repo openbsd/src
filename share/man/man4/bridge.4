@@ -1,6 +1,6 @@
-.\"	$OpenBSD: bridge.4,v 1.16 2000/01/10 22:46:12 angelos Exp $
+.\"	$OpenBSD: bridge.4,v 1.17 2000/01/25 22:06:27 jason Exp $
 .\"
-.\" Copyright (c) 1999 Jason L. Wright (jason@thought.net)
+.\" Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -302,6 +302,110 @@ should be set to
 to flush all addresses from the cache or
 .Ar IFBF_FLUSHDYN
 to flush only the dynamically learned addresses from the cache.
+.It Dv SIOCBRDGARL
+.Pq Li "struct ifbrlreq"
+Add a filtering rule to the bridge named in
+.Ar ifbr_name
+on the interface named in
+.Ar ifbr_ifsname .
+The argument structure is as follows:
+.Bd -literal -offset indent
+struct ifbrlreq {
+	char ifbr_name[IFNAMSIZ];    /* bridge */
+	char ifbr_ifsname[IFNAMSIZ]; /* ifs */
+	u_int8_t ifbr_action;        /* handling */
+	u_int8_t ifbr_flags;         /* flags */
+	struct ether_addr ifbr_src;  /* src mac */
+	struct ether_addr ifbr_dst;  /* dst mac */
+};
+#define BRL_ACTION_BLOCK        0x01
+#define BRL_ACTION_PASS         0x02
+#define BRL_FLAG_IN             0x08
+#define BRL_FLAG_OUT            0x04
+#define BRL_FLAG_SRCVALID       0x02
+#define BRL_FLAG_DSTVALID       0x01
+.Ed
+.Pp
+Rules are applied in the order in which they were added to the bridge,
+and the first matching rule's action parameter determines the fate of
+the packet.
+The
+.Ar ifbr_action
+parameter specifies whether a frame matching the rule is to
+be blocked or passed.
+.Pp
+If the
+.Ar BRL_FLAG_IN
+bit is set in
+.Ar ifbr_flags ,
+then the rule applies to frames received by the interface.
+If the
+.Ar BRL_FLAG_OUT
+bit is set,
+then the rule applies to frame transmitted by the interface.
+At least one of
+.Ar BRL_FLAG_IN
+or
+.Ar BRL_FLAG_OUT
+must be set.
+.Pp
+The source ethernet address in
+.Ar ifbr_src
+is checked if the
+.Ar BRL_FLAG_SRCVALID
+bit is set in
+.Ar ifbr_flags .
+The destination address in
+.Ar ifbr_dst
+is check if the
+.Ar BRL_FLAG_DSTVALID
+bit is set.
+If neither bit is set, the rule is matches all frames.
+.It Dv SIOCBRDGFRL
+.Pq Li "struct ifbrlreq"
+Flush rules from the bridge
+.Ar ifbr_name
+on the interface
+.Ar ifbr_ifsname .
+.It Dv SIOCBRDGGRL
+.Pq Li "struct ifbrlconf"
+Retrieve an array of rules from the bridge for a
+particular interface.  This request takes an
+.Ar ifbrlconf
+structure (see below) as a value-result parameter.
+The
+.Ar ifbrl_len
+field should be initially set to the size of the buffer
+pointed to by
+.Ar ifbrl_buf .
+On return it will contain the length, in bytes, of the rule list.
+Alternatively, if the
+.Ar ifbrl_len
+passed in is set to 0,
+SIOCBRDGGRL will set
+.Ar ifbrl_len
+to the size that
+.Ar ifbrl_buf
+needs to be to fit the entire configuration list,
+and will not fill in the other parameters.
+This is useful for determining the exact size that
+.Ar ifbrl_buf
+needs to be in advance.
+.Pp
+The argument structure is as follows:
+.Bd -literal -offset indent
+struct ifbrlconf {
+	char ifbrl_name[IFNAMSIZ];   /* bridge */
+	char ifbrl_ifsname[IFNAMSIZ];/* member */
+	u_int32_t ifbrl_len;         /* buflen */
+	union {
+		caddr_t ifbrlu_buf; 
+		struct  ifbrlreq *ifbrlu_req;
+	} ifbrl_ifbrlu;
+#define ifbrl_buf ifbrl_ifbrlu.ifbrlu_buf
+#define ifbrl_req ifbrl_ifbrlu.ifbrlu_req
+};
+.Ed
 .El
 .Sh ERRORS
 If the
