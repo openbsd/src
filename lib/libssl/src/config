@@ -390,13 +390,11 @@ exit 0
 
 # figure out if gcc is available and if so we use it otherwise
 # we fallback to whatever cc does on the system
-GCCVER=`(gcc --version) 2>/dev/null | head -1`
+GCCVER=`(gcc --version) 2>/dev/null`
 if [ "$GCCVER" != "" ]; then
   CC=gcc
-  # then strip off whatever prefix Cygnus as well as GCC 3.1 prepends
-  # the number with...  Hopefully, this will work for any future prefixes
-  # as well.
-  GCCVER=`echo $GCCVER | sed 's/^[a-zA-Z ()]*\-//'`
+  # then strip off whatever prefix Cygnus prepends the number with...
+  GCCVER=`echo $GCCVER | sed 's/^[a-z]*\-//'`
   # peak single digit before and after first dot, e.g. 2.95.1 gives 29
   GCCVER=`echo $GCCVER | sed 's/\([0-9]\)\.\([0-9]\).*/\1\2/'`
 else
@@ -525,6 +523,7 @@ EOF
 	OUT="linux-ppc" ;;
   ppc-*-linux2) OUT="linux-ppc" ;;
   m68k-*-linux*) OUT="linux-m68k" ;;
+  ia64-*-linux?) OUT="linux-ia64" ;;
   ppc-apple-rhapsody) OUT="rhapsody-ppc-cc" ;;
   ppc-apple-darwin*) OUT="darwin-ppc-cc" ;;
   i386-apple-darwin*) OUT="darwin-i386-cc" ;;
@@ -625,10 +624,17 @@ EOF
   *86*-*-netbsd) OUT="NetBSD-x86" ;;
   sun3*-*-netbsd) OUT="NetBSD-m68" ;;
   *-*-netbsd) OUT="NetBSD-sparc" ;;
-  *86*-*-openbsd) OUT="OpenBSD-x86" ;;
   alpha*-*-openbsd) OUT="OpenBSD-alpha" ;;
+  *86*-*-openbsd) OUT="OpenBSD-i386" ;;
+  m68k*-*-openbsd) OUT="OpenBSD-m68k" ;;
+  m88k*-*-openbsd) OUT="OpenBSD-m88k" ;;
+  mips*-*-openbsd) OUT="OpenBSD-mips" ;;
   pmax*-*-openbsd) OUT="OpenBSD-mips" ;;
+  powerpc*-*-openbsd) OUT="OpenBSD-powerpc" ;;
+  sparc64*-*-openbsd) OUT="OpenBSD-sparc64" ;;
+  sparc*-*-openbsd) OUT="OpenBSD-sparc" ;;
   vax*-*-openbsd) OUT="OpenBSD-vax" ;;
+  hppa*-*-openbsd) OUT="OpenBSD-hppa" ;;
   *-*-openbsd) OUT="OpenBSD" ;;
   *86*-*-bsdi4) OUT="bsdi-elf-gcc" ;;
   *-*-osf) OUT="alphaold-cc" ;;
