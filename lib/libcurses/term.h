@@ -1,4 +1,4 @@
-/*	$OpenBSD: term.h,v 1.12 2001/01/22 18:01:34 millert Exp $	*/
+/*	$OpenBSD: term.h,v 1.13 2002/02/18 22:24:32 deraadt Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -711,7 +711,7 @@ extern "C" {
 typedef struct termtype {	/* in-core form of terminfo data */
     char  *term_names;		/* str_table offset of term names */
     char  *str_table;		/* pointer to string table */
-    char  *Booleans;		/* array of boolean values */
+    signed char  *Booleans;		/* array of boolean values */
     short *Numbers;		/* array of integer values */
     char  **Strings;		/* array of string offsets */
 

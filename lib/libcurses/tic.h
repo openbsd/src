@@ -1,4 +1,4 @@
-/*	$OpenBSD: tic.h,v 1.12 2001/02/22 04:37:53 millert Exp $	*/
+/*	$OpenBSD: tic.h,v 1.13 2002/02/18 22:24:32 deraadt Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998-2000 Free Software Foundation, Inc.                   *
@@ -221,7 +221,7 @@ extern NCURSES_EXPORT(const struct name_table_entry * const *) _nc_get_hash_tabl
 #define ABSENT_STRING		(char *)0
 
 /* out-of-band values for representing cancels */
-#define CANCELLED_BOOLEAN	(char)(-2)
+#define CANCELLED_BOOLEAN	(signed char)(-2)
 #define CANCELLED_NUMERIC	-2
 #define CANCELLED_STRING	(char *)-1
 
