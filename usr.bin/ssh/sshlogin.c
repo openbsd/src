@@ -39,7 +39,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshlogin.c,v 1.10 2004/07/17 05:31:41 dtucker Exp $");
+RCSID("$OpenBSD: sshlogin.c,v 1.11 2004/08/11 11:59:22 djm Exp $");
 
 #include <util.h>
 #include <utmp.h>
@@ -63,6 +63,7 @@ get_last_login_time(uid_t uid, const char *logname,
 	struct lastlog ll;
 	char *lastlog;
 	int fd;
+	off_t pos, r;
 
 	lastlog = _PATH_LASTLOG;
 	buf[0] = '\0';
@@ -70,7 +71,17 @@ get_last_login_time(uid_t uid, const char *logname,
 	fd = open(lastlog, O_RDONLY);
 	if (fd < 0)
 		return 0;
-	lseek(fd, (off_t) ((long) uid * sizeof(ll)), SEEK_SET);
+
+	pos = (long) uid * sizeof(ll);
+	r = lseek(fd, pos, SEEK_SET);
+	if (r == -1) {
+		error("%s: llseek: %s", __func__, strerror(errno));
+		return (0);
+	}
+	if (r != pos) {
+		debug("%s: truncated lastlog", __func__);
+		return (0);
+	}
 	if (read(fd, &ll, sizeof(ll)) != sizeof(ll)) {
 		close(fd);
 		return 0;
