@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.145 2003/02/03 14:51:36 cedric Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.146 2003/02/05 10:13:44 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1349,10 +1349,10 @@ main(int argc, char *argv[])
 		}
 	}
 
-	if (tableopt != NULL || tblcmdopt != NULL) {
+	if (tblcmdopt != NULL) {
 		argc -= optind;
 		argv += optind;
-		ch = (tblcmdopt != NULL) ? *tblcmdopt : 0;
+		ch = *tblcmdopt;
 		if (ch == 'l') {
 			loadopt = PFCTL_FLAG_TABLE;
 			tblcmdopt = NULL;
