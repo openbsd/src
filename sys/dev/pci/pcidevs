@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.310 2000/09/12 00:27:05 deraadt Exp $
+	$OpenBSD: pcidevs,v 1.311 2000/09/14 07:58:59 niklas Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -680,6 +680,11 @@ product ADP2 3950U2D		0x0051	AHA-3950U2D Ultra2
 product ADP2 AIC7896		0x005f	AIC-7896/7 Ultra2
 product ADP2 AIC7899		0x00CF	AIC-7899 Ultra160
 product ADP2 3960D		0x00C0	AHA-3960D Ultra160
+product ADP2 AAC2622		0x0282	AAC-2622
+product ADP2 AAC364		0x0364	AAC-364
+product ADP2 AAC2622		0x0365	AAC-3642
+product ADP2 PERC_2QC		0x1364	Dell PERC 2/QC
+product ADP2 PERC_3QC		0x1365	Dell PERC 3/QC
 
 /* Advanced System Products */
 product ADVSYS 1200A		0x1100	1200A
@@ -912,6 +917,11 @@ product CYCLADES CYCLOMZ_2	0x0201	Cyclom-Z above 1M
 product CYRIX GXMPCI		0x0001  GXm Host-PCI
 product CYRIX GXMISA		0x0002	GXm PCI-ISA
 
+/* Dell Computer */
+product DELL DELL_PERC_2SI	0x0001	PERC 2/Si
+product DELL DELL_PERC_3DI	0x0002	PERC 3/Di
+product DELL DELL_PERC_3SI	0x0003	PERC 3/Si
+
 /* D-Link products */
 product DLINK 550TX		0x1002	550TX
 
@@ -991,6 +1001,8 @@ product EFFICIENTNETS EFSS25	0x0005	25SS-3010 ATM (ASIC)
 
 /* Hewlett-Packard products */
 product HP J2585A		0x1030	J2585A
+/* XXX guess */
+product HP NETRAID_4M		0x10c2	NetRaid-4M
 
 /* Hi/Fn products */
 product HIFN 7751		0x0005	7751
