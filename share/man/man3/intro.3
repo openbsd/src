@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.3,v 1.13 2002/06/30 21:46:23 deraadt Exp $
+.\"	$OpenBSD: intro.3,v 1.14 2003/01/20 20:02:08 marc Exp $
 .\"	$NetBSD: intro.3,v 1.5 1995/05/10 22:46:24 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -74,11 +74,6 @@ storage allocation,
 time functions,
 signal handling,
 and more.
-.It libc_r Pq Fl l Ns Ar c_r
-Reentrant C library.
-Contains POSIX 1003.1c
-.Xr pthreads 3
-API and thread scheduler, as well as all of the functions found in libc.
 .It libcurses Pq Fl l Ns Ar curses
 Terminal independent screen management routines for two-dimensional
 non-bitmap display terminals.
@@ -106,6 +101,15 @@ The math library,
 .Em libm .
 See
 .Xr math 3 .
+.It libpthread Pq Ar -pthread
+.St -p1003.1-01
+threads (see
+.Xr pthreads 3 )
+API and thread scheduler.
+Threaded applications should use
+.Ar -pthread
+not
+.Fl l Ns Ar pthread .
 .It libtermcap Pq Fl l Ns Ar termcap
 The terminal independent operation library package.
 (See
@@ -117,9 +121,6 @@ The terminal independent operation library package.
 .It Pa /usr/lib/libbfd.a
 .It Pa /usr/lib/libc.a
 C library
-.It Pa /usr/lib/libc_r.a
-reentrant C library (see
-.Xr pthreads 3 )
 .It Pa /usr/lib/libcom_err.a
 .It Pa /usr/lib/libcompat.a
 4.3 compatibility library
@@ -187,6 +188,10 @@ library for use with
 .It Pa /usr/lib/libpcap.a
 .Xr pcap 3
 library.
+.It Pa /usr/lib/libpthread.a
+.St -p1003.1-01
+threads library (see
+.Xr pthreads 3 )
 .It Pa /usr/lib/libreadline.a
 .It Pa /usr/lib/libresolv.a
 The
