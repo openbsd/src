@@ -1,4 +1,4 @@
-/*	$OpenBSD: bioscons.c,v 1.18 2000/06/08 01:51:32 mickey Exp $	*/
+/*	$OpenBSD: bioscons.c,v 1.19 2000/10/18 15:22:35 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -212,7 +212,16 @@ com_putc(dev, c)
 {
 	register int rv;
 
+	dev = minor(dev) & 0x7f;
+
+	/* check online (DSR) */
 	__asm __volatile(DOINT(0x14) : "=a" (rv) :
-	    "d" (minor(dev)), "0" (c | 0x100) : "%ecx", "cc" );
+	    "0" (0x300), "d" (dev) : "%ecx", "cc" );
+	if ( !(rv & 0x20) )
+		return;
+
+	/* send character */
+	__asm __volatile(DOINT(0x14) : "=a" (rv) :
+	    "0" (c | 0x100), "d" (dev) : "%ecx", "cc" );
 }
 
