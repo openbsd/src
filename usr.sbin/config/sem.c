@@ -1,4 +1,4 @@
-/*	$OpenBSD: sem.c,v 1.3 1996/04/21 23:40:25 deraadt Exp $	*/
+/*	$OpenBSD: sem.c,v 1.4 1996/07/07 22:02:21 maja Exp $	*/
 /*	$NetBSD: sem.c,v 1.8 1996/03/17 21:12:03 cgd Exp $	*/
 
 /*
@@ -739,10 +739,10 @@ newdevi(name, unit, d)
  * another device instead) plus unit number.
  */
 void
-adddev(name, at, loclist, flags)
+adddev(name, at, loclist, flags, disable)
 	const char *name, *at;
 	struct nvlist *loclist;
-	int flags;
+	int flags, disable;
 {
 	register struct devi *i;	/* the new instance */
 	register struct attr *attr;	/* attribute that allows attach */
@@ -870,6 +870,7 @@ ok:
 	i->i_atdeva = iba;
 	i->i_atunit = atunit;
 	i->i_cfflags = flags;
+	i->i_disable = disable;
 
 	*iba->d_ipp = i;
 	iba->d_ipp = &i->i_asame;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkioconf.c,v 1.4 1996/06/16 10:30:00 deraadt Exp $	*/
+/*	$OpenBSD: mkioconf.c,v 1.5 1996/07/07 22:02:20 maja Exp $	*/
 /*	$NetBSD: mkioconf.c,v 1.38 1996/03/17 06:29:27 cgd Exp $	*/
 
 /*
@@ -358,6 +358,8 @@ emitcfdata(fp)
 	if (fprintf(fp, "\n\
 #define NORM FSTATE_NOTFOUND\n\
 #define STAR FSTATE_STAR\n\
+#define DNRM FSTATE_DNOTFOUND\n\
+#define DSTR FSTATE_DSTAR\n\
 \n\
 struct cfdata cfdata[] = {\n\
     /* attachment       driver        unit  state loc     flags parents nm ivstubs */\n") < 0)
@@ -387,10 +389,18 @@ struct cfdata cfdata[] = {\n\
 		attachment = i->i_atdeva->d_name;
 		if (i->i_unit == STAR) {
 			unit = i->i_base->d_umax;
-			state = "STAR";
+			if (i->i_disable) {
+				state = "DSTR";
+			} else {
+				state = "STAR";
+			}
 		} else {
 			unit = i->i_unit;
-			state = "NORM";
+			if (i->i_disable) {
+				state = "DNRM";
+			} else {
+				state = "NORM";
+			}
 		}
 		if (i->i_ivoff < 0) {
 			vs = "";

@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: gram.y,v 1.3 1996/04/21 23:40:11 deraadt Exp $	*/
+/*	$OpenBSD: gram.y,v 1.4 1996/07/07 22:02:20 maja Exp $	*/
 /*	$NetBSD: gram.y,v 1.7 1996/03/17 13:18:18 cgd Exp $	*/
 
 /*
@@ -100,7 +100,7 @@ static	void	setmaxpartitions __P((int));
 	int	val;
 }
 
-%token	AND AT ATTACH COMPILE_WITH CONFIG DEFINE DEVICE DUMPS ENDFILE
+%token	AND AT ATTACH COMPILE_WITH CONFIG DEFINE DEVICE DISABLE DUMPS ENDFILE
 %token	XFILE FLAGS INCLUDE XMACHINE MAJOR MAKEOPTIONS MAXUSERS MAXPARTITIONS
 %token	MINOR ON OPTIONS PSEUDO_DEVICE ROOT SWAP VECTOR WITH
 %token	<val> FFLAG NUMBER
@@ -112,6 +112,7 @@ static	void	setmaxpartitions __P((int));
 %type	<attr>	attr
 %type	<devb>	devbase
 %type	<deva>	devattach_opt
+%type	<val>	disable
 %type	<list>	atlist interface_opt
 %type	<str>	atname
 %type	<list>	loclist_opt loclist locdef
@@ -216,11 +217,15 @@ one_def:
 	DEVICE devbase interface_opt attrs_opt
 					= { defdev($2, 0, $3, $4); } |
 	ATTACH devbase AT atlist veclist_opt devattach_opt attrs_opt
-					= { defdevattach($6, $2, $4, $5,
-					    $7); } |
+					= { defdevattach($6, $2, $4, $5	,
+				    $7); } |
 	MAXUSERS NUMBER NUMBER NUMBER	= { setdefmaxusers($2, $3, $4); } |
 	PSEUDO_DEVICE devbase attrs_opt = { defdev($2,1,NULL,$3); } |
 	MAJOR '{' majorlist '}';
+
+disable:
+	DISABLE				= { $$ = 1; } |
+	/* empty */			= { $$ = 0; };
 
 atlist:
 	atlist ',' atname		= { $$ = new_nx($3, $1); } |
@@ -318,8 +323,8 @@ config_spec:
 	MAXUSERS NUMBER			= { setmaxusers($2); } |
 	CONFIG conf sysparam_list	= { addconf(&conf); } |
 	PSEUDO_DEVICE WORD npseudo	= { addpseudo($2, $3); } |
-	device_instance AT attachment locators flags_opt
-					= { adddev($1, $3, $4, $5); };
+	device_instance AT attachment disable locators flags_opt
+					= { adddev($1, $3, $5, $6, $4); };
 
 mkopt_list:
 	mkopt_list ',' mkoption |

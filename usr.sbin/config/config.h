@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.h,v 1.4 1996/06/16 10:29:58 deraadt Exp $	*/
+/*	$OpenBSD: config.h,v 1.5 1996/07/07 22:02:19 maja Exp $	*/
 /*	$NetBSD: config.h,v 1.23 1996/03/17 13:18:15 cgd Exp $	*/
 
 /*
@@ -157,6 +157,7 @@ struct devi {
 	/* created while parsing config file */
 	const char *i_name;	/* e.g., "sd0" */
 	int	i_unit;		/* unit from name, e.g., 0 */
+	int	i_disable;	/* device is disabled */
 	struct	devbase *i_base;/* e.g., pointer to "sd" base */
 	struct	devi *i_next;	/* list of all instances */
 	struct	devi *i_bsame;	/* list on same base */

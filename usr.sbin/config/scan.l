@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: scan.l,v 1.4 1996/06/29 17:06:54 deraadt Exp $	*/
+/*	$OpenBSD: scan.l,v 1.5 1996/07/07 22:02:21 maja Exp $	*/
 /*	$NetBSD: scan.l,v 1.4 1996/03/17 06:29:35 cgd Exp $	*/
 
 /*
@@ -92,6 +92,7 @@ compile-with	{ return COMPILE_WITH; }
 config		{ return CONFIG; }
 define		{ return DEFINE; }
 device		{ return DEVICE; }
+disable		{ return DISABLE; }
 dumps		{ return DUMPS; }
 flags		{ return FLAGS; }
 file		{ return XFILE; }
