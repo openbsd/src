@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttymsg.c,v 1.4 1998/11/18 01:03:16 deraadt Exp $	*/
+/*	$OpenBSD: ttymsg.c,v 1.5 1998/11/18 02:57:22 deraadt Exp $	*/
 /*	$NetBSD: ttymsg.c,v 1.3 1994/11/17 07:17:55 jtc Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ttymsg.c	8.2 (Berkeley) 11/16/93";
 #endif
-static char rcsid[] = "$OpenBSD: ttymsg.c,v 1.4 1998/11/18 01:03:16 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ttymsg.c,v 1.5 1998/11/18 02:57:22 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -73,6 +73,7 @@ ttymsg(iov, iovcnt, line, tmout)
 	register int cnt, fd, left, wret;
 	struct iovec localiov[6];
 	int forked = 0;
+	struct stat st;
 
 	if (iovcnt > sizeof(localiov) / sizeof(localiov[0]))
 		return ("too many iov's (change code in wall/ttymsg.c)");
@@ -91,6 +92,11 @@ ttymsg(iov, iovcnt, line, tmout)
 		    device);
 		return (errbuf);
 	}
+
+	if (stat(device, &st) < 0)
+		return (NULL);
+	if ((st.st_mode & S_IWGRP) == 0)
+		return (NULL);
 
 	seteuid(geteuid());
 
