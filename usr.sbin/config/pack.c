@@ -1,4 +1,4 @@
-/*	$OpenBSD: pack.c,v 1.6 1996/12/11 13:00:13 niklas Exp $	*/
+/*	$OpenBSD: pack.c,v 1.7 1996/12/11 22:36:14 niklas Exp $	*/
 /*	$NetBSD: pack.c,v 1.5 1996/08/31 21:15:11 mycroft Exp $	*/
 
 /*
@@ -176,9 +176,12 @@ packdevi()
 		 * For each instance of each attachment, add or collapse
 		 * all its aliases.
 		 */
-		for (i = d->d_ihead; i != NULL; i = i->i_bsame) {
+		for (i = d->d_ihead; i != NULL; i = i->i_asame) {
 			m = n;
 			for (l = i; l != NULL; l = l->i_alias) {
+				/* Skip if we already handled this one.  */
+				if (l->i_cfindex >= 0)
+					continue;
 				l->i_pvlen = 0;
 				l->i_pvoff = -1;
 				l->i_locoff = -1;
