@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioapic.c,v 1.2 2004/06/25 11:31:21 deraadt Exp $	*/
+/*	$OpenBSD: ioapic.c,v 1.3 2004/06/27 16:17:50 deraadt Exp $	*/
 /* 	$NetBSD: ioapic.c,v 1.6 2003/05/15 13:30:31 fvdl Exp $	*/
 
 /*-
@@ -344,7 +344,8 @@ ioapic_attach(struct device *parent, struct device *self, void *aux)
 	 * mapping later ...
 	 */
 	if (apic_id != sc->sc_apicid) {
-		printf("%s: misconfigured as apic %d\n", sc->sc_pic.pic_dev.dv_xname, apic_id);
+		printf("%s: misconfigured as apic %d\n",
+		    sc->sc_pic.pic_dev.dv_xname, apic_id);
 
 		ioapic_write(sc,IOAPIC_ID,
 		    (ioapic_read(sc,IOAPIC_ID)&~IOAPIC_ID_MASK)
@@ -450,8 +451,6 @@ ioapic_enable(void)
 	}
 			
 	for (sc = ioapics; sc != NULL; sc = sc->sc_next) {
-		printf("%s: enabling\n", sc->sc_pic.pic_dev.dv_xname);
-
 		for (p = 0; p < sc->sc_apic_sz; p++) {
 			ip = &sc->sc_pins[p];
 			if (ip->ip_type != IST_NONE)

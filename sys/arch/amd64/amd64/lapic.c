@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.1 2004/06/25 11:03:27 art Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.2 2004/06/27 16:17:50 deraadt Exp $	*/
 /* $NetBSD: lapic.c,v 1.2 2003/05/08 01:04:35 fvdl Exp $ */
 
 /*-
@@ -273,7 +273,8 @@ lapic_calibrate_timer(ci)
 	u_int64_t dtick, dapic, tmp;
 	int i;
 
-	printf("%s: calibrating local timer\n", ci->ci_dev->dv_xname);
+	if (mp_verbose)
+		printf("%s: calibrating local timer\n", ci->ci_dev->dv_xname);
 
 	/*
 	 * Configure timer to one-shot, interrupt masked,
