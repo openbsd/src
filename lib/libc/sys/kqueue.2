@@ -408,9 +408,6 @@ No memory was available to register the event.
 The specified process to attach to does not exist.
 .El
 .Sh SEE ALSO
-.Xr aio_error 2 ,
-.Xr aio_read 2 ,
-.Xr aio_return 2 ,
 .Xr poll 2 ,
 .Xr read 2 ,
 .Xr select 2 ,
@@ -430,7 +427,4 @@ The
 system and this manual page were written by
 .An Jonathan Lemon Aq jlemon@FreeBSD.org .
 .Sh BUGS
-It is currently not possible to watch a
-.Xr vnode 9
-that resides on anything but
-a UFS file system.
+It is currently not possible to watch vnodes, fifos or AIO.
