@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_vfsops.c,v 1.2 1996/02/27 08:03:38 niklas Exp $	*/
+/*	$OpenBSD: procfs_vfsops.c,v 1.3 1996/06/20 15:12:57 mickey Exp $	*/
 /*	$NetBSD: procfs_vfsops.c,v 1.25 1996/02/09 22:40:53 christos Exp $	*/
 
 /*
@@ -159,7 +159,9 @@ procfs_statfs(mp, sbp, p)
 	struct statfs *sbp;
 	struct proc *p;
 {
+	struct vmtotal	vmtotals;
 
+	vmtotal(&vmtotals);
 #ifdef COMPAT_09
 	sbp->f_type = 10;
 #else
@@ -167,8 +169,8 @@ procfs_statfs(mp, sbp, p)
 #endif
 	sbp->f_bsize = PAGE_SIZE;
 	sbp->f_iosize = PAGE_SIZE;
-	sbp->f_blocks = 1;	/* avoid divide by zero in some df's */
-	sbp->f_bfree = 0;
+	sbp->f_blocks = vmtotals.t_vm;
+	sbp->f_bfree = vmtotals.t_vm - vmtotals.t_avm;
 	sbp->f_bavail = 0;
 	sbp->f_files = maxproc;			/* approx */
 	sbp->f_ffree = maxproc - nprocs;	/* approx */
