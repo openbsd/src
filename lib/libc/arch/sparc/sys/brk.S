@@ -37,12 +37,12 @@
 
 #if defined(SYSLIBC_SCCS) 
 	.text
-	.asciz "$OpenBSD: brk.S,v 1.2 1996/08/19 08:18:02 tholo Exp $"
+	.asciz "$OpenBSD: brk.S,v 1.3 2002/10/06 23:50:40 art Exp $"
 #endif /* SYSLIBC_SCCS */
 
 #include "SYS.h"
 
-	.globl	curbrk
+	.globl	__curbrk
 	.globl	minbrk
 
 	.data
@@ -62,7 +62,7 @@ ENTRY(brk)
 	mov	SYS_break, %g1
 	t	ST_SYSCALL
 	bcc,a	1f
-	ld	[%o5 + curbrk], %o4
+	ld	[%o5 + __curbrk], %o4
 	ERROR()
 1:
 	retl				! success, return 0 & record new break
@@ -79,9 +79,9 @@ ENTRY(brk)
 	mov	SYS_break, %g1
 	t	ST_SYSCALL
 	bcc,a	1f
-	 sethi	%hi(curbrk), %g1
+	 sethi	%hi(__curbrk), %g1
 	ERROR()
 1:
 	retl				! success, return 0 & record new break
-	 st	%o2, [%g1 + %lo(curbrk)]
+	 st	%o2, [%g1 + %lo(__curbrk)]
 #endif
