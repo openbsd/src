@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.52 1999/12/29 20:27:55 mickey Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.53 2000/01/09 22:31:07 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -319,7 +319,8 @@ struct tdb				/* tunnel descriptor block */
     u_int16_t         tdb_dstid_type;
 
     caddr_t           tdb_interface;
-    struct flow	     *tdb_flow; 	/* Which flows use this SA */
+    struct flow	     *tdb_flow; 	/* Which outboind flows use this SA */
+    struct flow	     *tdb_access;	/* Ingress access control */
 
     struct tdb       *tdb_bind_out;	/* Outgoing SA to use */
     TAILQ_HEAD(tdb_bind_head, tdb) tdb_bind_in;
@@ -437,6 +438,7 @@ htonq(u_int64_t q)
 #define spltdb	splsoftnet
 
 extern int encdebug;
+extern int ipsec_acl;
 extern int ipsec_in_use;
 extern u_int8_t hmac_ipad_buffer[64];
 extern u_int8_t hmac_opad_buffer[64];
