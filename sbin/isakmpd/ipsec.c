@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec.c,v 1.63 2002/01/27 01:56:31 ho Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.64 2002/02/21 20:09:18 angelos Exp $	*/
 /*	$EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	*/
 
 /*
@@ -379,7 +379,7 @@ ipsec_finalize_exchange (struct message *msg)
 			"src %s %s dst %s %s tproto %u sport %u dport %u",
 			addr1 ? addr1 : "<???>" , mask1 ? mask1 : "<???>",
 			addr2 ? addr2 : "<???>" , mask2 ? mask2 : "<???>",
-			ntohs (isa->tproto), isa->sport, ntohs (isa->dport)));
+			isa->tproto, ntohs (isa->sport), ntohs (isa->dport)));
 
 	      if (addr1)
 		free (addr1);
@@ -483,9 +483,7 @@ ipsec_set_network (u_int8_t *src_id, u_int8_t *dst_id, struct ipsec_sa *isa)
       break;
     }
 
-  memcpy (&isa->tproto, dst_id + ISAKMP_ID_DOI_DATA_OFF + IPSEC_ID_PROTO_OFF,
-	  IPSEC_ID_PROTO_LEN);
-  memcpy (&isa->dport, dst_id + ISAKMP_ID_DOI_DATA_OFF + IPSEC_ID_PORT_OFF,
+  memcpy (&isa->sport, src_id + ISAKMP_ID_DOI_DATA_OFF + IPSEC_ID_PORT_OFF,
 	  IPSEC_ID_PORT_LEN);
 
   /* Set destination address.  */
