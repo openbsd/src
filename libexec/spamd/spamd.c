@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.31 2003/04/12 23:38:01 deraadt Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.32 2003/04/15 07:16:14 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -299,7 +299,7 @@ configdone:
 
 
 int
-append_error_string (struct con *cp, size_t off, char *fmt, int af, void *ia)
+append_error_string(struct con *cp, size_t off, char *fmt, int af, void *ia)
 {
 	char sav = '\0';
 	static int lastcont = 0;
@@ -313,7 +313,8 @@ append_error_string (struct con *cp, size_t off, char *fmt, int af, void *ia)
 
 	if (lastcont != 0)
 		cp->obuf[lastcont] = '-';
-	i += snprintf(c, len, "%s ", nreply);
+	snprintf(c, len, "%s ", nreply);
+	i += strlen(c);
 	lastcont = off + i - 1;
 	if (*s == '"')
 		s++;
@@ -333,7 +334,8 @@ append_error_string (struct con *cp, size_t off, char *fmt, int af, void *ia)
 		if (c[i-1] == '\n') {
 			if (lastcont != 0)
 				cp->obuf[lastcont] = '-';
-			i += snprintf(c + i, len, "%s ", nreply);
+			snprintf(c + i, len, "%s ", nreply);
+			i += strlen(c);
 			lastcont = off + i - 1;
 		}
 
