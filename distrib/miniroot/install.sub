@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.231 2002/06/10 23:03:32 krw Exp $
+#	$OpenBSD: install.sub,v 1.232 2002/06/11 03:12:22 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1519,6 +1519,12 @@ install_disk() {
 }
 
 install_nfs() {
+	# Can we actually mount NFS filesystems?
+	if [ ! -f /sbin/mount_nfs ]; then
+		echo "/sbin/mount_nfs not found. Cannot mount NFS filesystems."
+		return
+	fi
+
 	[ "$_didnet" ] || donetconfig
 
 	# Get the IP address of the server
@@ -1545,8 +1551,7 @@ install_nfs() {
 	esac
 
 	# Mount the server
-	mkdir /mnt2 > /dev/null 2>&1
-	if ! mount_nfs $_nfs_tcp ${_nfs_server_ip}:${_nfs_server_path} /mnt2 ; then
+	if ! mount_nfs $_nfs_tcp -o ro ${_nfs_server_ip}:${_nfs_server_path} /mnt2 ; then
 		echo "Cannot mount NFS server. Aborting."
 		return
 	fi
@@ -1792,13 +1797,8 @@ __EOT
 			c*|C*)	install_cdrom
 				resp=c
 				;;
-			n*|N*)	if [ "$_have_nfs" ]; then
-					install_nfs
-					resp=n
-				else
-					echo "Invalid response: $resp"
-					resp=
-				fi
+			n*|N*)	install_nfs
+				resp=n
 				;;
 			*)	echo "Invalid response: $resp"
 				resp=
