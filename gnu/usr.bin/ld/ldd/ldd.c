@@ -151,5 +151,5 @@ char	*argv[];
 		argv++;
 	}
 
-	return rval;
+	return (rval ? 1 : 0);
 }
