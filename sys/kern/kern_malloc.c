@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.29 2001/05/14 06:56:30 angelos Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.30 2001/05/14 07:01:37 angelos Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -501,7 +501,9 @@ sysctl_malloc(name, namelen, oldp, oldlenp, newp, newlen)
 		        for (siz = 0, i = MINBUCKET; i < MINBUCKET + 16; i++)
 			        siz += sprintf(buckstring + siz,
 				    "%d,", (u_int)(1<<i));
-			buckstring[siz - 1] = '\0'; /* Remove trailing comma */
+			/* Remove trailing comma */
+			if (siz)
+				buckstring[siz - 1] = '\0';
 		}
 	        return (sysctl_rdstring(oldp, oldlenp, newp, buckstring));
 
@@ -536,7 +538,10 @@ sysctl_malloc(name, namelen, oldp, oldlenp, newp, newlen)
 		        for (siz = 0, i = 0; i < M_LAST; i++)
 			        siz += sprintf(memall + siz, "%s,",
 				    memname[i] ? memname[i] : "");
-			memall[siz - 1] = '\0'; /* Remove trailing comma */
+
+			/* Remove trailing comma */
+			if (siz)
+				memall[siz - 1] = '\0';
 
 			/* Now, convert all spaces to underscores */
 			for (i = 0; i < totlen; i++)
