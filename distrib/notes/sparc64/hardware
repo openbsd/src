@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.52 2003/05/02 00:03:11 jason Exp $
+dnl	$OpenBSD: hardware,v 1.53 2003/05/05 20:18:45 miod Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	- SBUS based workstations:
 		Ultra 1
@@ -190,5 +190,5 @@ Drivers for hardware marked with [A] are not included in the ramdisk.
 
 Hardware the we do NOT currently support, but get many questions about:
 	Multiprocessor machines.
-	Floppy driver (except for booting).
+	Floppy drive (except for booting).
 	SBUS and PCI cards other than those listed above.
