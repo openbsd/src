@@ -1,4 +1,4 @@
-.\"	$OpenBSD: brconfig.8,v 1.39 2002/12/06 16:28:48 markus Exp $
+.\"	$OpenBSD: brconfig.8,v 1.40 2002/12/09 10:11:53 markus Exp $
 .\"
 .\" Copyright (c) 1999-2001 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -247,6 +247,12 @@ Set the spanning tree priority of
 to
 .Ar num .
 Defaults to 128, minimum of 0, maximum of 255.
+.It Cm ifcost Ar interface Ar num
+Set the spanning tree path cost of
+.Ar interface
+to
+.Ar num .
+Defaults to 55, minimum of 1, maximum of 65535.
 .El
 .Sh EXAMPLES
 .Bl -tag -width brconfig

@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.19 2002/07/03 22:32:32 deraadt Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.20 2002/12/09 10:11:53 markus Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -67,6 +67,7 @@ int bridge_priority(int, char *, char *);
 int bridge_fwddelay(int, char *, char *);
 int bridge_hellotime(int, char *, char *);
 int bridge_ifprio(int, char *, char *, char *);
+int bridge_ifcost(int, char *, char *, char *);
 int bridge_timeout(int, char *, char *);
 int bridge_flush(int, char *);
 int bridge_flushall(int, char *);
@@ -353,6 +354,16 @@ main(int argc, char *argv[])
 				return (EX_USAGE);
 			}
 			error = bridge_ifprio(sock, brdg, argv[0], argv[1]);
+			if (error)
+				return (error);
+			argc--; argv++;
+		} else if (strcmp("ifcost", argv[0]) == 0) {
+			argc--; argv++;
+			if (argc < 2) {
+				warnx("ifcost requires 2 arguments");
+				return (EX_USAGE);
+			}
+			error = bridge_ifcost(sock, brdg, argv[0], argv[1]);
 			if (error)
 				return (error);
 			argc--; argv++;
@@ -650,8 +661,9 @@ bridge_list(int s, char *brdg, char *delim)
 		if (reqp->ifbr_ifsflags & IFBIF_SPAN)
 			continue;
 		printf("\t\t\t");
-		printf("port %u priority %u",
-		    reqp->ifbr_portno, reqp->ifbr_priority);
+		printf("port %u ifpriority %u ifcost %u",
+		    reqp->ifbr_portno, reqp->ifbr_priority,
+		    reqp->ifbr_path_cost);
 		if (reqp->ifbr_ifsflags & IFBIF_STP)
 			printf(" %s", stpstates[reqp->ifbr_state]);
 		printf("\n");
@@ -914,6 +926,33 @@ bridge_ifprio(int s, char *brdg, char *ifname, char *val)
 	breq.ifbr_priority = v;
 
 	if (ioctl(s, SIOCBRDGSIFPRIO, (caddr_t)&breq) < 0) {
+		warn("%s: %s", brdg, val);
+		return (EX_IOERR);
+	}
+	return (0);
+}
+
+int
+bridge_ifcost(int s, char *brdg, char *ifname, char *val)
+{
+	struct ifbreq breq;
+	u_int32_t v;
+	char *endptr;
+
+	strlcpy(breq.ifbr_name, brdg, sizeof(breq.ifbr_name));
+	strlcpy(breq.ifbr_ifsname, ifname, sizeof(breq.ifbr_ifsname));
+
+	errno = 0;
+	v = strtoul(val, &endptr, 0);
+	if (val[0] == '\0' || endptr[0] != '\0' ||
+	    (errno == ERANGE && v == ULONG_MAX) ||
+		(v < 1 || v > 0xffffffff)) {
+		printf("invalid arg for ifcost: %s\n", val);
+		return (EX_USAGE);
+	}
+	breq.ifbr_path_cost = v;
+
+	if (ioctl(s, SIOCBRDGSIFCOST, (caddr_t)&breq) < 0) {
 		warn("%s: %s", brdg, val);
 		return (EX_IOERR);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.h,v 1.19 2002/12/04 15:44:21 markus Exp $	*/
+/*	$OpenBSD: if_bridge.h,v 1.20 2002/12/09 10:11:52 markus Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -49,6 +49,7 @@ struct ifbreq {
 	u_int8_t	ifbr_state;		/* member stp state */
 	u_int8_t	ifbr_priority;		/* member stp priority */
 	u_int8_t	ifbr_portno;		/* member port number */
+	u_int32_t	ifbr_path_cost;		/* member stp path cost */
 };
 /* SIOCBRDGIFFLGS, SIOCBRDGIFFLGS */
 #define	IFBIF_LEARNING		0x0001	/* ifs can learn */

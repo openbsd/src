@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.104 2002/12/04 15:44:21 markus Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.105 2002/12/09 10:11:52 markus Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -432,6 +432,7 @@ bridge_ioctl(ifp, cmd, data)
 		req->ifbr_ifsflags = p->bif_flags;
 		req->ifbr_state = p->bif_state;
 		req->ifbr_priority = p->bif_priority;
+		req->ifbr_path_cost = p->bif_path_cost;
 		req->ifbr_portno = p->ifp->if_index & 0xff;
 		break;
 	case SIOCBRDGSIFFLGS:
@@ -466,6 +467,7 @@ bridge_ioctl(ifp, cmd, data)
 		p->bif_flags = req->ifbr_ifsflags;
 		break;
 	case SIOCBRDGSIFPRIO:
+	case SIOCBRDGSIFCOST:
 		if ((error = suser(prc->p_ucred, &prc->p_acflag)) != 0)
 			break;
 		ifs = ifunit(req->ifbr_ifsname);
@@ -485,7 +487,14 @@ bridge_ioctl(ifp, cmd, data)
 			error = ESRCH;
 			break;
 		}
-		p->bif_priority = req->ifbr_priority;
+		if (cmd == SIOCBRDGSIFPRIO)
+			p->bif_priority = req->ifbr_priority;
+		else {
+			if (req->ifbr_path_cost < 1)
+				error = EINVAL;
+			else
+				p->bif_path_cost = req->ifbr_path_cost;
+		}
 		break;
 	case SIOCBRDGRTS:
 		error = bridge_rtfind(sc, baconf);
@@ -685,6 +694,7 @@ bridge_bifconf(sc, bifc)
 		breq.ifbr_ifsflags = p->bif_flags;
 		breq.ifbr_state = p->bif_state;
 		breq.ifbr_priority = p->bif_priority;
+		breq.ifbr_path_cost = p->bif_path_cost;
 		breq.ifbr_portno = p->ifp->if_index & 0xff;
 		error = copyout((caddr_t)&breq,
 		    (caddr_t)(bifc->ifbic_req + i), sizeof(breq));
@@ -701,6 +711,7 @@ bridge_bifconf(sc, bifc)
 		breq.ifbr_ifsflags = p->bif_flags | IFBIF_SPAN;
 		breq.ifbr_state = p->bif_state;
 		breq.ifbr_priority = p->bif_priority;
+		breq.ifbr_path_cost = p->bif_path_cost;
 		breq.ifbr_portno = p->ifp->if_index & 0xff;
 		error = copyout((caddr_t)&breq,
 		    (caddr_t)(bifc->ifbic_req + i), sizeof(breq));
