@@ -1,4 +1,4 @@
-.\"	$OpenBSD: speaker.4,v 1.10 2000/11/10 20:02:18 todd Exp $
+.\"	$OpenBSD: speaker.4,v 1.11 2001/06/20 18:01:36 angelos Exp $
 .\"	$NetBSD: speaker.4,v 1.9 1998/08/18 08:16:56 augustss Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
@@ -47,7 +47,7 @@ and
 are used to lock and relinquish it.
 An attempt to
 .Fn open
-whenanother process has the device locked will return \-1 with an
+when another process has the device locked will return \-1 with an
 .Er EBUSY
 error indication.
 Writes to the device are interpreted as
