@@ -1,0 +1,138 @@
+#	$OpenBSD: genassym.cf,v 1.1 2001/05/20 05:51:22 miod Exp $
+#
+# Copyright (c) 1982, 1990 The Regents of the University of California.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 3. All advertising materials mentioning features or use of this software
+#    must display the following acknowledgement:
+#	This product includes software developed by the University of
+#	California, Berkeley and its contributors.
+# 4. Neither the name of the University nor the names of its contributors
+#    may be used to endorse or promote products derived from this software
+#    without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+#
+#	@(#)genassym.c	7.8 (Berkeley) 5/7/91
+#	$Id: genassym.cf,v 1.1 2001/05/20 05:51:22 miod Exp $
+#
+
+include <sys/param.h>
+include <sys/buf.h>
+include <sys/time.h>
+include <sys/proc.h>
+include <sys/mbuf.h>
+include <sys/msgbuf.h>
+include <machine/cpu.h>
+include <machine/trap.h>
+include <machine/psl.h>
+include <machine/vmparam.h>
+include <sys/syscall.h>
+include <sys/user.h>
+
+# proc fields and values
+define	P_FORW			offsetof(struct proc, p_forw)
+define	P_BACK			offsetof(struct proc, p_back)
+define	P_ADDR			offsetof(struct proc, p_addr)
+define	P_STAT			offsetof(struct proc, p_stat)
+define	P_WCHAN			offsetof(struct proc, p_wchan)
+
+define	SRUN			SRUN
+
+# general constants
+define	UPAGES			UPAGES
+define	USIZE			USPACE
+define	NBPG			NBPG
+
+# pcb fields
+define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)
+define	PCB_USER_STATE		offsetof(struct pcb, user_state)
+
+# system calls
+define	SYS_exit		SYS_exit
+define	SYS_sigreturn		SYS_sigreturn
+	
+# m88100_saved_state element indexes
+define	EF_R0		offsetof(struct m88100_saved_state, r[0]) / sizeof(int)
+define	EF_FPSR		offsetof(struct m88100_saved_state, fpsr) / sizeof(int)
+define	EF_FPCR		offsetof(struct m88100_saved_state, fpcr) / sizeof(int)
+define	EF_EPSR		offsetof(struct m88100_saved_state, epsr) / sizeof(int)
+define	EF_SXIP		offsetof(struct m88100_saved_state, sxip) / sizeof(int)
+define	EF_SFIP		offsetof(struct m88100_saved_state, sfip) / sizeof(int)
+define	EF_SNIP		offsetof(struct m88100_saved_state, snip) / sizeof(int)
+define	EF_SSBR		offsetof(struct m88100_saved_state, ssbr) / sizeof(int)
+define	EF_DMT0		offsetof(struct m88100_saved_state, dmt0) / sizeof(int)
+define	EF_DMD0		offsetof(struct m88100_saved_state, dmd0) / sizeof(int)
+define	EF_DMA0		offsetof(struct m88100_saved_state, dma0) / sizeof(int)
+define	EF_DMT1		offsetof(struct m88100_saved_state, dmt1) / sizeof(int)
+define	EF_DMD1		offsetof(struct m88100_saved_state, dmd1) / sizeof(int)
+define	EF_DMA1		offsetof(struct m88100_saved_state, dma1) / sizeof(int)
+define	EF_DMT2		offsetof(struct m88100_saved_state, dmt2) / sizeof(int)
+define	EF_DMD2		offsetof(struct m88100_saved_state, dmd2) / sizeof(int)
+define	EF_DMA2		offsetof(struct m88100_saved_state, dma2) / sizeof(int)
+define	EF_FPECR	offsetof(struct m88100_saved_state, fpecr) / sizeof(int)
+define	EF_FPCR		offsetof(struct m88100_saved_state, fpcr) / sizeof(int)
+define	EF_FPSR		offsetof(struct m88100_saved_state, fpsr) / sizeof(int)
+define	EF_FPHS1	offsetof(struct m88100_saved_state, fphs1) / sizeof(int)
+define	EF_FPLS1	offsetof(struct m88100_saved_state, fpls1) / sizeof(int)
+define	EF_FPHS2	offsetof(struct m88100_saved_state, fphs2) / sizeof(int)
+define	EF_FPLS2	offsetof(struct m88100_saved_state, fpls2) / sizeof(int)
+define	EF_FPPT		offsetof(struct m88100_saved_state, fppt) / sizeof(int)
+define	EF_FPRH		offsetof(struct m88100_saved_state, fprh) / sizeof(int)
+define	EF_FPRL		offsetof(struct m88100_saved_state, fprl) / sizeof(int)
+define	EF_FPIT		offsetof(struct m88100_saved_state, fpit) / sizeof(int)
+define	EF_VECTOR	offsetof(struct m88100_saved_state, vector) / sizeof(int)
+define	EF_MASK		offsetof(struct m88100_saved_state, mask) / sizeof(int)
+define	EF_MODE		offsetof(struct m88100_saved_state, mode) / sizeof(int)
+define	EF_RET		offsetof(struct m88100_saved_state, scratch1) / sizeof(int)
+define	EF_IPFSR	offsetof(struct m88100_saved_state, ipfsr) / sizeof(int)
+define	EF_DPFSR	offsetof(struct m88100_saved_state, dpfsr) / sizeof(int)
+define	EF_DSR		offsetof(struct m88100_saved_state, dsr) / sizeof(int)
+define	EF_DLAR		offsetof(struct m88100_saved_state, dlar) / sizeof(int)
+define	EF_DPAR		offsetof(struct m88100_saved_state, dpar) / sizeof(int)
+define	EF_ISR		offsetof(struct m88100_saved_state, dsr) / sizeof(int)
+define	EF_ILAR		offsetof(struct m88100_saved_state, ilar) / sizeof(int)
+define	EF_IPAR		offsetof(struct m88100_saved_state, ipar) / sizeof(int)
+define	EF_CPU		offsetof(struct m88100_saved_state, cpu) / sizeof(int)
+
+define	SIZEOF_EF	sizeof(struct m88100_saved_state)
+
+# more (machine-dependent) pcb fields
+define	PCB_PC		offsetof(struct m88100_pcb, pcb_pc)
+define	PCB_IPL		offsetof(struct m88100_pcb, pcb_ipl)
+define	PCB_R14		offsetof(struct m88100_pcb, pcb_r14)
+define	PCB_R15		offsetof(struct m88100_pcb, pcb_r15)
+define	PCB_R16		offsetof(struct m88100_pcb, pcb_r16)
+define	PCB_R17		offsetof(struct m88100_pcb, pcb_r17)
+define	PCB_R18		offsetof(struct m88100_pcb, pcb_r18)
+define	PCB_R19		offsetof(struct m88100_pcb, pcb_r19)
+define	PCB_R20		offsetof(struct m88100_pcb, pcb_r20)
+define	PCB_R21		offsetof(struct m88100_pcb, pcb_r21)
+define	PCB_R22		offsetof(struct m88100_pcb, pcb_r22)
+define	PCB_R23		offsetof(struct m88100_pcb, pcb_r23)
+define	PCB_R24		offsetof(struct m88100_pcb, pcb_r24)
+define	PCB_R25		offsetof(struct m88100_pcb, pcb_r25)
+define	PCB_R26		offsetof(struct m88100_pcb, pcb_r26)
+define	PCB_R27		offsetof(struct m88100_pcb, pcb_r27)
+define	PCB_R28		offsetof(struct m88100_pcb, pcb_r28)
+define	PCB_R29		offsetof(struct m88100_pcb, pcb_r29)
+define	PCB_R30		offsetof(struct m88100_pcb, pcb_r30)
+define	PCB_SP		offsetof(struct m88100_pcb, pcb_sp)
