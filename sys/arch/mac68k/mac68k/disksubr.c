@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.21 2003/02/24 23:43:14 miod Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.22 2003/02/28 14:08:50 miod Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.22 1997/11/26 04:18:20 briggs Exp $	*/
 
 /*
@@ -486,9 +486,8 @@ setdisklabel(olp, nlp, openmask, osdep)
 /*
  * Write disk label back to device after modification.
  *
- * To avaid sperading havoc into the MacOS partition structures, we will
+ * To avoid spreading havoc into the MacOS partition structures, we will
  * refuse to write a disklabel if the media has a MacOS signature.
- * Otherwise, it will be 
  */
 int
 writedisklabel(dev, strat, lp, osdep)
