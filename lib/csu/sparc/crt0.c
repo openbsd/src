@@ -40,26 +40,26 @@
 
 void ___start(int, char **, char **, void (*cleanup)(void), void *);
 
-__asm("
-	.text
-	.align	4
-	.global	__start
-	.global	_start
-__start:
-_start:
-	mov	0, %fp
-	ld	[%sp + 64], %o0		! get argc
-	add	%sp, 68, %o1		! get argv
-	sll	%o0, 2,	%o2		!
-	add	%o2, 4,	%o2		! envp = argv + (argc << 2) + 4
-	add	%o1, %o2, %o2		!
-	andn	%sp, 7,	%sp		! align
-	sub	%sp, 24, %sp		! expand to standard stack frame size
-	mov	%g3, %o3
-	mov	%g2, %o4
-	call	___start
-	 mov	%g1, %o5
-");
+__asm(
+"	.text\n"
+"	.align 4\n"
+"	.global	__start\n"
+"	.global	_start\n"
+"__start:\n"
+"_start:\n"
+"	mov	0, %fp\n"
+"	ld	[%sp + 64], %o0		! get argc\n"
+"	add	%sp, 68, %o1		! get argv\n"
+"	sll	%o0, 2,	%o2\n"
+"	add	%o2, 4,	%o2		! envp = argv + (argc << 2) + 4\n"
+"	add	%o1, %o2, %o2\n"
+"	andn	%sp, 7,	%sp		! align\n"
+"	sub	%sp, 24, %sp		! expand to standard stack frame size\n"
+"	mov	%g3, %o3\n"
+"	mov	%g2, %o4\n"
+"	call	___start\n"
+"	 mov	%g1, %o5\n"
+);
 
 char **environ;
 char *__progname = "";
