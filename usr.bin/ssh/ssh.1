@@ -9,7 +9,7 @@
 .\"
 .\" Created: Sat Apr 22 21:55:14 1995 ylo
 .\"
-.\" $Id: ssh.1,v 1.7 1999/09/30 17:20:44 deraadt Exp $
+.\" $Id: ssh.1,v 1.8 1999/10/01 18:17:49 deraadt Exp $
 .\"
 .Dd September 25, 1999
 .Dt SSH 1
@@ -769,7 +769,7 @@ Contains the RSA authentication identity of the user.  This file
 contains sensitive data and should be readable by the user but not
 accessible by others.  It is possible to specify a passphrase when
 generating the key; the passphrase will be used to encrypt the
-sensitive part of this file using IDEA.
+sensitive part of this file using 3DES.
 .It Pa $HOME/.ssh/identity.pub 
 Contains the public key for authentication (public part of the
 identity file in human-readable form).  The contents of this file
