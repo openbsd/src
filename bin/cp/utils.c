@@ -1,4 +1,4 @@
-/*	$OpenBSD: utils.c,v 1.4 1997/02/24 20:43:27 millert Exp $	*/
+/*	$OpenBSD: utils.c,v 1.5 1997/02/25 02:27:28 millert Exp $	*/
 /*	$NetBSD: utils.c,v 1.4 1995/08/02 07:17:02 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utils.c	8.3 (Berkeley) 4/1/94";
 #else
-static char rcsid[] = "$OpenBSD: utils.c,v 1.4 1997/02/24 20:43:27 millert Exp $";
+static char rcsid[] = "$OpenBSD: utils.c,v 1.5 1997/02/25 02:27:28 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -200,7 +200,7 @@ copy_link(p, exists)
 		warn("symlink: %s", link);
 		return (1);
 	}
-	return (pflag ? setfile(p->fts_statp, 0) : 0);
+	return (pflag ? setlink(p->fts_statp) : 0);
 }
 
 int
@@ -244,17 +244,6 @@ setfile(fs, fd)
 	static struct timeval tv[2];
 	int rval = 0;
 
-	/* Only change the owner for symbolic links. */
-	if (S_ISLNK(fs->st_mode)) {
-		if (lchown(to.p_path, fs->st_uid, fs->st_gid)) {
-			if (errno != EPERM) {
-				warn("lchown: %s", to.p_path);
-				rval = 1;
-			}
-		}
-		return (rval);
-	}
-
 	fs->st_mode &= S_ISUID | S_ISGID | S_IRWXU | S_IRWXG | S_IRWXO;
 
 	TIMESPEC_TO_TIMEVAL(&tv[0], &fs->st_atimespec);
@@ -289,6 +278,22 @@ setfile(fs, fd)
 	}
 	return (rval);
 }
+
+
+int
+setlink(fs)
+	register struct stat *fs;
+{
+
+	if (lchown(to.p_path, fs->st_uid, fs->st_gid)) {
+		if (errno != EPERM) {
+			warn("lchown: %s", to.p_path);
+			return (1);
+		}
+	}
+	return (0);
+}
+
 
 void
 usage()
