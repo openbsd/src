@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2_vnops.c,v 1.4 1996/10/18 15:23:40 mickey Exp $	*/
+/*	$OpenBSD: ext2_vnops.c,v 1.5 1996/10/18 16:02:09 mickey Exp $	*/
 
 /*
  *  modified for EXT2FS support in Lites 1.1
@@ -79,9 +79,9 @@ int ext2_reclaim __P((void *));
 int ext2_read __P((void *));
 int ext2_write __P((void *));
 
-#ifdef notdef
 /* Global vfs data structures for ext2fs. */
 int (**ext2_vnodeop_p) __P((void *));
+#ifdef notdef
 static struct vnodeopv_entry_desc ext2_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, ext2_lookup },	/* lookup */
@@ -129,8 +129,10 @@ static struct vnodeopv_entry_desc ext2_vnodeop_entries[] = {
 };
 static struct vnodeopv_desc ext2fs_vnodeop_opv_desc =
 	{ &ext2_vnodeop_p, ext2_vnodeop_entries };
+#endif
 
 int (**ext2_specop_p) __P((void *));
+#ifdef notdef
 static struct vnodeopv_entry_desc ext2_specop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, spec_lookup },	/* lookup */
@@ -178,9 +180,11 @@ static struct vnodeopv_entry_desc ext2_specop_entries[] = {
 };
 static struct vnodeopv_desc ext2fs_specop_opv_desc =
 	{ &ext2_specop_p, ext2_specop_entries };
+#endif
 
 #ifdef FIFO
 int (**ext2_fifoop_p) __P((void *));
+#ifdef notdef
 static struct vnodeopv_entry_desc ext2_fifoop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, fifo_lookup },	/* lookup */
