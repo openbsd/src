@@ -1,5 +1,5 @@
-/*	$OpenBSD: exchange.c,v 1.11 1999/03/31 01:50:29 niklas Exp $	*/
-/*	$EOM: exchange.c,v 1.69 1999/03/31 01:29:52 niklas Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.12 1999/03/31 23:46:25 niklas Exp $	*/
+/*	$EOM: exchange.c,v 1.70 1999/03/31 23:32:30 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -647,69 +647,73 @@ exchange_establish_p1 (struct transport *t, u_int8_t type, u_int32_t doi,
   char *tag = 0;
   char *str;
 
-  exchange = exchange_lookup_by_name (name, 1);
-  if (exchange)
+  if (name)
     {
-      exchange_add_finalization (exchange, finalize, arg);
-      return;
-    }
-
-  /* If no exchange type given, fetch from the configuration.  */
-  if (type == 0)
-    {
-      /* XXX Similar code can be found in exchange_setup_p1.  Share?  */
-
-      /* Find out our phase 1 mode.  */
-      tag = conf_get_str (name, "Configuration");
-      if (!tag)
+      exchange = exchange_lookup_by_name (name, 1);
+      if (exchange)
 	{
-	  /* XXX I am not sure a default should be used.  */
-#if 0
-	  tag = conf_get_str ("Phase 1", "Default");
+	  exchange_add_finalization (exchange, finalize, arg);
+	  return;
+	}
+
+      /* If no exchange type given, fetch from the configuration.  */
+      if (type == 0)
+	{
+	  /* XXX Similar code can be found in exchange_setup_p1.  Share?  */
+
+	  /* Find out our phase 1 mode.  */
+	  tag = conf_get_str (name, "Configuration");
 	  if (!tag)
 	    {
+	      /* XXX I am not sure a default should be used.  */
+#if 0
+	      tag = conf_get_str ("Phase 1", "Default");
+	      if (!tag)
+		{
+		  log_print ("exchange_establish_p1: "
+			     "no \"Default\" tag in [Phase 1] section");
+		  return;
+		}
+#else
 	      log_print ("exchange_establish_p1: "
-			 "no \"Default\" tag in [Phase 1] section");
+			 "no configuration found for peer \"%s\"",
+			 name);
+#endif
+	    }
+
+	  /* Figure out the DOI.  XXX Factor out?  */
+	  str = conf_get_str (tag, "DOI");
+	  if (!str)
+	    {
+	      log_print ("exchange_establish_p1: "
+			 "no \"DOI\" tag in [%s] section", tag);
 	      return;
 	    }
-#else
-	  log_print ("exchange_establish_p1: "
-		     "no configuration found for peer \"%s\"",
-		     name);
-#endif
-	}
+	  if (strcasecmp (str, "ISAKMP") == 0)
+	    doi = ISAKMP_DOI_ISAKMP;
+	  else if (strcasecmp (str, "IPSEC") == 0)
+	    doi = IPSEC_DOI_IPSEC;
+	  else
+	    {
+	      log_print ("exchange_establish_p1: DOI \"%s\" unsupported", str);
+	      return;
+	    }
 
-      /* Figure out the DOI.  XXX Factor out?  */
-      str = conf_get_str (tag, "DOI");
-      if (!str)
-	{
-	  log_print ("exchange_establish_p1: no \"DOI\" tag in [%s] section",
-		     tag);
-	  return;
-	}
-      if (strcasecmp (str, "ISAKMP") == 0)
-	doi = ISAKMP_DOI_ISAKMP;
-      else if (strcasecmp (str, "IPSEC") == 0)
-	doi = IPSEC_DOI_IPSEC;
-      else
-	{
-	  log_print ("exchange_establish_p1: DOI \"%s\" unsupported", str);
-	  return;
-	}
-
-      /* What exchange type do we want?  */
-      str = conf_get_str (tag, "EXCHANGE_TYPE");
-      if (!str)
-	{
-	  log_print ("exchange_establish_p1: "
-		     "no \"EXCHANGE_TYPE\" tag in [%s] section", tag);
-	  return;
-	}
-      type = constant_value (isakmp_exch_cst, str);
-      if (!type)
-	{
-	  log_print ("exchange_establish_p1: unknown exchange type %s", str);
-	  return;
+	  /* What exchange type do we want?  */
+	  str = conf_get_str (tag, "EXCHANGE_TYPE");
+	  if (!str)
+	    {
+	      log_print ("exchange_establish_p1: "
+			 "no \"EXCHANGE_TYPE\" tag in [%s] section", tag);
+	      return;
+	    }
+	  type = constant_value (isakmp_exch_cst, str);
+	  if (!type)
+	    {
+	      log_print ("exchange_establish_p1: unknown exchange type %s",
+			 str);
+	      return;
+	    }
 	}
     }
 
