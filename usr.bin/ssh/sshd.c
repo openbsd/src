@@ -11,7 +11,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: sshd.c,v 1.69 1999/12/07 17:52:29 markus Exp $");
+RCSID("$Id: sshd.c,v 1.70 1999/12/07 23:14:36 provos Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -280,6 +280,7 @@ main(int ac, char **av)
 	int opt, aux, sock_in, sock_out, newsock, i, pid, on = 1;
 	int remote_major, remote_minor;
 	int silentrsa = 0;
+	struct pollfd fds;
 	struct sockaddr_in sin;
 	char buf[100];			/* Must not be larger than remote_version. */
 	char remote_version[100];	/* Must be at least as big as buf. */
@@ -549,7 +550,18 @@ main(int ac, char **av)
 		for (;;) {
 			if (received_sighup)
 				sighup_restart();
-			/* Wait in accept until there is a connection. */
+			/* Wait in poll until there is a connection. */
+			memset(&fds, 0, sizeof(fds));
+			fds.fd = listen_sock;
+			fds.events = POLLIN;
+			if (poll(&fds, 1, -1) == -1) {
+				if (errno == EINTR)
+					continue;
+				error("poll: %.100s", strerror(errno));
+				/*NOTREACHED*/
+			}
+			if (fds.revents == 0)
+				continue;
 			aux = sizeof(sin);
 			newsock = accept(listen_sock, (struct sockaddr *) & sin, &aux);
 			if (received_sighup)
