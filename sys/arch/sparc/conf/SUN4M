@@ -1,4 +1,4 @@
-#	$OpenBSD: SUN4M,v 1.56 2003/06/25 17:40:00 miod Exp $
+#	$OpenBSD: SUN4M,v 1.57 2003/07/08 21:12:09 mickey Exp $
 # 	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -190,15 +190,19 @@ tslot*	at sbus?
 pcmcia*	at tslot? socket ?
 
 # PCMCIA devices
-wi*	at pcmcia? function ?
-ne*	at pcmcia? function ?
+wi*	at pcmcia? function ?			# WaveLAN IEEE 802.11DS
+#an*	at pcmcia? function ?			# Aironet IEEE 802.11DS
+ne*	at pcmcia? function ?			# NE2000-compat ethernet
+ep*	at pcmcia? function ?			# PCMCIA based 3C5xx ethernet
+#com*	at pcmcia? function ?			# PCMCIA modems/serial ports
 
-# Media Independent Interface (mii) drivers (required by hme and ne)
-bmtphy*	at mii? phy ?
-lxtphy*	at mii? phy ?
+# Media Independent Interface (mii) drivers (required by hme, ne, ep)
+bmtphy*	at mii? phy ?				# Broadcom 10/100 PHYs
+lxtphy*	at mii? phy ?				# Level1 LXT970 PHYs
 nsphy*	at mii? phy ?				# NS and compatible PHYs
 nsphyter* at mii? phy ?
 qsphy*	at mii? phy ?				# Quality Semi QS6612 PHYs
+tqphy*	at mii? phy ?				# TDK 78Q212x PHYs
 ukphy*	at mii? phy ?
 
 # SCSI bus layer.  SCSI devices attach to the SCSI bus, which attaches
