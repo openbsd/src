@@ -1,3 +1,5 @@
+/*	$OpenBSD: readpassphrase.c,v 1.8 2001/12/06 05:20:50 millert Exp $	*/
+
 /*
  * Copyright (c) 2000 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
@@ -26,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$OpenBSD: readpassphrase.c,v 1.7 2001/08/07 19:34:11 millert Exp $";
+static const char rcsid[] = "$OpenBSD: readpassphrase.c,v 1.8 2001/12/06 05:20:50 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <ctype.h>
@@ -40,17 +42,19 @@ static const char rcsid[] = "$OpenBSD: readpassphrase.c,v 1.7 2001/08/07 19:34:1
 #include <unistd.h>
 #include <readpassphrase.h>
 
+/* Shared with signal handler below to restore state. */
+static struct termios term, oterm;
+static struct sigaction sa, saveint, savehup, savequit, saveterm, savetstp;
+static int input;
+static volatile sig_atomic_t susp;
+
+static void handler(int);
+
 char *
-readpassphrase(prompt, buf, bufsiz, flags)
-	const char *prompt;
-	char *buf;
-	size_t bufsiz;
-	int flags;
+readpassphrase(const char *prompt, char *buf, size_t bufsiz, int flags)
 {
-	struct termios term, oterm;
 	char ch, *p, *end;
-	int input, output;
-	sigset_t oset, nset;
+	int output;
 
 	/* I suppose we could alloc on demand in this case (XXX). */
 	if (bufsiz == 0) {
@@ -72,14 +76,19 @@ readpassphrase(prompt, buf, bufsiz, flags)
 	}
 
 	/*
-	 * We block SIGINT and SIGTSTP so the terminal is not left
-	 * in an inconsistent state (ie: no echo).  It would probably
-	 * be better to simply catch these though.
+	 * Catch signals that would otherwise cause the user to end
+	 * up with echo turned off in the shell.  Don't worry about
+	 * things like SIGALRM and SIGPIPE for now.
 	 */
-	sigemptyset(&nset);
-	sigaddset(&nset, SIGINT);
-	sigaddset(&nset, SIGTSTP);
-	(void)sigprocmask(SIG_BLOCK, &nset, &oset);
+	sigemptyset(&sa.sa_mask);
+	sa.sa_flags = SA_RESTART;
+	sa.sa_handler = handler;
+	(void)sigaction(SIGINT, &sa, &saveint);
+	(void)sigaction(SIGHUP, &sa, &savehup);
+	(void)sigaction(SIGQUIT, &sa, &savequit);
+	(void)sigaction(SIGTERM, &sa, &saveterm);
+	sa.sa_flags = 0;	/* don't restart for SIGTSTP */
+	(void)sigaction(SIGTSTP, &sa, &savetstp);
 
 	/* Turn off echo if possible. */
 	if (tcgetattr(input, &oterm) == 0) {
@@ -94,6 +103,7 @@ readpassphrase(prompt, buf, bufsiz, flags)
 		memset(&oterm, 0, sizeof(oterm));
 	}
 
+redo:
 	(void)write(output, prompt, strlen(prompt));
 	end = buf + bufsiz - 1;
 	for (p = buf; read(input, &ch, 1) == 1 && ch != '\n' && ch != '\r';) {
@@ -109,24 +119,81 @@ readpassphrase(prompt, buf, bufsiz, flags)
 			*p++ = ch;
 		}
 	}
+	if (susp) {
+		/* Back from suspend. */
+		susp = 0;
+		goto redo;
+	}
 	*p = '\0';
 	if (!(term.c_lflag & ECHO))
 		(void)write(output, "\n", 1);
 
-	/* Restore old terminal settings and signal mask. */
+	/* Restore old terminal settings and signals. */
 	if (memcmp(&term, &oterm, sizeof(term)) != 0)
 		(void)tcsetattr(input, TCSAFLUSH|TCSASOFT, &oterm);
-	(void)sigprocmask(SIG_SETMASK, &oset, NULL);
+	(void)sigaction(SIGINT, &saveint, NULL);
+	(void)sigaction(SIGHUP, &savehup, NULL);
+	(void)sigaction(SIGQUIT, &savequit, NULL);
+	(void)sigaction(SIGTERM, &saveterm, NULL);
+	(void)sigaction(SIGTSTP, &savetstp, NULL);
 	if (input != STDIN_FILENO)
 		(void)close(input);
 	return(buf);
 }
 
 char *
-getpass(prompt)
-        const char *prompt;
+getpass(const char *prompt)
 {
 	static char buf[_PASSWORD_LEN + 1];
 
 	return(readpassphrase(prompt, buf, sizeof(buf), RPP_ECHO_OFF));
+}
+
+static void handler(int signo)
+{
+	struct sigaction osa;
+	sigset_t nset;
+	int save_errno;
+
+	save_errno = errno;
+
+	/* Restore tty modes */
+	if (memcmp(&term, &oterm, sizeof(term)) != 0)
+		(void)tcsetattr(input, TCSANOW|TCSASOFT, &oterm);
+
+	/*
+	 * Save old handler and set to original value.
+	 * Unblock receipt of 'signo' and resend the signal so that
+	 * it is caught by the pre-readpassphrase handler.
+	 */
+	switch (signo) {
+	case SIGINT:
+		(void)sigaction(signo, &saveint, &osa);
+		break;
+	case SIGHUP:
+		(void)sigaction(signo, &savehup, &osa);
+		break;
+	case SIGQUIT:
+		(void)sigaction(signo, &savequit, &osa);
+		break;
+	case SIGTERM:
+		(void)sigaction(signo, &saveterm, &osa);
+		break;
+	case SIGTSTP:
+		(void)sigaction(signo, &savetstp, &osa);
+		susp = 1;
+		break;
+	}
+	(void)sigemptyset(&nset);
+	(void)sigaddset(&nset, signo);
+	(void)sigprocmask(SIG_UNBLOCK, &nset, NULL);
+	(void)kill(getpid(), signo);
+	(void)sigprocmask(SIG_BLOCK, &nset, NULL);
+	(void)sigaction(signo, &osa, NULL);
+
+	/* Put tty modes back */
+	if (memcmp(&term, &oterm, sizeof(term)) != 0)
+		(void)tcsetattr(input, TCSANOW|TCSASOFT, &term);
+
+	errno = save_errno;
 }
