@@ -1,4 +1,36 @@
-/*	$OpenBSD: vm_machdep.c,v 1.9 1999/09/20 21:14:22 mickey Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.10 1999/11/25 18:37:43 mickey Exp $	*/
+
+/*
+ * Copyright (c) 1999 Michael Shalayeff
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by Michael Shalayeff.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR OR HIS RELATIVES BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF MIND, USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+ * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+ * THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -11,6 +43,7 @@
 #include <sys/exec.h>
 #include <sys/core.h>
 
+#include <machine/cpufunc.h>
 #include <machine/pmap.h>
 #include <machine/pcb.h>
 
@@ -52,7 +85,7 @@ cpu_coredump(p, vp, cred, core)
 	if ((error = write(vp, &cseg, core->c_seghdrsize)))
 		return error;
 	off += core->c_seghdrsize;
-	if ((error = write(vp, (caddr_t)&md_core, sizeof md_core)))
+	if ((error = write(vp, &md_core, sizeof md_core)))
 		return error;
 
 #undef write
@@ -71,13 +104,13 @@ pagemove(from, to, size)
 	register caddr_t from, to;
 	size_t size;
 {
-	register vm_offset_t pa;
+	register paddr_t pa;
 
 	while (size > 0) {
-		pa = pmap_extract(pmap_kernel(), (vm_offset_t)from);
+		pa = pmap_extract(pmap_kernel(), (vaddr_t)from);
 		pmap_remove(pmap_kernel(),
-			    (vm_offset_t)from, (vm_offset_t)from + PAGE_SIZE);
-		pmap_enter(pmap_kernel(), (vm_offset_t)to, pa,
+			    (vaddr_t)from, (vaddr_t)from + PAGE_SIZE);
+		pmap_enter(pmap_kernel(), (vaddr_t)to, pa,
 			   VM_PROT_READ|VM_PROT_WRITE, 1,
 			   VM_PROT_READ|VM_PROT_WRITE);
 		from += PAGE_SIZE;
@@ -90,17 +123,30 @@ void
 cpu_swapin(p)
 	struct proc *p;
 {
-	/* nothing yet, move to macros later */
+	struct trapframe *tf = p->p_md.md_regs;
+
+	/*
+	 * Stash the physical for the pcb of U for later perusal
+	 */
+	tf->tf_cr30 = kvtop((caddr_t)p->p_addr);
 }
 
 void
 cpu_swapout(p)
 	struct proc *p;
 {
+	extern struct proc *fpu_curproc;
+	struct proc *q = fpu_curproc;
+
+	fpu_curproc = NULL;
+
 	/*
-	 * explicit FPU save state, since user area might get
-	 * swapped out as well, and won't be able to save it no more
+	 * TODO: explicit FPU save state if we own the FPU,
+	 * since user area might get swapped out as well,
+	 * and we won't be able to save it no more
 	 */
+	if (p == q) {
+	}
 }
 
 void
@@ -113,22 +159,34 @@ cpu_fork(p1, p2, stack, stacksize)
 	register struct trapframe *tf;
 	register_t sp;
 
+#ifdef DIAGNOSTIC
+	if (round_page(sizeof(struct user)) > NBPG)
+		panic("USPACE too small for user");
+#endif
+
 	pcbp = &p2->p_addr->u_pcb;
 	*pcbp = p1->p_addr->u_pcb;
 	/* space is cached for the copy{in,out}'s pleasure */
 	pcbp->pcb_space = p2->p_vmspace->vm_map.pmap->pmap_space;
+	pcbp->pcb_uva = (vaddr_t)p2->p_addr;
 
-#ifdef DIAGNOSTIC
-	if (round_page(sizeof(struct user)) >= USPACE)
-		panic("USPACE too small for user");
-#endif
+	sp = (register_t)p2->p_addr + NBPG;
+	p2->p_md.md_regs = tf = (struct trapframe *)sp;
+	sp += sizeof(struct trapframe);
+	*tf = *p1->p_md.md_regs;
 
-	p2->p_md.md_regs = tf = &pcbp->pcb_tf;
-	sp = (register_t)p2->p_addr + round_page(sizeof(struct user));
+	/*
+	 * cpu_swapin() is supposed to fill out all the PAs
+	 * we gonna need in locore
+	 */
+	cpu_swapin(p2);
 
-	/* setup initial stack frame */
-	bzero((caddr_t)sp, HPPA_FRAME_SIZE);
-	tf->tf_sp = sp + HPPA_FRAME_SIZE;
+	tf->tf_sr0 = tf->tf_sr1 = tf->tf_sr2 = tf->tf_sr3 =
+		     tf->tf_sr5 = tf->tf_sr6 =
+		p2->p_vmspace->vm_map.pmap->pmap_space;
+	tf->tf_sr7 = HPPA_SID_KERNEL;
+	tf->tf_pidr1 = tf->tf_pidr2 = tf->tf_pidr3 = tf->tf_pidr4 =
+		p2->p_vmspace->vm_map.pmap->pmap_pid;
 
 	/*
 	 * If specified, give the child a different stack.
@@ -137,12 +195,17 @@ cpu_fork(p1, p2, stack, stacksize)
 		tf->tf_sp = (register_t)stack;
 
 	/*
-	 * everybody recomends to note here the inline version of
-	 * the cpu_set_kpc(), so note it !
+	 * Build a stack frame for the cpu_switch & co.
 	 */
-	tf->tf_arg0 = KERNMODE(child_return);
-	tf->tf_arg1 = (register_t)p2;
-	tf->tf_iioq_tail = tf->tf_iioq_head = (register_t)switch_trampoline;
+	sp += HPPA_FRAME_SIZE + 16*4; /* std frame + calee-save registers */
+	*HPPA_FRAME_CARG(0, sp) = tf->tf_sp;
+	*HPPA_FRAME_CARG(1, sp) = KERNMODE(child_return);
+	*HPPA_FRAME_CARG(2, sp) = (register_t)p2;
+	*(register_t*)(sp + HPPA_FRAME_PSP) = sp;
+	*(register_t*)(sp + HPPA_FRAME_CRP) =
+		(register_t)switch_trampoline;
+	tf->tf_sp = sp;
+	fdcache(HPPA_SID_KERNEL, (vaddr_t)tf, sizeof(*tf));
 }
 
 void
@@ -151,13 +214,13 @@ cpu_set_kpc(p, pc, arg)
 	void (*pc) __P((void *));
 	void *arg;
 {
-	register struct pcb *pcbp = &p->p_addr->u_pcb;
+	register struct trapframe *tf = p->p_md.md_regs;
 
-	pcbp->pcb_tf.tf_arg0 = (register_t)pc;
-	pcbp->pcb_tf.tf_arg1 = (register_t)arg;
-	pcbp->pcb_tf.tf_iioq_tail = pcbp->pcb_tf.tf_iioq_head = 
-		(register_t)switch_trampoline;
-
+	/*
+	 * Overwrite normally stashed there &child_return(p)
+	 */
+	*HPPA_FRAME_CARG(1, tf->tf_sp) = (register_t)pc;
+	*HPPA_FRAME_CARG(2, tf->tf_sp) = (register_t)arg;
 }
 
 void
@@ -165,8 +228,10 @@ cpu_exit(p)
 	struct proc *p;
 {
 	extern struct proc *fpu_curproc;	/* from machdep.c */
+
 	uvmexp.swtch++;
 
+	splhigh();
 	curproc = NULL;
 	fpu_curproc = NULL;
 	uvmspace_free(p->p_vmspace);
@@ -174,7 +239,6 @@ cpu_exit(p)
 	/* XXX should be in the locore? */
 	uvm_km_free(kernel_map, (vaddr_t)p->p_addr, USPACE);
 
-	splhigh();
 	switch_exit(p);
 }
 
@@ -184,16 +248,17 @@ cpu_exit(p)
 void
 vmapbuf(bp, len)
 	struct buf *bp;
-	vm_size_t len;
+	vsize_t len;
 {
-	vm_offset_t faddr, taddr, off, pa;
+	vaddr_t faddr, taddr, off;
+	paddr_t pa;
 	struct proc *p;
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
 	p = bp->b_proc;
 	faddr = trunc_page(bp->b_saveaddr = bp->b_data);
-	off = (vm_offset_t)bp->b_data - faddr;
+	off = (vaddr_t)bp->b_data - faddr;
 	len = round_page(off + len);
 	taddr = uvm_km_valloc_wait(phys_map, len);
 	bp->b_data = (caddr_t)(taddr + off);
@@ -215,14 +280,14 @@ vmapbuf(bp, len)
 void
 vunmapbuf(bp, len)
 	struct buf *bp;
-	vm_size_t len;
+	vsize_t len;
 {
-	vm_offset_t addr, off;
+	vaddr_t addr, off;
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vunmapbuf");
 	addr = trunc_page(bp->b_data);
-	off = (vm_offset_t)bp->b_data - addr;
+	off = (vaddr_t)bp->b_data - addr;
 	len = round_page(off + len);
 	uvm_km_free_wakeup(phys_map, addr, len);
 	bp->b_data = bp->b_saveaddr;
