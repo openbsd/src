@@ -1,4 +1,4 @@
-.\"	$OpenBSD: phones.5,v 1.3 1999/05/23 14:11:05 aaron Exp $
+.\"	$OpenBSD: phones.5,v 1.4 2000/03/01 18:01:21 aaron Exp $
 .\"	$NetBSD: phones.5,v 1.3 1994/11/30 19:31:25 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -41,14 +41,13 @@
 .Nm phones
 .Nd remote host phone number data base
 .Sh DESCRIPTION
-The file
+The
 .Pa /etc/phones
-contains the system-wide
-private phone numbers for the
+file contains the system-wide private phone numbers for the
 .Xr tip 1
-program.  This file is normally unreadable, and so may contain
-privileged information.  The format of the file is a series of lines
-of the form:
+program.
+This file is normally unreadable, and so may contain privileged information.
+The format of the file is a series of lines of the form:
 .Pp
 .D1 Li <system-name>[\ \et]*<phone-number>
 .Pp
@@ -56,25 +55,26 @@ The system name is one of those defined in the
 .Xr remote 5
 file and the phone number is constructed from any sequence of
 characters terminated only by
-.Dq \&,
+.Ql \&,
 or the end of the line. The
-.Dq =
+.Ql =
 and
-.Dq \&*
+.Ql \&*
 characters are
 indicators to the auto call units to pause and wait for a second dial
-tone (when going through an exchange).  The
-.Dq =
+tone (when going through an exchange).
+The
+.Ql =
 is required by the
 .Tn DF02-AC
 and the
-.Dq \&*
+.Ql \&*
 is required by the
 .Tn BIZCOMP
 1030.
 .Pp
-Only one phone number per line is permitted.  However, if more than
-one line in the file contains the same system name
+Only one phone number per line is permitted.
+However, if more than one line in the file contains the same system name,
 .Xr tip 1
 will attempt to dial each one in turn, until it establishes a connection.
 .Sh FILES

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printcap.5,v 1.9 1999/07/09 13:35:39 aaron Exp $
+.\"	$OpenBSD: printcap.5,v 1.10 2000/03/01 18:01:22 aaron Exp $
 .\"	$NetBSD: printcap.5,v 1.7 1998/02/20 12:24:50 hubertf Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -39,7 +39,7 @@
 .Os
 .Sh NAME
 .Nm printcap
-.Nd printer capability data base
+.Nd printer capability database
 .Sh SYNOPSIS
 .Nm printcap
 .Sh DESCRIPTION
@@ -47,13 +47,13 @@ The
 .Nm
 file is a simplified version of the
 .Xr termcap 5
-data base
-used to describe line printers.  The spooling system accesses the
+database used to describe line printers.
+The spooling system accesses the
 .Nm
 file every time it is used, allowing dynamic
-addition and deletion of printers.  Each entry in the data base
-is used to describe one printer.  This data base may not be
-substituted for, as is possible for
+addition and deletion of printers.
+Each entry in the database is used to describe one printer.
+This database may not be substituted for, as is possible for
 .Xr termcap ,
 because it may allow accounting to be bypassed.
 .Pp
@@ -61,7 +61,8 @@ The default printer is normally
 .Dq lp ,
 though the environment variable
 .Ev PRINTER
-may be used to override this.  Each spooling utility supports an option,
+may be used to override this.
+Each spooling utility supports an option,
 .Fl P Ns Ar printer ,
 to allow explicit naming of a destination printer.
 .Pp
@@ -83,7 +84,7 @@ call)
 .Pf ( Tn DVI
 format)
 .It "fc	num	0	if lp is a tty, clear flag bits"
-.Pq Pa sgtty.h
+.Pq Aq Pa sgtty.h
 .It "ff	str" Ta So Li \ef Sc Ta No "string to send for a form feed"
 .It "fo	bool	false	print a form feed when device is opened"
 .It "fs	num	0	like `fc' but set bits"
@@ -134,7 +135,7 @@ If the local line printer driver supports indentation, the daemon
 must understand how to invoke it.
 .Sh FILTERS
 If a printer is specified via
-.Cm lp
+.Sy lp
 (either local or remote),
 the
 .Xr lpd 8
@@ -142,7 +143,7 @@ daemon creates a pipeline of
 .Dq filters
 to process files for various printer types.
 The pipeline is not set up for remote printers specified via
-.Cm rm
+.Sy rm
 unless the local host is the same as the remote printer host
 given.
 The filters selected depend on the flags passed to
@@ -161,10 +162,10 @@ v	vf	raster image
 .Ed
 .Pp
 The
-.Cm if
+.Sy if
 filter is invoked with arguments:
 .Bd -filled -offset indent
-.Cm if
+.Sy if
 .Op Fl c
 .Fl w Ns Ar width
 .Fl l Ns Ar length
@@ -185,40 +186,40 @@ and
 .Ar length
 specify the page width and length
 (from
-.Cm pw
+.Sy pw
 and
-.Cm pl
+.Sy pl ,
 respectively) in characters.
 The
 .Fl n
 and
 .Fl h
 parameters specify the login name and host name of the owner
-of the job respectively.
+of the job, respectively.
 The
 .Ar acct-file
 function
 is passed from the
-.Cm af
+.Sy af
 .Nm
 entry.
 .Pp
 If no
-.Cm if
+.Sy if
 is specified,
-.Cm of
+.Sy of
 is used instead,
 with the distinction that
-.Cm of
+.Sy of
 is opened only once,
 while
-.Cm if
+.Sy if
 is opened for every individual job.
 Thus,
-.Cm if
+.Sy if
 is better suited to performing accounting.
 The
-.Cm of
+.Sy of
 is only given the
 .Ar width
 and
@@ -240,11 +241,10 @@ and
 .Ar length
 are represented in pixels,
 specified by the
-.Cm px
+.Sy px
 and
-.Cm py
-entries respectively.
-.Pp
+.Sy py
+entries, respectively.
 All filters take
 .Em stdin
 as the file,
@@ -270,7 +270,7 @@ Messages printed on
 .Em stderr
 of one of the filters
 are sent to the corresponding
-.Cm lf
+.Sy lf
 file.
 The filters may, of course, use
 .Xr syslog
