@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.7 1996/10/28 00:54:10 millert Exp $	*/
+/*	$OpenBSD: commands.c,v 1.8 1996/12/06 15:21:53 robin Exp $	*/
 /*	$NetBSD: commands.c,v 1.14 1996/03/24 22:03:48 jtk Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 static char sccsid[] = "@(#)commands.c	8.4 (Berkeley) 5/30/95";
 static char rcsid[] = "$NetBSD: commands.c,v 1.14 1996/03/24 22:03:48 jtk Exp $";
 #else
-static char rcsid[] = "$OpenBSD: commands.c,v 1.7 1996/10/28 00:54:10 millert Exp $";
+static char rcsid[] = "$OpenBSD: commands.c,v 1.8 1996/12/06 15:21:53 robin Exp $";
 #endif
 #endif /* not lint */
 
@@ -669,6 +669,7 @@ struct togglelist {
     int		(*handler)();	/* routine to do actual setting */
     int		*variable;
     char	*actionexplanation;
+    int		needconnect;	/* Need to be connected */
 };
 
 static struct togglelist Togglelist[] = {
@@ -676,105 +677,105 @@ static struct togglelist Togglelist[] = {
 	"flushing of output when sending interrupt characters",
 	    0,
 		&autoflush,
-		    "flush output when sending interrupt characters" },
+		    "flush output when sending interrupt characters", 0 },
     { "autosynch",
 	"automatic sending of interrupt characters in urgent mode",
 	    0,
 		&autosynch,
-		    "send interrupt characters in urgent mode" },
+		    "send interrupt characters in urgent mode", 0 },
 #if	defined(AUTHENTICATION)
     { "autologin",
 	"automatic sending of login and/or authentication info",
 	    0,
 		&autologin,
-		    "send login name and/or authentication information" },
+		    "send login name and/or authentication information", 0 },
     { "authdebug",
 	"Toggle authentication debugging",
 	    auth_togdebug,
 		0,
-		     "print authentication debugging information" },
+		     "print authentication debugging information", 0 },
 #endif
     { "skiprc",
 	"don't read ~/.telnetrc file",
 	    0,
 		&skiprc,
-		    "skip reading of ~/.telnetrc file" },
+		    "skip reading of ~/.telnetrc file", 0 },
     { "binary",
 	"sending and receiving of binary data",
 	    togbinary,
 		0,
-		    0 },
+		    0, 1 },
     { "inbinary",
 	"receiving of binary data",
 	    togrbinary,
 		0,
-		    0 },
+		    0, 1 },
     { "outbinary",
 	"sending of binary data",
 	    togxbinary,
 		0,
-		    0 },
+		    0, 1 },
     { "crlf",
 	"sending carriage returns as telnet <CR><LF>",
 	    togcrlf,
 		&crlf,
-		    0 },
+		    0, 0 },
     { "crmod",
 	"mapping of received carriage returns",
 	    0,
 		&crmod,
-		    "map carriage return on output" },
+		    "map carriage return on output", 0 },
     { "localchars",
 	"local recognition of certain control characters",
 	    lclchars,
 		&localchars,
-		    "recognize certain control characters" },
-    { " ", "", 0 },		/* empty line */
+		    "recognize certain control characters", 0 },
+    { " ", "", 0, 0 },		/* empty line */
 #if	defined(unix) && defined(TN3270)
     { "apitrace",
 	"(debugging) toggle tracing of API transactions",
 	    0,
 		&apitrace,
-		    "trace API transactions" },
+		    "trace API transactions", 0 },
     { "cursesdata",
 	"(debugging) toggle printing of hexadecimal curses data",
 	    0,
 		&cursesdata,
-		    "print hexadecimal representation of curses data" },
+		    "print hexadecimal representation of curses data", 0 },
 #endif	/* defined(unix) && defined(TN3270) */
     { "debug",
 	"debugging",
 	    togdebug,
 		&debug,
-		    "turn on socket level debugging" },
+		    "turn on socket level debugging", 0 },
     { "netdata",
 	"printing of hexadecimal network data (debugging)",
 	    0,
 		&netdata,
-		    "print hexadecimal representation of network traffic" },
+		    "print hexadecimal representation of network traffic", 0 },
     { "prettydump",
 	"output of \"netdata\" to user readable format (debugging)",
 	    0,
 		&prettydump,
-		    "print user readable output for \"netdata\"" },
+		    "print user readable output for \"netdata\"", 0 },
     { "options",
 	"viewing of options processing (debugging)",
 	    0,
 		&showoptions,
-		    "show option processing" },
+		    "show option processing", 0 },
 #if	defined(unix)
     { "termdata",
 	"(debugging) toggle printing of hexadecimal terminal data",
 	    0,
 		&termdata,
-		    "print hexadecimal representation of terminal traffic" },
+		    "print hexadecimal representation of terminal traffic", 0 },
 #endif	/* defined(unix) */
     { "?",
 	0,
-	    togglehelp },
+	    togglehelp, 0 },
     { "help",
 	0,
-	    togglehelp },
+	    togglehelp, 0 },
     { 0 }
 };
 
@@ -842,6 +843,10 @@ toggle(argc, argv)
 	} else if (c == 0) {
 	    fprintf(stderr, "'%s': unknown argument ('toggle ?' for help).\n",
 					name);
+	    return 0;
+	} else if (!connected && c->needconnect) {
+	    printf("?Need to be connected first.\n");
+	    printf("'send ?' for help\n");
 	    return 0;
 	} else {
 	    if (c->variable) {
@@ -987,7 +992,12 @@ setcmd(argc, argv)
 	    fprintf(stderr, "'%s': ambiguous argument ('set ?' for help).\n",
 			argv[1]);
 	    return 0;
+	} else if (!connected && c->needconnect) {
+	    printf("?Need to be connected first.\n");
+	    printf("'send ?' for help\n");
+	    return 0;
 	}
+
 	if (c->variable) {
 	    if ((argc == 2) || (strcmp("on", argv[2]) == 0))
 		*c->variable = 1;
