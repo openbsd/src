@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.6 2004/08/05 13:50:12 jfb Exp $	*/
+/*	$OpenBSD: util.c,v 1.7 2004/08/06 20:08:49 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -246,52 +246,35 @@ cvs_cksum(const char *file, char *dst, size_t len)
 /*
  * cvs_splitpath()
  *
- * Split a path <path> into the directory portion and the filename portion
- * and copy them in <dir> and <file>, whose lengths are <dlen> and <flen>,
- * unless they are NULL.
+ * Split a path <path> into the base portion and the filename portion.
+ * The path is copied in <base> and the last delimiter is replaced by a NUL
+ * byte.  The <file> pointer is set to point to the first character after
+ * that delimiter.
  * Returns 0 on success, or -1 on failure.
  */
 
 int
-cvs_splitpath(const char *path, char *dir, size_t dlen, char *file, size_t flen)
+cvs_splitpath(const char *path, char *base, size_t blen, char **file)
 {
 	size_t rlen;
-	const char *sp;
-	struct stat st;
+	char *sp;
 
-	rlen = strlen(path);
-	while ((rlen > 0) && (path[rlen - 1] == '/'))
-		path[--rlen] = '\0';
+	if ((rlen = strlcpy(base, path, blen)) >= blen)
+		return (-1);
 
-	sp = strrchr(path, '/');
+	while ((rlen > 0) && (base[rlen - 1] == '/'))
+		base[--rlen] = '\0';
+
+	sp = strrchr(base, '/');
 	if (sp == NULL) {
-		if (stat(path, &st) == -1)
-			return (-1);
-
-		if (S_ISDIR(st.st_mode)) {
-			if (dir != NULL)
-				strlcpy(dir, path, dlen);
-			if (file != NULL)
-				file[0] = '\0';
-		}
-		else {
-			if (file != NULL)
-				strlcpy(file, path, flen);
-			if (dir != NULL)
-				strlcpy(dir, ".", dlen);
-		}
+		strlcpy(base, "./", blen);
+		strlcat(base, path, blen);
+		sp = base + 1;
 	}
-	else {
-		rlen = MIN(dlen - 1, (size_t)(sp - path));
-		if (dir != NULL) {
-			strncpy(dir, path, rlen);
-			dir[rlen] = '\0';
-		}
 
-		sp++;
-		if (file != NULL)
-			strlcpy(file, sp, flen);
-	}
+	*sp = '\0';
+	if (file != NULL)
+		*file = sp + 1;
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.24 2004/08/06 14:49:03 jfb Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.25 2004/08/06 20:08:49 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -278,7 +278,7 @@ int              cvs_hist_append  (CVSHIST *, struct cvs_hent *);
 
 /* from util.c */
 int    cvs_readrepo   (const char *, char *, size_t);
-int    cvs_splitpath  (const char *, char *, size_t, char *, size_t);
+int    cvs_splitpath  (const char *, char *, size_t, char **);
 int    cvs_modetostr  (mode_t, char *, size_t);
 int    cvs_strtomode  (const char *, mode_t *);
 int    cvs_mkadmin    (struct cvs_file *, mode_t);
