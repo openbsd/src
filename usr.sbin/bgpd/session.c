@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.212 2004/12/23 17:34:04 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.213 2005/03/11 17:46:11 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -809,10 +809,9 @@ start_timer_keepalive(struct peer *peer)
 void
 session_close_connection(struct peer *peer)
 {
-	if (peer->fd != -1) {
-		shutdown(peer->fd, SHUT_RDWR);
+	if (peer->fd != -1)
 		close(peer->fd);
-	}
+
 	peer->fd = peer->wbuf.fd = -1;
 }
 
@@ -916,7 +915,6 @@ session_accept(int listenfd)
 			if (p->state == STATE_CONNECT)
 				session_close_connection(p);
 			else {
-				shutdown(connfd, SHUT_RDWR);
 				close(connfd);
 				return;
 			}
@@ -925,7 +923,6 @@ session_accept(int listenfd)
 		if (p->conf.auth.method != AUTH_NONE && sysdep.no_pfkey) {
 			log_peer_warnx(&p->conf,
 			    "ipsec or md5sig configured but not available");
-			shutdown(connfd, SHUT_RDWR);
 			close(connfd);
 			return;
 		}
@@ -934,7 +931,6 @@ session_accept(int listenfd)
 			if (sysdep.no_md5sig) {
 				log_peer_warnx(&p->conf,
 				    "md5sig configured but not available");
-				shutdown(connfd, SHUT_RDWR);
 				close(connfd);
 				return;
 			}
@@ -945,14 +941,12 @@ session_accept(int listenfd)
 			if (!opt) {	/* non-md5'd connection! */
 				log_peer_warnx(&p->conf,
 				    "connection attempt without md5 signature");
-				shutdown(connfd, SHUT_RDWR);
 				close(connfd);
 				return;
 			}
 		}
 		p->fd = p->wbuf.fd = connfd;
 		if (session_setup_socket(p)) {
-			shutdown(connfd, SHUT_RDWR);
 			close(connfd);
 			return;
 		}
@@ -960,7 +954,6 @@ session_accept(int listenfd)
 		bgp_fsm(p, EVNT_CON_OPEN);
 	} else {
 		log_conn_attempt(p, (struct sockaddr *)&cliaddr);
-		shutdown(connfd, SHUT_RDWR);
 		close(connfd);
 	}
 }
@@ -2138,7 +2131,6 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 				    entry);
 			} else {
 				la->reconf = RECONF_KEEP;
-				shutdown(nla->fd, SHUT_RDWR);
 				close(nla->fd);
 			}
 			break;
@@ -2180,7 +2172,6 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 					    (struct sockaddr *)&la->sa));
 					TAILQ_REMOVE(conf->listen_addrs, la,
 					    entry);
-					shutdown(la->fd, SHUT_RDWR);
 					close(la->fd);
 					free(la);
 				}
