@@ -1498,7 +1498,7 @@ writeset(const char *prefix, dns_rdatatype_t type) {
 	if (filename == NULL)
 		fatal("out of memory");
 	if (directory != NULL)
-		snprintf(filename, sizeof(filenamelen + 1), "%s/", directory);
+		snprintf(filename, filenamelen + 1, "%s/", directory);
 	else
 		filename[0] = 0;
 	strlcat(filename, prefix, filenamelen + 1);
