@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.88 2000/06/01 05:33:08 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.89 2000/06/01 05:46:12 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -1113,7 +1113,7 @@ tdb_delete(struct tdb *tdbp, int delchain, int expflags)
     int s;
 
     /* If it's still referenced, go on */
-    if (tdbp->tdb_ref-- > 0)
+    if (--tdbp->tdb_ref > 0)
     {
 	tdbp->tdb_flags |= TDBF_INVALID;
 	return;
