@@ -1,4 +1,4 @@
-/*	$OpenBSD: nanosleep.c,v 1.1 2002/02/16 00:47:55 art Exp $	*/
+/*	$OpenBSD: nanosleep.c,v 1.2 2002/02/17 05:33:33 art Exp $	*/
 /*
  *	Written by Artur Grabowski <art@openbsd.org> 2002 Public Domain.
  */
@@ -17,6 +17,8 @@ int with_signal(void);
 int time_elapsed(void);
 int time_elapsed_with_signal(void);
 
+int short_time(void);
+
 void sighandler(int);
 
 int
@@ -26,7 +28,7 @@ main(int argc, char **argv)
 
 	ret = 0;
 
-	while ((ch = getopt(argc, argv, "tseE")) != -1) {
+	while ((ch = getopt(argc, argv, "tseES")) != -1) {
 		switch (ch) {
 		case 't':
 			ret |= trivial();
@@ -40,6 +42,8 @@ main(int argc, char **argv)
 		case 'E':
 			ret |= time_elapsed_with_signal();
 			break;
+		case 'S':
+			ret |= short_time();
 		default:
 			fprintf(stderr, "Usage: nanosleep [-tse]\n");
 			exit(1);
@@ -212,6 +216,42 @@ time_elapsed_with_signal(void)
 		return 1;
 	}
 
+
+	if (wait(&status) < 0)
+		err(1, "wait");
+
+	return 0;
+}
+
+int
+short_time(void)
+{
+	struct timespec ts, rts;
+	pid_t pid;
+	int status;
+
+	signal(SIGUSR1, sighandler);
+
+	pid = getpid();
+
+	switch(fork()) {
+	case -1:
+		err(1, "fork");
+	default:
+		/* Sleep two seconds, then shoot parent. */
+		ts.tv_sec = 2;
+		ts.tv_nsec = 0;
+		nanosleep(&ts, NULL);
+		kill(pid, SIGUSR1);
+		exit(0);
+	}
+
+	ts.tv_sec = 0;
+	ts.tv_nsec = 1;
+	if (nanosleep(&ts, NULL) <= 0) {
+		warn("short_time: nanosleep");
+		return 1;
+	}
 
 	if (wait(&status) < 0)
 		err(1, "wait");
