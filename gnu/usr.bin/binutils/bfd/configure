@@ -1400,6 +1400,9 @@ if test "${target}" = "${host}"; then
 EOF
 
 	;;
+  alpha*-*-openbsd*)
+	COREFILE=netbsd-core.o
+	;;
   alpha*-*-*)		COREFILE=osf-core.o ;;
   arm-*-riscix)		COREFILE=trad-core.o ;;
   hppa*-*-hpux*)	COREFILE=hpux-core.o ;;
