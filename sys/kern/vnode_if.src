@@ -1,4 +1,4 @@
-#	$OpenBSD: vnode_if.src,v 1.11 2001/06/23 02:21:05 csapuntz Exp $
+#	$OpenBSD: vnode_if.src,v 1.12 2001/07/26 02:10:41 assar Exp $
 #	$NetBSD: vnode_if.src,v 1.10 1996/05/11 18:26:27 mycroft Exp $
 #
 # Copyright (c) 1992, 1993
@@ -102,12 +102,12 @@ vop_create {
 
 #
 #% mknod	dvp	L U U
-#% mknod	vpp	- X -
+#% mknod	vpp	- L -
 #
 
 vop_mknod {
 	IN SHOULDBELOCKED WILLRELE struct vnode *dvp;
-	OUT WILLRELE struct vnode **vpp;
+	OUT struct vnode **vpp;
 	IN struct componentname *cnp;
 	IN struct vattr *vap;
 };
@@ -314,16 +314,12 @@ vop_rmdir {
 
 #
 #% symlink	dvp	L U U
-#% symlink	vpp	- U -
-#
-# XXX - note that the return vnode has already been VRELE'ed
-#	by the filesystem layer.  To use it you must use vget,
-#	possibly with a further namei.
+#% symlink	vpp	- L -
 #
 
 vop_symlink {
 	IN SHOULDBELOCKED WILLRELE struct vnode *dvp;
-	OUT WILLRELE struct vnode **vpp;
+	OUT struct vnode **vpp;
 	IN struct componentname *cnp;
 	IN struct vattr *vap;
 	IN char *target;

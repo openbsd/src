@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vnops.c,v 1.14 2001/06/27 04:58:47 art Exp $	*/
+/*	$OpenBSD: ext2fs_vnops.c,v 1.15 2001/07/26 02:10:41 assar Exp $	*/
 /*	$NetBSD: ext2fs_vnops.c,v 1.1 1997/06/11 09:34:09 bouyer Exp $	*/
 
 /*
@@ -134,6 +134,8 @@ ext2fs_mknod(v)
 	register struct vattr *vap = ap->a_vap;
 	register struct vnode **vpp = ap->a_vpp;
 	register struct inode *ip;
+	struct mount *mp;	
+	ino_t	     ino;
 	int error;
 
 	if ((error =
@@ -158,6 +160,11 @@ ext2fs_mknod(v)
 	(*vpp)->v_type = VNON;
 	vgone(*vpp);
 	*vpp = 0;
+	error = VFS_VGET(mp, ino, vpp);
+	if (error != 0) {
+		*vpp = NULL;
+		return (error);
+	}
 	return (0);
 }
 
@@ -1192,7 +1199,8 @@ ext2fs_symlink(v)
 		error = vn_rdwr(UIO_WRITE, vp, ap->a_target, len, (off_t)0,
 		    UIO_SYSSPACE, IO_NODELOCKED, ap->a_cnp->cn_cred, NULL,
 		    (struct proc *)0);
-	vput(vp);
+	if (error)
+		vput(vp);
 	return (error);
 }
 

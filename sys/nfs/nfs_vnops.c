@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.35 2001/07/03 01:55:13 csapuntz Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.36 2001/07/26 02:10:41 assar Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -1155,8 +1155,6 @@ nfs_mknod(v)
 	int error;
 
 	error = nfs_mknodrpc(ap->a_dvp, &newvp, ap->a_cnp, ap->a_vap);
-	if (!error)
-		vrele(newvp);
 	return (error);
 }
 
@@ -1633,18 +1631,30 @@ nfs_symlink(v)
 		nfsm_wcc_data(dvp, wccflag);
 	}
 	nfsm_reqdone;
-	if (newvp)
-		vrele(newvp);
-	FREE(cnp->cn_pnbuf, M_NAMEI);
-	VTONFS(dvp)->n_flag |= NMODIFIED;
-	if (!wccflag)
-		VTONFS(dvp)->n_attrstamp = 0;
-	vrele(dvp);
 	/*
 	 * Kludge: Map EEXIST => 0 assuming that it is a reply to a retry.
 	 */
 	if (error == EEXIST)
 		error = 0;
+	if (error == 0 && newvp == NULL) {
+		struct nfsnode *np = NULL;
+
+		error = nfs_lookitup(dvp, cnp->cn_nameptr, cnp->cn_namelen,
+		    cnp->cn_cred, cnp->cn_proc, &np);
+		if (error == 0)
+			newvp = NFSTOV(np);
+	}
+	if (error) {
+		if (newvp != NULL)
+			vput(newvp);
+	} else {
+		*ap->a_vpp = newvp;
+	}
+	FREE(cnp->cn_pnbuf, M_NAMEI);
+	VTONFS(dvp)->n_flag |= NMODIFIED;
+	if (!wccflag)
+		VTONFS(dvp)->n_attrstamp = 0;
+	vrele(dvp);
 	return (error);
 }
 

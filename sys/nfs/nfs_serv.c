@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.24 2001/07/06 21:51:13 niklas Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.25 2001/07/26 02:10:41 assar Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -1362,16 +1362,6 @@ nfsrv_create(nfsd, slp, procp, mrq)
 				nfsm_reply(0);
 				return (0);
 			}
-			nd.ni_cnd.cn_nameiop = LOOKUP;
-			nd.ni_cnd.cn_flags &= ~(LOCKPARENT | SAVESTART);
-			nd.ni_cnd.cn_proc = procp;
-			nd.ni_cnd.cn_cred = cred;
-			if ((error = lookup(&nd)) != 0) {
-				free(nd.ni_cnd.cn_pnbuf, M_NAMEI);
-				nfsm_reply(0);
-				return (0);
-			}
-			
 			FREE(nd.ni_cnd.cn_pnbuf, M_NAMEI);
 			if (nd.ni_cnd.cn_flags & ISSYMLINK) {
 				vrele(nd.ni_dvp);
@@ -1554,14 +1544,7 @@ nfsrv_mknod(nfsd, slp, procp, mrq)
 			vrele(nd.ni_startdir);
 			goto out;
 		}
-		nd.ni_cnd.cn_nameiop = LOOKUP;
-		nd.ni_cnd.cn_flags &= ~(LOCKPARENT | SAVESTART);
-		nd.ni_cnd.cn_proc = procp;
-		nd.ni_cnd.cn_cred = procp->p_ucred;
-		error = lookup(&nd);
 		FREE(nd.ni_cnd.cn_pnbuf, M_NAMEI);
-		if (error)
-			goto out;
 		if (nd.ni_cnd.cn_flags & ISSYMLINK) {
 			vrele(nd.ni_dvp);
 			vput(nd.ni_vp);
@@ -2052,23 +2035,17 @@ nfsrv_symlink(nfsd, slp, procp, mrq)
 		vrele(nd.ni_startdir);
 	else {
 	    if (v3) {
-		nd.ni_cnd.cn_nameiop = LOOKUP;
-		nd.ni_cnd.cn_flags &= ~(LOCKPARENT | SAVESTART | FOLLOW);
-		nd.ni_cnd.cn_flags |= (NOFOLLOW | LOCKLEAF);
-		nd.ni_cnd.cn_proc = procp;
-		nd.ni_cnd.cn_cred = cred;
-		error = lookup(&nd);
-		if (!error) {
-			bzero((caddr_t)fhp, sizeof(nfh));
-			fhp->fh_fsid = nd.ni_vp->v_mount->mnt_stat.f_fsid;
-			error = VFS_VPTOFH(nd.ni_vp, &fhp->fh_fid);
-			if (!error)
-				error = VOP_GETATTR(nd.ni_vp, &va, cred,
-					procp);
-			vput(nd.ni_vp);
-		}
-	    } else
+		    bzero((caddr_t)fhp, sizeof(nfh));
+		    fhp->fh_fsid = nd.ni_vp->v_mount->mnt_stat.f_fsid;
+		    error = VFS_VPTOFH(nd.ni_vp, &fhp->fh_fid);
+		    if (!error)
+			    error = VOP_GETATTR(nd.ni_vp, &va, cred,
+						procp);
+		    vput(nd.ni_vp);
+	    } else {
 		vrele(nd.ni_startdir);
+		vput(nd.ni_vp);
+	    }
 	    FREE(nd.ni_cnd.cn_pnbuf, M_NAMEI);
 	}
 out:
