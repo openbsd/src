@@ -1,4 +1,4 @@
-#	$OpenBSD: services,v 1.16 1998/01/20 06:54:55 jason Exp $
+#	$OpenBSD: services,v 1.17 1998/09/01 22:57:11 art Exp $
 #
 # Network services, Internet style
 #
@@ -196,6 +196,19 @@ rkinit		2108/tcp			# Kerberos remote kinit
 kx		2111/tcp			# X over kerberos
 kip		2112/tcp			# IP over kerberos
 kauth		2120/tcp			# Remote kauth
+# 
+# AFS Services
+#
+afs3-fileserver		7000/udp	# AFS fileserver
+afs3-callback       	7001/udp	# AFS callback server
+afs3-prserver       	7002/udp	# AFS protection server
+afs3-vlserver		7003/udp	# AFS volumelocation server
+afs3-kaserver       	7004/udp	# AFS kerberos authenication server
+afs3-volser         	7005/udp	# AFS volume server
+afs3-errors         	7006/udp	# AFS error server ?
+afs3-bos            	7007/udp	# AFS basic over-see server ?
+afs3-update         	7008/udp	# ?
+afs3-rmtsys         	7009/udp	# ?
 #
 # Unofficial services
 #
