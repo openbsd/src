@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.50 2001/02/06 06:48:08 mickey Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.51 2001/03/05 03:38:38 angelos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1929,6 +1929,7 @@ bridge_filter(sc, ifp, eh, m)
 		ip = mtod(m, struct ip *);
 	}
 
+	ip->ip_sum = 0;
 	if ((ip->ip_sum = in_cksum(m, hlen)) != 0)
 		goto dropit;
 
@@ -1961,6 +1962,7 @@ bridge_filter(sc, ifp, eh, m)
 	HTONS(ip->ip_len);
 	HTONS(ip->ip_id);
 	HTONS(ip->ip_off);
+	ip->ip_sum = 0;
 	ip->ip_sum = in_cksum(m, hlen);
 
 	/* Reattach SNAP header */
