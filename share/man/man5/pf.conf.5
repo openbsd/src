@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.77 2002/08/08 15:16:42 pb Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.78 2002/08/10 15:40:05 pb Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -276,7 +276,24 @@ rules can optionally specify port ranges instead of single ports.
 \'rdr ... port 2000:2999 -> ... port 4000:*\' redirects port 2000 to 4000,
 2001 to 4001, ..., 2999 to 4999.
 .El
-.Sh LOGGING
+.Sh PARAMETERS
+The rule parameters specify for what packets a rule applies.
+A packet always comes in on or goes out through one interface.
+Most parameters are optional.
+If a parameter is specified, the rule only applies to packets with
+matching attributes.
+Certain parameters can be expressed as lists, in which case
+.Em pfctl
+generates all needed rule combinations.
+.Ss in or out
+The rule applies to incoming or outgoing packets.
+Either
+.Em in
+or
+.Em out
+must be specified.
+To cover both directions, two rules are needed.
+.Ss log
 .Bl -tag -width Fl
 .It Em log
 In addition to the action specified, a log message is generated.
@@ -300,54 +317,12 @@ logging daemon which dumps the logged packets to the file
 in
 .Xr pcap 3
 binary format.
-.Sh QUICK
+.Ss quick
 If a packet matches a rule which has the 
 .Sq quick
 option set, this rule
 is considered the last matching rule, and evaluation of subsequent rules
 is skipped.
-.Sh NO
-The
-.Sq no
-option is to a NAT rule what the
-.Sq quick
-option is to a filter rule.
-This option causes matching packets to remain untranslated.
-.Sh ROUTING
-If a packet matches a rule with a route option set, the packet filter will
-route the packet according to the type of route option.
-.Ss fastroute
-The
-.Em fastroute
-option does a normal route lookup to find the next hop for the packet.
-.Ss route-to
-The
-.Em route-to
-option routes the packet to the specified interface with an optional address
-for the next hop.
-.Ss dup-to
-The
-.Em dup-to
-option creates a duplicate of the packet and routes it like
-.Em route-to.
-The original packet gets routed as it normally would.
-.Sh PARAMETERS
-The rule parameters specify for what packets a rule applies.
-A packet always comes in on or goes out through one interface.
-Most parameters are optional.
-If a parameter is specified, the rule only applies to packets with
-matching attributes.
-Certain parameters can be expressed as lists, in which case
-.Em pfctl
-generates all needed rule combinations.
-.Ss in or out
-The rule applies to incoming or outgoing packets.
-Either
-.Em in
-or
-.Em out
-must be specified.
-To cover both directions, two rules are needed.
 .Ss on <interface>
 The rule applies only to packets coming in on or going out through this
 particular interface.
@@ -529,6 +504,31 @@ expands to
 .Ed
 .Pp
 Note that evaluation takes place at parse time.
+.Sh NO
+The
+.Sq no
+option is to a NAT rule what the
+.Sq quick
+option is to a filter rule.
+This option causes matching packets to remain untranslated.
+.Sh ROUTING
+If a packet matches a rule with a route option set, the packet filter will
+route the packet according to the type of route option.
+.Ss fastroute
+The
+.Em fastroute
+option does a normal route lookup to find the next hop for the packet.
+.Ss route-to
+The
+.Em route-to
+option routes the packet to the specified interface with an optional address
+for the next hop.
+.Ss dup-to
+The
+.Em dup-to
+option creates a duplicate of the packet and routes it like
+.Em route-to.
+The original packet gets routed as it normally would.
 .Sh MACROS
 .Em pfctl
 supports macro definition and expansion like:
