@@ -1,4 +1,4 @@
-/*	$OpenBSD: ispvar.h,v 1.14 2001/01/09 03:29:32 mjacob Exp $ */
+/*	$OpenBSD: ispvar.h,v 1.15 2001/02/12 23:51:20 mjacob Exp $ */
 /*
  * Soft Definitions for for Qlogic ISP SCSI adapters.
  *
@@ -80,12 +80,7 @@ struct ispmdvec {
  * Overall parameters
  */
 #define	MAX_TARGETS	16
-#ifdef	ISP2100_FABRIC
 #define	MAX_FC_TARG	256
-#else
-#define	MAX_FC_TARG	126
-#endif
-
 #define	ISP_MAX_TARGETS(isp)	(IS_FC(isp)? MAX_FC_TARG : MAX_TARGETS)
 #define	ISP_MAX_LUNS(isp)	(isp)->isp_maxluns
 
@@ -235,17 +230,20 @@ typedef struct {
 
 typedef struct {
 	u_int32_t		isp_fwoptions	: 16,
-						: 4,
+						: 3,
+				isp_iid_set	: 1,
 				loop_seen_once	: 1,
 				isp_loopstate	: 3,	/* Current Loop State */
 				isp_fwstate	: 3,	/* ISP F/W state */
 				isp_gotdparms	: 1,
 				isp_topo	: 3,
 				isp_onfabric	: 1;
+	u_int8_t		isp_iid;	/* 'initiator' id */
 	u_int8_t		isp_loopid;	/* hard loop id */
 	u_int8_t		isp_alpa;	/* ALPA */
-	volatile u_int16_t	isp_lipseq;	/* LIP sequence # */
 	u_int32_t		isp_portid;
+	volatile u_int16_t	isp_lipseq;	/* LIP sequence # */
+	u_int16_t		isp_xxxxxx;
 	u_int8_t		isp_execthrottle;
 	u_int8_t		isp_retry_delay;
 	u_int8_t		isp_retry_count;
@@ -266,14 +264,16 @@ typedef struct {
 	struct lportdb {
 		u_int
 					loopid		: 8,
-							: 4,
+							: 2,
+					was_fabric_dev	: 1,
+					fabric_dev	: 1,
 					loggedin	: 1,
 					roles		: 2,
 					valid		: 1;
 		u_int32_t		portid;
 		u_int64_t		node_wwn;
 		u_int64_t		port_wwn;
-	} portdb[MAX_FC_TARG], tport[FL_PORT_ID];
+	} portdb[MAX_FC_TARG], tport[FC_PORT_ID];
 
 	/*
 	 * Scratch DMA mapped in area to fetch Port Database stuff, etc.
@@ -294,6 +294,11 @@ typedef struct {
 #define	LOOP_NIL		0
 #define	LOOP_LIP_RCVD		1
 #define	LOOP_PDB_RCVD		2
+#define	LOOP_SCANNING_FABRIC	3
+#define	LOOP_FSCAN_DONE		4
+#define	LOOP_SCANNING_LOOP	5
+#define	LOOP_LSCAN_DONE		4
+#define	LOOP_SYNCING_PDB	6
 #define	LOOP_READY		7
 
 #define	TOPO_NL_PORT		0
@@ -329,14 +334,17 @@ typedef struct ispsoftc {
 	u_int8_t		isp_revision;	/* HBA Chip H/W Revision */
 	u_int32_t		isp_maxluns;	/* maximum luns supported */
 
-	u_int32_t
-				isp_touched	: 1,	/* board ever seen? */
+	u_int32_t		isp_clock	: 8,	/* input clock */
+						: 6,
+				isp_role	: 2,
 						: 1,
+				isp_touched	: 1,	/* board ever seen? */
 				isp_bustype	: 1,	/* SBus or PCI */
 				isp_loaded_fw	: 1,	/* loaded firmware */
-				isp_dblev	: 12,	/* debug log mask */
-				isp_clock	: 8,	/* input clock */
-				isp_confopts	: 8;	/* config options */
+				isp_dblev	: 12;	/* debug log mask */
+
+	u_int32_t		isp_confopts;		/* config options */
+
 	/*
 	 * Instrumentation
 	 */
@@ -359,6 +367,7 @@ typedef struct ispsoftc {
 	volatile u_int16_t	isp_residx;	/* index of next result */
 	volatile u_int16_t	isp_lasthdls;	/* last handle seed */
 	volatile u_int16_t	isp_mboxtmp[MAX_MAILBOX];
+	volatile u_int16_t	isp_lastmbxcmd;	/* last mbox command sent */
 
 	/*
 	 * Active commands are stored here, indexed by handle functions.
@@ -390,7 +399,6 @@ typedef struct ispsoftc {
  */
 #define	ISP_CFG_NORELOAD	0x80	/* don't download f/w */
 #define	ISP_CFG_NONVRAM		0x40	/* ignore NVRAM */
-#define	ISP_CFG_NOINIT		0x20	/* just set defaults- don't init */
 #define	ISP_CFG_FULL_DUPLEX	0x01	/* Full Duplex (Fibre Channel only) */
 #define	ISP_CFG_OWNWWN		0x02	/* override NVRAM wwn */
 #define	ISP_CFG_PORT_PREF	0x0C	/* Mask for Port Prefs (2200 only) */
@@ -400,11 +408,42 @@ typedef struct ispsoftc {
 #define	ISP_CFG_LPORT_ONLY	0x0C	/* insist on {N/F}L-Port connection */
 
 /*
+ * Prior to calling isp_reset for the first time, the outer layer
+ * should set isp_role to one of NONE, INITIATOR, TARGET, BOTH.
+ *
+ * If you set ISP_ROLE_NONE, the cards will be reset, new firmware loaded,
+ * NVRAM read, and defaults set, but any further initialization (e.g.
+ * INITIALIZE CONTROL BLOCK commands for 2X00 cards) won't be done.
+ *
+ * If INITIATOR MODE isn't set, attempts to run commands will be stopped
+ * at isp_start and completed with the moral equivalent of SELECTION TIMEOUT.
+ *
+ * If TARGET MODE is set, it doesn't mean that the rest of target mode support
+ * needs to be enabled, or will even work. What happens with the 2X00 cards
+ * here is that if you have enabled it with TARGET MODE as part of the ICB
+ * options, but you haven't given the f/w any ram resources for ATIOs or
+ * Immediate Notifies, the f/w just handles what it can and you never see
+ * anything. Basically, it sends a single byte of data (the first byte,
+ * which you can set as part of the INITIALIZE CONTROL BLOCK command) for
+ * INQUIRY, and sends back QUEUE FULL status for any other command.
+ * 
+ */
+#define	ISP_ROLE_NONE		0x0
+#define	ISP_ROLE_INITIATOR	0x1
+#define	ISP_ROLE_TARGET		0x2
+#define	ISP_ROLE_BOTH		(ISP_ROLE_TARGET|ISP_ROLE_INITIATOR)
+#define	ISP_ROLE_EITHER		ISP_ROLE_BOTH
+#ifndef	ISP_DEFAULT_ROLES
+#define	ISP_DEFAULT_ROLES	ISP_ROLE_INITIATOR
+#endif
+
+
+/*
  * Firmware related defines
  */
-#define	ISP_CODE_ORG		0x1000	/* default f/w code start */
+#define	ISP_CODE_ORG			0x1000	/* default f/w code start */
 #define	ISP_FW_REV(maj, min, mic)	((maj << 24) | (min << 16) | mic)
-#define	ISP_FW_REVX(xp)	((xp[0]<<24) | (xp[1] << 16) | xp[2])
+#define	ISP_FW_REVX(xp)			((xp[0]<<24) | (xp[1] << 16) | xp[2])
 
 /*
  * Bus (implementation) types
@@ -495,16 +534,48 @@ void isp_done __P((XS_T *));
 /*
  * Platform Dependent to External to Internal Control Function
  *
- * Assumes all locks are held and that no reentrancy issues need be dealt with.
+ * Assumes locks are held on entry. You should note that with many of
+ * these commands and locks may be released while this is occurring.
  *
+ * A few notes about some of these functions:
+ *
+ * ISPCTL_FCLINK_TEST tests to make sure we have good fibre channel link.
+ * The argument is a pointer to an integer which is the time, in microseconds,
+ * we should wait to see whether we have good link. This test, if successful,
+ * lets us know our connection topology and our Loop ID/AL_PA and so on.
+ * You can't get anywhere without this.
+ *
+ * ISPCTL_SCAN_FABRIC queries the name server (if we're on a fabric) for
+ * all entities using the FC Generic Services subcommand GET ALL NEXT.
+ * For each found entity, an ISPASYNC_FABRICDEV event is generated (see
+ * below).
+ *
+ * ISPCTL_SCAN_LOOP does a local loop scan. This is only done if the connection
+ * topology is NL or FL port (private or public loop). Since the Qlogic f/w
+ * 'automatically' manages local loop connections, this function essentially
+ * notes the arrival, departure, and possible shuffling around of local loop
+ * entities. Thus for each arrival and departure this generates an isp_async
+ * event of ISPASYNC_PROMENADE (see below).
+ *
+ * ISPCTL_PDB_SYNC is somewhat misnamed. It actually is the final step, in
+ * order, of ISPCTL_FCLINK_TEST, ISPCTL_SCAN_FABRIC, and ISPCTL_SCAN_LOOP.
+ * The main purpose of ISPCTL_PDB_SYNC is to complete management of logging
+ * and logging out of fabric devices (if one is on a fabric) and then marking
+ * the 'loop state' as being ready to now be used for sending commands to
+ * devices. Originally fabric name server and local loop scanning were
+ * part of this function. It's now been seperated to allow for finer control.
  */
 typedef enum {
 	ISPCTL_RESET_BUS,		/* Reset Bus */
 	ISPCTL_RESET_DEV,		/* Reset Device */
 	ISPCTL_ABORT_CMD,		/* Abort Command */
-	ISPCTL_UPDATE_PARAMS,		/* Update Operating Parameters */
+	ISPCTL_UPDATE_PARAMS,		/* Update Operating Parameters (SCSI) */
 	ISPCTL_FCLINK_TEST,		/* Test FC Link Status */
+	ISPCTL_SCAN_FABRIC,		/* (Re)scan Fabric Name Server */
+	ISPCTL_SCAN_LOOP,		/* (Re)scan Local Loop */
 	ISPCTL_PDB_SYNC,		/* Synchronize Port Database */
+	ISPCTL_SEND_LIP,		/* Send a LIP */
+	ISPCTL_GET_POSMAP,		/* Get FC-AL position map */
 	ISPCTL_TOGGLE_TMODE		/* toggle target mode */
 } ispctl_t;
 int isp_control __P((struct ispsoftc *, ispctl_t, void *));
@@ -514,22 +585,55 @@ int isp_control __P((struct ispsoftc *, ispctl_t, void *));
  * Platform Dependent to Internal to External Control Function
  * (each platform must provide such a function)
  *
- * Assumes all locks are held and that no reentrancy issues need be dealt with.
+ * Assumes locks are held.
+ *
+ * A few notes about some of these functions:
+ *
+ * ISPASYNC_CHANGE_NOTIFY notifies the outer layer that a change has
+ * occurred that invalidates the list of fabric devices known and/or
+ * the list of known loop devices. The argument passed is a pointer
+ * whose values are defined below  (local loop change, name server
+ * change, other). 'Other' may simply be a LIP, or a change in
+ * connection topology.
+ *
+ * ISPASYNC_FABRIC_DEV announces the next element in a list of
+ * fabric device names we're getting out of the name server. The
+ * argument points to a GET ALL NEXT response structure. The list
+ * is known to terminate with an entry that refers to ourselves.
+ * One of the main purposes of this function is to allow outer
+ * layers, which are OS dependent, to set policy as to which fabric
+ * devices might actually be logged into (and made visible) later
+ * at ISPCTL_PDB_SYNC time. Since there's a finite number of fabric
+ * devices that we can log into (256 less 3 'reserved' for F-port
+ * topologies), and fabrics can grow up to 8 million or so entries
+ * (24 bits of Port Address, less a wad of reserved spaces), clearly
+ * we had better let the OS determine login policy.
+ *
+ * ISPASYNC_PROMENADE has an argument that is a pointer to an integer which
+ * is an index into the portdb in the softc ('target'). Whether that entrie's
+ * valid tag is set or not says whether something has arrived or departed.
+ * The name refers to a favorite pastime of many city dwellers- watching
+ * people come and go, talking of Michaelangelo, and so on..
  */
 
 typedef enum {
-	ISPASYNC_NEW_TGT_PARAMS,
+	ISPASYNC_NEW_TGT_PARAMS,	/* New Target Parameters Negotiated */
 	ISPASYNC_BUS_RESET,		/* Bus Was Reset */
 	ISPASYNC_LOOP_DOWN,		/* FC Loop Down */
 	ISPASYNC_LOOP_UP,		/* FC Loop Up */
-	ISPASYNC_CHANGE_NOTIFY,		/* FC SNS or Port Database Changed */
-	ISPASYNC_FABRIC_DEV,		/* FC Fabric Device Arrived/Left */
-	ISPASYNC_LOGGED_INOUT,		/* FC Object Logged In/Out */
+	ISPASYNC_CHANGE_NOTIFY,		/* FC Change Notification */
+	ISPASYNC_FABRIC_DEV,		/* FC Fabric Device Arrival */
+	ISPASYNC_PROMENADE,		/* FC Objects coming && going */
 	ISPASYNC_TARGET_MESSAGE,	/* target message */
 	ISPASYNC_TARGET_EVENT,		/* target asynchronous event */
-	ISPASYNC_TARGET_ACTION		/* other target command action */
+	ISPASYNC_TARGET_ACTION,		/* other target command action */
+	ISPASYNC_CONF_CHANGE		/* Platform Configuration Change */
 } ispasync_t;
 int isp_async __P((struct ispsoftc *, ispasync_t, void *));
+
+#define	ISPASYNC_CHANGE_PDB	((void *) 0)
+#define	ISPASYNC_CHANGE_SNS	((void *) 1)
+#define	ISPASYNC_CHANGE_OTHER	((void *) 2)
 
 /*
  * Platform Dependent Error and Debug Printout
@@ -563,7 +667,6 @@ void isp_prt __P((struct ispsoftc *, int level, const char *, ...));
  *
  *	INLINE		-	platform specific define for 'inline' functions
  *
- *	ISP2100_FABRIC	-	defines whether FABRIC support is enabled
  *	ISP2100_SCRLEN	-	length for the Fibre Channel scratch DMA area
  *
  *	MEMZERO(dst, src)			platform zeroing function
@@ -596,7 +699,7 @@ void isp_prt __P((struct ispsoftc *, int level, const char *, ...));
  *	MBOX_WAIT_COMPLETE(struct ispsoftc *)	wait for mailbox cmd to be done
  *	MBOX_NOTIFY_COMPLETE(struct ispsoftc *)	notification of mbox cmd donee
  *	MBOX_RELEASE(struct ispsoftc *)		release lock on mailbox regs
- * 
+ *
  *
  *	SCSI_GOOD	SCSI 'Good' Status
  *	SCSI_CHECK	SCSI 'Check Condition' Status
