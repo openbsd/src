@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.22 2004/12/14 19:11:54 jfb Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.23 2004/12/14 19:56:35 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -550,6 +550,7 @@ void
 cvs_read_rcfile(void)
 {
 	char rcpath[MAXPATHLEN], linebuf[128], *lp;
+	int linenum = 0;
 	size_t len;
 	struct cvs_cmd *cmdp;
 	struct passwd *pw;
@@ -572,10 +573,12 @@ cvs_read_rcfile(void)
 	}
 
 	while (fgets(linebuf, sizeof(linebuf), fp) != NULL) {
+		linenum++;
 		if ((len = strlen(linebuf)) == 0)
 			continue;
 		if (linebuf[len - 1] != '\n') {
-			cvs_log(LP_WARN, ".cvsrc line too long");
+			cvs_log(LP_WARN, "line too long in `%s:%d'", rcpath,
+				linenum);
 			break;
 		}
 		linebuf[--len] = '\0';
@@ -614,7 +617,7 @@ cvs_read_rcfile(void)
 		}
 	}
 	if (ferror(fp)) {
-		cvs_log(LP_NOTICE, "failed to read line from cvsrc");
+		cvs_log(LP_NOTICE, "failed to read line from `%s'", rcpath);
 	}
 
 	(void)fclose(fp);
