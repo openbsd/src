@@ -40,8 +40,6 @@ Creating a bootable hard disk using SunOS or other Un*x-like system:
 	Use the dd(1) utility to copy the file to the hard drive.
 	Under SunOS, the command would be:
 
-		dd if=floppy{:--:}OSrev.fs of=/dev/rsd0b bs=36b
-				- or -
 		dd if=miniroot{:--:}OSrev.fs of=/dev/rsd0b bs=36b
 
 	The blocksize is arbitrary as long as it's a multiple of 512-bytes
