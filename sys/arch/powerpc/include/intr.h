@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.13 2001/11/19 05:13:50 drahn Exp $ */
+/*	$OpenBSD: intr.h,v 1.14 2002/01/21 17:18:46 drahn Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom, Opsycon AB and RTMX Inc, USA.
@@ -72,39 +72,39 @@ extern int imask[7];
  * achived with an empty asm volatile statement. the compiler
  * will not move instructions past asm volatiles.
  */
-static __inline int
+volatile static __inline int
 splraise(int newcpl)
 {
 	int oldcpl;
 
-	__asm__ volatile("");	/* don't reorder.... */
+	__asm__ volatile("":::"memory");	/* don't reorder.... */
 	oldcpl = cpl;
 	cpl = oldcpl | newcpl;
-	__asm__ volatile("");	/* reorder protect */
+	__asm__ volatile("":::"memory");	/* don't reorder.... */
 	return(oldcpl);
 }
 
-static __inline void
+static _volatile _inline void
 splx(int newcpl)
 {
-	__asm__ volatile("");	/* reorder protect */
+	__asm__ volatile("":::"memory");	/* reorder protect */
 	cpl = newcpl;
 	if(ipending & ~newcpl)
 		do_pending_int();
-	__asm__ volatile("");	/* reorder protect */
+	__asm__ volatile("":::"memory");	/* reorder protect */
 }
 
-static __inline int
+volatile static __inline int
 spllower(int newcpl)
 {
 	int oldcpl;
 
-	__asm__ volatile("");	/* reorder protect */
+	__asm__ volatile("":::"memory");	/* reorder protect */
 	oldcpl = cpl;
 	cpl = newcpl;
 	if(ipending & ~newcpl)
 		do_pending_int();
-	__asm__ volatile("");	/* reorder protect */
+	__asm__ volatile("":::"memory");	/* reorder protect */
 	return(oldcpl);
 }
 
