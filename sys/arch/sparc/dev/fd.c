@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.13 1996/12/06 11:23:02 deraadt Exp $	*/
+/*	$OpenBSD: fd.c,v 1.14 1997/04/02 01:33:15 deraadt Exp $	*/
 /*	$NetBSD: fd.c,v 1.33.4.1 1996/06/12 20:52:25 pk Exp $	*/
 
 /*-
@@ -1637,7 +1637,7 @@ fdgetdisklabel(dev)
 	char *errstring;
 
 	bzero(lp, sizeof(struct disklabel));
-	bzero(lp, sizeof(struct cpu_disklabel));
+	bzero(clp, sizeof(struct cpu_disklabel));
 
 	lp->d_secsize = FDC_BSIZE;
 	lp->d_secpercyl = fd->sc_type->seccyl;
