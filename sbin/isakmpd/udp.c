@@ -1,4 +1,4 @@
-/* $OpenBSD: udp.c,v 1.69 2004/04/15 18:39:26 deraadt Exp $	 */
+/* $OpenBSD: udp.c,v 1.70 2004/05/23 16:14:37 deraadt Exp $	 */
 /* $EOM: udp.c,v 1.57 2001/01/26 10:09:57 niklas Exp $	 */
 
 /*
@@ -140,7 +140,7 @@ udp_make(struct sockaddr *laddr)
 		log_print("udp_make: malloc (%lu) failed", (unsigned long) sizeof *t);
 		return 0;
 	}
-	s = monitor_socket(laddr->sa_family, SOCK_DGRAM, IPPROTO_UDP);
+	s = socket(laddr->sa_family, SOCK_DGRAM, IPPROTO_UDP);
 	if (s == -1) {
 		log_error("udp_make: socket (%d, %d, %d)", laddr->sa_family,
 		    SOCK_DGRAM, IPPROTO_UDP);
@@ -153,11 +153,11 @@ udp_make(struct sockaddr *laddr)
 	/* Wildcard address ?  */
 	switch (laddr->sa_family) {
 	case AF_INET:
-		if (((struct sockaddr_in *) laddr)->sin_addr.s_addr == INADDR_ANY)
+		if (((struct sockaddr_in *)laddr)->sin_addr.s_addr == INADDR_ANY)
 			wildcardaddress = 1;
 		break;
 	case AF_INET6:
-		if (IN6_IS_ADDR_UNSPECIFIED(&((struct sockaddr_in6 *) laddr)->sin6_addr))
+		if (IN6_IS_ADDR_UNSPECIFIED(&((struct sockaddr_in6 *)laddr)->sin6_addr))
 			wildcardaddress = 1;
 		break;
 	}
@@ -169,7 +169,7 @@ udp_make(struct sockaddr *laddr)
 	 * sending from it make sure it is entirely reuseable with SO_REUSEPORT.
 	 */
 	on = 1;
-	if (monitor_setsockopt(s, SOL_SOCKET,
+	if (setsockopt(s, SOL_SOCKET,
 	    wildcardaddress ? SO_REUSEPORT : SO_REUSEADDR,
 	    (void *) &on, sizeof on) == -1) {
 		log_error("udp_make: setsockopt (%d, %d, %d, %p, %lu)", s, SOL_SOCKET,
@@ -345,7 +345,7 @@ udp_bind_if(char *ifname, struct sockaddr *if_addr, void *arg)
 		return 0;
 	}
 	/* Don't bother with interfaces that are down.  */
-	s = monitor_socket(if_addr->sa_family, SOCK_DGRAM, 0);
+	s = socket(if_addr->sa_family, SOCK_DGRAM, 0);
 	if (s == -1) {
 		log_error("udp_bind_if: socket (%d, SOCK_DGRAM, 0) failed",
 		    if_addr->sa_family);

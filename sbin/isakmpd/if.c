@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.19 2004/04/15 18:39:25 deraadt Exp $	*/
+/*	$OpenBSD: if.c,v 1.20 2004/05/23 16:14:37 deraadt Exp $	*/
 /*	$EOM: if.c,v 1.12 1999/10/01 13:45:20 niklas Exp $	*/
 
 /*
@@ -65,7 +65,7 @@ siocgifconf(struct ifconf *ifcp)
 	int	s, len;
 
 	/* Get a socket to ask for the network interface configurations.  */
-	s = monitor_socket(AF_INET, SOCK_DGRAM, 0);
+	s = socket(AF_INET, SOCK_DGRAM, 0);
 	if (s == -1) {
 		log_error("siocgifconf: socket (AF_INET, SOCK_DGRAM, 0) failed");
 		return -1;
@@ -88,6 +88,7 @@ siocgifconf(struct ifconf *ifcp)
 			log_error("siocgifconf: ioctl (%d, SIOCGIFCONF, ...) failed", s);
 			goto err;
 		}
+
 		/*
 		 * If there is place for another ifreq we can be sure that the buffer
 		 * was big enough, otherwise double the size and try again.
@@ -136,7 +137,7 @@ if_map(int (*func)(char *, struct sockaddr *, void *), void *arg)
 	limit = ifc.ifc_buf + ifc.ifc_len;
 	for (p = ifc.ifc_buf; p < limit; p += len) {
 		ifrp = (struct ifreq *) p;
-		if ((*func) (ifrp->ifr_name, &ifrp->ifr_addr, arg) == -1)
+		if ((*func)(ifrp->ifr_name, &ifrp->ifr_addr, arg) == -1)
 			err = -1;
 		len = sizeof ifrp->ifr_name +
 		    MAX(sysdep_sa_len(&ifrp->ifr_addr), sizeof ifrp->ifr_addr);
