@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofbus.c,v 1.3 1998/08/22 18:00:34 rahnds Exp $	*/
+/*	$OpenBSD: ofbus.c,v 1.4 1998/09/09 04:25:52 rahnds Exp $	*/
 /*	$NetBSD: ofbus.c,v 1.3 1996/10/13 01:38:11 christos Exp $	*/
 
 /*
@@ -126,6 +126,7 @@ ofrattach(parent, dev, aux)
 		ofname[l] = 0;
 		systype(ofname);
 	}
+	ofw_intr_establish();
 		
 
 	for (child = OF_child(ofp->phandle); child; child = OF_peer(child)) {
