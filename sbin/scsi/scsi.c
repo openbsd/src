@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi.c,v 1.10 2003/03/13 05:00:45 deraadt Exp $	*/
+/*	$OpenBSD: scsi.c,v 1.11 2003/06/11 06:22:15 deraadt Exp $	*/
 /*	$FreeBSD: scsi.c,v 1.11 1996/04/06 11:00:28 joerg Exp $	*/
 
 /*
@@ -76,10 +76,10 @@ int modepage = 0; /* Read this mode page */
 int pagectl = 0;  /* Mode sense page control */
 int seconds = 2;
 
-void usage(void)
+void
+usage(void)
 {
 	printf(
-
 "Usage:\n"
 "\n"
 "  scsi -f device -d debug_level                    # To set debug level\n"
@@ -103,12 +103,12 @@ void usage(void)
 	exit (1);
 }
 
-void procargs(int *argc_p, char ***argv_p)
+void
+procargs(int *argc_p, char ***argv_p)
 {
 	int argc = *argc_p;
 	char **argv = *argv_p;
-	int		    fflag,
-	                    ch;
+	int		    fflag, ch;
 
 	fflag = 0;
 	commandflag = 0;
@@ -191,7 +191,8 @@ struct get_hook
 
 /* iget: Integer argument callback
  */
-int iget(void *hook, char *name)
+int
+iget(void *hook, char *name)
 {
 	struct get_hook *h = (struct get_hook *)hook;
 	int arg;
@@ -212,7 +213,8 @@ int iget(void *hook, char *name)
 
 /* cget: char * argument callback
  */
-char *cget(void *hook, char *name)
+char *
+cget(void *hook, char *name)
 {
 	struct get_hook *h = (struct get_hook *)hook;
 	char *arg;

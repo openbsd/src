@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.6 2003/06/02 20:06:16 millert Exp $	*/
+/*	$OpenBSD: conf.c,v 1.7 2003/06/11 06:22:14 deraadt Exp $	*/
 /*	$NetBSD: conf.c,v 1.4 1995/04/23 10:33:19 cgd Exp $	*/
 
 /*
@@ -70,8 +70,7 @@ static char *conf_file;		/* XXX for regerror */
  * just after (pred)
  */
 static void
-ins_que(elem, pred)
-	qelem *elem, *pred;
+ins_que(qelem *elem, qelem *pred)
 {
 	qelem *p = pred->q_forw;
 	elem->q_back = pred;
@@ -84,8 +83,7 @@ ins_que(elem, pred)
  * Remove an element from a 2-way list
  */
 static void
-rem_que(elem)
-	qelem *elem;
+rem_que(qelem *elem)
 {
 	qelem *p = elem->q_forw;
 	qelem *p2 = elem->q_back;
@@ -97,8 +95,7 @@ rem_que(elem)
  * Error checking malloc
  */
 static void *
-xmalloc(siz)
-	size_t siz;
+xmalloc(size_t siz)
 {
 	void *p = malloc(siz);
 	if (p)
@@ -115,9 +112,7 @@ xmalloc(siz)
  * and 1 is returned.
  */
 static int
-pinsert(p0, q0)
-	path *p0;
-	qelem *q0;
+pinsert(path *p0, qelem *q0)
 {
 	qelem *q;
 
@@ -135,9 +130,7 @@ pinsert(p0, q0)
 }
 
 static path *
-palloc(cline, lno)
-	char *cline;
-	int lno;
+palloc(char *cline, int lno)
 {
 	int c;
 	char *s;
@@ -222,8 +215,7 @@ palloc(cline, lno)
  * Free a path structure
  */
 static void
-pfree(p)
-	path *p;
+pfree(path *p)
 {
 	free(p->p_args);
 	regfree(&(p->p_re));
@@ -236,9 +228,7 @@ pfree(p)
  * and add all the ones on xq.
  */
 static void
-preplace(q0, xq)
-	qelem *q0;
-	qelem *xq;
+preplace(qelem *q0, qelem *xq)
 {
 	/*
 	 * While the list is not empty,
@@ -262,9 +252,7 @@ preplace(q0, xq)
  * add them to the list of paths.
  */
 static void
-readfp(q0, fp)
-	qelem *q0;
-	FILE *fp;
+readfp(qelem *q0, FILE *fp)
 {
 	char cline[LINE_MAX];
 	int nread = 0;
@@ -300,9 +288,7 @@ readfp(q0, fp)
  * If the file is not readable, then no changes take place
  */
 void
-conf_read(q, conf)
-	qelem *q;
-	char *conf;
+conf_read(qelem *q, char *conf)
 {
 	FILE *fp = fopen(conf, "r");
 	if (fp) {
@@ -316,9 +302,8 @@ conf_read(q, conf)
 }
 
 
-char **conf_match(q0, key)
-qelem *q0;
-char *key;
+char **
+conf_match(qelem *q0, char *key)
 {
 	qelem *q;
 

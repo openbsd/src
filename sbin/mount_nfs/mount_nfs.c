@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_nfs.c,v 1.31 2003/06/02 20:06:15 millert Exp $	*/
+/*	$OpenBSD: mount_nfs.c,v 1.32 2003/06/11 06:22:14 deraadt Exp $	*/
 /*	$NetBSD: mount_nfs.c,v 1.12.4.1 1996/05/25 22:48:05 fvdl Exp $	*/
 
 /*
@@ -174,9 +174,7 @@ int	xdr_dir(XDR *, char *);
 int	xdr_fh(XDR *, struct nfhret *);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int c;
 	struct nfs_args *nfsargsp;
@@ -384,9 +382,7 @@ main(argc, argv)
 }
 
 int
-getnfsargs(spec, nfsargsp)
-	char *spec;
-	struct nfs_args *nfsargsp;
+getnfsargs(char *spec, struct nfs_args *nfsargsp)
 {
 	CLIENT *clp;
 	struct hostent *hp;
@@ -568,17 +564,13 @@ tryagain:
  * xdr routines for mount rpc's
  */
 int
-xdr_dir(xdrsp, dirp)
-	XDR *xdrsp;
-	char *dirp;
+xdr_dir(XDR *xdrsp, char *dirp)
 {
 	return (xdr_string(xdrsp, &dirp, RPCMNT_PATHLEN));
 }
 
 int
-xdr_fh(xdrsp, np)
-	XDR *xdrsp;
-	struct nfhret *np;
+xdr_fh(XDR *xdrsp, struct nfhret *np)
 {
 	int i;
 	long auth, authcnt, authfnd = 0;
@@ -618,12 +610,12 @@ xdr_fh(xdrsp, np)
 }
 
 __dead void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr, "usage: mount_nfs %s\n%s\n%s\n%s\n",
-"[-23PTUbcdilqs] [-a maxreadahead] [-D deadthresh]",
-"\t[-I readdirsize] [-g maxgroups] [-L leaseterm] [-o options]",
-"\t[-R retrycnt] [-r readsize] [-t timeout] [-w writesize] [-x retrans]",
-"\trhost:path node");
+	    "[-23PTUbcdilqs] [-a maxreadahead] [-D deadthresh]",
+	    "\t[-I readdirsize] [-g maxgroups] [-L leaseterm] [-o options]",
+	    "\t[-R retrycnt] [-r readsize] [-t timeout] [-w writesize] [-x retrans]",
+	    "\trhost:path node");
 	exit(1);
 }

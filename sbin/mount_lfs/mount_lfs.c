@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_lfs.c,v 1.9 2003/06/02 20:06:15 millert Exp $	*/
+/*	$OpenBSD: mount_lfs.c,v 1.10 2003/06/11 06:22:13 deraadt Exp $	*/
 /*	$NetBSD: mount_lfs.c,v 1.4 1996/04/13 05:35:44 cgd Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_lfs.c	8.3 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$OpenBSD: mount_lfs.c,v 1.9 2003/06/02 20:06:15 millert Exp $";
+static char rcsid[] = "$OpenBSD: mount_lfs.c,v 1.10 2003/06/11 06:22:13 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -70,9 +70,7 @@ void	invoke_cleaner(char *);
 int short_rds, cleaner_debug;
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	struct ufs_args args;
 	int ch, mntflags, noclean;
@@ -142,8 +140,7 @@ main(argc, argv)
 }
 
 void
-invoke_cleaner(name)
-	char *name;
+invoke_cleaner(char *name)
 {
 	char *args[6], **ap = args;
 
@@ -161,7 +158,7 @@ invoke_cleaner(name)
 }
 
 void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr,
 		"usage: mount_lfs [-dns] [-o options] special node\n");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass4.c,v 1.5 2003/06/02 20:06:15 millert Exp $	*/
+/*	$OpenBSD: pass4.c,v 1.6 2003/06/11 06:22:13 deraadt Exp $	*/
 /*	$NetBSD: pass4.c,v 1.2 1997/09/14 14:27:29 lukem Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #include "extern.h"
 
 void
-pass4()
+pass4(void)
 {
 	ino_t inumber;
 	struct zlncnt *zlnp;
@@ -104,8 +104,7 @@ pass4()
 }
 
 int
-pass4check(idesc)
-	struct inodesc *idesc;
+pass4check(struct inodesc *idesc)
 {
 	struct dups *dlp;
 	int nfrags, res = KEEPON;

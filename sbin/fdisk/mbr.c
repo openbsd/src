@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.17 2003/06/03 01:13:19 weingart Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.18 2003/06/11 06:22:12 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -44,9 +44,7 @@
 
 
 void
-MBR_init(disk, mbr)
-	disk_t *disk;
-	mbr_t *mbr;
+MBR_init(disk_t *disk, mbr_t *mbr)
 {
 	/* Fix up given mbr for this disk */
 	mbr->part[0].flag = 0;
@@ -90,12 +88,7 @@ MBR_init(disk, mbr)
 }
 
 void
-MBR_parse(disk, mbr_buf, offset, reloff, mbr)
-	disk_t *disk;
-	char *mbr_buf;
-	off_t offset;
-	off_t reloff;
-	mbr_t *mbr;
+MBR_parse(disk_t *disk, char *mbr_buf, off_t offset, off_t reloff, mbr_t *mbr)
 {
 	int i;
 
@@ -110,9 +103,7 @@ MBR_parse(disk, mbr_buf, offset, reloff, mbr)
 }
 
 void
-MBR_make(mbr, mbr_buf)
-	mbr_t *mbr;
-	char *mbr_buf;
+MBR_make(mbr_t *mbr, char *mbr_buf)
 {
 	int i;
 
@@ -125,9 +116,7 @@ MBR_make(mbr, mbr_buf)
 }
 
 void
-MBR_print(mbr, units)
-	mbr_t *mbr;
-	char *units;
+MBR_print(mbr_t *mbr, char *units)
 {
 	int i;
 
@@ -142,10 +131,7 @@ MBR_print(mbr, units)
 }
 
 int
-MBR_read(fd, where, buf)
-	int fd;
-	off_t where;
-	char *buf;
+MBR_read(int fd, off_t where, char *buf)
 {
 	off_t off;
 	int len;
@@ -161,10 +147,7 @@ MBR_read(fd, where, buf)
 }
 
 int
-MBR_write(fd, where, buf)
-	int fd;
-	off_t where;
-	char *buf;
+MBR_write(int fd, off_t where, char *buf)
 {
 	off_t off;
 	int len;
@@ -181,9 +164,7 @@ MBR_write(fd, where, buf)
 }
 
 void
-MBR_pcopy(disk, mbr)
-	disk_t *disk;
-	mbr_t *mbr;
+MBR_pcopy(disk_t *disk, mbr_t *mbr)
 {
 	/*
 	 * Copy partition table from the disk indicated

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass5.c,v 1.11 2003/06/02 20:06:15 millert Exp $	*/
+/*	$OpenBSD: pass5.c,v 1.12 2003/06/11 06:22:13 deraadt Exp $	*/
 /*	$NetBSD: pass5.c,v 1.7 2000/01/28 16:01:46 bouyer Exp $ */
 
 /*
@@ -49,7 +49,7 @@
 void print_bmap(u_char *,u_int32_t);
 
 void
-pass5()
+pass5(void)
 {
 	int c;
 	struct m_ext2fs *fs = &sblock;
@@ -162,8 +162,8 @@ pass5()
 		cs_ndir += ndirs;
 
 		if (debug && (fs2h16(fs->e2fs_gd[c].ext2bgd_nbfree) != nbfree ||
-					  fs2h16(fs->e2fs_gd[c].ext2bgd_nifree) != nifree ||
-					  fs2h16(fs->e2fs_gd[c].ext2bgd_ndirs) != ndirs)) {
+		    fs2h16(fs->e2fs_gd[c].ext2bgd_nifree) != nifree ||
+		    fs2h16(fs->e2fs_gd[c].ext2bgd_ndirs) != ndirs)) {
 			printf("summary info for cg %d is %d, %d, %d,"
 					"should be %d, %d, %d\n", c,
 					fs2h16(fs->e2fs_gd[c].ext2bgd_nbfree),
@@ -230,9 +230,7 @@ pass5()
 }
 
 void
-print_bmap(map, size)
-	u_char *map;
-	u_int32_t size;
+print_bmap(u_char *map, u_int32_t size)
 {
 	int i, j;
 

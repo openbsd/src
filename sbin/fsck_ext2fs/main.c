@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.10 2003/06/02 20:06:15 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.11 2003/06/11 06:22:13 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.1 1997/06/11 11:21:50 bouyer Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 1/23/94";
 #if 0
 static char rcsid[] = "$NetBSD: main.c,v 1.1 1997/06/11 11:21:50 bouyer Exp $";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.10 2003/06/02 20:06:15 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.11 2003/06/11 06:22:13 deraadt Exp $";
 #endif
 #endif
 #endif /* not lint */
@@ -76,9 +76,7 @@ static  void usage(void);
 
 
 int
-main(argc, argv)
-	int	argc;
-	char	*argv[];
+main(int argc, char *argv[])
 {
 	int ch;
 	int ret = 0;
@@ -148,10 +146,7 @@ main(argc, argv)
 }
 
 static int
-argtoi(flag, req, str, base)
-	int flag;
-	char *req, *str;
-	int base;
+argtoi(int flag, char *req, char *str, int base)
 {
 	char *cp;
 	int ret;
@@ -167,10 +162,7 @@ argtoi(flag, req, str, base)
  */
 /* ARGSUSED */
 static int
-checkfilesys(filesys, mntpt, auxdata, child)
-	char *filesys, *mntpt;
-	long auxdata;
-	int child;
+checkfilesys(char *filesys, char *mntpt, long auxdata, int child)
 {
 	daddr_t n_bfree;
 	struct dups *dp;
@@ -322,7 +314,7 @@ checkfilesys(filesys, mntpt, auxdata, child)
 }
 
 static void
-usage()
+usage(void)
 {
 	extern char *__progname;
 

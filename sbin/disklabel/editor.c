@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.84 2003/06/03 01:52:40 millert Exp $	*/
+/*	$OpenBSD: editor.c,v 1.85 2003/06/11 06:22:12 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.84 2003/06/03 01:52:40 millert Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.85 2003/06/11 06:22:12 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -125,11 +125,7 @@ extern	struct dos_partition *dosdp;	/* DOS partition, if found */
  * Simple partition editor.  Primarily intended for new labels.
  */
 int
-editor(lp, f, dev, fstabfile)
-	struct disklabel *lp;
-	int f;
-	char *dev;
-	char *fstabfile;
+editor(struct disklabel *lp, int f, char *dev, char *fstabfile)
 {
 	struct disklabel lastlabel, tmplabel, label = *lp;
 	struct disklabel *disk_geop, *bios_geop;
@@ -444,11 +440,7 @@ editor(lp, f, dev, fstabfile)
  * Add a new partition.
  */
 void
-editor_add(lp, mp, freep, p)
-	struct disklabel *lp;
-	char **mp;
-	u_int32_t *freep;
-	char *p;
+editor_add(struct disklabel *lp, char **mp, u_int32_t *freep, char *p)
 {
 	struct partition *pp;
 	struct diskchunk *chunks;
@@ -589,10 +581,7 @@ getoff1:
  * Set the mountpoint of an existing partition ('name').
  */
 void
-editor_name(lp, mp, p)
-	struct disklabel *lp;
-	char **mp;
-	char *p;
+editor_name(struct disklabel *lp, char **mp, char *p)
 {
 	struct partition *pp;
 	int partno;
@@ -633,11 +622,7 @@ editor_name(lp, mp, p)
  * Change an existing partition.
  */
 void
-editor_modify(lp, mp, freep, p)
-	struct disklabel *lp;
-	char **mp;
-	u_int32_t *freep;
-	char *p;
+editor_modify(struct disklabel *lp, char **mp, u_int32_t *freep, char *p)
 {
 	struct partition origpart, *pp;
 	int partno;
@@ -746,11 +731,7 @@ getoff2:
  * Delete an existing partition.
  */
 void
-editor_delete(lp, mp, freep, p)
-	struct disklabel *lp;
-	char **mp;
-	u_int32_t *freep;
-	char *p;
+editor_delete(struct disklabel *lp, char **mp, u_int32_t *freep, char *p)
 {
 	int c;
 
@@ -814,11 +795,7 @@ editor_delete(lp, mp, freep, p)
  * Simplified display() for use with the builtin editor.
  */
 void
-editor_display(lp, mp, freep, unit)
-	struct disklabel *lp;
-	char **mp;
-	u_int32_t *freep;
-	char unit;
+editor_display(struct disklabel *lp, char **mp, u_int32_t *freep, char unit)
 {
 	int i;
 	int width;
@@ -848,9 +825,7 @@ editor_display(lp, mp, freep, unit)
  * Assumes there is a least one free sector left (returns 0 if not).
  */
 u_int32_t
-next_offset(lp, sizep)
-	struct disklabel *lp;
-	u_int32_t *sizep;
+next_offset(struct disklabel *lp, u_int32_t *sizep)
 {
 	struct partition **spp;
 	struct diskchunk *chunks;
@@ -908,10 +883,7 @@ next_offset(lp, sizep)
  * Change the size of an existing partition.
  */
 void
-editor_change(lp, freep, p)
-	struct disklabel *lp;
-	u_int32_t *freep;
-	char *p;
+editor_change(struct disklabel *lp, u_int32_t *freep, char *p)
 {
 	int partno;
 	u_int32_t newsize;
@@ -980,8 +952,7 @@ editor_change(lp, freep, p)
 }
 
 void
-make_contiguous(lp)
-	struct disklabel *lp;
+make_contiguous(struct disklabel *lp)
 {
 	struct partition **spp;
 	u_int16_t npartitions;
@@ -1010,8 +981,7 @@ make_contiguous(lp)
  * This assumes there can be no overlap.
  */
 int
-partition_cmp(e1, e2)
-	const void *e1, *e2;
+partition_cmp(const void *e1, const void *e2)
 {
 	struct partition *p1 = *(struct partition **)e1;
 	struct partition *p2 = *(struct partition **)e2;
@@ -1020,10 +990,7 @@ partition_cmp(e1, e2)
 }
 
 char *
-getstring(prompt, helpstring, oval)
-	char *prompt;
-	char *helpstring;
-	char *oval;
+getstring(char *prompt, char *helpstring, char *oval)
 {
 	static char buf[BUFSIZ];
 	int n;
@@ -1056,15 +1023,8 @@ getstring(prompt, helpstring, oval)
  * Usually only called by helper functions.
  */
 u_int32_t
-getuint(lp, partno, prompt, helpstring, oval, maxval, offset, flags)
-	struct disklabel *lp;
-	int partno;
-	char *prompt;
-	char *helpstring;
-	u_int32_t oval;
-	u_int32_t maxval;		/* XXX - used inconsistently */
-	u_int32_t offset;
-	int flags;
+getuint(struct disklabel *lp, int partno, char *prompt, char *helpstring,
+    u_int32_t oval, u_int32_t maxval, u_int32_t offset, int flags)
 {
 	char buf[BUFSIZ], *endptr, *p, operator = '\0';
 	u_int32_t rval = oval;
@@ -1186,10 +1146,7 @@ getuint(lp, partno, prompt, helpstring, oval, maxval, offset, flags)
  * if unable to resolve, else 0.
  */
 int
-has_overlap(lp, freep, resolve)
-	struct disklabel *lp;
-	u_int32_t *freep;
-	int resolve;
+has_overlap(struct disklabel *lp, u_int32_t *freep, int resolve)
 {
 	struct partition **spp;
 	u_int16_t npartitions;
@@ -1259,9 +1216,7 @@ has_overlap(lp, freep, resolve)
 }
 
 void
-edit_parms(lp, freep)
-	struct disklabel *lp;
-	u_int32_t *freep;
+edit_parms(struct disklabel *lp, u_int32_t *freep)
 {
 	char *p;
 	u_int32_t ui;
@@ -1449,9 +1404,7 @@ edit_parms(lp, freep)
 }
 
 struct partition **
-sort_partitions(lp, npart)
-	struct disklabel *lp;
-	u_int16_t *npart;
+sort_partitions(struct disklabel *lp, u_int16_t *npart)
 {
 	u_int16_t npartitions;
 	struct partition **spp;
@@ -1496,10 +1449,7 @@ sort_partitions(lp, npart)
  * Get a valid disk type if necessary.
  */
 void
-getdisktype(lp, banner, dev)
-	struct disklabel *lp;
-	char *banner;
-	char *dev;
+getdisktype(struct disklabel *lp, char *banner, char *dev)
 {
 	int i;
 	char *s, *def = "SCSI";
@@ -1578,9 +1528,7 @@ getdisktype(lp, banner, dev)
  * XXX - should mention MBR values if DOSLABEL
  */
 void
-set_bounds(lp, freep)
-	struct disklabel *lp;
-	u_int32_t *freep;
+set_bounds(struct disklabel *lp, u_int32_t *freep)
 {
 	u_int32_t ui, start_temp;
 
@@ -1618,8 +1566,7 @@ set_bounds(lp, freep)
  * Return a list of the "chunks" of free space available
  */
 struct diskchunk *
-free_chunks(lp)
-	struct disklabel *lp;
+free_chunks(struct disklabel *lp)
 {
 	u_int16_t npartitions;
 	struct partition **spp;
@@ -1674,9 +1621,7 @@ free_chunks(lp)
  * What is the OpenBSD portion of the disk?  Uses the MBR if applicable.
  */
 void
-find_bounds(lp, bios_lp)
-	struct disklabel *lp;
-	struct disklabel *bios_lp;
+find_bounds(struct disklabel *lp, struct disklabel *bios_lp)
 {
 #ifdef DOSLABEL
 	struct partition *pp = &lp->d_partitions[RAW_PART];
@@ -1747,9 +1692,7 @@ find_bounds(lp, bios_lp)
  * Calculate free space.
  */
 void
-editor_countfree(lp, freep)
-	struct disklabel *lp;
-	u_int32_t *freep;
+editor_countfree(struct disklabel *lp, u_int32_t *freep)
 {
 	struct partition *pp;
 	int i;
@@ -1766,8 +1709,7 @@ editor_countfree(lp, freep)
 }
 
 void
-editor_help(arg)
-	char *arg;
+editor_help(char *arg)
 {
 
 	/* XXX - put these strings in a table instead? */
@@ -1937,9 +1879,7 @@ editor_help(arg)
 }
 
 char **
-mpcopy(to, from)
-	char **to;
-	char **from;
+mpcopy(char **to, char **from)
 {
 	int i;
 
@@ -1960,9 +1900,7 @@ mpcopy(to, from)
 }
 
 int
-mpequal(mp1, mp2)
-	char **mp1;
-	char **mp2;
+mpequal(char **mp1, char **mp2)
 {
 	int i;
 
@@ -1979,11 +1917,7 @@ mpequal(mp1, mp2)
 }
 
 int
-mpsave(lp, mp, cdev, fstabfile)
-	struct disklabel *lp;
-	char **mp;
-	char *cdev;
-	char *fstabfile;
+mpsave(struct disklabel *lp, char **mp, char *cdev, char *fstabfile)
 {
 	int i, j, mpset;
 	char bdev[MAXPATHLEN], *p;
@@ -2035,9 +1969,7 @@ mpsave(lp, mp, cdev, fstabfile)
 }
 
 int
-get_offset(lp, partno)
-	struct disklabel *lp;
-	int partno;
+get_offset(struct disklabel *lp, int partno)
 {
 	u_int32_t ui;
 	struct partition *pp = &lp->d_partitions[partno];
@@ -2075,11 +2007,7 @@ get_offset(lp, partno)
 }
 
 int
-get_size(lp, partno, freep, new)
-	struct disklabel *lp;
-	int partno;
-	u_int32_t *freep;
-	int new;
+get_size(struct disklabel *lp, int partno, u_int32_t *freep, int new)
 {
 	u_int32_t ui;
 	struct partition *pp = &lp->d_partitions[partno];
@@ -2141,9 +2069,7 @@ get_size(lp, partno, freep, new)
 }
 
 int
-get_fsize(lp, partno)
-	struct disklabel *lp;
-	int partno;
+get_fsize(struct disklabel *lp, int partno)
 {
 	u_int32_t ui;
 	struct partition *pp = &lp->d_partitions[partno];
@@ -2167,9 +2093,7 @@ get_fsize(lp, partno)
 }
 
 int
-get_bsize(lp, partno)
-	struct disklabel *lp;
-	int partno;
+get_bsize(struct disklabel *lp, int partno)
 {
 	u_int32_t ui;
 	struct partition *pp = &lp->d_partitions[partno];
@@ -2210,9 +2134,7 @@ get_bsize(lp, partno)
 }
 
 int
-get_cpg(lp, partno)
-	struct disklabel *lp;
-	int partno;
+get_cpg(struct disklabel *lp, int partno)
 {
 	u_int32_t ui;
 	struct partition *pp = &lp->d_partitions[partno];
@@ -2235,9 +2157,7 @@ get_cpg(lp, partno)
 }
 
 int
-get_fstype(lp, partno)
-	struct disklabel *lp;
-	int partno;
+get_fstype(struct disklabel *lp, int partno)
 {
 	char *p;
 	u_int32_t ui;
@@ -2280,10 +2200,7 @@ get_fstype(lp, partno)
 }
 
 int
-get_mp(lp, mp, partno)
-	struct disklabel *lp;
-	char **mp;
-	int partno;
+get_mp(struct disklabel *lp, char **mp, int partno)
 {
 	char *p;
 	struct partition *pp = &lp->d_partitions[partno];
@@ -2321,9 +2238,7 @@ get_mp(lp, mp, partno)
 }
 
 int
-micmp(a1, a2)
-	const void *a1;
-	const void *a2;
+micmp(const void *a1, const void *a2)
 {
 	struct mountinfo *mi1 = (struct mountinfo *)a1;
 	struct mountinfo *mi2 = (struct mountinfo *)a2;
@@ -2340,10 +2255,7 @@ micmp(a1, a2)
 }
 
 void
-get_geometry(f, dgpp, bgpp)
-	int f;
-	struct disklabel **dgpp;
-	struct disklabel **bgpp;
+get_geometry(int f, struct disklabel **dgpp, struct disklabel **bgpp)
 {
 #ifdef CPU_BIOS
 	int mib[4];
@@ -2404,12 +2316,8 @@ get_geometry(f, dgpp, bgpp)
 }
 
 void
-set_geometry(lp, dgp, bgp, ugp, p)
-	struct disklabel *lp;
-	struct disklabel *dgp;
-	struct disklabel *bgp;
-	struct disklabel *ugp;
-	char *p;
+set_geometry(struct disklabel *lp, struct disklabel *dgp,
+    struct disklabel *bgp, struct disklabel *ugp, char *p)
 {
 	if (p == NULL) {
 		p = getstring("[d]isk, [b]ios, or [u]ser geometry",
@@ -2477,9 +2385,7 @@ set_geometry(lp, dgp, bgp, ugp, p)
 }
 
 void
-zero_partitions(lp, freep)
-	struct disklabel *lp;
-	u_int32_t *freep;
+zero_partitions(struct disklabel *lp, u_int32_t *freep)
 {
 	int i;
 

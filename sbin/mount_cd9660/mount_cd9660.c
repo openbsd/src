@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_cd9660.c,v 1.14 2003/06/02 20:06:15 millert Exp $	*/
+/*	$OpenBSD: mount_cd9660.c,v 1.15 2003/06/11 06:22:13 deraadt Exp $	*/
 /*	$NetBSD: mount_cd9660.c,v 1.3 1996/04/13 01:31:08 jtc Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_cd9660.c	8.4 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$OpenBSD: mount_cd9660.c,v 1.14 2003/06/02 20:06:15 millert Exp $";
+static char rcsid[] = "$OpenBSD: mount_cd9660.c,v 1.15 2003/06/11 06:22:13 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -71,9 +71,7 @@ const struct mntopt mopts[] = {
 void	usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	struct iso_args args;
 	int ch, mntflags, opts;
@@ -133,7 +131,7 @@ main(argc, argv)
 }
 
 void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr,
 		"usage: mount_cd9660 [-egjR] [-o options] special node\n");

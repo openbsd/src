@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_umap.c,v 1.12 2003/06/02 20:06:16 millert Exp $	*/
+/*	$OpenBSD: mount_umap.c,v 1.13 2003/06/11 06:22:14 deraadt Exp $	*/
 /*	$NetBSD: mount_umap.c,v 1.5 1996/04/13 01:32:05 jtc Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_umap.c	8.3 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$OpenBSD: mount_umap.c,v 1.12 2003/06/02 20:06:16 millert Exp $";
+static char rcsid[] = "$OpenBSD: mount_umap.c,v 1.13 2003/06/11 06:22:14 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -88,9 +88,7 @@ const struct mntopt mopts[] = {
 void	usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	static char not[] = "; not mounted.";
 	struct stat statbuf;
@@ -238,7 +236,7 @@ main(argc, argv)
 }
 
 void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr,
 "usage: mount_umap [-o options] -u usermap -g groupmap target_fs mount_point\n");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.33 2003/06/03 01:13:19 weingart Exp $	*/
+/*	$OpenBSD: part.c,v 1.34 2003/06/11 06:22:12 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -137,7 +137,7 @@ static const struct part_type {
 };
 
 void
-PRT_printall()
+PRT_printall(void)
 {
 	int i, idrows;
 
@@ -160,8 +160,7 @@ PRT_printall()
 }
 
 const char *
-PRT_ascii_id(id)
-	int id;
+PRT_ascii_id(int id)
 {
 	static char unknown[] = "<Unknown ID>";
 	int i;
@@ -175,13 +174,8 @@ PRT_ascii_id(id)
 }
 
 void
-PRT_parse(disk, prt, offset, reloff, partn, pn)
-	disk_t *disk;
-	void *prt;
-	off_t offset;
-	off_t reloff;
-	prt_t *partn;
-	int pn;
+PRT_parse(disk_t *disk, void *prt, off_t offset, off_t reloff,
+    prt_t *partn, int pn)
 {
 	unsigned char *p = prt;
 	off_t off;
@@ -211,8 +205,7 @@ PRT_parse(disk, prt, offset, reloff, partn, pn)
 }
 
 int
-PRT_check_chs(partn)
-	prt_t *partn;
+PRT_check_chs(prt_t *partn)
 {
 	if ( (partn->shead > 255) ||
 		(partn->ssect >63) ||
@@ -226,11 +219,7 @@ PRT_check_chs(partn)
 	return 1;
 }
 void
-PRT_make(partn, offset, reloff, prt)
-	prt_t *partn;
-	off_t offset;
-	off_t reloff;
-	void *prt;
+PRT_make(prt_t *partn, off_t offset, off_t reloff, void *prt)
 {
 	unsigned char *p = prt;
 	int ecsave, scsave;
@@ -283,10 +272,7 @@ PRT_make(partn, offset, reloff, prt)
 }
 
 void
-PRT_print(num, partn, units)
-	int num;
-	prt_t *partn;
-	char *units;
+PRT_print(int num, prt_t *partn, char *units)
 {
 	double size;
 	int i;
@@ -311,10 +297,7 @@ PRT_print(num, partn, units)
 }
 
 void
-PRT_fix_BN(disk, part, pn)
-	disk_t *disk;
-	prt_t *part;
-	int pn;
+PRT_fix_BN(disk_t *disk, prt_t *part, int pn)
 {
 	int spt, tpc, spc;
 	int start = 0;
@@ -348,10 +331,7 @@ PRT_fix_BN(disk, part, pn)
 }
 
 void
-PRT_fix_CHS(disk, part, pn)
-	disk_t *disk;
-	prt_t *part;
-	int pn;
+PRT_fix_CHS(disk_t *disk, prt_t *part, int pn)
 {
 	int spt, tpc, spc;
 	int start, end, size;

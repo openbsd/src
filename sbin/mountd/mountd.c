@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.58 2003/06/02 20:06:16 millert Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.59 2003/06/11 06:22:14 deraadt Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -307,7 +307,7 @@ main(int argc, char *argv[])
 }
 
 void
-mountd_svc_run()
+mountd_svc_run(void)
 {
 	fd_set *fds = NULL;
 	int fds_size = 0;
@@ -1036,7 +1036,7 @@ get_exp(void)
  * Allocate a group list element
  */
 struct grouplist *
-get_grp()
+get_grp(void)
 {
 	struct grouplist *gp;
 

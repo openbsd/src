@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_ados.c,v 1.9 2002/04/23 18:54:12 espie Exp $	*/
+/*	$OpenBSD: mount_ados.c,v 1.10 2003/06/11 06:22:13 deraadt Exp $	*/
 /*	$NetBSD: mount_ados.c,v 1.5 1996/04/13 01:30:59 jtc Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: mount_ados.c,v 1.9 2002/04/23 18:54:12 espie Exp $";
+static char rcsid[] = "$OpenBSD: mount_ados.c,v 1.10 2003/06/11 06:22:13 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -62,9 +62,7 @@ mode_t	a_mask(char *);
 void	usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	struct adosfs_args args;
 	struct stat sb;
@@ -141,8 +139,7 @@ main(argc, argv)
 }
 
 gid_t
-a_gid(s)
-	char *s;
+a_gid(char *s)
 {
 	struct group *gr;
 	char *gname;
@@ -161,8 +158,7 @@ a_gid(s)
 }
 
 uid_t
-a_uid(s)
-	char *s;
+a_uid(char *s)
 {
 	struct passwd *pw;
 	char *uname;
@@ -181,8 +177,7 @@ a_uid(s)
 }
 
 mode_t
-a_mask(s)
-	char *s;
+a_mask(char *s)
 {
 	int done, rv;
 	char *ep;
@@ -198,9 +193,10 @@ a_mask(s)
 }
 
 void
-usage()
+usage(void)
 {
 
-	fprintf(stderr, "usage: mount_ados [-o options] [-u user] [-g group] [-m mask] bdev dir\n");
+	fprintf(stderr,
+	    "usage: mount_ados [-o options] [-u user] [-g group] [-m mask] bdev dir\n");
 	exit(1);
 }

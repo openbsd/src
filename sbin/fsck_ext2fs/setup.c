@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.10 2003/06/02 20:06:15 millert Exp $	*/
+/*	$OpenBSD: setup.c,v 1.11 2003/06/11 06:22:13 deraadt Exp $	*/
 /*	$NetBSD: setup.c,v 1.1 1997/06/11 11:22:01 bouyer Exp $	*/
 
 /*
@@ -60,8 +60,7 @@ static struct disklabel *getdisklabel(char *, int);
 static int readsb(int);
 
 int
-setup(dev)
-	char *dev;
+setup(char *dev)
 {
 	long cg, asked, i;
 	long bmapsize;
@@ -251,8 +250,7 @@ badsblabel:
  * Read in the super block and its summary info.
  */
 static int
-readsb(listerr)
-	int listerr;
+readsb(int listerr)
 {
 	daddr_t super = bflag ? bflag : SBOFF / dev_bsize;
 
@@ -367,8 +365,7 @@ readsb(listerr)
 }
 
 void
-copyback_sb(bp)
-	struct bufarea *bp;
+copyback_sb(struct bufarea *bp)
 {
 	/* Copy the in-memory superblock back to buffer */
 	bp->b_un.b_fs->e2fs_icount = fs2h32(sblock.e2fs.e2fs_icount);
@@ -400,9 +397,7 @@ copyback_sb(bp)
 }
 
 void
-badsb(listerr, s)
-	int listerr;
-	char *s;
+badsb(int listerr, char *s)
 {
 
 	if (!listerr)
@@ -420,10 +415,7 @@ badsb(listerr, s)
  */
 
 int
-calcsb(dev, devfd, fs)
-	char *dev;
-	int devfd;
-	struct m_ext2fs *fs;
+calcsb(char *dev, int devfd, struct m_ext2fs *fs)
 {
 	struct disklabel *lp;
 	struct partition *pp;
@@ -465,9 +457,7 @@ calcsb(dev, devfd, fs)
 }
 
 static struct disklabel *
-getdisklabel(s, fd)
-	char *s;
-	int	fd;
+getdisklabel(char *s, int fd)
 {
 	static struct disklabel lab;
 
@@ -481,8 +471,7 @@ getdisklabel(s, fd)
 }
 
 daddr_t
-cgoverhead(c)
-	int c;
+cgoverhead(int c)
 {
 	int overh;
 	overh =	1 /* block bitmap */ +

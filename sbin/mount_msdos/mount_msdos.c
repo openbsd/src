@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_msdos.c,v 1.15 2003/04/18 22:16:24 tedu Exp $	*/
+/*	$OpenBSD: mount_msdos.c,v 1.16 2003/06/11 06:22:14 deraadt Exp $	*/
 /*	$NetBSD: mount_msdos.c,v 1.16 1996/10/24 00:12:50 cgd Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: mount_msdos.c,v 1.15 2003/04/18 22:16:24 tedu Exp $";
+static char rcsid[] = "$OpenBSD: mount_msdos.c,v 1.16 2003/06/11 06:22:14 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -63,9 +63,7 @@ mode_t	a_mask(char *);
 void	usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	struct msdosfs_args args;
 	struct stat sb;
@@ -171,8 +169,7 @@ main(argc, argv)
 }
 
 gid_t
-a_gid(s)
-	char *s;
+a_gid(char *s)
 {
 	struct group *gr;
 	char *gname;
@@ -191,8 +188,7 @@ a_gid(s)
 }
 
 uid_t
-a_uid(s)
-	char *s;
+a_uid(char *s)
 {
 	struct passwd *pw;
 	char *uname;
@@ -211,8 +207,7 @@ a_uid(s)
 }
 
 mode_t
-a_mask(s)
-	char *s;
+a_mask(char *s)
 {
 	int done, rv;
 	char *ep;
@@ -228,9 +223,10 @@ a_mask(s)
 }
 
 void
-usage()
+usage(void)
 {
 
-	fprintf(stderr, "usage: mount_msdos [-o options] [-u user] [-g group] [-m mask] bdev dir\n");
+	fprintf(stderr,
+	    "usage: mount_msdos [-o options] [-u user] [-g group] [-m mask] bdev dir\n");
 	exit(1);
 }

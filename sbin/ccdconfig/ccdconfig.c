@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccdconfig.c,v 1.18 2003/03/30 20:28:38 deraadt Exp $	*/
+/*	$OpenBSD: ccdconfig.c,v 1.19 2003/06/11 06:22:12 deraadt Exp $	*/
 /*	$NetBSD: ccdconfig.c,v 1.6 1996/05/16 07:11:18 thorpej Exp $	*/
 
 /*-
@@ -106,9 +106,7 @@ static	char *resolve_ccdname(char *);
 static	void usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	int ch, options = 0, action = CCD_CONFIG;
 
@@ -195,10 +193,7 @@ main(argc, argv)
 }
 
 static int
-do_single(argc, argv, action)
-	int argc;
-	char **argv;
-	int action;
+do_single(int argc, char *argv[], int action)
 {
 	struct ccd_ioctl ccio;
 	char *ccd, *cp, *cp2, **disks;
@@ -316,8 +311,7 @@ do_single(argc, argv, action)
 }
 
 static int
-do_all(action)
-	int action;
+do_all(int action)
 {
 	FILE *f;
 	char line[_POSIX2_LINE_MAX];
@@ -382,8 +376,7 @@ do_all(action)
 }
 
 static int
-checkdev(path)
-	char *path;
+checkdev(char *path)
 {
 	struct stat st;
 
@@ -397,9 +390,7 @@ checkdev(path)
 }
 
 static int
-pathtounit(path, unitp)
-	char *path;
-	int *unitp;
+pathtounit(char *path, int *unitp)
 {
 	struct stat st;
 	int maxpartitions;
@@ -419,8 +410,7 @@ pathtounit(path, unitp)
 }
 
 static char *
-resolve_ccdname(name)
-	char *name;
+resolve_ccdname(char *name)
 {
 	char c, *path;
 	size_t len, newlen;
@@ -452,10 +442,7 @@ resolve_ccdname(name)
 }
 
 static int
-do_io(path, cmd, cciop)
-	char *path;
-	u_long cmd;
-	struct ccd_ioctl *cciop;
+do_io(char *path, u_long cmd, struct ccd_ioctl *cciop)
 {
 	int fd;
 	char *cp;
@@ -493,9 +480,7 @@ do_io(path, cmd, cciop)
 }
 
 static int
-dump_ccd(argc, argv)
-	int argc;
-	char **argv;
+dump_ccd(int argc, char *argv[])
 {
 	char errbuf[_POSIX2_LINE_MAX], *ccd, *cp;
 	struct ccd_softc *cs, *kcs;
@@ -592,9 +577,7 @@ dump_ccd(argc, argv)
 }
 
 static void
-print_ccd_info(cs, kd)
-	struct ccd_softc *cs;
-	kvm_t *kd;
+print_ccd_info(struct ccd_softc *cs, kvm_t *kd)
 {
 	static int header_printed = 0;
 	struct ccdcinfo *cip;
@@ -647,8 +630,7 @@ print_ccd_info(cs, kd)
 }
 
 static int
-flags_to_val(flags)
-	char *flags;
+flags_to_val(char *flags)
 {
 	char *cp, *tok;
 	int i, tmp, val = ~CCDF_USERMASK;
@@ -706,7 +688,7 @@ flags_to_val(flags)
 }
 
 static void
-usage()
+usage(void)
 {
 
 	fprintf(stderr, "usage: %s [-cv] ccd ileave [flags] %s\n", __progname,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pt_file.c,v 1.8 2003/06/02 20:06:16 millert Exp $	*/
+/*	$OpenBSD: pt_file.c,v 1.9 2003/06/11 06:22:14 deraadt Exp $	*/
 /*	$NetBSD: pt_file.c,v 1.7 1995/06/06 19:54:30 mycroft Exp $	*/
 
 /*
@@ -50,12 +50,7 @@
 #include "portald.h"
 
 int
-portal_file(pcr, key, v, so, fdp)
-	struct portal_cred *pcr;
-	char *key;
-	char **v;
-	int so;
-	int *fdp;
+portal_file(struct portal_cred *pcr, char *key, char **v, int so, int *fdp)
 {
 	int fd;
 	char pbuf[MAXPATHLEN];

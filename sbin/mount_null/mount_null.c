@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_null.c,v 1.9 2003/06/02 20:06:15 millert Exp $	*/
+/*	$OpenBSD: mount_null.c,v 1.10 2003/06/11 06:22:14 deraadt Exp $	*/
 /*	$NetBSD: mount_null.c,v 1.3 1996/04/13 01:31:49 jtc Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_null.c	8.5 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$OpenBSD: mount_null.c,v 1.9 2003/06/02 20:06:15 millert Exp $";
+static char rcsid[] = "$OpenBSD: mount_null.c,v 1.10 2003/06/11 06:22:14 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -69,9 +69,7 @@ int	subdir(const char *, const char *);
 void	usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	struct null_args args;
 	int ch, mntflags;
@@ -113,9 +111,7 @@ main(argc, argv)
 }
 
 int
-subdir(p, dir)
-	const char *p;
-	const char *dir;
+subdir(const char *p, const char *dir)
 {
 	int l;
 
@@ -130,7 +126,7 @@ subdir(p, dir)
 }
 
 void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr,
 		"usage: mount_null [-o options] target_fs mount_point\n");

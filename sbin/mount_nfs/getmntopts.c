@@ -1,4 +1,4 @@
-/*	$OpenBSD: getmntopts.c,v 1.2 2003/06/02 20:06:15 millert Exp $	*/
+/*	$OpenBSD: getmntopts.c,v 1.3 2003/06/11 06:22:14 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -47,11 +47,8 @@ static char sccsid[] = "@(#)getmntopts.c	8.3 (Berkeley) 3/29/95";
 int getmnt_silent = 0;
 
 void
-getmntopts(options, m0, flagp, altflagp)
-	const char *options;
-	const struct mntopt *m0;
-	int *flagp;
-	int *altflagp;
+getmntopts(const char *options, const struct mntopt *m0, int *flagp,
+    int *altflagp)
 {
 	const struct mntopt *m;
 	int negative;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.40 2003/06/10 16:41:29 deraadt Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.41 2003/06/11 06:22:14 deraadt Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.8 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: newfs.c,v 1.40 2003/06/10 16:41:29 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: newfs.c,v 1.41 2003/06/11 06:22:14 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -188,9 +188,7 @@ char	device[MAXPATHLEN];
 extern	char *__progname;
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int ch;
 	struct partition *pp;
@@ -305,7 +303,8 @@ main(argc, argv)
 				else if (strcmp(optarg, "time") == 0)
 					reqopt = opt = FS_OPTTIME;
 				else
-	fatal("%s: unknown optimization preference: use `space' or `time'.");
+					fatal("%s: unknown optimization "
+					    "preference: use `space' or `time'.");
 			}
 			break;
 		case 'p':
@@ -676,9 +675,7 @@ char lmsg[] = "%s: can't read disk label";
 #endif
 
 struct disklabel *
-getdisklabel(s, fd)
-	char *s;
-	int fd;
+getdisklabel(char *s, int fd)
 {
 	static struct disklabel lab;
 
@@ -701,10 +698,7 @@ getdisklabel(s, fd)
 }
 
 void
-rewritelabel(s, fd, lp)
-	char *s;
-	int fd;
-	struct disklabel *lp;
+rewritelabel(char *s, int fd, struct disklabel *lp)
 {
 #ifdef COMPAT
 	if (unlabeled)
@@ -809,7 +803,7 @@ struct fsoptions {
 };
 
 void
-usage()
+usage(void)
 {
 	struct fsoptions *fsopt;
 

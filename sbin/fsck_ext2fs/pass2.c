@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass2.c,v 1.9 2003/06/02 20:06:15 millert Exp $	*/
+/*	$OpenBSD: pass2.c,v 1.10 2003/06/11 06:22:13 deraadt Exp $	*/
 /*	$NetBSD: pass2.c,v 1.6 2000/01/28 16:01:46 bouyer Exp $	*/
 
 /*
@@ -53,7 +53,7 @@ static int pass2check(struct inodesc *);
 static int blksort(const void *, const void *);
 
 void
-pass2()
+pass2(void)
 {
 	struct ext2fs_dinode *dp;
 	struct inoinfo **inpp, *inp;
@@ -188,8 +188,7 @@ pass2()
 }
 
 static int
-pass2check(idesc)
-	struct inodesc *idesc;
+pass2check(struct inodesc *idesc)
 {
 	struct ext2fs_direct *dirp = idesc->id_dirp;
 	struct inoinfo *inp;
@@ -431,8 +430,7 @@ again:
  * Routine to sort disk blocks.
  */
 static int
-blksort(inpp1, inpp2)
-	const void *inpp1, *inpp2;
+blksort(const void *inpp1, const void *inpp2)
 {
 	return ((* (struct inoinfo **) inpp1)->i_blks[0] -
 		(* (struct inoinfo **) inpp2)->i_blks[0]);

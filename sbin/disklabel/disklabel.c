@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.80 2003/06/02 20:06:14 millert Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.81 2003/06/11 06:22:12 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.80 2003/06/02 20:06:14 millert Exp $";
+static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.81 2003/06/11 06:22:12 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -137,9 +137,7 @@ void	usage(void);
 u_short	dkcksum(struct disklabel *);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int ch, f, writeable, error = 0;
 	char *fstabfile = NULL;
@@ -347,9 +345,7 @@ main(argc, argv)
  * if specified.
  */
 void
-makelabel(type, name, lp)
-	char *type, *name;
-	struct disklabel *lp;
+makelabel(char *type, char *name, struct disklabel *lp)
 {
 	struct disklabel *dp;
 
@@ -391,10 +387,7 @@ makelabel(type, name, lp)
 }
 
 int
-writelabel(f, boot, lp)
-	int f;
-	char *boot;
-	struct disklabel *lp;
+writelabel(int f, char *boot, struct disklabel *lp)
 {
 	int writeable;
 	off_t sectoffset = 0;
@@ -564,8 +557,7 @@ writelabel(f, boot, lp)
 }
 
 void
-l_perror(s)
-	char *s;
+l_perror(char *s)
 {
 
 	switch (errno) {
@@ -595,8 +587,7 @@ l_perror(s)
  * Fetch DOS partition table from disk.
  */
 struct dos_partition *
-readmbr(f)
-	int f;
+readmbr(int f)
 {
 	static int mbr[DEV_BSIZE / sizeof(int)];
 	struct dos_partition *dp;
@@ -681,8 +672,7 @@ readmbr(f)
  * Use ioctl to get label unless -r flag is given.
  */
 struct disklabel *
-readlabel(f)
-	int f;
+readlabel(int f)
 {
 	struct disklabel *lp = NULL;
 
@@ -760,10 +750,7 @@ readlabel(f)
  * Returns a pointer to the disklabel portion of the bootarea.
  */
 struct disklabel *
-makebootarea(boot, dp, f)
-	char *boot;
-	struct disklabel *dp;
-	int f;
+makebootarea(char *boot, struct disklabel *dp, int f)
 {
 	struct disklabel *lp;
 	char *p;
@@ -893,9 +880,7 @@ makebootarea(boot, dp, f)
 }
 
 void
-makedisktab(f, lp)
-	FILE *f;
-	struct disklabel *lp;
+makedisktab(FILE *f, struct disklabel *lp)
 {
 	int i;
 	char *did = "\\\n\t:";
@@ -984,8 +969,7 @@ makedisktab(f, lp)
 }
 
 int
-width_partition(lp, unit)
-	struct disklabel *lp;
+width_partition(struct disklabel *lp, int unit)
 {
 	unit = toupper(unit);
 	switch (unit) {
@@ -999,13 +983,8 @@ width_partition(lp, unit)
  * Display a particular partion.
  */
 void
-display_partition(f, lp, mp, i, unit, width)
-	FILE *f;
-	struct disklabel *lp;
-	char **mp;
-	int i;
-	char unit;
-	int width;
+display_partition(FILE *f, struct disklabel *lp, char **mp, int i,
+    char unit, int width)
 {
 	volatile struct partition *pp = &lp->d_partitions[i];
 	double p_size, p_offset;
@@ -1093,10 +1072,7 @@ display_partition(f, lp, mp, i, unit, width)
 }
 
 void
-display(f, lp, unit)
-	FILE *f;
-	struct disklabel *lp;
-	char unit;
+display(FILE *f, struct disklabel *lp, char unit)
 {
 	int i, j;
 	int width;
@@ -1149,9 +1125,7 @@ display(f, lp, unit)
 }
 
 int
-edit(lp, f)
-	struct disklabel *lp;
-	int f;
+edit(struct disklabel *lp, int f)
 {
 	int first, ch, fd;
 	struct disklabel label;
@@ -1210,7 +1184,7 @@ edit(lp, f)
 }
 
 int
-editit()
+editit(void)
 {
 	pid_t pid, xpid;
 	int stat, len;
@@ -1262,8 +1236,7 @@ bail:
 }
 
 char *
-skip(cp)
-	char *cp;
+skip(char *cp)
 {
 
 	cp += strspn(cp, " \t");
@@ -1273,8 +1246,7 @@ skip(cp)
 }
 
 char *
-word(cp)
-	char *cp;
+word(char *cp)
 {
 
 	cp += strcspn(cp, " \t");
@@ -1293,9 +1265,7 @@ word(cp)
  * and fill in lp.
  */
 int
-getasciilabel(f, lp)
-	FILE *f;
-	struct disklabel *lp;
+getasciilabel(FILE *f, struct disklabel *lp)
 {
 	char **cpp, *cp;
 	struct partition *pp;
@@ -1588,8 +1558,7 @@ getasciilabel(f, lp)
  * derived fields according to supplied values.
  */
 int
-checklabel(lp)
-	struct disklabel *lp;
+checklabel(struct disklabel *lp)
 {
 	struct partition *pp;
 	int i, errors = 0;
@@ -1695,8 +1664,7 @@ checklabel(lp)
  * clobber bootstrap code.
  */
 void
-setbootflag(lp)
-	struct disklabel *lp;
+setbootflag(struct disklabel *lp)
 {
 	struct partition *pp;
 	int i, errors = 0;
@@ -1731,9 +1699,7 @@ setbootflag(lp)
 #endif
 
 int
-cmplabel(lp1, lp2)
-	struct disklabel *lp1;
-	struct disklabel *lp2;
+cmplabel(struct disklabel *lp1, struct disklabel *lp2)
 {
 	struct disklabel lab1 = *lp1;
 	struct disklabel lab2 = *lp2;
@@ -1749,7 +1715,7 @@ cmplabel(lp1, lp2)
 }
 
 void
-usage()
+usage(void)
 {
 	char *boot = "";
 	char blank[] = "                             ";

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass1.c,v 1.9 2003/06/02 20:06:15 millert Exp $	*/
+/*	$OpenBSD: pass1.c,v 1.10 2003/06/11 06:22:13 deraadt Exp $	*/
 /*	$NetBSD: pass1.c,v 1.9 2000/01/31 11:40:12 bouyer Exp $	*/
 
 /*
@@ -53,7 +53,7 @@ static daddr_t dupblk;
 static void checkinode(ino_t, struct inodesc *);
 
 void
-pass1()
+pass1(void)
 {
 	ino_t inumber;
 	int c, i;
@@ -119,9 +119,7 @@ pass1()
 }
 
 static void
-checkinode(inumber, idesc)
-	ino_t inumber;
-	struct inodesc *idesc;
+checkinode(ino_t inumber, struct inodesc *idesc)
 {
 	struct ext2fs_dinode *dp;
 	struct zlncnt *zlnp;
@@ -289,8 +287,7 @@ unknown:
 }
 
 int
-pass1check(idesc)
-	struct inodesc *idesc;
+pass1check(struct inodesc *idesc)
 {
 	int res = KEEPON;
 	int anyout, nfrags;

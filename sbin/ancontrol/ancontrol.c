@@ -1,4 +1,4 @@
-/*	$OpenBSD: ancontrol.c,v 1.21 2002/06/09 08:13:04 todd Exp $	*/
+/*	$OpenBSD: ancontrol.c,v 1.22 2003/06/11 06:22:12 deraadt Exp $	*/
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -137,18 +137,16 @@ int s;			/* Global socket for ioctl's */
 struct ifreq ifr;	/* Global ifreq */
 
 void
-getsock()
+getsock(void)
 {
 	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
 		errx(1, "socket");
 }
 
 void
-an_getval(areq)
-	struct an_req		*areq;
+an_getval(struct an_req *areq)
 {
 	ifr.ifr_data = (caddr_t)areq;
-
 
 	if (ioctl(s, SIOCGAIRONET, &ifr) == -1)
 		err(1, "SIOCGAIRONET");
@@ -157,8 +155,7 @@ an_getval(areq)
 }
 
 void
-an_setval(areq)
-	struct an_req		*areq;
+an_setval(struct an_req *areq)
 {
 	ifr.ifr_data = (caddr_t)areq;
 
@@ -169,9 +166,7 @@ an_setval(areq)
 }
 
 void
-an_printstr(str, len)
-	char			*str;
-	int			len;
+an_printstr(char *str, int len)
 {
 	int			i;
 
@@ -186,9 +181,7 @@ an_printstr(str, len)
 }
 
 void
-an_printwords(w, len)
-	u_int16_t		*w;
-	int			len;
+an_printwords(u_int16_t *w, int len)
 {
 	int			i;
 
@@ -201,9 +194,7 @@ an_printwords(w, len)
 }
 
 void
-an_printspeeds(w, len)
-	u_int8_t		*w;
-	int			len;
+an_printspeeds(u_int8_t *w, int len)
 {
 	int			i;
 
@@ -216,9 +207,7 @@ an_printspeeds(w, len)
 }
 
 void
-an_printhex(ptr, len)
-	char			*ptr;
-	int			len;
+an_printhex(char *ptr, int len)
 {
 	int			i;
 
@@ -234,7 +223,7 @@ an_printhex(ptr, len)
 }
 
 void
-an_dumpstatus()
+an_dumpstatus(void)
 {
 	struct an_ltv_status	*sts;
 	struct an_req		areq;
@@ -299,7 +288,7 @@ an_dumpstatus()
 }
 
 void
-an_dumpcaps()
+an_dumpcaps(void)
 {
 	struct an_ltv_caps	*caps;
 	struct an_req		areq;
@@ -381,7 +370,7 @@ an_dumpcaps()
 }
 
 void
-an_dumpstats()
+an_dumpstats(void)
 {
 	struct an_ltv_stats	*stats;
 	struct an_req		areq;
@@ -549,7 +538,7 @@ an_dumpstats()
 }
 
 void
-an_dumpap()
+an_dumpap(void)
 {
 	struct an_ltv_aplist	*ap;
 	struct an_req		areq;
@@ -575,7 +564,7 @@ an_dumpap()
 }
 
 void
-an_dumpssid()
+an_dumpssid(void)
 {
 	struct an_ltv_ssidlist	*ssid;
 	struct an_req		areq;
@@ -595,7 +584,7 @@ an_dumpssid()
 }
 
 void
-an_dumpconfig()
+an_dumpconfig(void)
 {
 	struct an_ltv_genconfig	*cfg;
 	struct an_req		areq;
@@ -682,14 +671,12 @@ an_dumpconfig()
 	printf("\nAuthentication timeout:\t\t\t");
 	an_printwords(&cfg->an_auth_timeout, 1);
 	printf("\nWEP enabled:\t\t\t\t[ ");
-	if (cfg->an_authtype & AN_AUTHTYPE_PRIVACY_IN_USE)
-	{
+	if (cfg->an_authtype & AN_AUTHTYPE_PRIVACY_IN_USE) {
 		if (cfg->an_authtype & AN_AUTHTYPE_ALLOW_UNENCRYPTED)
 			printf("mixed cell");
 		else
 			printf("full");
-	}
-	else
+	} else
 		printf("no");
 	printf(" ]");
 	printf("\nAuthentication type:\t\t\t[ ");
@@ -789,9 +776,8 @@ an_dumpconfig()
 	return;
 }
 
-
 static void
-usage()
+usage(void)
 {
 	fprintf(stderr,
 	    "usage: ancontrol interface [-ACINSTh] [-t 0|1|2|3|4]\n"
@@ -808,9 +794,7 @@ usage()
 }
 
 void
-an_setconfig(act, arg)
-	int			act;
-	void			*arg;
+an_setconfig(int act, void *arg)
 {
 	struct an_ltv_genconfig	*cfg;
 	struct an_ltv_caps	*caps;
@@ -942,8 +926,7 @@ an_setconfig(act, arg)
 }
 
 void
-an_setspeed(arg)
-	void			*arg;
+an_setspeed(void *arg)
 {
 	struct an_req		areq;
 	struct an_ltv_caps	*caps;
@@ -989,9 +972,7 @@ an_setspeed(arg)
 }
 
 void
-an_setap(act, arg)
-	int			act;
-	void			*arg;
+an_setap(int act, void *arg)
 {
 	struct an_ltv_aplist	*ap;
 	struct an_req		areq;
@@ -1035,9 +1016,7 @@ an_setap(act, arg)
 }
 
 void
-an_setssid(act, arg)
-	int			act;
-	void			*arg;
+an_setssid(int act, void *arg)
 {
 	struct an_ltv_ssidlist	*ssid;
 	struct an_req		areq;
@@ -1075,7 +1054,7 @@ an_setssid(act, arg)
 
 #ifdef ANCACHE
 void
-an_zerocache()
+an_zerocache(void)
 {
 	struct an_req		areq;
 
@@ -1089,13 +1068,13 @@ an_zerocache()
 }
 
 void
-an_readcache()
+an_readcache(void)
 {
 	struct an_req		areq;
-	int 			*an_sigitems;
-	struct an_sigcache 	*sc;
+	int			*an_sigitems;
+	struct an_sigcache	*sc;
 	char *			pt;
-	int 			i;
+	int			i;
 
 	bzero((char *)&areq, sizeof(areq));
 	areq.an_len = AN_MAX_DATALEN;
@@ -1111,16 +1090,12 @@ an_readcache()
 	for (i = 0; i < *an_sigitems; i++) {
 		printf("[%d/%d]:", i+1, *an_sigitems);
 		printf(" %02x:%02x:%02x:%02x:%02x:%02x,",
-		  		    	sc->macsrc[0]&0xff,
-		  		    	sc->macsrc[1]&0xff,
-		   		    	sc->macsrc[2]&0xff,
-		   			sc->macsrc[3]&0xff,
-		   			sc->macsrc[4]&0xff,
-		   			sc->macsrc[5]&0xff);
-        	printf(" %d.%d.%d.%d,",((sc->ipsrc >> 0) & 0xff),
-				        ((sc->ipsrc >> 8) & 0xff),
-				        ((sc->ipsrc >> 16) & 0xff),
-				        ((sc->ipsrc >> 24) & 0xff));
+		    sc->macsrc[0]&0xff, sc->macsrc[1]&0xff,
+		    sc->macsrc[2]&0xff, sc->macsrc[3]&0xff,
+		    sc->macsrc[4]&0xff, sc->macsrc[5]&0xff);
+		printf(" %u.%u.%u.%u,",
+		    ((sc->ipsrc >> 0) & 0xff), ((sc->ipsrc >> 8) & 0xff),
+		    ((sc->ipsrc >> 16) & 0xff), ((sc->ipsrc >> 24) & 0xff));
 		printf(" sig: %d\n", sc->signal);
 		sc++;
 	}
@@ -1130,8 +1105,7 @@ an_readcache()
 #endif /* ANCACHE */
 
 int
-an_hex2int(c)
-	char			c;
+an_hex2int(char c)
 {
 	if (c >= '0' && c <= '9')
 		return (c - '0');
@@ -1144,9 +1118,7 @@ an_hex2int(c)
 }
 
 void
-an_str2key(s, k)
-	char			*s;
-	struct an_ltv_key	*k;
+an_str2key(char *s, struct an_ltv_key *k)
 {
 	int			n, i;
 	char			*p;
@@ -1171,9 +1143,7 @@ an_str2key(s, k)
 }
 
 void
-an_setkeys(key, keytype)
-	char *key;
-	int keytype;
+an_setkeys(char *key, int keytype)
 {
 	struct an_req		areq;
 	struct an_ltv_key	*k;
@@ -1209,7 +1179,7 @@ an_setkeys(key, keytype)
 }
 
 void
-an_readkeyinfo()
+an_readkeyinfo(void)
 {
 	struct an_req		areq;
 	struct an_ltv_key	*k;
@@ -1252,8 +1222,7 @@ an_readkeyinfo()
 }
 
 void
-an_enable_tx_key(arg)
-	char			*arg;
+an_enable_tx_key(char *arg)
 {
 	struct an_req		areq;
 	struct an_ltv_key	*k;
@@ -1283,9 +1252,7 @@ an_enable_tx_key(arg)
 }
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int ch;
 	int modifier = 0;
@@ -1449,7 +1416,6 @@ main(argc, argv)
 			usage();
 		}
 	}
-
 
 	/*
 	 * Show configuration status first. Do not allow

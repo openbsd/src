@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.94 2003/06/02 20:06:17 millert Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.95 2003/06/11 06:22:15 deraadt Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.94 2003/06/02 20:06:17 millert Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.95 2003/06/11 06:22:15 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -1607,7 +1607,8 @@ sysctl_malloc(char *string, char **bufpp, int mib[], int flags, int *typep)
 			if (lp.list == NULL)
 				return (-1);
 			lp.size = stor + 2;
-			for (i = 1; (lp.list[i].ctl_name = strsep(&buf, ",")) != NULL; i++) {
+			for (i = 1;
+			    (lp.list[i].ctl_name = strsep(&buf, ",")) != NULL; i++) {
 				if (lp.list[i].ctl_name[0] == '\0') {
 					i--;
 					continue;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.60 2003/06/02 20:06:16 millert Exp $	*/
+/*	$OpenBSD: ping.c,v 1.61 2003/06/11 06:22:14 deraadt Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: ping.c,v 1.60 2003/06/02 20:06:16 millert Exp $";
+static char rcsid[] = "$OpenBSD: ping.c,v 1.61 2003/06/11 06:22:14 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -1225,8 +1225,7 @@ pr_iph(struct ip *ip)
  * a hostname.
  */
 char *
-pr_addr(a)
-	in_addr_t a;
+pr_addr(in_addr_t a)
 {
 	struct hostent *hp;
 	struct in_addr in;

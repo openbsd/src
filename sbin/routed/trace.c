@@ -1,4 +1,4 @@
-/*	$OpenBSD: trace.c,v 1.12 2003/06/02 20:06:17 millert Exp $	*/
+/*	$OpenBSD: trace.c,v 1.13 2003/06/11 06:22:15 deraadt Exp $	*/
 /*	$NetBSD: trace.c,v 1.13 1995/06/20 22:28:03 christos Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
 #if !defined(lint)
 static char sccsid[] = "@(#)trace.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: trace.c,v 1.12 2003/06/02 20:06:17 millert Exp $";
+static char rcsid[] = "$OpenBSD: trace.c,v 1.13 2003/06/11 06:22:15 deraadt Exp $";
 #endif
 
 #define	RIPCMDS
@@ -89,7 +89,8 @@ saddr_ntoa(struct sockaddr *sa)
 
 
 static char *
-ts(time_t secs) {
+ts(time_t secs)
+{
 	static char s[20];
 
 	secs += epoch.tv_sec;
@@ -187,8 +188,7 @@ trace_off(char *p, ...)
 
 
 void
-trace_on(char *filename,
-	 int trusted)
+trace_on(char *filename, int trusted)
 {
 	struct stat stbuf;
 	FILE *n_ftrace;
@@ -436,9 +436,7 @@ static struct bits rs_bits[] = {
 
 
 static void
-trace_bits(struct bits *tbl,
-	   u_int field,
-	   int force)
+trace_bits(struct bits *tbl, u_int field, int force)
 {
 	int b;
 	char c;
@@ -477,9 +475,7 @@ trace_bits(struct bits *tbl,
 
 
 static char *
-trace_pair(naddr dst,
-	   naddr mask,
-	   char *gate)
+trace_pair(naddr dst, naddr mask, char *gate)
 {
 	static char buf[3*4+3+1+2+3	/* "xxx.xxx.xxx.xxx/xx-->" */
 			+3*4+3+1];	/* "xxx.xxx.xxx.xxx" */
@@ -494,8 +490,7 @@ trace_pair(naddr dst,
 
 
 void
-trace_if(char *act,
-	  struct interface *ifp)
+trace_if(char *act, struct interface *ifp)
 {
 	if (!TRACEACTIONS || ftrace == 0)
 		return;
@@ -517,14 +512,9 @@ trace_if(char *act,
 
 
 void
-trace_upslot(struct rt_entry *rt,
-	     struct rt_spare *rts,
-	     naddr	gate,
-	     naddr	router,
-	     struct interface *ifp,
-	     int	metric,
-	     u_short	tag,
-	     time_t	new_time)
+trace_upslot(struct rt_entry *rt, struct rt_spare *rts, naddr gate,
+    naddr router, struct interface *ifp, int metric, u_short tag,
+    time_t new_time)
 {
 	if (!TRACEACTIONS || ftrace == 0)
 		return;

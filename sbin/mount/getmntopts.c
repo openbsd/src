@@ -1,4 +1,4 @@
-/*	$OpenBSD: getmntopts.c,v 1.4 2003/06/02 20:06:15 millert Exp $	*/
+/*	$OpenBSD: getmntopts.c,v 1.5 2003/06/11 06:22:13 deraadt Exp $	*/
 /*	$NetBSD: getmntopts.c,v 1.3 1995/03/18 14:56:58 cgd Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getmntopts.c	8.1 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$OpenBSD: getmntopts.c,v 1.4 2003/06/02 20:06:15 millert Exp $";
+static char rcsid[] = "$OpenBSD: getmntopts.c,v 1.5 2003/06/11 06:22:13 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -50,10 +50,7 @@ static char rcsid[] = "$OpenBSD: getmntopts.c,v 1.4 2003/06/02 20:06:15 millert 
 #include "mntopts.h"
 
 void
-getmntopts(options, m0, flagp)
-	const char *options;
-	const struct mntopt *m0;
-	int *flagp;
+getmntopts(const char *options, const struct mntopt *m0, int *flagp)
 {
 	const struct mntopt *m;
 	int negative;

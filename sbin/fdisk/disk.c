@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.c,v 1.17 2003/06/03 01:13:19 weingart Exp $	*/
+/*	$OpenBSD: disk.c,v 1.18 2003/06/11 06:22:12 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 2001 Tobias Weingartner
@@ -46,9 +46,7 @@
 #include "misc.h"
 
 int
-DISK_open(disk, mode)
-	char *disk;
-	int mode;
+DISK_open(char *disk, int mode)
 {
 	int fd;
 	struct stat st;
@@ -64,8 +62,7 @@ DISK_open(disk, mode)
 }
 
 int
-DISK_close(fd)
-	int fd;
+DISK_close(int fd)
 {
 
 	return (close(fd));
@@ -77,8 +74,7 @@ DISK_close(fd)
  * they seem.
  */
 DISK_metrics *
-DISK_getlabelmetrics(name)
-	char *name;
+DISK_getlabelmetrics(char *name)
 {
 	DISK_metrics *lm = NULL;
 	struct disklabel dl;
@@ -114,8 +110,7 @@ DISK_getlabelmetrics(name)
  * correlating the BIOS drive to the BSD drive.
  */
 DISK_metrics *
-DISK_getbiosmetrics(name)
-	char *name;
+DISK_getbiosmetrics(char *name)
 {
 	bios_diskinfo_t di;
 	DISK_metrics *bm;
@@ -165,8 +160,7 @@ DISK_getbiosmetrics(name)
  * with.  Return NULL to indicate so.
  */
 DISK_metrics *
-DISK_getbiosmetrics(name)
-	char *name;
+DISK_getbiosmetrics(char *name)
 {
 	return (NULL);
 }
@@ -182,9 +176,7 @@ DISK_getbiosmetrics(name)
  * geometry he/she wishes to use.
  */
 int
-DISK_getmetrics(disk, user)
-	disk_t *disk;
-	DISK_metrics *user;
+DISK_getmetrics(disk_t *disk, DISK_metrics *user)
 {
 
 	disk->label = DISK_getlabelmetrics(disk->name);
@@ -203,7 +195,8 @@ DISK_getmetrics(disk, user)
 		cyls = disk->label->size / (disk->bios->heads * disk->bios->sectors);
 		secs = cyls * (disk->bios->heads * disk->bios->sectors);
 		if ((disk->label->size - secs) < 0)
-			errx(1, "BIOS fixup botch (%d sectors)", disk->label->size - secs);
+			errx(1, "BIOS fixup botch (%d sectors)",
+			    disk->label->size - secs);
 		disk->bios->cylinders = cyls;
 		disk->bios->size = secs;
 	}
@@ -230,9 +223,7 @@ DISK_getmetrics(disk, user)
  * to indicate the units that should be used for display.
  */
 int
-DISK_printmetrics(disk, units)
-	disk_t *disk;
-	char *units;
+DISK_printmetrics(disk_t *disk, char *units)
 {	
 	int i;
 	double size;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsdb.c,v 1.12 2003/04/17 06:56:04 deraadt Exp $	*/
+/*	$OpenBSD: fsdb.c,v 1.13 2003/06/11 06:22:13 deraadt Exp $	*/
 /*	$NetBSD: fsdb.c,v 1.7 1997/01/11 06:50:53 lukem Exp $	*/
 
 /*-
@@ -84,7 +84,7 @@ struct dinode *curinode;
 ino_t curinum;
 
 static void
-usage()
+usage(void)
 {
 	fprintf(stderr, "usage: %s [-d] -f <fsname>\n", __progname);
 	exit(1);
@@ -97,9 +97,7 @@ usage()
  * the file system.
  */
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int ch, rval;
 	char *fsys = NULL;
@@ -121,7 +119,7 @@ main(argc, argv)
 	if (!setup(fsys))
 		errx(1, "cannot set up file system `%s'", fsys);
 	printf("Editing file system `%s'\nLast Mounted on %s\n", fsys,
-	       sblock.fs_fsmnt);
+	    sblock.fs_fsmnt);
 	rval = cmdloop();
 	sblock.fs_clean = 0;		/* mark it dirty */
 	sbdirty();
@@ -133,9 +131,7 @@ main(argc, argv)
 }
 
 #define CMDFUNC(func) static int func(int argc, char *argv[])
-#define CMDFUNCSTART(func) static int func(argc, argv)		\
-				int argc;		\
-				char *argv[];
+#define CMDFUNCSTART(func) static int func(int argc, char *argv[])
 
 CMDFUNC(helpfn);
 CMDFUNC(focus);				/* focus on inode */
@@ -199,318 +195,317 @@ static struct cmdtable cmds[] = {
 };
 
 static int
-helpfn(argc, argv)
-	int argc;
-	char *argv[];
+helpfn(int argc, char *argv[])
 {
-    struct cmdtable *cmdtp;
+	struct cmdtable *cmdtp;
 
-    printf("Commands are:\n%-10s %5s %5s   %s\n",
-	   "command", "min argc", "max argc", "what");
+	printf("Commands are:\n%-10s %5s %5s   %s\n",
+	    "command", "min argc", "max argc", "what");
 
-    for (cmdtp = cmds; cmdtp->cmd; cmdtp++)
-	printf("%-10s %5u %5u   %s\n",
-	       cmdtp->cmd, cmdtp->minargc, cmdtp->maxargc, cmdtp->helptxt);
-    return 0;
+	for (cmdtp = cmds; cmdtp->cmd; cmdtp++)
+		printf("%-10s %5u %5u   %s\n",
+		    cmdtp->cmd, cmdtp->minargc, cmdtp->maxargc, cmdtp->helptxt);
+	return 0;
 }
 
 static char *
-prompt(el)
-	EditLine *el;
+prompt(EditLine *el)
 {
-    static char pstring[64];
-    snprintf(pstring, sizeof(pstring), "fsdb (inum: %d)> ", curinum);
-    return pstring;
+	static char pstring[64];
+
+	snprintf(pstring, sizeof(pstring), "fsdb (inum: %d)> ", curinum);
+	return pstring;
 }
 
 
 static int
-cmdloop()
+cmdloop(void)
 {
-    char *line = NULL;
-    const char *elline;
-    int cmd_argc, rval = 0, known;
+	char *line = NULL;
+	const char *elline;
+	int cmd_argc, rval = 0, known;
 #define scratch known
-    char **cmd_argv;
-    struct cmdtable *cmdp;
-    History *hist;
-    EditLine *elptr;
+	char **cmd_argv;
+	struct cmdtable *cmdp;
+	History *hist;
+	EditLine *elptr;
 
-    curinode = ginode(ROOTINO);
-    curinum = ROOTINO;
-    printactive();
+	curinode = ginode(ROOTINO);
+	curinum = ROOTINO;
+	printactive();
 
-    hist = history_init();
-    history(hist, H_EVENT, 100);	/* 100 elt history buffer */
+	hist = history_init();
+	history(hist, H_EVENT, 100);	/* 100 elt history buffer */
 
-    elptr = el_init(__progname, stdin, stdout);
-    el_set(elptr, EL_EDITOR, "emacs");
-    el_set(elptr, EL_PROMPT, prompt);
-    el_set(elptr, EL_HIST, history, hist);
-    el_source(elptr, NULL);
+	elptr = el_init(__progname, stdin, stdout);
+	el_set(elptr, EL_EDITOR, "emacs");
+	el_set(elptr, EL_PROMPT, prompt);
+	el_set(elptr, EL_HIST, history, hist);
+	el_source(elptr, NULL);
 
-    while ((elline = el_gets(elptr, &scratch)) != NULL && scratch != 0) {
-	if (debug)
-	    printf("command `%s'\n", line);
+	while ((elline = el_gets(elptr, &scratch)) != NULL && scratch != 0) {
+		if (debug)
+			printf("command `%s'\n", line);
 
-	history(hist, H_ENTER, elline);
+		history(hist, H_ENTER, elline);
 
-	line = strdup(elline);
-	cmd_argv = crack(line, &cmd_argc);
-	if (cmd_argc) {
-	    /*
-	     * el_parse returns -1 to signal that it's not been handled
-	     * internally.
-	     */
-	    if (el_parse(elptr, cmd_argc, cmd_argv) != -1)
-		continue;
-	    known = 0;
-	    for (cmdp = cmds; cmdp->cmd; cmdp++) {
-		if (!strcmp(cmdp->cmd, cmd_argv[0])) {
-		    if (cmd_argc >= cmdp->minargc &&
-			cmd_argc <= cmdp->maxargc)
-			rval = (*cmdp->handler)(cmd_argc, cmd_argv);
-		    else
-			rval = argcount(cmdp, cmd_argc, cmd_argv);
-		    known = 1;
-		    break;
-		}
-	    }
-	    if (!known)
-		warnx("unknown command `%s'", cmd_argv[0]), rval = 1;
-	} else
-	    rval = 0;
-	free(line);
-	if (rval < 0)
-	    return rval;
-	if (rval)
-	    warnx("rval was %d", rval);
-    }
-    el_end(elptr);
-    history_end(hist);
-    return rval;
+		line = strdup(elline);
+		cmd_argv = crack(line, &cmd_argc);
+		if (cmd_argc) {
+			/*
+			 * el_parse returns -1 to signal that it's not been handled
+			 * internally.
+			 */
+			if (el_parse(elptr, cmd_argc, cmd_argv) != -1)
+				continue;
+			known = 0;
+			for (cmdp = cmds; cmdp->cmd; cmdp++) {
+				if (!strcmp(cmdp->cmd, cmd_argv[0])) {
+					if (cmd_argc >= cmdp->minargc &&
+					    cmd_argc <= cmdp->maxargc)
+						rval = (*cmdp->handler)(cmd_argc,
+						    cmd_argv);
+					else
+						rval = argcount(cmdp,
+						    cmd_argc, cmd_argv);
+					known = 1;
+					break;
+				}
+			}
+			if (!known) {
+				warnx("unknown command `%s'", cmd_argv[0]);
+				rval = 1;
+			}
+		} else
+			rval = 0;
+		free(line);
+		if (rval < 0)
+			return rval;
+		if (rval)
+			warnx("rval was %d", rval);
+	}
+	el_end(elptr);
+	history_end(hist);
+	return rval;
 }
 
 static ino_t ocurrent;
 
 #define GETINUM(ac,inum)    inum = strtoul(argv[ac], &cp, 0); \
-    if (inum < ROOTINO || inum > maxino || cp == argv[ac] || *cp != '\0' ) { \
-	printf("inode %d out of range; range is [%d,%d]\n", \
-	       inum, ROOTINO, maxino); \
-	return 1; \
-    }
+	if (inum < ROOTINO || inum > maxino || cp == argv[ac] || *cp != '\0' ) { \
+		printf("inode %d out of range; range is [%d,%d]\n", \
+		    inum, ROOTINO, maxino); \
+		return 1; \
+	}
 
 /*
  * Focus on given inode number
  */
 CMDFUNCSTART(focus)
 {
-    ino_t inum;
-    char *cp;
+	ino_t inum;
+	char *cp;
 
-    GETINUM(1,inum);
-    curinode = ginode(inum);
-    ocurrent = curinum;
-    curinum = inum;
-    printactive();
-    return 0;
+	GETINUM(1,inum);
+	curinode = ginode(inum);
+	ocurrent = curinum;
+	curinum = inum;
+	printactive();
+	return 0;
 }
 
 CMDFUNCSTART(back)
 {
-    curinum = ocurrent;
-    curinode = ginode(curinum);
-    printactive();
-    return 0;
+	curinum = ocurrent;
+	curinode = ginode(curinum);
+	printactive();
+	return 0;
 }
 
 CMDFUNCSTART(zapi)
 {
-    ino_t inum;
-    struct dinode *dp;
-    char *cp;
+	ino_t inum;
+	struct dinode *dp;
+	char *cp;
 
-    GETINUM(1,inum);
-    dp = ginode(inum);
-    clearinode(dp);
-    inodirty();
-    if (curinode)			/* re-set after potential change */
-	curinode = ginode(curinum);
-    return 0;
+	GETINUM(1,inum);
+	dp = ginode(inum);
+	clearinode(dp);
+	inodirty();
+	if (curinode)			/* re-set after potential change */
+		curinode = ginode(curinum);
+	return 0;
 }
 
 CMDFUNCSTART(active)
 {
-    printactive();
-    return 0;
+	printactive();
+	return 0;
 }
 
 
 CMDFUNCSTART(quit)
 {
-    return -1;
+	return -1;
 }
 
 CMDFUNCSTART(uplink)
 {
-    if (!checkactive())
-	return 1;
-    printf("inode %d link count now %d\n", curinum, ++curinode->di_nlink);
-    inodirty();
-    return 0;
+	if (!checkactive())
+		return 1;
+	printf("inode %d link count now %d\n", curinum, ++curinode->di_nlink);
+	inodirty();
+	return 0;
 }
 
 CMDFUNCSTART(downlink)
 {
-    if (!checkactive())
-	return 1;
-    printf("inode %d link count now %d\n", curinum, --curinode->di_nlink);
-    inodirty();
-    return 0;
+	if (!checkactive())
+		return 1;
+	printf("inode %d link count now %d\n", curinum, --curinode->di_nlink);
+	inodirty();
+	return 0;
 }
 
 static const char *typename[] = {
-    "unknown",
-    "fifo",
-    "char special",
-    "unregistered #3",
-    "directory",
-    "unregistered #5",
-    "blk special",
-    "unregistered #7",
-    "regular",
-    "unregistered #9",
-    "symlink",
-    "unregistered #11",
-    "socket",
-    "unregistered #13",
-    "whiteout",
+	"unknown",
+	"fifo",
+	"char special",
+	"unregistered #3",
+	"directory",
+	"unregistered #5",
+	"blk special",
+	"unregistered #7",
+	"regular",
+	"unregistered #9",
+	"symlink",
+	"unregistered #11",
+	"socket",
+	"unregistered #13",
+	"whiteout",
 };
 
 static int slot;
 
 static int
-scannames(idesc)
-	struct inodesc *idesc;
+scannames(struct inodesc *idesc)
 {
 	struct direct *dirp = idesc->id_dirp;
 
 	printf("slot %d ino %d reclen %d: %s, `%.*s'\n",
-	       slot++, dirp->d_ino, dirp->d_reclen, typename[dirp->d_type],
-	       dirp->d_namlen, dirp->d_name);
+	    slot++, dirp->d_ino, dirp->d_reclen, typename[dirp->d_type],
+	    dirp->d_namlen, dirp->d_name);
 	return (KEEPON);
 }
 
 CMDFUNCSTART(ls)
 {
-    struct inodesc idesc;
-    checkactivedir();			/* let it go on anyway */
+	struct inodesc idesc;
+	checkactivedir();			/* let it go on anyway */
 
-    slot = 0;
-    idesc.id_number = curinum;
-    idesc.id_func = scannames;
-    idesc.id_type = DATA;
-    idesc.id_fix = IGNORE;
-    ckinode(curinode, &idesc);
-    curinode = ginode(curinum);
+	slot = 0;
+	idesc.id_number = curinum;
+	idesc.id_func = scannames;
+	idesc.id_type = DATA;
+	idesc.id_fix = IGNORE;
+	ckinode(curinode, &idesc);
+	curinode = ginode(curinum);
 
-    return 0;
+	return 0;
 }
 
 static int
-dolookup(name)
-	char *name;
+dolookup(char *name)
 {
-    struct inodesc idesc;
+	struct inodesc idesc;
 
-    if (!checkactivedir())
-	    return 0;
-    idesc.id_number = curinum;
-    idesc.id_func = findino;
-    idesc.id_name = name;
-    idesc.id_type = DATA;
-    idesc.id_fix = IGNORE;
-    if (ckinode(curinode, &idesc) & FOUND) {
-	curinum = idesc.id_parent;
-	curinode = ginode(curinum);
-	printactive();
-	return 1;
-    } else {
-	warnx("name `%s' not found in current inode directory", name);
-	return 0;
-    }
+	if (!checkactivedir())
+		return 0;
+	idesc.id_number = curinum;
+	idesc.id_func = findino;
+	idesc.id_name = name;
+	idesc.id_type = DATA;
+	idesc.id_fix = IGNORE;
+	if (ckinode(curinode, &idesc) & FOUND) {
+		curinum = idesc.id_parent;
+		curinode = ginode(curinum);
+		printactive();
+		return 1;
+	} else {
+		warnx("name `%s' not found in current inode directory", name);
+		return 0;
+	}
 }
 
 CMDFUNCSTART(focusname)
 {
-    char *p, *val;
+	char *p, *val;
 
-    if (!checkactive())
-	return 1;
+	if (!checkactive())
+		return 1;
 
-    ocurrent = curinum;
+	ocurrent = curinum;
 
-    if (argv[1][0] == '/') {
-	curinum = ROOTINO;
-	curinode = ginode(ROOTINO);
-    } else {
-	if (!checkactivedir())
-	    return 1;
-    }
-    for (p = argv[1]; p != NULL;) {
-	while ((val = strsep(&p, "/")) != NULL && *val == '\0');
-	if (val) {
-	    printf("component `%s': ", val);
-	    fflush(stdout);
-	    if (!dolookup(val)) {
-		curinode = ginode(curinum);
-		return(1);
-	    }
+	if (argv[1][0] == '/') {
+		curinum = ROOTINO;
+		curinode = ginode(ROOTINO);
+	} else {
+		if (!checkactivedir())
+		    return 1;
 	}
-    }
-    return 0;
+	for (p = argv[1]; p != NULL;) {
+		while ((val = strsep(&p, "/")) != NULL && *val == '\0');
+			if (val) {
+				printf("component `%s': ", val);
+				fflush(stdout);
+				if (!dolookup(val)) {
+					curinode = ginode(curinum);
+					return(1);
+				}
+			}
+	}
+	return 0;
 }
 
 CMDFUNCSTART(ln)
 {
-    ino_t inum;
-    int rval;
-    char *cp;
+	ino_t inum;
+	int rval;
+	char *cp;
 
-    GETINUM(1,inum);
+	GETINUM(1,inum);
 
-    if (!checkactivedir())
-	return 1;
-    rval = makeentry(curinum, inum, argv[2]);
-    if (rval)
-	printf("Ino %d entered as `%s'\n", inum, argv[2]);
-    else
-	printf("could not enter name? weird.\n");
-    curinode = ginode(curinum);
-    return rval;
+	if (!checkactivedir())
+		return 1;
+	rval = makeentry(curinum, inum, argv[2]);
+	if (rval)
+		printf("Ino %d entered as `%s'\n", inum, argv[2]);
+	else
+		printf("could not enter name? weird.\n");
+	curinode = ginode(curinum);
+	return rval;
 }
 
 CMDFUNCSTART(rm)
 {
-    int rval;
+	int rval;
 
-    if (!checkactivedir())
-	return 1;
-    rval = changeino(curinum, argv[1], 0);
-    if (rval & ALTERED) {
-	printf("Name `%s' removed\n", argv[1]);
-	return 0;
-    } else {
-	printf("could not remove name? weird.\n");
-	return 1;
-    }
+	if (!checkactivedir())
+		return 1;
+	rval = changeino(curinum, argv[1], 0);
+	if (rval & ALTERED) {
+		printf("Name `%s' removed\n", argv[1]);
+		return 0;
+	} else {
+		printf("could not remove name? weird.\n");
+		return 1;
+	}
 }
 
 static long slotcount, desired;
 
 static int
-chinumfunc(idesc)
-	struct inodesc *idesc;
+chinumfunc(struct inodesc *idesc)
 {
 	struct direct *dirp = idesc->id_dirp;
 
@@ -523,379 +518,378 @@ chinumfunc(idesc)
 
 CMDFUNCSTART(chinum)
 {
-    char *cp;
-    ino_t inum;
-    struct inodesc idesc;
+	char *cp;
+	ino_t inum;
+	struct inodesc idesc;
 
-    slotcount = 0;
-    if (!checkactivedir())
-	return 1;
-    GETINUM(2,inum);
+	slotcount = 0;
+	if (!checkactivedir())
+		return 1;
+	GETINUM(2,inum);
 
-    desired = strtol(argv[1], &cp, 0);
-    if (cp == argv[1] || *cp != '\0' || desired < 0) {
-	printf("invalid slot number `%s'\n", argv[1]);
-	return 1;
-    }
+	desired = strtol(argv[1], &cp, 0);
+	if (cp == argv[1] || *cp != '\0' || desired < 0) {
+		printf("invalid slot number `%s'\n", argv[1]);
+		return 1;
+	}
 
-    idesc.id_number = curinum;
-    idesc.id_func = chinumfunc;
-    idesc.id_fix = IGNORE;
-    idesc.id_type = DATA;
-    idesc.id_parent = inum;		/* XXX convenient hiding place */
+	idesc.id_number = curinum;
+	idesc.id_func = chinumfunc;
+	idesc.id_fix = IGNORE;
+	idesc.id_type = DATA;
+	idesc.id_parent = inum;		/* XXX convenient hiding place */
 
-    if (ckinode(curinode, &idesc) & FOUND)
-	return 0;
-    else {
-	warnx("no %sth slot in current directory", argv[1]);
-	return 1;
-    }
+	if (ckinode(curinode, &idesc) & FOUND)
+		return 0;
+	else {
+		warnx("no %sth slot in current directory", argv[1]);
+		return 1;
+	}
 }
 
 static int
-chnamefunc(idesc)
-	struct inodesc *idesc;
+chnamefunc(struct inodesc *idesc)
 {
 	struct direct *dirp = idesc->id_dirp;
 	struct direct testdir;
 
 	if (slotcount++ == desired) {
-	    /* will name fit? */
-	    testdir.d_namlen = strlen(idesc->id_name);
-	    if (DIRSIZ(NEWDIRFMT, &testdir) <= dirp->d_reclen) {
-		dirp->d_namlen = testdir.d_namlen;
-		strlcpy(dirp->d_name, idesc->id_name, sizeof dirp->d_name);
-		return STOP|ALTERED|FOUND;
-	    } else
-		return STOP|FOUND;	/* won't fit, so give up */
+		/* will name fit? */
+		testdir.d_namlen = strlen(idesc->id_name);
+		if (DIRSIZ(NEWDIRFMT, &testdir) <= dirp->d_reclen) {
+			dirp->d_namlen = testdir.d_namlen;
+			strlcpy(dirp->d_name, idesc->id_name, sizeof dirp->d_name);
+			return STOP|ALTERED|FOUND;
+		} else
+			return STOP|FOUND;	/* won't fit, so give up */
 	}
 	return KEEPON;
 }
 
 CMDFUNCSTART(chname)
 {
-    int rval;
-    char *cp;
-    struct inodesc idesc;
+	int rval;
+	char *cp;
+	struct inodesc idesc;
 
-    slotcount = 0;
-    if (!checkactivedir())
-	return 1;
+	slotcount = 0;
+	if (!checkactivedir())
+		return 1;
 
-    desired = strtoul(argv[1], &cp, 0);
-    if (cp == argv[1] || *cp != '\0') {
-	printf("invalid slot number `%s'\n", argv[1]);
-	return 1;
-    }
+	desired = strtoul(argv[1], &cp, 0);
+	if (cp == argv[1] || *cp != '\0') {
+		printf("invalid slot number `%s'\n", argv[1]);
+		return 1;
+	}
 
-    idesc.id_number = curinum;
-    idesc.id_func = chnamefunc;
-    idesc.id_fix = IGNORE;
-    idesc.id_type = DATA;
-    idesc.id_name = argv[2];
+	idesc.id_number = curinum;
+	idesc.id_func = chnamefunc;
+	idesc.id_fix = IGNORE;
+	idesc.id_type = DATA;
+	idesc.id_name = argv[2];
 
-    rval = ckinode(curinode, &idesc);
-    if ((rval & (FOUND|ALTERED)) == (FOUND|ALTERED))
-	return 0;
-    else if (rval & FOUND) {
-	warnx("new name `%s' does not fit in slot %s", argv[2], argv[1]);
-	return 1;
-    } else {
-	warnx("no %sth slot in current directory", argv[1]);
-	return 1;
-    }
+	rval = ckinode(curinode, &idesc);
+	if ((rval & (FOUND|ALTERED)) == (FOUND|ALTERED))
+		return 0;
+	else if (rval & FOUND) {
+		warnx("new name `%s' does not fit in slot %s", argv[2], argv[1]);
+		return 1;
+	} else {
+		warnx("no %sth slot in current directory", argv[1]);
+		return 1;
+	}
 }
 
 static struct typemap {
-    const char *typename;
-    int typebits;
+	const char *typename;
+	int typebits;
 } typenamemap[]  = {
-    {"file", IFREG},
-    {"dir", IFDIR},
-    {"socket", IFSOCK},
-    {"fifo", IFIFO},
+	{"file", IFREG},
+	{"dir", IFDIR},
+	{"socket", IFSOCK},
+	{"fifo", IFIFO},
 };
 
 CMDFUNCSTART(newtype)
 {
-    int type;
-    struct typemap *tp;
+	int type;
+	struct typemap *tp;
 
-    if (!checkactive())
-	return 1;
-    type = curinode->di_mode & IFMT;
-    for (tp = typenamemap;
-	 tp < &typenamemap[sizeof(typemap)/sizeof(*typemap)];
-	 tp++) {
-	if (!strcmp(argv[1], tp->typename)) {
-	    printf("setting type to %s\n", tp->typename);
-	    type = tp->typebits;
-	    break;
+	if (!checkactive())
+		return 1;
+	type = curinode->di_mode & IFMT;
+	for (tp = typenamemap;
+	    tp < &typenamemap[sizeof(typemap)/sizeof(*typemap)];
+	    tp++) {
+		if (!strcmp(argv[1], tp->typename)) {
+			printf("setting type to %s\n", tp->typename);
+			type = tp->typebits;
+			break;
+		}
 	}
-    }
-    if (tp == &typenamemap[sizeof(typemap)/sizeof(*typemap)]) {
-	warnx("type `%s' not known", argv[1]);
-	warnx("try one of `file', `dir', `socket', `fifo'");
-	return 1;
-    }
-    curinode->di_mode &= ~IFMT;
-    curinode->di_mode |= type;
-    inodirty();
-    printactive();
-    return 0;
+	if (tp == &typenamemap[sizeof(typemap)/sizeof(*typemap)]) {
+		warnx("type `%s' not known", argv[1]);
+		warnx("try one of `file', `dir', `socket', `fifo'");
+		return 1;
+	}
+	curinode->di_mode &= ~IFMT;
+	curinode->di_mode |= type;
+	inodirty();
+	printactive();
+	return 0;
 }
 
 CMDFUNCSTART(chmode)
 {
-    int rval = 1;
-    long modebits;
-    char *cp;
+	int rval = 1;
+	long modebits;
+	char *cp;
 
-    if (!checkactive())
-	return 1;
+	if (!checkactive())
+		return 1;
 
-    modebits = strtol(argv[1], &cp, 8);
-    if (cp == argv[1] || *cp != '\0' ) {
-	warnx("bad modebits `%s'", argv[1]);
-	return 1;
-    }
+	modebits = strtol(argv[1], &cp, 8);
+	if (cp == argv[1] || *cp != '\0' ) {
+		warnx("bad modebits `%s'", argv[1]);
+		return 1;
+	}
 
-    curinode->di_mode &= ~07777;
-    curinode->di_mode |= modebits;
-    inodirty();
-    printactive();
-    return rval;
+	curinode->di_mode &= ~07777;
+	curinode->di_mode |= modebits;
+	inodirty();
+	printactive();
+	return rval;
 }
 
 CMDFUNCSTART(chlen)
 {
-    int rval = 1;
-    long len;
-    char *cp;
+	int rval = 1;
+	long len;
+	char *cp;
 
-    if (!checkactive())
-	return 1;
+	if (!checkactive())
+		return 1;
 
-    len = strtol(argv[1], &cp, 0);
-    if (cp == argv[1] || *cp != '\0' || len < 0) {
-	warnx("bad length '%s'", argv[1]);
-	return 1;
-    }
+	len = strtol(argv[1], &cp, 0);
+	if (cp == argv[1] || *cp != '\0' || len < 0) {
+		warnx("bad length '%s'", argv[1]);
+		return 1;
+	}
 
-    curinode->di_size = len;
-    inodirty();
-    printactive();
-    return rval;
+	curinode->di_size = len;
+	inodirty();
+	printactive();
+	return rval;
 }
 
 CMDFUNCSTART(chaflags)
 {
-    int rval = 1;
-    u_long flags;
-    char *cp;
+	int rval = 1;
+	u_long flags;
+	char *cp;
 
-    if (!checkactive())
-	return 1;
+	if (!checkactive())
+		return 1;
 
-    flags = strtoul(argv[1], &cp, 0);
-    if (cp == argv[1] || *cp != '\0' ) {
-	warnx("bad flags `%s'", argv[1]);
-	return 1;
-    }
+	flags = strtoul(argv[1], &cp, 0);
+	if (cp == argv[1] || *cp != '\0' ) {
+		warnx("bad flags `%s'", argv[1]);
+		return 1;
+	}
 
-    if (flags > UINT_MAX) {
-	warnx("flags set beyond 32-bit range of field (%lx)", flags);
-	return(1);
-    }
-    curinode->di_flags = flags;
-    inodirty();
-    printactive();
-    return rval;
+	if (flags > UINT_MAX) {
+		warnx("flags set beyond 32-bit range of field (%lx)", flags);
+		return(1);
+	}
+	curinode->di_flags = flags;
+	inodirty();
+	printactive();
+	return rval;
 }
 
 CMDFUNCSTART(chgen)
 {
-    int rval = 1;
-    long gen;
-    char *cp;
+	int rval = 1;
+	long gen;
+	char *cp;
 
-    if (!checkactive())
-	return 1;
+	if (!checkactive())
+		return 1;
 
-    gen = strtol(argv[1], &cp, 0);
-    if (cp == argv[1] || *cp != '\0' ) {
-	warnx("bad gen `%s'", argv[1]);
-	return 1;
-    }
+	gen = strtol(argv[1], &cp, 0);
+	if (cp == argv[1] || *cp != '\0' ) {
+		warnx("bad gen `%s'", argv[1]);
+		return 1;
+	}
 
-    if (gen > INT_MAX || gen < INT_MIN) {
-	warnx("gen set beyond 32-bit range of field (%lx)", gen);
-	return(1);
-    }
-    curinode->di_gen = gen;
-    inodirty();
-    printactive();
-    return rval;
+	if (gen > INT_MAX || gen < INT_MIN) {
+		warnx("gen set beyond 32-bit range of field (%lx)", gen);
+		return(1);
+	}
+	curinode->di_gen = gen;
+	inodirty();
+	printactive();
+	return rval;
 }
 
 CMDFUNCSTART(linkcount)
 {
-    int rval = 1;
-    int lcnt;
-    char *cp;
+	int rval = 1;
+	int lcnt;
+	char *cp;
 
-    if (!checkactive())
-	return 1;
+	if (!checkactive())
+		return 1;
 
-    lcnt = strtol(argv[1], &cp, 0);
-    if (cp == argv[1] || *cp != '\0' ) {
-	warnx("bad link count `%s'", argv[1]);
-	return 1;
-    }
-    if (lcnt > USHRT_MAX || lcnt < 0) {
-	warnx("max link count is %d", USHRT_MAX);
-	return 1;
-    }
+	lcnt = strtol(argv[1], &cp, 0);
+	if (cp == argv[1] || *cp != '\0' ) {
+		warnx("bad link count `%s'", argv[1]);
+		return 1;
+	}
+	if (lcnt > USHRT_MAX || lcnt < 0) {
+		warnx("max link count is %d", USHRT_MAX);
+		return 1;
+	}
 
-    curinode->di_nlink = lcnt;
-    inodirty();
-    printactive();
-    return rval;
+	curinode->di_nlink = lcnt;
+	inodirty();
+	printactive();
+	return rval;
 }
 
 CMDFUNCSTART(chowner)
 {
-    int rval = 1;
-    uid_t uid;
-    char *cp;
-    struct passwd *pwd;
+	int rval = 1;
+	uid_t uid;
+	char *cp;
+	struct passwd *pwd;
 
-    if (!checkactive())
-	return 1;
+	if (!checkactive())
+		return 1;
 
-    uid = strtoul(argv[1], &cp, 0);
-    if (cp == argv[1] || *cp != '\0' ) {
-	/* try looking up name */
-	if ((pwd = getpwnam(argv[1]))) {
-	    uid = pwd->pw_uid;
-	} else {
-	    warnx("bad uid `%s'", argv[1]);
-	    return 1;
+	uid = strtoul(argv[1], &cp, 0);
+	if (cp == argv[1] || *cp != '\0' ) {
+		/* try looking up name */
+		if ((pwd = getpwnam(argv[1]))) {
+			uid = pwd->pw_uid;
+		} else {
+			warnx("bad uid `%s'", argv[1]);
+			return 1;
+		}
 	}
-    }
 
-    curinode->di_uid = uid;
-    inodirty();
-    printactive();
-    return rval;
+	curinode->di_uid = uid;
+	inodirty();
+	printactive();
+	return rval;
 }
 
 CMDFUNCSTART(chgroup)
 {
-    int rval = 1;
-    gid_t gid;
-    char *cp;
-    struct group *grp;
+	int rval = 1;
+	gid_t gid;
+	char *cp;
+	struct group *grp;
 
-    if (!checkactive())
-	return 1;
+	if (!checkactive())
+		return 1;
 
-    gid = strtoul(argv[1], &cp, 0);
-    if (cp == argv[1] || *cp != '\0' ) {
-	if ((grp = getgrnam(argv[1]))) {
-	    gid = grp->gr_gid;
-	} else {
-	    warnx("bad gid `%s'", argv[1]);
-	    return 1;
+	gid = strtoul(argv[1], &cp, 0);
+	if (cp == argv[1] || *cp != '\0' ) {
+		if ((grp = getgrnam(argv[1]))) {
+			gid = grp->gr_gid;
+		} else {
+			warnx("bad gid `%s'", argv[1]);
+			return 1;
+		}
 	}
-    }
 
-    curinode->di_gid = gid;
-    inodirty();
-    printactive();
-    return rval;
+	curinode->di_gid = gid;
+	inodirty();
+	printactive();
+	return rval;
 }
 
 static int
-dotime(name, rsec, rnsec)
-	char *name;
-	int32_t *rsec, *rnsec;
+dotime(char *name, int32_t *rsec, int32_t *rnsec)
 {
-    char *p, *val;
-    struct tm t;
-    int32_t sec;
-    int32_t nsec;
-    p = strchr(name, '.');
-    if (p) {
-	*p = '\0';
-	nsec = strtoul(++p, &val, 0);
-	if (val == p || *val != '\0' || nsec >= 1000000000 || nsec < 0) {
-		warnx("invalid nanoseconds");
-		goto badformat;
-	}
-    } else
-	nsec = 0;
-    if (strlen(name) != 14) {
+	char *p, *val;
+	struct tm t;
+	int32_t sec;
+	int32_t nsec;
+
+	p = strchr(name, '.');
+	if (p) {
+		*p = '\0';
+		nsec = strtoul(++p, &val, 0);
+		if (val == p || *val != '\0' || nsec >= 1000000000 || nsec < 0) {
+			warnx("invalid nanoseconds");
+			goto badformat;
+		}
+	} else
+		nsec = 0;
+
+	if (strlen(name) != 14) {
 badformat:
-	warnx("date format: YYYYMMDDHHMMSS[.nsec]");
-	return 1;
-    }
+		warnx("date format: YYYYMMDDHHMMSS[.nsec]");
+		return 1;
+	}
 
-    for (p = name; *p; p++)
-	if (*p < '0' || *p > '9')
-	    goto badformat;
+	for (p = name; *p; p++)
+		if (*p < '0' || *p > '9')
+			    goto badformat;
 
-    p = name;
+	p = name;
 #define VAL() ((*p++) - '0')
-    t.tm_year = VAL();
-    t.tm_year = VAL() + t.tm_year * 10;
-    t.tm_year = VAL() + t.tm_year * 10;
-    t.tm_year = VAL() + t.tm_year * 10 - 1900;
-    t.tm_mon = VAL();
-    t.tm_mon = VAL() + t.tm_mon * 10 - 1;
-    t.tm_mday = VAL();
-    t.tm_mday = VAL() + t.tm_mday * 10;
-    t.tm_hour = VAL();
-    t.tm_hour = VAL() + t.tm_hour * 10;
-    t.tm_min = VAL();
-    t.tm_min = VAL() + t.tm_min * 10;
-    t.tm_sec = VAL();
-    t.tm_sec = VAL() + t.tm_sec * 10;
-    t.tm_isdst = -1;
+	t.tm_year = VAL();
+	t.tm_year = VAL() + t.tm_year * 10;
+	t.tm_year = VAL() + t.tm_year * 10;
+	t.tm_year = VAL() + t.tm_year * 10 - 1900;
+	t.tm_mon = VAL();
+	t.tm_mon = VAL() + t.tm_mon * 10 - 1;
+	t.tm_mday = VAL();
+	t.tm_mday = VAL() + t.tm_mday * 10;
+	t.tm_hour = VAL();
+	t.tm_hour = VAL() + t.tm_hour * 10;
+	t.tm_min = VAL();
+	t.tm_min = VAL() + t.tm_min * 10;
+	t.tm_sec = VAL();
+	t.tm_sec = VAL() + t.tm_sec * 10;
+	t.tm_isdst = -1;
 
-    sec = mktime(&t);
-    if (sec == -1) {
-	warnx("date/time out of range");
-	return 1;
-    }
-    *rsec = sec;
-    *rnsec = nsec;
-    return 0;
+	sec = mktime(&t);
+	if (sec == -1) {
+		warnx("date/time out of range");
+		return 1;
+	}
+	*rsec = sec;
+	*rnsec = nsec;
+	return 0;
 }
 
 CMDFUNCSTART(chmtime)
 {
-    if (dotime(argv[1], &curinode->di_mtime, &curinode->di_mtimensec))
-	return 1;
-    inodirty();
-    printactive();
-    return 0;
+	if (dotime(argv[1], &curinode->di_mtime, &curinode->di_mtimensec))
+		return 1;
+	inodirty();
+	printactive();
+	return 0;
 }
 
 CMDFUNCSTART(chatime)
 {
-    if (dotime(argv[1], &curinode->di_atime, &curinode->di_atimensec))
-	return 1;
-    inodirty();
-    printactive();
-    return 0;
+	if (dotime(argv[1], &curinode->di_atime, &curinode->di_atimensec))
+		return 1;
+	inodirty();
+	printactive();
+	return 0;
 }
 
 CMDFUNCSTART(chctime)
 {
-    if (dotime(argv[1], &curinode->di_ctime, &curinode->di_ctimensec))
-	return 1;
-    inodirty();
-    printactive();
-    return 0;
+	if (dotime(argv[1], &curinode->di_ctime, &curinode->di_ctimensec))
+		return 1;
+	inodirty();
+	printactive();
+	return 0;
 }

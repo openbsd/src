@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.28 2003/06/02 20:06:16 millert Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.29 2003/06/11 06:22:14 deraadt Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.3 (Berkeley) 2/3/94";
 #else
-static char rcsid[] = "$OpenBSD: mkfs.c,v 1.28 2003/06/02 20:06:16 millert Exp $";
+static char rcsid[] = "$OpenBSD: mkfs.c,v 1.29 2003/06/11 06:22:14 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -138,10 +138,7 @@ int		isblock(struct fs *, unsigned char *, int);
 void		rdfs(daddr_t, int, void *);
 
 void
-mkfs(pp, fsys, fi, fo)
-	struct partition *pp;
-	char *fsys;
-	int fi, fo;
+mkfs(struct partition *pp, char *fsys, int fi, int fo)
 {
 	long i, mincpc, mincpg, inospercg;
 	long cylno, rpos, blk, j, warn = 0;
@@ -685,9 +682,7 @@ next:
  * Initialize a cylinder group.
  */
 void
-initcg(cylno, utime)
-	int cylno;
-	time_t utime;
+initcg(int cylno, time_t utime)
 {
 	daddr_t cbase, d, dlower, dupper, dmax, blkno;
 	long i, j;
@@ -879,8 +874,7 @@ struct odirect olost_found_dir[] = {
 #endif
 
 void
-fsinit(utime)
-	time_t utime;
+fsinit(time_t utime)
 {
 	/*
 	 * initialize the node
@@ -938,9 +932,7 @@ fsinit(utime)
  * return size of directory.
  */
 int
-makedir(protodir, entries)
-	struct direct *protodir;
-	int entries;
+makedir(struct direct *protodir, int entries)
 {
 	char *cp;
 	int i, spcleft;
@@ -961,9 +953,7 @@ makedir(protodir, entries)
  * allocate a block or frag
  */
 daddr_t
-alloc(size, mode)
-	int size;
-	int mode;
+alloc(int size, int mode)
 {
 	int i, frag;
 	daddr_t d, blkno;
@@ -1016,9 +1006,7 @@ goth:
  * Allocate an inode on the disk
  */
 void
-iput(ip, ino)
-	struct dinode *ip;
-	ino_t ino;
+iput(struct dinode *ip, ino_t ino)
 {
 	struct dinode buf[MAXINOPB];
 	daddr_t d;
@@ -1052,10 +1040,7 @@ iput(ip, ino)
  * read a block from the file system
  */
 void
-rdfs(bno, size, bf)
-	daddr_t bno;
-	int size;
-	void *bf;
+rdfs(daddr_t bno, int size, void *bf)
 {
 	int n;
 
@@ -1075,10 +1060,7 @@ rdfs(bno, size, bf)
  * write a block to the file system
  */
 void
-wtfs(bno, size, bf)
-	daddr_t bno;
-	int size;
-	void *bf;
+wtfs(daddr_t bno, int size, void *bf)
 {
 	int n;
 
@@ -1100,10 +1082,7 @@ wtfs(bno, size, bf)
  * check if a block is available
  */
 int
-isblock(fs, cp, h)
-	struct fs *fs;
-	unsigned char *cp;
-	int h;
+isblock(struct fs *fs, unsigned char *cp, int h)
 {
 	unsigned char mask;
 
@@ -1133,10 +1112,7 @@ isblock(fs, cp, h)
  * take a block out of the map
  */
 void
-clrblock(fs, cp, h)
-	struct fs *fs;
-	unsigned char *cp;
-	int h;
+clrblock(struct fs *fs, unsigned char *cp, int h)
 {
 	switch ((fs)->fs_frag) {
 	case 8:
@@ -1165,10 +1141,7 @@ clrblock(fs, cp, h)
  * put a block into the map
  */
 void
-setblock(fs, cp, h)
-	struct fs *fs;
-	unsigned char *cp;
-	int h;
+setblock(struct fs *fs, unsigned char *cp, int h)
 {
 	switch (fs->fs_frag) {
 	case 8:
@@ -1198,7 +1171,7 @@ setblock(fs, cp, h)
  * single line.
  */
 static int
-charsperline()
+charsperline(void)
 {
 	int columns;
 	char *cp;

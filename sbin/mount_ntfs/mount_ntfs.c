@@ -1,4 +1,4 @@
-/* $OpenBSD: mount_ntfs.c,v 1.5 2003/06/10 16:41:29 deraadt Exp $ */
+/* $OpenBSD: mount_ntfs.c,v 1.6 2003/06/11 06:22:14 deraadt Exp $ */
 /* $NetBSD: mount_ntfs.c,v 1.9 2003/05/03 15:37:08 christos Exp $ */
 
 /*
@@ -66,16 +66,9 @@ static const struct mntopt mopts[] = {
 
 static void	usage(void) __dead2;
 int main(int, char **);
-int mount_ntfs(int argc, char **argv);
 
 int
 main(int argc, char *argv[])
-{
-	return mount_ntfs(argc, argv);
-}
-
-int
-mount_ntfs(int argc, char *argv[])
 {
 	struct ntfs_args args;
 	struct stat sb;

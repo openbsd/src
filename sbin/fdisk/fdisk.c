@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.35 2003/06/03 01:13:19 weingart Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.36 2003/06/11 06:22:12 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -44,9 +44,10 @@ static unsigned char builtin_mbr[] = {
 
 
 void
-usage()
+usage(void)
 {
 	extern char * __progname;
+
 	fprintf(stderr, "usage: %s "
 	    "[-ieu] [-f mbrboot] [-c cyl -h head -s sect] disk\n"
 	    "\t-i: initialize disk with virgin MBR\n"
@@ -61,9 +62,7 @@ usage()
 
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	int ch, fd;
 	int i_flag = 0, m_flag = 0, u_flag = 0;
