@@ -1,4 +1,4 @@
-/*	$OpenBSD: modload.c,v 1.14 1997/08/24 08:07:02 downsj Exp $	*/
+/*	$OpenBSD: modload.c,v 1.15 1997/09/11 11:46:09 deraadt Exp $	*/
 /*	$NetBSD: modload.c,v 1.13 1995/05/28 05:21:58 jtc Exp $	*/
 
 /*
@@ -69,6 +69,16 @@ int symtab = 1;
 int quiet = 0;
 int dounlink = 0;
 
+#if defined(__alpha) || defined(__mips)
+#define LDSYMTABLE	"-R"
+#define LDTEXTSTART	"-Ttext"
+#define LDSYMPREFIX	""
+#else
+#define LDSYMTABLE	"-R"
+#define LDTEXTSTART	"-Ttext"
+#define LDSYMPREFIX	""
+#endif
+
 void
 linkcmd(kernel, entry, outfile, address, object)
 	char *kernel, *entry, *outfile;
@@ -79,21 +89,20 @@ linkcmd(kernel, entry, outfile, address, object)
 	pid_t pid;
 	int status;
 
-	snprintf(entrybuf, sizeof entrybuf, "_%s", entry);
+	snprintf(entrybuf, sizeof entrybuf, "%s%s", LDSYMPREFIX, entry);
 	snprintf(addrbuf, sizeof addrbuf, "%x", address);
 
 	if (debug)
-		printf("%s -A %s -e %s -o %s -T %s %s\n",
-			_PATH_LD, kernel, entrybuf, outfile,
-			addrbuf, object);
-
+		printf("%s %s %s -e %s -o %s %s %s %s\n",
+		    _PATH_LD, LDSYMTABLE, kernel, entrybuf,
+		    outfile, LDTEXTSTART, addrbuf, object);
 	
 	if ((pid = fork()) < 0)
 		err(18, "fork");
 
 	if(pid == 0) {
-		execl(_PATH_LD, "ld", "-A", kernel, "-e", entrybuf, "-o",
-		outfile, "-T", addrbuf, object, NULL);
+		execl(_PATH_LD, "ld", LDSYMTABLE, kernel, "-e", entrybuf, "-o",
+		    outfile, LDTEXTSTART, addrbuf, object, NULL);
 		exit(128 + errno);
 	}
 
@@ -179,7 +188,7 @@ main(argc, argv)
 	struct stat stb;
 	u_int modsize;	/* XXX */
 	u_int modentry;	/* XXX */
-	struct nlist nl, *nlp;
+	struct nlist *nlp;
 	int strtablen, numsyms;
 
 	struct lmc_loadbuf ldbuf;
@@ -501,7 +510,7 @@ main(argc, argv)
 			err(15, "error fetching module stats for post-install");
 		sprintf(id, "%d", sbuf.id);
 		sprintf(type, "0x%x", sbuf.type);
-		sprintf(offset, "%d", sbuf.offset);
+		sprintf(offset, "%lx", sbuf.offset);
 		/*
 		 * XXX
 		 * The modload docs say that drivers can install bdevsw &
