@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: syslog.c,v 1.21 2003/01/02 19:39:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: syslog.c,v 1.22 2003/01/20 20:10:26 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -269,8 +269,6 @@ vsyslog_r(pri, data, fmt, ap)
 	if (!data->opened)
 		openlog_r(data->log_tag, data->log_stat, 0, data);
 	connectlog_r(data);
-	if (send(data->log_file, tbuf, cnt, 0) >= 0)
-		return;
 
 	/*
 	 * If the send() failed, there are two likely scenarios:
@@ -280,13 +278,17 @@ vsyslog_r(pri, data, fmt, ap)
 	 * case #1 and keep send()ing data to cover case #2
 	 * to give syslogd a chance to empty its socket buffer.
 	 */
-	disconnectlog_r(data);
-	connectlog_r(data);
-	do {
-		usleep(1);
-		if (send(data->log_file, tbuf, cnt, 0) >= 0)
-			return;
-	} while (errno == ENOBUFS);
+	if (send(data->log_file, tbuf, cnt, 0) < 0) {
+		if (errno != ENOBUFS) {
+			disconnectlog_r(data);
+			connectlog_r(data);
+		}
+		do {
+			usleep(1);
+			if (send(data->log_file, tbuf, cnt, 0) >= 0)
+				break;
+		} while (errno == ENOBUFS);
+	}
 
 	/*
 	 * Output the message to the console; try not to block
@@ -306,9 +308,8 @@ vsyslog_r(pri, data, fmt, ap)
 		(void)close(fd);
 	}
 
-	if (data != &sdata) {
+	if (data != &sdata)
 		closelog_r(data);
-	}
 }
 
 static void
