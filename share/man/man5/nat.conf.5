@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nat.conf.5,v 1.12 2001/09/22 20:19:46 pvalchev Exp $
+.\"	$OpenBSD: nat.conf.5,v 1.13 2001/10/02 17:46:28 brad Exp $
 .\"
 .\" Copyright (c) 2001 Ian Darwin.  All rights reserved.
 .\"
@@ -122,7 +122,7 @@ when they are going out any interface except vlan12.
 This has the net effect of making traffic from the 192.168.168.0/24
 network appear as though it is the Internet routeable address
 204.92.77.111 to nodes behind any interface on the router except 
-the for the nodes on vlan12.  (Thus, 192.168.168.1 can talk to the
+for the nodes on vlan12.  (Thus, 192.168.168.1 can talk to the
 192.168.168.0/24 nodes.)
 .Bd -literal
 nat on ! vlan12 from 192.168.168.0/24 to any -> 204.92.77.111
