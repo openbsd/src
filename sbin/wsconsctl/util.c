@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.15 2002/12/11 18:27:19 deraadt Exp $ */
+/*	$OpenBSD: util.c,v 1.16 2002/12/17 07:10:25 mickey Exp $ */
 /*	$NetBSD: util.c,v 1.8 2000/03/14 08:11:53 sato Exp $ */
 
 /*-
@@ -192,6 +192,9 @@ pr_field(const char *pre, struct field *f, const char *sep)
 	case FMT_UINT:
 		printf("%u", *((u_int *) f->valp));
 		break;
+	case FMT_INT:
+		printf("%d", *((int *) f->valp));
+		break;
 	case FMT_BOOL:
 		printf("%s", *((u_int *) f->valp)? "on" : "off");
 		break;
@@ -258,6 +261,14 @@ rd_field(struct field *f, char *val, int merge)
 			*((u_int *) f->valp) += u;
 		else
 			*((u_int *) f->valp) = u;
+		break;
+	case FMT_INT:
+		if (sscanf(val, "%d", &i) != 1)
+			errx(1, "%s: not a number", val);
+		if (merge)
+			*((int *) f->valp) += i;
+		else
+			*((int *) f->valp) = i;
 		break;
 	case FMT_BOOL:
 		if (*val != 'o' || (val[1] != 'n' &&

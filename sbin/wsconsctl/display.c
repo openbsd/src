@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.7 2002/12/11 18:27:19 deraadt Exp $	*/
+/*	$OpenBSD: display.c,v 1.8 2002/12/17 07:10:25 mickey Exp $	*/
 /*	$NetBSD: display.c,v 1.1 1998/12/28 14:01:16 hannken Exp $ */
 
 /*-
@@ -51,7 +51,7 @@ int burnon, burnoff, vblank, kbdact, msact, outact;
 
 struct field display_field_tab[] = {
     { "type",		&dpytype,	FMT_DPYTYPE,	FLG_RDONLY },
-    { "focus",		&focus,		FMT_UINT,	FLG_MODIFY },
+    { "focus",		&focus,		FMT_INT,	FLG_MODIFY },
     { "brightness",	&brightness,	FMT_PC,		FLG_MODIFY|FLG_INIT },
     { "contrast",	&contrast,	FMT_PC,		FLG_MODIFY|FLG_INIT },
     { "backlight",	&backlight,	FMT_PC,		FLG_MODIFY|FLG_INIT },
