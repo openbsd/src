@@ -1,4 +1,4 @@
-/*	$OpenBSD: armreg.h,v 1.1 2004/02/01 05:09:49 drahn Exp $	*/
+/*	$OpenBSD: armreg.h,v 1.2 2004/12/30 23:30:14 drahn Exp $	*/
 /*	$NetBSD: armreg.h,v 1.27 2003/09/06 08:43:02 rearnsha Exp $	*/
 
 /*
@@ -196,14 +196,15 @@
 #define CPU_ID_SA1110		0x6901b110
 #define CPU_ID_IXP1200		0x6901c120
 #define CPU_ID_80200		0x69052000
-#define CPU_ID_PXA250    	0x69052100 /* sans core revision */
-#define CPU_ID_PXA210    	0x69052120
+#define CPU_ID_PXA250		0x69052100 /* sans core revision */
+#define CPU_ID_PXA210		0x69052120
 #define CPU_ID_PXA250A		0x69052100 /* 1st version Core */
 #define CPU_ID_PXA210A		0x69052120 /* 1st version Core */
 #define CPU_ID_PXA250B		0x69052900 /* 3rd version Core */
 #define CPU_ID_PXA210B		0x69052920 /* 3rd version Core */
 #define CPU_ID_PXA250C		0x69052d00 /* 4th version Core */
 #define CPU_ID_PXA210C		0x69052d20 /* 4th version Core */
+#define CPU_ID_PXA27X		0x69054110
 #define	CPU_ID_80321_400	0x69052420
 #define	CPU_ID_80321_600	0x69052430
 #define	CPU_ID_80321_400_B0	0x69052c20
