@@ -1,4 +1,4 @@
-/*	$OpenBSD: getopt_long.c,v 1.3 2002/12/05 21:45:01 millert Exp $	*/
+/*	$OpenBSD: getopt_long.c,v 1.4 2002/12/05 22:26:04 millert Exp $	*/
 /*	$NetBSD: getopt_long.c,v 1.15 2002/01/31 22:43:40 tv Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: getopt_long.c,v 1.3 2002/12/05 21:45:01 millert Exp $";
+static char *rcsid = "$OpenBSD: getopt_long.c,v 1.4 2002/12/05 22:26:04 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <err.h>
@@ -62,11 +62,11 @@ char    *optarg;		/* argument associated with option */
 #define FLAG_LONGONLY	0x04	/* operate as getopt_long_only */
 
 /* return values */
-#define	BADCH	(int)'?'
+#define	BADCH		(int)'?'
 #define	BADARG		((*options == ':') ? (int)':' : (int)'?')
-#define INORDER (int)1
+#define	INORDER 	(int)1
 
-#define	EMSG	""
+#define	EMSG		""
 
 static int getopt_internal(int, char * const *, const char *,
 			   const struct option *, int *, int);
@@ -403,7 +403,9 @@ start:
 	}
 	if (long_options != NULL && optchar == 'W' && oli[1] == ';') {
 		/* -W long-option */
-		if (++optind >= nargc) {	/* no arg */
+		if (*place)			/* no space */
+			/* NOTHING */;
+		else if (++optind >= nargc) {	/* no arg */
 			place = EMSG;
 			if (PRINT_ERROR)
 				warnx(recargchar, optchar);
