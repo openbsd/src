@@ -2,6 +2,580 @@ This is Info file cvsclient.info, produced by Makeinfo version 1.67
 from the input file ../../work/ccvs/doc/cvsclient.texi.
 
 
+File: cvsclient.info,  Node: Requests,  Next: Response intro,  Prev: Request intro,  Up: Protocol
+
+Requests
+========
+
+   Here are the requests:
+
+`Root PATHNAME \n'
+     Response expected: no.  Tell the server which `CVSROOT' to use.
+     Note that PATHNAME is a local directory and *not* a fully
+     qualified `CVSROOT' variable.  PATHNAME must already exist; if
+     creating a new root, use the `init' request, not `Root'.  PATHNAME
+     does not include the hostname of the server, how to access the
+     server, etc.; by the time the CVS protocol is in use, connection,
+     authentication, etc., are already taken care of.
+
+     The `Root' request must be sent only once, and it must be sent
+     before any requests other than `Valid-responses',
+     `valid-requests', `UseUnchanged', or `init'.
+
+`Valid-responses REQUEST-LIST \n'
+     Response expected: no.  Tell the server what responses the client
+     will accept.  request-list is a space separated list of tokens.
+
+`valid-requests \n'
+     Response expected: yes.  Ask the server to send back a
+     `Valid-requests' response.
+
+`Directory LOCAL-DIRECTORY \n'
+     Additional data: REPOSITORY \n.  Response expected: no.  Tell the
+     server what directory to use.  The REPOSITORY should be a
+     directory name from a previous server response.  Note that this
+     both gives a default for `Entry' and `Modified' and also for `ci'
+     and the other commands; normal usage is to send `Directory' for
+     each directory in which there will be an `Entry' or `Modified',
+     and then a final `Directory' for the original directory, then the
+     command.  The LOCAL-DIRECTORY is relative to the top level at
+     which the command is occurring (i.e. the last `Directory' which is
+     sent before the command); to indicate that top level, `.' should
+     be send for LOCAL-DIRECTORY.
+
+     Here is an example of where a client gets REPOSITORY and
+     LOCAL-DIRECTORY.  Suppose that there is a module defined by
+
+          moddir 1dir
+
+     That is, one can check out `moddir' and it will take `1dir' in the
+     repository and check it out to `moddir' in the working directory.
+     Then an initial check out could proceed like this:
+
+          C: Root /home/kingdon/zwork/cvsroot
+          . . .
+          C: Argument moddir
+          C: Directory .
+          C: /home/kingdon/zwork/cvsroot
+          C: co
+          S: Clear-sticky moddir/
+          S: /home/kingdon/zwork/cvsroot/1dir/
+          . . .
+          S: ok
+
+     In this example the response shown is `Clear-sticky', but it could
+     be another response instead.  Note that it returns two pathnames.
+     The first one, `moddir/', indicates the working directory to check
+     out into.  The second one, ending in `1dir/', indicates the
+     directory to pass back to the server in a subsequent `Directory'
+     request.  For example, a subsequent `update' request might look
+     like:
+
+          C: Directory moddir
+          C: /home/kingdon/zwork/cvsroot/1dir
+          . . .
+          C: update
+
+     For a given LOCAL-DIRECTORY, the repository will be the same for
+     each of the responses, so one can use the repository from whichever
+     response is most convenient.  Typically a client will store the
+     repository along with the sources for each LOCAL-DIRECTORY, use
+     that same setting whenever operating on that LOCAL-DIRECTORY, and
+     not update the setting as long as the LOCAL-DIRECTORY exists.
+
+     A client is free to rename a LOCAL-DIRECTORY at any time (for
+     example, in response to an explicit user request).  While it is
+     true that the server supplies a LOCAL-DIRECTORY to the client, as
+     noted above, this is only the default place to put the directory.
+     Of course, the various `Directory' requests for a single command
+     (for example, `update' or `ci' request) should name a particular
+     directory with the same LOCAL-DIRECTORY.
+
+     Each `Directory' request specifies a brand-new LOCAL-DIRECTORY and
+     REPOSITORY; that is, LOCAL-DIRECTORY and REPOSITORY are never
+     relative to paths specified in any previous `Directory' request.
+
+`Max-dotdot LEVEL \n'
+     Response expected: no.  Tell the server that LEVEL levels of
+     directories above the directory which `Directory' requests are
+     relative to will be needed.  For example, if the client is
+     planning to use a `Directory' request for `../../foo', it must
+     send a `Max-dotdot' request with a LEVEL of at least 2.
+     `Max-dotdot' must be sent before the first `Directory' request.
+
+`Static-directory \n'
+     Response expected: no.  Tell the server that the directory most
+     recently specified with `Directory' should not have additional
+     files checked out unless explicitly requested.  The client sends
+     this if the `Entries.Static' flag is set, which is controlled by
+     the `Set-static-directory' and `Clear-static-directory' responses.
+
+`Sticky TAGSPEC \n'
+     Response expected: no.  Tell the server that the directory most
+     recently specified with `Directory' has a sticky tag or date
+     TAGSPEC.  The first character of TAGSPEC is `T' for a tag, or `D'
+     for a date.  The remainder of TAGSPEC contains the actual tag or
+     date.
+
+     The server should remember `Static-directory' and `Sticky'
+     requests for a particular directory; the client need not resend
+     them each time it sends a `Directory' request for a given
+     directory.  However, the server is not obliged to remember them
+     beyond the context of a single command.
+
+`Checkin-prog PROGRAM \n'
+     Response expected: no.  Tell the server that the directory most
+     recently specified with `Directory' has a checkin program PROGRAM.
+     Such a program would have been previously set with the
+     `Set-checkin-prog' response.
+
+`Update-prog PROGRAM \n'
+     Response expected: no.  Tell the server that the directory most
+     recently specified with `Directory' has an update program PROGRAM.
+     Such a program would have been previously set with the
+     `Set-update-prog' response.
+
+`Entry ENTRY-LINE \n'
+     Response expected: no.  Tell the server what version of a file is
+     on the local machine.  The name in ENTRY-LINE is a name relative
+     to the directory most recently specified with `Directory'.  If the
+     user is operating on only some files in a directory, `Entry'
+     requests for only those files need be included.  If an `Entry'
+     request is sent without `Modified', `Is-modified', or `Unchanged',
+     it means the file is lost (does not exist in the working
+     directory).  If both `Entry' and one of `Modified', `Is-modified',
+     or `Unchanged' are sent for the same file, `Entry' must be sent
+     first.  For a given file, one can send `Modified', `Is-modified',
+     or `Unchanged', but not more than one of these three.
+
+`Kopt OPTION \n'
+     This indicates to the server which keyword expansion options to
+     use for the file specified by the next `Modified' or `Is-modified'
+     request (for example `-kb' for a binary file).  This is similar to
+     `Entry', but is used for a file for which there is no entries line.
+     Typically this will be a file being added via an `add' or `import'
+     request.  The client may not send both `Kopt' and `Entry' for the
+     same file.
+
+`Modified FILENAME \n'
+     Response expected: no.  Additional data: mode, \n, file
+     transmission.  Send the server a copy of one locally modified
+     file.  FILENAME is relative to the most recent repository sent
+     with `Directory'.  If the user is operating on only some files in
+     a directory, only those files need to be included.  This can also
+     be sent without `Entry', if there is no entry for the file.
+
+`Is-modified FILENAME \n'
+     Response expected: no.  Additional data: none.  Like `Modified',
+     but used if the server only needs to know whether the file is
+     modified, not the contents.
+
+     The commands which can take `Is-modified' instead of `Modified'
+     with no known change in behavior are: `admin', `diff' (if and only
+     if two `-r' or `-D' options are specified), `watch-on',
+     `watch-off', `watch-add', `watch-remove', `watchers', `editors',
+     `log', and `annotate'.
+
+     For the `status' command, one can send `Is-modified' but if the
+     client is using imperfect mechanisms such as timestamps to
+     determine whether to consider a file modified, then the behavior
+     will be different.  That is, if one sends `Modified', then the
+     server will actually compare the contents of the file sent and the
+     one it derives from to determine whether the file is genuinely
+     modified.  But if one sends `Is-modified', then the server takes
+     the client's word for it.  A similar situation exists for `tag',
+     if the `-c' option is specified.
+
+     Commands for which `Modified' is necessary are `co', `ci',
+     `update', and `import'.
+
+     Commands which do not need to inform the server about a working
+     directory, and thus should not be sending either `Modified' or
+     `Is-modified': `rdiff', `rtag', `history', `init', and `release'.
+
+     Commands for which further investigation is warranted are:
+     `remove', `add', and `export'.  Pending such investigation, the
+     more conservative course of action is to stick to `Modified'.
+
+`Unchanged FILENAME \n'
+     Response expected: no.  Tell the server that FILENAME has not been
+     modified in the checked out directory.  The name is relative to
+     the most recent repository sent with `Directory'.
+
+`UseUnchanged \n'
+     Response expected: no.  To specify the version of the protocol
+     described in this document, servers must support this request
+     (although it need not do anything) and clients must issue it.
+
+`Notify FILENAME \n'
+     Response expected: no.  Tell the server that a `edit' or `unedit'
+     command has taken place.  The server needs to send a `Notified'
+     response, but such response is deferred until the next time that
+     the server is sending responses.  Response expected: no.
+     Additional data:
+          NOTIFICATION-TYPE \t TIME \t CLIENTHOST \t
+          WORKING-DIR \t WATCHES \n
+     where NOTIFICATION-TYPE is `E' for edit, `U' for unedit, undefined
+     behavior if `C', and all other letters should be silently ignored
+     for future expansion.  TIME is the time at which the edit or
+     unedit took place, in a user-readable format of the client's
+     choice (the server should treat the time as an opaque string
+     rather than interpreting it).  CLIENTHOST is the name of the host
+     on which the edit or unedit took place, and WORKING-DIR is the
+     pathname of the working directory where the edit or unedit took
+     place.  WATCHES are the temporary watches to set.  If WATCHES is
+     followed by \t then the \t and the rest of the line should be
+     ignored, for future expansion.
+
+     Note that a client may be capable of performing an `edit' or
+     `unedit' operation without connecting to the server at that time,
+     and instead connecting to the server when it is convenient (for
+     example, when a laptop is on the net again) to send the `Notify'
+     requests.  Even if a client is capable of deferring notifications,
+     it should attempt to send them immediately (one can send `Notify'
+     requests together with a `noop' request, for example), unless
+     perhaps if it can know that a connection would be impossible.
+
+`Questionable FILENAME \n'
+     Response expected: no.  Additional data: no.  Tell the server to
+     check whether FILENAME should be ignored, and if not, next time the
+     server sends responses, send (in a `M' response) `?' followed by
+     the directory and filename.  FILENAME must not contain `/'; it
+     needs to be a file in the directory named by the most recent
+     `Directory' request.
+
+`Case \n'
+     Response expected: no.  Tell the server that filenames should be
+     matched in a case-insensitive fashion.  Note that this is not the
+     primary mechanism for achieving case-insensitivity; for the most
+     part the client keeps track of the case which the server wants to
+     use and takes care to always use that case regardless of what the
+     user specifies.  For example the filenames given in `Entry' and
+     `Modified' requests for the same file must match in case
+     regardless of whether the `Case' request is sent.  The latter
+     mechanism is more general (it could also be used for 8.3
+     filenames, VMS filenames with more than one `.', and any other
+     situation in which there is a predictable mapping between
+     filenames in the working directory and filenames in the protocol),
+     but there are some situations it cannot handle (ignore patterns, or
+     situations where the user specifies a filename and the client does
+     not know about that file).
+
+`Argument TEXT \n'
+     Response expected: no.  Save argument for use in a subsequent
+     command.  Arguments accumulate until an argument-using command is
+     given, at which point they are forgotten.
+
+`Argumentx TEXT \n'
+     Response expected: no.  Append \n followed by text to the current
+     argument being saved.
+
+`Global_option OPTION \n'
+     Response expected: no.  Transmit one of the global options `-q',
+     `-Q', `-l', `-t', `-r', or `-n'.  OPTION must be one of those
+     strings, no variations (such as combining of options) are allowed.
+     For graceful handling of `valid-requests', it is probably better
+     to make new global options separate requests, rather than trying
+     to add them to this request.
+
+`Gzip-stream LEVEL \n'
+     Response expected: no.  Use zlib (RFC 1950/1951) compression to
+     compress all further communication between the client and the
+     server.  After this request is sent, all further communication
+     must be compressed.  All further data received from the server
+     will also be compressed.  The LEVEL argument suggests to the
+     server the level of compression that it should apply; it should be
+     an integer between 1 and 9, inclusive, where a higher number
+     indicates more compression.
+
+`Kerberos-encrypt \n'
+     Response expected: no.  Use Kerberos encryption to encrypt all
+     further communication between the client and the server.  This
+     will only work if the connection was made over Kerberos in the
+     first place.  If both the `Gzip-stream' and the `Kerberos-encrypt'
+     requests are used, the `Kerberos-encrypt' request should be used
+     first.  This will make the client and server encrypt the
+     compressed data, as opposed to compressing the encrypted data.
+     Encrypted data is generally incompressible.
+
+     Note that this request does not fully prevent an attacker from
+     hijacking the connection, in the sense that it does not prevent
+     hijacking the connection between the initial authentication and the
+     `Kerberos-encrypt' request.
+
+`Gssapi-encrypt \n'
+     Response expected: no.  Use GSSAPI encryption to encrypt all
+     further communication between the client and the server.  This
+     will only work if the connection was made over GSSAPI in the first
+     place.  See `Kerberos-encrypt', above, for the relation between
+     `Gssapi-encrypt' and `Gzip-stream'.
+
+     Note that this request does not fully prevent an attacker from
+     hijacking the connection, in the sense that it does not prevent
+     hijacking the connection between the initial authentication and the
+     `Gssapi-encrypt' request.
+
+`Gssapi-authenticate \n'
+     Response expected: no.  Use GSSAPI authentication to authenticate
+     all further communication between the client and the server.  This
+     will only work if the connection was made over GSSAPI in the first
+     place.  Encrypted data is automatically authenticated, so using
+     both `Gssapi-authenticate' and `Gssapi-encrypt' has no effect
+     beyond that of `Gssapi-encrypt'.  Unlike encrypted data, it is
+     reasonable to compress authenticated data.
+
+     Note that this request does not fully prevent an attacker from
+     hijacking the connection, in the sense that it does not prevent
+     hijacking the connection between the initial authentication and the
+     `Gssapi-authenticate' request.
+
+`Set VARIABLE=VALUE \n'
+     Response expected: no.  Set a user variable VARIABLE to VALUE.
+
+`expand-modules \n'
+     Response expected: yes.  Expand the modules which are specified in
+     the arguments.  Returns the data in `Module-expansion' responses.
+     Note that the server can assume that this is checkout or export,
+     not rtag or rdiff; the latter do not access the working directory
+     and thus have no need to expand modules on the client side.
+
+     Expand may not be the best word for what this request does.  It
+     does not necessarily tell you all the files contained in a module,
+     for example.  Basically it is a way of telling you which working
+     directories the server needs to know about in order to handle a
+     checkout of the specified modules.
+
+     For example, suppose that the server has a module defined by
+
+          aliasmodule -a 1dir
+
+     That is, one can check out `aliasmodule' and it will take `1dir'
+     in the repository and check it out to `1dir' in the working
+     directory.  Now suppose the client already has this module checked
+     out and is planning on using the `co' request to update it.
+     Without using `expand-modules', the client would have two bad
+     choices: it could either send information about *all* working
+     directories under the current directory, which could be
+     unnecessarily slow, or it could be ignorant of the fact that
+     `aliasmodule' stands for `1dir', and neglect to send information
+     for `1dir', which would lead to incorrect operation.
+
+     With `expand-modules', the client would first ask for the module to
+     be expanded:
+
+          C: Root /home/kingdon/zwork/cvsroot
+          . . .
+          C: Argument aliasmodule
+          C: Directory .
+          C: /home/kingdon/zwork/cvsroot
+          C: expand-modules
+          S: Module-expansion 1dir
+          S: ok
+
+     and then it knows to check the `1dir' directory and send requests
+     such as `Entry' and `Modified' for the files in that directory.
+
+`ci \n'
+`diff \n'
+`tag \n'
+`status \n'
+`log \n'
+`remove \n'
+`admin \n'
+`history \n'
+`watchers \n'
+`editors \n'
+`annotate \n'
+     Response expected: yes.  Actually do a cvs command.  This uses any
+     previous `Argument', `Directory', `Entry', or `Modified' requests,
+     if they have been sent.  The last `Directory' sent specifies the
+     working directory at the time of the operation.  No provision is
+     made for any input from the user.  This means that `ci' must use a
+     `-m' argument if it wants to specify a log message.
+
+`co \n'
+     Response expected: yes.  Get files from the repository.  This uses
+     any previous `Argument', `Directory', `Entry', or `Modified'
+     requests, if they have been sent.  Arguments to this command are
+     module names; the client cannot know what directories they
+     correspond to except by (1) just sending the `co' request, and then
+     seeing what directory names the server sends back in its
+     responses, and (2) the `expand-modules' request.
+
+`export \n'
+     Response expected: yes.  Get files from the repository.  This uses
+     any previous `Argument', `Directory', `Entry', or `Modified'
+     requests, if they have been sent.  Arguments to this command are
+     module names, as described for the `co' request.  The intention
+     behind this command is that a client can get sources from a server
+     without storing CVS information about those sources.  That is, a
+     client probably should not count on being able to take the entries
+     line returned in the `Created' response from an `export' request
+     and send it in a future `Entry' request.  Note that the entries
+     line in the `Created' response must indicate whether the file is
+     binary or text, so the client can create it correctly.
+
+`rdiff \n'
+`rtag \n'
+     Response expected: yes.  Actually do a cvs command.  This uses any
+     previous `Argument' requests, if they have been sent.  The client
+     should not send `Directory', `Entry', or `Modified' requests for
+     this command; they are not used.  Arguments to these commands are
+     module names, as described for `co'.
+
+`init ROOT-NAME \n'
+     Response expected: yes.  If it doesn't already exist, create a CVS
+     repository ROOT-NAME.  Note that ROOT-NAME is a local directory
+     and *not* a fully qualified `CVSROOT' variable.  The `Root'
+     request need not have been previously sent.
+
+`update \n'
+     Response expected: yes.  Actually do a `cvs update' command.  This
+     uses any previous `Argument', `Directory', `Entry', or `Modified'
+     requests, if they have been sent.  The last `Directory' sent
+     specifies the working directory at the time of the operation.  The
+     `-I' option is not used-files which the client can decide whether
+     to ignore are not mentioned and the client sends the
+     `Questionable' request for others.
+
+`import \n'
+     Response expected: yes.  Actually do a `cvs import' command.  This
+     uses any previous `Argument', `Directory', `Entry', or `Modified'
+     requests, if they have been sent.  The last `Directory' sent
+     specifies the working directory at the time of the operation.  The
+     files to be imported are sent in `Modified' requests (files which
+     the client knows should be ignored are not sent; the server must
+     still process the CVSROOT/cvsignore file unless -I ! is sent).  A
+     log message must have been specified with a `-m' argument.
+
+`add \n'
+     Response expected: yes.  Add a file or directory.  This uses any
+     previous `Argument', `Directory', `Entry', or `Modified' requests,
+     if they have been sent.  The last `Directory' sent specifies the
+     working directory at the time of the operation.
+
+     To add a directory, send the directory to be added using
+     `Directory' and `Argument' requests.  For example:
+
+          C: Root /u/cvsroot
+          . . .
+          C: Argument nsdir
+          C: Directory nsdir
+          C: /u/cvsroot/1dir/nsdir
+          C: Directory .
+          C: /u/cvsroot/1dir
+          C: add
+          S: M Directory /u/cvsroot/1dir/nsdir added to the repository
+          S: ok
+
+     You will notice that the server does not signal to the client in
+     any particular way that the directory has been successfully added.
+     The client is supposed to just assume that the directory has been
+     added and update its records accordingly.  Note also that adding a
+     directory is immediate; it does not wait until a `ci' request as
+     files do.
+
+     To add a file, send the file to be added using a `Modified'
+     request.  For example:
+
+          C: Argument nfile
+          C: Directory .
+          C: /u/cvsroot/1dir
+          C: Modified nfile
+          C: u=rw,g=r,o=r
+          C: 6
+          C: hello
+          C: add
+          S: E cvs server: scheduling file `nfile' for addition
+          S: Mode u=rw,g=r,o=r
+          S: Checked-in ./
+          S: /u/cvsroot/1dir/nfile
+          S: /nfile/0///
+          S: E cvs server: use 'cvs commit' to add this file permanently
+          S: ok
+
+     Note that the file has not been added to the repository; the only
+     effect of a successful `add' request, for a file, is to supply the
+     client with a new entries line containing `0' to indicate an added
+     file.  In fact, the client probably could perform this operation
+     without contacting the server, although using `add' does cause the
+     server to perform a few more checks.
+
+     The client sends a subsequent `ci' to actually add the file to the
+     repository.
+
+     Another quirk of the `add' request is that with CVS 1.9 and older,
+     a pathname specified in an `Argument' request cannot contain `/'.
+     There is no good reason for this restriction, and in fact more
+     recent CVS servers don't have it.  But the way to interoperate
+     with the older servers is to ensure that all `Directory' requests
+     for `add' (except those used to add directories, as described
+     above), use `.' for LOCAL-DIRECTORY.  Specifying another string for
+     LOCAL-DIRECTORY may not get an error, but it will get you strange
+     `Checked-in' responses from the buggy servers.
+
+`watch-on \n'
+`watch-off \n'
+`watch-add \n'
+`watch-remove \n'
+     Response expected: yes.  Actually do the `cvs watch on', `cvs
+     watch off', `cvs watch add', and `cvs watch remove' commands,
+     respectively.  This uses any previous `Argument', `Directory',
+     `Entry', or `Modified' requests, if they have been sent.  The last
+     `Directory' sent specifies the working directory at the time of
+     the operation.
+
+`release \n'
+     Response expected: yes.  Note that a `cvs release' command has
+     taken place and update the history file accordingly.
+
+`noop \n'
+     Response expected: yes.  This request is a null command in the
+     sense that it doesn't do anything, but merely (as with any other
+     requests expecting a response) sends back any responses pertaining
+     to pending errors, pending `Notified' responses, etc.
+
+`update-patches \n'
+     Response expected: yes.  This request does not actually do
+     anything.  It is used as a signal that the server is able to
+     generate patches when given an `update' request.  The client must
+     issue the `-u' argument to `update' in order to receive patches.
+
+`gzip-file-contents LEVEL \n'
+     Response expected: no.  Note that this request does not follow the
+     response convention stated above.  `Gzip-stream' is suggested
+     instead of `gzip-file-contents' as it gives better compression; the
+     only reason to implement the latter is to provide compression with
+     CVS 1.8 and earlier.  The `gzip-file-contents' request asks the
+     server to compress files it sends to the client using `gzip'
+     (RFC1952/1951) compression, using the specified level of
+     compression.  If this request is not made, the server must not
+     compress files.
+
+     This is only a hint to the server.  It may still decide (for
+     example, in the case of very small files, or files that already
+     appear to be compressed) not to do the compression.  Compression
+     is indicated by a `z' preceding the file length.
+
+     Availability of this request in the server indicates to the client
+     that it may compress files sent to the server, regardless of
+     whether the client actually uses this request.
+
+`wrapper-sendme-rcsOptions \n'
+     Response expected: yes.  Request that the server transmit mappings
+     from filenames to keyword expansion modes in `Wrapper-rcsOption'
+     responses.
+
+`OTHER-REQUEST TEXT \n'
+     Response expected: yes.  Any unrecognized request expects a
+     response, and does not contain any additional data.  The response
+     will normally be something like `error  unrecognized request', but
+     it could be a different error if a previous command which doesn't
+     expect a response produced an error.
+
+   When the client is done, it drops the connection.
+
+
 File: cvsclient.info,  Node: Response intro,  Next: Response pathnames,  Prev: Requests,  Up: Protocol
 
 Introduction to Responses
@@ -408,258 +982,4 @@ the last `Directory' request which is sent before the command).
      MT +updated
      MT fname NAME
      MT -updated
-
-
-File: cvsclient.info,  Node: Example,  Next: Requirements,  Prev: Text tags,  Up: Protocol
-
-Example
-=======
-
-   Here is an example; lines are prefixed by `C: ' to indicate the
-client sends them or `S: ' to indicate the server sends them.
-
-   The client starts by connecting, sending the root, and completing the
-protocol negotiation.  In actual practice the lists of valid responses
-and requests would be longer.
-
-     C: Root /u/cvsroot
-     C: Valid-responses ok error Checked-in M E
-     C: valid-requests
-     S: Valid-requests Root Directory Entry Modified Argument Argumentx ci co
-     S: ok
-     C: UseUnchanged
-
-   The client wants to check out the `supermunger' module into a fresh
-working directory.  Therefore it first expands the `supermunger'
-module; this step would be omitted if the client was operating on a
-directory rather than a module.
-
-     C: Argument supermunger
-     C: Directory .
-     C: /u/cvsroot
-     C: expand-modules
-
-   The server replies that the `supermunger' module expands to the
-directory `supermunger' (the simplest case):
-
-     S: Module-expansion supermunger
-     S: ok
-
-   The client then proceeds to check out the directory.  The fact that
-it sends only a single `Directory' request which specifies `.' for the
-working directory means that there is not already a `supermunger'
-directory on the client.
-
-     C: Argument -N
-     C: Argument supermunger
-     C: Directory .
-     C: /u/cvsroot
-     C: co
-
-   The server replies with the requested files.  In this example, there
-is only one file, `mungeall.c'.  The `Clear-sticky' and
-`Clear-static-directory' requests are sent by the current
-implementation but they have no effect because the default is for those
-settings to be clear when a directory is newly created.
-
-     S: Clear-sticky supermunger/
-     S: /u/cvsroot/supermunger/
-     S: Clear-static-directory supermunger/
-     S: /u/cvsroot/supermunger/
-     S: E cvs server: Updating supermunger
-     S: M U supermunger/mungeall.c
-     S: Created supermunger/
-     S: /u/cvsroot/supermunger/mungeall.c
-     S: /mungeall.c/1.1///
-     S: u=rw,g=r,o=r
-     S: 26
-     S: int mein () { abort (); }
-     S: ok
-
-   The current client implementation would break the connection here
-and make a new connection for the next command.  However, the protocol
-allows it to keep the connection open and continue, which is what we
-show here.
-
-   After the user modifies the file and instructs the client to check it
-back in.  The client sends arguments to specify the log message and file
-to check in:
-
-     C: Argument -m
-     C: Argument Well, you see, it took me hours and hours to find
-     C: Argumentx this typo and I searched and searched and eventually
-     C: Argumentx had to ask John for help.
-     C: Argument mungeall.c
-
-   It also sends information about the contents of the working
-directory, including the new contents of the modified file.  Note that
-the user has changed into the `supermunger' directory before executing
-this command; the top level directory is a user-visible concept because
-the server should print filenames in `M' and `E' responses relative to
-that directory.
-
-     C: Directory .
-     C: /u/cvsroot/supermunger
-     C: Entry /mungeall.c/1.1///
-     C: Modified mungeall.c
-     C: u=rw,g=r,o=r
-     C: 26
-     C: int main () { abort (); }
-
-   And finally, the client issues the checkin command (which makes use
-of the data just sent):
-
-     C: ci
-
-   And the server tells the client that the checkin succeeded:
-
-     S: M Checking in mungeall.c;
-     S: E /u/cvsroot/supermunger/mungeall.c,v  <--  mungeall.c
-     S: E new revision: 1.2; previous revision: 1.1
-     S: E done
-     S: Mode u=rw,g=r,o=r
-     S: Checked-in ./
-     S: /u/cvsroot/supermunger/mungeall.c
-     S: /mungeall.c/1.2///
-     S: ok
-
-
-File: cvsclient.info,  Node: Requirements,  Next: Obsolete,  Prev: Example,  Up: Protocol
-
-Required versus optional parts of the protocol
-==============================================
-
-   The following are part of every known implementation of the CVS
-protocol (except obsolete, pre-1.5, versions of CVS) and it is
-considered reasonable behavior to completely fail to work if you are
-connected with an implementation which attempts to not support them.
-Requests: `Root', `Valid-responses', `valid-requests', `Directory',
-`Entry', `Modified', `Unchanged', `Argument', `Argumentx', `ci', `co',
-`update'.  Responses: `ok', `error', `Valid-requests', `Checked-in',
-`Updated', `Merged', `Removed', `M', `E'.
-
-   A server need not implement `Repository', but in order to
-interoperate with CVS 1.5 through 1.9 it must claim to implement it (in
-`Valid-requests').  The client will not actually send the request.
-
-
-File: cvsclient.info,  Node: Obsolete,  Prev: Requirements,  Up: Protocol
-
-Obsolete protocol elements
-==========================
-
-   This section briefly describes protocol elements which are obsolete.
-There is no attempt to document them in full detail.
-
-   There was a `Repository' request which was like `Directory' except
-it only provided REPOSITORY, and the local directory was assumed to be
-similarly named.
-
-   If the `UseUnchanged' request was not sent, there was a `Lost'
-request which was sent to indicate that a file did not exist in the
-working directory, and the meaning of sending `Entries' without `Lost'
-or `Modified' was different.  All current clients (CVS 1.5 and later)
-will send `UseUnchanged' if it is supported.
-
-
-File: cvsclient.info,  Node: Protocol Notes,  Prev: Protocol,  Up: Top
-
-Notes on the Protocol
-*********************
-
-   A number of enhancements are possible.  Also see the file TODO in
-the CVS source distribution, which has further ideas concerning various
-aspects of CVS, some of which impact the protocol.
-
-   * The `Modified' request could be speeded up by sending diffs rather
-     than entire files.  The client would need some way to keep the
-     version of the file which was originally checked out; probably
-     requiring the use of "cvs edit" in this case is the most sensible
-     course (the "cvs edit" could be handled by a package like VC for
-     emacs).  This would also allow local operation of `cvs diff'
-     without arguments.
-
-   * The current procedure for `cvs update' is highly sub-optimal if
-     there are many modified files.  One possible alternative would be
-     to have the client send a first request without the contents of
-     every modified file, then have the server tell it what files it
-     needs.  Note the server needs to do the what-needs-to-be-updated
-     check twice (or more, if changes in the repository mean it has to
-     ask the client for more files), because it can't keep locks open
-     while waiting for the network.  Perhaps this whole thing is
-     irrelevant if there is a multisite capability (as noted in TODO),
-     and therefore the rcsmerge can be done with a repository which is
-     connected via a fast connection.
-
-   * The fact that `pserver' requires an extra network turnaround in
-     order to perform authentication would be nice to avoid.  This
-     relates to the issue of reporting errors; probably the clean
-     solution is to defer the error until the client has issued a
-     request which expects a response.  To some extent this might
-     relate to the next item (in terms of how easy it is to skip a
-     whole bunch of requests until we get to one that expects a
-     response).  I know that the kerberos code doesn't wait in this
-     fashion, but that probably can cause network deadlocks and perhaps
-     future problems running over a transport which is more transaction
-     oriented than TCP.  On the other hand I'm not sure it is wise to
-     make the client conduct a lengthy upload only to find there is an
-     authentication failure.
-
-   * The protocol uses an extra network turnaround for protocol
-     negotiation (`valid-requests').  It might be nice to avoid this by
-     having the client be able to send requests and tell the server to
-     ignore them if they are unrecognized (different requests could
-     produce a fatal error if unrecognized).  To do this there should
-     be a standard syntax for requests.  For example, perhaps all
-     future requests should be a single line, with mechanisms analogous
-     to `Argumentx', or several requests working together, to provide
-     greater amounts of information.  Or there might be a standard
-     mechanism for counted data (analogous to that used by `Modified')
-     or continuation lines (like a generalized `Argumentx').  It would
-     be useful to compare what HTTP is planning in this area; last I
-     looked they were contemplating something called Protocol Extension
-     Protocol but I haven't looked at the relevant IETF documents in
-     any detail.  Obviously, we want something as simple as possible
-     (but no simpler).
-
-   * The scrambling algorithm in the CVS client and server actually
-     support more characters than those documented in *Note Password
-     scrambling::.  Someday we are going to either have to document
-     them all (but this is not as easy as it may look, see below), or
-     (gradually and with adequate process) phase out the support for
-     other characters in the CVS implementation.  This business of
-     having the feature partly undocumented isn't a desirable state
-     long-term.
-
-     The problem with documenting other characters is that unless we
-     know what character set is in use, there is no way to make a
-     password portable from one system to another.  For example, a with
-     a circle on top might have different encodings in different
-     character sets.
-
-     It *almost* works to say that the client picks an arbitrary,
-     unknown character set (indeed, having the CVS client know what
-     character set the user has in mind is a hard problem otherwise),
-     and scrambles according to a certain octet<->octet mapping.  There
-     are two problems with this.  One is that the protocol has no way
-     to transmit character 10 decimal (linefeed), and the current
-     server and clients have no way to handle 0 decimal (NUL).  This
-     may cause problems with certain multibyte character sets, in which
-     octets 10 and 0 will appear in the middle of other characters.
-     The other problem, which is more minor and possibly not worth
-     worrying about, is that someone can type a password on one system
-     and then go to another system which uses a different encoding for
-     the same characters, and have their password not work.
-
-     The restriction to the ISO646 invariant subset is the best
-     approach for strings which are not particularly significant to
-     users.  Passwords are visible enough that this is somewhat
-     doubtful as applied here.  ISO646 does, however, have the virtue
-     (!?) of offending everyone.  It is easy to say "But the $ is right
-     on people's keyboards!  Surely we can't forbid that".  From a
-     human factors point of view, that makes quite a bit of sense.  The
-     contrary argument, of course, is that a with a circle on top, or
-     some of the characters poorly handled by Unicode, are on
-     *someone*'s keyboard.
-
 

@@ -4,7 +4,8 @@ from the input file ../../work/ccvs/doc/cvsclient.texi.
 
 Indirect:
 cvsclient.info-1: 125
-cvsclient.info-2: 50060
+cvsclient.info-2: 23866
+cvsclient.info-3: 70456
 
 Tag Table:
 (Indirect)
@@ -14,20 +15,21 @@ Node: Goals3481
 Node: Connection and Authentication6405
 Node: Password scrambling12363
 Node: Protocol14230
-Node: Entries Lines16263
-Node: File Modes17366
-Node: Filenames18904
-Node: File transmissions20211
-Node: Strings21769
-Node: Request intro22460
-Node: Requests22880
-Node: Response intro50060
-Node: Response pathnames51427
-Node: Responses53338
-Node: Text tags68221
-Node: Example69470
-Node: Requirements73249
-Node: Obsolete74157
-Node: Protocol Notes74895
+Node: Entries Lines16315
+Node: File Modes17418
+Node: Filenames18956
+Node: File transmissions20263
+Node: Strings21821
+Node: Dates22504
+Node: Request intro23448
+Node: Requests23866
+Node: Response intro51046
+Node: Response pathnames52413
+Node: Responses54324
+Node: Text tags69207
+Node: Example70456
+Node: Requirements74235
+Node: Obsolete75143
+Node: Protocol Notes75881
 
 End Tag Table

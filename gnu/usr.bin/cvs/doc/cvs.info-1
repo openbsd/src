@@ -1,6 +1,10 @@
 This is Info file cvs.info, produced by Makeinfo version 1.67 from the
 input file ../../work/ccvs/doc/cvs.texinfo.
 
+START-INFO-DIR-ENTRY
+* CVS: (cvs).          Concurrent Versions System
+END-INFO-DIR-ENTRY
+
    Copyright (C) 1992, 1993 Signum Support AB Copyright (C) 1993, 1994
 Free Software Foundation, Inc.
 
@@ -10,16 +14,13 @@ preserved on all copies.
 
    Permission is granted to copy and distribute modified versions of
 this manual under the conditions for verbatim copying, provided also
-that the section entitled "GNU General Public License" is included
-exactly as in the original, and provided that the entire resulting
-derived work is distributed under the terms of a permission notice
-identical to this one.
+that the entire resulting derived work is distributed under the terms
+of a permission notice identical to this one.
 
    Permission is granted to copy and distribute translations of this
 manual into another language, under the above conditions for modified
-versions, except that the section entitled "GNU General Public License"
-and this permission notice may be included in translations approved by
-the Free Software Foundation instead of in the original English.
+versions, except that this permission notice may be stated in a
+translation approved by the Free Software Foundation.
 
 
 File: cvs.info,  Node: Top,  Next: Overview,  Up: (dir)
@@ -27,7 +28,7 @@ File: cvs.info,  Node: Top,  Next: Overview,  Up: (dir)
 
 
    This info manual describes how to use and administer CVS version
-1.9.26.
+1.9.28.
 
 * Menu:
 
@@ -60,7 +61,6 @@ References.
 * Troubleshooting::             Some tips when nothing works
 * Credits::                     Some of the contributors to this manual
 * BUGS::                        Dealing with bugs in CVS or this manual
-* Copying::                     GNU GENERAL PUBLIC LICENSE
 * Index::                       Index
 
 

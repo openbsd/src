@@ -1,6 +1,10 @@
 This is Info file cvs.info, produced by Makeinfo version 1.67 from the
 input file ../../work/ccvs/doc/cvs.texinfo.
 
+START-INFO-DIR-ENTRY
+* CVS: (cvs).          Concurrent Versions System
+END-INFO-DIR-ENTRY
+
    Copyright (C) 1992, 1993 Signum Support AB Copyright (C) 1993, 1994
 Free Software Foundation, Inc.
 
@@ -10,16 +14,13 @@ preserved on all copies.
 
    Permission is granted to copy and distribute modified versions of
 this manual under the conditions for verbatim copying, provided also
-that the section entitled "GNU General Public License" is included
-exactly as in the original, and provided that the entire resulting
-derived work is distributed under the terms of a permission notice
-identical to this one.
+that the entire resulting derived work is distributed under the terms
+of a permission notice identical to this one.
 
    Permission is granted to copy and distribute translations of this
 manual into another language, under the above conditions for modified
-versions, except that the section entitled "GNU General Public License"
-and this permission notice may be included in translations approved by
-the Free Software Foundation instead of in the original English.
+versions, except that this permission notice may be stated in a
+translation approved by the Free Software Foundation.
 
 
 File: cvs.info,  Node: Alias modules,  Next: Regular modules,  Up: modules
@@ -224,17 +225,18 @@ repository (this is denoted with the `-f' flag).  The `-t'/`-f' feature
 does not work with client/server CVS.
 
    The `cvswrappers' also has a `-m' option to specify the merge
-methodology that should be used when the file is updated.  `MERGE'
-means the usual CVS behavior: try to merge the files.  `COPY' means
-that `cvs update' will refuse to merge files, as it also does for files
-specified as binary with `-kb'.  CVS will provide the user with the two
-versions of the files, and require the user using mechanisms outside
-CVS, to insert any necessary changes.  *WARNING*: do not use `COPY' with
-CVS 1.9 or earlier-such versions of CVS will copy one version of your
-file over the other, wiping out the previous contents.  The `-m'
-wrapper option only affects behavior when merging is done on update; it
-does not affect how files are stored.  See *Note Binary files::, for
-more on binary files.
+methodology that should be used when a non-binary file is updated.
+`MERGE' means the usual CVS behavior: try to merge the files.  `COPY'
+means that `cvs update' will refuse to merge files, as it also does for
+files specified as binary with `-kb' (but if the file is specified as
+binary, there is no need to specify `-m 'COPY'').  CVS will provide the
+user with the two versions of the files, and require the user using
+mechanisms outside CVS, to insert any necessary changes.  *WARNING*: do
+not use `COPY' with CVS 1.9 or earlier-such versions of CVS will copy
+one version of your file over the other, wiping out the previous
+contents.  The `-m' wrapper option only affects behavior when merging
+is done on update; it does not affect how files are stored.  See *Note
+Binary files::, for more on binary files.
 
    The basic format of the file `cvswrappers' is:
 
@@ -632,19 +634,21 @@ Loginfo example
 below, appends all log messages to the file
 `$CVSROOT/CVSROOT/commitlog', and any commits to the administrative
 files (inside the `CVSROOT' directory) are also logged in
-`/usr/adm/cvsroot-log'.
+`/usr/adm/cvsroot-log'.  Commits to the `prog1' directory are mailed to
+ceder.
 
-     ALL             /usr/local/bin/cvs-log $CVSROOT/CVSROOT/commitlog
+     ALL             /usr/local/bin/cvs-log $CVSROOT/CVSROOT/commitlog $USER
      ^CVSROOT        /usr/local/bin/cvs-log /usr/adm/cvsroot-log
+     ^prog1          Mail -s %s ceder
 
    The shell-script `/usr/local/bin/cvs-log' looks like this:
 
      #!/bin/sh
      (echo "------------------------------------------------------";
-      echo -n $USER"  ";
+      echo -n $2"  ";
       date;
       echo;
-      sed '1s+'${CVSROOT}'++') >> $1
+      cat) >> $1
 
 
 File: cvs.info,  Node: Keeping a checked out copy,  Prev: loginfo example,  Up: loginfo

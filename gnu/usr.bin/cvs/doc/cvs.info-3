@@ -1,6 +1,10 @@
 This is Info file cvs.info, produced by Makeinfo version 1.67 from the
 input file ../../work/ccvs/doc/cvs.texinfo.
 
+START-INFO-DIR-ENTRY
+* CVS: (cvs).          Concurrent Versions System
+END-INFO-DIR-ENTRY
+
    Copyright (C) 1992, 1993 Signum Support AB Copyright (C) 1993, 1994
 Free Software Foundation, Inc.
 
@@ -10,16 +14,13 @@ preserved on all copies.
 
    Permission is granted to copy and distribute modified versions of
 this manual under the conditions for verbatim copying, provided also
-that the section entitled "GNU General Public License" is included
-exactly as in the original, and provided that the entire resulting
-derived work is distributed under the terms of a permission notice
-identical to this one.
+that the entire resulting derived work is distributed under the terms
+of a permission notice identical to this one.
 
    Permission is granted to copy and distribute translations of this
 manual into another language, under the above conditions for modified
-versions, except that the section entitled "GNU General Public License"
-and this permission notice may be included in translations approved by
-the Free Software Foundation instead of in the original English.
+versions, except that this permission notice may be stated in a
+translation approved by the Free Software Foundation.
 
 
 File: cvs.info,  Node: Creating a branch,  Next: Accessing branches,  Prev: Branches motivation,  Up: Branching and merging
@@ -30,10 +31,10 @@ Creating a branch
    You can create a branch with `tag -b'; for example, assuming you're
 in a working copy:
 
-     $ cvs tag -b release-1-0-patches
+     $ cvs tag -b rel-1-0-patches
 
    This splits off a branch based on the current revisions in the
-working copy, assigning that branch the name `release-1-0-patches'.
+working copy, assigning that branch the name `rel-1-0-patches'.
 
    It is important to understand that branches get created in the
 repository, not in the working copy.  Creating a branch based on
@@ -44,22 +45,22 @@ to do that, see *Note Accessing branches::.
    You can also create a branch without reference to any working copy,
 by using `rtag':
 
-     $ cvs rtag -b -r release-1-0 release-1-0-patches tc
+     $ cvs rtag -b -r rel-1-0 rel-1-0-patches tc
 
-   `-r release-1-0' says that this branch should be rooted at the
-revision that corresponds to the tag `release-1-0'.  It need not be the
-most recent revision - it's often useful to split a branch off an old
-revision (for example, when fixing a bug in a past release otherwise
-known to be stable).
+   `-r rel-1-0' says that this branch should be rooted at the revision
+that corresponds to the tag `rel-1-0'.  It need not be the most recent
+revision - it's often useful to split a branch off an old revision (for
+example, when fixing a bug in a past release otherwise known to be
+stable).
 
    As with `tag', the `-b' flag tells `rtag' to create a branch (rather
 than just a symbolic revision name).  Note that the numeric revision
-number that matches `release-1-0' will probably be different from file
-to file.
+number that matches `rel-1-0' will probably be different from file to
+file.
 
    So, the full effect of the command is to create a new branch - named
-`release-1-0-patches' - in module `tc', rooted in the revision tree at
-the point tagged by `release-1-0'.
+`rel-1-0-patches' - in module `tc', rooted in the revision tree at the
+point tagged by `rel-1-0'.
 
 
 File: cvs.info,  Node: Accessing branches,  Next: Branches and revisions,  Prev: Creating a branch,  Up: Branching and merging
@@ -75,17 +76,17 @@ over to the branch.
 the `-r' flag, followed by the tag name of the branch (*note Creating a
 branch::.):
 
-     $ cvs checkout -r release-1-0-patches tc
+     $ cvs checkout -r rel-1-0-patches tc
 
    Or, if you already have a working copy, you can switch it to a given
 branch with `update -r':
 
-     $ cvs update -r release-1-0-patches tc
+     $ cvs update -r rel-1-0-patches tc
 
    or equivalently:
 
      $ cd tc
-     $ cvs update -r release-1-0-patches
+     $ cvs update -r rel-1-0-patches
 
    It does not matter if the working copy was originally on the main
 trunk or on some other branch - the above command will switch it to the
@@ -109,35 +110,35 @@ any, of the current working files:
      
          Version:            1.7     Sat Dec  5 18:25:54 1992
          RCS Version:        1.7     /u/cvsroot/yoyodyne/tc/driver.c,v
-         Sticky Tag:         release-1-0-patches (branch: 1.7.2)
+         Sticky Tag:         rel-1-0-patches (branch: 1.7.2)
          Sticky Date:        (none)
          Sticky Options:     (none)
      
          Existing Tags:
-             release-1-0-patches             (branch: 1.7.2)
-             release-1-0                     (revision: 1.7)
+             rel-1-0-patches             (branch: 1.7.2)
+             rel-1-0                     (revision: 1.7)
      
      ===================================================================
      File: backend.c         Status: Up-to-date
      
          Version:            1.4     Tue Dec  1 14:39:01 1992
          RCS Version:        1.4     /u/cvsroot/yoyodyne/tc/backend.c,v
-         Sticky Tag:         release-1-0-patches (branch: 1.4.2)
+         Sticky Tag:         rel-1-0-patches (branch: 1.4.2)
          Sticky Date:        (none)
          Sticky Options:     (none)
      
          Existing Tags:
-             release-1-0-patches             (branch: 1.4.2)
-             release-1-0                     (revision: 1.4)
-             release-0-4                     (revision: 1.4)
+             rel-1-0-patches             (branch: 1.4.2)
+             rel-1-0                     (revision: 1.4)
+             rel-0-4                     (revision: 1.4)
 
    Don't be confused by the fact that the branch numbers for each file
 are different (`1.7.2' and `1.4.2' respectively).  The branch tag is the
-same, `release-1-0-patches', and the files are indeed on the same
-branch.  The numbers simply reflect the point in each file's revision
-history at which the branch was made.  In the above example, one can
-deduce that `driver.c' had been through more changes than `backend.c'
-before this branch was created.
+same, `rel-1-0-patches', and the files are indeed on the same branch.
+The numbers simply reflect the point in each file's revision history at
+which the branch was made.  In the above example, one can deduce that
+`driver.c' had been through more changes than `backend.c' before this
+branch was created.
 
    See *Note Branches and revisions:: for details about how branch
 numbers are constructed.
@@ -985,14 +986,14 @@ neither line ending conversion nor keyword expansion will be done.
    Here is an example of how you can create a new file using the `-kb'
 flag:
 
-     $ echo '$Id: cvs.info-3,v 1.1.1.12 1998/03/12 07:05:54 tholo Exp $' > kotest
+     $ echo '$Id: cvs.info-3,v 1.1.1.13 1998/07/13 04:04:49 tholo Exp $' > kotest
      $ cvs add -kb -m"A test file" kotest
      $ cvs ci -m"First checkin; contains a keyword" kotest
 
    If a file accidentally gets added without `-kb', one can use the
 `cvs admin' command to recover.  For example:
 
-     $ echo '$Id: cvs.info-3,v 1.1.1.12 1998/03/12 07:05:54 tholo Exp $' > kotest
+     $ echo '$Id: cvs.info-3,v 1.1.1.13 1998/07/13 04:04:49 tholo Exp $' > kotest
      $ cvs add -m"A test file" kotest
      $ cvs ci -m"First checkin; contains a keyword" kotest
      $ cvs admin -kb kotest

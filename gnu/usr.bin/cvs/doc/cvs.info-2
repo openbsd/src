@@ -1,6 +1,10 @@
 This is Info file cvs.info, produced by Makeinfo version 1.67 from the
 input file ../../work/ccvs/doc/cvs.texinfo.
 
+START-INFO-DIR-ENTRY
+* CVS: (cvs).          Concurrent Versions System
+END-INFO-DIR-ENTRY
+
    Copyright (C) 1992, 1993 Signum Support AB Copyright (C) 1993, 1994
 Free Software Foundation, Inc.
 
@@ -10,16 +14,13 @@ preserved on all copies.
 
    Permission is granted to copy and distribute modified versions of
 this manual under the conditions for verbatim copying, provided also
-that the section entitled "GNU General Public License" is included
-exactly as in the original, and provided that the entire resulting
-derived work is distributed under the terms of a permission notice
-identical to this one.
+that the entire resulting derived work is distributed under the terms
+of a permission notice identical to this one.
 
    Permission is granted to copy and distribute translations of this
 manual into another language, under the above conditions for modified
-versions, except that the section entitled "GNU General Public License"
-and this permission notice may be included in translations approved by
-the Free Software Foundation instead of in the original English.
+versions, except that this permission notice may be stated in a
+translation approved by the Free Software Foundation.
 
 
 File: cvs.info,  Node: Backing up,  Next: Moving a repository,  Prev: Creating a repository,  Up: Repository
@@ -950,7 +951,7 @@ commands must be issued inside your working copy of the module.  That
 is, you should issue the command in the directory where `backend.c'
 resides.
 
-     $ cvs tag release-0-4 backend.c
+     $ cvs tag rel-0-4 backend.c
      T backend.c
      $ cvs status -v backend.c
      ===================================================================
@@ -963,14 +964,14 @@ resides.
          Sticky Options:     (none)
      
          Existing Tags:
-             release-0-4                     (revision: 1.4)
+             rel-0-4                     (revision: 1.4)
 
    There is seldom reason to tag a file in isolation.  A more common
 use is to tag all the files that constitute a module with the same tag
 at strategic points in the development life-cycle, such as when a
 release is made.
 
-     $ cvs tag release-1-0 .
+     $ cvs tag rel-1-0 .
      cvs tag: Tagging .
      T Makefile
      T backend.c
@@ -987,7 +988,7 @@ certain revision of a module.  This flag makes it easy to retrieve the
 sources that make up release 1.0 of the module `tc' at any time in the
 future:
 
-     $ cvs checkout -r release-1-0 tc
+     $ cvs checkout -r rel-1-0 tc
 
 This is useful, for instance, if someone claims that there is a bug in
 that release, but you cannot find the bug in the current working copy.
@@ -1052,7 +1053,7 @@ are set:
      
          Version:            1.7.2.1 Sat Dec  5 19:35:03 1992
          RCS Version:        1.7.2.1 /u/cvsroot/yoyodyne/tc/driver.c,v
-         Sticky Tag:         release-1-0-patches (branch: 1.7.2)
+         Sticky Tag:         rel-1-0-patches (branch: 1.7.2)
          Sticky Date:        (none)
          Sticky Options:     (none)
 

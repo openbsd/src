@@ -1,0 +1,257 @@
+This is Info file cvsclient.info, produced by Makeinfo version 1.67
+from the input file ../../work/ccvs/doc/cvsclient.texi.
+
+
+File: cvsclient.info,  Node: Example,  Next: Requirements,  Prev: Text tags,  Up: Protocol
+
+Example
+=======
+
+   Here is an example; lines are prefixed by `C: ' to indicate the
+client sends them or `S: ' to indicate the server sends them.
+
+   The client starts by connecting, sending the root, and completing the
+protocol negotiation.  In actual practice the lists of valid responses
+and requests would be longer.
+
+     C: Root /u/cvsroot
+     C: Valid-responses ok error Checked-in M E
+     C: valid-requests
+     S: Valid-requests Root Directory Entry Modified Argument Argumentx ci co
+     S: ok
+     C: UseUnchanged
+
+   The client wants to check out the `supermunger' module into a fresh
+working directory.  Therefore it first expands the `supermunger'
+module; this step would be omitted if the client was operating on a
+directory rather than a module.
+
+     C: Argument supermunger
+     C: Directory .
+     C: /u/cvsroot
+     C: expand-modules
+
+   The server replies that the `supermunger' module expands to the
+directory `supermunger' (the simplest case):
+
+     S: Module-expansion supermunger
+     S: ok
+
+   The client then proceeds to check out the directory.  The fact that
+it sends only a single `Directory' request which specifies `.' for the
+working directory means that there is not already a `supermunger'
+directory on the client.
+
+     C: Argument -N
+     C: Argument supermunger
+     C: Directory .
+     C: /u/cvsroot
+     C: co
+
+   The server replies with the requested files.  In this example, there
+is only one file, `mungeall.c'.  The `Clear-sticky' and
+`Clear-static-directory' requests are sent by the current
+implementation but they have no effect because the default is for those
+settings to be clear when a directory is newly created.
+
+     S: Clear-sticky supermunger/
+     S: /u/cvsroot/supermunger/
+     S: Clear-static-directory supermunger/
+     S: /u/cvsroot/supermunger/
+     S: E cvs server: Updating supermunger
+     S: M U supermunger/mungeall.c
+     S: Created supermunger/
+     S: /u/cvsroot/supermunger/mungeall.c
+     S: /mungeall.c/1.1///
+     S: u=rw,g=r,o=r
+     S: 26
+     S: int mein () { abort (); }
+     S: ok
+
+   The current client implementation would break the connection here
+and make a new connection for the next command.  However, the protocol
+allows it to keep the connection open and continue, which is what we
+show here.
+
+   After the user modifies the file and instructs the client to check it
+back in.  The client sends arguments to specify the log message and file
+to check in:
+
+     C: Argument -m
+     C: Argument Well, you see, it took me hours and hours to find
+     C: Argumentx this typo and I searched and searched and eventually
+     C: Argumentx had to ask John for help.
+     C: Argument mungeall.c
+
+   It also sends information about the contents of the working
+directory, including the new contents of the modified file.  Note that
+the user has changed into the `supermunger' directory before executing
+this command; the top level directory is a user-visible concept because
+the server should print filenames in `M' and `E' responses relative to
+that directory.
+
+     C: Directory .
+     C: /u/cvsroot/supermunger
+     C: Entry /mungeall.c/1.1///
+     C: Modified mungeall.c
+     C: u=rw,g=r,o=r
+     C: 26
+     C: int main () { abort (); }
+
+   And finally, the client issues the checkin command (which makes use
+of the data just sent):
+
+     C: ci
+
+   And the server tells the client that the checkin succeeded:
+
+     S: M Checking in mungeall.c;
+     S: E /u/cvsroot/supermunger/mungeall.c,v  <--  mungeall.c
+     S: E new revision: 1.2; previous revision: 1.1
+     S: E done
+     S: Mode u=rw,g=r,o=r
+     S: Checked-in ./
+     S: /u/cvsroot/supermunger/mungeall.c
+     S: /mungeall.c/1.2///
+     S: ok
+
+
+File: cvsclient.info,  Node: Requirements,  Next: Obsolete,  Prev: Example,  Up: Protocol
+
+Required versus optional parts of the protocol
+==============================================
+
+   The following are part of every known implementation of the CVS
+protocol (except obsolete, pre-1.5, versions of CVS) and it is
+considered reasonable behavior to completely fail to work if you are
+connected with an implementation which attempts to not support them.
+Requests: `Root', `Valid-responses', `valid-requests', `Directory',
+`Entry', `Modified', `Unchanged', `Argument', `Argumentx', `ci', `co',
+`update'.  Responses: `ok', `error', `Valid-requests', `Checked-in',
+`Updated', `Merged', `Removed', `M', `E'.
+
+   A server need not implement `Repository', but in order to
+interoperate with CVS 1.5 through 1.9 it must claim to implement it (in
+`Valid-requests').  The client will not actually send the request.
+
+
+File: cvsclient.info,  Node: Obsolete,  Prev: Requirements,  Up: Protocol
+
+Obsolete protocol elements
+==========================
+
+   This section briefly describes protocol elements which are obsolete.
+There is no attempt to document them in full detail.
+
+   There was a `Repository' request which was like `Directory' except
+it only provided REPOSITORY, and the local directory was assumed to be
+similarly named.
+
+   If the `UseUnchanged' request was not sent, there was a `Lost'
+request which was sent to indicate that a file did not exist in the
+working directory, and the meaning of sending `Entries' without `Lost'
+or `Modified' was different.  All current clients (CVS 1.5 and later)
+will send `UseUnchanged' if it is supported.
+
+
+File: cvsclient.info,  Node: Protocol Notes,  Prev: Protocol,  Up: Top
+
+Notes on the Protocol
+*********************
+
+   A number of enhancements are possible.  Also see the file TODO in
+the CVS source distribution, which has further ideas concerning various
+aspects of CVS, some of which impact the protocol.
+
+   * The `Modified' request could be speeded up by sending diffs rather
+     than entire files.  The client would need some way to keep the
+     version of the file which was originally checked out; probably
+     requiring the use of "cvs edit" in this case is the most sensible
+     course (the "cvs edit" could be handled by a package like VC for
+     emacs).  This would also allow local operation of `cvs diff'
+     without arguments.
+
+   * The current procedure for `cvs update' is highly sub-optimal if
+     there are many modified files.  One possible alternative would be
+     to have the client send a first request without the contents of
+     every modified file, then have the server tell it what files it
+     needs.  Note the server needs to do the what-needs-to-be-updated
+     check twice (or more, if changes in the repository mean it has to
+     ask the client for more files), because it can't keep locks open
+     while waiting for the network.  Perhaps this whole thing is
+     irrelevant if there is a multisite capability (as noted in TODO),
+     and therefore the rcsmerge can be done with a repository which is
+     connected via a fast connection.
+
+   * The fact that `pserver' requires an extra network turnaround in
+     order to perform authentication would be nice to avoid.  This
+     relates to the issue of reporting errors; probably the clean
+     solution is to defer the error until the client has issued a
+     request which expects a response.  To some extent this might
+     relate to the next item (in terms of how easy it is to skip a
+     whole bunch of requests until we get to one that expects a
+     response).  I know that the kerberos code doesn't wait in this
+     fashion, but that probably can cause network deadlocks and perhaps
+     future problems running over a transport which is more transaction
+     oriented than TCP.  On the other hand I'm not sure it is wise to
+     make the client conduct a lengthy upload only to find there is an
+     authentication failure.
+
+   * The protocol uses an extra network turnaround for protocol
+     negotiation (`valid-requests').  It might be nice to avoid this by
+     having the client be able to send requests and tell the server to
+     ignore them if they are unrecognized (different requests could
+     produce a fatal error if unrecognized).  To do this there should
+     be a standard syntax for requests.  For example, perhaps all
+     future requests should be a single line, with mechanisms analogous
+     to `Argumentx', or several requests working together, to provide
+     greater amounts of information.  Or there might be a standard
+     mechanism for counted data (analogous to that used by `Modified')
+     or continuation lines (like a generalized `Argumentx').  It would
+     be useful to compare what HTTP is planning in this area; last I
+     looked they were contemplating something called Protocol Extension
+     Protocol but I haven't looked at the relevant IETF documents in
+     any detail.  Obviously, we want something as simple as possible
+     (but no simpler).
+
+   * The scrambling algorithm in the CVS client and server actually
+     support more characters than those documented in *Note Password
+     scrambling::.  Someday we are going to either have to document
+     them all (but this is not as easy as it may look, see below), or
+     (gradually and with adequate process) phase out the support for
+     other characters in the CVS implementation.  This business of
+     having the feature partly undocumented isn't a desirable state
+     long-term.
+
+     The problem with documenting other characters is that unless we
+     know what character set is in use, there is no way to make a
+     password portable from one system to another.  For example, a with
+     a circle on top might have different encodings in different
+     character sets.
+
+     It *almost* works to say that the client picks an arbitrary,
+     unknown character set (indeed, having the CVS client know what
+     character set the user has in mind is a hard problem otherwise),
+     and scrambles according to a certain octet<->octet mapping.  There
+     are two problems with this.  One is that the protocol has no way
+     to transmit character 10 decimal (linefeed), and the current
+     server and clients have no way to handle 0 decimal (NUL).  This
+     may cause problems with certain multibyte character sets, in which
+     octets 10 and 0 will appear in the middle of other characters.
+     The other problem, which is more minor and possibly not worth
+     worrying about, is that someone can type a password on one system
+     and then go to another system which uses a different encoding for
+     the same characters, and have their password not work.
+
+     The restriction to the ISO646 invariant subset is the best
+     approach for strings which are not particularly significant to
+     users.  Passwords are visible enough that this is somewhat
+     doubtful as applied here.  ISO646 does, however, have the virtue
+     (!?) of offending everyone.  It is easy to say "But the $ is right
+     on people's keyboards!  Surely we can't forbid that".  From a
+     human factors point of view, that makes quite a bit of sense.  The
+     contrary argument, of course, is that a with a circle on top, or
+     some of the characters poorly handled by Unicode, are on
+     *someone*'s keyboard.
+
+

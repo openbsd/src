@@ -1,6 +1,10 @@
 This is Info file cvs.info, produced by Makeinfo version 1.67 from the
 input file ../../work/ccvs/doc/cvs.texinfo.
 
+START-INFO-DIR-ENTRY
+* CVS: (cvs).          Concurrent Versions System
+END-INFO-DIR-ENTRY
+
    Copyright (C) 1992, 1993 Signum Support AB Copyright (C) 1993, 1994
 Free Software Foundation, Inc.
 
@@ -10,16 +14,13 @@ preserved on all copies.
 
    Permission is granted to copy and distribute modified versions of
 this manual under the conditions for verbatim copying, provided also
-that the section entitled "GNU General Public License" is included
-exactly as in the original, and provided that the entire resulting
-derived work is distributed under the terms of a permission notice
-identical to this one.
+that the entire resulting derived work is distributed under the terms
+of a permission notice identical to this one.
 
    Permission is granted to copy and distribute translations of this
 manual into another language, under the above conditions for modified
-versions, except that the section entitled "GNU General Public License"
-and this permission notice may be included in translations approved by
-the Free Software Foundation instead of in the original English.
+versions, except that this permission notice may be stated in a
+translation approved by the Free Software Foundation.
 
 
 File: cvs.info,  Node: Informing others,  Next: Concurrency,  Prev: Conflicts example,  Up: Multiple developers
@@ -254,7 +255,7 @@ systems call a "get" or a "fetch".
      The FILES and options are processed as for the `cvs watch'
      commands.
 
-     *Caution:* If the PRESERVEPERMISSIONS option is enabled in the
+     *Caution:* If the `PreservePermissions' option is enabled in the
      repository (*note config::.), CVS will not change the permissions
      on any of the FILES.  The reason for this change is to ensure that
      using `cvs edit' does not interfere with the ability to store file
@@ -454,8 +455,8 @@ file.
 * Avoiding substitution::       Avoiding substitution
 * Substitution modes::          Substitution modes
 * Log keyword::                 Problems with the $Log: cvs.info-4,v $
-* Log keyword::                 Problems with the Revision 1.1.1.12  1998/03/12 07:05:56  tholo
-* Log keyword::                 Problems with the Latest version from Cyclic; files missed in first run
+* Log keyword::                 Problems with the Revision 1.1.1.13  1998/07/13 04:04:51  tholo
+* Log keyword::                 Problems with the Latest version from Cyclic; skipped files
 * Log keyword::                 Problems with the keyword.
 
 
@@ -469,17 +470,17 @@ Keyword List
 `$Author: tholo $'
      The login name of the user who checked in the revision.
 
-`$Date: 1998/03/12 07:05:56 $'
+`$Date: 1998/07/13 04:04:51 $'
      The date and time (UTC) the revision was checked in.
 
-`$Header: /home/cvs/src/gnu/usr.bin/cvs/doc/cvs.info-4,v 1.1.1.12 1998/03/12 07:05:56 tholo Exp $'
+`$Header: /home/cvs/src/gnu/usr.bin/cvs/doc/cvs.info-4,v 1.1.1.13 1998/07/13 04:04:51 tholo Exp $'
      A standard header containing the full pathname of the RCS file,
      the revision number, the date (UTC), the author, the state, and
      the locker (if locked).  Files will normally never be locked when
      you use CVS.
 
-`$Id: cvs.info-4,v 1.1.1.12 1998/03/12 07:05:56 tholo Exp $'
-     Same as `$Header: /home/cvs/src/gnu/usr.bin/cvs/doc/cvs.info-4,v 1.1.1.12 1998/03/12 07:05:56 tholo Exp $', except that the RCS filename is without a path.
+`$Id: cvs.info-4,v 1.1.1.13 1998/07/13 04:04:51 tholo Exp $'
+     Same as `$Header: /home/cvs/src/gnu/usr.bin/cvs/doc/cvs.info-4,v 1.1.1.13 1998/07/13 04:04:51 tholo Exp $', except that the RCS filename is without a path.
 
 `$Name:  $'
      Tag name used to check out this file.
@@ -489,15 +490,15 @@ Keyword List
      locked, and thus almost always useless when you are using CVS).
 
 `$Log: cvs.info-4,v $
-`Revision 1.1.1.12  1998/03/12 07:05:56  tholo
-`Latest version from Cyclic; files missed in first run
+`Revision 1.1.1.13  1998/07/13 04:04:51  tholo
+`Latest version from Cyclic; skipped files
 `'
      The log message supplied during commit, preceded by a header
      containing the RCS filename, the revision number, the author, and
      the date (UTC).  Existing log messages are *not* replaced.
      Instead, the new log message is inserted after `$Log: cvs.info-4,v $
-     Instead, the new log message is inserted after `Revision 1.1.1.12  1998/03/12 07:05:56  tholo
-     Instead, the new log message is inserted after `Latest version from Cyclic; files missed in first run
+     Instead, the new log message is inserted after `Revision 1.1.1.13  1998/07/13 04:04:51  tholo
+     Instead, the new log message is inserted after `Latest version from Cyclic; skipped files
      Instead, the new log message is inserted after `'.  Each
      new line is prefixed with the same string which precedes the
      `$Log' keyword.  For example, if the file contains
@@ -505,8 +506,8 @@ Keyword List
             /* Here is what people have been up to:
              *
              * $Log: cvs.info-4,v $
-             * Revision 1.1.1.12  1998/03/12 07:05:56  tholo
-             * Latest version from Cyclic; files missed in first run
+             * Revision 1.1.1.13  1998/07/13 04:04:51  tholo
+             * Latest version from Cyclic; skipped files
              *
              * Revision 1.1  1997/01/03 14:23:51  joe
              * Add the superfrobnicate option
@@ -523,7 +524,7 @@ Keyword List
 `$RCSfile: cvs.info-4,v $'
      The name of the RCS file without a path.
 
-`$Revision: 1.1.1.12 $'
+`$Revision: 1.1.1.13 $'
      The revision number assigned to the revision.
 
 `$Source: /home/cvs/src/gnu/usr.bin/cvs/doc/cvs.info-4,v $'
@@ -540,14 +541,14 @@ Using keywords
 ==============
 
    To include a keyword string you simply include the relevant text
-string, such as `$Id: cvs.info-4,v 1.1.1.12 1998/03/12 07:05:56 tholo Exp $', inside the file, and commit the file.  CVS will
+string, such as `$Id: cvs.info-4,v 1.1.1.13 1998/07/13 04:04:51 tholo Exp $', inside the file, and commit the file.  CVS will
 automatically expand the string as part of the commit operation.
 
-   It is common to embed `$Id: cvs.info-4,v 1.1.1.12 1998/03/12 07:05:56 tholo Exp $' string in the C source code.  This
+   It is common to embed `$Id: cvs.info-4,v 1.1.1.13 1998/07/13 04:04:51 tholo Exp $' string in the C source code.  This
 example shows the first few lines of a typical file, after keyword
 substitution has been performed:
 
-     static char *rcsid="$Id: cvs.info-4,v 1.1.1.12 1998/03/12 07:05:56 tholo Exp $";
+     static char *rcsid="$Id: cvs.info-4,v 1.1.1.13 1998/07/13 04:04:51 tholo Exp $";
      /* The following lines will prevent `gcc' version 2.X
         from issuing an "unused variable" warning. */
      #if __GNUC__ == 2
@@ -567,11 +568,11 @@ binary files.
 
      $ ident samp.c
      samp.c:
-          $Id: cvs.info-4,v 1.1.1.12 1998/03/12 07:05:56 tholo Exp $
+          $Id: cvs.info-4,v 1.1.1.13 1998/07/13 04:04:51 tholo Exp $
      $ gcc samp.c
      $ ident a.out
      a.out:
-          $Id: cvs.info-4,v 1.1.1.12 1998/03/12 07:05:56 tholo Exp $
+          $Id: cvs.info-4,v 1.1.1.13 1998/07/13 04:04:51 tholo Exp $
 
    SCCS is another popular revision control system.  It has a command,
 `what', which is very similar to `ident' and used for the same purpose.
@@ -580,7 +581,7 @@ character sequence `@(#)' it is easy to include keywords that are
 detected by either command.  Simply prefix the RCS keyword with the
 magic SCCS phrase, like this:
 
-     static char *id="@(#) $Id: cvs.info-4,v 1.1.1.12 1998/03/12 07:05:56 tholo Exp $";
+     static char *id="@(#) $Id: cvs.info-4,v 1.1.1.13 1998/07/13 04:04:51 tholo Exp $";
 
 
 File: cvs.info,  Node: Avoiding substitution,  Next: Substitution modes,  Prev: Using keywords,  Up: Keyword substitution
@@ -630,15 +631,15 @@ files::.
 `-kk'
      Generate only keyword names in keyword strings; omit their values.
      For example, for the `Revision' keyword, generate the string
-     `$Revision: 1.1.1.12 $' instead of `$Revision: 1.1.1.12 $'.  This option is useful
+     `$Revision: 1.1.1.13 $' instead of `$Revision: 1.1.1.13 $'.  This option is useful
      to ignore differences due to keyword substitution when comparing
      different revisions of a file.
 
 `-ko'
      Generate the old keyword string, present in the working file just
      before it was checked in.  For example, for the `Revision'
-     keyword, generate the string `$Revision: 1.1.1.12 $' instead of
-     `$Revision: 1.1.1.12 $' if that is how the string appeared when the
+     keyword, generate the string `$Revision: 1.1.1.13 $' instead of
+     `$Revision: 1.1.1.13 $' if that is how the string appeared when the
      file was checked in.
 
 `-kb'
@@ -652,9 +653,9 @@ files::.
 `-kv'
      Generate only keyword values for keyword strings.  For example,
      for the `Revision' keyword, generate the string `5.7' instead of
-     `$Revision: 1.1.1.12 $'.  This can help generate files in programming
+     `$Revision: 1.1.1.13 $'.  This can help generate files in programming
      languages where it is hard to strip keyword delimiters like
-     `$Revision: 1.1.1.12 $' from a string.  However, further keyword
+     `$Revision: 1.1.1.13 $' from a string.  However, further keyword
      substitution cannot be performed once the keyword names are
      removed, so this option should be used with care.
 
@@ -666,25 +667,25 @@ files::.
 File: cvs.info,  Node: Log keyword,  Prev: Substitution modes,  Up: Keyword substitution
 
 Problems with the $Log: cvs.info-4,v $
-Problems with the Revision 1.1.1.12  1998/03/12 07:05:56  tholo
-Problems with the Latest version from Cyclic; files missed in first run
+Problems with the Revision 1.1.1.13  1998/07/13 04:04:51  tholo
+Problems with the Latest version from Cyclic; skipped files
 Problems with the keyword.
 ================================
 
    The `$Log: cvs.info-4,v $
-   The `Revision 1.1.1.12  1998/03/12 07:05:56  tholo
-   The `Latest version from Cyclic; files missed in first run
+   The `Revision 1.1.1.13  1998/07/13 04:04:51  tholo
+   The `Latest version from Cyclic; skipped files
    The `' keyword is somewhat controversial.  As long as you are
 working on your development system the information is easily accessible
 even if you do not use the `$Log: cvs.info-4,v $
-even if you do not use the `Revision 1.1.1.12  1998/03/12 07:05:56  tholo
-even if you do not use the `Latest version from Cyclic; files missed in first run
+even if you do not use the `Revision 1.1.1.13  1998/07/13 04:04:51  tholo
+even if you do not use the `Latest version from Cyclic; skipped files
 even if you do not use the `' keyword--just do a `cvs log'.  Once
 you export the file the history information might be useless anyhow.
 
    A more serious concern is that CVS is not good at handling `$Log: cvs.info-4,v $
-   A more serious concern is that CVS is not good at handling `Revision 1.1.1.12  1998/03/12 07:05:56  tholo
-   A more serious concern is that CVS is not good at handling `Latest version from Cyclic; files missed in first run
+   A more serious concern is that CVS is not good at handling `Revision 1.1.1.13  1998/07/13 04:04:51  tholo
+   A more serious concern is that CVS is not good at handling `Latest version from Cyclic; skipped files
    A more serious concern is that CVS is not good at handling `'
 entries when a branch is merged onto the main trunk.  Conflicts often
 result from the merging operation.
@@ -695,8 +696,8 @@ information from `cvs log' will not be consistent with the information
 inside the file.  This may or may not be a problem in real life.
 
    It has been suggested that the `$Log: cvs.info-4,v $
-   It has been suggested that the `Revision 1.1.1.12  1998/03/12 07:05:56  tholo
-   It has been suggested that the `Latest version from Cyclic; files missed in first run
+   It has been suggested that the `Revision 1.1.1.13  1998/07/13 04:04:51  tholo
+   It has been suggested that the `Latest version from Cyclic; skipped files
    It has been suggested that the `' keyword should be inserted
 *last* in the file, and not in the files header, if it is to be used at
 all.  That way the long list of change messages will not interfere with
@@ -953,28 +954,57 @@ developer at installation time.  In other words, it is not possible to
 opened, CVS will refuse to handle it.  Files also lose their ownerships
 and permissions during repository transactions.
 
-   If the configuration variable PRESERVEPERMISSIONS (*note config::.)
-is set in the repository, CVS will preserve file permissions and
-ownership across repository transactions, and will permit checkin and
-checkout of special files and symbolic links.
+   If the configuration variable `PreservePermissions' (*note
+config::.) is set in the repository, CVS will save the following file
+characteristics in the repository:
 
-   Using this option affects the behavior of CVS in several ways.
-First, some of the new operations supported by CVS are not accessible
-to all users.  In particular, file ownership and special file
-characteristics may only be changed by the superuser.  When the
-PRESERVEPERMISSIONS configuration variable is set, therefore, users
-will have to be `root' in order to perform CVS operations.
+   * user and group ownership
+
+   * permissions
+
+   * major and minor device numbers
+
+   * symbolic links
+
+   * hard link structure
+
+   Using the `PreservePermissions' option affects the behavior of CVS
+in several ways.  First, some of the new operations supported by CVS
+are not accessible to all users.  In particular, file ownership and
+special file characteristics may only be changed by the superuser.
+When the `PreservePermissions' configuration variable is set,
+therefore, users will have to be `root' in order to perform CVS
+operations.
+
+   When `PreservePermissions' is in use, some CVS operations (such as
+`cvs status') will not recognize a file's hard link structure, and so
+will emit spurious warnings about mismatching hard links.  The reason
+is that CVS's internal structure does not make it easy for these
+operations to collect all the necessary data about hard links, so they
+check for file conflicts with inaccurate data.
 
    A more subtle difference is that CVS considers a file to have
 changed only if its contents have changed (specifically, if the
 modification time of the working file does not match that of the
-repository's file).  Therefore, if only the permissions or ownership
-have changed, or if a device's major or minor numbers have changed, CVS
-will not notice.  In order to commit such a change to the repository,
-you must force the commit with `cvs commit -f'.  This also means that
-if a file's permissions have changed and the repository file is newer
-than the working copy, performing `cvs update' will silently change the
-permissions on the working copy.
+repository's file).  Therefore, if only the permissions, ownership or
+hard linkage have changed, or if a device's major or minor numbers have
+changed, CVS will not notice.  In order to commit such a change to the
+repository, you must force the commit with `cvs commit -f'.  This also
+means that if a file's permissions have changed and the repository file
+is newer than the working copy, performing `cvs update' will silently
+change the permissions on the working copy.
+
+   Changing hard links in a CVS repository is particularly delicate.
+Suppose that file `foo' is linked to file `old', but is later relinked
+to file `new'.  You can wind up in the unusual situation where,
+although `foo', `old' and `new' have all had their underlying link
+patterns changed, only `foo' and `new' have been modified, so `old' is
+not considered a candidate for checking in.  It can be very easy to
+produce inconsistent results this way.  Therefore, we recommend that
+when it is important to save hard links in a repository, the prudent
+course of action is to `touch' any file whose linkage or status has
+changed since the last checkin.  Indeed, it may be wise to `touch *'
+before each commit in a directory with complex hard link structures.
 
    It is worth noting that only regular files may be merged, for
 reasons that hopefully are obvious.  If `cvs update' or `cvs checkout
@@ -984,9 +1014,10 @@ and refuse to perform the merge.  At the same time, `cvs diff' will not
 report any differences between these files, since no meaningful textual
 comparisons can be made on files which contain no text.
 
-   The PreservePermissions features do not work with client/server CVS.
-Another limitation is that hard links must be to other files within
-the same directory; hard links across directories are not supported.
+   The `PreservePermissions' features do not work with client/server
+CVS.  Another limitation is that hard links must be to other files
+within the same directory; hard links across directories are not
+supported.
 
 
 File: cvs.info,  Node: CVS commands,  Next: Invoking CVS,  Prev: Special Files,  Up: Top
@@ -1109,7 +1140,7 @@ match against the file.  So if this is the contents of the user's
      log -N
      diff -u
      update -P
-     co -P
+     checkout -P
 
 the command `cvs checkout foo' would have the `-P' option added to the
 arguments, as well as `cvs co foo'.
