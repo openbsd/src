@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_dummy.c,v 1.3 2001/01/29 07:23:54 jasoni Exp $ */
+/*	$OpenBSD: linux_dummy.c,v 1.4 2001/04/02 21:43:11 niklas Exp $ */
 
 /*-
  * Copyright (c) 1994-1995 Søren Schmidt
@@ -80,7 +80,6 @@ DUMMY(idle);			/* #112 */
 DUMMY(vm86old);			/* #113 */
 DUMMY(swapoff);			/* #115 */
 DUMMY(sysinfo);			/* #116 */
-DUMMY(clone);			/* #120 */
 #ifndef __i386__
 DUMMY(modify_ldt);		/* #123 */
 #endif
@@ -95,13 +94,6 @@ DUMMY(sysfs);			/* #135 */
 DUMMY(afs_syscall);		/* #137 */
 DUMMY(mlockall);		/* #152 */
 DUMMY(munlockall);		/* #153 */
-DUMMY(sched_setparam);		/* #154 */
-DUMMY(sched_getparam);		/* #155 */
-DUMMY(sched_setscheduler);	/* #156 */
-DUMMY(sched_getscheduler);	/* #157 */
-DUMMY(sched_yield);		/* #158 */
-DUMMY(sched_get_priority_max);	/* #159 */
-DUMMY(sched_get_priority_min);	/* #160 */
 DUMMY(sched_rr_get_interval);	/* #161 */
 DUMMY(vm86);			/* #166 */
 DUMMY(query_module);		/* #167 */

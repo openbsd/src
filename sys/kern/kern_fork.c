@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.38 2001/03/23 18:42:06 art Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.39 2001/04/02 21:43:11 niklas Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -50,6 +50,7 @@
 #include <sys/mount.h>
 #include <sys/proc.h>
 #include <sys/resourcevar.h>
+#include <sys/signalvar.h>
 #include <sys/vnode.h>
 #include <sys/file.h>
 #include <sys/acct.h>
@@ -81,7 +82,7 @@ sys_fork(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	return (fork1(p, FORK_FORK, NULL, 0, retval));
+	return (fork1(p, SIGCHLD, FORK_FORK, NULL, 0, retval));
 }
 
 /*ARGSUSED*/
@@ -91,7 +92,7 @@ sys_vfork(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	return (fork1(p, FORK_VFORK|FORK_PPWAIT, NULL, 0, retval));
+	return (fork1(p, SIGCHLD, FORK_VFORK|FORK_PPWAIT, NULL, 0, retval));
 }
 
 int
@@ -103,6 +104,7 @@ sys_rfork(p, v, retval)
 	struct sys_rfork_args /* {
 		syscallarg(int) flags;
 	} */ *uap = v;
+
 	int rforkflags;
 	int flags;
 
@@ -131,12 +133,13 @@ sys_rfork(p, v, retval)
 	if (rforkflags & RFMEM)
 		flags |= FORK_VMNOSTACK;
 
-	return (fork1(p, flags, NULL, 0, retval));
+	return (fork1(p, SIGCHLD, flags, NULL, 0, retval));
 }
 
 int
-fork1(p1, flags, stack, stacksize, retval)
+fork1(p1, exitsig, flags, stack, stacksize, retval)
 	register struct proc *p1;
+	int exitsig;
 	int flags;
 	void *stack;
 	size_t stacksize;
@@ -246,6 +249,7 @@ again:
 	p2 = newproc;
 	p2->p_stat = SIDL;			/* protect against others */
 	p2->p_pid = lastpid;
+	p2->p_exitsig = exitsig;
 	LIST_INSERT_HEAD(&allproc, p2, p_list);
 	p2->p_forw = p2->p_back = NULL;		/* shouldn't be necessary */
 	LIST_INSERT_HEAD(PIDHASH(p2->p_pid), p2, p_hash);
@@ -338,6 +342,14 @@ again:
 	scheduler_fork_hook(p1, p2);
 
 	/*
+	 * Create signal actions for the child process.
+	 */
+	if (flags & FORK_SIGHAND)
+		sigactsshare(p1, p2);
+	else
+		p2->p_sigacts = sigactsinit(p1);
+
+	/*
 	 * This begins the section where we must prevent the parent
 	 * from being swapped.
 	 */
@@ -382,7 +394,7 @@ again:
 	 */
 #if defined(UVM)
 	uvm_fork(p1, p2, ((flags & FORK_SHAREVM) ? TRUE : FALSE), stack,
-		 stacksize);
+	    stacksize);
 #else /* UVM */
 	vm_fork(p1, p2, stack, stacksize);
 #endif /* UVM */

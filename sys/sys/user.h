@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.h,v 1.3 1996/04/21 22:32:17 deraadt Exp $	*/
+/*	$OpenBSD: user.h,v 1.4 2001/04/02 21:43:12 niklas Exp $	*/
 /*	$NetBSD: user.h,v 1.10 1996/04/09 20:55:49 cgd Exp $	*/
 
 /*
@@ -46,7 +46,6 @@
 #include <sys/uio.h>
 #endif
 #include <sys/resourcevar.h>
-#include <sys/signalvar.h>
 #include <vm/vm.h>		/* XXX */
 #include <sys/sysctl.h>
 
@@ -61,7 +60,6 @@
 struct	user {
 	struct	pcb u_pcb;
 
-	struct	sigacts u_sigacts;	/* p_sigacts points here (use it!) */
 	struct	pstats u_stats;		/* p_stats points here (use it!) */
 
 	/*
@@ -81,14 +79,10 @@ struct	user {
 #define	U_tsize	u_kproc.kp_eproc.e_vm.vm_tsize
 #define	U_dsize	u_kproc.kp_eproc.e_vm.vm_dsize
 #define	U_ssize	u_kproc.kp_eproc.e_vm.vm_ssize
-#define	U_sig	u_sigacts.ps_sig
-#define	U_code	u_sigacts.ps_code
 
 #ifndef _KERNEL
 #define	u_ar0	U_ar0
 #define	u_tsize	U_tsize
 #define	u_dsize	U_dsize
 #define	u_ssize	U_ssize
-#define	u_sig	U_sig
-#define	u_code	U_code
 #endif /* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_glue.c,v 1.35 1999/09/03 18:02:27 art Exp $    */
+/*	$OpenBSD: vm_glue.c,v 1.36 2001/04/02 21:43:12 niklas Exp $    */
 /*	$NetBSD: vm_glue.c,v 1.55.4.1 1996/06/13 17:25:45 cgd Exp $	*/
 
 /* 
@@ -237,14 +237,10 @@ vm_fork(p1, p2, stack, stacksize)
 			(vm_offset_t)up + USPACE, FALSE);
 
 	/*
-	 * p_stats and p_sigacts currently point at fields
-	 * in the user struct but not at &u, instead at p_addr.
-	 * Copy p_sigacts and parts of p_stats; zero the rest
-	 * of p_stats (statistics).
+	 * p_stats currently point at fields in the user struct.  Copy
+	 * parts of p_stats, and zero out the rest.
 	 */
 	p2->p_stats = &up->u_stats;
-	p2->p_sigacts = &up->u_sigacts;
-	up->u_sigacts = *p1->p_sigacts;
 	bzero(&up->u_stats.pstat_startzero,
 	    (unsigned) ((caddr_t)&up->u_stats.pstat_endzero -
 	    (caddr_t)&up->u_stats.pstat_startzero));

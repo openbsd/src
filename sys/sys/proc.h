@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.39 2001/03/25 18:09:18 csapuntz Exp $	*/
+/*	$OpenBSD: proc.h,v 1.40 2001/04/02 21:43:12 niklas Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -248,6 +248,10 @@ struct	proc {
 #define	P_NOCLDWAIT	0x080000	/* Let pid 1 wait for my children */
 #define	P_NOZOMBIE	0x100000	/* Pid 1 waits for me instead of dad */
 
+/* Macro to compute the exit signal to be delivered. */
+#define P_EXITSIG(p) \
+    (((p)->p_flag & (P_TRACED | P_FSTRACE)) ? SIGCHLD : (p)->p_exitsig)
+
 /*
  * These flags are kept in p_schedflags.  p_schedflags may be modified
  * only at splstatclock().
@@ -314,6 +318,7 @@ struct	pcred {
 #define FORK_NOZOMBIE	0x00000040
 #define FORK_SHAREVM	0x00000080
 #define FORK_VMNOSTACK	0x00000100
+#define FORK_SIGHAND	0x00000200
 
 #define	PIDHASH(pid)	(&pidhashtbl[(pid) & pidhash])
 extern LIST_HEAD(pidhashhead, proc) *pidhashtbl;
@@ -380,7 +385,7 @@ void    wakeup __P((void *chan));
 void	reaper __P((void));
 void	exit1 __P((struct proc *, int));
 void	exit2 __P((struct proc *));
-int	fork1 __P((struct proc *, int, void *, size_t, register_t *));
+int	fork1 __P((struct proc *, int, int, void *, size_t, register_t *));
 void	kmeminit __P((void));
 void	rqinit __P((void));
 int	groupmember __P((gid_t, struct ucred *));

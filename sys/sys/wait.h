@@ -1,4 +1,4 @@
-/*	$OpenBSD: wait.h,v 1.5 1996/11/14 20:28:35 etheisen Exp $	*/
+/*	$OpenBSD: wait.h,v 1.6 2001/04/02 21:43:12 niklas Exp $	*/
 /*	$NetBSD: wait.h,v 1.11 1996/04/09 20:55:51 cgd Exp $	*/
 
 /*
@@ -81,6 +81,9 @@
  */
 #define WNOHANG		1	/* don't hang in wait */
 #define WUNTRACED	2	/* tell about stopped, untraced children */
+#ifndef _POSIX_SOURCE
+#define	WALTSIG		4	/* wait for child with alternate exit signal */
+#endif
 
 #ifndef _POSIX_SOURCE
 /* POSIX extensions and 4.2/4.3 compatability: */

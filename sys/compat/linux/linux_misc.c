@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_misc.c,v 1.34 2001/01/23 05:48:05 csapuntz Exp $	*/
+/*	$OpenBSD: linux_misc.c,v 1.35 2001/04/02 21:43:11 niklas Exp $	*/
 /*	$NetBSD: linux_misc.c,v 1.27 1996/05/20 01:59:21 fvdl Exp $	*/
 
 /*
@@ -71,7 +71,9 @@
 
 #include <compat/linux/linux_types.h>
 #include <compat/linux/linux_fcntl.h>
+#include <compat/linux/linux_misc.h>
 #include <compat/linux/linux_mmap.h>
+#include <compat/linux/linux_sched.h>
 #include <compat/linux/linux_signal.h>
 #include <compat/linux/linux_syscallargs.h>
 #include <compat/linux/linux_util.h>
@@ -80,17 +82,16 @@
 #include <compat/common/compat_dir.h>
 
 /* linux_misc.c */
-static void bsd_to_linux_wstat __P((int *));
 static void bsd_to_linux_statfs __P((struct statfs *, struct linux_statfs *));
-int linux_select1 __P((struct proc *, register_t *, int, fd_set *, fd_set *,
-		       fd_set *, struct timeval *));
+int	linux_select1 __P((struct proc *, register_t *, int, fd_set *,
+     fd_set *, fd_set *, struct timeval *));
 
 /*
  * The information on a terminated (or stopped) process needs
  * to be converted in order for Linux binaries to get a valid signal
  * number out of it.
  */
-static void
+void
 bsd_to_linux_wstat(status)
 	int *status;
 {
@@ -166,7 +167,7 @@ linux_sys_wait4(p, v, retval)
 		syscallarg(struct rusage *) rusage;
 	} */ *uap = v;
 	struct sys_wait4_args w4a;
-	int error, *status, tstat;
+	int error, *status, tstat, linux_options, options;
 	caddr_t sg;
 
 	if (SCARG(uap, status) != NULL) {
@@ -175,9 +176,22 @@ linux_sys_wait4(p, v, retval)
 	} else
 		status = NULL;
 
+	linux_options = SCARG(uap, options);
+	options = 0;
+	if (linux_options &
+	    ~(LINUX_WAIT4_WNOHANG|LINUX_WAIT4_WUNTRACED|LINUX_WAIT4_WCLONE))
+		return (EINVAL);
+
+	if (linux_options & LINUX_WAIT4_WNOHANG)
+		options |= WNOHANG;
+	if (linux_options & LINUX_WAIT4_WUNTRACED)
+		options |= WUNTRACED;
+	if (linux_options & LINUX_WAIT4_WCLONE)
+		options |= WALTSIG;
+
 	SCARG(&w4a, pid) = SCARG(uap, pid);
 	SCARG(&w4a, status) = status;
-	SCARG(&w4a, options) = SCARG(uap, options);
+	SCARG(&w4a, options) = options;
 	SCARG(&w4a, rusage) = SCARG(uap, rusage);
 
 	if ((error = sys_wait4(p, &w4a, retval)))

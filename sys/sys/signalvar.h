@@ -1,4 +1,4 @@
-/*	$OpenBSD: signalvar.h,v 1.7 1997/08/31 20:42:01 deraadt Exp $	*/
+/*	$OpenBSD: signalvar.h,v 1.8 2001/04/02 21:43:12 niklas Exp $	*/
 /*	$NetBSD: signalvar.h,v 1.17 1996/04/22 01:23:31 christos Exp $	*/
 
 /*
@@ -61,6 +61,7 @@ struct	sigacts {
 	int	ps_sig;			/* for core dump/debugger XXX */
 	long	ps_code;		/* for core dump/debugger XXX */
 	sigset_t ps_usertramp;		/* SunOS compat; libc sigtramp XXX */
+	int	ps_refcnt;		/* reference count */
 };
 
 /* signal flags */
@@ -167,6 +168,13 @@ void	trapsignal __P((struct proc *p, int sig, u_long code, int type,
 void	sigexit __P((struct proc *, int));
 void	setsigvec __P((struct proc *, int, struct sigaction *));
 int	killpg1 __P((struct proc *, int, int, int));
+
+void	signal_init __P((void));
+
+struct sigacts *sigactsinit __P((struct proc *));
+void	sigactsshare __P((struct proc *, struct proc *));
+void	sigactsunshare __P((struct proc *));
+void	sigactsfree __P((struct proc *));
 
 /*
  * Machine-dependent functions:

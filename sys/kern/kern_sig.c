@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.41 2001/02/19 10:21:48 art Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.42 2001/04/02 21:43:12 niklas Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -63,6 +63,8 @@
 #include <sys/syslog.h>
 #include <sys/stat.h>
 #include <sys/core.h>
+#include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/ptrace.h>
 
 #include <sys/mount.h>
@@ -73,9 +75,7 @@
 #include <vm/vm.h>
 #include <sys/user.h>		/* for coredump */
 
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
 
 int	filt_sigattach(struct knote *kn);
 void	filt_sigdetach(struct knote *kn);
@@ -87,6 +87,8 @@ struct filterops sig_filtops =
 void stop __P((struct proc *p));
 void killproc __P((struct proc *, char *));
 int cansignal __P((struct proc *, struct pcred *, struct proc *, int));
+
+struct pool sigacts_pool;	/* memory pool for sigacts structures */
 
 /*
  * Can process p, with pcred pc, send the signal signum to process q?
@@ -144,6 +146,79 @@ cansignal(p, pc, q, signum)
 	return (0);
 }
 
+
+/*
+ * Initialize signal-related data structures.
+ */
+void
+signal_init()
+{
+	pool_init(&sigacts_pool, sizeof(struct sigacts), 0, 0, 0, "sigapl",
+	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_SUBPROC);
+}
+
+/*
+ * Create an initial sigacts structure, using the same signal state
+ * as p.
+ */
+struct sigacts *
+sigactsinit(p)
+	struct proc *p;
+{
+	struct sigacts *ps;
+
+	ps = pool_get(&sigacts_pool, PR_WAITOK);
+	memcpy(ps, p->p_sigacts, sizeof(struct sigacts));
+	ps->ps_refcnt = 1;
+	return (ps);
+}
+
+/*
+ * Make p2 share p1's sigacts.
+ */
+void
+sigactsshare(p1, p2)
+	struct proc *p1, *p2;
+{
+
+	p2->p_sigacts = p1->p_sigacts;
+	p1->p_sigacts->ps_refcnt++;
+}
+
+/*
+ * Make this process not share its sigacts, maintaining all
+ * signal state.
+ */
+void
+sigactsunshare(p)
+	struct proc *p;
+{
+	struct sigacts *newps;
+
+	if (p->p_sigacts->ps_refcnt == 1)
+		return;
+
+	newps = sigactsinit(p);
+	sigactsfree(p);
+	p->p_sigacts = newps;
+}
+
+/*
+ * Release a sigacts structure.
+ */
+void
+sigactsfree(p)
+	struct proc *p;
+{
+	struct sigacts *ps = p->p_sigacts;
+
+	if (--ps->ps_refcnt > 0)
+		return;
+
+	p->p_sigacts = NULL;
+
+	pool_put(&sigacts_pool, ps);
+}
 
 /* ARGSUSED */
 int

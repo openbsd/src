@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.60 2001/03/16 15:49:05 art Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.61 2001/04/02 21:43:11 niklas Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -118,6 +118,7 @@ struct	pcred cred0;
 struct	filedesc0 filedesc0;
 struct	plimit limit0;
 struct	vmspace vmspace0;
+struct	sigacts sigacts0;
 #ifndef curproc
 struct	proc *curproc;
 #endif
@@ -305,11 +306,10 @@ main(framep)
 	p->p_addr = proc0paddr;				/* XXX */
 
 	/*
-	 * We continue to place resource usage info and signal
-	 * actions in the user struct so they're pageable.
+	 * We continue to place resource usage info in the
+	 * user struct so they're pageable.
 	 */
 	p->p_stats = &p->p_addr->u_stats;
-	p->p_sigacts = &p->p_addr->u_sigacts;
 
 	/*
 	 * Charge root for one process.
@@ -416,10 +416,12 @@ main(framep)
 	p->p_rtime.tv_sec = p->p_rtime.tv_usec = 0;
 
 	/* Initialize signal state for process 0. */
+	signal_init();
+	p->p_sigacts = &sigacts0;
 	siginit(p);
 
 	/* Create process 1 (init(8)). */
-	if (fork1(p, FORK_FORK, NULL, 0, rval))
+	if (fork1(p, SIGCHLD, FORK_FORK, NULL, 0, rval))
 		panic("fork init");
 #ifdef cpu_set_init_frame			/* XXX should go away */
 	if (rval[1]) {
