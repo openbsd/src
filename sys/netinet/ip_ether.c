@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.c,v 1.10 2000/09/19 03:20:58 angelos Exp $  */
+/*	$OpenBSD: ip_ether.c,v 1.11 2000/12/30 22:55:33 angelos Exp $  */
 
 /*
  * The author of this code is Angelos D. Keromytis (kermit@adk.gr)
@@ -57,11 +57,18 @@
 #include <netinet/if_ether.h>
 #include <dev/rndvar.h>
 #include <net/if_bridge.h>
+#include <net/if_gif.h>
+
+#include "gif.h"
 
 #ifdef ENCDEBUG
 #define DPRINTF(x)	if (encdebug) printf x
 #else
 #define DPRINTF(x)
+#endif
+
+#ifndef offsetof
+#define offsetof(s, e) ((int)&((s *)0)->e)
 #endif
 
 /*
@@ -88,8 +95,10 @@ struct mbuf *m;
 va_dcl
 #endif
 {
+    union sockaddr_union ssrc, sdst;
     struct ether_header eh;
-    int iphlen;
+    int iphlen, i;
+    u_int8_t v;
     va_list ap;
 
     va_start(ap, m);
@@ -107,15 +116,6 @@ va_dcl
 	return;
     }
 
-    /* If there's no interface associated, drop now. */
-    if (m->m_pkthdr.rcvif == 0 || m->m_pkthdr.rcvif->if_bridge == 0)
-    {
-	DPRINTF(("etherip_input(): input interface or bridge unknown\n"));
-	etheripstat.etherip_noifdrops++;
-	m_freem(m);
-	return;
-    }
-    
     /*
      * Remove the outer IP header, make sure there's at least an
      * ethernet header's worth of data in there. 
@@ -140,11 +140,42 @@ va_dcl
 	}
     }
 
-    /*
-     * Interface pointer is already in first mbuf; chop off the 
-     * `outer' header and reschedule.
-     */
+    /* Copy the addresses for use later */
+    bzero(&ssrc, sizeof(ssrc));
+    bzero(&sdst, sizeof(sdst));
 
+    m_copydata(m, 0, 1, &v);
+    switch (v >> 4)
+    {
+#ifdef INET
+	case 4:
+	    ssrc.sa.sa_len = sdst.sa.sa_len = sizeof(struct sockaddr_in);
+	    ssrc.sa.sa_family = sdst.sa.sa_family = AF_INET;
+	    m_copydata(m, offsetof(struct ip, ip_src), sizeof(struct in_addr),
+		       (caddr_t) &ssrc.sin.sin_addr);
+	    m_copydata(m, offsetof(struct ip, ip_dst), sizeof(struct in_addr),
+		       (caddr_t) &sdst.sin.sin_addr);
+	    break;
+#endif /* INET */
+#ifdef INET6
+	case 6:
+	    ssrc.sa.sa_len = sdst.sa.sa_len = sizeof(struct sockaddr_in6);
+	    ssrc.sa.sa_family = sdst.sa.sa_family = AF_INET6;
+	    m_copydata(m, offsetof(struct ip6_hdr, ip6_src),
+		       sizeof(struct in6_addr),
+		       (caddr_t) &ssrc.sin6.sin6_addr);
+	    m_copydata(m, offsetof(struct ip6_hdr, ip6_dst),
+		       sizeof(struct in6_addr),
+		       (caddr_t) &sdst.sin6.sin6_addr);
+	    break;
+#endif /* INET6 */
+	default:
+	    m_freem(m);
+	    etheripstat.etherip_hdrops++;
+	    return /* EAFNOSUPPORT */;
+    }
+
+    /* Chop off the `outer' header and reschedule. */
     m->m_len -= iphlen;
     m->m_pkthdr.len -= iphlen;
     m->m_data += iphlen;
@@ -166,26 +197,48 @@ va_dcl
     }
 
     if (m->m_flags & (M_BCAST|M_MCAST))
-	m->m_pkthdr.rcvif->if_imcasts++;
+      m->m_pkthdr.rcvif->if_imcasts++;
 
     /* Trim the beginning of the mbuf, to remove the ethernet header */
     m_adj(m, sizeof(struct ether_header));
 
+#if NGIF > 0
+    /* Find appropriate gif(4) interface */
+    for (i = 0; i < ngif; i++)
+    {
+	if ((gif[i].gif_psrc == NULL) || (gif[i].gif_pdst == NULL) ||
+	    !(gif[i].gif_if.if_flags & (IFF_UP|IFF_RUNNING)))
+	  continue;
+
+	if (!bcmp(gif[i].gif_psrc, &sdst, gif[i].gif_psrc->sa_len) &&
+	    !bcmp(gif[i].gif_pdst, &ssrc, gif[i].gif_pdst->sa_len) &&
+	    gif[i].gif_if.if_bridge != NULL)
+	  break;
+    }
+
+    /* None found */
+    if (i >= ngif)
+    {
+	DPRINTF(("etherip_input(): no interface found\n"));
+        etheripstat.etherip_noifdrops++;
+	m_freem(m);
+	return;
+    }
+
 #if NBRIDGE > 0
     /*
-     * Tap the packet off here for a bridge, if configured and
-     * active for this interface.  bridge_input returns
+     * Tap the packet off here for a bridge. bridge_input() returns
      * NULL if it has consumed the packet, otherwise, it
      * gets processed as normal.
      */
-    if (m->m_pkthdr.rcvif->if_bridge)
-    {
-	m = bridge_input(m->m_pkthdr.rcvif, &eh, m);
-	if (m == NULL)
-	  return;
-    }
-#endif
+    m->m_pkthdr.rcvif = &gif[i].gif_if;
+    m = bridge_input(&gif[i].gif_if, &eh, m);
+    if (m == NULL)
+      return;
+#endif /* NBRIDGE */
+#endif /* NGIF */
 
+    etheripstat.etherip_noifdrops++;
     m_freem(m);
     return;
 }
