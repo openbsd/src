@@ -1,17 +1,14 @@
 Installation is supported from several media types, including:
 
-	DOS floppies
+	DOS partitions
+	FFS partitions
 	Tape
 	Remote NFS partition
 	FTP
 	rsh & restore
 
 No matter which installation medium you choose, you'll need to have
-two floppy disks (either 1.2M or 1.44 will work, though both should be
-the same type).  On the first, you'll put the kernel-copy image that's
-appropriate for your system.  On the second, you'll put the install or
-upgrade floppy image, depending on whether you're installing OpenBSD
-for the first time, or upgrading a previous installation.
+a floppy disk (1.44Mb required).
 
 If you are using a UN*X-like system to write the floppy images to
 disks, you should use the "dd" command to copy the file system images
@@ -22,15 +19,12 @@ different from system to system, and a comprehensive list of the
 possibilities is beyond the scope of this document.
 
 If you are using DOS to write the floppy images to disks, you should
-use the "rawrite" utility, provided in the "i386/utilities" directory
-of the OpenBSD distribution.  It will write the file system images (.fs
-files) to disks.
+use the "rawrite" utility, provided in the "i386/inst" directory of
+the OpenBSD distribution.  It will write the file system image (.fs
+file) to a disk.
 
-Note that, when installing, the kernel-copy floppy can be write-protected
-(i.e. read-only), but the install floppy MUST not be write-protected.
-The install program needs to write some temporary files, and if the
-disk is write-protected, it can't.  If you're upgrading your system,
-both the kernel-copy and upgrade floppies may be write-protected.
+Note that, when installing, the floppy can be write-protected (i.e.
+read-only).
 
 Obviously, the steps necessary to prepare the distribution sets for
 installation or upgrade depend on which installation medium you

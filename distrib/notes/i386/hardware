@@ -70,6 +70,7 @@ Supported devices include:
 		SMC/WD 8003, 8013, and the SMC "Elite16" ISA boards
 		SMC/WD 8216 (the SMC "Elite16 Ultra" ISA boards)  [X SEE BELOW]
 		Novell NE1000, NE2000
+		Digital DEFPA PCI FDDI adapters
 	Tape drives:
 		Most SCSI tape drives
 		QIC-02 and QIC-36 format (Archive- and Wangtek-
@@ -102,7 +103,7 @@ can use all of them by compiling a custom kernel once OpenBSD is
 installed.
 
 Support for devices marked with "[+]" IS included in the "generic" kernels,
-although it is not in the kernels which are on the distribution floppies.
+although it is not in the kernel on the installation floppy.
 
 
 Hardware the we do NOT currently support, but get many questions
@@ -119,9 +120,6 @@ about:
 	Multiprocessor Pentium and Pentium Pro systems.  (Though they should
 		run fine using one processor only.)
 	Intel EtherExpress 100 Fast Ethernet adapters.
-	Digital DEFPA PCI FDDI adapters (support barely missed this release;
-		it works in other ports, and will work in this one in the
-		next release)
 
 We are planning future support for many of these devices.
 

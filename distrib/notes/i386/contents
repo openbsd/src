@@ -11,53 +11,27 @@ out as follows:
 		floppies/	i386 boot and installation
 				floppies; see below.
 
-		utils/		Miscellaneous i386
-				installation utilities; see
-				installation section, below.
+		inst/		i386 boot/installation floppy;
+				miscellaneous i386 installation
+				utilities; see installation
+				section, below.
 
-There are four i386 floppy images to be found in the "i386/floppy"
-subdirectory of the OpenBSD 2.1 distribution.  Two of them are bootable
-kernel-copy floppies, one is an installation floppy, and one is an
-upgrade floppy.  They are all described in more detail below.  There
+There is one i386 floppy image to be found in the "i386/inst" sub-
+directory of the OpenBSD 2.1 distribution.  This is a bootable install
+floppy which can be used both to install and to upgrade an OpenBSD to
+the current version, as well as for maintenance work.  In addition there
+are some utilities that might be useful for the installation.  There
 are gzipped versions of each available, for easier downloading.  (The
 gzipped versions have the ".gz" extension added to their names.)
 
-Bootable Kernel-copy floppies:
+Bootable installation/upgrade floppy:
 
-	These disks contain file systems, are bootable, and have
-	enough utilities on board to copy a new kernel to your hard
-	disk once you have it partitioned for OpenBSD.  They make
-	upgrading to a new kernel easy, because all you have to do is
-	get a new kernel-copy floppy with a new kernel, boot from it,
-	and confirm that you want to have the kernel copied to your
-	disk.
+	This disks contains a file system, is bootable, and have
+	enough utilities on board to prepare your hard disk drive
+	for OpenBSD and install the OpenBSD distribution.
 
-        Please note that because of space considerations the kernel
-        copy floppies no longer contain drivers that are not needed
-        during installation -- in particular, no drivers needed to run
-        the X Window System are available in these kernels. It is
-        recommended that you configure a custom kernel following
-        installation.
-
-        For those that cannot configure a custom kernel, a "generic"
-        kernel image, named "bsd.gz" has been placed in the binaries
-	directory.  It is strongly encouraged that you build a custom
-        kernel for your installation rather than use a prebuilt generic
-        kernel.
-
-Installation floppy:
-
-	This disk contains the software necessary to prepare your hard
-	drive for OpenBSD and install the OpenBSD distribution. It is
-	not bootable, and must be used in conjunction with one of the
-	kernel-copy floppies.  This floppy is named "inst-21.fs".
-
-Upgrade floppy:
-
-	This disk contains the software to be used in upgrading the
-	system from a previous version of OpenBSD.  It is not bootable,
-	and must be used in conjunction with one of the kernel-copy
-	floppies.  This floppy is named "upgr21.fs"
+	It also holds the untilities needed in order to upgrade a
+	system to the current version of OpenBSD.
 
 The OpenBSD/i386 binary distribution sets contain the binaries which
 comprise the OpenBSD 2.1 release for the i386.  There are seven binary
