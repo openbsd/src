@@ -1,4 +1,4 @@
-/*	$OpenBSD: nubus.h,v 1.4 1996/05/26 18:35:33 briggs Exp $	*/
+/*	$OpenBSD: nubus.h,v 1.5 1996/09/21 03:39:56 briggs Exp $	*/
 /*	$NetBSD: nubus.h,v 1.14 1996/05/07 03:13:40 briggs Exp $	*/
 
 /*
@@ -53,6 +53,7 @@
 #define  NUBUS_TYPE_LCD		0x0002
 #define   NUBUS_DRSW_APPLE	0x0001
 #define    NUBUS_DRHW_TFB	0x0001
+#define    NUBUS_DRHW_WVC	0x0006
 #define    NUBUS_DRHW_M2HRVC	0x0013
 #define    NUBUS_DRHW_MICRON	0x0146
 
