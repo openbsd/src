@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_alpha.c,v 1.5 2000/11/08 18:40:48 ericj Exp $	*/
+/*	$OpenBSD: kvm_alpha.c,v 1.6 2001/01/22 14:01:28 art Exp $	*/
 /*	$NetBSD: kvm_alpha.c,v 1.5 1996/10/01 21:12:05 cgd Exp $	*/
 
 /*
@@ -109,7 +109,9 @@ _kvm_kvatop(kd, va, pa)
 	vm = kd->vmst;
 	page_off = va & (cpu_kh->page_size - 1);
 
+#ifndef PAGE_SHIFT
 #define        PAGE_SHIFT      vm->page_shift
+#endif
 
 	if (va >= ALPHA_K0SEG_BASE && va <= ALPHA_K0SEG_END) {
 		/*
