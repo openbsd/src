@@ -1,4 +1,4 @@
-/*	$OpenBSD: resp.c,v 1.1 2004/08/03 04:58:45 jfb Exp $	*/
+/*	$OpenBSD: resp.c,v 1.2 2004/08/03 05:08:45 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -27,6 +27,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 
 #include <fcntl.h>
 #include <stdio.h>
@@ -533,6 +534,7 @@ cvs_resp_updated(struct cvsroot *root, int type, char *line)
 	BUF *fbuf;
 	CVSENTRIES *ef;
 	struct cvs_ent *ep;
+	struct timeval tv[2];
 
 	ep = NULL;
 
@@ -544,7 +546,6 @@ cvs_resp_updated(struct cvsroot *root, int type, char *line)
 	ep = cvs_ent_parse(path);
 	if (ep == NULL)
 		return (-1);
-	printf("adding entry `%s'\n", path); 
 	snprintf(path, sizeof(path), "%s%s", line, ep->ce_name);
 
 	if (type == CVS_RESP_CREATED) {
@@ -571,6 +572,13 @@ cvs_resp_updated(struct cvsroot *root, int type, char *line)
 		return (-1);
 
 	cvs_buf_write(fbuf, path, fmode);
+
+	tv[0].tv_sec = (long)cvs_modtime;
+	tv[0].tv_usec = 0;
+	tv[1].tv_sec = (long)cvs_modtime;
+	tv[1].tv_usec = 0;
+	if (utimes(path, tv) == -1)
+		cvs_log(LP_ERRNO, "failed to set file timestamps");
 
 	/* now see if there is a checksum */
 	if (cvs_fcksum != NULL) {
