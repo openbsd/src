@@ -1,4 +1,4 @@
-/*	$OpenBSD: sort.c,v 1.2 1997/01/22 06:53:16 millert Exp $	*/
+/*	$OpenBSD: sort.c,v 1.3 1997/01/26 00:02:25 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sort.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: sort.c,v 1.2 1997/01/22 06:53:16 millert Exp $";
+static char rcsid[] = "$OpenBSD: sort.c,v 1.3 1997/01/26 00:02:25 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -217,9 +217,15 @@ main(argc, argv)
 	settables(fldtab[0].flags);
 	num_init();
 	fldtab->weights = gweights;
-	if (optind == argc)
-		argv[--optind] = devstdin;
-	filelist.names = argv+optind;
+	if (optind == argc) {
+		static char *names[2];
+
+		names[0] = devstdin;
+		names[1] = NULL;
+		filelist.names = names;
+		optind--;
+	} else
+		filelist.names = argv+optind;
 	if (SINGL_FLD)
 		get = makeline;
 	else
