@@ -1,4 +1,4 @@
-/*	$OpenBSD: rec_open.c,v 1.7 2002/01/31 17:19:11 millert Exp $	*/
+/*	$OpenBSD: rec_open.c,v 1.8 2003/05/01 20:23:40 avsm Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)rec_open.c	8.10 (Berkeley) 9/1/94";
 #else
-static char rcsid[] = "$OpenBSD: rec_open.c,v 1.7 2002/01/31 17:19:11 millert Exp $";
+static const char rcsid[] = "$OpenBSD: rec_open.c,v 1.8 2003/05/01 20:23:40 avsm Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 

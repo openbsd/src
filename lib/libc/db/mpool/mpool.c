@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpool.c,v 1.10 2002/02/25 23:45:15 millert Exp $	*/
+/*	$OpenBSD: mpool.c,v 1.11 2003/05/01 20:23:40 avsm Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)mpool.c	8.7 (Berkeley) 11/2/95";
 #else
-static char rcsid[] = "$OpenBSD: mpool.c,v 1.10 2002/02/25 23:45:15 millert Exp $";
+static const char rcsid[] = "$OpenBSD: mpool.c,v 1.11 2003/05/01 20:23:40 avsm Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash_log2.c,v 1.4 1999/02/15 05:11:24 millert Exp $	*/
+/*	$OpenBSD: hash_log2.c,v 1.5 2003/05/01 20:23:40 avsm Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)hash_log2.c	8.4 (Berkeley) 11/7/95";
 #else
-static char rcsid[] = "$OpenBSD: hash_log2.c,v 1.4 1999/02/15 05:11:24 millert Exp $";
+static const char rcsid[] = "$OpenBSD: hash_log2.c,v 1.5 2003/05/01 20:23:40 avsm Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
