@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.116 2004/05/06 22:38:44 deraadt Exp $
+#	$OpenBSD: files.i386,v 1.117 2004/05/08 05:10:12 grange Exp $
 #	$NetBSD: files.i386,v 1.73 1996/05/07 00:58:36 thorpej Exp $
 #
 # new style config file for i386 architecture
@@ -105,7 +105,7 @@ file	arch/i386/pci/pciide_machdep.c		pciide
 file	arch/i386/pci/pcic_pci_machdep.c	pcic_pci
 
 # PCI-Host bridge chipsets
-device	pchb:	pcibus
+device	pchb: pcibus
 attach	pchb at pci
 file	arch/i386/pci/pchb.c		pchb
 
@@ -120,9 +120,14 @@ attach	geodesc at pci
 file	arch/i386/pci/geodesc.c		geodesc
 
 # PCI-ISA bridge chipsets
-device	pcib:	isabus
+device	pcib: isabus
 attach	pcib at pci
-file	arch/i386/pci/pcib.c		pcib
+file	arch/i386/pci/pcib.c		pcib | ichpcib
+
+# Intel ICHx/ICHx-M LPC bridges
+device	ichpcib: isabus
+attach	ichpcib at pci
+file	arch/i386/pci/ichpcib.c		ichpcib
 
 device	hme: ether, ifnet, mii, ifmedia
 file	dev/ic/hme.c			hme
