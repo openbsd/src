@@ -1,4 +1,4 @@
-.\"	$OpenBSD: raidctl.8,v 1.21 2002/02/11 18:43:51 mpech Exp $
+.\"	$OpenBSD: raidctl.8,v 1.22 2002/02/17 20:23:36 tdeval Exp $
 .\"     $NetBSD: raidctl.8,v 1.24 2001/07/10 01:30:52 lukem Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -75,9 +75,9 @@
 .Op Fl v
 .Fl A Op yes | no | root
 .Ar dev
-.Nm raifctl
+.Nm raidctl
 .Op Fl v
-.Fl B Ar dev
+.Fl B Ar dev | Ic all
 .Nm raidctl
 .Op Fl v
 .Fl c Ar config_file Ar dev
@@ -95,19 +95,19 @@
 .Fl g Ar component Ar dev
 .Nm raidctl
 .Op Fl v
-.Fl G Ar dev 
+.Fl G Ar dev | Ic all
 .Nm raidctl
 .Op Fl v
-.Fl i Ar dev
+.Fl i Ar dev | Ic all
 .Nm raidctl
 .Op Fl v
 .Fl I Ar serial_number Ar dev
 .Nm raidctl
 .Op Fl v
-.Fl p Ar dev
+.Fl p Ar dev | Ic all
 .Nm raidctl
 .Op Fl v
-.Fl P Ar dev
+.Fl P Ar dev | Ic all
 .Nm raidctl
 .Op Fl v
 .Fl r Ar component Ar dev
@@ -116,13 +116,13 @@
 .Fl R Ar component Ar dev
 .Nm raidctl
 .Op Fl v
-.Fl s Ar dev
+.Fl s Ar dev | Ic all
 .Nm raidctl
 .Op Fl v
-.Fl S Ar dev
+.Fl S Ar dev | Ic all
 .Nm raidctl
 .Op Fl v
-.Fl u Ar dev
+.Fl u Ar dev | Ic all
 .Sh DESCRIPTION
 .Nm
 is the user-land control program for
@@ -162,7 +162,7 @@ will
 the use of the boot disk as the root device.  All components of the
 set must be of type RAID in the disklabel.  Note that the kernel being
 booted must currently reside on a non-RAID set.
-.It Fl B Ar dev
+.It Fl B Ar dev | Ic all
 Initiate a copyback of reconstructed data from a spare disk to
 its original disk.  This is performed after a component has failed, 
 and the failed drive has been reconstructed onto a spare drive.
@@ -192,14 +192,14 @@ disk onto an available hot spare.  This is one of the mechanisms used to start
 the reconstruction process if a component does have a hardware failure.
 .It Fl g Ar component Ar dev
 Get the component label for the specified component.
-.It Fl G Ar dev
+.It Fl G Ar dev | Ic all
 Generate the configuration of the RAIDframe device in a format suitable for
 use with
 .Nm
 .Fl c
 or
 .Fl C .
-.It Fl i Ar dev
+.It Fl i Ar dev | Ic all
 Initialize the RAID device.  In particular, (re-write) the parity on
 the selected device.  This 
 .Ar MUST
@@ -216,10 +216,10 @@ strictly enforced, different serial numbers should be used for
 different RAID sets.  This step 
 .Ar MUST
 be performed when a new RAID set is created.
-.It Fl p Ar dev
+.It Fl p Ar dev | Ic all
 Check the status of the parity on the RAID set.  Displays a status
 message, and returns successfully if the parity is up-to-date.
-.It Fl P Ar dev
+.It Fl P Ar dev | Ic all
 Check the status of the parity on the RAID set, and initialize
 (re-write) the parity if the parity is not known to be up-to-date.
 This is normally used after a system crash (and before a
@@ -236,14 +236,14 @@ if necessary, and immediately begins a reconstruction back to
 .Ar component .
 This is useful for reconstructing back onto a component after
 it has been replaced following a failure.
-.It Fl s Ar dev
+.It Fl s Ar dev | Ic all
 Display the status of the RAIDframe device for each of the components
 and spares.
-.It Fl S Ar dev
+.It Fl S Ar dev | Ic all
 Check the status of parity re-writing, component reconstruction, and
 component copyback.  The output indicates the amount of progress
 achieved in each of these areas.
-.It Fl u Ar dev
+.It Fl u Ar dev | Ic all
 Unconfigure the RAIDframe device.
 .It Fl v
 Be more verbose.  For operations such as reconstructions, parity
@@ -257,6 +257,21 @@ is specified by
 .Ar dev
 may be either the full name of the device, e.g. /dev/rraid0c,
 or just simply raid0 (for /dev/rraid0c).
+.Pp
+For several commands,
+.Nm
+can accept the word
+.Ic all
+as the
+.Ar dev
+argument.
+If
+.Ic all
+is used,
+.Nm
+will execute the requested action for all the configured
+.Xr raid 4
+devices.
 .Pp
 .Ss Configuration file
 The format of the configuration file is complex, and
