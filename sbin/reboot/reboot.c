@@ -1,4 +1,4 @@
-/*	$OpenBSD: reboot.c,v 1.6 1997/01/17 07:12:20 millert Exp $	*/
+/*	$OpenBSD: reboot.c,v 1.7 1997/04/11 09:06:42 deraadt Exp $	*/
 /*	$NetBSD: reboot.c,v 1.8 1995/10/05 05:36:22 mycroft Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)reboot.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: reboot.c,v 1.6 1997/01/17 07:12:20 millert Exp $";
+static char rcsid[] = "$OpenBSD: reboot.c,v 1.7 1997/04/11 09:06:42 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -57,9 +57,12 @@ static char rcsid[] = "$OpenBSD: reboot.c,v 1.6 1997/01/17 07:12:20 millert Exp 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <paths.h>
 
 void err __P((const char *fmt, ...));
 void usage __P((void));
+
+#define _PATH_RCSHUTDOWN	"/etc/rc.shutdown"
 
 int dohalt;
 
@@ -146,6 +149,20 @@ main(argc, argv)
 
 	/* Ignore the SIGHUP we get when our parent shell dies. */
 	(void)signal(SIGHUP, SIG_IGN);
+
+	if (access(_PATH_RCSHUTDOWN, R_OK) != -1) {
+		pid_t pid;
+
+		switch ((pid = fork())) {
+		case -1:
+			break;
+		case 0:
+			execl(_PATH_BSHELL, "sh", _PATH_RCSHUTDOWN, NULL);
+			exit(1);
+		default:
+			waitpid(pid, NULL, 0);
+		}
+	}
 
 	/* Send a SIGTERM first, a chance to save the buffers. */
 	if (kill(-1, SIGTERM) == -1) {
