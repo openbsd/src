@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.6 2003/06/19 20:30:54 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.7 2003/06/23 18:50:53 mickey Exp $
 
 
-RPCSRCS=	bootparam_prot.x klm_prot.x mount.x nfs_prot.x\
-		nlm_prot.x rex.x rnusers.x rusers.x rquota.x rstat.x rwall.x\
+RPCSRCS=	bootparam_prot.x klm_prot.x mount.x nfs_prot.x \
+		nlm_prot.x rex.x rnusers.x rusers.x rquota.x rstat.x rwall.x \
 		sm_inter.x spray.x yp.x yppasswd.x
 SRCS=		${RPCSRCS:R:S/$/.c/g}
 HDRS=           ${RPCSRCS:R:S/$/.h/g}
@@ -19,14 +19,14 @@ includes:	${HDRS}
 	${INSTALL} -d -o ${BINOWN} -g ${BINGRP} -m 755 \
 		${DESTDIR}/usr/include/rpcsvc
 	@echo installing rpc .h and .x files
-	@for i in $(HDRS); do \
-	    cmp -s $$i ${DESTDIR}/usr/include/rpcsvc/$$i || \
+	@(cd ${.CURDIR}; for i in $(RPCSRCS); do \
+	    cmp -s $(.CURDIR)/$$i ${DESTDIR}/usr/include/rpcsvc/$$i || \
 		{ j="${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444 $$i \
 		${DESTDIR}/usr/include/rpcsvc"; \
 		echo $$j; $$j; } \
-	done
-	@cd ${.CURDIR}; for i in $(RPCSRCS); do \
-	    cmp -s $(.CURDIR)/$$i ${DESTDIR}/usr/include/rpcsvc/$$i || \
+	done)
+	@sleep 1; for i in $(HDRS); do \
+	    cmp -s $$i ${DESTDIR}/usr/include/rpcsvc/$$i || \
 		{ j="${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444 $$i \
 		${DESTDIR}/usr/include/rpcsvc"; \
 		echo $$j; $$j; } \
