@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.840 2005/03/07 13:28:26 deraadt Exp $
+$OpenBSD: pcidevs,v 1.841 2005/03/07 15:56:34 xsa Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -2051,6 +2051,7 @@ product NVIDIA GEFORCE4TI4200GO 0x0286	GeForce4 Ti 4200 Go
 product NVIDIA GEFORCEFX5600	0x0312	GeForce FX 5600
 product NVIDIA GEFORCEFX5200	0x0322	GeForce FX 5200
 product NVIDIA GEFORCEFXGO5200	0x0324	GeForce FX Go 5200
+product NVIDIA GEFORCEFXGO5200_2	0x0329	GeForce FX Go 5200
 product NVIDIA GEFORCEFX5700LE	0x0343	GeForce FX 5700LE
 
 /* Oak Technologies products */
