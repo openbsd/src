@@ -200,9 +200,6 @@ char	*av[];
 #endif
 
 	init_prob();
-#if 0
-	srandom((int)(time((time_t *) NULL) + getpid()));
-#endif
 	do {
 		get_fort();
 	} while ((Short_only && fortlen() > SLEN) ||
