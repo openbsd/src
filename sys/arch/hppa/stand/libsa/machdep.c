@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.5 1999/05/03 22:46:38 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.6 2001/06/04 22:25:52 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -73,7 +73,7 @@ machdep()
 		       PAGE0->ivec_toclen, PAGE0->ivec_rendz,
 		       PAGE0->mem_10msec);
 		printf ("mem: cont=%u, phys=%u, pdc_spa=%u, resv=%u, free=%x\n"
-			"cpu_hpa=%p, pdc=%p, imm_hpa=%p[%u,%u], soft=%u\n",
+			"cpu_hpa=%x, pdc=%p, imm_hpa=%p[%u,%u], soft=%u\n",
 		       PAGE0->memc_cont, PAGE0->memc_phsize, PAGE0->memc_adsize,
 		       PAGE0->memc_resv, PAGE0->mem_free, PAGE0->mem_hpa,
 		       PAGE0->mem_pdc, PAGE0->imm_hpa, PAGE0->imm_spa_size,
