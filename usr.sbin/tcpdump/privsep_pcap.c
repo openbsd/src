@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep_pcap.c,v 1.2 2004/02/05 22:12:06 otto Exp $ */
+/*	$OpenBSD: privsep_pcap.c,v 1.3 2004/04/08 12:38:00 avsm Exp $ */
 
 /*
  * Copyright (c) 2004 Can Erkin Acar
@@ -323,7 +323,8 @@ priv_pcap_live(const char *dev, int slen, int prom, int to_ms, char *ebuf)
 
 	return (p);
  bad:
-	close(fd);
+	if (fd >= 0)
+		close(fd);
 	free(p);
 	return (NULL);
 }
