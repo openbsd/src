@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_faith.c,v 1.10 2002/03/14 01:27:09 millert Exp $	*/
+/*	$OpenBSD: if_faith.c,v 1.11 2002/06/04 22:14:16 itojun Exp $	*/
 /*
  * Copyright (c) 1982, 1986, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -198,16 +198,8 @@ faithrtrequest(cmd, rt, info)
 	struct rtentry *rt;
 	struct rt_addrinfo *info;
 {
-	if (rt) {
+	if (rt)
 		rt->rt_rmx.rmx_mtu = rt->rt_ifp->if_mtu; /* for ISO */
-		/*
-		 * For optimal performance, the send and receive buffers
-		 * should be at least twice the MTU plus a little more for
-		 * overhead.
-		 */
-		rt->rt_rmx.rmx_recvpipe =
-			rt->rt_rmx.rmx_sendpipe = 3 * FAITHMTU;
-	}
 }
 
 /*
