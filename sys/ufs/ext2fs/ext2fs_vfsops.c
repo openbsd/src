@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.5 1997/11/06 05:59:15 csapuntz Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.6 1997/11/09 13:12:17 provos Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -250,6 +250,7 @@ ext2fs_mount(mp, path, data, ndp, p)
 			else
 				fs->e2fs.e2fs_state = E2FS_ERRORS;
 			fs->e2fs_fmod = 1;
+			(void) ext2fs_sbupdate(ump, MNT_WAIT);
 		}
 		if (args.fspec == 0) {
 			/*
@@ -356,8 +357,12 @@ ext2fs_reload(mountp, cred, p)
 	 * Step 1: invalidate all cached meta-data.
 	 */
 	devvp = VFSTOUFS(mountp)->um_devvp;
-	if (vinvalbuf(devvp, 0, cred, p, 0, 0))
+	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
+	error = vinvalbuf(devvp, 0, cred, p, 0, 0);
+	VOP_UNLOCK(devvp, 0, p);
+	if (error)
 		panic("ext2fs_reload: dirty1");
+
 	/*
 	 * Step 2: re-read superblock from disk.
 	 */
@@ -423,19 +428,26 @@ ext2fs_reload(mountp, cred, p)
 	}
 	
 loop:
+	simple_lock(&mntvnode_slock);
 	for (vp = mountp->mnt_vnodelist.lh_first; vp != NULL; vp = nvp) {
+		if (vp->v_mount != mountp) {
+			simple_unlock(&mntvnode_slock);
+			goto loop;
+		}
+
 		nvp = vp->v_mntvnodes.le_next;
 		/*
 		 * Step 4: invalidate all inactive vnodes.
 		 */
-		if (vp->v_usecount == 0) {
-			vgone(vp);
-			continue;
-		}
+		if (vrecycle(vp, &mntvnode_slock, p))
+			goto loop;
+
 		/*
 		 * Step 5: invalidate all cached file data.
 		 */
-		if (vget(vp, LK_EXCLUSIVE, p))
+		simple_lock(&vp->v_interlock);
+		simple_unlock(&mntvnode_slock);
+		if (vget(vp, LK_EXCLUSIVE  | LK_INTERLOCK, p))
 			goto loop;
 		if (vinvalbuf(vp, 0, cred, p, 0, 0))
 			panic("ext2fs_reload: dirty2");
@@ -452,11 +464,12 @@ loop:
 		bcopy((struct ext2fs_dinode *)bp->b_data +
 			ino_to_fsbo(fs, ip->i_number),
 			&ip->i_din.e2fs_din, sizeof(struct ext2fs_dinode));
+		ip->i_effnlink = ip->i_e2fs_nlink;
 		brelse(bp);
 		vput(vp);
-		if (vp->v_mount != mountp)
-			goto loop;
+		simple_lock(&mntvnode_slock);
 	}
+	simple_unlock(&mntvnode_slock);
 	return (0);
 }
 
@@ -491,7 +504,10 @@ ext2fs_mountfs(devvp, mp, p)
 		return (error);
 	if (vcount(devvp) > 1 && devvp != rootvp)
 		return (EBUSY);
-	if ((error = vinvalbuf(devvp, V_SAVE, cred, p, 0, 0)) != 0)
+	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
+	error = vinvalbuf(devvp, V_SAVE, cred, p, 0, 0);
+	VOP_UNLOCK(devvp, 0, p);
+	if (error)
 		return (error);
 
 	ronly = (mp->mnt_flag & MNT_RDONLY) != 0;
@@ -584,8 +600,7 @@ ext2fs_mountfs(devvp, mp, p)
 	mp->mnt_data = (qaddr_t)ump;
 	mp->mnt_stat.f_fsid.val[0] = (long)dev;
 	mp->mnt_stat.f_fsid.val[1] = makefstype(MOUNT_EXT2FS);
-	mp->mnt_maxsymlinklen = EXT2_MAXSYMLINKLEN;
-	mp->mnt_flag |= MNT_LOCAL;
+	mp->mnt_maxsymlinklen = mp->mnt_vfc->vfc_typenum;;
 	ump->um_mountp = mp;
 	ump->um_dev = dev;
 	ump->um_devvp = devvp;
@@ -595,6 +610,7 @@ ext2fs_mountfs(devvp, mp, p)
 	devvp->v_specmountpoint = mp;
 	return (0);
 out:
+	devvp->v_specmountpoint = NULL;
 	if (bp)
 		brelse(bp);
 	(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, cred, p);
@@ -641,7 +657,6 @@ ext2fs_unmount(mp, mntflags, p)
 	free(fs, M_UFSMNT);
 	free(ump, M_UFSMNT);
 	mp->mnt_data = (qaddr_t)0;
-	mp->mnt_flag &= ~MNT_LOCAL;
 	return (error);
 }
 
@@ -654,14 +669,21 @@ ext2fs_flushfiles(mp, flags, p)
 	int flags;
 	struct proc *p;
 {
-	extern int doforce;
 	register struct ufsmount *ump;
 	int error;
 
-	if (!doforce)
-		flags &= ~FORCECLOSE;
 	ump = VFSTOUFS(mp);
-	error = vflush(mp, NULLVP, flags);
+	/*
+	 * Flush all the files.
+	 */
+	if ((error = vflush(mp, NULL, flags)) != 0)
+		return (error);
+	/*
+	 * Flush filesystem metadata.
+	 */
+	vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY, p);
+	error = VOP_FSYNC(ump->um_devvp, p->p_ucred, MNT_WAIT, p);
+	VOP_UNLOCK(ump->um_devvp, 0, p);
 	return (error);
 }
 
@@ -730,7 +752,7 @@ ext2fs_sync(mp, waitfor, cred, p)
 	struct ucred *cred;
 	struct proc *p;
 {
-	register struct vnode *vp;
+	register struct vnode *vp, *nvp;
 	register struct inode *ip;
 	register struct ufsmount *ump = VFSTOUFS(mp);
 	register struct m_ext2fs *fs;
@@ -742,45 +764,66 @@ ext2fs_sync(mp, waitfor, cred, p)
 	 * Consistency check that the superblock
 	 * is still in the buffer cache.
 	 */
-	if (fs->e2fs_fmod != 0) {
-		if (fs->e2fs_ronly != 0) {		/* XXX */
-			printf("fs = %s\n", fs->e2fs_fsmnt);
-			panic("update: rofs mod");
-		}
-		fs->e2fs_fmod = 0;
-		fs->e2fs.e2fs_wtime = time.tv_sec;
-		allerror = ext2fs_cgupdate(ump, waitfor);
+	if (fs->e2fs_fmod != 0 && fs->e2fs_ronly != 0) {	/* XXX */
+		printf("fs = %s\n", fs->e2fs_fsmnt);
+		panic("update: rofs mod");
 	}
 	/*
 	 * Write back each (modified) inode.
 	 */
+	simple_lock(&mntvnode_slock);
 loop:
 	for (vp = mp->mnt_vnodelist.lh_first;
 		 vp != NULL;
-		 vp = vp->v_mntvnodes.le_next) {
+		 vp = nvp) {
 		/*
 		 * If the vnode that we are about to sync is no longer
 		 * associated with this mount point, start over.
 		 */
 		if (vp->v_mount != mp)
 			goto loop;
-		if (VOP_ISLOCKED(vp))
-			continue;
+
+		simple_lock(&vp->v_interlock);
+		nvp = vp->v_mntvnodes.le_next;
 		ip = VTOI(vp);
-		if ((ip->i_flag &
-			(IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE)) == 0 &&
-			vp->v_dirtyblkhd.lh_first == NULL)
+		if (vp->v_type == VNON || ((ip->i_flag &
+		     (IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE)) == 0 &&
+		     vp->v_dirtyblkhd.lh_first == NULL) ||
+		     waitfor == MNT_LAZY) {
+			simple_unlock(&vp->v_interlock);
 			continue;
-		if (vget(vp, LK_EXCLUSIVE, p))
-			goto loop;
+		}
+		simple_unlock(&mntvnode_slock);
+		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK, p);
+		if (error) {
+			simple_lock(&mntvnode_slock);
+			if (error == ENOENT)
+				goto loop;
+			continue;
+		}
 		if ((error = VOP_FSYNC(vp, cred, waitfor, p)) != 0)
 			allerror = error;
-		vput(vp);
+		VOP_UNLOCK(vp, 0, p);
+		vrele(vp);
+		simple_lock(&mntvnode_slock);
 	}
+	simple_unlock(&mntvnode_slock);
 	/*
 	 * Force stale file system control information to be flushed.
 	 */
-	if ((error = VOP_FSYNC(ump->um_devvp, cred, waitfor, p)) != 0)
+	if (waitfor != MNT_LAZY) {
+		if (ump->um_mountp->mnt_flag & MNT_SOFTDEP)
+			waitfor = MNT_NOWAIT;
+		vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY, p);
+		if ((error = VOP_FSYNC(ump->um_devvp, cred, waitfor, p)) != 0)
+			allerror = error;
+		VOP_UNLOCK(ump->um_devvp, 0, p);
+	}
+	/*
+	 * Write back modified superblock.
+	 */
+	
+	if (fs->e2fs_fmod != 0 && (error = ext2fs_sbupdate(ump, waitfor)) != 0)
 		allerror = error;
 	return (allerror);
 }
@@ -817,6 +860,7 @@ ext2fs_vget(mp, ino, vpp)
 	}
 	MALLOC(ip, struct inode *, sizeof(struct inode), M_EXT2FSNODE, M_WAITOK);
 	bzero((caddr_t)ip, sizeof(struct inode));
+	lockinit(&ip->i_lock, PINOD, "inode", 0, 0);
 	vp->v_data = ip;
 	ip->i_vnode = vp;
 	ip->i_e2fs = fs = ump->um_e2fs;
@@ -839,7 +883,7 @@ ext2fs_vget(mp, ino, vpp)
 	if (error) {
 		/*
 		 * The inode does not contain anything useful, so it would
-		 * be misleading to leave it on its hash chain. With mode
+	 	 * be misleading to leave it on its hash chain. With mode
 		 * still zero, it will be unlinked and returned to the free
 		 * list by vput().
 		 */
@@ -850,7 +894,7 @@ ext2fs_vget(mp, ino, vpp)
 	}
 	bcopy(((struct ext2fs_dinode*)bp->b_data + ino_to_fsbo(fs, ino)),
 				&ip->i_din, sizeof(struct ext2fs_dinode));
-
+	ip->i_effnlink = ip->i_e2fs_nlink;
 	brelse(bp);
 
 	/*
