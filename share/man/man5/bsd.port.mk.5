@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.128 2004/01/18 07:55:34 sturm Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.129 2004/01/22 21:32:43 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -1201,6 +1201,10 @@ PATCH_LIST=${PORTSDIR}/x11/kde/libs2/patches/p-* patch-*
 .It Ev PATCH_STRIP
 Patch option used to strip directory levels while applying port's patches.
 Defaults to -p0 .
+.It Ev PKG_ARCH
+Comma-separated list of architectures on which this package may install.
+Defaults to ${MACHINE_ARCH},${ARCH}.
+Use * to mean any arch.
 .It Ev PKG_DBDIR
 Path to package installation records.
 Defaults to
