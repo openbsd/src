@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypserv_proc.c,v 1.4 1996/06/26 21:26:39 maja Exp $ */
+/*	$OpenBSD: ypserv_proc.c,v 1.5 1996/08/15 21:47:30 chuck Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypserv_proc.c,v 1.4 1996/06/26 21:26:39 maja Exp $";
+static char rcsid[] = "$OpenBSD: ypserv_proc.c,v 1.5 1996/08/15 21:47:30 chuck Exp $";
 #endif
 
 #include <rpc/rpc.h>
@@ -252,10 +252,10 @@ ypproc_xfr_2_svc(argp, rqstp)
 
 	bzero((char *)&res, sizeof(res));
 	
-	YPLOG("xfr_2: caller=[%s].%d, auth_ok=%s, domain=%s, tid=%s, prog=%s",
+	YPLOG("xfr_2: caller=[%s].%d, auth_ok=%s, domain=%s, tid=%d, prog=%d",
 	  inet_ntoa(caller->sin_addr), ntohs(caller->sin_port), TORF(ok), 
 	  argp->map_parms.domain, argp->transid, argp->prog);
-	YPLOG("       ipadd=%s, port=%s, map=%s", inet_ntoa(caller->sin_addr),
+	YPLOG("       ipadd=%s, port=%d, map=%s", inet_ntoa(caller->sin_addr),
 	  argp->port, argp->map_parms.map);
 
 	if (!ok) {
