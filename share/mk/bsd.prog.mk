@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.prog.mk,v 1.21 2000/02/11 15:02:00 ho Exp $
+#	$OpenBSD: bsd.prog.mk,v 1.22 2000/12/12 00:46:49 provos Exp $
 #	$NetBSD: bsd.prog.mk,v 1.55 1996/04/08 21:19:26 jtc Exp $
 #	@(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
 
@@ -27,7 +27,6 @@ LIBDBM?=	${DESTDIR}/usr/lib/libdbm.a
 LIBDES?=	${DESTDIR}/usr/lib/libdes.a
 LIBEDIT?=	${DESTDIR}/usr/lib/libedit.a
 LIBGCC?=	${DESTDIR}/usr/lib/libgcc.a
-LIBGMP?=	${DESTDIR}/usr/lib/libgmp.a
 LIBKDB?=	${DESTDIR}/usr/lib/libkdb.a
 LIBKEYNOTE?=	${DESTDIR}/usr/lib/libkeynote.a
 LIBKRB?=	${DESTDIR}/usr/lib/libkrb.a
