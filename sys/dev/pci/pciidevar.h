@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciidevar.h,v 1.13 2004/10/17 18:23:58 grange Exp $	*/
+/*	$OpenBSD: pciidevar.h,v 1.14 2004/10/17 18:32:12 grange Exp $	*/
 /*	$NetBSD: pciidevar.h,v 1.6 2001/01/12 16:04:00 bouyer Exp $	*/
 
 /*
@@ -74,7 +74,7 @@ struct pciide_softc {
 	/* Chip revision */
 	int sc_rev;
 	/* common definitions */
-	struct channel_softc *wdc_chanarray[PCIIDE_NUM_CHANNELS];
+	struct channel_softc *wdc_chanarray[PCIIDE_MAX_CHANNELS];
 	/* internal bookkeeping */
 	struct pciide_channel {			/* per-channel data */
 		struct channel_softc wdc_channel; /* generic part */
