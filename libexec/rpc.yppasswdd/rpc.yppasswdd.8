@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpc.yppasswdd.8,v 1.14 2002/02/13 21:35:24 deraadt Exp $
+.\"	$OpenBSD: rpc.yppasswdd.8,v 1.15 2002/02/13 21:36:45 deraadt Exp $
 .\"
 .\" Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
@@ -75,7 +75,7 @@ Don't allow changes of the gecos field in the passwd file.
 Don't allow changes of the password in the passwd file.
 .It Fl m Ar arg1 arg2 ...
 Pass the specified arguments to
-.Xr make 0
+.Xr make 1
 when invoking it in /var/yp to rebuild the passwd maps.
 .El
 .Sh FILES
@@ -84,9 +84,10 @@ when invoking it in /var/yp to rebuild the passwd maps.
 .It Pa /etc/master.passwd
 .El
 .Sh SEE ALSO
-.Xr ypbind 1 ,
+.Xr make 1 ,
 .Xr securenet 5 ,
 .Xr ypserv.acl 5 ,
+.Xr ypbind 8 ,
 .Xr yp 8
 .Sh AUTHORS
 Mats O Jansson <moj@stacken.kth.se>
