@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.12 2005/03/14 18:21:29 norby Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.13 2005/03/15 22:03:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -269,8 +269,10 @@ ospfe_dispatch_main(int fd, short event, void *bula)
 				}
 			}
 			break;
+		case IMSG_CTL_KROUTE:
+		case IMSG_CTL_KROUTE_ADDR:
+		case IMSG_CTL_IFINFO:
 		case IMSG_CTL_END:
-			log_debug("ospfe_dispatch_main: IMSG_CTL_END");
 			control_imsg_relay(&imsg);
 			break;
 		default:

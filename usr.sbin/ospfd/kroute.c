@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.5 2005/03/07 10:28:14 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.6 2005/03/15 22:03:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -270,7 +270,36 @@ kr_dispatch_msg(int fd, short event, void *bula)
 void
 kr_show_route(struct imsg *imsg)
 {
+	struct kroute_node	*kr;
+	int			 flags;
+	struct in_addr		 addr;
+
 	switch (imsg->hdr.type) {
+	case IMSG_CTL_KROUTE:
+		if (imsg->hdr.len != IMSG_HEADER_SIZE + sizeof(flags)) {
+			log_warnx("kr_show_route: wrong imsg len");
+			return;
+		}
+		memcpy(&flags, imsg->data, sizeof(flags));
+		RB_FOREACH(kr, kroute_tree, &krt)
+			if (!flags || kr->r.flags & flags) {
+				main_imsg_compose_ospfe(IMSG_CTL_KROUTE,
+				    imsg->hdr.pid, &kr->r, sizeof(kr->r));
+			}
+		break;
+	case IMSG_CTL_KROUTE_ADDR:
+		if (imsg->hdr.len != IMSG_HEADER_SIZE +
+		    sizeof(struct in_addr)) {
+			log_warnx("kr_show_route: wrong imsg len");
+			return;
+		}
+		memcpy(&addr, imsg->data, sizeof(addr));
+		kr = NULL;
+		kr = kroute_match(addr.s_addr);
+		if (kr != NULL)
+			main_imsg_compose_ospfe(IMSG_CTL_KROUTE, imsg->hdr.pid,
+			    &kr->r, sizeof(kr->r));
+		break;
 	default:
 		log_debug("kr_show_route: error handling imsg");
 		break;
@@ -286,7 +315,7 @@ kr_ifinfo(char *ifname)
 
 	RB_FOREACH(kif, kif_tree, &kit)
 		if (!strcmp(ifname, kif->k.ifname)) {
-			main_imsg_compose_ospfe(IMSG_IFINFO, 0,
+			main_imsg_compose_ospfe(IMSG_CTL_IFINFO, 0,
 			    &kif->k, sizeof(kif->k));
 			return;
 		}
@@ -775,7 +804,8 @@ fetchtable(void)
 			return (-1);
 		}
 
-		kr->r.flags = F_KERNEL;
+		if (!(rtm->rtm_flags & RTF_PROTO1))
+			kr->r.flags = F_KERNEL;
 
 		switch (sa->sa_family) {
 		case AF_INET:
@@ -796,7 +826,6 @@ fetchtable(void)
 		default:
 			free(kr);
 			continue;
-			/* not reached */
 		}
 
 		if ((sa = rti_info[RTAX_GATEWAY]) != NULL)
@@ -811,7 +840,11 @@ fetchtable(void)
 				break;
 			}
 
-		kroute_insert(kr);
+		if (rtm->rtm_flags & RTF_PROTO2)  {
+			send_rtmsg(kr_state.fd, RTM_DELETE, &kr->r);
+			free(kr);
+		} else
+			kroute_insert(kr);
 
 	}
 	free(buf);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.15 2005/03/14 18:21:29 norby Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.16 2005/03/15 22:03:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -97,6 +97,9 @@ enum imsg_type {
 	IMSG_CTL_FIB_COUPLE,
 	IMSG_CTL_FIB_DECOUPLE,
 	IMSG_CTL_AREA,
+	IMSG_CTL_KROUTE,
+	IMSG_CTL_KROUTE_ADDR,
+	IMSG_CTL_IFINFO,
 	IMSG_CTL_END,
 	IMSG_KROUTE_CHANGE,
 	IMSG_KROUTE_DELETE,
