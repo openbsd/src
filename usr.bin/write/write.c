@@ -1,4 +1,4 @@
-/*	$OpenBSD: write.c,v 1.16 2002/02/21 07:32:55 fgsch Exp $	*/
+/*	$OpenBSD: write.c,v 1.17 2002/08/04 01:26:40 deraadt Exp $	*/
 /*	$NetBSD: write.c,v 1.5 1995/08/31 21:48:32 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)write.c	8.2 (Berkeley) 4/27/95";
 #endif
-static char *rcsid = "$OpenBSD: write.c,v 1.16 2002/02/21 07:32:55 fgsch Exp $";
+static char *rcsid = "$OpenBSD: write.c,v 1.17 2002/08/04 01:26:40 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -74,15 +74,12 @@ int term_chk(char *, int *, time_t *, int);
 int utmp_chk(char *, char *);
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
-	char *cp;
+	char tty[MAXPATHLEN], *mytty, *cp;
+	int msgsok, myttyfd;
 	time_t atime;
 	uid_t myuid;
-	int msgsok, myttyfd;
-	char tty[MAXPATHLEN], *mytty;
 
 	/* check that sender has write enabled */
 	if (isatty(fileno(stdin)))
@@ -138,8 +135,7 @@ main(argc, argv)
  *     the given tty
  */
 int
-utmp_chk(user, tty)
-	char *user, *tty;
+utmp_chk(char *user, char *tty)
 {
 	struct utmp u;
 	int ufd;
@@ -170,9 +166,7 @@ utmp_chk(user, tty)
  * writing from, unless that's the only terminal with messages enabled.
  */
 void
-search_utmp(user, tty, mytty, myuid)
-	char *user, *tty, *mytty;
-	uid_t myuid;
+search_utmp(char *user, char *tty, char *mytty, uid_t myuid)
 {
 	struct utmp u;
 	time_t bestatime, atime;
@@ -224,10 +218,7 @@ search_utmp(user, tty, mytty, myuid)
  *     and the access time
  */
 int
-term_chk(tty, msgsokP, atimeP, showerror)
-	char *tty;
-	int *msgsokP, showerror;
-	time_t *atimeP;
+term_chk(char *tty, int *msgsokP, time_t *atimeP, int showerror)
 {
 	struct stat s;
 	char path[MAXPATHLEN];
@@ -247,9 +238,7 @@ term_chk(tty, msgsokP, atimeP, showerror)
  * do_write - actually make the connection
  */
 void
-do_write(tty, mytty, myuid)
-	char *tty, *mytty;
-	uid_t myuid;
+do_write(char *tty, char *mytty, uid_t myuid)
 {
 	char *login, *nows;
 	struct passwd *pwd;
@@ -267,6 +256,10 @@ do_write(tty, mytty, myuid)
 	(void)snprintf(path, sizeof(path), "%s%s", _PATH_DEV, tty);
 	if ((freopen(path, "w", stdout)) == NULL)
 		err(1, "%s", path);
+
+	/* revoke privs, now that we have opened the tty */
+	setegid(getgid());
+	setgid(getgid());
 
 	(void)signal(SIGINT, done);
 	(void)signal(SIGHUP, done);
@@ -302,8 +295,7 @@ done(int sig)
  *     turns \n into \r\n
  */
 void
-wr_fputs(s)
-	char *s;
+wr_fputs(char *s)
 {
 	u_char c;
 	char visout[5], *s2;
