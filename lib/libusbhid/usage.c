@@ -1,4 +1,4 @@
-/*	$OpenBSD: usage.c,v 1.6 2004/06/04 00:47:32 deraadt Exp $	*/
+/*	$OpenBSD: usage.c,v 1.7 2005/02/10 22:24:52 matthieu Exp $	*/
 /*	$NetBSD: usage.c,v 1.1 2001/12/28 17:45:27 augustss Exp $	*/
 
 /*
@@ -128,7 +128,7 @@ hid_start(const char *hidname)
 				len = curpage->pagesizemax + 10;
 				new = realloc(curpage->page_contents,
 				    len * sizeof (struct usage_in_page));
-				if (!curpage->page_contents) {
+				if (!new) {
 					free(curpage->page_contents);
 					curpage->page_contents = NULL;
 					free(n);
