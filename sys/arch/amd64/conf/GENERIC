@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.40 2004/12/13 23:30:12 millert Exp $
+#	$OpenBSD: GENERIC,v 1.41 2004/12/17 08:04:45 jsg Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -352,6 +352,7 @@ opl*	at yds?
 #midi*	at pcppi?		# MIDI interface to the PC speaker
 #midi*	at opl?			# OPL FM synth
 #midi*	at autri?
+midi*	at eap?
 
 # The spkr driver provides a simple tone interface to the built in speaker.
 #spkr0	at pcppi?		# PC speaker

@@ -1,4 +1,4 @@
-/*      $OpenBSD: eap.c,v 1.22 2004/12/07 03:17:42 jsg Exp $ */
+/*      $OpenBSD: eap.c,v 1.23 2004/12/17 08:04:45 jsg Exp $ */
 /*	$NetBSD: eap.c,v 1.46 2001/09/03 15:07:37 reinoud Exp $ */
 
 /*
@@ -54,9 +54,12 @@
  * ftp://ftp.alsa-project.org/pub/manuals/asahi_kasei/4531.pdf
  */
 
+#include "midi.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/fcntl.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/proc.h>
@@ -66,6 +69,7 @@
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
+#include <dev/midi_if.h>
 #include <dev/mulaw.h>
 #include <dev/auconv.h>
 #include <dev/ic/ac97.h>
@@ -127,6 +131,13 @@ struct eap_softc {
 	char	sc_rrun;
 #endif
 
+#if NMIDI > 0
+	void	(*sc_iintr)(void *, int); /* midi input ready handler */
+	void	(*sc_ointr)(void *);	/* midi output ready handler */
+	void	*sc_arg;
+	struct device *sc_mididev;
+#endif
+
 	u_short	sc_port[AK_NPORTS];	/* mirror of the hardware setting */
 	u_int	sc_record_source;	/* recording source mask */
 	u_int	sc_output_source;	/* output source mask */
@@ -143,8 +154,10 @@ enum	ac97_host_flags eap_flags_codec(void *);
 int	eap_allocmem(struct eap_softc *, size_t, size_t, struct eap_dma *);
 int	eap_freemem(struct eap_softc *, struct eap_dma *);
 
+#define EWRITE1(sc, r, x) bus_space_write_1((sc)->iot, (sc)->ioh, (r), (x))
 #define EWRITE2(sc, r, x) bus_space_write_2((sc)->iot, (sc)->ioh, (r), (x))
 #define EWRITE4(sc, r, x) bus_space_write_4((sc)->iot, (sc)->ioh, (r), (x))
+#define EREAD1(sc, r) bus_space_read_1((sc)->iot, (sc)->ioh, (r))
 #define EREAD2(sc, r) bus_space_read_2((sc)->iot, (sc)->ioh, (r))
 #define EREAD4(sc, r) bus_space_read_4((sc)->iot, (sc)->ioh, (r))
 
@@ -189,6 +202,13 @@ int	eap1371_write_codec(void *sc, u_int8_t a, u_int16_t d);
 void    eap1371_reset_codec(void *sc);
 int     eap1371_get_portnum_by_name(struct eap_softc *, char *, char *,
 					 char *);
+#if NMIDI > 0
+void	eap_midi_close(void *);
+void	eap_midi_getinfo(void *, struct midi_info *);
+int	eap_midi_open(void *, int, void (*)(void *, int),
+			   void (*)(void *), void *);
+int	eap_midi_output(void *, int);
+#endif
 
 struct audio_hw_if eap1370_hw_if = {
 	eap_open,
@@ -247,6 +267,16 @@ struct audio_hw_if eap1371_hw_if = {
 	eap_trigger_output,
 	eap_trigger_input,
 };
+
+#if NMIDI > 0
+struct midi_hw_if eap_midi_hw_if = {
+	eap_midi_open,
+	eap_midi_close,
+	eap_midi_output,
+	eap_midi_getinfo,
+	0,				/* ioctl */
+};
+#endif
 
 struct audio_device eap_device = {
 	"Ensoniq AudioPCI",
@@ -689,6 +719,9 @@ eap_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	audio_attach_mi(eap_hw_if, sc, &sc->sc_dev);
+#if NMIDI > 0
+	sc->sc_mididev = midi_attach_mi(&eap_midi_hw_if, sc, &sc->sc_dev);
+#endif
 }
 
 int
@@ -764,6 +797,18 @@ eap_intr(void *p)
 		if (sc->sc_pintr)
 			sc->sc_pintr(sc->sc_parg);
 	}
+#if NMIDI > 0
+	if ((intr & EAP_I_UART) && sc->sc_iintr != NULL) {
+		u_int32_t data;
+
+		if (EREAD1(sc, EAP_UART_STATUS) & EAP_US_RXINT) {
+			while (EREAD1(sc, EAP_UART_STATUS) & EAP_US_RXRDY) {
+				data = EREAD1(sc, EAP_UART_DATA);
+				sc->sc_iintr(sc->sc_arg, data);
+			}
+		}
+	}
+#endif
 	return (1);
 }
 
@@ -1640,3 +1685,68 @@ eap_flags_codec(void *v)
 
       return (sc->flags);
 }
+#if NMIDI > 0
+int
+eap_midi_open(void *addr, int flags,
+	      void (*iintr)(void *, int),
+	      void (*ointr)(void *),
+	      void *arg)
+{
+	struct eap_softc *sc = addr;
+	u_int32_t uctrl;
+
+	sc->sc_iintr = iintr;
+	sc->sc_ointr = ointr;
+	sc->sc_arg = arg;
+
+	EWRITE4(sc, EAP_ICSC, EREAD4(sc, EAP_ICSC) | EAP_UART_EN);
+	uctrl = 0;
+	if (flags & FREAD)
+		uctrl |= EAP_UC_RXINTEN;
+#if 0
+	/* I don't understand ../midi.c well enough to use output interrupts */
+	if (flags & FWRITE)
+		uctrl |= EAP_UC_TXINTEN; */
+#endif
+	EWRITE1(sc, EAP_UART_CONTROL, uctrl);
+
+	return (0);
+}
+
+void
+eap_midi_close(void *addr)
+{
+	struct eap_softc *sc = addr;
+
+	tsleep(sc, PWAIT, "eapclm", hz/10); /* give uart a chance to drain */
+	EWRITE1(sc, EAP_UART_CONTROL, 0);
+	EWRITE4(sc, EAP_ICSC, EREAD4(sc, EAP_ICSC) & ~EAP_UART_EN);
+
+	sc->sc_iintr = 0;
+	sc->sc_ointr = 0;
+}
+
+int
+eap_midi_output(void *addr, int d)
+{
+	struct eap_softc *sc = addr;
+	int x;
+
+	for (x = 0; x != MIDI_BUSY_WAIT; x++) {
+		if (EREAD1(sc, EAP_UART_STATUS) & EAP_US_TXRDY) {
+			EWRITE1(sc, EAP_UART_DATA, d);
+			return (0);
+		}
+		delay(MIDI_BUSY_DELAY);
+	}
+	return (EIO);
+}
+
+void
+eap_midi_getinfo(void *addr, struct midi_info *mi)
+{
+	mi->name = "AudioPCI MIDI UART";
+	mi->props = MIDI_PROP_CAN_INPUT;
+}
+
+#endif

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.166 2004/12/14 01:50:42 deraadt Exp $
+#	$OpenBSD: files.pci,v 1.167 2004/12/17 08:04:45 jsg Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -82,7 +82,7 @@ attach	iop at pci with iop_pci
 file	dev/pci/iop_pci.c		iop_pci
 
 # Ensoniq AudioPCI S5016, 1371
-device	eap: audio, auconv, mulaw, ac97
+device	eap: audio, auconv, mulaw, ac97, midibus
 attach	eap at pci
 file	dev/pci/eap.c			eap
 

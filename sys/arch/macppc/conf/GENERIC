@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.63 2004/12/08 08:05:44 dlg Exp $g
+#	$OpenBSD: GENERIC,v 1.64 2004/12/17 08:04:45 jsg Exp $g
 #
 # PPC GENERIC config file
 #
@@ -241,6 +241,9 @@ wdc*		at pcmcia?
 
 wsdisplay*	at vgafb?
 wskbd*		at ukbd? mux 1
+
+# MIDI support
+#midi*		at eap?
 
 # Audio support
 audio*		at awacs?

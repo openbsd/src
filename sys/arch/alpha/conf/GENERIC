@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.132 2004/12/08 12:29:29 martin Exp $
+#	$OpenBSD: GENERIC,v 1.133 2004/12/17 08:04:45 jsg Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 
 machine	alpha
@@ -322,6 +322,7 @@ opl*	at eso?
 
 # MIDI support
 midi*	at opl?				# OPL FM synth
+#midi*	at eap?
 
 #Audio Support
 audio*	at eap?

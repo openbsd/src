@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.110 2004/11/29 18:12:50 miod Exp $
+#	$OpenBSD: GENERIC,v 1.111 2004/12/17 08:04:45 jsg Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -85,6 +85,7 @@ opl*	at eso?
 # MIDI support
 midi*	at autri?
 midi*	at opl?
+#midi*	at eap?
 
 # PCI USB Controllers
 ohci*	at pci?			# Open Host Controller

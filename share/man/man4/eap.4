@@ -1,4 +1,4 @@
-.\" $OpenBSD: eap.4,v 1.12 2004/09/30 19:59:24 mickey Exp $
+.\" $OpenBSD: eap.4,v 1.13 2004/12/17 08:04:45 jsg Exp $
 .\" $NetBSD: eap.4,v 1.2 1998/05/06 19:14:06 augustss Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -41,6 +41,7 @@
 .Sh SYNOPSIS
 .Cd "eap* at pci?"
 .Cd "audio* at eap?"
+.Cd "midi* at eap?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -53,6 +54,7 @@ Ectiva 1938.
 .Xr ac97 4 ,
 .Xr audio 4 ,
 .Xr intro 4 ,
+.Xr midi 4 ,
 .Xr pci 4
 .Sh HISTORY
 The
@@ -60,4 +62,4 @@ The
 device driver appeared in
 .Ox 2.6 .
 .Sh BUGS
-The "FM" DAC and MIDI port are not supported.
+The "FM" DAC is not supported.

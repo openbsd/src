@@ -1,4 +1,4 @@
-.\" $OpenBSD: midi.4,v 1.17 2004/03/21 19:47:59 miod Exp $
+.\" $OpenBSD: midi.4,v 1.18 2004/12/17 08:04:45 jsg Exp $
 .\" $NetBSD: midi.4,v 1.4 1998/08/22 14:45:35 augustss Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@
 .Nd device-independent MIDI driver layer
 .Sh SYNOPSIS
 .Cd "midi* at autri?"
+.Cd "midi* at eap?"
 .Cd "midi* at mpu?"
 .Cd "midi* at opl?"
 .Cd "midi* at pcppi?"
@@ -105,6 +106,7 @@ interface.
 .Xr ossaudio 3 ,
 .Xr audio 4 ,
 .Xr autri 4 ,
+.Xr eap 4 ,
 .Xr mpu 4 ,
 .Xr opl 4 ,
 .Xr pcppi 4 ,
