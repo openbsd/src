@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.77 2002/06/07 23:06:43 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.78 2002/06/07 23:30:39 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -2306,6 +2306,7 @@ void
 ifa_load(void)
 {
 	struct ifaddrs *ifap, *ifa;
+	void *p;
 	int ifalen = 0;
 
 	if (getifaddrs(&ifap) < 0)
@@ -2343,9 +2344,21 @@ ifa_load(void)
 		}
 	}
 	/* shrink tables */
-	ifa0tab = realloc(ifa0tab, ifa0len * sizeof(void *));
-	ifa4tab = realloc(ifa4tab, ifa4len * sizeof(void *));
-	ifa6tab = realloc(ifa6tab, ifa6len * sizeof(void *));
+	if ((p = realloc(ifa0tab, ifa0len * sizeof(void *))) == NULL) {
+		free(ifa0tab);
+		ifa0tab = NULL;
+	} else
+		ifa0tab = p;
+	if ((p = realloc(ifa4tab, ifa4len * sizeof(void *))) == NULL) {
+		free(ifa4tab);
+		ifa4tab = NULL;
+	} else
+		ifa4tab = p;
+	if ((p = realloc(ifa6tab, ifa6len * sizeof(void *))) == NULL) {
+		free(ifa6tab);
+		ifa6tab = NULL;
+	} else
+		ifa6tab = p;
 	if (!ifa0tab || !ifa4tab || !ifa6tab)
 		err(1, "realloc");
 }
