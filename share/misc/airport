@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.8 2002/05/16 07:03:47 matthieu Exp $
+#	$OpenBSD: airport,v 1.9 2003/04/14 14:45:57 jakob Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 # 
 # Some of this information from the Airport Search Engine at
@@ -11,9 +11,11 @@ ABE:Allentown-Bethlehem-Easton International, Pennsylvania, USA
 ABQ:Albuquerque International, New Mexico, USA
 ABZ:Aberdeen,Scotland,United Kingdom
 AGC:Pittsburgh/Allegheny County, Pennsylvania, USA
+AGH:Angelholm/Helsingborg, Scania, Sweden
 AGP:Malaga, Spain
 AIY:Atlantic City International, New Jersey, USA
 AJA:Ajaccio,Corsica,France
+AJR:Arvidsjaur, Sweden
 AKL:Auckland, New Zealand
 ALB:Albany, New York, USA
 ALC:Alicante, Spain
@@ -45,6 +47,8 @@ BIO:Bilbao,Spain
 BIS:Bismarck Municipal, North Dakota, USA
 BKK:Bangkok, Thailand
 BKL:Cleveland Lakefront, Ohio, USA
+BLE:Borlange, Dalecarlia, Sweden
+BMA:Stockholm-Bromma, Uppland, Sweden
 BMI:Bloomington, Illinois, USA
 BNA:Nashville Metro, Tennessee, USA
 BOD:Bordeaux,France
@@ -78,10 +82,9 @@ CLT:Charlotte/Douglas International, North Carolina, USA
 CLY:Calvi,Corsica,France
 CMH:Columbus International, Ohio, USA
 COS:Peterson, Colorado Springs, USA
-CPH:Copenhagen,Denmark
+CPH:Copenhagen, Denmark
 CPR:Casper/Natrone County International, Wyoming, USA
 CRM:Charleston (WV) Yeager, South Carolina, USA
-CPH:Copenhagen, Denmark
 CRP:Corpus Christi International, Texas, USA
 CUN:Cancun, Mexico
 CVG:Cincinnati International, Ohio, USA
@@ -94,8 +97,8 @@ DEL:Delhi, India
 DEN:Denver International, Colorado, USA
 DET:Detroit City, Michigan, USA
 DFW:Dallas-Ft. Worth International, Texas, USA
-DRS:Dresden, Germany
 DRM:Drama, Greece
+DRS:Dresden, Germany
 DSM:Des Moines International, Iowa, USA
 DTT:All Airports around Detroit, Michigan, USA
 DTW:Detroit Metropolitan/Wayne County, Michigan, USA
@@ -105,6 +108,7 @@ EAP:Euro Airport Basel Mulhouse Freiburg,Switzerland/France/Germany
 EDI:Edimburgh,Scotland,United Kingdom
 ELP:El Paso International, El Paso, Texas, USA
 ETZ:Metz Nancy Lorraine, France
+EVG:Sveg, Sweden
 EWR:Newark International, New Jersey, USA
 EYW:Key West International, Florida, USA
 EZE:Buenos Aires, Argentina
@@ -124,6 +128,7 @@ GCI:Guernsey
 GCM:Grand Cayman, KY
 GDL:Guadalajara, Mex
 GEG:Spokane International, Washington, USA
+GEV:Gallivare, Sweden
 GIG:Rio De Janeiro, Brazil
 GLA:Glasgow International, Scotland
 GND:Grenada, GD
@@ -132,20 +137,27 @@ GOT:Landvetter, Goteborg, Sweden
 GOZ:Gorna Orechovitsa, Bulgaria
 GRR:Grand Rapids/Kent County International, Michigan, USA
 GRU:Sao Paulo, Brazil
+GSE:Goteborg-Save, Sweden
 GSO:Greensboro-High Pt.-Winston Salem Regional, North Carolina, USA
 GVA:Cointrin Geneva,Switzerland
+GVX:Gavle, Sweden
+HAD:Halmstad, Halland, Sweden
 HAJ:Hannover, Germany
 HAM:Fuhlsbuettel Hamburg, Germany
 HEL:Helsinki-Vantaa, Finland
 HER:Heraklion, Greece
+HFS:Hagfors, Sweden
 HKG:Hong Kong
 HKV:Haskovo, Bulgaria
+HLF:Hultsfred, Smaland, Sweden
+HMV:Hemavan, Sweden
 HNL:Honolulu International, Hawaii, USA
 HOT:Hot Springs Memorial Field
 HOU:Houston William P. Hobby, Texas, USA
 HPN:White Plains/Westchester County, New York, USA
 HRL:Harlingen, Texas, USA
 HUF:Terre Haute Hulman Regional, Indiana, USA
+HUV:Hudiksvall, Sweden
 HVN:New Haven Tweed, Connecticut, USA
 IAD:Washington Dulles, Virginia, USA
 IAH:Houston Intercontinental, Texas, USA
@@ -161,23 +173,31 @@ JAN:Jackson Municipal/Thompson Field, Missippi, USA
 JAX:Jacksonville International, Florida, USA
 JER:Jersey
 JFK:New York John F. Kennedy International, New York, USA
+JKG:Jonkoping, Smaland, Sweden
 JKH:Chios, Greece
 JKT:All Airports around Jakarta, Indonesia
 JMK:Mikonos, Greece
+JNU:Juneau International, Alaska, USA
 JSI:Skiathos, Greece
 JSS:Spetsai, Greece
 JSY:Syros Island, Greece
 JTR:Santorini, Thira Is., Greece
-JNU:Juneau International, Alaska, USA
 KCK:All Airports around Kansas City, Kansas, USA
 KDG:Kardjali, Bulgaria
+KID:Kristianstad, Sweden
 KIN:Kingston, Jamaica
 KIT:Kithira, Greece
 KIX:Osaka, Japan
+KLR:Kalmar, Sweden
 KLX:Kalamata, Greece
 KOA:Kailua-Kona Keahole, HI
+KRF:Kramfors, Sweden
+KRN:Kiruna, Sweden
+KSD:Karlstad, Wermland, Sweden
 KSJ:Kasos Island, Greece
+KSK:Karlskoga, Sweden
 KSO:Kastoria, Greece
+KVB:Skovde, Sweden
 KZI:Kozani, Greece
 KZS:Kastelorizo, Greece
 LAN:Lansing Capital City, Michigan, USA
@@ -194,15 +214,18 @@ LHR:London-Heathrow, UK
 LIH:Lihue, Hawaii, USA
 LIS:Lisbon, Portugal
 LIT:Little Rock Regional, Arkansas, USA
+LLA:Lulea, Sweden
 LNK:Lincoln Municipal, Nebraska, USA
 LON:All Airports around London, United Kingdom
 LPA:Gran Canaria, Spain
+LPI:Linkoping, Ostergotland, Sweden
 LRA:Larisa, Greece
 LRD:Laredo, Texas, USA
 LRS:Leros, Greece
 LUG:Lugano, Switzerland
 LUX:Luxemburg, Luxemburg
 LXS:Lemnos, Greece
+LYC:Lycksele, Sweden
 LYS:Lyon Saint-Exupery, France
 MAD:Madrid, Spain
 MAN:Manchester, UK
@@ -224,6 +247,7 @@ MKC:Kansas City Downtown, Missouri, USA
 MKE:Milwaukee General Mitchell International, Wisconsin, USA
 MLH:Mulhouse/Basel Euroairport, France
 MLI:Moline Quad City, Alabama, USA
+MMX:Malmo-Sturup, Scania, Sweden
 MNI:Montserrat, Leeward Islands
 MNL:Manila, Philippines
 MOB:Mobile Municipal/Bates Field, Alabama, USA
@@ -235,25 +259,32 @@ MSO:Missoula County, Montana, USA
 MSP:Minneapolis-St. Paul International, Minnesota, USA
 MSY:New Orleans International, Louisiana, USA
 MUC:Munich International Airport, Munich, Germany
+MXX:Mora, Dalecarlia, Sweden
 NAS:Nassau, Bahamas
 NCE:Nice, France
+NRK:Norrkoping, Sweden
 NRT:Narita, Tokyo, Japan
 NRW:All Airports around Nordrhein-Westfalen, Germany
 NUE:Nuernberg, Germany
 NYC:All Airports around New York City, New York, USA
+NYO:Stockholm - Skavsta, Sweden
 OAJ:Jacksonville Albert J. Ellis, North Carolina, USA
 OAK:Oakland International, California, USA
 ODS:Odessa, Ukrain
+OER:Ornskoldsvik, Sweden
 OGG:Kahului, HI
 OKC:Oklahoma City Will Rogers World, Oklahoma, USA
 OLM:Olympia, WA
 OMA:Omaha Eppley Airfield, Nebraska, USA
 ONT:Ontario International, California, USA
 OPO:Porto, Portugal
+ORB:Orebro, Sweden
 ORD:Chicago-O'Hare International, Illinois, USA
 ORF:Norfolk International, Virginia, USA
 ORY:Paris Orly, France
 OSA:All Airports around Osaka, Japan
+OSD:Ostersund, Sweden
+OSK:Oskarshamn, Sweden
 OSL:All Airports around Oslo, Norway
 PAO:Palo Alto Municipal, California, USA
 PAP:Port-au-Prince, Haiti
@@ -280,10 +311,11 @@ QDV:All Airports around Denver, Colorado, USA
 QLA:All Airports around Los Angeles, California, USA
 QSF:All Airports around San Francisco, California, USA
 RDU:Raleigh-Durham, North Carolina, USA
+RHO:Rhodes, Greece
 RIC:Richmond International/Byrd Field, Virginia, USA
 RIO:All Airports around Rio de Janeiro, RJ, Brazil
+RNB:Ronneby, Sweden
 RNO:Reno Cannon International, Nevada, USA
-RHO:Rhodes, Greece
 ROC:Rochester International, New York, USA
 ROM:All Airports around Roma, Italy
 ROU:Rousse, Bulgaria
@@ -295,9 +327,11 @@ SAV:Savannah International, Georgia, USA
 SBA:Santa Barbara Municipal, California, USA
 SCL:Santiago, Chile
 SDF:Louisville Standiford Field, Kentucky, USA
+SDL:Sundsvall/Harnosand-Midlanda, Sweden
 SEA:Seattle-Tacoma International, Washington, USA
 SEL:Seoul, South Korea
 SFO:San Francisco International, California, USA
+SFT:Skelleftea, Sweden
 SGF:Springfield Regional, Missouri, USA
 SIN:Singapore
 SIR:Sion, Switzerland
@@ -311,9 +345,11 @@ SLU:St. Lucia, LC
 SMF:Sacramento Metro, California, USA
 SNA:Santa Ana/Orange County/John Wayne, California, USA
 SOF:Sofia, Bulgaria
+SOO:Soderhamn, Sweden
 SPJ:Sparta, Greece
 SPS:Wichita Falls, Texas, USA
 SQL:San Carlos Municipal, California, USA
+SQO:Storuman, Sweden
 SRQ:Sarasota, Florida, USA
 STA:Stuttgart, Germany
 STL:St. Louis/Lambert International, Missouri, USA
@@ -327,6 +363,7 @@ SYD:Sydney, Australia
 SYR:Syracuse Hancock International, New York, USA
 SZR:Stara Zagora, Bulgaria
 TAB:Tobago
+THN:Trollhattan, Sweden
 TIA:Tirana, Albany
 TLS:Toulouse Blagnac, France
 TLV:Tel Aviv, Israel
@@ -338,14 +375,20 @@ TUL:Tulsa International, Oklahoma, USA
 TUN:Tunis, Tunisia
 TUS:Tucson International, Arizona, USA
 TXL:Berlin, Germany
+TYF:Torsby, Wermland, Sweden
 TYO:All Airports around Tokyo, Japan
 TYS:Knoxville McGhee Tyson, Tennessee, USA
 UCA:Utica/Oneida County, New York, USA
+UME:Umea-Alvik, Sweden
 UVF:St. Lucia, LC
 VAR:Varna, Bulgaria
+VBY:Visby, Gotland, Sweden
 VCE:Venezia, Italy
+VHM:Vilhelmina, Sweden
 VIE:Wien, Austria
 VLC:Valencia, Spain
+VST:Vasteras/Hasslo, Sweden
+VXO:Vaxjo, Smaland, Sweden
 WAS:All Airports around Washington, District of Columbia, USA
 WAW:Warsaw, Poland
 YAM:Sault Ste Marie, Ontario, Canada
