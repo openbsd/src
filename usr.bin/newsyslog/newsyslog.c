@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.77 2004/04/05 19:41:50 millert Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.78 2004/04/06 22:23:04 millert Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -14,6 +14,7 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ *
  * Sponsored in part by the Defense Advanced Research Projects
  * Agency (DARPA) and Air Force Research Laboratory, Air Force
  * Materiel Command, USAF, under agreement number F39502-99-1-0512.
@@ -71,7 +72,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.77 2004/04/05 19:41:50 millert Exp $";
+static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.78 2004/04/06 22:23:04 millert Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -829,9 +830,13 @@ dotrim(struct conf_entry *ent)
 			warn("can't rm %s", ent->log);
 	} else {
 		(void)snprintf(file1, sizeof(file1), "%s.0", oldlog);
-		if (noaction)
+		if (noaction) {
 			printf("\tmv %s to %s\n", ent->log, file1);
-		else if (movefile(ent->log, file1, ent->uid, ent->gid,
+			printf("\tchmod %o %s\n", ent->permissions, file1);
+			if (ent->uid != (uid_t)-1 || ent->gid != (gid_t)-1)
+				printf("\tchown %u:%u %s\n",
+				    ent->uid, ent->gid, file1);
+		} else if (movefile(ent->log, file1, ent->uid, ent->gid,
 		    ent->permissions))
 			warn("can't mv %s to %s", ent->log, file1);
 	}
@@ -1335,9 +1340,15 @@ movefile(char *from, char *to, uid_t owner_uid, gid_t group_gid, mode_t perm)
 	int i;
 
 	/* try rename(2) first */
-	i = rename(from, to);
-	if (i == 0 || errno != EXDEV)
-		return (i);
+	if (rename(from, to) == 0) {
+		if (chmod(to, perm))
+			warn("can't chmod %s", to);
+		if (owner_uid != (uid_t)-1 || group_gid != (gid_t)-1)
+			if (chown(to, owner_uid, group_gid))
+				warn("can't chown %s", to);
+		return (0);
+	} else if (errno != EXDEV)
+		return (-1);
 
 	/* different filesystem, have to copy the file */
 	if ((src = fopen(from, "r")) == NULL)
