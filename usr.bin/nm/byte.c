@@ -1,4 +1,4 @@
-/* $OpenBSD: byte.c,v 1.2 1999/08/29 17:22:05 espie Exp $ */
+/* $OpenBSD: byte.c,v 1.3 2001/08/19 23:21:40 espie Exp $ */
 /*
  * Copyright (c) 1999  
  *	Marc Espie.  All rights reserved.
@@ -35,6 +35,8 @@ static int byte_sex(mid)
 	case MID_HPUX:
 	case MID_SPARC:
 	case MID_MIPS:
+	case MID_SPARC64:
+	case MID_POWERPC:
 		return BIG_ENDIAN;
 	default:	/* we don't know what this is, so we don't want to process it */
 		return 0;
