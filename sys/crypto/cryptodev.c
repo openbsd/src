@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.c,v 1.39 2002/04/24 23:24:32 deraadt Exp $	*/
+/*	$OpenBSD: cryptodev.c,v 1.40 2002/04/26 04:31:14 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -123,7 +123,7 @@ int	cryptodev_cb(void *);
 int	cryptodevkey_cb(void *);
 
 int	usercrypto = 1;		/* userland may do crypto requests */
-int	cryptodevallowsoft = 1;	/* only use hardware crypto */
+int	cryptodevallowsoft = 0;	/* only use hardware crypto */
 
 /* ARGSUSED */
 int
@@ -508,8 +508,13 @@ cryptodev_key(struct crypt_kop *kop)
 	krp->krp_status = 0;
 	krp->krp_callback = (int (*) (struct cryptkop *)) cryptodevkey_cb;
 
-	for (i = 0; i < CRK_MAXPARAM; i++)
+	for (i = 0; i < CRK_MAXPARAM; i++) {
 		krp->krp_param[i].crp_nbits = kop->crk_param[i].crp_nbits;
+		if (krp->krp_param[i].crp_nbits % 32) {
+			error = EINVAL;
+			goto fail;
+		}
+	}
 	for (i = 0; i < krp->krp_iparams + krp->krp_oparams; i++) {
 		size = (krp->krp_param[i].crp_nbits + 7) / 8;
 		if (size == 0)
