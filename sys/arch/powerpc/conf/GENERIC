@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.26 2001/02/16 05:56:50 drahn Exp $
+#	$OpenBSD: GENERIC,v 1.27 2001/02/18 01:11:15 deraadt Exp $
 #
 # PPC GENERIC config file
 #
@@ -15,6 +15,7 @@ option		UVM
 option		FIREPOWERBUGS
 option		PPC_MPC106_BUG
 option		PCIVERBOSE
+option		USBVERBOSE
 option		WSEMUL_NO_DUMB
 
 include "../../../conf/GENERIC"
