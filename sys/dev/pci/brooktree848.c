@@ -1,4 +1,4 @@
-/*	$OpenBSD: brooktree848.c,v 1.8 1999/05/19 22:02:31 niklas Exp $	*/
+/*	$OpenBSD: brooktree848.c,v 1.9 1999/05/21 17:55:18 deraadt Exp $	*/
 /* $FreeBSD: brooktree848.c,v 1.64 1999/01/28 17:47:47 roger Exp $ */
 /* BT848 Driver for Brooktree's Bt848, Bt849, Bt878 and Bt 879 based cards.
    The Brooktree  BT848 Driver driver is based upon Mark Tinguely and
@@ -920,7 +920,7 @@ struct TUNER {
 static const struct TUNER tuners[] = {
 /* XXX FIXME: fill in the band-switch crosspoints */
 	/* NO_TUNER */
-	{ "<none>",				/* the 'name' */
+	{ "no",					/* the 'name' */
 	   TTYPE_XXX,				/* input type */
  	   { 0x00,				/* control byte for PLL */
  	     0x00,
