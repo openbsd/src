@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha.c,v 1.33 1999/01/07 06:14:46 niklas Exp $	*/
+/*	$OpenBSD: aha.c,v 1.34 1999/08/19 07:40:14 deraadt Exp $	*/
 /*	$NetBSD: aha.c,v 1.11 1996/05/12 23:51:23 mycroft Exp $	*/
 
 #undef AHADIAG
@@ -375,13 +375,16 @@ ahaattach(parent, self, aux)
 	struct aha_softc *sc = (void *)self;
 	int isapnp = !strcmp(parent->dv_cfdata->cf_driver->cd_name, "isapnp");
 
-	if (isapnp)
+	if (isapnp) {
 		ia->ia_iobase = ia->ipa_io[0].base;
+		isadma_cascade(ia->ia_drq);
+	}
+
 	if (aha_find(ia, sc, isapnp) != 0)
 		panic("ahaattach: aha_find of %s failed", self->dv_xname);
 	sc->sc_iobase = ia->ia_iobase;
 
-	if (sc->sc_drq != DRQUNK)
+	if (sc->sc_drq != DRQUNK && isapnp == 0)
 		isadma_cascade(sc->sc_drq);
 
 	aha_inquire_setup_information(sc);
