@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rfork.2,v 1.17 2002/11/28 21:50:13 brad Exp $
+.\"	$OpenBSD: rfork.2,v 1.18 2003/06/01 21:23:15 jmc Exp $
 .\"
 .\" This manual page is taken directly from Plan9, and modified to
 .\" describe the actual OpenBSD implementation.  Permission for
@@ -89,7 +89,7 @@ will sleep, if necessary, until required process resources are available.
 .Pp
 .Fn fork
 can be implemented as a call to
-.Xr rfork 2
+.Fn rfork
 using "RFFDG|RFPROC"
 but isn't for backwards compatibility.
 If a process has file descriptor table sharing active, setuid or setgid

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: msync.2,v 1.15 1999/06/29 14:10:10 aaron Exp $
+.\"	$OpenBSD: msync.2,v 1.16 2003/06/01 21:23:15 jmc Exp $
 .\"	$NetBSD: msync.2,v 1.8 1995/10/12 15:41:09 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -112,10 +112,6 @@ which are unmapped.
 .It Bq Er EIO
 An I/O error occurred while writing.
 .El
-.Sh BUGS
-Writes are currently done synchronously even if the
-.Dv MS_ASYNC
-flag is specified.
 .Sh SEE ALSO
 .Xr madvise 2 ,
 .Xr mincore 2 ,
@@ -129,3 +125,7 @@ function first appeared in
 .Bx 4.4 .
 It was modified to conform to
 .St -p1003.1b-93
+.Sh BUGS
+Writes are currently done synchronously even if the
+.Dv MS_ASYNC
+flag is specified.

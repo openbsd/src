@@ -1,4 +1,4 @@
-.\"	$OpenBSD: select.2,v 1.21 2002/11/19 20:57:13 millert Exp $
+.\"	$OpenBSD: select.2,v 1.22 2003/06/01 21:23:15 jmc Exp $
 .\"	$NetBSD: select.2,v 1.5 1995/06/27 22:32:28 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -167,6 +167,11 @@ One of its components is negative or too large.
 .Xr send 2 ,
 .Xr write 2 ,
 .Xr getdtablesize 3
+.Sh HISTORY
+The
+.Fn select
+function call appeared in
+.Bx 4.2 .
 .Sh BUGS
 Although the provision of
 .Xr getdtablesize 3
@@ -241,7 +246,7 @@ call, and the caller should reinitialize it on each invocation.
 Calculating the delta is easily done by calling
 .Xr gettimeofday 2
 before and after the call to
-.Fn select Ns ,
+.Fn select ,
 and using
 .Fn timersub
 (as described in
@@ -253,8 +258,3 @@ works poorly if multiple processes wait on the same file descriptor.
 Given that, it is rather surprising to see that many daemons are
 written that way (i.e.,
 .Xr httpd 8 ) .
-.Sh HISTORY
-The
-.Fn select
-function call appeared in
-.Bx 4.2 .

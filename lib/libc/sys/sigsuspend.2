@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sigsuspend.2,v 1.7 2000/10/18 05:12:12 aaron Exp $
+.\"	$OpenBSD: sigsuspend.2,v 1.8 2003/06/01 21:23:15 jmc Exp $
 .\"	$NetBSD: sigsuspend.2,v 1.4 1995/02/27 12:37:46 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -62,7 +62,7 @@ of the signal are examined to determine that there is no work
 to be done, and the process pauses awaiting work by using
 .Fn sigsuspend
 with the previous mask returned by
-.Xr sigprocmask .
+.Xr sigprocmask 2 .
 .Sh RETURN VALUES
 The
 .Fn sigsuspend

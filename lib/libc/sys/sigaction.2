@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sigaction.2,v 1.37 2003/05/12 14:40:13 jmc Exp $
+.\"	$OpenBSD: sigaction.2,v 1.38 2003/06/01 21:23:15 jmc Exp $
 .\"	$NetBSD: sigaction.2,v 1.7 1995/10/12 15:41:16 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -124,7 +124,7 @@ must arrange to restore the previous context itself.
 When a signal is delivered to a process a new signal mask is
 installed for the duration of the process' signal handler
 (or until a
-.Xr sigprocmask
+.Xr sigprocmask 2
 call is made).
 This mask is formed by taking the union of the current signal mask set,
 the signal to be delivered, and the signal mask
@@ -544,6 +544,20 @@ An attempt is made to ignore or supply a handler for
 or
 .Dv SIGSTOP .
 .El
+.Sh SEE ALSO
+.Xr kill 1 ,
+.Xr kill 2 ,
+.Xr ptrace 2 ,
+.Xr sigaltstack 2 ,
+.Xr sigprocmask 2 ,
+.Xr sigsuspend 2 ,
+.Xr wait 2 ,
+.Xr setjmp 3 ,
+.Xr sigblock 3 ,
+.Xr sigpause 3 ,
+.Xr sigsetops 3 ,
+.Xr sigvec 3 ,
+.Xr tty 4
 .Sh STANDARDS
 The
 .Fn sigaction
@@ -694,7 +708,6 @@ Extension Interfaces:
 .Fn strlcat ,
 .Fn strlcpy .
 .Pp
-.Pp
 Most functions not in the above lists are considered to be unsafe
 with respect to signals.
 That is to say, the behaviour of such functions when called from
@@ -717,18 +730,3 @@ Safe if the
 .Va syslog_data
 struct is initialized as a local variable.
 .El
-.Pp
-.Sh SEE ALSO
-.Xr kill 1 ,
-.Xr kill 2 ,
-.Xr ptrace 2 ,
-.Xr sigaltstack 2 ,
-.Xr sigprocmask 2 ,
-.Xr sigsuspend 2 ,
-.Xr wait 2 ,
-.Xr setjmp 3 ,
-.Xr sigblock 3 ,
-.Xr sigpause 3 ,
-.Xr sigsetops 3 ,
-.Xr sigvec 3 ,
-.Xr tty 4

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: socketpair.2,v 1.10 1999/07/06 18:21:04 deraadt Exp $
+.\"	$OpenBSD: socketpair.2,v 1.11 2003/06/01 21:23:15 jmc Exp $
 .\"	$NetBSD: socketpair.2,v 1.5 1995/02/27 12:38:00 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -86,6 +86,16 @@ The system file table is full.
 .Xr pipe 2 ,
 .Xr read 2 ,
 .Xr write 2
+.Sh STANDARDS
+The
+.Fn socketpair
+function conforms to
+.St -xpg4.2 .
+.Sh HISTORY
+The
+.Fn socketpair
+function call appeared in
+.Bx 4.2 .
 .Sh BUGS
 This call is currently implemented only for the
 .Tn LOCAL
@@ -97,13 +107,3 @@ of
 so that should be used instead of
 .Ev PF_LOCAL
 for maximal portability.
-.Sh STANDARDS
-The
-.Fn socketpair
-function conforms to
-.St -xpg4.2 .
-.Sh HISTORY
-The
-.Fn socketpair
-function call appeared in
-.Bx 4.2 .
