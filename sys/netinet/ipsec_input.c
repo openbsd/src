@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.48 2001/06/26 04:17:57 angelos Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.49 2001/07/05 16:45:55 jjbg Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -68,6 +68,7 @@
 #include <netinet/ip_ipsp.h>
 #include <netinet/ip_esp.h>
 #include <netinet/ip_ah.h>
+#include <netinet/ip_ipcomp.h>
 
 #include <net/if_enc.h>
 
@@ -85,6 +86,7 @@ void *ipsec_common_ctlinput(int, struct sockaddr *, void *, int);
 /* sysctl variables */
 int esp_enable = 0;
 int ah_enable = 0;
+int ipcomp_enable = 0;
 
 #ifdef INET6
 extern struct ip6protosw inet6sw[];
@@ -100,31 +102,38 @@ extern u_char ip6_protox[];
 int
 ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 {
-#define IPSEC_ISTAT(y,z) (sproto == IPPROTO_ESP ? (y)++ : (z)++)
+#define IPSEC_ISTAT(x,y,z) (sproto == IPPROTO_ESP ? (x)++ : \
+			    IPPROTO_AH ? (y)++ : (z)++)
 
 	union sockaddr_union dst_address;
 	struct tdb *tdbp;
 	u_int32_t spi;
+	u_int16_t cpi;
 	int s;
 
-	IPSEC_ISTAT(espstat.esps_input, ahstat.ahs_input);
+	IPSEC_ISTAT(espstat.esps_input, ahstat.ahs_input,
+	    ipcompstat.ipcomps_input);
 
 	if (m == 0) {
 		DPRINTF(("ipsec_common_input(): NULL packet received\n"));
-		IPSEC_ISTAT(espstat.esps_hdrops, ahstat.ahs_hdrops);
+		IPSEC_ISTAT(espstat.esps_hdrops, ahstat.ahs_hdrops,
+		    ipcompstat.ipcomps_hdrops);
 		return EINVAL;
 	}
 
 	if ((sproto == IPPROTO_ESP && !esp_enable) ||
-	    (sproto == IPPROTO_AH && !ah_enable)) {
+	    (sproto == IPPROTO_AH && !ah_enable) ||
+	    (sproto == IPPROTO_IPCOMP && !ipcomp_enable)) {
 		m_freem(m);
-		IPSEC_ISTAT(espstat.esps_pdrops, ahstat.ahs_pdrops);
+		IPSEC_ISTAT(espstat.esps_pdrops, ahstat.ahs_pdrops,
+		    ipcompstat.ipcomps_pdrops);
 		return EOPNOTSUPP;
 	}
 
 	if (m->m_pkthdr.len - skip < 2 * sizeof(u_int32_t)) {
 		m_freem(m);
-		IPSEC_ISTAT(espstat.esps_hdrops, ahstat.ahs_hdrops);
+		IPSEC_ISTAT(espstat.esps_hdrops, ahstat.ahs_hdrops,
+		    ipcompstat.ipcomps_hdrops);
 		DPRINTF(("ipsec_common_input(): packet too small\n"));
 		return EINVAL;
 	}
@@ -132,9 +141,14 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 	/* Retrieve the SPI from the relevant IPsec header */
 	if (sproto == IPPROTO_ESP)
 		m_copydata(m, skip, sizeof(u_int32_t), (caddr_t) &spi);
-	else
+	else if (sproto == IPPROTO_AH)
 		m_copydata(m, skip + sizeof(u_int32_t), sizeof(u_int32_t),
 		    (caddr_t) &spi);
+	else if (sproto == IPPROTO_IPCOMP) {
+		m_copydata(m, skip + sizeof(u_int16_t), sizeof(u_int16_t),
+		    (caddr_t) &cpi);
+		spi = ntohl(htons(cpi));
+	}
 
 	/*
      * Find tunnel control block and (indirectly) call the appropriate
@@ -168,7 +182,8 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 		DPRINTF(("ipsec_common_input(): unsupported protocol "
 		    "family %d\n", af));
 		m_freem(m);
-		IPSEC_ISTAT(espstat.esps_nopf, ahstat.ahs_nopf);
+		IPSEC_ISTAT(espstat.esps_nopf, ahstat.ahs_nopf,
+		    ipcompstat.ipcomps_nopf);
 		return EPFNOSUPPORT;
 	}
 
@@ -180,7 +195,8 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 		    "packet to %s, spi %08x\n",
 		    ipsp_address(dst_address), ntohl(spi)));
 		m_freem(m);
-		IPSEC_ISTAT(espstat.esps_notdb, ahstat.ahs_notdb);
+		IPSEC_ISTAT(espstat.esps_notdb, ahstat.ahs_notdb,
+		    ipcompstat.ipcomps_notdb);
 		return ENOENT;
 	}
 
@@ -188,7 +204,8 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 		splx(s);
 		DPRINTF(("ipsec_common_input(): attempted to use invalid SA %s/%08x/%u\n", ipsp_address(dst_address), ntohl(spi), tdbp->tdb_sproto));
 		m_freem(m);
-		IPSEC_ISTAT(espstat.esps_invalid, ahstat.ahs_invalid);
+		IPSEC_ISTAT(espstat.esps_invalid, ahstat.ahs_invalid,
+		    ipcompstat.ipcomps_invalid);
 		return EINVAL;
 	}
 
@@ -196,7 +213,8 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 		splx(s);
 		DPRINTF(("ipsec_common_input(): attempted to use uninitialized SA %s/%08x/%u\n", ipsp_address(dst_address), ntohl(spi), tdbp->tdb_sproto));
 		m_freem(m);
-		IPSEC_ISTAT(espstat.esps_noxform, ahstat.ahs_noxform);
+		IPSEC_ISTAT(espstat.esps_noxform, ahstat.ahs_noxform,
+		    ipcompstat.ipcomps_noxform);
 		return ENXIO;
 	}
 
@@ -264,7 +282,8 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff,
 	/* Sanity check */
 	if (m == NULL) {
 		/* The called routine will print a message if necessary */
-		IPSEC_ISTAT(espstat.esps_badkcr, ahstat.ahs_badkcr);
+		IPSEC_ISTAT(espstat.esps_badkcr, ahstat.ahs_badkcr,
+		    ipcompstat.ipcomps_badkcr);
 		return EINVAL;
 	}
 
@@ -275,7 +294,8 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff,
 			DPRINTF(("ipsec_common_input_cb(): processing failed "
 			    "for SA %s/%08x\n", ipsp_address(tdbp->tdb_dst),
 			    ntohl(tdbp->tdb_spi)));
-			IPSEC_ISTAT(espstat.esps_hdrops, ahstat.ahs_hdrops);
+			IPSEC_ISTAT(espstat.esps_hdrops, ahstat.ahs_hdrops,
+			    ipcompstat.ipcomps_hdrops);
 			return ENOBUFS;
 		}
 
@@ -314,7 +334,8 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff,
 
 				m_freem(m);
 				IPSEC_ISTAT(espstat.esps_pdrops,
-				    ahstat.ahs_pdrops);
+				    ahstat.ahs_pdrops,
+				    ipcompstat.ipcomps_pdrops);
 				return EACCES;
 			}
 		}
@@ -347,7 +368,8 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff,
 
 				m_freem(m);
 				IPSEC_ISTAT(espstat.esps_pdrops,
-				    ahstat.ahs_pdrops);
+				    ahstat.ahs_pdrops,
+				    ipcompstat.ipcomps_pdrops);
 				return EACCES;
 			}
 		}
@@ -372,7 +394,8 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff,
 			    ntohl(tdbp->tdb_spi)));
 
 			m_freem(m);
-			IPSEC_ISTAT(espstat.esps_pdrops, ahstat.ahs_pdrops);
+			IPSEC_ISTAT(espstat.esps_pdrops, ahstat.ahs_pdrops,
+			    ipcompstat.ipcomps_pdrops);
 			return EACCES;
 		}
 	}
@@ -389,7 +412,8 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff,
 			    "for SA %s/%08x\n", ipsp_address(tdbp->tdb_dst),
 			    ntohl(tdbp->tdb_spi)));
 
-			IPSEC_ISTAT(espstat.esps_hdrops, ahstat.ahs_hdrops);
+			IPSEC_ISTAT(espstat.esps_hdrops, ahstat.ahs_hdrops,
+			    ipcompstat.ipcomps_hdrops);
 			return EACCES;
 		}
 
@@ -428,7 +452,8 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff,
 
 				m_freem(m);
 				IPSEC_ISTAT(espstat.esps_pdrops,
-				    ahstat.ahs_pdrops);
+				    ahstat.ahs_pdrops,
+				    ipcompstat.ipcomps_pdrops);
 				return EACCES;
 			}
 		}
@@ -461,7 +486,8 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff,
 
 				m_freem(m);
 				IPSEC_ISTAT(espstat.esps_pdrops,
-				    ahstat.ahs_pdrops);
+				    ahstat.ahs_pdrops,
+				    ipcompstat.ipcomps_pdrops);
 				return EACCES;
 			}
 		}
@@ -487,7 +513,8 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff,
 			    ntohl(tdbp->tdb_spi)));
 
 			m_freem(m);
-			IPSEC_ISTAT(espstat.esps_pdrops, ahstat.ahs_pdrops);
+			IPSEC_ISTAT(espstat.esps_pdrops, ahstat.ahs_pdrops,
+			    ipcompstat.ipcomps_pdrops);
 			return EACCES;
 		}
 	}
@@ -501,14 +528,15 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff,
 	 * with a PACKET_TAG_IPSEC_IN_CRYPTO_DONE as opposed to
 	 * PACKET_TAG_IPSEC_IN_DONE type; in that case, just change the type.
 	 */
-	if (mt == NULL) {
+	if (mt == NULL && tdbp->tdb_sproto != IPPROTO_IPCOMP) {
 		mtag = m_tag_get(PACKET_TAG_IPSEC_IN_DONE,
 		    sizeof(struct tdb_ident), M_NOWAIT);
 		if (mtag == NULL) {
 			m_freem(m);
 			DPRINTF(("ipsec_common_input_cb(): failed to "
 			    "get tag\n"));
-			IPSEC_ISTAT(espstat.esps_hdrops, ahstat.ahs_hdrops);
+			IPSEC_ISTAT(espstat.esps_hdrops, ahstat.ahs_hdrops,
+			    ipcompstat.ipcomps_hdrops);
 			return ENOMEM;
 		}
 
@@ -532,6 +560,8 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff,
 		if (tdbp->tdb_authalgxform)
 			m->m_flags |= M_AUTH;
 	}
+	else if (sproto == IPPROTO_IPCOMP)
+		m->m_flags |= M_COMP;
 	else
 		m->m_flags |= M_AUTH;
 
@@ -572,6 +602,11 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff,
 		case IPPROTO_AH:
 			return ah4_input_cb(m);
 
+#ifdef IPCOMP
+		case IPPROTO_IPCOMP:
+			return ipcomp4_input_cb(m);
+#endif /* IPCOMP */
+
 		default:
 			DPRINTF(("ipsec_common_input_cb(): unknown/unsupported"
 			    " security protocol %d\n", sproto));
@@ -589,6 +624,11 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff,
 
 		case IPPROTO_AH:
 			return ah6_input_cb(m, skip, protoff);
+
+#ifdef IPCOMP
+		case IPPROTO_IPCOMP:
+			return ipcomp6_input_cb(m, skip, protoff);
+#endif /* IPCOMP */
 
 		default:
 			DPRINTF(("ipsec_common_input_cb(): unknown/unsupported"
@@ -638,7 +678,24 @@ ah_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlen, void *newp,
 		return sysctl_int(oldp, oldlen, newp, newlen, &ah_enable);
 	default:
 		return ENOPROTOOPT;
-	}
+    }
+    /* NOTREACHED */
+}
+
+int
+ipcomp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlen, void *newp,
+    size_t newlen)
+{
+	/* All sysctl names at this level are terminal. */
+	if (namelen != 1)
+		return ENOTDIR;
+    
+	switch (name[0]) {
+	case IPCOMPCTL_ENABLE:
+		return sysctl_int(oldp, oldlen, newp, newlen, &ipcomp_enable);
+	default:
+		return ENOPROTOOPT;
+	}	
 	/* NOTREACHED */
 }
 
@@ -741,6 +798,50 @@ esp4_input_cb(struct mbuf *m, ...)
 	splx(s);
 	return 0;
 }
+
+/* IPv4 IPCOMP wrapper */
+#ifdef IPCOMP
+void
+ipcomp4_input(struct mbuf *m, ...)
+{
+	int skip;
+	va_list ap;
+	va_start(ap, m);
+	skip = va_arg(ap, int);
+	va_end(ap);
+
+	ipsec_common_input(m, skip, offsetof(struct ip, ip_p), AF_INET,
+	    IPPROTO_IPCOMP);
+}
+
+/* IPv4 IPCOMP callback */
+int
+ipcomp4_input_cb(struct mbuf *m, ...)
+{
+	struct ifqueue *ifq = &ipintrq;
+	int s = splimp();
+    
+	/*
+	 * Interface pointer is already in first mbuf; chop off the
+	 * `outer' header and reschedule.
+	 */
+	if (IF_QFULL(ifq)) {
+		IF_DROP(ifq);
+		ipcompstat.ipcomps_qfull++;
+		splx(s);
+	
+		m_freem(m);
+		DPRINTF(("ipcomp4_input_cb(): dropped packet because of full IP queue\n"));
+		return ENOBUFS;
+	}
+
+	IF_ENQUEUE(ifq, m);
+	schednetisr(NETISR_IP);
+	splx(s);
+
+	return 0;
+}
+#endif /* IPCOMP */
 
 void *
 ipsec_common_ctlinput(int cmd, struct sockaddr *sa, void *v, int proto)
@@ -946,12 +1047,72 @@ esp6_input(struct mbuf **mp, int *offp, int proto)
 	}
 	ipsec_common_input(*mp, *offp, protoff, AF_INET6, proto);
 	return IPPROTO_DONE;
+
 }
 
-/* IPv6 ESP callback. */
+/* IPv6 ESP callback */
 int
 esp6_input_cb(struct mbuf *m, int skip, int protoff)
 {
 	return ah6_input_cb(m, skip, protoff);
 }
+
+/* IPv6 IPcomp wrapper */
+#ifdef IPCOMP
+int
+ipcomp6_input(struct mbuf **mp, int *offp, int proto)
+{
+	int l = 0;
+	int protoff;
+	struct ip6_ext ip6e;
+
+	if (*offp < sizeof(struct ip6_hdr)) {
+		DPRINTF(("ipcomp6_input(): bad offset\n"));
+		return IPPROTO_DONE;
+	} else if (*offp == sizeof(struct ip6_hdr)) {
+		protoff = offsetof(struct ip6_hdr, ip6_nxt);
+	} else {
+		/* Chase down the header chain... */
+		protoff = sizeof(struct ip6_hdr);
+
+		do {
+			protoff += l;
+			m_copydata(*mp, protoff, sizeof(ip6e), 
+			    (caddr_t) &ip6e);
+			if (ip6e.ip6e_nxt == IPPROTO_AH)
+				l = (ip6e.ip6e_len + 2) << 2;
+			else
+				l = (ip6e.ip6e_len + 1) << 3;
+#ifdef DIAGNOSTIC
+			if (l <= 0)
+				panic("ipcomp6_input: l went zero or negative");
+#endif
+		} while (protoff + l < *offp);
+
+		/* Malformed packet check */
+		if (protoff + l != *offp) {
+			DPRINTF(("ipcomp6_input(): bad packet header chain\n"));
+			ipcompstat.ipcomps_hdrops++;
+			m_freem(*mp);
+			*mp = NULL;
+			return IPPROTO_DONE;
+		}
+
+		protoff += offsetof(struct ip6_ext, ip6e_nxt);
+	}
+	ipsec_common_input(*mp, *offp, protoff, AF_INET6, proto);
+	return IPPROTO_DONE;
+}
+
+/* IPv6 IPcomp callback */
+int
+ipcomp6_input_cb(struct mbuf *m, int skip, int protoff)
+{
+	return ah6_input_cb(m, skip, protoff);
+}
+#endif /* IPCOMP */
+
 #endif /* INET6 */
+
+
+

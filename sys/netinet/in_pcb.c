@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.55 2001/06/12 10:59:53 angelos Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.56 2001/07/05 16:45:54 jjbg Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -101,6 +101,7 @@ struct	in_addr zeroin_addr;
 extern int ipsec_auth_default_level;
 extern int ipsec_esp_trans_default_level;
 extern int ipsec_esp_network_default_level;
+extern int ipsec_ipcomp_default_level;
 
 /*
  * These configure the range of local port addresses assigned to
@@ -173,6 +174,7 @@ in_pcballoc(so, v)
 	inp->inp_seclevel[SL_AUTH] = ipsec_auth_default_level;
 	inp->inp_seclevel[SL_ESP_TRANS] = ipsec_esp_trans_default_level;
 	inp->inp_seclevel[SL_ESP_NETWORK] = ipsec_esp_network_default_level;
+	inp->inp_seclevel[SL_IPCOMP] = ipsec_ipcomp_default_level;
 	s = splnet();
 	CIRCLEQ_INSERT_HEAD(&table->inpt_queue, inp, inp_queue);
 	LIST_INSERT_HEAD(INPCBHASH(table, &inp->inp_faddr, inp->inp_fport,

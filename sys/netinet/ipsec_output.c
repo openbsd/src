@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_output.c,v 1.17 2001/06/26 04:17:57 angelos Exp $ */
+/*	$OpenBSD: ipsec_output.c,v 1.18 2001/07/05 16:45:55 jjbg Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -47,6 +47,7 @@
 #include <netinet/ip_ipsp.h>
 #include <netinet/ip_ah.h>
 #include <netinet/ip_esp.h>
+#include <netinet/ip_ipcomp.h>
 #include <crypto/xform.h>
 
 #ifdef ENCDEBUG
@@ -76,7 +77,8 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 
 	/* Check that the transform is allowed by the administrator. */
 	if ((tdb->tdb_sproto == IPPROTO_ESP && !esp_enable) ||
-	    (tdb->tdb_sproto == IPPROTO_AH && !ah_enable)) {
+	    (tdb->tdb_sproto == IPPROTO_AH && !ah_enable) ||
+	    (tdb->tdb_sproto == IPPROTO_IPCOMP && !ipcomp_enable)) {
 		DPRINTF(("ipsp_process_packet(): IPSec outbound packet "
 		    "dropped due to policy (check your sysctls)\n"));
 		m_freem(m);
@@ -289,6 +291,16 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 		break;
 #endif /* INET6 */
 	}
+
+#ifdef IPCOMP
+	/* Non expansion policy for IPCOMP */
+	if (tdb->tdb_sproto == IPPROTO_IPCOMP) {
+		if ((m->m_pkthdr.len - i) < tdb->tdb_compalgxform->minlen) {
+			/* No need to compress, leave the packet untouched */
+			return ipsp_process_done(m, tdb);
+		}
+	}
+#endif /* IPCOMP */
 
 	/* Invoke the IPsec transform. */
 	return (*(tdb->tdb_xform->xf_output))(m, tdb, NULL, i, off);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_proto.c,v 1.30 2001/06/24 18:22:47 provos Exp $	*/
+/*	$OpenBSD: in_proto.c,v 1.31 2001/07/05 16:45:54 jjbg Exp $	*/
 /*	$NetBSD: in_proto.c,v 1.14 1996/02/18 18:58:32 christos Exp $	*/
 
 /*
@@ -285,6 +285,13 @@ struct protosw inetsw[] = {
   rip_usrreq,
   0,          0,              0,              0,		etherip_sysctl
 },
+#ifdef IPCOMP
+{ SOCK_RAW,   &inetdomain,    IPPROTO_IPCOMP, PR_ATOMIC|PR_ADDR,
+  ipcomp4_input,  rip_output, 0,              rip_ctloutput,
+  rip_usrreq,
+  0,          0,              0,              0,                ipcomp_sysctl
+},
+#endif /* IPCOMP */
 #endif /* IPSEC */
 #if NGRE > 0
 { SOCK_RAW,     &inetdomain,    IPPROTO_GRE,    PR_ATOMIC|PR_ADDR,

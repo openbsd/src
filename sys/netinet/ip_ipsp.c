@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.139 2001/06/27 02:32:58 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.140 2001/07/05 16:45:54 jjbg Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -91,6 +91,7 @@ void		tdb_soft_firstuse __P((void *v));
 extern int	ipsec_auth_default_level;
 extern int	ipsec_esp_trans_default_level;
 extern int	ipsec_esp_network_default_level;
+extern int	ipsec_ipcomp_default_level;
 
 extern int encdebug;
 int ipsec_in_use = 0;
@@ -117,6 +118,11 @@ struct xformsw xformsw[] = {
 	{ XF_ESP,	 XFT_CONF|XFT_AUTH, "IPsec ESP",
 	  esp_attach,	esp_init,  esp_zeroize,
 	  esp_input,	esp_output, },
+#ifdef IPCOMP
+	{ XF_IPCOMP,	XFT_COMP, "IPcomp",
+	  ipcomp_attach,    ipcomp_init, ipcomp_zeroize,
+	  ipcomp_input,     ipcomp_output, },
+#endif /* IPCOMP */
 #ifdef TCP_SIGNATURE
 	{ XF_TCPSIGNATURE,	 XFT_AUTH, "TCP MD5 Signature Option, RFC 2385",
 	  tcp_signature_tdb_attach, 	tcp_signature_tdb_init,
@@ -187,7 +193,14 @@ reserve_spi(u_int32_t sspi, u_int32_t tspi, union sockaddr_union *src,
 	int nums, s;
 
 	/* Don't accept ranges only encompassing reserved SPIs. */
-	if (tspi < sspi || tspi <= SPI_RESERVED_MAX) {
+	if (sproto != IPPROTO_IPCOMP && 
+	    (tspi < sspi || tspi <= SPI_RESERVED_MAX)) {
+		(*errval) = EINVAL;
+		return 0;
+	}
+	if (sproto == IPPROTO_IPCOMP && (tspi < sspi ||
+	    tspi <= CPI_RESERVED_MAX ||
+	    tspi >= CPI_PRIVATE_MIN)) {
 		(*errval) = EINVAL;
 		return 0;
 	}
@@ -195,6 +208,19 @@ reserve_spi(u_int32_t sspi, u_int32_t tspi, union sockaddr_union *src,
 	/* Limit the range to not include reserved areas. */
 	if (sspi <= SPI_RESERVED_MAX)
 		sspi = SPI_RESERVED_MAX + 1;
+
+	/* For IPCOMP the CPI is only 16 bits long, what a good idea.... */
+
+	if (sproto == IPPROTO_IPCOMP) {
+		u_int32_t t;
+		if (sspi >= 0x10000)
+			sspi = 0xffff;
+		if (tspi >= 0x10000)
+			tspi = 0xffff;
+		if (sspi > tspi) {
+			t = sspi; sspi = tspi; tspi = t;
+		}
+	}
 
 	if (sspi == tspi)   /* Asking for a specific SPI. */
 		nums = 1;

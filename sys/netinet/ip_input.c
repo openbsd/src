@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.89 2001/06/28 21:53:42 provos Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.90 2001/07/05 16:45:54 jjbg Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -64,6 +64,10 @@
 #include <netinet/ip_var.h>
 #include <netinet/ip_icmp.h>
 
+#ifdef IPSEC
+#include <netinet/ip_ipsp.h>
+#endif /* IPSEC */
+
 #ifndef	IPFORWARDING
 #ifdef GATEWAY
 #define	IPFORWARDING	1	/* forward IP packets not for us */
@@ -96,6 +100,7 @@ int ipsec_exp_first_use = IPSEC_DEFAULT_EXP_FIRST_USE;
 int ipsec_expire_acquire = IPSEC_DEFAULT_EXPIRE_ACQUIRE;
 char ipsec_def_enc[20];
 char ipsec_def_auth[20];
+char ipsec_def_comp[20];
 
 /*
  * Note: DIRECTED_BROADCAST is handled this way so that previous
@@ -124,6 +129,7 @@ struct rttimer_queue *ip_mtudisc_timeout_q = NULL;
 int	ipsec_auth_default_level = IPSEC_AUTH_LEVEL_DEFAULT;
 int	ipsec_esp_trans_default_level = IPSEC_ESP_TRANS_LEVEL_DEFAULT;
 int	ipsec_esp_network_default_level = IPSEC_ESP_NETWORK_LEVEL_DEFAULT;
+int	ipsec_ipcomp_default_level = IPSEC_IPCOMP_LEVEL_DEFAULT;
 
 /* Keep track of memory used for reassembly */
 int	ip_maxqueue = 300;
@@ -247,6 +253,7 @@ ip_init()
 
 	strncpy(ipsec_def_enc, IPSEC_DEFAULT_DEF_ENC, sizeof(ipsec_def_enc));
 	strncpy(ipsec_def_auth, IPSEC_DEFAULT_DEF_AUTH, sizeof(ipsec_def_auth));
+	strncpy(ipsec_def_comp, IPSEC_DEFAULT_DEF_COMP, sizeof(ipsec_def_comp));
 }
 
 struct	sockaddr_in ipaddr = { sizeof(ipaddr), AF_INET };
@@ -608,7 +615,8 @@ found:
          * While this is not the most paranoid setting, it allows
          * some flexibility in handling of nested tunnels etc.
          */
-        if ((ip->ip_p == IPPROTO_ESP) || (ip->ip_p == IPPROTO_AH))
+        if ((ip->ip_p == IPPROTO_ESP) || (ip->ip_p == IPPROTO_AH) ||
+	    (ip->ip_p == IPPROTO_IPCOMP))
           goto skipipsec;
 
 	/*
@@ -1650,6 +1658,10 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	case IPCTL_IPSEC_EXPIRE_ACQUIRE:
 	        return (sysctl_int(oldp, oldlenp, newp, newlen,
 				   &ipsec_expire_acquire));
+	case IPCTL_IPSEC_IPCOMP_ALGORITHM:
+	        return (sysctl_tstring(oldp, oldlenp, newp, newlen,
+				       ipsec_def_comp, 
+				       sizeof(ipsec_def_comp)));
 	default:
 		return (EOPNOTSUPP);
 	}
