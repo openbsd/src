@@ -1,4 +1,4 @@
-/* $OpenBSD: locore.s,v 1.15 2001/02/08 13:38:14 art Exp $ */
+/* $OpenBSD: locore.s,v 1.16 2001/06/11 08:51:20 art Exp $ */
 /* $NetBSD: locore.s,v 1.80 2000/09/04 00:31:59 thorpej Exp $ */
 
 /*-
@@ -624,9 +624,7 @@ LEAF(savefpstate, 1)
 	stt	$f25, (25 * 8)(t1)
 	stt	$f26, (26 * 8)(t1)
 	stt	$f27, (27 * 8)(t1)
-	.set noat
 	stt	$f28, (28 * 8)(t1)
-	.set at
 	stt	$f29, (29 * 8)(t1)
 	stt	$f30, (30 * 8)(t1)
 
