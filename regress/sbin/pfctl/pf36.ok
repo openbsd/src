@@ -3,12 +3,12 @@ nat on lo0 inet from any to 127.0.0.1 -> { 127.0.0.1, 127.0.0.2 } round-robin
 nat on lo0 inet from any to 127.0.0.1 -> 127.0.0.0/24 bitmask
 nat on lo0 inet from any to 127.0.0.1 -> 127.0.0.0/24 random
 nat on lo0 inet from any to 127.0.0.1 -> 127.0.0.0/24 source-hash 0x0123456789abcdef0123456789abcdef
-nat on lo0 inet from any to 127.0.0.1 -> 127.0.0.0/24 source-hash 0x93e3a84d77f522fdf7fd6c42b0d352fe
+nat on lo0 inet from any to 127.0.0.1 -> 127.0.0.0/24 source-hash 0x4da8e393fd22f577426cfdf7fe52d3b0
 nat on lo0 inet from any to 127.0.0.1 -> 127.0.0.0/24 round-robin
 rdr on lo0 inet from any to 127.0.0.1 -> { 127.0.0.1, 127.0.0.2 } round-robin
 rdr on lo0 inet from any to 127.0.0.1 -> { 127.0.0.1, 127.0.0.2 } round-robin
 rdr on lo0 inet from any to 127.0.0.1 -> 127.0.0.0/24 bitmask
 rdr on lo0 inet from any to 127.0.0.1 -> 127.0.0.0/24 random
 rdr on lo0 inet from any to 127.0.0.1 -> 127.0.0.0/24 source-hash 0x0123456789abcdef0123456789abcdef
-rdr on lo0 inet from any to 127.0.0.1 -> 127.0.0.0/24 source-hash 0x93e3a84d77f522fdf7fd6c42b0d352fe
+rdr on lo0 inet from any to 127.0.0.1 -> 127.0.0.0/24 source-hash 0x4da8e393fd22f577426cfdf7fe52d3b0
 rdr on lo0 inet from any to 127.0.0.1 -> 127.0.0.0/24 round-robin
