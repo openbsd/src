@@ -1,5 +1,5 @@
-/* $OpenBSD: wsconsio.h,v 1.1 2000/05/16 23:49:11 mickey Exp $ */
-/* $NetBSD: wsconsio.h,v 1.28 2000/03/13 01:46:44 sato Exp $ */
+/* $OpenBSD: wsconsio.h,v 1.2 2000/06/30 05:08:06 mickey Exp $ */
+/* $NetBSD: wsconsio.h,v 1.30 2000/06/02 23:45:13 matt Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -219,6 +219,12 @@ struct wsmouse_calibcoords {
 #define		WSDISPLAY_TYPE_TX	15	/* DEC TC TX */
 #define		WSDISPLAY_TYPE_HPCFB	16	/* Handheld/PalmSize PC */
 #define		WSDISPLAY_TYPE_VIDC	17	/* Acorn/ARM VIDC */
+#define		WSDISPLAY_TYPE_SPX	18	/* DEC SPX (VS3100/VS4000) */
+#define		WSDISPLAY_TYPE_GPX	19	/* DEC GPX (uVAX/VS2K/VS3100 */
+#define		WSDISPLAY_TYPE_LCG	20	/* DEC LCG (VS4000) */
+#define		WSDISPLAY_TYPE_VAX_MONO	21	/* DEC VS2K/VS3100 mono */
+#define		WSDISPLAY_TYPE_SB_P9100	22	/* Tadpole SPARCbook P9100 */
+#define		WSDISPLAY_TYPE_EGA	23	/* (generic) EGA */
 
 /* Basic display information.  Not applicable to all display types. */
 struct wsdisplay_fbinfo {
