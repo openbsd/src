@@ -18,7 +18,7 @@
 # archive site. Check with Archie if you don't know where that can be.)
 #
 
-# $Id: Head.U,v 3.0.1.8 1995/07/25 13:40:02 ram Exp $
+# $Id: Configure,v 1.1.1.1 1996/08/19 10:11:33 downsj Exp $
 #
 # Generated on Wed Feb 21 14:26:18 EST 1996 [metaconfig 3.0 PL60]
 
@@ -1934,14 +1934,16 @@ rp='What is your architecture name'
 archname="$ans"
 myarchname="$tarch"
 
-: is AFS running?
-echo " "
-if test -d /afs; then
-	echo "AFS may be running... I'll be extra cautious then..." >&4
-	afs=true
-else
-	echo "AFS does not seem to be running..." >&4
+if [ -z "$afs" ]; then
+	: is AFS running?
+	echo " "
+	if test -d /afs; then
+		echo "AFS may be running... I'll be extra cautious then..." >&4
+		afs=true
+	else
+		echo "AFS does not seem to be running..." >&4
 	afs=false
+	fi
 fi
 
 : decide how portable to be.  Allow command line overrides.
