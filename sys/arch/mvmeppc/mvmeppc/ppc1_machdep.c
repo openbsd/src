@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppc1_machdep.c,v 1.9 2002/06/12 03:49:59 miod Exp $	*/
+/*	$OpenBSD: ppc1_machdep.c,v 1.10 2004/01/24 22:15:58 miod Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -120,7 +120,7 @@ size_memory(void)
 	 * count it up.
 	 */
 	max = (void *)MAXPHYSMEM;
-	for (look = (void *)Roundup(end, STRIDE); look < max;
+	for (look = (void *)Roundup(&end, STRIDE); look < max;
 		 look = (int *)((unsigned)look + STRIDE)) {
 		unsigned save;
 
@@ -145,7 +145,6 @@ size_memory(void)
 			break;
 		*look = save;
 	}
-look = (unsigned int *)0x03f00000;	/* XXX */
 	physmem = btoc(trunc_page((unsigned)look)); /* in pages */
 	total_mem = trunc_page((unsigned)look);
 #ifdef USE_BUG
