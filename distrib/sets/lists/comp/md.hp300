@@ -82,6 +82,8 @@
 ./usr/lib/gcc-lib/m68k-unknown-openbsd2.8/2.95.3/f771
 ./usr/lib/gcc-lib/m68k-unknown-openbsd2.8/2.95.3/fpic
 ./usr/lib/gcc-lib/m68k-unknown-openbsd2.8/2.95.3/fpic/libgcc.a
+./usr/lib/gcc-lib/m68k-unknown-openbsd2.8/2.95.3/fPIC
+./usr/lib/gcc-lib/m68k-unknown-openbsd2.8/2.95.3/fPIC/libgcc.a
 ./usr/lib/gcc-lib/m68k-unknown-openbsd2.8/2.95.3/include/README
 ./usr/lib/gcc-lib/m68k-unknown-openbsd2.8/2.95.3/include/exception
 ./usr/lib/gcc-lib/m68k-unknown-openbsd2.8/2.95.3/include/float.h
