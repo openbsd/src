@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcireg.h,v 1.19 2002/07/13 18:20:26 mickey Exp $	*/
+/*	$OpenBSD: pcireg.h,v 1.20 2003/02/08 18:24:53 jason Exp $	*/
 /*	$NetBSD: pcireg.h,v 1.26 2000/05/10 16:58:42 thorpej Exp $	*/
 
 /*
@@ -489,5 +489,68 @@ typedef u_int8_t pci_intr_line_t;
 #define	PCI_INTERRUPT_PIN_C			0x03
 #define	PCI_INTERRUPT_PIN_D			0x04
 #define	PCI_INTERRUPT_PIN_MAX			0x04
+
+/*
+ * Vital Product Data resource tags.
+ */
+struct pci_vpd_smallres {
+	uint8_t		vpdres_byte0;		/* length of data + tag */
+	/* Actual data. */
+} __attribute__((__packed__));
+
+struct pci_vpd_largeres {
+	uint8_t		vpdres_byte0;
+	uint8_t		vpdres_len_lsb;		/* length of data only */
+	uint8_t		vpdres_len_msb;
+	/* Actual data. */
+} __attribute__((__packed__));
+
+#define	PCI_VPDRES_ISLARGE(x)			((x) & 0x80)
+
+#define	PCI_VPDRES_SMALL_LENGTH(x)		((x) & 0x7)
+#define	PCI_VPDRES_SMALL_NAME(x)		(((x) >> 3) & 0xf)
+
+#define	PCI_VPDRES_LARGE_NAME(x)		((x) & 0x7f)
+
+#define	PCI_VPDRES_TYPE_COMPATIBLE_DEVICE_ID	0x3	/* small */
+#define	PCI_VPDRES_TYPE_VENDOR_DEFINED		0xe	/* small */
+#define	PCI_VPDRES_TYPE_END_TAG			0xf	/* small */
+
+#define	PCI_VPDRES_TYPE_IDENTIFIER_STRING	0x02	/* large */
+#define	PCI_VPDRES_TYPE_VPD			0x10	/* large */
+
+struct pci_vpd {
+	uint8_t		vpd_key0;
+	uint8_t		vpd_key1;
+	uint8_t		vpd_len;		/* length of data only */
+	/* Actual data. */
+} __attribute__((__packed__));
+
+/*
+ * Recommended VPD fields:
+ *
+ *	PN		Part number of assembly
+ *	FN		FRU part number
+ *	EC		EC level of assembly
+ *	MN		Manufacture ID
+ *	SN		Serial Number
+ *
+ * Conditionally recommended VPD fields:
+ *
+ *	LI		Load ID
+ *	RL		ROM Level
+ *	RM		Alterable ROM Level
+ *	NA		Network Address
+ *	DD		Device Driver Level
+ *	DG		Diagnostic Level
+ *	LL		Loadable Microcode Level
+ *	VI		Vendor ID/Device ID
+ *	FU		Function Number
+ *	SI		Subsystem Vendor ID/Subsystem ID
+ *
+ * Additional VPD fields:
+ *
+ *	Z0-ZZ		User/Product Specific
+ */
 
 #endif /* _DEV_PCI_PCIREG_H_ */
