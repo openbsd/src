@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.303 2004/10/28 19:29:53 mcbride Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.304 2004/11/08 23:32:08 aaron Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -643,6 +643,15 @@ For example,
 .Bd -literal -offset indent
 scrub in on $ext_if all fragment reassemble
 .Ed
+.Pp
+The
+.Ar no
+option prefixed to a scrub rule causes matching packets to remain unscrubbed,
+much in the same way as
+.Ar drop quick
+works in the packet filter (see below).
+This mechanism should be used when it is necessary to exclude specific packets
+from broader scrub rules.
 .Sh QUEUEING
 Packets can be assigned to queues for the purpose of bandwidth
 control.
