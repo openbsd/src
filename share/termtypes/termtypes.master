@@ -1,13 +1,13 @@
 ######## TERMINAL TYPE DESCRIPTIONS SOURCE FILE
 #
-# $OpenBSD: termtypes.master,v 1.29 2001/02/08 05:04:55 millert Exp $
+# $OpenBSD: termtypes.master,v 1.30 2001/02/22 04:10:29 millert Exp $
 #
 # This version of terminfo.src is distributed with ncurses.
 # Report bugs to
 #	bug-ncurses@gnu.org
 #
 #	Version 10.2.1
-#	Date: 2000/12/17 02:20:54
+#	Date: 2001/02/11 01:36:18
 #	terminfo syntax
 #
 #	Eric S. Raymond		(current maintainer)
@@ -2836,10 +2836,13 @@ xterm-bold|xterm terminal emulator (X11R6 Window System) standout w/bold,
 # (kterm: this had extension capabilities ":KJ:TY=ascii:" -- esr)
 # (kterm should not invoke DEC Graphics as the alternate character set
 #  -- Kenji Rikitake)
+# (proper setting of enacs, smacs, rmacs makes kterm to use DEC Graphics
+#  -- MATSUMOTO Shoji)
 kterm|kterm kanji terminal emulator (X window system), 
 	eslok, hs, 
-	acsc@, csr=\E[%i%p1%d;%p2%dr, dsl=\E[?H, enacs@, fsl=\E[?F, 
-	kmous=\E[M, rc=\E8, rmacs@, sc=\E7, smacs@, 
+	acsc=++\,\,--..00II``aaffgghhjjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~, 
+	csr=\E[%i%p1%d;%p2%dr, dsl=\E[?H, enacs=, fsl=\E[?F, 
+	kmous=\E[M, rc=\E8, rmacs=\E(B, sc=\E7, smacs=\E(0, 
 	tsl=\E[?E\E[?%i%dT, use=xterm-r6, use=ecma+color, 
 kterm-color|kterm-co|kterm with ANSI colors, 
 	ncv@, use=kterm, use=ecma+color, 
@@ -3219,12 +3222,12 @@ screen|VT 100/ANSI X3.64 virtual terminal,
 	kcud1=\EOB, kcuf1=\EOC, kcuu1=\EOA, kdch1=\E[3~, kf1=\EOP, 
 	kf10=\E[21~, kf11=\E[23~, kf12=\E[24~, kf2=\EOQ, kf3=\EOR, 
 	kf4=\EOS, kf5=\E[15~, kf6=\E[17~, kf7=\E[18~, kf8=\E[19~, 
-	kf9=\E[20~, khome=\E[1~, kich1=\E[2~, kll=\E[4~, knp=\E[6~, 
-	kpp=\E[5~, nel=\EE, rc=\E8, rev=\E[7m, ri=\EM, rmacs=^O, 
-	rmir=\E[4l, rmkx=\E[?1l\E>, rmso=\E[23m, rmul=\E[24m, 
-	rs2=\Ec, sc=\E7, sgr0=\E[m, smacs=^N, smir=\E[4h, 
-	smkx=\E[?1h\E=, smso=\E[3m, smul=\E[4m, tbc=\E[3g, E0=\E(B, 
-	S0=\E(%p1%c, use=ecma+color, 
+	kf9=\E[20~, khome=\E[1~, kich1=\E[2~, kll=\E[4~, 
+	kmous=\E[M, knp=\E[6~, kpp=\E[5~, nel=\EE, rc=\E8, rev=\E[7m, 
+	ri=\EM, rmacs=^O, rmir=\E[4l, rmkx=\E[?1l\E>, rmso=\E[23m, 
+	rmul=\E[24m, rs2=\Ec, sc=\E7, sgr0=\E[m, smacs=^N, 
+	smir=\E[4h, smkx=\E[?1h\E=, smso=\E[3m, smul=\E[4m, 
+	tbc=\E[3g, E0=\E(B, S0=\E(%p1%c, use=ecma+color, 
 
 screen-w|VT 100/ANSI X3.64 virtual terminal with 132 cols, 
 	cols#132, use=screen, 
@@ -18647,6 +18650,12 @@ v3220|LANPAR Vision II model 3220/3221/3222,
 # 2000-12-16
 #	* improved scoansi, based on SCO man-page, and testing console,
 #	  scoterm with tack -TD
+#
+# 2001-01-27
+#	* modify kterm to use acsc via SCS controls.
+#
+# 2001-02-10
+#	* screen 3.9.8 allows xterm mouse controls to pass-through
 #
 # The following sets edit modes for GNU EMACS.
 # Local Variables:
