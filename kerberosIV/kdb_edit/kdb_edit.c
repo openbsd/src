@@ -1,8 +1,9 @@
-/*	$Id: kdb_edit.c,v 1.3 1997/08/25 23:08:44 deraadt Exp $	*/
+/*	$OpenBSD: kdb_edit.c,v 1.4 1997/12/17 10:21:26 art Exp $	*/
+/* $KTH: kdb_edit.c,v 1.25 1997/05/07 01:34:05 assar Exp $ */
 
 /*-
  * Copyright 1987, 1988 by the Student Information Processing Board
- *	of the Massachusetts Institute of Technology
+ *      of the Massachusetts Institute of Technology
  *
  * Permission to use, copy, modify, and distribute this software
  * and its documentation for any purpose and without fee is
@@ -26,16 +27,14 @@
  * exit returns 	 0 ==> success -1 ==> error 
  */
 
-#include <adm_locl.h>
+#include "adm_locl.h"
 
 #ifdef DEBUG
 extern  kerb_debug;
 #endif
 
-#define zaptime(foo) bzero((char *)(foo), sizeof(*(foo)))
+#define zaptime(foo) memset((foo), 0, sizeof(*(foo)))
 
-static char    prog[32];
-char   *progname = prog;
 static int     nflag = 0;
 static int     debug;
 
@@ -57,7 +56,23 @@ static des_cblock master_key;
 static des_cblock session_key;
 static des_key_schedule master_key_schedule;
 static char pw_str[255];
-static int master_key_version;
+static long master_key_version;
+
+static char progname[]="kdb_edit";
+
+time_t
+tm2time (struct tm tm, int local)
+{
+     time_t t;
+
+     tm.tm_isdst = -1;
+
+     t = mktime (&tm);
+
+     if (!local)
+       t += t - mktime (gmtime (&t));
+     return t;
+}
 
 static void
 Usage(void)
@@ -66,27 +81,16 @@ Usage(void)
     exit(1);
 }
 
-/*
- * "fgets" where the nl is zapped afterwards.
- */
-static char*
-z_fgets(cp, count, fp)
-	char *cp;
-	int count;
-	FILE *fp;
+static char *
+n_gets(char *buf, int size)
 {
-	int ix;
-	char *p;
-
-	if (fgets(cp, count, fp) == 0) {
-		return 0;
-	}
-	cp[count-1] = 0;
-	if ((p = strchr(cp, '\n')) == 0) {
-		return 0;
-	}
+    char *p;
+    char *ret;
+    ret = fgets(buf, size, stdin);
+  
+    if (ret && (p = strchr(buf, '\n')))
 	*p = 0;
-	return cp;
+    return ret;
 }
 
 
@@ -97,49 +101,59 @@ change_principal(void)
     int     creating = 0;
     int     editpw = 0;
     int     changed = 0;
-    int    temp_long;
+    long    temp_long;		/* Don't change to int32_t, used by scanf */
     int     n;
-    struct tm 	*tp, edate, *localtime(const time_t *);
-    long 	maketime(struct tm *tp, int local);
+    struct tm 	*tp, edate;
 
     fprintf(stdout, "\nPrincipal name: ");
     fflush(stdout);
-    if (!z_fgets(input_name, sizeof input_name, stdin) || *input_name == '\0')
+    if (!n_gets(input_name, sizeof(input_name)) || *input_name == '\0')
 	return 0;
     fprintf(stdout, "Instance: ");
     fflush(stdout);
     /* instance can be null */
-    z_fgets(input_instance, sizeof input_instance, stdin);
+    n_gets(input_instance, sizeof(input_instance));
     j = kerb_get_principal(input_name, input_instance, principal_data,
 			   MAX_PRINCIPAL, &more);
     if (!j) {
 	fprintf(stdout, "\n\07\07<Not found>, Create [y] ? ");
-	z_fgets(temp, sizeof temp, stdin); /* Default case should work, it didn't */
+	fflush(stdout);
+	n_gets(temp, sizeof(temp));		/* Default case should work, it didn't */
 	if (temp[0] != 'y' && temp[0] != 'Y' && temp[0] != '\0')
 	    return -1;
 	/* make a new principal, fill in defaults */
 	j = 1;
 	creating = 1;
-	strcpy(principal_data[0].name, input_name);
-	strcpy(principal_data[0].instance, input_instance);
+	strncpy(principal_data[0].name, input_name, ANAME_SZ - 1);
+	principal_data[0].name[ANAME_SZ - 1] = '\0';
+	strncpy(principal_data[0].instance, input_instance, INST_SZ - 1);
+	principal_data[0].instance[INST_SZ - 1] = '\0';
+
 	principal_data[0].old = NULL;
 	principal_data[0].exp_date = default_princ.exp_date;
-	principal_data[0].max_life = default_princ.max_life;
+	if (strcmp(input_instance, "admin") == 0)
+	  principal_data[0].max_life = 1 + (CLOCK_SKEW/(5*60)); /*5+5 minutes*/
+	else if (strcmp(input_instance, "root") == 0)
+	  principal_data[0].max_life = 96; /* 8 hours */
+	else
+	  principal_data[0].max_life = default_princ.max_life;
 	principal_data[0].attributes = default_princ.attributes;
 	principal_data[0].kdc_key_ver = (unsigned char) master_key_version;
 	principal_data[0].key_version = 0; /* bumped up later */
     }
     tp = k_localtime(&principal_data[0].exp_date);
-    (void) snprintf(principal_data[0].exp_date_txt,
-		    sizeof(principal_data[0].exp_date_txt), "%4d-%02d-%02d",
-		    tp->tm_year > 1900 ? tp->tm_year : tp->tm_year + 1900,
-		    tp->tm_mon + 1, tp->tm_mday); /* January is 0, not 1 */
+    snprintf(principal_data[0].exp_date_txt,
+	     sizeof(principal_data[0].exp_date_txt),
+	     "%4d-%02d-%02d",
+	     tp->tm_year + 1900,
+	     tp->tm_mon + 1, tp->tm_mday); /* January is 0, not 1 */
     for (i = 0; i < j; i++) {
 	for (;;) {
 	    fprintf(stdout,
 		    "\nPrincipal: %s, Instance: %s, kdc_key_ver: %d",
 		    principal_data[i].name, principal_data[i].instance,
 		    principal_data[i].kdc_key_ver);
+	    fflush(stdout);
 	    editpw = 1;
 	    changed = 0;
 	    if (!creating) {
@@ -148,57 +162,57 @@ change_principal(void)
 		 * for the qualifier clause of the replace 
 		 */
 		principal_data[i].old = (char *) &old_principal;
-		bcopy(&principal_data[i], &old_principal,
-		      sizeof(old_principal));
+		memcpy(&old_principal, &principal_data[i],
+		       sizeof(old_principal));
 		printf("\nChange password [n] ? ");
-		z_fgets(temp, sizeof temp, stdin);
+		n_gets(temp, sizeof(temp));
 		if (strcmp("y", temp) && strcmp("Y", temp))
 		    editpw = 0;
 	    }
-	    fflush(stdout);
 	    /* password */
 	    if (editpw) {
 #ifdef NOENCRYPTION
 		placebo_read_pw_string(pw_str, sizeof pw_str,
 		    "\nNew Password: ", TRUE);
 #else
-                des_read_pw_string(pw_str, sizeof pw_str,
-			"\nNew Password: ", TRUE);
+                if(des_read_pw_string(pw_str, sizeof pw_str,
+			"\nNew Password: ", TRUE))
+		    continue;
 #endif
 		if (   strcmp(pw_str, "RANDOM") == 0
 		    || strcmp(pw_str, "") == 0) {
 		    printf("\nRandom password [y] ? ");
-		    z_fgets(temp, sizeof temp, stdin);
+		    n_gets(temp, sizeof(temp));
 		    if (!strcmp("n", temp) || !strcmp("N", temp)) {
 			/* no, use literal */
 #ifdef NOENCRYPTION
-			bzero(new_key, sizeof(des_cblock));
+			memset(new_key, 0, sizeof(des_cblock));
 			new_key[0] = 127;
 #else
 			des_string_to_key(pw_str, &new_key);
 #endif
-			bzero(pw_str, sizeof pw_str);	/* "RANDOM" */
+			memset(pw_str, 0, sizeof pw_str);	/* "RANDOM" */
 		    } else {
 #ifdef NOENCRYPTION
-			bzero(new_key, sizeof(des_cblock));
+			memset(new_key, 0, sizeof(des_cblock));
 			new_key[0] = 127;
 #else
 			des_new_random_key(&new_key);
 #endif
-			bzero(pw_str, sizeof pw_str);
+			memset(pw_str, 0, sizeof pw_str);
 		    }
 		} else if (!strcmp(pw_str, "NULL")) {
 		    printf("\nNull Key [y] ? ");
-		    z_fgets(temp, sizeof temp, stdin);
+		    n_gets(temp, sizeof(temp));
 		    if (!strcmp("n", temp) || !strcmp("N", temp)) {
 			/* no, use literal */
 #ifdef NOENCRYPTION
-			bzero(new_key, sizeof(des_cblock));
+			memset(new_key, 0, sizeof(des_cblock));
 			new_key[0] = 127;
 #else
 			des_string_to_key(pw_str, &new_key);
 #endif
-			bzero(pw_str, sizeof pw_str);	/* "NULL" */
+			memset(pw_str, 0, sizeof pw_str);	/* "NULL" */
 		    } else {
 
 			principal_data[i].key_low = 0;
@@ -207,22 +221,22 @@ change_principal(void)
 		    }
 		} else {
 #ifdef NOENCRYPTION
-		    bzero(new_key, sizeof(des_cblock));
+		    memset(new_key, 0, sizeof(des_cblock));
 		    new_key[0] = 127;
 #else
 		    des_string_to_key(pw_str, &new_key);
 #endif
-		    bzero(pw_str, sizeof pw_str);
+		    memset(pw_str, 0, sizeof pw_str);
 		}
 
 		/* seal it under the kerberos master key */
 		kdb_encrypt_key (&new_key, &new_key, 
 				 &master_key, master_key_schedule,
 				 DES_ENCRYPT);
-		bcopy(new_key, &principal_data[i].key_low, 4);
-		bcopy(((int *) new_key) + 1,
-		    &principal_data[i].key_high, 4);
-		bzero(new_key, sizeof(new_key));
+		copy_from_key(new_key,
+			      &principal_data[i].key_low,
+			      &principal_data[i].key_high);
+		memset(new_key, 0, sizeof(new_key));
 	null_key:
 		/* set master key version */
 		principal_data[i].kdc_key_ver =
@@ -238,15 +252,16 @@ change_principal(void)
 	    /* expiration date */
 	    fprintf(stdout, "Expiration date (enter yyyy-mm-dd) [ %s ] ? ",
 		    principal_data[i].exp_date_txt);
+	    fflush(stdout);
 	    zaptime(&edate);
-	    while (z_fgets(temp, sizeof temp, stdin) &&
-		   ((n = strlen(temp)) >
-		    sizeof(principal_data[0].exp_date_txt))) {
+	    while (n_gets(temp, sizeof(temp)) && ((n = strlen(temp)) >
+				  sizeof(principal_data[0].exp_date_txt))) {
 	    bad_date:
 		fprintf(stdout, "\07\07Date Invalid\n");
 		fprintf(stdout,
 			"Expiration date (enter yyyy-mm-dd) [ %s ] ? ",
 			principal_data[i].exp_date_txt);
+		fflush(stdout);
 		zaptime(&edate);
 	    }
 
@@ -254,20 +269,24 @@ change_principal(void)
 		if (sscanf(temp, "%d-%d-%d", &edate.tm_year,
 			      &edate.tm_mon, &edate.tm_mday) != 3)
 		    goto bad_date;
-		(void) strcpy(principal_data[i].exp_date_txt, temp);
 		edate.tm_mon--;		/* January is 0, not 1 */
 		edate.tm_hour = 23;	/* nearly midnight at the end of the */
 		edate.tm_min = 59;	/* specified day */
-		if (!(principal_data[i].exp_date = maketime(&edate, 1)))
+		if (krb_check_tm (edate))
 		    goto bad_date;
+		edate.tm_year -= 1900;
+		temp_long = tm2time (edate, 1);
+		strcpy(principal_data[i].exp_date_txt, temp);
+		principal_data[i].exp_date = temp_long;
 		changed = 1;
 	    }
 
 	    /* maximum lifetime */
 	    fprintf(stdout, "Max ticket lifetime (*5 minutes) [ %d ] ? ",
 		    principal_data[i].max_life);
-	    while (z_fgets(temp, sizeof temp, stdin) && *temp) {
-		if (sscanf(temp, "%d", &temp_long) != 1)
+	    fflush(stdout);
+	    while (n_gets(temp, sizeof(temp)) && *temp) {
+		if (sscanf(temp, "%ld", &temp_long) != 1)
 		    goto bad_life;
 		if (temp_long > 255 || (temp_long < 0)) {
 		bad_life:
@@ -275,6 +294,7 @@ change_principal(void)
 		    fprintf(stdout,
 			    "Max ticket lifetime (*5 minutes) [ %d ] ? ",
 			    principal_data[i].max_life);
+		    fflush(stdout);
 		    continue;
 		}
 		changed = 1;
@@ -286,14 +306,16 @@ change_principal(void)
 	    /* attributes */
 	    fprintf(stdout, "Attributes [ %d ] ? ",
 		    principal_data[i].attributes);
-	    while (z_fgets(temp, sizeof temp, stdin) && *temp) {
-		if (sscanf(temp, "%d", &temp_long) != 1)
+	    fflush(stdout);
+	    while (n_gets(temp, sizeof(temp)) && *temp) {
+		if (sscanf(temp, "%ld", &temp_long) != 1)
 		    goto bad_att;
 		if (temp_long > 65535 || (temp_long < 0)) {
 		bad_att:
 		    fprintf(stdout, "\07\07Invalid, choose 0-65535\n");
 		    fprintf(stdout, "Attributes [ %d ] ? ",
 			    principal_data[i].attributes);
+		    fflush(stdout);
 		    continue;
 		}
 		changed = 1;
@@ -319,8 +341,8 @@ change_principal(void)
 	    }
 
 
-	    bzero(&principal_data[i].key_low, 4);
-	    bzero(&principal_data[i].key_high, 4);
+	    memset(&principal_data[i].key_low, 0, 4);
+	    memset(&principal_data[i].key_high, 0, 4);
 	    fflush(stdout);
 	    break;
 	}
@@ -336,12 +358,12 @@ static void
 cleanup(void)
 {
 
-    bzero(master_key, sizeof(master_key));
-    bzero(session_key, sizeof(session_key));
-    bzero(master_key_schedule, sizeof(master_key_schedule));
-    bzero(principal_data, sizeof(principal_data));
-    bzero(new_key, sizeof(new_key));
-    bzero(pw_str, sizeof(pw_str));
+    memset(master_key, 0, sizeof(master_key));
+    memset(session_key, 0, sizeof(session_key));
+    memset(master_key_schedule, 0, sizeof(master_key_schedule));
+    memset(principal_data, 0, sizeof(principal_data));
+    memset(new_key, 0, sizeof(new_key));
+    memset(pw_str, 0, sizeof(pw_str));
 }
 
 int
@@ -349,17 +371,8 @@ main(int argc, char **argv)
 {
     /* Local Declarations */
 
-    int		n;
+    long    n;
 
-    prog[sizeof prog - 1] = '\0';	/* make sure terminated */
-    strncpy(prog, argv[0], sizeof prog - 1);	/* salt away invoking
-						 * program */
-
-    /* Assume <=32 signals */
-    if (NSIG > 32) {
-	fprintf(stderr, "%s: more than 32 signals defined.\n", prog);
-	exit(-1);
-    }
     while (--argc > 0 && (*++argv)[0] == '-')
 	for (i = 1; argv[0][i] != '\0'; i++) {
 	    switch (argv[0][i]) {
@@ -380,43 +393,26 @@ main(int argc, char **argv)
 		continue;
 
 	    default:
-		fprintf(stderr, "%s: illegal flag \"%c\"\n",
-			progname, argv[0][i]);
+		warnx ("illegal flag \"%c\"", argv[0][i]);
 		Usage();	/* Give message and die */
 	    }
-	};
+	}
 
     fprintf(stdout, "Opening database...\n");
     fflush(stdout);
     kerb_init();
-    if (argc > 0) {
-	if (kerb_db_set_name(*argv) != 0) {
-	    fprintf(stderr, "Could not open altername database name\n");
-	    exit(1);
-	}
-    }
+    if (argc > 0)
+	if (kerb_db_set_name(*argv) != 0)
+	    errx (1, "Could not open altername database name");
 
-#ifdef	notdef
-    no_core_dumps();		/* diddle signals to avoid core dumps! */
-
-    /* ignore whatever is reasonable */
-    signal(SIGHUP, SIG_IGN);
-    signal(SIGINT, SIG_IGN);
-    signal(SIGTSTP, SIG_IGN);
-
-#endif
-
-    if (kdb_get_master_key ((nflag == 0), 
-			    &master_key, master_key_schedule) != 0) {
-      fprintf (stdout, "Couldn't read master key.\n");
-      fflush (stdout);
-      exit (-1);
-    }
+    if (kdb_get_master_key ((nflag == 0) ? KDB_GET_PROMPT : 0, 
+			    &master_key, master_key_schedule) != 0)
+	errx (1, "Couldn't read master key.");
 
     if ((master_key_version = kdb_verify_master_key(&master_key,
 						    master_key_schedule,
 						    stdout)) < 0)
-      exit (-1);
+      return 1;
 
     /* Initialize non shared random sequence */
     des_init_random_number_generator(&master_key);
@@ -424,12 +420,8 @@ main(int argc, char **argv)
     /* lookup the default values */
     n = kerb_get_principal(KERB_DEFAULT_NAME, KERB_DEFAULT_INST,
 			   &default_princ, 1, &more);
-    if (n != 1) {
-	fprintf(stderr,
-	     "%s: Kerberos error on default value lookup, %ld found.\n",
-		progname, n);
-	exit(-1);
-    }
+    if (n != 1)
+	errx (1, "Kerberos error on default value lookup, %ld found.", n);
     fprintf(stdout, "Previous or default values are in [brackets] ,\n");
     fprintf(stdout, "enter return to leave the same, or new value.\n");
 
@@ -437,33 +429,5 @@ main(int argc, char **argv)
     }
 
     cleanup();
-    exit(0);
+    return 0;
 }
-
-#if 0
-static void
-sig_exit(sig, code, scp)
-    int     sig, code;
-    struct sigcontext *scp;
-{
-    cleanup();
-    fprintf(stderr,
-	"\nSignal caught, sig = %d code = %d old pc = 0x%X \nexiting",
-        sig, code, scp->sc_pc);
-    exit(-1);
-}
-
-static void
-no_core_dumps()
-{
-    signal(SIGQUIT, sig_exit);
-    signal(SIGILL, sig_exit);
-    signal(SIGTRAP, sig_exit);
-    signal(SIGIOT, sig_exit);
-    signal(SIGEMT, sig_exit);
-    signal(SIGFPE, sig_exit);
-    signal(SIGBUS, sig_exit);
-    signal(SIGSEGV, sig_exit);
-    signal(SIGSYS, sig_exit);
-}
-#endif
