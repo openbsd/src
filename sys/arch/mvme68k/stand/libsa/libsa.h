@@ -16,7 +16,3 @@ void exec_mvme __P((char *, int));
 /* parse_args.c */
 void parse_args __P((char **, int *));
 
-#ifndef RB_NOSYM
-#define RB_NOSYM 0x400
-#endif
-
