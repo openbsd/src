@@ -1,5 +1,5 @@
-.\"	$OpenBSD: iostat.8,v 1.6 1996/10/08 01:21:01 michaels Exp $
-.\"	$NetBSD: iostat.8,v 1.9 1996/05/10 23:20:28 thorpej Exp $
+.\"	$OpenBSD: iostat.8,v 1.7 1996/11/02 00:35:50 millert Exp $
+.\"	$NetBSD: iostat.8,v 1.10 1996/10/25 18:21:57 scottr Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -143,11 +143,11 @@ to display specific drives, their names may be supplied on the command
 line.
 .Pp
 .Bl -tag -width indent -compact
-.It K/t
+.It KB/t
 Kilobytes transferred per disk transfer
 .It t/s
 transfers per second
-.It Mb/s
+.It MB/s
 Megabytes transferred per second
 .Pp
 .El
@@ -155,7 +155,7 @@ The alternate display format, (selected with
 .Fl D
 ), presents the following values.
 .Bl -tag -width indent -compact
-.It Kb
+.It KB
 Kilobytes transferred
 .It xfr
 Disk transfers

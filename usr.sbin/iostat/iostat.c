@@ -1,5 +1,5 @@
-/*	$OpenBSD: iostat.c,v 1.4 1996/08/11 22:32:42 niklas Exp $ */
-/*	$NetBSD: iostat.c,v 1.9 1996/05/10 23:20:29 thorpej Exp $	*/
+/*	$OpenBSD: iostat.c,v 1.5 1996/11/02 00:35:50 millert Exp $	*/
+/*	$NetBSD: iostat.c,v 1.10 1996/10/25 18:21:58 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -76,7 +76,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)iostat.c    8.2 (Berkeley) 1/26/94";
 #else
-static char *rcsid = "$NetBSD: iostat.c,v 1.9 1996/05/10 23:20:29 thorpej Exp $"
+static char *rcsid = "$NetBSD: iostat.c,v 1.10 1996/10/25 18:21:58 scottr Exp $"
 ;
 #endif
 #endif /* not lint */
@@ -239,14 +239,14 @@ header(signo)
 	for (i = 0; i < dk_ndrive; i++)
 		if (cur.dk_select[i])
 			if (ISSET(todo, SHOW_TOTALS))
-				(void)printf("   K/t xfr Mb   ");
+				(void)printf("  KB/t xfr MB   ");
 			else
-				(void)printf("   K/t t/s Mb/s ");
+				(void)printf("  KB/t t/s MB/s ");
 
 	if (ISSET(todo, SHOW_STATS_2))
 	for (i = 0; i < dk_ndrive; i++)
 		if (cur.dk_select[i])
-			(void)printf("   Kb xfr time ");
+			(void)printf("   KB xfr time ");
 
 	if (ISSET(todo, SHOW_CPU))
 		(void)printf(" us ni sy in id");
