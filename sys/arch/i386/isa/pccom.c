@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccom.c,v 1.12 1997/09/03 20:55:29 deraadt Exp $	*/
+/*	$OpenBSD: pccom.c,v 1.13 1997/10/07 06:49:49 mickey Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*-
@@ -163,8 +163,6 @@ com_pcmcia_mod(pc_link, self, pc_cf, cf)
     struct cfdata *cf;
 {               
     int err; 
-    struct pcmciadevs *dev = pc_link->device;
-    struct ed_softc *sc = (void *)self; 
     if (!(err = PCMCIA_BUS_CONFIG(pc_link->adapter, pc_link, self,
 				  pc_cf, cf))) {
         pc_cf->memwin = 0;
@@ -223,7 +221,7 @@ com_pcmcia_isa_attach(parent, match, aux, pc_link)
 	struct com_softc *sc = match;
 
 	int rval;
-	if (rval = comprobe(parent, sc->sc_dev.dv_cfdata, ia)) {
+	if ((rval = comprobe(parent, sc->sc_dev.dv_cfdata, ia))) {
 		if (ISSET(pc_link->flags, PCMCIA_REATTACH)) {
 #ifdef PCCOM_DEBUG
 			printf("comreattach, hwflags=%x\n", sc->sc_hwflags);
