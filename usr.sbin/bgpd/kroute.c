@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.113 2005/03/13 15:34:37 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.114 2005/03/13 15:52:34 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1157,6 +1157,7 @@ fetchtable(void)
 		}
 
 		kr->r.flags = F_KERNEL;
+		kr->r.ifindex = rtm->rtm_index;
 
 		switch (sa->sa_family) {
 		case AF_INET:
@@ -1187,7 +1188,6 @@ fetchtable(void)
 				break;
 			case AF_LINK:
 				kr->r.flags |= F_CONNECTED;
-				kr->r.ifindex = rtm->rtm_index;
 				break;
 			}
 
