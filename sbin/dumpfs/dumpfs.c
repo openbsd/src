@@ -1,4 +1,4 @@
-/*	$OpenBSD: dumpfs.c,v 1.6 1997/05/31 08:32:31 deraadt Exp $	*/
+/*	$OpenBSD: dumpfs.c,v 1.7 1997/06/30 02:59:28 deraadt Exp $	*/
 /*	$NetBSD: dumpfs.c,v 1.12 1997/04/26 05:41:33 lukem Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)dumpfs.c	8.2 (Berkeley) 2/2/94";
 #else
-static char rcsid[] = "$OpenBSD: dumpfs.c,v 1.6 1997/05/31 08:32:31 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: dumpfs.c,v 1.7 1997/06/30 02:59:28 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -173,8 +173,8 @@ dumpfs(name)
 	printf("symlinklen %d\ttrackskew %d\tinterleave %d\tcontigsumsize %d\n",
 	    afs.fs_maxsymlinklen, afs.fs_trackskew, afs.fs_interleave,
 	    afs.fs_contigsumsize);
-	printf("nindir\t%d\tinopb\t%d\tnspf\t%d\n",
-	    afs.fs_nindir, afs.fs_inopb, afs.fs_nspf);
+	printf("nindir\t%d\tinopb\t%d\tnspf\t%d\tmaxfilesize\t%qu\n",
+	    afs.fs_nindir, afs.fs_inopb, afs.fs_nspf, afs.fs_maxfilesize);
 	printf("sblkno\t%d\tcblkno\t%d\tiblkno\t%d\tdblkno\t%d\n",
 	    afs.fs_sblkno, afs.fs_cblkno, afs.fs_iblkno, afs.fs_dblkno);
 	printf("sbsize\t%d\tcgsize\t%d\tcgoffset %d\tcgmask\t0x%08x\n",
