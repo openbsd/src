@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.24 2000/01/12 17:14:02 csapuntz Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.25 2000/04/10 07:06:17 csapuntz Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -241,8 +241,11 @@ atapiscsi_attach(parent, self, aux)
 		    (wdc_atapi_get_params(chp, drive, id) == COMPLETE)) {
 			/* Temporarily, the device will be called
 			   atapiscsi. */
-			drvp->drv_softc = (struct device*)as;
-			wdc_probe_caps(drvp, id);
+			strncpy(drvp->drive_name, as->sc_dev.dv_xname,
+			    sizeof(drvp->drive_name) - 1);
+			drvp->cf_flags = as->sc_dev.dv_cfdata->cf_flags;
+
+			wdc_probe_caps(drvp, id); 
 
 			WDCDEBUG_PRINT(
 			    ("general config %04x capabilities %04x ",
@@ -283,10 +286,13 @@ atapiscsi_attach(parent, self, aux)
 			struct scsi_link *link = scsi->sc_link[drive][0];
 			struct ata_drive_datas *drvp = &chp->ch_drive[drive];
 
-			if (drvp->drv_softc == (struct device *)as && link) {
-				drvp->drv_softc = link->device_softc;
-				wdc_print_caps(drvp);
-			}
+			if (!link) continue;
+
+			strncpy(drvp->drive_name, 
+				((struct device *)(link->device_softc))->dv_xname, 
+				sizeof(drvp->drive_name) - 1);
+			
+			wdc_print_caps(drvp);
 		}
 	}
 }
@@ -344,7 +350,7 @@ wdc_atapi_get_params(chp, drive, id)
 	wdc_c.r_command = ATAPI_SOFT_RESET;
 	wdc_c.r_st_bmask = 0;
 	wdc_c.r_st_pmask = 0;
-	wdc_c.flags = AT_POLL;
+	wdc_c.flags = at_poll;
 	wdc_c.timeout = ATAPI_RESET_WAIT;
 	if (wdc_exec_command(drvp, &wdc_c) != WDC_COMPLETE) {
 		printf("wdc_atapi_get_params: ATAPI_SOFT_RESET failed for"
@@ -367,7 +373,7 @@ wdc_atapi_get_params(chp, drive, id)
 	delay(5000);
 
  retry:
-	if (ata_get_params(drvp, AT_POLL, id) != 0) {
+	if (ata_get_params(drvp, at_poll, id) != 0) {
 		WDCDEBUG_PRINT(("wdc_atapi_get_params: ATAPI_IDENTIFY_DEVICE "
 		    "failed for drive %s:%d:%d\n",
 		    chp->wdc->sc_dev.dv_xname, chp->channel, drive), 
@@ -1451,7 +1457,6 @@ wdc_atapi_done(chp, xfer, timeout)
 	int timeout;
 {
 	struct scsi_xfer *sc_xfer = xfer->cmd;
-	int need_done = xfer->c_flags & C_NEEDDONE;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->drive];
 	int doing_dma = xfer->c_flags & C_DMA;
 
@@ -1471,7 +1476,7 @@ wdc_atapi_done(chp, xfer, timeout)
 			wdc_downgrade_mode(drvp);
 	}
 
-	if (need_done) {
+	if (!(xfer->c_flags & C_POLL)) {
 		WDCDEBUG_PRINT(("wdc_atapi_done: scsi_done\n"), DEBUG_XFERS);
 		scsi_done(sc_xfer);
 	}

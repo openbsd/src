@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdcvar.h,v 1.7 1999/12/14 18:07:43 csapuntz Exp $     */
+/*      $OpenBSD: wdcvar.h,v 1.8 2000/04/10 07:06:15 csapuntz Exp $     */
 /*	$NetBSD: wdcvar.h,v 1.17 1999/04/11 20:50:29 bouyer Exp $	*/
 
 /*-
@@ -70,7 +70,7 @@ struct channel_softc { /* Per channel data */
 	u_int8_t ch_error;          /* copy of error register */
 	/* per-drive infos */
 	struct ata_drive_datas ch_drive[2];
-	
+
 	/*
 	 * channel queues. May be the same for all channels, if hw channels
 	 * are not independants
@@ -205,6 +205,7 @@ struct wdc_xfer {
 	void (*c_start) __P((struct channel_softc *, struct wdc_xfer *));
 	int  (*c_intr)  __P((struct channel_softc *, struct wdc_xfer *, int));
 	int (*c_done)  __P((struct channel_softc *, struct wdc_xfer *, int));
+        void (*c_kill_xfer) __P((struct channel_softc *, struct wdc_xfer *));
 
 	/* Used by ATAPISCSI */
 	int timeout;
@@ -226,6 +227,8 @@ struct wdc_xfer {
 
 int   wdcprobe __P((struct channel_softc *));
 void  wdcattach __P((struct channel_softc *));
+int   wdcdetach __P((struct channel_softc *, int));
+int   wdcactivate __P((struct device *, enum devact));
 int   wdcintr __P((void *));
 void  wdc_exec_xfer __P((struct channel_softc *, struct wdc_xfer *));
 struct wdc_xfer *wdc_get_xfer __P((int)); /* int = WDC_NOSLEEP/CANSLEEP */
@@ -238,7 +241,8 @@ int   wdcreset	__P((struct channel_softc *, int));
 #define VERBOSE 1 
 #define SILENT 0 /* wdcreset will not print errors */
 int   wdcwait __P((struct channel_softc *, int, int, int));
-void  wdcbit_bucket __P(( struct channel_softc *, int));
+void  wdcbit_bucket __P((struct channel_softc *, int));
+
 void  wdccommand __P((struct channel_softc *, u_int8_t, u_int8_t, u_int16_t,
 	                  u_int8_t, u_int8_t, u_int8_t, u_int8_t));
 void   wdccommandshort __P((struct channel_softc *, int, int));

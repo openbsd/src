@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdvar.h,v 1.1 1999/07/18 21:25:18 csapuntz Exp $	*/
+/*	$OpenBSD: wdvar.h,v 1.2 2000/04/10 07:06:16 csapuntz Exp $	*/
 /*	$NetBSD: wdvar.h,v 1.3 1998/11/11 19:38:27 bouyer Exp $	*/
 
 /*
@@ -58,8 +58,10 @@ struct ata_bio {
 #define ERR_DF	2 /* Drive fault */
 #define ERR_DMA 3 /* DMA error */
 #define TIMEOUT 4 /* device timed out */
+#define ERR_NODEV 5 /* device bas been detached */
     u_int8_t r_error; /* copy of error register */
     daddr_t badsect[127];    /* 126 plus trailing -1 marker */
+    struct wd_softc *wd;
 };
 
 /* drive states stored in ata_drive_datas */

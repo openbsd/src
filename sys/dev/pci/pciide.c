@@ -1,4 +1,4 @@
-/*      $OpenBSD: pciide.c,v 1.21 2000/03/24 17:47:41 chris Exp $     */
+/*      $OpenBSD: pciide.c,v 1.22 2000/04/10 07:06:17 csapuntz Exp $     */
 /*	$NetBSD: pciide.c,v 1.48 1999/11/28 20:05:18 bouyer Exp $	*/
 
 /*
@@ -1114,7 +1114,7 @@ pciide_print_modes(cp)
 		if ((drvp->drive_flags & DRIVE) == 0)
 			continue;
 		printf("%s(%s:%d:%d): using PIO mode %d",
-		    drvp->drv_softc->dv_xname,
+		    drvp->drive_name,
 		    sc->sc_wdcdev.sc_dev.dv_xname,
 		    chp->channel, drive, drvp->PIO_mode);
 		if (drvp->drive_flags & DRIVE_DMA)

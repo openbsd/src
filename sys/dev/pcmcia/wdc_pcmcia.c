@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc_pcmcia.c,v 1.7 2000/02/01 17:01:48 fgsch Exp $	*/
+/*	$OpenBSD: wdc_pcmcia.c,v 1.8 2000/04/10 07:06:15 csapuntz Exp $	*/
 /*	$NetBSD: wdc_pcmcia.c,v 1.19 1999/02/19 21:49:43 abs Exp $ */
 
 /*-
@@ -80,13 +80,18 @@ struct wdc_pcmcia_softc {
 	int sc_auxiowindow;
 	void *sc_ih;
 	struct pcmcia_function *sc_pf;
+	int sc_flags;
+#define WDC_PCMCIA_ATTACH       0x0001
 };
 
 static int wdc_pcmcia_match	__P((struct device *, void *, void *));
 static void wdc_pcmcia_attach	__P((struct device *, struct device *, void *));
+int    wdc_pcmcia_detach   __P((struct device *, int));
+int    wdc_pcmcia_activate __P((struct device *, enum devact));
 
 struct cfattach wdc_pcmcia_ca = {
-	sizeof(struct wdc_pcmcia_softc), wdc_pcmcia_match, wdc_pcmcia_attach
+	sizeof(struct wdc_pcmcia_softc), wdc_pcmcia_match, wdc_pcmcia_attach,
+	wdc_pcmcia_detach, wdc_pcmcia_activate
 };
 
 struct wdc_pcmcia_product {
@@ -280,14 +285,14 @@ wdc_pcmcia_attach(parent, self, aux)
 
 	if (cfe == NULL) {
 		printf(": can't handle card info\n");
-		return;
+		goto no_config_entry;
 	}
 
 	/* Enable the card. */
 	pcmcia_function_init(pa->pf, cfe);
 	if (pcmcia_function_enable(pa->pf)) {
 		printf(": function enable failed\n");
-		return;
+		goto enable_failed;
 	}
 
 	/*
@@ -306,9 +311,8 @@ wdc_pcmcia_attach(parent, self, aux)
 	if (pcmcia_io_map(pa->pf, quirks & WDC_PCMCIA_FORCE_16BIT_IO ?
 	    PCMCIA_WIDTH_IO16 : PCMCIA_WIDTH_AUTO, 0,
 	    sc->sc_pioh.size, &sc->sc_pioh, &sc->sc_iowindow)) {
-		/* XXX should unallocate */
 		printf(": can't map first I/O space\n");
-		return;
+		goto iomap_failed;
 	} 
 
 	/*
@@ -316,12 +320,12 @@ wdc_pcmcia_attach(parent, self, aux)
 	 * So whether the work around like above is necessary or not
 	 * is unknown.  XXX.
 	 */
-	if (cfe->num_iospace > 1 &&
-	    pcmcia_io_map(pa->pf, PCMCIA_WIDTH_AUTO, 0,
+	if (cfe->num_iospace <= 1)
+		sc->sc_auxiowindow = -1;
+	else if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_AUTO, 0,
 	    sc->sc_auxpioh.size, &sc->sc_auxpioh, &sc->sc_auxiowindow)) {
-		/* XXX should unallocate */
 		printf(": can't map second I/O space\n");
-		return;
+		goto iomapaux_failed;
 	}
 
 	printf(" port 0x%lx/%d",
@@ -347,7 +351,7 @@ wdc_pcmcia_attach(parent, self, aux)
 	    M_DEVBUF, M_NOWAIT);
 	if (sc->wdc_channel.ch_queue == NULL) {
 		printf("can't allocate memory for command queue\n");
-		return;
+		goto ch_queue_alloc_failed;
 	}
 	if (quirks & WDC_PCMCIA_NO_EXTRA_RESETS)
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_NO_EXTRA_RESETS;
@@ -372,9 +376,107 @@ wdc_pcmcia_attach(parent, self, aux)
 
 	printf("\n");
 
+	sc->sc_flags |= WDC_PCMCIA_ATTACH;
 	wdcattach(&sc->wdc_channel);
+	sc->sc_flags &= ~WDC_PCMCIA_ATTACH;
+	return;
+
+ ch_queue_alloc_failed:
+        /* Unmap our aux i/o window. */
+        if (sc->sc_auxiowindow != -1)
+                pcmcia_io_unmap(sc->sc_pf, sc->sc_auxiowindow);
+
+ iomapaux_failed:
+        /* Unmap our i/o window. */
+        pcmcia_io_unmap(sc->sc_pf, sc->sc_iowindow);
+
+ iomap_failed:
+        /* Disable the function */
+        pcmcia_function_disable(sc->sc_pf);
+
+ enable_failed:
+        /* Unmap our i/o space. */
+        pcmcia_io_free(sc->sc_pf, &sc->sc_pioh);
+        if (cfe->num_iospace == 2)
+                pcmcia_io_free(sc->sc_pf, &sc->sc_auxpioh);
+
+ no_config_entry:
+        sc->sc_iowindow = -1;
 }
 
+int
+wdc_pcmcia_detach(self, flags)
+	struct device *self;
+	int  flags;
+{
+        struct wdc_pcmcia_softc *sc = (struct wdc_pcmcia_softc *)self;
+        int error;
+
+        if (sc->sc_iowindow == -1)
+                /* Nothing to detach */
+                return (0);
+	
+	if ((error = wdcdetach(&sc->wdc_channel, flags)) != 0) 
+		return (error);
+
+        if (sc->wdc_channel.ch_queue != NULL)
+                free(sc->wdc_channel.ch_queue, M_DEVBUF);
+
+        /* Unmap our i/o window and i/o space. */
+        pcmcia_io_unmap(sc->sc_pf, sc->sc_iowindow);
+        pcmcia_io_free(sc->sc_pf, &sc->sc_pioh);
+        if (sc->sc_auxiowindow != -1) {
+                pcmcia_io_unmap(sc->sc_pf, sc->sc_auxiowindow);
+                pcmcia_io_free(sc->sc_pf, &sc->sc_auxpioh);
+        }
+
+        return (0);
+}
+
+int
+wdc_pcmcia_activate(self, act)
+	struct device *self;
+	enum devact act;
+{
+	struct wdc_pcmcia_softc *sc = (struct wdc_pcmcia_softc *)self;
+	int rv = 0, s;
+
+	s = splbio();
+	switch (act) {
+	case DVACT_ACTIVATE:
+		sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_BIO, 
+		    wdcintr, &sc->wdc_channel);
+		if (sc->sc_ih == NULL) {
+			printf("%s: "
+			    "couldn't establish interrupt handler\n",
+			    sc->sc_wdcdev.sc_dev.dv_xname);
+			rv = EIO;
+			break;
+		}
+
+		if (pcmcia_function_enable(sc->sc_pf)) {
+			printf("%s: couldn't enable PCMCIA function\n",
+			    sc->sc_wdcdev.sc_dev.dv_xname);
+			pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
+			rv = EIO;
+			break;
+		}
+
+		wdcreset(&sc->wdc_channel, VERBOSE);
+		rv = wdcactivate(self, act);
+		break;
+
+	case DVACT_DEACTIVATE:
+		pcmcia_function_disable(sc->sc_pf);
+		pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
+		rv = wdcactivate(self, act);
+		break;
+	}
+	splx(s);
+	return (rv);
+}
+
+#if 0
 int
 wdc_pcmcia_enable(arg, onoff)
 	void *arg;
@@ -383,25 +485,30 @@ wdc_pcmcia_enable(arg, onoff)
 	struct wdc_pcmcia_softc *sc = arg;
 
 	if (onoff) {
-		/* Establish the interrupt handler. */
-		sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_BIO, wdcintr,
-		    &sc->wdc_channel);
-		if (sc->sc_ih == NULL) {
-			printf("%s: couldn't establish interrupt handler\n",
-			    sc->sc_wdcdev.sc_dev.dv_xname);
-			return (EIO);
-		}
+                if ((sc->sc_flags & WDC_PCMCIA_ATTACH) == 0) {
+			sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_BIO, 
+			    wdcintr, &sc->wdc_channel);
+			if (sc->sc_ih == NULL) {
+				printf("%s: "
+				    "couldn't establish interrupt handler\n",
+				    sc->sc_wdcdev.sc_dev.dv_xname);
+				return (EIO);
+			}
 
-		if (pcmcia_function_enable(sc->sc_pf)) {
-			printf("%s: couldn't enable PCMCIA function\n",
-			    sc->sc_wdcdev.sc_dev.dv_xname);
-			pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
-			return (EIO);
+			if (pcmcia_function_enable(sc->sc_pf)) {
+				printf("%s: couldn't enable PCMCIA function\n",
+				    sc->sc_wdcdev.sc_dev.dv_xname);
+				pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
+				return (EIO);
+			}
+			wdcreset(&sc->wdc_channel, VERBOSE);
 		}
 	} else {
 		pcmcia_function_disable(sc->sc_pf);
-		pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
+                if ((sc->sc_flags & WDC_PCMCIA_ATTACH) == 0)
+			pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
 	}
 
 	return (0);
 }
+#endif

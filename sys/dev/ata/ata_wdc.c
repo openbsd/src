@@ -95,6 +95,7 @@
 #define DEBUG_STATUS 0x04
 #define DEBUG_FUNCS  0x08
 #define DEBUG_PROBE  0x10
+
 #ifdef WDCDEBUG
 int wdcdebug_wd_mask = 0;
 #define WDCDEBUG_PRINT(args, level) \
@@ -115,6 +116,7 @@ struct cfdriver wdc_cd = {
 void  wdc_ata_bio_start  __P((struct channel_softc *,struct wdc_xfer *));
 void  _wdc_ata_bio_start  __P((struct channel_softc *,struct wdc_xfer *));
 int   wdc_ata_bio_intr   __P((struct channel_softc *, struct wdc_xfer *, int));
+void  wdc_ata_bio_kill_xfer __P((struct channel_softc *,struct wdc_xfer *));
 void  wdc_ata_bio_done   __P((struct channel_softc *, struct wdc_xfer *)); 
 int   wdc_ata_ctrl_intr __P((struct channel_softc *, struct wdc_xfer *, int));
 int   wdc_ata_err __P((struct ata_drive_datas *, struct ata_bio *));
@@ -148,6 +150,7 @@ wdc_ata_bio(drvp, ata_bio)
 	xfer->c_bcount = ata_bio->bcount;
 	xfer->c_start = wdc_ata_bio_start;
 	xfer->c_intr = wdc_ata_bio_intr;
+	xfer->c_kill_xfer = wdc_ata_bio_kill_xfer;
 	wdc_exec_xfer(chp, xfer);
 	return (ata_bio->flags & ATA_ITSDONE) ? WDC_COMPLETE : WDC_QUEUED;
 }
@@ -222,7 +225,7 @@ _wdc_ata_bio_start(chp, xfer)
 		ata_delay = ATA_DELAY;
 	else
 		ata_delay = ATA_DELAY;
-again:
+ again:
 	/*
 	 *
 	 * When starting a multi-sector transfer, or doing single-sector
@@ -238,7 +241,7 @@ again:
 			long blkdiff;
 			int i;
 			for (i = 0; (blkdiff = ata_bio->badsect[i]) != -1;
-			    i++) {
+			     i++) {
 				blkdiff -= ata_bio->blkno;
 				if (blkdiff < 0)
 					continue;
@@ -255,7 +258,7 @@ again:
 				}
 				break;
 			}
-		/* Transfer is okay now. */
+			/* Transfer is okay now. */
 		}
 		if (ata_bio->flags & ATA_LBA) {
 			sect = (ata_bio->blkno >> 0) & 0xff;
@@ -322,8 +325,8 @@ again:
 		/* The number of blocks in the last stretch may be smaller. */
 		nblks = xfer->c_bcount / ata_bio->lp->d_secsize;
 		if (ata_bio->nblks > nblks) {
-		ata_bio->nblks = nblks;
-		ata_bio->nbytes = xfer->c_bcount;
+			ata_bio->nblks = nblks;
+			ata_bio->nbytes = xfer->c_bcount;
 		}
 	}
 	/* If this was a write and not using DMA, push the data. */
@@ -346,7 +349,7 @@ again:
 		    ata_bio->nbytes);
 	}
 
-intr:	/* Wait for IRQ (either real or polled) */
+ intr:	/* Wait for IRQ (either real or polled) */
 	if ((ata_bio->flags & ATA_POLL) == 0) {
 		chp->ch_flags |= WDCF_IRQ_WAIT;
 	} else {
@@ -357,7 +360,7 @@ intr:	/* Wait for IRQ (either real or polled) */
 			goto again;
 	}
 	return;
-timeout:
+ timeout:
 	printf("%s:%d:%d: not ready, st=0x%02x, err=0x%02x\n",
 	    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive,
 	    chp->ch_status, chp->ch_error);
@@ -506,6 +509,27 @@ end:
 	return 1;
 }
 
+
+void
+wdc_ata_bio_kill_xfer(chp, xfer)
+	struct channel_softc *chp;
+	struct wdc_xfer *xfer;
+{
+	struct ata_bio *ata_bio = xfer->cmd;
+
+	untimeout(wdctimeout, chp);
+	/* remove this command from xfer queue */
+	wdc_free_xfer(chp, xfer);
+
+	ata_bio->flags |= ATA_ITSDONE;
+	ata_bio->error = ERR_NODEV;
+	ata_bio->r_error = WDCE_ABRT;
+	if ((ata_bio->flags & ATA_POLL) == 0) {
+		WDCDEBUG_PRINT(("wdc_ata_done: wddone\n"), DEBUG_XFERS);
+		wddone(ata_bio->wd);
+	}
+}
+
 void
 wdc_ata_bio_done(chp, xfer)
 	struct channel_softc *chp;
@@ -536,7 +560,7 @@ wdc_ata_bio_done(chp, xfer)
 	ata_bio->flags |= ATA_ITSDONE;
 	if ((ata_bio->flags & ATA_POLL) == 0) {
 		WDCDEBUG_PRINT(("wdc_ata_done: wddone\n"), DEBUG_XFERS);
-		wddone(chp->ch_drive[drive].drv_softc);
+		wddone(ata_bio->wd);
 	}
 	WDCDEBUG_PRINT(("wdcstart from wdc_ata_done, flags 0x%x\n",
 	    chp->ch_flags), DEBUG_XFERS);

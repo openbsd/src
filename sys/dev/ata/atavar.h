@@ -1,4 +1,4 @@
-/*	$OpenBSD: atavar.h,v 1.4 1999/10/09 03:42:03 csapuntz Exp $	*/
+/*	$OpenBSD: atavar.h,v 1.5 2000/04/10 07:06:16 csapuntz Exp $	*/
 /*	$NetBSD: atavar.h,v 1.13 1999/03/10 13:11:43 bouyer Exp $	*/
 
 /*
@@ -55,6 +55,7 @@ struct ata_drive_datas {
 #define DRIVE_DMAERR	0x0100 /* Udma transfer had crc error, don't try DMA */
 #define DRIVE_DSCBA	0x0200 /* DSC in buffer availability mode */
 #define DRIVE_DSCWAIT	0x0400 /* In wait for DSC to be asserted */
+
     /*
      * Current setting of drive's PIO, DMA and UDMA modes.
      * Is initialised by the disks drivers at attach time, and may be
@@ -83,7 +84,8 @@ struct ata_drive_datas {
     /* downgrade mode after this many successive errors */
 #define NERRS_MAX 2
 
-    struct device *drv_softc; /* ATA/PI drive's softc, can be NULL */
+    char drive_name[31];
+    int  cf_flags;
     void *chnl_softc; /* channel softc */
 };
 
@@ -150,6 +152,8 @@ struct wdc_command {
     void (*callback) __P((void*)); /* command to call once command completed */
     void *callback_arg;  /* argument passed to *callback() */
 };
+
+extern int at_poll;
 
 int wdc_exec_command __P((struct ata_drive_datas *, struct wdc_command*));
 #define WDC_COMPLETE 0x01
