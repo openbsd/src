@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.8 1997/02/03 04:47:56 downsj Exp $	*/
+/*	$OpenBSD: locore.s,v 1.9 1997/02/03 15:54:43 deraadt Exp $	*/
 /*	$NetBSD: locore.s,v 1.62 1996/11/06 20:19:30 cgd Exp $	*/
 
 /*
@@ -1142,11 +1142,10 @@ _proc_trampoline:
  * Stack looks like:
  *
  *	sp+0 ->	signal number
- *	sp+4	signal specific code
+ *	sp+4	pointer to siginfo (sip)
  *	sp+8	pointer to signal context frame (scp)
- *	sp+12	pointer to siginfo (sip)
- *	sp+16	address of handler
- *	sp+20	saved hardware state
+ *	sp+12	address of handler
+ *	sp+16	saved hardware state
  *			.
  *			.
  *	scp+0->	beginning of signal context frame
@@ -1154,7 +1153,7 @@ _proc_trampoline:
 	.globl	_sigcode, _esigcode, _sigcodetrap
 	.data
 _sigcode:
-	movl	sp@(16),a0		| signal handler addr	(4 bytes)
+	movl	sp@(12),a0		| signal handler addr	(4 bytes)
 	jsr	a0@			| call signal handler	(2 bytes)
 	addql	#4,sp			| pop signo		(2 bytes)
 _sigcodetrap:
