@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_iv.c,v 1.21 2004/12/03 06:40:13 miod Exp $	*/
+/*	$OpenBSD: grf_iv.c,v 1.22 2004/12/08 06:57:48 miod Exp $	*/
 /*	$NetBSD: grf_iv.c,v 1.17 1997/02/20 00:23:27 scottr Exp $	*/
 
 /*
@@ -96,13 +96,13 @@ grfiv_match(parent, vcf, aux)
 		 * access the memory.
 		 */
 
-		if (bus_space_map(oa->oa_tag, QUADRA_DAFB_BASE, 0x1000,
+		if (bus_space_map(oa->oa_tag, QUADRA_DAFB_BASE, PAGE_SIZE,
 					0, &bsh)) {
 			panic("failed to map space for DAFB regs.");
 		}
 
 		if (mac68k_bus_space_probe(oa->oa_tag, bsh, 0x1C, 4) == 0) {
-			bus_space_unmap(oa->oa_tag, bsh, 0x1000);
+			bus_space_unmap(oa->oa_tag, bsh, PAGE_SIZE);
 			found = 0;
 			goto nodafb;
 		}
@@ -126,7 +126,7 @@ grfiv_match(parent, vcf, aux)
 		bus_space_write_4(oa->oa_tag, bsh, 0x110, 0);
 		bus_space_write_4(oa->oa_tag, bsh, 0x114, 0);
 
-		bus_space_unmap(oa->oa_tag, bsh, 0x1000);
+		bus_space_unmap(oa->oa_tag, bsh, PAGE_SIZE);
 
 		break;
 
@@ -161,7 +161,7 @@ grfiv_attach(parent, self, aux)
         case MACH_CLASSQ:
         case MACH_CLASSQ2:
 		sc->sc_tag = oa->oa_tag;
-		if (bus_space_map(sc->sc_tag, QUADRA_DAFB_BASE, 0x1000,
+		if (bus_space_map(sc->sc_tag, QUADRA_DAFB_BASE, 0x20,
 					0, &sc->sc_regh)) {
 			panic("failed to map space for DAFB regs.");
 		}
