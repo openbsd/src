@@ -1,10 +1,10 @@
-/*	$OpenBSD: miidevs.h,v 1.42 2003/10/05 03:28:34 krw Exp $	*/
+/*	$OpenBSD: miidevs.h,v 1.43 2004/04/15 08:45:19 mickey Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: miidevs,v 1.39 2003/10/05 03:24:24 krw Exp 
+ *	OpenBSD: miidevs,v 1.40 2004/04/15 08:45:04 mickey Exp 
  */
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
@@ -61,6 +61,7 @@
 #define	MII_OUI_LEVEL1	0x00207b	/* Level 1 */
 #define	MII_OUI_MYSON	0x00c0b4	/* Myson Technology */
 #define	MII_OUI_NATSEMI	0x080017	/* National Semiconductor */
+#define	MII_OUI_PLESSEY	0x046b40	/* Plessey Semiconductor */
 #define	MII_OUI_QUALSEMI	0x006051	/* Quality Semiconductor */
 #define	MII_OUI_SEEQ	0x00a07d	/* Seeq */
 #define	MII_OUI_SIS	0x00e006	/* Silicon Integrated Systems */
@@ -221,6 +222,10 @@
 #define	MII_STR_NATSEMI_DP83891	"DP83891 10/100/1000 media interface"
 #define	MII_MODEL_NATSEMI_DP83861	0x0006
 #define	MII_STR_NATSEMI_DP83861	"DP83861 10/100/1000 media interface"
+
+/* Plessey Semiconductor PHYs */
+#define	MII_MODEL_PLESSEY_NWK914	0x0000
+#define	MII_STR_PLESSEY_NWK914	"NWK914 10/100 media interface"
 
 /* Quality Semiconductor PHYs */
 #define	MII_MODEL_QUALSEMI_QS6612	0x0000
