@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.1 2002/01/31 15:56:03 art Exp $
+#	$OpenBSD: Makefile,v 1.2 2002/01/31 16:36:20 art Exp $
 
-SUBDIR+= ctors
+SUBDIR+= ctors dtors
 
 regress: _SUBDIRUSE
 
