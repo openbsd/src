@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.26 1999/02/24 23:45:52 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.27 1999/02/25 01:30:49 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -35,17 +35,29 @@
  * PURPOSE.
  */
 
+#ifndef _NETINET_IPSP_H_
+#define _NETINET_IPSP_H_
+
 /*
  * IPSP global definitions.
  */
 
+#include <sys/types.h>
+#include <netinet/in.h>
 #include <sys/md5k.h>
 #include <netinet/ip_sha1.h>
 #include <netinet/ip_rmd160.h>
 #include <netinet/ip_blf.h>
 #include <netinet/ip_cast.h>
 #include <netinet/ip_skipjack.h>
-#include <sys/socket.h>
+
+union sockaddr_union
+{
+    struct sockaddr     sa;
+    struct sockaddr_in  sin;
+    struct sockaddr_in6 sin6;
+    char  __maxsize[128];
+};
 
 /* HMAC key sizes */
 #define MD5HMAC96_KEYSIZE       16
@@ -480,4 +492,5 @@ extern int checkreplaywindow32(u_int32_t, u_int32_t, u_int32_t *, u_int32_t,
                                u_int32_t *);
 
 extern unsigned char ipseczeroes[];
-#endif
+#endif /* _KERNEL */
+#endif /* _NETINET_IPSP_H_ */
