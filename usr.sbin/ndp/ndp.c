@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndp.c,v 1.28 2003/06/26 21:32:01 deraadt Exp $	*/
+/*	$OpenBSD: ndp.c,v 1.29 2003/06/26 21:33:33 deraadt Exp $	*/
 /*	$KAME: ndp.c,v 1.101 2002/07/17 08:46:33 itojun Exp $	*/
 
 /*
@@ -95,17 +95,17 @@
 
 #include <arpa/inet.h>
 
-#include <netdb.h>
-#include <errno.h>
-#include <nlist.h>
 #include <stdio.h>
-#include <string.h>
-#include <paths.h>
-#include <err.h>
-#include <stdlib.h>
+#include <errno.h>
 #include <fcntl.h>
+#include <netdb.h>
+#include <nlist.h>
+#include <paths.h>
+#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <err.h>
+
 #include "gmt2local.h"
 
 /* packing rule for routing socket */
@@ -350,7 +350,7 @@ getsocket(void)
 	if (s < 0) {
 		s = socket(PF_ROUTE, SOCK_RAW, 0);
 		if (s < 0) {
-			err(1, "ndp: socket");
+			err(1, "socket");
 			/* NOTREACHED */
 		}
 	}
@@ -598,7 +598,7 @@ again:;
 		err(1, "sysctl(PF_ROUTE estimate)");
 	if (needed > 0) {
 		if ((buf = malloc(needed)) == NULL)
-			errx(1, "malloc");
+			err(1, "malloc");
 		if (sysctl(mib, 6, buf, &needed, NULL, 0) < 0)
 			err(1, "sysctl(PF_ROUTE, NET_RT_FLAGS)");
 		lim = buf + needed;
@@ -1033,8 +1033,8 @@ rtrlist(void)
 		/*NOTREACHED*/
 	}
 	buf = malloc(l);
-	if (!buf) {
-		errx(1, "not enough core");
+	if (buf == NULL) {
+		err(1, "malloc");
 		/*NOTREACHED*/
 	}
 	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]), buf, &l, NULL, 0) < 0) {
@@ -1130,8 +1130,8 @@ plist(void)
 		/*NOTREACHED*/
 	}
 	buf = malloc(l);
-	if (!buf) {
-		errx(1, "not enough core");
+	if (buf == NULL) {
+		err(1, "malloc");
 		/*NOTREACHED*/
 	}
 	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]), buf, &l, NULL, 0) < 0) {
