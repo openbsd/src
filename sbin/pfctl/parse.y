@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.134 2002/07/26 09:54:29 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.135 2002/07/30 09:31:05 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -356,6 +356,7 @@ pfrule		: action dir logquick interface route af proto fromto
 		{
 			struct pf_rule r;
 			struct node_state_opt *o;
+			struct node_proto *proto;
 
 			if (check_rulestate(PFCTL_STATE_FILTER))
 				YYERROR;
@@ -375,6 +376,17 @@ pfrule		: action dir logquick interface route af proto fromto
 			r.af = $6;
 			r.flags = $11.b1;
 			r.flagset = $11.b2;
+
+			if ($11.b1 || $11.b2) {
+				for (proto = $7; proto != NULL &&
+				    proto->proto != IPPROTO_TCP;
+				    proto = proto->next)
+					;	/* nothing */
+				if (proto == NULL && $7 != NULL) {
+					yyerror("flags only apply to tcp");
+					YYERROR;
+				}
+			}
 
 			r.keep_state = $13.action;
 			o = $13.options;
@@ -1531,10 +1543,6 @@ rule_consistent(struct pf_rule *r)
 		yyerror("port only applies to tcp/udp");
 		problems++;
 	}
-	if (r->proto != IPPROTO_TCP && (r->flags || r->flagset)) {
-		yyerror("flags only applies to tcp");
-		problems++;
-	}
 	if (r->proto != IPPROTO_ICMP && r->proto != IPPROTO_ICMPV6 &&
 	    (r->type || r->code)) {
 		yyerror("icmp-type/code only applies to icmp");
@@ -1792,11 +1800,14 @@ expand_rule(struct pf_rule *r,
     struct node_uid *uids, struct node_gid *gids,
     struct node_icmp *icmp_types)
 {
-	int af = r->af, nomatch = 0, added = 0;
-	char ifname[IF_NAMESIZE];
-	char label[PF_RULE_LABEL_SIZE];
+	int	af = r->af, nomatch = 0, added = 0;
+	char	ifname[IF_NAMESIZE];
+	char	label[PF_RULE_LABEL_SIZE];
+	u_int8_t 	flags, flagset;
 
 	strlcpy(label, r->label, sizeof(label));
+	flags = r->flags;
+	flagset = r->flagset;
 
 	CHECK_ROOT(struct node_if, interfaces);
 	CHECK_ROOT(struct node_proto, protos);
@@ -1871,6 +1882,14 @@ expand_rule(struct pf_rule *r,
 		r->type = icmp_type->type;
 		r->code = icmp_type->code;
 
+		if (r->proto && r->proto != IPPROTO_TCP &&
+		    (r->flags || r->flagset)) {
+			r->flags = 0;
+			r->flagset = 0;
+		} else {
+			r->flags = flags;
+			r->flagset = flagset;
+		}
 		if (icmp_type->proto && r->proto != icmp_type->proto) {
 			yyerror("icmp-type mismatch");
 			nomatch++;
