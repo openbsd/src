@@ -1,0 +1,266 @@
+.\"	$OpenBSD: kern.9,v 1.1 2002/08/24 03:31:42 wcobb Exp $
+.\"
+.\" Copyright (c) 2002 CubeSoft Communications, Inc. <http://www.csoft.org>
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistribution of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Neither the name of CubeSoft Communications, Inc, nor the names of its
+.\"    contributors may be used to endorse or promote products derived from
+.\"    this software without specific prior written permission.
+.\" 
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+.\" WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
+.\" INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+.\" (INCLUDING BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+.\" SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+.\" STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+.\" IN ANY WAY OUT OF THE USE OF THIS SOFTWARE EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd August 9, 2002
+.Dt KERN 9
+.Os
+.Sh NAME
+.Nm kern
+.Nd kernel library routines
+.Sh SYNOPSIS
+#include <lib/libkern.h>
+.Sh DESCRIPTION
+The
+.Nm
+library implements a set of useful functions and macros inside the kernel.
+.Pp
+.Sh MATH
+.nr nS 1
+.Ft int
+.Fn imax "int a" "int b"
+.Ft int
+.Fn imin "int a" "int b"
+.Ft long
+.Fn lmax "long a" "long b"
+.Ft long
+.Fn lmin "long a" "long b"
+.Ft u_int
+.Fn max "u_int a" "u_int b"
+.Ft u_int
+.Fn min "u_int a" "u_int b"
+.Ft u_long
+.Fn ulmax "u_long a" "u_long b"
+.Ft u_long
+.Fn ulmin "u_long a" "u_long b"
+.Ft int
+.Fn abs "int j"
+.nr nS 0
+.Pp
+The
+.Fn min ,
+.Fn imin ,
+.Fn lmin
+and
+.Fn ulmin
+functions return the smallest integer between
+.Fa a
+and
+.Fa b .
+The
+.Fn max ,
+.Fn imax ,
+.Fn lmax
+and
+.Fn ulmax
+functions return the largest integer between
+.Fa a
+and
+.Fa b .
+.Pp
+The
+.Fn abs
+function computes the absolute value of integer
+.Fa j .
+.Sh ASSERTIONS
+.nr nS 1
+.Ft "void"
+.Fn assert "CONDITION"
+.Ft "void"
+.Fn KASSERT "CONDITION"
+.Ft "void"
+.Fn KDASSERT "CONDITION"
+.nr nS 0
+.Pp
+These macros cause kernel
+.Xr panic 9
+if the given condition evaluates to false.
+.Fn assert
+tests are always compiled in.
+.Fn KASSERT
+tests are only included if the kernel has
+.Dv DIAGNOSTIC
+enabled.
+.Fn KDASSERT
+tests are only included if the kernel has
+.Dv DEBUG
+enabled.
+.Sh BYTE STRINGS
+.nr nS 1
+.Ft int
+.Fn locc "int mask" "u_int size" "char *cp"
+.Ft int
+.Fn skpc "int mask" "size_t size" "u_char *cp"
+.Ft int
+.Fn scanc "u_int size" "const u_char *cp" "const u_char *table" "int mask"
+.Ft int
+.Fn bcmp "const void *b1" "const void *b2" "size_t len"
+.Ft void *
+.Fn memchr "const void *b" "int c" "size_t len"
+.Ft int
+.Fn memcmp "const void *b1" "const void *b2" "size_t len"
+.Ft int
+.Fn ffs "int value"
+.nr nS 0
+.Pp
+The
+.Fn locc
+function locates an integer of value
+.Fa mask
+inside the string
+.Fa cp .
+The
+.Fn skpc
+function locates an unsigned character of value
+.Fa mask
+inside the string
+.Fa cp .
+.Pp
+The
+.Fn scanc
+function expects a string of indexes into the table
+.Fa table .
+Each table element is bitwise ANDed against
+.Fa mask .
+.Pp
+.Fn locc ,
+.Fn skpc
+and
+.Fn scanc
+expect the string to be of size
+.Fa size ,
+and return the index relative to the end of the string where the match
+occured, or zero if
+.Fa mask
+is not present in the string.
+.Pp
+The remaining functions have the same semantics as their libc counterparts,
+.Xr bcmp 3 ,
+.Xr memchr 3 ,
+.Xr memcmp 3
+and
+.Xr ffs 3 .
+.Sh CHARACTER STRINGS
+.nr nS 1
+.Ft size_t
+.Fn strlen "const char *s"
+.Ft char *
+.Fn strcat "char *s" "const char *append"
+.Ft char *
+.Fn strcpy "char *dst" "const char *src"
+.Ft char *
+.Fn strncpy "char *dst" "const char *src" "size_t len"
+.Ft size_t
+.Fn strlcpy "char *dst" "const char *src" "size_t size"
+.Ft size_t
+.Fn strlcat "char *dst" "const char *src" "size_t size"
+.Ft int
+.Fn strcmp "const char *s1" "const char *s2"
+.Ft int
+.Fn strncmp "const char *s1" "const char *s2" "size_t len"
+.Ft int
+.Fn strncasecmp "const char *s1" "const char *s2" "size_tlen"
+.nr nS 0
+.Pp
+.Pp
+Those functions have the same semantics as their libc counterparts,
+.Xr strlen 3 ,
+.Xr strcat 3 ,
+.Xr strcpy 3 ,
+.Xr strncpy 3 ,
+.Xr strlcpy 3 ,
+.Xr strlcat 3 ,
+.Xr strcmp 3 ,
+.Xr strncmp 3
+and
+.Xr strncasecmp 3 .
+.Sh RANDOM NUMBER GENERATION
+.Pp
+.nr nS 1
+.Ft u_long
+.Fn random "void"
+.Ft void
+.Fn srandom "u_long seed"
+.nr nS 0
+.Pp
+The
+.Fn random
+function returns a random number.
+The
+.Fn srandom
+function initializes the random seed.
+.Fn random
+will by default produce a sequence of numbers that can be duplicated
+by calling
+.Fn srandom
+with `1' as the seed.
+The
+.Fn random
+function is discouraged in favor of
+.Xr arc4random 9 .
+.Sh MISCELLANEOUS
+.nr nS 1
+.Ft int
+.Fn getsn "char *cp" "int size"
+.nr nS 0
+.Pp
+The
+.Fn getsn
+function reads user input from the console and returns on newline.
+The result is writte into
+.Fa cp ,
+which is assumed to be
+.Fa size
+bytes long.
+.Pp
+.Sh SEE ALSO
+.Xr arc4random 9 ,
+.Xr string 3 ,
+.Xr assert 3 ,
+.Xr bcmp 3 ,
+.Xr memchr 3 ,
+.Xr memcmp 3 ,
+.Xr ffs 3
+.Sh STANDARDS
+The
+.Fn abs ,
+.Fn memchr ,
+.Fn memcmp ,
+.Fn strlen ,
+.Fn strcat ,
+.Fn strcpy ,
+.Fn strncpy ,
+.Fn strcmp ,
+.Fn strncmp
+and
+.Fn strcasecmp
+functions conform to
+.St -ansiC .
+.Sh HISTORY
+The
+.Fn locc ,
+.Fn skpc
+and
+.Fn scanc
+functions are based on vax instructions of the same name.
