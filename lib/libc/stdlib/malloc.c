@@ -8,7 +8,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: malloc.c,v 1.51 2002/11/05 22:19:55 marc Exp $";
+static char rcsid[] = "$OpenBSD: malloc.c,v 1.52 2002/11/25 00:06:51 cloder Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -364,9 +364,9 @@ malloc_exit()
     char *q = "malloc() warning: Couldn't dump stats.\n";
     if (fd) {
         malloc_dump(fd);
-	fclose(fd);
+        fclose(fd);
     } else
-	write(2, q, strlen(q));
+        write(STDERR_FILENO, q, strlen(q));
 }
 #endif /* MALLOC_STATS */
 
@@ -534,8 +534,8 @@ malloc_init ()
 	malloc_junk=1;
 
 #ifdef MALLOC_STATS
-    if (malloc_stats)
-	atexit(malloc_exit);
+    if (malloc_stats && (atexit(malloc_exit) == -1))
+		wrtwarning("atexit(2) failed.  Will not be able to dump malloc stats on exit.\n");
 #endif /* MALLOC_STATS */
 
     /* Allocate one page for the page directory */
