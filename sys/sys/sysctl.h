@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.25 1998/06/02 06:10:30 deraadt Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.26 1998/07/07 07:12:51 deraadt Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -383,6 +383,8 @@ typedef int (sysctlfn)
 int sysctl_int __P((void *, size_t *, void *, size_t, int *));
 int sysctl_rdint __P((void *, size_t *, void *, int));
 int sysctl_string __P((void *, size_t *, void *, size_t, char *, int));
+int sysctl_tstring __P((void *, size_t *, void *, size_t, char *, int));
+int sysctl__string __P((void *, size_t *, void *, size_t, char *, int, int));
 int sysctl_rdstring __P((void *, size_t *, void *, char *));
 int sysctl_rdstruct __P((void *, size_t *, void *, void *, int));
 int sysctl_struct __P((void *, size_t *, void *, size_t, void *, int));

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gethostname.3,v 1.5 1998/05/13 08:50:56 deraadt Exp $
+.\"	$OpenBSD: gethostname.3,v 1.6 1998/07/07 07:12:53 deraadt Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -53,8 +53,8 @@ The parameter
 .Fa namelen
 specifies the size of the 
 .Fa name
-array.  The returned name is null-terminated unless insufficient
-space is provided.
+array.  If insufficient space is provided, the returned name is truncated.
+The returned name is always null-terminated.
 .Pp
 .Fn Sethostname
 sets the name of the host machine to be
@@ -90,9 +90,20 @@ Host names are limited to
 .Dv MAXHOSTNAMELEN
 (from
 .Ao Pa sys/param.h Ac )
-characters, currently 256.
+characters, currently 256.  This includes the terminating NUL character.
+.Pp
+If the buffer passed to
+.Fn getdomainname
+is smaller than
+.Dv MAXHOSTNAMELEN ,
+other operating systems may not gaurantee termination with NUL.
 .Sh HISTORY
 The
 .Nm
 function call appeared in
 .Bx 4.2 .
+.Sh STANDARDS
+The
+.Nm
+function call conforms to
+.St -xpg4.2 .
