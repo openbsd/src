@@ -8,7 +8,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: malloc.c,v 1.12 1996/09/16 05:43:40 tholo Exp $";
+static char rcsid[] = "$OpenBSD: malloc.c,v 1.13 1996/09/19 20:38:48 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -1019,7 +1019,7 @@ free_pages(ptr, index, info)
     struct pginfo *info;
 {
     int i;
-    struct pgfree *pf,*pt;
+    struct pgfree *pf,*pt=0;
     u_long l;
     void *tail;
 
@@ -1090,7 +1090,6 @@ free_pages(ptr, index, info)
 		pf->next = pt->next;
 		if (pf->next)
 		    pf->next->prev = pf;
-		free(pt);
 	    }
 	} else if (pf->page == tail) {
 	    /* Prepend to entry */
@@ -1132,6 +1131,8 @@ free_pages(ptr, index, info)
 
 	/* XXX: We could realloc/shrink the pagedir here I guess. */
     }
+    if (pt)
+	free(pt);
 }
 
 /*
