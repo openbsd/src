@@ -1,4 +1,4 @@
-/*	$OpenBSD: apci.c,v 1.21 2005/02/27 22:05:15 miod Exp $	*/
+/*	$OpenBSD: apci.c,v 1.22 2005/02/27 22:08:39 miod Exp $	*/
 /*	$NetBSD: apci.c,v 1.9 2000/11/02 00:35:05 eeh Exp $	*/
 
 /*-
@@ -976,6 +976,12 @@ void
 apcicninit(cp)
 	struct consdev *cp;
 {
+
+	/*
+	 * We are not interested by the second console pass.
+	 */
+	if (consolepass != 0)
+		return;
 
 	apci_cn = (struct apciregs *)IIOV(FRODO_BASE + FRODO_APCI_OFFSET(1));
 	apciinit(apci_cn, apcidefaultrate);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcm.c,v 1.23 2005/02/12 18:01:08 miod Exp $	*/
+/*	$OpenBSD: dcm.c,v 1.24 2005/02/27 22:08:39 miod Exp $	*/
 /*	$NetBSD: dcm.c,v 1.41 1997/05/05 20:59:16 thorpej Exp $	*/
 
 /*
@@ -1592,6 +1592,12 @@ void
 dcmcninit(cp)
 	struct consdev *cp;
 {
+
+	/*
+	 * We are not interested by the second console pass.
+	 */
+	if (consolepass != 0)
+		return;
 
 	dcm_cn = (struct dcmdevice *)conaddr;
 	dcminit(dcm_cn, DCMCONSPORT, dcmdefaultrate);

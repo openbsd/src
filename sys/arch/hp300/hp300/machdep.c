@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.100 2005/02/12 18:00:51 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.101 2005/02/27 22:08:41 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.121 1999/03/26 23:41:29 mycroft Exp $	*/
 
 /*
@@ -256,6 +256,12 @@ cpu_startup()
 
 	pmapdebug = 0;
 #endif
+
+	/*
+	 * Now that VM services are available, give another chance at
+	 * console devices to initialize, if they could not before.
+	 */
+	hp300_cninit();
 
 	/*
 	 * Initialize error message buffer (at end of core).

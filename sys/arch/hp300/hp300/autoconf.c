@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.32 2005/02/22 22:11:45 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.33 2005/02/27 22:08:41 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.45 1999/04/10 17:31:02 kleink Exp $	*/
 
 /*
@@ -1222,8 +1222,7 @@ console_scan(func, arg, bus)
 			 * non-zero if console probe successfull
 			 * and worthwhile.
 			 */
-			size = (*func)(scode, NULL, arg);
-			if (size) {
+			if ((*func)(scode, NULL, arg) != 0) {
 				/* Free last mapping. */
 				if (convasize)
 					iounmap(conaddr, convasize);
@@ -1239,23 +1238,27 @@ console_scan(func, arg, bus)
 	}
 }
 
+int consolepass = -1;
+
 /*
  * Special version of cninit().  Actually, crippled somewhat.
  * This version lets the drivers assign cn_tab.
  */
 void
-hp300_cninit()
+hp300_cninit(void)
 {
 	struct consdev *cp;
 	extern struct consdev constab[];
 
-	cn_tab = NULL;
+	if (++consolepass == 0) {
+		cn_tab = NULL;
 
-	/*
-	 * Call all of the console probe functions.
-	 */
-	for (cp = constab; cp->cn_probe; cp++)
-		(*cp->cn_probe)(cp);
+		/*
+		 * Call all of the console probe functions.
+		 */
+		for (cp = constab; cp->cn_probe; cp++)
+			(*cp->cn_probe)(cp);
+	}
 
 	/*
 	 * No console, we can handle it.
@@ -1265,8 +1268,14 @@ hp300_cninit()
 
 	/*
 	 * Turn on the console.
+	 *
+	 * Note that we need to check for cn_init because DIO frame buffers
+	 * will cause cn_tab to switch to wsdisplaycons, which does not
+	 * have an cn_init function.
 	 */
-	(*cn_tab->cn_init)(cn_tab);
+	if (cn_tab->cn_init != NULL) {
+		(*cn_tab->cn_init)(cn_tab);
+	}
 }
 
 /**********************************************************************

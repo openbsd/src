@@ -1,4 +1,4 @@
-/*	$OpenBSD: dca.c,v 1.25 2005/02/14 00:52:09 miod Exp $	*/
+/*	$OpenBSD: dca.c,v 1.26 2005/02/27 22:08:39 miod Exp $	*/
 /*	$NetBSD: dca.c,v 1.35 1997/05/05 20:58:18 thorpej Exp $	*/
 
 /*
@@ -1065,6 +1065,12 @@ void
 dcacninit(cp)
 	struct consdev *cp;
 {
+
+	/*
+	 * We are not interested by the second console pass.
+	 */
+	if (consolepass != 0)
+		return;
 
 	dca_cn = (struct dcadevice *)conaddr;
 	dcainit(dca_cn, dcadefaultrate);
