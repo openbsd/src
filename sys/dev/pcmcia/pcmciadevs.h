@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.67 2001/05/22 10:46:19 fgsch Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.68 2001/05/25 05:08:18 fgsch Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.61 2001/05/22 09:25:30 fgsch Exp 
+ *		OpenBSD: pcmciadevs,v 1.63 2001/05/25 05:05:33 fgsch Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -436,6 +436,7 @@
 #define	PCMCIA_VENDOR_SVEC	-1	/* SVEC/Hawking */
 #define	PCMCIA_VENDOR_SYNERGY21	-1	/* Synergy 21 */
 #define	PCMCIA_VENDOR_TEAC	-1	/* TEAC */
+#define	PCMCIA_VENDOR_WISECOM	-1	/* Wisecom */
 #define	PCMCIA_VENDOR_YEDATA	-1	/* Y-E DATA */
 #define	PCMCIA_VENDOR_ZOOM	-1	/* Zoom */
 
@@ -553,3 +554,5 @@
 #define	PCMCIA_PRODUCT_GVC_NIC2000P	PCMCIA_PRODUCT_INVALID
 #define	PCMCIA_CIS_SYNERGY21_S21810	{ "PCMCIA", "Ethernet", "A", "004743118001" }
 #define	PCMCIA_PRODUCT_SYNERGY21_S21810	PCMCIA_PRODUCT_INVALID
+#define	PCMCIA_CIS_WISECOM_T210CT	{ "PCMCIA", "Ethernet Card", NULL, NULL }
+#define	PCMCIA_PRODUCT_WISECOM_T210CT	PCMCIA_PRODUCT_INVALID
