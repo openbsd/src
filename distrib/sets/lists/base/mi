@@ -2239,16 +2239,7 @@
 ./usr/share/man/cat1
 ./usr/share/man/cat1/help.0
 ./usr/share/man/cat1/man.0
-./usr/share/man/cat1/perl584delta.0
-./usr/share/man/cat1/perl585delta.0
 ./usr/share/man/cat1/pkg_add.0
-./usr/share/man/cat3p/DBM_Filter.0
-./usr/share/man/cat3p/DBM_Filter::compress.0
-./usr/share/man/cat3p/DBM_Filter::encode.0
-./usr/share/man/cat3p/DBM_Filter::int32.0
-./usr/share/man/cat3p/DBM_Filter::null.0
-./usr/share/man/cat3p/DBM_Filter::utf8.0
-./usr/share/man/cat3p/I18N::LangTags::Detect.0
 ./usr/share/man/cat7
 ./usr/share/man/cat7/packages.0
 ./usr/share/man/cat8

@@ -392,6 +392,8 @@
 ./usr/share/man/cat1/perl581delta.0
 ./usr/share/man/cat1/perl582delta.0
 ./usr/share/man/cat1/perl583delta.0
+./usr/share/man/cat1/perl584delta.0
+./usr/share/man/cat1/perl585delta.0
 ./usr/share/man/cat1/perl58delta.0
 ./usr/share/man/cat1/perlapi.0
 ./usr/share/man/cat1/perlapio.0
@@ -725,6 +727,12 @@
 ./usr/share/man/cat3p/Config.0
 ./usr/share/man/cat3p/Cwd.0
 ./usr/share/man/cat3p/DB.0
+./usr/share/man/cat3p/DBM_Filter.0
+./usr/share/man/cat3p/DBM_Filter::compress.0
+./usr/share/man/cat3p/DBM_Filter::encode.0
+./usr/share/man/cat3p/DBM_Filter::int32.0
+./usr/share/man/cat3p/DBM_Filter::null.0
+./usr/share/man/cat3p/DBM_Filter::utf8.0
 ./usr/share/man/cat3p/DB_File.0
 ./usr/share/man/cat3p/Data::Dumper.0
 ./usr/share/man/cat3p/Devel::DProf.0
@@ -828,6 +836,7 @@
 ./usr/share/man/cat3p/Hash::Util.0
 ./usr/share/man/cat3p/I18N::Collate.0
 ./usr/share/man/cat3p/I18N::LangTags.0
+./usr/share/man/cat3p/I18N::LangTags::Detect.0
 ./usr/share/man/cat3p/I18N::LangTags::List.0
 ./usr/share/man/cat3p/I18N::Langinfo.0
 ./usr/share/man/cat3p/IO.0
@@ -1253,11 +1262,13 @@
 ./usr/share/man/cat4/ip6.0
 ./usr/share/man/cat4/ipcomp.0
 ./usr/share/man/cat4/ipsec.0
+./usr/share/man/cat4/ipw.0
 ./usr/share/man/cat4/isa.0
 ./usr/share/man/cat4/isapnp.0
 ./usr/share/man/cat4/ises.0
 ./usr/share/man/cat4/isp.0
 ./usr/share/man/cat4/it.0
+./usr/share/man/cat4/iwi.0
 ./usr/share/man/cat4/keynote.0
 ./usr/share/man/cat4/ksyms.0
 ./usr/share/man/cat4/kue.0
@@ -1981,7 +1992,9 @@
 ./usr/share/man/cat8/iopctl.0
 ./usr/share/man/cat8/iostat.0
 ./usr/share/man/cat8/ipsecadm.0
+./usr/share/man/cat8/ipwcontrol.0
 ./usr/share/man/cat8/isakmpd.0
+./usr/share/man/cat8/iwicontrol.0
 ./usr/share/man/cat8/kadmin.0
 ./usr/share/man/cat8/kadmind.0
 ./usr/share/man/cat8/kdc.0

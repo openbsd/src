@@ -464,6 +464,10 @@
 ./usr/include/dev/pci/if_em.h
 ./usr/include/dev/pci/if_em_hw.h
 ./usr/include/dev/pci/if_em_osdep.h
+./usr/include/dev/pci/if_ipwreg.h
+./usr/include/dev/pci/if_ipwvar.h
+./usr/include/dev/pci/if_iwireg.h
+./usr/include/dev/pci/if_iwivar.h
 ./usr/include/dev/pci/if_levar.h
 ./usr/include/dev/pci/if_lgereg.h
 ./usr/include/dev/pci/if_lmc_types.h
