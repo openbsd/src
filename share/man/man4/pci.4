@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci.4,v 1.20 2000/11/10 09:39:37 niklas Exp $
+.\"	$OpenBSD: pci.4,v 1.21 2000/11/15 21:06:53 aaron Exp $
 .\"	$NetBSD: pci.4,v 1.29 2000/04/01 00:32:23 tsarna Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -209,6 +209,11 @@ Broadcom Bluesteelnet uBsec 5501, 5601, and 5805.
 .It Xr cy 4
 Cyclades Cyclom-4Y, -8Y, and -16Y asynchronous serial communications devices.
 devices.
+.El
+.Ss Display adapters
+.Bl -tag -width vga(4) -offset ind
+.It Xr vga 4
+VGA graphics cards.
 .El
 .Ss Audio devices
 .Bl -tag -width cmpci(4) -offset ind
