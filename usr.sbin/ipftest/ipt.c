@@ -119,6 +119,8 @@ char *argv[];
 		exit(-1);
 	}
 
+	initparse ();
+
 	if (rules) {
 		struct	frentry *fr;
 		char	line[513], *s;
