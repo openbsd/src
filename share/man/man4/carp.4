@@ -1,4 +1,4 @@
-.\"	$OpenBSD: carp.4,v 1.6 2004/02/25 08:42:38 jmc Exp $
+.\"	$OpenBSD: carp.4,v 1.7 2004/03/05 17:24:13 mcbride Exp $
 .\"
 .\" Copyright (c) 2003, Ryan McBride.  All rights reserved.
 .\"
@@ -75,14 +75,14 @@ Additionally, there are a number of global parameters which can be set using
 .Xr sysctl 8 .
 .Sh EXAMPLES
 In order to set up an ARP balanced virtual host, it is necessary to configure
-one virtual host for each physical host which you would like to have actively
-responding to ARP requests and thus handling the traffic.
-In the following example, we will configure 2 hosts to provide balancing and
+one virtual host for each physical host which would responding to ARP
+requests and thus handling the traffic.
+In the following example, 2 hosts are configured to provide balancing and
 failover for the IP address 192.168.1.10.
 .Pp
-First, we configure the
+First the
 .Nm
-interfaces on Host A.
+interfaces on Host A are configured.
 The
 .Ar advskew
 of 100 on the second virtual host means that it's advertisements will be sent
@@ -94,8 +94,8 @@ out slightly less frequently.
 # ifconfig carp1 vhid 2 advskew 100 pass mekmitasdigoat 192.168.1.10
 .Ed
 .Pp
-Now we configure Host B.
-The configuration is identical, except we skew virtual host 1 instead.
+The configuration for host B is identical, except the skew is on
+virtual host 1 rather than virtual host 2.
 .Bd -literal -offset indent
 # ifconfig carp0 create
 # ifconfig carp0 vhid 1 advskew 100 pass mekmitasdigoat 192.168.1.10
