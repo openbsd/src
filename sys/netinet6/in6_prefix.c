@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_prefix.c,v 1.4 2000/02/07 06:05:41 itojun Exp $	*/
+/*	$OpenBSD: in6_prefix.c,v 1.5 2000/02/09 07:34:49 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -386,6 +386,7 @@ assigne_ra_entry(struct rr_prefix *rpp, int iilen, struct in6_ifaddr *ia)
 		 sizeof(*IA6_IN6(ia)) << 3, rpp->rp_plen, iilen);
 	/* link to ia, and put into list */
 	rap->ra_addr = ia;
+	rap->ra_addr->ia_ifa.ifa_refcnt++;
 #if 0 /* Can't do this now, because rpp may be on th stack. should fix it? */
 	ia->ia6_ifpr = rp2ifpr(rpp);
 #endif
@@ -486,9 +487,10 @@ in6_prefix_add_ifid(int iilen, struct in6_ifaddr *ia)
 	}
 	rap = search_ifidwithprefix(ifpr2rp(ifpr), IA6_IN6(ia));
 	if (rap != NULL) {
-		if (rap->ra_addr == NULL)
+		if (rap->ra_addr == NULL) {
 			rap->ra_addr = ia;
-		else if (rap->ra_addr != ia) {
+			rap->ra_addr->ia_ifa.ifa_refcnt++;
+		} else if (rap->ra_addr != ia) {
 			/* There may be some inconsistencies between addrs. */
 			log(LOG_ERR, "ip6_prefix.c: addr %s/%d matched prefix"
 			    "has already another ia %p(%s) on its ifid list\n",
@@ -518,6 +520,8 @@ in6_prefix_remove_ifid(int iilen, struct in6_ifaddr *ia)
 		int s = splnet();
 		LIST_REMOVE(rap, ra_entry);
 		splx(s);
+		if (rap->ra_addr)
+			IFAFREE(&rap->ra_addr->ia_ifa);
 		free(rap, M_RR_ADDR);
 	}
 	if (LIST_FIRST(&ifpr2rp(ia->ia6_ifpr)->rp_addrhead) == NULL)
@@ -571,12 +575,16 @@ add_each_addr(struct socket *so, struct rr_prefix *rpp, struct rp_addr *rap)
 	if (ia6 != NULL) {
 		if (ia6->ia6_ifpr == NULL) {
 			/* link this addr and the prefix each other */
+			IFAFREE(&rap->ra_addr->ia_ifa);
 			rap->ra_addr = ia6;
+			rap->ra_addr->ia_ifa.ifa_refcnt++;
 			ia6->ia6_ifpr = rp2ifpr(rpp);
 			return;
 		}
 		if (ia6->ia6_ifpr == rp2ifpr(rpp)) {
+			IFAFREE(&rap->ra_addr->ia_ifa);
 			rap->ra_addr = ia6;
+			rap->ra_addr->ia_ifa.ifa_refcnt++;
 			return;
 		}
 		/*
@@ -664,6 +672,8 @@ rrpr_update(struct socket *so, struct rr_prefix *new)
 			LIST_REMOVE(rap, ra_entry);
 			if (search_ifidwithprefix(rpp, &rap->ra_ifid)
 			    != NULL) {
+				if (rap->ra_addr)
+					IFAFREE(&rap->ra_addr->ia_ifa);
 				free(rap, M_RR_ADDR);
 				continue;
 			}
@@ -851,6 +861,8 @@ free_rp_entries(struct rr_prefix *rpp)
 
 		rap = LIST_FIRST(&rpp->rp_addrhead);
 		LIST_REMOVE(rap, ra_entry);
+		if (rap->ra_addr)
+			IFAFREE(&rap->ra_addr->ia_ifa);
 		free(rap, M_RR_ADDR);
 	}
 }
@@ -921,6 +933,7 @@ delete_each_prefix(struct rr_prefix *rpp, u_char origin)
 		rap->ra_addr->ia6_ifpr = NULL;
 
 		in6_purgeaddr(&rap->ra_addr->ia_ifa, rpp->rp_ifp);
+		IFAFREE(&rap->ra_addr->ia_ifa);
 		free(rap, M_RR_ADDR);
 	}
 	rp_remove(rpp);
