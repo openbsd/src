@@ -37,7 +37,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: packet.c,v 1.35 2000/09/07 20:27:52 deraadt Exp $");
+RCSID("$OpenBSD: packet.c,v 1.36 2000/10/03 17:59:57 markus Exp $");
 
 #include "xmalloc.h"
 #include "buffer.h"
@@ -614,7 +614,7 @@ packet_send2()
 		    buffer_len(&outgoing_packet),
 		    mac->key, mac->key_len
 		);
-		DBG(debug("done calc HMAC out #%d", seqnr));
+		DBG(debug("done calc MAC out #%d", seqnr));
 	}
 	/* encrypt packet and append to output buffer. */
 	buffer_append_space(&output, &cp, buffer_len(&outgoing_packet));
@@ -894,8 +894,8 @@ packet_read_poll2(int *payload_len_ptr)
 		    mac->key, mac->key_len
 		);
 		if (memcmp(macbuf, buffer_ptr(&input), mac->mac_len) != 0)
-			packet_disconnect("Corrupted HMAC on input.");
-		DBG(debug("HMAC #%d ok", seqnr));
+			packet_disconnect("Corrupted MAC on input.");
+		DBG(debug("MAC #%d ok", seqnr));
 		buffer_consume(&input, mac->mac_len);
 	}
 	if (++seqnr == 0)
