@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.135 2000/07/06 00:59:00 todd Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.136 2000/08/11 18:38:58 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -898,6 +898,9 @@ winchip_cpu_setup(cpu_device, model, step)
 	switch (model) {
 	case 4: /* WinChip C6 */
 		cpu_feature &= ~CPUID_TSC;
+		/* Disable RDTSC instruction from user-level. */
+		lcr4(rcr4() | CR4_TSD);
+
 		printf("%s: broken TSC disabled\n", cpu_device);
 		break;
 	}
