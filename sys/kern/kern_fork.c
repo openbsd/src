@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.62 2003/07/02 00:07:42 avsm Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.63 2003/09/23 20:26:18 millert Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -123,6 +123,9 @@ sys_rfork(struct proc *p, void *v, register_t *retval)
 	return (fork1(p, SIGCHLD, flags, NULL, 0, NULL, NULL, retval));
 }
 
+/* print the 'table full' message once per 10 seconds */
+struct timeval fork_tfmrate = { 10, 0 };
+
 int
 fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
     void (*func)(void *), void *arg, register_t *retval)
@@ -144,7 +147,10 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
 	 */
 	uid = p1->p_cred->p_ruid;
 	if ((nprocs >= maxproc - 5 && uid != 0) || nprocs >= maxproc) {
-		tablefull("proc");
+		static struct timeval lasttfm;
+
+		if (ratecheck(&lasttfm, &fork_tfmrate))
+			tablefull("proc");
 		return (EAGAIN);
 	}
 	nprocs++;
