@@ -658,7 +658,7 @@ void ps_printer::define_encoding(const char *encoding, int encoding_index)
     fatal("can't open encoding file `%1'", encoding);
   int lineno = 1;
   char buf[256];
-  while (fgets(buf, 512, fp) != 0) {
+  while (fgets(buf, sizeof buf, fp) != 0) {
     char *p = buf;
     while (csspace(*p))
       p++;
