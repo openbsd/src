@@ -27,6 +27,7 @@ you didn't get a copy, you may request one from <license@inner.net>.
 #include <sys/proc.h>
 #include <net/route.h>
 #include <netinet/in.h>
+#include <netinet/ip_ipsp.h>
 #include <net/pfkeyv2.h>
 
 #include <sys/protosw.h>
