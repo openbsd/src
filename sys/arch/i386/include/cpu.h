@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.31 1995/10/11 04:20:02 mycroft Exp $	*/
+/*	$NetBSD: cpu.h,v 1.32 1995/12/24 01:08:02 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -54,7 +54,6 @@
  */
 #define	cpu_swapin(p)			/* nothing */
 #define	cpu_wait(p)			/* nothing */
-#define	cpu_swapout(p)			panic("cpu_swapout: can't get here");
 
 /*
  * Arguments to hardclock, softclock and statclock
