@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: fwalk.c,v 1.5 2004/09/28 18:12:44 otto Exp $";
+static char rcsid[] = "$OpenBSD: fwalk.c,v 1.6 2005/03/30 19:59:03 pat Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <errno.h>
@@ -40,7 +40,7 @@ static char rcsid[] = "$OpenBSD: fwalk.c,v 1.5 2004/09/28 18:12:44 otto Exp $";
 #include "glue.h"
 
 int
-_fwalk(int (*function)())
+_fwalk(int (*function)(FILE *))
 {
 	FILE *fp;
 	int n, ret;
