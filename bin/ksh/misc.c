@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.10 1999/06/15 01:18:35 millert Exp $	*/
+/*	$OpenBSD: misc.c,v 1.11 2000/06/28 20:36:37 mickey Exp $	*/
 
 /*
  * Miscellaneous functions
@@ -476,18 +476,15 @@ getn(as, ai)
 	const char *as;
 	int *ai;
 {
-	const char *s;
-	register int n;
-	int sawdigit = 0;
+	char *p;
+	long n;
 
-	s = as;
-	if (*s == '-' || *s == '+')
-		s++;
-	for (n = 0; digit(*s); s++, sawdigit = 1)
-		n = n * 10 + (*s - '0');
-	*ai = (*as == '-') ? -n : n;
-	if (*s || !sawdigit)
+	n = strtol(as, &p, 10);
+
+	if (!*as || *p || INT_MIN >= n || n >= INT_MAX)
 		return 0;
+
+	*ai = (int)n;
 	return 1;
 }
 
