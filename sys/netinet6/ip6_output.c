@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.30 2001/03/30 11:09:02 itojun Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.31 2001/04/11 04:49:23 itojun Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -2151,10 +2151,12 @@ ip6_setpktoptions(control, opt, priv)
 
 			/*
 			 * Check if the requested source address is indeed a
-			 * unicast address assigned to the node.
+			 * unicast address assigned to the node, and can be
+			 * used as the packet's source address.
 			 */
 			if (!IN6_IS_ADDR_UNSPECIFIED(&opt->ip6po_pktinfo->ipi6_addr)) {
 				struct ifaddr *ia;
+				struct in6_ifaddr *ia6;
 				struct sockaddr_in6 sin6;
 
 				bzero(&sin6, sizeof(sin6));
@@ -2169,6 +2171,11 @@ ip6_setpktoptions(control, opt, priv)
 				      opt->ip6po_pktinfo->ipi6_ifindex))) {
 					return(EADDRNOTAVAIL);
 				}
+				ia6 = (struct in6_ifaddr *)ia;
+				if ((ia6->ia6_flags & (IN6_IFF_ANYCAST|IN6_IFF_NOTREADY)) != 0) {
+					return(EADDRNOTAVAIL);
+				}
+
 				/*
 				 * Check if the requested source address is
 				 * indeed a unicast address assigned to the
