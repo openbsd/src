@@ -1,4 +1,4 @@
-.\"	$OpenBSD: telnet.1,v 1.14 1998/11/11 23:01:46 aaron Exp $
+.\"	$OpenBSD: telnet.1,v 1.15 1999/02/21 02:50:04 aaron Exp $
 .\"	$NetBSD: telnet.1,v 1.5 1996/02/28 21:04:12 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
@@ -304,6 +304,14 @@ command mode may be entered by typing the
 .Nm telnet
 ``escape character'' (initially ``^]'').
 When in command mode, the normal terminal editing conventions are available.
+Note that the escape character will return to the command mode of the initial
+invokation of
+.Nm telnet
+that has the controlling terminal. Use the
+.Cm send escape
+command to switch to command mode in subsequent
+.Nm telnet
+processes on remote hosts.
 .Pp
 The following
 .Nm telnet
