@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.10 1997/05/01 15:16:46 pefo Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.11 1997/08/01 23:33:05 deraadt Exp $	*/
 /* 
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.c	8.4 (Berkeley) 1/26/94
- *      $Id: pmap.c,v 1.10 1997/05/01 15:16:46 pefo Exp $
+ *      $Id: pmap.c,v 1.11 1997/08/01 23:33:05 deraadt Exp $
  */
 
 /*
@@ -130,7 +130,7 @@ struct physseg {
 
 #define pa_to_pvh(pa)	(&pv_table[pa_index(pa)])
 
-#ifdef DEBUG
+#ifdef DIAGNOSTIC
 struct {
 	int kernel;	/* entering kernel mapping */
 	int user;	/* entering user mapping */
@@ -1055,7 +1055,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 					npte = PG_CWPAGE;
 		}
 
-#ifdef DEBUG
+#ifdef DIAGNOSTIC
 		enter_stats.managed++;
 #endif
 		/*
@@ -1077,7 +1077,9 @@ pmap_enter(pmap, va, pa, prot, wired)
 			if (pmapdebug & PDB_PVENTRY)
 				printf("pmap_enter: first pv: pmap %x va %x\n",
 					pmap, va);
+#ifdef DIAGNOSTIC
 			enter_stats.firstpv++;
+#endif
 #endif
 			pv->pv_va = va;
 			pv->pv_flags = 0;
@@ -1153,7 +1155,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 			npv->pv_next = pv->pv_next;
 			npv->pv_flags = pv->pv_flags;
 			pv->pv_next = npv;
-#ifdef DEBUG
+#ifdef DIAGNOSTIC
 			if (!npv->pv_next)
 				enter_stats.secondpv++;
 #endif
@@ -1166,7 +1168,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 		 * Assumption: if it is not part of our managed memory
 		 * then it must be device memory which may be volitile.
 		 */
-#ifdef DEBUG
+#ifdef DIAGNOSTIC
 		enter_stats.unmanaged++;
 #endif
 		npte = (prot & VM_PROT_WRITE) ? (PG_IOPAGE & ~PG_G) : (PG_IOPAGE& ~(PG_G | PG_M));
