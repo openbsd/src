@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_qstats.c,v 1.7 2003/01/10 08:03:28 henning Exp $ */
+/*	$OpenBSD: pfctl_qstats.c,v 1.8 2003/01/24 08:54:09 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer
@@ -83,6 +83,10 @@ void			 print_priqstats(struct priq_classstats);
 void			 pfctl_free_altq_node(struct pf_altq_node *);
 void			 pfctl_print_altq_nodestat(int,
 			    const struct pf_altq_node *);
+
+double	calc_interval(struct timeval *, struct timeval *);
+double	calc_rate(u_int64_t, u_int64_t, double);
+double	calc_pps(u_int64_t, u_int64_t, double);
 
 int
 pfctl_show_altq(int dev, int verbose)
@@ -284,4 +288,35 @@ pfctl_free_altq_node(struct pf_altq_node *node)
 		node = node->next;
 		free(prev);
 	}
+}
+
+/* calculate interval in sec */
+double
+calc_interval(struct timeval *cur_time, struct timeval *last_time)
+{
+	double	sec;
+
+	sec = (double)(cur_time->tv_sec - last_time->tv_sec) +
+	    (double)(cur_time->tv_usec - last_time->tv_usec) / 1000000;
+	return (sec);
+}
+
+/* calculate rate in bps */
+double
+calc_rate(u_int64_t new_bytes, u_int64_t last_bytes, double interval)
+{
+	double	rate;
+
+	rate = (double)(new_bytes - last_bytes) * 8 / interval;
+	return (rate);
+}
+
+/* calculate packets in second */
+double
+calc_pps(u_int64_t new_pkts, u_int64_t last_pkts, double interval)
+{
+	double	pps;
+
+	pps = (double)(new_pkts - last_pkts) / interval;
+	return (pps);
 }
