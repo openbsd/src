@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gethostbyname.3,v 1.19 2003/06/02 20:18:35 millert Exp $
+.\"	$OpenBSD: gethostbyname.3,v 1.20 2003/06/30 16:54:53 millert Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -61,7 +61,8 @@
 .Fn hstrerror "int err"
 .Sh DESCRIPTION
 The
-.Fn gethostbyname
+.Fn gethostbyname ,
+.Fn gethostbyname2
 and
 .Fn gethostbyaddr
 functions each return a pointer to an object with the following structure
@@ -93,7 +94,7 @@ The members of this structure are:
 .It Fa h_name
 Official name of the host.
 .It Fa h_aliases
-A zero-terminated array of alternate names for the host.
+A NULL-terminated array of alternate names for the host.
 .It Fa h_addrtype
 The type of address being returned.
 .It Fa h_length
@@ -119,8 +120,10 @@ and
 is an advanced form of
 .Fn gethostbyname
 which allows lookups in address families other than
-.Dv AF_INET ,
-for example
+.Dv AF_INET .
+Currently, the only supported address family besides
+.Dv AF_INET
+is
 .Dv AF_INET6 .
 .Pp
 The
@@ -170,6 +173,19 @@ The contents of the error message is the same as that returned by
 .Fn hstrerror
 with argument
 .Fa h_errno .
+.Sh ENVIRONMENT
+.Bl -tag -width HOSTALIASES
+.It HOSTALIASES
+A file containing local host aliases.
+See
+.Xr hostname 7
+for more information.
+.It RES_OPTIONS
+A list of options to override the resolver's internal defaults.
+See
+.Xr resolver 3
+for more information.
+.El
 .Sh FILES
 .Bl -tag -width /etc/resolv.conf -compact
 .It Pa /etc/hosts
@@ -209,6 +225,16 @@ associated with this name.
 Another type of request to the name server using this domain name
 will result in an answer;
 for example, a mail-forwarder may be registered for this domain.
+.It Dv NETDB_INTERNAL
+An internal error occurred.
+This may occurs when an address family other than
+.It Dv AF_INET
+or
+.It Dv AF_INET6
+is specified or when a resource is unable to be allocated.
+the 
+.It Dv NETDB_SUCCESS
+The function completed successfully.
 .El
 .Sh SEE ALSO
 .Xr getaddrinfo 3 ,
