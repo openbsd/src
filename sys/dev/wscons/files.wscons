@@ -1,4 +1,4 @@
-# $OpenBSD: files.wscons,v 1.6 2002/01/03 21:58:59 jason Exp $
+# $OpenBSD: files.wscons,v 1.7 2004/03/10 00:31:40 deraadt Exp $
 # $NetBSD: files.wscons,v 1.19 1999/12/12 08:17:28 scottr Exp $
 
 #
@@ -30,17 +30,17 @@ file	dev/wscons/wsemul_vt100.c		wsdisplay & !wsemul_no_vt100
 file	dev/wscons/wsemul_vt100_subr.c		wsdisplay & !wsemul_no_vt100
 file	dev/wscons/wsemul_vt100_chars.c		wsdisplay & !wsemul_no_vt100
 file	dev/wscons/wsemul_vt100_keys.c		wsdisplay & !wsemul_no_vt100
-file	dev/wscons/wsevent.c	wskbd | wsmouse
-file	dev/wscons/wskbd.c	wskbd needs-flag
-file	dev/wscons/wskbdutil.c	wskbd needs-flag
-file	dev/wscons/wsmouse.c	wsmouse needs-flag
+file	dev/wscons/wsevent.c			wskbd | wsmouse
+file	dev/wscons/wskbd.c			wskbd needs-flag
+file	dev/wscons/wskbdutil.c			wskbd needs-flag
+file	dev/wscons/wsmouse.c			wsmouse needs-flag
 
 file	dev/rcons/raster_op.c			wsrasteremulops
 file	dev/rcons/raster_text.c			wsrasteremulops
 file	dev/wscons/wscons_rinit.c		wsrasteremulops
 file	dev/wscons/wscons_rops.c		wsrasteremulops
 file    dev/wscons/wscons_gallant19.c		wsrasteremulops
-file	dev/wscons/wscons_font8x16.c	wsrasteremulops
+file	dev/wscons/wscons_font8x16.c		wsrasteremulops
 
 pseudo-device	wsmux
 file	dev/wscons/wsmux.c			wsmux | wsdisplay needs-flag
