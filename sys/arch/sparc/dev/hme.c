@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.36 2002/04/30 01:12:29 art Exp $	*/
+/*	$OpenBSD: hme.c,v 1.37 2002/06/07 23:34:54 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -384,7 +384,7 @@ hmeioctl(ifp, cmd, data)
 
 	if ((error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data)) > 0) {
 		splx(s);
-		return error;
+		return (error);
 	}
 
 	switch (cmd) {
@@ -470,7 +470,7 @@ hmeioctl(ifp, cmd, data)
 		error = EINVAL;
 	}
 	splx(s);
-	return error;
+	return (error);
 }
 
 void
@@ -670,7 +670,7 @@ hme_mint(sc, why)
 {
 	printf("%s: link status changed\n", sc->sc_dev.dv_xname);
 	hme_poll_stop(sc);
-	return 1;
+	return (1);
 }
 
 /*
@@ -721,7 +721,7 @@ hme_tint(sc)
 	if (sc->sc_no_td == 0)
 		ifp->if_timer = 0;
 
-	return 1;
+	return (1);
 }
 
 int
@@ -756,7 +756,7 @@ hme_rint(sc)
 
 	sc->sc_last_rd = bix;
 
-	return 1;
+	return (1);
 }
 
 /*
@@ -776,7 +776,7 @@ hme_eint(sc, why)
 		hmereset(sc);
 	}
 
-	return 1;
+	return (1);
 }
 
 /*
@@ -829,7 +829,7 @@ hme_put(sc, idx, m)
 		tlen += len;
 		MFREE(m, n);
 	}
-	return tlen;
+	return (tlen);
 }
 
 void
@@ -1058,7 +1058,7 @@ hme_mii_read(self, phy, reg)
 		}
 		if (!tries) {
 			printf("%s: mii_read failed\n", sc->sc_dev.dv_xname);
-			return 0;
+			return (0);
 		}
 		return (tcvr->frame & 0xffff);
 	}
@@ -1090,7 +1090,7 @@ hme_mii_read(self, phy, reg)
 	hme_tcvr_bb_readb(sc, phy);			/* ignore... */
 	hme_tcvr_bb_readb(sc, phy);			/* ignore... */
 
-	return ret;
+	return (ret);
 }
 
 int
