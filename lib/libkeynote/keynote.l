@@ -1,5 +1,5 @@
 %{
-/* $OpenBSD: keynote.l,v 1.11 2000/06/13 19:16:16 angelos Exp $ */
+/* $OpenBSD: keynote.l,v 1.12 2000/08/11 20:51:38 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -69,14 +69,13 @@ specnumber      [1-9][0-9]*
 number		{digit}+
 flt		{digit}+"."{digit}+
 vstring		[a-zA-Z_][a-zA-Z0-9_]*
-litstring	\"(([^\"\n])|(\\[\"\n.]))*\"
+litstring	\"(((\\\n)|(\\.)|([^\\\n\"]))*)\"
 variable	{vstring}
 comment		"#"[^\n]*
 %s ACTIONSTRING LOCALINIT KEYPREDICATE SIGNERINIT KEYNOTEVERSION
 %pointer
 %option noyywrap never-interactive yylineno
 %%
-
 %{
     /*
      * Return a preset token, so we can have more than one grammars
