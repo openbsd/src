@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.84 2005/03/30 05:20:18 henning Exp $	*/
+/*	$OpenBSD: route.c,v 1.85 2005/03/30 05:29:04 henning Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -30,20 +30,6 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-static const char copyright[] =
-"@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static const char sccsid[] = "@(#)route.c	8.3 (Berkeley) 3/19/94";
-#else
-static const char rcsid[] = "$OpenBSD: route.c,v 1.84 2005/03/30 05:20:18 henning Exp $";
-#endif
-#endif /* not lint */
-
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
@@ -74,15 +60,15 @@ static const char rcsid[] = "$OpenBSD: route.c,v 1.84 2005/03/30 05:20:18 hennin
 #include "show.h"
 
 union	sockunion {
-	struct	sockaddr sa;
-	struct	sockaddr_in sin;
+	struct sockaddr		sa;
+	struct sockaddr_in	sin;
 #ifdef INET6
-	struct	sockaddr_in6 sin6;
+	struct sockaddr_in6	sin6;
 #endif
-	struct	sockaddr_ipx sipx;
-	struct	sockaddr_dl sdl;
-	struct	sockaddr_rtin rtin;
-	struct	sockaddr_rtlabel rtlabel;
+	struct sockaddr_ipx	sipx;
+	struct sockaddr_dl	sdl;
+	struct sockaddr_rtin	rtin;
+	struct sockaddr_rtlabel	rtlabel;
 } so_dst, so_gate, so_mask, so_genmask, so_ifa, so_ifp, so_label;
 
 typedef union sockunion *sup;
@@ -91,9 +77,10 @@ int	rtm_addrs, s;
 int	forcehost, forcenet, nflag, af, qflag, tflag;
 int	iflag, verbose, aflen = sizeof(struct sockaddr_in);
 int	locking, lockrest, debugonly;
-struct	rt_metrics rt_metrics;
 u_long	rtm_inits;
 uid_t	uid;
+
+struct rt_metrics	rt_metrics;
 
 void	 flushroutes(int, char **);
 int	 newroute(int, char **);
@@ -110,7 +97,7 @@ void	 pmsg_addrs(char *, int);
 void	 bprintf(FILE *, int, char *);
 void	 mask_addr(union sockunion *, union sockunion *, int);
 #ifdef INET6
-static int inet6_makenetandmask(struct sockaddr_in6 *);
+int	inet6_makenetandmask(struct sockaddr_in6 *);
 #endif
 int	 getaddr(int, char *, struct hostent **);
 int	 rtmsg(int, int);
@@ -178,7 +165,7 @@ main(int argc, char **argv)
 		s = open(_PATH_DEVNULL, O_WRONLY);
 	else
 		s = socket(PF_ROUTE, SOCK_RAW, 0);
-	if (s < 0)
+	if (s == -1)
 		err(1, "socket");
 	if (*argv == NULL)
 		usage(NULL);
@@ -272,7 +259,7 @@ flushroutes(int argc, char **argv)
 	if (buf == NULL)
 		return;
 
-	seqno = 0;		/* ??? */
+	seqno = 0;
 	for (next = buf; next < lim; next += rtm->rtm_msglen) {
 		rtm = (struct rt_msghdr *)next;
 		if (verbose)
@@ -304,7 +291,8 @@ flushroutes(int argc, char **argv)
 			printf("%-20.20s ", rtm->rtm_flags & RTF_HOST ?
 			    routename(sa) : netname(sa, NULL)); /* XXX extract
 								   netmask */
-			sa = (struct sockaddr *)(ROUNDUP(sa->sa_len) + (char *)sa);
+			sa = (struct sockaddr *)
+			    (ROUNDUP(sa->sa_len) + (char *)sa);
 			printf("%-20.20s ", routename(sa));
 			printf("done\n");
 		}
@@ -672,7 +660,7 @@ inet_makenetandmask(u_int32_t net, struct sockaddr_in *sin, int bits)
 /*
  * XXX the function may need more improvement...
  */
-static int
+int
 inet6_makenetandmask(struct sockaddr_in6 *sin6)
 {
 	char *plen = NULL;
@@ -963,8 +951,8 @@ monitor(void)
 }
 
 struct {
-	struct	rt_msghdr m_rtm;
-	char	m_space[512];
+	struct rt_msghdr	m_rtm;
+	char			m_space[512];
 } m_rtmsg;
 
 int
