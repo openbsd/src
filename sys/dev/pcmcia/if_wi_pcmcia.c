@@ -1,4 +1,4 @@
-/* $OpenBSD: if_wi_pcmcia.c,v 1.46 2004/04/06 21:08:57 millert Exp $ */
+/* $OpenBSD: if_wi_pcmcia.c,v 1.47 2004/05/03 16:58:11 drahn Exp $ */
 /* $NetBSD: if_wi_pcmcia.c,v 1.14 2001/11/26 04:34:56 ichiro Exp $ */
 
 /*
@@ -353,8 +353,10 @@ wi_pcmcia_attach(parent, self, aux)
 		goto bad;
 	}
 
-	wi_attach(sc, &wi_func_io);
-	return;
+	if (wi_attach(sc, &wi_func_io) == 0)
+		return;
+
+	pcmcia_intr_disestablish(psc->sc_pf, sc->sc_ih);
 
 bad:
 	if (state > 2)
