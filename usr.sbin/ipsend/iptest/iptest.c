@@ -1,6 +1,8 @@
-/*     $OpenBSD: iptest.c,v 1.4 1998/01/26 04:17:10 dgregor Exp $     */
+
+/*	$OpenBSD: iptest.c,v 1.5 2001/01/17 06:01:27 fgsch Exp $	*/
+
 /*
- * ipsend.c (C) 1995-1997 Darren Reed
+ * ipsend.c (C) 1995-1998 Darren Reed
  *
  * This was written to test what size TCP fragments would get through
  * various TCP/IP packet filters, as used in IP firewalls.  In certain
@@ -13,13 +15,14 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "%W% %G% (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)$Id: iptest.c,v 1.4 1998/01/26 04:17:10 dgregor Exp $";
+static const char rcsid[] = "@(#)$IPFilter: iptest.c,v 2.2 1999/12/04 03:37:05 darrenr Exp $";
 #endif
 #include <stdio.h>
 #include <netdb.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/socket.h>
@@ -98,7 +101,8 @@ char **argv;
 	struct	tcpiphdr *ti;
 	struct	in_addr	gwip;
 	ip_t	*ip;
-	char	*name =  argv[0], host[64], *gateway = NULL, *dev = NULL;
+	char	*name =  argv[0], host[MAXHOSTNAMELEN + 1];
+	char	*gateway = NULL, *dev = NULL;
 	char	*src = NULL, *dst;
 	int	mtu = 1500, tests = 0, pointtest = 0, c;
 
@@ -154,6 +158,7 @@ char **argv;
 	if (!src)
 	    {
 		gethostname(host, sizeof(host));
+		host[sizeof(host) - 1] = '\0';
 		src = host;
 	    }
 

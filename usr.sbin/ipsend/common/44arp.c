@@ -1,3 +1,5 @@
+/*	$OpenBSD: 44arp.c,v 1.3 2001/01/17 06:01:24 fgsch Exp $	*/
+
 /*
  * Based upon 4.4BSD's /usr/sbin/arp
  */
@@ -26,6 +28,7 @@
 # include <net/if_var.h>
 #endif
 #include "ipsend.h"
+#include "iplang.h"
 
 
 /*
@@ -64,6 +67,11 @@ char	*addr, *eaddr;
 	struct	rt_msghdr	*rtm;
 	struct	sockaddr_inarp	*sin;
 	struct	sockaddr_dl	*sdl;
+
+#ifdef	IPSEND
+	if (arp_getipv4(addr, ether) == 0)
+		return 0;
+#endif
 
 	mib[0] = CTL_NET;
 	mib[1] = PF_ROUTE;

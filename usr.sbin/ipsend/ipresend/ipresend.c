@@ -1,6 +1,7 @@
-/*     $OpenBSD: ipresend.c,v 1.4 1999/03/31 05:50:19 deraadt Exp $     */
+/*	$OpenBSD: ipresend.c,v 1.5 2001/01/17 06:01:25 fgsch Exp $	*/
+
 /*
- * ipresend.c (C) 1995-1997 Darren Reed
+ * ipresend.c (C) 1995-1998 Darren Reed
  *
  * This was written to test what size TCP fragments would get through
  * various TCP/IP packet filters, as used in IP firewalls.  In certain
@@ -13,7 +14,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "%W% %G% (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)$Id: ipresend.c,v 1.4 1999/03/31 05:50:19 deraadt Exp $";
+static const char rcsid[] = "@(#)$IPFilter: ipresend.c,v 2.1 1999/08/04 17:31:05 darrenr Exp $";
 #endif
 #include <stdio.h>
 #include <stdlib.h>
@@ -47,7 +48,7 @@ int	opts = 0;
 # ifdef	linux
 char	default_device[] = "eth0";
 # else
-#  if defined(sun) || defined(__OpenBSD__)
+#  ifdef	sun
 char	default_device[] = "le0";
 #  else
 #   ifdef	ultrix
@@ -146,7 +147,7 @@ char	**argv;
 			usage(name);
 		}
 
-	if (!ipr)
+	if (!ipr || !resend)
 		usage(name);
 
 	gwip.s_addr = 0;

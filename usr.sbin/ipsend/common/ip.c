@@ -1,5 +1,7 @@
+/*	$OpenBSD: ip.c,v 1.6 2001/01/17 06:01:24 fgsch Exp $	*/
+
 /*
- * ip.c (C) 1995-1997 Darren Reed
+ * ip.c (C) 1995-1998 Darren Reed
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
@@ -7,7 +9,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "%W% %G% (C)1995";
-static const char rcsid[] = "@(#)$Id: ip.c,v 1.5 1998/01/26 04:16:50 dgregor Exp $";
+static const char rcsid[] = "@(#)$IPFilter: ip.c,v 2.1 1999/08/04 17:31:04 darrenr Exp $";
 #endif
 #include <errno.h>
 #include <stdio.h>
@@ -117,7 +119,6 @@ int	frag;
 	last_gw.s_addr = gwip.s_addr;
 	iplen = ip->ip_len;
 	ip->ip_len = htons(iplen);
-	ip->ip_off = htons(ip->ip_off);
 	if (!(frag & 2)) {
 		if (!ip->ip_v)
 			ip->ip_v   = IPVERSION;
@@ -260,7 +261,7 @@ struct	in_addr	gwip;
 
 	i = sizeof(struct tcpiphdr) / sizeof(long);
 
-	if ((ti->ti_flags == TH_SYN) && !ip->ip_off &&
+	if ((ti->ti_flags == TH_SYN) && !ntohs(ip->ip_off) &&
 	    (lbuf[i] != htonl(0x020405b4))) {
 		lbuf[i] = htonl(0x020405b4);
 		bcopy((char *)ip + hlen + thlen, (char *)ip + hlen + thlen + 4,

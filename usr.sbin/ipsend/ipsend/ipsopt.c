@@ -1,6 +1,7 @@
-/*      $OpenBSD: ipsopt.c,v 1.2 1998/01/26 04:17:06 dgregor Exp $      */
+/*	$OpenBSD: ipsopt.c,v 1.3 2001/01/17 06:01:27 fgsch Exp $	*/
+
 /*
- * Copyright (C) 1995-1997 by Darren Reed.
+ * Copyright (C) 1995-1998 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
@@ -8,7 +9,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipsopt.c	1.2 1/11/96 (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)$Id: ipsopt.c,v 1.2 1998/01/26 04:17:06 dgregor Exp $";
+static const char rcsid[] = "@(#)$IPFilter: ipsopt.c,v 2.1 1999/08/04 17:31:07 darrenr Exp $";
 #endif
 #include <stdio.h>
 #include <string.h>

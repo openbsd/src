@@ -1,7 +1,7 @@
-/*	$OpenBSD: ipft_hx.c,v 1.12 2000/03/13 23:40:20 kjell Exp $	*/
+/*	$OpenBSD: ipft_hx.c,v 1.13 2001/01/17 06:01:22 fgsch Exp $	*/
 
 /*
- * Copyright (C) 1995-1998 by Darren Reed.
+ * Copyright (C) 1995-2000 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
@@ -37,14 +37,14 @@
 #include <netdb.h>
 #include <arpa/nameser.h>
 #include <resolv.h>
-#include <netinet/ip_fil_compat.h>
+#include <netinet/ip_compat.h>
 #include <netinet/tcpip.h>
 #include "ipf.h"
 #include "ipt.h"
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipft_hx.c	1.1 3/9/96 (C) 1996 Darren Reed";
-static const char rcsid[] = "@(#)$IPFilter: ipft_hx.c,v 2.1 1999/08/04 17:30:03 darrenr Exp $";
+static const char rcsid[] = "@(#)$IPFilter: ipft_hx.c,v 2.2 2000/03/13 22:10:24 darrenr Exp $";
 #endif
 
 extern	int	opts;

@@ -1,15 +1,16 @@
 %{
-/*     $OpenBSD: iplang_y.y,v 1.1 1998/01/26 04:17:02 dgregor Exp $     */
+/*	$OpenBSD: iplang_y.y,v 1.2 2001/01/17 06:01:26 fgsch Exp $	*/
+
 /*
- * Copyright (C) 1997 by Darren Reed.
+ * Copyright (C) 1997-1998 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  *
- * $Id: iplang_y.y,v 1.1 1998/01/26 04:17:02 dgregor Exp $
+ * $IPFilter: iplang_y.y,v 2.2.2.1 2000/08/05 14:43:39 darrenr Exp $
  */
- 
+
 #include <stdio.h>
 #include <string.h>
 #include <fcntl.h>
@@ -45,11 +46,14 @@
 #include <resolv.h>
 #include <ctype.h>
 #include "ipsend.h"
-#include "ip_fil_compat.h"
+#include "ip_compat.h"
 #include "ipf.h"
 #include "iplang.h"
 
+#if !defined(__NetBSD__) && (!defined(__FreeBSD_version) && \
+    __FreeBSD_version < 400020)
 extern	struct ether_addr *ether_aton __P((char *));
+#endif
 
 extern	int	opts;
 extern	struct ipopt_names ionames[];
@@ -163,6 +167,7 @@ void	end_tcp __P((void));
 void	end_data __P((void));
 void	yyerror __P((char *));
 void	iplang __P((FILE *));
+int	arp_getipv4 __P((char *, char *));
 int	yyparse __P((void));
 %}
 %union {
@@ -346,7 +351,7 @@ tcpopts:
 tcpopt:	IL_TCPO_NOP ';'			{ set_tcpopt(IL_TCPO_NOP, NULL); }
 	| IL_TCPO_EOL ';'		{ set_tcpopt(IL_TCPO_EOL, NULL); }
 	| IL_TCPO_MSS optoken		{ set_tcpopt(IL_TCPO_MSS,&$2);}
-	| IL_TCPO_WSCALE optoken	{ set_tcpopt(IL_TCPO_MSS,&$2);}
+	| IL_TCPO_WSCALE optoken	{ set_tcpopt(IL_TCPO_WSCALE,&$2);}
 	| IL_TCPO_TS optoken		{ set_tcpopt(IL_TCPO_TS, &$2);}
 	;
 
@@ -780,6 +785,8 @@ char **arg;
 				*t++ = (u_char)(val & 0xff);
 				todo = 0;
 			}
+			if (todo)
+				continue;
 		}
 		if (quote) {
 			if (isdigit(c)) {
@@ -808,8 +815,8 @@ char **arg;
 					*t++ = '\t';
 					break;
 				}
-				quote = 0;
 			}
+			quote = 0;
 			continue;
 		}
 
@@ -818,6 +825,8 @@ char **arg;
 		else
 			*t++ = c;
 	}
+	if (todo)
+		*t++ = (u_char)(val & 0xff);
 	if (quote)
 		*t++ = '\\';
 	len = t - (u_char *)canip->ah_data;
@@ -911,7 +920,7 @@ char **arg;
 void set_ipv4off(arg)
 char **arg;
 {
-	ip->ip_off = strtol(*arg, NULL, 0);
+	ip->ip_off = htons(strtol(*arg, NULL, 0));
 	free(*arg);
 	*arg = NULL;
 }
@@ -962,7 +971,7 @@ char **arg;
 void set_ipv4id(arg)
 char **arg;
 {
-	ip->ip_id = strtol(*arg, NULL, 0);
+	ip->ip_id = htons(strtol(*arg, NULL, 0));
 	free(*arg);
 	*arg = NULL;
 }
@@ -1000,7 +1009,7 @@ void new_tcpheader()
 	ip->ip_p = IPPROTO_TCP;
 
 	tcp = (tcphdr_t *)new_header(IPPROTO_TCP);
-	tcp->th_win = 4096;
+	tcp->th_win = htons(4096);
 	tcp->th_off = sizeof(*tcp) >> 2;
 }
 
@@ -1048,7 +1057,7 @@ char **arg;
 void set_tcpseq(arg)
 char **arg;
 {
-	tcp->th_seq = strtol(*arg, NULL, 0);
+	tcp->th_seq = htonl(strtol(*arg, NULL, 0));
 	free(*arg);
 	*arg = NULL;
 }
@@ -1057,7 +1066,7 @@ char **arg;
 void set_tcpack(arg)
 char **arg;
 {
-	tcp->th_ack = strtol(*arg, NULL, 0);
+	tcp->th_ack = htonl(strtol(*arg, NULL, 0));
 	free(*arg);
 	*arg = NULL;
 }
@@ -1079,7 +1088,7 @@ char **arg;
 void set_tcpurp(arg)
 char **arg;
 {
-	tcp->th_urp = strtol(*arg, NULL, 0);
+	tcp->th_urp = htons(strtol(*arg, NULL, 0));
 	free(*arg);
 	*arg = NULL;
 }
@@ -1088,7 +1097,7 @@ char **arg;
 void set_tcpwin(arg)
 char **arg;
 {
-	tcp->th_win = strtol(*arg, NULL, 0);
+	tcp->th_win = htons(strtol(*arg, NULL, 0));
 	free(*arg);
 	*arg = NULL;
 }
@@ -1299,7 +1308,8 @@ void packet_done()
 	u_char  *s = (u_char *)ipbuffer, *t = (u_char *)outline;
 
 	if (opts & OPT_VERBOSE) {
-		for (i = ip->ip_len, j = 0; i; i--, j++, s++) {
+		ip->ip_len = htons(ip->ip_len);
+		for (i = ntohs(ip->ip_len), j = 0; i; i--, j++, s++) {
 			if (j && !(j & 0xf)) {
 				*t++ = '\n';
 				*t = '\0';
@@ -1339,6 +1349,7 @@ void packet_done()
 		}
 		fputs(outline, stdout);
 		fflush(stdout);
+		ip->ip_len = ntohs(ip->ip_len);
 	}
 
 	prep_packet();
@@ -1421,6 +1432,21 @@ char **arg;
 	carp->arp_addr = getipv4addr(*arg);
 	free(*arg);
 	*arg = NULL;
+}
+
+
+int arp_getipv4(ip, addr)
+char *ip;
+char *addr;
+{
+	arp_t *a;
+
+	for (a = arplist; a; a = a->arp_next)
+		if (!bcmp(ip, (char *)&a->arp_addr, 4)) {
+			bcopy((char *)&a->arp_eaddr, addr, 6);
+			return 0;
+		}
+	return -1;
 }
 
 
@@ -1543,35 +1569,35 @@ char **type;
 void set_icmpid(arg)
 int arg;
 {
-	icmp->icmp_id = arg;
+	icmp->icmp_id = htons(arg);
 }
 
 
 void set_icmpseq(arg)
 int arg;
 {
-	icmp->icmp_seq = arg;
+	icmp->icmp_seq = htons(arg);
 }
 
 
 void set_icmpotime(arg)
 int arg;
 {
-	icmp->icmp_otime = arg;
+	icmp->icmp_otime = htonl(arg);
 }
 
 
 void set_icmprtime(arg)
 int arg;
 {
-	icmp->icmp_rtime = arg;
+	icmp->icmp_rtime = htonl(arg);
 }
 
 
 void set_icmpttime(arg)
 int arg;
 {
-	icmp->icmp_ttime = arg;
+	icmp->icmp_ttime = htonl(arg);
 }
 
 
@@ -1579,7 +1605,7 @@ void set_icmpmtu(arg)
 int arg;
 {
 #if	BSD >= 199306
-	icmp->icmp_nextmtu = arg;
+	icmp->icmp_nextmtu = htons(arg);
 #endif
 }
 
@@ -1731,7 +1757,9 @@ void end_ipv4()
 	aniphdr_t *aip;
 
 	ip->ip_sum = 0;
+	ip->ip_len = htons(ip->ip_len);
 	ip->ip_sum = chksum((u_short *)ip, ip->ip_hl << 2);
+	ip->ip_len = ntohs(ip->ip_len);
 	free_anipheader();
 	for (aip = aniphead, ip = NULL; aip; aip = aip->ah_next)
 		if (aip->ah_p == IPPROTO_IP)
@@ -1762,9 +1790,10 @@ void end_udp()
 	iptmp.ip_p = ip->ip_p;
 	iptmp.ip_src = ip->ip_src;
 	iptmp.ip_dst = ip->ip_dst;
-	iptmp.ip_len = ip->ip_len - (ip->ip_hl << 2);
+	iptmp.ip_len = htons(ip->ip_len - (ip->ip_hl << 2));
 	sum = p_chksum((u_short *)&iptmp, (u_int)sizeof(iptmp));
-	udp->uh_sum = c_chksum((u_short *)udp, (u_int)iptmp.ip_len, sum);
+	udp->uh_ulen = htons(udp->uh_ulen);
+	udp->uh_sum = c_chksum((u_short *)udp, (u_int)ntohs(iptmp.ip_len), sum);
 	free_anipheader();
 	for (aip = aniphead, udp = NULL; aip; aip = aip->ah_next)
 		if (aip->ah_p == IPPROTO_UDP)
@@ -1782,10 +1811,10 @@ void end_tcp()
 	iptmp.ip_p = ip->ip_p;
 	iptmp.ip_src = ip->ip_src;
 	iptmp.ip_dst = ip->ip_dst;
-	iptmp.ip_len = ip->ip_len - (ip->ip_hl << 2);
+	iptmp.ip_len = htons(ip->ip_len - (ip->ip_hl << 2));
 	sum = p_chksum((u_short *)&iptmp, (u_int)sizeof(iptmp));
 	tcp->th_sum = 0;
-	tcp->th_sum = c_chksum((u_short *)tcp, (u_int)iptmp.ip_len, sum);
+	tcp->th_sum = c_chksum((u_short *)tcp, (u_int)ntohs(iptmp.ip_len), sum);
 	free_anipheader();
 	for (aip = aniphead, tcp = NULL; aip; aip = aip->ah_next)
 		if (aip->ah_p == IPPROTO_TCP)

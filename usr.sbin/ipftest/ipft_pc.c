@@ -1,7 +1,7 @@
-/*	$OpenBSD: ipft_pc.c,v 1.16 2000/03/13 23:40:20 kjell Exp $	*/
+/*	$OpenBSD: ipft_pc.c,v 1.17 2001/01/17 06:01:22 fgsch Exp $	*/
 
 /*
- * Copyright (C) 1993-1998 by Darren Reed.
+ * Copyright (C) 1993-2000 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
@@ -28,14 +28,14 @@
 #include <netinet/ip.h>
 #include <netinet/tcp.h>
 #include <net/if.h>
-#include <netinet/ip_fil_compat.h>
+#include <netinet/ip_compat.h>
 #include <netinet/tcpip.h>
 #include "ipf.h"
 #include "pcap.h"
 #include "ipt.h"
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)$IPFilter: ipft_pc.c,v 2.1 1999/08/04 17:30:03 darrenr Exp $";
+static const char rcsid[] = "@(#)$IPFilter: ipft_pc.c,v 2.2 2000/03/13 22:10:24 darrenr Exp $";
 #endif
 
 struct	llc	{
@@ -48,9 +48,9 @@ struct	llc	{
  * While many of these maybe the same, some do have different header formats
  * which make this useful.
  */
-#define	DLT_MAX	14
+#define	DLT_MAX	10
 
-static	struct	llc	llcs[DLT_MAX] = {
+static	struct	llc	llcs[DLT_MAX+1] = {
 	{ 0, 0, 0 },	/* DLT_NULL */
 	{ 14, 12, 2 },	/* DLT_E10MB */
 	{ 0, 0, 0 },	/* DLT_EN3MB */
@@ -61,10 +61,7 @@ static	struct	llc	llcs[DLT_MAX] = {
 	{ 0, 0, 0 },	/* DLT_ARCNET */
 	{ 0, 0, 0 },	/* DLT_SLIP */
 	{ 0, 0, 0 },	/* DLT_PPP */
-	{ 0, 0, 0 },	/* DLT_FDDI */
-	{ 0, 0, 0 },	/* DLT_ATMRFC1483 */
-	{ 0, 0, 0 },   	/* DLT_LOOP */
-	{ 0, 0, 0 }   	/* DLT_ENC */
+	{ 0, 0, 0 }	/* DLT_FDDI */
 };
 
 static	int	pcap_open __P((char *));
@@ -119,7 +116,7 @@ char	*fname;
 		swap_hdr(&ph);
 	}
 
-	if (ph.pc_v_maj != PCAP_VERSION_MAJ || ph.pc_type >= DLT_MAX) {
+	if (ph.pc_v_maj != PCAP_VERSION_MAJ || ph.pc_type > DLT_MAX) {
 		(void) close(fd);
 		return -2;
 	}

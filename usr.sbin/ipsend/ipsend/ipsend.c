@@ -1,6 +1,7 @@
-/*     $OpenBSD: ipsend.c,v 1.6 1999/03/22 05:33:30 deraadt Exp $     */
+/*	$OpenBSD: ipsend.c,v 1.7 2001/01/17 06:01:26 fgsch Exp $	*/
+
 /*
- * ipsend.c (C) 1995-1997 Darren Reed
+ * ipsend.c (C) 1995-1998 Darren Reed
  *
  * This was written to test what size TCP fragments would get through
  * various TCP/IP packet filters, as used in IP firewalls.  In certain
@@ -13,13 +14,14 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipsend.c	1.5 12/10/95 (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)$Id: ipsend.c,v 1.6 1999/03/22 05:33:30 deraadt Exp $";
+static const char rcsid[] = "@(#)$IPFilter: ipsend.c,v 2.2 1999/12/04 03:37:05 darrenr Exp $";
 #endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <netdb.h>
 #include <string.h>
+#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/socket.h>
@@ -33,7 +35,6 @@ static const char rcsid[] = "@(#)$Id: ipsend.c,v 1.6 1999/03/22 05:33:30 deraadt
 #ifndef	linux
 #include <netinet/ip_var.h>
 #endif
-#include "ip_fil_compat.h"
 #include "ipsend.h"
 #include "ipf.h"
 
@@ -47,13 +48,13 @@ int	opts;
 #ifdef	linux
 char	default_device[] = "eth0";
 #else
-# if defined(sun) || defined(__OpenBSD__)
+# ifdef	sun
 char	default_device[] = "le0";
 # else
 #  ifdef	ultrix
 char	default_device[] = "ln0";
 #  else
-#   ifdef __bsdi__
+#   ifdef	__bsdi__
 char	default_device[] = "ef0";
 #   else
 #    ifdef	__sgi
@@ -178,7 +179,8 @@ char	**argv;
 	struct	in_addr	gwip;
 	tcphdr_t	*tcp;
 	ip_t	*ip;
-	char	*name =  argv[0], host[64], *gateway = NULL, *dev = NULL;
+	char	*name =  argv[0], host[MAXHOSTNAMELEN + 1];
+	char	*gateway = NULL, *dev = NULL;
 	char	*src = NULL, *dst, *s;
 	int	mtu = 1500, olen = 0, c, nonl = 0;
 
@@ -358,8 +360,8 @@ char	**argv;
 		tcp = (tcphdr_t *)((char *)(ip + 1) + olen);
 	    }
 
-	if (ip->ip_p == IPPROTO_TCP && optind < argc)
-		for (s = argv[optind]; (c = *s); s++)
+	if (ip->ip_p == IPPROTO_TCP)
+		for (s = argv[optind]; s && (c = *s); s++)
 			switch(c)
 			{
 			case 'S' : case 's' :

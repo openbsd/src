@@ -1,5 +1,7 @@
+/*	$OpenBSD: sbpf.c,v 1.5 2001/01/17 06:01:25 fgsch Exp $	*/
+
 /*
- * (C)opyright 1995-1997 Darren Reed. (from tcplog)
+ * (C)opyright 1995-1998 Darren Reed. (from tcplog)
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
@@ -24,7 +26,11 @@
 #if BSD < 199103
 #include <sys/fcntlcom.h>
 #endif
-#include <sys/dir.h>
+#if (__FreeBSD_version >= 300000)
+# include <sys/dirent.h>
+#else
+# include <sys/dir.h>
+#endif
 #include <net/bpf.h>
 
 #include <net/if.h>
@@ -39,11 +45,11 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)sbpf.c	1.3 8/25/95 (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)$Id: sbpf.c,v 1.4 1999/12/30 08:02:33 kjell Exp $";
+static const char rcsid[] = "@(#)$IPFilter: sbpf.c,v 2.1 1999/08/04 17:31:13 darrenr Exp $";
 #endif
 
 /*
- * the code herein is derived from libpcap.
+ * the code herein is dervied from libpcap.
  */
 static	u_char	*buf = NULL;
 static	int	bufsize = 0, timeout = 1;
@@ -58,6 +64,8 @@ int	sport, tout;
 	struct	ifreq ifr;
 	char	bpfname[16];
 	int	fd, i;
+
+	fd = 0;			/* shutup gcc	*/
 
 	for (i = 0; i < 16; i++)
 	    {

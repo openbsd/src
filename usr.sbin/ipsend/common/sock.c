@@ -1,5 +1,7 @@
+/*	$OpenBSD: sock.c,v 1.4 2001/01/17 06:01:25 fgsch Exp $	*/
+
 /*
- * sock.c (C) 1995-1997 Darren Reed
+ * sock.c (C) 1995-1998 Darren Reed
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
@@ -7,7 +9,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)sock.c	1.2 1/11/96 (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)$Id: sock.c,v 1.3 1998/01/26 04:16:54 dgregor Exp $";
+static const char rcsid[] = "@(#)$IPFilter: sock.c,v 2.1.4.1 2000/12/16 21:05:44 darrenr Exp $";
 #endif
 #include <stdio.h>
 #include <unistd.h>
@@ -22,7 +24,11 @@ static const char rcsid[] = "@(#)$Id: sock.c,v 1.3 1998/01/26 04:16:54 dgregor E
 #ifndef	ultrix
 #include <fcntl.h>
 #endif
-#include <sys/dir.h>
+#if (__FreeBSD_version >= 300000)
+# include <sys/dirent.h>
+#else
+# include <sys/dir.h>
+#endif
 #define _KERNEL
 #define	KERNEL
 #ifdef	ultrix
@@ -278,12 +284,21 @@ struct	tcpiphdr *ti;
 		return NULL;
 
 	fd = (struct filedesc *)malloc(sizeof(*fd));
+#if defined( __FreeBSD_version) && __FreeBSD_version >= 500013
+	if (KMCPY(fd, p->ki_fd, sizeof(*fd)) == -1)
+	    {
+		fprintf(stderr, "read(%#lx,%#lx) failed\n",
+			(u_long)p, (u_long)p->ki_fd);
+		return NULL;
+	    }
+#else
 	if (KMCPY(fd, p->kp_proc.p_fd, sizeof(*fd)) == -1)
 	    {
 		fprintf(stderr, "read(%#lx,%#lx) failed\n",
 			(u_long)p, (u_long)p->kp_proc.p_fd);
 		return NULL;
 	    }
+#endif
 
 	o = (struct file **)calloc(1, sizeof(*o) * (fd->fd_lastfile + 1));
 	if (KMCPY(o, fd->fd_ofiles, (fd->fd_lastfile + 1) * sizeof(*o)) == -1)

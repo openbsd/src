@@ -1,5 +1,7 @@
+/*	$OpenBSD: ipsend.h,v 1.3 2001/01/17 06:01:25 fgsch Exp $	*/
+
 /*
- * ipsend.h (C) 1997 Darren Reed
+ * ipsend.h (C) 1997-1998 Darren Reed
  *
  * This was written to test what size TCP fragments would get through
  * various TCP/IP packet filters, as used in IP firewalls.  In certain
@@ -21,7 +23,7 @@
 # endif
 #endif
 
-#include "ip_fil_compat.h"
+#include "ip_compat.h"
 #ifdef	linux
 #include <linux/sockios.h>
 #endif
@@ -64,6 +66,6 @@ extern	int	kmemcpy __P((char *, void *, int));
 
 #define	KMCPY(a,b,c)	kmemcpy((char *)(a), (void *)(b), (int)(c))
 
-#ifndef OPT_RAW
+#ifndef	OPT_RAW
 #define	OPT_RAW	0x80000
 #endif

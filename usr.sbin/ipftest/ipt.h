@@ -1,12 +1,12 @@
-/*	$OpenBSD: ipt.h,v 1.10 2000/03/13 23:40:20 kjell Exp $	*/
+/*	$OpenBSD: ipt.h,v 1.11 2001/01/17 06:01:23 fgsch Exp $	*/
 
 /*
- * Copyright (C) 1993-1998 by Darren Reed.
+ * Copyright (C) 1993-2000 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
- * $IPFilter: ipt.h,v 2.1 1999/08/04 17:30:08 darrenr Exp $
+ * $IPFilter: ipt.h,v 2.2 2000/03/13 22:10:25 darrenr Exp $
  */
 
 #ifndef	__IPT_H__
