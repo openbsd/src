@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.33 2001/06/05 20:54:51 provos Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.34 2001/06/22 14:11:01 deraadt Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -106,7 +106,7 @@ struct vnode {
 	struct	buflists v_cleanblkhd;		/* clean blocklist head */
 	struct	buflists v_dirtyblkhd;		/* dirty blocklist head */
 	u_int   v_numoutput;			/* num of writes in progress */
-	LIST_ENTRY(vnode) v_synclist;           /* vnode with dirty buffers */
+	LIST_ENTRY(vnode) v_synclist;		/* vnode with dirty buffers */
 	union {
 		struct mount	*vu_mountedhere;/* ptr to mounted vfs (VDIR) */
 		struct socket	*vu_socket;	/* unix ipc (VSOCK) */
@@ -140,7 +140,7 @@ struct vnode {
 #define	VXLOCK		0x0100	/* vnode is locked to change underlying type */
 #define	VXWANT		0x0200	/* process is waiting for vnode */
 #define	VALIASED	0x0800	/* vnode has an alias */
-#define VLOCKSWORK      0x4000  /* FS supports locking discipline */
+#define VLOCKSWORK	0x4000	/* FS supports locking discipline */
 
 /*
  * (v_bioflag) Flags that may be manipulated by interrupt handlers
@@ -179,7 +179,7 @@ struct vattr {
  * Flags for va_cflags.
  */
 #define	VA_UTIMES_NULL	0x01		/* utimes argument was NULL */
-#define VA_EXCLUSIVE    0x02            /* exclusive create request */
+#define VA_EXCLUSIVE    0x02		/* exclusive create request */
 /*
  * Flags for ioflag.
  */
@@ -225,7 +225,7 @@ extern int		vttoif_tab[];
 #define	V_SAVE		0x0001		/* vinvalbuf: sync file first */
 #define	V_SAVEMETA	0x0002		/* vinvalbuf: leave indirect blocks */
 
-#define REVOKEALL       0x0001          /* vop_reovke: revoke all aliases */
+#define REVOKEALL	0x0001		/* vop_reovke: revoke all aliases */
 
 
 TAILQ_HEAD(freelst, vnode);
@@ -342,7 +342,7 @@ struct simplelock mntvnode_slock;
  * you might want to consult Intrisics.h's XtOffset{,Of,To}.
  */
 #define VOPARG_OFFSET(p_type,field) \
-        ((int) (((char *) (&(((p_type)NULL)->field))) - ((char *) NULL)))
+	((int) (((char *) (&(((p_type)NULL)->field))) - ((char *) NULL)))
 #define VOPARG_OFFSETOF(s_type,field) \
 	VOPARG_OFFSET(s_type*,field)
 #define VOPARG_OFFSETTO(S_TYPE,S_OFFSET,STRUCT_P) \
@@ -422,7 +422,7 @@ void	vflushbuf __P((struct vnode *vp, int sync));
 int	vflush __P((struct mount *mp, struct vnode *vp, int flags));
 void	vntblinit __P((void));
 void    vn_initialize_syncerd __P((void));
-int     vwaitforio __P((struct vnode *, int, char *, int));
+int	vwaitforio __P((struct vnode *, int, char *, int));
 void	vwakeup __P((struct vnode *));
 void	vdevgone __P((int, int, int, enum vtype));
 int 	vget __P((struct vnode *vp, int lockflag, struct proc *p));
@@ -443,7 +443,7 @@ int 	vn_rdwr __P((enum uio_rw rw, struct vnode *vp, caddr_t base,
 	    struct ucred *cred, size_t *aresid, struct proc *p));
 int	vn_lock __P((struct vnode *vp, int flags, struct proc *p));
 
-int     vop_generic_abortop __P((void *));
+int	vop_generic_abortop __P((void *));
 int	vop_generic_islocked __P((void *));
 int	vop_generic_lock __P((void *));
 int	vop_generic_unlock __P((void *));
@@ -461,10 +461,10 @@ struct vnode *
 void 	vput __P((struct vnode *vp));
 void 	vrele __P((struct vnode *vp));
 int	vaccess __P((mode_t file_mode, uid_t uid, gid_t gid,
-		     mode_t acc_mode, struct ucred *cred));
+	    mode_t acc_mode, struct ucred *cred));
 
-int     vn_isdisk __P((struct vnode *vp, int *errp));
+int	vn_isdisk __P((struct vnode *vp, int *errp));
 
-int     softdep_fsync __P((struct vnode *vp));
+int	softdep_fsync __P((struct vnode *vp));
 
 #endif /* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_subr.c,v 1.10 2001/02/22 16:08:01 art Exp $	*/
+/*	$OpenBSD: exec_subr.c,v 1.11 2001/06/22 14:14:08 deraadt Exp $	*/
 /*	$NetBSD: exec_subr.c,v 1.9 1994/12/04 03:10:42 mycroft Exp $	*/
 
 /*
@@ -101,7 +101,7 @@ vmcmdset_extend(evsp)
 
 	/* reallocate the command set */
 	nvcp = malloc(evsp->evs_cnt * sizeof(struct exec_vmcmd), M_EXEC,
-		      M_WAITOK);
+	    M_WAITOK);
 	bcopy(evsp->evs_cmds, nvcp, (ocnt * sizeof(struct exec_vmcmd)));
 	if (evsp->evs_cmds != evsp->evs_start)
 		free(evsp->evs_cmds, M_EXEC);
@@ -149,17 +149,17 @@ vmcmd_map_pagedvn(p, cmd)
 	 * call this routine.
 	 */
 #if defined(UVM)
-        struct uvm_object *uobj;
+	struct uvm_object *uobj;
 	int retval;
 
 	/*
 	 * map the vnode in using uvm_map.
 	 */
 
-        if (cmd->ev_len == 0)
-                return(0);
-        if (cmd->ev_offset & PAGE_MASK)
-                return(EINVAL);
+	if (cmd->ev_len == 0)
+		return(0);
+	if (cmd->ev_offset & PAGE_MASK)
+		return(EINVAL);
 	if (cmd->ev_addr & PAGE_MASK)
 		return(EINVAL);
 	if (cmd->ev_len & PAGE_MASK)
@@ -169,18 +169,18 @@ vmcmd_map_pagedvn(p, cmd)
 	 * first, attach to the object
 	 */
 
-        uobj = uvn_attach((void *) cmd->ev_vp, VM_PROT_READ|VM_PROT_EXECUTE);
-        if (uobj == NULL)
-                return(ENOMEM);
+	uobj = uvn_attach((void *) cmd->ev_vp, VM_PROT_READ|VM_PROT_EXECUTE);
+	if (uobj == NULL)
+		return(ENOMEM);
 
 	/*
 	 * do the map
 	 */
 
-	retval = uvm_map(&p->p_vmspace->vm_map, &cmd->ev_addr, cmd->ev_len, 
-		uobj, cmd->ev_offset, 
-		UVM_MAPFLAG(cmd->ev_prot, VM_PROT_ALL, UVM_INH_COPY, 
-			UVM_ADV_NORMAL, UVM_FLAG_COPYONW|UVM_FLAG_FIXED));
+	retval = uvm_map(&p->p_vmspace->vm_map, &cmd->ev_addr, cmd->ev_len,
+	    uobj, cmd->ev_offset,
+	    UVM_MAPFLAG(cmd->ev_prot, VM_PROT_ALL, UVM_INH_COPY,
+	    UVM_ADV_NORMAL, UVM_FLAG_COPYONW|UVM_FLAG_FIXED));
 
 	/*
 	 * check for error
@@ -220,11 +220,11 @@ vmcmd_map_readvn(p, cmd)
 		return(KERN_SUCCESS); /* XXXCDC: should it happen? */
 	
 	cmd->ev_addr = trunc_page(cmd->ev_addr); /* required by uvm_map */
-	error = uvm_map(&p->p_vmspace->vm_map, &cmd->ev_addr, 
-			round_page(cmd->ev_len), NULL, UVM_UNKNOWN_OFFSET, 
-			UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_COPY,
-			UVM_ADV_NORMAL,
-			UVM_FLAG_FIXED|UVM_FLAG_OVERLAY|UVM_FLAG_COPYONW));
+	error = uvm_map(&p->p_vmspace->vm_map, &cmd->ev_addr,
+	    round_page(cmd->ev_len), NULL, UVM_UNKNOWN_OFFSET,
+	    UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_COPY,
+	    UVM_ADV_NORMAL,
+	    UVM_FLAG_FIXED|UVM_FLAG_OVERLAY|UVM_FLAG_COPYONW));
 
 #else
 	error = vm_allocate(&p->p_vmspace->vm_map, &cmd->ev_addr,
@@ -247,10 +247,10 @@ vmcmd_map_readvn(p, cmd)
 		 * it mapped read-only, so now we are going to have to call
 		 * uvm_map_protect() to fix up the protection.  ICK.
 		 */
-		return(uvm_map_protect(&p->p_vmspace->vm_map, 
-				trunc_page(cmd->ev_addr),
-				round_page(cmd->ev_addr + cmd->ev_len),
-				cmd->ev_prot, FALSE));
+		return(uvm_map_protect(&p->p_vmspace->vm_map,
+		    trunc_page(cmd->ev_addr),
+		    round_page(cmd->ev_addr + cmd->ev_len),
+		    cmd->ev_prot, FALSE));
 	} else {
 		return(KERN_SUCCESS);
 	}
@@ -278,11 +278,10 @@ vmcmd_map_zero(p, cmd)
 		return(KERN_SUCCESS); /* XXXCDC: should it happen? */
 	
 	cmd->ev_addr = trunc_page(cmd->ev_addr); /* required by uvm_map */
-	error = uvm_map(&p->p_vmspace->vm_map, &cmd->ev_addr, 
-			round_page(cmd->ev_len), NULL, UVM_UNKNOWN_OFFSET, 
-			UVM_MAPFLAG(cmd->ev_prot, UVM_PROT_ALL, UVM_INH_COPY,
-			UVM_ADV_NORMAL,
-			UVM_FLAG_FIXED|UVM_FLAG_COPYONW));
+	error = uvm_map(&p->p_vmspace->vm_map, &cmd->ev_addr,
+	    round_page(cmd->ev_len), NULL, UVM_UNKNOWN_OFFSET,
+	    UVM_MAPFLAG(cmd->ev_prot, UVM_PROT_ALL, UVM_INH_COPY,
+	    UVM_ADV_NORMAL, UVM_FLAG_FIXED|UVM_FLAG_COPYONW));
 
 #else
 	error = vm_allocate(&p->p_vmspace->vm_map, &cmd->ev_addr,

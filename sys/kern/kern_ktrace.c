@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ktrace.c,v 1.22 2000/11/10 18:15:46 art Exp $	*/
+/*	$OpenBSD: kern_ktrace.c,v 1.23 2001/06/22 14:14:08 deraadt Exp $	*/
 /*	$NetBSD: kern_ktrace.c,v 1.23 1996/02/09 18:59:36 christos Exp $	*/
 
 /*
@@ -525,11 +525,11 @@ ktrcanset(callp, targetp)
 	struct pcred *target = targetp->p_cred;
 
 	if ((caller->pc_ucred->cr_uid == target->p_ruid &&
-	     target->p_ruid == target->p_svuid &&
-	     caller->p_rgid == target->p_rgid &&	/* XXX */
-	     target->p_rgid == target->p_svgid &&
-	     (targetp->p_traceflag & KTRFAC_ROOT) == 0) ||
-	     caller->pc_ucred->cr_uid == 0)
+	    target->p_ruid == target->p_svuid &&
+	    caller->p_rgid == target->p_rgid &&	/* XXX */
+	    target->p_rgid == target->p_svgid &&
+	    (targetp->p_traceflag & KTRFAC_ROOT) == 0) ||
+	    caller->pc_ucred->cr_uid == 0)
 		return (1);
 
 	return (0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_physio.c,v 1.10 2001/05/07 22:16:35 art Exp $	*/
+/*	$OpenBSD: kern_physio.c,v 1.11 2001/06/22 14:14:09 deraadt Exp $	*/
 /*	$NetBSD: kern_physio.c,v 1.28 1997/05/19 10:43:28 pk Exp $	*/
 
 /*-
@@ -103,8 +103,8 @@ physio(strategy, bp, dev, flags, minphys, uio)
 #if defined(UVM) /* XXXCDC: map not locked, rethink */
 			/* XXX - obsolete now that vslock can error? */
 			if (!uvm_useracc(uio->uio_iov[i].iov_base,
-				     uio->uio_iov[i].iov_len,
-				     (flags == B_READ) ? B_WRITE : B_READ))
+			    uio->uio_iov[i].iov_len,
+			    (flags == B_READ) ? B_WRITE : B_READ))
 				return (EFAULT);
 #else
 			if (!useracc(uio->uio_iov[i].iov_base,
@@ -249,9 +249,9 @@ after_unlock:
 				panic("done > todo; strategy broken");
 #endif
 			iovp->iov_len -= done;
-                        iovp->iov_base += done;
-                        uio->uio_offset += done;
-                        uio->uio_resid -= done;
+			iovp->iov_base += done;
+			uio->uio_offset += done;
+			uio->uio_resid -= done;
 
 			/*
 			 * Now, check for an error.
@@ -301,13 +301,13 @@ getphysbuf()
 	int s;
 
 	s = splbio();
-        while (bswlist.b_actf == NULL) {
-                bswlist.b_flags |= B_WANTED;
-                tsleep((caddr_t)&bswlist, PRIBIO + 1, "getphys", 0);
-        }
-        bp = bswlist.b_actf;
-        bswlist.b_actf = bp->b_actf;
-        splx(s);
+	while (bswlist.b_actf == NULL) {
+		bswlist.b_flags |= B_WANTED;
+		tsleep((caddr_t)&bswlist, PRIBIO + 1, "getphys", 0);
+	}
+	bp = bswlist.b_actf;
+	bswlist.b_actf = bp->b_actf;
+	splx(s);
 #else
 
 	bp = malloc(sizeof(*bp), M_TEMP, M_WAITOK);
@@ -331,14 +331,14 @@ putphysbuf(bp)
 	struct buf *bp;
 {
 #if !defined(UVM)
-        bp->b_actf = bswlist.b_actf;
-        bswlist.b_actf = bp;
-        if (bp->b_vp)
-                brelvp(bp);
-        if (bswlist.b_flags & B_WANTED) {
-                bswlist.b_flags &= ~B_WANTED;
-                wakeup(&bswlist);
-        }
+	bp->b_actf = bswlist.b_actf;
+	bswlist.b_actf = bp;
+	if (bp->b_vp)
+		brelvp(bp);
+	if (bswlist.b_flags & B_WANTED) {
+		bswlist.b_flags &= ~B_WANTED;
+		wakeup(&bswlist);
+	}
 #else
 	/* XXXCDC: is this necesary? */
 	if (bp->b_vp)

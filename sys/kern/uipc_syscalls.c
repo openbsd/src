@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.38 2001/05/16 12:52:58 ho Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.39 2001/06/22 14:14:10 deraadt Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -179,7 +179,7 @@ sys_accept(p, v, retval)
 			break;
 		}
 		error = tsleep((caddr_t)&so->so_timeo, PSOCK | PCATCH,
-			       netcon, 0);
+		    netcon, 0);
 		if (error) {
 			splx(s);
 			return (error);
@@ -268,7 +268,7 @@ sys_connect(p, v, retval)
 	s = splsoftnet();
 	while ((so->so_state & SS_ISCONNECTING) && so->so_error == 0) {
 		error = tsleep((caddr_t)&so->so_timeo, PSOCK | PCATCH,
-			       netcon, 0);
+		    netcon, 0);
 		if (error)
 			break;
 	}
@@ -437,7 +437,7 @@ sendit(p, s, mp, flags, retsize)
 #ifdef KTRACE
 	struct iovec *ktriov = NULL;
 #endif
-	
+
 	if ((error = getsock(p->p_fd, s, &fp)) != 0)
 		return (error);
 	auio.uio_iov = mp->msg_iov;
@@ -497,7 +497,7 @@ sendit(p, s, mp, flags, retsize)
 #endif
 	len = auio.uio_resid;
 	error = sosend((struct socket *)fp->f_data, to, &auio,
-		       NULL, control, flags);
+	    NULL, control, flags);
 	if (error) {
 		if (auio.uio_resid != len && (error == ERESTART ||
 		    error == EINTR || error == EWOULDBLOCK))
@@ -540,8 +540,7 @@ sys_recvfrom(p, v, retval)
 
 	if (SCARG(uap, fromlenaddr)) {
 		error = copyin((caddr_t)SCARG(uap, fromlenaddr),
-			       (caddr_t)&msg.msg_namelen,
-			       sizeof (msg.msg_namelen));
+		    (caddr_t)&msg.msg_namelen, sizeof (msg.msg_namelen));
 		if (error)
 			return (error);
 	} else
@@ -554,7 +553,7 @@ sys_recvfrom(p, v, retval)
 	msg.msg_control = 0;
 	msg.msg_flags = SCARG(uap, flags);
 	return (recvit(p, SCARG(uap, s), &msg,
-		       (caddr_t)SCARG(uap, fromlenaddr), retval));
+	    (caddr_t)SCARG(uap, fromlenaddr), retval));
 }
 
 int
@@ -573,7 +572,7 @@ sys_recvmsg(p, v, retval)
 	register int error;
 
 	error = copyin((caddr_t)SCARG(uap, msg), (caddr_t)&msg,
-		       sizeof (msg));
+	    sizeof (msg));
 	if (error)
 		return (error);
 	if (msg.msg_iovlen <= 0 || msg.msg_iovlen > IOV_MAX)
@@ -591,7 +590,7 @@ sys_recvmsg(p, v, retval)
 	uiov = msg.msg_iov;
 	msg.msg_iov = iov;
 	error = copyin((caddr_t)uiov, (caddr_t)iov,
-		       (unsigned)(msg.msg_iovlen * sizeof (struct iovec)));
+	    (unsigned)(msg.msg_iovlen * sizeof (struct iovec)));
 	if (error)
 		goto done;
 	if ((error = recvit(p, SCARG(uap, s), &msg, (caddr_t)0, retval)) == 0) {
@@ -623,7 +622,7 @@ recvit(p, s, mp, namelenp, retsize)
 #ifdef KTRACE
 	struct iovec *ktriov = NULL;
 #endif
-	
+
 	if ((error = getsock(p->p_fd, s, &fp)) != 0)
 		return (error);
 	auio.uio_iov = mp->msg_iov;
@@ -673,7 +672,7 @@ recvit(p, s, mp, namelenp, retsize)
 		if (len <= 0 || from == 0)
 			len = 0;
 		else {
-		        /* save sa_len before it is destroyed by MSG_COMPAT */
+			/* save sa_len before it is destroyed by MSG_COMPAT */
 			if (len > from->m_len)
 				len = from->m_len;
 			/* else if len < from->m_len ??? */
@@ -806,7 +805,7 @@ sys_setsockopt(p, v, retval)
 		if (m == NULL)
 			return (ENOBUFS);
 		error = copyin(SCARG(uap, val), mtod(m, caddr_t),
-			       SCARG(uap, valsize));
+		    SCARG(uap, valsize));
 		if (error) {
 			(void) m_free(m);
 			return (error);
@@ -840,7 +839,7 @@ sys_getsockopt(p, v, retval)
 		return (error);
 	if (SCARG(uap, val)) {
 		error = copyin((caddr_t)SCARG(uap, avalsize),
-			       (caddr_t)&valsize, sizeof (valsize));
+		    (caddr_t)&valsize, sizeof (valsize));
 		if (error)
 			return (error);
 	} else
@@ -874,7 +873,7 @@ sys_pipe(p, v, retval)
 
 	if ((error = sys_opipe(p, v, rval)) != 0)
 		return (error);
-	
+
 	fds[0] = rval[0];
 	fds[1] = rval[1];
 	error = copyout((caddr_t)fds, (caddr_t)SCARG(uap, fdp),

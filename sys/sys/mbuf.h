@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.37 2001/05/31 23:35:56 angelos Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.38 2001/06/22 14:11:00 deraadt Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -153,7 +153,7 @@ struct mbuf {
 #define M_LOOP		0x0040	/* for Mbuf statistics */
 
 #if 0 /*KAME IPSEC*/
-#define M_AUTHIPDGM     0x0080  /* data origin authentication */
+#define M_AUTHIPDGM	0x0080  /* data origin authentication */
 #endif
 
 /* flags copied when copying m_pkthdr */
@@ -297,12 +297,12 @@ struct mbuf *_sk_mgethdr(int, int);
 	MBUFLOCK( \
 		(m)->m_ext.ext_buf = \
 		    pool_get(&mclpool, (how) == M_WAIT ? \
-			(PR_WAITOK|PR_LIMITFAIL) : 0); \
+		    (PR_WAITOK|PR_LIMITFAIL) : 0); \
 		if ((m)->m_ext.ext_buf == NULL) { \
 			m_reclaim(); \
 			(m)->m_ext.ext_buf = \
 			    pool_get(&mclpool, \
-			     (how) == M_WAIT ? PR_WAITOK : 0); \
+			    (how) == M_WAIT ? PR_WAITOK : 0); \
 		} \
 	); \
 	if ((m)->m_ext.ext_buf != NULL) { \
@@ -551,10 +551,10 @@ void	m_reclaim __P((void));
 void	m_copydata __P((struct mbuf *, int, int, caddr_t));
 void	m_cat __P((struct mbuf *, struct mbuf *));
 struct mbuf *m_devget __P((char *, int, int, struct ifnet *,
-			   void (*) __P((const void *, void *, size_t))));
+	    void (*) __P((const void *, void *, size_t))));
 void	m_zero __P((struct mbuf *));
 int	m_apply __P((struct mbuf *, int, int,
-			int (*)(caddr_t, caddr_t, unsigned int), caddr_t));
+	    int (*)(caddr_t, caddr_t, unsigned int), caddr_t));
 void	mbinit __P((void));
 
 /* Packet tag routines */

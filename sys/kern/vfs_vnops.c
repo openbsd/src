@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.30 2001/05/14 12:38:47 art Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.31 2001/06/22 14:14:11 deraadt Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -64,7 +64,7 @@
 int	vn_read __P((struct file *fp, off_t *off, struct uio *uio, 
 	    struct ucred *cred));
 int	vn_write __P((struct file *fp, off_t *off, struct uio *uio, 
-            struct ucred *cred));
+	    struct ucred *cred));
 int	vn_select __P((struct file *fp, int which, struct proc *p));
 int	vn_kqfilter __P((struct file *fp, struct knote *kn));
 int 	vn_closefile __P((struct file *fp, struct proc *p));
@@ -448,7 +448,7 @@ vn_ioctl(fp, com, data, p)
 			return VOP_IOCTL(vp, com, data, fp->f_flag,
 					 p->p_ucred, p);
 		if (com == FIONBIO || com == FIOASYNC)  /* XXX */
-			return (0);                     /* XXX */
+			return (0);			/* XXX */
 		/* fall into... */
 
 	default:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_init.c,v 1.10 2000/09/27 16:13:46 mickey Exp $	*/
+/*	$OpenBSD: vfs_init.c,v 1.11 2001/06/22 14:14:10 deraadt Exp $	*/
 /*	$NetBSD: vfs_init.c,v 1.6 1996/02/09 19:00:58 christos Exp $	*/
 
 /*
@@ -131,8 +131,7 @@ vfs_opv_init_explicit(vfs_opv_desc)
 	}
 
 	for (opve_descp = vfs_opv_desc->opv_desc_ops;
-	     opve_descp->opve_op;
-	     opve_descp++) {
+	    opve_descp->opve_op; opve_descp++) {
 		/*
 		 * Sanity check:  is this operation listed
 		 * in the list of operations?  We check this
@@ -182,7 +181,7 @@ vfs_opv_init_default(vfs_opv_desc)
 
 	for (j = 0; j < vfs_opv_numops; j++)
 		if (opv_desc_vector[j] == NULL)
-			opv_desc_vector[j] = 
+			opv_desc_vector[j] =
 			    opv_desc_vector[VOFFSET(vop_default)];
 }
 

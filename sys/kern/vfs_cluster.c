@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_cluster.c,v 1.24 2001/05/28 00:23:02 gluk Exp $	*/
+/*	$OpenBSD: vfs_cluster.c,v 1.25 2001/06/22 14:14:10 deraadt Exp $	*/
 /*	$NetBSD: vfs_cluster.c,v 1.12 1996/04/22 01:39:05 christos Exp $	*/
 
 /*-
@@ -156,7 +156,7 @@ cluster_read(vp, ci, filesize, lblkno, size, cred, bpp)
 	if (!ISSEQREAD(ci, lblkno)) {
 		ci->ci_ralen = 0;
 		ci->ci_maxra = lblkno;
-	} else if ((u_quad_t)(ioblkno + 1) * (u_quad_t)size <= filesize && 
+	} else if ((u_quad_t)(ioblkno + 1) * (u_quad_t)size <= filesize &&
 		   !alreadyincore &&
 		   !(error = VOP_BMAP(vp, ioblkno, NULL, &blkno, &num_ra)) &&
 		   blkno != -1) {
@@ -194,10 +194,10 @@ cluster_read(vp, ci, filesize, lblkno, size, cred, bpp)
 			bp->b_blkno = blkno;
 			/* Case 5: check how many blocks to read ahead */
 			++ioblkno;
-			if ((u_quad_t)(ioblkno + 1) * (u_quad_t)size 
-			      > filesize ||
+			if ((u_quad_t)(ioblkno + 1) * (u_quad_t)size >
+			    filesize ||
 			    incore(vp, ioblkno) || (error = VOP_BMAP(vp,
-			     ioblkno, NULL, &blkno, &num_ra)) || blkno == -1)
+			    ioblkno, NULL, &blkno, &num_ra)) || blkno == -1)
 				goto skip_readahead;
 			/*
 			 * Adjust readahead as above.
@@ -241,7 +241,7 @@ skip_readahead:
 	if (bp) {
 		if (bp->b_flags & (B_DONE | B_DELWRI))
 			panic("cluster_read: DONE bp");
-		else 
+		else
 			error = VOP_STRATEGY(bp);
 	}
 
@@ -483,22 +483,22 @@ cluster_callback(bp)
  */
 void
 cluster_write(bp, ci, filesize)
-        struct buf *bp;
+	struct buf *bp;
 	struct cluster_info *ci;
 	u_quad_t filesize;
 {
-        struct vnode *vp;
-        daddr_t lbn;
-        int maxclen, cursize;
+	struct vnode *vp;
+	daddr_t lbn;
+	int maxclen, cursize;
 
-        vp = bp->b_vp;
-        lbn = bp->b_lblkno;
+	vp = bp->b_vp;
+	lbn = bp->b_lblkno;
 
 	/* Initialize vnode to beginning of file. */
 	if (lbn == 0)
 		ci->ci_lasta = ci->ci_clen = ci->ci_cstart = ci->ci_lastw = 0;
 
-        if (ci->ci_clen == 0 || lbn != ci->ci_lastw + 1 ||
+	if (ci->ci_clen == 0 || lbn != ci->ci_lastw + 1 ||
 	    (bp->b_blkno != ci->ci_lasta + btodb(bp->b_bcount))) {
 		maxclen = MAXBSIZE / vp->v_mount->mnt_stat.f_iosize - 1;
 		if (ci->ci_clen != 0) {
@@ -528,7 +528,7 @@ cluster_write(bp, ci, filesize)
 					 * Failed, push the previous cluster.
 					 */
 					for (bpp = buflist->bs_children;
-					     bpp < endbp; bpp++)
+					    bpp < endbp; bpp++)
 						brelse(*bpp);
 					free(buflist, M_SEGMENT);
 					cluster_wbuild(vp, NULL, bp->b_bcount,
@@ -538,7 +538,7 @@ cluster_write(bp, ci, filesize)
 					 * Succeeded, keep building cluster.
 					 */
 					for (bpp = buflist->bs_children;
-					     bpp <= endbp; bpp++)
+					    bpp <= endbp; bpp++)
 						bdwrite(*bpp);
 					free(buflist, M_SEGMENT);
 					ci->ci_lastw = lbn;
@@ -554,7 +554,7 @@ cluster_write(bp, ci, filesize)
 		 */
 		if ((u_quad_t)(lbn + 1) * (u_quad_t)bp->b_bcount != filesize &&
 		    (VOP_BMAP(vp, lbn, NULL, &bp->b_blkno, &maxclen) ||
-		     bp->b_blkno == -1)) {
+		    bp->b_blkno == -1)) {
 			bawrite(bp);
 			ci->ci_clen = 0;
 			ci->ci_lasta = bp->b_blkno;
@@ -562,13 +562,13 @@ cluster_write(bp, ci, filesize)
 			ci->ci_lastw = lbn;
 			return;
 		}
-                ci->ci_clen = maxclen;
-                if (maxclen == 0) {		/* I/O not contiguous */
+		ci->ci_clen = maxclen;
+		if (maxclen == 0) {		/* I/O not contiguous */
 			ci->ci_cstart = lbn + 1;
-                        bawrite(bp);
-                } else {			/* Wait for rest of cluster */
+		bawrite(bp);
+		} else {			/* Wait for rest of cluster */
 			ci->ci_cstart = lbn;
-                        bdwrite(bp);
+			bdwrite(bp);
 		}
 	} else if (lbn == ci->ci_cstart + ci->ci_clen) {
 		/*

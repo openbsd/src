@@ -1,4 +1,4 @@
-/*	$OpenBSD: audioio.h,v 1.12 2001/01/28 09:45:26 aaron Exp $	*/
+/*	$OpenBSD: audioio.h,v 1.13 2001/06/22 14:10:59 deraadt Exp $	*/
 /*	$NetBSD: audioio.h,v 1.24 1998/08/13 06:28:41 mrg Exp $	*/
 
 /*
@@ -89,11 +89,11 @@ typedef struct audio_info audio_info_t;
  * Parameter for the AUDIO_GETDEV ioctl to determine current
  * audio devices.
  */
-#define MAX_AUDIO_DEV_LEN       16
+#define MAX_AUDIO_DEV_LEN	16
 typedef struct audio_device {
-        char name[MAX_AUDIO_DEV_LEN];
-        char version[MAX_AUDIO_DEV_LEN];
-        char config[MAX_AUDIO_DEV_LEN];
+	char name[MAX_AUDIO_DEV_LEN];
+	char version[MAX_AUDIO_DEV_LEN];
+	char config[MAX_AUDIO_DEV_LEN];
 } audio_device_t;
 
 typedef struct audio_offset {
@@ -296,7 +296,7 @@ typedef struct mixer_ctrl {
 #define AudioNagc	"agc"
 #define AudioNdelay	"delay"
 #define AudioNselect	"select" /* select destination */
-#define AudioNvideo     "video"
+#define AudioNvideo	"video"
 
 #define AudioEmulaw		"mulaw"
 #define AudioEalaw		"alaw"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_extent.c,v 1.14 2001/05/08 19:40:55 fgsch Exp $	*/
+/*	$OpenBSD: subr_extent.c,v 1.15 2001/06/22 14:14:09 deraadt Exp $	*/
 /*	$NetBSD: subr_extent.c,v 1.7 1996/11/21 18:46:34 cgd Exp $	*/
 
 /*-
@@ -95,7 +95,7 @@ extent_register(ex)
 	struct extent *ex;
 {
 	/* Is this redundant? */
-	if(ext_listp == NULL){
+	if (ext_listp == NULL){
 		LIST_INIT(&ext_list);
 		ext_listp = &ext_list;
 	}
@@ -118,7 +118,8 @@ extent_find(name)
 	struct extent *ep;
 
 	for(ep = ext_listp->lh_first; ep != NULL; ep = ep->ex_link.le_next){
-		if(!strcmp(ep->ex_name, name)) return(ep);
+		if (!strcmp(ep->ex_name, name))
+			return(ep);
 	}
 
 	return(NULL);
@@ -641,7 +642,7 @@ extent_alloc_subregion1(ex, substart, subend, size, alignment, skew, boundary,
 				 * Calculate the next boundary after the start
 				 * of this region.
 				 */
-				dontcross = EXTENT_ALIGN(newstart+1, boundary, 
+				dontcross = EXTENT_ALIGN(newstart+1, boundary,
 				    (flags & EX_BOUNDZERO) ? 0 : ex->ex_start)
 				    - 1;
 
@@ -718,7 +719,7 @@ extent_alloc_subregion1(ex, substart, subend, size, alignment, skew, boundary,
 		 */
 		if (!LE_OV(newstart, (size - 1), subend))
 			goto fail;
-		
+
 		last = rp;
 	}
 
@@ -742,7 +743,7 @@ extent_alloc_subregion1(ex, substart, subend, size, alignment, skew, boundary,
 			 * Calculate the next boundary after the start
 			 * of this region.
 			 */
-			dontcross = EXTENT_ALIGN(newstart+1, boundary, 
+			dontcross = EXTENT_ALIGN(newstart+1, boundary,
 			    (flags & EX_BOUNDZERO) ? 0 : ex->ex_start)
 			    - 1;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_script.c,v 1.12 2001/05/14 13:31:52 art Exp $	*/
+/*	$OpenBSD: exec_script.c,v 1.13 2001/06/22 14:14:08 deraadt Exp $	*/
 /*	$NetBSD: exec_script.c,v 1.13 1996/02/04 02:15:06 christos Exp $	*/
 
 /*
@@ -270,13 +270,13 @@ fail:
 	epp->ep_flags |= EXEC_DESTR;
 
 	/* kill the opened file descriptor, else close the file */
-        if (epp->ep_flags & EXEC_HASFD) {
-                epp->ep_flags &= ~EXEC_HASFD;
-                (void) fdrelease(p, epp->ep_fd);
-        } else
+	if (epp->ep_flags & EXEC_HASFD) {
+		epp->ep_flags &= ~EXEC_HASFD;
+		(void) fdrelease(p, epp->ep_fd);
+	} else
 		vn_close(scriptvp, FREAD, p->p_ucred, p);
 
-        FREE(epp->ep_ndp->ni_cnd.cn_pnbuf, M_NAMEI);
+	FREE(epp->ep_ndp->ni_cnd.cn_pnbuf, M_NAMEI);
 
 	/* free the fake arg list, because we're not returning it */
 	tmpsap = shellargp;
@@ -286,11 +286,11 @@ fail:
 	}
 	FREE(shellargp, M_EXEC);
 
-        /*
-         * free any vmspace-creation commands,
-         * and release their references
-         */
-        kill_vmcmds(&epp->ep_vmcmds);
+	/*
+	 * free any vmspace-creation commands,
+	 * and release their references
+	 */
+	kill_vmcmds(&epp->ep_vmcmds);
 
-        return error;
+	return error;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.h,v 1.8 2001/06/03 03:22:53 angelos Exp $	*/
+/*	$OpenBSD: disk.h,v 1.9 2001/06/22 14:10:59 deraadt Exp $	*/
 /*	$NetBSD: disk.h,v 1.11 1996/04/28 20:22:50 thorpej Exp $	*/
 
 /*
@@ -72,9 +72,9 @@ struct diskstats {
 
 struct disk {
 	TAILQ_ENTRY(disk) dk_link;	/* link in global disklist */
-	struct lock     dk_lock;        /* disk lock */
+	struct lock	dk_lock;	/* disk lock */
 	char		*dk_name;	/* disk name */
-	int             dk_flags;       /* disk flags */
+	int		dk_flags;	/* disk flags */
 #define DKF_CONSTRUCTED  0x0001
 
 	/*
@@ -154,7 +154,7 @@ extern	int disk_count;			/* number of disks in global disklist */
 extern	int disk_change;		/* disk attached/detached */
 
 void	disk_init __P((void));
-int     disk_construct __P((struct disk *, char *));
+int	disk_construct __P((struct disk *, char *));
 void	disk_attach __P((struct disk *));
 void	disk_detach __P((struct disk *));
 void	disk_busy __P((struct disk *));
@@ -162,7 +162,7 @@ void	disk_unbusy __P((struct disk *, long));
 void	disk_resetstat __P((struct disk *));
 struct	disk *disk_find __P((char *));
 
-int     disk_lock __P((struct disk *));
+int	disk_lock __P((struct disk *));
 void    disk_unlock __P((struct disk *));
 
 struct device;

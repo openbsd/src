@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.31 2001/01/22 14:25:03 art Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.32 2001/06/22 14:14:07 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -169,7 +169,7 @@ elf_check_header(ehdr, type)
 	Elf32_Ehdr *ehdr;
 	int type;
 {
-        /*
+	/*
 	 * We need to check magic, class size, endianess, and version before
 	 * we look at the rest of the Elf32_Ehdr structure. These few elements
 	 * are represented in a machine independant fashion.
@@ -178,14 +178,14 @@ elf_check_header(ehdr, type)
 	    ehdr->e_ident[EI_CLASS] != ELF_TARG_CLASS ||
 	    ehdr->e_ident[EI_DATA] != ELF_TARG_DATA ||
 	    ehdr->e_ident[EI_VERSION] != ELF_TARG_VER)
-                return (ENOEXEC);
-        
-        /* Now check the machine dependant header */
+		return (ENOEXEC);
+
+	/* Now check the machine dependant header */
 	if (ehdr->e_machine != ELF_TARG_MACH ||
 	    ehdr->e_version != ELF_TARG_VER)
-                return (ENOEXEC);
+		return (ENOEXEC);
 
-        /* Check the type */
+	/* Check the type */
 	if (ehdr->e_type != type)
 		return (ENOEXEC);
 
@@ -206,7 +206,7 @@ olf_check_header(ehdr, type, os)
 {
 	int i;
 
-        /*
+	/*
 	 * We need to check magic, class size, endianess, version, and OS
 	 * before we look at the rest of the Elf32_Ehdr structure. These few
 	 * elements are represented in a machine independant fashion.
@@ -215,20 +215,20 @@ olf_check_header(ehdr, type, os)
 	    ehdr->e_ident[OI_CLASS] != ELF_TARG_CLASS ||
 	    ehdr->e_ident[OI_DATA] != ELF_TARG_DATA ||
 	    ehdr->e_ident[OI_VERSION] != ELF_TARG_VER)
-                return (ENOEXEC);
+		return (ENOEXEC);
 
 	for (i = 0; i < sizeof elf_probes / sizeof elf_probes[0]; i++)
 		if ((1 << ehdr->e_ident[OI_OS]) & elf_probes[i].os_mask)
-                	goto os_ok;
+			goto os_ok;
 	return (ENOEXEC);
 
-os_ok:        
-        /* Now check the machine dependant header */
+os_ok:
+	/* Now check the machine dependant header */
 	if (ehdr->e_machine != ELF_TARG_MACH ||
 	    ehdr->e_version != ELF_TARG_VER)
-                return (ENOEXEC);
+		return (ENOEXEC);
 
-        /* Check the type */
+	/* Check the type */
 	if (ehdr->e_type != type)
 		return (ENOEXEC);
 
@@ -283,18 +283,17 @@ elf_load_psection(vcset, vp, ph, addr, size, prot)
 	 * Because the pagedvn pager can't handle zero fill of the last
 	 * data page if it's not page aligned we map the las page readvn.
 	 */
-	if(ph->p_flags & PF_W) {
+	if (ph->p_flags & PF_W) {
 		psize = trunc_page(*size);
 		NEW_VMCMD(vcset, vmcmd_map_pagedvn, psize, *addr, vp,
 		    offset, *prot);
-		if(psize != *size) {
+		if (psize != *size) {
 			NEW_VMCMD(vcset, vmcmd_map_readvn, *size - psize,
 			    *addr + psize, vp, offset + psize, *prot);
 		}
-	}
-	else {
-		 NEW_VMCMD(vcset, vmcmd_map_pagedvn, psize, *addr, vp, offset,
-		     *prot);
+	} else {
+		NEW_VMCMD(vcset, vmcmd_map_pagedvn, psize, *addr, vp, offset,
+		    *prot);
 	}
 
 	/*
@@ -415,7 +414,7 @@ elf_load_file(p, path, epp, ap, last)
 			if (eh.e_entry >= ph[i].p_vaddr &&
 			    eh.e_entry < (ph[i].p_vaddr + size)) {
  				epp->ep_entry = addr + eh.e_entry -
-                                        ELF_ALIGN(ph[i].p_vaddr,ph[i].p_align);
+				    ELF_ALIGN(ph[i].p_vaddr,ph[i].p_align);
 				ap->arg_interp = addr;
 			}
 			addr += size;
@@ -564,8 +563,8 @@ exec_elf_makecmds(p, epp)
 			 * Decide whether it's text or data by looking
 			 * at the entry point.
 			 */
-			if (eh->e_entry >= addr && eh->e_entry < (addr + size))
-			    {
+			if (eh->e_entry >= addr &&
+			    eh->e_entry < (addr + size)) {
 				epp->ep_taddr = addr;
 				epp->ep_tsize = size;
 			} else {
@@ -632,8 +631,7 @@ exec_elf_makecmds(p, epp)
 
 		epp->ep_emul_arg = ap;
 		epp->ep_entry = eh->e_entry; /* keep check_exec() happy */
-	}
-	else {
+	} else {
 		epp->ep_interp = NULL;
 		epp->ep_entry = eh->e_entry;
 	}
@@ -672,7 +670,7 @@ exec_elf_fixup(p, epp)
 	AuxInfo ai[ELF_AUX_ENTRIES], *a;
 	u_long	pos = epp->ep_interp_pos;
 
-	if(epp->ep_interp == 0) {
+	if (epp->ep_interp == 0) {
 		return (0);
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.21 2001/05/14 11:04:03 art Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.22 2001/06/22 14:11:00 deraadt Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -157,8 +157,7 @@ struct socket {
     ((sbspace(&(so)->so_snd) >= (so)->so_snd.sb_lowat && \
 	(((so)->so_state&SS_ISCONNECTED) || \
 	  ((so)->so_proto->pr_flags&PR_CONNREQUIRED)==0)) || \
-     ((so)->so_state & SS_CANTSENDMORE) || \
-     (so)->so_error)
+    ((so)->so_state & SS_CANTSENDMORE) || (so)->so_error)
 
 /* adjust counters in sb reflecting allocation of m */
 #define	sballoc(sb, m) { \
@@ -221,9 +220,9 @@ struct knote;
  * File operations on sockets.
  */
 int	soo_read __P((struct file *fp, off_t *, struct uio *uio, 
-            struct ucred *cred));
+	    struct ucred *cred));
 int	soo_write __P((struct file *fp, off_t *, struct uio *uio,
-            struct ucred *cred));
+	    struct ucred *cred));
 int	soo_ioctl __P((struct file *fp, u_long cmd, caddr_t data,
 	    struct proc *p));
 int	soo_select __P((struct file *fp, int which, struct proc *p));
@@ -274,7 +273,7 @@ struct socket *
 void	soqinsque __P((struct socket *head, struct socket *so, int q));
 int	soqremque __P((struct socket *so, int q));
 int	soreceive __P((struct socket *so, struct mbuf **paddr, struct uio *uio,
-		       struct mbuf **mp0, struct mbuf **controlp, int *flagsp));
+	    struct mbuf **mp0, struct mbuf **controlp, int *flagsp));
 int	soreserve __P((struct socket *so, u_long sndcc, u_long rcvcc));
 void	sorflush __P((struct socket *so));
 int	sosend __P((struct socket *so, struct mbuf *addr, struct uio *uio,

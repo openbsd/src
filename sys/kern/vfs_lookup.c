@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lookup.c,v 1.18 2000/11/10 18:15:48 art Exp $	*/
+/*	$OpenBSD: vfs_lookup.c,v 1.19 2001/06/22 14:14:10 deraadt Exp $	*/
 /*	$NetBSD: vfs_lookup.c,v 1.17 1996/02/09 19:00:59 christos Exp $	*/
 
 /*
@@ -132,14 +132,14 @@ namei(ndp)
 	}
 
 	/*
-	 *  Strip trailing slashes, as requested 
+	 *  Strip trailing slashes, as requested
 	 */
 	if (cnp->cn_flags & STRIPSLASHES) {
 		char *end = cnp->cn_pnbuf + ndp->ni_pathlen - 2;
 
 		cp = end;
-		while (cp >= cnp->cn_pnbuf &&
-		       (*cp == '/')) cp--;
+		while (cp >= cnp->cn_pnbuf && (*cp == '/'))
+			cp--;
 
 		/* Still some remaining characters in the buffer */
 		if (cp >= cnp->cn_pnbuf) {
@@ -147,7 +147,7 @@ namei(ndp)
 			*(cp + 1) = '\0';
 		}
 	}
-	
+
 	ndp->ni_loopcnt = 0;
 
 	/*
@@ -259,7 +259,7 @@ badlink:
  * the target is returned locked, otherwise it is returned unlocked.
  * When creating or renaming and LOCKPARENT is specified, the target may not
  * be ".".  When deleting and LOCKPARENT is specified, the target may be ".".
- * 
+ *
  * Overall outline of lookup:
  *
  * dirloop:
@@ -514,8 +514,8 @@ unionlookup:
 	 * if so find the root of the mounted file system.
 	 */
 	while (dp->v_type == VDIR && (mp = dp->v_mountedhere) &&
-	       (cnp->cn_flags & NOCROSSMOUNT) == 0) {
-		if (vfs_busy(mp, 0, 0, p)) 
+	    (cnp->cn_flags & NOCROSSMOUNT) == 0) {
+		if (vfs_busy(mp, 0, 0, p))
 			continue;
 		error = VFS_ROOT(mp, &tdp);
 		vfs_unbusy(mp, p);
@@ -567,7 +567,7 @@ terminal:
 		 */
 		if (rdonly || (dp->v_mount->mnt_flag & MNT_RDONLY) ||
 		    (wantparent &&
-		     (ndp->ni_dvp->v_mount->mnt_flag & MNT_RDONLY))) {
+		    (ndp->ni_dvp->v_mount->mnt_flag & MNT_RDONLY))) {
 			error = EROFS;
 			goto bad2;
 		}
@@ -707,7 +707,7 @@ relookup(dvp, vpp, cnp)
 		 */
 		if (rdonly || (dp->v_mount->mnt_flag & MNT_RDONLY) ||
 		    (wantparent &&
-		     (dvp->v_mount->mnt_flag & MNT_RDONLY))) {
+		    (dvp->v_mount->mnt_flag & MNT_RDONLY))) {
 			error = EROFS;
 			goto bad2;
 		}

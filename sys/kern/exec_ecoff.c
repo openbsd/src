@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_ecoff.c,v 1.6 2000/08/31 14:49:06 ericj Exp $	*/
+/*	$OpenBSD: exec_ecoff.c,v 1.7 2001/06/22 14:14:07 deraadt Exp $	*/
 /*	$NetBSD: exec_ecoff.c,v 1.8 1996/05/19 20:36:06 jonathan Exp $	*/
 
 /*
@@ -69,7 +69,7 @@ exec_ecoff_makecmds(p, epp)
 
 	if (ECOFF_BADMAG(execp))
 		return ENOEXEC;
-	
+
 	switch (execp->a.magic) {
 	case ECOFF_OMAGIC:
 		error = exec_ecoff_prep_omagic(p, epp);
@@ -121,7 +121,7 @@ exec_ecoff_prep_omagic(p, epp)
 		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, eap->bsize,
 		    ECOFF_SEGMENT_ALIGN(execp, eap->bss_start), NULLVP, 0,
 		    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
-	
+
 	return exec_setup_stack(p, epp);
 }
 

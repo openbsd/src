@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.51 2001/06/19 07:54:36 deraadt Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.52 2001/06/22 14:14:08 deraadt Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -475,8 +475,8 @@ sys_execve(p, v, retval)
 	p->p_acflag &= ~AFORK;
 
 	/* record proc's vnode, for use by procfs and others */
-        if (p->p_textvp)
-                vrele(p->p_textvp);
+	if (p->p_textvp)
+		vrele(p->p_textvp);
 	VREF(pack.ep_vp);
 	p->p_textvp = pack.ep_vp;
 
@@ -615,8 +615,8 @@ sys_execve(p, v, retval)
 	KNOTE(&p->p_klist, NOTE_EXEC);
 
 	/* setup new registers and do misc. setup. */
-	if(pack.ep_emul->e_fixup != NULL) {
-		if((*pack.ep_emul->e_fixup)(p, &pack) != 0)
+	if (pack.ep_emul->e_fixup != NULL) {
+		if ((*pack.ep_emul->e_fixup)(p, &pack) != 0)
 			goto free_pack_abort;
 	}
 #ifdef MACHINE_STACK_GROWS_UP

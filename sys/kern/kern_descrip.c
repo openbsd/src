@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.30 2001/05/23 14:50:15 art Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.31 2001/06/22 14:14:08 deraadt Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -95,32 +95,32 @@ filedesc_init()
 static __inline int
 find_next_zero (u_int *bitmap, int want, u_int bits)
 {
-        int i, off, maxoff;
+	int i, off, maxoff;
 	u_int sub;
 
-        if (want > bits)
-                return -1;
+	if (want > bits)
+		return -1;
 
 	off = want >> NDENTRYSHIFT;
 	i = want & NDENTRYMASK;
-        if (i) {
+	if (i) {
 		sub = bitmap[off] | ((u_int)~0 >> (NDENTRIES - i));
 		if (sub != ~0)
 			goto found;
 		off++;
-        }
+	}
 
 	maxoff = NDLOSLOTS(bits);
-        while (off < maxoff) {
-                if ((sub = bitmap[off]) != ~0)
-                        goto found;
+	while (off < maxoff) {
+		if ((sub = bitmap[off]) != ~0)
+			goto found;
 		off++;
-        }
+	}
 
-        return -1;
+	return -1;
 
  found:
-        return (off << NDENTRYSHIFT) + ffs(~sub) - 1;
+	return (off << NDENTRYSHIFT) + ffs(~sub) - 1;
 }
 
 int
@@ -134,17 +134,15 @@ find_last_set(struct filedesc *fd, int last)
 
 	while (!bitmap[off] && off >= 0)
 		off--;
-
 	if (off < 0)
 		return 0;
-	
+
 	i = ((off + 1) << NDENTRYSHIFT) - 1;
 	if (i >= last)
 		i = last - 1;
 
 	while (i > 0 && ofiles[i] == NULL)
 		i--;
-
 	return i;
 }
 
@@ -608,7 +606,7 @@ fdalloc(p, want, result)
 			i = fdp->fd_freefile;
 		off = i >> NDENTRYSHIFT;
 		new = find_next_zero(fdp->fd_himap, off,
-				     (last + NDENTRIES - 1) >> NDENTRYSHIFT);
+		    (last + NDENTRIES - 1) >> NDENTRYSHIFT);
 		if (new != -1) {
 			i = find_next_zero(&fdp->fd_lomap[new], 
 					   new > off ? 0 : i & NDENTRYMASK,
@@ -659,19 +657,19 @@ fdalloc(p, want, result)
 
 		if (NDHISLOTS(nfiles) > NDHISLOTS(fdp->fd_nfiles)) {
 			newhimap = malloc(NDHISLOTS(nfiles) * sizeof(u_int),
-			       M_FILEDESC, M_WAITOK);
+			    M_FILEDESC, M_WAITOK);
 			newlomap = malloc( NDLOSLOTS(nfiles) * sizeof(u_int),
-			       M_FILEDESC, M_WAITOK);
+			    M_FILEDESC, M_WAITOK);
 
 			bcopy(fdp->fd_himap, newhimap,
-			      (i = NDHISLOTS(fdp->fd_nfiles) * sizeof(u_int)));
+			    (i = NDHISLOTS(fdp->fd_nfiles) * sizeof(u_int)));
 			bzero((char *)newhimap + i,
-			      NDHISLOTS(nfiles) * sizeof(u_int) - i);
+			    NDHISLOTS(nfiles) * sizeof(u_int) - i);
 
 			bcopy(fdp->fd_lomap, newlomap,
-			      (i = NDLOSLOTS(fdp->fd_nfiles) * sizeof(u_int)));
+			    (i = NDLOSLOTS(fdp->fd_nfiles) * sizeof(u_int)));
 			bzero((char *)newlomap + i,
-			      NDLOSLOTS(nfiles) * sizeof(u_int) - i);
+			    NDLOSLOTS(nfiles) * sizeof(u_int) - i);
 
 			if (NDHISLOTS(fdp->fd_nfiles) > NDHISLOTS(NDFILE)) {
 				free(fdp->fd_himap, M_FILEDESC);
@@ -865,9 +863,9 @@ fdcopy(p)
 			((struct filedesc0 *) newfdp)->fd_dlomap;
 	} else {
 		newfdp->fd_himap = malloc(NDHISLOTS(i) * sizeof(u_int),
-		       M_FILEDESC, M_WAITOK);
+		    M_FILEDESC, M_WAITOK);
 		newfdp->fd_lomap = malloc(NDLOSLOTS(i) * sizeof(u_int),
-		       M_FILEDESC, M_WAITOK);
+		    M_FILEDESC, M_WAITOK);
 	}
 	newfdp->fd_nfiles = i;
 	bcopy(fdp->fd_ofiles, newfdp->fd_ofiles, i * sizeof(struct file **));
@@ -1064,7 +1062,7 @@ filedescopen(dev, mode, type, p)
 
 	/*
 	 * XXX Kludge: set curproc->p_dupfd to contain the value of the
-	 * the file descriptor being sought for duplication. The error 
+	 * the file descriptor being sought for duplication. The error
 	 * return ensures that the vnode for this device will be released
 	 * by vn_open. Open will detect this special error and take the
 	 * actions in dupfdopen below. Other callers of vn_open or VOP_OPEN

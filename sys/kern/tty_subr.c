@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_subr.c,v 1.11 2001/05/16 12:52:58 ho Exp $	*/
+/*	$OpenBSD: tty_subr.c,v 1.12 2001/06/22 14:14:09 deraadt Exp $	*/
 /*	$NetBSD: tty_subr.c,v 1.13 1996/02/09 19:00:43 christos Exp $	*/
 
 /*
@@ -50,7 +50,7 @@
  * defined we allocate an array of bits -- 1/8th as much memory but
  * setbit(), clrbit(), and isset() take more cpu. If QBITS is
  * undefined, we just use an array of bytes.
- * 
+ *
  * If TTY_QUOTE functionality isn't required by a line discipline,
  * it can free c_cq and set it to NULL. This speeds things up,
  * and also does not use any extra memory. This is useful for (say)
@@ -309,7 +309,7 @@ out:
 	if (clp->c_cq) {
 #ifdef QBITS
 		if (c & TTY_QUOTE)
-			setbit(clp->c_cq, i); 
+			setbit(clp->c_cq, i);
 		else
 			clrbit(clp->c_cq, i);
 #else

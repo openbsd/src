@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_ecoff.h,v 1.5 2000/08/31 14:49:07 ericj Exp $	*/
+/*	$OpenBSD: exec_ecoff.h,v 1.6 2001/06/22 14:11:00 deraadt Exp $	*/
 /*	$NetBSD: exec_ecoff.h,v 1.9 1996/05/09 23:42:08 cgd Exp $	*/
 
 /*
@@ -85,29 +85,29 @@ struct ecoff_exechdr {
 #define ECOFF_ZMAGIC 0413
 
 #define ECOFF_ROUND(value, by) \
-        (((value) + (by) - 1) & ~((by) - 1))
+	(((value) + (by) - 1) & ~((by) - 1))
 
 #define ECOFF_BLOCK_ALIGN(ep, value) \
-        ((ep)->a.magic == ECOFF_ZMAGIC ? ECOFF_ROUND((value), ECOFF_LDPGSZ) : \
-	 (value))
+	((ep)->a.magic == ECOFF_ZMAGIC ? ECOFF_ROUND((value), ECOFF_LDPGSZ) : \
+	    (value))
 
 #define ECOFF_TXTOFF(ep) \
-        ((ep)->a.magic == ECOFF_ZMAGIC ? 0 : \
-	 ECOFF_ROUND(ECOFF_HDR_SIZE + (ep)->f.f_nscns * \
-		     sizeof(struct ecoff_scnhdr), ECOFF_SEGMENT_ALIGNMENT(ep)))
+	((ep)->a.magic == ECOFF_ZMAGIC ? 0 : \
+	    ECOFF_ROUND(ECOFF_HDR_SIZE + (ep)->f.f_nscns * \
+	    sizeof(struct ecoff_scnhdr), ECOFF_SEGMENT_ALIGNMENT(ep)))
 
 #define ECOFF_DATOFF(ep) \
-        (ECOFF_BLOCK_ALIGN((ep), ECOFF_TXTOFF(ep) + (ep)->a.tsize))
+	(ECOFF_BLOCK_ALIGN((ep), ECOFF_TXTOFF(ep) + (ep)->a.tsize))
 
 #define ECOFF_SEGMENT_ALIGN(ep, value) \
-        (ECOFF_ROUND((value), ((ep)->a.magic == ECOFF_ZMAGIC ? ECOFF_LDPGSZ : \
-         ECOFF_SEGMENT_ALIGNMENT(ep))))
+	(ECOFF_ROUND((value), ((ep)->a.magic == ECOFF_ZMAGIC ? ECOFF_LDPGSZ : \
+	ECOFF_SEGMENT_ALIGNMENT(ep))))
 
 #ifdef _KERNEL
 int	exec_ecoff_makecmds __P((struct proc *, struct exec_package *));
 int	cpu_exec_ecoff_hook __P((struct proc *, struct exec_package *));
-int     exec_ecoff_prep_omagic __P((struct proc *, struct exec_package *));
-int     exec_ecoff_prep_nmagic __P((struct proc *, struct exec_package *));
-int     exec_ecoff_prep_zmagic __P((struct proc *, struct exec_package *));
+int	exec_ecoff_prep_omagic __P((struct proc *, struct exec_package *));
+int	exec_ecoff_prep_nmagic __P((struct proc *, struct exec_package *));
+int	exec_ecoff_prep_zmagic __P((struct proc *, struct exec_package *));
 #endif /* _KERNEL */
 #endif /* !_SYS_EXEC_ECOFF_H_ */

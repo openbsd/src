@@ -1,4 +1,4 @@
-/*	$OpenBSD: endian.h,v 1.5 2000/10/25 21:43:29 deraadt Exp $	*/
+/*	$OpenBSD: endian.h,v 1.6 2001/06/22 14:11:00 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -112,7 +112,7 @@
 #define swap32 __swap32gen
 #endif /* MD_SWAP */
 
-#define swap16_multi(v, n) do {					        \
+#define swap16_multi(v, n) do {						\
 	size_t __swap16_multi_n = (n);					\
 	u_int16_t *__swap16_multi_v = (v);				\
 									\

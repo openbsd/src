@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_prot.c,v 1.16 2001/06/19 07:54:37 deraadt Exp $	*/
+/*	$OpenBSD: kern_prot.c,v 1.17 2001/06/22 14:14:09 deraadt Exp $	*/
 /*	$NetBSD: kern_prot.c,v 1.33 1996/02/09 18:59:42 christos Exp $	*/
 
 /*
@@ -109,7 +109,7 @@ sys_getpgid(curp, v, retval)
 	struct sys_getpgid_args /* {
 		syscallarg(pid_t) pid;
 	} */ *uap = v;
-        struct proc *targp = curp;
+	struct proc *targp = curp;
 
 	if (SCARG(uap, pid) == 0 || SCARG(uap, pid) == curp->p_pid)
 		goto found;
@@ -124,14 +124,14 @@ found:
 
 pid_t
 sys_getsid(curp, v, retval)
-        struct proc *curp;
-        void *v;
-        register_t *retval;
+	struct proc *curp;
+	void *v;
+	register_t *retval;
 {
-        struct sys_getsid_args /* {
-                syscallarg(pid_t) pid;
-        } */ *uap = v;
-        struct proc *targp = curp;
+	struct sys_getsid_args /* {
+		syscallarg(pid_t) pid;
+	} */ *uap = v;
+	struct proc *targp = curp;
 
 	if (SCARG(uap, pid) == 0 || SCARG(uap, pid) == curp->p_pid)
 		goto found;
@@ -502,7 +502,7 @@ sys_setgroups(p, v, retval)
 		return (EINVAL);
 	pc->pc_ucred = crcopy(pc->pc_ucred);
 	error = copyin((caddr_t)SCARG(uap, gidset),
-		       (caddr_t)pc->pc_ucred->cr_groups, ngrp * sizeof(gid_t));
+	    (caddr_t)pc->pc_ucred->cr_groups, ngrp * sizeof(gid_t));
 	if (error)
 		return (error);
 	pc->pc_ucred->cr_ngroups = ngrp;

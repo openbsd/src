@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_shm.c,v 1.17 2001/05/16 17:14:36 millert Exp $	*/
+/*	$OpenBSD: sysv_shm.c,v 1.18 2001/06/22 14:14:09 deraadt Exp $	*/
 /*	$NetBSD: sysv_shm.c,v 1.50 1998/10/21 22:24:29 tron Exp $	*/
 
 /*
@@ -69,7 +69,7 @@ struct shmid_ds *shm_find_segment_by_shmid __P((int));
  * per proc array of 'struct shmmap_state'
  */
 
-#define	SHMSEG_FREE     	0x0200
+#define	SHMSEG_FREE		0x0200
 #define	SHMSEG_REMOVED  	0x0400
 #define	SHMSEG_ALLOCATED	0x0800
 #define	SHMSEG_WANTED		0x1000
@@ -164,8 +164,8 @@ shm_delete_mapping(vm, shmmap_s)
 #ifdef UVM
 	result = uvm_deallocate(&vm->vm_map, shmmap_s->va, size);
 #else
-	result = vm_map_remove(&vm->vm_map,
-			       shmmap_s->va, shmmap_s->va + size);
+	result = vm_map_remove(&vm->vm_map, shmmap_s->va,
+	    shmmap_s->va + size);
 #endif
 	if (result != KERN_SUCCESS)
 		return EINVAL;
@@ -263,17 +263,15 @@ sys_shmat(p, v, retval)
 			return EINVAL;
 	} else {
 		/* This is just a hint to vm_mmap() about where to put it. */
-		attach_va =
-		    round_page((vaddr_t)p->p_vmspace->vm_taddr + MAXTSIZ +
-			       MAXDSIZ);
+		attach_va = round_page((vaddr_t)p->p_vmspace->vm_taddr +
+		    MAXTSIZ + MAXDSIZ);
 	}
 	shm_handle = shmseg->shm_internal;
 #ifdef UVM
 	uao_reference(shm_handle->shm_object);
 	rv = uvm_map(&p->p_vmspace->vm_map, &attach_va, size,
-		     shm_handle->shm_object, 0,
-		     UVM_MAPFLAG(prot, prot, UVM_INH_SHARE,
-				 UVM_ADV_RANDOM, 0));
+	    shm_handle->shm_object, 0, UVM_MAPFLAG(prot, prot,
+	    UVM_INH_SHARE, UVM_ADV_RANDOM, 0));
 	if (rv != KERN_SUCCESS) {
 	    return ENOMEM;
 	}
@@ -285,7 +283,7 @@ sys_shmat(p, v, retval)
 		return ENOMEM;
 	}
 	vm_map_protect(&p->p_vmspace->vm_map, attach_va, attach_va + size,
-		       prot, 0);
+	    prot, 0);
 	vm_map_inherit(&p->p_vmspace->vm_map,
 		attach_va, attach_va + size, VM_INHERIT_SHARE);
 #endif
@@ -331,7 +329,7 @@ sys_shmctl(p, v, retval)
 		if ((error = ipcperm(cred, &shmseg->shm_perm, IPC_M)) != 0)
 			return error;
 		error = copyin(SCARG(uap, buf), (caddr_t)&inbuf,
-			       sizeof(inbuf));
+		    sizeof(inbuf));
 		if (error)
 			return error;
 		shmseg->shm_perm.uid = inbuf.shm_perm.uid;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf64.c,v 1.14 2001/03/29 13:25:34 art Exp $	*/
+/*	$OpenBSD: exec_elf64.c,v 1.15 2001/06/22 14:14:07 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -111,8 +111,8 @@ void elf64_load_psection __P((struct exec_vmcmd_set *, struct vnode *,
 int exec_elf64_fixup __P((struct proc *, struct exec_package *));
 
 /* round up and down to page boundaries. */
-#define ELF_ROUND(a, b)         (((a) + (b) - 1) & ~((b) - 1))
-#define ELF_TRUNC(a, b)         ((a) & ~((b) - 1))
+#define ELF_ROUND(a, b)		(((a) + (b) - 1) & ~((b) - 1))
+#define ELF_TRUNC(a, b)		((a) & ~((b) - 1))
 
 /*
  * This is the basic elf emul. elf64_probe_funcs may change to other emuls.
@@ -179,7 +179,7 @@ elf64_check_header(ehdr, type)
 	Elf64_Ehdr *ehdr;
 	int type;
 {
-        /*
+	/*
 	 * We need to check magic, class size, endianess, and version before
 	 * we look at the rest of the Elf64_Ehdr structure. These few elements
 	 * are represented in a machine independant fashion.
@@ -188,14 +188,14 @@ elf64_check_header(ehdr, type)
 	    ehdr->e_ident[EI_CLASS] != ELF_TARG_CLASS ||
 	    ehdr->e_ident[EI_DATA] != ELF_TARG_DATA ||
 	    ehdr->e_ident[EI_VERSION] != ELF_TARG_VER)
-                return (ENOEXEC);
-        
-        /* Now check the machine dependant header */
+		return (ENOEXEC);
+
+	/* Now check the machine dependant header */
 	if (ehdr->e_machine != ELF_TARG_MACH ||
 	    ehdr->e_version != ELF_TARG_VER)
-                return (ENOEXEC);
+		return (ENOEXEC);
 
-        /* Check the type */
+	/* Check the type */
 	if (ehdr->e_type != type)
 		return (ENOEXEC);
 
@@ -216,7 +216,7 @@ olf64_check_header(ehdr, type, os)
 {
 	int i;
 
-        /*
+	/*
 	 * We need to check magic, class size, endianess, version, and OS
 	 * before we look at the rest of the Elf64_Ehdr structure. These few
 	 * elements are represented in a machine independant fashion.
@@ -225,20 +225,20 @@ olf64_check_header(ehdr, type, os)
 	    ehdr->e_ident[OI_CLASS] != ELF_TARG_CLASS ||
 	    ehdr->e_ident[OI_DATA] != ELF_TARG_DATA ||
 	    ehdr->e_ident[OI_VERSION] != ELF_TARG_VER)
-                return (ENOEXEC);
+		return (ENOEXEC);
 
 	for (i = 0; i < sizeof elf64_probes / sizeof elf64_probes[0]; i++)
 		if ((1 << ehdr->e_ident[OI_OS]) & elf64_probes[i].os_mask)
-                	goto os_ok;
+			goto os_ok;
 	return (ENOEXEC);
 
-os_ok:        
-        /* Now check the machine dependant header */
+os_ok:
+	/* Now check the machine dependant header */
 	if (ehdr->e_machine != ELF_TARG_MACH ||
 	    ehdr->e_version != ELF_TARG_VER)
-                return (ENOEXEC);
+		return (ENOEXEC);
 
-        /* Check the type */
+	/* Check the type */
 	if (ehdr->e_type != type)
 		return (ENOEXEC);
 
@@ -248,7 +248,7 @@ os_ok:
 
 /*
  * elf64_load_psection():
- * 
+ *
  * Load a psection at the appropriate address
  */
 void
@@ -293,7 +293,7 @@ elf64_load_psection(vcset, vp, ph, addr, size, prot)
 	 * Because the pagedvn pager can't handle zero fill of the last
 	 * data page if it's not page aligned we map the last page readvn.
 	 */
-	if(ph->p_flags & PF_W) {
+	if (ph->p_flags & PF_W) {
 		psize = trunc_page(*size);
 		NEW_VMCMD(vcset, vmcmd_map_pagedvn, psize, *addr, vp,
 		    offset, *prot);
@@ -301,10 +301,9 @@ elf64_load_psection(vcset, vp, ph, addr, size, prot)
 			NEW_VMCMD(vcset, vmcmd_map_readvn, *size - psize,
 			    *addr + psize, vp, offset + psize, *prot);
 		}
-	}
-	else {
-		 NEW_VMCMD(vcset, vmcmd_map_pagedvn, psize, *addr, vp, offset,
-		     *prot);
+	} else {
+		NEW_VMCMD(vcset, vmcmd_map_pagedvn, psize, *addr, vp, offset,
+		    *prot);
 	}
 
 	/*
@@ -430,7 +429,7 @@ elf64_load_file(p, path, epp, ap, last)
 			if (eh.e_entry >= ph[i].p_vaddr &&
 			    eh.e_entry < (ph[i].p_vaddr + size)) {
  				epp->ep_entry = addr + eh.e_entry -
-                                        ELF_TRUNC(ph[i].p_vaddr,ph[i].p_align);
+				    ELF_TRUNC(ph[i].p_vaddr,ph[i].p_align);
 				ap->arg_interp = addr;
 			}
 			addr += size;
@@ -519,8 +518,8 @@ exec_elf64_makecmds(p, epp)
 			if (pp->p_filesz >= sizeof(interp))
 				goto bad;
 			if ((error = elf64_read_from(p, epp->ep_vp,
-			     pp->p_offset, (caddr_t)interp,
-			     pp->p_filesz)) != 0)
+			    pp->p_offset, (caddr_t)interp,
+			    pp->p_filesz)) != 0)
 				goto bad;
 			break;
 		}
@@ -552,7 +551,7 @@ exec_elf64_makecmds(p, epp)
 	}
 #endif
 	for (i = 0; i < sizeof elf64_probes / sizeof elf64_probes[0] && error;
-	     i++)
+	    i++)
 		if (os == OOS_NULL || ((1 << os) & elf64_probes[i].os_mask))
 			error = elf64_probes[i].func ?
 			    (*elf64_probes[i].func)(p, epp, interp, &pos, &os) :
@@ -593,9 +592,9 @@ native:
 				epp->ep_taddr = addr;
 				epp->ep_tsize = size;
 				if (epp->ep_daddr == ELF64_NO_ADDR) {
-                                        epp->ep_daddr = addr;
-                                        epp->ep_dsize = size;
-                                }
+					epp->ep_daddr = addr;
+					epp->ep_dsize = size;
+				}
 			} else {
 				epp->ep_daddr = addr;
 				epp->ep_dsize = size;
@@ -660,8 +659,7 @@ native:
 
 		epp->ep_emul_arg = ap;
 		epp->ep_entry = eh->e_entry; /* keep check_exec() happy */
-	}
-	else {
+	} else {
 		epp->ep_interp = NULL;
 		epp->ep_entry = eh->e_entry;
 	}
@@ -700,7 +698,7 @@ exec_elf64_fixup(p, epp)
 	AuxInfo ai[ELF_AUX_ENTRIES], *a;
 	u_long	pos = epp->ep_interp_pos;
 
-	if(epp->ep_interp == 0) {
+	if (epp->ep_interp == 0) {
 		return (0);
 	}
 

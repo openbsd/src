@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_aout.h,v 1.9 1998/04/25 06:28:14 niklas Exp $	*/
+/*	$OpenBSD: exec_aout.h,v 1.10 2001/06/22 14:11:00 deraadt Exp $	*/
 /*	$NetBSD: exec_aout.h,v 1.15 1996/05/18 17:20:54 christos Exp $	*/
 
 /*
@@ -77,11 +77,11 @@ struct exec {
 #define	MID_MIPS	142	/* big-endian MIPS */
 #define	MID_ARM6	143	/* ARM6 */
 #define MID_ROMP	149	/* IBM RT */
-#define MID_M88K        151     /* m88k BSD binary */ 
+#define MID_M88K	151	/* m88k BSD binary */ 
 #define	MID_HP200	200	/* hp200 (68010) BSD binary */
 #define	MID_HP300	300	/* hp300 (68020+68881) BSD binary */
 #define	MID_HPUX	0x20C	/* hp200/300 HP-UX binary */
-#define	MID_HPUX800     0x20B   /* hp800 HP-UX binary */
+#define	MID_HPUX800	0x20B	/* hp800 HP-UX binary */
 
 /*
  * a_flags

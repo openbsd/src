@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_olf.h,v 1.7 1997/05/05 23:25:17 etheisen Exp $	*/
+/*	$OpenBSD: exec_olf.h,v 1.8 2001/06/22 14:11:00 deraadt Exp $	*/
 /*
  * Copyright (c) 1996 Erik Theisen.  All rights reserved.
  *
@@ -25,14 +25,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-        /****   OLF - Open Linkage Format   ****/
-
-        /*
-         * OLF is a modified ELF that attempts
-         * to fix two serious shortcomings in
-         * the SVR4 ABI.  Namely a lack of an
-         * operating system and strip tag.
-         */
+/*
+ * OLF is a modified ELF that attempts to fix two serious shortcomings in
+ * the SVR4 ABI.  Namely a lack of an operating system and strip tag.
+ */
 
 #ifndef _SYS_EXEC_OLF_H_
 #define _SYS_EXEC_OLF_H_
@@ -40,18 +36,18 @@
 #include <sys/exec_elf.h>
 
 /* e_ident[] identification indexes */
-#define OI_MAG0         EI_MAG0		/* file ID */
-#define OI_MAG1         EI_MAG1		/* file ID */
-#define OI_MAG2         EI_MAG2		/* file ID */
-#define OI_MAG3         EI_MAG3		/* file ID */
-#define OI_CLASS        EI_CLASS	/* file class */
-#define OI_DATA         EI_DATA		/* data encoding */
-#define OI_VERSION      EI_VERSION	/* OLF header version */
+#define OI_MAG0		EI_MAG0		/* file ID */
+#define OI_MAG1		EI_MAG1		/* file ID */
+#define OI_MAG2		EI_MAG2		/* file ID */
+#define OI_MAG3		EI_MAG3		/* file ID */
+#define OI_CLASS	EI_CLASS	/* file class */
+#define OI_DATA		EI_DATA		/* data encoding */
+#define OI_VERSION	EI_VERSION	/* OLF header version */
 #define OI_OS		7		/* Operating system tag */
 #define OI_DYNAMIC	8		/* Dynamic tag */
 #define OI_STRIP	9		/* Strip tag */
 #define OI_PAD		10		/* start of pad bytes */
-#define OI_NIDENT       EI_NIDENT       /* Size of e_ident[] */
+#define OI_NIDENT	EI_NIDENT	/* Size of e_ident[] */
 
 /* e_ident[] magic number */
 #define OLFMAG0		ELFMAG0		/* e_ident[OI_MAG0] */
@@ -63,15 +59,15 @@
  
 /* e_ident[] file class */
 #define OLFCLASSNONE	ELFCLASSNONE	/* invalid */
-#define OLFCLASS32	ELFCLASS32	/* 32-bit objs */            
+#define OLFCLASS32	ELFCLASS32	/* 32-bit objs */
 #define OLFCLASS64	ELFCLASS64	/* 64-bit objs */
-#define OLFCLASSNUM	ELFCLASSNUM	/* number of classes */     
+#define OLFCLASSNUM	ELFCLASSNUM	/* number of classes */
  
 /* e_ident[] data encoding */
 #define OLFDATANONE	ELFDATANONE	/* invalid */   
-#define OLFDATA2LSB	ELFDATA2LSB	/* Little-Endian */        
-#define OLFDATA2MSB	ELFDATA2MSB	/* Big-Endian */         
-#define OLFDATANUM	ELFDATANUM	/* number of data encode defines */     
+#define OLFDATA2LSB	ELFDATA2LSB	/* Little-Endian */
+#define OLFDATA2MSB	ELFDATA2MSB	/* Big-Endian */
+#define OLFDATANUM	ELFDATANUM	/* number of data encode defines */
 
 
 /*
@@ -125,10 +121,11 @@
 #define OSTRIP_N	1		/* Not Stripped */
 
 /* e_ident */
-#define IS_OLF(ehdr) ((ehdr).e_ident[OI_MAG0] == OLFMAG0 && \
-                      (ehdr).e_ident[OI_MAG1] == OLFMAG1 && \
-                      (ehdr).e_ident[OI_MAG2] == OLFMAG2 && \
-                      (ehdr).e_ident[OI_MAG3] == OLFMAG3)
+#define IS_OLF(ehdr) \
+    ((ehdr).e_ident[OI_MAG0] == OLFMAG0 && \
+    (ehdr).e_ident[OI_MAG1] == OLFMAG1 && \
+    (ehdr).e_ident[OI_MAG2] == OLFMAG2 && \
+    (ehdr).e_ident[OI_MAG3] == OLFMAG3)
 
 /* The rest of the types and defines come from the ELF header file */
 #endif /* _SYS_EXEC_OLF_H_ */

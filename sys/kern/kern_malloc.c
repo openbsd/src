@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.33 2001/06/21 14:28:53 niklas Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.34 2001/06/22 14:14:08 deraadt Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -247,8 +247,7 @@ malloc(size, type, flags)
 
 		vm_map_lock(kmem_map);
 		rv = uvm_map_checkprot(kmem_map, addr,
-				       addr + sizeof(struct freelist),
-				       VM_PROT_WRITE);
+		    addr + sizeof(struct freelist), VM_PROT_WRITE);
 		vm_map_unlock(kmem_map);
 
 		if (!rv)
@@ -493,8 +492,8 @@ sysctl_malloc(name, namelen, oldp, oldlenp, newp, newlen, p)
 	size_t newlen;
 	struct proc *p;
 {
-        struct kmembuckets kb;
-        int i, siz;
+	struct kmembuckets kb;
+	int i, siz;
 
 	if (namelen != 2 && name[0] != KERN_MALLOC_BUCKETS &&
 	    name[0] != KERN_MALLOC_KMEMNAMES)
@@ -502,21 +501,21 @@ sysctl_malloc(name, namelen, oldp, oldlenp, newp, newlen, p)
 
 	switch (name[0]) {
 	case KERN_MALLOC_BUCKETS:
-	        /* Initialize the first time */
-	        if (buckstring_init == 0) {
+		/* Initialize the first time */
+		if (buckstring_init == 0) {
 			buckstring_init = 1;
 			bzero(buckstring, sizeof(buckstring));
-		        for (siz = 0, i = MINBUCKET; i < MINBUCKET + 16; i++)
-			        siz += sprintf(buckstring + siz,
-				    "%d,", (u_int)(1<<i));
+			for (siz = 0, i = MINBUCKET; i < MINBUCKET + 16; i++)
+			    siz += sprintf(buckstring + siz,
+			    "%d,", (u_int)(1<<i));
 			/* Remove trailing comma */
 			if (siz)
 				buckstring[siz - 1] = '\0';
 		}
-	        return (sysctl_rdstring(oldp, oldlenp, newp, buckstring));
+		return (sysctl_rdstring(oldp, oldlenp, newp, buckstring));
 
 	case KERN_MALLOC_BUCKET:
-	        bcopy(&bucket[BUCKETINDX(name[1])], &kb, sizeof(kb));
+		bcopy(&bucket[BUCKETINDX(name[1])], &kb, sizeof(kb));
 		kb.kb_next = kb.kb_last = 0;
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &kb, sizeof(kb)));
 	case KERN_MALLOC_KMEMSTATS:
@@ -530,7 +529,7 @@ sysctl_malloc(name, namelen, oldp, oldlenp, newp, newlen, p)
 #endif
 	case KERN_MALLOC_KMEMNAMES:
 #if defined(KMEMSTATS) || defined(DIAGNOSTIC) || defined(FFS_SOFTUPDATES)
-	        if (memall == NULL) {
+		if (memall == NULL) {
 			int totlen;
 
 			i = lockmgr(&sysctl_kmemlock, LK_EXCLUSIVE, NULL, p);
@@ -545,8 +544,8 @@ sysctl_malloc(name, namelen, oldp, oldlenp, newp, newlen, p)
 			}
 			memall = malloc(totlen + M_LAST, M_SYSCTL, M_WAITOK);
 			bzero(memall, totlen + M_LAST);
-		        for (siz = 0, i = 0; i < M_LAST; i++)
-			        siz += sprintf(memall + siz, "%s,",
+			for (siz = 0, i = 0; i < M_LAST; i++)
+				siz += sprintf(memall + siz, "%s,",
 				    memname[i] ? memname[i] : "");
 
 			/* Remove trailing comma */
@@ -559,12 +558,12 @@ sysctl_malloc(name, namelen, oldp, oldlenp, newp, newlen, p)
 					memall[i] = '_';
 			lockmgr(&sysctl_kmemlock, LK_RELEASE, NULL, p);
 		}
-	        return (sysctl_rdstring(oldp, oldlenp, newp, memall));
+		return (sysctl_rdstring(oldp, oldlenp, newp, memall));
 #else
 		return (EOPNOTSUPP);
 #endif
 	default:
-	        return (EOPNOTSUPP);
+		return (EOPNOTSUPP);
 	}
 	/* NOTREACHED */
 }

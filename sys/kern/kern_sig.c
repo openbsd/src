@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.44 2001/06/18 09:00:24 art Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.45 2001/06/22 14:14:09 deraadt Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -272,7 +272,7 @@ sys_sigaction(p, v, retval)
 	}
 	if (SCARG(uap, nsa)) {
 		error = copyin((caddr_t)SCARG(uap, nsa), (caddr_t)sa,
-			       sizeof (vec));
+		    sizeof (vec));
 		if (error)
 			return (error);
 		setsigvec(p, signum, sa);
@@ -414,7 +414,7 @@ execsigs(p)
 	ps->ps_sigstk.ss_size = 0;
 	ps->ps_sigstk.ss_sp = 0;
 	ps->ps_flags = 0;
-	p->p_flag &= ~P_NOCLDWAIT;	
+	p->p_flag &= ~P_NOCLDWAIT;
 }
 
 /*
@@ -451,7 +451,7 @@ sys_sigprocmask(p, v, retval)
 	case SIG_SETMASK:
 		p->p_sigmask = SCARG(uap, mask) &~ sigcantmask;
 		break;
-	
+
 	default:
 		error = EINVAL;
 		break;
@@ -595,10 +595,10 @@ killpg1(cp, signum, pgid, all)
 	register struct pcred *pc = cp->p_cred;
 	struct pgrp *pgrp;
 	int nfound = 0;
-	
-	if (all)	
+
+	if (all)
 		/* 
-		 * broadcast 
+		 * broadcast
 		 */
 		for (p = LIST_FIRST(&allproc); p; p = LIST_NEXT(p, p_list)) {
 			if (p->p_pid <= 1 || p->p_flag & P_SYSTEM || 
@@ -609,8 +609,8 @@ killpg1(cp, signum, pgid, all)
 				psignal(p, signum);
 		}
 	else {
-		if (pgid == 0)		
-			/* 
+		if (pgid == 0)
+			/*
 			 * zero pgid means send to my process group.
 			 */
 			pgrp = cp->p_pgrp;
@@ -723,8 +723,8 @@ trapsignal(p, signum, code, type, sigval)
 		p->p_stats->p_ru.ru_nsignals++;
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_PSIG))
-			ktrpsig(p, signum, ps->ps_sigact[signum], 
-				p->p_sigmask, code);
+			ktrpsig(p, signum, ps->ps_sigact[signum],
+			    p->p_sigmask, code);
 #endif
 		(*p->p_emul->e_sendsig)(ps->ps_sigact[signum], signum,
 		    p->p_sigmask, code, type, sigval);
@@ -1439,7 +1439,7 @@ filt_sigdetach(struct knote *kn)
 }
 
 /*
- * signal knotes are shared with proc knotes, so we apply a mask to 
+ * signal knotes are shared with proc knotes, so we apply a mask to
  * the hint in order to differentiate them from process hints.  This
  * could be avoided by using a signal-specific knote list, but probably
  * isn't worth the trouble.

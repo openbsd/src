@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.22 2001/04/06 18:59:17 gluk Exp $	*/
+/*	$OpenBSD: buf.h,v 1.23 2001/06/22 14:10:59 deraadt Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -52,7 +52,7 @@ struct vnode;
 
 /*
  * To avoid including <ufs/ffs/softdep.h>
- */ 
+ */
 
 LIST_HEAD(workhead, worklist);
 
@@ -69,7 +69,6 @@ extern struct bio_ops {
 	void	(*io_movedeps) __P((struct buf *, struct buf *));
 	int	(*io_countdeps) __P((struct buf *, int, int));
 } bioops;
- 
 
 /*
  * The buffer header describes an I/O operation in the kernel.
@@ -235,43 +234,42 @@ void  buf_replacevnode __P((struct buf *, struct vnode *));
 static __inline void
 buf_start(struct buf *bp)
 {
-        if (bioops.io_start)
-                (*bioops.io_start)(bp);
+	if (bioops.io_start)
+		(*bioops.io_start)(bp);
 }
 
 static __inline void
 buf_complete(struct buf *bp)
 {
-        if (bioops.io_complete)
-                (*bioops.io_complete)(bp);
+	if (bioops.io_complete)
+		(*bioops.io_complete)(bp);
 }
 
 static __inline void
 buf_deallocate(struct buf *bp)
 {
-        if (bioops.io_deallocate)
-                (*bioops.io_deallocate)(bp);
+	if (bioops.io_deallocate)
+		(*bioops.io_deallocate)(bp);
 }
 
 static __inline void
 buf_movedeps(struct buf *bp, struct buf *bp2)
 {
-        if (bioops.io_movedeps)
-                (*bioops.io_movedeps)(bp, bp2);
+	if (bioops.io_movedeps)
+		(*bioops.io_movedeps)(bp, bp2);
 }
 
 static __inline int
 buf_countdeps(struct buf *bp, int i, int islocked)
 {
-        if (bioops.io_countdeps)
-                return ((*bioops.io_countdeps)(bp, i, islocked));
-        else
-                return (0);
+	if (bioops.io_countdeps)
+		return ((*bioops.io_countdeps)(bp, i, islocked));
+	else
+		return (0);
 }
 
 int	cluster_read __P((struct vnode *, struct cluster_info *,
-			  u_quad_t, daddr_t, long,
-			  struct ucred *, struct buf **));
+	    u_quad_t, daddr_t, long, struct ucred *, struct buf **));
 void	cluster_write __P((struct buf *, struct cluster_info *, u_quad_t));
 
 __END_DECLS

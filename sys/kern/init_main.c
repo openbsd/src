@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.65 2001/05/17 18:41:44 provos Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.66 2001/06/22 14:14:08 deraadt Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -463,7 +463,7 @@ main(framep)
 #ifdef CRYPTO
 	/* Create process 5, the crypto kernel thread. */
 	if (kthread_create(start_crypto, NULL, NULL, "crypto"))
-	        panic("crypto thread");
+		panic("crypto thread");
 #endif /* CRYPTO */
 
 	/* Create any other deferred kernel threads. */
@@ -558,11 +558,10 @@ start_init(arg)
 #endif
 #if defined(UVM)
 	if (uvm_map(&p->p_vmspace->vm_map, &addr, PAGE_SIZE, 
-                    NULL, UVM_UNKNOWN_OFFSET, 
-                    UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_COPY,
-		    UVM_ADV_NORMAL,
-                    UVM_FLAG_FIXED|UVM_FLAG_OVERLAY|UVM_FLAG_COPYONW))
-		!= KERN_SUCCESS)
+	    NULL, UVM_UNKNOWN_OFFSET, 
+	    UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_COPY,
+	    UVM_ADV_NORMAL, UVM_FLAG_FIXED|UVM_FLAG_OVERLAY|UVM_FLAG_COPYONW))
+	    != KERN_SUCCESS)
 		panic("init: couldn't allocate argument space");
 #else
 	if (vm_allocate(&p->p_vmspace->vm_map, &addr, (vsize_t)PAGE_SIZE,
@@ -696,9 +695,9 @@ start_reaper(arg)
 #ifdef CRYPTO
 void
 start_crypto(arg)
-        void *arg;
+	void *arg;
 {
-        crypto_thread();
-        /* NOTREACHED */
+	crypto_thread();
+	/* NOTREACHED */
 }
 #endif /* CRYPTO */

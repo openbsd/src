@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.11 2001/04/07 22:02:20 tholo Exp $	*/
+/*	$OpenBSD: exec.h,v 1.12 2001/06/22 14:11:00 deraadt Exp $	*/
 /*	$NetBSD: exec.h,v 1.59 1996/02/09 18:25:09 christos Exp $	*/
 
 /*-
@@ -181,10 +181,11 @@ void	kill_vmcmds		__P((struct exec_vmcmd_set *evsp));
 int	vmcmd_map_pagedvn	__P((struct proc *, struct exec_vmcmd *));
 int	vmcmd_map_readvn	__P((struct proc *, struct exec_vmcmd *));
 int	vmcmd_map_zero		__P((struct proc *, struct exec_vmcmd *));
-void	*copyargs		__P((struct exec_package *, struct ps_strings *,
-				     void *, void *));
+void	*copyargs		__P((struct exec_package *,
+				    struct ps_strings *,
+				    void *, void *));
 void	setregs			__P((struct proc *, struct exec_package *,
-				     u_long, register_t *));
+				    u_long, register_t *));
 int	check_exec		__P((struct proc *, struct exec_package *));
 int	exec_setup_stack	__P((struct proc *, struct exec_package *));
 
@@ -205,9 +206,9 @@ void	new_vmcmd __P((struct exec_vmcmd_set *evsp,
 	vcp->ev_len = (len); \
 	vcp->ev_addr = (addr); \
 	if ((vcp->ev_vp = (vp)) != NULLVP) \
-                VREF(vp); \
-        vcp->ev_offset = (offset); \
-        vcp->ev_prot = (prot); \
+		VREF(vp); \
+	vcp->ev_offset = (offset); \
+	vcp->ev_prot = (prot); \
 }
 #endif /* DEBUG */
 

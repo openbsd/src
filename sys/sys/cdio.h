@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.h,v 1.9 1999/12/08 06:32:56 angelos Exp $	*/
+/*	$OpenBSD: cdio.h,v 1.10 2001/06/22 14:10:59 deraadt Exp $	*/
 /*	$NetBSD: cdio.h,v 1.11 1996/02/19 18:29:04 scottr Exp $	*/
 
 #ifndef _SYS_CDIO_H_
@@ -12,12 +12,12 @@
 union msf_lba {
 	struct {
 		u_char unused;
-	  	u_char minute;
+		u_char minute;
 		u_char second;
 		u_char frame;
 	} msf;
-	u_int32_t lba;
-	u_char	addr[4];
+	u_int32_t	lba;
+	u_char		addr[4];
 };
 
 struct cd_toc_entry {
@@ -241,83 +241,83 @@ struct ioc_load_unload {
 /* DVD definitions */
 
 /* DVD-ROM Specific ioctls */
-#define DVD_READ_STRUCT         _IOWR('d', 0, union dvd_struct)
-#define DVD_WRITE_STRUCT        _IOWR('d', 1, union dvd_struct)
-#define DVD_AUTH                _IOWR('d', 2, union dvd_authinfo)
+#define DVD_READ_STRUCT		_IOWR('d', 0, union dvd_struct)
+#define DVD_WRITE_STRUCT	_IOWR('d', 1, union dvd_struct)
+#define DVD_AUTH		_IOWR('d', 2, union dvd_authinfo)
 
-#define GPCMD_READ_DVD_STRUCTURE            0xad
-#define GPCMD_SEND_DVD_STRUCTURE            0xad
-#define GPCMD_REPORT_KEY                    0xa4
-#define GPCMD_SEND_KEY                      0xa3
+#define GPCMD_READ_DVD_STRUCTURE	0xad
+#define GPCMD_SEND_DVD_STRUCTURE	0xad
+#define GPCMD_REPORT_KEY		0xa4
+#define GPCMD_SEND_KEY			0xa3
 
 /* DVD struct types */
-#define DVD_STRUCT_PHYSICAL     0x00
-#define DVD_STRUCT_COPYRIGHT    0x01
-#define DVD_STRUCT_DISCKEY      0x02
-#define DVD_STRUCT_BCA          0x03
-#define DVD_STRUCT_MANUFACT     0x04
+#define DVD_STRUCT_PHYSICAL		0x00
+#define DVD_STRUCT_COPYRIGHT		0x01
+#define DVD_STRUCT_DISCKEY		0x02
+#define DVD_STRUCT_BCA			0x03
+#define DVD_STRUCT_MANUFACT		0x04
 
 struct dvd_layer {
-        u_int8_t book_version;
-        u_int8_t book_type;
-        u_int8_t min_rate;
-        u_int8_t disc_size;
-        u_int8_t layer_type;
-        u_int8_t track_path;
-        u_int8_t nlayers;
-        u_int8_t track_density;
-        u_int8_t linear_density;
-        u_int8_t bca;
-        u_int32_t start_sector;
-        u_int32_t end_sector;
-        u_int32_t end_sector_l0;
+	u_int8_t book_version;
+	u_int8_t book_type;
+	u_int8_t min_rate;
+	u_int8_t disc_size;
+	u_int8_t layer_type;
+	u_int8_t track_path;
+	u_int8_t nlayers;
+	u_int8_t track_density;
+	u_int8_t linear_density;
+	u_int8_t bca;
+	u_int32_t start_sector;
+	u_int32_t end_sector;
+	u_int32_t end_sector_l0;
 };
  
 struct dvd_physical {
-        u_int8_t type;
+	u_int8_t type;
 
-        u_int8_t layer_num;
-        struct dvd_layer layer[4];
+	u_int8_t layer_num;
+	struct dvd_layer layer[4];
 };
 
 struct dvd_copyright {
-        u_int8_t type;
+	u_int8_t type;
 
-        u_int8_t layer_num;
-        u_int8_t cpst;
-        u_int8_t rmi;
+	u_int8_t layer_num;
+	u_int8_t cpst;
+	u_int8_t rmi;
 };
 
 struct dvd_disckey {
-        u_int8_t type;
+	u_int8_t type;
 
-        u_int8_t agid;
-        u_int8_t value[2048];
+	u_int8_t agid;
+	u_int8_t value[2048];
 };
 
 struct dvd_bca {
-        u_int8_t type;
+	u_int8_t type;
 
-        int len;
-        u_int8_t value[188];
+	int len;
+	u_int8_t value[188];
 };
 
 struct dvd_manufact {
-        u_int8_t type;
+	u_int8_t type;
 
-        u_int8_t layer_num;
-        int len;
-        u_int8_t value[2048];
+	u_int8_t layer_num;
+	int len;
+	u_int8_t value[2048];
 };
 
 union dvd_struct {
-        u_int8_t type;
+	u_int8_t type;
 
-        struct dvd_physical     physical;
-        struct dvd_copyright    copyright;
-        struct dvd_disckey      disckey;
-        struct dvd_bca          bca;
-        struct dvd_manufact     manufact;
+	struct dvd_physical	physical;
+	struct dvd_copyright	copyright;
+	struct dvd_disckey	disckey;
+	struct dvd_bca		bca;
+        struct dvd_manufact	manufact;
 };
 
 /*
@@ -325,94 +325,94 @@ union dvd_struct {
  */
 
 /* Authentication states */
-#define DVD_LU_SEND_AGID        0
-#define DVD_HOST_SEND_CHALLENGE 1
-#define DVD_LU_SEND_KEY1        2
-#define DVD_LU_SEND_CHALLENGE   3
-#define DVD_HOST_SEND_KEY2      4
+#define DVD_LU_SEND_AGID	0
+#define DVD_HOST_SEND_CHALLENGE	1
+#define DVD_LU_SEND_KEY1	2
+#define DVD_LU_SEND_CHALLENGE	3
+#define DVD_HOST_SEND_KEY2	4
 
 /* Termination states */
-#define DVD_AUTH_ESTABLISHED    5
-#define DVD_AUTH_FAILURE        6
+#define DVD_AUTH_ESTABLISHED	5
+#define DVD_AUTH_FAILURE	6
 
 /* Other functions */
-#define DVD_LU_SEND_TITLE_KEY   7
-#define DVD_LU_SEND_ASF         8
-#define DVD_INVALIDATE_AGID     9
+#define DVD_LU_SEND_TITLE_KEY	7
+#define DVD_LU_SEND_ASF		8
+#define DVD_INVALIDATE_AGID	9
 
 #if 0
 /* State data */
-typedef u_int8_t dvd_key[5];        /* 40-bit value, MSB is first elem. */
-typedef u_int8_t dvd_challenge[10]; /* 80-bit value, MSB is first elem. */
+typedef u_int8_t dvd_key[5];		/* 40-bit value, MSB is first elem. */
+typedef u_int8_t dvd_challenge[10];	/* 80-bit value, MSB is first elem. */
 #endif
 
 #define DVD_KEY_SIZE		5
 #define DVD_CHALLENGE_SIZE	10
 
 struct dvd_lu_send_agid {
-        u_int8_t type;
+	u_int8_t type;
 
-        u_int8_t agid;
+	u_int8_t agid;
 };
 
 struct dvd_host_send_challenge {
-        u_int8_t type;
+	u_int8_t type;
 
-        u_int8_t agid;
-        u_int8_t chal[DVD_CHALLENGE_SIZE];
+	u_int8_t agid;
+	u_int8_t chal[DVD_CHALLENGE_SIZE];
 };
 
 struct dvd_send_key {
-        u_int8_t type;
+	u_int8_t type;
 
-        u_int8_t agid;
-        u_int8_t key[DVD_KEY_SIZE];
+	u_int8_t agid;
+	u_int8_t key[DVD_KEY_SIZE];
 };
 
 struct dvd_lu_send_challenge {
-        u_int8_t type;
+	u_int8_t type;
 
-        u_int8_t agid;
-        u_int8_t chal[DVD_CHALLENGE_SIZE];
+	u_int8_t agid;
+	u_int8_t chal[DVD_CHALLENGE_SIZE];
 };
 
-#define DVD_CPM_NO_COPYRIGHT    0
-#define DVD_CPM_COPYRIGHTED     1
+#define DVD_CPM_NO_COPYRIGHT	0
+#define DVD_CPM_COPYRIGHTED	1
 
-#define DVD_CP_SEC_NONE         0
-#define DVD_CP_SEC_EXIST        1
+#define DVD_CP_SEC_NONE		0
+#define DVD_CP_SEC_EXIST	1
 
-#define DVD_CGMS_UNRESTRICTED   0
-#define DVD_CGMS_SINGLE         2
-#define DVD_CGMS_RESTRICTED     3
+#define DVD_CGMS_UNRESTRICTED	0
+#define DVD_CGMS_SINGLE		2
+#define DVD_CGMS_RESTRICTED	3
 
 struct dvd_lu_send_title_key {
-        u_int8_t type;
+	u_int8_t type;
 
-        u_int8_t agid;
-        u_int8_t title_key[DVD_KEY_SIZE];
-        int lba;
-        u_int8_t cpm;
-        u_int8_t cp_sec;
-        u_int8_t cgms;
+	u_int8_t agid;
+	u_int8_t title_key[DVD_KEY_SIZE];
+	int lba;
+	u_int8_t cpm;
+	u_int8_t cp_sec;
+	u_int8_t cgms;
 };
 
 struct dvd_lu_send_asf {
-        u_int8_t type;
+	u_int8_t type;
 
-        u_int8_t agid;
-        u_int8_t asf;
+	u_int8_t agid;
+	u_int8_t asf;
 };
 
 union dvd_authinfo {
-        u_int8_t type;
+	u_int8_t type;
 
-        struct dvd_lu_send_agid         lsa;
-        struct dvd_host_send_challenge  hsc;
-        struct dvd_send_key             lsk;
-        struct dvd_lu_send_challenge    lsc;
-        struct dvd_send_key             hsk;
-        struct dvd_lu_send_title_key    lstk;
-        struct dvd_lu_send_asf          lsasf;
+	struct dvd_lu_send_agid		lsa;
+	struct dvd_host_send_challenge	hsc;
+	struct dvd_send_key		lsk;
+	struct dvd_lu_send_challenge	lsc;
+	struct dvd_send_key		hsk;
+	struct dvd_lu_send_title_key	lstk;
+	struct dvd_lu_send_asf		lsasf;
 };
 #endif /* !_SYS_CDIO_H_ */

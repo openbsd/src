@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.17 2001/05/26 04:38:32 angelos Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.18 2001/06/22 14:14:10 deraadt Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -81,7 +81,7 @@ u_long	sb_max = SB_MAX;		/* patchable */
  * structure queued on so_q0 by calling sonewconn().  When the connection
  * is established, soisconnected() is called, and transfers the
  * socket structure to so_q, making it available to accept().
- * 
+ *
  * If a socket is closed with sockets on either
  * so_q0 or so_q, these sockets are dropped.
  *
@@ -164,7 +164,7 @@ sonewconn1(head, connstatus)
 	if (head->so_qlen + head->so_q0len > head->so_qlimit * 3)
 		return ((struct socket *)0);
 	MALLOC(so, struct socket *, sizeof(*so), M_SOCKET, M_DONTWAIT);
-	if (so == NULL) 
+	if (so == NULL)
 		return ((struct socket *)0);
 	bzero((caddr_t)so, sizeof(*so));
 	so->so_type = head->so_type;
@@ -285,7 +285,7 @@ sbwait(sb)
 	    sb->sb_timeo));
 }
 
-/* 
+/*
  * Lock a sockbuf already known to be locked;
  * return any error returned from sleep (EINTR).
  */
@@ -297,9 +297,9 @@ sb_lock(sb)
 
 	while (sb->sb_flags & SB_LOCK) {
 		sb->sb_flags |= SB_WANT;
-		error = tsleep((caddr_t)&sb->sb_flags, 
-			       (sb->sb_flags & SB_NOINTR) ?
-					PSOCK : PSOCK|PCATCH, netio, 0);
+		error = tsleep((caddr_t)&sb->sb_flags,
+		    (sb->sb_flags & SB_NOINTR) ?
+		    PSOCK : PSOCK|PCATCH, netio, 0);
 		if (error)
 			return (error);
 	}
@@ -669,8 +669,8 @@ sbcompress(sb, m, n)
 		eor |= m->m_flags & M_EOR;
 		if (m->m_len == 0 &&
 		    (eor == 0 ||
-		     (((o = m->m_next) || (o = n)) &&
-		      o->m_type == m->m_type))) {
+		    (((o = m->m_next) || (o = n)) &&
+		    o->m_type == m->m_type))) {
 			m = m_free(m);
 			continue;
 		}

@@ -1,4 +1,4 @@
-/*       $OpenBSD: vfs_sync.c,v 1.18 2001/03/16 15:51:58 art Exp $  */
+/*       $OpenBSD: vfs_sync.c,v 1.19 2001/06/22 14:14:11 deraadt Exp $  */
 
 /*
  *  Portions of this code are:
@@ -61,7 +61,7 @@ int   softdep_process_worklist __P((struct mount *));
 
 /*
  * The workitem queue.
- */ 
+ */
 #define SYNCER_MAXDELAY	32		/* maximum sync delay time */
 #define SYNCER_DEFAULT 30		/* default sync delay time */
 int syncer_maxdelay = SYNCER_MAXDELAY;	/* maximum delay time */
@@ -69,7 +69,7 @@ time_t syncdelay = SYNCER_DEFAULT;	/* time to delay syncing vnodes */
 
 int rushjob = 0;			/* number of slots to run ASAP */
 int stat_rush_requests = 0;		/* number of rush requests */
- 
+
 static int syncer_delayno = 0;
 static long syncer_mask;
 LIST_HEAD(synclist, vnode);
@@ -79,7 +79,7 @@ struct proc *syncerproc;
 
 /*
  * The workitem queue.
- * 
+ *
  * It is useful to delay writes of file data and filesystem metadata
  * for tens of seconds so that quickly created and deleted files need
  * not waste disk bandwidth being created and removed. To realize this,
@@ -139,7 +139,7 @@ vn_syncer_add_to_worklist(vp, delay)
  * System filesystem synchronizer daemon.
  */
 
-void 
+void
 sched_sync(p)
 	struct proc *p;
 {
@@ -178,8 +178,8 @@ sched_sync(p)
 			if (LIST_FIRST(slp) == vp) {
 				/*
 				 * Note: disk vps can remain on the
-				 * worklist too with no dirty blocks, but 
-				 * since sync_fsync() moves it to a different 
+				 * worklist too with no dirty blocks, but
+				 * since sync_fsync() moves it to a different
 				 * slot we are safe.
 				 */
 				if (LIST_FIRST(&vp->v_dirtyblkhd) == NULL &&
@@ -264,7 +264,7 @@ int   sync_inactive __P((void *));
 #define sync_unlock vop_generic_unlock
 int   sync_print __P((void *));
 #define sync_islocked vop_generic_islocked
- 
+
 int (**sync_vnodeop_p) __P((void *));
 struct vnodeopv_entry_desc sync_vnodeop_entries[] = {
       { &vop_default_desc, vn_default_error },
@@ -278,8 +278,9 @@ struct vnodeopv_entry_desc sync_vnodeop_entries[] = {
       { &vop_islocked_desc, sync_islocked },          /* islocked */
       { (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
 };
-struct vnodeopv_desc sync_vnodeop_opv_desc =
-      { &sync_vnodeop_p, sync_vnodeop_entries };
+struct vnodeopv_desc sync_vnodeop_opv_desc = {
+	&sync_vnodeop_p, sync_vnodeop_entries
+};
 
 /*
  * Create a new filesystem syncer vnode for the specified mount point.
@@ -399,14 +400,14 @@ sync_print(v)
 	void *v;
 
 {
-      struct vop_print_args /* {
-              struct vnode *a_vp;
-      } */ *ap = v;
-      struct vnode *vp = ap->a_vp;
+	struct vop_print_args /* {
+		struct vnode *a_vp;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
 
-      printf("syncer vnode");
-      if (vp->v_vnlock != NULL)
-              lockmgr_printinfo(vp->v_vnlock);
-      printf("\n");
-      return (0);
+	printf("syncer vnode");
+	if (vp->v_vnlock != NULL)
+		lockmgr_printinfo(vp->v_vnlock);
+	printf("\n");
+	return (0);
 }

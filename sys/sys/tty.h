@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.h,v 1.9 2001/05/14 07:07:14 angelos Exp $	*/
+/*	$OpenBSD: tty.h,v 1.10 2001/06/22 14:11:00 deraadt Exp $	*/
 /*	$NetBSD: tty.h,v 1.30.4.1 1996/06/02 09:08:13 mrg Exp $	*/
 
 /*-
@@ -272,7 +272,7 @@ void	tty_attach __P((struct tty *));
 void	tty_detach __P((struct tty *));
 struct tty *ttymalloc __P((void));
 void	 ttyfree __P((struct tty *));
-u_char	*firstc           __P((struct clist *clp, int *c));
+u_char	*firstc __P((struct clist *clp, int *c));
 
 int	cttyopen __P((dev_t, int, int, struct proc *));
 int	cttyread __P((dev_t, struct uio *, int));
