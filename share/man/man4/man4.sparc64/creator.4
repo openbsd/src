@@ -1,4 +1,4 @@
-.\"	$OpenBSD: creator.4,v 1.11 2002/10/01 21:03:27 miod Exp $
+.\"	$OpenBSD: creator.4,v 1.12 2003/03/10 20:11:36 miod Exp $
 .\"
 .\" Copyright (c) 2002 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -40,12 +40,15 @@
 .Cd "creator* at upa0 flags 0x0"
 .Cd "wsdisplay* at creator?"
 .Sh DESCRIPTION
+The Creator, Creator 3D and Elite 3D UPA
+are color frame buffers, with graphics acceleration, available for most
+of the UltraSPARC workstations with UPA or PCI slots.
+.Pp
 The
 .Nm
-is a memory based color frame buffer driver for the
+driver interfaces those frame buffers with the
 .Xr wscons 4
-console framework and for the Creator, Creator 3D and Elite 3D UPA
-framebuffers.
+console framework.
 It does not provide direct device driver entry points but makes its functions
 available via the internal
 .Xr wsdisplay 4

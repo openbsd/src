@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cgsix.4,v 1.20 2003/03/09 02:39:27 miod Exp $
+.\"	$OpenBSD: cgsix.4,v 1.21 2003/03/10 20:11:33 miod Exp $
 .\"	$NetBSD: cgsix.4,v 1.4 1998/06/11 08:32:20 fair Exp $
 .\"
 .\" Copyright 1994
@@ -52,7 +52,13 @@
 .Sh DESCRIPTION
 The
 .Nm
-is a memory based color frame buffer for the
+is a color frame buffer with graphics acceleration,
+available as an SBus card for sun4c and sun4m, or as a P4 bus
+card for sun4 workstations.
+.Pp
+The
+.Nm
+driver interfaces the frame buffer with the
 .Xr wscons 4
 console framework.
 It does not provide direct device driver entry points
@@ -60,7 +66,9 @@ but makes its functions available via the internal
 .Xr wsdisplay 4
 interface.
 .Pp
-Different models exist, with various memory sizes and capabilities.
+Different
+.Nm
+frame buffer models exist, with various memory sizes and capabilities.
 The
 .Nm
 driver supports the four flavours:

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cgthree.4,v 1.18 2003/03/09 02:39:27 miod Exp $
+.\"	$OpenBSD: cgthree.4,v 1.19 2003/03/10 20:11:33 miod Exp $
 .\"	$NetBSD: cgthree.4,v 1.4 1998/06/11 08:32:20 fair Exp $
 .\"
 .\" Copyright (c) 1992, 1993
@@ -52,7 +52,12 @@
 .Sh DESCRIPTION
 The
 .Nm
-is a memory based color frame buffer for the
+is a color frame buffer, available as an SBus card or on-board on some sun4c
+and sun4m workstations.
+.Pp
+The
+.Nm
+driver interfaces the frame buffer with the
 .Xr wscons 4
 console framework.
 It does not provide direct device driver entry points

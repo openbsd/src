@@ -1,4 +1,4 @@
-.\"     $OpenBSD: pnozz.4,v 1.12 2003/03/09 02:39:27 miod Exp $
+.\"     $OpenBSD: pnozz.4,v 1.13 2003/03/10 20:11:33 miod Exp $
 .\"
 .\" Copyright (c) 1999 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -34,16 +34,14 @@
 .Os
 .Sh NAME
 .Nm pnozz
-.Nd Tadpole Weitek p9100 frame buffer
+.Nd Tadpole Weitek P9100 frame buffer
 .Sh SYNOPSIS
 .Cd "pnozz0 at sbus? slot ? offset ?"
 .Cd "wsdisplay* at pnozz?"
 .Sh DESCRIPTION
 The
 .Nm
-is a memory based color frame buffer for the
-.Xr wscons 4
-console framework, and found on
+is a color frame buffer found on
 .Tn "Tadpole SPARCbook 3GS and 3GX"
 laptops.
 It is based on the
@@ -51,6 +49,12 @@ It is based on the
 and an
 .Tn "IBM RGB528"
 RAMDAC.
+.Pp
+The
+.Nm
+driver interfaces the frame buffer with the
+.Xr wscons 4
+console framework.
 It does not provide direct device driver entry points
 but makes its functions available via the internal
 .Xr wsdisplay 4
@@ -59,7 +63,7 @@ interface.
 If the
 .Xr tctrl 4
 device is also configured, the
-.Nm pnozz
+.Nm
 will be powered down when the lid of the laptop
 is closed or the screen is blanked.
 .Sh SEE ALSO

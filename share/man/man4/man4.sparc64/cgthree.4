@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cgthree.4,v 1.6 2003/01/05 02:18:33 miod Exp $
+.\"	$OpenBSD: cgthree.4,v 1.7 2003/03/10 20:11:36 miod Exp $
 .\"
 .\" Copyright (c) 2001 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -41,7 +41,11 @@
 .Sh DESCRIPTION
 The
 .Nm
-is a memory based color frame buffer driver for the
+is an SBus color frame buffer.
+.Pp
+The
+.Nm
+driver interfaces the frame buffer with the
 .Xr wscons 4
 console framework.
 It does not provide direct device driver entry points

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcx.4,v 1.20 2003/03/10 11:35:06 jmc Exp $
+.\"	$OpenBSD: tcx.4,v 1.21 2003/03/10 20:11:33 miod Exp $
 .\"	$NetBSD: tcx.4,v 1.3 1997/10/08 22:00:14 jtc Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -47,8 +47,13 @@
 .Sh DESCRIPTION
 The
 .Nm
-is a memory based color frame buffer, with graphics acceleration and
-overlay capabilities, for the
+is an 8 bit color frame buffer, with graphics acceleration,
+found on-board the SPARCstation 4, and also available in a 24 bit version
+as an AFX board for the SPARCstation 5.
+.Pp
+The
+.Nm
+driver interfaces the frame buffer with the
 .Xr wscons 4
 console framework.
 It does not provide direct device driver entry points

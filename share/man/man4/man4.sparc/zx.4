@@ -1,4 +1,4 @@
-.\"	$OpenBSD: zx.4,v 1.1 2003/03/09 02:39:28 miod Exp $
+.\"	$OpenBSD: zx.4,v 1.2 2003/03/10 20:11:33 miod Exp $
 .\" Copyright (c) 2003 Miodrag Vallat.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -34,15 +34,16 @@
 .Sh DESCRIPTION
 The
 .Nm
-is a memory based color frame buffer, with graphics acceleration
+is a color frame buffer, with graphics acceleration
 and overlay capabilities.
 It is also known as the
 .Tn Sun
 .Dq Leo
 graphics card.
+.Pp
 The
 .Nm
-driver interfaces the frame buffer to the
+driver interfaces the frame buffer with the
 .Xr wscons 4
 console framework.
 It does not provide direct device driver entry points
