@@ -1,4 +1,4 @@
-.\"	$OpenBSD: syslogd.8,v 1.20 2004/01/05 09:45:49 jmc Exp $
+.\"	$OpenBSD: syslogd.8,v 1.21 2004/12/02 21:58:57 jmc Exp $
 .\"
 .\" Copyright (c) 1983, 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -106,6 +106,13 @@ see
 .Xr syslog.conf 5 .
 .Pp
 .Nm
+creates the file
+.Pa /var/run/syslog.pid ,
+and stores its process ID there.
+This can be used to kill or reconfigure
+.Nm syslogd .
+.Pp
+.Nm
 opens an Internet domain socket as specified
 in
 .Pa /etc/services .
@@ -130,13 +137,6 @@ If
 .Nm
 is running in secure mode, all incoming data on this socket is discarded.
 The socket is required for sending forwarded messages.
-.Pp
-.Nm
-creates the file
-.Pa /var/run/syslog.pid ,
-and stores its process ID there.
-This can be used to kill or reconfigure
-.Nm syslogd .
 .Pp
 The message sent to
 .Nm
