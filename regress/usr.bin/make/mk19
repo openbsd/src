@@ -1,0 +1,5 @@
+# $OpenBSD: mk19,v 1.1 2002/09/09 10:05:34 espie Exp $
+# Posix compliance test: variable SHELL shall not be taken from the environment
+
+a:
+	@echo ${SHELL}
