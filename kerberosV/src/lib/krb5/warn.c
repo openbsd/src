@@ -70,7 +70,7 @@ _warnerr(krb5_context context, int do_errtext,
     if(context && context->warn_dest)
 	krb5_log(context, context->warn_dest, level, xfmt, args[0], args[1]);
     else
-	_warnx(xfmt, args[0], args[1]);
+	warnx(xfmt, args[0], args[1]);
     free(msg);
     return 0;
 }
