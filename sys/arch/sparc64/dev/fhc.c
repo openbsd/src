@@ -1,4 +1,4 @@
-/*	$OpenBSD: fhc.c,v 1.4 2004/09/24 21:29:36 jason Exp $	*/
+/*	$OpenBSD: fhc.c,v 1.5 2004/09/27 17:28:03 jason Exp $	*/
 
 /*
  * Copyright (c) 2004 Jason L. Wright (jason@thought.net)
@@ -123,7 +123,7 @@ fhc_get_string(int node, char *name, char **buf)
 	if (len < 0)
 		return (len);
 	*buf = (char *)malloc(len + 1, M_DEVBUF, M_NOWAIT);
-	if (buf == NULL)
+	if (*buf == NULL)
 		return (-1);
 
 	if (len != 0)

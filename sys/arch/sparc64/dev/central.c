@@ -1,4 +1,4 @@
-/*	$OpenBSD: central.c,v 1.3 2004/09/24 20:49:57 jason Exp $	*/
+/*	$OpenBSD: central.c,v 1.4 2004/09/27 17:28:03 jason Exp $	*/
 
 /*
  * Copyright (c) 2004 Jason L. Wright (jason@thought.net)
@@ -121,7 +121,7 @@ central_get_string(int node, char *name, char **buf)
 	if (len < 0)
 		return (len);
 	*buf = (char *)malloc(len + 1, M_DEVBUF, M_NOWAIT);
-	if (buf == NULL)
+	if (*buf == NULL)
 		return (-1);
 
 	if (len != 0)
