@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.87 2002/10/28 20:49:16 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.88 2002/10/30 23:55:58 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -434,7 +434,7 @@ pmap_bootstrap(vstart)
 	extern char etext, etext1;
 	extern u_int totalphysmem, *ie_mem;
 	extern paddr_t hppa_vtop;
-	vaddr_t va, endaddr, addr = hppa_round_page(vstart), t;
+	vaddr_t va, addr = hppa_round_page(vstart), t;
 	vsize_t size;
 #if 0 && (defined(HP7100LC_CPU) || defined(HP7300LC_CPU))
 	struct vp_entry *hptp;
@@ -516,11 +516,12 @@ pmap_bootstrap(vstart)
 		/* TODO find a way to avoid using cr*, use cpu regs instead */
 		mtctl(addr, CR_VTOP);
 		mtctl(size - 1, CR_HPTMASK);
-		addr += size;
+		addr += size;	/* should keep the alignment right */
 	}
 #endif	/* HP7100LC_CPU | HP7300LC_CPU */
 
 	/* XXX PCXS needs this inserted into an IBTLB */
+	/*	and can block-map the whole phys w/ another */
 	t = (vaddr_t)&etext1;
 	if (btlb_insert(HPPA_SID_KERNEL, 0, 0, &t,
 	    pmap_sid2pid(HPPA_SID_KERNEL) |
@@ -541,18 +542,16 @@ pmap_bootstrap(vstart)
 	 * lazy map only needed pieces (see bus_mem_add_mapping() for refs).
 	 */
 
-	/* one for the start of the kernel virtual */
-	npdes = 1 + (totalphysmem + btoc(PDE_SIZE) - 1) / btoc(PDE_SIZE);
-	addr = round_page(addr);
-	size = npdes * PAGE_SIZE;
+	/* four more for the the kernel virtual */
+	npdes = 4 + (totalphysmem + btoc(PDE_SIZE) - 1) / btoc(PDE_SIZE);
 	uvm_page_physload(0, totalphysmem,
-	    atop(addr + size), totalphysmem, VM_FREELIST_DEFAULT);
+	    atop(addr) + npdes, totalphysmem, VM_FREELIST_DEFAULT);
 
 	/* map the pdes */
 	for (va = 0; npdes--; va += PDE_SIZE, addr += PAGE_SIZE) {
 
 		/* last pde is for the start of kernel virtual */
-		if (!npdes)
+		if (npdes == 3)
 			va = SYSCALLGATE;
 		/* now map the pde for the physmem */
 		bzero((void *)addr, PAGE_SIZE);
@@ -574,7 +573,7 @@ pmap_bootstrap(vstart)
 		pmap_kenter_pa(va, va, prot);
 	}
 
-	DPRINTF(PDB_INIT, ("bootstrap: mapped %p - 0x%x\n", &etext1, endaddr));
+	DPRINTF(PDB_INIT, ("bootstrap: mapped %p - 0x%x\n", &etext1, va));
 }
 
 void
