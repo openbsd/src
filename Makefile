@@ -7,13 +7,7 @@ SUBDIR+= gnu
 
 SUBDIR+= sys
 
-.if exists(domestic) && !defined(EXPORTABLE_SYSTEM)
-SUBDIR+= domestic
-.endif
-
-.if exists(kerberosIV)
 SUBDIR+= kerberosIV
-.endif
 
 .if exists(regress)
 .ifmake !(install)
@@ -40,12 +34,7 @@ build:
 	${MAKE} cleandir
 	(cd ${.CURDIR}/lib && ${MAKE} depend && ${MAKE} && ${MAKE} install)
 	(cd ${.CURDIR}/gnu/lib && ${MAKE} depend && ${MAKE} && ${MAKE} install)
-.if exists(domestic)
-	(cd ${.CURDIR}/domestic/libcrypt && ${MAKE} depend && ${MAKE} && ${MAKE} install)
-.endif
-.if exists(kerberosIV)
 	(cd ${.CURDIR}/kerberosIV && ${MAKE} build)
-.endif
 	${MAKE} depend && ${MAKE} && ${MAKE} install
 
 .include <bsd.subdir.mk>
