@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.8 1997/06/25 18:12:16 kstailey Exp $	*/
+/*	$OpenBSD: main.c,v 1.9 1997/07/14 14:16:47 graichen Exp $	*/
 /*	$NetBSD: main.c,v 1.22 1996/10/11 20:15:48 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 1/23/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.8 1997/06/25 18:12:16 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.9 1997/07/14 14:16:47 graichen Exp $";
 #endif
 #endif /* not lint */
 
@@ -260,9 +260,9 @@ checkfilesys(filesys, mntpt, auxdata, child)
 	 */
 	n_ffree = sblock.fs_cstotal.cs_nffree;
 	n_bfree = sblock.fs_cstotal.cs_nbfree;
-	pwarn("%d files, %d used, %d free ",
+	pwarn("%d files, %d used, %d free\n",
 	    n_files, n_blks, n_ffree + sblock.fs_frag * n_bfree);
-	printf("(%d frags, %d blocks, %d.%d%% fragmentation)\n",
+	pwarn("(%d frags, %d blocks, %d.%d%% fragmentation)\n",
 	    n_ffree, n_bfree, (n_ffree * 100) / sblock.fs_dsize,
 	    ((n_ffree * 1000 + sblock.fs_dsize / 2) / sblock.fs_dsize) % 10);
 	if (debug &&
