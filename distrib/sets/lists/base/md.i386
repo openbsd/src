@@ -62,7 +62,7 @@
 ./usr/lib/libpthread.so.6.0
 ./usr/lib/libreadline.so.3.0
 ./usr/lib/libsectok.so.6.0
-./usr/lib/libskey.so.5.0
+./usr/lib/libskey.so.5.1
 ./usr/lib/libssl.so.9.0
 ./usr/lib/libstdc++.so.33.0
 ./usr/lib/libtermcap.so.10.0

@@ -4378,6 +4378,7 @@
 ./usr/share/man/cat3/skey_set_algorithm.0
 ./usr/share/man/cat3/skey_unlock.0
 ./usr/share/man/cat3/skeychallenge.0
+./usr/share/man/cat3/skeychallenge2.0
 ./usr/share/man/cat3/skeygetnext.0
 ./usr/share/man/cat3/skeylookup.0
 ./usr/share/man/cat3/skeyverify.0
