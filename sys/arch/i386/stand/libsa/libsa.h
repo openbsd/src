@@ -1,4 +1,4 @@
-/*	$OpenBSD: libsa.h,v 1.10 1997/08/04 21:53:35 mickey Exp $	*/
+/*	$OpenBSD: libsa.h,v 1.11 1997/08/05 17:45:56 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -40,7 +40,8 @@ void devboot __P((dev_t, char *));
 void *alloca __P((size_t));
 void machdep __P((void));
 u_int apm_init __P((void));
- 
+int kentry __P((u_int, u_int));
+
 extern int	boothowto;
 		/* XXX filled in assumption that last file opened is kernel */
 extern int	bootdev, bootdev_geometry;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosvar.h,v 1.4 1997/08/02 22:25:30 mickey Exp $	*/
+/*	$OpenBSD: biosvar.h,v 1.5 1997/08/05 17:45:55 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -40,7 +40,7 @@
 #define BOOTC_GETENV 0x02
 #define BOOTC_SETENV 0x03
 #define  BOOTV_BOOTDEV 1
-#define  BOOTV_BDGEOM  2
+#define  BOOTV_BDGMTRY 2
 #define  BOOTV_CONSDEV 3
 #define  BOOTV_APMCONN 4
 #define BOOTC_GETC 0x10
@@ -210,8 +210,6 @@ extern struct BIOS_regs {
 	u_int32_t	biosr_ds;
 	u_int32_t	biosr_es;
 }	BIOS_regs;
-
-int kentry __P((u_int, void *));
 
 #ifdef _KERNEL
 #include <machine/bus.h>
