@@ -15,7 +15,7 @@ login (authentication) dialog.
 */
 
 #include "includes.h"
-RCSID("$Id: sshconnect.c,v 1.19 1999/10/15 20:51:01 markus Exp $");
+RCSID("$Id: sshconnect.c,v 1.20 1999/10/16 19:23:35 provos Exp $");
 
 #include <ssl/bn.h>
 #include "xmalloc.h"
@@ -1014,6 +1014,7 @@ void ssh_login(int host_key_valid,
   unsigned int supported_ciphers, supported_authentications, protocol_flags;
   HostStatus host_status;
   HostStatus ip_status;
+  int host_ip_differ = 0;
   int local = (ntohl(hostaddr->sin_addr.s_addr) >> 24) == IN_LOOPBACKNET;
   int payload_len, clen, sum_len = 0;
   u_int32_t rand = 0;
@@ -1137,9 +1138,10 @@ void ssh_login(int host_key_valid,
 					 BN_num_bits(host_key->n),
 					 host_key->e, host_key->n,
 					 ip_key->e, ip_key->n);
-    if (ip_status == HOST_CHANGED && host_status == HOST_CHANGED &&
-	(BN_cmp(ip_key->e, file_key->e) || BN_cmp(ip_key->n, file_key->n)))
-      ip_status = HOST_DIFFER;
+    if (host_status == HOST_CHANGED &&
+	(ip_status != HOST_CHANGED || 
+	 (BN_cmp(ip_key->e, file_key->e) || BN_cmp(ip_key->n, file_key->n))))
+      host_ip_differ = 1;
 
     RSA_free(ip_key);
   } else
@@ -1203,7 +1205,7 @@ void ssh_login(int host_key_valid,
     }
   case HOST_CHANGED:
     if (options->check_host_ip) {
-      if (ip_status != HOST_CHANGED) {
+      if (host_ip_differ) {
 	error("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
 	error("@       WARNING: POSSIBLE DNS SPOOFING DETECTED!          @");
 	error("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");

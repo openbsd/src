@@ -13,7 +13,7 @@ Generic header file for ssh.
 
 */
 
-/* RCSID("$Id: ssh.h,v 1.11 1999/10/14 18:17:42 markus Exp $"); */
+/* RCSID("$Id: ssh.h,v 1.12 1999/10/16 19:23:35 provos Exp $"); */
 
 #ifndef SSH_H
 #define SSH_H
@@ -300,7 +300,7 @@ int match_hostname(const char *host, const char *pattern, unsigned int len);
    Returns HOST_OK if the host is known and has the specified key,
    HOST_NEW if the host is not known, and HOST_CHANGED if the host is known
    but used to have a different host key.  The host must be in all lowercase. */
-typedef enum { HOST_OK, HOST_NEW, HOST_CHANGED, HOST_DIFFER } HostStatus;
+typedef enum { HOST_OK, HOST_NEW, HOST_CHANGED } HostStatus;
 HostStatus check_host_in_hostfile(const char *filename, 
 				  const char *host, unsigned int bits,
 				  BIGNUM *e, BIGNUM *n,
