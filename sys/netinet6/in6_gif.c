@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_gif.c,v 1.21 2002/05/30 04:19:44 itojun Exp $	*/
+/*	$OpenBSD: in6_gif.c,v 1.22 2003/12/03 14:51:05 markus Exp $	*/
 /*	$KAME: in6_gif.c,v 1.43 2001/01/22 07:27:17 itojun Exp $	*/
 
 /*
@@ -206,7 +206,6 @@ int in6_gif_input(mp, offp, proto)
 	struct gif_softc *sc;
 	struct ifnet *gifp = NULL;
 	struct ip6_hdr *ip6;
-	int i;
 
 	/* XXX What if we run transport-mode IPsec to protect gif tunnel ? */
 	if (m->m_flags & (M_AUTH | M_CONF))
@@ -215,7 +214,7 @@ int in6_gif_input(mp, offp, proto)
 	ip6 = mtod(m, struct ip6_hdr *);
 
 #define satoin6(sa)	(((struct sockaddr_in6 *)(sa))->sin6_addr)
-	for (i = 0, sc = gif_softc; i < ngif; i++, sc++) {
+	LIST_FOREACH(sc, &gif_softc_list, gif_list) {
 		if (sc->gif_psrc == NULL || sc->gif_pdst == NULL ||
 		    sc->gif_psrc->sa_family != AF_INET6 ||
 		    sc->gif_pdst->sa_family != AF_INET6) {

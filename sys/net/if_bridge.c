@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.125 2003/10/02 05:50:34 itojun Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.126 2003/12/03 14:55:58 markus Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -122,9 +122,6 @@
 
 extern int ifqmaxlen;
 
-struct bridge_softc *bridgectl;
-int nbridge;
-
 void	bridgeattach(int);
 int	bridge_ioctl(struct ifnet *, u_long, caddr_t);
 void	bridge_start(struct ifnet *);
@@ -169,6 +166,8 @@ void	bridge_send_icmp_err(struct bridge_softc *, struct ifnet *,
 #ifdef IPSEC
 int bridge_ipsec(int, int, int, struct mbuf *);
 #endif
+int     bridge_clone_create(struct if_clone *, int);
+void	bridge_clone_destroy(struct ifnet *ifp);
 
 #define	ETHERADDR_IS_IP_MCAST(a) \
 	/* struct etheraddr *a;	*/				\
@@ -176,47 +175,97 @@ int bridge_ipsec(int, int, int, struct mbuf *);
 	 (a)->ether_addr_octet[1] == 0x00 &&			\
 	 (a)->ether_addr_octet[2] == 0x5e)
 
+LIST_HEAD(, bridge_softc) bridge_list;
+
+struct if_clone bridge_cloner =
+    IF_CLONE_INITIALIZER("bridge", bridge_clone_create, bridge_clone_destroy);
+
+/* ARGSUSED */
 void
 bridgeattach(int n)
 {
+	LIST_INIT(&bridge_list);
+	if_clone_attach(&bridge_cloner);
+}
+
+int
+bridge_clone_create(struct if_clone *ifc, int unit)
+{
 	struct bridge_softc *sc;
 	struct ifnet *ifp;
-	int i;
+	int s;
 
-	bridgectl = malloc(n * sizeof(*sc), M_DEVBUF, M_NOWAIT);
-	if (!bridgectl)
-		return;
-	nbridge = n;
-	bzero(bridgectl, n * sizeof(*sc));
-	for (sc = bridgectl, i = 0; i < nbridge; i++, sc++) {
+	sc = malloc(sizeof(*sc), M_DEVBUF, M_NOWAIT);
+	if (!sc)
+		return (ENOMEM);
+	bzero(sc, sizeof(*sc));
 
-		sc->sc_brtmax = BRIDGE_RTABLE_MAX;
-		sc->sc_brttimeout = BRIDGE_RTABLE_TIMEOUT;
-		sc->sc_bridge_max_age = BSTP_DEFAULT_MAX_AGE;
-		sc->sc_bridge_hello_time = BSTP_DEFAULT_HELLO_TIME;
-		sc->sc_bridge_forward_delay= BSTP_DEFAULT_FORWARD_DELAY;
-		sc->sc_bridge_priority = BSTP_DEFAULT_BRIDGE_PRIORITY;
-		sc->sc_hold_time = BSTP_DEFAULT_HOLD_TIME;
-		timeout_set(&sc->sc_brtimeout, bridge_timer, sc);
-		LIST_INIT(&sc->sc_iflist);
-		LIST_INIT(&sc->sc_spanlist);
-		ifp = &sc->sc_if;
-		snprintf(ifp->if_xname, sizeof ifp->if_xname, "bridge%d", i);
-		ifp->if_softc = sc;
-		ifp->if_mtu = ETHERMTU;
-		ifp->if_ioctl = bridge_ioctl;
-		ifp->if_output = bridge_output;
-		ifp->if_start = bridge_start;
-		ifp->if_type = IFT_BRIDGE;
-		ifp->if_snd.ifq_maxlen = ifqmaxlen;
-		ifp->if_hdrlen = sizeof(struct ether_header);
-		if_attach(ifp);
-		if_alloc_sadl(ifp);
+	sc->sc_brtmax = BRIDGE_RTABLE_MAX;
+	sc->sc_brttimeout = BRIDGE_RTABLE_TIMEOUT;
+	sc->sc_bridge_max_age = BSTP_DEFAULT_MAX_AGE;
+	sc->sc_bridge_hello_time = BSTP_DEFAULT_HELLO_TIME;
+	sc->sc_bridge_forward_delay= BSTP_DEFAULT_FORWARD_DELAY;
+	sc->sc_bridge_priority = BSTP_DEFAULT_BRIDGE_PRIORITY;
+	sc->sc_hold_time = BSTP_DEFAULT_HOLD_TIME;
+	timeout_set(&sc->sc_brtimeout, bridge_timer, sc);
+	LIST_INIT(&sc->sc_iflist);
+	LIST_INIT(&sc->sc_spanlist);
+	ifp = &sc->sc_if;
+	snprintf(ifp->if_xname, sizeof ifp->if_xname, "%s%d", ifc->ifc_name, 
+	    unit);
+	ifp->if_softc = sc;
+	ifp->if_mtu = ETHERMTU;
+	ifp->if_ioctl = bridge_ioctl;
+	ifp->if_output = bridge_output;
+	ifp->if_start = bridge_start;
+	ifp->if_type = IFT_BRIDGE;
+	ifp->if_snd.ifq_maxlen = ifqmaxlen;
+	ifp->if_hdrlen = sizeof(struct ether_header);
+	if_attach(ifp);
+	if_alloc_sadl(ifp);
 #if NBPFILTER > 0
-		bpfattach(&sc->sc_if.if_bpf, ifp,
-		    DLT_EN10MB, sizeof(struct ether_header));
+	bpfattach(&sc->sc_if.if_bpf, ifp,
+	    DLT_EN10MB, sizeof(struct ether_header));
 #endif
+	s = splnet();
+	LIST_INSERT_HEAD(&bridge_list, sc, sc_list);
+	splx(s);
+
+	return (0);
+}
+
+void
+bridge_clone_destroy(struct ifnet *ifp)
+{
+	struct bridge_softc *sc = ifp->if_softc;
+	struct bridge_iflist *bif;
+	int s;
+
+	bridge_stop(sc);
+	while ((bif = LIST_FIRST(&sc->sc_iflist)) != NULL) {
+		/* XXX shared with ioctl and detach */
+		/* XXX promisc disable? */
+		LIST_REMOVE(bif, next);
+		bridge_rtdelete(sc, bif->ifp, 0);
+		bridge_flushrule(bif);
+		bif->ifp->if_bridge = NULL;
+		free(bif, M_DEVBUF);
 	}
+	while ((bif = LIST_FIRST(&sc->sc_spanlist)) != NULL) {
+		LIST_REMOVE(bif, next);
+		free(bif, M_DEVBUF);
+	}
+
+	s = splnet();
+	LIST_REMOVE(sc, sc_list);
+	splx(s);
+
+#if NBPFILTER > 0
+	bpfdetach(ifp);
+#endif  
+	if_detach(ifp);
+
+	free(sc, M_DEVBUF);
 }
 
 int
@@ -1027,10 +1076,9 @@ bridgeintr(void)
 {
 	struct bridge_softc *sc;
 	struct mbuf *m;
-	int i, s;
+	int s;
 
-	for (i = 0; i < nbridge; i++) {
-		sc = &bridgectl[i];
+	LIST_FOREACH(sc, &bridge_list, sc_list) {
 		for (;;) {
 			s = splimp();
 			IF_DEQUEUE(&sc->sc_if.if_snd, m);

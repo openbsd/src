@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_faith.c,v 1.15 2003/06/02 23:28:12 millert Exp $	*/
+/*	$OpenBSD: if_faith.c,v 1.16 2003/12/03 14:53:04 markus Exp $	*/
 /*
  * Copyright (c) 1982, 1986, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -71,9 +71,12 @@ int faithoutput(struct ifnet *, struct mbuf *, struct sockaddr *,
 	struct rtentry *);
 static void faithrtrequest(int, struct rtentry *, struct rt_addrinfo *);
 
-void faithattach(int);
+void	faithattach(int);
+int	faith_clone_create(struct if_clone *, int);
+void	faith_clone_destroy(struct ifnet *ifp);
 
-static struct ifnet faithif[NFAITH];
+struct if_clone faith_cloner =
+    IF_CLONE_INITIALIZER("faith", faith_clone_create, faith_clone_destroy);
 
 #define	FAITHMTU	1500
 
@@ -82,27 +85,48 @@ void
 faithattach(faith)
 	int faith;
 {
-	struct ifnet *ifp;
-	int i;
+	if_clone_attach(&faith_cloner);
+}
 
-	for (i = 0; i < NFAITH; i++) {
-		ifp = &faithif[i];
-		bzero(ifp, sizeof(faithif[i]));
-		snprintf(ifp->if_xname, sizeof ifp->if_xname, "faith%d", i);
-		ifp->if_mtu = FAITHMTU;
-		/* Change to BROADCAST experimentaly to announce its prefix. */
-		ifp->if_flags = /* IFF_LOOPBACK */ IFF_BROADCAST | IFF_MULTICAST;
-		ifp->if_ioctl = faithioctl;
-		ifp->if_output = faithoutput;
-		ifp->if_type = IFT_FAITH;
-		ifp->if_hdrlen = 0;
-		ifp->if_addrlen = 0;
-		if_attach(ifp);
-		if_alloc_sadl(ifp);
+int
+faith_clone_create(ifc, unit)
+	struct if_clone *ifc;
+	int unit;
+{
+	struct ifnet *ifp;
+
+	ifp = malloc(sizeof(*ifp), M_DEVBUF, M_NOWAIT);
+	if (!ifp)
+		return (ENOMEM);
+	bzero(ifp, sizeof(*ifp));
+	snprintf(ifp->if_xname, sizeof ifp->if_xname, "%s%d", ifc->ifc_name, 
+	    unit);
+	ifp->if_mtu = FAITHMTU;
+	/* Change to BROADCAST experimentaly to announce its prefix. */
+	ifp->if_flags = /* IFF_LOOPBACK */ IFF_BROADCAST | IFF_MULTICAST;
+	ifp->if_ioctl = faithioctl;
+	ifp->if_output = faithoutput;
+	ifp->if_type = IFT_FAITH;
+	ifp->if_hdrlen = 0;
+	ifp->if_addrlen = 0;
+	if_attach(ifp);
+	if_alloc_sadl(ifp);
 #if NBPFILTER > 0
-		bpfattach(&ifp->if_bpf, ifp, DLT_NULL, sizeof(u_int));
+	bpfattach(&ifp->if_bpf, ifp, DLT_NULL, sizeof(u_int));
 #endif
-	}
+	return (0);
+}
+
+void
+faith_clone_destroy(ifp)
+	struct ifnet *ifp;
+{
+#if NBPFILTER > 0
+	bpfdetach(ifp);
+#endif  
+	if_detach(ifp);
+
+	free(ifp, M_DEVBUF);
 }
 
 int

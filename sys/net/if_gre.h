@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.h,v 1.8 2003/11/16 20:30:07 avsm Exp $ */
+/*      $OpenBSD: if_gre.h,v 1.9 2003/12/03 14:52:23 markus Exp $ */
 /*	$NetBSD: if_gre.h,v 1.5 1999/11/19 20:41:19 thorpej Exp $ */
 
 /*
@@ -42,6 +42,7 @@
 
 struct gre_softc {
 	struct ifnet sc_if;
+	LIST_ENTRY(gre_softc) sc_list;
 	int gre_unit;
 	int gre_flags;
 	struct    in_addr g_src;  /* source address of gre packets */
@@ -138,8 +139,7 @@ struct mobip_h {
  */
 
 #ifdef _KERNEL
-extern	struct gre_softc *gre;
-extern	int ngre;
+extern  LIST_HEAD(gre_softc_head, gre_softc) gre_softc_list;
 extern  int gre_allow;   
 extern  int gre_wccp;
 extern  int ip_mobile_allow;

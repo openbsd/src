@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.51 2003/12/02 06:00:18 mickey Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.52 2003/12/03 14:53:04 markus Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -106,6 +106,8 @@ struct tun_softc {
 	uid_t	tun_sigeuid;		/* euid for process that set tun_pgid */
 	struct	selinfo	tun_rsel;	/* read select */
 	struct	selinfo	tun_wsel;	/* write select (not used) */
+	int	tun_unit;
+	LIST_ENTRY(tun_softc) tun_list;	/* all tunnel interfaces */
 };
 
 #ifdef	TUN_DEBUG
@@ -114,9 +116,6 @@ int	tundebug = TUN_DEBUG;
 #else
 #define TUNDEBUG(a)	/* (tundebug? printf a : 0) */
 #endif
-
-struct tun_softc *tunctl;
-int ntun;
 
 extern int ifqmaxlen;
 
@@ -131,7 +130,8 @@ int	tunread(dev_t, struct uio *, int);
 int	tunwrite(dev_t, struct uio *, int);
 int	tunpoll(dev_t, int, struct proc *);
 int	tunkqfilter(dev_t, struct knote *);
-
+int	tun_clone_create(struct if_clone *, int);
+struct	tun_softc *tun_lookup(int);
 
 static int tuninit(struct tun_softc *);
 #ifdef ALTQ
@@ -148,46 +148,80 @@ struct filterops tunread_filtops =
 struct filterops tunwrite_filtops =
 	{ 1, NULL, filt_tunwdetach, filt_tunwrite};
 
+LIST_HEAD(, tun_softc) tun_softc_list;
+
+struct if_clone tun_cloner =
+    IF_CLONE_INITIALIZER("tun", tun_clone_create, NULL);
+
 void
 tunattach(n)
 	int n;
 {
-	register int i;
+	LIST_INIT(&tun_softc_list);
+	if_clone_attach(&tun_cloner);
+}
+
+int
+tun_clone_create(ifc, unit)
+	struct if_clone *ifc;
+	int unit;
+{
+	struct tun_softc *tp;
 	struct ifnet *ifp;
+	int s;
 
-	ntun = n;
-	tunctl = malloc(ntun * sizeof(*tunctl), M_DEVBUF, M_WAITOK);
-	bzero(tunctl, ntun * sizeof(*tunctl));
-	for (i = 0; i < ntun; i++) {
-		tunctl[i].tun_flags = TUN_INITED;
+	tp = malloc(sizeof(*tp), M_DEVBUF, M_NOWAIT);
+	if (!tp)
+		return (ENOMEM);
+	bzero(tp, sizeof(*tp));
 
-		ifp = &tunctl[i].tun_if;
-		snprintf(ifp->if_xname, sizeof ifp->if_xname, "tun%d", i);
-		ifp->if_softc = &tunctl[i];
-		ifp->if_mtu = TUNMTU;
-		ifp->if_ioctl = tun_ioctl;
-		ifp->if_output = tun_output;
+	tp->tun_unit = unit;
+	tp->tun_flags = TUN_INITED;
+
+	ifp = &tp->tun_if;
+	snprintf(ifp->if_xname, sizeof ifp->if_xname, "%s%d", ifc->ifc_name, 
+	    unit);
+	ifp->if_softc = tp;
+	ifp->if_mtu = TUNMTU;
+	ifp->if_ioctl = tun_ioctl;
+	ifp->if_output = tun_output;
 #ifdef ALTQ
-		ifp->if_start = tunstart;
+	ifp->if_start = tunstart;
 #endif
-		ifp->if_flags = IFF_POINTOPOINT;
-		ifp->if_type  = IFT_PROPVIRTUAL;
-		IFQ_SET_MAXLEN(&ifp->if_snd, ifqmaxlen);
-		IFQ_SET_READY(&ifp->if_snd);
-		ifp->if_hdrlen = sizeof(u_int32_t);
-		ifp->if_collisions = 0;
-		ifp->if_ierrors = 0;
-		ifp->if_oerrors = 0;
-		ifp->if_ipackets = 0;
-		ifp->if_opackets = 0;
-		ifp->if_ibytes = 0;
-		ifp->if_obytes = 0;
-		if_attach(ifp);
-		if_alloc_sadl(ifp);
+	ifp->if_flags = IFF_POINTOPOINT;
+	ifp->if_type  = IFT_PROPVIRTUAL;
+	IFQ_SET_MAXLEN(&ifp->if_snd, ifqmaxlen);
+	IFQ_SET_READY(&ifp->if_snd);
+	ifp->if_hdrlen = sizeof(u_int32_t);
+	ifp->if_collisions = 0;
+	ifp->if_ierrors = 0;
+	ifp->if_oerrors = 0;
+	ifp->if_ipackets = 0;
+	ifp->if_opackets = 0;
+	ifp->if_ibytes = 0;
+	ifp->if_obytes = 0;
+	if_attach(ifp);
+	if_alloc_sadl(ifp);
 #if NBPFILTER > 0
-		bpfattach(&ifp->if_bpf, ifp, DLT_LOOP, sizeof(u_int32_t));
+	bpfattach(&ifp->if_bpf, ifp, DLT_LOOP, sizeof(u_int32_t));
 #endif
-	}
+	s = splnet();
+	LIST_INSERT_HEAD(&tun_softc_list, tp, tun_list);
+	splx(s);
+
+	return (0);
+}
+
+struct tun_softc *
+tun_lookup(unit)
+	int unit;
+{
+	struct tun_softc *tp;
+
+	LIST_FOREACH(tp, &tun_softc_list, tun_list)
+		if (tp->tun_unit == unit)
+			return (tp);
+	return (NULL);
 }
 
 /*
@@ -202,15 +236,19 @@ tunopen(dev, flag, mode, p)
 {
 	struct tun_softc *tp;
 	struct ifnet	*ifp;
-	register int	unit, error;
+	int error;
 
 	if ((error = suser(p, 0)) != 0)
 		return (error);
 
-	if ((unit = minor(dev)) >= ntun)
-		return (ENXIO);
+	if ((tp = tun_lookup(minor(dev))) == NULL) {
+		/* create on demand */
+                (void) tun_clone_create(&tun_cloner, minor(dev));
 
-	tp = &tunctl[unit];
+		if ((tp = tun_lookup(minor(dev))) == NULL)
+			return (ENXIO);
+	}
+
 	if (tp->tun_flags & TUN_OPEN)
 		return EBUSY;
 
@@ -231,14 +269,13 @@ tunclose(dev, flag, mode, p)
 	int	mode;
 	struct proc *p;
 {
-	register int	unit, s;
+	int	s;
 	struct tun_softc *tp;
 	struct ifnet	*ifp;
 
-	if ((unit = minor(dev)) >= ntun)
+	if ((tp = tun_lookup(minor(dev))) == NULL)
 		return (ENXIO);
 
-	tp = &tunctl[unit];
 	ifp = &tp->tun_if;
 	tp->tun_flags &= ~TUN_OPEN;
 
@@ -460,15 +497,13 @@ tunioctl(dev, cmd, data, flag, p)
 	int		flag;
 	struct proc	*p;
 {
-	int		unit, s;
+	int		s;
 	struct tun_softc *tp;
 	struct tuninfo *tunp;
 	struct mbuf *m;
 
-	if ((unit = minor(dev)) >= ntun)
+	if ((tp = tun_lookup(minor(dev))) == NULL)
 		return (ENXIO);
-
-	tp = &tunctl[unit];
 
 	s = splimp();
 	switch (cmd) {
@@ -557,16 +592,14 @@ tunread(dev, uio, ioflag)
 	struct uio	*uio;
 	int		ioflag;
 {
-	int		unit;
 	struct tun_softc *tp;
 	struct ifnet	*ifp;
 	struct mbuf	*m, *m0;
 	int		error = 0, len, s;
 
-	if ((unit = minor(dev)) >= ntun)
+	if ((tp = tun_lookup(minor(dev))) == NULL)
 		return (ENXIO);
 
-	tp = &tunctl[unit];
 	ifp = &tp->tun_if;
 	TUNDEBUG(("%s: read\n", ifp->if_xname));
 	if ((tp->tun_flags & TUN_READY) != TUN_READY) {
@@ -628,7 +661,7 @@ tunwrite(dev, uio, ioflag)
 	struct uio	*uio;
 	int		ioflag;
 {
-	int		unit;
+	struct tun_softc *tp;
 	struct ifnet	*ifp;
 	struct ifqueue	*ifq;
 	u_int32_t	*th;
@@ -636,10 +669,10 @@ tunwrite(dev, uio, ioflag)
 	int		isr;
 	int		error=0, s, tlen, mlen;
 
-	if ((unit = minor(dev)) >= ntun)
+	if ((tp = tun_lookup(minor(dev))) == NULL)
 		return (ENXIO);
 
-	ifp = &tunctl[unit].tun_if;
+	ifp = &tp->tun_if;
 	TUNDEBUG(("%s: tunwrite\n", ifp->if_xname));
 
 	if (uio->uio_resid == 0 || uio->uio_resid > TUNMRU) {
@@ -760,15 +793,14 @@ tunpoll(dev, events, p)
 	int		events;
 	struct proc	*p;
 {
-	int		unit, revents, s;
+	int		revents, s;
 	struct tun_softc *tp;
 	struct ifnet	*ifp;
 	struct mbuf	*m;
 
-	if ((unit = minor(dev)) >= ntun)
+	if ((tp = tun_lookup(minor(dev))) == NULL)
 		return (ENXIO);
 
-	tp = &tunctl[unit];
 	ifp = &tp->tun_if;
 	revents = 0;
 	s = splimp();
@@ -803,15 +835,14 @@ tunpoll(dev, events, p)
 int
 tunkqfilter(dev_t dev,struct knote *kn)
 {
-	int unit, s;
+	int s;
 	struct klist *klist;
 	struct tun_softc *tp;
 	struct ifnet *ifp;
 
-	if ((unit = minor(dev)) >= ntun)
-		return ENXIO;
+	if ((tp = tun_lookup(minor(dev))) == NULL)
+		return (ENXIO);
 
-	tp = &tunctl[unit];
 	ifp = &tp->tun_if;
 
 	s = splimp();

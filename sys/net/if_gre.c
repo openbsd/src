@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.c,v 1.28 2003/08/15 20:32:19 tedu Exp $ */
+/*      $OpenBSD: if_gre.c,v 1.29 2003/12/03 14:52:23 markus Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -99,9 +99,12 @@
                          before changing if state to up to find the
                          correct value */
 
-struct gre_softc *gre = 0;
+int	gre_clone_create(struct if_clone *, int);
+void    gre_clone_destroy(struct ifnet *);
 
-int ngre = 0;
+struct gre_softc_head gre_softc_list;
+struct if_clone gre_cloner =
+    IF_CLONE_INITIALIZER("gre", gre_clone_create, gre_clone_destroy);
 
 /*
  * We can control the acceptance of GRE and MobileIP packets by
@@ -119,43 +122,71 @@ int ip_mobile_allow = 0;
 static void gre_compute_route(struct gre_softc *sc);
 
 void
-greattach(n)
-	int n;
+greattach(int n)
+{
+	LIST_INIT(&gre_softc_list);
+	if_clone_attach(&gre_cloner);
+}
+
+int
+gre_clone_create(struct if_clone *ifc, int unit)
 {
 	struct gre_softc *sc;
-	int i;
+	int s;
 
-	ngre = n;
-	gre = sc = malloc(ngre * sizeof(struct gre_softc), M_DEVBUF, M_WAIT);
-	bzero(sc, ngre * sizeof(struct gre_softc));
-	for (i = 0; i < ngre ; sc++) {
-		snprintf(sc->sc_if.if_xname, sizeof(sc->sc_if.if_xname),
-			 "gre%d", i++);
-		sc->sc_if.if_softc = sc;
-		sc->sc_if.if_type = IFT_OTHER;
-		sc->sc_if.if_addrlen = 0;
-		sc->sc_if.if_hdrlen = 24; /* IP + GRE */
-		sc->sc_if.if_mtu = GREMTU;
-		sc->sc_if.if_flags = IFF_POINTOPOINT|IFF_MULTICAST;
-		sc->sc_if.if_output = gre_output;
-		sc->sc_if.if_ioctl = gre_ioctl;
-		sc->sc_if.if_collisions = 0;
-		sc->sc_if.if_ierrors = 0;
-		sc->sc_if.if_oerrors = 0;
-		sc->sc_if.if_ipackets = 0;
-		sc->sc_if.if_opackets = 0;
-		sc->g_dst.s_addr = sc->g_src.s_addr = INADDR_ANY;
-		sc->g_proto = IPPROTO_GRE;
-		sc->sc_if.if_flags |= IFF_LINK0;
+	sc = malloc(sizeof(*sc), M_DEVBUF, M_NOWAIT);
+	if (!sc)
+		return (ENOMEM);
+	bzero(sc, sizeof(*sc));
+	snprintf(sc->sc_if.if_xname, sizeof sc->sc_if.if_xname, "%s%d",
+	    ifc->ifc_name, unit);
+	sc->sc_if.if_softc = sc;
+	sc->sc_if.if_type = IFT_OTHER;
+	sc->sc_if.if_addrlen = 0;
+	sc->sc_if.if_hdrlen = 24; /* IP + GRE */
+	sc->sc_if.if_mtu = GREMTU;
+	sc->sc_if.if_flags = IFF_POINTOPOINT|IFF_MULTICAST;
+	sc->sc_if.if_output = gre_output;
+	sc->sc_if.if_ioctl = gre_ioctl;
+	sc->sc_if.if_collisions = 0;
+	sc->sc_if.if_ierrors = 0;
+	sc->sc_if.if_oerrors = 0;
+	sc->sc_if.if_ipackets = 0;
+	sc->sc_if.if_opackets = 0;
+	sc->g_dst.s_addr = sc->g_src.s_addr = INADDR_ANY;
+	sc->g_proto = IPPROTO_GRE;
+	sc->sc_if.if_flags |= IFF_LINK0;
 
-		if_attach(&sc->sc_if);
-		if_alloc_sadl(&sc->sc_if);
+	if_attach(&sc->sc_if);
+	if_alloc_sadl(&sc->sc_if);
 
 #if NBPFILTER > 0
-		bpfattach(&sc->sc_if.if_bpf, &sc->sc_if, DLT_RAW,
-		    sizeof(u_int32_t));
+	bpfattach(&sc->sc_if.if_bpf, &sc->sc_if, DLT_RAW,
+	    sizeof(u_int32_t));
 #endif
-	}
+	s = splnet();
+	LIST_INSERT_HEAD(&gre_softc_list, sc, sc_list);
+	splx(s);
+
+	return (0);
+}
+
+void   
+gre_clone_destroy(struct ifnet *ifp)
+{
+	struct gre_softc *sc = ifp->if_softc;
+	int s;
+
+	s = splnet();
+	LIST_REMOVE(sc, sc_list);
+	splx(s);
+
+#if NBPFILTER > 0
+	bpfdetach(ifp);
+#endif  
+	if_detach(ifp);
+
+	free(sc, M_DEVBUF);
 }
 
 /*

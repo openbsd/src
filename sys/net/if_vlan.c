@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.41 2003/08/15 20:32:19 tedu Exp $ */
+/*	$OpenBSD: if_vlan.c,v 1.42 2003/12/03 14:55:58 markus Exp $ */
 /*
  * Copyright 1998 Massachusetts Institute of Technology
  *
@@ -79,10 +79,6 @@
 #include <net/if_vlan_var.h>
 
 extern struct	ifaddr	**ifnet_addrs;
-
-struct ifvlan *ifv_softc;
-int nifvlan;
-
 extern int ifqmaxlen;
 
 void	vlan_start (struct ifnet *ifp);
@@ -95,40 +91,79 @@ int	vlan_set_promisc (struct ifnet *ifp);
 int	vlan_ether_addmulti(struct ifvlan *, struct ifreq *);
 int	vlan_ether_delmulti(struct ifvlan *, struct ifreq *);
 void	vlan_ether_purgemulti(struct ifvlan *);
+int	vlan_clone_create(struct if_clone *, int);
+void	vlan_clone_destroy(struct ifnet *);
 
+LIST_HEAD(, ifvlan) vlan_list;
+
+struct if_clone vlan_cloner =
+    IF_CLONE_INITIALIZER("vlan", vlan_clone_create, vlan_clone_destroy);
+
+/* ARGSUSED */
 void
 vlanattach(int count)
 {
+	LIST_INIT(&vlan_list);
+	if_clone_attach(&vlan_cloner);
+}
+
+int
+vlan_clone_create(struct if_clone *ifc, int unit)
+{
+	struct ifvlan *ifv;
 	struct ifnet *ifp;
-	int i;
+	int s;
 
-	MALLOC(ifv_softc, struct ifvlan *, count * sizeof(struct ifvlan),
-	    M_DEVBUF, M_NOWAIT);
-	if (ifv_softc == NULL)
-		panic("vlanattach: MALLOC failed");
-	nifvlan = count;
-	bzero(ifv_softc, nifvlan * sizeof(struct ifvlan));
+	ifv = malloc(sizeof(*ifv), M_DEVBUF, M_NOWAIT);
+	if (!ifv)
+		return (ENOMEM);
+	bzero(ifv, sizeof(*ifv));
 
-	for (i = 0; i < nifvlan; i++) {
-		LIST_INIT(&ifv_softc[i].vlan_mc_listhead);
-		ifp = &ifv_softc[i].ifv_if;
-		ifp->if_softc = &ifv_softc[i];
-		snprintf(ifp->if_xname, sizeof ifp->if_xname, "vlan%d", i);
-		/* NB: flags are not set here */
-		/* NB: mtu is not set here */
+	LIST_INIT(&ifv->vlan_mc_listhead);
+	ifp = &ifv->ifv_if;
+	ifp->if_softc = ifv;
+	snprintf(ifp->if_xname, sizeof ifp->if_xname, "%s%d", ifc->ifc_name,
+	    unit);
+	/* NB: flags are not set here */
+	/* NB: mtu is not set here */
 
-		ifp->if_start = vlan_start;
-		ifp->if_ioctl = vlan_ioctl;
-		ifp->if_output = ether_output;
-		IFQ_SET_MAXLEN(&ifp->if_snd, ifqmaxlen);
-		IFQ_SET_READY(&ifp->if_snd);
-		if_attach(ifp);
-		ether_ifattach(ifp);
+	ifp->if_start = vlan_start;
+	ifp->if_ioctl = vlan_ioctl;
+	ifp->if_output = ether_output;
+	IFQ_SET_MAXLEN(&ifp->if_snd, ifqmaxlen);
+	IFQ_SET_READY(&ifp->if_snd);
+	if_attach(ifp);
+	ether_ifattach(ifp);
 
-		/* Now undo some of the damage... */
-		ifp->if_type = IFT_8021_VLAN;
-		ifp->if_hdrlen = EVL_ENCAPLEN;
-	}
+	/* Now undo some of the damage... */
+	ifp->if_type = IFT_8021_VLAN;
+	ifp->if_hdrlen = EVL_ENCAPLEN;
+
+	s = splnet();
+	LIST_INSERT_HEAD(&vlan_list, ifv, ifv_list);
+	splx(s);
+
+	return (0);
+}
+
+void
+vlan_clone_destroy(struct ifnet *ifp)
+{
+	struct ifvlan *ifv = ifp->if_softc;
+	int s;
+
+	s = splnet();
+	LIST_REMOVE(ifv, ifv_list);
+	splx(s);
+
+	vlan_unconfig(ifp);
+#if NBPFILTER > 0
+	bpfdetach(ifp);
+#endif  
+	ether_ifdetach(ifp);
+	if_detach(ifp);
+
+	free(ifv, M_DEVBUF);
 }
 
 void
@@ -237,18 +272,16 @@ vlan_start(struct ifnet *ifp)
 int
 vlan_input_tag(struct mbuf *m, u_int16_t t)
 {
-	int i;
 	struct ifvlan *ifv;
 	struct ether_vlan_header vh;
 
 	t = EVL_VLANOFTAG(t);
-	for (i = 0; i < nifvlan; i++) {
-		ifv = &ifv_softc[i];
+	LIST_FOREACH(ifv, &vlan_list, ifv_list) {
 		if (m->m_pkthdr.rcvif == ifv->ifv_p && t == ifv->ifv_tag)
 			break;
 	}
 
-	if (i >= nifvlan) {
+	if (ifv == NULL) {
 		if (m->m_pkthdr.len < sizeof(struct ether_header)) {
 			m_freem(m);
 			return (-1);
@@ -304,7 +337,6 @@ vlan_input(eh, m)
 	struct ether_header *eh;
 	struct mbuf *m;
 {
-	int i;
 	struct ifvlan *ifv;
 	u_int tag;
 	struct ifnet *ifp = m->m_pkthdr.rcvif;
@@ -317,13 +349,12 @@ vlan_input(eh, m)
 
 	tag = EVL_VLANOFTAG(ntohs(*mtod(m, u_int16_t *)));
 
-	for (i = 0; i < nifvlan; i++) {
-		ifv = &ifv_softc[i];
+	LIST_FOREACH(ifv, &vlan_list, ifv_list) {
 		if (m->m_pkthdr.rcvif == ifv->ifv_p && tag == ifv->ifv_tag)
 			break;
 	}
 
-	if (i >= nifvlan || (ifv->ifv_if.if_flags & (IFF_UP|IFF_RUNNING)) !=
+	if (ifv == NULL || (ifv->ifv_if.if_flags & (IFF_UP|IFF_RUNNING)) !=
 	    (IFF_UP|IFF_RUNNING)) {
 		m_freem(m);
 		return -1;	/* so ether_input can take note */

@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_gre.c,v 1.22 2003/07/09 22:03:16 itojun Exp $ */
+/*      $OpenBSD: ip_gre.c,v 1.23 2003/12/03 14:52:23 markus Exp $ */
 /*	$NetBSD: ip_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -390,9 +390,8 @@ gre_lookup(m, proto)
 {
 	struct ip *ip = mtod(m, struct ip *);
 	struct gre_softc *sc;
-	int i;
 
-	for (i = 0, sc = gre; i < ngre; i++, sc++) {
+	LIST_FOREACH(sc, &gre_softc_list, sc_list) {
 		if ((sc->g_dst.s_addr == ip->ip_src.s_addr) &&
 		    (sc->g_src.s_addr == ip->ip_dst.s_addr) &&
 		    (sc->g_proto == proto) &&
