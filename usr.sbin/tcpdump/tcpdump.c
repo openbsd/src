@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpdump.c,v 1.41 2005/03/06 21:05:49 jmc Exp $	*/
+/*	$OpenBSD: tcpdump.c,v 1.42 2005/03/07 16:13:38 reyk Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -26,7 +26,7 @@ static const char copyright[] =
     "@(#) Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n";
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/tcpdump.c,v 1.41 2005/03/06 21:05:49 jmc Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/tcpdump.c,v 1.42 2005/03/07 16:13:38 reyk Exp $ (LBL)";
 #endif
 
 /*
@@ -98,7 +98,7 @@ RETSIGTYPE cleanup(int);
 extern __dead void usage(void);
 
 /* Length of saved portion of packet. */
-int snaplen = DEFAULT_SNAPLEN;
+int snaplen = 0;
 
 struct printer {
 	pcap_handler f;
@@ -126,6 +126,8 @@ static struct printer printers[] = {
 	{ pflog_old_if_print,		DLT_OLD_PFLOG },
 	{ pfsync_if_print,		DLT_PFSYNC },
 	{ ppp_ether_if_print,		DLT_PPP_ETHER },
+	{ ieee802_11_if_print,		DLT_IEEE802_11 },
+	{ ieee802_11_radio_if_print,	DLT_IEEE802_11_RADIO },
 	{ NULL,				0 },
 };
 
@@ -185,7 +187,9 @@ const struct pcap_linktype {
 	{ DLT_OLD_PFLOG,	"OLD_PFLOG" },
 	{ DLT_PFSYNC,		"PFSYNC" },
 	{ DLT_PPP_ETHER,	"PPP_ETHER" },
+	{ DLT_IEEE802_11,	"IEEE802_11" },
 	{ DLT_PFLOG,		"PFLOG" },
+	{ DLT_IEEE802_11_RADIO,	"IEEE802_11_RADIO" },
 	{ 0,			NULL }
 };
 
@@ -439,6 +443,17 @@ main(int argc, char **argv)
 			usage();
 			/* NOTREACHED */
 		}
+
+	if (snaplen == 0) {
+		switch (dlt) {
+		case DLT_IEEE802_11_RADIO:
+			snaplen = RADIOTAP_SNAPLEN;			
+			break;
+		default:
+			snaplen = DEFAULT_SNAPLEN;
+			break;
+		}
+	}
 
 	if (aflag && nflag)
 		error("-a and -n options are incompatible");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.h,v 1.47 2004/09/16 11:29:51 markus Exp $	*/
+/*	$OpenBSD: interface.h,v 1.48 2005/03/07 16:13:38 reyk Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -20,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/interface.h,v 1.47 2004/09/16 11:29:51 markus Exp $ (LBL)
+ * @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/interface.h,v 1.48 2005/03/07 16:13:38 reyk Exp $ (LBL)
  */
 
 #ifndef tcpdump_interface_h
@@ -79,6 +79,7 @@ extern int packettype;		/* as specified by -T */
 #define DEFAULT_SNAPLEN 96
 #endif /* INET6 */
 #define SACK_SNAPLEN 94
+#define RADIOTAP_SNAPLEN (DEFAULT_SNAPLEN + 64)
 
 #ifndef BIG_ENDIAN
 #define BIG_ENDIAN 4321
@@ -159,6 +160,7 @@ extern const char *tok2str(const struct tok *, const char *, int);
 extern char *dnaddr_string(u_short);
 extern void safeputs(const char *);
 extern void safeputchar(int);
+extern void printb(char *, unsigned short, char *);
 
 extern void wrapup(int);
 
@@ -211,6 +213,10 @@ extern void ppp_ether_if_print(u_char *, const struct pcap_pkthdr *,
 	const u_char *);
 extern void gre_print(const u_char *, u_int);
 extern void icmp_print(const u_char *, const u_char *);
+extern void ieee802_11_if_print(u_char *, const struct pcap_pkthdr *,
+    const u_char *);
+extern void ieee802_11_radio_if_print(u_char *, const struct pcap_pkthdr *,
+    const u_char *);
 extern void igrp_print(const u_char *, u_int, const u_char *);
 extern void ip_print(const u_char *, u_int);
 extern void ipx_print(const u_char *, u_int);

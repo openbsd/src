@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.18 2004/07/28 09:37:26 markus Exp $	*/
+/*	$OpenBSD: util.c,v 1.19 2005/03/07 16:13:38 reyk Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/util.c,v 1.18 2004/07/28 09:37:26 markus Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/util.c,v 1.19 2005/03/07 16:13:38 reyk Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>
@@ -326,4 +326,36 @@ safeputchar(int c)
 		printf("%c", c & 0xff);
 	else
 		printf("\\%03o", c & 0xff);
+}
+
+/*
+ * Print a value a la the %b format of the kernel's printf
+ * (from sbin/ifconfig/ifconfig.c)
+ */
+void
+printb(char *s, unsigned short v, char *bits)
+{
+	int i, any = 0;
+	char c;
+
+	if (bits && *bits == 8)
+		printf("%s=%o", s, v);
+	else
+		printf("%s=%x", s, v);
+	bits++;
+	if (bits) {
+		putchar('<');
+		while ((i = *bits++)) {
+			if (v & (1 << (i-1))) {
+				if (any)
+					putchar(',');
+				any = 1;
+				for (; (c = *bits) > 32; bits++)
+					putchar(c);
+			} else
+				for (; *bits > 32; bits++)
+					;
+		}
+		putchar('>');
+	}
 }
