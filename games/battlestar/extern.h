@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.2 1997/09/01 18:13:16 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.3 1997/12/16 07:54:25 angelos Exp $	*/
 /*	$NetBSD: extern.h,v 1.5 1995/04/24 12:22:18 cgd Exp $	*/
 
 /*
@@ -265,7 +265,7 @@ int card __P((char *, int));
 void chime __P((void));
 void crash __P((void));
 int cypher __P((void));
-void die __P((void));
+void die __P((int));
 void dig __P((void));
 int draw __P((void));
 void drink __P((void));

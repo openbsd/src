@@ -1,4 +1,4 @@
-/*	$OpenBSD: com4.c,v 1.4 1997/09/01 18:13:11 millert Exp $	*/
+/*	$OpenBSD: com4.c,v 1.5 1997/12/16 07:54:23 angelos Exp $	*/
 /*	$NetBSD: com4.c,v 1.3 1995/03/21 15:07:04 cgd Exp $	*/
 
 /*
@@ -258,7 +258,7 @@ throw(name)
 			}
 			else if (value == GRENADE && testbit(location[position].objects,value)){
 				puts("You are blown into shreds when your grenade explodes.");
-				die();
+				die(0);
 			}
 			if (wordnumber < wordcount - 1 && wordvalue[++wordnumber] == AND)
 				wordnumber++;
@@ -289,7 +289,7 @@ char *name;
 			encumber -= objcumber[value];
 			if (value == BOMB){
 				puts("The bomb explodes.  A blinding white light and immense concussion obliterate us.");
-				die();
+				die(0);
 			}
 			if (value != AMULET && value != MEDALION && value != TALISMAN)
 				setbit(location[position].objects,value);

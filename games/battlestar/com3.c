@@ -1,4 +1,4 @@
-/*	$OpenBSD: com3.c,v 1.3 1997/08/24 21:55:02 deraadt Exp $	*/
+/*	$OpenBSD: com3.c,v 1.4 1997/12/16 07:54:22 angelos Exp $	*/
 /*	$NetBSD: com3.c,v 1.3 1995/03/21 15:07:00 cgd Exp $	*/
 
 /*
@@ -215,7 +215,7 @@ shoot()
 				btime++;
 				printf("The %s explode%s\n",objsht[value],(objsht[value][n-1]=='s' ? (objsht[value][n-2]=='s' ? "s." : ".") : "s."));
 				if (value == BOMB)
-					die();
+					die(0);
 			}
 			else
 				printf("I dont see any %s around here.\n", objsht[value]);
@@ -250,7 +250,7 @@ shoot()
 						case 20:
 							puts("The blast hits the door and it explodes into flame.  The magnesium burns");
 							puts("so rapidly that we have no chance to escape.");
-							die();
+							die(0);
 						default:
 							puts("Nothing happens.");
 					}
@@ -297,7 +297,7 @@ shoot()
 					if (testbit(location[position].objects,MAN)){
 						puts("The man falls to the ground with blood pouring all over his white suit.");
 						puts("Your fantasy is over.");
-						die();
+						die(0);
 					}
 					else puts("What man?");
 					break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fly.c,v 1.4 1997/08/24 21:55:08 deraadt Exp $	*/
+/*	$OpenBSD: fly.c,v 1.5 1997/12/16 07:54:25 angelos Exp $	*/
 /*	$NetBSD: fly.c,v 1.3 1995/03/21 15:07:28 cgd Exp $	*/
 
 /*
@@ -60,14 +60,15 @@ sig_t oldsig;
 
 void blast __P((void));
 void endfly __P((void));
-void moveenemy __P((void));
+void moveenemy __P((int));
 void notarget __P((void));
 void screen __P((void));
-void succumb __P((void));
+void succumb __P((int));
 void target __P((void));
 
 void
-succumb()
+succumb(sigraised)
+int sigraised;
 {
 	if (oldsig == SIG_DFL) {
 		endfly();
@@ -93,7 +94,7 @@ visual()
 	screen();
 	row = rnd(LINES-3) + 1;
 	column = rnd(COLS-2) + 1;
-	moveenemy();
+	moveenemy(0);
 	for (;;) {
 		switch(getchar()){
 
@@ -183,7 +184,7 @@ visual()
 		}
 		if (bclock <= 0){
 			endfly();
-			die();
+			die(0);
 		}
 	}
 }
@@ -254,7 +255,8 @@ blast()
 }
 
 void
-moveenemy()
+moveenemy(sigraised)
+int sigraised;
 {
 	double d;
 	int oldr, oldc;

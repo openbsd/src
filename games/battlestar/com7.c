@@ -1,4 +1,4 @@
-/*	$OpenBSD: com7.c,v 1.4 1997/09/01 18:13:14 millert Exp $	*/
+/*	$OpenBSD: com7.c,v 1.5 1997/12/16 07:54:24 angelos Exp $	*/
 /*	$NetBSD: com7.c,v 1.3 1995/03/21 15:07:12 cgd Exp $	*/
 
 /*
@@ -62,7 +62,7 @@ fighton:
 		exhaustion = CYCLE/(snooze - btime);
 	else {
 		puts("You collapse exhausted, and he pulverizes your skull.");
-		die();
+		die(0);
 	}
 	if (snooze - btime < 20)
 		puts("You look tired! I hope you're able to fight.");
@@ -182,7 +182,7 @@ fighton:
 						puts("his power grows and the walls of\nthe earth tremble.");
 						puts("When he touches the medallion, your chest explodes and the foundations of the\nearth collapse.");
 						puts("The planet is consumed by darkness.");
-						die();
+						die(0);
 					}
 					if (testbit(inven,AMULET)){
 						clearbit(inven,AMULET);
@@ -199,7 +199,7 @@ fighton:
 				}
 				else{
 					puts("I'm afraid you have been killed.");
-					die();
+					die(0);
 				}
 			}
 			else{
@@ -270,7 +270,7 @@ fighton:
 		puts("You emerge unscathed.");
 	if (injuries[SKULL] && injuries[INCISE] && injuries[NECK]){
 		puts("I'm afraid you have suffered fatal injuries.");
-		die();
+		die(0);
 	}
 	goto fighton;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: com2.c,v 1.4 1997/09/01 18:13:10 millert Exp $	*/
+/*	$OpenBSD: com2.c,v 1.5 1997/12/16 07:54:22 angelos Exp $	*/
 /*	$NetBSD: com2.c,v 1.3 1995/03/21 15:06:55 cgd Exp $	*/
 
 /*
@@ -219,7 +219,7 @@ murder()
 				if (testbit(location[position].objects,MAN)){
 					puts("You strike him to the ground, and he coughs up blood.");
 					puts("Your fantasy is over.");
-					die();
+					die(0);
 				}
 			case -1:
 				puts("Kill what?");

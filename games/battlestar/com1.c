@@ -1,4 +1,4 @@
-/*	$OpenBSD: com1.c,v 1.4 1997/09/01 18:13:08 millert Exp $	*/
+/*	$OpenBSD: com1.c,v 1.5 1997/12/16 07:54:21 angelos Exp $	*/
 /*	$NetBSD: com1.c,v 1.3 1995/03/21 15:06:51 cgd Exp $	*/
 
 /*
@@ -105,7 +105,7 @@ news()
 		puts("An explosion of shuddering magnitude splinters bulkheads and");
 		puts("ruptures the battlestar's hull.  You are sucked out into the");
 		puts("frozen void of space and killed.");
-		die();
+		die(0);
 	}
 	if (btime > 20 && position < 32)
 		puts("Explosions rock the battlestar.");
@@ -202,7 +202,7 @@ news()
 	}
 	if (injuries[SKULL] && injuries[INCISE] && injuries[NECK]){
 		puts("I'm afraid you have suffered fatal injuries.");
-		die();
+		die(0);
 	}
 	for (n=0; n < NUMOFINJURIES; n++)
 		if (injuries[n] == 1){
@@ -244,7 +244,7 @@ crash()
 			if (!location[position].down){
 				puts("Your viper strikes the ground and explodes into firey fragments.");
 				puts("Thick black smoke billows up from the wreckage.");
-				die();
+				die(0);
 			}
 			position = location[position].down;
 		}

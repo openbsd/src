@@ -1,4 +1,4 @@
-/*	$OpenBSD: com6.c,v 1.7 1997/09/01 19:30:55 millert Exp $	*/
+/*	$OpenBSD: com6.c,v 1.8 1997/12/16 07:54:23 angelos Exp $	*/
 /*	$NetBSD: com6.c,v 1.5 1995/04/27 21:30:23 mycroft Exp $	*/
 
 /*
@@ -86,7 +86,8 @@ land()
 }
 
 void
-die() 		/* endgame */
+die(sigraised) 		/* endgame */
+int sigraised;
 {
 	printf("bye.\nYour rating was %s.\n", rate());
 	post(' ');
@@ -225,7 +226,7 @@ light()		/* synonyms = {strike, smoke} */
 		matchcount--;
 		if (position == 217){
 			puts("The whole bungalow explodes with an intense blast.");
-			die();
+			die(0);
 		}
 	}
 	else puts("You're out of matches.");
