@@ -1,0 +1,11 @@
+/dev/ttyb
+19200
+modem
+crtscts
+defaultroute
+netmask 255.255.255.0
+ipcp-accept-local
+ipcp-accept-remote
+noipdefault
+lock
+connect "/usr/sbin/chat -v -f /etc/ppp/chatscript"
