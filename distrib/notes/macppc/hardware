@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.14 2002/11/21 16:54:02 jason Exp $
+dnl	$OpenBSD: hardware,v 1.15 2002/11/25 14:52:31 drahn Exp $
 OpenBSD/MACHINE OSREV runs on iMac, G4 Power Macintosh, G4 Cube as well
 as PowerBook and iBook machines.
 
@@ -59,6 +59,31 @@ Supported devices {:-include-:}:
 			Intel EtherExpress PRO/100+ "Management Adapter"
 			Intel EtherExpress PRO/100 Dual Port
 			Intel PRO/100 VE, PRO/100 VM, and PRO/100 S
+		Intel i82450, i82542, i82543, i82544, i82545, and i82456
+		based adapters (em), including:
+			Intel PRO/1000 Gigabit Server Adapter (SX Fiber)
+			(PWLA8490)
+			Intel PRO/1000F Gigabit Server Adapter (SX Fiber)
+			(PWLA8490SX)
+			Intel PRO/1000T Server Adapter (PWLA8490T)
+			Intel PRO/1000XT Server Adapter (PWLA8490XT)
+			Intel PRO/1000XS Server Adapter (SX Fiber) (PWLA8490XF)
+			Intel PRO/1000T Desktop Adapter (PWLA8390T)
+			Intel PRO/1000XTL Lo Profile PCI Server (PWLA8490XTL)
+			Intel PRO/1000MT Desktop Adapter (PWLA8390MT)
+			Intel PRO/1000MT Server Adapter (PWLA8490MT)
+			Intel PRO/1000MT Dual Port Server Adapter (PWLA8492MT)
+			Intel PRO/1000MF Server Adapter (SX Fiber) (PWLA8490MF)
+			Intel PRO/1000MF Dual Port Server Adapter (SX Fiber)
+			(PWLA8492MF)
+			Intel PRO/1000MF Server Adapter (LX Fiber) (PWLA8490LX)
+		3Com 3c9xx EtherLink XL adapters (xl), including:
+			3Com 3c900/3c900B PCI adapters
+			3Com 3c905/3c905B/3c905C PCI adapters
+			3Com 3c980/3c980C server adapters
+			3Com 3cSOHO adapter
+			3Com 3c900B-FL and 3c900B-FL/FX fiber optic adapters
+			3Com 3c555/3c556/3c556B MiniPCI adapters
 
 	Wireless Ethernet Adapters
 		Aironet 802.11DS PCMCIA and PCI
