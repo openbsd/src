@@ -267,6 +267,24 @@ child_resume (pid, step, signal)
     perror_with_name ("ptrace");
 }
 
+#ifdef  FETCH_KCORE_REGISTERS
+void
+fetch_kcore_registers (pcbp)
+	struct pcb *pcbp;
+{
+  int i;
+
+  registers_changed ();
+
+  supply_register (SP_REGNUM, &pcbp->pcb_hw.apcb_ksp);	/* sp */
+  supply_register (PC_REGNUM, &pcbp->pcb_context[7]);	/* pc */
+
+  for (i = 0; i < 7; i++)				/* s0 - s6 */
+    supply_register (S0_REGNUM + i, &pcbp->pcb_context[i]);
+}
+#endif  /* FETCH_KCORE_REGISTERS */
+
+
 /* Register that we are able to handle alpha core file formats. */
 
 static struct core_fns alpha_core_fns =

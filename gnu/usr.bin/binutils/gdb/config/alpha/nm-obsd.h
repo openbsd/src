@@ -43,3 +43,6 @@ get_longjmp_target PARAMS ((CORE_ADDR *));
 
 #define	FETCH_INFERIOR_REGISTERS
 #define	CHILD_RESUME
+
+/* This enables functions needed by kcore-nbsd.c */
+#define FETCH_KCORE_REGISTERS
