@@ -1,4 +1,4 @@
-.\"	$OpenBSD: setproctitle.3,v 1.13 2001/01/26 06:38:23 aaron Exp $
+.\"	$OpenBSD: setproctitle.3,v 1.14 2001/02/17 17:15:23 pjanzen Exp $
 .\"
 .\" Copyright (c) 1994, 1995 Christopher G. Demetriou
 .\" All rights reserved.
@@ -74,7 +74,7 @@ The
 function first appeared in
 .Nx 0.9a .
 .Sh CAVEATS
-It is important to never pass a string with user-supplied data as a
+It is important never to pass a string with user-supplied data as a
 format without using
 .Ql %s .
 An attacker can put format specifiers in the string to mangle your stack,
@@ -87,7 +87,7 @@ as the resulting string may still contain user-supplied conversion specifiers
 for later interpolation by
 .Fn setproctitle .
 .Pp
-Be sure to always use the proper secure idiom:
+Always be sure to use the proper secure idiom:
 .Bd -literal -offset indent
 setproctitle("%s", string);
 .Ed

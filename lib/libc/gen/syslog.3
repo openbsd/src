@@ -1,4 +1,4 @@
-.\"	$OpenBSD: syslog.3,v 1.10 2000/12/24 00:30:52 aaron Exp $
+.\"	$OpenBSD: syslog.3,v 1.11 2001/02/17 17:15:23 pjanzen Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -264,7 +264,7 @@ These
 functions appeared in
 .Bx 4.2 .
 .Sh CAVEATS
-It is important to never pass a string with user-supplied data as a
+It is important never to pass a string with user-supplied data as a
 format without using
 .Ql %s .
 An attacker can put format specifiers in the string to mangle your stack,
@@ -277,7 +277,7 @@ as the resulting string may still contain user-supplied conversion specifiers
 for later interpolation by
 .Fn syslog .
 .Pp
-Be sure to always use the proper secure idiom:
+Always be sure to use the proper secure idiom:
 .Bd -literal -offset indent
 syslog("%s", string);
 .Ed
