@@ -1,4 +1,4 @@
-/* $OpenBSD: i386.h,v 1.8 2002/07/16 03:58:25 fgsch Exp $ */
+/* $OpenBSD: i386.h,v 1.9 2002/07/23 02:54:54 fgsch Exp $ */
 /* i386-opcode.h -- Intel 80386 opcode table
    Copyright (C) 1989, 1991, Free Software Foundation.
 
@@ -845,6 +845,10 @@ static const template i386_optab[] = {
 
 /* state management */
 {"emms", 0, 0x0f77, _, 0, 0, 0, 0},
+
+/* SSE extensions */
+
+{"pshufw", 3, 0x0f70, _, Modrm, Imm8, RegMMX|Mem, RegMMX},
 
 {"", 0, 0, 0, 0, 0, 0, 0}	/* sentinal */
 };
