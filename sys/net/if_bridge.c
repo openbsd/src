@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.41 2000/11/07 05:38:53 jason Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.42 2000/11/10 05:24:58 jason Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -319,9 +319,10 @@ bridge_ioctl(ifp, cmd, data)
 
 		p = (struct bridge_iflist *) malloc(
 		    sizeof(struct bridge_iflist), M_DEVBUF, M_NOWAIT);
-		if (p == NULL && ifs->if_type == IFT_ETHER) {
+		if (p == NULL) {
+			if (ifs->if_type == IFT_ETHER)
+				ifpromisc(ifs, 0);
 			error = ENOMEM;
-			ifpromisc(ifs, 0);
 			break;
 		}
 
