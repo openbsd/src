@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr.c,v 1.7 2001/07/12 05:17:02 deraadt Exp $	*/
+/*	$OpenBSD: subr.c,v 1.8 2003/04/05 16:13:12 deraadt Exp $	*/
 /*	$NetBSD: subr.c,v 1.4 1995/09/10 15:55:15 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)subr.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: subr.c,v 1.7 2001/07/12 05:17:02 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: subr.c,v 1.8 2003/04/05 16:13:12 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -106,9 +106,10 @@ char *strsave(instring)
 	char	*instring;
 {
 	char	*outstring;
+	size_t  len = strlen(instring) + 1;
 
-	outstring = (char *)Calloc(1, strlen(instring) + 1);
-	strcpy(outstring, instring);	/* ok */
+	outstring = (char *)Calloc(1, len);
+	strlcpy(outstring, instring, len);
 	return(outstring);
 }
 /*
