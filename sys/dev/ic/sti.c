@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti.c,v 1.38 2005/01/05 23:04:25 miod Exp $	*/
+/*	$OpenBSD: sti.c,v 1.39 2005/01/23 16:53:21 miod Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -121,8 +121,9 @@ int sti_fetchfonts(struct sti_softc *sc, struct sti_inqconfout *cfg,
 void sti_attach_deferred(void *);
 
 void
-sti_attach_common(sc)
+sti_attach_common(sc, codebase)
 	struct sti_softc *sc;
+	u_int codebase;
 {
 	struct sti_inqconfout cfg;
 	struct sti_einqconfout ecfg;
@@ -130,6 +131,7 @@ sti_attach_common(sc)
 	struct sti_dd *dd;
 	struct sti_cfg *cc;
 	int error, size, i;
+	int geometry_kluge = 0;
 
 	sc->sc_devtype = bus_space_read_1(sc->memt, sc->romh, 3);
 
@@ -170,25 +172,30 @@ sti_attach_common(sc)
 		dd->dd_eddst[2]= bus_space_read_1(sc->memt, sc->romh, 0xdf);
 		dd->dd_cfbaddr = parseword(0xe0) & ~3;
 
-		dd->dd_pacode[0x0] = parseword(0x100) & ~3;
-		dd->dd_pacode[0x1] = parseword(0x110) & ~3;
-		dd->dd_pacode[0x2] = parseword(0x120) & ~3;
-		dd->dd_pacode[0x3] = parseword(0x130) & ~3;
-		dd->dd_pacode[0x4] = parseword(0x140) & ~3;
-		dd->dd_pacode[0x5] = parseword(0x150) & ~3;
-		dd->dd_pacode[0x6] = parseword(0x160) & ~3;
-		dd->dd_pacode[0x7] = parseword(0x170) & ~3;
-		dd->dd_pacode[0x8] = parseword(0x180) & ~3;
-		dd->dd_pacode[0x9] = parseword(0x190) & ~3;
-		dd->dd_pacode[0xa] = parseword(0x1a0) & ~3;
-		dd->dd_pacode[0xb] = parseword(0x1b0) & ~3;
-		dd->dd_pacode[0xc] = parseword(0x1c0) & ~3;
-		dd->dd_pacode[0xd] = parseword(0x1d0) & ~3;
-		dd->dd_pacode[0xe] = parseword(0x1e0) & ~3;
-		dd->dd_pacode[0xf] = parseword(0x1f0) & ~3;
-	} else	/* STI_DEVTYPE4 */
+		codebase <<= 2;
+		dd->dd_pacode[0x0] = parseword(codebase + 0x000) & ~3;
+		dd->dd_pacode[0x1] = parseword(codebase + 0x010) & ~3;
+		dd->dd_pacode[0x2] = parseword(codebase + 0x020) & ~3;
+		dd->dd_pacode[0x3] = parseword(codebase + 0x030) & ~3;
+		dd->dd_pacode[0x4] = parseword(codebase + 0x040) & ~3;
+		dd->dd_pacode[0x5] = parseword(codebase + 0x050) & ~3;
+		dd->dd_pacode[0x6] = parseword(codebase + 0x060) & ~3;
+		dd->dd_pacode[0x7] = parseword(codebase + 0x070) & ~3;
+		dd->dd_pacode[0x8] = parseword(codebase + 0x080) & ~3;
+		dd->dd_pacode[0x9] = parseword(codebase + 0x090) & ~3;
+		dd->dd_pacode[0xa] = parseword(codebase + 0x0a0) & ~3;
+		dd->dd_pacode[0xb] = parseword(codebase + 0x0b0) & ~3;
+		dd->dd_pacode[0xc] = parseword(codebase + 0x0c0) & ~3;
+		dd->dd_pacode[0xd] = parseword(codebase + 0x0d0) & ~3;
+		dd->dd_pacode[0xe] = parseword(codebase + 0x0e0) & ~3;
+		dd->dd_pacode[0xf] = parseword(codebase + 0x0f0) & ~3;
+	} else {	/* STI_DEVTYPE4 */
 		bus_space_read_region_4(sc->memt, sc->romh, 0, (u_int32_t *)dd,
 		    sizeof(*dd) / 4);
+		/* fix pacode... */
+		bus_space_read_region_4(sc->memt, sc->romh, codebase,
+		    (u_int32_t *)dd->dd_pacode, sizeof(dd->dd_pacode) / 4);
+	}
 
 #ifdef STIDEBUG
 	printf("dd:\n"
@@ -328,6 +335,22 @@ sti_attach_common(sc)
 	if ((error = sti_inqcfg(sc, &cfg))) {
 		printf(": error %d inquiring config\n", error);
 		return;
+	}
+
+	/*
+	 * Older (rev 8.02) boards report wrong offset values,
+	 * similar to the displayable area size, at least in m68k mode.
+	 * Attempt to detect this and adjust here.
+	 */
+	if (cfg.owidth == cfg.width &&
+	    cfg.oheight == cfg.height)
+		geometry_kluge = 1;
+
+	if (geometry_kluge) {
+		sc->sc_cfg.oscr_width = cfg.owidth =
+		    cfg.fbwidth - cfg.width;
+		sc->sc_cfg.oscr_height = cfg.oheight =
+		    cfg.fbheight - cfg.height;
 	}
 
 	if ((error = sti_init(sc, STI_TEXTMODE))) {
@@ -897,8 +920,7 @@ sti_copyrows(v, srcrow, dstrow, nrows)
 	struct sti_softc *sc = v;
 	struct sti_font *fp = &sc->sc_curfont;
 
-	sti_bmove(sc, sc->sc_cfg.oscr_width, srcrow * fp->height,
-	    sc->sc_cfg.oscr_width, dstrow * fp->height,
+	sti_bmove(sc, 0, srcrow * fp->height, 0, dstrow * fp->height,
 	    nrows * fp->height, sc->sc_cfg.scr_width, bmf_copy);
 }
 
@@ -911,8 +933,7 @@ sti_eraserows(v, srcrow, nrows, attr)
 	struct sti_softc *sc = v;
 	struct sti_font *fp = &sc->sc_curfont;
 
-	sti_bmove(sc, sc->sc_cfg.oscr_width, srcrow * fp->height,
-	    sc->sc_cfg.oscr_width, srcrow * fp->height,
+	sti_bmove(sc, 0, srcrow * fp->height, 0, srcrow * fp->height,
 	    nrows * fp->height, sc->sc_cfg.scr_width, bmf_clear);
 }
 
@@ -928,4 +949,3 @@ sti_alloc_attr(v, fg, bg, flags, pattr)
 
 	return 0;
 }
-

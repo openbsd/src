@@ -1,4 +1,4 @@
-/*	$OpenBSD: stireg.h,v 1.8 2003/08/19 02:52:38 mickey Exp $	*/
+/*	$OpenBSD: stireg.h,v 1.9 2005/01/23 16:53:21 miod Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -53,6 +53,13 @@
 #define	STI_UTIL	12
 #define	STI_END		13
 #define	STI_CODECNT	16
+
+#define	STI_CODEBASE_MAIN	0x40
+#define	STI_CODEBASE_ALT	0x80
+
+#define	STI_CODEBASE_PA		STI_CODEBASE_MAIN
+#define	STI_CODEBASE_M68K	STI_CODEBASE_ALT
+#define	STI_CODEBASE_PA64	STI_CODEBASE_ALT
 
 /* sti returns */
 #define	STI_OK		0
