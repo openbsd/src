@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.1.1.1 2004/04/21 15:23:52 aoyama Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.2 2004/06/19 18:33:37 miod Exp $	*/
 /*	$NetBSD: if_le.c,v 1.33 1996/11/20 18:56:52 gwr Exp $	*/
 
 /*-
@@ -38,8 +38,6 @@
  */
 
 /* based on OpenBSD: sys/arch/sun3/dev/if_le.c */
-
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
