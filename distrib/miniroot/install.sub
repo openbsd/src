@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.158 2000/10/09 22:47:22 naddy Exp $
+#	$OpenBSD: install.sub,v 1.159 2000/11/20 13:11:16 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -867,7 +867,7 @@ local _url_type _url_base _reuse _minpat
 while test $# != 0; do
 	case "$1" in
 		-ftp) _url_type=ftp ;;
-		-html) _url_type=html ;;
+		-html) _url_type=http ;;
 		-reuse) _reuse=1 ;;
 		-minpat) shift; _minpat="$1" ;;
 	esac
