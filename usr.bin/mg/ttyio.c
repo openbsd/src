@@ -47,19 +47,18 @@ ttopen()
 		if (tcgetattr(0, &ot) < 0)
 			abort();
 		nt = ot;		/* save entry state		*/
-		nt.c_cc[VMIN] = 1;	/* one character read is OK	*/
-		nt.c_cc[VTIME] = 0;	/* Never time out.		*/
+		/* Set terminal to 'raw' mode and ignore a 'break' */
+		nt.c_cc[VMIN] = 1;
+		nt.c_cc[VTIME] = 0;
 		nt.c_iflag |= IGNBRK;
-		nt.c_iflag &= ~( ICRNL | INLCR | ISTRIP | IXON | IXOFF );
+		nt.c_iflag &= ~(BRKINT|PARMRK|INLCR|IGNCR|ICRNL|IXON);
 		nt.c_oflag &= ~OPOST;
-		nt.c_cflag |= CS8;	/* allow 8th bit on input	*/
-		nt.c_cflag &= ~PARENB;	/* Don't check parity		*/
-		nt.c_lflag &= ~( ECHO | ICANON | ISIG );
+		nt.c_lflag &= ~(ECHO|ECHONL|ICANON|ISIG|IEXTEN);
 
 		ttysavedp = TRUE;
 	}
 	
-	if (tcsetattr(0, TCSAFLUSH, &nt) < 0)
+	if (tcsetattr(0, TCSASOFT | TCSADRAIN, &nt) < 0)
 		abort();
 
 	ttyactivep = TRUE;
@@ -75,7 +74,7 @@ ttclose()
 	if(!ttysavedp || !ttyactivep)
 		return;
 	ttflush();
-	if (tcsetattr(0, TCSAFLUSH, &ot) < 0)
+	if (tcsetattr(0, TCSASOFT | TCSADRAIN, &ot) < 0)
 		abort();
 	ttyactivep = FALSE;
 }
