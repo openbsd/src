@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass2.c,v 1.7 2002/06/09 08:13:05 todd Exp $	*/
+/*	$OpenBSD: pass2.c,v 1.8 2003/04/17 06:48:47 tedu Exp $	*/
 /*	$NetBSD: pass2.c,v 1.6 2000/01/28 16:01:46 bouyer Exp $	*/
 
 /*
@@ -135,7 +135,8 @@ pass2()
 				inodirty();
 			}
 		} else if ((inp->i_isize & (sblock.e2fs_bsize - 1)) != 0) {
-			getpathname(pathbuf, inp->i_number, inp->i_number);
+			getpathname(pathbuf, sizeof pathbuf, inp->i_number,
+			    inp->i_number);
 			pwarn("DIRECTORY %s: LENGTH %lu NOT MULTIPLE OF %d",
 			    pathbuf, (u_long)inp->i_isize, sblock.e2fs_bsize);
 			if (preen)
@@ -234,7 +235,7 @@ pass2check(idesc)
 		proto.e2d_type = EXT2_FT_DIR;
 	else
 		proto.e2d_type = 0;
-	(void)strcpy(proto.e2d_name, ".");
+	(void)strlcpy(proto.e2d_name, ".", sizeof proto.e2d_name);
 	entrysize = EXT2FS_DIRSIZ(proto.e2d_namlen);
 	if (fs2h32(dirp->e2d_ino) != 0 && strcmp(dirp->e2d_name, "..") != 0) {
 		pfatal("CANNOT FIX, FIRST ENTRY IN DIRECTORY CONTAINS %s\n",
@@ -269,7 +270,7 @@ chk1:
 		proto.e2d_type = EXT2_FT_DIR;
 	else
 		proto.e2d_type = 0;
-	(void)strcpy(proto.e2d_name, "..");
+	(void)strlcpy(proto.e2d_name, "..", sizeof proto.e2d_name);
 	entrysize = EXT2FS_DIRSIZ(2);
 	if (idesc->id_entryno == 0) {
 		n = EXT2FS_DIRSIZ(dirp->e2d_namlen);
@@ -386,10 +387,10 @@ again:
 		case DFOUND:
 			inp = getinoinfo(fs2h32(dirp->e2d_ino));
 			if (inp->i_parent != 0 && idesc->id_entryno > 2) {
-				getpathname(pathbuf, idesc->id_number,
-				    idesc->id_number);
-				getpathname(namebuf, fs2h32(dirp->e2d_ino),
-					fs2h32(dirp->e2d_ino));
+				getpathname(pathbuf, sizeof pathbuf,
+				    idesc->id_number, idesc->id_number);
+				getpathname(namebuf, sizeof namebuf,
+				    fs2h32(dirp->e2d_ino), fs2h32(dirp->e2d_ino));
 				pwarn("%s %s %s\n", pathbuf,
 				    "IS AN EXTRANEOUS HARD LINK TO DIRECTORY",
 				    namebuf);

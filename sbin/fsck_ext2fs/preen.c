@@ -1,4 +1,4 @@
-/*	$OpenBSD: preen.c,v 1.8 2003/04/06 08:51:24 avsm Exp $	*/
+/*	$OpenBSD: preen.c,v 1.9 2003/04/17 06:48:47 tedu Exp $	*/
 /*	$NetBSD: preen.c,v 1.2 1997/09/14 14:27:30 lukem Exp $	*/
 
 /*
@@ -248,16 +248,14 @@ addpart(name, fsname, auxdata)
 		exit (8);
 	}
 	pt = *ppt;
-	if ((pt->name = malloc(strlen(name) + 1)) == NULL) {
+	if ((pt->name = strdup(name)) == NULL) {
 		fprintf(stderr, "out of memory");
 		exit (8);
 	}
-	(void)strcpy(pt->name, name);
-	if ((pt->fsname = malloc(strlen(fsname) + 1)) == NULL) {
+	if ((pt->fsname = strdup(fsname)) == NULL) {
 		fprintf(stderr, "out of memory");
 		exit (8);
 	}
-	(void)strcpy(pt->fsname, fsname);
 	pt->next = NULL;
 	pt->auxdata = auxdata;
 }

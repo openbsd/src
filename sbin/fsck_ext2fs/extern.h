@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.4 2002/02/16 21:27:34 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.5 2003/04/17 06:48:47 tedu Exp $	*/
 /*	$NetBSD: extern.h,v 1.1 1997/06/11 11:21:46 bouyer Exp $	*/
 
 /*
@@ -52,7 +52,7 @@ void	freeblk(daddr_t);
 void	freeino(ino_t);
 void	freeinodebuf(void);
 int	ftypeok(struct ext2fs_dinode *);
-void	getpathname(char *, ino_t, ino_t);
+void	getpathname(char *, size_t, ino_t, ino_t);
 void	inocleanup(void);
 void	inodirty(void);
 int	linkup(ino_t, ino_t);

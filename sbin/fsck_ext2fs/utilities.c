@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.11 2002/02/23 21:23:46 deraadt Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.12 2003/04/17 06:48:47 tedu Exp $	*/
 /*	$NetBSD: utilities.c,v 1.6 2001/02/04 21:19:34 christos Exp $	*/
 
 /*
@@ -397,29 +397,30 @@ freeblk(blkno)
  * Find a pathname
  */
 void
-getpathname(namebuf, curdir, ino)
+getpathname(namebuf, buflen, curdir, ino)
 	char *namebuf;
+	size_t buflen;
 	ino_t curdir, ino;
 {
-	int len;
+	size_t len;
 	char *cp;
 	struct inodesc idesc;
 	static int busy = 0;
 
 	if (curdir == ino && ino == EXT2_ROOTINO) {
-		(void)strcpy(namebuf, "/");
+		(void)strlcpy(namebuf, "/", buflen);
 		return;
 	}
 	if (busy ||
 	    (statemap[curdir] != DSTATE && statemap[curdir] != DFOUND)) {
-		(void)strcpy(namebuf, "?");
+		(void)strlcpy(namebuf, "?", buflen);
 		return;
 	}
 	busy = 1;
 	memset(&idesc, 0, sizeof(struct inodesc));
 	idesc.id_type = DATA;
 	idesc.id_fix = IGNORE;
-	cp = &namebuf[MAXPATHLEN - 1];
+	cp = &namebuf[buflen - 1];
 	*cp = '\0';
 	if (curdir != ino) {
 		idesc.id_parent = curdir;
@@ -440,16 +441,16 @@ getpathname(namebuf, curdir, ino)
 			break;
 		len = strlen(namebuf);
 		cp -= len;
-		memcpy(cp, namebuf, (size_t)len);
-		*--cp = '/';
+		memcpy(cp, namebuf, len);
+		*(--cp) = '/';
 		if (cp < &namebuf[EXT2FS_MAXNAMLEN])
 			break;
 		ino = idesc.id_number;
 	}
 	busy = 0;
 	if (ino != EXT2_ROOTINO)
-		*--cp = '?';
-	memcpy(namebuf, cp, (size_t)(&namebuf[MAXPATHLEN] - cp));
+		*(--cp) = '?';
+	memcpy(namebuf, cp, (size_t)(&namebuf[buflen] - cp));
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.8 2002/06/09 08:13:05 todd Exp $	*/
+/*	$OpenBSD: dir.c,v 1.9 2003/04/17 06:48:47 tedu Exp $	*/
 /*	$NetBSD: dir.c,v 1.5 2000/01/28 16:01:46 bouyer Exp $	*/
 
 /*
@@ -272,7 +272,7 @@ fileerror(cwd, ino, errmesg)
 	pwarn("%s ", errmesg);
 	pinode(ino);
 	printf("\n");
-	getpathname(pathbuf, cwd, ino);
+	getpathname(pathbuf, sizeof pathbuf, cwd, ino);
 	if ((ino < EXT2_FIRSTINO && ino != EXT2_ROOTINO) || ino > maxino) {
 		pfatal("NAME=%s\n", pathbuf);
 		return;
@@ -521,7 +521,7 @@ makeentry(parent, ino, name)
 	}
 	if ((ckinode(dp, &idesc) & ALTERED) != 0)
 		return (1);
-	getpathname(pathbuf, parent, parent);
+	getpathname(pathbuf, sizeof pathbuf, parent, parent);
 	dp = ginode(parent);
 	if (expanddir(dp, pathbuf) == 0)
 		return (0);
