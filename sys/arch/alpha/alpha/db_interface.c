@@ -1,4 +1,4 @@
-/* $OpenBSD: db_interface.c,v 1.14 2002/03/14 01:26:26 millert Exp $ */
+/* $OpenBSD: db_interface.c,v 1.15 2003/02/19 19:32:44 miod Exp $ */
 /* $NetBSD: db_interface.c,v 1.8 1999/10/12 17:08:57 jdolecek Exp $ */
 
 /* 
@@ -80,15 +80,6 @@ extern int trap_types;
 #endif
 
 int	db_active = 0;
-
-void	db_mach_halt(db_expr_t, int, db_expr_t, char *);
-void	db_mach_reboot(db_expr_t, int, db_expr_t, char *);
-
-struct db_command db_machine_cmds[] = {
-	{ "halt",	db_mach_halt,	0,	0 },
-	{ "reboot",	db_mach_reboot,	0,	0 },
-	{ (char *)0, },
-};
 
 struct db_variable db_regs[] = {
 	{	"v0",	&ddb_regs.tf_regs[FRAME_V0],	FCN_NULL	},
@@ -218,48 +209,6 @@ Debugger()
 {
 
 	__asm __volatile("call_pal 0x81");		/* bugchk */
-}
-
-/*
- * This is called before ddb_init() to install the
- * machine-specific command table.  (see machdep.c)
- */
-void
-db_machine_init()
-{
-
-#if 0
-	db_machine_commands_install(db_machine_cmds);
-#endif
-}
-
-/*
- * Alpha-specific ddb commands:
- *
- *	halt		set halt bit in rpb and halt
- *	reboot		set reboot bit in rpb and halt
- */
-
-void
-db_mach_halt(addr, have_addr, count, modif)
-	db_expr_t	addr;
-	int		have_addr;
-	db_expr_t	count;
-	char *		modif;
-{
-
-	prom_halt(1);
-}
-
-void
-db_mach_reboot(addr, have_addr, count, modif)
-	db_expr_t	addr;
-	int		have_addr;
-	db_expr_t	count;
-	char *		modif;
-{
-
-	prom_halt(0);
 }
 
 /*
