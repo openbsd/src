@@ -1,4 +1,4 @@
-/*	$OpenBSD: monitor.c,v 1.7 2004/12/20 14:58:57 moritz Exp $	*/
+/*	$OpenBSD: monitor.c,v 1.8 2005/02/26 17:35:05 moritz Exp $	*/
 
 /*
  * Copyright (c) 2004 Moritz Jodeit <moritz@openbsd.org>
@@ -77,17 +77,22 @@ void
 send_data(int sock, void *buf, size_t len)
 {
 	ssize_t n;
-	size_t pos;
+	size_t pos = 0;
 	char *ptr = buf;
 
-	for (pos = 0; len > pos; pos += n) {
-		n = write(sock, ptr + pos, len - pos);
-
-		if (n == -1 && !(errno == EINTR || errno == EAGAIN))
-			fatalx("send_data: %m");
-
-		if (n == 0)
-			fatalx("send_data: connection closed");
+	while (len > pos) {
+		switch (n = write(sock, ptr + pos, len - pos)) {
+		case 0:
+			kill_slave();
+			_exit(0);
+			/* NOTREACHED */
+		case -1:
+			if (errno != EINTR && errno != EAGAIN)
+				fatalx("send_data: %m");
+			break;
+		default:
+			pos += n;
+		}
 	}
 }
 
@@ -98,17 +103,22 @@ void
 recv_data(int sock, void *buf, size_t len)
 {
 	ssize_t n;
-	size_t pos;
+	size_t pos = 0;
 	char *ptr = buf;
 
-	for (pos = 0; len > pos; pos += n) {
-		n = read(sock, ptr + pos, len - pos);
-
-		if (n == -1 && !(errno == EINTR || errno == EAGAIN))
-			fatalx("recv_data: %m");
-
-		if (n == 0)
-			fatalx("recv_data: connection closed");
+	while (len > pos) {
+		switch (n = read(sock, ptr + pos, len - pos)) {
+		case 0:
+			kill_slave();
+			_exit(0);
+			/* NOTREACHED */
+		case -1:
+			if (errno != EINTR && errno != EAGAIN)
+				fatalx("recv_data: %m");
+			break;
+		default:
+			pos += n;
+		}
 	}
 }
 
