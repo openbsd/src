@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.14 2004/01/11 02:39:05 henning Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.15 2004/01/11 21:47:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -32,7 +32,7 @@ int	prefix_cmp(struct prefix *, struct prefix *);
 void	up_generate_updates(struct prefix *, struct prefix *);
 int	up_generate_attr(struct rde_peer *, struct update_attr *,
 	    struct attr_flags *);
-int	up_set_prefix(u_char *, int, struct in_addr, u_int8_t);
+int	up_set_prefix(u_char *, int, struct bgpd_addr *, u_int8_t);
 
 /*
  * Decision Engine RFC implementation:
@@ -244,7 +244,7 @@ prefix_evaluate(struct prefix *p, struct pt_entry *pte)
 
 /* update stuff. */
 struct update_prefix {
-	struct in_addr			 prefix;
+	struct bgpd_addr		 prefix;
 	int				 prefixlen;
 	struct uplist_prefix		*prefix_h;
 	TAILQ_ENTRY(update_prefix)	 prefix_l;
@@ -320,9 +320,11 @@ up_down(struct rde_peer *peer)
 int
 up_prefix_cmp(struct update_prefix *a, struct update_prefix *b)
 {
-	if (a->prefix.s_addr < b->prefix.s_addr)
+	ENSURE(a->prefix.af == AF_INET);
+
+	if (a->prefix.v4.s_addr < b->prefix.v4.s_addr)
 		return (-1);
-	if (a->prefix.s_addr > b->prefix.s_addr)
+	if (a->prefix.v4.s_addr > b->prefix.v4.s_addr)
 		return (1);
 	if (a->prefixlen < b->prefixlen)
 		return (-1);
@@ -562,17 +564,18 @@ up_generate_attr(struct rde_peer *peer, struct update_attr *upa,
 }
 
 int
-up_set_prefix(u_char *buf, int len, struct in_addr prefix, u_int8_t plen)
+up_set_prefix(u_char *buf, int len, struct bgpd_addr *prefix, u_int8_t plen)
 {
 	int	totlen;
 
+	ENSURE(prefix->af == AF_INET);
 	ENSURE(plen <= 32);
 	totlen = (plen + 7) / 8 + 1;
 
 	if (totlen > len)
 		return (-1);
 	*buf++ = plen;
-	memcpy(buf, &prefix.s_addr, totlen - 1);
+	memcpy(buf, &prefix->v4.s_addr, totlen - 1);
 	return (totlen);
 }
 
@@ -587,7 +590,7 @@ up_dump_prefix(u_char *buf, int len, struct uplist_prefix *prefix_head,
 	    upp != TAILQ_END(prefix_head); upp = xupp) {
 		xupp = TAILQ_NEXT(upp, prefix_l);
 		if ((r = up_set_prefix(buf + wpos, len - wpos,
-		    upp->prefix, upp->prefixlen)) == -1)
+		    &upp->prefix, upp->prefixlen)) == -1)
 			break;
 		wpos += r;
 		if (RB_REMOVE(uptree_prefix, &peer->up_prefix, upp) == NULL)

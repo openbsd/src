@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_prefix.c,v 1.6 2004/01/06 10:51:14 claudio Exp $ */
+/*	$OpenBSD: rde_prefix.c,v 1.7 2004/01/11 21:47:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -122,7 +122,7 @@ pt_empty(struct pt_entry *pte)
 }
 
 struct pt_entry *
-pt_get(struct in_addr prefix, int prefixlen)
+pt_get(struct bgpd_addr *prefix, int prefixlen)
 {
 	struct pt_entryhead	*head;
 	struct pt_entry		*p;
@@ -131,19 +131,19 @@ pt_get(struct in_addr prefix, int prefixlen)
 	ENSURE(MIN_PREFIX <= prefixlen && prefixlen <= MAX_PREFIX);
 	PT_STAT2(pt_get, prefixlen);
 
-	p_hbo = ntohl(prefix.s_addr);
+	p_hbo = ntohl(prefix->v4.s_addr);
 	head = PT_HASH(p_hbo, prefixlen);
 	ENSURE(head != NULL);
 
 	LIST_FOREACH(p, head, pt_l) {
-		if (prefix.s_addr == p->prefix.s_addr)
+		if (prefix->v4.s_addr == p->prefix.v4.s_addr)
 			return p;
 	}
 	return NULL;
 }
 
 struct pt_entry *
-pt_add(struct in_addr prefix, int prefixlen)
+pt_add(struct bgpd_addr *prefix, int prefixlen)
 {
 	struct pt_entryhead	*head;
 	struct pt_entry		*p;
@@ -153,12 +153,12 @@ pt_add(struct in_addr prefix, int prefixlen)
 	ENSURE(pt_get(prefix, prefixlen) == NULL);
 	PT_STAT2(pt_add, prefixlen);
 
-	p_hbo = ntohl(prefix.s_addr);
+	p_hbo = ntohl(prefix->v4.s_addr);
 	head = PT_HASH(p_hbo, prefixlen);
 	ENSURE(head != NULL);
 
 	p = pt_alloc();
-	p->prefix = prefix;
+	memcpy(&p->prefix, prefix, sizeof(p->prefix));
 	p->prefixlen = prefixlen;
 	LIST_INIT(&p->prefix_h);
 
@@ -174,12 +174,11 @@ pt_remove(struct pt_entry *pte)
 	PT_STAT2(pt_remove, pte->prefixlen);
 
 	LIST_REMOVE(pte, pt_l);
-	/* XXX we could bzero it for debugging reasons */
 	pt_free(pte);
 }
 
 struct pt_entry *
-pt_lookup(struct in_addr prefix)
+pt_lookup(struct bgpd_addr *prefix)
 {
 	struct pt_entry	*p;
 	int		 i;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.55 2004/01/11 21:32:56 henning Exp $ */
+/*	$OpenBSD: rde.c,v 1.56 2004/01/11 21:47:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -39,7 +39,7 @@ void		 rde_sighdlr(int);
 void		 rde_dispatch_imsg_session(struct imsgbuf *);
 void		 rde_dispatch_imsg_parent(struct imsgbuf *);
 int		 rde_update_dispatch(struct imsg *);
-int		 rde_update_get_prefix(u_char *, u_int16_t, struct in_addr *,
+int		 rde_update_get_prefix(u_char *, u_int16_t, struct bgpd_addr *,
 		     u_int8_t *);
 void		 init_attr_flags(struct attr_flags *);
 int		 rde_update_get_attr(struct rde_peer *, u_char *, u_int16_t,
@@ -47,7 +47,7 @@ int		 rde_update_get_attr(struct rde_peer *, u_char *, u_int16_t,
 void		 rde_update_err(u_int32_t, enum suberr_update);
 void		 rde_update_log(const char *,
 		     const struct rde_peer *, const struct attr_flags *,
-		     const struct in_addr *, u_int8_t);
+		     const struct bgpd_addr *, u_int8_t);
 void		 rde_update_queue_runner(void);
 
 void		 peer_init(struct peer *, u_long);
@@ -316,7 +316,7 @@ rde_update_dispatch(struct imsg *imsg)
 	u_int16_t		 attrpath_len;
 	u_int16_t		 nlri_len;
 	u_int8_t		 prefixlen;
-	struct in_addr		 prefix;
+	struct bgpd_addr	 prefix;
 	struct attr_flags	 attrs;
 
 	peer = peer_get(imsg->hdr.peerid);
@@ -349,7 +349,7 @@ rde_update_dispatch(struct imsg *imsg)
 		p += pos;
 		withdrawn_len -= pos;
 		rde_update_log("withdraw", peer, NULL, &prefix, prefixlen);
-		prefix_remove(peer, prefix, prefixlen);
+		prefix_remove(peer, &prefix, prefixlen);
 	}
 
 	memcpy(&len, p, 2);
@@ -385,7 +385,7 @@ rde_update_dispatch(struct imsg *imsg)
 		p += pos;
 		nlri_len -= pos;
 		rde_update_log("update", peer, &attrs, &prefix, prefixlen);
-		path_update(peer, &attrs, prefix, prefixlen);
+		path_update(peer, &attrs, &prefix, prefixlen);
 	}
 
 	/* need to free allocated attribute memory that is no longer used */
@@ -395,7 +395,7 @@ rde_update_dispatch(struct imsg *imsg)
 }
 
 int
-rde_update_get_prefix(u_char *p, u_int16_t len, struct in_addr *prefix,
+rde_update_get_prefix(u_char *p, u_int16_t len, struct bgpd_addr *prefix,
     u_int8_t *prefixlen)
 {
 	int		i;
@@ -422,7 +422,8 @@ rde_update_get_prefix(u_char *p, u_int16_t len, struct in_addr *prefix,
 			plen++;
 		}
 	}
-	prefix->s_addr = addr.a32.s_addr;
+	prefix->af = AF_INET;
+	prefix->v4.s_addr = addr.a32.s_addr;
 	*prefixlen = pfxlen;
 
 	return (plen);
@@ -541,10 +542,11 @@ rde_update_err(u_int32_t peerid, enum suberr_update errorcode)
 void
 rde_update_log(const char *message,
     const struct rde_peer *peer, const struct attr_flags *attr,
-    const struct in_addr *prefix, u_int8_t prefixlen)
+    const struct bgpd_addr *prefix, u_int8_t prefixlen)
 {
-	char *neighbor;
-	char *nexthop = NULL;
+	char		*neighbor;
+	char	 	*nexthop = NULL;
+	struct in_addr	 nh;
 
 	if (! (conf->log & BGPD_LOG_UPDATES))
 		return;
@@ -554,13 +556,14 @@ rde_update_log(const char *message,
 		return;
 
 	if (attr != NULL) {
-		asprintf(&nexthop, " via %s", inet_ntoa(attr->nexthop));
+		nh.s_addr = attr->nexthop;
+		asprintf(&nexthop, " via %s", inet_ntoa(nh));
 	}
 
 	logit(LOG_DEBUG, "neighbor %s (AS%u) %s %s/%u"
 	    "%s",
 	    neighbor, peer->conf.remote_as, message,
-	    inet_ntoa(*prefix), prefixlen,
+	    inet_ntoa(prefix->v4), prefixlen,
 	    nexthop ? nexthop : "");
 
 	free(neighbor);
@@ -591,10 +594,11 @@ rde_send_kroute(struct prefix *new, struct prefix *old)
 	} else {
 		type = IMSG_KROUTE_CHANGE;
 		p = new;
-		kr.nexthop = p->aspath->nexthop->true_nexthop.s_addr;
+		kr.nexthop = p->aspath->nexthop->true_nexthop.v4.s_addr;
 	}
 
-	kr.prefix = p->prefix->prefix.s_addr;
+	/* XXX switch struct kroute to bgpd_addr too */
+	kr.prefix = p->prefix->prefix.v4.s_addr;
 	kr.prefixlen = p->prefix->prefixlen;
 
 	if (imsg_compose(&ibuf_main, type, 0, &kr, sizeof(kr)) == -1)
@@ -605,20 +609,17 @@ rde_send_kroute(struct prefix *new, struct prefix *old)
  * nexthop specific functions
  */
 void
-rde_send_nexthop(in_addr_t next, int valid)
+rde_send_nexthop(struct bgpd_addr *next, int valid)
 {
 	int			type;
-	struct bgpd_addr	addr;
 
 	if (valid)
 		type = IMSG_NEXTHOP_ADD;
 	else
 		type = IMSG_NEXTHOP_REMOVE;
 
-	addr.af = AF_INET;
-	addr.v4.s_addr = next;
-
-	if (imsg_compose(&ibuf_main, type, 0, &addr, sizeof(addr)) == -1)
+	/* XXX change to bgpd_addr */
+	if (imsg_compose(&ibuf_main, type, 0, next, sizeof(in_addr_t)) == -1)
 		fatal("imsg_compose error");
 }
 

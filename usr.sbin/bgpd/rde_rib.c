@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.18 2004/01/11 19:14:43 henning Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.19 2004/01/11 21:47:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -18,6 +18,9 @@
 
 #include <sys/types.h>
 #include <sys/queue.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include <errno.h>
 #include <stdlib.h>
@@ -87,9 +90,9 @@ attr_compare(struct attr_flags *a, struct attr_flags *b)
 		return (1);
 	if (a->origin < b->origin)
 		return (-1);
-	if (a->nexthop.s_addr > b->nexthop.s_addr)
+	if (a->nexthop > b->nexthop)
 		return (1);
-	if (a->nexthop.s_addr < b->nexthop.s_addr)
+	if (a->nexthop < b->nexthop)
 		return (-1);
 	if (a->med > b->med)
 		return (1);
@@ -511,7 +514,7 @@ path_init(u_long hashsize)
 
 void
 path_update(struct rde_peer *peer, struct attr_flags *attrs,
-    struct in_addr prefix, int prefixlen)
+    struct bgpd_addr *prefix, int prefixlen)
 {
 	struct rde_aspath	*asp;
 	struct prefix		*p;
@@ -703,7 +706,7 @@ static void		 prefix_unlink(struct prefix *);
  * search in the path list for specified prefix. Returns NULL if not found.
  */
 struct prefix *
-prefix_get(struct rde_aspath *asp, struct in_addr prefix, int prefixlen)
+prefix_get(struct rde_aspath *asp, struct bgpd_addr *prefix, int prefixlen)
 {
 	struct prefix	*p;
 
@@ -713,7 +716,7 @@ prefix_get(struct rde_aspath *asp, struct in_addr prefix, int prefixlen)
 	LIST_FOREACH(p, &asp->prefix_h, path_l) {
 		ENSURE(p->prefix != NULL);
 		if (p->prefix->prefixlen == prefixlen &&
-		    p->prefix->prefix.s_addr == prefix.s_addr) {
+		    p->prefix->prefix.v4.s_addr == prefix->v4.s_addr) {
 			ENSURE(p->aspath == asp);
 			return p;
 		}
@@ -727,7 +730,7 @@ prefix_get(struct rde_aspath *asp, struct in_addr prefix, int prefixlen)
  * to be done -- which is actually always.
  */
 struct pt_entry *
-prefix_add(struct rde_aspath *asp, struct in_addr prefix, int prefixlen)
+prefix_add(struct rde_aspath *asp, struct bgpd_addr *prefix, int prefixlen)
 
 {
 	struct prefix	*p;
@@ -767,7 +770,7 @@ prefix_move(struct rde_aspath *asp, struct prefix *p)
 	/* create new prefix node */
 	np = prefix_alloc();
 	np->aspath = asp;
-	np->prefix = p->prefix;
+	memcpy(&np->prefix, &p->prefix, sizeof(np->prefix));
 	np->peer = p->peer;
 	np->lastchange = time(NULL);
 
@@ -776,8 +779,8 @@ prefix_move(struct rde_aspath *asp, struct prefix *p)
 	asp->prefix_cnt++;
 	/* XXX for debugging */
 	if (asp->prefix_cnt == MAX_PREFIX_PER_AS)
-		logit(LOG_INFO, "RDE: prefix hog, prefix %#x/%d",
-		    np->prefix->prefix.s_addr, np->prefix->prefixlen);
+		logit(LOG_INFO, "RDE: prefix hog, prefix %s/%d",
+		    inet_ntoa(np->prefix->prefix.v4), np->prefix->prefixlen);
 	ENSURE(asp->prefix_cnt < MAX_PREFIX_PER_AS);
 
 	/*
@@ -813,7 +816,7 @@ prefix_move(struct rde_aspath *asp, struct prefix *p)
  * pt_entry -- become empty remove them too.
  */
 void
-prefix_remove(struct rde_peer *peer, struct in_addr prefix, int prefixlen)
+prefix_remove(struct rde_peer *peer, struct bgpd_addr *prefix, int prefixlen)
 {
 	struct prefix		*p;
 	struct pt_entry		*pte;
@@ -906,8 +909,8 @@ prefix_link(struct prefix *pref, struct pt_entry *pte, struct rde_aspath *asp)
 
 	/* XXX for debugging */
 	if (asp->prefix_cnt == MAX_PREFIX_PER_AS)
-		logit(LOG_INFO, "RDE: prefix hog, prefix %#x/%d",
-		    pte->prefix.s_addr, pte->prefixlen);
+		logit(LOG_INFO, "RDE: prefix hog, prefix %s/%d",
+		    inet_ntoa(pte->prefix.v4), pte->prefixlen);
 	ENSURE(asp->prefix_cnt < MAX_PREFIX_PER_AS);
 
 	pref->aspath = asp;
@@ -1004,7 +1007,8 @@ struct nexthop_table {
 } nexthoptable;
 
 #define NEXTHOP_HASH(x)					\
-	&nexthoptable.nexthop_hashtbl[(x) & nexthoptable.nexthop_hashmask]
+	&nexthoptable.nexthop_hashtbl[ntohl((x)) & 	\
+	    nexthoptable.nexthop_hashmask]
 
 void
 nexthop_init(u_long hashsize)
@@ -1032,14 +1036,14 @@ nexthop_add(struct rde_aspath *asp)
 	ENSURE(asp != NULL);
 
 	if ((nh = asp->nexthop) == NULL)
-		nh = nexthop_get(asp->flags.nexthop.s_addr);
+		nh = nexthop_get(asp->flags.nexthop);
 	if (nh == NULL) {
 		nh = nexthop_alloc();
 		nh->state = NEXTHOP_LOOKUP;
-		nh->exit_nexthop = asp->flags.nexthop;
-		LIST_INSERT_HEAD(NEXTHOP_HASH(asp->flags.nexthop.s_addr), nh,
+		nh->exit_nexthop.v4.s_addr = asp->flags.nexthop;
+		LIST_INSERT_HEAD(NEXTHOP_HASH(asp->flags.nexthop), nh,
 		    nexthop_l);
-		rde_send_nexthop(nh->exit_nexthop.s_addr, 1);
+		rde_send_nexthop(&nh->exit_nexthop, 1);
 	}
 	asp->nexthop = nh;
 	LIST_INSERT_HEAD(&nh->path_h, asp, nexthop_l);
@@ -1060,7 +1064,7 @@ nexthop_remove(struct rde_aspath *asp)
 
 	if (LIST_EMPTY(&nh->path_h)) {
 		LIST_REMOVE(nh, nexthop_l);
-		rde_send_nexthop(nh->exit_nexthop.s_addr, 0);
+		rde_send_nexthop(&nh->exit_nexthop, 0);
 		nexthop_free(nh);
 	}
 }
@@ -1073,7 +1077,7 @@ nexthop_get(in_addr_t nexthop)
 	RIB_STAT(nexthop_get);
 
 	LIST_FOREACH(nh, NEXTHOP_HASH(nexthop), nexthop_l) {
-		if (nh->exit_nexthop.s_addr == nexthop)
+		if (nh->exit_nexthop.v4.s_addr == nexthop)
 			return nh;
 	}
 	return NULL;
@@ -1092,7 +1096,7 @@ nexthop_update(struct kroute_nexthop *msg)
 		logit(LOG_INFO, "nexthop_update: non-existent nexthop");
 		return;
 	}
-	ENSURE(nh->exit_nexthop.s_addr == msg->nexthop.v4.s_addr);
+	ENSURE(nh->exit_nexthop.v4.s_addr == msg->nexthop.v4.s_addr);
 
 	if (msg->valid)
 		nh->state = NEXTHOP_REACH;
@@ -1100,9 +1104,11 @@ nexthop_update(struct kroute_nexthop *msg)
 		nh->state = NEXTHOP_UNREACH;
 
 	if (msg->connected)
-		nh->true_nexthop.s_addr = nh->exit_nexthop.s_addr;
+		memcpy(&nh->true_nexthop, &nh->exit_nexthop,
+		    sizeof(nh->true_nexthop));
 	else
-		nh->true_nexthop.s_addr = msg->gateway.v4.s_addr;
+		memcpy(&nh->true_nexthop, &msg->gateway,
+		    sizeof(nh->true_nexthop));
 
 	nh->connected = msg->connected;
 

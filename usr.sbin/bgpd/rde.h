@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.14 2004/01/11 20:13:00 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.15 2004/01/11 21:47:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -97,20 +97,6 @@ struct aspath {
 	 */
 };
 
-struct astags {
-	u_int16_t			len;
-	u_int16_t			size;
-	struct community {
-		u_int16_t		as_num;
-		u_int16_t		value;
-	}				astag[1];
-	/* this beast is variable sized */
-	/*
-	 * XXX does not work. Because of possible unaligned access to
-	 * u_int16_t. This needs to be solved somewhat differently.
-	 */
-};
-
 enum attrtypes {
 	ATTR_UNDEF,
 	ATTR_ORIGIN,
@@ -147,7 +133,7 @@ TAILQ_HEAD(attr_list, attr);
 
 struct attr_flags {
 	struct aspath			*aspath;
-	struct in_addr			 nexthop;	/* exit nexthop */
+	in_addr_t			 nexthop;	/* exit nexthop */
 	u_int32_t			 med;		/* multi exit disc */
 	u_int32_t			 lpref;		/* local pref */
 	u_int8_t			 origin;
@@ -167,8 +153,8 @@ struct nexthop {
 	u_int32_t		costs;
 #endif
 	struct aspath_head	path_h;
-	struct in_addr		exit_nexthop;
-	struct in_addr		true_nexthop;
+	struct bgpd_addr	exit_nexthop;
+	struct bgpd_addr	true_nexthop;
 	u_int8_t		connected;
 };
 
@@ -194,7 +180,7 @@ struct rde_aspath {
 struct pt_entry {
 	LIST_ENTRY(pt_entry)		 pt_l;	/* currently we are using a
 						   hash list for prefixes */
-	struct in_addr			 prefix;
+	struct bgpd_addr		 prefix;
 	int				 prefixlen;
 	struct prefix_head		 prefix_h;
 	struct prefix			*active; /* for fast access */
@@ -218,7 +204,7 @@ struct prefix {
 /* prototypes */
 /* rde.c */
 void		 rde_send_kroute(struct prefix *, struct prefix *);
-void		 rde_send_nexthop(in_addr_t, int);
+void		 rde_send_nexthop(struct bgpd_addr *, int);
 u_int16_t	 rde_local_as(void);
 
 /* rde_rib.c */
@@ -246,7 +232,7 @@ int		 aspath_compare(struct aspath *, struct aspath *);
 
 void		 path_init(u_long);
 void		 path_update(struct rde_peer *, struct attr_flags *,
-		     struct in_addr , int);
+		     struct bgpd_addr *, int);
 struct rde_aspath *path_get(struct aspath *, struct rde_peer *);
 struct rde_aspath *path_add(struct rde_peer *, struct attr_flags *);
 void		 path_remove(struct rde_aspath *);
@@ -254,10 +240,10 @@ void		 path_updateall(struct rde_aspath *, enum nexthop_state);
 void		 path_destroy(struct rde_aspath *);
 int		 path_empty(struct rde_aspath *);
 
-struct prefix	*prefix_get(struct rde_aspath *, struct in_addr, int);
-struct pt_entry	*prefix_add(struct rde_aspath *, struct in_addr, int);
+struct prefix	*prefix_get(struct rde_aspath *, struct bgpd_addr *, int);
+struct pt_entry	*prefix_add(struct rde_aspath *, struct bgpd_addr *, int);
 struct pt_entry	*prefix_move(struct rde_aspath *, struct prefix *);
-void		 prefix_remove(struct rde_peer *, struct in_addr, int);
+void		 prefix_remove(struct rde_peer *, struct bgpd_addr *, int);
 struct prefix	*prefix_bypeer(struct pt_entry *, struct rde_peer *);
 void		 prefix_updateall(struct rde_aspath *, enum nexthop_state);
 void		 prefix_destroy(struct prefix *);
@@ -278,10 +264,10 @@ int		 up_dump_attrnlri(u_char *, int, struct rde_peer *);
 /* rde_prefix.c */
 void		 pt_init(void);
 int		 pt_empty(struct pt_entry *);
-struct pt_entry	*pt_get(struct in_addr, int);
-struct pt_entry *pt_add(struct in_addr, int);
+struct pt_entry	*pt_get(struct bgpd_addr *, int);
+struct pt_entry *pt_add(struct bgpd_addr *, int);
 void		 pt_remove(struct pt_entry *);
-struct pt_entry	*pt_lookup(struct in_addr);
+struct pt_entry	*pt_lookup(struct bgpd_addr *);
 void		 pt_dump(void (*)(struct pt_entry *, void *), void *);
 
 

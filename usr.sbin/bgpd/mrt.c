@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.21 2004/01/11 01:00:07 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.22 2004/01/11 21:47:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -306,7 +306,7 @@ mrt_dump_entry(struct mrt_config *mrt, struct prefix *p, u_int16_t snum,
 
 	DUMP_SHORT(buf, 0);
 	DUMP_SHORT(buf, snum);
-	DUMP_NLONG(buf, p->prefix->prefix.s_addr);
+	DUMP_NLONG(buf, p->prefix->prefix.v4.s_addr);
 	DUMP_BYTE(buf, p->prefix->prefixlen);
 	DUMP_BYTE(buf, 1);		/* state */
 	DUMP_LONG(buf, p->lastchange);	/* originated */
