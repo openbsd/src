@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: ypxfr.c,v 1.3 1996/03/02 03:01:49 dm Exp $";
+static char rcsid[] = "$Id: ypxfr.c,v 1.4 1996/03/02 03:42:06 dm Exp $";
 #endif
 
 #include <stdio.h>
@@ -227,6 +227,18 @@ char *temp_map;
 }
 
 int
+unlink_db(domain,map,temp_map)
+char *temp_map;
+{
+	char	db_temp[255];
+
+	sprintf(db_temp,"%s/%s/%s%s",YP_DB_PATH,domain,temp_map,YPDB_SUFFIX);
+	unlink(db_temp);
+
+	return YPPUSH_SUCC;
+}
+
+int
 add_order(db, ordernum)
 DBM *db;
 u_long ordernum;
@@ -307,10 +319,10 @@ DBM *db;
 	k.dptr = keystr;
 	k.dsize = strlen(keystr);
 
-	status = !yp_match_host(client, domain, map,
+	status = yp_match_host(client, domain, map,
 			       k.dptr, k.dsize, &value, &vallen);
 	
-	if(status > 0 && value) {
+	if(status == 0 && value) {
 		v.dptr = value;
 		v.dsize = vallen;
 		
@@ -324,7 +336,7 @@ DBM *db;
 		}
 	}
 
-	return status;
+	return 1;
 }
 
 int
@@ -582,6 +594,8 @@ char *argv[];
 		/* Rename db */
 		if(status > 0) {
 			status = install_db(domain,map,mapname);
+		} else {
+			status = unlink_db(domain,map,mapname);
 		}
 		
 	}
