@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.357 2003/05/17 03:04:45 mcbride Exp $ */
+/*	$OpenBSD: pf.c,v 1.358 2003/05/17 21:15:23 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2225,7 +2225,7 @@ pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
 	    ((r->rule_flag & PFRULE_RETURNRST) ||
 	    (r->rule_flag & PFRULE_RETURNICMP) ||
 	    (r->rule_flag & PFRULE_RETURN))) {
-		/* undo NAT/RST changes, if they have taken place */
+		/* undo NAT changes, if they have taken place */
 		if (nat != NULL) {
 			pf_change_ap(saddr, &th->th_sport, pd->ip_sum,
 			    &th->th_sum, &baddr, bport, 0, af);
@@ -2534,7 +2534,7 @@ pf_test_udp(struct pf_rule **rm, struct pf_state **sm, int direction,
 	if ((r->action == PF_DROP) &&
 	    ((r->rule_flag & PFRULE_RETURNICMP) ||
 	    (r->rule_flag & PFRULE_RETURN))) {
-		/* undo NAT/RST changes, if they have taken place */
+		/* undo NAT changes, if they have taken place */
 		if (nat != NULL) {
 			pf_change_ap(saddr, &uh->uh_sport, pd->ip_sum,
 			    &uh->uh_sum, &baddr, bport, 1, af);
