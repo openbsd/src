@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pw_init.3,v 1.7 2003/06/02 20:18:42 millert Exp $
+.\"	$OpenBSD: pw_init.3,v 1.8 2004/04/20 23:20:07 millert Exp $
 .\"
 .\" Copyright (c) 1995
 .\"	The Regents of the University of California.  All rights reserved.
@@ -58,7 +58,7 @@
 .Ft void
 .Fn pw_prompt
 .Ft void
-.Fn pw_copy "int ffd" "int tfd" "struct passwd *pw"
+.Fn pw_copy "int ffd" "int tfd" "const struct passwd *pw" "const struct passwd *opw"
 .Ft int
 .Fn pw_scan "char *bp" "struct passwd *pw" "int *flags"
 .Ft void
@@ -125,9 +125,20 @@ function reads a passwd file from
 .Fa ffd
 and writes it to
 .Fa tfd ,
-updating the entry corresponding to pw->pw_name with the information
-in
+updating the entry corresponding to pw-\*(Gtpw_name
+with the information in
 .Fa pw .
+If
+.Fa opw 
+is not NULL, opw-\*(Gtpw_name will be used for matching instead.
+Additionally, if the existing entry does not match
+.Fa opw ,
+the operation is aborted.
+The use of
+.Fa opw
+allows the caller to change the user name in an entry as well as
+guarantee that the entry being replaced has not changed in the
+meantime.
 .Pp
 The
 .Fn pw_scan

@@ -1,4 +1,4 @@
-/*	$OpenBSD: passwd.c,v 1.42 2003/06/26 16:34:42 deraadt Exp $	*/
+/*	$OpenBSD: passwd.c,v 1.43 2004/04/20 23:20:07 millert Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -30,7 +30,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$OpenBSD: passwd.c,v 1.42 2003/06/26 16:34:42 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: passwd.c,v 1.43 2004/04/20 23:20:07 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -422,12 +422,27 @@ pw_prompt(void)
 		pw_error(NULL, 0, 0);
 }
 
-void
-pw_copy(int ffd, int tfd, struct passwd *pw)
+static int
+pw_equal(const struct passwd *pw1, const struct passwd *pw2)
 {
+	return (strcmp(pw1->pw_name, pw2->pw_name) == 0 &&
+	    pw1->pw_uid == pw2->pw_uid &&
+	    pw1->pw_gid == pw2->pw_gid &&
+	    strcmp(pw1->pw_class, pw2->pw_class) == 0 &&
+	    pw1->pw_change == pw2->pw_change &&
+	    pw1->pw_expire == pw2->pw_expire &&
+	    strcmp(pw1->pw_gecos, pw2->pw_gecos) == 0 &&
+	    strcmp(pw1->pw_dir, pw2->pw_dir) == 0 &&
+	    strcmp(pw1->pw_shell, pw2->pw_shell) == 0);
+}
+
+void
+pw_copy(int ffd, int tfd, const struct passwd *pw, const struct passwd *opw)
+{
+	struct passwd tpw;
 	FILE   *from, *to;
 	int	done;
-	char   *p, buf[8192];
+	char   *p, *ep, buf[8192];
 	char   *master = pw_file(_PATH_MASTERPASSWD);
 
 	if (!master)
@@ -438,7 +453,7 @@ pw_copy(int ffd, int tfd, struct passwd *pw)
 		pw_error(pw_lck ? pw_lck : NULL, pw_lck ? 1 : 0, 1);
 
 	for (done = 0; fgets(buf, sizeof(buf), from);) {
-		if (!strchr(buf, '\n')) {
+		if ((ep = strchr(buf, '\n')) == NULL) {
 			warnx("%s: line too long", master);
 			pw_error(NULL, 0, 1);
 		}
@@ -453,12 +468,22 @@ pw_copy(int ffd, int tfd, struct passwd *pw)
 			pw_error(NULL, 0, 1);
 		}
 		*p = '\0';
-		if (strcmp(buf, pw->pw_name)) {
+		if (strcmp(buf, opw ? opw->pw_name : pw->pw_name)) {
 			*p = ':';
 			(void)fprintf(to, "%s", buf);
 			if (ferror(to))
 				goto err;
 			continue;
+		}
+		if (opw != NULL) {
+			*p = ':';
+			*ep = '\0';
+			if (!pw_scan(buf, &tpw, NULL))
+				pw_error(NULL, 0, 1);
+			if (!pw_equal(&tpw, opw)) {
+				warnx("%s: inconsistent entry", master);
+				pw_error(NULL, 0, 1);
+			}
 		}
 		(void)fprintf(to, "%s:%s:%u:%u:%s:%d:%d:%s:%s:%s\n",
 		    pw->pw_name, pw->pw_passwd, (u_int)pw->pw_uid,
