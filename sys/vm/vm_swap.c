@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_swap.c,v 1.14 2001/03/01 21:38:35 csapuntz Exp $	*/
+/*	$OpenBSD: vm_swap.c,v 1.15 2001/03/09 03:13:48 deraadt Exp $	*/
 /*	$NetBSD: vm_swap.c,v 1.64 1998/11/08 19:45:17 mycroft Exp $	*/
 
 /*
@@ -335,7 +335,7 @@ sys_swapctl(p, v, retval)
 	struct swappri *spp;
 	struct swapdev *sdp;
 	struct swapent *sep;
-	char	userpath[PATH_MAX + 1];
+	char	userpath[MAXPATHLEN];
 	int	count, error, misc;
 	size_t	len;
 	int	priority;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: swapctl.c,v 1.3 2000/06/30 16:00:09 millert Exp $	*/
+/*	$OpenBSD: swapctl.c,v 1.4 2001/03/09 03:13:48 deraadt Exp $	*/
 /*	$NetBSD: swapctl.c,v 1.9 1998/07/26 20:23:15 mycroft Exp $	*/
 
 /*
@@ -370,7 +370,7 @@ do_fstab()
 			priority = pri;
 
 		if ((s = strstr(fp->fs_mntops, NFSMNTPT)) != NULL) {
-			char *t, cmd[2*PATH_MAX+sizeof(PATH_MOUNT)+2];
+			char *t, cmd[strlen(PATH_MOUNT)+1+PATH_MAX+1+PATH_MAX+1];
 
 			/*
 			 * Skip this song and dance if we're only
@@ -396,7 +396,7 @@ do_fstab()
 				continue;
 			}
 			snprintf(cmd, sizeof(cmd), "%s %s %s",
-				PATH_MOUNT, fp->fs_spec, spec);
+			    PATH_MOUNT, fp->fs_spec, spec);
 			if (system(cmd) != 0) {
 				warnx("%s: mount failed", fp->fs_spec);
 				continue;

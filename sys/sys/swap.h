@@ -1,4 +1,4 @@
-/*	$OpenBSD: swap.h,v 1.2 1999/08/23 17:08:37 art Exp $	*/
+/*	$OpenBSD: swap.h,v 1.3 2001/03/09 03:13:47 deraadt Exp $	*/
 /*	$NetBSD: swap.h,v 1.2 1998/09/13 14:46:24 christos Exp $	*/
 
 /*
@@ -49,7 +49,7 @@ struct swapent {
 	int	se_nblks;		/* total blocks */
 	int	se_inuse;		/* blocks in use */
 	int	se_priority;		/* priority of this device */
-	char	se_path[PATH_MAX+1];	/* path name */
+	char	se_path[MAXPATHLEN];	/* path name */
 };
 
 #define SWAP_ON		1		/* begin swapping on device */

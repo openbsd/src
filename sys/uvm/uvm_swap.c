@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.24 2001/03/08 15:21:37 smart Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.25 2001/03/09 03:13:47 deraadt Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.28 1999/07/22 22:58:39 thorpej Exp $	*/
 
 /*
@@ -678,7 +678,7 @@ sys_swapctl(p, v, retval)
 	struct swappri *spp;
 	struct swapdev *sdp;
 	struct swapent *sep;
-	char	userpath[PATH_MAX + 1];
+	char	userpath[MAXPATHLEN];
 	size_t	len;
 	int	count, error, misc;
 	int	priority;
