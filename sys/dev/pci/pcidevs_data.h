@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.603 2003/03/08 23:01:29 mickey Exp 
+ *		OpenBSD: pcidevs,v 1.604 2003/03/12 02:28:56 grange Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -4955,6 +4955,14 @@ static const struct pci_known_product pci_known_products[] = {
 	    "SiS530 Host-PCI",
 	},
 	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_540,
+	    "540 Host-PCI",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_550,
+	    "550 Host-PCI",
+	},
+	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_85C601,
 	    "85C601 EIDE",
 	},
@@ -4967,20 +4975,108 @@ static const struct pci_known_product pci_known_products[] = {
 	    "630 Host-PCI",
 	},
 	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_633,
+	    "633 Host-PCI",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_635,
+	    "635 Host-PCI",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_640,
+	    "640 Host-PCI",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_645,
+	    "645 Host-PCI",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_646,
+	    "646 Host-PCI",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_648,
+	    "648 Host-PCI",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_650,
+	    "650 Host-PCI",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_651,
+	    "651 Host-PCI",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_652,
+	    "652 Host-PCI",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_655,
+	    "655 Host-PCI",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_658,
+	    "658 Host-PCI",
+	},
+	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_730,
 	    "730 Host-PCI",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_733,
+	    "733 Host-PCI",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_735,
 	    "735 Host-PCI",
 	},
 	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_740,
+	    "740 Host-PCI",
+	},
+	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_745,
 	    "745 Host-PCI",
 	},
 	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_746,
+	    "746 Host-PCI",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_748,
+	    "748 Host-PCI",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_750,
+	    "750 Host-PCI",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_751,
+	    "751 Host-PCI",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_752,
+	    "752 Host-PCI",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_755,
+	    "755 Host-PCI",
+	},
+	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_900,
 	    "900 10/100BaseTX",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_961,
+	    "961 Host-PCI",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_962,
+	    "962 Host-PCI",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_963,
+	    "963 Host-PCI",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_7016,

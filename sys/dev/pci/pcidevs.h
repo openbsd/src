@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.603 2003/03/08 23:01:29 mickey Exp 
+ *		OpenBSD: pcidevs,v 1.604 2003/03/12 02:28:56 grange Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -2149,13 +2149,37 @@
 #define	PCI_PRODUCT_SIS_85C496	0x0496		/* 85C496 */
 #define	PCI_PRODUCT_SIS_85C596	0x0496		/* 85C596 */
 #define	PCI_PRODUCT_SIS_SiS530	0x0530		/* SiS530 Host-PCI */
+#define	PCI_PRODUCT_SIS_540	0x0540		/* 540 Host-PCI */
+#define	PCI_PRODUCT_SIS_550	0x0550		/* 550 Host-PCI */
 #define	PCI_PRODUCT_SIS_85C601	0x0601		/* 85C601 EIDE */
 #define	PCI_PRODUCT_SIS_620	0x0620		/* 620 Host-PCI */
 #define	PCI_PRODUCT_SIS_630	0x0630		/* 630 Host-PCI */
+#define	PCI_PRODUCT_SIS_633	0x0633		/* 633 Host-PCI */
+#define	PCI_PRODUCT_SIS_635	0x0635		/* 635 Host-PCI */
+#define	PCI_PRODUCT_SIS_640	0x0640		/* 640 Host-PCI */
+#define	PCI_PRODUCT_SIS_645	0x0645		/* 645 Host-PCI */
+#define	PCI_PRODUCT_SIS_646	0x0646		/* 646 Host-PCI */
+#define	PCI_PRODUCT_SIS_648	0x0648		/* 648 Host-PCI */
+#define	PCI_PRODUCT_SIS_650	0x0650		/* 650 Host-PCI */
+#define	PCI_PRODUCT_SIS_651	0x0651		/* 651 Host-PCI */
+#define	PCI_PRODUCT_SIS_652	0x0652		/* 652 Host-PCI */
+#define	PCI_PRODUCT_SIS_655	0x0655		/* 655 Host-PCI */
+#define	PCI_PRODUCT_SIS_658	0x0658		/* 658 Host-PCI */
 #define	PCI_PRODUCT_SIS_730	0x0730		/* 730 Host-PCI */
+#define	PCI_PRODUCT_SIS_733	0x0733		/* 733 Host-PCI */
 #define	PCI_PRODUCT_SIS_735	0x0735		/* 735 Host-PCI */
+#define	PCI_PRODUCT_SIS_740	0x0740		/* 740 Host-PCI */
 #define	PCI_PRODUCT_SIS_745	0x0745		/* 745 Host-PCI */
+#define	PCI_PRODUCT_SIS_746	0x0746		/* 746 Host-PCI */
+#define	PCI_PRODUCT_SIS_748	0x0748		/* 748 Host-PCI */
+#define	PCI_PRODUCT_SIS_750	0x0750		/* 750 Host-PCI */
+#define	PCI_PRODUCT_SIS_751	0x0751		/* 751 Host-PCI */
+#define	PCI_PRODUCT_SIS_752	0x0752		/* 752 Host-PCI */
+#define	PCI_PRODUCT_SIS_755	0x0755		/* 755 Host-PCI */
 #define	PCI_PRODUCT_SIS_900	0x0900		/* 900 10/100BaseTX */
+#define	PCI_PRODUCT_SIS_961	0x0961		/* 961 Host-PCI */
+#define	PCI_PRODUCT_SIS_962	0x0962		/* 962 Host-PCI */
+#define	PCI_PRODUCT_SIS_963	0x0963		/* 963 Host-PCI */
 #define	PCI_PRODUCT_SIS_7016	0x7016		/* 7016 10/100BaseTX */
 #define	PCI_PRODUCT_SIS_7018	0x7018		/* Trident 4D WAVE */
 #define	PCI_PRODUCT_SIS_5511	0x5511		/* 5511 */
