@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.91 2001/01/23 04:19:42 krw Exp $
+#	$OpenBSD: files.pci,v 1.92 2001/01/29 08:45:58 ho Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -253,6 +253,11 @@ file	dev/pci/hifn7751.c		hifn
 device	ubsec: crypto
 attach	ubsec at pci
 file	dev/pci/ubsec.c			ubsec
+
+# Pijnenburg PCC-ISES
+device	ises: crypto
+attach	ises at pci
+file	dev/pci/ises.c			ises
 
 # Winbond W89C840F ethernet
 device	wb: ether, ifnet, mii, ifmedia, mii_phy
