@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.120 2004/09/30 14:24:27 millert Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.121 2004/10/11 15:16:49 mickey Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.117 2004/09/30 14:24:05 millert Exp 
+ *		OpenBSD: pcmciadevs,v 1.118 2004/10/11 15:16:37 mickey Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -582,6 +582,8 @@
 #define	PCMCIA_PRODUCT_PLANEX_FNW3600T	-1
 #define	PCMCIA_CIS_PLANEX_FNW3700T	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_PLANEX_FNW3700T	-1
+#define	PCMCIA_CIS_PLANEX_GWNS11H	{ "PLANEX", "GW-NS11H Wireless LAN PC Card", NULL, NULL }
+#define	PCMCIA_PRODUCT_PLANEX_GWNS11H	PCMCIA_PRODUCT_INVALID
 #define	PCMCIA_CIS_DLINK_DE650	{ "D-Link", "DE-650", NULL, NULL }
 #define	PCMCIA_PRODUCT_DLINK_DE650	PCMCIA_PRODUCT_INVALID
 #define	PCMCIA_CIS_DLINK_DE660	{ "D-Link", "DE-660", NULL, NULL }
