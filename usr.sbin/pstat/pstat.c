@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.20 1999/06/03 15:49:31 deraadt Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.21 1999/06/23 15:56:36 millert Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
 #else
-static char *rcsid = "$OpenBSD: pstat.c,v 1.20 1999/06/03 15:49:31 deraadt Exp $";
+static char *rcsid = "$OpenBSD: pstat.c,v 1.21 1999/06/23 15:56:36 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -960,7 +960,7 @@ swapmode()
 		    "Used", "Avail", "Capacity", "Priority");
 
 	/* Run through swap list, doing the funky monkey. */
-	div = blocksize / 512;
+	div = blocksize / DEV_BSIZE;
 	avail = nfree = npfree = 0;
 	for (i = 0; i < nswap; i++) {
 		int xsize, xfree;
@@ -999,7 +999,9 @@ swapmode()
 	 */
 	used = avail - nfree;
 	if (totalflag) {
-		(void)printf("%dM/%dM swap space\n", used / 2048, avail / 2048);
+		(void)printf("%dM/%dM swap space\n",
+		    used / (1048576 / DEV_BSIZE),
+		    avail / (1048576 / DEV_BSIZE));
 		return;
 	}
 	if (npfree > 1) {
