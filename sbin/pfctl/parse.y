@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.105 2002/06/23 03:07:21 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.106 2002/06/24 10:55:08 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -270,6 +270,19 @@ scrubrule	: SCRUB dir interface fromto nodf minttl maxmss fragcache
 			r.action = PF_SCRUB;
 			r.direction = $2;
 
+			if ($3) {
+				if ($3->not) {
+					yyerror("scrub rules don't support "
+					    "'! <if>'");
+					YYERROR;
+				} else if ($3->next) {
+					yyerror("scrub rules don't support "
+					    "{} expansion");
+					YYERROR;
+				}
+				memcpy(r.ifname, $3->ifname,
+				    sizeof(r.ifname));
+			}
 			if ($5)
 				r.rule_flag |= PFRULE_NODF;
 			if ($6)
