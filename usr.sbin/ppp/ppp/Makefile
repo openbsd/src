@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.8 1999/05/08 11:06:32 brian Exp $
+#	$Id: Makefile,v 1.9 1999/05/12 10:03:48 brian Exp $
 
 PROG=	ppp
 SRCS=	alias.c alias_cmd.c alias_cuseeme.c alias_db.c alias_ftp.c \
@@ -8,7 +8,7 @@ SRCS=	alias.c alias_cmd.c alias_cuseeme.c alias_db.c alias_ftp.c \
 	hdlc.c id.c iface.c ip.c ipcp.c iplist.c lcp.c link.c log.c lqr.c \
 	main.c mbuf.c mp.c pap.c physical.c pred.c probe.c prompt.c proto.c \
 	radius.c radlib.c route.c server.c sig.c slcompress.c systems.c \
-	sync.c tcp.c throughput.c timer.c tty.c tun.c vjcomp.c
+	sync.c tcp.c throughput.c timer.c tty.c tun.c udp.c vjcomp.c
 CFLAGS+=-Wall -DHAVE_DES -DNO_FW_PUNCH
 LDADD+= -ldes -lutil -lz
 DPADD+=	${LIBDES} ${LIBUTIL} ${LIBZ}

@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: sync.c,v 1.1 1999/05/08 11:06:39 brian Exp $
+ *	$Id: sync.c,v 1.2 1999/05/12 10:03:54 brian Exp $
  */
 
 #include <sys/types.h>
@@ -49,6 +49,14 @@
 #include "physical.h"
 
 static struct mbuf *
+sync_LayerPush(struct bundle *bundle, struct link *l, struct mbuf *bp,
+                int pri, u_short *proto)
+{
+  log_DumpBp(LogSYNC, "Write", bp);
+  return bp;
+}
+
+static struct mbuf *
 sync_LayerPull(struct bundle *b, struct link *l, struct mbuf *bp,
                u_short *proto)
 {
@@ -57,7 +65,9 @@ sync_LayerPull(struct bundle *b, struct link *l, struct mbuf *bp,
   if (!p)
     log_Printf(LogERROR, "Can't Pull a sync packet from a logical link\n");
   else {
-    /* Normally done by the HDLC layer */
+    log_DumpBp(LogSYNC, "Read", bp);
+
+    /* Either done here or by the HDLC layer */
     p->hdlc.lqm.SaveInOctets += mbuf_Length(bp) + 1;
     p->hdlc.lqm.SaveInPackets++;
   }
@@ -65,4 +75,4 @@ sync_LayerPull(struct bundle *b, struct link *l, struct mbuf *bp,
   return bp;
 }
 
-struct layer synclayer = { LAYER_SYNC, "sync", NULL, sync_LayerPull };
+struct layer synclayer = { LAYER_SYNC, "sync", sync_LayerPush, sync_LayerPull };

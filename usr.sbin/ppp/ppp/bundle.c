@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: bundle.c,v 1.15 1999/05/08 11:06:33 brian Exp $
+ *	$Id: bundle.c,v 1.16 1999/05/12 10:03:48 brian Exp $
  */
 
 #include <sys/param.h>
@@ -87,7 +87,7 @@
 #include "ip.h"
 #include "iface.h"
 
-#define SCATTER_SEGMENTS 4	/* version, datalink, name, physical */
+#define SCATTER_SEGMENTS 5	/* version, datalink, name, physical, device */
 #define SOCKET_OVERHEAD	100	/* additional buffer space for large */
                                 /* {recv,send}msg() calls            */
 
