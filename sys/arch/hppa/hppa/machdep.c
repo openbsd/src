@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.92 2002/12/19 00:41:20 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.93 2002/12/19 00:46:21 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -1178,13 +1178,19 @@ setregs(p, pack, stack, retval)
 	    p, pack, stack, retval, pack->ep_entry, tf->tf_cr30);
 	*/
 #endif
-
 	tf->tf_flags = TFF_SYS|TFF_LAST;
 	tf->tf_iioq_tail = 4 +
 	    (tf->tf_iioq_head = pack->ep_entry | HPPA_PC_PRIV_USER);
 	tf->tf_rp = 0;
 	tf->tf_arg0 = (u_long)PS_STRINGS;
 	tf->tf_arg1 = tf->tf_arg2 = 0; /* XXX dynload stuff */
+
+	/* setup terminal stack frame */
+	stack = hppa_round_page(stack);
+	tf->tf_r3 = stack;
+	tf->tf_sp = stack += HPPA_FRAME_SIZE;
+	suword((caddr_t)(stack - HPPA_FRAME_SIZE), 0);
+	suword((caddr_t)(stack + HPPA_FRAME_CRP), 0);
 
 	/* reset any of the pending FPU exceptions */
 	pcb->pcb_fpregs[0] = ((u_int64_t)HPPA_FPU_INIT) << 32;
@@ -1197,14 +1203,6 @@ setregs(p, pack, stack, retval)
 		/* force an fpu ctxsw, we'll not be hugged by the cpu_switch */
 		mtctl(0, CR_CCR);
 	}
-
-	/* setup terminal stack frame */
-	stack = hppa_round_page(stack);
-	tf->tf_r3 = stack;
-	suword((caddr_t)(stack), 0);
-	stack += HPPA_FRAME_SIZE;
-	suword((caddr_t)(stack + HPPA_FRAME_CRP), 0);
-	tf->tf_sp = stack;
 
 	retval[1] = 0;
 }
