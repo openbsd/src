@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.108 2002/11/11 23:46:29 millert Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.109 2003/04/28 02:58:45 itojun Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.108 2002/11/11 23:46:29 millert Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.109 2003/04/28 02:58:45 itojun Exp $";
 #endif /* not lint */
 
 /*
@@ -1886,7 +1886,7 @@ print_service(char *action, struct servtab *sep)
 		fprintf(stderr, "proto=%s,", sep->se_proto);
 
 	fprintf(stderr,
-	    " wait.max=%hd.%d user:group=%s.%s builtin=%lx server=%s\n",
+	    " wait.max=%hd.%d user:group=%s:%s builtin=%lx server=%s\n",
 	    sep->se_wait, sep->se_max, sep->se_user,
 	    sep->se_group ? sep->se_group : "wheel",
 	    (long)sep->se_bi, sep->se_server);
