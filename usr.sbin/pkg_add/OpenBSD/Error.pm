@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Error.pm,v 1.6 2004/11/15 02:44:50 espie Exp $
+# $OpenBSD: Error.pm,v 1.7 2004/11/27 12:07:58 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -72,7 +72,7 @@ sub Warn
 sub new
 {
 	my $class = shift;
-	bless {messages=>{}}, $class;
+	bless {messages=>{}, dirs_okay=>{}}, $class;
 }
 
 sub set_pkgname

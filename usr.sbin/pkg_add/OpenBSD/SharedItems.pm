@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SharedItems.pm,v 1.4 2004/11/27 11:36:16 espie Exp $
+# $OpenBSD: SharedItems.pm,v 1.5 2004/11/27 12:07:58 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -74,7 +74,8 @@ sub cleanup
 					$i->cleanup($state);
 				}
 				if (!rmdir $realname) {
-					$state->print("Error deleting directory $realname: $!\n");
+					$state->print("Error deleting directory $realname: $!\n")
+					    unless $state->{dirs_okay}->{$d};
 				}
 			}
 			$done++;

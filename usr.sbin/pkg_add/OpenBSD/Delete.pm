@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.12 2004/11/27 11:36:16 espie Exp $
+# $OpenBSD: Delete.pm,v 1.13 2004/11/27 12:07:58 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -158,6 +158,20 @@ sub delete
 {
 }
 
+package OpenBSD::PackingElement::FileObject;
+use File::Basename;
+
+sub mark_dir
+{
+	my ($self, $state, $dir) = @_;
+
+	$state->{dirs_okay}->{$dir} = 1;
+	my $d2 = dirname($dir);
+	if ($d2 ne $dir) {
+		$self->mark_dir($state, $d2);
+	}
+}
+
 package OpenBSD::PackingElement::NewUser;
 sub delete
 {
@@ -272,6 +286,8 @@ sub delete
 package OpenBSD::PackingElement::Sample;
 use OpenBSD::md5;
 use OpenBSD::Error;
+use File::Basename;
+
 sub delete
 {
 	my ($self, $state) = @_;
@@ -298,6 +314,7 @@ sub delete
 
 	if ($state->{quick}) {
 		unless ($state->{extra}) {
+			$self->mark_dir($state, dirname($name));
 			$state->print("You should also remove $realname\n");
 			return;
 		}
@@ -307,6 +324,7 @@ sub delete
 			print "File $realname identical to sample\n" if $state->{not} or $state->{verbose};
 		} else {
 			unless ($state->{extra}) {
+				$self->mark_dir($state, dirname($name));
 				$state->print("You should also remove $realname (which was modified)\n");
 				return;
 			}
@@ -363,6 +381,8 @@ sub delete
 }
 
 package OpenBSD::PackingElement::Extra;
+use File::Basename;
+
 sub delete
 {
 	my ($self, $state) = @_;
@@ -378,8 +398,10 @@ sub delete
 		    print "problem deleting extra file $realname\n";
 	} else {
 		$state->print("You should also remove $realname\n");
+		$self->mark_dir($state, dirname($name));
 	}
 }
+
 
 package OpenBSD::PackingElement::Extradir;
 sub delete
@@ -391,6 +413,7 @@ sub delete
 		$self->SUPER::delete($state);
 	} else {
 		$state->print("You should also remove the directory $realname\n");
+		$self->mark_dir($state, $self->fullname());
 	}
 }
 
