@@ -46,7 +46,11 @@
 display is modeled after the 
 .Tn VAX/VMS 
 program of the same name.
-The terminal has to be set for 9600 baud to obtain the proper effect.
+To obtain the proper effect, either the terminal must be set for 9600 baud
+or the
+.Nm -d
+option must be used to specify a delay, in milliseconds, between each update.  A
+reasonable delay is 120; the default is 0.
 .Pp
 As with all programs that use
 .Tn termcap ,

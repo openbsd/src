@@ -55,10 +55,13 @@ static char rcsid[] = "$NetBSD: caesar.c,v 1.4 1996/02/06 22:47:15 jtc Exp $";
 #endif
 #endif /* not lint */
 
+#include <stdlib.h>
+#include <string.h>
 #include <math.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <unistd.h>
+#include <err.h>
 #include <errno.h>
 
 #define	LINELENGTH	2048
@@ -76,40 +79,51 @@ double stdf[26] = {
 	2.62, 0.81, 1.88, 0.23,  2.07, 0.06,
 };
 
+void printit __P((int));
+void usage   __P(());
+
+
+int
 main(argc, argv)
 	int argc;
 	char **argv;
 {
-	register int ch, dot, i, nread, winnerdot;
-	register char *inbuf;
+	register int ch, dot, i, nread, winnerdot = 0;
+	register char *inbuf, *p, **av;
 	int obs[26], try, winner;
-	char *malloc(), *strerror();
 
 	/* revoke privs */
 	setegid(getgid());
 	setgid(getgid());
 
-	if (argc > 1)
-		printit(argv[1]);
-
-	if (!(inbuf = malloc(LINELENGTH))) {
-		(void)fprintf(stderr, "caesar: out of memory.\n");
-		exit(1);
+	if (argc > 1) {
+		if ((i = atoi(argv[1])))
+			printit(atoi(argv[1]));
+		else
+			usage();
 	}
+
+	/* check to see if we were called as rot13 */
+	av = argv;
+	p = strrchr(*av, '/');
+	if (p++ == NULL)
+		p = *av;
+	if (strcmp(p,"rot13") == 0)
+		printit(13);
+
+	if (!(inbuf = malloc(LINELENGTH)))
+		errx(1, "out of memory.");
 
 	/* adjust frequency table to weight low probs REAL low */
 	for (i = 0; i < 26; ++i)
 		stdf[i] = log(stdf[i]) + log(26.0 / 100.0);
 
 	/* zero out observation table */
-	bzero(obs, 26 * sizeof(int));
+	memset(obs, 0, 26 * sizeof(int));
 
-	if ((nread = read(STDIN_FILENO, inbuf, LINELENGTH)) < 0) {
-		(void)fprintf(stderr, "caesar: %s\n", strerror(errno));
-		exit(1);
-	}
-	for (i = nread; i--;) {
-		ch = inbuf[i];
+	nread = 0;
+	while ((nread < LINELENGTH) && ((ch = getchar()) != EOF)) {
+		inbuf[nread++] = ch;
 		if (islower(ch))
 			++obs[ch - 'a'];
 		else if (isupper(ch))
@@ -124,9 +138,6 @@ main(argc, argv)
 		dot = 0;
 		for (i = 0; i < 26; i++)
 			dot += obs[i] * stdf[(i + try) % 26];
-		/* initialize winning score */
-		if (try == 0)
-			winnerdot = dot;
 		if (dot > winnerdot) {
 			/* got a new winner! */
 			winner = try;
@@ -134,31 +145,31 @@ main(argc, argv)
 		}
 	}
 
-	for (;;) {
-		for (i = 0; i < nread; ++i) {
-			ch = inbuf[i];
-			putchar(ROTATE(ch, winner));
-		}
-		if (nread < LINELENGTH)
-			break;
-		if ((nread = read(STDIN_FILENO, inbuf, LINELENGTH)) < 0) {
-			(void)fprintf(stderr, "caesar: %s\n", strerror(errno));
-			exit(1);
-		}
+	/* dump the buffer before calling printit */
+	for (i = 0; i < nread; ++i) {
+		ch = inbuf[i];
+		putchar(ROTATE(ch, winner));
 	}
-	exit(0);
+	printit(winner);
+	/* NOT REACHED */
 }
 
-printit(arg)
-	char *arg;
+void
+printit(int rot)
 {
-	register int ch, rot;
+	register int ch;
 
-	if ((rot = atoi(arg)) < 0) {
-		(void)fprintf(stderr, "caesar: bad rotation value.\n");
-		exit(1);
-	}
+	if ((rot < 0) || ( rot >= 26))
+		errx(1, "bad rotation value");
+	
 	while ((ch = getchar()) != EOF)
 		putchar(ROTATE(ch, rot));
 	exit(0);
+}
+
+void
+usage()
+{
+	fprintf(stderr,"usage: caesar [rotation]\n");
+	exit(1);
 }
