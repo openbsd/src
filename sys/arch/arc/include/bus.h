@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.5 1996/09/18 11:39:24 niklas Exp $	*/
+/*	$OpenBSD: bus.h,v 1.6 1996/09/18 17:20:54 niklas Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -122,9 +122,9 @@ struct arc_isa_busmap {
 #define	bus_io_read_raw_multi_1(t, h, o, a, c)	\
 					insb((h) + (o), (a), (c))
 #define	bus_io_read_raw_multi_2(t, h, o, a, c)	\
-					insw((h) + (o), (a), (c))
+					insw((h) + (o), (a), ((c) >> 1))
 #define	bus_io_read_raw_multi_4(t, h, o, a, c)	\
-					insl((h) + (o), (a), (c))
+					insl((h) + (o), (a), ((c) >> 2))
 #if 0 /* Cause a link error for bus_io_read_raw_multi_8 */
 #define	bus_io_read_raw_multi_8(t, h, o, a, c)	\
 				!!! bus_io_read_raw_multi_8 unimplemented !!!
@@ -133,9 +133,9 @@ struct arc_isa_busmap {
 #define	bus_io_write_raw_multi_1(t, h, o, a, c)	\
 					outsb((h) + (o), (a), (c))
 #define	bus_io_write_raw_multi_2(t, h, o, a, c)	\
-					outsw((h) + (o), (a), (c))
+					outsw((h) + (o), (a), ((c) >> 1))
 #define	bus_io_write_raw_multi_4(t, h, o, a, c)	\
-					outsl((h) + (o), (a), (c))
+					outsl((h) + (o), (a), ((c) >> 2))
 #if 0 /* Cause a link error for bus_io_write_raw_multi_8 */
 #define	bus_io_write_raw_multi_8(t, h, o, a, c)	\
 				!!! bus_io_write_raw_multi_8 unimplimented !!!
