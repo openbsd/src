@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.10 1997/04/07 11:49:42 deraadt Exp $
+#	$OpenBSD: MAKEDEV,v 1.11 1997/04/23 20:39:01 gvf Exp $
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
 
@@ -166,7 +166,6 @@ fd*|sd*|vnd*)
 	    mknod r${name}${unit}a	c $chr `expr $unit '*' 16 + 0`
 	    mknod ${name}${unit}c	b $blk `expr $unit '*' 16 + 2`
 	    mknod r${name}${unit}c	c $chr `expr $unit '*' 16 + 2`
-	    if [ $name != vnd ]; then
 		mknod ${name}${unit}b	b $blk `expr $unit '*' 16 + 1`
 		mknod ${name}${unit}d	b $blk `expr $unit '*' 16 + 3`
 		mknod ${name}${unit}e	b $blk `expr $unit '*' 16 + 4`
@@ -195,7 +194,6 @@ fd*|sd*|vnd*)
 		mknod r${name}${unit}n	c $chr `expr $unit '*' 16 + 13`
 		mknod r${name}${unit}o	c $chr `expr $unit '*' 16 + 14`
 		mknod r${name}${unit}p	c $chr `expr $unit '*' 16 + 15`
-	    fi
 	    chown root.operator ${name}${unit}[a-p] r${name}${unit}[a-p]
 	    chmod 640 ${name}${unit}[a-p] r${name}${unit}[a-p]
 	    ;;

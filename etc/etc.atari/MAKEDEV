@@ -217,8 +217,6 @@ sd*|vnd*|ccd*)
 	0|1|2|3|4|5|6|7|8|9|10|11|12|13|14|15)
 		mknod ${name}${unit}c	b $blk `expr $unit '*' 16 + 2`
 		mknod r${name}${unit}c	c $chr `expr $unit '*' 16 + 2`
-		if [ $name != cd -a $name != vnd ]
-		then
 		mknod ${name}${unit}a	b $blk `expr $unit '*' 16 + 0`
 		mknod ${name}${unit}b	b $blk `expr $unit '*' 16 + 1`
 		mknod ${name}${unit}d	b $blk `expr $unit '*' 16 + 3`
@@ -249,7 +247,6 @@ sd*|vnd*|ccd*)
 		mknod r${name}${unit}n	c $chr `expr $unit '*' 16 + 13`
 		mknod r${name}${unit}o	c $chr `expr $unit '*' 16 + 14`
 		mknod r${name}${unit}p	c $chr `expr $unit '*' 16 + 15`
-		fi
 		chown root.operator ${name}${unit}[a-p] r${name}${unit}[a-p]
 		chmod 640 ${name}${unit}[a-p] r${name}${unit}[a-p]
 		;;

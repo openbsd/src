@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.6 1996/12/14 18:24:05 millert Exp $
+#	$OpenBSD: MAKEDEV,v 1.7 1997/04/23 20:39:06 gvf Exp $
 #	$NetBSD: MAKEDEV,v 1.1.1.1.4.1 1996/06/17 02:36:16 oki Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -34,7 +34,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	$Id: MAKEDEV,v 1.6 1996/12/14 18:24:05 millert Exp $
+#	$Id: MAKEDEV,v 1.7 1997/04/23 20:39:06 gvf Exp $
 #
 #	from:
 #	hp300/MAKEDEV (1/15/94), from:
@@ -214,8 +214,6 @@ sd*|vnd*|ccd*)
 	0|1|2|3|4|5|6|7|8|9|10|11|12|13|14|15)
 		mknod ${name}${unit}c	b $blk `expr $unit '*' 8 + 2`
 		mknod r${name}${unit}c	c $chr `expr $unit '*' 8 + 2`
-		if [ $name != cd -a $name != vnd ]
-		then
 		mknod ${name}${unit}a	b $blk `expr $unit '*' 8 + 0`
 		mknod ${name}${unit}b	b $blk `expr $unit '*' 8 + 1`
 		mknod ${name}${unit}d	b $blk `expr $unit '*' 8 + 3`
@@ -230,7 +228,6 @@ sd*|vnd*|ccd*)
 		mknod r${name}${unit}f	c $chr `expr $unit '*' 8 + 5`
 		mknod r${name}${unit}g	c $chr `expr $unit '*' 8 + 6`
 		mknod r${name}${unit}h	c $chr `expr $unit '*' 8 + 7`
-		fi
 		chown root.operator ${name}${unit}[a-h] r${name}${unit}[a-h]
 		chmod 640 ${name}${unit}[a-h] r${name}${unit}[a-h]
 		;;
