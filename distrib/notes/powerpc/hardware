@@ -29,6 +29,10 @@ Supported devices {:-include-:}:
 		Onboard Older iMac 10-100Mbs (bm) Ethernet. 
 		Onboard G4/PowerBook/Newer iMac (gm) ethernet.
 
+	Wireless Ethernet Adapters
+		Aironet 802.11DS PCI
+		WaveLAN IEEE 802.11DS
+
 	Tape drives:
 		SCSI Tape drives
 
