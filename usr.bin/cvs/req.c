@@ -1,4 +1,4 @@
-/*	$OpenBSD: req.c,v 1.6 2004/12/06 21:03:12 deraadt Exp $	*/
+/*	$OpenBSD: req.c,v 1.7 2004/12/07 17:10:56 tedu Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -150,9 +150,6 @@ static char *cvs_req_args[CVS_PROTO_MAXARG];
 static int   cvs_req_nargs = 0;
 
 
-
-
-
 /*
  * cvs_req_handle()
  *
@@ -160,7 +157,6 @@ static int   cvs_req_nargs = 0;
  * of the command as single argument.
  * Returns the return value of the command on success, or -1 on failure.
  */
-
 int
 cvs_req_handle(char *line)
 {
@@ -183,7 +179,6 @@ cvs_req_handle(char *line)
 
 	return (*cvs_req_swtab[req->req_id].hdlr)(req->req_id, cp);
 }
-
 
 
 static int
@@ -235,8 +230,6 @@ static int
 cvs_req_directory(int reqid, char *line)
 {
 
-
-
 	return (0);
 }
 
@@ -245,7 +238,6 @@ cvs_req_directory(int reqid, char *line)
  *
  * Handler for the `Case' requests, which toggles case sensitivity ON or OFF
  */
-
 static int
 cvs_req_case(int reqid, char *line)
 {

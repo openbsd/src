@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.38 2004/12/06 21:03:12 deraadt Exp $	*/
+/*	$OpenBSD: file.c,v 1.39 2004/12/07 17:10:56 tedu Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -59,7 +59,6 @@ struct cvs_ignpat {
 /*
  * Standard patterns to ignore.
  */
-
 static const char *cvs_ign_std[] = {
 	".",
 	"..",
@@ -89,7 +88,6 @@ static const char *cvs_ign_std[] = {
  * Filename hash table used to avoid duplication of name strings when working
  * on large source trees with common parts.
  */
-
 SLIST_HEAD(cvs_fhb, cvs_fname);
 
 static struct cvs_fhb cvs_fnht[CVS_FILE_NBUCKETS];
@@ -122,7 +120,6 @@ static CVSFILE*          cvs_file_lget     (const char *, int, CVSFILE *);
  * cvs_file_init()
  *
  */
-
 int
 cvs_file_init(void)
 {
@@ -180,7 +177,6 @@ cvs_file_init(void)
  * Add the pattern <pat> to the list of patterns for files to ignore.
  * Returns 0 on success, or -1 on failure.
  */
-
 int
 cvs_file_ignore(const char *pat)
 {
@@ -216,7 +212,6 @@ cvs_file_ignore(const char *pat)
  * Returns 1 if the filename <file> is matched by one of the ignore
  * patterns, or 0 otherwise.
  */
-
 int
 cvs_file_chkign(const char *file)
 {
@@ -247,7 +242,6 @@ cvs_file_chkign(const char *file)
  * created.
  * Returns the created file on success, or NULL on failure.
  */
-
 CVSFILE*
 cvs_file_create(CVSFILE *parent, const char *path, u_int type, mode_t mode)
 {
@@ -301,7 +295,6 @@ cvs_file_create(CVSFILE *parent, const char *path, u_int type, mode_t mode)
  * Returns the copied file on success, or NULL on failure.  The returned
  * structure should be freed using cvs_file_free().
  */
-
 CVSFILE*
 cvs_file_copy(CVSFILE *orig)
 {
@@ -358,7 +351,6 @@ cvs_file_get(const char *path, int flags)
  * Returns a pointer to the lowest common subdirectory to all specified
  * files.
  */
-
 CVSFILE*
 cvs_file_getspec(char **fspec, int fsn, int flags)
 {
@@ -410,7 +402,6 @@ cvs_file_getspec(char **fspec, int fsn, int flags)
  * The file's pathname <path> must be relative to the base of <hier>.
  * Returns the entry on success, or NULL on failure.
  */
-
 CVSFILE*
 cvs_file_find(CVSFILE *hier, const char *path)
 {
@@ -463,7 +454,6 @@ cvs_file_find(CVSFILE *hier, const char *path)
  * at least MAXPATHLEN bytes long.
  * Returns a pointer to the start of the path on success, or NULL on failure.
  */
-
 char*
 cvs_file_getpath(CVSFILE *file, char *buf, size_t len)
 {
@@ -509,7 +499,6 @@ cvs_file_getpath(CVSFILE *file, char *buf, size_t len)
  * has to be a file of type DT_DIR.
  * Returns 0 on success, or -1 on failure.
  */
-
 int
 cvs_file_attach(CVSFILE *parent, CVSFILE *file)
 {
@@ -535,7 +524,6 @@ cvs_file_attach(CVSFILE *parent, CVSFILE *file)
  * This function should not free the directory information on error, as this
  * is performed by cvs_file_free().
  */
-
 static int
 cvs_file_getdir(CVSFILE *cf, int flags)
 {
@@ -655,7 +643,6 @@ cvs_file_getdir(CVSFILE *cf, int flags)
  *
  * Free a cvs_file structure and its contents.
  */
-
 void
 cvs_file_free(CVSFILE *cf)
 {
@@ -672,7 +659,6 @@ cvs_file_free(CVSFILE *cf)
  * <exam>.  The function is called for all subdirectories and files of the
  * root file.
  */
-
 int
 cvs_file_examine(CVSFILE *cf, int (*exam)(CVSFILE *, void *), void *arg)
 {
@@ -698,7 +684,6 @@ cvs_file_examine(CVSFILE *cf, int (*exam)(CVSFILE *, void *), void *arg)
  *
  * Free a cvs_dir structure and its contents.
  */
-
 static void
 cvs_file_freedir(struct cvs_dir *cd)
 {
@@ -728,7 +713,6 @@ cvs_file_freedir(struct cvs_dir *cd)
  * in the list must be given by <nfiles>.
  * Returns 0 on success, or -1 on failure.
  */
-
 static int
 cvs_file_sort(struct cvs_flist *flp, u_int nfiles)
 {
@@ -790,7 +774,6 @@ cvs_file_cmp(const void *f1, const void *f2)
  *
  * Allocate a CVSFILE structure and initialize its internals.
  */
-
 CVSFILE*
 cvs_file_alloc(const char *path, u_int type)
 {
@@ -848,7 +831,6 @@ cvs_file_alloc(const char *path, u_int type)
  * Returns a pointer to the created file structure on success, or NULL on
  * failure.
  */
-
 static CVSFILE*
 cvs_file_lget(const char *path, int flags, CVSFILE *parent)
 {
@@ -921,7 +903,6 @@ cvs_file_cmpname(const char *name1, const char *name2)
  * Generate an 8 bit hash value from the name of a file.
  * XXX Improve my distribution!
  */
-
 static u_int8_t
 cvs_file_hashname(const char *name)
 {
@@ -943,7 +924,6 @@ cvs_file_hashname(const char *name)
  * If no entry is found for that name, a new one is created and inserted into
  * the table.  The name's reference count is increased.
  */
-
 static struct cvs_fname*
 cvs_file_getname(const char *name)
 {

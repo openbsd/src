@@ -1,16 +1,16 @@
-/*	$OpenBSD: sock.c,v 1.7 2004/11/09 20:43:22 krapht Exp $	*/
+/*	$OpenBSD: sock.c,v 1.8 2004/12/07 17:10:56 tedu Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
- * All rights reserved. 
+ * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without 
- * modification, are permitted provided that the following conditions 
- * are met: 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
  *
- * 1. Redistributions of source code must retain the above copyright 
- *    notice, this list of conditions and the following disclaimer. 
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
  * 2. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission. 
+ *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
  * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
@@ -21,7 +21,7 @@
  * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+ * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <sys/types.h>
@@ -46,8 +46,6 @@ volatile sig_atomic_t  cvs_sock_doloop;
 
 char     *cvsd_sock_path = CVSD_SOCK_PATH;
 
-
-
 /* daemon API */
 #ifdef CVSD
 int cvsd_sock = -1;
@@ -69,7 +67,6 @@ static struct sockaddr_un cvs_sun;
  * we close it before reopening it.
  * Returns 0 on success, -1 on failure.
  */
-
 int
 cvsd_sock_open(void)
 {
@@ -81,7 +78,7 @@ cvsd_sock_open(void)
 
 	cvsd_sock = socket(AF_LOCAL, SOCK_STREAM, 0);
 	if (cvsd_sock == -1) {
-		cvs_log(LP_ERRNO, "failed to open socket"); 
+		cvs_log(LP_ERRNO, "failed to open socket");
 		return (-1);
 	}
 
@@ -122,7 +119,6 @@ cvsd_sock_open(void)
  *
  * Close the local socket.
  */
-
 void
 cvsd_sock_close(void)
 {
@@ -147,7 +143,6 @@ cvsd_sock_close(void)
  * no available child processes, a new one will be created unless the number
  * of children has attained the maximum.
  */
-
 int
 cvsd_sock_accept(int fd)
 {
@@ -172,7 +167,6 @@ cvsd_sock_accept(int fd)
  *
  * Open a connection to the CVS server's local socket.
  */
-
 int
 cvs_sock_connect(const char *path)
 {
@@ -205,7 +199,6 @@ cvs_sock_connect(const char *path)
  *
  * Disconnect from the open socket to the CVS server.
  */
-
 void
 cvs_sock_disconnect(void)
 {

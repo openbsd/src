@@ -1,16 +1,16 @@
-/*	$OpenBSD: file.h,v 1.10 2004/12/02 06:54:15 jfb Exp $	*/
+/*	$OpenBSD: file.h,v 1.11 2004/12/07 17:10:56 tedu Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
- * All rights reserved. 
+ * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without 
- * modification, are permitted provided that the following conditions 
- * are met: 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
  *
- * 1. Redistributions of source code must retain the above copyright 
- *    notice, this list of conditions and the following disclaimer. 
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
  * 2. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission. 
+ *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
  * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
@@ -21,7 +21,7 @@
  * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+ * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #ifndef FILE_H
@@ -39,7 +39,6 @@ struct cvs_entries;
 
 #define CVS_FILE_MAXDEPTH     32
 #define CVS_FILE_NBUCKETS     256
-
 
 
 #define CF_STAT     0x01  /* obsolete */
@@ -65,7 +64,6 @@ struct cvs_entries;
  * a cvs_dir structure containing data specific to the directory (such as
  * the contents of the directory's CVS/Entries, CVS/Root, etc.).
  */
-
 #define CVS_FST_UNKNOWN   0
 #define CVS_FST_UPTODATE  1
 #define CVS_FST_MODIFIED  2
@@ -74,7 +72,7 @@ struct cvs_entries;
 #define CVS_FST_CONFLICT  5
 #define CVS_FST_PATCHED   6
 
- 
+
 struct cvs_fname {
 	char  *cf_name;
 	u_int  cf_ref;

@@ -1,16 +1,16 @@
-/*	$OpenBSD: cvs.c,v 1.17 2004/12/07 06:33:10 jfb Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.18 2004/12/07 17:10:56 tedu Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
- * All rights reserved. 
+ * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without 
- * modification, are permitted provided that the following conditions 
- * are met: 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
  *
- * 1. Redistributions of source code must retain the above copyright 
- *    notice, this list of conditions and the following disclaimer. 
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
  * 2. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission. 
+ *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
  * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
@@ -21,7 +21,7 @@
  * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+ * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <sys/types.h>
@@ -48,8 +48,6 @@ extern char *__progname;
 /* verbosity level: 0 = really quiet, 1 = quiet, 2 = verbose */
 int verbosity = 2;
 
-
-
 /* compression level used with zlib, 0 meaning no compression taking place */
 int   cvs_compress = 0;
 int   cvs_readrc = 1;		/* read .cvsrc on startup */
@@ -67,10 +65,8 @@ char *cvs_editor = CVS_EDITOR_DEFAULT;
 
 char *cvs_msg = NULL;
 
-
 /* hierarchy of all the files affected by the command */
 CVSFILE *cvs_files;
-
 
 
 /*
@@ -85,7 +81,6 @@ CVSFILE *cvs_files;
  * returned is EX_USAGE, the command's usage string is printed to standard
  * error before returning.
  */
-
 static struct cvs_cmd {
 	int     cmd_op;
 	char    cmd_name[CVS_CMD_MAXNAMELEN];
@@ -319,7 +314,6 @@ int              cvs_getopt   (int, char **);
  *
  * Display usage information.
  */
-
 void
 usage(void)
 {
@@ -494,7 +488,7 @@ cvs_getopt(int argc, char **argv)
 			 */
 			break;
 		case 'z':
-			cvs_compress = (int)strtol(optarg, &ep, 10); 
+			cvs_compress = (int)strtol(optarg, &ep, 10);
 			if (*ep != '\0')
 				errx(1, "error parsing compression level");
 			if (cvs_compress < 0 || cvs_compress > 9)
@@ -522,7 +516,6 @@ cvs_getopt(int argc, char **argv)
  * aliases matches <cmd>.
  * Returns a pointer to the command entry on success, NULL on failure.
  */
-
 struct cvs_cmd*
 cvs_findcmd(const char *cmd)
 {
@@ -555,7 +548,6 @@ cvs_findcmd(const char *cmd)
  * exists, it should contain a list of arguments that should always be given
  * implicitly to the specified commands.
  */
-
 void
 cvs_read_rcfile(void)
 {

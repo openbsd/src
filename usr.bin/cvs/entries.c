@@ -1,16 +1,16 @@
-/*	$OpenBSD: entries.c,v 1.19 2004/12/06 21:03:12 deraadt Exp $	*/
+/*	$OpenBSD: entries.c,v 1.20 2004/12/07 17:10:56 tedu Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
- * All rights reserved. 
+ * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without 
- * modification, are permitted provided that the following conditions 
- * are met: 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
  *
- * 1. Redistributions of source code must retain the above copyright 
- *    notice, this list of conditions and the following disclaimer. 
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
  * 2. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission. 
+ *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
  * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
@@ -21,7 +21,7 @@
  * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+ * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <sys/param.h>
@@ -41,7 +41,6 @@
 #define CVS_ENTRIES_DELIM   '/'
 
 
-
 /*
  * cvs_ent_open()
  *
@@ -49,7 +48,6 @@
  * Returns a pointer to the CVSENTRIES file structure on success, or NULL
  * on failure.
  */
-
 CVSENTRIES*
 cvs_ent_open(const char *dir, int flags)
 {
@@ -147,7 +145,6 @@ cvs_ent_open(const char *dir, int flags)
  * Close the Entries file <ep> and free all data.  Any reference to entries
  * structure within that file become invalid.
  */
-
 void
 cvs_ent_close(CVSENTRIES *ep)
 {
@@ -183,7 +180,6 @@ cvs_ent_close(CVSENTRIES *ep)
  * opened for writing.
  * Returns 0 on success, or -1 on failure.
  */
-
 int
 cvs_ent_add(CVSENTRIES *ef, struct cvs_ent *ent)
 {
@@ -208,7 +204,6 @@ cvs_ent_add(CVSENTRIES *ef, struct cvs_ent *ent)
  *
  * Add a line to the Entries file.
  */
-
 int
 cvs_ent_addln(CVSENTRIES *ef, const char *line)
 {
@@ -239,7 +234,6 @@ cvs_ent_addln(CVSENTRIES *ef, const char *line)
  * Remove an entry from the Entries file <ef>.  The entry's name is given
  * by <name>.
  */
-
 int
 cvs_ent_remove(CVSENTRIES *ef, const char *name)
 {
@@ -270,7 +264,6 @@ cvs_ent_remove(CVSENTRIES *ef, const char *name)
  * <file>.
  * Returns a pointer to the cvs entry structure on success, or NULL on failure.
  */
-
 struct cvs_ent*
 cvs_ent_get(CVSENTRIES *ef, const char *file)
 {
@@ -292,7 +285,6 @@ cvs_ent_get(CVSENTRIES *ef, const char *file)
  * will return the entry following the last one returned.
  * Returns a pointer to the cvs entry structure on success, or NULL on failure.
  */
-
 struct cvs_ent*
 cvs_ent_next(CVSENTRIES *ef)
 {
@@ -310,7 +302,6 @@ cvs_ent_next(CVSENTRIES *ef)
  * Parse a single line from a CVS/Entries file and return a cvs_entry structure
  * containing all the parsed information.
  */
-
 struct cvs_ent*
 cvs_ent_parse(const char *entry)
 {
@@ -378,7 +369,6 @@ cvs_ent_parse(const char *entry)
  *
  * Free a single CVS entries structure.
  */
-
 void
 cvs_ent_free(struct cvs_ent *ent)
 {
@@ -397,7 +387,6 @@ cvs_ent_free(struct cvs_ent *ent)
  * path <path> and return that entry.  That entry must later be freed using
  * cvs_ent_free().
  */
-
 struct cvs_ent*
 cvs_ent_getent(const char *path)
 {
@@ -428,7 +417,6 @@ cvs_ent_getent(const char *path)
  * Explicitly write the contents of the Entries file <ef> to disk.
  * Returns 0 on success, or -1 on failure.
  */
-
 int
 cvs_ent_write(CVSENTRIES *ef)
 {

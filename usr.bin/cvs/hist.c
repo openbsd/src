@@ -1,16 +1,16 @@
-/*	$OpenBSD: hist.c,v 1.2 2004/12/06 21:03:12 deraadt Exp $	*/
+/*	$OpenBSD: hist.c,v 1.3 2004/12/07 17:10:56 tedu Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
- * All rights reserved. 
+ * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without 
- * modification, are permitted provided that the following conditions 
- * are met: 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
  *
- * 1. Redistributions of source code must retain the above copyright 
- *    notice, this list of conditions and the following disclaimer. 
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
  * 2. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission. 
+ *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
  * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
@@ -21,7 +21,7 @@
  * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+ * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <sys/param.h>
@@ -44,16 +44,12 @@ static int  cvs_hist_fillbuf  (CVSHIST *);
 static int  cvs_hist_fmt      (const struct cvs_hent *, char *, size_t);
 
 
-
-
-
 /*
  * cvs_hist_open()
  *
  * Open a CVS history file.
  * Returns the number of entries in the file on success, or -1 on error.
  */
-
 CVSHIST*
 cvs_hist_open(const char *path)
 {
@@ -100,7 +96,6 @@ cvs_hist_open(const char *path)
  *
  * Close the CVS history file previously opened by a call to cvs_hist_open()
  */
-
 void
 cvs_hist_close(CVSHIST *histp)
 {
@@ -120,7 +115,6 @@ cvs_hist_close(CVSHIST *histp)
  * Returns the next entry from the file on success, or NULL on failure or if
  * no entries are left.
  */
-
 struct cvs_hent*
 cvs_hist_getnext(CVSHIST *histp)
 {
@@ -140,7 +134,6 @@ cvs_hist_getnext(CVSHIST *histp)
  * first set to the end of the file.
  * Returns 0 on success, or -1 on failure.
  */
-
 int
 cvs_hist_append(CVSHIST *histp, struct cvs_hent *hentp)
 {
@@ -172,7 +165,6 @@ cvs_hist_append(CVSHIST *histp, struct cvs_hent *hentp)
  *
  * Fill the history file's internal buffer for future parsing.
  */
-
 static int
 cvs_hist_fillbuf(CVSHIST *histp)
 {
@@ -202,7 +194,6 @@ cvs_hist_fillbuf(CVSHIST *histp)
  * the buffered history entries.
  * Returns the number of entries parsed on success, or -1 on failure.
  */
-
 int
 cvs_hist_parse(CVSHIST *histp)
 {
@@ -282,17 +273,15 @@ cvs_hist_parse(CVSHIST *histp)
  * the CVS `history' file, and store the resulting string in <buf>, which is
  * of size <blen>.
  */
-
 static int
 cvs_hist_fmt(const struct cvs_hent *ent, char *buf, size_t blen)
 {
 	char numbuf[64];
 
-	if (rcsnum_tostr(ent->ch_rev, numbuf, sizeof(numbuf)) == NULL) {
+	if (rcsnum_tostr(ent->ch_rev, numbuf, sizeof(numbuf)) == NULL)
 		return (-1);
-	}
 
-	return snprintf(buf, blen, "%c%8x|%s|%s|%s|%s|%s",
+	return (snprintf(buf, blen, "%c%8x|%s|%s|%s|%s|%s",
 	    ent->ch_event, ent->ch_date, ent->ch_user, ent->ch_curdir,
-	    ent->ch_repo, numbuf, ent->ch_arg);
+	    ent->ch_repo, numbuf, ent->ch_arg));
 }

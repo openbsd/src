@@ -1,4 +1,4 @@
-/*	$OpenBSD: resp.c,v 1.12 2004/12/07 16:48:55 jfb Exp $	*/
+/*	$OpenBSD: resp.c,v 1.13 2004/12/07 17:10:56 tedu Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -55,7 +55,6 @@
 		while ((len > 0) && (p[len - 1] == '/'))	\
 			p[--len] = '\0';			\
 	} while (0)
-
 
 
 static int  cvs_resp_validreq  (struct cvsroot *, int, char *);
@@ -143,7 +142,6 @@ extern u_int cvs_version_sent;
  * of the command as single argument.
  * Returns the return value of the command on success, or -1 on failure.
  */
-
 int
 cvs_resp_handle(struct cvsroot *root, char *line)
 {
@@ -176,7 +174,6 @@ cvs_resp_handle(struct cvsroot *root, char *line)
  * to 1 to indicate the validity.
  * Returns 0 on success, or -1 on failure.
  */
-
 static int
 cvs_resp_validreq(struct cvsroot *root, int type, char *line)
 {
@@ -207,7 +204,6 @@ cvs_resp_validreq(struct cvsroot *root, int type, char *line)
  *
  * Handler for the `M', 'MT', `F' and `E' responses.
  */
-
 static int
 cvs_resp_m(struct cvsroot *root, int type, char *line)
 {
@@ -285,12 +281,12 @@ cvs_resp_m(struct cvsroot *root, int type, char *line)
 /*
  * cvs_resp_ok()
  *
- * Handler for the `ok' response.  This handler's job is to 
+ * Handler for the `ok' response.  This handler's job is to
  */
-
 static int
 cvs_resp_ok(struct cvsroot *root, int type, char *line)
 {
+
 	return (1);
 }
 
@@ -298,12 +294,12 @@ cvs_resp_ok(struct cvsroot *root, int type, char *line)
 /*
  * cvs_resp_error()
  *
- * Handler for the `error' response.  This handler's job is to 
+ * Handler for the `error' response.  This handler's job is to
  */
-
 static int
 cvs_resp_error(struct cvsroot *root, int type, char *line)
 {
+
 	fprintf(stderr, "%s\n", line);
 	return (1);
 }
@@ -315,7 +311,6 @@ cvs_resp_error(struct cvsroot *root, int type, char *line)
  * Handler for the `Clear-static-directory' and `Set-static-directory'
  * responses.
  */
-
 static int
 cvs_resp_statdir(struct cvsroot *root, int type, char *line)
 {
@@ -355,7 +350,6 @@ cvs_resp_statdir(struct cvsroot *root, int type, char *line)
  * specified directory doesn't exist, we create it and attach it to the
  * global file structure.
  */
-
 static int
 cvs_resp_sticky(struct cvsroot *root, int type, char *line)
 {
@@ -416,7 +410,6 @@ cvs_resp_sticky(struct cvsroot *root, int type, char *line)
  * Handler for the `New-entry' response and `Checked-in' responses.
  * In the case of `New-entry', we expect the entry line
  */
-
 static int
 cvs_resp_newentry(struct cvsroot *root, int type, char *line)
 {
@@ -470,7 +463,6 @@ cvs_resp_newentry(struct cvsroot *root, int type, char *line)
  * The file handler must make sure that the checksums match and free the
  * checksum buffer once it's done to indicate there is no further checksum.
  */
-
 static int
 cvs_resp_cksum(struct cvsroot *root, int type, char *line)
 {
@@ -496,7 +488,6 @@ cvs_resp_cksum(struct cvsroot *root, int type, char *line)
  * given is used to set the last modification time on the next file that
  * will be received.
  */
-
 static int
 cvs_resp_modtime(struct cvsroot *root, int type, char *line)
 {
@@ -511,7 +502,6 @@ cvs_resp_modtime(struct cvsroot *root, int type, char *line)
  * Handler for the `Updated', `Update-existing', `Created', `Merged' and
  * `Patched' responses, which all have a very similar format.
  */
-
 static int
 cvs_resp_updated(struct cvsroot *root, int type, char *line)
 {
@@ -604,7 +594,6 @@ cvs_resp_updated(struct cvsroot *root, int type, char *line)
  * the local copy.  The `Remove-entry' is received in cases where the file is
  * already gone but there is still an entry to remove in the Entries file.
  */
-
 static int
 cvs_resp_removed(struct cvsroot *root, int type, char *line)
 {
@@ -636,7 +625,6 @@ cvs_resp_removed(struct cvsroot *root, int type, char *line)
  *
  * Handler for the `Mode' response.
  */
-
 static int
 cvs_resp_mode(struct cvsroot *root, int type, char *line)
 {
@@ -653,7 +641,6 @@ cvs_resp_mode(struct cvsroot *root, int type, char *line)
  *
  * Handler for the `Module-expansion' response.
  */
-
 static int
 cvs_resp_modxpand(struct cvsroot *root, int type, char *line)
 {
@@ -665,7 +652,6 @@ cvs_resp_modxpand(struct cvsroot *root, int type, char *line)
  *
  * Handler for the `Rcs-diff' response.
  */
-
 static int
 cvs_resp_rcsdiff(struct cvsroot *root, int type, char *line)
 {
@@ -686,9 +672,8 @@ cvs_resp_rcsdiff(struct cvsroot *root, int type, char *line)
 	/* get updated entry fields */
 	cvs_getln(root, buf, sizeof(buf));
 	ent = cvs_ent_parse(buf);
-	if (ent == NULL) {
+	if (ent == NULL)
 		return (-1);
-	}
 
 	patchbuf = cvs_recvfile(root, &fmode);
 	fcont = cvs_buf_load(file, BUF_AUTOEXT);
@@ -736,7 +721,6 @@ cvs_resp_rcsdiff(struct cvsroot *root, int type, char *line)
  *
  * Handler for the `Template' response.
  */
-
 static int
 cvs_resp_template(struct cvsroot *root, int type, char *line)
 {

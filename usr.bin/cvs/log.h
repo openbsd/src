@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.h,v 1.3 2004/08/05 13:39:01 jfb Exp $	*/
+/*	$OpenBSD: log.h,v 1.4 2004/12/07 17:10:56 tedu Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -42,7 +42,6 @@
 #define LF_PID     0x01     /* include PID in messages */
 
 
-
 /* log priority levels */
 #define LP_DEBUG    0
 #define LP_INFO     1
@@ -54,10 +53,10 @@
 #define LP_ALERT    5
 #define LP_ERRNO    6
 #define LP_ABORT    7
- 
+
 #define LP_MAX      7
 #define LP_ALL      255
- 
+
 /* filtering methods */
 #define LP_FILTER_SET     0     /* set a filter */
 #define LP_FILTER_UNSET   1     /* remove a filter */

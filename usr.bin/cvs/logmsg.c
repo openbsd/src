@@ -1,16 +1,16 @@
-/*	$OpenBSD: logmsg.c,v 1.6 2004/12/06 21:03:12 deraadt Exp $	*/
+/*	$OpenBSD: logmsg.c,v 1.7 2004/12/07 17:10:56 tedu Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
- * All rights reserved. 
+ * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without 
- * modification, are permitted provided that the following conditions 
- * are met: 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
  *
- * 1. Redistributions of source code must retain the above copyright 
- *    notice, this list of conditions and the following disclaimer. 
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
  * 2. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission. 
+ *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
  * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
@@ -21,7 +21,7 @@
  * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+ * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <sys/types.h>
@@ -55,7 +55,6 @@
  * The returned value must later be free()d.
  * Returns a pointer to the allocated buffer on success, or NULL on failure.
  */
-
 char*
 cvs_logmsg_open(const char *path)
 {
@@ -92,7 +91,7 @@ cvs_logmsg_open(const char *path)
 			    ((lbuf[0] != 'y') && (lbuf[0] != 'n'))) {
 				fprintf(stderr, "invalid input\n");
 				continue;
-			} else if (lbuf[0] == 'y') 
+			} else if (lbuf[0] == 'y')
 				break;
 			else if (lbuf[0] == 'n') {
 				cvs_log(LP_ERR, "aborted by user");
@@ -108,9 +107,8 @@ cvs_logmsg_open(const char *path)
 	}
 
 	bp = cvs_buf_alloc(128, BUF_AUTOEXT);
-	if (bp == NULL) {
+	if (bp == NULL)
 		return (NULL);
-	}
 
 	/* lcont is used to tell if a buffer returned by fgets is a start
 	 * of line or just line continuation because the buffer isn't
@@ -146,7 +144,6 @@ cvs_logmsg_open(const char *path)
  * Returns the message in a dynamically allocated string on success, NULL on
  * failure.
  */
-
 char*
 cvs_logmsg_get(const char *dir, struct cvs_flist *files)
 {
@@ -252,7 +249,7 @@ cvs_logmsg_get(const char *dir, struct cvs_flist *files)
 		if ((len == 0) || (len > 2)) {
 			fprintf(stderr, "invalid input\n");
 			continue;
-		} else if (buf[0] == 'a') { 
+		} else if (buf[0] == 'a') {
 			cvs_log(LP_ERR, "aborted by user");
 			break;
 		} else if ((buf[0] == '\n') || (buf[0] == 'c')) {
@@ -280,7 +277,6 @@ cvs_logmsg_get(const char *dir, struct cvs_flist *files)
  * cvs_logmsg_send()
  *
  */
-
 int
 cvs_logmsg_send(struct cvsroot *root, const char *msg)
 {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.6 2004/12/06 21:03:12 deraadt Exp $	*/
+/*	$OpenBSD: log.c,v 1.7 2004/12/07 17:10:56 tedu Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -82,7 +82,6 @@ static struct syslog_data cvs_sl;
  * Initialize the logging facility of the server.
  * Returns 0 on success, or -1 on failure.
  */
-
 int
 cvs_log_init(u_int dest, u_int flags)
 {
@@ -116,12 +115,11 @@ cvs_log_init(u_int dest, u_int flags)
  *
  * Cleanup the logging facility.
  */
-
 void
 cvs_log_cleanup(void)
 {
-	closelog_r(&cvs_sl);
 
+	closelog_r(&cvs_sl);
 }
 
 
@@ -184,7 +182,6 @@ cvs_log_filter(u_int how, u_int level)
  * The <fmt> argument should not have a terminating newline, as this is taken
  * care of by the logging facility.
  */
-
 int
 cvs_log(u_int level, const char *fmt, ...)
 {
@@ -205,7 +202,6 @@ cvs_log(u_int level, const char *fmt, ...)
  * The <fmt> argument should not have a terminating newline, as this is taken
  * care of by the logging facility.
  */
-
 int
 cvs_vlog(u_int level, const char *fmt, va_list vap)
 {
@@ -286,7 +282,6 @@ cvs_vlog(u_int level, const char *fmt, va_list vap)
  * Wrapper function around printf() that prepends a 'M' or 'E' command when
  * the program is acting as server.
  */
-
 int
 cvs_printf(const char *fmt, ...)
 {

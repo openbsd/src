@@ -1,16 +1,16 @@
-/*	$OpenBSD: cvsd.c,v 1.13 2004/12/06 21:03:12 deraadt Exp $	*/
+/*	$OpenBSD: cvsd.c,v 1.14 2004/12/07 17:10:56 tedu Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
- * All rights reserved. 
+ * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without 
- * modification, are permitted provided that the following conditions 
- * are met: 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
  *
- * 1. Redistributions of source code must retain the above copyright 
- *    notice, this list of conditions and the following disclaimer. 
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
  * 2. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission. 
+ *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
  * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
@@ -21,7 +21,7 @@
  * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+ * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <sys/param.h>
@@ -58,7 +58,6 @@ static void  cvsd_report      (void);
 extern char *__progname;
 
 
-
 int    cvsd_fg = 0;
 uid_t  cvsd_uid = -1;
 gid_t  cvsd_gid = -1;
@@ -92,7 +91,6 @@ int    cvsd_msghdlr  (struct cvsd_child *, int);
  *
  * Generic signal handler.
  */
-
 void
 cvsd_sighdlr(int signo)
 {
@@ -120,7 +118,6 @@ cvsd_sighdlr(int signo)
  *
  * Display program usage.
  */
-
 void
 usage(void)
 {
@@ -275,7 +272,6 @@ main(int argc, char **argv)
  *
  * Drop privileges.
  */
-
 int
 cvsd_privdrop(void)
 {
@@ -304,7 +300,6 @@ cvsd_privdrop(void)
  * weird of loose permissions.
  * Returns the number of warnings on success, or -1 on failure.
  */
-
 int
 cvsd_checkperms(const char *path)
 {
@@ -410,7 +405,6 @@ cvsd_checkperms(const char *path)
  * On success, returns 0 in the child process context, 1 in the parent's
  * context, or -1 on failure.
  */
-
 int
 cvsd_child_fork(struct cvsd_child **chpp)
 {
@@ -491,7 +485,6 @@ cvsd_child_fork(struct cvsd_child **chpp)
  * at least <cvsd_chmin> children in it.
  * Returns 0 on success, or -1 on failure.
  */
-
 int
 cvsd_child_reap(void)
 {
@@ -543,7 +536,6 @@ cvsd_child_reap(void)
  * created unless the number of children has attained the maximum, in which
  * case NULL is returned.
  */
-
 struct cvsd_child*
 cvsd_child_get(void)
 {
@@ -570,7 +562,6 @@ cvsd_child_get(void)
  * local socket for requests from the cvs(1) program and on any outstanding
  * messages from the children.
  */
-
 static void
 cvsd_parent_loop(void)
 {
@@ -680,7 +671,6 @@ cvsd_parent_loop(void)
  * cvsd_child_main()
  *
  */
-
 static void
 cvsd_child_main(void)
 {
@@ -755,7 +745,6 @@ cvsd_child_main(void)
  * Handler for messages received from child processes.
  * Returns 0 on success, or -1 on failure.
  */
-
 int
 cvsd_msghdlr(struct cvsd_child *child, int fd)
 {
@@ -794,7 +783,7 @@ cvsd_msghdlr(struct cvsd_child *child, int fd)
 	switch (msg.cm_type) {
 	case CVSD_MSG_GETUID:
 		rbuf[ret] = '\0';
-		cvs_log(LP_INFO, "getting UID for `%s'", rbuf); 
+		cvs_log(LP_INFO, "getting UID for `%s'", rbuf);
 
 		pw = getpwnam(rbuf);
 		if (pw != NULL) {
@@ -806,7 +795,7 @@ cvsd_msghdlr(struct cvsd_child *child, int fd)
 		break;
 	case CVSD_MSG_GETUNAME:
 		memcpy(&uid, rbuf, sizeof(uid));
-		cvs_log(LP_INFO, "getting username for UID %u", uid); 
+		cvs_log(LP_INFO, "getting username for UID %u", uid);
 		pw = getpwuid(uid);
 		if (pw != NULL) {
 			msg.cm_type = CVSD_MSG_UNAME;
@@ -817,7 +806,7 @@ cvsd_msghdlr(struct cvsd_child *child, int fd)
 		break;
 	case CVSD_MSG_GETGID:
 		rbuf[ret] = '\0';
-		cvs_log(LP_INFO, "getting GID for `%s'", rbuf); 
+		cvs_log(LP_INFO, "getting GID for `%s'", rbuf);
 
 		gr = getgrnam(rbuf);
 		if (gr != NULL) {
@@ -849,7 +838,6 @@ cvsd_msghdlr(struct cvsd_child *child, int fd)
  * a new buffer.
  * Returns 0 on success, or -1 on failure.
  */
-
 int
 cvsd_set(int what, ...)
 {
@@ -925,7 +913,6 @@ cvsd_set(int what, ...)
 /*
  * cvsd_report()
  */
-
 static void
 cvsd_report(void)
 {

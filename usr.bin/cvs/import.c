@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.1 2004/11/09 20:46:02 krapht Exp $	*/
+/*	$OpenBSD: import.c,v 1.2 2004/12/07 17:10:56 tedu Exp $	*/
 /*
  * Copyright (c) 2004 Joris Vink <amni@pandora.be>
  * All rights reserved.
@@ -122,7 +122,7 @@ do_import(struct cvsroot *root, char **argv)
 	    cvs_sendarg(root, argv[1], 0) < 0 ||
 	    cvs_sendarg(root, argv[2], 0) < 0) {
 		cvs_log(LP_ERR, "failed to send arguments");
- 		return (-1);
+		return (-1);
 	}
 
 	/* create the repository name */

@@ -1,16 +1,16 @@
-/*	$OpenBSD: rcs.c,v 1.14 2004/12/06 21:03:12 deraadt Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.15 2004/12/07 17:10:56 tedu Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
- * All rights reserved. 
+ * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without 
- * modification, are permitted provided that the following conditions 
- * are met: 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
  *
- * 1. Redistributions of source code must retain the above copyright 
- *    notice, this list of conditions and the following disclaimer. 
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
  * 2. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission. 
+ *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
  * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
@@ -21,7 +21,7 @@
  * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+ * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <sys/param.h>
@@ -72,7 +72,6 @@
 
 #define RCS_NOSCOL   0x01   /* no terminating semi-colon */
 #define RCS_VOPT     0x02   /* value is optional */
-
 
 
 /* opaque parse data */
@@ -162,7 +161,6 @@ static struct rcs_key {
  * first operation that requires information from the file.
  * Returns a handle to the opened file on success, or NULL on failure.
  */
-
 RCSFILE*
 rcs_open(const char *path, u_int mode)
 {
@@ -225,7 +223,6 @@ rcs_open(const char *path, u_int mode)
  *
  * Close an RCS file handle.
  */
-
 void
 rcs_close(RCSFILE *rfp)
 {
@@ -283,7 +280,6 @@ rcs_close(RCSFILE *rfp)
  * path is in <rf_path>.
  * Returns 0 on success, or -1 on failure.
  */
-
 int
 rcs_write(RCSFILE *rfp)
 {
@@ -377,7 +373,6 @@ rcs_write(RCSFILE *rfp)
  * is named <sym> and is bound to the RCS revision <snum>.
  * Returns 0 on success, or -1 on failure.
  */
-
 int
 rcs_addsym(RCSFILE *rfp, const char *sym, RCSNUM *snum)
 {
@@ -947,7 +942,7 @@ rcs_parse_delta(RCSFILE *rfp)
 			rcs_freedelta(rdp);
 			return (-1);
 		} else if (tok == RCS_TOK_NUM || tok == RCS_TOK_DESC) {
-			rcs_pushtok(rfp, RCS_TOKSTR(rfp), tok); 
+			rcs_pushtok(rfp, RCS_TOKSTR(rfp), tok);
 			ret = (tok == RCS_TOK_NUM ? 1 : 0);
 			break;
 		}
@@ -994,7 +989,7 @@ rcs_parse_delta(RCSFILE *rfp)
 				free(tokstr);
 			tokstr = strdup(RCS_TOKSTR(rfp));
 			if (tokstr == NULL) {
-				cvs_log(LP_ERRNO, 
+				cvs_log(LP_ERRNO,
 				    "failed to duplicate rcs token");
 				rcs_freedelta(rdp);
 				return (-1);
@@ -1488,7 +1483,7 @@ rcs_gettok(RCSFILE *rfp)
 		*bp = '\0';
 
 		for (i = 0; i < sizeof(rcs_keys)/sizeof(rcs_keys[0]); i++) {
-			if (strcmp(rcs_keys[i].rk_str, pdp->rp_buf) == 0) { 
+			if (strcmp(rcs_keys[i].rk_str, pdp->rp_buf) == 0) {
 				type = rcs_keys[i].rk_id;
 				break;
 			}

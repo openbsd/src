@@ -1,16 +1,16 @@
-/*	$OpenBSD: cvs.h,v 1.34 2004/12/07 06:33:10 jfb Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.35 2004/12/07 17:10:56 tedu Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
- * All rights reserved. 
+ * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without 
- * modification, are permitted provided that the following conditions 
- * are met: 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
  *
- * 1. Redistributions of source code must retain the above copyright 
- *    notice, this list of conditions and the following disclaimer. 
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
  * 2. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission. 
+ *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
  * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
@@ -21,7 +21,7 @@
  * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+ * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #ifndef CVS_H
@@ -65,7 +65,6 @@
 #define CVS_OP_VERSION     15
 
 #define CVS_OP_ANY         64     /* all operations */
-
 
 
 /* methods */
@@ -127,7 +126,6 @@ struct cvs_op {
 	char             *co_msg;    /* message string (on commit or add) */
 	struct cvs_flist  co_files;
 };
-
 
 
 struct cvsroot {
@@ -197,7 +195,6 @@ typedef struct cvs_entries {
 } CVSENTRIES;
 
 
-
 struct cvs_hent {
 	char    ch_event;
 	time_t  ch_date;
@@ -237,7 +234,6 @@ extern int   cvs_nocase;
 extern CVSFILE *cvs_files;
 
 #endif
-
 
 
 /* client command handlers */

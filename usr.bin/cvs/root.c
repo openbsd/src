@@ -1,16 +1,16 @@
-/*	$OpenBSD: root.c,v 1.12 2004/12/06 21:03:13 deraadt Exp $	*/
+/*	$OpenBSD: root.c,v 1.13 2004/12/07 17:10:56 tedu Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
- * All rights reserved. 
+ * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without 
- * modification, are permitted provided that the following conditions 
- * are met: 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
  *
- * 1. Redistributions of source code must retain the above copyright 
- *    notice, this list of conditions and the following disclaimer. 
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
  * 2. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission. 
+ *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
  * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
@@ -21,7 +21,7 @@
  * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+ * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <sys/types.h>
@@ -81,7 +81,6 @@ static u_int cvs_rcsz = 0;
  * Returns a pointer to the allocated information on success, or NULL
  * on failure.
  */
-
 struct cvsroot*
 cvsroot_parse(const char *str)
 {
@@ -229,7 +228,6 @@ cvsroot_parse(const char *str)
  * Free a CVSROOT structure previously allocated and returned by
  * cvsroot_parse().
  */
-
 void
 cvsroot_free(struct cvsroot *root)
 {
@@ -256,7 +254,6 @@ cvsroot_free(struct cvsroot *root)
  * 2) the CVS/Root file found in checked-out trees
  * 3) the CVSROOT environment variable
  */
-
 struct cvsroot*
 cvsroot_get(const char *dir)
 {
@@ -290,9 +287,9 @@ cvsroot_get(const char *dir)
 	(void)fclose(fp);
 
 	len = strlen(line);
-	if (len == 0) {
+	if (len == 0)
 		cvs_log(LP_WARN, "empty CVS/Root file");
-	} else if (line[len - 1] == '\n')
+	else if (line[len - 1] == '\n')
 		line[--len] = '\0';
 
 	return cvsroot_parse(line);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.10 2004/12/06 21:03:12 deraadt Exp $	*/
+/*	$OpenBSD: diff.c,v 1.11 2004/12/07 17:10:56 tedu Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -242,7 +242,6 @@ static int  files_differ(FILE *, FILE *);
 static char *preadline(int, size_t, off_t);
 
 
-
 extern int cvs_client;
 
 static int aflag, bflag, dflag, iflag, Nflag, tflag, Tflag, wflag;
@@ -276,8 +275,6 @@ static struct context_vec *context_vec_ptr;
 #define FUNCTION_CONTEXT_SIZE	41
 static int lastline;
 static int lastmatchline;
-
-
 
 
 /*
@@ -339,7 +336,6 @@ u_char cup2low[256] = {
 };
 
 
-
 /*
  * cvs_diff()
  *
@@ -347,7 +343,6 @@ u_char cup2low[256] = {
  *
  * SYNOPSIS: cvs [args] diff [-clipu] [-D date] [-r rev]
  */
-
 int
 cvs_diff(int argc, char **argv)
 {
@@ -439,7 +434,6 @@ cvs_diff(int argc, char **argv)
  * cvs_diff_sendflags()
  *
  */
-
 int
 cvs_diff_sendflags(struct cvsroot *root, struct diff_arg *dap)
 {
@@ -473,7 +467,6 @@ cvs_diff_sendflags(struct cvsroot *root, struct diff_arg *dap)
  *
  * Diff a single file.
  */
-
 int
 cvs_diff_file(struct cvs_file *cfp, void *arg)
 {

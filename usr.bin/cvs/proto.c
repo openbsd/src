@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.30 2004/12/06 21:03:12 deraadt Exp $	*/
+/*	$OpenBSD: proto.c,v 1.31 2004/12/07 17:10:56 tedu Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -66,8 +66,6 @@
 #define CVS_REQF_RESP    0x01
 
 
-
-
 extern int   verbosity;
 extern int   cvs_compress;
 extern char *cvs_rsh;
@@ -76,10 +74,7 @@ extern int   cvs_nolog;
 extern int   cvs_readonly;
 extern int   cvs_cmdop;
 
-
-
 static int  cvs_initlog   (void);
-
 
 struct cvs_req cvs_requests[] = {
 	{ CVS_REQ_DIRECTORY,     "Directory",         0             },
@@ -132,7 +127,6 @@ struct cvs_req cvs_requests[] = {
 	{ CVS_REQ_CI,            "ci",                CVS_REQF_RESP },
 };
 
-
 struct cvs_resp cvs_responses[] = {
 	{ CVS_RESP_OK,         "ok"                     },
 	{ CVS_RESP_ERROR,      "error"                  },
@@ -167,7 +161,6 @@ struct cvs_resp cvs_responses[] = {
 /* hack to receive the remote version without outputting it */
 u_int cvs_version_sent = 0;
 
-
 static char  cvs_proto_buf[4096];
 
 /*
@@ -192,7 +185,6 @@ static pid_t cvs_subproc_pid;
  * server.  Then, a version request is sent and various global flags are sent.
  * Returns 0 on success, or -1 on failure.
  */
-
 int
 cvs_connect(struct cvsroot *root)
 {
@@ -352,7 +344,6 @@ cvs_connect(struct cvsroot *root)
  *
  * Disconnect from the cvs server.
  */
-
 void
 cvs_disconnect(struct cvsroot *root)
 {
@@ -372,7 +363,6 @@ cvs_disconnect(struct cvsroot *root)
  * cvs_req_getbyid()
  *
  */
-
 struct cvs_req*
 cvs_req_getbyid(int reqid)
 {
@@ -381,6 +371,7 @@ cvs_req_getbyid(int reqid)
 	for (i = 0; i < CVS_NBREQ; i++)
 		if (cvs_requests[i].req_id == reqid)
 			return &(cvs_requests[i]);
+
 	return (NULL);
 }
 
@@ -388,7 +379,6 @@ cvs_req_getbyid(int reqid)
 /*
  * cvs_req_getbyname()
  */
-
 struct cvs_req*
 cvs_req_getbyname(const char *rname)
 {
@@ -408,7 +398,6 @@ cvs_req_getbyname(const char *rname)
  * Build a space-separated list of all the requests that this protocol
  * implementation supports.
  */
-
 char*
 cvs_req_getvalid(void)
 {
@@ -457,7 +446,6 @@ cvs_req_getvalid(void)
  * cvs_resp_getbyid()
  *
  */
-
 struct cvs_resp*
 cvs_resp_getbyid(int respid)
 {
@@ -466,6 +454,7 @@ cvs_resp_getbyid(int respid)
 	for (i = 0; i < CVS_NBREQ; i++)
 		if (cvs_responses[i].resp_id == (u_int)respid)
 			return &(cvs_responses[i]);
+
 	return (NULL);
 }
 
@@ -473,7 +462,6 @@ cvs_resp_getbyid(int respid)
 /*
  * cvs_resp_getbyname()
  */
-
 struct cvs_resp*
 cvs_resp_getbyname(const char *rname)
 {
@@ -544,7 +532,6 @@ cvs_resp_getvalid(void)
  * Send the mode and size of a file followed by the file's contents.
  * Returns 0 on success, or -1 on failure.
  */
-
 int
 cvs_sendfile(struct cvsroot *root, const char *path)
 {
@@ -594,7 +581,6 @@ cvs_sendfile(struct cvsroot *root, const char *path)
  * create or update the file whose path is <path> with the received
  * information.
  */
-
 BUF*
 cvs_recvfile(struct cvsroot *root, mode_t *mode)
 {
@@ -653,7 +639,6 @@ cvs_recvfile(struct cvsroot *root, mode_t *mode)
  * contained in <arg>, which should not be terminated by a newline.
  * Returns 0 on success, or -1 on failure.
  */
-
 int
 cvs_sendreq(struct cvsroot *root, u_int rid, const char *arg)
 {
@@ -708,7 +693,6 @@ cvs_sendreq(struct cvsroot *root, u_int rid, const char *arg)
  * non-zero (either an error occured or the end of the response was reached).
  * Returns the number of handled commands on success, or -1 on failure.
  */
-
 int
 cvs_getresp(struct cvsroot *root)
 {
@@ -754,7 +738,6 @@ cvs_getresp(struct cvsroot *root)
  * Get a line from the remote end and store it in <lbuf>.  The terminating
  * newline character is stripped from the result.
  */
-
 int
 cvs_getln(struct cvsroot *root, char *lbuf, size_t len)
 {
@@ -794,7 +777,6 @@ cvs_getln(struct cvsroot *root, char *lbuf, size_t len)
  * contained in <arg>, which should not be terminated by a newline.
  * Returns 0 on success, or -1 on failure.
  */
-
 int
 cvs_sendresp(u_int rid, const char *arg)
 {
@@ -827,7 +809,6 @@ cvs_sendresp(u_int rid, const char *arg)
  *
  * Get a request from the client.
  */
-
 int
 cvs_getreq(void)
 {
@@ -866,7 +847,6 @@ cvs_getreq(void)
  * without any modifications.
  * Returns 0 on success, or -1 on failure.
  */
-
 int
 cvs_sendln(struct cvsroot *root, const char *line)
 {
@@ -902,7 +882,6 @@ cvs_sendln(struct cvsroot *root, const char *line)
  *
  * Send the first <len> bytes from the buffer <src> to the server.
  */
-
 int
 cvs_sendraw(struct cvsroot *root, const void *src, size_t len)
 {
@@ -928,7 +907,6 @@ cvs_sendraw(struct cvsroot *root, const void *src, size_t len)
  *
  * Receive the first <len> bytes from the buffer <src> to the server.
  */
-
 ssize_t
 cvs_recvraw(struct cvsroot *root, void *dst, size_t len)
 {
@@ -954,9 +932,8 @@ cvs_recvraw(struct cvsroot *root, void *dst, size_t len)
  *
  * Send a `Directory' request along with the 2 paths that follow it.
  */
-
 int
-cvs_senddir(struct cvsroot *root, CVSFILE *dir) 
+cvs_senddir(struct cvsroot *root, CVSFILE *dir)
 {
 	char lbuf[MAXPATHLEN], rbuf[MAXPATHLEN];
 
@@ -983,7 +960,6 @@ cvs_senddir(struct cvsroot *root, CVSFILE *dir)
  * determine if the argument should be simply appended to the last argument
  * sent or if it should be created as a new argument (0).
  */
-
 int
 cvs_sendarg(struct cvsroot *root, const char *arg, int append)
 {
@@ -998,7 +974,6 @@ cvs_sendarg(struct cvsroot *root, const char *arg, int append)
  * Send an `Entry' request to the server along with the mandatory fields from
  * the CVS entry <ent> (which are the name and revision).
  */
-
 int
 cvs_sendentry(struct cvsroot *root, const struct cvs_ent *ent)
 {
@@ -1020,7 +995,6 @@ cvs_sendentry(struct cvsroot *root, const struct cvs_ent *ent)
  * output.
  * Returns 0 on success, or -1 on failure.
  */
-
 static int
 cvs_initlog(void)
 {

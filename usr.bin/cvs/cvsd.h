@@ -1,16 +1,16 @@
-/*	$OpenBSD: cvsd.h,v 1.6 2004/11/09 20:51:33 krapht Exp $	*/
+/*	$OpenBSD: cvsd.h,v 1.7 2004/12/07 17:10:56 tedu Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
- * All rights reserved. 
+ * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without 
- * modification, are permitted provided that the following conditions 
- * are met: 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
  *
- * 1. Redistributions of source code must retain the above copyright 
- *    notice, this list of conditions and the following disclaimer. 
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
  * 2. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission. 
+ *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
  * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
@@ -21,7 +21,7 @@
  * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+ * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #ifndef CVSD_H
@@ -46,7 +46,6 @@
 
 #define CVSD_CHILD_DEFMIN    3
 #define CVSD_CHILD_DEFMAX    5
-
 
 
 #define CVSD_FPERM  (S_IRUSR | S_IWUSR)
@@ -91,7 +90,6 @@
 #define CVSD_ST_STOPPED      4
 
 
-
 /* message structure to pass data between the parent and the chrooted child */
 struct cvsd_msg {
 	u_int8_t  cm_type;
@@ -129,10 +127,8 @@ struct cvsd_child {
 };
 
 
-
 extern uid_t    cvsd_uid;
 extern gid_t    cvsd_gid;
-
 
 
 int                cvsd_set        (int, ...);

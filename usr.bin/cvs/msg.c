@@ -1,4 +1,4 @@
-/*	$OpenBSD: msg.c,v 1.5 2004/12/06 21:03:12 deraadt Exp $	*/
+/*	$OpenBSD: msg.c,v 1.6 2004/12/07 17:10:56 tedu Exp $	*/
 /*
  * Copyright (c) 2002 Matthieu Herrb
  * Copyright (c) 2001 Niels Provos <provos@citi.umich.edu>
@@ -37,7 +37,6 @@
  *
  * Pass a file descriptor <fd> to the other endpoint of the socket <sock>.
  */
-
 int
 cvsd_sendfd(int sock, int fd)
 {
@@ -81,7 +80,6 @@ cvsd_sendfd(int sock, int fd)
  * Receive a file descriptor over the socket <sock>.  Returns the descriptor
  * on success, or -1 on failure.
  */
-
 int
 cvsd_recvfd(int sock)
 {
@@ -129,7 +127,6 @@ cvsd_recvfd(int sock)
  * <fd>.
  * Returns 0 on success, or -1 on failure.
  */
-
 int
 cvsd_sendmsg(int fd, u_int type, const void *data, size_t len)
 {
@@ -181,7 +178,6 @@ cvsd_sendmsg(int fd, u_int type, const void *data, size_t len)
  * Returns 1 if a message was read, 0 if the remote end closed the message
  * socket and no further messages can be read, or -1 on failure.
  */
-
 int
 cvsd_recvmsg(int fd, u_int *type, void *dst, size_t *len)
 {

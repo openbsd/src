@@ -1,16 +1,16 @@
-/*	$OpenBSD: commit.c,v 1.8 2004/12/06 21:03:12 deraadt Exp $	*/
+/*	$OpenBSD: commit.c,v 1.9 2004/12/07 17:10:56 tedu Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
- * All rights reserved. 
+ * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without 
- * modification, are permitted provided that the following conditions 
- * are met: 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
  *
- * 1. Redistributions of source code must retain the above copyright 
- *    notice, this list of conditions and the following disclaimer. 
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
  * 2. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission. 
+ *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
  * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
@@ -21,7 +21,7 @@
  * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+ * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <sys/types.h>
@@ -53,7 +53,6 @@ int    cvs_commit_file     (CVSFILE *, void *);
  *
  * Handler for the `cvs commit' command.
  */
-
 int
 cvs_commit(int argc, char **argv)
 {
@@ -142,7 +141,6 @@ cvs_commit(int argc, char **argv)
  * Examine the file <cf> to see if it will be part of the commit, in which
  * case it gets added to the list passed as second argument.
  */
-
 int
 cvs_commit_prepare(CVSFILE *cf, void *arg)
 {
@@ -166,7 +164,6 @@ cvs_commit_prepare(CVSFILE *cf, void *arg)
  *
  * Commit a single file.
  */
-
 int
 cvs_commit_file(CVSFILE *cf, void *arg)
 {
