@@ -5082,7 +5082,7 @@ for machine in $build $host $target; do
 		;;
 	vax-*-openbsd*)
 		tm_file=vax/openbsd.h
-		tmake_file=t-libc-ok
+		tmake_file="t-libc-ok vax/t-openbsd"
 		# On OpenBSD, the headers are already okay.
 		fixincludes=Makefile.in
 		xmake_file=x-openbsd
