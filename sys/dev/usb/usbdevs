@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.35 2001/10/02 01:37:36 millert Exp $
+$OpenBSD: usbdevs,v 1.36 2001/10/26 18:05:28 nate Exp $
 /* $NetBSD: usbdevs,v 1.127 2000/11/15 14:36:09 augustss Exp $ */
 
 /*
@@ -610,7 +610,9 @@ product MACALLY MOUSE1		0x0101	mouse
 
 /* MCT Corp. */
 product MCT HUB0100		0x0100	Hub
+product MCT DU_H3SP_USB232	0x0200	D-Link DU-H3SP USB BAY Hub
 product MCT USB232		0x0210	USB-232 Interface
+product MCT SITECOM_USB232	0x0230	Sitecom USB-232 Products
 
 /* Melco, Inc products */
 product MELCO LUATX1		0x0001	LUA-TX Ethernet
