@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.38 2000/01/24 22:44:58 mickey Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.39 2000/02/01 04:03:14 assar Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -539,7 +539,6 @@ sys_execve(p, v, retval)
 			 */
 			if (fp == NULL) {
 				short flags = FREAD | (i == 0 ? 0 : FWRITE);
-				extern struct fileops vnops;
 				struct nameidata nd;
 				int indx;
 

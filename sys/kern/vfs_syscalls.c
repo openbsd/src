@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.60 1999/12/06 07:28:06 art Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.61 2000/02/01 04:03:14 assar Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -867,7 +867,6 @@ sys_open(p, v, retval)
 	int type, indx, error, localtrunc = 0;
 	struct flock lf;
 	struct nameidata nd;
-	extern struct fileops vnops;
 
 	if ((error = falloc(p, &nfp, &indx)) != 0)
 		return (error);
