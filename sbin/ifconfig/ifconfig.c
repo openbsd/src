@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.105 2004/06/26 03:12:08 pb Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.106 2004/06/26 04:00:05 pb Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.105 2004/06/26 03:12:08 pb Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.106 2004/06/26 04:00:05 pb Exp $";
 #endif
 #endif /* not lint */
 
@@ -2592,7 +2592,10 @@ getifgroups(void)
 	strlcpy(ifg.if_name, name, IFNAMSIZ);
 	
 	if (ioctl(s, SIOCGIFGROUP, (caddr_t)&ifg) == -1)
-		err(1, "SIOCGIFGROUP");
+		if (errno == EINVAL || errno == ENOTTY)
+			return;
+		else
+			err(1, "SIOCGIFGROUP");
 
 	len = ifg.ifg_len;
 	ifg.ifg_groups = (struct ifgroup *)calloc(len / sizeof(struct ifgroup),
