@@ -1,5 +1,53 @@
-Host name		Services Provided
----- ----		-------- --------
+This is a list of currently known ftp servers:
+
+Australia:
+
+ftp://melanoma.bf.rmit.edu.au/pub/OpenBSD == 
+	ftp://ftp.au.openbsd.org/pub/OpenBSD
+
+France:
+
+ftp://ftp.univ-evry.fr/pub/system/OpenBSD ==
+	     ftp://ftp1.fr.openbsd.org/pub/system/OpenBSD
+
+ftp://ftp.ibp.fr/pub/OpenBSD == ftp://ftp2.fr.openbsd.org/pub/OpenBSD
+
+Germany:
+
+
+ftp://ftp.cs.tu-berlin.de/pub/OpenBSD
+
+Located at the Free University, Berlin:
+
+	ftp://ftp.fu-berlin.de/pub/unix/openbsd/mirrors/OpenBSD ==
+		ftp://ftp.de.openbsd.org/pub/unix/openbsd/mirrors/OpenBSD
+
+Japan:
+
+Located at Toyohashi University of Technology, Aichi:
+
+	ftp://ftp.tut.ac.jp/OpenBSD == ftp://ftp.jp.openbsd.org/OpenBSD
+
+Located at Dream Train Internet:
+
+	ftp://ftp.dti.ad.jp/pub/OpenBSD
+
+Switzerland:
+
+ftp://ftp.openbsd.org/pub/OpenBSD == 
+	ftp://ftp.eu.openbsd.org/pub/OpenBSD
+
+UK:
+
+ftp://ftp.southern.com/pub/OpenBSD
+
+USA:
+
+ftp://hydra.heuris.com/pub/OpenBSD ==
+	ftp://ftp1.usa.openbsd.org/pub/OpenBSD
+
+ftp://freestuff.cs.colorado.edu/pub/OpenBSD == 
+	ftp://ftp2.usa.openbsd.org/pub/OpenBSD
 
 If you wish to become a distribution site for OpenBSD, contact
-mirrors@openbsd.org.
+deraadt@cvs.openbsd.org.
