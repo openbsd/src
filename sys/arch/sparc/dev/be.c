@@ -1,4 +1,4 @@
-/*	$OpenBSD: be.c,v 1.7 1998/08/28 19:06:46 jason Exp $	*/
+/*	$OpenBSD: be.c,v 1.8 1998/09/01 20:04:14 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt and Jason L. Wright.
@@ -448,8 +448,18 @@ betint(sc)
 	struct besoftc *sc;
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct be_bregs *br = sc->sc_br;
 	int bix;
 	struct be_txd txd;
+
+	/*
+	 * Get collision counters
+	 */
+	ifp->if_collisions += br->nc_ctr + br->fc_ctr + br->ex_ctr + br->lt_ctr;
+	br->nc_ctr = 0;
+	br->fc_ctr = 0;
+	br->ex_ctr = 0;
+	br->lt_ctr = 0;
 
 	bix = sc->sc_first_td;
 
@@ -489,7 +499,6 @@ berint(sc)
 	struct besoftc *sc;
 {
 	int bix, len;
-	struct be_rxd rxd;
 
 	bix = sc->sc_last_rd;
 
@@ -497,17 +506,14 @@ berint(sc)
 	 * Process all buffers with valid data.
 	 */
 	for (;;) {
-		bcopy(&sc->sc_desc->be_rxd[bix], &rxd, sizeof(rxd));
-
-		if (rxd.rx_flags & BE_RXD_OWN)
+		if (sc->sc_desc->be_rxd[bix].rx_flags & BE_RXD_OWN)
 			break;
 
-		len = rxd.rx_flags & BE_RXD_LENGTH;
+		len = sc->sc_desc->be_rxd[bix].rx_flags & BE_RXD_LENGTH;
 		be_read(sc, bix, len);
 
-		rxd.rx_flags =	BE_RXD_OWN | (BE_PKT_BUF_SZ & BE_RXD_LENGTH);
-
-		bcopy(&rxd, &sc->sc_desc->be_rxd[bix], sizeof(rxd));
+		sc->sc_desc->be_rxd[(bix + BE_RX_RING_SIZE)%BE_RX_RING_MAXSIZE].rx_flags =
+		    BE_RXD_OWN | (BE_PKT_BUF_SZ & BE_RXD_LENGTH);
 
 		if (++bix == BE_RX_RING_MAXSIZE)
 			bix = 0;
@@ -673,9 +679,12 @@ beinit(sc)
 	for (i = 0; i < BE_RX_RING_MAXSIZE; i++) {
 		sc->sc_desc->be_rxd[i].rx_addr =
 			(u_int32_t) &sc->sc_bufs_dva->rx_buf[i % BE_RX_RING_SIZE][0];
-		sc->sc_desc->be_rxd[i].rx_flags =
-			BE_RXD_OWN |
-			(BE_PKT_BUF_SZ & BE_RXD_LENGTH);
+		if ((i / BE_RX_RING_SIZE) == 0)
+			sc->sc_desc->be_rxd[i].rx_flags =
+				BE_RXD_OWN |
+				(BE_PKT_BUF_SZ & BE_RXD_LENGTH);
+		else
+			sc->sc_desc->be_rxd[i].rx_flags = 0;
 	}
 
 	sc->sc_first_td = sc->sc_last_td = sc->sc_no_td = 0;
@@ -1044,7 +1053,7 @@ be_put(sc, idx, m)
 			continue;
 		}
 		bcopy(mtod(m, caddr_t),
-		      ((char *)sc->sc_desc->be_txd[idx].tx_addr) + boff, len);
+		      &sc->sc_bufs->tx_buf[idx % BE_TX_RING_SIZE][boff], len);
 		boff += len;
 		tlen += len;
 		MFREE(m, n);
@@ -1142,7 +1151,7 @@ be_get(sc, idx, totlen)
 				len = MCLBYTES;
 		}
 		m->m_len = len = min(totlen, len);
-		bcopy(((char *)sc->sc_desc->be_rxd[idx].rx_addr) + boff,
+		bcopy(&sc->sc_bufs->rx_buf[idx % BE_RX_RING_SIZE][boff],
 		      mtod(m, caddr_t), len);
 		boff += len;
 		totlen -= len;
