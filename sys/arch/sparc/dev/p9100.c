@@ -1,7 +1,7 @@
-/*	$OpenBSD: p9100.c,v 1.35 2005/03/23 17:16:34 miod Exp $	*/
+/*	$OpenBSD: p9100.c,v 1.36 2005/03/26 15:16:14 miod Exp $	*/
 
 /*
- * Copyright (c) 2003, Miodrag Vallat.
+ * Copyright (c) 2003, 2005, Miodrag Vallat.
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
  * All rights reserved.
  *
@@ -46,6 +46,7 @@
 #include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
+#include <machine/bsd_openprom.h>
 #include <machine/pmap.h>
 #include <machine/cpu.h>
 #include <machine/conf.h>
@@ -53,6 +54,7 @@
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/rasops/rasops.h>
+#include <dev/wsfont/wsfont.h>
 #include <machine/fbvar.h>
 
 #include <sparc/dev/btreg.h>
@@ -85,6 +87,7 @@ static __inline__
 void	p9100_loadcmap_deferred(struct p9100_softc *, u_int, u_int);
 void	p9100_loadcmap_immediate(struct p9100_softc *, u_int, u_int);
 paddr_t	p9100_mmap(void *, off_t, int);
+int	p9100_pick_romfont(struct p9100_softc *);
 void	p9100_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
 
 struct wsdisplay_accessops p9100_accessops = {
@@ -225,9 +228,10 @@ void
 p9100attach(struct device *parent, struct device *self, void *args)
 {
 	struct p9100_softc *sc = (struct p9100_softc *)self;
+	struct rasops_info *ri = &sc->sc_sunfb.sf_ro;
 	struct confargs *ca = args;
-	int node, row, scr;
-	int isconsole, fb_depth;
+	int node, scr, fb_depth;
+	int isconsole, fontswitch, clear;
 
 #ifdef DIAGNOSTIC
 	if (ca->ca_ra.ra_nreg < P9100_NREG) {
@@ -269,9 +273,9 @@ p9100attach(struct device *parent, struct device *self, void *args)
 		break;
 	}
 	fb_setsize(&sc->sc_sunfb, fb_depth, 800, 600, node, ca->ca_bustype);
-	sc->sc_sunfb.sf_ro.ri_bits = mapiodev(&sc->sc_phys, 0,
+	ri->ri_bits = mapiodev(&sc->sc_phys, 0,
 	    round_page(sc->sc_sunfb.sf_fbsize));
-	sc->sc_sunfb.sf_ro.ri_hw = sc;
+	ri->ri_hw = sc;
 
 	printf(": rev %x, %dx%d, depth %d\n", scr & SCR_ID_MASK,
 	    sc->sc_sunfb.sf_width, sc->sc_sunfb.sf_height,
@@ -287,9 +291,13 @@ p9100attach(struct device *parent, struct device *self, void *args)
 	P9100_WRITE_CTL(sc, P9000_INTERRUPT_ENABLE, IER_MASTER_ENABLE | 0);
 
 	/*
-	 * If the framebuffer width is under 1024x768, we will switch from the
-	 * PROM font to the more adequate 8x16 font here.
-	 * However, we need to adjust two things in this case:
+	 * Try to get a copy of the PROM font.
+	 *
+	 * If we can, we still need to adjust the visible portion of the
+	 * display, as the PROM output is offset two chars to the left.
+	 *
+	 * If we can't, we'll switch to the 8x16 font, and we'll need to adjust
+	 * two things:
 	 * - the display row should be overrided from the current PROM metrics,
 	 *   to prevent us from overwriting the last few lines of text.
 	 * - if the 80x34 screen would make a large margin appear around it,
@@ -297,8 +305,13 @@ p9100attach(struct device *parent, struct device *self, void *args)
 	 *   the margins.
 	 * XXX there should be a rasops "clear margins" feature
 	 */
-	fbwscons_init(&sc->sc_sunfb,
-	    isconsole && (sc->sc_sunfb.sf_width >= 1024) ? 0 : RI_CLEAR);
+	fontswitch = p9100_pick_romfont(sc);
+	clear = !isconsole || fontswitch;
+	fbwscons_init(&sc->sc_sunfb, clear ? RI_CLEAR : 0);
+	if (!clear) {
+		ri->ri_bits -= 2 * ri->ri_xscale;
+		ri->ri_xorigin -= 2 * ri->ri_xscale;
+	}
 	fbwscons_setcolormap(&sc->sc_sunfb, p9100_setcolor);
 
 	/*
@@ -313,12 +326,7 @@ p9100attach(struct device *parent, struct device *self, void *args)
 	p9100_burner(sc, 1, 0);
 
 	if (isconsole) {
-		if (sc->sc_sunfb.sf_width < 1024)
-			row = 0;	/* screen has been cleared above */
-		else
-			row = -1;
-
-		fbwscons_console_init(&sc->sc_sunfb, row);
+		fbwscons_console_init(&sc->sc_sunfb, clear ? 0 : -1);
 	}
 
 	fbwscons_attach(&sc->sc_sunfb, &p9100_accessops, isconsole);
@@ -751,4 +759,79 @@ p9100_ras_do_cursor(struct rasops_info *ri)
 	sc->sc_junk = P9100_READ_CMD(sc, P9000_PE_QUAD);
 
 	p9100_drain(sc);
+}
+
+/*
+ * PROM font managment
+ */
+
+#define	ROMFONTNAME	"p9100_romfont"
+struct wsdisplay_font p9100_romfont = {
+	ROMFONTNAME,
+	0,
+	0, 256,
+	WSDISPLAY_FONTENC_ISO,	/* should check the `character-set' property */
+	0, 0, 0,
+	WSDISPLAY_FONTORDER_L2R,
+	WSDISPLAY_FONTORDER_L2R,
+	NULL,
+	NULL
+};
+
+int
+p9100_pick_romfont(struct p9100_softc *sc)
+{
+	struct rasops_info *ri = &sc->sc_sunfb.sf_ro;
+	int *romwidth, *romheight;
+	u_int8_t **romaddr;
+	char buf[200];
+
+	/*
+	 * This code currently only works for PROM >= 2.9; see
+	 * autoconf.c romgetcursoraddr() for details.
+	 */
+	if (promvec->pv_romvec_vers < 2 || promvec->pv_printrev < 0x00020009)
+		return (1);
+
+	/*
+	 * Get the PROM font metrics and address
+	 */
+	snprintf(buf, sizeof buf, "stdout @ is my-self "
+	    "addr char-height %lx ! addr char-width %lx ! addr font-base %lx !",
+	    (vaddr_t)&romheight, (vaddr_t)&romwidth, (vaddr_t)&romaddr);
+	romheight = romwidth = NULL;
+	rominterpret(buf);
+
+	if (romheight == NULL || romwidth == NULL || romaddr == NULL ||
+	    *romheight == 0 || *romwidth == 0 || *romaddr == NULL)
+		return (1);
+
+	p9100_romfont.fontwidth = *romwidth;
+	p9100_romfont.fontheight = *romheight;
+	p9100_romfont.stride = howmany(*romwidth, NBBY);
+	p9100_romfont.data = *romaddr;
+	
+#ifdef DEBUG
+	printf("%s: PROM font %dx%d @%p",
+	    sc->sc_sunfb.sf_dev.dv_xname, *romwidth, *romheight, *romaddr);
+#endif
+
+	/*
+	 * Build and add a wsfont structure
+	 */
+	wsfont_init();	/* if not done before */
+	if (wsfont_add(&p9100_romfont, 0) != 0)
+		return (1);
+
+	/*
+	 * Select this very font in our rasops structure
+	 */
+	ri->ri_wsfcookie = wsfont_find(ROMFONTNAME, 0, 0, 0);
+	if (wsfont_lock(ri->ri_wsfcookie, &ri->ri_font,
+	    WSDISPLAY_FONTORDER_L2R, WSDISPLAY_FONTORDER_L2R) <= 0) {
+		ri->ri_wsfcookie = 0;
+		return (1);
+	}
+	
+	return (0);
 }
