@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.policy.5,v 1.33 2003/07/09 08:16:44 jmc Exp $
+.\" $OpenBSD: isakmpd.policy.5,v 1.34 2003/07/25 10:06:27 markus Exp $
 .\" $EOM: isakmpd.policy.5,v 1.24 2000/11/23 12:55:25 niklas Exp $
 .\"
 .\" Copyright (c) 1999-2001, Angelos D. Keromytis.  All rights reserved.
@@ -312,6 +312,9 @@ One of
 .Va md5 ,
 .Va sha ,
 .Va ripemd ,
+.Va sha2-256 ,
+.Va sha2-385 ,
+.Va sha2-512 ,
 or
 .Va des ,
 based on the hash algorithm specified in the AH proposal.
@@ -348,6 +351,9 @@ One of
 .Va hmac-sha ,
 .Va des-mac ,
 .Va kpdk ,
+.Va hmac-sha2-256 ,
+.Va hmac-sha2-385 ,
+.Va hmac-sha2-512 ,
 or
 .Va hmac-ripemd .
 based on the authentication method specified in the AH proposal.
@@ -357,6 +363,9 @@ One of
 .Va hmac-sha ,
 .Va des-mac ,
 .Va kpdk ,
+.Va hmac-sha2-256 ,
+.Va hmac-sha2-385 ,
+.Va hmac-sha2-512 ,
 or
 .Va hmac-ripemd
 based on the authentication method specified in the ESP proposal.
