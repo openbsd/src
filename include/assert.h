@@ -1,4 +1,4 @@
-/*	$OpenBSD: assert.h,v 1.4 2002/02/19 19:39:36 millert Exp $	*/
+/*	$OpenBSD: assert.h,v 1.5 2002/04/17 16:00:34 espie Exp $	*/
 /*	$NetBSD: assert.h,v 1.6 1994/10/26 00:55:44 cgd Exp $	*/
 
 /*-
@@ -49,16 +49,22 @@
 #undef assert
 #undef _assert
 
+#include <sys/cdefs.h>
+
 #ifdef NDEBUG
-#define	assert(e)	((void)0)
-#define	_assert(e)	((void)0)
+# define	assert(e)	((void)0)
+# define	_assert(e)	((void)0)
 #else
-#define	_assert(e)	assert(e)
-#define	assert(e)	((e) ? (void)0 : __assert(__FILE__, __LINE__, #e))
+# define	_assert(e)	assert(e)
+# if __GNUC_PREREQ__(2, 95) || (defined(__STDC__) && defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L)
+#  define	assert(e)	((e) ? (void)0 : __assert2(__FILE__, __LINE__, __func__, #e))
+# else
+#  define	assert(e)	((e) ? (void)0 : __assert(__FILE__, __LINE__, #e))
+# endif
 #endif
 
-#include <sys/cdefs.h>
 
 __BEGIN_DECLS
 void __assert(const char *, int, const char *);
+void __assert2(const char *, int, const char *, const char *);
 __END_DECLS
