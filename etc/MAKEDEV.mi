@@ -1,6 +1,6 @@
 include(MAKEDEV.sub)dnl
 dnl
-vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.37 2002/02/21 13:03:00 todd Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.38 2002/02/21 13:41:55 todd Exp $-})dnl
 dnl
 divert(1)dnl
 {-#-}
@@ -148,7 +148,7 @@ twrget(all, mmcl, mmclock)dnl
 target(all, lpt, 0, 1, 2)dnl
 twrget(all, lpt, lpa, 0, 1, 2)dnl
 target(all, joy, 0, 1)dnl
-target(all, rnd, random)dnl
+twrget(all, rnd, random)dnl
 target(all, uk, 0)dnl
 target(all, st, 0)dnl
 target(all, wt, 0)dnl
@@ -173,7 +173,6 @@ twrget(all, csx, cgsix, 0)dnl
 twrget(all, ceg, cgeight, 0)dnl
 twrget(all, cfo, cgfourteen, 0)dnl
 target(all, tcx, 0)dnl
-twrget(all, grf_mac, grf, 0, 1, 2, 3)dnl
 twrget(all, grf_amiga, grf, 0, 1, 2, 3, 4, 5, 6)dnl
 target(all, par, 0)dnl
 twrget(all, amouse, mouse, 0, 1)dnl
@@ -304,6 +303,7 @@ target(ramd, bpf, 0)dnl
 target(ramd, rd, 0)dnl
 -})dnl
 ifelse(MACHINE, sparc, {-dnl
+target(all, uk, 1)dnl
 target(all, ses, 0)dnl
 target(all, ch, 0)dnl
 target(all, ss, 0, 1)dnl
@@ -326,6 +326,7 @@ target(ramd, rd, 0)dnl
 target(ramd, cd, 0)dnl
 -})dnl
 ifelse(MACHINE, sparc64, {-dnl
+target(all, uk, 1)dnl
 twrget(wscons, wscons, ttyD, cfg, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, a, b)dnl
 target(all, ccd, 0, 1, 2, 3)dnl
 target(all, ses, 0)dnl
@@ -549,6 +550,7 @@ target(ramd, bpf, 0, 1)dnl
 target(ramd, tun, 0, 1)dnl
 -})dnl
 ifelse(MACHINE, mac68k, {-dnl
+twrget(all, grf_mac, grf, 0, 1, 2, 3)dnl
 target(all, uk, 1)dnl
 target(all, ses, 0)dnl
 target(all, sd, 0, 1, 2, 3, 4)dnl
@@ -565,6 +567,7 @@ target(all, xy, 0, 1, 2, 3)dnl
 target(all, rd, 0)dnl
 target(all, cd, 0, 1)dnl
 target(all, ccd, 0, 1, 2, 3)dnl
+twrget(all, grf_mac, grf, 0, 1)dnl
 twrget(ramd, mac_ttye, ttye, 0)dnl
 target(ramd, cd, 0, 1)dnl
 target(ramd, sd, 0, 1, 2, 3)dnl
@@ -599,8 +602,10 @@ target(ramd, cd, 0, 1)dnl)dnl
 target(ramd, rd, 0)dnl
 target(ramd, tty0, 0, 1)dnl
 target(ramd, pty, 0)dnl
+twrget(ramd, rnd, random)dnl
 -})dnl
 ifelse(MACHINE, sun3, {-
+target(all, uk, 1)dnl
 target(all, ses, 0)dnl
 target(all, ch, 0)dnl
 target(all, ss, 0, 1)dnl
