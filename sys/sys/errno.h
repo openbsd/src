@@ -1,4 +1,4 @@
-/*	$OpenBSD: errno.h,v 1.4 1996/07/25 05:44:10 downsj Exp $	*/
+/*	$OpenBSD: errno.h,v 1.5 1996/07/26 10:34:28 deraadt Exp $	*/
 /*	$NetBSD: errno.h,v 1.10 1996/01/20 01:33:53 jtc Exp $	*/
 
 /*
@@ -48,7 +48,7 @@ extern int errno;			/* global error number */
 #define __SYS_ERRLIST
 
 extern int sys_nerr;
-extern const char *const sys_errlist[];
+extern char *sys_errlist[];
 #endif
 #endif
 

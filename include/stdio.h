@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdio.h,v 1.5 1996/07/25 05:47:59 downsj Exp $	*/
+/*	$OpenBSD: stdio.h,v 1.6 1996/07/26 10:34:25 deraadt Exp $	*/
 /*	$NetBSD: stdio.h,v 1.18 1996/04/25 18:29:21 jtc Exp $	*/
 
 /*-
@@ -238,7 +238,7 @@ char	*gets __P((char *));
 #define __SYS_ERRLIST
 
 extern int sys_nerr;			/* perror(3) external variables */
-extern const char *const sys_errlist[];
+extern char *sys_errlist[];
 #endif
 void	 perror __P((const char *));
 int	 printf __P((const char *, ...));
