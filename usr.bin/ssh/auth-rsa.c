@@ -16,7 +16,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: auth-rsa.c,v 1.14 1999/11/24 19:53:44 markus Exp $");
+RCSID("$Id: auth-rsa.c,v 1.15 1999/12/02 20:17:49 markus Exp $");
 
 #include "rsa.h"
 #include "packet.h"
@@ -255,9 +255,9 @@ auth_rsa(struct passwd *pw, BIGNUM *client_n)
 
 		/* check the real bits  */
 		if (bits != BN_num_bits(n))
-			error("Warning: error in %s, line %ld: keysize mismatch: "
-			      "actual size %d vs. announced %d.",
-			      file, linenum, BN_num_bits(n), bits);
+			log("Warning: %s, line %ld: keysize mismatch: "
+			    "actual %d vs. announced %d.",
+			    file, linenum, BN_num_bits(n), bits);
 
 		/* Check if the we have found the desired key (identified by its modulus). */
 		if (BN_cmp(n, client_n) != 0)
