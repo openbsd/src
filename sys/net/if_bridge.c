@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.22 2000/01/10 22:18:29 angelos Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.23 2000/01/15 05:02:46 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -131,6 +131,14 @@ struct bridge_softc {
 	LIST_HEAD(bridge_rthead, bridge_rtnode)	*sc_rts;/* hash table */
 };
 
+/*
+ * Ethernet header and SNAP header
+ */
+struct ehllc {
+	struct ether_header eh;
+	struct llc llc;
+};
+
 struct bridge_softc bridgectl[NBRIDGE];
 
 void	bridgeattach __P((int));
@@ -153,6 +161,7 @@ struct ifnet *	bridge_rtupdate __P((struct bridge_softc *,
 struct ifnet *	bridge_rtlookup __P((struct bridge_softc *,
     struct ether_addr *));
 u_int32_t	bridge_hash __P((struct ether_addr *));
+struct mbuf *bridge_blocknonip __P((struct mbuf *));
 
 #define	ETHERADDR_IS_IP_MCAST(a) \
 	/* struct etheraddr *a;	*/				\
@@ -762,13 +771,13 @@ bridgeintr(void)
 				}
 			}
 
-			if ((ifl->bif_flags & IFBIF_BLOCKNONIP) &&
-			    (eh->ether_type != htons(ETHERTYPE_IP)) &&
-			    (eh->ether_type != htons(ETHERTYPE_IPV6)) &&
-			    (eh->ether_type != htons(ETHERTYPE_ARP)) &&
-			    (eh->ether_type != htons(ETHERTYPE_REVARP))) {
-				m_freem(m);
-				continue;
+			if (ifl->bif_flags & IFBIF_BLOCKNONIP) {
+				m = bridge_blocknonip(m);
+				if (m == NULL)
+					continue;
+				eh = mtod(m, struct ether_header *);
+				dst = (struct ether_addr *)&eh->ether_dhost[0];
+				src = (struct ether_addr *)&eh->ether_shost[0];
 			}
 
 #if defined(INET) && (defined(IPFILTER) || defined(IPFILTER_LKM))
@@ -937,13 +946,6 @@ bridge_broadcast(sc, ifp, eh, m)
 		    (m->m_flags & (M_BCAST | M_MCAST)) == 0)
 			continue;
 
-		if ((p->bif_flags & IFBIF_BLOCKNONIP) &&
-		    (eh->ether_type != htons(ETHERTYPE_IP)) &&
-		    (eh->ether_type != htons(ETHERTYPE_IPV6)) &&
-		    (eh->ether_type != htons(ETHERTYPE_ARP)) &&
-		    (eh->ether_type != htons(ETHERTYPE_REVARP)))
-			continue;
-
 		if ((p->ifp->if_flags & IFF_RUNNING) == 0)
 			continue;
 
@@ -965,8 +967,14 @@ bridge_broadcast(sc, ifp, eh, m)
 			}
 		}
 
+		if (p->bif_flags & IFBIF_BLOCKNONIP) {
+			mc = bridge_blocknonip(mc);
+			if (mc == NULL)
+				continue;
+		}
+
 		sc->sc_if.if_opackets++;
-		sc->sc_if.if_obytes += m->m_pkthdr.len;
+		sc->sc_if.if_obytes += mc->m_pkthdr.len;
 		if ((eh->ether_shost[0] & 1) == 0)
 			ifp->if_omcasts++;
 
@@ -1435,12 +1443,44 @@ done:
 	return (error);
 }
 
-#if defined(INET) && (defined(IPFILTER) || defined(IPFILTER_LKM))
+struct mbuf *
+bridge_blocknonip(m)
+	struct mbuf *m;
+{
+	struct ehllc *ehllc;
+	u_int16_t etype;
 
-struct ehllc {
-	struct ether_header eh;
-	struct llc llc;
-};
+	if (m->m_len < sizeof(struct ehllc)) {
+		m = m_pullup(m, sizeof(struct ehllc));
+		if (m == NULL)
+			return (m);
+	}
+
+	ehllc = mtod(m, struct ehllc *);
+	etype = ntohs(ehllc->eh.ether_type);
+
+	if (etype == ETHERTYPE_ARP || etype == ETHERTYPE_REVARP ||
+	    etype == ETHERTYPE_IP  || etype == ETHERTYPE_IPV6)
+		return (m);
+
+	if (etype > ETHERMTU)
+		goto notip;
+
+	if (ehllc->llc.llc_control == LLC_UI &&
+	    ehllc->llc.llc_dsap == LLC_SNAP_LSAP &&
+	    ehllc->llc.llc_ssap == LLC_SNAP_LSAP) {
+		etype = ntohs(ehllc->llc.llc_snap.ether_type);
+		if (etype == ETHERTYPE_ARP || etype == ETHERTYPE_REVARP ||
+		    etype == ETHERTYPE_IP  || etype == ETHERTYPE_IPV6)
+			return (m);
+	}
+
+notip:
+	m_freem(m);
+	return (NULL);
+}
+
+#if defined(INET) && (defined(IPFILTER) || defined(IPFILTER_LKM))
 
 /*
  * Filter IP packets by peeking into the ethernet frame.  This violates
