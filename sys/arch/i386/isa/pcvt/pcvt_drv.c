@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_drv.c,v 1.17 1997/11/05 09:38:55 deraadt Exp $	*/
+/*	$OpenBSD: pcvt_drv.c,v 1.18 1998/01/04 12:11:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -239,7 +239,7 @@ pcattach(struct isa_device *dev)
 			break;
 	}
 
-	printf("kbd, [R%s]\n", PCVT_REL);
+	printf("kbd\n");
 
 #if PCVT_NETBSD || (PCVT_FREEBSD > 110 && PCVT_FREEBSD < 200)
 
