@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.127 2002/05/29 18:57:05 deraadt Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.128 2002/06/09 00:37:37 itojun Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$OpenBSD: ftpd.c,v 1.127 2002/05/29 18:57:05 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ftpd.c,v 1.128 2002/06/09 00:37:37 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -1859,9 +1859,13 @@ printaddr:
 		}
 		if (af) {
 			char hbuf[MAXHOSTNAMELEN], pbuf[10];
-			if (getnameinfo((struct sockaddr *)su, su->su_len,
+			union sockunion tmp = *su;
+
+			if (tmp.su_family == AF_INET6)
+				tmp.su_sin6.sin6_scope_id = 0;
+			if (getnameinfo((struct sockaddr *)&tmp, tmp.su_len,
 			    hbuf, sizeof(hbuf), pbuf, sizeof(pbuf),
-			    NI_NUMERICHOST) == 0) {
+			    NI_NUMERICHOST | NI_NUMERICSERV) == 0) {
 				if (ispassive)
 					printf("211- EPSV ");
 				else
