@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb_direct.c,v 1.3 1997/03/31 12:59:11 briggs Exp $	*/
+/*	$OpenBSD: adb_direct.c,v 1.4 1997/04/07 01:22:15 briggs Exp $	*/
 /*  adb_direct.c 1.91 1/20/97 jpw */
 
 /*
@@ -1754,7 +1754,7 @@ int
 adb_op_sync(Ptr buffer, Ptr compRout, Ptr data, short command)
 {
         int     result;
-        int     flag;
+        volatile int     flag;
 
         flag = 0;
         result = adb_op(buffer, (void *) adb_op_comprout,
@@ -2011,7 +2011,7 @@ adb_set_date_time(unsigned long time)
 {
         u_char output[MAX_ADB_MSG_LENGTH];
         int     result;
-        int     flag = 0;
+        volatile int     flag = 0;
 
         switch (adbHardware) {
         case ADB_HW_II:
@@ -2100,7 +2100,7 @@ adb_prog_switch_enable(void)
 {
         u_char output[MAX_ADB_MSG_LENGTH];
         int     result;
-        int     flag = 0;
+        volatile int     flag = 0;
 
         switch (adbHardware) {
         case ADB_HW_IISI:
@@ -2134,7 +2134,7 @@ adb_prog_switch_disable(void)
 {
         u_char output[MAX_ADB_MSG_LENGTH];
         int     result;
-        int     flag = 0;
+        volatile int     flag = 0;
 
         switch (adbHardware) {
         case ADB_HW_IISI:
