@@ -73,8 +73,7 @@ PRIVATE int remote_session ARGS2(char *, acc_method, char *, host)
 	 *  *cp=0;  / * terminate at any ;,<,>,`,|,",' or space or return
 	 *  or tab to prevent security whole
 	 */
-	for(cp = (strchr(host, '@') ? strchr(host, '@') : host); *cp != '\0';
-		cp++)	{
+	for(cp = host; *cp != '\0'; cp++) {
 	    if(!isalnum(*cp) && *cp != '_' && *cp != '-' &&
 				*cp != ':' && *cp != '.' && *cp != '@') {
 		*cp = '\0';
@@ -165,18 +164,18 @@ PRIVATE int remote_session ARGS2(char *, acc_method, char *, host)
 #if defined(unix) || defined(DOSPATH)
 #ifndef TELNET_DONE
 	if (login_protocol == rlogin) {
-	    sprintf(command, "%s %s%s%s", RLOGIN_COMMAND,
+	    snprintf(command, sizeof(command) - 1, "%s %s%s%s", RLOGIN_COMMAND,
 		hostname,
 		user ? " -l " : "",
 		user ? user : "");
 
 	} else if (login_protocol == tn3270) {
-	    sprintf(command, "%s %s %s", TN3270_COMMAND,
+	    snprintf(command, sizeof(command) - 1, "%s %s %s", TN3270_COMMAND,
 		hostname,
 		port ? port : "");
 
 	} else {  /* TELNET */
-	    sprintf(command, "%s %s %s", TELNET_COMMAND,
+	    snprintf(command, sizeof(command) - 1, "%s %s %s", TELNET_COMMAND,
 		hostname,
 		port ? port : "");
 	}
