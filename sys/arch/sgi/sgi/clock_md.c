@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock_md.c,v 1.5 2004/08/11 15:13:35 deraadt Exp $ */
+/*	$OpenBSD: clock_md.c,v 1.6 2004/09/16 09:24:52 pefo Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -107,7 +107,7 @@ ds1687_get(sc, base, ct)
 	ct->min = FROMBCD(bus_space_read_1(clk_t, clk_h, 2));
 	ct->hour = FROMBCD(bus_space_read_1(clk_t, clk_h, 4));
 	ct->day = FROMBCD(bus_space_read_1(clk_t, clk_h, 7));
-	ct->mon = FROMBCD(bus_space_read_1(clk_t, clk_h, 8)) - 1;
+	ct->mon = FROMBCD(bus_space_read_1(clk_t, clk_h, 8));
 	ct->year = FROMBCD(bus_space_read_1(clk_t, clk_h, 9));
 	century = FROMBCD(bus_space_read_1(clk_t, clk_h, 72));
 
@@ -141,7 +141,7 @@ ds1687_set(sc, ct)
 	bus_space_write_1(clk_t, clk_h, 4, TOBCD(ct->hour));
 	bus_space_write_1(clk_t, clk_h, 6, TOBCD(ct->dow));
 	bus_space_write_1(clk_t, clk_h, 7, TOBCD(ct->day));
-	bus_space_write_1(clk_t, clk_h, 8, TOBCD(ct->mon + 1));
+	bus_space_write_1(clk_t, clk_h, 8, TOBCD(ct->mon));
 	bus_space_write_1(clk_t, clk_h, 9, TOBCD(year));
 	bus_space_write_1(clk_t, clk_h, 72, TOBCD(century));
 
