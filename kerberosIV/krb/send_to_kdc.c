@@ -315,7 +315,7 @@ send_recv(pkt, rpkt, f, _to, addrs)
         if (krb_debug)
             fprintf(stderr,
                     "packet not from %lx\n",
-                    ntohl(hp->h_addr));
+                    from.sin_addr.s_addr);
     }
     if (krb_debug)
         fprintf(stderr, "%s: received packet from wrong host! (%x)\n",
