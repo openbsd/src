@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.34 1998/08/24 05:30:07 millert Exp $
+#	$OpenBSD: MAKEDEV,v 1.35 1998/08/24 05:49:55 millert Exp $
 #	$NetBSD: MAKEDEV,v 1.21 1996/05/19 21:03:49 veego Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -135,7 +135,7 @@ floppy|ramdisk)
 
 std)
 	rm -f console drum kmem mem reload null zero tty
-	rm -f klog stdin stdout stderr ipf
+	rm -f klog stdin stdout stderr ipf ksyms
 	mknod console		c 0 0
 	mknod drum		c 3 0	; chmod 640 drum ; chown root.kmem drum
 	mknod kmem		c 2 1	; chmod 640 kmem ; chown root.kmem kmem
