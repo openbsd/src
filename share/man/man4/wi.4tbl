@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wi.4tbl,v 1.58 2004/10/20 15:36:20 miod Exp $
+.\"	$OpenBSD: wi.4tbl,v 1.59 2004/10/24 22:07:47 millert Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -195,7 +195,7 @@ MicroSoft MN520:Prism-2.5:PCMCIA
 NANOSPEED ROOT-RZ2000:Prism-2:PCMCIA
 NDC/Sohoware NCP130:Prism-2:PCI
 NEC CMZ-RT-WP:Prism-2:PCMCIA
-Netgear MA111:Prism-3:USB
+Netgear MA111 (version 1 only):Prism-3:USB
 Netgear MA311:Prism-2.5:PCI
 Netgear MA401:Prism-2:PCMCIA
 Netgear MA401RA:Prism-2.5:PCMCIA
