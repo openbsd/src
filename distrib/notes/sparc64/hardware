@@ -56,6 +56,7 @@ Supported devices {:-include-:}:
 
 	Serial ports: 
 		onboard SBUS Zilog 8530 (zs)
+		onboard EBUS Infineon (Siemens) 82532 (sab)
 		onboard 16550 compatibles (com)
 		SBus MAGMA cards including: 4Sp, 8Sp, 12Sp, 16Sp,
 			LC2+1Sp, 2+1Sp, 4+1Sp, and 8+2Sp
