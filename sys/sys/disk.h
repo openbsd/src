@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.h,v 1.6 2001/01/25 03:50:53 todd Exp $	*/
+/*	$OpenBSD: disk.h,v 1.7 2001/05/14 07:05:00 angelos Exp $	*/
 /*	$NetBSD: disk.h,v 1.11 1996/04/28 20:22:50 thorpej Exp $	*/
 
 /*
@@ -140,6 +140,7 @@ TAILQ_HEAD(disklist_head, disk);	/* the disklist is a TAILQ */
 
 #ifdef _KERNEL
 extern	int disk_count;			/* number of disks in global disklist */
+extern	int disk_change;		/* disk attached/detached */
 
 void	disk_init __P((void));
 int     disk_construct __P((struct disk *, char *));
