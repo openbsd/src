@@ -1,5 +1,5 @@
 #  $NetBSD: Makefile,v 1.28 1995/11/20 22:06:19 jtc Exp $
-#  $OpenBSD: Makefile,v 1.16 1999/03/07 01:21:32 deraadt Exp $
+#  $OpenBSD: Makefile,v 1.17 1999/03/08 19:14:28 millert Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
 # 
@@ -42,6 +42,9 @@
 #					    libm with IEEE as the 
 #					    default standard
 # 
+
+# For NOPROFILE and NOPIC
+.include <bsd.own.mk>
 
 CFLAGS+= -D__LIBM_PRIVATE -D_USE_WRITE
 
