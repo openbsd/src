@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.16 1999/02/24 22:57:34 angelos Exp $	*/
+/*	$OpenBSD: main.c,v 1.17 1999/03/01 01:28:13 d Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-static char *rcsid = "$OpenBSD: main.c,v 1.16 1999/02/24 22:57:34 angelos Exp $";
+static char *rcsid = "$OpenBSD: main.c,v 1.17 1999/03/01 01:28:13 d Exp $";
 #endif
 #endif /* not lint */
 
@@ -248,7 +248,7 @@ main(argc, argv)
 
 	af = AF_UNSPEC;
 
-	while ((ch = getopt(argc, argv, "Aadf:ghI:iM:mN:np:rstuvw:")) != -1)
+	while ((ch = getopt(argc, argv, "Aadf:gI:iM:mN:np:rstuvw:")) != -1)
 		switch(ch) {
 		case 'A':
 			Aflag = 1;
@@ -563,7 +563,7 @@ usage()
 	(void)fprintf(stderr,
 "usage: %s [-Aan] [-f address_family] [-M core] [-N system]\n", __progname);
 	(void)fprintf(stderr,
-"       %s [-ghimnrs] [-f address_family] [-M core] [-N system]\n", __progname);
+"       %s [-gimnrs] [-f address_family] [-M core] [-N system]\n", __progname);
 	(void)fprintf(stderr,
 "       %s [-n] [-I interface] [-M core] [-N system] [-w wait]\n", __progname);
 	(void)fprintf(stderr,
