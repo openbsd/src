@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.49 2004/04/09 21:52:17 henning Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.50 2004/05/31 16:58:19 mcbride Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1166,6 +1166,7 @@ void ti_setmulti(sc)
  
 	ifp = &sc->arpcom.ac_if;
 
+allmulti:
 	if (ifp->if_flags & IFF_ALLMULTI) {
 		TI_DO_CMD(TI_CMD_SET_ALLMULTI, TI_CMD_CODE_ALLMULTI_ENB, 0);
 		return;
@@ -1188,6 +1189,13 @@ void ti_setmulti(sc)
 	/* Now program new ones. */
 	ETHER_FIRST_MULTI(step, ac, enm);
 	while (enm != NULL) {
+		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+			/* Re-enable interrupts. */
+			CSR_WRITE_4(sc, TI_MB_HOSTINTR, intrs);
+
+			ifp->if_flags |= IFF_ALLMULTI;
+			goto allmulti;
+		}
 		mc = malloc(sizeof(struct ti_mc_entry), M_DEVBUF, M_NOWAIT);
 		if (mc == NULL)
 			panic("ti_setmulti");
