@@ -1,4 +1,4 @@
-/*	$OpenBSD: sync.c,v 1.7 2003/07/06 02:03:13 avsm Exp $	*/
+/*	$OpenBSD: sync.c,v 1.8 2004/12/17 18:46:32 moritz Exp $	*/
 /*	$NetBSD: sync.c,v 1.9 1998/08/30 09:19:40 veego Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)sync.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: sync.c,v 1.7 2003/07/06 02:03:13 avsm Exp $";
+static char rcsid[] = "$OpenBSD: sync.c,v 1.8 2004/12/17 18:46:32 moritz Exp $";
 #endif
 #endif /* not lint */
 
@@ -69,24 +69,25 @@ fmtship(buf, len, fmt, ship)
 	const char *fmt;
 	struct ship *ship;
 {
-	while (*fmt) {
-		if (len-- == 0) {
-			*buf = '\0';
-			return;
-		}
+	if (len == 0)
+		abort();	/* XXX */
+
+	while (*fmt && len > 1) {
 		if (*fmt == '$' && fmt[1] == '$') {
-			size_t l = snprintf(buf, len, "%s (%c%c)",
+			size_t l;
+			snprintf(buf, len, "%s (%c%c)",
 			    ship->shipname, colours(ship), sterncolour(ship));
+			l = strlen(buf);
 			buf += l;
-			len -= l - 1;
+			len -= l;
 			fmt += 2;
-		}
-		else
+		} else {
 			*buf++ = *fmt++;
+			len--;
+		}
 	}
 
-	if (len > 0)
-		*buf = '\0';
+	*buf = '\0';
 }
 
 
