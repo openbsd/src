@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";*/
-static char rcsid[] = "$Id: main.c,v 1.14 1999/12/09 20:20:43 deraadt Exp $";
+static char rcsid[] = "$Id: main.c,v 1.15 2000/09/07 17:02:23 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -416,7 +416,7 @@ getname()
 
 		if (c == EOT)
 			exit(1);
-		if (c == '\r' || c == '\n' || np >= &name[sizeof name]) {
+		if (c == '\r' || c == '\n' || np >= name + sizeof name -1) {
 			putf("\r\n");
 			break;
 		}
