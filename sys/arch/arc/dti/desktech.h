@@ -1,4 +1,4 @@
-/*	$OpenBSD: desktech.h,v 1.4 1996/10/01 20:50:12 pefo Exp $ */
+/*	$OpenBSD: desktech.h,v 1.5 1998/05/03 19:44:40 imp Exp $ */
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -64,5 +64,18 @@
 #define	TYNE_P_BOUNCE		(0x0100800000LL)	/* Dma bounce buffer */
 #define	TYNE_V_BOUNCE		0xe2000000
 #define	TYNE_S_BOUNCE		0x00020000
+
+/*
+ * Deskstation rPC44 I/O map.  We map these into one TLB of size 16M.
+ * Note: We really have EISA here, but no one has EISA cards yet to 
+ * justify implmeneting EISA.
+ */
+#define RPC44_P_ISA_IO		(0xb0000000)		/* ISA I/O control */
+#define RPC44_V_ISA_IO		(0xe0000000)
+#define RPC44_S_ISA_IO		(0x00010000)
+
+#define RPC44_P_ISA_MEM		(0xa0000000)		/* ISA Memory control */
+#define RPC44_V_ISA_MEM		(0xe1000000)
+#define RPC44_S_ISA_MEM		(0x01000000)
 
 #endif	/* _DESKTECH_H_ */
