@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_machdep_asm.S,v 1.3 2002/11/29 09:27:34 deraadt Exp $	*/
+/*	$OpenBSD: uthread_machdep_asm.S,v 1.4 2002/12/12 18:26:18 marc Exp $	*/
 /* David Leonard, <d@csee.uq.edu.au>. Public domain. */
 
 #include <machine/asm.h>
@@ -66,9 +66,12 @@ _thread_machdep_switch:
 LEAF(_atomic_lock,1)
         LDGP(pv)
 
-0:      ldq_l   v0, 0(a0)       /* read existing lock value */
+				/* NOTE: using ldl_l/stl_c instead of
+				   ldq_l and ldq_c as machine/spinlock.h
+				   defines _spinlock_lock_t as int */
+0:      ldl_l   v0, 0(a0)       /* read existing lock value */
         mov     1, t0           /* locked value to store */
-        stq_c   t0, 0(a0)       /* attempt to store, status in t0 */
+        stl_c   t0, 0(a0)       /* attempt to store, status in t0 */
         beq     t0, 1f          /* branch forward to optimise prediction */
         mb                      /* sync with other processors */
         RET                     /* return with v0==0 if lock obtained */
