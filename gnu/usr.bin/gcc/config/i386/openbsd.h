@@ -12,9 +12,8 @@
 /* Get generic OpenBSD definitions.  */
 #include <openbsd.h>
 
-/* Keep __NetBSD__ until we diverge sufficiently from them.  */
 #undef CPP_PREDEFINES
-#define CPP_PREDEFINES "-Dunix -Di386 -D__OpenBSD__ -D__NetBSD__ -Asystem(unix) -Asystem(OpenBSD) -Acpu(i386) -Amachine(i386)"
+#define CPP_PREDEFINES "-Dunix -Di386 -D__OpenBSD__ -Asystem(unix) -Asystem(OpenBSD) -Acpu(i386) -Amachine(i386)"
 
 #undef SIZE_TYPE
 #define SIZE_TYPE "unsigned int"
@@ -31,7 +30,7 @@
 #undef WCHAR_TYPE_SIZE
 #define WCHAR_TYPE_SIZE 32
 
-/*	$OpenBSD: openbsd.h,v 1.4 1996/08/25 11:50:11 deraadt Exp $	*/
+/*	$OpenBSD: openbsd.h,v 1.5 1997/03/28 20:47:21 deraadt Exp $	*/
 
 /* There are conflicting reports about whether this system uses
    a different assembler syntax.  wilson@cygnus.com says # is right.  */

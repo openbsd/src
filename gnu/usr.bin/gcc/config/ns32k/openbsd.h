@@ -68,7 +68,7 @@ Boston, MA 02111-1307, USA.
 /* Names to predefine in the preprocessor for this target machine.  */
 
 #undef CPP_PREDEFINES
-#define CPP_PREDEFINES "-Dunix -Dns32k -Dns32000 -Dns32532 -D__OpenBSD__ -D__NetBSD__ -Dpc532 -D__ns32k__ -Asystem(unix) -Asystem(OpenBSD) -Acpu(ns32k) -Amachine(ns32k)"
+#define CPP_PREDEFINES "-Dunix -Dns32k -Dns32000 -Dns32532 -D__OpenBSD__ -Dpc532 -D__ns32k__ -Asystem(unix) -Asystem(OpenBSD) -Acpu(ns32k) -Amachine(ns32k)"
 
 /* Make gcc agree with <machine/ansi.h> */
 

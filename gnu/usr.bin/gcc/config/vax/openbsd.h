@@ -2,7 +2,7 @@
 #include <openbsd.h>
 
 #undef CPP_PREDEFINES
-#define CPP_PREDEFINES "-Dunix -Dvax -D__OpenBSD__ -D__NetBSD__ -Asystem(unix) -Asystem(OpenBSD) -Acpu(vax) -Amachine(vax)"
+#define CPP_PREDEFINES "-Dunix -Dvax -D__OpenBSD__ -Asystem(unix) -Asystem(OpenBSD) -Acpu(vax) -Amachine(vax)"
 
 /* Make gcc agree with <machine/ansi.h> */
 

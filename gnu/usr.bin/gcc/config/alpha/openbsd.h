@@ -65,7 +65,7 @@ Boston, MA 02111-1307, USA.  */
 /* Define mips-specific OpenBSD predefines... */
 #ifndef CPP_PREDEFINES
 #define CPP_PREDEFINES "-D__ANSI_COMPAT \
--D__OpenBSD__ -D__NetBSD__ -D__alpha__ -D__alpha"
+-D__OpenBSD__ -D__alpha__ -D__alpha"
 #endif
 
 /* Always uses gas.  */

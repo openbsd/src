@@ -70,7 +70,7 @@ Boston, MA 02111-1307, USA.  */
 /* Define mips-specific OpenBSD predefines... */
 #ifndef CPP_PREDEFINES
 #define CPP_PREDEFINES "-D__ANSI_COMPAT \
--DMIPSEL -DR3000 -DSYSTYPE_BSD -D_SYSTYPE_BSD -D__OpenBSD__ -D__NetBSD__ -Dmips \
+-DMIPSEL -DR3000 -DSYSTYPE_BSD -D_SYSTYPE_BSD -D__OpenBSD__ -Dmips \
 -D__NO_LEADING_UNDERSCORES__ -D__GP_SUPPORT__ \
 -Dunix -D_R3000 \
 -Asystem(unix) -Asystem(OpenBSD) -Amachine(mips)"

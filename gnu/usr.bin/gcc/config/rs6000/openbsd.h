@@ -464,7 +464,7 @@ do {									\
 
 #undef CPP_PREDEFINES
 #define CPP_PREDEFINES "-Dunix -Dppc -D__ppc__ -Dpowerpc -D__powerpc__ \
-	-D__OpenBSD__ -D__NetBSD__ -Asystem(unix) -Asystem(OpenBSD) \
+	-D__OpenBSD__ -Asystem(unix) -Asystem(OpenBSD) \
 	-Acpu(powerpc) -Amachine(powerpc)"
 
 #undef CPP_SPEC
