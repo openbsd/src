@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.97 2002/06/11 18:03:25 frantzen Exp $	*/
+/*	$OpenBSD: parse.y,v 1.98 2002/06/12 18:35:07 kjell Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1055,7 +1055,10 @@ icmp6type	: STRING			{
 		}
 		;
 
-keep		: /* empty */			{ $$.action = 0; }
+keep		: /* empty */			{
+			$$.action = 0;
+			$$.options = NULL;
+		}
 		| KEEP STATE state_opt_spec	{
 			$$.action = PF_STATE_NORMAL;
 			$$.options = $3;
