@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx.c,v 1.61 2004/12/30 17:20:09 krw Exp $	*/
+/*	$OpenBSD: aic7xxx.c,v 1.62 2005/01/12 00:35:32 krw Exp $	*/
 /*	$NetBSD: aic7xxx.c,v 1.108 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.61 2004/12/30 17:20:09 krw Exp $
+ * $Id: aic7xxx.c,v 1.62 2005/01/12 00:35:32 krw Exp $
  */
 /*
  * Ported from FreeBSD by Pascal Renauld, Network Storage Solutions, Inc. - April 2003
@@ -1498,8 +1498,6 @@ ahc_clear_critical_section(struct ahc_softc *ahc)
 		 * so we are really executing the instruction just
 		 * before it.
 		 */
-		if (seqaddr != 0)
-			seqaddr -= 1;
 		cs = ahc->critical_sections;
 		for (i = 0; i < ahc->num_critical_sections; i++, cs++) {
 			
