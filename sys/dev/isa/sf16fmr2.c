@@ -1,4 +1,4 @@
-/* $OpenBSD: sf16fmr2.c,v 1.5 2002/01/07 18:32:19 mickey Exp $ */
+/* $OpenBSD: sf16fmr2.c,v 1.6 2002/10/15 15:00:11 mickey Exp $ */
 /* $RuOBSD: sf16fmr2.c,v 1.12 2001/10/18 16:51:36 pva Exp $ */
 
 /*
@@ -45,6 +45,7 @@
 #include <dev/isa/isavar.h>
 #include <dev/radio_if.h>
 #include <dev/ic/tea5757.h>
+#include <dev/ic/pt2254a.h>
 
 #define SF16FMR2_BASE_VALID(x)	(x == 0x384)
 #define SF16FMR2_CAPABILITIES	RADIO_CAPS_DETECT_STEREO |		\
@@ -53,6 +54,9 @@
 				RADIO_CAPS_LOCK_SENSITIVITY |		\
 				RADIO_CAPS_HW_AFC |			\
 				RADIO_CAPS_HW_SEARCH
+
+#define SF16FMR2_AMP		0
+#define SF16FMR2_NOAMP		1
 
 #define SF16FMR2_AMPLIFIER	(1 << 7)
 #define SF16FMR2_SIGNAL		(1 << 3)
@@ -71,10 +75,17 @@
 #define SF16FMR2_WREN_OFF	(1 << 2)
 
 #define SF16FMR2_READ_CLOCK_LOW		\
-		SF16FMR2_DATA_ON | SF16FMR2_CLCK_OFF | SF16FMR2_WREN_OFF
+	SF16FMR2_DATA_ON | SF16FMR2_CLCK_OFF | SF16FMR2_WREN_OFF
 
 #define SF16FMR2_READ_CLOCK_HIGH	\
-		SF16FMR2_DATA_ON | SF16FMR2_CLCK_ON | SF16FMR2_WREN_OFF
+	SF16FMR2_DATA_ON | SF16FMR2_CLCK_ON | SF16FMR2_WREN_OFF
+
+#define SF16FMR2_VOLU_STROBE_ON		(0 << 2)
+#define SF16FMR2_VOLU_STROBE_OFF	(1 << 2)
+#define SF16FMR2_VOLU_CLOCK_ON		(1 << 5)
+#define SF16FMR2_VOLU_CLOCK_OFF		(0 << 5)
+#define SF16FMR2_VOLU_DATA_ON		(1 << 6)
+#define SF16FMR2_VOLU_DATA_OFF		(0 << 6)
 
 int	sf2r_probe(struct device *, void *, void *);
 void	sf2r_attach(struct device *, struct device * self, void *);
@@ -95,6 +106,7 @@ struct radio_hw_if sf2r_hw_if = {
 struct sf2r_softc {
 	struct device	sc_dev;
 
+	int		type;
 	u_int32_t	freq;
 	u_int32_t	stereo;
 	u_int32_t	lock;
@@ -113,9 +125,10 @@ struct cfdriver sf2r_cd = {
 };
 
 void	sf2r_set_mute(struct sf2r_softc *);
+void	sf2r_send_vol_bit(bus_space_tag_t, bus_space_handle_t, u_int32_t);
 int	sf2r_find(bus_space_tag_t, bus_space_handle_t, int);
 
-u_int32_t	sf2r_read_register(bus_space_tag_t, bus_space_handle_t, bus_size_t);
+u_int32_t sf2r_read_register(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 
 void	sf2r_init(bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int32_t);
 void	sf2r_rset(bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int32_t);
@@ -154,6 +167,7 @@ sf2r_attach(struct device *parent, struct device *self, void *aux)
 	struct sf2r_softc *sc = (void *) self;
 	struct isa_attach_args *ia = aux;
 	struct cfdata *cf = sc->sc_dev.dv_cfdata;
+	int type;
 
 	sc->tea.iot = ia->ia_iot;
 	sc->mute = 0;
@@ -164,7 +178,7 @@ sf2r_attach(struct device *parent, struct device *self, void *aux)
 
 	/* remap I/O */
 	if (bus_space_map(sc->tea.iot, ia->ia_iobase, ia->ia_iosize,
-			  0, &sc->tea.ioh)) {
+	    0, &sc->tea.ioh)) {
 		printf(": bus_space_map() failed\n");
 		return;
 	}
@@ -181,6 +195,9 @@ sf2r_attach(struct device *parent, struct device *self, void *aux)
 	tea5757_set_freq(&sc->tea, sc->stereo, sc->lock, sc->freq);
 	sf2r_set_mute(sc);
 
+	type = sf2r_read_register(sc->tea.iot, sc->tea.ioh, sc->tea.offset);
+	sc->type = (type >> 24) & (1 << 1)? SF16FMR2_AMP : SF16FMR2_NOAMP;
+
 	radio_attach_mi(&sf2r_hw_if, sc, &sc->sc_dev);
 }
 
@@ -191,11 +208,37 @@ void
 sf2r_set_mute(struct sf2r_softc *sc)
 {
 	u_int8_t mute;
+	u_int32_t reg, vol, i;
 
-	mute = (sc->mute || !sc->vol) ? SF16FMR2_MUTE : SF16FMR2_UNMUTE;
-	bus_space_write_1(sc->tea.iot, sc->tea.ioh, 0, mute);
-	DELAY(64);
-	bus_space_write_1(sc->tea.iot, sc->tea.ioh, 0, mute);
+	if (sc->type == SF16FMR2_NOAMP) {
+		mute = (sc->mute || !sc->vol)? SF16FMR2_MUTE : SF16FMR2_UNMUTE;
+		bus_space_write_1(sc->tea.iot, sc->tea.ioh, 0, mute);
+		DELAY(64);
+		bus_space_write_1(sc->tea.iot, sc->tea.ioh, 0, mute);
+	} else {
+		mute = sc->mute? SF16FMR2_MUTE : SF16FMR2_UNMUTE;
+		bus_space_write_1(sc->tea.iot, sc->tea.ioh, 0, mute);
+		DELAY(64);
+		bus_space_write_1(sc->tea.iot, sc->tea.ioh, 0, mute);
+
+		vol = pt2254a_encode_volume(&sc->vol, 255);
+		reg = pt2254a_compose_register(vol, vol,
+		    USE_CHANNEL, USE_CHANNEL);
+
+		bus_space_write_1(sc->tea.iot, sc->tea.ioh,
+		    0, SF16FMR2_VOLU_STROBE_OFF);
+
+		for (i = 0; i < PT2254A_REGISTER_LENGTH; i++)
+			sf2r_send_vol_bit(sc->tea.iot, sc->tea.ioh,
+			    reg & (1 << i));
+
+		bus_space_write_1(sc->tea.iot, sc->tea.ioh,
+		    0, SF16FMR2_VOLU_STROBE_ON);
+		bus_space_write_1(sc->tea.iot, sc->tea.ioh,
+		    0, SF16FMR2_VOLU_STROBE_OFF);
+		bus_space_write_1(sc->tea.iot, sc->tea.ioh,
+		    0, 0x10 | SF16FMR2_VOLU_STROBE_OFF);
+	}
 }
 
 void
@@ -239,7 +282,7 @@ sf2r_find(bus_space_tag_t iot, bus_space_handle_t ioh, int flags)
 		sf2r_set_mute(&sc);
 		freq = sf2r_read_register(iot, ioh, sc.tea.offset);
 		if (tea5757_decode_freq(freq, sc.tea.flags & TEA5757_TEA5759)
-				== sc.freq)
+		    == sc.freq)
 			return 1;
 	}
 
@@ -251,14 +294,14 @@ sf2r_write_bit(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t off, int 
 {
 	u_int8_t data;
 
-	data = bit ? SF16FMR2_DATA_ON : SF16FMR2_DATA_OFF;
+	data = bit? SF16FMR2_DATA_ON : SF16FMR2_DATA_OFF;
 
 	bus_space_write_1(iot, ioh, off,
-			SF16FMR2_WREN_ON | SF16FMR2_CLCK_OFF | data);
+	    SF16FMR2_WREN_ON | SF16FMR2_CLCK_OFF | data);
 	bus_space_write_1(iot, ioh, off,
-			SF16FMR2_WREN_ON | SF16FMR2_CLCK_ON  | data);
+	    SF16FMR2_WREN_ON | SF16FMR2_CLCK_ON  | data);
 	bus_space_write_1(iot, ioh, off,
-			SF16FMR2_WREN_ON | SF16FMR2_CLCK_OFF | data);
+	    SF16FMR2_WREN_ON | SF16FMR2_CLCK_OFF | data);
 }
 
 u_int32_t
@@ -274,14 +317,14 @@ sf2r_read_register(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t off)
 	i = bus_space_read_1(iot, ioh, off);
 	DELAY(6);
 	/* Amplifier: 0 - not present, 1 - present */
-	state = i & SF16FMR2_AMPLIFIER ? (1 << 2) : (0 << 2);
+	state = i & SF16FMR2_AMPLIFIER? (1 << 2) : (0 << 2);
 	/* Signal: 0 - not tuned, 1 - tuned */
-	state |= i & SF16FMR2_SIGNAL   ? (0 << 1) : (1 << 1);
+	state |= i & SF16FMR2_SIGNAL? (0 << 1) : (1 << 1);
 
 	bus_space_write_1(iot, ioh, off, SF16FMR2_READ_CLOCK_LOW);
 	i = bus_space_read_1(iot, ioh, off);
 	/* Stereo: 0 - mono, 1 - stereo */
-	state |= i & SF16FMR2_STEREO   ? (0 << 0) : (1 << 0);
+	state |= i & SF16FMR2_STEREO? (0 << 0) : (1 << 0);
 	res = i & SF16FMR2_DATA_ON;
 
 	i = 23;
@@ -304,15 +347,15 @@ sf2r_get_info(void *v, struct radio_info *ri)
 	u_int32_t buf;
 
 	ri->mute = sc->mute;
-	ri->volume = sc->vol ? 255 : 0;
-	ri->stereo = sc->stereo == TEA5757_STEREO ? 1 : 0;
+	ri->volume = sc->vol? 255 : 0;
+	ri->stereo = sc->stereo == TEA5757_STEREO? 1 : 0;
 	ri->caps = SF16FMR2_CAPABILITIES;
 	ri->rfreq = 0;
 	ri->lock = tea5757_decode_lock(sc->lock);
 
 	buf = sf2r_read_register(sc->tea.iot, sc->tea.ioh, sc->tea.offset);
 	ri->freq  = sc->freq = tea5757_decode_freq(buf,
-			sc->tea.flags & TEA5757_TEA5759);
+	    sc->tea.flags & TEA5757_TEA5759);
 	ri->info = 3 & (buf >> 24);
 
 	return (0);
@@ -323,12 +366,12 @@ sf2r_set_info(void *v, struct radio_info *ri)
 {
 	struct sf2r_softc *sc = v;
 
-	sc->mute = ri->mute ? 1 : 0;
-	sc->vol = ri->volume ? 255 : 0;
-	sc->stereo = ri->stereo ? TEA5757_STEREO: TEA5757_MONO;
+	sc->mute = ri->mute? 1 : 0;
+	sc->vol = ri->volume? 255 : 0;
+	sc->stereo = ri->stereo? TEA5757_STEREO: TEA5757_MONO;
 	sc->lock = tea5757_encode_lock(ri->lock);
 	ri->freq = sc->freq = tea5757_set_freq(&sc->tea,
-			sc->lock, sc->stereo, ri->freq);
+	    sc->lock, sc->stereo, ri->freq);
 	sf2r_set_mute(sc);
 
 	return (0);
@@ -343,4 +386,15 @@ sf2r_search(void *v, int f)
 	sf2r_set_mute(sc);
 
 	return (0);
+}
+
+void
+sf2r_send_vol_bit(bus_space_tag_t iot, bus_space_handle_t ioh, u_int32_t d) {
+	u_int8_t data;
+
+	data = SF16FMR2_VOLU_STROBE_OFF;
+	data |= d? SF16FMR2_VOLU_DATA_ON : SF16FMR2_VOLU_DATA_OFF;
+
+	bus_space_write_1(iot, ioh, 0, data | SF16FMR2_VOLU_CLOCK_OFF);
+	bus_space_write_1(iot, ioh, 0, data | SF16FMR2_VOLU_CLOCK_ON);
 }

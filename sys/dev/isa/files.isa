@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.78 2002/08/28 21:20:48 mickey Exp $
+#	$OpenBSD: files.isa,v 1.79 2002/10/15 15:00:11 mickey Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config file and device description for machine-independent ISA code.
@@ -344,7 +344,7 @@ attach sfr at isa
 file	dev/isa/sf16fmr.c		sfr
 
 # Sound Forte RadioLink SF16-FMR2 FM Radio Card
-device sf2r: radiobus, tea5757
+device sf2r: radiobus, tea5757, pt2254a
 attach sf2r at isa
 file	dev/isa/sf16fmr2.c		sf2r
 
