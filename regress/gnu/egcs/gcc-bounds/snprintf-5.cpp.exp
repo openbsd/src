@@ -1,0 +1,2 @@
+snprintf-5.cpp: In function `int main(int, char **)':
+snprintf-5.cpp:5: warning: non-positive bounds length (-10) detected
