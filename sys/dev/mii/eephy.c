@@ -1,4 +1,4 @@
-/*	$OpenBSD: eephy.c,v 1.15 2005/02/05 19:11:34 brad Exp $	*/
+/*	$OpenBSD: eephy.c,v 1.16 2005/02/05 22:30:52 brad Exp $	*/
 /*
  * Principal Author: Parag Patel
  * Copyright (c) 2001
@@ -107,7 +107,7 @@ eephymatch(struct device *parent, void *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
-	if(mii_phy_match(ma, eephys) != NULL)
+	if (mii_phy_match(ma, eephys) != NULL)
 		return (10);
 
 	return(0);

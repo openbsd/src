@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphy.c,v 1.21 2005/02/05 19:11:34 brad Exp $	*/
+/*	$OpenBSD: brgphy.c,v 1.22 2005/02/05 22:30:52 brad Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -118,7 +118,7 @@ brgphy_probe(struct device *parent, void *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
-	if(mii_phy_match(ma, brgphys) != NULL)
+	if (mii_phy_match(ma, brgphys) != NULL)
 		return(10);
 
 	return(0);
