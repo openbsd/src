@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.46 1998/04/16 04:49:34 millert Exp 
+ *	OpenBSD: pcidevs,v 1.47 1998/04/25 00:15:21 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -761,6 +761,9 @@
 #define	PCI_PRODUCT_IBM_82351	0x0022		/* 82351 PCI-PCI Bridge */
 #define	PCI_PRODUCT_IBM_0x0036	0x0036		/* Miami/PCI */
 
+/* IDT products */
+#define	PCI_PRODUCT_IDT_77201	0x0001		/* 77201/77211 ATM (NICStAR) */
+
 /* Integrated Micro Solutions products */
 #define	PCI_PRODUCT_IMS_8849	0x8849		/* 8849 */
 
@@ -977,6 +980,7 @@
 
 /* Toshiba products */
 #define	PCI_PRODUCT_TOSHIBA_R4X00	0x102f		/* R4x00 Host-PCI Bridge */
+#define	PCI_PRODUCT_TOSHIBA_TC35856F	0x0020		/* TC35856F ATM (Meteor) */
 
 /* Trident products */
 #define	PCI_PRODUCT_TRIDENT_TGUI_9320	0x9320		/* TGUI 9320 */

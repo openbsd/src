@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.46 1998/04/16 04:49:34 millert Exp 
+ *	OpenBSD: pcidevs,v 1.47 1998/04/25 00:15:21 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -951,6 +951,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "Miami/PCI",
 	},
 	{
+	    PCI_VENDOR_IDT, PCI_PRODUCT_IDT_77201,
+	    0,
+	    "IDT",
+	    "77201/77211 ATM (NICStAR)",
+	},
+	{
 	    PCI_VENDOR_IMS, PCI_PRODUCT_IMS_8849,
 	    0,
 	    "Integrated Micro Solutions",
@@ -1807,6 +1813,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Toshiba America",
 	    "R4x00 Host-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_TOSHIBA, PCI_PRODUCT_TOSHIBA_TC35856F,
+	    0,
+	    "Toshiba America",
+	    "TC35856F ATM (Meteor)",
 	},
 	{
 	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_TGUI_9320,
