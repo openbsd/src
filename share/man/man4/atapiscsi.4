@@ -1,4 +1,4 @@
-.\"	$OpenBSD: atapiscsi.4,v 1.6 2000/07/10 13:27:34 aaron Exp $
+.\"	$OpenBSD: atapiscsi.4,v 1.7 2001/04/05 20:10:39 deraadt Exp $
 .\"
 .\" Copyright (c) 1999 Constantine Sapuntzakis.
 .\"
@@ -34,8 +34,8 @@
 .Nm atapiscsi
 .Nd ATAPI<->SCSI adapter
 .Sh SYNOPSIS
-.Cd "atapiscsi* at wdc? channel ?"
-.Cd "atapiscsi* at pciide? channel ?"
+.Cd "atapiscsi* at wdc? channel ? flags 0x0000"
+.Cd "atapiscsi* at pciide? channel ? flags 0x0000"
 .Cd "scsibus* at atapiscsi?"
 .Sh DESCRIPTION
 The
@@ -63,6 +63,31 @@ devices do not support it.
 There is only one command outstanding on a cable at a time.
 For example, if a hard disk and a CD drive are placed on the same cable,
 the hard disk requests may get queued behind slower CD operations.
+.Pp
+The
+.Cm flags
+are used only with controllers that support DMA operations and
+mode settings (like some
+.Xr pciide 4
+controllers).
+The lowest order (rightmost) nibble of the
+.Cm flags
+define the PIO mode to use. The next four bits indicate the DMA mode and the
+third nibble the UltraDMA mode.
+.Pp
+For each set of four bits, the 3 lower bits define the mode to use
+and the last bit must be set to 1 for this setting to be used.
+For DMA and UltraDMA, 0xf (1111) means
+.Dq disable .
+For example, a
+.Cm flags
+value of 0x0fac (1111 1010 1100)
+means
+.Do
+use PIO mode 4, DMA mode 2, disable UltraDMA
+.Dc .
+The special setting 0x0000 means
+.Dq use whatever the drive claims to support .
 .Sh SEE ALSO
 .Xr cd 4 ,
 .Xr intro 4 ,
