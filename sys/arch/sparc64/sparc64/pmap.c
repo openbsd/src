@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.14 2002/07/20 20:19:11 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.15 2002/07/24 00:48:25 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 /*
@@ -270,7 +270,8 @@ u_int64_t first_phys_addr;
 /*
  * Here's the CPU TSB stuff.  It's allocated in pmap_bootstrap.
  */
-pte_t *tsb;
+pte_t *tsb_dmmu;
+pte_t *tsb_immu;
 int tsbsize;		/* tsbents = 512 * 2^^tsbsize */
 #define TSBENTS (512<<tsbsize)
 #define	TSBSIZE	(TSBENTS * 16)
@@ -1090,8 +1091,10 @@ remap_data:
 #endif
 	BDPRINTF(PDB_BOOT, ("frobbed i, firstaddr before TSB=%x, %lx\r\n", 
 			    (int)i, (u_long)firstaddr));
-	valloc(tsb, pte_t, TSBSIZE);
-	bzero(tsb, TSBSIZE);
+	valloc(tsb_dmmu, pte_t, TSBSIZE);
+	bzero(tsb_dmmu, TSBSIZE);
+	valloc(tsb_immu, pte_t, TSBSIZE);
+	bzero(tsb_immu, TSBSIZE);
 
 	BDPRINTF(PDB_BOOT1, ("firstaddr after TSB=%lx\r\n", (u_long)firstaddr));
 	BDPRINTF(PDB_BOOT1, ("TSB allocated at %p size %08x\r\n", (void *)tsb,
@@ -1975,10 +1978,6 @@ pmap_kenter_pa(va, pa, prot)
 	 * Construct the TTE.
 	 */
 	s = splvm();
-#if 0
-	/* Not needed -- all operations are atomic. */
-	simple_lock(&pm->pm_lock);
-#endif
 #ifdef DEBUG	     
 	enter_stats.unmanaged ++;
 #endif
@@ -1986,9 +1985,13 @@ pmap_kenter_pa(va, pa, prot)
 	tte.data = TSB_DATA(0, PGSZ_8K, pa, 1 /* Privileged */,
 				 (VM_PROT_WRITE & prot),
 				 1, 0, 1, 0);
-	/* We don't track modification here. */
-	if (VM_PROT_WRITE & prot)
+	/*
+	 * We don't track modification on kenter mappings.
+	 */
+	if (prot & VM_PROT_WRITE)
 		tte.data |= TLB_REAL_W|TLB_W;
+	if (prot & VM_PROT_EXECUTE)
+		tte.data |= TLB_EXEC;
 	tte.data |= TLB_TSB_LOCK;	/* wired */
 	ASSERT((tte.data & TLB_NFO) == 0);
 	pg = NULL;
@@ -2022,30 +2025,7 @@ pmap_kenter_pa(va, pa, prot)
 		       (long long)pg);
 		vm_page_free1(PHYS_TO_VM_PAGE(pg));
 	}
-#ifdef DEBUG
-	i = ptelookup_va(va);
-	if( pmapdebug & PDB_ENTER )
-		prom_printf("pmap_kenter_pa: va=%08x tag=%x:%08x data=%08x:%08x tsb[%d]=%08x\r\n", va,
-			    (int)(tte.tag>>32), (int)tte.tag, 
-			    (int)(tte.data>>32), (int)tte.data, 
-			    i, &tsb[i]);
-	if( pmapdebug & PDB_MMU_STEAL && tsb[i].data ) {
-		prom_printf("pmap_kenter_pa: evicting entry tag=%x:%08x data=%08x:%08x tsb[%d]=%08x\r\n",
-			    (int)(tsb[i].tag>>32), (int)tsb[i].tag, 
-			    (int)(tsb[i].data>>32), (int)tsb[i].data, 
-			    i, &tsb[i]);
-		prom_printf("with va=%08x tag=%x:%08x data=%08x:%08x tsb[%d]=%08x\r\n", va,
-			    (int)(tte.tag>>32), (int)tte.tag, 
-			    (int)(tte.data>>32), (int)tte.data, 
-			    i, &tsb[i]);
-	}
-#endif
-#if 0
-/* Not needed -- all operations are atomic. */
-	simple_unlock(&pm->pm_lock);
-#endif
 	splx(s);
-	ASSERT((tsb[i].data & TLB_NFO) == 0);
 	/* this is correct */
 	dcache_flush_page(pa);
 }
@@ -2098,7 +2078,8 @@ pmap_kremove(va, size)
 		/* Shouldn't need to do this if the entry's not valid. */
 		if ((data = pseg_get(pm, va))) {
 			paddr_t entry;
-			
+			int64_t tag;
+
 			flush |= 1;
 			entry = (data&TLB_PA_MASK);
 			/* We need to flip the valid bit and clear the access statistics. */
@@ -2116,26 +2097,22 @@ pmap_kremove(va, size)
 #endif
 			
 			i = ptelookup_va(va);
-			if (tsb[i].tag > 0 
-			    && tsb[i].tag == TSB_TAG(0,pm->pm_ctx,va))
-			{
-				/* 
-				 * Invalidate the TSB 
-				 * 
-				 * While we can invalidate it by clearing the
-				 * valid bit:
-				 *
-				 * ptp->data_v = 0;
-				 *
-				 * it's faster to do store 1 doubleword.
-				 */
-#ifdef DEBUG
-				if (pmapdebug & PDB_DEMAP)
-					printf(" clearing TSB [%d]\n", i);
-#endif
-				tsb[i].data = 0LL; 
-				ASSERT((tsb[i].data & TLB_NFO) == 0);
-				/* Flush the TLB */
+			tag = TSB_TAG(0, pm->pm_ctx, va);
+			/*
+			 * Invalidate the TSB 
+			 *
+			 * While we can invalidate it by clearing the
+			 * valid bit:
+			 *
+			 * ptp->data_v = 0;
+			 *
+			 * it's faster to do store 1 doubleword.
+			 */
+			if (tsb_dmmu[i].tag == tag) {
+				tsb_dmmu[i].data = 0LL;
+			}
+			if (tsb_immu[i].tag == tag) {
+				tsb_immu[i].data = 0LL;
 			}
 #ifdef DEBUG
 			remove_stats.tflushes ++;
@@ -2214,7 +2191,7 @@ pmap_enter(pm, va, pa, prot, flags)
 		/* If we don't have the traphandler do it, set the ref/mod bits now */
 		if ((flags & VM_PROT_ALL) || (tte.data & TLB_ACCESS))
 			pv->pv_va |= PV_REF;
-		if (flags & VM_PROT_WRITE || (tte.data & (TLB_MODIFY)))
+		if ((flags & VM_PROT_WRITE) || (tte.data & (TLB_MODIFY)))
 			pv->pv_va |= PV_MOD;
 #ifdef DEBUG
 		enter_stats.managed ++;
@@ -2237,6 +2214,8 @@ pmap_enter(pm, va, pa, prot, flags)
 		aliased, 1, (pa & PMAP_LITTLE));
 	if (prot & VM_PROT_WRITE)
 		tte.data |= TLB_REAL_W;
+	if (prot & VM_PROT_EXECUTE)
+		tte.data |= TLB_EXEC;
 	if (wired)
 		tte.data |= TLB_TSB_LOCK;
 	ASSERT((tte.data & TLB_NFO) == 0);
@@ -2280,42 +2259,17 @@ pmap_enter(pm, va, pa, prot, flags)
 	simple_unlock(&pm->pm_lock);
 	splx(s);
 	i = ptelookup_va(va);
-#ifdef DEBUG
-	if( pmapdebug & PDB_ENTER )
-		prom_printf("pmap_enter: va=%08x tag=%x:%08x data=%08x:%08x tsb[%d]=%08x\r\n", va,
-			    (int)(tte.tag>>32), (int)tte.tag, 
-			    (int)(tte.data>>32), (int)tte.data, 
-			    i, &tsb[i]);
-	if( pmapdebug & PDB_MMU_STEAL && tsb[i].data ) {
-		prom_printf("pmap_enter: evicting entry tag=%x:%08x data=%08x:%08x tsb[%d]=%08x\r\n",
-			    (int)(tsb[i].tag>>32), (int)tsb[i].tag, 
-			    (int)(tsb[i].data>>32), (int)tsb[i].data, 
-			    i, &tsb[i]);
-		prom_printf("with va=%08x tag=%x:%08x data=%08x:%08x tsb[%d]=%08x\r\n", va,
-			    (int)(tte.tag>>32), (int)tte.tag, 
-			    (int)(tte.data>>32), (int)tte.data, 
-			    i, &tsb[i]);
-	}
-#endif
 	if (pm->pm_ctx || pm == pmap_kernel()) {
-		if (tsb[i].tag > 0 && 
-		    tsb[i].tag == TSB_TAG(0,pm->pm_ctx,va)) {
-			/* 
-			 * Invalidate the TSB 
-			 * 
-			 * While we can invalidate it by clearing the
-			 * valid bit:
-			 *
-			 * ptp->data_v = 0;
-			 *
-			 * it's faster to do store 1 doubleword.
-			 */
-			tsb[i].data = 0LL; 
-			ASSERT((tsb[i].data & TLB_NFO) == 0);
+		int64_t tag = TSB_TAG(0, pm->pm_ctx, va);
+
+		if (tsb_dmmu[i].tag == tag) {
+			tsb_dmmu[i].data = 0LL;
+		}
+		if (tsb_immu[i].tag == tag) {
+			tsb_immu[i].data = 0LL;
 		}
 		/* Force reload -- protections may be changed */
 		tlb_flush_pte(va, pm->pm_ctx);	
-		ASSERT((tsb[i].data & TLB_NFO) == 0);
 	}
 	/* this is correct */
 	dcache_flush_page(pa);
@@ -2334,7 +2288,7 @@ pmap_remove(pm, va, endva)
 	vaddr_t va, endva;
 {
 	int i, s, flush=0;
-	int64_t data;
+	int64_t data, tag;
 	vaddr_t flushva = va;
 
 	/* 
@@ -2394,38 +2348,13 @@ pmap_remove(pm, va, endva)
 #endif
 			if (!pm->pm_ctx && pm != pmap_kernel()) continue;
 			i = ptelookup_va(va);
-			if (tsb[i].tag > 0 
-			    && tsb[i].tag == TSB_TAG(0,pm->pm_ctx,va))
-			{
-				/* 
-				 * Invalidate the TSB 
-				 * 
-				 * While we can invalidate it by clearing the
-				 * valid bit:
-				 *
-				 * ptp->data_v = 0;
-				 *
-				 * it's faster to do store 1 doubleword.
-				 */
-#ifdef DEBUG
-				if (pmapdebug & PDB_REMOVE)
-					printf(" clearing TSB [%d]\n", i);
-#endif
-				tsb[i].data = 0LL; 
-				ASSERT((tsb[i].data & TLB_NFO) == 0);
-				/* Flush the TLB */
+			tag = TSB_TAG(0, pm->pm_ctx, va);
+			if (tsb_dmmu[i].tag == tag) {
+				tsb_dmmu[i].data = 0LL;
 			}
-#ifdef NOTDEF_DEBUG
-			else if (pmapdebug & PDB_REMOVE) {
-				printf("TSB[%d] has ctx %d va %x: ",
-				       i,
-				       TSB_TAG_CTX(tsb[i].tag),
-				       (int)(TSB_TAG_VA(tsb[i].tag)|(i<<13)));
-				printf("%08x:%08x %08x:%08x\n",
-				       (int)(tsb[i].tag>>32), (int)tsb[i].tag, 
-				       (int)(tsb[i].data>>32), (int)tsb[i].data);			       
+			if (tsb_immu[i].tag == tag) {
+				tsb_immu[i].data = 0LL;
 			}
-#endif
 #ifdef DEBUG
 			remove_stats.tflushes ++;
 #endif
@@ -2460,12 +2389,13 @@ pmap_protect(pm, sva, eva, prot)
 {
 	int i, s;
 	paddr_t pa;
-	int64_t data;
+	int64_t data, tag;
 	
 	ASSERT(pm != pmap_kernel() || eva < INTSTACK || sva > EINTSTACK);
 	ASSERT(pm != pmap_kernel() || eva < kdata || sva > ekdata);
 
-	if (prot & VM_PROT_WRITE) 
+	if ((prot & (VM_PROT_WRITE|VM_PROT_EXECUTE)) ==
+	    (VM_PROT_WRITE|VM_PROT_EXECUTE))
 		return;
 
 	if (prot == VM_PROT_NONE) {
@@ -2509,12 +2439,16 @@ pmap_protect(pm, sva, eva, prot)
 
 				/* Save REF/MOD info */
 				pv = pa_to_pvh(pa);
-				if (data & TLB_ACCESS) pv->pv_va |= PV_REF;
+				if (data & TLB_ACCESS)
+					pv->pv_va |= PV_REF;
 				if (data & (TLB_MODIFY))  
 					pv->pv_va |= PV_MOD;
 			}
 			/* Just do the pmap and TSB, not the pv_list */
-			data &= ~(TLB_W|TLB_REAL_W);
+			if ((prot & VM_PROT_WRITE) == 0)
+				data &= ~(TLB_W|TLB_REAL_W);
+			if ((prot & VM_PROT_EXECUTE) == 0)
+				data &= ~(TLB_EXEC);
 			ASSERT((data & TLB_NFO) == 0);
 			if (pseg_set(pm, sva, data, 0)) {
 				printf("pmap_protect: gotten pseg empty!\n");
@@ -2524,11 +2458,15 @@ pmap_protect(pm, sva, eva, prot)
 			
 			if (!pm->pm_ctx && pm != pmap_kernel()) continue;
 			i = ptelookup_va(sva);
-			if (tsb[i].tag > 0 
-			    && tsb[i].tag == TSB_TAG(0,pm->pm_ctx,sva)) {
-				tsb[i].data = data;
-				ASSERT((tsb[i].data & TLB_NFO) == 0);
-				
+			tag = TSB_TAG(0, pm->pm_ctx, sva);
+			if (tsb_dmmu[i].tag == tag) {
+				tsb_dmmu[i].data = data;
+			}
+			if (tsb_immu[i].tag == tag) {
+				if ((data & TLB_EXEC) != 0)
+					tsb_immu[i].data = data;
+				else
+					tsb_immu[i].data = 0LL;
 			}
 			tlb_flush_pte(sva, pm->pm_ctx);
 		}
@@ -2864,11 +2802,17 @@ pmap_clear_modify(pg)
 				/* panic? */
 			}
 			if (pv->pv_pmap->pm_ctx || pv->pv_pmap == pmap_kernel()) {
-				i = ptelookup_va(pv->pv_va&PV_VAMASK);
-				if (tsb[i].tag == TSB_TAG(0, pv->pv_pmap->pm_ctx, pv->pv_va&PV_VAMASK))
-					tsb[i].data = /* data */ 0;
-				tlb_flush_pte(pv->pv_va&PV_VAMASK, 
-					pv->pv_pmap->pm_ctx);
+				int64_t tag;
+
+				i = ptelookup_va(pv->pv_va & PV_VAMASK);
+				tag = TSB_TAG(0, pv->pv_pmap->pm_ctx,
+				    (pv->pv_va & PV_VAMASK));
+				if (tsb_dmmu[i].tag == tag)
+					tsb_dmmu[i].data = 0LL;/* data */
+				if (tsb_immu[i].tag == tag)
+					tsb_immu[i].data = 0LL;/* data */
+				tlb_flush_pte((pv->pv_va & PV_VAMASK),
+				    pv->pv_pmap->pm_ctx);
 			}
 			/* Then clear the mod bit in the pv */
 			if (pv->pv_va & PV_MOD)
@@ -2949,13 +2893,17 @@ pmap_clear_reference(pg)
 				/* panic? */
 			}
 			if (pv->pv_pmap->pm_ctx || 
-				pv->pv_pmap == pmap_kernel()) {
-				i = ptelookup_va(pv->pv_va&PV_VAMASK);
+			    pv->pv_pmap == pmap_kernel()) {
+				int64_t tag;
+
+				i = ptelookup_va(pv->pv_va & PV_VAMASK);
 				/* Invalidate our TSB entry since ref info is in the PTE */
-				if (tsb[i].tag == 
-					TSB_TAG(0,pv->pv_pmap->pm_ctx,pv->pv_va&
-						PV_VAMASK))
-					tsb[i].data = 0;
+				tag = TSB_TAG(0, pv->pv_pmap->pm_ctx,
+				    (pv->pv_va&PV_VAMASK));
+				if (tsb_dmmu[i].tag == tag)
+					tsb_dmmu[i].data = 0;
+				if (tsb_immu[i].tag == tag)
+					tsb_immu[i].data = 0;
 /*
 				tlb_flush_pte(pv->pv_va&PV_VAMASK, 
 					pv->pv_pmap->pm_ctx);
@@ -3206,10 +3154,15 @@ pmap_page_protect(pg, prot)
 					/* panic? */
 				}
 				if (pv->pv_pmap->pm_ctx || pv->pv_pmap == pmap_kernel()) {
+					int64_t tag;
 					i = ptelookup_va(pv->pv_va&PV_VAMASK);
 					/* since we already know the va for each mapping we don't need to scan the entire TSB */
-					if (tsb[i].tag == TSB_TAG(0, pv->pv_pmap->pm_ctx, pv->pv_va&PV_VAMASK))
-						tsb[i].data = /* data */ 0;
+					tag = TSB_TAG(0, pv->pv_pmap->pm_ctx,
+					    (pv->pv_va & PV_VAMASK));
+					if (tsb_dmmu[i].tag == tag)
+						tsb_dmmu[i].data = /* data */ 0LL;
+					if (tsb_immu[i].tag == tag)
+						tsb_immu[i].data = /* data */ 0LL;
 					tlb_flush_pte(pv->pv_va&PV_VAMASK, pv->pv_pmap->pm_ctx);
 				}
 				simple_unlock(&pv->pv_pmap->pm_lock);
@@ -3271,11 +3224,17 @@ pmap_page_protect(pg, prot)
 				/* panic? */
 			}
 			if (npv->pv_pmap->pm_ctx || npv->pv_pmap == pmap_kernel()) {
+				int64_t tag;
+
 				/* clear the entry in the TSB */
 				i = ptelookup_va(npv->pv_va&PV_VAMASK);
+				tag = TSB_TAG(0, npv->pv_pmap->pm_ctx,
+				    (npv->pv_va & PV_VAMASK));
 				/* since we already know the va for each mapping we don't need to scan the entire TSB */
-				if (tsb[i].tag == TSB_TAG(0, npv->pv_pmap->pm_ctx, npv->pv_va&PV_VAMASK))
-					tsb[i].data = 0LL;			
+				if (tsb_dmmu[i].tag == tag)
+					tsb_dmmu[i].data = 0LL;			
+				if (tsb_immu[i].tag == tag)
+					tsb_immu[i].data = 0LL;			
 				tlb_flush_pte(npv->pv_va&PV_VAMASK, npv->pv_pmap->pm_ctx);
 			}
 			simple_unlock(&npv->pv_pmap->pm_lock);
@@ -3320,11 +3279,18 @@ pmap_page_protect(pg, prot)
 				/* panic? */
 			}
 			if (pv->pv_pmap->pm_ctx || pv->pv_pmap == pmap_kernel()) {
+				int64_t tag;
+
 				i = ptelookup_va(pv->pv_va&PV_VAMASK);
 				/* since we already know the va for each mapping we don't need to scan the entire TSB */
-				if (tsb[i].tag == TSB_TAG(0, pv->pv_pmap->pm_ctx, pv->pv_va&PV_VAMASK))
-					tsb[i].data = 0LL;			
-				tlb_flush_pte(pv->pv_va&PV_VAMASK, pv->pv_pmap->pm_ctx);
+				tag = TSB_TAG(0, pv->pv_pmap->pm_ctx,
+				    (pv->pv_va & PV_VAMASK));
+				if (tsb_dmmu[i].tag == tag)
+					tsb_dmmu[i].data = 0LL;			
+				if (tsb_immu[i].tag == tag)
+					tsb_immu[i].data = 0LL;			
+				tlb_flush_pte(pv->pv_va & PV_VAMASK,
+				    pv->pv_pmap->pm_ctx);
 			}
 			simple_unlock(&pv->pv_pmap->pm_lock);
 			npv = pv->pv_next;
@@ -3418,8 +3384,10 @@ ctx_alloc(pm)
 #endif
 		/* We gotta steal this context */
 		for (i = 0; i < TSBENTS; i++) {
-			if (TSB_TAG_CTX(tsb[i].tag) == cnum)
-				tsb[i].data = 0LL;
+			if (TSB_TAG_CTX(tsb_dmmu[i].tag) == cnum)
+				tsb_dmmu[i].data = 0LL;
+			if (TSB_TAG_CTX(tsb_immu[i].tag) == cnum)
+				tsb_immu[i].data = 0LL;
 		}
 		tlb_flush_ctx(cnum);
 	}
@@ -3740,22 +3708,13 @@ pmap_page_cache(pm, pa, mode)
 		if (pv->pv_pmap != pm)
 			simple_unlock(&pv->pv_pmap->pm_lock);
 		if (pv->pv_pmap->pm_ctx || pv->pv_pmap == pmap_kernel()) {
+			int64_t tag;
 			i = ptelookup_va(va);
-			if (tsb[i].tag > 0 && tsb[i].tag == 
-			    TSB_TAG(0, pv->pv_pmap->pm_ctx, va)) {
-				/* 
-				 * Invalidate the TSB 
-				 * 
-				 * While we can invalidate it by clearing the
-				 * valid bit:
-				 *
-				 * ptp->data_v = 0;
-				 *
-				 * it's faster to do store 1 doubleword.
-				 */
-				tsb[i].data = 0LL; 
-				ASSERT((tsb[i].data & TLB_NFO) == 0);
-			}
+			tag = TSB_TAG(0, pv->pv_pmap->pm_ctx, va);
+			if (tsb_dmmu[i].tag == tag)
+				tsb_dmmu[i].data = 0LL; 
+			if (tsb_immu[i].tag == tag)
+				tsb_immu[i].data = 0LL; 
 			/* Force reload -- protections may be changed */
 			tlb_flush_pte(va, pv->pv_pmap->pm_ctx);	
 		}

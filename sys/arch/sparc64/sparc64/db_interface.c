@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.11 2002/06/15 17:23:31 art Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.12 2002/07/24 00:48:25 art Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.61 2001/07/31 06:55:47 eeh Exp $ */
 
 /*
@@ -750,7 +750,7 @@ db_dump_dtsb(addr, have_addr, count, modif)
 	db_expr_t count;
 	char *modif;
 {
-	extern pte_t *tsb;
+	extern pte_t *tsb_dmmu;
 	extern int tsbsize;
 #define TSBENTS (512<<tsbsize)
 	int i;
@@ -758,14 +758,14 @@ db_dump_dtsb(addr, have_addr, count, modif)
 	db_printf("TSB:\n");
 	for (i=0; i<TSBENTS; i++) {
 		db_printf("%4d:%4d:%08x %08x:%08x ", i, 
-			  (int)((tsb[i].tag&TSB_TAG_G)?-1:TSB_TAG_CTX(tsb[i].tag)),
-			  (int)((i<<13)|TSB_TAG_VA(tsb[i].tag)),
-			  (int)(tsb[i].data>>32), (int)tsb[i].data);
+			  (int)((tsb_dmmu[i].tag&TSB_TAG_G)?-1:TSB_TAG_CTX(tsb_dmmu[i].tag)),
+			  (int)((i<<13)|TSB_TAG_VA(tsb_dmmu[i].tag)),
+			  (int)(tsb_dmmu[i].data>>32), (int)tsb_dmmu[i].data);
 		i++;
 		db_printf("%4d:%4d:%08x %08x:%08x\n", i,
-			  (int)((tsb[i].tag&TSB_TAG_G)?-1:TSB_TAG_CTX(tsb[i].tag)),
-			  (int)((i<<13)|TSB_TAG_VA(tsb[i].tag)),
-			  (int)(tsb[i].data>>32), (int)tsb[i].data);
+			  (int)((tsb_dmmu[i].tag&TSB_TAG_G)?-1:TSB_TAG_CTX(tsb_dmmu[i].tag)),
+			  (int)((i<<13)|TSB_TAG_VA(tsb_dmmu[i].tag)),
+			  (int)(tsb_dmmu[i].data>>32), (int)tsb_dmmu[i].data);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.22 2002/07/23 13:58:23 art Exp $	*/
+/*	$OpenBSD: locore.s,v 1.23 2002/07/24 00:48:25 art Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -3201,7 +3201,15 @@ instr_miss:
 1:
 	ldxa	[%g6] ASI_PHYS_CACHED, %g4
 	brgez,pn %g4, textfault
-	 or	%g4, TTE_ACCESS, %g7			! Update accessed bit
+	 nop
+
+	/* Check if it's an executable mapping. */
+	andcc	%g4, TTE_EXEC, %g0
+	bz,pn	%xcc, textfault
+	 nop
+
+
+	or	%g4, TTE_ACCESS, %g7			! Update accessed bit
 	btst	TTE_ACCESS, %g4				! Need to update access bit?
 	bne,pt	%xcc, 1f
 	 nop
@@ -5663,37 +5671,37 @@ _C_LABEL(cpu_initialize):
 	flushw
 
 	/*
-	 * Step 7: change the trap base register, and install our TSB
-	 *
-	 * XXXX -- move this to CPUINFO_VA+32KB?
+	 * Step 7: change the trap base register, and install our TSBs
 	 */
+
+	/* Set the dmmu tsb */
 	sethi	%hi(0x1fff), %l2
-	set	_C_LABEL(tsb), %l0
+	set	_C_LABEL(tsb_dmmu), %l0
 	LDPTR	[%l0], %l0
 	set	_C_LABEL(tsbsize), %l1
 	or	%l2, %lo(0x1fff), %l2
 	ld	[%l1], %l1
 	andn	%l0, %l2, %l0			! Mask off size and split bits
 	or	%l0, %l1, %l0			! Make a TSB pointer
-!	srl	%l0, 0, %l0	! DEBUG -- make sure this is a valid pointer by zeroing the high bits
+	set	TSB, %l2
+	stxa	%l0, [%l2] ASI_DMMU		! Install data TSB pointer
+	membar	#Sync
 
-#ifdef DEBUG
-	set	1f, %o0		! Debug printf
-	srlx	%l0, 32, %o1
-	call	_C_LABEL(prom_printf)
-	 srl	%l0, 0, %o2
-	.data
-1:
-	.asciz	"Setting TSB pointer %08x %08x\r\n"
-	_ALIGN
-	.text
-#endif
 
+	/* Set the immu tsb */
+	sethi	%hi(0x1fff), %l2
+	set	_C_LABEL(tsb_immu), %l0
+	LDPTR	[%l0], %l0
+	set	_C_LABEL(tsbsize), %l1
+	or	%l2, %lo(0x1fff), %l2
+	ld	[%l1], %l1
+	andn	%l0, %l2, %l0			! Mask off size and split bits
+	or	%l0, %l1, %l0			! Make a TSB pointer
 	set	TSB, %l2
 	stxa	%l0, [%l2] ASI_IMMU		! Install insn TSB pointer
 	membar	#Sync				! We may need more membar #Sync in here
-	stxa	%l0, [%l2] ASI_DMMU		! Install data TSB pointer
-	membar	#Sync
+
+	/* Change the trap base register */
 	set	_C_LABEL(trapbase), %l1
 	call	_C_LABEL(prom_set_trap_table)	! Now we should be running 100% from our handlers
 	 mov	%l1, %o0

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.21 2002/06/23 03:03:15 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.22 2002/07/24 00:48:25 art Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -1015,7 +1015,7 @@ text_access_fault(tf, type, pc, sfsr)
 
 	/* Now munch on protections... */
 
-	access_type = /* VM_PROT_EXECUTE| */VM_PROT_READ;
+	access_type = VM_PROT_EXECUTE;
 	if (tstate & (PSTATE_PRIV<<TSTATE_PSTATE_SHIFT)) {
 		extern int trap_trace_dis;
 		trap_trace_dis = 1; /* Disable traptrace for printf */
@@ -1122,7 +1122,7 @@ text_access_error(tf, type, pc, sfsr, afva, afsr)
 	va = trunc_page(pc);
 
 	/* Now munch on protections... */
-	access_type = /* VM_PROT_EXECUTE| */ VM_PROT_READ;
+	access_type = VM_PROT_EXECUTE;
 	if (tstate & (PSTATE_PRIV<<TSTATE_PSTATE_SHIFT)) {
 		extern int trap_trace_dis;
 		trap_trace_dis = 1; /* Disable traptrace for printf */
