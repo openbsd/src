@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.55 2004/05/29 04:33:27 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.56 2004/05/29 08:44:21 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -654,6 +654,8 @@ carp_clone_destroy(struct ifnet *ifp)
 {
 	struct carp_softc *sc = ifp->if_softc;
 	struct carp_if *cif;
+	struct ip_moptions *imo = &sc->sc_imo;
+	struct ip6_moptions *im6o = &sc->sc_im6o;
 
 	timeout_del(&sc->sc_ad_tmo);
 	timeout_del(&sc->sc_md_tmo);
@@ -662,7 +664,22 @@ carp_clone_destroy(struct ifnet *ifp)
 	if (sc->sc_ifp != NULL) {
 		cif = (struct carp_if *)sc->sc_ifp->if_carp;
 		TAILQ_REMOVE(&cif->vhif_vrs, sc, sc_list);
-		if (!--cif->vhif_nvrs) {
+		if (cif->vhif_nvrs) {
+			ifpromisc(sc->sc_ifp, 0);
+
+			/* Clear IPv4 multicast */
+			in_delmulti(imo->imo_membership[--imo->imo_num_memberships]);
+			imo->imo_multicast_ifp = NULL;
+
+			/* Clear IPv6 multicast */
+			while (!LIST_EMPTY(&im6o->im6o_memberships)) {
+				struct in6_multi_mship *imm =
+				    LIST_FIRST(&im6o->im6o_memberships);
+
+				LIST_REMOVE(imm, i6mm_chain);
+				in6_leavegroup(imm);
+			}
+
 			sc->sc_ifp->if_carp = NULL;
 			FREE(cif, M_IFADDR);
 		}
