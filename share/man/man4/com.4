@@ -1,4 +1,4 @@
-.\"	$OpenBSD: com.4,v 1.16 2004/05/03 15:18:19 drahn Exp $
+.\"	$OpenBSD: com.4,v 1.17 2004/05/25 09:42:55 jmc Exp $
 .\"	$NetBSD: com.4,v 1.5 1996/03/16 00:07:08 thorpej Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
@@ -41,7 +41,9 @@
 .Nm pccom
 .Nd serial communications interface
 .Sh SYNOPSIS
-.Cd "# amd64 and i386 - pccom or com attachments"
+.Cd "# pccom or com attachments"
+.Cd "#"
+.Cd "# i386"
 .Cd "pccom0 at isa? port 0x3f8 irq 4"
 .Cd "pccom1 at isa? port 0x2f8 irq 3"
 .Cd "pccom2 at isa? port 0x3e8 irq 5"
@@ -56,7 +58,7 @@
 .Cd "pccom* at hsq? slave ?"
 .Cd "pccom* at rtfps? slave ?"
 .Pp
-.Cd "# alpha"
+.Cd "# alpha and amd64"
 .Cd "com0 at isa? port 0x3f8 irq 4"
 .Cd "com1 at isa? port 0x2f8 irq 3"
 .Pp
