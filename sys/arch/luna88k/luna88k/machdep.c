@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.16 2004/11/08 16:39:31 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.17 2004/11/09 15:02:19 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -214,18 +214,6 @@ int physmem;	  /* available physical memory, in pages */
 
 struct vm_map *exec_map = NULL;
 struct vm_map *phys_map = NULL;
-
-/*
- * iomap stuff is for managing chunks of virtual address space that
- * can be allocated to IO devices.
- * VMEbus drivers use this at this now. Only on-board IO devices' addresses
- * are mapped so that pa == va. XXX smurph.
- */
-
-vaddr_t iomapbase;
-
-struct extent *iomap_extent;
-struct vm_map *iomap_map;
 
 /*
  * Declare these as initialized data so we can patch them.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.3 2004/10/01 19:00:48 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.4 2004/11/09 15:02:22 miod Exp $	*/
 
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -49,7 +49,6 @@
 #include <sys/buf.h>
 #include <sys/user.h>
 #include <sys/vnode.h>
-#include <sys/extent.h>
 #include <sys/core.h>
 #include <sys/exec.h>
 #include <sys/ptrace.h>
@@ -63,17 +62,9 @@
 #include <machine/locore.h>
 #include <machine/trap.h>
 
-extern struct extent *iomap_extent;
-extern struct vm_map *iomap_map;
-
 extern void proc_do_uret(struct proc *);
 extern void savectx(struct pcb *);
 extern void switch_exit(struct proc *);
-
-vaddr_t iomap_mapin(paddr_t, psize_t, boolean_t);
-void iomap_mapout(vaddr_t, vsize_t);
-void *mapiodev(void *, int);
-void unmapiodev(void *, int);
 
 /*
  * Finish a fork operation, with process p2 nearly set up.
@@ -327,101 +318,6 @@ vunmapbuf(bp, len)
 	uvm_km_free_wakeup(phys_map, addr, len);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = 0;
-}
-
-
-/*
- * Map a range [pa, pa+len] in the given map to a kernel address
- * in iomap space.
- *
- * Note: To be flexible, I did not put a restriction on the alignment
- * of pa. However, it is advisable to have pa page aligned since otherwise,
- * we might have several mappings for a given chunk of the IO page.
- */
-vaddr_t
-iomap_mapin(paddr_t pa, psize_t len, boolean_t canwait)
-{
-	vaddr_t	iova, tva, off;
-	paddr_t ppa;
-	int s, error;
-
-	if (len == 0)
-		return NULL;
-
-	ppa = trunc_page(pa);
-	off = pa & PGOFSET;
-	len = round_page(off + len);
-
-	s = splhigh();
-	error = extent_alloc(iomap_extent, len, PAGE_SIZE, 0, EX_NOBOUNDARY,
-	    canwait ? EX_WAITSPACE : EX_NOWAIT, &iova);
-	splx(s);
-
-	if (error != 0)
-		return NULL;
-
-	cmmu_flush_tlb(cpu_number(), 1, iova, len);	/* necessary? */
-
-	tva = iova;
-	while (len != 0) {
-		pmap_enter(vm_map_pmap(iomap_map), tva, ppa,
-			   VM_PROT_WRITE | VM_PROT_READ,
-			   VM_PROT_WRITE | VM_PROT_READ | PMAP_WIRED);
-		len -= PAGE_SIZE;
-		tva += PAGE_SIZE;
-		ppa += PAGE_SIZE;
-	}
-	pmap_update(pmap_kernel());
-
-	return (iova + off);
-}
-
-/*
- * Free up the mapping in iomap.
- */
-void
-iomap_mapout(vaddr_t kva, vsize_t len)
-{
-	vaddr_t 	off;
-	int 		s, error;
-
-	off = kva & PGOFSET;
-	kva = trunc_page(kva);
-	len = round_page(off + len);
-
-	pmap_remove(vm_map_pmap(iomap_map), kva, kva + len);
-	pmap_update(vm_map_pmap(iomap_map));
-
-	s = splhigh();
-	error = extent_free(iomap_extent, kva, len, EX_NOWAIT);
-	splx(s);
-
-	if (error != 0)
-		printf("iomap_mapout: extent_free failed\n");
-}
-
-/*
- * Allocate/deallocate a cache-inhibited range of kernel virtual address
- * space mapping the indicated physical address range [pa - pa+size)
- */
-void *
-mapiodev(pa, size)
-	void *pa;
-	int size;
-{
-	paddr_t ppa;
-	ppa = (paddr_t)pa;
-	return ((void *)iomap_mapin(ppa, size, 0));
-}
-
-void
-unmapiodev(kva, size)
-	void *kva;
-	int size;
-{
-	vaddr_t va;
-	va = (vaddr_t)kva;
-	iomap_mapout(va, size);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.13 2004/08/02 08:35:00 miod Exp $ */
+/*	$OpenBSD: mainbus.c,v 1.14 2004/11/09 15:02:23 miod Exp $ */
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 2004, Miodrag Vallat.
@@ -31,11 +31,15 @@
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/disklabel.h>
+#include <sys/extent.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 #include <machine/autoconf.h>
 #include <machine/cmmu.h>
 #include <machine/cpu.h>
+#include <machine/cpu_number.h>
 
 #ifdef MVME188
 #include <machine/mvme188.h>
@@ -65,6 +69,12 @@ const struct mvme88k_bus_space_tag mainbus_bustag = {
 	mainbus_subregion,
 	mainbus_vaddr
 };
+
+extern struct extent *iomap_extent;
+extern struct vm_map *iomap_map;
+
+void	*mapiodev(void *, int);
+void	unmapiodev(void *, int);
 
 /*
  * Obio (internal IO) space is mapped 1:1 (see pmap_bootstrap() for details).
@@ -103,11 +113,7 @@ mainbus_map(bus_addr_t addr, bus_size_t size, int flags,
 	if (addr >= threshold)
 		map = (vaddr_t)addr;
 	else {
-#if 0
-		map = iomap_mapin(addr, size, 0);
-#else
 		map = (vaddr_t)mapiodev((void *)addr, size);
-#endif
 	}
 
 	if (map == NULL)
@@ -135,6 +141,81 @@ void *
 mainbus_vaddr(bus_space_handle_t handle)
 {
 	return (void *)handle;
+}
+
+/*
+ * Map a range [pa, pa+size] in the given map to a kernel address
+ * in iomap space.
+ *
+ * Note: To be flexible, I did not put a restriction on the alignment
+ * of pa. However, it is advisable to have pa page aligned since otherwise,
+ * we might have several mappings for a given chunk of the IO page.
+ */
+void *
+mapiodev(pa, size)
+	void *pa;
+	int size;
+{
+	vaddr_t	iova, tva, off;
+	paddr_t ppa;
+	int s, error;
+
+	if (size <= 0)
+		return NULL;
+
+	ppa = trunc_page((paddr_t)pa);
+	off = (paddr_t)pa & PGOFSET;
+	size = round_page(off + size);
+
+	s = splhigh();
+	error = extent_alloc(iomap_extent, size, PAGE_SIZE, 0, EX_NOBOUNDARY,
+	    EX_WAITSPACE, &iova);
+	splx(s);
+
+	if (error != 0)
+		return NULL;
+
+	cmmu_flush_tlb(cpu_number(), 1, iova, size);	/* necessary? */
+
+	tva = iova;
+	while (size != 0) {
+		pmap_enter(vm_map_pmap(iomap_map), tva, ppa,
+			   VM_PROT_WRITE | VM_PROT_READ,
+			   VM_PROT_WRITE | VM_PROT_READ | PMAP_WIRED);
+		size -= PAGE_SIZE;
+		tva += PAGE_SIZE;
+		ppa += PAGE_SIZE;
+	}
+	pmap_update(vm_map_pmap(iomap_map));
+
+	return (void *)(iova + off);
+}
+
+/*
+ * Free up the mapping in iomap.
+ */
+void
+unmapiodev(va, size)
+	void *va;
+	int size;
+{
+	vaddr_t kva, off;
+	int s, error;
+
+	off = (vaddr_t)va & PGOFSET;
+	kva = trunc_page((vaddr_t)va);
+	size = round_page(off + size);
+
+	pmap_remove(vm_map_pmap(iomap_map), kva, kva + size);
+	pmap_update(vm_map_pmap(iomap_map));
+
+	s = splhigh();
+	error = extent_free(iomap_extent, kva, size, EX_NOWAIT);
+#ifdef DIAGNOSTIC
+	if (error != 0)
+		printf("unmapiodev: extent_free failed\n");
+#endif
+	splx(s);
 }
 
 /*
