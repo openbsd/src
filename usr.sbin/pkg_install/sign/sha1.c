@@ -1,4 +1,4 @@
-/* $OpenBSD: sha1.c,v 1.3 2001/11/26 05:04:33 deraadt Exp $ */
+/* $OpenBSD: sha1.c,v 1.4 2003/04/05 10:42:19 avsm Exp $ */
 /*-
  * Copyright (c) 1999 Marc Espie.
  *
@@ -49,22 +49,23 @@ struct sha1_checker {
 #define BUFSIZE	(MAXID+sizeof(SHA1_TEMPLATE)+2*SHA1_DIGESTSIZE+1)
 
 /* Finalize SHA1 checksum for our sha1_context into result 
-	(size at least BUFSIZE).  Returns the length of the checksum
+	(size at least bufsize).  Returns the length of the checksum
    marker, e.g.,   SHA1 (id) = xxxxxxxxx
                                ^here 
 	Return 0 for errors.
  */
 size_t 
-sha1_build_checksum(result, n)
+sha1_build_checksum(result, n, bufsize)
 	char *result;
 	struct sha1_checker *n;
+	size_t bufsize;
 {
 	size_t length;
 
-	sprintf(result, "SHA1 (%s) = ", n->id);
+	snprintf(result, bufsize, "SHA1 (%s) = ", n->id);
 	length = strlen(result);
 	SHA1End(&n->context, result + length);
-	strcat(result, "\n");
+	strlcat(result, "\n", bufsize);
 	free(n);	
 	return length;
 }
@@ -125,7 +126,7 @@ sha1_sign_ok(arg)
 	FILE *f;
 	int tag_found;
 
-	length = sha1_build_checksum(buffer, n);
+	length = sha1_build_checksum(buffer, n, sizeof(buffer));
 	f= fopen(SHA1_DB_NAME, "r");
 	tag_found = 0;
 
@@ -203,7 +204,7 @@ retrieve_sha1_marker(filename, sign, userid)
 		return 0;
 	}
 
-	(void)sha1_build_checksum(result, checker);
+	(void)sha1_build_checksum(result, checker, sizeof(result));
 	fputs(result, stderr);
 	return 1;
 }
