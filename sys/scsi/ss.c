@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss.c,v 1.17 1997/03/08 20:51:36 kstailey Exp $	*/
+/*	$OpenBSD: ss.c,v 1.18 1997/03/08 22:52:58 kstailey Exp $	*/
 /*	$NetBSD: ss.c,v 1.10 1996/05/05 19:52:55 christos Exp $	*/
 
 /*
@@ -67,18 +67,24 @@
 struct quirkdata {
 	char *name;
 	u_int quirks;
-#define SS_Q_NEEDS_WINDOW_DESC_LEN	0x0001 /* needs special WDL */
-#define SS_Q_USES_HALFTONE		0x0002 /* uses non-zero halftone */
-#define SS_Q_NEEDS_RIF_SET		0x0004
-#define SS_Q_NEEDS_PADDING_TYPE		0x0008 /* does not pad to byte
-						  boundary */
-#define SS_Q_USES_BIT_ORDERING		0x0010 /* uses non-zero bit ordering */
-#define SS_Q_VENDOR_UNIQUE_SETWINDOW	0x0020 /* 40 bytes of parms is not
-						  enough */
-#define SS_Q_GET_BUFFER_SIZE		0x0040 /* use GET_BUFFER_SIZE while
-						  reading */
-
+#define SS_Q_WINDOW_DESC_LEN	0x0001 /* needs special WDL */
+#define SS_Q_BRIGHTNESS		0x0002 /* use special value for brightness */
+#define SS_Q_REV_BRIGHTNESS	0x0004 /* reverse brightness control in s/w */
+#define SS_Q_THRESHOLD		0x0008 /* use special value for threshold */
+#define SS_Q_MONO_THRESHOLD	0x0010 /* same as SS_Q_THRESHOLD but only
+					* for monochrome image data */
+#define SS_Q_CONTRAST		0x0020 /* use special value for contrast */
+#define SS_Q_REV_CONTRAST	0x0040 /* reverse contrast control in s/w */
+#define SS_Q_HALFTONE		0x0080 /* uses non-zero halftone */
+#define SS_Q_SET_RIF		0x0100 /* set RIF bit */
+#define SS_Q_PADDING_TYPE	0x0200 /* does not pad to byte boundary */
+#define SS_Q_BIT_ORDERING	0x0400 /* uses non-zero bit ordering */
+#define SS_Q_VENDOR_SETWINDOW	0x0800 /* 40 bytes of parms is not enough */
+#define SS_Q_GET_BUFFER_SIZE	0x1000 /* use GET_BUFFER_SIZE while reading */
 	long window_descriptor_length;
+	u_int8_t brightness;
+	u_int8_t threshold;
+	u_int8_t contrast;
 	u_int8_t halftone_pattern[2];
 	int pad_type;
 	long bit_ordering;
@@ -119,51 +125,81 @@ int	fujitsu_m3096g_sw __P((struct ss_softc *, struct scan_io *,
 
 struct ss_quirk_inquiry_pattern ss_quirk_patterns[] = {
 	{{T_SCANNER, T_FIXED,
+	 "RICOH   ", "IS50            ", "    "}, {
+		 "Ricoh IS-50",
+		 SS_Q_WINDOW_DESC_LEN |
+		 SS_Q_REV_BRIGHTNESS |
+		 SS_Q_THRESHOLD |
+		 SS_Q_REV_CONTRAST |
+		 SS_Q_HALFTONE |
+		 SS_Q_BIT_ORDERING |
+		 SS_Q_VENDOR_SETWINDOW,
+		 320, 0, 0, 0, { 2, 0x0a }, 0, 7,
+		 ricoh_is410_sw
+	 }},
+	{{T_SCANNER, T_FIXED,
 	 "RICOH   ", "IS410           ", "    "}, {
 		 "Ricoh IS-410",
-		 SS_Q_NEEDS_WINDOW_DESC_LEN |
-		 SS_Q_USES_HALFTONE |
-		 SS_Q_USES_BIT_ORDERING |
-		 SS_Q_VENDOR_UNIQUE_SETWINDOW,
-		 320, { 2, 0x0a }, 0, 7,
+		 SS_Q_WINDOW_DESC_LEN |
+		 SS_Q_THRESHOLD |
+		 SS_Q_HALFTONE |
+		 SS_Q_BIT_ORDERING |
+		 SS_Q_VENDOR_SETWINDOW,
+		 320, 0, 0, 0, { 2, 0x0a }, 0, 7,
+		 ricoh_is410_sw
+	 }},
+	{{T_SCANNER, T_FIXED,	       /* Ricoh IS-410 OEMed by IBM */
+	 "IBM     ", "2456-001        ", "    "}, {
+		 "IBM 2456",
+		 SS_Q_WINDOW_DESC_LEN |
+		 SS_Q_THRESHOLD |
+		 SS_Q_HALFTONE |
+		 SS_Q_BIT_ORDERING |
+		 SS_Q_VENDOR_SETWINDOW,
+		 320, 0, 0, 0, { 2, 0x0a }, 0, 7,
 		 ricoh_is410_sw
 	 }},
 	{{T_SCANNER, T_FIXED,
 	 "UMAX    ", "UC630           ", "    "}, {
 		 "UMAX UC-630",
-		 SS_Q_NEEDS_WINDOW_DESC_LEN |
-		 SS_Q_USES_HALFTONE |
-		 SS_Q_VENDOR_UNIQUE_SETWINDOW,
-		 0x2e, { 0, 1 }, 0, 0,
+		 SS_Q_WINDOW_DESC_LEN |
+		 SS_Q_HALFTONE |
+		 SS_Q_VENDOR_SETWINDOW,
+		 0x2e, 0, 0, 0, { 0, 1 }, 0, 0,
 		 umax_uc630_sw
 	 }},
 	{{T_SCANNER, T_FIXED,
 	 "UMAX    ", "UG630           ", "    "}, {
 		 "UMAX UG-630",
-		 SS_Q_NEEDS_WINDOW_DESC_LEN |
-		 SS_Q_USES_HALFTONE |
-		 SS_Q_VENDOR_UNIQUE_SETWINDOW,
-		 0x2e, { 0, 1 }, 0, 0,
+		 SS_Q_WINDOW_DESC_LEN |
+		 SS_Q_HALFTONE |
+		 SS_Q_VENDOR_SETWINDOW,
+		 0x2e, 0, 0, 0, { 0, 1 }, 0, 0,
 		 umax_uc630_sw
 	 }},
 #ifdef NOTYET			/* ADF version */
 	{{T_SCANNER, T_FIXED,
 	 "FUJITSU ", "M3096Gm         ", "    "}, {
 		 "Fujitsu M3096G",
-		 SS_Q_NEEDS_WINDOW_DESC_LEN |
-		 SS_Q_USES_HALFTONE |
-		 SS_Q_NEEDS_RIF_SET |
-		 SS_Q_NEEDS_PADDING_TYPE,
-		 64, { 0, 1 }, 0, 0,
+		 SS_Q_WINDOW_DESC_LEN |
+		 SS_Q_BRIGHTNESS |
+		 SS_Q_MONO_THRESHOLD |
+		 SS_Q_HALFTONE |
+		 SS_Q_SET_RIF |
+		 SS_Q_PADDING_TYPE,
+		 64, 0, 0, 0, { 0, 1 }, 0, 0,
 		 fujistsu_m3096g_sw
 	 }},
 #else				/* flatbed-only version */
 	{{T_SCANNER, T_FIXED,
 	 "FUJITSU ", "M3096Gm         ", "    "}, {
 		 "Fujitsu M3096G",
-		 SS_Q_USES_HALFTONE |
-		 SS_Q_NEEDS_PADDING_TYPE,
-		 0, { 0, 1 }, 0, 0,
+		 SS_Q_BRIGHTNESS |
+		 SS_Q_MONO_THRESHOLD |
+		 SS_Q_CONTRAST |
+		 SS_Q_HALFTONE |
+		 SS_Q_PADDING_TYPE,
+		 0, 0, 0, 0, { 0, 1 }, 0, 0,
 		 NULL
 	 }},
 #endif
@@ -628,11 +664,14 @@ ss_set_window(ss, sio)
 	_lto3l(sizeof(window_data), window_cmd.len);
 
 	bzero(&window_data, sizeof(window_data));
-	if (ss->quirkdata->quirks & SS_Q_NEEDS_WINDOW_DESC_LEN)
+	if (ss->quirkdata->quirks & SS_Q_WINDOW_DESC_LEN)
 		_lto2l(ss->quirkdata->window_descriptor_length,
 		       window_data.window_desc_len);
 	else
 		_lto2l(40L, window_data.window_desc_len);
+
+	/* start of SET_WINDOW parameter block */
+
 	/* leave window id at zero */
 	/* leave auto bit at zero */
 	_lto2l(sio->scan_x_resolution, window_data.x_res);
@@ -641,9 +680,41 @@ ss_set_window(ss, sio)
 	_lto4l(sio->scan_y_origin, window_data.y_org);
 	_lto4l(sio->scan_width,  window_data.width);
 	_lto4l(sio->scan_height, window_data.length);
-	window_data.brightness     = sio->scan_brightness;
-	window_data.threshold      = sio->scan_brightness;
-	window_data.contrast       = sio->scan_contrast;
+
+	if (ss->quirkdata->quirks & SS_Q_REV_BRIGHTNESS)
+		window_data.brightness = 256 - sio->scan_brightness;
+	else if (ss->quirkdata->quirks & SS_Q_BRIGHTNESS)
+		window_data.brightness = ss->quirkdata->brightness;
+	else
+		window_data.brightness = sio->scan_brightness;
+
+	/*
+	 * threshold: Default is to follow brightness.
+	 * If SS_Q_MONO_THRESHOLD is set then the quirkdata contains a special
+	 * value to be used instead of default when image data is monochrome.
+	 * Otherwise if SS_Q_THRESHOLD is set then the quirkdata contains
+	 * the threshold to always use.
+	 * Both SS_Q_MONO_THRESHOLD and SS_Q_THRESHOLD should not be set at
+	 * the same time.
+	 */
+	if (ss->quirkdata->quirks & SS_Q_MONO_THRESHOLD)
+		if (sio->scan_image_mode == SIM_BINARY_MONOCHROME ||
+		    sio->scan_image_mode == SIM_DITHERED_MONOCHROME)
+			window_data.threshold = ss->quirkdata->threshold;
+		else
+			window_data.threshold = sio->scan_brightness;
+	else if (ss->quirkdata->quirks & SS_Q_THRESHOLD)
+		window_data.threshold = ss->quirkdata->threshold;
+	else
+		window_data.threshold = sio->scan_brightness;
+
+	if (ss->quirkdata->quirks & SS_Q_REV_CONTRAST)
+		window_data.contrast = 256 - sio->scan_contrast;
+	else if (ss->quirkdata->quirks & SS_Q_CONTRAST)
+		window_data.contrast = ss->quirkdata->contrast;
+	else
+		window_data.contrast = sio->scan_contrast;
+
 	switch (sio->scan_image_mode) {
 	case SIM_RED:
 	case SIM_GREEN:
@@ -653,27 +724,33 @@ ss_set_window(ss, sio)
 	default:
 		window_data.image_comp = sio->scan_image_mode;
 	}
+
 	window_data.bits_per_pixel = sio->scan_bits_per_pixel;
-	if (ss->quirkdata->quirks & SS_Q_USES_HALFTONE) {
+
+	if (ss->quirkdata->quirks & SS_Q_HALFTONE) {
 		window_data.halftone_pattern[0] =
 			ss->quirkdata->halftone_pattern[0];
 		window_data.halftone_pattern[1] = 
 			ss->quirkdata->halftone_pattern[1];
 	} /* else leave halftone set to zero. */
-	if (ss->quirkdata->quirks & SS_Q_NEEDS_RIF_SET)
+
+	if (ss->quirkdata->quirks & SS_Q_SET_RIF)
 		window_data.rif = 1;
-	if (ss->quirkdata->quirks & SS_Q_NEEDS_PADDING_TYPE)
+
+	if (ss->quirkdata->quirks & SS_Q_PADDING_TYPE)
 		window_data.pad_type = ss->quirkdata->pad_type;
 	else
 		window_data.pad_type = 3; /* 3 = pad to byte boundary */
-	if (ss->quirkdata->quirks & SS_Q_USES_BIT_ORDERING)
+
+	if (ss->quirkdata->quirks & SS_Q_BIT_ORDERING)
 		_lto2l(ss->quirkdata->bit_ordering, window_data.bit_ordering);
+
 	/* else leave bit_ordering set to zero. */
 	/* leave compression type & argument set to zero. */
 
 #undef window_data
 
-	if (ss->quirkdata->quirks &SS_Q_VENDOR_UNIQUE_SETWINDOW)
+	if (ss->quirkdata->quirks &SS_Q_VENDOR_SETWINDOW)
 		return ((*ss->quirkdata->vendor_unique_sw)(ss, sio,
 		    &window_cmd, (void*)&wd));
 	else
