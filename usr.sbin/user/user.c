@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.19 2001/02/13 09:18:33 deraadt Exp $ */
+/* $OpenBSD: user.c,v 1.20 2001/03/24 19:20:51 jakob Exp $ */
 /* $NetBSD: user.c,v 1.17 2000/04/14 06:26:55 simonb Exp $ */
 
 /*
@@ -1145,7 +1145,7 @@ useradd(int argc, char **argv)
 			bigD = 1;
 			break;
 		case 'G':
-		        strlcpy (buf, optarg, strlen (optarg) + 1);
+		        strlcpy (buf, optarg, sizeof(buf));
 			p = buf;
 			while ((s = strsep (&p, ",")) != NULL &&
 			       u.u_groupc < NGROUPS_MAX - 2)
@@ -1264,7 +1264,7 @@ usermod(int argc, char **argv)
 	while ((c = getopt(argc, argv, "G:c:d:e:f:g:l:mos:u:" MOD_OPT_EXTENSIONS)) != -1) {
 		switch(c) {
 		case 'G':
-		        strlcpy (buf, optarg, strlen (optarg) + 1);
+		        strlcpy (buf, optarg, sizeof(buf));
 			p = buf;
 			while ((s = strsep (&p, ",")) != NULL &&
 			       u.u_groupc < NGROUPS_MAX - 2)
