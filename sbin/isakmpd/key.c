@@ -1,4 +1,4 @@
-/* $OpenBSD: key.c,v 1.19 2004/09/17 13:53:08 ho Exp $	 */
+/* $OpenBSD: key.c,v 1.20 2004/12/28 11:19:47 hshoexer Exp $	 */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -199,7 +199,13 @@ key_from_printable(int type, int private, char *key, u_int8_t **data,
 			*datalenp = 0;
 			return;
 		}
-		*datalenp = hex2raw(key, *data, datalen);
+		if (hex2raw(key, *data, datalen)) {
+			log_error("key_from_printable: invalid hex key");
+			free(*data);
+			*datalenp = 0;
+			return;
+		}
+		*datalenp = datalen;
 		break;
 #endif
 
