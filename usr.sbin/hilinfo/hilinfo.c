@@ -1,4 +1,4 @@
-/*	$OpenBSD: hilinfo.c,v 1.4 2002/02/19 20:20:39 miod Exp $	*/
+/*	$OpenBSD: hilinfo.c,v 1.5 2004/07/09 16:22:02 deraadt Exp $	*/
 /* 
  * Copyright (c) 1987-1993, The University of Utah and
  * the Center for Software Science at the University of Utah (CSS).
@@ -117,7 +117,7 @@ getinfo(dname)
 }
 
 void
-printall()
+printall(void)
 {
 	int i;
 
@@ -133,7 +133,7 @@ printall()
 }
 
 char *
-tname()
+tname(void)
 {
 	struct hil_info *hp;
 
@@ -146,7 +146,7 @@ tname()
 }
 
 void
-usage()
+usage(void)
 {
 	extern char *__progname;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.20 2004/07/03 23:40:44 djm Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.21 2004/07/09 16:22:04 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Anil Madhavapeddy <anil@recoil.org>
@@ -527,7 +527,7 @@ priv_open_config(void)
 
 /* Ask if config file has been modified since last attempt to read it */
 int
-priv_config_modified()
+priv_config_modified(void)
 {
 	int cmd, res;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.11 2003/09/26 16:09:27 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.12 2004/07/09 16:22:02 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1996/05/16 16:00:55 thorpej Exp $	*/
 
 /*-
@@ -115,9 +115,7 @@ int	verbose = 0;
 extern	char *__progname;
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	int ch, do_stdin = 0;
 	char *cp, line[BUFSIZE];
@@ -211,7 +209,7 @@ main(argc, argv)
 
 #ifdef __sparc__
 static int
-getcputype()
+getcputype(void)
 {
 	int mib[2];
 	size_t len;
@@ -232,8 +230,7 @@ getcputype()
  * the table, and call the corresponding handler function.
  */
 static void
-action(line)
-	char *line;
+action(char *line)
 {
 	char *keyword, *arg, *cp;
 	struct keytabent *ktent;
@@ -272,7 +269,7 @@ action(line)
  * Dump the contents of the prom corresponding to all known keywords.
  */
 static void
-dump_prom()
+dump_prom(void)
 {
 	struct keytabent *ktent;
 
@@ -289,7 +286,7 @@ dump_prom()
 }
 
 static void
-usage()
+usage(void)
 {
 
 #ifdef __sparc__

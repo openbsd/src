@@ -1,5 +1,5 @@
 /*	$NetBSD: create.c,v 1.11 1996/09/05 09:24:19 mycroft Exp $	*/
-/*	$OpenBSD: create.c,v 1.21 2004/05/02 17:35:08 millert Exp $	*/
+/*	$OpenBSD: create.c,v 1.22 2004/07/09 16:22:03 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static const char sccsid[] = "@(#)create.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: create.c,v 1.21 2004/05/02 17:35:08 millert Exp $";
+static const char rcsid[] = "$OpenBSD: create.c,v 1.22 2004/07/09 16:22:03 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -76,7 +76,7 @@ static int	statd(FTS *, FTSENT *, uid_t *, gid_t *, mode_t *);
 static void	statf(int, FTSENT *);
 
 void
-cwalk()
+cwalk(void)
 {
 	FTS *t;
 	FTSENT *p;

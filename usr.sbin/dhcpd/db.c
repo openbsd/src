@@ -1,4 +1,4 @@
-/*	$OpenBSD: db.c,v 1.7 2004/04/18 01:19:07 henning Exp $	*/
+/*	$OpenBSD: db.c,v 1.8 2004/07/09 16:22:02 deraadt Exp $	*/
 
 /*
  * Persistent database management routines for DHCPD.
@@ -221,7 +221,7 @@ db_startup(void)
 }
 
 void
-new_lease_file()
+new_lease_file(void)
 {
 	fflush(db_file);
 	rewind(db_file);

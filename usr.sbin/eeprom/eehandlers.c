@@ -1,4 +1,4 @@
-/*	$OpenBSD: eehandlers.c,v 1.10 2002/05/30 19:09:05 deraadt Exp $	*/
+/*	$OpenBSD: eehandlers.c,v 1.11 2004/07/09 16:22:02 deraadt Exp $	*/
 /*	$NetBSD: eehandlers.c,v 1.2 1996/02/28 01:13:22 thorpej Exp $	*/
 
 /*-
@@ -93,9 +93,7 @@ static	int doio(struct keytabent *, u_char *, ssize_t, int);
 }
 
 void
-ee_hwupdate(ktent, arg)
-	struct keytabent *ktent;
-	char *arg;
+ee_hwupdate(struct keytabent *ktent, char *arg)
 {
 	time_t t;
 	char *cp, *cp2;
@@ -126,9 +124,7 @@ ee_hwupdate(ktent, arg)
 }
 
 void
-ee_num8(ktent, arg)
-	struct keytabent *ktent;
-	char *arg;
+ee_num8(struct keytabent *ktent, char *arg)
 {
 	u_char num8 = 0;
 	u_int num32;
@@ -152,9 +148,7 @@ ee_num8(ktent, arg)
 }
 
 void
-ee_num16(ktent, arg)
-	struct keytabent *ktent;
-	char *arg;
+ee_num16(struct keytabent *ktent, char *arg)
 {
 	u_int16_t num16 = 0;
 	u_int num32;
@@ -189,9 +183,7 @@ static	struct strvaltabent scrsizetab[] = {
 };
 
 void
-ee_screensize(ktent, arg)
-	struct keytabent *ktent;
-	char *arg;
+ee_screensize(struct keytabent *ktent, char *arg)
 {
 	struct strvaltabent *svp;
 	u_char scsize;
@@ -230,9 +222,7 @@ static	struct strvaltabent truthtab[] = {
 };
 
 void
-ee_truefalse(ktent, arg)
-	struct keytabent *ktent;
-	char *arg;
+ee_truefalse(struct keytabent *ktent, char *arg)
 {
 	struct strvaltabent *svp;
 	u_char truth;
@@ -264,9 +254,7 @@ ee_truefalse(ktent, arg)
 }
 
 void
-ee_bootdev(ktent, arg)
-	struct keytabent *ktent;
-	char *arg;
+ee_bootdev(struct keytabent *ktent, char *arg)
 {
 	u_char dev[5];
 	int i;
@@ -336,9 +324,7 @@ ee_bootdev(ktent, arg)
 }
 
 void
-ee_kbdtype(ktent, arg)
-	struct keytabent *ktent;
-	char *arg;
+ee_kbdtype(struct keytabent *ktent, char *arg)
 {
 	u_char kbd = 0;
 	u_int kbd2;
@@ -372,9 +358,7 @@ static	struct strvaltabent constab[] = {
 };
 
 void
-ee_constype(ktent, arg)
-	struct keytabent *ktent;
-	char *arg;
+ee_constype(struct keytabent *ktent, char *arg)
 {
 	struct strvaltabent *svp;
 	u_char cons;
@@ -408,9 +392,7 @@ ee_constype(ktent, arg)
 #endif
 
 void
-ee_diagpath(ktent, arg)
-	struct keytabent *ktent;
-	char *arg;
+ee_diagpath(struct keytabent *ktent, char *arg)
 {
 	char path[40];
 
@@ -429,9 +411,7 @@ ee_diagpath(ktent, arg)
 }
 
 void
-ee_banner(ktent, arg)
-	struct keytabent *ktent;
-	char *arg;
+ee_banner(struct keytabent *ktent, char *arg)
 {
 	char string[80];
 	u_char enable;
@@ -472,18 +452,14 @@ ee_banner(ktent, arg)
 
 /* ARGSUSED */
 void
-ee_notsupp(ktent, arg)
-	struct keytabent *ktent;
-	char *arg;
+ee_notsupp(struct keytabent *ktent, char *arg)
 {
 
 	warnx("field `%s' not yet supported", ktent->kt_keyword);
 }
 
 static void
-badval(ktent, arg)
-	struct keytabent *ktent;
-	char *arg;
+badval(struct keytabent *ktent, char *arg)
 {
 
 	warnx("inappropriate value `%s' for field `%s'", arg,
@@ -491,11 +467,7 @@ badval(ktent, arg)
 }
 
 static int
-doio(ktent, buf, len, wr)
-	struct keytabent *ktent;
-	u_char *buf;
-	ssize_t len;
-	int wr;
+doio(struct keytabent *ktent, u_char *buf, ssize_t len, int wr)
 {
 	int fd, rval = 0;
 	u_char *buf2;
@@ -561,7 +533,7 @@ doio(ktent, buf, len, wr)
  * of it sequentially starting at eeWriteCount[0].
  */
 void
-ee_updatechecksums()
+ee_updatechecksums(void)
 {
 	struct keytabent kt;
 	u_char checkme[EE_SIZE - EE_HWUPDATE_LOC];
@@ -600,7 +572,7 @@ ee_updatechecksums()
 }
 
 void
-ee_verifychecksums()
+ee_verifychecksums(void)
 {
 	struct keytabent kt;
 	u_char checkme[EE_SIZE - EE_HWUPDATE_LOC];

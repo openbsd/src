@@ -1,4 +1,4 @@
-/*	$OpenBSD: rip6query.c,v 1.11 2003/06/26 19:47:10 deraadt Exp $	*/
+/*	$OpenBSD: rip6query.c,v 1.12 2004/07/09 16:22:04 deraadt Exp $	*/
 /*	$KAME: rip6query.c,v 1.17 2002/09/08 01:35:17 itojun Exp $	*/
 
 /*
@@ -181,15 +181,14 @@ main(int argc, char *argv[])
 }
 
 static void
-usage()
+usage(void)
 {
 	fprintf(stderr, "Usage: rip6query [-I iface] [-w wait] address\n");
 }
 
 /* getnameinfo() is preferred as we may be able to show ifindex as ifname */
 static const char *
-sa_n2a(sa)
-	struct sockaddr *sa;
+sa_n2a(struct sockaddr *sa)
 {
 	static char buf[NI_MAXHOST];
 
@@ -201,8 +200,7 @@ sa_n2a(sa)
 }
 
 static const char *
-inet6_n2a(addr)
-	struct in6_addr *addr;
+inet6_n2a(struct in6_addr *addr)
 {
 	static char buf[NI_MAXHOST];
 
@@ -210,8 +208,7 @@ inet6_n2a(addr)
 }
 
 static void
-sigalrm_handler(sig)
-	int sig;
+sigalrm_handler(int sig)
 {
 
 	_exit(0);

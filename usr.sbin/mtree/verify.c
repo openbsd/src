@@ -1,4 +1,4 @@
-/*	$OpenBSD: verify.c,v 1.13 2003/06/02 23:36:54 millert Exp $	*/
+/*	$OpenBSD: verify.c,v 1.14 2004/07/09 16:22:03 deraadt Exp $	*/
 /*	$NetBSD: verify.c,v 1.10 1995/03/07 21:26:28 cgd Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static const char sccsid[] = "@(#)verify.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: verify.c,v 1.13 2003/06/02 23:36:54 millert Exp $";
+static const char rcsid[] = "$OpenBSD: verify.c,v 1.14 2004/07/09 16:22:03 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -61,7 +61,7 @@ static void	miss(NODE *, char *, size_t);
 static int	vwalk(void);
 
 int
-verify()
+verify(void)
 {
 	int rval;
 
@@ -72,7 +72,7 @@ verify()
 }
 
 static int
-vwalk()
+vwalk(void)
 {
 	FTS *t;
 	FTSENT *p;

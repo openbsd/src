@@ -1,5 +1,5 @@
 /*	$NetBSD: spec.c,v 1.6 1995/03/07 21:12:12 cgd Exp $	*/
-/*	$OpenBSD: spec.c,v 1.20 2004/07/01 18:25:48 otto Exp $	*/
+/*	$OpenBSD: spec.c,v 1.21 2004/07/09 16:22:03 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static const char sccsid[] = "@(#)spec.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: spec.c,v 1.20 2004/07/01 18:25:48 otto Exp $";
+static const char rcsid[] = "$OpenBSD: spec.c,v 1.21 2004/07/09 16:22:03 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,7 +56,7 @@ static void	 set(char *, NODE *);
 static void	 unset(char *, NODE *);
 
 NODE *
-spec()
+spec(void)
 {
 	NODE *centry, *last;
 	char *p;

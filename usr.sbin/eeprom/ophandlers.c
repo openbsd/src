@@ -1,4 +1,4 @@
-/*	$OpenBSD: ophandlers.c,v 1.7 2003/11/27 10:36:01 henning Exp $	*/
+/*	$OpenBSD: ophandlers.c,v 1.8 2004/07/09 16:22:02 deraadt Exp $	*/
 /*	$NetBSD: ophandlers.c,v 1.2 1996/02/28 01:13:30 thorpej Exp $	*/
 
 /*-
@@ -77,8 +77,7 @@ static	struct extabent opextab[] = {
 };
 
 char *
-op_handler(keyword, arg)
-	char *keyword, *arg;
+op_handler(char *keyword, char *arg)
 {
 	struct opiocdesc opio;
 	struct extabent *ex;
@@ -164,10 +163,7 @@ op_handler(keyword, arg)
 
 /* ARGSUSED */
 static void
-op_notsupp(exent, opiop, arg)
-	struct extabent *exent;
-	struct opiocdesc *opiop;
-	char *arg;
+op_notsupp(struct extabent *exent, struct opiocdesc *opiop, char *arg)
 {
 
 	warnx("property `%s' not yet supported", exent->ex_keyword);
@@ -178,7 +174,7 @@ op_notsupp(exent, opiop, arg)
  * (Really!  This is the only way I could get it to work!)
  */
 void
-op_dump()
+op_dump(void)
 {
 	struct opiocdesc opio1, opio2;
 	struct extabent *ex;

@@ -1,4 +1,4 @@
-/* $OpenBSD: wsfontload.c,v 1.6 2003/04/19 23:50:06 millert Exp $ */
+/* $OpenBSD: wsfontload.c,v 1.7 2004/07/09 16:22:04 deraadt Exp $ */
 /* $NetBSD: wsfontload.c,v 1.2 2000/01/05 18:46:43 ad Exp $ */
 
 /*
@@ -56,7 +56,7 @@ static void usage(void);
 static int getencoding(char *);
 
 static void
-usage()
+usage(void)
 {
 	extern char *__progname;
 
