@@ -1,6 +1,8 @@
 ./sbin/ldconfig
+./usr/bin/addr2line
 ./usr/bin/elf2aout
 ./usr/bin/ldd
+./usr/bin/readelf
 ./usr/include/mips
 ./usr/include/readline
 ./usr/lib/gcc-lib/mipsel-unknown-openbsd2.8
@@ -39,6 +41,7 @@
 ./usr/lib/libwrap.so.1.1
 ./usr/lib/libz.so.1.3
 ./usr/lib/scrt0.o
+./usr/libdata/ldscripts
 ./usr/libdata/perl5/mips-openbsd
 ./usr/libdata/perl5/mips-openbsd/5.6.0
 ./usr/libdata/perl5/mips-openbsd/5.6.0/.packlist
@@ -1736,10 +1739,6 @@
 ./usr/local/libdata/perl5/site_perl/mips-openbsd
 ./usr/mdec/bootrz
 ./usr/mdec/rzboot
-./usr/mipsel-unknown-openbsd2.8
-./usr/mipsel-unknown-openbsd2.8/bin
-./usr/mipsel-unknown-openbsd2.8/lib
-./usr/mipsel-unknown-openbsd2.8/lib/ldscripts
 ./usr/share/info/as.info
 ./usr/share/info/as.info-1
 ./usr/share/info/as.info-2
@@ -1747,12 +1746,18 @@
 ./usr/share/info/as.info-4
 ./usr/share/info/as.info-5
 ./usr/share/info/as.info-6
+./usr/share/info/as.info-7
+./usr/share/info/as.info-8
 ./usr/share/info/binutils.info
 ./usr/share/info/binutils.info-1
 ./usr/share/info/binutils.info-2
+./usr/share/info/binutils.info-3
 ./usr/share/info/gasp.info
 ./usr/share/info/gprof.info
+./usr/share/info/gprof.info-1
+./usr/share/info/gprof.info-2
 ./usr/share/info/ld.info
 ./usr/share/info/ld.info-1
 ./usr/share/info/ld.info-2
 ./usr/share/info/ld.info-3
+./usr/share/info/ld.info-4
