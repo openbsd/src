@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.45 1999/07/24 23:56:43 deraadt Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.46 1999/11/22 12:55:16 mjacob Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -224,7 +224,7 @@ scsi_probe_bus(bus, target, lun)
 {
 	struct scsibus_softc *scsi;
 	int maxtarget, mintarget, maxlun, minlun;
-	u_int8_t scsi_addr;
+	u_int16_t scsi_addr;
 
 	if (bus < 0 || bus >= scsibus_cd.cd_ndevs)
 		return ENXIO;

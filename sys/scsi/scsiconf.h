@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.19 1999/07/25 07:09:19 csapuntz Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.20 1999/11/22 12:55:16 mjacob Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -146,12 +146,12 @@ struct scsi_device {
 struct scsi_link {
 	u_int8_t scsi_version;		/* SCSI-I, SCSI-II, etc. */
 	u_int8_t scsibus;		/* the Nth scsibus */
-	u_int8_t target;		/* targ of this dev */
-	u_int8_t lun;			/* lun of this dev */
-	u_int8_t adapter_target;	/* what are we on the scsi bus */
-	u_int8_t adapter_buswidth;	/* 8 (regular) or 16 (wide). (0 becomes 8) */
-	u_int8_t openings;		/* available operations */
-	u_int8_t active;		/* operations in progress */
+	u_int16_t target;		/* targ of this dev */
+	u_int16_t lun;			/* lun of this dev */
+	u_int16_t adapter_target;	/* what are we on the scsi bus */
+	u_int16_t adapter_buswidth;	/* 8 (regular) or 16 (wide). (0 becomes 8) */
+	u_int16_t openings;		/* available operations */
+	u_int16_t active;		/* operations in progress */
 	u_int16_t flags;		/* flags that all devices have */
 #define	SDEV_REMOVABLE	 	0x0001	/* media is removable */
 #define	SDEV_MEDIA_LOADED 	0x0002	/* device figures are still valid */
@@ -208,7 +208,7 @@ struct scsibus_softc {
 	struct scsi_link *adapter_link;		/* prototype supplied by adapter */
 	struct scsi_link ***sc_link;
 	u_int16_t moreluns;
-	u_int8_t sc_buswidth;
+	u_int16_t sc_buswidth;
 };
 
 /*
