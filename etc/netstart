@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.46 1999/03/01 05:04:24 millert Exp $
+#	$OpenBSD: netstart,v 1.47 1999/03/26 14:34:31 niklas Exp $
 
 # Returns true if $1 contains only alphanumerics
 isalphanumeric() {
@@ -54,7 +54,12 @@ route -n add -net 127 127.0.0.1 -reject
 #
 # OR
 #
-# dhcp 
+# dhcp
+#
+# OR
+#
+# bridge
+# brconfig-arguments [ several lines if needed ]
 #
 # addr_family is the address family of the interface, generally inet
 # hostname is the host name that belongs to the interface, in /etc/hosts.
@@ -66,55 +71,65 @@ route -n add -net 127 127.0.0.1 -reject
 # has a "destination" (i.e. it's a point-to-point link, like SLIP).
 # dest_addr is the hostname of the other end of the link, in /etc/hosts
 #
+# the only required contents of the file in this mode are the addr_family field
+# and the hostname.
+#
 # dhcp is simply the string "dhcp" (no quotes, though) if the interface
 # is to be configured using DHCP.  See dhclient(8) and dhclient.conf(5)
 # for details.
 #
-# the only required contents of the file are the addr_family field
-# and the hostname.
+# bridge is the string "bridge" (still no quotes).  Bridge interfaces
+# are just configured "up" and then brconfig(8) is called for each
+# line of arguments following this first line.
 
-(
-    for hn in /etc/hostname.*; do
-	# Strip off /etc/hostname. prefix
-	if=${hn#/etc/hostname.}
+for hn in /etc/hostname.*; do
+    # Strip off /etc/hostname. prefix
+    if=${hn#/etc/hostname.}
 
-	# Interface names must be alphanumeric only.  We check to avoid
-	# configuring backup or temp files, and to catch the "*" case.
-	if ! isalphanumeric "$if"; then
-	    continue
-	fi
+    # Interface names must be alphanumeric only.  We check to avoid
+    # configuring backup or temp files, and to catch the "*" case.
+    if ! isalphanumeric "$if"; then
+        continue
+    fi
 
-	# Now parse the hostname.* file
-        (
-            read af name mask bcaddr extras
+    # Now parse the hostname.* file
+    {
+        read af name mask bcaddr extras
+
+	# $af can be either "bridge", "dhcp", "up" or an address family.
+	case "$af" in
+	"bridge")
+	    ifconfig $if up
+	    cmd=`sed "s/\(.*\)/brconfig $if \1;/"`
+ 	    ;;
+	"dhcp")
+	    ifconfig $if $extras down
+	    cmd="/sbin/dhclient $if"
+	    ;;
+	"up")
+	    # The only one of these guaranteed to be set is $if
+	    cmd="ifconfig $if $name $mask $bcaddr $extras up"
+ 	    ;;
+ 	*)
             read dt dtaddr
-
-	    # $af can be either "up", "dhcp", or an address family.
-	    if [ "$af" = "up" ]; then
-		# The only one of these guaranteed to be set is $if
-		ifconfig $if $name $mask $bcaddr $extras up
-	    elif [ "$af" = "dhcp" ]; then
-		ifconfig $if $extras down
-		cmd="/sbin/dhclient $if";
-	    else
-		if [ ! -n "$name" ]; then
-		    echo "/etc/hostname.$if: invalid network configuration file"
-		    exit
-		fi
-
-		cmd="ifconfig $if $af $name "
-		if [ "${dt}" = "dest" ]; then cmd="$cmd $dtaddr"; fi
-		if [ -n "$mask" ]; then cmd="$cmd netmask $mask"; fi
-		if [ -n "$bcaddr" -a "X$bcaddr" != "XNONE" ]; then
-		    cmd="$cmd broadcast $bcaddr";
-		fi
-		cmd="$cmd $extras";
+	    if [ ! -n "$name" ]; then
+		echo "/etc/hostname.$if: invalid network configuration file"
+		exit
 	    fi
 
-	    $cmd
-        ) < /etc/hostname.$if
-    done
-)
+	    cmd="ifconfig $if $af $name "
+	    if [ "${dt}" = "dest" ]; then cmd="$cmd $dtaddr"; fi
+	    if [ -n "$mask" ]; then cmd="$cmd netmask $mask"; fi
+	    if [ -n "$bcaddr" -a "X$bcaddr" != "XNONE" ]; then
+		cmd="$cmd broadcast $bcaddr";
+	    fi
+	    cmd="$cmd $extras";
+	    ;;
+	esac
+
+	eval "$cmd"
+    } < /etc/hostname.$if
+done
 
 # /etc/mygate, if it exists, contains the name of my gateway host
 # that name must be in /etc/hosts.
