@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha1742.c,v 1.15 2001/02/03 07:24:49 mickey Exp $	*/
+/*	$OpenBSD: aha1742.c,v 1.16 2001/08/26 00:45:08 fgsch Exp $	*/
 /*	$NetBSD: aha1742.c,v 1.61 1996/05/12 23:40:01 mycroft Exp $	*/
 
 /*
@@ -637,10 +637,6 @@ ahb_done(sc, ecb)
 	 * Otherwise, put the results of the operation
 	 * into the xfer and call whoever started it
 	 */
-	if ((xs->flags & INUSE) == 0) {
-		printf("%s: exiting but not in use!\n", sc->sc_dev.dv_xname);
-		Debugger();
-	}
 	if (ecb->flags & ECB_IMMED) {
 		if (ecb->flags & ECB_IMMED_FAIL)
 			xs->error = XS_DRIVER_STUFFUP;
@@ -958,10 +954,9 @@ ahb_scsi_cmd(xs)
 	 * then we can't allow it to sleep
 	 */
 	flags = xs->flags;
-	if ((flags & (ITSDONE|INUSE)) != INUSE) {
-		printf("%s: done or not in use?\n", sc->sc_dev.dv_xname);
+	if (flags & ITSDONE) {
+		printf("%s: done?\n", sc->sc_dev.dv_xname);
 		xs->flags &= ~ITSDONE;
-		xs->flags |= INUSE;
 	}
 	if ((ecb = ahb_get_ecb(sc, flags)) == NULL) {
 		xs->error = XS_DRIVER_STUFFUP;

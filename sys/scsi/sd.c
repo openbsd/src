@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.49 2001/08/06 20:50:25 miod Exp $	*/
+/*	$OpenBSD: sd.c,v 1.50 2001/08/26 00:45:08 fgsch Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -1254,7 +1254,7 @@ sddump(dev, blkno, va, size)
 		 * to wait for an xs.
 		 */
 		bzero(xs, sizeof(sx));
-		xs->flags |= SCSI_AUTOCONF | INUSE | SCSI_DATA_OUT;
+		xs->flags |= SCSI_AUTOCONF | SCSI_DATA_OUT;
 		xs->sc_link = sd->sc_link;
 		xs->retries = SDRETRIES;
 		xs->timeout = 10000;	/* 10000 millisecs for a disk ! */

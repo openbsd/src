@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr5380.c,v 1.15 1999/01/11 05:11:35 millert Exp $	*/
+/*	$OpenBSD: ncr5380.c,v 1.16 2001/08/26 00:45:08 fgsch Exp $	*/
 /*	$NetBSD: ncr5380.c,v 1.38 1996/12/19 21:48:18 scottr Exp $	*/
 
 /*
@@ -336,10 +336,6 @@ ncr5380_scsi_cmd(struct scsi_xfer *xs)
 	if (flags & ITSDONE) {
 		ncr_tprint(reqp, "scsi_cmd: command already done.....\n");
 		xs->flags &= ~ITSDONE;
-	}
-	if (!(flags & INUSE)) {
-		ncr_tprint(reqp, "scsi_cmd: command not in use.....\n");
-		xs->flags |= INUSE;
 	}
 
 #ifdef REAL_DMA

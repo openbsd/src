@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr.c,v 1.60 2001/08/25 10:13:30 art Exp $	*/
+/*	$OpenBSD: ncr.c,v 1.61 2001/08/26 00:45:08 fgsch Exp $	*/
 /*	$NetBSD: ncr.c,v 1.63 1997/09/23 02:39:15 perry Exp $	*/
 
 /**************************************************************************
@@ -1467,7 +1467,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 #if 0
 static char ident[] =
-	"\n$OpenBSD: ncr.c,v 1.60 2001/08/25 10:13:30 art Exp $\n";
+	"\n$OpenBSD: ncr.c,v 1.61 2001/08/26 00:45:08 fgsch Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
@@ -4431,11 +4431,6 @@ static int32_t ncr_start (struct scsi_xfer * xp)
 	*/
 
 	flags = xp->flags;
-	if (!(flags & INUSE)) {
-		printf("%s: ?INUSE?\n", ncr_name (np));
-		xp->flags |= INUSE;
-	};
-
 	if(flags & ITSDONE) {
 		printf("%s: ?ITSDONE?\n", ncr_name (np));
 		xp->flags &= ~ITSDONE;

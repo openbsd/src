@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi96.c,v 1.6 2001/07/04 08:52:46 niklas Exp $	*/
+/*	$OpenBSD: scsi96.c,v 1.7 2001/08/26 00:45:08 fgsch Exp $	*/
 /*	$NetBSD: scsi96.c,v 1.21 1996/10/13 03:21:29 christos Exp $	*/
 
 /*
@@ -193,10 +193,6 @@ ncr53c96_scsi_cmd(struct scsi_xfer * xs)
 	if (flags & ITSDONE) {
 		printf("Already done?");
 		xs->flags &= ~ITSDONE;
-	}
-	if (!(flags & INUSE)) {
-		printf("Not in use?");
-		xs->flags |= INUSE;
 	}
 	if (flags & SCSI_RESET) {
 		printf("flags & SCSIRESET.\n");
