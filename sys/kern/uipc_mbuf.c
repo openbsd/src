@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.52 2002/02/05 21:47:59 angelos Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.53 2002/02/05 21:59:18 angelos Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -901,9 +901,12 @@ m_zero(m)
 	struct mbuf *m;
 {
 	while (m) {
+#ifdef DIAGNOSTIC
+		if (M_READONLY(m))
+			panic("m_zero: M_READONLY");
+#endif /* DIAGNOSTIC */
 		if ((m->m_flags & M_EXT) &&
-		    (m->m_ext.ext_free == NULL) &&
-		    !MCLISREFERENCED(m))
+		    (m->m_ext.ext_free == NULL))
 			memset(m->m_ext.ext_buf, 0, m->m_ext.ext_size);
 		else {
 			if (m->m_flags & M_PKTHDR)
