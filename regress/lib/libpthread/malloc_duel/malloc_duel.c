@@ -1,4 +1,4 @@
-/* $OpenBSD: malloc_duel.c,v 1.1 2002/11/12 03:17:16 marc Exp $ */
+/* $OpenBSD: malloc_duel.c,v 1.2 2003/07/31 21:48:04 deraadt Exp $ */
 /* PUBLIC DOMAIN Nov 2002 <marc@snafu.org> */
 
 /*
@@ -27,7 +27,7 @@ alarm_handler(int sig)
 /*
  * A function that does lots of mallocs, called by all threads.
  */
-void
+static void
 malloc_loop(void)
 {
 	int	i;
@@ -49,7 +49,7 @@ malloc_loop(void)
 /*
  * A thread that does a lot of mallocs
  */
-void *
+static void *
 thread(void *arg)
 {
 	malloc_loop();

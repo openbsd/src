@@ -1,4 +1,4 @@
-/*	$OpenBSD: poll.c,v 1.3 2001/09/20 16:43:15 todd Exp $	*/
+/*	$OpenBSD: poll.c,v 1.4 2003/07/31 21:48:05 deraadt Exp $	*/
 /* David Leonard <d@openbsd.org>, 2001. Public Domain. */
 
 #include <pthread.h>
@@ -13,8 +13,7 @@
 #define POLLALL	(POLLIN|POLLOUT|POLLERR|POLLNVAL)
 
 static void
-print_pollfd(p)
-	struct pollfd *p;
+print_pollfd(struct pollfd *p)
 {
 
 	printf("{fd=%d, events=< %s%s%s> revents=< %s%s%s%s%s>}",
@@ -31,8 +30,7 @@ print_pollfd(p)
 }
 
 static void *
-writer(arg)
-	void *arg;
+writer(void *arg)
 {
 	int fd = *(int *)arg;
 	const char msg[1] = { '!' };
@@ -42,8 +40,7 @@ writer(arg)
 }
 
 static void *
-reader(arg)
-	void *arg;
+reader(void *arg)
 {
 	int fd = *(int *)arg;
 	char buf[1];
@@ -53,9 +50,7 @@ reader(arg)
 }
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	pthread_t t;
 	void *result;

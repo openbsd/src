@@ -1,4 +1,4 @@
-/*	$OpenBSD: sleep.c,v 1.3 2002/06/16 23:06:28 marc Exp $	*/
+/*	$OpenBSD: sleep.c,v 1.4 2003/07/31 21:48:06 deraadt Exp $	*/
 /*
  * Copyright (c) 1993, 1994, 1995, 1996 by Chris Provenzano and contributors, 
  * proven@mit.edu All rights reserved.
@@ -50,7 +50,8 @@
 const char buf[] = "abcdefghijklimnopqrstuvwxyz";
 int fd = 1;
 
-void* new_thread(void* arg)
+static void *
+new_thread(void* arg)
 {
 	int i;
 
@@ -62,7 +63,7 @@ void* new_thread(void* arg)
 }
 
 int
-main()
+main(int argc, char *argv[])
 {
 	pthread_t thread[2];
 	int count = sizeof thread/sizeof thread[0];

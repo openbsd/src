@@ -13,8 +13,8 @@
 
 #include <util.h>
 
-static int fmt_test();
-static int scan_test();
+static int fmt_test(void);
+static int scan_test(void);
 
 static void print_errno(int e);
 static int assert_int(int testnum, int checknum, int expect, int result);
@@ -104,7 +104,7 @@ static struct {			/* the test cases */
 #	define DDATA_LENGTH (sizeof ddata/sizeof *ddata)
 
 static int
-fmt_test()
+fmt_test(void)
 {
 	unsigned int i, e, errs = 0;
 	int ret;
@@ -204,7 +204,7 @@ print(char *input, quad_t result, int ret)
 }
 
 static int
-scan_test()
+scan_test(void)
 {
 	unsigned int i, errs = 0, e;
 	int ret;

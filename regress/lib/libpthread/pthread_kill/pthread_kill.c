@@ -1,4 +1,4 @@
-/* $OpenBSD: pthread_kill.c,v 1.3 2003/06/19 00:59:54 pvalchev Exp $ */
+/* $OpenBSD: pthread_kill.c,v 1.4 2003/07/31 21:48:05 deraadt Exp $ */
 /* PUBLIC DOMAIN Oct 2002 <marc@snafu.org> */
 
 /*
@@ -10,10 +10,11 @@
 #include <signal.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <stdlib.h>
 
 #include "test.h"
 
-void
+static void
 act_handler(int signal, siginfo_t *siginfo, void *context)
 {
 	struct sigaction sa;
@@ -28,7 +29,7 @@ act_handler(int signal, siginfo_t *siginfo, void *context)
 	free(str);
 }
  
-void *
+static void *
 thread(void * arg)
 {
 	sigset_t run_mask;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: close.c,v 1.3 2002/02/15 23:36:52 marc Exp $	*/
+/*	$OpenBSD: close.c,v 1.4 2003/07/31 21:48:04 deraadt Exp $	*/
 /*
  * Copyright (c) 1993, 1994, 1995, 1996 by Chris Provenzano and contributors, 
  * proven@mit.edu All rights reserved.
@@ -54,7 +54,7 @@ int fd;
 /*
  * meat of inetd discard service -- ignore data
  */
-void
+static void
 discard(int s)
 {
 	char buffer[BUFSIZE];
@@ -69,7 +69,7 @@ discard(int s)
  */
 #define TEST_PORT	9876
 
-void
+static void
 server(void)
 {
 	int	sock;
@@ -94,7 +94,8 @@ server(void)
 	exit(0);
 }
 
-void* new_thread(void* arg)
+static void *
+new_thread(void* arg)
 {
 	fd_set r;
 	int ret;
@@ -112,7 +113,7 @@ void* new_thread(void* arg)
 }
 
 int
-main()
+main(int argc, char *argv[])
 {
 	pthread_t thread;
 	pthread_attr_t attr;

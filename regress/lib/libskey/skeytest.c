@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeytest.c,v 1.1 2003/06/15 16:40:27 mickey Exp $	*/
+/*	$OpenBSD: skeytest.c,v 1.2 2003/07/31 21:48:07 deraadt Exp $	*/
 /*	$NetBSD: skeytest.c,v 1.3 2002/02/21 07:38:18 itojun Exp $	*/
 
 /*-
@@ -67,54 +67,52 @@ struct regPass {
 		{ NULL }
 	};
 
-int main()
-	{
+int
+main(int argc, char *argv[])
+{
 	char data[16], prn[64];
 	struct regPass *rp;
 	int i = 0;
 	int errors = 0;
 	int j;
 	
-	for(rp = regPass; rp->passphrase; rp++)
-		{
+	for(rp = regPass; rp->passphrase; rp++) {
 		struct regRes *rr;
 
 		i++;
-		for(rr = rp->res; rr->algo; rr++)
-			{
+		for(rr = rp->res; rr->algo; rr++) {
 			skey_set_algorithm(rr->algo);
 
 			keycrunch(data, rp->seed, rp->passphrase);
 			btoa8(prn, data);
 
-			if(strcasecmp(prn, rr->zero))
-				{
+			if(strcasecmp(prn, rr->zero)) {
 				errors++;
-				printf("Set %d, round 0, %s: Expected %s and got %s\n", i, rr->algo, rr->zero, prn);
-				}
+				printf("Set %d, round 0, %s: Expected %s and got %s\n",
+				    i, rr->algo, rr->zero, prn);
+			}
 
 			f(data);
 			btoa8(prn, data);
 
-			if(strcasecmp(prn, rr->one))
-				{
+			if(strcasecmp(prn, rr->one)) {
 				errors++;
-				printf("Set %d, round 1, %s: Expected %s and got %s\n", i, rr->algo, rr->one, prn);
-				}
+				printf("Set %d, round 1, %s: Expected %s and got %s\n",
+				    i, rr->algo, rr->one, prn);
+			}
 
 			for(j=1; j<99; j++)
 				f(data);
 			btoa8(prn, data);
 
-			if(strcasecmp(prn, rr->nine))
-				{
+			if(strcasecmp(prn, rr->nine)) {
 				errors++;
-				printf("Set %d, round 99, %s: Expected %s and got %s\n", i, rr->algo, rr->nine, prn);
-				}
-
+				printf("Set %d, round 99, %s: Expected %s and got %s\n",
+				    i, rr->algo, rr->nine, prn);
 			}
 		}
+	}
 
 	printf("%d errors\n", errors);
 	return(errors ? 1 : 0);
-	}
+}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.c,v 1.4 2002/06/16 23:06:15 marc Exp $	*/
+/*	$OpenBSD: signal.c,v 1.5 2003/07/31 21:48:06 deraadt Exp $	*/
 /* David Leonard <d@openbsd.org>, 2001. Public Domain. */
 
 /*
@@ -14,9 +14,8 @@
 
 volatile int alarmed;
 
-void *
-sleeper(arg)
-	void *arg;
+static void *
+sleeper(void *arg)
 {
 	sigset_t mask;
 
@@ -28,9 +27,8 @@ sleeper(arg)
 	SUCCEED;
 }
 
-void
-handler(sig)
-	int sig;
+static void
+handler(int sig)
 {
 	int save_errno = errno;
 
@@ -41,7 +39,7 @@ handler(sig)
 }
 
 int
-main()
+main(int argc, char *argv[])
 {
 	pthread_t slpr;
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: signodefer.c,v 1.2 2002/10/23 22:30:04 marc Exp $ */
+/* $OpenBSD: signodefer.c,v 1.3 2003/07/31 21:48:06 deraadt Exp $ */
 /* PUBLIC DOMAIN Oct 2002 <marc@snafu.org> */
 
 /*
@@ -15,7 +15,7 @@ volatile sig_atomic_t sigactive;
 volatile sig_atomic_t sigcount;
 volatile sig_atomic_t was_active;
 
-void
+static void
 act_handler(int signal, siginfo_t *siginfo, void *context)
 {
 	char *str;

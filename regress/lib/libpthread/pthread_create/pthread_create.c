@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_create.c,v 1.2 2001/09/20 16:43:15 todd Exp $	*/
+/*	$OpenBSD: pthread_create.c,v 1.3 2003/07/31 21:48:05 deraadt Exp $	*/
 /*
  * Copyright (c) 1993, 1994, 1995, 1996 by Chris Provenzano and contributors, 
  * proven@mit.edu All rights reserved.
@@ -43,7 +43,8 @@
 #include <stdlib.h>
 #include "test.h"
 
-void* new_thread(void* arg)
+static void *
+new_thread(void* arg)
 {
 	int i;
 
@@ -54,7 +55,7 @@ void* new_thread(void* arg)
 }
 
 int
-main()
+main(int argc, char *argv[])
 {
 	pthread_t thread;
 	int i;

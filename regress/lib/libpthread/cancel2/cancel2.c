@@ -1,4 +1,4 @@
-/* $OpenBSD: cancel2.c,v 1.1 2003/01/19 21:23:46 marc Exp $ */
+/* $OpenBSD: cancel2.c,v 1.2 2003/07/31 21:48:04 deraadt Exp $ */
 /* PUBLIC DOMAIN <marc@snafu.org> */
 
 /*
@@ -14,7 +14,7 @@
 
 #include "test.h"
 
-void *
+static void *
 select_thread(void *arg)
 {
 	int read_fd = *(int*) arg;

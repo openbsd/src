@@ -1,4 +1,4 @@
-/*	$OpenBSD: execve.c,v 1.2 2002/12/13 20:21:04 marc Exp $	*/
+/*	$OpenBSD: execve.c,v 1.3 2003/07/31 21:48:04 deraadt Exp $	*/
 /*
  * Copyright (c) 1993, 1994, 1995, 1996 by Chris Provenzano and contributors, 
  * proven@mit.edu All rights reserved.
@@ -55,7 +55,7 @@ char *argv[] = {
 char * should_succeed = "This line should be displayed\n";
 
 int
-main()
+main(int argc, char *argv[])
 {
 	int fd;
 

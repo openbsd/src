@@ -1,4 +1,4 @@
-/*	$OpenBSD: pread.c,v 1.1 2002/02/08 19:05:18 art Exp $	*/
+/*	$OpenBSD: pread.c,v 1.2 2003/07/31 21:48:09 deraadt Exp $	*/
 /*
  *	Written by Artur Grabowski <art@openbsd.org> 2002 Public Domain.
  */
@@ -9,7 +9,7 @@
 #include <fcntl.h>
 
 int
-main()
+main(int argc, char *argv[])
 {	
 	char temp[] = "/tmp/dup2XXXXXXXXX";
 	const char magic[10] = "0123456789";

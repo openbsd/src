@@ -1,4 +1,4 @@
-/*	$OpenBSD: eventtest.c,v 1.1 2003/06/15 16:34:53 mickey Exp $	*/
+/*	$OpenBSD: eventtest.c,v 1.2 2003/07/31 21:48:04 deraadt Exp $	*/
 /*	$NetBSD: eventtest.c,v 1.2 2003/06/13 04:09:18 itojun Exp $	*/
 
 /*
@@ -63,7 +63,7 @@ static struct timeval tcalled;
 #define TEST1	"this is a test"
 #define SECONDS	1
 
-void
+static void
 simple_read_cb(int fd, short event, void *arg)
 {
 	char buf[256];
@@ -80,7 +80,7 @@ simple_read_cb(int fd, short event, void *arg)
 	called++;
 }
 
-void
+static void
 simple_write_cb(int fd, short event, void *arg)
 {
 	int len;
@@ -92,7 +92,7 @@ simple_write_cb(int fd, short event, void *arg)
 		test_ok = 1;
 }
 
-void
+static void
 multiple_write_cb(int fd, short event, void *arg)
 {
 	struct event *ev = arg;
@@ -123,7 +123,7 @@ multiple_write_cb(int fd, short event, void *arg)
 		event_add(ev, NULL);
 }
 
-void
+static void
 multiple_read_cb(int fd, short event, void *arg)
 {
 	struct event *ev = arg;
@@ -143,7 +143,7 @@ multiple_read_cb(int fd, short event, void *arg)
 		event_add(ev, NULL);
 }
 
-void
+static void
 timeout_cb(int fd, short event, void *arg)
 {
 	struct timeval tv;
@@ -163,7 +163,7 @@ timeout_cb(int fd, short event, void *arg)
 		test_ok = 1;
 }
 
-void
+static void
 signal_cb(int fd, short event, void *arg)
 {
 	struct event *ev = arg;
@@ -177,7 +177,7 @@ struct both {
 	int nread;
 };
 
-void
+static void
 combined_read_cb(int fd, short event, void *arg)
 {
 	struct both *both = arg;
@@ -194,7 +194,7 @@ combined_read_cb(int fd, short event, void *arg)
 	event_add(&both->ev, NULL);
 }
 
-void
+static void
 combined_write_cb(int fd, short event, void *arg)
 {
 	struct both *both = arg;
@@ -219,7 +219,7 @@ combined_write_cb(int fd, short event, void *arg)
 
 /* Test infrastructure */
 
-int
+static int
 setup_test(char *name)
 {
 
@@ -235,7 +235,7 @@ setup_test(char *name)
 	return (0);
 }
 
-int
+static int
 cleanup_test(void)
 {
 	close(pair[0]);
@@ -252,7 +252,7 @@ cleanup_test(void)
 }
 
 int
-main (int argc, char **argv)
+main(int argc, char **argv)
 {
 	struct event ev, ev2;
 	struct timeval tv;

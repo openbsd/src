@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.3 1997/01/15 23:41:07 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.4 2003/07/31 21:48:03 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.2 1995/04/20 22:39:51 cgd Exp $	*/
 
 #include <stdio.h>
@@ -22,16 +22,15 @@ regoff_t startoff = 0;
 regoff_t endoff = 0;
 
 
-extern int split();
-extern void regprint();
+extern int split(char *, char *[], int, char *);
+extern void regprint(regex_t *, FILE *);
 
 /*
  - main - do the simple case, hand off to regress() for regression
  */
 int
-main(argc, argv)
-int argc;
-char *argv[];
+main(int argc, char *argv[])
+
 {
 	regex_t re;
 #	define	NS	10
@@ -431,8 +430,9 @@ char *should;
 				(sub.rm_so != -1 && sub.rm_eo == -1) ||
 				(sub.rm_so != -1 && sub.rm_so < 0) ||
 				(sub.rm_eo != -1 && sub.rm_eo < 0) ) {
-		sprintf(grump, "start %ld end %ld", (long)sub.rm_so,
-							(long)sub.rm_eo);
+		snprintf(grump, sizeof grump,
+		    "start %ld end %ld", (long)sub.rm_so,
+		    (long)sub.rm_eo);
 		return(grump);
 	}
 
@@ -444,8 +444,9 @@ char *should;
 
 	/* check for in range */
 	if (sub.rm_eo > strlen(str)) {
-		sprintf(grump, "start %ld end %ld, past end of string",
-					(long)sub.rm_so, (long)sub.rm_eo);
+		snprintf(grump, sizeof grump,
+			"start %ld end %ld, past end of string",
+			(long)sub.rm_so, (long)sub.rm_eo);
 		return(grump);
 	}
 
@@ -455,13 +456,13 @@ char *should;
 
 	/* check for not supposed to match */
 	if (should == NULL) {
-		sprintf(grump, "matched `%.*s'", len, p);
+		snprintf(grump, sizeof grump, "matched `%.*s'", len, p);
 		return(grump);
 	}
 
 	/* check for wrong match */
 	if (len != shlen || strncmp(p, should, (size_t)shlen) != 0) {
-		sprintf(grump, "matched `%.*s' instead", len, p);
+		snprintf(grump, sizeof grump, "matched `%.*s' instead", len, p);
 		return(grump);
 	}
 	if (shlen > 0)
@@ -474,7 +475,7 @@ char *should;
 	if (shlen == 0)
 		shlen = 1;	/* force check for end-of-string */
 	if (strncmp(p, at, shlen) != 0) {
-		sprintf(grump, "matched null at `%.20s'", p);
+		snprintf(grump, sizeof grump, "matched null at `%.20s'", p);
 		return(grump);
 	}
 	return(NULL);
@@ -507,7 +508,7 @@ char *name;
 	static char efbuf[100];
 	regex_t re;
 
-	sprintf(efbuf, "REG_%s", name);
+	snprintf(efbuf, sizeof efbuf, "REG_%s", name);
 	assert(strlen(efbuf) < sizeof(efbuf));
 	re.re_endp = efbuf;
 	(void) regerror(REG_ATOI, &re, efbuf, sizeof(efbuf));

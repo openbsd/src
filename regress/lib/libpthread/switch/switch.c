@@ -1,4 +1,4 @@
-/*	$OpenBSD: switch.c,v 1.3 2002/10/12 18:59:13 marc Exp $	*/
+/*	$OpenBSD: switch.c,v 1.4 2003/07/31 21:48:07 deraadt Exp $	*/
 /*
  * Copyright (c) 1993, 1994, 1995, 1996 by Chris Provenzano and contributors, 
  * proven@mit.edu All rights reserved.
@@ -58,7 +58,8 @@ volatile int ending = 0;
 /* ==========================================================================
  * usage();
  */
-void usage(void)
+static void
+usage(void)
 {
     extern char *__progname;
     printf("usage: %s [-?] [-c count]\n", __progname);
@@ -66,9 +67,8 @@ void usage(void)
     errno = 0;
 }
 
-void *
-new_thread(arg)
-	void *arg;
+static void *
+new_thread(void *arg)
 {
 	int i;
 
@@ -83,9 +83,7 @@ new_thread(arg)
 }
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	pthread_t thread;
 	int count = 4;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: goodaout.c,v 1.2 2001/01/29 02:05:56 niklas Exp $	*/
+/*	$OpenBSD: goodaout.c,v 1.3 2003/07/31 21:48:08 deraadt Exp $	*/
 /*	$NetBSD: goodaout.c,v 1.3 1995/04/20 22:44:20 cgd Exp $	*/
 
 /*
@@ -35,9 +35,7 @@
 #include <unistd.h>
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv)
 {
 	printf("succeeded\n");
 	exit(0);

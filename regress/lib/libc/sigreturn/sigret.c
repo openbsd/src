@@ -1,5 +1,5 @@
 /*
- * $OpenBSD: sigret.c,v 1.4 2002/04/30 01:59:47 deraadt Exp $
+ * $OpenBSD: sigret.c,v 1.5 2003/07/31 21:48:04 deraadt Exp $
  *
  * Public Domain
  *
@@ -64,13 +64,13 @@ usage(const char * err, ...)
 	exit(1);
 }
 
-void
+static void
 indirect_return(struct sigcontext * scp)
 {
 	sigreturn(scp);
 }
 
-void
+static void
 sig_handler(int sig, siginfo_t *blah, void *x)
 {
 	struct sigcontext * scp = x;
@@ -90,7 +90,7 @@ sig_handler(int sig, siginfo_t *blah, void *x)
 	}
 }
 
-void
+static void
 test2(char *fmt)
 {
 	char *ofmt = fmt;

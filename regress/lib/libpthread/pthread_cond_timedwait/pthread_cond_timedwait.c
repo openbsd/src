@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_cond_timedwait.c,v 1.3 2003/07/08 00:15:06 marc Exp $	*/
+/*	$OpenBSD: pthread_cond_timedwait.c,v 1.4 2003/07/31 21:48:05 deraadt Exp $	*/
 /*
  * Copyright (c) 1993, 1994, 1995, 1996 by Chris Provenzano and contributors, 
  * proven@mit.edu All rights reserved.
@@ -51,7 +51,8 @@
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
 
-void* thread_1(void * new_buf)
+static void *
+thread_1(void * new_buf)
 {
 	CHECKr(pthread_mutex_lock(&mutex));
 	CHECKr(pthread_cond_signal(&cond));
@@ -59,7 +60,8 @@ void* thread_1(void * new_buf)
 	pthread_exit(NULL);
 }
 
-void* thread_2(void * new_buf)
+static void *
+thread_2(void * new_buf)
 {
 	sleep(1);
 	CHECKr(pthread_mutex_lock(&mutex));
@@ -69,7 +71,7 @@ void* thread_2(void * new_buf)
 }
 
 int
-main()
+main(int argc, char *argv[])
 {
 	struct timespec abstime;
 	struct timeval begtime;

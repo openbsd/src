@@ -1,4 +1,4 @@
-/*	$OpenBSD: kqueue-pty.c,v 1.4 2003/07/31 03:23:41 mickey Exp $	*/
+/*	$OpenBSD: kqueue-pty.c,v 1.5 2003/07/31 21:48:08 deraadt Exp $	*/
 
 /*	Written by Michael Shalayeff, 2003, Public Domain	*/
 
@@ -12,7 +12,7 @@
 #include <fcntl.h>
 #include <err.h>
 
-int
+static int
 pty_check(int kq, struct kevent *ev, int n, int rm, int rs, int wm, int ws)
 {
 	struct timespec ts;
@@ -43,6 +43,8 @@ pty_check(int kq, struct kevent *ev, int n, int rm, int rs, int wm, int ws)
 
 	return (0);
 }
+
+int do_pty(void);
 
 int
 do_pty(void)

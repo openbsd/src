@@ -1,4 +1,4 @@
-/*	$OpenBSD: mmaptest.c,v 1.5 2002/09/12 04:09:31 mickey Exp $	*/
+/*	$OpenBSD: mmaptest.c,v 1.6 2003/07/31 21:48:08 deraadt Exp $	*/
 /*
  *	Written by Artur Grabowski <art@openbsd.org>, 2001 Public Domain
  */
@@ -20,7 +20,7 @@
 #define MAGIC "The voices in my head are trying to ignore me."
 
 int
-main()
+main(int argc, char *argv[])
 {
 	char fname[25] = "/tmp/mmaptestXXXXXXXXXX";
 	int page_size;

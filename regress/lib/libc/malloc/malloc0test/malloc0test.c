@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc0test.c,v 1.1 2003/07/15 10:09:37 otto Exp $	*/
+/*	$OpenBSD: malloc0test.c,v 1.2 2003/07/31 21:48:03 deraadt Exp $	*/
 /*
  * Public domain.  2001, Theo de Raadt
  */
@@ -14,14 +14,14 @@
 volatile sig_atomic_t got;
 jmp_buf jmp;
 
-void
+static void
 catch(int signo)
 {
 	got++;
 	longjmp(jmp, 1);
 }
 
-int
+static int
 test(char *p, int size)
 {
 	signal(SIGSEGV, catch);

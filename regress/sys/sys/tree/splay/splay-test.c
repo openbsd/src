@@ -1,4 +1,4 @@
-/*	$OpenBSD: splay-test.c,v 1.2 2002/10/16 15:30:06 art Exp $	*/
+/*	$OpenBSD: splay-test.c,v 1.3 2003/07/31 21:48:10 deraadt Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -39,7 +39,7 @@ struct node {
 
 SPLAY_HEAD(tree, node) root;
 
-int
+static int
 compare(struct node *a, struct node *b)
 {
 	if (a->key < b->key) return (-1);

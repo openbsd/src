@@ -1,19 +1,17 @@
-/*	$OpenBSD: split.c,v 1.2 2001/01/29 02:05:44 niklas Exp $	*/
+/*	$OpenBSD: split.c,v 1.3 2003/07/31 21:48:03 deraadt Exp $	*/
 /*	$NetBSD: split.c,v 1.2 1995/04/20 22:39:57 cgd Exp $	*/
 
 #include <stdio.h>
 #include <string.h>
+
+int split(char *string, char *fields[], int nfields, char *sep);
 
 /*
  - split - divide a string into fields, like awk split()
  = int split(char *string, char *fields[], int nfields, char *sep);
  */
 int				/* number of fields, including overflow */
-split(string, fields, nfields, sep)
-char *string;
-char *fields[];			/* list is not NULL-terminated */
-int nfields;			/* number of entries available in fields[] */
-char *sep;			/* "" white, "c" single char, "ab" [ab]+ */
+split(char *string, char *fields[], int nfields, char *sep)
 {
 	register char *p = string;
 	register char c;			/* latest character */

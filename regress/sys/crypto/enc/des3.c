@@ -1,4 +1,4 @@
-/*      $OpenBSD: des3.c,v 1.5 2002/06/23 21:46:10 wcobb Exp $  */
+/*      $OpenBSD: des3.c,v 1.6 2003/07/31 21:48:07 deraadt Exp $  */
 
 /*
  * Copyright (c) 2002 Markus Friedl.  All rights reserverd.
@@ -37,7 +37,7 @@
 #include <string.h>
 #include <unistd.h>
 
-int
+static int
 syscrypt(const unsigned char *key, size_t klen, const unsigned char *iv,
     const unsigned char *in, unsigned char *out, size_t len, int encrypt)
 {
@@ -90,7 +90,7 @@ err:
 	return (-1);
 }
 
-int
+static int
 getallowsoft(void)
 {
 	int mib[2], old;
@@ -106,7 +106,7 @@ getallowsoft(void)
 	return old;
 }
 
-void
+static void
 setallowsoft(int new)
 {
 	int mib[2], old;
@@ -121,7 +121,7 @@ setallowsoft(int new)
 		err(1, "sysctl failed");
 }
 
-int
+static int
 match(unsigned char *a, unsigned char *b, size_t len)
 {
 	int i;

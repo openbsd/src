@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket2.c,v 1.3 2002/01/02 16:15:32 fgsch Exp $	*/
+/*	$OpenBSD: socket2.c,v 1.4 2003/07/31 21:48:06 deraadt Exp $	*/
 /*
  * Copyright (c) 1993, 1994, 1995, 1996 by Chris Provenzano and contributors, 
  * proven@mit.edu All rights reserved.
@@ -59,9 +59,8 @@ struct sockaddr_in a_sout;
 #define MESSAGE5 "This should be message #5"
 #define MESSAGE6 "This should be message #6"
 
-void *
-sock_write(arg)
-	void *arg;
+static void *
+sock_write(void *arg)
 {
 	int fd = *(int *)arg;
 
@@ -72,8 +71,8 @@ sock_write(arg)
 
 static pthread_mutex_t waiter_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-void*
-waiter(sig)
+static void *
+waiter(int sig)
 {
 	int status;
 	pid_t pid;
@@ -89,9 +88,8 @@ waiter(sig)
 	return (NULL);
 }
 
-void *
-sock_accept(arg)
-	void *arg;
+static void *
+sock_accept(void *arg)
 {
 	pthread_t thread, wthread;
 	struct sockaddr a_sin;
@@ -175,7 +173,7 @@ sock_accept(arg)
 }
 
 int
-main()
+main(int argc, char *argv[])
 {
 	pthread_t thread;
 

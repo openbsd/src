@@ -1,4 +1,4 @@
-/*	$OpenBSD: cancel.c,v 1.5 2002/02/17 05:44:38 marc Exp $	*/
+/*	$OpenBSD: cancel.c,v 1.6 2003/07/31 21:48:04 deraadt Exp $	*/
 /* David Leonard <d@openbsd.org>, 1999. Public Domain. */
 
 #include <pthread.h>
@@ -15,7 +15,9 @@ static struct timespec expiretime;
 
 static volatile int pv_state = 0;
 
-void p() {
+static void
+p(void)
+{
 	CHECKr(pthread_mutex_lock(&mutex));
 	if (pv_state <= 0) {
 		CHECKr(pthread_cond_timedwait(&cond, &mutex, &expiretime));
@@ -24,7 +26,9 @@ void p() {
 	CHECKr(pthread_mutex_unlock(&mutex));
 }
 
-void v() {
+static void
+v(void)
+{
 	int needsignal;
 
 	CHECKr(pthread_mutex_lock(&mutex));
@@ -35,16 +39,15 @@ void v() {
 	CHECKr(pthread_mutex_unlock(&mutex));
 }
 
-void
+static void
 c1handler(void *arg)
 {
 	CHECKe(close(*(int *)arg));
 	v();
 }
 
-void *
-child1fn(arg)
-	void *arg;
+static void *
+child1fn(void *arg)
 {
 	int fd;
 	char buf[1024];
@@ -65,7 +68,7 @@ child1fn(arg)
 
 static int c2_in_test = 0;
 
-void
+static void
 c2handler(void *arg)
 {
 	ASSERT(c2_in_test);
@@ -73,9 +76,8 @@ c2handler(void *arg)
 }
 
 static int message_seen = 0;
-void *
-child2fn(arg)
-	void *arg;
+static void *
+child2fn(void *arg)
 {
 	SET_NAME("c2");
 
@@ -118,7 +120,7 @@ child2fn(arg)
 
 static int c3_cancel_survived;
 
-void
+static void
 c3handler(void *arg)
 {
 	printf("(fyi, cancellation of self %s instantaneous)\n",
@@ -126,9 +128,8 @@ c3handler(void *arg)
 	v();
 }
 
-void *
-child3fn(arg)
-	void *arg;
+static void *
+child3fn(void *arg)
 {
 	SET_NAME("c3");
 	pthread_cleanup_push(c3handler, NULL);
@@ -144,7 +145,7 @@ child3fn(arg)
 }
 
 int
-main()
+main(int argc, char *argv[])
 {
 	pthread_t child1, child2, child3;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: unfdpass.c,v 1.7 2002/02/16 21:27:32 millert Exp $	*/
+/*	$OpenBSD: unfdpass.c,v 1.8 2003/07/31 21:48:10 deraadt Exp $	*/
 /*	$NetBSD: unfdpass.c,v 1.3 1998/06/24 23:51:30 thorpej Exp $	*/
 
 /*-
@@ -89,10 +89,10 @@ main(argc, argv)
 	 * Create the test files.
 	 */
 	for (i = 0; i < 2; i++) {
-		(void) sprintf(fname, "file%d", i + 1);
+		(void) snprintf(fname, sizeof fname, "file%d", i + 1);
 		if ((fd = open(fname, O_WRONLY|O_CREAT|O_TRUNC, 0666)) == -1)
 			err(1, "open %s", fname);
-		(void) sprintf(buf, "This is file %d.\n", i + 1);
+		(void) snprintf(buf, sizeof buf, "This is file %d.\n", i + 1);
 		if (write(fd, buf, strlen(buf)) != strlen(buf))
 			err(1, "write %s", fname);
 		(void) close(fd);
@@ -280,7 +280,7 @@ child()
 	 * Open the files again, and pass them to the child over the socket.
 	 */
 	for (i = 0; i < 2; i++) {
-		(void) sprintf(fname, "file%d", i + 1);
+		(void) snprintf(fname, sizeof fname, "file%d", i + 1);
 		if ((fd = open(fname, O_RDONLY, 0666)) == -1)
 			err(1, "child open %s", fname);
 		files[i] = fd;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dup2test.c,v 1.2 2002/02/08 16:56:07 art Exp $	*/
+/*	$OpenBSD: dup2test.c,v 1.3 2003/07/31 21:48:08 deraadt Exp $	*/
 /*
  *	Written by Artur Grabowski <art@openbsd.org> 2001 Public Domain.
  */
@@ -9,7 +9,7 @@
 #include <fcntl.h>
 
 int
-main()
+main(int argc, char *argv[])
 {
 	int orgfd, fd1, fd2;
 	char temp[] = "/tmp/dup2XXXXXXXXX";

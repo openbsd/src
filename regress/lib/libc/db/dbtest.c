@@ -1,4 +1,4 @@
-/*	$OpenBSD: dbtest.c,v 1.10 2003/06/02 19:38:25 millert Exp $	*/
+/*	$OpenBSD: dbtest.c,v 1.11 2003/07/31 21:48:02 deraadt Exp $	*/
 /*	$NetBSD: dbtest.c,v 1.8 1996/05/03 21:57:48 cgd Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)dbtest.c	8.17 (Berkeley) 9/1/94";
 #else
-static char rcsid[] = "$OpenBSD: dbtest.c,v 1.10 2003/06/02 19:38:25 millert Exp $";
+static char rcsid[] = "$OpenBSD: dbtest.c,v 1.11 2003/07/31 21:48:02 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -88,9 +88,7 @@ DB *XXdbp;				/* Global for gdb. */
 int XXlineno;				/* Fast breakpoint for gdb. */
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	extern int optind;
 	extern char *optarg;
@@ -158,7 +156,7 @@ main(argc, argv)
 		p = getenv("TMPDIR");
 		if (p == NULL)
 			p = "/var/tmp";
-		(void)sprintf(buf, "%s/__dbtest", p);
+		(void)snprintf(buf, sizeof buf, "%s/__dbtest", p);
 		fname = buf;
 		(void)unlink(buf);
 	} else  if (!sflag)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: toint.c,v 1.2 2003/07/31 03:23:41 mickey Exp $	*/
+/*	$OpenBSD: toint.c,v 1.3 2003/07/31 21:48:04 deraadt Exp $	*/
 
 /*	Written by Michael Shalayeff, 2003, Public domain.	*/
 
@@ -6,7 +6,7 @@
 #include <signal.h>
 #include <unistd.h>
 
-void
+static void
 sigfpe(int sig, siginfo_t *si, void *v)
 {
 	char buf[132];
@@ -19,14 +19,14 @@ sigfpe(int sig, siginfo_t *si, void *v)
 	_exit(1);
 }
 
-int
+static int
 toint(double d)
 {
 	return (int)d;
 }
 
 int
-main()
+main(int argc, char *argv[])
 {
 	struct sigaction sa;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kqueue-random.c,v 1.3 2003/07/31 03:23:41 mickey Exp $	*/
+/*	$OpenBSD: kqueue-random.c,v 1.4 2003/07/31 21:48:08 deraadt Exp $	*/
 /*	Written by Michael Shalayeff, 2002, Public Domain	*/
 
 #include <stdlib.h>
@@ -12,6 +12,8 @@
 #include <sys/fcntl.h>
 
 #include <dev/rndvar.h>
+
+int do_random(void);
 
 int
 do_random(void)

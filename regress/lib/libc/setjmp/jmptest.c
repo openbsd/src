@@ -1,4 +1,4 @@
-/*	$OpenBSD: jmptest.c,v 1.5 2001/11/11 23:26:35 deraadt Exp $	*/
+/*	$OpenBSD: jmptest.c,v 1.6 2003/07/31 21:48:03 deraadt Exp $	*/
 /*	$NetBSD: jmptest.c,v 1.2 1995/01/01 20:55:35 jtc Exp $	*/
 
 /*
@@ -64,9 +64,8 @@
 
 int expectsignal;
 
-void
-aborthandler(signo)
-	int signo;
+static void
+aborthandler(int signo)
 {
 
 	if (expectsignal)
@@ -78,9 +77,7 @@ aborthandler(signo)
 }
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	struct sigaction sa;
 	BUF jb;

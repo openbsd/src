@@ -1,4 +1,4 @@
-/*	$OpenBSD: fcntl_dup.c,v 1.1 2002/02/08 17:05:55 art Exp $	*/
+/*	$OpenBSD: fcntl_dup.c,v 1.2 2003/07/31 21:48:08 deraadt Exp $	*/
 /*
  *	Written by Artur Grabowski <art@openbsd.org> 2002 Public Domain.
  */
@@ -9,7 +9,7 @@
 #include <fcntl.h>
 
 int
-main()
+main(int argc, char *argv[])
 {
 	int orgfd, fd1, fd2;
 	char temp[] = "/tmp/dup2XXXXXXXXX";

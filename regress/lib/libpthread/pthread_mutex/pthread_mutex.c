@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_mutex.c,v 1.3 2001/11/03 04:33:48 marc Exp $	*/
+/*	$OpenBSD: pthread_mutex.c,v 1.4 2003/07/31 21:48:05 deraadt Exp $	*/
 /*
  * Copyright (c) 1993, 1994, 1995, 1996 by Chris Provenzano and contributors, 
  * proven@mit.edu All rights reserved.
@@ -49,9 +49,8 @@
 
 int contention_variable;
 
-void * 
-thread_contention(arg)
-	void *arg;
+static void * 
+thread_contention(void *arg)
 {
 	pthread_mutex_t *mutex = arg;
 
@@ -64,9 +63,8 @@ thread_contention(arg)
 	pthread_exit(NULL);
 }
 
-void
-test_contention_lock(mutex)
-	pthread_mutex_t *mutex;
+static void
+test_contention_lock(pthread_mutex_t *mutex)
 {
 	pthread_t thread;
 
@@ -82,18 +80,16 @@ test_contention_lock(mutex)
 	CHECKr(pthread_mutex_unlock(mutex));
 }
 
-void
-test_nocontention_lock(mutex)
-	pthread_mutex_t *mutex;
+static void
+test_nocontention_lock(pthread_mutex_t *mutex)
 {
 	printf("  test_nocontention_lock()\n");
 	CHECKr(pthread_mutex_lock(mutex));
 	CHECKr(pthread_mutex_unlock(mutex));
 }
 
-void
-test_debug_double_lock(mutex)
-	pthread_mutex_t *mutex;
+static void
+test_debug_double_lock(pthread_mutex_t *mutex)
 {
 	printf("  test_debug_double_lock()\n");
 	CHECKr(pthread_mutex_lock(mutex));
@@ -101,9 +97,8 @@ test_debug_double_lock(mutex)
 	CHECKr(pthread_mutex_unlock(mutex));
 }
 
-void
-test_debug_double_unlock(mutex)
-	pthread_mutex_t *mutex;
+static void
+test_debug_double_unlock(pthread_mutex_t *mutex)
 {
 	printf("  test_debug_double_unlock()\n");
 	CHECKr(pthread_mutex_lock(mutex));
@@ -112,17 +107,16 @@ test_debug_double_unlock(mutex)
 	ASSERTe(pthread_mutex_unlock(mutex), != 0);
 }
 
-void
-test_nocontention_trylock(mutex)
-	pthread_mutex_t *mutex;
+static void
+test_nocontention_trylock(pthread_mutex_t *mutex)
 {
 	printf("  test_nocontention_trylock()\n");
 	CHECKr(pthread_mutex_trylock(mutex));
 	CHECKr(pthread_mutex_unlock(mutex));
 }
 
-void
-test_mutex_static()
+static void
+test_mutex_static(void)
 {
 	pthread_mutex_t mutex_static = PTHREAD_MUTEX_INITIALIZER;
 
@@ -131,7 +125,7 @@ test_mutex_static()
 	test_contention_lock(&mutex_static);
 }
 
-void
+static void
 test_mutex_fast(void)
 {
 	pthread_mutex_t mutex_fast; 
@@ -143,8 +137,8 @@ test_mutex_fast(void)
 	CHECKr(pthread_mutex_destroy(&mutex_fast));
 }
 
-void
-test_mutex_debug()
+static void
+test_mutex_debug(void)
 {
 	pthread_mutexattr_t mutex_debug_attr; 
 	pthread_mutex_t mutex_debug; 
@@ -161,8 +155,8 @@ test_mutex_debug()
 	CHECKr(pthread_mutex_destroy(&mutex_debug));
 }
 
-void
-test_mutex_recursive()
+static void
+test_mutex_recursive(void)
 {
 	pthread_mutexattr_t mutex_recursive_attr; 
 	pthread_mutex_t mutex_recursive; 
@@ -187,7 +181,7 @@ test_mutex_recursive()
 }
 
 int
-main()
+main(int argc, char *argv[])
 {
 	test_mutex_static();
 	test_mutex_fast();

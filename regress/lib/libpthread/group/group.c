@@ -1,4 +1,4 @@
-/*	$OpenBSD: group.c,v 1.4 2001/09/12 12:07:39 fgsch Exp $	*/
+/*	$OpenBSD: group.c,v 1.5 2003/07/31 21:48:04 deraadt Exp $	*/
 
 /* David Leonard <d@openbsd.org>, 2001. Public Domain. */
 
@@ -24,7 +24,7 @@ volatile int done_count;
 pthread_mutex_t display;
 pthread_mutex_t display2;
 
-void *
+static void *
 test(void *arg)
 {
 	gid_t gid = *(gid_t *)arg;
@@ -137,7 +137,7 @@ test(void *arg)
 
 #define NGRPS	5
 int
-main()
+main(int argc, char *argv[])
 {
 	pthread_t thread[NGRPS];
 	int gid;

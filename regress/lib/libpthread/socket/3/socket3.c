@@ -1,4 +1,4 @@
-/* $OpenBSD: socket3.c,v 1.2 2002/10/12 19:02:51 marc Exp $ */
+/* $OpenBSD: socket3.c,v 1.3 2003/07/31 21:48:06 deraadt Exp $ */
 /* PUBLIC DOMAIN Oct 2002 <marc@snafu.org> */
 
 /* Test blocking/non-blocking mode inheritance on accept */
@@ -20,7 +20,7 @@
  * connect to the test port passed in arg, then close the connection
  * and return.
  */
-void *
+static void *
 sock_connect(void *arg)
 {
 	struct sockaddr_in sin;
@@ -43,7 +43,7 @@ sock_connect(void *arg)
  * verify that the blocking mode of the socket returned from accept is
  * also non-blocking
  */
-void *
+static void *
 sock_accept(void *arg)
 {
 	pthread_t connect_thread;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: preemption.c,v 1.3 2003/01/26 22:05:12 marc Exp $	*/
+/*	$OpenBSD: preemption.c,v 1.4 2003/07/31 21:48:05 deraadt Exp $	*/
 /*
  * Copyright (c) 1993, 1994, 1995, 1996 by Chris Provenzano and contributors, 
  * proven@mit.edu All rights reserved.
@@ -37,8 +37,8 @@
 #include <stdlib.h>
 #include "test.h"
 
-void *
-new_thread(void * new_buf)
+static void *
+new_thread(void *new_buf)
 {
 	int i;
 
@@ -53,7 +53,7 @@ new_thread(void * new_buf)
 }
 
 int
-main()
+main(int argc, char *argv[])
 {
 	pthread_t thread;
 

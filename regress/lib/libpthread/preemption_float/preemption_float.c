@@ -1,4 +1,4 @@
-/*	$OpenBSD: preemption_float.c,v 1.3 2003/01/23 00:52:52 marc Exp $	*/
+/*	$OpenBSD: preemption_float.c,v 1.4 2003/07/31 21:48:05 deraadt Exp $	*/
 /*
  * Copyright (c) 1993, 1994, 1995, 1996 by Chris Provenzano and contributors, 
  * proven@mit.edu All rights reserved.
@@ -47,7 +47,8 @@ int limit = 2;
 int float_passed = 0;
 int float_failed = 1;
 
-void *log_loop (void *x) {
+static void *
+log_loop (void *x) {
   int i;
   double d, d1, d2;
   /* sleep (1); */
@@ -70,7 +71,8 @@ void *log_loop (void *x) {
   pthread_exit(&float_passed);
 }
 
-void *trig_loop (void *x) {
+static void *
+trig_loop (void *x) {
   int i;
   double d, d1, d2;
   /* sleep (1);  */
@@ -95,7 +97,7 @@ void *trig_loop (void *x) {
   pthread_exit(&float_passed);
 }
 
-int
+static int
 floatloop(void)
 {
 	pthread_t thread[2];
@@ -112,7 +114,7 @@ floatloop(void)
 }
 
 int
-main()
+main(int argc, char *argv[])
 {
 	pthread_t thread;
 	int *result;

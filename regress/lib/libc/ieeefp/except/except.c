@@ -1,4 +1,4 @@
-/*	$OpenBSD: except.c,v 1.3 2001/01/29 02:05:42 niklas Exp $	*/
+/*	$OpenBSD: except.c,v 1.4 2003/07/31 21:48:03 deraadt Exp $	*/
 
 #include <stdio.h>
 #include <signal.h>
@@ -6,7 +6,6 @@
 #include <ieeefp.h>
 #include <float.h>
 
-void sigfpe();
 volatile sig_atomic_t signal_cought;
 
 static volatile const double one  = 1.0;
@@ -14,8 +13,14 @@ static volatile const double zero = 0.0;
 static volatile const double huge = DBL_MAX;
 static volatile const double tiny = DBL_MIN;
 
+static void
+sigfpe(int signo)
+{
+	signal_cought = 1;
+}
+
 int
-main()
+main(int argc, char *argv[])
 {
 	volatile double x;
 
@@ -83,8 +88,3 @@ main()
 	exit(0);
 }
 
-void
-sigfpe()
-{
-	signal_cought = 1;
-}

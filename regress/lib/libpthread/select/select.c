@@ -1,4 +1,4 @@
-/*	$OpenBSD: select.c,v 1.2 2001/09/20 16:43:15 todd Exp $	*/
+/*	$OpenBSD: select.c,v 1.3 2003/07/31 21:48:06 deraadt Exp $	*/
 /*
  * Copyright (c) 1993, 1994, 1995, 1996 by Chris Provenzano and contributors, 
  * proven@mit.edu All rights reserved.
@@ -51,9 +51,8 @@
 
 int ntouts = 0;
 
-void *
-bg_routine(arg)
-	void *arg;
+static void *
+bg_routine(void *arg)
 {
 	char dot = '.';
 	int n;
@@ -71,9 +70,8 @@ bg_routine(arg)
 	}
 }
 
-void *
-fg_routine(arg)
-	void *arg;
+static void *
+fg_routine(void *arg)
 {
 	int	flags;
 	int	n;
@@ -127,9 +125,7 @@ fg_routine(arg)
 }
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	pthread_t	bg_thread, fg_thread;
 	FILE *		slpr;

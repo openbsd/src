@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcap.c,v 1.4 2002/01/08 18:55:46 marc Exp $ */
+/*	$OpenBSD: pcap.c,v 1.5 2003/07/31 21:48:05 deraadt Exp $ */
 /*
  *	Placed in the PUBLIC DOMAIN
  */
@@ -19,13 +19,13 @@ volatile int packet_count = 0;
 pthread_mutex_t dummy;
 pthread_cond_t syncer;
 
-void
+static void
 packet_ignore(u_char *tag, const struct pcap_pkthdr *hdr, const u_char *data)
 {
 	packet_count += 1;
 }
 
-void *
+static void *
 pcap_thread(void *arg)
 {
 	char errbuf[PCAP_ERRBUF_SIZE];
@@ -42,7 +42,7 @@ pcap_thread(void *arg)
 	return 0;
 }
 
-void *
+static void *
 ping_thread(void *arg)
 {
 	SET_NAME("ping_thread");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: noexec.c,v 1.6 2003/05/05 15:34:46 mickey Exp $	*/
+/*	$OpenBSD: noexec.c,v 1.7 2003/07/31 21:48:09 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002,2003 Michael Shalayeff
@@ -49,9 +49,9 @@ char label[64] = "non-exec ";
 u_int64_t data[(PAD + TESTSZ + PAD + MAXPAGESIZE) / 8] = { 0 };
 u_int64_t bss[(PAD + TESTSZ + PAD + MAXPAGESIZE) / 8];
 
-void testfly();
+void testfly(void);
 
-void
+static void
 fdcache(void *p, size_t size)
 {
 #ifdef __hppa__
@@ -68,13 +68,13 @@ fdcache(void *p, size_t size)
 #endif
 }
 
-void
+static void
 sigsegv(int sig, siginfo_t *sip, void *scp)
 {
 	_exit(fail);
 }
 
-int
+static int
 noexec(void *p, size_t size)
 {
 	fail = 0;
@@ -85,7 +85,7 @@ noexec(void *p, size_t size)
 	return (1);
 }
 
-int
+static int
 noexec_mprotect(void *p, size_t size)
 {
 
@@ -108,7 +108,7 @@ noexec_mprotect(void *p, size_t size)
 	return (1);
 }
 
-void *
+static void *
 getaddr(void *a)
 {
 	void *ret;
@@ -121,7 +121,7 @@ getaddr(void *a)
 	return (void *)((u_long)ret & ~(page_size - 1));
 }
 
-int
+static int
 noexec_mmap(void *p, size_t size)
 {
 	memcpy(p + page_size * 1, p, page_size);
@@ -156,7 +156,7 @@ noexec_mmap(void *p, size_t size)
 	return (0);
 }
 
-void
+static void
 usage(void)
 {
 	extern char *__progname;
@@ -268,7 +268,7 @@ main(int argc, char *argv[])
 __asm (".space 8192");
 
 void
-testfly()
+testfly(void)
 {
 }
 

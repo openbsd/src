@@ -1,4 +1,4 @@
-/*	$OpenBSD: setjmp.c,v 1.2 2001/09/20 16:43:15 todd Exp $	*/
+/*	$OpenBSD: setjmp.c,v 1.3 2003/07/31 21:48:06 deraadt Exp $	*/
 /*
  * Copyright (c) 1993, 1994, 1995, 1996 by Chris Provenzano and contributors, 
  * proven@mit.edu All rights reserved.
@@ -38,9 +38,8 @@
 
 int reached;
 
-void *
-_jump(arg)
-	void *arg;
+static void *
+_jump(void *arg)
 {
 	jmp_buf foo;
 
@@ -54,9 +53,8 @@ _jump(arg)
 	PANIC("_longjmp");
 }
 
-void *
-jump(arg)
-	void *arg;
+static void *
+jump(void *arg)
 {
 	jmp_buf foo;
 
@@ -71,7 +69,7 @@ jump(arg)
 }
 
 int
-main()
+main(int argc, char *argv[])
 {
 	pthread_t child;
 	void *res;

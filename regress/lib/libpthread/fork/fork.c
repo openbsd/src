@@ -1,4 +1,4 @@
-/*	$OpenBSD: fork.c,v 1.3 2002/12/08 04:16:19 marc Exp $	*/
+/*	$OpenBSD: fork.c,v 1.4 2003/07/31 21:48:04 deraadt Exp $	*/
 /*
  * Copyright (c) 1993, 1994, 1995, 1996 by Chris Provenzano and contributors, 
  * proven@mit.edu All rights reserved.
@@ -50,14 +50,14 @@
 #include "test.h"
 
 
-void *
+static void *
 empty(void *arg)
 {
 
 	return (void *)0x12345678;
 }
 
-void *
+static void *
 sleeper(void *arg)
 {
 
@@ -68,7 +68,7 @@ sleeper(void *arg)
 
 
 int
-main()
+main(int argc, char *argv[])
 {
 	int flags;
 	pthread_t sleeper_thread;

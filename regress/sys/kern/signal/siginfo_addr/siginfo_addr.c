@@ -6,7 +6,7 @@
 
 #define FAULTADDR	0x123123
 
-void
+static void
 handler(int sig, siginfo_t *sip, void *scp)
 {
 	char buf[1024];
@@ -23,9 +23,7 @@ handler(int sig, siginfo_t *sip, void *scp)
 
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	struct sigaction sa;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdarg.c,v 1.4 2001/12/12 21:18:34 fgsch Exp $	*/
+/*	$OpenBSD: stdarg.c,v 1.5 2003/07/31 21:48:06 deraadt Exp $	*/
 /* David Leonard <d@openbsd.org>, 2001. Public Domain. */
 
 /*
@@ -15,7 +15,7 @@
 
 int thing;
 
-int
+static int
 test1(char *fmt, ...)
 {
 	va_list	ap;
@@ -56,9 +56,8 @@ test1(char *fmt, ...)
 	return 9;
 }
 
-void * 
-run_test(arg)
-	void *arg;
+static void * 
+run_test(void *arg)
 {
 	char *msg = (char *)arg;
 	int i;
@@ -74,7 +73,7 @@ run_test(arg)
 }
 
 int
-main()
+main(int argc, char *argv[])
 {
 	pthread_t t1, t2;
 
