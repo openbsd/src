@@ -1,7 +1,6 @@
-#	$OpenBSD: Makefile,v 1.1 2004/02/16 19:04:42 miod Exp $
+#	$OpenBSD: Makefile,v 1.2 2004/03/08 22:53:57 deraadt Exp $
 
-# TODO: boot_amd64.8
-MAN=	MAKEDEV.8
+MAN=	MAKEDEV.8 boot_amd64.8
 MANSUBDIR=amd64
 
 .include <bsd.prog.mk>
