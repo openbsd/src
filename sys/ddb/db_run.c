@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_run.c,v 1.6 1997/03/25 17:07:39 rahnds Exp $	*/
+/*	$OpenBSD: db_run.c,v 1.7 1997/07/06 16:35:27 niklas Exp $	*/
 /*	$NetBSD: db_run.c,v 1.8 1996/02/05 01:57:12 christos Exp $	*/
 
 /* 
@@ -246,6 +246,16 @@ db_single_step(regs)
  *	we allocate a breakpoint and save it here.
  *	These breakpoints are deleted on return.
  */			
+
+/*
+ * XXX is this proto right?  We don't use this facility in any of our ports.
+ * I've seen it defined to (0) when it is not needed and then the proto will
+ * not be correct, so skip it then.
+ */
+#ifndef getreg_val
+extern u_int getreg_val __P((db_regs_t *, int));
+#endif
+
 db_breakpoint_t	db_not_taken_bkpt = 0;
 db_breakpoint_t	db_taken_bkpt = 0;
 
@@ -262,15 +272,13 @@ db_set_single_step(regs)
 	 */
 	inst = db_get_value(pc, sizeof(int), FALSE);
 	if (inst_branch(inst) || inst_call(inst)) {
-	    extern unsigned getreg_val();
-
 	    brpc = branch_taken(inst, pc, getreg_val, regs);
 	    if (brpc != pc) {	/* self-branches are hopeless */
 		db_taken_bkpt = db_set_temp_breakpoint(brpc);
 	    }
-	    pc = next_instr_address(pc,1);
+	    pc = next_instr_address(pc, 1);
 	}
-	pc = next_instr_address(pc,0);
+	pc = next_instr_address(pc, 0);
 	db_not_taken_bkpt = db_set_temp_breakpoint(pc);
 }
 
@@ -278,8 +286,6 @@ void
 db_clear_single_step(regs)
 	db_regs_t *regs;
 {
-	register db_breakpoint_t	bkpt;
-
 	if (db_taken_bkpt != 0) {
 	    db_delete_temp_breakpoint(db_taken_bkpt);
 	    db_taken_bkpt = 0;
