@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.30 2001/09/14 14:58:44 art Exp $	*/
+/*	$OpenBSD: trap.c,v 1.31 2001/09/18 01:51:54 drahn Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -55,6 +55,7 @@
 #include <uvm/uvm_extern.h>
 
 #include <ddb/db_extern.h>
+#include <ddb/db_sym.h>
 
 static int fix_unaligned __P((struct proc *p, struct trapframe *frame));
 int badaddr __P((char *addr, u_int32_t len));
@@ -91,6 +92,8 @@ trap(frame)
 	int type = frame->exc;
 	u_quad_t sticks;
 	union sigval sv;
+	char *name;
+	db_expr_t offset;
 
 	if (frame->srr1 & PSL_PR) {
 		type |= EXC_USER;
@@ -346,8 +349,13 @@ mpc_print_pci_stat();
 		/* set up registers */
 		db_save_regs(frame);
 #endif
-		panic ("trap type %x at %x lr %x\n",
-			type, frame->srr0, frame->lr);
+		db_find_sym_and_offset(frame->srr0, &name, &offset);
+		if (!name) {
+			name = "0";
+			offset = frame->srr0;
+		}
+		panic ("trap type %x at %x (%s+0x%x) lr %x\n",
+			type, frame->srr0, name, offset, frame->lr);
 
 
 	case EXC_PGM|EXC_USER:
