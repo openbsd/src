@@ -1,4 +1,4 @@
-.\" $OpenBSD: groupinfo.8,v 1.9 2003/06/08 23:32:23 millert Exp $
+.\" $OpenBSD: groupinfo.8,v 1.10 2003/06/15 06:40:15 jmc Exp $
 .\" $NetBSD: groupinfo.8,v 1.3 2000/10/03 19:32:23 bjh21 Exp $
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -50,21 +50,22 @@ The following command line options are recognised:
 .Bl -tag -width Ds
 .It Fl e
 return 0 if the group exists, and non-zero if the
-group does not exist, on the system. No information is
-displayed. This form of the command is useful for
+group does not exist, on the system.
+No information is displayed.
+This form of the command is useful for
 scripts which need to check whether a particular group
-name or gid is already in use on the system.
+name or GID is already in use on the system.
 .It Fl v
 perform any actions in a verbose manner.
 .El
 .Pp
 The
 .Ar group
-argument may either be a group's name, or a gid.
+argument may either be a group's name, or a GID.
 .Pp
 The
 .Nm
-utility exits 0 if the group name or gid exists, and non-zero if it does not.
+utility exits 0 if the group name or GID exists, and non-zero if it does not.
 .Sh FILES
 .Bl -tag -width /etc/usermgmt.conf -compact
 .It Pa /etc/usermgmt.conf
@@ -81,5 +82,4 @@ utility first appeared in
 The
 .Nm
 utility was written by
-.An Alistair G. Crooks
-.Aq agc@NetBSD.org .
+.An Alistair G. Crooks Aq agc@NetBSD.org .

@@ -1,4 +1,4 @@
-.\" $OpenBSD: userinfo.8,v 1.9 2003/06/08 23:32:23 millert Exp $
+.\" $OpenBSD: userinfo.8,v 1.10 2003/06/15 06:40:15 jmc Exp $
 .\" $NetBSD: userinfo.8,v 1.8 2003/02/14 16:11:37 grant Exp $
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -50,21 +50,22 @@ The following command line options are recognised:
 .Bl -tag -width Ds
 .It Fl e
 return 0 if the user exists, and non-zero if the
-user does not exist, on the system. No information is
-displayed. This form of the command is useful for
+user does not exist, on the system.
+No information is displayed.
+This form of the command is useful for
 scripts which need to check whether a particular user
-name or uid is already in use on the system.
+name or UID is already in use on the system.
 .It Fl v
 perform any actions in a verbose manner.
 .El
 .Pp
 The
 .Ar user
-argument may either be a user's name, or a uid.
+argument may either be a user's name, or a UID.
 .Pp
 The
 .Nm
-utility exits 0 if the user name or uid exists, and non-zero if it does not.
+utility exits 0 if the user name or UID exists, and non-zero if it does not.
 .Sh FILES
 .Bl -tag -width /etc/usermgmt.conf -compact
 .It Pa /etc/usermgmt.conf
@@ -81,5 +82,4 @@ utility first appeared in
 The
 .Nm
 utility was written by
-.An Alistair G. Crooks
-.Aq agc@NetBSD.org .
+.An Alistair G. Crooks Aq agc@NetBSD.org .

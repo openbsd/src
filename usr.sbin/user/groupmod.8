@@ -1,4 +1,4 @@
-.\" $OpenBSD: groupmod.8,v 1.12 2003/06/08 23:32:23 millert Exp $
+.\" $OpenBSD: groupmod.8,v 1.13 2003/06/15 06:40:15 jmc Exp $
 .\" $NetBSD: groupmod.8,v 1.10 2003/02/14 16:11:37 grant Exp $
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -54,7 +54,7 @@ gives the numeric group identifier to be used for the new group.
 .It Fl n Ar newname
 gives the new name which the group shall have.
 .It Fl o
-allow the new group to have a gid which is already in use for another group.
+allow the new group to have a GID which is already in use for another group.
 .It Fl v
 enables verbose mode - explain the commands as they are executed.
 .El
@@ -77,5 +77,4 @@ utility first appeared in
 The
 .Nm
 utility was written by
-.An Alistair G. Crooks
-.Aq agc@NetBSD.org .
+.An Alistair G. Crooks Aq agc@NetBSD.org .

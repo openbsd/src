@@ -1,4 +1,4 @@
-.\" $OpenBSD: user.8,v 1.10 2003/06/08 23:32:23 millert Exp $
+.\" $OpenBSD: user.8,v 1.11 2003/06/15 06:40:15 jmc Exp $
 .\" $NetBSD: user.8,v 1.9 2001/06/05 11:31:21 wiz Exp $
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -39,6 +39,7 @@
 .Nd manage user login information on the system
 .Sh SYNOPSIS
 .Nm user
+.Bk -words
 .Cm add
 .Fl D
 .Op Fl b Ar base-dir
@@ -47,7 +48,9 @@
 .Op Fl g Ar gid/name/=uid
 .Op Fl L Ar login-class
 .Op Fl r Ar low..high
+.Ek
 .Nm user
+.Bk -words
 .Cm add
 .Op Fl mov
 .Op Fl G Ar secondary-group
@@ -64,6 +67,7 @@
 .Op Fl s Ar shell
 .Op Fl u Ar uid
 .Ar user
+.Ek
 .Nm user
 .Cm del
 .Fl D
@@ -77,6 +81,7 @@
 .Op Fl ev
 .Ar user
 .Nm user
+.Bk -words
 .Cm mod
 .Op Fl mov
 .Op Fl G Ar secondary-group
@@ -91,6 +96,7 @@
 .Op Fl s Ar shell
 .Op Fl u Ar uid
 .Ar user
+.Ek
 .Sh DESCRIPTION
 The
 .Nm
@@ -113,7 +119,7 @@ utility exits 0 on success, and \*(Gt0 if an error occurs.
 Skeleton files for new user
 .It Pa /etc/usermgmt.conf
 Configuration file for
-.Nm ,
+.Nm user ,
 .Xr group 8
 and those backend commands
 .El
@@ -135,5 +141,4 @@ utility first appeared in
 The
 .Nm
 utility was written by
-.An Alistair G. Crooks
-.Aq agc@NetBSD.org .
+.An Alistair G. Crooks Aq agc@NetBSD.org .

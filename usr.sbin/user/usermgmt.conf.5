@@ -1,4 +1,4 @@
-.\" $OpenBSD: usermgmt.conf.5,v 1.1 2003/06/08 23:05:10 millert Exp $
+.\" $OpenBSD: usermgmt.conf.5,v 1.2 2003/06/15 06:40:15 jmc Exp $
 .\" $NetBSD: usermgmt.conf.5,v 1.3 2002/10/02 13:49:11 grant Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -82,11 +82,12 @@ A value of 0 can be used to disable this feature.
 sets the default primary group for new users.
 If this is
 .Ql =uid ,
-then a uid and gid will be picked which are both unique
+then a UID and GID will be picked which are both unique
 and the same, and a line added to
 .Pa /etc/group
-to describe the new group. It has the format:
-.br
+to describe the new group.
+It has the format:
+.Pp
 .Bd -ragged -offset indent -compact
 .Ic group
 .Ar gid | name | Li =uid
@@ -107,7 +108,7 @@ or a non-zero number, then the user login information will be
 preserved when removing a user with
 .Xr userdel 8 .
 .It Ic range
-specifies the uid boundaries for new users.
+specifies the UID boundaries for new users.
 If unspecified, the default is
 .Dq 1000..60000 .
 It has the format:

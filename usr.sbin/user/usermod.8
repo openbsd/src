@@ -1,4 +1,4 @@
-.\" $OpenBSD: usermod.8,v 1.14 2003/06/08 23:32:23 millert Exp $
+.\" $OpenBSD: usermod.8,v 1.15 2003/06/15 06:40:15 jmc Exp $
 .\" $NetBSD: usermod.8,v 1.17 2003/02/14 16:11:37 grant Exp $
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -92,8 +92,8 @@ It should be entered in the form
 .Dq month day year ,
 where month is the month name (the first three characters are
 sufficient), day is the day of the month, and year is the year.
-Time in seconds since the epoch (UTC) is also valid.  A value of
-0 can be used to disable this feature.
+Time in seconds since the epoch (UTC) is also valid.
+A value of 0 can be used to disable this feature.
 This value can be preset for all users using the
 .Ar expire
 field in the
@@ -113,7 +113,7 @@ option.
 gives the group name or identifier to be used for the user's primary group.
 If this is
 .Ql =uid ,
-then a uid and gid will be picked which are both unique
+then a UID and GID will be picked which are both unique
 and the same, and a line added to
 .Pa /etc/group
 to describe the new group.
@@ -127,10 +127,11 @@ See
 .Xr usermgmt.conf 5
 for more details.
 .It Fl L Ar login-class
-this option sets the login class for the user being created.  See
+this option sets the login class for the user being created.
+See
 .Xr login.conf 5
-for more information on user login classes. This value can be preset
-for all users by using the
+for more information on user login classes.
+This value can be preset for all users by using the
 .Ar class
 field in the
 .Pa /etc/usermgmt.conf
@@ -158,7 +159,7 @@ and
 .Fl l
 is needed.
 .It Fl o
-allows duplicate uids to be given.
+allows duplicate UIDs to be given.
 .It Fl p Ar password
 specifies an already-encrypted password for the user.
 This password can then be changed by using the
@@ -185,7 +186,7 @@ See
 .Xr usermgmt.conf 5
 for more details.
 .It Fl u Ar uid
-specifies a new uid for the user.
+specifies a new UID for the user.
 Boundaries for this value can be preset for all users
 by using the
 .Ar range
@@ -203,10 +204,11 @@ Once the information has been verified,
 .Nm
 uses
 .Xr pwd_mkdb 8
-to update the user database.  This is run in the background, and,
-at very large sites could take several minutes.  Until this update
-is completed, the password file is unavailable for other updates
-and the new information is not available to programs.
+to update the user database.
+This is run in the background, and,
+at very large sites could take several minutes.
+Until this update is completed, the password file is unavailable for other
+updates and the new information is not available to programs.
 .Pp
 The
 .Nm
@@ -230,5 +232,4 @@ utility first appeared in
 The
 .Nm
 utility was written by
-.An Alistair G. Crooks
-.Aq agc@NetBSD.org .
+.An Alistair G. Crooks Aq agc@NetBSD.org .

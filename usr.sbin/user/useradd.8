@@ -1,4 +1,4 @@
-.\" $OpenBSD: useradd.8,v 1.16 2003/06/08 23:32:23 millert Exp $
+.\" $OpenBSD: useradd.8,v 1.17 2003/06/15 06:40:15 jmc Exp $
 .\" $NetBSD: useradd.8,v 1.26 2003/02/25 10:36:21 wiz Exp $
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -39,6 +39,7 @@
 .Nd add a user to the system
 .Sh SYNOPSIS
 .Nm useradd
+.Bk -words
 .Fl D
 .Op Fl b Ar base-dir
 .Op Fl e Ar expiry-time
@@ -51,7 +52,9 @@
 .Fl r Ar low Ns Li .. Ns Ar high
 .Oc
 .Op Fl s Ar shell
+.Ek
 .Nm useradd
+.Bk -words
 .Op Fl mov
 .Op Fl G Ar secondary-group[,group,...]
 .Op Fl b Ar base-dir
@@ -70,6 +73,7 @@
 .Op Fl s Ar shell
 .Op Fl u Ar uid
 .Ar user
+.Ek
 .Sh DESCRIPTION
 The
 .Nm useradd
@@ -87,7 +91,7 @@ the time of password expiry,
 the time of account expiry,
 primary group,
 the skeleton directory,
-the range from which the uid will be allocated,
+the range from which the UID will be allocated,
 and default login shell
 can be provided in the
 .Pa /etc/usermgmt.conf
@@ -150,9 +154,9 @@ for more information on user login classes.
 .It Xo
 .Fl r Ar low Ns Li .. Ns Ar high
 .Xc
-sets the low and high bounds of uid ranges for new users. A new user
-can only be created if there are uids which can be assigned from one
-of the free ranges.
+sets the low and high bounds of UID ranges for new users.
+A new user can only be created if there are UIDs which can be assigned
+from one of the free ranges.
 .It Fl s Ar shell
 sets the default login shell for new users.
 .El
@@ -199,7 +203,7 @@ option above.
 gives the group name or identifier to be used for the new user's primary group.
 If this is
 .Ql =uid ,
-then a uid and gid will be picked which are both unique
+then a UID and GID will be picked which are both unique
 and the same, and a line added to
 .Pa /etc/group
 to describe the new group.
@@ -207,13 +211,14 @@ to describe the new group.
 gives the skeleton directory in which to find files
 with which to populate the new user's home directory.
 .It Fl L Ar login-class
-This option sets the login class for the user being created.  See
+This option sets the login class for the user being created.
+See
 .Xr login.conf 5
 for more information on user login classes.
 .It Fl m
 create a new home directory for the new user.
 .It Fl o
-allow the new user to have a uid which is already in use for another user.
+allow the new user to have a UID which is already in use for another user.
 .It Fl p Ar password
 specifies an already-encrypted password for the new user.
 This password can then be changed by using the
@@ -225,7 +230,7 @@ the account will be disabled by default.
 .It Fl s Ar shell
 specifies the login shell for the new user.
 .It Fl u Ar uid
-specifies a uid for the new user.
+specifies a UID for the new user.
 Boundaries for this value can be preset for all users
 by using the
 .Ar range
@@ -240,10 +245,11 @@ Once the information has been verified,
 .Nm
 uses
 .Xr pwd_mkdb 8
-to update the user database.  This is run in the background, and,
-at very large sites could take several minutes.  Until this update
-is completed, the password file is unavailable for other updates
-and the new information is not available to programs.
+to update the user database.
+This is run in the background, and,
+at very large sites could take several minutes.
+Until this update is completed, the password file is unavailable for other
+updates and the new information is not available to programs.
 .Pp
 The
 .Nm
@@ -273,5 +279,4 @@ utility first appeared in
 The
 .Nm
 utility was written by
-.An Alistair G. Crooks
-.Aq agc@NetBSD.org .
+.An Alistair G. Crooks Aq agc@NetBSD.org .
