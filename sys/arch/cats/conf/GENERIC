@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.6 2004/02/26 05:01:43 drahn Exp $
+#	$OpenBSD: GENERIC,v 1.7 2004/03/11 18:49:54 deraadt Exp $
 #
 # GENERIC machine description file
 # 
@@ -148,16 +148,16 @@ xl*	at pci? dev ? function ?	# 3C9xx ethernet
 
 # MII/PHY support
 exphy*	at mii? phy ?			# 3Com internal PHYs
-#icsphy* at mii? phy ?			# Integrated Circuit Systems ICS189x
+icsphy* at mii? phy ?			# Integrated Circuit Systems ICS189x
 inphy*	at mii? phy ?			# Intel 82555 PHYs
-#iophy*	at mii? phy ?			# Intel 82553 PHYs
-#lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
+iophy*	at mii? phy ?			# Intel 82553 PHYs
+lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
 nsphy*	at mii? phy ?			# NS83840 PHYs
-#nsphyter* at mii? phy ?		# NS83843 PHYs
+nsphyter* at mii? phy ?		# NS83843 PHYs
 qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
-#sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
-#tlphy*	at mii? phy ?			# ThunderLAN PHYs
-#tqphy*	at mii? phy ?			# TDK Semiconductor PHYs
+sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
+tlphy*	at mii? phy ?			# ThunderLAN PHYs
+tqphy*	at mii? phy ?			# TDK Semiconductor PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
 
 # USB Controller and Devices
