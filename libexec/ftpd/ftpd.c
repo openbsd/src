@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.75 2000/07/05 17:21:02 deraadt Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.76 2000/07/05 21:56:48 deraadt Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -2011,7 +2011,7 @@ dolog(sa)
 	remotehost[sizeof(remotehost)-1] = '\0';
 #ifdef HASSETPROCTITLE
 	snprintf(proctitle, sizeof(proctitle), "%s: connected", remotehost);
-	setproctitle(proctitle);
+	setproctitle("%s", proctitle);
 #endif /* HASSETPROCTITLE */
 
 	if (logging)
