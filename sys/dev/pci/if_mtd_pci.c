@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mtd_pci.c,v 1.6 2003/09/25 22:06:00 mickey Exp $	*/
+/*	$OpenBSD: if_mtd_pci.c,v 1.7 2003/09/29 03:08:17 mickey Exp $	*/
 
 /*
  * Copyright (c) 2003 Oleg Safiullin <form@pdp11.org.ru>
@@ -83,6 +83,11 @@ mtd_pci_attach(struct device *parent, struct device *self, void *aux)
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
 	bus_size_t iosize;
+
+	sc->sc_devid = PCI_PRODUCT(pa->pa_id);
+	if (sc->sc_devid == PCI_PRODUCT_MYSON_MTD800 &&
+	    pci_conf_read(pa->pa_pc, pa->pa_tag, MTD_PCI_LOIO) & 0x300)
+		pa->pa_flags &= ~PCI_FLAGS_IO_ENABLED;
 
 #ifndef MTD_USE_IO
 	if (pci_mapreg_map(pa, MTD_PCI_LOMEM, PCI_MAPREG_TYPE_MEM, 0,
