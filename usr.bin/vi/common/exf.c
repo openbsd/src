@@ -1,4 +1,4 @@
-/*	$OpenBSD: exf.c,v 1.16 2002/02/18 23:56:10 ericj Exp $	*/
+/*	$OpenBSD: exf.c,v 1.17 2002/02/19 00:06:34 ericj Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -989,7 +989,7 @@ file_write(sp, fm, tm, name, flags)
 			*--s = '.';
 		}
 	}
-	msgq(sp, M_INFO, "%s", s)
+	msgq(sp, M_INFO, "%s", s);
 	if (nf)
 		FREE_SPACE(sp, p, 0);
 	return (0);
