@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.32 2001/09/19 20:50:57 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.33 2001/09/20 13:46:04 drahn Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -497,9 +497,10 @@ badaddr(addr, len)
 {
 	faultbuf env;
 	u_int32_t v;
+	register void *oldh = curpcb->pcb_onfault;
 
 	if (setfault(env)) {
-		curpcb->pcb_onfault = 0;
+		curpcb->pcb_onfault = oldh;
 		return EFAULT;
 	}
 	switch(len) {
@@ -513,7 +514,7 @@ badaddr(addr, len)
 		v = *((volatile u_int8_t *)addr);
 		break;
 	}
-	curpcb->pcb_onfault = 0;
+	curpcb->pcb_onfault = oldh;
 	return(0);
 }
 
@@ -526,9 +527,10 @@ copyin(udaddr, kaddr, len)
 	void *p;
 	size_t l;
 	faultbuf env;
+	register void *oldh = curpcb->pcb_onfault;
 
 	if (setfault(env)) {
-		curpcb->pcb_onfault = 0;
+		curpcb->pcb_onfault = oldh;
 		return EFAULT;
 	}
 	while (len > 0) {
@@ -542,7 +544,7 @@ copyin(udaddr, kaddr, len)
 		kaddr += l;
 		len -= l;
 	}
-	curpcb->pcb_onfault = 0;
+	curpcb->pcb_onfault = oldh;
 	return 0;
 }
 
@@ -555,9 +557,10 @@ copyout(kaddr, udaddr, len)
 	void *p;
 	size_t l;
 	faultbuf env;
+	register void *oldh = curpcb->pcb_onfault;
 
 	if (setfault(env)) {
-		curpcb->pcb_onfault = 0;
+		curpcb->pcb_onfault = oldh;
 		return EFAULT;
 	}
 	while (len > 0) {
@@ -571,7 +574,7 @@ copyout(kaddr, udaddr, len)
 		kaddr += l;
 		len -= l;
 	}
-	curpcb->pcb_onfault = 0;
+	curpcb->pcb_onfault = oldh;
 	return 0;
 }
 
