@@ -1,6 +1,6 @@
 include(MAKEDEV.sub)dnl
 dnl
-vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.64 2004/01/12 22:18:23 todd Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.65 2004/01/12 22:31:34 todd Exp $-})dnl
 dnl
 divert(1)dnl
 {-#-}
@@ -447,7 +447,9 @@ _mcdev({-uhid-}, uhid*, {-uhid-}, {-major_uhid_c-}, 660)dnl
 __devitem(ulpt, ulpt*, Printer devices)dnl
 _mcdev({-ulpt-}, ulpt*, {-ulpt-}, {-major_ulpt_c-}, 660)dnl
 __devitem(ttyU, ttyU*, Serial ports)dnl
-_mcdev({-ttyU-}, ttyU*, {-ttyU-}, {-major_ttyU_c-}, 660, dialer uucp)dnl
+_mkdev({-ttyU-}, {-ttyU[0-9a-zA-Z]-}, {-U=${i#ttyU*}
+	o=$(alph2d $U)
+	M ttyU$U c major_ttyU_c $o 660 dialer uucp-})dnl
 __devitem(urio, urio*, Diamond Multimedia Rio 500)dnl
 _mcdev({-urio-}, urio*, {-urio-}, {-major_urio_c-}, 660)dnl
 __devitem(uscan, uscanner*, Scanners)dnl
@@ -672,6 +674,14 @@ hex()
 	14) echo -n e;;
 	15) echo -n f;;
 	esac
+}
+
+alph2d()
+{
+	local t="$1"  
+	local p="0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	local sub=${p%${t}*}
+	echo ${#sub}
 }
 
 h2d()

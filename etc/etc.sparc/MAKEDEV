@@ -4,8 +4,8 @@
 # generated from:
 #
 #	OpenBSD: etc.sparc/MAKEDEV.md,v 1.19 2003/06/18 18:08:59 todd Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.63 2003/10/15 02:01:04 todd Exp 
-#	OpenBSD: MAKEDEV.sub,v 1.8 2003/06/18 18:08:59 todd Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.64 2004/01/12 22:18:23 todd Exp 
+#	OpenBSD: MAKEDEV.sub,v 1.9 2004/01/12 22:18:24 todd Exp 
 #
 #
 # Copyright (c) 2001,2002,2003 Todd T. Fries <todd@OpenBSD.org>
@@ -91,6 +91,14 @@ hex()
 	14) echo -n e;;
 	15) echo -n f;;
 	esac
+}
+
+alph2d()
+{
+	local t="$1"  
+	local p="0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	local sub=${p%${t}*}
+	echo ${#sub}
 }
 
 h2d()

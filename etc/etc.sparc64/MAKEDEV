@@ -3,9 +3,9 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.27 2003/06/18 18:08:59 todd Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.63 2003/10/15 02:01:04 todd Exp 
-#	OpenBSD: MAKEDEV.sub,v 1.8 2003/06/18 18:08:59 todd Exp 
+#	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.28 2004/01/12 22:18:24 todd Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.64 2004/01/12 22:18:23 todd Exp 
+#	OpenBSD: MAKEDEV.sub,v 1.9 2004/01/12 22:18:24 todd Exp 
 #
 #
 # Copyright (c) 2001,2002,2003 Todd T. Fries <todd@OpenBSD.org>
@@ -66,7 +66,7 @@
 #	ugen*	Generic device
 #	ulpt*	Printer devices
 #	urio*	Diamond Multimedia Rio 500
-#	utty*	Serial ports
+#	ttyU*	Serial ports
 #	uscanner*	Scanners
 # Special purpose devices:
 #	usbs	make USB devices
@@ -107,6 +107,14 @@ hex()
 	14) echo -n e;;
 	15) echo -n f;;
 	esac
+}
+
+alph2d()
+{
+	local t="$1"  
+	local p="0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	local sub=${p%${t}*}
+	echo ${#sub}
 }
 
 h2d()
@@ -365,7 +373,7 @@ ses*)
 	;;
 
 usbs)
-	R utty0 utty1 ugen0 ugen1 ulpt0 ulpt1 uhid0 uhid1 uhid2 uhid3
+	R ttyU0 ttyU1 ugen0 ugen1 ulpt0 ulpt1 uhid0 uhid1 uhid2 uhid3
 	R uscanner0 urio0 usb0 usb1
 	;;
 
@@ -373,8 +381,10 @@ uscanner*)
 	M uscanner$U c 96 $U 660
 	;;
 
-utty*)
-	M utty$U c 95 $U 660
+ttyU[0-9a-zA-Z])
+	U=${i#ttyU*}
+	o=$(alph2d $U)
+	M ttyU$U c 95 $o 660 dialer uucp
 	;;
 
 urio*)
