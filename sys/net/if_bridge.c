@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.73 2001/07/25 04:59:33 jason Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.74 2001/07/27 22:31:47 jason Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -65,6 +65,11 @@
 
 #if NPF > 0
 #include <net/pfvar.h>
+#define	BRIDGE_IN	PF_IN
+#define	BRIDGE_OUT	PF_OUT
+#else
+#define	BRIDGE_IN	0
+#define	BRIDGE_OUT	1
 #endif
 
 #if NBPFILTER > 0
@@ -1038,7 +1043,7 @@ bridgeintr_frame(sc, m)
 		return;
 	}
 
-	m = bridge_filter(sc, PF_IN, src_if, &eh, m);
+	m = bridge_filter(sc, BRIDGE_IN, src_if, &eh, m);
 	if (m == NULL)
 		return;
 
@@ -1080,7 +1085,7 @@ bridgeintr_frame(sc, m)
 		m_freem(m);
 		return;
 	}
-	m = bridge_filter(sc, PF_OUT, dst_if, &eh, m);
+	m = bridge_filter(sc, BRIDGE_OUT, dst_if, &eh, m);
 	if (m == NULL)
 		return;
 
@@ -1320,7 +1325,7 @@ bridge_broadcast(sc, ifp, eh, m)
 			}
 		}
 
-		mc = bridge_filter(sc, PF_OUT, dst_if, eh, mc);
+		mc = bridge_filter(sc, BRIDGE_OUT, dst_if, eh, mc);
 		if (mc == NULL)
 			continue;
 
