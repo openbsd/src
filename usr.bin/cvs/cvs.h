@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.20 2004/08/03 00:05:54 jfb Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.21 2004/08/05 13:24:37 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -84,6 +84,7 @@
 
 
 /* defaults */
+#define CVS_SERVER_DEFAULT  "cvs"
 #define CVS_RSH_DEFAULT     "ssh"
 #define CVS_EDITOR_DEFAULT  "vi"
 
@@ -142,6 +143,7 @@ struct cvsroot {
 	/* connection data */
 	FILE   *cr_srvin;
 	FILE   *cr_srvout;
+	FILE   *cr_srverr;
 	char   *cr_version;   /* version of remote server */
 	u_char  cr_vrmask[10];  /* mask of valid requests supported by server */
 };

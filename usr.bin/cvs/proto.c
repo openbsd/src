@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.19 2004/08/04 13:26:02 jfb Exp $	*/
+/*	$OpenBSD: proto.c,v 1.20 2004/08/05 13:24:37 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -194,7 +194,7 @@ static FILE *cvs_server_outlog = NULL;
 int
 cvs_connect(struct cvsroot *root)
 {
-	int argc, infd[2], outfd[2];
+	int argc, infd[2], outfd[2], errfd[2];
 	pid_t pid;
 	char *argv[16], *cvs_server_cmd, *vresp;
 
@@ -212,6 +212,16 @@ cvs_connect(struct cvsroot *root)
 		return (-1);
 	}
 
+	if (pipe(errfd) == -1) {
+		cvs_log(LP_ERRNO,
+		    "failed to create error pipe for client connection");
+		(void)close(infd[0]);
+		(void)close(infd[1]);
+		(void)close(outfd[0]);
+		(void)close(outfd[1]);
+		return (-1);
+	}
+
 	pid = fork();
 	if (pid == -1) {
 		cvs_log(LP_ERRNO, "failed to fork for cvs server connection");
@@ -219,13 +229,15 @@ cvs_connect(struct cvsroot *root)
 	}
 	if (pid == 0) {
 		if ((dup2(infd[0], STDIN_FILENO) == -1) ||
-		    (dup2(outfd[1], STDOUT_FILENO) == -1)) {
+		    (dup2(outfd[1], STDOUT_FILENO) == -1) ||
+		    (dup2(errfd[1], STDERR_FILENO) == -1)) {
 			cvs_log(LP_ERRNO,
 			    "failed to setup standard streams for cvs server");
 			return (-1);
 		}
 		(void)close(infd[1]);
 		(void)close(outfd[0]);
+		(void)close(errfd[0]);
 
 		argc = 0;
 		argv[argc++] = cvs_rsh;
@@ -238,7 +250,7 @@ cvs_connect(struct cvsroot *root)
 
 		cvs_server_cmd = getenv("CVS_SERVER");
 		if (cvs_server_cmd == NULL)
-			cvs_server_cmd = "cvs";
+			cvs_server_cmd = CVS_SERVER_DEFAULT;
 
 		argv[argc++] = root->cr_host;
 		argv[argc++] = cvs_server_cmd;
@@ -253,6 +265,7 @@ cvs_connect(struct cvsroot *root)
 	/* we are the parent */
 	(void)close(infd[0]);
 	(void)close(outfd[1]);
+	(void)close(errfd[1]);
 
 	root->cr_srvin = fdopen(infd[1], "w");
 	if (root->cr_srvin == NULL) {
@@ -263,6 +276,12 @@ cvs_connect(struct cvsroot *root)
 	root->cr_srvout = fdopen(outfd[0], "r");
 	if (root->cr_srvout == NULL) {
 		cvs_log(LP_ERRNO, "failed to create pipe stream");
+		return (-1);
+	}
+
+	root->cr_srverr = fdopen(errfd[0], "r");
+	if (root->cr_srverr == NULL) {
+		cvs_log(LP_ERR, "failed to create pipe stream");
 		return (-1);
 	}
 
