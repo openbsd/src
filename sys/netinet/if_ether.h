@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.h,v 1.22 2002/06/09 16:26:10 itojun Exp $	*/
+/*	$OpenBSD: if_ether.h,v 1.23 2002/06/10 22:48:09 chris Exp $	*/
 /*	$NetBSD: if_ether.h,v 1.22 1996/05/11 13:00:00 mycroft Exp $	*/
 
 /*
@@ -205,6 +205,7 @@ void	arp_rtrequest(int, struct rtentry *, struct rt_addrinfo *);
 
 int	ether_addmulti(struct ifreq *, struct arpcom *);
 int	ether_delmulti(struct ifreq *, struct arpcom *);
+int	ether_multiaddr(struct sockaddr *, u_int8_t[], u_int8_t[]);
 #endif /* _KERNEL */
 
 /*
