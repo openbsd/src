@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.5 2001/01/23 15:56:39 deraadt Exp $ */
+/*	$OpenBSD: loader.c,v 1.6 2001/02/03 22:11:41 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -565,12 +565,12 @@ _dl_call_init(elf_object_t *object)
 	}
 
 
-#ifdef __powerpc__
+#ifndef __mips__
 	if(object->dyn.init) {
 		(*object->dyn.init)();
 	}
 #endif
-#ifndef __powerpc__
+#ifdef __mips__
 /* XXX We perform relocation of DTOR/CTOR. This is a ld bug problem
  * XXX that should be fixed.
  */
@@ -607,7 +607,7 @@ _dl_call_init(elf_object_t *object)
 		(*object->dyn.init)();
 	}
 #endif
-#endif /* ! __powerpc__ */
+#endif /* __mips__ */
 	object->status |= STAT_INIT_DONE;
 }
 
