@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.31 2005/01/22 23:09:15 jmc Exp $
+.\"	$OpenBSD: cvs.1,v 1.32 2005/01/26 17:52:06 xsa Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" All rights reserved.
@@ -585,10 +585,120 @@ will also connect to the server and ask it to print its version information.
 Aliases:
 .Ic ve ,
 .Ic ver .
-.It Ic watch
-Set watches.
-.It Ic watchers
-See who is watching a file.
+.It Xo Ic watch
+.Ar on | off | add | remove
+.Op Fl lR
+.Op Fl a Ar action
+.Op Ar file ...
+.Xc
+.Pp
+The
+.Ic watch
+command switches a file from normal mode to
+pseudo-lock mode as well as handling the notifications associated
+with it.
+Pseudo-lock mode means knowing who is editing a file:
+for that,
+.Nm
+extracts the file in read-only mode.
+Users must use the
+.Ic edit
+command to get the editing rights on the file.
+.Pp
+One of the following arguments to the
+.Ic watch
+command is mandatory: on, off, add, or remove.
+.Ar on
+switches the file into pseudo-lock mode;
+.Ar off
+switches it back to normal mode;
+.Ar add
+adds notifications for specific actions on the file;
+.Ar remove
+removes those notifications.
+.Pp
+The notifications are permanent.
+They remain in place until the
+.Ic watch remove
+command is issued while the temporary notifications are
+made available with the
+.Ic edit
+command.
+.Pp
+The
+.Fl l
+flag is used to limit the scope of the search to the local directory
+only and to disable recursive behaviour, which can be requested with the
+.Fl R
+flag.
+The
+.Fl a
+flag specifies the permanent notification wanted for
+.Ar add | remove :
+.Pp
+.Bl -tag -width "commitXX" -compact
+.It Cm commit
+Another user has committed changes to the
+.Ar file .
+.It Cm edit
+Another user is editing the
+.Ar file .
+.It Cm unedit
+Another user has finished editing the
+.Ar file .
+.It Cm all
+All of the above.
+.It Cm none
+No notification.
+.El
+.Pp
+If no speficiation is requested using the
+.Ar add
+or
+.Ar remove
+arguments, it implies the
+.Fl a Ar all
+option.
+.It Xo Ic watchers
+.Op Fl lR
+.Op Ar file ...
+.Xc
+.Pp
+The
+.Ic watchers
+command lists the users who asked for notifications as well as the
+notifications details.
+The possible notifications are as follows:
+.Bl -tag -width "tcommitXX"
+.It Cm commit
+Permanent watch of a commit of a new version of a file.
+.It Cm edit
+Permanent watch of the start of file edition.
+.It Cm tcommit
+Temporary watch of a commit of new version of a file.
+.It Cm tedit
+Temporary watch of the start of file edition.
+.It Cm tunedit
+Temporary watch of the end of file edition.
+.It Cm unedit
+Permanent watch of the end of file edition.
+.El
+.Pp
+The
+.Fl l
+flag is used to limit the scope of the search to the local directory
+only and to disable recursive behaviour, which can be requested with the
+.Fl R
+flag.
+.Pp
+The temporary watches are set using the
+.Ic edit
+command, until the
+.Ic commit
+or
+.Ic unedit
+command is issued on the
+.Ar file .
 .El
 .Sh ENVIRONMENT
 .Bl -tag -width CVS_CLIENT_LOG
