@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.11 1997/11/04 08:45:56 deraadt Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.12 1998/07/10 08:06:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tftpd.c	5.13 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: tftpd.c,v 1.11 1997/11/04 08:45:56 deraadt Exp $: tftpd.c,v 1.6 1997/02/16 23:49:21 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: tftpd.c,v 1.12 1998/07/10 08:06:26 deraadt Exp $: tftpd.c,v 1.6 1997/02/16 23:49:21 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -94,7 +94,7 @@ int	cancreate = 0;
 static void
 usage()
 {
-	syslog(LOG_ERR, "Usage: %s [-cs] [directory ...]\n", __progname);
+	syslog(LOG_ERR, "Usage: %s [-cs] [directory ...]", __progname);
 	exit(1);
 }
 
@@ -134,7 +134,7 @@ main(argc, argv)
 		else
 			dirs = calloc(ndirs+2, sizeof(char *));
 		if (dirs == NULL) {
-			syslog(LOG_ERR, "malloc: %m\n");
+			syslog(LOG_ERR, "malloc: %m");
 			exit(1);
 		}			
 		dirs[n++] = argv[optind];
@@ -144,27 +144,27 @@ main(argc, argv)
 
 	if (secure) {
 		if (ndirs == 0) {
-			syslog(LOG_ERR, "no -s directory\n");
+			syslog(LOG_ERR, "no -s directory");
 			exit(1);
 		}
 		if (ndirs > 1) {
-			syslog(LOG_ERR, "too many -s directories\n");
+			syslog(LOG_ERR, "too many -s directories");
 			exit(1);
 		}
 		if (chdir(dirs[0])) {
-			syslog(LOG_ERR, "%s: %m\n", dirs[0]);
+			syslog(LOG_ERR, "%s: %m", dirs[0]);
 			exit(1);
 		}
 	}
 
 	pw = getpwnam("nobody");
 	if (!pw) {
-		syslog(LOG_ERR, "no nobody: %m\n");
+		syslog(LOG_ERR, "no nobody: %m");
 		exit(1);
 	}
 
 	if (secure && chroot(".")) {
-		syslog(LOG_ERR, "chroot: %m\n");
+		syslog(LOG_ERR, "chroot: %m");
 		exit(1);
 	}
 
@@ -174,14 +174,14 @@ main(argc, argv)
 	(void) setuid(pw->pw_uid);
 
 	if (ioctl(fd, FIONBIO, &on) < 0) {
-		syslog(LOG_ERR, "ioctl(FIONBIO): %m\n");
+		syslog(LOG_ERR, "ioctl(FIONBIO): %m");
 		exit(1);
 	}
 	fromlen = sizeof (from);
 	n = recvfrom(fd, buf, sizeof (buf), 0,
 	    (struct sockaddr *)&from, &fromlen);
 	if (n < 0) {
-		syslog(LOG_ERR, "recvfrom: %m\n");
+		syslog(LOG_ERR, "recvfrom: %m");
 		exit(1);
 	}
 	/*
@@ -223,7 +223,7 @@ main(argc, argv)
 			break;
 	}
 	if (pid < 0) {
-		syslog(LOG_ERR, "fork: %m\n");
+		syslog(LOG_ERR, "fork: %m");
 		exit(1);
 	} else if (pid != 0)
 		exit(0);
@@ -235,15 +235,15 @@ main(argc, argv)
 	close(1);
 	peer = socket(AF_INET, SOCK_DGRAM, 0);
 	if (peer < 0) {
-		syslog(LOG_ERR, "socket: %m\n");
+		syslog(LOG_ERR, "socket: %m");
 		exit(1);
 	}
 	if (bind(peer, (struct sockaddr *)&s_in, sizeof (s_in)) < 0) {
-		syslog(LOG_ERR, "bind: %m\n");
+		syslog(LOG_ERR, "bind: %m");
 		exit(1);
 	}
 	if (connect(peer, (struct sockaddr *)&from, sizeof(from)) < 0) {
-		syslog(LOG_ERR, "connect: %m\n");
+		syslog(LOG_ERR, "connect: %m");
 		exit(1);
 	}
 	tp = (struct tftphdr *)buf;
@@ -439,7 +439,7 @@ sendfile(pf)
 
 send_data:
 		if (send(peer, dp, size + 4, 0) != size + 4) {
-			syslog(LOG_ERR, "tftpd: write: %m\n");
+			syslog(LOG_ERR, "tftpd: write: %m");
 			goto abort;
 		}
 		read_ahead(file, pf->f_convert);
@@ -448,7 +448,7 @@ send_data:
 			n = recv(peer, ackbuf, sizeof (ackbuf), 0);
 			alarm(0);
 			if (n < 0) {
-				syslog(LOG_ERR, "tftpd: read: %m\n");
+				syslog(LOG_ERR, "tftpd: read: %m");
 				goto abort;
 			}
 			ap->th_opcode = ntohs((u_short)ap->th_opcode);
@@ -503,7 +503,7 @@ recvfile(pf)
 		(void) setjmp(timeoutbuf);
 send_ack:
 		if (send(peer, ackbuf, 4, 0) != 4) {
-			syslog(LOG_ERR, "tftpd: write: %m\n");
+			syslog(LOG_ERR, "tftpd: write: %m");
 			goto abort;
 		}
 		write_behind(file, pf->f_convert);
@@ -512,7 +512,7 @@ send_ack:
 			n = recv(peer, dp, PKTSIZE, 0);
 			alarm(0);
 			if (n < 0) {		/* really? */
-				syslog(LOG_ERR, "tftpd: read: %m\n");
+				syslog(LOG_ERR, "tftpd: read: %m");
 				goto abort;
 			}
 			dp->th_opcode = ntohs((u_short)dp->th_opcode);
@@ -600,5 +600,5 @@ nak(error)
 	tp->th_msg[length] = '\0';
 	length += 5;
 	if (send(peer, buf, length, 0) != length)
-		syslog(LOG_ERR, "nak: %m\n");
+		syslog(LOG_ERR, "nak: %m");
 }

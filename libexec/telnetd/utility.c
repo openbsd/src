@@ -1,4 +1,4 @@
-/*	$OpenBSD: utility.c,v 1.14 1998/05/08 19:43:44 deraadt Exp $	*/
+/*	$OpenBSD: utility.c,v 1.15 1998/07/10 08:06:24 deraadt Exp $	*/
 /*	$NetBSD: utility.c,v 1.9 1996/02/28 20:38:29 thorpej Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 static char sccsid[] = "@(#)utility.c	8.4 (Berkeley) 5/30/95";
 static char rcsid[] = "$NetBSD: utility.c,v 1.9 1996/02/28 20:38:29 thorpej Exp $";
 #else
-static char rcsid[] = "$OpenBSD: utility.c,v 1.14 1998/05/08 19:43:44 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: utility.c,v 1.15 1998/07/10 08:06:24 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -78,10 +78,10 @@ ttloop()
     }
     ncc = read(net, netibuf, sizeof netibuf);
     if (ncc < 0) {
-	syslog(LOG_INFO, "ttloop:  read: %m\n");
+	syslog(LOG_INFO, "ttloop:  read: %m");
 	exit(1);
     } else if (ncc == 0) {
-	syslog(LOG_INFO, "ttloop:  peer died: %m\n");
+	syslog(LOG_INFO, "ttloop:  peer died: %m");
 	exit(1);
     }
     DIAG(TD_REPORT, {sprintf(nfrontp, "td: ttloop read %d chars\r\n", ncc);

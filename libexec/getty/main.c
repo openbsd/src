@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";*/
-static char rcsid[] = "$Id: main.c,v 1.11 1997/11/20 07:39:27 deraadt Exp $";
+static char rcsid[] = "$Id: main.c,v 1.12 1998/07/10 08:06:04 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -154,7 +154,7 @@ timeoverrun(signo)
 	int signo;
 {
 
-	syslog(LOG_ERR, "getty exiting due to excessive running time\n");
+	syslog(LOG_ERR, "getty exiting due to excessive running time");
 	exit(1);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: procs.c,v 1.7 1997/09/17 23:09:38 deraadt Exp $	*/
+/*	$OpenBSD: procs.c,v 1.8 1998/07/10 08:06:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -164,7 +164,7 @@ transmit_result(opcode, result, req)
 		success = clnt_call(cli, opcode, xdr_nlm_res, result, xdr_void,
 		    &dummy, timeo);
 		if (debug_level > 2)
-			syslog(LOG_DEBUG, "clnt_call returns %d\n", success);
+			syslog(LOG_DEBUG, "clnt_call returns %d", success);
 	}
 }
 
@@ -207,7 +207,7 @@ nlm_test_msg_1_svc(arg, rqstp)
 		success = clnt_call(cli, NLM_TEST_RES, xdr_nlm_testres, &res, xdr_void,
 		    &dummy, timeo);
 		if (debug_level > 2)
-			syslog(LOG_DEBUG, "clnt_call returns %d\n", success);
+			syslog(LOG_DEBUG, "clnt_call returns %d", success);
 	}
 	return (NULL);
 }

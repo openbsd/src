@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94"; */
-static char *rcsid = "$Id: rshd.c,v 1.25 1998/07/09 23:38:15 millert Exp $";
+static char *rcsid = "$Id: rshd.c,v 1.26 1998/07/10 08:06:12 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -248,7 +248,7 @@ doit(fromp)
 #endif
 	fromp->sin_port = ntohs((u_short)fromp->sin_port);
 	if (fromp->sin_family != AF_INET) {
-		syslog(LOG_ERR, "malformed \"from\" address (af %d)\n",
+		syslog(LOG_ERR, "malformed \"from\" address (af %d)",
 		    fromp->sin_family);
 		exit(1);
 	}
@@ -317,7 +317,7 @@ doit(fromp)
 #endif
 			if (port >= IPPORT_RESERVED ||
 			    port < IPPORT_RESERVED/2) {
-				syslog(LOG_ERR, "2nd port not reserved\n");
+				syslog(LOG_ERR, "2nd port not reserved");
 				exit(1);
 			}
 		fromp->sin_port = htons(port);

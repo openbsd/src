@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rexecd.c	5.12 (Berkeley) 2/25/91";*/
-static char rcsid[] = "$Id: rexecd.c,v 1.10 1998/07/09 23:54:36 millert Exp $";
+static char rcsid[] = "$Id: rexecd.c,v 1.11 1998/07/10 08:06:08 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -178,7 +178,7 @@ doit(f, fromp)
 	}
 	if (port != 0) {
 		if (port < IPPORT_RESERVED) {
-			syslog(LOG_ERR, "client stderr port in reserved range\n");
+			syslog(LOG_ERR, "client stderr port in reserved range");
 			exit(1); 
 		}
 		s = socket(AF_INET, SOCK_STREAM, 0);

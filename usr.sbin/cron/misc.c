@@ -16,7 +16,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Id: misc.c,v 1.4 1998/03/30 06:59:45 deraadt Exp $";
+static char rcsid[] = "$Id: misc.c,v 1.5 1998/07/10 08:06:34 deraadt Exp $";
 #endif
 
 /* vix 26jan87 [RCS has the rest of the log]
@@ -527,7 +527,7 @@ log_it(username, xpid, event, detail)
 		syslog_open = TRUE;		/* assume openlog success */
 	}
 
-	syslog(LOG_INFO, "(%s) %s (%s)\n", username, event, detail);
+	syslog(LOG_INFO, "(%s) %s (%s)", username, event, detail);
 
 #endif /*SYSLOG*/
 

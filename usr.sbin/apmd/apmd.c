@@ -246,7 +246,7 @@ int howmany;
 	syslog(LOG_WARNING, "cannot open " _PATH_DEV_SPEAKER ": %m");
 	return;
     }
-    syslog(LOG_DEBUG, "sending %d tones to speaker\n", howmany);
+    syslog(LOG_DEBUG, "sending %d tones to speaker", howmany);
     write (spkrfd, "o4cc", 2 + howmany);
     close(spkrfd);
     return;

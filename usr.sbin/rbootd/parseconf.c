@@ -329,7 +329,7 @@ GetBootFiles()
 	 *  Open current directory to read boot file names.
 	 */
 	if ((dfd = opendir(".")) == NULL) {	/* open BootDir */
-		syslog(LOG_ERR, "GetBootFiles: can't open directory (%s)\n",
+		syslog(LOG_ERR, "GetBootFiles: can't open directory (%s)",
 		       BootDir);
 		return(0);
 	}
@@ -355,7 +355,7 @@ GetBootFiles()
 	(void) closedir(dfd);			/* close BootDir */
 
 	if (i == 0)				/* cant find any boot files */
-		syslog(LOG_ERR, "GetBootFiles: no boot files (%s)\n", BootDir);
+		syslog(LOG_ERR, "GetBootFiles: no boot files (%s)", BootDir);
 
 	return(i);
 }

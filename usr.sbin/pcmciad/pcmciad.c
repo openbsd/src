@@ -156,7 +156,7 @@ main(int argc,
 			    close(fd);
 			} else {
 				FD_SET(fd, &sockets);
-				syslog(LOG_DEBUG, "%s is fd %d\n", confline, fd);
+				syslog(LOG_DEBUG, "%s is fd %d", confline, fd);
 				if (fstat(fd, &statb) == -1) {
 					syslog(LOG_ERR, "cannot fstat %s: %m",
 					       confline);
@@ -178,7 +178,7 @@ main(int argc,
 
 			}
 		} else
-			syslog(LOG_DEBUG, "%s:  %m", confline);
+			syslog(LOG_DEBUG, "%s: %m", confline);
 	}
 	fclose(infile);
 
@@ -186,7 +186,7 @@ main(int argc,
 		syslog(LOG_ERR, "no files to monitor");
 		exit(1);
 	}
-	syslog(LOG_DEBUG, "maxfd = %d\n", maxfd);
+	syslog(LOG_DEBUG, "maxfd = %d", maxfd);
 
 	signal(SIGCHLD, child_death);
 	while (1) {
@@ -194,10 +194,10 @@ main(int argc,
 		 (ready = select(maxfd+1, 0, 0, &selcopy, 0)) > 0;
 		 selcopy = sockets) {
 		register int i;
-		syslog(LOG_DEBUG, "%d ready descriptors\n", ready);
+		syslog(LOG_DEBUG, "%d ready descriptors", ready);
 		for (i = 0; ready && i <= maxfd; i++) {
 		    if (FD_ISSET(i, &selcopy)) {
-			syslog(LOG_DEBUG, "fd %d is exceptionally ready\n", i);
+			syslog(LOG_DEBUG, "fd %d is exceptionally ready", i);
 			/* sleep to let it settle */
 			sleep(2);
 			ready--;
@@ -237,7 +237,7 @@ handle_fd(int fd)
 	}
 	status = ISSET(stbuf.status, PCMCIA_CARD_PRESENT);
 	if (!status) {
-		syslog(LOG_INFO,"No card in slot %d\n",stbuf.slot);
+		syslog(LOG_INFO,"No card in slot %d",stbuf.slot);
 		if (ISSET(stbuf.status, PCMCIA_CARD_INUSE) ||
 		    ISSET(stbuf.status, PCMCIA_CARD_IS_MAPPED)) {
 		    if (ioctl(fd,
@@ -258,7 +258,7 @@ handle_fd(int fd)
 			return;
 		    }
 		} else {
-			syslog(LOG_DEBUG,"Card in slot %d is not mapped\n",
+			syslog(LOG_DEBUG,"Card in slot %d is not mapped",
 			       stbuf.slot);
 			if (status != slot_status[fd]) {
 			    make_noise(HIGH_LOW);
@@ -327,7 +327,7 @@ tryagain:
 				syslog(LOG_INFO,"<%s, %s, %s, %s>",
 				       manu, model, addinf1, addinf2);
 			} else {
-				syslog(LOG_ERR, "can't get CIS info\n");
+				syslog(LOG_ERR, "can't get CIS info");
 				if (first) {
 					first = 0;
 					goto tryagain;
@@ -362,7 +362,7 @@ tryagain:
 	else if (WIFEXITED(status)) {
 		if (WEXITSTATUS(status) != 0)
 			syslog(LOG_ERR,
-			       "%s returned %d\n", cmd, WEXITSTATUS(status));
+			       "%s returned %d", cmd, WEXITSTATUS(status));
 	} else if (WIFSIGNALED(status)) {
 		syslog(LOG_ERR,
 		       "%s died from signal %d", cmd, WTERMSIG(status));
@@ -436,7 +436,7 @@ make_noise(tones)
 			exit(1);
 		}
 		syslog(LOG_DEBUG,
-		       "sending %s to speaker\n", tone_string[tones]);
+		       "sending %s to speaker", tone_string[tones]);
 		write (spkrfd, tone_string[tones], strlen(tone_string[tones]));
 		exit(0);
 	default:

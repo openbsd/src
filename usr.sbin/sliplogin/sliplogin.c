@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)sliplogin.c	5.6 (Berkeley) 3/2/91";*/
-static char rcsid[] = "$Id: sliplogin.c,v 1.8 1998/07/08 21:45:04 deraadt Exp $";
+static char rcsid[] = "$Id: sliplogin.c,v 1.9 1998/07/10 08:06:55 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -124,7 +124,7 @@ findid(name)
 	(void)strncpy(loginname, name, sizeof loginname-1);
 	loginname[sizeof loginname -1] = '\0';
 	if ((fp = fopen(_PATH_ACCESS, "r")) == NULL) {
-		syslog(LOG_ERR, "%s: %m\n", _PATH_ACCESS);
+		syslog(LOG_ERR, "%s: %m", _PATH_ACCESS);
 		err(1, "%s", _PATH_ACCESS);
 	}
 	while (fgets(loginargs, sizeof(loginargs) - 1, fp)) {
@@ -154,7 +154,7 @@ findid(name)
 				fputs("access denied - no login file\n",
 				      stderr);
 				syslog(LOG_ERR,
-				       "access denied for %s - no %s\n",
+				       "access denied for %s - no %s",
 				       name, _PATH_LOGIN);
 				exit(5);
 			}
@@ -163,7 +163,7 @@ findid(name)
 		(void) fclose(fp);
 		return;
 	}
-	syslog(LOG_ERR, "SLIP access denied for %s\n", name);
+	syslog(LOG_ERR, "SLIP access denied for %s", name);
 	errx(1, "SLIP access denied for %s", name);
 	/* NOTREACHED */
 }
@@ -200,7 +200,7 @@ hup_handler(s)
 		(void) system(logincmd);
 	}
 	(void) close(0);
-	syslog(LOG_INFO, "closed %s slip unit %d (%s)\n", loginname, unit,
+	syslog(LOG_INFO, "closed %s slip unit %d (%s)", loginname, unit,
 	       sigstr(s));
 	exit(1);
 	/* NOTREACHED */
@@ -281,7 +281,7 @@ main(argc, argv)
 
 		if ((name = getlogin()) == NULL) {
 			syslog(LOG_ERR,
-			    "access denied - getlogin returned 0\n");
+			    "access denied - getlogin returned 0");
 			errx(1, "access denied - no username");
 		}
 		findid(name);
@@ -338,7 +338,7 @@ main(argc, argv)
 	(void) signal(SIGHUP, hup_handler);
 	(void) signal(SIGTERM, hup_handler);
 
-	syslog(LOG_INFO, "attaching slip unit %d for %s\n", unit, loginname);
+	syslog(LOG_INFO, "attaching slip unit %d for %s", unit, loginname);
 	(void)snprintf(logincmd, sizeof(loginargs), "%s %d %d %s", loginfile,
 	    unit, speed, loginargs);
 

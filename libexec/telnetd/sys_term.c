@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_term.c,v 1.13 1998/05/08 19:32:33 deraadt Exp $	*/
+/*	$OpenBSD: sys_term.c,v 1.14 1998/07/10 08:06:23 deraadt Exp $	*/
 /*	$NetBSD: sys_term.c,v 1.9 1996/03/20 04:25:53 tls Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 static char sccsid[] = "@(#)sys_term.c	8.4+1 (Berkeley) 5/30/95";
 static char rcsid[] = "$NetBSD: sys_term.c,v 1.8 1996/02/28 20:38:21 thorpej Exp $";
 #else
-static char rcsid[] = "$OpenBSD: sys_term.c,v 1.13 1998/05/08 19:32:33 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: sys_term.c,v 1.14 1998/07/10 08:06:23 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -1805,7 +1805,7 @@ start_login(host, autologin, name)
 	sleep(1);
 	execv(loginprog, argv);
 
-	syslog(LOG_ERR, "%s: %m\n", loginprog);
+	syslog(LOG_ERR, "%s: %m", loginprog);
 	fatalperror(net, loginprog);
 	/*NOTREACHED*/
 }
@@ -2188,12 +2188,12 @@ cleantmpdir(jid, tpath, user)
 {
 	switch(fork()) {
 	case -1:
-		syslog(LOG_ERR, "TMPDIR cleanup(%s): fork() failed: %m\n",
+		syslog(LOG_ERR, "TMPDIR cleanup(%s): fork() failed: %m",
 							tpath);
 		break;
 	case 0:
 		execl(CLEANTMPCMD, CLEANTMPCMD, user, tpath, 0);
-		syslog(LOG_ERR, "TMPDIR cleanup(%s): execl(%s) failed: %m\n",
+		syslog(LOG_ERR, "TMPDIR cleanup(%s): execl(%s) failed: %m",
 							tpath, CLEANTMPCMD);
 		exit(1);
 	default:

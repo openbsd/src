@@ -223,7 +223,7 @@ parse(fd, laddr, faddr)
 	}
 
 	if (syslog_flag)
-		syslog(LOG_DEBUG, "Successful lookup: %d , %d : %s\n",
+		syslog(LOG_DEBUG, "Successful lookup: %d , %d : %s",
 		    lport, fport, pw->pw_name);
 
 	if (noident_flag && check_noident(pw->pw_dir)) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.3 1996/07/15 05:10:11 mickey Exp $	*/
+/*	$OpenBSD: table.c,v 1.4 1998/07/10 08:06:19 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)table.c	5.7 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: table.c,v 1.3 1996/07/15 05:10:11 mickey Exp $";
+static char rcsid[] = "$Id: table.c,v 1.4 1998/07/10 08:06:19 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -115,7 +115,7 @@ find_match(request)
 			return (&ptr->request);
 	}
 	if (debug)
-		syslog(LOG_DEBUG, "find_match: not found\n");
+		syslog(LOG_DEBUG, "find_match: not found");
 
 	return ((CTL_MSG *)0);
 }

@@ -2,7 +2,7 @@
  * smtpd, Obtuse SMTP daemon, storing agent. does simple collection of
  * mail messages, for later forwarding by smtpfwdd.
  *
- * $Id: smtpd.c,v 1.6 1998/06/03 08:57:11 beck Exp $
+ * $Id: smtpd.c,v 1.7 1998/07/10 08:06:15 deraadt Exp $
  * 
  * Copyright (c) 1996, 1997 Obtuse Systems Corporation. All rights
  * reserved.
@@ -40,7 +40,7 @@
 
 char *obtuse_copyright =
 "Copyright 1996 - Obtuse Systems Corporation - All rights reserved.";
-char *obtuse_rcsid = "$Id: smtpd.c,v 1.6 1998/06/03 08:57:11 beck Exp $";
+char *obtuse_rcsid = "$Id: smtpd.c,v 1.7 1998/07/10 08:06:15 deraadt Exp $";
 
 #include <stdarg.h>
 #include <stdlib.h>
@@ -2669,14 +2669,13 @@ main(int argc, char **argv)
      * didn't get one from a getsockname. get our hostname and use
      * that. 
      */
-    char hname[66];
+    char hname[MAXHOSTNAMELEN];
     struct hostent *hp;
 
-    if (gethostname(hname, 65) != 0) {
+    if (gethostname(hname, sizeof hname) != 0) {
       syslog(LOG_ERR, "gethostname() call failed! (%m) Who am I?");
       exit(EX_OSERR);
     }
-    hname[65] = '\0';
     if ((hp = gethostbyname(hname)) != NULL) {
       peerinfo.my_clean_reverse_name = strdup(hp->h_name);
     } else {

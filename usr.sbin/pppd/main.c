@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.23 1998/07/09 06:33:28 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.24 1998/07/10 08:06:45 deraadt Exp $	*/
 
 /*
  * main.c - Point-to-Point Protocol main module
@@ -23,7 +23,7 @@
 #if 0
 static char rcsid[] = "Id: main.c,v 1.49 1998/05/05 05:24:17 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.23 1998/07/09 06:33:28 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.24 1998/07/10 08:06:45 deraadt Exp $";
 #endif
 #endif
 
@@ -1361,7 +1361,7 @@ void
 novm(msg)
     char *msg;
 {
-    syslog(LOG_ERR, "Virtual memory exhausted allocating %s\n", msg);
+    syslog(LOG_ERR, "Virtual memory exhausted allocating %s", msg);
     die(1);
 }
 

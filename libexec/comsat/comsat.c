@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)comsat.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$Id: comsat.c,v 1.7 1997/11/20 23:31:50 deraadt Exp $";
+static char rcsid[] = "$Id: comsat.c,v 1.8 1998/07/10 08:06:02 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -215,7 +215,7 @@ notify(utp, offset)
 		dsyslog(LOG_DEBUG, "%s: wrong mode on %s", utp->ut_name, tty);
 		return;
 	}
-	dsyslog(LOG_DEBUG, "notify %s on %s\n", utp->ut_name, tty);
+	dsyslog(LOG_DEBUG, "notify %s on %s", utp->ut_name, tty);
 	if (fork())
 		return;
 	(void)signal(SIGALRM, SIG_DFL);

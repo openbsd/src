@@ -143,7 +143,7 @@ tryagain:
 			goto overwrite;
 		}
 		if (doing_proxy == 0) {
-			syslog(LOG_ERR, "arptab_set: can only proxy for %s\n",
+			syslog(LOG_ERR, "arptab_set: can only proxy for %s",
 			    inet_ntoa(sin->sin_addr));
 			close(s);
 			s = -1;
@@ -151,7 +151,7 @@ tryagain:
 		}
 		if (sin_m.sin_other & SIN_PROXY) {
 			syslog(LOG_ERR,
-			    "arptab_set: proxy entry exists for non 802 device\n");
+			    "arptab_set: proxy entry exists for non 802 device");
 			close(s);
 			s = -1;
 			return(1);
@@ -163,7 +163,7 @@ tryagain:
 overwrite:
 	if (sdl->sdl_family != AF_LINK) {
 		syslog(LOG_ERR,
-		    "arptab_set: cannot intuit interface index and type for %s\n",
+		    "arptab_set: cannot intuit interface index and type for %s",
 		    inet_ntoa(sin->sin_addr));
 		close(s);
 		s = -1;
@@ -196,7 +196,7 @@ rtmsg(cmd)
 
 	switch (cmd) {
 	default:
-		syslog(LOG_ERR, "arptab_set: internal wrong cmd\n");
+		syslog(LOG_ERR, "arptab_set: internal wrong cmd");
 		exit(1);
 	case RTM_ADD:
 		rtm->rtm_addrs |= RTA_GATEWAY;
