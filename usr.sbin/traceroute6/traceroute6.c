@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.3 2000/03/12 03:56:44 itojun Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.4 2000/04/20 07:49:47 angelos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -348,6 +348,7 @@ char *source = 0;
 char *hostname;
 
 int nprobes = 3;
+int min_hops = 1;
 int max_hops = 30;
 u_short ident;
 u_short port = 32768+666;	/* start udp dest port # for probe packets */
@@ -380,7 +381,7 @@ main(argc, argv)
 	on = 1;
 	seq = 0;
 	
-	while ((ch = getopt(argc, argv, "dlm:np:q:rs:w:vg:")) != EOF)
+	while ((ch = getopt(argc, argv, "b:dlm:np:q:rs:w:vg:")) != EOF)
 		switch(ch) {
 		case 'd':
 			options |= SO_DEBUG;
@@ -428,11 +429,19 @@ main(argc, argv)
 #endif
 			freehostent(hp);
 			break;
+		case 'b':
+			min_hops = atoi(optarg);
+			if (min_hops > max_hops) {
+				Fprintf(stderr,
+				    "traceroute6: min hoplimit must be <= %d.\n", max_hops);
+				exit(1);
+			}
+			break;
 		case 'm':
 			max_hops = atoi(optarg);
-			if (max_hops <= 1) {
+			if (max_hops < min_hops) {
 				Fprintf(stderr,
-				    "traceroute6: max hoplimit must be >1.\n");
+				    "traceroute6: max hoplimit must be >= %d.\n", min_hops);
 				exit(1);
 			}
 			break;
@@ -768,10 +777,13 @@ main(argc, argv)
 	Fprintf(stderr, ", %d hops max, %d byte packets\n", max_hops, datalen);
 	(void) fflush(stderr);
 
+	if (min_hops > 1)
+		Printf("Skipping %d intermediate hops", min_hops - 1);
+
 	/*
 	 * Main loop
 	 */
-	for (hops = 1; hops <= max_hops; ++hops) {
+	for (hops = min_hops; hops <= max_hops; ++hops) {
 		struct in6_addr lastaddr;
 		int got_there = 0;
 		int unreachable = 0;
