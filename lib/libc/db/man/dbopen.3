@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dbopen.3,v 1.4 1999/01/11 11:14:47 deraadt Exp $
+.\"	$OpenBSD: dbopen.3,v 1.5 1999/02/26 06:55:53 millert Exp $
 .\"	$NetBSD: dbopen.3,v 1.6 1995/02/27 13:23:25 cgd Exp $
 .\"
 .\" Copyright (c) 1997, Phillip F Knaack. All rights reserved.
@@ -47,13 +47,8 @@
 .Fd #include <fcntl.h>
 .Fd #include <limits.h>
 .Fd #include <db.h>
-.Fo "DB * dbopen"
-.Fa "const char *file"
-.Fa "int flags"
-.Fa "int mode"
-.Fa "DBTYPE type"
-.Fa "const void *openinfo"
-.Fc
+.Ft DB *
+.Fn dbopen "const char *file" "int flags" "int mode" "DBTYPE type" "const void *openinfo"
 .Sh DESCRIPTION
 .Nm
 is the library interface to database files.
@@ -75,7 +70,7 @@ opens
 for reading and/or writing.
 Files never intended to be preserved on disk may be created by setting
 the file parameter to
-.Dv NULL.
+.Dv NULL .
 .Pp
 The
 .Fa flags
@@ -133,13 +128,16 @@ argument is a pointer to an access method specific structure described
 in the access method's manual page.
 If
 .Fa openinfo
-is NULL, each access method will use defaults appropriate for the system
+is
+.Dv NULL ,
+each access method will use defaults appropriate for the system
 and the access method.
 .Pp
 .Nm
-returns a pointer to a DB structure on success and NULL on error.
-The DB structure is defined in the <db.h> include file, and contains at
-least the following fields:
+returns a pointer to a DB structure on success and
+.Dv NULL
+on error.  The DB structure is defined in the <db.h> include file,
+and contains at least the following fields:
 .Pp
 .Bl -item -compact
 typedef struct {
