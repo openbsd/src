@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac97.h,v 1.9 2001/10/28 18:58:12 mickey Exp $	*/
+/*	$OpenBSD: ac97.h,v 1.10 2001/10/28 19:07:24 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999 Constantine Sapuntzakis
@@ -75,6 +75,17 @@ int ac97_attach __P((struct ac97_host_if *));
 int ac97_set_rate __P((struct ac97_codec_if *, struct audio_params *, int));
 
 #define	AC97_REG_RESET			0x00
+#define	AC97_CAPS_MICIN			0x0001
+#define	AC97_CAPS_TONECTRL		0x0004
+#define	AC97_CAPS_SIMSTEREO		0x0008
+#define	AC97_CAPS_HEADPHONES		0x0010
+#define	AC97_CAPS_LOUDNESS		0x0020
+#define	AC97_CAPS_DAC18			0x0040
+#define	AC97_CAPS_DAC20			0x0080
+#define	AC97_CAPS_ADC18			0x0100
+#define	AC97_CAPS_ADC20			0x0200
+#define	AC97_CAPS_ENHANCEMENT_MASK	0xfc00
+#define	AC97_CAPS_ENHANCEMENT_SHIFT	10
 #define	AC97_CAPS_ENHANCEMENT(reg)	(((reg) >> 10) & 0x1f)
 #define	AC97_REG_MASTER_VOLUME		0x02
 #define	AC97_REG_HEADPHONE_VOLUME	0x04
