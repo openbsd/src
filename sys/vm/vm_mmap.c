@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_mmap.c,v 1.42 1995/10/10 01:27:11 mycroft Exp $	*/
+/*	$NetBSD: vm_mmap.c,v 1.43 1995/12/05 22:54:42 pk Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -827,15 +827,13 @@ vm_mmap(map, addr, size, prot, maxprot, flags, handle, foff)
 			vm_offset_t off;
 
 			/* locate and allocate the target address space */
+			vm_map_lock(map);
 			if (fitit) {
 				/*
-				 * We cannot call vm_map_find() because
-				 * a proposed address may be vetoed by
-				 * the pmap module.
-				 * So we look for space ourselves, validate
-				 * it and insert it into the map. 
+				 * Find space in the map at a location
+				 * that is compatible with the object/offset
+				 * we're going to attach there.
 				 */
-				vm_map_lock(map);
 			again:
 				if (vm_map_findspace(map, *addr, size,
 						     addr) == 1) {
@@ -843,33 +841,40 @@ vm_mmap(map, addr, size, prot, maxprot, flags, handle, foff)
 				} else {
 					vm_object_prefer(object, foff, addr);
 					rv = vm_map_insert(map, NULL,
-							(vm_offset_t)0,
-							*addr, *addr+size);
+							   (vm_offset_t)0,
+							   *addr, *addr+size);
+					/*
+					 * vm_map_insert() may fail if
+					 * vm_object_prefer() has altered
+					 * the initial address.
+					 * If so, we start again.
+					 */
 					if (rv == KERN_NO_SPACE)
-						/*
-						 * Modified address didn't fit
-						 * after all, the gap must
-						 * have been to small.
-						 */
 						goto again;
 				}
-				vm_map_unlock(map);
 			} else {
-				rv = vm_map_find(map, NULL, (vm_offset_t)0,
-					 addr, size, 0);
+				rv = vm_map_insert(map, NULL, (vm_offset_t)0,
+						   *addr, *addr + size);
 
+#ifdef DEBUG
 				/*
 				 * Check against PMAP preferred address. If
 				 * there's a mismatch, these pages should not
 				 * be shared with others. <howto?>
 				 */
-				if (rv == KERN_SUCCESS) {
+				if (rv == KERN_SUCCESS &&
+				    (mmapdebug & MDB_MAPIT)) {
 					vm_offset_t	paddr = *addr;
 					vm_object_prefer(object, foff, &paddr);
 					if (paddr != *addr)
-						printf("vm_mmap: pmap botch!\n");
+					    printf(
+					      "vm_mmap: pmap botch! "
+					      "[foff %x, addr %x, paddr %x]\n",
+					      foff, *addr, paddr);
 				}
+#endif
 			}
+			vm_map_unlock(map);
 
 			if (rv != KERN_SUCCESS) {
 				vm_object_deallocate(object);
@@ -879,7 +884,7 @@ vm_mmap(map, addr, size, prot, maxprot, flags, handle, foff)
 					     VM_MIN_ADDRESS+size, TRUE);
 			off = VM_MIN_ADDRESS;
 			rv = vm_allocate_with_pager(tmap, &off, size,
-						    TRUE, pager,
+						    FALSE, pager,
 						    foff, FALSE);
 			if (rv != KERN_SUCCESS) {
 				vm_object_deallocate(object);

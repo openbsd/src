@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_object.c,v 1.29 1995/07/13 12:35:29 pk Exp $	*/
+/*	$NetBSD: vm_object.c,v 1.31 1995/12/06 00:38:11 pk Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -1418,17 +1418,17 @@ vm_object_prefer(object, offset, addr)
 	register vm_page_t	p;
 	register vm_offset_t	paddr;
 
-	if (object == NULL)
-		return;
-
 #ifdef PMAP_PREFER
-	vm_object_lock(object);
+	if (object == NULL)
+		goto first_map;
+
 	/*
 	 * Look for the first page that the pmap layer has something
 	 * to say about. Since an object maps a contiguous range of
 	 * virutal addresses, this will determine the preferred origin
 	 * of the proposed mapping.
 	 */
+	vm_object_lock(object);
 	for (p = object->memq.tqh_first; p != NULL; p = p->listq.tqe_next) {
 		if (p->flags & (PG_FAKE | PG_FICTITIOUS))
 			continue;
@@ -1436,9 +1436,20 @@ vm_object_prefer(object, offset, addr)
 		if (paddr == (vm_offset_t)-1)
 			continue;
 		*addr = paddr - (p->offset - offset);
-		break;
+		vm_object_unlock(object);
+		return;
 	}
 	vm_object_unlock(object);
+
+first_map:
+	/*
+	 * No physical page attached; ask for a preferred address based
+	 * only on the given virtual address.
+	 */
+	paddr = PMAP_PREFER((vm_offset_t)-1, *addr);
+	if (paddr != (vm_offset_t)-1)
+		*addr = paddr;
+
 #endif
 }
 /*

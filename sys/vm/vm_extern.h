@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_extern.h,v 1.14 1995/09/27 20:30:17 thorpej Exp $	*/
+/*	$NetBSD: vm_extern.h,v 1.15 1995/12/09 04:28:16 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -103,7 +103,11 @@ void		 vm_fault_copy_entry __P((vm_map_t,
 		    vm_map_t, vm_map_entry_t, vm_map_entry_t));
 void		 vm_fault_unwire __P((vm_map_t, vm_offset_t, vm_offset_t));
 int		 vm_fault_wire __P((vm_map_t, vm_offset_t, vm_offset_t));
-int		 vm_fork __P((struct proc *, struct proc *, int));
+#ifdef __FORK_BRAINDAMAGE
+int		 vm_fork __P((struct proc *, struct proc *));
+#else
+void		 vm_fork __P((struct proc *, struct proc *));
+#endif
 int		 vm_inherit __P((vm_map_t,
 		    vm_offset_t, vm_size_t, vm_inherit_t));
 void		 vm_init_limits __P((struct proc *));

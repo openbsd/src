@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_glue.c,v 1.46 1995/05/05 03:35:39 cgd Exp $	*/
+/*	$NetBSD: vm_glue.c,v 1.48 1995/12/09 04:28:19 mycroft Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -202,10 +202,13 @@ vsunlock(addr, len, dirtied)
  * after cpu_fork returns in the child process.  We do nothing here
  * after cpu_fork returns.
  */
+#ifdef __FORK_BRAINDAMAGE
 int
-vm_fork(p1, p2, isvfork)
+#else
+void
+#endif
+vm_fork(p1, p2)
 	register struct proc *p1, *p2;
-	int isvfork;
 {
 	register struct user *up;
 	vm_offset_t addr;
@@ -222,18 +225,14 @@ vm_fork(p1, p2, isvfork)
 
 #ifdef SYSVSHM
 	if (p1->p_vmspace->vm_shm)
-		shmfork(p1, p2, isvfork);
+		shmfork(p1, p2);
 #endif
 
 #if !defined(i386) && !defined(pc532)
 	/*
 	 * Allocate a wired-down (for now) pcb and kernel stack for the process
 	 */
-#ifdef pica
-	addr = kmem_alloc_upage(kernel_map, USPACE);
-#else
 	addr = kmem_alloc_pageable(kernel_map, USPACE);
-#endif
 	if (addr == 0)
 		panic("vm_fork: no more kernel virtual memory");
 	vm_map_pageable(kernel_map, addr, addr + USPACE, FALSE);
@@ -276,6 +275,8 @@ vm_fork(p1, p2, isvfork)
 	(void)vm_map_inherit(vp, addr, VM_MAX_ADDRESS, VM_INHERIT_NONE);
 	}
 #endif
+
+#ifdef __FORK_BRAINDAMAGE
 	/*
 	 * cpu_fork will copy and update the kernel stack and pcb,
 	 * and make the child ready to run.  It marks the child
@@ -284,6 +285,15 @@ vm_fork(p1, p2, isvfork)
 	 * once in the child.
 	 */
 	return (cpu_fork(p1, p2));
+#else
+	/*
+	 * cpu_fork will copy and update the kernel stack and pcb,
+	 * and make the child ready to run.  The child will exit
+	 * directly to user mode on its first time slice, and will
+	 * not return here.
+	 */
+	cpu_fork(p1, p2);
+#endif
 }
 
 /*
@@ -339,7 +349,7 @@ swapin(p)
 	cpu_swapin(p);
 	s = splstatclock();
 	if (p->p_stat == SRUN)
-	        setrunqueue(p);
+		setrunqueue(p);
 	p->p_flag |= P_INMEM;
 	splx(s);
 	p->p_swtime = 0;
@@ -399,10 +409,6 @@ loop:
 			printf("swapin: pid %d(%s)@%x, pri %d free %d\n",
 			       p->p_pid, p->p_comm, p->p_addr,
 			       ppri, cnt.v_free_count);
-#endif
-#ifdef pica
-		vm_map_pageable(kernel_map, (vm_offset_t)p->p_addr,
-		    (vm_offset_t)p->p_addr + atop(USPACE), FALSE);
 #endif
 		swapin(p);
 		goto loop;

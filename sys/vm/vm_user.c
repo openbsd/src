@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_user.c,v 1.11 1994/10/20 04:27:34 cgd Exp $	*/
+/*	$NetBSD: vm_user.c,v 1.12 1995/12/05 22:54:39 pk Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -276,6 +276,7 @@ vm_allocate_with_pager(map, addr, size, anywhere, pager, poffset, internal)
 {
 	register vm_object_t	object;
 	register int		result;
+	vm_offset_t		start;
 
 	if (map == NULL)
 		return(KERN_INVALID_ARGUMENT);
@@ -309,7 +310,25 @@ vm_allocate_with_pager(map, addr, size, anywhere, pager, poffset, internal)
 		cnt.v_nzfod -= atop(size);
 	}
 
-	result = vm_map_find(map, object, poffset, addr, size, anywhere);
+	start = *addr;
+	vm_map_lock(map);
+	if (anywhere) {
+	again:
+		if (vm_map_findspace(map, start, size, addr))
+			result = KERN_NO_SPACE;
+		else {
+			vm_object_prefer(object, poffset, addr);
+			start = *addr;
+			result = vm_map_insert(map, object, poffset,
+					       start, start + size);
+			if (result == KERN_NO_SPACE)
+				goto again;
+		}
+	} else
+		result = vm_map_insert(map, object, poffset,
+				       start, start + size);
+	vm_map_unlock(map);
+
 	if (result != KERN_SUCCESS)
 		vm_object_deallocate(object);
 	else if (pager != NULL)
