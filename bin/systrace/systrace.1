@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systrace.1,v 1.7 2002/06/04 22:46:42 provos Exp $
+.\"	$OpenBSD: systrace.1,v 1.8 2002/06/05 12:00:15 mpech Exp $
 .\"
 .\" Copyright 2002 Niels Provos <provos@citi.umich.edu>
 .\" All rights reserved.
@@ -46,15 +46,16 @@
 The
 .Nm
 utility enforces system call policies for applications by
-constraining the application's access to the system.  The policy is
-generated interactively. Operations not covered by the policy raise an
+constraining the application's access to the system.
+The policy is generated interactively.
+Operations not covered by the policy raise an
 alarm and allow an user to refine the currently configured policy.
 .Pp
 The options are as follows:
 .Bl -tag -width Dfxfile
 .It Fl a
-Enables automatic enforcement of configured policies.  An operation
-not covered by policy is denied and logged via
+Enables automatic enforcement of configured policies.
+An operation not covered by policy is denied and logged via
 .Xr syslog 3 .
 .It Fl i
 Inherits the policy of the first executed binary to all children.
