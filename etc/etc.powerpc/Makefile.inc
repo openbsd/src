@@ -1,7 +1,5 @@
-#
+#	$OpenBSD: Makefile.inc,v 1.4 1997/09/21 11:50:36 deraadt Exp $
 #	etc.powerpc/Makefile.inc -- powerpc-specific etc Makefile targets
-#
-#	$Id: Makefile.inc,v 1.3 1997/05/13 19:46:10 deraadt Exp $
 
 .ifdef DESTDIR
 snap_md: binutils bsd bootblocks

@@ -1,7 +1,5 @@
-#
+#	$OpenBSD: Makefile.inc,v 1.7 1997/09/21 11:50:25 deraadt Exp $
 #	etc.i386/Makefile.inc -- i386-specific etc Makefile targets
-#
-#	$Id: Makefile.inc,v 1.6 1997/09/18 17:17:36 deraadt Exp $
 
 .ifdef DESTDIR
 snap_md: bsd distrib

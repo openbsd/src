@@ -1,7 +1,5 @@
-#
+#	$OpenBSD: Makefile.inc,v 1.2 1997/09/21 11:50:32 deraadt Exp $
 #	etc.mvme88k/Makefile.inc -- mvme88k-specific etc Makefile targets
-#
-#	$Id: Makefile.inc,v 1.1 1997/03/25 17:06:36 rahnds Exp $
 
 .ifdef DESTDIR
 snap_md: bsd-generic bootblocks

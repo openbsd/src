@@ -1,7 +1,5 @@
-#
+#	$OpenBSD: Makefile.inc,v 1.9 1997/09/21 11:50:13 deraadt Exp $
 #	etc.alpha/Makefile.inc -- alpha-specific etc Makefile targets
-#
-#	$Id: Makefile.inc,v 1.8 1997/09/18 17:17:32 deraadt Exp $
 
 .ifdef DESTDIR
 

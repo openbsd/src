@@ -1,8 +1,5 @@
-#
+#	$OpenBSD: Makefile.inc,v 1.12 1997/09/21 11:50:15 deraadt Exp $
 #	etc.amiga/Makefile.inc -- amiga-specific etc Makefile targets
-#
-#	$OpenBSD: Makefile.inc,v 1.11 1997/09/18 17:17:35 deraadt Exp $
-#	$NetBSD: Makefile.inc,v 1.7 1995/11/28 05:40:21 jtc Exp $
 
 .ifdef DESTDIR
 snap_md: bsd distrib

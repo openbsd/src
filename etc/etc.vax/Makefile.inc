@@ -1,5 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.1 1996/03/28 18:24:40 niklas Exp $
-#	$NetBSD: Makefile.inc,v 1.1 1996/03/14 17:32:16 ragge Exp $
+#	$OpenBSD: Makefile.inc,v 1.2 1997/09/21 11:50:43 deraadt Exp $
 #
 #	etc.vax/Makefile.inc -- vax-specific etc Makefile targets
 #
