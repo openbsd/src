@@ -1,3 +1,4 @@
+# $OpenBSD: Makefile,v 1.2 2004/09/22 21:37:35 espie Exp $
 .PATH: ${.CURDIR}/lib
 
 LIB=	expat
