@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.482 2005/03/04 11:01:32 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.483 2005/03/15 17:38:43 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2577,6 +2577,7 @@ pf_get_mss(struct mbuf *m, int off, u_int16_t th_off, sa_family_t af)
 			break;
 		case TCPOPT_MAXSEG:
 			bcopy((caddr_t)(opt + 2), (caddr_t)&mss, 2);
+			NTOHS(mss);
 			/* FALLTHROUGH */
 		default:
 			optlen = opt[1];
