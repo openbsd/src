@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.samples.7,v 1.45 2003/09/02 19:08:21 jmc Exp $
+.\"	$OpenBSD: mdoc.samples.7,v 1.46 2003/09/25 09:27:40 jmc Exp $
 .\"	$NetBSD: mdoc.samples.7,v 1.5 1996/04/03 20:17:34 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -3226,21 +3226,28 @@ template for writing a man page
 .Xr troff 1 ,
 .Xr mdoc 7
 .Sh BUGS
-Undesirable hyphenation on the dash of a flag
-argument is not yet resolved, and causes
-occasional mishaps in the
-.Sx DESCRIPTION
-section.
-(line break on the hyphen).
+Undesirable hyphenation on the dash of a macro argument is not yet resolved,
+and can cause line break on the hyphen.
 .Pp
-Predefined strings are not declared in documentation.
+A
+.Ql \&.Pp
+before a display causes a double vertical space in PostScript output.
 .Pp
-Section 3f has not been added to the header routines.
+No macro yet exists to cause a line break without inserting a vertical space
+(such as troff's
+.Ql \&.br
+macro).
 .Pp
-.Ql \&.Nm
-font should be changed in
-.Sx NAME
-section.
+.Ql \&.Dt
+does not allow arbitrary arguments, and certainly should.
+.Pp
+Arbitrary arguments to
+.Ql \&.Os
+must be double quoted.
+.Pp
+The
+.Ql \&.At
+macro cannot handle punctuation.
 .Pp
 .Ql \&.Fn
 needs to have a check to prevent splitting up
@@ -3260,6 +3267,8 @@ to the right).
 .Pp
 The list and display macros do not do any keeps
 and certainly should be able to.
+.Pp
+Section 3f has not been added to the header routines.
 .\" Note what happens if the parameter list overlaps a newline
 .\" boundary.
 .\" to make sure a line boundary is crossed:
