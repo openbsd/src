@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.41 2002/05/15 23:17:53 art Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.42 2002/05/18 18:24:21 art Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.45 1997/10/24 18:14:25 chuck Exp $	*/
 
 /*-
@@ -219,6 +219,8 @@ panic(const char *fmt, ...)
 #ifdef DDB
 	if (db_panic)
 		Debugger();
+	else
+		db_stack_dump();
 #endif
 	boot(bootopt);
 }
