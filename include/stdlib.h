@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdlib.h,v 1.31 2004/05/03 19:16:36 tedu Exp $	*/
+/*	$OpenBSD: stdlib.h,v 1.32 2004/08/03 19:59:42 millert Exp $	*/
 /*	$NetBSD: stdlib.h,v 1.25 1995/12/27 21:19:08 jtc Exp $	*/
 
 /*-
@@ -130,12 +130,12 @@ double	 strtod(const char *, char **);
 long	 strtol(const char *, char **, int);
 long long
 	 strtoll(const char *, char **, int);
+long long
+	 strtonum(const char *, long long, long long, const char **);
 unsigned long
 	 strtoul(const char *, char **, int);
 unsigned long long
 	 strtoull(const char *, char **, int);
-unsigned long long
-	 strtonum(const char *, long long, unsigned long long, const char **);
 int	 system(const char *);
 
 /* these are currently just stubs */
