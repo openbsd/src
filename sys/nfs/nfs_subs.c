@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.46 2004/07/13 21:04:29 millert Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.47 2004/07/16 15:01:51 henning Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -71,9 +71,6 @@
 #include <miscfs/specfs/specdev.h>
 
 #include <netinet/in.h>
-#ifdef ISO
-#include <netiso/iso.h>
-#endif
 
 #include <dev/rndvar.h>
 
@@ -1707,21 +1704,6 @@ netaddr_match(family, haddr, nam)
 		    inetaddr->sin_addr.s_addr == haddr->had_inetaddr)
 			return (1);
 		break;
-#ifdef ISO
-	case AF_ISO:
-	    {
-		struct sockaddr_iso *isoaddr1, *isoaddr2;
-
-		isoaddr1 = mtod(nam, struct sockaddr_iso *);
-		isoaddr2 = mtod(haddr->had_nam, struct sockaddr_iso *);
-		if (isoaddr1->siso_family == AF_ISO &&
-		    isoaddr1->siso_nlen > 0 &&
-		    isoaddr1->siso_nlen == isoaddr2->siso_nlen &&
-		    SAME_ISOADDR(isoaddr1, isoaddr2))
-			return (1);
-		break;
-	    }
-#endif	/* ISO */
 	default:
 		break;
 	};

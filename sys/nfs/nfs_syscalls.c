@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.41 2004/06/25 00:54:28 tholo Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.42 2004/07/16 15:01:51 henning Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -61,9 +61,6 @@
 
 #include <netinet/in.h>
 #include <netinet/tcp.h>
-#ifdef ISO
-#include <netiso/iso.h>
-#endif
 #include <nfs/xdr_subs.h>
 #include <nfs/rpcv2.h>
 #include <nfs/nfsproto.h>
@@ -377,7 +374,6 @@ sys_nfssvc(p, v, retval)
 					nuidp->nu_inetaddr =
 					     saddr->sin_addr.s_addr;
 					break;
-				    case AF_ISO:
 				    default:
 					nuidp->nu_flag |= NU_NAM;
 					nuidp->nu_nam = m_copym(
@@ -434,14 +430,6 @@ nfssvc_addsock(fp, mynam)
 			m_freem(mynam);
 			return (EPERM);
 		}
-#ifdef ISO
-	} else if (so->so_proto->pr_protocol == ISOPROTO_CLTP) {
-		tslp = nfs_cltpsock;
-		if (tslp->ns_flag & SLP_VALID) {
-			m_freem(mynam);
-			return (EPERM);
-		}
-#endif /* ISO */
 	}
 	if (so->so_type == SOCK_STREAM)
 		siz = NFS_MAXPACKET + sizeof (u_long);
