@@ -1,6 +1,6 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
-#	$OpenBSD: bsd.port.mk,v 1.51 1998/11/19 22:15:31 marc Exp $
+#	$OpenBSD: bsd.port.mk,v 1.52 1998/11/25 01:08:35 espie Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -69,8 +69,9 @@ NetBSD_MAINTAINER=	agc@netbsd.org
 #				  MASTER_SITE_OVERRIDE.
 # PACKAGES		- A top level directory where all packages go (rather than
 #				  going locally to each port). (default: ${PORTSDIR}/packages).
-# GMAKE			- Set to path of GNU make if not in $PATH (default: gmake).
-# XMKMF			- Set to path of `xmkmf' if not in $PATH (default: xmkmf -a ).
+# GMAKE			- Set to path of GNU make if not in $PORTPATH (default: gmake).
+# XMKMF			- Set to path of `xmkmf' if not in $PORTPATH 
+#                 (default: xmkmf -a ).
 # MAINTAINER	- The e-mail address of the contact person for this port
 #				  Defaults: ports@OpenBSD.ORG      (OpenBSD)
 #							ports@FreeBSD.ORG      (FreeBSD)
@@ -153,6 +154,11 @@ NetBSD_MAINTAINER=	agc@netbsd.org
 # BROKEN		- Port is broken.  Set this string to the reason why.
 # RESTRICTED	- Port is restricted.  Set this string to the reason why.
 # USE_GMAKE		- Says that the port uses gmake.
+#
+# XXX: cygnus products do NOT use autoconf for making its main 
+#      configure from configure.in
+# USE_AUTOCONF	- Says that the port uses autoconf (implies GNU_CONFIGURE).
+# AUTOCONF_DIR  - Where to apply autoconf (default: ${WRKSRC}).
 # USE_PERL5		- Says that the port uses perl5 for building and running.
 # USE_IMAKE		- Says that the port uses imake.
 # USE_X11		- Says that the port uses X11 (i.e., installs in ${X11BASE}).
@@ -179,7 +185,7 @@ NetBSD_MAINTAINER=	agc@netbsd.org
 #				  name of a file if it starts with a slash (/), an
 #				  executable otherwise.  make will test for the
 #				  existence (if it is a full pathname) or search for
-#				  it in your $PATH (if it is an executable) and go
+#				  it in $PORTPATH (if it is an executable) and go
 #				  into "dir" to do a "make all install" if it's not
 #				  found.
 # BUILD_DEPENDS - A list of "path:dir" pairs of other ports this
@@ -215,7 +221,7 @@ NetBSD_MAINTAINER=	agc@netbsd.org
 #				  Arguments to ${EXTRACT_CMD} following filename
 #				  (default: none).
 #
-# FETCH_CMD		  - Full path to ftp/http fetch command if not in $PATH
+# FETCH_CMD		  - Full path to ftp/http fetch command if not in $PORTPATH
 #				  (default: /usr/bin/ftp).
 # FETCH_BEFORE_ARGS -
 #				  Arguments to ${FETCH_CMD} before filename (default: none).
@@ -309,7 +315,7 @@ NetBSD_MAINTAINER=	agc@netbsd.org
 #				  use in INDEX files and the like.
 # checkpatch	- Do a "patch -C" instead of a "patch".  Note that it may
 #				  give incorrect results if multiple patches deal with
-#				  the same file. NOT AVAILABLE WITH OPENBSD!
+#				  the same file.
 # checksum		- Use files/md5 to ensure that your distfiles are valid.
 # makesum		- Generate files/md5 (only do this for your own ports!).
 # addsum		- update files/md5 in a non-destructive way (own ports only!)
@@ -433,6 +439,13 @@ MAKE_PROGRAM=		${GMAKE}
 .else
 MAKE_PROGRAM=		${MAKE}
 .endif
+.if defined(USE_AUTOCONF)
+GNU_CONFIGURE= yes
+BUILD_DEPENDS+=		${AUTOCONF}:${PORTSDIR}/devel/autoconf
+AUTOCONF_DIR?=${WRKSRC}
+# missing ?= not an oversight
+AUTOCONF_ENV=PATH=${PORTPATH}
+.endif
 .if defined(USE_EGCC)
 BUILD_DEPENDS+= 	${EGCC}:${PORTSDIR}/devel/egcs-stable
 CC=${EGCC}
@@ -468,9 +481,12 @@ PACKAGE_COOKIE?=	${WRKDIR}/.package_done
 
 # Miscellaneous overridable commands:
 GMAKE?=			gmake
+AUTOCONF?=		autoconf
 EGCC?=			egcc
 EGXX?=			eg++
 XMKMF?=			xmkmf -a
+
+# be paranoid about which md5 we trust
 .if exists(/sbin/md5)
 MD5?=			/sbin/md5
 .elif exists(/bin/md5)
@@ -482,9 +498,11 @@ MD5?=			md5
 .endif
 MD5_FILE?=		${FILESDIR}/md5
 
+PORTPATH?= /usr/bin:/bin:/usr/sbin:/sbin:${LOCALBASE}/bin:${X11BASE}/bin
+
 MAKE_FLAGS?=	-f
 MAKEFILE?=		Makefile
-MAKE_ENV+=		PATH=${PATH}:${LOCALBASE}/bin:${X11BASE}/bin PREFIX=${PREFIX} LOCALBASE=${LOCALBASE} X11BASE=${X11BASE} MOTIFLIB="${MOTIFLIB}" CFLAGS="${CFLAGS}"
+MAKE_ENV+=		PATH=${PORTPATH} PREFIX=${PREFIX} LOCALBASE=${LOCALBASE} X11BASE=${X11BASE} MOTIFLIB="${MOTIFLIB}" CFLAGS="${CFLAGS}"
 
 .if exists(/usr/bin/fetch)
 FETCH_CMD?=		/usr/bin/fetch
@@ -515,13 +533,9 @@ PATCH_ARGS+=		--batch
 PATCH_DIST_ARGS+=	--batch
 .endif
 
-# OpenBSD patch does not support the -C option/checkpatch target
-#
-.if (${OPSYS} != "OpenBSD")
 .if defined(PATCH_CHECK_ONLY)
 PATCH_ARGS+=	-C
 PATCH_DIST_ARGS+=	-C
-.endif
 .endif
 
 .if exists(/bin/tar)
@@ -631,6 +645,7 @@ PLIST?=		${PKGDIR}/PLIST
 .endif
 
 PKG_CMD?=		/usr/sbin/pkg_create
+PKG_DELETE?=	/usr/sbin/pkg_delete
 .if !defined(PKG_ARGS)
 PKG_ARGS=		-v -c ${COMMENT} -d ${DESCR} -f ${PLIST} -p ${PREFIX} -P "`${MAKE} package-depends|sort -u`"
 .if exists(${PKGDIR}/INSTALL)
@@ -668,6 +683,7 @@ CAT?=		/bin/cat
 CP?=		/bin/cp
 DIRNAME?=	/usr/bin/dirname
 ECHO?=		/bin/echo
+EXPR?=		/bin/expr
 FALSE?=		/usr/bin/false
 FILE?=		/usr/bin/file
 GREP?=		/usr/bin/grep
@@ -684,6 +700,9 @@ READLINK?=	/usr/bin/readlink
 RM?=		/bin/rm
 RMDIR?=		/bin/rmdir
 SED?=		/usr/bin/sed
+
+# XXX ${SETENV} is needed in front of var=value lists whenever the next
+# command is expanded from a variable, as this could be a shell construct
 SETENV?=	/usr/bin/env
 SH?=		/bin/sh
 TR?=		/usr/bin/tr
@@ -783,7 +802,7 @@ MASTER_SITES:=	${MASTER_SITE_OVERRIDE} ${MASTER_SITES}
 PATCH_SITES:=	${MASTER_SITE_OVERRIDE} ${PATCH_SITES}
 .endif
 
-# The following is a FreeBSD construct that dopes not work in OpenBSD.
+# The following is a FreeBSD construct that does not work in OpenBSD.
 # Since OpenBSD does not put packages in /cdrom/ports/packages it
 # is safe to leave (but I may remove it in the future).
 #
@@ -876,7 +895,7 @@ PKGFILE?=		${PKGNAME}${PKG_SUFX}
 .endif
 
 CONFIGURE_SCRIPT?=	configure
-CONFIGURE_ENV+=		PATH=${PATH}:${LOCALBASE}/bin:${X11BASE}/bin
+CONFIGURE_ENV+=		PATH=${PORTPATH}
 
 .if defined(GNU_CONFIGURE)
 CONFIGURE_ARGS+=	--prefix=${PREFIX}
@@ -885,7 +904,7 @@ HAS_CONFIGURE=		yes
 
 # Passed to most of script invocations
 SCRIPTS_ENV+= CURDIR=${.CURDIR} DISTDIR=${DISTDIR} \
-          PATH=${PATH}:${LOCALBASE}/bin:${X11BASE}/bin \
+          PATH=${PORTPATH} \
 		  WRKDIR=${WRKDIR} WRKSRC=${WRKSRC} PATCHDIR=${PATCHDIR} \
 		  SCRIPTDIR=${SCRIPTDIR} FILESDIR=${FILESDIR} \
 		  PORTSDIR=${PORTSDIR} DEPENDS="${DEPENDS}" \
@@ -1243,7 +1262,8 @@ do-patch:
 	  done)
 .endif
 	@if [ -d ${PATCHDIR} ]; then \
-		for i in ${PATCHDIR}/${PATCH_LIST}; do \
+		(cd ${PATCHDIR}; \
+		for i in ${PATCH_LIST}; do \
 			case $$i in \
 				*.orig|*.rej|*~) \
 					${ECHO_MSG} "===>   Ignoring patchfile $$i" ; \
@@ -1263,7 +1283,7 @@ do-patch:
 					fi; \
 					;; \
 			esac; \
-		done; \
+		done) \
 	fi
 .endif
 
@@ -1271,6 +1291,9 @@ do-patch:
 
 .if !target(do-configure)
 do-configure:
+.if defined(USE_AUTOCONF)
+	@cd ${AUTOCONF_DIR} && ${SETENV} ${AUTOCONF_ENV} ${AUTOCONF}
+.endif
 	@if [ -f ${SCRIPTDIR}/configure ]; then \
 		cd ${.CURDIR} && ${SETENV} ${SCRIPTS_ENV} ${SH} \
 		  ${SCRIPTDIR}/configure; \
@@ -1425,7 +1448,7 @@ _PORT_USE: .USE
 .for manpage in ${_MANPAGES} ${_CATPAGES}
 	@if [ -L ${manpage} ]; then \
 		set - `${FILE} ${manpage}`; \
-		shift `expr $$# - 1`; \
+		shift `${EXPR} $$# - 1`; \
 		${LN} -sf $${1}.gz ${manpage}.gz; \
 		${RM} ${manpage}; \
 	else \
@@ -1530,13 +1553,10 @@ post-${name}:
 # Checkpatch
 #
 # Special target to verify patches
-# OpenBSD patch does not support the -C option; thus this target disabled
-#
-.if (${OPSYS} != "OpenBSD")
+
 .if !target(checkpatch)
 checkpatch:
 	@cd ${.CURDIR} && ${MAKE} PATCH_CHECK_ONLY=yes ${.MAKEFLAGS} patch
-.endif
 .endif
 
 # Reinstall
@@ -1556,7 +1576,7 @@ reinstall:
 .if !target(deinstall)
 uninstall deinstall:
 	@${ECHO_MSG} "===> Deinstalling for ${PKGNAME}"
-	@pkg_delete -f ${PKGNAME}
+	@${PKG_DELETE} -f ${PKGNAME}
 	@${RM} -f ${INSTALL_COOKIE} ${PACKAGE_COOKIE}
 .endif
 
@@ -1863,17 +1883,18 @@ DEPENDS_TMP+=	${RUN_DEPENDS}
 _DEPENDS_USE:	.USE
 .if defined(DEPENDS_TMP)
 .if !defined(NO_DEPENDS)
-	@for i in ${DEPENDS_TMP}; do \
+	@PATH=${PORTPATH}; \
+	for i in ${DEPENDS_TMP}; do \
 		prog=`${ECHO} $$i | ${SED} -e 's/:.*//'`; \
 		dir=`${ECHO} $$i | ${SED} -e 's/[^:]*://'`; \
-		if expr "$$dir" : '.*:' > /dev/null; then \
+		if ${EXPR} "$$dir" : '.*:' > /dev/null; then \
 			target=`${ECHO} $$dir | ${SED} -e 's/.*://'`; \
 			dir=`${ECHO} $$dir | ${SED} -e 's/:.*//'`; \
 		else \
 			target=${DEPENDS_TARGET}; \
 		fi; \
 		found=not; \
-		if expr "$$prog" : \\/ >/dev/null; then \
+		if ${EXPR} "$$prog" : \\/ >/dev/null; then \
 			if [ -e "$$prog" ]; then \
 				${ECHO_MSG} "===>  ${PKGNAME} depends on file: $$prog - found"; \
 				found=""; \
@@ -1915,7 +1936,7 @@ lib-depends:
 	@for i in ${LIB_DEPENDS}; do \
 		lib=`${ECHO} $$i | ${SED} -e 's/:.*//' -e 's|\([^\\]\)\.|\1\\\\.|g'`; \
 		dir=`${ECHO} $$i | ${SED} -e 's/[^:]*://'`; \
-		if expr "$$dir" : '.*:' > /dev/null; then \
+		if ${EXPR} "$$dir" : '.*:' > /dev/null; then \
 			target=`${ECHO} $$dir | ${SED} -e 's/.*://'`; \
 			dir=`${ECHO} $$dir | ${SED} -e 's/:.*//'`; \
 		else \
@@ -1940,7 +1961,7 @@ lib-depends:
 	@for i in ${LIB_DEPENDS}; do \
 		lib=`${ECHO} $$i | ${SED} -e 's/:.*//' -e 's|\([^\\]\)\.|\1\\\\.|g'`; \
 		dir=`${ECHO} $$i | ${SED} -e 's/[^:]*://'`; \
-		if expr "$$dir" : '.*:' > /dev/null; then \
+		if ${EXPR} "$$dir" : '.*:' > /dev/null; then \
 			target=`${ECHO} $$dir | ${SED} -e 's/.*://'`; \
 			dir=`${ECHO} $$dir | ${SED} -e 's/:.*//'`; \
 		else \
@@ -1971,7 +1992,7 @@ misc-depends:
 .if defined(DEPENDS)
 .if !defined(NO_DEPENDS)
 	@for dir in ${DEPENDS}; do \
-		if expr "$$dir" : '.*:' > /dev/null; then \
+		if ${EXPR} "$$dir" : '.*:' > /dev/null; then \
 			target=`${ECHO} $$dir | ${SED} -e 's/.*://'`; \
 			dir=`${ECHO} $$dir | ${SED} -e 's/:.*//'`; \
 		else \
