@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_motorola.c,v 1.30 2003/11/02 13:47:28 miod Exp $ */
+/*	$OpenBSD: pmap_motorola.c,v 1.31 2003/12/14 19:06:59 miod Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -2289,7 +2289,7 @@ pmap_testbit(pg, bit)
 	struct vm_page *pg;
 	int bit;
 {
-	struct pv_entry *pv;
+	struct pv_entry *pv, *pvl;
 	pt_entry_t *pte;
 	int s;
 
@@ -2316,8 +2316,8 @@ pmap_testbit(pg, bit)
 	 * found.  Cache a hit to speed future lookups.
 	 */
 	if (pv->pv_pmap != NULL) {
-		for (; pv; pv = pv->pv_next) {
-			pte = pmap_pte(pv->pv_pmap, pv->pv_va);
+		for (pvl = pv; pvl != NULL; pvl = pvl->pv_next) {
+			pte = pmap_pte(pvl->pv_pmap, pvl->pv_va);
 			if (*pte & bit) {
 				pv->pv_flags |= bit;
 				splx(s);
