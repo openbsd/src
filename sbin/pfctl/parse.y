@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.345 2003/03/27 15:58:11 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.346 2003/03/27 16:11:55 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1039,6 +1039,10 @@ cbqflags_item	: STRING	{
 				$$ = CBQCLF_RED|CBQCLF_ECN;
 			else if (!strcmp($1, "rio"))
 				$$ = CBQCLF_RIO;
+			else {
+				yyerror("unknown cbq flag \"%s\"", $1);
+				YYERROR;
+			}
 		}
 		;
 
@@ -1055,6 +1059,10 @@ priqflags_item	: STRING	{
 				$$ = PRCF_RED|PRCF_ECN;
 			else if (!strcmp($1, "rio"))
 				$$ = PRCF_RIO;
+			else {
+				yyerror("unknown priq flag \"%s\"", $1);
+				YYERROR;
+			}
 		}
 		;
 
