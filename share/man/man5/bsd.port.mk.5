@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.63 2002/03/02 13:41:02 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.64 2002/03/16 00:56:47 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -386,6 +386,10 @@ if port is an older autoconf port, that does not recognize --sysconfdir.
 Add
 .Sq autoconf
 if autoconf needs to be rerun first.
+Add
+.Sq automake
+if automake may need to be rerun.
+Otherwise, automake will be explicitly disabled.
 If
 .Sq imake ,
 assume port configures using X11 ports Imakefile framework.
