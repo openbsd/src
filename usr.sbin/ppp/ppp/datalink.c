@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: datalink.c,v 1.16 1999/03/04 17:42:25 brian Exp $
+ *	$Id: datalink.c,v 1.17 1999/04/19 16:59:39 brian Exp $
  */
 
 #include <sys/param.h>
@@ -144,6 +144,8 @@ datalink_HangupDone(struct datalink *dl)
     datalink_StartDialTimer(dl, dl->cbcp.fsm.delay);
     cbcp_Down(&dl->cbcp);
     datalink_NewState(dl, DATALINK_OPENING);
+    if (bundle_Phase(dl->bundle) != PHASE_TERMINATE)
+      bundle_NewPhase(dl->bundle, PHASE_ESTABLISH);
   } else if (dl->bundle->CleaningUp ||
       (dl->physical->type == PHYS_DIRECT) ||
       ((!dl->dial.tries || (dl->dial.tries < 0 && !dl->reconnect_tries)) &&
@@ -157,6 +159,8 @@ datalink_HangupDone(struct datalink *dl)
       datalink_StartDialTimer(dl, datalink_GetDialTimeout(dl));
   } else {
     datalink_NewState(dl, DATALINK_OPENING);
+    if (bundle_Phase(dl->bundle) != PHASE_TERMINATE)
+      bundle_NewPhase(dl->bundle, PHASE_ESTABLISH);
     if (dl->dial.tries < 0) {
       datalink_StartDialTimer(dl, dl->cfg.reconnect.timeout);
       dl->dial.tries = dl->cfg.dial.max;
@@ -494,7 +498,7 @@ datalink_LayerUp(void *v, struct fsm *fp)
     lcp->auth_ineed = lcp->want_auth;
     lcp->auth_iwait = lcp->his_auth;
     if (lcp->his_auth || lcp->want_auth) {
-      if (bundle_Phase(dl->bundle) == PHASE_ESTABLISH)
+      if (bundle_Phase(dl->bundle) != PHASE_NETWORK)
         bundle_NewPhase(dl->bundle, PHASE_AUTHENTICATE);
       log_Printf(LogPHASE, "%s: his = %s, mine = %s\n", dl->name,
                 Auth2Nam(lcp->his_auth, lcp->his_authtype),
