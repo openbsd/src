@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh.S,v 1.53 2004/06/22 18:27:08 miod Exp $   */
+/*   $OpenBSD: eh.S,v 1.54 2004/06/22 23:00:15 miod Exp $   */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -2371,7 +2371,16 @@ ASLOCAL(m88110_use_SR3_pcb)
 	 *   use it as scratch storage.
 	 */
 #if 1
-	br	_C_LABEL(m88110_error_handler)
+	ldcr	TMP,  PSR
+	clr	TMP,  TMP,  1<PSR_FPU_DISABLE_BIT>	/* enable the FPU */
+	clr	TMP,  TMP,  1<PSR_SHADOW_FREEZE_BIT>	/* and shadowing */
+	stcr	TMP,  EPSR
+
+	or.u	TMP,  r0,   hi16(_C_LABEL(m88110_error_handler))
+	or	TMP,  TMP,  lo16(_C_LABEL(m88110_error_handler))
+	stcr	TMP,  EXIP
+
+	RTE
 #else
 	/* Testing!!! */
 	xcr	r30,  r30,  SR3			/* r30 = old exception frame */
