@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.1 2004/01/28 01:39:39 mickey Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.2 2004/02/21 03:00:23 deraadt Exp $	*/
 /*	$NetBSD: sys_machdep.c,v 1.1 2003/04/26 18:39:32 fvdl Exp $	*/
 
 /*-
@@ -281,6 +281,10 @@ out:
 }
 #endif	/* USER_LDT */
 
+#ifdef APERTURE
+extern int allowaperture;
+#endif
+
 int
 x86_64_iopl(struct proc *p, void *args, register_t *retval)
 {
@@ -288,11 +292,16 @@ x86_64_iopl(struct proc *p, void *args, register_t *retval)
 	struct trapframe *tf = p->p_md.md_regs;
 	struct x86_64_iopl_args ua;
 
-	if (securelevel > 1)
-		return EPERM;
-
 	if ((error = suser(p, 0)) != 0)
 		return error;
+
+#ifdef APERTURE
+	if (!allowaperture && securelevel > 0)
+		return EPERM;
+#else
+	if (securelevel > 1)
+		return EPERM;
+#endif
 
 	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
 		return error;
