@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hotplugd.8,v 1.1 2004/05/30 08:28:28 grange Exp $
+.\"	$OpenBSD: hotplugd.8,v 1.2 2004/12/25 20:05:43 ian Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -99,7 +99,7 @@ case $DEVCLASS in
 	case $disklabel in
 	Sony*DSC*)
 		# Sony DSC camera
-		mount /dev/"$DEVNAME"i /mnt/camera
+		mount -o nodev,nosuid /dev/"$DEVNAME"i /mnt/camera
 		;;
 	esac
 
