@@ -23,7 +23,8 @@ RM=	rm -f
 	$(CHMOD) $(ROMODE) $@
 
 ALL=	boat-anchor.cf chimera.cf pain.cf sun-lamp.cf trinity.cf \
-	clientproto.cf netbsd-proto.cf tcpproto.cf uucpproto.cf
+	clientproto.cf netbsd-proto.cf tcpproto.cf uucpproto.cf \
+	gandalf.cf
 
 all: $(ALL)
 
