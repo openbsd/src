@@ -1,4 +1,4 @@
-/*	$OpenBSD: autri.c,v 1.11 2002/11/29 04:59:59 fgsch Exp $	*/
+/*	$OpenBSD: autri.c,v 1.12 2003/03/09 01:52:14 tedu Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -463,7 +463,9 @@ autri_reset_codec(sc_)
 enum ac97_host_flags
 autri_flags_codec(void *v)
 {
-	return (AC97_HOST_DONT_READ);
+	struct autri_codec_softc *sc = v;
+
+	return (sc->flags);
 }
 
 /*
@@ -557,6 +559,9 @@ autri_attach(parent, self, aux)
 	codec->host_if.read = autri_read_codec;
 	codec->host_if.write = autri_write_codec;
 	codec->host_if.flags = autri_flags_codec;
+	codec->flags = AC97_HOST_DONT_READ | AC97_HOST_SWAPPED_CHANNELS;
+	if (sc->sc_dev.dv_cfdata->cf_flags & 0x0001)
+		codec->flags &= ~AC97_HOST_SWAPPED_CHANNELS;
 
 	if ((r = ac97_attach(&codec->host_if)) != 0) {
 		printf("%s: can't attach codec (error 0x%X)\n",
