@@ -1,8 +1,8 @@
-The mac68k-specific portion of the NetBSD 1.1 release is found in the
+The mac68k-specific portion of the OpenBSD 1.1 release is found in the
 "mac68k" subdirectory of the distribution.  That subdirectory is laid
 out as follows:
 
-.../NetBSD-1.1/mac68k/
+.../OpenBSD-1.1/mac68k/
 			binary/		mac68k binary distribution sets;
 					see below.
 
@@ -11,26 +11,26 @@ out as follows:
 
 			utils/		The mac68k installation utilities.
 
-The NetBSD/mac68k binary distribution sets contain the binaries which
-comprise the NetBSD 1.1 release for the mac68k.  There are eight binary
+The OpenBSD/mac68k binary distribution sets contain the binaries which
+comprise the OpenBSD 1.1 release for the mac68k.  There are eight binary
 distribution sets, and the "security" distribution set.  The binary
 distribution sets can be found in subdirectories of the "mac68k/binary"
-subdirectory of the NetBSD 1.1 distribution tree, and are as follows:
+subdirectory of the OpenBSD 1.1 distribution tree, and are as follows:
 
-	netbsd10 The NetBSD/mac68k 1.1 kernel binary.  You MUST
+	bsd10	The OpenBSD/mac68k 1.1 kernel binary.  You MUST
 		install this file.  It is the kernel that you need
 		to boot the system.
 		[ 307K gzipped, 610K uncompressed ]
 
-	base11	The NetBSD/mac68k 1.1 base binary distribution.  You
+	base11	The OpenBSD/mac68k 1.1 base binary distribution.  You
 		MUST install this distribution set.  It contains the
-		base NetBSD utilities that are necessary for the
+		base OpenBSD utilities that are necessary for the
 		system to run and be minimally functional.  It
 		includes shared library support, and excludes
 		everything described below.
 		[ 6.2M gzipped, 18.4M uncompressed ]
 
-	comp11	The NetBSD/mac68k Compiler tools.  All of the tools
+	comp11	The OpenBSD/mac68k Compiler tools.  All of the tools
 		relating to C, C++, and FORTRAN (yes, there are two!).
 		This set includes the system include files
 		(/usr/include), the linker, the compiler tool chain,
@@ -65,16 +65,16 @@ subdirectory of the NetBSD 1.1 distribution tree, and are as follows:
 		installed from the source tree by default.
 		[ 1.6M gzipped, 5.7M uncompressed ]
 
-	text11	This set includes NetBSD's text processing tools,
+	text11	This set includes OpenBSD's text processing tools,
 		including groff, all related programs, and their
 		manual pages.
 		[ 0.8M gzipped, 2.9M uncompressed ]
 
 The mac68k security distribution set is named "secr11" and can be found
-in the "mac68k/security" subdirectory of the NetBSD 1.1 distribution
+in the "mac68k/security" subdirectory of the OpenBSD 1.1 distribution
 tree.  It contains the crypt libraries (for the DES encryption algorithm)
 and the binaries which depend on it.  It can only be found on those sites
-which carry the complete NetBSD distribution and that can legally obtain
+which carry the complete OpenBSD distribution and that can legally obtain
 it.  (Remember, because of United States law, this distribution set may
 not be exported to locations outside of the United States and Canada.)
 [ 109K gzipped, 260K uncompressed ]

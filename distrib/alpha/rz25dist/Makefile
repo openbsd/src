@@ -1,3 +1,4 @@
+#	$OpenBSD: Makefile,v 1.4 1996/04/25 21:27:25 niklas Exp $
 #	$NetBSD: Makefile,v 1.12 1995/12/21 14:22:25 cgd Exp $
 
 # Make a distribution for the alpha, on a spare disk.
@@ -33,7 +34,7 @@ build-fs:
 	cd ${.CURDIR}/../../../cygnus && \
 	    make prefix=${DESTDIR}/usr/local install
 	cd ${.CURDIR}/../../../xc && make install install.man
-	cp ${.CURDIR}/../../../sys/arch/alpha/compile/GENERIC/netbsd ${DESTDIR}
+	cp ${.CURDIR}/../../../sys/arch/alpha/compile/GENERIC/bsd ${DESTDIR}
 	ln -s gcc ${DESTDIR}/usr/local/bin/cc
 	ln -s \
 	../local/lib/gcc-lib/alpha-unknown-netbsd1.1A./2.7-95q4/cpp \
@@ -64,7 +65,7 @@ rz25-image.gz: mount-fs build-fs unmount-fs
 bin.tar.gz: mount-fs build-fs
 	/bin/rm -f $@
 	(cd ${DESTDIR} ; find . | grep -v '^./etc' | \
-	    grep -v '^./usr/X11R6' | grep -v '^./netbsd' | \
+	    grep -v '^./usr/X11R6' | grep -v '^./bsd' | \
 	    grep -v '^./boot' | pax -w -d | gzip -9) > $@
 
 etc.tar.gz: mount-fs build-fs

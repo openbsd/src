@@ -1,8 +1,8 @@
-The amiga-specific portion of the NetBSD 1.1 release is found in the
+The amiga-specific portion of the OpenBSD 1.1 release is found in the
 "amiga" subdirectory of the distribution.  That subdirectory is layed
 out as follows:
 
-.../NetBSD-1.1/amiga/
+.../OpenBSD-1.1/amiga/
 			binary/		amiga binary distribution sets;
 					see below.
 
@@ -17,7 +17,7 @@ out as follows:
 					installation section, below.
 
 There are two amiga file system images to be found in the "amiga/miniroot"
-subdirectory of the NetBSD 1.1 distribution.  One of them is a upgrade
+subdirectory of the OpenBSD 1.1 distribution.  One of them is a upgrade
 image and one is an installation image. They are described in more
 detail below.  There are gzipped versions of each available, for easier
 downloading.  (The gzipped version have the ".gz" extension added to
@@ -26,7 +26,7 @@ their names.)
 Installation file system:
 
 	This file contains a BSD root file system setup to help
-	you install the rest of NetBSD.  This includes formatting
+	you install the rest of OpenBSD.  This includes formatting
 	and mounting your root and /usr partitions and getting
 	ready to extract (and possibly first fetching) the distribution
 	sets.  There is enough on this file system to allow you to
@@ -40,7 +40,7 @@ Installation file system:
 Upgrade file system:
 
 	This file contains a BSD root file system setup to help
-	you upgrade a previous version of NetBSD.  This includes
+	you upgrade a previous version of OpenBSD.  This includes
 	converting existing partitions and mounting your root and
 	/usr partitions and getting ready to extract (and possibly
 	first fetching) the distribution sets.  There is enough on
@@ -48,25 +48,25 @@ Upgrade file system:
 	configure an ethernet, mount an NFS file system or ftp.
 	You can also load distribution sets from a SCSI tape, from
 	one of your existing AmigaDOS partitions, or from an existing
-	NetBSD partition.
+	OpenBSD partition.
 
 	This file is named "upgr-11.fs".
 
-The NetBSD/amiga binary distribution sets contain the binaries which
-comprise the NetBSD 1.1 release for the amiga.  There are seven binary
+The OpenBSD/amiga binary distribution sets contain the binaries which
+comprise the OpenBSD 1.1 release for the amiga.  There are seven binary
 distribution sets, and the "security" distribution set.  The binary
 distribution sets can be found in subdirectories of the "amiga/binary"
-subdirectory of the NetBSD 1.1 distribution tree, and are as follows:
+subdirectory of the OpenBSD 1.1 distribution tree, and are as follows:
 
-	base11	The NetBSD/amiga 1.1 base binary distribution.  You
+	base11	The OpenBSD/amiga 1.1 base binary distribution.  You
 		MUST install this distribution set.  It contains the
-		base NetBSD utilities that are necessary for the
+		base OpenBSD utilities that are necessary for the
 		system to run and be minimally functional.  It
 		includes shared library support, and excludes
 		everything described below.
 		[ 7M gzipped, 20M uncompressed ]
 
-	comp11	The NetBSD/amiga Compiler tools.  All of the tools
+	comp11	The OpenBSD/amiga Compiler tools.  All of the tools
 		relating to C, C++, and FORTRAN (yes, there are two!).
 		This set includes the system include files
 		(/usr/include), the linker, the compiler tool chain,
@@ -101,16 +101,16 @@ subdirectory of the NetBSD 1.1 distribution tree, and are as follows:
 		installed from the source tree by default.
 		[ 2M gzipped, 7M uncompressed ]
 
-	text11	This set includes NetBSD's text processing tools,
+	text11	This set includes OpenBSD's text processing tools,
 		including groff, all related programs, and their
 		manual pages.
 		[ 784K gzipped, 3M uncompressed ]
 
 The amiga security distribution set is named "secr11" and can be found
-in the "amiga/security" subdirectory of the NetBSD 1.1 distribution
+in the "amiga/security" subdirectory of the OpenBSD 1.1 distribution
 tree.  It contains crypt.c (the source file for the DES encryption
 algorithm) and the binaries which depend on it.  It can only be found
-on those sites which carry the complete NetBSD distribution and that
+on those sites which carry the complete OpenBSD distribution and that
 can legally obtain it.  (Remember, because of United States law, this
 distribution set may not be exported to locations outside of the
 United States and Canada.)  [ 128K gzipped, 307K uncompressed ]

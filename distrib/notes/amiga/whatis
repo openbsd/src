@@ -1,5 +1,3 @@
 
-This is the second public release of NetBSD for the Amiga line of
-computers.  Several additional graphics and network boards are now
-supported.  Some of the SCSI drivers have been enhanced and (hopefully)
-improved.
+This is the first public release of OpenBSD for the Amiga line of
+computers.  Several graphics, SCSI and network boards are supported.

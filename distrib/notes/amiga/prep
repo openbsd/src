@@ -1,5 +1,5 @@
 You will need an AmigaDOS hard drive prep tool to prepare you hard
-drives for use with NetBSD/amiga.  HDToolBox is provided with the
+drives for use with OpenBSD/amiga.  HDToolBox is provided with the
 system software and on floppy installation disks since Release 2.0
 of AmigaDOS so we will provide instructions for its use.
 
@@ -39,10 +39,10 @@ Preparing you hard disk with HDToolBox:
 	The important things you need to do above and beyond normal
 	partitioning includes (from Partition Drive section):
 
-		Marking all NetBSD partitions as non-bootable.
+		Marking all OpenBSD partitions as non-bootable.
 
 		Changing the file system parameters of the partitions
-		to NetBSD ones.  This must be done from the
+		to OpenBSD ones.  This must be done from the
 		partitioning section and `Advanced options' must
 		be enabled.  To Make the needed changes:
 
@@ -58,7 +58,7 @@ Preparing you hard disk with HDToolBox:
 			other partitions: 0x4e425507
 
 		Here `other' refers to other partitions you will
-		format for reading and writing under NetBSD (e.g.
+		format for reading and writing under OpenBSD (e.g.
 		/usr)
 
 		Make sure you hit the return key to enter this value
@@ -69,27 +69,27 @@ Preparing you hard disk with HDToolBox:
 		- Set Reserved Blocks start and end to 0.
 		- Click Ok.
 
-		Mask and maxtransfer are not used with NetBSD.
+		Mask and maxtransfer are not used with OpenBSD.
 
 		Until you compile your own kernel your swap partition
 		must exist on the drive that also holds your root
 		partition.
 
 	
-	Once this is done NetBSD/amiga will be able to recognize your
+	Once this is done OpenBSD/amiga will be able to recognize your
 	disks and which partitions it should use.
 
 Transferring the miniroot filesystem:
 
-	The NetBSD/amiga installation or upgrade now uses a "miniroot"
-	fileystem which is installed on the partition used by NetBSD
+	The OpenBSD/amiga installation or upgrade now uses a "miniroot"
+	fileystem which is installed on the partition used by OpenBSD
 	for swapping.  This removes the requirement of using a floppy
 	disk for the filesystem used by the installation or upgrade
 	process.  It also allows more utilities to be present on the
 	filesystem than would be available when using an 880K floppy
 	disk.
 
-	Once the hard disk has been prepared for NetBSD, the appropriate
+	Once the hard disk has been prepared for OpenBSD, the appropriate
 	miniroot filesystem (inst-11.fs for a new install or upgr-11.fs
 	for an upgrade) is transferred to the swap partition configured
 	during the hard disk prep (or the existing swap parition in
@@ -97,23 +97,23 @@ Transferring the miniroot filesystem:
 	the "amiga/utilities" directory can be used on AmigaDOS to
 	transfer the filesystem for either a new installation or an
 	upgrade.  The filesystem can also be transferred on an existing
-	NetBSD system for an update by using dd.  This should only be
-	done after booting NetBSD into single-user state.  It may also
+	OpenBSD system for an update by using dd.  This should only be
+	done after booting OpenBSD into single-user state.  It may also
 	be possible to shutdown to single-user, providing that the
 	single-user state processes are not using the swap partition.
 
 	On AmigaDOS, the command:
 		xstreamtodev --input=inst-11.fs --rdb-name=<swap partition>
-	where <swap partition> is the name you gave to the NetBSD
+	where <swap partition> is the name you gave to the OpenBSD
 	partition to be used for swapping.  Use upgr-11.fs if you
-	are going to do an upgrade of an existing NetBSD system.  If
+	are going to do an upgrade of an existing OpenBSD system.  If
 	xstreamtodev is unable to determine the SCSI driver device
 	name or the unit number of the specified partition, you may
 	also need to include the option "--device=<driver.name>" and/or
 	"--unit=<SCSI unit number>".
 
-	To transfer the miniroot using NetBSD, you should be booted up
-	in single user state on the current NetBSD system, or use the
+	To transfer the miniroot using OpenBSD, you should be booted up
+	in single user state on the current OpenBSD system, or use the
 	"shutdown now" command to shutdown to single-uyser state.  Then
 	copy the miniroot using dd:
 		dd if=upgr-11.fs of=/dev/rsd0b

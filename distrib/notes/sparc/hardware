@@ -1,20 +1,20 @@
-NetBSD/sparc RELEASE runs on the following classes of machines:
+OpenBSD/sparc RELEASE runs on the following classes of machines:
 	- sun4c (e.g. the SS1, SS1+, SS2, IPC, ELC, IPX, and SLC)
 	- sun4 (e.g. the 4/100, 4/200, and 4/300.   note that support
 		for the 4/400 processor is incomplete)
 
-NetBSD/sparc RELEASE does *not* run on these machines (yet):
+OpenBSD/sparc RELEASE does *not* run on these machines (yet):
 	- sun-4/400 (lacking support for the I/O cache, and has
 			ethernet problems)
 	- sun4m (e.g. sparc classic, 4, 5, 10, and 20)
 	- sun4d (e.g. sparc center 2000)
 
-Work on porting NetBSD/sparc to the sun4m platform is currently in 
+Work on porting OpenBSD/sparc to the sun4m platform is currently in 
 progress, but was not ready in time for the 1.1 release.
 
 The minimal configuration requires 4M of RAM and ~60M of disk space.
 To install the entire system requires much more disk space, and to run
-X or compile the system, more RAM is recommended.  (NetBSD with 4M of
+X or compile the system, more RAM is recommended.  (OpenBSD with 4M of
 RAM feels like Solaris with 4M of RAM.) Note that until you have
 around 16M of RAM, getting more RAM is more important than getting a
 faster CPU.)

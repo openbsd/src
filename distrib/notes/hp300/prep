@@ -6,12 +6,12 @@ sectors.  You must have this information before proceeding.  The
 file `.../install/HP-IB.geometry' has geometry inforomation for several
 HP-IB disks, but may be incomplete.  Geometry may be calculated from an
 HP-UX `/etc/disktab' entry, but note that HP-UX geometry is based on
-1024 byte sectors, while NetBSD's is based on 512 byte sectors.
+1024 byte sectors, while OpenBSD's is based on 512 byte sectors.
 
 QUICK NOTE ABOUT PARTITIONS:  Since the target disk will become the boot
-disk for your new NetBSD/hp300 installation, you will need to treat the
+disk for your new OpenBSD/hp300 installation, you will need to treat the
 `a' and `c' partitions in a special manner.  Due to the size of the
-NetBSD/hp300 boot program (it spills into the area after the disklabel),
+OpenBSD/hp300 boot program (it spills into the area after the disklabel),
 it is necessary to offset the `a' partition one cylinder from the beginning
 of the disk.  Later, the `c' partition will be marked with the type
 `FS_BOOT' and may not be used for a filesystem.  (For those unfamiliar
@@ -19,7 +19,7 @@ with historic BSD partition conventions, the `c' partition is defined
 as `the entire disk', or the `raw partition'.)
 
 A QUICK NOTE ABOUT DISK NUMBERS:  While in the SYS_INST program, you
-may use different unit numbers for the disks than when the NetBSD
+may use different unit numbers for the disks than when the OpenBSD
 kernel is running.  The unit number for a disk while in SYS_INST is
 calculated with the following formula:
 
@@ -66,14 +66,14 @@ the following from the `.../install' directory in addition to the items
 listed above:
 
 	rbootd.tar.gz	Source code for the rbootd program included with
-			NetBSD.  It requires that the server have a
+			OpenBSD.  It requires that the server have a
 			Berkeley Packet Filter (bpf).  You will need to
 			compile this version of rbootd if your server
 			system does not have this utility already.
 
 First of all, configure your rbootd to handle boot requests from the
-client.  NOTE: NetBSD's `rbootd' is slightly different from HP-UX's.
-To configure NetBSD's `rbootd', create a file called `/etc/rbootd.conf'
+client.  NOTE: OpenBSD's `rbootd' is slightly different from HP-UX's.
+To configure OpenBSD's `rbootd', create a file called `/etc/rbootd.conf'
 and place in it an entry like the following:
 
 	08:00:09:04:AA:33	SYS_INST	# thunder-egg
@@ -101,7 +101,7 @@ the space bar a few times.  Shortly, you should see a menu of possible boot
 options appear.  Select the option corresponding to SYS_INST.  SYS_INST will
 load and prompt you for a command.
 
-If this is a new NetBSD installation, you will need to place a disklabel
+If this is a new OpenBSD installation, you will need to place a disklabel
 on the disk.
 
 	sys_inst> disklabel

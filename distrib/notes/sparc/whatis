@@ -1,5 +1,5 @@
-NetBSD RELEASE is the second release for the sparc. Many more sparc
+OpenBSD RELEASE is the second release for the sparc. Many more sparc
 models and devices are now supported.
-In addition to the SunOS 4.1 compatibility present in NetBSD/sparc 1.0,
+In addition to the SunOS 4.1 compatibility present in OpenBSD/sparc 1.0,
 version RELEASE will also run some number of SunOS 5 (SVR4) executables
 in binary emulation mode.

@@ -1,37 +1,36 @@
-INSTALLATION NOTES for NetBSD/MACHINE 1.1
+INSTALLATION NOTES for OpenBSD/MACHINE 1.1
 
 
 
 Be sure to read _ALL_ of this document before you try to install
-NetBSD/MACHINE.
+OpenBSD/MACHINE.
 
 
 
-What is NetBSD?
+What is OpenBSD?
 ---- -- ------
 
-NetBSD is a Berkeley Networking Release 2 (Net/2) and 4.4BSD-Lite
+OpenBSD is a Berkeley Networking Release 2 (Net/2) and 4.4BSD-Lite
 -derived Operating System.  It is a fully functional UN*X-like system
-which runs on many architectures and is being ported to more.  NetBSD, 
-as the name implies, is a creation of the members of the network community
-and without the net it's likely that this release wouldn't have come
-about.
+which runs on many architectures and is being ported to more.  OpenBSD, 
+is a creation of the members of the network community and without the
+net it's likely that this release wouldn't have come about.
 
-NetBSD 1.1 is a evolutionary release which contains over a year of
+OpenBSD 1.1 is a evolutionary release which contains over a year of
 changes to the kernel, user-level utilities, and documentation.
 
-Continuing the multi-platform tradition, NetBSD has added ports to
+Continuing the multi-platform tradition, OpenBSD has added ports to
 atari and mvme68k based machines.  Kernel interfaces have continued to
 be refined, and now several subsystems and device drivers are shared
 among the different ports.  You can look for this trend to continue.
 
-NetBSD 1.1 has significantly enhanced the binary emulation subsystem 
+OpenBSD 1.1 has significantly enhanced the binary emulation subsystem 
 (which includes iBCS2, Linux, OSF/1, SunOS, SVR4, Solaris and Ultrix
 compatibility) and several kernel subsystems have been generalized
 to support this more readily.  The binary emulation strategy is 
 aimed at making the emulation as accurate as possible.
 
-NetBSD 1.1 is also the first release to see machine-independent disk
+OpenBSD 1.1 is also the first release to see machine-independent disk
 striping.  The concatenated disk driver (ccd), which was previously
 supported only by the hp300 port, has been vastly improved.  Many
 bugs were fixed, and explicit references to device-dependent routines
@@ -40,7 +39,7 @@ routines.  In addition, several features were added, including partition
 support, dynamic configuration and unconfiguration via a user space system
 utility program, and virtually unlimited number of component devices.
 
-Many new user programs have been added in NetBSD 1.1, as well,
+Many new user programs have been added in OpenBSD 1.1, as well,
 bringing it closer to our goal of supplying a complete UN*X-like
 environment. 
 
@@ -48,40 +47,15 @@ environment.
 #include "whatis"
 
 
-The Future of NetBSD:
+The Future of OpenBSD:
 --- ------ -- ------
-
-The NetBSD Foundation was recently incorporated as a non-profit
-organization.  It's purpose is to encourage, foster and promote the
-free exchange of computer software, namely the NetBSD Operating
-System.  The foundation will allow for many things to be handled more
-smoothly than could be done with our previous informal organization.
-In particular, it provides the framework to deal with other parties
-that wish to become involved in the NetBSD Project. (IN WHAT WAY?  Money, donations, etc)
-
-We believe that the NetBSD Foundation will help improve the quality 
-of NetBSD by:
-
-	* providing better organization to keep track of development
-	  efforts, including co-ordination with groups working in 
-	  related fields.
-
-	* providing a framework to receive donations of goods and
-          services and to own the resources necessary to run the
-          NetBSD Project.
-
-        * providing a better position from which to undertake
-          promotional activities.
-
-        * periodically organizing workshops for developers and other
-          interested people to discuss ongoing work.
 
 We hope to have regular releases of the full binary and source trees,
 but these are difficult to coordinate, especially with all of the
 architectures which we now support!  We hope to support even _more_
 hardware in the future, and have a rather large number of other ideas
-about what can be done to improve NetBSD.  We intend to continue our
-current practice of making the NetBSD-current development source
+about what can be done to improve OpenBSD.  We intend to continue our
+current practice of making the OpenBSD-current development source
 available on a daily or nearly-daily basis.
 
 We intend to integrate free, positive changes from whatever sources
@@ -89,36 +63,36 @@ will provide them, providing that they are well thought-out and
 increase the usability of the system.
 
 Above all, we hope to create a stable and accessible system, and to be
-responsive to the needs and desires of NetBSD users, because it is for
-and because of them that NetBSD exists.
+responsive to the needs and desires of OpenBSD users, because it is for
+and because of them that OpenBSD exists.
 
 
-Sources of NetBSD:
+Sources of OpenBSD:
 ------- -- ------
 
 #include "mirrors"
 
-NetBSD 1.1 Release Contents:
+OpenBSD 1.1 Release Contents:
 ------ --- ------- --------
 
-The NetBSD 1.1 release is organized in the following way:
+The OpenBSD 1.1 release is organized in the following way:
 
-.../NetBSD-1.1/
+.../OpenBSD-1.1/
 		BUGS			Known bugs list (incomplete
 					and out of date).
 
-		CHANGES			Changes since NetBSD's last
+		CHANGES			Changes since OpenBSD's last
 					release (and before).
 
 		LAST_MINUTE		Last minute changes.
 
 		MIRRORS			A list of sites that mirror
-					the NetBSD 1.1 distribution.
+					the OpenBSD 1.1 distribution.
 
 		README.files		README describing the
 					distribution's contents.
 
-		TODO			NetBSD's todo list (incomplete
+		TODO			OpenBSD's todo list (incomplete
 					and out of date).
 
 		patches/		Post-release source code
@@ -128,7 +102,7 @@ The NetBSD 1.1 release is organized in the following way:
 					below.
 
 In addition to the files and directories listed above, there is one
-directory per architecture, for each of the architectures that NetBSD
+directory per architecture, for each of the architectures that OpenBSD
 1.1 has a binary distribution for.  There are also
 'README.export-control' files sprinkled liberally throughout the
 distribution tree, which point out that there are some portions of the
@@ -152,7 +126,7 @@ are as follows:
 		sets.
 		[ 7.1M gzipped, 30.4M uncompressed ]
 
-	ksrc11	This set contains the sources to the NetBSD 1.1
+	ksrc11	This set contains the sources to the OpenBSD 1.1
 		kernel, config(8), config.old(8) and dbsym(8).
 		[ 6.0M gzipped, 27.0M uncompressed ]
 
@@ -162,7 +136,7 @@ are as follows:
 		typesettable document set, the dictionaries, and more.
 		[ 2.4M gzipped, 8.9M uncompressed ]
 
-	src11	This set contains all of the NetBSD 1.1 sources which
+	src11	This set contains all of the OpenBSD 1.1 sources which
 		are not mentioned above.
 		[ 9.3M gzipped, 41.6M uncompressed ]
 
@@ -199,37 +173,37 @@ files is corrupt and have access to a cksum binary.
 #include "contents"
 
 
-NetBSD System Requirements and Supported Devices:
+OpenBSD System Requirements and Supported Devices:
 ------ ------ ------------ --- --------- -------
 
 #include "hardware"
 
 
-Getting the NetBSD System on to Useful Media:
+Getting the OpenBSD System on to Useful Media:
 ------- --- ------ ------ -- -- ------ -----
 
 #include "xfer"
 
 
-Preparing your System for NetBSD Installation:
+Preparing your System for OpenBSD Installation:
 --------- ---- ------ --- ------ ------------
 
 #include "prep"
 
 
-Installing the NetBSD System:
+Installing the OpenBSD System:
 ---------- --- ------ ------
 
 #include "install"
 
 
-Upgrading a previously-installed NetBSD System:
+Upgrading a previously-installed OpenBSD System:
 --------- - ---------- --------- ------ ------
 
 #include "upgrade"
 
 
-Using online NetBSD documentation
+Using online OpenBSD documentation
 ----- ------ ------ -------------
 
 Documentation is available if you first install the manual
@@ -277,28 +251,28 @@ Registration?  What's that?
 
 If you've got something to say, do so!  We'd like your input.
 There are various mailing lists available via the mailing list
-server at <majordomo@NetBSD.ORG>.  To get help on using the mailing
+server at <majordomo@OpenBSD.ORG>.  To get help on using the mailing
 list server, send mail to that address with an empty body, and it will
 reply with instructions.
 
 There are various mailing lists set up to deal with comments and
 questions about this release.  Please send comments to:
 
-	netbsd-comments@NetBSD.ORG
+	openbsd-comments@OpenBSD.ORG
 
-To report bugs, use the 'send-pr' command shipped with NetBSD,
+To report bugs, use the 'send-pr' command shipped with OpenBSD,
 and fill in as much information about the problem as you can.  Good
 bug reports include lots of details.  Additionally, bug reports can
 be sent by mail to:
 
-	netbsd-bugs@NetBSD.ORG
+	openbsd-bugs@NetBSD.ORG
 
 Use of 'send-pr' is encouraged, however, because bugs reported with it
-are entered into the NetBSD bugs database, and thus can't slip through
+are entered into the OpenBSD bugs database, and thus can't slip through
 the cracks.
 
 There are also port-specific mailing lists, to discuss aspects of
-each port of NetBSD.  Use majordomo to find their addresses.  If
+each port of OpenBSD.  Use majordomo to find their addresses.  If
 you're interested in doing a serious amount of work on a specific
 port, you probably should contact the "owner" of that port (listed
 below).
@@ -306,7 +280,7 @@ below).
 If you'd like to help with this effort, and have an idea as to how
 you could be useful, send mail and/or subscribe to:
 
-	netbsd-help@NetBSD.ORG
+	openbsd-help@OpenBSD.ORG
 
 As a favor, please avoid mailing huge documents or files to these
 mailing lists.  Instead, put the material you would have sent up
@@ -334,25 +308,16 @@ Also, our thanks go to:
 for answering lots of questions, fixing bugs, and doing the various work
 they've done.
 
-UC Berkeley's Experimental Computing Facility provided a home for
-sun-lamp in the past, people to look after it, and a sense of humor.
-Rob Robertson, too, has added his unique sense of humor to things, and
-for a long time provided the primary FTP site for NetBSD.
-
 Without CVS, this project would be impossible to manage, so our hats
 go off to Brian Berliner, Jeff Polk, and the various other people
 who've had a hand in making CVS a useful tool.
-
-Alistair G. Crooks <agc@westley.demon.co.uk> has been producing tar 
-file snapshot reports for NetBSD-current users, a very valuable 
-service.
 
 Dave Burgess <burgess@cynjut.infonet.net> has been maintaining the
 386BSD/NetBSD/FreeBSD FAQ for quite some time, and deserves to be
 recognized for it.
 
 The following people (in alphabetical order) have made donations or
-loans of hardware and/or money, to support NetBSD development, and
+loans of hardware and/or money, to support OpenBSD development, and
 deserve credit for it:
 #include "donations"
 (If you're not on that list and should be, tell us!  We probably were
@@ -360,7 +325,7 @@ not able to get in touch with you, to verify that you wanted to be
 listed.)
 
 Finally, we thank all of the people who've put sweat and tears into
-developing NetBSD since its inception in January, 1993.  (Obviously,
+developing OpenBSD since its inception in October (?), 1995.  (Obviously,
 there are a lot more people who deserve thanks here.  If you're one of
 them, and would like to mentioned, tell us!)
 
@@ -368,50 +333,6 @@ them, and would like to mentioned, tell us!)
 We are:
 -- ---
 (in alphabetical order)
-
-The NetBSD core group:
-J.T. Conklin		<jtc@NetBSD.ORG>
-Charles Hannum		<mycroft@NetBSD.ORG>
-Paul Kranenburg		<pk@NetBSD.ORG>
-Jason Thorpe		<thorpej@NetBSD.ORG>
-Christos Zoulas 	<christos@NetBSD.ORG>
-
-The port-masters (and their ports):
-Allen Briggs		<briggs@mail.vt.edu>		(mac68k)
-Chuck Cranor		<chuck@NetBSD.ORG>		(mvme68k)
-Chris G. Demetriou	<cgd@NetBSD.ORG>		(alpha)
-Charles Hannum		<mycroft@NetBSD.ORG>		(i386)
-Chris Hopps		<chopps@NetBSD.ORG>		(amiga)
-Paul Kranenburg		<pk@NetBSD.ORG>			(sparc)
-Ted Lemon		<mellon@NetBSD.ORG>		(pmax)
-Anders Magnusson	<ragge@NetBSD.ORG>		(vax)
-Phil Nelson		<phil@NetBSD.ORG>		(pc532)
-Gordon Ross		<gwr@NetBSD.ORG>		(sun3)
-Jason Thorpe		<thorpej@NetBSD.ORG>		(hp300)
-Leo Weppelman		<leo@NetBSD.ORG>		(atari)
-
-Supporting cast:
-Steve Allen		<wormey@eskimo.com>
-John Brezak		<brezak@NetBSD.ORG>
-Dave Burgess		<burgess@cynjut.infonet.net>
-Hubert Feyrer		<hubert.feyrer@rz.uni-regensburg.de>
-Adam Glass		<glass@NetBSD.ORG>
-Brad Grantham		<grantham@tenon.com>
-Matthew Green		<mrg@eterna.com.au>
-Michael L. Hitch	<osymh@gemini.oscs.montana.edu>
-Lawrence Kesteloot	<kesteloo@cs.unc.edu>
-John Kohl 		<jtk@NetBSD.ORG>
-Paul Mackerras	 	<paulus@NetBSD.ORG>
-Neil J. McRae		<neil@domino.org>
-Perry Metzger		<perry@NetBSD.ORG>
-Herb Peyerl		<hpeyerl@beer.org>
-Matthias Pfaller	<leo@marco.de>
-Chris Provenzano	<proven@NetBSD.ORG>
-Waldi Ravens		<waldi@moacs.indiv.nl.net>
-Scott Reynolds		<scottr@edsi.org>
-Thor Lancelot Simon	<tls@NetBSD.ORG>
-Wolfgang Solfrank	<ws@tools.de>
-Frank van der Linden	<fvdl@NetBSD.ORG>
 
 Legal Mumbo-jumbo:
 ----- ----- -----

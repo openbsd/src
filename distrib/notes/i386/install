@@ -1,4 +1,4 @@
-Installing NetBSD is a relatively complex process, but if you have
+Installing OpenBSD is a relatively complex process, but if you have
 this document in hand and are careful to read and remember the
 information which is presented to you by the install program, it
 shouldn't be too much trouble.
@@ -7,25 +7,25 @@ Before you begin, you should know the geometry of your hard disk, i.e.
 the sector size (note that sector sizes other than 512 bytes are not
 currently supported), the number of sectors per track, the number of
 tracks per cylinder (also known as the number of heads), and the
-number of cylinders on the disk.  The NetBSD kernel will try to
+number of cylinders on the disk.  The OpenBSD kernel will try to
 discover these parameters on its own, and if it can it will print them
 at boot time.  If possible, you should use the parameters it prints.
 (You might not be able to because you're sharing your disk with
 another operating system, or because your disk is old enough that the
 kernel can't figure out its geometry.)
 
-If NetBSD will be sharing the disk with DOS or another operating
+If OpenBSD will be sharing the disk with DOS or another operating
 system, you should have already completed the section of these notes
 that instructed you on how to prepare your hard disk.  You should know
-the size of the NetBSD area of the disk and its offset from the
+the size of the OpenBSD area of the disk and its offset from the
 beginning of the disk.  You will need this information when setting up
-your NetBSD partitions.
+your OpenBSD partitions.
 
-You should now be ready to install NetBSD.  It might be handy for you
+You should now be ready to install OpenBSD.  It might be handy for you
 to have a pencil, some paper, and a calculator handy.
 
 The following is a walk-through of the steps you will take while
-getting NetBSD installed on your hard disk.  If any question has a
+getting OpenBSD installed on your hard disk.  If any question has a
 default answer, it will be displayed in brackets ("[]") after the
 question.  If you wish to stop the installation, you may hit Control-C
 at any time, but if you do, you'll have to begin the installation
@@ -39,7 +39,7 @@ process again from scratch.
 	kernel-copy floppy image to a different disk, and using that.
 	If that doesn't work, try booting after disabling your CPU's
 	internal and external caches (if any).  If it still doesn't
-	work, NetBSD probably can't be run on your hardware.  This can
+	work, OpenBSD probably can't be run on your hardware.  This can
 	probably be considered a bug, so you might want to report it.
 	If you do, please include as many details about your system
 	configuration as you can.
@@ -59,12 +59,12 @@ process again from scratch.
 	disk (the "inst-11" floppy) is writable, insert it into the
 	floppy drive, and hit any key.
 
-	You will then be presented with the NetBSD kernel boot
+	You will then be presented with the OpenBSD kernel boot
 	messages.  You will want to read them, to determine your
 	disk's name and geometry.  Its name will be something like
 	"sd0" or "wd0" and the geometry will be printed on a line that
 	begins with its name.  As mentioned above, you will need your
-	disk's geometry when creating NetBSD's partitions.  You will
+	disk's geometry when creating OpenBSD's partitions.  You will
 	also need to know the name, to tell the install tools what
 	disk to install on.
 
@@ -118,7 +118,7 @@ process again from scratch.
 	asked about which units you wish to use, and you should reply
 	with "c" for cylinders, or "s" for sectors.
 
-	You will be asked for the size of the NetBSD portion of the
+	You will be asked for the size of the OpenBSD portion of the
 	disk.  If you're installing on the whole disk, reply with the
 	size of the disk, as printed earlier by the install program.
 	If you're using only part of the disk, reply with the size
@@ -126,12 +126,12 @@ process again from scratch.
 	enter the size in the units you specified in the last step!)
 
 	If you are not installing on the whole disk, you will be asked
-	fro the offset of the NetBSD partition from the beginning of
+	fro the offset of the OpenBSD partition from the beginning of
 	the disk.  Reply with the appropriate offset (again, in
 	whichever units you specified), as determined by how you
 	set up your disk using the partition editor.
 
-	You will be asked to enter the size of your NetBSD root
+	You will be asked to enter the size of your OpenBSD root
 	partition.  It should be at least 13M, but if you are going to
 	be doing development, 14-16M is a more desirable size.  This
 	size should be expressed in units of sectors or cylinders,
@@ -154,7 +154,7 @@ process again from scratch.
 	separate partition.  That can be done with these installation
 	tools, but is not covered here.)  The install program will
 	tell you how much space there is left to be allocated in the
-	NetBSD area of the disk, and, if you only want one more
+	OpenBSD area of the disk, and, if you only want one more
 	partition ("/usr"), you should enter it at the prompt when the
 	installer asks you how large the next partition should be.
 	It will then ask you for the name of the mount point for that
@@ -163,7 +163,7 @@ process again from scratch.
 
 	YOU ARE NOW AT THE POINT OF NO RETURN.  Nothing has been
 	written to your disk yet, but if you confirm that you want to
-	install NetBSD, your hard drive will be modified, and its
+	install OpenBSD, your hard drive will be modified, and its
 	contents may be scrambled at the whim of the install program.
 	This is especially likely if you have given the install
 	program incorrect information.  If you are sure you want to
@@ -171,7 +171,7 @@ process again from scratch.
 
 	The install program will now label your disk and make the file
 	systems you specified.  The filesystems will be initialized to
-	contain NetBSD bootstrapping binaries and configuration files.
+	contain OpenBSD bootstrapping binaries and configuration files.
 	It will also create an /etc/fstab for your system, and mount
 	all of the file systems under /mnt. (In other words, your root
 	partition will be mounted on /mnt, your /usr partition on
@@ -236,7 +236,7 @@ process again from scratch.
 		extracted.
 
 		(Note: if you know that you will be running low on
-		disk space when installing NetBSD, you can load and
+		disk space when installing OpenBSD, you can load and
 		extract one distribution set at a time.  To do this,
 		load only the floppies which contain the files for the
 		first distribution set, extract them, and then change
@@ -406,7 +406,7 @@ process again from scratch.
 	expects that you have installed the "base11" and "etc11"
 	distribution sets.  If you have not, you will not be able to
 	run it successfully (nor will you have a functional system, in
-	any case).  To configure your newly-installed NetBSD system,
+	any case).  To configure your newly-installed OpenBSD system,
 	run the command "Configure".  It will ask you for the system's
 	host name, domain name, and other network configuration
 	information.  It will set up your configuration files and make
@@ -416,7 +416,7 @@ Kernel Installation:
 
 	Enter "halt" at the prompt to halt the system.  When the
 	system is halted, remove the "inst-11" floppy from the floppy
-	drive, and replace it with the NetBSD 1.1 kernel-copy floppy
+	drive, and replace it with the OpenBSD 1.1 kernel-copy floppy
 	that you previously booted from.  Reboot with that floppy.
 	with that floppy.
 
@@ -445,13 +445,13 @@ Kernel Installation:
 	Once the system is halted, remove the kernel-copy floppy from
 	the floppy disk drive, and hit any key to reboot.
 
-Congratulations, you have successfully installed NetBSD 1.1.  When you
-reboot into NetBSD, you should log in as "root" at the login prompt.
+Congratulations, you have successfully installed OpenBSD 1.1.  When you
+reboot into OpenBSD, you should log in as "root" at the login prompt.
 There is no initial password, but if you're using the machine in a
 networked environment, you should create yourself an account and
 protect it and the "root" account with good passwords.
 
-Some of the files in the NetBSD 1.1 distribution might need to be
+Some of the files in the OpenBSD 1.1 distribution might need to be
 tailored for your site.  In particular, the /etc/sendmail.cf file will
 almost definitely need to be adjusted, and other files in /etc will
 probably need to be modified, as well.  If you are unfamiliar with

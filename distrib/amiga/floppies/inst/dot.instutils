@@ -1,3 +1,4 @@
+#	$OpenBSD: dot.instutils,v 1.3 1996/04/25 21:27:28 niklas Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -26,12 +27,10 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-#	$OpenBSD: dot.instutils,v 1.2 1996/04/25 02:35:49 mickey Exp $
 
-# Installation configuration utilites (functions), to get NetBSD configured
+# Installation configuration utilites (functions), to get OpenBSD configured
 # reasonably once it is installed on the hard disk.  These are meant to be
-# invoked from the shell prompt, by people installing NetBSD.
+# invoked from the shell prompt, by people installing OpenBSD.
 
 Configure()
 {
@@ -146,7 +145,7 @@ Configure()
 	sync
 
 	echo	""
-	echo	"All that's left to do now is to install the NetBSD kernel on"
+	echo	"All that's left to do now is to install the OpenBSD kernel on"
 	echo	"your hard disk.  You should now halt your machine using the"
 	echo	"'halt' command.  Once the machine is halted, reboot it"
 }

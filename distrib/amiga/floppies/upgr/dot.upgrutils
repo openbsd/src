@@ -1,3 +1,4 @@
+#	$OpenBSD: dot.upgrutils,v 1.3 1996/04/25 21:27:37 niklas Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -26,8 +27,6 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-#	$OpenBSD: dot.upgrutils,v 1.2 1996/04/25 02:36:08 mickey Exp $
 
 # Upgrade cleanup utilites (functions), to make sure a recently-upgraded
 # system is safely runnable.  These are meant to be invoked from the shell
@@ -48,7 +47,7 @@ Cleanup()
 	echo	"Done."
 
 	echo	""
-	echo	"All that's left to do now is to install a new NetBSD kernel"
+	echo	"All that's left to do now is to install a new OpenBSD kernel"
 	echo	"on your hard disk.  You should now halt your machine using"
 	echo	"the 'halt' command."
 }

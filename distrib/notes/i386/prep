@@ -1,8 +1,8 @@
-NOTE: If you wish to install NetBSD on your whole disk, i.e. you do
+NOTE: If you wish to install OpenBSD on your whole disk, i.e. you do
 not want DOS or any other operating system to reside on your hard
 disk, you can skip this section and go on to the section that
 describes installation, below.  If you're upgrading your system from a
-previous release of NetBSD, you shouldn't have proceeded directly to
+previous release of OpenBSD, you shouldn't have proceeded directly to
 the section about upgrading; you need none of the information
 presented here.
 
@@ -12,13 +12,13 @@ wish to keep.  Repartitioning your hard disk is an excellent way to
 destroy important data.
 
 Second, if you are using a disk controller which supports disk
-geometry translation, be sure to use the same parameters for NetBSD as
+geometry translation, be sure to use the same parameters for OpenBSD as
 for DOS or the other operating systems installed on your disk.  If you
-do not, it will be much harder to make NetBSD properly coexist with
+do not, it will be much harder to make OpenBSD properly coexist with
 them.  Utilities exist which will print out the disk geometry which DOS
 sees; some versions of DOS "fdisk" also do this.  If you have an "EIDE"
-hard disk, DOS and NetBSD probably won't see the same geometry, and you
-must be careful to find out the DOS geometry and tell NetBSD about it
+hard disk, DOS and OpenBSD probably won't see the same geometry, and you
+must be careful to find out the DOS geometry and tell OpenBSD about it
 during the installation.
 
 Third (but related to the second point above), if you are using a hard
@@ -27,7 +27,7 @@ some kind of software translation utility or other kludge, you MUST
 BE SURE that all partitions which you want to boot from must start below
 cylinder 1024 by the BIOS's idea of the disk, and that all DOS partitions
 MUST EXIST ENTIRELY BELOW cylinder 1024, or you will either not be able to
-boot NetBSD, not be able to boot DOS, or you may experience data loss or
+boot OpenBSD, not be able to boot DOS, or you may experience data loss or
 filesystem corruption.  Be sure you aren't using geometry translation that
 you don't know about, but that the DOS "fdisk" program does!
 
@@ -35,9 +35,9 @@ Fourth, use the DOS "fdisk" program or another partition editor to
 repartition your hard disk.  Create a partition of at least 40M in
 size (preferably much larger), and note its starting offset and its
 length (preferably in units of disk sectors or cylinders).  You will
-need that information when installing NetBSD (and if the offset and
+need that information when installing OpenBSD (and if the offset and
 length are not in those units, you will have to convert them).  Once
-you have created the new NetBSD partition, mark it as having a
+you have created the new OpenBSD partition, mark it as having a
 partition type of 0xA5 (165, in decimal).  If you used "fdisk" to
 partition your disk, you will probably have to use a different
 partition editor to mark the partition with the correct type.
@@ -51,5 +51,5 @@ systems will have different needs; most will need to reformat the
 partition, and if it was their "main" partition, will probably need
 to be reinstalled.
 
-Your hard disk is now prepared to have NetBSD installed on it, and
+Your hard disk is now prepared to have OpenBSD installed on it, and
 you should proceed with the installation instructions.

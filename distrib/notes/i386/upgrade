@@ -1,4 +1,4 @@
-The upgrade to NetBSD 1.1 is a binary upgrade; it would be prohibitive
+The upgrade to OpenBSD 1.1 is a binary upgrade; it would be prohibitive
 to make users upgrade by compiling and installing the 1.1 sources, and
 it would be very difficult to even compile a set of instructions that
 allowed them to do so.  Because of the many changes to the system, it
@@ -16,10 +16,10 @@ which weren't previously on the system.  If you have a few megabytes
 free on each of your root and /usr partitions, you should have enough
 space.
 
-Since upgrading involves replacing the boot blocks on your NetBSD
+Since upgrading involves replacing the boot blocks on your OpenBSD
 partition, the kernel, and most of the system binaries, it has the
 potential to cause data loss.  You are strongly advised to BACK UP ANY
-IMPORTANT DATA ON YOUR DISK, whether on the NetBSD partition or on
+IMPORTANT DATA ON YOUR DISK, whether on the OpenBSD partition or on
 another operating system's partition, before beginning the upgrade
 process.
 
@@ -55,7 +55,7 @@ To upgrade your system, follow the following instructions:
 	probably do it manually after the install process is complete,
 	by using "fsck -c 2". Read the fsck(8) manual page for more
 	details. Note that this step is only important when upgrading
-        from a pre-NetBSD 1.0 release.
+        from a pre-OpenBSD 1.0 release.
 
 	The upgrade program will then check your root file system,
 	and, if you approved, will upgrade it to the new file system
@@ -70,7 +70,7 @@ To upgrade your system, follow the following instructions:
 	file systems under /mnt.  (In other words, your root partition
 	will be mounted on /mnt, your /usr partition on /mnt/usr, etc.)
 
-	If you don't already have the NetBSD distribution sets on your
+	If you don't already have the OpenBSD distribution sets on your
 	disk, look in the installation section for information on how
 	to transfer them to your disk.
 
@@ -84,7 +84,7 @@ To upgrade your system, follow the following instructions:
 		incrementally from your lone floppy drive.
 
 	Once the distribution sets are transferred to your disk,
-	continue here.  (Obviously, if the NetBSD distribution sets
+	continue here.  (Obviously, if the OpenBSD distribution sets
 	are already on your disk, because you've transferred them
 	before starting the upgrade process, you don't need to
 	transfer them again now!)
@@ -117,7 +117,7 @@ To upgrade your system, follow the following instructions:
 	it is complete, you should use "halt" to halt the system.
 
 	When the system is halted, remove the "upgr11" floppy from
-	the floppy drive, and replace it with the NetBSD 1.1
+	the floppy drive, and replace it with the OpenBSD 1.1
 	kernel-copy floppy that you previously booted from. Reboot
 	with that floppy.
 
@@ -146,17 +146,17 @@ To upgrade your system, follow the following instructions:
 	Once the system is halted, remove the kernel-copy floppy from
 	the floppy disk drive, and hit any key to reboot.
 
-Your system has now been upgraded to NetBSD 1.1.
+Your system has now been upgraded to OpenBSD 1.1.
 
         After a new kernel has been copied to your hard disk, your
-	machine is a complete NetBSD 1.1 system.  However, that
+	machine is a complete OpenBSD 1.1 system.  However, that
 	doesn't mean that you're finished with the upgrade process.
 	There are several things that you should do, or might have to
 	do, to insure that the system works properly.
 
 	First, if you did not upgrade your file systems to the new
 	file system format during the upgrade process, and you are
-        upgrading from a pre-1.0 NetBSD, you may want to do so now,
+        upgrading from a pre-1.0 OpenBSD, you may want to do so now,
         with "fsck -c 2".  If you are unsure about the process, it's
         suggested that you read the fsck(8) manual page.
 
@@ -185,9 +185,9 @@ Your system has now been upgraded to NetBSD 1.1.
 	page.)
 
 	Finally, you will want to delete old binaries that were part
-	of the version of NetBSD that you upgraded from and have since
-	been removed from the NetBSD distribution.  If you are
-        upgrading from a pre-1.0 NetBSD, you might also
+	of the version of OpenBSD that you upgraded from and have since
+	been removed from the OpenBSD distribution.  If you are
+        upgrading from a pre-1.0 OpenBSD, you might also
 	want to recompile any locally-built binaries, to take
 	advantage of the shared libraries.  (Note that any new
 	binaries that you build will be dynamically linked, and

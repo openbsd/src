@@ -1,7 +1,7 @@
-#	$OpenBSD: list,v 1.4 1996/04/25 02:36:11 mickey Exp $
+#	$OpenBSD: list,v 1.5 1996/04/25 21:27:38 niklas Exp $
 
 # copy the kernel
-COPY	${CURDIR}/../../../../sys/arch/amiga/compile/INSTALL/netbsd	netbsd
+COPY	${CURDIR}/../../../../sys/arch/amiga/compile/INSTALL/bsd	bsd
 
 # and the upgrade tools
 COPY	dot.profile			.profile

@@ -1,8 +1,8 @@
-The sparc-specific portion of the NetBSD RELEASE release is found in the
+The sparc-specific portion of the OpenBSD RELEASE release is found in the
 "sparc" subdirectory of the distribution.  That subdirectory is laid
 out as follows:
 
-.../NetBSD-RELEASE/sparc/
+.../OpenBSD-RELEASE/sparc/
 			binary/		sparc binary distribution sets;
 					see below.
 
@@ -12,21 +12,21 @@ out as follows:
 			install/	Base GENERIC kernels, tools,
 					and installation script.
 
-The NetBSD/sparc binary distribution sets contain the binaries which
-comprise the NetBSD RELEASE release for the sparc.  There are seven binary
+The OpenBSD/sparc binary distribution sets contain the binaries which
+comprise the OpenBSD RELEASE release for the sparc.  There are seven binary
 distribution sets, and the "security" distribution set.  The binary
 distribution sets can be found in subdirectories of the "sparc/binary"
-subdirectory of the NetBSD RELEASE distribution tree, and are as follows:
+subdirectory of the OpenBSD RELEASE distribution tree, and are as follows:
 
-	base11	The NetBSD/sparc RELEASE base binary distribution.  You
+	base11	The OpenBSD/sparc RELEASE base binary distribution.  You
 		MUST install this distribution set.  It contains the
-		base NetBSD utilities that are necessary for the
+		base OpenBSD utilities that are necessary for the
 		system to run and be minimally functional.  It
 		includes shared library support, and excludes
 		everything described below.
 		[ 8.0M gzipped, 24.4M uncompressed ]
 
-	comp11	The NetBSD/sparc Compiler tools.  All of the tools
+	comp11	The OpenBSD/sparc Compiler tools.  All of the tools
 		relating to C, C++, and FORTRAN (yes, there are two!).
 		This set includes the system include files
 		(/usr/include), the linker, the compiler tool chain,
@@ -61,16 +61,16 @@ subdirectory of the NetBSD RELEASE distribution tree, and are as follows:
 		installed from the source tree by default.
 		[ 1.9M gzipped, 6.6M uncompressed ]
 
-	text11	This set includes NetBSD's text processing tools,
+	text11	This set includes OpenBSD's text processing tools,
 		including groff, all related programs, and their
 		manual pages.
 		[ 0.8M gzipped, 3.1M uncompressed ]
 
 The sparc security distribution set is named "secr11" and can be found
-in the "sparc/security" subdirectory of the NetBSD RELEASE distribution
+in the "sparc/security" subdirectory of the OpenBSD RELEASE distribution
 tree.  It contains crypt.c (the source file for the DES encryption
 algorithm) and the binaries which depend on it.  It can only be found
-on those sites which carry the complete NetBSD distribution and that
+on those sites which carry the complete OpenBSD distribution and that
 can legally obtain it.  (Remember, because of United States law, this
 distribution set may not be exported to locations outside of the
 United States and Canada.)  [ 127K gzipped, 337K uncompressed ]

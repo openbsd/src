@@ -1,4 +1,5 @@
 #!/bin/sh
+#	$OpenBSD: install.sh,v 1.6 1996/04/25 21:28:08 niklas Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -27,10 +28,8 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-#	$Id: install.sh,v 1.5 1996/02/02 07:24:28 dm Exp $
 
-#	NetBSD installation script.
+#	OpenBSD installation script.
 #	In a perfect world, this would be a nice C program, with a reasonable
 #	user interface.
 
@@ -48,9 +47,9 @@ getresp() {
 	fi
 }
 
-echo	"Welcome to the NetBSD ${VERSION} installation program."
+echo	"Welcome to the OpenBSD ${VERSION} installation program."
 echo	""
-echo	"This program is designed to help you put NetBSD on your hard disk,"
+echo	"This program is designed to help you put OpenBSD on your hard disk,"
 echo	"in a simple and rational way.  You'll be asked several questions,"
 echo	"and it would probably be useful to have your disk's hardware"
 echo	"manual, the installation notes, and a calculator handy."
@@ -88,7 +87,7 @@ echo	""
 echo	"To do the installation, you'll need to provide some information about"
 echo	"your disk."
 echo	""
-echo	"NetBSD can be installed on ST506, ESDI, IDE, or SCSI disks."
+echo	"OpenBSD can be installed on ST506, ESDI, IDE, or SCSI disks."
 echo -n	"What kind of disk will you be installing on? [SCSI] "
 getresp "SCSI"
 case "$resp" in
@@ -159,7 +158,7 @@ labelname=$resp
 echo	""
 echo	"You will now need to provide some information about your disk's"
 echo	"geometry.  This should either be in the User's Manual for your disk,"
-echo	"or you should have written down what NetBSD printed when booting."
+echo	"or you should have written down what OpenBSD printed when booting."
 echo	"(Note that he geometry that's printed at boot time is preferred.)"
 echo	""
 echo    "You may choose to view the initial boot messages for your system"
@@ -232,13 +231,13 @@ if [ $sizeunit = "sectors" ]; then
 fi
 
 echo -n ""
-echo -n "Size of NetBSD portion of disk (in $sizeunit)? "
+echo -n "Size of OpenBSD portion of disk (in $sizeunit)? "
 getresp
 partition=$resp
 partition_sects=`expr $resp \* $sizemult`
 part_offset=0
 if [ $partition_sects -lt $disksize ]; then
-	echo -n "Offset of NetBSD portion of disk (in $sizeunit)? "
+	echo -n "Offset of OpenBSD portion of disk (in $sizeunit)? "
 	getresp
 	part_offset=$resp
 fi
@@ -281,7 +280,7 @@ echo	""
 
 swap=0
 while [ $swap -eq 0 ]; do 
-	echo	"$units_left $sizeunit remaining in NetBSD portion of disk."
+	echo	"$units_left $sizeunit remaining in OpenBSD portion of disk."
 	echo -n	"Swap partition size (in $sizeunit)? "
 	getresp
 	case $resp in
@@ -304,7 +303,7 @@ blocksize=8192
 $DONTDOIT mount -u /dev/fd0a /
 cat /etc/disktab.preinstall > $DT
 echo	"" >> $DT
-echo	"$labelname|NetBSD installation generated:\\" >> $DT
+echo	"$labelname|OpenBSD installation generated:\\" >> $DT
 echo	"	:dt=${type}:ty=winchester:\\" >> $DT
 echo -n	"	:nc#${cyls_per_disk}:ns#${sects_per_track}" >> $DT
 echo	":nt#${tracks_per_cyl}:\\" >> $DT
@@ -321,8 +320,8 @@ _offset=`expr $part_offset \* $sizemult`
 echo	"	:pc#${_size}:oc#${_offset}:\\" >> $DT
 
 echo	"You will now have to enter information about any other partitions"
-echo	"to be created in the NetBSD portion of the disk.  This process will"
-echo	"be complete when you've filled up all remaining space in the NetBSD"
+echo	"to be created in the OpenBSD portion of the disk.  This process will"
+echo	"be complete when you've filled up all remaining space in the OpenBSD"
 echo	"portion of the disk."
 
 while [ $part_used -lt $partition ]; do
@@ -330,7 +329,7 @@ while [ $part_used -lt $partition ]; do
 	units_left=`expr $partition - $part_used`
 	while [ $part_size -eq 0 ]; do
 		echo	""
-		echo -n	"$units_left $sizeunit remaining in NetBSD portion of "
+		echo -n	"$units_left $sizeunit remaining in OpenBSD portion of "
 		echo	"the disk"
 		echo -n "Next partition size (in $sizeunit)? "
 		getresp
@@ -390,7 +389,7 @@ sync
 echo	""
 echo	"THIS IS YOUR LAST CHANCE!!!"
 echo	""
-echo -n	"Are you SURE you want NetBSD installed on your hard drive? (yes/no) "
+echo -n	"Are you SURE you want OpenBSD installed on your hard drive? (yes/no) "
 answer=""
 while [ "$answer" = "" ]; do
 	getresp
@@ -486,10 +485,10 @@ echo	"OK!  The preliminary work of setting up your disk is now complete."
 echo 	""
 echo	"The remaining tasks are:"
 echo	""
-echo	"To copy a NetBSD kernel to the hard drive's root filesystem."
+echo	"To copy a OpenBSD kernel to the hard drive's root filesystem."
 echo	"Once accomplished, you can boot off the hard drive."
 echo	""
-echo	"To load and install the NetBSD distribution sets."
+echo	"To load and install the OpenBSD distribution sets."
 echo	"Currently the hard drive's root filesystem is mounted on /mnt"
 echo	""
 echo	"Consult the installation notes which will describe how to"

@@ -1,4 +1,4 @@
-#	$Id: list,v 1.3 1995/12/14 07:00:36 deraadt Exp $
+#	$OpenBSD: list,v 1.4 1996/04/25 21:30:44 niklas Exp $
 
 # copy the MAKEDEV script and make some devices
 COPY	${DESTDIR}/dev/MAKEDEV	dev/MAKEDEV
@@ -19,7 +19,7 @@ SPECIAL	/usr/sbin/chroot . ./pwd_mkdb -p /etc/master.passwd
 SPECIAL	/bin/rm pwd_mkdb
 
 # copy the crunched binary, link to it
-COPY	${OBJDIR}/netbsd.gz	netbsd.gz
+COPY	${OBJDIR}/bsd.gz	bsd.gz
 COPY	${OBJDIR}/instbin	instbin
 LINK	instbin			bin/cat
 LINK	instbin			bin/chmod

@@ -14,17 +14,17 @@ this table:
     5		sd5
     6		sd6
 
-Unlike SunOS and the OpenBOOT ROM, a generic NetBSD kernel numbers
+Unlike SunOS and the OpenBOOT ROM, a generic OpenBSD kernel numbers
 scsi drives sequentially as it finds them.  The drive with the
 lowest scsi-id will be called sd0, the next one sd1, etc.
 
-To ease the installation process, the default NetBSD kernel in the
+To ease the installation process, the default OpenBSD kernel in the
 distribution is setup to match the Sun mapping above by hard-wiring
 scsi-id#3 to sd0 and scsi-id#0 to sd3. The remaining drives will be
 dynamically mapped to other sd* numbers.
 
-A truely generic NetBSD kernel is also provided as `/netbsd.GENERIC',
-which will do the standard NetBSD probe ordering. If your configuration
+A truely generic OpenBSD kernel is also provided as `/bsd.GENERIC',
+which will do the standard OpenBSD probe ordering. If your configuration
 differs from the default Sun setup, you can try to use this kernel to
 complete the installation.
 
@@ -40,7 +40,7 @@ instead of `ok', type:
     ok setenv sunmon-compat? false
     ok
 
-This is needed because netbsd cannot handle the old-mode yet, and will
+This is needed because OpenBSD cannot handle the old-mode yet, and will
 firework on you.
 
 Also, you cannot use the security modes of the sparc OpenBOOT ROM.

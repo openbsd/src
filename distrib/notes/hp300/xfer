@@ -69,12 +69,12 @@ To prepare for installing via FTP:
 
 	All that is required in this case is that you have
 	network access to an FTP server.  This may be your
-	account on another system, or may even be ftp.NetBSD.ORG
-	itself.  If you wish to use ftp.NetBSD.ORG as your FTP
+	account on another system, or may even be ftp.OpenBSD.ORG
+	itself.  If you wish to use ftp.OpenBSD.ORG as your FTP
 	file server, you may want to keep the following information
 	handy:
 
 		IP Address: 205.149.163.23
 		Login: anonymous
 		Password: <your e-mail address>
-		Server path: /pub/NetBSD/NetBSD-1.1/hp300/binary
+		Server path: /pub/OpenBSD/OpenBSD-1.1/hp300/binary

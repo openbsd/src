@@ -1,8 +1,8 @@
-The i386-specific portion of the NetBSD 1.1 release is found in the
+The i386-specific portion of the OpenBSD 1.1 release is found in the
 "i386" subdirectory of the distribution.  That subdirectory is laid
 out as follows:
 
-.../NetBSD-1.1/i386/
+.../OpenBSD-1.1/i386/
 			INSTALL		Installation notes; this file.
 
 			binary/		i386 binary distribution sets;
@@ -19,7 +19,7 @@ out as follows:
 					installation section, below.
 
 There are four i386 floppy images to be found in the "i386/floppy"
-subdirectory of the NetBSD 1.1 distribution.  Two of them are bootable
+subdirectory of the OpenBSD 1.1 distribution.  Two of them are bootable
 kernel-copy floppies, one is an installation floppy, and one is an
 upgrade floppy.  They are all described in more detail below.  There
 are gzipped versions of each available, for easier downloading.  (The
@@ -29,7 +29,7 @@ Bootable Kernel-copy floppies:
 
 	These disks contain file systems, are bootable, and have
 	enough utilities on board to copy a new kernel to your hard
-	disk once you have it partitioned for NetBSD.  They make
+	disk once you have it partitioned for OpenBSD.  They make
 	upgrading to a new kernel easy, because all you have to do is
 	get a new kernel-copy floppy with a new kernel, boot from it,
 	and confirm that you want to have the kernel copied to your
@@ -53,11 +53,11 @@ Bootable Kernel-copy floppies:
         installation.
 
         For those that cannot configure a custom kernel, two "generic"
-        kernel images, named "netbsd-adp.gz" and "netbsd-oth.gz", have
+        kernel images, named "bsd-adp.gz" and "bsd-oth.gz", have
         been placed in the binaries directory. These are identical
-        except that "netbsd-adp.gz" contains support for Adaptec SCSI
+        except that "bsd-adp.gz" contains support for Adaptec SCSI
         controllers, but no other SCSI controllers, and
-        "netbsd-oth.gz" contains support only for SCSI controllers
+        "bsd-oth.gz" contains support only for SCSI controllers
         other than the Adaptec. (These are similar in nature to the
         kernels on the kernel copy floppies but with additional device
         support.) It is strongly encouraged that you build a custom
@@ -68,32 +68,32 @@ Bootable Kernel-copy floppies:
 Installation floppy:
 
 	This disk contains the software necessary to prepare your hard
-	drive for NetBSD and install the NetBSD distribution. It is
+	drive for OpenBSD and install the OpenBSD distribution. It is
 	not bootable, and must be used in conjunction with one of the
 	kernel-copy floppies.  This floppy is named "inst-11.fs".
 
 Upgrade floppy:
 
 	This disk contains the software to be used in upgrading the
-	system from a previous version of NetBSD.  It is not bootable,
+	system from a previous version of OpenBSD.  It is not bootable,
 	and must be used in conjunction with one of the kernel-copy
 	floppies.  This floppy is named "upgr11.fs"
 
-The NetBSD/i386 binary distribution sets contain the binaries which
-comprise the NetBSD 1.1 release for the i386.  There are seven binary
+The OpenBSD/i386 binary distribution sets contain the binaries which
+comprise the OpenBSD 1.1 release for the i386.  There are seven binary
 distribution sets, and the "security" distribution set.  The binary
 distribution sets can be found in subdirectories of the "i386/binary"
-subdirectory of the NetBSD 1.1 distribution tree, and are as follows:
+subdirectory of the OpenBSD 1.1 distribution tree, and are as follows:
 
-	base11	The NetBSD/i386 1.1 base binary distribution.  You
+	base11	The OpenBSD/i386 1.1 base binary distribution.  You
 		MUST install this distribution set.  It contains the
-		base NetBSD utilities that are necessary for the
+		base OpenBSD utilities that are necessary for the
 		system to run and be minimally functional.  It
 		includes shared library support, and excludes
 		everything described below.
 		[ 7.5M gzipped, 19.5M uncompressed ]
 
-	comp11	The NetBSD/i386 Compiler tools.  All of the tools
+	comp11	The OpenBSD/i386 Compiler tools.  All of the tools
 		relating to C, C++, and FORTRAN (yes, there are two!).
 		This set includes the system include files
 		(/usr/include), the linker, the compiler tool chain,
@@ -128,20 +128,20 @@ subdirectory of the NetBSD 1.1 distribution tree, and are as follows:
 		installed from the source tree by default.
 		[ 1.9M gzipped, 6.6M uncompressed ]
 
-	text11	This set includes NetBSD's text processing tools,
+	text11	This set includes OpenBSD's text processing tools,
 		including groff, all related programs, and their
 		manual pages.
 		[ 0.8M gzipped, 2.9M uncompressed ]
 
 The i386 security distribution set is named "secr11" and can be found
-in the "i386/security" subdirectory of the NetBSD 1.1 distribution
+in the "i386/security" subdirectory of the OpenBSD 1.1 distribution
 tree.  It contains crypt.c (the source file for the DES encryption
 algorithm) and the binaries which depend on it, as well as the "bdes"
 DES encryption program.  You do not need this distribution set to use
 encrypted passwords in your password file; the "base11" distribution
 includes a crypt library which can perform only the decryption function.
 The "secr11" distribution set can be found only on those sites which
-carry the complete NetBSD distribution and which can legally obtain it.
+carry the complete OpenBSD distribution and which can legally obtain it.
 (Remember, because of United States law, this distribution set may not be
 exported to locations outside of the United States and Canada.)
 	[ 154K gzipped, 358K uncompressed ]

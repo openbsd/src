@@ -1,3 +1,5 @@
+/*	$OpenBSD: go.c,v 1.2 1996/04/25 21:30:41 niklas Exp $	*/
+
 /*
  * Copyright (c) 1995 Matthias Pfaller.
  * All rights reserved.
@@ -26,19 +28,17 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: go.c,v 1.1.1.1 1995/10/18 08:37:42 deraadt Exp $
  */
 
 #include <sys/reboot.h>
 register r6 asm("r6");
 
 /*
- * In order to install netbsd on 4mb machines, netbsd must survive an overflow
- * of the real kernel into the netbsd image. So the compressed kernel image
- * has to be linked in front of the uncompressing code. This code fragment
- * sets the default root disk to rd0 and then jumps behind the compressed
- * kernel image.
+ * In order to install OpenBSD on 4mb machines, OpenBSD must survive an
+ * overflow of the real kernel into the bsd image. So the compressed kernel
+ * image has to be linked in front of the uncompressing code. This code
+ * fragment sets the default root disk to rd0 and then jumps behind the
+ * compressed kernel image.
  */
 
 go()

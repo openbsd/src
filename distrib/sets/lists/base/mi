@@ -611,7 +611,7 @@
 ./usr/share/games/larn
 ./usr/share/games/quiz.db
 ./usr/share/gnats
-./usr/share/gnats/netbsd
+./usr/share/gnats/bsd
 ./usr/share/groff_font
 ./usr/share/groff_font/devX100
 ./usr/share/groff_font/devX100-12

@@ -1,5 +1,5 @@
 #!/bin/sh
-#
+#	$OpenBSD: install.sh,v 1.2 1996/04/25 21:27:46 niklas Exp $
 #	$NetBSD: install.sh,v 1.2 1995/08/25 19:17:28 leo Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -29,9 +29,8 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
 
-#	NetBSD installation script.
+#	OpenBSD installation script.
 #	In a perfect world, this would be a nice C program, with a reasonable
 #	user interface.
 
@@ -95,9 +94,9 @@ prepdrive() {
 	esac
 }
 
-echo	"Welcome to the NetBSD ${VERSION} installation program."
+echo	"Welcome to the OpenBSD ${VERSION} installation program."
 echo	""
-echo	"This program is designed to help you put NetBSD on your hard disk,"
+echo	"This program is designed to help you put OpenBSD on your hard disk,"
 echo	"in a simple and rational way.  Its main objective is to format,"
 echo	"mount and create an fstab for your root (/) and user (/usr)"
 echo	"partitions."
@@ -155,7 +154,7 @@ echo	""
 echo	"THIS IS YOUR LAST CHANCE!!!"
 echo	""
 echo	"(answering yes will format your root partition on $rdev)"
-echo -n	"Are you SURE you want NetBSD installed on your hard drive? (yes/no) "
+echo -n	"Are you SURE you want OpenBSD installed on your hard drive? (yes/no) "
 answer=""
 while [ "$answer" = "" ]; do
 	getresp
@@ -262,11 +261,11 @@ echo	" done."
 echo	""
 echo	""
 echo	"OK!  The preliminary work of setting up your disk is now complete,"
-echo	"and you can install the actual NetBSD software."
+echo	"and you can install the actual OpenBSD software."
 echo	""
 echo	"Right now, your root is mounted on /mnt and your usr on /mnt/usr."
 echo	"You should consult the installation notes to determine how to load"
-echo	"and install the NetBSD distribution sets, and how to configure your"
+echo	"and install the OpenBSD distribution sets, and how to configure your"
 echo	"system when you are done."
 echo	""
 echo	"GOOD LUCK!"

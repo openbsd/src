@@ -1,4 +1,5 @@
 #!/bin/sh
+#	$OpenBSD: upgrade.sh,v 1.3 1996/04/25 21:27:41 niklas Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -27,8 +28,6 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-#	$OpenBSD: upgrade.sh,v 1.2 1996/04/25 02:36:13 mickey Exp $
 
 #	OpenBSD upgrade script.
 #	In a perfect world, this would be a nice C program, with a reasonable
@@ -89,9 +88,9 @@ Convert_fstab() {
 	sed "s/ufs/ffs/" /mnt/etc/fstab.ufs >/mnt/etc/fstab
 }
 
-echo	"Welcome to the NetBSD ${VERSION} upgrade program."
+echo	"Welcome to the OpenBSD ${VERSION} upgrade program."
 echo	""
-echo	"This program is designed to help you put the new version of NetBSD"
+echo	"This program is designed to help you put the new version of OpenBSD"
 echo	"on your hard disk, in a simple and rational way.  To upgrade, you"
 echo	"must have plenty of free space on all partitions which will be"
 echo	"upgraded.  If you have at least 1MB free on your root partition,"
@@ -272,11 +271,11 @@ echo	"Done."
 echo    ""
 echo    ""
 echo	"OK!  The preliminary work of setting up your disk is now complete,"
-echo	"and you can now upgrade the actual NetBSD software."
+echo	"and you can now upgrade the actual OpenBSD software."
 echo	""
 echo	"Right now, your hard disk is mounted on /mnt.  You should consult"
 echo	"the installation notes to determine how to load and install the new"
-echo	"NetBSD distribution sets, and how to clean up after the upgrade"
+echo	"OpenBSD distribution sets, and how to clean up after the upgrade"
 echo	"software, when you are done."
 echo	""
 echo	"GOOD LUCK!"

@@ -1,7 +1,8 @@
+#	$OpenBSD: list,v 1.4 1996/04/25 21:27:53 niklas Exp $
 #	$NetBSD: list,v 1.2 1995/11/14 01:40:42 thorpej Exp $
 
 # copy the kernel
-COPY	${CURDIR}/../../../../sys/arch/hp300/compile/GENERIC/netbsd	netbsd
+COPY	${CURDIR}/../../../../sys/arch/hp300/compile/GENERIC/bsd	bsd
 
 # and the installation tools
 COPY	dot.profile			.profile

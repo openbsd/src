@@ -1,8 +1,8 @@
 
-Installing NetBSD is a relatively complex process, but if you have
+Installing OpenBSD is a relatively complex process, but if you have
 this document in hand it should not be too difficult.
 
-There are several ways to install NetBSD onto your disk.  If your
+There are several ways to install OpenBSD onto your disk.  If your
 machine has a tape drive the easiest way is "Installing from tape"
 (details below).  If your machine is on a network with a suitable
 NFS server, then "Installing from NFS" is the next best method.
@@ -13,7 +13,7 @@ initialize the disk on that machine and then move the disk.
 
 * Installing from tape:
 
-Create the NetBSD/sun3 1.1 boot tape as described in the section
+Create the OpenBSD/sun3 1.1 boot tape as described in the section
 entitled "Preparing a boot tape" and boot the tape.  At the PROM
 monitor prompt, use one of the commands:
 	>b st()
@@ -24,7 +24,7 @@ second will use SCSI target 5.  The '>' is the monitor prompt.
 After the tape loads, you should see many lines of configuration
 messages, and then the following "welcome" screen:
 
-	Welcome to the NetBSD/sun3 RAMDISK root!
+	Welcome to the OpenBSD/sun3 RAMDISK root!
 
 This environment is designed to do only three things:
 1:  Partititon your disk (use the command:  edlabel /dev/rsd0c)
@@ -59,7 +59,7 @@ entitled "Booting the miniroot" for details.
 Before you can install from NFS, you must have already configured
 your NFS server to support your machine as a diskless client.
 Instructions for configuring the server are found in the section
-entitled "Getting the NetBSD System onto Useful Media" above.
+entitled "Getting the OpenBSD System onto Useful Media" above.
 
 First, at the Sun PROM monitor prompt, enter a boot command
 using the network interface as the boot device.  On desktop

@@ -6,9 +6,9 @@ No matter what you do, however, you'll need to have three disks handy,
 on which you will put the install and boot floppy images.
 
 All the images are available from the directory "atari/floppies",
-under the root of the NetBSD tree at your favorite archive site.
+under the root of the OpenBSD tree at your favorite archive site.
 
-If you are using NetBSD/atari to make the floppies, you should use
+If you are using OpenBSD/atari to make the floppies, you should use
 the command dd(1) to write the raw floppy images (.fs files) to
 the disk. To write onto fd0 use:
 
@@ -29,8 +29,8 @@ you choose.  The various methods are explained below.
 
 To prepare for installing via an GEMDOS partition:
 
-	To install NetBSD from an GEMDOS partition, you need to
-	get the NetBSD distribution sets you wish to install
+	To install OpenBSD from an GEMDOS partition, you need to
+	get the OpenBSD distribution sets you wish to install
 	on your system on to an GEMDOS partition.  All of the
 	set_name.xx pieces can be placed in a single directory
 	instead of separate ones for each distribution set.  This
@@ -43,8 +43,8 @@ To prepare for installing via an GEMDOS partition:
 
 To prepare for installing via a tape:
 
-	To install NetBSD from a tape, you need to somehow
-	get the NetBSD filesets you wish to install on
+	To install OpenBSD from a tape, you need to somehow
+	get the OpenBSD filesets you wish to install on
 	your system on to the appropriate kind of tape,
 	in tar format.
 

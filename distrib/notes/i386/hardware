@@ -1,4 +1,4 @@
-NetBSD/i386 1.1 runs on ISA (AT-Bus), EISA, PCI, and VL-bus systems
+OpenBSD/i386 1.1 runs on ISA (AT-Bus), EISA, PCI, and VL-bus systems
 with 386-family processors, with or without math coprocessors.  It
 does NOT support MCA systems, such as some IBM PS/2 systems.  The
 minimal configuration is said to require 4M of RAM and 50M of disk space,
@@ -38,7 +38,7 @@ Supported devices include:
 			Future Domain TMC-950
 
 	MDA, CGA, VGA, SVGA, and HGC Display Adapters.  (Note that not
-		all of the display adapters NetBSD/i386 can work with
+		all of the display adapters OpenBSD/i386 can work with
 		are supported by X.  See the XFree86 FAQ for more
 		information.)
 	Serial ports:
@@ -100,8 +100,8 @@ Drivers for hardware marked with "[*]" are NOT included on the
 distribution floppies.  Except as noted above, all other drivers are
 present on both kernel-copy disks.  Also, at the present time, the
 distributed kernels support only one SCSI host adapter per machine.
-NetBSD normally allows more, though, so if you have more than one, you
-can use all of them by compiling a custom kernel once NetBSD is
+OpenBSD normally allows more, though, so if you have more than one, you
+can use all of them by compiling a custom kernel once OpenBSD is
 installed.
 
 Support for devices marked with "[+]" IS included in the "generic" kernels,

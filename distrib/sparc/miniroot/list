@@ -1,3 +1,4 @@
+#	$OpenBSD: list,v 1.3 1996/04/25 21:31:40 niklas Exp $
 #	$NetBSD: list,v 1.2 1996/01/06 22:42:17 pk Exp $
 
 # We can only get this program this way.
@@ -8,7 +9,7 @@ SPECIAL	chmod 555 sbin/mount_mfs
 COPYDIR	${DESTDIR}/usr/mdec	usr/mdec
 
 # copy the kernel
-COPY	${CURDIR}/../../sys/arch/sparc/compile/GENERIC/netbsd	netbsd
+COPY	${CURDIR}/../../sys/arch/sparc/compile/GENERIC/bsd	bsd
 
 # various files that we need in /etc for the install
 COPY	${DESTDIR}/etc/disktab		etc/disktab.shadow

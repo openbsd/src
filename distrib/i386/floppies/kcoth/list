@@ -1,4 +1,4 @@
-#	$Id: list,v 1.2 1996/02/02 07:24:35 dm Exp $
+#	$OpenBSD: list,v 1.3 1996/04/25 21:28:26 niklas Exp $
 
 # copy the kernel
 COPY	${CURDIR}/../../../../sys/arch/i386/compile/INSTOTHER/bsd	bsd

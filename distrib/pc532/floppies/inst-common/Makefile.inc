@@ -1,3 +1,4 @@
+#	$OpenBSD: Makefile.inc,v 1.3 1996/04/25 21:30:33 niklas Exp $ 
 #	$NetBSD: Makefile.inc,v 1.5 1995/11/28 23:58:56 jtc Exp $ 
 
 # TOP is assumed to be defined by Makefile including this one.
@@ -23,7 +24,7 @@ PWDOBJ=		${PWDSRC}/obj
 PWDOBJ=		${PWDSRC}
 .endif
 
-all: netbsd
+all: bsd
 	dd if=/dev/zero of=${IMAGE} bs=18k count=80
 	disklabel -r -w ${.OBJDIR}/${IMAGE} boot3 2>/dev/null
 	-yes|bim -c init -c "add ${MDEC}/boot boot" -c "default 0" \
@@ -31,13 +32,13 @@ all: netbsd
 	vnconfig -v -c ${VND_DEV} ${IMAGE}
 	newfs -b 8192 -f 1024 -O -m 0 -o space -i 204800 -c 80 ${VND_RDEV} boot3
 	mount ${VND_DEV} ${MOUNT_POINT}
-	cp netbsd ${MOUNT_POINT}/netbsd
+	cp bsd ${MOUNT_POINT}/bsd
 	@df -i ${MOUNT_POINT}
 	@echo ""
 	umount ${MOUNT_POINT}
 	vnconfig -u ${VND_DEV}
 
-inject.fs: ${CBIN} ${LISTS} netbsd.gz 
+inject.fs: ${CBIN} ${LISTS} bsd.gz 
 	(cd ${PWDSRC}; ${MAKE})
 	${CC} -static -o pwd_mkdb ${PWDOBJ}/*.o
 	dd if=/dev/zero of=${.TARGET} bs=128k count=16
@@ -69,29 +70,29 @@ cloak: ${COMMONDIR}/cloak.c
 
 inject: ${COMMONDIR}/inject.c
 
-netbsd.gz:
-	gzip -9 <${ADIR}/compile/DEFAULT/netbsd >netbsd.gz
-#	cp ${ADIR}/compile/DEFAULT/netbsd /var/tmp/$$$$; \
+bsd.gz:
+	gzip -9 <${ADIR}/compile/DEFAULT/bsd >bsd.gz
+#	cp ${ADIR}/compile/DEFAULT/bsd /var/tmp/$$$$; \
 #		strip /var/tmp/$$$$; \
-#		gzip -9 </var/tmp/$$$$ >netbsd.gz; \
+#		gzip -9 </var/tmp/$$$$ >bsd.gz; \
 #		rm /var/tmp/$$$$
 
 
-netbsd.o: inject cloak inject.fs
-	cp ${ADIR}/compile/INSTALL/netbsd /var/tmp/$$$$; \
+bsd.o: inject cloak inject.fs
+	cp ${ADIR}/compile/INSTALL/bsd /var/tmp/$$$$; \
 		strip /var/tmp/$$$$; \
 		./inject /var/tmp/$$$$ inject.fs; \
-		gzip -9 </var/tmp/$$$$ | ./cloak >netbsd.o; \
+		gzip -9 </var/tmp/$$$$ | ./cloak >bsd.o; \
 		rm /var/tmp/$$$$
 
 go.o: ${COMMONDIR}/go.c
 
-netbsd: netbsd.o go.o
-	ld -s -z -T 240000 -e _go go.o netbsd.o ${MDEC}/zboot.o -o netbsd
+bsd: bsd.o go.o
+	ld -s -z -T 240000 -e _go go.o netbsd.o ${MDEC}/zboot.o -o bsd
 
 clean cleandir:
 	/bin/rm -f core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.lo *.c
-	/bin/rm -f netbsd* inject* cloak pwd_mkdb
+	/bin/rm -f bsd* inject* cloak pwd_mkdb
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>

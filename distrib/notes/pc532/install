@@ -1,8 +1,8 @@
-(IF you already have NetBSD/pc532 installed and you only want to update
+(IF you already have OpenBSD/pc532 installed and you only want to update
 your system, see the next section.)
 
-To install NetBSD/pc532, there are several things you need to know.
-First, NetBSD "autoconfigs" the scsi devices. inst-11.fs has only
+To install OpenBSD/pc532, there are several things you need to know.
+First, OpenBSD "autoconfigs" the scsi devices. inst-11.fs has only
 support for disks configured into the kernel. Starting the search at
 SCSI address 0, lun 0 and increasing, the first disk found will be sd0
 regardless of the address, the second will be sd1. KLONDIKE for example
@@ -54,7 +54,7 @@ The Install Procedure:
 	drive and use the monitor's boot command to boot the default
 	image from the floppy. The image booted will ask you for a
 	kernel to load. Answer
-		sdXa:/netbsd
+		sdXa:/bsd
 	Replace X with your drive number. For KLONDIKE X would be "2".
 
 	Tape:
@@ -62,7 +62,7 @@ The Install Procedure:
 		- load the inst-11.fs at 0x288000
 		- run at 0x3E8820
 	The boot program will ask you now for a kernel to load. Answer
-		rd0a:/netbsd
+		rd0a:/bsd
 
 	Serial line:
 	Provided with the distribution is source for program called 
@@ -109,7 +109,7 @@ The Install Procedure:
 
   d) run "install"  -- it will ask you for the disk geometry and other
 	questions.  It will ask you for the geometry and then ask you
-	how many of those sectors you want to use for NetBSD. It also
+	how many of those sectors you want to use for OpenBSD. It also
 	wants to know the size of your boot partition (to be used with
 	the auto-boot monitor), your root partition, your swap partition,
 	and then any other partitions you may want.  For the "other"
@@ -120,11 +120,11 @@ The Install Procedure:
 	to the mount point and it will not run newfs on the partition.
 	It will enter the partition into the disklabel.
 
-  e) look around, if you want ... and then halt NetBSD.
+  e) look around, if you want ... and then halt OpenBSD.
 
   f) reboot the machine.  Using the autoboot monitor, all you should have
 	to do is give the ROM monitor command "boot".  The secondary
-	UFS boot program eventually times out and auto-loads /netbsd.
+	UFS boot program eventually times out and auto-loads /bsd.
 	You can get it to do it faster by hitting "return".
 	If you are NOT using the autoboot monitor, it's time to warm
 	up your eprom burner :-)
@@ -145,7 +145,7 @@ The Install Procedure:
 
 	c) tape
 
-	d) cdrom (If you have a CD with NetBSD/532 ...)
+	d) cdrom (If you have a CD with OpenBSD/532 ...)
 
 	e) Use the ROM compatable "download" program.  The program
 	   download is included in the initial installation and
@@ -196,7 +196,7 @@ The Install Procedure:
 
 	Now you can adjust the kernel's default baud rate to match your
 	monitor's default baud rate. Do the following:
-		gdb -w /netbsd
+		gdb -w /bsd
 		set scndefaultrate = YOUR_BAUD_RATE
 		quit
 	where YOUR_BAUD_RATE is the actual value, 19200, 38400 or
@@ -208,5 +208,5 @@ The Install Procedure:
   l) Reboot the machine and it should come up in multi-user mode *IF*
 	you got it configured correctly.
 
-  m) Enjoy!  And help fix bugs and improve NetBSD/pc532!
+  m) Enjoy!  And help fix bugs and improve OpenBSD/pc532!
 

@@ -1,3 +1,4 @@
+#	$OpenBSD: dot.commonutils,v 1.2 1996/04/25 21:31:24 niklas Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -26,12 +27,10 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-#	$Id: dot.commonutils,v 1.1 1995/10/27 22:39:53 deraadt Exp $
 
-# Installation utilites (functions), to get NetBSD installed on
+# Installation utilites (functions), to get OpenBSD installed on
 # the hard disk.  These are meant to be invoked from the shell prompt,
-# by people installing NetBSD.
+# by people installing OpenBSD.
 
 # we know that /etc/fstab is only generated on the hard drive
 dest_dir=/

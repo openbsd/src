@@ -1,4 +1,4 @@
-The "standard" method of getting NetBSD/pc532 onto your pc532 is
+The "standard" method of getting OpenBSD/pc532 onto your pc532 is
 via the console terminal and using the downloading parts of the
 ROM monitor.  As such, usually another computer has the distribution
 on disk and is connected via a serial line to your pc532's console
@@ -10,12 +10,10 @@ sends data to the ROM monitor over the serial line.
 You may need to find and read the documentation about the ROM monitor
 download command and other low level comands.
 
-Other methods of getting NetBSD/pc532 on your pc532 may include 
+Other methods of getting OpenBSD/pc532 on your pc532 may include 
 SCSI tape or SCSI floppy disk or cloning a disk on a system
-already running NetBSD/pc532.
+already running OpenBSD/pc532.
 
 If you have some operating system already running on your pc532,
-you can use that OS to get NetBSD/pc532 on a hard disk much easier than
-with the ROM monitor.  (NetBSD/pc532 was developed from Minix/pc532
-until it was self hosting.  You can run NetBSD and Minix or other OS
-off the same disk.)
+you can use that OS to get OpenBSD/pc532 on a hard disk much easier than
+with the ROM monitor.

@@ -1,16 +1,16 @@
-The upgrade to NetBSD 1.1 is a binary upgrade; it would be prohibitive
+The upgrade to OpenBSD 1.1 is a binary upgrade; it would be prohibitive
 to make users upgrade by compiling and installing the 1.1 sources, and
 it would be very difficult to even compile a set of instructions that
 allowed them to do so.  
 
 To do the upgrade, you must have at least base.tar.gz on disk and
-a copy of the proper netbsd.default.  It will require quite a bit
+a copy of the proper bsd.default.  It will require quite a bit
 of disk space to do the upgrade.
 
 Since upgrading involves replacing the kernel, and most of the system
 binaries, it has the potential to cause data loss.  You are strongly
 advised to BACK UP ANY IMPORTANT DATA ON YOUR DISK, whether on the
-NetBSD partition or on another operating system's partition, before
+OpenBSD partition or on another operating system's partition, before
 beginning the upgrade process.
 
 To upgrade your system, follow the following instructions:
@@ -29,14 +29,14 @@ To upgrade your system, follow the following instructions:
 
 	Extract all the tar.gz files you want.  You should carefully
 	work at upgrading /etc.  There may be changes to file formats
-	depending on what version of NetBSD/pc532 you are running.
+	depending on what version of OpenBSD/pc532 you are running.
 
 	BE CAREFUL IF YOU ARE NOT RUNNING WITH SECURITY.  The 
 	1.1 distribution does contain support for password encription.
 	It would be reasonable to save a copy of master.passwd and
 	remove all passwords until after you upgrade. 
 
-	Place netbsd.default in / as the file netbsd.
+	Place bsd.default in / as the file bsd.
 
 	Reboot.  (Remember, detbsd.default is a 9600 console line
 	kernel.  Read the last part of the new installation part of

@@ -1,3 +1,4 @@
+#	$OpenBSD: Makefile,v 1.3 1996/04/25 21:31:56 niklas Exp $
 #	$NetBSD: Makefile,v 1.3 1995/11/21 21:19:12 gwr Exp $
 
 TOP=		${.CURDIR}/..
@@ -16,7 +17,7 @@ LISTS=	${TOP}/common/mini_sbin.list \
 	${TOP}/common/mini_xx.list \
 	${TOP}/common/${IMAGE}.list
 
-KERNEL=${SRCSYSDIR}/arch/sun3/compile/GENERIC/netbsd
+KERNEL=${SRCSYSDIR}/arch/sun3/compile/GENERIC/bsd
 
 MOUNT_POINT=	/mnt
 #BDEV=		/dev/sd2b
@@ -42,7 +43,7 @@ ${IMAGE}.gz: ${TREE} ${LISTS} ${CBIN} mini_xx
 	sync ; sleep 1 ; sync
 	cd ${MOUNT_POINT} ;\
 	  usr/mdec/installboot -v ufsboot usr/mdec/bootxx ${CDEV}
-	cp ${KERNEL} ${MOUNT_POINT}/netbsd
+	cp ${KERNEL} ${MOUNT_POINT}/bsd
 	sync
 	@echo ""
 	@df -i ${MOUNT_POINT}

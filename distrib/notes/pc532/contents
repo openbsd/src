@@ -1,14 +1,14 @@
-The pc532-specific portion of the NetBSD 1.1 release is found in the
+The pc532-specific portion of the OpenBSD 1.1 release is found in the
 "pc532" subdirectory of the distribution.  That subdirectory contains
 the files as follows:
 
-.../NetBSD-1.1/pc532/
+.../OpenBSD-1.1/pc532/
 
 	INSTALL			Installation notes; this file.
 	CKSUM			output of "cksum *.gz"
 	inst-11.fs.gz		Installation file system.
 	download.c.gz		Source for a pc532 ROM compat download pgm
-	netbsd.default.gz	Upgrade kernel
+	bsd.default.gz		Upgrade kernel
 	base.tar.gz		base distribution
 	comp.tar.gz		compiler tools & libraries
 	etc.tar.gz		files for /etc
@@ -21,15 +21,15 @@ the files as follows:
 The binary distribution consists of the following files:
 
 	base.tar.gz
-		The NetBSD/pc532 1.1 base binary distribution.  You
+		The OpenBSD/pc532 1.1 base binary distribution.  You
 		MUST install this distribution set.  It contains the
-		base NetBSD utilities that are necessary for the
+		base OpenBSD utilities that are necessary for the
 		system to run and be minimally functional.  It
 		excludes everything described below.
 		[ 6.8M gzipped ]
 
 	comp.tar.gz
-		The NetBSD/pc532 Compiler tools.  All of the tools
+		The OpenBSD/pc532 Compiler tools.  All of the tools
 		relating to C, C++, and FORTRAN (yes, there are two!).
 		This set includes the system include files
 		(/usr/include), the linker, the compiler tool chain,
@@ -67,7 +67,7 @@ The binary distribution consists of the following files:
 		[ 1.9M gzipped ]
 
 	text.tar.gz
-		This set includes NetBSD's text processing tools,
+		This set includes OpenBSD's text processing tools,
 		including groff, all related programs, and their
 		manual pages.
 		[ 0.8M gzipped ]
@@ -80,7 +80,7 @@ recompile the following programs:
 	skeyinit, su, tn3270, pppd
 
 
-The initial installation process on a pc532 without NetBSD/pc532
+The initial installation process on a pc532 without OpenBSD/pc532
 is supported by the following files:
 
 	Initial file system used via SCSI floppy or downloaded into 
@@ -98,5 +98,5 @@ is supported by the following files:
 The upgrade process is supported by having a copy of a 1.1 kernel
 available.  This file is:
 
-	netbsd.default.gz	-- a kernel produced from the DEFAULT
+	bsd.default.gz		-- a kernel produced from the DEFAULT
 				   configuration file in pc532/conf.

@@ -30,4 +30,4 @@ and a larger /usr.  If you plan to use this machine as a
 server, you may also want a separate /var.  Create these
 partitions as the BSD "usr" or "User slice X" type.
 
-You are now set to install NetBSD on your hard drive.
+You are now set to install OpenBSD on your hard drive.

@@ -1,4 +1,4 @@
-It is possible to easily upgrade your existing NetBSD/hp300 system
+It is possible to easily upgrade your existing OpenBSD/hp300 system
 using the upgrade program in the miniroot.  If you wish to upgrade
 your system by this method, simply select the `upgrade' option once
 the miniroot has booted.  The upgrade program with then guide you
@@ -19,8 +19,8 @@ through the procedure.  The upgrade program will:
 
 	* Copy a new kernel onto your root partition.
 	  NOTE: the existing kernel WILL NOT be backed up; doing
-	  so would be pointless, since a NetBSD 1.0 kernel will
-	  not run NetBSD 1.1 executables.
+	  so would be pointless, since a OpenBSD 1.0 kernel will
+	  not run OpenBSD 1.1 executables.
 
 	* Install a new boot block.
 
@@ -33,7 +33,7 @@ manually.  To do this, follow the following procedure:
 	* Place _at least_ the `base' binary set in a filesystem
 	  accessible to the target machine.  A local filesystem
 	  is preferred, since there may be incompatibilities
-	  between the NetBSD 1.1 kernel and older route(8)
+	  between the OpenBSD 1.1 kernel and older route(8)
 	  binaries.
 
 	* Back up your pre-existing kernel and copy the 1.1
@@ -56,7 +56,7 @@ manually.  To do this, follow the following procedure:
 		sh /etc/netstart
 
 	  NOTE: the route(8) commands may fail due to potential
-	  incompatibilities between route(8) and the NetBSD 1.1
+	  incompatibilities between route(8) and the OpenBSD 1.1
 	  kernel.  Once you have enabled the network, mount the
 	  NFS filesystems.  If you use amd(8), you may or may not
 	  have to mount these filesystems manually.  Your mileage

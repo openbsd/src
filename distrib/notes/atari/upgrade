@@ -19,7 +19,7 @@ actions:
 	mount_ffs /dev/sd1a /mnt
 	mount_ffs /dev/sd1d /mnt/usr
 
-At this point, you can follow the section "Installing the NetBSD System"
+At this point, you can follow the section "Installing the OpenBSD System"
 to install the sets. There is one difference: When Extract asks you 
 	"Are you installing a -current snapshot? [n]"
 answer 'y'.

@@ -9,7 +9,7 @@ No matter which installation medium you choose, you'll need to have
 two floppy disks (either 1.2M or 1.44 will work, though both should be
 the same type).  On the first, you'll put the kernel-copy image that's
 appropriate for your system.  On the second, you'll put the install or
-upgrade floppy image, depending on whether you're installing NetBSD
+upgrade floppy image, depending on whether you're installing OpenBSD
 for the first time, or upgrading a previous installation.
 
 If you are using an Adaptec SCSI host adapter, you need the kcadp11.fs
@@ -27,7 +27,7 @@ possibilities is beyond the scope of this document.
 
 If you are using DOS to write the floppy images to disks, you should
 use the "rawrite" utility, provided in the "i386/utilities" directory
-of the NetBSD distribution.  It will write the file system images (.fs
+of the OpenBSD distribution.  It will write the file system images (.fs
 files) to disks.
 
 Note that, when installing, the kernel-copy floppy can be write-protected
@@ -40,7 +40,7 @@ Obviously, the steps necessary to prepare the distribution sets for
 installation or upgrade depend on which installation medium you
 choose.  The steps for the various media are outlined below.
 
-To install or upgrade NetBSD using DOS floppies, you need to do the
+To install or upgrade OpenBSD using DOS floppies, you need to do the
 following:
 
 	Count the number of "set_name.xx" files that make up the
@@ -70,14 +70,14 @@ following:
 
 	Once you have the files on DOS disks, you can proceed to the
 	next step in the installation or upgrade process.  If you're
-	installing NetBSD from scratch, go to the section on preparing
+	installing OpenBSD from scratch, go to the section on preparing
 	your hard disk, below.  If you're upgrading an existing
 	installation, go directly to the section on upgrading.
 
-To install or upgrade NetBSD using a tape, you need to do the
+To install or upgrade OpenBSD using a tape, you need to do the
 following:
 
-	To install NetBSD from a tape, you need to make a tape that
+	To install OpenBSD from a tape, you need to make a tape that
 	contains the distribution set files, in "tar" format.  If
 	you're making the tape on a UN*X-like system, the easiest way
 	to do so is probably something like:
@@ -95,7 +95,7 @@ following:
 	minimum installation to a new disk), you would do the
 	following:
 
-		cd .../NetBSD-1.1		# the top of the tree
+		cd .../OpenBSD-1.1		# the top of the tree
 		cd i386/binary
 		tar cf <tape_device> base11 etc11
 
@@ -104,11 +104,11 @@ following:
 
 	Once you have the files on the tape, you can proceed to the
 	next step in the installation or upgrade process.  If you're
-	installing NetBSD from scratch, go to the section on preparing
+	installing OpenBSD from scratch, go to the section on preparing
 	your hard disk, below.  If you're upgrading an existing
 	installation, go directly to the section on upgrading.
 
-To install or upgrade NetBSD using a remote partition, mounted via
+To install or upgrade OpenBSD using a remote partition, mounted via
 NFS, you must do the following:
 
 	NOTE:	This method of installation is recommended only for
@@ -117,9 +117,9 @@ NFS, you must do the following:
 		this documentation should help, but is not intended to
 		be all-encompassing.
 
-	Place the NetBSD distribution sets you wish to install into a
+	Place the OpenBSD distribution sets you wish to install into a
 	directory on an NFS server, and make that directory mountable
-	by the machine on which you are installing or upgrading NetBSD.
+	by the machine on which you are installing or upgrading OpenBSD.
 	This will probably require modifying the /etc/exports file on
 	of the NFS server and resetting its mount daemon (mountd).
 	(Both of these actions will probably require superuser
@@ -127,19 +127,19 @@ NFS, you must do the following:
 
 	You need to know the the numeric IP address of the NFS server,
 	and, if the server is not on a network directly connected to
-	the machine on which you're installing or upgrading NetBSD,
+	the machine on which you're installing or upgrading OpenBSD,
 	you need to know the numeric IP address of the router closest
-	to the NetBSD machine.  Finally, you need to know the numeric
-	IP address of the NetBSD machine itself.
+	to the OpenBSD machine.  Finally, you need to know the numeric
+	IP address of the OpenBSD machine itself.
 
 	Once the NFS server is set up properly and you have the
 	information mentioned above, you can proceed to the next step
 	in the installation or upgrade process.  If you're installing
-	NetBSD from scratch, go to the section on preparing your hard
+	OpenBSD from scratch, go to the section on preparing your hard
 	disk, below.  If you're upgrading an existing installation, go
 	directly to the section on upgrading.
 
-To install or upgrade NetBSD by using FTP to get the installation
+To install or upgrade OpenBSD by using FTP to get the installation
 sets, you must do the following:
 
 	NOTE:	This method of installation is recommended only for
@@ -150,23 +150,23 @@ sets, you must do the following:
 
 	The preparations for this installation/upgrade method are
 	easy; all you make sure that there's some FTP site from which
-	you can retrieve the NetBSD distribution when you're about to
+	you can retrieve the OpenBSD distribution when you're about to
 	install or upgrade.  You need to know the numeric IP address
 	of that site, and, if it's not on a network directly connected
-	to the machine on which you're installing or upgrading NetBSD,
+	to the machine on which you're installing or upgrading OpenBSD,
 	you need to know the numeric IP address of the router closest
-	to the NetBSD machine.  Finally, you need to know the numeric
-	IP address of the NetBSD machine itself.
+	to the OpenBSD machine.  Finally, you need to know the numeric
+	IP address of the OpenBSD machine itself.
 
 	Once you have this information, you can proceed to the next
 	step in the installation or upgrade process.  If you're
-	installing NetBSD from scratch, go to the section on
+	installing OpenBSD from scratch, go to the section on
 	preparing your hard disk, below.  If you're upgrading an
 	existing installation, go directly to the section on
 	upgrading.
 
-If you are upgrading NetBSD, you also have the option of installing
-NetBSD by putting the new distribution sets somewhere in your existing
+If you are upgrading OpenBSD, you also have the option of installing
+OpenBSD by putting the new distribution sets somewhere in your existing
 file system, and using them from there.  To do that, you must do the
 following:
 
