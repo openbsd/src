@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.115 2002/07/09 11:49:02 itojun Exp $	*/
+/*	$OpenBSD: parse.y,v 1.116 2002/07/09 11:50:58 itojun Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -2555,7 +2555,8 @@ ifa_load(void)
 		}
 #ifdef __KAME__
 		if (ifa->ifa_addr->sa_family == AF_INET6 &&
-		    IN6_IS_ADDR_LINKLOCAL(&((struct sockaddr_in6 *)ifa->ifa_addr)->sin6_addr)) {
+		    IN6_IS_ADDR_LINKLOCAL(&((struct sockaddr_in6 *)ifa->ifa_addr)->sin6_addr) &&
+		    ((struct sockaddr_in6 *)ifa->ifa_addr)->sin6_scope_id == 0) {
 			struct sockaddr_in6 *sin6;
 
 			sin6 = (struct sockaddr_in6 *)ifa->ifa_addr;
