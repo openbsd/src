@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.24 2002/06/08 21:22:03 itojun Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.25 2002/06/08 21:29:13 itojun Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -1252,9 +1252,9 @@ nd6_dad_timer(ifa)
 			 && dp->dad_ns_icount == dp->dad_count
 			 && dp->dad_na_icount == 0) {
 				log(LOG_INFO, "DAD questionable for %s(%s): "
-					"network card loops back multicast?\n",
-					ip6_sprintf(&ia->ia_addr.sin6_addr),
-					ifa->ifa_ifp->if_xname);
+				    "network card loops back multicast?\n",
+				    ip6_sprintf(&ia->ia_addr.sin6_addr),
+				    ifa->ifa_ifp->if_xname);
 				/* XXX consider it a duplicate or not? */
 				/* duplicate++; */
 			} else {
