@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.103 2004/01/11 21:54:27 deraadt Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.104 2004/01/11 21:56:31 deraadt Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.103 2004/01/11 21:54:27 deraadt Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.104 2004/01/11 21:56:31 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -220,12 +220,8 @@ main(int argc, char *argv[])
 {
 	int ch, lvl1;
 
-	while ((ch = getopt(argc, argv, "AanqwO")) != -1) {
+	while ((ch = getopt(argc, argv, "Aanqw")) != -1) {
 		switch (ch) {
-
-		case 'O':
-			equ = " = ";
-			break;
 
 		case 'A':
 			Aflag = 1;
