@@ -218,8 +218,10 @@ sparc_init_extra_frame_info (fromleaf, fi)
       get_saved_register (buf, 0, 0, fi, FP_REGNUM, 0);
       fi->frame = extract_address (buf, REGISTER_RAW_SIZE (FP_REGNUM));
 
-      if (GDB_TARGET_IS_SPARC64 && (fi->frame & 1))
+#ifdef GDB_TARGET_IS_SPARC64
+      if (fi->frame & 1)
 	fi->frame += 2047;
+#endif
     }
 
   /* Decide whether this is a function with a ``flat register window''
@@ -255,8 +257,10 @@ sparc_init_extra_frame_info (fromleaf, fi)
 	      get_saved_register (buf, 0, 0, fi, I7_REGNUM, 0);
 	      fi->frame = extract_address (buf, REGISTER_RAW_SIZE (I7_REGNUM));
 
-	      if (GDB_TARGET_IS_SPARC64 && (fi->frame & 1))
+#ifdef GDB_TARGET_IS_SPARC64
+	      if (fi->frame & 1)
 		fi->frame += 2047;
+#endif
 
 	      /* Record where the fp got saved.  */
 	      fi->fp_addr = fi->frame + fi->sp_offset + X_SIMM13 (insn);
@@ -1051,8 +1055,10 @@ sparc_pop_frame ()
 	 registers array.  */
       sp = fsr.regs[SP_REGNUM];
 
-      if (GDB_TARGET_IS_SPARC64 && (sp & 1))
+#ifdef GDB_TARGET_IS_SPARC64
+      if (sp & 1)
 	sp += 2047;
+#endif
 
       read_memory (sp, reg_temp, SPARC_INTREG_SIZE * 16);
 
@@ -1582,6 +1588,8 @@ _initialize_sparc_tdep ()
   tm_print_insn_info.mach = TM_PRINT_INSN_MACH;  /* Selects sparc/sparclite */
 }
 
+#ifdef GDB_TARGET_IS_SPARC64
+
 /* Compensate for stack bias. Note that we currently don't handle
    mixed 32/64 bit code. */
     
@@ -1625,3 +1633,4 @@ sparc64_write_fp (CORE_ADDR val)
     write_register (FP_REGNUM, val);
 }
 
+#endif
