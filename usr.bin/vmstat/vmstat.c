@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.84 2004/06/11 16:09:08 deraadt Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.85 2004/06/14 00:38:02 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: vmstat.c,v 1.84 2004/06/11 16:09:08 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: vmstat.c,v 1.85 2004/06/14 00:38:02 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -233,6 +233,11 @@ main(int argc, char *argv[])
 			setgid(getgid());
 			setegid(getegid());
 
+#ifdef __i386__
+			if (c == 1 && namelist[X_APICINTRHAND].n_value == 0)
+				printf("huh\n");
+			else
+#endif
 			if (c > 0) {
 				(void)fprintf(stderr,
 				    "%s: undefined symbols:", __progname);
@@ -729,31 +734,29 @@ dointr(void)
 
 	(void)printf("interrupt             total     rate\n");
 
-	{
-		kread(X_INTRHAND, intrhand, sizeof(intrhand));
-		kread(X_INTRSTRAY, intrstray, sizeof(intrstray));
+	kread(X_INTRHAND, intrhand, sizeof(intrhand));
+	kread(X_INTRSTRAY, intrstray, sizeof(intrstray));
 
-		for (i = 0; i < 16; i++) {
-			ihp = intrhand[i];
-			while (ihp) {
-				if (kvm_read(kd, (u_long)ihp, &ih,
-				    sizeof(ih)) != sizeof(ih))
-					errx(1, "vmstat: ih: %s",
-					    kvm_geterr(kd));
-				if (kvm_read(kd, (u_long)ih.ih_what, iname,
-				    16) != 16)
-					errx(1, "vmstat: ih_what: %s",
-					    kvm_geterr(kd));
-				snprintf(fname, sizeof fname, "irq%d/%s", i,
-				    iname);
-				printf("%-16.16s %10lu %8lu\n", fname,
-				    ih.ih_count, ih.ih_count / uptime);
-				inttotal += ih.ih_count;
-				ihp = ih.ih_next;
-			}
+	for (i = 0; i < 16; i++) {
+		ihp = intrhand[i];
+		while (ihp) {
+			if (kvm_read(kd, (u_long)ihp, &ih,
+			    sizeof(ih)) != sizeof(ih))
+				errx(1, "vmstat: ih: %s",
+				    kvm_geterr(kd));
+			if (kvm_read(kd, (u_long)ih.ih_what, iname,
+			    16) != 16)
+				errx(1, "vmstat: ih_what: %s",
+				    kvm_geterr(kd));
+			snprintf(fname, sizeof fname, "irq%d/%s", i,
+			    iname);
+			printf("%-16.16s %10lu %8lu\n", fname,
+			    ih.ih_count, ih.ih_count / uptime);
+			inttotal += ih.ih_count;
+			ihp = ih.ih_next;
 		}
 	}
-	{
+	if (namelist[X_APICINTRHAND].n_value) {
 		kread(X_APICINTRHAND, apicintrhand, sizeof(apicintrhand));
 
 		for (i = 0; i < 256; i++) {
