@@ -577,6 +577,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/amivar.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/anreg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/anvar.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/apcdmareg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/awireg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/awivar.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/ax88190reg.ph
@@ -972,7 +973,6 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/rndvar.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/sbus
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/sbus/bereg.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/dev/sbus/cs4231reg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/sbus/cs4231var.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/sbus/lebuffervar.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/sbus/qecreg.ph

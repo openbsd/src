@@ -149,6 +149,7 @@
 ./usr/include/dev/ic/amivar.h
 ./usr/include/dev/ic/anreg.h
 ./usr/include/dev/ic/anvar.h
+./usr/include/dev/ic/apcdmareg.h
 ./usr/include/dev/ic/awireg.h
 ./usr/include/dev/ic/awivar.h
 ./usr/include/dev/ic/ax88190reg.h
@@ -544,7 +545,6 @@
 ./usr/include/dev/rndvar.h
 ./usr/include/dev/sbus
 ./usr/include/dev/sbus/bereg.h
-./usr/include/dev/sbus/cs4231reg.h
 ./usr/include/dev/sbus/cs4231var.h
 ./usr/include/dev/sbus/lebuffervar.h
 ./usr/include/dev/sbus/qecreg.h
