@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.66 1998/02/18 14:05:27 art Exp $
+#	$OpenBSD: rc,v 1.67 1998/02/26 18:50:52 millert Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -159,7 +159,7 @@ fi
 
 # $nfs_server is imported from /etc/rc.conf;
 # if $nfs_server == YES, the machine is setup for being an nfs server
-if [ X${nfs_server} = X"YES" -a -r /etc/exports -a \
+if [ X${nfs_server} = X"YES" -a -s /etc/exports -a \
     `cat /etc/exports | sed -e '/^#/d' | wc -l` -ne 0 ]; then
 	rm -f /var/db/mountdtab	
 	echo -n > /var/db/mountdtab
@@ -176,7 +176,7 @@ if [ X${nfs_client} = X"YES" ]; then
 	echo -n ' nfsiod';		nfsiod ${nfsiod_flags}
 fi
 
-if [ X${amd} = X"YES" -a -d ${amd_dir} -a -r ${amd_master} ]; then
+if [ X${amd} = X"YES" -a -d ${amd_dir} -a -e ${amd_master} ]; then
 	echo -n ' amd'
 	amd -l syslog -x error,noinfo,nostats -p \
 	    -a ${amd_dir} `cat ${amd_master}` > /var/run/amd.pid
@@ -303,7 +303,7 @@ echo -n starting network daemons:
 # $gated and $routed_flags are imported from /etc/rc.conf.
 # If $gated == YES, gated is used; otherwise routed.
 # If $routed_flags == NO, routed isn't run.
-if [ X${gated} = X"YES" -a -r /etc/gated.conf ]; then
+if [ X${gated} = X"YES" -a -e /etc/gated.conf ]; then
 	echo -n ' gated';		gated $gated_flags
 elif [ "X${routed_flags}" != X"NO" ]; then
 	echo -n ' routed';		routed $routed_flags
@@ -330,7 +330,7 @@ fi
 # If $sendmail_flags == NO or /etc/sendmail.cf doesn't exist, then
 # sendmail isn't run.  We call sendmail with a full path so that
 # SIGHUP works.
-if [ "X${sendmail_flags}" != X"NO" -a -r /etc/sendmail.cf ]; then
+if [ "X${sendmail_flags}" != X"NO" -a -s /etc/sendmail.cf ]; then
 	echo -n ' sendmail';		/usr/sbin/sendmail ${sendmail_flags}
 fi
 
@@ -348,21 +348,21 @@ fi
 # $rarpd_flags is imported from /etc/rc.conf;
 # If $rarpd_flags == NO or /etc/ethers doesn't exist, then
 # rarpd isn't run.
-if [ "X${rarpd_flags}" != X"NO" -a -r /etc/ethers ]; then
+if [ "X${rarpd_flags}" != X"NO" -a -s /etc/ethers ]; then
 	echo -n ' rarpd';		rarpd ${rarpd_flags}
 fi
 
 # $bootparamd_flags is imported from /etc/rc.conf;
 # If $bootparamd_flags == NO or /etc/bootparams doesn't exist, then
 # bootparamd isn't run.
-if [ "X${bootparamd_flags}" != X"NO" -a -r /etc/bootparams ]; then
+if [ "X${bootparamd_flags}" != X"NO" -a -s /etc/bootparams ]; then
 	echo -n ' rpc.bootparamd';	rpc.bootparamd ${bootparamd_flags}
 fi
 
 # $rbootd_flags is imported from /etc/rc.conf;
 # If $rbootd_flags == NO or /etc/rbootd.conf doesn't exist, then
 # rbootd isn't run.
-if [ "X${rbootd_flags}" != X"NO" -a -r /etc/rbootd.conf ]; then
+if [ "X${rbootd_flags}" != X"NO" -a -s /etc/rbootd.conf ]; then
 	echo -n ' rbootd';		rbootd ${rbootd_flags}
 fi
 
