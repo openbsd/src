@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.19 2000/10/30 18:20:14 aaron Exp $	*/
+/*	$OpenBSD: dc.c,v 1.20 2000/11/16 06:08:31 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -46,7 +46,7 @@
  * ADMtek AL981 (www.admtek.com.tw)
  * ADMtek AN983 (www.admtek.com.tw)
  * Davicom DM9100, DM9102, DM9102A (www.davicom8.com)
- * Accton EN1217 (www.accton.com)
+ * Accton EN1217, EN2242 (www.accton.com)
  * Xircom X3201 (www.xircom.com)
  *
  * Datasheets for the 21143 are available at developer.intel.com.
