@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl.c,v 1.44 2004/04/24 19:51:47 miod Exp $ */
+/*	$OpenBSD: cl.c,v 1.45 2004/04/29 16:20:02 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -1316,21 +1316,27 @@ cl_mintr(arg)
 		log(LOG_WARNING, "cl_mintr: channel %x timer 2 unexpected\n",channel);
 	}
 	if (misr & 0x20) {
+#ifdef DEBUG
 		log(LOG_WARNING, "cl_mintr: channel %x cts %x\n",channel,
 		    ((msvr & 0x20) != 0x0)
 		);
+#endif
 	}
 	if (misr & 0x40) {
 		struct tty *tp = sc->sc_cl[channel].tty;
+#ifdef DEBUG
 		log(LOG_WARNING, "cl_mintr: channel %x cd %x\n",channel,
 		    ((msvr & 0x40) != 0x0)
 		);
+#endif
 		ttymodem(tp, ((msvr & 0x40) != 0x0) );
 	}
 	if (misr & 0x80) {
+#ifdef DEBUG
 		log(LOG_WARNING, "cl_mintr: channel %x dsr %x\n",channel,
 		((msvr & 0x80) != 0x0)
 		);
+#endif
 	}
 	bus_space_write_1(iot, ioh, CL_MEOIR, 0);
 	return 1;
@@ -1481,6 +1487,9 @@ cl_rxintr(arg)
 	int i;
 	u_int8_t reoir;
 	u_char buffer[CL_FIFO_MAX +1];
+#ifdef DDB
+	int wantddb = 0;
+#endif
 
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
@@ -1494,31 +1503,30 @@ cl_rxintr(arg)
 	sc->sc_rxintrcnt.ev_count++;
 	channel = rir & 0x3;
 	cmr = bus_space_read_1(iot, ioh, CL_CMR);
-	reoir = 0x08;
 
 	sc->sc_cl[channel].rxcnt ++;
 	risrl = bus_space_read_1(iot, ioh, CL_RISRL);
 	if (risrl & 0x80) {
 		/* timeout, no characters */
-		reoir = 0x08;
 	} else
-	/* We don't need no sinkin special characters */
+	/* We don't need no stinkin special characters */
 	if (risrl & 0x08) {
 		cl_overflow(sc, channel, (long *)&sc->sc_fotime, "fifo");
-		reoir = 0x08;
 	} else
 	if (risrl & 0x04) {
 		cl_parity(sc, channel);
-		reoir = 0x08;
 	} else
 	if (risrl & 0x02) {
 		cl_frame(sc, channel);
-		reoir = 0x08;
 	} else
 	if (risrl & 0x01) {
+#ifdef DDB
+		if (sc->sc_cl[channel].cl_consio)
+			wantddb = db_console;
+#endif
 		cl_break(sc, channel);
-		reoir = 0x08;
 	}
+	reoir = 0x08;
 
 	switch (cmr & CL_RXMASK) {
 	case CL_RXDMAINT:
@@ -1622,6 +1630,10 @@ cl_rxintr(arg)
 		/* we probably will go to hell quickly now */
 		bus_space_write_1(iot, ioh, CL_REOIR, 0x08);
 	}
+#ifdef DDB
+	if (wantddb != 0)
+		Debugger();
+#endif
 	return 1;
 }
 
@@ -1659,10 +1671,7 @@ cl_break(sc, channel)
 	struct clsoftc *sc;
 	int channel;
 {
-#ifdef DDB
-	if (sc->sc_cl[channel].cl_consio && db_console != 0)
-		Debugger();
-#else
+#ifdef DEBUG
 	log(LOG_WARNING, "%s[%d]: break detected\n", sc->sc_dev.dv_xname,
 	    channel);
 #endif
