@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mbuf_tags.9,v 1.15 2003/05/10 22:38:27 henning Exp $
+.\"	$OpenBSD: mbuf_tags.9,v 1.16 2003/05/13 21:32:26 henning Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -189,6 +189,10 @@ Used by
 .Xr pf 4
 for queueing.
 The tag contains the ID of the queue this packet should go to.
+.It PACKET_TAG_PF_TAG
+Used by
+.Xr pf 4
+to tag packets and filtering on those later on.
 .El
 .Pp
 .Fn m_tag_free
