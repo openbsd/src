@@ -16,7 +16,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- *  $OpenBSD: physical.h,v 1.17 2000/09/14 22:02:50 brian Exp $
+ *  $OpenBSD: physical.h,v 1.18 2001/06/19 10:24:56 brian Exp $
  *
  */
 
@@ -56,6 +56,7 @@ struct cd {
 struct device {
   int type;
   const char *name;
+  u_short mtu;
   struct cd cd;
 
   int (*awaitcarrier)(struct physical *);
@@ -143,6 +144,7 @@ extern const char *physical_LockedDevice(struct physical *);
 extern void physical_ChangedPid(struct physical *, pid_t);
 
 extern int physical_IsSync(struct physical *);
+extern u_short physical_DeviceMTU(struct physical *);
 extern const char *physical_GetDevice(struct physical *);
 extern void physical_SetDeviceList(struct physical *, int, const char *const *);
 extern void physical_SetDevice(struct physical *, const char *);

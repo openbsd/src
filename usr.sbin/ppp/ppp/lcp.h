@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: lcp.h,v 1.9 2001/06/13 21:33:41 brian Exp $
+ * $OpenBSD: lcp.h,v 1.10 2001/06/19 10:24:55 brian Exp $
  */
 
 /* callback::opmask values */
@@ -82,6 +82,9 @@ struct lcp {
 
   struct {
     u_short mru;		/* Preferred MRU value */
+    u_short max_mru;		/* Preferred MRU value */
+    u_short mtu;		/* Preferred MTU */
+    u_short max_mtu;		/* Preferred MTU */
     u_int32_t accmap;		/* Initial ACCMAP value */
     int openmode;		/* when to start CFG REQs */
     u_int32_t lqrperiod;	/* LQR frequency (seconds) */

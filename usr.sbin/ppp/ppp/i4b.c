@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: i4b.c,v 1.4 2000/08/16 13:53:58 brian Exp $
+ *	$OpenBSD: i4b.c,v 1.5 2001/06/19 10:24:53 brian Exp $
  */
 
 #include <sys/param.h>
@@ -293,6 +293,7 @@ i4b_device2iov(struct device *d, struct iovec *iov, int *niov,
 static struct device basei4bdevice = {
   I4B_DEVICE,
   "i4b",
+  0,
   { CD_REQUIRED, DEF_I4BCDDELAY },
   i4b_AwaitCarrier,
   NULL,

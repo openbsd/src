@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: ip.c,v 1.32 2001/06/13 21:33:41 brian Exp $
+ * $OpenBSD: ip.c,v 1.33 2001/06/19 10:24:54 brian Exp $
  */
 
 #include <sys/param.h>
@@ -905,6 +905,14 @@ ip_PushPacket(struct link *l, struct bundle *bundle)
 
   if (ipcp->fsm.state != ST_OPENED)
     return 0;
+
+  /*
+   * If ccp is not open but is required, do nothing.
+   */
+  if (l->ccp.fsm.state != ST_OPENED && ccp_Required(&l->ccp)) {
+    log_Printf(LogPHASE, "%s: Not transmitting... waiting for CCP\n", l->name);
+    return 0;
+  }
 
   queue = ipcp->Queue + IPCP_QUEUES(ipcp) - 1;
   do {

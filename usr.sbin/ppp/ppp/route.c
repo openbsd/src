@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: route.c,v 1.12 2001/06/13 21:33:42 brian Exp $
+ * $OpenBSD: route.c,v 1.13 2001/06/19 10:24:58 brian Exp $
  */
 
 #include <sys/param.h>
@@ -577,9 +577,8 @@ route_UpdateMTU(struct bundle *bundle)
       log_Printf(LogTCPIP, "route_UpdateMTU: Netif: %d (%s), dst %s, mtu %d\n",
                  rtm->rtm_index, Index2Nam(rtm->rtm_index),
                  inet_ntoa(((struct sockaddr_in *)sa[RTAX_DST])->sin_addr),
-                 bundle->mtu);
-      rt_Update(bundle, in[RTAX_DST]->sin_addr,
-                         in[RTAX_GATEWAY]->sin_addr);
+                 bundle->iface->mtu);
+      rt_Update(bundle, in[RTAX_DST]->sin_addr, in[RTAX_GATEWAY]->sin_addr);
     }
   }
 
@@ -890,7 +889,7 @@ rt_Update(struct bundle *bundle, struct in_addr dst, struct in_addr gw)
     rtmes.m_rtm.rtm_inits |= RTV_RPIPE;
   }
 
-  rtmes.m_rtm.rtm_rmx.rmx_mtu = bundle->mtu;
+  rtmes.m_rtm.rtm_rmx.rmx_mtu = bundle->iface->mtu;
   rtmes.m_rtm.rtm_inits |= RTV_MTU;
 
   memset(&rtdata, '\0', sizeof rtdata);

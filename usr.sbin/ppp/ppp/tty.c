@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: tty.c,v 1.15 2000/11/02 00:54:35 brian Exp $
+ *	$OpenBSD: tty.c,v 1.16 2001/06/19 10:25:00 brian Exp $
  */
 
 #include <sys/param.h>
@@ -333,6 +333,7 @@ tty_device2iov(struct device *d, struct iovec *iov, int *niov,
 static struct device basettydevice = {
   TTY_DEVICE,
   "tty",
+  0,
   { CD_VARIABLE, DEF_TTYCDDELAY },
   tty_AwaitCarrier,
   NULL,

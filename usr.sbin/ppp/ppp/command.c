@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: command.c,v 1.59 2001/06/13 21:33:40 brian Exp $
+ * $OpenBSD: command.c,v 1.60 2001/06/19 10:24:51 brian Exp $
  */
 
 #include <sys/param.h>
@@ -135,7 +135,7 @@
 #define VAR_URGENTPORTS	33
 #define	VAR_LOGOUT	34
 #define	VAR_IFQUEUE	35
-#define	VAR_KEYBITS	36
+#define	VAR_MPPE	36
 
 /* ``accept|deny|disable|enable'' masks */
 #define NEG_HISMASK (1)
@@ -159,7 +159,7 @@
 #define NEG_MPPE	54
 #define NEG_CHAP81	55
 
-const char Version[] = "2.3.1";
+const char Version[] = "2.3.2";
 
 static int ShowCommand(struct cmdargs const *);
 static int TerminalCommand(struct cmdargs const *);
@@ -1489,6 +1489,7 @@ SetVariable(struct cmdargs const *arg)
 {
   long long_val, param = (long)arg->cmd->args;
   int mode, dummyint, f, first;
+  u_short *change;
   const char *argp;
   struct datalink *cx = arg->cx;	/* LOCAL_CX uses this */
   const char *err = NULL;
@@ -1609,20 +1610,43 @@ SetVariable(struct cmdargs const *arg)
     break;
 
 #ifdef HAVE_DES
-  case VAR_KEYBITS:
-    if (arg->argc > arg->argn) {
-      l->ccp.cfg.mppe.keybits = atoi(arg->argv[arg->argn]);
-      if (l->ccp.cfg.mppe.keybits != 40 &&
-          l->ccp.cfg.mppe.keybits != 56 &&
-          l->ccp.cfg.mppe.keybits != 128 ) {
-        log_Printf(LogWARN, "%d: Invalid bits number\n",
-                  l->ccp.cfg.mppe.keybits);
-        l->ccp.cfg.mppe.keybits = 40;
-      }
-    } else {
-      err = "No bits number pecified\n";
-      log_Printf(LogWARN, err);
+  case VAR_MPPE:
+    if (arg->argc > arg->argn + 2)
+      return -1;
+
+    if (arg->argc == arg->argn) {
+      l->ccp.cfg.mppe.keybits = 0;
+      l->ccp.cfg.mppe.state = MPPE_ANYSTATE;
+      l->ccp.cfg.mppe.required = 0;
+      break;
     }
+
+    if (!strcmp(argp, "*"))
+      long_val = 0;
+    else {
+      long_val = atol(argp);
+      if (long_val != 40 && long_val != 56 && long_val != 128) {
+        log_Printf(LogWARN, "%s: Invalid bits value\n", argp);
+        return -1;
+      }
+    }
+
+    if (arg->argc == arg->argn + 2) {
+      if (!strcmp(arg->argv[arg->argn + 1], "*"))
+        l->ccp.cfg.mppe.state = MPPE_ANYSTATE;
+      else if (!strcasecmp(arg->argv[arg->argn + 1], "stateless"))
+        l->ccp.cfg.mppe.state = MPPE_STATELESS;
+      else if (!strcasecmp(arg->argv[arg->argn + 1], "statefull"))
+        l->ccp.cfg.mppe.state = MPPE_STATEFUL;
+      else {
+        log_Printf(LogWARN, "%s: Invalid state value\n",
+                   arg->argv[arg->argn + 1]);
+        return -1;
+      }
+    } else
+      l->ccp.cfg.mppe.state = MPPE_ANYSTATE;
+    l->ccp.cfg.mppe.keybits = long_val;
+    l->ccp.cfg.mppe.required = 1;
     break;
 #endif
 
@@ -1678,9 +1702,36 @@ SetVariable(struct cmdargs const *arg)
     break;
 
   case VAR_MRU:
-    long_val = atol(argp);
+    switch(arg->argc - arg->argn) {
+    case 1:
+      if (argp[strspn(argp, "0123456789")] != '\0')
+        return -1;
+    case 0:
+      long_val = atol(argp);
+      change = &l->lcp.cfg.mru;
+      if (long_val > l->lcp.cfg.max_mru) {
+        log_Printf(LogWARN, "MRU %ld: too large - max set to %d\n", long_val,
+                   l->lcp.cfg.max_mru);
+        return 1;
+      }
+      break;
+    case 2:
+      if (strcasecmp(argp, "max") && strcasecmp(argp, "maximum"))
+        return -1;
+      long_val = atol(arg->argv[arg->argn + 1]);
+      change = &l->lcp.cfg.max_mru;
+      if (long_val > MAX_MRU) {
+        log_Printf(LogWARN, "MRU %ld: too large - maximum is %d\n", long_val,
+                   MAX_MRU);
+        return 1;
+      }
+      break;
+    default:
+      return -1;
+    }
+
     if (long_val == 0)
-      l->lcp.cfg.mru = DEF_MRU;
+      *change = DEF_MRU;
     else if (long_val < MIN_MRU) {
       log_Printf(LogWARN, "MRU %ld: too small - min %d\n", long_val, MIN_MRU);
       return 1;
@@ -1688,11 +1739,40 @@ SetVariable(struct cmdargs const *arg)
       log_Printf(LogWARN, "MRU %ld: too big - max %d\n", long_val, MAX_MRU);
       return 1;
     } else
-      l->lcp.cfg.mru = long_val;
+      *change = long_val;
+    if (l->lcp.cfg.mru > *change)
+      l->lcp.cfg.mru = *change;
     break;
 
   case VAR_MTU:
-    long_val = atol(argp);
+    switch(arg->argc - arg->argn) {
+    case 1:
+      if (argp[strspn(argp, "0123456789")] != '\0')
+        return -1;
+    case 0:
+      long_val = atol(argp);
+      change = &l->lcp.cfg.mtu;
+      if (long_val > l->lcp.cfg.max_mtu) {
+        log_Printf(LogWARN, "MTU %ld: too large - max set to %d\n", long_val,
+                   l->lcp.cfg.max_mtu);
+        return 1;
+      }
+      break;
+    case 2:
+      if (strcasecmp(argp, "max") && strcasecmp(argp, "maximum"))
+        return -1;
+      long_val = atol(arg->argv[arg->argn + 1]);
+      change = &l->lcp.cfg.max_mtu;
+      if (long_val > MAX_MTU) {
+        log_Printf(LogWARN, "MTU %ld: too large - maximum is %d\n", long_val,
+                   MAX_MTU);
+        return 1;
+      }
+      break;
+    default:
+      return -1;
+    }
+
     if (long_val && long_val < MIN_MTU) {
       log_Printf(LogWARN, "MTU %ld: too small - min %d\n", long_val, MIN_MTU);
       return 1;
@@ -1700,7 +1780,9 @@ SetVariable(struct cmdargs const *arg)
       log_Printf(LogWARN, "MTU %ld: too big - max %d\n", long_val, MAX_MTU);
       return 1;
     } else
-      arg->bundle->cfg.mtu = long_val;
+      *change = long_val;
+    if (l->lcp.cfg.mtu > *change)
+      l->lcp.cfg.mtu = *change;
     break;
 
   case VAR_OPENMODE:
@@ -2022,8 +2104,8 @@ static struct cmdtab const SetCommands[] = {
   (const void *) VAR_WINSIZE},
 #ifdef HAVE_DES
   {"mppe", NULL, SetVariable, LOCAL_AUTH | LOCAL_CX_OPT,
-  "MPPE key size", "set mppe {40|56|128}", 
-  (const void *) VAR_KEYBITS},
+  "MPPE key size and state", "set mppe [40|56|128|* [statefull|stateless|*]]", 
+  (const void *) VAR_MPPE},
 #endif
   {"device", "line", SetVariable, LOCAL_AUTH | LOCAL_CX,
   "physical device name", "set device|line device-name[,device-name]",
@@ -2064,9 +2146,9 @@ static struct cmdtab const SetCommands[] = {
   {"mrru", NULL, SetVariable, LOCAL_AUTH, "MRRU value",
   "set mrru value", (const void *)VAR_MRRU},
   {"mru", NULL, SetVariable, LOCAL_AUTH | LOCAL_CX_OPT,
-  "MRU value", "set mru value", (const void *)VAR_MRU},
-  {"mtu", NULL, SetVariable, LOCAL_AUTH,
-  "interface MTU value", "set mtu value", (const void *)VAR_MTU},
+  "MRU value", "set mru [max[imum]] [value]", (const void *)VAR_MRU},
+  {"mtu", NULL, SetVariable, LOCAL_AUTH | LOCAL_CX,
+  "interface MTU value", "set mtu [max[imum]] [value]", (const void *)VAR_MTU},
   {"nbns", NULL, SetVariable, LOCAL_AUTH, "NetBIOS Name Server",
   "set nbns pri-addr [sec-addr]", (const void *)VAR_NBNS},
   {"openmode", NULL, SetVariable, LOCAL_AUTH | LOCAL_CX, "open mode",
