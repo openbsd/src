@@ -1,4 +1,4 @@
-/*	$OpenBSD: library.c,v 1.16 2002/07/12 20:18:30 drahn Exp $ */
+/*	$OpenBSD: library.c,v 1.17 2002/07/23 23:56:31 mickey Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -426,7 +426,7 @@ _dl_tryload_shlib(const char *libname, int type)
 		if (phdp->p_type == PT_LOAD) {
 			char *start = (char *)(phdp->p_vaddr & ~align) + loff;
 			int size = (phdp->p_vaddr & align) + phdp->p_filesz;
-			int res;
+			void *res;
 
 			res = _dl_mmap(start, size, PFLAGS(phdp->p_flags),
 			    MAP_FIXED|MAP_PRIVATE, libfile,

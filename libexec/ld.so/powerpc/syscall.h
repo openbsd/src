@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.9 2002/07/12 20:18:30 drahn Exp $ */
+/*	$OpenBSD: syscall.h,v 1.10 2002/07/23 23:56:31 mickey Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -68,7 +68,7 @@ _dl_exit (int status)
 }
 
 static inline int
-_dl_open (const char* addr, unsigned int flags)
+_dl_open (const char* addr, int flags)
 {
 	register int status __asm__ ("3");
 
@@ -104,10 +104,10 @@ _dl_close (int fd)
 	return status;
 }
 
-static inline int
-_dl_write (int fd, const char* buf, int len)
+static inline ssize_t
+_dl_write (int fd, const char* buf, size_t len)
 {
-	register int status __asm__ ("3");
+	register ssize_t status __asm__ ("3");
 
 	__asm__ volatile ("mr    0,%1\n\t"
 	    "mr    3,%2\n\t"
@@ -124,10 +124,10 @@ _dl_write (int fd, const char* buf, int len)
 	return status;
 }
 
-static inline int
-_dl_read (int fd, const char* buf, int len)
+static inline ssize_t
+_dl_read (int fd, const char* buf, size_t len)
 {
-	register int status __asm__ ("3");
+	register ssize_t status __asm__ ("3");
 
 	__asm__ volatile ("mr    0,%1\n\t"
 	    "mr    3,%2\n\t"
@@ -158,16 +158,15 @@ __asm__(".align 2\n\t"
 	"1:\n\t"
 	"blr");
 
-static inline int
-_dl_mmap (void *addr, unsigned int len, unsigned int prot,
-    unsigned int flags, int fd, off_t offset)
+static inline void *
+_dl_mmap (void *addr, size_t len, int prot, int flags, int fd, off_t offset)
 {
-	return((int)_dl__syscall((quad_t)SYS_mmap, addr, len, prot,
+	return((void *)_dl__syscall((quad_t)SYS_mmap, addr, len, prot,
 	    flags, fd, 0, offset));
 }
 
 static inline int
-_dl_munmap (const void* addr, unsigned int len)
+_dl_munmap (const void* addr, size_t len)
 {
 	register int status __asm__ ("3");
 
@@ -186,7 +185,7 @@ _dl_munmap (const void* addr, unsigned int len)
 }
 
 static inline int
-_dl_mprotect (const void *addr, int size, int prot)
+_dl_mprotect (const void *addr, size_t size, int prot)
 {
 	register int status __asm__ ("3");
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.6 2002/05/28 00:23:57 deraadt Exp $	*/
+/*	$OpenBSD: util.h,v 1.7 2002/07/23 23:56:31 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -36,7 +36,6 @@
 
 #ifndef __DL_UTIL_H__
 #define __DL_UTIL_H__
-int _dl_write(int, const char *, int);
 void *_dl_malloc(const int size);
 void _dl_free(void *);
 char *_dl_strdup(const char *);
