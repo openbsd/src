@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.355 2003/04/11 15:19:10 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.356 2003/04/12 20:10:32 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -145,6 +145,7 @@ struct node_queue_opt {
 	union {
 		struct cbq_opts		cbq_opts;
 		struct priq_opts	priq_opts;
+		struct hfsc_opts	hfsc_opts;
 	}			 data;
 };
 
@@ -356,7 +357,7 @@ typedef struct {
 %token	REQUIREORDER
 %token	ANTISPOOF FOR
 %token	BITMASK RANDOM SOURCEHASH ROUNDROBIN STATICPORT
-%token	ALTQ CBQ PRIQ BANDWIDTH TBRSIZE
+%token	ALTQ CBQ PRIQ HFSC BANDWIDTH TBRSIZE
 %token	QUEUE PRIORITY QLIMIT
 %token	<v.string>		STRING
 %token	<v.i>			PORTBINARY
@@ -393,6 +394,7 @@ typedef struct {
 %type	<v.queue_options>	scheduler
 %type	<v.number>		cbqflags_list cbqflags_item
 %type	<v.number>		priqflags_list priqflags_item
+%type	<v.number>		hfscflags_list hfscflags_item
 %type	<v.queue_bwspec>	bandwidth
 %type	<v.filter_opts>		filter_opts filter_opt filter_opts_l
 %type	<v.queue_opts>		queue_opts queue_opt queue_opts_l
@@ -833,6 +835,10 @@ altqif		: ALTQ interface queue_opts QUEUE qassign {
 				a.pq_u.priq_opts =
 				    $3.scheduler.data.priq_opts;
 				break;
+			case ALTQT_HFSC:
+				a.pq_u.hfsc_opts =
+				    $3.scheduler.data.hfsc_opts;
+				break;
 			default:
 				break;
 			}
@@ -880,6 +886,10 @@ queuespec	: QUEUE STRING interface queue_opts qassign {
 			case ALTQT_PRIQ:
 				a.pq_u.priq_opts =
 				    $4.scheduler.data.priq_opts;
+				break;
+			case ALTQT_HFSC:
+				a.pq_u.hfsc_opts =
+				    $4.scheduler.data.hfsc_opts;
 				break;
 			default:
 				break;
@@ -1014,6 +1024,14 @@ scheduler	: CBQ				{
 			$$.qtype = ALTQT_PRIQ;
 			$$.data.priq_opts.flags = $3;
 		}
+		| HFSC				{
+			$$.qtype = ALTQT_HFSC;
+			$$.data.hfsc_opts.flags = 0;
+		}
+		| HFSC '(' hfscflags_list ')'	{
+			$$.qtype = ALTQT_HFSC;
+			$$.data.hfsc_opts.flags = $3;
+		}
 		;
 
 cbqflags_list	: cbqflags_item				{ $$ |= $1; }
@@ -1053,6 +1071,26 @@ priqflags_item	: STRING	{
 				$$ = PRCF_RIO;
 			else {
 				yyerror("unknown priq flag \"%s\"", $1);
+				YYERROR;
+			}
+		}
+		;
+
+hfscflags_list	: hfscflags_item			{ $$ |= $1; }
+		| hfscflags_list comma hfscflags_item	{ $$ |= $3; }
+		;
+
+hfscflags_item	: STRING	{
+			if (!strcmp($1, "default"))
+				$$ = HFCF_DEFAULTCLASS;
+			else if (!strcmp($1, "red"))
+				$$ = HFCF_RED;
+			else if (!strcmp($1, "ecn"))
+				$$ = HFCF_RED|HFCF_ECN;
+			else if (!strcmp($1, "rio"))
+				$$ = HFCF_RIO;
+			else {
+				yyerror("unknown hfsc flag \"%s\"", $1);
 				YYERROR;
 			}
 		}
@@ -3108,7 +3146,8 @@ expand_altq(struct pf_altq *a, struct node_if *interfaces,
 				printf("\n");
 			}
 
-			if (pa.scheduler == ALTQT_CBQ) {
+			if (pa.scheduler == ALTQT_CBQ ||
+			    pa.scheduler == ALTQT_HFSC) {
 				/* now create a root queue */
 				memset(&pb, 0, sizeof(struct pf_altq));
 				if (strlcpy(qname, "root_", sizeof(qname)) >=
@@ -3125,7 +3164,10 @@ expand_altq(struct pf_altq *a, struct node_if *interfaces,
 					errx(1, "expand_altq: strlcpy");
 				pb.qlimit = pa.qlimit;
 				pb.scheduler = pa.scheduler;
-				pb.pq_u.cbq_opts = pa.pq_u.cbq_opts;
+				if (pa.scheduler == ALTQT_CBQ)
+					pb.pq_u.cbq_opts = pa.pq_u.cbq_opts;
+				if (pa.scheduler == ALTQT_HFSC)
+					pb.pq_u.hfsc_opts = pa.pq_u.hfsc_opts;
 				if (eval_pfqueue(pf, &pb, pa.ifbandwidth, 0))
 					errs++;
 				else
@@ -3137,7 +3179,8 @@ expand_altq(struct pf_altq *a, struct node_if *interfaces,
 				n = calloc(1, sizeof(struct node_queue));
 				if (n == NULL)
 					err(1, "expand_altq: calloc");
-				if (pa.scheduler == ALTQT_CBQ)
+				if (pa.scheduler == ALTQT_CBQ ||
+				    pa.scheduler == ALTQT_HFSC)
 					if (strlcpy(n->parent, qname,
 					    sizeof(n->parent)) >=
 					    sizeof(n->parent))
@@ -3488,6 +3531,7 @@ lookup(char *s)
 		{ "fragment",		FRAGMENT},
 		{ "from",		FROM},
 		{ "group",		GROUP},
+		{ "hfsc",		HFSC},
 		{ "icmp-type",		ICMPTYPE},
 		{ "icmp6-type",		ICMP6TYPE},
 		{ "in",			IN},
