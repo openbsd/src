@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.36 2003/12/26 23:46:51 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.37 2003/12/27 00:17:26 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -56,6 +56,7 @@ u_int8_t	mask2prefixlen(in_addr_t);
 int		kroute_fetchtable(void);
 int		kroute_remove(struct kroute_node *);
 int		kroute_nexthop_insert(in_addr_t, struct kroute_nexthop *);
+int		kroute_nexthop_checkmatch(in_addr_t, struct knexthop_node *);
 int		knexthop_compare(struct knexthop_node *,
 		    struct knexthop_node *);
 
@@ -557,11 +558,13 @@ kroute_remove(struct kroute_node *kr)
 				 * non-bgp route. if not, notify RDE
 				 * that this nexthop is now invalid
 				 */
-				bzero(&h, sizeof(h));
-				if (kroute_nexthop_insert(s->nexthop, &h) == -1)
-					return (-1);
-				if (h.valid == 0)	/* no alternate route */
+				if (!kroute_nexthop_checkmatch(s->nexthop,
+				    s)) {
+					s->kroute = NULL;
+					bzero(&h, sizeof(h));
+					h.nexthop = s->nexthop;
 					send_nexthop_update(&h);
+				}
 			}
 	free(kr);
 	return (0);
@@ -641,7 +644,6 @@ kroute_nexthop_delete(in_addr_t key)
 int
 kroute_nexthop_insert(in_addr_t key, struct kroute_nexthop *nh)
 {
-	struct kroute_node	*kr;
 	struct knexthop_node	*h;
 
 	if ((h = calloc(1, sizeof(struct knexthop_node))) == NULL) {
@@ -651,20 +653,32 @@ kroute_nexthop_insert(in_addr_t key, struct kroute_nexthop *nh)
 
 	h->nexthop = nh->nexthop = key;
 
-	if ((kr = kroute_match(key)) != NULL)
-		if (kr->flags & F_KERNEL) {	/* must be non-bgp! */
-			h->kroute = kr;
-			kr->flags |= F_NEXTHOP;
-			nh->valid = 1;
-			nh->connected = kr->flags & F_CONNECTED;
-			nh->gateway = kr->r.nexthop;
-		}
+	if (kroute_nexthop_checkmatch(key, h) == 1) {
+		nh->valid = 1;
+		nh->connected = h->kroute->flags & F_CONNECTED;
+		nh->gateway = h->kroute->r.nexthop;
+	}
 
 	if (RB_INSERT(knexthop_tree, &knt, h) != NULL) {
 		logit(LOG_CRIT, "knexthop_tree insert failed for %s",
 			    log_ntoa(h->nexthop));
 		free(h);
 	}
+	return (0);
+}
+
+int
+kroute_nexthop_checkmatch(in_addr_t key, struct knexthop_node *h)
+{
+	struct kroute_node	*kr;
+
+	if ((kr = kroute_match(key)) != NULL)
+		if (kr->flags & F_KERNEL) {	/* must be non-bgp! */
+			h->kroute = kr;
+			kr->flags |= F_NEXTHOP;
+			return (1);
+		}
+
 	return (0);
 }
 
