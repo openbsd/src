@@ -1,4 +1,4 @@
-/*	$OpenBSD: net.c,v 1.4 1996/09/23 14:18:57 mickey Exp $	*/
+/*	$OpenBSD: net.c,v 1.5 1996/10/16 11:04:38 mickey Exp $	*/
 /*	$NetBSD: net.c,v 1.12 1995/12/13 23:38:10 pk Exp $	*/
 
 /*
@@ -43,8 +43,6 @@
 #include <sys/param.h>
 #include <sys/socket.h>
 
-#include <string.h>
-
 #include <net/if.h>
 #include <netinet/in.h>
 
@@ -58,6 +56,12 @@
 
 #include "stand.h"
 #include "net.h"
+
+#if defined(ARP_DEBUG) || defined(NET_DEBUG) || defined(BOOTP_DEBUG) || \
+    defined(ETHER_DEBUG) || defined(NETIF_DEBUG) || defined(NFS_DEBUG) || \
+    defined(RPC_DEBUG)
+int net_debug = 0;
+#endif
 
 /* Caller must leave room for ethernet, ip and udp headers in front!! */
 ssize_t
@@ -74,7 +78,7 @@ sendudp(d, pkt, len)
 	struct ip tip;
 
 #ifdef NET_DEBUG
- 	if (debug) {
+ 	if (net_debug) {
 		printf("sendudp: d=%x called.\n", (u_int)d);
 		if (d) {
 			printf("saddr: %s:%d",
@@ -146,7 +150,7 @@ readudp(d, pkt, len, tleft)
 	u_int16_t etype;	/* host order */
 
 #ifdef NET_DEBUG
-	if (debug)
+	if (net_debug)
 		printf("readudp: called\n");
 #endif
 
@@ -171,7 +175,7 @@ readudp(d, pkt, len, tleft)
 
 	if (etype != ETHERTYPE_IP) {
 #ifdef NET_DEBUG
-		if (debug)
+		if (net_debug)
 			printf("readudp: not IP. ether_type=%x\n", etype);
 #endif
 		return -1;
@@ -181,7 +185,7 @@ readudp(d, pkt, len, tleft)
 	if (ip->ip_v != IPVERSION ||
 	    ip->ip_p != IPPROTO_UDP) {	/* half char */
 #ifdef NET_DEBUG
-		if (debug)
+		if (net_debug)
 			printf("readudp: IP version or not UDP. ip_v=%d ip_p=%d\n", ip->ip_v, ip->ip_p);
 #endif
 		return -1;
@@ -191,7 +195,7 @@ readudp(d, pkt, len, tleft)
 	if (hlen < sizeof(*ip) ||
 	    in_cksum(ip, hlen) != 0) {
 #ifdef NET_DEBUG
-		if (debug)
+		if (net_debug)
 			printf("readudp: short hdr or bad cksum.\n");
 #endif
 		return -1;
@@ -199,14 +203,14 @@ readudp(d, pkt, len, tleft)
 	NTOHS(ip->ip_len);
 	if (n < ip->ip_len) {
 #ifdef NET_DEBUG
-		if (debug)
+		if (net_debug)
 			printf("readudp: bad length %d < %d.\n", n, ip->ip_len);
 #endif
 		return -1;
 	}
 	if (d->myip.s_addr && ip->ip_dst.s_addr != d->myip.s_addr) {
 #ifdef NET_DEBUG
-		if (debug) {
+		if (net_debug) {
 			printf("readudp: bad saddr %s != ", inet_ntoa(d->myip));
 			printf("%s\n", inet_ntoa(ip->ip_dst));
 		}
@@ -222,7 +226,7 @@ readudp(d, pkt, len, tleft)
 	}
 	if (uh->uh_dport != d->myport) {
 #ifdef NET_DEBUG
-		if (debug)
+		if (net_debug)
 			printf("readudp: bad dport %d != %d\n",
 				d->myport, ntohs(uh->uh_dport));
 #endif
@@ -243,7 +247,7 @@ readudp(d, pkt, len, tleft)
 		ui->ui_len = uh->uh_ulen;
 		if (in_cksum(ui, n) != 0) {
 #ifdef NET_DEBUG
-			if (debug)
+			if (net_debug)
 				printf("readudp: bad cksum\n");
 #endif
 			*ip = tip;
@@ -256,7 +260,7 @@ readudp(d, pkt, len, tleft)
 	NTOHS(uh->uh_ulen);
 	if (uh->uh_ulen < sizeof(*uh)) {
 #ifdef NET_DEBUG
-		if (debug)
+		if (net_debug)
 			printf("readudp: bad udp len %d < %d\n",
 				uh->uh_ulen, sizeof(*uh));
 #endif
@@ -292,7 +296,7 @@ sendrecv(d, sproc, sbuf, ssize, rproc, rbuf, rsize)
 	long tleft;
 
 #ifdef NET_DEBUG
-	if (debug)
+	if (net_debug)
 		printf("sendrecv: called\n");
 #endif
 
@@ -427,7 +431,7 @@ intoa(addr)
 	register char *cp;
 	register u_int byte;
 	register int n;
-	static char buf[17];	/* strlen(".255.255.255.255") + 1 */
+	static char buf[sizeof(".255.255.255.255")];
 
 	NTOHL(addr);
 	cp = &buf[sizeof buf];
