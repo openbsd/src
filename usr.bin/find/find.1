@@ -1,4 +1,4 @@
-.\"	$OpenBSD: find.1,v 1.18 1999/02/24 10:25:45 deraadt Exp $
+.\"	$OpenBSD: find.1,v 1.19 1999/03/17 17:36:30 espie Exp $
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -43,7 +43,7 @@
 .Nd walk a file hierarchy
 .Sh SYNOPSIS
 .Nm find
-.Op Fl HdhXx
+.Op Fl HdhXxW
 .Op Fl f Ar file
 .Op Ar file ...
 .Ar expression
@@ -110,9 +110,13 @@ argument to
 .Xr xargs 1 .
 .It Fl x
 Prevents
-.Nm find
+.Nm 
 from descending into directories that have a device number different
 than that of the file from which the descent began.
+.It Fl W
+Let
+.Nm
+take whiteouts into account when scanning directories.
 .El
 .Sh PRIMARIES
 .Bl -tag -width Ds
@@ -330,7 +334,8 @@ Possible file types are as follows:
 .Pp
 .Bl -tag -width flag -offset indent -compact
 .It Cm W
-whiteout
+whiteout (currently, these won't even be visible without also specifying 
+.Fl W )
 .It Cm b
 block special
 .It Cm c
@@ -497,3 +502,8 @@ These problems are handled by the
 option and the
 .Xr getopt 3
 ``--'' construct.
+.Pp
+The
+.Fl W
+option is probably not the most elegant way to handle whiteouts, it may
+be replaced by a more sophisticated algorithm eventually.
