@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.15 1997/09/19 17:16:14 niklas Exp $	*/
+/*	$OpenBSD: trap.c,v 1.16 1997/10/07 22:52:05 niklas Exp $	*/
 /*	$NetBSD: trap.c,v 1.56 1997/07/16 00:01:47 is Exp $	*/
 
 /*
@@ -176,6 +176,9 @@ int mmudebug = 0;
 
 extern struct pcb *curpcb;
 extern char fubail[], subail[];
+
+/* XXX until we get it from m68k/cpu.h */
+extern void    regdump __P((struct trapframe *, int));
 
 int	_write_back __P((u_int, u_int, u_int, u_int, vm_map_t));
 void	userret __P((struct proc *, int, u_quad_t));
