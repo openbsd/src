@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.4 2004/05/10 10:30:24 aoyama Exp $	*/
+/* $OpenBSD: machdep.c,v 1.5 2004/06/02 13:49:43 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -1685,15 +1685,14 @@ luna88k_bootstrap()
 #ifdef DEBUG
 	printf("LUNA88K boot: memory from 0x%x to 0x%x\n", avail_start, avail_end);
 #endif
-	pmap_bootstrap((vaddr_t)trunc_page((unsigned)&kernelstart) /* = loadpt */,
-		       &avail_start, &avail_end, &virtual_avail,
-		       &virtual_end);
+	pmap_bootstrap((vaddr_t)trunc_page((unsigned)&kernelstart));
+
 	/*
 	 * Tell the VM system about available physical memory.
 	 * luna88k only has one segment.
 	 */
 	uvm_page_physload(atop(avail_start), atop(avail_end),
-			  atop(avail_start), atop(avail_end),VM_FREELIST_DEFAULT);
+	    atop(avail_start), atop(avail_end),VM_FREELIST_DEFAULT);
 
 	/* Initialize cached PTEs for u-area mapping. */
 	save_u_area(&proc0, (vaddr_t)proc0paddr);
