@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo.c,v 1.45 2003/03/04 00:29:17 itojun Exp $	*/
+/*	$OpenBSD: getaddrinfo.c,v 1.46 2003/03/17 23:16:36 jason Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.31 2000/08/31 17:36:43 itojun Exp $	*/
 
 /*
@@ -435,10 +435,10 @@ getaddrinfo(hostname, servname, hints, res)
 	if (sentinel.ai_next)
 		goto good;
 
-	if (pai->ai_flags & AI_NUMERICHOST)
-		ERR(EAI_NODATA);
 	if (hostname == NULL)
 		ERR(EAI_NODATA);
+	if (pai->ai_flags & AI_NUMERICHOST)
+		ERR(EAI_NONAME);
 
 	/*
 	 * hostname as alphabetical name.
