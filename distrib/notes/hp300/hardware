@@ -29,7 +29,7 @@ The following HP hardware is supported:
 		98638 8-port (dcm).
 		400-series Apollo 3-port serial/keyboard mux (apci).
 		[Note:  Support is incomplete.  The first port is typically
-		configured as a dca device.]
+		configured as a dca device, except on the 425e.]
 
 	Network interfaces:
 		98643 built-in and add-on LAN cards.

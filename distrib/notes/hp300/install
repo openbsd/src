@@ -1,10 +1,104 @@
 OpenBSDInstallPrelude
+dnl No extra line, this has to stick to the geometry notes paragraph.
+The file `HP-IB.geometry' has geometry information for several HP-IB
+disks, but may be incomplete.  Geometry may be calculated from an HP-UX 
+`/etc/disktab' entry, but note that HP-UX geometry is based on
+1024 byte sectors, while OpenBSD's is based on 512 byte sectors.
+
+The ramdisk kernel may be loaded from the network, from CD-ROM, or other
+SCSI devices (such as Zip(tm) disk).  Note that loading from HPIB or SCSI
+cartridge tape is possible, but not currently supported.
+
+
+Booting from CD-ROM installation media:
+
+You can burn a bootable CD-ROM and boot from it.
+To boot from SCSI CD-ROM, simply insert the CD into the drive before power
+up, then during the computer's self-test cycle, press the space bar.
+Shortly, you should see a menu of possible boot options appear.  Select
+the option corresponding to SYS_CDBOOT.
+SYS_CDBOOT will then load and begin loading bsd.rd from the CD; depending
+on your ROM revision and hardware configuration, you may or may not see
+any messages on the console while this happens.
+
+Please note that booting from CD-ROM may not be supported by all models of
+MACHINE.  You will also need a CD-ROM drive which uses 512 byte blocks;
+anything which shipped with an MACHINE or is known to boot a SPARC or black
+NeXTStation should work.  Modern CD-ROM drives jumpered to use 512-byte
+blocks should work as well.
+
+
+Booting from Network:
+
+Note:  Booting SYS_UBOOT via the network is only possible if your bootrom
+is `rev. c' or later.  (This only applies to the 320/350 era machines.)
+
+If you wish to load the SYS_UBOOT program via the network, you need to
+either have another OpenBSD system on the network, or something else
+capable of running the rbootd(8) program.  Source code may be found
+under usr.sbin/rbootd in the OpenBSD source tree, but requires the
+Berkeley Packet Filter (bpf) in order to function.  It may be possible to
+use HP-UX, but is not recommended (or documented here).  For more
+information on diskless booting under OpenBSD, see the diskless(8)
+manual page.
+
+First of all, configure your rbootd to handle boot requests from the
+client.  NOTE: OpenBSD's `rbootd' is slightly different from HP-UX's.
+To configure OpenBSD's `rbootd', create a file called `/etc/rbootd.conf'
+and place in it an entry like the following:
+
+	08:00:09:04:AA:33	SYS_UBOOT	# thunder-egg
+
+The first column is the ethernet address of the client's network interface.
+The second column is the program to send to the client, and anything after
+the `#' is a comment.  Once you have rbootd running, copy the SYS_UBOOT
+program to the /usr/mdec/rbootd directory on your server.  If this
+directory doesn't exist already, you will need to create it.
+
+Next, add the client to /etc/ethers on your server.  For example:
+
+	08:00:09:04:AA:33	thunder-egg
+
+Then start `rarpd' on your server; `rarpd -a' should do the trick.
+
+Finally, you need to add an entry in /etc/bootparams.  For example:
+
+	thunder-egg	root=myserver:/export/MACHINE
+
+Where myserver is the name of your server machine and `/export/MACHINE'
+is the directory that holds the ramdisk kernel image (`bsd.rd').
+Now run `rpc.bootparamd' and make sure that this directory is NFS
+exported to the client.  See the manual pages on your server system
+if you need more information about exporting filesystems.  If you
+run into problems you may wish to run `rpc.bootparamd' with the `-d'
+flag on your server to get extra debugging information.
+
+You are now ready to load SYS_UBOOT.  During the client's self-test cycle,
+press the space bar.  Shortly, you should see a menu of possible boot
+options appear.  Select the option corresponding to SYS_UBOOT.
+SYS_UBOOT will then load and prompt you for a kernel name.  NFS file
+names should not have a leading '/' prepended to them, simply use `bsd.rd'.
+
+
+Installing using the CD-ROM or netboot procedure:
 
 OpenBSDInstallPart2
 
-	Boot your machine from the network.  When presented with
-	the boot prompt, enter the path of your kernel (`bsd.rd'
-	is a likely choice if you are booting over the network).
+	Boot your machine from the installation media as described above.
+
+	When presented with the boot prompt, enter the path of your kernel
+	(which is likely to be `bsd.rd').
+
+	It will take a while to load the kernel especially from a slow
+	speed cdrom or slow network connection, most likely more than
+	a minute.  If some action doesn't eventually happen, or the
+	spinning cursor has stopped and nothing further has happened,
+	either your boot media is bad, your diskless setup is incorrect,
+	or you may have a hardware or configuration problem.
+	Remember that if your machine is a 425e, you must use a serial
+	console, even if you can initiate the boot process from the
+	graphics console.
+
 
 OpenBSDBootMsgs
 
@@ -13,10 +107,11 @@ OpenBSDBootMsgs
 	graphics display, just hit return to select the default (hp300h).
 	If you are using an ASCII terminal, it should either be an HP
 	or vt100 compatible terminal; nothing else is supported.  (If
-	your terminal type is xterm, just use vt100).  After entering
-	the terminal type you will be asked whether you wish to do an
-	"install" or an "upgrade".  Enter 'i' for a fresh install or 'u'
-	to upgrade an existing installation.
+	your terminal type is xterm, just use vt100).
+	
+	After entering the terminal type you will be asked whether you
+	wish to do an "(I)nstall" or an "(U)pgrade".  Enter 'I' for a
+	fresh install or 'U' to upgrade an existing installation.
 
 	You will be presented with a welcome message and asked if
 	you really wish to install (or upgrade).  Assuming you
@@ -31,9 +126,6 @@ OpenBSDBootMsgs
 	invoke an interactive editor allowing you to do this.  Note
 	that partition 'c' inside this disk label should ALWAYS
 	reflect the entire disk, including any non-OpenBSD portions.
-	If you are labeling a new disk, you will probably start
-	out with an 'a' partition that spans the disk.  In this
-	case you should delete 'a' before adding new partitions.
 	The root file system should be in partition 'a', and swap
 	is usually in partition 'b'.  It is recommended that you
 	create separate partitions for /usr and /var, and if you
@@ -42,15 +134,11 @@ OpenBSDBootMsgs
 	the info on the ``-E'' flag).
 
 	Since the target disk will become the boot disk for your new
-	OpenBSD/MACHINE installation, you will need to treat the `a' and
-	`c' partitions in a special manner.  Due to the size of the
-	OpenBSD/MACHINE boot program (it spills into the area after the
-	disklabel), it is necessary to offset the `a' partition one
-	cylinder from the beginning of the disk.  Later, the `c'
-	partition will be marked with the type `FS_BOOT' and may not
-	be used for a filesystem.  By default, the disklabel program
-	will enforce this by restricting the available disk area to
-	keep the first cylinder safe from being overwritten.
+	OpenBSD/MACHINE installation, the disklabel program will restrict
+	the available disk area to keep the first cylinder, which will
+	contain the bootblock, safe from being overwritten. If you don't
+	plan to install a bootblock on this disk, you can reclaim this
+	space with the 'b' command.
 
 	The swap partition (usually 'b') should have a type of "swap", all
 	other native OpenBSD partitions should have a type of "4.2BSD".
