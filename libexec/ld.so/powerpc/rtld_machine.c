@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.26 2003/06/09 16:10:04 deraadt Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.27 2003/07/06 20:04:00 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -72,9 +72,10 @@ void _dl_syncicache(char *from, size_t len);
 void _dl_bind_start(void); /* XXX */
 
 void
-_dl_bcopy(void *src, void *dest, int size)
+_dl_bcopy(const void *src, void *dest, int size)
 {
-	unsigned char *psrc = src, *pdest = dest;
+	unsigned const char *psrc = src;
+	unsigned char *pdest = dest;
 	int i;
 
 	for (i = 0; i < size; i++)
@@ -502,8 +503,7 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 		object->plt_size += plt_addr - object->plt_start;
 		object->plt_size = ELF_ROUND(object->plt_size, _dl_pagesz);
 	}
-		
-	
+
 	if (!lazy) {
 		_dl_md_reloc(object, DT_JMPREL, DT_PLTRELSZ);
 		return;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_mquery.c,v 1.10 2003/07/02 08:18:03 niklas Exp $ */
+/*	$OpenBSD: library_mquery.c,v 1.11 2003/07/06 20:03:57 deraadt Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -188,7 +188,7 @@ nohints:
 						match = 1;
 						len = _dl_strlcpy(
 						    _dl_hint_store, lp,
-						     MAXPATHLEN);
+						    MAXPATHLEN);
 						if (lp[len-1] != '/') {
 							_dl_hint_store[len] =
 							    '/';

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldconfig.c,v 1.12 2002/07/30 22:25:27 deraadt Exp $	*/
+/*	$OpenBSD: ldconfig.c,v 1.13 2003/07/06 20:04:00 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1993,1995 Paul Kranenburg
@@ -275,7 +275,7 @@ enter(char *dir, char *file, char *name, int dewey[], int ndewey)
 #define _PATH_LD_HINTS		"./ld.so.hints"
 #endif
 
-int
+static int
 hinthash(char *cp, int vmajor, int vminor)
 {
 	int	k = 0;
@@ -294,15 +294,11 @@ hinthash(char *cp, int vmajor, int vminor)
 int
 buildhints(void)
 {
-	struct hints_header	hdr;
-	struct hints_bucket	*blist;
-	struct shlib_list	*shp;
-	char			*strtab;
-	int			i, n, str_index = 0;
-	int			strtab_sz = 0;	/* Total length of strings */
-	int			nhints = 0;	/* Total number of hints */
-	int			fd;
-	char			*tmpfile;
+	int strtab_sz = 0, nhints = 0, fd, i, n, str_index = 0;
+	struct hints_bucket *blist;
+	struct hints_header hdr;
+	struct shlib_list *shp;
+	char *strtab, *tmpfile;
 
 	for (shp = shlib_head; shp; shp = shp->next) {
 		strtab_sz += 1 + strlen(shp->name);
@@ -425,13 +421,13 @@ buildhints(void)
 static int
 readhints(void)
 {
-	int			fd, i;
-	caddr_t			addr;
-	long			msize;
-	struct hints_header	*hdr;
-	struct hints_bucket	*blist;
-	char			*strtab;
-	struct shlib_list	*shp;
+	struct hints_bucket *blist;
+	struct hints_header *hdr;
+	struct shlib_list *shp;
+	caddr_t addr;
+	char *strtab;
+	long msize;
+	int fd, i;
 
 	if ((fd = open(_PATH_LD_HINTS, O_RDONLY, 0)) == -1) {
 		warn("%s", _PATH_LD_HINTS);
@@ -507,8 +503,8 @@ readhints(void)
 static void
 listhints(void)
 {
-	struct shlib_list	*shp;
-	int			i;
+	struct shlib_list *shp;
+	int i;
 
 	printf("%s:\n", _PATH_LD_HINTS);
 	printf("\tsearch directories: %s\n", dir_list);

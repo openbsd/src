@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.26 2003/06/03 16:20:41 art Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.27 2003/07/06 20:04:00 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -209,6 +209,7 @@ static long reloc_target_bitmask[] = {
 #define RELOC_VALUE_BITMASK(t)	(reloc_target_bitmask[t])
 
 void _dl_reloc_plt(Elf_Word *where, Elf_Addr value, Elf_RelA *rela);
+void _dl_install_plt(Elf_Word *pltgot, Elf_Addr proc);
 
 int
 _dl_md_reloc(elf_object_t *object, int rel, int relasz)
@@ -589,7 +590,7 @@ _dl_reloc_plt(Elf_Word *where, Elf_Addr value, Elf_RelA *rela)
 /*
  * Resolve a symbol at run-time.
  */
-void *
+Elf_Addr
 _dl_bind(elf_object_t *object, int index)
 {
 	Elf_RelA *rela;
@@ -654,7 +655,7 @@ _dl_bind(elf_object_t *object, int index)
 		_dl_sigprocmask(SIG_SETMASK, &omask, NULL);
 	}
 
-	return (void *)ooff + this->st_value;
+	return ooff + this->st_value;
 }
 
 /*

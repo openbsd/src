@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.11 2003/06/09 16:10:04 deraadt Exp $ */
+/*	$OpenBSD: syscall.h,v 1.12 2003/07/06 20:04:00 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998-2002 Opsycon AB, Sweden.
@@ -46,7 +46,7 @@ extern long _dl__syscall(quad_t val, ...);
  */
 
 extern inline int
-_dl_exit (int status)
+_dl_exit(int status)
 {
 	register int __status __asm__ ("$2");
 
@@ -63,7 +63,7 @@ _dl_exit (int status)
 }
 
 extern inline int
-_dl_open (const char* addr, int flags)
+_dl_open(const char* addr, int flags)
 {
 	register int status __asm__ ("$2");
 
@@ -83,7 +83,7 @@ _dl_open (const char* addr, int flags)
 }
 
 extern inline int
-_dl_close (int fd)
+_dl_close(int fd)
 {
 	register int status __asm__ ("$2");
 
@@ -102,7 +102,7 @@ _dl_close (int fd)
 }
 
 extern inline ssize_t
-_dl_write (int fd, const char* buf, size_t len)
+_dl_write(int fd, const char* buf, size_t len)
 {
 	register ssize_t status __asm__ ("$2");
 
@@ -123,7 +123,7 @@ _dl_write (int fd, const char* buf, size_t len)
 }
 
 extern inline ssize_t
-_dl_read (int fd, const char* buf, size_t len)
+_dl_read(int fd, const char* buf, size_t len)
 {
 	register ssize_t status __asm__ ("$2");
 
@@ -144,7 +144,7 @@ _dl_read (int fd, const char* buf, size_t len)
 }
 
 extern inline void *
-_dl_mmap (void *addr, size_t size, int prot, int flags, int fd, off_t f_offset)
+_dl_mmap(void *addr, size_t size, int prot, int flags, int fd, off_t f_offset)
 {
 	register void * malloc_buffer __asm__ ("$2");
 
@@ -182,7 +182,7 @@ _dl_mmap (void *addr, size_t size, int prot, int flags, int fd, off_t f_offset)
 }
 
 extern inline int
-_dl_munmap (const void* addr, size_t len)
+_dl_munmap(const void* addr, size_t len)
 {
 	register int status __asm__ ("$2");
 
@@ -202,7 +202,7 @@ _dl_munmap (const void* addr, size_t len)
 }
 
 extern inline int
-_dl_mprotect (const void *addr, size_t size, int prot)
+_dl_mprotect(const void *addr, size_t size, int prot)
 {
 	register int status __asm__ ("$2");
 
@@ -220,7 +220,7 @@ _dl_mprotect (const void *addr, size_t size, int prot)
 }
 
 extern inline int
-_dl_stat (const char *addr, struct stat *sb)
+_dl_stat(const char *addr, struct stat *sb)
 {
 	register int status __asm__ ("$2");
 
@@ -237,7 +237,7 @@ _dl_stat (const char *addr, struct stat *sb)
 }
 
 extern inline int
-_dl_fstat (const int fd, struct stat *sb)
+_dl_fstat(const int fd, struct stat *sb)
 {
 	register int status __asm__ ("$2");
 
@@ -254,7 +254,7 @@ _dl_fstat (const int fd, struct stat *sb)
 }
 
 extern inline ssize_t
-_dl_fcntl (int fd, int cmd, int flag)
+_dl_fcntl(int fd, int cmd, int flag)
 {
 	register int status __asm__ ("$2");
 
@@ -275,7 +275,7 @@ _dl_fcntl (int fd, int cmd, int flag)
 }
 
 extern inline ssize_t
-_dl_getdirentries (int fd, char *buf, int nbytes, long *basep)
+_dl_getdirentries(int fd, char *buf, int nbytes, long *basep)
 {
 	register int status __asm__ ("$2");
 
@@ -296,7 +296,7 @@ _dl_getdirentries (int fd, char *buf, int nbytes, long *basep)
 }
 
 extern inline int
-_dl_issetugid (void)
+_dl_issetugid(void)
 {
 	register int status __asm__ ("$2");
 
@@ -311,7 +311,7 @@ _dl_issetugid (void)
 }
 
 extern inline off_t
-_dl_lseek (int fd, off_t offset, int whence)
+_dl_lseek(int fd, off_t offset, int whence)
 {
 	return _dl__syscall((quad_t)SYS_lseek, fd, 0, offset, whence);
 }

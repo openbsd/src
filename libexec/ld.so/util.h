@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.15 2003/06/11 17:47:57 deraadt Exp $	*/
+/*	$OpenBSD: util.h,v 1.16 2003/07/06 20:03:58 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -30,13 +30,22 @@
 
 #ifndef __DL_UTIL_H__
 #define __DL_UTIL_H__
+
+#include <stdarg.h>
+
 void *_dl_malloc(const size_t size);
 void _dl_free(void *);
 char *_dl_strdup(const char *);
 void _dl_printf(const char *fmt, ...);
+void _dl_vprintf(const char *fmt, va_list ap);
 void _dl_fdprintf(int, const char *fmt, ...);
 void _dl_show_objects(void);
 unsigned int _dl_random(void);
+ssize_t _dl_write(int fd, const char* buf, size_t len);
+
+void _dl_bcopy(const void *src, void *dest, int size);
+
+long _dl_strtol(const char *nptr, char **endptr, int base);
 
 /*
  *	The following functions are declared inline so they can

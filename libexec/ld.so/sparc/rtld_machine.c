@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.15 2003/06/03 16:20:41 art Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.16 2003/07/06 20:04:00 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -323,7 +323,7 @@ resolve_failed:
  * Resolve a symbol at run-time.
  */
 Elf_Addr
-_dl_bind(elf_object_t *object, Elf_Word reloff)
+_dl_bind(elf_object_t *object, int reloff)
 {
 	const Elf_Sym *sym, *this;
 	Elf_Addr *addr, ooff;
@@ -354,7 +354,7 @@ _dl_bind(elf_object_t *object, Elf_Word reloff)
 		sigfillset(&nmask);
 		_dl_sigprocmask(SIG_BLOCK, &nmask, &omask);
 		/* mprotect the actual modified region, not the whole plt */
-		_dl_mprotect((void*)addr,sizeof (Elf_Addr) * 3,
+		_dl_mprotect((void*)addr, sizeof (Elf_Addr) * 3,
 		    PROT_READ|PROT_WRITE|PROT_EXEC);
 	}
 
@@ -363,7 +363,7 @@ _dl_bind(elf_object_t *object, Elf_Word reloff)
 	/* if PLT is (to be protected, change back to RO/X */
 	if (object->plt_size != 0) {
 		/* mprotect the actual modified region, not the whole plt */
-		_dl_mprotect((void*)addr,sizeof (Elf_Addr) * 3,
+		_dl_mprotect((void*)addr, sizeof (Elf_Addr) * 3,
 		    PROT_READ|PROT_EXEC);
 		_dl_sigprocmask(SIG_SETMASK, &omask, NULL);
 	}

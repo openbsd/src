@@ -1,4 +1,4 @@
-/*	$OpenBSD: sod.c,v 1.17 2003/05/08 16:30:52 millert Exp $	*/
+/*	$OpenBSD: sod.c,v 1.18 2003/07/06 20:03:57 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -50,6 +50,7 @@
 #include "sod.h"
 
 int _dl_hinthash(char *cp, int vmajor, int vminor);
+void _dl_maphints(void);
 
 /*
  * Populate sod struct for dlopen's call to map_object
@@ -99,13 +100,13 @@ _dl_build_sod(const char *name, struct sod *sodp)
 			break;
 		case 2:
 			/* major version extension */
-			major = strtol(tok, &etok, 10);
+			major = _dl_strtol(tok, &etok, 10);
 			if (*tok == '\0' || *etok != '\0')
 				goto backout;
 			break;
 		case 3:
 			/* minor version extension */
-			minor = strtol(tok, &etok, 10);
+			minor = _dl_strtol(tok, &etok, 10);
 			if (*tok == '\0' || *etok != '\0')
 				goto backout;
 			break;

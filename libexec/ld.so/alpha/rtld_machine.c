@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.23 2003/06/03 16:20:40 art Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.24 2003/07/06 20:04:00 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -33,6 +33,7 @@
 #include <sys/types.h>
 #include <sys/cdefs.h>
 #include <sys/mman.h>
+#include <sys/exec.h>
 
 #include <machine/elf_machdep.h>
 
@@ -45,12 +46,12 @@
 #include "resolve.h"
 
 void
-_dl_bcopy(void *src, void *dest, int size)
+_dl_bcopy(const void *src, void *dest, int size)
 {
-	unsigned char *psrc, *pdest;
+	unsigned const char *psrc = src;
+	unsigned char *pdest = dest;
 	int i;
-	psrc = src;
-	pdest = dest;
+
 	for (i = 0; i < size; i++) {
 		pdest[i] = psrc[i];
 	}
@@ -177,8 +178,8 @@ resolve_failed:
 /*
  * Resolve a symbol at run-time.
  */
-void *
-_dl_bind(elf_object_t *object, Elf_Word reloff)
+Elf_Addr
+_dl_bind(elf_object_t *object, int reloff)
 {
 	Elf_RelA *rela;
 	Elf_Addr *addr, ooff;
@@ -218,7 +219,7 @@ _dl_bind(elf_object_t *object, Elf_Word reloff)
 		_dl_sigprocmask(SIG_SETMASK, &omask, NULL);
 	}
 
-	return (void *)*addr;
+	return *addr;
 }
 
 /*
@@ -282,8 +283,6 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 		object->plt_size += plt_addr - object->plt_start;
 		object->plt_size = ELF_ROUND(object->plt_size, _dl_pagesz);
 	}
-	 
-
 
 	if (object->obj_type == OBJTYPE_LDR || !lazy || pltgot == NULL) {
 		_dl_md_reloc(object, DT_JMPREL, DT_PLTRELSZ);
@@ -316,10 +315,10 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 
 /* relocate the GOT early */
 
+void	_reloc_alpha_got(Elf_Dyn *dynp, Elf_Addr relocbase);
+
 void
-_reloc_alpha_got(dynp, relocbase)
-	Elf_Dyn *dynp;
-	Elf_Addr relocbase;
+_reloc_alpha_got(Elf_Dyn *dynp, Elf_Addr relocbase)
 {
 	const Elf_RelA *rela = 0, *relalim;
 	Elf_Addr relasz = 0;

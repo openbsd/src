@@ -1,4 +1,4 @@
-/*	$OpenBSD: shlib.c,v 1.7 2002/07/30 22:25:27 deraadt Exp $	*/
+/*	$OpenBSD: shlib.c,v 1.8 2003/07/06 20:04:00 deraadt Exp $	*/
 /*	$NetBSD: shlib.c,v 1.13 1998/04/04 01:00:29 fvdl Exp $	*/
 
 /*
@@ -128,7 +128,7 @@ add_search_path(char *path)
 	free(dup);
 }
 
-void
+static void
 remove_search_path(char *path)
 {
 	char	*cp, *dup;
@@ -223,7 +223,7 @@ cmpndewey(int d1[], int n1, int d2[], int n2)
 #undef major
 #undef minor
 
-char *
+static char *
 findshlib(char *name, int *majorp, int *minorp, int do_dot_a)
 {
 	int major = *majorp, minor = *minorp, ndewey, i, len;

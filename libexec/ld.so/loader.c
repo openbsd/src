@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.64 2003/06/22 21:39:01 drahn Exp $ */
+/*	$OpenBSD: loader.c,v 1.65 2003/07/06 20:03:57 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -45,8 +45,13 @@
 /*
  * Local decls.
  */
-static char *_dl_getenv(const char *var, char **env);
-static void _dl_unsetenv(const char *var, char **env);
+static char *_dl_getenv(const char *, char **);
+static void _dl_unsetenv(const char *, char **);
+unsigned long _dl_boot(const char **, char **, const long, long *);
+void _dl_debug_state(void);
+void _dl_setup_env(char **);
+void _dl_dtors(void);
+void _dl_boot_bind(const long, long *);
 
 const char *_dl_progname;
 int  _dl_pagesz;
@@ -121,7 +126,6 @@ _dl_dopreload(char *paths)
  * grab interesting environment variables, zap bad env vars if
  * issetugid
  */
-
 void
 _dl_setup_env(char **envp)
 {
@@ -192,8 +196,8 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 		_dl_pagesz = 4096;
 
 	/*
-	 * now that GOT and PLT has been relocated, and we know page size 
-	 * protect it from modification 
+	 * now that GOT and PLT has been relocated, and we know
+	 * page size, protect it from modification
 	 */
 	{
 		extern char *__got_start;
@@ -205,18 +209,17 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 
 		_dl_mprotect((void *)ELF_TRUNC((long)&__got_start, _dl_pagesz),
 		    ELF_ROUND((long)&__got_end,_dl_pagesz) -
-		        ELF_TRUNC((long)&__got_start, _dl_pagesz),
+		    ELF_TRUNC((long)&__got_start, _dl_pagesz),
 		    GOT_PERMS);
 
 #ifndef __i386__
 		/* only for DATA_PLT or BSS_PLT */
 		_dl_mprotect((void *)ELF_TRUNC((long)&__plt_start, _dl_pagesz),
 		    ELF_ROUND((long)&__plt_end,_dl_pagesz) -
-		        ELF_TRUNC((long)&__plt_start, _dl_pagesz),
+		    ELF_TRUNC((long)&__plt_start, _dl_pagesz),
 		    PROT_READ|PROT_EXEC);
 #endif
 	}
-	
 
 	DL_DEB(("rtld loading: '%s'\n", _dl_progname));
 

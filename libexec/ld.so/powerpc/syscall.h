@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.16 2003/06/09 16:10:04 deraadt Exp $ */
+/*	$OpenBSD: syscall.h,v 1.17 2003/07/06 20:04:00 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -48,7 +48,7 @@ static off_t	_dl_lseek(int, off_t, int);
  */
 
 static inline int
-_dl_exit (int status)
+_dl_exit(int status)
 {
 	register int __status __asm__ ("3");
 
@@ -63,7 +63,7 @@ _dl_exit (int status)
 }
 
 static inline int
-_dl_open (const char* addr, int flags)
+_dl_open(const char* addr, int flags)
 {
 	register int status __asm__ ("3");
 
@@ -82,7 +82,7 @@ _dl_open (const char* addr, int flags)
 }
 
 static inline int
-_dl_close (int fd)
+_dl_close(int fd)
 {
 	register int status __asm__ ("3");
 
@@ -100,7 +100,7 @@ _dl_close (int fd)
 }
 
 static inline ssize_t
-_dl_write (int fd, const char* buf, size_t len)
+_dl_write(int fd, const char* buf, size_t len)
 {
 	register ssize_t status __asm__ ("3");
 
@@ -120,7 +120,7 @@ _dl_write (int fd, const char* buf, size_t len)
 }
 
 static inline ssize_t
-_dl_read (int fd, const char* buf, size_t len)
+_dl_read(int fd, const char* buf, size_t len)
 {
 	register ssize_t status __asm__ ("3");
 
@@ -154,14 +154,14 @@ __asm__(".align 2\n\t"
 	"blr");
 
 static inline void *
-_dl_mmap (void *addr, size_t len, int prot, int flags, int fd, off_t offset)
+_dl_mmap(void *addr, size_t len, int prot, int flags, int fd, off_t offset)
 {
 	return((void *)_dl__syscall((quad_t)SYS_mmap, addr, len, prot,
 	    flags, fd, 0, offset));
 }
 
 static inline int
-_dl_munmap (const void* addr, size_t len)
+_dl_munmap(const void* addr, size_t len)
 {
 	register int status __asm__ ("3");
 
@@ -180,7 +180,7 @@ _dl_munmap (const void* addr, size_t len)
 }
 
 static inline int
-_dl_mprotect (const void *addr, size_t size, int prot)
+_dl_mprotect(const void *addr, size_t size, int prot)
 {
 	register int status __asm__ ("3");
 
@@ -200,7 +200,7 @@ _dl_mprotect (const void *addr, size_t size, int prot)
 }
 
 static inline int
-_dl_stat (const char *addr, struct stat *sb)
+_dl_stat(const char *addr, struct stat *sb)
 {
 	register int status __asm__ ("3");
 
@@ -219,7 +219,7 @@ _dl_stat (const char *addr, struct stat *sb)
 }
 
 static inline int
-_dl_fstat (int fd, struct stat *sb)
+_dl_fstat(int fd, struct stat *sb)
 {
 	register int status __asm__ ("3");
 
@@ -238,7 +238,7 @@ _dl_fstat (int fd, struct stat *sb)
 }
 
 static inline int
-_dl_fcntl (int fd, int cmd, int flag)
+_dl_fcntl(int fd, int cmd, int flag)
 {
 	register int status __asm__ ("3");
 
@@ -280,7 +280,7 @@ _dl_getdirentries(int fd, char *buf, int nbytes, long *basep)
 }
 
 static inline int
-_dl_issetugid()
+_dl_issetugid(void)
 {
 	register int status __asm__ ("3");
 
@@ -303,10 +303,11 @@ _dl_lseek(int fildes, off_t offset, int whence)
 }
 
 static inline int
-_dl_sigprocmask (int how, const sigset_t *set, sigset_t *oset)
+_dl_sigprocmask(int how, const sigset_t *set, sigset_t *oset)
 {
 	sigset_t sig_store;
 	sigset_t sig_store1;
+
 	if (set != NULL) {
 		sig_store1 = *set;
 	} else {
@@ -349,7 +350,6 @@ _dl_sysctl(int *name, u_int namelen, void *oldp, size_t *oldplen, void *newp,
 	    "r" (oldplen), "r" (newp), "r" (newlen)
 	    : "0", "3", "4", "5", "6", "7", "8");
 	return status;
-	
 }
 
 #endif /*__DL_SYSCALL_H__*/
