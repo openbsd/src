@@ -1,12 +1,12 @@
-/*	$OpenBSD: cardbusdevs_data.h,v 1.1 2000/03/02 23:03:26 aaron Exp $ */
-/*	$NetBSD: cardbusdevs_data.h,v 1.5 1999/12/11 22:22:54 explorer Exp $	*/
+/*	$OpenBSD: cardbusdevs_data.h,v 1.2 2000/05/15 06:35:47 niklas Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: cardbusdevs,v 1.7 1999/12/11 22:22:34 explorer Exp 
+ *	OpenBSD: cardbusdevs,v 1.2 2000/05/15 06:26:58 niklas Exp 
  */
+/*	$NetBSD: cardbusdevs,v 1.7 1999/12/11 22:22:34 explorer Exp $	*/
 
 /*
  * Copyright (C) 1999  Hayakawa Koichi.
@@ -99,6 +99,12 @@ struct cardbus_knowndev cardbus_knowndevs[] = {
 	    0,
 	    "Xircom",
 	    "X3201-3 Fast Ethernet Controller (21143)",
+	},
+	{
+	    CARDBUS_VENDOR_XIRCOM, CARDBUS_PRODUCT_XIRCOM_MODEM56,
+	    0,
+	    "Xircom",
+	    "56k Modem",
 	},
 	{
 	    CARDBUS_VENDOR_DEC, 0,
