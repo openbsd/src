@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.408 2001/06/20 21:58:11 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.409 2001/06/21 09:24:26 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -326,7 +326,7 @@
 #define	PCI_VENDOR_DATATRANSLATION	0x1116		/* Data Translation */
 #define	PCI_VENDOR_DATACUBE	0x1117		/* Datacube */
 #define	PCI_VENDOR_BERG	0x1118		/* Berg Electronics */
-#define	PCI_VENDOR_VORTEX	0x1119		/* Vortex Computer Systems */
+#define	PCI_VENDOR_VORTEX	0x1119		/* Vortex */
 #define	PCI_VENDOR_EFFICIENTNETS	0x111a		/* Efficent Networks */
 #define	PCI_VENDOR_TELEDYNE	0x111b		/* Teledyne */
 #define	PCI_VENDOR_TRICORD	0x111c		/* Tricord Systems */

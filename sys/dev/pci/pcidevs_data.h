@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.408 2001/06/20 21:58:11 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.409 2001/06/21 09:24:26 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -5496,7 +5496,7 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_VORTEX,
-	    "Vortex Computer Systems",
+	    "Vortex",
 	},
 	{
 	    PCI_VENDOR_EFFICIENTNETS,
