@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: tty.c,v 1.11 1999/07/15 02:10:32 brian Exp $
+ *	$Id: tty.c,v 1.12 1999/08/10 10:50:44 brian Exp $
  */
 
 #include <sys/param.h>
@@ -408,8 +408,10 @@ tty_Create(struct physical *p)
     ios.c_iflag |= IXOFF;
   }
   ios.c_iflag |= IXON;
-  if (p->type != PHYS_DEDICATED)
+  if (p->type != PHYS_DEDICATED) {
     ios.c_cflag |= HUPCL;
+    ios.c_cflag &= ~CLOCAL;
+  }
 
   if (p->type != PHYS_DIRECT) {
       /* Change tty speed when we're not in -direct mode */
