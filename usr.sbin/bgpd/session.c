@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.177 2004/06/22 03:17:01 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.178 2004/06/22 03:44:26 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1617,8 +1617,10 @@ parse_open(struct peer *peer)
 	p += sizeof(as);
 
 	/* if remote-as is zero and it's a cloned neighbor, accept any */
-	if (peer->conf.cloned && !peer->conf.remote_as)
+	if (peer->conf.cloned && !peer->conf.remote_as) {
 		peer->conf.remote_as = ntohs(as);
+		peer->conf.ebgp = (peer->conf.remote_as != conf->as);
+	}
 
 	if (peer->conf.remote_as != ntohs(as)) {
 		log_peer_warnx(&peer->conf, "peer sent wrong AS %u", ntohs(as));
