@@ -1,6 +1,6 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
-#	$OpenBSD: bsd.port.mk,v 1.34 1998/07/08 03:27:17 marc Exp $
+#	$OpenBSD: bsd.port.mk,v 1.35 1998/07/09 03:12:18 marc Exp $
 #	$NetBSD: $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
@@ -1534,6 +1534,8 @@ checksum: fetch
 # packing list utilities.  This generates a packing list from a recently
 # installed port.  Not perfect, but pretty close.  The generated file
 # will have to have some tweaks done by hand.
+# Note: add @comment PACKAGE(arch=${ARCH}, opsys=${OPSYS}, vers=${OPSYS_VER})
+# when port is installed or package created.
 #
 .if !target(plist)
 plist: install
@@ -1542,7 +1544,6 @@ plist: install
 	  ld=""; \
 	  ${ECHO} "@cwd ${PREFIX}"; \
 	  ${ECHO} "@name ${PKGNAME}"; \
-	  ${ECHO} "@comment PACKAGE(arch=${ARCH}, opsys=${OPSYS}, vers=${OPSYS_VER})"; \
 	  for f in `${MAKE} package-depends|sort -u`; do ${ECHO} "@pkgdep $$f"; done; \
 	  for f in `find ${PREFIX} -newer ${INSTALL_PRE_COOKIE} -print 2> /dev/null`; do \
 	   ff=`${ECHO} $$f | ${SED} -e 's|^${PREFIX}/||'`; \
