@@ -1,4 +1,4 @@
-/*	$OpenBSD: monitor.c,v 1.16 2004/03/29 17:07:59 deraadt Exp $	*/
+/*	$OpenBSD: monitor.c,v 1.17 2004/03/31 10:53:10 ho Exp $	*/
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -43,6 +43,8 @@
 #include <regex.h>
 #include <keynote.h>
 #endif
+
+#include "sysdep.h"
 
 #include "conf.h"
 #include "log.h"
@@ -552,7 +554,7 @@ monitor_loop (int debugging)
   if (!fds)
     {
       kill (m_state.pid, SIGTERM);
-      log_fatal ("monitor_loop: calloc() failed");
+      log_fatal ("monitor_loop: malloc (%u) failed", fdsn);
       return;
     }
 
@@ -1088,9 +1090,10 @@ m_priv_check_bind (const struct sockaddr *sa, socklen_t salen)
       return 1;
     }
 
-    if (sa->sa_len != salen)
+    if (sysdep_sa_len ((struct sockaddr *)sa) != salen)
       {
-	log_print ("Length mismatch: %d %d", (int) sa->sa_len, (int) salen);
+	log_print ("Length mismatch: %d %d",
+		   (int) sysdep_sa_len ((struct sockaddr *)sa), (int) salen);
 	return 1;
       }
 
