@@ -245,6 +245,7 @@ member	ih_fun
 member	ih_arg
 member	ih_number
 member	ih_pil
+member	ih_busy
 member	IH_PEND		ih_pending
 member	ih_next
 member	ih_map

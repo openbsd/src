@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.29 2003/02/28 21:27:42 jason Exp $	*/
+/*	$OpenBSD: locore.s,v 1.30 2003/03/20 23:05:30 henric Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -2808,8 +2808,9 @@ winfixsave:
 	/* Did we save a user or kernel window ? */
 !	srax	%g3, 48, %g7				! User or kernel store? (TAG TARGET)
 	sllx	%g3, (64-13), %g7			! User or kernel store? (TAG ACCESS)
+	sethi	%hi((2*NBPG)-8), %g7
 	brnz,pt	%g7, 1f					! User fault -- save windows to pcb
-	 set	(2*NBPG)-8, %g7
+	 or	%g7, %lo((2*NBPG)-8), %g7
 
 	and	%g4, CWP, %g4				! %g4 = %cwp of trap
 	wrpr	%g4, 0, %cwp				! Kernel fault -- restore %cwp and force and trap to debugger
@@ -3970,7 +3971,8 @@ interrupt_vector:
 
 setup_sparcintr:
 #ifdef	INTR_INTERLOCK
-	LDPTR	[%g5+IH_PEND], %g6	! Read pending flag
+	ldstub  [%g5+IH_BUSY], %g6	! Check if already in use
+	membar #LoadLoad | #LoadStore
 	brnz,pn	%g6, ret_from_intr_vector ! Skip it if it's running
 #endif
 	 ldub	[%g5+IH_PIL], %g6	! Read interrupt mask
@@ -4011,7 +4013,7 @@ setup_sparcintr:
 	LOCTOGLOB
 	 restore
 97:
-#endif
+#endif	/* DEBUG */ 
 	 dec	%g7
 	brgz,pt	%g7, 1b
 	 inc	PTRSZ, %g1		! Next slot
@@ -4032,9 +4034,10 @@ setup_sparcintr:
 	ta	1
 	LOCTOGLOB
 	restore
-#endif
-#endif	/* INTRLIST */
 2:
+#endif	/* DIAGNOSTIC */
+#endif	/* INTRLIST */
+
 #ifdef DEBUG
 	set	_C_LABEL(intrdebug), %g7
 	ld	[%g7], %g7
@@ -4055,7 +4058,7 @@ setup_sparcintr:
 	LOCTOGLOB
 	restore
 97:
-#endif
+#endif	/* DEBUG */
 	mov	1, %g7
 	sll	%g7, %g6, %g6
 	wr	%g6, 0, SET_SOFTINT	! Invoke a softint
@@ -4269,21 +4272,37 @@ sparc_intr_retry:
 	bne,pn	%icc, 1b
 	 add	%sp, CC64FSZ+STKB, %o2	! tf = %sp + CC64FSZ + STKB
 2:
+	LDPTR	[%l2 + IH_PEND], %l7	! Load next pending
 	LDPTR	[%l2 + IH_FUN], %o4	! ih->ih_fun
 	LDPTR	[%l2 + IH_ARG], %o0	! ih->ih_arg
+	LDPTR	[%l2 + IH_CLR], %l1	! ih->ih_clear
+
+	STPTR	%g0, [%l2 + IH_PEND]	! Unlink from list
+
+	! Note that the function handler itself or an interrupt
+	! may add handlers to the pending pending. This includes
+	! the current entry in %l2 and entries held on our local
+	! pending list in %l7.  The former is ok because we are
+	! done with it now and the latter because they are still
+	! marked busy. We may also be able to do this by having
+	! the soft interrupts use a variation of the hardware
+	! interrupts' ih_clr scheme.  Note:  The busy flag does
+	! not itself prevent the handler from being entered
+	! recursively.  It only indicates that the handler is
+	! about to be invoked and that it should not be added
+	! to the pending table.
+	membar	#StoreStore | #LoadStore
+	stb	%g0, [%l2 + IH_BUSY]	! Allow the ih to be reused
+
+	! At this point, the current ih could already be added
+	! back to the pending table.
 
 	jmpl	%o4, %o7		! handled = (*ih->ih_fun)(...)
 	 movrz	%o0, %o2, %o0		! arg = (arg == 0) ? arg : tf
-	LDPTR	[%l2 + IH_PEND], %l7	! Clear pending flag
-	LDPTR	[%l2 + IH_CLR], %l1
-	membar	#LoadStore
-	STPTR	%g0, [%l2 + IH_PEND]	! Clear pending flag
-	membar	#Sync
 
 	brz,pn	%l1, 0f
-	 add	%l5, %o0, %l5
+	 add	%l5, %o0, %l5		! Add handler return value
 	stx	%g0, [%l1]		! Clear intr source
-	membar	#Sync			! Should not be needed
 0:
 	brnz,pn	%l7, 2b			! 'Nother?
 	 mov	%l7, %l2
@@ -11492,15 +11511,17 @@ ENTRY(ienab_bic)
  */
 ENTRY(send_softint)
 	rdpr	%pil, %g1	! s = splx(level)
-	cmp	%g1, %o1
-	bge,pt	%icc, 1f
-	 nop
-	wrpr	%o1, 0, %pil
+	!cmp	%g1, %o1
+	!bge,pt	%icc, 1f
+	! nop
+	wrpr	%g0, PIL_HIGH, %pil
 1:
 	brz,pn	%o2, 1f
-	 set	intrpending, %o3
-	LDPTR	[%o2 + IH_PEND], %o5
-	mov	8, %o4			! Number of slots to search
+	 mov	8, %o4			! Number of slots to search
+	set	intrpending, %o3
+
+	ldstub	[%o2 + IH_BUSY], %o5
+	membar #LoadLoad | #LoadStore
 #ifdef INTR_INTERLOCK
 	brnz	%o5, 1f
 #endif

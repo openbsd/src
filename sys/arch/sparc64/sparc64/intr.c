@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.12 2003/02/17 01:29:20 henric Exp $	*/
+/*	$OpenBSD: intr.c,v 1.13 2003/03/20 23:05:30 henric Exp $	*/
 /*	$NetBSD: intr.c,v 1.39 2001/07/19 23:38:11 eeh Exp $ */
 
 /*
@@ -250,6 +250,7 @@ intr_establish(level, ih)
 	 * and we do want to preserve order.
 	 */
 	ih->ih_pil = level; /* XXXX caller should have done this before */
+	ih->ih_busy = 0;    /* XXXX caller should have done this before */
 	ih->ih_pending = 0; /* XXXX caller should have done this before */
 	ih->ih_next = NULL;
 	for (p = &intrhand[level]; (q = *p) != NULL; p = &q->ih_next)
@@ -347,6 +348,7 @@ softintr_establish(level, fun, arg)
 	ih->ih_fun = (int (*)(void *))fun;	/* XXX */
 	ih->ih_arg = arg;
 	ih->ih_pil = level;
+	ih->ih_busy = 0;
 	ih->ih_pending = 0;
 	ih->ih_clr = NULL;
 	return (void *)ih;
