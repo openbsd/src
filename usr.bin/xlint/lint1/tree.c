@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.6 2002/02/16 21:27:59 millert Exp $	*/
+/*	$OpenBSD: tree.c,v 1.7 2005/01/24 00:12:28 millert Exp $	*/
 /*	$NetBSD: tree.c,v 1.12 1995/10/02 17:37:57 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: tree.c,v 1.6 2002/02/16 21:27:59 millert Exp $";
+static char rcsid[] = "$OpenBSD: tree.c,v 1.7 2005/01/24 00:12:28 millert Exp $";
 #endif
 
 #include <stdlib.h>
@@ -3838,6 +3838,7 @@ catstrg(strg1, strg2)
 			     (len2 + 1) * sizeof (wchar_t));
 		free(strg2->st_wcp);
 	}
+	strg1->st_len = len;
 	free(strg2);
 
 	return (strg1);
