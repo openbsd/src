@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.5 2001/08/29 15:01:17 krw Exp $
+#	$OpenBSD: list,v 1.6 2001/09/17 18:21:30 deraadt Exp $
 
 COPY	${OBJDIR}/raminst		raminst
 LINK	raminst			bin/cat
@@ -33,7 +33,6 @@ LINK	raminst			usr/bin/more
 LINK	raminst			sbin/mount
 LINK	raminst			sbin/mount_cd9660
 LINK	raminst			sbin/mount_ffs
-LINK	raminst			sbin/mount_kernfs
 LINK	raminst			sbin/mount_nfs
 LINK	raminst			sbin/mount_mfs
 LINK	raminst			sbin/newfs

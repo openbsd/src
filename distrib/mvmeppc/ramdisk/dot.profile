@@ -1,4 +1,4 @@
-#       $OpenBSD: dot.profile,v 1.3 2001/09/17 14:52:18 millert Exp $
+#       $OpenBSD: dot.profile,v 1.4 2001/09/17 18:21:30 deraadt Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -41,8 +41,7 @@ alias dmesg="cat /kern/msgbuf"
 if [ "X${DONEPROFILE}" = "X" ]; then
 	DONEPROFILE=YES
 
-	# mount kernfs and re-mount the boot media (perhaps r/w)
-	mount_kernfs /kern /kern
+	# re-mount the boot media (perhaps r/w)
 	mount -u /dev/rd0a /
 
 	# set up some sane defaults
