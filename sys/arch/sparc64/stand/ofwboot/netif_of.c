@@ -1,4 +1,4 @@
-/*	$OpenBSD: netif_of.c,v 1.3 2001/08/22 10:41:08 art Exp $	*/
+/*	$OpenBSD: netif_of.c,v 1.4 2001/08/22 10:44:02 art Exp $	*/
 /*	$NetBSD: netif_of.c,v 1.1 2000/08/20 14:58:39 mrg Exp $	*/
 
 /*
@@ -44,10 +44,10 @@
 #include <sys/socket.h>
 
 #include <net/if.h>
-#include <netinet/if_ether.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
+#include <netinet/if_ether.h>
 
 #include <lib/libsa/stand.h>
 #include <lib/libsa/net.h>
