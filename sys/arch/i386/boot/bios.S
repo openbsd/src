@@ -71,6 +71,8 @@ ENTRY(biosread)
 	pushl	%ebp
 	movl	%esp, %ebp
 	pushl	%ebx
+	pushl	%esi
+	pushl	%edi
 
 	movb	16(%ebp), %dh
 	movw	12(%ebp), %cx
@@ -97,11 +99,120 @@ ENTRY(biosread)
 	xorl	%eax, %eax
 	movb	%bl, %al	# return value in %ax
 
+	popl	%edi
+	popl	%esi
 	popl	%ebx
 	popl	%ebp
 	ret
 
 
+#ifdef DOSREAD
+/*
+# MSDOS call "INT 0x21 Function 0x3d" to open a file.
+# Call with   %ah = 0x3d
+#             %al = 0x0  (access and sharing modes)
+#             %ds:%dx = ASCIZ filename
+#             %cl = attribute mask of files to look for
+*/
+ENTRY(dosexit)
+      pushl %ebp
+      movl  %esp, %ebp
+      pushl   %ebx
+      pushl   %esi
+      pushl   %edi
+      movl    0x8(%ebp), %ebx # exit code
+      call    _C_LABEL(prot_to_real)  # enter real mode
+      movb    %bl, %al        # exit code
+      movb    $0x4c , %ah     # Exit
+      int     $0x21
+      cli
+      hlt
+
+ENTRY(dosopen)
+      pushl %ebp
+      movl  %esp, %ebp
+      pushl   %ebx
+      pushl   %esi
+      pushl   %edi
+      movl    0x8(%ebp), %edx # File name.
+      movb    $0x0 , %cl      # Attribute mask.
+      call    _C_LABEL(prot_to_real)  # enter real mode
+      movb    $0x3d, %ah      # Open existing file.
+      movb    $0x0 , %al      # Compatibility mode
+      int     $0x21
+      jnc     ok1
+      addr32
+      movl    %eax, _C_LABEL(doserrno)
+      data32
+      movl    $-1, %eax
+ok1:
+      pushl   %eax
+      data32
+      call    _C_LABEL(real_to_prot) # back to protected mode
+      xorl    %eax, %eax
+      popw    %ax             # return value in %eax
+      popl    %edi
+      popl    %esi
+      popl    %ebx
+      popl    %ebp
+      ret
+ENTRY(dosread)
+      pushl %ebp
+      movl  %esp, %ebp
+      pushl   %ebx
+      pushl   %esi
+      pushl   %edi
+      movl    0x8(%ebp), %ebx # File handle
+      movl    0xc(%ebp), %edx # Buffer.
+      movl    0x10(%ebp) , %ecx       # Bytes to read
+      call    _C_LABEL(prot_to_real)  # enter real mode
+      movb    $0x3f, %ah      # Read from file or device
+      movb    $0x0 , %al      # Compatibility mode
+      int     $0x21
+      jnc     ok2
+      addr32
+      movl    %eax, _C_LABEL(doserrno)
+      data32
+      movl    $-1, %eax
+ok2:
+      pushl   %eax
+      data32
+      call    _C_LABEL(real_to_prot) # back to protected mode
+      xorl    %eax, %eax
+      popw    %ax             # return value in %eax
+      popl    %edi
+      popl    %esi
+      popl    %ebx
+      popl    %ebp
+      ret
+ENTRY(dosclose)
+      pushl %ebp
+      movl  %esp, %ebp
+      pushl   %ebx
+      pushl   %esi
+      pushl   %edi
+      movl    0x8(%ebp), %ebx # File handle
+      call    _C_LABEL(prot_to_real)  # enter real mode
+      movb    $0x3e, %ah      # Close file.
+      movb    $0x0 , %al      # Compatibility mode
+      int     $0x21
+      jnc     ok3
+      addr32
+      movl    %eax, _C_LABEL(doserrno)
+      data32
+      movl    $-1, %eax
+ok3:
+      pushl   %eax
+      data32
+      call    _C_LABEL(real_to_prot) # back to protected mode
+      xorl    %eax, %eax
+      popw    %ax             # return value in %eax
+      popl    %edi
+      popl    %esi
+      popl    %ebx
+      popl    %ebp
+      ret
+#endif
 /*
 #ifndef SERIAL
 # BIOS call "INT 10H Function 0Eh" to write character to console
@@ -120,6 +231,8 @@ ENTRY(putc)
 	pushl	%ebp
 	movl	%esp, %ebp
 	pushl	%ebx
+	pushl	%esi
+	pushl	%edi
 
 	movb	8(%ebp), %cl
 
@@ -141,6 +254,8 @@ ENTRY(putc)
 	data32
 	call	_C_LABEL(real_to_prot)
 
+	popl	%edi
+	popl	%esi
 	popl	%ebx
 	popl	%ebp
 	ret
@@ -164,6 +279,8 @@ ENTRY(getc)
 	pushl	%ebp
 	movl	%esp, %ebp
 	pushl	%ebx
+	pushl	%esi
+	pushl	%edi
 
 	call	_C_LABEL(prot_to_real)
 
@@ -184,6 +301,8 @@ ENTRY(getc)
 	xorl	%eax, %eax
 	movb	%bl, %al
 
+	popl	%edi
+	popl	%esi
 	popl	%ebx
 	popl	%ebp
 	ret
@@ -212,6 +331,8 @@ ENTRY(ischar)
 	pushl	%ebp
 	movl	%esp, %ebp
 	pushl	%ebx
+	pushl	%esi
+	pushl	%edi
 
 	call	_C_LABEL(prot_to_real)
 
@@ -234,6 +355,8 @@ ENTRY(ischar)
 	xorl	%eax, %eax
 	movb	%bl, %al
 
+	popl	%edi
+	popl	%esi
 	popl	%ebx
 	popl	%ebp
 	ret
@@ -249,6 +372,8 @@ ENTRY(get_diskinfo)
 	pushl	%ebp
 	movl	%esp, %ebp
 	pushl	%ebx
+	pushl	%esi
+	pushl	%edi
 
 	movb	8(%ebp), %dl		# diskinfo(drive #)
 
@@ -284,6 +409,8 @@ ok:
 	andb	$0x3f, %cl		# mask of cylinder gunk
 	movb	%cl, %al		# max sector (and # sectors)
 
+	popl	%edi
+	popl	%esi
 	popl	%ebx
 	popl	%ebp
 	ret
@@ -302,6 +429,8 @@ ENTRY(memsize)
 	pushl	%ebp
 	movl	%esp, %ebp
 	pushl	%ebx
+	pushl	%esi
+	pushl	%edi
 
 	movl	8(%ebp), %ebx
 
@@ -326,6 +455,8 @@ xdone:
 	call	_C_LABEL(real_to_prot)
 
 	movl	%ebx, %eax
+	popl	%edi
+	popl	%esi
 	popl	%ebx
 	popl	%ebp
 	ret

@@ -41,7 +41,11 @@
 #define	SPT(di)		((di)&0xff)
 #define	HEADS(di)	((((di)>>8)&0xff)+1)
 
+#ifdef DOSREAD
+char *devs[] = {"wd", "hd", "fd", "wt", "sd", "dos", 0};
+#else
 char *devs[] = {"wd", "hd", "fd", "wt", "sd", 0};
+#endif
 
 #ifdef DO_BAD144
 struct dkbad dkb;
@@ -148,11 +152,28 @@ static char ra_buf[RA_SECTORS * BPS];
 static int ra_dev;
 static int ra_end;
 static int ra_first;
+static int ra_sectors;
+static int ra_skip;
 
 Bread(sector, addr)
 	int sector;
 	void *addr;
 {
+      extern int ourseg;
+      int dmalimit = ((((ourseg<<4)+(int)ra_buf)+65536) & ~65535)
+        - ((ourseg<<4)+ (int)ra_buf);
+      if (dmalimit<RA_SECTORS*BPS) {
+        if (dmalimit*2<RA_SECTORS*BPS) {
+          ra_sectors = (RA_SECTORS*BPS-dmalimit)/BPS;
+          ra_skip = RA_SECTORS - ra_sectors;
+          } else {
+            ra_sectors = dmalimit/BPS;
+            ra_skip = 0;
+          }
+      } else {
+        ra_sectors = RA_SECTORS;
+        ra_skip=0;
+      }
 
 	if (dosdev != ra_dev || sector < ra_first || sector >= ra_end) {
 		int cyl, head, sec, nsec;
@@ -161,10 +182,10 @@ Bread(sector, addr)
 		head = (sector % spc) / spt;
 		sec = sector % spt;
 		nsec = spt - sec;
-		if (nsec > RA_SECTORS)
-			nsec = RA_SECTORS;
+              if (nsec > ra_sectors)
+                nsec = ra_sectors;
 		twiddle();
-		while (biosread(dosdev, cyl, head, sec, nsec, ra_buf)) {
+              while (biosread(dosdev, cyl, head, sec, nsec, ra_buf+ra_skip*BPS)) {
 			printf("Error: C:%d H:%d S:%d\n", cyl, head, sec);
 			nsec = 1;
 			twiddle();
@@ -173,7 +194,7 @@ Bread(sector, addr)
 		ra_first = sector;
 		ra_end = sector + nsec;
 	}
-	bcopy(ra_buf + (sector - ra_first) * BPS, addr, BPS);
+      bcopy(ra_buf + (sector - ra_first+ra_skip) * BPS, addr, BPS);
 }
 
 badsect(sector)

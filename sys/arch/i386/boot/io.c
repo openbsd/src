@@ -148,9 +148,42 @@ gets(buf)
 	char *buf;
 {
 	char *ptr = buf;
+	static char hadchar=0;
 
+#ifdef DOSREAD
+	/*
+	 *      Simulate keyboard input of the command line arguments.
+	 */
+	static int first=1;
+	int hadarg=0;
+
+	if (first) {
+		char *arg = (char *) 0x80;
+		int argcnt = *arg++;
+		while (argcnt && *arg==' ') {
+			arg++;
+			argcnt--;
+		}
+		while (argcnt--) {
+			if (*arg>='A' && *arg<='Z')
+				*arg += 'a' - 'A';
+			putchar(*arg);
+			*ptr++ = *arg++;
+			hadarg=1;
+		}
+		first=0;
+	}
+#endif
 	for (;;) {
 		register int c = getc();
+		hadchar=1;
+#ifdef DOSREAD
+		if (c == 3 || c== 27 ) {
+			printf("Exiting\n");
+			dosexit(0);
+			printf("Exiting failed\n");
+		}
+#endif
 		if (c == '\n' || c == '\r') {
 			putchar('\n');
 			*ptr = '\0';
@@ -158,6 +191,13 @@ gets(buf)
 		} else if (c == '\b' || c == '\177') {
 			if (ptr > buf) {
 				putchar('\b');
+#ifdef DOSREAD
+      if (hadarg) {
+        putchar('\n');
+        *ptr=0;
+        return 1;
+      }
+#endif
 				putchar(' ');
 				putchar('\b');
 				ptr--;

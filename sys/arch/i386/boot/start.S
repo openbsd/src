@@ -70,6 +70,7 @@ BOOTABLE	=	0x80	# value of boot_ind, means bootable partition
 
 ENTRY(boot1)
 start:
+#ifndef DOSREAD
 	# start (aka boot1) is loaded at 0x0:0x7c00 but we want 0x7c0:0
 	# ljmp to the next instruction to adjust %cs
 	data32
@@ -182,8 +183,13 @@ again:
 	movl	$enoboot, %esi
 	data32
 	jmp	err_stop
+#else /* !DOSREAD */
+      movb    $0xff, %dl
+      jmp     _C_LABEL(boot2)
+#endif /* DOSREAD */
 
 
+#ifndef DOSREAD
 /*
 # BIOS call "INT 0x13 Function 0x2" to read sectors from disk into memory
 #       Call with       %ah = 0x2
@@ -264,6 +270,7 @@ message:
 	data32
 	pushl	%edx
 
+#endif
 nextb:
 	cld
 	lodsb			# load a byte into %al

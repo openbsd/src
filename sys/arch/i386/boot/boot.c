@@ -73,7 +73,7 @@ char *names[] = {
 static void getbootdev __P((int *howto));
 static void loadprog __P((int howto));
 
-extern char *version;
+extern char version[];
 extern int end;
 
 void
@@ -85,6 +85,7 @@ boot(drive)
 		
 	printf("\n"
 	       ">> OpenBSD BOOT: %d/%d k [%s]\n"
+	       "use ? for file list, or carriage return for defaults\n"
 	       "use hd(1,a)/bsd to boot sd0 when wd0 is also installed\n",
 		argv[7] = memsize(0),
 		argv[8] = memsize(1),
@@ -95,21 +96,36 @@ loadstart:
 	* As a default set it to the first partition of the first	*
 	* floppy or hard drive						*
 	\***************************************************************/
-	part = 0;
-	unit = drive&0x7f;
-	maj = (drive&0x80 ? 0 : 2);		/* a good first bet */
+#ifdef DOSREAD
+	if (drive== 0xff) {
+          maj = 5;
+          part = 0;
+          unit = 0;
+	} else
+#endif
+        {
+          part = 0;
+          unit = drive&0x7f;
+          maj = (drive&0x80 ? 0 : 2);         /* a good first bet */
+        }
 
 	name = names[currname++];
 
 	loadflags = 0;
+	getbootdev(&loadflags);
+	switch(openrd()) {
+	case 0:
+		loadprog(loadflags);
+		break;
+	case -1:
+		currname--;
+		break;
+	default:
+		printf("Can't find %s\n", name);
+		break;
+	}
 	if (currname == NUMNAMES)
 		currname = 0;
-	getbootdev(&loadflags);
-	if (openrd()) {
-		printf("Can't find %s\n", name);
-		goto loadstart;
-	}
-	loadprog(loadflags);
 	goto loadstart;
 }
 
@@ -127,8 +143,6 @@ loadprog(howto)
 		printf("invalid format\n");
 		return;
 	}
-
-	poff = N_TXTOFF(head);
 
 	startaddr = (int)head.a_entry;
 	addr = (startaddr & 0x00f00000); /* some MEG boundary */
@@ -149,7 +163,8 @@ loadprog(howto)
 	/* LOAD THE TEXT SEGMENT				*/
 	/********************************************************/
 	printf("%d", head.a_text);
-	xread(addr, head.a_text);
+      pcpy(&head, addr, sizeof(head));
+      xread(addr+sizeof(head), head.a_text - sizeof(head));
 #ifdef CHECKSUM
 	if (cflag)
 		printf("(%x)", cksum(addr, head.a_text));
@@ -223,6 +238,9 @@ loadprog(howto)
 	}
 
 	putchar(']');
+#ifdef DOSREAD
+      doclose();
+#endif
 
 	/********************************************************/
 	/* and that many bytes of (debug symbols?)		*/
