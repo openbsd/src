@@ -1,4 +1,4 @@
-/*	$OpenBSD: prom.h,v 1.4 1996/10/30 22:39:21 niklas Exp $	*/
+/*	$OpenBSD: prom.h,v 1.5 1996/11/28 20:09:29 niklas Exp $	*/
 /*	$NetBSD: prom.h,v 1.4 1996/10/15 23:52:49 cgd Exp $	*/
 
 /*
@@ -58,7 +58,7 @@ int	prom_getenv __P((int, char *, int));
 
 void	init_prom_interface __P((void));
 void	hwrbp_restart_setup __P((void));
-int	prom_dispatch __P((int, int, u_char *, int));
+int	prom_dispatch __P((int, ...));
 int	promcnlookc __P((dev_t, char *));
 #endif
 
