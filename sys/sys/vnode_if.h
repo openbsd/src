@@ -3,7 +3,7 @@
  * (Modifications made here may easily be lost!)
  *
  * Created from the file:
- *	OpenBSD: vnode_if.src,v 1.22 2003/07/21 22:44:50 tedu Exp 
+ *	OpenBSD: vnode_if.src,v 1.23 2003/09/23 16:46:02 millert Exp 
  * by the script:
  *	OpenBSD: vnode_if.sh,v 1.13 2003/06/02 23:28:07 millert Exp 
  */
@@ -172,16 +172,14 @@ extern struct vnodeop_desc vop_ioctl_desc;
 int VOP_IOCTL(struct vnode *, u_long, void *, int, struct ucred *, 
     struct proc *);
 
-struct vop_select_args {
+struct vop_poll_args {
 	struct vnodeop_desc *a_desc;
 	struct vnode *a_vp;
-	int a_which;
-	int a_fflags;
-	struct ucred *a_cred;
+	int a_events;
 	struct proc *a_p;
 };
-extern struct vnodeop_desc vop_select_desc;
-int VOP_SELECT(struct vnode *, int, int, struct ucred *, struct proc *);
+extern struct vnodeop_desc vop_poll_desc;
+int VOP_POLL(struct vnode *, int, struct proc *);
 
 struct vop_kqfilter_args {
 	struct vnodeop_desc *a_desc;
