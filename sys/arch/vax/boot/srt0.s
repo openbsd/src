@@ -1,4 +1,4 @@
-/*	$OpenBSD: srt0.s,v 1.5 1998/02/03 11:48:28 maja Exp $ */
+/*	$OpenBSD: srt0.s,v 1.6 1998/05/14 13:50:36 niklas Exp $ */
 /*	$NetBSD: srt0.s,v 1.9 1997/03/22 12:47:32 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -41,8 +41,8 @@
  * position set in a.out header.
  */
 
-nisse:	.set	nisse,0		# pass -e nisse to ld gives OK start addr
-	.globl	nisse
+start0:	.set	start0,0	# passing -e start0 to ld gives OK start addr
+	.globl	start0
 
 _start:	.globl	_start
 	nop;nop;		# If we get called by calls, or something

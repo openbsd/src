@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 1998/05/11 07:39:13 niklas Exp $
+#	$OpenBSD: Makefile,v 1.10 1998/05/14 13:50:35 niklas Exp $
 #	$NetBSD: Makefile,v 1.14 1997/06/29 21:30:09 ragge Exp $
 #
 
@@ -69,22 +69,22 @@ xxboot:	start.o bootxx.o romread.o libsvax.a ${SALIB}
 	@rm -f a.out
 
 boot:	boot.o srt0.o devopen.o conf.o ${DEVS} libsvax.a ${SALIB}
-	@date '+_vers: .globl _vers; .asciz ">> NetBSD/vax boot [%y%m%d %H:%M] <<"' | ${AS} -o vers.o
-	${LD} -N -Ttext ${RELOC} -e nisse -o $@ srt0.o devopen.o boot.o \
+	@date '+_vers: .globl _vers; .asciz ">> OpenBSD/vax boot [%y%m%d %H:%M] <<"' | ${AS} -o vers.o
+	${LD} -N -Ttext ${RELOC} -e start0 -o $@ srt0.o devopen.o boot.o \
 	conf.o ${DEVS} ${LIBS} vers.o
 	@${STRIP} boot
 	@${SIZE} boot
 
 edlabel: edlabel.o srt0.o devopen.o conf.o ${DEVS} libsvax.a
-	@date '+_vers: .globl _vers; .asciz ">> NetBSD/vax boot [%y%m%d %H:%M] <<"' | ${AS} -o vers.o
-	${LD} -N -Ttext ${RELOC} -e nisse -o $@ srt0.o devopen.o edlabel.o\
+	@date '+_vers: .globl _vers; .asciz ">> OpenBSD/vax boot [%y%m%d %H:%M] <<"' | ${AS} -o vers.o
+	${LD} -N -Ttext ${RELOC} -e start0 -o $@ srt0.o devopen.o edlabel.o\
 	conf.o ${DEVS} ${LIBS} vers.o
 	@${STRIP} edlabel
 	@${SIZE} edlabel
 
 copy:	copy.o srt0.o devopen.o conf.o ${DEVS} libsvax.a
-	@date '+_vers: .globl _vers; .asciz ">> NetBSD/vax boot [%y%m%d %H:%M] <<"' | ${AS} -o vers.o
-	${LD} -N -Ttext ${RELOC} -e nisse -o $@ srt0.o devopen.o copy.o \
+	@date '+_vers: .globl _vers; .asciz ">> OpenBSD/vax boot [%y%m%d %H:%M] <<"' | ${AS} -o vers.o
+	${LD} -N -Ttext ${RELOC} -e start0 -o $@ srt0.o devopen.o copy.o \
 	conf.o ${DEVS} ${LIBS} vers.o
 	@${STRIP} copy
 	@${SIZE} copy
