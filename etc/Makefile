@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.155 2002/04/03 20:56:36 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.156 2002/04/17 22:54:20 miod Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -329,7 +329,7 @@ MAKEDEVARCHS+= hppa
 MAKEDEVARCHS+= i386
 MAKEDEVARCHS+= mac68k
 MAKEDEVARCHS+= macppc
-#MAKEDEVARCHS+= mvme68k
+MAKEDEVARCHS+= mvme68k
 #MAKEDEVARCHS+= mvme88k
 #MAKEDEVARCHS+= mvmeppc
 MAKEDEVARCHS+= sparc
