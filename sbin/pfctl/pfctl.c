@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.105 2002/12/17 20:06:05 henning Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.106 2002/12/18 14:14:09 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -712,13 +712,39 @@ pfctl_add_pool(struct pfctl *pf, struct pf_pool *p, sa_family_t af)
 int
 pfctl_add_rule(struct pfctl *pf, struct pf_rule *r)
 {
+	u_int8_t rs_num;
+	
+	switch (r->action) {
+	case PF_SCRUB:
+	case PF_DROP:
+	case PF_PASS:
+		rs_num = PF_RULESET_RULE;	
+		break;
+	case PF_NAT:
+	case PF_NONAT:
+		rs_num = PF_RULESET_NAT;	
+		break;
+	case PF_RDR:
+	case PF_NORDR:
+		rs_num = PF_RULESET_RDR;	
+		break;
+	case PF_BINAT:
+	case PF_NOBINAT:
+		rs_num = PF_RULESET_BINAT;	
+		break;
+	default:
+		err(1, "Invalid rule type");	
+		break;
+	}
+	
 	if ((loadopt & (PFCTL_FLAG_FILTER | PFCTL_FLAG_ALL)) != 0) {
 		if (pfctl_add_pool(pf, &r->rpool, r->af))
 			return (1);
 		if ((pf->opts & PF_OPT_NOACTION) == 0) {
-			memcpy(&pf->prule->rule, r, sizeof(pf->prule->rule));
-			pf->prule->pool_ticket = pf->paddr.ticket;
-			if (ioctl(pf->dev, DIOCADDRULE, pf->prule))
+			memcpy(&pf->prule[rs_num]->rule, r,
+			    sizeof(pf->prule[rs_num]->rule));
+			pf->prule[rs_num]->pool_ticket = pf->paddr.ticket;
+			if (ioctl(pf->dev, DIOCADDRULE, pf->prule[rs_num]))
 				err(1, "DIOCADDRULE");
 		}
 		if (pf->opts & PF_OPT_VERBOSE)
@@ -755,15 +781,18 @@ int
 pfctl_rules(int dev, char *filename, int opts)
 {
 	FILE *fin;
-	struct pfioc_rule	pr;
+	struct pfioc_rule	pr[PF_RULESET_MAX];
 	struct pfioc_altq	pa;
 	struct pfctl		pf;
+	int			i;
 
 	memset(&pr, 0, sizeof(pr));
 	memset(&pa, 0, sizeof(pa));
 	memset(&pf, 0, sizeof(pf));
-	memcpy(pr.anchor, anchorname, sizeof(pr.anchor));
-	memcpy(pr.ruleset, rulesetname, sizeof(pr.ruleset));
+	for (i = 0; i < PF_RULESET_MAX; i++) {
+		memcpy(pr[i].anchor, anchorname, sizeof(pr[i].anchor));
+		memcpy(pr[i].ruleset, rulesetname, sizeof(pr[i].ruleset));
+	}
 	if (strcmp(filename, "-") == 0) {
 		fin = stdin;
 		infile = "stdin";
@@ -777,14 +806,14 @@ pfctl_rules(int dev, char *filename, int opts)
 	}
 	if ((opts & PF_OPT_NOACTION) == 0) {
 		if ((loadopt & (PFCTL_FLAG_NAT | PFCTL_FLAG_ALL)) != 0) {
-			pr.rule.action = PF_NAT;
-			if (ioctl(dev, DIOCBEGINRULES, &pr))
+			pr[PF_RULESET_NAT].rule.action = PF_NAT;
+			if (ioctl(dev, DIOCBEGINRULES, &pr[PF_RULESET_NAT]))
 				err(1, "DIOCBEGINRULES");
-			pr.rule.action = PF_RDR;
-			if (ioctl(dev, DIOCBEGINRULES, &pr))
+			pr[PF_RULESET_RDR].rule.action = PF_RDR;
+			if (ioctl(dev, DIOCBEGINRULES, &pr[PF_RULESET_RDR]))
 				err(1, "DIOCBEGINRULES");
-			pr.rule.action = PF_BINAT;
-			if (ioctl(dev, DIOCBEGINRULES, &pr))
+			pr[PF_RULESET_BINAT].rule.action = PF_BINAT;
+			if (ioctl(dev, DIOCBEGINRULES, &pr[PF_RULESET_BINAT]))
 				err(1, "DIOCBEGINRULES");
 		}
 		if (((altqsupport && loadopt
@@ -792,16 +821,18 @@ pfctl_rules(int dev, char *filename, int opts)
 		    ioctl(dev, DIOCBEGINALTQS, &pa.ticket)) {
 			err(1, "DIOCBEGINALTQS");
 		}
-		pr.rule.action = PF_PASS;
+		pr[PF_RULESET_RULE].rule.action = PF_PASS;
 		if (((loadopt & (PFCTL_FLAG_FILTER | PFCTL_FLAG_ALL)) != 0) &&
-		    ioctl(dev, DIOCBEGINRULES, &pr))
+		    ioctl(dev, DIOCBEGINRULES, &pr[PF_RULESET_RULE]))
 			err(1, "DIOCBEGINRULES");
 	}
 	/* fill in callback data */
 	pf.dev = dev;
 	pf.opts = opts;
 	pf.paltq = &pa;
-	pf.prule = &pr;
+	for (i = 0; i < PF_RULESET_MAX; i++) {
+		pf.prule[i] = &pr[i];
+	}
 	pf.rule_nr = 0;
 	if (parse_rules(fin, &pf, opts) < 0)
 		errx(1, "Syntax error in file: pf rules not loaded");
@@ -810,23 +841,23 @@ pfctl_rules(int dev, char *filename, int opts)
 			errx(1, "errors in altq config");
 	if ((opts & PF_OPT_NOACTION) == 0) {
 		if ((loadopt & (PFCTL_FLAG_NAT | PFCTL_FLAG_ALL)) != 0) {
-			pr.rule.action = PF_NAT;
-			if (ioctl(dev, DIOCCOMMITRULES, &pr))
+			pr[PF_RULESET_NAT].rule.action = PF_NAT;
+			if (ioctl(dev, DIOCCOMMITRULES, &pr[PF_RULESET_NAT]))
 				err(1, "DIOCCOMMITRULES");
-			pr.rule.action = PF_RDR;
-			if (ioctl(dev, DIOCCOMMITRULES, &pr))
+			pr[PF_RULESET_RDR].rule.action = PF_RDR;
+			if (ioctl(dev, DIOCCOMMITRULES, &pr[PF_RULESET_RDR]))
 				err(1, "DIOCCOMMITRULES");
-			pr.rule.action = PF_BINAT;
-			if (ioctl(dev, DIOCCOMMITRULES, &pr))
+			pr[PF_RULESET_BINAT].rule.action = PF_BINAT;
+			if (ioctl(dev, DIOCCOMMITRULES, &pr[PF_RULESET_BINAT]))
 				err(1, "DIOCCOMMITRULES");
 		}
 		if (((altqsupport && loadopt
 		    & (PFCTL_FLAG_ALTQ | PFCTL_FLAG_ALL)) != 0) &&
 		    ioctl(dev, DIOCCOMMITALTQS, &pa.ticket))
 			err(1, "DIOCCOMMITALTQS");
-		pr.rule.action = PF_PASS;
+		pr[PF_RULESET_RULE].rule.action = PF_PASS;
 		if (((loadopt & (PFCTL_FLAG_FILTER | PFCTL_FLAG_ALL)) != 0) &&
-		    ioctl(dev, DIOCCOMMITRULES, &pr))
+		    ioctl(dev, DIOCCOMMITRULES, &pr[PF_RULESET_RULE]))
 			err(1, "DIOCCOMMITRULES");
 #if 0
 		if ((opts & PF_OPT_QUIET) == 0) {

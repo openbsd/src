@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.h,v 1.34 2002/12/17 12:36:59 mcbride Exp $ */
+/*	$OpenBSD: pfctl_parser.h,v 1.35 2002/12/18 14:14:09 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -59,7 +59,7 @@ struct pfctl {
 	int opts;
 	u_int32_t rule_nr;
 	struct pfioc_pooladdr paddr;
-	struct pfioc_rule *prule;
+	struct pfioc_rule *prule[PF_RULESET_MAX];
 	struct pfioc_altq *paltq;
 	struct pfioc_queue *pqueue;
 };
