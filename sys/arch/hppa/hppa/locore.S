@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.138 2004/09/14 23:39:32 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.139 2004/09/15 00:25:43 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -2336,12 +2336,9 @@ ENTRY($fpu_emulate,320)
 	ldi	T_EMULATION, r1
 
 $fpu_emulate_done
-	comb,=,n r0, r1, $fpu_emulate_done2
-
-	b	TLABEL(all)
+	comb,<>	r0, r1, TLABEL(all)
 	ldi	T_EXCEPTION, r1
 
-$fpu_emulate_done2
 	rfir
 	nop
 EXIT($fpu_emulate)
