@@ -1,7 +1,7 @@
 Since OpenBSD OSREV is the first release for MACHINE systems, upgrades
 are not expected.
 If you have been using an old OpenBSD/MACHINE snapshot, you can follow the
-follwing instructions.
+following instructions.
 
 dnl XXX replace when floppy disk available
 dnl OpenBSDUpgrade({:- or the installation floppy-:})

@@ -30,8 +30,6 @@ maintenance and disaster recovery.
 The kernel and boot images are provided for net booting installations.
 
 
-Bootable installation images:
-  
 DistributionDescription(six)
 
 OpenBSDbase(24.3M,74.9M,shared)

@@ -33,9 +33,7 @@ insurance if you want to be able to "go back" for some reason.
 
 After taking care of all that, bring your system down gracefully using
 the shutdown(8) and/or halt(8) commands.  This will get you to the monitor
-prompt.  Sun PROM monitor commands and setup differ considerably depending
-on the system architecture and age, you may needed to reference the PROM
-monitor manual for your system for details.
+prompt.
 
 dnl XXX no floppy available yet
 dnl Booting from Floppy Disk installation media:
@@ -139,12 +137,16 @@ dnl	MACHINE models.
 	you should choose the terminal type from amongst those listed.
 	(If your terminal type is xterm, just use vt100).
 
-	After entering the terminal type you will be greeted by a
-	welcome message and asked if you really want to continue.
-	Assuming you answered yes, the install program will then tell
-	you which disks of that type it can install on, and ask you
-	which it should use.  The name of the disk is typically "sd0".
-	Reply with the name of your disk.
+	After entering the terminal type you will be asked whether you
+	wish to do an "(I)nstall" or an "(U)pgrade".  Enter 'I' for a
+	fresh install or 'U' to upgrade an existing installation.
+
+	You will be presented with a welcome message and asked if
+	you really want to continue. Assuming you answered yes, the
+	install program will then tell you which disks of that type
+	it can install on, and ask you which it should use.  The name
+	of the disk is typically "sd0" for SCSI drives and "wd0" for
+	IDE drives. Reply with the name of your disk.
 
 	Next you will have to edit or create a disklabel for the disk
 	OpenBSD is being installed on.  The installation script will
