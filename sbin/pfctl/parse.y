@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.287 2003/01/11 22:00:00 mcbride Exp $	*/
+/*	$OpenBSD: parse.y,v 1.288 2003/01/13 08:17:47 camield Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -495,10 +495,8 @@ option		: SET OPTIMIZATION STRING		{
 		;
 
 string		: string STRING				{
-			if (asprintf(&$$, "%s %s", $1, $2) == -1) {
-				yyerror("asprintf failed");
-				YYERROR;
-			}
+			if (asprintf(&$$, "%s %s", $1, $2) == -1)
+				err(1, "string: asprintf");
 			free($1);
 			free($2);
 		}
@@ -508,10 +506,8 @@ string		: string STRING				{
 varset		: STRING PORTUNARY string		{
 			if (pf->opts & PF_OPT_VERBOSE)
 				printf("%s = \"%s\"\n", $1, $3);
-			if (symset($1, $3) == -1) {
-				yyerror("cannot store variable %s", $1);
-				YYERROR;
-			}
+			if (symset($1, $3) == -1)
+				err(1, "cannot store variable %s", $1);
 		}
 		;
 
@@ -2043,10 +2039,8 @@ state_opt_item	: MAXIMUM number		{
 		;
 
 label		: LABEL STRING			{
-			if (($$ = strdup($2)) == NULL) {
-				yyerror("rule label strdup() failed");
-				YYERROR;
-			}
+			if (($$ = strdup($2)) == NULL)
+				err(1, "rule label strdup() failed");
 		}
 		;
 
@@ -2124,9 +2118,9 @@ redirpool	: /* empty */			{ $$ = NULL; }
 
 hashkey		: /* empty */
 		{
-			$$ = malloc(sizeof(struct pf_poolhashkey));
+			$$ = calloc(1, sizeof(struct pf_poolhashkey));
 			if ($$ == NULL)
-				err(1, "pooltype: malloc");
+				err(1, "hashkey: calloc");
 			$$->key32[0] = arc4random();
 			$$->key32[1] = arc4random();
 			$$->key32[2] = arc4random();
@@ -2426,10 +2420,8 @@ binatrule	: no BINAT interface af proto FROM host TO ipspec redirection
 
 				TAILQ_INIT(&binat.rpool.list);
 				pa = calloc(1, sizeof(struct pf_pooladdr));
-				if (pa == NULL) {
-					yyerror("calloc");
-					YYERROR;
-				}
+				if (pa == NULL)
+					err(1, "binat: calloc");
 				pa->addr.addr = $10->host->addr;
 				pa->ifname[0] = 0;
 				TAILQ_INSERT_TAIL(&binat.rpool.list,
@@ -2575,10 +2567,8 @@ route_host	: STRING			{
 			$$ = calloc(1, sizeof(struct node_host));
 			if ($$ == NULL)
 				err(1, "route_host: calloc");
-			if (($$->ifname = strdup($1)) == NULL) {
-				yyerror("routeto: strdup");
-				YYERROR;
-			}
+			if (($$->ifname = strdup($1)) == NULL)
+				err(1, "routeto: strdup");
 			if (ifa_exists($$->ifname) == NULL) {
 				yyerror("routeto: unknown interface %s",
 				    $$->ifname);
@@ -2589,10 +2579,8 @@ route_host	: STRING			{
 		}
 		| '(' STRING host ')'		{
 			$$ = $3;
-			if (($$->ifname = strdup($2)) == NULL) {
-				yyerror("routeto: strdup");
-				YYERROR;
-			}
+			if (($$->ifname = strdup($2)) == NULL)
+				err(1, "routeto: strdup");
 			if (ifa_exists($$->ifname) == NULL) {
 				yyerror("routeto: unknown interface %s",
 				    $$->ifname);
@@ -3328,10 +3316,8 @@ expand_rule(struct pf_rule *r,
 		TAILQ_INIT(&r->rpool.list);
 		for (h = rpool_hosts; h != NULL; h = h->next) {
 			pa = calloc(1, sizeof(struct pf_pooladdr));
-			if (pa == NULL) {
-				yyerror("calloc");
-				error++;
-			}
+			if (pa == NULL)
+				err(1, "expand_rule: calloc");
 			pa->addr.addr = h->addr;
 			if (h->ifname != NULL) {
 				if (strlcpy(pa->ifname, h->ifname,
@@ -3429,10 +3415,8 @@ expand_nat(struct pf_rule *n,
 		TAILQ_INIT(&n->rpool.list);
 		for (h = rpool_hosts; h != NULL; h = h->next) {
 			pa = calloc(1, sizeof(struct pf_pooladdr));
-			if (pa == NULL) {
-				yyerror("calloc");
-				error++;
-			}
+			if (pa == NULL)
+				err(1, "expand_nat: calloc");
 			pa->addr.addr = h->addr;
 			pa->ifname[0] = 0;
 			TAILQ_INSERT_TAIL(&n->rpool.list, pa, entries);
@@ -3510,10 +3494,8 @@ expand_rdr(struct pf_rule *r, struct node_if *interfaces,
 		TAILQ_INIT(&r->rpool.list);
 		for (h = rpool_hosts; h != NULL; h = h->next) {
 			pa = calloc(1, sizeof(struct pf_pooladdr));
-			if (pa == NULL) {
-				yyerror("calloc");
-				error++;
-			}
+			if (pa == NULL)
+				err(1, "expand_rdr: calloc");
 			pa->addr.addr = h->addr;
 			pa->ifname[0] = 0;
 			TAILQ_INSERT_TAIL(&r->rpool.list, pa, entries);
@@ -4050,10 +4032,8 @@ ifa_load(void)
 			n->ifindex = ((struct sockaddr_in6 *)
 			    ifa->ifa_addr)->sin6_scope_id;
 		}
-		if ((n->ifname = strdup(ifa->ifa_name)) == NULL) {
-			yyerror("strdup failed");
-			exit(1);
-		}
+		if ((n->ifname = strdup(ifa->ifa_name)) == NULL)
+			err(1, "ifa_load: strdup");
 		n->next = NULL;
 		n->tail = n;
 		if (h == NULL)
