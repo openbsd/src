@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.70 2003/09/06 18:20:23 miod Exp $
+#	$OpenBSD: bsd.own.mk,v 1.71 2003/12/27 23:23:21 espie Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -35,6 +35,9 @@ ELF_TOOLCHAIN?=	yes
 .else
 ELF_TOOLCHAIN?=	no
 .endif
+
+# don't use yet.
+USE_GCC3?=no
 
 # where the system object and source trees are kept; can be configurable
 # by the user in case they want them in ~/foosrc and ~/fooobj, for example
