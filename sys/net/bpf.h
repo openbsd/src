@@ -1,5 +1,5 @@
-/*	$OpenBSD: bpf.h,v 1.4 1996/07/12 07:57:41 mickey Exp $	*/
-/*	$NetBSD: bpf.h,v 1.14 1996/05/02 00:57:28 cgd Exp $	*/
+/*	$OpenBSD: bpf.h,v 1.5 1997/03/17 16:29:37 niklas Exp $	*/
+/*	$NetBSD: bpf.h,v 1.15 1996/12/13 07:57:33 mikel Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -50,11 +50,11 @@
 typedef	int32_t	bpf_int32;
 typedef u_int32_t	bpf_u_int32;
 /*
- * Alignment macros.  BPF_WORDALIGN rounds up to the next 
- * even multiple of BPF_ALIGNMENT. 
+ * Alignment macros.  BPF_WORDALIGN rounds up to the next even multiple of
+ * BPF_ALIGNMENT (which is at least as much as what a timeval needs).
  */
-#define BPF_ALIGNMENT sizeof(u_int32_t)
-#define BPF_WORDALIGN(x) (((x)+(BPF_ALIGNMENT-1))&~(BPF_ALIGNMENT-1))
+#define BPF_ALIGNMENT sizeof(long)
+#define BPF_WORDALIGN(x) (((x) + (BPF_ALIGNMENT - 1)) & ~(BPF_ALIGNMENT - 1))
 
 #define BPF_MAXINSNS 512
 #define BPF_MAXBUFSIZE 0x8000
