@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.27 2002/05/22 03:23:59 jason Exp $
+dnl	$OpenBSD: hardware,v 1.28 2002/05/29 01:52:47 fgsch Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	- SBUS based workstations:
 		Ultra 1
@@ -102,7 +102,7 @@ Supported devices {:-include-:}:
 		PCI video boards:
 			ATI Rage (vgafb) (8 bit color, unaccelerated)
 			  (24bit color, accelerated on some machines)
-		UPA Creator/Creator3D (24 bit color, unaccelerated)
+		UPA Creator/Creator3D/Elite3D (24 bit color, unaccelerated)
 
 	Miscellaneous devices:
 		EBus beeper (beeper)
