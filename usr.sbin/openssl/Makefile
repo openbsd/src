@@ -30,7 +30,7 @@ CFLAGS+= -DB_ENDIAN
 
 CFLAGS+= -DMONOLITH -DOPENSSL_NO_IDEA -DTERMIOS -DANSI_SOURCE -DOPENSSL_NO_RC5
 CFLAGS+= -DOPENSSL_NO_MDC2
-CFLAGS+= -I/usr/include/ssl -I${SSLEAY_SRC_TOP}
+CFLAGS+= -I${SSLEAY_SRC_TOP}
 
 SRCS=	verify.c asn1pars.c req.c dgst.c dh.c enc.c passwd.c gendh.c errstr.c\
 	pkcs7.c crl2p7.c crl.c ca.c \
