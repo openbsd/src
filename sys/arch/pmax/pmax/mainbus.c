@@ -1,3 +1,4 @@
+/*	$OpenBSD: mainbus.c,v 1.9 2000/03/12 19:25:13 maja Exp $	*/
 /*	$NetBSD: mainbus.c,v 1.18 1996/10/13 03:39:51 christos Exp $	*/
 
 /*
@@ -123,8 +124,8 @@ mbattach(parent, self, aux)
 	 *
 	 * For now, we only have one. Attach it directly.
 	 */
-	/*nca.ca_name = "cpu";*/
-	bcopy("cpu", nca.ca_name, sizeof(nca.ca_name));
+
+	nca.ca_name = "cpu";
 	nca.ca_slot = 0;
 	nca.ca_offset = 0;
 	nca.ca_addr = 0;
