@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.40 2005/02/25 20:30:36 jfb Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.41 2005/03/06 21:09:00 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -102,7 +102,7 @@ static struct cvs_cmd {
 		NULL,
 	},
 	{
-		CVS_OP_ADMIN, "admin",    { "adm", "rcs" }, NULL,
+		CVS_OP_ADMIN, "admin",    { "adm", "rcs" }, cvs_admin,
 		"",
 		"",
 		"Administration front end for rcs",
