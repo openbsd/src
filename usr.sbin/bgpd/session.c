@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.132 2004/03/10 14:54:11 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.133 2004/03/10 15:15:48 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -138,13 +138,15 @@ setup_listener(void)
 
 int
 session_main(struct bgpd_config *config, struct peer *cpeers,
-    struct filter_head *rules, int pipe_m2s[2], int pipe_s2r[2])
+    struct network_head *net_l, struct filter_head *rules,
+    int pipe_m2s[2], int pipe_s2r[2])
 {
 	int			 nfds, i, j, timeout, idx_peers;
 	pid_t			 pid;
 	time_t			 nextaction;
 	struct passwd		*pw;
 	struct peer		*p, *peer_l[OPEN_MAX], *last, *next;
+	struct network		*net;
 	struct filter_rule	*r;
 	struct pollfd		 pfd[OPEN_MAX];
 	struct ctl_conn		*ctl_conn;
@@ -204,6 +206,12 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 		free(r);
 	}
 	free(rules);
+
+	/* network list is not used in the SE */
+	while ((net = TAILQ_FIRST(net_l)) != NULL) {
+		TAILQ_REMOVE(net_l, net, network_l);
+		free(net);
+	}
 
 	while (session_quit == 0) {
 		bzero(&pfd, sizeof(pfd));
