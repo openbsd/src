@@ -1,4 +1,4 @@
-#	$OpenBSD: na.phone,v 1.10 1999/03/07 20:52:18 deraadt Exp $
+#	$OpenBSD: na.phone,v 1.11 1999/06/29 15:11:23 mickey Exp $
 #	@(#)na.phone	8.1 (Berkeley) 6/8/93
 #
 # Area Code : City : State/Province : State/Province Abbrev.
@@ -216,6 +216,7 @@
 618:Mt. Vernon:Illinois:IL
 619:San Diego:California:CA
 630:Chicago Suburbs (Cellular and Pagers):Illinois:IL
+646:Manhattan:New York:NY
 664::Montserrat:
 701::North Dakota:ND
 702::Nevada:NV
