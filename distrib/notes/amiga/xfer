@@ -1,7 +1,7 @@
 Installation is supported from several media types, including:
 
-	AmigaDOS partitions
-	FFS partitions
+	AmigaDOS Fast file system partitions
+	Berkeley FFS partitions
 	Tape
 	Remote NFS partition
 	FTP
@@ -30,10 +30,10 @@ To prepare for installing via an AmigaDOS partition:
 
 	To install OpenBSD from an AmigaDOS partition, you need to
 	get the OpenBSD distribution sets you wish to install
-	on your system on to an AmigaDOS partition.  All of the
-	set_name.tar.gz pieces can be placed in a single directory
-	instead of separate ones for each distribution set.  This
-	will also simplify the installation work later on.
+	on your system on to an AmigaDOS fast file system partition.
+	All of the set_name.tar.gz pieces can be placed in a single
+	directory instead of separate ones for each distribution set.
+	This will also simplify the installation work later on.
 
 	Note where you place the files, you will need this later.
 	Also, it might be a good idea to type down the AmigaDOS

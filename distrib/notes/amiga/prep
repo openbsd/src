@@ -12,7 +12,7 @@ Preparing you hard disk with HDToolBox:
 	up here you could lose everything on all the drives that 
 	you configure.  It is therefore advised that you:
 
-		Write down your current configurations.  Do this
+		Write down your current configuration.  Do this
 		by examining each partition on the drive and the
 		drives parameters (from Change drive type.)
 
@@ -90,7 +90,7 @@ Choosing installation root filesystem type:
 
 	The OpenBSD/amiga operating system can be installed using two
 	different root filesystems: ramdisk or miniroot.  The ramdisk
-	is strongly recommended as it requires less preparation work.
+	is strongly recommended as it requires less preparatory work.
 	However the ramdisk kernel requires that your system has at
 	least 6MB of fastmem.  The miniroot requires less (installs on
 	a 4MB system should be possible) and has tools to make SLIP or

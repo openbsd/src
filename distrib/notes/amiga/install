@@ -125,7 +125,7 @@ begin again from scratch.
 		link0 -link1	Use AUI port
 		link0 link1		Use UTP (twisted pair) port
 
-	After all network interfaces has been configured the install pro-
+	After all network interfaces have been configured the install pro-
 	gram will ask for a default route and IP address of the primary
 	name server to use.  You will also be presented with an opportunity
 	to edit the host table.

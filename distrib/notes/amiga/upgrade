@@ -76,7 +76,7 @@ To upgrade your system, follow the following instructions:
 	However, if you hit it at an inopportune moment, your system
 	may be left in an inconsistent (and possibly unusable) state.
 
-	The upgrade program will then chack & mount your root filesystem
+	The upgrade program will then check & mount your root filesystem
 	under /mnt and grab some configuration info from it for the
 	continued upgrade process.  You'll be asked if the network
 	should be enabled at this point.  After that is done the rest

@@ -40,7 +40,7 @@ Installation/upgrade miniroot file system:
 	then mounting your root and /usr partitions and getting
 	ready to extract (and possibly first fetching) the distribution
 	sets.  There is enough on this file system to allow you to
-	make a slip or ppp connection, configure an ethernet, mount an
+	make a slip or ppp connection, configure an Ethernet, mount an
 	NFS file system or ftp.  You can also load distribution sets from
 	a SCSI tape or from one of your existing AmigaDOS partitions.
 
