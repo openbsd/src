@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.11 2004/11/07 12:19:20 espie Exp $
+# $OpenBSD: Update.pm,v 1.12 2004/11/07 13:19:48 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -222,10 +222,13 @@ sub split_libs
 	return $splitted;
 }
 
-sub print_depends_closure
+sub walk_depends_closure
 {
-	my @todo = @_;
+	my ($start, $name) = @_;
+	my @todo = ($start);
 	my $done = {};
+
+	my $write = OpenBSD::RequiredBy->new($name);
 
 	while (my $pkg = shift @todo) {
 		$done->{$pkg} = 1;
@@ -235,7 +238,11 @@ sub print_depends_closure
 			for my $pkg2 (@$list) {
 				next if $done->{$pkg2};
 				push(@todo, $pkg2);
-				print $pkg2, "\n";
+				$write->add($pkg2);
+				my $contents = installed_info($pkg2).CONTENTS;
+				my $plist = OpenBSD::PackingList->fromfile($contents);
+				OpenBSD::PackingElement::PkgDep->add($plist, $name);
+				$plist->tofile($contents);
 				$done->{$pkg2} = 1;
 			}
 		}
@@ -256,9 +263,18 @@ sub save_old_libraries
 
 	if (%$libs) {
 		my $stub_list = split_libs($old_plist, $libs);
-		print_depends_closure($old_plist->pkgname());
-		$stub_list->write(\*STDOUT);
-		exit(1);
+		my $stub_name = $stub_list->pkgname();
+		my $dest = installed_info($stub_name);
+		mkdir($dest);
+		my $oldname = $old_plist->pkgname();
+		open my $comment, '>', $dest.COMMENT;
+		print $comment "Stub libraries for $oldname";
+		close $comment;
+		link($dest.COMMENT, $dest.DESC);
+		$stub_list->tofile($dest.CONTENTS);
+		$old_plist->tofile(installed_info($oldname).CONTENTS);
+
+		walk_depends_closure($old_plist->pkgname(), $stub_name);
 	}
 }
 
