@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lasi.4,v 1.6 2001/10/05 14:45:53 mpech Exp $
+.\"	$OpenBSD: lasi.4,v 1.7 2002/04/03 22:44:25 mickey Exp $
 .\"
 .\"
 .\" Copyright (c) 1999 Michael Shalayeff
@@ -35,14 +35,17 @@
 .Sh NAME
 .Nm lasi
 .Nd "Core" bus controller and I/O subsystem as present on HP9000
-712/*, 725/75, 725/100, 743/*, 744/*, 745/*
-workstations
+712/*, 715/64/80/100/100XC, 725/64/80/100, 743/*, 744/*, 745/*
+workstations and single-board computers.
 .Sh SYNOPSIS
 .Cd "lasi0   at mainbus? irq 28"
 .Cd "gscbus* at lasi?"
 .Sh INTRODUCTION
-The supported Core bus controllers are those present on PA7100LC-based
-workstations (usually), and based upon LSI's macrochip that includes:
+The supported Core bus controllers are those used in conjuction with
+.Tn PA7100LC
+and
+.Tn PA7300LC
+CPUs and based upon LSI's macrochip that includes:
 .Bl -bullet -compact
 .It
 Core bus controller
@@ -53,19 +56,23 @@ Interrupt Controller
 .It
 Real Time Clock Interface
 .It
+Power System support
+.It
 RAM and Flash EEPROM controllers
 .It
 Two PS/2 ports
 .It
 RS-232 and Centronics I/O ports
 .It
-i82596 Ethernet Controller
+i82596CA Ethernet Controller
 .It
 NCR53C710 SCSI IO Processor
 .It
 Serial Interface for the CS4216 Audio Codec
 .It
 Interface for the WD37C65C floppy drive controller
+.It
+Optional Telephone interface (voice/modem/fax two channels)
 .El
 .Sh SEE ALSO
 .Xr wax 4 ,
