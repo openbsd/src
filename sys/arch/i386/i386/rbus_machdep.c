@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbus_machdep.c,v 1.4 2000/10/31 18:56:40 deraadt Exp $ */
+/*	$OpenBSD: rbus_machdep.c,v 1.5 2000/11/21 14:23:33 aaron Exp $ */
 /*	$NetBSD: rbus_machdep.c,v 1.2 1999/10/15 06:43:06 haya Exp $	*/
 
 /*
@@ -112,7 +112,11 @@ _bus_space_unmap(t, bsh, size, adrp)
       /*
        * Free the kernel virtual mapping.
        */
+#if defined(UVM)
       uvm_km_free(kernel_map, va, endva - va);
+#else
+      kmem_free(kernel_map, va, endva - va);
+#endif
     }
   } else {
     panic("_i386_memio_unmap: bad bus space tag");
