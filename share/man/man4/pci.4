@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci.4,v 1.49 2001/10/24 04:08:44 deraadt Exp $
+.\"	$OpenBSD: pci.4,v 1.50 2001/10/24 17:35:23 millert Exp $
 .\"	$NetBSD: pci.4,v 1.29 2000/04/01 00:32:23 tsarna Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -224,7 +224,8 @@ VIA Technologies VT3043 and VT86C100A Ethernet interfaces.
 .It Xr wb 4
 Winbond W89C840F Ethernet interfaces.
 .It Xr wi 4
-WaveLAN/IEEE and PRISM-II 802.11DS wireless network interfaces.
+WaveLAN/IEEE and PRISM-II 802.11DS wireless network interfaces behind
+a PLX 905x-based dumb PCMCIA->PCI bridge.
 .It Xr wx 4
 Intel Gigabit Ethernet interfaces.
 .It Xr xl 4
