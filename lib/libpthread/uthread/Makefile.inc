@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.15 2003/10/22 00:25:42 brad Exp $
+# $OpenBSD: Makefile.inc,v 1.16 2003/12/23 22:37:03 brad Exp $
 # $FreeBSD: Makefile.inc,v 1.19 1999/08/28 00:03:19 peter Exp $
 
 # uthread sources
@@ -30,6 +30,7 @@ SRCS+= \
 	uthread_cancel.c \
 	uthread_clean.c \
 	uthread_close.c \
+	uthread_concurrency.c \
 	uthread_cond.c \
 	uthread_condattr_destroy.c \
 	uthread_condattr_init.c \

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread.h,v 1.17 2003/02/27 07:03:21 cloder Exp $	*/
+/*	$OpenBSD: pthread.h,v 1.18 2003/12/23 22:37:03 brad Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 by Chris Provenzano, proven@mit.edu
@@ -306,6 +306,8 @@ int		pthread_getschedparam(pthread_t pthread, int *policy,
 		    struct sched_param * param);
 int		pthread_setschedparam(pthread_t pthread, int policy,
 		    const struct sched_param * param);
+int		pthread_getconcurrency(void);
+int		pthread_setconcurrency(int);
 
 #if defined(_POSIX_THREAD_PRIORITY_SCHEDULING)
 int		pthread_attr_getinheritsched(const pthread_attr_t *, int *);
