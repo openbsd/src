@@ -1790,6 +1790,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/times.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/timex.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/tprintf.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/sys/tree.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/tty.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/ttychars.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/ttycom.ph

@@ -1798,6 +1798,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/times.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/timex.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/tprintf.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/tree.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/tty.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/ttychars.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/ttycom.ph

@@ -588,6 +588,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/sched.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/swap.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/timeout.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/sys/tree.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/termcap.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/ufs/ufs/extattr.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/usbhid.ph

@@ -1315,6 +1315,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/times.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/timex.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/tprintf.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/sys/tree.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/tty.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/ttychars.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/ttycom.ph

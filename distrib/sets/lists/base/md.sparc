@@ -1431,6 +1431,7 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/times.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/timex.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/tprintf.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/sys/tree.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/tty.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/ttychars.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/ttycom.ph
