@@ -1,4 +1,4 @@
-/*	$OpenBSD: fnmatch.h,v 1.4 1997/09/22 05:25:32 millert Exp $	*/
+/*	$OpenBSD: fnmatch.h,v 1.5 2000/03/24 17:13:23 millert Exp $	*/
 /*	$NetBSD: fnmatch.h,v 1.5 1994/10/26 00:55:53 cgd Exp $	*/
 
 /*-
@@ -40,6 +40,7 @@
 #define	_FNMATCH_H_
 
 #define	FNM_NOMATCH	1	/* Match failed. */
+#define	FNM_NOSYS	2	/* Function not supported (unused). */
 
 #define	FNM_NOESCAPE	0x01	/* Disable backslash escaping. */
 #define	FNM_PATHNAME	0x02	/* Slash must be matched by slash. */
