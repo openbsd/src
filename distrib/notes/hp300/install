@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.19 2002/03/30 22:52:57 miod Exp $
+dnl	$OpenBSD: install,v 1.20 2002/04/08 23:46:46 miod Exp $
 OpenBSDInstallPrelude
 dnl No extra line, this has to stick to the geometry notes paragraph.
 The file `HP-IB.geometry' has geometry information for several HP-IB
@@ -111,10 +111,6 @@ OpenBSDBootMsgs
 	your terminal type is xterm, just use vt100).
 	
 OpenBDSInstallPart3({:- or "hd0" for HPIB/CS80 drives-:})
-
-	Please note that, if you choose to have your root (/) filesystem
-	on a SCSI drive, that only device ID 4, 5 and 6 (that is, sd4,
-	sd5 and sd6 from OpenBSD's point of view) are bootable.
 
 OpenBSDInstallPart4
 
