@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_file.c,v 1.3 1996/05/22 12:01:48 deraadt Exp $	*/
+/*	$OpenBSD: linux_file.c,v 1.4 1996/10/16 12:25:08 deraadt Exp $	*/
 /*	$NetBSD: linux_file.c,v 1.15 1996/05/20 01:59:09 fvdl Exp $	*/
 
 /*
@@ -819,5 +819,5 @@ linux_sys_fdatasync(p, v, retval)
 	struct linux_sys_fdatasync_args /* {
 		syscallarg(int) fd;
 	} */ *uap = v;
-	return sys_fsync(p, v, retval);
+	return sys_fsync(p, uap, retval);
 }
