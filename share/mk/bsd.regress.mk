@@ -1,3 +1,4 @@
+#	$OpenBSD: bsd.regress.mk,v 1.6 2002/01/03 01:47:23 art Exp $
 # No man pages for regression tests.
 NOMAN=
 
