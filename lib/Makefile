@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile,v 1.7 1996/06/02 21:47:01 tholo Exp $
-#	$NetBSD: Makefile,v 1.20 1996/05/12 04:30:18 mhitch Exp $
+#	$OpenBSD: Makefile,v 1.8 1996/06/18 10:07:05 deraadt Exp $
+#	$NetBSD: Makefile,v 1.20.4.1 1996/06/14 17:22:38 cgd Exp $
 
 SUBDIR=	csu libarch libc libcompat libcrypt libcurses libedit libform \
 	libl libm libmenu libocurses libpanel libpcap libresolv librpcsvc \
