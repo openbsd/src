@@ -7,6 +7,8 @@ OPSYS!=	uname -s
 .if (${OPSYS} == "OpenBSD")
 MAN=		libalias.3 
 CFLAGS+=	-DNO_FW_PUNCH
+NOPROFILE=
+NOPIC=
 .else
 SHLIB_MAJOR=	2
 SHLIB_MINOR=	5
