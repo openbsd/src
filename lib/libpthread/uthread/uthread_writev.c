@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_writev.c,v 1.3 1999/11/25 07:01:47 d Exp $	*/
+/*	$OpenBSD: uthread_writev.c,v 1.4 2001/08/11 14:56:07 fgsch Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -136,6 +136,18 @@ writev(int fd, const struct iovec * iov, int iovcnt)
 						p_iov[idx].iov_base += cnt;
 						cnt = 0;
 					}
+				}
+			} else if (n == 0) {
+				/*
+				 * Avoid an infinite loop if the last iov_len is
+				 * 0.
+				 */
+				while (idx < iovcnt && p_iov[idx].iov_len == 0)
+					idx++;
+
+				if (idx == iovcnt) {
+					ret = num;
+					break;
 				}
 			}
 
