@@ -28,7 +28,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: compat.c,v 1.18 2000/07/08 23:17:31 provos Exp $");
+RCSID("$OpenBSD: compat.c,v 1.19 2000/07/09 01:27:32 ho Exp $");
 
 #include "ssh.h"
 #include "packet.h"
@@ -87,7 +87,7 @@ proto_spec(const char *spec)
 	if (spec == NULL)
 		return ret;
 	q = s = xstrdup(spec);
-	for ((p = strsep(&q, SEP)); p; (p = strsep(&q, SEP))) {
+	for ((p = strsep(&q, SEP)); p && *p != '\0'; (p = strsep(&q, SEP))) {
 		switch(atoi(p)) {
 		case 1:
 			if (ret == SSH_PROTO_UNKNOWN)

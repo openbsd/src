@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: readconf.c,v 1.38 2000/07/08 23:17:31 provos Exp $");
+RCSID("$OpenBSD: readconf.c,v 1.39 2000/07/09 01:27:33 ho Exp $");
 
 #include "ssh.h"
 #include "cipher.h"
@@ -590,9 +590,11 @@ parse_int:
 	}
 
 	/* Check that there is no garbage at end of line. */
-	if (strsep(&s, WHITESPACE) != NULL)
-		fatal("%.200s line %d: garbage at end of line.",
-		      filename, linenum);
+	if ((arg = strsep(&s, WHITESPACE)) != NULL && *arg != '\0')
+	{
+		fatal("%.200s line %d: garbage at end of line; \"%.200s\".",
+		      filename, linenum, arg);
+	}
 	return 0;
 }
 
