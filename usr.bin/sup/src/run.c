@@ -1,4 +1,4 @@
-/*	$OpenBSD: run.c,v 1.7 2001/05/02 22:56:52 millert Exp $	*/
+/*	$OpenBSD: run.c,v 1.8 2001/05/04 22:16:15 millert Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -120,7 +120,8 @@ makearglist(ap)
 		}
 		np[i] = va_arg(ap, char *);
 	}
-	while (np[i++] != NULL);
+	while (np[i++] != NULL)
+		;
 	return np;
 }
 
@@ -154,7 +155,7 @@ va_dcl
 int runv (name,argv)
 char *name,**argv;
 {
-	return (dorun (name, argv, 0));
+	return (dorun(name, argv, 0));
 }
 
 int
@@ -184,56 +185,57 @@ va_dcl
 	return (val);
 }
 
-int runvp (name,argv)
-char *name,**argv;
+int runvp (name, argv)
+	char *name, **argv;
 {
-	return (dorun (name, argv, 1));
+	return (dorun(name, argv, 1));
 }
 
-static
-int dorun (name,argv,usepath)
-char *name,**argv;
-int usepath;
+static int
+dorun(name, argv, usepath)
+	char *name,**argv;
+	int usepath;
 {
 	int wpid;
-	register int pid;
-	struct sigaction ignoresig,intsig,quitsig;
+	int pid;
+	struct sigaction ignoresig, intsig, quitsig;
 	int status;
 
 	if ((pid = vfork()) == -1)
 		return(-1);	/* no more process's, so exit with error */
 
 	if (pid == 0) {			/* child process */
-		setegid (getgid());
-		setgid (getgid());
-		seteuid (getuid());
-		setuid (getuid());
+		setegid(getgid());
+		setgid(getgid());
+		seteuid(getuid());
+		setuid(getuid());
 		if (usepath)
 		    execvp(name,argv);
 		else
 		    execv(name,argv);
 		fprintf (stderr,"run: can't exec %s: %s\n",name,
 		    strerror(errno));
-		_exit (0377);
+		_exit(0377);
 	}
 
 	memset(&ignoresig, 0, sizeof ignoresig);
 	ignoresig.sa_handler = SIG_IGN;	/* ignore INT and QUIT signals */
 	sigemptyset(&ignoresig.sa_mask);
 	ignoresig.sa_flags = 0;
-	sigaction (SIGINT,&ignoresig,&intsig);
-	sigaction (SIGQUIT,&ignoresig,&quitsig);
+	sigaction(SIGINT, &ignoresig, &intsig);
+	sigaction(SIGQUIT, &ignoresig, &quitsig);
 	do {
-		wpid = wait3 (&status, WUNTRACED, 0);
-		if (WIFSTOPPED (status)) {
-		    kill (0,SIGTSTP);
+		/* XXX - just give waitpid() pid instead of -1? (millert) */
+		wpid = waitpid(-1, &status, WUNTRACED);
+		if (WIFSTOPPED(status)) {
+		    kill(0, SIGTSTP);
 		    wpid = 0;
 		}
 	} while (wpid != pid && wpid != -1);
-	sigaction (SIGINT,&intsig,0);	/* restore signals */
-	sigaction (SIGQUIT,&quitsig,0);
+	sigaction (SIGINT, &intsig, 0);	/* restore signals */
+	sigaction (SIGQUIT, &quitsig, 0);
 
-	if (WIFSIGNALED (status) || WEXITSTATUS(status) == 0377)
+	if (WIFSIGNALED(status) || WEXITSTATUS(status) == 0377)
 		return (-1);
 
 	return (WEXITSTATUS(status));

@@ -1,4 +1,4 @@
-/*     $OpenBSD: supextern.h,v 1.3 2001/05/02 22:56:53 millert Exp $  */
+/*     $OpenBSD: supextern.h,v 1.4 2001/05/04 22:16:16 millert Exp $  */
 
 #ifndef __P
 #ifdef __STDC__
@@ -64,9 +64,6 @@ int runvp __P((char *, char **));
 int runio __P((char *const[], const char *, const char *, const char *));
 int runiofd __P((char *const[], const int, const int, const int));
 
-/* salloc.c */
-char *salloc __P((const char *));
-
 /* scan.c */
 int getrelease __P((char *));
 void makescanlists __P((void));
@@ -74,6 +71,7 @@ void getscanlists __P((void));
 void cdprefix __P((char *));
 
 /* scm.c */
+int lock_host_file __P((char *));
 int servicesetup __P((char *));
 int service __P((void));
 int serviceprep __P((void));

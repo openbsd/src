@@ -1,4 +1,4 @@
-/*	$OpenBSD: path.c,v 1.4 1997/09/16 11:01:15 deraadt Exp $	*/
+/*	$OpenBSD: path.c,v 1.5 2001/05/04 22:16:15 millert Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -58,47 +58,53 @@
  *	a "/" in between that and the directory part of the path.
  *	If you want to be cute, you can also resolve ".."s at that time.
  *
+ * XXX - this is horrible code (millert)
  */
 #include "supcdefs.h"
 #include "supextern.h"
 
 void
-path (original,direc,file, filen)
-char *original,*direc,*file;
-int filen;
+path(original, direc, file, filen)
+	char *original, *direc, *file;
+	int filen;
 {
-	register char *y;
+	char *y;
 	/* x is direc */
-	register char *p;
+	char *p;
 
 	/* copy and note the end */
 	p = original;
 	y = direc;
-	while ((*y++ = *p++) != '\0') ;		/* copy string */
+	while ((*y++ = *p++) != '\0')
+		;	/* copy string */
 	/* y now points to first char after null */
-	--y;	/* y now points to null */
-	--y;	/* y now points to last char of string before null */
+	--y;		/* y now points to null */
+	--y;		/* y now points to last char of string before null */
 
 	/* chop off trailing / except as first character */
-	while (y>direc && *y == '/') --y;	/* backpedal past / */
+	while (y>direc && *y == '/')
+		--y;	/* backpedal past / */
 	/* y now points to char before first trailing / or null */
 	*(++y) = 0;				/* chop off end of string */
 	/* y now points to null */
 
 	/* find last /, if any.  If found, change to null and bump y */
-	while (y>direc && *y != '/') --y;
+	while (y>direc && *y != '/')
+		--y;
 	/* y now points to / or direc.  Note *direc may be / */
-	if (*y == '/') {
+	if (*y == '/')
 		*y++ = 0;
-	}
 
 	/* find file name part */
-	if (*y)  strncpy (file,y, filen-1);
-	else     strncpy (file,".", filen-1);
-	file[filen-1] = '\0';
+	if (*y)
+		strlcpy(file, y, filen);
+	else
+		strcpy(file, ".");
 
 	/* find directory part */
-	if (direc == y)        strcpy (direc,".");
-	else if (*direc == 0)  strcpy (direc,"/");
+	if (direc == y)
+		strcpy(direc, ".");
+	else if (*direc == 0)
+		strcpy(direc, "/");
 	/* else direc already has proper value */
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nxtarg.c,v 1.4 2001/05/02 22:56:52 millert Exp $	*/
+/*	$OpenBSD: nxtarg.c,v 1.5 2001/05/04 22:16:15 millert Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -60,21 +60,26 @@
 char _argbreak;
 
 char *nxtarg (q,brk)
-char **q,*brk;
+	char **q,*brk;
 {
-	register char *front,*back;
+	char *front, *back;
+
 	front = *q;			/* start of string */
 	/* leading blanks and tabs */
-	while (*front && (*front == ' ' || *front == '\t')) front++;
+	while (*front && (*front == ' ' || *front == '\t'))
+		front++;
 	/* find break character at end */
-	if (brk == 0)  brk = " ";
+	if (brk == 0)
+		brk = " ";
 	back = skipto (front, brk);
 	_argbreak = *back;
 	*q = (*back ? back+1 : back);	/* next arg start loc */
 	/* elim trailing blanks and tabs */
 	back -= 1;
-	while ((back >= front) && (*back == ' ' || *back == '\t')) back--;
+	while ((back >= front) && (*back == ' ' || *back == '\t'))
+		back--;
 	back++;
-	if (*back)  *back = '\0';
+	if (*back)
+		*back = '\0';
 	return (front);
 }

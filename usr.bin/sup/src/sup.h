@@ -1,4 +1,4 @@
-/*	$OpenBSD: sup.h,v 1.7 2001/05/02 22:56:53 millert Exp $	*/
+/*	$OpenBSD: sup.h,v 1.8 2001/05/04 22:16:16 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -180,9 +180,9 @@ struct treestruct {
 	int Tflags;			/* flags of file */
 	int Tmode;			/* st_mode of file */
 	char *Tuser;			/* owner of file */
-	int Tuid;			/* owner id of file */
+	uid_t Tuid;			/* owner id of file */
 	char *Tgroup;			/* group of file */
-	int Tgid;			/* group id of file */
+	gid_t Tgid;			/* group id of file */
 	int Tctime;			/* inode modification time */
 	int Tmtime;			/* data modification time */
 	struct treestruct *Tlink;	/* tree of link names */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: stree.c,v 1.7 2001/04/29 21:52:15 millert Exp $	*/
+/*	$OpenBSD: stree.c,v 1.8 2001/05/04 22:16:16 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -76,29 +76,34 @@ Static int Tprintone __P((TREE *, void *));
  *************************************************************/
 
 void
-Tfree (t)
-register TREE **t;
+Tfree(t)
+	TREE **t;
 {
-	if (*t == NULL)  return;
-	Tfree (&((*t)->Tlink));
-	Tfree (&((*t)->Texec));
-	Tfree (&((*t)->Tlo));
-	Tfree (&((*t)->Thi));
-	if ((*t)->Tname)  free ((*t)->Tname);
-	if ((*t)->Tuser)  free ((*t)->Tuser);
-	if ((*t)->Tgroup)  free ((*t)->Tgroup);
-	free (*(char **)t);
+	if (*t == NULL)
+		return;
+	Tfree(&((*t)->Tlink));
+	Tfree(&((*t)->Texec));
+	Tfree(&((*t)->Tlo));
+	Tfree(&((*t)->Thi));
+	if ((*t)->Tname)
+		free((*t)->Tname);
+	if ((*t)->Tuser)
+		free((*t)->Tuser);
+	if ((*t)->Tgroup)
+		free((*t)->Tgroup);
+	free(*t);
 	*t = NULL;
 }
 
-Static
-TREE *Tmake (p)
-char *p;
+Static TREE *
+Tmake(p)
+	char *p;
 {
-	register TREE *t;
-	t = (TREE *) malloc (sizeof (TREE));
+	TREE *t;
+
+	t = (TREE *) malloc(sizeof(TREE));
 	if (t != NULL) {
-		t->Tname = (p == NULL) ? NULL : salloc (p);
+		t->Tname = (p == NULL) ? NULL : strdup(p);
 		t->Tflags = 0;
 		t->Tuid = 0;
 		t->Tgid = 0;
@@ -116,172 +121,186 @@ char *p;
 	return (t);
 }
 
-Static
-TREE *Trotll (tp,tl)
-register TREE *tp,*tl;
+Static TREE *
+Trotll(tp, tl)
+	TREE *tp, *tl;
 {
-    tp->Tlo = tl->Thi;
-    tl->Thi = tp;
-    tp->Tbf = tl->Tbf = 0;
-    return(tl);
+
+	tp->Tlo = tl->Thi;
+	tl->Thi = tp;
+	tp->Tbf = tl->Tbf = 0;
+	return(tl);
 }
 
-Static
-TREE *Trotlh (tp,tl)
-register TREE *tp,*tl;
+Static TREE *
+Trotlh (tp,tl)
+	TREE *tp, *tl;
 {
-    register TREE *th;
+	TREE *th;
 
-    th = tl->Thi;
-    tp->Tlo = th->Thi;
-    tl->Thi = th->Tlo;
-    th->Thi = tp;
-    th->Tlo = tl;
-    tp->Tbf = tl->Tbf = 0;
-    if (th->Tbf == 1)
-	tp->Tbf = -1;
-    else if (th->Tbf == -1)
-	tl->Tbf = 1;
-    th->Tbf = 0;
-    return(th);
+	th = tl->Thi;
+	tp->Tlo = th->Thi;
+	tl->Thi = th->Tlo;
+	th->Thi = tp;
+	th->Tlo = tl;
+	tp->Tbf = tl->Tbf = 0;
+	if (th->Tbf == 1)
+		tp->Tbf = -1;
+	else if (th->Tbf == -1)
+		tl->Tbf = 1;
+	th->Tbf = 0;
+	return (th);
 }
 
-Static
-TREE *Trothl (tp,th)
-register TREE *tp,*th;
+Static TREE *
+Trothl(tp, th)
+	TREE *tp, *th;
 {
-    register TREE *tl;
+	TREE *tl;
 
-    tl = th->Tlo;
-    tp->Thi = tl->Tlo;
-    th->Tlo = tl->Thi;
-    tl->Tlo = tp;
-    tl->Thi = th;
-    tp->Tbf = th->Tbf = 0;
-    if (tl->Tbf == -1)
-	tp->Tbf = 1;
-    else if (tl->Tbf == 1)
-	th->Tbf = -1;
-    tl->Tbf = 0;
-    return(tl);
+	tl = th->Tlo;
+	tp->Thi = tl->Tlo;
+	th->Tlo = tl->Thi;
+	tl->Tlo = tp;
+	tl->Thi = th;
+	tp->Tbf = th->Tbf = 0;
+	if (tl->Tbf == -1)
+		tp->Tbf = 1;
+	else if (tl->Tbf == 1)
+		th->Tbf = -1;
+	tl->Tbf = 0;
+	return (tl);
 }
 
-Static
-TREE *Trothh (tp,th)
-register TREE *tp,*th;
+Static TREE *
+Trothh(tp, th)
+	TREE *tp, *th;
 {
-    tp->Thi = th->Tlo;
-    th->Tlo = tp;
-    tp->Tbf = th->Tbf = 0;
-    return(th);
+
+	tp->Thi = th->Tlo;
+	th->Tlo = tp;
+	tp->Tbf = th->Tbf = 0;
+	return (th);
 }
 
 Static void
-Tbalance (t)
-TREE **t;
+Tbalance(t)
+	TREE **t;
 {
-    if ((*t)->Tbf < 2 && (*t)->Tbf > -2)
-	return;
-    if ((*t)->Tbf > 0) {
-	if ((*t)->Tlo->Tbf > 0)
-	    *t = Trotll(*t, (*t)->Tlo);
-	else
-	    *t = Trotlh(*t, (*t)->Tlo);
-    } else {
-	if ((*t)->Thi->Tbf > 0)
-	    *t = Trothl(*t, (*t)->Thi);
-	else
-	    *t = Trothh(*t, (*t)->Thi);
-    }
+
+	if ((*t)->Tbf < 2 && (*t)->Tbf > -2)
+		return;
+	if ((*t)->Tbf > 0) {
+		if ((*t)->Tlo->Tbf > 0)
+			*t = Trotll(*t, (*t)->Tlo);
+		else
+			*t = Trotlh(*t, (*t)->Tlo);
+	} else {
+		if ((*t)->Thi->Tbf > 0)
+			*t = Trothl(*t, (*t)->Thi);
+		else
+			*t = Trothh(*t, (*t)->Thi);
+	}
 }
 
-Static
-TREE *Tinsertavl (t,p,find,dh)
-TREE **t;
-char *p;
-int find;
-int *dh;
+Static TREE *
+Tinsertavl(t, p, find, dh)
+	TREE **t;
+	char *p;
+	int find;
+	int *dh;
 {
-	register TREE *newt;
-	register int cmp;
+	TREE *newt;
+	int cmp;
 	int deltah;
 
 	if (*t == NULL) {
-	    if ((*t = Tmake (p)) != NULL)
-	    	*dh = 1;
-	    return (*t);
+		if ((*t = Tmake(p)) != NULL)
+			*dh = 1;
+		return (*t);
 	}
 	if ((cmp = strcmp(p, (*t)->Tname)) == 0) {
-	    if (!find)  return (NULL);	/* node already exists */
-	    *dh = 0;
-	    return (*t);
+		if (!find)
+			return (NULL);	/* node already exists */
+		*dh = 0;
+		return (*t);
 	} else if (cmp < 0) {
-	    if ((newt = Tinsertavl (&((*t)->Tlo),p,find,&deltah)) == NULL)
-		return (NULL);
+	    if ((newt = Tinsertavl(&((*t)->Tlo), p, find, &deltah)) == NULL)
+		    return (NULL);
 	    (*t)->Tbf += deltah;
 	} else {
-	    if ((newt = Tinsertavl (&((*t)->Thi),p,find,&deltah)) == NULL)
-		return (NULL);
-	    (*t)->Tbf -= deltah;
+		if ((newt = Tinsertavl(&((*t)->Thi), p, find, &deltah)) == NULL)
+			return (NULL);
+		(*t)->Tbf -= deltah;
 	}
 	Tbalance(t);
-	if ((*t)->Tbf == 0) deltah = 0;
+	if ((*t)->Tbf == 0)
+		deltah = 0;
 	*dh = deltah;
 	return (newt);
 }
 
-TREE *Tinsert (t,p,find)
-TREE **t;
-register char *p;
-int find;
+TREE *
+Tinsert(t, p, find)
+	TREE **t;
+	char *p;
+	int find;
 {
 	int deltah;
 
 	if (p != NULL && p[0] == '.' && p[1] == '/') {
 		p += 2;
-		while (*p == '/') p++;
-		if (*p == 0) p = ".";
+		while (*p == '/')
+			p++;
+		if (*p == 0)
+			p = ".";
 	}
-	return (Tinsertavl (t,p,find,&deltah));
+	return (Tinsertavl(t, p, find, &deltah));
 }
 
-TREE *Tsearch (t,p)
-TREE *t;
-char *p;
+TREE *
+Tsearch(t, p)
+	TREE *t;
+	char *p;
 {
-	register TREE *x;
-	register int cmp;
+	TREE *x;
+	int cmp;
 
 	x = t;
 	while (x) {
-		cmp = strcmp (p,x->Tname);
-		if (cmp == 0)  return (x);
-		if (cmp < 0)	x = x->Tlo;
-		else		x = x->Thi;
+		cmp = strcmp(p, x->Tname);
+		if (cmp == 0)
+			return (x);
+		if (cmp < 0)
+			x = x->Tlo;
+		else
+			x = x->Thi;
 	}
 	return (NULL);
 }
 
-TREE *Tlookup (t,p)
-TREE *t;
-char *p;
+TREE *
+Tlookup (t, p)
+	TREE *t;
+	char *p;
 {
-	register TREE *x;
+	TREE *x;
 	char buf[MAXPATHLEN];
 
 	if (p == NULL)
 		return (NULL);
 	if (p[0] == '.' && p[1] == '/') {
 		p += 2;
-		while (*p == '/') p++;
-		if (*p == 0) p = ".";
+		while (*p == '/')
+			p++;
+		if (*p == 0)
+			p = ".";
 	}
-	if ((x = Tsearch (t,p)) != NULL)
+	if ((x = Tsearch(t, p)) != NULL)
 		return (x);
-	if (*p != '/' && (x = Tsearch (t,".")) != NULL)
+	if (*p != '/' && (x = Tsearch(t, ".")) != NULL)
 		return (x);
-	(void) strncpy(buf, p, sizeof(buf)-1);
-	buf[sizeof buf-1] = '\0';
+	(void) strlcpy(buf, p, sizeof(buf));
 	while ((p = strrchr(buf, '/')) != NULL) {
 		while (p >= buf && *(p-1) == '/')
 			p--;
@@ -289,7 +308,7 @@ char *p;
 			*(p+1) = '\0';
 		else
 			*p = '\0';
-		if ((x = Tsearch (t,buf)) != NULL)
+		if ((x = Tsearch(t, buf)) != NULL)
 			return (x);
 		if (p == buf)
 			break;
@@ -299,24 +318,24 @@ char *p;
 
 Static int process_level;
 
-Static
-int Tsubprocess (t,reverse,f,argp)
-TREE *t;
-int reverse;
-int (*f) __P((TREE *, void *));
-void *argp;
+Static int
+Tsubprocess (t, reverse, f, argp)
+	TREE *t;
+	int reverse;
+	int (*f) __P((TREE *, void *));
+	void *argp;
 {
-	register int x = SCMOK;
+	int x = SCMOK;
+
 	process_level++;
-	if (reverse?t->Thi:t->Tlo)
-		x = Tsubprocess (reverse?t->Thi:t->Tlo,
-				 reverse,f,argp);
+	if (reverse ? t->Thi : t->Tlo)
+		x = Tsubprocess(reverse ? t->Thi : t->Tlo, reverse, f, argp);
 	if (x == SCMOK) {
-		x = (*f) (t,argp);
+		x = (*f)(t, argp);
 		if (x == SCMOK) {
-			if (reverse?t->Tlo:t->Thi)
-				x = Tsubprocess (reverse?t->Tlo:t->Thi,
-						 reverse,f,argp);
+			if (reverse ? t->Tlo : t->Thi)
+				x = Tsubprocess (reverse ? t->Tlo : t->Thi,
+						 reverse, f, argp);
 		}
 	}
 	process_level--;
@@ -324,46 +343,52 @@ void *argp;
 }
 
 /* VARARGS2 */
-int Trprocess (t,f,args)
-TREE *t;
-int (*f) __P((TREE *, void *));
-void *args;
+int
+Trprocess(t, f, args)
+	TREE *t;
+	int (*f) __P((TREE *, void *));
+	void *args;
 {
-	if (t == NULL)  return (SCMOK);
+	if (t == NULL)
+		return (SCMOK);
 	process_level = 0;
-	return (Tsubprocess (t,TRUE,f,args));
+	return (Tsubprocess(t, TRUE, f, args));
 }
 
 /* VARARGS2 */
-int Tprocess (t,f,args)
-TREE *t;
-int (*f) __P((TREE *, void *));
-void *args;
+int
+Tprocess(t, f, args)
+	TREE *t;
+	int (*f) __P((TREE *, void *));
+	void *args;
 {
-	if (t == NULL)  return (SCMOK);
+	if (t == NULL)
+		return (SCMOK);
 	process_level = 0;
-	return (Tsubprocess (t,FALSE,f,args));
+	return (Tsubprocess(t, FALSE, f, args));
 }
 
-Static
-int Tprintone (t, v)
-TREE *t;
-void *v;
+Static int
+Tprintone(t, v)
+	TREE *t;
+	void *v;
 {
 	int i;
 	for (i = 0; i < (process_level*2); i++)
 		(void) putchar(' ');
-	printf ("Node at %p name '%s' flags %o hi %p lo %p\n",t,t->Tname,t->Tflags,t->Thi,t->Tlo);
+	printf("Node at %p name '%s' flags %o hi %p lo %p\n",
+	    t, t->Tname, t->Tflags, t->Thi, t->Tlo);
 	return (SCMOK);
 }
 
 void
-Tprint (t,p)		/* print tree -- for debugging */
-TREE *t;
-char *p;
+Tprint(t, p)		/* print tree -- for debugging */
+	TREE *t;
+	char *p;
 {
-	printf ("%s\n",p);
-	(void) Tprocess (t,Tprintone, NULL);
-	printf ("End of tree\n");
-	(void) fflush (stdout);
+
+	printf("%s\n",p);
+	(void) Tprocess(t,Tprintone, NULL);
+	printf("End of tree\n");
+	(void) fflush(stdout);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scmio.c,v 1.6 2001/05/02 22:56:53 millert Exp $	*/
+/*	$OpenBSD: scmio.c,v 1.7 2001/05/04 22:16:16 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -208,22 +208,22 @@ static int readcount __P((int *));
  ***********************************************/
 
 static int
-writedata (count,data)		/* write raw data to network */
-int count;
-char *data;
+writedata (count, data)		/* write raw data to network */
+	int count;
+	char *data;
 {
-	register int x,tries;
-	register struct buf *bp;
+	int x, tries;
+	struct buf *bp;
 
 	if (bufptr) {
 		if (bufptr->b_cnt + count <= FILEXFER) {
-			bcopy (data,bufptr->b_ptr,count);
+			memcpy(bufptr->b_ptr, data ,count);
 			bufptr->b_cnt += count;
 			bufptr->b_ptr += count;
 			return (SCMOK);
 		}
 		bp = (bufptr == buffers) ? &buffers[1] : buffers;
-		bcopy (data,bp->b_data,count);
+		memcpy(bp->b_data, data, count);
 		bp->b_cnt = count;
 		bp->b_ptr = bp->b_data + count;
 		data = bufptr->b_data;
@@ -235,67 +235,72 @@ char *data;
 	tries = 0;
 	for (;;) {
 		errno = 0;
-		x = write (netfile,data,count);
-		if (x > 0)  break;
-		if (errno)  break;
-		if (++tries > RETRIES)  break;
+		x = write(netfile, data, count);
+		if (x > 0)
+			break;
+		if (errno)
+			break;
+		if (++tries > RETRIES)
+			break;
 		if (scmdebug > 0)
-			logerr ("SCM Retrying failed network write");
+			logerr("SCM Retrying failed network write");
 	}
 	if (x <= 0) {
 		if (errno == EPIPE)
-			return (scmerr (-1,"Network write timed out"));
+			return (scmerr(-1, "Network write timed out"));
 		if (errno)
-			return (scmerr (errno,"Write error on network"));
-		return (scmerr (-1,"Write retries failed"));
+			return (scmerr(errno, "Write error on network"));
+		return (scmerr(-1, "Write retries failed"));
 	}
 	if (x != count)
-		return (scmerr (-1,"Write error on network returned %d on write of %d",x,count));
+		return (scmerr(-1, "Write error on network returned %d on write of %d", x, count));
 	return (SCMOK);
 }
 
 static int
-writeblock (count,data)		/* write data block */
-int count;
-char *data;
+writeblock (count, data)	/* write data block */
+	int count;
+	char *data;
 {
-	register int x;
+	int x;
 	int y = byteswap(count);
 
-	x = writedata (sizeof(int),(char *)&y);
-	if (x == SCMOK)  x = writedata (count,data);
+	x = writedata(sizeof(int), (char *)&y);
+	if (x == SCMOK)
+		x = writedata(count, data);
 	return (x);
 }
 
 int
-writemsg (msg)		/* write start of message */
-int msg;
+writemsg(msg)		/* write start of message */
+	int msg;
 {
 	int x;
 
 	if (scmdebug > 1)
-		loginfo ("SCM Writing message %d",msg);
+		loginfo("SCM Writing message %d", msg);
 	if (bufptr)
-		return (scmerr (-1,"Buffering already enabled"));
+		return (scmerr(-1, "Buffering already enabled"));
 	bufptr = buffers;
 	bufptr->b_ptr = bufptr->b_data;
 	bufptr->b_cnt = 0;
 	x = byteswap (msg);
-	return (writedata(sizeof(int),(char *)&x));
+	return (writedata(sizeof(int), (char *)&x));
 }
 
 int
-writemend ()		/* write end of message */
+writemend()		/* write end of message */
 {
-	register int count;
-	register char *data;
+	int count;
+	char *data;
 	int x;
 
-	x = byteswap (ENDCOUNT);
-	x = writedata (sizeof(int),(char *)&x);
-	if (x != SCMOK)  return (x);
+	x = byteswap(ENDCOUNT);
+	x = writedata(sizeof(int), (char *)&x);
+	if (x != SCMOK)
+		return (x);
 	if (bufptr == NULL)
-		return (scmerr (-1,"Buffering already disabled"));
+		return (scmerr(-1, "Buffering already disabled"));
 	if (bufptr->b_cnt == 0) {
 		bufptr = NULL;
 		return (SCMOK);
@@ -303,114 +308,127 @@ writemend ()		/* write end of message */
 	data = bufptr->b_data;
 	count = bufptr->b_cnt;
 	bufptr = NULL;
-	return (writedata (count, data));
+	return (writedata(count, data));
 }
 
 int
-writeint (i)		/* write int as data block */
-int i;
+writeint(i)		/* write int as data block */
+	int i;
 {
 	int x;
 	if (scmdebug > 2)
-		loginfo ("SCM Writing integer %d",i);
+		loginfo("SCM Writing integer %d", i);
 	x = byteswap(i);
-	return (writeblock(sizeof(int),(char *)&x));
+	return (writeblock(sizeof(int), (char *)&x));
 }
 
 int
-writestring (p)		/* write string as data block */
-char *p;
+writestring(p)		/* write string as data block */
+	char *p;
 {
-	register int len,x;
+	int len, x;
+
 	if (p == NULL) {
 		int y = byteswap(NULLCOUNT);
 		if (scmdebug > 2)
-			loginfo ("SCM Writing string NULL");
-		return (writedata (sizeof(int),(char *)&y));
+			loginfo("SCM Writing string NULL");
+		return (writedata(sizeof(int), (char *)&y));
 	}
 	if (scmdebug > 2)
-		loginfo ("SCM Writing string %s",p);
-	len = strlen (p);
+		loginfo("SCM Writing string %s", p);
+	len = strlen(p);
 	if (cryptflag) {
-		x = getcryptbuf (len+1);
+		x = getcryptbuf(len+1);
 		if (x != SCMOK)
 			return (x);
-		encode (p,cryptbuf,len);
+		encode(p, cryptbuf, len);
 		p = cryptbuf;
 	}
-	return (writeblock(len,p));
+	return (writeblock(len, p));
 }
 
 int
-writefile (f)		/* write open file as a data block */
+writefile(f)		/* write open file as a data block */
 int f;
 {
 	char buf[FILEXFER];
-	register int number = 0,sum = 0,filesize,x;
-	int y;
+	int number, sum, filesize, x, y;
 	struct stat statbuf;
 
-	if (fstat(f,&statbuf) < 0)
-		return (scmerr (errno,"Can't access open file for message"));
+	/*
+	 * XXX - st_size is really 64 bits but if we change things to support
+	 *	 files > 2gig we become incompatible with everyone else.
+	 */
+	number = sum = 0;
+	if (fstat(f, &statbuf) < 0)
+		return (scmerr(errno, "Can't access open file for message"));
 	filesize = statbuf.st_size;
 	y = byteswap(filesize);
-	x = writedata (sizeof(int),(char *)&y);
+	x = writedata(sizeof(int), (char *)&y);
 
-	if (cryptflag)  x = getcryptbuf (FILEXFER);
+	if (cryptflag)
+		x = getcryptbuf(FILEXFER);
 
 	if (x == SCMOK) {
 		sum = 0;
 		do {
-			number = read (f,buf,FILEXFER);
+			number = read(f, buf, FILEXFER);
 			if (number > 0) {
 				if (cryptflag) {
-					encode (buf,cryptbuf,number);
-					x = writedata (number,cryptbuf);
-				}
-				else {
-					x = writedata (number,buf);
+					encode(buf, cryptbuf, number);
+					x = writedata(number, cryptbuf);
+				} else {
+					x = writedata(number,buf);
 				}
 				sum += number;
 			}
 		} while (x == SCMOK && number > 0);
 	}
 	if (sum != filesize)
-		return (scmerr (-1,"File size error on output message"));
+		return (scmerr(-1, "File size error on output message"));
 	if (number < 0)
-		return (scmerr (errno,"Read error on file output message"));
+		return (scmerr(errno, "Read error on file output message"));
 	return (x);
 }
 
 int
-writemnull (msg)	/* write message with no data */
-int msg;
+writemnull(msg)		/* write message with no data */
+	int msg;
 {
-	register int x;
-	x = writemsg (msg);
-	if (x == SCMOK)  x = writemend ();
+	int x;
+
+	x = writemsg(msg);
+	if (x == SCMOK)
+		x = writemend();
 	return (x);
 }
 
 int
-writemint (msg,i)		/* write message of one int */
-int msg,i;
+writemint(msg, i)		/* write message of one int */
+	int msg, i;
 {
-	register int x;
-	x = writemsg (msg);
-	if (x == SCMOK)  x = writeint (i);
-	if (x == SCMOK)  x = writemend ();
+	int x;
+
+	x = writemsg(msg);
+	if (x == SCMOK)
+		x = writeint(i);
+	if (x == SCMOK)
+		x = writemend();
 	return (x);
 }
 
 int
-writemstr (msg,p)		/* write message of one string */
-int msg;
-char *p;
+writemstr(msg, p)		/* write message of one string */
+	int msg;
+	char *p;
 {
-	register int x;
-	x = writemsg (msg);
-	if (x == SCMOK)  x = writestring (p);
-	if (x == SCMOK)  x = writemend ();
+	int x;
+
+	x = writemsg(msg);
+	if (x == SCMOK)
+		x = writestring(p);
+	if (x == SCMOK)
+		x = writemend();
 	return (x);
 }
 
@@ -419,12 +437,12 @@ char *p;
  *************************************************/
 
 static int
-readdata (count,data)		/* read raw data from network */
-int count;
-char *data;
+readdata(count, data)		/* read raw data from network */
+	int count;
+	char *data;
 {
-	register char *p;
-	register int n,m,x;
+	char *p;
+	int n, m, x;
 	int tries;
 	static int bufcnt = 0;
 	static char *bufptr;
@@ -434,10 +452,10 @@ char *data;
 
 	if (count < 0) {
 		if (bufptr + count < buffer)
-			return (scmerr (-1,"No space in buffer %d",count));
+			return (scmerr(-1, "No space in buffer %d", count));
 		bufptr += count;
 		bufcnt -= count;
-		bcopy (data,bufptr,-count);
+		memcpy(bufptr, data, -count);
 		return (SCMOK);
 	}
 	if (count == 0 && data == NULL) {
@@ -445,13 +463,13 @@ char *data;
 		return (SCMOK);
 	}
 	if (count <= bufcnt) {
-		bcopy (bufptr,data,count);
+		memcpy(data, bufptr, count);
 		bufptr += count;
 		bufcnt -= count;
 		return (SCMOK);
 	}
 	if (bufcnt > 0) {
-		bcopy (bufptr,data,bufcnt);
+		memcpy(data, bufptr, bufcnt);
 		data += bufcnt;
 		count -= bufcnt;
 	}
@@ -465,206 +483,227 @@ char *data;
 	while (m > 0) {
 		tries = 0;
 		for (;;) {
+			/* XXX - bad select usage, fixme! (millert) */
 			imask = 1 << netfile;
 			if (select(32,(fd_set *)&imask,(fd_set *)0,(fd_set *)0,&timout) < 0)
 				imask = 1;
 			errno = 0;
 			if (imask)
-				x = read (netfile,p,n);
+				x = read(netfile, p, n);
 			else
-				return (scmerr (-1,"Timeout on network input"));
-			if (x > 0)  break;
+				return (scmerr(-1, "Timeout on network input"));
+			if (x > 0)
+				break;
 			if (x == 0)
-				return (scmerr (-1,"Premature EOF on network input"));
-			if (errno)  break;
-			if (++tries > RETRIES)  break;
+				return (scmerr(-1, "Premature EOF on network input"));
+			if (errno)
+				break;
+			if (++tries > RETRIES)
+				break;
 			if (scmdebug > 0)
-				loginfo ("SCM Retrying failed network read");
+				loginfo("SCM Retrying failed network read");
 		}
 		if (x < 0) {
 			if (errno)
-				return (scmerr (errno,"Read error on network"));
-			return (scmerr (-1,"Read retries failed"));
+				return (scmerr(errno, "Read error on network"));
+			return (scmerr(-1, "Read retries failed"));
 		}
 		p += x;
 		n -= x;
 		m -= x;
 		bufcnt += x;
 	}
-	bcopy (bufptr,data,count);
+	memcpy(data, bufptr, count);
 	bufptr += count;
 	bufcnt -= count;
 	return (SCMOK);
 }
 
-static
-int readcount (count)			/* read count of data block */
-int *count;
+static int
+readcount(count)			/* read count of data block */
+	int *count;
 {
-	register int x;
-	int y;
-	x = readdata (sizeof(int),(char *)&y);
-	if (x != SCMOK)  return (x);
-	*count = byteswap(y);
-	return (SCMOK);
-}
+	int x, y;
 
-int prereadcount (count)		/* preread count of data block */
-int *count;
-{
-	register int x;
-	int y;
-	x = readdata (sizeof(int),(char *)&y);
-	if (x != SCMOK)  return (x);
-	x = readdata (- ((int)(sizeof(int))),(char *)&y);
-	if (x != SCMOK)  return (x);
+	x = readdata(sizeof(int), (char *)&y);
+	if (x != SCMOK)
+		return (x);
 	*count = byteswap(y);
 	return (SCMOK);
 }
 
 int
-readflush ()
+prereadcount(count)		/* preread count of data block */
+	int *count;
 {
-	return (readdata (0, (char *)NULL));
+	int x, y;
+
+	x = readdata(sizeof(int), (char *)&y);
+	if (x != SCMOK)
+		return (x);
+	x = readdata(- ((int)(sizeof(int))), (char *)&y);
+	if (x != SCMOK)
+		return (x);
+	*count = byteswap(y);
+	return (SCMOK);
 }
 
 int
-readmsg (msg)		/* read header for expected message */
-int msg;		/* if message is unexpected, send back SCMHUH */
+readflush()
 {
-	register int x;
+
+	return (readdata(0, NULL));
+}
+
+int
+readmsg(msg)		/* read header for expected message */
+	int msg;	/* if message is unexpected, send back SCMHUH */
+{
+	int x;
 	int m;
+
 	if (scmdebug > 1)
-		loginfo ("SCM Reading message %d",msg);
-	x = readdata (sizeof(int),(char *)&m);	/* msg type */
-	if (x != SCMOK)  return (x);
+		loginfo("SCM Reading message %d", msg);
+	x = readdata(sizeof(int), (char *)&m);	/* msg type */
+	if (x != SCMOK)
+		return (x);
 	m = byteswap(m);
-	if (m == msg)  return (x);
+	if (m == msg)
+		return (x);
 
 	/* check for MSGGOAWAY in case he noticed problems first */
 	if (m != MSGGOAWAY)
-		return (scmerr (-1,"Received unexpected message %d",m));
-	(void) netcrypt ((char *)NULL);
-	(void) readstring (&goawayreason);
-	(void) readmend ();
+		return (scmerr(-1, "Received unexpected message %d", m));
+	(void) netcrypt(NULL);
+	(void) readstring(&goawayreason);
+	(void) readmend();
 	if (goawayreason == NULL)
 		return (SCMEOF);
-	logerr ("SCM GOAWAY %s",goawayreason);
+	logerr("SCM GOAWAY %s", goawayreason);
 	return (SCMEOF);
 }
 
 int
-readmend ()
+readmend()
 {
-	register int x;
-	int y;
-	x = readdata (sizeof(int),(char *)&y);
+	int x, y;
+
+	x = readdata(sizeof(int), (char *)&y);
 	y = byteswap(y);
 	if (x == SCMOK && y != ENDCOUNT)
-		return (scmerr (-1,"Error reading end of message"));
+		return (scmerr(-1, "Error reading end of message"));
 	return (x);
 }
 
 int
-readskip ()			/* skip over one input block */
+readskip()			/* skip over one input block */
 {
-	register int x;
+	int x;
 	int n;
 	char buf[FILEXFER];
-	x = readcount (&n);
-	if (x != SCMOK)  return (x);
+
+	x = readcount(&n);
+	if (x != SCMOK)
+		return (x);
 	if (n < 0)
-		return (scmerr (-1,"Invalid message count %d",n));
+		return (scmerr(-1, "Invalid message count %d", n));
 	while (x == SCMOK && n > 0) {
-		x = readdata (XFERSIZE(n),buf);
+		x = readdata(XFERSIZE(n), buf);
 		n -= XFERSIZE(n);
 	}
 	return (x);
 }
 
-int readint (buf)		/* read int data block */
-int *buf;
+int readint(buf)		/* read int data block */
+	int *buf;
 {
-	register int x;
+	int x;
 	int y;
-	x = readcount (&y);
-	if (x != SCMOK)  return (x);
+
+	x = readcount(&y);
+	if (x != SCMOK)
+		return (x);
 	if (y < 0)
-		return (scmerr (-1,"Invalid message count %d",y));
+		return (scmerr(-1, "Invalid message count %d",y));
 	if (y != sizeof(int))
-		return (scmerr (-1,"Size error for int message is %d",y));
-	x = readdata (sizeof(int),(char *)&y);
+		return (scmerr(-1, "Size error for int message is %d", y));
+	x = readdata(sizeof(int), (char *)&y);
 	(*buf) = byteswap(y);
 	if (scmdebug > 2)
-		loginfo ("SCM Reading integer %d",*buf);
+		loginfo("SCM Reading integer %d", *buf);
 	return (x);
 }
 
-int readstring (buf)	/* read string data block */
-register char **buf;
+int readstring(buf)	/* read string data block */
+	char **buf;
 {
-	register int x;
+	int x;
 	int count;
-	register char *p;
+	char *p;
 
-	x = readcount (&count);
-	if (x != SCMOK)  return (x);
+	x = readcount(&count);
+	if (x != SCMOK)
+		return (x);
 	if (count == NULLCOUNT) {
 		if (scmdebug > 2)
-			loginfo ("SCM Reading string NULL");
+			loginfo("SCM Reading string NULL");
 		*buf = NULL;
 		return (SCMOK);
 	}
 	if (count < 0)
-		return (scmerr (-1,"Invalid message count %d",count));
+		return (scmerr(-1, "Invalid message count %d", count));
 	if (scmdebug > 3)
-		loginfo ("SCM Reading string count %d",count);
-	if ((p = (char *)malloc ((unsigned)count+1)) == NULL)
-		return (scmerr (-1,"Can't malloc %d bytes for string",count));
+		loginfo("SCM Reading string count %d", count);
+	if ((p = (char *)malloc(count + 1)) == NULL)
+		return (scmerr(-1, "Can't malloc %d bytes for string", count));
 	if (cryptflag) {
-		x = getcryptbuf (count+1);
-		if (x == SCMOK)  x = readdata (count,cryptbuf);
-		if (x != SCMOK)  return (x);
+		x = getcryptbuf(count+1);
+		if (x == SCMOK)
+			x = readdata(count, cryptbuf);
+		if (x != SCMOK)
+			return (x);
 	if (scmdebug > 3)
-		printf ("SCM Reading encrypted string %s\n",cryptbuf);
-		decode (cryptbuf,p,count);
-	}
-	else {
-		x = readdata (count,p);
-		if (x != SCMOK)  return (x);
+		printf("SCM Reading encrypted string %s\n", cryptbuf);
+		decode(cryptbuf, p, count);
+	} else {
+		x = readdata(count,p);
+		if (x != SCMOK)
+			return (x);
 	}
 	p[count] = 0;		/* NULL at end of string */
 	*buf = p;
 	if (scmdebug > 2)
-		loginfo ("SCM Reading string %s",*buf);
+		loginfo("SCM Reading string %s", *buf);
 	return (SCMOK);
 }
 
 int
-readfile (f)		/* read data block into open file */
-int f;
+readfile(f)		/* read data block into open file */
+	int f;
 {
-	register int x;
+	int x;
 	int count;
 	char buf[FILEXFER];
 
 	if (cryptflag) {
-		x = getcryptbuf (FILEXFER);
-		if (x != SCMOK)  return (x);
+		x = getcryptbuf(FILEXFER);
+		if (x != SCMOK)
+			return (x);
 	}
-	x = readcount (&count);
-	if (x != SCMOK)  return (x);
+	x = readcount(&count);
+	if (x != SCMOK)
+		return (x);
 	if (count < 0)
-		return (scmerr (-1,"Invalid message count %d",count));
+		return (scmerr(-1, "Invalid message count %d", count));
 	while (x == SCMOK && count > 0) {
 		if (cryptflag) {
-			x = readdata (XFERSIZE(count),cryptbuf);
-			if (x == SCMOK)  decode (cryptbuf,buf,XFERSIZE(count));
-		}
-		else
-			x = readdata (XFERSIZE(count),buf);
+			x = readdata(XFERSIZE(count), cryptbuf);
+			if (x == SCMOK)
+				decode(cryptbuf, buf, XFERSIZE(count));
+		} else
+			x = readdata(XFERSIZE(count), buf);
 		if (x == SCMOK) {
-			(void) write (f,buf,XFERSIZE(count));
+			(void) write(f, buf, XFERSIZE(count));
 			count -= XFERSIZE(count);
 		}
 	}
@@ -672,34 +711,42 @@ int f;
 }
 
 int
-readmnull (msg)		/* read null message */
-int msg;
+readmnull(msg)		/* read null message */
+	int msg;
 {
-	register int x;
-	x = readmsg (msg);
-	if (x == SCMOK)  x = readmend ();
+	int x;
+
+	x = readmsg(msg);
+	if (x == SCMOK)
+		x = readmend();
 	return (x);
 }
 
 int
-readmint (msg,buf)		/* read int message */
-int msg,*buf;
+readmint(msg, buf)		/* read int message */
+	int msg, *buf;
 {
-	register int x;
-	x = readmsg (msg);
-	if (x == SCMOK)  x = readint (buf);
-	if (x == SCMOK)  x = readmend ();
+	int x;
+
+	x = readmsg(msg);
+	if (x == SCMOK)
+		x = readint(buf);
+	if (x == SCMOK)
+		x = readmend();
 	return (x);
 }
 
-int readmstr (msg,buf)		/* read string message */
-int msg;
-char **buf;
+int readmstr(msg, buf)		/* read string message */
+	int msg;
+	char **buf;
 {
-	register int x;
-	x = readmsg (msg);
-	if (x == SCMOK)  x = readstring (buf);
-	if (x == SCMOK)  x = readmend ();
+	int x;
+
+	x = readmsg(msg);
+	if (x == SCMOK)
+		x = readstring(buf);
+	if (x == SCMOK)
+		x = readmend();
 	return (x);
 }
 
@@ -708,47 +755,45 @@ char **buf;
  **********************************/
 
 void
-crosspatch ()
+crosspatch()
 {
 	fd_set ibits, obits, xbits;
-	register int c;
+	int c;
 	char buf[STRINGLENGTH];
 
+	/* XXX - bad select usage--fixme! (millert) */
 	for (;;) {
-		FD_ZERO (&ibits);
-		FD_ZERO (&obits);
-		FD_ZERO (&xbits);
-		FD_SET (0,&ibits);
-		FD_SET (netfile,&ibits);
-		if ((c = select(16, &ibits, &obits, &xbits,
-				(struct timeval *)NULL)) < 1) {
+		FD_ZERO(&ibits);
+		FD_ZERO(&obits);
+		FD_ZERO(&xbits);
+		FD_SET(0,&ibits);
+		FD_SET(netfile,&ibits);
+		if ((c = select(16, &ibits, &obits, &xbits, NULL)) < 1) {
 			if (c == -1) {
-				if (errno == EINTR) {
+				if (errno == EINTR)
 					continue;
-				}
 			}
 			sleep (5);
 			continue;
 		}
-		if (FD_ISSET (netfile,&ibits)) {
-			c = read (netfile,buf,sizeof (buf));
-			if (c < 0 && errno == EWOULDBLOCK)
-				c = 0;
-			else {
-				if (c <= 0) {
-					break;
-				}
-				(void) write (1,buf,c);
-			}
-		}
-		if (FD_ISSET(0, &ibits)) {
-			c = read (0,buf,sizeof (buf));
+		if (FD_ISSET(netfile, &ibits)) {
+			c = read(netfile, buf, sizeof (buf));
 			if (c < 0 && errno == EWOULDBLOCK)
 				c = 0;
 			else {
 				if (c <= 0)
 					break;
-				(void) write (netfile,buf,c);
+				(void) write(1, buf, c);
+			}
+		}
+		if (FD_ISSET(0, &ibits)) {
+			c = read(0, buf, sizeof (buf));
+			if (c < 0 && errno == EWOULDBLOCK)
+				c = 0;
+			else {
+				if (c <= 0)
+					break;
+				(void) write(netfile, buf, c);
 			}
 		}
 	}

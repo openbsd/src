@@ -1,4 +1,4 @@
-/*	$OpenBSD: supscan.c,v 1.10 2001/05/02 22:56:54 millert Exp $	*/
+/*	$OpenBSD: supscan.c,v 1.11 2001/05/04 22:16:17 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -171,46 +171,42 @@ int main __P((int, char **));
  *************************************/
 
 int
-main (argc,argv)
-int argc;
-char **argv;
+main(argc, argv)
+	int argc;
+	char **argv;
 {
-	SCAN_COLLECTION *c;
-#if __GNUC__
-	/* Avoid longjmp clobbering */
-	(void) &c;
-#endif
+	SCAN_COLLECTION * volatile c;
 
-	init (argc,argv);		/* process arguments */
+	init(argc, argv);		/* process arguments */
 	for (c = firstC; c; c = c->Cnext) {
 		collname = c->Cname;
 		basedir = c->Cbase;
 		prefix = c->Cprefix;
-		(void) chdir (basedir);
-		scantime = time ((time_t *)NULL);
+		(void) chdir(basedir);
+		scantime = time(NULL);
 		if (!quiet)
-			printf ("SUP Scan for %s starting at %s",collname,
-				ctime (&scantime));
-		(void) fflush (stdout);
-		if (!setjmp (sjbuf)) {
-			makescanlists (); /* record names in scan files */
-			scantime = time ((time_t *)NULL);
+			printf("SUP Scan for %s starting at %s", collname,
+			    ctime(&scantime));
+		(void) fflush(stdout);
+		if (!setjmp(sjbuf)) {
+			makescanlists(); /* record names in scan files */
+			scantime = time(NULL);
 			if (!quiet)
-				printf ("SUP Scan for %s completed at %s",
-					collname, ctime (&scantime));
+				printf("SUP Scan for %s completed at %s",
+				    collname, ctime(&scantime));
 		} else
-			fprintf(stderr, 
-				"SUP: Scan for %s aborted at %s",collname,
-				ctime (&scantime));
+			fprintf(stderr, "SUP: Scan for %s aborted at %s",
+			    collname, ctime(&scantime));
 		if (!quiet)
-			(void) fflush (stdout);
+			(void) fflush(stdout);
 	}
 	while ((c = firstC) != NULL) {
 		firstC = firstC->Cnext;
-		free (c->Cname);
-		free (c->Cbase);
-		if (c->Cprefix)  free (c->Cprefix);
-		free ((char *)c);
+		free(c->Cname);
+		free(c->Cbase);
+		if (c->Cprefix)
+			free(c->Cprefix);
+		free(c);
 	}
 	exit (0);
 }
@@ -220,23 +216,24 @@ char **argv;
  *****************************************/
 
 void
-usage ()
+usage()
 {
-	fprintf (stderr,"Usage: supscan [ -vq ] collection [ basedir ]\n");
-	fprintf (stderr,"       supscan [ -vq ] -f dirfile\n");
-	fprintf (stderr,"       supscan [ -vq ] -s\n");
+
+	fprintf(stderr, "Usage: supscan [ -vq ] collection [ basedir ]\n");
+	fprintf(stderr, "       supscan [ -vq ] -f dirfile\n");
+	fprintf(stderr, "       supscan [ -vq ] -s\n");
 	exit (1);
 }
 
 void
-init (argc,argv)
-int argc;
-char **argv;
+init(argc, argv)
+	int argc;
+	char **argv;
 {
-	char buf[STRINGLENGTH],fbuf[STRINGLENGTH],*p,*q;
+	char buf[STRINGLENGTH], fbuf[STRINGLENGTH], *p, *q;
 	FILE *f;
 	SCAN_COLLECTION **c;
-	int fflag,sflag;
+	int fflag, sflag;
 	char *filename = NULL;
 
 	quiet = FALSE;
@@ -248,7 +245,7 @@ char **argv;
 		case 'f':
 			fflag = TRUE;
 			if (argc == 2)
-				usage ();
+				usage();
 			--argc;
 			argv++;
 			filename = argv[1];
@@ -263,115 +260,126 @@ char **argv;
 			sflag = TRUE;
 			break;
 		default:
-			fprintf (stderr,"supscan: Invalid flag %s ignored\n",
-				argv[1]);
-			(void) fflush (stderr);
+			fprintf(stderr, "supscan: Invalid flag %s ignored\n",
+			    argv[1]);
+			(void) fflush(stderr);
 		}
 		--argc;
 		argv++;
 	}
 	if (!fflag) {
-		(void) snprintf (fbuf,sizeof fbuf,FILEDIRS,DEFDIR);
+		(void) snprintf(fbuf, sizeof fbuf, FILEDIRS, DEFDIR);
 		filename = fbuf;
 	}
 	if (sflag) {
 		if (argc != 1)
-			usage ();
+			usage();
 		firstC = NULL;
 		c = &firstC;
-		(void) snprintf (buf,sizeof buf,FILEHOSTS,DEFDIR);
-		if ((f = fopen (buf,"r")) == NULL)
-			quit (1,"supscan: Unable to open %s\n",buf);
-		while ((p = fgets (buf,STRINGLENGTH,f)) != NULL) {
-			q = strchr (p,'\n');
-			if (q)  *q = 0;
-			if (strchr ("#;:",*p))  continue;
-			collname = nxtarg (&p," \t=");
-			p = skipover (p," \t=");
-			if (!localhost (p))  continue;
-			*c = getscancoll(filename,salloc (collname),
-					(char *)NULL);
-			if (*c)  c = &((*c)->Cnext);
+		(void) snprintf(buf, sizeof buf, FILEHOSTS, DEFDIR);
+		if ((f = fopen(buf, "r")) == NULL)
+			quit(1, "supscan: Unable to open %s\n", buf);
+		while ((p = fgets(buf, sizeof(buf), f)) != NULL) {
+			q = strchr(p, '\n');
+			if (q)
+				*q = '\0';
+			if (strchr("#;:", *p))
+				continue;
+			collname = nxtarg(&p, " \t=");
+			p = skipover(p, " \t=");
+			if (!localhost(p))
+				continue;
+			*c = getscancoll(filename, strdup(collname), NULL);
+			if (*c)
+				c = &((*c)->Cnext);
 		}
-		(void) fclose (f);
+		(void) fclose(f);
 		return;
 	}
 	if (argc < 2 && fflag) {
 		firstC = NULL;
 		c = &firstC;
-		if ((f = fopen (filename,"r")) == NULL)
-			quit (1,"supscan: Unable to open %s\n",filename);
-		while ((p = fgets (buf,STRINGLENGTH,f)) != NULL) {
-			q = strchr (p,'\n');
-			if (q)  *q = 0;
-			if (strchr ("#;:",*p))  continue;
-			q = nxtarg (&p," \t=");
-			p = skipover (p," \t=");
-			*c = getscancoll(filename,salloc (q),salloc (p));
-			if (*c)  c = &((*c)->Cnext);
+		if ((f = fopen(filename, "r")) == NULL)
+			quit(1, "supscan: Unable to open %s\n", filename);
+		while ((p = fgets(buf, sizeof(buf), f)) != NULL) {
+			q = strchr(p, '\n');
+			if (q)
+				*q = '\0';
+			if (strchr("#;:",*p))
+				continue;
+			q = nxtarg(&p, " \t=");
+			p = skipover(p, " \t=");
+			*c = getscancoll(filename, strdup(q), strdup(p));
+			if (*c)
+				c = &((*c)->Cnext);
 		}
-		(void) fclose (f);
+		(void) fclose(f);
 		return;
 	}
 	if (argc < 2 || argc > 3)
-		usage ();
-	firstC = getscancoll(filename,salloc (argv[1]),
-			argc > 2 ? salloc (argv[2]) : (char *)NULL);
+		usage();
+	firstC = getscancoll(filename, strdup(argv[1]),
+	    argc > 2 ? strdup(argv[2]) : NULL);
 }
 
 static SCAN_COLLECTION *
 getscancoll(filename, collname, basedir)
-register char *filename,*collname,*basedir;
+	char *filename, *collname, *basedir;
 {
-	char buf[STRINGLENGTH],*p,*q;
+	char buf[STRINGLENGTH], *p, *q;
 	FILE *f;
 	SCAN_COLLECTION *c;
 
 	if (basedir == NULL) {
-		if ((f = fopen (filename,"r")) != NULL) {
-			while ((p = fgets (buf,STRINGLENGTH,f)) != NULL) {
-				q = strchr (p,'\n');
-				if (q)  *q = 0;
-				if (strchr ("#;:",*p))  continue;
-				q = nxtarg (&p," \t=");
-				if (strcmp (q,collname) == 0) {
-					p = skipover (p," \t=");
-					basedir = salloc (p);
+		if ((f = fopen(filename, "r")) != NULL) {
+			while ((p = fgets(buf, sizeof(buf), f)) != NULL) {
+				q = strchr(p, '\n');
+				if (q)
+					*q = '\0';
+				if (strchr("#;:", *p))
+					continue;
+				q = nxtarg(&p, " \t=");
+				if (strcmp(q, collname) == 0) {
+					p = skipover(p, " \t=");
+					basedir = strdup(p);
 					break;
 				}
 			}
-			(void) fclose (f);
+			(void) fclose(f);
 		}
 		if (basedir == NULL) {
-			(void) snprintf (buf,sizeof buf,
-				FILEBASEDEFAULT,collname);
-			basedir = salloc (buf);
+			(void) snprintf(buf, sizeof buf, FILEBASEDEFAULT,
+			    collname);
+			basedir = strdup(buf);
 		}
 	}
 	if (chdir(basedir) < 0) {
-		fprintf (stderr,"supscan:  Can't chdir to base directory %s for %s\n",
-			basedir,collname);
+		fprintf (stderr,
+		    "supscan:  Can't chdir to base directory %s for %s\n",
+		    basedir, collname);
 		return (NULL);
 	}
 	prefix = NULL;
-	(void) snprintf (buf,sizeof buf,FILEPREFIX,collname);
-	if ((f = fopen (buf,"r")) != NULL) {
-		while ((p = fgets (buf,STRINGLENGTH,f)) != NULL) {
-			q = strchr (p,'\n');
-			if (q) *q = 0;
-			if (strchr ("#;:",*p))  continue;
-			prefix = salloc (p);
+	(void) snprintf(buf, sizeof buf, FILEPREFIX, collname);
+	if ((f = fopen(buf, "r")) != NULL) {
+		while ((p = fgets(buf, sizeof(buf), f)) != NULL) {
+			q = strchr(p, '\n');
+			if (q)
+				*q = '\0';
+			if (strchr("#;:", *p))
+				continue;
+			prefix = strdup(p);
 			if (chdir(prefix) < 0) {
-				fprintf (stderr,"supscan: can't chdir to %s from base directory %s for %s\n",
-					prefix,basedir,collname);
+				fprintf(stderr, "supscan: can't chdir to %s from base directory %s for %s\n",
+				    prefix, basedir, collname);
 				return (NULL);
 			}
 			break;
 		}
-		(void) fclose (f);
+		(void) fclose(f);
 	}
-	if ((c = (SCAN_COLLECTION *) malloc (sizeof(SCAN_COLLECTION))) == NULL)
-		quit (1,"supscan: can't malloc collection structure\n");
+	if ((c = (SCAN_COLLECTION *) malloc(sizeof(SCAN_COLLECTION))) == NULL)
+		quit(1, "supscan: can't malloc collection structure\n");
 	c->Cname = collname;
 	c->Cbase = basedir;
 	c->Cprefix = prefix;
@@ -381,10 +389,10 @@ register char *filename,*collname,*basedir;
 
 void
 #ifdef __STDC__
-goaway (char *fmt,...)
+goaway(char *fmt,...)
 #else
 /*VARARGS*//*ARGSUSED*/
-goaway (va_alist)
+goaway(va_alist)
 va_dcl
 #endif
 {
@@ -396,31 +404,31 @@ va_dcl
 	char *fmt;
 
 	va_start(ap);
-	fmt = va_arg(ap,char *);
+	fmt = va_arg(ap, char *);
 #endif
 
 	vfprintf(stderr, fmt, ap);
 	va_end(ap);
-	(void) putc ('\n',stderr);
-	(void) fflush (stderr);
-	longjmp (sjbuf,TRUE);
+	(void) putc ('\n', stderr);
+	(void) fflush(stderr);
+	longjmp(sjbuf,TRUE);
 }
 
-int localhost (host)
-register char *host;
+int
+localhost (host)
+	char *host;
 {
 	static char myhost[MAXHOSTNAMELEN];
 	static int myhostlen;
-	register int hostlen;
+	int hostlen;
 
 	if (*myhost == '\0') {
 		/*
 		 * We assume that the host name in the kernel is the
 		 * fully qualified form.
 		 */
-		if (gethostname (myhost,sizeof (myhost)) < 0) {
-		    quit (1,"supscan: can't get kernel host name\n");
-		}
+		if (gethostname(myhost, sizeof (myhost)) < 0)
+			quit (1, "supscan: can't get kernel host name\n");
 		myhostlen = strlen(myhost);
 	}
 
@@ -437,7 +445,6 @@ register char *host;
 
 	hostlen = strlen(host);
 
-	return(strncasecmp (myhost,
-			    host,
-			    hostlen < myhostlen ? hostlen : myhostlen) == 0);
+	return(strncasecmp(myhost, host,
+	    hostlen < myhostlen ? hostlen : myhostlen) == 0);
 }

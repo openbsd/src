@@ -1,4 +1,4 @@
-/*	$OpenBSD: scm.c,v 1.11 2001/05/02 22:56:53 millert Exp $	*/
+/*	$OpenBSD: scm.c,v 1.12 2001/05/04 22:16:16 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -224,134 +224,137 @@ static char *myhost __P((void));
  ***    F O R   S E R V E R                      ***
  ***************************************************/
 
-int lock_host_file(char *lockdir) {
+/*
+ * Mark that we are servicing a connection from host at ia.  We do
+ * this by getting an exclusive lock on a file that is "ia" in
+ * dotted decimal, in directory "lockdir".  For convienence's sake we
+ * write our process ID in there.  Should be called from servicing
+ * child, so lock goes away on exit.  Must be called after service()
+ * sets global remoteaddr (above).
+ *
+ * Returns fd for file on success, -1 on failure.
+ */
+int
+lock_host_file(lockdir)
+	char *lockdir;
+{
+	char *dd, *lpath;
+	int i, fd; 
+	FILE *f;
 
-  /* mark that we are servicing a connection from host at ia.  we do
-   * this by getting an exclusive lock on a file that is "ia" in
-   * dotted decimal, in directory "lockdir". For convienence's sake we
-   * write our process ID in there. Should be called from servicing
-   * child, so lock goes away on exit. must be called after service()
-   * sets global remoteaddr (above).
-   *
-   * returns fd for file on success,-1 on failure.
-   */
-
-  char *dd, *lpath;
-  int i, fd; 
-  FILE *f;
-
-  dd=strdup(inet_ntoa(remoteaddr));
-  if (dd == NULL) {
-    syslog(LOG_ERR, "Malloc failed in lock_host_file()");
-    return(-1);
-  }
-  i=strlen(lockdir) + strlen(dd) + 2; /* null and maybe a / */
-  lpath=(char *)malloc(i * sizeof(char));
-  lpath[i-1]='\0';
-  if (lpath == NULL) {
-    syslog(LOG_ERR, "Malloc failed in lock_host_file()");
-    free(dd);
-    return(-1);
-  }
-  (void) strncpy(lpath, lockdir, i-1);
-  if (lpath[strlen(lpath) - 1] != '/') {
-    lpath[strlen(lpath) + 1] = '\0';
-    lpath[strlen(lpath)] = '/'; 
-  }
-  (void) strncat(lpath, dd, i - strlen(lpath)); 
-  if (lpath[i-1] != '\0') {
-    syslog(LOG_CRIT, "Buffer overrun in lock_host_file(). SHOULD NOT HAPPEN!");
-    abort();
-  }
-  free(dd);
-  if ((fd = open(lpath, O_CREAT | O_WRONLY, 0600)) < 0) {
-    syslog(LOG_ERR, "Couldn't open/create lock file %s (%m)", lpath);
-    free(lpath);
-    return(-1);
-  }
+	dd = strdup(inet_ntoa(remoteaddr));
+	if (dd == NULL) {
+		syslog(LOG_ERR, "Malloc failed in lock_host_file()");
+		return(-1);
+	}
+	i = strlen(lockdir) + strlen(dd) + 2; /* NUL and maybe a / */
+	lpath = (char *)malloc(i);
+	if (lpath == NULL) {
+		syslog(LOG_ERR, "Malloc failed in lock_host_file()");
+		free(dd);
+		return(-1);
+	}
+	(void) strlcpy(lpath, lockdir, i);
+	if (lpath[strlen(lpath) - 1] != '/') {
+		lpath[strlen(lpath)] = '/'; 
+		lpath[strlen(lpath) + 1] = '\0';
+	}
+	if (strlcat(lpath, dd, i) >= i) {
+		syslog(LOG_CRIT, "Buffer overrun in lock_host_file(). SHOULD NOT HAPPEN!");
+		abort();
+	}
+	free(dd);
+	if ((fd = open(lpath, O_CREAT | O_WRONLY, 0600)) < 0) {
+		syslog(LOG_ERR, "Couldn't open/create lock file %s (%m)", lpath);
+		free(lpath);
+		return(-1);
+	}
 #ifdef USE_LOCKF
-  if (lockf(fd, F_TLOCK, 0) != 0) 
+	if (lockf(fd, F_TLOCK, 0) != 0) 
 #else
-  if (flock(fd, LOCK_EX | LOCK_NB ) != 0)
+	if (flock(fd, LOCK_EX | LOCK_NB ) != 0)
 #endif
-    {
-      syslog(LOG_DEBUG, "Can't get lock on %s.", lpath);
-      free(lpath);
-      close(fd);
-      return(-1);
-    }
-  if (ftruncate(fd, 0) < 0) {
-    syslog(LOG_ERR, "Couldn't ftruncate fd %d for lock file %s (%m)",
-	   fd, lpath);
-    free(lpath);
-    close(fd);
-    return(-1);
-  }
-  f=fdopen(fd,"w");
-  if (f == NULL) {
-    syslog(LOG_ERR, "Couldn't fopen fd %d for lock file %s (%m)", fd, lpath);
-    free(lpath);
-    close(fd);
-    return(-1);
-  }
-  (void)fprintf(f,"%d\n", getpid());
-  fflush(f);
-  free(lpath);
-  return(fd);
+	{
+		syslog(LOG_DEBUG, "Can't get lock on %s.", lpath);
+		free(lpath);
+		close(fd);
+		return(-1);
+	}
+	if (ftruncate(fd, 0) < 0) {
+		syslog(LOG_ERR,
+		    "Couldn't ftruncate fd %d for lock file %s (%m)",
+		    fd, lpath);
+		free(lpath);
+		close(fd);
+		return(-1);
+	}
+	f = fdopen(fd, "w");
+	if (f == NULL) {
+		syslog(LOG_ERR, "Couldn't fopen fd %d for lock file %s (%m)",
+		    fd, lpath);
+		free(lpath);
+		close(fd);
+		return(-1);
+	}
+	(void)fprintf(f, "%d\n", getpid());
+	fflush(f);
+	free(lpath);
+	return(fd);
 }
 
 int
-servicesetup (server)		/* listen for clients */
-char *server;
+servicesetup(server)		/* listen for clients */
+	char *server;
 {
 	struct sockaddr_in sin;
 	struct servent *sp;
 	short port;
 	int one = 1;
 
-	if (myhost () == NULL)
-		return (scmerr (-1,"Local hostname not known"));
-	if ((sp = getservbyname(server,"tcp")) == 0) {
+	if (myhost() == NULL)
+		return (scmerr(-1, "Local hostname not known"));
+	if ((sp = getservbyname(server, "tcp")) == 0) {
 		if (strcmp(server, FILEPORT) == 0)
 			port = htons((u_short)FILEPORTNUM);
 		else if (strcmp(server, DEBUGFPORT) == 0)
 			port = htons((u_short)DEBUGFPORTNUM);
 		else
-			return (scmerr (-1,"Can't find %s server description",server));
-		(void) scmerr (-1,"%s/tcp: unknown service: using port %d",
-					server,port);
+			return (scmerr(-1, "Can't find %s server description",
+			    server));
+		(void) scmerr(-1, "%s/tcp: unknown service: using port %d",
+		    server,port);
 	} else
 		port = sp->s_port;
-	endservent ();
-	sock = socket (AF_INET,SOCK_STREAM,0);
+	endservent();
+	sock = socket(AF_INET, SOCK_STREAM, 0);
 	if (sock < 0)
-		return (scmerr (errno,"Can't create socket for connections"));
-	if (setsockopt (sock,SOL_SOCKET,SO_REUSEADDR,(char *)&one,sizeof(int)) < 0)
+		return (scmerr(errno, "Can't create socket for connections"));
+	if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char *)&one, sizeof(int)) < 0)
 		(void) scmerr (errno,"Can't set SO_REUSEADDR socket option");
-	(void) bzero ((char *)&sin,sizeof(sin));
+	(void) memset(&sin, 0, sizeof(sin));
 	sin.sin_family = AF_INET;
 	sin.sin_port = port;
-	if (bind (sock,(struct sockaddr *)&sin,sizeof(sin)) < 0)
-		return (scmerr (errno,"Can't bind socket for connections"));
-	if (listen (sock,NCONNECTS) < 0)
-		return (scmerr (errno,"Can't listen on socket"));
+	if (bind(sock, (struct sockaddr *)&sin, sizeof(sin)) < 0)
+		return (scmerr(errno, "Can't bind socket for connections"));
+	if (listen(sock, NCONNECTS) < 0)
+		return (scmerr(errno, "Can't listen on socket"));
 	return (SCMOK);
 }
 
 int
-service ()
+service()
 {
 	struct sockaddr_in from;
-	int x,len;
+	int x, len;
 
 again:
 	remotename = NULL;
-	len = sizeof (from);
+	len = sizeof(from);
 	do {
-		netfile = accept (sock,(struct sockaddr *)&from,&len);
+		netfile = accept(sock, (struct sockaddr *)&from, &len);
 	} while (netfile < 0 && errno == EINTR);
 	if (netfile < 0)
-		return (scmerr (errno,"Can't accept connections"));
+		return (scmerr(errno, "Can't accept connections"));
 
 	/* protection against ftp bounce attack */
 	if (from.sin_port == htons(20)) {
@@ -359,20 +362,21 @@ again:
 		goto again;
 	}
 	remoteaddr = from.sin_addr;
-	if (read(netfile,(char *)&x,sizeof(int)) != sizeof(int))
-		return (scmerr (errno,"Can't transmit data on connection"));
+	if (read(netfile, (char *)&x, sizeof(int)) != sizeof(int))
+		return (scmerr(errno, "Can't transmit data on connection"));
 	if (x == 0x01020304)
 		swapmode = 0;
 	else if (x == 0x04030201)
 		swapmode = 1;
 	else
-		return (scmerr (-1,"Unexpected byteswap mode %x",x));
+		return (scmerr(-1, "Unexpected byteswap mode %x", x));
 	return (SCMOK);
 }
 
 int
-serviceprep ()		/* kill temp socket in daemon */
+serviceprep()		/* kill temp socket in daemon */
 {
+
 	if (sock >= 0) {
 		(void) close (sock);
 		sock = -1;
@@ -381,28 +385,30 @@ serviceprep ()		/* kill temp socket in daemon */
 }
 
 int
-servicekill ()		/* kill net file in daemon's parent */
+servicekill()		/* kill net file in daemon's parent */
 {
+
 	if (netfile >= 0) {
-		(void) close (netfile);
+		(void) close(netfile);
 		netfile = -1;
 	}
 	if (remotename) {
-		free (remotename);
+		free(remotename);
 		remotename = NULL;
 	}
 	return (SCMOK);
 }
 
 int
-serviceend ()		/* kill net file after use in daemon */
+serviceend()		/* kill net file after use in daemon */
 {
+
 	if (netfile >= 0) {
-		(void) close (netfile);
+		(void) close(netfile);
 		netfile = -1;
 	}
 	if (remotename) {
-		free (remotename);
+		free(remotename);
 		remotename = NULL;
 	}
 	return (SCMOK);
@@ -413,8 +419,8 @@ serviceend ()		/* kill net file after use in daemon */
  ***    F O R   C L I E N T                      ***
  ***************************************************/
 
-int dobackoff (t,b)
-int *t,*b;
+int dobackoff(t, b)
+	int *t, *b;
 {
 	struct timeval tt;
 	unsigned s;
@@ -422,25 +428,26 @@ int *t,*b;
 	if (*t == 0)
 		return (0);
 	s = *b * 30;
-	if (gettimeofday (&tt,(struct timezone *)NULL) >= 0)
+	if (gettimeofday(&tt, NULL) >= 0)
 		s += (tt.tv_usec >> 8) % s;
-	if (*b < 32) *b <<= 1;
+	if (*b < 32)
+		*b <<= 1;
 	if (*t != -1) {
 		if (s > *t)
 			s = *t;
 		*t -= s;
 	}
 	if (!silent)
-	    (void) scmerr (-1,"Will retry in %d seconds",s);
-	sleep (s);
+	    (void) scmerr(-1, "Will retry in %d seconds", s);
+	sleep(s);
 	return (1);
 }
 
 int
-request (server,hostname,retry)		/* connect to server */
-char *server;
-char *hostname;
-int *retry;
+request(server, hostname, retry)	/* connect to server */
+	char *server;
+	char *hostname;
+	int *retry;
 {
 	int x, backoff;
 	struct hostent *h;
@@ -454,55 +461,56 @@ int *retry;
 		else if (strcmp(server, DEBUGFPORT) == 0)
 			port = htons((u_short)DEBUGFPORTNUM);
 		else
-			return (scmerr (-1,"Can't find %s server description",
+			return (scmerr (-1, "Can't find %s server description",
 					server));
 		if (!silent)
-		    (void) scmerr (-1,"%s/tcp: unknown service: using port %d",
-				    server,port);
+		    (void) scmerr (-1, "%s/tcp: unknown service: using port %d",
+				    server, port);
 	} else
 		port = sp->s_port;
-	(void) bzero ((char *)&sin,sizeof(sin));
+	(void) memset(&sin, 0, sizeof(sin));
 	sin.sin_family = AF_INET;
-	sin.sin_addr.s_addr = inet_addr (hostname);
+	sin.sin_addr.s_addr = inet_addr(hostname);
 	if (sin.sin_addr.s_addr == (u_long) INADDR_NONE) {
-		if ((h = gethostbyname (hostname)) == NULL)
-			return (scmerr (-1,"Can't find host entry for %s",
+		if ((h = gethostbyname(hostname)) == NULL)
+			return (scmerr(-1, "Can't find host entry for %s",
 					hostname));
 		hostname = h->h_name;
-		(void) bcopy (h->h_addr,(char *)&sin.sin_addr,h->h_length);
+		(void) memcpy(&sin.sin_addr, h->h_addr, h->h_length);
 	}
 	sin.sin_port = port;
 	backoff = 1;
 	for (;;) {
-		netfile = socket (AF_INET,SOCK_STREAM,0);
+		netfile = socket(AF_INET, SOCK_STREAM, 0);
 		if (netfile < 0)
-			return (scmerr (errno,"Can't create socket"));
+			return (scmerr(errno, "Can't create socket"));
 		tin = sin;
-		if (connect(netfile,(struct sockaddr *)&tin,sizeof(tin)) >= 0)
+		if (connect(netfile, (struct sockaddr *)&tin, sizeof(tin)) >= 0)
 			break;
-		(void) scmerr (errno,"Can't connect to server for %s",server);
+		(void) scmerr (errno,"Can't connect to server for %s", server);
 		(void) close(netfile);
-		if (!dobackoff (retry,&backoff))
+		if (!dobackoff(retry,&backoff))
 			return (SCMERR);
 	}
 	remoteaddr = sin.sin_addr;
-	remotename = salloc(hostname);
+	remotename = strdup(hostname);
 	x = 0x01020304;
-	(void) write (netfile,(char *)&x,sizeof(int));
+	(void) write (netfile, (char *)&x, sizeof(int));
 	swapmode = 0;		/* swap only on server, not client */
 	return (SCMOK);
 }
 
 int
-requestend ()			/* end connection to server */
+requestend()			/* end connection to server */
 {
-	(void) readflush ();
+
+	(void) readflush();
 	if (netfile >= 0) {
-		(void) close (netfile);
+		(void) close(netfile);
 		netfile = -1;
 	}
 	if (remotename) {
-		free (remotename);
+		free(remotename);
 		remotename = NULL;
 	}
 	return (SCMOK);
@@ -512,51 +520,54 @@ requestend ()			/* end connection to server */
  ***    H O S T   N A M E   C H E C K I N G    ***
  *************************************************/
 
-static
-char *myhost ()		/* find my host name */
+static char *
+myhost()		/* find my host name */
 {
 	struct hostent *h;
 	static char name[MAXHOSTNAMELEN];
 
 	if (name[0] == '\0') {
-		if (gethostname (name,sizeof name) < 0)
+		if (gethostname(name,sizeof name) < 0)
 			return (NULL);
-		if ((h = gethostbyname (name)) == NULL)
+		if ((h = gethostbyname(name)) == NULL)
 			return (NULL);
-		(void) strncpy (name,h->h_name,sizeof name-1);
-		name[sizeof name-1] = '\0';
+		(void) strlcpy(name, h->h_name, sizeof name);
 	}
 	return (name);
 }
 
-char *remotehost ()	/* remote host name (if known) */
+char *
+remotehost()		/* remote host name (if known) */
 {
-	register struct hostent *h;
+	struct hostent *h;
 
 	if (remotename == NULL) {
-		h = gethostbyaddr ((char *)&remoteaddr,sizeof(remoteaddr),
+		h = gethostbyaddr((char *)&remoteaddr, sizeof(remoteaddr),
 				    AF_INET);
-		remotename = salloc (h ? h->h_name : inet_ntoa(remoteaddr));
+		remotename = strdup(h ? h->h_name : inet_ntoa(remoteaddr));
 		if (remotename == NULL)
 			return("UNKNOWN");
 	}
 	return (remotename);
 }
 
-int thishost (host)
-register char *host;
+int
+thishost(host)
+	char *host;
 {
-	register struct hostent *h;
+	struct hostent *h;
 	char *name;
 
-	if ((name = myhost ()) == NULL)
-		logquit (1,"Can't find my host entry '%s'", myhost());
-	h = gethostbyname (host);
-	if (h == NULL) return (0);
-	return (strcasecmp (name,h->h_name) == 0);
+	if ((name = myhost()) == NULL)
+		logquit (1, "Can't find my host entry '%s'", myhost());
+	h = gethostbyname(host);
+	if (h == NULL)
+		return (0);
+	return (strcasecmp(name, h->h_name) == 0);
 }
 
-int samehost ()		/* is remote host same as local host? */
+int
+samehost()		/* is remote host same as local host? */
 {
 	static struct in_addr *intp;
 	static int nint = 0;
@@ -574,17 +585,17 @@ int samehost ()		/* is remote host same as local host? */
 			logquit (1,"Can't create socket for SIOCGIFCONF");
 		ifc.ifc_len = sizeof(buf);
 		ifc.ifc_buf = buf;
-		if (ioctl (s,SIOCGIFCONF,(char *)&ifc) < 0)
-			logquit (1,"SIOCGIFCONF failed");
+		if (ioctl(s, SIOCGIFCONF, (char *)&ifc) < 0)
+			logquit(1,"SIOCGIFCONF failed");
 		(void) close(s);
-		if ((nint = ifc.ifc_len/sizeof(struct ifreq)) <= 0)
+		if ((nint = ifc.ifc_len / sizeof(struct ifreq)) <= 0)
 			return (0);
 		intp = (struct in_addr *)
-			malloc ((unsigned) nint*sizeof(struct in_addr));
+			malloc (nint * sizeof(struct in_addr));
 		if ((ifp = intp) == 0)
-			logquit (1,"no space for interfaces");
+			logquit (1, "no space for interfaces");
 		for (ifr = ifc.ifc_req, n = nint; n > 0; --n, ifr++) {
-			(void) bcopy ((char *)&ifr->ifr_addr,(char *)&sin,sizeof(sin));
+			(void) memcpy(&sin, &ifr->ifr_addr, sizeof(sin));
 			*ifp++ = sin.sin_addr;
 		}
 	}
@@ -596,29 +607,31 @@ int samehost ()		/* is remote host same as local host? */
 	return (0);
 }
 
-int matchhost (name)	/* is this name of remote host? */
-char *name;
+int
+matchhost(name)		/* is this name of remote host? */
+	char *name;
 {
 	struct hostent *h;
 	struct in_addr addr;
 	char **ap;
+
 	if ((addr.s_addr = inet_addr(name)) != (u_long) INADDR_NONE)
 		return (addr.s_addr == remoteaddr.s_addr);
-	if ((h = gethostbyname (name)) == 0)
+	if ((h = gethostbyname(name)) == 0)
 		return (0);
 	if (h->h_addrtype != AF_INET || h->h_length != sizeof(struct in_addr))
 		return (0);
 	for (ap = h->h_addr_list; *ap; ap++)
-		if (bcmp ((char *)&remoteaddr,*ap,h->h_length) == 0)
+		if (memcmp(&remoteaddr, *ap, h->h_length) == 0)
 			return (1);
 	return (0);
 }
 
 #ifdef __STDC__
-int scmerr (int error,char *fmt,...)
+int scmerr(int error,char *fmt,...)
 #else
 /*VARARGS*//*ARGSUSED*/
-int scmerr (va_alist)
+int scmerr(va_alist)
 va_dcl
 #endif
 {
@@ -634,19 +647,19 @@ va_dcl
 	fmt = va_arg(ap,char *);
 #endif
 
-	(void) fflush (stdout);
+	(void) fflush(stdout);
 	if (progpid > 0)
-		fprintf (stderr,"%s %d: ",program,progpid);
+		fprintf(stderr, "%s %d: ", program, progpid);
 	else
-		fprintf (stderr,"%s: ",program);
+		fprintf(stderr,"%s: ", program);
 
 	vfprintf(stderr, fmt, ap);
 	va_end(ap);
 	if (error >= 0)
-		fprintf (stderr,": %s\n",errmsg(error));
+		fprintf(stderr, ": %s\n", errmsg(error));
 	else
-		fprintf (stderr,"\n");
-	(void) fflush (stderr);
+		fprintf(stderr, "\n");
+	(void) fflush(stderr);
 	return (SCMERR);
 }
 
@@ -659,16 +672,17 @@ union intchar {
 	char uc[sizeof(int)];
 };
 
-int byteswap (in)
-int in;
+int byteswap(in)
+	int in;
 {
 	union intchar x,y;
-	register int ix,iy;
+	int ix,iy;
 
-	if (swapmode == 0)  return (in);
+	if (swapmode == 0)
+		return (in);
 	x.ui = in;
 	iy = sizeof(int);
-	for (ix=0; ix<sizeof(int); ix++) {
+	for (ix=0; ix < sizeof(int); ix++) {
 		--iy;
 		y.uc[iy] = x.uc[ix];
 	}

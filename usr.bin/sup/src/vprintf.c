@@ -1,4 +1,4 @@
-/*	$OpenBSD: vprintf.c,v 1.7 2001/05/02 22:56:54 millert Exp $	*/
+/*	$OpenBSD: vprintf.c,v 1.8 2001/05/04 22:16:17 millert Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -91,6 +91,7 @@ vfprintf(f, fmt, args)
 	char *fmt;
 	va_list args;
 {
+
 	_doprnt(fmt, args, f);
 	return (ferror(f) ? EOF : 0);
 }
@@ -129,7 +130,7 @@ vsnprintf(s, n, fmt, args)
 	fakebuf._cnt++;
 	putc('\0', &fakebuf);
 	if (fakebuf._cnt<0)
-	    fakebuf._cnt = 0;
+		fakebuf._cnt = 0;
 	return (n-fakebuf._cnt-1);
 }
 #endif	/* NEED_VPRINTF || NEED_VSNPRINTF */

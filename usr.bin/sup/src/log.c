@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.6 2001/05/02 22:56:52 millert Exp $	*/
+/*	$OpenBSD: log.c,v 1.7 2001/05/04 22:16:15 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -47,7 +47,7 @@
  */
 
 #include <stdio.h>
-#include <sys/syslog.h>
+#include <syslog.h>
 #include <c.h>
 #include "supcdefs.h"
 #include "supextern.h"
@@ -56,16 +56,17 @@ static int opened = 0;
 
 void
 logopen(program)
-char *program;
+	char *program;
 {
-	if (opened)  return;
-	openlog(program,LOG_PID,LOG_DAEMON);
+	if (opened)
+		return;
+	openlog(program, LOG_PID, LOG_DAEMON);
 	opened++;
 }
 
 void
 #ifdef __STDC__
-logquit(int retval,char *fmt,...)
+logquit(int retval, char *fmt, ...)
 #else
 /*VARARGS*//*ARGSUSED*/
 logquit(va_alist)
@@ -88,11 +89,11 @@ va_dcl
 	vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 	if (opened) {
-		syslog (LOG_ERR, "%s", buf);
-		closelog ();
-		exit (retval);
+		syslog(LOG_ERR, "%s", buf);
+		closelog();
+		exit(retval);
 	}
-	quit (retval,"SUP: %s\n", buf);
+	quit(retval, "SUP: %s\n", buf);
 }
 
 void
@@ -118,11 +119,11 @@ va_dcl
 	vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 	if (opened) {
-		syslog (LOG_ERR, "%s", buf);
+		syslog(LOG_ERR, "%s", buf);
 		return;
 	}
-	fprintf (stderr,"SUP: %s\n",buf);
-	(void) fflush (stderr);
+	fprintf(stderr, "SUP: %s\n", buf);
+	(void) fflush(stderr);
 }
 
 void
@@ -148,11 +149,11 @@ va_dcl
 	vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 	if (opened) {
-		syslog (LOG_INFO, "%s", buf);
+		syslog(LOG_INFO, "%s", buf);
 		return;
 	}
-	printf ("%s\n",buf);
-	(void) fflush (stdout);
+	printf ("%s\n", buf);
+	(void) fflush(stdout);
 }
 
 #ifdef LIBWRAP
@@ -190,16 +191,16 @@ va_dcl
 	char *fmt;
 
 	va_start(ap);
-	fmt = va_arg(ap,char *);
+	fmt = va_arg(ap, char *);
 #endif
 	vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 	if (opened) {
-		syslog (deny_severity, "%s", buf);
+		syslog(deny_severity, "%s", buf);
 		return;
 	}
-	printf ("%s\n",buf);
-	(void) fflush (stdout);
+	printf("%s\n", buf);
+	(void) fflush(stdout);
 }
 
 void
@@ -225,11 +226,10 @@ va_dcl
 	vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 	if (opened) {
-		syslog (allow_severity, "%s", buf);
+		syslog(allow_severity, "%s", buf);
 		return;
 	}
-	printf ("%s\n",buf);
-	(void) fflush (stdout);
+	printf("%s\n",buf);
+	(void) fflush(stdout);
 }
-
 #endif /*  LIBWRAP */

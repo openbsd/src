@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffilecopy.c,v 1.5 1997/04/01 07:35:03 todd Exp $	*/
+/*	$OpenBSD: ffilecopy.c,v 1.6 2001/05/04 22:16:15 millert Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -50,36 +50,41 @@
 #include "supcdefs.h"
 #include "supextern.h"
 
-int ffilecopy (here,there)
-FILE *here, *there;
+int
+ffilecopy(here,there)
+	FILE *here, *there;
 {
-	register int i, herefile, therefile;
+	int i, herefile, therefile;
 
 	herefile = fileno(here);
 	therefile = fileno(there);
 
-	if (fflush (there) == EOF)		/* flush pending output */
+	if (fflush(there) == EOF)		/* flush pending output */
 		return (EOF);
 
-#if	defined(__386BSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__bsdi__)
+#ifdef _FSTDIO
 	if ((here->_r) > 0) {			/* flush buffered input */
-		i = write (therefile, here->_p, here->_r);
-		if (i != here->_r)  return (EOF);
+		i = write(therefile, here->_p, here->_r);
+		if (i != here->_r)
+			return (EOF);
 		here->_p = here->_bf._base;
 		here->_r = 0;
 	}
 #else
 	if ((here->_cnt) > 0) {			/* flush buffered input */
-		i = write (therefile, here->_ptr, here->_cnt);
-		if (i != here->_cnt)  return (EOF);
+		i = write(therefile, here->_ptr, here->_cnt);
+		if (i != here->_cnt)
+			return (EOF);
 		here->_ptr = here->_base;
 		here->_cnt = 0;
 	}
-#endif
-	i = filecopy (herefile, therefile);	/* fast file copy */
-	if (i < 0)  return (EOF);
+#endif /* _FSTDIO */
 
-#if	defined(__386BSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__bsdi__)
+	i = filecopy(herefile, therefile);	/* fast file copy */
+	if (i < 0)
+		return (EOF);
+
+#ifdef _FSTDIO
 	(here->_flags) |= __SEOF;		/* indicate EOF */
 #else
 	(here->_flag) |= _IOEOF;		/* indicate EOF */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: netcryptvoid.c,v 1.5 2001/05/02 22:56:52 millert Exp $	*/
+/*	$OpenBSD: netcryptvoid.c,v 1.6 2001/05/04 22:16:15 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -57,18 +57,18 @@ int cryptflag;			/* whether to encrypt/decrypt data */
 char *cryptbuf;			/* buffer for data encryption/decryption */
 
 int netcrypt (pword)
-char *pword;
+	char *pword;
 {
 	if (pword == NULL || (strcmp(pword,PSWDCRYPT) == 0)) {
 		cryptflag = 0;
-		(void) getcryptbuf (0);
+		(void) getcryptbuf(0);
 		return (SCMOK);
 	}
 	return (SCMERR);
 }
 
-int getcryptbuf (x)
-int x;
+int getcryptbuf(x)
+	int x;
 {
 	if (cryptflag == 0)
 		return(SCMOK);
@@ -77,14 +77,14 @@ int x;
 }
 
 void decode (in,out,count)
-char *in,*out;
-int count;
+	char *in,*out;
+	int count;
 {
 }
 
 
 void encode (in,out,count)
-char *in,*out;
-int count;
+	char *in,*out;
+	int count;
 {
 }

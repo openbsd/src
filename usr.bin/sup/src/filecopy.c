@@ -1,4 +1,4 @@
-/*	$OpenBSD: filecopy.c,v 1.3 1997/04/01 07:35:05 todd Exp $	*/
+/*	$OpenBSD: filecopy.c,v 1.4 2001/05/04 22:16:15 millert Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -53,17 +53,20 @@
  *
  */
 
-#define BUFFERSIZE 10240
 #include "supcdefs.h"
 #include "supextern.h"
 
-int filecopy (here,there)
-int here,there;
+#define BUFFERSIZE 10240
+
+int
+filecopy (here, there)
+	int here, there;
 {
-	register int kount;
+	int kount;
 	char buffer[BUFFERSIZE];
+
 	kount = 0;
-	while (kount == 0 && (kount=read(here,buffer,BUFFERSIZE)) > 0)
-		kount -= write (there,buffer,kount);
+	while (kount == 0 && (kount = read(here, buffer, BUFFERSIZE)) > 0)
+		kount -= write(there, buffer, kount);
 	return (kount ? -1 : 0);
 }

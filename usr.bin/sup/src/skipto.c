@@ -55,35 +55,36 @@
 #include "supcdefs.h"
 #include "supextern.h"
 
-static char tab[256] = {
-	0};
+static char tab[256];
 
-char *skipto (string, charset)
-char *string, *charset;
+char *
+skipto(string, charset)
+	char *string, *charset;
 {
 	char *setp, *strp;
 
 	tab[0] = 1;		/* Stop on a null, too. */
-	for (setp = charset;  *setp;  setp++)
+	for (setp = charset; *setp; setp++)
 		tab[(unsigned char) *setp] = 1;
-	for (strp = string;  tab[(unsigned char) *strp]==0;  strp++)
-		continue;
+	for (strp = string; tab[(unsigned char) *strp] == 0; strp++)
+		;
 	for (setp = charset;  *setp;  setp++)
 		tab[(unsigned char) *setp] = 0;
-	return strp;
+	return (strp);
 }
 
-char *skipover (string, charset)
-char *string, *charset;
+char *
+skipover(string, charset)
+	char *string, *charset;
 {
 	char *setp, *strp;
 
 	tab[0] = 0;		/* Do not skip over nulls. */
-	for (setp = charset;  *setp;  setp++)
+	for (setp = charset; *setp; setp++)
 		tab[(unsigned char) *setp] = 1;
-	for (strp = string;  tab[(unsigned char) *strp];  strp++)
-		continue;
-	for (setp = charset;  *setp;  setp++)
+	for (strp = string; tab[(unsigned char) *strp]; strp++)
+		;
+	for (setp = charset; *setp; setp++)
 		tab[(unsigned char) *setp] = 0;
-	return strp;
+	return (strp);
 }

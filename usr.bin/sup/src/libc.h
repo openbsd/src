@@ -1,4 +1,4 @@
-/*	$OpenBSD: libc.h,v 1.6 2001/05/02 22:56:52 millert Exp $	*/
+/*	$OpenBSD: libc.h,v 1.7 2001/05/04 22:16:15 millert Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -145,7 +145,6 @@ extern unsigned int gethex(const char*, unsigned int, unsigned int,
 extern unsigned int hexarg(const char**, const char*, const char*,
 			   unsigned int, unsigned int, unsigned int);
 extern unsigned int atoh(const char*);
-extern char *salloc(const char*);
 extern char *concat(const char*, int, ...);
 #else	/* __STDC__ */
 extern char *foldup(), *folddown();
@@ -157,7 +156,6 @@ extern float getfloat(), floatarg();
 extern double getdouble(), doublearg();
 extern unsigned int getoct(), octarg(), gethex(), hexarg();
 extern unsigned int atoo(), atoh();
-extern char *salloc();
 extern char *concat();
 #endif	/* __STDC__ */
 
@@ -195,9 +193,10 @@ extern int abs(int);
 extern double atof(const char *);
 extern int atoi(const char *);
 extern long atol(const char *);
-extern void bcopy(const void *, void *, int);
-extern int bcmp(const void *, const void *, int);
-extern void bzero(void *, int);
+extern void memcpy(void *, const void *, size_t);
+extern void memmove(void *, const void *, size_t);
+extern int memcmp(const void *, const void *, size_t);
+extern void memset(void *, int, size_t);
 extern int ffs(int);
 extern char *crypt(const char *, const char *);
 extern void setkey(char *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: supmsg.c,v 1.6 2001/05/02 22:56:54 millert Exp $	*/
+/*	$OpenBSD: supmsg.c,v 1.7 2001/05/04 22:16:17 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -75,44 +75,64 @@ static int needone __P((TREE *, void *));
 static int denyone __P((TREE *, void *));
 static int writeone __P((TREE *, void *));
 
-int msgsignon ()
+int
+msgsignon()
 {
-	register int x;
+	int x;
 
 	if (server) {
-		x = readmsg (MSGSIGNON);
-		if (x == SCMOK)  x = readint (&protver);
-		if (x == SCMOK)  x = readint (&pgmver);
-		if (x == SCMOK)  x = readstring (&scmver);
-		if (x == SCMOK)  x = readmend ();
+		x = readmsg(MSGSIGNON);
+		if (x == SCMOK)
+			x = readint(&protver);
+		if (x == SCMOK)
+			x = readint(&pgmver);
+		if (x == SCMOK)
+			x = readstring(&scmver);
+		if (x == SCMOK)
+			x = readmend();
 	} else {
-		x = writemsg (MSGSIGNON);
-		if (x == SCMOK)  x = writeint (PROTOVERSION);
-		if (x == SCMOK)  x = writeint (pgmversion);
-		if (x == SCMOK)  x = writestring (scmversion);
-		if (x == SCMOK)  x = writemend ();
+		x = writemsg(MSGSIGNON);
+		if (x == SCMOK)
+			x = writeint(PROTOVERSION);
+		if (x == SCMOK)
+			x = writeint(pgmversion);
+		if (x == SCMOK)
+			x = writestring(scmversion);
+		if (x == SCMOK)
+			x = writemend();
 	}
 	return (x);
 }
 
-int msgsignonack ()
+int
+msgsignonack()
 {
-	register int x;
+	int x;
 
 	if (server) {
-		x = writemsg (MSGSIGNONACK);
-		if (x == SCMOK)  x = writeint (PROTOVERSION);
-		if (x == SCMOK)  x = writeint (pgmversion);
-		if (x == SCMOK)  x = writestring (scmversion);
-		if (x == SCMOK)  x = writeint (fspid);
-		if (x == SCMOK)  x = writemend ();
+		x = writemsg(MSGSIGNONACK);
+		if (x == SCMOK)
+			x = writeint(PROTOVERSION);
+		if (x == SCMOK)
+			x = writeint(pgmversion);
+		if (x == SCMOK)
+			x = writestring(scmversion);
+		if (x == SCMOK)
+			x = writeint(fspid);
+		if (x == SCMOK)
+			x = writemend();
 	} else {
-		x = readmsg (MSGSIGNONACK);
-		if (x == SCMOK)  x = readint (&protver);
-		if (x == SCMOK)  x = readint (&pgmver);
-		if (x == SCMOK)  x = readstring (&scmver);
-		if (x == SCMOK)  x = readint (&fspid);
-		if (x == SCMOK)  x = readmend ();
+		x = readmsg(MSGSIGNONACK);
+		if (x == SCMOK)
+			x = readint(&protver);
+		if (x == SCMOK)
+			x = readint(&pgmver);
+		if (x == SCMOK)
+			x = readstring(&scmver);
+		if (x == SCMOK)
+			x = readint(&fspid);
+		if (x == SCMOK)
+			x = readmend();
 	}
 	return (x);
 }
@@ -132,67 +152,92 @@ extern int	newonly;		/* only send new files */
 extern char	*release;		/* release name */
 extern int	setupack;		/* ack return value for setup */
 
-int msgsetup ()
+int
+msgsetup()
 {
-	register int x;
+	int x;
 
 	if (server) {
-		x = readmsg (MSGSETUP);
-		if (x != SCMOK)  return (x);
+		x = readmsg(MSGSETUP);
+		if (x != SCMOK)
+			return (x);
 		if (protver >= 7) {
-			x = readint (&xpatch);
-			if (x != SCMOK)  return (x);
+			x = readint(&xpatch);
+			if (x != SCMOK)
+				return (x);
 		} else
 			xpatch = FALSE;
 		if (xpatch) {
-			x = readstring (&xuser);
-			if (x != SCMOK)  return (x);
-			return (readmend ());
+			x = readstring(&xuser);
+			if (x != SCMOK)
+				return (x);
+			return (readmend());
 		}
-		x = readstring (&collname);
-		if (x == SCMOK)  x = readint ((int *)&lasttime);
-		if (x == SCMOK)  x = readstring (&basedir);
-		if (x == SCMOK)  x = readint (&basedev);
-		if (x == SCMOK)  x = readint (&baseino);
-		if (x == SCMOK)  x = readint (&listonly);
-		if (x == SCMOK)  x = readint (&newonly);
+		x = readstring(&collname);
+		if (x == SCMOK)
+			x = readint((int *)&lasttime);
+		if (x == SCMOK)
+			x = readstring(&basedir);
+		if (x == SCMOK)
+			x = readint(&basedev);
+		if (x == SCMOK)
+			x = readint(&baseino);
+		if (x == SCMOK)
+			x = readint(&listonly);
+		if (x == SCMOK)
+			x = readint(&newonly);
 		if (x == SCMOK) {
 			if (protver < 6)
-				release = (char *)NULL;
+				release = NULL;
 			else
-				x = readstring (&release);
+				x = readstring(&release);
 		}
-		if (x == SCMOK)  x = readmend ();
+		if (x == SCMOK)
+			x = readmend();
 	} else {
-		x = writemsg (MSGSETUP);
-		if (x != SCMOK)  return (x);
+		x = writemsg(MSGSETUP);
+		if (x != SCMOK)
+			return (x);
 		if (protver >= 7) {
-			x = writeint (xpatch);
-			if (x != SCMOK)  return (x);
+			x = writeint(xpatch);
+			if (x != SCMOK)
+				return (x);
 		}
 		if (xpatch) {
-			x = writestring (xuser);
-			if (x != SCMOK)  return (x);
-			return (writemend ());
+			x = writestring(xuser);
+			if (x != SCMOK)
+				return (x);
+			return (writemend());
 		}
-		if (x == SCMOK)  x = writestring (collname);
-		if (x == SCMOK)  x = writeint ((int)lasttime);
-		if (x == SCMOK)  x = writestring (basedir);
-		if (x == SCMOK)  x = writeint (basedev);
-		if (x == SCMOK)  x = writeint (baseino);
-		if (x == SCMOK)  x = writeint (listonly);
-		if (x == SCMOK)  x = writeint (newonly);
-		if (x == SCMOK && protver >= 6)  x = writestring (release);
-		if (x == SCMOK)  x = writemend ();
+		if (x == SCMOK)
+			x = writestring(collname);
+		if (x == SCMOK)
+			x = writeint((int)lasttime);
+		if (x == SCMOK)
+			x = writestring(basedir);
+		if (x == SCMOK)
+			x = writeint(basedev);
+		if (x == SCMOK)
+			x = writeint(baseino);
+		if (x == SCMOK)
+			x = writeint(listonly);
+		if (x == SCMOK)
+			x = writeint(newonly);
+		if (x == SCMOK && protver >= 6)
+			x = writestring(release);
+		if (x == SCMOK)
+			x = writemend();
 	}
 	return (x);
 }
 
-int msgsetupack ()
+int
+msgsetupack()
 {
+
 	if (server)
-		return (writemint (MSGSETUPACK,setupack));
-	return (readmint (MSGSETUPACK,&setupack));
+		return (writemint(MSGSETUPACK, setupack));
+	return (readmint(MSGSETUPACK, &setupack));
 }
 
 /*
@@ -200,18 +245,22 @@ int msgsetupack ()
  */
 extern char	*crypttest;		/* encryption test string */
 
-int msgcrypt ()
+int
+msgcrypt()
 {
+
 	if (server)
-		return (readmstr (MSGCRYPT,&crypttest));
-	return (writemstr (MSGCRYPT,crypttest));
+		return (readmstr(MSGCRYPT, &crypttest));
+	return (writemstr(MSGCRYPT, crypttest));
 }
 
-int msgcryptok ()
+int
+msgcryptok()
 {
+
 	if (server)
-		return (writemnull (MSGCRYPTOK));
-	return (readmnull (MSGCRYPTOK));
+		return (writemnull(MSGCRYPTOK));
+	return (readmnull(MSGCRYPTOK));
 }
 
 /*
@@ -223,38 +272,56 @@ extern char	*logpswd;		/* password for login */
 extern int	logack;			/* login ack status */
 extern char	*logerror;		/* error from login */
 
-int msglogin ()
+int
+msglogin()
 {
-	register int x;
+	int x;
+
 	if (server) {
-		x = readmsg (MSGLOGIN);
-		if (x == SCMOK)  x = readstring (&logcrypt);
-		if (x == SCMOK)  x = readstring (&loguser);
-		if (x == SCMOK)  x = readstring (&logpswd);
-		if (x == SCMOK)  x = readmend ();
+		x = readmsg(MSGLOGIN);
+		if (x == SCMOK)
+			x = readstring(&logcrypt);
+		if (x == SCMOK)
+			x = readstring(&loguser);
+		if (x == SCMOK)
+			x = readstring(&logpswd);
+		if (x == SCMOK)
+			x = readmend();
 	} else {
-		x = writemsg (MSGLOGIN);
-		if (x == SCMOK)  x = writestring (logcrypt);
-		if (x == SCMOK)  x = writestring (loguser);
-		if (x == SCMOK)  x = writestring (logpswd);
-		if (x == SCMOK)  x = writemend ();
+		x = writemsg(MSGLOGIN);
+		if (x == SCMOK)
+			x = writestring(logcrypt);
+		if (x == SCMOK)
+			x = writestring(loguser);
+		if (x == SCMOK)
+			x = writestring(logpswd);
+		if (x == SCMOK)
+			x = writemend();
 	}
 	return (x);
 }
 
-int msglogack ()
+int
+msglogack()
 {
-	register int x;
+	int x;
+
 	if (server) {
-		x = writemsg (MSGLOGACK);
-		if (x == SCMOK)  x = writeint (logack);
-		if (x == SCMOK)  x = writestring (logerror);
-		if (x == SCMOK)  x = writemend ();
+		x = writemsg(MSGLOGACK);
+		if (x == SCMOK)
+			x = writeint(logack);
+		if (x == SCMOK)
+			x = writestring(logerror);
+		if (x == SCMOK)
+			x = writemend();
 	} else {
-		x = readmsg (MSGLOGACK);
-		if (x == SCMOK)  x = readint (&logack);
-		if (x == SCMOK)  x = readstring (&logerror);
-		if (x == SCMOK)  x = readmend ();
+		x = readmsg(MSGLOGACK);
+		if (x == SCMOK)
+			x = readint(&logack);
+		if (x == SCMOK)
+			x = readstring(&logerror);
+		if (x == SCMOK)
+			x = readmend();
 	}
 	return (x);
 }
@@ -264,32 +331,42 @@ int msglogack ()
  */
 extern TREE	*refuseT;		/* tree of files to refuse */
 
-static int refuseone (t, v)
-register TREE *t;
-void *v;
+static int
+refuseone(t, v)
+	TREE *t;
+	void *v;
 {
-	return (writestring (t->Tname));
+	return (writestring(t->Tname));
 }
 
-int msgrefuse ()
+int
+msgrefuse()
 {
-	register int x;
+	int x;
+
 	if (server) {
 		char *name;
-		x = readmsg (MSGREFUSE);
-		if (x == SCMOK)  x = readstring (&name);
+
+		x = readmsg(MSGREFUSE);
+		if (x == SCMOK)
+			x = readstring(&name);
 		while (x == SCMOK) {
-			if (name == NULL)  break;
-			(void) Tinsert (&refuseT,name,FALSE);
-			free (name);
-			x = readstring (&name);
+			if (name == NULL)
+				break;
+			(void) Tinsert(&refuseT, name, FALSE);
+			free(name);
+			x = readstring(&name);
 		}
-		if (x == SCMOK)  x = readmend ();
+		if (x == SCMOK)
+			x = readmend();
 	} else {
-		x = writemsg (MSGREFUSE);
-		if (x == SCMOK)  x = Tprocess (refuseT,refuseone, NULL);
-		if (x == SCMOK)  x = writestring ((char *)NULL);
-		if (x == SCMOK)  x = writemend ();
+		x = writemsg(MSGREFUSE);
+		if (x == SCMOK)
+			x = Tprocess(refuseT, refuseone, NULL);
+		if (x == SCMOK)
+			x = writestring(NULL);
+		if (x == SCMOK)
+			x = writemend();
 	}
 	return (x);
 }
@@ -300,49 +377,67 @@ int msgrefuse ()
 extern TREE	*listT;			/* tree of files to list */
 extern time_t	scantime;		/* time that collection was scanned */
 
-static int listone (t, v)
-register TREE *t;
-void *v;
+static int
+listone(t, v)
+	TREE *t;
+	void *v;
 {
-	register int x;
+	int x;
 
-	x = writestring (t->Tname);
-	if (x == SCMOK)  x = writeint ((int)t->Tmode);
-	if (x == SCMOK)  x = writeint ((int)t->Tflags);
-	if (x == SCMOK)  x = writeint (t->Tmtime);
+	x = writestring(t->Tname);
+	if (x == SCMOK)
+		x = writeint((int)t->Tmode);
+	if (x == SCMOK)
+		x = writeint((int)t->Tflags);
+	if (x == SCMOK)
+		x = writeint(t->Tmtime);
 	return (x);
 }
 
-int msglist ()
+int
+msglist()
 {
-	register int x;
+	int x;
+
 	if (server) {
-		x = writemsg (MSGLIST);
-		if (x == SCMOK)  x = Tprocess (listT,listone, NULL);
-		if (x == SCMOK)  x = writestring ((char *)NULL);
-		if (x == SCMOK)  x = writeint ((int)scantime);
-		if (x == SCMOK)  x = writemend ();
+		x = writemsg(MSGLIST);
+		if (x == SCMOK)
+			x = Tprocess(listT, listone, NULL);
+		if (x == SCMOK)
+			x = writestring(NULL);
+		if (x == SCMOK)
+			x = writeint((int)scantime);
+		if (x == SCMOK)
+			x = writemend();
 	} else {
 		char *name;
-		int mode,flags,mtime;
-		register TREE *t;
-		x = readmsg (MSGLIST);
-		if (x == SCMOK)  x = readstring (&name);
+		int mode, flags, mtime;
+		TREE *t;
+
+		x = readmsg(MSGLIST);
+		if (x == SCMOK)
+			x = readstring(&name);
 		while (x == SCMOK) {
-			if (name == NULL)  break;
-			x = readint (&mode);
-			if (x == SCMOK)  x = readint (&flags);
-			if (x == SCMOK)  x = readint (&mtime);
-			if (x != SCMOK)  break;
-			t = Tinsert (&listT,name,TRUE);
-			free (name);
+			if (name == NULL)
+				break;
+			x = readint(&mode);
+			if (x == SCMOK)
+				x = readint(&flags);
+			if (x == SCMOK)
+				x = readint(&mtime);
+			if (x != SCMOK)
+				break;
+			t = Tinsert(&listT, name, TRUE);
+			free(name);
 			t->Tmode = mode;
 			t->Tflags = flags;
 			t->Tmtime = mtime;
-			x = readstring (&name);
+			x = readstring(&name);
 		}
-		if (x == SCMOK)  x = readint ((int *)&scantime);
-		if (x == SCMOK)  x = readmend ();
+		if (x == SCMOK)
+			x = readint((int *)&scantime);
+		if (x == SCMOK)
+			x = readmend();
 	}
 	return (x);
 }
@@ -352,40 +447,53 @@ int msglist ()
  */
 extern TREE	*needT;			/* tree of files to need */
 
-static int needone (t, v)
-register TREE *t;
-void *v;
+static int
+needone(t, v)
+	TREE *t;
+	void *v;
 {
-	register int x;
-	x = writestring (t->Tname);
-	if (x == SCMOK)  x = writeint ((t->Tflags&FUPDATE) != 0);
+	int x;
+
+	x = writestring(t->Tname);
+	if (x == SCMOK)
+		x = writeint((t->Tflags&FUPDATE) != 0);
 	return (x);
 }
 
-int msgneed ()
+int msgneed()
 {
-	register int x;
+	int x;
+
 	if (server) {
 		char *name;
 		int update;
-		register TREE *t;
-		x = readmsg (MSGNEED);
-		if (x == SCMOK)  x = readstring (&name);
+		TREE *t;
+
+		x = readmsg(MSGNEED);
+		if (x == SCMOK)
+			x = readstring(&name);
 		while (x == SCMOK) {
-			if (name == NULL)  break;
-			x = readint (&update);
-			if (x != SCMOK)  break;
-			t = Tinsert (&needT,name,TRUE);
-			free (name);
-			if (update)  t->Tflags |= FUPDATE;
-			x = readstring (&name);
+			if (name == NULL)
+				break;
+			x = readint(&update);
+			if (x != SCMOK)
+				break;
+			t = Tinsert(&needT, name, TRUE);
+			free(name);
+			if (update)
+				t->Tflags |= FUPDATE;
+			x = readstring(&name);
 		}
-		if (x == SCMOK)  x = readmend ();
+		if (x == SCMOK)
+			x = readmend();
 	} else {
-		x = writemsg (MSGNEED);
-		if (x == SCMOK)  x = Tprocess (needT,needone, NULL);
-		if (x == SCMOK)  x = writestring ((char *)NULL);
-		if (x == SCMOK)  x = writemend ();
+		x = writemsg(MSGNEED);
+		if (x == SCMOK)
+			x = Tprocess(needT, needone, NULL);
+		if (x == SCMOK)
+			x = writestring(NULL);
+		if (x == SCMOK)
+			x = writemend();
 	}
 	return (x);
 }
@@ -395,32 +503,43 @@ int msgneed ()
  */
 extern TREE	*denyT;			/* tree of files to deny */
 
-static int denyone (t, v)
-register TREE *t;
-void *v;
+static int
+denyone(t, v)
+	TREE *t;
+	void *v;
 {
-	return (writestring (t->Tname));
+
+	return (writestring(t->Tname));
 }
 
-int msgdeny ()
+int
+msgdeny()
 {
-	register int x;
+	int x;
+
 	if (server) {
-		x = writemsg (MSGDENY);
-		if (x == SCMOK)  x = Tprocess (denyT,denyone, NULL);
-		if (x == SCMOK)  x = writestring ((char *)NULL);
-		if (x == SCMOK)  x = writemend ();
+		x = writemsg(MSGDENY);
+		if (x == SCMOK)
+			x = Tprocess(denyT,denyone, NULL);
+		if (x == SCMOK)
+			x = writestring(NULL);
+		if (x == SCMOK)
+			x = writemend();
 	} else {
 		char *name;
-		x = readmsg (MSGDENY);
-		if (x == SCMOK)  x = readstring (&name);
+
+		x = readmsg(MSGDENY);
+		if (x == SCMOK)
+			x = readstring(&name);
 		while (x == SCMOK) {
-			if (name == NULL)  break;
-			(void) Tinsert (&denyT,name,FALSE);
-			free (name);
-			x = readstring (&name);
+			if (name == NULL)
+				break;
+			(void) Tinsert(&denyT, name, FALSE);
+			free(name);
+			x = readstring(&name);
 		}
-		if (x == SCMOK)  x = readmend ();
+		if (x == SCMOK)
+			x = readmend();
 	}
 	return (x);
 }
@@ -428,11 +547,13 @@ int msgdeny ()
 /*
  * send file message
  */
-int msgsend ()
+int
+msgsend()
 {
+
 	if (server)
-		return (readmnull (MSGSEND));
-	return (writemnull (MSGSEND));
+		return (readmnull(MSGSEND));
+	return (writemnull(MSGSEND));
 }
 
 /*
@@ -440,25 +561,29 @@ int msgsend ()
  */
 extern TREE	*upgradeT;		/* pointer to file being upgraded */
 
-static int writeone (t, v)
-register TREE *t;
-void *v;
+static int
+writeone(t, v)
+	TREE *t;
+	void *v;
 {
-	return (writestring (t->Tname));
+
+	return (writestring(t->Tname));
 }
 
 
 #ifdef __STDC__
-int msgrecv (int (*xferfile)(TREE *, va_list),...)
+int
+msgrecv(int (*xferfile)(TREE *, va_list),...)
 #else
 /*VARARGS*//*ARGSUSED*/
-int msgrecv (va_alist)
+int
+msgrecv(va_alist)
 va_dcl
 #endif
 {
 	va_list args;
-	register int x;
-	register TREE *t = upgradeT;
+	int x;
+	TREE *t = upgradeT;
 #ifdef __STDC__
 	va_start(args,xferfile);
 #else
@@ -470,64 +595,95 @@ va_dcl
 	if (server) {
 		x = writemsg (MSGRECV);
 		if (t == NULL) {
-			if (x == SCMOK)  x = writestring ((char *)NULL);
-			if (x == SCMOK)  x = writemend ();
+			if (x == SCMOK)
+				x = writestring(NULL);
+			if (x == SCMOK)
+				x = writemend();
 			return (x);
 		}
-		if (x == SCMOK)  x = writestring (t->Tname);
-		if (x == SCMOK)  x = writeint (t->Tmode);
+		if (x == SCMOK)
+			x = writestring(t->Tname);
+		if (x == SCMOK)
+			x = writeint(t->Tmode);
 		if (t->Tmode == 0) {
-			if (x == SCMOK)  x = writemend ();
+			if (x == SCMOK)
+				x = writemend();
 			return (x);
 		}
-		if (x == SCMOK)  x = writeint (t->Tflags);
-		if (x == SCMOK)  x = writestring (t->Tuser);
-		if (x == SCMOK)  x = writestring (t->Tgroup);
-		if (x == SCMOK)  x = writeint (t->Tmtime);
-		if (x == SCMOK)  x = Tprocess (t->Tlink,writeone, NULL);
-		if (x == SCMOK)  x = writestring ((char *)NULL);
-		if (x == SCMOK)  x = Tprocess (t->Texec,writeone, NULL);
-		if (x == SCMOK)  x = writestring ((char *)NULL);
-		if (x == SCMOK)  x = (*xferfile) (t,args);
-		if (x == SCMOK)  x = writemend ();
+		if (x == SCMOK)
+			x = writeint(t->Tflags);
+		if (x == SCMOK)
+			x = writestring(t->Tuser);
+		if (x == SCMOK)
+			x = writestring(t->Tgroup);
+		if (x == SCMOK)
+			x = writeint(t->Tmtime);
+		if (x == SCMOK)
+			x = Tprocess(t->Tlink, writeone, NULL);
+		if (x == SCMOK)
+			x = writestring(NULL);
+		if (x == SCMOK)
+			x = Tprocess(t->Texec,writeone, NULL);
+		if (x == SCMOK)
+			x = writestring(NULL);
+		if (x == SCMOK)
+			x = (*xferfile)(t, args);
+		if (x == SCMOK)
+			x = writemend();
 	} else {
-		char *linkname,*execcmd;
-		if (t == NULL)  return (SCMERR);
+		char *linkname, *execcmd;
+
+		if (t == NULL)
+			return (SCMERR);
 		x = readmsg (MSGRECV);
-		if (x == SCMOK)  x = readstring (&t->Tname);
+		if (x == SCMOK)
+			x = readstring(&t->Tname);
 		if (x == SCMOK && t->Tname == NULL) {
-			x = readmend ();
-			if (x == SCMOK)  x = (*xferfile) (NULL,args);
+			x = readmend();
+			if (x == SCMOK)
+				x = (*xferfile)(NULL, args);
 			return (x);
 		}
-		if (x == SCMOK)  x = readint (&t->Tmode);
+		if (x == SCMOK)
+			x = readint(&t->Tmode);
 		if (t->Tmode == 0) {
-			x = readmend ();
-			if (x == SCMOK)  x = (*xferfile) (t,args);
+			x = readmend();
+			if (x == SCMOK)
+				x = (*xferfile)(t, args);
 			return (x);
 		}
-		if (x == SCMOK)  x = readint (&t->Tflags);
-		if (x == SCMOK)  x = readstring (&t->Tuser);
-		if (x == SCMOK)  x = readstring (&t->Tgroup);
-		if (x == SCMOK)  x = readint (&t->Tmtime);
+		if (x == SCMOK)
+			x = readint(&t->Tflags);
+		if (x == SCMOK)
+			x = readstring(&t->Tuser);
+		if (x == SCMOK)
+			x = readstring(&t->Tgroup);
+		if (x == SCMOK)
+			x = readint(&t->Tmtime);
 		t->Tlink = NULL;
-		if (x == SCMOK)  x = readstring (&linkname);
+		if (x == SCMOK)
+			x = readstring(&linkname);
 		while (x == SCMOK) {
-			if (linkname == NULL)  break;
-			(void) Tinsert (&t->Tlink,linkname,FALSE);
-			free (linkname);
-			x = readstring (&linkname);
+			if (linkname == NULL)
+				break;
+			(void) Tinsert(&t->Tlink, linkname, FALSE);
+			free(linkname);
+			x = readstring(&linkname);
 		}
 		t->Texec = NULL;
-		if (x == SCMOK)  x = readstring (&execcmd);
+		if (x == SCMOK)
+			x = readstring(&execcmd);
 		while (x == SCMOK) {
-			if (execcmd == NULL)  break;
-			(void) Tinsert (&t->Texec,execcmd,FALSE);
-			free (execcmd);
-			x = readstring (&execcmd);
+			if (execcmd == NULL)
+				break;
+			(void) Tinsert(&t->Texec, execcmd, FALSE);
+			free(execcmd);
+			x = readstring(&execcmd);
 		}
-		if (x == SCMOK)  x = (*xferfile) (t,args);
-		if (x == SCMOK)  x = readmend ();
+		if (x == SCMOK)
+			x = (*xferfile)(t, args);
+		if (x == SCMOK)
+			x = readmend();
 	}
 	va_end(args);
 	return (x);
@@ -539,24 +695,31 @@ va_dcl
 extern int	doneack;
 extern char	*donereason;
 
-int msgdone ()
+int
+msgdone()
 {
-	register int x;
+	int x;
 
 	if (protver < 6) {
-		printf ("Error, msgdone should not have been called.");
+		printf("Error, msgdone should not have been called.");
 		return (SCMERR);
 	}
 	if (server) {
-		x = readmsg (MSGDONE);
-		if (x == SCMOK)  x = readint (&doneack);
-		if (x == SCMOK)  x = readstring (&donereason);
-		if (x == SCMOK)  x = readmend ();
+		x = readmsg(MSGDONE);
+		if (x == SCMOK)
+			x = readint(&doneack);
+		if (x == SCMOK)
+			x = readstring(&donereason);
+		if (x == SCMOK)
+			x = readmend();
 	} else {
-		x = writemsg (MSGDONE);
-		if (x == SCMOK)  x = writeint (doneack);
-		if (x == SCMOK)  x = writestring (donereason);
-		if (x == SCMOK)  x = writemend ();
+		x = writemsg(MSGDONE);
+		if (x == SCMOK)
+			x = writeint(doneack);
+		if (x == SCMOK)
+			x = writestring(donereason);
+		if (x == SCMOK)
+			x = writemend();
 	}
 	return (x);
 }
@@ -566,9 +729,11 @@ int msgdone ()
  */
 extern char	*goawayreason;		/* reason for goaway */
 
-int msggoaway ()
+int
+msggoaway()
 {
-	return (writemstr (MSGGOAWAY,goawayreason));
+
+	return (writemstr(MSGGOAWAY, goawayreason));
 }
 
 /*
@@ -577,35 +742,41 @@ int msggoaway ()
 extern int	xargc;			/* arg count for crosspatch */
 extern char	**xargv;		/* arg array for crosspatch */
 
-int msgxpatch ()
+int
+msgxpatch()
 {
-	register int x;
-	register int i;
+	int x, i;
 
 	if (server) {
-		x = readmsg (MSGXPATCH);
-		if (x != SCMOK)  return (x);
-		x = readint (&xargc);
-		if (x != SCMOK)  return (x);
+		x = readmsg(MSGXPATCH);
+		if (x != SCMOK)
+			return (x);
+		x = readint(&xargc);
+		if (x != SCMOK)
+			return (x);
 		xargc += 2;
-		xargv = (char **)calloc (sizeof (char *),(unsigned)xargc+1);
+		xargv = (char **)calloc(sizeof (char *), xargc+1);
 		if (xargv == NULL)
 			return (SCMERR);
 		for (i = 2; i < xargc; i++) {
-			x = readstring (&xargv[i]);
-			if (x != SCMOK)  return (x);
+			x = readstring(&xargv[i]);
+			if (x != SCMOK)
+				return (x);
 		}
-		x = readmend ();
+		x = readmend();
 	} else {
-		x = writemsg (MSGXPATCH);
-		if (x != SCMOK)  return (x);
-		x = writeint (xargc);
-		if (x != SCMOK)  return (x);
+		x = writemsg(MSGXPATCH);
+		if (x != SCMOK)
+			return (x);
+		x = writeint(xargc);
+		if (x != SCMOK)
+			return (x);
 		for (i = 0; i < xargc; i++) {
-			x = writestring (xargv[i]);
-			if (x != SCMOK)  return (x);
+			x = writestring(xargv[i]);
+			if (x != SCMOK)
+				return (x);
 		}
-		x = writemend ();
+		x = writemend();
 	}
 	return (x);
 }
@@ -615,9 +786,11 @@ int msgxpatch ()
  */
 extern int	docompress;		/* Compress file before sending? */
 
-int msgcompress ()
+int
+msgcompress()
 {
+
 	if (server)
-		return (readmint (MSGCOMPRESS,&docompress));
-	return (writemint (MSGCOMPRESS, docompress));
+		return (readmint(MSGCOMPRESS, &docompress));
+	return (writemint(MSGCOMPRESS, docompress));
 }
