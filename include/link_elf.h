@@ -1,4 +1,4 @@
-/*	$OpenBSD: link_elf.h,v 1.2 2002/08/06 07:40:31 pvalchev Exp $	*/
+/*	$OpenBSD: link_elf.h,v 1.3 2002/09/08 01:28:58 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -79,7 +79,7 @@ struct link_map
 	lt_executable,		/* The main executable program.  */
 	lt_interpreter,		/* The interpreter: the dynamic linker.  */
 	lt_library,		/* Library needed by main executable.  */
-	lt_loaded,		/* Extra run-time loaded shared object.  */
+	lt_loaded		/* Extra run-time loaded shared object.  */
       } l_type:2;
     unsigned int l_deps_loaded:1; /* Nonzero if DT_NEEDED items loaded.  */
     unsigned int l_relocated:1;	/* Nonzero if object's relocations done.  */
