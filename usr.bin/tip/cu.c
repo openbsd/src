@@ -1,4 +1,4 @@
-/*	$OpenBSD: cu.c,v 1.7 2001/09/10 00:14:17 millert Exp $	*/
+/*	$OpenBSD: cu.c,v 1.8 2001/09/17 22:41:26 deraadt Exp $	*/
 /*	$NetBSD: cu.c,v 1.5 1997/02/11 09:24:05 mrg Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cu.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: cu.c,v 1.7 2001/09/10 00:14:17 millert Exp $";
+static char rcsid[] = "$OpenBSD: cu.c,v 1.8 2001/09/17 22:41:26 deraadt Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -69,7 +69,16 @@ cumain(argc, argv)
 			CU = optarg;
 			break;
 		case 'l':
-			DV = optarg;
+			if (DV != NULL) {
+				fprintf(stderr,
+				    "%s: cannot specificy multiple -l options\n",
+				    __progname);
+				exit(3);
+			}
+			if (strchr(optarg, '/'))
+				DV = optarg;
+			else
+				asprintf(&DV, "/dev/%s", optarg);
 			break;
 		case 's':
 			l = strtol(optarg, &cp, 10);
