@@ -1,4 +1,4 @@
-/*	$Id: site.h,v 1.1.1.1 1995/12/14 06:52:35 tholo Exp $	*/
+/*	$Id: site.h,v 1.2 1995/12/14 08:43:43 tholo Exp $	*/
 
 /* 
  * Site-specific definitions.
@@ -22,10 +22,6 @@
 #define KS_LOGFIL	"/var/log/kerberos_slave.log"
 #define KRBLOG 		"/var/log/kerberos.log"  /* master server  */
 #define KRBSLAVELOG	"/var/log/kerberos_slave.log" /* master (?) server  */
-
-#define	KRB_MASTER	"kerberos"
-#define	KRB_HOST	"kowande.bu.oz.au" 
-#define	KRB_REALM	"KOWANDE.BU.OZ.AU"
 
 /* from: kadm_server.h  */
 /* the default syslog file */

@@ -1,4 +1,4 @@
-/*	$Id: krb.h,v 1.1.1.1 1995/12/14 06:52:34 tholo Exp $	*/
+/*	$Id: krb.h,v 1.2 1995/12/14 08:43:42 tholo Exp $	*/
 
 /*-
  * Copyright 1987, 1988 by the Student Information Processing Board
@@ -54,13 +54,7 @@ extern const char *krb_err_txt[MAX_KRB_ERRORS];
  *
  * KRBLOG is the log file for the kerberos master server. KRB_CONF is
  * the configuration file where different host machines running master
- * and slave servers can be found. KRB_MASTER is the name of the
- * machine with the master database.  The admin_server runs on this
- * machine, and all changes to the db (as opposed to read-only
- * requests, which can go to slaves) must go to it. KRB_HOST is the
- * default machine * when looking for a kerberos slave server.  Other
- * possibilities are * in the KRB_CONF file. KRB_REALM is the name of
- * the realm. 
+ * and slave servers can be found.
  */
 
 /* The maximum sizes for aname, realm, sname, and instance +1 */

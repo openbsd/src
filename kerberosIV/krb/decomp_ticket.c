@@ -35,8 +35,7 @@ or implied warranty.
  * fills in values for its arguments.
  *
  * Note: if the client realm field in the ticket is the null string,
- * then the "prealm" variable is filled in with the local realm (as
- * defined by KRB_REALM).
+ * then the "prealm" variable is filled in with the local realm.
  *
  * If the ticket byte order is different than the host's byte order
  * (as indicated by the byte order bit of the "flags" field), then
@@ -103,8 +102,8 @@ decomp_ticket(tkt, flags, pname, pinstance, prealm, paddress, session,
     (void) strcpy(prealm,ptr);  /* realm */
     ptr += strlen(prealm) + 1;
     /* temporary hack until realms are dealt with properly */
-    if (*prealm == 0)
-        (void) strcpy(prealm,KRB_REALM);
+    if (*prealm == 0 && krb_get_lrealm(prealm, 1) != KSUCCESS)
+	return(KFAILURE);
 
     bcopy(ptr,(char *)paddress,4); /* net address */
     ptr += 4;

@@ -1,4 +1,4 @@
-/*	$Id: kdb_init.c,v 1.1.1.1 1995/12/14 06:52:42 tholo Exp $	*/
+/*	$Id: kdb_init.c,v 1.2 1995/12/14 08:43:47 tholo Exp $	*/
 
 /*-
  * Copyright 1987, 1988 by the Student Information Processing Board
@@ -23,6 +23,7 @@
  */
 
 #include <adm_locl.h>
+#include <sys/param.h>
 
 enum ap_op {
     NULL_KEY,			/* setup null keys */
@@ -100,8 +101,9 @@ add_principal(char *name, char *instance, enum ap_op aap_op)
 int
 main(int argc, char **argv)
 {
-    char    realm[REALM_SZ];
-    char   *cp;
+    char    admin[MAXHOSTNAMELEN];
+    char    realm[REALM_SZ], defrealm[REALM_SZ];
+    char   *cp, *dot;
     int code;
     char *database;
     
@@ -128,7 +130,9 @@ main(int argc, char **argv)
     if (argc == 2)
 	strncpy(realm, argv[1], REALM_SZ);
     else {
-	fprintf(stderr, "Realm name [default  %s ]: ", KRB_REALM);
+	if (krb_get_lrealm(defrealm, 1) != KSUCCESS)
+	    strcpy(defrealm, "NONE");
+	fprintf(stderr, "Realm name [default  %s ]: ", defrealm);
 	if (fgets(realm, sizeof(realm), stdin) == NULL) {
 	    fprintf(stderr, "\nEOF reading realm\n");
 	    exit(1);
@@ -136,7 +140,7 @@ main(int argc, char **argv)
 	if ((cp = strchr(realm, '\n')))
 	    *cp = '\0';
 	if (!*realm)			/* no realm given */
-	    strcpy(realm, KRB_REALM);
+	    strcpy(realm, defrealm);
     }
     if (!k_isrealm(realm)) {
 	fprintf(stderr, "%s: Bad kerberos realm name \"%s\"\n",
@@ -152,6 +156,13 @@ main(int argc, char **argv)
       exit (-1);
     }
 
+    if (krb_get_admhst(admin, realm, 1) != KSUCCESS) {
+      fprintf (stderr, "Couldn't get admin server.\n");
+      exit (-1);
+    }
+    if ((dot = strchr(admin, '.')) != NULL)
+	*dot = '\0';
+
     /* Initialize non shared random sequence */
     des_init_random_number_generator(&master_key);
 
@@ -159,7 +170,7 @@ main(int argc, char **argv)
 	add_principal(KERB_M_NAME, KERB_M_INST, MASTER_KEY) ||
 	add_principal(KERB_DEFAULT_NAME, KERB_DEFAULT_INST, NULL_KEY) ||
 	add_principal("krbtgt", realm, RANDOM_KEY) ||
-	add_principal("changepw", KRB_MASTER, RANDOM_KEY) 
+	add_principal("changepw", admin, RANDOM_KEY) 
 	) {
 	fprintf(stderr, "\n%s: couldn't initialize database.\n",
 		progname);

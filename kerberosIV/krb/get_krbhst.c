@@ -38,10 +38,8 @@ or implied warranty.
  * returns (in h) the nth entry from the configuration file (KRB_CONF,
  * defined in "krb.h") associated with the specified realm.
  *
- * On end-of-file, krb_get_krbhst returns KFAILURE.  If n=1 and the
- * configuration file does not exist, krb_get_krbhst will return KRB_HOST
- * (also defined in "krb.h").  If all goes well, the routine returnes
- * KSUCCESS.
+ * On end-of-file, krb_get_krbhst returns KFAILURE. If all goes well,
+ * the routine returns KSUCCESS.
  *
  * The KRB_CONF file contains the name of the local realm in the first
  * line (not used by this routine), followed by lines indicating realm/host
@@ -78,12 +76,7 @@ krb_get_krbhst(h, r, n)
         strncat(tbuf, "/krb.conf", sizeof(tbuf));
         tbuf[sizeof(tbuf)-1] = 0;
         if ((cnffile = fopen(tbuf,"r")) == NULL)
-            if (n==1) {
-                (void) strcpy(h,KRB_HOST);
-                return(KSUCCESS);
-            }
-            else
-                return(KFAILURE);
+            return(KFAILURE);
     }
     if (fscanf(cnffile,"%s",tr) == EOF)
         return(KFAILURE);

@@ -1,4 +1,4 @@
-/*	$Id: kadmin.c,v 1.1.1.1 1995/12/14 06:52:48 tholo Exp $	*/
+/*	$Id: kadmin.c,v 1.2 1995/12/14 08:43:44 tholo Exp $	*/
 
 /* 
  * Copyright (C) 1989 by the Massachusetts Institute of Technology
@@ -287,6 +287,7 @@ static int inited = 0;
 static void
 do_init(int argc, char **argv)
 {
+    char *dot, admin[MAXHOSTNAMELEN];
     struct passwd *pw;
     int c;
 #define OPTION_STRING "u:r:m"
@@ -298,14 +299,21 @@ do_init(int argc, char **argv)
 	 * This is only as a default/initial realm; we don't care 
 	 * about failure.
 	 */
-	if (krb_get_lrealm(default_realm, 1) != KSUCCESS)
-	    strcpy(default_realm, KRB_REALM);
+	if (krb_get_lrealm(default_realm, 1) != KSUCCESS) {
+	    fprintf(stderr,
+		    "Could not determine local realm name.\n");
+	}
+
+	c = krb_get_admhst(admin, default_realm, 1);
+	if (c == KSUCCESS && (dot = strchr(admin, '.')) != NULL)
+	    *dot = '\0';
 
 	/* 
 	 * If we can reach the local realm, initialize to it.  Otherwise,
 	 * don't initialize.
 	 */
-	if (kadm_init_link(PWSERV_NAME, KRB_MASTER, krbrlm) != KADM_SUCCESS)
+	if (c == KSUCCESS &&
+	    kadm_init_link(PWSERV_NAME, admin, default_realm) != KADM_SUCCESS)
 	    bzero(krbrlm, sizeof(krbrlm));
 	else
 	    strcpy(krbrlm, default_realm);
@@ -370,6 +378,7 @@ main(int argc, char **argv)
 static int
 setvals(Kadm_vals *vals, char *string)
 {
+    char *dot, admin[MAXHOSTNAMELEN];
     char realm[REALM_SZ];
     int status = KADM_SUCCESS;
 
@@ -385,8 +394,12 @@ setvals(Kadm_vals *vals, char *string)
     if (!realm[0])
 	strcpy(realm, default_realm);
     if (strcmp(realm, krbrlm)) {
+	if ((status = krb_get_admhst(admin, realm, 1)) != KSUCCESS)
+            return(status);
+	if (status == KSUCCESS && (dot = strchr(admin, '.')) != NULL)
+	    *dot = '\0';
 	strcpy(krbrlm, realm);
-	if ((status = kadm_init_link(PWSERV_NAME, KRB_MASTER, krbrlm)) 
+	if ((status = kadm_init_link(PWSERV_NAME, admin, krbrlm)) 
 	    != KADM_SUCCESS)
 	    printf("kadm error for realm %s: %s\n", 
 		   krbrlm, error_message(status));

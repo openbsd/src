@@ -1,4 +1,4 @@
-/*	$Id: ksrvutil.c,v 1.1.1.1 1995/12/14 06:52:53 tholo Exp $	*/
+/*	$Id: ksrvutil.c,v 1.2 1995/12/14 08:43:56 tholo Exp $	*/
 
 /*-
  * Copyright (C) 1989 by the Massachusetts Institute of Technology
@@ -232,11 +232,17 @@ print_name(char *name, char *inst, char *realm)
 static int
 get_svc_new_key(unsigned char *new_key, char *sname, char *sinst, char *srealm, char *keyfile)
 {
-    int status = KADM_SUCCESS;
+    char *dot, admin[MAXHOSTNAMELEN];
+    int status;
 
+    if ((status = krb_get_admhst(admin, srealm, 1)) != KSUCCESS)
+	return(status);
+    if ((dot = strchr(admin, '.')) != NULL)
+	*dot = '\0';
+    status = KADM_SUCCESS;
     if (((status = krb_get_svc_in_tkt(sname, sinst, srealm, PWSERV_NAME,
 				      KADM_SINST, 1, keyfile)) == KSUCCESS) &&
-	((status = kadm_init_link("changepw", KRB_MASTER, srealm)) == 
+	((status = kadm_init_link("changepw", admin, srealm)) == 
 	 KADM_SUCCESS)) {
 #ifdef NOENCRYPTION
 	(void) bzero((char *) new_key, sizeof(des_cblock));
@@ -323,8 +329,10 @@ main(int argc, char **argv)
     krb_set_tkt_string(change_tkt);
 
     /* This is used only as a default for adding keys */
-    if (krb_get_lrealm(local_realm, 1) != KSUCCESS)
-	(void) strcpy(local_realm, KRB_REALM);
+    if (krb_get_lrealm(local_realm, 1) != KSUCCESS) {
+	(void) fprintf(stderr, "%s: Unable to find local realm name\n", argv[0]);
+	exit(1);
+    }
     
     for (i = 1; i < argc; i++) {
 	if (strcmp(argv[i], "-i") == 0) 
@@ -593,7 +601,7 @@ ksrvutil_get()
   char local_hostname[100];
 
   if (krb_get_lrealm(local_realm, 1) != KSUCCESS)
-    strcpy(local_realm, KRB_REALM);
+    strcpy(local_realm, "");
   gethostname(local_hostname, sizeof(local_hostname));
   strcpy(local_hostname, krb_get_phost(local_hostname));
   do {

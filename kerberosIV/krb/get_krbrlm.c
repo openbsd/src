@@ -33,9 +33,7 @@ or implied warranty.
  * krb_get_lrealm takes a pointer to a string, and a number, n.  It fills
  * in the string, r, with the name of the nth realm specified on the
  * first line of the kerberos config file (KRB_CONF, defined in "krb.h").
- * It returns 0 (KSUCCESS) on success, and KFAILURE on failure.  If the
- * config file does not exist, and if n=1, a successful return will occur
- * with r = KRB_REALM (also defined in "krb.h").
+ * It returns 0 (KSUCCESS) on success, and KFAILURE on failure.
  *
  * NOTE: for archaic & compatibility reasons, this routine will only return
  * valid results when n = 1.
@@ -61,12 +59,7 @@ krb_get_lrealm(r, n)
         strncat(tbuf, "/krb.conf", sizeof(tbuf));
         tbuf[sizeof(tbuf)-1] = 0;
         if ((cnffile = fopen(tbuf,"r")) == NULL)
-            if (n == 1) {
-                (void) strcpy(r, KRB_REALM);
-                return(KSUCCESS);
-            }
-            else
-                return(KFAILURE);
+            return(KFAILURE);
     }
 
     if (fscanf(cnffile,"%s",r) != 1) {

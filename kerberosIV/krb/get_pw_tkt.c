@@ -28,6 +28,7 @@ or implied warranty.
   */
 
 #include "krb_locl.h"
+#include <sys/param.h>
 
 /*
  * Get a ticket for the password-changing server ("changepw.KRB_MASTER").
@@ -66,17 +67,23 @@ get_pw_tkt(user, instance, realm, cpw)
 	char *realm;
 	char *cpw;
 {
+    char *dot, admin[MAXHOSTNAMELEN];
     int kerror;
 
+    if ((kerror = krb_get_admhst(admin, realm, 1)) != KSUCCESS)
+        return(GT_PW_BADPW);
+    if ((dot = strchr(admin, '.')) != NULL)
+	*dot = '\0';
+
     kerror = krb_get_pw_in_tkt(user, instance, realm, "changepw",
-			       KRB_MASTER, 1, cpw);
+			       admin, 1, cpw);
 
     if (kerror == INTK_BADPW)
 	return(GT_PW_BADPW);
 
     if (kerror == KDC_NULL_KEY) {
 	kerror = krb_get_pw_in_tkt("default","changepw",realm,"changepw",
-				   KRB_MASTER,1,"changepwkrb");
+				   admin,1,"changepwkrb");
 	if (kerror)
 	    return(kerror);
 	return(GT_PW_NULL);

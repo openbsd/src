@@ -1,4 +1,4 @@
-/*	$Id: kpropd.c,v 1.1.1.1 1995/12/14 06:52:52 tholo Exp $	*/
+/*	$Id: kpropd.c,v 1.2 1995/12/14 08:43:50 tholo Exp $	*/
 
 /*-
  * Copyright 1987 by the Massachusetts Institute of Technology.
@@ -14,6 +14,7 @@
 
 #include <slav_locl.h>
 #include <kprop.h>
+#include <sys/param.h>
 
 static char *kdb_util_path = "kdb_util";
 
@@ -138,7 +139,8 @@ main(int argc, char **argv)
   char    local_file[256];
   char    local_temp[256];
   struct hostent *hp;
-  char    hostname[256];
+  char    *dot, admin[MAXHOSTNAMELEN];
+  char    hostname[MAXHOSTNAMELEN];
   char    from_str[128];
   long    kerror;
   AUTH_DAT auth_dat;
@@ -315,9 +317,15 @@ main(int argc, char **argv)
     /* AUTHORIZATION is done here.  We might want to expand this to
      * read an acl file at some point, but allowing for now
      * KPROP_SERVICE_NAME.KRB_MASTER@local-realm is fine ... */
+    if (krb_get_admhst(admin, my_realm, 1) != KSUCCESS) {
+      klog (L_KRB_PERR, "Unable to get admin host");
+      SlowDeath();
+    }
+    if ((dot = strchr(admin, '.')) != NULL)
+	*dot = '\0';
 
     if ((strcmp (KPROP_SERVICE_NAME, auth_dat.pname) != 0) ||
-	(strcmp (KRB_MASTER, auth_dat.pinst) != 0) ||
+	(strcmp (admin, auth_dat.pinst) != 0) ||
 	(strcmp (my_realm, auth_dat.prealm) != 0)) {
       klog (L_KRB_PERR, "Authorization denied!");
       SlowDeath();
