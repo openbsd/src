@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.9 1996/07/29 03:43:54 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.10 1996/07/29 07:53:07 downsj Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.9 1996/07/29 03:43:54 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.10 1996/07/29 07:53:07 downsj Exp $";
 #endif /* not lint */
 
 /*
@@ -761,7 +761,11 @@ setsockopt(fd, SOL_SOCKET, opt, (char *)&on, sizeof (on))
 		/*
 		 * for RPC services, attempt to use a reserved port
 		 * if they are going to be running as root.
+		 *
+		 * Also, zero out the port for all RPC services; let bind()
+		 * find one.
 		 */
+		sep->se_ctrladdr_in.sin_port = 0;
 		if (sep->se_user && (pwd = getpwnam(sep->se_user)) &&
 		    pwd->pw_uid == 0)
 			r = bindresvport(sep->se_fd, &sep->se_ctrladdr);
