@@ -214,7 +214,7 @@ rbv_intr(struct frame *fp)
 	register unsigned char	intbits;
 	register char		bitnum, bitmsk;
 
-	intbits = (via2_reg(vIFR + rIFR) &= via2_reg(vIER + rIER));
+	intbits = (via2_reg(vIFR + rIFR) & via2_reg(vIER + rIER));
 
 	if (intbits == 0) return;
 
