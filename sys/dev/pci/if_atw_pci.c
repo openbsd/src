@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atw_pci.c,v 1.1 2004/06/22 23:55:23 millert Exp $	*/
+/*	$OpenBSD: if_atw_pci.c,v 1.2 2004/06/27 19:30:03 millert Exp $	*/
 /*	$NetBSD: if_atw_pci.c,v 1.6 2004/02/17 21:20:55 dyoung Exp $	*/
 
 /*-
@@ -109,12 +109,10 @@ struct cfdriver atw_cd = {
 const struct atw_pci_product {
 	u_int32_t	app_vendor;	/* PCI vendor ID */
 	u_int32_t	app_product;	/* PCI product ID */
-	const char	*app_product_name;
 } atw_pci_products[] = {
-	{ PCI_VENDOR_ADMTEK,		PCI_PRODUCT_ADMTEK_ADM8211,
-	  "ADMtek ADM8211 802.11 MAC/BBP" },
+	{ PCI_VENDOR_ADMTEK,		PCI_PRODUCT_ADMTEK_ADM8211 },
 
-	{ 0,				0,				NULL },
+	{ 0,				0 },
 };
 
 const struct atw_pci_product *atw_pci_lookup(const struct pci_attach_args *);
@@ -125,7 +123,7 @@ atw_pci_lookup(const struct pci_attach_args *pa)
 	const struct atw_pci_product *app;
 
 	for (app = atw_pci_products;
-	     app->app_product_name != NULL;
+	     app->app_vendor != 0 && app->app_product != 0;
 	     app++) {
 		if (PCI_VENDOR(pa->pa_id) == app->app_vendor &&
 		    PCI_PRODUCT(pa->pa_id) == app->app_product)
@@ -185,7 +183,7 @@ atw_pci_attach(struct device *parent, struct device *self, void *aux)
 	int ioh_valid, memh_valid;
 	const struct atw_pci_product *app;
 	pcireg_t reg;
-	int pmreg, rev;
+	int pmreg;
 
 	psc->psc_pc = pa->pa_pc;
 	psc->psc_pcitag = pa->pa_tag;
@@ -201,13 +199,6 @@ atw_pci_attach(struct device *parent, struct device *self, void *aux)
 	 * XXX Maybe we should add some!
 	 */
 	sc->sc_flags |= ATWF_ENABLED;
-
-	/*
-	 * Get revision info, and set some chip-specific variables.
-	 */
-	rev = PCI_REVISION(pa->pa_class);
-	printf(": %s, pass %d.%d\n", app->app_product_name,
-	    (rev >> 4) & 0xf, rev & 0xf);
 
 	/*
 	 * Check to see if the device is in power-save mode, and
@@ -294,23 +285,21 @@ atw_pci_attach(struct device *parent, struct device *self, void *aux)
 	 * Map and establish our interrupt.
 	 */
 	if (pci_intr_map(pa, &psc->psc_ih)) {
-		printf("%s: unable to map interrupt\n",
-		    sc->sc_dev.dv_xname);
+		printf(": unable to map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pc, psc->psc_ih); 
 	psc->psc_intrcookie = pci_intr_establish(pc, psc->psc_ih, IPL_NET,
 	    atw_intr, sc, sc->sc_dev.dv_xname);
 	if (psc->psc_intrcookie == NULL) {
-		printf("%s: unable to establish interrupt",
-		    sc->sc_dev.dv_xname);
+		printf(": unable to establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
 		return;
 	}
 
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	printf(": %s\n", intrstr);
 
 	sc->sc_enable = atw_pci_enable;
 	sc->sc_disable = atw_pci_disable;
