@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys-bsd.c,v 1.18 2002/07/01 19:31:37 deraadt Exp $	*/
+/*	$OpenBSD: sys-bsd.c,v 1.19 2002/09/13 00:12:10 deraadt Exp $	*/
 
 /*
  * sys-bsd.c - System-dependent procedures for setting up
@@ -42,28 +42,43 @@
  * AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * Copyright (c) 1995 The Australian National University.
- * All rights reserved.
+ * Copyright (c) 1989-2002 Paul Mackerras. All rights reserved.
  *
- * Redistribution and use in source and binary forms are permitted
- * provided that the above copyright notice and this paragraph are
- * duplicated in all such forms and that any documentation,
- * advertising materials, and other materials related to such
- * distribution and use acknowledge that the software was developed
- * by Carnegie Mellon University and The Australian National University.
- * The names of the Universities may not be used to endorse or promote
- * products derived from this software without specific prior written
- * permission.
- * THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
- * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * 3. The name(s) of the authors of this software must not be used to
+ *    endorse or promote products derived from this software without
+ *    prior written permission.
+ *
+ * 4. Redistributions of any form whatsoever must retain the following
+ *    acknowledgment:
+ *    "This product includes software developed by Paul Mackerras
+ *     <paulus@samba.org>".
+ *
+ * THE AUTHORS OF THIS SOFTWARE DISCLAIM ALL WARRANTIES WITH REGARD TO
+ * THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS, IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY
+ * SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN
+ * AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
+ * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #ifndef lint
 #if 0
 static char rcsid[] = "Id: sys-bsd.c,v 1.31 1998/04/02 12:04:19 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: sys-bsd.c,v 1.18 2002/07/01 19:31:37 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: sys-bsd.c,v 1.19 2002/09/13 00:12:10 deraadt Exp $";
 #endif
 #endif
 
