@@ -1,4 +1,4 @@
-/*	$OpenBSD: ts102.c,v 1.8 2003/06/28 16:23:54 miod Exp $	*/
+/*	$OpenBSD: ts102.c,v 1.9 2003/06/28 16:40:52 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  *
@@ -749,7 +749,16 @@ tslot_slot_intr(struct tslot_data *td, int intreg)
 
 	sockstat = td->td_status;
 
-	if (intreg & TS102_CARD_INT_STATUS_CARDDETECT_STATUS_CHANGED) {
+	/*
+	 * The TS102 queues interrupt request, and may trigger an interrupt
+	 * for a condition the driver does not want to receive anymore (for
+	 * example, after a card gets removed).
+	 * Thus, only proceed if the driver is currently allowing a particular
+	 * condition.
+	 */
+
+	if ((intreg & TS102_CARD_INT_STATUS_CARDDETECT_STATUS_CHANGED) != 0 &&
+	    (intreg & TS102_CARD_INT_MASK_CARDDETECT_STATUS) != 0) {
 		if (status & TS102_CARD_STS_PRES) {
 			tslot_queue_event(td->td_parent,
 			    td->td_slot, TSLOT_EVENT_INSERT);
@@ -768,10 +777,11 @@ tslot_slot_intr(struct tslot_data *td, int intreg)
 		return;
 	}
 
-	if (intreg & TS102_CARD_INT_STATUS_IRQ) {
+	if ((intreg & TS102_CARD_INT_STATUS_IRQ) != 0 &&
+	    (intreg & TS102_CARD_INT_MASK_IRQ) != 0) {
 		if (sockstat != TS_CARD) {
-			printf("%s: spurious interrupt on slot %d\n",
-			    td->td_parent->sc_dev.dv_xname, td->td_slot);
+			printf("%s: spurious interrupt on slot %d isr %x\n",
+			    td->td_parent->sc_dev.dv_xname, td->td_slot, intreg);
 			return;
 		}
 
