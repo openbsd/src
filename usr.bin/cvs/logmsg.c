@@ -1,4 +1,4 @@
-/*	$OpenBSD: logmsg.c,v 1.8 2004/12/08 17:22:48 jfb Exp $	*/
+/*	$OpenBSD: logmsg.c,v 1.9 2004/12/08 18:54:23 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -224,9 +224,10 @@ cvs_logmsg_get(const char *dir, struct cvs_flist *added,
 			fprintf(fp, " %s", fpath);
 			tlen += len;
 		}
+		fputc('\n', fp);
 
-		fprintf(fp, "\n%s %s\n", CVS_LOGMSG_PREFIX, CVS_LOGMSG_LINE);
 	}
+	fprintf(fp, "%s %s\n", CVS_LOGMSG_PREFIX, CVS_LOGMSG_LINE);
 	(void)fflush(fp);
 
 	if (fstat(fd, &st1) == -1) {
