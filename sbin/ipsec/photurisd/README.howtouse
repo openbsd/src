@@ -10,8 +10,8 @@ What is IPSec ?
 What has Photuris to do with IPSec ?
 
    In order to transmit encrypted or authenticated data between two
-   hosts, those two hosts have to aggree on session keys which are used
-   as input for the encryption and authenication functions.
+   hosts, those two hosts have to agree on session keys which are used
+   as input for the encryption and authentication functions.
    
    The Photuris protocol exchanges keys in such a way that no
    eavesdropper will have knowledge of the session keys. It also allows
