@@ -1,4 +1,4 @@
-/*	$OpenBSD: mb89352.c,v 1.6 2004/08/21 18:00:26 miod Exp $	*/
+/*	$OpenBSD: mb89352.c,v 1.7 2004/08/30 17:01:43 miod Exp $	*/
 /*	$NetBSD: mb89352.c,v 1.5 2000/03/23 07:01:31 thorpej Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
@@ -1485,6 +1485,19 @@ spc_process_intr(void *arg, u_char ints)
 
 	SPC_TRACE(("spc_process_intr  "));
 
+	goto start;
+
+loop:
+	/*
+	 * Loop until transfer completion.
+	 */
+	ints = spc_read(INTS);
+start:
+	SPC_MISC(("ints = 0x%x  ", ints));
+
+	/*
+	 * Check for the end of a DMA operation before doing anything else...
+	 */
 	if (sc->sc_dma_done != NULL &&
 	    sc->sc_state == SPC_CONNECTED &&
 	    (sc->sc_flags & SPC_DOINGDMA) != 0 &&
@@ -1492,19 +1505,9 @@ spc_process_intr(void *arg, u_char ints)
 		(*sc->sc_dma_done)(sc);
 	}
 
-	goto start;
-
-loop:
 	/*
-	 * Loop until transfer completion.
+	 * Then check for abnormal conditions, such as reset.
 	 */
-	/*
-	 * First check for abnormal conditions, such as reset.
-	 */
-	ints = spc_read(INTS);
-start:
-	SPC_MISC(("ints = 0x%x  ", ints));
-
 	if ((ints & INTS_RST) != 0) {
 		printf("%s: SCSI bus reset\n", sc->sc_dev.dv_xname);
 		goto reset;
@@ -1733,6 +1736,16 @@ start:
 	    sc->sc_prevphase == PH_MSGIN &&
 	    sc->sc_state != SPC_CONNECTED)
 		goto out;
+
+	/*
+	 * Do not change phase (yet) if we have a pending DMA operation.
+	 */
+	if (sc->sc_dma_done != NULL &&
+	    sc->sc_state == SPC_CONNECTED &&
+	    (sc->sc_flags & SPC_DOINGDMA) != 0 &&
+	    (sc->sc_phase == PH_DATAOUT || sc->sc_phase == PH_DATAIN)) {
+		goto out;
+	}
 
 dophase:
 #if 0

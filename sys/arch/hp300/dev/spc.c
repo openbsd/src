@@ -1,4 +1,4 @@
-/* $OpenBSD: spc.c,v 1.7 2004/08/25 21:00:37 miod Exp $ */
+/* $OpenBSD: spc.c,v 1.8 2004/08/30 17:01:43 miod Exp $ */
 /* $NetBSD: spc.c,v 1.2 2003/11/17 14:37:59 tsutsui Exp $ */
 
 /*
@@ -246,18 +246,9 @@ spc_dio_dmadone(struct spc_softc *sc)
 	int resid, trans;
 	u_int8_t cmd;
 
-	/* wait DMA complete */
-	if ((spc_read(SSTS) & SSTS_BUSY) != 0) {
-		int timeout = 1000; /* XXX how long? */
-		while ((spc_read(SSTS) & SSTS_BUSY) != 0) {
-			if (--timeout < 0) {
-				printf("%s: DMA complete timeout\n",
-				    sc->sc_dev.dv_xname);
-				timeout = 1000;
-			}
-			DELAY(1);
-		}
-	}
+	/* Check if the DMA operation is finished. */
+	if ((spc_read(SSTS) & SSTS_BUSY) != 0)
+		return;
 
 	sc->sc_flags &= ~SPC_DOINGDMA;
 	if ((dsc->sc_dflags & SCSI_HAVEDMA) != 0) {
