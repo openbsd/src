@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.28 2004/02/27 20:53:56 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.29 2004/04/28 01:13:36 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -518,7 +518,7 @@ mrt_select(struct mrt_head *mc, struct pollfd *pfd, struct mrt **mrt,
 		xm = LIST_NEXT(m, list);
 		if (m->state == MRT_STATE_TOREMOVE) {
 			imsg_compose(m->ibuf, IMSG_MRT_END, 0,
-					&m->conf, sizeof(m->conf));
+			    &m->conf, sizeof(m->conf));
 			if (mrt_close(m) == 0) {
 				m->state = MRT_STATE_REMOVE;
 				m->ReopenTimer = 0;
@@ -554,7 +554,7 @@ mrt_select(struct mrt_head *mc, struct pollfd *pfd, struct mrt **mrt,
 				m->ReopenTimer = now + m->ReopenTimerInterval;
 			m->state = MRT_STATE_RUNNING;
 			imsg_compose(m->ibuf, IMSG_MRT_REQ, 0,
-					&m->conf, sizeof(m->conf));
+			    &m->conf, sizeof(m->conf));
 		}
 		if (m->state == MRT_STATE_REOPEN) {
 			if (mrt_close(m) == 0) {
