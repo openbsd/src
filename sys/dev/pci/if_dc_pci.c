@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_pci.c,v 1.10 2000/10/30 18:20:18 aaron Exp $	*/
+/*	$OpenBSD: if_dc_pci.c,v 1.11 2000/11/16 01:25:45 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -96,6 +96,7 @@ struct dc_type dc_devs[] = {
 	{ PCI_VENDOR_LITEON, PCI_PRODUCT_LITEON_PNIC },
 	{ PCI_VENDOR_LITEON, PCI_PRODUCT_LITEON_PNICII },
 	{ PCI_VENDOR_ACCTON, PCI_PRODUCT_ACCTON_EN1217 },
+	{ PCI_VENDOR_ACCTON, PCI_PRODUCT_ACCTON_EN2242 },
 	{ 0, 0 }
 };
 
@@ -298,6 +299,13 @@ void dc_pci_attach(parent, self, aux)
 		break;
 	case PCI_VENDOR_MACRONIX:
 	case PCI_VENDOR_ACCTON:
+		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ACCTON_EN2242) {
+			found = 1;
+			sc->dc_type = DC_TYPE_AN983;
+			sc->dc_flags |= DC_TX_USE_TX_INTR;
+			sc->dc_flags |= DC_TX_ADMTEK_WAR;
+			sc->dc_pmode = DC_PMODE_MII;
+		}
 		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_MACRONIX_MX98713) {
 			found = 1;
 			if (revision < DC_REVISION_98713A) {
