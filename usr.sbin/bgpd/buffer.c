@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.3 2003/12/20 21:14:55 henning Exp $ */
+/*	$OpenBSD: buffer.c,v 1.4 2003/12/21 16:11:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -62,10 +62,10 @@ buf_add(struct buf *buf, void *data, ssize_t len)
 	return (0);
 }
 
-u_char *
+void *
 buf_reserve(struct buf *buf, ssize_t len)
 {
-	u_char	*b;
+	void	*b;
 
 	if (buf->wpos + len > buf->size)
 		return (NULL);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.3 2003/12/19 01:15:47 deraadt Exp $ */
+/*	$OpenBSD: rde.h,v 1.4 2003/12/21 16:11:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Claudio Jeker <cjeker@diehard.n-r-g.com> and
@@ -52,21 +52,14 @@ LIST_HEAD(aspath_head, rde_aspath);
 struct rde_peer {
 	LIST_ENTRY(rde_peer)		hash_l;	/* hash list over all peers */
 	LIST_ENTRY(rde_peer)		peer_l; /* list of all peers */
-	struct aspath_head		path_h;  /* list of all as pathes */
+	struct aspath_head		path_h; /* list of all as pathes */
 	struct peer_config		conf;
 	u_int32_t			remote_bgpid;
 	enum peer_state			state;
 };
 
-struct as_segment {
-	u_int8_t			type;	/* type of as path segment */
 #define AS_SET			1
 #define AS_SEQUENCE		2
-	u_int8_t			len;	/* size in u_int16_t of object*/
-	u_int16_t			as_num[1]; /* in network byte order */
-	/* this beast is variable sized */
-};
-
 #define ASPATH_HEADER_SIZE	sizeof(struct aspath_hdr)
 
 struct aspath_hdr {
@@ -97,6 +90,10 @@ struct astags {
 		u_int16_t		value;
 	}				astag[1];
 	/* this beast is variable sized */
+	/*
+	 * XXX does not work. Because of possible unalignd access to
+	 * u_int16_t. This needs to be solved somewhat differently.
+	 */
 };
 
 enum attrtypes {
@@ -198,13 +195,13 @@ struct prefix {
 int		 attr_equal(struct attr_flags *, struct attr_flags *);
 void		 attr_copy(struct attr_flags *, struct attr_flags *);
 u_int16_t	 attr_length(struct attr_flags *);
-int		 attr_dump(u_char *, u_int16_t, struct attr_flags *);
+int		 attr_dump(void *, u_int16_t, struct attr_flags *);
 
-int		 aspath_verify(u_char *, u_int16_t, u_int16_t);
+int		 aspath_verify(void *, u_int16_t, u_int16_t);
 #define		 AS_ERR_LEN	-1
 #define		 AS_ERR_TYPE	-2
 #define		 AS_ERR_LOOP	-3
-struct aspath	*aspath_create(u_char *, u_int16_t);
+struct aspath	*aspath_create(void *, u_int16_t);
 void		 aspath_destroy(struct aspath *);
 u_char		*aspath_dump(struct aspath *);
 u_int16_t	 aspath_length(struct aspath *);

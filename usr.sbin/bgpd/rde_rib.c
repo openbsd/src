@@ -1,7 +1,7 @@
-/*	$OpenBSD: rde_rib.c,v 1.3 2003/12/19 19:24:08 deraadt Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.4 2003/12/21 16:11:34 claudio Exp $ */
 
 /*
- * Copyright (c) 2003 Claudio Jeker <cjeker@diehard.n-r-g.com>
+ * Copyright (c) 2003 Claudio Jeker <claudio@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -125,80 +125,81 @@ attr_length(struct attr_flags *attr)
 }
 
 int
-attr_dump(u_char *p, u_int16_t len, struct attr_flags *a)
+attr_dump(void *p, u_int16_t len, struct attr_flags *a)
 {
-#define ATTR_WRITE(b, a, alen)			\
-	do {					\
-		if ((wlen += (alen)) > len)	\
-			return (-1);		\
-		memcpy((b), (a), (alen));	\
-		(b) += (alen);			\
-	} while (0)
-#define ATTR_WRITEB(b, c)			\
-	do {					\
-		if (wlen++ == len)		\
-			return (-1);		\
-		*(b)++ = (u_char)(c);		\
-	} while (0)
+	u_char		*buf = p;
+	u_int32_t	 tmp32;
+	u_int16_t	 tmp16;
+	u_int16_t	 aslen, wlen = 0;
 
-	u_int32_t	tmp32;
-	u_int16_t	tmp16;
-	u_int16_t	aslen, wlen = 0;
+#define ATTR_WRITE(b, a, alen)				\
+	do {						\
+		if ((wlen + (alen)) > len)		\
+			return (-1);			\
+		memcpy((b) + wlen, (a), (alen));	\
+		wlen += (alen);				\
+	} while (0)
+#define ATTR_WRITEB(b, c)				\
+	do {						\
+		if (wlen == len || (c) > 0xff)		\
+			return (-1);			\
+		(b)[wlen++] = (c);			\
+	} while (0)
 
 	/* origin */
-	ATTR_WRITEB(p, ATTR_ORIGIN_FLAGS);
-	ATTR_WRITEB(p, ATTR_ORIGIN);
-	ATTR_WRITEB(p, 1);
-	ATTR_WRITEB(p, a->origin);
+	ATTR_WRITEB(buf, ATTR_ORIGIN_FLAGS);
+	ATTR_WRITEB(buf, ATTR_ORIGIN);
+	ATTR_WRITEB(buf, 1);
+	ATTR_WRITEB(buf, a->origin);
 
 	/* aspath */
 	aslen = aspath_length(a->aspath);
-	ATTR_WRITEB(p, ATTR_TRANSITIVE | (aslen>255 ? ATTR_EXTLEN : 0));
-	ATTR_WRITEB(p, ATTR_ASPATH);
+	ATTR_WRITEB(buf, ATTR_TRANSITIVE | (aslen>255 ? ATTR_EXTLEN : 0));
+	ATTR_WRITEB(buf, ATTR_ASPATH);
 	if (aslen > 255) {
 		tmp16 = htonl(aslen);
-		ATTR_WRITE(p, &tmp16, 4);
+		ATTR_WRITE(buf, &tmp16, 4);
 	} else
-		ATTR_WRITEB(p, aslen);
-	ATTR_WRITE(p, aspath_dump(a->aspath), aslen);
+		ATTR_WRITEB(buf, aslen);
+	ATTR_WRITE(buf, aspath_dump(a->aspath), aslen);
 
 	/* nexthop */
-	ATTR_WRITEB(p, ATTR_NEXTHOP_FLAGS);
-	ATTR_WRITEB(p, ATTR_NEXTHOP);
-	ATTR_WRITEB(p, 4);
-	ATTR_WRITE(p, &a->nexthop, 4);	/* network byte order */
+	ATTR_WRITEB(buf, ATTR_NEXTHOP_FLAGS);
+	ATTR_WRITEB(buf, ATTR_NEXTHOP);
+	ATTR_WRITEB(buf, 4);
+	ATTR_WRITE(buf, &a->nexthop, 4);	/* network byte order */
 
 	/* MED */
 	if (a->med != 0) {
-		ATTR_WRITEB(p, ATTR_MED_FLAGS);
-		ATTR_WRITEB(p, ATTR_MED);
-		ATTR_WRITEB(p, 4);
+		ATTR_WRITEB(buf, ATTR_MED_FLAGS);
+		ATTR_WRITEB(buf, ATTR_MED);
+		ATTR_WRITEB(buf, 4);
 		tmp32 = htonl(a->med);
-		ATTR_WRITE(p, &tmp32, 4);
+		ATTR_WRITE(buf, &tmp32, 4);
 	}
 
 	/* local preference */
-	ATTR_WRITEB(p, ATTR_LOCALPREF_FLAGS);
-	ATTR_WRITEB(p, ATTR_LOCALPREF);
-	ATTR_WRITEB(p, 4);
+	ATTR_WRITEB(buf, ATTR_LOCALPREF_FLAGS);
+	ATTR_WRITEB(buf, ATTR_LOCALPREF);
+	ATTR_WRITEB(buf, 4);
 	tmp32 = htonl(a->lpref);
-	ATTR_WRITE(p, &tmp32, 4);
+	ATTR_WRITE(buf, &tmp32, 4);
 
 	/* atomic aggregate */
 	if (a->aggr_atm == 1) {
-		ATTR_WRITEB(p, ATTR_ATOMIC_AGGREGATE_FLAGS);
-		ATTR_WRITEB(p, ATTR_ATOMIC_AGGREGATE);
-		ATTR_WRITEB(p, 0);
+		ATTR_WRITEB(buf, ATTR_ATOMIC_AGGREGATE_FLAGS);
+		ATTR_WRITEB(buf, ATTR_ATOMIC_AGGREGATE);
+		ATTR_WRITEB(buf, 0);
 	}
 
 	/* aggregator */
 	if (a->aggr_as != 0) {
-		ATTR_WRITEB(p, ATTR_AGGREGATOR_FLAGS);
-		ATTR_WRITEB(p, ATTR_AGGREGATOR);
-		ATTR_WRITEB(p, 6);
+		ATTR_WRITEB(buf, ATTR_AGGREGATOR_FLAGS);
+		ATTR_WRITEB(buf, ATTR_AGGREGATOR);
+		ATTR_WRITEB(buf, 6);
 		tmp16 = htons(a->aggr_as);
-		ATTR_WRITE(p, &tmp16, 2);
-		ATTR_WRITE(p, &a->aggr_ip, 4);	/* network byte order */
+		ATTR_WRITE(buf, &tmp16, 2);
+		ATTR_WRITE(buf, &a->aggr_ip, 4);	/* network byte order */
 	}
 
 	return wlen;
@@ -213,43 +214,62 @@ attr_dump(u_char *p, u_int16_t len, struct attr_flags *a)
  * aspath regexp search,
  * aspath to string converter
  */
+static u_int16_t	aspath_extract(void *, int);
+
+/*
+ * Extract the asnum out of the as segement at the specified position.
+ * Direct access is not possible because of non-aligned reads.
+ */
+static u_int16_t
+aspath_extract(void *seg, int pos)
+{
+	u_char		*ptr = seg;
+	u_int16_t	 as = 0;
+
+	ENSURE(0 <= pos && pos < 0xff);
+
+	ptr += 2 + 2 * pos;
+	as = *ptr++;
+	as <<= 8;
+	as |= *ptr;
+	return as;
+}
 
 int
-aspath_verify(u_char *data, u_int16_t len, u_int16_t myAS)
+aspath_verify(void *data, u_int16_t len, u_int16_t myAS)
 {
-	struct as_segment	*seg;
-	u_int16_t		 pos;
-	u_int8_t		 i;
+	u_int8_t	*seg = data;
+	u_int16_t	 seg_size;
+	u_int8_t	 i, seg_len, seg_type;
 
-	for (pos = 0; pos + 1 < len; ) {
-		seg = (struct as_segment *)(data + pos);
-		if (seg->type != AS_SET && seg->type != AS_SEQUENCE) {
+	for (; len > 0; len -= seg_size, seg += seg_size) {
+		seg_type = seg[0];
+		seg_len = seg[1];
+		if (seg_type != AS_SET && seg_type != AS_SEQUENCE) {
 			return AS_ERR_TYPE;
 		}
+		seg_size = 2 + 2 * seg_len;
 
-		if ((pos += 2 + 2 * seg->len) > len)
+		if (seg_size > len)
 			return AS_ERR_LEN;
 
-		for (i = 0; i < seg->len; i++) {
-			if (myAS == seg->as_num[i])
+		for (i = 0; i < seg_len; i++) {
+			if (myAS == aspath_extract(seg, i))
 				return AS_ERR_LOOP;
 		}
 	}
-	if (pos == len)
-		return 0;	/* all OK */
-
-	return AS_ERR_LEN;
+	return 0;	/* all OK */
 }
 
 struct aspath *
-aspath_create(u_char *data, u_int16_t len)
+aspath_create(void *data, u_int16_t len)
 {
 	struct aspath	*aspath;
 
 	RIB_STAT(aspath_create);
 
-	/* XXX we assume that the aspath was already checked for correctness */
-	aspath = (struct aspath *)malloc(ASPATH_HEADER_SIZE + len);
+	/* The aspath must already have been checked for correctness. */
+	aspath = malloc(ASPATH_HEADER_SIZE + len);
 	if (aspath == NULL)
 		fatal("aspath_create", errno);
 	aspath->hdr.len = len;
@@ -271,7 +291,7 @@ aspath_destroy(struct aspath *aspath)
 u_char *
 aspath_dump(struct aspath *aspath)
 {
-	return (u_char *)aspath->data;
+	return aspath->data;
 }
 
 u_int16_t
@@ -283,19 +303,22 @@ aspath_length(struct aspath *aspath)
 u_int16_t
 aspath_count(struct aspath *aspath)
 {
-	struct as_segment	*seg;
-	u_int16_t		 cnt, len, pos;
+	u_int8_t	*seg;
+	u_int16_t	 cnt, len, seg_size;
+	u_int8_t	 seg_type, seg_len;
 
-	len = aspath->hdr.len;
 	cnt = 0;
-	for (pos = 0; pos + 1 < len; ) {
-		seg = (struct as_segment *)(aspath->data + pos);
-		ENSURE(seg->type == AS_SET || seg->type == AS_SEQUENCE);
-		if (seg->type == AS_SET)
+	seg = aspath->data;
+	for (len = aspath->hdr.len; len > 0; len -= seg_size, seg += seg_size) {
+		seg_type = seg[0];
+		seg_len = seg[1];
+		ENSURE(seg_type == AS_SET || seg_type == AS_SEQUENCE);
+		seg_size = 2 + 2 * seg_len;
+
+		if (seg_type == AS_SET)
 			cnt += 1;
 		else
-			cnt += seg->len;
-		pos += 2 + 2 * seg->len;
+			cnt += seg_len;
 	}
 	return cnt;
 }
@@ -303,19 +326,17 @@ aspath_count(struct aspath *aspath)
 u_int16_t
 aspath_neighbour(struct aspath *aspath)
 {
-	struct as_segment	*seg;
 	/*
 	 * Empty aspath is OK -- internal as route.
 	 * But what is the neighbour? For now let's return 0 that
 	 * should not break anything.
 	 */
 
-	ENSURE(aspath->hdr.len >= 2);
+	if (aspath->hdr.len < 2)
+		fatal("aspath_neighbour: aspath has no data", 0);
 
-	seg = (struct as_segment *)aspath->data;
-	if (seg->len > 0)
-		return seg->as_num[0];
-
+	if (aspath->data[1] > 0)
+		return aspath_extract(aspath->data, 0);
 	return 0;
 }
 
@@ -324,21 +345,24 @@ aspath_neighbour(struct aspath *aspath)
 u_long
 aspath_hash(struct aspath *aspath)
 {
-	struct as_segment	*seg;
-	u_long			 hash;
-	u_int16_t		 len, pos;
-	u_int8_t		 i;
+	u_int8_t	*seg;
+	u_long		 hash;
+	u_int16_t	 len, seg_size;
+	u_int8_t	 i, seg_len, seg_type;
 
 	hash = AS_HASH_INITAL;
-	len = aspath->hdr.len;
-	for (pos = 0; pos < len; ) {
-		seg = (struct as_segment *)(aspath->data + pos);
-		ENSURE(pos + 2 + 2 * seg->len <= len);
-		for (i = 0; i < seg->len; i++) {
+	seg = aspath->data;
+	for (len = aspath->hdr.len; len > 0; len -= seg_size, seg += seg_size) {
+		seg_type = seg[0];
+		seg_len = seg[1];
+		ENSURE(seg_type == AS_SET || seg_type == AS_SEQUENCE);
+		seg_size = 2 + 2 * seg_len;
+
+		ENSURE(seg_size <= len);
+		for (i = 0; i < seg_len; i++) {
 			hash += (hash << 5);
-			hash ^= seg->as_num[i];
+			hash ^= aspath_extract(seg, i);
 		}
-		pos += 2 + 2 * seg->len;
 	}
 	return hash;
 }

@@ -1,7 +1,7 @@
-/*	$OpenBSD: mrt.c,v 1.5 2003/12/20 21:43:45 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.6 2003/12/21 16:11:33 claudio Exp $ */
 
 /*
- * Copyright (c) 2003 Claudio Jeker <cjeker@diehard.n-r-g.com>
+ * Copyright (c) 2003 Claudio Jeker <claudio@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -43,9 +43,12 @@ static int	mrt_dump_entry(int, struct prefix *, u_int16_t,
 static void	mrt_dump_header(struct buf *, u_int16_t, u_int16_t, u_int32_t);
 static int	mrt_open(struct mrtdump_config *);
 
-/* XXX breaks buf encapsulation */
 #define DUMP_BYTE(x, b)							\
-	(x)->buf[buf->wpos++] = (b)
+	do {								\
+		u_char		t = (b);				\
+		if (buf_add((x), &t, sizeof(t)) == -1)			\
+			fatal("buf_add error", 0);			\
+	} while (0)
 
 #define DUMP_SHORT(x, s)						\
 	do {								\
@@ -79,7 +82,7 @@ mrt_dump_bgp_msg(int fd, u_char *pkg, u_int16_t pkglen, int type,
 	int		 i, n;
 	u_int16_t	 len;
 
-	len = pkglen + MRT_BGP4MP_HEADER_SIZE + type>0?MSGSIZE_HEADER:0;
+	len = pkglen + MRT_BGP4MP_HEADER_SIZE + type > 0 ? MSGSIZE_HEADER : 0;
 
 	hdr.len = len + IMSG_HEADER_SIZE + MRT_HEADER_SIZE;
 	hdr.type = IMSG_MRT_MSG;
@@ -121,7 +124,7 @@ mrt_dump_entry(int fd, struct prefix *p, u_int16_t snum,
     struct peer_config *peer, u_int32_t id)
 {
 	struct buf	*buf;
-	u_char		*s;
+	void		*bptr;
 	struct imsg_hdr	 hdr;
 	u_int16_t	 len, attr_len;
 	int		 n;
@@ -150,10 +153,10 @@ mrt_dump_entry(int fd, struct prefix *p, u_int16_t snum,
 	DUMP_SHORT(buf, peer->remote_as);
 	DUMP_SHORT(buf,  attr_len);
 
-	if ((s = buf_reserve(buf, attr_len)) == NULL)
+	if ((bptr = buf_reserve(buf, attr_len)) == NULL)
 		fatal("buf_reserve error", 0);
 
-	if (attr_dump(s, attr_len, &p->aspath->flags) == -1)
+	if (attr_dump(bptr, attr_len, &p->aspath->flags) == -1)
 		fatal("attr_dump error", 0);
 
 	if ((n = buf_close(buf)) == -1)
