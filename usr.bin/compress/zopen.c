@@ -1,4 +1,4 @@
-/*	$OpenBSD: zopen.c,v 1.2 1996/06/26 05:32:22 deraadt Exp $	*/
+/*	$OpenBSD: zopen.c,v 1.3 1996/09/22 20:05:19 tholo Exp $	*/
 /*	$NetBSD: zopen.c,v 1.5 1995/03/26 09:44:53 glass Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)zopen.c	8.1 (Berkeley) 6/27/93";
 #else
-static char rcsid[] = "$OpenBSD: zopen.c,v 1.2 1996/06/26 05:32:22 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: zopen.c,v 1.3 1996/09/22 20:05:19 tholo Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -695,6 +695,56 @@ cl_hash(zs, cl_hsize)			/* Reset code table. */
 	} while ((i -= 16) >= 0);
 	for (i += 16; i > 0; i--)
 		*--htab_p = m1;
+}
+
+FILE *
+zdopen(fd, mode, bits)
+	int fd;
+	const char *mode;
+	int bits;
+{
+	struct s_zstate *zs;
+
+	if (mode[0] != 'r' && mode[0] != 'w' || mode[1] != '\0' ||
+	    bits < 0 || bits > BITS) {
+		errno = EINVAL;
+		return (NULL);
+	}
+
+	if ((zs = calloc(1, sizeof(struct s_zstate))) == NULL)
+		return (NULL);
+
+	maxbits = bits ? bits : BITS;	/* User settable max # bits/code. */
+	maxmaxcode = 1 << maxbits;	/* Should NEVER generate this code. */
+	hsize = HSIZE;			/* For dynamic table sizing. */
+	free_ent = 0;			/* First unused entry. */
+	block_compress = BLOCK_MASK;
+	clear_flg = 0;
+	ratio = 0;
+	checkpoint = CHECK_GAP;
+	in_count = 1;			/* Length of input. */
+	out_count = 0;			/* # of codes output (for debugging). */
+	state = S_START;
+	roffset = 0;
+	size = 0;
+
+	/*
+	 * Layering compress on top of stdio in order to provide buffering,
+	 * and ensure that reads and write work with the data specified.
+	 */
+	if ((fp = fdopen(fd, mode)) == NULL) {
+		free(zs);
+		return (NULL);
+	}
+	switch (*mode) {
+	case 'r':
+		zmode = 'r';
+		return (funopen(zs, zread, NULL, NULL, zclose));
+	case 'w':
+		zmode = 'w';
+		return (funopen(zs, NULL, zwrite, NULL, zclose));
+	}
+	/* NOTREACHED */
 }
 
 FILE *
