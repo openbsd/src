@@ -1,4 +1,4 @@
-/*	$OpenBSD: intvec.s,v 1.8 1997/09/12 09:30:54 maja Exp $   */
+/*	$OpenBSD: intvec.s,v 1.9 1998/05/11 15:40:34 niklas Exp $   */
 /*	$NetBSD: intvec.s,v 1.23 1997/07/28 21:48:35 ragge Exp $   */
 
 /*
@@ -319,7 +319,31 @@ ENTRY(rxcs);	/* console interrupt from some other processor */
 	STRAY(0,A8)
 	STRAY(0,AC)
 
-	FASTINTR(netint,netintr)	#network packet interrupt
+ENTRY(netint)
+	PUSHR
+#ifdef INET
+#if NARP > 0
+	bbcc	$NETISR_ARP,_netisr,1f; calls $0,_arpintr; 1:
+#endif
+	bbcc	$NETISR_IP,_netisr,1f; calls $0,_ipintr; 1:
+#endif
+#ifdef NETATALK
+	bbcc	$NETISR_ATALK,_netisr,1f; calls $0,_atintr; 1:
+#endif
+#ifdef NS
+	bbcc	$NETISR_NS,_netisr,1f; calls $0,_nsintr; 1:
+#endif
+#ifdef ISO
+	bbcc	$NETISR_ISO,_netisr,1f; calls $0,_clnlintr; 1:
+#endif
+#ifdef CCITT
+	bbcc	$NETISR_CCITT,_netisr,1f; calls $0,_ccittintr; 1:
+#endif
+#if NPPP > 0
+	bbcc	$NETISR_PPP,_netisr,1f; calls $0,_pppintr; 1:
+#endif
+	POPR
+	rei
 
 	STRAY(0,B4)
 	STRAY(0,B8)
