@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.61 2004/09/24 09:06:50 espie Exp $
+# $OpenBSD: pkg_add,v 1.62 2004/10/11 09:13:20 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -596,7 +596,7 @@ sub borked_script($)
 	}
 }
 
-sub collision_report
+sub collision_report($)
 {
 	my $list = shift;
 	my %todo = map {($_, 1)} @$list;
@@ -626,29 +626,12 @@ sub collision_report
 	}
 }
 
-sub manpages_index
+sub validate_plist($$)
 {
 	my ($plist, $destdir) = @_;
-	return unless defined $plist->{state}->{mandirs};
-	require OpenBSD::Makewhatis;
 
-	while (my ($k, $v) = each %{$plist->{state}->{mandirs}}) {
-		my @l = map { $destdir.$_ } @$v;
-		eval { OpenBSD::Makewhatis::merge($destdir.$k, \@l); };
-		if ($@) {
-			print STDERR "Error in makewhatis: $@\n";
-		}
-	}
-}
-
-
-sub really_add($$)
-{
-	my ($handle, $destdir) = @_;
-	my $plist = $handle->{plist};
-	my $dir = $handle->info();
-	my $pkgname = $plist->pkgname();
 	my $problems = 0;
+	my $pkgname = $plist->pkgname();
 
 	my $extra = $plist->{extrainfo};
 	if ($cdrom_only && ((!defined $extra) || $extra->{cdrom} ne 'yes')) {
@@ -659,7 +642,7 @@ sub really_add($$)
 	    print "Package $pkgname is not for ftp.\n";
 	    $problems++;
 	}
-	$ENV{'PKG_PREFIX'} = $plist->pkgbase();
+
 	# check for collisions with existing stuff
 	my $colliding = [];
 	for my $item (@{$plist->{items}}) {
@@ -684,6 +667,40 @@ sub really_add($$)
 		collision_report($colliding);
 	}
 	exit(1) if $problems;
+}
+
+sub manpages_index
+{
+	my ($plist, $destdir) = @_;
+	return unless defined $plist->{state}->{mandirs};
+	require OpenBSD::Makewhatis;
+
+	while (my ($k, $v) = each %{$plist->{state}->{mandirs}}) {
+		my @l = map { $destdir.$_ } @$v;
+		eval { OpenBSD::Makewhatis::merge($destdir.$k, \@l); };
+		if ($@) {
+			print STDERR "Error in makewhatis: $@\n";
+		}
+	}
+}
+
+
+sub really_add($$)
+{
+	my ($handle, $destdir) = @_;
+	my $plist = $handle->{plist};
+	my $dir = $handle->info();
+	my $pkgname = $plist->pkgname();
+
+	validate_plist($plist, $destdir);
+
+	if (!defined $handle) {
+		print STDERR "Archive in $pkgname broken\n";
+		$errors++;
+		return;
+	}
+
+	$ENV{'PKG_PREFIX'} = $plist->pkgbase();
 
 	my $interrupted;
 	local $SIG{'INT'} = sub {
@@ -711,13 +728,6 @@ sub really_add($$)
 			}
 		}
 	}
-
-	if (!defined $handle) {
-		print STDERR "Archive in $pkgname broken\n";
-		$errors++;
-		return;
-	}
-
 
 	$plist->{done} = [];
 	for my $item (@{$plist->{groups}}, @{$plist->{users}}, @{$plist->{items}}) {
