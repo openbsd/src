@@ -1,4 +1,4 @@
-/*	$OpenBSD: mld6.c,v 1.11 2001/12/07 09:16:07 itojun Exp $	*/
+/*	$OpenBSD: mld6.c,v 1.12 2002/01/08 04:29:21 itojun Exp $	*/
 /*	$KAME: mld6.c,v 1.26 2001/02/16 14:50:35 itojun Exp $	*/
 
 /*
@@ -201,10 +201,12 @@ mld6_input(m, off)
 	/* source address validation */
 	ip6 = mtod(m, struct ip6_hdr *);/* in case mpullup */
 	if (!IN6_IS_ADDR_LINKLOCAL(&ip6->ip6_src)) {
+#if 0
 		log(LOG_ERR,
 		    "mld6_input: src %s is not link-local (grp=%s)\n",
 		    ip6_sprintf(&ip6->ip6_src),
 		    ip6_sprintf(&mldh->mld6_addr));
+#endif
 		/*
 		 * spec (RFC2710) does not explicitly
 		 * specify to discard the packet from a non link-local
@@ -329,7 +331,9 @@ mld6_input(m, off)
 			mldh->mld6_addr.s6_addr16[1] = 0; /* XXX */
 		break;
 	default:		/* this is impossible */
+#if 0
 		log(LOG_ERR, "mld6_input: illegal type(%d)", mldh->mld6_type);
+#endif
 		break;
 	}
 
