@@ -14,6 +14,7 @@ MAKEFILE=	Makefile.ssl
 MAKE=		make -f $(MAKEFILE)
 MAKEDEPPROG=	makedepend
 MAKEDEPEND=	$(TOP)/util/domd $(TOP) -MD $(MAKEDEPPROG)
+PERL=		perl
 
 PEX_LIBS=
 EX_LIBS= #-lnsl -lsocket
@@ -234,7 +235,7 @@ test_gen:
 	@echo "Generate and verify a certificate request"
 	@sh ./testgen
 
-test_ss:
+test_ss keyU.ss certU.ss certCA.ss: testss
 	@echo "Generate and certify a test certificate"
 	@sh ./testss
 
@@ -242,13 +243,17 @@ test_engine:
 	@echo "Manipulate the ENGINE structures"
 	./$(ENGINETEST)
 
-test_ssl:
+test_ssl: keyU.ss certU.ss certCA.ss
 	@echo "test SSL protocol"
-	@sh ./testssl
+	@sh ./testssl keyU.ss certU.ss certCA.ss
 
 test_ca:
-	@echo "Generate and certify a test certificate via the 'ca' program"
-	@sh ./testca
+	@if ../apps/openssl no-rsa; then \
+	  echo "skipping CA.sh test -- requires RSA"; \
+	else \
+	  echo "Generate and certify a test certificate via the 'ca' program"; \
+	  sh ./testca; \
+ 	fi
 
 test_rd: #$(RDTEST)
 #	@echo "test Rijndael"

@@ -312,7 +312,7 @@ void ENGINE_load_builtin_engines(void);
 #ifdef __OpenBSD__
 void ENGINE_load_cryptodev(void);
 #endif	
-	
+
 /* Get and set global flags (ENGINE_TABLE_FLAG_***) for the implementation
  * "registry" handling. */
 unsigned int ENGINE_get_table_flags(void);

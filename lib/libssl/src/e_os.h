@@ -79,7 +79,7 @@ extern "C" {
 #ifndef DEVRANDOM
 /* set this to a comma-separated list of 'random' device files to try out.
  * My default, we will try to read at least one of these files */
-#define DEVRANDOM  "/dev/arandom","/dev/urandom","/dev/random","/dev/srandom"
+#define DEVRANDOM "/dev/urandom","/dev/random","/dev/srandom"
 #endif
 #ifndef DEVRANDOM_EGD
 /* set this to a comma-seperated list of 'egd' sockets to try out. These

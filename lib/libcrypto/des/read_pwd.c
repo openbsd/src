@@ -211,7 +211,7 @@ static int noecho_fgets(char *buf, int size, FILE *tty);
 #endif
 static jmp_buf save;
 
-int _ossl_old_des_read_pw_string(char *buf, int length, const char *prompt,
+int des_read_pw_string(char *buf, int length, const char *prompt,
 	     int verify)
 	{
 	char buff[BUFSIZ];

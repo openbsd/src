@@ -99,12 +99,11 @@ int RAND_load_file(const char *file, long bytes)
 	if (file == NULL) return(0);
 
 	i=stat(file,&sb);
-	if (i < 0) { 
-	  /* If the state fails, put some crap in anyway */
-	  RAND_add(&sb,sizeof(sb),0);
-	  return(0);
-	}
+	/* If the state fails, put some crap in anyway */
+	RAND_add(&sb,sizeof(sb),0);
+	if (i < 0) return(0);
 	if (bytes == 0) return(ret);
+
 	in=fopen(file,"rb");
 	if (in == NULL) goto err;
 	if (sb.st_mode & (S_IFBLK | S_IFCHR)) {
@@ -218,12 +217,12 @@ err:
 
 const char *RAND_file_name(char *buf, size_t size)
 	{
-	char *s = NULL;
+	char *s=NULL;
 	int ok = 0;
 	struct stat sb;
 
 	if (issetugid() == 0)
-		s = getenv("RANDFILE");
+		s=getenv("RANDFILE");
 	if (s != NULL && *s && strlen(s) + 1 < size)
 		{
 		strlcpy(buf,s,size);
@@ -272,4 +271,3 @@ const char *RAND_file_name(char *buf, size_t size)
 #endif
 	return(buf);
 	}
-

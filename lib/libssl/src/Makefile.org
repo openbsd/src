@@ -35,8 +35,6 @@ OPENSSLDIR=/usr/local/ssl
 # DEVRANDOM - Give this the value of the 'random device' if your OS supports
 #           one.  32 bytes will be read from this when the random
 #           number generator is initalised.
-# SSL_ALLOW_ADH - define if you want the server to be able to use the
-#           SSLv3 anon-DH ciphers.
 # SSL_FORBID_ENULL - define if you want the server to be not able to use the
 #           NULL encryption ciphers.
 #
@@ -734,21 +732,21 @@ install_docs:
 		fn=`basename $$i .pod`; \
 		if [ "$$fn" = "config" ]; then sec=5; else sec=1; fi; \
 		echo "installing man$$sec/`basename $$i .pod`.$$sec"; \
-		(cd `$(PERL) util/dirname.pl $$i`; \
+		(cd `dirname $$i`; \
 		sh -c "`cd ../../util; ./pod2mantest ignore` \
 			--section=$$sec --center=OpenSSL \
 			--release=$(VERSION) `basename $$i`") \
-			>  $(INSTALL_PREFIX)$(MANDIR)/man$$sec/`basename $$i .pod`.$$sec); \
+			>  $(INSTALL_PREFIX)$(MANDIR)/man$$sec/`basename $$i .pod`.$$sec; \
 	done
 	@for i in doc/crypto/*.pod doc/ssl/*.pod; do \
 		fn=`basename $$i .pod`; \
 		if [ "$$fn" = "des_modes" ]; then sec=7; else sec=3; fi; \
 		echo "installing man$$sec/`basename $$i .pod`.$$sec"; \
-		(cd `$(PERL) util/dirname.pl $$i`; \
+		(cd `dirname $$i`; \
 		sh -c "`cd ../../util; ./pod2mantest ignore` \
 			--section=$$sec --center=OpenSSL \
 			--release=$(VERSION) `basename $$i`") \
-			>  $(INSTALL_PREFIX)$(MANDIR)/man$$sec/`basename $$i .pod`.$$sec); \
+			>  $(INSTALL_PREFIX)$(MANDIR)/man$$sec/`basename $$i .pod`.$$sec; \
 	done
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.

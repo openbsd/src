@@ -1,5 +1,13 @@
 /* NOCW */
 #include <stdio.h>
+#ifdef _OSD_POSIX
+#ifndef CHARSET_EBCDIC
+#define CHARSET_EBCDIC 1
+#endif
+#endif
+#ifdef CHARSET_EBCDIC
+#include <openssl/ebcdic.h>
+#endif
 
 /* This version of crypt has been developed from my MIT compatible
  * DES library.

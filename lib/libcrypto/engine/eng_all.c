@@ -96,6 +96,9 @@ void ENGINE_load_builtin_engines(void)
 #ifndef OPENSSL_NO_HW_SUREWARE
 	ENGINE_load_sureware();
 #endif
+#ifndef OPENSSL_NO_HW_4758_CCA
+	ENGINE_load_4758cca();
+#endif
 #ifdef OPENSSL_OPENBSD_DEV_CRYPTO
 	ENGINE_load_openbsd_dev_crypto();
 #endif
@@ -114,5 +117,3 @@ void ENGINE_setup_openbsd(void) {
 	openbsd_default_loaded=1;
 }
 #endif
-
-

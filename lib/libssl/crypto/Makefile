@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.25 2002/09/03 18:59:55 markus Exp $
+# $OpenBSD: Makefile,v 1.26 2002/09/05 22:12:11 markus Exp $
 
 LIB=	crypto
 
@@ -29,7 +29,7 @@ CFLAGS+= -DOPENSSL_NO_RC5 -DOPENSSL_NO_KRB5 -DSO_DLFCN -DHAVE_DLFCN_H
 CFLAGS+= -DNO_WINDOWS_BRAINDEATH
 CFLAGS+= -DOPENSSL_NO_HW_CSWIFT -DOPENSSL_NO_HW_NCIPHER -DOPENSSL_NO_HW_ATALLA
 CFLAGS+= -DOPENSSL_NO_HW_NURON -DOPENSSL_NO_HW_UBSEC -DOPENSSL_NO_HW_AEP
-CFLAGS+= -DOPENSSL_NO_HW_SUREWARE
+CFLAGS+= -DOPENSSL_NO_HW_SUREWARE -DOPENSSL_NO_HW_4758_CCA
 CFLAGS+= -I${.CURDIR}/../${SSLEAYDIST}
 CFLAGS+= -I${LCRYPTO_SRC}
 SRCS+= o_time.c
@@ -282,11 +282,13 @@ includes: obj_mac.h
 CFLAGS+= -I${.OBJDIR}
 
 GENERATED=obj_mac.h obj_dat.h
-CLEANFILES=${GENERATED}
+CLEANFILES=${GENERATED} obj_mac.num.tmp
 SSL_OBJECTS=${SSL_SRC}/crypto/objects
 
-obj_mac.h: ${SSL_OBJECTS}/objects.h
-	/usr/bin/perl ${SSL_OBJECTS}/objects.pl ${SSL_OBJECTS}/objects.txt ${SSL_OBJECTS}/obj_mac.num obj_mac.h
+obj_mac.h: ${SSL_OBJECTS}/objects.h ${SSL_OBJECTS}/obj_mac.num ${SSL_OBJECTS}/objects.txt
+	cat ${SSL_OBJECTS}/obj_mac.num > obj_mac.num.tmp
+	/usr/bin/perl ${SSL_OBJECTS}/objects.pl ${SSL_OBJECTS}/objects.txt obj_mac.num.tmp obj_mac.h
+
 obj_dat.h: obj_mac.h
 	/usr/bin/perl ${SSL_OBJECTS}/obj_dat.pl obj_mac.h obj_dat.h
 
