@@ -1,8 +1,9 @@
-/*	$OpenBSD: connection.c,v 1.2 1999/06/02 06:31:37 niklas Exp $	*/
-/*	$EOM: connection.c,v 1.14 1999/06/01 18:28:44 ho Exp $	*/
+/*	$OpenBSD: connection.c,v 1.3 1999/07/07 22:04:34 niklas Exp $	*/
+/*	$EOM: connection.c,v 1.16 1999/06/07 00:10:47 ho Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 1999 Hakan Olsson.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -170,6 +171,13 @@ connection_lookup (char *name)
     if (strcasecmp (conn->name, name) == 0)
       return conn;
   return 0;
+}
+
+/* Does the connection named NAME exist?  */
+int
+connection_exist (char *name)
+{
+  return (connection_lookup (name) != NULL);
 }
 
 /* Find the passive connection named NAME.  */
