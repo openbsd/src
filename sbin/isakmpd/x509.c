@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.49 2001/04/12 15:50:02 ho Exp $	*/
+/*	$OpenBSD: x509.c,v 1.50 2001/05/12 06:46:58 angelos Exp $	*/
 /*	$EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	*/
 
 /*
@@ -623,7 +623,7 @@ x509_hash_find (u_int8_t *id, size_t len)
 {
   struct x509_hash *cert;
   u_int8_t **cid;
-  size_t *clen;
+  u_int32_t *clen;
   int n, i, id_found;
 
   for (cert = LIST_FIRST (&x509_tab[x509_hash (id, len)]); cert;
