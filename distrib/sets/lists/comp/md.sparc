@@ -117,6 +117,7 @@
 ./usr/include/ieeefp.h
 ./usr/include/sparc
 ./usr/include/sparc/ansi.h
+./usr/include/sparc/apmvar.h
 ./usr/include/sparc/asm.h
 ./usr/include/sparc/autoconf.h
 ./usr/include/sparc/bppioctl.h

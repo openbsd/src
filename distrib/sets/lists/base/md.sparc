@@ -1387,6 +1387,7 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/soundcard.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/ansi.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/apmvar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/asm.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/autoconf.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/bppioctl.ph
@@ -2193,6 +2194,9 @@
 ./usr/mdec/boot
 ./usr/mdec/bootxx
 ./usr/mdec/installboot
+./usr/sbin/apm
+./usr/sbin/apmd
 ./usr/sbin/eeprom
 ./usr/sbin/fdformat
 ./usr/sbin/wsconscfg
+./usr/sbin/zzz
