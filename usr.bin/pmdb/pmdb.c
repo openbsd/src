@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmdb.c,v 1.10 2002/07/22 01:20:50 art Exp $	*/
+/*	$OpenBSD: pmdb.c,v 1.11 2002/07/22 23:26:05 fgsch Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -97,10 +97,6 @@ main(int argc, char **argv)
 	int level;
 	pid_t pid;
 
-	if (argc < 2) {
-		usage();
-	}
-
 	core = NULL;
 	pid = 0;
 
@@ -122,6 +118,9 @@ main(int argc, char **argv)
 	}
 	argc -= optind;
 	argv += optind;
+
+	if (argc == 0)
+		usage();
 
 	if ((pmenv = getenv("IN_PMDB")) != NULL) {
 		level = atoi(pmenv);
