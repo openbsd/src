@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcm.c,v 1.10 1997/07/14 04:25:13 downsj Exp $	*/
+/*	$OpenBSD: dcm.c,v 1.11 1997/09/14 03:43:03 downsj Exp $	*/
 /*	$NetBSD: dcm.c,v 1.41 1997/05/05 20:59:16 thorpej Exp $	*/
 
 /*
@@ -526,18 +526,22 @@ dcmopen(dev, flag, mode, p)
 			return (EBUSY);
 		}
 	} else {
-		while (!(DCMCUA(dev) && sc->sc_cua) &&
-		    (tp->t_cflag & CLOCAL) == 0 &&
-		    (tp->t_state & TS_CARR_ON) == 0) {
+		while (sc->sc_cua ||
+		    ((tp->t_cflag & CLOCAL) == 0 &&
+		    (tp->t_state & TS_CARR_ON) == 0)) {
 			tp->t_state |= TS_WOPEN;
 			error = ttysleep(tp, (caddr_t)&tp->t_rawq,
 			    TTIPRI | PCATCH, ttopen, 0);
+			if (!DCMCUA(dev) && sc->sc_cua && error == EINTR)
+				continue;
 			if (error) {
 				if (DCMCUA(dev))
 					sc->sc_cua = 0;
 				splx(s);
 				return (error);
 			}
+			if (!DCMCUA(dev) && sc->sc_cua)
+				continue;
 		}
 	}
 	splx(s);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: apci.c,v 1.2 1997/07/14 04:25:12 downsj Exp $	*/
+/*	$OpenBSD: apci.c,v 1.3 1997/09/14 03:43:01 downsj Exp $	*/
 /*	$NetBSD: apci.c,v 1.1 1997/05/12 08:12:36 thorpej Exp $	*/
 
 /*      
@@ -341,18 +341,22 @@ apciopen(dev, flag, mode, p)
 			return (EBUSY);
 		}
 	} else {
-		while (!(APCICUA(dev) && sc->sc_cua) &&
-		    (tp->t_cflag & CLOCAL) == 0 &&
-		    (tp->t_state & TS_CARR_ON) == 0) {
+		while (sc->sc_cua ||
+		    ((tp->t_cflag & CLOCAL) == 0 &&
+		    (tp->t_state & TS_CARR_ON) == 0)) {
 			tp->t_state |= TS_WOPEN;
 			error = ttysleep(tp, (caddr_t)&tp->t_rawq,
 			    TTIPRI | PCATCH, ttopen, 0);
+			if (!APCICUA(dev) && sc->sc_cua && error == EINTR)
+				continue;
 			if (error) {
 				if (APCICUA(dev))
 					sc->sc_cua = 0;
 				splx(s);
 				return (error);
 			}
+			if (!APCICUA(dev) && sc->sc_cua)
+				continue;
 		}
 	}
 
