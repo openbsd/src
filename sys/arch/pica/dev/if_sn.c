@@ -380,7 +380,7 @@ snioctl(ifp, cmd, data)
 {
 	struct ifaddr *ifa;
 	struct sn_softc *sc = sncd.cd_devs[ifp->if_unit];
-	int     s = splimp(), err = 0;
+	int     s = splnet(), err = 0;
 	int	temp;
 
 	switch (cmd) {
@@ -540,7 +540,7 @@ sninit(unit)
 		/* already running */
 		return (0);
 
-	s = splimp();
+	s = splnet();
 
 	csr->s_cr = CR_RST;	/* s_dcr only accessable reset mode! */
 
@@ -603,7 +603,7 @@ snstop(unit)
 {
 	struct sn_softc *sc = sncd.cd_devs[unit];
 	struct mtd *mtd;
-	int s = splimp();
+	int s = splnet();
 
 	/* stick chip in reset */
 	sc->sc_csr->s_cr = CR_RST;
@@ -654,7 +654,7 @@ snwatchdog(unit)
 	}
 }
 /*
- * stuff packet into sonic (at splimp)
+ * stuff packet into sonic (at splnet)
 */
 int 
 sonicput(sc, m0)
