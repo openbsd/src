@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamdb.8,v 1.2 2004/03/01 17:47:07 beck Exp $
+.\"	$OpenBSD: spamdb.8,v 1.3 2004/03/13 09:27:08 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Bob Beck.  All rights reserved.
 .\"
@@ -42,18 +42,18 @@ Updates time last seen to now.
 .It Fl d Ar ip
 Delete a whitelist entry for IP address "ip".
 .El
-.Pp
 .Ss DATABASE OUTPUT FORMAT
 If invoked without any arguments,
 .Nm
-lists the contents of the database
-in a text format. The format is as follows:
+lists the contents of the database in a text format.
+The format is as follows:
 .Bd -literal -offset 4n
 type:source ip:from:to:first:pass:expire:block:pass
 .Ed
 .Pp
 The fields are as follows:
-.Bl -tag -width Ds -offset indent -compact
+.Pp
+.Bl -tag -width "source ip" -offset indent -compact
 .It type
 .Em WHITE
 if whitelisted or
@@ -66,13 +66,13 @@ envelope-from address for
 .Em GREY
 (empty for
 .Em WHITE
-entries).
+entries)
 .It to
 envelope-to address for
 .Em GREY
 (empty for
 .Em WHITE
-entries).
+entries)
 .It first
 time the entry was first seen
 .It pass
@@ -83,16 +83,16 @@ to being
 .It expire
 time the entry will expire and be removed from the database
 .It block
-number of times a corresponding connection recieved a temporary
+number of times a corresponding connection received a temporary
 failure from
 .Xr spamd 8
 .It pass
 number of times a corresponding connection has been seen to pass
 to the real MTA by
-.Xr spamlogd 8 .
+.Xr spamlogd 8
 .El
 .Pp
-Note that times are in seconds since the epoch, in the manner returned by
+Note that times are in seconds since the Epoch, in the manner returned by
 .Xr time 3 .
 .Sh FILES
 /var/db/spamd
