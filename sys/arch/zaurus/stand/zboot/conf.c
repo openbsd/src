@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.1 2005/01/10 00:25:03 deraadt Exp $	*/
+/*	$OpenBSD: conf.c,v 1.2 2005/01/10 21:50:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -13,8 +13,8 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR 
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
@@ -50,18 +50,18 @@ int	debug = 1;
 #endif
 
 void (*zaurus_probe1[])(void) = {
-        cninit
+	cninit
 };
 #if 0
 void (*zaurus_probe2[])(void) = {
-        diskprobe
+	diskprobe
 };
 #endif
 
 struct zaurus_boot_probes probe_list[] = {
-        { "probing", zaurus_probe1, NENTS(zaurus_probe1) },
+	{ "probing", zaurus_probe1, NENTS(zaurus_probe1) },
 #if 0
-        { "disk",    zaurus_probe2, NENTS(zaurus_probe2) }
+	{ "disk",    zaurus_probe2, NENTS(zaurus_probe2) }
 #endif
 };
 int nibprobes = NENTS(probe_list);

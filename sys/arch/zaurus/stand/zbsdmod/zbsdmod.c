@@ -1,4 +1,4 @@
-/*	$OpenBSD	*/
+/*	$OpenBSD: zbsdmod.c,v 1.3 2005/01/10 21:50:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -202,7 +202,7 @@ zbsdmod_close(struct inode *ino, struct file *f)
 			elf32bsdboot();
 			printk("%s: boot failed\n", ZBOOTDEV_NAME);
 #else
-			printk("/* boot() */\n"); 
+			printk("/* boot() */\n");
 #endif
 		}
 		isopen = 0;

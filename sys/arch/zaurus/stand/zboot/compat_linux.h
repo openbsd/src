@@ -1,4 +1,4 @@
-/*	$OpenBSD: compat_linux.h,v 1.2 2005/01/10 21:10:57 uwe Exp $	*/
+/*	$OpenBSD: compat_linux.h,v 1.3 2005/01/10 21:50:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -45,17 +45,17 @@
 #define __NR__new_select	(__NR_SYSCALL_BASE+142)
 #define __NR_select		__NR__new_select /* XXX */
 #define __NR_syscall		(__NR_SYSCALL_BASE+113)
-#define linux__sys2(x) 		#x
-#define linux__sys1(x) 		linux__sys2(x)
+#define linux__sys2(x)		#x
+#define linux__sys1(x)		linux__sys2(x)
 #define linux__syscall(name)	"swi\t" linux__sys1(__NR_##name) "\n\t"
-#define linux__syscall_return(type, res)                                \
-do {                                                                    \
-        if ((unsigned long)(res) >= (unsigned long)(-125)) {            \
-                errno = -(res);                                         \
-                res = -1;                                               \
-        }                                                               \
-        return (type) (res);                                            \
-} while (0)
+#define linux__syscall_return(type, res)				\
+	do {								\
+		if ((unsigned long)(res) >= (unsigned long)(-125)) {	\
+			errno = -(res);					\
+			res = -1;					\
+		}							\
+		return (type) (res);					\
+	} while (0)
 
 #undef	SYS_select
 #define SYS_select		__NR__new_select
