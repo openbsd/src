@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_shm.c,v 1.32 2003/01/06 20:11:28 millert Exp $	*/
+/*	$OpenBSD: sysv_shm.c,v 1.33 2003/01/07 00:34:41 millert Exp $	*/
 /*	$NetBSD: sysv_shm.c,v 1.50 1998/10/21 22:24:29 tron Exp $	*/
 
 /*
@@ -606,8 +606,8 @@ sysctl_sysvshm(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		    val == shminfo.shmmni)
 			return (error);
 
-		if (val < shminfo.shmmni)
-			return (EINVAL);	/* can't decrease shmmni */
+		if (val < shminfo.shmmni || val > 0xffff)
+			return (EINVAL);
 
 		/* Expand shmsegs and shmseqs arrays */
 		newsegs = malloc(val * sizeof(struct shmid_ds *),
