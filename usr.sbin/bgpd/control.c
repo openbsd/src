@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.30 2004/05/08 11:22:43 henning Exp $ */
+/*	$OpenBSD: control.c,v 1.31 2004/05/21 11:48:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -271,8 +271,15 @@ control_dispatch_msg(struct pollfd *pfd)
 		case IMSG_CTL_SHOW_RIB:
 		case IMSG_CTL_SHOW_RIB_AS:
 		case IMSG_CTL_SHOW_RIB_PREFIX:
+		case IMSG_CTL_SHOW_NETWORK:
 			c->ibuf.pid = imsg.hdr.pid;
 			imsg_compose_rde(imsg.hdr.type, imsg.hdr.pid,
+			    imsg.data, imsg.hdr.len - IMSG_HEADER_SIZE);
+			break;
+		case IMSG_NETWORK_ADD:
+		case IMSG_NETWORK_REMOVE:
+		case IMSG_NETWORK_FLUSH:
+			imsg_compose_rde(imsg.hdr.type, 0,
 			    imsg.data, imsg.hdr.len - IMSG_HEADER_SIZE);
 			break;
 		default:

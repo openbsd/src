@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.112 2004/05/08 19:17:20 henning Exp $ */
+/*	$OpenBSD: rde.c,v 1.113 2004/05/21 11:48:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -66,7 +66,10 @@ void		 peer_down(u_int32_t);
 void		 peer_dump(u_int32_t, u_int16_t, u_int8_t);
 
 void		 network_init(struct network_head *);
-void		 network_add(struct network_config *);
+void		 network_add(struct network_config *, int);
+void		 network_delete(struct network_config *, int);
+void		 network_dump_upcall(struct pt_entry *, void *);
+void		 network_flush(int);
 
 void		 rde_shutdown(void);
 
@@ -75,6 +78,7 @@ struct bgpd_config	*conf, *nconf;
 time_t			 reloadtime;
 struct rde_peer_head	 peerlist;
 struct rde_peer		 peerself;
+struct rde_peer		 peerdynamic;
 struct filter_head	*rules_l, *newrules;
 struct imsgbuf		 ibuf_se;
 struct imsgbuf		 ibuf_main;
@@ -250,6 +254,38 @@ rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 			memcpy(&r, imsg.data, sizeof(r));
 			peer_dump(imsg.hdr.peerid, r.afi, r.safi);
 			break;
+		case IMSG_NETWORK_ADD:
+			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
+			    sizeof(struct network_config)) {
+				log_warnx("rde_dispatch: wrong imsg len");
+				break;
+			}
+			network_add(imsg.data, 0);
+			break;
+		case IMSG_NETWORK_REMOVE:
+			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
+			    sizeof(struct network_config)) {
+				log_warnx("rde_dispatch: wrong imsg len");
+				break;
+			}
+			network_delete(imsg.data, 0);
+			break;
+		case IMSG_NETWORK_FLUSH:
+			if (imsg.hdr.len != IMSG_HEADER_SIZE) {
+				log_warnx("rde_dispatch: wrong imsg len");
+				break;
+			}
+			network_flush(0);
+			break;
+		case IMSG_CTL_SHOW_NETWORK:
+			if (imsg.hdr.len != IMSG_HEADER_SIZE) {
+				log_warnx("rde_dispatch: wrong imsg len");
+				break;
+			}
+			pid = imsg.hdr.pid;
+			pt_dump(network_dump_upcall, &pid);
+			imsg_compose_pid(&ibuf_se, IMSG_CTL_END, pid, NULL, 0);
+			break;
 		case IMSG_CTL_SHOW_RIB:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE) {
 				log_warnx("rde_dispatch: wrong imsg len");
@@ -317,8 +353,8 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 				fatal(NULL);
 			memcpy(nconf, imsg.data, sizeof(struct bgpd_config));
 			break;
-		case IMSG_RECONF_NETWORK:
-			network_add(imsg.data);
+		case IMSG_NETWORK_ADD:
+			network_add(imsg.data, 1);
 			break;
 		case IMSG_RECONF_FILTER:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
@@ -1122,16 +1158,22 @@ network_init(struct network_head *net_l)
 	peerself.conf.remote_as = conf->as;
 	snprintf(peerself.conf.descr, sizeof(peerself.conf.descr),
 	    "LOCAL AS %hu", conf->as);
+	bzero(&peerdynamic, sizeof(peerdynamic));
+	peerdynamic.state = PEER_UP;
+	peerdynamic.remote_bgpid = conf->bgpid;
+	peerdynamic.conf.remote_as = conf->as;
+	snprintf(peerdynamic.conf.descr, sizeof(peerdynamic.conf.descr),
+	    "LOCAL AS %hu", conf->as);
 
 	while ((n = TAILQ_FIRST(net_l)) != NULL) {
 		TAILQ_REMOVE(net_l, n, network_l);
-		network_add(&n->net);
+		network_add(&n->net, 1);
 		free(n);
 	}
 }
 
 void
-network_add(struct network_config *nc)
+network_add(struct network_config *nc, int flagstatic)
 {
 	struct attr_flags	 attrs;
 
@@ -1147,7 +1189,52 @@ network_add(struct network_config *nc)
 	/* apply default overrides */
 	rde_apply_set(&attrs, &nc->attrset);
 
-	path_update(&peerself, &attrs, &nc->prefix, nc->prefixlen);
+	if (flagstatic)
+		path_update(&peerself, &attrs, &nc->prefix, nc->prefixlen);
+	else
+		path_update(&peerdynamic, &attrs, &nc->prefix, nc->prefixlen);
+}
+
+void
+network_delete(struct network_config *nc, int flagstatic)
+{
+	if (flagstatic)
+		prefix_remove(&peerself, &nc->prefix, nc->prefixlen);
+	else
+		prefix_remove(&peerdynamic, &nc->prefix, nc->prefixlen);
+}
+
+void
+network_dump_upcall(struct pt_entry *pt, void *ptr)
+{
+	struct prefix		*p;
+	struct kroute		 k;
+	pid_t			 pid;
+
+	memcpy(&pid, ptr, sizeof(pid));
+
+	LIST_FOREACH(p, &pt->prefix_h, prefix_l)
+	    if (p->aspath->nexthop->flags & NEXTHOP_ANNOUNCE) {
+		    bzero(&k, sizeof(k));
+		    memcpy(&k.prefix, &p->prefix->prefix.v4.s_addr,
+			sizeof(k.prefix));
+		    k.prefixlen = p->prefix->prefixlen;
+		    if (p->peer == &peerself)
+			    k.flags = F_KERNEL;
+		    if (imsg_compose_pid(&ibuf_se, IMSG_CTL_SHOW_NETWORK, pid,
+			&k, sizeof(k)) == -1)
+			    log_warnx("network_dump_upcall: "
+				"imsg_compose error");
+	    }
+}
+
+void
+network_flush(int flagstatic)
+{
+	if (flagstatic)
+		prefix_network_clean(&peerself, time(NULL));
+	else
+		prefix_network_clean(&peerdynamic, time(NULL));
 }
 
 /* clean up */
