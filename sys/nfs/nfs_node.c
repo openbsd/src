@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_node.c,v 1.21 2002/01/23 00:39:48 art Exp $	*/
+/*	$OpenBSD: nfs_node.c,v 1.22 2002/02/22 20:19:14 csapuntz Exp $	*/
 /*	$NetBSD: nfs_node.c,v 1.16 1996/02/18 11:53:42 fvdl Exp $	*/
 
 /*
@@ -145,6 +145,8 @@ loop:
 	vp = nvp;
 	np = pool_get(&nfs_node_pool, PR_WAITOK);
 	bzero((caddr_t)np, sizeof *np);
+	lockinit(&np->n_lock, PINOD, "nfsvlock", 0, 0);
+	lockmgr(&np->n_lock, LK_EXCLUSIVE, 0, p);
 	vp->v_data = np;
 	np->n_vnode = vp;
 
@@ -194,19 +196,32 @@ nfs_inactive(v)
 		np->n_sillyrename = (struct sillyrename *)0;
 	} else
 		sp = (struct sillyrename *)0;
-	if (sp) {
-		/*
-		 * Remove the silly file that was rename'd earlier
-		 */
-		(void) nfs_vinvalbuf(ap->a_vp, 0, sp->s_cred, p, 1);
-		nfs_removeit(sp);
-		crfree(sp->s_cred);
-		vrele(sp->s_dvp);
-		FREE((caddr_t)sp, M_NFSREQ);
-	}
-	np->n_flag &= (NMODIFIED | NFLUSHINPROG | NFLUSHWANT);
 
+	/*
+	 * Remove the silly file that was rename'd earlier
+	 */
+	if (sp)
+		(void) nfs_vinvalbuf(ap->a_vp, 0, sp->s_cred, p, 1);
+
+	np->n_flag &= (NMODIFIED | NFLUSHINPROG | NFLUSHWANT);
+	
 	VOP_UNLOCK(ap->a_vp, 0, ap->a_p);
+
+	if (sp) {
+		/* Note: sp->s_dvp may already be locked somewhere up in 
+		   the call stack as _inactive is called from many places
+		   in the code. Thus, this call below requires that
+		   recursive locks be enabled in vn_lock.
+		*/
+		int error = vn_lock(sp->s_dvp, LK_EXCLUSIVE, ap->a_p);
+		if (error == 0) {
+			nfs_removeit(sp);
+			vput(sp->s_dvp);
+		}
+		crfree(sp->s_cred);
+      		FREE((caddr_t)sp, M_NFSREQ);
+	}
+
 	return (0);
 }
 
@@ -256,4 +271,3 @@ nfs_reclaim(v)
 	vp->v_data = NULL;
 	return (0);
 }
-

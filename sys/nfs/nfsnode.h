@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsnode.h,v 1.13 2001/12/19 08:58:06 art Exp $	*/
+/*	$OpenBSD: nfsnode.h,v 1.14 2002/02/22 20:19:14 csapuntz Exp $	*/
 /*	$NetBSD: nfsnode.h,v 1.16 1996/02/18 11:54:04 fvdl Exp $	*/
 
 /*
@@ -119,6 +119,7 @@ struct nfsnode {
 	nfsfh_t			n_fh;		/* Small File Handle */
 	struct ucred		*n_rcred;
 	struct ucred		*n_wcred;
+	struct lock             n_lock;
 };
 
 #define n_atim		n_un1.nf_atim
@@ -187,9 +188,9 @@ int	nfs_readdir __P((void *));
 int	nfs_readlink __P((void *));
 int	nfs_inactive __P((void *));
 int	nfs_reclaim __P((void *));
-#define nfs_lock ((int (*) __P((void *)))vop_generic_lock)
-#define nfs_unlock ((int (*) __P((void *)))vop_generic_unlock)
-#define nfs_islocked ((int (*) __P((void *)))vop_generic_islocked)
+int     nfs_lock __P((void *));
+int     nfs_unlock __P((void *));
+int     nfs_islocked __P((void *));
 int	nfs_bmap __P((void *));
 int	nfs_strategy __P((void *));
 int	nfs_print __P((void *));
