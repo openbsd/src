@@ -1,4 +1,4 @@
-/*	$OpenBSD: sort.c,v 1.4 1997/06/16 02:21:56 millert Exp $	*/
+/*	$OpenBSD: sort.c,v 1.5 1997/06/16 02:39:15 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sort.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: sort.c,v 1.4 1997/06/16 02:21:56 millert Exp $";
+static char rcsid[] = "$OpenBSD: sort.c,v 1.5 1997/06/16 02:39:15 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -123,6 +123,7 @@ main(argc, argv)
 		case 'd':
 		case 'f':
 		case 'i':
+		case 'n':
 		case 'r': tmp |= optval(ch, 0);
 			if (tmp & R && tmp & F)
 				fldtab->weights = RFtable;
@@ -135,13 +136,8 @@ main(argc, argv)
 		case 'o':
 			outpath = optarg;
 			break;
-		case 'n':
-			/* XXX - this does not deal with -n in with -k */
-			nflag = 1;
-			setfield("1n", ++ftpos, fldtab->flags&(~R));
-			break;
 		case 'k':
-			 setfield(optarg, ++ftpos, fldtab->flags);
+			setfield(optarg, ++ftpos, fldtab->flags);
 			break;
 		case 't':
 			if (SEP_FLAG)
@@ -209,7 +205,7 @@ main(argc, argv)
 			err(2, argv[i]);
 	}
 
-	if (!(fldtab->flags & (I|D) || fldtab[1].icol.num)) {
+	if (!(fldtab->flags & (I|D|N) || fldtab[1].icol.num)) {
 		SINGL_FLD = 1;
 		fldtab[0].icol.num = 1;
 	} else {
@@ -217,8 +213,6 @@ main(argc, argv)
 			fldtab[0].flags &= ~(BI|BT);
 			setfield("1", ++ftpos, fldtab->flags);
 		}
-		if (nflag)
-			fldtab[1].flags |= fldtab->flags;
 		fldreset(fldtab);
 		fldtab[0].flags &= ~F;
 	}
