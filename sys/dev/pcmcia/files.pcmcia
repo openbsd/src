@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pcmcia,v 1.18 1999/07/01 06:29:55 fgsch Exp $
+#	$OpenBSD: files.pcmcia,v 1.19 1999/07/11 16:25:36 niklas Exp $
 #	$NetBSD: files.pcmcia,v 1.9 1998/06/21 18:45:41 christos Exp $
 #
 # Config.new file and device description for machine-independent PCMCIA code.
@@ -69,3 +69,8 @@ file dev/pcmcia/if_rl2_pcmcia.c			rln_pcmcia
 #device	cnw: ether, ifnet
 #attach	cnw at pcmcia
 #file	dev/pcmcia/if_cnw.c			cnw
+
+# Lucent WaveLAN
+device wi: ether, ifnet
+attach wi at pcmcia
+file dev/pcmcia/if_wi.c				wi
