@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.51 2002/06/08 04:36:18 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.52 2002/06/08 07:58:07 dhartmei Exp $
 .\"
 .\" Copyright (c) 2001, Daniel Hartmeier
 .\" All rights reserved.
@@ -53,7 +53,7 @@ rule           = action ( "in" | "out" )
                  hosts
                  [ user ] [ group ] [ flags ]
                  [ icmp-type | ipv6-icmp-type ]
-                 [ ( "keep" | "modulate" ) "state" [ "(" "max" number ")" ] ]
+                 [ ( "keep" | "modulate" ) "state" [ "(" state-opts ")" ] ]
                  [ "fragment" ] [ "no-df" ] [ "min-ttl" number ]
                  [ "max-mss" number ] [ "allow-opts" ]
                  [ "label" string ] .
@@ -100,6 +100,9 @@ ipv6-icmp-type = "ipv6-icmp-type" ( icmp-type-code | "{" icmp-list "}" ) .
 icmp-type-code = ( icmp-type-name | icmp-type-number )
                  [ "code" ( icmp-code-name | icmp-code-number ) ] .
 icmp-list      = icmp-type-code [ "," icmp-list ] . 
+
+state-opts     = state-opt [ "," state-opts ] .
+state-opt      = ( "max" number ) | ( timeout number ) .
 
 .Ed
 .Sh FILTER RULES
@@ -490,11 +493,6 @@ see
 .Xr nat.conf 5
 .Pc
 implicitly create state for connections.
-.Pp
-The "(max <number>)" option can be used to limit the number of concurrent
-states a rule can create to the specified maximum.
-When this limit is reached, further packets matching the rule that would
-create state are dropped, until existing states time out.
 .Sh STATE MODULATION
 Much of the security derived from TCP is attributable to how well the
 initial sequence numbers (ISNs) are chosen.
@@ -540,6 +538,24 @@ The sudden withdrawl
 of the modulation will appear to each side of the connection that its
 peer has suddenly shifted its sequence by a random amount.  Neither side
 will be able to recover and the connection will stall then eventually close.
+.Sh STATE OPTIONS
+Both "keep state" and "modulate state" support the following options:
+.Bl -tag -width timeout_seconds -compact
+.It Em max number
+Limits the number of concurrent states the rule may create.
+When this limit is reached, further packets matching the rule that would
+create state are dropped, until existing states time out.
+.It Em timeout seconds
+Changes the timeout values used for states created by this rule.
+For a list of all valid timeout names, see
+.Xr pf.conf 5 .
+.El
+.Pp
+Multiple options can be specified, separated by commas:
+.Bd -literal
+    pass in proto tcp from any to any port www flags S/SA \\
+      keep state (max 100, tcp.established 60, tcp.closing 5)
+.Ed
 .Sh NORMALIZATION
 Packet normalization is invoked via the
 .Pa scrub

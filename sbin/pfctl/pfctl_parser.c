@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.79 2002/06/07 22:53:45 pb Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.80 2002/06/08 07:58:07 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -530,6 +530,8 @@ print_status(struct pf_status *s)
 void
 print_rule(struct pf_rule *r)
 {
+	int i, opts;
+
 	printf("@%d ", r->nr);
 	if (r->action == PF_PASS)
 		printf("pass ");
@@ -685,8 +687,28 @@ print_rule(struct pf_rule *r)
 		printf("keep state ");
 	else if (r->keep_state == PF_STATE_MODULATE)
 		printf("modulate state ");
+	opts = 0;
 	if (r->max_states)
-		printf("(max %u) ", r->max_states);
+		opts = 1;
+	for (i = 0; !opts && i < PFTM_MAX; ++i)
+		if (r->timeout[i])
+			opts = 1;
+	if (opts) {
+		printf("(");
+		if (r->max_states) {
+			printf("max %u", r->max_states);
+			opts = 0;
+		}
+		for (i = 0; i < PFTM_MAX; ++i)
+			if (r->timeout[i]) {
+				if (!opts)
+					printf(", ");
+				opts = 0;
+				printf("%s %u", pf_timeouts[i].name,
+				    r->timeout[i]);
+			}
+		printf(") ");
+	}
 	if (r->rule_flag & PFRULE_FRAGMENT)
 		printf("fragment ");
 	if (r->rule_flag & PFRULE_NODF)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.69 2002/06/07 21:25:35 dhartmei Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.70 2002/06/08 07:58:07 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -92,10 +92,7 @@ char	*state_kill[2];
 
 char	*infile;
 
-static const struct {
-	const char	*name;
-	int		timeout;
-} pf_timeouts[] = {
+const struct pf_timeout pf_timeouts[] = {
 	{ "tcp.first",		PFTM_TCP_FIRST_PACKET },
 	{ "tcp.opening",	PFTM_TCP_OPENING },
 	{ "tcp.established",	PFTM_TCP_ESTABLISHED },

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.80 2002/06/08 01:00:23 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.81 2002/06/08 07:58:07 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -103,6 +103,19 @@ struct node_icmp {
 	struct node_icmp	*next;
 };
 
+struct node_state_opt {
+        enum	{ PF_STATE_OPT_MAX=0, PF_STATE_OPT_TIMEOUT=1 };
+	int			 type;
+	union {
+		u_int32_t	 max_states;
+		struct {
+			int	 	number;
+			u_int32_t	seconds;
+		}		 timeout;
+	}			 data;
+	struct node_state_opt	*next;
+};
+
 struct peer {
 	struct node_host	*host;
 	struct node_port	*port;
@@ -158,6 +171,7 @@ typedef struct {
 		struct node_port	*port;
 		struct node_uid		*uid;
 		struct node_gid		*gid;
+		struct node_state_opt	*state_opt;
 		struct peer		peer;
 		struct {
 			struct peer	src, dst;
@@ -173,10 +187,8 @@ typedef struct {
 			struct range		 rport;
 		}			*redirection;
 		struct {
-			int		action;
-			struct {
-				u_int32_t	max_states;
-			}		options;
+			int			 action;
+			struct node_state_opt	*options;
 		}			keep_state;
 	} v;
 	int lineno;
@@ -208,7 +220,8 @@ typedef struct {
 %type	<v.route>	route
 %type	<v.redirection>	redirection
 %type	<v.string>	label
-%type	<v.keep_state>	keep keep_opts
+%type	<v.keep_state>	keep
+%type	<v.state_opt>	state_opt_spec state_opt_list state_opt_item
 %%
 
 ruleset		: /* empty */
@@ -237,6 +250,7 @@ pfrule		: action dir log quick interface route af proto fromto
 		  maxmss allowopts label
 		{
 			struct pf_rule r;
+			struct node_state_opt *o;
 
 			if (natmode) {
 				yyerror("filter rule not permitted in nat mode");
@@ -260,7 +274,33 @@ pfrule		: action dir log quick interface route af proto fromto
 			r.flagset = $12.b2;
 
 			r.keep_state = $14.action;
-			r.max_states = $14.options.max_states;
+			o = $14.options;
+			while (o) {
+				struct node_state_opt *p = o;
+
+				switch (o->type) {
+				case PF_STATE_OPT_MAX:
+					if (r.max_states) {
+						yyerror("state option 'max' "
+						    "multiple definitions");
+						YYERROR;
+					}
+					r.max_states = o->data.max_states;
+					break;
+				case PF_STATE_OPT_TIMEOUT:
+					if (r.timeout[o->data.timeout.number]) {
+						yyerror("state timeout %s "
+						    "multiple definitions",
+						    pf_timeouts[o->data.
+						    timeout.number].name);
+						YYERROR;
+					}
+					r.timeout[o->data.timeout.number] =
+					    o->data.timeout.seconds;
+				}
+				o = o->next;
+				free(p);
+			}
 
 			if ($15)
 				r.rule_flag |= PFRULE_FRAGMENT;
@@ -974,23 +1014,61 @@ icmp6type	: STRING			{
 		;
 
 keep		: /* empty */			{ $$.action = 0; }
-		| KEEP STATE keep_opts		{
+		| KEEP STATE state_opt_spec	{
 			$$.action = PF_STATE_NORMAL;
-			$$.options = $3.options;
+			$$.options = $3;
 		}
-		| MODULATE STATE keep_opts	{
+		| MODULATE STATE state_opt_spec	{
 			$$.action = PF_STATE_MODULATE;
-			$$.options = $3.options;
+			$$.options = $3;
 		}
 		;
 
-keep_opts	: /* empty */			{ $$.options.max_states = 0; }
-		| '(' MAXIMUM NUMBER ')'	{
-			if ($3 <= 0) {
-				yyerror("illegal keep states max value %d", $3);
+state_opt_spec	: /* empty */			{ $$ = NULL; }
+		| '(' state_opt_list ')'	{ $$ = $2; }
+		;
+
+state_opt_list	: state_opt_item		{ $$ = $1; }
+		| state_opt_list ',' state_opt_item {
+			$$ = $1;
+			while ($1->next)
+				$1 = $1->next;
+			$1->next = $3;
+		}
+		;
+
+state_opt_item	: MAXIMUM NUMBER 		{
+			if ($2 <= 0) {
+				yyerror("illegal states max value %d", $2);
 				YYERROR;
 			}
-			$$.options.max_states = $3;
+			$$ = calloc(1, sizeof(struct node_state_opt));
+			if ($$ == NULL)
+				err(1, "state_opt_item: calloc");
+			$$->type = PF_STATE_OPT_MAX;
+			$$->data.max_states = $2;
+			$$->next = NULL;
+		}
+		| STRING NUMBER			{
+			int i;
+
+			for (i = 0; pf_timeouts[i].name &&
+			    strcmp(pf_timeouts[i].name, $1); ++i);
+			if (!pf_timeouts[i].name) {
+				yyerror("illegal timeout name %s", $1);
+				YYERROR;
+			}
+			if ($2 < 0) {
+				yyerror("illegal timeout value %d", $2);
+				YYERROR;
+			}
+			$$ = calloc(1, sizeof(struct node_state_opt));
+			if ($$ == NULL)
+				err(1, "state_opt_item: calloc");
+			$$->type = PF_STATE_OPT_TIMEOUT;
+			$$->data.timeout.number = pf_timeouts[i].timeout;
+			$$->data.timeout.seconds = $2;
+			$$->next = NULL;
 		}
 		;
 

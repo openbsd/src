@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.219 2002/06/07 22:53:37 pb Exp $ */
+/*	$OpenBSD: pf.c,v 1.220 2002/06/08 07:58:06 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -277,7 +277,8 @@ int			 pf_socket_lookup(uid_t *, gid_t *, int, int, int,
 	(s)->lan.addr.addr32[3] != (s)->gwy.addr.addr32[3])) || \
 	(s)->lan.port != (s)->gwy.port
 
-
+#define TIMEOUT(r,i) \
+	(((r) && (r)->timeout[(i)]) ? (r)->timeout[(i)] : *pftm_timeouts[(i)])
 
 static __inline int pf_state_compare(struct pf_tree_node *,
 			struct pf_tree_node *);
@@ -3246,7 +3247,7 @@ pf_test_tcp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		s->src.state = TCPS_SYN_SENT;
 		s->dst.state = TCPS_CLOSED;
 		s->creation = time.tv_sec;
-		s->expire = s->creation + pftm_tcp_first_packet;
+		s->expire = s->creation + TIMEOUT(*rm, PFTM_TCP_FIRST_PACKET);
 		s->packets = 1;
 		s->bytes = pd->tot_len;
 		if (pf_insert_state(s)) {
@@ -3482,7 +3483,7 @@ pf_test_udp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		s->dst.max_win = 0;
 		s->dst.state = 0;
 		s->creation = time.tv_sec;
-		s->expire = s->creation + pftm_udp_first_packet;
+		s->expire = s->creation + TIMEOUT(*rm, PFTM_UDP_FIRST_PACKET);
 		s->packets = 1;
 		s->bytes = pd->tot_len;
 		if (pf_insert_state(s)) {
@@ -3744,7 +3745,7 @@ pf_test_icmp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		s->dst.max_win = 0;
 		s->dst.state = 0;
 		s->creation = time.tv_sec;
-		s->expire = s->creation + pftm_icmp_first_packet;
+		s->expire = s->creation + TIMEOUT(*rm, PFTM_ICMP_FIRST_PACKET);
 		s->packets = 1;
 		s->bytes = pd->tot_len;
 		if (pf_insert_state(s)) {
@@ -3952,7 +3953,7 @@ pf_test_other(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		s->dst.max_win = 0;
 		s->dst.state = 0;
 		s->creation = time.tv_sec;
-		s->expire = s->creation + pftm_other_first_packet;
+		s->expire = s->creation + TIMEOUT(*rm, PFTM_OTHER_FIRST_PACKET);
 		s->packets = 1;
 		s->bytes = pd->tot_len;
 		if (pf_insert_state(s)) {
@@ -4184,18 +4185,23 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 		/* update expire time */
 		if (src->state >= TCPS_FIN_WAIT_2 &&
 		    dst->state >= TCPS_FIN_WAIT_2)
-			(*state)->expire = time.tv_sec + pftm_tcp_closed;
+			(*state)->expire = time.tv_sec +
+			    TIMEOUT((*state)->rule.ptr, PFTM_TCP_CLOSED);
 		else if (src->state >= TCPS_FIN_WAIT_2 ||
 		    dst->state >= TCPS_FIN_WAIT_2)
-			(*state)->expire = time.tv_sec + pftm_tcp_fin_wait;
+			(*state)->expire = time.tv_sec +
+			    TIMEOUT((*state)->rule.ptr, PFTM_TCP_FIN_WAIT);
 		else if (src->state >= TCPS_CLOSING ||
 		    dst->state >= TCPS_CLOSING)
-			(*state)->expire = time.tv_sec + pftm_tcp_closing;
+			(*state)->expire = time.tv_sec +
+			    TIMEOUT((*state)->rule.ptr, PFTM_TCP_CLOSING);
 		else if (src->state < TCPS_ESTABLISHED ||
 		    dst->state < TCPS_ESTABLISHED)
-			(*state)->expire = time.tv_sec + pftm_tcp_opening;
+			(*state)->expire = time.tv_sec +
+			    TIMEOUT((*state)->rule.ptr, PFTM_TCP_OPENING);
 		else
-			(*state)->expire = time.tv_sec + pftm_tcp_established;
+			(*state)->expire = time.tv_sec +
+			    TIMEOUT((*state)->rule.ptr, PFTM_TCP_ESTABLISHED);
 
 		/* Fall through to PASS packet */
 
@@ -4349,9 +4355,11 @@ pf_test_state_udp(struct pf_state **state, int direction, struct ifnet *ifp,
 
 	/* update expire time */
 	if (src->state == 2 && dst->state == 2)
-		(*state)->expire = time.tv_sec + pftm_udp_multiple;
+		(*state)->expire = time.tv_sec +
+		    TIMEOUT((*state)->rule.ptr, PFTM_UDP_MULTIPLE);
 	else
-		(*state)->expire = time.tv_sec + pftm_udp_single;
+		(*state)->expire = time.tv_sec +
+		    TIMEOUT((*state)->rule.ptr, PFTM_UDP_SINGLE);
 
 	/* translate source/destination address, if necessary */
 	if (STATE_TRANSLATE(*state)) {
@@ -4436,7 +4444,8 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 
 		(*state)->packets++;
 		(*state)->bytes += pd->tot_len;
-		(*state)->expire = time.tv_sec + pftm_icmp_error_reply;
+		(*state)->expire = time.tv_sec +
+		    TIMEOUT((*state)->rule.ptr, PFTM_ICMP_ERROR_REPLY);
 
 		/* translate source/destination address, if needed */
 		if (PF_ANEQ(&(*state)->lan.addr, &(*state)->gwy.addr, pd->af)) {
@@ -4889,9 +4898,11 @@ pf_test_state_other(struct pf_state **state, int direction, struct ifnet *ifp,
 
 	/* update expire time */
 	if (src->state == 2 && dst->state == 2)
-		(*state)->expire = time.tv_sec + pftm_other_multiple;
+		(*state)->expire = time.tv_sec +
+		    TIMEOUT((*state)->rule.ptr, PFTM_OTHER_MULTIPLE);
 	else
-		(*state)->expire = time.tv_sec + pftm_other_single;
+		(*state)->expire = time.tv_sec +
+		    TIMEOUT((*state)->rule.ptr, PFTM_OTHER_SINGLE);
 
 	/* translate source/destination address, if necessary */
 	if (STATE_TRANSLATE(*state)) {
