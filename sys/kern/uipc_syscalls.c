@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.15 1999/02/14 19:02:20 millert Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.16 1999/02/14 19:24:05 millert Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -156,11 +156,13 @@ sys_accept(p, v, retval)
 	int namelen, error, s, tmpfd;
 	register struct socket *so;
 
-	if (SCARG(uap, name) && (error = copyin((caddr_t)SCARG(uap, anamelen),
-	    (caddr_t)&namelen, sizeof (namelen))))
-		return (error);
-	if (namelen < 0)
-		return (EFAULT);
+	if (SCARG(uap, name)) {
+		if ((error = copyin((caddr_t)SCARG(uap, anamelen),
+		    (caddr_t)&namelen, sizeof (namelen))))
+			return (error);
+		if (namelen < 0)
+			return (EFAULT);
+	}
 	if ((error = getsock(p->p_fd, SCARG(uap, s), &fp)) != 0)
 		return (error);
 	s = splsoftnet();
