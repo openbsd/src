@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.52 2004/08/05 19:57:17 brad Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.53 2004/08/19 18:26:29 mcbride Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -679,7 +679,9 @@ void *ti_jalloc(sc)
 	entry = SLIST_FIRST(&sc->ti_jfree_listhead);
 
 	if (entry == NULL) {
+#ifdef TI_VERBOSE
 		printf("%s: no free jumbo buffers\n", sc->sc_dv.dv_xname);
+#endif
 		return(NULL);
 	}
 
