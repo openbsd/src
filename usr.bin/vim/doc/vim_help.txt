@@ -803,6 +803,7 @@ Short explanation of each option:		*option_list*
 				   C4350, etc.)
 |:normal|	:norm[al][!] {commands}
 				Execute Normal mode commands.
+|Q|		   Q		switch to "ex" mode.
 ------------------------------------------------------------------------------
 *X_ce*		Command-line editing
 

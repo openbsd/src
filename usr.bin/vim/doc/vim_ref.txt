@@ -442,8 +442,9 @@ Example for using a script file to change a name in several files:
 		foreach i ( *.let ) vim -s subs.vi $i
 
 If the executable is called "view", Vim will start in Readonly mode.  This is
-useful if you can make a hard or symbolic link from "view" to "vim".
-Starting in Readonly mode can also be done with "vim -v".
+useful if you can make a hard or symbolic link from "view" to "vim".  Starting
+in Readonly mode can also be done with "vim -v".  If the executable is called
+"ex", Vim will start in Ex mode rather than visual mode.
 
 
 3.2 Workbench (Amiga only)				*workbench*
@@ -2585,9 +2586,10 @@ the string "[Modified]" if the buffer has been changed.
 
 							*:ex*
 :ex [+cmd] [file]	Same as :edit.  {Vi: go from visual to Ex mode}
+			Use the |Q| command to switch to Ex mode.
 
 							*:vi* *:visual*
-:vi[sual] [+cmd] [file]	Same as :edit.  {Vi: go from Ex to visual mode}
+:vi[sual] [+cmd] [file]	Same as :edit, but also go from Ex to visual mode.
 
 							*:vie* *:view*
 :vie[w] [+cmd] file	Same as :edit, but set 'readonly' option for this
@@ -3574,7 +3576,6 @@ or change text.  The following operators are available:
 	|gU|	gU	make upper case
 	|!|	!	filter through an external program
 	|=|	=	filter through 'equalprg' or C-indenting if empty
-	|Q|	Q	text formatting (obsolete)
 	|gq|	gq	text formatting
 	|>|	>	shift right
 	|<|	<	shift left
@@ -3780,6 +3781,29 @@ or the last line.  The first two commands put the cursor in the same column
 (if possible) as it was after the last command that changed the column,
 except after the "$" command, then the cursor will be put on the last
 character of the line.
+
+							*:z*
+:{range}z[+-^.=]{count}	Display several lines of text surrounding the line
+			specified with {range}, or around the current line
+			if there is no {range}.  If there is a {count}, that's
+			how many lines you'll see; otherwise, the current
+			window size is used.
+
+			:z can be used either alone or followed by any of
+			several punctuation marks.  These have the following
+			effect:
+
+			mark   first line    last line      new location
+			----   ----------    ---------      ------------
+			+      current line  1 scr forward  1 scr forward
+			-      1 scr back    current line   current line
+			^      2 scr back    1 scr back     1 scr back
+                        .      1/2 scr back  1/2 scr fwd    1/2 src fwd
+			=      1/2 src back  1/2 scr fwd    current line
+
+			Specifying no mark at all is the same as "+".
+			If the mark is "=", a line of dashes is printed
+			around the current line.
 
 
 6.3 Word motions					*word_motions*
@@ -5175,6 +5199,18 @@ This command reads "binfile", uuencodes it and reads it into the current
 buffer.  Useful when you are editing e-mail and want to include a binary
 file.
 
+							*:a* *:append*
+:{range}a[ppend]	Insert several lines of text below the specified
+			line.  Type a line containing only "." to stop
+			inserting.  If the {range} is missing, the text
+			will be inserted after the current line.
+
+							*:i* *:insert*
+:{range}a[ppend]	Insert several lines of text above the specified
+			line.  Type a line containing only "." to stop
+			inserting.  If the {range} is missing, the text
+			will be inserted before the current line.
+
 
 10. Deleting text					*deleting*
 =================
@@ -5332,6 +5368,12 @@ on a non-blank.  This is because "cw" is interpreted as change-word, and a
 word does not include the following white space.  {Vi: "cw" when on a blank
 followed by other blanks changes only the first blank; this is probably a
 bug, because "dw" deletes all the blanks}
+
+							*:c* *:change*
+:{range}c[hange]	Replace lines of text with some different text.
+			Type a line containing only "." to stop replacing.
+			If the {range} is missing, the current line will
+			be replaced with the new text.
 
 
 11.2 Simple changes					*simple_change*
@@ -5681,19 +5723,15 @@ either the first or second pattern in parentheses did not match, so either
 :[range]le[ft] [indent]	left align lines in [range].  Sets the indent in the
 			lines to [indent] (default 0).  {not in Vi}
 
-gq{motion}						*Q* *gq*
-Q{motion}		Format the lines that were moved over.  The length of
+							*gq*
+gq{motion}		Format the lines that were moved over.  The length of
 			each line will be restricted to the width given with
 			the 'textwidth' option.  See below.  If the
 			'textwidth' option is 0, the width of the screen is
 			used (with a maximum of 79).  {not in Vi}
-			NOTE: The "Q" command is used in Vi to go to Ex mode.
-			In a future version of Vim this will be made
-			compatible.  Use "gq" for formatting now, to avoid
-			problems when upgrading to a newer version of Vim.
 
-{Visual}gq							*v_Q* *v_gq*
-{Visual}Q		Format the highlighted text.  (see the chapter on
+							*v_gq*
+{Visual}gq		Format the highlighted text.  (see the chapter on
 			Visual mode |Visual_mode|).  {not in Vi}
 
 Example: To format the current paragraph use "gqp".
@@ -5797,10 +5835,10 @@ r	Automatically insert the current comment leader after hitting
 	<return> in insert mode.
 o	Automatically insert the current comment leader after hitting 'o' or
 	'O' in Normal mode.
-q	Allow formatting of comments with "gq" (or "Q", which is obsolete).
-	Note that blank lines, or lines containing only the comment leader
-	will be left untouched.  A new paragraph starts after such a line, or
-	when the comment leader changes.
+q	Allow formatting of comments with "gq".  Note that blank lines, or
+	lines containing only the comment leader will be left untouched.  A
+	new paragraph starts after such a line, or when the comment leader
+	changes.
 2	When formatting text the indent of the second line of a paragraph is
 	used for the rest of the paragraph.  This allows for paragraphs with
 	a different indent for the first line.
@@ -6419,7 +6457,6 @@ The operators that can be used are:
 	<	shift left (1)(*)				|v_<|
 	!	filter through external command (1)		|v_!|
 	=	filter through 'equalprg' option command (1)	|v_=|
-	Q	format lines to 'textwidth' length (1)(obsolete)|v_Q|
 	gq	format lines to 'textwidth' length (1)		|v_gq|
 
 The objects that can be used are:
@@ -6621,6 +6658,15 @@ K			Run a program to lookup the keyword under the
 			CTRL-C (CTRL-break on MS-DOS).  "gs" stands for "goto
 			sleep".  While sleeping the cursor is positioned in
 			the text (if visible).  {not in Vi}
+
+							*Q*
+Q			Switch to "ex" mode.  This is just like typing ":"
+			commands one after another, except you don't have to
+			keep pressing ":" and the screen doesn't get updated
+			after each command.  Use the |:visual| command to
+			return to the normal visual editor.  Vim will enter
+			this mode by default if it's invoked as "ex" on the
+			command line.
 
 
 15. Repeating commands					*repeating*
@@ -9908,13 +9954,7 @@ are included.  However, there is no Ex mode.
 
 These commands are in Vi, but not in Vim.
 
-Q			{Vi: go to Ex mode} See |pseudo-Q|.
-
-:a[ppend]		{Vi: append text}		*:a* *:append*
-:c[hange]		{Vi: replace lines}		*:c* *:change*
-:i[nsert]		{Vi: insert text}		*:i* *:insert*
 :o[pen]			{Vi: start editing in open mode}*:o* *:open*
-:z			{Vi: print some lines}		*:z*
 
 
 21.2 Missing options					*missing_options*

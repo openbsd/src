@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmdcmds.pro,v 1.2 1996/09/21 06:23:50 downsj Exp $	*/
+/*	$OpenBSD: cmdcmds.pro,v 1.3 1996/09/22 01:18:20 downsj Exp $	*/
 /* cmdcmds.c */
 void do_ascii __PARMS((void));
 void do_align __PARMS((linenr_t start, linenr_t end, int width, int type));
@@ -14,4 +14,8 @@ void viminfo_readstring __PARMS((char_u *p));
 void viminfo_writestring __PARMS((FILE *fd, char_u *p));
 void do_fixdel __PARMS((void));
 void print_line __PARMS((linenr_t lnum, int use_number));
+void print_line_cr __PARMS((linenr_t lnum, int use_number));
 void do_file __PARMS((char_u *arg, int forceit));
+void ex_insert __PARMS((int before, linenr_t whatline));
+void ex_change __PARMS((linenr_t start, linenr_t end));
+void ex_z __PARMS((linenr_t line, char_u *arg));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.2 1996/09/21 06:23:09 downsj Exp $	*/
+/*	$OpenBSD: message.c,v 1.3 1996/09/22 01:18:03 downsj Exp $	*/
 /* vi:set ts=4 sw=4:
  *
  * VIM - Vi IMproved		by Bram Moolenaar
@@ -23,7 +23,7 @@
 static void msg_screen_outchar __ARGS((int c));
 static int msg_check_screen __ARGS((void));
 
-static int	lines_left = -1;			/* lines left for listing */
+/* lines_left moved to globals so do_exmode could see it */
 
 /*
  * msg(s) - displays the string 's' on the status line
@@ -243,6 +243,12 @@ wait_return(redraw)
 	{
 		c = CR;						/* just pretend CR was hit */
 		quit_more = FALSE;
+		got_int = FALSE;
+	}
+	else if (exmode_active)
+	{
+		MSG_OUTSTR(" ");    /* make sure the cursor is on the right line */
+		c = CR;                     /* no need for a return in ex mode */
 		got_int = FALSE;
 	}
 	else
@@ -546,6 +552,16 @@ msg_prt_line(s)
 	int             n_spaces = 0;
 	char_u			*p = NULL;			/* init to make SASC shut up */
 	int 			n;
+
+	/*
+	 * if it's a blank line, echo a space, because otherwise if we're
+	 * in ex mode, the : for the next command will end up on the wrong
+	 * line.  I don't know why -- hooray for cargo cult programming!
+	 */
+
+	if (*s == 0) {
+		msg_outchar(' ');
+	}
 
 	for (;;)
 	{

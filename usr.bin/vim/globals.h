@@ -1,4 +1,4 @@
-/*	$OpenBSD: globals.h,v 1.2 1996/09/21 06:23:00 downsj Exp $	*/
+/*	$OpenBSD: globals.h,v 1.3 1996/09/22 01:18:02 downsj Exp $	*/
 /* vi:set ts=4 sw=4:
  *
  * VIM - Vi IMproved		by Bram Moolenaar
@@ -382,6 +382,20 @@ extern char_u *all_cflags;			/* this is in pathdef.c */
 #endif
 
 EXTERN char_u no_lines_msg[]		INIT(="--No lines in buffer--");
+
+/*
+ * ex mode (Q) state
+ */
+
+EXTERN int exmode_active INIT(= FALSE);
+EXTERN int ex_no_reprint INIT(= FALSE); /* no need to print after z or p */
+
+/* 
+ * message.c: lines left before a "more" message.  Ex mode needs to
+ * be able to reset this after you type something.
+ */
+
+EXTERN int lines_left INIT(= -1);		/* lines left for listing */
 
 /*
  * The error messages that can be shared are included here.

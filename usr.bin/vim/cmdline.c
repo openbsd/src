@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmdline.c,v 1.3 1996/09/21 23:23:28 downsj Exp $	*/
+/*	$OpenBSD: cmdline.c,v 1.4 1996/09/22 01:18:00 downsj Exp $	*/
 /* vi:set ts=4 sw=4:
  *
  * VIM - Vi IMproved		by Bram Moolenaar
@@ -272,6 +272,7 @@ getcmdline(firstc, count)
 #endif
 	gotocmdline(TRUE);
 	msg_outchar(firstc);
+
 	/*
 	 * Avoid scrolling when called by a recursive do_cmdline(), e.g. when doing
 	 * ":@0" when register 0 doesn't contain a CR.
@@ -999,6 +1000,47 @@ ccheck_abbr(c)
 }
 
 /*
+ * do_exmode(): repeatedly get ex commands for the Q command, until we
+ * return to visual mode.
+ */
+
+static int ex_pressedreturn = FALSE;
+
+void
+do_exmode()
+{
+	int save_msg_scroll;
+
+	save_msg_scroll = msg_scroll;
+	++RedrawingDisabled;
+
+	exmode_active = TRUE;
+	msg_scroll = TRUE;
+	need_wait_return = FALSE;
+
+	while (exmode_active) {
+		linenr_t oldline = curwin->w_cursor.lnum;
+
+		do_cmdline ((char_u *) 0, TRUE, TRUE);
+		lines_left = Rows - 1;
+
+		if (oldline != curwin->w_cursor.lnum && !ex_no_reprint) {
+			if (ex_pressedreturn) {
+				print_line_cr (curwin->w_cursor.lnum, FALSE);
+				ex_pressedreturn = FALSE;
+			} else {
+				print_line (curwin->w_cursor.lnum, FALSE);
+			}
+		}
+
+		ex_no_reprint = FALSE;
+	}
+
+	--RedrawingDisabled;
+	msg_scroll = save_msg_scroll;
+}
+
+/*
  * do_cmdline(): execute an Ex command line
  *
  * 1. If no line given, get one.
@@ -1185,6 +1227,13 @@ do_one_cmd(cmdlinep, cmdlinelenp, sourcing)
  */
 	for (cmd = *cmdlinep; vim_strchr((char_u *)" \t:", *cmd) != NULL; cmd++)
 		;
+
+	/* in ex mode, an empty line works like :+ */
+
+	if (*cmd == NUL && exmode_active) {
+		cmd = "+";
+		ex_pressedreturn = TRUE;
+	}
 
 	if (*cmd == '"' || *cmd == NUL)	/* ignore comment and empty lines */
 		goto doend;
@@ -2407,6 +2456,12 @@ donextfile:		if (i < 0 || i >= arg_count)
 		case CMD_ex:
 		case CMD_visual:
 		case CMD_view:
+				if (cmdidx == CMD_visual || cmdidx == CMD_view) {
+					exmode_active = FALSE;
+
+					if (*arg == NUL) break;
+				}
+
 				if ((cmdidx == CMD_new) && *arg == NUL)
 				{
 					setpcmark();
@@ -2566,6 +2621,8 @@ donextfile:		if (i < 0 || i >= arg_count)
 
 				if (cmdidx == CMD_list)
 					curwin->w_p_list = i;
+
+				ex_no_reprint = TRUE;
 
 				break;
 
@@ -3132,6 +3189,23 @@ find_pat:
 				}
 				break;
 
+		case CMD_insert:
+				ex_insert (TRUE, line2);
+				break;
+
+		case CMD_append:
+				ex_insert (FALSE, line2);
+				break;
+
+		case CMD_change:
+				ex_change (line1, line2);
+				break;
+
+		case CMD_z:
+				ex_z (line2, arg);
+				ex_no_reprint = TRUE;
+				break;
+
 		default:
 					/* Normal illegal commands have already been handled */
 				errormsg = (char_u *)"Sorry, this command is not implemented";
@@ -3538,7 +3612,15 @@ do_ecmd(fnum, fname, sfname, command, newlnum, flags)
 			beginline(MAYBE);
 		}
 		else
+		{
+			if (exmode_active)
+			{
+				curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
+				check_cursor();
+			}
+
 			beginline(TRUE);
+		}
 	}
 
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmdcmds.c,v 1.2 1996/09/21 06:22:52 downsj Exp $	*/
+/*	$OpenBSD: cmdcmds.c,v 1.3 1996/09/22 01:17:58 downsj Exp $	*/
 /* vi:set ts=4 sw=4:
  *
  * VIM - Vi IMproved		by Bram Moolenaar
@@ -1194,14 +1194,13 @@ do_fixdel()
 										 (char_u *)"\010" : (char_u *)"\177");
 }
 
-	void
-print_line(lnum, use_number)
+	static void
+print_line_no_prefix(lnum, use_number)
 	linenr_t	lnum;
 	int			use_number;
 {
 	char_u		numbuf[20];
 
-	msg_outchar('\n');
 	if (curwin->w_p_nu || use_number)
 	{
 		sprintf((char *)numbuf, "%7ld ", (long)lnum);
@@ -1211,6 +1210,24 @@ print_line(lnum, use_number)
 		stop_highlight();
 	}
 	msg_prt_line(ml_get(lnum));
+}
+
+    void
+print_line(lnum, use_number)
+	linenr_t	lnum;
+	int			use_number;
+{
+	msg_outchar('\n');
+	print_line_no_prefix (lnum, use_number);
+}
+
+    void
+print_line_cr(lnum, use_number)
+	linenr_t	lnum;
+	int			use_number;
+{
+	msg_outchar('\r');
+	print_line_no_prefix (lnum, use_number);
 }
 
 /*
@@ -1250,4 +1267,162 @@ do_file(arg, forceit)
 	}
 	/* print full filename if :cd used */
 	fileinfo(did_cd, FALSE, forceit);
+}
+
+/*
+ * do the Ex mode :insert and :append commands
+ */
+
+void
+ex_insert (int before, linenr_t whatline)
+{
+	/* put the cursor somewhere sane if we insert nothing */
+
+	if (whatline > curbuf->b_ml.ml_line_count) {
+		curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
+	} else {
+		curwin->w_cursor.lnum = whatline;
+	}
+
+	while (1) {
+		char_u *theline;
+
+		if (((theline = getcmdline (' ', 1L)) == 0) ||
+			((theline[0] == '.') && (theline[1] == 0))) {
+			break;
+		}
+
+		if (before) {
+			mark_adjust (whatline, MAXLNUM, 1, 0L);
+			ml_append (whatline - 1, theline, (colnr_t) 0, FALSE);
+			curwin->w_cursor.lnum = whatline;
+		} else {
+			mark_adjust (whatline + 1, MAXLNUM, 1, 0L);
+			ml_append (whatline, theline, (colnr_t) 0, FALSE);
+			curwin->w_cursor.lnum = whatline + 1;
+		}
+
+		vim_free (theline);
+		whatline++;
+	}
+
+	CHANGED;
+	beginline (MAYBE);
+	updateScreen (NOT_VALID);
+}
+
+/*
+ * do the Ex mode :change command
+ */
+
+void
+ex_change (linenr_t start, linenr_t end)
+{
+	while (end >= start) {
+		ml_delete (start, FALSE);
+		end--;
+	}
+
+	ex_insert (TRUE, start);
+}
+
+void
+ex_z (linenr_t line, char_u *arg)
+{
+	char_u *x;
+	int bigness = curwin->w_height - 3;
+	char_u kind;
+	int minus = 0;
+	linenr_t start, end, curs, i;
+
+	if (arg == 0) { /* is this possible?  I don't remember */
+		arg = "";
+	}
+
+	if (bigness < 1) {
+		bigness = 1;
+	}
+
+	x = arg;
+	if (*x == '-' || *x == '+' || *x == '=' || *x == '^' || *x == '.') x++;
+
+	if (*x != 0) {
+		if (!isdigit (*x)) {
+			EMSG ("non-numeric argument to :z");
+			return;
+		} else {
+			bigness = atoi (x);
+		}
+	}
+
+	kind = *arg;
+
+	switch (kind) {
+		case '-':
+			start = line - bigness;
+			end = line;
+			curs = line;
+			break;
+
+		case '=':
+			start = line - bigness / 2 + 1;
+			end = line + bigness / 2 - 1;
+			curs = line;
+			minus = 1;
+			break;
+
+		case '^':
+			start = line - bigness * 2;
+			end = line - bigness;
+			curs = line - bigness;
+			break;
+
+		case '.':
+			start = line - bigness / 2;
+			end = line + bigness / 2;
+			curs = end;
+			break;
+
+		default:  /* '+' */
+			start = line;
+			end = line + bigness;
+			curs = end;
+			break;
+	}
+
+	if (start < 1) {
+		start = 1;
+	}
+
+	if (end > curbuf->b_ml.ml_line_count) {
+		end = curbuf->b_ml.ml_line_count;
+	}
+
+	if (curs > curbuf->b_ml.ml_line_count) {
+		curs = curbuf->b_ml.ml_line_count;
+	}
+
+	for (i = start; i <= end; i++) {
+		int j;
+
+		if (minus && (i == line)) {
+			msg_outchar ('\n');
+
+			for (j = 1; j < Columns; j++) {
+				msg_outchar ('-');
+			}
+		}
+
+		print_line (i, FALSE);
+
+		if (minus && (i == line)) {
+			msg_outchar ('\n');
+
+			for (j = 1; j < Columns; j++) {
+				msg_outchar ('-');
+			}
+		}
+	}
+
+	curwin->w_cursor.lnum = curs;
 }

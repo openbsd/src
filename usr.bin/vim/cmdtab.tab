@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmdtab.tab,v 1.2 1996/09/21 06:22:55 downsj Exp $	*/
+/*	$OpenBSD: cmdtab.tab,v 1.3 1996/09/22 01:18:01 downsj Exp $	*/
 /* vi:ts=4:sw=4
  *
  * VIM - Vi IMproved
@@ -242,7 +242,7 @@ static struct
 	{(char_u *)"xit",			RANGE+BANG+FILE1+DFLALL+TRLBAR},
 	{(char_u *)"xall",			BANG+TRLBAR},
 	{(char_u *)"yank",			RANGE+REGSTR+COUNT+TRLBAR},
-	{(char_u *)"z",				RANGE+COUNT+TRLBAR},		/* not supported */
+	{(char_u *)"z",				RANGE+EXTRA+TRLBAR},		/* not supported */
 	{(char_u *)"@",				RANGE+EXTRA+TRLBAR},
 	{(char_u *)"!",				RANGE+BANG+NAMEDFS},
 	{(char_u *)"<",				RANGE+COUNT+TRLBAR},

@@ -28,6 +28,7 @@ INCOMPATIBLE CHANGES					|Incompatible_changes|
     'tildeop' and 'weirdinvert' short names changed	|short_name_changed|
     Use of "v", "V" and "CTRL-V" in Visual mode		|use_visual_cmds|
     CTRL-B in Insert mode removed			|toggle_revins|
+    Q command changed to "gq"				|Q_renamed|
 
 NEW AND IMPROVED FEATURES				|new_features|
     New on-line help system				|new_help|
@@ -49,6 +50,7 @@ NEW AND IMPROVED FEATURES				|new_features|
     Support for Windows NT and Windows 95		|new_win32|
     Support for OS/2					|new_os2|
     Support for MiNT					|new_mint|
+    Ex mode commands added				|new_ex|
     Miscellaneous					|new_misc|
 
 VI COMPATIBILITY IMPROVEMENTS				|vi_compat|
@@ -401,6 +403,13 @@ this and accidentally hit CTRL-B, it is very difficult to find out how to undo
 it.  Since hardly anybody uses this feature, it is disabled by default.  If
 you want to use it, define RIGHTLEFT in feature.h before compiling. |'revins'|
 
+Q command in normal mode renamed to "gq"		*Q_renamed*
+----------------------------------------
+
+The Q command was used in vim 3.0 to rewrap paragraphs, but in standard vi
+Q is the command to switch from "visual" mode to "ex" mode, and vim now has
+an "ex" mode.
+
 
 NEW AND IMPROVED FEATURES				*new_features*
 =========================
@@ -729,8 +738,8 @@ Moved initialization of 'shellpipe' and 'shellredir' to after other
 initializations, so that they work correctly when 'shell' option is set.
 							|'shellpipe'|
 
-Added '2' to 'formatoptions': 'Q' will keep the indent of the second line of a
-paragraph.						|'formatoptions'|
+Added '2' to 'formatoptions': 'gq' (formerly Q) will keep the indent of the
+second line of a paragraph.				|'formatoptions'|
 
 Added 'maxmapdepth' option: maximum recursiveness of mapping.
 							|'maxmapdepth'|
@@ -1024,12 +1033,20 @@ this port quite easy.  It mostly uses the Unix files and settings.
 							|vim_os2.txt|
 
 
-Support for MiNT						*new_mint*
+Support for MiNT					*new_mint*
 ----------------
 
 There is now a version of Vim for MiNT.  It was compiled with gcc under
 a Unix-like environment.
 							|vim_mint.txt|
+
+
+Ex mode commands added					*new_ex*
+----------------------
+
+Vim now works in Ex mode when invoked as "ex" or when the Q command is
+used.  The :append, :change, :insert, and :z commands now function like
+standard vi.
 
 
 Miscellaneous new features				*new_misc*
@@ -1133,22 +1150,22 @@ insert is still possible.  				|'revins'|
 Added "gq" as an alias to "Q".  The "Q" command will be changed in a following
 version of Vim, to make it Vi compatible (start Ex mode).	|gq|
 
-The "Q" operator no longer affects empty lines.  You can now format a lot of
-paragraphs without losing the separating blank lines.  Use "Qp..." to format a
-few consecutive paragraphs.				|Q|
+The "gq" operator (formerly Q) no longer affects empty lines.  You can now
+format a lot of paragraphs without losing the separating blank lines.  Use
+"gqp..." to format a few consecutive paragraphs.	|gq|
 
-Formatting with "Q" fixes up the indent of the first line (replace with
-minimal number of tabs/spaces).				|Q|
+Formatting with "gq" fixes up the indent of the first line (replace with
+minimal number of tabs/spaces).				|gq|
 
-After "Q", put cursor at first non-blank of the last formatted line.  This
+After "gq", put cursor at first non-blank of the last formatted line.  This
 makes it easier to repeat the formatting.
-Made "Q}" put the cursor on the line after the paragraph (where the "}"
+Made "gq}" put the cursor on the line after the paragraph (where the "}"
 command would have taken the cursor).  Makes it possible to use "." to format
-the next paragraph.					|Q|
+the next paragraph.					|gq|
 
-When formatting with "Q" while 'tw' and 'wm' are both zero, use a textwidth of
+When formatting with "gq" while 'tw' and 'wm' are both zero, use a textwidth of
 79, or the screen width minus one if that is smaller.  Joining all the lines
-doesn't make sense for the "Q" command.			|Q|
+doesn't make sense for the "gq" command.			|gq|
 
 Added CTRL-W CTRL-T (go to top window) and CTRL-W CTRL-B (go to bottom
 window).						|CTRL-W_CTRL-T|.

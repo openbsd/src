@@ -1,4 +1,4 @@
-/*	$OpenBSD: normal.c,v 1.2 1996/09/21 06:23:11 downsj Exp $	*/
+/*	$OpenBSD: normal.c,v 1.3 1996/09/22 01:18:06 downsj Exp $	*/
 /* vi:set ts=4 sw=4:
  *
  * VIM - Vi IMproved		by Bram Moolenaar
@@ -525,6 +525,11 @@ dozet:
 			}
 		}
 		do_cmdline(NULL, FALSE, FALSE);
+		break;
+
+	  case 'Q':
+		do_exmode();
+		updateScreen(CLEAR);
 		break;
 
 	  case K_HELP:
@@ -1590,7 +1595,6 @@ insert_command:
 	  case '<':
 	  case '!':
 	  case '=':
-	  case 'Q':					/* should start Ex mode */
 dooperator:
 		n = vim_strchr(opchars, c) - opchars + 1;
 		if (n == op_type)		/* double operator works on lines */

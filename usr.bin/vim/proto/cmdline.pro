@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmdline.pro,v 1.2 1996/09/21 06:23:50 downsj Exp $	*/
+/*	$OpenBSD: cmdline.pro,v 1.3 1996/09/22 01:18:20 downsj Exp $	*/
 /* cmdline.c */
 void add_to_history __PARMS((int histype, char_u *new_entry));
 char_u *getcmdline __PARMS((int firstc, long count));
@@ -23,3 +23,4 @@ void prepare_viminfo_history __PARMS((int len));
 int read_viminfo_history __PARMS((char_u *line, FILE *fp));
 void finish_viminfo_history __PARMS((void));
 void write_viminfo_history __PARMS((FILE *fp));
+void do_exmode __PARMS((void));

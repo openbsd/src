@@ -3,9 +3,8 @@
 This is a summary of the differences between VIM and vi. It is not complete.
 see also |vim_ref.txt|, look for comments in {}, like "{not in Vi}".
 
-Vim is mostly POSIX 1003.2-1 compliant.  The commands known to be missing
-are "Q", ":append", ":change", ":insert", ":open" and ":z".  There are
-probably a lot of small differences.
+Vim is mostly POSIX 1003.2-1 compliant.  The only command known to be missing
+is ":open".  There are probably a lot of small differences.
 
 
 THE MOST INTERESTING ADDITIONS
@@ -77,7 +76,6 @@ Visual mode.						|Visual_mode|
 		!	filter through external program
 		=	filter through indent
 		:	start ":" command for the Visual lines.
-		Q	format text to 'textwidth' columns (obsolete)
 		gq	format text to 'textwidth' columns
 		J	join lines
 		~	swap case
@@ -321,6 +319,11 @@ Support for Windows 95/NT				|new_win32|
 	runs under Windows 3.1 and MS-DOS.  It supports long file names where
 	available.
 
+Ex mode							|new_ex|
+	You now get Ex mode when you invoke vim as "ex" or use the |Q|
+	command.  The |:append|, |:insert|, |:change|, and |:z| commands
+	now function like in standard vi.
+
 Miscellaneous new features				|new_misc|
 	Implemented incremental search.
 	A whole bunch of commands that start with "g": Goto declaration, show
@@ -329,7 +332,7 @@ Miscellaneous new features				|new_misc|
 	Added the ":retab" command.  Can be used to change the size of a
 	<Tab>, replace spaces with a <Tab> or a <Tab> with spaces.
 	Implemented "Vim -r" to list any swap files that can be found.
-	The "Q" operator no longer affects empty lines.
+	The "gq" operator no longer affects empty lines.
 	Added '-' register for deletes of less than one line, see |registers|.
 	Quickfix: Support for several error formats at the same time.
 	Added separate mapping for normal mode and visual mode.
@@ -380,7 +383,6 @@ The "-o" option opens a window for each argument.  "-o4" opens four windows.
 
 In command mode:
 
-Missing command: "Q" (go to Ex mode) (but see |pseudo-Q|).
 Missing Ex commands: append, change, insert, open and z.
 
 The command characters are shown in the last line of the screen.  They are
@@ -555,6 +557,9 @@ In both Vi and Vim you can create a line break with the ":substitute" command
 by using a CTRL-M.  For Vi this means you cannot insert a real CTRL-M in the
 text.  With Vim you can put a real CTRL-M in the text by preceding it with a
 CTRL-V.
+
+The "Q" operator has been renamed to "gq" so that the "Q" command can switch
+to "ex" mode.
 
 
 In insert mode:

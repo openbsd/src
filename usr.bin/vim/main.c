@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.2 1996/09/21 06:23:05 downsj Exp $	*/
+/*	$OpenBSD: main.c,v 1.3 1996/09/22 01:18:02 downsj Exp $	*/
 /* vi:set ts=4 sw=4:
  *
  * VIM - Vi IMproved		by Bram Moolenaar
@@ -153,6 +153,7 @@ main(argc, argv)
 	int				arg_idx = 0;			/* index for arg_files[] */
 	int				check_version = FALSE;	/* check .vimrc version number */
 	int				argv_idx;				/* index in argv[n][] */
+	int             invoked_as_ex = FALSE;  /* argv[0] is "ex" */
 
 #if defined(MSDOS) || defined(WIN32) || defined(OS2)
 	static struct initmap
@@ -246,6 +247,15 @@ main(argc, argv)
 		curbuf->b_p_ro = TRUE;
 		if (p_uc)					/* if we are doing any updating.. */
 			p_uc = 10000;			/* ..don't update very often */
+	}
+
+/*
+ * If the executable is called "ex" we start in ex mode.
+ */
+
+	if (STRCMP(gettail((char_u *)argv[0]), (char_u *)"ex") == 0)
+	{
+		invoked_as_ex = TRUE;
 	}
 
 /*
@@ -863,7 +873,10 @@ main(argc, argv)
 	secure = 0;
 
 	scroll_start();
-	screenclear();						/* clear screen */
+
+	if (!invoked_as_ex) {
+		screenclear();					/* clear screen */
+	}
 
 	no_wait_return = TRUE;
 
@@ -899,6 +912,10 @@ main(argc, argv)
 #ifdef AUTOCMD
 				curwin = firstwin;			/* start again */
 #endif
+				if (invoked_as_ex) {		/* move to end of file if running as 
+ex */
+					curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
+				}
 			}
 			mch_breakcheck();
 			if (got_int)
@@ -950,7 +967,7 @@ main(argc, argv)
 			curwin->w_arg_idx = arg_idx;
 			/* edit file from arg list, if there is one */
 			(void)do_ecmd(0, arg_idx < arg_count ? arg_files[arg_idx] : NULL,
-										  NULL, NULL, (linenr_t)1, ECMD_HIDE);
+										  NULL, NULL, (linenr_t)0, ECMD_HIDE);
 			if (arg_idx == arg_count - 1)
 				arg_had_last = TRUE;
 			++arg_idx;
@@ -1045,7 +1062,7 @@ main(argc, argv)
 		 * If there is nothing in the stuff_buffer or do_redraw is TRUE,
 		 * update cursor and redraw.
 		 */
-		if (skip_redraw)			
+		if (skip_redraw || invoked_as_ex)			
 			skip_redraw = FALSE;
 		else if (do_redraw || stuff_empty())
 		{
@@ -1086,6 +1103,23 @@ main(argc, argv)
 
 			setcursor();
 			cursor_on();
+		}
+
+		/* 
+		 * if we're invoked as ex, do a round of ex commands before
+		 * going on to normal mode
+		 */
+
+		if (invoked_as_ex) {
+			do_exmode();
+
+			cursupdate();
+			updateScreen(TRUE);
+			showmode();
+			setcursor();
+			cursor_on();
+
+			invoked_as_ex = FALSE;
 		}
 
 		/*

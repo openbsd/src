@@ -1202,6 +1202,7 @@ N<Del>	vim_ref.txt	/\*N<Del>\*
 O	vim_ref.txt	/\*O\*
 P	vim_ref.txt	/\*P\*
 Q	vim_ref.txt	/\*Q\*
+Q_renamed	vim_40.txt	/\*Q_renamed\*
 R	vim_ref.txt	/\*R\*
 S	vim_ref.txt	/\*S\*
 SHELL	vim_ref.txt	/\*SHELL\*
@@ -1650,6 +1651,7 @@ new_autocmd	vim_40.txt	/\*new_autocmd\*
 new_cindent	vim_40.txt	/\*new_cindent\*
 new_commandline	vim_40.txt	/\*new_commandline\*
 new_complete	vim_40.txt	/\*new_complete\*
+new_ex	vim_40.txt	/\*new_ex\*
 new_features	vim_40.txt	/\*new_features\*
 new_gui	vim_40.txt	/\*new_gui\*
 new_help	vim_40.txt	/\*new_help\*
@@ -1898,7 +1900,6 @@ v_D	vim_ref.txt	/\*v_D\*
 v_J	vim_ref.txt	/\*v_J\*
 v_K	vim_ref.txt	/\*v_K\*
 v_P	vim_ref.txt	/\*v_P\*
-v_Q	vim_ref.txt	/\*v_Q\*
 v_R	vim_ref.txt	/\*v_R\*
 v_S	vim_ref.txt	/\*v_S\*
 v_U	vim_ref.txt	/\*v_U\*

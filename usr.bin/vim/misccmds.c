@@ -1,4 +1,4 @@
-/*	$OpenBSD: misccmds.c,v 1.2 1996/09/21 06:23:10 downsj Exp $	*/
+/*	$OpenBSD: misccmds.c,v 1.3 1996/09/22 01:18:04 downsj Exp $	*/
 /* vi:set ts=4 sw=4:
  *
  * VIM - Vi IMproved		by Bram Moolenaar
@@ -1459,6 +1459,7 @@ change_warning(col)
 		MSG_OUTSTR("Warning: Changing a readonly file");
 		msg_clr_eos();
 		(void)msg_end();
+		flushbuf();
 		mch_delay(1000L, TRUE);	/* give him some time to think about it */
 		curbuf->b_did_warn = TRUE;
 	}
