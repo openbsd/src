@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.11 2003/12/26 21:51:57 henning Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.12 2003/12/26 22:41:01 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Claudio Jeker <claudio@openbsd.org>
@@ -492,9 +492,6 @@ path_updateall(struct rde_aspath *asp, enum nexthop_state state)
 {
 	RIB_STAT(path_updateall);
 
-	if (asp->state == state)
-		return;		/* no need to redo it */
-	asp->state = state;
 	prefix_updateall(asp, state);
 }
 
@@ -1022,6 +1019,7 @@ nexthop_alloc(void)
 	nh = calloc(1, sizeof(*nh));
 	if (nh == NULL)
 		fatal("nexthop_alloc");
+	LIST_INIT(&nh->path_h);
 	return nh;
 }
 
