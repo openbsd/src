@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_mroute.c,v 1.27 2002/06/29 07:58:30 deraadt Exp $	*/
+/*	$OpenBSD: ip6_mroute.c,v 1.28 2002/07/25 12:43:28 itojun Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.45 2001/03/25 08:38:51 itojun Exp $	*/
 
 /*
@@ -1487,7 +1487,7 @@ phyint_send(ip6, mifp, m)
 	 * if it would fit in the MTU of the interface.
 	 */
 	linkmtu = IN6_LINKMTU(ifp);
-	if (mb_copy->m_pkthdr.len < linkmtu || linkmtu < IPV6_MMTU) {
+	if (mb_copy->m_pkthdr.len <= linkmtu || linkmtu < IPV6_MMTU) {
 		dst6->sin6_len = sizeof(struct sockaddr_in6);
 		dst6->sin6_family = AF_INET6;
 		dst6->sin6_addr = ip6->ip6_dst;
