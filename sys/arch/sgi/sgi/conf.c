@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.5 2004/09/22 14:39:45 miod Exp $ */
+/*	$OpenBSD: conf.c,v 1.6 2004/10/08 17:52:08 mcbride Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -149,6 +149,8 @@ cdev_decl(ksyms);
 #include "pci.h"
 cdev_decl(pci);
 
+#include "inet.h"
+
 #include "pf.h"
 #include "systrace.h"
 
@@ -205,7 +207,7 @@ cdev_wsdisplay_init(NWSDISPLAY, wsdisplay),	/* 25: */
 	cdev_notdef(),			/* 44: */
 	cdev_notdef(),			/* 45: */
 	cdev_notdef(),			/* 46: */
-	cdev_notdef(),			/* 47: */
+	cdev_crypto_init(NCRYPTO,crypto),	/* 47: /dev/crypto */
 	cdev_notdef(),			/* 48: */
 	cdev_notdef(),			/* 49: */
 	cdev_systrace_init(NSYSTRACE,systrace),	/* 50: system call tracing */

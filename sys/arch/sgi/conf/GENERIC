@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.9 2004/09/16 09:14:04 mickey Exp $
+#	$OpenBSD: GENERIC,v 1.10 2004/10/08 17:52:08 mcbride Exp $
 #
 
 machine		sgi mips64
@@ -109,4 +109,8 @@ ch*		at scsibus?
 ss*		at scsibus?
 uk*		at scsibus?
 
+#### crypto devices
+hifn*		at pci?		# Hi/fn 7751 crypto card
+
 #pseudo-device	wsmux	2	# mouse & keyboard multiplexor
+pseudo-device	crypto		1
