@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.86 2001/11/04 01:27:58 pvalchev Exp $
+.\"	$OpenBSD: options.4,v 1.87 2001/11/06 03:20:34 pvalchev Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -437,6 +437,13 @@ system.
 This filesystem is still experimental and is known to be somewhat unstable.
 See
 .Xr mount_union 8
+for details.
+.It Cd option XFS
+Includes the kernel support for the AFS-compatible Arla filesystem.
+Since the xfs interface is simple and generic it can be used for other
+filesystems as well.
+See
+.Xr mount_xfs 8
 for details.
 .El
 .Ss File System Options
