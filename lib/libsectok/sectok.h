@@ -1,4 +1,4 @@
-/* $Id: sectok.h,v 1.7 2001/06/26 21:32:47 rees Exp $ */
+/* $Id: sectok.h,v 1.8 2001/06/26 23:25:12 rees Exp $ */
 
 /*
 copyright 1997, 2000
@@ -119,8 +119,11 @@ char *lookup_cmdname(int ins);
 /* Common card routines */
 void sectok_fmt_fid(char *fname, int f0, int f1);
 int sectok_selectfile(int fd, int cla, unsigned char *fid, int verbose);
+void sectok_parse_fname(char *buf, unsigned char *fid);
 
 /* Cyberflex */
+int cyberflex_create_file(int fd, int cla, unsigned char *fid, int size);
+int cyberflex_delete_file(int fd, int cla, int f0, int f1, int verbose);
 int cyberflex_load_rsa_pub(int fd, int cla, unsigned char *key_fid,
 			   int key_len, unsigned char *key_data);
 int cyberflex_load_rsa_priv(int fd, int cla, unsigned char *key_fid,

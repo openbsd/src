@@ -1,4 +1,4 @@
-/* $Id: cyberflex.c,v 1.3 2001/06/26 21:32:47 rees Exp $ */
+/* $Id: cyberflex.c,v 1.4 2001/06/26 23:25:11 rees Exp $ */
 
 /*
 copyright 2000
@@ -57,12 +57,62 @@ such damages.
 
 static unsigned char root_fid[] = {0x3f, 0x00};
 
+int cyberflex_create_file(int fd, int cla, unsigned char *fid, int size)
+{
+    int i, n, r1, r2;
+    unsigned char data[16];
+
+    size += 16;
+
+    data[0] = (size >> 16);
+    data[1] = (size & 0xff);
+    data[2] = fid[0];
+    data[3] = fid[1];
+    data[4] = 0x02;		/* file type = 2 (binary file) */
+    data[5] = 0x01;		/* status = 1 */
+    data[6] = data[7] = 0x00;	/* record related */
+    data[8] = 0xff;		/* ACL can do everything with AUT0 */
+    for (i = 9; i < 16; i++ )
+	data[i] = 0x00;		/* ACL : cannot do anything without AUT0 */
+
+    n = scwrite(fd, cla, 0xe0, 0, 0, 0x10, data, &r1, &r2);
+    if (n < 0 || (r1 != 0x90 && r1 != 0x61))
+	return -1;
+
+    sectok_selectfile(fd, cla, fid, 0);
+
+    return 0;
+}
+
+int
+cyberflex_delete_file(int fd, int cla, int f0, int f1, int verbose)
+{
+    int n, r1, r2;
+    unsigned char buf[2];
+    char fname[5];
+
+    buf[0] = f0;
+    buf[1] = f1;
+
+    n = scwrite(fd, cla, 0xe4, 0, 0, 0x02, buf, &r1, &r2);
+    if (n < 0)
+	return -1;
+    if (r1 != 0x90 && r1 != 0x61) {
+	/* error */
+	if (verbose) {
+	    sectok_fmt_fid(fname, f0, f1);
+	    printf("delete_file %s: %s\n", fname, get_r1r2s(r1, r2));
+	}
+	return -1;
+    }
+    return 0;
+}
+
 int
 cyberflex_load_rsa_pub(int fd, int cla, unsigned char *key_fid,
 		       int key_len, unsigned char *key_data)
 {
-    int rv, i, r1, r2;
-    unsigned char data[16];
+    int rv, r1, r2;
     char kfname[5];
 
     rv = sectok_selectfile(fd, cla, root_fid, 0);
@@ -73,25 +123,7 @@ cyberflex_load_rsa_pub(int fd, int cla, unsigned char *key_fid,
     rv = sectok_selectfile(fd, cla, key_fid, 0);
     if (rv < 0) {
 	printf ("public key file does not exist.  create it.\n");
-	data[0] = 0x01;
-	data[1] = 0x00;
-	data[2] = key_fid[0];
-	data[3] = key_fid[1];
-	data[4] = 0x02;		/* file type = 2 (binary file) */
-	data[5] = 0x01;		/* status = 1 */
-	data[6] = data[7] = 0x00; /* record related */
-	data[8] = 0xff;		/* ACL can do everything with AUT0 */
-	for (i = 9; i < 16; i++ ) {
-	    data[i] = 0x00;	/* ACL : cannot do anything without AUT0 */
-	}
-
-	rv = scwrite(fd, cla, 0xe0, 0, 0, 0x10, data, &r1, &r2);
-	if (r1 != 0x90 && r1 != 0x61) {
-	    /* error */
-	    printf("creating file %s: %s\n", kfname, get_r1r2s(r1, r2));
-	    return -1;
-	}
-	rv = sectok_selectfile(fd, cla, key_fid, 0);
+	cyberflex_create_file(fd, cla, key_fid, key_len);
     }
 
     /* Write the key data */
