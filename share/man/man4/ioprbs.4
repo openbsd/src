@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ioprbs.4,v 1.1 2001/07/03 23:11:28 niklas Exp $
+.\"	$OpenBSD: ioprbs.4,v 1.2 2001/07/03 23:57:51 niklas Exp $
 .\"
 .\" Copyright (c) 2000 Niklas Hallqvist.  All rights reserved.
 .\"
@@ -49,10 +49,6 @@ The
 driver first appeared in
 .Ox 3.0 .
 .Sh BUGS
-There currently is a boundary bug which sometime makes it impossible to
-fully use the last cylinder.  If you see diagnostics when building your
-filesystem, just shrink that partition a little.
-.Pp
 It is not yet possible to boot of an
 .Nm
 device.
