@@ -656,6 +656,10 @@ setpte4m(va, pte)
 /*----------------------------------------------------------------*/
 
 #ifdef SUN4
+extern int mmu_3l;
+#endif
+
+#ifdef SUN4
 #define CTX_USABLE(pm,rp)	(CPU_ISSUN4M \
 				    ? ((pm)->pm_ctx != NULL ) \
 				    : ((pm)->pm_ctx != NULL && \
@@ -3653,9 +3657,12 @@ pmap_pinit(pm)
 		TAILQ_INIT(&pm->pm_seglist);
 #ifdef SUN4
 		TAILQ_INIT(&pm->pm_reglist);
-		if (mmu_3l)
-		    for (i = NUREG; --i >= 0;)
-			pm->pm_regmap[i].rg_smeg = reginval;
+		if (mmu_3l) {
+			int i;
+
+			for (i = NUREG; --i >= 0;)
+				pm->pm_regmap[i].rg_smeg = reginval;
+		}
 #endif
 	}
 #if defined(SUN4M)
