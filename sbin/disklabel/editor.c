@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.4 1997/10/02 01:16:01 millert Exp $	*/
+/*	$OpenBSD: editor.c,v 1.5 1997/10/02 05:58:51 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.4 1997/10/02 01:16:01 millert Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.5 1997/10/02 05:58:51 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -116,8 +116,9 @@ editor(lp, f)
 			buf[0] = 'q';
 			buf[1] = '\0';
 		}
-		cmd = strtok(buf, " \t");
-		arg = strtok(NULL, " \t");
+		if ((cmd = strtok(buf, " \t\r\n")) == NULL)
+			continue;
+		arg = strtok(NULL, " \t\r\n");
 
 		switch (*cmd) {
 
@@ -199,7 +200,7 @@ editor(lp, f)
 
 		case 's':
 			if (arg == NULL) {
-				arg = getstring(lp, "Filename:",
+				arg = getstring(lp, "Filename",
 				    "Name of the file to save label into.",
 				    NULL);
 				if (*arg == '\0')
@@ -879,7 +880,7 @@ getstring(lp, prompt, helpstring, oval)
 		rewind(stdin);
 		if (fgets(buf, sizeof(buf), stdin) == NULL) {
 			putchar('\n');
-			buf[0] == '\0';
+			buf[0] = '\0';
 		}
 		n = strlen(buf);
 		if (n > 0 && buf[n-1] == '\n')
@@ -991,6 +992,7 @@ getuint(lp, partno, prompt, helpstring, oval, maxval, flags)
 	}
 	if ((flags & DO_ROUNDING) && rval < UINT_MAX) {
 		u_int32_t cyls;
+		/* XXX - should use maxsize and round down if too big */
 #ifdef CYLCHECK
 		/* Always round to nearest cylinder, regardless of units */
 		cyls = (u_int32_t)((rval / (double)lp->d_secpercyl) + 0.5);
@@ -1000,7 +1002,6 @@ getuint(lp, partno, prompt, helpstring, oval, maxval, flags)
 		}
 #else
 		/* Round to nearest cylinder unless given in blocks */
-		/* XXX - only round BSD partitions! */
 		if (mult > 1) {
 			cyls = (u_int32_t)((rval / (double)lp->d_secpercyl)
 			    + 0.5);
