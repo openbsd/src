@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcivar.h,v 1.17 2000/03/26 22:38:22 mickey Exp $	*/
+/*	$OpenBSD: pcivar.h,v 1.18 2000/06/09 16:09:09 chris Exp $	*/
 /*	$NetBSD: pcivar.h,v 1.23 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -162,10 +162,7 @@ struct pci_quirkdata {
  * Configuration space access and utility functions.  (Note that most,
  * e.g. make_tag, conf_read, conf_write are declared by pci_machdep.h.)
  */
-/*
- * Configuration space access and utility functions.  (Note that most,
- * e.g. make_tag, conf_read, conf_write are declared by pci_machdep.h.)
- */
+pcireg_t pci_mapreg_type __P((pci_chipset_tag_t, pcitag_t, int));
 int	pci_mapreg_info __P((pci_chipset_tag_t, pcitag_t, int, pcireg_t,
 	    bus_addr_t *, bus_size_t *, int *));
 int	pci_mapreg_map __P((struct pci_attach_args *, int, pcireg_t, int,
