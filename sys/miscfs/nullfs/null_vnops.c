@@ -1,4 +1,4 @@
-/*	$OpenBSD: null_vnops.c,v 1.12 1999/01/11 05:12:27 millert Exp $	*/
+/*	$OpenBSD: null_vnops.c,v 1.13 1999/02/08 22:25:29 art Exp $	*/
 /*	$NetBSD: null_vnops.c,v 1.7 1996/05/10 22:51:01 jtk Exp $	*/
 
 /*
@@ -200,6 +200,7 @@ int	null_lock __P((void *));
 int	null_unlock __P((void *));
 int	null_islocked __P((void *));
 int	null_lookup __P((void *));
+int	null_open __P((void *));
 
 /*
  * This is the 10-Apr-92 bypass routine.
@@ -366,6 +367,24 @@ null_getattr(v)
 	return (0);
 }
 
+/*
+ * We must handle open to be able to catch MNT_NODEV and friends.
+ */
+int
+null_open(v)
+	void *v;
+{
+	struct vop_open_args *ap = v;
+	struct vnode *vp = ap->a_vp;
+	enum vtype lower_type = VTONULL(vp)->null_lowervp->v_type;
+
+
+	if (((lower_type == VBLK) || (lower_type == VCHR)) &&
+	    (vp->v_mount->mnt_flag & MNT_NODEV))
+		return ENXIO;
+
+	return null_bypass(ap);
+}
 
 int
 null_inactive(v)
@@ -604,10 +623,12 @@ struct vnodeopv_entry_desc null_vnodeop_entries[] = {
 	{ &vop_reclaim_desc,	null_reclaim },
 	{ &vop_print_desc,	null_print },
 
+	{ &vop_open_desc,	null_open },	/* mount option handling */
+
 	{ &vop_lock_desc,	null_lock },
 	{ &vop_unlock_desc,	null_unlock },
 	{ &vop_islocked_desc,	null_islocked },
-	{ &vop_lookup_desc,	null_lookup }, /* special locking frob */
+	{ &vop_lookup_desc,	null_lookup },	/* special locking frob */
 
 	{ &vop_strategy_desc,	null_strategy },
 	{ &vop_bwrite_desc,	null_bwrite },
