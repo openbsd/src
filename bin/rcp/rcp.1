@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcp.1,v 1.15 2003/07/25 09:49:02 jmc Exp $
+.\"	$OpenBSD: rcp.1,v 1.16 2003/07/25 09:52:48 jmc Exp $
 .\"	$NetBSD: rcp.1,v 1.6 1995/07/25 19:37:25 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
@@ -38,10 +38,10 @@
 .Nd remote file copy
 .Sh SYNOPSIS
 .Nm rcp
-.Op Fl px
+.Op Fl p
 .Ar file1 file2
 .Nm rcp
-.Op Fl prx
+.Op Fl pr
 .Ar file ...
 .Ar directory
 .Sh DESCRIPTION
@@ -84,15 +84,6 @@ If any of the source files are directories,
 .Nm
 copies each subtree rooted at that name; in this case
 the destination must be a directory.
-.It Fl x
-Turns on
-.Tn DES
-encryption for all data passed by
-.Nm rcp .
-This may impact response time and
-.Tn CPU
-utilization, but provides
-increased security.
 .El
 .Pp
 If
