@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.71 2002/09/11 03:27:30 itojun Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.72 2002/09/23 23:03:31 itojun Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -1051,7 +1051,7 @@ ip6_insert_jumboopt(exthdrs, plen)
 			mopt->m_len += JUMBOOPTLEN;
 		}
 		optbuf[0] = IP6OPT_PADN;
-		optbuf[1] = 1;
+		optbuf[1] = 0;
 
 		/*
 		 * Adjust the header length according to the pad and
