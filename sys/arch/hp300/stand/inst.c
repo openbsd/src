@@ -1,4 +1,4 @@
-/*	$OpenBSD: inst.c,v 1.4 1997/03/21 07:16:20 downsj Exp $	*/
+/*	$OpenBSD: inst.c,v 1.5 1997/04/16 12:38:22 downsj Exp $	*/
 /*	$NetBSD: inst.c,v 1.6 1996/12/21 21:23:43 thorpej Exp $	*/
 
 /*
@@ -72,6 +72,8 @@ extern	char *lowram;
 extern	int noconsole;
 extern	int netio_ask;
 
+extern	const char version[];
+
 char	*kernel_name = "/bsd";
 
 void	dsklabel __P((void));
@@ -108,9 +110,8 @@ main()
 	 */
 	netio_ask = 1;
 
-	printf("\n>> OpenBSD [%dKB] MINIROOT INSTALLATION HP9000/%s CPU\n",
-	       (__LDPGSZ / 1024), getmachineid());
-	printf(">> $OpenBSD: inst.c,v 1.4 1997/03/21 07:16:20 downsj Exp $\n");
+	printf("\n>> OpenBSD [%dKB] MINIROOT INSTALLATION %s HP9000/%s CPU\n",
+	       (__LDPGSZ / 1024), version, getmachineid());
 	gethelp();
 
 	for (;;) {

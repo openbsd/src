@@ -1,4 +1,4 @@
-/*	$OpenBSD: uboot.c,v 1.6 1997/03/21 07:16:22 downsj Exp $	*/
+/*	$OpenBSD: uboot.c,v 1.7 1997/04/16 12:38:23 downsj Exp $	*/
 /*	$NetBSD: uboot.c,v 1.2 1996/10/14 07:33:45 thorpej Exp $	*/
 
 /*-
@@ -55,6 +55,8 @@ extern	u_int opendev;
 extern	char *lowram;
 extern	int noconsole;
 
+extern	const char version[];
+
 /*
  * XXX UFS accepts a /, NFS doesn't.
  */
@@ -70,9 +72,8 @@ main()
 {
 	int currname = 0;
 
-	printf("\n>> OpenBSD [%dKB] UNIFIED BOOT HP9000/%s CPU\n",
-	       (__LDPGSZ / 1024), getmachineid());
-	printf(">> $OpenBSD: uboot.c,v 1.6 1997/03/21 07:16:22 downsj Exp $\n");
+	printf("\n>> OpenBSD [%dKB] UNIFIED BOOT %s HP9000/%s CPU\n",
+	       (__LDPGSZ / 1024), version, getmachineid());
 	printf(">> Enter \"reset\" to reset system.\n");
 
 	bdev   = B_TYPE(bootdev);

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 1997/04/16 11:56:36 downsj Exp $
+#	$OpenBSD: Makefile,v 1.9 1997/04/16 12:38:21 downsj Exp $
 #	$NetBSD: Makefile,v 1.22 1996/10/18 06:03:25 thorpej Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/10/93
 
@@ -17,12 +17,11 @@ DEFS=	-DSTANDALONE -DCOMPAT_NOLABEL ${CONS} -Dhp300 # -DROMPRF
 #DEFS+=	-DLE_DEBUG
 CFLAGS=	-O3 ${INCPATH} ${DEFS}
 
-SRCS=   autoconf.c cons.c devopen.c machdep.c prf.c
+SRCS=	autoconf.c cons.c ct.c dca.c dcm.c devopen.c dnkbd.c fhpib.c \
+	hd.c hil.c hpib.c if_le.c ite.c ite_dv.c ite_gb.c ite_rb.c \
+	ite_subr.c ite_tc.c ite_hy.c kbd.c kbdconf.c kbdvar.h machdep.c \
+	nhpib.c prf.c scsi.c sd.c version.c
 OBJS=	${SRCS:N*.h:R:S/$/.o/g}
-DSRCS=	ct.c dca.c dcm.c dnkbd.c fhpib.c hd.c hil.c hpib.c if_le.c \
-	ite.c ite_dv.c ite_gb.c ite_rb.c ite_subr.c ite_tc.c ite_hy.c \
-	kbd.c kbdconf.c kbdvar.h nhpib.c scsi.c sd.c
-DOBJS=	${DSRCS:N*.h:R:S/$/.o/g}
 
 S=	${.CURDIR}/../../..
 
@@ -42,7 +41,7 @@ LIBZ=	${ZLIB}
 .include "${.CURDIR}/libsa/Makefile.inc"
 LIBSA=	${SA_LIB}
 
-LIBS=	${OBJS} libdrive.a ${LIBSA} ${LIBZ} ${LIBKERN}
+LIBS=	${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 
 BOOTS=	uboot.lif inst.lif
 BOOTAOUTS=uboot inst
@@ -51,11 +50,6 @@ ALL=	${BOOTS} mkboot installboot
 all: ${ALL}
 
 ${BOOTS}: ${LIBS}
-
-libdrive.a: ${DOBJS}
-	rm -f $@
-	${AR} cq $@ ${DOBJS}
-	${RANLIB} $@
 
 # depend on DEFS
 
@@ -101,7 +95,7 @@ installboot: ${.CURDIR}/installboot.sh
 clean::
 	rm -f *.o *.i
 	rm -f a.out ${BOOTS} ${BOOTAOUTS}
-	rm -f libdrive.a mkboot installboot
+	rm -f mkboot installboot
 
 install:
 	${INSTALL} -d -m 755 -o ${BINOWN} -g ${BINGRP} \
