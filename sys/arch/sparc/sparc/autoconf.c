@@ -1438,7 +1438,7 @@ getdisk(str, len, defpart, devp)
 #endif
 		}
 #if NFD > 0
-		if (devpart == 0)
+		if (defpart == 0)
 			printf(" fdeject");
 #endif /* NFD */
 		printf("\n");
