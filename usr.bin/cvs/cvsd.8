@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvsd.8,v 1.1.1.1 2004/07/13 22:02:40 jfb Exp $
+.\"	$OpenBSD: cvsd.8,v 1.2 2004/07/25 03:23:57 jfb Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\"
@@ -55,6 +55,9 @@ socket on which it listens for requests.
 The parent process' only purpose is to answer requests for things outside of
 the child's jail.
 .Pp
+.Nm
+provides a way to apply Access Control Lists on the modules based on
+operation, path, tags and users.
 In order to enforce ACLs and prevent users from modifying the files in the
 repository directly, all of the files within the repository should be owned
 by the user and group
@@ -97,6 +100,8 @@ as the file to bind to for the local socket.
 Be verbose.
 .Sh FILES
 .Bl -tag -width /var/run/cvsd.sock -compact
+.It Pa /etc/cvsd.conf
+Standard configuration file for the server.
 .It Pa /var/run/cvsd.pid
 Process ID of the currently running
 .Nm .
@@ -106,8 +111,8 @@ Default listening socket for incoming cvs requests.
 .Sh SEE ALSO
 .Xr cvs 1 ,
 .Xr rcs 1 ,
-.Xr rcsfile 5 ,
-.Xr cvsacl 5
+.Xr cvsd.conf 5 ,
+.Xr rcsfile 5
 .Sh HISTORY
 The
 .Nm

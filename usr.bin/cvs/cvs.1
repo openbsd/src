@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.1.1.1 2004/07/13 22:02:40 jfb Exp $
+.\"	$OpenBSD: cvs.1,v 1.2 2004/07/25 03:23:57 jfb Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" All rights reserved.
@@ -141,8 +141,15 @@ input and ".out" for the server's output.
 .Xr diff 1 ,
 .Xr patch 1 ,
 .Xr cvsd 8
+.Sh CAVEATS
+This CVS implementation does not fully conform to the GNU CVS version.
+In many cases, this was done explicitly because GNU CVS has inconsistencies
+or ambiguous behaviour.
 .Sh HISTORY
 The OpenCVS project is a BSD-licensed rewrite of the original
 Concurrent Versioning System written by Jean-Francois Brousseau.
 The original CVS code was written in large parts by Dick Grune,
 Brian Berliner and Jeff Polk.
+.Sh AUTHORS
+.An Jean-Francois Brousseau
+.An Vincent Labrecque
