@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.23 1997/06/22 22:33:53 downsj Exp $ */
+/*	$OpenBSD: machdep.c,v 1.24 1997/06/22 23:54:24 downsj Exp $ */
 /*	$NetBSD: machdep.c,v 1.64 1996/05/19 04:12:56 mrg Exp $ */
 
 /*
@@ -681,10 +681,12 @@ boot(howto)
 	(void) splhigh();		/* ??? */
 	if ((howto & RB_HALT) || (howto & RB_POWERDOWN)) {
 		doshutdownhooks();
+#if defined(SUN4M)
 		if (howto & RB_POWERDOWN) {
 			printf("attempting to power down...\n");
 			powerdown();
 		}
+#endif
 		printf("halted\n\n");
 		romhalt();
 	}
