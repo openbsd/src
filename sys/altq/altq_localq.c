@@ -1,5 +1,9 @@
-/*	$OpenBSD: altq_localq.c,v 1.2 2001/08/09 14:32:59 deraadt Exp $	*/
-/*	$KAME: altq_localq.c,v 1.3 2000/10/18 09:15:23 kjc Exp $	*/
+/*	$OpenBSD: altq_localq.c,v 1.3 2001/08/16 13:05:24 kjc Exp $	*/
+/*	$KAME: altq_localq.c,v 1.4 2001/08/16 11:28:25 kjc Exp $	*/
+/*
+ * a skeleton file for implementing a new queueing discipline.
+ * this file is in the public domain.
+ */
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
