@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.85 2003/03/04 22:18:43 deraadt Exp $
+.\" $OpenBSD: pfctl.8,v 1.86 2003/03/06 03:49:50 david Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd Nov 20, 2002
+.Dd November 20, 2002
 .Dt PFCTL 8
 .Os
 .Sh NAME
@@ -34,14 +34,14 @@
 .Nm pfctl
 .Bk -words
 .Op Fl AdehnNqrROvz
-.Op Fl a Ar anchor[:ruleset]
+.Op Fl a Ar anchor Ns Op Ar :ruleset
 .Op Fl D Ar macro=value
 .Op Fl f Ar file
 .Op Fl F Ar modifier
 .Op Fl k Ar host
 .Op Fl s Ar modifier
 .Op Fl t Ar table
-.Op Fl T Ar command [address ...]
+.Op Fl T Ar command Op Ar address ...
 .Op Fl x Ar level
 .Ek
 .Sh DESCRIPTION
@@ -100,17 +100,17 @@ Apply flags
 and
 .Fl s
 only to the rules in the specified
-.Pa anchor
+.Ar anchor
 and optional named ruleset
 .Ar ruleset .
 In addition to the main ruleset,
 .Nm
 can load and manipulate additional rulesets by name.
 Named rulesets are attached at
-.Pa anchor
+.Ar anchor
 points, which are also referenced by name.
 Evaluation of
-.Pa anchor
+.Ar anchor
 rules from the main ruleset is described in
 .Xr pf.conf 5 .
 .Bd -literal -offset indent
@@ -126,19 +126,29 @@ Other rules and options are ignored.
 .It Fl d
 Disable the packet filter.
 .It Fl D Ar macro=value
-Define macros on the command line.
-Overrides macro definition in the ruleset.
+Define
+.Ar macro
+to be set to
+.Ar value
+on the command line.
+Overrides the definition of
+.Ar macro
+in the ruleset.
 .It Fl e
 Enable the packet filter.
 .It Fl f Ar file
-Load rule file.
-This file may contain macros, tables, options, and normalization, queueing,
+Load the rules contained in
+.Ar file.
+This
+.Ar file
+may contain macros, tables, options, and normalization, queueing,
 translation, and filtering rules.
 With the exception of macros and tables, the statements must appear in that
 order.
 .It Fl F Ar modifier
-Flush one of the following.
-Modifier name may be abbreviated:
+Flush the filter parameters specified by
+.Ar modifier
+(may be abbreviated):
 .Bl -tag -width "F tables " -compact
 .It Fl F Ar nat
 Flush the NAT rules.
@@ -156,11 +166,15 @@ Flush the tables.
 Flush all of the above.
 .El
 .It Fl k Ar host
-Kill all of the state entries originating from the specified host.
+Kill all of the state entries originating from the specified
+.Ar host .
 A second
 .Fl k Ar host
 option may be specified, which will kill all the state entries
-from the first host to the second host.
+from the first
+.Ar host
+to the second
+.Ar host .
 .Bd -literal -offset indent
 Example:
 Kill all of the state entries originating from host
@@ -191,8 +205,9 @@ Other rules and options are ignored.
 Load only the options present in the rule file.
 Other rules and options are ignored.
 .It Fl s Ar modifier
-Show filter parameters.
-Modifier names may be abbreviated:
+Show the filter parameters specified by
+.Ar modifier
+(may be abbreviated):
 .Bl -tag -width "s timeouts " -compact
 .It Fl s Ar nat
 Show the currently loaded NAT rules.
@@ -208,7 +223,9 @@ will loop and show updated queue statistics every five seconds, including
 measured bandwidth and packets per second.
 .It Fl s Ar rules
 Show the currently loaded filter rules.
-When used together with -v, the per-rule statistics (number of evaluations,
+When used together with
+.Fl v ,
+the per-rule statistics (number of evaluations,
 packets and bytes) are also shown.
 Note that the 'skip step' optimization done automatically by the kernel
 will skip evaluation of rules where possible.
@@ -239,8 +256,10 @@ Show all of the above.
 .El
 .It Fl t Ar table
 Specify the name of the table.
-.It Fl T Ar command [address ...]
-Specify the command to apply to the table.
+.It Fl T Ar command Op Ar address ...
+Specify the
+.Ar command
+(may be abbreviated) to apply to the table.
 Commands include:
 .Bl -tag -width "T Replace " -compact
 .It Fl T Ar kill
@@ -459,8 +478,9 @@ A second use of
 will produce even more verbose output.
 See previous section for its effect on table commands.
 .It Fl x Ar level
-Set the debug level to one of the following.
-Level names may be abbreviated:
+Set the debug
+.Ar level
+(may be abbreviated) to one of the following:
 .Bl -tag -width "x urgent " -compact
 .It Fl x Ar none
 Don't generate debug messages.
