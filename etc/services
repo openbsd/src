@@ -1,4 +1,4 @@
-#	$OpenBSD: services,v 1.25 2001/01/18 22:38:33 angelos Exp $
+#	$OpenBSD: services,v 1.26 2001/02/08 22:36:06 angelos Exp $
 #
 # Network services, Internet style
 #
@@ -76,8 +76,8 @@ uucp-path	117/tcp
 nntp		119/tcp		readnews untp	# USENET News Transfer Protocol
 ntp		123/tcp
 ntp		123/udp				# Network Time Protocol
-loc-srv		135/tcp				# NCS local location broker
-loc-srv		135/udp
+epmap		135/tcp				# DCE endpoint resolution
+epmap		135/udp
 netbios-ns	137/tcp				# NETBIOS Name Service
 netbios-ns	137/udp
 netbios-dgm	138/tcp				# NETBIOS Datagram Service
@@ -121,6 +121,8 @@ imap3		220/tcp				# Interactive Mail Access
 imap3		220/udp				# Protocol v3
 ulistserv	372/tcp				# UNIX Listserv
 ulistserv	372/udp
+svrloc		427/tcp				# Server Location
+svrloc		427/udp
 nnsp		433/tcp		usenet		# Network News Transfer
 https		443/tcp				# secure http (SSL)
 photuris	468/tcp				# Photuris Key Management
