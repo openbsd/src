@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount.8,v 1.6 1997/06/02 12:37:49 deraadt Exp $
+.\"	$OpenBSD: mount.8,v 1.7 1998/09/05 22:44:37 art Exp $
 .\"	$NetBSD: mount.8,v 1.11 1995/07/12 06:23:21 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1989, 1991, 1993
@@ -283,7 +283,6 @@ file system table
 .Xr mount_fdesc 8 ,
 .Xr mount_ffs 8 ,
 .Xr mount_kernfs 8 ,
-.Xr mount_lfs 8 ,
 .Xr mount_mfs 8 ,
 .Xr mount_msdos 8 ,
 .Xr mount_nfs 8 ,
@@ -292,7 +291,8 @@ file system table
 .Xr mount_procfs 8 ,
 .Xr mount_umap 8 ,
 .Xr mount_union 8 ,
-.Xr umount 8
+.Xr mount_xfs 8 ,
+.Xr umount 8 .
 .Sh HISTORY
 A
 .Nm mount
