@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.19 2001/06/09 01:39:31 aaron Exp $ */
+/* $OpenBSD: wskbd.c,v 1.20 2001/06/09 01:43:51 aaron Exp $ */
 /* $NetBSD: wskbd.c,v 1.38 2000/03/23 07:01:47 thorpej Exp $ */
 
 /*
@@ -154,7 +154,6 @@ struct wskbd_softc {
 
 	int	sc_ledstate;
 
-	int	sc_ready;		/* accepting events */
 	struct wseventvar sc_events;	/* event queue state */
 
 	int	sc_isconsole;
@@ -395,7 +394,7 @@ wskbd_attach(parent, self, aux)
 
 	sc->sc_accessops = ap->accessops;
 	sc->sc_accesscookie = ap->accesscookie;
-	sc->sc_ready = 0;				/* sanity */
+	sc->sc_events.io = NULL;			/* sanity */
 	sc->sc_repeating = 0;
 	sc->sc_translating = 1;
 	sc->sc_ledstate = -1; /* force update */
@@ -621,7 +620,7 @@ wskbd_input(dev, type, value)
 	 */
 
 	/* no one to receive; punt!*/
-	if (!sc->sc_ready)
+	if (sc->sc_events.io == NULL)
 		return;
 
 #if NWSMUX > 0
@@ -742,7 +741,6 @@ wskbdopen(dev, flags, mode, p)
 	wsevent_init(&sc->sc_events);		/* may cause sleep */
 
 	sc->sc_translating = 0;
-	sc->sc_ready = 1;			/* start accepting events */
 
 	wskbd_enable(sc, 1);
 	return (0);
@@ -770,7 +768,6 @@ wskbddoclose(dv, flags, mode, p)
 		return (0);
 	}
 
-	sc->sc_ready = 0;			/* stop accepting events */
 	sc->sc_translating = 1;
 
 	wsevent_fini(&sc->sc_events);
