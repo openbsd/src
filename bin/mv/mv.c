@@ -1,4 +1,4 @@
-/*	$OpenBSD: mv.c,v 1.5 1996/12/14 12:18:05 mickey Exp $	*/
+/*	$OpenBSD: mv.c,v 1.6 1997/02/02 10:16:58 tholo Exp $	*/
 /*	$NetBSD: mv.c,v 1.9 1995/03/21 09:06:52 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mv.c	8.2 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: mv.c,v 1.5 1996/12/14 12:18:05 mickey Exp $";
+static char rcsid[] = "$OpenBSD: mv.c,v 1.6 1997/02/02 10:16:58 tholo Exp $";
 #endif
 #endif /* not lint */
 
@@ -238,7 +238,7 @@ fastcopy(from, to, sbp)
 	static u_int blen;
 	static char *bp;
 	register int nread, from_fd, to_fd;
-	int badchown = 0;
+	int badchown = 0, serrno;
 
 	if ((from_fd = open(from, O_RDONLY, 0)) < 0) {
 		warn("%s", from);
@@ -250,8 +250,10 @@ fastcopy(from, to, sbp)
 		return (1);
 	}
 
-	if (fchown(to_fd, sbp->st_uid, sbp->st_gid))
+	if (fchown(to_fd, sbp->st_uid, sbp->st_gid)) {
+		serrno = errno;
 		badchown = 1;
+	}
 	(void) fchmod(to_fd, sbp->st_mode & ~(S_ISUID|S_ISGID));
 
 	if (!blen && !(bp = malloc(blen = sbp->st_blksize))) {
@@ -274,11 +276,12 @@ err:		if (unlink(to))
 	(void)close(from_fd);
 
 	if (badchown) {
+		errno = serrno;
 		if ((sbp->st_mode & (S_ISUID|S_ISGID)))  {
 			warn("%s: set owner/group; not setting setuid/setgid",
 			    to);
 			sbp->st_mode &= ~(S_ISUID|S_ISGID);
-		} else
+		} else if (!fflg)
 			warn("%s: set owner/group", to);
 	}
 	if (fchmod(to_fd, sbp->st_mode))
