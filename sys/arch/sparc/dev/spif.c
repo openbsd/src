@@ -1,4 +1,4 @@
-/*	$OpenBSD: spif.c,v 1.6 1999/04/22 12:33:18 jason Exp $	*/
+/*	$OpenBSD: spif.c,v 1.7 2000/06/02 15:53:22 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -86,8 +86,14 @@ int	sttyread	__P((dev_t, struct uio *, int));
 int	sttywrite	__P((dev_t, struct uio *, int));
 int	sttyioctl	__P((dev_t, u_long, caddr_t, int, struct proc *));
 int	sttystop	__P((struct tty *, int));
-int	spifstcintr	__P((void *));
-int	spifsoftintr	__P((void *));
+
+int	spifstcintr		__P((void *));
+int	spifstcintr_mx		__P((struct spif_softc *, int *));
+int	spifstcintr_tx		__P((struct spif_softc *, int *));
+int	spifstcintr_rx		__P((struct spif_softc *, int *));
+int	spifstcintr_rxexception	__P((struct spif_softc *, int *));
+int	spifsoftintr		__P((void *));
+
 int	stty_param	__P((struct tty *, struct termios *));
 struct tty *sttytty	__P((dev_t));
 int	stty_modem_control __P((struct stty_port *, int, int));
@@ -195,13 +201,15 @@ spifattach(parent, self, aux)
 	while (sc->sc_regs->stc.gsvr != 0xff);
 	while (sc->sc_regs->stc.gfrcr != sc->sc_rev2);
 
-	sc->sc_regs->stc.gsvr = 0;
+	sc->sc_regs->stc.pprh = CD180_PPRH;
+	sc->sc_regs->stc.pprl = CD180_PPRL;
 	sc->sc_regs->stc.msmr = SPIF_MSMR;
 	sc->sc_regs->stc.tsmr = SPIF_TSMR;
 	sc->sc_regs->stc.rsmr = SPIF_RSMR;
-	sc->sc_regs->stc.pprh = CD180_PPRH;
-	sc->sc_regs->stc.pprl = CD180_PPRL;
-
+	sc->sc_regs->stc.gsvr = 0;
+	sc->sc_regs->stc.gscr1 = 0;
+	sc->sc_regs->stc.gscr2 = 0;
+	sc->sc_regs->stc.gscr3 = 0;
 	printf(": rev %x chiprev %x osc %sMhz stcpri %d ppcpri %d softpri %d\n",
 	    sc->sc_rev, sc->sc_rev2, clockfreq(sc->sc_osc),
 	    stcpri, ppcpri, PIL_TTY);
@@ -329,6 +337,7 @@ sttyopen(dev, flags, mode, p)
 		csc->sc_regs->stc.car = sp->sp_channel;
 		stty_write_ccr(&csc->sc_regs->stc,
 		    CD180_CCR_CMD_RESET | CD180_CCR_RESETCHAN);
+		csc->sc_regs->stc.car = sp->sp_channel;
 
 		stty_param(tp, &tp->t_termios);
 
@@ -586,25 +595,26 @@ stty_param(tp, t)
 		break;
 	}
 	sc->sc_regs->stc.cor1 = opt;
+	stty_write_ccr(&sc->sc_regs->stc, CD180_CCR_CMD_COR|CD180_CCR_CORCHG1);
 
 	opt = CD180_COR2_ETC;
 	if (ISSET(t->c_cflag, CRTSCTS))
 		opt |= CD180_COR2_CTSAE;
 	sc->sc_regs->stc.cor2 = opt;
+	stty_write_ccr(&sc->sc_regs->stc, CD180_CCR_CMD_COR|CD180_CCR_CORCHG2);
 
 	sc->sc_regs->stc.cor3 = STTY_RX_FIFO_THRESHOLD;
-
-	stty_write_ccr(&sc->sc_regs->stc, CD180_CCR_CMD_COR |
-	    CD180_CCR_CORCHG1 | CD180_CCR_CORCHG2 | CD180_CCR_CORCHG3);
+	stty_write_ccr(&sc->sc_regs->stc, CD180_CCR_CMD_COR|CD180_CCR_CORCHG3);
 
 	sc->sc_regs->stc.schr1 = 0x11;
 	sc->sc_regs->stc.schr2 = 0x13;
 	sc->sc_regs->stc.schr3 = 0x11;
 	sc->sc_regs->stc.schr4 = 0x13;
-	sc->sc_regs->stc.rtpr = 0x28;
+	sc->sc_regs->stc.rtpr = 0x12;
 
 	sc->sc_regs->stc.mcor1 = CD180_MCOR1_CDZD | STTY_RX_DTR_THRESHOLD;
 	sc->sc_regs->stc.mcor2 = CD180_MCOR2_CDOD;
+	sc->sc_regs->stc.mcr = 0;
 
 	if (t->c_ospeed) {
 		sc->sc_regs->stc.tbprh = tbprh;
@@ -712,48 +722,51 @@ stty_start(tp)
 }
 
 int
-spifstcintr(vsc)
-	void *vsc;
+spifstcintr_rxexception(sc, needsoftp)
+	struct spif_softc *sc;
+	int *needsoftp;
 {
-	struct spif_softc *sc = (struct spif_softc *)vsc;
 	struct stty_port *sp;
-	u_int8_t channel, ar, *ptr;
-	int needsoft = 0, r = 0, i;
+	u_int8_t channel, *ptr;
+	int cnt;
 
-	/*
-	 * Receive data service request
-	 * (also Receive error service request)
-	 */
-	ar = sc->sc_regs->istc.rrar & CD180_GSVR_IMASK;
-
-	switch (ar) {
-	case CD180_GSVR_RXGOOD:
-		r = 1;
-		channel = CD180_GSCR_CHANNEL(sc->sc_regs->stc.gscr1);
-		sp = &sc->sc_ttys->sc_port[channel];
-		ptr = sp->sp_rput;
-		for (i = sc->sc_regs->stc.rdcr; i > 0; i--) {
-			*ptr++ = 0;
-			*ptr++ = sc->sc_regs->stc.rdr;
-			if (ptr == sp->sp_rend)
-				ptr = sp->sp_rbuf;
-			if (ptr == sp->sp_rget) {
-				if (ptr == sp->sp_rbuf)
-					ptr = sp->sp_rend;
-				ptr -= 2;
-				SET(sp->sp_flags, STTYF_RING_OVERFLOW);
-				break;
-			}
-		}
+	channel = CD180_GSCR_CHANNEL(sc->sc_regs->stc.gscr1);
+	sp = &sc->sc_ttys->sc_port[channel];
+	ptr = sp->sp_rput;
+	*ptr++ = sc->sc_regs->stc.rcsr;
+	*ptr++ = sc->sc_regs->stc.rdr;
+	if (ptr == sp->sp_rend)
+		ptr = sp->sp_rbuf;
+	if (ptr == sp->sp_rget) {
+		if (ptr == sp->sp_rbuf)
+			ptr = sp->sp_rend;
+		ptr -= 2;
+		SET(sp->sp_flags, STTYF_RING_OVERFLOW);
+	}
+	sc->sc_regs->stc.eosrr = 0;
+	if (cnt) {
+		*needsoftp = 1;
 		sp->sp_rput = ptr;
-		needsoft = 1;
-		break;
-	case CD180_GSVR_RXEXCEPTION:
-		r = 1;
-		channel = CD180_GSCR_CHANNEL(sc->sc_regs->stc.gscr1);
-		sp = &sc->sc_ttys->sc_port[channel];
-		ptr = sp->sp_rput;
-		*ptr++ = sc->sc_regs->stc.rcsr;
+	}
+	return (1);
+}
+
+int
+spifstcintr_rx(sc, needsoftp)
+	struct spif_softc *sc;
+	int *needsoftp;
+{
+	struct stty_port *sp;
+	u_int8_t channel, *ptr, cnt, rcsr;
+	int i;
+
+	channel = CD180_GSCR_CHANNEL(sc->sc_regs->stc.gscr1);
+	sp = &sc->sc_ttys->sc_port[channel];
+	ptr = sp->sp_rput;
+	cnt = sc->sc_regs->stc.rdcr;
+	for (i = 0; i < cnt; i++) {
+		*ptr++ = 0;
+		rcsr = sc->sc_regs->stc.rcsr;
 		*ptr++ = sc->sc_regs->stc.rdr;
 		if (ptr == sp->sp_rend)
 			ptr = sp->sp_rbuf;
@@ -764,80 +777,114 @@ spifstcintr(vsc)
 			SET(sp->sp_flags, STTYF_RING_OVERFLOW);
 			break;
 		}
-		sp->sp_rput = ptr;
-		needsoft = 1;
-		break;
 	}
 	sc->sc_regs->stc.eosrr = 0;
+	if (cnt) {
+		*needsoftp = 1;
+		sp->sp_rput = ptr;
+	}
+	return (1);
+}
 
-	/*
-	 * Transmit service request
-	 */
-	ar = sc->sc_regs->istc.trar & CD180_GSVR_IMASK;
-	if (ar == CD180_GSVR_TXDATA) {
-		int cnt = 0;
+int
+spifstcintr_tx(sc, needsoftp)
+	struct spif_softc *sc;
+	int *needsoftp;
+{
+	struct stty_port *sp;
+	u_int8_t channel, ch;
+	int cnt = 0;
 
-		r = 1;
-		channel = CD180_GSCR_CHANNEL(sc->sc_regs->stc.gscr1);
-		sp = &sc->sc_ttys->sc_port[channel];
+	channel = CD180_GSCR_CHANNEL(sc->sc_regs->stc.gscr1);
+	sp = &sc->sc_ttys->sc_port[channel];
+	if (!ISSET(sp->sp_flags, STTYF_STOP)) {
+		if (ISSET(sp->sp_flags, STTYF_SET_BREAK)) {
+			sc->sc_regs->stc.tdr = 0;
+			sc->sc_regs->stc.tdr = 0x81;
+			CLR(sp->sp_flags, STTYF_SET_BREAK);
+			cnt += 2;
+		}
+		if (ISSET(sp->sp_flags, STTYF_CLR_BREAK)) {
+			sc->sc_regs->stc.tdr = 0;
+			sc->sc_regs->stc.tdr = 0x83;
+			CLR(sp->sp_flags, STTYF_CLR_BREAK);
+			cnt += 2;
+		}
 
-		if (!ISSET(sp->sp_flags, STTYF_STOP)) {
-			if (ISSET(sp->sp_flags, STTYF_SET_BREAK)) {
-				sc->sc_regs->stc.tdr = 0;
-				sc->sc_regs->stc.tdr = 0x81;
-				CLR(sp->sp_flags, STTYF_SET_BREAK);
-				cnt += 2;
-			}
-			if (ISSET(sp->sp_flags, STTYF_CLR_BREAK)) {
-				sc->sc_regs->stc.tdr = 0;
-				sc->sc_regs->stc.tdr = 0x83;
-				CLR(sp->sp_flags, STTYF_CLR_BREAK);
-				cnt += 2;
-			}
+		while (sp->sp_txc > 0 && cnt < (CD180_TX_FIFO_SIZE-1)) {
+			ch = *sp->sp_txp;
+			sp->sp_txc--;
+			sp->sp_txp++;
 
-			while (sp->sp_txc > 0 && cnt < (CD180_TX_FIFO_SIZE-1)) {
-				u_int8_t ch;
-
-				ch = *sp->sp_txp;
-				sp->sp_txc--;
-				sp->sp_txp++;
-
-				if (ch == 0) {
-					sc->sc_regs->stc.tdr = ch;
-					cnt++;
-				}
+			if (ch == 0) {
 				sc->sc_regs->stc.tdr = ch;
 				cnt++;
 			}
-
-			if (sp->sp_txc == 0 ||
-			    ISSET(sp->sp_flags, STTYF_STOP)) {
-				sc->sc_regs->stc.srer &= ~CD180_SRER_TXD;
-				CLR(sp->sp_flags, STTYF_STOP);
-				SET(sp->sp_flags, STTYF_DONE);
-				needsoft = 1;
-			}
+			sc->sc_regs->stc.tdr = ch;
+			cnt++;
 		}
 	}
-	sc->sc_regs->stc.eosrr = 0;
 
-	/*
-	 * Modem signal service request
-	 */
-	ar = sc->sc_regs->istc.mrar & CD180_GSVR_IMASK;
-	if (ar == CD180_GSVR_STATCHG) {
-		r = 1;
-		channel = CD180_GSCR_CHANNEL(sc->sc_regs->stc.gscr1);
-		sp = &sc->sc_ttys->sc_port[channel];
-		ar = sc->sc_regs->stc.mcr;
-		if (ar & CD180_MCR_CD) {
-			SET(sp->sp_flags, STTYF_CDCHG);
-			needsoft = 1;
-		}
-
-		sc->sc_regs->stc.mcr = 0;
+	if (sp->sp_txc == 0 ||
+	    ISSET(sp->sp_flags, STTYF_STOP)) {
+		sc->sc_regs->stc.srer &= ~CD180_SRER_TXD;
+		CLR(sp->sp_flags, STTYF_STOP);
+		SET(sp->sp_flags, STTYF_DONE);
+		*needsoftp = 1;
 	}
+
 	sc->sc_regs->stc.eosrr = 0;
+
+	return (1);
+}
+
+int
+spifstcintr_mx(sc, needsoftp)
+	struct spif_softc *sc;
+	int *needsoftp;
+{
+	struct stty_port *sp;
+	u_int8_t channel, mcr;
+
+	channel = CD180_GSCR_CHANNEL(sc->sc_regs->stc.gscr1);
+	sp = &sc->sc_ttys->sc_port[channel];
+	mcr = sc->sc_regs->stc.mcr;
+	if (mcr & CD180_MCR_CD) {
+		SET(sp->sp_flags, STTYF_CDCHG);
+		*needsoftp = 1;
+	}
+	sc->sc_regs->stc.mcr = 0;
+	sc->sc_regs->stc.eosrr = 0;
+	return (1);
+}
+
+int
+spifstcintr(vsc)
+	void *vsc;
+{
+	struct spif_softc *sc = (struct spif_softc *)vsc;
+	int needsoft = 0, r = 0, i;
+	u_int8_t ar;
+
+	for (i = 0; i < 8; i++) {
+		ar = sc->sc_regs->istc.rrar & CD180_GSVR_IMASK;
+		if (ar == CD180_GSVR_RXGOOD)
+			r |= spifstcintr_rx(sc, &needsoft);
+		else if (ar == CD180_GSVR_RXEXCEPTION)
+			r |= spifstcintr_rxexception(sc, &needsoft);
+	}
+
+	for (i = 0; i < 8; i++) {
+		ar = sc->sc_regs->istc.trar & CD180_GSVR_IMASK;
+		if (ar == CD180_GSVR_TXDATA)
+			r |= spifstcintr_tx(sc, &needsoft);
+	}
+
+	for (i = 0; i < 8; i++) {
+		ar = sc->sc_regs->istc.mrar & CD180_GSVR_IMASK;
+		if (ar == CD180_GSVR_STATCHG)
+			r |= spifstcintr_mx(sc, &needsoft);
+	}
 
 	if (needsoft) {
 #if defined(SUN4M)
@@ -872,10 +919,9 @@ spifsoftintr(vsc)
 			while (sp->sp_rget != sp->sp_rput) {
 				stat = sp->sp_rget[0];
 				data = sp->sp_rget[1];
-				if ((sp->sp_rget + 2) == sp->sp_rend)
+				sp->sp_rget += 2;
+				if (sp->sp_rget == sp->sp_rend)
 					sp->sp_rget = sp->sp_rbuf;
-				else
-					sp->sp_rget = sp->sp_rget + 2;
 
 				if (stat & (CD180_RCSR_BE | CD180_RCSR_FE))
 					data |= TTY_FE;
@@ -883,10 +929,6 @@ spifsoftintr(vsc)
 				if (stat & CD180_RCSR_PE)
 					data |= TTY_PE;
 
-				if (stat & CD180_RCSR_OE)
-					log(LOG_WARNING,
-					    "%s-%x: fifo overflow\n",
-					    stc->sc_dev.dv_xname, i);
 				(*linesw[tp->t_line].l_rint)(data, tp);
 				r = 1;
 			}
