@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp.c,v 1.51 2001/08/25 22:13:27 niklas Exp $	*/
+/*	$OpenBSD: udp.c,v 1.52 2001/10/09 14:53:05 ho Exp $	*/
 /*	$EOM: udp.c,v 1.57 2001/01/26 10:09:57 niklas Exp $	*/
 
 /*
@@ -507,7 +507,7 @@ udp_create (char *name)
   if (!u)
     {
       log_print ("udp_create: %s:%s must exist as a listener too", addr_str,
-		 udp_default_port);
+		 port_str);
       rv = 0;
       goto ret;
     }
