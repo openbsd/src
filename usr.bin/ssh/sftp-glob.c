@@ -23,7 +23,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sftp-glob.c,v 1.10 2002/02/13 00:59:23 djm Exp $");
+RCSID("$OpenBSD: sftp-glob.c,v 1.11 2002/06/30 21:59:45 deraadt Exp $");
 
 #include <glob.h>
 
@@ -53,12 +53,12 @@ fudge_opendir(const char *path)
 
 	r = xmalloc(sizeof(*r));
 
-	if (do_readdir(cur.conn, (char*)path, &r->dir))
+	if (do_readdir(cur.conn, (char *)path, &r->dir))
 		return(NULL);
 
 	r->offset = 0;
 
-	return((void*)r);
+	return((void *)r);
 }
 
 static struct dirent *
@@ -107,7 +107,7 @@ fudge_lstat(const char *path, struct stat *st)
 {
 	Attrib *a;
 
-	if (!(a = do_lstat(cur.conn, (char*)path, 0)))
+	if (!(a = do_lstat(cur.conn, (char *)path, 0)))
 		return(-1);
 
 	attrib_to_stat(a, st);
@@ -120,7 +120,7 @@ fudge_stat(const char *path, struct stat *st)
 {
 	Attrib *a;
 
-	if (!(a = do_stat(cur.conn, (char*)path, 0)))
+	if (!(a = do_stat(cur.conn, (char *)path, 0)))
 		return(-1);
 
 	attrib_to_stat(a, st);
