@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.30 1997/12/08 21:27:37 mickey Exp $
+#	$OpenBSD: MAKEDEV,v 1.31 1998/01/09 18:00:08 niklas Exp $
 #	$NetBSD: MAKEDEV,v 1.21 1996/05/19 21:03:49 veego Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -116,7 +116,7 @@ all)
 	sh MAKEDEV std fd st0 st1 ttye0 ttye1 ttye2 ttye3 ttye4 ttye5 ttye6
 	sh MAKEDEV mouse0 mouse1 tty00 ttyA0 ttyA1
 	sh MAKEDEV ttyB0 ttyB1 ttyB2 ttyB3 ttyB4 ttyB5 ttyB6 ttyB7 ttyB8 ttyB9
-	sh MAKEDEV grf0 grf1 grf2 grf3 grf4 grf5
+	sh MAKEDEV grf0 grf1 grf2 grf3 grf4 grf5 grf6
 	sh MAKEDEV kbd sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9
 	sh MAKEDEV vnd0 vnd1 vnd2 vnd3 vnd4 vnd5 vnd6 cd0 cd1 fd0 fd1 fd2 fd3
 	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
