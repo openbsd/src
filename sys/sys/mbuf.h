@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.51 2001/07/05 08:33:11 jjbg Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.52 2001/07/05 08:45:14 angelos Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -158,19 +158,10 @@ struct mbuf {
 /* KAME IPv6 */
 #define M_ANYCAST6	0x4000	/* received as IPv6 anycast */
 
-#if 0 /*KAME IPSEC*/
-#define M_AUTHIPHDR	0x0010	/* data origin authentication for IP header */
-#define M_DECRYPTED	0x0020	/* confidentiality */
-#endif
-
 #define M_LOOP		0x0040	/* for Mbuf statistics */
 
-#if 0 /*KAME IPSEC*/
-#define M_AUTHIPDGM	0x0080  /* data origin authentication */
-#endif
-
 /* flags copied when copying m_pkthdr */
-#define	M_COPYFLAGS	(M_PKTHDR|M_EOR|M_PROTO1|M_BCAST|M_MCAST|M_CONF|M_AUTH|M_ANYCAST6|M_LOOP)
+#define	M_COPYFLAGS	(M_PKTHDR|M_EOR|M_PROTO1|M_BCAST|M_MCAST|M_CONF|M_AUTH|M_COMP|M_ANYCAST6|M_LOOP)
 
 /* mbuf types */
 #define	MT_FREE		0	/* should be on free list */
