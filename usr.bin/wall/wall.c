@@ -1,4 +1,4 @@
-/*	$OpenBSD: wall.c,v 1.15 2001/09/04 23:25:56 millert Exp $	*/
+/*	$OpenBSD: wall.c,v 1.16 2001/09/06 14:21:47 deraadt Exp $	*/
 /*	$NetBSD: wall.c,v 1.6 1994/11/17 07:17:58 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)wall.c	8.2 (Berkeley) 11/16/93";
 #endif
-static const char rcsid[] = "$OpenBSD: wall.c,v 1.15 2001/09/04 23:25:56 millert Exp $";
+static const char rcsid[] = "$OpenBSD: wall.c,v 1.16 2001/09/06 14:21:47 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -79,8 +79,6 @@ void	makemsg(char *);
 void	addgroup(struct group *, char *);
 char   *ttymsg(struct iovec *, int, char *, int);
 __dead	void usage(void);
-
-#define	IGNOREUSER	"sleeper"
 
 int nobanner;
 int mbufsize;
@@ -131,8 +129,7 @@ main(int argc, char **argv)
 	iov.iov_len = mbufsize;
 	/* NOSTRICT */
 	while (fread(&utmp, sizeof(utmp), 1, fp) == 1) {
-		if (!utmp.ut_name[0] ||
-		    !strncmp(utmp.ut_name, IGNOREUSER, sizeof(utmp.ut_name)))
+		if (!utmp.ut_name[0])
 			continue;
 		if (grouplist) {
 			ingroup = 0;
