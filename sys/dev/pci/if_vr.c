@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.31 2003/02/19 14:38:22 miod Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.32 2003/10/07 12:42:07 miod Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/pci/if_vr.c,v 1.61 2003/02/01 01:27:05 silby Exp $
+ * $FreeBSD: src/sys/pci/if_vr.c,v 1.73 2003/08/22 07:13:22 imp Exp $
  */
 
 /*
@@ -723,6 +723,7 @@ vr_attach(parent, self, aux)
 	 * Map control/status registers.
 	 */
 	command = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
+	sc->vr_revid = PCI_REVISION(pa->pa_class);
 
 #ifdef VR_USEIOSPACE
 	if (!(command & PCI_COMMAND_IO_ENABLE)) {
@@ -1408,19 +1409,15 @@ vr_start(ifp)
 {
 	struct vr_softc		*sc;
 	struct mbuf		*m_head = NULL;
-	struct vr_chain		*cur_tx = NULL, *start_tx;
+	struct vr_chain		*cur_tx = NULL, *start_tx, *prev_tx;
 
 	sc = ifp->if_softc;
-
-	if (ifp->if_flags & IFF_OACTIVE)
-		return;
 
 	/*
 	 * Check for an available queue slot. If there are none,
 	 * punt.
 	 */
 	if (sc->vr_cdata.vr_tx_free->vr_mbuf != NULL) {
-		ifp->if_flags |= IFF_OACTIVE;
 		return;
 	}
 
@@ -1432,18 +1429,20 @@ vr_start(ifp)
 			break;
 
 		/* Pick a descriptor off the free list. */
+		prev_tx = cur_tx;
 		cur_tx = sc->vr_cdata.vr_tx_free;
 		sc->vr_cdata.vr_tx_free = cur_tx->vr_nextdesc;
 
 		/* Pack the data into the descriptor. */
 		if (vr_encap(sc, cur_tx, m_head)) {
+			/* Rollback, send what we were able to encap. */
 			if (ALTQ_IS_ENABLED(&ifp->if_snd)) {
 				m_freem(m_head);
 			} else {
 				IF_PREPEND(&ifp->if_snd, m_head);
-				ifp->if_flags |= IFF_OACTIVE;
 			}
-			cur_tx = NULL;
+			sc->vr_cdata.vr_tx_free = cur_tx;
+			cur_tx = prev_tx;
 			break;
 		}
 
@@ -1459,7 +1458,6 @@ vr_start(ifp)
 			bpf_mtap(ifp->if_bpf, cur_tx->vr_mbuf);
 #endif
 		VR_TXOWN(cur_tx) = VR_TXSTAT_OWN;
-		VR_SETBIT16(sc, VR_COMMAND, /*VR_CMD_TX_ON|*/VR_CMD_TX_GO);
 	}
 
 	/*
@@ -1472,6 +1470,9 @@ vr_start(ifp)
 
 	if (sc->vr_cdata.vr_tx_head == NULL)
 		sc->vr_cdata.vr_tx_head = start_tx;
+
+	/* Tell the chip to start transmitting. */
+	VR_SETBIT16(sc, VR_COMMAND, /*VR_CMD_TX_ON|*/VR_CMD_TX_GO);
 
 	/*
 	 * Set a timeout in case the chip goes out to lunch.
