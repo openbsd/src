@@ -1,3 +1,5 @@
+/*	$OpenBSD: dev_mkdb.c,v 1.5 2000/10/03 18:07:51 mickey Exp $	*/
+
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -39,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)dev_mkdb.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$Id: dev_mkdb.c,v 1.4 1999/12/05 22:06:00 deraadt Exp $";
+static char rcsid[] = "$Id: dev_mkdb.c,v 1.5 2000/10/03 18:07:51 mickey Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -74,6 +76,7 @@ main(argc, argv)
 	} bkey;
 	DB *db;
 	DBT data, key;
+	HASHINFO info;
 	int ch;
 	u_char buf[MAXNAMLEN + 1];
 	char dbtmp[MAXPATHLEN], dbname[MAXPATHLEN];
@@ -97,8 +100,10 @@ main(argc, argv)
 
 	(void)snprintf(dbtmp, sizeof(dbtmp), "%sdev.tmp", _PATH_VARRUN);
 	(void)snprintf(dbname, sizeof(dbtmp), "%sdev.db", _PATH_VARRUN);
+	bzero(&info, sizeof(info));
+	info.bsize = 8192;
 	db = dbopen(dbtmp, O_CREAT|O_EXLOCK|O_RDWR|O_TRUNC,
-	    S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH, DB_HASH, NULL);
+	    S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH, DB_HASH, &info);
 	if (db == NULL)
 		err(1, "%s", dbtmp);
 
@@ -140,7 +145,8 @@ main(argc, argv)
 	(void)(db->close)(db);
 	if (rename(dbtmp, dbname))
 		err(1, "rename %s to %s", dbtmp, dbname);
-	exit(0);
+
+	return (0);
 }
 
 void
