@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.34 2002/07/31 03:10:50 art Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.35 2003/05/13 16:38:34 millert Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -62,7 +62,10 @@ typedef u_int64_t	Elf64_Xword;
 typedef u_int32_t	Elf64_Half;
 typedef u_int16_t	Elf64_Quarter;
 
-/* e_ident[] identification indexes */
+/*
+ * e_ident[] identification indexes 
+ * See http://www.caldera.com/developers/gabi/2000-07-17/ch4.eheader.html
+ */
 #define EI_MAG0		0		/* file ID */
 #define EI_MAG1		1		/* file ID */
 #define EI_MAG2		2		/* file ID */
@@ -70,8 +73,9 @@ typedef u_int16_t	Elf64_Quarter;
 #define EI_CLASS	4		/* file class */
 #define EI_DATA		5		/* data encoding */
 #define EI_VERSION	6		/* ELF header version */
-#define EI_PAD		7		/* start of pad bytes */
-#define EI_BRAND	8		/* brand */ 
+#define EI_OSABI	7		/* OS/ABI ID */
+#define EI_ABIVERSION	8		/* ABI version */ 
+#define EI_PAD		9		/* start of pad bytes */
 #define EI_NIDENT	16		/* Size of e_ident[] */
 
 /* e_ident[] magic number */
@@ -93,6 +97,23 @@ typedef u_int16_t	Elf64_Quarter;
 #define ELFDATA2LSB	1		/* Little-Endian */
 #define ELFDATA2MSB	2		/* Big-Endian */
 #define ELFDATANUM	3		/* number of data encode defines */
+
+/* e_ident[] Operating System/ABI */
+#define ELFOSABI_SYSV		0	/* UNIX System V ABI */
+#define ELFOSABI_HPUX		1	/* HP-UX operating system */
+#define ELFOSABI_NETBSD		2	/* NetBSD */
+#define ELFOSABI_LINUX		3	/* GNU/Linux */
+#define ELFOSABI_HURD		4	/* GNU/Hurd */
+#define ELFOSABI_86OPEN		5	/* 86Open common IA32 ABI */
+#define ELFOSABI_SOLARIS	6	/* Solaris */
+#define ELFOSABI_MONTEREY	7	/* Monterey */
+#define ELFOSABI_IRIX		8	/* IRIX */
+#define ELFOSABI_FREEBSD	9	/* FreeBSD */
+#define ELFOSABI_TRU64		10	/* TRU64 UNIX */
+#define ELFOSABI_MODESTO	11	/* Novell Modesto */
+#define ELFOSABI_OPENBSD	12	/* OpenBSD */
+#define ELFOSABI_ARM		97	/* ARM */
+#define ELFOSABI_STANDALONE	255	/* Standalone (embedded) application */
 
 /* e_ident */
 #define IS_ELF(ehdr) ((ehdr).e_ident[EI_MAG0] == ELFMAG0 && \
