@@ -1,4 +1,4 @@
-/*	$OpenBSD: expand.c,v 1.8 2003/04/05 20:31:58 deraadt Exp $	*/
+/*	$OpenBSD: expand.c,v 1.9 2003/04/19 17:22:29 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -39,7 +39,7 @@ static char RCSid[] =
 "$From: expand.c,v 6.18 1998/03/24 00:37:10 michaelc Exp $";
 #else
 static char RCSid[] = 
-"$OpenBSD: expand.c,v 1.8 2003/04/05 20:31:58 deraadt Exp $";
+"$OpenBSD: expand.c,v 1.9 2003/04/19 17:22:29 millert Exp $";
 #endif
 
 static char sccsid[] = "@(#)expand.c	5.2 (Berkeley) 3/28/86";
@@ -144,7 +144,7 @@ expand(list, wh)				/* quote in list->n_name */
 	which = wh;
 	path = tpathp = pathp = pathbuf;
 	*pathp = CNULL;
-	lastpathp = &path[sizeof pathbuf - 2];
+	lastpathp = &pathbuf[sizeof pathbuf - 2];
 	tilde = "";
 	eargc = 0;
 	eargv = sortbase = argvbuf;
@@ -292,8 +292,9 @@ void expstr(s)
 			if (pw == NULL || strcmp(pw->pw_name, 
 						 (char *)ebuf+1) != 0) {
 				if ((pw = getpwnam((char *)ebuf+1)) == NULL) {
-					strcat((char *)ebuf, 
-					       ": unknown user name");
+					strlcat((char *)ebuf,
+					    ": unknown user name",
+					    sizeof(ebuf));
 					yyerror((char *)ebuf+1);
 					return;
 				}
@@ -399,7 +400,8 @@ void matchdir(pattern)				/* quote in pattern */
 			if (which & E_TILDE)
 				Cat((u_char *)path, (u_char *)dp->d_name);
 			else {
-				(void) strcpy(pathp, dp->d_name);
+				(void) strlcpy(pathp, dp->d_name,
+				    lastpathp - pathp + 2);
 				Cat((u_char *)tilde, (u_char *)tpathp);
 				*pathp = CNULL;
 			}
@@ -410,8 +412,8 @@ void matchdir(pattern)				/* quote in pattern */
 patherr1:
 	closedir(dirp);
 patherr2:
-	(void) strcat(path, ": ");
-	(void) strcat(path, SYSERR);
+	(void) strlcat(path, ": ", lastpathp - path + 2);
+	(void) strlcat(path, SYSERR, lastpathp - path + 2);
 	yyerror(path);
 }
 
@@ -478,7 +480,9 @@ pend:
 doit:
 			savec = *pm;
 			*pm = 0;
-			(void) strcpy((char *)lm, (char *)pl);
+			*lm = 0;
+			(void) strlcat((char *)restbuf, (char *)pl,
+			    sizeof restbuf);
 			(void) strlcat((char *)restbuf, (char *)pe + 1,
 			    sizeof restbuf);
 			*pm = savec;

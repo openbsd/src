@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.15 2003/04/07 21:13:52 deraadt Exp $	*/
+/*	$OpenBSD: client.c,v 1.16 2003/04/19 17:22:29 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -39,7 +39,7 @@ static char RCSid[] =
 "$From: client.c,v 6.80 1996/02/28 20:34:27 mcooper Exp $";
 #else
 static char RCSid[] = 
-"$OpenBSD: client.c,v 1.15 2003/04/07 21:13:52 deraadt Exp $";
+"$OpenBSD: client.c,v 1.16 2003/04/19 17:22:29 millert Exp $";
 #endif
 
 static char sccsid[] = "@(#)client.c";
@@ -525,8 +525,8 @@ static int rmchk(opts)
 			 * CC_NO -- file exists - DON'T remove.
 			 * CC_YES -- file doesn't exist - REMOVE.
 			 */
-			(void) sprintf(ptarget, "%s%s", 
-				       (ptarget[-1] == '/' ? "" : "/"), s);
+			snprintf(ptarget, target + sizeof(target) - ptarget,
+			    "%s%s", (ptarget[-1] == '/' ? "" : "/"), s);
 			debugmsg(DM_MISC, "check %s\n", target);
 			if (except(target))
 				(void) sendcmd(CC_NO, NULL);
@@ -1215,7 +1215,7 @@ extern int install(src, dest, ddir, destdir, opts)
 			debugmsg(DM_MISC, "%s\n", buff);
 	}
 
-	rname = exptilde(target, src);
+	rname = exptilde(target, src, sizeof(target));
 	if (rname == NULL)
 		return(-1);
 	ptarget = target;

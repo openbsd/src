@@ -1,4 +1,4 @@
-/*	$OpenBSD: docmd.c,v 1.12 2003/04/05 20:31:58 deraadt Exp $	*/
+/*	$OpenBSD: docmd.c,v 1.13 2003/04/19 17:22:29 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -39,7 +39,7 @@ static char RCSid[] =
 "$From: docmd.c,v 6.86 1996/01/30 02:29:43 mcooper Exp $";
 #else
 static char RCSid[] = 
-"$OpenBSD: docmd.c,v 1.12 2003/04/05 20:31:58 deraadt Exp $";
+"$OpenBSD: docmd.c,v 1.13 2003/04/19 17:22:29 millert Exp $";
 #endif
 
 static char sccsid[] = "@(#)docmd.c	5.1 (Berkeley) 6/6/85";
@@ -64,7 +64,7 @@ struct namelist	       *filelist;		/* list of source files */
 extern struct cmd      *cmds;			/* Initialized by yyparse() */
 time_t			lastmod;		/* Last modify time */
 
-extern char 		target[];
+extern char 		target[BUFSIZ];
 extern char 	       *ptarget;
 extern int		activechildren;
 extern int		maxchildren;
@@ -690,7 +690,7 @@ static void cmptime(name, sbcmds, env)
 	 * first time cmptime() is called?
 	 */
 	if (ptarget == NULL) {
-		if (exptilde(target, name) == NULL)
+		if (exptilde(target, name, sizeof(target)) == NULL)
 			return;
 		ptarget = name = target;
 		while (*ptarget)
@@ -721,12 +721,10 @@ static void cmptime(name, sbcmds, env)
 				       E_LOCFILE, name, sc->sc_name);
 			message(MT_CHANGE, "special \"%s\"", buf);
 			if (*env) {
-				int len = strlen(*env);
-				*env = (char *) xrealloc(*env, len +
-							 strlen(name) + 2);
-				*env[len] = CNULL;
-				(void) strcat(*env, name);
-				(void) strcat(*env, ":");
+				size_t len = strlen(*env) + strlen(name) + 2;
+				*env = (char *) xrealloc(*env, len);
+				(void) strlcat(*env, name, len);
+				(void) strlcat(*env, ":", len);
 			}
 			if (IS_ON(options, DO_VERIFY))
 				continue;
@@ -800,16 +798,13 @@ static void dodcolon(cmd, filev)
 		if (sc->sc_type == NOTIFY)
 			notify(NULL, sc->sc_args, (time_t)lastmod);
 		else if (sc->sc_type == CMDSPECIAL && env) {
-			char *p;
-			int len = strlen(env);
-
-			env = xrealloc(env, 
-				       len + strlen(sc->sc_name) + 2);
-			env[len] = CNULL;
-			if (*(p = &env[len - 1]) == ':')
-				*p = CNULL;
-			(void) strcat(env, "';");
-			(void) strcat(env, sc->sc_name);
+			size_t len = strlen(env);
+			if (env[len - 1] == ':')
+				env[--len] = CNULL;
+			len += 2 + strlen(sc->sc_name) + 1;
+			env = xrealloc(env, len);
+			(void) strlcat(env, "';", len);
+			(void) strlcat(env, sc->sc_name, len);
 			message(MT_CHANGE, "cmdspecial \"%s\"", env);
 			if (!nflag && IS_OFF(options, DO_VERIFY))
 				runcommand(env);

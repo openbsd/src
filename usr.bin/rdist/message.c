@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.12 2003/04/06 18:57:44 deraadt Exp $	*/
+/*	$OpenBSD: message.c,v 1.13 2003/04/19 17:22:29 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -39,7 +39,7 @@ static char RCSid[] =
 "$From: message.c,v 6.24 1996/07/19 17:00:35 michaelc Exp $";
 #else
 static char RCSid[] = 
-"$OpenBSD: message.c,v 1.12 2003/04/06 18:57:44 deraadt Exp $";
+"$OpenBSD: message.c,v 1.13 2003/04/19 17:22:29 millert Exp $";
 #endif
 
 static char sccsid[] = "@(#)common.c";
@@ -59,7 +59,6 @@ static char copyright[] =
 
 int			debug = 0;		/* Debugging level */
 int			nerrs = 0;		/* Number of errors */
-char		       *tempfile = NULL;	/* Name of temporary file */
 
 /*
  * Message Types
@@ -455,6 +454,8 @@ static void msgsendnotify(msgfac, mtype, flags, msgbuf)
 	int flags;
 	char *msgbuf;
 {
+	char *tempfile;
+
 	if (IS_ON(flags, MT_DEBUG))
 		return;
 
@@ -472,7 +473,7 @@ static void msgsendnotify(msgfac, mtype, flags, msgbuf)
 		 */
 		if ((cp = getenv("TMPDIR")) == NULL)
 			cp = _PATH_TMP;
-		len = strlen(cp) + 1 + strlen(_RDIST_TMP) + 2;
+		len = strlen(cp) + 1 + sizeof(_RDIST_TMP);
 		tempfile = (char *) xmalloc(len);
 		(void) snprintf(tempfile, len, "%s/%s", cp, _RDIST_TMP);
 

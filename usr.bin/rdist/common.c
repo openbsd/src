@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.17 2003/04/05 20:31:58 deraadt Exp $	*/
+/*	$OpenBSD: common.c,v 1.18 2003/04/19 17:22:29 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -39,7 +39,7 @@ static char RCSid[] =
 "$From: common.c,v 6.82 1998/03/23 23:27:33 michaelc Exp $";
 #else
 static char RCSid[] = 
-"$OpenBSD: common.c,v 1.17 2003/04/05 20:31:58 deraadt Exp $";
+"$OpenBSD: common.c,v 1.18 2003/04/19 17:22:29 millert Exp $";
 #endif
 
 static char sccsid[] = "@(#)common.c";
@@ -296,9 +296,10 @@ extern void sighandler(sig)
  * Function to actually send the command char and message to the
  * remote host.
  */
-static int sendcmdmsg(cmd, msg)
+static int sendcmdmsg(cmd, msg, msgsize)
 	char cmd;
 	char *msg;
+	size_t msgsize;
 {
 	int len;
 
@@ -309,7 +310,7 @@ static int sendcmdmsg(cmd, msg)
 	 * All commands except C_NONE should have a newline
 	 */
 	if (cmd != C_NONE && !strchr(msg + 1, '\n'))
-		(void) strcat(msg + 1, "\n");
+		(void) strlcat(msg + 1, "\n", msgsize - 1);
 
 	if (cmd == C_NONE)
 		len = strlen(msg);
@@ -342,12 +343,13 @@ extern int sendcmd(char cmd, char *fmt, ...)
 
 	va_start(args, fmt);
 	if (fmt)
-		(void) vsprintf((cmd == C_NONE) ? buf : buf + 1, fmt, args);
+		(void) vsnprintf(buf + (cmd != C_NONE),
+		    sizeof(buf) - (cmd != C_NONE), fmt, args);
 	else
 		buf[1] = CNULL;
 	va_end(args);
 
-	return(sendcmdmsg(cmd, buf));
+	return(sendcmdmsg(cmd, buf, sizeof(buf)));
 }
 #endif	/* ARG_TYPE == ARG_STDARG */
 
@@ -368,12 +370,13 @@ extern int sendcmd(va_alist)
 	cmd = (char) va_arg(args, int);
 	fmt = va_arg(args, char *);
 	if (fmt)
-		(void) vsprintf((cmd == C_NONE) ? buf : buf + 1, fmt, args);
+		(void) vsnprintf(buf + (cmd != C_NONE),
+		    sizeof(buf) - (cmd != C_NONE), fmt, args);
 	else
 		buf[1] = CNULL;
 	va_end(args);
 
-	return(sendcmdmsg(cmd, buf));
+	return(sendcmdmsg(cmd, buf, sizeof(buf)));
 }
 #endif	/* ARG_TYPE == ARG_VARARGS */
 
@@ -389,12 +392,13 @@ extern int sendcmd(cmd, fmt, a1, a2, a3, a4, a5, a6, a7, a8)
 	static char buf[BUFSIZ];
 
 	if (fmt)
-		(void) sprintf((cmd == C_NONE) ? buf : buf + 1, 
-			       fmt, a1, a2, a3, a4, a5, a6, a7, a8);
+		(void) snprintf(buf + (cmd != C_NONE),
+		    sizeof(buf) - (cmd != C_NONE),
+		    fmt, a1, a2, a3, a4, a5, a6, a7, a8);
 	else
 		buf[1] = CNULL;
 
-	return(sendcmdmsg(cmd, buf));
+	return(sendcmdmsg(cmd, buf, sizeof(buf)));
 }
 #endif	/* !ARG_TYPE */
 
@@ -668,52 +672,55 @@ extern int response()
  * user's home directory path name. Return a pointer in buf to the
  * part corresponding to `file'.
  */
-extern char *exptilde(ebuf, file)
+extern char *exptilde(ebuf, file, ebufsize)
 	char *ebuf;
+	size_t ebufsize;
 	char *file;
 {
-	char *s1, *s2, *s3;
+	char *pw_dir, *rest;
+	size_t len;
 	extern char *homedir;
 
 	if (*file != '~') {
-		(void) strcpy(ebuf, file);
+notilde:
+		(void) strlcpy(ebuf, file, ebufsize);
 		return(ebuf);
 	}
 	if (*++file == CNULL) {
-		s2 = homedir;
-		s3 = NULL;
+		pw_dir = homedir;
+		rest = NULL;
 	} else if (*file == '/') {
-		s2 = homedir;
-		s3 = file;
+		pw_dir = homedir;
+		rest = file;
 	} else {
-		s3 = file;
-		while (*s3 && *s3 != '/')
-			s3++;
-		if (*s3 == '/')
-			*s3 = CNULL;
+		rest = file;
+		while (*rest && *rest != '/')
+			rest++;
+		if (*rest == '/')
+			*rest = CNULL;
 		else
-			s3 = NULL;
+			rest = NULL;
 		if (pw == NULL || strcmp(pw->pw_name, file) != 0) {
 			if ((pw = getpwnam(file)) == NULL) {
 				error("%s: unknown user name", file);
-				if (s3 != NULL)
-					*s3 = '/';
+				if (rest != NULL)
+					*rest = '/';
 				return(NULL);
 			}
 		}
-		if (s3 != NULL)
-			*s3 = '/';
-		s2 = pw->pw_dir;
+		if (rest != NULL)
+			*rest = '/';
+		pw_dir = pw->pw_dir;
 	}
-	for (s1 = ebuf; (*s1++ = *s2++); )
-		;
-	s2 = --s1;
-	if (s3 != NULL) {
-		s2++;
-		while ((*s1++ = *s3++))
-			;
+	if ((len = strlcpy(ebuf, pw_dir, ebufsize)) >= ebufsize)
+		goto notilde;
+	pw_dir = ebuf + len;
+	if (rest != NULL) {
+		pw_dir++;
+		if ((len = strlcat(ebuf, rest, ebufsize)) >= ebufsize)
+			goto notilde;
 	}
-	return(s2);
+	return(pw_dir);
 }
 
 #if	defined(DIRECT_RCMD)

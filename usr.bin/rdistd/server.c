@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.12 2003/04/10 22:42:29 millert Exp $	*/
+/*	$OpenBSD: server.c,v 1.13 2003/04/19 17:22:30 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -38,7 +38,7 @@ static char RCSid[] =
 "$From: server.c,v 6.85 1996/03/12 22:55:38 mcooper Exp $";
 #else
 static char RCSid[] = 
-"$OpenBSD: server.c,v 1.12 2003/04/10 22:42:29 millert Exp $";
+"$OpenBSD: server.c,v 1.13 2003/04/19 17:22:30 millert Exp $";
 #endif
 
 static char sccsid[] = "@(#)server.c	5.3 (Berkeley) 6/7/86";
@@ -80,7 +80,8 @@ static int cattarget(string)
 		return(-10);
 	}
 
-	(void) sprintf(ptarget, "/%s", string);
+	(void) snprintf(ptarget, target + sizeof(target) - ptarget,
+	    "/%s", string);
 
 	return(0);
 }
@@ -511,7 +512,7 @@ static void docmdspecial()
 	char *cp;
 	char *cmd, *env = NULL;
 	int n;
-	int len;
+	size_t len;
 
 	/* We're ready */
 	ack();
@@ -531,24 +532,20 @@ static void docmdspecial()
 				(void) snprintf(env, len, "export %s;%s=%s", 
 					       E_FILES, E_FILES, cp);
 			} else {
-				len = strlen(env);
-				env = (char *) xrealloc(env, 
-				    len + strlen(cp) + 2);
-				env[len] = CNULL;
-				(void) strcat(env, ":");
-				(void) strcat(env, cp);
+				len = strlen(env) + 1 + strlen(cp) + 1;
+				env = (char *) xrealloc(env, len);
+				(void) strlcat(env, ":", len);
+				(void) strlcat(env, cp, len);
 			}
 			ack();
 			break;
 
 		case RC_COMMAND:
 			if (env) {
-				len = strlen(env);
-				env = (char *) xrealloc(env, 
-							len + strlen(cp) + 2);
-				env[len] = CNULL;
-				(void) strcat(env, ";");
-				(void) strcat(env, cp);
+				len = strlen(env) + 1 + strlen(cp) + 1;
+				env = (char *) xrealloc(env, len);
+				(void) strlcat(env, ";", len);
+				(void) strlcat(env, cp, len);
 				cmd = env;
 			} else
 				cmd = cp;
@@ -1261,7 +1258,7 @@ static void hardlink(cmd)
 		return;
 	}
 
-	if (exptilde(expbuf, oldname) == NULL) {
+	if (exptilde(expbuf, oldname, sizeof(expbuf)) == NULL) {
 		error("hardlink: tilde expansion failed");
 		return;
 	}
@@ -1562,7 +1559,7 @@ static void settarget(cmd, isdir)
 	/*
 	 * Handle target
 	 */
-	if (exptilde(target, cp) == NULL)
+	if (exptilde(target, cp, sizeof(target)) == NULL)
 		return;
 	ptarget = target;
 	while (*ptarget)
