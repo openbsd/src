@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.134 2004/02/18 13:39:02 xsa Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.135 2004/05/16 23:14:55 pvalchev Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -1007,6 +1007,10 @@ If USE_LIBTOOL is set, the environment variable LIBTOOL is set
 to ${LIBTOOL} ${LIBTOOL_FLAGS}.
 .It Ev LOCALBASE
 where other ports have already been installed (default: /usr/local)
+.It Ev LP64_ARCHS
+Set to the list of 64-bit architectures.
+Use with
+.Ev NOT_FOR_ARCHS .
 .It Ev MAINTAINER
 E-mail address with full name of the port's maintainer.
 Defaults to ports@openbsd.org.
