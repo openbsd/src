@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: security,v 1.31 1998/11/22 22:15:42 deraadt Exp $
+#	$OpenBSD: security,v 1.32 1999/06/19 17:14:31 espie Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -32,11 +32,11 @@ awk -F: '{
 		next;
 	}
 	if (NF != 10)
-		printf("Line %d has the wrong number of fields.\n", NR);
+		printf("Line %d has the wrong number of fields:\n%s\n", NR, $0);
 	if ($1 ~ /^[+-]/)
 		next;
 	if ($1 == "")
-		printf("Line %d has an empty login field.\n", NR);
+		printf("Line %d has an empty login field:\n%s\n", NR, $0);
 	else if ($1 !~ /^[A-Za-z0-9][A-Za-z0-9_-]*$/)
 		printf("Login %s has non-alphanumeric characters.\n", $1);
 	if (length($1) > 8)
@@ -111,7 +111,7 @@ awk -F: '{
 	if ($1 ~ /^[+-].*$/)
 		next;
 	if (NF != 4)
-		printf("Line %d has the wrong number of fields.\n", NR);
+		printf("Line %d has the wrong number of fields:\n%s\n", NR, $0);
 	if ($1 !~ /^[A-za-z0-9][A-za-z0-9_-]*$/)
 		printf("Group %s has non-alphanumeric characters.\n", $1);
 	if (length($1) > 8)
