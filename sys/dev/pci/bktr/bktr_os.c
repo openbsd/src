@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_os.c,v 1.14 2003/01/05 01:24:53 mickey Exp $	*/
+/*	$OpenBSD: bktr_os.c,v 1.15 2003/01/15 06:30:35 art Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.20 2000/10/20 08:16:53 roger Exp $ */
 
 /*
@@ -1310,12 +1310,12 @@ int	bktr_ioctl(dev_t, ioctl_cmd_t, caddr_t, int, struct proc *);
 paddr_t	bktr_mmap(dev_t, off_t, int);
 #endif
 
-vm_offset_t vm_page_alloc_contig(vm_offset_t, vm_offset_t,
-                                 vm_offset_t, vm_offset_t);
-
 #if defined(__OpenBSD__)
 static int      bktr_probe(struct device *, void *, void *);
 #else
+vm_offset_t vm_page_alloc_contig(vm_offset_t, vm_offset_t,
+                                 vm_offset_t, vm_offset_t);
+
 static int      bktr_probe(struct device *, struct cfdata *, void *);
 #endif
 static void     bktr_attach(struct device *, struct device *, void *);
@@ -1490,7 +1490,7 @@ bktr_attach(struct device *parent, struct device *self, void *aux)
 /*
  * Special Memory Allocation
  */
-vm_offset_t
+vaddr_t
 get_bktr_mem(bktr, dmapp, size)
         bktr_ptr_t bktr;
         bus_dmamap_t *dmapp;
@@ -1541,14 +1541,14 @@ get_bktr_mem(bktr, dmapp, size)
                 bus_dmamap_destroy(dmat, *dmapp);
                 return 0;
         }
-        return (vm_offset_t)kva;
+        return (vaddr_t)kva;
 }
 
 void
 free_bktr_mem(bktr, dmap, kva)
         bktr_ptr_t bktr;
         bus_dmamap_t dmap;
-        vm_offset_t kva;
+        vaddr_t kva;
 {
         bus_dma_tag_t dmat = bktr->dmat;
 

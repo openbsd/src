@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_core.c,v 1.7 2003/01/05 02:05:58 mickey Exp $	*/
+/*	$OpenBSD: bktr_core.c,v 1.8 2003/01/15 06:30:35 art Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.114 2000/10/31 13:09:56 roger Exp $ */
 
 /*
@@ -472,7 +472,7 @@ static int      i2c_read_byte( bktr_ptr_t bktr, unsigned char *data, int last );
 void
 common_bktr_attach( bktr_ptr_t bktr, int unit, u_long pci_id, u_int rev )
 {
-	vm_offset_t	buf = 0;
+	vaddr_t	buf = 0;
 
 /***************************************/
 /* *** OS Specific memory routines *** */
@@ -1286,7 +1286,7 @@ video_ioctl( bktr_ptr_t bktr, int unit, ioctl_cmd_t cmd, caddr_t arg, struct pro
 	struct meteor_counts	*counts;
 	struct meteor_video	*video;
 	struct bktr_capture_area *cap_area;
-	vm_offset_t		buf;
+	vaddr_t			buf;
 	int                     i;
 	char                    char_temp;
 
