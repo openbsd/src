@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipcp.c,v 1.2 1996/03/25 15:55:43 niklas Exp $	*/
+/*	$OpenBSD: ipcp.c,v 1.3 1996/07/20 12:02:08 joshd Exp $	*/
 
 /*
  * ipcp.c - PPP IP Control Protocol.
@@ -20,7 +20,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: ipcp.c,v 1.2 1996/03/25 15:55:43 niklas Exp $";
+static char rcsid[] = "$OpenBSD: ipcp.c,v 1.3 1996/07/20 12:02:08 joshd Exp $";
 #endif
 
 /*
@@ -31,9 +31,13 @@ static char rcsid[] = "$OpenBSD: ipcp.c,v 1.2 1996/03/25 15:55:43 niklas Exp $";
 #include <string.h>
 #include <syslog.h>
 #include <netdb.h>
+#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <netinet/in_systm.h>
+#include <netinet/ip.h>
+#include <netinet/tcp.h>
 
 #include "pppd.h"
 #include "fsm.h"
@@ -86,12 +90,40 @@ static fsm_callbacks ipcp_callbacks = { /* IPCP callback routines */
     "IPCP"			/* String name of protocol */
 };
 
+/*
+ * Protocol entry points from main code.
+ */
+static void ipcp_init __P((int));
+static void ipcp_open __P((int));
+static void ipcp_close __P((int, char *));
+static void ipcp_lowerup __P((int));
+static void ipcp_lowerdown __P((int));
+static void ipcp_input __P((int, u_char *, int));
+static void ipcp_protrej __P((int));
+static int  ipcp_printpkt __P((u_char *, int,
+                               void (*) __P((void *, char *, ...)), void *));
+static void ip_check_options __P((void));
+static int  ip_demand_conf __P((int));
+static int  ip_active_pkt __P((u_char *, int));
+    
 struct protent ipcp_protent = {
-    PPP_IPCP, ipcp_init, ipcp_input, ipcp_protrej,
-    ipcp_lowerup, ipcp_lowerdown, ipcp_open, ipcp_close,
-    ipcp_printpkt, NULL, 1, "IPCP",
-    ip_check_options, ip_demand_conf,
+    PPP_IPCP,
+    ipcp_init,
+    ipcp_input,
+    ipcp_protrej,
+    ipcp_lowerup,
+    ipcp_lowerdown,
+    ipcp_open,
+    ipcp_close,
+    ipcp_printpkt,
+    NULL,
+    1,
+    "IPCP",
+    ip_check_options,
+    ip_demand_conf,
+    ip_active_pkt
 };
+
 
 /*
  * Lengths of configuration options.
@@ -130,7 +162,7 @@ u_int32_t ipaddr;
 /*
  * ipcp_init - Initialize IPCP.
  */
-void
+static void
 ipcp_init(unit)
     int unit;
 {
@@ -173,7 +205,7 @@ ipcp_init(unit)
 /*
  * ipcp_open - IPCP is allowed to come up.
  */
-void
+static void
 ipcp_open(unit)
     int unit;
 {
@@ -184,7 +216,7 @@ ipcp_open(unit)
 /*
  * ipcp_close - Take IPCP down.
  */
-void
+static void
 ipcp_close(unit, reason)
     int unit;
     char *reason;
@@ -196,7 +228,7 @@ ipcp_close(unit, reason)
 /*
  * ipcp_lowerup - The lower layer is up.
  */
-void
+static void
 ipcp_lowerup(unit)
     int unit;
 {
@@ -207,7 +239,7 @@ ipcp_lowerup(unit)
 /*
  * ipcp_lowerdown - The lower layer is down.
  */
-void
+static void
 ipcp_lowerdown(unit)
     int unit;
 {
@@ -218,7 +250,7 @@ ipcp_lowerdown(unit)
 /*
  * ipcp_input - Input IPCP packet.
  */
-void
+static void
 ipcp_input(unit, p, len)
     int unit;
     u_char *p;
@@ -233,7 +265,7 @@ ipcp_input(unit, p, len)
  *
  * Pretend the lower layer went down, so we shut up.
  */
-void
+static void
 ipcp_protrej(unit)
     int unit;
 {
@@ -1007,7 +1039,7 @@ endswitch:
  * ip_check_options - check that any IP-related options are OK,
  * and assign appropriate defaults.
  */
-void
+static void
 ip_check_options()
 {
     struct hostent *hp;
@@ -1049,7 +1081,7 @@ ip_check_options()
  * ip_demand_conf - configure the interface as though
  * IPCP were up, for use with dial-on-demand.
  */
-int
+static int
 ip_demand_conf(u)
     int u;
 {
@@ -1155,6 +1187,8 @@ ipcp_up(f)
 	    return;
 	}
 
+        sifnpmode(f->unit, PPP_IP, NPMODE_PASS);
+
 	/* assign a default route through the interface if required */
 	if (ipcp_wantoptions[f->unit].default_route) 
 	    if (sifdefaultroute(f->unit, ho->hisaddr))
@@ -1190,8 +1224,9 @@ ipcp_down(f)
 {
     u_int32_t ouraddr, hisaddr;
 
-    np_down(f->unit, PPP_IP);
     IPCPDEBUG((LOG_INFO, "ipcp: down"));
+    np_down(f->unit, PPP_IP);
+    sifvjcomp(f->unit, 0, 0, 0);
 
     /*
      * If we are doing dial-on-demand, set the interface
@@ -1261,16 +1296,16 @@ ipcp_script(f, script)
 /*
  * ipcp_printpkt - print the contents of an IPCP packet.
  */
-char *ipcp_codenames[] = {
+static char *ipcp_codenames[] = {
     "ConfReq", "ConfAck", "ConfNak", "ConfRej",
     "TermReq", "TermAck", "CodeRej"
 };
 
-int
+static int
 ipcp_printpkt(p, plen, printer, arg)
     u_char *p;
     int plen;
-    void (*printer)();
+    void (*printer) __P((void *, char *, ...));
     void *arg;
 {
     int code, id, len, olen;
@@ -1351,6 +1386,16 @@ ipcp_printpkt(p, plen, printer, arg)
 	    printer(arg, ">");
 	}
 	break;
+
+    case TERMACK:
+    case TERMREQ:
+        if (len > 0 && *p >= ' ' && *p < 0x7f) {
+            printer(arg, " ");
+            print_string(p, len, printer, arg);
+            p += len;
+            len = 0;
+        }
+        break;  
     }
 
     /* print the rest of the bytes in the packet */
@@ -1361,3 +1406,38 @@ ipcp_printpkt(p, plen, printer, arg)
 
     return p - pstart;
 }
+
+/*
+ * ip_active_pkt - see if this IP packet is worth bringing the link up
+for.
+ * We don't bring the link up for IP fragments or for TCP FIN packets
+ * with no data.
+ */
+#ifndef IP_OFFMASK
+#define IP_OFFMASK      0x1fff
+#endif
+    
+ip_active_pkt(pkt, len)
+    u_char *pkt;
+    int len;
+{
+    struct ip *ip;
+    struct tcphdr *tcp;
+    int hlen;
+    
+    if (len < sizeof(struct ip) + PPP_HDRLEN)
+        return 0;
+    ip = (struct ip *) (pkt + PPP_HDRLEN);
+    if ((ntohs(ip->ip_off) & IP_OFFMASK) != 0)
+        return 0;
+    if (ip->ip_p != IPPROTO_TCP)
+        return 1;
+    hlen = ip->ip_hl * 4;
+    if (len < hlen + sizeof(struct tcphdr) + PPP_HDRLEN)
+        return 0;
+    tcp = (struct tcphdr *) (pkt + PPP_HDRLEN + hlen);
+    if ((tcp->th_flags & TH_FIN) != 0 && hlen + tcp->th_off * 4 == len)
+        return 0;
+    return 1;
+}
+

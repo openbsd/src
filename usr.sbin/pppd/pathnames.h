@@ -1,4 +1,4 @@
-/*	$OpenBSD: pathnames.h,v 1.2 1996/03/25 15:55:53 niklas Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.3 1996/07/20 12:02:13 joshd Exp $	*/
 
 /*
  * define path names
@@ -17,6 +17,8 @@
 #define _PATH_SYSOPTIONS "/etc/ppp/options"
 #define _PATH_IPUP	"/etc/ppp/ip-up"
 #define _PATH_IPDOWN	"/etc/ppp/ip-down"
+#define _PATH_AUTHUP  "/etc/ppp/auth-up"
+#define _PATH_AUTHDOWN        "/etc/ppp/auth-down"
 #define _PATH_TTYOPT	"/etc/ppp/options."
 #define _PATH_CONNERRS	"/etc/ppp/connect-errors"
 #define _PATH_USEROPT	".ppprc"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccp.c,v 1.3 1996/04/21 23:41:18 deraadt Exp $	*/
+/*	$OpenBSD: ccp.c,v 1.4 1996/07/20 12:02:05 joshd Exp $	*/
 
 /*
  * ccp.c - PPP Compression Control Protocol.
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: ccp.c,v 1.3 1996/04/21 23:41:18 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ccp.c,v 1.4 1996/07/20 12:02:05 joshd Exp $";
 #endif
 
 #include <string.h>
@@ -40,10 +40,37 @@ static char rcsid[] = "$OpenBSD: ccp.c,v 1.3 1996/04/21 23:41:18 deraadt Exp $";
 #include "fsm.h"
 #include "ccp.h"
 
+/*
+ * Protocol entry points from main code.
+ */
+static void ccp_init __P((int unit));
+static void ccp_open __P((int unit));
+static void ccp_close __P((int unit, char *));
+static void ccp_lowerup __P((int unit));
+static void ccp_lowerdown __P((int));
+static void ccp_input __P((int unit, u_char *pkt, int len));
+static void ccp_protrej __P((int unit));
+static int  ccp_printpkt __P((u_char *pkt, int len,
+                              void (*printer) __P((void *, char *, ...)),
+                              void *arg));
+static void ccp_datainput __P((int unit, u_char *pkt, int len));
+
 struct protent ccp_protent = {
-    PPP_CCP, ccp_init, ccp_input, ccp_protrej,
-    ccp_lowerup, ccp_lowerdown, ccp_open, ccp_close,
-    ccp_printpkt, ccp_datainput, 1, "CCP", NULL, NULL
+    PPP_CCP,
+    ccp_init,
+    ccp_input,
+    ccp_protrej,
+    ccp_lowerup,
+    ccp_lowerdown,
+    ccp_open,
+    ccp_close,  
+    ccp_printpkt,
+    ccp_datainput,
+    1,
+    "CCP",
+    NULL,
+    NULL,
+    NULL
 };
 
 fsm ccp_fsm[NUM_PPP];
@@ -105,7 +132,7 @@ static int all_rejected[NUM_PPP];	/* we rejected all peer's options */
 /*
  * ccp_init - initialize CCP.
  */
-void
+static void
 ccp_init(unit)
     int unit;
 {
@@ -160,7 +187,7 @@ ccp_open(unit)
 /*
  * ccp_close - Terminate CCP.
  */
-void
+static void
 ccp_close(unit, reason)
     int unit;
     char *reason;
@@ -172,7 +199,7 @@ ccp_close(unit, reason)
 /*
  * ccp_lowerup - we may now transmit CCP packets.
  */
-void
+static void
 ccp_lowerup(unit)
     int unit;
 {
@@ -182,7 +209,7 @@ ccp_lowerup(unit)
 /*
  * ccp_lowerdown - we may not transmit CCP packets.
  */
-void
+static void
 ccp_lowerdown(unit)
     int unit;
 {
@@ -192,7 +219,7 @@ ccp_lowerdown(unit)
 /*
  * ccp_input - process a received CCP packet.
  */
-void
+static void
 ccp_input(unit, p, len)
     int unit;
     u_char *p;
@@ -254,7 +281,7 @@ ccp_extcode(f, code, id, p, len)
 /*
  * ccp_protrej - peer doesn't talk CCP.
  */
-void
+static void
 ccp_protrej(unit)
     int unit;
 {
@@ -401,6 +428,8 @@ ccp_addci(f, p, lenp)
 	    p += CILEN_PREDICTOR_2;
 	}
     }
+
+    go->method = (p > p0)? p0[0]: -1;
 
     *lenp = p - p0;
 }
@@ -613,6 +642,7 @@ ccp_reqci(f, p, lenp, dont_nak)
     len = *lenp;
 
     memset(ho, 0, sizeof(ccp_options));
+    ho->method = (len > 0)? p[0]: -1;
 
     while (len > 0) {
 	newret = CONFACK;
@@ -765,6 +795,42 @@ ccp_reqci(f, p, lenp, dont_nak)
 }
 
 /*
+ * Make a string name for a compression method (or 2).
+ */
+static char *
+method_name(opt, opt2)
+    ccp_options *opt, *opt2;
+{
+    static char result[64];
+ 
+    if (!ANY_COMPRESS(*opt))
+        return "(none)";
+    switch (opt->method) {
+    case CI_DEFLATE:
+        if (opt2 != NULL && opt2->deflate_size != opt->deflate_size)
+            sprintf(result, "Deflate (%d/%d)", opt->deflate_size,
+                    opt2->deflate_size);
+        else
+            sprintf(result, "Deflate (%d)", opt->deflate_size);
+        break;
+    case CI_BSD_COMPRESS:
+        if (opt2 != NULL && opt2->bsd_bits != opt->bsd_bits)
+            sprintf(result, "BSD-Compress (%d/%d)", opt->bsd_bits,
+                    opt2->bsd_bits);
+        else   
+            sprintf(result, "BSD-Compress (%d)", opt->bsd_bits);
+        break;
+    case CI_PREDICTOR_1:
+        return "Predictor 1";
+    case CI_PREDICTOR_2:
+        return "Predictor 2";
+    default:
+        sprintf(result, "Method %d", opt->method);
+    }
+    return result;
+}
+    
+/*
  * CCP has come up - inform the kernel driver.
  */
 static void
@@ -774,12 +840,26 @@ ccp_up(f)
     ccp_options *go = &ccp_gotoptions[f->unit];
     ccp_options *ho = &ccp_hisoptions[f->unit];
 
+    char method1[64];
+    
     ccp_flags_set(f->unit, 1, 1);
-    if (ANY_COMPRESS(*go) || ANY_COMPRESS(*ho))
-	syslog(LOG_NOTICE, "%s enabled",
-	       ANY_COMPRESS(*go)? ANY_COMPRESS(*ho)? "Compression":
-	       "Receive compression": "Transmit compression");
-}
+    if (ANY_COMPRESS(*go)) {
+        if (ANY_COMPRESS(*ho)) {
+            if (go->method == ho->method) {
+                syslog(LOG_NOTICE, "%s compression enabled",
+                       method_name(go, ho));
+            } else {
+                strcpy(method1, method_name(go, NULL));
+                syslog(LOG_NOTICE, "%s / %s compression enabled",
+                       method1, method_name(ho, NULL));
+            }
+        } else
+            syslog(LOG_NOTICE, "%s receive compression enabled",
+                   method_name(go, NULL));
+    } else
+        syslog(LOG_NOTICE, "%s transmit compression enabled",
+               method_name(ho, NULL));
+} 
 
 /*
  * CCP has gone down - inform the kernel driver.
@@ -797,14 +877,14 @@ ccp_down(f)
 /*
  * Print the contents of a CCP packet.
  */
-char *ccp_codenames[] = {
+static char *ccp_codenames[] = {
     "ConfReq", "ConfAck", "ConfNak", "ConfRej",
     "TermReq", "TermAck", "CodeRej",
     NULL, NULL, NULL, NULL, NULL, NULL,
     "ResetReq", "ResetAck",
 };
 
-int
+static int
 ccp_printpkt(p, plen, printer, arg)
     u_char *p;
     int plen;
@@ -883,6 +963,16 @@ ccp_printpkt(p, plen, printer, arg)
 	    printer(arg, ">");
 	}
 	break;
+
+    case TERMACK:
+    case TERMREQ:
+        if (len > 0 && *p >= ' ' && *p < 0x7f) {
+            print_string(p, len, printer, arg);
+            p += len;
+            len = 0;  
+        }
+        break;
+
     }
 
     /* dump out the rest of the packet in hex */

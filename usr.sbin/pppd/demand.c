@@ -1,4 +1,4 @@
-/*	$OpenBSD: demand.c,v 1.1 1996/03/25 15:55:37 niklas Exp $	*/
+/*	$OpenBSD: demand.c,v 1.2 1996/07/20 12:02:07 joshd Exp $	*/
 
 /*
  * demand.c - Dial on demand support.
@@ -20,7 +20,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: demand.c,v 1.1 1996/03/25 15:55:37 niklas Exp $";
+static char rcsid[] = "$OpenBSD: demand.c,v 1.2 1996/07/20 12:02:07 joshd Exp $";
 #endif
 
 #include <stdio.h>
@@ -62,6 +62,8 @@ struct packet {
 struct packet *pend_q;
 struct packet *pend_qtail;
 
+static int active_packet __P((unsigned char *, int));
+
 /*
  * demand_conf - configure the interface for doing dial-on-demand.
  */
@@ -87,7 +89,9 @@ demand_conf()
     ppp_send_config(0, PPP_MRU, (u_int32_t) 0, 0, 0);
     ppp_recv_config(0, PPP_MRU, (u_int32_t) 0, 0, 0);
 
+#if 0
     set_filters(&pass_filter, &active_filter);
+#endif
 
     /*
      * Call the demand_conf procedure for each protocol that's got one.
@@ -310,3 +314,32 @@ demand_rexmit(proto)
     if (prev != NULL)
 	prev->next = NULL;
 }
+
+/*
+ * Scan a packet to decide whether it is an "active" packet,
+ * that is, whether it is worth bringing up the link for.
+ */
+static int
+active_packet(p, len)
+    unsigned char *p;
+    int len;
+{
+    int proto, i;
+    struct protent *protp;
+  
+    if (len < PPP_HDRLEN)
+        return 0;
+    proto = PPP_PROTOCOL(p);
+    for (i = 0; (protp = protocols[i]) != NULL; ++i) {
+        if (protp->protocol < 0xC000 && (protp->protocol & ~0x8000) == proto) {
+            if (!protp->enabled_flag)
+                return 0;
+            if (protp->active_pkt == NULL)
+                return 1;
+            return (*protp->active_pkt)(p, len);
+        }
+    }
+    return 0;                   /* not a supported protocol !!?? */
+}   
+  
+

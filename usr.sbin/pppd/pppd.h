@@ -1,4 +1,4 @@
-/*	$OpenBSD: pppd.h,v 1.2 1996/03/25 15:55:55 niklas Exp $	*/
+/*	$OpenBSD: pppd.h,v 1.3 1996/07/20 12:02:14 joshd Exp $	*/
 
 /*
  * pppd.h - PPP daemon global declarations.
@@ -33,6 +33,14 @@
 #include <net/ppp_defs.h>
 #include <net/bpf.h>
 
+#if __STDC__
+#include <stdarg.h>
+#define __V(x)        x
+#else
+#include <varargs.h>
+#define __V(x)        (va_alist) va_dcl
+#endif
+
 #define NUM_PPP	1		/* One PPP interface supported (per process) */
 
 /*
@@ -57,6 +65,8 @@ extern u_char	outpacket_buf[]; /* Buffer for outgoing packets */
 extern int	phase;		/* Current state of link - see values below */
 extern int	baud_rate;	/* Current link speed in bits/sec */
 extern char	*progname;	/* Name of this program */
+extern int    redirect_stderr;  /* Connector's stderr should go to file */
+extern char   peer_authname[];  /* Authenticated name of peer */
 
 /*
  * Variables set by command-line options.
@@ -95,17 +105,21 @@ extern int	idle_time_limit;/* Shut down link if idle for this long */
 extern int	holdoff;	/* Dead time before restarting */
 extern struct	bpf_program pass_filter;   /* Filter for pkts to pass */
 extern struct	bpf_program active_filter; /* Filter for link-active pkts */
+extern int    refuse_pap;     /* Don't wanna auth. ourselves with PAP */
+extern int    refuse_chap;    /* Don't wanna auth. ourselves with CHAP */
+
 
 /*
  * Values for phase.
  */
 #define PHASE_DEAD		0
-#define PHASE_DORMANT		1
-#define PHASE_ESTABLISH		2
-#define PHASE_AUTHENTICATE	3
-#define PHASE_NETWORK		4
-#define PHASE_TERMINATE		5
-#define PHASE_HOLDOFF		6
+#define PHASE_INITIALIZE      1
+#define PHASE_DORMANT         2
+#define PHASE_ESTABLISH               3
+#define PHASE_AUTHENTICATE    4
+#define PHASE_NETWORK         5
+#define PHASE_TERMINATE               6
+#define PHASE_HOLDOFF         7
 
 /*
  * The following struct gives the addresses of procedures to call
@@ -113,19 +127,34 @@ extern struct	bpf_program active_filter; /* Filter for link-active pkts */
  */
 struct protent {
     u_short protocol;		/* PPP protocol number */
-    void (*init)();		/* Initialization procedure */
-    void (*input)();		/* Process a received packet */
-    void (*protrej)();		/* Process a received protocol-reject */
-    void (*lowerup)();		/* Lower layer has come up */
-    void (*lowerdown)();	/* Lower layer has gone down */
-    void (*open)();		/* Open the protocol */
-    void (*close)();		/* Close the protocol */
-    int  (*printpkt)();		/* Print a packet in readable form */
-    void (*datainput)();	/* Process a received data packet */
+    /* Initialization procedure */
+    void (*init) __P((int unit));
+    /* Process a received packet */ 
+    void (*input) __P((int unit, u_char *pkt, int len));
+    /* Process a received protocol-reject */
+    void (*protrej) __P((int unit));
+    /* Lower layer has come up */
+    void (*lowerup) __P((int unit));
+    /* Lower layer has gone down */   
+    void (*lowerdown) __P((int unit));
+    /* Open the protocol */
+    void (*open) __P((int unit));
+    /* Close the protocol */
+    void (*close) __P((int unit, char *reason));
+    /* Print a packet in readable form */
+    int  (*printpkt) __P((u_char *pkt, int len,
+                        void (*printer) __P((void *, char *, ...)),
+                        void *arg));
+    /* Process a received data packet */
+    void (*datainput) __P((int unit, u_char *pkt, int len));
     int  enabled_flag;		/* 0 iff protocol is disabled */
     char *name;			/* Text name of protocol */
-    void (*check_options)();	/* Check requested options, assign dflts */
-    int  (*demand_conf)();	/* Configure interface for demand-dial */
+    /* Check requested options, assign defaults */
+    void (*check_options) __P((void));
+    /* Configure interface for demand-dial */
+    int  (*demand_conf) __P((int unit));
+    /* Say whether to bring up link for this pkt */
+    int  (*active_pkt) __P((u_char *pkt, int len));
 };
 
 /* Table of pointers to supported protocols */
@@ -153,6 +182,9 @@ void log_packet __P((u_char *, int, char *));
 				/* Format a packet and log it with syslog */
 void print_string __P((char *, int,  void (*) (void *, char *, ...),
 		void *));	/* Format a string for output */
+int fmtmsg __P((char *, int, char *, ...));           /* sprintf++ */
+int vfmtmsg __P((char *, int, char *, va_list));      /* vsprintf++ */
+
 
 /* Procedures exported from auth.c */
 void link_required __P((int));	  /* we are starting to use the link */
@@ -164,7 +196,7 @@ void np_down __P((int, int));	  /* a network protocol has gone down */
 void np_finished __P((int, int)); /* a network protocol no longer needs link */
 void auth_peer_fail __P((int, int));
 				/* peer failed to authenticate itself */
-void auth_peer_success __P((int, int));
+void auth_peer_success __P((int, int, char *, int));
 				/* peer successfully authenticated itself */
 void auth_withpeer_fail __P((int, int));
 				/* we failed to authenticate ourselves */
@@ -172,6 +204,8 @@ void auth_withpeer_success __P((int, int));
 				/* we successfully authenticated ourselves */
 void auth_check_options __P((void));
 				/* check authentication options supplied */
+void auth_reset __P((int));     /* check what secrets we have */
+
 int  check_passwd __P((int, char *, int, char *, int, char **, int *));
 				/* Check peer-supplied username/password */
 int  get_secret __P((int, char *, char *, char *, int *, int));
@@ -263,6 +297,9 @@ int  options_from_file __P((char *filename, int must_exist, int check_prot));
 				/* Parse options from an options file */
 int  options_from_user __P((void)); /* Parse options from user's .ppprc */
 int  options_for_tty __P((void)); /* Parse options from /etc/ppp/options.tty */
+void scan_args __P((int argc, char **argv));
+                                /* Look for tty name in command-line args */
+
 int  getword __P((FILE *f, char *word, int *newlinep, char *filename));
 				/* Read a word from a file */
 

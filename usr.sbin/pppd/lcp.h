@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcp.h,v 1.2 1996/03/25 15:55:47 niklas Exp $	*/
+/*	$OpenBSD: lcp.h,v 1.3 1996/07/20 12:02:11 joshd Exp $	*/
 
 /*
  * lcp.h - Link Control Protocol definitions.
@@ -72,16 +72,11 @@ extern u_int32_t xmit_accm[][8];
 #define MINMRU	128		/* No MRUs below this */
 #define MAXMRU	16384		/* Normally limit MRU to this */
 
-void lcp_init __P((int));
 void lcp_open __P((int));
 void lcp_close __P((int, char *));
 void lcp_lowerup __P((int));
 void lcp_lowerdown __P((int));
-void lcp_input __P((int, u_char *, int));
-void lcp_protrej __P((int));
-void lcp_sprotrej __P((int, u_char *, int));
-int  lcp_printpkt __P((u_char *, int,
-		       void (*) __P((void *, char *, ...)), void *));
+void lcp_sprotrej __P((int, u_char *, int));    /* send protocol reject */
 
 extern struct protent lcp_protent;
 

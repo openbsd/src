@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcp.c,v 1.2 1996/03/25 15:55:46 niklas Exp $	*/
+/*	$OpenBSD: lcp.c,v 1.3 1996/07/20 12:02:10 joshd Exp $	*/
 
 /*
  * lcp.c - PPP Link Control Protocol.
@@ -20,7 +20,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: lcp.c,v 1.2 1996/03/25 15:55:46 niklas Exp $";
+static char rcsid[] = "$OpenBSD: lcp.c,v 1.3 1996/07/20 12:02:10 joshd Exp $";
 #endif
 
 /*
@@ -103,11 +103,34 @@ static fsm_callbacks lcp_callbacks = {	/* LCP callback routines */
     "LCP"			/* String name of protocol */
 };
 
+/*
+ * Protocol entry points.
+ * Some of these are called directly.
+ */
+
+static void lcp_init __P((int));
+static void lcp_input __P((int, u_char *, int));
+static void lcp_protrej __P((int));
+static int  lcp_printpkt __P((u_char *, int,
+                              void (*) __P((void *, char *, ...)), void *));
+
 struct protent lcp_protent = {
-    PPP_LCP, lcp_init, lcp_input, lcp_protrej,
-    lcp_lowerup, lcp_lowerdown, lcp_open, lcp_close,
-    lcp_printpkt, NULL, 1, "LCP", NULL, NULL
-};
+    PPP_LCP,
+    lcp_init,
+    lcp_input,
+    lcp_protrej,
+    lcp_lowerup,
+    lcp_lowerdown,
+    lcp_open,
+    lcp_close,
+    lcp_printpkt,
+    NULL,
+    1,
+    "LCP",
+    NULL,
+    NULL,
+    NULL
+};  
 
 int lcp_loopbackfail = DEFLOOPBACKFAIL;
 
@@ -127,7 +150,7 @@ int lcp_loopbackfail = DEFLOOPBACKFAIL;
 /*
  * lcp_init - Initialize LCP.
  */
-void
+static void
 lcp_init(unit)
     int unit;
 {
@@ -203,6 +226,7 @@ lcp_close(unit, reason)
 {
     fsm *f = &lcp_fsm[unit];
 
+    phase = PHASE_TERMINATE;
     if (f->state == STOPPED && f->flags & (OPT_PASSIVE|OPT_SILENT)) {
 	/*
 	 * This action is not strictly according to the FSM in RFC1548,
@@ -257,7 +281,7 @@ lcp_lowerdown(unit)
 /*
  * lcp_input - Input LCP packet.
  */
-void
+static void
 lcp_input(unit, p, len)
     int unit;
     u_char *p;
@@ -366,7 +390,7 @@ lcp_rprotrej(f, inp, len)
  * lcp_protrej - A Protocol-Reject was received.
  */
 /*ARGSUSED*/
-void
+static void
 lcp_protrej(unit)
     int unit;
 {
@@ -411,6 +435,7 @@ lcp_resetci(f)
     lcp_wantoptions[f->unit].numloops = 0;
     lcp_gotoptions[f->unit] = lcp_wantoptions[f->unit];
     peer_mru[f->unit] = PPP_MRU;
+    auth_reset(f->unit);
 }
 
 
@@ -739,8 +764,11 @@ lcp_nakci(f, p, len)
      */
     if ((go->neg_chap || go->neg_upap)
 	&& len >= CILEN_SHORT
-	&& p[0] == CI_AUTHTYPE && p[1] >= CILEN_SHORT) {
+        && p[0] == CI_AUTHTYPE && p[1] >= CILEN_SHORT && p[1] <= len) {
 	cilen = p[1];
+        len -= cilen;
+        no.neg_chap = go->neg_chap;
+        no.neg_upap = go->neg_upap;
 	INCPTR(2, p);
         GETSHORT(cishort, p);
 	if (cishort == PPP_PAP && cilen == CILEN_SHORT) {
@@ -751,7 +779,7 @@ lcp_nakci(f, p, len)
 	     */
 	    if (!go->neg_chap)
 		goto bad;
-	    go->neg_chap = 0;
+            try.neg_chap = 0;
 
 	} else if (cishort == PPP_CHAP && cilen == CILEN_CHAP) {
 	    GETCHAR(cichar, p);
@@ -762,12 +790,12 @@ lcp_nakci(f, p, len)
 		 * asking for CHAP.
 		 */
 		if (cichar != go->chap_mdtype)
-		    go->neg_chap = 0;
+                    try.neg_chap = 0;
 	    } else {
 		/*
 		 * Stop asking for PAP if we were asking for it.
 		 */
-		go->neg_upap = 0;
+		try.neg_upap = 0;
 	    }
 
 	} else {
@@ -776,9 +804,9 @@ lcp_nakci(f, p, len)
 	     * Stop asking for what we were asking for.
 	     */
 	    if (go->neg_chap)
-		go->neg_chap = 0;
+		try.neg_chap = 0;
 	    else
-		go->neg_upap = 0;
+		try.neg_upap = 0;
 	    p += cilen - CILEN_SHORT;
 	}
     }
@@ -813,7 +841,11 @@ lcp_nakci(f, p, len)
 	      try.magicnumber = magic();
 	      looped_back = 1;
 	      );
-
+    /*
+     * Peer shouldn't send Nak for protocol compression or
+     * address/control compression requests; they should send
+     * a Reject instead.  If they send a Nak, treat it as a Reject.
+     */
     NAKCIVOID(CI_PCOMPRESSION, neg_pcompression,
 	      try.neg_pcompression = 0;
 	      );
@@ -840,7 +872,7 @@ lcp_nakci(f, p, len)
     while (len > CILEN_VOID) {
 	GETCHAR(citype, p);
 	GETCHAR(cilen, p);
-	if ((len -= cilen) < 0)
+        if (cilen < CILEN_VOID || (len -= cilen) < 0)
 	    goto bad;
 	next = p + cilen - 2;
 
@@ -1056,7 +1088,7 @@ lcp_reqci(f, inp, lenp, reject_if_disagree)
     lcp_options *ho = &lcp_hisoptions[f->unit];
     lcp_options *ao = &lcp_allowoptions[f->unit];
     u_char *cip, *next;		/* Pointer to current and next CIs */
-    u_char cilen, citype, cichar;/* Parsed len, type, char value */
+    int cilen, citype, cichar;/* Parsed len, type, char value */
     u_short cishort;		/* Parsed short value */
     u_int32_t cilong;		/* Parse long value */
     int rc = CONFACK;		/* Final packet return code */
@@ -1206,7 +1238,11 @@ lcp_reqci(f, inp, lenp, reject_if_disagree)
 		    break;
 		}
 		GETCHAR(cichar, p);	/* get digest type*/
-		if (cichar != ao->chap_mdtype) {
+                if (cichar != CHAP_DIGEST_MD5
+#ifdef CHAPMS
+                    && cichar != CHAP_MICROSOFT
+#endif
+                    ) {
 		    orc = CONFNAK;
 		    PUTCHAR(CI_AUTHTYPE, nakp);
 		    PUTCHAR(CILEN_CHAP, nakp);
@@ -1460,13 +1496,13 @@ lcp_finished(f)
 /*
  * lcp_printpkt - print the contents of an LCP packet.
  */
-char *lcp_codenames[] = {
+static char *lcp_codenames[] = {
     "ConfReq", "ConfAck", "ConfNak", "ConfRej",
     "TermReq", "TermAck", "CodeRej", "ProtRej",
     "EchoReq", "EchoRep", "DiscReq"
 };
 
-int
+static int
 lcp_printpkt(p, plen, printer, arg)
     u_char *p;
     int plen;
@@ -1477,6 +1513,7 @@ lcp_printpkt(p, plen, printer, arg)
     u_char *pstart, *optend;
     u_short cishort;
     u_int32_t cilong;
+    int fascii;   
 
     if (plen < HEADERLEN)
 	return 0;
@@ -1582,6 +1619,27 @@ lcp_printpkt(p, plen, printer, arg)
 	    printer(arg, ">");
 	}
 	break;
+
+    case TERMACK:
+    case TERMREQ:
+        if (len > 0 && *p >= ' ' && *p < 0x7f) {
+            printer(arg, " ");
+            print_string(p, len, printer, arg);
+            p += len;
+            len = 0;
+        }
+        break;      
+
+    case ECHOREQ:
+    case ECHOREP:
+    case DISCREQ:
+        if (len >= 4) {
+            GETLONG(cilong, p);
+            printer(arg, " magic=0x%x", cilong);
+            p += 4;
+            len -= 4;
+        }
+        break;
     }
 
     /* print the rest of the bytes in the packet */

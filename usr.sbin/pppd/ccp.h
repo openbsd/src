@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccp.h,v 1.2 1996/03/25 15:55:33 niklas Exp $	*/
+/*	$OpenBSD: ccp.h,v 1.3 1996/07/20 12:02:05 joshd Exp $	*/
 
 /*
  * ccp.h - Definitions for PPP Compression Control Protocol.
@@ -34,6 +34,7 @@ typedef struct ccp_options {
     u_int predictor_2: 1;	/* do Predictor-2? */
     u_short bsd_bits;		/* # bits/code for BSD Compress */
     u_short deflate_size;	/* lg(window size) for Deflate */
+    short method;               /* code for chosen compression method */ 
 } ccp_options;
 
 extern fsm ccp_fsm[];
@@ -41,17 +42,5 @@ extern ccp_options ccp_wantoptions[];
 extern ccp_options ccp_gotoptions[];
 extern ccp_options ccp_allowoptions[];
 extern ccp_options ccp_hisoptions[];
-
-void ccp_init __P((int unit));
-void ccp_open __P((int unit));
-void ccp_close __P((int unit, char *));
-void ccp_lowerup __P((int unit));
-void ccp_lowerdown __P((int));
-void ccp_input __P((int unit, u_char *pkt, int len));
-void ccp_protrej __P((int unit));
-int  ccp_printpkt __P((u_char *pkt, int len,
-			  void (*printer) __P((void *, char *, ...)),
-			  void *arg));
-void ccp_datainput __P((int unit, u_char *pkt, int len));
 
 extern struct protent ccp_protent;
