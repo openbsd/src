@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.4 2001/08/22 05:08:11 jason Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.5 2001/08/23 15:20:48 art Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -559,9 +559,9 @@ swapconf()
 void
 setroot()
 {
-	register struct swdevt *swp;
-	register struct device *dv;
-	register int len, majdev, unit, part;
+	struct swdevt *swp;
+	struct device *dv;
+	int len, majdev, unit, part;
 	dev_t nrootdev, nswapdev = NODEV;
 	char buf[128];
 	dev_t temp;
@@ -759,6 +759,7 @@ struct nam2blk {
 } nam2blk[] = {
 	{ "sd",         7 },
 	{ "rd",         5 },
+	{ "wd",		12 },
 	{ "cd",         18 },
 };
 
@@ -767,7 +768,7 @@ findblkmajor(dv)
 	struct device *dv;
 {
 	char *name = dv->dv_xname;
-	register int i;
+	int i;
 
 	for (i = 0; i < sizeof(nam2blk)/sizeof(nam2blk[0]); ++i)
 		if (strncmp(name, nam2blk[i].name, strlen(nam2blk[0].name)) == 0
@@ -782,7 +783,7 @@ getdisk(str, len, defpart, devp)
 	int len, defpart;
 	dev_t *devp;
 {
-	register struct device *dv;
+	struct device *dv;
 
 	if ((dv = parsedisk(str, len, defpart, devp)) == NULL) {
 		printf("use one of:");
@@ -806,8 +807,8 @@ parsedisk(str, len, defpart, devp)
 	int len, defpart;
 	dev_t *devp;
 {
-	register struct device *dv;
-	register char *cp, c;
+	struct device *dv;
+	char *cp, c;
 	int majdev, unit, part;
 
 	if (len == 0)
@@ -845,12 +846,12 @@ parsedisk(str, len, defpart, devp)
 
 static int
 getstr(cp, size)
-	register char *cp;
-	register int size;
+	char *cp;
+	int size;
 {
-	register char *lp;
-	register int c;
-	register int len;
+	char *lp;
+	int c;
+	int len;
 
 	lp = cp;
 	len = 0;
