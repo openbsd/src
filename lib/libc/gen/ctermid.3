@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ctermid.3,v 1.3 1999/05/29 16:08:54 aaron Exp $
+.\"	$OpenBSD: ctermid.3,v 1.4 1999/06/04 01:30:10 aaron Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -49,9 +49,7 @@ the current controlling terminal of the calling process.
 .Pp
 If
 .Ar buf
-is the
-.Dv NULL
-pointer, a pointer to a static area is returned.
+is a null pointer, a pointer to a static area is returned.
 Otherwise, the pathname is copied into the memory referenced by
 .Ar buf .
 The argument
@@ -66,12 +64,8 @@ bytes long.
 The current implementation simply generates
 .Qq /dev/tty .
 .Sh RETURN VALUES
-Upon successful completion, a
-.Pf non- Dv NULL
-pointer is returned.
-Otherwise, a
-.Dv NULL
-pointer is returned and the global variable
+Upon successful completion, a non-null pointer is returned.
+Otherwise, a null pointer is returned and the global variable
 .Va errno
 is set to indicate the error.
 .Sh ERRORS

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: exec.3,v 1.8 1999/06/03 10:03:19 aaron Exp $
+.\"	$OpenBSD: exec.3,v 1.9 1999/06/04 01:30:10 aaron Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -84,49 +84,42 @@ functions can be thought of as
 \&...,
 .Fa argn .
 Together they describe a list of one or more pointers to
-NUL-terminated
+null-terminated
 strings that represent the argument list available to the executed program.
 The first argument, by convention, should point to the file name associated
 with the file being executed.
 The list of arguments
 .Em must
-be terminated by a
-.Dv NULL
-pointer.
+be terminated by a null pointer.
 .Pp
 The
 .Fn exect ,
 .Fn execv ,
 and
 .Fn execvp
-functions provide an array of pointers to NUL-terminated
-strings that
+functions provide an array of pointers to
+null-terminated strings that
 represent the argument list available to the new program.
 The first argument, by convention, should point to the file name associated
 with the file begin executed.
 The array of pointers
 .Em must
-be terminated by a
-.Dv NULL
-pointer.
+be terminated by a null pointer itself.
 .Pp
 The
 .Fn execle
 and
 .Fn exect
 functions also specify the environment of the executed process by following
-the
-.Dv NULL
+the null
 pointer that terminates the list of arguments in the parameter list
 or the pointer to the
 .Va argv
 array with an additional parameter.
-This additional parameter is an array of pointers to NUL-terminated
+This additional parameter is an array of pointers to null-terminated
 strings and
 .Em must
-be terminated by a
-.Dv NULL
-pointer itself.
+be terminated by a null pointer itself.
 The other functions take the environment for the new process image from the
 external variable
 .Va environ

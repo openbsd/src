@@ -1,4 +1,4 @@
-.\"	$OpenBSD: directory.3,v 1.8 1999/06/03 10:03:19 aaron Exp $
+.\"	$OpenBSD: directory.3,v 1.9 1999/06/04 01:30:10 aaron Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -71,9 +71,7 @@ with it
 and
 returns a pointer to be used to identify the
 directory stream
-in subsequent operations.  The pointer
-.Dv NULL
-is returned if
+in subsequent operations.  A null pointer is returned if
 .Fa filename
 cannot be accessed, or if
 .Xr malloc 3

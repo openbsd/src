@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getcap.3,v 1.12 1999/06/03 10:03:20 aaron Exp $
+.\"	$OpenBSD: getcap.3,v 1.13 1999/06/04 01:30:10 aaron Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -77,8 +77,7 @@ The
 function
 extracts the capability record
 .Fa name
-from the database specified by the
-.Dv NULL Ns -terminated
+from the database specified by the null-terminated
 file array
 .Fa db_array
 and returns a pointer to a
@@ -176,7 +175,7 @@ found.  The end of the capability value is signaled by a
 .Sq \&:
 or
 .Tn ASCII
-.Dv NUL
+NUL
 (see below for capability database syntax).
 .Pp
 .Fn cgetnum
@@ -196,16 +195,15 @@ retrieves the value of the string capability
 .Fa cap
 from the capability record pointed to by
 .Fa buf .
-A pointer to a decoded, NUL-terminated,
+A pointer to a decoded, null-terminated,
 .Xr malloc Ns \&'d
 copy of the string is returned in the
 .Ft char *
 pointed to by
 .Fa str .
-The number of characters in the decoded string not including the trailing
-.Dv NUL
-is returned on success, \-1 if the requested string capability couldn't
-be found, \-2 if a system error was encountered (storage allocation
+The number of characters in the decoded string (not including the trailing
+NUL) is returned on success, \-1 if the requested string capability couldn't
+be found, or \-2 if a system error was encountered (storage allocation
 failure).
 .Pp
 .Fn cgetustr
@@ -218,8 +216,7 @@ character of the capability string literally.
 and
 .Fn cgetnext
 comprise a function group that provides for sequential
-access of the
-.Dv NULL Ns -terminated
+access of the null-terminated
 array of file names,
 .Fa db_array .
 .Fn cgetfirst 
@@ -455,15 +452,12 @@ A
 may be followed by up to three octal digits directly specifies
 the numeric code for a character.  The use of
 .Tn ASCII
-.Dv NUL Ns s ,
-while easily
+NULs, while easily
 encoded, causes all sorts of problems and must be used with care since
-.Dv NUL Ns s
-are typically used to denote the end of strings; many applications
+NULs are typically used to denote the end of strings; many applications
 use
 .Sq \e\|200
-to represent a
-.Dv NUL .
+to represent a NUL.
 .Sh EXAMPLES
 .Bd -unfilled -offset indent
 example\||\|an example of binding multiple values to names:\e

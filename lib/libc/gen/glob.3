@@ -1,4 +1,4 @@
-.\"	$OpenBSD: glob.3,v 1.9 1999/05/29 22:38:35 aaron Exp $
+.\"	$OpenBSD: glob.3,v 1.10 1999/06/04 01:30:11 aaron Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -141,8 +141,7 @@ field.
 If this flag is set,
 .Fa gl_offs
 is used to specify how many
-.Dv NULL
-pointers to prepend to the beginning
+null pointers to prepend to the beginning
 of the
 .Fa gl_pathv
 field.
@@ -150,13 +149,10 @@ In other words,
 .Fa gl_pathv
 will point to
 .Fa gl_offs
-.Dv NULL
-pointers,
+null pointers,
 followed by
 .Fa gl_pathc
-pathname pointers, followed by a
-.Dv NULL
-pointer.
+pathname pointers, followed by a null pointer.
 .It Dv GLOB_ERR
 Causes
 .Fn glob
@@ -269,8 +265,7 @@ to user name home directories.
 If, during the search, a directory is encountered that cannot be opened
 or read and
 .Fa errfunc
-is
-.Pf non- Dv NULL , 
+is non-null,
 .Fn glob
 calls
 .Fa (*errfunc)(path, errno) .
@@ -359,7 +354,7 @@ or
 .Ql [ ,
 cleared if not.
 .It Fa gl_pathv
-Contains a pointer to a NUL-terminated
+Contains a pointer to a null-terminated
 list of matched pathnames.
 However, if
 .Fa gl_pathc

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getpwent.3,v 1.6 1999/05/29 19:11:11 aaron Exp $
+.\"	$OpenBSD: getpwent.3,v 1.7 1999/06/04 01:30:11 aaron Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -136,9 +136,7 @@ The functions
 and
 .Fn getpwuid
 return a valid pointer to a passwd structure on success
-or a
-.Dv NULL
-pointer if end-of-file is reached or an error occurs.
+or a null pointer if end-of-file is reached or an error occurs.
 The
 .Fn setpassent
 function returns 0 on failure or 1 on success.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: psignal.3,v 1.5 1999/05/29 21:24:18 aaron Exp $
+.\"	$OpenBSD: psignal.3,v 1.6 1999/06/04 01:30:11 aaron Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -55,8 +55,8 @@ and writes it to the standard error.
 .Pp
 If the argument
 .Fa s
-is
-.Pf non- Dv NULL
+is not
+.Dv NULL
 it is written to the standard error file descriptor
 prior to the message string,
 immediately followed by a colon and a space.

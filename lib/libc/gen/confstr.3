@@ -1,4 +1,4 @@
-.\"	$OpenBSD: confstr.3,v 1.8 1999/05/29 22:38:33 aaron Exp $
+.\"	$OpenBSD: confstr.3,v 1.9 1999/06/04 01:30:10 aaron Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -66,15 +66,13 @@ If
 .Fa len
 is non-zero,
 .Fa buf
-is a
-.Pf non- Dv NULL
-pointer, and
+is a non-null pointer, and
 .Fa name
 has a value; up to
 .Fa len
 \- 1 bytes of the value are copied into the buffer 
 .Fa buf .
-The copied value is always NUL-terminated.
+The copied value is always null terminated.
 .Pp
 The available values are as follows:
 .Pp

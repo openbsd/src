@@ -24,7 +24,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: dirname.3,v 1.6 1999/05/29 16:08:54 aaron Exp $
+.\" $OpenBSD: dirname.3,v 1.7 1999/06/04 01:30:10 aaron Exp $
 .\"
 .Dd August 17, 1997
 .Dt DIRNAME 3
@@ -49,9 +49,7 @@ Any trailing
 characters are not counted as part of the directory
 name.  If
 .Ar path
-is a
-.Dv NULL
-pointer, the empty string, or contains no
+is a null pointer, the empty string, or contains no
 .Sq \&/
 characters,
 .Fn dirname
@@ -66,9 +64,7 @@ returns a pointer to the parent directory of
 .Pp
 If
 .Fn dirname
-fails, a
-.Dv NULL
-pointer is returned and the global variable
+fails, a null pointer is returned and the global variable
 .Va errno
 is set to indicate the error.
 .Sh ERRORS

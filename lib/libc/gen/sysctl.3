@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.17 1999/06/03 10:03:23 aaron Exp $
+.\"	$OpenBSD: sysctl.3,v 1.18 1999/06/04 01:30:11 aaron Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -711,8 +711,7 @@ The
 array is less than two or greater than
 .Dv CTL_MAXNAME .
 .It Bq Er EINVAL
-A
-.Pf non- Dv NULL
+A non-null
 .Fa newp
 pointer is given and its specified length in
 .Fa newlen
