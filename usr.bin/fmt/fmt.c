@@ -1,4 +1,4 @@
-/*	$OpenBSD: fmt.c,v 1.14 1999/12/15 05:34:33 deraadt Exp $	*/
+/*	$OpenBSD: fmt.c,v 1.15 1999/12/30 18:00:42 provos Exp $	*/
 
 /* Sensible version of fmt
  *
@@ -168,7 +168,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-  "$OpenBSD: fmt.c,v 1.14 1999/12/15 05:34:33 deraadt Exp $";
+  "$OpenBSD: fmt.c,v 1.15 1999/12/30 18:00:42 provos Exp $";
 static const char copyright[] =
   "Copyright (c) 1997 Gareth McCaughan. All rights reserved.\n";
 #endif /* not lint */
@@ -604,7 +604,7 @@ get_line(FILE *stream, size_t *lengthp) {
   if (buf==NULL) { length=100; buf=XMALLOC(length); }
   while ((ch=getc(stream)) != '\n' && ch != EOF) {
     if (ch==' ') ++spaces_pending;
-    else if (isprint(ch)) {
+    else if (!iscntrl(ch)) {
       while (len+spaces_pending >= length) {
         length*=2; buf=xrealloc(buf, length);
       }
