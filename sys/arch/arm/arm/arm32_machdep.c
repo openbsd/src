@@ -1,4 +1,4 @@
-/*	$OpenBSD: arm32_machdep.c,v 1.8 2005/03/03 22:55:00 uwe Exp $	*/
+/*	$OpenBSD: arm32_machdep.c,v 1.9 2005/03/07 02:08:45 uwe Exp $	*/
 /*	$NetBSD: arm32_machdep.c,v 1.42 2003/12/30 12:33:15 pk Exp $	*/
 
 /*
@@ -62,8 +62,13 @@
 #include <arm/katelib.h>
 #include <arm/machdep.h>
 #include <machine/bootconfig.h>
+#include <machine/conf.h>
 
+#ifdef CONF_HAVE_APM
 #include "apm.h"
+#else
+#define NAPM	0
+#endif
 #include "rd.h"
 
 struct vm_map *exec_map = NULL;
