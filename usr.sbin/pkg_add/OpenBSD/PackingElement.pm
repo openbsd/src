@@ -1,4 +1,4 @@
-# $OpenBSD: PackingElement.pm,v 1.6 2004/01/22 21:11:43 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.7 2004/01/28 22:12:01 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -402,6 +402,13 @@ __PACKAGE__->setKeyword('name');
 sub keyword() { "name" }
 sub category() { "name" }
 
+package OpenBSD::PackingElement::LocalBase;
+our @ISA=qw(OpenBSD::PackingElement::Unique OpenBSD::PackingElement);
+
+__PACKAGE__->setKeyword('localbase');
+sub keyword() { "localbase" }
+sub category() { "localbase" }
+
 package OpenBSD::PackingElement::Cwd;
 use File::Spec;
 our @ISA=qw(OpenBSD::PackingElement);
@@ -414,9 +421,6 @@ sub destate
 {
 	my ($self, $state) = @_;
 	$state->{cwd} = $self->{name};
-	if (!defined $state->{prefix}) {
-		$state->{prefix} = $state->{cwd};
-	}
 }
 
 package OpenBSD::PackingElement::Owner;

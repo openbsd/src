@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.25 2004/01/27 17:47:45 sturm Exp $
+# $OpenBSD: pkg_add,v 1.26 2004/01/28 22:12:01 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -120,11 +120,12 @@ package main;
 
 my $errors = 0;
 
-our ($opt_v, $opt_n, $opt_I, $opt_f);
-getopts('vnIf:');
+our ($opt_v, $opt_n, $opt_I, $opt_f, $opt_L);
+getopts('vnIL:f:');
 if ($opt_f) {
 	%forced = map {($_, 1)} split(/,/, $opt_f);
 }
+$opt_L = '/usr/local' unless defined $opt_L;
 
 if ($< && !$forced{nonroot}) {
 	die "$0 must be run as root";
@@ -185,6 +186,11 @@ sub pre_add($$)
 	    OpenBSD::PackingList->fromfile($dir.CONTENTS);
 	unless (defined $plist) {
 		print "Can't find CONTENTS from $pkg\n";
+		$errors++;
+		return undef;
+	}
+	if ($plist->pkgbase() ne $opt_L) {
+		print "Localbase mismatch: package has: ", $plist->pkgbase(), " , user wants: $opt_L\n";
 		$errors++;
 		return undef;
 	}
@@ -350,7 +356,7 @@ sub really_add($)
 	my $plist = $handle->{plist};
 	my $dir = $handle->info();
 	my $pkgname = $plist->pkgname();
-	$ENV{'PKG_PREFIX'} = '/usr/local';
+	$ENV{'PKG_PREFIX'} = $plist->pkgbase();
 	# check for collisions with existing stuff
 	my $problems = 0;
 	for my $item (@{$plist->{items}}) {
@@ -484,7 +490,7 @@ while (my $pkg = shift @todo) {
 	for my $dep (@{$plist->{libdepend}}) {
 		# can't check libspecs yet
 		next if $dep->{name} ne $plist->pkgname();
-		if (!check_lib_specs('/usr/local', $dep->{libspec})) {
+		if (!check_lib_specs($plist->pkgbase(), $dep->{libspec})) {
 			print "Can't install $pkg: incorrect libspec: ",
 			    $dep->{libspec}, "\n";
 			next MAINLOOP unless $forced{libdepends};

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.3 2004/01/22 21:11:43 espie Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.4 2004/01/28 22:12:01 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -43,6 +43,7 @@
 .Op Fl r Ar rscript
 .Op Fl S Ar fake-base
 .Op Fl D Ar displayfile
+.Op Fl L Ar localbase
 .Fl c Ar comment
 .Fl d Ar description
 .Fl f Ar packlist
@@ -130,6 +131,16 @@ the package, and to record as the base for installing the package.
 Set
 .Ar fake-base
 as the prefix to prepend to any file to select for the package.
+.It Fl L Ar localbase
+Record
+.Ar localbase
+as the localbase used in the package.
+By default,
+.Pa /usr/local .
+Packages built with another localbase can only be installed by using
+the same localbase in
+.Xr pkg_add 1 ,
+to prevent errors.
 .It Fl k Ar dscript
 Set
 .Ar dscript
@@ -268,6 +279,10 @@ may trip someone up later.
 .It Cm @ignore
 Used internally to tell extraction to ignore the next file (don't
 copy it anywhere), as it's used for some special purpose.
+.It Cm @localbase
+Used internally to record the settings of
+.Fl L
+option.
 .It Cm @name Ar name
 Set the name of the package.
 This is mandatory and is usually put at the top.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.10 2004/01/27 14:50:52 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.11 2004/01/28 22:12:01 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -27,6 +27,7 @@
 .Nm pkg_add
 .Op Fl Inv
 .Op Fl f Ar keys
+.Op Fl L Ar localbase
 .Ar pkg-name Op Ar ...
 .Sh DESCRIPTION
 The
@@ -139,6 +140,26 @@ install even if not running as root.
 .It Ar scripts
 install scripts may fail.
 .El
+.It Fl L Ar localbase
+Install a package under
+.Ar localbase .
+By default,
+.Ar localbase
+equals
+.Pa /usr/local ,
+and specifying it is not necessary.
+However, packages can be created using a different
+.Ar localbase 
+.Po
+see
+.Xr pkg_create 1
+.Pc ,
+and those packages can only be installed by using the same 
+.Ar localbase .
+See
+.Xr bsd.port.mk 5
+for a description of
+.Ev LOCALBASE .
 .El
 .Pp
 By default, when adding packages via FTP, the

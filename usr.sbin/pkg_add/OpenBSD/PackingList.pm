@@ -1,4 +1,4 @@
-# $OpenBSD: PackingList.pm,v 1.4 2003/12/26 16:44:31 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.5 2004/01/28 22:12:01 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -148,10 +148,15 @@ sub pkgname($)
 	return $self->{name}->{name};
 }
 
-sub prefix($)
+sub pkgbase($)
 {
 	my $self = shift;
-	return $self->{state}->{prefix};
+
+	if (defined $self->{localbase}) {
+		return $self->{localbase}->{name};
+	} else {
+		return '/usr/local';
+	}
 }
 
 # allows the autoloader to work correctly

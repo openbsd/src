@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.21 2004/01/27 15:34:31 espie Exp $
+# $OpenBSD: pkg_delete,v 1.22 2004/01/28 22:12:01 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -248,7 +248,7 @@ sub delete
 
 package main;
 
-our ($opt_v, $opt_D, $opt_d, $opt_n, $opt_f, $opt_q, $opt_p, $opt_c);
+our ($opt_v, $opt_D, $opt_d, $opt_n, $opt_f, $opt_q, $opt_p, $opt_c, $opt_L);
 
 sub remove_packing_info
 {
@@ -288,7 +288,7 @@ sub delete_package
 	}
 	die if $problems;
 
-	$ENV{'PKG_PREFIX'} = '/usr/local';
+	$ENV{'PKG_PREFIX'} = $plist->pkgbase();
 	if ($plist->has(REQUIRE)) {
 		$plist->get(REQUIRE)->delete($state);
 	}
@@ -314,7 +314,9 @@ sub delete_package
 	remove_packing_info($dir) unless $opt_n;
 }
 
-getopts('vcDdnf:qpS:');
+getopts('vcDdnf:qpS:L:');
+
+$opt_L = '/usr/local' unless defined $opt_L;
 
 if (defined $opt_p) {
 	die "Option p is obsolete";
