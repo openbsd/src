@@ -1,8 +1,8 @@
-# $OpenBSD: pf.os,v 1.6 2003/08/28 18:17:09 frantzen Exp $
+# $OpenBSD: pf.os,v 1.7 2003/08/29 18:43:41 david Exp $
 # passive OS fingerprinting
 # -------------------------
 #
-# SYN signatures. Those signatures work for SYN packets only (duh!). 
+# SYN signatures. Those signatures work for SYN packets only (duh!).
 #
 # (C) Copyright 2000-2003 by Michal Zalewski <lcamtuf@coredump.cx>
 # (C) Copyright 2003 by Mike Frantzen <frantzen@w4g.org>
@@ -37,7 +37,7 @@
 #   cases, the value is just arbitrary.
 #
 #   NEW SIGNATURE: if p0f reported a special value of 'Snn', the number
-#   appears to be a multiple of MSS (MSS*nn); a special value of 'Tnn' 
+#   appears to be a multiple of MSS (MSS*nn); a special value of 'Tnn'
 #   means it is a multiple of MTU ((MSS+40)*nn). Unless you notice the
 #   value of nn is not fixed (unlikely), just copy the Snn or Tnn token
 #   literally. If you know this device has a simple stack and a fixed
@@ -46,7 +46,7 @@
 #
 #   If WSS otherwise looks like a fixed value (for example a multiple
 #   of two), or if you can confirm the value is fixed, please quote
-#   it literaly. If there's no apparent pattern in WSS chosen, you
+#   it literally. If there's no apparent pattern in WSS chosen, you
 #   should consider wildcarding this value.
 #
 # - Overall packet size - a function of all IP and TCP options and bugs.
@@ -55,7 +55,7 @@
 #
 # - Initial TTL - We check the actual TTL of a received packet. It can't
 #   be higher than the initial TTL, and also shouldn't be dramatically
-#   lower (maximum distance is defined as 40 hops). 
+#   lower (maximum distance is defined as 40 hops).
 #
 #   NEW SIGNATURE: *Never* copy TTL from a p0f-reported signature literally.
 #   You need to determine the initial TTL. The best way to do it is to
@@ -82,7 +82,7 @@
 #
 # - Window scaling (WSCALE) - this feature is used to scale WSS.
 #   It extends the size of a TCP/IP window to 32 bits. Some modern
-#   systems implement this feature. 
+#   systems implement this feature.
 #
 #   NEW SIGNATURE: Observe several signatures. Initial WSCALE is often set
 #   to zero or other low value. There's usually no need to wildcard this
@@ -91,7 +91,7 @@
 # - Timestamp - some systems that implement timestamps set them to
 #   zero in the initial SYN. This case is detected and handled appropriately.
 #
-# - Selective ACK permitted - a flag set by systems that implement 
+# - Selective ACK permitted - a flag set by systems that implement
 #   selective ACK functionality.
 #
 # - The sequence of TCP all options (MSS, window scaling, selective ACK
@@ -103,7 +103,7 @@
 #   NEW SIGNATURE: Copy the sequence literally.
 #
 # To wildcard any value (except for initial TTL or TCP options), replace
-# it with '*'. You can also use a modulo operator to match any values 
+# it with '*'. You can also use a modulo operator to match any values
 # that divide by nnn - '%nnn'.
 #
 # Fingerprint entry format:
@@ -113,7 +113,7 @@
 # wwww     - window size (can be *, %nnn, Snn or Tnn).  The special values
 #            "S" and "T" which are a multiple of MSS or a multiple of MTU
 #            respectively.
-# ttt      - initial TTL 
+# ttt      - initial TTL
 # D        - don't fragment bit (0 - not set, 1 - set)
 # ss       - overall SYN packet size
 # OOO      - option value and order specification (see below)
@@ -128,7 +128,7 @@
 # bogus.
 #
 # If OS genre starts with @, it denotes an approximate hit for a group
-# of operating systems (signature reporting still enabled in this case). 
+# of operating systems (signature reporting still enabled in this case).
 # Use this feature at the end of this file to catch cases for which
 # you don't have a precise match, but can tell it's Windows or FreeBSD
 # or whatnot by looking at, say, flag layout alone.
@@ -154,7 +154,7 @@
 # -----------------------
 #
 # Do not add a system X as OS Y just because NMAP says so. It is often
-# the case that X is a NAT firewall. While nmap is talking to the 
+# the case that X is a NAT firewall. While nmap is talking to the
 # device itself, p0f is fingerprinting the guy behind the firewall
 # instead.
 #
@@ -350,7 +350,7 @@ S52:128:1:48:M1260,N,N,S:		Windows:2000:Cisco VPN:Windows XP/2000 via Cisco VPN 
 # Odds, ends, mods. Advanced Networking Pack turns out to be
 # responsible for enabling RFC1323, System Mechanic also messes
 # with TTLs and timestamps:
- 
+
 *:128:1:64:M*,N,W2,N,N,T0,N,N,S:	Windows:2000:SP4:Windows 2000 SP4 (AdvNetPack) or PalmPC
 S4:128:1:48:M*,N,N,S:			Windows:2000:SP3:Windows 2000 SP3 (NetTweak)
 S44:128:1:64:M*,N,W0,N,N,T0,N,N,S:	Windows:XP:AdvNetPack:Windows XP (AdvNetPack)
@@ -383,7 +383,7 @@ S17:64:1:44:M1460:			SCO:OpenServer:5.0:SCO Unixware 7.0.0 or OpenServer 5.0.4-5
 
 
 # ---------------- NewtonOS -----------------
- 
+
 4096:64:0:44:M1420:		NewtonOS:2.1::NewtonOS 2.1
 
 # ---------------- NeXTSTEP -----------------
@@ -413,7 +413,7 @@ S8:64:0:44:M512:		NeXTSTEP:3.3::NeXTSTEP 3.3
 
 # ---------- Firewalls / routers ------------
 
-S12:64:1:44:M1460:			@Checkpoint:::Checkpoint (rnknown 1)
+S12:64:1:44:M1460:			@Checkpoint:::Checkpoint (unknown 1)
 S12:64:1:48:N,N,S,M1460:		@Checkpoint:::Checkpoint (unknown 2)
 4096:32:0:44:M1460:			ExtremeWare:4.x::ExtremeWare 4.x
 60352:64:0:52:M1460,N,W2,N,N,S:		Clavister:7.03.01::Clavister firewall 7.03.01
