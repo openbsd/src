@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsec.4,v 1.11 1998/10/31 23:17:40 espie Exp $
+.\" $OpenBSD: ipsec.4,v 1.12 1998/12/29 12:01:25 deraadt Exp $
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -86,9 +86,11 @@ packets that have been successfully processed by IPSec.
 Security Associations can be set up manually with
 the
 .Xr ipsecadm 1
-utility or the
+utility or the 
 .Xr photurisd 8
-key management daemon.
+or
+.Xr isakmpd 8
+key management daemons.
 .Pp
 The following
 .Tn IP-level
@@ -116,7 +118,9 @@ specify the security policy to use in that catagory:
 Bypass the default system security policy. This option can only be used
 by privileged processes.
 This level is necessary for key management daemons like
-.Xr photurisd 8 .
+.Xr photurisd 8
+or
+.Xr isakmpd 8 .
 .It IPSEC_LEVEL_AVAIL
 If a Security Association is available it will be used for sending packets
 by that socket.
@@ -176,6 +180,7 @@ At the moment the socket options are not fully implemented.
 .Xr tcp 4 ,
 .Xr udp 4 ,
 .Xr icmp 4 ,
+.Xr isakmpd 4 ,
 .Xr ipsecadm 1 ,
 .Xr photurisd 8 ,
 .Xr vpn 8 .
