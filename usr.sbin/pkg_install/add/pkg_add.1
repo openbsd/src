@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.30 2003/03/07 06:30:38 david Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.31 2003/04/15 19:50:22 jmc Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -79,7 +79,7 @@ Alternatively, it is possible to add packages interactively from within
 the ftp client.
 For example, the following works:
 .Bd -literal
-	$ ftp ftp://ftp.openbsd.org/pub/OpenBSD/2.7/packages/i386
+	$ ftp ftp://ftp.openbsd.org/pub/OpenBSD/2.7/packages/i386/
 	250 CWD command successful
 	ftp> ls m*
 	227 Entering Passive Mode (129,128,5,191,164,73)
@@ -300,7 +300,7 @@ If the
 .Ar install
 script exits with a non-zero status code, the installation is terminated.
 .It
-The packing list is used as a guide for moving (or copying, as necessary) 
+The packing list is used as a guide for moving (or copying, as necessary)
 files from the staging area into their final locations.
 .It
 If the package contains an
