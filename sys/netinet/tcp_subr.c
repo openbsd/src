@@ -1,4 +1,5 @@
-/*	$NetBSD: tcp_subr.c,v 1.20 1995/11/21 01:07:41 cgd Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.3 1996/03/03 22:30:47 niklas Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -66,7 +67,10 @@ int 	tcp_mssdflt = TCP_MSS;
 int 	tcp_rttdflt = TCPTV_SRTTDFLT / PR_SLOWHZ;
 int	tcp_do_rfc1323 = 1;
 
-extern	struct inpcb *tcp_last_inpcb;
+#ifndef TCBHASHSIZE
+#define	TCBHASHSIZE	128
+#endif
+int	tcbhashsize = TCBHASHSIZE;
 
 /*
  * Tcp initialization
@@ -76,7 +80,7 @@ tcp_init()
 {
 
 	tcp_iss = 1;		/* wrong */
-	in_pcbinit(&tcbtable);
+	in_pcbinit(&tcbtable, tcbhashsize);
 	if (max_protohdr < sizeof(struct tcpiphdr))
 		max_protohdr = sizeof(struct tcpiphdr);
 	if (max_linkhdr + sizeof(struct tcpiphdr) > MHLEN)
@@ -272,7 +276,6 @@ tcp_close(tp)
 	register struct ipqent *qe;
 	struct inpcb *inp = tp->t_inpcb;
 	struct socket *so = inp->inp_socket;
-	register struct mbuf *m;
 #ifdef RTV_RTT
 	register struct rtentry *rt;
 
@@ -291,7 +294,7 @@ tcp_close(tp)
 	if (SEQ_LT(tp->iss + so->so_snd.sb_hiwat * 16, tp->snd_max) &&
 	    (rt = inp->inp_route.ro_rt) &&
 	    satosin(rt_key(rt))->sin_addr.s_addr != INADDR_ANY) {
-		register u_long i;
+		register u_long i = 0;
 
 		if ((rt->rt_rmx.rmx_locks & RTV_RTT) == 0) {
 			i = tp->t_srtt *
@@ -324,8 +327,8 @@ tcp_close(tp)
 		 * before we start updating, then update on both good
 		 * and bad news.
 		 */
-		if ((rt->rt_rmx.rmx_locks & RTV_SSTHRESH) == 0 &&
-		    (i = tp->snd_ssthresh) && rt->rt_rmx.rmx_ssthresh ||
+		if (((rt->rt_rmx.rmx_locks & RTV_SSTHRESH) == 0 &&
+		    (i = tp->snd_ssthresh) && rt->rt_rmx.rmx_ssthresh) ||
 		    i < (rt->rt_rmx.rmx_sendpipe / 2)) {
 			/*
 			 * convert the limit from user data bytes to
@@ -354,9 +357,6 @@ tcp_close(tp)
 	free(tp, M_PCB);
 	inp->inp_ppcb = 0;
 	soisdisconnected(so);
-	/* clobber input pcb cache if we're closing the cached connection */
-	if (inp == tcp_last_inpcb)
-		tcp_last_inpcb = 0;
 	in_pcbdetach(inp);
 	tcpstat.tcps_closed++;
 	return ((struct tcpcb *)0);
@@ -402,20 +402,20 @@ tcp_notify(inp, error)
 	sowwakeup(so);
 }
 
-void
-tcp_ctlinput(cmd, sa, ip)
+void *
+tcp_ctlinput(cmd, sa, v)
 	int cmd;
 	struct sockaddr *sa;
-	register struct ip *ip;
+	register void *v;
 {
+	register struct ip *ip = v;
 	register struct tcphdr *th;
-	extern struct in_addr zeroin_addr;
 	extern int inetctlerrmap[];
 	void (*notify) __P((struct inpcb *, int)) = tcp_notify;
 	int errno;
 
 	if ((unsigned)cmd >= PRC_NCMDS)
-		return;
+		return NULL;
 	errno = inetctlerrmap[cmd];
 	if (cmd == PRC_QUENCH)
 		notify = tcp_quench;
@@ -424,13 +424,14 @@ tcp_ctlinput(cmd, sa, ip)
 	else if (cmd == PRC_HOSTDEAD)
 		ip = 0;
 	else if (errno == 0)
-		return;
+		return NULL;
 	if (ip) {
 		th = (struct tcphdr *)((caddr_t)ip + (ip->ip_hl << 2));
 		in_pcbnotify(&tcbtable, sa, th->th_dport, ip->ip_src,
 		    th->th_sport, errno, notify);
 	} else
 		in_pcbnotifyall(&tcbtable, sa, errno, notify);
+	return NULL;
 }
 
 /*

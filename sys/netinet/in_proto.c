@@ -1,4 +1,5 @@
-/*	$NetBSD: in_proto.c,v 1.12 1995/09/30 07:02:00 thorpej Exp $	*/
+/*	$OpenBSD: in_proto.c,v 1.2 1996/03/03 22:30:33 niklas Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.13 1996/02/13 23:42:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -66,20 +67,21 @@
  */
 
 #ifdef NSIP
-void	idpip_input(), nsip_ctlinput();
+#include <netns/ns_var.h>
+#include <netns/idp_var.h>
 #endif /* NSIP */
 
 #ifdef TPIP
-void	tpip_input(), tpip_ctlinput(), tp_init(), tp_slowtimo(), tp_drain();
-int	tp_ctloutput(), tp_usrreq();
+#include <netiso/tp_param.h>
+#include <netiso/tp_var.h>
 #endif /* TPIP */
 
 #ifdef EON
-void	eoninput(), eonctlinput(), eonprotoinit();
+#include <netiso/eonvar.h>
 #endif /* EON */
 
 #ifdef MROUTING
-void	ipip_input();
+#include <netinet/mroute.h>
 #endif /* MROUTING */
 
 extern	struct domain inetdomain;

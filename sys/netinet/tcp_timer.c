@@ -1,4 +1,5 @@
-/*	$NetBSD: tcp_timer.c,v 1.13 1995/08/12 23:59:39 mycroft Exp $	*/
+/*	$OpenBSD: tcp_timer.c,v 1.2 1996/03/03 22:30:48 niklas Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.14 1996/02/13 23:44:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -203,7 +204,7 @@ tcp_timers(tp, timer)
 		}
 		tcpstat.tcps_rexmttimeo++;
 		rexmt = TCP_REXMTVAL(tp) * tcp_backoff[tp->t_rxtshift];
-		TCPT_RANGESET(tp->t_rxtcur, rexmt,
+		TCPT_RANGESET((long) tp->t_rxtcur, rexmt,
 		    tp->t_rttmin, TCPTV_REXMTMAX);
 		tp->t_timer[TCPT_REXMT] = tp->t_rxtcur;
 		/*

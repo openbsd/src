@@ -1,4 +1,5 @@
-/*	$NetBSD: igmp.c,v 1.14 1995/08/12 23:59:31 mycroft Exp $	*/
+/*	$OpenBSD: igmp.c,v 1.2 1996/03/03 22:30:26 niklas Exp $	*/
+/*	$NetBSD: igmp.c,v 1.15 1996/02/13 23:41:25 christos Exp $	*/
 
 /*
  * Internet Group Management Protocol (IGMP) routines.
@@ -14,6 +15,7 @@
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/protosw.h>
+#include <sys/systm.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -26,12 +28,16 @@
 #include <netinet/igmp.h>
 #include <netinet/igmp_var.h>
 
+#include <machine/stdarg.h>
+
 #define IP_MULTICASTOPTS	0
 
 int		igmp_timers_are_running;
 static struct router_info *rti_head;
 
 void igmp_sendpkt __P((struct in_multi *, int));
+static int rti_fill __P((struct in_multi *));
+static struct router_info * rti_find __P((struct ifnet *));
 
 void
 igmp_init()
@@ -91,10 +97,15 @@ rti_find(ifp)
 }
 
 void
-igmp_input(m, iphlen)
-	register struct mbuf *m;
-	register int iphlen;
+#if __STDC__
+igmp_input(struct mbuf *m, ...)
+#else
+igmp_input(m, va_alist)
+	struct mbuf *m;
+	va_dcl
+#endif
 {
+	register int iphlen;
 	register struct ifnet *ifp = m->m_pkthdr.rcvif;
 	register struct ip *ip = mtod(m, struct ip *);
 	register struct igmp *igmp;
@@ -105,6 +116,11 @@ igmp_input(m, iphlen)
 	struct router_info *rti;
 	register struct in_ifaddr *ia;
 	int timer;
+	va_list ap;
+
+	va_start(ap, m);
+	iphlen = va_arg(ap, int);
+	va_end(ap);
 
 	++igmpstat.igps_rcv_total;
 

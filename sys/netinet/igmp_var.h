@@ -1,4 +1,5 @@
-/*	$NetBSD: igmp_var.h,v 1.8 1995/05/31 06:08:24 mycroft Exp $	*/
+/*	$OpenBSD: igmp_var.h,v 1.2 1996/03/03 22:30:27 niklas Exp $	*/
+/*	$NetBSD: igmp_var.h,v 1.9 1996/02/13 23:41:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 Stephen Deering.
@@ -73,7 +74,7 @@ struct igmpstat igmpstat;
 #define	IGMP_RANDOM_DELAY(X)	(random() % (X) + 1)
 
 void	igmp_init __P((void));
-void	igmp_input __P((struct mbuf *, int));
+void	igmp_input __P((struct mbuf *, ...));
 void	igmp_joingroup __P((struct in_multi *));
 void	igmp_leavegroup __P((struct in_multi *));
 void	igmp_fasttimo __P((void));

@@ -1,4 +1,5 @@
-/*	$NetBSD: raw_ip.c,v 1.22 1995/11/30 16:42:18 pk Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.3 1996/03/03 22:30:43 niklas Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.24 1996/02/13 23:43:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -53,6 +54,9 @@
 #include <netinet/ip_var.h>
 #include <netinet/ip_mroute.h>
 #include <netinet/in_pcb.h>
+#include <netinet/in_var.h>
+
+#include <machine/stdarg.h>
 
 struct inpcbtable rawcbtable;
 
@@ -73,7 +77,7 @@ void
 rip_init()
 {
 
-	in_pcbinit(&rawcbtable);
+	in_pcbinit(&rawcbtable, 1);
 }
 
 struct	sockaddr_in ripsrc = { sizeof(ripsrc), AF_INET };
@@ -83,8 +87,13 @@ struct	sockaddr_in ripsrc = { sizeof(ripsrc), AF_INET };
  * mbuf chain.
  */
 void
-rip_input(m)
+#if __STDC__
+rip_input(struct mbuf *m, ...)
+#else
+rip_input(m, va_alist)
 	struct mbuf *m;
+	va_dcl
+#endif
 {
 	register struct ip *ip = mtod(m, struct ip *);
 	register struct inpcb *inp;
@@ -104,7 +113,7 @@ rip_input(m)
 			continue;
 		if (last) {
 			struct mbuf *n;
-			if (n = m_copy(m, 0, (int)M_COPYALL)) {
+			if ((n = m_copy(m, 0, (int)M_COPYALL)) != NULL) {
 				if (sbappendaddr(&last->so_rcv,
 				    sintosa(&ripsrc), n,
 				    (struct mbuf *)0) == 0)
@@ -134,15 +143,29 @@ rip_input(m)
  * Tack on options user may have setup with control call.
  */
 int
-rip_output(m, so, dst)
-	register struct mbuf *m;
+#if __STDC__
+rip_output(struct mbuf *m, ...)
+#else
+rip_output(m, va_alist)
+	struct mbuf *m;
+	va_dcl
+#endif
+{
 	struct socket *so;
 	u_long dst;
-{
 	register struct ip *ip;
-	register struct inpcb *inp = sotoinpcb(so);
+	register struct inpcb *inp;
 	struct mbuf *opts;
-	int flags = (so->so_options & SO_DONTROUTE) | IP_ALLOWBROADCAST;
+	int flags;
+	va_list ap;
+
+	va_start(ap, m);
+	so = va_arg(ap, struct socket *);
+	dst = va_arg(ap, u_long);
+	va_end(ap);
+
+	inp = sotoinpcb(so);
+	flags = (so->so_options & SO_DONTROUTE) | IP_ALLOWBROADCAST;
 
 	/*
 	 * If the user handed us a complete IP packet, use it.
@@ -182,7 +205,6 @@ rip_ctloutput(op, so, level, optname, m)
 	struct mbuf **m;
 {
 	register struct inpcb *inp = sotoinpcb(so);
-	register int error;
 
 	if (level != IPPROTO_IP) {
 		if (m != 0 && *m != 0)

@@ -1,4 +1,5 @@
-/*	$NetBSD: if_ether.h,v 1.20 1995/06/12 00:47:27 mycroft Exp $	*/
+/*	$OpenBSD: if_ether.h,v 1.2 1996/03/03 22:30:25 niklas Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.21 1996/02/13 23:41:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -231,3 +232,21 @@ struct ether_multistep {
 	(step).e_enm = (ac)->ac_multiaddrs.lh_first; \
 	ETHER_NEXT_MULTI((step), (enm)); \
 }
+
+#ifdef _KERNEL
+
+void arp_rtrequest __P((int, struct rtentry *, struct sockaddr *));
+void arpwhohas __P((struct arpcom *, struct in_addr *));
+int arpresolve __P((struct arpcom *, struct rtentry *, struct mbuf *,
+		    struct sockaddr *, u_char *));
+void arpintr __P((void));
+int arpioctl __P((u_long, caddr_t));
+void arp_ifinit __P((struct arpcom *, struct ifaddr *));
+void revarpinput __P((struct mbuf *));
+void in_revarpinput __P((struct mbuf *));
+void revarprequest __P((struct ifnet *));
+int revarpwhoarewe __P((struct ifnet *, struct in_addr *, struct in_addr *));
+int revarpwhoami __P((struct in_addr *, struct ifnet *));
+int db_show_arptab __P((void));
+
+#endif

@@ -1,4 +1,5 @@
-/*	$NetBSD: ip_var.h,v 1.15 1995/11/21 01:07:38 cgd Exp $	*/
+/*	$OpenBSD: ip_var.h,v 1.3 1996/03/03 22:30:42 niklas Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.16 1996/02/13 23:43:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -167,8 +168,7 @@ int	 ip_getmoptions __P((int, struct ip_moptions *, struct mbuf **));
 void	 ip_init __P((void));
 int	 ip_mforward __P((struct mbuf *, struct ifnet *));
 int	 ip_optcopy __P((struct ip *, struct ip *));
-int	 ip_output __P((struct mbuf *,
-	    struct mbuf *, struct route *, int, struct ip_moptions *));
+int	 ip_output __P((struct mbuf *, ...));
 int	 ip_pcbopts __P((struct mbuf **, struct mbuf *));
 struct ip *
 	 ip_reass __P((struct ipqent *, struct ipq *));
@@ -183,8 +183,8 @@ int	 ip_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
 void	 ipintr __P((void));
 int	 rip_ctloutput __P((int, struct socket *, int, int, struct mbuf **));
 void	 rip_init __P((void));
-void	 rip_input __P((struct mbuf *));
-int	 rip_output __P((struct mbuf *, struct socket *, u_long));
+void	 rip_input __P((struct mbuf *, ...));
+int	 rip_output __P((struct mbuf *, ...));
 int	 rip_usrreq __P((struct socket *,
 	    int, struct mbuf *, struct mbuf *, struct mbuf *));
 #endif

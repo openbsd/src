@@ -1,4 +1,5 @@
-/*	$NetBSD: tcp_var.h,v 1.15 1995/11/21 01:07:43 cgd Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.3 1996/03/03 22:30:50 niklas Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993, 1994
@@ -220,7 +221,9 @@ struct	tcpstat {
 	u_long	tcps_pawsdrop;		/* segments dropped due to PAWS */
 	u_long	tcps_predack;		/* times hdr predict ok for acks */
 	u_long	tcps_preddat;		/* times hdr predict ok for data pkts */
-	u_long	tcps_pcbcachemiss;
+
+	u_long	tcps_pcbhashmiss;	/* input packets missing pcb hash */
+	u_long	tcps_noport;		/* no socket on port */
 };
 
 /*
@@ -245,7 +248,7 @@ int	 tcp_attach __P((struct socket *));
 void	 tcp_canceltimers __P((struct tcpcb *));
 struct tcpcb *
 	 tcp_close __P((struct tcpcb *));
-void	 tcp_ctlinput __P((int, struct sockaddr *, struct ip *));
+void	 *tcp_ctlinput __P((int, struct sockaddr *, void *));
 int	 tcp_ctloutput __P((int, struct socket *, int, int, struct mbuf **));
 struct tcpcb *
 	 tcp_disconnect __P((struct tcpcb *));
@@ -256,7 +259,7 @@ void	 tcp_dooptions __P((struct tcpcb *,
 void	 tcp_drain __P((void));
 void	 tcp_fasttimo __P((void));
 void	 tcp_init __P((void));
-void	 tcp_input __P((struct mbuf *, int));
+void	 tcp_input __P((struct mbuf *, ...));
 int	 tcp_mss __P((struct tcpcb *, u_int));
 struct tcpcb *
 	 tcp_newtcpcb __P((struct inpcb *));

@@ -1,4 +1,5 @@
-/*	$NetBSD: tcp_output.c,v 1.13 1995/04/13 20:09:23 cgd Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.2 1996/03/03 22:30:46 niklas Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.14 1996/02/13 23:43:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -59,6 +60,11 @@
 #include <netinet/tcp_var.h>
 #include <netinet/tcpip.h>
 #include <netinet/tcp_debug.h>
+
+#ifdef TUBA
+#include <netiso/iso.h>
+#include <netiso/tuba_table.h>
+#endif
 
 #ifdef notyet
 extern struct mbuf *m_copypack();

@@ -1,4 +1,5 @@
-/*	$NetBSD: in.h,v 1.17 1995/06/04 05:06:55 mycroft Exp $	*/
+/*	$OpenBSD: in.h,v 1.5 1996/03/03 22:30:29 niklas Exp $	*/
+/*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -91,7 +92,7 @@ struct in_addr {
  * on these macros not doing byte-swapping.
  */
 #ifdef _KERNEL
-#define	__IPADDR(x)	htonl((u_int32_t)(x))
+#define	__IPADDR(x)	((u_int32_t) htonl((u_int32_t)(x)))
 #else
 #define	__IPADDR(x)	((u_int32_t)(x))
 #endif
@@ -244,8 +245,9 @@ struct ip_mreq {
 #ifdef notyet
 #define	IPCTL_DEFMTU		4	/* default MTU */
 #endif
-#define IPCTL_SOURCEROUTE	5	/* may perform source routes */
-#define	IPCTL_MAXID		6
+#define	IPCTL_SOURCEROUTE	5	/* may perform source routes */
+#define	IPCTL_DIRECTEDBCAST	6	/* default broadcast behavior */
+#define	IPCTL_MAXID		7
 
 #define	IPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -254,6 +256,7 @@ struct ip_mreq {
 	{ "ttl", CTLTYPE_INT }, \
 	{ "mtu", CTLTYPE_INT }, \
 	{ "sourceroute", CTLTYPE_INT }, \
+	{ "directed-broadcast", CTLTYPE_INT }, \
 }
 
 

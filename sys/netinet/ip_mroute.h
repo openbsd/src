@@ -1,4 +1,5 @@
-/*	$NetBSD: ip_mroute.h,v 1.9 1995/05/31 21:50:43 mycroft Exp $	*/
+/*	$OpenBSD: ip_mroute.h,v 1.2 1996/03/03 22:30:40 niklas Exp $	*/
+/*	$NetBSD: ip_mroute.h,v 1.10 1996/02/13 23:42:55 christos Exp $	*/
 
 /*
  * Definitions for IP multicast forwarding.
@@ -210,9 +211,21 @@ struct pkt_queue {
 };
   
   
-int	ip_mforward __P((struct mbuf *, struct ifnet *));
-int	ip_mrouter_get __P((int, struct socket *, struct mbuf **));
-int	ip_mrouter_set __P((int, struct socket *, struct mbuf **));
-int	ip_mrouter_done __P((void));
+int ip_mrouter_set __P((int, struct socket *, struct mbuf **));
+int ip_mrouter_get __P((int, struct socket *, struct mbuf **));
+int mrt_ioctl __P((u_long, caddr_t));
+int ip_mrouter_done __P((void));
+void reset_vif __P((struct vif *));
+#ifdef RSVP_ISI
+int ip_mforward __P((struct mbuf *, struct ifnet *, struct ip_moptions *));
+int legal_vif_num __P((int));
+int ip_rsvp_vif_init __P((struct socket *, struct mbuf *));
+int ip_rsvp_vif_done __P((struct socket *, struct mbuf *));
+void ip_rsvp_force_done __P((struct socket *));
+void rsvp_input __P((struct mbuf *, struct ifnet *));
+#else
+int ip_mforward __P((struct mbuf *, struct ifnet *));
+#endif
+void ipip_input __P((struct mbuf *, ...));
 
 #endif /* _KERNEL */

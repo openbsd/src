@@ -1,4 +1,5 @@
-/*	$NetBSD: ip_input.c,v 1.25 1995/11/21 01:07:34 cgd Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.9 1996/03/03 22:30:37 niklas Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.28 1996/02/13 23:42:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -46,6 +47,10 @@
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
+#include <sys/proc.h>
+
+#include <vm/vm.h>
+#include <sys/sysctl.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -68,10 +73,22 @@
 #ifndef	IPSENDREDIRECTS
 #define	IPSENDREDIRECTS	1
 #endif
+/*
+ * Note: DIRECTED_BROADCAST is handled this way so that previous
+ * configuration using this option will Just Work.
+ */
+#ifndef IPDIRECTEDBCAST
+#ifdef DIRECTED_BROADCAST
+#define IPDIRECTEDBCAST	1
+#else
+#define	IPDIRECTEDBCAST	0
+#endif /* DIRECTED_BROADCAST */
+#endif /* IPDIRECTEDBCAST */
 int	ipforwarding = IPFORWARDING;
 int	ipsendredirects = IPSENDREDIRECTS;
-int	ip_dosourceroute = 0;	/* no source routing unless sysctl'd to enable */
+int	ip_dosourceroute = 0;	/* no src-routing unless sysctl'd to enable */
 int	ip_defttl = IPDEFTTL;
+int	ip_directedbcast = IPDIRECTEDBCAST;
 #ifdef DIAGNOSTIC
 int	ipprintfs = 0;
 #endif
@@ -82,9 +99,6 @@ u_char	ip_protox[IPPROTO_MAX];
 int	ipqmaxlen = IFQ_MAXLEN;
 struct	in_ifaddrhead in_ifaddr;
 struct	ifqueue ipintrq;
-#if defined(IPFILTER) || defined(IPFILTER_LKM)
-int	(*fr_checkp) __P((struct ip *, int, struct ifnet *, int, struct mbuf **));
-#endif
 
 char *
 inet_ntoa(ina)
@@ -200,7 +214,7 @@ next:
 		}
 		ip = mtod(m, struct ip *);
 	}
-	if (ip->ip_sum = in_cksum(m, hlen)) {
+	if ((ip->ip_sum = in_cksum(m, hlen)) != 0) {
 		ipstat.ips_badsum++;
 		goto bad;
 	}
@@ -234,19 +248,6 @@ next:
 			m_adj(m, ip->ip_len - m->m_pkthdr.len);
 	}
 
-#if defined(IPFILTER) || defined(IPFILTER_LKM)
-	/*
-	 * Check if we want to allow this packet to be processed.
-	 * Consider it to be bad if not.
-	 */
-	{
-		struct mbuf *m0 = m;
-		if (fr_checkp && (*fr_checkp)(ip, hlen, m->m_pkthdr.rcvif, 0, &m0))
-			goto next;
-		else
-		  ip = mtod(m = m0, struct ip *);
-	}
-#endif
 	/*
 	 * Process options and, if not destined for us,
 	 * ship it on.  ip_dooptions returns 1 when an
@@ -263,10 +264,8 @@ next:
 	for (ia = in_ifaddr.tqh_first; ia; ia = ia->ia_list.tqe_next) {
 		if (ip->ip_dst.s_addr == ia->ia_addr.sin_addr.s_addr)
 			goto ours;
-		if (
-#ifdef	DIRECTED_BROADCAST
-		    ia->ia_ifp == m->m_pkthdr.rcvif &&
-#endif
+		if (((ip_directedbcast == 0) || (ip_directedbcast &&
+		    ia->ia_ifp == m->m_pkthdr.rcvif)) &&
 		    (ia->ia_ifp->if_flags & IFF_BROADCAST)) {
 			if (ip->ip_dst.s_addr == ia->ia_broadaddr.sin_addr.s_addr ||
 			    ip->ip_dst.s_addr == ia->ia_netbroadcast.s_addr ||
@@ -386,10 +385,10 @@ found:
 		ip->ip_len -= hlen;
 		mff = (ip->ip_off & IP_MF) != 0;
 		if (mff) {
-		        /*
-		         * Make sure that fragments have a data length
+			/*
+			 * Make sure that fragments have a data length
 			 * that's a non-zero multiple of 8 bytes.
-		         */
+			 */
 			if (ip->ip_len == 0 || (ip->ip_len & 0x7) != 0) {
 				ipstat.ips_badfrags++;
 				goto bad;
@@ -765,6 +764,19 @@ ip_dooptions(m)
 				code = &cp[IPOPT_OFFSET] - (u_char *)ip;
 				goto bad;
 			}
+
+			if (!ip_dosourceroute) {
+				char buf[4*sizeof "123"];
+
+				strcpy(buf, inet_ntoa(ip->ip_dst));
+				log(LOG_WARNING,
+				    "attempted source route from %s to %s\n",
+				    inet_ntoa(ip->ip_src), buf);
+				type = ICMP_UNREACH;
+				code = ICMP_UNREACH_SRCFAIL;
+				goto bad;
+			}
+
 			/*
 			 * If no space remains, ignore.
 			 */
@@ -1028,7 +1040,7 @@ ip_forward(m, srcrt)
 	register struct ip *ip = mtod(m, struct ip *);
 	register struct sockaddr_in *sin;
 	register struct rtentry *rt;
-	int error, type = 0, code;
+	int error, type = 0, code = 0;
 	struct mbuf *mcopy;
 	n_long dest;
 	struct ifnet *destifp;
@@ -1037,7 +1049,7 @@ ip_forward(m, srcrt)
 #ifdef DIAGNOSTIC
 	if (ipprintfs)
 		printf("forward: src %lx dst %x ttl %x\n", ip->ip_src.s_addr,
-			ip->ip_dst.s_addr, ip->ip_ttl);
+		    ip->ip_dst.s_addr, ip->ip_ttl);
 #endif
 	if (m->m_flags & M_BCAST || in_canforward(ip->ip_dst) == 0) {
 		ipstat.ips_cantforward++;
@@ -1100,16 +1112,13 @@ ip_forward(m, srcrt)
 		    code = ICMP_REDIRECT_HOST;
 #ifdef DIAGNOSTIC
 		    if (ipprintfs)
-		        printf("redirect (%d) to %lx\n", code, (u_int32_t)dest);
+			printf("redirect (%d) to %lx\n", code, (u_int32_t)dest);
 #endif
 		}
 	}
 
-	error = ip_output(m, (struct mbuf *)0, &ipforward_rt, IP_FORWARDING
-#ifdef DIRECTED_BROADCAST
-			    | IP_ALLOWBROADCAST
-#endif
-						, 0);
+	error = ip_output(m, (struct mbuf *)0, &ipforward_rt,
+	    (IP_FORWARDING | (ip_directedbcast ? IP_ALLOWBROADCAST : 0)), 0);
 	if (error)
 		ipstat.ips_cantforward++;
 	else {
@@ -1183,7 +1192,16 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &ip_mtu));
 #endif
 	case IPCTL_SOURCEROUTE:
-		return (sysctl_int(oldp, oldlenp, newp, newlen, &ip_dosourceroute));
+		/*
+		 * Don't allow this to change in a secure environment.
+		 */
+		if (securelevel > 0)
+			return (EPERM);
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+		    &ip_dosourceroute));
+	case IPCTL_DIRECTEDBCAST:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+		    &ip_directedbcast));
 	default:
 		return (EOPNOTSUPP);
 	}

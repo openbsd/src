@@ -1,4 +1,5 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.17 1995/09/30 07:02:05 thorpej Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.2 1996/03/03 22:30:49 niklas Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -45,6 +46,10 @@
 #include <sys/protosw.h>
 #include <sys/errno.h>
 #include <sys/stat.h>
+#include <sys/proc.h>
+#include <sys/ucred.h>
+#include <vm/vm.h>
+#include <sys/sysctl.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -81,7 +86,7 @@ tcp_usrreq(so, req, m, nam, control)
 	struct mbuf *m, *nam, *control;
 {
 	register struct inpcb *inp;
-	register struct tcpcb *tp;
+	register struct tcpcb *tp = NULL;
 	int s;
 	int error = 0;
 	int ostate;
@@ -521,8 +526,18 @@ tcp_usrclosed(tp)
 		tp->t_state = TCPS_LAST_ACK;
 		break;
 	}
-	if (tp && tp->t_state >= TCPS_FIN_WAIT_2)
+	if (tp && tp->t_state >= TCPS_FIN_WAIT_2) {
 		soisdisconnected(tp->t_inpcb->inp_socket);
+		/*
+		 * If we are in FIN_WAIT_2, we arrived here because the
+		 * application did a shutdown of the send side.  Like the
+		 * case of a transition from FIN_WAIT_1 to FIN_WAIT_2 after
+		 * a full close, we start a timer to make sure sockets are
+		 * not left in FIN_WAIT_2 forever.
+		 */
+		if (tp->t_state == TCPS_FIN_WAIT_2)
+			tp->t_timer[TCPT_2MSL] = tcp_maxidle;
+	}
 	return (tp);
 }
 
