@@ -1,4 +1,4 @@
-/*	$OpenBSD: rijndael.c,v 1.3 2000/10/15 14:18:31 markus Exp $	*/
+/*	$OpenBSD: rijndael.c,v 1.4 2000/10/16 22:44:33 deraadt Exp $	*/
 
 /* This is an independent implementation of the encryption algorithm:   */
 /*                                                                      */
@@ -56,7 +56,7 @@ void gen_tabs	__P((void));
 
 #define bswap(x)    (rotl(x, 8) & 0x00ff00ff | rotr(x, 8) & 0xff00ff00)
 
-/* Extract byte from a 32 bit quantity (little endian notation)     */ 
+/* Extract byte from a 32 bit quantity (little endian notation)     */
 
 #define byte(x,n)   ((u1byte)((x) >> (8 * n)))
 
@@ -96,7 +96,7 @@ void gen_tabs	__P((void));
 #define get_key(x,len)                          \
     ((u4byte*)(x))[4] = ((u4byte*)(x))[5] =     \
     ((u4byte*)(x))[6] = ((u4byte*)(x))[7] = 0;  \
-    switch((((len) + 63) / 64)) {               \
+    switch ((((len) + 63) / 64)) {               \
     case 2:                                     \
     ((u4byte*)(x))[0] = io_swap(in_key[3]);     \
     ((u4byte*)(x))[1] = io_swap(in_key[2]);     \
@@ -139,7 +139,7 @@ void gen_tabs	__P((void));
 #define get_key(x,len)                          \
     ((u4byte*)(x))[4] = ((u4byte*)(x))[5] =     \
     ((u4byte*)(x))[6] = ((u4byte*)(x))[7] = 0;  \
-    switch((((len) + 63) / 64)) {               \
+    switch ((((len) + 63) / 64)) {               \
     case 4:                                     \
     ((u4byte*)(x))[6] = io_swap(in_key[6]);     \
     ((u4byte*)(x))[7] = io_swap(in_key[7]);     \
@@ -238,7 +238,7 @@ gen_tabs(void)
 	/* 0x11b as modular polynomial - the simplest prmitive  */
 	/* root is 0x11, used here to generate the tables       */
 
-	for(i = 0,p = 1; i < 256; ++i) {
+	for (i = 0,p = 1; i < 256; ++i) {
 		pow_tab[i] = (u1byte)p; log_tab[p] = (u1byte)i;
 
 		p = p ^ (p << 1) ^ (p & 0x80 ? 0x01b : 0);
@@ -246,8 +246,8 @@ gen_tabs(void)
 
 	log_tab[1] = 0; p = 1;
 
-	for(i = 0; i < 10; ++i) {
-		rco_tab[i] = p; 
+	for (i = 0; i < 10; ++i) {
+		rco_tab[i] = p;
 
 		p = (p << 1) ^ (p & 0x80 ? 0x1b : 0);
 	}
@@ -258,20 +258,19 @@ gen_tabs(void)
 	/* of the specification the bits are numbered from the  */
 	/* least significant end of a byte.                     */
 
-	for(i = 0; i < 256; ++i) {
-		p = (i ? pow_tab[255 - log_tab[i]] : 0); q = p; 
-		q = (q >> 7) | (q << 1); p ^= q; 
-		q = (q >> 7) | (q << 1); p ^= q; 
-		q = (q >> 7) | (q << 1); p ^= q; 
-		q = (q >> 7) | (q << 1); p ^= q ^ 0x63; 
+	for (i = 0; i < 256; ++i) {
+		p = (i ? pow_tab[255 - log_tab[i]] : 0); q = p;
+		q = (q >> 7) | (q << 1); p ^= q;
+		q = (q >> 7) | (q << 1); p ^= q;
+		q = (q >> 7) | (q << 1); p ^= q;
+		q = (q >> 7) | (q << 1); p ^= q ^ 0x63;
 		sbx_tab[i] = (u1byte)p; isb_tab[p] = (u1byte)i;
 	}
 
-	for(i = 0; i < 256; ++i) {
-		p = sbx_tab[i]; 
+	for (i = 0; i < 256; ++i) {
+		p = sbx_tab[i];
 
-#ifdef  LARGE_TABLES        
-        
+#ifdef  LARGE_TABLES
 		t = p; fl_tab[0][i] = t;
 		fl_tab[1][i] = rotl(t,  8);
 		fl_tab[2][i] = rotl(t, 16);
@@ -281,30 +280,29 @@ gen_tabs(void)
 			((u4byte)p <<  8) |
 			((u4byte)p << 16) |
 			((u4byte)ff_mult(3, p) << 24);
-        
+
 		ft_tab[0][i] = t;
 		ft_tab[1][i] = rotl(t,  8);
 		ft_tab[2][i] = rotl(t, 16);
 		ft_tab[3][i] = rotl(t, 24);
 
-		p = isb_tab[i]; 
+		p = isb_tab[i];
 
-#ifdef  LARGE_TABLES        
-        
-		t = p; il_tab[0][i] = t; 
-		il_tab[1][i] = rotl(t,  8); 
-		il_tab[2][i] = rotl(t, 16); 
+#ifdef  LARGE_TABLES
+		t = p; il_tab[0][i] = t;
+		il_tab[1][i] = rotl(t,  8);
+		il_tab[2][i] = rotl(t, 16);
 		il_tab[3][i] = rotl(t, 24);
-#endif 
+#endif
 		t = ((u4byte)ff_mult(14, p)) |
 			((u4byte)ff_mult( 9, p) <<  8) |
 			((u4byte)ff_mult(13, p) << 16) |
 			((u4byte)ff_mult(11, p) << 24);
-        
-		it_tab[0][i] = t; 
-		it_tab[1][i] = rotl(t,  8); 
-		it_tab[2][i] = rotl(t, 16); 
-		it_tab[3][i] = rotl(t, 24); 
+
+		it_tab[0][i] = t;
+		it_tab[1][i] = rotl(t,  8);
+		it_tab[2][i] = rotl(t, 16);
+		it_tab[3][i] = rotl(t, 24);
 	}
 
 	tab_gen = 1;
@@ -358,46 +356,55 @@ gen_tabs(void)
 rijndael_ctx *
 rijndael_set_key(rijndael_ctx *ctx, const u4byte *in_key, const u4byte key_len,
 		 int encrypt)
-{  
+{
 	u4byte  i, t, u, v, w;
 	u4byte *e_key = ctx->e_key;
 	u4byte *d_key = ctx->d_key;
 
 	ctx->decrypt = !encrypt;
 
-	if(!tab_gen)
+	if (!tab_gen)
 		gen_tabs();
 
 	ctx->k_len = (key_len + 31) / 32;
 
-	e_key[0] = in_key[0]; e_key[1] = in_key[1];
-	e_key[2] = in_key[2]; e_key[3] = in_key[3];
-	
-	switch(ctx->k_len) {
-        case 4: t = e_key[3];
-                for(i = 0; i < 10; ++i) 
+	e_key[0] = in_key[0];
+	e_key[1] = in_key[1];
+	e_key[2] = in_key[2];
+	e_key[3] = in_key[3];
+
+	switch (ctx->k_len) {
+        case 4:
+		t = e_key[3];
+                for (i = 0; i < 10; ++i)
 			loop4(i);
                 break;
 
-        case 6: e_key[4] = in_key[4]; t = e_key[5] = in_key[5];
-                for(i = 0; i < 8; ++i) 
+        case 6:
+		e_key[4] = in_key[4];
+		t = e_key[5] = in_key[5];
+                for (i = 0; i < 8; ++i)
 			loop6(i);
                 break;
 
-        case 8: e_key[4] = in_key[4]; e_key[5] = in_key[5];
-                e_key[6] = in_key[6]; t = e_key[7] = in_key[7];
-                for(i = 0; i < 7; ++i) 
+        case 8:
+		e_key[4] = in_key[4];
+		e_key[5] = in_key[5];
+                e_key[6] = in_key[6];
+		t = e_key[7] = in_key[7];
+                for (i = 0; i < 7; ++i)
 			loop8(i);
                 break;
 	}
 
 	if (!encrypt) {
-		d_key[0] = e_key[0]; d_key[1] = e_key[1];
-		d_key[2] = e_key[2]; d_key[3] = e_key[3];
+		d_key[0] = e_key[0];
+		d_key[1] = e_key[1];
+		d_key[2] = e_key[2];
+		d_key[3] = e_key[3];
 
-		for(i = 4; i < 4 * ctx->k_len + 24; ++i) {
+		for (i = 4; i < 4 * ctx->k_len + 24; ++i)
 			imix_col(d_key[i], e_key[i]);
-		}
 	}
 
 	return ctx;
@@ -420,23 +427,23 @@ rijndael_set_key(rijndael_ctx *ctx, const u4byte *in_key, const u4byte key_len,
 
 void
 rijndael_encrypt(rijndael_ctx *ctx, const u4byte *in_blk, u4byte *out_blk)
-{   
+{
 	u4byte k_len = ctx->k_len;
 	u4byte *e_key = ctx->e_key;
 	u4byte  b0[4], b1[4], *kp;
 
-	b0[0] = in_blk[0] ^ e_key[0]; b0[1] = in_blk[1] ^ e_key[1];
-	b0[2] = in_blk[2] ^ e_key[2]; b0[3] = in_blk[3] ^ e_key[3];
+	b0[0] = in_blk[0] ^ e_key[0];
+	b0[1] = in_blk[1] ^ e_key[1];
+	b0[2] = in_blk[2] ^ e_key[2];
+	b0[3] = in_blk[3] ^ e_key[3];
 
 	kp = e_key + 4;
 
-	if(k_len > 6) {
+	if (k_len > 6)
 		f_nround(b1, b0, kp); f_nround(b0, b1, kp);
-	}
 
-	if(k_len > 4) {
+	if (k_len > 4)
 		f_nround(b1, b0, kp); f_nround(b0, b1, kp);
-	}
 
 	f_nround(b1, b0, kp); f_nround(b0, b1, kp);
 	f_nround(b1, b0, kp); f_nround(b0, b1, kp);
@@ -465,24 +472,24 @@ rijndael_encrypt(rijndael_ctx *ctx, const u4byte *in_blk, u4byte *out_blk)
 
 void
 rijndael_decrypt(rijndael_ctx *ctx, const u4byte *in_blk, u4byte *out_blk)
-{  
+{
 	u4byte  b0[4], b1[4], *kp;
 	u4byte k_len = ctx->k_len;
 	u4byte *e_key = ctx->e_key;
 	u4byte *d_key = ctx->d_key;
 
-	b0[0] = in_blk[0] ^ e_key[4 * k_len + 24]; b0[1] = in_blk[1] ^ e_key[4 * k_len + 25];
-	b0[2] = in_blk[2] ^ e_key[4 * k_len + 26]; b0[3] = in_blk[3] ^ e_key[4 * k_len + 27];
+	b0[0] = in_blk[0] ^ e_key[4 * k_len + 24];
+	b0[1] = in_blk[1] ^ e_key[4 * k_len + 25];
+	b0[2] = in_blk[2] ^ e_key[4 * k_len + 26];
+	b0[3] = in_blk[3] ^ e_key[4 * k_len + 27];
 
 	kp = d_key + 4 * (k_len + 5);
 
-	if(k_len > 6) {
+	if (k_len > 6)
 		i_nround(b1, b0, kp); i_nround(b0, b1, kp);
-	}
 
-	if(k_len > 4) {
+	if (k_len > 4)
 		i_nround(b1, b0, kp); i_nround(b0, b1, kp);
-	}
 
 	i_nround(b1, b0, kp); i_nround(b0, b1, kp);
 	i_nround(b1, b0, kp); i_nround(b0, b1, kp);
