@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.bsd-wrapper,v 1.56 2003/07/30 22:59:31 millert Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.57 2003/08/10 20:44:27 espie Exp $
 #
 # Build wrapper for Perl 5.8.0
 #
@@ -475,7 +475,9 @@ INST_PROG='/usr/bin/install -c'
 .endif
 
 MLINKS=		c2ph.1 pstruct.1 s2p.1 psed.1 \
-		Getopt::Std.3p getopt.3p Getopt::Std.3p getopts.3p
+		Getopt::Std.3p getopt.3p Getopt::Std.3p getopts.3p \
+		File::Basename.3p dirname.3p File::Basename.3p basename.3p \
+		File::Basename.3p fileparse.3p
 
 # NOTE: config.sh *must* be first
 GENERATED=	config.sh config.h cflags makeaperl makedepend makedir \
