@@ -1,4 +1,4 @@
-/*	$OpenBSD: yppush_svc.c,v 1.2 1996/05/30 09:53:22 deraadt Exp $ */
+/*	$OpenBSD: yppush_svc.c,v 1.3 2000/06/28 23:58:24 deraadt Exp $ */
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: yppush_svc.c,v 1.2 1996/05/30 09:53:22 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: yppush_svc.c,v 1.3 2000/06/28 23:58:24 deraadt Exp $";
 #endif /* not lint */
 
 #include "yppush.h"
@@ -70,11 +70,11 @@ void _msgout(msg)
 {
 #ifdef RPC_SVC_FG
 	if (_rpcpmstart)
-		syslog(LOG_ERR, msg);
+		syslog(LOG_ERR, "%s", msg);
 	else
 		(void) fprintf(stderr, "%s\n", msg);
 #else
-	syslog(LOG_ERR, msg);
+	syslog(LOG_ERR, "%s", msg);
 #endif
 }
 
