@@ -1,9 +1,7 @@
-#	$OpenBSD: Makefile,v 1.1 2001/12/30 07:04:38 pvalchev Exp $
+#	$OpenBSD: Makefile,v 1.2 2002/09/06 00:23:12 brad Exp $
 #	$NetBSD: Makefile,v 1.5 1999/07/23 09:44:38 mrg Exp $
 
 LIB=	usbhid
-NOPIC=
-NOPROFILE=
 MAN=	usbhid.3
 
 MLINKS=	usbhid.3 hid_dispose_report_desc.3 \
