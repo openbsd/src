@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.10 1998/08/20 00:14:03 millert Exp $	*/
+/*	$OpenBSD: nlist.c,v 1.11 1998/08/21 19:24:39 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)nlist.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: nlist.c,v 1.10 1998/08/20 00:14:03 millert Exp $";
+static char *rcsid = "$OpenBSD: nlist.c,v 1.11 1998/08/21 19:24:39 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -60,6 +60,7 @@ static char *rcsid = "$OpenBSD: nlist.c,v 1.10 1998/08/20 00:14:03 millert Exp $
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/file.h>
+#include <sys/sysctl.h>
 
 #ifdef _NLIST_DO_ELF
 #include <elf_abi.h>
@@ -93,8 +94,10 @@ __aout_knlist(name, db)
 	NLIST nbuf;
 	DBT data, key;
 	int fd, nr, strsize;
+	size_t len;
 	u_long kerntextoff;
-	char *strtab, buf[1024];
+	size_t snamesize;
+	char *strtab, buf[1024], *sname, *p;
 
 	kfile = name;
 	if ((fd = open(name, O_RDONLY, 0)) < 0)
@@ -146,6 +149,7 @@ __aout_knlist(name, db)
 
 	/* Read each symbol and enter it into the database. */
 	nsyms = ebuf.a_syms / sizeof(struct nlist);
+	sname = NULL;
 	while (nsyms--) {
 		if (fread((char *)&nbuf, sizeof (NLIST), 1, fp) != 1) {
 			if (feof(fp))
@@ -155,36 +159,74 @@ __aout_knlist(name, db)
 		if (!nbuf._strx || nbuf.n_type&N_STAB)
 			continue;
 
-		key.data = (u_char *)strtab + nbuf._strx - sizeof(long);
-		key.size = strlen((char *)key.data);
+		/* If the symbol does not start with '_', add one */
+		p = strtab + nbuf._strx - sizeof(int);
+		if (*p != '_') {
+			len = strlen(p) + 1;
+			if (len >= snamesize)
+				sname = realloc(sname, len + 1024);
+			if (sname == NULL)
+				errx(1, "cannot allocate memory");
+			*sname = '_';
+			strcpy(sname+1, p);
+			puts(sname);
+			key.data = (u_char *)sname;
+			key.size = len;
+		} else {
+			key.data = (u_char *)p;
+			key.size = strlen((char *)key.data);
+		}
 		if (db->put(db, &key, &data, 0))
 			err(1, "record enter");
 
 		if (strcmp((char *)key.data, VRS_SYM) == 0) {
-			long cur_off, voff;
-			/*
-			 * Calculate offset relative to a normal (non-kernel)
-			 * a.out.  Kerntextoff is where the kernel is really
-			 * loaded; N_TXTADDR is where a normal file is loaded.
-			 * From there, locate file offset in text or data.
-			 */
-			voff = nbuf.n_value - kerntextoff + N_TXTADDR(ebuf);
-			if ((nbuf.n_type & N_TYPE) == N_TEXT)
-				voff += N_TXTOFF(ebuf) - N_TXTADDR(ebuf);
-			else
-				voff += N_DATOFF(ebuf) - N_DATADDR(ebuf);
-			cur_off = ftell(fp);
-			if (fseek(fp, voff, SEEK_SET) == -1)
-				badfmt("corrupted string table");
+			long cur_off = -1;
 
-			/*
-			 * Read version string up to, and including newline.
-			 * This code assumes that a newline terminates the
-			 * version line.
-			 */
-			if (fgets(buf, sizeof(buf), fp) == NULL)
-				badfmt("corrupted string table");
+			if (ebuf.a_data && ebuf.a_text > __LDPGSZ) {
+				/*
+				 * Calculate offset relative to a normal
+				 * (non-kernel) a.out.  Kerntextoff is where the
+				 * kernel is really loaded; N_TXTADDR is where
+				 * a normal file is loaded.  From there, locate
+				 * file offset in text or data.
+				 */
+				long voff;
 
+				voff = nbuf.n_value-kerntextoff+N_TXTADDR(ebuf);
+				if ((nbuf.n_type & N_TYPE) == N_TEXT)
+					voff += N_TXTOFF(ebuf)-N_TXTADDR(ebuf);
+				else
+					voff += N_DATOFF(ebuf)-N_DATADDR(ebuf);
+				cur_off = ftell(fp);
+				if (fseek(fp, voff, SEEK_SET) == -1)
+					badfmt("corrupted string table");
+
+				/*
+				 * Read version string up to, and including
+				 * newline.  This code assumes that a newline
+				 * terminates the version line.
+				 */
+				if (fgets(buf, sizeof(buf), fp) == NULL)
+					badfmt("corrupted string table");
+			} else {
+				/*
+				 * No data segment and text is __LDPGSZ.
+				 * This must be /dev/ksyms or a look alike.
+				 * Use sysctl() to get version since we
+				 * don't have real text or data.
+				 */
+				int mib[2];
+
+				mib[0] = CTL_KERN;
+				mib[1] = KERN_VERSION;
+				len = sizeof(buf);
+				if (sysctl(mib, 2, buf, &len, NULL, 0) == -1) {
+					err(1, "sysctl can't find kernel "
+					    "version string");
+				}
+				if ((p = strchr(buf, '\n')) != NULL)
+					*(p+1) = '\0';
+			}
 			key.data = (u_char *)VRS_KEY;
 			key.size = sizeof(VRS_KEY) - 1;
 			data.data = (u_char *)buf;
@@ -195,7 +237,7 @@ __aout_knlist(name, db)
 			/* Restore to original values. */
 			data.data = (u_char *)&nbuf;
 			data.size = sizeof(NLIST);
-			if (fseek(fp, cur_off, SEEK_SET) == -1)
+			if (cur_off != -1 && fseek(fp, cur_off, SEEK_SET) == -1)
 				badfmt("corrupted string table");
 		}
 	}
@@ -487,11 +529,11 @@ __ecoff_knlist(name, db)
 	data.data = (u_char *)&nbuf;
 	data.size = sizeof(NLIST);
 
-	for (i = 0; i < nesyms; i++) {
+	for (sname = NULL, i = 0; i < nesyms; i++) {
 		/* Need to prepend a '_' */
-		len = strlen(&mappedfile[extstroff + esyms[i].es_strindex]);
+		len = strlen(&mappedfile[extstroff + esyms[i].es_strindex]) + 1;
 		if (len >= snamesize)
-			sname = malloc(len + 1024);
+			sname = realloc(sname, len + 1024);
 		if (sname == NULL)
 			errx(1, "cannot allocate memory");
 		*sname = '_';
