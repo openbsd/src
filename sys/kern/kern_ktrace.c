@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ktrace.c,v 1.18 2000/04/20 10:03:42 art Exp $	*/
+/*	$OpenBSD: kern_ktrace.c,v 1.19 2000/04/21 07:39:15 deraadt Exp $	*/
 /*	$NetBSD: kern_ktrace.c,v 1.23 1996/02/09 18:59:36 christos Exp $	*/
 
 /*
@@ -194,7 +194,7 @@ ktrgenio(vp, fd, rw, iov, len, error)
 	struct ktr_header kth;
 	struct ktr_genio *ktp;
 	caddr_t cp;
-	int resid = len, cnt;
+	int resid = len, count;
 	struct proc *p = curproc;	/* XXX */
 	int buflen;
 
@@ -223,24 +223,24 @@ ktrgenio(vp, fd, rw, iov, len, error)
 		if (p->p_schedflags & PSCHED_SHOULDYIELD)
 			preempt(NULL);
 
-		cnt = min(iov->iov_len, buflen);
-		if (cnt > resid)
-			cnt = resid;
-		if (copyin(iov->iov_base, cp, cnt))
+		count = min(iov->iov_len, buflen);
+		if (count > resid)
+			count = resid;
+		if (copyin(iov->iov_base, cp, count))
 			break;
 
-		kth.ktr_len = cnt + sizeof(struct ktr_genio);
+		kth.ktr_len = count + sizeof(struct ktr_genio);
 
 		if (ktrwrite(vp, &kth) != 0)
 			break;
 
-		iov->iov_len -= cnt;
-		iov->iov_base += cnt;
+		iov->iov_len -= count;
+		iov->iov_base += count;
 
 		if (iov->iov_len == 0)
 			iov++;
 
-		resid -= cnt;
+		resid -= count;
 	}
 
 	FREE(ktp, M_TEMP);
