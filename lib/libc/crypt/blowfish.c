@@ -1,4 +1,4 @@
-/* $OpenBSD: blowfish.c,v 1.11 1998/08/22 07:12:58 deraadt Exp $ */
+/* $OpenBSD: blowfish.c,v 1.12 1998/08/30 22:35:39 niklas Exp $ */
 /*
  * Blowfish block cipher for OpenBSD
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -585,24 +585,6 @@ blf_dec(c, data, blocks)
 	}
 }
 
-/* Repeating operations for little endian machines */
-
-/*
- * XXX This code is NOT correct for unaligned-access faulting machines.
- */
-#define BLF_BLK_ENC  l = ntohl (*(u_int32_t *)data); \
-        r = ntohl (*(u_int32_t *)(data+4)); \
-        Blowfish_encipher(c, &l, &r); \
-        *(u_int32_t *)data = htonl (l); \
-        *(u_int32_t *)(data + 4) = htonl (r);
-
-#define BLF_BLK_DEC  l = ntohl (*(u_int32_t *)data); \
-        r = ntohl (*(u_int32_t *)(data+4)); \
-        Blowfish_decipher(c, &l, &r); \
-        *(u_int32_t *)data = htonl (l); \
-        *(u_int32_t *)(data + 4) = htonl (r);
-
-
 #if __STDC__
 void
 blf_ecb_encrypt(blf_ctx *c, u_int8_t *data, u_int32_t len)
@@ -618,13 +600,17 @@ blf_ecb_encrypt(c, data, len)
 	u_int32_t i;
 
 	for (i = 0; i < len; i += 8) {
-#if BYTE_ORDER == LITTLE_ENDIAN
-		BLF_BLK_ENC;
-#else
-		memcpy(&l, data, sizeof l);
-		memcpy(&r, data + 4, sizeof r);
+		l = data[0] << 24 | data[1] << 16 | data[2] << 8 | data[3];
+		r = data[4] << 24 | data[5] << 16 | data[6] << 8 | data[7];
 		Blowfish_encipher(c, &l, &r);
-#endif
+		data[0] = l >> 24 & 0xff;
+		data[1] = l >> 16 & 0xff;
+		data[2] = l >> 8 & 0xff;
+		data[3] = l & 0xff;
+		data[4] = r >> 24 & 0xff;
+		data[5] = r >> 16 & 0xff;
+		data[6] = r >> 8 & 0xff;
+		data[7] = r & 0xff;
 		data += 8;
 	}
 }
@@ -644,13 +630,17 @@ blf_ecb_decrypt(c, data, len)
 	u_int32_t i;
 
 	for (i = 0; i < len; i += 8) {
-#if BYTE_ORDER == LITTLE_ENDIAN
-		BLF_BLK_DEC;
-#else
-		memcpy(&l, data, sizeof l);
-		memcpy(&r, data + 4, sizeof r);
+		l = data[0] << 24 | data[1] << 16 | data[2] << 8 | data[3];
+		r = data[4] << 24 | data[5] << 16 | data[6] << 8 | data[7];
 		Blowfish_decipher(c, &l, &r);
-#endif
+		data[0] = l >> 24 & 0xff;
+		data[1] = l >> 16 & 0xff;
+		data[2] = l >> 8 & 0xff;
+		data[3] = l & 0xff;
+		data[4] = r >> 24 & 0xff;
+		data[5] = r >> 16 & 0xff;
+		data[6] = r >> 8 & 0xff;
+		data[7] = r & 0xff;
 		data += 8;
 	}
 }
@@ -668,18 +658,22 @@ blf_cbc_encrypt(c, iv, data, len)
 #endif
 {
 	u_int32_t l, r;
-	u_int32_t i;
+	u_int32_t i, j;
 
 	for (i = 0; i < len; i += 8) {
-		*(u_int32_t *)data ^= *(u_int32_t *)iv;
-		*(u_int32_t *)(data + 4) ^= *(u_int32_t *)(iv + 4);
-#if BYTE_ORDER == LITTLE_ENDIAN
-		BLF_BLK_ENC;
-#else
-		memcpy(&l, data, sizeof l);
-		memcpy(&r, data + 4, sizeof r);
+		for (j = 0; j < 8; j++)
+			data[j] ^= iv[j];
+		l = data[0] << 24 | data[1] << 16 | data[2] << 8 | data[3];
+		r = data[4] << 24 | data[5] << 16 | data[6] << 8 | data[7];
 		Blowfish_encipher(c, &l, &r);
-#endif
+		data[0] = l >> 24 & 0xff;
+		data[1] = l >> 16 & 0xff;
+		data[2] = l >> 8 & 0xff;
+		data[3] = l & 0xff;
+		data[4] = r >> 24 & 0xff;
+		data[5] = r >> 16 & 0xff;
+		data[6] = r >> 8 & 0xff;
+		data[7] = r & 0xff;
 		iv = data;
 		data += 8;
 	}
@@ -699,32 +693,40 @@ blf_cbc_decrypt(c, iva, data, len)
 {
 	u_int32_t l, r;
 	u_int8_t *iv;
-	u_int32_t i;
+	u_int32_t i, j;
 
 	iv = data + len - 16;
 	data = data + len - 8;
 	for (i = len - 8; i >= 8; i -= 8) {
-#if BYTE_ORDER == LITTLE_ENDIAN
-		BLF_BLK_DEC;
-#else
-		memcpy(&l, data, sizeof l);
-		memcpy(&r, data + 4, sizeof r);
+		l = data[0] << 24 | data[1] << 16 | data[2] << 8 | data[3];
+		r = data[4] << 24 | data[5] << 16 | data[6] << 8 | data[7];
 		Blowfish_decipher(c, &l, &r);
-#endif
-		*(u_int32_t *)data ^= *(u_int32_t *)iv;
-		*(u_int32_t *)(data + 4) ^= *(u_int32_t *)(iv + 4);
+		data[0] = l >> 24 & 0xff;
+		data[1] = l >> 16 & 0xff;
+		data[2] = l >> 8 & 0xff;
+		data[3] = l & 0xff;
+		data[4] = r >> 24 & 0xff;
+		data[5] = r >> 16 & 0xff;
+		data[6] = r >> 8 & 0xff;
+		data[7] = r & 0xff;
+		for (j = 0; j < 8; j++)
+			data[j] ^= iv[j];
 		iv = data;
 		data -= 8;
 	}
-#if BYTE_ORDER == LITTLE_ENDIAN
-	BLF_BLK_DEC;
-#else
-	memcpy(&l, data, sizeof l);
-	memcpy(&r, data + 4, sizeof r);
+	l = data[0] << 24 | data[1] << 16 | data[2] << 8 | data[3];
+	r = data[4] << 24 | data[5] << 16 | data[6] << 8 | data[7];
 	Blowfish_decipher(c, &l, &r);
-#endif
-	*(u_int32_t *)data ^= *(u_int32_t *)iva;
-	*(u_int32_t *)(data + 4) ^= *(u_int32_t *)(iva + 4);
+	data[0] = l >> 24 & 0xff;
+	data[1] = l >> 16 & 0xff;
+	data[2] = l >> 8 & 0xff;
+	data[3] = l & 0xff;
+	data[4] = r >> 24 & 0xff;
+	data[5] = r >> 16 & 0xff;
+	data[6] = r >> 8 & 0xff;
+	data[7] = r & 0xff;
+	for (j = 0; j < 8; j++)
+		data[j] ^= iva[j];
 }
 
 #if 0
