@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.632 2003/06/02 00:21:59 margarida Exp $
+	$OpenBSD: pcidevs,v 1.633 2003/06/02 15:39:55 drahn Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -896,6 +896,7 @@ product APPLE UNINORTH2ETH	0x002f  Uni-N2 Host
 product APPLE PANGEA_FW		0x0030	Pangea FireWire
 product APPLE UNINORTH_FW       0x0031  UniNorth Firewire
 product APPLE GMAC3             0x0032  GMAC Ethernet
+product APPLE UNINORTH_ATA	0x0033	Uni-N ATA
 product APPLE UNINORTH_AGP3     0x0034  UniNorth AGP Bridge
 product APPLE UNINORTH5         0x0035  UniNorth Host-PCI Bridge
 product APPLE UNINORTH6         0x0036  UniNorth Host-PCI Bridge
