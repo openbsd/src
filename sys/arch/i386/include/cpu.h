@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.15 1997/09/27 06:31:32 mickey Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.16 1997/10/25 08:36:42 mickey Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -208,12 +208,16 @@ void	setconf __P((void));
  */
 #define	CPU_CONSDEV		1	/* dev_t: console terminal device */
 #define	CPU_BIOS		2	/* BIOS variables */
-#define	CPU_MAXID		3	/* number of valid machdep ids */
+#define	CPU_BLK2CHR		3	/* convert blk maj into chr one */
+#define	CPU_CHR2BLK		4	/* convert chr maj into blk one */
+#define	CPU_MAXID		5	/* number of valid machdep ids */
 
 #define	CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
 	{ "console_device", CTLTYPE_STRUCT }, \
 	{ "bios", CTLTYPE_INT }, \
+	{ "blk2chr", CTLTYPE_INT }, \
+	{ "chr2blk", CTLTYPE_INT }, \
 }
 
 #endif /* !_I386_CPU_H_ */

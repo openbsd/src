@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.58 1997/10/25 06:58:00 niklas Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.59 1997/10/25 08:36:41 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.202 1996/05/18 15:54:59 christos Exp $	*/
 
 /*-
@@ -1487,6 +1487,14 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return bios_sysctl(name + 1, namelen - 1, oldp, oldlenp,
 		    newp, newlen, p);
 #endif
+	case CPU_BLK2CHR:
+		if (namelen != 2)
+			return (ENOTDIR);		/* overloaded */
+		return blktochr(name[1]);
+	case CPU_CHR2BLK:
+		if (namelen != 2)
+			return (ENOTDIR);		/* overloaded */
+		return chrtoblk(name[1]);
 	default:
 		return EOPNOTSUPP;
 	}
