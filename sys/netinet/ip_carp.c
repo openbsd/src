@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.26 2003/11/08 19:17:28 jmc Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.27 2003/11/09 08:56:55 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -147,8 +147,7 @@ void	carp_hmac_generate(struct carp_softc *, u_int32_t *,
 int	carp_hmac_verify(struct carp_softc *, u_int32_t *,
 	    unsigned char *);
 void	carp_setroute(struct carp_softc *, int);
-void	carp_input_c(struct mbuf *, struct carp_softc *,
-	    struct carp_header *, sa_family_t);
+void	carp_input_c(struct mbuf *, struct carp_header *, sa_family_t);
 void	carpattach(int);
 void	carpdetach(struct carp_softc *);
 int	carp_prepare_ad(struct mbuf *, struct carp_softc *,
@@ -267,7 +266,6 @@ carp_setroute(struct carp_softc *sc, int cmd)
 void
 carp_input(struct mbuf *m, ...)
 {
-	struct carp_softc *sc;
 	struct ip *ip = mtod(m, struct ip *);
 	struct carp_header *ch;
 	int iplen, len, hlen;
@@ -350,14 +348,13 @@ carp_input(struct mbuf *m, ...)
 	}
 	m->m_data -= iplen;
 
-	carp_input_c(m, sc, ch, AF_INET);
+	carp_input_c(m, ch, AF_INET);
 }
 
 #ifdef INET6
 int
 carp6_input(struct mbuf **mp, int *offp, int proto)
 {
-	struct carp_softc *sc;
 	struct mbuf *m = *mp;
 	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
 	struct carp_header *ch;
@@ -406,15 +403,15 @@ carp6_input(struct mbuf **mp, int *offp, int proto)
 	}
 	m->m_data -= *offp;
 
-	carp_input_c(m, sc, ch, AF_INET6);
+	carp_input_c(m, ch, AF_INET6);
 	return (IPPROTO_DONE);
 }
 #endif /* INET6 */
 
 void
-carp_input_c(struct mbuf *m, struct carp_softc *sc,
-	struct carp_header *ch, sa_family_t af)
+carp_input_c(struct mbuf *m, struct carp_header *ch, sa_family_t af)
 {
+	struct carp_softc *sc;
 	struct ifnet *ifp = m->m_pkthdr.rcvif;
 	u_int64_t tmp_counter;
 	struct timeval sc_tv, ch_tv;
