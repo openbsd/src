@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.17 2001/08/11 09:54:59 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.18 2001/08/14 16:25:45 mickey Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -95,7 +95,7 @@ u_int32_t		 ipmask(u_int8_t);
 %type	<iface> iface
 %type	<number> address port icmptype minttl
 %type	<i>	direction log quick keep proto nodf
-%type	<b>	action icmpspec flags blockspec
+%type	<b>	action icmpspec flag flags blockspec
 %type	<range>	dport rport
 %%
 
@@ -326,41 +326,21 @@ port:		NUMBER			{
 		}
 		;
 
+flag:		STRING			{
+			int f;
+
+			if ((f = parse_flags($1)) < 0) {
+				yyerror("bad flags %s", $1);
+				YYERROR;
+			}
+			$$.b1 = f;
+		}
+		;
+
 flags:					{ $$.b1 = 0; $$.b2 = 0; }
-		| FLAGS STRING		{
-			int f;
-
-			if ((f = parse_flags($2)) < 0) {
-				yyerror("bad flags %s", $2);
-				YYERROR;
-			}
-			$$.b1 = f;
-			$$.b2 = 63;
-		}
-		| FLAGS STRING "/" STRING	{
-			int f;
-
-			if ((f = parse_flags($2)) < 0) {
-				yyerror("bad flags %s", $2);
-				YYERROR;
-			}
-			$$.b1 = f;
-			if ((f = parse_flags($4)) < 0) {
-				yyerror("bad flags %s", $4);
-				YYERROR;
-			}
-			$$.b2 = f;
-		}
-		| FLAGS "/" STRING	{
-			int f;
-
-			$$.b1 = 0;
-			if ((f = parse_flags($3)) < 0) {
-				yyerror("bad flags %s", $3);
-				YYERROR;
-			}
-			$$.b2 = f;
-		}
+		| FLAGS flag		{ $$.b1 = $2.b1; $$.b2 = 63; }
+		| FLAGS flag "/" flag	{ $$.b1 = $2.b1; $$.b2 = $4.b1; }
+		| FLAGS "/" flag	{ $$.b1 = 0; $$.b2 = $3.b1; }
 		;
 
 icmpspec:				{ $$.b1 = 0; $$.b2 = 0; }
