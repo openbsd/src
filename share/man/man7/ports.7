@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ports.7,v 1.41 2004/01/22 21:07:10 espie Exp $
+.\" $OpenBSD: ports.7,v 1.42 2004/04/16 21:23:08 jmc Exp $
 .\" $FreeBSD: ports.7,v 1.7 1998/06/23 04:38:50 hoek Exp $
 .\"
 .Dd January 25, 1998
@@ -134,7 +134,7 @@ is executed.
 Default behavior is to call exit, but this can be overridden on the command
 line, e.g., to avoid stopping after each problem.
 .Bd -literal -offset indent
-	$ make REPORT_PROBLEM=true
+$ make REPORT_PROBLEM=true
 .Ed
 .Pp
 The targets that do this are
@@ -198,7 +198,7 @@ The main
 mirror should still hold a copy of old distfiles, indexed by checksum.
 Using
 .Bd -literal -offset indent
-	$ make checksum REFETCH=true
+$ make checksum REFETCH=true
 .Ed
 .Pp
 will try to get a set of distfiles that match the recorded checksum.
@@ -304,7 +304,6 @@ The variables pertaining to network access have been marshalled into
 To customize that setup, copy that file into
 .Pa ${PORTSDIR}/infrastructure/db/network.conf
 and edit it.
-.Pp
 .Bl -tag -width MASTER_SITES
 .It Ev MASTER_SITE_OPENBSD
 If set to
@@ -350,7 +349,6 @@ To build a port with a specific flavor, just pass
 in the environment of the
 .Xr make 1
 command:
-.Pp
 .Bd -literal -offset indent
 $ env FLAVOR="static" make package
 .Ed
@@ -409,7 +407,6 @@ them manually, or alternatively, you may set
 in the environment of the
 .Xr make 1
 command during the install/deinstall phase:
-.Pp
 .Bd -literal -offset indent
 $ env SUBPACKAGE="-server" make install
 $ env SUBPACKAGE="-server" make deinstall
@@ -428,7 +425,6 @@ instead of simply being defined, for uniformity and future compatibility.
 .Pp
 Variable names starting with _ are private to the ports infrastructure,
 should not be changed by the user, and are liable to change without notice.
-.Pp
 .Bl -tag -width MASTER_SITES
 .It Ev PORTSDIR
 Location of the ports tree

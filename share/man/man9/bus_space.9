@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bus_space.9,v 1.10 2003/06/06 20:56:32 jmc Exp $
+.\"	$OpenBSD: bus_space.9,v 1.11 2004/04/16 21:23:08 jmc Exp $
 .\" $NetBSD: bus_space.9,v 1.15 2000/08/09 03:11:00 tv Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -943,7 +943,6 @@ input port, and are placed by the device on a stack, the top of which is
 read by reading from the output port.
 The sequence to correctly write two data bytes to the device then read
 those two data bytes back would be:
-.Pp
 .Bd -literal
 /*
  * t and h are the tag and handle for the mapped device's
