@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.835 2005/02/21 19:55:50 grange Exp 
+ *	OpenBSD: pcidevs,v 1.836 2005/02/24 20:21:27 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -243,6 +243,7 @@
 #define	PCI_VENDOR_BLUESTEEL	0x15ab		/* Bluesteel Networks */
 #define	PCI_VENDOR_VMWARE	0x15ad		/* VMware */
 #define	PCI_VENDOR_NDC	0x15e8		/* National Datacomm Corp */
+#define	PCI_VENDOR_ZOLTRIX	0x15b0		/* Zoltrix Intl Ltd. */
 #define	PCI_VENDOR_EUMITCOM	0x1638		/* Eumitcom */
 #define	PCI_VENDOR_NETSEC	0x1660		/* NetSec */
 #define	PCI_VENDOR_SAMSUNG	0x167d		/* Samsung */
@@ -2824,6 +2825,9 @@
 
 /* Ziatech products */
 #define	PCI_PRODUCT_ZIATECH_ZT8905	0x8905		/* PCI-ST32 */
+
+/* Zoltrix Intl Ltd. products */
+#define	PCI_PRODUCT_ZOLTRIX_GENIE_TV_FM	0x400d		/* Genie TV/FM */
 
 /* Zoran products */
 #define	PCI_PRODUCT_ZORAN_ZR36057	0x6057		/* TV */

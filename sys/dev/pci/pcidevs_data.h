@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.835 2005/02/21 19:55:50 grange Exp 
+ *	OpenBSD: pcidevs,v 1.836 2005/02/24 20:21:27 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -8399,6 +8399,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "PCI-ST32",
 	},
 	{
+	    PCI_VENDOR_ZOLTRIX, PCI_PRODUCT_ZOLTRIX_GENIE_TV_FM,
+	    "Genie TV/FM",
+	},
+	{
 	    PCI_VENDOR_ZORAN, PCI_PRODUCT_ZORAN_ZR36057,
 	    "TV",
 	},
@@ -9177,6 +9181,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_NDC,
 	    "National Datacomm Corp",
+	},
+	{
+	    PCI_VENDOR_ZOLTRIX,
+	    "Zoltrix Intl Ltd.",
 	},
 	{
 	    PCI_VENDOR_EUMITCOM,

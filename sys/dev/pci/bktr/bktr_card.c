@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_card.c,v 1.11 2005/02/17 18:07:36 jfb Exp $	*/
+/*	$OpenBSD: bktr_card.c,v 1.12 2005/02/24 20:23:39 mickey Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_card.c,v 1.16 2000/10/31 13:09:56 roger Exp $ */
 
 /*
@@ -379,6 +379,18 @@ static const struct CARDTYPE cards[] = {
 	   { 0x02, 0x00, 0x00, 0x00, 1 },	/* audio MUX values */
 	   0x18e0 },				/* GPIO mask */
 
+	{  CARD_ZOLTRIX_GENIE_FM,		/* the card id */
+	   "Zoltrix Genie TV/FM",		/* the 'name' */
+	   NULL,				/* the tuner */
+	   0,					/* the tuner i2c address */
+	   0,					/* dbx is optional */
+	   0,					/* msp34xx is optional */
+	   0,					/* dpl3518a is optional */
+	   0,					/* EEProm type */
+	   0,					/* EEProm size */
+	   { 0xbc803f, 0xbcb03f, 0xbc903f, 0x0, 1 },	/* audio MUX values*/
+	   0xbcf03f },				/* GPIO mask */
+
 };
 
 struct bt848_card_sig bt848_card_signature[1]= {
@@ -732,6 +744,17 @@ probeCard( bktr_ptr_t bktr, int verbose, int unit )
 		    bktr->card = cards[ (card = CARD_IO_BCTV3) ];
 		    bktr->card.eepromAddr = eeprom_i2c_address;
 		    bktr->card.eepromSize = (u_char)(256 / EEPROMBLOCKSIZE);
+		    goto checkTuner;
+		}
+
+		if (subsystem_vendor_id == PCI_VENDOR_ZOLTRIX) {
+		    if (subsystem_id == PCI_PRODUCT_ZOLTRIX_GENIE_TV_FM) {
+			bktr->card = cards[ (card = CARD_ZOLTRIX_GENIE_FM) ];
+		    } else {
+			bktr->card = cards[ (card = CARD_ZOLTRIX) ];
+		    }
+ 		    bktr->card.eepromAddr = eeprom_i2c_address;
+ 		    bktr->card.eepromSize = (u_char)(256 / EEPROMBLOCKSIZE);
 		    goto checkTuner;
 		}
 
@@ -1147,6 +1170,11 @@ checkTuner:
 
 	case CARD_TVWONDER:
 	    select_tuner( bktr, PHILIPS_NTSC );
+	    goto checkDBX;
+	    break;
+
+	case CARD_ZOLTRIX_GENIE_FM:
+	    select_tuner( bktr, PHILIPS_FR1236_NTSC );
 	    goto checkDBX;
 	    break;
 
