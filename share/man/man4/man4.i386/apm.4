@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apm.4,v 1.14 2001/02/13 02:23:34 marc Exp $
+.\"	$OpenBSD: apm.4,v 1.15 2001/07/18 16:08:46 mickey Exp $
 .\"
 .\"	Copyright (c) 1998 Marco S. Hyman
 .\"
@@ -269,8 +269,8 @@ An attempt to open the file when in use will fail, returning
 .Xr apmd 8 ,
 .Xr halt 8 ,
 .Xr sysctl 8
-.Pp
-http://developer.intel.com/ial/powermgm/apmv12.pdf
+.\" .Pp
+.\" http://developer.intel.com/ial/powermgm/apmv12.pdf
 .Sh HISTORY
 The
 .Nm
@@ -287,3 +287,5 @@ driver source code contains these copyrights:
 .Sh BUGS
 Not all the BIOSes support power down the way we are attempting
 to execute it.
+.Pp
+Not all BIOS vendors even read the specification.
