@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rm.1,v 1.12 2000/11/16 22:37:05 aaron Exp $
+.\"	$OpenBSD: rm.1,v 1.13 2001/06/08 13:41:21 millert Exp $
 .\"	$NetBSD: rm.1,v 1.8 1995/07/25 19:37:30 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
@@ -159,9 +159,22 @@ not the standard error output.
 .Sh STANDARDS
 The
 .Nm
-utility is expected to be
+utility is almost
 .St -p1003.2
-compatible.
+compatible, except that
+.Tn POSIX
+requires
+.Nm
+to act like
+.Xr rmdir 1
+when the
+.Ar file
+specified is a directory.  This implementation requires the
+.Fl d
+option if such behavior is desired.  This follows the historical
+behavior of
+.Nm
+with respect to directories.
 .Sh HISTORY
 An
 .Nm
