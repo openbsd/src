@@ -1,4 +1,4 @@
-/*	$OpenBSD: uyap_firmware.h,v 1.1 2001/12/17 01:39:08 deraadt Exp $ */
+/*	$OpenBSD: uyap_firmware.h,v 1.2 2004/12/19 15:20:13 deraadt Exp $ */
 /*	$NetBSD: uyap_firmware.h,v 1.2 2001/01/16 03:10:09 augustss Exp $	*/
 
 /*
@@ -37,6 +37,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+const struct ezdata uyap_firmware[] = {
 {0x10,0x146C,
 	"\xC2\x00\x90\x7F\xA5\xE0\x54\x18\xFF\x13\x13\x13\x54\x1F\x44\x50"},
 {0x10,0x147C,
@@ -1234,3 +1235,4 @@
 {0x01,0x02F1,
 	"\x00"},
 {0x00,0x0000,""}
+};

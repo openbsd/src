@@ -1,4 +1,4 @@
-/*	$OpenBSD: ezload.c,v 1.6 2002/07/25 04:07:32 nate Exp $ */
+/*	$OpenBSD: ezload.c,v 1.7 2004/12/19 15:20:13 deraadt Exp $ */
 /*	$NetBSD: ezload.c,v 1.5 2002/07/11 21:14:25 augustss Exp $	*/
 
 /*
@@ -41,6 +41,7 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+#include <sys/malloc.h>
 #include <sys/conf.h>
 
 #include <dev/usb/usb.h>
@@ -106,12 +107,14 @@ ezload_reset(usbd_device_handle dev, int reset)
 }
 
 usbd_status
-ezload_download(usbd_device_handle dev, const struct ezdata *rec)
+ezload_download(usbd_device_handle dev, const char *name, const u_char *buf,
+    size_t buflen)
 {
 	usb_device_request_t req;
 	const struct ezdata *ptr;
 	usbd_status err;
 	u_int len, offs;
+	const struct ezdata *rec = (struct ezdata *)buf;
 
 	DPRINTF(("ezload_down record=%p\n", rec));
 
@@ -145,19 +148,29 @@ ezload_download(usbd_device_handle dev, const struct ezdata *rec)
 }
 
 usbd_status
-ezload_downloads_and_reset(usbd_device_handle dev, const struct ezdata **recs)
+ezload_downloads_and_reset(usbd_device_handle dev, char **names)
 {
 	usbd_status err;
+	size_t buflen;
+	u_char *buf;
+	int error;
 
 	/*(void)ezload_reset(dev, 1);*/
 	err = ezload_reset(dev, 1);
 	if (err)
 		return (err);
 	usbd_delay_ms(dev, 250);
-	while (*recs != NULL) {
-		err = ezload_download(dev, *recs++);
+
+	while (*names != NULL) {
+		error = loadfirmware(*names, &buf, &buflen);
+		if (error)
+			return (error);
+
+		err = ezload_download(dev, *names, buf, buflen);
+		free(buf, M_DEVBUF);
 		if (err)
 			return (err);
+		names++;
 	}
 	if (err)
 		return (err);

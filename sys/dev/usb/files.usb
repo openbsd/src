@@ -1,4 +1,4 @@
-#	$OpenBSD: files.usb,v 1.41 2004/11/22 18:49:05 deraadt Exp $
+#	$OpenBSD: files.usb,v 1.42 2004/12/19 15:20:13 deraadt Exp $
 #	$NetBSD: files.usb,v 1.16 2000/02/14 20:29:54 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
@@ -108,7 +108,7 @@ attach	uvisor at uhub
 file	dev/usb/uvisor.c		uvisor
 
 # YAP phone firmware loader
-device	uyap: ezload
+device	uyap: ezload, firmload
 attach	uyap at uhub
 file	dev/usb/uyap.c			uyap
 

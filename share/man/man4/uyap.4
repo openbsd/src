@@ -1,4 +1,4 @@
-.\" $OpenBSD: uyap.4,v 1.4 2004/09/30 19:59:26 mickey Exp $
+.\" $OpenBSD: uyap.4,v 1.5 2004/12/19 15:20:11 deraadt Exp $
 .\" $NetBSD:  $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -52,6 +52,13 @@ two audio pipes (handled by
 .Xr uaudio 4 )
 and an HID device (handled by
 .Xr uhid 4 ) .
+.Sh FILES
+The driver need a firmware file,
+which is loaded on demand when the device is attached:
+.Pp
+.Bl -tag -width Ds -offset indent -compact
+.It Pa /etc/firmware/uyap
+.El
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr uaudio 4 ,
