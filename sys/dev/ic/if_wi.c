@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.67 2002/06/15 18:49:04 millert Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.68 2002/06/21 06:46:26 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -124,7 +124,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.67 2002/06/15 18:49:04 millert Exp $";
+	"$OpenBSD: if_wi.c,v 1.68 2002/06/21 06:46:26 fgsch Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -1643,8 +1643,8 @@ wi_ioctl(ifp, command, data)
 			error = copyout(&sc->wi_net_name, ifr->ifr_data,
 			    sizeof(sc->wi_net_name));
 		} else {
-			wreq.wi_type = htole16(WI_RID_CURRENT_SSID);
-			wreq.wi_len = htole16(WI_MAX_DATALEN);
+			wreq.wi_type = WI_RID_CURRENT_SSID;
+			wreq.wi_len = WI_MAX_DATALEN;
 			if (wi_read_record(sc, (struct wi_ltv_gen *)&wreq) ||
 			    letoh16(wreq.wi_val[0]) > IEEE80211_NWID_LEN)
 				error = EINVAL;
