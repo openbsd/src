@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.285 2000/07/19 21:14:12 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.286 2000/07/19 22:04:17 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -975,6 +975,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "IDE-2015PL",
 	},
 	{
+	    PCI_VENDOR_AUREAL, PCI_PRODUCT_AUREAL_AU8820,
+	    0,
+	    "Aureal",
+	    "AU8820 Vortex1",
+	},
+	{
+	    PCI_VENDOR_AUREAL, PCI_PRODUCT_AUREAL_AU8830,
+	    0,
+	    "Aureal",
+	    "AU8830 Vortex2",
+	},
+	{
 	    PCI_VENDOR_AVANCE, PCI_PRODUCT_AVANCE_AVL2301,
 	    0,
 	    "Avance Logic",
@@ -1687,18 +1699,6 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Diamond Multimedia",
 	    "Viper/PCI",
-	},
-	{
-	    PCI_VENDOR_DIAMOND2, PCI_PRODUCT_DIAMOND2_MONSTER,
-	    0,
-	    "Diamond Multimedia(2)",
-	    "Monster",
-	},
-	{
-	    PCI_VENDOR_DIAMOND2, PCI_PRODUCT_DIAMOND2_MX300,
-	    0,
-	    "Diamond Multimedia(2)",
-	    "Monster Sound MX300",
 	},
 	{
 	    PCI_VENDOR_DPT, PCI_PRODUCT_DPT_SC_RAID,
@@ -7755,9 +7755,9 @@ struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
-	    PCI_VENDOR_DIAMOND2, 0,
+	    PCI_VENDOR_AUREAL, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Diamond Multimedia(2)",
+	    "Aureal",
 	    NULL,
 	},
 	{

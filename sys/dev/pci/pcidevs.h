@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.285 2000/07/19 21:14:12 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.286 2000/07/19 22:04:17 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -511,7 +511,7 @@
 #define	PCI_VENDOR_ALTEON	0x12ae		/* Alteon */
 #define	PCI_VENDOR_PICTUREEL	0x12c5		/* Picture Elements */
 #define	PCI_VENDOR_STB2	0x12d2		/* NVidia/SGS-Thomson */
-#define	PCI_VENDOR_DIAMOND2	0x12eb		/* Diamond Multimedia(2) */
+#define	PCI_VENDOR_AUREAL	0x12eb		/* Aureal */
 #define	PCI_VENDOR_ADMTEK	0x1317		/* ADMtek */
 #define	PCI_VENDOR_FORTEMEDIA	0x1319		/* Forte Media */
 #define	PCI_VENDOR_SIIG	0x131f		/* SIIG */
@@ -762,6 +762,10 @@
 /* Atronics products */
 #define	PCI_PRODUCT_ATRONICS_IDE_2015PL	0x2015		/* IDE-2015PL */
 
+/* Aureal products */
+#define	PCI_PRODUCT_AUREAL_AU8820	0x0001		/* AU8820 Vortex1 */
+#define	PCI_PRODUCT_AUREAL_AU8830	0x0002		/* AU8830 Vortex2 */
+
 /* Avance Logic products */
 #define	PCI_PRODUCT_AVANCE_AVL2301	0x2301		/* AVL2301 */
 #define	PCI_PRODUCT_AVANCE_AVG2302	0x2302		/* AVG2302 */
@@ -932,8 +936,6 @@
 
 /* Diamond products */
 #define	PCI_PRODUCT_DIAMOND_VIPER	0x9001		/* Viper/PCI */
-#define	PCI_PRODUCT_DIAMOND2_MONSTER	0x0001		/* Monster */
-#define	PCI_PRODUCT_DIAMOND2_MX300	0x0002		/* Monster Sound MX300 */
 
 /* Distributed Processing Technology products */
 #define	PCI_PRODUCT_DPT_SC_RAID	0xa400		/* SmartCache/Raid */
