@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.9 1996/11/28 23:37:42 niklas Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.10 1997/06/18 19:07:01 dm Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.26 1996/10/24 12:32:29 fvdl Exp $	*/
 
 /*
@@ -138,6 +138,50 @@ mode2:
 	tag.mode2.enable = 0xf0 | (function << 1);
 	tag.mode2.forward = bus;
 	return tag;
+#endif
+}
+
+void
+pci_decompose_tag(pc, tag, bp, dp, fp)
+	pci_chipset_tag_t pc;
+	pcitag_t tag;
+	int *bp, *dp, *fp;
+{
+
+#ifndef PCI_CONF_MODE
+	switch (pci_mode) {
+	case 1:
+		goto mode1;
+	case 2:
+		goto mode2;
+	default:
+		panic("pci_decompose_tag: mode not configured");
+	}
+#endif
+
+#if !defined(PCI_CONF_MODE) || (PCI_CONF_MODE == 1)
+#ifndef PCI_CONF_MODE
+mode1:
+#endif
+	if (bp != NULL)
+		*bp = (tag.mode1 >> 16) & 0xff;
+	if (dp != NULL)
+		*dp = (tag.mode1 >> 11) & 0x1f;
+	if (fp != NULL)
+		*fp = (tag.mode1 >> 8) & 0x7;
+	return;
+#endif
+
+#if !defined(PCI_CONF_MODE) || (PCI_CONF_MODE == 2)
+#ifndef PCI_CONF_MODE
+mode2:
+#endif
+	if (bp != NULL)
+		*bp = tag.mode2.forward & 0xff;
+	if (dp != NULL)
+		*dp = (tag.mode2.port >> 8) & 0xf;
+	if (fp != NULL)
+		*fp = (tag.mode2.enable >> 1) & 0x7;
 #endif
 }
 

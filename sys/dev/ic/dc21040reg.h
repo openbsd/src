@@ -1,8 +1,7 @@
-/*	$OpenBSD: dc21040reg.h,v 1.3 1996/10/31 01:01:28 niklas Exp $	*/
-/*	$NetBSD: dc21040reg.h,v 1.6 1995/08/19 04:15:29 cgd Exp $	*/
+/*	$NetBSD: dc21040reg.h,v 1.11 1997/06/08 18:44:02 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1994, 1995 Matt Thomas (thomas@lkg.dec.com)
+ * Copyright (c) 1994, 1995, 1996 Matt Thomas <matt@3am-software.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -23,13 +22,12 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Id: dc21040reg.h,v 1.24 1997/05/16 19:47:09 thomas Exp
  */
 
 #if !defined(_DC21040_H)
 #define _DC21040_H
-
-typedef	u_int16_t	tulip_uint16_t;
-typedef	u_int32_t	tulip_uint32_t;
 
 #if defined(BYTE_ORDER) && BYTE_ORDER == BIG_ENDIAN
 #define	TULIP_BITFIELD2(a, b)		      b, a
@@ -42,15 +40,15 @@ typedef	u_int32_t	tulip_uint32_t;
 #endif
 
 typedef struct {
-    tulip_uint32_t d_status;
-    tulip_uint32_t TULIP_BITFIELD3(d_length1 : 11,
-				   d_length2 : 11,
-				   d_flag : 10);
-    tulip_uint32_t d_addr1;
-    tulip_uint32_t d_addr2;
+    u_int32_t d_status;
+    u_int32_t TULIP_BITFIELD3(d_length1 : 11,
+			      d_length2 : 11,
+			      d_flag : 10);
+    u_int32_t d_addr1;
+    u_int32_t d_addr2;
 } tulip_desc_t;
 
-#define	TULIP_DSTS_OWNER	0x80000000	/* Owner (1 = DC21040) */
+#define	TULIP_DSTS_OWNER	0x80000000	/* Owner (1 = 21040) */
 #define	TULIP_DSTS_ERRSUM	0x00008000	/* Error Summary */
 /*
  * Transmit Status
@@ -97,7 +95,7 @@ typedef struct {
 #define	TULIP_DFLAG_TxHASHFILT	0x0001		/* Hash/Perfect Filtering */
 
 /*
- * The DC21040 Registers (IO Space Addresses)
+ * The 21040 Registers (IO Space Addresses)
  */
 #define	TULIP_REG_BUSMODE	0x00	/* CSR0  -- Bus Mode */
 #define	TULIP_REG_TXPOLL	0x08	/* CSR1  -- Transmit Poll Demand */
@@ -124,6 +122,7 @@ typedef struct {
 #define	TULIP_STS_ERR_PARITY	0x00000000L		/*        000 - Parity Error (Perform Reset) */
 #define	TULIP_STS_ERR_MASTER	0x00800000L		/*        001 - Master Abort */
 #define	TULIP_STS_ERR_TARGET	0x01000000L		/*        010 - Target Abort */
+#define	TULIP_STS_ERR_SHIFT	23
 #define	TULIP_STS_TXSTATEMASK	0x00700000L		/* ( R)  Transmission Process State */
 #define	TULIP_STS_TXS_RESET	0x00000000L		/*        000 - Rset or transmit jabber expired */
 #define	TULIP_STS_TXS_FETCH	0x00100000L		/*        001 - Fetching transmit descriptor */
@@ -152,16 +151,16 @@ typedef struct {
 #define	TULIP_STS_NORMALINTR	0x00010000L		/* (RW)  Normal Interrupt */
 #define	TULIP_STS_ABNRMLINTR	0x00008000L		/* (RW)  Abnormal Interrupt */
 #define	TULIP_STS_SYSERROR	0x00002000L		/* (RW)  System Error */
-#define	TULIP_STS_LINKFAIL	0x00001000L		/* (RW)  Link Failure (DC21040) */
-#define	TULIP_STS_FULDPLXSHRT	0x00000800L		/* (RW)  Full Duplex Short Fram Rcvd (DC21040) */
-#define	TULIP_STS_GPTIMEOUT	0x00000800L		/* (RW)  General Purpose Timeout (DC21140) */
-#define	TULIP_STS_AUI		0x00000400L		/* (RW)  AUI/TP Switch (DC21040) */
+#define	TULIP_STS_LINKFAIL	0x00001000L		/* (RW)  Link Failure (21040) */
+#define	TULIP_STS_FULDPLXSHRT	0x00000800L		/* (RW)  Full Duplex Short Fram Rcvd (21040) */
+#define	TULIP_STS_GPTIMEOUT	0x00000800L		/* (RW)  General Purpose Timeout (21140) */
+#define	TULIP_STS_AUI		0x00000400L		/* (RW)  AUI/TP Switch (21040) */
 #define	TULIP_STS_RXTIMEOUT	0x00000200L		/* (RW)  Receive Watchbog Timeout */
 #define	TULIP_STS_RXSTOPPED	0x00000100L		/* (RW)  Receive Process Stopped */
 #define	TULIP_STS_RXNOBUF	0x00000080L		/* (RW)  Receive Buffer Unavailable */
 #define	TULIP_STS_RXINTR	0x00000040L		/* (RW)  Receive Interrupt */
 #define	TULIP_STS_TXUNDERFLOW	0x00000020L		/* (RW)  Transmit Underflow */
-#define	TULIP_STS_LINKPASS	0x00000010L		/* (RW)  LinkPass (DC21041) */
+#define	TULIP_STS_LINKPASS	0x00000010L		/* (RW)  LinkPass (21041) */
 #define	TULIP_STS_TXBABBLE	0x00000008L		/* (RW)  Transmit Jabber Timeout */
 #define	TULIP_STS_TXNOBUF	0x00000004L		/* (RW)  Transmit Buffer Unavailable */
 #define	TULIP_STS_TXSTOPPED	0x00000002L		/* (RW)  Transmit Process Stopped */
@@ -170,16 +169,16 @@ typedef struct {
 /*
  * CSR6 -- Command (Operation Mode) Register
  */
-#define	TULIP_CMD_MUSTBEONE	0x02000000L		/* (RW)  Must Be One (DC21140) */
-#define	TULIP_CMD_SCRAMBLER	0x01000000L		/* (RW)  Scrambler Mode (DC21140) */
-#define	TULIP_CMD_PCSFUNCTION	0x00800000L		/* (RW)  PCS Function (DC21140) */
-#define	TULIP_CMD_TXTHRSHLDCTL	0x00400000L		/* (RW)  Transmit Threshold Mode (DC21140) */
-#define	TULIP_CMD_STOREFWD	0x00200000L		/* (RW)  Store and Foward (DC21140) */
-#define	TULIP_CMD_NOHEARTBEAT	0x00080000L		/* (RW)  No Heartbeat (DC21140) */
-#define	TULIP_CMD_PORTSELECT	0x00040000L		/* (RW)  Post Select (100Mb) (DC21140) */
-#define	TULIP_CMD_ENHCAPTEFFCT	0x00040000L		/* (RW)  Enhanced Capture Effecty (DC21041) */
+#define	TULIP_CMD_MUSTBEONE	0x02000000L		/* (RW)  Must Be One (21140) */
+#define	TULIP_CMD_SCRAMBLER	0x01000000L		/* (RW)  Scrambler Mode (21140) */
+#define	TULIP_CMD_PCSFUNCTION	0x00800000L		/* (RW)  PCS Function (21140) */
+#define	TULIP_CMD_TXTHRSHLDCTL	0x00400000L		/* (RW)  Transmit Threshold Mode (21140) */
+#define	TULIP_CMD_STOREFWD	0x00200000L		/* (RW)  Store and Foward (21140) */
+#define	TULIP_CMD_NOHEARTBEAT	0x00080000L		/* (RW)  No Heartbeat (21140) */
+#define	TULIP_CMD_PORTSELECT	0x00040000L		/* (RW)  Post Select (100Mb) (21140) */
+#define	TULIP_CMD_ENHCAPTEFFCT	0x00040000L		/* (RW)  Enhanced Capture Effecty (21041) */
 #define	TULIP_CMD_CAPTREFFCT	0x00020000L		/* (RW)  Capture Effect (!802.3) */
-#define	TULIP_CMD_BACKPRESSURE	0x00010000L		/* (RW)  Back Pressure (!802.3) (DC21040) */
+#define	TULIP_CMD_BACKPRESSURE	0x00010000L		/* (RW)  Back Pressure (!802.3) (21040) */
 #define	TULIP_CMD_THRESHOLDCTL	0x0000C000L		/* (RW)  Threshold Control */
 #define	TULIP_CMD_THRSHLD72	0x00000000L		/*       00 - 72 Bytes */
 #define	TULIP_CMD_THRSHLD96	0x00004000L		/*       01 - 96 Bytes */
@@ -199,26 +198,98 @@ typedef struct {
 #define	TULIP_CMD_RXRUN		0x00000002L		/* (RW)  Start/Stop Receive Filtering */
 #define	TULIP_CMD_HASHPRFCTFLTR	0x00000001L		/* (R )  Hash/Perfect Receive Filtering */
 
-
 #define TULIP_SIASTS_OTHERRXACTIVITY	0x00000200L
 #define TULIP_SIASTS_RXACTIVITY		0x00000100L
 #define	TULIP_SIASTS_LINKFAIL		0x00000004L
 #define	TULIP_SIACONN_RESET		0x00000000L
 
-#define	TULIP_SIACONN_AUI		0x0000000DL
-#define	TULIP_SIACONN_10BASET		0x00000005L
+/*
+ * 21040 SIA definitions
+ */
+#define	TULIP_21040_PROBE_10BASET_TIMEOUT	2500
+#define	TULIP_21040_PROBE_AUIBNC_TIMEOUT	300
+#define	TULIP_21040_PROBE_EXTSIA_TIMEOUT	300
 
-#define	TULIP_DC21041_SIACONN_10BASET	0x0000EF01L
-#define	TULIP_DC21041_SIATXRX_10BASET	0x0000FF3FL
-#define	TULIP_DC21041_SIAGEN_10BASET	0x00000000L
+#define	TULIP_21040_SIACONN_10BASET	0x00008F01L
+#define	TULIP_21040_SIATXRX_10BASET	0x0000FFFFL
+#define	TULIP_21040_SIAGEN_10BASET	0x00000000L
 
-#define	TULIP_DC21041_SIACONN_AUI	0x0000EF09L
-#define	TULIP_DC21041_SIATXRX_AUI	0x0000F73DL
-#define	TULIP_DC21041_SIAGEN_AUI	0x0000000EL
+#define	TULIP_21040_SIACONN_10BASET_FD	0x00008F01L
+#define	TULIP_21040_SIATXRX_10BASET_FD	0x0000FFFDL
+#define	TULIP_21040_SIAGEN_10BASET_FD	0x00000000L
 
-#define	TULIP_DC21041_SIACONN_BNC	0x0000EF09L
-#define	TULIP_DC21041_SIATXRX_BNC	0x0000F73DL
-#define	TULIP_DC21041_SIAGEN_BNC	0x00000006L
+#define	TULIP_21040_SIACONN_AUIBNC	0x00008F09L
+#define	TULIP_21040_SIATXRX_AUIBNC	0x00000705L
+#define	TULIP_21040_SIAGEN_AUIBNC	0x00000006L
+
+#define	TULIP_21040_SIACONN_EXTSIA	0x00003041L
+#define	TULIP_21040_SIATXRX_EXTSIA	0x00000000L
+#define	TULIP_21040_SIAGEN_EXTSIA	0x00000006L
+
+/*
+ * 21041 SIA definitions
+ */
+
+#define	TULIP_21041_PROBE_10BASET_TIMEOUT	2500
+#define	TULIP_21041_PROBE_AUIBNC_TIMEOUT	300
+
+#define	TULIP_21041_SIACONN_10BASET		0x0000EF01L
+#define	TULIP_21041_SIATXRX_10BASET		0x0000FF3FL
+#define	TULIP_21041_SIAGEN_10BASET		0x00000000L
+
+#define	TULIP_21041P2_SIACONN_10BASET		0x0000EF01L
+#define	TULIP_21041P2_SIATXRX_10BASET		0x0000FFFFL
+#define	TULIP_21041P2_SIAGEN_10BASET		0x00000000L
+
+#define	TULIP_21041_SIACONN_10BASET_FD		0x0000EF01L
+#define	TULIP_21041_SIATXRX_10BASET_FD		0x0000FF3DL
+#define	TULIP_21041_SIAGEN_10BASET_FD		0x00000000L
+
+#define	TULIP_21041P2_SIACONN_10BASET_FD	0x0000EF01L
+#define	TULIP_21041P2_SIATXRX_10BASET_FD	0x0000FFFFL
+#define	TULIP_21041P2_SIAGEN_10BASET_FD		0x00000000L
+
+#define	TULIP_21041_SIACONN_AUI			0x0000EF09L
+#define	TULIP_21041_SIATXRX_AUI			0x0000F73DL
+#define	TULIP_21041_SIAGEN_AUI			0x0000000EL
+
+#define	TULIP_21041P2_SIACONN_AUI		0x0000EF09L
+#define	TULIP_21041P2_SIATXRX_AUI		0x0000F7FDL
+#define	TULIP_21041P2_SIAGEN_AUI		0x0000000EL
+
+#define	TULIP_21041_SIACONN_BNC			0x0000EF09L
+#define	TULIP_21041_SIATXRX_BNC			0x0000F73DL
+#define	TULIP_21041_SIAGEN_BNC			0x00000006L
+
+#define	TULIP_21041P2_SIACONN_BNC		0x0000EF09L
+#define	TULIP_21041P2_SIATXRX_BNC		0x0000F7FDL
+#define	TULIP_21041P2_SIAGEN_BNC		0x00000006L
+
+/*
+ * 21142 SIA definitions
+ */
+
+#define	TULIP_21142_PROBE_10BASET_TIMEOUT	2500
+#define	TULIP_21142_PROBE_AUIBNC_TIMEOUT	300
+
+#define	TULIP_21142_SIACONN_10BASET		0x00000001L
+#define	TULIP_21142_SIATXRX_10BASET		0x0000F3FFL
+#define	TULIP_21142_SIAGEN_10BASET		0x00000000L
+
+#define	TULIP_21142_SIACONN_10BASET_FD		0x00000001L
+#define	TULIP_21142_SIATXRX_10BASET_FD		0x0000F3FDL
+#define	TULIP_21142_SIAGEN_10BASET_FD		0x00000000L
+
+#define	TULIP_21142_SIACONN_AUI			0x00000009L
+#define	TULIP_21142_SIATXRX_AUI			0x0000F3FDL
+#define	TULIP_21142_SIAGEN_AUI			0x0000000EL
+
+#define	TULIP_21142_SIACONN_BNC			0x00000009L
+#define	TULIP_21142_SIATXRX_BNC			0x0000F3FDL
+#define	TULIP_21142_SIAGEN_BNC			0x00000006L
+
+
+
 
 #define	TULIP_WATCHDOG_TXDISABLE	0x00000001L
 #define	TULIP_WATCHDOG_RXDISABLE	0x00000010L
@@ -242,59 +313,131 @@ typedef struct {
 #define	TULIP_BUSMODE_TXPOLL_200000ns	0x00020000L
 #define	TULIP_BUSMODE_TXPOLL_800000ns	0x00040000L
 #define	TULIP_BUSMODE_TXPOLL_1600000ns	0x00060000L
-#define	TULIP_BUSMODE_TXPOLL_12800ns	0x00080000L	/* DC21041 only */
-#define	TULIP_BUSMODE_TXPOLL_25600ns	0x000A0000L	/* DC21041 only */
-#define	TULIP_BUSMODE_TXPOLL_51200ns	0x000C0000L	/* DC21041 only */
-#define	TULIP_BUSMODE_TXPOLL_102400ns	0x000E0000L	/* DC21041 only */
-#define	TULIP_BUSMODE_DESC_BIGENDIAN	0x00100000L	/* DC21041 only */
+#define	TULIP_BUSMODE_TXPOLL_12800ns	0x00080000L	/* 21041 only */
+#define	TULIP_BUSMODE_TXPOLL_25600ns	0x000A0000L	/* 21041 only */
+#define	TULIP_BUSMODE_TXPOLL_51200ns	0x000C0000L	/* 21041 only */
+#define	TULIP_BUSMODE_TXPOLL_102400ns	0x000E0000L	/* 21041 only */
+#define	TULIP_BUSMODE_DESC_BIGENDIAN	0x00100000L	/* 21041 only */
+#define	TULIP_BUSMODE_READMULTIPLE	0x00200000L	/* */
 
+#define	TULIP_REG_CFDA			0x40
+#define	TULIP_CFDA_SLEEP		0x80000000L
+#define	TULIP_CFDA_SNOOZE		0x40000000L
+
+#define	TULIP_GP_PINSET			0x00000100L
 /*
- * These are the defintitions used for the DEC DC21140
+ * These are the defintitions used for the DEC 21140
  * evaluation board.
  */
-#define	TULIP_GP_EB_PINS		0x0000011F	/* General Purpose Pin directions */
+#define	TULIP_GP_EB_PINS		0x0000001F	/* General Purpose Pin directions */
 #define	TULIP_GP_EB_OK10		0x00000080	/* 10 Mb/sec Signal Detect gep<7> */
 #define	TULIP_GP_EB_OK100		0x00000040	/* 100 Mb/sec Signal Detect gep<6> */
 #define	TULIP_GP_EB_INIT		0x0000000B	/* No loopback --- point-to-point */
 
 /*
- * There are the definitions used for the DEC DE500-XA
- * 10/100 board
+ * These are the defintitions used for the SMC9332 (21140) board.
  */
-#define	TULIP_GP_DE500_PINS		0x0000010FL
-#define	TULIP_GP_DE500_NOTOK_10		0x00000080L
-#define	TULIP_GP_DE500_NOTOK_100	0x00000040L
+#define	TULIP_GP_SMC_9332_PINS		0x0000003F	/* General Purpose Pin directions */
+#define	TULIP_GP_SMC_9332_OK10		0x00000080	/* 10 Mb/sec Signal Detect gep<7> */
+#define	TULIP_GP_SMC_9332_OK100		0x00000040	/* 100 Mb/sec Signal Detect gep<6> */
+#define	TULIP_GP_SMC_9332_INIT		0x00000009	/* No loopback --- point-to-point */
+
+#define	TULIP_OUI_SMC_0			0x00
+#define	TULIP_OUI_SMC_1			0x00
+#define	TULIP_OUI_SMC_2			0xC0
+
+/*
+ * There are the definitions used for the DEC DE500
+ * 10/100 family of boards
+ */
+#define	TULIP_GP_DE500_PINS		0x0000001FL
+#define	TULIP_GP_DE500_LINK_PASS	0x00000080L
+#define	TULIP_GP_DE500_SYM_LINK		0x00000040L
+#define	TULIP_GP_DE500_SIGNAL_DETECT	0x00000020L
+#define	TULIP_GP_DE500_PHY_RESET	0x00000010L
 #define	TULIP_GP_DE500_HALFDUPLEX	0x00000008L
+#define	TULIP_GP_DE500_PHY_LOOPBACK	0x00000004L
+#define	TULIP_GP_DE500_FORCE_LED	0x00000002L
 #define	TULIP_GP_DE500_FORCE_100	0x00000001L
 
 /*
  * These are the defintitions used for the Cogent EM100
- * DC21140 board.
+ * 21140 board.
  */
-#define	TULIP_GP_EM100_PINS		0x0000013F	/* General Purpose Pin directions */
+#define	TULIP_GP_EM100_PINS		0x0000003F	/* General Purpose Pin directions */
 #define	TULIP_GP_EM100_INIT		0x00000009	/* No loopback --- point-to-point */
 #define	TULIP_OUI_COGENT_0		0x00
 #define	TULIP_OUI_COGENT_1		0x00
 #define	TULIP_OUI_COGENT_2		0x92
-#define	TULIP_COGENT_EM100_ID		0x12
+#define	TULIP_COGENT_EM100TX_ID		0x12
+#define	TULIP_COGENT_EM100FX_ID		0x15
 
 
 /*
  * These are the defintitions used for the Znyx ZX342
  * 10/100 board
  */
-#define	TULIP_GP_ZX34X_PINS		0x0000011F	/* General Purpose Pin directions */
-#define	TULIP_GP_ZX34X_OK10		0x00000080	/* 10 Mb/sec Signal Detect gep<7> */
-#define	TULIP_GP_ZX34X_OK100		0x00000040	/* 100 Mb/sec Signal Detect gep<6> */
-#define	TULIP_GP_ZX34X_INIT		0x00000009	
 #define	TULIP_OUI_ZNYX_0		0x00
 #define	TULIP_OUI_ZNYX_1		0xC0
 #define	TULIP_OUI_ZNYX_2		0x95
 
+#define	TULIP_ZNYX_ID_ZX312		0x0602
+#define	TULIP_ZNYX_ID_ZX312T		0x0622
+#define	TULIP_ZNYX_ID_ZX314_INTA	0x0701
+#define	TULIP_ZNYX_ID_ZX314		0x0711
+#define	TULIP_ZNYX_ID_ZX315_INTA	0x0801
+#define	TULIP_ZNYX_ID_ZX315		0x0811
+#define	TULIP_ZNYX_ID_ZX342		0x0901
+#define	TULIP_ZNYX_ID_ZX342B		0x0921
+#define	TULIP_ZNYX_ID_ZX342_X3		0x0902
+#define	TULIP_ZNYX_ID_ZX342_X4		0x0903
+#define	TULIP_ZNYX_ID_ZX344		0x0A01
+#define	TULIP_ZNYX_ID_ZX351		0x0B01
+#define	TULIP_ZNYX_ID_ZX345		0x0C01
+#define	TULIP_ZNYX_ID_ZX311		0x0D01
+#define	TULIP_ZNYX_ID_ZX346		0x0E01
+
+#define	TULIP_GP_ZX34X_PINS		0x0000001F	/* General Purpose Pin directions */
+#define	TULIP_GP_ZX344_PINS		0x0000000B	/* General Purpose Pin directions */
+#define	TULIP_GP_ZX345_PINS		0x00000003	/* General Purpose Pin directions */
+#define	TULIP_GP_ZX346_PINS		0x00000043	/* General Purpose Pin directions */
+#define	TULIP_GP_ZX34X_LNKFAIL		0x00000080	/* 10Mb/s Link Failure */
+#define	TULIP_GP_ZX34X_SYMDET		0x00000040	/* 100Mb/s Symbol Detect */
+#define	TULIP_GP_ZX345_PHYACT		0x00000040	/* PHY Activity */
+#define	TULIP_GP_ZX34X_SIGDET		0x00000020	/* 100Mb/s Signal Detect */
+#define	TULIP_GP_ZX346_AUTONEG_ENABLED	0x00000020	/* 802.3u autoneg enabled */
+#define	TULIP_GP_ZX342_COLENA		0x00000008	/* 10t Ext LB */
+#define	TULIP_GP_ZX344_ROTINT		0x00000008	/* PPB IRQ rotation */
+#define	TULIP_GP_ZX345_SPEED10		0x00000008	/* 10Mb speed detect */
+#define	TULIP_GP_ZX346_SPEED100		0x00000008	/* 100Mb speed detect */
+#define	TULIP_GP_ZX34X_NCOLENA		0x00000004	/* 10t Int LB */
+#define	TULIP_GP_ZX34X_RXMATCH		0x00000004	/* RX Match */
+#define	TULIP_GP_ZX346_FULLDUPLEX	0x00000004	/* Full Duplex Sensed */
+#define	TULIP_GP_ZX34X_LB102		0x00000002	/* 100tx twister LB */
+#define	TULIP_GP_ZX34X_NLB101		0x00000001	/* PDT/PDR LB */
+#define	TULIP_GP_ZX34X_INIT		0x00000009	
 
 /*
- * SROM definitions for the DC21140 and DC21041.
+ * Compex's OUI.  We need to twiddle a bit on their 21041 card.
  */
+#define	TULIP_OUI_COMPEX_0		0x00
+#define	TULIP_OUI_COMPEX_1		0x80
+#define	TULIP_OUI_COMPEX_2		0x48
+#define	TULIP_21041_COMPEX_XREGDATA	1
+
+/*
+ * Asante's OUI and stuff...
+ */
+#define TULIP_OUI_ASANTE_0		0x00
+#define TULIP_OUI_ASANTE_1		0x00
+#define TULIP_OUI_ASANTE_2		0x94
+#define TULIP_GP_ASANTE_PINS		0x000000bf	/* GP pin config */
+#define TULIP_GP_ASANTE_PHYRESET	0x00000008	/* Reset PHY */
+
+/*
+ * SROM definitions for the 21140 and 21041.
+ */
+#define	SROMXREG	0x0400
 #define SROMSEL         0x0800
 #define SROMRD          0x4000
 #define SROMWR          0x2000
@@ -315,6 +458,60 @@ typedef struct {
 #define	SROM_BITWIDTH	6
 
 /*
+ * MII Definitions for the 21041 and 21140/21140A/21142
+ */
+#define	MII_PREAMBLE		(~0)
+#define	MII_TEST		0xAAAAAAAA
+#define	MII_RDCMD		0xF6		/* 1111.0110 */
+#define	MII_WRCMD		0xF5		/* 1111.0101 */
+#define	MII_DIN			0x00080000
+#define	MII_RD			0x00040000
+#define	MII_WR			0x00000000
+#define	MII_DOUT		0x00020000
+#define	MII_CLK			0x00010000
+#define	MII_CLKON		MII_CLK
+#define	MII_CLKOFF		MII_CLK
+
+#define	PHYREG_CONTROL			0
+#define	PHYREG_STATUS			1
+#define	PHYREG_IDLOW			2
+#define	PHYREG_IDHIGH			3
+#define	PHYREG_AUTONEG_ADVERTISEMENT	4
+#define	PHYREG_AUTONEG_ABILITIES	5
+#define	PHYREG_AUTONEG_EXPANSION	6
+#define	PHYREG_AUTONEG_NEXTPAGE		7
+
+#define	PHYSTS_100BASET4	0x8000
+#define	PHYSTS_100BASETX_FD	0x4000
+#define	PHYSTS_100BASETX	0x2000
+#define	PHYSTS_10BASET_FD	0x1000
+#define	PHYSTS_10BASET		0x0800
+#define	PHYSTS_AUTONEG_DONE	0x0020
+#define	PHYSTS_REMOTE_FAULT	0x0010
+#define	PHYSTS_CAN_AUTONEG	0x0008
+#define	PHYSTS_LINK_UP		0x0004
+#define	PHYSTS_JABBER_DETECT	0x0002
+#define	PHYSTS_EXTENDED_REGS	0x0001
+
+#define	PHYCTL_RESET		0x8000
+#define	PHYCTL_SELECT_100MB	0x2000
+#define	PHYCTL_AUTONEG_ENABLE	0x1000
+#define	PHYCTL_ISOLATE		0x0400
+#define	PHYCTL_AUTONEG_RESTART	0x0200
+#define	PHYCTL_FULL_DUPLEX	0x0100
+
+
+#define MII_RD          0x00040000
+#define MII_WR          0x00000000
+#define MII_DIN         0x00080000
+#define MII_DOUT        0x00020000
+#define MII_DOUTON      MII_DOUT
+#define MII_DOUTOFF     MII_DOUT
+#define MII_CLK		0x00010000
+#define MII_CLKON       MII_CLK
+#define MII_CLKOFF      MII_CLK
+
+/*
  * Definitions for the DE425.
  */
 #define	DE425_CFID		0x08	/* Configuration Id */
@@ -325,12 +522,79 @@ typedef struct {
 #define	DE425_CFDA		0x2C	/* Configuration Driver Area */
 #define	DE425_ENETROM_OFFSET	0xC90	/* Offset in I/O space for ENETROM */
 #define	DE425_CFG0		0xC88	/* IRQ register */
+#define	DE425_EISAID		0x10a34250 /* EISA device id */
+#define	DE425_EISA_IOSIZE	0x100
 
 #define	DEC_VENDORID		0x1011
-#define	DC21040_CHIPID		0x0002
-#define	DC21140_CHIPID		0x0009
-#define	DC21041_CHIPID		0x0014
+#define	CHIPID_21040		0x0002
+#define	CHIPID_21140		0x0009
+#define	CHIPID_21041		0x0014
+#define	CHIPID_21142		0x0019
 #define	PCI_VENDORID(x)		((x) & 0xFFFF)
 #define	PCI_CHIPID(x)		(((x) >> 16) & 0xFFFF)
+
+/*
+ * Generic SROM Format
+ *
+ *
+ */
+
+typedef struct {
+    u_int8_t sh_idbuf[18];
+    u_int8_t sh_version;
+    u_int8_t sh_adapter_count;
+    u_int8_t sh_ieee802_address[6];
+} tulip_srom_header_t;
+
+typedef struct {
+    u_int8_t sai_device;
+    u_int8_t sai_leaf_offset_lowbyte;
+    u_int8_t sai_leaf_offset_highbyte;
+} tulip_srom_adapter_info_t;
+
+typedef enum {
+    TULIP_SROM_CONNTYPE_10BASET			=0x0000,
+    TULIP_SROM_CONNTYPE_BNC			=0x0001,
+    TULIP_SROM_CONNTYPE_AUI			=0x0002,
+    TULIP_SROM_CONNTYPE_100BASETX		=0x0003,
+    TULIP_SROM_CONNTYPE_100BASET4		=0x0006,
+    TULIP_SROM_CONNTYPE_100BASEFX		=0x0007,
+    TULIP_SROM_CONNTYPE_MII_10BASET		=0x0009,
+    TULIP_SROM_CONNTYPE_MII_100BASETX		=0x000D,
+    TULIP_SROM_CONNTYPE_MII_100BASET4		=0x000F,
+    TULIP_SROM_CONNTYPE_MII_100BASEFX		=0x0010,
+    TULIP_SROM_CONNTYPE_10BASET_NWAY		=0x0100,
+    TULIP_SROM_CONNTYPE_10BASET_FD		=0x0204,
+    TULIP_SROM_CONNTYPE_MII_10BASET_FD		=0x020A,
+    TULIP_SROM_CONNTYPE_100BASETX_FD		=0x020E,
+    TULIP_SROM_CONNTYPE_MII_100BASETX_FD	=0x0211,
+    TULIP_SROM_CONNTYPE_10BASET_NOLINKPASS	=0x0400,
+    TULIP_SROM_CONNTYPE_AUTOSENSE		=0x0800,
+    TULIP_SROM_CONNTYPE_AUTOSENSE_POWERUP	=0x8800,
+    TULIP_SROM_CONNTYPE_AUTOSENSE_NWAY		=0x9000,
+    TULIP_SROM_CONNTYPE_NOT_USED		=0xFFFF
+} tulip_srom_connection_t;
+
+typedef enum {
+    TULIP_SROM_MEDIA_10BASET			=0x0000,
+    TULIP_SROM_MEDIA_BNC			=0x0001,
+    TULIP_SROM_MEDIA_AUI			=0x0002,
+    TULIP_SROM_MEDIA_100BASETX			=0x0003,
+    TULIP_SROM_MEDIA_10BASET_FD			=0x0004,
+    TULIP_SROM_MEDIA_100BASETX_FD		=0x0005,
+    TULIP_SROM_MEDIA_100BASET4			=0x0006,
+    TULIP_SROM_MEDIA_100BASEFX			=0x0007,
+    TULIP_SROM_MEDIA_100BASEFX_FD		=0x0008
+} tulip_srom_media_t;
+
+#define	TULIP_SROM_21041_EXTENDED	0x40
+
+#define	TULIP_SROM_2114X_NOINDICATOR	0x8000
+#define	TULIP_SROM_2114X_DEFAULT	0x4000
+#define	TULIP_SROM_2114X_POLARITY	0x0080
+#define	TULIP_SROM_2114X_CMDBITS(n)	(((n) & 0x0071) << 18)
+#define	TULIP_SROM_2114X_BITPOS(b)	(1 << (((b) & 0x0E) >> 1))
+
+
 
 #endif /* !defined(_DC21040_H) */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.3 1996/04/21 22:17:34 deraadt Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.4 1997/06/18 19:07:02 dm Exp $	*/
 /*	$NetBSD: pci_machdep.h,v 1.5 1996/03/27 04:01:16 cgd Exp $	*/
 
 /*
@@ -85,6 +85,8 @@ const char	*pci_intr_string __P((pci_chipset_tag_t, pci_intr_handle_t));
 void		*pci_intr_establish __P((pci_chipset_tag_t, pci_intr_handle_t,
 		    int, int (*)(void *), void *, char *));
 void		pci_intr_disestablish __P((pci_chipset_tag_t, void *));
+void		pci_decompose_tag __P((pci_chipset_tag_t, pcitag_t,
+		    int *, int *, int *));
 
 /*
  * Compatibility functions, to map the old i386 PCI functions to the new ones.
