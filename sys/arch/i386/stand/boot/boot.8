@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot.8,v 1.21 2000/11/18 11:23:19 aaron Exp $
+.\"	$OpenBSD: boot.8,v 1.22 2000/11/18 12:12:37 aaron Exp $
 .\"
 .\" Copyright (c) 1997-2000 Michael Shalayeff
 .\" All rights reserved.
@@ -280,6 +280,22 @@ Useful for debugging.
 .Li # echo \&"set tty com0\&" > /etc/boot.conf
 .Pp
 Invoke the serial console at every boot.
+.Pp
+.Li boot> boot wd1a:/bsd -c
+.Pp
+Boot the kernel named
+.Pa /bsd
+from the second IDE disk in
+.Dq User Kernel Configuration
+mode (see
+.Xr config 8 ) .
+This mechanism allows for the explicit enabling and disabling of devices
+during the current boot sequence, as well as the modification
+of device parameters.
+Once booted, such changes can be made permanent by using
+.Xr config 8 Ns 's
+.Fl e
+option.
 .Sh FILES
 .Bl -tag -width /usr/mdec/biosbootxx -compact
 .It Pa /usr/mdec/biosboot
