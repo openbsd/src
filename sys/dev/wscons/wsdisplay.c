@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.9 2000/11/23 16:13:42 aaron Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.10 2001/02/08 02:47:11 aaron Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.37.4.1 2000/06/30 16:27:53 simonb Exp $ */
 
 /*
@@ -1811,9 +1811,13 @@ wsscrollback(arg, op)
 	struct wsdisplay_softc *sc = arg;
 	int lines;
 
-	lines = sc->sc_focus->scr_dconf->scrdata->nrows - 1;
-	if (op == WSCONS_SCROLL_BACKWARD)
-		lines = -lines;
+	if (op == WSDISPLAY_SCROLL_RESET)
+		lines = 0;
+	else {
+		lines = sc->sc_focus->scr_dconf->scrdata->nrows - 1;
+		if (op == WSDISPLAY_SCROLL_BACKWARD)
+			lines = -lines;
+	}
 
 	if (sc->sc_accessops->scrollback) {
 		(*sc->sc_accessops->scrollback)(sc->sc_accesscookie,

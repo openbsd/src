@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.6 2001/01/30 17:33:20 aaron Exp $ */
+/* $OpenBSD: wskbd.c,v 1.7 2001/02/08 02:47:12 aaron Exp $ */
 /* $NetBSD: wskbd.c,v 1.38 2000/03/23 07:01:47 thorpej Exp $ */
 
 /*
@@ -522,14 +522,16 @@ wskbd_detach(self, flags)
 #if NWSMUX > 0
 	int mux;
 
+	mux = sc->sc_dv.dv_cfdata->wskbddevcf_mux;
+	if (mux != WSKBDDEVCF_MUX_DEFAULT)
+		wsmux_detach(mux, &sc->sc_dv);
+#endif
+
+#if NWSDISPLAY > 0
 	if (sc->sc_repeating) {
 		sc->sc_repeating = 0;
 		timeout_del(&sc->sc_repeat_ch);
 	}
-
-	mux = sc->sc_dv.dv_cfdata->wskbddevcf_mux;
-	if (mux != WSKBDDEVCF_MUX_DEFAULT)
-		wsmux_detach(mux, &sc->sc_dv);
 #endif
 
 	evar = &sc->sc_events;
@@ -584,9 +586,15 @@ wskbd_input(dev, type, value)
 		num = wskbd_translate(sc->id, type, value);
 		if (num > 0) {
 			if (sc->sc_displaydv != NULL) {
-				for (i = 0; i < num; i++)
-				wsdisplay_kbdinput(sc->sc_displaydv,
-						sc->id->t_symbols[i]);
+				/* XXX - Shift_R+PGUP(release) emits PrtSc */
+				if (sc->id->t_symbols[0] != KS_Print_Screen) {
+					wsscrollback(sc->sc_displaydv,
+					    WSDISPLAY_SCROLL_RESET);
+				}
+				for (i = 0; i < num; i++) {
+					wsdisplay_kbdinput(sc->sc_displaydv,
+					    sc->id->t_symbols[i]);
+				}
 			}
 
 			sc->sc_repeating = num;
@@ -1304,13 +1312,15 @@ internal_command(sc, type, ksym)
 	switch (ksym) {
 	case KS_Cmd_ScrollBack:
 		if (MOD_ONESET(sc->id, MOD_ANYSHIFT)) {
-			wsscrollback(sc->sc_displaydv, WSCONS_SCROLL_BACKWARD);
+			wsscrollback(sc->sc_displaydv,
+			    WSDISPLAY_SCROLL_BACKWARD);
 			return (1);
 		}
 
 	case KS_Cmd_ScrollFwd:
 		if (MOD_ONESET(sc->id, MOD_ANYSHIFT)) {
-			wsscrollback(sc->sc_displaydv, WSCONS_SCROLL_FORWARD);
+			wsscrollback(sc->sc_displaydv,
+			    WSDISPLAY_SCROLL_FORWARD);
 			return (1);
 		}
 	}
@@ -1445,6 +1455,7 @@ wskbd_translate(id, type, value)
 #endif
 	}
 
+#if NWSDISPLAY > 0
 	if (sc != NULL && sc->sc_repeating) {
 		if ((type == WSCONS_EVENT_KEY_UP && value != sc->sc_repkey) ||
 		    (type == WSCONS_EVENT_KEY_DOWN && value == sc->sc_repkey))
@@ -1458,6 +1469,9 @@ kbrep:
 	}
 	if (sc != NULL)
 		sc->sc_repkey = value;
+#else
+kbrep:
+#endif
 
 	/* If this is a key release or we are in command mode, we are done */
 	if (type != WSCONS_EVENT_KEY_DOWN || iscommand) {

@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplayvar.h,v 1.5 2001/01/31 16:38:02 aaron Exp $ */
+/* $OpenBSD: wsdisplayvar.h,v 1.6 2001/02/08 02:47:12 aaron Exp $ */
 /* $NetBSD: wsdisplayvar.h,v 1.14.4.1 2000/06/30 16:27:53 simonb Exp $ */
 
 /*
@@ -205,5 +205,6 @@ void wsdisplay_switchtoconsole __P((void));
  */
 void wsscrollback __P((void *, int op));
 
-#define WSCONS_SCROLL_BACKWARD	0
-#define WSCONS_SCROLL_FORWARD	1
+#define WSDISPLAY_SCROLL_BACKWARD	0
+#define WSDISPLAY_SCROLL_FORWARD	1
+#define WSDISPLAY_SCROLL_RESET		2

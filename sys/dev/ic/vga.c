@@ -1,4 +1,4 @@
-/* $OpenBSD: vga.c,v 1.16 2001/01/31 16:38:00 aaron Exp $ */
+/* $OpenBSD: vga.c,v 1.17 2001/02/08 02:47:10 aaron Exp $ */
 /* $NetBSD: vga.c,v 1.28.2.1 2000/06/30 16:27:47 simonb Exp $ */
 
 /*
@@ -913,8 +913,12 @@ vga_scrollback(v, cookie, lines)
 	struct vgascreen *scr = cookie;
 	struct vga_handle *vh = &vc->hdl;
 
-	if (lines == 0)
+	if (lines == 0) {
+		if (scr->pcs.visibleoffset == scr->pcs.dispoffset)
+			return;
+
 		scr->pcs.visibleoffset = scr->pcs.dispoffset;	/* reset */
+	}
 	else {
 		int vga_scr_end;
 		int margin = scr->pcs.type->ncols * 2;
