@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fddisubr.c,v 1.16 1998/07/07 14:52:38 ryker Exp $	*/
+/*	$OpenBSD: if_fddisubr.c,v 1.17 1998/07/08 22:22:51 ryker Exp $	*/
 /*	$NetBSD: if_fddisubr.c,v 1.5 1996/05/07 23:20:21 christos Exp $	*/
 
 /*
@@ -530,8 +530,8 @@ fddi_input(ifp, fh, m)
 			for (i = 0; i < 6; i++) {
 				eh->ether_shost[i] = c = fh->fddi_dhost[i];
 				eh->ether_dhost[i] = 
-					eh->ether_dhost[i] = fh->fddi_shost[i];
-				eh->ether_shost[i] = c;
+					fh->fddi_dhost[i] = fh->fddi_shost[i];
+				fh->fddi_shost[i] = c;
 			}
 			eh->ether_type = 0;
 			ifp->if_output(ifp, m, &sa, NULL);
