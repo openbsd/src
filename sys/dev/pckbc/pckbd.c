@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbd.c,v 1.1 2000/11/13 20:12:34 aaron Exp $ */
+/* $OpenBSD: pckbd.c,v 1.2 2001/02/02 20:19:04 aaron Exp $ */
 /* $NetBSD: pckbd.c,v 1.24 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -102,11 +102,6 @@
 
 #if defined(__i386__) || defined(__alpha__)
 #include <sys/kernel.h> /* XXX for hz */
-#endif
-
-#if 0
-#include "opt_pckbd_layout.h"
-#include "opt_wsdisplay_compat.h"
 #endif
 
 struct pckbd_internal {
