@@ -1,6 +1,6 @@
 #
-# $OpenBSD: netbsd.S,v 1.2 1996/05/30 22:15:02 niklas Exp $
-# $NetBSD: netbsd.S,v 1.1 1996/05/15 21:06:24 is Exp $
+# $OpenBSD: netbsd.S,v 1.3 1997/07/06 07:46:19 downsj Exp $
+# $NetBSD: netbsd.S,v 1.3 1997/06/27 23:32:09 is Exp $
 #
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # MOTOROLA MICROPROCESSOR & MEMORY TECHNOLOGY GROUP
@@ -94,19 +94,19 @@
 #
 	.global	_060_dmem_write
 _060_dmem_write:
-	btst	#0x5,a6@(0x4)		|# check for supervisor state
+	btst	#0x5,a6@(0x4)	|# check for supervisor state
 	beqs	user_write
 super_write:
-	moveb	a0@+,a1@+		|# copy 1 byte
+	moveb	a0@+,a1@+	|# copy 1 byte
 	subql	#0x1,d0		|# decr byte counter
-	bnes	super_write		|# quit if ctr = 0
+	bnes	super_write	|# quit if ctr = 0
 	clrl	d1		|# return success
 	rts
 user_write:
 	movel	d0,sp@-		|# pass: counter
 	movel	a1,sp@-		|# pass: user dst
 	movel	a0,sp@-		|# pass: supervisor src
-	bsrl	_copyout		|# write byte to user mem
+	bsrl	_copyout	|# write byte to user mem
 	movel	d0,d1		|# return success
 	addl	#0xc,sp		|# clear 3 lw params
 	rts
@@ -128,12 +128,12 @@ user_write:
 	.global	_060_dmem_read
 _060_imem_read:
 _060_dmem_read:
-	btst	#0x5,a6@(0x4)		|# check for supervisor state
+	btst	#0x5,a6@(0x4)	|# check for supervisor state
 	beqs	user_read
 super_read:
-	moveb	a0@+,a1@+		|# copy 1 byte
+	moveb	a0@+,a1@+	|# copy 1 byte
 	subql	#0x1,d0		|# decr byte counter
-	bnes	super_read		|# quit if ctr = 0
+	bnes	super_read	|# quit if ctr = 0
 	clrl	d1		|# return success
 	rts
 user_read:
@@ -159,12 +159,12 @@ user_read:
 #
 	.global	_060_dmem_read_byte
 _060_dmem_read_byte:
-	btst	#0x5,a6@(0x4)		|# check for supervisor state
+	btst	#0x5,a6@(0x4)	|# check for supervisor state
 	bnes	dmrbs		|# supervisor
 dmrbu:
 	clrl	sp@-		|# clear space on stack for result
-	movel	#0x1,sp@-		|# pass: # bytes to copy
-	pea	sp@(0x7)		|# pass: dst addr (stack)
+	movel	#0x1,sp@-	|# pass: # bytes to copy
+	pea	sp@(0x7)	|# pass: dst addr (stack)
 	movel	a0,sp@-		|# pass: src addr (user mem)
 	bsrl	_copyin		|# "copy in" the data
 	movel	d0,d1		|# return success
@@ -196,12 +196,12 @@ dmrbs:
 
 _060_imem_read_word:
 _060_dmem_read_word:
-	btst	#0x5,a6@(0x4)		|# check for supervisor state
+	btst	#0x5,a6@(0x4)	|# check for supervisor state
 	bnes	dmrws		|# supervisor
 dmrwu:
 	clrl	sp@-		|# clear result space on stack
-	movel	#0x2,sp@-		|# pass: # bytes to copy
-	pea	sp@(0x6)		|# pass: dst addr (stack)
+	movel	#0x2,sp@-	|# pass: # bytes to copy
+	pea	sp@(0x6)	|# pass: dst addr (stack)
 	movel	a0,sp@-		|# pass: src addr (user mem)
 	bsrl	_copyin		|# "copy in" the data
 	movel	d0,d1		|# return success
@@ -236,12 +236,12 @@ dmrws:
 
 _060_imem_read_long:
 _060_dmem_read_long:
-	btst	#0x5,a6@(0x4)		|# check for supervisor state
+	btst	#0x5,a6@(0x4)	|# check for supervisor state
 	bnes	dmrls		|# supervisor
 dmrlu:
 	subql	#0x4,sp		|# clear result space on stack
-	movel	#0x4,sp@-		|# pass: # bytes to copy
-	pea	sp@(0x4)		|# pass: dst addr (stack)
+	movel	#0x4,sp@-	|# pass: # bytes to copy
+	pea	sp@(0x4)	|# pass: dst addr (stack)
 	movel	a0,sp@-		|# pass: src addr (user mem)
 	bsrl	_copyin		|# "copy in" the data
 	movel	d0,d1		|# return success
@@ -267,16 +267,16 @@ dmrls:
 #
 	.global	_060_dmem_write_byte
 _060_dmem_write_byte:
-	btst	#0x5,a6@(0x4)		|# check for supervisor state
+	btst	#0x5,a6@(0x4)	|# check for supervisor state
 	bnes	dmwbs		|# supervisor
 dmwbu:
 	movel	d0,sp@-		|# put src on stack
-	movel	#0x1,sp@-		|# pass: # bytes to copy
+	movel	#0x1,sp@-	|# pass: # bytes to copy
 	movel	a0,sp@-		|# pass: dst addr (user mem)
-	pea	sp@(0xb)		|# pass: src addr (stack)
-	bsrl	_copyout		|# "copy out" the data
+	pea	sp@(0xb)	|# pass: src addr (stack)
+	bsrl	_copyout	|# "copy out" the data
 	movel	d0,d1		|# return success
-	addl	#0x10,sp		|# delete params + src
+	addl	#0x10,sp	|# delete params + src
 	rts
 dmwbs:
 	moveb	d0,a0@		|# store super byte
@@ -297,16 +297,16 @@ dmwbs:
 #
 	.global	_060_dmem_write_word
 _060_dmem_write_word:
-	btst	#0x5,a6@(0x4)		|# check for supervisor state
+	btst	#0x5,a6@(0x4)	|# check for supervisor state
 	bnes	dmwws		|# supervisor
 dmwwu:
 	movel	d0,sp@-		|# put src on stack
-	movel	#0x2,sp@-		|# pass: # bytes to copy
+	movel	#0x2,sp@-	|# pass: # bytes to copy
 	movel	a0,sp@-		|# pass: dst addr (user mem)
-	pea	sp@(0xa)		|# pass: src addr (stack)
-	bsrl	_copyout		|# "copy out" the data
+	pea	sp@(0xa)	|# pass: src addr (stack)
+	bsrl	_copyout	|# "copy out" the data
 	movel	d0,d1		|# return success
-	addl	#0x10,sp		|# delete params + src
+	addl	#0x10,sp	|# delete params + src
 	rts
 dmwws:
 	movew	d0,a0@		|# store super word
@@ -327,16 +327,16 @@ dmwws:
 #
 	.global	_060_dmem_write_long
 _060_dmem_write_long:
-	btst	#0x5,a6@(0x4)		|# check for supervisor state
+	btst	#0x5,a6@(0x4)	|# check for supervisor state
 	bnes	dmwls		|# supervisor
 dmwlu:
 	movel	d0,sp@-		|# put src on stack
-	movel	#0x4,sp@-		|# pass: # bytes to copy
+	movel	#0x4,sp@-	|# pass: # bytes to copy
 	movel	a0,sp@-		|# pass: dst addr (user mem)
-	pea	sp@(0x8)		|# pass: src addr (stack)
-	bsrl	_copyout		|# "copy out" the data
+	pea	sp@(0x8)	|# pass: src addr (stack)
+	bsrl	_copyout	|# "copy out" the data
 	movel	d0,d1		|# return success
-	addl	#0x10,sp		|# delete params + src
+	addl	#0x10,sp	|# delete params + src
 	rts
 dmwls:
 	movel	d0,a0@		|# store super longword
@@ -354,9 +354,9 @@ dmwls:
 #
 # The sample code below simply executes an "rte".
 #
-	.global	_060_real_trace
+	.global	_060_real_trace,_trace
 _060_real_trace:
-	rte
+	jra	_trace
 
 #
 # _060_real_access():
@@ -366,14 +366,12 @@ _060_real_trace:
 # handler for access error exceptions. The exception stack frame is an
 # 8-word access error frame.
 #
-# The sample routine below simply executes an "rte" instruction which
-# is most likely the incorrect thing to do and could put the system
-# into an infinite loop.
+# We jump directly to the 68060 buserr handler.
+# If we had a sane ld, we could use use that entry point directly...
 #
-	.global	_060_real_access
+	.globl	_060_real_access,_buserr60
 _060_real_access:
-	.globl	_buserr
-	jmp	_buserr
+	jra	_buserr60
 
 	.include	"inetbsd.S"
 	.include	"fnetbsd.S"

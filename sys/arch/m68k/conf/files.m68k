@@ -1,11 +1,12 @@
-#       $OpenBSD: files.m68k,v 1.7 1997/03/26 08:23:52 downsj Exp $
-#       $NetBSD: files.m68k,v 1.16 1997/02/12 01:01:07 gwr Exp $
+#       $OpenBSD: files.m68k,v 1.8 1997/07/06 07:46:20 downsj Exp $
+#       $NetBSD: files.m68k,v 1.18 1997/06/06 23:15:28 veego Exp $
 #
 file	arch/m68k/m68k/db_disasm.c		ddb
 file	arch/m68k/m68k/db_interface.c		ddb
 file	arch/m68k/m68k/db_trace.c		ddb
 file	arch/m68k/m68k/in_cksum.c		inet
 file	arch/m68k/m68k/kgdb_m68k.c		kgdb
+file	arch/m68k/m68k/m68k_machdep.c
 file	arch/m68k/m68k/mappedcopy.c		mappedcopy
 file	arch/m68k/m68k/ns_cksum.c		ns
 file	arch/m68k/m68k/oc_cksum.s		inet

@@ -1,5 +1,5 @@
-/*	$OpenBSD: frame.h,v 1.4 1997/03/21 00:36:37 niklas Exp $	*/
-/*	$NetBSD: frame.h,v 1.13 1997/01/27 22:58:45 gwr Exp $	*/
+/*	$OpenBSD: frame.h,v 1.5 1997/07/06 07:46:25 downsj Exp $	*/
+/*	$NetBSD: frame.h,v 1.15 1997/05/03 12:49:05 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -55,7 +55,7 @@ struct frame {
 		u_int	tf_pc;
 		u_short	tf_format:4,
 			tf_vector:12;
-	} F_t;
+	} __attribute__((packed)) F_t;
 	union F_u {
 		struct fmt2 {
 			u_int	f_iaddr;

@@ -1,13 +1,12 @@
-/*	$OpenBSD: copypage.s,v 1.2 1997/07/06 07:46:28 downsj Exp $	*/
-/*	$NetBSD: copypage.s,v 1.4 1997/05/30 01:34:49 jtc Exp $	*/
+/*	$OpenBSD: cacheops_20.h,v 1.1 1997/07/06 07:46:23 downsj Exp $	*/
+/*	$NetBSD: cacheops_20.h,v 1.1 1997/06/02 20:26:39 leo Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by J.T. Conklin <jtc@netbsd.org> and 
- * by Hiroshi Horitomo <horimoto@cs-aoi.cs.sist.ac.jp> 
+ * by Leo Weppelman
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -39,81 +38,79 @@
  */
 
 /*
- * Optimized functions for copying/clearing a whole page.
+ * Invalidate entire TLB.
  */
-
-#include <machine/asm.h>
-#include "assym.h"
-
-	.file	"copypage.s"
-	.text
+void TBIA_20 __P((void));
+extern inline void
+TBIA_20()
+{
+	__asm __volatile (" pflusha");
+}
 
 /*
- * copypage040(fromaddr, toaddr)
- *
- * Optimized version of bcopy for a single page-aligned NBPG byte copy,
- * using instuctions only available on the mc68040 and later.
+ * Invalidate any TLB entry for given VA (TB Invalidate Single)
  */
-#if defined(M68040) || defined(M68060)
-ENTRY(copypage040)
-	movl	sp@(4),a0		| source address
-	movl	sp@(8),a1		| destiniation address
-	movw	#NBPG/32-1,d0		| number of 32 byte chunks - 1
-Lm16loop:
-	.long	0xf6209000		| move16 a0@+,a1@+
-	.long	0xf6209000		| move16 a0@+,a1@+
-	dbf	d0,Lm16loop
-	rts
-#endif /* M68040 || M68060 */
+void TBIS_20 __P((void *));
+extern inline void
+TBIS_20(va)
+	void	*va;
+{
+
+	__asm __volatile (" pflushs	#0,#0,%0@" : : "a" (va) );
+}
 
 /*
- * copypage(fromaddr, toaddr)
- *
- * Optimized version of bcopy for a single page-aligned NBPG byte copy.
+ * Invalidate supervisor side of TLB
  */
-ENTRY(copypage)
-	movl	sp@(4),a0		| source address
-	movl	sp@(8),a1		| destiniation address
-	movw	#NBPG/32-1,d0		| number of 32 byte chunks - 1
-Lmlloop:
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	dbf	d0,Lmlloop
-	rts
+void TBIAS_20 __P((void));
+extern inline void
+TBIAS_20()
+{
+	__asm __volatile (" pflushs #4,#4");
+}
 
 /*
- * zeropage(addr)
- *
- * Optimized version of bzero for a single page-aligned NBPG byte zero.
+ * Invalidate user side of TLB
  */
-ENTRY(zeropage)
-	movl	sp@(4),a0		| dest address
-	movql	#NBPG/256-1,d0		| number of 256 byte chunks - 1
-	movml	d2-d7,sp@-
-	movql	#0,d1
-	movql	#0,d2
-	movql	#0,d3
-	movql	#0,d4
-	movql	#0,d5
-	movql	#0,d6
-	movql	#0,d7
-	movl	d1,a1
-	lea	a0@(NBPG),a0
-Lzloop:
-	movml	d1-d7/a1,a0@-
-	movml	d1-d7/a1,a0@-
-	movml	d1-d7/a1,a0@-
-	movml	d1-d7/a1,a0@-
-	movml	d1-d7/a1,a0@-
-	movml	d1-d7/a1,a0@-
-	movml	d1-d7/a1,a0@-
-	movml	d1-d7/a1,a0@-
-	dbf	d0,Lzloop
-	movml	sp@+,d2-d7
-	rts
+void TBIAU_20 __P((void));
+extern inline void
+TBIAU_20()
+{
+	__asm __volatile (" pflushs #0,#4;");
+}
+
+/*
+ * Invalidate instruction cache
+ */
+void ICIA_20 __P((void));
+extern inline void
+ICIA_20()
+{
+	__asm __volatile (" movc %0,cacr;" : : "d" (IC_CLEAR));
+}
+
+void ICPA_20 __P((void));
+extern inline void
+ICPA_20()
+{
+	__asm __volatile (" movc %0,cacr;" : : "d" (IC_CLEAR));
+}
+
+/*
+ * Invalidate data cache.
+ * NOTE: we do not flush 68030/20 on-chip cache as there are no aliasing
+ * problems with DC_WA.  The only cases we have to worry about are context
+ * switch and TLB changes, both of which are handled "in-line" in resume
+ * and TBI*.
+ */
+#define	DCIA_20()
+#define	DCIS_20()
+#define	DCIU_20()
+#define	DCIAS_20()
+
+void PCIA_20 __P((void));
+extern inline void
+PCIA_20()
+{
+	__asm __volatile (" movc %0,cacr;" : : "d" (DC_CLEAR));
+}

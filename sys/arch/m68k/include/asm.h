@@ -1,7 +1,8 @@
-/*	$OpenBSD: asm.h,v 1.3 1997/01/13 11:51:09 niklas Exp $	*/
-/*	$NetBSD: asm.h,v 1.12 1996/11/30 02:49:00 jtc Exp $	*/
+/*	$OpenBSD: asm.h,v 1.4 1997/07/06 07:46:22 downsj Exp $	*/
+/*	$NetBSD: asm.h,v 1.13 1997/04/24 22:49:39 thorpej Exp $	*/
 
 /*
+ * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
  * Copyright (c) 1994 Allen Briggs
  * All rights reserved.
  *
@@ -46,10 +47,11 @@
 #define _ASM_H_
 
 #ifdef __STDC__
-#define _C_LABEL(name)		_ ## name
+#define	_C_LABEL(name)		_ ## name
 #else
-#define _C_LABEL(name)		_/**/name
-#endif
+#define	_C_LABEL(name)		_/**/name
+#endif /* __STDC__ */
+
 #define	_ASM_LABEL(name)	name
 
 #ifndef _KERNEL
@@ -68,6 +70,9 @@
 
 #define ENTRY(name)		_ENTRY(_C_LABEL(name)) _PROF_PROLOG
 #define	ASENTRY(name)		_ENTRY(_ASM_LABEL(name)) _PROF_PROLOG
+
+#define	ENTRY_NOPROFILE(name)	_ENTRY(_C_LABEL(name))
+#define	ASENTRY_NOPROFILE(name)	_ENTRY(_ASM_LABEL(name))
 
 /*
  * The m68k ALTENTRY macro is very different than the traditional
@@ -88,6 +93,62 @@
 #define ALTENTRY(name, rname)	_ENTRY(_C_LABEL(name))
 #endif
 
-#define RCSID(x)		.text; .asciz x
+#define RCSID(x)	.text			;	\
+			.asciz x		;	\
+			.even
+
+/*
+ * Global variables of whatever sort.
+ */
+#define	GLOBAL(x)					\
+		.globl	_C_LABEL(x)		;	\
+	_C_LABEL(x):
+
+#define	ASGLOBAL(x)					\
+		.globl	_ASM_LABEL(x)		;	\
+	_ASM_LABEL(x):
+
+/*
+ * ...and local variables.
+ */
+#define	LOCAL(x)					\
+	_C_LABEL(x):
+
+#define	ASLOCAL(x)					\
+	_ASM_LABEL(x):
+
+/*
+ * Items in the BSS segment.
+ */
+#define	BSS(name, size)					\
+	.comm	_C_LABEL(name),size
+
+#define	ASBSS(name, size)				\
+	.comm	_ASM_LABEL(name),size
+
+#ifdef _KERNEL
+/*
+ * Shorthand for calling panic().
+ * Note the side-effect: it uses up the 9: label, so be careful!
+ */
+#define	PANIC(x)					\
+		pea	9f			;	\
+		jbsr	_C_LABEL(panic)		;	\
+	9:	.asciz	x			;	\
+		.even
+
+/*
+ * Shorthand for defining vectors for the vector table.
+ */
+#define	VECTOR(x)					\
+	.long	_C_LABEL(x)
+
+#define	ASVECTOR(x)					\
+	.long	_ASM_LABEL(x)
+
+#define	VECTOR_UNUSED					\
+	.long	0
+
+#endif /* _KERNEL */
 
 #endif /* _ASM_H_ */

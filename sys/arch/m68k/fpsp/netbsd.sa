@@ -1,5 +1,5 @@
-*	$OpenBSD: netbsd.sa,v 1.2 1996/05/29 21:05:32 niklas Exp $
-*	$NetBSD: netbsd.sa,v 1.2 1994/10/26 07:49:19 cgd Exp $
+*	$OpenBSD: netbsd.sa,v 1.3 1997/07/06 07:46:21 downsj Exp $
+*	$NetBSD: netbsd.sa,v 1.3 1997/04/25 02:26:04 thorpej Exp $
 
 *	MOTOROLA MICROPROCESSOR & MEMORY TECHNOLOGY GROUP
 *	M68000 Hi-Performance Microprocessor Division
@@ -71,8 +71,13 @@ SKELETON	IDNT    2,1 Motorola 040 Floating Point Software Package
 
 	include	fpsp.h
 
+*
+* XXX Note, this is NOT valid Motorola syntax, but what else can we do?
+*
+#include "../include/asm.h"
+
 	xref	b1238_fix
-	xref	_mmutype
+	xref	_C_LABEL(mmutype)
 
 *
 *	Divide by Zero exception
@@ -82,15 +87,15 @@ SKELETON	IDNT    2,1 Motorola 040 Floating Point Software Package
 	xdef	dz
 	xdef	real_dz
 dz:
-	cmp.l		#-2,_mmutype
-	bne.l		_fpfault
+	cmp.l		#-2,_C_LABEL(mmutype)
+	bne.l		_C_LABEL(fpfault)
 real_dz:
 	link		a6,#-LOCAL_SIZE
 	fsave		-(sp)
 	bclr.b		#E1,E_BYTE(a6)
 	frestore	(sp)+
 	unlk		a6
-	jmp		_fpfault
+	jmp		_C_LABEL(fpfault)
 
 *
 *	Inexact exception
@@ -116,8 +121,8 @@ real_dz:
 	xdef	real_inex
 	xdef	inex
 inex:
-	cmp.l		#-2,_mmutype
-	bne.l		_fpfault
+	cmp.l		#-2,_C_LABEL(mmutype)
+	bne.l		_C_LABEL(fpfault)
 	link		a6,#-LOCAL_SIZE
 	fsave		-(sp)
 	cmpi.b		#VER_40,(sp)		;test version number
@@ -176,7 +181,7 @@ inex_cke1:
 inex_done:
 	frestore	(sp)+
 	unlk		a6
-	jmp		_fpfault
+	jmp		_C_LABEL(fpfault)
 	
 *
 *	Overflow exception
@@ -185,9 +190,9 @@ inex_done:
 	xdef	real_ovfl
 	xdef	ovfl
 ovfl:
-	cmp.l		#-2,_mmutype
+	cmp.l		#-2,_C_LABEL(mmutype)
 	beq.l		fpsp_ovfl
-	jmp		_fpfault
+	jmp		_C_LABEL(fpfault)
 real_ovfl:
 	link		a6,#-LOCAL_SIZE
 	fsave		-(sp)
@@ -197,7 +202,7 @@ real_ovfl:
 ovfl_done:
 	frestore	(sp)+
 	unlk		a6
-	jmp		_fpfault
+	jmp		_C_LABEL(fpfault)
 	
 *
 *	Underflow exception
@@ -206,9 +211,9 @@ ovfl_done:
 	xdef	real_unfl
 	xdef	unfl
 unfl:
-	cmp.l		#-2,_mmutype
+	cmp.l		#-2,_C_LABEL(mmutype)
 	beq.l		fpsp_unfl
-	jmp		_fpfault
+	jmp		_C_LABEL(fpfault)
 real_unfl:
 	link		a6,#-LOCAL_SIZE
 	fsave		-(sp)
@@ -218,7 +223,7 @@ real_unfl:
 unfl_done:
 	frestore	(sp)+
 	unlk		a6
-	jmp		_fpfault
+	jmp		_C_LABEL(fpfault)
 	
 *
 *	Signalling NAN exception
@@ -227,16 +232,16 @@ unfl_done:
 	xdef	real_snan
 	xdef	snan
 snan:
-	cmp.l		#-2,_mmutype
+	cmp.l		#-2,_C_LABEL(mmutype)
 	beq.l		fpsp_snan
-	jmp		_fpfault
+	jmp		_C_LABEL(fpfault)
 real_snan:
 	link		a6,#-LOCAL_SIZE
 	fsave		-(sp)
 	bclr.b		#E1,E_BYTE(a6)	;snan is always an E1 exception
 	frestore	(sp)+
 	unlk		a6
-	jmp		_fpfault
+	jmp		_C_LABEL(fpfault)
 	
 *
 *	Operand Error exception
@@ -245,16 +250,16 @@ real_snan:
 	xdef	real_operr
 	xdef	operr
 operr:
-	cmp.l		#-2,_mmutype
+	cmp.l		#-2,_C_LABEL(mmutype)
 	beq.l		fpsp_operr
-	jmp		_fpfault
+	jmp		_C_LABEL(fpfault)
 real_operr:
 	link		a6,#-LOCAL_SIZE
 	fsave		-(sp)
 	bclr.b		#E1,E_BYTE(a6)	;operr is always an E1 exception
 	frestore	(sp)+
 	unlk		a6
-	jmp		_fpfault
+	jmp		_C_LABEL(fpfault)
 	
 *
 *	BSUN exception
@@ -265,9 +270,9 @@ real_operr:
 	xdef	real_bsun
 	xdef	bsun
 bsun:
-	cmp.l		#-2,_mmutype
+	cmp.l		#-2,_C_LABEL(mmutype)
 	beq.l		fpsp_bsun
-	jmp		_fpfault
+	jmp		_C_LABEL(fpfault)
 real_bsun:
 	link		a6,#-LOCAL_SIZE
 	fsave		-(sp)
@@ -277,7 +282,7 @@ real_bsun:
 	fmove.l		(sp)+,FPSR
 	frestore	(sp)+
 	unlk		a6
-	jmp		_fpfault
+	jmp		_C_LABEL(fpfault)
 
 *
 *	F-line exception
@@ -290,11 +295,11 @@ real_bsun:
 	xdef	real_fline
 	xdef	fline
 fline:
-	cmp.l		#-2,_mmutype
+	cmp.l		#-2,_C_LABEL(mmutype)
 	beq.l		fpsp_fline
-	jmp		_fpfault
+	jmp		_C_LABEL(fpfault)
 real_fline:
-	jmp		_fpfault
+	jmp		_C_LABEL(fpfault)
 
 *
 *	Unsupported data type exception
@@ -303,16 +308,16 @@ real_fline:
 	xdef	real_unsupp
 	xdef	unsupp
 unsupp:
-	cmp.l		#-2,_mmutype
+	cmp.l		#-2,_C_LABEL(mmutype)
 	beq.l		fpsp_unsupp
-	jmp		_fpfault
+	jmp		_C_LABEL(fpfault)
 real_unsupp:
 	link		a6,#-LOCAL_SIZE
 	fsave		-(sp)
 	bclr.b		#E1,E_BYTE(a6)	;unsupp is always an E1 exception
 	frestore	(sp)+
 	unlk		a6
-	jmp		_fpfault
+	jmp		_C_LABEL(fpfault)
 
 *
 *	Trace exception
@@ -340,7 +345,7 @@ real_trace:
 	xdef	fpsp_fmt_error
 fpsp_fmt_error:
 	pea		1f
-	jsr		_panic
+	jsr		_C_LABEL(panic)
 	dc.l		$f27f0000	;f-line illegal
 1:
 	.asciz		"bad floating point stack frame"
@@ -354,10 +359,10 @@ fpsp_fmt_error:
 *	to execute before we do.  If there is, do it now.
 *
 *
-	xref	rei
+	xref	_ASM_LABEL(rei)
 	xdef	fpsp_done
 fpsp_done:
-	jmp		rei
+	jmp		_ASM_LABEL(rei)
 
 *
 *	mem_write --- write to user or supervisor address space
@@ -395,7 +400,7 @@ user_write:
 	move.l	d0,-(sp)
 	move.l	a1,-(sp)
 	move.l	a0,-(sp)
-	jsr	_copyout
+	jsr	_C_LABEL(copyout)
 	add.l	#12,sp
 	move.l	(sp)+,d1
 	rts
@@ -435,7 +440,7 @@ user_read:
 	move.l	d0,-(sp)
 	move.l	a1,-(sp)
 	move.l	a0,-(sp)
-	jsr	_copyin
+	jsr	_C_LABEL(copyin)
 	add.l	#12,sp
 	move.l	(sp)+,d1
 	rts

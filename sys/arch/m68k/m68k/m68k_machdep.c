@@ -1,13 +1,12 @@
-/*	$OpenBSD: copypage.s,v 1.2 1997/07/06 07:46:28 downsj Exp $	*/
-/*	$NetBSD: copypage.s,v 1.4 1997/05/30 01:34:49 jtc Exp $	*/
+/*	$OpenBSD: m68k_machdep.c,v 1.1 1997/07/06 07:46:28 downsj Exp $	*/
+/*	$NetBSD: m68k_machdep.c,v 1.3 1997/06/12 09:57:04 veego Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by J.T. Conklin <jtc@netbsd.org> and 
- * by Hiroshi Horitomo <horimoto@cs-aoi.cs.sist.ac.jp> 
+ * by Bernd Ernesti.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -38,82 +37,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Optimized functions for copying/clearing a whole page.
- */
+#include <sys/param.h>
 
-#include <machine/asm.h>
-#include "assym.h"
+/* the following is used externally (sysctl_hw) */
+char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 
-	.file	"copypage.s"
-	.text
-
-/*
- * copypage040(fromaddr, toaddr)
- *
- * Optimized version of bcopy for a single page-aligned NBPG byte copy,
- * using instuctions only available on the mc68040 and later.
- */
-#if defined(M68040) || defined(M68060)
-ENTRY(copypage040)
-	movl	sp@(4),a0		| source address
-	movl	sp@(8),a1		| destiniation address
-	movw	#NBPG/32-1,d0		| number of 32 byte chunks - 1
-Lm16loop:
-	.long	0xf6209000		| move16 a0@+,a1@+
-	.long	0xf6209000		| move16 a0@+,a1@+
-	dbf	d0,Lm16loop
-	rts
-#endif /* M68040 || M68060 */
-
-/*
- * copypage(fromaddr, toaddr)
- *
- * Optimized version of bcopy for a single page-aligned NBPG byte copy.
- */
-ENTRY(copypage)
-	movl	sp@(4),a0		| source address
-	movl	sp@(8),a1		| destiniation address
-	movw	#NBPG/32-1,d0		| number of 32 byte chunks - 1
-Lmlloop:
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	dbf	d0,Lmlloop
-	rts
-
-/*
- * zeropage(addr)
- *
- * Optimized version of bzero for a single page-aligned NBPG byte zero.
- */
-ENTRY(zeropage)
-	movl	sp@(4),a0		| dest address
-	movql	#NBPG/256-1,d0		| number of 256 byte chunks - 1
-	movml	d2-d7,sp@-
-	movql	#0,d1
-	movql	#0,d2
-	movql	#0,d3
-	movql	#0,d4
-	movql	#0,d5
-	movql	#0,d6
-	movql	#0,d7
-	movl	d1,a1
-	lea	a0@(NBPG),a0
-Lzloop:
-	movml	d1-d7/a1,a0@-
-	movml	d1-d7/a1,a0@-
-	movml	d1-d7/a1,a0@-
-	movml	d1-d7/a1,a0@-
-	movml	d1-d7/a1,a0@-
-	movml	d1-d7/a1,a0@-
-	movml	d1-d7/a1,a0@-
-	movml	d1-d7/a1,a0@-
-	dbf	d0,Lzloop
-	movml	sp@+,d2-d7
-	rts

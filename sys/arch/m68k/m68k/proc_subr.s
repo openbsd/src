@@ -1,5 +1,5 @@
-/*	$OpenBSD: sigreturn.s,v 1.2 1997/07/06 07:46:30 downsj Exp $	*/
-/*	$NetBSD: sigreturn.s,v 1.2 1997/04/25 02:22:04 thorpej Exp $	*/
+/*	$OpenBSD: proc_subr.s,v 1.1 1997/07/06 07:46:28 downsj Exp $	*/
+/*	$NetBSD: proc_subr.s,v 1.2 1997/04/25 02:22:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,45 +44,90 @@
  */
 
 /*
- * NOTICE: This is not a standalone file.  To use it, #include it in
- * your port's locore.s, like so:
- *
- *	#include <m68k/m68k/sigreturn.s>
+ * Assembly routines related to process manipulation.
  */
 
 /*
- * The sigreturn() syscall comes here.  It requires special handling
- * because we must open a hole in the stack to fill in the (possibly much
- * larger) original stack frame.
+ * NOTICE: This is not a standalone file.  To use it, #include it in
+ * your port's locore.s, like so:
+ *
+ *	#include <m68k/m68k/proc_subr.s>
  */
-ASENTRY_NOPROFILE(sigreturn)
-	lea	sp@(-84),sp		| leave enough space for largest frame
-	movl	sp@(84),sp@		| move up current 8 byte frame
-	movl	sp@(88),sp@(4)
-	movl	#84,sp@-		| default: adjust by 84 bytes
-	moveml	#0xFFFF,sp@-		| save user registers
-	movl	usp,a0			| save the user SP
-	movl	a0,sp@(FR_SP)		|   in the savearea
-	movl	#SYS_sigreturn,sp@-	| push syscall number
-	jbsr	_C_LABEL(syscall)	| handle it
-	addql	#4,sp			| pop syscall#
-	movl	sp@(FR_SP),a0		| grab and restore
-	movl	a0,usp			|   user SP
-	lea	sp@(FR_HW),a1		| pointer to HW frame
-	movw	sp@(FR_ADJ),d0		| do we need to adjust the stack?
-	jeq	Lsigr1			| no, just continue
-	moveq	#92,d1			| total size
-	subw	d0,d1			|  - hole size = frame size
-	lea	a1@(92),a0		| destination
-	addw	d1,a1			| source
-	lsrw	#1,d1			| convert to word count
-	subqw	#1,d1			| minus 1 for dbf
-Lsigrlp:
-	movw	a1@-,a0@-		| copy a word
-	dbf	d1,Lsigrlp		| continue
-	movl	a0,a1			| new HW frame base
-Lsigr1:
-	movl	a1,sp@(FR_SP)		| new SP value
-	moveml	sp@+,#0x7FFF		| restore user registers
-	movl	sp@,sp			| and our SP
-	jra	_ASM_LABEL(rei)		| all done
+
+/*
+ * The following primitives manipulate the run queues.  _whichqs tells which
+ * of the 32 queues _qs have processes in them.  Setrunqueue puts processes
+ * into queues, remrunqueue removes them from queues.  The running process is
+ * on no queue, other processes are on a queue related to p->p_priority,
+ * divided by 4 actually to shrink the 0-127 range of priorities into the 32
+ * available queues.
+ */
+
+/*
+ * Setrunqueue(p)
+ *
+ * Call should be made at spl6(), and p->p_stat should be SRUN
+ */
+ENTRY(setrunqueue)
+	movl	sp@(4),a0
+#ifdef DIAGNOSTIC
+	tstl	a0@(P_BACK)
+	jne	Lset1
+	tstl	a0@(P_WCHAN)
+	jne	Lset1
+	cmpb	#SRUN,a0@(P_STAT)
+	jne	Lset1
+#endif
+	clrl	d0
+	movb	a0@(P_PRIORITY),d0
+	lsrb	#2,d0
+	movl	_C_LABEL(whichqs),d1
+	bset	d0,d1
+	movl	d1,_C_LABEL(whichqs)
+	lslb	#3,d0
+	addl	#_C_LABEL(qs),d0
+	movl	d0,a0@(P_FORW)
+	movl	d0,a1
+	movl	a1@(P_BACK),a0@(P_BACK)
+	movl	a0,a1@(P_BACK)
+	movl	a0@(P_BACK),a1
+	movl	a0,a1@(P_FORW)
+	rts
+#ifdef DIAGNOSTIC
+Lset1:
+	PANIC("setrunqueue")
+#endif
+
+/*
+ * remrunqueue(p)
+ *
+ * Call should be made at spl6().
+ */
+ENTRY(remrunqueue)
+	movl	sp@(4),a0
+	movb	a0@(P_PRIORITY),d0
+#ifdef DIAGNOSTIC
+	lsrb	#2,d0
+	movl	_C_LABEL(whichqs),d1
+	btst	d0,d1
+	jeq	Lrem2
+#endif
+	movl	a0@(P_BACK),a1
+	clrl	a0@(P_BACK)
+	movl	a0@(P_FORW),a0
+	movl	a0,a1@(P_FORW)
+	movl	a1,a0@(P_BACK)
+	cmpal	a0,a1
+	jne	Lrem1
+#ifndef DIAGNOSTIC
+	lsrb	#2,d0
+	movl	_C_LABEL(whichqs),d1
+#endif
+	bclr	d0,d1
+	movl	d1,_C_LABEL(whichqs)
+Lrem1:
+	rts
+#ifdef DIAGNOSTIC
+Lrem2:
+	PANIC("remrunqueue")
+#endif
