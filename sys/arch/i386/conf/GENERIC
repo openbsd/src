@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.68 1998/06/23 05:59:43 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.69 1998/06/29 21:11:24 millert Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -184,6 +184,7 @@ sb*	at isapnp?
 wss0	at isa? port 0x530 irq 10 drq 0	# Windows Sound System
 pas0	at isa? port 0x220 irq 7 drq 1	# ProAudio Spectrum
 gus0	at isa? port 0x220 irq 7 drq 1 flags 6 # Gravis UltraSound (flags is record drq)
+ym*	at isapnp?
 #spkr0	at pckbd? port 0x61
 
 #Audio Support
@@ -192,6 +193,7 @@ audio*  at gus?
 audio*  at pas?
 audio*  at sp?
 audio*  at wss?
+audio*  at ym?
 
 # Joystick driver. Probe is a little strange; add only if you have one.
 #joy0	at isa? port 0x201
