@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.73 2001/08/07 16:51:12 pvalchev Exp $
+.\"	$OpenBSD: sysctl.3,v 1.74 2001/08/18 03:32:16 art Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -311,6 +311,7 @@ information.
 .It Dv KERN_USERMOUNT No "	integer	yes"
 .It Dv KERN_VERSION No "	string	no"
 .It Dv KERN_VNODE No "	struct vnode	no"
+.It Dv KERN_STACKGAPRANDOM No "	integer	yes"
 .El
 .Pp
 .Bl -tag -width "123456"
@@ -582,6 +583,13 @@ Each element of the array contains the kernel address of a vnode
 .Li struct vnode *
 followed by the vnode itself
 .Li struct vnode .
+.It Dv KERN_STACKGAPRANDOM
+Sets the range of the random value added to the stack pointer on each
+program execution.
+The random value is added to make buffer overflow exploitation slightly
+harder.
+The bigger the number, the harder it is to brute force this added protection,
+but it also means bigger waste of memory.
 .El
 .Ss CTL_MACHDEP
 The set of variables defined is architecture dependent.

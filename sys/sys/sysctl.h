@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.41 2001/06/24 16:00:45 art Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.42 2001/08/18 03:32:16 art Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -163,7 +163,8 @@ struct ctlname {
 #define	KERN_NPROCS		47	/* int: number of processes */
 #define	KERN_MSGBUF		48	/* message buffer, KERN_MSGBUFSIZE */
 #define	KERN_POOL		49	/* struct: pool information */
-#define	KERN_MAXID		50	/* number of valid kern ids */
+#define KERN_STACKGAPRANDOM	50	/* int: stackgap_random */
+#define	KERN_MAXID		51	/* number of valid kern ids */
 
 #define	CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -216,6 +217,7 @@ struct ctlname {
 	{ "nprocs", CTLTYPE_INT }, \
 	{ "msgbuf", CTLTYPE_STRUCT }, \
 	{ "pool", CTLTYPE_NODE }, \
+	{ "stackgap_random", CTLTYPE_INT }, \
 }
 
 /*

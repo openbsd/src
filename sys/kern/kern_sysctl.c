@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.55 2001/07/17 20:57:49 deraadt Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.56 2001/08/18 03:32:16 art Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -230,11 +230,12 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	size_t newlen;
 	struct proc *p;
 {
-	int error, level, inthostid;
+	int error, level, inthostid, oldsgap;
 	extern char ostype[], osrelease[], osversion[], version[];
 	extern int somaxconn, sominconn;
 	extern int usermount, nosuidcoredump;
 	extern long cp_time[CPUSTATES];
+	extern int stackgap_random;
 
 	/* all sysctl names at this level are terminal */
 	if (namelen != 1 && !(name[0] == KERN_PROC || name[0] == KERN_PROF ||
@@ -394,6 +395,20 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (sysctl_rdint(oldp, oldlenp, newp, nprocs));
 	case KERN_POOL:
 		return (sysctl_dopool(name + 1, namelen - 1, oldp, oldlenp));
+	case KERN_STACKGAPRANDOM:
+		oldsgap = stackgap_random;
+
+		error = sysctl_int(oldp, oldlenp, newp, newlen, &stackgap_random);
+		/*
+		 * Safety harness.
+		 */
+		if ((stackgap_random < ALIGNBYTES && stackgap_random != 0) ||
+		    !powerof2(stackgap_random) ||
+		    stackgap_random > PAGE_SIZE * 2) {
+			stackgap_random = oldsgap;
+			return (EINVAL);
+		}
+		return (error);
 	default:
 		return (EOPNOTSUPP);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.54 2001/06/27 04:49:41 art Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.55 2001/08/18 03:32:16 art Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -65,6 +65,15 @@
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
+
+#include <dev/rndvar.h>
+
+/*
+ * stackgap_random specifies if the stackgap should have a random size added
+ * to it. Must be a n^2. If non-zero, the stack gap will be calculated as:
+ * (arc4random() * ALIGNBYTES) & (stackgap_random - 1) + STACKGAPLEN.
+ */
+int stackgap_random;
 
 /*
  * check exec:
@@ -219,7 +228,7 @@ sys_execve(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_execve_args /* {
+	struct sys_execve_args /* {
 		syscallarg(char *) path;
 		syscallarg(char * *) argp;
 		syscallarg(char * *) envp;
@@ -232,7 +241,7 @@ sys_execve(p, v, retval)
 	char *argp;
 	char * const *cpp, *dp, *sp;
 	long argc, envc;
-	size_t len;
+	size_t len, sgap;
 #ifdef MACHINE_STACK_GROWS_UP
 	size_t slen;
 #endif
@@ -355,9 +364,12 @@ sys_execve(p, v, retval)
 
 	szsigcode = pack.ep_emul->e_esigcode - pack.ep_emul->e_sigcode;
 
+	sgap = STACKGAPLEN;
+	if (stackgap_random != 0)
+		sgap += (arc4random() * ALIGNBYTES) & (stackgap_random - 1);
 	/* Now check if args & environ fit into new stack */
 	len = ((argc + envc + 2 + pack.ep_emul->e_arglen) * sizeof(char *) +
-	    sizeof(long) + dp + STACKGAPLEN + szsigcode +
+	    sizeof(long) + dp + sgap + szsigcode +
 	    sizeof(struct ps_strings)) - argp;
 
 	len = ALIGN(len);	/* make the stack "safely" aligned */
