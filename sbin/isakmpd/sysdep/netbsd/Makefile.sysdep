@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sysdep,v 1.4 2001/02/24 04:42:49 angelos Exp $
+#	$OpenBSD: Makefile.sysdep,v 1.5 2001/04/03 10:55:21 niklas Exp $
 
 #
 # Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -28,9 +28,9 @@
 #
 
 # Override default features
-FEATURES=	tripledes des blowfish cast ec aggressive debug
+FEATURES=	tripledes des blowfish cast ec aggressive debug x509
 # Not yet
-#FEATURES+=	policy x509
+#FEATURES+=	policy
 
 LIBGMP=		/usr/pkg/lib/libgmp.a
 LIBCRYPTO=	/usr/lib/libcrypto.a
