@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.31 2002/07/01 19:31:34 deraadt Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.32 2003/01/07 09:00:33 kjc Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -680,15 +680,12 @@ pppoutput(ifp, m0, dst, rtp)
     enum NPmode mode;
     int len;
     struct mbuf *m;
-    ALTQ_DECL(struct altq_pktattr pktattr;)
 
     if (sc->sc_devp == NULL || (ifp->if_flags & IFF_RUNNING) == 0
 	|| ((ifp->if_flags & IFF_UP) == 0 && dst->sa_family != AF_UNSPEC)) {
 	error = ENETDOWN;	/* sort of */
 	goto bad;
     }
-
-    IFQ_CLASSIFY(&ifp->if_snd, m0, dst->sa_family, &pktattr);
 
     /*
      * Compute PPP header.
@@ -822,7 +819,7 @@ pppoutput(ifp, m0, dst, rtp)
 		error = 0;
 	    }
 	} else
-	    IFQ_ENQUEUE(&sc->sc_if.if_snd, m0, &pktattr, error);
+	    IFQ_ENQUEUE(&sc->sc_if.if_snd, m0, NULL, error);
 	if (error) {
 	    splx(s);
 	    sc->sc_if.if_oerrors++;

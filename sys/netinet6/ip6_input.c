@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.46 2002/09/11 03:27:30 itojun Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.47 2003/01/07 09:00:34 kjc Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -265,13 +265,6 @@ ip6_input(m)
 #endif
 
 	ip6stat.ip6s_nxthist[ip6->ip6_nxt]++;
-
-#ifdef ALTQ
-	if (altq_input != NULL && (*altq_input)(m, AF_INET6) == 0) {
-		/* packet is dropped by traffic conditioner */
-		return;
-	}
-#endif
 
 	/*
 	 * Check against address spoofing/corruption.

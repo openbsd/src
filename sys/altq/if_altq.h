@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_altq.h,v 1.7 2002/12/16 17:27:20 henning Exp $	*/
+/*	$OpenBSD: if_altq.h,v 1.8 2003/01/07 09:00:34 kjc Exp $	*/
 /*	$KAME: if_altq.h,v 1.6 2001/01/29 19:59:09 itojun Exp $	*/
 
 /*
@@ -170,7 +170,6 @@ extern int altq_enable(struct ifaltq *);
 extern int altq_disable(struct ifaltq *);
 extern struct mbuf *tbr_dequeue(struct ifaltq *, int);
 extern int (*altq_input)(struct mbuf *, int);
-void altq_etherclassify(struct ifaltq *, struct mbuf *, struct altq_pktattr *);
 
 #endif /* _KERNEL */
 

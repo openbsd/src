@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.66 2002/09/11 05:38:47 itojun Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.67 2003/01/07 09:00:33 kjc Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -254,7 +254,6 @@ ether_output(ifp, m0, dst, rt0)
 	register struct ether_header *eh;
 	struct arpcom *ac = (struct arpcom *)ifp;
 	short mflags;
-	ALTQ_DECL(struct altq_pktattr pktattr;)
 
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
 		senderr(ENETDOWN);
@@ -280,12 +279,6 @@ ether_output(ifp, m0, dst, rt0)
 			    time.tv_sec < rt->rt_rmx.rmx_expire)
 				senderr(rt == rt0 ? EHOSTDOWN : EHOSTUNREACH);
 	}
-
-	/*
-	 * if the queueing discipline needs packet classification,
-	 * do it before prepending link headers.
-	 */
-	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family, &pktattr);
 
 	switch (dst->sa_family) {
 
@@ -572,7 +565,7 @@ ether_output(ifp, m0, dst, rt0)
 	 * Queue message on interface, and start output if interface
 	 * not yet active.
 	 */
-	IFQ_ENQUEUE(&ifp->if_snd, m, &pktattr, error);
+	IFQ_ENQUEUE(&ifp->if_snd, m, NULL, error);
 	if (error) {
 		/* mbuf is already freed */
 		splx(s);
@@ -591,99 +584,6 @@ bad:
 		m_freem(m);
 	return (error);
 }
-
-#ifdef ALTQ
-/*
- * This routine is a slight hack to allow a packet to be classified
- * if the Ethernet headers are present.  It will go away when ALTQ's
- * classification engine understands link headers.
- */
-void
-altq_etherclassify(struct ifaltq *ifq, struct mbuf *m,
-    struct altq_pktattr *pktattr)
-{
-	struct ether_header *eh;
-	u_int16_t ether_type;
-	int hlen, af, hdrsize;
-	caddr_t hdr;
-
-	hlen = ETHER_HDR_LEN;
-	eh = mtod(m, struct ether_header *);
-
-	ether_type = htons(eh->ether_type);
-
-	if (ether_type < ETHERMTU) {
-		/* LLC/SNAP */
-		struct llc *llc = (struct llc *)(eh + 1);
-		hlen += 8;
-
-		if (m->m_len < hlen ||
-		    llc->llc_dsap != LLC_SNAP_LSAP ||
-		    llc->llc_ssap != LLC_SNAP_LSAP ||
-		    llc->llc_control != LLC_UI) {
-			/* Not SNAP. */
-			goto bad;
-		}
-
-		ether_type = htons(llc->llc_un.type_snap.ether_type);
-	}
-
-	switch (ether_type) {
-	case ETHERTYPE_IP:
-		af = AF_INET;
-		hdrsize = 20;		/* sizeof(struct ip) */
-		break;
-
-	case ETHERTYPE_IPV6:
-		af = AF_INET6;
-		hdrsize = 40;		/* sizeof(struct ip6_hdr) */
-		break;
-
-	default:
-		af = AF_UNSPEC;
-		hdrsize = 0;
-		break;
-	}
-
-	while (m->m_len <= hlen) {
-		hlen -= m->m_len;
-		m = m->m_next;
-	}
-	if (m->m_len < (hlen + hdrsize)) {
-		/*
-		 * protocol header not in a single mbuf.
-		 * We can't cope with this situation right now
-		 * (but it shouldn't ever happen, really, anyhow).
-		 */
-#ifdef DEBUG
-		printf("altq_etherclassify: headers span multiple mbufs: "
-		    "%d < %d\n", m->m_len, (hlen + hdrsize));
-#endif
-		goto bad;
-	}
-
-	m->m_data += hlen;
-	m->m_len -= hlen;
-
-	hdr = mtod(m, caddr_t);
-
-	if (ALTQ_NEEDS_CLASSIFY(ifq))
-		pktattr->pattr_class =
-		    (*ifq->altq_classify)(ifq->altq_clfier, m, af);
-	pktattr->pattr_af = af;
-	pktattr->pattr_hdr = hdr;
-
-	m->m_data -= hlen;
-	m->m_len += hlen;
-
-	return;
-
- bad:
-	pktattr->pattr_class = NULL;
-	pktattr->pattr_hdr = NULL;
-	pktattr->pattr_af = AF_UNSPEC;
-}
-#endif /* ALTQ */
 
 /*
  * Temporary function to migrate while

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_arcsubr.c,v 1.13 2002/09/15 16:02:13 niklas Exp $	*/
+/*	$OpenBSD: if_arcsubr.c,v 1.14 2003/01/07 09:00:33 kjc Exp $	*/
 /*	$NetBSD: if_arcsubr.c,v 1.8 1996/05/07 02:40:29 thorpej Exp $	*/
 
 /*
@@ -104,7 +104,6 @@ arc_output(ifp, m0, dst, rt0)
 	int			s, error, newencoding, len;
 	u_int8_t		atype, adst;
 	int			tfrags, sflag, fsflag, rsflag;
-	ALTQ_DECL(struct altq_pktattr pktattr;)
 
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING)) 
 		return (ENETDOWN); /* m, m1 aren't initialized yet */
@@ -136,12 +135,6 @@ arc_output(ifp, m0, dst, rt0)
 			    time.tv_sec < rt->rt_rmx.rmx_expire)
 				senderr(rt == rt0 ? EHOSTDOWN : EHOSTUNREACH);
 	}
-
-	/*
-	 * if the queueing discipline needs packet classification,
-	 * do it before prepending link headers.
-	 */
-	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family, &pktattr);
 
 	switch (dst->sa_family) {
 #ifdef INET
@@ -222,7 +215,7 @@ arc_output(ifp, m0, dst, rt0)
 			 * Queue message on interface, and start output if 
 			 * interface not yet active.
 			 */
-			IFQ_ENQUEUE(&ifp->if_snd, m, &pktattr, error);
+			IFQ_ENQUEUE(&ifp->if_snd, m, NULL, error);
 			if (error) {
 				/* mbuf is already freed */
 				splx(s);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upl.c,v 1.12 2002/07/29 02:56:56 nate Exp $ */
+/*	$OpenBSD: if_upl.c,v 1.13 2003/01/07 09:00:34 kjc Exp $ */
 /*	$NetBSD: if_upl.c,v 1.19 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -1054,17 +1054,10 @@ upl_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	   struct rtentry *rt0)
 {
 	int s, len, error;
-	ALTQ_DECL(struct altq_pktattr pktattr;)
 
 	DPRINTFN(10,("%s: %s: enter\n",
 		     USBDEVNAME(((struct upl_softc *)ifp->if_softc)->sc_dev),
 		     __func__));
-
-	/*
-	 * if the queueing discipline needs packet classification,
-	 * do it now.
-	 */
-	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family, &pktattr);
 
 	len = m->m_pkthdr.len;
 	s = splnet();
@@ -1072,7 +1065,7 @@ upl_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	 * Queue message on interface, and start output if interface
 	 * not yet active.
 	 */
-	IFQ_ENQUEUE(&ifp->if_snd, m, &pktattr, error);
+	IFQ_ENQUEUE(&ifp->if_snd, m, NULL, error);
 	if (error) {
 		/* mbuf is already freed */
 		splx(s);

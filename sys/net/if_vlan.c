@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.32 2002/06/12 01:42:29 chris Exp $ */
+/*	$OpenBSD: if_vlan.c,v 1.33 2003/01/07 09:00:34 kjc Exp $ */
 /*
  * Copyright 1998 Massachusetts Institute of Technology
  *
@@ -137,7 +137,6 @@ vlan_start(struct ifnet *ifp)
 	struct ifnet *p;
 	struct mbuf *m, *m0;
 	int error;
-	ALTQ_DECL(struct altq_pktattr pktattr;)
 
 	ifv = ifp->if_softc;
 	p = ifv->ifv_p;
@@ -157,26 +156,6 @@ vlan_start(struct ifnet *ifp)
 			m_freem(m);
 			continue;
 		}
-
-#ifdef ALTQ
-		/*
-		 * If ALTQ is enabled on the parent interface, do
-		 * classification; the queueing discipline might
-		 * not require classification, but might require
-		 * the address family/header pointer in the pktattr.
-		 */
-		if (ALTQ_IS_ENABLED(&p->if_snd)) {
-			switch (p->if_type) {
-			case IFT_ETHER:
-				altq_etherclassify(&p->if_snd, m, &pktattr);
-				break;
-#ifdef DIAGNOSTIC
-			default:
-				panic("vlan_start: impossible (altq)");
-#endif
-			}
-		}
-#endif /* ALTQ */
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
@@ -239,7 +218,7 @@ vlan_start(struct ifnet *ifp)
 		p->if_obytes += m->m_pkthdr.len;
 		if (m->m_flags & M_MCAST)
 			p->if_omcasts++;
-		IFQ_ENQUEUE(&p->if_snd, m, &pktattr, error);
+		IFQ_ENQUEUE(&p->if_snd, m, NULL, error);
 		if (error) {
 			/* mbuf is already freed */
 			ifp->if_oerrors++;

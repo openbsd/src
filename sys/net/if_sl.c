@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sl.c,v 1.17 2002/09/11 05:38:47 itojun Exp $	*/
+/*	$OpenBSD: if_sl.c,v 1.18 2003/01/07 09:00:33 kjc Exp $	*/
 /*	$NetBSD: if_sl.c,v 1.39.4.1 1996/06/02 16:26:31 thorpej Exp $	*/
 
 /*
@@ -386,9 +386,6 @@ sloutput(ifp, m, dst, rtp)
 	register struct sl_softc *sc = ifp->if_softc;
 	register struct ip *ip;
 	int s, error;
-	ALTQ_DECL(struct altq_pktattr pktattr;)
-
-	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family, &pktattr);
 
 	/*
 	 * `Cannot happen' (see slioctl).  Someday we will extend
@@ -427,7 +424,7 @@ sloutput(ifp, m, dst, rtp)
 			slstart(sc->sc_ttyp);
 		}
 	}
-	IFQ_ENQUEUE(&sc->sc_if.if_snd, m, &pktattr, error);
+	IFQ_ENQUEUE(&sc->sc_if.if_snd, m, NULL, error);
 	if (error) {
 		splx(s);
 		sc->sc_if.if_oerrors++;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_strip.c,v 1.22 2002/09/11 05:38:47 itojun Exp $	*/
+/*	$OpenBSD: if_strip.c,v 1.23 2003/01/07 09:00:33 kjc Exp $	*/
 /*	$NetBSD: if_strip.c,v 1.2.4.3 1996/08/03 00:58:32 jtc Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
@@ -717,7 +717,6 @@ stripoutput(ifp, m, dst, rt)
 	register u_char *dldst;		/* link-level next-hop */
 	int s;
 	u_char dl_addrbuf[STARMODE_ADDR_LEN+1];
-	ALTQ_DECL(struct altq_pktattr pktattr;)
 
 	/*
 	 * Verify tty line is up and alive.
@@ -745,11 +744,6 @@ stripoutput(ifp, m, dst, rt)
 		printf("\n");
 	}
 #endif
-	/*
-	 * if the queueing discipline needs packet classification,
-	 * do it before prepending link headers.
-	 */
-	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family, &pktattr);
 
 	switch (dst->sa_family) {
 	case AF_INET:
@@ -863,7 +857,7 @@ stripoutput(ifp, m, dst, rt)
 			error = 0;
 		}
 	} else
-		IFQ_ENQUEUE(&sc->sc_if.if_snd, m, &pktattr, error);
+		IFQ_ENQUEUE(&sc->sc_if.if_snd, m, NULL, error);
 	if (error) {
 		splx(s);
 		sc->sc_if.if_oerrors++;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.44 2002/12/06 15:58:49 nate Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.45 2003/01/07 09:00:34 kjc Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -377,7 +377,6 @@ tun_output(ifp, m0, dst, rt)
 	struct tun_softc *tp = ifp->if_softc;
 	int		s, len, error;
 	u_int32_t	*af;
-	ALTQ_DECL(struct altq_pktattr pktattr;)
 
 	TUNDEBUG(("%s: tun_output\n", ifp->if_xname));
 
@@ -388,12 +387,6 @@ tun_output(ifp, m0, dst, rt)
 		return EHOSTDOWN;
 	}
 
-	/*
-	 * if the queueing discipline needs packet classification,
-	 * do it before prepending link headers.
-	 */
-	IFQ_CLASSIFY(&ifp->if_snd, m0, dst->sa_family, &pktattr);
- 
 	M_PREPEND(m0, sizeof(*af), M_DONTWAIT);
 	af = mtod(m0, u_int32_t *);
 	*af = htonl(dst->sa_family);
@@ -405,7 +398,7 @@ tun_output(ifp, m0, dst, rt)
 
 	len = m0->m_pkthdr.len + sizeof(*af);
 	s = splimp();
-	IFQ_ENQUEUE(&ifp->if_snd, m0, &pktattr, error);
+	IFQ_ENQUEUE(&ifp->if_snd, m0, NULL, error);
 	if (error) {
 		splx(s);
 		ifp->if_collisions++;

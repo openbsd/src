@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.107 2002/09/04 19:04:38 dhartmei Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.108 2003/01/07 09:00:34 kjc Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -399,12 +399,6 @@ ipv4_input(m)
 
 	ip = mtod(m, struct ip *);
 	hlen = ip->ip_hl << 2;
-#endif
-
-#ifdef ALTQ
-	if (altq_input != NULL && (*altq_input)(m, AF_INET) == 0)
-		/* packet is dropped by traffic conditioner */
-		return;
 #endif
 
 	/*

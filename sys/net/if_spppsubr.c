@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.16 2002/09/26 20:43:54 chris Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.17 2003/01/07 09:00:33 kjc Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -653,7 +653,6 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 	struct ppp_header *h;
 	struct ifqueue *ifq = NULL;
 	int s, len, rv = 0;
-	ALTQ_DECL(struct altq_pktattr pktattr;)
 
 	s = splimp();
 
@@ -674,12 +673,6 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 		lcp.Open(sp);
 		s = splimp();
 	}
-
-	/*
-	 * if the queueing discipline needs packet classification,
-	 * do it before prepending link headers.
-	 */
-	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family, &pktattr);
 
 #ifdef INET
 	/*
@@ -814,7 +807,7 @@ nosupport:
 		}
 		IF_ENQUEUE (ifq, m);
 	} else
-		IFQ_ENQUEUE(&ifp->if_snd, m, &pktattr, rv);
+		IFQ_ENQUEUE(&ifp->if_snd, m, NULL, rv);
 	if (rv != 0) {
 		++ifp->if_oerrors;
 		splx (s);
