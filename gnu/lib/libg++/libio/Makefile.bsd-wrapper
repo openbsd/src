@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.2 1996/03/27 23:00:04 niklas Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.3 1996/04/17 08:01:41 deraadt Exp $
 
 LIBIO=		io
 LIBIOSTREAM=	iostream
@@ -48,7 +48,7 @@ _G_config.h: gen-params
 	CC="$(CC)"; export CC; \
 	CXX="$(CXX) $(CXXFLAGS)"; export CXX; \
 	CONFIG_NM="nm"; export CONFIG_NM; \
-	$(SHELL) $(.CURDIR)/gen-params LIB_VERSION=$(VERSION) $(G_CONFIG_ARGS) >tmp-params.h
+	sh $(.CURDIR)/gen-params LIB_VERSION=$(VERSION) $(G_CONFIG_ARGS) >tmp-params.h
 	@mv tmp-params.h _G_config.h
 
 iostream.list: _G_config.h
