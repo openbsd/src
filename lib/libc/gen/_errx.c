@@ -1,4 +1,4 @@
-/*	$OpenBSD: _errx.c,v 1.2 1996/04/21 23:39:05 deraadt Exp $	*/
+/*	$OpenBSD: _errx.c,v 1.3 1996/05/01 12:56:19 deraadt Exp $	*/
 
 /*
  * J.T. Conklin, December 12, 1994
@@ -12,6 +12,7 @@ __indr_reference(_errx, errx);
 #else
 
 #define _errx    errx
+#define _verrx   verrx
 #define rcsid   _rcsid
 #include "errx.c"
 
