@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_sem.c,v 1.22 2003/11/20 22:22:35 millert Exp $	*/
+/*	$OpenBSD: sysv_sem.c,v 1.23 2003/12/03 19:03:42 millert Exp $	*/
 /*	$NetBSD: sysv_sem.c,v 1.26 1996/02/09 19:00:25 christos Exp $	*/
 
 /*
@@ -524,10 +524,11 @@ sys_semop(struct proc *p, void *v, register_t *retval)
 	struct sem *semptr = NULL;
 	struct sem_undo *suptr = NULL;
 	struct ucred *cred = p->p_ucred;
-	int i, j, error;
-	int do_wakeup, do_undos;
+	u_int i, j;
+	int do_wakeup, do_undos, error;
 
-	DPRINTF(("call to semop(%d, %p, %d)\n", semid, sops, nsops));
+	DPRINTF(("call to semop(%d, %p, %u)\n", semid, SCARG(uap, sops),
+	    nsops));
 
 	semid = IPCID_TO_IX(semid);	/* Convert back to zero origin */
 
@@ -543,15 +544,19 @@ sys_semop(struct proc *p, void *v, register_t *retval)
 		return (error);
 	}
 
-	if (nsops > seminfo.semopm) {
-		DPRINTF(("too many sops (max=%d, nsops=%d)\n", seminfo.semopm, nsops));
+	if (nsops == 0) {
+		*retval = 0;
+		return (0);
+	} else if (nsops > (u_int)seminfo.semopm) {
+		DPRINTF(("too many sops (max=%d, nsops=%u)\n", seminfo.semopm,
+		    nsops));
 		return (E2BIG);
 	}
 
 	sops = malloc(nsops * sizeof(struct sembuf), M_SEM, M_WAITOK);
 	error = copyin(SCARG(uap, sops), sops, nsops * sizeof(struct sembuf));
 	if (error != 0) {
-		DPRINTF(("error = %d from copyin(%p, %p, %d)\n", error,
+		DPRINTF(("error = %d from copyin(%p, %p, %u)\n", error,
 		    SCARG(uap, sops), &sops, nsops * sizeof(struct sembuf)));
 		free(sops, M_SEM);
 		return (error);
@@ -704,15 +709,17 @@ done:
 			 * we applied them.  This guarantees that we won't run
 			 * out of space as we roll things back out.
 			 */
-			for (j = i - 1; j >= 0; j--) {
-				if ((sops[j].sem_flg & SEM_UNDO) == 0)
-					continue;
-				adjval = sops[j].sem_op;
-				if (adjval == 0)
-					continue;
-				if (semundo_adjust(p, &suptr, semid,
-				    sops[j].sem_num, adjval) != 0)
-					panic("semop - can't undo undos");
+			if (i != 0) {
+				for (j = i - 1; j >= 0; j--) {
+					if ((sops[j].sem_flg & SEM_UNDO) == 0)
+						continue;
+					adjval = sops[j].sem_op;
+					if (adjval == 0)
+						continue;
+					if (semundo_adjust(p, &suptr, semid,
+					    sops[j].sem_num, adjval) != 0)
+						panic("semop - can't undo undos");
+				}
 			}
 
 			for (j = 0; j < nsops; j++)
