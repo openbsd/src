@@ -1,4 +1,4 @@
-/*	$OpenBSD: isakmpd.c,v 1.56 2004/02/19 09:54:52 ho Exp $	*/
+/*	$OpenBSD: isakmpd.c,v 1.57 2004/02/19 15:35:16 hshoexer Exp $	*/
 /*	$EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	*/
 
 /*
@@ -244,7 +244,7 @@ report (void)
 
   if (!rfp)
     {
-      log_error ("fopen (\"%s\", \"w\") failed", report_file);
+      log_error ("report: fopen (\"%s\", \"w\") failed", report_file);
       return;
     }
 
@@ -347,11 +347,12 @@ write_pid_file (void)
   if (fp != NULL)
     {
       if (fprintf (fp, "%ld\n", (long) getpid ()) < 0)
-	log_error ("main: failed to write PID to \"%.100s\"", pid_file);
+	log_error ("write_pid_file: failed to write PID to \"%.100s\"",
+	           pid_file);
       fclose (fp);
     }
   else
-    log_fatal ("main: fopen (\"%.100s\", \"w\") failed", pid_file);
+    log_fatal ("write_pid_file: fopen (\"%.100s\", \"w\") failed", pid_file);
 }
 
 int
@@ -500,7 +501,7 @@ main (int argc, char *argv[])
 	{
 	  if (errno != EINTR)
 	    {
-	      log_error ("select");
+	      log_error ("main: select");
 
 	      /*
 	       * In order to give the unexpected error condition time to
