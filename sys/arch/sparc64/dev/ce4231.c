@@ -1,4 +1,4 @@
-/*	$OpenBSD: ce4231.c,v 1.16 2004/09/29 19:17:43 miod Exp $	*/
+/*	$OpenBSD: ce4231.c,v 1.17 2004/11/09 14:30:34 miod Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -1404,7 +1404,7 @@ ce4231_alloc(addr, direction, size, pool, flags)
 
 	p = (struct cs_dma *)malloc(sizeof(struct cs_dma), pool, flags);
 	if (p == NULL)
-		goto fail;
+		return (NULL);
 
 	if (bus_dmamap_create(dmat, size, 1, size, 0,
 	    BUS_DMA_NOWAIT, &p->dmamap) != 0)
@@ -1436,6 +1436,7 @@ fail2:
 fail1:
 	bus_dmamap_destroy(dmat, p->dmamap);
 fail:
+	free(p, pool);
 	return (NULL);
 }
 
