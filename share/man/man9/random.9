@@ -1,4 +1,4 @@
-.\"	$OpenBSD: random.9,v 1.2 1997/06/15 06:48:14 mickey Exp $
+.\"	$OpenBSD: random.9,v 1.3 1998/05/19 22:54:59 jason Exp $
 .\"
 .\" Copyright (c) 1996	Michael Shalayeff
 .\" All rights reserved.
@@ -53,14 +53,14 @@ add_{mouse,tty,net,blkdev}_randomness routines used to supply data
 for the random data source device for future processing.
 .Pp
 .Nm get_random_bytes
-maybe used to retrive strong random data, just
+may be used to retrieve strong random data, just
 as it would by
 .Xr srandom 4
 device.
 .br
 .Nm arc4random
-will give you random 32 bit number hashed with aRC4 algorythm,
-wich appeared to be faster.
+will give random 32 bit numbers hashed with the aRC4 algorithm,
+which appears to be faster.
 .Sh SEE ALSO
 .Xr random 4 ,
 .Xr arc4random 3
