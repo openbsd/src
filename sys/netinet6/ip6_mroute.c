@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_mroute.c,v 1.26 2002/06/09 14:38:39 itojun Exp $	*/
+/*	$OpenBSD: ip6_mroute.c,v 1.27 2002/06/29 07:58:30 deraadt Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.45 2001/03/25 08:38:51 itojun Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  * Modified by Mark J. Steiglitz, Stanford, May, 1991
  * Modified by Van Jacobson, LBL, January 1993
  * Modified by Ajit Thyagarajan, PARC, August 1993
- * Modified by Bill Fenenr, PARC, April 1994
+ * Modified by Bill Fenner, PARC, April 1994
  *
  * MROUTING Revision: 3.5.1.2 + PIM-SMv2 (pimd) Support
  */
