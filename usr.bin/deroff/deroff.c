@@ -1,4 +1,4 @@
-/*	$OpenBSD: deroff.c,v 1.3 2002/02/28 08:57:37 millert Exp $	*/
+/*	$OpenBSD: deroff.c,v 1.4 2002/02/28 22:12:15 danh Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -76,7 +76,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)deroff.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: deroff.c,v 1.3 2002/02/28 08:57:37 millert Exp $";
+static const char rcsid[] = "$OpenBSD: deroff.c,v 1.4 2002/02/28 22:12:15 danh Exp $";
 #endif
 #endif /* not lint */
 
@@ -110,10 +110,10 @@ static const char rcsid[] = "$OpenBSD: deroff.c,v 1.3 2002/02/28 08:57:37 miller
 #ifdef DEBUG
 #  define C	_C()
 #  define C1	_C1()
-#else not DEBUG
+#else /* not DEBUG */
 #  define C	Cget
 #  define C1	C1get
-#endif not DEBUG
+#endif /* not DEBUG */
 
 #define SKIP while (C != '\n')
 #define SKIP_TO_COM SKIP; SKIP; pc=c; while (C != '.' || pc != '\n' || C > 'Z')pc=c
@@ -127,7 +127,7 @@ static const char rcsid[] = "$OpenBSD: deroff.c,v 1.3 2002/02/28 08:57:37 miller
 
 #ifdef DEBUG
 char *mactab[] = { "-ms", "-mm", "-me", "-ma" };
-#endif DEBUG
+#endif /* DEBUG */
 
 #define	ONE 1
 #define	TWO 2
@@ -346,7 +346,7 @@ main(int ac, char **av)
 #ifdef DEBUG
 	printf("msflag = %d, mac = %s, keepblock = %d, disp = %d\n",
 		msflag, mactab[mac], keepblock, disp);
-#endif DEBUG
+#endif /* DEBUG */
 	if (argc == 0) {
 		infile = stdin;
 	} else {
@@ -479,7 +479,7 @@ work(void)
 		C;
 #ifdef FULLDEBUG
 		printf("Starting work with `%c'\n", c);
-#endif FULLDEBUG
+#endif /* FULLDEBUG */
 		if (c == '.' || c == '\'')
 			comline();
 		else
@@ -831,7 +831,7 @@ _C(void)
 
 	return(Cget);
 }
-#endif DEBUG
+#endif /* DEBUG */
 
 /*
  *	Put out a macro line, using ms and mm conventions.
@@ -986,7 +986,7 @@ meputmac(char *cp, int constant)
 			}
 			printf("]");
 		}
-#endif FULLDEBUG
+#endif /* FULLDEBUG */
 		/*
 		 *	Determine if the argument merits being printed
 		 *
@@ -1482,7 +1482,7 @@ comx:
 			hit = 1;
 #ifdef FULLDEBUG
 			printf("preliminary hit macro %c%c ", c1, c2);
-#endif FULLDEBUG
+#endif /* FULLDEBUG */
 			switch (mp->condition) {
 			case NONE:
 				hit = YES;
@@ -1509,7 +1509,7 @@ comx:
 			if (hit) {
 #ifdef FULLDEBUG
 				printf("MATCH\n");
-#endif FULLDEBUG
+#endif /* FULLDEBUG */
 				switch ((*(mp->func))(c12)) {
 				default:
 					return;
@@ -1521,7 +1521,7 @@ comx:
 			}
 #ifdef FULLDEBUG
 			printf("FAIL\n");
-#endif FULLDEBUG
+#endif /* FULLDEBUG */
 			break;
 		}
 	}
