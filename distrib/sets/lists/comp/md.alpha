@@ -120,6 +120,3 @@
 ./usr/share/man/cat3/kvm_dump_inval.0
 ./usr/share/man/cat3/kvm_dump_mkheader.0
 ./usr/share/man/cat3/kvm_dump_wrtheader.0
-./usr/lib/libssl_pic.a
-./usr/lib/libcrypto_pic.a
-./usr/lib/libotermcap_pic.a
