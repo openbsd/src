@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_quick_mode.c,v 1.89 2005/03/05 12:32:58 ho Exp $	 */
+/* $OpenBSD: ike_quick_mode.c,v 1.90 2005/03/22 12:43:39 hshoexer Exp $	 */
 /* $EOM: ike_quick_mode.c,v 1.139 2001/01/26 10:43:17 niklas Exp $	 */
 
 /*
@@ -141,6 +141,8 @@ check_policy(struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
 			log_error("check_policy: calloc (%d, %lu) failed",
 			    policy_asserts_num,
 			    (unsigned long)sizeof *keynote_ids);
+			kn_close(isakmp_sa->policy_id);
+			isakmp_sa->policy_id = -1;
 			return 0;
 		}
 	}
