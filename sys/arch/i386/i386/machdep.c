@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.176 2001/09/19 20:50:56 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.177 2001/10/04 21:20:12 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2965,8 +2965,28 @@ _bus_dmamap_load_raw(t, map, segs, nsegs, size, flags)
 	bus_size_t size;
 	int flags;
 {
+	if (nsegs > map->_dm_segcnt || size > map->_dm_size)
+		return (EINVAL);
 
-	panic("_bus_dmamap_load_raw: not implemented");
+	/*
+	 * Make sure we don't cross any boundaries.
+	 */
+	if (map->_dm_boundary) {
+		bus_addr_t bmask = ~(map->_dm_boundary - 1);
+		int i;
+
+		for (i = 0; i < nsegs; i++) {
+			if (segs[i].ds_len > map->_dm_maxsegsz)
+				return (EINVAL);
+			if ((segs[i].ds_addr & bmask) !=
+			    ((segs[i].ds_addr + segs[i].ds_len - 1) & bmask))
+				return (EINVAL);
+		}
+	}
+
+	bcopy(segs, map->dm_segs, nsegs * sizeof(*segs));
+	map->dm_nsegs = nsegs;
+	return (0);
 }
 
 /*
