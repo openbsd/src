@@ -1,4 +1,4 @@
-/*	$OpenBSD: ap_config.h,v 1.13 2002/07/19 21:31:15 henning Exp $ */
+/*	$OpenBSD: ap_config.h,v 1.14 2002/09/06 19:21:13 henning Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -692,6 +692,7 @@ extern char *crypt();
 #if defined __OpenBSD__
 #define HAVE_SYSVSEM_SERIALIZED_ACCEPT
 #define USE_SYSVSEM_SERIALIZED_ACCEPT
+#define NET_SIZE_T socklen_t
 #endif
 #define HAVE_FLOCK_SERIALIZED_ACCEPT
 #define SINGLE_LISTEN_UNSERIALIZED_ACCEPT
