@@ -1,4 +1,4 @@
-.\"	$OpenBSD: 3.t,v 1.2 2001/02/03 08:15:06 niklas Exp $
+.\"	$OpenBSD: 3.t,v 1.3 2003/04/10 16:31:02 millert Exp $
 .\"
 .\" Copyright (c) 1980, 1986, 1988, 1993
 .\"	 The Regents of the University of California.  All rights reserved.
@@ -713,7 +713,7 @@ After copying your version of
 you should do:
 .DS
 \fB#\fP \fIchown \-R root /var/spool/at\fP
-\fB#\fP \fIchown \-R uucp.daemon /var/spool/uucp\fP
+\fB#\fP \fIchown \-R uucp:daemon /var/spool/uucp\fP
 \fB#\fP \fIchmod \-R o\-w /var/spool/uucp\fP
 .DE
 .PP
