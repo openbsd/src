@@ -180,7 +180,7 @@ char *argv[];
 
 	if((kbfd = open(KEYB_DEVICE, 0)) < 0)
 	{
-		perror("kcon: keyboard open failiure");
+		perror("kcon: keyboard open failure");
 		exit(1);
 	}
 
