@@ -2446,7 +2446,7 @@ msgstr "Fabrication du fichier %s « %s » à partir de « %s ».\n"
 #, c-format
 msgid "This is %s, produced by makeinfo version %s from %s.\n"
 msgstr ""
-"Ceci est le fichier Info %s, produit par Makeinfo version %s à partir %s.\n"
+"Ceci est le fichier Info %s, produit par Makeinfo version %s à partir de %s.\n"
 
 #: makeinfo/makeinfo.c:1583
 #, c-format
