@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pcmcia.c,v 1.30 2000/06/26 06:22:00 aaron Exp $	*/
+/*	$OpenBSD: if_ne_pcmcia.c,v 1.31 2000/08/30 20:51:35 fgsch Exp $	*/
 /*	$NetBSD: if_ne_pcmcia.c,v 1.17 1998/08/15 19:00:04 thorpej Exp $	*/
 
 /*
@@ -161,10 +161,6 @@ struct ne2000dev {
       PCMCIA_CIS_NDC_ND5100_E,
       0, -1, { 0x00, 0x80, 0xc6 } },
 
-    { PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
-      PCMCIA_CIS_LINKSYS_COMBO_ECARD_2,
-      0, -1, { 0x00, 0xe0, 0x98 } },
-
     /*
      * You have to add new entries which contains
      * PCMCIA_VENDOR_INVALID and/or PCMCIA_PRODUCT_INVALID 
@@ -194,11 +190,11 @@ struct ne2000dev {
 
     { PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_COMBO_ECARD,
       PCMCIA_CIS_PLANEX_FNW3600T,
-      0, -1, { 0x00, 0x90, 0xcc }, NE2000DVF_DL10019 },
+      0, -1, { 0x00, 0x90, 0xcc } },
 
     { PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_COMBO_ECARD,
       PCMCIA_CIS_SVEC_PN650TX,
-      0, -1, { 0x00, 0xe0, 0x98 }, NE2000DVF_DL10019 },
+      0, -1, { 0x00, 0xe0, 0x98 } },
 
     /*
      * This entry should be here so that above two cards doesn't
@@ -211,11 +207,11 @@ struct ne2000dev {
 
     { PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_ETHERFAST,
       PCMCIA_CIS_LINKSYS_ETHERFAST,
-      0, -1, { 0x00, 0x80, 0xc8 }, NE2000DVF_DL10019 },
+      0, -1, { 0x00, 0x80, 0xc8 } },
 
     { PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_ETHERFAST,
       PCMCIA_CIS_DLINK_DE650,
-      0, -1, { 0x00, 0xe0, 0x98 }, NE2000DVF_DL10019 },
+      0, -1, { 0x00, 0xe0, 0x98 } },
 
     { PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_COMBO_ECARD,
       PCMCIA_CIS_LINKSYS_COMBO_ECARD, 
@@ -293,7 +289,7 @@ struct ne2000dev {
 
     { PCMCIA_VENDOR_COREGA, PCMCIA_PRODUCT_COREGA_FAST_ETHER_PCC_TX,
       PCMCIA_CIS_COREGA_FAST_ETHER_PCC_TX,
-      0, -1, { 0x00, 0x00, 0xf4 }, NE2000DVF_DL10019 },
+      0, -1, { 0x00, 0x00, 0xf4 } },
 
     { PCMCIA_VENDOR_COMPEX, PCMCIA_PRODUCT_COMPEX_LINKPORT_ENET_B,
       PCMCIA_CIS_COMPEX_LINKPORT_ENET_B,
@@ -563,6 +559,9 @@ again:
 				    ne_dev->enet_maddr, myea);
 				if (enaddr == NULL)
 					continue;
+			} else {
+				enaddr = ne_pcmcia_dl10019_get_enaddr(psc,
+				    myea);
 			}
 			break;
 		}
@@ -571,15 +570,6 @@ again:
 		printf("%s: can't match ethernet vendor code\n",
 		    dsc->sc_dev.dv_xname);
 		goto fail_5;
-	}
-
-	if ((ne_dev->flags & NE2000DVF_DL10019) != 0) {
-		enaddr = ne_pcmcia_dl10019_get_enaddr(psc, myea);
-		if (enaddr == NULL) {
-			++i;
-			goto again;
-		}
-		nsc->sc_type = NE2000_TYPE_DL10019;
 	}
 
 	if (enaddr != NULL) {
@@ -594,12 +584,14 @@ again:
 		}
 	}
 
+#ifdef notyet
 	if ((ne_dev->flags & NE2000DVF_AX88190) != 0) {
 		if (ne_pcmcia_ax88190_set_iobase(psc))
 			goto fail_5;
 
 		nsc->sc_type = NE2000_TYPE_AX88190;
 	}
+#endif
 
 	/*
 	 * Check for a RealTek 8019.
@@ -788,16 +780,15 @@ ne_pcmcia_dl10019_get_enaddr(psc, myea)
 	u_int8_t sum;
 	int j;
 
-#define PAR0	0x04
 	for (j = 0, sum = 0; j < 8; j++)
 		sum += bus_space_read_1(nsc->sc_asict, nsc->sc_asich,
-		    PAR0 + j);
+		    0x04 + j);
 	if (sum != 0xff)
 		return (NULL);
 	for (j = 0; j < ETHER_ADDR_LEN; j++)
 		myea[j] = bus_space_read_1(nsc->sc_asict,
-		    nsc->sc_asich, PAR0 + j);
-#undef PAR0
+		    nsc->sc_asich, 0x04 + j);
+	nsc->sc_type = NE2000_TYPE_DL10019;
 	return (myea);
 }
 
