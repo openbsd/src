@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.7 2002/03/14 01:26:45 millert Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.8 2002/06/11 10:57:51 art Exp $	*/
 /*	$NetBSD: cpu.c,v 1.13 2001/05/26 21:27:15 chs Exp $ */
 
 /*
@@ -122,89 +122,6 @@ static char *iu_vendor[16] = {
 	"vendor#15"
 };
 #endif
-
-/*
- * Overhead involved in firing up a new CPU:
- * 
- *	Allocate a cpuinfo/interrupt stack
- *	Map that into the kernel
- *	Initialize the cpuinfo
- *	Return the TLB entry for the cpuinfo.
- */
-u_int64_t
-cpu_init(pa, cpu_num)
-	paddr_t pa;
-	int cpu_num;
-{
-	struct cpu_info *ci;
-	u_int64_t pagesize;
-	u_int64_t pte;
-	struct vm_page *m;
-	psize_t size;
-	vaddr_t va;
-	struct pglist mlist;
-	int error;
-
-	size = NBPG; /* XXXX 8K, 64K, 512K, or 4MB */
-	TAILQ_INIT(&mlist);
-	if ((error = uvm_pglistalloc((psize_t)size, (paddr_t)0, (paddr_t)-1,
-		(paddr_t)size, (paddr_t)0, &mlist, 1, 0)) != 0)
-		panic("cpu_start: no memory, error %d", error);
-
-	va = uvm_km_valloc(kernel_map, size);
-	if (va == 0)
-		panic("cpu_start: no memory");
-
-	m = TAILQ_FIRST(&mlist);
-	pa = VM_PAGE_TO_PHYS(m);
-	pte = TSB_DATA(0 /* global */,
-		pagesize,
-		pa,
-		1 /* priv */,
-		1 /* Write */,
-		1 /* Cacheable */,
-		1 /* ALIAS -- Disable D$ */,
-		1 /* valid */,
-		0 /* IE */);
-
-	/* Map the pages */
-	for (; m != NULL; m = TAILQ_NEXT(m,pageq)) {
-		pa = VM_PAGE_TO_PHYS(m);
-		pmap_zero_page(pa);
-		pmap_enter(pmap_kernel(), va, pa | PMAP_NVC,
-			VM_PROT_READ|VM_PROT_WRITE,
-			VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
-		va += NBPG;
-	}
-	pmap_update(pmap_kernel());
-
-	if (!cpus) cpus = (struct cpu_info *)va;
-	else {
-		for (ci = cpus; ci->ci_next; ci=ci->ci_next);
-		ci->ci_next = (struct cpu_info *)va;
-	}
-
-	switch (size) {
-#define K	*1024
-	case 8 K:
-		pagesize = TLB_8K;
-		break;
-	case 64 K:
-		pagesize = TLB_64K;
-		break;
-	case 512 K:
-		pagesize = TLB_512K;
-		break;
-	case 4 K K:
-		pagesize = TLB_4M;
-		break;
-	default:
-		panic("cpu_start: stack size %x not a machine page size\n",
-			(unsigned)size);
-	}
-	return (pte|TLB_L);
-}
-
 
 int
 cpu_match(parent, vcf, aux)

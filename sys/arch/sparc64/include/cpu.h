@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.11 2002/06/07 21:33:43 nordin Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.12 2002/06/11 10:57:51 art Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
@@ -253,9 +253,6 @@ extern struct intrhand *intrlev[MAXINTNUM];
 
 void	intr_establish(int level, struct intrhand *);
 
-/* cpu.c */
-paddr_t cpu_alloc(void);
-u_int64_t cpu_init(paddr_t, int);
 /* disksubr.c */
 struct dkbad;
 int isbad(struct dkbad *bt, int, int, int);
