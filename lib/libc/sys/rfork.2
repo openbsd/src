@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rfork.2,v 1.19 2003/06/18 11:05:21 jmc Exp $
+.\"	$OpenBSD: rfork.2,v 1.20 2004/04/02 19:08:58 tedu Exp $
 .\"
 .\" Copyright (c) 2003 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -80,7 +80,6 @@ The kernel forces sharing of the entire address space.
 The child will then inherit all the shared segments the parent process owns.
 Subsequent forks by the parent will then propagate the shared
 data and bss between children.
-The stack segment is always split.
 .It Dv RFNOWAIT
 Parent need not
 .Xr wait 2

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.63 2003/09/23 20:26:18 millert Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.64 2004/04/02 19:08:58 tedu Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -44,6 +44,7 @@
 #include <sys/malloc.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
+#include <sys/exec.h>
 #include <sys/resourcevar.h>
 #include <sys/signalvar.h>
 #include <sys/vnode.h>
@@ -118,7 +119,7 @@ sys_rfork(struct proc *p, void *v, register_t *retval)
 		flags |= FORK_NOZOMBIE;
 
 	if (rforkflags & RFMEM)
-		flags |= FORK_VMNOSTACK;
+		flags |= FORK_SHAREVM;
 
 	return (fork1(p, SIGCHLD, flags, NULL, 0, NULL, NULL, retval));
 }
@@ -291,23 +292,6 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
 	 * from being swapped.
 	 */
 	PHOLD(p1);
-
-	if (flags & FORK_VMNOSTACK) {
-		/* share everything, but ... */
-		uvm_map_inherit(&p1->p_vmspace->vm_map,
-		    VM_MIN_ADDRESS, VM_MAXUSER_ADDRESS,
-		    MAP_INHERIT_SHARE);
-		/* ... don't share stack */
-#ifdef MACHINE_STACK_GROWS_UP
-		uvm_map_inherit(&p1->p_vmspace->vm_map,
-		    USRSTACK, USRSTACK + MAXSSIZ,
-		    MAP_INHERIT_COPY);
-#else
-		uvm_map_inherit(&p1->p_vmspace->vm_map,
-		    USRSTACK - MAXSSIZ, USRSTACK,
-		    MAP_INHERIT_COPY);
-#endif
-	}
 
 	p2->p_addr = (struct user *)uaddr;
 
