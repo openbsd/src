@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.86 2005/03/30 05:34:30 henning Exp $	*/
+/*	$OpenBSD: route.c,v 1.87 2005/03/30 07:59:03 henning Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -333,6 +333,8 @@ set_metric(char *value, int key)
 		valp = &rt_metrics.rmx_rttvar;
 		flag = RTV_RTTVAR;
 		break;
+	default:
+		errx(1, "king bula sez: set_metric with invalid key");
 	}
 	rtm_inits |= flag;
 	if (lockrest || locking)
