@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.122 2004/01/08 05:56:14 jmc Exp $
+.\"	$OpenBSD: sysctl.3,v 1.123 2004/01/08 11:01:17 jmc Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1288,8 +1288,9 @@ and should normally be enabled on all systems.
 .It Li ip.sourceroute
 Returns 1 when forwarding of source-routed packets is enabled for
 the host.
-This value may only be changed if the kernel security
-level is less than 1.
+As detailed in
+.Xr securelevel 7 ,
+this variable may not be changed if the securelevel is \*(Gt 0.
 .It Li ip.ttl
 The maximum time-to-live (hop count) value for an
 .Tn IP
