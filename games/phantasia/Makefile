@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 1996/10/12 21:27:50 niklas Exp $
+#	$OpenBSD: Makefile,v 1.6 1997/01/03 03:04:00 etheisen Exp $
 #	$NetBSD: Makefile,v 1.4 1995/03/24 03:58:22 cgd Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
@@ -24,7 +24,7 @@ setup: phantglobs.o.bld setup.o monsters.asc ${LIBM}
 
 beforeinstall: 
 	./setup -m ${.CURDIR}/monsters.asc
-	chown games.bin ${DESTDIR}/var/games/phantasia/*
+	chown root.bin ${DESTDIR}/var/games/phantasia/*
 
 # Make Phantasia map.  Change the map commands reflect your installation.
 # PLOTDEVICE is used for plotting the map.  Change as appropriate.
