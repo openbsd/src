@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.24 1998/02/15 20:56:40 niklas Exp $
+#	$OpenBSD: Makefile,v 1.25 1998/03/17 18:10:53 mickey Exp $
 
 #
 # For more information on building in tricky environments, please see
@@ -93,7 +93,8 @@ cross-helpers:
 	-mkdir -p ${CROSSDIR}/usr/include
 	echo _MACHINE_ARCH | \
 	    cat ${.CURDIR}/sys/arch/${TARGET}/include/param.h - | \
-	    ${CPP} -E |sed -n '$$p' >${CROSSDIR}/TARGET_ARCH
+	    ${CPP} -E -I${.CURDIR}/sys/arch | \
+	    sed -n '$$p' >${CROSSDIR}/TARGET_ARCH
 	eval `grep '^osr=' sys/conf/newvers.sh`; \
 	   sed "s/\$$/-unknown-openbsd$$osr/" ${CROSSDIR}/TARGET_ARCH > \
 	   ${CROSSDIR}/TARGET_CANON
@@ -110,7 +111,7 @@ cross-binutils:
 	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	    ${MAKE} -f Makefile.bsd-wrapper obj); \
 	    (cd ${CROSSDIR}/usr/obj/gnu/usr.bin/binutils; \
-	    ${BSDSRCDIR}/gnu/usr.bin/binutils/configure \
+	    /bin/sh ${BSDSRCDIR}/gnu/usr.bin/binutils/configure \
 	    --prefix ${CROSSDIR}/usr \
 	    --target `cat ${CROSSDIR}/TARGET_CANON` && \
 	    ${MAKE} && ${MAKE} install)
@@ -139,7 +140,7 @@ cross-gcc:
 	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	    ${MAKE} -f Makefile.bsd-wrapper obj)
 	(cd ${CROSSDIR}/usr/obj/gnu/usr.bin/gcc; \
-	    ${.CURDIR}/gnu/usr.bin/gcc/configure \
+	    /bin/sh ${.CURDIR}/gnu/usr.bin/gcc/configure \
 	    --prefix ${CROSSDIR}/usr \
 	    --target `cat ${CROSSDIR}/TARGET_CANON` && \
 	    ${MAKE} BISON=yacc LANGUAGES=c \
