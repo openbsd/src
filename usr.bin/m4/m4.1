@@ -1,4 +1,4 @@
-.\"	@(#) $OpenBSD: m4.1,v 1.25 2002/04/28 14:37:12 espie Exp $
+.\"	@(#) $OpenBSD: m4.1,v 1.26 2003/01/05 10:10:44 pvalchev Exp $
 .\"
 .\"
 .Dd January 26, 1993
@@ -177,7 +177,7 @@ if no arguments are passed.
 .It Ic errprint
 Prints the first argument on the standard error output stream.
 .It Ic esyscmd
-Pass its first argument to a shell and returns the shell's standard output.
+Passes its first argument to a shell and returns the shell's standard output.
 Note that the shell shares its standard input and standard error with
 .Nm
 .It Ic eval
@@ -230,7 +230,7 @@ returns 16).
 If the second
 argument is not found index returns \-1.
 .It Ic indir
-Indirectly calls the macro whose name is passed as the first arguments,
+Indirectly calls the macro whose name is passed as the first argument,
 with the remaining arguments passed as first, ... arguments.
 .It Ic len
 Returns the number of characters in the first argument.

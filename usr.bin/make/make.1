@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.47 2002/08/30 22:59:01 jsyn Exp $
+.\"	$OpenBSD: make.1,v 1.48 2003/01/05 10:10:44 pvalchev Exp $
 .\"	$OpenPackages$
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
@@ -649,9 +649,9 @@ environment variable, or defined at compilation time.
 .El
 .Pp
 Variable expansion may be modified to select or modify each word of the
-variable (where a
+variable (where
 .Dq word
-is whitespace delimited sequence of characters).
+is a whitespace delimited sequence of characters).
 The general format of a variable expansion is as follows:
 .Pp
 .Dl {variable[:modifier[:...]]}
@@ -1053,7 +1053,7 @@ are substituted in the
 inside the body of the for loop.
 The number of words must match the number of iteration variables;
 that is, if there are three iteration variables, the number of words
-must be a multiple a three.
+must be a multiple of three.
 .Pp
 Loops and conditional expressions may nest arbitrarily, but
 they may not cross include file boundaries.
@@ -1112,11 +1112,11 @@ If the target already has commands, the
 target's commands are appended
 to them.
 .It Ic .WAIT
-If special
+If
 .Ic .WAIT
-source is appears in a dependency line, the sources that precede it are
+appears in a dependency line, the sources that precede it are
 made before the sources that succeed it in the line.
-Loops are not being
+Loops are not
 detected and targets that form loops will be silently ignored.
 .El
 .Sh "SPECIAL TARGETS"
@@ -1155,7 +1155,7 @@ A list of suffixes that indicate files that can be included in a source
 file.
 The suffix must have already been declared with
 .Ic .SUFFIXES ,
-any suffix so declared will have the directories on its search path (see
+any suffix so declared will have the directories in its search path (see
 .Ic .PATH )
 placed in the
 .Va .INCLUDES
@@ -1238,7 +1238,7 @@ command in the file.
 .It Ic .SUFFIXES
 Each source specifies a suffix to
 .Nm make .
-If no sources are specified, any previous specified suffices are deleted.
+If no sources are specified, any previously specified suffices are deleted.
 .El
 .Sh ENVIRONMENT
 .Nm
@@ -1290,8 +1290,8 @@ This was removed for POSIX compatibility.
 The internal variable
 .Va MAKE
 is set to the same value as
-.Va .MAKE ,
-support for this may be removed in the future.
+.Va .MAKE .
+Support for this may be removed in the future.
 .Pp
 Most of the more esoteric features of
 .Nm
@@ -1330,9 +1330,9 @@ The evaluation of
 .Ar expression
 in a test is very simple-minded.
 Currently, the only form that works is
-.Ql .if ${VAR} op something
+.Ql .if ${VAR} op something \.
 For instance, you should write tests as
-.Ql .if ${VAR} = "string"
+.Ql .if ${VAR} = "string" ,
 not the other way around, which doesn't work.
 .Pp
 For loops are expanded before tests, so a fragment such as:
