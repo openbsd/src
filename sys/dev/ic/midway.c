@@ -1,5 +1,5 @@
-/*	$OpenBSD: midway.c,v 1.4 1996/06/27 04:27:49 chuck Exp $	*/
-/*	(sync'd to midway.c 1.53)	*/
+/*	$OpenBSD: midway.c,v 1.5 1996/06/28 02:31:09 chuck Exp $	*/
+/*	(sync'd to midway.c 1.54)	*/
 
 /*
  *
@@ -83,6 +83,7 @@
 
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/types.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
@@ -98,6 +99,12 @@
 #ifdef INET
 #include <netinet/if_atm.h>
 #endif
+
+#ifdef NATM
+#include <netinet/in.h>
+#include <netnatm/natm.h>
+#endif
+
 
 #ifndef sparc
 #include <machine/bus.h>
@@ -867,7 +874,10 @@ caddr_t data;
     struct ifaddr *ifa = (struct ifaddr *) data;
     struct ifreq *ifr = (struct ifreq *) data;
     struct atm_pseudoioctl *api = (struct atm_pseudoioctl *)data;
-    int s, error = 0;
+#ifdef NATM
+    struct atm_rawioctl *ario = (struct atm_rawioctl *)data;
+#endif
+    int s, error = 0, slot;
 
     s = splnet();
 
@@ -880,6 +890,23 @@ caddr_t data;
 		error = en_rxctl(sc, api, 0);
 		break;
 
+#ifdef NATM
+	case SIOCXRAWATM:
+		if ((slot = sc->rxvc2slot[ario->npcb->npcb_vci]) == RX_NONE) {
+			error = EINVAL;
+			break;
+		}
+		if (ario->rawvalue)
+			sc->rxslot[slot].oth_flags |= ENOTHER_RAW;
+		else
+			sc->rxslot[slot].oth_flags &= (~ENOTHER_RAW);
+#ifdef EN_DEBUG
+		printf("%s: rxvci%d: turn %s raw (boodi) mode\n",
+			sc->sc_dev.dv_xname, ario->npcb->npcb_vci,
+			(ario->rawvalue) ? "on" : "off");
+#endif
+		break;
+#endif
 	case SIOCSIFADDR: 
 		ifp->if_flags |= IFF_UP;
 #ifdef INET
@@ -2479,11 +2506,6 @@ done:
 /*
  * functions we can call from ddb
  */
-
-#ifdef NATM
-#include <netinet/in.h>
-#include <netnatm/natm.h>
-#endif
 
 /*
  * en_dump: dump the state
