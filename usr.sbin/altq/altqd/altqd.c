@@ -1,4 +1,4 @@
-/*	$OpenBSD: altqd.c,v 1.5 2001/11/19 04:20:42 deraadt Exp $	*/
+/*	$OpenBSD: altqd.c,v 1.6 2001/12/03 08:40:43 kjc Exp $	*/
 /*	$KAME: altqd.c,v 1.5 2001/08/16 10:39:16 kjc Exp $	*/
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -73,7 +73,6 @@
 #include "altq_qop.h"
 #include "quip_server.h"
 
-#define  ALTQD_PID_FILE		"/var/run/altqd.pid"
 #define MAX_CLIENT		10
 
 int	altqd_socket = -1;
@@ -133,7 +132,6 @@ main(int argc, char **argv)
 {
 	int		c;
 	int		i, maxfd;
-	extern char	*optarg;
 
 	m_debug = DEFAULT_DEBUG_MASK;
 	l_debug = DEFAULT_LOGGING_LEVEL;
@@ -204,24 +202,16 @@ main(int argc, char **argv)
 	}
 
 	if (daemonize) {
-		FILE *fp;
-
 		daemon(0, 0);
 
 		/* save pid to the pid file (/var/tmp/altqd.pid) */
-		if ((fp = fopen(ALTQD_PID_FILE, "w")) != NULL) {
-			fprintf(fp, "%d\n", getpid());
-			fclose(fp);
-		} else
-			warn("can't open pid file: %s: %s",
-			    ALTQD_PID_FILE, strerror(errno));
+		if (pidfile(NULL))
+			LOG(LOG_WARNING, errno, "can't open pid file");
 	} else {
 		/* interactive mode */
 		if (infile) {
-			if ((infp = fopen(infile, "r")) == NULL) {
-				perror("Cannot open input file");
-				exit(1);
-			}
+			if ((infp = fopen(infile, "r")) == NULL)
+				err(1, "Cannot open input file");
 		} else {
 			infp = stdin;
 			printf("\nEnter ? or command:\n");
@@ -253,37 +243,22 @@ main(int argc, char **argv)
 			printf("reinitializing altqd...\n");
 			qcmd_init();
 		}
-		if (gotsig_term) {
-			fprintf(stderr, "Exiting on signal %d\n", SIGTERM);
+		if (gotsig_term || gotsig_int) {
+			fprintf(stderr, "Exiting on signal %d\n",
+				gotsig_term ? SIGTERM : SIGINT);
 
 			qcmd_destroyall();
 
-			/* if we have a pid file, remove it */
-			if (daemonize) {
-				unlink(ALTQD_PID_FILE);
+			if (daemonize)
 				closelog();
-			}
-			exit(0);
-		}
-		if (gotsig_int) {
-			fprintf(stderr, "Exiting on signal %d\n", SIGINT);
-			qcmd_destroyall();
-
-			/* if we have a pid file, remove it */
-			if (daemonize) {
-				unlink(ALTQD_PID_FILE);
-				closelog();
-			}
 			exit(0);
 		}
 
 		FD_COPY(&fds, &t_fds);
 		rc = select(maxfd, &t_fds, NULL, NULL, NULL);
 		if (rc < 0) {
-			if (errno != EINTR) {
-				perror("select");
-				exit(1);
-			}
+			if (errno != EINTR)
+				err(1, "select");
 			continue;
 		}
 
