@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ipv6.c,v 1.15 2000/02/28 16:40:39 itojun Exp $	*/
+/*	$OpenBSD: raw_ipv6.c,v 1.16 2000/04/30 14:55:26 itojun Exp $	*/
 
 /*
 %%% copyright-nrl-95
@@ -44,7 +44,7 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
  * SUCH DAMAGE.
  *
  *	@(#)raw_ip.c	8.7 (Berkeley) 5/15/95
- *	$Id: raw_ipv6.c,v 1.15 2000/02/28 16:40:39 itojun Exp $
+ *	$Id: raw_ipv6.c,v 1.16 2000/04/30 14:55:26 itojun Exp $
  */
 
 #include <sys/param.h>
@@ -604,7 +604,7 @@ rip6_ctloutput (op, so, level, optname, m)
   return ip6_ctloutput(op, so, level, optname, m);
 }
 
-#if __GNUC__ && __GNUC__ >= 2 && __OPTIMIZE__
+#if 1
 #define MAYBESTATIC static
 #define MAYBEINLINE __inline__
 #else /* __GNUC__ && __GNUC__ >= 2 && __OPTIMIZE__ */
