@@ -79,7 +79,7 @@
 
 #if defined(HEADER_BN_H) && !defined(CONFIG_HEADER_BN_H)
 #define CONFIG_HEADER_BN_H
-#define BN_LLONG
+#undef BN_LLONG
 
 /* Should we define BN_DIV2W here? */
 
@@ -87,9 +87,9 @@
 /* The prime number generation stuff may not work when
  * EIGHT_BIT but I don't care since I've only used this mode
  * for debuging the bignum libraries */
-#undef SIXTY_FOUR_BIT_LONG
+#define SIXTY_FOUR_BIT_LONG
 #undef SIXTY_FOUR_BIT
-#define THIRTY_TWO_BIT
+#undef THIRTY_TWO_BIT
 #undef SIXTEEN_BIT
 #undef EIGHT_BIT
 #endif
@@ -98,7 +98,7 @@
 #define CONFIG_HEADER_RC4_LOCL_H
 /* if this is defined data[i] is used instead of *data, this is a %20
  * speedup on x86 */
-#define RC4_INDEX
+#undef RC4_INDEX
 #endif
 
 #if defined(HEADER_BF_LOCL_H) && !defined(CONFIG_HEADER_BF_LOCL_H)
@@ -112,7 +112,7 @@
 /* the following is tweaked from a config script, that is why it is a
  * protected undef/define */
 #ifndef DES_PTR
-#undef DES_PTR
+#define DES_PTR
 #endif
 
 /* This helps C compiler generate the correct code for multiple functional
@@ -133,7 +133,7 @@ YOU SHOULD NOT HAVE BOTH DES_RISC1 AND DES_RISC2 DEFINED!!!!!
 /* Unroll the inner loop, this sometimes helps, sometimes hinders.
  * Very mucy CPU dependant */
 #ifndef DES_UNROLL
-#define DES_UNROLL
+#undef DES_UNROLL
 #endif
 
 /* These default values were supplied by
