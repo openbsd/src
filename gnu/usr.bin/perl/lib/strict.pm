@@ -55,7 +55,7 @@ name without fully qualifying it.
 
 This disables the poetry optimization, generating a compile-time error if
 you try to use a bareword identifier that's not a subroutine, unless it
-appears in curly braces or on the left hand side of the "=>" symbol.
+appears in curly braces or on the left hand side of the "=E<gt>" symbol.
 
 
     use strict 'subs';
@@ -74,10 +74,11 @@ See L<perlmod/Pragmatic Modules>.
 
 sub bits {
     my $bits = 0;
+    my $sememe;
     foreach $sememe (@_) {
-	$bits |= 0x00000002 if $sememe eq 'refs';
-	$bits |= 0x00000200 if $sememe eq 'subs';
-	$bits |= 0x00000400 if $sememe eq 'vars';
+	$bits |= 0x00000002, next if $sememe eq 'refs';
+	$bits |= 0x00000200, next if $sememe eq 'subs';
+	$bits |= 0x00000400, next if $sememe eq 'vars';
     }
     $bits;
 }

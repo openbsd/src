@@ -1,15 +1,44 @@
-# This file is read by Makefile.SH to produce rules for $(perllib)
-# We insert perl5.def since I do not know how to generate it yet.
+# This file is read by Makefile.SH to produce rules for $(LIBPERL) (and
+# some additional rules as well).
+
+# Rerun `sh Makefile.SH; make depend' after making any change.
+
+# Additional rules supported: perl_, aout_test, aout_install, use them
+# for a.out style perl (which may fork).
+
+$spitshell >>Makefile <<!GROK!THIS!
+
+AOUT_CCCMD	= \$(CC) $aout_ccflags $optimize
+AOUT_AR		= $aout_ar
+AOUT_OBJ_EXT	= $aout_obj_ext
+AOUT_LIB_EXT	= $aout_lib_ext
+AOUT_LIBPERL	= libperl$aout_lib_ext
+AOUT_CLDFLAGS	= $aout_ldflags
+
+AOUT_LIBPERL_DLL	= libperl_dll$aout_lib_ext
+AOUT_CCCMD_DLL	= \$(CC) -DDOSISH -DOS2=2 -DEMBED -I. -DPACK_MALLOC -DDEBUGGING_MSTATS -DTWO_POT_OPTIMIZE -DPERL_EMERGENCY_SBRK
+AOUT_CLDFLAGS_DLL	= -Zexe -Zmt -Zcrtdll
+
+LD_OPT		= $optimize
+
+!GROK!THIS!
 
 $spitshell >>Makefile <<'!NO!SUBS!'
-$(perllib): perl.imp perl.dll perl5.def
-	emximp -o $(perllib) perl.imp
+$(LIBPERL): perl.imp perl.dll perl5.def
+	emximp -o $(LIBPERL) perl.imp
+
+$(AOUT_LIBPERL_DLL): perl.imp perl.dll perl5.def
+	emximp -o $(AOUT_LIBPERL_DLL) perl.imp
 
 perl.imp: perl5.def
 	emximp -o perl.imp perl5.def
+	echo	'emx_calloc		emxlibcm	400	?' >> $@
+	echo	'emx_free		emxlibcm	401	?' >> $@
+	echo	'emx_malloc		emxlibcm	402	?' >> $@
+	echo	'emx_realloc		emxlibcm	403	?' >> $@
 
 perl.dll: $(obj) perl5.def perl$(OBJ_EXT)
-	$(LD) $(LDDLFLAGS) -o $@ perl$(OBJ_EXT) $(obj) -lsocket perl5.def
+	$(LD) $(LD_OPT) $(LDDLFLAGS) -o $@ perl$(OBJ_EXT) $(obj) $(libs) perl5.def
 
 perl5.def: perl.linkexp
 	echo "LIBRARY 'Perl' INITINSTANCE TERMINSTANCE"	> $@
@@ -19,8 +48,15 @@ perl5.def: perl.linkexp
 	echo DATA LOADONCALL NONSHARED MULTIPLE		>>$@
 	echo EXPORTS					>>$@
 	echo '  "ctermid"'				>>$@
+	echo '  "get_sysinfo"'				>>$@
 	echo '  "Perl_OS2_init"'			>>$@
 	echo '  "OS2_Perl_data"'			>>$@
+	echo '  "dlopen"'				>>$@
+	echo '  "dlsym"'				>>$@
+	echo '  "dlerror"'				>>$@
+	echo '  "my_tmpfile"'				>>$@
+	echo '  "my_tmpnam"'				>>$@
+	echo '  "my_flock"'				>>$@
 !NO!SUBS!
 
 if [ ! -z "$myttyname" ] ; then
@@ -35,25 +71,24 @@ $spitshell >>Makefile <<'!NO!SUBS!'
 #	grep -v '"\(malloc\|realloc\|free\)"' perl.linkexp	>>$@
 
 
-# We assume here that perl is available somewhere ...
-
 perl.exports: perl.exp EXTERN.h perl.h
-	(echo '#include "EXTERN.h"'; echo '#include "perl.h"' ; \
-			echo '#include "perl.exp"') | \
+	(echo "#include \"EXTERN.h\" \n#include \"perl.h\" \n#include \"perl.exp\"";	\
+	 echo "malloc\nrealloc\ncalloc\nfree") | \
 		$(CC) -DEMBED  -E - | \
 		awk '{if ($$2 == "") print $$1}' | sort | uniq > $@
-
-#		perl -ne 'print if (/^#!/ .. /^#\s/) && s/^(\w+) *$$/$$1/' > $@
 
 perl.linkexp: perl.exports perl.map
 	cat perl.exports perl.map | sort | uniq -d | sed -e 's/\w\+/  "\0"/' > perl.linkexp
 
-perl.map: $(obj) perl$(OBJ_EXT) miniperlmain$(OBJ_EXT)
-	$(CC) $(LARGE) $(CLDFLAGS) $(CCDLFLAGS) -o dummy.exe miniperlmain$(OBJ_EXT) perl$(OBJ_EXT) $(obj) -lsocket -lm -Zmap -Zlinker /map
-	awk '{if ($$3 == "") print $$2}' <dummy.map | sort | uniq > perl.map
-	rm dummy.exe dummy.map
+# We link miniperl statically, since .DLL depends on $(DYNALOADER) 
 
-depend: os2ish.h
+perl.map miniperl: $(obj) perl$(OBJ_EXT) miniperlmain$(OBJ_EXT)
+	$(CC) $(LARGE) $(CLDFLAGS) -o miniperl miniperlmain$(OBJ_EXT) perl$(OBJ_EXT) $(obj) $(libs) -Zmap -Zlinker /map
+	awk '{if ($$3 == "") print $$2}' <miniperl.map | sort | uniq > perl.map
+	rm miniperl.map
+	@./miniperl -w -Ilib -MExporter -e 0 || $(MAKE) minitest
+
+depend: os2ish.h dlfcn.h 
 
 # Stupid make? Needed...
 os2$(OBJ_EXT) : os2.c
@@ -61,11 +96,99 @@ os2$(OBJ_EXT) : os2.c
 os2.c: os2/os2.c os2ish.h
 	cp $< $@
 
+dl_os2.c: os2/dl_os2.c os2ish.h
+	cp $< $@
+
 os2ish.h: os2/os2ish.h
 	cp $< $@
+
+dlfcn.h: os2/dlfcn.h
+	cp $< $@
+
+# This one is compiled OMF, so cannot fork():
+
+perl___: $& perlmain$(OBJ_EXT) $(LIBPERL) $(DYNALOADER) $(static_ext) ext.libs
+	$(SHRPENV) $(CC) $(LARGE) $(CLDFLAGS) $(CCDLFLAGS) -o perl___ perlmain$(OBJ_EXT) $(DYNALOADER) $(static_ext) $(LIBPERL) `cat ext.libs` $(libs)
 
 installcmd : 
 	perl -e 'die qq{Give the option INSTALLCMDDIR=... to make!} if $$ARGV[0] eq ""' $(INSTALLCMDDIR)
 	perl os2/perl2cmd.pl $(INSTALLCMDDIR)
+
+# Aout section:
+
+aout_obj = $(addsuffix $(AOUT_OBJ_EXT),$(basename $(obj)))
+AOUT_DYNALOADER = $(addsuffix $(AOUT_LIB_EXT),$(basename $(DYNALOADER)))
+aout_static_ext = $(addsuffix $(AOUT_LIB_EXT),$(basename $(dynamic_ext)))
+aout_static_lib = $(addsuffix $(LIB_EXT),$(basename $(dynamic_ext)))
+
+aout_static_ext_dll = $(addsuffix $(AOUT_LIB_EXT),$(basename $(static_ext)))
+DYNALOADER_OBJ = ext/DynaLoader/DynaLoader$(OBJ_EXT)
+aout_static_ext_dll = $(addsuffix $(AOUT_LIB_EXT),$(basename $(static_ext)))
+AOUT_DYNALOADER_OBJ = $(addsuffix $(AOUT_OBJ_EXT),$(basename $(DYNALOADER_OBJ)))
+
+$(AOUT_DYNALOADER_OBJ) : $(DYNALOADER_OBJ)
+	emxaout -o $@ $<
+
+$(DYNALOADER_OBJ) : $(DYNALOADER)
+	@sh -c true
+
+$(AOUT_LIBPERL) : $(aout_obj) perl$(AOUT_OBJ_EXT)
+	rm -f $@
+	$(AOUT_AR) rcu $@ perl$(AOUT_OBJ_EXT) $(aout_obj)
+
+.c$(AOUT_OBJ_EXT):
+	$(AOUT_CCCMD) $(PLDLFLAGS) -c $*.c
+
+perlmain(AOUT_OBJ_EXT): perlmain.c
+	$(AOUT_CCCMD_DLL) $(PLDLFLAGS) -c perlmain.c
+
+aout_perlmain.c: miniperlmain.c config.sh makefile $(static_ext_autoinit)
+	sh writemain $(DYNALOADER) $(aout_static_lib) > tmp
+	sh mv-if-diff tmp aout_perlmain.c
+
+miniperl_: $& miniperlmain$(AOUT_OBJ_EXT) $(AOUT_LIBPERL) ext.libs
+	$(CC) $(LARGE) $(AOUT_CLDFLAGS) $(CCDLFLAGS) -o miniperl_ miniperlmain$(AOUT_OBJ_EXT) $(AOUT_LIBPERL) `cat ext.libs` $(libs)
+
+perl_: $& aout_perlmain$(AOUT_OBJ_EXT) $(AOUT_LIBPERL) $(AOUT_DYNALOADER) $(aout_static_ext) ext.libs
+	$(CC) $(LARGE) $(AOUT_CLDFLAGS) $(CCDLFLAGS) -o perl_ aout_perlmain$(AOUT_OBJ_EXT) $(AOUT_DYNALOADER) $(aout_static_ext) $(AOUT_LIBPERL) `cat ext.libs` $(libs)
+
+perl : perl__ perl___
+
+perl__: $& perlmain$(OBJ_EXT) $(LIBPERL) $(DYNALOADER) $(static_ext) ext.libs
+	$(CC) $(LARGE) $(CLDFLAGS) $(CCDLFLAGS) -o perl__ perlmain$(OBJ_EXT) $(DYNALOADER) $(static_ext) $(LIBPERL) `cat ext.libs` $(libs) -Zlinker /PM:PM
+
+# Forking dynamically loaded perl:
+
+perl: $& perlmain$(AOUT_OBJ_EXT) $(AOUT_DYNALOADER_OBJ) $(aout_static_ext_dll) $(AOUT_LIBPERL_DLL) ext.libs
+	$(CC) $(LARGE) $(AOUT_CLDFLAGS_DLL) $(CCDLFLAGS) -o perl perlmain$(AOUT_OBJ_EXT) $(AOUT_DYNALOADER_OBJ) $(aout_static_ext_dll) $(AOUT_LIBPERL_DLL) `cat ext.libs` $(libs)
+
+clean: aout_clean
+
+aout_clean:
+	-rm *perl_.* *.o *.a lib/auto/*/*.a ext/*/Makefile.aout
+
+aout_install: perl_ aout_install.perl
+
+aout_install.perl: perl_ installperl
+	./perl_ installperl
+
+aout_test: perl_
+	- cd t && (rm -f perl_$(EXE_EXT); $(LNS) ../perl_$(EXE_EXT) perl$(EXE_EXT)) && ./perl TEST </dev/tty
+
+lib/auto/OS2/*/%.a : ext/OS2/%/Makefile.aout
+	cd ext/OS2/$(basename $(notdir $@)) ; make -f Makefile.aout config || echo "$make config failed, continuing anyway..."
+	cd ext/OS2/$(basename $(notdir $@)) ; make -f Makefile.aout LINKTYPE=static CCCDLFLAGS=
+
+lib/auto/*/%.a : ext/%/Makefile.aout
+	cd ext/$(basename $(notdir $@)) ; make -f Makefile.aout config || echo "$make config failed, continuing anyway..."
+	cd ext/$(basename $(notdir $@)) ; make -f Makefile.aout LINKTYPE=static CCCDLFLAGS=
+
+.PRECIOUS : ext/%/Makefile.aout ext/OS2/%/Makefile.aout
+
+ext/OS2/%/Makefile.aout : miniperl_
+	cd $(dir $@) ; ../../../miniperl_ -I ../../../lib Makefile.PL MAKEFILE=Makefile.aout INSTALLDIRS=perl 
+
+ext/%/Makefile.aout : miniperl_
+	cd $(dir $@) ; ../../miniperl_ -I ../../lib Makefile.PL MAKEFILE=Makefile.aout INSTALLDIRS=perl 
 
 !NO!SUBS!

@@ -28,6 +28,12 @@ case "$cc" in
     	;;
 esac
 
+# getsockname() and getpeername() return 256 for no good reason
+ccflags="$ccflags -DBOGUS_GETNAME_RETURN=256"
+
+# rename(2) can't rename long filenames
+d_rename=undef
+
 # You can also include -D_SYSV3 to pick up "traditionally visible"
 # symbols hidden by name-space pollution rules.  This raises some
 # compilation "redefinition" warnings, but they appear harmless.

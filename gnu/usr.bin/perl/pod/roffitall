@@ -1,84 +1,201 @@
 #!/bin/sh
-#psroff -t -man -rC1 -rD1 -rF1 > /tmp/PerlDoc.ps 2>/tmp/PerlTOC.raw \
-nroff -man -rC1 -rD1 -rF1 > /tmp/PerlDoc.txt 2>/tmp/PerlTOC.nr.raw \
-    /usr/local/man/man1/perl.1	\
-    /usr/local/man/man1/perldata.1	\
-    /usr/local/man/man1/perlsyn.1	\
-    /usr/local/man/man1/perlop.1	\
-    /usr/local/man/man1/perlre.1	\
-    /usr/local/man/man1/perlrun.1	\
-    /usr/local/man/man1/perlfunc.1	\
-    /usr/local/man/man1/perlvar.1	\
-    /usr/local/man/man1/perlsub.1	\
-    /usr/local/man/man1/perlmod.1	\
-    /usr/local/man/man1/perlref.1	\
-    /usr/local/man/man1/perldsc.1	\
-    /usr/local/man/man1/perllol.1	\
-    /usr/local/man/man1/perlobj.1	\
-    /usr/local/man/man1/perltie.1	\
-    /usr/local/man/man1/perlbot.1	\
-    /usr/local/man/man1/perldebug.1	\
-    /usr/local/man/man1/perldiag.1	\
-    /usr/local/man/man1/perlform.1	\
-    /usr/local/man/man1/perlipc.1	\
-    /usr/local/man/man1/perlsec.1	\
-    /usr/local/man/man1/perltrap.1	\
-    /usr/local/man/man1/perlstyle.1	\
-    /usr/local/man/man1/perlxs.1	\
-    /usr/local/man/man1/perlxstut.1	\
-    /usr/local/man/man1/perlguts.1	\
-    /usr/local/man/man1/perlcall.1	\
-    /usr/local/man/man1/perlembed.1	\
-    /usr/local/man/man1/perlpod.1	\
-    /usr/local/man/man1/perlbook.1	\
+#
+# Usage: roffitall [-nroff|-psroff|-groff]
+#
+# Authors: Tom Christiansen, Raphael Manfredi
+
+me=roffitall
+tmp=.
+
+if test -f ../config.sh; then
+	. ../config.sh
+fi
+
+mandir=$installman1dir
+libdir=$installman3dir
+
+test -d $mandir || mandir=/usr/local/man/man1
+test -d $libdir || libdir=/usr/local/man/man3
+
+case "$1" in
+-nroff) cmd="nroff -man"; ext='txt';;
+-psroff) cmd="psroff -t"; ext='ps';;
+-groff) cmd="groff -man"; ext='ps';;
+*)
+	echo "Usage: roffitall [-nroff|-psroff|-groff]" >&2
+	exit 1
+	;;
+esac
+
+toroff=`
+	echo		\
+    $mandir/perl.1	\
+    $mandir/perldelta.1	\
+    $mandir/perldata.1	\
+    $mandir/perlsyn.1	\
+    $mandir/perlop.1	\
+    $mandir/perlre.1	\
+    $mandir/perlrun.1	\
+    $mandir/perllocale.1	\
+    $mandir/perlfunc.1	\
+    $mandir/perlvar.1	\
+    $mandir/perlsub.1	\
+    $mandir/perlmod.1	\
+    $mandir/perlmodlib.1	\
+    $mandir/perlref.1	\
+    $mandir/perldsc.1	\
+    $mandir/perllol.1	\
+    $mandir/perlobj.1	\
+    $mandir/perltie.1	\
+    $mandir/perltoot.1	\
+    $mandir/perlbot.1	\
+    $mandir/perldebug.1	\
+    $mandir/perldiag.1	\
+    $mandir/perlform.1	\
+    $mandir/perlipc.1	\
+    $mandir/perlsec.1	\
+    $mandir/perltrap.1	\
+    $mandir/perlstyle.1	\
+    $mandir/perlapio.1	\
+    $mandir/perlxs.1	\
+    $mandir/perlxstut.1	\
+    $mandir/perlguts.1	\
+    $mandir/perlcall.1	\
+    $mandir/perlembed.1	\
+    $mandir/perlpod.1	\
+    $mandir/perlbook.1	\
+    $mandir/perlfaq.1	\
+    $mandir/perlfaq1.1	\
+    $mandir/perlfaq2.1	\
+    $mandir/perlfaq3.1	\
+    $mandir/perlfaq4.1	\
+    $mandir/perlfaq5.1	\
+    $mandir/perlfaq6.1	\
+    $mandir/perlfaq7.1	\
+    $mandir/perlfaq8.1	\
+    $mandir/perlfaq9.1	\
 	\
-    /usr/local/man/man3/diagnostics.3	\
-    /usr/local/man/man3/integer.3	\
-    /usr/local/man/man3/less.3	\
-    /usr/local/man/man3/lib.3	\
-    /usr/local/man/man3/overload.3	\
-    /usr/local/man/man3/sigtrap.3	\
-    /usr/local/man/man3/strict.3	\
-    /usr/local/man/man3/subs.3	\
+    $libdir/blib.3	\
+    $libdir/diagnostics.3	\
+    $libdir/integer.3	\
+    $libdir/less.3	\
+    $libdir/lib.3	\
+    $libdir/locale.3	\
+    $libdir/overload.3	\
+    $libdir/sigtrap.3	\
+    $libdir/strict.3	\
+    $libdir/subs.3	\
+    $libdir/vars.3	\
 	\
-    /usr/local/man/man3/AnyDBM_File.3	\
-    /usr/local/man/man3/AutoLoader.3	\
-    /usr/local/man/man3/AutoSplit.3	\
-    /usr/local/man/man3/Benchmark.3	\
-    /usr/local/man/man3/Carp.3	\
-    /usr/local/man/man3/Config.3	\
-    /usr/local/man/man3/Cwd.3	\
-    /usr/local/man/man3/DB_File.3	\
-    /usr/local/man/man3/Devel::SelfStubber.3	\
-    /usr/local/man/man3/DynaLoader.3	\
-    /usr/local/man/man3/English.3	\
-    /usr/local/man/man3/Env.3	\
-    /usr/local/man/man3/Exporter.3	\
-    /usr/local/man/man3/ExtUtils::Liblist.3	\
-    /usr/local/man/man3/ExtUtils::MakeMaker.3	\
-    /usr/local/man/man3/ExtUtils::Manifest.3	\
-    /usr/local/man/man3/ExtUtils::Mkbootstrap.3	\
-    /usr/local/man/man3/Fcntl.3	\
-    /usr/local/man/man3/File::Basename.3	\
-    /usr/local/man/man3/File::CheckTree.3	\
-    /usr/local/man/man3/File::Find.3	\
-    /usr/local/man/man3/FileHandle.3	\
-    /usr/local/man/man3/File::Path.3	\
-    /usr/local/man/man3/Getopt::Long.3	\
-    /usr/local/man/man3/Getopt::Std.3	\
-    /usr/local/man/man3/I18N::Collate.3	\
-    /usr/local/man/man3/IPC::Open2.3	\
-    /usr/local/man/man3/IPC::Open3.3	\
-    /usr/local/man/man3/Net::Ping.3	\
-    /usr/local/man/man3/POSIX.3	\
-    /usr/local/man/man3/Safe.3	\
-    /usr/local/man/man3/SelfLoader.3	\
-    /usr/local/man/man3/Socket.3	\
-    /usr/local/man/man3/Sys::Hostname.3	\
-    /usr/local/man/man3/Term::Cap.3	\
-    /usr/local/man/man3/Term::Complete.3	\
-    /usr/local/man/man3/Test::Harness.3	\
-    /usr/local/man/man3/Text::Abbrev.3	\
-    /usr/local/man/man3/Text::Soundex.3	\
-    /usr/local/man/man3/TieHash.3	\
-    /usr/local/man/man3/Time::Local.3	
+    $libdir/AnyDBM_File.3	\
+    $libdir/AutoLoader.3	\
+    $libdir/AutoSplit.3	\
+    $libdir/Benchmark.3	\
+    $libdir/Carp.3	\
+    $libdir/Config.3	\
+    $libdir/Cwd.3	\
+    $libdir/DB_File.3	\
+    $libdir/Devel::SelfStubber.3	\
+    $libdir/DynaLoader.3	\
+    $libdir/English.3	\
+    $libdir/Env.3	\
+    $libdir/Exporter.3	\
+    $libdir/ExtUtils::Embed.3	\
+    $libdir/ExtUtils::Install.3	\
+    $libdir/ExtUtils::Liblist.3	\
+    $libdir/ExtUtils::MakeMaker.3	\
+    $libdir/ExtUtils::Manifest.3	\
+    $libdir/ExtUtils::Mkbootstrap.3	\
+    $libdir/ExtUtils::Mksymlists.3	\
+    $libdir/Fcntl.3	\
+    $libdir/File::Basename.3	\
+    $libdir/File::CheckTree.3	\
+    $libdir/File::Copy.3	\
+    $libdir/File::Compare.3	\
+    $libdir/File::Find.3	\
+    $libdir/File::Path.3	\
+    $libdir/File::stat.3	\
+    $libdir/FileCache.3	\
+    $libdir/FileHandle.3	\
+    $libdir/FindBin.3	\
+    $libdir/Getopt::Long.3	\
+    $libdir/Getopt::Std.3	\
+    $libdir/I18N::Collate.3	\
+    $libdir/IO.3 \
+    $libdir/IO::File.3 \
+    $libdir/IO::Handle.3 \
+    $libdir/IO::Pipe.3 \
+    $libdir/IO::Seekable.3 \
+    $libdir/IO::Select.3 \
+    $libdir/IO::Socket.3 \
+    $libdir/IPC::Open2.3	\
+    $libdir/IPC::Open3.3	\
+    $libdir/Math::BigFloat.3	\
+    $libdir/Math::BigInt.3	\
+    $libdir/Math::Complex.3	\
+    $libdir/Math::Trig.3	\
+    $libdir/Net::Ping.3	\
+    $libdir/Net::hostent.3	\
+    $libdir/Net::netent.3	\
+    $libdir/Net::protoent.3	\
+    $libdir/Net::servent.3	\
+    $libdir/Opcode.3	\
+    $libdir/POSIX.3	\
+    $libdir/Pod::Text.3	\
+    $libdir/Safe.3	\
+    $libdir/Search::Dict.3	\
+    $libdir/SelectSaver.3	\
+    $libdir/SelfLoader.3	\
+    $libdir/Shell.3	\
+    $libdir/Socket.3	\
+    $libdir/Symbol.3	\
+    $libdir/Sys::Hostname.3	\
+    $libdir/Sys::Syslog.3	\
+    $libdir/Term::Cap.3	\
+    $libdir/Term::Complete.3	\
+    $libdir/Test::Harness.3	\
+    $libdir/Text::Abbrev.3	\
+    $libdir/Text::ParseWords.3	\
+    $libdir/Text::Soundex.3	\
+    $libdir/Text::Tabs.3	\
+    $libdir/Tie::Hash.3	\
+    $libdir/Tie::RefHash.3	\
+    $libdir/Tie::Scalar.3	\
+    $libdir/Tie::SubstrHash.3	\
+    $libdir/Time::Local.3		\
+    $libdir/Time::gmtime.3	\
+    $libdir/Time::localtime.3	\
+    $libdir/Time::tm.3		\
+    $libdir/UNIVERSAL.3		\
+    $libdir/User::grent.3		\
+    $libdir/User::pwent.3 | \
+perl -ne 'map { -r && print "$_ " } split'`
+
+# Bypass internal shell buffer limit -- can't use case
+if perl -e '$a = shift; exit($a =~ m|/|)' $toroff; then
+	echo "$me: empty file list -- did you run install?" >&2
+	exit 1
+fi
+
+#psroff -t -man -rC1 -rD1 -rF1 > $tmp/PerlDoc.ps 2>$tmp/PerlTOC.raw
+#nroff -man -rC1 -rD1 -rF1 > $tmp/PerlDoc.txt 2>$tmp/PerlTOC.nr.raw
+
+# First, create the raw data
+run="$cmd -rC1 -rD1 -rF1 >$tmp/PerlDoc.$ext 2>$tmp/PerlTOC.$ext.raw"
+echo "$me: running $run"
+eval $run $toroff
+
+#Now create the TOC
+echo "$me: parsing TOC"
+./rofftoc $tmp/PerlTOC.$ext.raw > $tmp/PerlTOC.tmp.man
+run="$cmd $tmp/PerlTOC.tmp.man >$tmp/PerlTOC.$ext"
+echo "$me: running $run"
+eval $run
+
+# Finally, recreate the Doc, without the blank page 0
+run="$cmd -rC1 -rD1 >$tmp/PerlDoc.$ext 2>$tmp/PerlTOC.$ext.raw"
+echo "$me: running $run"
+eval $run $toroff
+rm -f $tmp/PerlTOC.tmp.man $tmp/PerlTOC.$ext.raw
+echo "$me: leaving you with $tmp/PerlDoc.$ext and $tmp/PerlTOC.$ext"
+

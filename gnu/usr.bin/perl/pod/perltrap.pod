@@ -6,7 +6,8 @@ perltrap - Perl traps for the unwary
 
 The biggest trap of all is forgetting to use the B<-w> switch; see
 L<perlrun>.  The second biggest trap is not making your entire program
-runnable under C<use strict>.
+runnable under C<use strict>.  The third biggest trap is not reading
+the list of changes in this version of Perl; see L<perldelta>.
 
 =head2 Awk Traps
 
@@ -20,8 +21,8 @@ The English module, loaded via
 
     use English;
 
-allows you to refer to special variables (like $RS) as 
-though they were in B<awk>; see L<perlvar> for details.
+allows you to refer to special variables (like C<$/>) with names (like
+C<$RS>), as though they were in B<awk>; see L<perlvar> for details.
 
 =item *
 
@@ -34,7 +35,7 @@ Curly brackets are required on C<if>s and C<while>s.
 
 =item *
 
-Variables begin with "$" or "@" in Perl.
+Variables begin with "$", "@" or "%" in Perl.
 
 =item *
 
@@ -47,8 +48,7 @@ You have to decide whether your array has numeric or string indices.
 
 =item *
 
-Associative array values do not spring into existence upon mere
-reference.
+Hash values do not spring into existence upon mere reference.
 
 =item *
 
@@ -58,8 +58,8 @@ comparisons.
 =item *
 
 Reading an input line does not split it for you.  You get to split it
-yourself to an array.  And split() operator has different
-arguments.
+to an array yourself.  And the split() operator has different
+arguments than B<awk>'s.
 
 =item *
 
@@ -69,13 +69,13 @@ executed.)  See L<perlvar>.
 
 =item *
 
-$<I<digit>> does not refer to fields--it refers to substrings matched by
-the last match pattern.
+$E<lt>I<digit>E<gt> does not refer to fields--it refers to substrings matched
+by the last match pattern.
 
 =item *
 
 The print() statement does not add field and record separators unless
-you set C<$,> and C<$.>.  You can set $OFS and $ORS if you're using
+you set C<$,> and C<$\>.  You can set $OFS and $ORS if you're using
 the English module.
 
 =item *
@@ -101,9 +101,9 @@ basically incompatible with C.)
 =item *
 
 The concatenation operator is ".", not the null string.  (Using the
-null string would render C</pat/ /pat/> unparsable, since the third slash
-would be interpreted as a division operator--the tokener is in fact
-slightly context sensitive for operators like "/", "?", and ">".
+null string would render C</pat/ /pat/> unparsable, because the third slash
+would be interpreted as a division operator--the tokenizer is in fact
+slightly context sensitive for operators like "/", "?", and "E<gt>".
 And in fact, "." itself can be the beginning of a number.)
 
 =item *
@@ -158,7 +158,7 @@ You must use C<elsif> rather than C<else if>.
 
 =item *
 
-The C<break> and C<continue> keywords from C become in 
+The C<break> and C<continue> keywords from C become in
 Perl C<last> and C<next>, respectively.
 Unlike in C, these do I<NOT> work within a C<do { } while> construct.
 
@@ -168,11 +168,11 @@ There's no switch statement.  (But it's easy to build one on the fly.)
 
 =item *
 
-Variables begin with "$" or "@" in Perl.
+Variables begin with "$", "@" or "%" in Perl.
 
 =item *
 
-printf() does not implement the "*" format for interpolating
+C<printf()> does not implement the "*" format for interpolating
 field widths, but it's trivial to use interpolation of double-quoted
 strings to achieve the same effect.
 
@@ -183,7 +183,7 @@ Comments begin with "#", not "/*".
 =item *
 
 You can't take the address of anything, although a similar operator
-in Perl 5 is the backslash, which creates a reference.
+in Perl is the backslash, which creates a reference.
 
 =item *
 
@@ -231,7 +231,7 @@ Sharp shell programmers should take note of the following:
 
 =item *
 
-The backtick operator does variable interpretation without regard to
+The backtick operator does variable interpolation without regard to
 the presence of single quotes in the command.
 
 =item *
@@ -241,7 +241,7 @@ The backtick operator does no translation of the return value, unlike B<csh>.
 =item *
 
 Shells (especially B<csh>) do several levels of substitution on each
-command line.  Perl does substitution only in certain constructs
+command line.  Perl does substitution in only certain constructs
 such as double quotes, backticks, angle brackets, and search patterns.
 
 =item *
@@ -274,36 +274,36 @@ context than they do in a scalar one.  See L<perldata> for details.
 
 =item *
 
-Avoid barewords if you can, especially all lower-case ones.
-You can't tell just by looking at it whether a bareword is 
-a function or a string.  By using quotes on strings and 
-parens on function calls, you won't ever get them confused.
+Avoid barewords if you can, especially all lowercase ones.
+You can't tell by just looking at it whether a bareword is
+a function or a string.  By using quotes on strings and
+parentheses on function calls, you won't ever get them confused.
 
 =item *
 
-You cannot discern from mere inspection which built-ins
-are unary operators (like chop() and chdir()) 
+You cannot discern from mere inspection which builtins
+are unary operators (like chop() and chdir())
 and which are list operators (like print() and unlink()).
-(User-defined subroutines can B<only> be list operators, never
+(User-defined subroutines can be B<only> list operators, never
 unary ones.)  See L<perlop>.
 
 =item *
 
 People have a hard time remembering that some functions
 default to $_, or @ARGV, or whatever, but that others which
-you might expect to do not.  
+you might expect to do not.
 
-=item * 
+=item *
 
-The <FH> construct is not the name of the filehandle, it is a readline
-operation on that handle.  The data read is only assigned to $_ if the
+The E<lt>FHE<gt> construct is not the name of the filehandle, it is a readline
+operation on that handle.  The data read is assigned to $_ only if the
 file read is the sole condition in a while loop:
 
     while (<FH>)      { }
-    while ($_ = <FH>) { }..
+    while (defined($_ = <FH>)) { }..
     <FH>;  # data discarded!
 
-=item * 
+=item *
 
 Remember not to use "C<=>" when you need "C<=~>";
 these two constructs are quite different:
@@ -313,14 +313,14 @@ these two constructs are quite different:
 
 =item *
 
-The C<do {}> construct isn't a real loop that you can use 
+The C<do {}> construct isn't a real loop that you can use
 loop control on.
 
 =item *
 
-Use my() for local variables whenever you can get away with 
-it (but see L<perlform> for where you can't).  
-Using local() actually gives a local value to a global 
+Use C<my()> for local variables whenever you can get away with
+it (but see L<perlform> for where you can't).
+Using C<local()> actually gives a local value to a global
 variable, which leaves you open to unforeseen side-effects
 of dynamic scoping.
 
@@ -332,65 +332,629 @@ external name is still an alias for the original.
 
 =back
 
-=head2 Perl4 Traps
+=head2 Perl4 to Perl5 Traps
 
-Penitent Perl 4 Programmers should take note of the following
-incompatible changes that occurred between release 4 and release 5:
+Practicing Perl4 Programmers should take note of the following
+Perl4-to-Perl5 specific traps.
+
+They're crudely ordered according to the following list:
 
 =over 4
 
-=item *
+=item Discontinuance, Deprecation, and BugFix traps
 
-C<@> now always interpolates an array in double-quotish strings.  Some programs
-may now need to use backslash to protect any C<@> that shouldn't interpolate.
+Anything that's been fixed as a perl4 bug, removed as a perl4 feature
+or deprecated as a perl4 feature with the intent to encourage usage of
+some other perl5 feature.
 
-=item *
+=item Parsing Traps
 
-Barewords that used to look like strings to Perl will now look like subroutine
-calls if a subroutine by that name is defined before the compiler sees them.
-For example:
+Traps that appear to stem from the new parser.
 
-    sub SeeYa { die "Hasta la vista, baby!" }
-    $SIG{'QUIT'} = SeeYa;
+=item Numerical Traps
 
-In Perl 4, that set the signal handler; in Perl 5, it actually calls the
-function!  You may use the B<-w> switch to find such places.
+Traps having to do with numerical or mathematical operators.
 
-=item *
+=item General data type traps
 
-Symbols starting with C<_> are no longer forced into package C<main>, except
-for $_ itself (and @_, etc.).
+Traps involving perl standard data types.
 
-=item *
+=item Context Traps - scalar, list contexts
 
-Double-colon is now a valid package separator in an identifier.  Thus these
-behave differently in perl4 vs. perl5:
+Traps related to context within lists, scalar statements/declarations.
 
-    print "$a::$b::$c\n";
+=item Precedence Traps
+
+Traps related to the precedence of parsing, evaluation, and execution of
+code.
+
+=item General Regular Expression Traps using s///, etc.
+
+Traps related to the use of pattern matching.
+
+=item Subroutine, Signal, Sorting Traps
+
+Traps related to the use of signals and signal handlers, general subroutines,
+and sorting, along with sorting subroutines.
+
+=item OS Traps
+
+OS-specific traps.
+
+=item DBM Traps
+
+Traps specific to the use of C<dbmopen()>, and specific dbm implementations.
+
+=item Unclassified Traps
+
+Everything else.
+
+=back
+
+If you find an example of a conversion trap that is not listed here,
+please submit it to Bill Middleton <F<wjm@best.com>> for inclusion.
+Also note that at least some of these can be caught with B<-w>.
+
+=head2 Discontinuance, Deprecation, and BugFix traps
+
+Anything that has been discontinued, deprecated, or fixed as
+a bug from perl4.
+
+=over 4
+
+=item * Discontinuance
+
+Symbols starting with "_" are no longer forced into package main, except
+for C<$_> itself (and C<@_>, etc.).
+
+    package test;
+    $_legacy = 1;
+
+    package main;
+    print "\$_legacy is ",$_legacy,"\n";
+
+    # perl4 prints: $_legacy is 1
+    # perl5 prints: $_legacy is
+
+=item * Deprecation
+
+Double-colon is now a valid package separator in a variable name.  Thus these
+behave differently in perl4 vs. perl5, because the packages don't exist.
+
+    $a=1;$b=2;$c=3;$var=4;
+    print "$a::$b::$c ";
     print "$var::abc::xyz\n";
+ 
+    # perl4 prints: 1::2::3 4::abc::xyz
+    # perl5 prints: 3
 
-=item *
+Given that C<::> is now the preferred package delimiter, it is debatable
+whether this should be classed as a bug or not.
+(The older package delimiter, ' ,is used here)
 
-C<s'$lhs'$rhs'> now does no interpolation on either side.  It used to
-interpolate C<$lhs> but not C<$rhs>.
+    $x = 10 ;
+    print "x=${'x}\n" ;
 
-=item *
+    # perl4 prints: x=10
+    # perl5 prints: Can't find string terminator "'" anywhere before EOF
 
-The second and third arguments of splice() are now evaluated in scalar
-context (as the book says) rather than list context.
+You can avoid this problem, and remain compatible with perl4, if you
+always explicitly include the package name:
 
-=item *
+    $x = 10 ;
+    print "x=${main'x}\n" ;
+
+Also see precedence traps, for parsing C<$:>.
+
+=item * BugFix
+
+The second and third arguments of C<splice()> are now evaluated in scalar
+context (as the Camel says) rather than list context.
+
+    sub sub1{return(0,2) }          # return a 2-elem array
+    sub sub2{ return(1,2,3)}        # return a 3-elem array
+    @a1 = ("a","b","c","d","e");
+    @a2 = splice(@a1,&sub1,&sub2);
+    print join(' ',@a2),"\n";
+
+    # perl4 prints: a b
+    # perl5 prints: c d e
+
+=item * Discontinuance
+
+You can't do a C<goto> into a block that is optimized away.  Darn.
+
+    goto marker1;
+
+    for(1){
+    marker1:
+        print "Here I is!\n";
+    }
+
+    # perl4 prints: Here I is!
+    # perl5 dumps core (SEGV)
+
+=item * Discontinuance
+
+It is no longer syntactically legal to use whitespace as the name
+of a variable, or as a delimiter for any kind of quote construct.
+Double darn.
+
+    $a = ("foo bar");
+    $b = q baz ;
+    print "a is $a, b is $b\n";
+
+    # perl4 prints: a is foo bar, b is baz
+    # perl5 errors: Bareword found where operator expected
+
+=item * Discontinuance
+
+The archaic while/if BLOCK BLOCK syntax is no longer supported.
+
+    if { 1 } {
+        print "True!";
+    }
+    else {
+        print "False!";
+    }
+
+    # perl4 prints: True!
+    # perl5 errors: syntax error at test.pl line 1, near "if {"
+
+=item * BugFix
+
+The C<**> operator now binds more tightly than unary minus.
+It was documented to work this way before, but didn't.
+
+    print -4**2,"\n";
+
+    # perl4 prints: 16
+    # perl5 prints: -16
+
+=item * Discontinuance
+
+The meaning of C<foreach{}> has changed slightly when it is iterating over a
+list which is not an array.  This used to assign the list to a
+temporary array, but no longer does so (for efficiency).  This means
+that you'll now be iterating over the actual values, not over copies of
+the values.  Modifications to the loop variable can change the original
+values.
+
+    @list = ('ab','abc','bcd','def');
+    foreach $var (grep(/ab/,@list)){
+        $var = 1;
+    }
+    print (join(':',@list));
+
+    # perl4 prints: ab:abc:bcd:def
+    # perl5 prints: 1:1:bcd:def
+
+To retain Perl4 semantics you need to assign your list
+explicitly to a temporary array and then iterate over that.  For
+example, you might need to change
+
+    foreach $var (grep(/ab/,@list)){
+
+to
+
+    foreach $var (@tmp = grep(/ab/,@list)){
+
+Otherwise changing $var will clobber the values of @list.  (This most often
+happens when you use C<$_> for the loop variable, and call subroutines in
+the loop that don't properly localize C<$_>.)
+
+=item * Discontinuance
+
+C<split> with no arguments now behaves like C<split ' '> (which doesn't
+return an initial null field if $_ starts with whitespace), it used to
+behave like C<split /\s+/> (which does).
+
+    $_ = ' hi mom';
+    print join(':', split);
+
+    # perl4 prints: :hi:mom
+    # perl5 prints: hi:mom
+
+=item * BugFix
+
+Perl 4 would ignore any text which was attached to an B<-e> switch,
+always taking the code snippet from the following arg.  Additionally, it
+would silently accept an B<-e> switch without a following arg.  Both of
+these behaviors have been fixed.
+
+    perl -e'print "attached to -e"' 'print "separate arg"'
+
+    # perl4 prints: separate arg
+    # perl5 prints: attached to -e
+
+    perl -e
+
+    # perl4 prints:
+    # perl5 dies: No code specified for -e.
+
+=item * Discontinuance
+
+In Perl 4 the return value of C<push> was undocumented, but it was
+actually the last value being pushed onto the target list.  In Perl 5
+the return value of C<push> is documented, but has changed, it is the
+number of elements in the resulting list.
+
+    @x = ('existing');
+    print push(@x, 'first new', 'second new');
+
+    # perl4 prints: second new
+    # perl5 prints: 3
+
+=item * Discontinuance
+
+In Perl 4 (and versions of Perl 5 before 5.004), C<'\r'> characters in
+Perl code were silently allowed, although they could cause (mysterious!)
+failures in certain constructs, particularly here documents.  Now,
+C<'\r'> characters cause an immediate fatal error.  (Note: In this
+example, the notation B<\015> represents the incorrect line
+ending. Depending upon your text viewer, it will look different.)
+
+    print "foo";\015
+    print "bar";
+
+    # perl4     prints: foobar
+    # perl5.003 prints: foobar
+    # perl5.004 dies: Illegal character \015 (carriage return)
+
+See L<perldiag> for full details.
+
+=item * Deprecation
+
+Some error messages will be different.
+
+=item * Discontinuance
+
+Some bugs may have been inadvertently removed.  :-)
+
+=back
+
+=head2 Parsing Traps
+
+Perl4-to-Perl5 traps from having to do with parsing.
+
+=over 4
+
+=item * Parsing
+
+Note the space between . and =
+
+    $string . = "more string";
+    print $string;
+
+    # perl4 prints: more string
+    # perl5 prints: syntax error at - line 1, near ". ="
+
+=item * Parsing
+
+Better parsing in perl 5
+
+    sub foo {}
+    &foo
+    print("hello, world\n");
+
+    # perl4 prints: hello, world
+    # perl5 prints: syntax error
+
+=item * Parsing
+
+"if it looks like a function, it is a function" rule.
+
+  print
+    ($foo == 1) ? "is one\n" : "is zero\n";
+
+    # perl4 prints: is zero
+    # perl5 warns: "Useless use of a constant in void context" if using -w
+
+=back
+
+=head2 Numerical Traps
+
+Perl4-to-Perl5 traps having to do with numerical operators,
+operands, or output from same.
+
+=over 5
+
+=item * Numerical
+
+Formatted output and significant digits
+
+    print 7.373504 - 0, "\n";
+    printf "%20.18f\n", 7.373504 - 0;
+
+    # Perl4 prints:
+    7.375039999999996141
+    7.37503999999999614
+
+    # Perl5 prints:
+    7.373504
+    7.37503999999999614
+
+=item * Numerical
+
+This specific item has been deleted.  It demonstrated how the auto-increment
+operator would not catch when a number went over the signed int limit.  Fixed
+in version 5.003_04.  But always be wary when using large integers.
+If in doubt:
+
+   use Math::BigInt;
+
+=item * Numerical
+
+Assignment of return values from numeric equality tests
+does not work in perl5 when the test evaluates to false (0).
+Logical tests now return an null, instead of 0
+
+    $p = ($test == 1);
+    print $p,"\n";
+
+    # perl4 prints: 0
+    # perl5 prints:
+
+Also see L<"General Regular Expression Traps using s///, etc.">
+for another example of this new feature...
+
+=back
+
+=head2 General data type traps
+
+Perl4-to-Perl5 traps involving most data-types, and their usage
+within certain expressions and/or context.
+
+=over 5
+
+=item * (Arrays)
+
+Negative array subscripts now count from the end of the array.
+
+    @a = (1, 2, 3, 4, 5);
+    print "The third element of the array is $a[3] also expressed as $a[-2] \n";
+
+    # perl4 prints: The third element of the array is 4 also expressed as
+    # perl5 prints: The third element of the array is 4 also expressed as 4
+
+=item * (Arrays)
+
+Setting C<$#array> lower now discards array elements, and makes them
+impossible to recover.
+
+    @a = (a,b,c,d,e);
+    print "Before: ",join('',@a);
+    $#a =1;
+    print ", After: ",join('',@a);
+    $#a =3;
+    print ", Recovered: ",join('',@a),"\n";
+
+    # perl4 prints: Before: abcde, After: ab, Recovered: abcd
+    # perl5 prints: Before: abcde, After: ab, Recovered: ab
+
+=item * (Hashes)
+
+Hashes get defined before use
+
+    local($s,@a,%h);
+    die "scalar \$s defined" if defined($s);
+    die "array \@a defined" if defined(@a);
+    die "hash \%h defined" if defined(%h);
+
+    # perl4 prints:
+    # perl5 dies: hash %h defined
+
+=item * (Globs)
+
+glob assignment from variable to variable will fail if the assigned
+variable is localized subsequent to the assignment
+
+    @a = ("This is Perl 4");
+    *b = *a;
+    local(@a);
+    print @b,"\n";
+
+    # perl4 prints: This is Perl 4
+    # perl5 prints:
+
+    # Another example
+
+    *fred = *barney; # fred is aliased to barney
+    @barney = (1, 2, 4);
+    # @fred;
+    print "@fred";  # should print "1, 2, 4"
+
+    # perl4 prints: 1 2 4
+    # perl5 prints: In string, @fred now must be written as \@fred
+
+=item * (Scalar String)
+
+Changes in unary negation (of strings)
+This change effects both the return value and what it
+does to auto(magic)increment.
+
+    $x = "aaa";
+    print ++$x," : ";
+    print -$x," : ";
+    print ++$x,"\n";
+
+    # perl4 prints: aab : -0 : 1
+    # perl5 prints: aab : -aab : aac
+
+=item * (Constants)
+
+perl 4 lets you modify constants:
+
+    $foo = "x";
+    &mod($foo);
+    for ($x = 0; $x < 3; $x++) {
+        &mod("a");
+    }
+    sub mod {
+        print "before: $_[0]";
+        $_[0] = "m";
+        print "  after: $_[0]\n";
+    }
+
+    # perl4:
+    # before: x  after: m
+    # before: a  after: m
+    # before: m  after: m
+    # before: m  after: m
+
+    # Perl5:
+    # before: x  after: m
+    # Modification of a read-only value attempted at foo.pl line 12.
+    # before: a
+
+=item * (Scalars)
+
+The behavior is slightly different for:
+
+    print "$x", defined $x
+
+    # perl 4: 1
+    # perl 5: <no output, $x is not called into existence>
+
+=item * (Variable Suicide)
+
+Variable suicide behavior is more consistent under Perl 5.
+Perl5 exhibits the same behavior for hashes and scalars,
+that perl4 exhibits for only scalars.
+
+    $aGlobal{ "aKey" } = "global value";
+    print "MAIN:", $aGlobal{"aKey"}, "\n";
+    $GlobalLevel = 0;
+    &test( *aGlobal );
+
+    sub test {
+        local( *theArgument ) = @_;
+        local( %aNewLocal ); # perl 4 != 5.001l,m
+        $aNewLocal{"aKey"} = "this should never appear";
+        print "SUB: ", $theArgument{"aKey"}, "\n";
+        $aNewLocal{"aKey"} = "level $GlobalLevel";   # what should print
+        $GlobalLevel++;
+        if( $GlobalLevel<4 ) {
+            &test( *aNewLocal );
+        }
+    }
+
+    # Perl4:
+    # MAIN:global value
+    # SUB: global value
+    # SUB: level 0
+    # SUB: level 1
+    # SUB: level 2
+
+    # Perl5:
+    # MAIN:global value
+    # SUB: global value
+    # SUB: this should never appear
+    # SUB: this should never appear
+    # SUB: this should never appear
+
+=back
+
+=head2 Context Traps - scalar, list contexts
+
+=over 5
+
+=item * (list context)
+
+The elements of argument lists for formats are now evaluated in list
+context.  This means you can interpolate list values now.
+
+    @fmt = ("foo","bar","baz");
+    format STDOUT=
+    @<<<<< @||||| @>>>>>
+    @fmt;
+    .
+    write;
+
+    # perl4 errors:  Please use commas to separate fields in file
+    # perl5 prints: foo     bar      baz
+
+=item * (scalar context)
+
+The C<caller()> function now returns a false value in a scalar context
+if there is no caller.  This lets library files determine if they're
+being required.
+
+    caller() ? (print "You rang?\n") : (print "Got a 0\n");
+
+    # perl4 errors: There is no caller
+    # perl5 prints: Got a 0
+
+=item * (scalar context)
+
+The comma operator in a scalar context is now guaranteed to give a
+scalar context to its arguments.
+
+    @y= ('a','b','c');
+    $x = (1, 2, @y);
+    print "x = $x\n";
+
+    # Perl4 prints:  x = c   # Thinks list context interpolates list
+    # Perl5 prints:  x = 3   # Knows scalar uses length of list
+
+=item * (list, builtin)
+
+C<sprintf()> funkiness (array argument converted to scalar array count)
+This test could be added to t/op/sprintf.t
+
+    @z = ('%s%s', 'foo', 'bar');
+    $x = sprintf(@z);
+    if ($x eq 'foobar') {print "ok 2\n";} else {print "not ok 2 '$x'\n";}
+
+    # perl4 prints: ok 2
+    # perl5 prints: not ok 2
+
+C<printf()> works fine, though:
+
+    printf STDOUT (@z);
+    print "\n";
+
+    # perl4 prints: foobar
+    # perl5 prints: foobar
+
+Probably a bug.
+
+=back
+
+=head2 Precedence Traps
+
+Perl4-to-Perl5 traps involving precedence order.
+
+=over 5
+
+=item * Precedence
+
+LHS vs. RHS of any assignment operator.  LHS is evaluated first
+in perl4, second in perl5; this can affect the relationship
+between side-effects in sub-expressions.
+
+    @arr = ( 'left', 'right' );
+    $a{shift @arr} = shift @arr;
+    print join( ' ', keys %a );
+
+    # perl4 prints: left
+    # perl5 prints: right
+
+=item * Precedence
 
 These are now semantic errors because of precedence:
 
-    shift @list + 20;	
-    $n = keys %map + 20; 
+    @list = (1,2,3,4,5);
+    %map = ("a",1,"b",2,"c",3,"d",4);
+    $n = shift @list + 2;   # first item in list plus 2
+    print "n is $n, ";
+    $m = keys %map + 2;     # number of items in hash plus 2
+    print "m is $m\n";
 
-Because if that were to work, then this couldn't:
+    # perl4 prints: n is 3, m is 6
+    # perl5 errors and fails to compile
 
-    sleep $dormancy + 20;
-
-=item *
+=item * Precedence
 
 The precedence of assignment operators is now the same as the precedence
 of assignment.  Perl 4 mistakenly gave them the precedence of the associated
@@ -400,7 +964,7 @@ operator.  So you now must parenthesize them in expressions like
 
 Otherwise
 
-    /foo/ ? $a += 2 : $a -= 2;
+    /foo/ ? $a += 2 : $a -= 2
 
 would be erroneously parsed as
 
@@ -412,111 +976,512 @@ On the other hand,
 
 now works as a C programmer would expect.
 
-=item *
+=item * Precedence
 
-C<open FOO || die> is now incorrect.  You need parens around the filehandle.
-While temporarily supported, using such a construct will 
-generate a non-fatal (but non-suppressible) warning.
+    open FOO || die;
 
-=item *
+is now incorrect.  You need parentheses around the filehandle.
+Otherwise, perl5 leaves the statement as its default precedence:
 
-The elements of argument lists for formats are now evaluated in list
-context.  This means you can interpolate list values now.
+    open(FOO || die);
 
-=item *
+    # perl4 opens or dies
+    # perl5 errors: Precedence problem: open FOO should be open(FOO)
 
-You can't do a C<goto> into a block that is optimized away.  Darn.
+=item * Precedence
 
-=item *
+perl4 gives the special variable, C<$:> precedence, where perl5
+treats C<$::> as main C<package>
 
-It is no longer syntactically legal to use whitespace as the name
-of a variable, or as a delimiter for any kind of quote construct.
-Double darn.
+    $a = "x"; print "$::a";
 
-=item *
+    # perl 4 prints: -:a
+    # perl 5 prints: x
 
-The caller() function now returns a false value in a scalar context if there
-is no caller.  This lets library files determine if they're being required.
+=item * Precedence
 
-=item *
+concatenation precedence over filetest operator?
+
+    -e $foo .= "q"
+
+    # perl4 prints: no output
+    # perl5 prints: Can't modify -e in concatenation
+
+=back
+
+=head2 General Regular Expression Traps using s///, etc.
+
+All types of RE traps.
+
+=over 5
+
+=item * Regular Expression
+
+C<s'$lhs'$rhs'> now does no interpolation on either side.  It used to
+interpolate C<$lhs> but not C<$rhs>.  (And still does not match a literal
+'$' in string)
+
+    $a=1;$b=2;
+    $string = '1 2 $a $b';
+    $string =~ s'$a'$b';
+    print $string,"\n";
+
+    # perl4 prints: $b 2 $a $b
+    # perl5 prints: 1 2 $a $b
+
+=item * Regular Expression
 
 C<m//g> now attaches its state to the searched string rather than the
-regular expression.
+regular expression.  (Once the scope of a block is left for the sub, the
+state of the searched string is lost)
 
-=item *
+    $_ = "ababab";
+    while(m/ab/g){
+        &doit("blah");
+    }
+    sub doit{local($_) = shift; print "Got $_ "}
 
-C<reverse> is no longer allowed as the name of a sort subroutine.
+    # perl4 prints: blah blah blah
+    # perl5 prints: infinite loop blah...
 
-=item *
+=item * Regular Expression
 
-B<taintperl> is no longer a separate executable.  There is now a B<-T>
-switch to turn on tainting when it isn't turned on automatically.
+Currently, if you use the C<m//o> qualifier on a regular expression
+within an anonymous sub, I<all> closures generated from that anonymous
+sub will use the regular expression as it was compiled when it was used
+the very first time in any such closure.  For instance, if you say
 
-=item *
+    sub build_match {
+        my($left,$right) = @_;
+        return sub { $_[0] =~ /$left stuff $right/o; };
+    }
 
-Double-quoted strings may no longer end with an unescaped C<$> or C<@>.
+build_match() will always return a sub which matches the contents of
+C<$left> and C<$right> as they were the I<first> time that build_match()
+was called, not as they are in the current call.
 
-=item *
+This is probably a bug, and may change in future versions of Perl.
 
-The archaic C<while/if> BLOCK BLOCK syntax is no longer supported.
+=item * Regular Expression
+
+If no parentheses are used in a match, Perl4 sets C<$+> to
+the whole match, just like C<$&>. Perl5 does not.
+
+    "abcdef" =~ /b.*e/;
+    print "\$+ = $+\n";
+
+    # perl4 prints: bcde
+    # perl5 prints:
+
+=item * Regular Expression
+
+substitution now returns the null string if it fails
+
+    $string = "test";
+    $value = ($string =~ s/foo//);
+    print $value, "\n";
+
+    # perl4 prints: 0
+    # perl5 prints:
+
+Also see L<Numerical Traps> for another example of this new feature.
+
+=item * Regular Expression
+
+C<s`lhs`rhs`> (using backticks) is now a normal substitution, with no
+backtick expansion
+
+    $string = "";
+    $string =~ s`^`hostname`;
+    print $string, "\n";
+
+    # perl4 prints: <the local hostname>
+    # perl5 prints: hostname
+
+=item * Regular Expression
+
+Stricter parsing of variables used in regular expressions
+
+    s/^([^$grpc]*$grpc[$opt$plus$rep]?)//o;
+
+    # perl4: compiles w/o error
+    # perl5: with Scalar found where operator expected ..., near "$opt$plus"
+
+an added component of this example, apparently from the same script, is
+the actual value of the s'd string after the substitution.
+C<[$opt]> is a character class in perl4 and an array subscript in perl5
+
+    $grpc = 'a';
+    $opt  = 'r';
+    $_ = 'bar';
+    s/^([^$grpc]*$grpc[$opt]?)/foo/;
+    print ;
+
+    # perl4 prints: foo
+    # perl5 prints: foobar
+
+=item * Regular Expression
+
+Under perl5, C<m?x?> matches only once, like C<?x?>. Under perl4, it matched
+repeatedly, like C</x/> or C<m!x!>.
+
+    $test = "once";
+    sub match { $test =~ m?once?; }
+    &match();
+    if( &match() ) {
+        # m?x? matches more then once
+        print "perl4\n";
+    } else {
+        # m?x? matches only once
+        print "perl5\n";
+    }
+
+    # perl4 prints: perl4
+    # perl5 prints: perl5
 
 
-=item *
+=item * Regular Expression
 
-Negative array subscripts now count from the end of the array.
+Under perl4 and upto version 5.003, a failed C<m//g> match used to
+reset the internal iterator, so that subsequent C<m//g> match attempts
+began from the beginning of the string.  In perl version 5.004 and later,
+failed C<m//g> matches do not reset the iterator position (which can be
+found using the C<pos()> function--see L<perlfunc/pos>).
 
-=item *
+    $test = "foop";
+    for (1..3) {
+        print $1 while ($test =~ /(o)/g);
+        # pos $test = 0;     # to get old behavior
+    }
 
-The comma operator in a scalar context is now guaranteed to give a
-scalar context to its arguments.
+    # perl4     prints: oooooo
+    # perl5.004 prints: oo
 
-=item *
+You may always reset the iterator yourself as shown in the commented line
+to get the old behavior.
 
-The C<**> operator now binds more tightly than unary minus.  
-It was documented to work this way before, but didn't.
+=back
 
-=item *
+=head2 Subroutine, Signal, Sorting Traps
 
-Setting C<$#array> lower now discards array elements.
+The general group of Perl4-to-Perl5 traps having to do with
+Signals, Sorting, and their related subroutines, as well as
+general subroutine traps.  Includes some OS-Specific traps.
 
-=item *
+=over 5
 
-delete() is not guaranteed to return the old value for tie()d arrays,
-since this capability may be onerous for some modules to implement.
+=item * (Signals)
 
-=item *
+Barewords that used to look like strings to Perl will now look like subroutine
+calls if a subroutine by that name is defined before the compiler sees them.
+
+    sub SeeYa { warn"Hasta la vista, baby!" }
+    $SIG{'TERM'} = SeeYa;
+    print "SIGTERM is now $SIG{'TERM'}\n";
+
+    # perl4 prints: SIGTERM is main'SeeYa
+    # perl5 prints: SIGTERM is now main::1
+
+Use B<-w> to catch this one
+
+=item * (Sort Subroutine)
+
+reverse is no longer allowed as the name of a sort subroutine.
+
+    sub reverse{ print "yup "; $a <=> $b }
+    print sort reverse a,b,c;
+
+    # perl4 prints: yup yup yup yup abc
+    # perl5 prints: abc
+
+=item * warn() won't let you specify a filehandle.
+
+Although it _always_ printed to STDERR, warn() would let you specify a
+filehandle in perl4.  With perl5 it does not.
+
+    warn STDERR "Foo!";
+
+    # perl4 prints: Foo!
+    # perl5 prints: String found where operator expected
+
+=back
+
+=head2 OS Traps
+
+=over 5
+
+=item * (SysV)
+
+Under HPUX, and some other SysV OSes, one had to reset any signal handler,
+within  the signal handler function, each time a signal was handled with
+perl4.  With perl5, the reset is now done correctly.  Any code relying
+on the handler _not_ being reset will have to be reworked.
+
+Since version 5.002, Perl uses sigaction() under SysV.
+
+    sub gotit {
+        print "Got @_... ";
+    }
+    $SIG{'INT'} = 'gotit';
+
+    $| = 1;
+    $pid = fork;
+    if ($pid) {
+        kill('INT', $pid);
+        sleep(1);
+        kill('INT', $pid);
+    } else {
+        while (1) {sleep(10);}
+    }
+
+    # perl4 (HPUX) prints: Got INT...
+    # perl5 (HPUX) prints: Got INT... Got INT...
+
+=item * (SysV)
+
+Under SysV OSes, C<seek()> on a file opened to append C<E<gt>E<gt>> now does
+the right thing w.r.t. the fopen() manpage. e.g., - When a file is opened
+for append,  it  is  impossible to overwrite information already in
+the file.
+
+    open(TEST,">>seek.test");
+    $start = tell TEST ;
+    foreach(1 .. 9){
+        print TEST "$_ ";
+    }
+    $end = tell TEST ;
+    seek(TEST,$start,0);
+    print TEST "18 characters here";
+
+    # perl4 (solaris) seek.test has: 18 characters here
+    # perl5 (solaris) seek.test has: 1 2 3 4 5 6 7 8 9 18 characters here
+
+
+
+=back
+
+=head2 Interpolation Traps
+
+Perl4-to-Perl5 traps having to do with how things get interpolated
+within certain expressions, statements, contexts, or whatever.
+
+=over 5
+
+=item * Interpolation
+
+@ now always interpolates an array in double-quotish strings.
+
+    print "To: someone@somewhere.com\n";
+
+    # perl4 prints: To:someone@somewhere.com
+    # perl5 errors : In string, @somewhere now must be written as \@somewhere
+
+=item * Interpolation
+
+Double-quoted strings may no longer end with an unescaped $ or @.
+
+    $foo = "foo$";
+    $bar = "bar@";
+    print "foo is $foo, bar is $bar\n";
+
+    # perl4 prints: foo is foo$, bar is bar@
+    # perl5 errors: Final $ should be \$ or $name
+
+Note: perl5 DOES NOT error on the terminating @ in $bar
+
+=item * Interpolation
+
+Perl now sometimes evaluates arbitrary expressions inside braces that occur
+within double quotes (usually when the opening brace is preceded by C<$>
+or C<@>).
+
+    @www = "buz";
+    $foo = "foo";
+    $bar = "bar";
+    sub foo { return "bar" };
+    print "|@{w.w.w}|${main'foo}|";
+
+    # perl4 prints: |@{w.w.w}|foo|
+    # perl5 prints: |buz|bar|
+
+Note that you can C<use strict;> to ward off such trappiness under perl5.
+
+=item * Interpolation
 
 The construct "this is $$x" used to interpolate the pid at that
-point, but now tries to dereference $x.  C<$$> by itself still
+point, but now apparently tries to dereference C<$x>.  C<$$> by itself still
 works fine, however.
 
-=item *
+    print "this is $$x\n";
 
-The meaning of foreach has changed slightly when it is iterating over a
-list which is not an array.  This used to assign the list to a
-temporary array, but no longer does so (for efficiency).  This means
-that you'll now be iterating over the actual values, not over copies of
-the values.  Modifications to the loop variable can change the original
-values.  To retain Perl 4 semantics you need to assign your list
-explicitly to a temporary array and then iterate over that.  For
-example, you might need to change
+    # perl4 prints: this is XXXx   (XXX is the current pid)
+    # perl5 prints: this is
 
-    foreach $var (grep /x/, @list) { ... }
+=item * Interpolation
+
+Creation of hashes on the fly with C<eval "EXPR"> now requires either both
+C<$>'s to be protected in the specification of the hash name, or both curlies
+to be protected.  If both curlies are protected, the result will be compatible
+with perl4 and perl5.  This is a very common practice, and should be changed
+to use the block form of C<eval{}>  if possible.
+
+    $hashname = "foobar";
+    $key = "baz";
+    $value = 1234;
+    eval "\$$hashname{'$key'} = q|$value|";
+    (defined($foobar{'baz'})) ?  (print "Yup") : (print "Nope");
+
+    # perl4 prints: Yup
+    # perl5 prints: Nope
+
+Changing
+
+    eval "\$$hashname{'$key'} = q|$value|";
 
 to
 
-    foreach $var (my @tmp = grep /x/, @list) { ... }
+    eval "\$\$hashname{'$key'} = q|$value|";
 
-Otherwise changing C<$var> will clobber the values of @list.  (This most often
-happens when you use C<$_> for the loop variable, and call subroutines in
-the loop that don't properly localize C<$_>.)
+causes the following result:
 
-=item *
+    # perl4 prints: Nope
+    # perl5 prints: Yup
 
-Some error messages will be different.
+or, changing to
 
-=item *
+    eval "\$$hashname\{'$key'\} = q|$value|";
 
-Some bugs may have been inadvertently removed.
+causes the following result:
+
+    # perl4 prints: Yup
+    # perl5 prints: Yup
+    # and is compatible for both versions
+
+
+=item * Interpolation
+
+perl4 programs which unconsciously rely on the bugs in earlier perl versions.
+
+    perl -e '$bar=q/not/; print "This is $foo{$bar} perl5"'
+
+    # perl4 prints: This is not perl5
+    # perl5 prints: This is perl5
+
+=item * Interpolation
+
+You also have to be careful about array references.
+
+    print "$foo{"
+
+    perl 4 prints: {
+    perl 5 prints: syntax error
+
+=item * Interpolation
+
+Similarly, watch out for:
+
+    $foo = "array";
+    print "\$$foo{bar}\n";
+
+    # perl4 prints: $array{bar}
+    # perl5 prints: $
+
+Perl 5 is looking for C<$array{bar}> which doesn't exist, but perl 4 is
+happy just to expand $foo to "array" by itself.  Watch out for this
+especially in C<eval>'s.
+
+=item * Interpolation
+
+C<qq()> string passed to C<eval>
+
+    eval qq(
+        foreach \$y (keys %\$x\) {
+            \$count++;
+        }
+    );
+
+    # perl4 runs this ok
+    # perl5 prints: Can't find string terminator ")"
 
 =back
+
+=head2 DBM Traps
+
+General DBM traps.
+
+=over 5
+
+=item * DBM
+
+Existing dbm databases created under perl4 (or any other dbm/ndbm tool)
+may cause the same script, run under perl5, to fail.  The build of perl5
+must have been linked with the same dbm/ndbm as the default for C<dbmopen()>
+to function properly without C<tie>'ing to an extension dbm implementation.
+
+    dbmopen (%dbm, "file", undef);
+    print "ok\n";
+
+    # perl4 prints: ok
+    # perl5 prints: ok (IFF linked with -ldbm or -lndbm)
+
+
+=item * DBM
+
+Existing dbm databases created under perl4 (or any other dbm/ndbm tool)
+may cause the same script, run under perl5, to fail.  The error generated
+when exceeding the limit on the key/value size will cause perl5 to exit
+immediately.
+
+    dbmopen(DB, "testdb",0600) || die "couldn't open db! $!";
+    $DB{'trap'} = "x" x 1024;  # value too large for most dbm/ndbm
+    print "YUP\n";
+
+    # perl4 prints:
+    dbm store returned -1, errno 28, key "trap" at - line 3.
+    YUP
+
+    # perl5 prints:
+    dbm store returned -1, errno 28, key "trap" at - line 3.
+
+=back
+
+=head2 Unclassified Traps
+
+Everything else.
+
+=over 5
+
+=item * C<require>/C<do> trap using returned value
+
+If the file doit.pl has:
+
+    sub foo {
+        $rc = do "./do.pl";
+        return 8;
+    }
+    print &foo, "\n";
+
+And the do.pl file has the following single line:
+
+    return 3;
+
+Running doit.pl gives the following:
+
+    # perl 4 prints: 3 (aborts the subroutine early)
+    # perl 5 prints: 8
+
+Same behavior if you replace C<do> with C<require>.
+
+=item * C<split> on empty string with LIMIT specified
+
+	$string = '';
+    @list = split(/foo/, $string, 2)
+
+Perl4 returns a one element list containing the empty string but Perl5
+returns an empty list.
+
+=back
+
+As always, if any of these are ever officially declared as bugs,
+they'll be fixed and removed.
+

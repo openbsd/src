@@ -25,6 +25,7 @@ $subdump = 1;
 
 sub main::dumpValue {
   local %address;
+  local $^W=0;
   (print "undef\n"), return unless defined $_[0];
   (print &stringify($_[0]), "\n"), return unless ref $_[0];
   dumpvar::unwrap($_[0],0);
@@ -116,9 +117,9 @@ sub unwrap {
 
     # Check for reused addresses
     if (ref $v) { 
-      ($address) = $v =~ /(0x[0-9a-f]+)/ ; 
+      ($address) = $v =~ /(0x[0-9a-f]+)\)$/ ; 
       if (defined $address) { 
-	($type) = $v =~ /=(.*?)\(/ ;
+	($type) = $v =~ /=(.*?)\([^=]+$/ ;
 	$address{$address}++ ;
 	if ( $address{$address} > 1 ) { 
 	  print "${sp}-> REUSED_ADDRESS\n" ; 
@@ -134,7 +135,7 @@ sub unwrap {
       } 
     }
 
-    if ( ref $v eq 'HASH' or $type eq 'HASH') { 
+    if ( UNIVERSAL::isa($v, 'HASH') ) { 
 	@sortKeys = sort keys(%$v) ;
 	undef $more ; 
 	$tHashDepth = $#sortKeys ; 
@@ -167,7 +168,7 @@ sub unwrap {
 	}
 	print "$sp  empty hash\n" unless @sortKeys;
 	print "$sp$more" if defined $more ;
-    } elsif ( ref $v eq 'ARRAY' or $type eq 'ARRAY') { 
+    } elsif ( UNIVERSAL::isa($v, 'ARRAY') ) { 
 	$tArrayDepth = $#{$v} ; 
 	undef $more ; 
 	$tArrayDepth = $#{$v} < $arrayDepth-1 ? $#{$v} : $arrayDepth-1 
@@ -197,13 +198,13 @@ sub unwrap {
 	}
 	print "$sp  empty array\n" unless @$v;
 	print "$sp$more" if defined $more ;  
-    } elsif ( ref $v eq 'SCALAR' or ref $v eq 'REF' or $type eq 'SCALAR' ) { 
+    } elsif (  UNIVERSAL::isa($v, 'SCALAR') or ref $v eq 'REF' ) { 
 	    print "$sp-> ";
 	    DumpElem $$v, $s;
-    } elsif ( ref $v eq 'CODE' or $type eq 'CODE' ) { 
+    } elsif ( UNIVERSAL::isa($v, 'CODE') ) { 
 	    print "$sp-> ";
 	    dumpsub (0, $v);
-    } elsif (ref $v eq 'GLOB') {
+    } elsif ( UNIVERSAL::isa($v, 'GLOB') ) {
       print "$sp-> ",&stringify($$v,1),"\n";
       if ($globPrint) {
 	$s += 3;
@@ -222,8 +223,8 @@ sub unwrap {
 
 sub matchvar {
   $_[0] eq $_[1] or 
-    ($_[1] =~ /^([!~])(.)/) and 
-      ($1 eq '!') ^ (eval {($_[2] . "::" . $_[0]) =~ /$2$'/});
+    ($_[1] =~ /^([!~])(.)([\x00-\xff]*)/) and 
+      ($1 eq '!') ^ (eval {($_[2] . "::" . $_[0]) =~ /$2$3/});
 }
 
 sub compactDump {
@@ -319,7 +320,7 @@ sub findsubs {
 
 sub main::dumpvar {
     my ($package,@vars) = @_;
-    local(%address,$key,$val);
+    local(%address,$key,$val,$^W);
     $package .= "::" unless $package =~ /::$/;
     *stab = *{"main::"};
     while ($package =~ /(\w+?::)/g){

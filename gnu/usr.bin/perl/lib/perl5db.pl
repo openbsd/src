@@ -2,7 +2,8 @@ package DB;
 
 # Debugger for Perl 5.00x; perl5db.pl patch level:
 
-$header = 'perl5db.pl patch level 0.94';
+$VERSION = 1.01;
+$header = "perl5db.pl version $VERSION";
 
 # Enhanced by ilya@math.ohio-state.edu (Ilya Zakharevich)
 # Latest version available: ftp://ftp.math.ohio-state.edu/pub/users/ilya/perl
@@ -16,14 +17,35 @@ $header = 'perl5db.pl patch level 0.94';
 # This file is automatically included if you do perl -d.
 # It's probably not useful to include this yourself.
 #
-# Perl supplies the values for @line and %sub.  It effectively inserts
-# a &DB'DB(<linenum>); in front of every place that can have a
+# Perl supplies the values for %sub.  It effectively inserts
+# a &DB'DB(); in front of every place that can have a
 # breakpoint. Instead of a subroutine call it calls &DB::sub with
 # $DB::sub being the called subroutine. It also inserts a BEGIN
 # {require 'perl5db.pl'} before the first line.
 #
+# After each `require'd file is compiled, but before it is executed, a
+# call to DB::postponed($main::{'_<'.$filename}) is emulated. Here the
+# $filename is the expanded name of the `require'd file (as found as
+# value of %INC).
+#
+# Additional services from Perl interpreter:
+#
+# if caller() is called from the package DB, it provides some
+# additional data.
+#
+# The array @{$main::{'_<'.$filename} is the line-by-line contents of
+# $filename.
+#
+# The hash %{'_<'.$filename} contains breakpoints and action (it is
+# keyed by line number), and individual entries are settable (as
+# opposed to the whole hash). Only true/false is important to the
+# interpreter, though the values used by perl5db.pl have the form
+# "$break_condition\0$action". Values are magical in numeric context.
+#
+# The scalar ${'_<'.$filename} contains "_<$filename".
+#
 # Note that no subroutine call is possible until &DB::sub is defined
-# (for subroutines defined outside this file). In fact the same is
+# (for subroutines defined outside of the package DB). In fact the same is
 # true if $deep is not defined.
 #
 # $Log:	perldb.pl,v $
@@ -63,6 +85,65 @@ $header = 'perl5db.pl patch level 0.94';
 # information into db.out.  (If you interrupt it, you would better
 # reset LineInfo to something "interactive"!)
 #
+##################################################################
+# Changelog:
+
+# A lot of things changed after 0.94. First of all, core now informs
+# debugger about entry into XSUBs, overloaded operators, tied operations,
+# BEGIN and END. Handy with `O f=2'.
+
+# This can make debugger a little bit too verbose, please be patient
+# and report your problems promptly.
+
+# Now the option frame has 3 values: 0,1,2.
+
+# Note that if DESTROY returns a reference to the object (or object),
+# the deletion of data may be postponed until the next function call,
+# due to the need to examine the return value.
+
+# Changes: 0.95: `v' command shows versions.
+# Changes: 0.96: `v' command shows version of readline.
+#	primitive completion works (dynamic variables, subs for `b' and `l',
+#		options). Can `p %var'
+#	Better help (`h <' now works). New commands <<, >>, {, {{.
+#	{dump|print}_trace() coded (to be able to do it from <<cmd).
+#	`c sub' documented.
+#	At last enough magic combined to stop after the end of debuggee.
+#	!! should work now (thanks to Emacs bracket matching an extra
+#	`]' in a regexp is caught).
+#	`L', `D' and `A' span files now (as documented).
+#	Breakpoints in `require'd code are possible (used in `R').
+#	Some additional words on internal work of debugger.
+#	`b load filename' implemented.
+#	`b postpone subr' implemented.
+#	now only `q' exits debugger (overwriteable on $inhibit_exit).
+#	When restarting debugger breakpoints/actions persist.
+#     Buglet: When restarting debugger only one breakpoint/action per 
+#		autoloaded function persists.
+# Changes: 0.97: NonStop will not stop in at_exit().
+#	Option AutoTrace implemented.
+#	Trace printed differently if frames are printed too.
+#	new `inhibitExit' option.
+#	printing of a very long statement interruptible.
+# Changes: 0.98: New command `m' for printing possible methods
+#	'l -' is a synonim for `-'.
+#	Cosmetic bugs in printing stack trace.
+#	`frame' & 8 to print "expanded args" in stack trace.
+#	Can list/break in imported subs.
+#	new `maxTraceLen' option.
+#	frame & 4 and frame & 8 granted.
+#	new command `m'
+#	nonstoppable lines do not have `:' near the line number.
+#	`b compile subname' implemented.
+#	Will not use $` any more.
+#	`-' behaves sane now.
+# Changes: 0.99: Completion for `f', `m'.
+#	`m' will remove duplicate names instead of duplicate functions.
+#	`b load' strips trailing whitespace.
+#	completion ignores leading `|'; takes into account current package
+#	when completing a subroutine name (same for `l').
+
+####################################################################
 
 # Needed for the statement after exec():
 
@@ -76,12 +157,11 @@ warn (			# Do not ;-)
       $dumpvar::quoteHighBit,  
       $dumpvar::printUndef,    
       $dumpvar::globPrint,     
-      $readline::Tk_toloop,    
       $dumpvar::usageOnly,
       @ARGS,
       $Carp::CarpLevel,
       $panic,
-      $first_time,
+      $second_time,
      ) if 0;
 
 # Command-line + PERLLIB:
@@ -91,16 +171,14 @@ warn (			# Do not ;-)
 
 $trace = $signal = $single = 0;	# Uninitialized warning suppression
                                 # (local $^W cannot help - other packages!).
-@stack = (0);
-
-$option{PrintRet} = 1;
+$inhibit_exit = $option{PrintRet} = 1;
 
 @options     = qw(hashDepth arrayDepth DumpDBFiles DumpPackages 
 		  compactDump veryCompact quote HighBit undefPrint
-		  globPrint PrintRet UsageOnly frame
-		  TTY noTTY ReadLine NonStop LineInfo
-		  recallCommand ShellBang pager tkRunning
-		  signalLevel warnLevel dieLevel);
+		  globPrint PrintRet UsageOnly frame AutoTrace
+		  TTY noTTY ReadLine NonStop LineInfo maxTraceLen
+		  recallCommand ShellBang pager tkRunning ornaments
+		  signalLevel warnLevel dieLevel inhibit_exit);
 
 %optionVars    = (
 		 hashDepth	=> \$dumpvar::hashDepth,
@@ -110,9 +188,11 @@ $option{PrintRet} = 1;
 		 HighBit	=> \$dumpvar::quoteHighBit,
 		 undefPrint	=> \$dumpvar::printUndef,
 		 globPrint	=> \$dumpvar::globPrint,
-		 tkRunning	=> \$readline::Tk_toloop,
 		 UsageOnly	=> \$dumpvar::usageOnly,     
-		  frame           => \$frame,
+		 frame          => \$frame,
+		 AutoTrace      => \$trace,
+		 inhibit_exit   => \$inhibit_exit,
+		 maxTraceLen	=> \$maxtrace,
 );
 
 %optionAction  = (
@@ -130,6 +210,8 @@ $option{PrintRet} = 1;
 		  signalLevel	=> \&signalLevel,
 		  warnLevel	=> \&warnLevel,
 		  dieLevel	=> \&dieLevel,
+		  tkRunning	=> \&tkRunning,
+		  ornaments	=> \&ornaments,
 		 );
 
 %optionRequire = (
@@ -140,12 +222,19 @@ $option{PrintRet} = 1;
 
 # These guys may be defined in $ENV{PERL5DB} :
 $rl = 1 unless defined $rl;
+$warnLevel = 1 unless defined $warnLevel;
+$dieLevel = 1 unless defined $dieLevel;
+$signalLevel = 1 unless defined $signalLevel;
+$pre = [] unless defined $pre;
+$post = [] unless defined $post;
+$pretype = [] unless defined $pretype;
 warnLevel($warnLevel);
 dieLevel($dieLevel);
 signalLevel($signalLevel);
 &pager(defined($ENV{PAGER}) ? $ENV{PAGER} : "|more") unless defined $pager;
 &recallCommand("!") unless defined $prc;
 &shellBang("!") unless defined $psh;
+$maxtrace = 400 unless defined $maxtrace;
 
 if (-e "/dev/tty") {
   $rcfile=".perldb";
@@ -169,9 +258,12 @@ if (exists $ENV{PERLDB_RESTART}) {
   delete $ENV{PERLDB_RESTART};
   # $restart = 1;
   @hist = get_list('PERLDB_HIST');
-  my @visited = get_list("PERLDB_VISITED");
-  for (0 .. $#visited) {
-    %{$postponed{$visited[$_]}} = get_list("PERLDB_FILE_$_");
+  %break_on_load = get_list("PERLDB_ON_LOAD");
+  %postponed = get_list("PERLDB_POSTPONE");
+  my @had_breakpoints= get_list("PERLDB_VISITED");
+  for (0 .. $#had_breakpoints) {
+    my %pf = get_list("PERLDB_FILE_$_");
+    $postponed_file{$had_breakpoints[$_]} = \%pf if %pf;
   }
   my %opt = get_list("PERLDB_OPT");
   my ($opt,$val);
@@ -181,6 +273,10 @@ if (exists $ENV{PERLDB_RESTART}) {
   }
   @INC = get_list("PERLDB_INC");
   @ini_INC = @INC;
+  $pretype = [get_list("PERLDB_PRETYPE")];
+  $pre = [get_list("PERLDB_PRE")];
+  $post = [get_list("PERLDB_POST")];
+  @typeahead = get_list("PERLDB_TYPEAHEAD", @typeahead);
 }
 
 if ($notty) {
@@ -194,14 +290,18 @@ if ($notty) {
 
   if (-e "/dev/tty") {
     $console = "/dev/tty";
-  } elsif (-e "con") {
+  } elsif (-e "con" or $^O eq 'MSWin32') {
     $console = "con";
   } else {
     $console = "sys\$command";
   }
 
+  if (($^O eq 'MSWin32') and ($emacs or defined $ENV{EMACS})) {
+    $console = undef;
+  }
+
   # Around a bug:
-  if (defined $ENV{OS2_SHELL} and $emacs) { # In OS/2
+  if (defined $ENV{OS2_SHELL} and ($emacs or $ENV{WINDOWID})) { # In OS/2
     $console = undef;
   }
 
@@ -249,41 +349,28 @@ if (defined &afterinit) {	# May be defined in $rcfile
   &afterinit();
 }
 
+$I_m_init = 1;
+
 ############################################################ Subroutines
 
 sub DB {
-    unless ($first_time++) {	# Do when-running init
-      if ($runnonstop) {		# Disable until signal
+    # _After_ the perl program is compiled, $single is set to 1:
+    if ($single and not $second_time++) {
+      if ($runnonstop) {	# Disable until signal
 	for ($i=0; $i <= $#stack; ) {
 	    $stack[$i++] &= ~1;
 	}
 	$single = 0;
-	return;
+	# return;			# Would not print trace!
       }
-      # Define a subroutine in which we will stop
-#       eval <<'EOE';
-# sub at_end::db {"Debuggee terminating";}
-# END {
-#   $DB::step = 1; 
-#   print $OUT "Debuggee terminating.\n"; 
-#   &at_end::db;}
-# EOE
     }
+    $runnonstop = 0 if $single or $signal; # Disable it if interactive.
     &save;
-    if ($doret) {
-	$doret = 0;
-	if ($option{PrintRet}) {
-	    print $OUT "$retctx context return from $lastsub:", 
-	      ($retctx eq 'list') ? "\n" : " " ;
-	    dumpit( ($retctx eq 'list') ? \@ret : $ret );
-	}
-    }
     ($package, $filename, $line) = caller;
     $filename_ini = $filename;
     $usercontext = '($@, $!, $,, $/, $\, $^W) = @saved;' .
       "package $package;";	# this won't let them modify, alas
-    local(*dbline) = "::_<$filename";
-    install_breakpoints($filename) unless $visited{$filename}++;
+    local(*dbline) = $main::{'_<' . $filename};
     $max = $#dbline;
     if (($stop,$action) = split(/\0/,$dbline{$line})) {
 	if ($stop eq '1') {
@@ -293,7 +380,9 @@ sub DB {
 	    $dbline{$line} =~ s/;9($|\0)/$1/;
 	}
     }
-    if ($single || $trace || $signal) {
+    my $was_signal = $signal;
+    $signal = 0;
+    if ($single || $trace || $was_signal) {
 	$term || &setterm;
 	if ($emacs) {
 	    $position = "\032\032$filename:$line:0\n";
@@ -305,48 +394,60 @@ sub DB {
 	    $after = ($dbline[$line] =~ /\n$/ ? '' : "\n");
 	    if (length($prefix) > 30) {
 	        $position = "$prefix$line):\n$line:\t$dbline[$line]$after";
-		print $LINEINFO $position;
 		$prefix = "";
 		$infix = ":\t";
 	    } else {
 		$infix = "):\t";
 		$position = "$prefix$line$infix$dbline[$line]$after";
+	    }
+	    if ($frame) {
+		print $LINEINFO ' ' x $#stack, "$line:\t$dbline[$line]$after";
+	    } else {
 		print $LINEINFO $position;
 	    }
 	    for ($i = $line + 1; $i <= $max && $dbline[$i] == 0; ++$i) { #{ vi
 		last if $dbline[$i] =~ /^\s*[\;\}\#\n]/;
+		last if $signal;
 		$after = ($dbline[$i] =~ /\n$/ ? '' : "\n");
 		$incr_pos = "$prefix$i$infix$dbline[$i]$after";
-		print $LINEINFO $incr_pos;
 		$position .= $incr_pos;
+		if ($frame) {
+		    print $LINEINFO ' ' x $#stack, "$i:\t$dbline[$i]$after";
+		} else {
+		    print $LINEINFO $incr_pos;
+		}
 	    }
 	}
     }
     $evalarg = $action, &eval if $action;
-    if ($single || $signal) {
+    if ($single || $was_signal) {
 	local $level = $level + 1;
-	$evalarg = $pre, &eval if $pre;
+	foreach $evalarg (@$pre) {
+	  &eval;
+	}
 	print $OUT $#stack . " levels deep in subroutine calls!\n"
 	  if $single & 4;
 	$start = $line;
+	$incr = -1;		# for backward motion.
+	@typeahead = @$pretype, @typeahead;
       CMD:
 	while (($term || &setterm),
+	       ($term_pid == $$ or &resetterm),
 	       defined ($cmd=&readline("  DB" . ('<' x $level) .
 				       ($#hist+1) . ('>' x $level) .
 				       " "))) {
-	    #{			# <-- Do we know what this brace is for?
 		$single = 0;
 		$signal = 0;
 		$cmd =~ s/\\$/\n/ && do {
 		    $cmd .= &readline("  cont: ");
 		    redo CMD;
 		};
-		$cmd =~ /^q$/ && exit 0;
 		$cmd =~ /^$/ && ($cmd = $laststep);
 		push(@hist,$cmd) if length($cmd) > 1;
 	      PIPE: {
 		    ($i) = split(/\s+/,$cmd);
 		    eval "\$cmd =~ $alias{$i}", print $OUT $@ if $alias{$i};
+		    $cmd =~ /^q$/ && ($exiting = 1) && exit 0;
 		    $cmd =~ /^h$/ && do {
 			print $OUT $help;
 			next CMD; };
@@ -355,8 +456,10 @@ sub DB {
 			next CMD; };
 		    $cmd =~ /^h\s+(\S)$/ && do {
 			my $asked = "\Q$1";
-			if ($help =~ /^($asked([\s\S]*?)\n)(\Z|[^\s$asked])/m) {
+			if ($help =~ /^$asked/m) {
+			  while ($help =~ /^($asked([\s\S]*?)\n)(\Z|[^\s$asked])/mg) {
 			    print $OUT $1;
+			  }
 			} else {
 			    print $OUT "`$asked' is not a debugger command.\n";
 			}
@@ -373,6 +476,8 @@ sub DB {
 			    }
 			}
 			next CMD; };
+		    $cmd =~ /^v$/ && do {
+			list_versions(); next CMD};
 		    $cmd =~ s/^X\b/V $package/;
 		    $cmd =~ /^V$/ && do {
 			$cmd = "V $package"; };
@@ -383,6 +488,7 @@ sub DB {
 			do 'dumpvar.pl' unless defined &main::dumpvar;
 			if (defined &main::dumpvar) {
 			    local $frame = 0;
+			    local $doret = -2;
 			    &main::dumpvar($packname,@vars);
 			} else {
 			    print $OUT "dumpvar.pl not available.\n";
@@ -390,9 +496,14 @@ sub DB {
 			select ($savout);
 			next CMD; };
 		    $cmd =~ s/^x\b/ / && do { # So that will be evaled
-			$onetimeDump = 1; };
+			$onetimeDump = 'dump'; };
+		    $cmd =~ s/^m\s+([\w:]+)\s*$/ / && do {
+			methods($1); next CMD};
+		    $cmd =~ s/^m\b/ / && do { # So this will be evaled
+			$onetimeDump = 'methods'; };
 		    $cmd =~ /^f\b\s*(.*)/ && do {
 			$file = $1;
+			$file =~ s/\s+$//;
 			if (!$file) {
 			    print $OUT "The old f command is now the r command.\n";
 			    print $OUT "The new f command switches filenames.\n";
@@ -400,32 +511,37 @@ sub DB {
 			}
 			if (!defined $main::{'_<' . $file}) {
 			    if (($try) = grep(m#^_<.*$file#, keys %main::)) {{
-					      $file = substr($try,2);
-					      print "\n$file:\n";
+					      $try = substr($try,2);
+					      print $OUT "Choosing $try matching `$file':\n";
+					      $file = $try;
 					  }}
 			}
 			if (!defined $main::{'_<' . $file}) {
-			    print $OUT "There's no code here matching $file.\n";
+			    print $OUT "No file matching `$file' is loaded.\n";
 			    next CMD;
 			} elsif ($file ne $filename) {
-			    *dbline = "::_<$file";
-			    $visited{$file}++;
+			    *dbline = $main::{'_<' . $file};
 			    $max = $#dbline;
 			    $filename = $file;
 			    $start = 1;
 			    $cmd = "l";
-			} };
+			  } else {
+			    print $OUT "Already in $file.\n";
+			    next CMD;
+			  }
+		      };
+		    $cmd =~ s/^l\s+-\s*$/-/;
 		    $cmd =~ /^l\b\s*([\':A-Za-z_][\':\w]*)/ && do {
 			$subname = $1;
 			$subname =~ s/\'/::/;
-			$subname = "main::".$subname unless $subname =~ /::/;
+			$subname = $package."::".$subname 
+			  unless $subname =~ /::/;
 			$subname = "main".$subname if substr($subname,0,2) eq "::";
-			@pieces = split(/:/,$sub{$subname});
+			@pieces = split(/:/,find_sub($subname));
 			$subrange = pop @pieces;
 			$file = join(':', @pieces);
 			if ($file ne $filename) {
-			    *dbline = "::_<$file";
-			    $visited{$file}++;
+			    *dbline = $main::{'_<' . $file};
 			    $max = $#dbline;
 			    $filename = $file;
 			}
@@ -439,9 +555,10 @@ sub DB {
 			    next CMD;
 			} };
 		    $cmd =~ /^\.$/ && do {
+			$incr = -1;		# for backward motion.
 			$start = $line;
 			$filename = $filename_ini;
-			*dbline = "::_<$filename";
+			*dbline = $main::{'_<' . $filename};
 			$max = $#dbline;
 			print $LINEINFO $position;
 			next CMD };
@@ -452,8 +569,10 @@ sub DB {
 			#print $OUT 'l ' . $start . '-' . ($start + $incr);
 			$cmd = 'l ' . $start . '-' . ($start + $incr); };
 		    $cmd =~ /^-$/ && do {
+			$start -= $incr + $window + 1;
+			$start = 1 if $start <= 0;
 			$incr = $window - 1;
-			$cmd = 'l ' . ($start-$window*2) . '+'; };
+			$cmd = 'l ' . ($start) . '+'; };
 		    $cmd =~ /^l$/ && do {
 			$incr = $window - 1;
 			$cmd = 'l ' . $start . '-' . ($start + $incr); };
@@ -468,6 +587,7 @@ sub DB {
 			$i = $2;
 			$i = $line if $i eq '.';
 			$i = 1 if $i < 1;
+			$incr = $end - $i;
 			if ($emacs) {
 			    print $OUT "\032\032$filename:$i:0\n";
 			    $i = $end;
@@ -477,7 +597,7 @@ sub DB {
 			        $arrow = ($i==$line 
 					  and $filename eq $filename_ini) 
 				  ?  '==>' 
-				    : ':' ;
+				    : ($dbline[$i]+0 ? ':' : ' ') ;
 				$arrow .= 'b' if $stop;
 				$arrow .= 'a' if $action;
 				print $OUT "$i$arrow\t", $dbline[$i];
@@ -488,7 +608,13 @@ sub DB {
 			$start = $max if $start > $max;
 			next CMD; };
 		    $cmd =~ /^D$/ && do {
-			print $OUT "Deleting all breakpoints...\n";
+		      print $OUT "Deleting all breakpoints...\n";
+		      my $file;
+		      for $file (keys %had_breakpoints) {
+			local *dbline = $main::{'_<' . $file};
+			my $max = $#dbline;
+			my $was;
+			
 			for ($i = 1; $i <= $max ; $i++) {
 			    if (defined $dbline{$i}) {
 				$dbline{$i} =~ s/^[^\0]+//;
@@ -497,19 +623,89 @@ sub DB {
 				}
 			    }
 			}
-			next CMD; };
+		      }
+		      undef %postponed;
+		      undef %postponed_file;
+		      undef %break_on_load;
+		      undef %had_breakpoints;
+		      next CMD; };
 		    $cmd =~ /^L$/ && do {
+		      my $file;
+		      for $file (keys %had_breakpoints) {
+			local *dbline = $main::{'_<' . $file};
+			my $max = $#dbline;
+			my $was;
+			
 			for ($i = 1; $i <= $max; $i++) {
 			    if (defined $dbline{$i}) {
-				print $OUT "$i:\t", $dbline[$i];
+			        print "$file:\n" unless $was++;
+				print $OUT " $i:\t", $dbline[$i];
 				($stop,$action) = split(/\0/, $dbline{$i});
-				print $OUT "  break if (", $stop, ")\n"
+				print $OUT "   break if (", $stop, ")\n"
 				  if $stop;
-				print $OUT "  action:  ", $action, "\n"
+				print $OUT "   action:  ", $action, "\n"
 				  if $action;
 				last if $signal;
 			    }
 			}
+		      }
+		      if (%postponed) {
+			print $OUT "Postponed breakpoints in subroutines:\n";
+			my $subname;
+			for $subname (keys %postponed) {
+			  print $OUT " $subname\t$postponed{$subname}\n";
+			  last if $signal;
+			}
+		      }
+		      my @have = map { # Combined keys
+			keys %{$postponed_file{$_}}
+		      } keys %postponed_file;
+		      if (@have) {
+			print $OUT "Postponed breakpoints in files:\n";
+			my ($file, $line);
+			for $file (keys %postponed_file) {
+			  my $db = $postponed_file{$file};
+			  print $OUT " $file:\n";
+			  for $line (sort {$a <=> $b} keys %$db) {
+				print $OUT "  $line:\n";
+				my ($stop,$action) = split(/\0/, $$db{$line});
+				print $OUT "    break if (", $stop, ")\n"
+				  if $stop;
+				print $OUT "    action:  ", $action, "\n"
+				  if $action;
+				last if $signal;
+			  }
+			  last if $signal;
+			}
+		      }
+		      if (%break_on_load) {
+			print $OUT "Breakpoints on load:\n";
+			my $file;
+			for $file (keys %break_on_load) {
+			  print $OUT " $file\n";
+			  last if $signal;
+			}
+		      }
+		      next CMD; };
+		    $cmd =~ /^b\b\s*load\b\s*(.*)/ && do {
+			my $file = $1; $file =~ s/\s+$//;
+			{
+			  $break_on_load{$file} = 1;
+			  $break_on_load{$::INC{$file}} = 1 if $::INC{$file};
+			  $file .= '.pm', redo unless $file =~ /\./;
+			}
+			$had_breakpoints{$file} = 1;
+			print $OUT "Will stop on load of `@{[join '\', `', sort keys %break_on_load]}'.\n";
+			next CMD; };
+		    $cmd =~ /^b\b\s*(postpone|compile)\b\s*([':A-Za-z_][':\w]*)\s*(.*)/ && do {
+			my $cond = $3 || '1';
+			my ($subname, $break) = ($2, $1 eq 'postpone');
+			$subname =~ s/\'/::/;
+			$subname = "${'package'}::" . $subname
+			  unless $subname =~ /::/;
+			$subname = "main".$subname if substr($subname,0,2) eq "::";
+			$postponed{$subname} = $break 
+			  ? "break +0 if $cond" : "compile";
 			next CMD; };
 		    $cmd =~ /^b\b\s*([':A-Za-z_][':\w]*)\s*(.*)/ && do {
 			$subname = $1;
@@ -519,12 +715,12 @@ sub DB {
 			  unless $subname =~ /::/;
 			$subname = "main".$subname if substr($subname,0,2) eq "::";
 			# Filename below can contain ':'
-			($file,$i) = ($sub{$subname} =~ /^(.*):(.*)$/);
+			($file,$i) = (find_sub($subname) =~ /^(.*):(.*)$/);
 			$i += 0;
 			if ($i) {
 			    $filename = $file;
-			    *dbline = "::_<$filename";
-			    $visited{$filename}++;
+			    *dbline = $main::{'_<' . $filename};
+			    $had_breakpoints{$filename} = 1;
 			    $max = $#dbline;
 			    ++$i while $dbline[$i] == 0 && $i < $max;
 			    $dbline{$i} =~ s/^[^\0]*/$cond/;
@@ -538,6 +734,7 @@ sub DB {
 			if ($dbline[$i] == 0) {
 			    print $OUT "Line $i not breakable.\n";
 			} else {
+			    $had_breakpoints{$filename} = 1;
 			    $dbline{$i} =~ s/^[^\0]*/$cond/;
 			}
 			next CMD; };
@@ -547,13 +744,20 @@ sub DB {
 			delete $dbline{$i} if $dbline{$i} eq '';
 			next CMD; };
 		    $cmd =~ /^A$/ && do {
+		      my $file;
+		      for $file (keys %had_breakpoints) {
+			local *dbline = $main::{'_<' . $file};
+			my $max = $#dbline;
+			my $was;
+			
 			for ($i = 1; $i <= $max ; $i++) {
 			    if (defined $dbline{$i}) {
 				$dbline{$i} =~ s/\0[^\0]*//;
 				delete $dbline{$i} if $dbline{$i} eq '';
 			    }
 			}
-			next CMD; };
+		      }
+		      next CMD; };
 		    $cmd =~ /^O\s*$/ && do {
 			for (@options) {
 			    &dump_option($_);
@@ -562,11 +766,26 @@ sub DB {
 		    $cmd =~ /^O\s*(\S.*)/ && do {
 			parse_options($1);
 			next CMD; };
+		    $cmd =~ /^\<\<\s*(.*)/ && do { # \<\< for CPerl sake: not HERE
+			push @$pre, action($1);
+			next CMD; };
+		    $cmd =~ /^>>\s*(.*)/ && do {
+			push @$post, action($1);
+			next CMD; };
 		    $cmd =~ /^<\s*(.*)/ && do {
-			$pre = action($1);
+		        $pre = [], next CMD unless $1;
+			$pre = [action($1)];
 			next CMD; };
 		    $cmd =~ /^>\s*(.*)/ && do {
-			$post = action($1);
+		        $post = [], next CMD unless $1;
+			$post = [action($1)];
+			next CMD; };
+		    $cmd =~ /^\{\{\s*(.*)/ && do {
+			push @$pretype, $1;
+			next CMD; };
+		    $cmd =~ /^\{\s*(.*)/ && do {
+		        $pretype = [], next CMD unless $1;
+			$pretype = [$1];
 			next CMD; };
 		    $cmd =~ /^a\b\s*(\d+)(\s+(.*))?/ && do {
 			$i = $1; $j = $3;
@@ -578,22 +797,27 @@ sub DB {
 			}
 			next CMD; };
 		    $cmd =~ /^n$/ && do {
+		        end_report(), next CMD if $finished and $level <= 1;
 			$single = 2;
 			$laststep = $cmd;
 			last CMD; };
 		    $cmd =~ /^s$/ && do {
+		        end_report(), next CMD if $finished and $level <= 1;
 			$single = 1;
 			$laststep = $cmd;
 			last CMD; };
 		    $cmd =~ /^c\b\s*([\w:]*)\s*$/ && do {
-			$i = $1;
+		        end_report(), next CMD if $finished and $level <= 1;
+			$subname = $i = $1;
 			if ($i =~ /\D/) { # subroutine name
-			    ($file,$i) = ($sub{$i} =~ /^(.*):(.*)$/);
+			    $subname = $package."::".$subname 
+			        unless $subname =~ /::/;
+			    ($file,$i) = (find_sub($subname) =~ /^(.*):(.*)$/);
 			    $i += 0;
 			    if ($i) {
 			        $filename = $file;
-				*dbline = "::_<$filename";
-				$visited{$filename}++;
+				*dbline = $main::{'_<' . $filename};
+				$had_breakpoints{$filename}++;
 				$max = $#dbline;
 				++$i while $dbline[$i] == 0 && $i < $max;
 			    } else {
@@ -613,11 +837,12 @@ sub DB {
 			}
 			last CMD; };
 		    $cmd =~ /^r$/ && do {
+		        end_report(), next CMD if $finished and $level <= 1;
 			$stack[$#stack] |= 1;
-			$doret = 1;
+			$doret = $option{PrintRet} ? $#stack - 1 : -2;
 			last CMD; };
 		    $cmd =~ /^R$/ && do {
-		        print $OUT "Warning: a lot of settings and command-line options may be lost!\n";
+		        print $OUT "Warning: some settings and command-line options may be lost!\n";
 			my (@script, @flags, $cl);
 			push @flags, '-w' if $ini_warn;
 			# Put all the old includes at the start to get
@@ -638,52 +863,67 @@ sub DB {
 			set_list("PERLDB_HIST", 
 				 $term->Features->{getHistory} 
 				 ? $term->GetHistory : @hist);
-			my @visited = keys %visited;
-			set_list("PERLDB_VISITED", @visited);
+			my @had_breakpoints = keys %had_breakpoints;
+			set_list("PERLDB_VISITED", @had_breakpoints);
 			set_list("PERLDB_OPT", %option);
-			for (0 .. $#visited) {
-			  *dbline = "::_<$visited[$_]";
-			  set_list("PERLDB_FILE_$_", %dbline);
+			set_list("PERLDB_ON_LOAD", %break_on_load);
+			my @hard;
+			for (0 .. $#had_breakpoints) {
+			  my $file = $had_breakpoints[$_];
+			  *dbline = $main::{'_<' . $file};
+			  next unless %dbline or $postponed_file{$file};
+			  (push @hard, $file), next 
+			    if $file =~ /^\(eval \d+\)$/;
+			  my @add;
+			  @add = %{$postponed_file{$file}}
+			    if $postponed_file{$file};
+			  set_list("PERLDB_FILE_$_", %dbline, @add);
 			}
+			for (@hard) { # Yes, really-really...
+			  # Find the subroutines in this eval
+			  *dbline = $main::{'_<' . $_};
+			  my ($quoted, $sub, %subs, $line) = quotemeta $_;
+			  for $sub (keys %sub) {
+			    next unless $sub{$sub} =~ /^$quoted:(\d+)-(\d+)$/;
+			    $subs{$sub} = [$1, $2];
+			  }
+			  unless (%subs) {
+			    print $OUT
+			      "No subroutines in $_, ignoring breakpoints.\n";
+			    next;
+			  }
+			LINES: for $line (keys %dbline) {
+			    # One breakpoint per sub only:
+			    my ($offset, $sub, $found);
+			  SUBS: for $sub (keys %subs) {
+			      if ($subs{$sub}->[1] >= $line # Not after the subroutine
+				  and (not defined $offset # Not caught
+				       or $offset < 0 )) { # or badly caught
+				$found = $sub;
+				$offset = $line - $subs{$sub}->[0];
+				$offset = "+$offset", last SUBS if $offset >= 0;
+			      }
+			    }
+			    if (defined $offset) {
+			      $postponed{$found} =
+				"break $offset if $dbline{$line}";
+			    } else {
+			      print $OUT "Breakpoint in $_:$line ignored: after all the subroutines.\n";
+			    }
+			  }
+			}
+			set_list("PERLDB_POSTPONE", %postponed);
+			set_list("PERLDB_PRETYPE", @$pretype);
+			set_list("PERLDB_PRE", @$pre);
+			set_list("PERLDB_POST", @$post);
+			set_list("PERLDB_TYPEAHEAD", @typeahead);
 			$ENV{PERLDB_RESTART} = 1;
 			#print "$^X, '-d', @flags, @script, ($emacs ? '-emacs' : ()), @ARGS";
 			exec $^X, '-d', @flags, @script, ($emacs ? '-emacs' : ()), @ARGS;
 			print $OUT "exec failed: $!\n";
 			last CMD; };
 		    $cmd =~ /^T$/ && do {
-			local($p,$f,$l,$s,$h,$a,$e,$r,@a,@sub);
-			for ($i = 1; 
-			     ($p,$f,$l,$s,$h,$w,$e,$r) = caller($i); 
-			     $i++) {
-			    @a = ();
-			    for $arg (@args) {
-				$_ = "$arg";
-				s/([\'\\])/\\$1/g;
-				s/([^\0]*)/'$1'/
-				  unless /^(?: -?[\d.]+ | \*[\w:]* )$/x;
-				s/([\200-\377])/sprintf("M-%c",ord($1)&0177)/eg;
-				s/([\0-\37\177])/sprintf("^%c",ord($1)^64)/eg;
-				push(@a, $_);
-			    }
-			    $w = $w ? '@ = ' : '$ = ';
-			    $a = $h ? '(' . join(', ', @a) . ')' : '';
-			    $e =~ s/\n\s*\;\s*\Z// if $e;
-			    $e =~ s/[\\\']/\\$1/g if $e;
-			    if ($r) {
-			      $s = "require '$e'";
-			    } elsif (defined $r) {
-			      $s = "eval '$e'";
-			    } elsif ($s eq '(eval)') {
-			      $s = "eval {...}";
-			    }
-			    $f = "file `$f'" unless $f eq '-e';
-			    push(@sub, "$w$s$a called from $f line $l\n");
-			    last if $signal;
-			}
-			for ($i=0; $i <= $#sub; $i++) {
-			    last if $signal;
-			    print $OUT $sub[$i];
-			}
+			print_trace($OUT, 1); # skip DB
 			next CMD; };
 		    $cmd =~ /^\/(.*)$/ && do {
 			$inpat = $1;
@@ -697,6 +937,7 @@ sub DB {
 			    $pat = $inpat;
 			}
 			$end = $start;
+			$incr = -1;
 			eval '
 			    for (;;) {
 				++$start;
@@ -725,6 +966,7 @@ sub DB {
 			    $pat = $inpat;
 			}
 			$end = $start;
+			$incr = -1;
 			eval '
 			    for (;;) {
 				--$start;
@@ -747,8 +989,8 @@ sub DB {
 			$cmd = $hist[$i] . "\n";
 			print $OUT $cmd;
 			redo CMD; };
-		    $cmd =~ /^$sh$sh\s*/ && do {
-			&system($');
+		    $cmd =~ /^$sh$sh\s*([\x00-\xff]*)/ && do {
+			&system($1);
 			next CMD; };
 		    $cmd =~ /^$rc([^$rc].*)$/ && do {
 			$pat = "^$1";
@@ -766,8 +1008,8 @@ sub DB {
 		    $cmd =~ /^$sh$/ && do {
 			&system($ENV{SHELL}||"/bin/sh");
 			next CMD; };
-		    $cmd =~ /^$sh\s*/ && do {
-			&system($ENV{SHELL}||"/bin/sh","-c",$');
+		    $cmd =~ /^$sh\s*([\x00-\xff]*)/ && do {
+			&system($ENV{SHELL}||"/bin/sh","-c",$1);
 			next CMD; };
 		    $cmd =~ /^H\b\s*(-(\d+))?/ && do {
 			$end = $2?($#hist-$2):0;
@@ -777,8 +1019,8 @@ sub DB {
 			      unless $hist[$i] =~ /^.?$/;
 			};
 			next CMD; };
-		    $cmd =~ s/^p$/print \$DB::OUT \$_/;
-		    $cmd =~ s/^p\b/print \$DB::OUT /;
+		    $cmd =~ s/^p$/print {\$DB::OUT} \$_/;
+		    $cmd =~ s/^p\b/print {\$DB::OUT} /;
 		    $cmd =~ /^=/ && do {
 			if (local($k,$v) = ($cmd =~ /^=\s*(\S+)\s+(.*)/)) {
 			    $alias{$k}="s~$k~$v~";
@@ -812,7 +1054,7 @@ sub DB {
 			    }
 			    next CMD;
 			}
-			$SIG{PIPE}= "DB::catch" if $pager =~ /^\|/
+			$SIG{PIPE}= \&DB::catch if $pager =~ /^\|/
 			  && "" eq $SIG{PIPE}  ||  "DEFAULT" eq $SIG{PIPE};
 			$selected= select(OUT);
 			$|= 1;
@@ -824,11 +1066,10 @@ sub DB {
 		    $cmd =~ s/^s\s/\$DB::single = 1;\n/ && do {$laststep = 's'};
 		    $cmd =~ s/^n\s/\$DB::single = 2;\n/ && do {$laststep = 'n'};
 		}		# PIPE:
-	    #}			# <-- Do we know what this brace is for?
 	    $evalarg = "\$^D = \$^D | \$DB::db_stop;\n$cmd"; &eval;
 	    if ($onetimeDump) {
 		$onetimeDump = undef;
-	    } else {
+	    } elsif ($term_pid == $$) {
 		print $OUT "\n";
 	    }
 	} continue {		# CMD:
@@ -841,7 +1082,7 @@ sub DB {
 			  ( $? & 127 ) ? " (SIG ".($?&127).")" : "", "\n" ) if $?;
 		    open(OUT,">&STDOUT") || &warn("Can't restore DB::OUT");
 		    open(STDOUT,">&SAVEOUT") || &warn("Can't restore STDOUT");
-		    $SIG{PIPE}= "DEFAULT" if $SIG{PIPE} eq "DB::catch";
+		    $SIG{PIPE}= "DEFAULT" if $SIG{PIPE} eq \&DB::catch;
 		    # Will stop ignoring SIGPIPE if done like nohup(1)
 		    # does SIGINT but Perl doesn't give us a choice.
 		} else {
@@ -852,8 +1093,9 @@ sub DB {
 		$piped= "";
 	    }
 	}			# CMD:
-	if ($post) {
-	    $evalarg = $post; &eval;
+	$exiting = 1 unless defined $cmd;
+	foreach $evalarg (@$post) {
+	  &eval;
 	}
     }				# if ($single || $signal)
     ($@, $!, $,, $/, $\, $^W) = @saved;
@@ -864,23 +1106,43 @@ sub DB {
 # BEGIN {warn 4}
 
 sub sub {
-    print $LINEINFO ' ' x $#stack, "entering $sub\n" if $frame;
+    my ($al, $ret, @ret) = "";
+    if (length($sub) > 10 && substr($sub, -10, 10) eq '::AUTOLOAD') {
+	$al = " for $$sub";
+    }
     push(@stack, $single);
     $single &= 1;
     $single |= 4 if $#stack == $deep;
+    ($frame & 4 
+     ? ( (print $LINEINFO ' ' x ($#stack - 1), "in  "), 
+	 # Why -1? But it works! :-(
+	 print_trace($LINEINFO, -1, 1, 1, "$sub$al") )
+     : print $LINEINFO ' ' x ($#stack - 1), "entering $sub$al\n") if $frame;
     if (wantarray) {
 	@ret = &$sub;
 	$single |= pop(@stack);
-	$retctx = "list";
-	$lastsub = $sub;
-print $LINEINFO ' ' x $#stack, "exited $sub\n" if $frame;
+	($frame & 4 
+	 ? ( (print $LINEINFO ' ' x $#stack, "out "), 
+	     print_trace($LINEINFO, -1, 1, 1, "$sub$al") )
+	 : print $LINEINFO ' ' x $#stack, "exited $sub$al\n") if $frame & 2;
+	print ($OUT ($frame & 16 ? ' ' x $#stack : ""),
+		    "list context return from $sub:\n"), dumpit( \@ret ),
+	  $doret = -2 if $doret eq $#stack or $frame & 16;
 	@ret;
     } else {
-	$ret = &$sub;
+        if (defined wantarray) {
+	    $ret = &$sub;
+        } else {
+            &$sub; undef $ret;
+        };
 	$single |= pop(@stack);
-	$retctx = "scalar";
-	$lastsub = $sub;
-print $LINEINFO ' ' x $#stack, "exited $sub\n" if $frame;
+	($frame & 4 
+	 ? ( (print $LINEINFO ' ' x $#stack, "out "), 
+	      print_trace($LINEINFO, -1, 1, 1, "$sub$al") )
+	 : print $LINEINFO ' ' x $#stack, "exited $sub$al\n") if $frame & 2;
+	print ($OUT ($frame & 16 ? ' ' x $#stack : ""),
+		    "scalar context return from $sub: "), dumpit( $ret ),
+	  $doret = -2 if $doret eq $#stack or $frame & 16;
 	$ret;
     }
 }
@@ -905,36 +1167,159 @@ sub eval {
 	$^D = $od;
     }
     my $at = $@;
+    local $saved[0];		# Preserve the old value of $@
     eval "&DB::save";
     if ($at) {
 	print $OUT $at;
-    } elsif ($onetimeDump) {
+    } elsif ($onetimeDump eq 'dump') {
 	dumpit(\@res);
+    } elsif ($onetimeDump eq 'methods') {
+	methods($res[0]);
     }
 }
 
-sub install_breakpoints {
-  my $filename = shift;
-  return unless exists $postponed{$filename};
-  my %break = %{$postponed{$filename}};
-  for (keys %break) {
-    my $i = $_;
-    #if (/\D/) {			# Subroutine name
-    #} 
-    $dbline{$i} = $break{$_};	# Cannot be done before the file is around
+sub postponed_sub {
+  my $subname = shift;
+  if ($postponed{$subname} =~ s/^break\s([+-]?\d+)\s+if\s//) {
+    my $offset = $1 || 0;
+    # Filename below can contain ':'
+    my ($file,$i) = (find_sub($subname) =~ /^(.*):(\d+)-.*$/);
+    if ($i) {
+      $i += $offset;
+      local *dbline = $main::{'_<' . $file};
+      local $^W = 0;		# != 0 is magical below
+      $had_breakpoints{$file}++;
+      my $max = $#dbline;
+      ++$i until $dbline[$i] != 0 or $i >= $max;
+      $dbline{$i} = delete $postponed{$subname};
+    } else {
+      print $OUT "Subroutine $subname not found.\n";
+    }
+    return;
   }
+  elsif ($postponed{$subname} eq 'compile') { $signal = 1 }
+  #print $OUT "In postponed_sub for `$subname'.\n";
+}
+
+sub postponed {
+  return &postponed_sub
+    unless ref \$_[0] eq 'GLOB'; # A subroutine is compiled.
+  # Cannot be done before the file is compiled
+  local *dbline = shift;
+  my $filename = $dbline;
+  $filename =~ s/^_<//;
+  $signal = 1, print $OUT "'$filename' loaded...\n"
+    if $break_on_load{$filename};
+  print $LINEINFO ' ' x $#stack, "Package $filename.\n" if $frame;
+  return unless $postponed_file{$filename};
+  $had_breakpoints{$filename}++;
+  #%dbline = %{$postponed_file{$filename}}; # Cannot be done: unsufficient magic
+  my $key;
+  for $key (keys %{$postponed_file{$filename}}) {
+    $dbline{$key} = $ {$postponed_file{$filename}}{$key};
+  }
+  delete $postponed_file{$filename};
 }
 
 sub dumpit {
     local ($savout) = select($OUT);
-    do 'dumpvar.pl' unless defined &main::dumpValue;
+    my $osingle = $single;
+    my $otrace = $trace;
+    $single = $trace = 0;
+    local $frame = 0;
+    local $doret = -2;
+    unless (defined &main::dumpValue) {
+	do 'dumpvar.pl';
+    }
     if (defined &main::dumpValue) {
-        local $frame = 0;
 	&main::dumpValue(shift);
     } else {
 	print $OUT "dumpvar.pl not available.\n";
     }
+    $single = $osingle;
+    $trace = $otrace;
     select ($savout);    
+}
+
+# Tied method do not create a context, so may get wrong message:
+
+sub print_trace {
+  my $fh = shift;
+  my @sub = dump_trace($_[0] + 1, $_[1]);
+  my $short = $_[2];		# Print short report, next one for sub name
+  my $s;
+  for ($i=0; $i <= $#sub; $i++) {
+    last if $signal;
+    local $" = ', ';
+    my $args = defined $sub[$i]{args} 
+    ? "(@{ $sub[$i]{args} })"
+      : '' ;
+    $args = (substr $args, 0, $maxtrace - 3) . '...' 
+      if length $args > $maxtrace;
+    my $file = $sub[$i]{file};
+    $file = $file eq '-e' ? $file : "file `$file'" unless $short;
+    $s = $sub[$i]{sub};
+    $s = (substr $s, 0, $maxtrace - 3) . '...' if length $s > $maxtrace;    
+    if ($short) {
+      my $sub = @_ >= 4 ? $_[3] : $s;
+      print $fh "$sub[$i]{context}=$sub$args from $file:$sub[$i]{line}\n";
+    } else {
+      print $fh "$sub[$i]{context} = $s$args" .
+	" called from $file" . 
+	  " line $sub[$i]{line}\n";
+    }
+  }
+}
+
+sub dump_trace {
+  my $skip = shift;
+  my $count = shift || 1e9;
+  $skip++;
+  $count += $skip;
+  my ($p,$file,$line,$sub,$h,$args,$e,$r,@a,@sub,$context);
+  my $nothard = not $frame & 8;
+  local $frame = 0;		# Do not want to trace this.
+  my $otrace = $trace;
+  $trace = 0;
+  for ($i = $skip; 
+       $i < $count and ($p,$file,$line,$sub,$h,$context,$e,$r) = caller($i); 
+       $i++) {
+    @a = ();
+    for $arg (@args) {
+      my $type;
+      if (not defined $arg) {
+	push @a, "undef";
+      } elsif ($nothard and tied $arg) {
+	push @a, "tied";
+      } elsif ($nothard and $type = ref $arg) {
+	push @a, "ref($type)";
+      } else {
+	local $_ = "$arg";	# Safe to stringify now - should not call f().
+	s/([\'\\])/\\$1/g;
+	s/(.*)/'$1'/s
+	  unless /^(?: -?[\d.]+ | \*[\w:]* )$/x;
+	s/([\200-\377])/sprintf("M-%c",ord($1)&0177)/eg;
+	s/([\0-\37\177])/sprintf("^%c",ord($1)^64)/eg;
+	push(@a, $_);
+      }
+    }
+    $context = $context ? '@' : "\$";
+    $args = $h ? [@a] : undef;
+    $e =~ s/\n\s*\;\s*\Z// if $e;
+    $e =~ s/([\\\'])/\\$1/g if $e;
+    if ($r) {
+      $sub = "require '$e'";
+    } elsif (defined $r) {
+      $sub = "eval '$e'";
+    } elsif ($sub eq '(eval)') {
+      $sub = "eval {...}";
+    }
+    push(@sub, {context => $context, sub => $sub, args => $args,
+		file => $file, line => $line});
+    last if $signal;
+  }
+  $trace = $otrace;
+  @sub;
 }
 
 sub action {
@@ -972,7 +1357,9 @@ sub system {
 
 sub setterm {
     local $frame = 0;
-    eval "require Term::ReadLine;" or die $@;
+    local $doret = -2;
+    local @stack = @stack;		# Prevent growth by failing `use'.
+    eval { require Term::ReadLine } or die $@;
     if ($notty) {
 	if ($tty) {
 	    open(IN,"<$tty") or die "Cannot open TTY `$TTY' for read: $!";
@@ -995,15 +1382,43 @@ sub setterm {
     } else {
 	$term = new Term::ReadLine 'perldb', $IN, $OUT;
 
-	$readline::rl_basic_word_break_characters .= "[:" 
-	  if defined $readline::rl_basic_word_break_characters 
-	    and index($readline::rl_basic_word_break_characters, ":") == -1;
+	$rl_attribs = $term->Attribs;
+	$rl_attribs->{basic_word_break_characters} .= '-:+/*,[])}' 
+	  if defined $rl_attribs->{basic_word_break_characters} 
+	    and index($rl_attribs->{basic_word_break_characters}, ":") == -1;
+	$rl_attribs->{special_prefixes} = '$@&%';
+	$rl_attribs->{completer_word_break_characters} .= '$@&%';
+	$rl_attribs->{completion_function} = \&db_complete; 
     }
     $LINEINFO = $OUT unless defined $LINEINFO;
     $lineinfo = $console unless defined $lineinfo;
     $term->MinLine(2);
     if ($term->Features->{setHistory} and "@hist" ne "?") {
       $term->SetHistory(@hist);
+    }
+    ornaments($ornaments) if defined $ornaments;
+    $term_pid = $$;
+}
+
+sub resetterm {			# We forked, so we need a different TTY
+    $term_pid = $$;
+    if (defined &get_fork_TTY) {
+      &get_fork_TTY;
+    } elsif (not defined $fork_TTY 
+	     and defined $ENV{TERM} and $ENV{TERM} eq 'xterm' 
+	     and defined $ENV{WINDOWID} and defined $ENV{DISPLAY}) { 
+        # Possibly _inside_ XTERM
+        open XT, q[3>&1 xterm -title 'Forked Perl debugger' -e sh -c 'tty 1>&3;\
+ sleep 10000000' |];
+        $fork_TTY = <XT>;
+        chomp $fork_TTY;
+    }
+    if (defined $fork_TTY) {
+      TTY($fork_TTY);
+      undef $fork_TTY;
+    } else {
+      print $OUT "Forked, but do not know how to change a TTY.\n",
+          "Define \$DB::fork_TTY or get_fork_TTY().\n";
     }
 }
 
@@ -1017,11 +1432,20 @@ sub readline {
     return $got;
   }
   local $frame = 0;
+  local $doret = -2;
   $term->readline(@_);
 }
 
 sub dump_option {
     my ($opt, $val)= @_;
+    $val = option_val($opt,'N/A');
+    $val =~ s/([\\\'])/\\$1/g;
+    printf $OUT "%20s = '%s'\n", $opt, $val;
+}
+
+sub option_val {
+    my ($opt, $default)= @_;
+    my $val;
     if (defined $optionVars{$opt}
 	and defined $ {$optionVars{$opt}}) {
 	$val = $ {$optionVars{$opt}};
@@ -1032,12 +1456,11 @@ sub dump_option {
 	     and not defined $option{$opt}
 	     or defined $optionVars{$opt}
 	     and not defined $ {$optionVars{$opt}}) {
-	$val = 'N/A';
+	$val = $default;
     } else {
 	$val = $option{$opt};
     }
-    $val =~ s/[\\\']/\\$&/g;
-    printf $OUT "%20s = '%s'\n", $opt, $val;
+    $val
 }
 
 sub parse_options {
@@ -1070,7 +1493,8 @@ sub parse_options {
 	print $OUT "Unknown option `$opt'\n" unless $matches;
 	print $OUT "Ambiguous option `$opt'\n" if $matches > 1;
 	$option{$option} = $val if $matches == 1 and defined $val;
-	eval "local \$frame = 0; require '$optionRequire{$option}'"
+	eval "local \$frame = 0; local \$doret = -2; 
+	      require '$optionRequire{$option}'"
 	  if $matches == 1 and defined $optionRequire{$option} and defined $val;
 	$ {$optionVars{$option}} = $val 
 	  if $matches == 1
@@ -1091,7 +1515,7 @@ sub set_list {
   for $i (0 .. $#list) {
     $val = $list[$i];
     $val =~ s/\\/\\\\/g;
-    $val =~ s/[\0-\37\177\200-\377]/"\\0x" . unpack('H2',$&)/eg;
+    $val =~ s/([\0-\37\177\200-\377])/"\\0x" . unpack('H2',$1)/eg;
     $ENV{"$ {stem}_$i"} = $val;
   }
 }
@@ -1111,6 +1535,7 @@ sub get_list {
 
 sub catch {
     $signal = 1;
+    return;			# Put nothing on the stack - malloc/free land!
 }
 
 sub warn {
@@ -1120,38 +1545,56 @@ sub warn {
 }
 
 sub TTY {
-    if ($term) {
-	&warn("Too late to set TTY!\n") if @_;
-    } else {
-	$tty = shift if @_;
-    }
+    if (@_ and $term and $term->Features->{newTTY}) {
+      my ($in, $out) = shift;
+      if ($in =~ /,/) {
+	($in, $out) = split /,/, $in, 2;
+      } else {
+	$out = $in;
+      }
+      open IN, $in or die "cannot open `$in' for read: $!";
+      open OUT, ">$out" or die "cannot open `$out' for write: $!";
+      $term->newTTY(\*IN, \*OUT);
+      $IN	= \*IN;
+      $OUT	= \*OUT;
+      return $tty = $in;
+    } elsif ($term and @_) {
+	&warn("Too late to set TTY, enabled on next `R'!\n");
+    } 
+    $tty = shift if @_;
     $tty or $console;
 }
 
 sub noTTY {
     if ($term) {
-	&warn("Too late to set noTTY!\n") if @_;
-    } else {
-	$notty = shift if @_;
+	&warn("Too late to set noTTY, enabled on next `R'!\n") if @_;
     }
+    $notty = shift if @_;
     $notty;
 }
 
 sub ReadLine {
     if ($term) {
-	&warn("Too late to set ReadLine!\n") if @_;
-    } else {
-	$rl = shift if @_;
+	&warn("Too late to set ReadLine, enabled on next `R'!\n") if @_;
     }
+    $rl = shift if @_;
     $rl;
+}
+
+sub tkRunning {
+    if ($ {$term->Features}{tkRunning}) {
+        return $term->tkRunning(@_);
+    } else {
+	print $OUT "tkRunning not supported by current ReadLine package.\n";
+	0;
+    }
 }
 
 sub NonStop {
     if ($term) {
-	&warn("Too late to set up NonStop mode!\n") if @_;
-    } else {
-	$runnonstop = shift if @_;
+	&warn("Too late to set up NonStop mode, enabled on next `R'!\n") if @_;
     }
+    $runnonstop = shift if @_;
     $runnonstop;
 }
 
@@ -1173,6 +1616,16 @@ sub shellBang {
     $psh =~ s/\\(.)/$1/g;
     &sethelp;
     $psh;
+}
+
+sub ornaments {
+  if (defined $term) {
+    local ($warnLevel,$dieLevel) = (0, 1);
+    return '' unless $term->Features->{ornaments};
+    eval { $term->ornaments(@_) } || '';
+  } else {
+    $ornaments = shift;
+  }
 }
 
 sub recallCommand {
@@ -1200,6 +1653,29 @@ sub LineInfo {
     $lineinfo;
 }
 
+sub list_versions {
+  my %version;
+  my $file;
+  for (keys %INC) {
+    $file = $_;
+    s,\.p[lm]$,,i ;
+    s,/,::,g ;
+    s/^perl5db$/DB/;
+    s/^Term::ReadLine::readline$/readline/;
+    if (defined $ { $_ . '::VERSION' }) {
+      $version{$file} = "$ { $_ . '::VERSION' } from ";
+    } 
+    $version{$file} .= $INC{$file};
+  }
+  do 'dumpvar.pl' unless defined &main::dumpValue;
+  if (defined &main::dumpValue) {
+    local $frame = 0;
+    &main::dumpValue(\%version);
+  } else {
+    print $OUT "dumpvar.pl not available.\n";
+  }
+}
+
 sub sethelp {
     $help = "
 T		Stack trace.
@@ -1207,8 +1683,8 @@ s [expr]	Single step [in expr].
 n [expr]	Next, steps over subroutine calls [in expr].
 <CR>		Repeat last n or s command.
 r		Return from current subroutine.
-c [line]	Continue; optionally inserts a one-time-only breakpoint
-		at the specified line.
+c [line|sub]	Continue; optionally inserts a one-time-only breakpoint
+		at the specified position.
 l min+incr	List incr+1 lines starting at min.
 l min-max	List lines min through max.
 l line		List single line.
@@ -1217,10 +1693,10 @@ l		List next window of lines.
 -		List previous window of lines.
 w [line]	List window around line.
 .		Return to the executed line.
-f filename	Switch to viewing filename.
+f filename	Switch to viewing filename. Must be loaded.
 /pattern/	Search forwards for pattern; final / is optional.
 ?pattern?	Search backwards for pattern; final ? is optional.
-L		List all breakpoints and actions for the current file.
+L		List all breakpoints and actions.
 S [[!]pattern]	List subroutine names [not] matching pattern.
 t		Toggle trace mode.
 t expr		Trace through execution of expr.
@@ -1229,6 +1705,12 @@ b [line] [condition]
 		condition breaks if it evaluates to true, defaults to '1'.
 b subname [condition]
 		Set breakpoint at first line of subroutine.
+b load filename Set breakpoint on `require'ing the given file.
+b postpone subname [condition]
+		Set breakpoint at first line of subroutine after 
+		it is compiled.
+b compile subname
+		Stop after the subroutine is compiled.
 d [line]	Delete the breakpoint for line.
 D		Delete all breakpoints.
 a [line] command
@@ -1240,11 +1722,17 @@ V [pkg [vars]]	List some (default all) variables in package (default current).
 		Use ~pattern and !pattern for positive and negative regexps.
 X [vars]	Same as \"V currentpackage [vars]\".
 x expr		Evals expression in array context, dumps the result.
+m expr		Evals expression in array context, prints methods callable
+		on the first element of the result.
+m class		Prints methods callable via the given class.
 O [opt[=val]] [opt\"val\"] [opt?]...
 		Set or query values of options.  val defaults to 1.  opt can
 		be abbreviated.  Several options can be listed.
     recallCommand, ShellBang:	chars used to recall command or spawn shell;
     pager:			program for output of \"|cmd\";
+    tkRunning:			run Tk while prompting (with ReadLine);
+    signalLevel warnLevel dieLevel:	level of verbosity;
+    inhibit_exit		Allows stepping off the end of the script.
   The following options affect what happens with V, X, and x commands:
     arrayDepth, hashDepth:	print only first N elements ('' for all);
     compactDump, veryCompact:	change style of array and hash dump;
@@ -1252,15 +1740,20 @@ O [opt[=val]] [opt\"val\"] [opt?]...
     DumpDBFiles:		dump arrays holding debugged files;
     DumpPackages:		dump symbol tables of packages;
     quote, HighBit, undefPrint:	change style of string dump;
-    tkRunning:			run Tk while prompting (with ReadLine);
-    signalLevel warnLevel dieLevel:	level of verbosity;
   Option PrintRet affects printing of return value after r command,
          frame    affects printing messages on entry and exit from subroutines.
+         AutoTrace affects printing messages on every possible breaking point.
+	 maxTraceLen gives maximal length of evals/args listed in stack trace.
+	 ornaments affects screen appearance of the command line.
 		During startup options are initialized from \$ENV{PERLDB_OPTS}.
 		You can put additional initialization options TTY, noTTY,
-		ReadLine, and NonStop there.
-< command	Define command to run before each prompt.
-> command	Define command to run after each prompt.
+		ReadLine, and NonStop there (or use `R' after you set them).
+< command	Define Perl command to run before each prompt.
+<< command	Add to the list of Perl commands to run before each prompt.
+> command	Define Perl command to run after each prompt.
+>> command	Add to the list of Perl commands to run after each prompt.
+\{ commandline	Define debugger command to run before each prompt.
+\{{ commandline	Add to the list of debugger commands to run before each prompt.
 $prc number	Redo a previous command (default previous command).
 $prc -number	Redo number'th-to-last command.
 $prc pattern	Redo last command that started with pattern.
@@ -1270,16 +1763,20 @@ $psh$psh cmd  	Run cmd in a subprocess (reads from DB::IN, writes to DB::OUT)"
 $psh [cmd] 	Run cmd in subshell (forces \"\$SHELL -c 'cmd'\")." ) . "
 		See 'O shellBang' too.
 H -number	Display last number commands (default all).
-p expr		Same as \"print DB::OUT expr\" in current package.
+p expr		Same as \"print {DB::OUT} expr\" in current package.
 |dbcmd		Run debugger command, piping DB::OUT to current pager.
 ||dbcmd		Same as |dbcmd but DB::OUT is temporarilly select()ed as well.
 \= [alias value]	Define a command alias, or list current aliases.
 command		Execute as a perl statement in current package.
-R		Pure-man-restart of debugger, debugger state and command-line
-		options are lost.
+v		Show versions of loaded modules.
+R		Pure-man-restart of debugger, some of debugger state
+		and command-line options may be lost.
+		Currently the following setting are preserved: 
+		history, breakpoints and actions, debugger Options 
+		and the following command-line options: -w, -I, -e.
 h [db_command]	Get help [on a specific debugger command], enter |h to page.
 h h		Summary of debugger commands.
-q or ^D		Quit.
+q or ^D		Quit. Set \$DB::finished to 0 to debug global destruction.
 
 ";
     $summary = <<"END_SUM";
@@ -1288,12 +1785,12 @@ List/search source lines:               Control script execution:
   - or .      List previous/current line  s [expr]    Single step [in expr]
   w [line]    List around line            n [expr]    Next, steps over subs
   f filename  View source in file         <CR>        Repeat last n or s
-  /pattern/   Search forward              r           Return from subroutine
-  ?pattern?   Search backward             c [line]    Continue until line
+  /pattern/ ?patt?   Search forw/backw    r           Return from subroutine
+  v	      Show versions of modules    c [ln|sub]  Continue until position
 Debugger controls:                        L           List break pts & actions
   O [...]     Set debugger options        t [expr]    Toggle trace [trace expr]
-  < command   Command for before prompt   b [ln] [c]  Set breakpoint
-  > command   Command for after prompt    b sub [c]   Set breakpoint for sub
+  <[<] or {[{] [cmd]   Do before prompt   b [ln/event] [c]     Set breakpoint
+  >[>] [cmd]  Do after prompt             b sub [c]   Set breakpoint for sub
   $prc [N|pat]   Redo a previous command     d [line]    Delete a breakpoint
   H [-num]    Display last num commands   D           Delete all breakpoints
   = [a val]   Define/list an alias        a [ln] cmd  Do cmd before line
@@ -1301,66 +1798,71 @@ Debugger controls:                        L           List break pts & actions
   |[|]dbcmd   Send output to pager        $psh\[$psh\] syscmd Run cmd in a subprocess
   q or ^D     Quit			  R	      Attempt a restart
 Data Examination:	      expr     Execute perl code, also see: s,n,t expr
+  x|m expr	Evals expr in array context, dumps the result or lists methods.
+  p expr	Print expression (uses script's current package).
   S [[!]pat]	List subroutine names [not] matching pattern
   V [Pk [Vars]]	List Variables in Package.  Vars can be ~pattern or !pattern.
   X [Vars]	Same as \"V current_package [Vars]\".
-  x expr	Evals expression in array context, dumps the result.
-  p expr	Print expression (uses script's current package).
 END_SUM
-				# '); # Fix balance of Emacs parsing
+				# ')}}; # Fix balance of Emacs parsing
 }
 
 sub diesignal {
     local $frame = 0;
-    $SIG{'ABRT'} = DEFAULT;
+    local $doret = -2;
+    $SIG{'ABRT'} = 'DEFAULT';
     kill 'ABRT', $$ if $panic++;
-    print $DB::OUT "Got $_[0]!\n";	# in the case cannot continue
-    local $SIG{__WARN__} = '';
-    require Carp; 
-    local $Carp::CarpLevel = 2;		# mydie + confess
-    &warn(Carp::longmess("Signal @_"));
+    if (defined &Carp::longmess) {
+	local $SIG{__WARN__} = '';
+	local $Carp::CarpLevel = 2;		# mydie + confess
+	&warn(Carp::longmess("Signal @_"));
+    }
+    else {
+	print $DB::OUT "Got signal @_\n";
+    }
     kill 'ABRT', $$;
 }
 
 sub dbwarn { 
   local $frame = 0;
+  local $doret = -2;
   local $SIG{__WARN__} = '';
-  require Carp; 
-  #&warn("Entering dbwarn\n");
+  local $SIG{__DIE__} = '';
+  eval { require Carp } if defined $^S;	# If error/warning during compilation,
+                                        # require may be broken.
+  warn(@_, "\nCannot print stack trace, load with -MCarp option to see stack"),
+    return unless defined &Carp::longmess;
   my ($mysingle,$mytrace) = ($single,$trace);
   $single = 0; $trace = 0;
   my $mess = Carp::longmess(@_);
   ($single,$trace) = ($mysingle,$mytrace);
-  #&warn("Warning in dbwarn\n");
   &warn($mess); 
-  #&warn("Exiting dbwarn\n");
 }
 
 sub dbdie {
   local $frame = 0;
+  local $doret = -2;
   local $SIG{__DIE__} = '';
   local $SIG{__WARN__} = '';
   my $i = 0; my $ineval = 0; my $sub;
-  #&warn("Entering dbdie\n");
-  if ($dieLevel != 2) {
-    while ((undef,undef,undef,$sub) = caller(++$i)) {
-      $ineval = 1, last if $sub eq '(eval)';
-    }
-    {
+  if ($dieLevel > 2) {
       local $SIG{__WARN__} = \&dbwarn;
-      &warn(@_) if $dieLevel > 2; # Ineval is false during destruction?
-    }
-    #&warn("dieing quietly in dbdie\n") if $ineval and $dieLevel < 2;
-    die @_ if $ineval and $dieLevel < 2;
+      &warn(@_);		# Yell no matter what
+      return;
   }
-  require Carp; 
+  if ($dieLevel < 2) {
+    die @_ if $^S;		# in eval propagate
+  }
+  eval { require Carp } if defined $^S;	# If error/warning during compilation,
+                                	# require may be broken.
+  die(@_, "\nCannot print stack trace, load with -MCarp option to see stack")
+    unless defined &Carp::longmess;
   # We do not want to debug this chunk (automatic disabling works
   # inside DB::DB, but not in Carp).
   my ($mysingle,$mytrace) = ($single,$trace);
   $single = 0; $trace = 0;
   my $mess = Carp::longmess(@_);
   ($single,$trace) = ($mysingle,$mytrace);
-  #&warn("dieing loudly in dbdie\n");
   die $mess;
 }
 
@@ -1369,7 +1871,7 @@ sub warnLevel {
     $prevwarn = $SIG{__WARN__} unless $warnLevel;
     $warnLevel = shift;
     if ($warnLevel) {
-      $SIG{__WARN__} = 'DB::dbwarn';
+      $SIG{__WARN__} = \&DB::dbwarn;
     } else {
       $SIG{__WARN__} = $prevwarn;
     }
@@ -1382,10 +1884,11 @@ sub dieLevel {
     $prevdie = $SIG{__DIE__} unless $dieLevel;
     $dieLevel = shift;
     if ($dieLevel) {
-      $SIG{__DIE__} = 'DB::dbdie'; # if $dieLevel < 2;
-      #$SIG{__DIE__} = 'DB::diehard' if $dieLevel >= 2;
+      $SIG{__DIE__} = \&DB::dbdie; # if $dieLevel < 2;
+      #$SIG{__DIE__} = \&DB::diehard if $dieLevel >= 2;
       print $OUT "Stack dump during die enabled", 
-        ( $dieLevel == 1 ? " outside of evals" : ""), ".\n";
+        ( $dieLevel == 1 ? " outside of evals" : ""), ".\n"
+	  if $I_m_init;
       print $OUT "Dump printed too.\n" if $dieLevel > 2;
     } else {
       $SIG{__DIE__} = $prevdie;
@@ -1401,14 +1904,54 @@ sub signalLevel {
     $prevbus = $SIG{BUS} unless $signalLevel;
     $signalLevel = shift;
     if ($signalLevel) {
-      $SIG{SEGV} = 'DB::diesignal';
-      $SIG{BUS} = 'DB::diesignal';
+      $SIG{SEGV} = \&DB::diesignal;
+      $SIG{BUS} = \&DB::diesignal;
     } else {
       $SIG{SEGV} = $prevsegv;
       $SIG{BUS} = $prevbus;
     }
   }
   $signalLevel;
+}
+
+sub find_sub {
+  my $subr = shift;
+  return unless defined &$subr;
+  $sub{$subr} or do {
+    $subr = \&$subr;		# Hard reference
+    my $s;
+    for (keys %sub) {
+      $s = $_, last if $subr eq \&$_;
+    }
+    $sub{$s} if $s;
+  }
+}
+
+sub methods {
+  my $class = shift;
+  $class = ref $class if ref $class;
+  local %seen;
+  local %packs;
+  methods_via($class, '', 1);
+  methods_via('UNIVERSAL', 'UNIVERSAL', 0);
+}
+
+sub methods_via {
+  my $class = shift;
+  return if $packs{$class}++;
+  my $prefix = shift;
+  my $prepend = $prefix ? "via $prefix: " : '';
+  my $name;
+  for $name (grep {defined &{$ {"$ {class}::"}{$_}}} 
+	     sort keys %{"$ {class}::"}) {
+    next if $seen{ $name }++;
+    print $DB::OUT "$prepend$name\n";
+  }
+  return unless shift;		# Recurse?
+  for $name (@{"$ {class}::ISA"}) {
+    $prepend = $prefix ? $prefix . " -> $name" : $name;
+    methods_via($name, $prepend, 1);
+  }
 }
 
 # The following BEGIN is very handy if debugger goes havoc, debugging debugger?
@@ -1423,24 +1966,123 @@ BEGIN {			# This does not compile, alas.
   $window = 10;
   $preview = 3;
   $sub = '';
-  #$SIG{__WARN__} = "DB::dbwarn";
-  #$SIG{__DIE__} = 'DB::dbdie';
-  #$SIG{SEGV} = "DB::diesignal";
-  #$SIG{BUS} = "DB::diesignal";
-  $SIG{INT} = "DB::catch";
-  #$SIG{FPE} = "DB::catch";
-  #warn "SIGFPE installed";
-  $warnLevel = 1 unless defined $warnLevel;
-  $dieLevel = 1 unless defined $dieLevel;
-  $signalLevel = 1 unless defined $signalLevel;
+  $SIG{INT} = \&DB::catch;
+  # This may be enabled to debug debugger:
+  #$warnLevel = 1 unless defined $warnLevel;
+  #$dieLevel = 1 unless defined $dieLevel;
+  #$signalLevel = 1 unless defined $signalLevel;
 
   $db_stop = 0;			# Compiler warning
   $db_stop = 1 << 30;
   $level = 0;			# Level of recursive debugging
+  # @stack and $doret are needed in sub sub, which is called for DB::postponed.
+  # Triggers bug (?) in perl is we postpone this until runtime:
+  @postponed = @stack = (0);
+  $doret = -2;
+  $frame = 0;
 }
 
 BEGIN {$^W = $ini_warn;}	# Switch warnings back
 
 #use Carp;			# This did break, left for debuggin
+
+sub db_complete {
+  # Specific code for b c l V m f O, &blah, $blah, @blah, %blah
+  my($text, $line, $start) = @_;
+  my ($itext, $search, $prefix, $pack) =
+    ($text, "^\Q$ {'package'}::\E([^:]+)\$");
+  
+  return sort grep /^\Q$text/, (keys %sub), qw(postpone load compile), # subroutines
+                               (map { /$search/ ? ($1) : () } keys %sub)
+    if (substr $line, 0, $start) =~ /^\|*[blc]\s+((postpone|compile)\s+)?$/;
+  return sort grep /^\Q$text/, values %INC # files
+    if (substr $line, 0, $start) =~ /^\|*b\s+load\s+$/;
+  return sort map {($_, db_complete($_ . "::", "V ", 2))}
+    grep /^\Q$text/, map { /^(.*)::$/ ? ($1) : ()} keys %:: # top-packages
+      if (substr $line, 0, $start) =~ /^\|*[Vm]\s+$/ and $text =~ /^\w*$/;
+  return sort map {($_, db_complete($_ . "::", "V ", 2))}
+    grep !/^main::/,
+      grep /^\Q$text/, map { /^(.*)::$/ ? ($prefix . "::$1") : ()} keys %{$prefix . '::'}
+				 # packages
+	if (substr $line, 0, $start) =~ /^\|*[Vm]\s+$/ 
+	  and $text =~ /^(.*[^:])::?(\w*)$/  and $prefix = $1;
+  if ( $line =~ /^\|*f\s+(.*)/ ) { # Loaded files
+    # We may want to complete to (eval 9), so $text may be wrong
+    $prefix = length($1) - length($text);
+    $text = $1;
+    return sort 
+	map {substr $_, 2 + $prefix} grep /^_<\Q$text/, (keys %main::), $0
+  }
+  if ((substr $text, 0, 1) eq '&') { # subroutines
+    $text = substr $text, 1;
+    $prefix = "&";
+    return sort map "$prefix$_", 
+               grep /^\Q$text/, 
+                 (keys %sub),
+                 (map { /$search/ ? ($1) : () } 
+		    keys %sub);
+  }
+  if ($text =~ /^[\$@%](.*)::(.*)/) { # symbols in a package
+    $pack = ($1 eq 'main' ? '' : $1) . '::';
+    $prefix = (substr $text, 0, 1) . $1 . '::';
+    $text = $2;
+    my @out 
+      = map "$prefix$_", grep /^\Q$text/, grep /^_?[a-zA-Z]/, keys %$pack ;
+    if (@out == 1 and $out[0] =~ /::$/ and $out[0] ne $itext) {
+      return db_complete($out[0], $line, $start);
+    }
+    return sort @out;
+  }
+  if ($text =~ /^[\$@%]/) { # symbols (in $package + packages in main)
+    $pack = ($package eq 'main' ? '' : $package) . '::';
+    $prefix = substr $text, 0, 1;
+    $text = substr $text, 1;
+    my @out = map "$prefix$_", grep /^\Q$text/, 
+       (grep /^_?[a-zA-Z]/, keys %$pack), 
+       ( $pack eq '::' ? () : (grep /::$/, keys %::) ) ;
+    if (@out == 1 and $out[0] =~ /::$/ and $out[0] ne $itext) {
+      return db_complete($out[0], $line, $start);
+    }
+    return sort @out;
+  }
+  if ((substr $line, 0, $start) =~ /^\|*O\b.*\s$/) { # Options after a space
+    my @out = grep /^\Q$text/, @options;
+    my $val = option_val($out[0], undef);
+    my $out = '? ';
+    if (not defined $val or $val =~ /[\n\r]/) {
+      # Can do nothing better
+    } elsif ($val =~ /\s/) {
+      my $found;
+      foreach $l (split //, qq/\"\'\#\|/) {
+	$out = "$l$val$l ", last if (index $val, $l) == -1;
+      }
+    } else {
+      $out = "=$val ";
+    }
+    # Default to value if one completion, to question if many
+    $rl_attribs->{completer_terminator_character} = (@out == 1 ? $out : '? ');
+    return sort @out;
+  }
+  return $term->filename_list($text); # filenames
+}
+
+sub end_report {
+  print $OUT "Use `q' to quit or `R' to restart.  `h q' for details.\n"
+}
+
+END {
+  $finished = $inhibit_exit;	# So that some keys may be disabled.
+  # Do not stop in at_exit() and destructors on exit:
+  $DB::single = !$exiting && !$runnonstop;
+  DB::fake::at_exit() unless $exiting or $runnonstop;
+}
+
+package DB::fake;
+
+sub at_exit {
+  "Debugged program terminated.  Use `q' to quit or `R' to restart.";
+}
+
+package DB;			# Do not trace this 1; below!
 
 1;

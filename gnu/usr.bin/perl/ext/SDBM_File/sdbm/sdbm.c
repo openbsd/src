@@ -32,6 +32,7 @@ static char rcsid[] = "$Id: sdbm.c,v 1.16 90/12/13 13:01:31 oz Exp $";
 /*
  * externals
  */
+#ifndef WIN32
 #ifndef sun
 extern int errno;
 #endif
@@ -39,6 +40,7 @@ extern int errno;
 extern Malloc_t malloc proto((MEM_SIZE));
 extern Free_t free proto((Malloc_t));
 extern Off_t lseek();
+#endif
 
 /*
  * forward
@@ -135,7 +137,7 @@ int mode;
  * open the files in sequence, and stat the dirfile.
  * If we fail anywhere, undo everything, return NULL.
  */
-#	ifdef OS2
+#if defined(OS2) || defined(MSDOS) || defined(WIN32)
 	flags |= O_BINARY;
 #	endif
 	if ((db->pagf = open(pagname, flags, mode)) > -1) {

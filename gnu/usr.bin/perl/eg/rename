@@ -2,12 +2,11 @@
 'di';
 'ig00';
 #
-# $RCSfile: rename,v $$Revision: 1.1.1.1 $$Date: 1996/08/19 10:11:54 $
+# $RCSfile: rename,v $$Revision: 1.2 $$Date: 1997/11/30 07:49:42 $
 #
 # $Log: rename,v $
-# Revision 1.1.1.1  1996/08/19 10:11:54  downsj
-# Import of Perl 5.003 into the tree.  Makefile.bsd-wrapper and
-# config.sh.OpenBSD are the only local changes.
+# Revision 1.2  1997/11/30 07:49:42  millert
+# perl 5.004_04
 #
 
 ($op = shift) || die "Usage: rename perlexpr [filenames]\n";

@@ -8,16 +8,28 @@ open(try, '>Io.argv.tmp') || (die "Can't open temp file.");
 print try "a line\n";
 close try;
 
-$x = `./perl -e 'while (<>) {print \$.,\$_;}' Io.argv.tmp Io.argv.tmp`;
-
+if ($^O eq 'MSWin32') {
+  $x = `.\\perl -e "while (<>) {print \$.,\$_;}" Io.argv.tmp Io.argv.tmp`;
+}
+else {
+  $x = `./perl -e 'while (<>) {print \$.,\$_;}' Io.argv.tmp Io.argv.tmp`;
+}
 if ($x eq "1a line\n2a line\n") {print "ok 1\n";} else {print "not ok 1\n";}
 
-$x = `echo foo|./perl -e 'while (<>) {print $_;}' Io.argv.tmp -`;
-
+if ($^O eq 'MSWin32') {
+  $x = `.\\perl -le "print 'foo'" | .\\perl -e "while (<>) {print \$_;}" Io.argv.tmp -`;
+}
+else {
+  $x = `echo foo|./perl -e 'while (<>) {print $_;}' Io.argv.tmp -`;
+}
 if ($x eq "a line\nfoo\n") {print "ok 2\n";} else {print "not ok 2\n";}
 
-$x = `echo foo|./perl -e 'while (<>) {print $_;}'`;
-
+if ($^O eq 'MSWin32') {
+  $x = `.\\perl -le "print 'foo'" |.\\perl -e "while (<>) {print \$_;}"`;
+}
+else {
+  $x = `echo foo|./perl -e 'while (<>) {print $_;}'`;
+}
 if ($x eq "foo\n") {print "ok 3\n";} else {print "not ok 3 :$x:\n";}
 
 @ARGV = ('Io.argv.tmp', 'Io.argv.tmp', '/dev/null', 'Io.argv.tmp');
@@ -33,4 +45,4 @@ if ($y eq "1a line\n2a line\n3a line\n")
 else
     {print "not ok 5\n";}
 
-`/bin/rm -f Io.argv.tmp` if -x '/bin/rm';
+unlink 'Io.argv.tmp';

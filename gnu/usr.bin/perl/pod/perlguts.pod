@@ -8,7 +8,9 @@ This document attempts to describe some of the internal functions of the
 Perl executable.  It is far from complete and probably contains many errors.
 Please refer any questions or comments to the author below.
 
-=head1 Datatypes
+=head1 Variables
+
+=head2 Datatypes
 
 Perl has three typedefs that handle Perl's three main data types:
 
@@ -20,31 +22,33 @@ Each typedef has specific routines that manipulate the various data types.
 
 =head2 What is an "IV"?
 
-Perl uses a special typedef IV which is large enough to hold either an
-integer or a pointer.
+Perl uses a special typedef IV which is a simple integer type that is
+guaranteed to be large enough to hold a pointer (as well as an integer).
 
 Perl also uses two special typedefs, I32 and I16, which will always be at
 least 32-bits and 16-bits long, respectively.
 
-=head2 Working with SV's
+=head2 Working with SVs
 
 An SV can be created and loaded with one command.  There are four types of
 values that can be loaded: an integer value (IV), a double (NV), a string,
 (PV), and another scalar (SV).
 
-The four routines are:
+The five routines are:
 
     SV*  newSViv(IV);
     SV*  newSVnv(double);
     SV*  newSVpv(char*, int);
+    SV*  newSVpvf(const char*, ...);
     SV*  newSVsv(SV*);
 
-To change the value of an *already-existing* SV, there are five routines:
+To change the value of an *already-existing* SV, there are six routines:
 
     void  sv_setiv(SV*, IV);
     void  sv_setnv(SV*, double);
-    void  sv_setpvn(SV*, char*, int)
     void  sv_setpv(SV*, char*);
+    void  sv_setpvn(SV*, char*, int)
+    void  sv_setpvf(SV*, const char*, ...);
     void  sv_setsv(SV*, SV*);
 
 Notice that you can choose to specify the length of the string to be
@@ -52,7 +56,16 @@ assigned by using C<sv_setpvn> or C<newSVpv>, or you may allow Perl to
 calculate the length by using C<sv_setpv> or by specifying 0 as the second
 argument to C<newSVpv>.  Be warned, though, that Perl will determine the
 string's length by using C<strlen>, which depends on the string terminating
-with a NUL character.
+with a NUL character.  The arguments of C<sv_setpvf> are processed like
+C<sprintf>, and the formatted output becomes the value.
+
+All SVs that will contain strings should, but need not, be terminated
+with a NUL character.  If it is not NUL-terminated there is a risk of
+core dumps and corruptions from code which passes the string to C
+functions or system calls which expect a NUL-terminated string.
+Perl's own functions typically add a trailing NUL for this reason.
+Nevertheless, you should be very careful when you pass a string stored
+in an SV to a C function or system call.
 
 To access the actual value that an SV points to, you can use the macros:
 
@@ -67,9 +80,9 @@ In the C<SvPV> macro, the length of the string returned is placed into the
 variable C<len> (this is a macro, so you do I<not> use C<&len>).  If you do not
 care what the length of the data is, use the global variable C<na>.  Remember,
 however, that Perl allows arbitrary strings of data that may both contain
-NUL's and not be terminated by a NUL.
+NULs and might not be terminated by a NUL.
 
-If you simply want to know if the scalar value is TRUE, you can use:
+If you want to know if the scalar value is TRUE, you can use:
 
     SvTRUE(SV*)
 
@@ -80,7 +93,9 @@ Perl to allocate more memory for your SV, you can use the macro
 
 which will determine if more memory needs to be allocated.  If so, it will
 call the function C<sv_grow>.  Note that C<SvGROW> can only increase, not
-decrease, the allocated memory of an SV.
+decrease, the allocated memory of an SV and that it does not automatically
+add a byte for the a trailing NUL (perl's own string functions typically do
+C<SvGROW(sv, len + 1)>).
 
 If you have an SV and want to know what kind of data Perl thinks is stored
 in it, you can use the following macros to check the type of SV you have.
@@ -107,18 +122,20 @@ you can use the following functions:
 
     void  sv_catpv(SV*, char*);
     void  sv_catpvn(SV*, char*, int);
+    void  sv_catpvf(SV*, const char*, ...);
     void  sv_catsv(SV*, SV*);
 
 The first function calculates the length of the string to be appended by
 using C<strlen>.  In the second, you specify the length of the string
-yourself.  The third function extends the string stored in the first SV
-with the string stored in the second SV.  It also forces the second SV to
-be interpreted as a string.
+yourself.  The third function processes its arguments like C<sprintf> and
+appends the formatted output.  The fourth function extends the string
+stored in the first SV with the string stored in the second SV.  It also
+forces the second SV to be interpreted as a string.
 
 If you know the name of a scalar variable, you can get a pointer to its SV
 by using the following:
 
-    SV*  perl_get_sv("varname", FALSE);
+    SV*  perl_get_sv("package::varname", FALSE);
 
 This returns NULL if the variable does not exist.
 
@@ -144,18 +161,18 @@ Take this code:
     sv_setsv(ST(0), sv);
 
 This code tries to return a new SV (which contains the value 42) if it should
-return a real value, or undef otherwise.  Instead it has returned a null
+return a real value, or undef otherwise.  Instead it has returned a NULL
 pointer which, somewhere down the line, will cause a segmentation violation,
-or just weird results.  Change the zero to C<&sv_undef> in the first line and
-all will be well.
+bus error, or just weird results.  Change the zero to C<&sv_undef> in the first
+line and all will be well.
 
 To free an SV that you've created, call C<SvREFCNT_dec(SV*)>.  Normally this
-call is not necessary.  See the section on B<MORTALITY>.
+call is not necessary (see L<Reference Counts and Mortality>).
 
 =head2 What's Really Stored in an SV?
 
 Recall that the usual method of determining the type of scalar you have is
-to use C<Sv*OK> macros.  Since a scalar can be both a number and a string,
+to use C<Sv*OK> macros.  Because a scalar can be both a number and a string,
 usually these macros will always return TRUE and calling the C<Sv*V>
 macros will do the appropriate conversion of string to integer/double or
 integer/double to string.
@@ -170,23 +187,23 @@ pointer in an SV, you can use the following three macros instead:
 These will tell you if you truly have an integer, double, or string pointer
 stored in your SV.  The "p" stands for private.
 
-In general, though, it's best to just use the C<Sv*V> macros.
+In general, though, it's best to use the C<Sv*V> macros.
 
-=head2 Working with AV's
+=head2 Working with AVs
 
-There are two ways to create and load an AV.  The first method just creates
-an empty AV:
+There are two ways to create and load an AV.  The first method creates an
+empty AV:
 
     AV*  newAV();
 
-The second method both creates the AV and initially populates it with SV's:
+The second method both creates the AV and initially populates it with SVs:
 
     AV*  av_make(I32 num, SV **ptr);
 
 The second argument points to an array containing C<num> C<SV*>'s.  Once the
-AV has been created, the SV's can be destroyed, if so desired.
+AV has been created, the SVs can be destroyed, if so desired.
 
-Once the AV has been created, the following operations are possible on AV's:
+Once the AV has been created, the following operations are possible on AVs:
 
     void  av_push(AV*, SV*);
     SV*   av_pop(AV*);
@@ -200,63 +217,83 @@ to these new elements.
 
 Here are some other functions:
 
-    I32   av_len(AV*); /* Returns highest index value in array */
-
+    I32   av_len(AV*);
     SV**  av_fetch(AV*, I32 key, I32 lval);
-            /* Fetches value at key offset, but it stores an undef value
-               at the offset if lval is non-zero */
     SV**  av_store(AV*, I32 key, SV* val);
-            /* Stores val at offset key */
 
-Take note that C<av_fetch> and C<av_store> return C<SV**>'s, not C<SV*>'s.
+The C<av_len> function returns the highest index value in array (just
+like $#array in Perl).  If the array is empty, -1 is returned.  The
+C<av_fetch> function returns the value at index C<key>, but if C<lval>
+is non-zero, then C<av_fetch> will store an undef value at that index.
+The C<av_store> function stores the value C<val> at index C<key>, and does
+not increment the reference count of C<val>.  Thus the caller is responsible
+for taking care of that, and if C<av_store> returns NULL, the caller will
+have to decrement the reference count to avoid a memory leak.  Note that
+C<av_fetch> and C<av_store> both return C<SV**>'s, not C<SV*>'s as their
+return value.
 
     void  av_clear(AV*);
-            /* Clear out all elements, but leave the array */
     void  av_undef(AV*);
-            /* Undefines the array, removing all elements */
     void  av_extend(AV*, I32 key);
-            /* Extend the array to a total of key elements */
+
+The C<av_clear> function deletes all the elements in the AV* array, but
+does not actually delete the array itself.  The C<av_undef> function will
+delete all the elements in the array plus the array itself.  The
+C<av_extend> function extends the array so that it contains C<key>
+elements.  If C<key> is less than the current length of the array, then
+nothing is done.
 
 If you know the name of an array variable, you can get a pointer to its AV
 by using the following:
 
-    AV*  perl_get_av("varname", FALSE);
+    AV*  perl_get_av("package::varname", FALSE);
 
 This returns NULL if the variable does not exist.
 
-=head2 Working with HV's
+See L<Understanding the Magic of Tied Hashes and Arrays> for more
+information on how to use the array access functions on tied arrays.
+
+=head2 Working with HVs
 
 To create an HV, you use the following routine:
 
     HV*  newHV();
 
-Once the HV has been created, the following operations are possible on HV's:
+Once the HV has been created, the following operations are possible on HVs:
 
     SV**  hv_store(HV*, char* key, U32 klen, SV* val, U32 hash);
     SV**  hv_fetch(HV*, char* key, U32 klen, I32 lval);
 
-The C<klen> parameter is the length of the key being passed in.  The C<val>
-argument contains the SV pointer to the scalar being stored, and C<hash> is
-the pre-computed hash value (zero if you want C<hv_store> to calculate it
-for you).  The C<lval> parameter indicates whether this fetch is actually a
-part of a store operation.
+The C<klen> parameter is the length of the key being passed in (Note that
+you cannot pass 0 in as a value of C<klen> to tell Perl to measure the
+length of the key).  The C<val> argument contains the SV pointer to the
+scalar being stored, and C<hash> is the precomputed hash value (zero if
+you want C<hv_store> to calculate it for you).  The C<lval> parameter
+indicates whether this fetch is actually a part of a store operation, in
+which case a new undefined value will be added to the HV with the supplied
+key and C<hv_fetch> will return as if the value had already existed.
 
 Remember that C<hv_store> and C<hv_fetch> return C<SV**>'s and not just
-C<SV*>.  In order to access the scalar value, you must first dereference
-the return value.  However, you should check to make sure that the return
-value is not NULL before dereferencing it.
+C<SV*>.  To access the scalar value, you must first dereference the return
+value.  However, you should check to make sure that the return value is
+not NULL before dereferencing it.
 
 These two functions check if a hash table entry exists, and deletes it.
 
     bool  hv_exists(HV*, char* key, U32 klen);
     SV*   hv_delete(HV*, char* key, U32 klen, I32 flags);
 
+If C<flags> does not include the C<G_DISCARD> flag then C<hv_delete> will
+create and return a mortal copy of the deleted value.
+
 And more miscellaneous functions:
 
     void   hv_clear(HV*);
-            /* Clears all entries in hash table */
     void   hv_undef(HV*);
-            /* Undefines the hash table */
+
+Like their AV counterparts, C<hv_clear> deletes all the entries in the hash
+table but does not actually delete the hash table.  The C<hv_undef> deletes
+both the entries and the hash table itself.
 
 Perl keeps the actual data in linked list of structures with a typedef of HE.
 These contain the actual key and value pointers (plus extra administrative
@@ -284,11 +321,11 @@ specified below.
 If you know the name of a hash variable, you can get a pointer to its HV
 by using the following:
 
-    HV*  perl_get_hv("varname", FALSE);
+    HV*  perl_get_hv("package::varname", FALSE);
 
 This returns NULL if the variable does not exist.
 
-The hash algorithm, for those who are interested, is:
+The hash algorithm is defined in the C<PERL_HASH(hash, key, klen)> macro:
 
     i = klen;
     hash = 0;
@@ -296,18 +333,72 @@ The hash algorithm, for those who are interested, is:
     while (i--)
 	hash = hash * 33 + *s++;
 
+See L<Understanding the Magic of Tied Hashes and Arrays> for more
+information on how to use the hash access functions on tied hashes.
+
+=head2 Hash API Extensions
+
+Beginning with version 5.004, the following functions are also supported:
+
+    HE*     hv_fetch_ent  (HV* tb, SV* key, I32 lval, U32 hash);
+    HE*     hv_store_ent  (HV* tb, SV* key, SV* val, U32 hash);
+    
+    bool    hv_exists_ent (HV* tb, SV* key, U32 hash);
+    SV*     hv_delete_ent (HV* tb, SV* key, I32 flags, U32 hash);
+    
+    SV*     hv_iterkeysv  (HE* entry);
+
+Note that these functions take C<SV*> keys, which simplifies writing
+of extension code that deals with hash structures.  These functions
+also allow passing of C<SV*> keys to C<tie> functions without forcing
+you to stringify the keys (unlike the previous set of functions).
+
+They also return and accept whole hash entries (C<HE*>), making their
+use more efficient (since the hash number for a particular string
+doesn't have to be recomputed every time).  See L<API LISTING> later in
+this document for detailed descriptions.
+
+The following macros must always be used to access the contents of hash
+entries.  Note that the arguments to these macros must be simple
+variables, since they may get evaluated more than once.  See
+L<API LISTING> later in this document for detailed descriptions of these
+macros.
+
+    HePV(HE* he, STRLEN len)
+    HeVAL(HE* he)
+    HeHASH(HE* he)
+    HeSVKEY(HE* he)
+    HeSVKEY_force(HE* he)
+    HeSVKEY_set(HE* he, SV* sv)
+
+These two lower level macros are defined, but must only be used when
+dealing with keys that are not C<SV*>s:
+
+    HeKEY(HE* he)
+    HeKLEN(HE* he)
+
+Note that both C<hv_store> and C<hv_store_ent> do not increment the
+reference count of the stored C<val>, which is the caller's responsibility.
+If these functions return a NULL value, the caller will usually have to
+decrement the reference count of C<val> to avoid a memory leak.
+
 =head2 References
 
 References are a special type of scalar that point to other data types
 (including references).
 
-To create a reference, use the following command:
+To create a reference, use either of the following functions:
 
-    SV* newRV((SV*) thing);
+    SV* newRV_inc((SV*) thing);
+    SV* newRV_noinc((SV*) thing);
 
-The C<thing> argument can be any of an C<SV*>, C<AV*>, or C<HV*>.  Once
-you have a reference, you can use the following macro to dereference the
-reference:
+The C<thing> argument can be any of an C<SV*>, C<AV*>, or C<HV*>.  The
+functions are identical except that C<newRV_inc> increments the reference
+count of the C<thing>, while C<newRV_noinc> does not.  For historical
+reasons, C<newRV> is a synonym for C<newRV_inc>.
+
+Once you have a reference, you can use the following macro to dereference
+the reference:
 
     SvRV(SV*)
 
@@ -318,8 +409,8 @@ To determine if an SV is a reference, you can use the following macro:
 
     SvROK(SV*)
 
-To actually discover what the reference refers to, you must use the following
-macro and then check the value returned.
+To discover what type of value the reference refers to, use the following
+macro and then check the return value.
 
     SvTYPE(SvRV(SV*))
 
@@ -328,10 +419,14 @@ The most useful types that will be returned are:
     SVt_IV    Scalar
     SVt_NV    Scalar
     SVt_PV    Scalar
+    SVt_RV    Scalar
     SVt_PVAV  Array
     SVt_PVHV  Hash
     SVt_PVCV  Code
-    SVt_PVMG  Blessed Scalar
+    SVt_PVGV  Glob (possible a file handle)
+    SVt_PVMG  Blessed or Magical Scalar
+
+    See the sv.h header file for more details.
 
 =head2 Blessed References and Class Objects
 
@@ -345,134 +440,113 @@ A reference can be blessed into a package with the following function:
     SV* sv_bless(SV* sv, HV* stash);
 
 The C<sv> argument must be a reference.  The C<stash> argument specifies
-which class the reference will belong to.  See the section on L<Stashes>
-for information on converting class names into stashes.
+which class the reference will belong to.  See
+L<Stashes and Globs> for information on converting class names into stashes.
 
 /* Still under construction */
 
 Upgrades rv to reference if not already one.  Creates new SV for rv to
-point to.
-If classname is non-null, the SV is blessed into the specified class.
-SV is returned.
+point to.  If C<classname> is non-null, the SV is blessed into the specified
+class.  SV is returned.
 
 	SV* newSVrv(SV* rv, char* classname);
 
-Copies integer or double into an SV whose reference is rv.  SV is blessed
-if classname is non-null.
+Copies integer or double into an SV whose reference is C<rv>.  SV is blessed
+if C<classname> is non-null.
 
 	SV* sv_setref_iv(SV* rv, char* classname, IV iv);
 	SV* sv_setref_nv(SV* rv, char* classname, NV iv);
 
-Copies pointer (I<not a string!>) into an SV whose reference is rv.
-SV is blessed if classname is non-null.
+Copies the pointer value (I<the address, not the string!>) into an SV whose
+reference is rv.  SV is blessed if C<classname> is non-null.
 
 	SV* sv_setref_pv(SV* rv, char* classname, PV iv);
 
-Copies string into an SV whose reference is rv.
-Set length to 0 to let Perl calculate the string length.
-SV is blessed if classname is non-null.
+Copies string into an SV whose reference is C<rv>.  Set length to 0 to let
+Perl calculate the string length.  SV is blessed if C<classname> is non-null.
 
 	SV* sv_setref_pvn(SV* rv, char* classname, PV iv, int length);
 
 	int sv_isa(SV* sv, char* name);
 	int sv_isobject(SV* sv);
 
-=head1 Creating New Variables
+=head2 Creating New Variables
 
-To create a new Perl variable, which can be accessed from your Perl script,
-use the following routines, depending on the variable type.
+To create a new Perl variable with an undef value which can be accessed from
+your Perl script, use the following routines, depending on the variable type.
 
-    SV*  perl_get_sv("varname", TRUE);
-    AV*  perl_get_av("varname", TRUE);
-    HV*  perl_get_hv("varname", TRUE);
+    SV*  perl_get_sv("package::varname", TRUE);
+    AV*  perl_get_av("package::varname", TRUE);
+    HV*  perl_get_hv("package::varname", TRUE);
 
 Notice the use of TRUE as the second parameter.  The new variable can now
 be set, using the routines appropriate to the data type.
 
-There are additional bits that may be OR'ed with the TRUE argument to enable
-certain extra features.  Those bits are:
+There are additional macros whose values may be bitwise OR'ed with the
+C<TRUE> argument to enable certain extra features.  Those bits are:
 
-    0x02  Marks the variable as multiply defined, thus preventing the
-	  "Indentifier <varname> used only once: possible typo" warning.
-    0x04  Issues a "Had to create <varname> unexpectedly" warning if
-	  the variable didn't actually exist.  This is useful if
-	  you expected the variable to already exist and want to propagate
-	  this warning back to the user.
+    GV_ADDMULTI	Marks the variable as multiply defined, thus preventing the
+		"Name <varname> used only once: possible typo" warning.
+    GV_ADDWARN	Issues the warning "Had to create <varname> unexpectedly" if
+		the variable did not exist before the function was called.
 
-If the C<varname> argument does not contain a package specifier, it is
-created in the current package.
+If you do not specify a package name, the variable is created in the current
+package.
 
-=head1 XSUB's and the Argument Stack
+=head2 Reference Counts and Mortality
 
-The XSUB mechanism is a simple way for Perl programs to access C subroutines.
-An XSUB routine will have a stack that contains the arguments from the Perl
-program, and a way to map from the Perl data structures to a C equivalent.
+Perl uses an reference count-driven garbage collection mechanism. SVs,
+AVs, or HVs (xV for short in the following) start their life with a
+reference count of 1.  If the reference count of an xV ever drops to 0,
+then it will be destroyed and its memory made available for reuse.
 
-The stack arguments are accessible through the C<ST(n)> macro, which returns
-the C<n>'th stack argument.  Argument 0 is the first argument passed in the
-Perl subroutine call.  These arguments are C<SV*>, and can be used anywhere
-an C<SV*> is used.
+This normally doesn't happen at the Perl level unless a variable is
+undef'ed or the last variable holding a reference to it is changed or
+overwritten.  At the internal level, however, reference counts can be
+manipulated with the following macros:
 
-Most of the time, output from the C routine can be handled through use of
-the RETVAL and OUTPUT directives.  However, there are some cases where the
-argument stack is not already long enough to handle all the return values.
-An example is the POSIX tzname() call, which takes no arguments, but returns
-two, the local timezone's standard and summer time abbreviations.
+    int SvREFCNT(SV* sv);
+    SV* SvREFCNT_inc(SV* sv);
+    void SvREFCNT_dec(SV* sv);
 
-To handle this situation, the PPCODE directive is used and the stack is
-extended using the macro:
+However, there is one other function which manipulates the reference
+count of its argument.  The C<newRV_inc> function, you will recall,
+creates a reference to the specified argument.  As a side effect,
+it increments the argument's reference count.  If this is not what
+you want, use C<newRV_noinc> instead.
 
-    EXTEND(sp, num);
+For example, imagine you want to return a reference from an XSUB function.
+Inside the XSUB routine, you create an SV which initially has a reference
+count of one.  Then you call C<newRV_inc>, passing it the just-created SV.
+This returns the reference as a new SV, but the reference count of the
+SV you passed to C<newRV_inc> has been incremented to two.  Now you
+return the reference from the XSUB routine and forget about the SV.
+But Perl hasn't!  Whenever the returned reference is destroyed, the
+reference count of the original SV is decreased to one and nothing happens.
+The SV will hang around without any way to access it until Perl itself
+terminates.  This is a memory leak.
 
-where C<sp> is the stack pointer, and C<num> is the number of elements the
-stack should be extended by.
+The correct procedure, then, is to use C<newRV_noinc> instead of
+C<newRV_inc>.  Then, if and when the last reference is destroyed,
+the reference count of the SV will go to zero and it will be destroyed,
+stopping any memory leak.
 
-Now that there is room on the stack, values can be pushed on it using the
-macros to push IV's, doubles, strings, and SV pointers respectively:
+There are some convenience functions available that can help with the
+destruction of xVs.  These functions introduce the concept of "mortality".
+An xV that is mortal has had its reference count marked to be decremented,
+but not actually decremented, until "a short time later".  Generally the
+term "short time later" means a single Perl statement, such as a call to
+an XSUB function.  The actual determinant for when mortal xVs have their
+reference count decremented depends on two macros, SAVETMPS and FREETMPS.
+See L<perlcall> and L<perlxs> for more details on these macros.
 
-    PUSHi(IV)
-    PUSHn(double)
-    PUSHp(char*, I32)
-    PUSHs(SV*)
+"Mortalization" then is at its simplest a deferred C<SvREFCNT_dec>.
+However, if you mortalize a variable twice, the reference count will
+later be decremented twice.
 
-And now the Perl program calling C<tzname>, the two values will be assigned
-as in:
-
-    ($standard_abbrev, $summer_abbrev) = POSIX::tzname;
-
-An alternate (and possibly simpler) method to pushing values on the stack is
-to use the macros:
-
-    XPUSHi(IV)
-    XPUSHn(double)
-    XPUSHp(char*, I32)
-    XPUSHs(SV*)
-
-These macros automatically adjust the stack for you, if needed.
-
-For more information, consult L<perlxs>.
-
-=head1 Mortality
-
-In Perl, values are normally "immortal" -- that is, they are not freed unless
-explicitly done so (via the Perl C<undef> call or other routines in Perl
-itself).
-
-Add cruft about reference counts.
-	int SvREFCNT(SV* sv);
-	void SvREFCNT_inc(SV* sv);
-	void SvREFCNT_dec(SV* sv);
-
-In the above example with C<tzname>, we needed to create two new SV's to push
-onto the argument stack, that being the two strings.  However, we don't want
-these new SV's to stick around forever because they will eventually be
-copied into the SV's that hold the two scalar variables.
-
-An SV (or AV or HV) that is "mortal" acts in all ways as a normal "immortal"
-SV, AV, or HV, but is only valid in the "current context".  When the Perl
-interpreter leaves the current context, the mortal SV, AV, or HV is
-automatically freed.  Generally the "current context" means a single
-Perl statement.
+You should be careful about creating mortal variables.  Strange things
+can happen if you make the same value mortal within multiple contexts,
+or if you make a variable mortal multiple times.
 
 To create a mortal variable, use the functions:
 
@@ -480,34 +554,22 @@ To create a mortal variable, use the functions:
     SV*  sv_2mortal(SV*)
     SV*  sv_mortalcopy(SV*)
 
-The first call creates a mortal SV, the second converts an existing SV to
-a mortal SV, the third creates a mortal copy of an existing SV.
+The first call creates a mortal SV, the second converts an existing
+SV to a mortal SV (and thus defers a call to C<SvREFCNT_dec>), and the
+third creates a mortal copy of an existing SV.
 
-The mortal routines are not just for SV's -- AV's and HV's can be made mortal
-by passing their address (and casting them to C<SV*>) to the C<sv_2mortal> or
-C<sv_mortalcopy> routines.
+The mortal routines are not just for SVs -- AVs and HVs can be
+made mortal by passing their address (type-casted to C<SV*>) to the
+C<sv_2mortal> or C<sv_mortalcopy> routines.
 
->From Ilya:
-Beware that the sv_2mortal() call is eventually equivalent to
-svREFCNT_dec(). A value can happily be mortal in two different contexts,
-and it will be svREFCNT_dec()ed twice, once on exit from these
-contexts. It can also be mortal twice in the same context. This means
-that you should be very careful to make a value mortal exactly as many
-times as it is needed. The value that go to the Perl stack I<should>
-be mortal.
+=head2 Stashes and Globs
 
-You should be careful about creating mortal variables.  It is possible for
-strange things to happen should you make the same value mortal within
-multiple contexts.
-
-=head1 Stashes
-
-A stash is a hash table (associative array) that contains all of the
-different objects that are contained within a package.  Each key of the
-stash is a symbol name (shared by all the different types of objects
-that have the same name), and each value in the hash table is called a
-GV (for Glob Value).  This GV in turn contains references to the various
-objects of that name, including (but not limited to) the following:
+A "stash" is a hash that contains all of the different objects that
+are contained within a package.  Each key of the stash is a symbol
+name (shared by all the different types of objects that have the same
+name), and each value in the hash table is a GV (Glob Value).  This GV
+in turn contains references to the various objects of that name,
+including (but not limited to) the following:
 
     Scalar Value
     Array Value
@@ -517,11 +579,11 @@ objects of that name, including (but not limited to) the following:
     Format
     Subroutine
 
-Perl stores various stashes in a separate GV structure (for global
-variable) but represents them with an HV structure.  The keys in this
-larger GV are the various package names; the values are the C<GV*>'s
-which are stashes.  It may help to think of a stash purely as an HV,
-and that the term "GV" means the global variable hash.
+There is a single stash called "defstash" that holds the items that exist
+in the "main" package.  To get at the items in other packages, append the
+string "::" to the package name.  The items in the "Foo" package are in
+the stash "Foo::" in defstash.  The items in the "Bar::Baz" package are
+in the stash "Baz::" in "Bar::"'s stash.
 
 To get the stash pointer for a particular package, use the function:
 
@@ -546,8 +608,8 @@ then use the following to get the package name itself:
 
     char*  HvNAME(HV* stash);
 
-If you need to return a blessed value to your Perl script, you can use the
-following function:
+If you need to bless or re-bless an object you can use the following
+function:
 
     SV*  sv_bless(SV*, HV* stash)
 
@@ -557,12 +619,50 @@ as any other SV.
 
 For more information on references and blessings, consult L<perlref>.
 
-=head1 Magic
+=head2 Double-Typed SVs
+
+Scalar variables normally contain only one type of value, an integer,
+double, pointer, or reference.  Perl will automatically convert the
+actual scalar data from the stored type into the requested type.
+
+Some scalar variables contain more than one type of scalar data.  For
+example, the variable C<$!> contains either the numeric value of C<errno>
+or its string equivalent from either C<strerror> or C<sys_errlist[]>.
+
+To force multiple data values into an SV, you must do two things: use the
+C<sv_set*v> routines to add the additional scalar type, then set a flag
+so that Perl will believe it contains more than one type of data.  The
+four macros to set the flags are:
+
+	SvIOK_on
+	SvNOK_on
+	SvPOK_on
+	SvROK_on
+
+The particular macro you must use depends on which C<sv_set*v> routine
+you called first.  This is because every C<sv_set*v> routine turns on
+only the bit for the particular type of data being set, and turns off
+all the rest.
+
+For example, to create a new Perl variable called "dberror" that contains
+both the numeric and descriptive string error values, you could use the
+following code:
+
+    extern int  dberror;
+    extern char *dberror_list;
+
+    SV* sv = perl_get_sv("dberror", TRUE);
+    sv_setiv(sv, (IV) dberror);
+    sv_setpv(sv, dberror_list[dberror]);
+    SvIOK_on(sv);
+
+If the order of C<sv_setiv> and C<sv_setpv> had been reversed, then the
+macro C<SvPOK_on> would need to be called instead of C<SvIOK_on>.
+
+=head2 Magic Variables
 
 [This section still under construction.  Ignore everything here.  Post no
 bills.  Everything not permitted is forbidden.]
-
-# Version 6, 1995/1/27
 
 Any SV may be magical, that is, it has special features that a normal
 SV does not have.  These features are stored in the SV structure in a
@@ -594,12 +694,12 @@ If C<sv> is not already magical, Perl uses the C<SvUPGRADE> macro to
 set the C<SVt_PVMG> flag for the C<sv>.  Perl then continues by adding
 it to the beginning of the linked list of magical features.  Any prior
 entry of the same type of magic is deleted.  Note that this can be
-overriden, and multiple instances of the same type of magic can be
+overridden, and multiple instances of the same type of magic can be
 associated with an SV.
 
-The C<name> and C<namlem> arguments are used to associate a string with
-the magic, typically the name of a variable. C<namlem> is stored in the
-C<mg_len> field and if C<name> is non-null and C<namlem> >= 0 a malloc'd
+The C<name> and C<namlen> arguments are used to associate a string with
+the magic, typically the name of a variable. C<namlen> is stored in the
+C<mg_len> field and if C<name> is non-null and C<namlen> >= 0 a malloc'd
 copy of the name is stored in C<mg_ptr> field.
 
 The sv_magic function uses C<how> to determine which, if any, predefined
@@ -610,7 +710,7 @@ stored in the C<mg_type> field.
 The C<obj> argument is stored in the C<mg_obj> field of the C<MAGIC>
 structure.  If it is not the same as the C<sv> argument, the reference
 count of the C<obj> object is incremented.  If it is the same, or if
-the C<how> argument is "#", or if it is a null pointer, then C<obj> is
+the C<how> argument is "#", or if it is a NULL pointer, then C<obj> is
 merely stored, without the reference count being incremented.
 
 There is also a function to add magic to an C<HV>:
@@ -665,38 +765,71 @@ the various routines for the various magical types begin with C<magic_>.
 
 The current kinds of Magic Virtual Tables are:
 
-    mg_type  MGVTBL              Type of magicalness
-    -------  ------              -------------------
-    \0       vtbl_sv             Regexp???
-    A        vtbl_amagic         Operator Overloading
-    a        vtbl_amagicelem     Operator Overloading
-    c        0                   Used in Operator Overloading
-    B        vtbl_bm             Boyer-Moore???
+    mg_type  MGVTBL              Type of magic
+    -------  ------              ----------------------------
+    \0       vtbl_sv             Special scalar variable
+    A        vtbl_amagic         %OVERLOAD hash
+    a        vtbl_amagicelem     %OVERLOAD hash element
+    c        (none)              Holds overload table (AMT) on stash
+    B        vtbl_bm             Boyer-Moore (fast string search)
     E        vtbl_env            %ENV hash
     e        vtbl_envelem        %ENV hash element
-    g        vtbl_mglob          Regexp /g flag???
+    f        vtbl_fm             Formline ('compiled' format)
+    g        vtbl_mglob          m//g target / study()ed string
     I        vtbl_isa            @ISA array
     i        vtbl_isaelem        @ISA array element
-    L        0 (but sets RMAGICAL)     Perl Module/Debugger???
-    l        vtbl_dbline         Debugger?
-    P        vtbl_pack           Tied Array or Hash
-    p        vtbl_packelem       Tied Array or Hash element
-    q        vtbl_packelem       Tied Scalar or Handle
-    S        vtbl_sig            Signal Hash
-    s        vtbl_sigelem        Signal Hash element
+    k        vtbl_nkeys          scalar(keys()) lvalue
+    L        (none)              Debugger %_<filename 
+    l        vtbl_dbline         Debugger %_<filename element
+    o        vtbl_collxfrm       Locale transformation
+    P        vtbl_pack           Tied array or hash
+    p        vtbl_packelem       Tied array or hash element
+    q        vtbl_packelem       Tied scalar or handle
+    S        vtbl_sig            %SIG hash
+    s        vtbl_sigelem        %SIG hash element
     t        vtbl_taint          Taintedness
-    U        vtbl_uvar	         ???
-    v        vtbl_vec	         Vector
-    x        vtbl_substr         Substring???
-    *        vtbl_glob           GV???
-    #        vtbl_arylen         Array Length
-    .        vtbl_pos	         $. scalar variable
-    ~        Reserved for extensions, but multiple extensions may clash
+    U        vtbl_uvar           Available for use by extensions
+    v        vtbl_vec            vec() lvalue
+    x        vtbl_substr         substr() lvalue
+    y        vtbl_defelem        Shadow "foreach" iterator variable /
+                                  smart parameter vivification
+    *        vtbl_glob           GV (typeglob)
+    #        vtbl_arylen         Array length ($#ary)
+    .        vtbl_pos            pos() lvalue
+    ~        (none)              Available for use by extensions
 
-When an upper-case and lower-case letter both exist in the table, then the
-upper-case letter is used to represent some kind of composite type (a list
-or a hash), and the lower-case letter is used to represent an element of
+When an uppercase and lowercase letter both exist in the table, then the
+uppercase letter is used to represent some kind of composite type (a list
+or a hash), and the lowercase letter is used to represent an element of
 that composite type.
+
+The '~' and 'U' magic types are defined specifically for use by
+extensions and will not be used by perl itself.  Extensions can use
+'~' magic to 'attach' private information to variables (typically
+objects).  This is especially useful because there is no way for
+normal perl code to corrupt this private information (unlike using
+extra elements of a hash object).
+
+Similarly, 'U' magic can be used much like tie() to call a C function
+any time a scalar's value is used or changed.  The C<MAGIC>'s
+C<mg_ptr> field points to a C<ufuncs> structure:
+
+    struct ufuncs {
+        I32 (*uf_val)(IV, SV*);
+        I32 (*uf_set)(IV, SV*);
+        IV uf_index;
+    };
+
+When the SV is read from or written to, the C<uf_val> or C<uf_set>
+function will be called with C<uf_index> as the first arg and a
+pointer to the SV as the second.
+
+Note that because multiple extensions may be using '~' or 'U' magic,
+it is important for extensions to take extra care to avoid conflict.
+Typically only using the magic on objects blessed into the same class
+as the extension is sufficient.  For '~' magic, it may also be
+appropriate to add an I32 'signature' at the top of the private data
+area and check that.
 
 =head2 Finding Magic
 
@@ -704,55 +837,271 @@ that composite type.
 
 This routine returns a pointer to the C<MAGIC> structure stored in the SV.
 If the SV does not have that magical feature, C<NULL> is returned.  Also,
-if the SV is not of type SVt_PVMG, Perl may core-dump.
+if the SV is not of type SVt_PVMG, Perl may core dump.
 
     int mg_copy(SV* sv, SV* nsv, char* key, STRLEN klen);
 
 This routine checks to see what types of magic C<sv> has.  If the mg_type
-field is an upper-case letter, then the mg_obj is copied to C<nsv>, but
-the mg_type field is changed to be the lower-case letter.
+field is an uppercase letter, then the mg_obj is copied to C<nsv>, but
+the mg_type field is changed to be the lowercase letter.
 
-=head1 Double-Typed SV's
+=head2 Understanding the Magic of Tied Hashes and Arrays
 
-Scalar variables normally contain only one type of value, an integer,
-double, pointer, or reference.  Perl will automatically convert the
-actual scalar data from the stored type into the requested type.
+Tied hashes and arrays are magical beasts of the 'P' magic type.
 
-Some scalar variables contain more than one type of scalar data.  For
-example, the variable C<$!> contains either the numeric value of C<errno>
-or its string equivalent from either C<strerror> or C<sys_errlist[]>.
+WARNING: As of the 5.004 release, proper usage of the array and hash
+access functions requires understanding a few caveats.  Some
+of these caveats are actually considered bugs in the API, to be fixed
+in later releases, and are bracketed with [MAYCHANGE] below. If
+you find yourself actually applying such information in this section, be
+aware that the behavior may change in the future, umm, without warning.
 
-To force multiple data values into an SV, you must do two things: use the
-C<sv_set*v> routines to add the additional scalar type, then set a flag
-so that Perl will believe it contains more than one type of data.  The
-four macros to set the flags are:
+The C<av_store> function, when given a tied array argument, merely
+copies the magic of the array onto the value to be "stored", using
+C<mg_copy>.  It may also return NULL, indicating that the value did not
+actually need to be stored in the array.  [MAYCHANGE] After a call to
+C<av_store> on a tied array, the caller will usually need to call
+C<mg_set(val)> to actually invoke the perl level "STORE" method on the
+TIEARRAY object.  If C<av_store> did return NULL, a call to
+C<SvREFCNT_dec(val)> will also be usually necessary to avoid a memory
+leak. [/MAYCHANGE]
 
-	SvIOK_on
-	SvNOK_on
-	SvPOK_on
-	SvROK_on
+The previous paragraph is applicable verbatim to tied hash access using the
+C<hv_store> and C<hv_store_ent> functions as well.
 
-The particular macro you must use depends on which C<sv_set*v> routine
-you called first.  This is because every C<sv_set*v> routine turns on
-only the bit for the particular type of data being set, and turns off
-all the rest.
+C<av_fetch> and the corresponding hash functions C<hv_fetch> and
+C<hv_fetch_ent> actually return an undefined mortal value whose magic
+has been initialized using C<mg_copy>.  Note the value so returned does not
+need to be deallocated, as it is already mortal.  [MAYCHANGE] But you will
+need to call C<mg_get()> on the returned value in order to actually invoke
+the perl level "FETCH" method on the underlying TIE object.  Similarly,
+you may also call C<mg_set()> on the return value after possibly assigning
+a suitable value to it using C<sv_setsv>,  which will invoke the "STORE"
+method on the TIE object. [/MAYCHANGE]
 
-For example, to create a new Perl variable called "dberror" that contains
-both the numeric and descriptive string error values, you could use the
-following code:
+[MAYCHANGE]
+In other words, the array or hash fetch/store functions don't really
+fetch and store actual values in the case of tied arrays and hashes.  They
+merely call C<mg_copy> to attach magic to the values that were meant to be
+"stored" or "fetched".  Later calls to C<mg_get> and C<mg_set> actually
+do the job of invoking the TIE methods on the underlying objects.  Thus
+the magic mechanism currently implements a kind of lazy access to arrays
+and hashes.
 
-    extern int  dberror;
-    extern char *dberror_list;
+Currently (as of perl version 5.004), use of the hash and array access
+functions requires the user to be aware of whether they are operating on
+"normal" hashes and arrays, or on their tied variants.  The API may be
+changed to provide more transparent access to both tied and normal data
+types in future versions.
+[/MAYCHANGE]
 
-    SV* sv = perl_get_sv("dberror", TRUE);
-    sv_setiv(sv, (IV) dberror);
-    sv_setpv(sv, dberror_list[dberror]);
-    SvIOK_on(sv);
+You would do well to understand that the TIEARRAY and TIEHASH interfaces
+are mere sugar to invoke some perl method calls while using the uniform hash
+and array syntax.  The use of this sugar imposes some overhead (typically
+about two to four extra opcodes per FETCH/STORE operation, in addition to
+the creation of all the mortal variables required to invoke the methods).
+This overhead will be comparatively small if the TIE methods are themselves
+substantial, but if they are only a few statements long, the overhead
+will not be insignificant.
 
-If the order of C<sv_setiv> and C<sv_setpv> had been reversed, then the
-macro C<SvPOK_on> would need to be called instead of C<SvIOK_on>.
+=head2 Localizing changes
 
-=head1 Calling Perl Routines from within C Programs
+Perl has a very handy construction
+
+  {
+    local $var = 2;
+    ...
+  }
+
+This construction is I<approximately> equivalent to
+
+  {
+    my $oldvar = $var;
+    $var = 2;
+    ...
+    $var = $oldvar;
+  }
+
+The biggest difference is that the first construction would
+reinstate the initial value of $var, irrespective of how control exits
+the block: C<goto>, C<return>, C<die>/C<eval> etc. It is a little bit
+more efficient as well.
+
+There is a way to achieve a similar task from C via Perl API: create a
+I<pseudo-block>, and arrange for some changes to be automatically
+undone at the end of it, either explicit, or via a non-local exit (via
+die()). A I<block>-like construct is created by a pair of
+C<ENTER>/C<LEAVE> macros (see L<perlcall/EXAMPLE/"Returning a
+Scalar">).  Such a construct may be created specially for some
+important localized task, or an existing one (like boundaries of
+enclosing Perl subroutine/block, or an existing pair for freeing TMPs)
+may be used. (In the second case the overhead of additional
+localization must be almost negligible.) Note that any XSUB is
+automatically enclosed in an C<ENTER>/C<LEAVE> pair.
+
+Inside such a I<pseudo-block> the following service is available:
+
+=over
+
+=item C<SAVEINT(int i)>
+
+=item C<SAVEIV(IV i)>
+
+=item C<SAVEI32(I32 i)>
+
+=item C<SAVELONG(long i)>
+
+These macros arrange things to restore the value of integer variable
+C<i> at the end of enclosing I<pseudo-block>.
+
+=item C<SAVESPTR(s)>
+
+=item C<SAVEPPTR(p)>
+
+These macros arrange things to restore the value of pointers C<s> and
+C<p>. C<s> must be a pointer of a type which survives conversion to
+C<SV*> and back, C<p> should be able to survive conversion to C<char*>
+and back.
+
+=item C<SAVEFREESV(SV *sv)>
+
+The refcount of C<sv> would be decremented at the end of
+I<pseudo-block>. This is similar to C<sv_2mortal>, which should (?) be
+used instead.
+
+=item C<SAVEFREEOP(OP *op)>
+
+The C<OP *> is op_free()ed at the end of I<pseudo-block>.
+
+=item C<SAVEFREEPV(p)>
+
+The chunk of memory which is pointed to by C<p> is Safefree()ed at the
+end of I<pseudo-block>.
+
+=item C<SAVECLEARSV(SV *sv)>
+
+Clears a slot in the current scratchpad which corresponds to C<sv> at
+the end of I<pseudo-block>.
+
+=item C<SAVEDELETE(HV *hv, char *key, I32 length)>
+
+The key C<key> of C<hv> is deleted at the end of I<pseudo-block>. The
+string pointed to by C<key> is Safefree()ed.  If one has a I<key> in
+short-lived storage, the corresponding string may be reallocated like
+this:
+
+  SAVEDELETE(defstash, savepv(tmpbuf), strlen(tmpbuf));
+
+=item C<SAVEDESTRUCTOR(f,p)>
+
+At the end of I<pseudo-block> the function C<f> is called with the
+only argument (of type C<void*>) C<p>.
+
+=item C<SAVESTACK_POS()>
+
+The current offset on the Perl internal stack (cf. C<SP>) is restored
+at the end of I<pseudo-block>.
+
+=back
+
+The following API list contains functions, thus one needs to
+provide pointers to the modifiable data explicitly (either C pointers,
+or Perlish C<GV *>s).  Where the above macros take C<int>, a similar 
+function takes C<int *>.
+
+=over
+
+=item C<SV* save_scalar(GV *gv)>
+
+Equivalent to Perl code C<local $gv>.
+
+=item C<AV* save_ary(GV *gv)>
+
+=item C<HV* save_hash(GV *gv)>
+
+Similar to C<save_scalar>, but localize C<@gv> and C<%gv>.
+
+=item C<void save_item(SV *item)>
+
+Duplicates the current value of C<SV>, on the exit from the current
+C<ENTER>/C<LEAVE> I<pseudo-block> will restore the value of C<SV>
+using the stored value.
+
+=item C<void save_list(SV **sarg, I32 maxsarg)>
+
+A variant of C<save_item> which takes multiple arguments via an array
+C<sarg> of C<SV*> of length C<maxsarg>.
+
+=item C<SV* save_svref(SV **sptr)>
+
+Similar to C<save_scalar>, but will reinstate a C<SV *>.
+
+=item C<void save_aptr(AV **aptr)>
+
+=item C<void save_hptr(HV **hptr)>
+
+Similar to C<save_svref>, but localize C<AV *> and C<HV *>.
+
+=back
+
+The C<Alias> module implements localization of the basic types within the
+I<caller's scope>.  People who are interested in how to localize things in
+the containing scope should take a look there too.
+
+=head1 Subroutines
+
+=head2 XSUBs and the Argument Stack
+
+The XSUB mechanism is a simple way for Perl programs to access C subroutines.
+An XSUB routine will have a stack that contains the arguments from the Perl
+program, and a way to map from the Perl data structures to a C equivalent.
+
+The stack arguments are accessible through the C<ST(n)> macro, which returns
+the C<n>'th stack argument.  Argument 0 is the first argument passed in the
+Perl subroutine call.  These arguments are C<SV*>, and can be used anywhere
+an C<SV*> is used.
+
+Most of the time, output from the C routine can be handled through use of
+the RETVAL and OUTPUT directives.  However, there are some cases where the
+argument stack is not already long enough to handle all the return values.
+An example is the POSIX tzname() call, which takes no arguments, but returns
+two, the local time zone's standard and summer time abbreviations.
+
+To handle this situation, the PPCODE directive is used and the stack is
+extended using the macro:
+
+    EXTEND(sp, num);
+
+where C<sp> is the stack pointer, and C<num> is the number of elements the
+stack should be extended by.
+
+Now that there is room on the stack, values can be pushed on it using the
+macros to push IVs, doubles, strings, and SV pointers respectively:
+
+    PUSHi(IV)
+    PUSHn(double)
+    PUSHp(char*, I32)
+    PUSHs(SV*)
+
+And now the Perl program calling C<tzname>, the two values will be assigned
+as in:
+
+    ($standard_abbrev, $summer_abbrev) = POSIX::tzname;
+
+An alternate (and possibly simpler) method to pushing values on the stack is
+to use the macros:
+
+    XPUSHi(IV)
+    XPUSHn(double)
+    XPUSHp(char*, I32)
+    XPUSHs(SV*)
+
+These macros automatically adjust the stack for you, if needed.  Thus, you
+do not need to call C<EXTEND> to extend the stack.
+
+For more information, consult L<perlxs> and L<perlxstut>.
+
+=head2 Calling Perl Routines from within C Programs
 
 There are four routines that can be used to call a Perl subroutine from
 within a C program.  These four are:
@@ -787,26 +1136,30 @@ functions:
     XPUSH*()
     POP*()
 
-For more information, consult L<perlcall>.
+For a detailed description of calling conventions from C to Perl,
+consult L<perlcall>.
 
-=head1 Memory Allocation
+=head2 Memory Allocation
 
-It is strongly suggested that you use the version of malloc that is distributed
-with Perl.  It keeps pools of various sizes of unallocated memory in order to
-more quickly satisfy allocation requests.
-However, on some platforms, it may cause spurious malloc or free errors.
+It is suggested that you use the version of malloc that is distributed
+with Perl.  It keeps pools of various sizes of unallocated memory in
+order to satisfy allocation requests more quickly.  However, on some
+platforms, it may cause spurious malloc or free errors.
 
     New(x, pointer, number, type);
     Newc(x, pointer, number, type, cast);
     Newz(x, pointer, number, type);
 
-These three macros are used to initially allocate memory.  The first argument
-C<x> was a "magic cookie" that was used to keep track of who called the macro,
-to help when debugging memory problems.  However, the current code makes no
-use of this feature (Larry has switched to using a run-time memory checker),
-so this argument can be any number.
+These three macros are used to initially allocate memory.
 
-The second argument C<pointer> will point to the newly allocated memory.
+The first argument C<x> was a "magic cookie" that was used to keep track
+of who called the macro, to help when debugging memory problems.  However,
+the current code makes no use of this feature (most Perl developers now
+use run-time memory checkers), so this argument can be any number.
+
+The second argument C<pointer> should be the name of a variable that will
+point to the newly allocated memory.
+
 The third and fourth arguments C<number> and C<type> specify how many of
 the specified type of data structure should be allocated.  The argument
 C<type> is passed to C<sizeof>.  The final argument to C<Newc>, C<cast>,
@@ -835,6 +1188,212 @@ destination starting points.  Perl will move, copy, or zero out C<number>
 instances of the size of the C<type> data structure (using the C<sizeof>
 function).
 
+=head2 PerlIO
+
+The most recent development releases of Perl has been experimenting with
+removing Perl's dependency on the "normal" standard I/O suite and allowing
+other stdio implementations to be used.  This involves creating a new
+abstraction layer that then calls whichever implementation of stdio Perl
+was compiled with.  All XSUBs should now use the functions in the PerlIO
+abstraction layer and not make any assumptions about what kind of stdio
+is being used.
+
+For a complete description of the PerlIO abstraction, consult L<perlapio>.
+
+=head2 Putting a C value on Perl stack
+
+A lot of opcodes (this is an elementary operation in the internal perl
+stack machine) put an SV* on the stack. However, as an optimization
+the corresponding SV is (usually) not recreated each time. The opcodes
+reuse specially assigned SVs (I<target>s) which are (as a corollary)
+not constantly freed/created.
+
+Each of the targets is created only once (but see
+L<Scratchpads and recursion> below), and when an opcode needs to put
+an integer, a double, or a string on stack, it just sets the
+corresponding parts of its I<target> and puts the I<target> on stack.
+
+The macro to put this target on stack is C<PUSHTARG>, and it is
+directly used in some opcodes, as well as indirectly in zillions of
+others, which use it via C<(X)PUSH[pni]>.
+
+=head2 Scratchpads
+
+The question remains on when the SVs which are I<target>s for opcodes
+are created. The answer is that they are created when the current unit --
+a subroutine or a file (for opcodes for statements outside of
+subroutines) -- is compiled. During this time a special anonymous Perl
+array is created, which is called a scratchpad for the current
+unit.
+
+A scratchpad keeps SVs which are lexicals for the current unit and are
+targets for opcodes. One can deduce that an SV lives on a scratchpad
+by looking on its flags: lexicals have C<SVs_PADMY> set, and
+I<target>s have C<SVs_PADTMP> set.
+
+The correspondence between OPs and I<target>s is not 1-to-1. Different
+OPs in the compile tree of the unit can use the same target, if this
+would not conflict with the expected life of the temporary.
+
+=head2 Scratchpads and recursion
+
+In fact it is not 100% true that a compiled unit contains a pointer to
+the scratchpad AV. In fact it contains a pointer to an AV of
+(initially) one element, and this element is the scratchpad AV. Why do
+we need an extra level of indirection?
+
+The answer is B<recursion>, and maybe (sometime soon) B<threads>. Both
+these can create several execution pointers going into the same
+subroutine. For the subroutine-child not write over the temporaries
+for the subroutine-parent (lifespan of which covers the call to the
+child), the parent and the child should have different
+scratchpads. (I<And> the lexicals should be separate anyway!)
+
+So each subroutine is born with an array of scratchpads (of length 1).
+On each entry to the subroutine it is checked that the current
+depth of the recursion is not more than the length of this array, and
+if it is, new scratchpad is created and pushed into the array.
+
+The I<target>s on this scratchpad are C<undef>s, but they are already
+marked with correct flags.
+
+=head1 Compiled code
+
+=head2 Code tree
+
+Here we describe the internal form your code is converted to by
+Perl. Start with a simple example:
+
+  $a = $b + $c;
+
+This is converted to a tree similar to this one:
+
+             assign-to
+           /           \
+          +             $a
+        /   \
+      $b     $c
+
+(but slightly more complicated).  This tree reflect the way Perl
+parsed your code, but has nothing to do with the execution order.
+There is an additional "thread" going through the nodes of the tree
+which shows the order of execution of the nodes.  In our simplified
+example above it looks like:
+
+     $b ---> $c ---> + ---> $a ---> assign-to
+
+But with the actual compile tree for C<$a = $b + $c> it is different:
+some nodes I<optimized away>.  As a corollary, though the actual tree
+contains more nodes than our simplified example, the execution order
+is the same as in our example.
+
+=head2 Examining the tree
+
+If you have your perl compiled for debugging (usually done with C<-D
+optimize=-g> on C<Configure> command line), you may examine the
+compiled tree by specifying C<-Dx> on the Perl command line.  The
+output takes several lines per node, and for C<$b+$c> it looks like
+this:
+
+    5           TYPE = add  ===> 6
+                TARG = 1
+                FLAGS = (SCALAR,KIDS)
+                {
+                    TYPE = null  ===> (4)
+                      (was rv2sv)
+                    FLAGS = (SCALAR,KIDS)
+                    {
+    3                   TYPE = gvsv  ===> 4
+                        FLAGS = (SCALAR)
+                        GV = main::b
+                    }
+                }
+                {
+                    TYPE = null  ===> (5)
+                      (was rv2sv)
+                    FLAGS = (SCALAR,KIDS)
+                    {
+    4                   TYPE = gvsv  ===> 5
+                        FLAGS = (SCALAR)
+                        GV = main::c
+                    }
+                }
+
+This tree has 5 nodes (one per C<TYPE> specifier), only 3 of them are
+not optimized away (one per number in the left column).  The immediate
+children of the given node correspond to C<{}> pairs on the same level
+of indentation, thus this listing corresponds to the tree:
+
+                   add
+                 /     \
+               null    null
+                |       |
+               gvsv    gvsv
+
+The execution order is indicated by C<===E<gt>> marks, thus it is C<3
+4 5 6> (node C<6> is not included into above listing), i.e.,
+C<gvsv gvsv add whatever>.
+
+=head2 Compile pass 1: check routines
+
+The tree is created by the I<pseudo-compiler> while yacc code feeds it
+the constructions it recognizes. Since yacc works bottom-up, so does
+the first pass of perl compilation.
+
+What makes this pass interesting for perl developers is that some
+optimization may be performed on this pass.  This is optimization by
+so-called I<check routines>.  The correspondence between node names
+and corresponding check routines is described in F<opcode.pl> (do not
+forget to run C<make regen_headers> if you modify this file).
+
+A check routine is called when the node is fully constructed except
+for the execution-order thread.  Since at this time there is no
+back-links to the currently constructed node, one can do most any
+operation to the top-level node, including freeing it and/or creating
+new nodes above/below it.
+
+The check routine returns the node which should be inserted into the
+tree (if the top-level node was not modified, check routine returns
+its argument).
+
+By convention, check routines have names C<ck_*>. They are usually
+called from C<new*OP> subroutines (or C<convert>) (which in turn are
+called from F<perly.y>).
+
+=head2 Compile pass 1a: constant folding
+
+Immediately after the check routine is called the returned node is
+checked for being compile-time executable.  If it is (the value is
+judged to be constant) it is immediately executed, and a I<constant>
+node with the "return value" of the corresponding subtree is
+substituted instead.  The subtree is deleted.
+
+If constant folding was not performed, the execution-order thread is
+created.
+
+=head2 Compile pass 2: context propagation
+
+When a context for a part of compile tree is known, it is propagated
+down through the tree.  Aat this time the context can have 5 values
+(instead of 2 for runtime context): void, boolean, scalar, list, and
+lvalue.  In contrast with the pass 1 this pass is processed from top
+to bottom: a node's context determines the context for its children.
+
+Additional context-dependent optimizations are performed at this time.
+Since at this moment the compile tree contains back-references (via
+"thread" pointers), nodes cannot be free()d now.  To allow
+optimized-away nodes at this stage, such nodes are null()ified instead
+of free()ing (i.e. their type is changed to OP_NULL).
+
+=head2 Compile pass 3: peephole optimization
+
+After the compile tree for a subroutine (or for an C<eval> or a file)
+is created, an additional pass over the code is performed. This pass
+is neither top-down or bottom-up, but in the execution order (with
+additional compilications for conditionals).  These optimizations are
+done in the subroutine peep().  Optimizations performed at this stage
+are subject to the same restrictions as in the pass 2.
+
 =head1 API LISTING
 
 This is a listing of functions, macros, flags, and variables that may be
@@ -845,11 +1404,12 @@ extensions.
 
 =item AvFILL
 
-See C<av_len>.
+Same as C<av_len>.
 
 =item av_clear
 
-Clears an array, making it empty.
+Clears an array, making it empty.  Does not free the memory used by the
+array itself.
 
 	void	av_clear _((AV* ar));
 
@@ -866,6 +1426,9 @@ Returns the SV at the specified index in the array.  The C<key> is the
 index.  If C<lval> is set then the fetch will be part of a store.  Check
 that the return value is non-null before dereferencing it to a C<SV*>.
 
+See L<Understanding the Magic of Tied Hashes and Arrays> for more
+information on how to use this function on tied arrays.
+
 	SV**	av_fetch _((AV* ar, I32 key, I32 lval));
 
 =item av_len
@@ -876,8 +1439,9 @@ Returns the highest index in the array.  Returns -1 if the array is empty.
 
 =item av_make
 
-Creats a new AV and populates it with a list of SVs.  The SVs are copied
-into the array, so they may be freed after the call to av_make.
+Creates a new AV and populates it with a list of SVs.  The SVs are copied
+into the array, so they may be freed after the call to av_make.  The new AV
+will have a reference count of 1.
 
 	AV*	av_make _((I32 size, SV** svp));
 
@@ -890,7 +1454,8 @@ empty.
 
 =item av_push
 
-Pushes an SV onto the end of the array.
+Pushes an SV onto the end of the array.  The array will grow automatically
+to accommodate the addition.
 
 	void	av_push _((AV* ar, SV* val));
 
@@ -903,33 +1468,42 @@ Shifts an SV off the beginning of the array.
 =item av_store
 
 Stores an SV in an array.  The array index is specified as C<key>.  The
-return value will be null if the operation failed, otherwise it can be
-dereferenced to get the original C<SV*>.
+return value will be NULL if the operation failed or if the value did not
+need to be actually stored within the array (as in the case of tied arrays).
+Otherwise it can be dereferenced to get the original C<SV*>.  Note that the
+caller is responsible for suitably incrementing the reference count of C<val>
+before the call, and decrementing it if the function returned NULL.
+
+See L<Understanding the Magic of Tied Hashes and Arrays> for more
+information on how to use this function on tied arrays.
 
 	SV**	av_store _((AV* ar, I32 key, SV* val));
 
 =item av_undef
 
-Undefines the array.
+Undefines the array.  Frees the memory used by the array itself.
 
 	void	av_undef _((AV* ar));
 
 =item av_unshift
 
-Unshift an SV onto the beginning of the array.
+Unshift the given number of C<undef> values onto the beginning of the
+array.  The array will grow automatically to accommodate the addition.
+You must then use C<av_store> to assign values to these new elements.
 
 	void	av_unshift _((AV* ar, I32 num));
 
 =item CLASS
 
 Variable which is setup by C<xsubpp> to indicate the class name for a C++ XS
-constructor.  This is always a C<char*>.  See C<THIS> and L<perlxs>.
+constructor.  This is always a C<char*>.  See C<THIS> and
+L<perlxs/"Using XS With C++">.
 
 =item Copy
 
 The XSUB-writer's interface to the C C<memcpy> function.  The C<s> is the
 source, C<d> is the destination, C<n> is the number of items, and C<t> is
-the type.
+the type.  May fail on overlapping copies.  See also C<Move>.
 
 	(void) Copy( s, d, n, t );
 
@@ -948,33 +1522,51 @@ Returns the stash of the CV.
 
 When Perl is run in debugging mode, with the B<-d> switch, this SV is a
 boolean which indicates whether subs are being single-stepped.
-Single-stepping is automatically turned on after every step.  See C<DBsub>.
+Single-stepping is automatically turned on after every step.  This is the C
+variable which corresponds to Perl's $DB::single variable.  See C<DBsub>.
 
 =item DBsub
 
 When Perl is run in debugging mode, with the B<-d> switch, this GV contains
-the SV which holds the name of the sub being debugged.  See C<DBsingle>.
+the SV which holds the name of the sub being debugged.  This is the C
+variable which corresponds to Perl's $DB::sub variable.  See C<DBsingle>.
 The sub name can be found by
 
 	SvPV( GvSV( DBsub ), na )
 
+=item DBtrace
+
+Trace variable used when Perl is run in debugging mode, with the B<-d>
+switch.  This is the C variable which corresponds to Perl's $DB::trace
+variable.  See C<DBsingle>.
+
 =item dMARK
 
-Declare a stack marker for the XSUB.  See C<MARK> and C<dORIGMARK>.
+Declare a stack marker variable, C<mark>, for the XSUB.  See C<MARK> and
+C<dORIGMARK>.
 
 =item dORIGMARK
 
 Saves the original stack mark for the XSUB.  See C<ORIGMARK>.
 
+=item dowarn
+
+The C variable which corresponds to Perl's $^W warning variable.
+
 =item dSP
 
-Declares a stack pointer for the XSUB.  See C<SP>.
+Declares a stack pointer variable, C<sp>, for the XSUB.  See C<SP>.
 
 =item dXSARGS
 
 Sets up stack and mark pointers for an XSUB, calling dSP and dMARK.  This is
 usually handled automatically by C<xsubpp>.  Declares the C<items> variable
 to indicate the number of items on the stack.
+
+=item dXSI32
+
+Sets up the C<ix> variable for an XSUB which has aliases.  This is usually
+handled automatically by C<xsubpp>.
 
 =item ENTER
 
@@ -997,7 +1589,7 @@ L<perlcall>.
 
 =item G_ARRAY
 
-Used to indicate array context.  See C<GIMME> and L<perlcall>.
+Used to indicate array context.  See C<GIMME_V>, C<GIMME> and L<perlcall>.
 
 =item G_DISCARD
 
@@ -1010,8 +1602,14 @@ Used to force a Perl C<eval> wrapper around a callback.  See L<perlcall>.
 
 =item GIMME
 
-The XSUB-writer's equivalent to Perl's C<wantarray>.  Returns C<G_SCALAR> or
-C<G_ARRAY> for scalar or array context.
+A backward-compatible version of C<GIMME_V> which can only return
+C<G_SCALAR> or C<G_ARRAY>; in a void context, it returns C<G_SCALAR>.
+
+=item GIMME_V
+
+The XSUB-writer's equivalent to Perl's C<wantarray>.  Returns
+C<G_VOID>, C<G_SCALAR> or C<G_ARRAY> for void, scalar or array
+context, respectively.
 
 =item G_NOARGS
 
@@ -1019,7 +1617,63 @@ Indicates that no arguments are being sent to a callback.  See L<perlcall>.
 
 =item G_SCALAR
 
-Used to indicate scalar context.  See C<GIMME> and L<perlcall>.
+Used to indicate scalar context.  See C<GIMME_V>, C<GIMME>, and L<perlcall>.
+
+=item G_VOID
+
+Used to indicate void context.  See C<GIMME_V> and L<perlcall>.
+
+=item gv_fetchmeth
+
+Returns the glob with the given C<name> and a defined subroutine or
+C<NULL>.  The glob lives in the given C<stash>, or in the stashes
+accessable via @ISA and @<UNIVERSAL>.
+
+The argument C<level> should be either 0 or -1.  If C<level==0>, as a
+side-effect creates a glob with the given C<name> in the given
+C<stash> which in the case of success contains an alias for the
+subroutine, and sets up caching info for this glob.  Similarly for all
+the searched stashes.
+
+This function grants C<"SUPER"> token as a postfix of the stash name.
+
+The GV returned from C<gv_fetchmeth> may be a method cache entry,
+which is not visible to Perl code.  So when calling C<perl_call_sv>,
+you should not use the GV directly; instead, you should use the
+method's CV, which can be obtained from the GV with the C<GvCV> macro.
+
+        GV*     gv_fetchmeth _((HV* stash, char* name, STRLEN len, I32 level));
+
+=item gv_fetchmethod
+
+=item gv_fetchmethod_autoload
+
+Returns the glob which contains the subroutine to call to invoke the
+method on the C<stash>.  In fact in the presense of autoloading this may
+be the glob for "AUTOLOAD".  In this case the corresponding variable
+$AUTOLOAD is already setup.
+
+The third parameter of C<gv_fetchmethod_autoload> determines whether AUTOLOAD
+lookup is performed if the given method is not present: non-zero means
+yes, look for AUTOLOAD; zero means no, don't look for AUTOLOAD.  Calling
+C<gv_fetchmethod> is equivalent to calling C<gv_fetchmethod_autoload> with a
+non-zero C<autoload> parameter.
+
+These functions grant C<"SUPER"> token as a prefix of the method name.
+
+Note that if you want to keep the returned glob for a long time, you
+need to check for it being "AUTOLOAD", since at the later time the call
+may load a different subroutine due to $AUTOLOAD changing its value.
+Use the glob created via a side effect to do this.
+
+These functions have the same side-effects and as C<gv_fetchmeth> with
+C<level==0>.  C<name> should be writable if contains C<':'> or C<'\''>.
+The warning against passing the GV returned by C<gv_fetchmeth> to
+C<perl_call_sv> apply equally to these functions.
+
+        GV*     gv_fetchmethod _((HV* stash, char* name));
+        GV*     gv_fetchmethod_autoload _((HV* stash, char* name,
+                                           I32 autoload));
 
 =item gv_stashpv
 
@@ -1039,9 +1693,76 @@ Returns a pointer to the stash for a specified package.  See C<gv_stashpv>.
 
 Return the SV from the GV.
 
-=item he_free
+=item HEf_SVKEY
 
-Releases a hash entry from an iterator.  See C<hv_iternext>.
+This flag, used in the length slot of hash entries and magic
+structures, specifies the structure contains a C<SV*> pointer where a
+C<char*> pointer is to be expected. (For information only--not to be used).
+
+=item HeHASH
+
+Returns the computed hash (type C<U32>) stored in the hash entry.
+
+	HeHASH(HE* he)
+
+=item HeKEY
+
+Returns the actual pointer stored in the key slot of the hash entry.
+The pointer may be either C<char*> or C<SV*>, depending on the value of
+C<HeKLEN()>.  Can be assigned to.  The C<HePV()> or C<HeSVKEY()> macros
+are usually preferable for finding the value of a key.
+
+	HeKEY(HE* he)
+
+=item HeKLEN
+
+If this is negative, and amounts to C<HEf_SVKEY>, it indicates the entry
+holds an C<SV*> key.  Otherwise, holds the actual length of the key.
+Can be assigned to. The C<HePV()> macro is usually preferable for finding
+key lengths.
+
+	HeKLEN(HE* he)
+
+=item HePV
+
+Returns the key slot of the hash entry as a C<char*> value, doing any
+necessary dereferencing of possibly C<SV*> keys.  The length of
+the string is placed in C<len> (this is a macro, so do I<not> use
+C<&len>).  If you do not care about what the length of the key is,
+you may use the global variable C<na>.  Remember though, that hash
+keys in perl are free to contain embedded nulls, so using C<strlen()>
+or similar is not a good way to find the length of hash keys.
+This is very similar to the C<SvPV()> macro described elsewhere in
+this document.
+
+	HePV(HE* he, STRLEN len)
+
+=item HeSVKEY
+
+Returns the key as an C<SV*>, or C<Nullsv> if the hash entry
+does not contain an C<SV*> key.
+
+	HeSVKEY(HE* he)
+
+=item HeSVKEY_force
+
+Returns the key as an C<SV*>.  Will create and return a temporary
+mortal C<SV*> if the hash entry contains only a C<char*> key.
+
+	HeSVKEY_force(HE* he)
+
+=item HeSVKEY_set
+
+Sets the key to a given C<SV*>, taking care to set the appropriate flags
+to indicate the presence of an C<SV*> key, and returns the same C<SV*>.
+
+	HeSVKEY_set(HE* he, SV* sv)
+
+=item HeVAL
+
+Returns the value slot (type C<SV*>) stored in the hash entry.
+
+	HeVAL(HE* he)
 
 =item hv_clear
 
@@ -1049,30 +1770,80 @@ Clears a hash, making it empty.
 
 	void	hv_clear _((HV* tb));
 
+=item hv_delayfree_ent
+
+Releases a hash entry, such as while iterating though the hash, but
+delays actual freeing of key and value until the end of the current
+statement (or thereabouts) with C<sv_2mortal>.  See C<hv_iternext>
+and C<hv_free_ent>.
+
+	void    hv_delayfree_ent _((HV* hv, HE* entry));
+
 =item hv_delete
 
 Deletes a key/value pair in the hash.  The value SV is removed from the hash
-and returned to the caller.  The C<lken> is the length of the key.  The
-C<flags> value will normally be zero; if set to G_DISCARD then null will be
+and returned to the caller.  The C<klen> is the length of the key.  The
+C<flags> value will normally be zero; if set to G_DISCARD then NULL will be
 returned.
 
 	SV*	hv_delete _((HV* tb, char* key, U32 klen, I32 flags));
 
+=item hv_delete_ent
+
+Deletes a key/value pair in the hash.  The value SV is removed from the hash
+and returned to the caller.  The C<flags> value will normally be zero; if set
+to G_DISCARD then NULL will be returned.  C<hash> can be a valid precomputed
+hash value, or 0 to ask for it to be computed.
+
+	SV*     hv_delete_ent _((HV* tb, SV* key, I32 flags, U32 hash));
+
 =item hv_exists
 
 Returns a boolean indicating whether the specified hash key exists.  The
-C<lken> is the length of the key.
+C<klen> is the length of the key.
 
 	bool	hv_exists _((HV* tb, char* key, U32 klen));
+
+=item hv_exists_ent
+
+Returns a boolean indicating whether the specified hash key exists. C<hash>
+can be a valid precomputed hash value, or 0 to ask for it to be computed.
+
+	bool    hv_exists_ent _((HV* tb, SV* key, U32 hash));
 
 =item hv_fetch
 
 Returns the SV which corresponds to the specified key in the hash.  The
-C<lken> is the length of the key.  If C<lval> is set then the fetch will be
+C<klen> is the length of the key.  If C<lval> is set then the fetch will be
 part of a store.  Check that the return value is non-null before
 dereferencing it to a C<SV*>.
 
+See L<Understanding the Magic of Tied Hashes and Arrays> for more
+information on how to use this function on tied hashes.
+
 	SV**	hv_fetch _((HV* tb, char* key, U32 klen, I32 lval));
+
+=item hv_fetch_ent
+
+Returns the hash entry which corresponds to the specified key in the hash.
+C<hash> must be a valid precomputed hash number for the given C<key>, or
+0 if you want the function to compute it.  IF C<lval> is set then the
+fetch will be part of a store.  Make sure the return value is non-null
+before accessing it.  The return value when C<tb> is a tied hash
+is a pointer to a static location, so be sure to make a copy of the
+structure if you need to store it somewhere.
+
+See L<Understanding the Magic of Tied Hashes and Arrays> for more
+information on how to use this function on tied hashes.
+
+	HE*     hv_fetch_ent  _((HV* tb, SV* key, I32 lval, U32 hash));
+
+=item hv_free_ent
+
+Releases a hash entry, such as while iterating though the hash.  See
+C<hv_iternext> and C<hv_delayfree_ent>.
+
+	void    hv_free_ent _((HV* hv, HE* entry));
 
 =item hv_iterinit
 
@@ -1080,12 +1851,25 @@ Prepares a starting point to traverse a hash table.
 
 	I32	hv_iterinit _((HV* tb));
 
+Note that hv_iterinit I<currently> returns the number of I<buckets> in
+the hash and I<not> the number of keys (as indicated in the Advanced
+Perl Programming book). This may change in future. Use the HvKEYS(hv)
+macro to find the number of keys in a hash.
+
 =item hv_iterkey
 
 Returns the key from the current position of the hash iterator.  See
 C<hv_iterinit>.
 
 	char*	hv_iterkey _((HE* entry, I32* retlen));
+
+=item hv_iterkeysv
+
+Returns the key as an C<SV*> from the current position of the hash
+iterator.  The return value will always be a mortal copy of the
+key.  Also see C<hv_iterinit>.
+
+	SV*     hv_iterkeysv  _((HE* entry));
 
 =item hv_iternext
 
@@ -1122,12 +1906,35 @@ Returns the package name of a stash.  See C<SvSTASH>, C<CvSTASH>.
 =item hv_store
 
 Stores an SV in a hash.  The hash key is specified as C<key> and C<klen> is
-the length of the key.  The C<hash> parameter is the pre-computed hash
+the length of the key.  The C<hash> parameter is the precomputed hash
 value; if it is zero then Perl will compute it.  The return value will be
-null if the operation failed, otherwise it can be dereferenced to get the
-original C<SV*>.
+NULL if the operation failed or if the value did not need to be actually
+stored within the hash (as in the case of tied hashes).  Otherwise it can
+be dereferenced to get the original C<SV*>.  Note that the caller is
+responsible for suitably incrementing the reference count of C<val>
+before the call, and decrementing it if the function returned NULL.
+
+See L<Understanding the Magic of Tied Hashes and Arrays> for more
+information on how to use this function on tied hashes.
 
 	SV**	hv_store _((HV* tb, char* key, U32 klen, SV* val, U32 hash));
+
+=item hv_store_ent
+
+Stores C<val> in a hash.  The hash key is specified as C<key>.  The C<hash>
+parameter is the precomputed hash value; if it is zero then Perl will
+compute it.  The return value is the new hash entry so created.  It will be
+NULL if the operation failed or if the value did not need to be actually
+stored within the hash (as in the case of tied hashes).  Otherwise the
+contents of the return value can be accessed using the C<He???> macros
+described here.  Note that the caller is responsible for suitably
+incrementing the reference count of C<val> before the call, and decrementing
+it if the function returned NULL.
+
+See L<Understanding the Magic of Tied Hashes and Arrays> for more
+information on how to use this function on tied hashes.
+
+	HE*     hv_store_ent  _((HV* tb, SV* key, SV* val, U32 hash));
 
 =item hv_undef
 
@@ -1144,7 +1951,7 @@ character or digit.
 
 =item isALPHA
 
-Returns a boolean indicating whether the C C<char> is an ascii alphanumeric
+Returns a boolean indicating whether the C C<char> is an ascii alphabetic
 character.
 
 	int isALPHA (char c)
@@ -1176,7 +1983,12 @@ Returns a boolean indicating whether the C C<char> is an uppercase character.
 =item items
 
 Variable which is setup by C<xsubpp> to indicate the number of items on the
-stack.  See L<perlxs>.
+stack.  See L<perlxs/"Variable-length Parameter Lists">.
+
+=item ix
+
+Variable which is setup by C<xsubpp> to indicate which of an XSUB's aliases
+was used to invoke it.  See L<perlxs/"The ALIAS: Keyword">.
 
 =item LEAVE
 
@@ -1186,7 +1998,7 @@ Closing bracket on a callback.  See C<ENTER> and L<perlcall>.
 
 =item MARK
 
-Stack marker for the XSUB.  See C<dMARK>.
+Stack marker variable for the XSUB.  See C<dMARK>.
 
 =item mg_clear
 
@@ -1240,7 +2052,7 @@ Do magic after a value is assigned to the SV.  See C<sv_magic>.
 
 The XSUB-writer's interface to the C C<memmove> function.  The C<s> is the
 source, C<d> is the destination, C<n> is the number of items, and C<t> is
-the type.
+the type.  Can do overlapping moves.  See also C<Copy>.
 
 	(void) Move( s, d, n, t );
 
@@ -1270,64 +2082,73 @@ memory is zeroed with C<memzero>.
 
 =item newAV
 
-Creates a new AV.  The refcount is set to 1.
+Creates a new AV.  The reference count is set to 1.
 
 	AV*	newAV _((void));
 
 =item newHV
 
-Creates a new HV.  The refcount is set to 1.
+Creates a new HV.  The reference count is set to 1.
 
 	HV*	newHV _((void));
 
-=item newRV
+=item newRV_inc
 
-Creates an RV wrapper for an SV.  The refcount for the original SV is
+Creates an RV wrapper for an SV.  The reference count for the original SV is
 incremented.
 
-	SV*	newRV _((SV* ref));
+	SV*	newRV_inc _((SV* ref));
+
+For historical reasons, "newRV" is a synonym for "newRV_inc".
+
+=item newRV_noinc
+
+Creates an RV wrapper for an SV.  The reference count for the original
+SV is B<not> incremented.
+
+	SV*     newRV_noinc _((SV* ref));
 
 =item newSV
 
 Creates a new SV.  The C<len> parameter indicates the number of bytes of
-pre-allocated string space the SV should have.  The refcount for the new SV
-is set to 1.
+preallocated string space the SV should have.  The reference count for the
+new SV is set to 1.
 
 	SV*	newSV _((STRLEN len));
 
 =item newSViv
 
-Creates a new SV and copies an integer into it.  The refcount for the SV is
-set to 1.
+Creates a new SV and copies an integer into it.  The reference count for the
+SV is set to 1.
 
 	SV*	newSViv _((IV i));
 
 =item newSVnv
 
-Creates a new SV and copies a double into it.  The refcount for the SV is
-set to 1.
+Creates a new SV and copies a double into it.  The reference count for the
+SV is set to 1.
 
 	SV*	newSVnv _((NV i));
 
 =item newSVpv
 
-Creates a new SV and copies a string into it.  The refcount for the SV is
-set to 1.  If C<len> is zero then Perl will compute the length.
+Creates a new SV and copies a string into it.  The reference count for the
+SV is set to 1.  If C<len> is zero then Perl will compute the length.
 
 	SV*	newSVpv _((char* s, STRLEN len));
 
 =item newSVrv
 
 Creates a new SV for the RV, C<rv>, to point to.  If C<rv> is not an RV then
-it will be upgraded one.  If C<classname> is non-null then the new SV will
+it will be upgraded to one.  If C<classname> is non-null then the new SV will
 be blessed in the specified package.  The new SV is returned and its
-refcount is 1.
+reference count is 1.
 
 	SV*	newSVrv _((SV* rv, char* classname));
 
 =item newSVsv
 
-Creates a new SV which is an exact duplicate of the orignal SV.
+Creates a new SV which is an exact duplicate of the original SV.
 
 	SV*	newSVsv _((SV* old));
 
@@ -1408,6 +2229,12 @@ Tells Perl to C<eval> the string in the SV.
 
 	I32	perl_eval_sv _((SV* sv, I32 flags));
 
+=item perl_eval_pv
+
+Tells Perl to C<eval> the given string and return an SV* result.
+
+	SV*	perl_eval_pv _((char* p, I32 croak_on_error));
+
 =item perl_free
 
 Releases a Perl interpreter.  See L<perlembed>.
@@ -1416,7 +2243,7 @@ Releases a Perl interpreter.  See L<perlembed>.
 
 Returns the AV of the specified Perl array.  If C<create> is set and the
 Perl variable does not exist then it will be created.  If C<create> is not
-set and the variable does not exist then null is returned.
+set and the variable does not exist then NULL is returned.
 
 	AV*	perl_get_av _((char* name, I32 create));
 
@@ -1424,7 +2251,7 @@ set and the variable does not exist then null is returned.
 
 Returns the CV of the specified Perl sub.  If C<create> is set and the Perl
 variable does not exist then it will be created.  If C<create> is not
-set and the variable does not exist then null is returned.
+set and the variable does not exist then NULL is returned.
 
 	CV*	perl_get_cv _((char* name, I32 create));
 
@@ -1432,7 +2259,7 @@ set and the variable does not exist then null is returned.
 
 Returns the HV of the specified Perl hash.  If C<create> is set and the Perl
 variable does not exist then it will be created.  If C<create> is not
-set and the variable does not exist then null is returned.
+set and the variable does not exist then NULL is returned.
 
 	HV*	perl_get_hv _((char* name, I32 create));
 
@@ -1440,7 +2267,7 @@ set and the variable does not exist then null is returned.
 
 Returns the SV of the specified Perl scalar.  If C<create> is set and the
 Perl variable does not exist then it will be created.  If C<create> is not
-set and the variable does not exist then null is returned.
+set and the variable does not exist then NULL is returned.
 
 	SV*	perl_get_sv _((char* name, I32 create));
 
@@ -1544,7 +2371,8 @@ The XSUB-writer's interface to the C C<realloc> function, with cast.
 =item RETVAL
 
 Variable which is setup by C<xsubpp> to hold the return value for an XSUB.
-This is always the proper type for the XSUB.  See L<perlxs>.
+This is always the proper type for the XSUB.
+See L<perlxs/"The RETVAL Variable">.
 
 =item safefree
 
@@ -1659,8 +2487,8 @@ ends.
 =item sv_bless
 
 Blesses an SV into a specified package.  The SV must be an RV.  The package
-must be designated by its stash (see C<gv_stashpv()>).  The refcount of the
-SV is unaffected.
+must be designated by its stash (see C<gv_stashpv()>).  The reference count
+of the SV is unaffected.
 
 	SV*	sv_bless _((SV* sv, HV* stash));
 
@@ -1677,12 +2505,27 @@ C<len> indicates number of bytes to copy.
 
 	void	sv_catpvn _((SV* sv, char* ptr, STRLEN len));
 
+=item sv_catpvf
+
+Processes its arguments like C<sprintf> and appends the formatted output
+to an SV.
+
+	void	sv_catpvf _((SV* sv, const char* pat, ...));
+
 =item sv_catsv
 
-Concatentates the string from SV C<ssv> onto the end of the string in SV
+Concatenates the string from SV C<ssv> onto the end of the string in SV
 C<dsv>.
 
 	void	sv_catsv _((SV* dsv, SV* ssv));
+
+=item sv_cmp
+
+Compares the strings in two SVs.  Returns -1, 0, or 1 indicating whether the
+string in C<sv1> is less than, equal to, or greater than the string in
+C<sv2>.
+
+	I32	sv_cmp _((SV* sv1, SV* sv2));
 
 =item SvCUR
 
@@ -1696,6 +2539,12 @@ Set the length of the string which is in the SV.  See C<SvCUR>.
 
 	SvCUR_set (SV* sv, int val )
 
+=item sv_dec
+
+Auto-decrement of the value in the SV.
+
+	void	sv_dec _((SV* sv));
+
 =item SvEND
 
 Returns a pointer to the last character in the string which is in the SV.
@@ -1703,11 +2552,31 @@ See C<SvCUR>.  Access the character as
 
 	*SvEND(sv)
 
+=item sv_eq
+
+Returns a boolean indicating whether the strings in the two SVs are
+identical.
+
+	I32	sv_eq _((SV* sv1, SV* sv2));
+
 =item SvGROW
 
-Expands the character buffer in the SV.
+Expands the character buffer in the SV.  Calls C<sv_grow> to perform the
+expansion if necessary.  Returns a pointer to the character buffer.
 
 	char * SvGROW( SV* sv, int len )
+
+=item sv_grow
+
+Expands the character buffer in the SV.  This will use C<sv_unref> and will
+upgrade the SV to C<SVt_PV>.  Returns a pointer to the character buffer.
+Use C<SvGROW>.
+
+=item sv_inc
+
+Auto-increment of the value in the SV.
+
+	void	sv_inc _((SV* sv));
 
 =item SvIOK
 
@@ -1724,6 +2593,12 @@ Unsets the IV status of an SV.
 =item SvIOK_on
 
 Tells an SV that it is an integer.
+
+	SvIOK_on (SV* sv)
+
+=item SvIOK_only
+
+Tells an SV that it is an integer and disables all other OK bits.
 
 	SvIOK_on (SV* sv)
 
@@ -1768,6 +2643,12 @@ Returns the size of the string buffer in the SV.  See C<SvCUR>.
 
 	int SvLEN (SV* sv)
 
+=item sv_len
+
+Returns the length of the string in the SV.  Use C<SvCUR>.
+
+	STRLEN	sv_len _((SV* sv));
+
 =item sv_magic
 
 Adds magic to an SV.
@@ -1789,7 +2670,7 @@ Returns a boolean indicating whether the value is an SV.
 
 =item sv_newmortal
 
-Creates a new SV which is mortal.  The refcount of the SV is set to 1.
+Creates a new SV which is mortal.  The reference count of the SV is set to 1.
 
 	SV*	sv_newmortal _((void));
 
@@ -1835,6 +2716,12 @@ Tells an SV that it is a double.
 
 	SvNOK_on (SV* sv)
 
+=item SvNOK_only
+
+Tells an SV that it is a double and disables all other OK bits.
+
+	SvNOK_on (SV* sv)
+
 =item SvNOKp
 
 Returns a boolean indicating whether the SV contains a double.  Checks the
@@ -1872,6 +2759,12 @@ Tells an SV that it is a string.
 
 	SvPOK_on (SV* sv)
 
+=item SvPOK_only
+
+Tells an SV that it is a string and disables all other OK bits.
+
+	SvPOK_on (SV* sv)
+
 =item SvPOKp
 
 Returns a boolean indicating whether the SV contains a character string.
@@ -1895,19 +2788,19 @@ Returns a pointer to the string in the SV.  The SV must contain a string.
 
 =item SvREFCNT
 
-Returns the value of the object's refcount.
+Returns the value of the object's reference count.
 
 	int SvREFCNT (SV* sv);
 
 =item SvREFCNT_dec
 
-Decrements the refcount of the given SV.
+Decrements the reference count of the given SV.
 
 	void SvREFCNT_dec (SV* sv)
 
 =item SvREFCNT_inc
 
-Increments the refcount of the given SV.
+Increments the reference count of the given SV.
 
 	void SvREFCNT_inc (SV* sv)
 
@@ -1935,6 +2828,35 @@ Dereferences an RV to return the SV.
 
 	SV*	SvRV (SV* sv);
 
+=item SvTAINT
+
+Taints an SV if tainting is enabled
+
+	SvTAINT (SV* sv);
+
+=item SvTAINTED
+
+Checks to see if an SV is tainted. Returns TRUE if it is, FALSE if not.
+
+	SvTAINTED (SV* sv);
+
+=item SvTAINTED_off
+
+Untaints an SV. Be I<very> careful with this routine, as it short-circuits
+some of Perl's fundamental security features. XS module authors should
+not use this function unless they fully understand all the implications
+of unconditionally untainting the value. Untainting should be done in
+the standard perl fashion, via a carefully crafted regexp, rather than
+directly untainting variables.
+
+	SvTAINTED_off (SV* sv);
+
+=item SvTAINTED_on
+
+Marks an SV as tainted.
+
+	SvTAINTED_on (SV* sv);
+
 =item sv_setiv
 
 Copies an integer into the given SV.
@@ -1960,31 +2882,41 @@ bytes to be copied.
 
 	void	sv_setpvn _((SV* sv, char* ptr, STRLEN len));
 
+=item sv_setpvf
+
+Processes its arguments like C<sprintf> and sets an SV to the formatted
+output.
+
+	void	sv_setpvf _((SV* sv, const char* pat, ...));
+
 =item sv_setref_iv
 
-Copies an integer into an SV, optionally blessing the SV.  The SV must be an
-RV.  The C<classname> argument indicates the package for the blessing.  Set
-C<classname> to C<Nullch> to avoid the blessing.  The new SV will be
-returned and will have a refcount of 1.
+Copies an integer into a new SV, optionally blessing the SV.  The C<rv>
+argument will be upgraded to an RV.  That RV will be modified to point to
+the new SV.  The C<classname> argument indicates the package for the
+blessing.  Set C<classname> to C<Nullch> to avoid the blessing.  The new SV
+will be returned and will have a reference count of 1.
 
 	SV*	sv_setref_iv _((SV *rv, char *classname, IV iv));
 
 =item sv_setref_nv
 
-Copies a double into an SV, optionally blessing the SV.  The SV must be an
-RV.  The C<classname> argument indicates the package for the blessing.  Set
-C<classname> to C<Nullch> to avoid the blessing.  The new SV will be
-returned and will have a refcount of 1.
+Copies a double into a new SV, optionally blessing the SV.  The C<rv>
+argument will be upgraded to an RV.  That RV will be modified to point to
+the new SV.  The C<classname> argument indicates the package for the
+blessing.  Set C<classname> to C<Nullch> to avoid the blessing.  The new SV
+will be returned and will have a reference count of 1.
 
 	SV*	sv_setref_nv _((SV *rv, char *classname, double nv));
 
 =item sv_setref_pv
 
-Copies a pointer into an SV, optionally blessing the SV.  The SV must be an
-RV.  If the C<pv> argument is NULL then C<sv_undef> will be placed into the
-SV.  The C<classname> argument indicates the package for the blessing.  Set
-C<classname> to C<Nullch> to avoid the blessing.  The new SV will be
-returned and will have a refcount of 1.
+Copies a pointer into a new SV, optionally blessing the SV.  The C<rv>
+argument will be upgraded to an RV.  That RV will be modified to point to
+the new SV.  If the C<pv> argument is NULL then C<sv_undef> will be placed
+into the SV.  The C<classname> argument indicates the package for the
+blessing.  Set C<classname> to C<Nullch> to avoid the blessing.  The new SV
+will be returned and will have a reference count of 1.
 
 	SV*	sv_setref_pv _((SV *rv, char *classname, void* pv));
 
@@ -1995,11 +2927,12 @@ Note that C<sv_setref_pvn> copies the string while this copies the pointer.
 
 =item sv_setref_pvn
 
-Copies a string into an SV, optionally blessing the SV.  The lenth of the
-string must be specified with C<n>.  The SV must be an RV.  The C<classname>
+Copies a string into a new SV, optionally blessing the SV.  The length of the
+string must be specified with C<n>.  The C<rv> argument will be upgraded to
+an RV.  That RV will be modified to point to the new SV.  The C<classname>
 argument indicates the package for the blessing.  Set C<classname> to
 C<Nullch> to avoid the blessing.  The new SV will be returned and will have
-a refcount of 1.
+a reference count of 1.
 
 	SV*	sv_setref_pvn _((SV *rv, char *classname, char* pv, I32 n));
 
@@ -2008,9 +2941,7 @@ Note that C<sv_setref_pv> copies the pointer while this copies the string.
 =item sv_setsv
 
 Copies the contents of the source SV C<ssv> into the destination SV C<dsv>.
-(B<NOTE:> If C<ssv> has the C<SVs_TEMP> bit set, C<sv_setsv> may simply steal
-the string from C<ssv> and give it to C<dsv>, leaving C<ssv> empty.
-Caveat caller.)
+The source SV may be destroyed if it is mortal.
 
 	void	sv_setsv _((SV* dsv, SV* ssv));
 
@@ -2068,16 +2999,32 @@ C<svtype> enum.  Test these flags with the C<SvTYPE> macro.
 
 =item SvUPGRADE
 
-Used to upgrade an SV to a more complex form.  See C<svtype>.
+Used to upgrade an SV to a more complex form.  Uses C<sv_upgrade> to perform
+the upgrade if necessary.  See C<svtype>.
+
+	bool    SvUPGRADE _((SV* sv, svtype mt));
+
+=item sv_upgrade
+
+Upgrade an SV to a more complex form.  Use C<SvUPGRADE>.  See C<svtype>.
 
 =item sv_undef
 
 This is the C<undef> SV.  Always refer to this as C<&sv_undef>.
 
+=item sv_unref
+
+Unsets the RV status of the SV, and decrements the reference count of
+whatever was being referenced by the RV.  This can almost be thought of
+as a reversal of C<newSVrv>.  See C<SvROK_off>.
+
+	void    sv_unref _((SV* sv));
+
 =item sv_usepvn
 
 Tells an SV to use C<ptr> to find its string value.  Normally the string is
-stored inside the SV; this allows the SV to use an outside string.  The
+stored inside the SV but sv_usepvn allows the SV to use an outside string.
+The C<ptr> should point to memory that was allocated by C<malloc>.  The
 string length, C<len>, must be supplied.  This function will realloc the
 memory pointed to by C<ptr>, so that pointer should not be freed or used by
 the programmer after giving it to sv_usepvn.
@@ -2092,7 +3039,7 @@ This is the C<true> SV.  See C<sv_no>.  Always refer to this as C<&sv_yes>.
 
 Variable which is setup by C<xsubpp> to designate the object in a C++ XSUB.
 This is always the proper type for the C++ object.  See C<CLASS> and
-L<perlxs>.
+L<perlxs/"Using XS With C++">.
 
 =item toLOWER
 
@@ -2138,36 +3085,109 @@ Push an SV onto the stack, extending the stack if necessary.  See C<PUSHs>.
 
 	XPUSHs(sv)
 
+=item XS
+
+Macro to declare an XSUB and its C parameter list.  This is handled by
+C<xsubpp>.
+
 =item XSRETURN
 
 Return from XSUB, indicating number of items on the stack.  This is usually
 handled by C<xsubpp>.
 
-	XSRETURN(x);
+	XSRETURN(int x);
 
 =item XSRETURN_EMPTY
 
-Return from an XSUB immediately.
+Return an empty list from an XSUB immediately.
 
 	XSRETURN_EMPTY;
 
+=item XSRETURN_IV
+
+Return an integer from an XSUB immediately.  Uses C<XST_mIV>.
+
+	XSRETURN_IV(IV v);
+
 =item XSRETURN_NO
 
-Return C<false> from an XSUB immediately.
+Return C<&sv_no> from an XSUB immediately.  Uses C<XST_mNO>.
 
 	XSRETURN_NO;
 
+=item XSRETURN_NV
+
+Return an double from an XSUB immediately.  Uses C<XST_mNV>.
+
+	XSRETURN_NV(NV v);
+
+=item XSRETURN_PV
+
+Return a copy of a string from an XSUB immediately.  Uses C<XST_mPV>.
+
+	XSRETURN_PV(char *v);
+
 =item XSRETURN_UNDEF
 
-Return C<undef> from an XSUB immediately.
+Return C<&sv_undef> from an XSUB immediately.  Uses C<XST_mUNDEF>.
 
 	XSRETURN_UNDEF;
 
 =item XSRETURN_YES
 
-Return C<true> from an XSUB immediately.
+Return C<&sv_yes> from an XSUB immediately.  Uses C<XST_mYES>.
 
 	XSRETURN_YES;
+
+=item XST_mIV
+
+Place an integer into the specified position C<i> on the stack.  The value is
+stored in a new mortal SV.
+
+	XST_mIV( int i, IV v );
+
+=item XST_mNV
+
+Place a double into the specified position C<i> on the stack.  The value is
+stored in a new mortal SV.
+
+	XST_mNV( int i, NV v );
+
+=item XST_mNO
+
+Place C<&sv_no> into the specified position C<i> on the stack.
+
+	XST_mNO( int i );
+
+=item XST_mPV
+
+Place a copy of a string into the specified position C<i> on the stack.  The
+value is stored in a new mortal SV.
+
+	XST_mPV( int i, char *v );
+
+=item XST_mUNDEF
+
+Place C<&sv_undef> into the specified position C<i> on the stack.
+
+	XST_mUNDEF( int i );
+
+=item XST_mYES
+
+Place C<&sv_yes> into the specified position C<i> on the stack.
+
+	XST_mYES( int i );
+
+=item XS_VERSION
+
+The version identifier for an XS module.  This is usually handled
+automatically by C<ExtUtils::MakeMaker>.  See C<XS_VERSION_BOOTCHECK>.
+
+=item XS_VERSION_BOOTCHECK
+
+Macro to verify that a PM module's $VERSION variable matches the XS module's
+C<XS_VERSION> variable.  This is usually handled automatically by
+C<xsubpp>.  See L<perlxs/"The VERSIONCHECK: Keyword">.
 
 =item Zero
 
@@ -2178,17 +3198,17 @@ destination, C<n> is the number of items, and C<t> is the type.
 
 =back
 
-=head1 AUTHOR
+=head1 EDITOR
 
-Jeff Okamoto <okamoto@corp.hp.com>
+Jeff Okamoto <F<okamoto@corp.hp.com>>
 
 With lots of help and suggestions from Dean Roehrich, Malcolm Beattie,
 Andreas Koenig, Paul Hudson, Ilya Zakharevich, Paul Marquess, Neil
-Bowers, Matthew Green, Tim Bunce, and Spider Boardman.
+Bowers, Matthew Green, Tim Bunce, Spider Boardman, Ulrich Pfeifer, and
+Stephen McCamant.
 
-API Listing by Dean Roehrich <roehrich@cray.com>.
+API Listing by Dean Roehrich <F<roehrich@cray.com>>.
 
 =head1 DATE
 
-Version 20: 1995/12/14
-
+Version 31.8: 1997/5/17

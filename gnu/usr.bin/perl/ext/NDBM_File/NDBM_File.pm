@@ -28,7 +28,7 @@ NDBM_File - Tied access to ndbm files
 
  use NDBM_File;
 
- tie(%h,NDBM_File,'Op.dbmx', O_RDWR|O_CREAT, 0640);
+ tie(%h, 'NDBM_File', 'Op.dbmx', O_RDWR|O_CREAT, 0640);
 
  untie %h;
 

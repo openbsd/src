@@ -1,47 +1,15 @@
 package ExtUtils::Mkbootstrap;
+
+$VERSION = substr q$Revision: 1.2 $, 10;
+# $Date: 1997/11/30 07:57:31 $
+
 use Config;
 use Exporter;
 @ISA=('Exporter');
 @EXPORT='&Mkbootstrap';
-$Version=2.0; # just to start somewhere
 
 sub Mkbootstrap {
-
-=head1 NAME
-
-ExtUtils::Mkbootstrap - make a bootstrap file for use by DynaLoader
-
-=head1 SYNOPSIS
-
-C<mkbootstrap>
-
-=head1 DESCRIPTION
-
-Mkbootstrap typically gets called from an extension Makefile.
-
-There is no C<*.bs> file supplied with the extension. Instead a
-C<*_BS> file which has code for the special cases, like posix for
-berkeley db on the NeXT.
-
-This file will get parsed, and produce a maybe empty
-C<@DynaLoader::dl_resolve_using> array for the current architecture.
-That will be extended by $BSLOADLIBS, which was computed by
-ExtUtils::Liblist::ext(). If this array still is empty, we do nothing,
-else we write a .bs file with an C<@DynaLoader::dl_resolve_using>
-array.
-
-The C<*_BS> file can put some code into the generated C<*.bs> file by
-placing it in C<$bscode>. This is a handy 'escape' mechanism that may
-prove useful in complex situations.
-
-If @DynaLoader::dl_resolve_using contains C<-L*> or C<-l*> entries then
-Mkbootstrap will automatically add a dl_findfile() call to the
-generated C<*.bs> file.
-
-=cut
-
     my($baseext, @bsloadlibs)=@_;
-
     @bsloadlibs = grep($_, @bsloadlibs); # strip empty libs
 
     print STDOUT "	bsloadlibs=@bsloadlibs\n" if $Verbose;
@@ -58,6 +26,8 @@ generated C<*.bs> file.
     if (-f "${baseext}_BS"){
 	$_ = "${baseext}_BS";
 	package DynaLoader; # execute code as if in DynaLoader
+	local($osname, $dlsrc) = (); # avoid warnings
+	($osname, $dlsrc) = @Config::Config{qw(osname dlsrc)};
 	$bscode = "";
 	unshift @INC, ".";
 	require $_;
@@ -95,3 +65,39 @@ generated C<*.bs> file.
     }
 }
 
+1;
+
+__END__
+
+=head1 NAME
+
+ExtUtils::Mkbootstrap - make a bootstrap file for use by DynaLoader
+
+=head1 SYNOPSIS
+
+C<mkbootstrap>
+
+=head1 DESCRIPTION
+
+Mkbootstrap typically gets called from an extension Makefile.
+
+There is no C<*.bs> file supplied with the extension. Instead a
+C<*_BS> file which has code for the special cases, like posix for
+berkeley db on the NeXT.
+
+This file will get parsed, and produce a maybe empty
+C<@DynaLoader::dl_resolve_using> array for the current architecture.
+That will be extended by $BSLOADLIBS, which was computed by
+ExtUtils::Liblist::ext(). If this array still is empty, we do nothing,
+else we write a .bs file with an C<@DynaLoader::dl_resolve_using>
+array.
+
+The C<*_BS> file can put some code into the generated C<*.bs> file by
+placing it in C<$bscode>. This is a handy 'escape' mechanism that may
+prove useful in complex situations.
+
+If @DynaLoader::dl_resolve_using contains C<-L*> or C<-l*> entries then
+Mkbootstrap will automatically add a dl_findfile() call to the
+generated C<*.bs> file.
+
+=cut

@@ -2,12 +2,11 @@
 'di';
 'ig00';
 #
-# $RCSfile: relink,v $$Revision: 1.1.1.1 $$Date: 1996/08/19 10:11:53 $
+# $RCSfile: relink,v $$Revision: 1.2 $$Date: 1997/11/30 07:49:41 $
 #
 # $Log: relink,v $
-# Revision 1.1.1.1  1996/08/19 10:11:53  downsj
-# Import of Perl 5.003 into the tree.  Makefile.bsd-wrapper and
-# config.sh.OpenBSD are the only local changes.
+# Revision 1.2  1997/11/30 07:49:41  millert
+# perl 5.004_04
 #
 
 ($op = shift) || die "Usage: relink perlexpr [filenames]\n";

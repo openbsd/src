@@ -167,7 +167,21 @@ be received by Perl as the return value of the XSUB.
 
 If the XSUB has a return type of C<void> then the compiler will
 not supply a RETVAL variable for that function.  When using
-the PPCODE: directive the RETVAL variable may not be needed.
+the PPCODE: directive the RETVAL variable is not needed, unless used
+explicitly.
+
+If PPCODE: directive is not used, C<void> return value should be used
+only for subroutines which do not return a value, I<even if> CODE:
+directive is used which sets ST(0) explicitly.
+
+Older versions of this document recommended to use C<void> return
+value in such cases. It was discovered that this could lead to
+segfaults in cases when XSUB was I<truely> C<void>. This practice is
+now deprecated, and may be not supported at some future version. Use
+the return value C<SV *> in such cases. (Currently C<xsubpp> contains
+some heuristic code which tries to disambiguate between "truely-void"
+and "old-practice-declared-as-void" functions. Hence your code is at
+mercy of this heuristics unless you use C<SV *> as return value.)
 
 =head2 The MODULE Keyword
 
@@ -275,7 +289,7 @@ its parameters.  The Perl usage is given first.
 
      $status = rpcb_gettime( "localhost", $timep );
 
-The XSUB follows. 
+The XSUB follows.
 
      bool_t
      rpcb_gettime(host,timep)
@@ -305,7 +319,7 @@ above, this keyword does not affect the way the compiler handles RETVAL.
 =head2 The NO_INIT Keyword
 
 The NO_INIT keyword is used to indicate that a function
-parameter is being used as only an output value.  The B<xsubpp>
+parameter is being used only as an output value.  The B<xsubpp>
 compiler will normally generate code to read the values of
 all function parameters from the argument stack and assign
 them to C variables upon entry to the function.  NO_INIT
@@ -314,7 +328,7 @@ output rather than for input and that they will be handled
 before the function terminates.
 
 The following example shows a variation of the rpcb_gettime() function.
-This function uses the timep variable as only an output variable and does
+This function uses the timep variable only as an output variable and does
 not care about its initial contents.
 
      bool_t
@@ -415,6 +429,23 @@ A correct, but error-prone example.
           OUTPUT:
           timep
           RETVAL
+
+=head2 The SCOPE: Keyword
+
+The SCOPE: keyword allows scoping to be enabled for a particular XSUB. If
+enabled, the XSUB will invoke ENTER and LEAVE automatically.
+
+To support potentially complex type mappings, if a typemap entry used
+by this XSUB contains a comment like C</*scope*/> then scoping will
+automatically be enabled for that XSUB.
+
+To enable scoping:
+
+    SCOPE: ENABLE
+
+To disable scoping:
+
+    SCOPE: DISABLE
 
 =head2 The INPUT: Keyword
 
@@ -543,7 +574,7 @@ the following statement.
 
 =head2 Returning Undef And Empty Lists
 
-Occasionally the programmer will want to simply return
+Occasionally the programmer will want to return simply
 C<undef> or an empty list if a function fails rather than a
 separate status value.  The rpcb_gettime() function offers
 just this situation.  If the function succeeds we would like
@@ -553,13 +584,13 @@ of $timep will either be undef or it will be a valid time.
 
      $timep = rpcb_gettime( "localhost" );
 
-The following XSUB uses the C<void> return type to disable the generation of
-the RETVAL variable and uses a CODE: block to indicate to the compiler
+The following XSUB uses the C<SV *> return type as a mneumonic only,
+and uses a CODE: block to indicate to the compiler
 that the programmer has supplied all the necessary code.  The
 sv_newmortal() call will initialize the return value to undef, making that
 the default return value.
 
-     void
+     SV *
      rpcb_gettime(host)
           char *  host
 	  PREINIT:
@@ -573,7 +604,7 @@ the default return value.
 The next example demonstrates how one would place an explicit undef in the
 return value, should the need arise.
 
-     void
+     SV *
      rpcb_gettime(host)
           char *  host
 	  PREINIT:
@@ -614,7 +645,7 @@ other C<XSRETURN> macros.
 
 The REQUIRE: keyword is used to indicate the minimum version of the
 B<xsubpp> compiler needed to compile the XS module.  An XS module which
-contains the following statement will only compile with B<xsubpp> version
+contains the following statement will compile with only B<xsubpp> version
 1.922 or greater:
 
 	REQUIRE: 1.922
@@ -647,7 +678,7 @@ terminate the code block.
 =head2 The VERSIONCHECK: Keyword
 
 The VERSIONCHECK: keyword corresponds to B<xsubpp>'s C<-versioncheck> and
-C<-noversioncheck> options.  This keyword overrides the commandline
+C<-noversioncheck> options.  This keyword overrides the command line
 options.  Version checking is enabled by default.  When version checking is
 enabled the XS module will attempt to verify that its version matches the
 version of the PM module.
@@ -663,7 +694,7 @@ To disable version checking:
 =head2 The PROTOTYPES: Keyword
 
 The PROTOTYPES: keyword corresponds to B<xsubpp>'s C<-prototypes> and
-C<-noprototypes> options.  This keyword overrides the commandline options.
+C<-noprototypes> options.  This keyword overrides the command line options.
 Prototypes are enabled by default.  When prototypes are enabled XSUBs will
 be given Perl prototypes.  This keyword may be used multiple times in an XS
 module to enable and disable prototypes for different parts of the module.
@@ -700,7 +731,7 @@ prototypes.
 
 =head2 The ALIAS: Keyword
 
-The ALIAS: keyword allows an XSUB to have two more more unique Perl names
+The ALIAS: keyword allows an XSUB to have two more unique Perl names
 and to know which of those names was used when it was invoked.  The Perl
 names may be fully-qualified with package names.  Each alias is given an
 index.  The compiler will setup a variable called C<ix> which contain the
@@ -760,8 +791,8 @@ variable (see L<"The ALIAS: Keyword">), or maybe via the C<items> variable
 B<default> case if it is not associated with a conditional.  The following
 example shows CASE switched via C<ix> with a function C<rpcb_gettime()>
 having an alias C<x_gettime()>.  When the function is called as
-C<rpcb_gettime()> it's parameters are the usual C<(char *host, time_t *timep)>, 
-but when the function is called as C<x_gettime()> is parameters are
+C<rpcb_gettime()> its parameters are the usual C<(char *host, time_t *timep)>,
+but when the function is called as C<x_gettime()> its parameters are
 reversed, C<(time_t *timep, char *host)>.
 
     long
@@ -827,16 +858,16 @@ C<&> through, so the function call looks like C<rpcb_gettime(host, &timep)>.
 =head2 Inserting Comments and C Preprocessor Directives
 
 C preprocessor directives are allowed within BOOT:, PREINIT: INIT:,
-CODE:, PPCODE: and CLEANUP: blocks, as well as outside the functions.
+CODE:, PPCODE:, and CLEANUP: blocks, as well as outside the functions.
 Comments are allowed anywhere after the MODULE keyword.  The compiler
 will pass the preprocessor directives through untouched and will remove
 the commented lines.
+
 Comments can be added to XSUBs by placing a C<#> as the first
 non-whitespace of a line.  Care should be taken to avoid making the
 comment look like a C preprocessor directive, lest it be interpreted as
 such.  The simplest way to prevent this is to put whitespace in front of
 the C<#>.
-
 
 If you use preprocessor directives to choose one of two
 versions of a function, use
@@ -936,7 +967,7 @@ example.
     # char* having the name of the package for the blessing.
     O_OBJECT
     	sv_setref_pv( $arg, CLASS, (void*)$var );
-    
+
     INPUT
     O_OBJECT
     	if( sv_isobject($arg) && (SvTYPE(SvRV($arg)) == SVt_PVMG) )
@@ -1071,6 +1102,37 @@ that the C unary operator C<*> is considered to be a part of the C type name.
      TYPEMAP
      Netconfig *<tab>T_PTROBJ
 
+Here's a more complicated example: suppose that you wanted C<struct
+netconfig> to be blessed into the class C<Net::Config>.  One way to do
+this is to use underscores (_) to separate package names, as follows:
+
+        typedef struct netconfig * Net_Config;
+
+And then provide a typemap entry C<T_PTROBJ_SPECIAL> that maps underscores to
+double-colons (::), and declare C<Net_Config> to be of that type:
+
+
+        TYPEMAP
+        Net_Config      T_PTROBJ_SPECIAL
+
+        INPUT
+        T_PTROBJ_SPECIAL
+                if (sv_derived_from($arg, \"${(my $ntt=$ntype)=~s/_/::/g;\$ntt}\")) {
+                        IV tmp = SvIV((SV*)SvRV($arg));
+                $var = ($type) tmp;
+                }
+                else
+                        croak(\"$var is not of type ${(my $ntt=$ntype)=~s/_/::/g;\$ntt}\")
+
+        OUTPUT
+        T_PTROBJ_SPECIAL
+                sv_setref_pv($arg, \"${(my $ntt=$ntype)=~s/_/::/g;\$ntt}\",
+                (void*)$var);
+
+The INPUT and OUTPUT sections substitute underscores for double-colons
+on the fly, giving the desired effect.  This example demonstrates some
+of the power and versatility of the typemap facility.
+
 =head1 EXAMPLES
 
 File C<RPC.xs>: Interface to some ONC+ RPC bind library functions.
@@ -1085,7 +1147,7 @@ File C<RPC.xs>: Interface to some ONC+ RPC bind library functions.
 
      MODULE = RPC  PACKAGE = RPC
 
-     void
+     SV *
      rpcb_gettime(host="localhost")
           char *host
 	  PREINIT:
@@ -1146,5 +1208,5 @@ This document covers features supported by C<xsubpp> 1.935.
 
 =head1 AUTHOR
 
-Dean Roehrich F<E<lt>roehrich@cray.comE<gt>>
-Mar 12, 1996
+Dean Roehrich <F<roehrich@cray.com>>
+Jul 8, 1996

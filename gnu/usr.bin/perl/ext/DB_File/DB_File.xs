@@ -3,10 +3,14 @@
  DB_File.xs -- Perl 5 interface to Berkeley DB 
 
  written by Paul Marquess (pmarquess@bfsec.bt.co.uk)
- last modified 14th November 1995
- version 1.01
+ last modified 29th Jun 1997
+ version 1.15
 
  All comments/suggestions/problems are welcome
+
+     Copyright (c) 1995, 1996, 1997 Paul Marquess. All rights reserved.
+     This program is free software; you can redistribute it and/or
+     modify it under the same terms as Perl itself.
 
  Changes:
 	0.1 - 	Initial Release
@@ -17,6 +21,31 @@
 	1.01 - 	Fixed a SunOS core dump problem.
 		The return value from TIEHASH wasn't set to NULL when
 		dbopen returned an error.
+	1.02 - 	Use ALIAS to define TIEARRAY.
+		Removed some redundant commented code.
+		Merged OS2 code into the main distribution.
+		Allow negative subscripts with RECNO interface.
+		Changed the default flags to O_CREAT|O_RDWR
+	1.03 - 	Added EXISTS
+	1.04 -  fixed a couple of bugs in hash_cb. Patches supplied by
+		Dave Hammen, hammen@gothamcity.jsc.nasa.gov
+	1.05 -  Added logic to allow prefix & hash types to be specified via
+		Makefile.PL
+	1.06 -  Minor namespace cleanup: Localized PrintBtree.
+	1.07 -  Fixed bug with RECNO, where bval wasn't defaulting to "\n". 
+	1.08 -  No change to DB_File.xs
+	1.09 -  Default mode for dbopen changed to 0666
+	1.10 -  Fixed fd method so that it still returns -1 for
+		in-memory files when db 1.86 is used.
+	1.11 -  No change to DB_File.xs
+	1.12 -  No change to DB_File.xs
+	1.13 -  Tidied up a few casts.
+	1.14 -  Made it illegal to tie an associative array to a RECNO
+	        database and an ordinary array to a HASH or BTREE database.
+	1.15 -  Patch from Gisle Aas <gisle@aas.no> to suppress "use of 
+		undefined value" warning with db_get and db_seq.
+
+
 */
 
 #include "EXTERN.h"  
@@ -24,19 +53,25 @@
 #include "XSUB.h"
 
 #include <db.h>
+/* #ifdef DB_VERSION_MAJOR */
+/* #include <db_185.h> */
+/* #endif */
 
 #include <fcntl.h> 
 
-typedef struct {
-	DBTYPE	type ;
-	DB * 	dbp ;
-	SV *	compare ;
-	SV *	prefix ;
-	SV *	hash ;
-	} DB_File_type;
+#ifdef mDB_Prefix_t 
+#ifdef DB_Prefix_t
+#undef DB_Prefix_t
+#endif
+#define DB_Prefix_t	mDB_Prefix_t 
+#endif
 
-typedef DB_File_type * DB_File ;
-typedef DBT DBTKEY ;
+#ifdef mDB_Hash_t
+#ifdef DB_Hash_t
+#undef DB_Hash_t
+#endif
+#define DB_Hash_t	mDB_Hash_t
+#endif
 
 union INFO {
         HASHINFO 	hash ;
@@ -44,8 +79,21 @@ union INFO {
         BTREEINFO 	btree ;
       } ;
 
+typedef struct {
+	DBTYPE	type ;
+	DB * 	dbp ;
+	SV *	compare ;
+	SV *	prefix ;
+	SV *	hash ;
+	int	in_memory ;
+	union INFO info ;
+	} DB_File_type;
 
-/* #define TRACE  */
+typedef DB_File_type * DB_File ;
+typedef DBT DBTKEY ;
+
+
+/* #define TRACE */
 
 #define db_DESTROY(db)                  ((db->dbp)->close)(db->dbp)
 #define db_DELETE(db, key, flags)       ((db->dbp)->del)(db->dbp, &key, flags)
@@ -54,21 +102,27 @@ union INFO {
 
 #define db_close(db)			((db->dbp)->close)(db->dbp)
 #define db_del(db, key, flags)          ((db->dbp)->del)(db->dbp, &key, flags)
-#define db_fd(db)                       ((db->dbp)->fd)(db->dbp) 
+#define db_fd(db)                       (db->in_memory	\
+						? -1 	\
+						: ((db->dbp)->fd)(db->dbp) )
 #define db_put(db, key, value, flags)   ((db->dbp)->put)(db->dbp, &key, &value, flags)
 #define db_get(db, key, value, flags)   ((db->dbp)->get)(db->dbp, &key, &value, flags)
 #define db_seq(db, key, value, flags)   ((db->dbp)->seq)(db->dbp, &key, &value, flags)
 #define db_sync(db, flags)              ((db->dbp)->sync)(db->dbp, flags)
 
 
-#define OutputValue(arg, name)  \
-	{ if (RETVAL == 0) sv_setpvn(arg, name.data, name.size) ; }
+#define OutputValue(arg, name)  				\
+	{ if (RETVAL == 0) {					\
+	      sv_setpvn(arg, name.data, name.size) ;		\
+	  }							\
+	}
 
 #define OutputKey(arg, name)	 				\
 	{ if (RETVAL == 0) \
 	  { 							\
-		if (db->type != DB_RECNO) 			\
+		if (db->type != DB_RECNO) {			\
 		    sv_setpvn(arg, name.data, name.size); 	\
+		}						\
 		else 						\
 		    sv_setiv(arg, (I32)*(I32*)name.data - 1); 	\
 	  } 							\
@@ -117,7 +171,7 @@ const DBT * key2 ;
     SPAGAIN ;
 
     if (count != 1)
-        croak ("DB_File btree_compare: expected 1 return value from %s, got %d\n", count) ;
+        croak ("DB_File btree_compare: expected 1 return value from compare sub, got %d\n", count) ;
 
     retval = POPi ;
 
@@ -164,7 +218,7 @@ const DBT * key2 ;
     SPAGAIN ;
 
     if (count != 1)
-        croak ("DB_File btree_prefix: expected 1 return value from %s, got %d\n", count) ;
+        croak ("DB_File btree_prefix: expected 1 return value from prefix sub, got %d\n", count) ;
  
     retval = POPi ;
  
@@ -187,7 +241,12 @@ size_t size ;
     if (size == 0)
         data = "" ;
 
+     /* DGH - Next two lines added to fix corrupted stack problem */
+    ENTER ;
+    SAVETMPS;
+
     PUSHMARK(sp) ;
+
     XPUSHs(sv_2mortal(newSVpv((char*)data,size)));
     PUTBACK ;
 
@@ -196,7 +255,7 @@ size_t size ;
     SPAGAIN ;
 
     if (count != 1)
-        croak ("DB_File hash_cb: expected 1 return value from %s, got %d\n", count) ;
+        croak ("DB_File hash_cb: expected 1 return value from hash sub, got %d\n", count) ;
 
     retval = POPi ;
 
@@ -212,44 +271,45 @@ size_t size ;
 
 static void
 PrintHash(hash)
-HASHINFO hash ;
+HASHINFO * hash ;
 {
     printf ("HASH Info\n") ;
-    printf ("  hash      = %s\n", (hash.hash != NULL ? "redefined" : "default")) ;
-    printf ("  bsize     = %d\n", hash.bsize) ;
-    printf ("  ffactor   = %d\n", hash.ffactor) ;
-    printf ("  nelem     = %d\n", hash.nelem) ;
-    printf ("  cachesize = %d\n", hash.cachesize) ;
-    printf ("  lorder    = %d\n", hash.lorder) ;
+    printf ("  hash      = %s\n", (hash->hash != NULL ? "redefined" : "default")) ;
+    printf ("  bsize     = %d\n", hash->bsize) ;
+    printf ("  ffactor   = %d\n", hash->ffactor) ;
+    printf ("  nelem     = %d\n", hash->nelem) ;
+    printf ("  cachesize = %d\n", hash->cachesize) ;
+    printf ("  lorder    = %d\n", hash->lorder) ;
 
 }
 
 static void
 PrintRecno(recno)
-RECNOINFO recno ;
+RECNOINFO * recno ;
 {
     printf ("RECNO Info\n") ;
-    printf ("  flags     = %d\n", recno.flags) ;
-    printf ("  cachesize = %d\n", recno.cachesize) ;
-    printf ("  psize     = %d\n", recno.psize) ;
-    printf ("  lorder    = %d\n", recno.lorder) ;
-    printf ("  reclen    = %d\n", recno.reclen) ;
-    printf ("  bval      = %d\n", recno.bval) ;
-    printf ("  bfname    = %s\n", recno.bfname) ;
+    printf ("  flags     = %d\n", recno->flags) ;
+    printf ("  cachesize = %d\n", recno->cachesize) ;
+    printf ("  psize     = %d\n", recno->psize) ;
+    printf ("  lorder    = %d\n", recno->lorder) ;
+    printf ("  reclen    = %lu\n", (unsigned long)recno->reclen) ;
+    printf ("  bval      = %d 0x%x\n", recno->bval, recno->bval) ;
+    printf ("  bfname    = %d [%s]\n", recno->bfname, recno->bfname) ;
 }
 
+static void
 PrintBtree(btree)
-BTREEINFO btree ;
+BTREEINFO * btree ;
 {
     printf ("BTREE Info\n") ;
-    printf ("  compare    = %s\n", (btree.compare ? "redefined" : "default")) ;
-    printf ("  prefix     = %s\n", (btree.prefix ? "redefined" : "default")) ;
-    printf ("  flags      = %d\n", btree.flags) ;
-    printf ("  cachesize  = %d\n", btree.cachesize) ;
-    printf ("  psize      = %d\n", btree.psize) ;
-    printf ("  maxkeypage = %d\n", btree.maxkeypage) ;
-    printf ("  minkeypage = %d\n", btree.minkeypage) ;
-    printf ("  lorder     = %d\n", btree.lorder) ;
+    printf ("  compare    = %s\n", (btree->compare ? "redefined" : "default")) ;
+    printf ("  prefix     = %s\n", (btree->prefix ? "redefined" : "default")) ;
+    printf ("  flags      = %d\n", btree->flags) ;
+    printf ("  cachesize  = %d\n", btree->cachesize) ;
+    printf ("  psize      = %d\n", btree->psize) ;
+    printf ("  maxkeypage = %d\n", btree->maxkeypage) ;
+    printf ("  minkeypage = %d\n", btree->minkeypage) ;
+    printf ("  lorder     = %d\n", btree->lorder) ;
 }
 
 #else
@@ -275,147 +335,194 @@ DB * db ;
     else if (RETVAL == 1) /* No key means empty file */
         RETVAL = 0 ;
 
-    return (RETVAL) ;
+    return ((I32)RETVAL) ;
+}
+
+static recno_t
+GetRecnoKey(db, value)
+DB_File  db ;
+I32      value ;
+{
+    if (value < 0) {
+	/* Get the length of the array */
+	I32 length = GetArrayLength(db->dbp) ;
+
+	/* check for attempt to write before start of array */
+	if (length + value + 1 <= 0)
+	    croak("Modification of non-creatable array value attempted, subscript %ld", (long)value) ;
+
+	value = length + value + 1 ;
+    }
+    else
+        ++ value ;
+
+    return value ;
 }
 
 static DB_File
-ParseOpenInfo(name, flags, mode, sv, string)
+ParseOpenInfo(isHASH, name, flags, mode, sv)
+int    isHASH ;
 char * name ;
 int    flags ;
 int    mode ;
 SV *   sv ;
-char * string ;
 {
     SV **	svp;
     HV *	action ;
-    union INFO	info ;
     DB_File	RETVAL = (DB_File)safemalloc(sizeof(DB_File_type)) ;
     void *	openinfo = NULL ;
-    /* DBTYPE	type = DB_HASH ; */
+    union INFO	* info  = &RETVAL->info ;
 
+    /* Default to HASH */
     RETVAL->hash = RETVAL->compare = RETVAL->prefix = NULL ;
     RETVAL->type = DB_HASH ;
+
+     /* DGH - Next line added to avoid SEGV on existing hash DB */
+    CurrentDB = RETVAL; 
+
+    /* fd for 1.86 hash in memory files doesn't return -1 like 1.85 */
+    RETVAL->in_memory = (name == NULL) ;
 
     if (sv)
     {
         if (! SvROK(sv) )
             croak ("type parameter is not a reference") ;
 
-        action = (HV*)SvRV(sv);
+        svp  = hv_fetch( (HV*)SvRV(sv), "GOT", 3, FALSE) ;
+        if (svp && SvOK(*svp))
+            action  = (HV*) SvRV(*svp) ;
+	else
+	    croak("internal error") ;
+
         if (sv_isa(sv, "DB_File::HASHINFO"))
         {
+
+	    if (!isHASH)
+	        croak("DB_File can only tie an associative array to a DB_HASH database") ;
+
             RETVAL->type = DB_HASH ;
-            openinfo = (void*)&info ;
+            openinfo = (void*)info ;
   
             svp = hv_fetch(action, "hash", 4, FALSE); 
 
             if (svp && SvOK(*svp))
             {
-                info.hash.hash = hash_cb ;
+                info->hash.hash = hash_cb ;
 		RETVAL->hash = newSVsv(*svp) ;
             }
             else
-	        info.hash.hash = NULL ;
+	        info->hash.hash = NULL ;
 
            svp = hv_fetch(action, "bsize", 5, FALSE);
-           info.hash.bsize = svp ? SvIV(*svp) : 0;
+           info->hash.bsize = svp ? SvIV(*svp) : 0;
            
            svp = hv_fetch(action, "ffactor", 7, FALSE);
-           info.hash.ffactor = svp ? SvIV(*svp) : 0;
+           info->hash.ffactor = svp ? SvIV(*svp) : 0;
          
            svp = hv_fetch(action, "nelem", 5, FALSE);
-           info.hash.nelem = svp ? SvIV(*svp) : 0;
+           info->hash.nelem = svp ? SvIV(*svp) : 0;
          
            svp = hv_fetch(action, "cachesize", 9, FALSE);
-           info.hash.cachesize = svp ? SvIV(*svp) : 0;
+           info->hash.cachesize = svp ? SvIV(*svp) : 0;
          
            svp = hv_fetch(action, "lorder", 6, FALSE);
-           info.hash.lorder = svp ? SvIV(*svp) : 0;
+           info->hash.lorder = svp ? SvIV(*svp) : 0;
 
            PrintHash(info) ; 
         }
         else if (sv_isa(sv, "DB_File::BTREEINFO"))
         {
+	    if (!isHASH)
+	        croak("DB_File can only tie an associative array to a DB_BTREE database");
+
             RETVAL->type = DB_BTREE ;
-            openinfo = (void*)&info ;
+            openinfo = (void*)info ;
    
             svp = hv_fetch(action, "compare", 7, FALSE);
             if (svp && SvOK(*svp))
             {
-                info.btree.compare = btree_compare ;
+                info->btree.compare = btree_compare ;
 		RETVAL->compare = newSVsv(*svp) ;
             }
             else
-                info.btree.compare = NULL ;
+                info->btree.compare = NULL ;
 
             svp = hv_fetch(action, "prefix", 6, FALSE);
             if (svp && SvOK(*svp))
             {
-                info.btree.prefix = btree_prefix ;
+                info->btree.prefix = btree_prefix ;
 		RETVAL->prefix = newSVsv(*svp) ;
             }
             else
-                info.btree.prefix = NULL ;
+                info->btree.prefix = NULL ;
 
             svp = hv_fetch(action, "flags", 5, FALSE);
-            info.btree.flags = svp ? SvIV(*svp) : 0;
+            info->btree.flags = svp ? SvIV(*svp) : 0;
    
             svp = hv_fetch(action, "cachesize", 9, FALSE);
-            info.btree.cachesize = svp ? SvIV(*svp) : 0;
+            info->btree.cachesize = svp ? SvIV(*svp) : 0;
          
             svp = hv_fetch(action, "minkeypage", 10, FALSE);
-            info.btree.minkeypage = svp ? SvIV(*svp) : 0;
+            info->btree.minkeypage = svp ? SvIV(*svp) : 0;
         
             svp = hv_fetch(action, "maxkeypage", 10, FALSE);
-            info.btree.maxkeypage = svp ? SvIV(*svp) : 0;
+            info->btree.maxkeypage = svp ? SvIV(*svp) : 0;
 
             svp = hv_fetch(action, "psize", 5, FALSE);
-            info.btree.psize = svp ? SvIV(*svp) : 0;
+            info->btree.psize = svp ? SvIV(*svp) : 0;
          
             svp = hv_fetch(action, "lorder", 6, FALSE);
-            info.btree.lorder = svp ? SvIV(*svp) : 0;
+            info->btree.lorder = svp ? SvIV(*svp) : 0;
 
             PrintBtree(info) ;
          
         }
         else if (sv_isa(sv, "DB_File::RECNOINFO"))
         {
+	    if (isHASH)
+	        croak("DB_File can only tie an array to a DB_RECNO database");
+
             RETVAL->type = DB_RECNO ;
-            openinfo = (void *)&info ;
+            openinfo = (void *)info ;
 
             svp = hv_fetch(action, "flags", 5, FALSE);
-            info.recno.flags = (u_long) svp ? SvIV(*svp) : 0;
+            info->recno.flags = (u_long) (svp ? SvIV(*svp) : 0);
          
             svp = hv_fetch(action, "cachesize", 9, FALSE);
-            info.recno.cachesize = (u_int) svp ? SvIV(*svp) : 0;
+            info->recno.cachesize = (u_int) (svp ? SvIV(*svp) : 0);
          
             svp = hv_fetch(action, "psize", 5, FALSE);
-            info.recno.psize = (int) svp ? SvIV(*svp) : 0;
+            info->recno.psize = (u_int) (svp ? SvIV(*svp) : 0);
          
             svp = hv_fetch(action, "lorder", 6, FALSE);
-            info.recno.lorder = (int) svp ? SvIV(*svp) : 0;
+            info->recno.lorder = (int) (svp ? SvIV(*svp) : 0);
          
             svp = hv_fetch(action, "reclen", 6, FALSE);
-            info.recno.reclen = (size_t) svp ? SvIV(*svp) : 0;
+            info->recno.reclen = (size_t) (svp ? SvIV(*svp) : 0);
          
 	    svp = hv_fetch(action, "bval", 4, FALSE);
             if (svp && SvOK(*svp))
             {
                 if (SvPOK(*svp))
-		    info.recno.bval = (u_char)*SvPV(*svp, na) ;
+		    info->recno.bval = (u_char)*SvPV(*svp, na) ;
 		else
-		    info.recno.bval = (u_char)(unsigned long) SvIV(*svp) ;
+		    info->recno.bval = (u_char)(unsigned long) SvIV(*svp) ;
             }
             else
  	    {
-		if (info.recno.flags & R_FIXEDLEN)
-                    info.recno.bval = (u_char) ' ' ;
+		if (info->recno.flags & R_FIXEDLEN)
+                    info->recno.bval = (u_char) ' ' ;
 		else
-                    info.recno.bval = (u_char) '\n' ;
+                    info->recno.bval = (u_char) '\n' ;
 	    }
          
             svp = hv_fetch(action, "bfname", 6, FALSE); 
-            info.recno.bfname = (char *) svp ? SvPV(*svp,na) : 0;
+            if (svp && SvOK(*svp)) {
+		char * ptr = SvPV(*svp,na) ;
+                info->recno.bfname = (char*) (na ? ptr : NULL) ;
+	    }
+	    else
+		info->recno.bfname = NULL ;
 
             PrintRecno(info) ;
         }
@@ -424,17 +531,14 @@ char * string ;
     }
 
 
+    /* OS2 Specific Code */
+#ifdef OS2
+#ifdef __EMX__
+    flags |= O_BINARY;
+#endif /* __EMX__ */
+#endif /* OS2 */
+
     RETVAL->dbp = dbopen(name, flags, mode, RETVAL->type, openinfo) ; 
-
-#if 0
-    /* kludge mode on: RETVAL->type for DB_RECNO is set to DB_BTREE
-		       so remember a DB_RECNO by saving the address
-		       of one of it's internal routines
-    */
-    if (RETVAL->dbp && type == DB_RECNO)
-        DB_recno_close = RETVAL->dbp->close ;
-#endif
-
 
     return (RETVAL) ;
 }
@@ -695,7 +799,8 @@ constant(name,arg)
 
 
 DB_File
-db_TIEHASH(dbtype, name=undef, flags=O_RDWR, mode=0640, type=DB_HASH)
+db_DoTie_(isHASH, dbtype, name=undef, flags=O_CREAT|O_RDWR, mode=0666, type=DB_HASH)
+	int		isHASH
 	char *		dbtype
 	int		flags
 	int		mode
@@ -704,21 +809,18 @@ db_TIEHASH(dbtype, name=undef, flags=O_RDWR, mode=0640, type=DB_HASH)
 	    char *	name = (char *) NULL ; 
 	    SV *	sv = (SV *) NULL ; 
 
-	    if (items >= 2 && SvOK(ST(1))) 
-	        name = (char*) SvPV(ST(1), na) ; 
+	    if (items >= 3 && SvOK(ST(2))) 
+	        name = (char*) SvPV(ST(2), na) ; 
 
-            if (items == 5)
-	        sv = ST(4) ;
+            if (items == 6)
+	        sv = ST(5) ;
 
-	    RETVAL = ParseOpenInfo(name, flags, mode, sv, "new") ;
+	    RETVAL = ParseOpenInfo(isHASH, name, flags, mode, sv) ;
 	    if (RETVAL->dbp == NULL)
 	        RETVAL = NULL ;
 	}
 	OUTPUT:	
 	    RETVAL
-
-BOOT:
-    newXS("DB_File::TIEARRAY", XS_DB_File_db_TIEHASH, file);
 
 int
 db_DESTROY(db)
@@ -742,6 +844,21 @@ db_DELETE(db, key, flags=0)
 	u_int		flags
 	INIT:
 	  CurrentDB = db ;
+
+
+int
+db_EXISTS(db, key)
+	DB_File		db
+	DBTKEY		key
+	CODE:
+	{
+          DBT		value ;
+	
+	  CurrentDB = db ;
+	  RETVAL = (((db->dbp)->get)(db->dbp, &key, &value, 0) == 0) ;
+	}
+	OUTPUT:
+	  RETVAL
 
 int
 db_FETCH(db, key, flags=0)
@@ -783,7 +900,7 @@ db_FIRSTKEY(db)
 	    ST(0) = sv_newmortal();
 	    if (RETVAL == 0)
 	    {
-	        if (Db->type != DB_RECNO)
+	        if (db->type != DB_RECNO)
 	            sv_setpvn(ST(0), key.data, key.size);
 	        else
 	            sv_setiv(ST(0), (I32)*(I32*)key.data - 1);
@@ -804,7 +921,7 @@ db_NEXTKEY(db, key)
 	    ST(0) = sv_newmortal();
 	    if (RETVAL == 0)
 	    {
-	        if (Db->type != DB_RECNO)
+	        if (db->type != DB_RECNO)
 	            sv_setpvn(ST(0), key.data, key.size);
 	        else
 	            sv_setiv(ST(0), (I32)*(I32*)key.data - 1);
@@ -859,9 +976,11 @@ pop(db)
 	    /* Now delete it */
 	    if (RETVAL == 0)
 	    {
+		/* the call to del will trash value, so take a copy now */
+	        sv_setpvn(ST(0), value.data, value.size);
 	        RETVAL = (Db->del)(Db, &key, R_CURSOR) ;
-	        if (RETVAL == 0)
-	            sv_setpvn(ST(0), value.data, value.size);
+	        if (RETVAL != 0) 
+	            sv_setsv(ST(0), &sv_undef); 
 	    }
 	}
 
@@ -870,20 +989,22 @@ shift(db)
 	DB_File		db
 	CODE:
 	{
-	    DBTKEY	key ;
 	    DBT		value ;
+	    DBTKEY	key ;
 	    DB *	Db = db->dbp ;
 
 	    CurrentDB = db ;
 	    /* get the first value */
-	    RETVAL = (Db->seq)(Db, &key, &value, R_FIRST) ;	
+	    RETVAL = (Db->seq)(Db, &key, &value, R_FIRST) ;	 
 	    ST(0) = sv_newmortal();
 	    /* Now delete it */
 	    if (RETVAL == 0)
 	    {
-	        RETVAL = (Db->del)(Db, &key, R_CURSOR) ;
-	        if (RETVAL == 0)
-	            sv_setpvn(ST(0), value.data, value.size);
+		/* the call to del will trash value, so take a copy now */
+	        sv_setpvn(ST(0), value.data, value.size);
+	        RETVAL = (Db->del)(Db, &key, R_CURSOR) ; 
+	        if (RETVAL != 0)
+	            sv_setsv (ST(0), &sv_undef) ;
 	    }
 	}
 
@@ -947,7 +1068,7 @@ int
 db_get(db, key, value, flags=0)
 	DB_File		db
 	DBTKEY		key
-	DBT		value
+	DBT		value = NO_INIT
 	u_int		flags
 	INIT:
 	  CurrentDB = db ;
@@ -983,10 +1104,11 @@ int
 db_seq(db, key, value, flags)
 	DB_File		db
 	DBTKEY		key 
-	DBT		value
+	DBT		value = NO_INIT
 	u_int		flags
 	INIT:
 	  CurrentDB = db ;
 	OUTPUT:
 	  key
 	  value
+

@@ -1,8 +1,8 @@
 /* VMS::Stdio - VMS extensions to stdio routines 
  *
- * Version:  2.0
+ * Version:  2.02
  * Author:   Charles Bailey  bailey@genetics.upenn.edu
- * Revised:  28-Feb-1996
+ * Revised:  15-Feb-1997
  *
  */
 
@@ -79,8 +79,8 @@ IV *pval;
 
 static SV *
 newFH(FILE *fp, char type) {
-    SV *rv, *gv = NEWSV(0,0);
-    GV **stashp;
+    SV *rv;
+    GV **stashp, *gv = (GV *)NEWSV(0,0);
     HV *stash;
     IO *io;
 
@@ -100,9 +100,9 @@ newFH(FILE *fp, char type) {
     gv_init(gv,stash,"__FH__",6,0);
     io = GvIOp(gv) = newIO();
     IoIFP(io) = fp;
-    if (type != '>') IoOFP(io) = fp;
+    if (type != '<') IoOFP(io) = fp;
     IoTYPE(io) = type;
-    rv = newRV(gv);
+    rv = newRV((SV *)gv);
     SvREFCNT_dec(gv);
     return sv_bless(rv,stash);
 }
@@ -127,7 +127,8 @@ flush(sv)
 	CODE:
 	    FILE *fp = Nullfp;
 	    if (SvOK(sv)) fp = IoIFP(sv_2io(sv));
-	    ST(0) = fflush(fp) ? &sv_undef : &sv_yes;
+	    if (fflush(fp)) { ST(0) = &sv_undef; }
+	    else            { clearerr(fp); ST(0) = &sv_yes; }
 
 char *
 getname(fp)
@@ -157,7 +158,8 @@ sync(fp)
 	FILE *	fp
 	PROTOTYPE: $
 	CODE:
-	    ST(0) = fsync(fileno(fp)) ? &sv_undef : &sv_yes;
+	    if (fsync(fileno(fp))) { ST(0) = &sv_undef; }
+	    else                   { clearerr(fp); ST(0) = &sv_yes; }
 
 char *
 tmpnam()
@@ -225,7 +227,7 @@ vmsopen(spec,...)
 	        break;
 	    }
 	    if (fp != Nullfp) {
-	      SV *fh = newFH(fp,(mode[1] ? '+' : (mode[0] == 'r' ? '<' : '>')));
+	      SV *fh = newFH(fp,(mode[1] ? '+' : (mode[0] == 'r' ? '<' : (mode[0] == 'a' ? 'a' : '>'))));
 	      ST(0) = (fh ? sv_2mortal(fh) : &sv_undef);
 	    }
 	    else { ST(0) = &sv_undef; }

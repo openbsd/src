@@ -21,7 +21,7 @@ AUTOLOAD {
     my $cmd = $AUTOLOAD;
     $cmd =~ s/^.*:://;
     eval qq {
-	sub $AUTOLOAD {
+	*$AUTOLOAD = sub {
 	    if (\@_ < 1) {
 		`$cmd`;
 	    }

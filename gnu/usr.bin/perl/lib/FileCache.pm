@@ -19,7 +19,7 @@ maximum.
 =head1 BUGS
 
 F<sys/param.h> lies with its C<NOFILE> define on some systems,
-so you may have to set $cacheout::maxopen yourself.
+so you may have to set $FileCache::cacheout_maxopen yourself.
 
 =cut
 
@@ -53,7 +53,7 @@ sub cacheout {
     ($file) = @_;
     unless (defined $cacheout_maxopen) {
 	if (open(PARAM,'/usr/include/sys/param.h')) {
-	    local $.;
+	    local ($_, $.);
 	    while (<PARAM>) {
 		$cacheout_maxopen = $1 - 4
 		    if /^\s*#\s*define\s+NOFILE\s+(\d+)/;

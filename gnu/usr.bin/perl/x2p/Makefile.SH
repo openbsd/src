@@ -14,18 +14,22 @@ esac
 : This forces SH files to create target in same directory as SH file.
 : This is so that make depend always knows where to find SH derivatives.
 case "$0" in
-*/*) cd `expr X$0 : 'X\(.*\)/'` ;;
+*/Makefile.SH) cd `expr X$0 : 'X\(.*\)/'` ;;
+Makefile.SH) ;;
+*) case `pwd` in
+   */x2p) ;;
+   *) if test -d x2p; then cd x2p
+      else echo "Can't figure out where to write output."; exit 1
+	  fi;;
+   esac;;
 esac
 
 echo "Extracting x2p/Makefile (with variable substitutions)"
 rm -f Makefile
 cat >Makefile <<!GROK!THIS!
-# $RCSfile: Makefile.SH,v $$Revision: 1.1 $$Date: 1996/08/19 10:13:33 $
+# $RCSfile: Makefile.SH,v $$Revision: 4.1 $$Date: 92/08/07 18:29:07 $
 #
-# $Log: Makefile.SH,v $
-# Revision 1.1  1996/08/19 10:13:33  downsj
-# Initial revision
-#
+# $Log:	Makefile.SH,v $
 
 CC = $cc
 BYACC = $byacc
@@ -37,6 +41,10 @@ mallocobj = $mallocobj
 shellflags = $shellflags
 
 libs = $libs
+
+$make_set_make
+# grrr
+SHELL = $sh
 
 # These variables will be used in a future version to make
 # the make file more portable to non-unix systems.
@@ -72,7 +80,7 @@ plextract = find2perl s2p
 
 addedbyconf = $(shextract) $(plextract)
 
-h = EXTERN.h INTERN.h ../config.h handy.h hash.h a2p.h str.h util.h
+h = EXTERN.h INTERN.h ../config.h ../handy.h hash.h a2p.h str.h util.h
 
 c = hash.c $(mallocsrc) str.c util.c walk.c
 
@@ -80,11 +88,9 @@ obj = hash$(OBJ_EXT) $(mallocobj) str$(OBJ_EXT) util$(OBJ_EXT) walk$(OBJ_EXT)
 
 lintflags = -phbvxac
 
-# grrr
-SHELL = /bin/sh
 
 .c$(OBJ_EXT):
-	$(CCCMD) $*.c
+	$(CCCMD) -DPERL_FOR_X2P $*.c
 
 all: $(public) $(private) $(util)
 	touch all
@@ -106,7 +112,8 @@ run_byacc:	FORCE
 a2p.c: a2p.y
 	-@touch a2p.c
 
-a2p$(OBJ_EXT): a2p.c a2py.c a2p.h EXTERN.h util.h INTERN.h handy.h ../config.h str.h hash.h
+a2p$(OBJ_EXT): a2p.c a2py.c a2p.h EXTERN.h util.h INTERN.h \
+		../handy.h ../config.h str.h hash.h
 	$(CCCMD) $(LARGE) a2p.c
 
 clean:
@@ -125,7 +132,7 @@ lint:
 	lint $(lintflags) $(defs) $(c) > a2p.fuzz
 
 depend: $(mallocsrc) ../makedepend
-	sh ../makedepend
+	sh ../makedepend MAKE=$(MAKE)
 
 clist:
 	echo $(c) | tr ' ' '\012' >.clist
@@ -144,6 +151,7 @@ $(plextract):
 malloc.c: ../malloc.c
 	rm -f malloc.c
 	sed <../malloc.c >malloc.c \
+	    -e 's/"EXTERN.h"/"..\/EXTERN.h"/' \
 	    -e 's/"perl.h"/"..\/perl.h"/' \
 	    -e 's/my_exit/exit/'
 

@@ -1,0 +1,51 @@
+#!/bin/rc
+# This is an rc shell script which unpacks the perl distribution, builds 
+# directories, and puts files where they belong.
+# To use, just run it from within the plan9 subdirectory with the appropriate
+# permissions.
+# Last modified 6/30/96 by:
+# Luther Huffman, Strategic Computer Solutions, Inc., lutherh@stratcom.com
+
+awk -f versnum ../patchlevel.h
+. buildinfo
+builddir = `{ cd .. ; pwd } 
+if (~ $#* 0) platforms = $objtype
+if not switch($1) {
+	case -a ; platforms = (386 mips sparc 68020)
+	case * ; echo 'Usage: setup.rc [-a]' >[1=2] ; exit
+}
+sourcedir=/sys/src/cmd/perl/$p9pvers
+privlib=/sys/lib/perl
+sitelib=$privlib/site_perl
+
+#Build source directory
+if (test ! -d /sys/src/cmd/perl) mkdir /sys/src/cmd/perl
+if (test ! -d $sourcedir) mkdir $sourcedir
+
+#Populate source directory
+echo Building source directories ...
+{cd $builddir ; tar c .} | { cd $sourcedir ; tar x}
+cp $builddir/plan9/plan9.c $builddir/plan9/plan9ish.h $builddir/plan9/mkfile $sourcedir
+cd $sourcedir/lib ; rm -rf *
+
+#Build library directories
+echo Building library directories ...
+if (test ! -d $privlib) mkdir $privlib
+if (test ! -d $privlib/auto) mkdir $privlib/auto
+if (test ! -d $sitelib) mkdir $sitelib
+for(i in $platforms){
+	archlib=/$i/lib/perl/$p9pvers
+	sitearch=$archlib/site_perl
+	corelib=$archlib/CORE
+	arpalib=$corelib/arpa
+	if (test ! -d /$i/lib/perl) mkdir /$i/lib/perl
+	if (test ! -d $archlib) mkdir $archlib
+	if (test ! -d $sitearch) mkdir $sitearch
+	if (test ! -d $corelib) mkdir $corelib
+	if (test ! -d $arpalib) mkdir $arpalib
+	cp $builddir/*.h $builddir/plan9/*.h  $corelib
+	cp $builddir/plan9/arpa/*.h  $arpalib
+}
+
+#Populate library directories
+{cd $builddir/lib ; tar c . } | {cd $privlib ; tar x }

@@ -7,7 +7,7 @@ d_voidsig=define
 d_charsprf=undef
 
 case "$cc" in
-*gcc) ccflags="$ccflags -D_BSD_TYPES" ;;
+*gcc*) ccflags="$ccflags -D_BSD_TYPES" ;;
 *) ccflags="$ccflags -ansiposix -signed" ;;
 esac
 
@@ -17,7 +17,7 @@ esac
 # I don't know if they affect versions of perl other than 5.000 or
 # versions of IRIX other than 4.0.4.
 #
-cat <<'EOM'
+cat <<'EOM' >&4
 If you have problems, you might have try including
 	-DSTANDARD_C -cckr 
 in ccflags.

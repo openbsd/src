@@ -14,7 +14,7 @@ use POSIX qw(fcntl_h signal_h limits_h _exit getcwd open read write);
 use strict subs;
 
 $| = 1;
-print "1..14\n";
+print "1..17\n";
 
 $testfd = open("TEST", O_RDONLY, 0) and print "ok 1\n";
 read($testfd, $buffer, 9) if $testfd > 2;
@@ -58,8 +58,27 @@ print &_POSIX_OPEN_MAX > $fds[1] ? "ok 12\n" : "not ok 12\n";
 
 print getcwd() =~ m#/t$# ? "ok 13\n" : "not ok 13\n";
 
+# Check string conversion functions.
+
+if ($Config{d_strtod}) {
+    $lc = &POSIX::setlocale(&POSIX::LC_NUMERIC, 'C') if $Config{d_setlocale};
+    ($n, $x) = &POSIX::strtod('3.14159_OR_SO');
+    print (($n == 3.14159) && ($x == 6) ? "ok 14\n" : "not ok 14\n");
+    &POSIX::setlocale(&POSIX::LC_NUMERIC, $lc) if $Config{d_setlocale};
+} else { print "# strtod not present\n", "ok 14\n"; }
+
+if ($Config{d_strtol}) {
+    ($n, $x) = &POSIX::strtol('21_PENGUINS');
+    print (($n == 21) && ($x == 9) ? "ok 15\n" : "not ok 15\n");
+} else { print "# strtol not present\n", "ok 15\n"; }
+
+if ($Config{d_strtoul}) {
+    ($n, $x) = &POSIX::strtoul('88_TEARS');
+    print (($n == 88) && ($x == 6) ? "ok 16\n" : "not ok 16\n");
+} else { print "# strtoul not present\n", "ok 16\n"; }
+
 # Pick up whether we're really able to dynamically load everything.
-print &POSIX::acos(1.0) == 0.0 ? "ok 14\n" : "not ok 14\n";
+print &POSIX::acos(1.0) == 0.0 ? "ok 17\n" : "not ok 17\n";
 
 $| = 0;
 print '@#!*$@(!@#$';

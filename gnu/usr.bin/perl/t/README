@@ -8,4 +8,9 @@ If you put out extra lines with a '#' character on the front, you don't
 have to worry about removing the extra print statements later since TEST
 ignores lines beginning with '#'.
 
-If you come up with new tests, send them to lwall@sems.com.
+If you know that Perl is basically working but expect that some tests
+will fail, you may want to use Test::Harness thusly:
+	./perl -I../lib harness
+This method pinpoints failed tests automatically.
+
+If you come up with new tests, please send them to larry@wall.org.

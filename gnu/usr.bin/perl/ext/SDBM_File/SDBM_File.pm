@@ -24,7 +24,7 @@ SDBM_File - Tied access to sdbm files
 
  use SDBM_File;
 
- tie(%h,SDBM_File,'Op.dbmx', O_RDWR|O_CREAT, 0640);
+ tie(%h, 'SDBM_File', 'Op.dbmx', O_RDWR|O_CREAT, 0640);
 
  untie %h;
 

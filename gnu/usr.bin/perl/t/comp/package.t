@@ -5,7 +5,7 @@ print "1..7\n";
 $blurfl = 123;
 $foo = 3;
 
-package XYZ;
+package xyz;
 
 $bar = 4;
 
@@ -20,10 +20,10 @@ $ABC'dyick = 6;
 $xyz = 2;
 
 $main = join(':', sort(keys %main::));
-$XYZ = join(':', sort(keys %XYZ::));
+$xyz = join(':', sort(keys %xyz::));
 $ABC = join(':', sort(keys %ABC::));
 
-print $XYZ eq 'ABC:XYZ:bar:main:xyz' ? "ok 1\n" : "not ok 1 '$XYZ'\n";
+print $xyz eq 'ABC:bar:main:xyz' ? "ok 1\n" : "not ok 1 '$xyz'\n";
 print $ABC eq 'blurfl:dyick' ? "ok 2\n" : "not ok 2 '$ABC'\n";
 print $main'blurfl == 123 ? "ok 3\n" : "not ok 3\n";
 

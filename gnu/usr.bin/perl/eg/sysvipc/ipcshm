@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 eval 'exec /usr/bin/perl -S $0 ${1+"$@"}'
-	if 0;
+	if $running_under_some_shell;
 
 require 'sys/ipc.ph';
 require 'sys/shm.ph';

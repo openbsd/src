@@ -17,6 +17,9 @@ alignbytes=8
 
 usemymalloc='n'
 
+so="a"
+dlext="so"
+
 # Make setsockopt work correctly.  See man page.
 # ccflags='-D_BSD=44'
 
@@ -30,12 +33,18 @@ case "$osvers" in
     ccflags='-D_ALL_SOURCE'
     ;;
 *)  # These hints at least work for 4.x, possibly other systems too.
-    d_setregid='undef'
-    d_setreuid='undef'
-    ccflags='-qmaxmem=8192 -D_ALL_SOURCE -D_ANSI_C_SOURCE -D_POSIX_SOURCE'
+    ccflags='-D_ALL_SOURCE -D_ANSI_C_SOURCE -D_POSIX_SOURCE'
+    case "$cc" in
+     *gcc*) ;;
+     *) ccflags="-qmaxmem=8192  $ccflags" ;;
+    esac
     nm_opt='-B'
     ;;
 esac
+
+# These functions don't work like Perl expects them to.
+d_setregid='undef'
+d_setreuid='undef'
 
 # The optimizer in 4.1.1 apparently generates bad code for scope.c.
 # Configure doesn't offer an easy way to propagate extra variables

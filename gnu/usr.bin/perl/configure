@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-# $Id: configure,v 1.1.1.1 1996/08/19 10:11:33 downsj Exp $
+# $Id: configure,v 1.2 1997/11/30 07:48:25 millert Exp $
 #
 # GNU configure-like front end to metaconfig's Configure.
 #
@@ -16,15 +16,26 @@
 # include this script in your own package.
 #
 # $Log: configure,v $
-# Revision 1.1.1.1  1996/08/19 10:11:33  downsj
-# Import of Perl 5.003 into the tree.  Makefile.bsd-wrapper and
-# config.sh.OpenBSD are the only local changes.
+# Revision 1.2  1997/11/30 07:48:25  millert
+# perl 5.004_04
 #
 # Revision 3.0.1.1  1995/07/25  14:16:21  ram
 # patch56: created
 #
 
 (exit $?0) || exec sh $0 $argv:q
+
+case "$0" in
+*configure)
+    if cmp $0 `echo $0 | sed -e s/configure/Configure/` >/dev/null; then
+	echo "Your configure and Configure scripts seem to be identical."
+	echo "This can happen on filesystems that aren't fully case sensitive."
+	echo "You'll have to explicitly extract Configure and run that."
+	exit 1
+    fi
+    ;;
+esac
+
 opts=''
 verbose=''
 create='-e'
@@ -38,6 +49,7 @@ It emulates the following GNU configure options (must be fully spelled out):
 	--help
 	--no-create
 	--prefix=PREFIX
+ 	--cache-file  (ignored)
 	--quiet
 	--silent
 	--verbose
@@ -56,6 +68,9 @@ EOM
 		opts="$opts $arg"
 		shift
 		;;
+ 	--cache-file=*)
+ 		shift		# Just ignore it.
+ 		;;
 	--quiet|--silent)
 		exec >/dev/null 2>&1
 		shift

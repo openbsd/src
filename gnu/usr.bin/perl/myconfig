@@ -21,21 +21,23 @@ $spitshell <<!GROK!THIS!
 
 Summary of my $package ($baserev patchlevel $PATCHLEVEL subversion $SUBVERSION) configuration:
   Platform:
-    osname=$osname, osver=$osvers, archname=$archname
+    osname=$osname, osvers=$osvers, archname=$archname
     uname='$myuname'
     hint=$hint, useposix=$useposix, d_sigaction=$d_sigaction
+    bincompat3=$bincompat3 useperlio=$useperlio d_sfio=$d_sfio
   Compiler:
     cc='$cc', optimize='$optimize', gccversion=$gccversion
     cppflags='$cppflags'
     ccflags ='$ccflags'
     stdchar='$stdchar', d_stdstdio=$d_stdstdio, usevfork=$usevfork
     voidflags=$voidflags, castflags=$castflags, d_casti32=$d_casti32, d_castneg=$d_castneg
-    intsize=$intsize, alignbytes=$alignbytes, usemymalloc=$usemymalloc, randbits=$randbits
+    intsize=$intsize, alignbytes=$alignbytes, usemymalloc=$usemymalloc, prototype=$prototype
   Linker and Libraries:
     ld='$ld', ldflags ='$ldflags'
     libpth=$libpth
     libs=$libs
     libc=$libc, so=$so
+    useshrplib=$useshrplib, libperl=$libperl
   Dynamic Linking:
     dlsrc=$dlsrc, dlext=$dlext, d_dlsymun=$d_dlsymun, ccdlflags='$ccdlflags'
     cccdlflags='$cccdlflags', lddlflags='$lddlflags'

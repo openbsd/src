@@ -119,7 +119,7 @@
 #endif
 
 #ifndef HAS_DLERROR
-# if defined(__NetBSD__) || defined(__OpenBSD__)
+# ifdef __NetBSD__
 #  define dlerror() strerror(errno)
 # else
 #  define dlerror() "Unknown error - dlerror() not implemented"
@@ -143,17 +143,25 @@ BOOT:
 
 
 void *
-dl_load_file(filename)
-    char *		filename
-    CODE:
+dl_load_file(filename, flags=0)
+    char *	filename
+    int		flags
+    PREINIT:
     int mode = RTLD_LAZY;
+    CODE:
 #ifdef RTLD_NOW
     if (dl_nonlazy)
 	mode = RTLD_NOW;
 #endif
-    DLDEBUG(1,fprintf(stderr,"dl_load_file(%s):\n", filename));
+    if (flags & 0x01)
+#ifdef RTLD_GLOBAL
+	mode |= RTLD_GLOBAL;
+#else
+	warn("Can't make loaded symbols global on this platform while loading %s",filename);
+#endif
+    DLDEBUG(1,PerlIO_printf(PerlIO_stderr(), "dl_load_file(%s,%x):\n", filename,flags));
     RETVAL = dlopen(filename, mode) ;
-    DLDEBUG(2,fprintf(stderr," libref=%x\n", RETVAL));
+    DLDEBUG(2,PerlIO_printf(PerlIO_stderr(), " libref=%lx\n", (unsigned long) RETVAL));
     ST(0) = sv_newmortal() ;
     if (RETVAL == NULL)
 	SaveError("%s",dlerror()) ;
@@ -167,13 +175,14 @@ dl_find_symbol(libhandle, symbolname)
     char *	symbolname
     CODE:
 #ifdef DLSYM_NEEDS_UNDERSCORE
-    char symbolname_buf[1024];
-    symbolname = dl_add_underscore(symbolname, symbolname_buf);
+    symbolname = form("_%s", symbolname);
 #endif
-    DLDEBUG(2,fprintf(stderr,"dl_find_symbol(handle=%x, symbol=%s)\n",
-	libhandle, symbolname));
+    DLDEBUG(2, PerlIO_printf(PerlIO_stderr(),
+			     "dl_find_symbol(handle=%lx, symbol=%s)\n",
+			     (unsigned long) libhandle, symbolname));
     RETVAL = dlsym(libhandle, symbolname);
-    DLDEBUG(2,fprintf(stderr,"  symbolref = %x\n", RETVAL));
+    DLDEBUG(2, PerlIO_printf(PerlIO_stderr(),
+			     "  symbolref = %lx\n", (unsigned long) RETVAL));
     ST(0) = sv_newmortal() ;
     if (RETVAL == NULL)
 	SaveError("%s",dlerror()) ;
@@ -195,8 +204,8 @@ dl_install_xsub(perl_name, symref, filename="$Package")
     void *		symref 
     char *		filename
     CODE:
-    DLDEBUG(2,fprintf(stderr,"dl_install_xsub(name=%s, symref=%x)\n",
-		perl_name, symref));
+    DLDEBUG(2,PerlIO_printf(PerlIO_stderr(), "dl_install_xsub(name=%s, symref=%lx)\n",
+		perl_name, (unsigned long) symref));
     ST(0)=sv_2mortal(newRV((SV*)newXS(perl_name, (void(*)())symref, filename)));
 
 

@@ -7,7 +7,7 @@ print "1..13\n";
 $TST = 'tst';
 
 open($TST, '../Configure') || (die "Can't open ../Configure");
-
+binmode $TST if $^O eq 'MSWin32';
 if (eof(tst)) { print "not ok 1\n"; } else { print "ok 1\n"; }
 
 $firstline = <$TST>;

@@ -1,6 +1,6 @@
 /*    op.h
  *
- *    Copyright (c) 1991-1994, Larry Wall
+ *    Copyright (c) 1991-1997, Larry Wall
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -41,11 +41,20 @@ typedef U32 PADOFFSET;
     U8		op_flags;		\
     U8		op_private;
 
-#define GIMME (op->op_flags & OPf_KNOW ? op->op_flags & OPf_LIST : dowantarray())
+#define OP_GIMME(op,dfl) \
+	(((op)->op_flags & OPf_WANT) == OPf_WANT_VOID   ? G_VOID   : \
+	 ((op)->op_flags & OPf_WANT) == OPf_WANT_SCALAR ? G_SCALAR : \
+	 ((op)->op_flags & OPf_WANT) == OPf_WANT_LIST   ? G_ARRAY   : \
+	 dfl)
+
+#define GIMME_V		OP_GIMME(op, block_gimme())
 
 /* Public flags */
-#define OPf_LIST	1	/* Do operator in list context. */
-#define OPf_KNOW	2	/* Context is known. */
+
+#define OPf_WANT	3	/* Mask for "want" bits: */
+#define  OPf_WANT_VOID	 1	/*   Want nothing */
+#define  OPf_WANT_SCALAR 2	/*   Want single value */
+#define  OPf_WANT_LIST	 3	/*   Want list of any length */
 #define OPf_KIDS	4	/* There is a firstborn child. */
 #define OPf_PARENS	8	/* This operator was parenthesized. */
 				/*  (Or block needs explicit scope entry.) */
@@ -63,6 +72,13 @@ typedef U32 PADOFFSET;
 				/*  On flipflop, we saw ... instead of .. */
 				/*  On UNOPs, saw bare parens, e.g. eof(). */
 				/*  On OP_ENTERSUB || OP_NULL, saw a "do". */
+				/*  On OP_(ENTER|LEAVE)EVAL, don't clear $@ */
+
+/* old names; don't use in new code, but don't break them, either */
+#define OPf_LIST	1
+#define OPf_KNOW	2
+#define GIMME \
+	  (op->op_flags & OPf_KNOW ? op->op_flags & OPf_LIST : dowantarray())
 
 /* Private for lvalues */
 #define OPpLVAL_INTRO	128	/* Lvalue must be localized */
@@ -73,6 +89,9 @@ typedef U32 PADOFFSET;
 /* Private for OP_SASSIGN */
 #define OPpASSIGN_BACKWARDS	64	/* Left & right switched. */
 
+/* Private for OP_MATCH and OP_SUBST{,CONST} */
+#define OPpRUNTIME		64	/* Pattern coming in on the stack */
+
 /* Private for OP_TRANS */
 #define OPpTRANS_SQUASH		16
 #define OPpTRANS_DELETE		32
@@ -82,11 +101,16 @@ typedef U32 PADOFFSET;
 #define OPpREPEAT_DOLIST	64	/* List replication. */
 
 /* Private for OP_ENTERSUB, OP_RV2?V, OP_?ELEM */
-  /* (lower bits carry hints) */
-#define OPpENTERSUB_AMPER	8	/* Used & form to call. */
+#define OPpDEREF		(32|64)	/* Want ref to something: */
+#define OPpDEREF_AV		32	/*   Want ref to AV. */
+#define OPpDEREF_HV		64	/*   Want ref to HV. */
+#define OPpDEREF_SV		(32|64)	/*   Want ref to SV. */
+  /* OP_ENTERSUB only */
 #define OPpENTERSUB_DB		16	/* Debug subroutine. */
-#define OPpDEREF_AV		32	/* Want ref to AV. */
-#define OPpDEREF_HV		64	/* Want ref to HV. */
+#define OPpENTERSUB_AMPER	8	/* Used & form to call. */
+  /* OP_?ELEM only */
+#define OPpLVAL_DEFER		16	/* Defer creation of array/hash elem */
+  /* for OP_RV2?V, lower bits carry hints */
 
 /* Private for OP_CONST */
 #define OPpCONST_ENTERED	16	/* Has been entered as symbol. */
@@ -99,8 +123,11 @@ typedef U32 PADOFFSET;
 /* Private for OP_LIST */
 #define OPpLIST_GUESSED		64	/* Guessed that pushmark was needed. */
 
-/* Private for OP_LEAVE and friends */
-#define OPpLEAVE_VOID		64	/* No need to copy out values. */
+/* Private for OP_DELETE */
+#define OPpSLICE		64	/* Operating on a list of keys */
+
+/* Private for OP_SORT, OP_PRTF, OP_SPRINTF, string cmp'n, and case changers */
+#define OPpLOCALE		64	/* Use locale */
 
 struct op {
     BASEOP
@@ -161,12 +188,12 @@ struct pmop {
 #define PMf_CONST	0x0040		/* subst replacement is constant */
 #define PMf_KEEP	0x0080		/* keep 1st runtime pattern forever */
 #define PMf_GLOBAL	0x0100		/* pattern had a g modifier */
-#define PMf_RUNTIME	0x0200		/* pattern coming in on the stack */
+#define PMf_CONTINUE	0x0200		/* don't reset pos() if //g fails */
 #define PMf_EVAL	0x0400		/* evaluating replacement as expr */
 #define PMf_WHITE	0x0800		/* pattern is \s+ */
 #define PMf_MULTILINE	0x1000		/* assume multiple lines */
 #define PMf_SINGLELINE	0x2000		/* assume single line */
-#define PMf_UNUSED	0x4000		/* (unused) */
+#define PMf_LOCALE	0x4000		/* use locale for character types */
 #define PMf_EXTENDED	0x8000		/* chuck embedded whitespace */
 
 struct svop {

@@ -7,40 +7,49 @@ perlref - Perl references and nested data structures
 Before release 5 of Perl it was difficult to represent complex data
 structures, because all references had to be symbolic, and even that was
 difficult to do when you wanted to refer to a variable rather than a
-symbol table entry.  Perl 5 not only makes it easier to use symbolic
+symbol table entry.  Perl not only makes it easier to use symbolic
 references to variables, but lets you have "hard" references to any piece
-of data.  Any scalar may hold a hard reference.  Since arrays and hashes
+of data.  Any scalar may hold a hard reference.  Because arrays and hashes
 contain scalars, you can now easily build arrays of arrays, arrays of
 hashes, hashes of arrays, arrays of hashes of functions, and so on.
 
 Hard references are smart--they keep track of reference counts for you,
-automatically freeing the thing referred to when its reference count
-goes to zero.  If that thing happens to be an object, the object is
-destructed.  See L<perlobj> for more about objects.  (In a sense,
-everything in Perl is an object, but we usually reserve the word for
-references to objects that have been officially "blessed" into a class package.)
+automatically freeing the thing referred to when its reference count goes
+to zero.  (Note: The reference counts for values in self-referential or
+cyclic data structures may not go to zero without a little help; see
+L<perlobj/"Two-Phased Garbage Collection"> for a detailed explanation.
+If that thing happens to be an object, the object is destructed.  See
+L<perlobj> for more about objects.  (In a sense, everything in Perl is an
+object, but we usually reserve the word for references to objects that
+have been officially "blessed" into a class package.)
 
-A symbolic reference contains the name of a variable, just as a
-symbolic link in the filesystem merely contains the name of a file.  
-The C<*glob> notation is a kind of symbolic reference.  Hard references
-are more like hard links in the file system: merely another way
-at getting at the same underlying object, irrespective of its name.
+Symbolic references are names of variables or other objects, just as a
+symbolic link in a Unix filesystem contains merely the name of a file.
+The C<*glob> notation is a kind of symbolic reference.  (Symbolic
+references are sometimes called "soft references", but please don't call
+them that; references are confusing enough without useless synonyms.)
 
-"Hard" references are easy to use in Perl.  There is just one
-overriding principle:  Perl does no implicit referencing or
-dereferencing.  When a scalar is holding a reference, it always behaves
-as a scalar.  It doesn't magically start being an array or a hash
-unless you tell it so explicitly by dereferencing it.
+In contrast, hard references are more like hard links in a Unix file
+system: They are used to access an underlying object without concern for
+what its (other) name is.  When the word "reference" is used without an
+adjective, like in the following paragraph, it usually is talking about a
+hard reference.
 
-References can be constructed several ways.
+References are easy to use in Perl.  There is just one overriding
+principle: Perl does no implicit referencing or dereferencing.  When a
+scalar is holding a reference, it always behaves as a simple scalar.  It
+doesn't magically start being an array or hash or subroutine; you have to
+tell it explicitly to do so, by dereferencing it.
+
+References can be constructed in several ways.
 
 =over 4
 
 =item 1.
 
 By using the backslash operator on a variable, subroutine, or value.
-(This works much like the & (address-of) operator works in C.)  Note
-that this typically creates I<ANOTHER> reference to a variable, since
+(This works much like the & (address-of) operator in C.)  Note
+that this typically creates I<ANOTHER> reference to a variable, because
 there's already a reference to the variable in the symbol table.  But
 the symbol table reference might go away, and you'll still have the
 reference that the backslash returned.  Here are some examples:
@@ -49,8 +58,13 @@ reference that the backslash returned.  Here are some examples:
     $arrayref  = \@ARGV;
     $hashref   = \%ENV;
     $coderef   = \&handler;
-    $globref   = \*STDOUT;
+    $globref   = \*foo;
 
+It isn't possible to create a true reference to an IO handle (filehandle or
+dirhandle) using the backslash operator.  See the explanation of the
+*foo{THING} syntax below.  (However, you're apt to find Perl code
+out there using globrefs as though they were IO handles, which is
+grandfathered into continued functioning.)
 
 =item 2.
 
@@ -60,17 +74,20 @@ brackets:
     $arrayref = [1, 2, ['a', 'b', 'c']];
 
 Here we've constructed a reference to an anonymous array of three elements
-whose final element is itself reference to another anonymous array of three
+whose final element is itself a reference to another anonymous array of three
 elements.  (The multidimensional syntax described later can be used to
-access this.  For example, after the above, $arrayref-E<gt>[2][1] would have
+access this.  For example, after the above, C<$arrayref-E<gt>[2][1]> would have
 the value "b".)
 
 Note that taking a reference to an enumerated list is not the same
 as using square brackets--instead it's the same as creating
 a list of references!
 
-    @list = (\$a, \$b, \$c);  
-    @list = \($a, $b, $c);	# same thing!
+    @list = (\$a, \@b, \%c);
+    @list = \($a, @b, %c);	# same thing!
+
+As a special case, C<\(@foo)> returns a list of references to the contents
+of C<@foo>, not a reference to C<@foo> itself.  Likewise for C<%foo>.
 
 =item 3.
 
@@ -126,8 +143,8 @@ context even when it's called outside of the context.
 In human terms, it's a funny way of passing arguments to a subroutine when
 you define it as well as when you call it.  It's useful for setting up
 little bits of code to run later, such as callbacks.  You can even
-do object-oriented stuff with it, though Perl provides a different
-mechanism to do that already--see L<perlobj>.
+do object-oriented stuff with it, though Perl already provides a different
+mechanism to do that--see L<perlobj>.
 
 You can also think of closure as a way to write a subroutine template without
 using eval.  (In fact, in version 5.000, eval was the I<only> way to get
@@ -157,7 +174,7 @@ newprint() I<despite> the fact that the "my $x" has seemingly gone out of
 scope by the time the anonymous subroutine runs.  That's what closure
 is all about.
 
-This only applies to lexical variables, by the way.  Dynamic variables
+This applies to only lexical variables, by the way.  Dynamic variables
 continue to work as they have always worked.  Closure is not something
 that most Perl programmers need trouble themselves about to begin with.
 
@@ -176,26 +193,61 @@ named new(), but don't have to be:
 =item 6.
 
 References of the appropriate type can spring into existence if you
-dereference them in a context that assumes they exist.  Since we haven't
+dereference them in a context that assumes they exist.  Because we haven't
 talked about dereferencing yet, we can't show you any examples yet.
 
 =item 7.
 
-References to filehandles can be created by taking a reference to 
-a typeglob.  This is currently the best way to pass filehandles into or
+A reference can be created by using a special syntax, lovingly known as
+the *foo{THING} syntax.  *foo{THING} returns a reference to the THING
+slot in *foo (which is the symbol table entry which holds everything
+known as foo).
+
+    $scalarref = *foo{SCALAR};
+    $arrayref  = *ARGV{ARRAY};
+    $hashref   = *ENV{HASH};
+    $coderef   = *handler{CODE};
+    $ioref     = *STDIN{IO};
+    $globref   = *foo{GLOB};
+
+All of these are self-explanatory except for *foo{IO}.  It returns the
+IO handle, used for file handles (L<perlfunc/open>), sockets
+(L<perlfunc/socket> and L<perlfunc/socketpair>), and directory handles
+(L<perlfunc/opendir>).  For compatibility with previous versions of
+Perl, *foo{FILEHANDLE} is a synonym for *foo{IO}.
+
+*foo{THING} returns undef if that particular THING hasn't been used yet,
+except in the case of scalars.  *foo{SCALAR} returns a reference to an
+anonymous scalar if $foo hasn't been used yet.  This might change in a
+future release.
+
+The use of *foo{IO} is the best way to pass bareword filehandles into or
 out of subroutines, or to store them in larger data structures.
 
-    splutter(\*STDOUT);
+    splutter(*STDOUT{IO});
     sub splutter {
 	my $fh = shift;
 	print $fh "her um well a hmmm\n";
     }
 
-    $rec = get_rec(\*STDIN);
+    $rec = get_rec(*STDIN{IO});
     sub get_rec {
 	my $fh = shift;
 	return scalar <$fh>;
     }
+
+Beware, though, that you can't do this with a routine which is going to
+open the filehandle for you, because *HANDLE{IO} will be undef if HANDLE
+hasn't been used yet.  Use \*HANDLE for that sort of thing instead.
+
+Using \*HANDLE (or *HANDLE) is another way to use and store non-bareword
+filehandles (before perl version 5.002 it was the only way).  The two
+methods are largely interchangeable, you can do
+
+    splutter(\*STDOUT);
+    $rec = get_rec(\*STDIN);
+
+with the above subroutine definitions.
 
 =back
 
@@ -207,9 +259,9 @@ are several basic methods.
 
 =item 1.
 
-Anywhere you'd put an identifier as part of a variable or subroutine
-name, you can replace the identifier with a simple scalar variable
-containing a reference of the correct type:
+Anywhere you'd put an identifier (or chain of identifiers) as part
+of a variable or subroutine name, you can replace the identifier with
+a simple scalar variable containing a reference of the correct type:
 
     $bar = $$scalarref;
     push(@$arrayref, $filename);
@@ -230,28 +282,28 @@ However, a "simple scalar" includes an identifier that itself uses method
 
 =item 2.
 
-Anywhere you'd put an identifier as part of a variable or subroutine
-name, you can replace the identifier with a BLOCK returning a reference
-of the correct type.  In other words, the previous examples could be
-written like this:
+Anywhere you'd put an identifier (or chain of identifiers) as part of a
+variable or subroutine name, you can replace the identifier with a
+BLOCK returning a reference of the correct type.  In other words, the
+previous examples could be written like this:
 
     $bar = ${$scalarref};
     push(@{$arrayref}, $filename);
     ${$arrayref}[0] = "January";
     ${$hashref}{"KEY"} = "VALUE";
     &{$coderef}(1,2,3);
-    $globref->print("output\n");  # iff you use FileHandle
+    $globref->print("output\n");  # iff IO::Handle is loaded
 
 Admittedly, it's a little silly to use the curlies in this case, but
 the BLOCK can contain any arbitrary expression, in particular,
 subscripted expressions:
 
-    &{ $dispatch{$index} }(1,2,3);	# call correct routine 
+    &{ $dispatch{$index} }(1,2,3);	# call correct routine
 
 Because of being able to omit the curlies for the simple case of C<$$x>,
 people often make the mistake of viewing the dereferencing symbols as
 proper operators, and wonder about their precedence.  If they were,
-though, you could use parens instead of braces.  That's not the case.
+though, you could use parentheses instead of braces.  That's not the case.
 Consider the difference below; case 0 is a short-hand version of case 1,
 I<NOT> case 2:
 
@@ -266,14 +318,15 @@ it's presumably referencing.  That would be case 3.
 
 =item 3.
 
-The case of individual array elements arises often enough that it gets
-cumbersome to use method 2.  As a form of syntactic sugar, the two
-lines like that above can be written:
+Subroutine calls and lookups of individual array elements arise often
+enough that it gets cumbersome to use method 2.  As a form of
+syntactic sugar, the examples for method 2 may be written:
 
-    $arrayref->[0] = "January";
-    $hashref->{"KEY"} = "VALUE";
+    $arrayref->[0] = "January";   # Array element
+    $hashref->{"KEY"} = "VALUE";  # Hash element
+    $coderef->(1,2,3);            # Subroutine call
 
-The left side of the array can be any expression returning a reference,
+The left side of the arrow can be any expression returning a reference,
 including a previous dereference.  Note that C<$array[$x]> is I<NOT> the
 same thing as C<$array-E<gt>[$x]> here:
 
@@ -317,7 +370,7 @@ reference is pointing to.  See L<perlfunc>.
 The bless() operator may be used to associate a reference with a package
 functioning as an object class.  See L<perlobj>.
 
-A typeglob may be dereferenced the same way a reference can, since
+A typeglob may be dereferenced the same way a reference can, because
 the dereference syntax always indicates the kind of reference desired.
 So C<${*foo}> and C<${\$foo}> both indicate the same scalar variable.
 
@@ -332,7 +385,7 @@ the whole block returns a reference to an array, which is then
 dereferenced by C<@{...}> and stuck into the double-quoted string. This
 chicanery is also useful for arbitrary expressions:
 
-    print "That yeilds @{[$n + 5]} widgets\n";
+    print "That yields @{[$n + 5]} widgets\n";
 
 =head2 Symbolic references
 
@@ -364,7 +417,7 @@ that, you can say
     use strict 'refs';
 
 and then only hard references will be allowed for the rest of the enclosing
-block.  An inner block may countermand that with 
+block.  An inner block may countermand that with
 
     no strict 'refs';
 
@@ -377,15 +430,15 @@ invisible to this mechanism.  For example:
     {
 	my $value = 20;
 	print $$ref;
-    } 
+    }
 
 This will still print 10, not 20.  Remember that local() affects package
 variables, which are all "global" to the package.
 
 =head2 Not-so-symbolic references
 
-A new feature contributing to readability in 5.001 is that the brackets
-around a symbolic reference behave more like quotes, just as they
+A new feature contributing to readability in perl version 5.001 is that the
+brackets around a symbolic reference behave more like quotes, just as they
 always have within a string.  That is,
 
     $push = "pop on ";
@@ -402,7 +455,7 @@ and even
     print ${ push } . "over";
 
 will have the same effect.  (This would have been a syntax error in
-5.000, though Perl 4 allowed it in the spaceless form.)  Note that this
+Perl 5.000, though Perl 4 allowed it in the spaceless form.)  Note that this
 construct is I<not> considered to be a symbolic reference when you're
 using strict refs:
 
@@ -416,7 +469,7 @@ subscripting a hash.  So now, instead of writing
 
     $array{ "aaa" }{ "bbb" }{ "ccc" }
 
-you can just write
+you can write just
 
     $array{ aaa }{ bbb }{ ccc }
 
@@ -433,7 +486,7 @@ makes it more than a bareword:
     $array{ shift @_ }
 
 The B<-w> switch will warn you if it interprets a reserved word as a string.
-But it will no longer warn you about using lowercase words, since the
+But it will no longer warn you about using lowercase words, because the
 string is effectively quoted.
 
 =head1 WARNING
@@ -443,8 +496,8 @@ converted into a string:
 
     $x{ \$a } = $a;
 
-If you try to dereference the key, it won't do a hard dereference, and 
-you won't accomplish what you're attemping.  You might want to do something
+If you try to dereference the key, it won't do a hard dereference, and
+you won't accomplish what you're attempting.  You might want to do something
 more like
 
     $r = \@a;

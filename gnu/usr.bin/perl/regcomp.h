@@ -48,41 +48,51 @@
  */
 
 /* definition	number	opnd?	meaning */
-#define	END	0	/* no	End of program. */
-#define	BOL	1	/* no	Match "" at beginning of line. */
-#define MBOL	2	/* no	Same, assuming multiline. */
-#define SBOL	3	/* no	Same, assuming singleline. */
-#define	EOL	4	/* no	Match "" at end of line. */
-#define MEOL	5	/* no	Same, assuming multiline. */
-#define SEOL	6	/* no	Same, assuming singleline. */
-#define	ANY	7	/* no	Match any one character (except newline). */
-#define	SANY	8	/* no	Match any one character. */
-#define	ANYOF	9	/* sv	Match character in (or not in) this class. */
+#define	END	 0	/* no	End of program. */
+#define	BOL	 1	/* no	Match "" at beginning of line. */
+#define MBOL	 2	/* no	Same, assuming multiline. */
+#define SBOL	 3	/* no	Same, assuming singleline. */
+#define	EOL	 4	/* no	Match "" at end of line. */
+#define MEOL	 5	/* no	Same, assuming multiline. */
+#define SEOL	 6	/* no	Same, assuming singleline. */
+#define	ANY	 7	/* no	Match any one character (except newline). */
+#define	SANY	 8	/* no	Match any one character. */
+#define	ANYOF	 9	/* sv	Match character in (or not in) this class. */
 #define	CURLY	10	/* sv	Match this simple thing {n,m} times. */
 #define	CURLYX	11	/* sv	Match this complex thing {n,m} times. */
 #define	BRANCH	12	/* node	Match this alternative, or the next... */
 #define	BACK	13	/* no	Match "", "next" ptr points backward. */
-#define	EXACTLY	14	/* sv	Match this string (preceded by length). */
-#define	NOTHING	15	/* no	Match empty string. */
-#define	STAR	16	/* node	Match this (simple) thing 0 or more times. */
-#define	PLUS	17	/* node	Match this (simple) thing 1 or more times. */
-#define ALNUM	18	/* no	Match any alphanumeric character */
-#define NALNUM	19	/* no	Match any non-alphanumeric character */
+#define	EXACT	14	/* sv	Match this string (preceded by length). */
+#define	EXACTF	15	/* sv	Match this string, folded (prec. by length). */
+#define	EXACTFL	16	/* sv	Match this string, folded in locale (w/len). */
+#define	NOTHING	17	/* no	Match empty string. */
+#define	STAR	18	/* node	Match this (simple) thing 0 or more times. */
+#define	PLUS	19	/* node	Match this (simple) thing 1 or more times. */
 #define BOUND	20	/* no	Match "" at any word boundary */
-#define NBOUND	21	/* no	Match "" at any word non-boundary */
-#define SPACE	22	/* no	Match any whitespace character */
-#define NSPACE	23	/* no	Match any non-whitespace character */
-#define DIGIT	24	/* no	Match any numeric character */
-#define NDIGIT	25	/* no	Match any non-numeric character */
-#define REF	26	/* num	Match some already matched string */
+#define BOUNDL	21	/* no	Match "" at any word boundary */
+#define NBOUND	22	/* no	Match "" at any word non-boundary */
+#define NBOUNDL	23	/* no	Match "" at any word non-boundary */
+#define REF	24	/* num	Match already matched string */
+#define REFF	25	/* num	Match already matched string, folded */
+#define REFFL	26	/* num	Match already matched string, folded in loc. */
 #define	OPEN	27	/* num	Mark this point in input as start of #n. */
 #define	CLOSE	28	/* num	Analogous to OPEN. */
 #define MINMOD	29	/* no	Next operator is not greedy. */
-#define GBOL	30	/* no	Matches where last m//g left off. */
+#define GPOS	30	/* no	Matches where last m//g left off. */
 #define IFMATCH	31	/* no	Succeeds if the following matches. */
 #define UNLESSM	32	/* no	Fails if the following matches. */
 #define SUCCEED	33	/* no	Return from a subroutine, basically. */
 #define WHILEM	34	/* no	Do curly processing and see if rest matches. */
+#define ALNUM	35	/* no	Match any alphanumeric character */
+#define ALNUML	36 	/* no	Match any alphanumeric char in locale */
+#define NALNUM	37	/* no	Match any non-alphanumeric character */
+#define NALNUML	38	/* no	Match any non-alphanumeric char in locale */
+#define SPACE	39	/* no	Match any whitespace character */
+#define SPACEL	40	/* no	Match any whitespace char in locale */
+#define NSPACE	41	/* no	Match any non-whitespace character */
+#define NSPACEL	42	/* no	Match any non-whitespace char in locale */
+#define DIGIT	43	/* no	Match any numeric character */
+#define NDIGIT	44	/* no	Match any non-numeric character */
 
 /*
  * Opcode notes:
@@ -109,7 +119,13 @@
 #ifndef DOINIT
 EXT char regarglen[];
 #else
-EXT char regarglen[] = {0,0,0,0,0,0,0,0,0,0,4,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,2,2,0,0,0,0,0};
+EXT char regarglen[] = {
+    0,0,0,0,0,0,0,0,0,0,
+    /*CURLY*/ 4, /*CURLYX*/ 4,
+    0,0,0,0,0,0,0,0,0,0,0,0,
+    /*REF*/ 2, 2, 2, /*OPEN*/ 2, /*CLOSE*/ 2,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+};
 #endif
 
 #ifndef DOINIT
@@ -130,27 +146,37 @@ EXT char regkind[] = {
 	CURLY,
 	BRANCH,
 	BACK,
-	EXACTLY,
+	EXACT,
+	EXACT,
+	EXACT,
 	NOTHING,
 	STAR,
 	PLUS,
-	ALNUM,
-	NALNUM,
+	BOUND,
 	BOUND,
 	NBOUND,
-	SPACE,
-	NSPACE,
-	DIGIT,
-	NDIGIT,
+	NBOUND,
+	REF,
+	REF,
 	REF,
 	OPEN,
 	CLOSE,
 	MINMOD,
-	BOL,
+	GPOS,
 	BRANCH,
 	BRANCH,
 	END,
-	WHILEM
+	WHILEM,
+	ALNUM,
+	ALNUM,
+	NALNUM,
+	NALNUM,
+	SPACE,
+	SPACE,
+	NSPACE,
+	NSPACE,
+	DIGIT,
+	NDIGIT,
 };
 #endif
 
@@ -158,14 +184,21 @@ EXT char regkind[] = {
 #ifndef DOINIT
 EXT char varies[];
 #else
-EXT char varies[] = {BRANCH,BACK,STAR,PLUS,CURLY,CURLYX,REF,WHILEM,0};
+EXT char varies[] = {
+    BRANCH, BACK, STAR, PLUS, CURLY, CURLYX, REF, REFF, REFFL, WHILEM, 0
+};
 #endif
 
 /* The following always have a length of 1. */
 #ifndef DOINIT
 EXT char simple[];
 #else
-EXT char simple[] = {ANY,SANY,ANYOF,ALNUM,NALNUM,SPACE,NSPACE,DIGIT,NDIGIT,0};
+EXT char simple[] = {
+    ANY, SANY, ANYOF,
+    ALNUM, ALNUML, NALNUM, NALNUML,
+    SPACE, SPACEL, NSPACE, NSPACEL,
+    DIGIT, NDIGIT, 0
+};
 #endif
 
 EXT char regdummy;
@@ -221,6 +254,16 @@ EXT char regdummy;
 #endif
 
 #define MAGIC 0234
+
+/* Flags for first parameter byte of ANYOF */
+#define ANYOF_INVERT	0x40
+#define ANYOF_FOLD	0x20
+#define ANYOF_LOCALE	0x10
+#define ANYOF_ISA	0x0F
+#define ANYOF_ALNUML	 0x08
+#define ANYOF_NALNUML	 0x04
+#define ANYOF_SPACEL	 0x02
+#define ANYOF_NSPACEL	 0x01
 
 /*
  * Utility definitions.

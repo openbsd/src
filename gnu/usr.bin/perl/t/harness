@@ -3,13 +3,17 @@
 # We suppose that perl _mostly_ works at this moment, so may use
 # sophisticated testing.
 
-# Note that _before install_ you may need to run it with -I ../lib flag
-
+BEGIN {
+    chdir 't' if -d 't';
+    @INC = '../lib';
+}
 use lib '../lib';
+
 use Test::Harness;
 
 $Test::Harness::switches = "";	# Too much noise otherwise
+$Test::Harness::verbose = shift if @ARGV && $ARGV[0] eq '-v';
 
 @tests = @ARGV;
-@tests = <*/*.t> unless @tests;
+@tests = <base/*.t comp/*.t cmd/*.t io/*.t op/*.t pragma/*.t lib/*.t> unless @tests;
 Test::Harness::runtests @tests;

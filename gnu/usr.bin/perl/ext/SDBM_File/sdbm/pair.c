@@ -231,7 +231,7 @@ register int siz;
 
 	for (i = 1; i < n; i += 2) {
 		if (siz == off - ino[i] &&
-		    memcmp(key, pag + ino[i], siz) == 0)
+		    memEQ(key, pag + ino[i], siz))
 			return i;
 		off = ino[i + 1];
 	}

@@ -21,7 +21,7 @@ with three dimensions!
     for $x (1 .. 10) {
 	for $y (1 .. 10) {
 	    for $z (1 .. 10) {
-		$LoL[$x][$y][$z] = 
+		$LoL[$x][$y][$z] =
 		    $x ** $y + $z;
 	    }
 	}
@@ -30,25 +30,25 @@ with three dimensions!
 Alas, however simple this may appear, underneath it's a much more
 elaborate construct than meets the eye!
 
-How do you print it out?  Why can't you just say C<print @LoL>?  How do
+How do you print it out?  Why can't you say just C<print @LoL>?  How do
 you sort it?  How can you pass it to a function or get one of these back
 from a function?  Is is an object?  Can you save it to disk to read
 back later?  How do you access whole rows or columns of that matrix?  Do
-all the values have to be numeric?  
+all the values have to be numeric?
 
 As you see, it's quite easy to become confused.  While some small portion
 of the blame for this can be attributed to the reference-based
 implementation, it's really more due to a lack of existing documentation with
 examples designed for the beginner.
 
-This document is meant to be a detailed but understandable treatment of
-the many different sorts of data structures you might want to develop.  It should
-also serve as a cookbook of examples.  That way, when you need to create one of these
-complex data structures, you can just pinch, pilfer, or purloin
-a drop-in example from here.
+This document is meant to be a detailed but understandable treatment of the
+many different sorts of data structures you might want to develop.  It
+should also serve as a cookbook of examples.  That way, when you need to
+create one of these complex data structures, you can just pinch, pilfer, or
+purloin a drop-in example from here.
 
 Let's look at each of these possible constructs in detail.  There are separate
-documents on each of the following:
+sections on each of the following:
 
 =over 5
 
@@ -62,36 +62,32 @@ documents on each of the following:
 
 =item * more elaborate constructs
 
-=item * recursive and self-referential data structures
-
-=item * objects
-
 =back
 
 But for now, let's look at some of the general issues common to all
-of these types of data structures. 
+of these types of data structures.
 
 =head1 REFERENCES
 
 The most important thing to understand about all data structures in Perl
 -- including multidimensional arrays--is that even though they might
 appear otherwise, Perl C<@ARRAY>s and C<%HASH>es are all internally
-one-dimensional.  They can only hold scalar values (meaning a string,
+one-dimensional.  They can hold only scalar values (meaning a string,
 number, or a reference).  They cannot directly contain other arrays or
 hashes, but instead contain I<references> to other arrays or hashes.
 
-You can't use a reference to a array or hash in quite the same way that
-you would a real array or hash.  For C or C++ programmers unused to distinguishing
-between arrays and pointers to the same, this can be confusing.  If so,
-just think of it as the difference between a structure and a pointer to a
-structure.  
+You can't use a reference to a array or hash in quite the same way that you
+would a real array or hash.  For C or C++ programmers unused to
+distinguishing between arrays and pointers to the same, this can be
+confusing.  If so, just think of it as the difference between a structure
+and a pointer to a structure.
 
 You can (and should) read more about references in the perlref(1) man
 page.  Briefly, references are rather like pointers that know what they
 point to.  (Objects are also a kind of reference, but we won't be needing
-them right away--if ever.)  That means that when you have something that
-looks to you like an access to two-or-more-dimensional array and/or hash,
-that what's really going on is that in all these cases, the base type is
+them right away--if ever.)  This means that when you have something which
+looks to you like an access to a two-or-more-dimensional array and/or hash,
+what's really going on is that the base type is
 merely a one-dimensional entity that contains references to the next
 level.  It's just that you can I<use> it as though it were a
 two-dimensional one.  This is actually the way almost all C
@@ -102,7 +98,7 @@ multidimensional arrays work as well.
     $hash{string}[7]			# hash of arrays
     $hash{string}{'another string'}	# hash of hashes
 
-Now, because the top level only contains references, if you try to print
+Now, because the top level contains only references, if you try to print
 out your array in with a simple print() function, you'll get something
 that doesn't look very nice, like this:
 
@@ -130,7 +126,7 @@ of a nested array:
     for $i (1..10) {
 	@list = somefunc($i);
 	$LoL[$i] = @list;	# WRONG!
-    } 
+    }
 
 That's just the simple case of assigning a list to a scalar and getting
 its element count.  If that's what you really and truly want, then you
@@ -138,8 +134,8 @@ might do well to consider being a tad more explicit about it, like this:
 
     for $i (1..10) {
 	@list = somefunc($i);
-	$counts[$i] = scalar @list;	
-    } 
+	$counts[$i] = scalar @list;
+    }
 
 Here's the case of taking a reference to the same memory location
 again and again:
@@ -147,9 +143,9 @@ again and again:
     for $i (1..10) {
 	@list = somefunc($i);
 	$LoL[$i] = \@list;	# WRONG!
-    } 
+    }
 
-So, just what's the big problem with that?  It looks right, doesn't it?
+So, what's the big problem with that?  It looks right, doesn't it?
 After all, I just told you that you need an array of references, so by
 golly, you've made me one!
 
@@ -164,29 +160,29 @@ the following C program:
 	rp = getpwnam("root");
 	dp = getpwnam("daemon");
 
-	printf("daemon name is %s\nroot name is %s\n", 
+	printf("daemon name is %s\nroot name is %s\n",
 		dp->pw_name, rp->pw_name);
     }
 
 Which will print
 
     daemon name is daemon
-    root name is daemon 
+    root name is daemon
 
 The problem is that both C<rp> and C<dp> are pointers to the same location
 in memory!  In C, you'd have to remember to malloc() yourself some new
 memory.  In Perl, you'll want to use the array constructor C<[]> or the
 hash constructor C<{}> instead.   Here's the right way to do the preceding
-broken code fragments
+broken code fragments:
 
     for $i (1..10) {
 	@list = somefunc($i);
 	$LoL[$i] = [ @list ];
-    } 
+    }
 
 The square brackets make a reference to a new array with a I<copy>
 of what's in @list at the time of the assignment.  This is what
-you want.  
+you want.
 
 Note that this will produce something similar, but it's
 much harder to read:
@@ -194,7 +190,7 @@ much harder to read:
     for $i (1..10) {
 	@list = 0 .. $i;
 	@{$LoL[$i]} = @list;
-    } 
+    }
 
 Is it the same?  Well, maybe so--and maybe not.  The subtle difference
 is that when you assign something in square brackets, you know for sure
@@ -218,9 +214,9 @@ something is "interesting", that rather than meaning "intriguing",
 they're disturbingly more apt to mean that it's "annoying",
 "difficult", or both?  :-)
 
-So just remember to always use the array or hash constructors with C<[]>
+So just remember always to use the array or hash constructors with C<[]>
 or C<{}>, and you'll be fine, although it's not always optimally
-efficient.  
+efficient.
 
 Surprisingly, the following dangerous-looking construct will
 actually work out fine:
@@ -228,7 +224,7 @@ actually work out fine:
     for $i (1..10) {
         my @list = somefunc($i);
         $LoL[$i] = \@list;
-    } 
+    }
 
 That's because my() is more of a run-time statement than it is a
 compile-time declaration I<per se>.  This means that the my() variable is
@@ -251,7 +247,7 @@ In summary:
     @{ $LoL[$i] } = @list;	# way too tricky for most programmers
 
 
-=head1 CAVEAT ON PRECEDENCE 
+=head1 CAVEAT ON PRECEDENCE
 
 Speaking of things like C<@{$LoL[$i]}>, the following are actually the
 same thing:
@@ -290,29 +286,24 @@ this:
     my $listref = [
 	[ "fred", "barney", "pebbles", "bambam", "dino", ],
 	[ "homer", "bart", "marge", "maggie", ],
-	[ "george", "jane", "alroy", "judy", ],
+	[ "george", "jane", "elroy", "judy", ],
     ];
 
     print $listref[2][2];
 
 The compiler would immediately flag that as an error I<at compile time>,
 because you were accidentally accessing C<@listref>, an undeclared
-variable, and it would thereby remind you to instead write:
+variable, and it would thereby remind you to write instead:
 
     print $listref->[2][2]
 
 =head1 DEBUGGING
 
-The standard Perl debugger in 5.001 doesn't do a very nice job of 
-printing out complex data structures.  However, the perl5db that
-Ilya Zakharevich E<lt>F<ilya@math.ohio-state.edu>E<gt>
-wrote, which is accessible at
-
-    ftp://ftp.perl.com/pub/perl/ext/perl5db-kit-0.9.tar.gz
-
-has several new features, including command line editing as well
-as the C<x> command to dump out complex data structures.  For example, 
-given the assignment to $LoL above, here's the debugger output:
+Before version 5.002, the standard Perl debugger didn't do a very nice job of
+printing out complex data structures.  With 5.002 or above, the
+debugger includes several new features, including command line editing as
+well as the C<x> command to dump out complex data structures.  For
+example, given the assignment to $LoL above, here's the debugger output:
 
     DB<1> X $LoL
     $LoL = ARRAY(0x13b5a0)
@@ -330,15 +321,15 @@ given the assignment to $LoL above, here's the debugger output:
        2  ARRAY(0x13b540)
 	  0  'george'
 	  1  'jane'
-	  2  'alroy'
+	  2  'elroy'
 	  3  'judy'
 
-There's also a lower-case B<x> command which is nearly the same.
+There's also a lowercase B<x> command which is nearly the same.
 
 =head1 CODE EXAMPLES
 
-Presented with little comment (these will get their own man pages someday)
-here are short code examples illustrating access of various 
+Presented with little comment (these will get their own manpages someday)
+here are short code examples illustrating access of various
 types of data structures.
 
 =head1 LISTS OF LISTS
@@ -356,18 +347,18 @@ types of data structures.
  # reading from file
  while ( <> ) {
      push @LoL, [ split ];
-
+ }
 
  # calling a function
  for $i ( 1 .. 10 ) {
      $LoL[$i] = [ somefunc($i) ];
-
+ }
 
  # using temp vars
  for $i ( 1 .. 10 ) {
      @tmp = somefunc($i);
      $LoL[$i] = [ @tmp ];
-
+ }
 
  # add to an existing row
  push @{ $LoL[0] }, "wilma", "betty";
@@ -383,28 +374,28 @@ types of data structures.
  # print the whole thing with refs
  for $aref ( @LoL ) {
      print "\t [ @$aref ],\n";
-
+ }
 
  # print the whole thing with indices
  for $i ( 0 .. $#LoL ) {
      print "\t [ @{$LoL[$i]} ],\n";
-
+ }
 
  # print the whole thing one at a time
  for $i ( 0 .. $#LoL ) {
-     for $j ( 0 .. $#{$LoL[$i]} ) {
+     for $j ( 0 .. $#{ $LoL[$i] } ) {
          print "elt $i $j is $LoL[$i][$j]\n";
      }
-
+ }
 
 =head1 HASHES OF LISTS
 
 =head2 Declaration of a HASH OF LISTS
 
  %HoL = (
-        "flintstones"        => [ "fred", "barney" ],
-        "jetsons"            => [ "george", "jane", "elroy" ],
-        "simpsons"           => [ "homer", "marge", "bart" ],
+        flintstones        => [ "fred", "barney" ],
+        jetsons            => [ "george", "jane", "elroy" ],
+        simpsons           => [ "homer", "marge", "bart" ],
       );
 
 =head2 Generation of a HASH OF LISTS
@@ -414,7 +405,7 @@ types of data structures.
  while ( <> ) {
      next unless s/^(.*?):\s*//;
      $HoL{$1} = [ split ];
-
+ }
 
  # reading from file; more temps
  # flintstones: fred barney wilma dino
@@ -422,18 +413,18 @@ types of data structures.
      ($who, $rest) = split /:\s*/, $line, 2;
      @fields = split ' ', $rest;
      $HoL{$who} = [ @fields ];
-
+ }
 
  # calling a function that returns a list
  for $group ( "simpsons", "jetsons", "flintstones" ) {
      $HoL{$group} = [ get_family($group) ];
-
+ }
 
  # likewise, but using temps
  for $group ( "simpsons", "jetsons", "flintstones" ) {
      @members = get_family($group);
      $HoL{$group} = [ @members ];
-
+ }
 
  # append new members to an existing family
  push @{ $HoL{"flintstones"} }, "wilma", "betty";
@@ -449,24 +440,31 @@ types of data structures.
  # print the whole thing
  foreach $family ( keys %HoL ) {
      print "$family: @{ $HoL{$family} }\n"
-
+ }
 
  # print the whole thing with indices
  foreach $family ( keys %HoL ) {
      print "family: ";
-     foreach $i ( 0 .. $#{ $HoL{$family} ) {
+     foreach $i ( 0 .. $#{ $HoL{$family} } ) {
          print " $i = $HoL{$family}[$i]";
      }
      print "\n";
-
+ }
 
  # print the whole thing sorted by number of members
- foreach $family ( sort { @{$HoL{$b}} <=> @{$HoL{$b}} } keys %HoL ) {
+ foreach $family ( sort { @{$HoL{$b}} <=> @{$HoL{$a}} } keys %HoL ) {
      print "$family: @{ $HoL{$family} }\n"
+ }
 
  # print the whole thing sorted by number of members and name
- foreach $family ( sort { @{$HoL{$b}} <=> @{$HoL{$a}} } keys %HoL ) {
+ foreach $family ( sort {
+			    @{$HoL{$b}} <=> @{$HoL{$a}}
+					||
+				    $a cmp $b
+	    } keys %HoL )
+ {
      print "$family: ", join(", ", sort @{ $HoL{$family}), "\n";
+ }
 
 =head1 LISTS OF HASHES
 
@@ -474,8 +472,8 @@ types of data structures.
 
  @LoH = (
         {
-           Lead      => "fred",
-           Friend    => "barney",
+            Lead     => "fred",
+            Friend   => "barney",
         },
         {
             Lead     => "george",
@@ -500,6 +498,7 @@ types of data structures.
          $rec->{$key} = $value;
      }
      push @LoH, $rec;
+ }
 
 
  # reading from file
@@ -507,30 +506,30 @@ types of data structures.
  # no temp
  while ( <> ) {
      push @LoH, { split /[\s+=]/ };
-
+ }
 
  # calling a function  that returns a key,value list, like
  # "lead","fred","daughter","pebbles"
- while ( %fields = getnextpairset() )
+ while ( %fields = getnextpairset() ) {
      push @LoH, { %fields };
-
+ }
 
  # likewise, but using no temp vars
  while (<>) {
      push @LoH, { parsepairs($_) };
-
+ }
 
  # add key/value to an element
- $LoH[0]{"pet"} = "dino";
- $LoH[2]{"pet"} = "santa's little helper";
+ $LoH[0]{pet} = "dino";
+ $LoH[2]{pet} = "santa's little helper";
 
 =head2 Access and Printing of a LIST OF HASHES
 
  # one element
- $LoH[0]{"lead"} = "fred";
+ $LoH[0]{lead} = "fred";
 
  # another element
- $LoH[1]{"lead"} =~ s/(\w)/\u$1/;
+ $LoH[1]{lead} =~ s/(\w)/\u$1/;
 
  # print the whole thing with refs
  for $href ( @LoH ) {
@@ -539,7 +538,7 @@ types of data structures.
          print "$role=$href->{$role} ";
      }
      print "}\n";
-
+ }
 
  # print the whole thing with indices
  for $i ( 0 .. $#LoH ) {
@@ -548,33 +547,35 @@ types of data structures.
          print "$role=$LoH[$i]{$role} ";
      }
      print "}\n";
-
+ }
 
  # print the whole thing one at a time
  for $i ( 0 .. $#LoH ) {
      for $role ( keys %{ $LoH[$i] } ) {
          print "elt $i $role is $LoH[$i]{$role}\n";
      }
+ }
 
 =head1 HASHES OF HASHES
 
 =head2 Declaration of a HASH OF HASHES
 
  %HoH = (
-        "flintstones" => {
-            "lead"    => "fred",
-            "pal"     => "barney",
+        flintstones => {
+		lead      => "fred",
+		pal       => "barney",
         },
-        "jetsons"     => {
-             "lead"   => "george",
-             "wife"   => "jane",
-             "his boy"=> "elroy",
-         }
-        "simpsons"    => {
-             "lead"   => "homer",
-             "wife"   => "marge",
-             "kid"    => "bart",
-      );
+        jetsons     => {
+		lead      => "george",
+		wife      => "jane",
+		"his boy" => "elroy",
+        },
+        simpsons    => {
+		lead      => "homer",
+		wife      => "marge",
+		kid       => "bart",
+	},
+ );
 
 =head2 Generation of a HASH OF HASHES
 
@@ -599,81 +600,78 @@ types of data structures.
          ($key, $value) = split /=/, $field;
          $rec->{$key} = $value;
      }
-
-
- # calling a function  that returns a key,value list, like
- # "lead","fred","daughter","pebbles"
- while ( %fields = getnextpairset() )
-     push @a, { %fields };
-
+ }
 
  # calling a function  that returns a key,value hash
  for $group ( "simpsons", "jetsons", "flintstones" ) {
      $HoH{$group} = { get_family($group) };
-
+ }
 
  # likewise, but using temps
  for $group ( "simpsons", "jetsons", "flintstones" ) {
      %members = get_family($group);
      $HoH{$group} = { %members };
-
+ }
 
  # append new members to an existing family
  %new_folks = (
-     "wife" => "wilma",
-     "pet"  => "dino";
+     wife => "wilma",
+     pet  => "dino";
  );
+
  for $what (keys %new_folks) {
      $HoH{flintstones}{$what} = $new_folks{$what};
-
+ }
 
 =head2 Access and Printing of a HASH OF HASHES
 
  # one element
- $HoH{"flintstones"}{"wife"} = "wilma";
+ $HoH{flintstones}{wife} = "wilma";
 
  # another element
  $HoH{simpsons}{lead} =~ s/(\w)/\u$1/;
 
  # print the whole thing
  foreach $family ( keys %HoH ) {
-     print "$family: ";
-     for $role ( keys %{ $HoH{$family} } {
+     print "$family: { ";
+     for $role ( keys %{ $HoH{$family} } ) {
          print "$role=$HoH{$family}{$role} ";
      }
      print "}\n";
-
+ }
 
  # print the whole thing  somewhat sorted
  foreach $family ( sort keys %HoH ) {
-     print "$family: ";
-     for $role ( sort keys %{ $HoH{$family} } {
+     print "$family: { ";
+     for $role ( sort keys %{ $HoH{$family} } ) {
          print "$role=$HoH{$family}{$role} ";
      }
      print "}\n";
+ }
 
 
  # print the whole thing sorted by number of members
- foreach $family ( sort { keys %{$HoH{$b}} <=> keys %{$HoH{$b}} } keys %HoH ) {
-     print "$family: ";
-     for $role ( sort keys %{ $HoH{$family} } {
+ foreach $family ( sort { keys %{$HoH{$b}} <=> keys %{$HoH{$a}} } keys %HoH ) {
+     print "$family: { ";
+     for $role ( sort keys %{ $HoH{$family} } ) {
          print "$role=$HoH{$family}{$role} ";
      }
      print "}\n";
-
+ }
 
  # establish a sort order (rank) for each role
  $i = 0;
  for ( qw(lead wife son daughter pal pet) ) { $rank{$_} = ++$i }
 
  # now print the whole thing sorted by number of members
- foreach $family ( sort { keys %{$HoH{$b}} <=> keys %{$HoH{$b}} } keys %HoH ) {
-     print "$family: ";
+ foreach $family ( sort { keys %{ $HoH{$b} } <=> keys %{ $HoH{$a} } } keys %HoH ) {
+     print "$family: { ";
      # and print these according to rank order
-     for $role ( sort { $rank{$a} <=> $rank{$b} keys %{ $HoH{$family} } {
+     for $role ( sort { $rank{$a} <=> $rank{$b} }  keys %{ $HoH{$family} } ) {
          print "$role=$HoH{$family}{$role} ";
      }
      print "}\n";
+ }
 
 
 =head1 MORE ELABORATE RECORDS
@@ -684,48 +682,48 @@ Here's a sample showing how to create and use a record whose fields are of
 many different sorts:
 
      $rec = {
-         STRING  => $string,
-         LIST    => [ @old_values ],
-         LOOKUP  => { %some_table },
-         FUNC    => \&some_function,
-         FANON   => sub { $_[0] ** $_[1] },
-         FH      => \*STDOUT,
+	 TEXT      => $string,
+	 SEQUENCE  => [ @old_values ],
+	 LOOKUP    => { %some_table },
+	 THATCODE  => \&some_function,
+	 THISCODE  => sub { $_[0] ** $_[1] },
+	 HANDLE    => \*STDOUT,
      };
 
-     print $rec->{STRING};
+     print $rec->{TEXT};
 
      print $rec->{LIST}[0];
-     $last = pop @ { $rec->{LIST} };
+     $last = pop @ { $rec->{SEQUENCE} };
 
      print $rec->{LOOKUP}{"key"};
      ($first_k, $first_v) = each %{ $rec->{LOOKUP} };
 
-     $answer = &{ $rec->{FUNC} }($arg);
-     $answer = &{ $rec->{FANON} }($arg1, $arg2);
+     $answer = $rec->{THATCODE}->($arg);
+     $answer = $rec->{THISCODE}->($arg1, $arg2);
 
      # careful of extra block braces on fh ref
-     print { $rec->{FH} } "a string\n";
+     print { $rec->{HANDLE} } "a string\n";
 
      use FileHandle;
-     $rec->{FH}->autoflush(1);
-     $rec->{FH}->print(" a string\n");
+     $rec->{HANDLE}->autoflush(1);
+     $rec->{HANDLE}->print(" a string\n");
 
 =head2 Declaration of a HASH OF COMPLEX RECORDS
 
      %TV = (
-        "flintstones" => {
+        flintstones => {
             series   => "flintstones",
-            nights   => [ qw(monday thursday friday) ];
+            nights   => [ qw(monday thursday friday) ],
             members  => [
                 { name => "fred",    role => "lead", age  => 36, },
                 { name => "wilma",   role => "wife", age  => 31, },
-                { name => "pebbles", role => "kid", age  =>  4, },
+                { name => "pebbles", role => "kid",  age  =>  4, },
             ],
         },
 
-        "jetsons"     => {
+        jetsons     => {
             series   => "jetsons",
-            nights   => [ qw(wednesday saturday) ];
+            nights   => [ qw(wednesday saturday) ],
             members  => [
                 { name => "george",  role => "lead", age  => 41, },
                 { name => "jane",    role => "wife", age  => 39, },
@@ -733,9 +731,9 @@ many different sorts:
             ],
          },
 
-        "simpsons"    => {
+        simpsons    => {
             series   => "simpsons",
-            nights   => [ qw(monday) ];
+            nights   => [ qw(monday) ],
             members  => [
                 { name => "homer", role => "lead", age  => 34, },
                 { name => "marge", role => "wife", age => 37, },
@@ -749,7 +747,7 @@ many different sorts:
      # reading from file
      # this is most easily done by having the file itself be
      # in the raw data format as shown above.  perl is happy
-     # to parse complex datastructures if declared as data, so
+     # to parse complex data structures if declared as data, so
      # sometimes it's easiest to do that
 
      # here's a piece by piece build up
@@ -759,7 +757,7 @@ many different sorts:
 
      @members = ();
      # assume this file in field=value syntax
-     while () {
+     while (<>) {
          %fields = split /[\s=]+/;
          push @members, { %fields };
      }
@@ -779,7 +777,7 @@ many different sorts:
      foreach $family (keys %TV) {
          $rec = $TV{$family}; # temp pointer
          @kids = ();
-         for $person ( @{$rec->{members}} ) {
+         for $person ( @{ $rec->{members} } ) {
              if ($person->{role} =~ /kid|son|daughter/) {
                  push @kids, $person;
              }
@@ -808,7 +806,7 @@ many different sorts:
          for $who ( @{ $TV{$family}{members} } ) {
              print " $who->{name} ($who->{role}), age $who->{age}\n";
          }
-         print "it turns out that $TV{$family}{'lead'} has ";
+         print "it turns out that $TV{$family}{lead} has ";
          print scalar ( @{ $TV{$family}{kids} } ), " kids named ";
          print join (", ", map { $_->{name} } @{ $TV{$family}{kids} } );
          print "\n";
@@ -820,18 +818,17 @@ You cannot easily tie a multilevel data structure (such as a hash of
 hashes) to a dbm file.  The first problem is that all but GDBM and
 Berkeley DB have size limitations, but beyond that, you also have problems
 with how references are to be represented on disk.  One experimental
-module that does attempt to partially address this need is the MLDBM
-module.  Check your nearest CPAN site as described in L<perlmod> for
+module that does partially attempt to address this need is the MLDBM
+module.  Check your nearest CPAN site as described in L<perlmodlib> for
 source code to MLDBM.
 
 =head1 SEE ALSO
 
-L<perlref>, L<perllol>, L<perldata>, L<perlobj>
+perlref(1), perllol(1), perldata(1), perlobj(1)
 
 =head1 AUTHOR
 
-Tom Christiansen E<lt>F<tchrist@perl.com>E<gt>
+Tom Christiansen <F<tchrist@perl.com>>
 
-Last update: 
-Tue Dec 12 09:20:26 MST 1995
-
+Last update:
+Wed Oct 23 04:57:50 MET DST 1996

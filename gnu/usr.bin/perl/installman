@@ -56,36 +56,69 @@ runpod2man('pod', $man1dir, $man1ext);
 # Install the pods for library modules.
 runpod2man('lib', $man3dir, $man3ext);
 
+# Install the pods embedded in the installed scripts
+runpod2man('utils', $man1dir, $man1ext, 'c2ph');
+runpod2man('utils', $man1dir, $man1ext, 'h2ph');
+runpod2man('utils', $man1dir, $man1ext, 'h2xs');
+runpod2man('utils', $man1dir, $man1ext, 'perldoc');
+runpod2man('utils', $man1dir, $man1ext, 'perlbug');
+runpod2man('utils', $man1dir, $man1ext, 'pl2pm');
+runpod2man('utils', $man1dir, $man1ext, 'splain');
+runpod2man('x2p', $man1dir, $man1ext, 's2p');
+runpod2man('x2p', $man1dir, $man1ext, 'a2p.pod');
+runpod2man('pod', $man1dir, $man1ext, 'pod2man');
+runpod2man('pod', $man1dir, $man1ext, 'pod2html');
+
+# It would probably be better to have this page linked
+# to the c2ph man page.  Or, this one could say ".so man1/c2ph.1",
+# but then it would have to pay attention to $man1dir and $man1ext.
+runpod2man('utils', $man1dir, $man1ext, 'pstruct'); 
+
+runpod2man('lib/ExtUtils', $man1dir, $man1ext, 'xsubpp');
+
 sub runpod2man {
-    my($poddir, $mandir, $manext) = @_;
+    # $script is script name if we are installing a manpage embedded 
+    # in a script, undef otherwise
+    my($poddir, $mandir, $manext, $script) = @_;
+
+    my($downdir); # can't just use .. when installing xsubpp manpage
+
+    $downdir = $poddir;
+    $downdir =~ s:[^/]+:..:g;
     my($builddir) = Cwd::getcwd();
 
     if ($mandir eq ' ' or $mandir eq '') {
-	print STDERR "Skipping installation of $poddir man pages.\n";
+	print STDERR "Skipping installation of ",
+	    ($script ? "$poddir/$script man page" : "$poddir man pages"), ".\n";
 	return;
     }
 
+    print STDERR "chdir $poddir\n";
     chdir $poddir || die "Unable to cd to $poddir directory!\n$!\n";
 
     # We insist on using the current version of pod2man in case there
     # are enhancements or changes from previous installed versions.
     # The error message doesn't include the '..' because the user
     # won't be aware that we've chdir to $poddir.
-    -r  "../pod/pod2man" || die "Executable pod/pod2man not found.\n";
+    -r  "$downdir/pod/pod2man" || die "Executable pod/pod2man not found.\n";
 
     # We want to be sure to use the current perl.  We can't rely on
     # the installed perl because it might not be actually installed
     # yet. (The user may have set the $install* Configure variables 
     # to point to some temporary home, from which the executable gets
     # installed by occult means.)
-    $pod2man = "../perl -I ../lib ../pod/pod2man --section=$manext --official";
+    $pod2man = "$downdir/perl -I $downdir/lib $downdir/pod/pod2man --section=$manext --official";
 
-    mkpath($mandir, 1, 0777);  # In File::Path
+    mkpath($mandir, 1, 0777) unless $notify;  # In File::Path
     # Make a list of all the .pm and .pod files in the directory.  We will
     # always run pod2man from the lib directory and feed it the full pathname
     # of the pod.  This might be useful for pod2man someday.
-    @modpods = ();
-    find(\&lsmodpods, '.');
+    if ($script) {
+	@modpods = ($script);
+    } else {
+	@modpods = ();
+	find(\&lsmodpods, '.');
+    }
     foreach $mod (@modpods) {
 	$manpage = $mod;
 	my $tmp;
@@ -96,7 +129,7 @@ sub runpod2man {
 	# Convert name from  File/Basename.pm to File::Basename.3 format,
 	# if necessary.
 	$manpage =~ s#\.p(m|od)$##;
-	if ($^O eq 'os2') {
+	if ($^O eq 'os2' || $^O eq 'amigaos') {
 	  $manpage =~ s#/#.#g;
 	} else {
 	  $manpage =~ s#/#::#g;
@@ -111,6 +144,7 @@ sub runpod2man {
 	}
     }
     chdir "$builddir" || die "Unable to cd back to $builddir directory!\n$!\n";
+    print STDERR "chdir $builddir\n";
 }
 
 sub lsmodpods {
@@ -154,7 +188,7 @@ next unless -e $name;
 chmod 0777, $name if $^O eq 'os2';
 print STDERR "  unlink $name\n";
 ( CORE::unlink($name) and ++$cnt 
-    or warn "Couldn't unlink $name: $!\n" ) unless $nonono;
+    or warn "Couldn't unlink $name: $!\n" ) unless $notify;
     }
     return $cnt;
 }

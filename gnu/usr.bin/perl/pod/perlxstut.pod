@@ -1,6 +1,6 @@
 =head1 NAME
 
-perlXStut - Tutorial for XSUB's
+perlXStut - Tutorial for XSUBs
 
 =head1 DESCRIPTION
 
@@ -10,8 +10,8 @@ L<perlxs>.
 
 This tutorial starts with very simple examples and becomes more complex,
 with each new example adding new features.  Certain concepts may not be
-completely explained until later in the tutorial in order to slowly ease
-the reader into building extensions.
+completely explained until later in the tutorial to ease the
+reader slowly into building extensions.
 
 =head2 VERSION CAVEAT
 
@@ -25,13 +25,21 @@ features were added to Perl 5.
 
 =item *
 
-In versions of 5.002 prior to version beta 3, then the line in the .xs file
+In versions of Perl 5.002 prior to the gamma version, the test script
+in Example 1 will not function properly.  You need to change the "use
+lib" line to read:
+
+	use lib './blib';
+
+=item *
+
+In versions of Perl 5.002 prior to version beta 3, the line in the .xs file
 about "PROTOTYPES: DISABLE" will cause a compiler error.  Simply remove that
 line from the file.
 
 =item *
 
-In versions of 5.002 prior to version 5.002b1h, the test.pl file was not
+In versions of Perl 5.002 prior to version 5.002b1h, the test.pl file was not
 automatically created by h2xs.  This means that you cannot say "make test"
 to run the test script.  You will need to add the following line before the
 "use extension" statement:
@@ -47,7 +55,7 @@ to use the following line:
 
 =item *
 
-This document assumes that the executable named "perl" is Perl version 5.  
+This document assumes that the executable named "perl" is Perl version 5.
 Some systems may have installed Perl version 5 as "perl5".
 
 =back
@@ -55,7 +63,7 @@ Some systems may have installed Perl version 5 as "perl5".
 =head2 DYNAMIC VERSUS STATIC
 
 It is commonly thought that if a system does not have the capability to
-dynamically load a library, you cannot build XSUB's.  This is incorrect.
+load a library dynamically, you cannot build XSUBs.  This is incorrect.
 You I<can> build them, but you must link the XSUB's subroutines with the
 rest of Perl, creating a new executable.  This situation is similar to
 Perl 4.
@@ -80,7 +88,7 @@ test" is sufficient.
 Our first extension will be very simple.  When we call the routine in the
 extension, it will print out a well-known message and return.
 
-Run "h2xs -A -n Mytest".  This creates a directory named Mytest, possibly under
+Run C<h2xs -A -n Mytest>.  This creates a directory named Mytest, possibly under
 ext/ if that directory exists in the current working directory.  Several files
 will be created in the Mytest dir, including MANIFEST, Makefile.PL, Mytest.pm,
 Mytest.xs, test.pl, and Changes.
@@ -137,7 +145,7 @@ And the Mytest.xs file should look something like this:
 	#ifdef __cplusplus
 	}
 	#endif
-	
+
 	PROTOTYPES: DISABLE
 
 	MODULE = Mytest		PACKAGE = Mytest
@@ -150,7 +158,7 @@ Let's edit the .xs file by adding this to the end of the file:
 		printf("Hello, world!\n");
 
 Now we'll run "perl Makefile.PL".  This will create a real Makefile,
-which make needs.  It's output looks something like:
+which make needs.  Its output looks something like:
 
 	% perl Makefile.PL
 	Checking if your kit is complete...
@@ -177,11 +185,11 @@ example only, we'll create a special test script.  Create a file called hello
 that looks like this:
 
 	#! /opt/perl5/bin/perl
-	
-	use lib './blib';
-	
+
+	use ExtUtils::testlib;
+
 	use Mytest;
-	
+
 	Mytest::hello();
 
 Now we run the script and we should see the following output:
@@ -193,7 +201,7 @@ Now we run the script and we should see the following output:
 =head2 EXAMPLE 2
 
 Now let's add to our extension a subroutine that will take a single argument
-and return 0 if the argument is even, 1 if the argument is odd.
+and return 1 if the argument is even, 0 if the argument is odd.
 
 Add the following to the end of Mytest.xs:
 
@@ -214,20 +222,18 @@ the four lines starting at the "CODE:" line to not be indented.  However,
 for readability purposes, it is suggested that you indent them 8 spaces
 (or one normal tab stop).
 
-Now re-run make to rebuild our new shared library.
+Now rerun make to rebuild our new shared library.
 
 Now perform the same steps as before, generating a Makefile from the
 Makefile.PL file, and running make.
 
-In order to test that our extension works, we now need to look at the
+To test that our extension works, we now need to look at the
 file test.pl.  This file is set up to imitate the same kind of testing
 structure that Perl itself has.  Within the test script, you perform a
 number of tests to confirm the behavior of the extension, printing "ok"
-when the test is correct, "not ok" when it is not.
-
-Remove the line that starts with "use lib", change the print statement in
-the BEGIN block to print "1..4", and add the following code to the end of
-the file:
+when the test is correct, "not ok" when it is not.  Change the print
+statement in the BEGIN block to print "1..4", and add the following code
+to the end of the file:
 
 	print &Mytest::is_even(0) == 1 ? "ok 2" : "not ok 2", "\n";
 	print &Mytest::is_even(1) == 0 ? "ok 3" : "not ok 3", "\n";
@@ -255,7 +261,8 @@ h2xs creates a number of files in the extension directory.  The file
 Makefile.PL is a perl script which will generate a true Makefile to build
 the extension.  We'll take a closer look at it later.
 
-The files <extension>.pm and <extension>.xs contain the meat of the extension.
+The files E<lt>extensionE<gt>.pm and E<lt>extensionE<gt>.xs contain the meat
+of the extension.
 The .xs file holds the C routines that make up the extension.  The .pm file
 contains routines that tell Perl how to load your extension.
 
@@ -265,7 +272,7 @@ contain the shared library that we will build.  Once we have tested it, we
 can install it into its final location.
 
 Invoking the test script via "make test" did something very important.  It
-invoked perl with all those -I arguments so that it could find the various
+invoked perl with all those C<-I> arguments so that it could find the various
 files that are part of the extension.
 
 It is I<very> important that while you are still testing extensions that
@@ -367,9 +374,9 @@ you change the value of constants!
 =head2 WHAT'S NEW HERE?
 
 Two things are new here.  First, we've made some changes to Makefile.PL.
-In this case, we've specified an extra library to link in, in this case the
-math library, libm.  We'll talk later about how to write XSUBs that can call
-every routine in a library.
+In this case, we've specified an extra library to link in, the math library
+libm.  We'll talk later about how to write XSUBs that can call every routine
+in a library.
 
 Second, the value of the function is being passed back not as the function's
 return value, but through the same variable that was passed into the function.
@@ -439,14 +446,14 @@ section on the argument stack.
 =head2 WARNING
 
 In general, it's not a good idea to write extensions that modify their input
-parameters, as in Example 3.  However, in order to better accomodate calling
+parameters, as in Example 3.  However, to accommodate better calling
 pre-existing C routines, which often do modify their input parameters,
-this behavior is tolerated.
+this behavior is tolerated.  The next example will show how to do this.
 
 =head2 EXAMPLE 4
 
-In this example, we'll now begin to write XSUB's that will interact with
-pre-defined C libraries.  To begin with, we will build a small library of
+In this example, we'll now begin to write XSUBs that will interact with
+predefined C libraries.  To begin with, we will build a small library of
 our own, then let h2xs write our .pm and .xs files for us.
 
 Create a new directory called Mytest2 at the same level as the directory
@@ -468,7 +475,7 @@ Also create a file mylib.c that looks like this:
 
 	#include <stdlib.h>
 	#include "./mylib.h"
-	
+
 	double
 	foo(a, b, c)
 	int		a;
@@ -483,12 +490,13 @@ And finally create a file Makefile.PL that looks like this:
 	use ExtUtils::MakeMaker;
 	$Verbose = 1;
 	WriteMakefile(
-	    'NAME' => 'Mytest2::mylib',
-	    'clean'     => {'FILES' => 'libmylib.a'},
+	    NAME      => 'Mytest2::mylib',
+	    SKIP      => [qw(all static static_lib dynamic dynamic_lib)],
+	    clean     => {'FILES' => 'libmylib$(LIB_EXT)'},
 	);
 
 
-	sub MY::postamble {
+	sub MY::top_targets {
 		'
 	all :: static
 
@@ -504,7 +512,7 @@ And finally create a file Makefile.PL that looks like this:
 We will now create the main top-level Mytest2 files.  Change to the directory
 above Mytest2 and run the following command:
 
-	% h2xs -O -n Mytest2 < ./Mytest2/mylib/mylib.h
+	% h2xs -O -n Mytest2 ./Mytest2/mylib/mylib.h
 
 This will print out a warning about overwriting Mytest2, but that's okay.
 Our files are stored in Mytest2/mylib, and will be untouched.
@@ -521,12 +529,13 @@ and a new replacement subroutine too:
 	sub MY::postamble {
 	'
 	$(MYEXTLIB): mylib/Makefile
-		cd mylib && $(MAKE)
+		cd mylib && $(MAKE) $(PASTHRU)
 	';
 	}
 
 (Note: Most makes will require that there be a tab character that indents
-the line "cd mylib && $(MAKE)".)
+the line C<cd mylib && $(MAKE) $(PASTHRU)>, similarly for the Makefile in the
+subdirectory.)
 
 Let's also fix the MANIFEST file so that it accurately reflects the contents
 of our extension.  The single line that says "mylib" should be replaced by
@@ -537,8 +546,9 @@ the following three lines:
 	mylib/mylib.h
 
 To keep our namespace nice and unpolluted, edit the .pm file and change
-the line setting @EXPORT to @EXPORT_OK.  And finally, in the .xs file,
-edit the #include line to read:
+the lines setting @EXPORT to @EXPORT_OK (there are two: one in the line
+beginning "use vars" and one setting the array itself).  Finally, in the
+.xs file, edit the #include line to read:
 
 	#include "mylib/mylib.h"
 
@@ -569,16 +579,18 @@ and add the following lines to the end of the script:
 	print &Mytest2::foo(1, 2, "0.0") == 7 ? "ok 3\n" : "not ok 3\n";
 	print abs(&Mytest2::foo(0, 0, "-3.4") - 0.6) <= 0.01 ? "ok 4\n" : "not ok 4\n";
 
-(When dealing with floating-point comparisons, it is often useful to not check
+(When dealing with floating-point comparisons, it is often useful not to check
 for equality, but rather the difference being below a certain epsilon factor,
 0.01 in this case)
 
 Run "make test" and all should be well.
 
-=head 2 WHAT HAS HAPPENED HERE?
+=head2 WHAT HAS HAPPENED HERE?
 
 Unlike previous examples, we've now run h2xs on a real include file.  This
 has caused some extra goodies to appear in both the .pm and .xs files.
+
+=over 4
 
 =item *
 
@@ -597,20 +609,25 @@ C<constant> routine.
 
 The .pm file has exported the name TESTVAL in the @EXPORT array.  This
 could lead to name clashes.  A good rule of thumb is that if the #define
-is only going to be used by the C routines themselves, and not by the user,
+is going to be used by only the C routines themselves, and not by the user,
 they should be removed from the @EXPORT array.  Alternately, if you don't
 mind using the "fully qualified name" of a variable, you could remove most
 or all of the items in the @EXPORT array.
 
+=item *
+
+If our include file contained #include directives, these would not be
+processed at all by h2xs.  There is no good solution to this right now.
+
 =back
 
 We've also told Perl about the library that we built in the mylib
-subdirectory.  That required only the addition of the MYEXTLIB variable
+subdirectory.  That required the addition of only the MYEXTLIB variable
 to the WriteMakefile call and the replacement of the postamble subroutine
 to cd into the subdirectory and run make.  The Makefile.PL for the
 library is a bit more complicated, but not excessively so.  Again we
 replaced the postamble subroutine to insert our own code.  This code
-simply specified that the library to be created here was a static
+specified simply that the library to be created here was a static
 archive (as opposed to a dynamically loadable library) and provided the
 commands to build it.
 
@@ -670,7 +687,7 @@ usually 0.  The "ST" is actually a macro that points to the n'th argument
 on the argument stack.  ST(0) is thus the first argument passed to the
 XSUB, ST(1) is the second argument, and so on.
 
-When you list the arguments to the XSUB in the .xs file, that tell xsubpp
+When you list the arguments to the XSUB in the .xs file, that tells xsubpp
 which argument corresponds to which of the argument stack (i.e., the first
 one listed is the first argument, and so on).  You invite disaster if you
 do not list them in the same order as the function expects them.
@@ -681,14 +698,14 @@ Sometimes you might want to provide some extra methods or subroutines
 to assist in making the interface between Perl and your extension simpler
 or easier to understand.  These routines should live in the .pm file.
 Whether they are automatically loaded when the extension itself is loaded
-or only loaded when called depends on where in the .pm file the subroutine
+or loaded only when called depends on where in the .pm file the subroutine
 definition is placed.
 
 =head2 DOCUMENTING YOUR EXTENSION
 
 There is absolutely no excuse for not documenting your extension.
 Documentation belongs in the .pm file.  This file will be fed to pod2man,
-and the embedded documentation will be converted to the man page format,
+and the embedded documentation will be converted to the manpage format,
 then placed in the blib directory.  It will be copied to Perl's man
 page directory when the extension is installed.
 
@@ -701,7 +718,7 @@ See L<perlpod> for more information about the pod format.
 =head2 INSTALLING YOUR EXTENSION
 
 Once your extension is complete and passes all its tests, installing it
-is quite simple: you simply run "make install".  You will either need 
+is quite simple: you simply run "make install".  You will either need
 to have write permission into the directories where Perl is installed,
 or ask your system administrator to run the make for you.
 
@@ -712,11 +729,11 @@ and L<perlpod>.
 
 =head2 Author
 
-Jeff Okamoto <okamoto@corp.hp.com>
+Jeff Okamoto <F<okamoto@corp.hp.com>>
 
 Reviewed and assisted by Dean Roehrich, Ilya Zakharevich, Andreas Koenig,
 and Tim Bunce.
 
 =head2 Last Changed
 
-1996/2/9
+1996/7/10

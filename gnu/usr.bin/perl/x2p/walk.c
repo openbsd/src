@@ -1,6 +1,6 @@
 /* $RCSfile: walk.c,v $$Revision: 4.1 $$Date: 92/08/07 18:29:31 $
  *
- *    Copyright (c) 1991, Larry Wall
+ *    Copyright (c) 1991-1997, Larry Wall
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -145,7 +145,7 @@ int minprec;			/* minimum precedence without parens */
 	    if (saw_FNR)
 		str_cat(str,"continue {\n    $FNRbase = $. if eof;\n}\n");
 	}
-	else
+	else if (old_awk)
 	    str_cat(str,"while (<>) { }		# (no line actions)\n");
 	if (ops[node+4].ival) {
 	    realexit = TRUE;

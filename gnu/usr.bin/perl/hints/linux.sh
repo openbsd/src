@@ -15,6 +15,9 @@
 # Updated Fri Jun 21 11:07:54 EDT 1996
 # NDBM support for ELF renabled by <kjahds@kjahds.com>
 
+# No version of Linux supports setuid scripts.
+d_suidsafe='undef'
+
 # perl goes into the /usr tree.  See the Filesystem Standard
 # available via anonymous FTP at tsx-11.mit.edu in
 # /pub/linux/docs/linux-standards/fsstnd.
@@ -25,6 +28,14 @@ esac
 
 # gcc-2.6.3 defines _G_HAVE_BOOL to 1, but doesn't actually supply bool.
 ccflags="-Dbool=char -DHAS_BOOL $ccflags"
+
+# libc6, aka glibc2, seems to need STRUCT_TM_HASZONE defined.
+# Thanks to Bart Schuller <schuller@Lunatech.com>
+# See Message-ID: <19971009002636.50729@tanglefoot>
+# This is currently commented out for maintenance releases
+# but should probably be uncommented for 5.005 or after
+# more widespread testing.
+#POSIX_cflags='ccflags="$ccflags -DSTRUCT_TM_HASZONE"'
 
 # BSD compatability library no longer needed
 set `echo X "$libswanted "| sed -e 's/ bsd / /'`
@@ -134,8 +145,8 @@ fi
 rm -f try.c a.out
 
 if /bin/bash -c exit; then
-  echo
-  echo You appear to have a working bash. Good.
+  echo ''
+  echo 'You appear to have a working bash.  Good.'
 else
   cat << 'EOM' >&4
 
@@ -148,16 +159,46 @@ EOM
 
 fi
 
-# Avoid some troublesome gcvt() functions.  With some libc versions, 
-# perl -e '$x=1e5; print "$x\n";' prints 1e+5.  We'd like it
-# to print 100000 instead, consistent with the integer value given
-# on other platforms.  This isn't a bug in gcvt, really; more in our
-# expectations for it.  We'd like it to behave exactly as
-# sprintf %.16g, but it isn't documented to do that.
-#
-# We'll use sprintf() instead, since we can control the output more
-# precisely.
+# On SPARClinux,
+# The following csh consistently coredumped in the test directory
+# "/home/mikedlr/perl5.003_94/t", though not most other directories.
+
+#Name        : csh                    Distribution: Red Hat Linux (Rembrandt)
+#Version     : 5.2.6                        Vendor: Red Hat Software
+#Release     : 3                        Build Date: Fri May 24 19:42:14 1996
+#Install date: Thu Jul 11 16:20:14 1996 Build Host: itchy.redhat.com
+#Group       : Shells                   Source RPM: csh-5.2.6-3.src.rpm
+#Size        : 184417
+#Description : BSD c-shell
+
+# For this reason I suggest using the much bug-fixed tcsh for globbing
+# where available.
+
+if [  ! "`csh -c 'echo $version' 2>/dev/null`"  ] 
+then
+    echo 'Real csh found (might break); looking for tcsh ...'
+    # Use ../UU/loc to find tcsh.  (We run in the hints/ directory.)
+    if xxx=`../UU/loc tcsh blurfl $pth`; $test -f "$xxx"; then
+	echo "Found tcsh.  I'll use it for globbing."
+	# We can't change Configure's setting of $csh, due to the way
+	# Configure handles $d_portable and commands found in $loclist.
+	# We can set the value for CSH in config.h by setting full_csh.
+	full_csh=$xxx
+    else
+	echo "Couldn't find tcsh.  BEWARE:  GLOBBING MIGHT BE BROKEN."
+    fi
+else
+    echo 'Your csh is really tcsh.  Good.'
+fi
+
+# Shimpei Yamashita <shimpei@socrates.patnet.caltech.edu>
+# Message-Id: <33EF1634.B36B6500@pobox.com>
 # 
-# The next version of Configure will check for this automatically.
-d_Gconvert='sprintf((b),"%.*g",(n),(x))'
+# MkLinux (osname=linux,archname=ppc-linux), which differs slightly from other
+# linuces, needs special flags passed in order for dynamic loading to work.
+# instead of the recommended:
+# ccdlflags='-rdynamic'
+# 
+# it should be:
+# ccdlflags='-Wl,-E'
 

@@ -10,6 +10,6 @@ do
       rm -f $i/3b1cc
       ln ../hints/3b1cc $i
 done
-echo "\nIf you want to use the 3b1 shared libraries, complete this script then"
-echo "read the header in 3b1cc.           [Type carriage return to continue]\c"
+echo "\nIf you want to use the 3b1 shared libraries, complete this script then" >&4
+echo "read the header in 3b1cc.           [Type carriage return to continue]\c" >&4
 read vch

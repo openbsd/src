@@ -8,14 +8,14 @@ use File::Basename qw(&basename &dirname);
 # have to mention them as if they were shell variables, not
 # %Config entries.  Thus you write
 #  $startperl
+#  $man3ext
 # to ensure Configure will look for $Config{startperl}.
 
 # This forces PL files to create target in same directory as PL file.
 # This is so that make depend always knows where to find PL derivatives.
-chdir(dirname($0));
-($file = basename($0)) =~ s/\.PL$//;
-$file =~ s/\.pl$//
-	if ($^O eq 'VMS' or $^O eq 'os2');  # "case-forgiving"
+chdir dirname($0);
+$file = basename($0, '.PL');
+$file .= '.com' if $^O eq 'VMS';
 
 open OUT,">$file" or die "Can't create $file: $!";
 
@@ -25,14 +25,16 @@ print "Extracting $file (with variable substitutions)\n";
 # You can use $Config{...} to use Configure variables.
 
 print OUT <<"!GROK!THIS!";
-$Config{'startperl'}
+$Config{startperl}
+    eval 'exec $Config{perlpath} -S \$0 \${1+"\$@"}'
+	if \$running_under_some_shell;
+
+\$DEF_PM_SECTION = '$Config{man3ext}' || '3';
 !GROK!THIS!
 
 # In the following, perl variables are not expanded during extraction.
 
 print OUT <<'!NO!SUBS!';
-eval 'exec perl -S $0 "$@"'
-    if 0;
 
 =head1 NAME
 
@@ -47,6 +49,7 @@ B<pod2man>
 [ B<--date=>I<string> ]
 [ B<--fixed=>I<font> ]
 [ B<--official> ]
+[ B<--lax> ]
 I<inputfile>
 
 =head1 DESCRIPTION
@@ -105,6 +108,10 @@ miscellaneous information, and 8 for administrator commands.  This works
 best if you put your Perl man pages in a separate tree, like
 F</usr/local/perl/man/>.  By default, section 1 will be used
 unless the file ends in F<.pm> in which case section 3 will be selected.
+
+=item lax
+
+Don't complain when required sections aren't present.
 
 =back
 
@@ -198,7 +205,7 @@ Who wrote it (or AUTHORS if multiple).
 =item HISTORY
 
 Programs derived from other sources sometimes have this, or
-you might keep a modification long here.
+you might keep a modification log here.
 
 =back
 
@@ -225,12 +232,6 @@ as bold, italic, or code.
 
 (F) The input file wasn't available for the given reason.
 
-=item high bit char in input stream
-
-(W) You can't use high-bit characters in the input stream,
-because the translator uses them for its own nefarious purposes.
-Use an HTML entity in angle brackets instead.
-
 =item Improper man page - no dash in NAME header in paragraph %d of %s
 
 (W) The NAME header did not have an isolated dash in it.  This is
@@ -254,7 +255,7 @@ not having a NAME is a fatal.
 =item Unknown escape: %s in %s
 
 (W) An unknown HTML entity (probably for an 8-bit character) was given via
-a C<E<lt>E<gt>> directive.  Besides amp, lt, gt, and quot, recognized
+a C<EE<lt>E<gt>> directive.  Besides amp, lt, gt, and quot, recognized
 entities are Aacute, aacute, Acirc, acirc, AElig, aelig, Agrave, agrave,
 Aring, aring, Atilde, atilde, Auml, auml, Ccedil, ccedil, Eacute, eacute,
 Ecirc, ecirc, Egrave, egrave, ETH, eth, Euml, euml, Iacute, iacute, Icirc,
@@ -279,7 +280,7 @@ C<=head1>, C<=head2>, C<=item>, C<=over>, C<=back>, or C<=cut>.
 
 If you would like to print out a lot of man page continuously, you
 probably want to set the C and D registers to set contiguous page
-numbering and even/odd paging, at least one some versions of man(7).
+numbering and even/odd paging, at least on some versions of man(7).
 Settting the F register will get you some additional experimental
 indexing:
 
@@ -292,8 +293,7 @@ directives.
 
 =head1 RESTRICTIONS
 
-You shouldn't use 8-bit characters in the input stream, as these
-will be used by the translator.
+None at this time.
 
 =head1 BUGS
 
@@ -310,8 +310,17 @@ Tom Christiansen such that Larry probably doesn't recognize it anymore.
 
 $/ = "";
 $cutting = 1;
+@Indices = ();
 
-($version,$patch) = `\PATH=.:..:\$PATH; perl -v` =~ /version (\d\.\d{3}(?: +)(?:\S+)?)(?:.*patchlevel (\d\S*))?/s;
+# We try first to get the version number from a local binary, in case we're
+# running an installed version of Perl to produce documentation from an
+# uninstalled newer version's pod files.
+if ($^O ne 'plan9') {
+  ($version,$patch) =
+    `\PATH=.:..:\$PATH; perl -v` =~ /version (\d\.\d{3})(?:_(\d{2}))?/;
+}
+# No luck; we'll just go with the running Perl's version
+($version,$patch) = $] =~ /^(.{5})(\d{2})?/ unless $version;
 $DEF_RELEASE  = "perl $version";
 $DEF_RELEASE .= ", patch $patch" if $patch;
 
@@ -329,6 +338,7 @@ $DEF_SECTION = 1;
 $DEF_CENTER = "User Contributed Perl Documentation";
 $STD_CENTER = "Perl Programmers Reference Guide";
 $DEF_FIXED = 'CW';
+$DEF_LAX = 0;
 
 sub usage {
     warn "$0: @_\n" if @_;
@@ -341,6 +351,7 @@ Options are:
 	--date=string         (default "$DEF_DATE")
 	--fixed=font	      (default "$DEF_FIXED")
 	--official	      (default NOT)
+	--lax                 (default NOT)
 EOF
 }
 
@@ -351,6 +362,7 @@ $uok = GetOptions( qw(
 	date=s
 	fixed=s
 	official
+	lax
 	help));
 
 $DEF_DATE = makedate((stat($ARGV[0]))[9] || time());
@@ -359,9 +371,11 @@ usage("Usage error!") unless $uok;
 usage() if $opt_help;
 usage("Need one and only one podpage argument") unless @ARGV == 1;
 
-$section = $opt_section || ($ARGV[0] =~ /\.pm$/ ? 3 : $DEF_SECTION);
+$section = $opt_section || ($ARGV[0] =~ /\.pm$/
+				? $DEF_PM_SECTION : $DEF_SECTION);
 $RP = $opt_release || $DEF_RELEASE;
 $center = $opt_center || ($opt_official ? $STD_CENTER : $DEF_CENTER);
+$lax = $opt_lax || $DEF_LAX;
 
 $CFont = $opt_fixed || $DEF_FIXED;
 
@@ -375,7 +389,6 @@ else {
     die "roff font should be 1 or 2 chars, not `$CFont_embed'";
 }
 
-$section = $opt_section || $DEF_SECTION;
 $date = $opt_date || $DEF_DATE;
 
 for (qw{NAME DESCRIPTION}) {
@@ -387,8 +400,27 @@ $wanna_see{SYNOPSIS}++ if $section =~ /^3/;
 
 $name = @ARGV ? $ARGV[0] : "<STDIN>";
 $Filename = $name;
-$name = uc($name) if $section =~ /^1/;
-$name =~ s/\.[^.]*$//;
+if ($section =~ /^1/) {
+    require File::Basename;
+    $name = uc File::Basename::basename($name);
+}
+$name =~ s/\.(pod|p[lm])$//i;
+
+# Lose everything up to the first of
+#     */lib/*perl*	standard or site_perl module
+#     */*perl*/lib	from -D prefix=/opt/perl
+#     */*perl*/		random module hierarchy
+# which works.
+$name =~ s-//+-/-g;
+if ($name =~ s-^.*?/lib/[^/]*perl[^/]*/--i
+	or $name =~ s-^.*?/[^/]*perl[^/]*/lib/--i
+	or $name =~ s-^.*?/[^/]*perl[^/]*/--i) {
+    # Lose ^arch/version/.
+    $name =~ s-^[^/]+/\d+\.\d+/--;
+}
+
+# Translate Getopt/Long to Getopt::Long, etc.
+$name =~ s(/)(::)g;
 
 if ($name ne 'something') {
     FCHECK: {
@@ -400,14 +432,23 @@ if ($name ne 'something') {
 		unless (/\s*-+\s+/) {
 		    $oops++;
 		    warn "$0: Improper man page - no dash in NAME header in paragraph $. of $ARGV[0]\n"
+                } else {
+		    my @n = split /\s+-+\s+/;
+		    if (@n != 2) {
+			$oops++;
+			warn "$0: Improper man page - malformed NAME header in paragraph $. of $ARGV[0]\n"
+		    }
+		    else {
+			%namedesc = @n;
+		    }
 		}
-		%namedesc = split /\s+-\s+/;
 		last FCHECK;
 	    }
 	    next if /^=cut\b/;	# DB_File and Net::Ping have =cut before NAME
-	    die "$0: Invalid man page - 1st pod line is not NAME in $ARGV[0]\n";
+	    next if /^=pod\b/;  # It is OK to have =pod before NAME
+	    die "$0: Invalid man page - 1st pod line is not NAME in $ARGV[0]\n" unless $lax;
 	}
-	die "$0: Invalid man page - no documentation in $ARGV[0]\n";
+	die "$0: Invalid man page - no documentation in $ARGV[0]\n" unless $lax;
     }
     close F;
 }
@@ -460,16 +501,36 @@ print <<"END";
 .if (\\n(.H=4u)&(1m=20u) .ds -- \\(*W\\h'-12u'\\(*W\\h'-8u'-\\" diablo 12 pitch
 .ds L" ""
 .ds R" ""
+'''   \\*(M", \\*(S", \\*(N" and \\*(T" are the equivalent of
+'''   \\*(L" and \\*(R", except that they are used on ".xx" lines,
+'''   such as .IP and .SH, which do another additional levels of
+'''   double-quote interpretation
+.ds M" """
+.ds S" """
+.ds N" """""
+.ds T" """""
 .ds L' '
 .ds R' '
+.ds M' '
+.ds S' '
+.ds N' '
+.ds T' '
 'br\\}
 .el\\{\\
 .ds -- \\(em\\|
 .tr \\*(Tr
 .ds L" ``
 .ds R" ''
+.ds M" ``
+.ds S" ''
+.ds N" ``
+.ds T" ''
 .ds L' `
 .ds R' '
+.ds M' `
+.ds S' '
+.ds N' `
+.ds T' '
 .ds PI \\(*p
 'br\\}
 END
@@ -495,13 +556,14 @@ END
 
 print <<"END";
 .TH $name $section "$RP" "$date" "$center"
-.IX Title "$name $section"
 .UC
 END
 
+push(@Indices, qq{.IX Title "$name $section"});
+
 while (($name, $desc) = each %namedesc) {
     for ($name, $desc) { s/^\s+//; s/\s+$//; }
-    print qq(.IX Name "$name - $desc"\n);
+    push(@Indices, qq(.IX Name "$name - $desc"\n));
 }
 
 print <<'END';
@@ -603,10 +665,21 @@ END
 
 $indent = 0;
 
+$begun = "";
+
 while (<>) {
     if ($cutting) {
 	next unless /^=/;
 	$cutting = 0;
+    }
+    if ($begun) {
+	if (/^=end\s+$begun/) {
+            $begun = "";
+	}
+	elsif ($begun =~ /^(roff|man)$/) {
+	    print STDOUT $_;
+        }
+	next;
     }
     chomp;
 
@@ -632,6 +705,22 @@ while (<>) {
 
     $verbatim = 0;
 
+    if (/^=for\s+(\S+)\s*/s) {
+	if ($1 eq "man" or $1 eq "roff") {
+	    print STDOUT $',"\n\n";
+	} else {
+	    # ignore unknown for
+	}
+	next;
+    }
+    elsif (/^=begin\s+(\S+)\s*/s) {
+	$begun = $1;
+	if ($1 eq "man" or $1 eq "roff") {
+	    print STDOUT $'."\n\n";
+	}
+	next;
+    }
+
     # check for things that'll hosed our noremap scheme; affects $_
     init_noremap();
 
@@ -639,6 +728,10 @@ while (<>) {
 
 	# trofficate backslashes; must do it before what happens below
 	s/\\/noremap('\\e')/ge;
+
+	# protect leading periods and quotes against *roff
+	# mistaking them for directives
+	s/^(?:[A-Z]<)?[.']/\\&$&/gm;
 
 	# first hide the escapes in case we need to
 	# intuit something and get it wrong due to fmting
@@ -653,18 +746,16 @@ while (<>) {
 	    )
 	} {I<$1>}gx;
 
-	# func(n) is a reference to a man page
+	# func(n) is a reference to a perl function or a man page
 	s{
-	    (\w+)
+	    ([:\w]+)
 	    (
-		\(
-		    [^\s,\051]+
-		\)
+		\( [^\051]+ \)
 	    )
 	} {I<$1>\\|$2}gx;
 
 	# convert simple variable references
-	s/(\s+)([\$\@%][\w:]+)/${1}C<$2>/g;
+	s/(\s+)([\$\@%][\w:]+)(?!\()/${1}C<$2>/g;
 
 	if (m{ (
 		    [\-\w]+
@@ -754,7 +845,7 @@ while (<>) {
 		    ?  "the section on I<$2> in the I<$1> manpage"
 		    :  "the section on I<$2>"
 	    }
-	}gex;
+	}gesx; # s in case it goes over multiple lines, so . matches \n
 
 	s/Z<>/\\&/g;
 
@@ -769,8 +860,19 @@ while (<>) {
 
 	($Cmd, $_) = split(' ', $_, 2);
 
+	$dotlevel = 1;
+	if ($Cmd eq 'head1') {
+	   $dotlevel = 1;
+	}
+	elsif ($Cmd eq 'head2') {
+	   $dotlevel = 1;
+	}
+	elsif ($Cmd eq 'item') {
+	   $dotlevel = 2;
+	}
+
 	if (defined $_) {
-	    &escapes;
+	    &escapes($dotlevel);
 	    s/"/""/g;
 	}
 
@@ -783,11 +885,11 @@ while (<>) {
 	    s/\s+$//;
 	    delete $wanna_see{$_} if exists $wanna_see{$_};
 	    print qq{.SH "$_"\n};
-	    print qq{.IX Header "$_"\n};
+      push(@Indices, qq{.IX Header "$_"\n});
 	}
 	elsif ($Cmd eq 'head2') {
 	    print qq{.Sh "$_"\n};
-	    print qq{.IX Subsection "$_"\n};
+      push(@Indices, qq{.IX Subsection "$_"\n});
 	}
 	elsif ($Cmd eq 'over') {
 	    push(@indent,$indent);
@@ -800,8 +902,13 @@ while (<>) {
 	}
 	elsif ($Cmd eq 'item') {
 	    s/^\*( |$)/\\(bu$1/g;
+	    # if you know how to get ":s please do
+	    s/\\\*\(L"([^"]+?)\\\*\(R"/'$1'/g;
+	    s/\\\*\(L"([^"]+?)""/'$1'/g;
+	    s/[^"]""([^"]+?)""[^"]/'$1'/g;
+	    # here do something about the $" in perlvar?
 	    print STDOUT qq{.Ip "$_" $indent\n};
-	    print qq{.IX Item "$_"\n};
+      push(@Indices, qq{.IX Item "$_"\n});
 	}
 	elsif ($Cmd eq 'pod') {
 	    # this is just a comment
@@ -814,7 +921,7 @@ while (<>) {
 	if ($needspace) {
 	    &makespace;
 	}
-	&escapes;
+	&escapes(0);
 	clear_noremap(1);
 	print $_, "\n";
 	$needspace = 1;
@@ -826,13 +933,15 @@ print <<"END";
 .rn }` ''
 END
 
-if (%wanna_see) {
+if (%wanna_see && !$lax) {
     @missing = keys %wanna_see;
     warn "$0: $Filename is missing required section"
 	.  (@missing > 1 && "s")
 	.  ": @missing\n";
     $oops++;
 }
+
+foreach (@Indices) { print "$_\n"; }
 
 exit;
 #exit ($oops != 0);
@@ -846,6 +955,7 @@ sub nobreak {
 }
 
 sub escapes {
+    my $indot = shift;
 
     s/X<(.*?)>/mkindex($1)/ge;
 
@@ -858,9 +968,19 @@ sub escapes {
     s/([^"])--"/$1\\*(--"/g;
 
     # fix up quotes; this is somewhat tricky
+    my $dotmacroL = 'L';
+    my $dotmacroR = 'R';
+    if ( $indot == 1 ) {
+	$dotmacroL = 'M';
+	$dotmacroR = 'S';
+    }  
+    elsif ( $indot >= 2 ) {
+	$dotmacroL = 'N';
+	$dotmacroR = 'T';
+    }  
     if (!/""/) {
-	s/(^|\s)(['"])/noremap("$1\\*(L$2")/ge;
-	s/(['"])($|[\-\s,;\\!?.])/noremap("\\*(R$1$2")/ge;
+	s/(^|\s)(['"])/noremap("$1\\*($dotmacroL$2")/ge;
+	s/(['"])($|[\-\s,;\\!?.])/noremap("\\*($dotmacroR$1$2")/ge;
     }
 
     #s/(?!")(?:.)--(?!")(?:.)/\\*(--/g;
@@ -910,13 +1030,7 @@ sub escapes {
 # make troff just be normal, but make small nroff get quoted
 # decided to just put the quotes in the text; sigh;
 sub ccvt {
-     local($_,$prev) = @_;
-     if ( /^\W+$/ && !/^\$./ ) {
- 	($prev && "\n") . noremap(qq{.CQ $_ \n\\&});
- 	# what about $" ?
-     } else {
- 	noremap(qq{${CFont_embed}$_\\fR});
-     }
+    local($_,$prev) = @_;
     noremap(qq{.CQ "$_" \n\\&});
 }
 
@@ -932,7 +1046,7 @@ sub makespace {
 sub mkindex {
     my ($entry) = @_;
     my @entries = split m:\s*/\s*:, $entry;
-    print ".IX Xref ";
+    push @Indices, ".IX Xref " . join ' ', map {qq("$_")} @entries;
     for $entry (@entries) {
 	print qq("$entry" );
     }
@@ -952,9 +1066,8 @@ sub noremap {
 }
 
 sub init_noremap {
-    if ( /[\200-\377]/ ) {
-	warn "$0: high bit char in input stream in paragraph $. of $ARGV\n";
-    }
+	# escape high bit characters in input stream
+	s/([\200-\377])/"E<".ord($1).">"/ge;
 }
 
 sub clear_noremap {
@@ -969,13 +1082,19 @@ sub clear_noremap {
     # otherwise the interative \w<> processing would have
     # been hosed by the E<gt>
     s {
-	    E<	
-	    ( [A-Za-z]+ )	
+	    E<
+	    (
+	        ( \d + ) 
+	        | ( [A-Za-z]+ )	
+	    )
 	    >	
     } {
-	 do {	
-	     exists $HTML_Escapes{$1}
-		? do { $HTML_Escapes{$1} }
+	 do {
+	     defined $2
+		? chr($2)
+		:	
+	     exists $HTML_Escapes{$3}
+		? do { $HTML_Escapes{$3} }
 		: do {
 		    warn "$0: Unknown escape in paragraph $. of $ARGV: ``$&''\n";
 		    "E<$1>";
@@ -986,6 +1105,7 @@ sub clear_noremap {
 
 sub internal_lrefs {
     local($_) = shift;
+    local $trailing_and = s/and\s+$// ? "and " : "";
 
     s{L</([^>]+)>}{$1}g;
     my(@items) = split( /(?:,?\s+(?:and\s+)?)/ );
@@ -998,7 +1118,8 @@ sub internal_lrefs {
     }
 
     $retstr .= " entr" . ( @items > 1  ? "ies" : "y" )
-	    .  " elsewhere in this document";
+	    .  " elsewhere in this document "; # terminal space to avoid words running together (pattern used strips terminal spaces)
+    $retstr .=  $trailing_and;
 
     return $retstr;
 

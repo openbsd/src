@@ -1,7 +1,7 @@
 .\" $Id: sdbm.3,v 1.2 90/12/13 13:00:57 oz Exp $
 .TH SDBM 3 "1 March 1990"
 .SH NAME
-sdbm, dbm_open, dbm_prep, dbm_close, dbm_fetch, dbm_store, dbm_delete, dbm_firstkey, dbm_nextkey, dbm_hash, dbm_rdonly, dbm_error, dbm_clearerr, dbm_dirfno, dbm_pagfno \- data base subroutines
+sdbm, sdbm_open, sdbm_prep, sdbm_close, sdbm_fetch, sdbm_store, sdbm_delete, sdbm_firstkey, sdbm_nextkey, sdbm_hash, sdbm_rdonly, sdbm_error, sdbm_clearerr, sdbm_dirfno, sdbm_pagfno \- data base subroutines
 .SH SYNOPSIS
 .nf
 .ft B
@@ -14,60 +14,60 @@ typedef struct {
 .sp
 datum nullitem = { NULL, 0 };
 .sp
-\s-1DBM\s0 *dbm_open(char *file, int flags, int mode)
+\s-1DBM\s0 *sdbm_open(char *file, int flags, int mode)
 .sp
-\s-1DBM\s0 *dbm_prep(char *dirname, char *pagname, int flags, int mode)
+\s-1DBM\s0 *sdbm_prep(char *dirname, char *pagname, int flags, int mode)
 .sp
-void dbm_close(\s-1DBM\s0 *db)
+void sdbm_close(\s-1DBM\s0 *db)
 .sp
-datum dbm_fetch(\s-1DBM\s0 *db, key)
+datum sdbm_fetch(\s-1DBM\s0 *db, key)
 .sp
-int dbm_store(\s-1DBM\s0 *db, datum key, datum val, int flags)
+int sdbm_store(\s-1DBM\s0 *db, datum key, datum val, int flags)
 .sp
-int dbm_delete(\s-1DBM\s0 *db, datum key)
+int sdbm_delete(\s-1DBM\s0 *db, datum key)
 .sp
-datum dbm_firstkey(\s-1DBM\s0 *db)
+datum sdbm_firstkey(\s-1DBM\s0 *db)
 .sp
-datum dbm_nextkey(\s-1DBM\s0 *db)
+datum sdbm_nextkey(\s-1DBM\s0 *db)
 .sp
-long dbm_hash(char *string, int len)
+long sdbm_hash(char *string, int len)
 .sp
-int dbm_rdonly(\s-1DBM\s0 *db)
-int dbm_error(\s-1DBM\s0 *db)
-dbm_clearerr(\s-1DBM\s0 *db)
-int dbm_dirfno(\s-1DBM\s0 *db)
-int dbm_pagfno(\s-1DBM\s0 *db)
+int sdbm_rdonly(\s-1DBM\s0 *db)
+int sdbm_error(\s-1DBM\s0 *db)
+sdbm_clearerr(\s-1DBM\s0 *db)
+int sdbm_dirfno(\s-1DBM\s0 *db)
+int sdbm_pagfno(\s-1DBM\s0 *db)
 .ft R
 .fi
 .SH DESCRIPTION
 .IX "database library" sdbm "" "\fLsdbm\fR"
-.IX dbm_open "" "\fLdbm_open\fR \(em open \fLsdbm\fR database"
-.IX dbm_prep "" "\fLdbm_prep\fR \(em prepare \fLsdbm\fR database"
-.IX dbm_close "" "\fLdbm_close\fR \(em close \fLsdbm\fR routine"
-.IX dbm_fetch "" "\fLdbm_fetch\fR \(em fetch \fLsdbm\fR database data"
-.IX dbm_store "" "\fLdbm_store\fR \(em add data to \fLsdbm\fR database"
-.IX dbm_delete "" "\fLdbm_delete\fR \(em remove data from \fLsdbm\fR database"
-.IX dbm_firstkey "" "\fLdbm_firstkey\fR \(em access \fLsdbm\fR database"
-.IX dbm_nextkey "" "\fLdbm_nextkey\fR \(em access \fLsdbm\fR database"
-.IX dbm_hash "" "\fLdbm_hash\fR \(em string hash for \fLsdbm\fR database"
-.IX dbm_rdonly "" "\fLdbm_rdonly\fR \(em return \fLsdbm\fR database read-only mode"
-.IX dbm_error "" "\fLdbm_error\fR \(em return \fLsdbm\fR database error condition"
-.IX dbm_clearerr "" "\fLdbm_clearerr\fR \(em clear \fLsdbm\fR database error condition"
-.IX dbm_dirfno "" "\fLdbm_dirfno\fR \(em return \fLsdbm\fR database bitmap file descriptor"
-.IX dbm_pagfno "" "\fLdbm_pagfno\fR \(em return \fLsdbm\fR database data file descriptor"
-.IX "database functions \(em \fLsdbm\fR"  dbm_open  ""  \fLdbm_open\fP
-.IX "database functions \(em \fLsdbm\fR"  dbm_prep  ""  \fLdbm_prep\fP
-.IX "database functions \(em \fLsdbm\fR"  dbm_close  ""  \fLdbm_close\fP
-.IX "database functions \(em \fLsdbm\fR"  dbm_fetch  ""  \fLdbm_fetch\fP
-.IX "database functions \(em \fLsdbm\fR"  dbm_store  ""  \fLdbm_store\fP
-.IX "database functions \(em \fLsdbm\fR"  dbm_delete  ""  \fLdbm_delete\fP
-.IX "database functions \(em \fLsdbm\fR"  dbm_firstkey  ""  \fLdbm_firstkey\fP
-.IX "database functions \(em \fLsdbm\fR"  dbm_nextkey  ""  \fLdbm_nextkey\fP
-.IX "database functions \(em \fLsdbm\fR"  dbm_rdonly  ""  \fLdbm_rdonly\fP
-.IX "database functions \(em \fLsdbm\fR"  dbm_error  ""  \fLdbm_error\fP
-.IX "database functions \(em \fLsdbm\fR"  dbm_clearerr  ""  \fLdbm_clearerr\fP
-.IX "database functions \(em \fLsdbm\fR"  dbm_dirfno  ""  \fLdbm_dirfno\fP
-.IX "database functions \(em \fLsdbm\fR"  dbm_pagfno  ""  \fLdbm_pagfno\fP
+.IX sdbm_open "" "\fLsdbm_open\fR \(em open \fLsdbm\fR database"
+.IX sdbm_prep "" "\fLsdbm_prep\fR \(em prepare \fLsdbm\fR database"
+.IX sdbm_close "" "\fLsdbm_close\fR \(em close \fLsdbm\fR routine"
+.IX sdbm_fetch "" "\fLsdbm_fetch\fR \(em fetch \fLsdbm\fR database data"
+.IX sdbm_store "" "\fLsdbm_store\fR \(em add data to \fLsdbm\fR database"
+.IX sdbm_delete "" "\fLsdbm_delete\fR \(em remove data from \fLsdbm\fR database"
+.IX sdbm_firstkey "" "\fLsdbm_firstkey\fR \(em access \fLsdbm\fR database"
+.IX sdbm_nextkey "" "\fLsdbm_nextkey\fR \(em access \fLsdbm\fR database"
+.IX sdbm_hash "" "\fLsdbm_hash\fR \(em string hash for \fLsdbm\fR database"
+.IX sdbm_rdonly "" "\fLsdbm_rdonly\fR \(em return \fLsdbm\fR database read-only mode"
+.IX sdbm_error "" "\fLsdbm_error\fR \(em return \fLsdbm\fR database error condition"
+.IX sdbm_clearerr "" "\fLsdbm_clearerr\fR \(em clear \fLsdbm\fR database error condition"
+.IX sdbm_dirfno "" "\fLsdbm_dirfno\fR \(em return \fLsdbm\fR database bitmap file descriptor"
+.IX sdbm_pagfno "" "\fLsdbm_pagfno\fR \(em return \fLsdbm\fR database data file descriptor"
+.IX "database functions \(em \fLsdbm\fR"  sdbm_open  ""  \fLsdbm_open\fP
+.IX "database functions \(em \fLsdbm\fR"  sdbm_prep  ""  \fLsdbm_prep\fP
+.IX "database functions \(em \fLsdbm\fR"  sdbm_close  ""  \fLsdbm_close\fP
+.IX "database functions \(em \fLsdbm\fR"  sdbm_fetch  ""  \fLsdbm_fetch\fP
+.IX "database functions \(em \fLsdbm\fR"  sdbm_store  ""  \fLsdbm_store\fP
+.IX "database functions \(em \fLsdbm\fR"  sdbm_delete  ""  \fLsdbm_delete\fP
+.IX "database functions \(em \fLsdbm\fR"  sdbm_firstkey  ""  \fLsdbm_firstkey\fP
+.IX "database functions \(em \fLsdbm\fR"  sdbm_nextkey  ""  \fLsdbm_nextkey\fP
+.IX "database functions \(em \fLsdbm\fR"  sdbm_rdonly  ""  \fLsdbm_rdonly\fP
+.IX "database functions \(em \fLsdbm\fR"  sdbm_error  ""  \fLsdbm_error\fP
+.IX "database functions \(em \fLsdbm\fR"  sdbm_clearerr  ""  \fLsdbm_clearerr\fP
+.IX "database functions \(em \fLsdbm\fR"  sdbm_dirfno  ""  \fLsdbm_dirfno\fP
+.IX "database functions \(em \fLsdbm\fR"  sdbm_pagfno  ""  \fLsdbm_pagfno\fP
 .LP
 This package allows an application to maintain a mapping of <key,value> pairs
 in disk files.  This is not to be considered a real database system, but is
@@ -124,15 +124,15 @@ a
 .BR "DBM *" ,
 to identify the database to be manipulated.  Such a handle can be obtained
 from the only routines that do not require it, namely
-.BR dbm_open (\|)
+.BR sdbm_open (\|)
 or
-.BR dbm_prep (\|).
+.BR sdbm_prep (\|).
 Either of these will open or create the two necessary files.  The
 difference is that the latter allows explicitly naming the bitmap and data
 files whereas
-.BR dbm_open (\|)
+.BR sdbm_open (\|)
 will take a base file name and call
-.BR dbm_prep (\|)
+.BR sdbm_prep (\|)
 with the default extensions.
 The
 .I flags
@@ -142,18 +142,18 @@ parameters are the same as for
 .BR open (2).
 .LP
 To free the resources occupied while a database handle is active, call
-.BR dbm_close (\|).
+.BR sdbm_close (\|).
 .LP
 Given a handle, one can retrieve data associated with a key by using the
-.BR dbm_fetch (\|)
+.BR sdbm_fetch (\|)
 routine, and associate data with a key by using the
-.BR dbm_store (\|)
+.BR sdbm_store (\|)
 routine.
 .LP
 The values of the
 .I flags
 parameter for
-.BR dbm_store (\|)
+.BR sdbm_store (\|)
 can be either
 .BR \s-1DBM_INSERT\s0 ,
 which will not change an existing entry with the same key, or
@@ -162,14 +162,14 @@ which will replace an existing entry with the same key.
 Keys are unique within the database.
 .LP
 To delete a key and its associated value use the
-.BR dbm_delete (\|)
+.BR sdbm_delete (\|)
 routine.
 .LP
 To retrieve every key in the database, use a loop like:
 .sp
 .nf
 .ft B
-for (key = dbm_firstkey(db); key.dptr != NULL; key = dbm_nextkey(db))
+for (key = sdbm_firstkey(db); key.dptr != NULL; key = sdbm_nextkey(db))
         ;
 .ft R
 .fi
@@ -180,27 +180,27 @@ If you determine that the performance of the database is inadequate or
 you notice clustering or other effects that may be due to the hashing
 algorithm used by this package, you can override it by supplying your
 own
-.BR dbm_hash (\|)
+.BR sdbm_hash (\|)
 routine.  Doing so will make the database unintelligable to any other
 applications that do not use your specialized hash function.
 .sp
 .LP
 The following macros are defined in the header file:
 .IP
-.BR dbm_rdonly (\|)
+.BR sdbm_rdonly (\|)
 returns true if the database has been opened read\-only.
 .IP
-.BR dbm_error (\|)
+.BR sdbm_error (\|)
 returns true if an I/O error has occurred.
 .IP
-.BR dbm_clearerr (\|)
+.BR sdbm_clearerr (\|)
 allows you to clear the error flag if you think you know what the error
 was and insist on ignoring it.
 .IP
-.BR dbm_dirfno (\|)
+.BR sdbm_dirfno (\|)
 returns the file descriptor associated with the bitmap file.
 .IP
-.BR dbm_pagfno (\|)
+.BR sdbm_pagfno (\|)
 returns the file descriptor associated with the data file.
 .SH SEE ALSO
 .IR open (2).
@@ -220,7 +220,7 @@ will return
 to indicate an error.
 .LP
 As a special case of
-.BR dbm_store (\|),
+.BR sdbm_store (\|),
 if it is called with the
 .B \s-1DBM_INSERT\s0
 flag and the key already exists in the database, the return value will be 1.
@@ -281,10 +281,10 @@ header file should be installed in
 The
 .B nullitem
 data item, and the
-.BR dbm_prep (\|),
-.BR dbm_hash (\|),
-.BR dbm_rdonly (\|),
-.BR dbm_dirfno (\|),
+.BR sdbm_prep (\|),
+.BR sdbm_hash (\|),
+.BR sdbm_rdonly (\|),
+.BR sdbm_dirfno (\|),
 and
-.BR dbm_pagfno (\|)
+.BR sdbm_pagfno (\|)
 functions are unique to this package.

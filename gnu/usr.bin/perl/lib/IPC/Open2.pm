@@ -1,7 +1,14 @@
 package IPC::Open2;
+
+use strict;
+use vars qw($VERSION @ISA @EXPORT);
+
 require 5.000;
 require Exporter;
-use Carp;
+
+$VERSION	= 1.01;
+@ISA		= qw(Exporter);
+@EXPORT		= qw(open2);
 
 =head1 NAME
 
@@ -20,7 +27,16 @@ The open2() function spawns the given $cmd and connects $rdr for
 reading and $wtr for writing.  It's what you think should work 
 when you try
 
-    open(HANDLE, "|cmd args");
+    open(HANDLE, "|cmd args|");
+
+The write filehandle will have autoflush turned on.
+
+If $rdr is a string (that is, a bareword filehandle rather than a glob
+or a reference) and it begins with ">&", then the child will send output
+directly to that file handle.  If $wtr is a string that begins with
+"<&", then WTR will be closed in the parent, and the child will read
+from it directly.  In both cases, there will be a dup(2) instead of a
+pipe(2) made.
 
 open2() returns the process ID of the child process.  It doesn't return on
 failure: it just raises an exception matching C</^open2:/>.
@@ -38,18 +54,16 @@ a time.  Programs like B<sort> that read their entire input stream first,
 however, are quite apt to cause deadlock.  
 
 The big problem with this approach is that if you don't have control 
-over source code being run in the the child process, you can't control what it does 
-with pipe buffering.  Thus you can't just open a pipe to C<cat -v> and continually
-read and write a line from it.
+over source code being run in the child process, you can't control
+what it does with pipe buffering.  Thus you can't just open a pipe to
+C<cat -v> and continually read and write a line from it.
 
 =head1 SEE ALSO
 
-See L<open3> for an alternative that handles STDERR as well.
+See L<IPC::Open3> for an alternative that handles STDERR as well.  This
+function is really just a wrapper around open3().
 
 =cut
-
-@ISA = qw(Exporter);
-@EXPORT = qw(open2);
 
 # &open2: tom christiansen, <tchrist@convex.com>
 #
@@ -67,41 +81,15 @@ See L<open3> for an alternative that handles STDERR as well.
 # 
 # abort program if
 #	rdr or wtr are null
-# 	pipe or fork or exec fails
+# 	a system call fails
 
-$fh = 'FHOPEN000';  # package static in case called more than once
+require IPC::Open3;
 
 sub open2 {
-    local($kidpid);
-    local($dad_rdr, $dad_wtr, @cmd) = @_;
-
-    $dad_rdr ne '' 		|| croak "open2: rdr should not be null";
-    $dad_wtr ne '' 		|| croak "open2: wtr should not be null";
-
-    # force unqualified filehandles into callers' package
-    local($package) = caller;
-    $dad_rdr =~ s/^[^']+$/$package'$&/ unless ref $dad_rdr;
-    $dad_wtr =~ s/^[^']+$/$package'$&/ unless ref $dad_wtr;
-
-    local($kid_rdr) = ++$fh;
-    local($kid_wtr) = ++$fh;
-
-    pipe($dad_rdr, $kid_wtr) 	|| croak "open2: pipe 1 failed: $!";
-    pipe($kid_rdr, $dad_wtr) 	|| croak "open2: pipe 2 failed: $!";
-
-    if (($kidpid = fork) < 0) {
-	croak "open2: fork failed: $!";
-    } elsif ($kidpid == 0) {
-	close $dad_rdr; close $dad_wtr;
-	open(STDIN,  "<&$kid_rdr");
-	open(STDOUT, ">&$kid_wtr");
-	warn "execing @cmd\n" if $debug;
-	exec @cmd
-	    or croak "open2: exec of @cmd failed";   
-    } 
-    close $kid_rdr; close $kid_wtr;
-    select((select($dad_wtr), $| = 1)[0]); # unbuffer pipe
-    $kidpid;
+    my ($read, $write, @cmd) = @_;
+    local $Carp::CarpLevel = $Carp::CarpLevel + 1;
+    return IPC::Open3::_open3('open2', scalar caller,
+				$write, $read, '>&STDERR', @cmd);
 }
-1; # so require is happy
 
+1

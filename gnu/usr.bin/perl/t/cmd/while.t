@@ -90,6 +90,7 @@ loop: while (<fh>) {
 if (!eof || $bad) {print "not ok 8\n";} else {print "ok 8\n";}
 if (!$badcont) {print "ok 9\n";} else {print "not ok 9\n";}
 
+close(fh) || die "Can't close Cmd_while.tmp.";
 unlink 'Cmd_while.tmp' || `/bin/rm Cmd_While.tmp`;
 
 #$x = 0;

@@ -1,0 +1,22 @@
+README.qnx
+
+Please see hints/qnx.sh for more detailed information about compiling
+perl under QNX4.
+
+The files in the "qnx" directory are:
+
+ * "qnx/ar" is a script that emulates the standard unix archive (aka
+   library) utility.  Under Watcom 10.6, ar is linked to wlib and
+   provides the expected interface. With Watcom 9.5, a cover function
+   is required. This one is fairly crude but has proved adequate for
+   compiling perl.  A more thorough version is available at:
+
+	http://www.fdma.com/pub/qnx/porting/ar
+
+ * "qnx/cpp" is a script that provides C preprocessing functionality.
+   Configure can generate a similar cover, but it doesn't handle all
+   the command-line options that perl throws at it. This might be
+   reasonably placed in /usr/local/bin.
+
+--
+Norton T. Allen (allen@huarp.harvard.edu)

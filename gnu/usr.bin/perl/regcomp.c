@@ -43,7 +43,7 @@
  *
  ****    Alterations to Henry's code are...
  ****
- ****    Copyright (c) 1991-1994, Larry Wall
+ ****    Copyright (c) 1991-1997, Larry Wall
  ****
  ****    You may distribute under the terms of either the GNU General Public
  ****    License or the Artistic License, as specified in the README file.
@@ -107,8 +107,9 @@ static char *regnode _((char));
 static char *regpiece _((I32 *));
 static void reginsert _((char, char *));
 static void regoptail _((char *, char *));
-static void regset _((char *, I32, I32));
+static void regset _((char *, I32));
 static void regtail _((char *, char *));
+static char* regwhite _((char *, char *));
 static char* nextchar _((void));
 
 /*
@@ -132,7 +133,6 @@ char* exp;
 char* xend;
 PMOP* pm;
 {
-    I32 fold = pm->op_pmflags & PMf_FOLD;
     register regexp *r;
     register char *scan;
     register SV *longish;
@@ -146,17 +146,25 @@ PMOP* pm;
     I32 minlen = 0;
     I32 sawplus = 0;
     I32 sawopen = 0;
+#define MAX_REPEAT_DEPTH 12
+    struct {
+	char *opcode;
+	I32 count;
+    } repeat_stack[MAX_REPEAT_DEPTH];
+    I32 repeat_depth = 0;
+    I32 repeat_count = 1;	/* We start unmultiplied. */
 
     if (exp == NULL)
 	croak("NULL regexp argument");
 
-    /* First pass: determine size, legality. */
+    regprecomp = savepvn(exp, xend - exp);
     regflags = pm->op_pmflags;
+    regsawback = 0;
+
+    /* First pass: determine size, legality. */
     regparse = exp;
     regxend = xend;
-    regprecomp = savepvn(exp,xend-exp);
     regnaughty = 0;
-    regsawback = 0;
     regnpar = 1;
     regsize = 0L;
     regcode = &regdummy;
@@ -171,17 +179,18 @@ PMOP* pm;
     if (regsize >= 32767L)		/* Probably could be 65535L. */
 	FAIL("regexp too big");
 
-    /* Allocate space. */
+    /* Allocate space and initialize. */
     Newc(1001, r, sizeof(regexp) + (unsigned)regsize, char, regexp);
     if (r == NULL)
 	FAIL("regexp out of space");
-
-    /* Second pass: emit code. */
-    r->prelen = xend-exp;
+    r->prelen = xend - exp;
     r->precomp = regprecomp;
     r->subbeg = r->subbase = NULL;
-    regnaughty = 0;
+
+    /* Second pass: emit code. */
     regparse = exp;
+    regxend = xend;
+    regnaughty = 0;
     regnpar = 1;
     regcode = r->program;
     regc((char)MAGIC);
@@ -190,7 +199,6 @@ PMOP* pm;
 
     /* Dig out information for optimizations. */
     pm->op_pmflags = regflags;
-    fold = pm->op_pmflags & PMf_FOLD;
     r->regstart = Nullsv;	/* Worst-case defaults. */
     r->reganch = 0;
     r->regmust = Nullsv;
@@ -216,36 +224,41 @@ PMOP* pm;
 
 	/* Starting-point info. */
       again:
-	if (OP(first) == EXACTLY) {
+	if (OP(first) == EXACT) {
 	    r->regstart = newSVpv(OPERAND(first)+1,*OPERAND(first));
-	    if (SvCUR(r->regstart) > !(sawstudy|fold))
-		fbm_compile(r->regstart,fold);
-	    else
-		sv_upgrade(r->regstart, SVt_PVBM);
+	    if (SvCUR(r->regstart) > !sawstudy)
+		fbm_compile(r->regstart);
+	    (void)SvUPGRADE(r->regstart, SVt_PVBM);
 	}
 	else if (strchr(simple+2,OP(first)))
 	    r->regstclass = first;
-	else if (OP(first) == BOUND || OP(first) == NBOUND)
+	else if (regkind[(U8)OP(first)] == BOUND ||
+		 regkind[(U8)OP(first)] == NBOUND)
 	    r->regstclass = first;
 	else if (regkind[(U8)OP(first)] == BOL) {
-	    r->reganch = ROPT_ANCH;
+	    r->reganch |= ROPT_ANCH_BOL;
 	    first = NEXTOPER(first);
-	  	goto again;
+	    goto again;
+	}
+	else if (OP(first) == GPOS) {
+	    r->reganch |= ROPT_ANCH_GPOS;
+	    first = NEXTOPER(first);
+	    goto again;
 	}
 	else if ((OP(first) == STAR &&
 	    regkind[(U8)OP(NEXTOPER(first))] == ANY) &&
 	    !(r->reganch & ROPT_ANCH) )
 	{
 	    /* turn .* into ^.* with an implied $*=1 */
-	    r->reganch = ROPT_ANCH | ROPT_IMPLICIT;
+	    r->reganch |= ROPT_ANCH_BOL | ROPT_IMPLICIT;
 	    first = NEXTOPER(first);
-	  	goto again;
+	    goto again;
 	}
 	if (sawplus && (!sawopen || !regsawback))
 	    r->reganch |= ROPT_SKIP;	/* x+ must match 1st of run */
 
-	DEBUG_r(fprintf(stderr,"first %d next %d offset %d\n",
-	   OP(first), OP(NEXTOPER(first)), first - scan));
+	DEBUG_r(PerlIO_printf(Perl_debug_log, "first %d next %d offset %ld\n",
+	   OP(first), OP(NEXTOPER(first)), (long)(first - scan)));
 	/*
 	* If there's something expensive in the r.e., find the
 	* longest literal string that must appear and make it the
@@ -280,13 +293,13 @@ PMOP* pm;
 		scan = regnext(scan);
 		continue;
 	    }
-	    if (OP(scan) == EXACTLY) {
+	    if (OP(scan) == EXACT) {
 		char *t;
 
 		first = scan;
-		while (OP(t = regnext(scan)) == CLOSE)
+		while ((t = regnext(scan)) && OP(t) == CLOSE)
 		    scan = t;
-		minlen += *OPERAND(first);
+		minlen += *OPERAND(first) * repeat_count;
 		if (curback - backish == len) {
 		    sv_catpvn(longish, OPERAND(first)+1,
 			*OPERAND(first));
@@ -305,22 +318,42 @@ PMOP* pm;
 		    curback += *OPERAND(first);
 	    }
 	    else if (strchr(varies,OP(scan))) {
-		curback = -30000;
-		len = 0;
-		if (SvCUR(longish) > SvCUR(longest)) {
-		    sv_setsv(longest,longish);
-		    backest = backish;
+		int tcount;
+		char *next;
+
+		if (repeat_depth < MAX_REPEAT_DEPTH
+		    && ((OP(scan) == PLUS
+			 && (tcount = 1)
+			 && (next = NEXTOPER(scan)))
+			|| (regkind[(U8)OP(scan)] == CURLY
+			    && (tcount = ARG1(scan))
+			    && (next = NEXTOPER(scan)+4))))
+		{
+		    /* We treat (abc)+ as (abc)(abc)*. */
+
+		    /* Mark the place to return back. */
+		    repeat_stack[repeat_depth].opcode = regnext(scan);
+		    repeat_stack[repeat_depth].count = repeat_count;
+		    repeat_depth++;
+		    repeat_count *= tcount;
+
+		    /* Go deeper: */
+		    scan = next;
+		    continue;
 		}
-		sv_setpvn(longish,"",0);
-		if (OP(scan) == PLUS && strchr(simple,OP(NEXTOPER(scan))))
-		    minlen++;
-		else if (regkind[(U8)OP(scan)] == CURLY &&
-		  strchr(simple,OP(NEXTOPER(scan)+4)))
-		    minlen += ARG1(scan);
+		else {
+		    curback = -30000;
+		    len = 0;
+		    if (SvCUR(longish) > SvCUR(longest)) {
+			sv_setsv(longest,longish);
+			backest = backish;
+		    }
+		    sv_setpvn(longish,"",0);
+		}
 	    }
 	    else if (strchr(simple,OP(scan))) {
 		curback++;
-		minlen++;
+		minlen += repeat_count;
 		len = 0;
 		if (SvCUR(longish) > SvCUR(longest)) {
 		    sv_setsv(longest,longish);
@@ -329,12 +362,26 @@ PMOP* pm;
 		sv_setpvn(longish,"",0);
 	    }
 	    scan = regnext(scan);
+	    if (!scan) {		/* Go up PLUS or CURLY. */
+		if (!repeat_depth--)
+		    croak("panic: re scan");
+		scan = repeat_stack[repeat_depth].opcode;
+		repeat_count = repeat_stack[repeat_depth].count;
+		/* Need to submit the longest string found: */
+		curback = -30000;
+		len = 0;
+		if (SvCUR(longish) > SvCUR(longest)) {
+		    sv_setsv(longest,longish);
+		    backest = backish;
+		}
+		sv_setpvn(longish,"",0);
+	    }
 	}
 
 	/* Prefer earlier on tie, unless we can tail match latter */
 
-	if (SvCUR(longish) + (regkind[(U8)OP(first)] == EOL) >
-		SvCUR(longest))
+	if (SvCUR(longish) + (first && regkind[(U8)OP(first)] == EOL)
+		> SvCUR(longest))
 	{
 	    sv_setsv(longest,longish);
 	    backest = backish;
@@ -342,26 +389,22 @@ PMOP* pm;
 	else
 	    sv_setpvn(longish,"",0);
 	if (SvCUR(longest)
-	    &&
-	    (!r->regstart
-	     ||
-	     !fbm_instr((unsigned char*) SvPVX(r->regstart),
-		  (unsigned char *) SvPVX(r->regstart)
-		    + SvCUR(r->regstart),
-		  longest)
-	    )
-	   )
+	    && (!r->regstart
+		|| !fbm_instr((unsigned char*) SvPVX(r->regstart),
+			      (unsigned char *) (SvPVX(r->regstart)
+						 + SvCUR(r->regstart)),
+			      longest)))
 	{
 	    r->regmust = longest;
 	    if (backest < 0)
 		backest = -1;
 	    r->regback = backest;
-	    if (SvCUR(longest) > !(sawstudy || fold ||
-			regkind[(U8)OP(first)]==EOL))
-		fbm_compile(r->regmust,fold);
+	    if (SvCUR(longest) > !(sawstudy || 
+				   (first && regkind[(U8)OP(first)] == EOL)))
+		fbm_compile(r->regmust);
 	    (void)SvUPGRADE(r->regmust, SVt_PVBM);
 	    BmUSEFUL(r->regmust) = 100;
-	    if (regkind[(U8)OP(first)] == EOL && SvCUR(longish))
+	    if (first && regkind[(U8)OP(first)] == EOL && SvCUR(longish))
 		SvTAIL_on(r->regmust);
 	}
 	else {
@@ -371,7 +414,6 @@ PMOP* pm;
 	SvREFCNT_dec(longish);
     }
 
-    r->do_folding = fold;
     r->nparens = regnpar - 1;
     r->minlen = minlen;
     Newz(1002, r->startp, regnpar, char*);
@@ -415,7 +457,7 @@ I32 *flagp;
 		break;
 	    case '$':
 	    case '@':
-		croak("Sequence (?%c...) not implemented", paren);
+		croak("Sequence (?%c...) not implemented", (int)paren);
 		break;
 	    case '#':
 		while (*regparse && *regparse != ')')
@@ -425,9 +467,12 @@ I32 *flagp;
 		nextchar();
 		*flagp = TRYAGAIN;
 		return NULL;
+            case 0:
+                croak("Sequence (? incomplete");
+                break;
 	    default:
 		--regparse;
-		while (*regparse && strchr("iogmsx", *regparse))
+		while (*regparse && strchr("iogcmsx", *regparse))
 		    pmflag(&regflags, *regparse++);
 		if (*regparse != ')')
 		    croak("Sequence (?%c...) not recognized", *regparse);
@@ -655,6 +700,10 @@ I32 *flagp;
 	*flagp = flags;
 	return(ret);
     }
+
+    if (!(flags&HASWIDTH) && op != '?')
+      FAIL("regexp *+ operand could be empty"); /* else may core dump */
+
     nextchar();
 
     *flagp = (op != '+') ? (WORST|SPSTART) : (WORST|HASWIDTH);
@@ -770,10 +819,16 @@ tryagain:
 	croak("internal urp in regexp at /%s/", regparse);
 				/* Supposed to be caught earlier. */
 	break;
+    case '{':
+	if (!regcurly(regparse)) {
+	    regparse++;
+	    goto defchar;
+	}
+	/* FALL THROUGH */
     case '?':
     case '+':
     case '*':
-	FAIL("?+* follows nothing in regexp");
+	FAIL("?+*{} follows nothing in regexp");
 	break;
     case '\\':
 	switch (*++regparse) {
@@ -783,7 +838,7 @@ tryagain:
 	    nextchar();
 	    break;
 	case 'G':
-	    ret = regnode(GBOL);
+	    ret = regnode(GPOS);
 	    *flagp |= SIMPLE;
 	    nextchar();
 	    break;
@@ -793,32 +848,32 @@ tryagain:
 	    nextchar();
 	    break;
 	case 'w':
-	    ret = regnode(ALNUM);
+	    ret = regnode((regflags & PMf_LOCALE) ? ALNUML : ALNUM);
 	    *flagp |= HASWIDTH|SIMPLE;
 	    nextchar();
 	    break;
 	case 'W':
-	    ret = regnode(NALNUM);
+	    ret = regnode((regflags & PMf_LOCALE) ? NALNUML : NALNUM);
 	    *flagp |= HASWIDTH|SIMPLE;
 	    nextchar();
 	    break;
 	case 'b':
-	    ret = regnode(BOUND);
+	    ret = regnode((regflags & PMf_LOCALE) ? BOUNDL : BOUND);
 	    *flagp |= SIMPLE;
 	    nextchar();
 	    break;
 	case 'B':
-	    ret = regnode(NBOUND);
+	    ret = regnode((regflags & PMf_LOCALE) ? NBOUNDL : NBOUND);
 	    *flagp |= SIMPLE;
 	    nextchar();
 	    break;
 	case 's':
-	    ret = regnode(SPACE);
+	    ret = regnode((regflags & PMf_LOCALE) ? SPACEL : SPACE);
 	    *flagp |= HASWIDTH|SIMPLE;
 	    nextchar();
 	    break;
 	case 'S':
-	    ret = regnode(NSPACE);
+	    ret = regnode((regflags & PMf_LOCALE) ? NSPACEL : NSPACE);
 	    *flagp |= HASWIDTH|SIMPLE;
 	    nextchar();
 	    break;
@@ -851,7 +906,9 @@ tryagain:
 		    goto defchar;
 		else {
 		    regsawback = 1;
-		    ret = reganode(REF, num);
+		    ret = reganode((regflags & PMf_FOLD)
+				   ? ((regflags & PMf_LOCALE) ? REFFL : REFF)
+				   : REF, num);
 		    *flagp |= HASWIDTH;
 		    while (isDIGIT(*regparse))
 			regparse++;
@@ -887,13 +944,18 @@ tryagain:
 	    regparse++;
 
 	defchar:
-	    ret = regnode(EXACTLY);
+	    ret = regnode((regflags & PMf_FOLD)
+			  ? ((regflags & PMf_LOCALE) ? EXACTFL : EXACTF)
+			  : EXACT);
 	    regc(0);		/* save spot for len */
 	    for (len = 0, p = regparse - 1;
 	      len < 127 && p < regxend;
 	      len++)
 	    {
 		oldp = p;
+
+		if (regflags & PMf_EXTENDED)
+		    p = regwhite(p, regxend);
 		switch (*p) {
 		case '^':
 		case '$':
@@ -948,10 +1010,8 @@ tryagain:
 			break;
 		    case 'c':
 			p++;
-			ender = *p++;
-			if (isLOWER(ender))
-			    ender = toUPPER(ender);
-			ender ^= 64;
+			ender = UCHARAT(p++);
+			ender = toCTRL(ender);
 			break;
 		    case '0': case '1': case '2': case '3':case '4':
 		    case '5': case '6': case '7': case '8':case '9':
@@ -974,24 +1034,12 @@ tryagain:
 			break;
 		    }
 		    break;
-		case '#':
-		    if (regflags & PMf_EXTENDED) {
-			while (p < regxend && *p != '\n') p++;
-		    }
-		    /* FALL THROUGH */
-		case ' ': case '\t': case '\n': case '\r': case '\f': case '\v':
-		    if (regflags & PMf_EXTENDED) {
-			p++;
-			len--;
-			continue;
-		    }
-		    /* FALL THROUGH */
 		default:
 		    ender = *p++;
 		    break;
 		}
-		if (regflags & PMf_FOLD && isUPPER(ender))
-		    ender = toLOWER(ender);
+		if (regflags & PMf_EXTENDED)
+		    p = regwhite(p, regxend);
 		if (ISMULT2(p)) { /* Back off on ?+*. */
 		    if (len)
 			p = oldp;
@@ -1022,25 +1070,40 @@ tryagain:
     return(ret);
 }
 
+static char *
+regwhite(p, e)
+char *p;
+char *e;
+{
+    while (p < e) {
+	if (isSPACE(*p))
+	    ++p;
+	else if (*p == '#') {
+	    do {
+		p++;
+	    } while (p < e && *p != '\n');
+	}
+	else
+	    break;
+    }
+    return p;
+}
+
 static void
-regset(bits,def,c)
-char *bits;
-I32 def;
+regset(opnd, c)
+char *opnd;
 register I32 c;
 {
-    if (regcode == &regdummy)
-      return;
-    c &= 255;
-    if (def)
-	bits[c >> 3] &= ~(1 << (c & 7));
-    else
-	bits[c >> 3] |=  (1 << (c & 7));
+    if (opnd == &regdummy)
+	return;
+    c &= 0xFF;
+    opnd[1 + (c >> 3)] |= (1 << (c & 7));
 }
 
 static char *
 regclass()
 {
-    register char *bits;
+    register char *opnd;
     register I32 class;
     register I32 lastclass = 1234;
     register I32 range = 0;
@@ -1049,16 +1112,21 @@ regclass()
     I32 numlen;
 
     ret = regnode(ANYOF);
+    opnd = regcode;
+    for (class = 0; class < 33; class++)
+	regc(0);
     if (*regparse == '^') {	/* Complement of range. */
 	regnaughty++;
 	regparse++;
-	def = 0;
-    } else {
-	def = 255;
+	if (opnd != &regdummy)
+	    *opnd |= ANYOF_INVERT;
     }
-    bits = regcode;
-    for (class = 0; class < 32; class++)
-      regc(def);
+    if (opnd != &regdummy) {
+	if (regflags & PMf_FOLD)
+	    *opnd |= ANYOF_FOLD;
+	if (regflags & PMf_LOCALE)
+	    *opnd |= ANYOF_LOCALE;
+    }
     if (*regparse == ']' || *regparse == '-')
 	goto skipcond;		/* allow 1st char to be ] or - */
     while (regparse < regxend && *regparse != ']') {
@@ -1068,39 +1136,63 @@ regclass()
 	    class = UCHARAT(regparse++);
 	    switch (class) {
 	    case 'w':
-		for (class = 0; class < 256; class++)
-		  if (isALNUM(class))
-		    regset(bits,def,class);
+		if (regflags & PMf_LOCALE) {
+		    if (opnd != &regdummy)
+			*opnd |= ANYOF_ALNUML;
+		}
+		else {
+		    for (class = 0; class < 256; class++)
+			if (isALNUM(class))
+			    regset(opnd, class);
+		}
 		lastclass = 1234;
 		continue;
 	    case 'W':
-		for (class = 0; class < 256; class++)
-		  if (!isALNUM(class))
-		    regset(bits,def,class);
+		if (regflags & PMf_LOCALE) {
+		    if (opnd != &regdummy)
+			*opnd |= ANYOF_NALNUML;
+		}
+		else {
+		    for (class = 0; class < 256; class++)
+			if (!isALNUM(class))
+			    regset(opnd, class);
+		}
 		lastclass = 1234;
 		continue;
 	    case 's':
-		for (class = 0; class < 256; class++)
-		  if (isSPACE(class))
-		    regset(bits,def,class);
+		if (regflags & PMf_LOCALE) {
+		    if (opnd != &regdummy)
+			*opnd |= ANYOF_SPACEL;
+		}
+		else {
+		    for (class = 0; class < 256; class++)
+			if (isSPACE(class))
+			    regset(opnd, class);
+		}
 		lastclass = 1234;
 		continue;
 	    case 'S':
-		for (class = 0; class < 256; class++)
-		  if (!isSPACE(class))
-		    regset(bits,def,class);
+		if (regflags & PMf_LOCALE) {
+		    if (opnd != &regdummy)
+			*opnd |= ANYOF_NSPACEL;
+		}
+		else {
+		    for (class = 0; class < 256; class++)
+			if (!isSPACE(class))
+			    regset(opnd, class);
+		}
 		lastclass = 1234;
 		continue;
 	    case 'd':
 		for (class = '0'; class <= '9'; class++)
-		    regset(bits,def,class);
+		    regset(opnd, class);
 		lastclass = 1234;
 		continue;
 	    case 'D':
 		for (class = 0; class < '0'; class++)
-		    regset(bits,def,class);
+		    regset(opnd, class);
 		for (class = '9' + 1; class < 256; class++)
-		    regset(bits,def,class);
+		    regset(opnd, class);
 		lastclass = 1234;
 		continue;
 	    case 'n':
@@ -1129,10 +1221,8 @@ regclass()
 		regparse += numlen;
 		break;
 	    case 'c':
-		class = *regparse++;
-		if (isLOWER(class))
-		  class = toUPPER(class);
-		class ^= 64;
+		class = UCHARAT(regparse++);
+		class = toCTRL(class);
 		break;
 	    case '0': case '1': case '2': case '3': case '4':
 	    case '5': case '6': case '7': case '8': case '9':
@@ -1155,11 +1245,8 @@ regclass()
 		continue;	/* do it next time */
 	    }
 	}
-	for ( ; lastclass <= class; lastclass++) {
-	    regset(bits,def,lastclass);
-	    if (regflags & PMf_FOLD && isUPPER(lastclass))
-		regset(bits,def,toLOWER(lastclass));
-	}
+	for ( ; lastclass <= class; lastclass++)
+	    regset(opnd, lastclass);
 	lastclass = class;
     }
     if (*regparse != ']')
@@ -1432,16 +1519,16 @@ register char *s;
 #ifdef DEBUGGING
 
 /*
- - regdump - dump a regexp onto stderr in vaguely comprehensible form
+ - regdump - dump a regexp onto Perl_debug_log in vaguely comprehensible form
  */
 void
 regdump(r)
 regexp *r;
 {
     register char *s;
-    register char op = EXACTLY;	/* Arbitrary non-END op. */
+    register char op = EXACT;	/* Arbitrary non-END op. */
     register char *next;
-
+    SV *sv = sv_newmortal();
 
     s = r->program + 1;
     while (op != END) {	/* While that wasn't END last time... */
@@ -1450,61 +1537,71 @@ regexp *r;
 	    s++;
 #endif
 	op = OP(s);
-	fprintf(stderr,"%2d%s", s-r->program, regprop(s));	/* Where, what. */
+	/* where, what */
+	regprop(sv, s);
+	PerlIO_printf(Perl_debug_log, "%2ld%s", (long)(s - r->program), SvPVX(sv));
 	next = regnext(s);
 	s += regarglen[(U8)op];
 	if (next == NULL)		/* Next ptr. */
-	    fprintf(stderr,"(0)");
+	    PerlIO_printf(Perl_debug_log, "(0)");
 	else 
-	    fprintf(stderr,"(%d)", (s-r->program)+(next-s));
+	    PerlIO_printf(Perl_debug_log, "(%ld)", (long)(s-r->program)+(next-s));
 	s += 3;
 	if (op == ANYOF) {
-	    s += 32;
+	    s += 33;
 	}
-	if (op == EXACTLY) {
+	if (regkind[(U8)op] == EXACT) {
 	    /* Literal string, where present. */
 	    s++;
-	    (void)putc(' ', stderr);
-	    (void)putc('<', stderr);
+	    (void)PerlIO_putc(Perl_debug_log, ' ');
+	    (void)PerlIO_putc(Perl_debug_log, '<');
 	    while (*s != '\0') {
-		(void)putc(*s, stderr);
+		(void)PerlIO_putc(Perl_debug_log,*s);
 		s++;
 	    }
-	    (void)putc('>', stderr);
+	    (void)PerlIO_putc(Perl_debug_log, '>');
 	    s++;
 	}
-	(void)putc('\n', stderr);
+	(void)PerlIO_putc(Perl_debug_log, '\n');
     }
 
     /* Header fields of interest. */
     if (r->regstart)
-	fprintf(stderr,"start `%s' ", SvPVX(r->regstart));
-    if (r->regstclass)
-	fprintf(stderr,"stclass `%s' ", regprop(r->regstclass));
-    if (r->reganch & ROPT_ANCH)
-	fprintf(stderr,"anchored ");
+	PerlIO_printf(Perl_debug_log, "start `%s' ", SvPVX(r->regstart));
+    if (r->regstclass) {
+	regprop(sv, r->regstclass);
+	PerlIO_printf(Perl_debug_log, "stclass `%s' ", SvPVX(sv));
+    }
+    if (r->reganch & ROPT_ANCH) {
+	PerlIO_printf(Perl_debug_log, "anchored");
+	if (r->reganch & ROPT_ANCH_BOL)
+	    PerlIO_printf(Perl_debug_log, "(BOL)");
+	if (r->reganch & ROPT_ANCH_GPOS)
+	    PerlIO_printf(Perl_debug_log, "(GPOS)");
+	PerlIO_putc(Perl_debug_log, ' ');
+    }
     if (r->reganch & ROPT_SKIP)
-	fprintf(stderr,"plus ");
+	PerlIO_printf(Perl_debug_log, "plus ");
     if (r->reganch & ROPT_IMPLICIT)
-	fprintf(stderr,"implicit ");
+	PerlIO_printf(Perl_debug_log, "implicit ");
     if (r->regmust != NULL)
-	fprintf(stderr,"must have \"%s\" back %ld ", SvPVX(r->regmust),
+	PerlIO_printf(Perl_debug_log, "must have \"%s\" back %ld ", SvPVX(r->regmust),
 	 (long) r->regback);
-    fprintf(stderr, "minlen %ld ", (long) r->minlen);
-    fprintf(stderr,"\n");
+    PerlIO_printf(Perl_debug_log, "minlen %ld ", (long) r->minlen);
+    PerlIO_printf(Perl_debug_log, "\n");
 }
 
 /*
 - regprop - printable representation of opcode
 */
-char *
-regprop(op)
+void
+regprop(sv, op)
+SV *sv;
 char *op;
 {
     register char *p = 0;
 
-    (void) strcpy(buf, ":");
-
+    sv_setpv(sv, ":");
     switch (OP(op)) {
     case BOL:
 	p = "BOL";
@@ -1536,8 +1633,14 @@ char *op;
     case BRANCH:
 	p = "BRANCH";
 	break;
-    case EXACTLY:
-	p = "EXACTLY";
+    case EXACT:
+	p = "EXACT";
+	break;
+    case EXACTF:
+	p = "EXACTF";
+	break;
+    case EXACTFL:
+	p = "EXACTFL";
 	break;
     case NOTHING:
 	p = "NOTHING";
@@ -1548,48 +1651,38 @@ char *op;
     case END:
 	p = "END";
 	break;
-    case ALNUM:
-	p = "ALNUM";
-	break;
-    case NALNUM:
-	p = "NALNUM";
-	break;
     case BOUND:
 	p = "BOUND";
+	break;
+    case BOUNDL:
+	p = "BOUNDL";
 	break;
     case NBOUND:
 	p = "NBOUND";
 	break;
-    case SPACE:
-	p = "SPACE";
-	break;
-    case NSPACE:
-	p = "NSPACE";
-	break;
-    case DIGIT:
-	p = "DIGIT";
-	break;
-    case NDIGIT:
-	p = "NDIGIT";
+    case NBOUNDL:
+	p = "NBOUNDL";
 	break;
     case CURLY:
-	(void)sprintf(buf+strlen(buf), "CURLY {%d,%d}", ARG1(op),ARG2(op));
-	p = NULL;
+	sv_catpvf(sv, "CURLY {%d,%d}", ARG1(op), ARG2(op));
 	break;
     case CURLYX:
-	(void)sprintf(buf+strlen(buf), "CURLYX {%d,%d}", ARG1(op),ARG2(op));
-	p = NULL;
+	sv_catpvf(sv, "CURLYX {%d,%d}", ARG1(op), ARG2(op));
 	break;
     case REF:
-	(void)sprintf(buf+strlen(buf), "REF%d", ARG1(op));
-	p = NULL;
+	sv_catpvf(sv, "REF%d", ARG1(op));
+	break;
+    case REFF:
+	sv_catpvf(sv, "REFF%d", ARG1(op));
+	break;
+    case REFFL:
+	sv_catpvf(sv, "REFFL%d", ARG1(op));
 	break;
     case OPEN:
-	(void)sprintf(buf+strlen(buf), "OPEN%d", ARG1(op));
-	p = NULL;
+	sv_catpvf(sv, "OPEN%d", ARG1(op));
 	break;
     case CLOSE:
-	(void)sprintf(buf+strlen(buf), "CLOSE%d", ARG1(op));
+	sv_catpvf(sv, "CLOSE%d", ARG1(op));
 	p = NULL;
 	break;
     case STAR:
@@ -1601,8 +1694,8 @@ char *op;
     case MINMOD:
 	p = "MINMOD";
 	break;
-    case GBOL:
-	p = "GBOL";
+    case GPOS:
+	p = "GPOS";
 	break;
     case UNLESSM:
 	p = "UNLESSM";
@@ -1616,12 +1709,41 @@ char *op;
     case WHILEM:
 	p = "WHILEM";
 	break;
+    case DIGIT:
+	p = "DIGIT";
+	break;
+    case NDIGIT:
+	p = "NDIGIT";
+	break;
+    case ALNUM:
+	p = "ALNUM";
+	break;
+    case NALNUM:
+	p = "NALNUM";
+	break;
+    case SPACE:
+	p = "SPACE";
+	break;
+    case NSPACE:
+	p = "NSPACE";
+	break;
+    case ALNUML:
+	p = "ALNUML";
+	break;
+    case NALNUML:
+	p = "NALNUML";
+	break;
+    case SPACEL:
+	p = "SPACEL";
+	break;
+    case NSPACEL:
+	p = "NSPACEL";
+	break;
     default:
 	FAIL("corrupted regexp opcode");
     }
-    if (p != NULL)
-	(void) strcat(buf, p);
-    return(buf);
+    if (p)
+	sv_catpv(sv, p);
 }
 #endif /* DEBUGGING */
 

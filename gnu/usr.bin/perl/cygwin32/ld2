@@ -1,0 +1,9 @@
+#!/bin/sh
+#
+# ld wrapper for building dynamic lib version of perl;
+#  passes all args to ld.
+#
+
+PERLPATH=/perl5.004
+
+$PERLPATH/perl $PERLPATH/perlld "$@"

@@ -5,20 +5,20 @@ perlform - Perl formats
 =head1 DESCRIPTION
 
 Perl has a mechanism to help you generate simple reports and charts.  To
-facilitate this, Perl helps you code up your output page 
-close to how it will look when it's printed.  It can keep
-track of things like how many lines on a page, what page you're on, when to
-print page headers, etc.  Keywords are borrowed from FORTRAN:
-format() to declare and write() to execute; see their entries in
-L<perlfunc>.  Fortunately, the layout is much more legible, more like
-BASIC's PRINT USING statement.  Think of it as a poor man's nroff(1).
+facilitate this, Perl helps you code up your output page close to how it
+will look when it's printed.  It can keep track of things like how many
+lines are on a page, what page you're on, when to print page headers,
+etc.  Keywords are borrowed from FORTRAN: format() to declare and write()
+to execute; see their entries in L<perlfunc>.  Fortunately, the layout is
+much more legible, more like BASIC's PRINT USING statement.  Think of it
+as a poor man's nroff(1).
 
-Formats, like packages and subroutines, are declared rather than executed,
-so they may occur at any point in your program.  (Usually it's best to
-keep them all together though.) They have their own namespace apart from
-all the other "types" in Perl.  This means that if you have a function
-named "Foo", it is not the same thing as having a format named "Foo".
-However, the default name for the format associated with a given
+Formats, like packages and subroutines, are declared rather than
+executed, so they may occur at any point in your program.  (Usually it's
+best to keep them all together though.) They have their own namespace
+apart from all the other "types" in Perl.  This means that if you have a
+function named "Foo", it is not the same thing as having a format named
+"Foo".  However, the default name for the format associated with a given
 filehandle is the same as the name of the filehandle.  Thus, the default
 format for STDOUT is name "STDOUT", and the default format for filehandle
 TEMP is name "TEMP".  They just look the same.  They aren't.
@@ -29,8 +29,8 @@ Output record formats are declared as follows:
     FORMLIST
     .
 
-If name is omitted, format "STDOUT" is defined.  FORMLIST consists of a
-sequence of lines, each of which may be of one of three types:
+If name is omitted, format "STDOUT" is defined.  FORMLIST consists of
+a sequence of lines, each of which may be one of three types:
 
 =over 4
 
@@ -54,7 +54,7 @@ with either "@" (at) or "^" (caret).  These lines do not undergo any kind
 of variable interpolation.  The at field (not to be confused with the array
 marker @) is the normal kind of field; the other kind, caret fields, are used
 to do rudimentary multi-line text block filling.  The length of the field
-is supplied by padding out the field with multiple "<", ">", or "|"
+is supplied by padding out the field with multiple "E<lt>", "E<gt>", or "|"
 characters to specify, respectively, left justification, right
 justification, or centering.  If the variable would exceed the width
 specified, it is truncated.
@@ -64,7 +64,7 @@ characters (with an optional ".") to specify a numeric field.  This way
 you can line up the decimal points.  If any value supplied for these
 fields contains a newline, only the text up to the newline is printed.
 Finally, the special field "@*" can be used for printing multi-line,
-non-truncated values; it should appear by itself on a line.
+nontruncated values; it should appear by itself on a line.
 
 The values are specified on the following line in the same order as
 the picture fields.  The expressions providing the values should be
@@ -72,7 +72,14 @@ separated by commas.  The expressions are all evaluated in a list context
 before the line is processed, so a single list expression could produce
 multiple list elements.  The expressions may be spread out to more than
 one line if enclosed in braces.  If so, the opening brace must be the first
-token on the first line.
+token on the first line.  If an expression evaluates to a number with a
+decimal part, and if the corresponding picture specifies that the decimal
+part should appear in the output (that is, any picture except multiple "#"
+characters B<without> an embedded "."), the character used for the decimal
+point is B<always> determined by the current LC_NUMERIC locale.  This
+means that, if, for example, the run-time environment happens to specify a
+German locale, "," will be used instead of the default ".".  See
+L<perllocale> and L<"WARNINGS"> for more information.
 
 Picture fields that begin with ^ rather than @ are treated specially.
 With a # field, the field is blanked out if the value is undefined.  For
@@ -98,9 +105,9 @@ first, the line will be repeated until all the fields on the line are
 exhausted.  (If you use a field of the at variety, the expression you
 supply had better not give the same value every time forever!)
 
-Top-of-form processing is by default handled by a format with the 
+Top-of-form processing is by default handled by a format with the
 same name as the current filehandle with "_TOP" concatenated to it.
-It's triggered at the top of each page.  See <perlfunc/write()>.
+It's triggered at the top of each page.  See L<perlfunc/write>.
 
 Examples:
 
@@ -147,22 +154,22 @@ Examples:
  .
 
 It is possible to intermix print()s with write()s on the same output
-channel, but you'll have to handle $- ($FORMAT_LINES_LEFT)
+channel, but you'll have to handle C<$-> (C<$FORMAT_LINES_LEFT>)
 yourself.
 
 =head2 Format Variables
 
-The current format name is stored in the variable C<$~> ($FORMAT_NAME),
-and the current top of form format name is in C<$^> ($FORMAT_TOP_NAME).
-The current output page number is stored in C<$%> ($FORMAT_PAGE_NUMBER),
-and the number of lines on the page is in C<$=> ($FORMAT_LINES_PER_PAGE).
+The current format name is stored in the variable C<$~> (C<$FORMAT_NAME>),
+and the current top of form format name is in C<$^> (C<$FORMAT_TOP_NAME>).
+The current output page number is stored in C<$%> (C<$FORMAT_PAGE_NUMBER>),
+and the number of lines on the page is in C<$=> (C<$FORMAT_LINES_PER_PAGE>).
 Whether to autoflush output on this handle is stored in C<$|>
-($OUTPUT_AUTOFLUSH).  The string output before each top of page (except
-the first) is stored in C<$^L> ($FORMAT_FORMFEED).  These variables are
+(C<$OUTPUT_AUTOFLUSH>).  The string output before each top of page (except
+the first) is stored in C<$^L> (C<$FORMAT_FORMFEED>).  These variables are
 set on a per-filehandle basis, so you'll need to select() into a different
 one to affect them:
 
-    select((select(OUTF), 
+    select((select(OUTF),
 	    $~ = "My_Other_Format",
 	    $^ = "My_Top_Format"
 	   )[0]);
@@ -187,7 +194,7 @@ If you use the English module, you can even read the variable names:
     select($ofh);
 
 But you still have those funny select()s.  So just use the FileHandle
-module.  Now, you can access these special variables using lower-case
+module.  Now, you can access these special variables using lowercase
 method names instead:
 
     use FileHandle;
@@ -198,25 +205,25 @@ Much better!
 
 =head1 NOTES
 
-Since the values line may contain arbitrary expressions (for at fields, 
+Because the values line may contain arbitrary expressions (for at fields,
 not caret fields), you can farm out more sophisticated processing
 to other functions, like sprintf() or one of your own.  For example:
 
-    format Ident = 
+    format Ident =
 	@<<<<<<<<<<<<<<<
 	&commify($n)
     .
 
 To get a real at or caret into the field, do this:
 
-    format Ident = 
+    format Ident =
     I have an @ here.
 	    "@"
     .
 
 To center a whole line of text, do something like this:
 
-    format Ident = 
+    format Ident =
     @|||||||||||||||||||||||||||||||||||||||||||||||
 	    "Some text line"
     .
@@ -233,12 +240,12 @@ on the current number of columns, and then eval() it:
              . '$entry' . "\n";
              . ".\n";
     print $format if $Debugging;
-    eval $format; 
+    eval $format;
     die $@ if $@;
 
 Which would generate a format looking something like this:
 
- format STDOUT = 
+ format STDOUT =
  ^<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
  $entry
          ^<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<~~
@@ -247,7 +254,7 @@ Which would generate a format looking something like this:
 
 Here's a little program that's somewhat like fmt(1):
 
- format = 
+ format =
  ^<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< ~~
  $_
 
@@ -257,7 +264,7 @@ Here's a little program that's somewhat like fmt(1):
  while (<>) {
      s/\s*\n\s*/ /g;
      write;
- } 
+ }
 
 =head2 Footers
 
@@ -270,10 +277,10 @@ Here's one strategy:  If you have a fixed-size footer, you can get footers
 by checking $FORMAT_LINES_LEFT before each write() and print the footer
 yourself if necessary.
 
-Here's another strategy; open a pipe to yourself, using C<open(MESELF, "|-")> 
-(see L<perlfunc/open()>) and always write() to MESELF instead of
-STDOUT.  Have your child process postprocesses its STDIN to rearrange
-headers and footers however you like.  Not very convenient, but doable.
+Here's another strategy: Open a pipe to yourself, using C<open(MYSELF, "|-")>
+(see L<perlfunc/open()>) and always write() to MYSELF instead of STDOUT.
+Have your child process massage its STDIN to rearrange headers and footers
+however you like.  Not very convenient, but doable.
 
 =head2 Accessing Formatting Internals
 
@@ -298,7 +305,7 @@ is to printf(), do this:
 	$^A = "";
 	formline($format,@_);
 	return $^A;
-    } 
+    }
 
     $string = swrite(<<'END', 1, 2, 3);
  Check me out
@@ -306,10 +313,25 @@ is to printf(), do this:
  END
     print $string;
 
-=head1 WARNING
+=head1 WARNINGS
+
+The lone dot that ends a format can also prematurely end an email
+message passing through a misconfigured Internet mailer (and based on
+experience, such misconfiguration is the rule, not the exception).  So
+when sending format code through email, you should indent it so that
+the format-ending dot is not on the left margin; this will prevent
+email cutoff.
 
 Lexical variables (declared with "my") are not visible within a
 format unless the format is declared within the scope of the lexical
-variable.  (They weren't visible at all before version 5.001.)  Furthermore,
-lexical aliases will not be compiled correctly: see
-L<perlfunc/my> for other issues.
+variable.  (They weren't visible at all before version 5.001.)
+
+Formats are the only part of Perl which unconditionally use information
+from a program's locale; if a program's environment specifies an
+LC_NUMERIC locale, it is always used to specify the decimal point
+character in formatted output.  Perl ignores all other aspects of locale
+handling unless the C<use locale> pragma is in effect.  Formatted output
+cannot be controlled by C<use locale> because the pragma is tied to the
+block structure of the program, and, for historical reasons, formats
+exist outside that block structure.  See L<perllocale> for further
+discussion of locale handling.

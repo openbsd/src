@@ -2,21 +2,31 @@ package Exporter;
 
 require 5.001;
 
+#
+# We go to a lot of trouble not to 'require Carp' at file scope,
+#  because Carp requires Exporter, and something has to give.
+#
+
 $ExportLevel = 0;
 $Verbose = 0 unless $Verbose;
-
-require Carp;
 
 sub export {
 
     # First make import warnings look like they're coming from the "use".
     local $SIG{__WARN__} = sub {
 	my $text = shift;
-	$text =~ s/ at \S*Exporter.pm line \d+.*\n//;
-	local $Carp::CarpLevel = 1;	# ignore package calling us too.
-	Carp::carp($text);
+	if ($text =~ s/ at \S*Exporter.pm line \d+.*\n//) {
+	    require Carp;
+	    local $Carp::CarpLevel = 1;	# ignore package calling us too.
+	    Carp::carp($text);
+	}
+	else {
+	    warn $text;
+	}
     };
     local $SIG{__DIE__} = sub {
+	require Carp;
+	local $Carp::CarpLevel = 1;	# ignore package calling us too.
 	Carp::croak("$_[0]Illegal null symbol in \@${1}::EXPORT")
 	    if $_[0] =~ /^Unable to create sub named "(.*?)::"/;
     };
@@ -91,13 +101,23 @@ sub export {
 			@imports = @exports;
 			last;
 		    }
+		    # We need a way to emulate 'use Foo ()' but still
+		    # allow an easy version check: "use Foo 1.23, ''";
+		    if (@imports == 2 and !$imports[1]) {
+			@imports = ();
+			last;
+		    }
 		} elsif ($sym !~ s/^&// || !$exports{$sym}) {
-		    warn qq["$sym" is not exported by the $pkg module];
+                    require Carp;
+		    Carp::carp(qq["$sym" is not exported by the $pkg module]);
 		    $oops++;
 		}
 	    }
 	}
-	Carp::croak("Can't continue after import errors") if $oops;
+	if ($oops) {
+	    require Carp;
+	    Carp::croak("Can't continue after import errors");
+	}
     }
     else {
 	@imports = @exports;
@@ -118,10 +138,14 @@ sub export {
 	if (@failed) {
 	    @failed = $pkg->export_fail(@failed);
 	    foreach $sym (@failed) {
-		warn qq["$sym" is not implemented by the $pkg module ],
-			"on this architecture";
+                require Carp;
+		Carp::carp(qq["$sym" is not implemented by the $pkg module ],
+			"on this architecture");
 	    }
-	    Carp::croak("Can't continue after import errors") if @failed;
+	    if (@failed) {
+		require Carp;
+		Carp::croak("Can't continue after import errors");
+	    }
 	}
     }
 
@@ -139,8 +163,17 @@ sub export {
 	    $type eq '@' ? \@{"${pkg}::$sym"} :
 	    $type eq '%' ? \%{"${pkg}::$sym"} :
 	    $type eq '*' ?  *{"${pkg}::$sym"} :
-		Carp::croak("Can't export symbol: $type$sym");
+	    do { require Carp; Carp::croak("Can't export symbol: $type$sym") };
     }
+}
+
+sub export_to_level
+{
+      my $pkg = shift;
+      my ($level, $junk) = (shift, shift);  # need to get rid of first arg
+                                            # we know it already.
+      my $callpkg = caller($level);
+      $pkg->export($callpkg, @_);
 }
 
 sub import {
@@ -148,6 +181,7 @@ sub import {
     my $callpkg = caller($ExportLevel);
     export $pkg, $callpkg, @_;
 }
+
 
 
 # Utility functions
@@ -159,8 +193,11 @@ sub _push_tags {
     push(@{"${pkg}::$var"},
 	map { $export_tags{$_} ? @{$export_tags{$_}} : scalar(++$nontag,$_) }
 		(@$syms) ? @$syms : keys %export_tags);
-    # This may change to a die one day
-    Carp::carp("Some names are not tags") if $nontag and $^W;
+    if ($nontag and $^W) {
+	# This may change to a die one day
+	require Carp;
+	Carp::carp("Some names are not tags");
+    }
 }
 
 sub export_tags    { _push_tags((caller)[0], "EXPORT",    \@_) }
@@ -170,15 +207,21 @@ sub export_ok_tags { _push_tags((caller)[0], "EXPORT_OK", \@_) }
 # Default methods
 
 sub export_fail {
+    my $self = shift;
     @_;
 }
 
 sub require_version {
     my($self, $wanted) = @_;
     my $pkg = ref $self || $self;
-    my $version = ${"${pkg}::VERSION"} || "(undef)";
-    Carp::croak("$pkg $wanted required--this is only version $version")
-		if $version < $wanted;
+    my $version = ${"${pkg}::VERSION"};
+    if (!$version or $version < $wanted) {
+	$version ||= "(undef)";
+	my $file = $INC{"$pkg.pm"};
+	$file &&= " ($file)";
+	require Carp;
+	Carp::croak("$pkg $wanted required--this is only version $version$file")
+    }
     $version;
 }
 
@@ -235,7 +278,7 @@ In other files which wish to use ModuleName:
 =head1 DESCRIPTION
 
 The Exporter module implements a default C<import> method which
-many modules choose inherit rather than implement their own.
+many modules choose to inherit rather than implement their own.
 
 Perl automatically calls the C<import> method when processing a
 C<use> statement for a module. Modules and C<use> are documented
@@ -254,7 +297,7 @@ try to use @EXPORT_OK in preference to @EXPORT and avoid short or
 common symbol names to reduce the risk of name clashes.
 
 Generally anything not exported is still accessible from outside the
-module using the ModuleName::item_name (or $blessed_ref->method)
+module using the ModuleName::item_name (or $blessed_ref-E<gt>method)
 syntax.  By convention you can use a leading underscore on names to
 informally indicate that they are 'internal' and not for public use.
 
@@ -315,10 +358,57 @@ You can say C<BEGIN { $Exporter::Verbose=1 }> to see how the
 specifications are being processed and what is actually being imported
 into modules.
 
+=head2 Exporting without using Export's import method
+
+Exporter has a special method, 'export_to_level' which is used in situations
+where you can't directly call Export's import method. The export_to_level
+method looks like:
+
+MyPackage->export_to_level($where_to_export, @what_to_export);
+
+where $where_to_export is an integer telling how far up the calling stack
+to export your symbols, and @what_to_export is an array telling what
+symbols *to* export (usually this is @_).
+
+For example, suppose that you have a module, A, which already has an
+import function:
+
+package A;
+
+@ISA = qw(Exporter);
+@EXPORT_OK = qw ($b);
+
+sub import
+{
+    $A::b = 1;     # not a very useful import method
+}
+
+and you want to Export symbol $A::b back to the module that called 
+package A. Since Exporter relies on the import method to work, via 
+inheritance, as it stands Exporter::import() will never get called. 
+Instead, say the following:
+
+package A;
+@ISA = qw(Exporter);
+@EXPORT_OK = qw ($b);
+
+sub import
+{
+    $A::b = 1;
+    A->export_to_level(1, @_);
+}
+
+This will export the symbols one level 'above' the current package - ie: to 
+the program or module that used package A. 
+
+Note: Be careful not to modify '@_' at all before you call export_to_level
+- or people using your package will get very unexplained results!
+
+
 =head2 Module Version Checking
 
 The Exporter module will convert an attempt to import a number from a
-module into a call to $module_name->require_version($value). This can
+module into a call to $module_name-E<gt>require_version($value). This can
 be used to validate that the version of the module being used is
 greater than or equal to the required version.
 
@@ -339,7 +429,7 @@ or constants that may not exist on some systems.
 The names of any symbols that cannot be exported should be listed
 in the C<@EXPORT_FAIL> array.
 
-If a module attempts to import any of these symbols the Exporter will
+If a module attempts to import any of these symbols the Exporter
 will give the module an opportunity to handle the situation before
 generating an error. The Exporter will call an export_fail method
 with a list of the failed symbols:

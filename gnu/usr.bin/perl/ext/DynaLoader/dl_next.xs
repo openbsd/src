@@ -31,9 +31,12 @@ Anno Siegel
 
 */
 
+#if NS_TARGET_MAJOR >= 4
+#else
 /* include these before perl headers */
 #include <mach-o/rld.h>
 #include <streams/streams.h>
+#endif
 
 #include "EXTERN.h"
 #include "perl.h"
@@ -47,15 +50,102 @@ Anno Siegel
 static char * dl_last_error = (char *) 0;
 static AV *dl_resolve_using = Nullav;
 
-NXStream *
-OpenError()
+static char *dlerror()
+{
+    return dl_last_error;
+}
+
+int dlclose(handle) /* stub only */
+void *handle;
+{
+    return 0;
+}
+
+#if NS_TARGET_MAJOR >= 4
+#import <mach-o/dyld.h>
+
+enum dyldErrorSource
+{
+    OFImage,
+};
+
+static void TranslateError
+    (const char *path, enum dyldErrorSource type, int number)
+{
+    char *error;
+    unsigned int index;
+    static char *OFIErrorStrings[] =
+    {
+	"%s(%d): Object Image Load Failure\n",
+	"%s(%d): Object Image Load Success\n",
+	"%s(%d): Not an recognisable object file\n",
+	"%s(%d): No valid architecture\n",
+	"%s(%d): Object image has an invalid format\n",
+	"%s(%d): Invalid access (permissions?)\n",
+	"%s(%d): Unknown error code from NSCreateObjectFileImageFromFile\n",
+    };
+#define NUM_OFI_ERRORS (sizeof(OFIErrorStrings) / sizeof(OFIErrorStrings[0]))
+
+    switch (type)
+    {
+    case OFImage:
+	index = number;
+	if (index > NUM_OFI_ERRORS - 1)
+	    index = NUM_OFI_ERRORS - 1;
+	error = form(OFIErrorStrings[index], path, number);
+	break;
+
+    default:
+	error = form("%s(%d): Totally unknown error type %d\n",
+		     path, number, type);
+	break;
+    }
+    safefree(dl_last_error);
+    dl_last_error = savepv(error);
+}
+
+static char *dlopen(char *path, int mode /* mode is ignored */)
+{
+    int dyld_result;
+    NSObjectFileImage ofile;
+    NSModule handle = NULL;
+
+    dyld_result = NSCreateObjectFileImageFromFile(path, &ofile);
+    if (dyld_result != NSObjectFileImageSuccess)
+	TranslateError(path, OFImage, dyld_result);
+    else
+    {
+    	// NSLinkModule will cause the run to abort on any link error's
+	// not very friendly but the error recovery functionality is limited.
+	handle = NSLinkModule(ofile, path, TRUE);
+    }
+    
+    return handle;
+}
+
+void *
+dlsym(handle, symbol)
+void *handle;
+char *symbol;
+{
+    void *addr;
+
+    if (NSIsSymbolNameDefined(symbol))
+	addr = NSAddressOfSymbol(NSLookupAndBindSymbol(symbol));
+    else
+    	addr = NULL;
+
+    return addr;
+}
+
+#else /* NS_TARGET_MAJOR <= 3 */
+
+static NXStream *OpenError(void)
 {
     return NXOpenMemory( (char *) 0, 0, NX_WRITEONLY);
 }
 
-void
-TransferError( s)
-NXStream *s;
+static void TransferError(NXStream *s)
 {
     char *buffer;
     int len, maxlen;
@@ -68,24 +158,14 @@ NXStream *s;
     strcpy(dl_last_error, buffer);
 }
 
-void
-CloseError( s)
-NXStream *s;
+static void CloseError(NXStream *s)
 {
     if ( s ) {
       NXCloseMemory( s, NX_FREEBUFFER);
     }
 }
 
-char *dlerror()
-{
-    return dl_last_error;
-}
-
-char *
-dlopen(path, mode)
-char * path;
-int mode; /* mode is ignored */
+static char *dlopen(char *path, int mode /* mode is ignored */)
 {
     int rld_success;
     NXStream *nxerr;
@@ -120,29 +200,21 @@ int mode; /* mode is ignored */
     return result;
 }
 
-int
-dlclose(handle) /* stub only */
-void *handle;
-{
-    return 0;
-}
-
 void *
 dlsym(handle, symbol)
 void *handle;
 char *symbol;
 {
     NXStream	*nxerr = OpenError();
-    char	symbuf[1024];
     unsigned long	symref = 0;
 
-    sprintf(symbuf, "_%s", symbol);
-    if (!rld_lookup(nxerr, symbuf, &symref)) {
+    if (!rld_lookup(nxerr, form("_%s", symbol), &symref))
 	TransferError(nxerr);
-    }
     CloseError(nxerr);
     return (void*) symref;
 }
+
+#endif /* NS_TARGET_MAJOR >= 4 */
 
 
 /* ----- code from dl_dlopen.xs below here ----- */
@@ -163,13 +235,17 @@ BOOT:
 
 
 void *
-dl_load_file(filename)
+dl_load_file(filename, flags=0)
     char *	filename
-    CODE:
+    int		flags
+    PREINIT:
     int mode = 1;
-    DLDEBUG(1,fprintf(stderr,"dl_load_file(%s):\n", filename));
+    CODE:
+    DLDEBUG(1,PerlIO_printf(PerlIO_stderr(), "dl_load_file(%s,%x):\n", filename,flags));
+    if (flags & 0x01)
+	warn("Can't make loaded symbols global on this platform while loading %s",filename);
     RETVAL = dlopen(filename, mode) ;
-    DLDEBUG(2,fprintf(stderr," libref=%x\n", RETVAL));
+    DLDEBUG(2,PerlIO_printf(PerlIO_stderr(), " libref=%x\n", RETVAL));
     ST(0) = sv_newmortal() ;
     if (RETVAL == NULL)
 	SaveError("%s",dlerror()) ;
@@ -182,10 +258,15 @@ dl_find_symbol(libhandle, symbolname)
     void *		libhandle
     char *		symbolname
     CODE:
-    DLDEBUG(2,fprintf(stderr,"dl_find_symbol(handle=%x, symbol=%s)\n",
-	    libhandle, symbolname));
+#if NS_TARGET_MAJOR >= 4
+    symbolname = form("_%s", symbolname);
+#endif
+    DLDEBUG(2, PerlIO_printf(PerlIO_stderr(),
+			     "dl_find_symbol(handle=%lx, symbol=%s)\n",
+			     (unsigned long) libhandle, symbolname));
     RETVAL = dlsym(libhandle, symbolname);
-    DLDEBUG(2,fprintf(stderr,"  symbolref = %x\n", RETVAL));
+    DLDEBUG(2, PerlIO_printf(PerlIO_stderr(),
+			     "  symbolref = %lx\n", (unsigned long) RETVAL));
     ST(0) = sv_newmortal() ;
     if (RETVAL == NULL)
 	SaveError("%s",dlerror()) ;
@@ -207,7 +288,7 @@ dl_install_xsub(perl_name, symref, filename="$Package")
     void *	symref 
     char *	filename
     CODE:
-    DLDEBUG(2,fprintf(stderr,"dl_install_xsub(name=%s, symref=%x)\n",
+    DLDEBUG(2,PerlIO_printf(PerlIO_stderr(), "dl_install_xsub(name=%s, symref=%x)\n",
 	    perl_name, symref));
     ST(0)=sv_2mortal(newRV((SV*)newXS(perl_name, (void(*)())symref, filename)));
 

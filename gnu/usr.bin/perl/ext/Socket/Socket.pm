@@ -1,7 +1,7 @@
 package Socket;
 
 use vars qw($VERSION @ISA @EXPORT);
-$VERSION = "1.5";
+$VERSION = "1.6";
 
 =head1 NAME
 
@@ -47,12 +47,15 @@ all of the commonly used pound-defines like AF_INET, SOCK_STREAM, etc.
 
 In addition, some structure manipulation functions are available:
 
+=over
+
 =item inet_aton HOSTNAME
 
 Takes a string giving the name of a host, and translates that
 to the 4-byte string (structure). Takes arguments of both
 the 'rtfm.mit.edu' type and '18.181.0.24'. If the host name
-cannot be resolved, returns undef.
+cannot be resolved, returns undef. For multi-homed hosts (hosts
+with more than one address), the first address found is returned.
 
 =item inet_ntoa IP_ADDRESS
 
@@ -72,6 +75,15 @@ a particular network interface. This wildcard address
 allows you to bind to all of them simultaneously.)
 Normally equivalent to inet_aton('0.0.0.0').
 
+=item INADDR_BROADCAST
+
+Note: does not return a number, but a packed string.
+
+Returns the 4-byte 'this-lan' ip broadcast address.
+This can be useful for some protocols to solicit information
+from all servers on the same LAN cable.
+Normally equivalent to inet_aton('255.255.255.255').
+
 =item INADDR_LOOPBACK
 
 Note - does not return a number.
@@ -83,7 +95,7 @@ to inet_aton('localhost').
 
 Note - does not return a number.
 
-Returns the 4-byte invalid ip address. Normally equivalent
+Returns the 4-byte 'invalid' ip address. Normally equivalent
 to inet_aton('255.255.255.255').
 
 =item sockaddr_in PORT, ADDRESS
@@ -115,10 +127,10 @@ Will croak if the structure does not have AF_INET in the right place.
 =item sockaddr_un SOCKADDR_UN
 
 In an array context, unpacks its SOCKADDR_UN argument and returns an array
-consisting of (PATHNAME).  In a scalar context, packs its PATHANE
+consisting of (PATHNAME).  In a scalar context, packs its PATHNAME
 arguments as a SOCKADDR_UN and returns it.  If this is confusing, use
 pack_sockaddr_un() and unpack_sockaddr_un() explicitly.
-These are only supported if your system has <sys/un.h>.
+These are only supported if your system has E<lt>F<sys/un.h>E<gt>.
 
 =item pack_sockaddr_un PATH
 
@@ -134,19 +146,20 @@ Takes a sockaddr_un structure (as returned by pack_sockaddr_un())
 and returns the pathname.  Will croak if the structure does not
 have AF_UNIX in the right place.
 
+=back
+
 =cut
 
 use Carp;
 
 require Exporter;
-use AutoLoader;
 require DynaLoader;
 @ISA = qw(Exporter DynaLoader);
 @EXPORT = qw(
 	inet_aton inet_ntoa pack_sockaddr_in unpack_sockaddr_in
 	pack_sockaddr_un unpack_sockaddr_un
 	sockaddr_in sockaddr_un
-	INADDR_ANY INADDR_LOOPBACK INADDR_NONE
+	INADDR_ANY INADDR_BROADCAST INADDR_LOOPBACK INADDR_NONE
 	AF_802
 	AF_APPLETALK
 	AF_CCITT
@@ -256,14 +269,8 @@ sub AUTOLOAD {
     ($constname = $AUTOLOAD) =~ s/.*:://;
     my $val = constant($constname, @_ ? $_[0] : 0);
     if ($! != 0) {
-	if ($! =~ /Invalid/) {
-	    $AutoLoader::AUTOLOAD = $AUTOLOAD;
-	    goto &AutoLoader::AUTOLOAD;
-	}
-	else {
-	    my ($pack,$file,$line) = caller;
-	    croak "Your vendor has not defined Socket macro $constname, used";
-	}
+	my ($pack,$file,$line) = caller;
+	croak "Your vendor has not defined Socket macro $constname, used";
     }
     eval "sub $AUTOLOAD { $val }";
     goto &$AUTOLOAD;
@@ -271,8 +278,4 @@ sub AUTOLOAD {
 
 bootstrap Socket $VERSION;
 
-# Preloaded methods go here.  Autoload methods go after __END__, and are
-# processed by the autosplit program.
-
 1;
-__END__

@@ -1,6 +1,6 @@
 /*    mg.h
  *
- *    Copyright (c) 1991-1994, Larry Wall
+ *    Copyright (c) 1991-1997, Larry Wall
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -32,5 +32,10 @@ struct magic {
 
 #define MGf_MINMATCH   1
 
-#define MgTAINTEDDIR(mg) (mg->mg_flags & MGf_TAINTEDDIR)
-#define MgTAINTEDDIR_on(mg) (mg->mg_flags |= MGf_TAINTEDDIR)
+#define MgTAINTEDDIR(mg)	(mg->mg_flags & MGf_TAINTEDDIR)
+#define MgTAINTEDDIR_on(mg)	(mg->mg_flags |= MGf_TAINTEDDIR)
+#define MgTAINTEDDIR_off(mg)	(mg->mg_flags &= ~MGf_TAINTEDDIR)
+
+#define MgPV(mg,lp)		(((lp = (mg)->mg_len) == HEf_SVKEY) ?   \
+				 SvPV((SV*)((mg)->mg_ptr),lp) :		\
+				 (mg)->mg_ptr)

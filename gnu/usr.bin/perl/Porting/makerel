@@ -1,0 +1,100 @@
+#!/bin/env perl -w
+
+# A first attempt at some automated support for making a perl release.
+# Very basic but functional - if you're on a unix system.
+#
+# No matter how automated this gets, you'll always need to read
+# and re-read pumpkin.pod checking for things to be done at various
+# stages of the process.
+#
+# Tim Bunce, June 1997
+
+use ExtUtils::Manifest qw(fullcheck);
+
+$|=1;
+$relroot = "..";	# XXX make an option
+
+die "Must be in root of the perl source tree.\n"
+	unless -f "./MANIFEST" and -f "patchlevel.h";
+
+$patchlevel_h = `grep '#define ' patchlevel.h`;
+print $patchlevel_h;
+$patchlevel = $1 if $patchlevel_h =~ /PATCHLEVEL\s+(\d+)/;
+$subversion = $1 if $patchlevel_h =~ /SUBVERSION\s+(\d+)/;
+die "Unable to parse patchlevel.h" unless $subversion > 0;
+$vers = sprintf("5.%03d", $patchlevel);
+$vers.= sprintf( "_%02d", $subversion) if $subversion;
+
+$perl = "perl$vers";
+$reldir = "$relroot/$perl";
+$reldir .= "-$ARGV[0]" if $ARGV[0];
+
+print "\nMaking a release for $perl in $reldir\n\n";
+
+
+print "Cross-checking the MANIFEST...\n";
+($missfile, $missentry) = fullcheck();
+warn "Can't make a release with MANIFEST files missing.\n" if @$missfile;
+warn "Can't make a release with files not listed in MANIFEST.\n" if @$missentry;
+if ("@$missentry" =~ m/\.orig\b/) {
+    # Handy listing of find command and .orig files from patching work.
+    # I tend to run 'xargs rm' and copy and paste the file list.
+    my $cmd = "find . -name '*.orig' -print";
+    print "$cmd\n";
+    system($cmd);
+}
+die "Aborted.\n" if @$missentry or @$missfile;
+print "\n";
+
+
+print "Setting file permissions...\n";
+system("find . -type f -print     | xargs chmod -w");
+system("find . -type d -print     | xargs chmod g-s");
+system("find t -name '*.t' -print | xargs chmod +x");
+system("chmod +w configure"); # special case (see pumpkin.pod)
+@exe = qw(
+    Configure
+    configpm
+    configure
+    embed.pl
+    installperl
+    installman
+    keywords.pl
+    myconfig
+    opcode.pl
+    perly.fixer
+    t/TEST
+    t/*/*.t
+    *.SH
+    vms/ext/Stdio/test.pl
+    vms/ext/filespec.t
+    vms/fndvers.com
+    x2p/*.SH
+    Porting/patchls
+    Porting/makerel
+);
+system("chmod +x @exe");
+print "\n";
+
+
+print "Creating $reldir release directory...\n";
+die "$reldir release directory already exists\n"   if -e "../$perl";
+die "$reldir.tar.gz release file already exists\n" if -e "../$reldir.tar.gz";
+mkdir($reldir, 0755) or die "mkdir $reldir: $!\n";
+print "\n";
+
+
+print "Copying files to release directory...\n";
+# ExtUtils::Manifest maniread does not preserve the order
+$cmd = "awk '{print \$1}' MANIFEST | cpio -pdm $reldir";
+system($cmd) == 0 or die "$cmd failed";
+print "\n";
+
+chdir $relroot or die $!;
+
+print "Creating and compressing the tar file...\n";
+$cmd = "tar cf - $perl | gzip --best > $perl.tar.gz";
+system($cmd) == 0 or die "$cmd failed";
+print "\n";
+
+system("ls -ld $perl*");

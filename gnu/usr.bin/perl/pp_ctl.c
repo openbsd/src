@@ -1,6 +1,6 @@
 /*    pp_ctl.c
  *
- *    Copyright (c) 1991-1994, Larry Wall
+ *    Copyright (c) 1991-1997, Larry Wall
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -23,16 +23,20 @@
 #define WORD_ALIGN sizeof(U16)
 #endif
 
+#define DOCATCH(o) ((CATCH_GET == TRUE) ? docatch(o) : (o))
+
+static OP *docatch _((OP *o));
 static OP *doeval _((int gimme));
-static OP *dofindlabel _((OP *op, char *label, OP **opstack));
+static OP *dofindlabel _((OP *op, char *label, OP **opstack, OP **oplimit));
 static void doparseform _((SV *sv));
 static I32 dopoptoeval _((I32 startingblock));
 static I32 dopoptolabel _((char *label));
 static I32 dopoptoloop _((I32 startingblock));
 static I32 dopoptosub _((I32 startingblock));
 static void save_lines _((AV *array, SV *sv));
-static int sortcmp _((const void *, const void *));
 static int sortcv _((const void *, const void *));
+static int sortcmp _((const void *, const void *));
+static int sortcmp_locale _((const void *, const void *));
 
 static I32 sortcxix;
 
@@ -46,10 +50,14 @@ PP(pp_wantarray)
     if (cxix < 0)
 	RETPUSHUNDEF;
 
-    if (cxstack[cxix].blk_gimme == G_ARRAY)
+    switch (cxstack[cxix].blk_gimme) {
+    case G_ARRAY:
 	RETPUSHYES;
-    else
+    case G_SCALAR:
 	RETPUSHNO;
+    default:
+	RETPUSHUNDEF;
+    }
 }
 
 PP(pp_regcmaybe)
@@ -86,7 +94,7 @@ PP(pp_regcomp) {
 	pm->op_pmflags |= PMf_WHITE;
 
     if (pm->op_pmflags & PMf_KEEP) {
-	pm->op_pmflags &= ~PMf_RUNTIME;	/* no point compiling again */
+	pm->op_private &= ~OPpRUNTIME;	/* no point compiling again */
 	hoistmust(pm);
 	cLOGOP->op_first->op_next = op->op_next;
     }
@@ -104,14 +112,15 @@ PP(pp_substcont)
     char *orig = cx->sb_orig;
     register REGEXP *rx = cx->sb_rx;
 
+    rxres_restore(&cx->sb_rxres, rx);
+
     if (cx->sb_iters++) {
 	if (cx->sb_iters > cx->sb_maxiters)
 	    DIE("Substitution loop");
 
+	if (!cx->sb_rxtainted)
+	    cx->sb_rxtainted = SvTAINTED(TOPs);
 	sv_catsv(dstr, POPs);
-	if (rx->subbase)
-	    Safefree(rx->subbase);
-	rx->subbase = cx->sb_subbase;
 
 	/* Are we done */
 	if (cx->sb_once || !pregexec(rx, s, cx->sb_strend, orig,
@@ -120,6 +129,8 @@ PP(pp_substcont)
 	    SV *targ = cx->sb_targ;
 	    sv_catpvn(dstr, s, cx->sb_strend - s);
 
+	    TAINT_IF(cx->sb_rxtainted || rx->exec_tainted);
+
 	    (void)SvOOK_off(targ);
 	    Safefree(SvPVX(targ));
 	    SvPVX(targ) = SvPVX(dstr);
@@ -127,9 +138,10 @@ PP(pp_substcont)
 	    SvLEN_set(targ, SvLEN(dstr));
 	    SvPVX(dstr) = 0;
 	    sv_free(dstr);
-
 	    (void)SvPOK_only(targ);
 	    SvSETMAGIC(targ);
+	    SvTAINT(targ);
+
 	    PUSHs(sv_2mortal(newSViv((I32)cx->sb_iters - 1)));
 	    LEAVE_SCOPE(cx->sb_oldsave);
 	    POPSUBST(cx);
@@ -146,10 +158,74 @@ PP(pp_substcont)
     cx->sb_m = m = rx->startp[0];
     sv_catpvn(dstr, s, m-s);
     cx->sb_s = rx->endp[0];
-    cx->sb_subbase = rx->subbase;
-
-    rx->subbase = Nullch;	/* so recursion works */
+    cx->sb_rxtainted |= rx->exec_tainted;
+    rxres_save(&cx->sb_rxres, rx);
     RETURNOP(pm->op_pmreplstart);
+}
+
+void
+rxres_save(rsp, rx)
+void **rsp;
+REGEXP *rx;
+{
+    UV *p = (UV*)*rsp;
+    U32 i;
+
+    if (!p || p[1] < rx->nparens) {
+	i = 6 + rx->nparens * 2;
+	if (!p)
+	    New(501, p, i, UV);
+	else
+	    Renew(p, i, UV);
+	*rsp = (void*)p;
+    }
+
+    *p++ = (UV)rx->subbase;
+    rx->subbase = Nullch;
+
+    *p++ = rx->nparens;
+
+    *p++ = (UV)rx->subbeg;
+    *p++ = (UV)rx->subend;
+    for (i = 0; i <= rx->nparens; ++i) {
+	*p++ = (UV)rx->startp[i];
+	*p++ = (UV)rx->endp[i];
+    }
+}
+
+void
+rxres_restore(rsp, rx)
+void **rsp;
+REGEXP *rx;
+{
+    UV *p = (UV*)*rsp;
+    U32 i;
+
+    Safefree(rx->subbase);
+    rx->subbase = (char*)(*p);
+    *p++ = 0;
+
+    rx->nparens = *p++;
+
+    rx->subbeg = (char*)(*p++);
+    rx->subend = (char*)(*p++);
+    for (i = 0; i <= rx->nparens; ++i) {
+	rx->startp[i] = (char*)(*p++);
+	rx->endp[i] = (char*)(*p++);
+    }
+}
+
+void
+rxres_free(rsp)
+void **rsp;
+{
+    UV *p = (UV*)*rsp;
+
+    if (p) {
+	Safefree((char*)(*p));
+	Safefree(p);
+	*rsp = Null(void*);
+    }
 }
 
 PP(pp_formline)
@@ -174,7 +250,7 @@ PP(pp_formline)
     bool gotsome;
     STRLEN len;
 
-    if (!SvCOMPILED(form)) {
+    if (!SvMAGICAL(form) || !SvCOMPILED(form)) {
 	SvREADONLY_off(form);
 	doparseform(form);
     }
@@ -212,9 +288,9 @@ PP(pp_formline)
 	    case FF_END:	name = "END";		break;
 	    }
 	    if (arg >= 0)
-		fprintf(stderr, "%-16s%ld\n", name, (long) arg);
+		PerlIO_printf(PerlIO_stderr(), "%-16s%ld\n", name, (long) arg);
 	    else
-		fprintf(stderr, "%-16s\n", name);
+		PerlIO_printf(PerlIO_stderr(), "%-16s\n", name);
 	} )
 	switch (*fpc++) {
 	case FF_LINEMARK:
@@ -376,6 +452,8 @@ PP(pp_formline)
 	    }
 	    gotsome = TRUE;
 	    value = SvNV(sv);
+	    /* Formats aren't yet marked for locales, so assume "yes". */
+	    SET_NUMERIC_LOCAL();
 	    if (arg & 256) {
 		sprintf(t, "%#*.*f", (int) fieldsize, (int) arg & 255, value);
 	    } else {
@@ -450,7 +528,7 @@ PP(pp_grepstart)
 
     if (stack_base + *markstack_ptr == sp) {
 	(void)POPMARK;
-	if (GIMME != G_ARRAY)
+	if (GIMME_V == G_SCALAR)
 	    XPUSHs(&sv_no);
 	RETURNOP(op->op_next->op_next);
     }
@@ -513,6 +591,7 @@ PP(pp_mapwhile)
     /* All done yet? */
     if (markstack_ptr[-1] > *markstack_ptr) {
 	I32 items;
+	I32 gimme = GIMME_V;
 
 	(void)POPMARK;				/* pop top */
 	LEAVE;					/* exit outer scope */
@@ -520,12 +599,12 @@ PP(pp_mapwhile)
 	items = --*markstack_ptr - markstack_ptr[-1];
 	(void)POPMARK;				/* pop dst */
 	SP = stack_base + POPMARK;		/* pop original mark */
-	if (GIMME != G_ARRAY) {
+	if (gimme == G_SCALAR) {
 	    dTARGET;
 	    XPUSHi(items);
-	    RETURN;
 	}
-	SP += items;
+	else if (gimme == G_ARRAY)
+	    SP += items;
 	RETURN;
     }
     else {
@@ -574,7 +653,7 @@ PP(pp_sort)
 	    if (!(cv && CvROOT(cv))) {
 		if (gv) {
 		    SV *tmpstr = sv_newmortal();
-		    gv_efullname(tmpstr, gv);
+		    gv_efullname3(tmpstr, gv, Nullch);
 		    if (cv && CvXSUB(cv))
 			DIE("Xsub \"%s\" called in sort", SvPVX(tmpstr));
 		    DIE("Undefined sort subroutine \"%s\" called",
@@ -590,7 +669,7 @@ PP(pp_sort)
 	    sortcop = CvSTART(cv);
 	    SAVESPTR(CvROOT(cv)->op_ppaddr);
 	    CvROOT(cv)->op_ppaddr = ppaddr[OP_NULL];
-	    
+
 	    SAVESPTR(curpad);
 	    curpad = AvARRAY((AV*)AvARRAY(CvPADLIST(cv))[1]);
 	}
@@ -604,10 +683,9 @@ PP(pp_sort)
     while (MARK < SP) {	/* This may or may not shift down one here. */
 	/*SUPPRESS 560*/
 	if (*up = *++MARK) {			/* Weed out nulls. */
-	    if (!SvPOK(*up))
+	    SvTEMP_off(*up);
+	    if (!sortcop && !SvPOK(*up))
 		(void)sv_2pv(*up, &na);
-	    else
-		SvTEMP_off(*up);
 	    up++;
 	}
     }
@@ -617,17 +695,19 @@ PP(pp_sort)
 	    AV *oldstack;
 	    CONTEXT *cx;
 	    SV** newsp;
+	    bool oldcatch = CATCH_GET;
 
 	    SAVETMPS;
 	    SAVESPTR(op);
 
-	    oldstack = stack;
+	    oldstack = curstack;
 	    if (!sortstack) {
 		sortstack = newAV();
 		AvREAL_off(sortstack);
 		av_extend(sortstack, 32);
 	    }
-	    SWITCHSTACK(stack, sortstack);
+	    CATCH_SET(TRUE);
+	    SWITCHSTACK(curstack, sortstack);
 	    if (sortstash != stash) {
 		firstgv = gv_fetchpv("a", TRUE, SVt_PV);
 		secondgv = gv_fetchpv("b", TRUE, SVt_PV);
@@ -636,20 +716,31 @@ PP(pp_sort)
 
 	    SAVESPTR(GvSV(firstgv));
 	    SAVESPTR(GvSV(secondgv));
-	    PUSHBLOCK(cx, CXt_LOOP, stack_base);
+
+	    PUSHBLOCK(cx, CXt_NULL, stack_base);
+	    if (!(op->op_flags & OPf_SPECIAL)) {
+		bool hasargs = FALSE;
+		cx->cx_type = CXt_SUB;
+		cx->blk_gimme = G_SCALAR;
+		PUSHSUB(cx);
+		if (!CvDEPTH(cv))
+		    (void)SvREFCNT_inc(cv); /* in preparation for POPSUB */
+	    }
 	    sortcxix = cxstack_ix;
 
 	    qsort((char*)(myorigmark+1), max, sizeof(SV*), sortcv);
 
 	    POPBLOCK(cx,curpm);
 	    SWITCHSTACK(sortstack, oldstack);
+	    CATCH_SET(oldcatch);
 	}
 	LEAVE;
     }
     else {
 	if (max > 1) {
 	    MEXTEND(SP, 20);	/* Can't afford stack realloc on signal. */
-	    qsort((char*)(ORIGMARK+1), max, sizeof(SV*), sortcmp);
+	    qsort((char*)(ORIGMARK+1), max, sizeof(SV*),
+		  (op->op_private & OPpLOCALE) ? sortcmp_locale : sortcmp);
 	}
     }
     stack_sp = ORIGMARK + max;
@@ -682,6 +773,7 @@ PP(pp_flip)
 	    sv_setiv(PAD_SV(cUNOP->op_first->op_targ), 1);
 	    if (op->op_flags & OPf_SPECIAL) {
 		sv_setiv(targ, 1);
+		SETs(targ);
 		RETURN;
 	    }
 	    else {
@@ -707,14 +799,16 @@ PP(pp_flop)
 	I32 max;
 
 	if (SvNIOKp(left) || !SvPOKp(left) ||
-	  (looks_like_number(left) && *SvPVX(left) != '0') ) {
+	  (looks_like_number(left) && *SvPVX(left) != '0') )
+	{
 	    i = SvIV(left);
 	    max = SvIV(right);
-	    if (max > i)
+	    if (max >= i) {
+		EXTEND_MORTAL(max - i + 1);
 		EXTEND(SP, max - i + 1);
+	    }
 	    while (i <= max) {
-		sv = sv_mortalcopy(&sv_no);
-		sv_setiv(sv,i++);
+		sv = sv_2mortal(newSViv(i++));
 		PUSHs(sv);
 	    }
 	}
@@ -774,14 +868,18 @@ char *label;
 	    if (dowarn)
 		warn("Exiting eval via %s", op_name[op->op_type]);
 	    break;
+	case CXt_NULL:
+	    if (dowarn)
+		warn("Exiting pseudo-block via %s", op_name[op->op_type]);
+	    return -1;
 	case CXt_LOOP:
 	    if (!cx->blk_loop.label ||
 	      strNE(label, cx->blk_loop.label) ) {
-		DEBUG_l(deb("(Skipping label #%d %s)\n",
-			i, cx->blk_loop.label));
+		DEBUG_l(deb("(Skipping label #%ld %s)\n",
+			(long)i, cx->blk_loop.label));
 		continue;
 	    }
-	    DEBUG_l( deb("(Found label #%d %s)\n", i, label));
+	    DEBUG_l( deb("(Found label #%ld %s)\n", (long)i, label));
 	    return i;
 	}
     }
@@ -791,16 +889,29 @@ char *label;
 I32
 dowantarray()
 {
+    I32 gimme = block_gimme();
+    return (gimme == G_VOID) ? G_SCALAR : gimme;
+}
+
+I32
+block_gimme()
+{
     I32 cxix;
 
     cxix = dopoptosub(cxstack_ix);
     if (cxix < 0)
-	return G_SCALAR;
+	return G_VOID;
 
-    if (cxstack[cxix].blk_gimme == G_ARRAY)
-	return G_ARRAY;
-    else
+    switch (cxstack[cxix].blk_gimme) {
+    case G_VOID:
+	return G_VOID;
+    case G_SCALAR:
 	return G_SCALAR;
+    case G_ARRAY:
+	return G_ARRAY;
+    default:
+	croak("panic: bad gimme: %d\n", cxstack[cxix].blk_gimme);
+    }
 }
 
 static I32
@@ -816,7 +927,7 @@ I32 startingblock;
 	    continue;
 	case CXt_EVAL:
 	case CXt_SUB:
-	    DEBUG_l( deb("(Found sub #%d)\n", i));
+	    DEBUG_l( deb("(Found sub #%ld)\n", (long)i));
 	    return i;
 	}
     }
@@ -835,7 +946,7 @@ I32 startingblock;
 	default:
 	    continue;
 	case CXt_EVAL:
-	    DEBUG_l( deb("(Found eval #%d)\n", i));
+	    DEBUG_l( deb("(Found eval #%ld)\n", (long)i));
 	    return i;
 	}
     }
@@ -853,7 +964,7 @@ I32 startingblock;
 	switch (cx->cx_type) {
 	case CXt_SUBST:
 	    if (dowarn)
-		warn("Exiting substitition via %s", op_name[op->op_type]);
+		warn("Exiting substitution via %s", op_name[op->op_type]);
 	    break;
 	case CXt_SUB:
 	    if (dowarn)
@@ -863,8 +974,12 @@ I32 startingblock;
 	    if (dowarn)
 		warn("Exiting eval via %s", op_name[op->op_type]);
 	    break;
+	case CXt_NULL:
+	    if (dowarn)
+		warn("Exiting pseudo-block via %s", op_name[op->op_type]);
+	    return -1;
 	case CXt_LOOP:
-	    DEBUG_l( deb("(Found loop #%d)\n", i));
+	    DEBUG_l( deb("(Found loop #%ld)\n", (long)i));
 	    return i;
 	}
     }
@@ -880,11 +995,14 @@ I32 cxix;
     I32 optype;
 
     while (cxstack_ix > cxix) {
-	cx = &cxstack[cxstack_ix--];
-	DEBUG_l(fprintf(stderr, "Unwinding block %ld, type %s\n", (long) cxstack_ix+1,
-		    block_type[cx->cx_type]));
+	cx = &cxstack[cxstack_ix];
+	DEBUG_l(PerlIO_printf(Perl_debug_log, "Unwinding block %ld, type %s\n",
+			      (long) cxstack_ix+1, block_type[cx->cx_type]));
 	/* Note: we don't need to restore the base context info till the end. */
 	switch (cx->cx_type) {
+	case CXt_SUBST:
+	    POPSUBST(cx);
+	    continue;  /* not break */
 	case CXt_SUB:
 	    POPSUB(cx);
 	    break;
@@ -894,51 +1012,11 @@ I32 cxix;
 	case CXt_LOOP:
 	    POPLOOP(cx);
 	    break;
-	case CXt_SUBST:
+	case CXt_NULL:
 	    break;
 	}
+	cxstack_ix--;
     }
-}
-
-#ifdef I_STDARG
-OP *
-die(char* pat, ...)
-#else
-/*VARARGS0*/
-OP *
-die(pat, va_alist)
-    char *pat;
-    va_dcl
-#endif
-{
-    va_list args;
-    char *message;
-    int oldrunlevel = runlevel;
-    int was_in_eval = in_eval;
-    HV *stash;
-    GV *gv;
-    CV *cv;
-
-#ifdef I_STDARG
-    va_start(args, pat);
-#else
-    va_start(args);
-#endif
-    message = mess(pat, &args);
-    va_end(args);
-    if (diehook && (cv = sv_2cv(diehook, &stash, &gv, 0)) && !CvDEPTH(cv)) {
-	dSP;
-
-	PUSHMARK(sp);
-	EXTEND(sp, 1);
-	PUSHs(sv_2mortal(newSVpv(message,0)));
-	PUTBACK;
-	perl_call_sv((SV*)cv, G_DISCARD);
-    }
-    restartop = die_where(message);
-    if ((!restartop && was_in_eval) || oldrunlevel > 1)
-	Siglongjmp(top_env, 3);
-    return restartop;
 }
 
 OP *
@@ -980,7 +1058,7 @@ char *message;
 
 	    POPBLOCK(cx,curpm);
 	    if (cx->cx_type != CXt_EVAL) {
-		fprintf(stderr, "panic: die %s", message);
+		PerlIO_printf(PerlIO_stderr(), "panic: die %s", message);
 		my_exit(1);
 	    }
 	    POPEVAL(cx);
@@ -991,28 +1069,17 @@ char *message;
 
 	    LEAVE;
 
-	    if (optype == OP_REQUIRE)
-		DIE("%s", SvPVx(GvSV(errgv), na));
+	    if (optype == OP_REQUIRE) {
+		char* msg = SvPVx(GvSV(errgv), na);
+		DIE("%s", *msg ? msg : "Compilation failed in require");
+	    }
 	    return pop_return();
 	}
     }
-    fputs(message, stderr);
-    (void)Fflush(stderr);
-    if (e_tmpname) {
-	if (e_fp) {
-	    fclose(e_fp);
-	    e_fp = Nullfp;
-	}
-	(void)UNLINK(e_tmpname);
-	Safefree(e_tmpname);
-	e_tmpname = Nullch;
-    }
-    statusvalue = SHIFTSTATUS(statusvalue);
-#ifdef VMS
-    my_exit((U32)vaxc$errno?vaxc$errno:errno?errno:statusvalue?statusvalue:SS$_ABORT);
-#else
-    my_exit((I32)((errno&255)?errno:((statusvalue&255)?statusvalue:255)));
-#endif
+    PerlIO_printf(PerlIO_stderr(), "%s",message);
+    PerlIO_flush(PerlIO_stderr());
+    my_failure_exit();
+    /* NOTREACHED */
     return 0;
 }
 
@@ -1064,6 +1131,7 @@ PP(pp_caller)
     register I32 cxix = dopoptosub(cxstack_ix);
     register CONTEXT *cx;
     I32 dbcxix;
+    I32 gimme;
     SV *sv;
     I32 count = 0;
 
@@ -1107,7 +1175,7 @@ PP(pp_caller)
 	RETURN;
     if (cx->cx_type == CXt_SUB) { /* So is cxstack[dbcxix]. */
 	sv = NEWSV(49, 0);
-	gv_efullname(sv, CvGV(cxstack[cxix].blk_sub.cv));
+	gv_efullname3(sv, CvGV(cxstack[cxix].blk_sub.cv), Nullch);
 	PUSHs(sv_2mortal(sv));
 	PUSHs(sv_2mortal(newSViv((I32)cx->blk_sub.hasargs)));
     }
@@ -1115,7 +1183,11 @@ PP(pp_caller)
 	PUSHs(sv_2mortal(newSVpv("(eval)",0)));
 	PUSHs(sv_2mortal(newSViv(0)));
     }
-    PUSHs(sv_2mortal(newSViv((I32)cx->blk_gimme)));
+    gimme = (I32)cx->blk_gimme;
+    if (gimme == G_VOID)
+	PUSHs(&sv_undef);
+    else
+	PUSHs(sv_2mortal(newSViv(gimme & G_ARRAY)));
     if (cx->cx_type == CXt_EVAL) {
 	if (cx->blk_eval.old_op_type == OP_ENTEREVAL) {
 	    PUSHs(cx->blk_eval.cur_text);
@@ -1155,8 +1227,8 @@ sortcv(a, b)
 const void *a;
 const void *b;
 {
-    SV **str1 = (SV **) a;
-    SV **str2 = (SV **) b;
+    SV * const *str1 = (SV * const *)a;
+    SV * const *str2 = (SV * const *)b;
     I32 oldsaveix = savestack_ix;
     I32 oldscopeix = scopestack_ix;
     I32 result;
@@ -1182,33 +1254,15 @@ sortcmp(a, b)
 const void *a;
 const void *b;
 {
-    register SV *str1 = *(SV **) a;
-    register SV *str2 = *(SV **) b;
-    I32 retval;
+    return sv_cmp(*(SV * const *)a, *(SV * const *)b);
+}
 
-    if (!SvPOKp(str1)) {
-	if (!SvPOKp(str2))
-	    return 0;
-	else
-	    return -1;
-    }
-    if (!SvPOKp(str2))
-	return 1;
-
-    if (SvCUR(str1) < SvCUR(str2)) {
-	/*SUPPRESS 560*/
-	if (retval = memcmp(SvPVX(str1), SvPVX(str2), SvCUR(str1)))
-	    return retval;
-	else
-	    return -1;
-    }
-    /*SUPPRESS 560*/
-    else if (retval = memcmp(SvPVX(str1), SvPVX(str2), SvCUR(str2)))
-	return retval;
-    else if (SvCUR(str1) == SvCUR(str2))
-	return 0;
-    else
-	return 1;
+static int
+sortcmp_locale(a, b)
+const void *a;
+const void *b;
+{
+    return sv_cmp_locale(*(SV * const *)a, *(SV * const *)b);
 }
 
 PP(pp_reset)
@@ -1258,7 +1312,7 @@ PP(pp_dbstate)
 	SAVETMPS;
 
 	SAVEI32(debug);
-	SAVESPTR(stack_sp);
+	SAVESTACK_POS();
 	debug = 0;
 	hasargs = 0;
 	sp = stack_sp;
@@ -1285,7 +1339,7 @@ PP(pp_enteriter)
 {
     dSP; dMARK;
     register CONTEXT *cx;
-    I32 gimme = GIMME;
+    I32 gimme = GIMME_V;
     SV **svp;
 
     ENTER;
@@ -1302,14 +1356,11 @@ PP(pp_enteriter)
 
     PUSHBLOCK(cx, CXt_LOOP, SP);
     PUSHLOOP(cx, svp, MARK);
-    if (op->op_flags & OPf_STACKED) {
-	AV* av = (AV*)POPs;
-	cx->blk_loop.iterary = av;
-	cx->blk_loop.iterix = -1;
-    }
+    if (op->op_flags & OPf_STACKED)
+	cx->blk_loop.iterary = (AV*)SvREFCNT_inc(POPs);
     else {
-	cx->blk_loop.iterary = stack;
-	AvFILL(stack) = sp - stack_base;
+	cx->blk_loop.iterary = curstack;
+	AvFILL(curstack) = sp - stack_base;
 	cx->blk_loop.iterix = MARK - stack_base;
     }
 
@@ -1320,7 +1371,7 @@ PP(pp_enterloop)
 {
     dSP;
     register CONTEXT *cx;
-    I32 gimme = GIMME;
+    I32 gimme = GIMME_V;
 
     ENTER;
     SAVETMPS;
@@ -1336,6 +1387,7 @@ PP(pp_leaveloop)
 {
     dSP;
     register CONTEXT *cx;
+    struct block_loop cxloop;
     I32 gimme;
     SV **newsp;
     PMOP *newpm;
@@ -1343,27 +1395,33 @@ PP(pp_leaveloop)
 
     POPBLOCK(cx,newpm);
     mark = newsp;
-    POPLOOP(cx);
-    if (gimme == G_SCALAR) {
-	if (op->op_private & OPpLEAVE_VOID)
-	    ;
-	else {
-	    if (mark < SP)
-		*++newsp = sv_mortalcopy(*SP);
-	    else
-		*++newsp = &sv_undef;
-	}
+    POPLOOP1(cx);	/* Delay POPLOOP2 until stack values are safe */
+
+    TAINT_NOT;
+    if (gimme == G_VOID)
+	; /* do nothing */
+    else if (gimme == G_SCALAR) {
+	if (mark < SP)
+	    *++newsp = sv_mortalcopy(*SP);
+	else
+	    *++newsp = &sv_undef;
     }
     else {
-	while (mark < SP)
+	while (mark < SP) {
 	    *++newsp = sv_mortalcopy(*++mark);
+	    TAINT_NOT;		/* Each item is independent */
+	}
     }
-    curpm = newpm;	/* Don't pop $1 et al till now */
-    sp = newsp;
+    SP = newsp;
+    PUTBACK;
+
+    POPLOOP2();		/* Stack values are safe: release loop vars ... */
+    curpm = newpm;	/* ... and pop $1 et al */
+
     LEAVE;
     LEAVE;
 
-    RETURN;
+    return NORMAL;
 }
 
 PP(pp_return)
@@ -1371,16 +1429,18 @@ PP(pp_return)
     dSP; dMARK;
     I32 cxix;
     register CONTEXT *cx;
+    struct block_sub cxsub;
+    bool popsub2 = FALSE;
     I32 gimme;
     SV **newsp;
     PMOP *newpm;
     I32 optype = 0;
 
-    if (stack == sortstack) {
-	if (cxstack_ix == sortcxix || dopoptosub(cxstack_ix) < sortcxix) {
+    if (curstack == sortstack) {
+	if (cxstack_ix == sortcxix || dopoptosub(cxstack_ix) <= sortcxix) {
 	    if (cxstack_ix > sortcxix)
 		dounwind(sortcxix);
-	    AvARRAY(stack)[1] = *SP;
+	    AvARRAY(curstack)[1] = *SP;
 	    stack_sp = stack_base + 1;
 	    return 0;
 	}
@@ -1395,13 +1455,15 @@ PP(pp_return)
     POPBLOCK(cx,newpm);
     switch (cx->cx_type) {
     case CXt_SUB:
-	POPSUB(cx);
+	POPSUB1(cx);	/* Delay POPSUB2 until stack values are safe */
+	popsub2 = TRUE;
 	break;
     case CXt_EVAL:
 	POPEVAL(cx);
 	if (optype == OP_REQUIRE &&
 	    (MARK == SP || (gimme == G_SCALAR && !SvTRUE(*SP))) )
 	{
+	    /* Unassume the success we assumed earlier. */
 	    char *name = cx->blk_eval.old_name;
 	    (void)hv_delete(GvHVn(incgv), name, strlen(name), G_DISCARD);
 	    DIE("%s did not return a true value", name);
@@ -1409,21 +1471,30 @@ PP(pp_return)
 	break;
     default:
 	DIE("panic: return");
-	break;
     }
 
+    TAINT_NOT;
     if (gimme == G_SCALAR) {
 	if (MARK < SP)
-	    *++newsp = sv_mortalcopy(*SP);
+	    *++newsp = (popsub2 && SvTEMP(*SP))
+			? *SP : sv_mortalcopy(*SP);
 	else
 	    *++newsp = &sv_undef;
     }
-    else {
-	while (MARK < SP)
-	    *++newsp = sv_mortalcopy(*++MARK);
+    else if (gimme == G_ARRAY) {
+	while (++MARK <= SP) {
+	    *++newsp = (popsub2 && SvTEMP(*MARK))
+			? *MARK : sv_mortalcopy(*MARK);
+	    TAINT_NOT;		/* Each item is independent */
+	}
     }
-    curpm = newpm;	/* Don't pop $1 et al till now */
     stack_sp = newsp;
+
+    /* Stack values are safe: */
+    if (popsub2) {
+	POPSUB2();	/* release CV and @_ ... */
+    }
+    curpm = newpm;	/* ... and pop $1 et al */
 
     LEAVE;
     return pop_return();
@@ -1434,6 +1505,9 @@ PP(pp_last)
     dSP;
     I32 cxix;
     register CONTEXT *cx;
+    struct block_loop cxloop;
+    struct block_sub cxsub;
+    I32 pop2 = 0;
     I32 gimme;
     I32 optype;
     OP *nextop;
@@ -1457,38 +1531,55 @@ PP(pp_last)
     POPBLOCK(cx,newpm);
     switch (cx->cx_type) {
     case CXt_LOOP:
-	POPLOOP(cx);
-	nextop = cx->blk_loop.last_op->op_next;
-	LEAVE;
+	POPLOOP1(cx);	/* Delay POPLOOP2 until stack values are safe */
+	pop2 = CXt_LOOP;
+	nextop = cxloop.last_op->op_next;
+	break;
+    case CXt_SUB:
+	POPSUB1(cx);	/* Delay POPSUB2 until stack values are safe */
+	pop2 = CXt_SUB;
+	nextop = pop_return();
 	break;
     case CXt_EVAL:
 	POPEVAL(cx);
 	nextop = pop_return();
 	break;
-    case CXt_SUB:
-	POPSUB(cx);
-	nextop = pop_return();
-	break;
     default:
 	DIE("panic: last");
-	break;
     }
 
+    TAINT_NOT;
     if (gimme == G_SCALAR) {
-	if (mark < SP)
-	    *++newsp = sv_mortalcopy(*SP);
+	if (MARK < SP)
+	    *++newsp = ((pop2 == CXt_SUB) && SvTEMP(*SP))
+			? *SP : sv_mortalcopy(*SP);
 	else
 	    *++newsp = &sv_undef;
     }
-    else {
-	while (mark < SP)
-	    *++newsp = sv_mortalcopy(*++mark);
+    else if (gimme == G_ARRAY) {
+	while (++MARK <= SP) {
+	    *++newsp = ((pop2 == CXt_SUB) && SvTEMP(*MARK))
+			? *MARK : sv_mortalcopy(*MARK);
+	    TAINT_NOT;		/* Each item is independent */
+	}
     }
-    curpm = newpm;	/* Don't pop $1 et al till now */
-    sp = newsp;
+    SP = newsp;
+    PUTBACK;
+
+    /* Stack values are safe: */
+    switch (pop2) {
+    case CXt_LOOP:
+	POPLOOP2();	/* release loop vars ... */
+	LEAVE;
+	break;
+    case CXt_SUB:
+	POPSUB2();	/* release CV and @_ ... */
+	break;
+    }
+    curpm = newpm;	/* ... and pop $1 et al */
 
     LEAVE;
-    RETURNOP(nextop);
+    return nextop;
 }
 
 PP(pp_next)
@@ -1544,19 +1635,27 @@ PP(pp_redo)
 static OP* lastgotoprobe;
 
 static OP *
-dofindlabel(op,label,opstack)
+dofindlabel(op,label,opstack,oplimit)
 OP *op;
 char *label;
 OP **opstack;
+OP **oplimit;
 {
     OP *kid;
     OP **ops = opstack;
+    static char too_deep[] = "Target of goto is too deeply nested";
 
+    if (ops >= oplimit)
+	croak(too_deep);
     if (op->op_type == OP_LEAVE ||
 	op->op_type == OP_SCOPE ||
 	op->op_type == OP_LEAVELOOP ||
 	op->op_type == OP_LEAVETRY)
-	    *ops++ = cUNOP->op_first;
+    {
+	*ops++ = cUNOP->op_first;
+	if (ops >= oplimit)
+	    croak(too_deep);
+    }
     *ops = 0;
     if (op->op_flags & OPf_KIDS) {
 	/* First try all the kids at this level, since that's likeliest. */
@@ -1568,15 +1667,12 @@ OP **opstack;
 	for (kid = cUNOP->op_first; kid; kid = kid->op_sibling) {
 	    if (kid == lastgotoprobe)
 		continue;
-	    if (kid->op_type == OP_NEXTSTATE || kid->op_type == OP_DBSTATE) {
-		if (ops > opstack &&
-		  (ops[-1]->op_type == OP_NEXTSTATE ||
-		   ops[-1]->op_type == OP_DBSTATE))
-		    *ops = kid;
-		else
-		    *ops++ = kid;
-	    }
-	    if (op = dofindlabel(kid,label,ops))
+	    if ((kid->op_type == OP_NEXTSTATE || kid->op_type == OP_DBSTATE) &&
+		(ops == opstack ||
+		 (ops[-1]->op_type != OP_NEXTSTATE &&
+		  ops[-1]->op_type != OP_DBSTATE)))
+		*ops++ = kid;
+	    if (op = dofindlabel(kid, label, ops, oplimit))
 		return op;
 	}
     }
@@ -1596,7 +1692,8 @@ PP(pp_goto)
     OP *retop = 0;
     I32 ix;
     register CONTEXT *cx;
-    OP *enterops[64];
+#define GOTO_DEPTH 64
+    OP *enterops[GOTO_DEPTH];
     char *label;
     int do_dump = (op->op_type == OP_DUMP);
 
@@ -1616,7 +1713,7 @@ PP(pp_goto)
 	    if (!CvROOT(cv) && !CvXSUB(cv)) {
 		if (CvGV(cv)) {
 		    SV *tmpstr = sv_newmortal();
-		    gv_efullname(tmpstr, CvGV(cv));
+		    gv_efullname3(tmpstr, CvGV(cv), Nullch);
 		    DIE("Goto undefined subroutine &%s",SvPVX(tmpstr));
 		}
 		DIE("Goto undefined subroutine");
@@ -1634,8 +1731,11 @@ PP(pp_goto)
 		AV* av = cx->blk_sub.argarray;
 		
 		items = AvFILL(av) + 1;
-		Copy(AvARRAY(av), ++stack_sp, items, SV*);
+		stack_sp++;
+		EXTEND(stack_sp, items); /* @_ could have been extended. */
+		Copy(AvARRAY(av), stack_sp, items, SV*);
 		stack_sp += items;
+		SvREFCNT_dec(GvAV(defgv));
 		GvAV(defgv) = cx->blk_sub.savearray;
 		AvREAL_off(av);
 		av_clear(av);
@@ -1661,6 +1761,7 @@ PP(pp_goto)
 		    sp = stack_base + items;
 		}
 		else {
+		    stack_sp--;		/* There is no cv arg. */
 		    (void)(*CvXSUB(cv))(cv);
 		}
 		LEAVE;
@@ -1676,8 +1777,7 @@ PP(pp_goto)
 		    (void)SvREFCNT_inc(cv);
 		else {	/* save temporaries on recursion? */
 		    if (CvDEPTH(cv) == 100 && dowarn)
-			warn("Deep recursion on subroutine \"%s\"",
-			    GvENAME(CvGV(cv)));
+			sub_crush_depth(cv);
 		    if (CvDEPTH(cv) > AvFILL(padlist)) {
 			AV *newpad = newAV();
 			SV **oldpad = AvARRAY(svp[CvDEPTH(cv)-1]);
@@ -1686,8 +1786,10 @@ PP(pp_goto)
 			for ( ;ix > 0; ix--) {
 			    if (svp[ix] != &sv_undef) {
 				char *name = SvPVX(svp[ix]);
-				if (SvFLAGS(svp[ix]) & SVf_FAKE) {
-				    /* outer lexical? */
+				if ((SvFLAGS(svp[ix]) & SVf_FAKE)
+				    || *name == '&')
+				{
+				    /* outer lexical or anon code */
 				    av_store(newpad, ix,
 					SvREFCNT_inc(oldpad[ix]) );
 				}
@@ -1725,7 +1827,7 @@ PP(pp_goto)
 
 		    cx->blk_sub.savearray = GvAV(defgv);
 		    cx->blk_sub.argarray = av;
-		    GvAV(defgv) = cx->blk_sub.argarray;
+		    GvAV(defgv) = (AV*)SvREFCNT_inc(av);
 		    ++mark;
 
 		    if (items >= AvMAX(av) + 1) {
@@ -1750,6 +1852,15 @@ PP(pp_goto)
 			mark++;
 		    }
 		}
+		if (PERLDB_SUB && curstash != debstash) {
+		    /*
+		     * We do not care about using sv to call CV;
+		     * it's for informational purposes only.
+		     */
+		    SV *sv = GvSV(DBsub);
+		    save_item(sv);
+		    gv_efullname3(sv, CvGV(cv), Nullch);
+		}
 		RETURNOP(CvSTART(cv));
 	    }
 	}
@@ -1773,9 +1884,6 @@ PP(pp_goto)
 	for (ix = cxstack_ix; ix >= 0; ix--) {
 	    cx = &cxstack[ix];
 	    switch (cx->cx_type) {
-	    case CXt_SUB:
-		gotoprobe = CvROOT(cx->blk_sub.cv);
-		break;
 	    case CXt_EVAL:
 		gotoprobe = eval_root; /* XXX not good for nested eval */
 		break;
@@ -1790,14 +1898,22 @@ PP(pp_goto)
 		else
 		    gotoprobe = main_root;
 		break;
+	    case CXt_SUB:
+		if (CvDEPTH(cx->blk_sub.cv)) {
+		    gotoprobe = CvROOT(cx->blk_sub.cv);
+		    break;
+		}
+		/* FALL THROUGH */
+	    case CXt_NULL:
+		DIE("Can't \"goto\" outside a block");
 	    default:
 		if (ix)
 		    DIE("panic: goto");
-		else
-		    gotoprobe = main_root;
+		gotoprobe = main_root;
 		break;
 	    }
-	    retop = dofindlabel(gotoprobe, label, enterops);
+	    retop = dofindlabel(gotoprobe, label,
+				enterops, enterops + GOTO_DEPTH);
 	    if (retop)
 		break;
 	    lastgotoprobe = gotoprobe;
@@ -1824,6 +1940,11 @@ PP(pp_goto)
 	    OP *oldop = op;
 	    for (ix = 1; enterops[ix]; ix++) {
 		op = enterops[ix];
+		/* Eventually we may want to stack the needed arguments
+		 * for each op.  For now, we punt on the hard ones. */
+		if (op->op_type == OP_ENTERITER)
+		    DIE("Can't \"goto\" into the middle of a foreach loop",
+			label);
 		(*op->op_ppaddr)();
 	    }
 	    op = oldop;
@@ -1843,9 +1964,9 @@ PP(pp_goto)
 	do_undump = FALSE;
     }
 
-    if (stack == signalstack) {
+    if (curstack == signalstack) {
         restartop = retop;
-        Siglongjmp(top_env, 3);
+        JMPENV_JUMP(3);
     }
 
     RETURNOP(retop);
@@ -1858,8 +1979,13 @@ PP(pp_exit)
 
     if (MAXARG < 1)
 	anum = 0;
-    else
+    else {
 	anum = SvIVx(POPs);
+#ifdef VMSISH_EXIT
+	if (anum == 1 && VMSISH_EXIT)
+	    anum = 0;
+#endif
+    }
     my_exit(anum);
     PUSHs(&sv_undef);
     RETURN;
@@ -1934,29 +2060,74 @@ SV *sv;
 }
 
 static OP *
+docatch(o)
+OP *o;
+{
+    int ret;
+    I32 oldrunlevel = runlevel;
+    OP *oldop = op;
+    dJMPENV;
+
+    op = o;
+#ifdef DEBUGGING
+    assert(CATCH_GET == TRUE);
+    DEBUG_l(deb("(Setting up local jumplevel, runlevel = %ld)\n", (long)runlevel+1));
+#endif
+    JMPENV_PUSH(ret);
+    switch (ret) {
+    default:				/* topmost level handles it */
+	JMPENV_POP;
+	runlevel = oldrunlevel;
+	op = oldop;
+	JMPENV_JUMP(ret);
+	/* NOTREACHED */
+    case 3:
+	if (!restartop) {
+	    PerlIO_printf(PerlIO_stderr(), "panic: restartop\n");
+	    break;
+	}
+	op = restartop;
+	restartop = 0;
+	/* FALL THROUGH */
+    case 0:
+        runops();
+	break;
+    }
+    JMPENV_POP;
+    runlevel = oldrunlevel;
+    op = oldop;
+    return Nullop;
+}
+
+static OP *
 doeval(gimme)
 int gimme;
 {
     dSP;
     OP *saveop = op;
     HV *newstash;
+    CV *caller;
     AV* comppadlist;
 
     in_eval = 1;
 
+    PUSHMARK(SP);
+
     /* set up a scratch pad */
 
-    SAVEINT(padix);
+    SAVEI32(padix);
     SAVESPTR(curpad);
     SAVESPTR(comppad);
     SAVESPTR(comppad_name);
-    SAVEINT(comppad_name_fill);
-    SAVEINT(min_intro_pending);
-    SAVEINT(max_intro_pending);
+    SAVEI32(comppad_name_fill);
+    SAVEI32(min_intro_pending);
+    SAVEI32(max_intro_pending);
 
+    caller = compcv;
     SAVESPTR(compcv);
     compcv = (CV*)NEWSV(1104,0);
     sv_upgrade((SV *)compcv, SVt_PVCV);
+    CvUNIQUE_on(compcv);
 
     comppad = newAV();
     comppad_name = newAV();
@@ -1971,6 +2142,10 @@ int gimme;
     av_store(comppadlist, 0, (SV*)comppad_name);
     av_store(comppadlist, 1, (SV*)comppad);
     CvPADLIST(compcv) = comppadlist;
+
+    if (saveop->op_type != OP_REQUIRE)
+	CvOUTSIDE(compcv) = (CV*)SvREFCNT_inc(caller);
+
     SAVEFREESV(compcv);
 
     /* make sure we compile in the right package */
@@ -1992,7 +2167,10 @@ int gimme;
     curcop->cop_arybase = 0;
     SvREFCNT_dec(rs);
     rs = newSVpv("\n", 1);
-    sv_setpv(GvSV(errgv),"");
+    if (saveop->op_flags & OPf_SPECIAL)
+	in_eval |= 4;
+    else
+	sv_setpv(GvSV(errgv),"");
     if (yyparse() || error_count || !eval_root) {
 	SV **newsp;
 	I32 gimme;
@@ -2004,13 +2182,16 @@ int gimme;
 	    op_free(eval_root);
 	    eval_root = Nullop;
 	}
+	SP = stack_base + POPMARK;		/* pop original mark */
 	POPBLOCK(cx,curpm);
 	POPEVAL(cx);
 	pop_return();
 	lex_end();
 	LEAVE;
-	if (optype == OP_REQUIRE)
-	    DIE("%s", SvPVx(GvSV(errgv), na));
+	if (optype == OP_REQUIRE) {
+	    char* msg = SvPVx(GvSV(errgv), na);
+	    DIE("%s", *msg ? msg : "Compilation failed in require");
+	}
 	SvREFCNT_dec(rs);
 	rs = SvREFCNT_inc(nrs);
 	RETPUSHUNDEF;
@@ -2019,15 +2200,33 @@ int gimme;
     rs = SvREFCNT_inc(nrs);
     compiling.cop_line = 0;
     SAVEFREEOP(eval_root);
-    if (gimme & G_ARRAY)
+    if (gimme & G_VOID)
+	scalarvoid(eval_root);
+    else if (gimme & G_ARRAY)
 	list(eval_root);
     else
 	scalar(eval_root);
 
     DEBUG_x(dump_eval());
 
+    /* Register with debugger: */
+    if (PERLDB_INTER && saveop->op_type == OP_REQUIRE) {
+	CV *cv = perl_get_cv("DB::postponed", FALSE);
+	if (cv) {
+	    dSP;
+	    PUSHMARK(sp);
+	    XPUSHs((SV*)compiling.cop_filegv);
+	    PUTBACK;
+	    perl_call_sv((SV*)cv, G_DISCARD);
+	}
+    }
+
     /* compiled okay, so do it */
 
+    CvDEPTH(compcv) = 1;
+
+    SP = stack_base + POPMARK;		/* pop original mark */
+    op = saveop;					/* The caller may need it. */
     RETURNOP(eval_start);
 }
 
@@ -2037,13 +2236,15 @@ PP(pp_require)
     register CONTEXT *cx;
     SV *sv;
     char *name;
-    char *tmpname;
+    char *tryname;
+    SV *namesv = Nullsv;
     SV** svp;
     I32 gimme = G_SCALAR;
-    FILE *tryrsfp = 0;
+    PerlIO *tryrsfp = 0;
 
     sv = POPs;
     if (SvNIOKp(sv) && !SvPOKp(sv)) {
+	SET_NUMERIC_STANDARD();
 	if (atof(patchlevel) + 0.00000999 < SvNV(sv))
 	    DIE("Perl %s required--this is only version %s, stopped",
 		SvPV(sv,na),patchlevel);
@@ -2060,59 +2261,77 @@ PP(pp_require)
 
     /* prepare to compile file */
 
-    tmpname = savepv(name);
-    if (*tmpname == '/' ||
-	(*tmpname == '.' && 
-	    (tmpname[1] == '/' ||
-	     (tmpname[1] == '.' && tmpname[2] == '/')))
+    if (*name == '/' ||
+	(*name == '.' && 
+	    (name[1] == '/' ||
+	     (name[1] == '.' && name[2] == '/')))
 #ifdef DOSISH
-      || (tmpname[0] && tmpname[1] == ':')
+      || (name[0] && name[1] == ':')
+#endif
+#ifdef WIN32
+      || (name[0] == '\\' && name[1] == '\\')	/* UNC path */
 #endif
 #ifdef VMS
-	|| (strchr(tmpname,':') || ((*tmpname == '[' || *tmpname == '<') &&
-	    (tmpname[1] == '-' || tmpname[1] == ']' || tmpname[1] == '>')))
+	|| (strchr(name,':')  || ((*name == '[' || *name == '<') &&
+	    (isALNUM(name[1]) || strchr("$-_]>",name[1]))))
 #endif
     )
     {
-	tryrsfp = fopen(tmpname,"r");
+	tryname = name;
+	tryrsfp = PerlIO_open(name,"r");
     }
     else {
 	AV *ar = GvAVn(incgv);
 	I32 i;
-
-	for (i = 0; i <= AvFILL(ar); i++) {
 #ifdef VMS
-	    if (tounixpath_ts(SvPVx(*av_fetch(ar, i, TRUE), na),buf) == NULL)
-		continue;
-	    strcat(buf,name);
-#else
-	    (void)sprintf(buf, "%s/%s",
-		SvPVx(*av_fetch(ar, i, TRUE), na), name);
+	char *unixname;
+	if ((unixname = tounixspec(name, Nullch)) != Nullch)
 #endif
-	    tryrsfp = fopen(buf, "r");
-	    if (tryrsfp) {
-		char *s = buf;
-
-		if (*s == '.' && s[1] == '/')
-		    s += 2;
-		Safefree(tmpname);
-		tmpname = savepv(s);
-		break;
+	{
+	    namesv = NEWSV(806, 0);
+	    for (i = 0; i <= AvFILL(ar); i++) {
+		char *dir = SvPVx(*av_fetch(ar, i, TRUE), na);
+#ifdef VMS
+		char *unixdir;
+		if ((unixdir = tounixpath(dir, Nullch)) == Nullch)
+		    continue;
+		sv_setpv(namesv, unixdir);
+		sv_catpv(namesv, unixname);
+#else
+		sv_setpvf(namesv, "%s/%s", dir, name);
+#endif
+		tryname = SvPVX(namesv);
+		tryrsfp = PerlIO_open(tryname, "r");
+		if (tryrsfp) {
+		    if (tryname[0] == '.' && tryname[1] == '/')
+			tryname += 2;
+		    break;
+		}
 	    }
 	}
     }
     SAVESPTR(compiling.cop_filegv);
-    compiling.cop_filegv = gv_fetchfile(tmpname);
-    Safefree(tmpname);
-    tmpname = Nullch;
+    compiling.cop_filegv = gv_fetchfile(tryrsfp ? tryname : name);
+    SvREFCNT_dec(namesv);
     if (!tryrsfp) {
 	if (op->op_type == OP_REQUIRE) {
-	    sprintf(tokenbuf,"Can't locate %s in @INC", name);
-	    if (instr(tokenbuf,".h "))
-		strcat(tokenbuf," (change .h to .ph maybe?)");
-	    if (instr(tokenbuf,".ph "))
-		strcat(tokenbuf," (did you run h2ph?)");
-	    DIE("%s",tokenbuf);
+	    SV *msg = sv_2mortal(newSVpvf("Can't locate %s in @INC", name));
+	    SV *dirmsgsv = NEWSV(0, 0);
+	    AV *ar = GvAVn(incgv);
+	    I32 i;
+	    if (instr(SvPVX(msg), ".h "))
+		sv_catpv(msg, " (change .h to .ph maybe?)");
+	    if (instr(SvPVX(msg), ".ph "))
+		sv_catpv(msg, " (did you run h2ph?)");
+	    sv_catpv(msg, " (@INC contains:");
+	    for (i = 0; i <= AvFILL(ar); i++) {
+		char *dir = SvPVx(*av_fetch(ar, i, TRUE), na);
+		sv_setpvf(dirmsgsv, " %s", dir);
+	        sv_catsv(msg, dirmsgsv);
+	    }
+	    sv_catpvn(msg, ")", 1);
+    	    SvREFCNT_dec(dirmsgsv);
+	    DIE("%_", msg);
 	}
 
 	RETPUSHUNDEF;
@@ -2145,7 +2364,7 @@ PP(pp_require)
     compiling.cop_line = 0;
 
     PUTBACK;
-    return doeval(G_SCALAR);
+    return DOCATCH(doeval(G_SCALAR));
 }
 
 PP(pp_dofile)
@@ -2158,9 +2377,11 @@ PP(pp_entereval)
     dSP;
     register CONTEXT *cx;
     dPOPss;
-    I32 gimme = GIMME;
-    char tmpbuf[32];
+    I32 gimme = GIMME_V, was = sub_generation;
+    char tmpbuf[TYPE_DIGITS(long) + 12];
+    char *safestr;
     STRLEN len;
+    OP *ret;
 
     if (!SvPV(sv,len) || !len)
 	RETPUSHUNDEF;
@@ -2173,10 +2394,16 @@ PP(pp_entereval)
     /* switch to eval mode */
 
     SAVESPTR(compiling.cop_filegv);
-    sprintf(tmpbuf, "_<(eval %d)", ++evalseq);
+    sprintf(tmpbuf, "_<(eval %lu)", (unsigned long)++evalseq);
     compiling.cop_filegv = gv_fetchfile(tmpbuf+2);
     compiling.cop_line = 1;
-    SAVEDELETE(defstash, savepv(tmpbuf), strlen(tmpbuf));
+    /* XXX For C<eval "...">s within BEGIN {} blocks, this ends up
+       deleting the eval's FILEGV from the stash before gv_check() runs
+       (i.e. before run-time proper). To work around the coredump that
+       ensues, we always turn GvMULTI_on for any globals that were
+       introduced within evals. See force_ident(). GSAR 96-10-12 */
+    safestr = savepv(tmpbuf);
+    SAVEDELETE(defstash, safestr, strlen(safestr));
     SAVEI32(hints);
     hints = op->op_targ;
 
@@ -2186,10 +2413,15 @@ PP(pp_entereval)
 
     /* prepare to compile string */
 
-    if (perldb && curstash != debstash)
+    if (PERLDB_LINE && curstash != debstash)
 	save_lines(GvAV(compiling.cop_filegv), linestr);
     PUTBACK;
-    return doeval(gimme);
+    ret = doeval(gimme);
+    if (PERLDB_INTER && was != sub_generation /* Some subs defined here. */
+	&& ret != op->op_next) {	/* Successive compilation. */
+	strcpy(safestr, "_<(eval )");	/* Anything fake and short. */
+    }
+    return DOCATCH(ret);
 }
 
 PP(pp_leaveeval)
@@ -2201,53 +2433,89 @@ PP(pp_leaveeval)
     I32 gimme;
     register CONTEXT *cx;
     OP *retop;
+    U8 save_flags = op -> op_flags;
     I32 optype;
 
     POPBLOCK(cx,newpm);
     POPEVAL(cx);
     retop = pop_return();
 
-    if (gimme == G_SCALAR) {
-	if (op->op_private & OPpLEAVE_VOID)
-	    MARK = newsp;
-	else {
-	    MARK = newsp + 1;
-	    if (MARK <= SP) {
-		if (SvFLAGS(TOPs) & SVs_TEMP)
-		    *MARK = TOPs;
-		else
-		    *MARK = sv_mortalcopy(TOPs);
-	    }
-	    else {
-		MEXTEND(mark,0);
-		*MARK = &sv_undef;
-	    }
+    TAINT_NOT;
+    if (gimme == G_VOID)
+	MARK = newsp;
+    else if (gimme == G_SCALAR) {
+	MARK = newsp + 1;
+	if (MARK <= SP) {
+	    if (SvFLAGS(TOPs) & SVs_TEMP)
+		*MARK = TOPs;
+	    else
+		*MARK = sv_mortalcopy(TOPs);
 	}
-	SP = MARK;
+	else {
+	    MEXTEND(mark,0);
+	    *MARK = &sv_undef;
+	}
     }
     else {
-	for (mark = newsp + 1; mark <= SP; mark++)
-	    if (!(SvFLAGS(TOPs) & SVs_TEMP))
+	/* in case LEAVE wipes old return values */
+	for (mark = newsp + 1; mark <= SP; mark++) {
+	    if (!(SvFLAGS(*mark) & SVs_TEMP)) {
 		*mark = sv_mortalcopy(*mark);
-		/* in case LEAVE wipes old return values */
+		TAINT_NOT;	/* Each item is independent */
+	    }
+	}
     }
     curpm = newpm;	/* Don't pop $1 et al till now */
 
-    if (optype != OP_ENTEREVAL) {
-	char *name = cx->blk_eval.old_name;
+    /*
+     * Closures mentioned at top level of eval cannot be referenced
+     * again, and their presence indirectly causes a memory leak.
+     * (Note that the fact that compcv and friends are still set here
+     * is, AFAIK, an accident.)  --Chip
+     */
+    if (AvFILL(comppad_name) >= 0) {
+	SV **svp = AvARRAY(comppad_name);
+	I32 ix;
+	for (ix = AvFILL(comppad_name); ix >= 0; ix--) {
+	    SV *sv = svp[ix];
+	    if (sv && sv != &sv_undef && *SvPVX(sv) == '&') {
+		SvREFCNT_dec(sv);
+		svp[ix] = &sv_undef;
 
-	if (!(gimme == G_SCALAR ? SvTRUE(*sp) : sp > newsp)) {
-	    /* Unassume the success we assumed earlier. */
-	    (void)hv_delete(GvHVn(incgv), name, strlen(name), G_DISCARD);
-
-	    if (optype == OP_REQUIRE)
-		retop = die("%s did not return a true value", name);
+		sv = curpad[ix];
+		if (CvCLONE(sv)) {
+		    SvREFCNT_dec(CvOUTSIDE(sv));
+		    CvOUTSIDE(sv) = Nullcv;
+		}
+		else {
+		    SvREFCNT_dec(sv);
+		    sv = NEWSV(0,0);
+		    SvPADTMP_on(sv);
+		    curpad[ix] = sv;
+		}
+	    }
 	}
+    }
+
+#ifdef DEBUGGING
+    assert(CvDEPTH(compcv) == 1);
+#endif
+    CvDEPTH(compcv) = 0;
+
+    if (optype == OP_REQUIRE &&
+	!(gimme == G_SCALAR ? SvTRUE(*sp) : sp > newsp))
+    {
+	/* Unassume the success we assumed earlier. */
+	char *name = cx->blk_eval.old_name;
+	(void)hv_delete(GvHVn(incgv), name, strlen(name), G_DISCARD);
+	retop = die("%s did not return a true value", name);
     }
 
     lex_end();
     LEAVE;
-    sv_setpv(GvSV(errgv),"");
+
+    if (!(save_flags & OPf_SPECIAL))
+	sv_setpv(GvSV(errgv),"");
 
     RETURNOP(retop);
 }
@@ -2256,7 +2524,7 @@ PP(pp_entertry)
 {
     dSP;
     register CONTEXT *cx;
-    I32 gimme = GIMME;
+    I32 gimme = GIMME_V;
 
     ENTER;
     SAVETMPS;
@@ -2268,7 +2536,8 @@ PP(pp_entertry)
 
     in_eval = 1;
     sv_setpv(GvSV(errgv),"");
-    RETURN;
+    PUTBACK;
+    return DOCATCH(op->op_next);
 }
 
 PP(pp_leavetry)
@@ -2285,29 +2554,31 @@ PP(pp_leavetry)
     POPEVAL(cx);
     pop_return();
 
-    if (gimme == G_SCALAR) {
-	if (op->op_private & OPpLEAVE_VOID)
-	    MARK = newsp;
+    TAINT_NOT;
+    if (gimme == G_VOID)
+	SP = newsp;
+    else if (gimme == G_SCALAR) {
+	MARK = newsp + 1;
+	if (MARK <= SP) {
+	    if (SvFLAGS(TOPs) & (SVs_PADTMP|SVs_TEMP))
+		*MARK = TOPs;
+	    else
+		*MARK = sv_mortalcopy(TOPs);
+	}
 	else {
-	    MARK = newsp + 1;
-	    if (MARK <= SP) {
-		if (SvFLAGS(TOPs) & (SVs_PADTMP|SVs_TEMP))
-		    *MARK = TOPs;
-		else
-		    *MARK = sv_mortalcopy(TOPs);
-	    }
-	    else {
-		MEXTEND(mark,0);
-		*MARK = &sv_undef;
-	    }
+	    MEXTEND(mark,0);
+	    *MARK = &sv_undef;
 	}
 	SP = MARK;
     }
     else {
-	for (mark = newsp + 1; mark <= SP; mark++)
-	    if (!(SvFLAGS(TOPs) & (SVs_PADTMP|SVs_TEMP)))
+	/* in case LEAVE wipes old return values */
+	for (mark = newsp + 1; mark <= SP; mark++) {
+	    if (!(SvFLAGS(*mark) & (SVs_PADTMP|SVs_TEMP))) {
 		*mark = sv_mortalcopy(*mark);
-		/* in case LEAVE wipes old return values */
+		TAINT_NOT;	/* Each item is independent */
+	    }
+	}
     }
     curpm = newpm;	/* Don't pop $1 et al till now */
 
@@ -2334,7 +2605,10 @@ SV *sv;
     register I32 arg;
     bool ischop;
 
-    New(804, fops, (send - s)*3+2, U16);    /* Almost certainly too long... */
+    if (len == 0)
+	croak("Null picture in formline");
+    
+    New(804, fops, (send - s)*3+10, U16);    /* Almost certainly too long... */
     fpc = fops;
 
     if (s < send) {
@@ -2367,13 +2641,12 @@ SV *sv;
 	    skipspaces++;
 	    arg -= skipspaces;
 	    if (arg) {
-		if (postspace) {
+		if (postspace)
 		    *fpc++ = FF_SPACE;
-		    postspace = FALSE;
-		}
 		*fpc++ = FF_LITERAL;
 		*fpc++ = arg;
 	    }
+	    postspace = FALSE;
 	    if (s <= send)
 		skipspaces--;
 	    if (skipspaces) {
@@ -2489,5 +2762,6 @@ SV *sv;
     }
     Copy(fops, s, arg, U16);
     Safefree(fops);
+    sv_magic(sv, Nullsv, 'f', Nullch, 0);
     SvCOMPILED_on(sv);
 }

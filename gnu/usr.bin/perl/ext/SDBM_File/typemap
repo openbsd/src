@@ -23,3 +23,5 @@ T_DATUM
 	sv_setpvn($arg, $var.dptr, $var.dsize);
 T_GDATUM
 	sv_usepvn($arg, $var.dptr, $var.dsize);
+T_PTROBJ
+        sv_setref_pv($arg, dbtype, (void*)$var);

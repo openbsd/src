@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# $RCSfile: dus,v $$Revision: 1.1.1.1 $$Date: 1996/08/19 10:11:53 $
+# $RCSfile: dus,v $$Revision: 1.2 $$Date: 1997/11/30 07:49:37 $
 
 # This script does a du -s on any directories in the current directory that
 # are not mount points for another filesystem.

@@ -5,7 +5,7 @@ require Exporter;
 @ISA = qw(Exporter);
 @EXPORT = qw(&soundex $soundex_nocode);
 
-# $Id: Soundex.pm,v 1.1.1.1 1996/08/19 10:12:51 downsj Exp $
+# $Id: Soundex.pm,v 1.2 1997/11/30 07:58:05 millert Exp $
 #
 # Implementation of soundex algorithm as described by Knuth in volume
 # 3 of The Art of Computer Programming, with ideas stolen from Ian
@@ -23,9 +23,8 @@ require Exporter;
 # Lukasiewicz, Lissajous -> L222
 #
 # $Log: Soundex.pm,v $
-# Revision 1.1.1.1  1996/08/19 10:12:51  downsj
-# Import of Perl 5.003 into the tree.  Makefile.bsd-wrapper and
-# config.sh.OpenBSD are the only local changes.
+# Revision 1.2  1997/11/30 07:58:05  millert
+# perl 5.004_04
 #
 # Revision 1.2  1994/03/24  00:30:27  mike
 # Subtle bug (any excuse :-) spotted by Rich Pinder <rpinder@hsc.usc.edu>
@@ -52,7 +51,7 @@ sub soundex
 
   foreach (@s)
   {
-    tr/a-z/A-Z/;
+    $_ = uc $_;
     tr/A-Z//cd;
 
     if ($_ eq '')

@@ -29,6 +29,12 @@
 #include <a.out.h>
 #include <ldfcn.h>
 
+/* If using PerlIO, redefine these macros from <ldfcn.h> */
+#ifdef USE_PERLIO
+#define FSEEK(ldptr,o,p)        PerlIO_seek(IOPTR(ldptr),(p==BEGINNING)?(OFFSET(ldptr)+o):o,p)
+#define FREAD(p,s,n,ldptr)      PerlIO_read(IOPTR(ldptr),p,s*n)
+#endif
+
 /*
  * We simulate dlopen() et al. through a call to load. Because AIX has
  * no call to find an exported symbol we read the loader section of the
@@ -389,7 +395,13 @@ static int readExports(ModulePtr mp)
 			;
 		return -1;
 	}
+/* This first case is a hack, since it assumes that the 3rd parameter to
+   FREAD is 1. See the redefinition of FREAD above to see how this works. */
+#ifdef USE_PERLIO
+	if (FREAD(ldbuf, sh.s_size, 1, ldp) != sh.s_size) {
+#else
 	if (FREAD(ldbuf, sh.s_size, 1, ldp) != 1) {
+#endif
 		errvalid++;
 		strcpy(errbuf, "readExports: cannot read loader section");
 		safefree(ldbuf);
@@ -524,12 +536,15 @@ BOOT:
 
 
 void *
-dl_load_file(filename)
-	char *		filename
+dl_load_file(filename, flags=0)
+	char *	filename
+	int	flags
 	CODE:
-	DLDEBUG(1,fprintf(stderr,"dl_load_file(%s):\n", filename));
+	DLDEBUG(1,PerlIO_printf(PerlIO_stderr(), "dl_load_file(%s,%x):\n", filename,flags));
+	if (flags & 0x01)
+	    warn("Can't make loaded symbols global on this platform while loading %s",filename);
 	RETVAL = dlopen(filename, 1) ;
-	DLDEBUG(2,fprintf(stderr," libref=%x\n", RETVAL));
+	DLDEBUG(2,PerlIO_printf(PerlIO_stderr(), " libref=%x\n", RETVAL));
 	ST(0) = sv_newmortal() ;
 	if (RETVAL == NULL)
 	    SaveError("%s",dlerror()) ;
@@ -542,10 +557,10 @@ dl_find_symbol(libhandle, symbolname)
 	void *		libhandle
 	char *		symbolname
 	CODE:
-	DLDEBUG(2,fprintf(stderr,"dl_find_symbol(handle=%x, symbol=%s)\n",
+	DLDEBUG(2,PerlIO_printf(PerlIO_stderr(), "dl_find_symbol(handle=%x, symbol=%s)\n",
 		libhandle, symbolname));
 	RETVAL = dlsym(libhandle, symbolname);
-	DLDEBUG(2,fprintf(stderr,"  symbolref = %x\n", RETVAL));
+	DLDEBUG(2,PerlIO_printf(PerlIO_stderr(), "  symbolref = %x\n", RETVAL));
 	ST(0) = sv_newmortal() ;
 	if (RETVAL == NULL)
 	    SaveError("%s",dlerror()) ;
@@ -567,7 +582,7 @@ dl_install_xsub(perl_name, symref, filename="$Package")
     void *	symref 
     char *	filename
     CODE:
-    DLDEBUG(2,fprintf(stderr,"dl_install_xsub(name=%s, symref=%x)\n",
+    DLDEBUG(2,PerlIO_printf(PerlIO_stderr(), "dl_install_xsub(name=%s, symref=%x)\n",
 	perl_name, symref));
     ST(0)=sv_2mortal(newRV((SV*)newXS(perl_name, (void(*)())symref, filename)));
 

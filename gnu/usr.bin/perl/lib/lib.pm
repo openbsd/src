@@ -1,20 +1,30 @@
 package lib;
 
+use vars qw(@ORIG_INC);
 use Config;
 
 my $archname = $Config{'archname'};
 
-@ORIG_INC = ();		# (avoid typo warning)
 @ORIG_INC = @INC;	# take a handy copy of 'original' value
 
 
 sub import {
     shift;
     foreach (reverse @_) {
+	## Ignore this if not defined.
+	next unless defined($_);
+	if ($_ eq '') {
+	    require Carp;
+	    Carp::carp("Empty compile time value given to use lib");
+							# at foo.pl line ...
+	}
 	unshift(@INC, $_);
 	# Put a corresponding archlib directory infront of $_ if it
 	# looks like $_ has an archlib directory below it.
-	unshift(@INC, "$_/$archname") if -d "$_/$archname/auto";
+	if (-d "$_/$archname") {
+	    unshift(@INC, "$_/$archname")    if -d "$_/$archname/auto";
+	    unshift(@INC, "$_/$archname/$]") if -d "$_/$archname/$]/auto";
+	}
     }
 }
 
@@ -60,7 +70,6 @@ It is typically used to add extra directories to perl's search path so
 that later C<use> or C<require> statements will find modules which are
 not located on perl's default search path.
 
-
 =head2 ADDING DIRECTORIES TO @INC
 
 The parameters to C<use lib> are added to the start of the perl search
@@ -79,7 +88,6 @@ architecture specific directory and is added to @INC in front of $dir.
 
 If LIST includes both $dir and $dir/$archname then $dir/$archname will
 be added to @INC twice (if $dir/$archname/auto exists).
-
 
 =head2 DELETING DIRECTORIES FROM @INC
 
@@ -106,7 +114,6 @@ architecture specific directory and is also deleted from @INC.
 If LIST includes both $dir and $dir/$archname then $dir/$archname will
 be deleted from @INC twice (if $dir/$archname/auto exists).
 
-
 =head2 RESTORING ORIGINAL @INC
 
 When the lib module is first loaded it records the current value of @INC
@@ -118,7 +125,7 @@ can say
 
 =head1 SEE ALSO
 
-AddINC - optional module which deals with paths relative to the source file.
+FindBin - optional module which deals with paths relative to the source file.
 
 =head1 AUTHOR
 

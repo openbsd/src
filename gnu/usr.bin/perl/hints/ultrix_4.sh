@@ -4,9 +4,15 @@
 #
 # Use   Configure -Dcc=gcc   to use gcc.
 #
-# I don't know if -g is really needed.  (AD)
+# This used to use -g, but that pulls in -DDEBUGGING by default.
 case "$optimize" in
-'') optimize=-g ;;
+'')
+	# recent versions have a working compiler.
+	case "$osvers" in
+	*4.[45]*)	optimize='-O2' ;;
+	*)		optimize='none' ;;
+	esac
+	;;
 esac
 
 # Some users have reported Configure runs *much* faster if you 
@@ -16,7 +22,7 @@ esac
 # Then run "sh5 Configure.sh5 [your options]"
 
 case "$myuname" in
-*risc*) cat <<EOF
+*risc*) cat <<EOF >&4
 Note that there is a bug in some versions of NFS on the DECStation that
 may cause utime() to work incorrectly.  If so, regression test io/fs
 may fail if run under NFS.  Ignore the failure.
@@ -28,16 +34,16 @@ case "$cc" in
 *gcc*) ;;
 *)
     case "$osvers" in
-    *4.1*)	ccflags="$ccflags -DLANGUAGE_C -Olimit 2900" ;;
-    *4.2*)	ccflags="$ccflags -DLANGUAGE_C -Olimit 2900"
+    *4.1*)	ccflags="$ccflags -DLANGUAGE_C -Olimit 3200" ;;
+    *4.2*)	ccflags="$ccflags -DLANGUAGE_C -Olimit 3200"
 		# Prototypes sometimes cause compilation errors in 4.2.
 		prototype=undef   
 		case "$myuname" in
 		*risc*)  d_volatile=undef ;;
 		esac
 		;;
-    *4.3*)	ccflags="$ccflags -std1 -DLANGUAGE_C -Olimit 2900" ;;
-    *)	ccflags="$ccflags -std -Olimit 2900" ;;
+    *4.3*)	ccflags="$ccflags -std1 -DLANGUAGE_C -Olimit 3200" ;;
+    *)	ccflags="$ccflags -std -Olimit 3200" ;;
     esac
     ;;
 esac
@@ -50,4 +56,11 @@ case "$osvers" in
 *)	ranlib='ranlib' ;;
 esac
 
+# Settings that don't depend on $osvers:
+
+util_cflags='ccflags="$ccflags -DLOCALE_ENVIRON_REQUIRED"'
 groupstype='int'
+# This will cause a WHOA THERE warning, but it's accurate.  The
+# configure test should be beefed up to try using the field when
+# it can't find any of the standardly-named fields.
+d_dirnamlen='define'

@@ -1,65 +1,82 @@
 #!./perl
 
 # $RCSfile: stat.t,v $$Revision: 4.1 $$Date: 92/08/07 18:28:28 $
-# 950521 DFD    This version hacked to make test 39 succeed on MachTen
-#               though the O.S. wrongly thinks /dev/null is a terminal
+
+BEGIN {
+    chdir 't' if -d 't';
+    @INC = '../lib';
+}
+
+use Config;
+
 print "1..56\n";
 
-chop($cwd = `pwd`);
+$Is_MSWin32 = $^O eq 'MSWin32';
+chop($cwd = ($Is_MSWin32 ? `cd` : `pwd`));
 
-$DEV = `ls -l /dev`;
+$DEV = `ls -l /dev` unless $Is_MSWin32;
 
 unlink "Op.stat.tmp";
 open(FOO, ">Op.stat.tmp");
 
-$junk = `ls Op.stat.tmp`;	# hack to make Apollo update link count
+# hack to make Apollo update link count:
+$junk = `ls Op.stat.tmp` unless $Is_MSWin32;
 
 ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime,
     $blksize,$blocks) = stat(FOO);
 if ($nlink == 1) {print "ok 1\n";} else {print "not ok 1\n";}
-if ($mtime && $mtime == $ctime) {print "ok 2\n";} else {print "not ok 2\n";}
+if ($Is_MSWin32 || ($mtime && $mtime == $ctime)) {print "ok 2\n";}
+else {print "# |$mtime| vs |$ctime|\nnot ok 2\n";}
 
 print FOO "Now is the time for all good men to come to.\n";
 close(FOO);
 
 sleep 2;
 
-`rm -f Op.stat.tmp2; ln Op.stat.tmp Op.stat.tmp2; chmod 644 Op.stat.tmp`;
+if ($Is_MSWin32) { unlink "Op.stat.tmp2" }
+else {
+    `rm -f Op.stat.tmp2;ln Op.stat.tmp Op.stat.tmp2; chmod 644 Op.stat.tmp`;
+}
 
 ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime,
     $blksize,$blocks) = stat('Op.stat.tmp');
 
-if ($nlink == 2) {print "ok 3\n";} else {print "not ok 3\n";}
-if (($mtime && $mtime != $ctime) || $cwd =~ m#/afs/#) {
+if ($Is_MSWin32 || $Config{dont_use_nlink} || $nlink == 2)
+    {print "ok 3\n";} else {print "# \$nlink is |$nlink|\nnot ok 3\n";}
+
+if ($Is_MSWin32 || ($mtime && $mtime != $ctime) || $cwd =~ m#/afs/# || $^O eq 'amigaos') {
     print "ok 4\n";
 }
 else {
     print "not ok 4\n";
-    print '#4 If test op/stat.t fails test 4, check if you are on a tmpfs';
-    print '#4 of some sort.  Building in /tmp sometimes has this problem.';
+    print "#4 If test op/stat.t fails test 4, check if you are on a tmpfs\n";
+    print "#4 of some sort.  Building in /tmp sometimes has this problem.\n";
 }
 print "#4	:$mtime: != :$ctime:\n";
 
-`rm -f Op.stat.tmp`;
-`touch Op.stat.tmp`;
+unlink "Op.stat.tmp";
+if ($Is_MSWin32) {  open F, '>Op.stat.tmp' and close F }
+else             { `touch Op.stat.tmp` }
 
 if (-z 'Op.stat.tmp') {print "ok 5\n";} else {print "not ok 5\n";}
 if (! -s 'Op.stat.tmp') {print "ok 6\n";} else {print "not ok 6\n";}
 
-`echo hi >Op.stat.tmp`;
+$Is_MSWin32 ? `cmd /c echo hi > Op.stat.tmp` : `echo hi >Op.stat.tmp`;
 if (! -z 'Op.stat.tmp') {print "ok 7\n";} else {print "not ok 7\n";}
 if (-s 'Op.stat.tmp') {print "ok 8\n";} else {print "not ok 8\n";}
 
 unlink 'Op.stat.tmp';
 $olduid = $>;		# can't test -r if uid == 0
-`echo hi >Op.stat.tmp`;
+$Is_MSWin32 ? `cmd /c echo hi > Op.stat.tmp` : `echo hi >Op.stat.tmp`;
 chmod 0,'Op.stat.tmp';
 eval '$> = 1;';		# so switch uid (may not be implemented)
 if (!$> || ! -r 'Op.stat.tmp') {print "ok 9\n";} else {print "not ok 9\n";}
 if (!$> || ! -w 'Op.stat.tmp') {print "ok 10\n";} else {print "not ok 10\n";}
 eval '$> = $olduid;';		# switch uid back (may not be implemented)
 print "# olduid=$olduid, newuid=$>\n" unless ($> == $olduid);
-if (! -x 'Op.stat.tmp') {print "ok 11\n";} else {print "not ok 11\n";}
+
+if (! -x 'Op.stat.tmp') {print "ok 11\n";}
+else                    {print "not ok 11\n";}
 
 foreach ((12,13,14,15,16,17)) {
     print "ok $_\n";		#deleted tests
@@ -68,7 +85,7 @@ foreach ((12,13,14,15,16,17)) {
 chmod 0700,'Op.stat.tmp';
 if (-r 'Op.stat.tmp') {print "ok 18\n";} else {print "not ok 18\n";}
 if (-w 'Op.stat.tmp') {print "ok 19\n";} else {print "not ok 19\n";}
-if (-x 'Op.stat.tmp') {print "ok 20\n";} else {print "not ok 20\n";}
+if ($Is_MSWin32 or -x 'Op.stat.tmp') {print "ok 20\n";} else {print "not ok 20\n";}
 
 if (-f 'Op.stat.tmp') {print "ok 21\n";} else {print "not ok 21\n";}
 if (! -d 'Op.stat.tmp') {print "ok 22\n";} else {print "not ok 22\n";}
@@ -76,7 +93,7 @@ if (! -d 'Op.stat.tmp') {print "ok 22\n";} else {print "not ok 22\n";}
 if (-d '.') {print "ok 23\n";} else {print "not ok 23\n";}
 if (! -f '.') {print "ok 24\n";} else {print "not ok 24\n";}
 
-if (`ls -l perl` =~ /^l.*->/) {
+if (!$Is_MSWin32 and `ls -l perl` =~ /^l.*->/) {
     if (-l 'perl') {print "ok 25\n";} else {print "not ok 25\n";}
 }
 else {
@@ -86,10 +103,12 @@ else {
 if (-o 'Op.stat.tmp') {print "ok 26\n";} else {print "not ok 26\n";}
 
 if (-e 'Op.stat.tmp') {print "ok 27\n";} else {print "not ok 27\n";}
-`rm -f Op.stat.tmp Op.stat.tmp2`;
+unlink 'Op.stat.tmp', 'Op.stat.tmp2';
 if (! -e 'Op.stat.tmp') {print "ok 28\n";} else {print "not ok 28\n";}
 
-if ($DEV !~ /\nc.* (\S+)\n/)
+if ($Is_MSWin32)
+    {print "ok 29\n";}
+elsif ($DEV !~ /\nc.* (\S+)\n/)
     {print "ok 29\n";}
 elsif (-c "/dev/$1")
     {print "ok 29\n";}
@@ -97,7 +116,9 @@ else
     {print "not ok 29\n";}
 if (! -c '.') {print "ok 30\n";} else {print "not ok 30\n";}
 
-if ($DEV !~ /\ns.* (\S+)\n/)
+if ($Is_MSWin32)
+    {print "ok 31\n";}
+elsif ($DEV !~ /\ns.* (\S+)\n/)
     {print "ok 31\n";}
 elsif (-S "/dev/$1")
     {print "ok 31\n";}
@@ -105,7 +126,9 @@ else
     {print "not ok 31\n";}
 if (! -S '.') {print "ok 32\n";} else {print "not ok 32\n";}
 
-if ($DEV !~ /\nb.* (\S+)\n/)
+if ($Is_MSWin32)
+    {print "ok 33\n";}
+elsif ($DEV !~ /\nb.* (\S+)\n/)
     {print "ok 33\n";}
 elsif (-b "/dev/$1")
     {print "ok 33\n";}
@@ -113,17 +136,21 @@ else
     {print "not ok 33\n";}
 if (! -b '.') {print "ok 34\n";} else {print "not ok 34\n";}
 
+if ($^O eq 'amigaos' or $Is_MSWin32) {print "ok 35\n"; goto tty_test;}
+
 $cnt = $uid = 0;
 
 die "Can't run op/stat.t test 35 without pwd working" unless $cwd;
-print ("not ok 35\n"), goto tty_test unless -d '/usr/bin';
-chdir '/usr/bin' || die "Can't cd to /usr/bin";
-while (defined($_ = <*>)) {
+($bin) = grep {-d} ($^O eq 'machten' ? qw(/usr/bin /bin) : qw(/bin /usr/bin))
+    or print ("not ok 35\n"), goto tty_test;
+opendir BIN, $bin or die "Can't opendir $bin: $!";
+while (defined($_ = readdir BIN)) {
+    $_ = "$bin/$_";
     $cnt++;
     $uid++ if -u;
     last if $uid && $uid < $cnt;
 }
-chdir $cwd || die "Can't cd back to $cwd";
+closedir BIN;
 
 # I suppose this is going to fail somewhere...
 if ($uid > 0 && $uid < $cnt)
@@ -133,18 +160,35 @@ else
 
 tty_test:
 
-unless (open(tty,"/dev/tty")) {
-    print STDERR "Can't open /dev/tty--run t/TEST outside of make.\n";
+# To assist in automated testing when a controlling terminal (/dev/tty)
+# may not be available (at, cron  rsh etc), the PERL_SKIP_TTY_TEST env var
+# can be set to skip the tests that need a tty.
+unless($ENV{PERL_SKIP_TTY_TEST}) {
+    if ($Is_MSWin32) {
+	print "ok 36\n";
+	print "ok 37\n";
+    }
+    else {
+	unless (open(tty,"/dev/tty")) {
+	    print STDERR "Can't open /dev/tty--run t/TEST outside of make.\n";
+	}
+	if (-t tty) {print "ok 36\n";} else {print "not ok 36\n";}
+	if (-c tty) {print "ok 37\n";} else {print "not ok 37\n";}
+	close(tty);
+    }
+    if (! -t tty) {print "ok 38\n";} else {print "not ok 38\n";}
+    if (-t)       {print "ok 39\n";} else {print "not ok 39\n";}
 }
-if (-t tty) {print "ok 36\n";} else {print "not ok 36\n";}
-if (-c tty) {print "ok 37\n";} else {print "not ok 37\n";}
-close(tty);
-if (! -t tty) {print "ok 38\n";} else {print "not ok 38\n";}
+else {
+    print "ok 36\n";
+    print "ok 37\n";
+    print "ok 38\n";
+    print "ok 39\n";
+}
 open(null,"/dev/null");
-if (! -t null || -e '/xenix' || -e '/MachTen')
-	{print "ok 39\n";} else {print "not ok 39\n";}
+if (! -t null || -e '/xenix' || $^O eq 'machten' || $Is_MSWin32)
+	{print "ok 40\n";} else {print "not ok 40\n";}
 close(null);
-if (-t) {print "ok 40\n";} else {print "not ok 40\n";}
 
 # These aren't strictly "stat" calls, but so what?
 

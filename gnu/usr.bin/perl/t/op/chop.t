@@ -2,7 +2,7 @@
 
 # $RCSfile: chop.t,v $$Revision: 4.1 $$Date: 92/08/07 18:27:40 $
 
-print "1..22\n";
+print "1..28\n";
 
 # optimized
 
@@ -70,3 +70,18 @@ $_ = "f";
 $/ = "";
 print chomp() == 0 ? "ok 21\n" : "not ok 21\n";
 print $_ eq "f" ? "ok 22\n" : "not ok 22\n";
+
+$_ = "xx";
+$/ = "xx";
+print chomp() == 2 ? "ok 23\n" : "not ok 23\n";
+print $_ eq "" ? "ok 24\n" : "not ok 24\n";
+
+$_ = "axx";
+$/ = "xx";
+print chomp() == 2 ? "ok 25\n" : "not ok 25\n";
+print $_ eq "a" ? "ok 26\n" : "not ok 26\n";
+
+$_ = "axx";
+$/ = "yy";
+print chomp() == 0 ? "ok 27\n" : "not ok 27\n";
+print $_ eq "axx" ? "ok 28\n" : "not ok 28\n";

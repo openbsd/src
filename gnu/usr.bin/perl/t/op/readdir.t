@@ -12,7 +12,7 @@ closedir(OP);
 if (@D > 20 && @D < 100) { print "ok 2\n"; } else { print "not ok 2\n"; }
 
 @R = sort @D;
-@G = <op/*.t>;
+@G = sort <op/*.t>;
 if ($G[0] =~ m#.*\](\w+\.t)#i) {
     # grep is to convert filespecs returned from glob under VMS to format
     # identical to that returned by readdir

@@ -1,11 +1,13 @@
 /*    cv.h
  *
- *    Copyright (c) 1991-1994, Larry Wall
+ *    Copyright (c) 1991-1997, Larry Wall
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
  *
  */
+
+/* This structure much match the beginning of XPVFM */
 
 struct xpvcv {
     char *	xpv_pv;		/* pointer to malloced string */
@@ -47,6 +49,9 @@ struct xpvcv {
 #define CVf_CLONED	0x02	/* a clone of one of those */
 #define CVf_ANON	0x04	/* CvGV() can't be trusted */
 #define CVf_OLDSTYLE	0x08
+#define CVf_UNIQUE	0x10	/* can't be cloned */
+#define CVf_NODEBUG	0x20	/* no DB::sub indirection for this CV
+				   (esp. useful for special XSUBs) */
 
 #define CvCLONE(cv)		(CvFLAGS(cv) & CVf_CLONE)
 #define CvCLONE_on(cv)		(CvFLAGS(cv) |= CVf_CLONE)
@@ -63,3 +68,11 @@ struct xpvcv {
 #define CvOLDSTYLE(cv)		(CvFLAGS(cv) & CVf_OLDSTYLE)
 #define CvOLDSTYLE_on(cv)	(CvFLAGS(cv) |= CVf_OLDSTYLE)
 #define CvOLDSTYLE_off(cv)	(CvFLAGS(cv) &= ~CVf_OLDSTYLE)
+
+#define CvUNIQUE(cv)		(CvFLAGS(cv) & CVf_UNIQUE)
+#define CvUNIQUE_on(cv)		(CvFLAGS(cv) |= CVf_UNIQUE)
+#define CvUNIQUE_off(cv)	(CvFLAGS(cv) &= ~CVf_UNIQUE)
+
+#define CvNODEBUG(cv)		(CvFLAGS(cv) & CVf_NODEBUG)
+#define CvNODEBUG_on(cv)	(CvFLAGS(cv) |= CVf_NODEBUG)
+#define CvNODEBUG_off(cv)	(CvFLAGS(cv) &= ~CVf_NODEBUG)

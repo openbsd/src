@@ -1,6 +1,6 @@
 /*    handy.h
  *
- *    Copyright (c) 1991-1994, Larry Wall
+ *    Copyright (c) 1991-1997, Larry Wall
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -20,9 +20,23 @@
 
 #define Null(type) ((type)NULL)
 #define Nullch Null(char*)
-#define Nullfp Null(FILE*)
+#define Nullfp Null(PerlIO*)
 #define Nullsv Null(SV*)
 
+#ifdef TRUE
+#undef TRUE
+#endif
+#ifdef FALSE
+#undef FALSE
+#endif
+#define TRUE (1)
+#define FALSE (0)
+
+
+/* XXX Configure ought to have a test for a boolean type, if I can
+   just figure out all the headers such a test needs.
+   Andy Dougherty	August 1996
+*/
 /* bool is built-in for g++-2.6.3, which might be used for an extension.
    If the extension includes <_G_config.h> before this file then
    _G_HAVE_BOOL will be properly set.  If, however, the extension includes
@@ -37,6 +51,19 @@
 # endif
 #endif
 
+/* The NeXT dynamic loader headers will not build with the bool macro
+   So declare them now to clear confusion.
+*/
+#ifdef NeXT
+# undef FALSE
+# undef TRUE
+  typedef enum bool { FALSE = 0, TRUE = 1 } bool;
+# define ENUM_BOOL 1
+# ifndef HAS_BOOL
+#  define HAS_BOOL 1
+# endif /* !HAS_BOOL */
+#endif /* NeXT */
+
 #ifndef HAS_BOOL
 # ifdef UTS
 #  define bool int
@@ -45,30 +72,69 @@
 # endif
 #endif
 
-#ifdef TRUE
-#undef TRUE
-#endif
-#ifdef FALSE
-#undef FALSE
-#endif
-#define TRUE (1)
-#define FALSE (0)
+/* XXX A note on the perl source internal type system.  The
+   original intent was that I32 be *exactly* 32 bits.
+
+   Currently, we only guarantee that I32 is *at least* 32 bits.
+   Specifically, if int is 64 bits, then so is I32.  (This is the case
+   for the Cray.)  This has the advantage of meshing nicely with
+   standard library calls (where we pass an I32 and the library is
+   expecting an int), but the disadvantage that an I32 is not 32 bits.
+   Andy Dougherty	August 1996
+
+   In the future, we may perhaps want to think about something like
+    #if INTSIZE == 4
+	typedef I32 int;
+    #else
+    #  if LONGSIZE == 4
+	    typedef I32 long;
+    #  else
+    #    if SHORTSIZE == 4
+	    typedef I32 short;
+    #    else
+	    typedef I32 int;
+    #    endif
+    #  endif
+    #endif
+   For the moment, these are mentioned here so metaconfig will
+   construct Configure to figure out the various sizes.
+*/
 
 typedef char		I8;
 typedef unsigned char	U8;
+/* I8_MAX and I8_MIN constants are not defined, as I8 is an ambiguous type.
+   Please search CHAR_MAX in perl.h for further details. */
+#define U8_MAX PERL_UCHAR_MAX
+#define U8_MIN PERL_UCHAR_MIN
 
 typedef short		I16;
 typedef unsigned short	U16;
+#define I16_MAX PERL_SHORT_MAX
+#define I16_MIN PERL_SHORT_MIN
+#define U16_MAX PERL_USHORT_MAX
+#define U16_MIN PERL_USHORT_MIN
 
 #if BYTEORDER > 0x4321
   typedef int		I32;
   typedef unsigned int	U32;
+# define I32_MAX PERL_INT_MAX
+# define I32_MIN PERL_INT_MIN
+# define U32_MAX PERL_UINT_MAX
+# define U32_MIN PERL_UINT_MIN
 #else
   typedef long		I32;
   typedef unsigned long	U32;
+# define I32_MAX PERL_LONG_MAX
+# define I32_MIN PERL_LONG_MIN
+# define U32_MAX PERL_ULONG_MAX
+# define U32_MIN PERL_ULONG_MIN
 #endif
 
-#define Ctl(ch) (ch & 037)
+#define BIT_DIGITS(N)   (((N)*146)/485 + 1)  /* log2(10) =~ 146/485 */
+#define TYPE_DIGITS(T)  BIT_DIGITS(sizeof(T) * 8)
+#define TYPE_CHARS(T)   (TYPE_DIGITS(T) + 2) /* sign, NUL */
+
+#define Ctl(ch) ((ch) & 037)
 
 #define strNE(s1,s2) (strcmp(s1,s2))
 #define strEQ(s1,s2) (!strcmp(s1,s2))
@@ -79,45 +145,96 @@ typedef unsigned short	U16;
 #define strnNE(s1,s2,l) (strncmp(s1,s2,l))
 #define strnEQ(s1,s2,l) (!strncmp(s1,s2,l))
 
+#ifdef HAS_MEMCMP
+#  define memNE(s1,s2,l) (memcmp(s1,s2,l))
+#  define memEQ(s1,s2,l) (!memcmp(s1,s2,l))
+#else
+#  define memNE(s1,s2,l) (bcmp(s1,s2,l))
+#  define memEQ(s1,s2,l) (!bcmp(s1,s2,l))
+#endif
+
+/*
+ * Character classes.
+ *
+ * Unfortunately, the introduction of locales means that we
+ * can't trust isupper(), etc. to tell the truth.  And when
+ * it comes to /\w+/ with tainting enabled, we *must* be able
+ * to trust our character classes.
+ *
+ * Therefore, the default tests in the text of Perl will be
+ * independent of locale.  Any code that wants to depend on
+ * the current locale will use the tests that begin with "lc".
+ */
+
 #ifdef HAS_SETLOCALE  /* XXX Is there a better test for this? */
 #  ifndef CTYPE256
 #    define CTYPE256
 #  endif
 #endif
 
-#ifdef USE_NEXT_CTYPE 
-#define isALNUM(c)   (NXIsAlpha((unsigned int)c) || NXIsDigit((unsigned int)c) || c == '_')
-#define isIDFIRST(c) (NXIsAlpha((unsigned int)c) || c == '_')
-#define isALPHA(c)   NXIsAlpha((unsigned int)c)
-#define isSPACE(c)   NXIsSpace((unsigned int)c)
-#define isDIGIT(c)   NXIsDigit((unsigned int)c)
-#define isUPPER(c)   NXIsUpper((unsigned int)c)
-#define isLOWER(c)   NXIsLower((unsigned int)c)
-#define toUPPER(c)   NXToUpper((unsigned int)c)
-#define toLOWER(c)   NXToLower((unsigned int)c)
-#else /* USE_NEXT_CTYPE */
-#if defined(CTYPE256) || (!defined(isascii) && !defined(HAS_ISASCII))
-#define isALNUM(c)   (isalpha((unsigned char)(c)) || isdigit((unsigned char)(c)) || c == '_')
-#define isIDFIRST(c) (isalpha((unsigned char)(c)) || (c) == '_')
-#define isALPHA(c)   isalpha((unsigned char)(c))
-#define isSPACE(c)   isspace((unsigned char)(c))
-#define isDIGIT(c)   isdigit((unsigned char)(c))
-#define isUPPER(c)   isupper((unsigned char)(c))
-#define isLOWER(c)   islower((unsigned char)(c))
-#define toUPPER(c)   toupper((unsigned char)(c))
-#define toLOWER(c)   tolower((unsigned char)(c))
-#else
-#define isALNUM(c)   (isascii(c) && (isalpha(c) || isdigit(c) || c == '_'))
-#define isIDFIRST(c) (isascii(c) && (isalpha(c) || (c) == '_'))
-#define isALPHA(c)   (isascii(c) && isalpha(c))
-#define isSPACE(c)   (isascii(c) && isspace(c))
-#define isDIGIT(c)   (isascii(c) && isdigit(c))
-#define isUPPER(c)   (isascii(c) && isupper(c))
-#define isLOWER(c)   (isascii(c) && islower(c))
-#define toUPPER(c)   toupper(c)
-#define toLOWER(c)   tolower(c)
-#endif
+#define isALNUM(c)	(isALPHA(c) || isDIGIT(c) || (c) == '_')
+#define isIDFIRST(c)	(isALPHA(c) || (c) == '_')
+#define isALPHA(c)	(isUPPER(c) || isLOWER(c))
+#define isSPACE(c) \
+	((c) == ' ' || (c) == '\t' || (c) == '\n' || (c) =='\r' || (c) == '\f')
+#define isDIGIT(c)	((c) >= '0' && (c) <= '9')
+#define isUPPER(c)	((c) >= 'A' && (c) <= 'Z')
+#define isLOWER(c)	((c) >= 'a' && (c) <= 'z')
+#define isPRINT(c)	(((c) > 32 && (c) < 127) || isSPACE(c))
+#define toUPPER(c)	(isLOWER(c) ? (c) - ('a' - 'A') : (c))
+#define toLOWER(c)	(isUPPER(c) ? (c) + ('a' - 'A') : (c))
+
+#ifdef USE_NEXT_CTYPE
+
+#  define isALNUM_LC(c) \
+	(NXIsAlpha((unsigned int)(c)) || NXIsDigit((unsigned int)(c)) || \
+	 (char)(c) == '_')
+#  define isIDFIRST_LC(c) \
+	(NXIsAlpha((unsigned int)(c)) || (char)(c) == '_')
+#  define isALPHA_LC(c)		NXIsAlpha((unsigned int)(c))
+#  define isSPACE_LC(c)		NXIsSpace((unsigned int)(c))
+#  define isDIGIT_LC(c)		NXIsDigit((unsigned int)(c))
+#  define isUPPER_LC(c)		NXIsUpper((unsigned int)(c))
+#  define isLOWER_LC(c)		NXIsLower((unsigned int)(c))
+#  define isPRINT_LC(c)		NXIsPrint((unsigned int)(c))
+#  define toUPPER_LC(c)		NXToUpper((unsigned int)(c))
+#  define toLOWER_LC(c)		NXToLower((unsigned int)(c))
+
+#else /* !USE_NEXT_CTYPE */
+#  if defined(CTYPE256) || (!defined(isascii) && !defined(HAS_ISASCII))
+
+#    define isALNUM_LC(c) \
+	(isalpha((unsigned char)(c)) || \
+	 isdigit((unsigned char)(c)) || (char)(c) == '_')
+#    define isIDFIRST_LC(c) (isalpha((unsigned char)(c)) || (char)(c) == '_')
+#    define isALPHA_LC(c)	isalpha((unsigned char)(c))
+#    define isSPACE_LC(c)	isspace((unsigned char)(c))
+#    define isDIGIT_LC(c)	isdigit((unsigned char)(c))
+#    define isUPPER_LC(c)	isupper((unsigned char)(c))
+#    define isLOWER_LC(c)	islower((unsigned char)(c))
+#    define isPRINT_LC(c)	isprint((unsigned char)(c))
+#    define toUPPER_LC(c)	toupper((unsigned char)(c))
+#    define toLOWER_LC(c)	tolower((unsigned char)(c))
+
+#  else
+
+#    define isALNUM_LC(c) \
+	(isascii(c) && (isalpha(c) || isdigit(c) || (c) == '_'))
+#    define isIDFIRST_LC(c)	(isascii(c) && (isalpha(c) || (c) == '_'))
+#    define isALPHA_LC(c)	(isascii(c) && isalpha(c))
+#    define isSPACE_LC(c)	(isascii(c) && isspace(c))
+#    define isDIGIT_LC(c)	(isascii(c) && isdigit(c))
+#    define isUPPER_LC(c)	(isascii(c) && isupper(c))
+#    define isLOWER_LC(c)	(isascii(c) && islower(c))
+#    define isPRINT_LC(c)	(isascii(c) && isprint(c))
+#    define toUPPER_LC(c)	toupper(c)
+#    define toLOWER_LC(c)	tolower(c)
+
+#  endif
 #endif /* USE_NEXT_CTYPE */
+
+/* This conversion works both ways, strangely enough. */
+#define toCTRL(c)    (toUPPER(c) ^ 64)
 
 /* Line numbers are unsigned, 16 bits. */
 typedef U16 line_t;
@@ -127,62 +244,68 @@ typedef U16 line_t;
 #define NOLINE ((line_t) 65535)
 #endif
 
+/* XXX LEAKTEST doesn't really work in perl5.  There are direct calls to
+   safemalloc() in the source, so LEAKTEST won't pick them up.
+   Further, if you try LEAKTEST, you'll also end up calling
+   Safefree, which might call safexfree() on some things that weren't
+   malloced with safexmalloc.  The correct "fix" to this, if anyone
+   is interested, is to ensure that all calls go through the New and
+   Renew macros.
+	--Andy Dougherty		August 1996
+*/
+
 #ifndef lint
 #ifndef LEAKTEST
-#ifndef safemalloc
-char *safemalloc _((MEM_SIZE));
-char *saferealloc _((char *, MEM_SIZE));
-void safefree _((char *));
-#endif
-#ifndef MSDOS
-#define New(x,v,n,t)  (v = (t*)safemalloc((MEM_SIZE)((n) * sizeof(t))))
-#define Newc(x,v,n,t,c)  (v = (c*)safemalloc((MEM_SIZE)((n) * sizeof(t))))
-#define Newz(x,v,n,t) (v = (t*)safemalloc((MEM_SIZE)((n) * sizeof(t)))), \
-    memzero((char*)(v), (n) * sizeof(t))
-#define Renew(v,n,t) (v = (t*)saferealloc((char*)(v),(MEM_SIZE)((n)*sizeof(t))))
-#define Renewc(v,n,t,c) (v = (c*)saferealloc((char*)(v),(MEM_SIZE)((n)*sizeof(t))))
-#else
-#define New(x,v,n,t)  (v = (t*)safemalloc(((unsigned long)(n) * sizeof(t))))
-#define Newc(x,v,n,t,c)  (v = (c*)safemalloc(((unsigned long)(n) * sizeof(t))))
-#define Newz(x,v,n,t) (v = (t*)safemalloc(((unsigned long)(n) * sizeof(t)))), \
-    memzero((char*)(v), (n) * sizeof(t))
-#define Renew(v,n,t) (v = (t*)saferealloc((char*)(v),((unsigned long)(n)*sizeof(t))))
-#define Renewc(v,n,t,c) (v = (c*)saferealloc((char*)(v),((unsigned long)(n)*sizeof(t))))
-#endif /* MSDOS */
-#define Safefree(d) safefree((char*)d)
-#define NEWSV(x,len) newSV(len)
+
+#define New(x,v,n,t)	(v = (t*)safemalloc((MEM_SIZE)((n)*sizeof(t))))
+#define Newc(x,v,n,t,c)	(v = (c*)safemalloc((MEM_SIZE)((n)*sizeof(t))))
+#define Newz(x,v,n,t)	(v = (t*)safemalloc((MEM_SIZE)((n)*sizeof(t)))), \
+			memzero((char*)(v), (n)*sizeof(t))
+#define Renew(v,n,t) \
+	  (v = (t*)saferealloc((Malloc_t)(v),(MEM_SIZE)((n)*sizeof(t))))
+#define Renewc(v,n,t,c) \
+	  (v = (c*)saferealloc((Malloc_t)(v),(MEM_SIZE)((n)*sizeof(t))))
+#define Safefree(d)	safefree((Malloc_t)(d))
+#define NEWSV(x,len)	newSV(len)
+
 #else /* LEAKTEST */
-char *safexmalloc();
-char *safexrealloc();
-void safexfree();
-#define New(x,v,n,t)  (v = (t*)safexmalloc(x,(MEM_SIZE)((n) * sizeof(t))))
-#define Newc(x,v,n,t,c)  (v = (c*)safexmalloc(x,(MEM_SIZE)((n) * sizeof(t))))
-#define Newz(x,v,n,t) (v = (t*)safexmalloc(x,(MEM_SIZE)((n) * sizeof(t)))), \
-    memzero((char*)(v), (n) * sizeof(t))
-#define Renew(v,n,t) (v = (t*)safexrealloc((char*)(v),(MEM_SIZE)((n)*sizeof(t))))
-#define Renewc(v,n,t,c) (v = (c*)safexrealloc((char*)(v),(MEM_SIZE)((n)*sizeof(t))))
-#define Safefree(d) safexfree((char*)d)
-#define NEWSV(x,len) newSV(x,len)
-#define MAXXCOUNT 1200
+
+#define New(x,v,n,t)	(v = (t*)safexmalloc((x),(MEM_SIZE)((n)*sizeof(t))))
+#define Newc(x,v,n,t,c)	(v = (c*)safexmalloc((x),(MEM_SIZE)((n)*sizeof(t))))
+#define Newz(x,v,n,t)	(v = (t*)safexmalloc((x),(MEM_SIZE)((n)*sizeof(t)))), \
+			 memzero((char*)(v), (n)*sizeof(t))
+#define Renew(v,n,t) \
+	  (v = (t*)safexrealloc((Malloc_t)(v),(MEM_SIZE)((n)*sizeof(t))))
+#define Renewc(v,n,t,c) \
+	  (v = (c*)safexrealloc((Malloc_t)(v),(MEM_SIZE)((n)*sizeof(t))))
+#define Safefree(d)	safexfree((Malloc_t)d)
+#define NEWSV(x,len)	newSV(x,len)
+
+#define MAXXCOUNT 1400
 long xcount[MAXXCOUNT];
 long lastxcount[MAXXCOUNT];
+
 #endif /* LEAKTEST */
-#define Move(s,d,n,t) (void)memmove((char*)(d),(char*)(s), (n) * sizeof(t))
-#define Copy(s,d,n,t) (void)memcpy((char*)(d),(char*)(s), (n) * sizeof(t))
-#define Zero(d,n,t) (void)memzero((char*)(d), (n) * sizeof(t))
+
+#define Move(s,d,n,t)	(void)memmove((char*)(d),(char*)(s), (n) * sizeof(t))
+#define Copy(s,d,n,t)	(void)memcpy((char*)(d),(char*)(s), (n) * sizeof(t))
+#define Zero(d,n,t)	(void)memzero((char*)(d), (n) * sizeof(t))
+
 #else /* lint */
-#define New(x,v,n,s) (v = Null(s *))
-#define Newc(x,v,n,s,c) (v = Null(s *))
-#define Newz(x,v,n,s) (v = Null(s *))
-#define Renew(v,n,s) (v = Null(s *))
+
+#define New(x,v,n,s)	(v = Null(s *))
+#define Newc(x,v,n,s,c)	(v = Null(s *))
+#define Newz(x,v,n,s)	(v = Null(s *))
+#define Renew(v,n,s)	(v = Null(s *))
 #define Move(s,d,n,t)
 #define Copy(s,d,n,t)
 #define Zero(d,n,t)
-#define Safefree(d) d = d
+#define Safefree(d)	(d) = (d)
+
 #endif /* lint */
 
 #ifdef USE_STRUCT_COPY
-#define StructCopy(s,d,t) *((t*)(d)) = *((t*)(s))
+#define StructCopy(s,d,t) (*((t*)(d)) = *((t*)(s)))
 #else
 #define StructCopy(s,d,t) Copy(s,d,1,t)
 #endif

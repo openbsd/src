@@ -53,8 +53,8 @@ sub dotsh {
    open (_SH_ENV, "/tmp/_sh_env$$") || die "Could not open /tmp/_sh_env$$!\n";
    while (<_SH_ENV>) {
        chop;
-       /=/;
-       $ENV{$`} = $';
+       m/^([^=]*)=(.*)/s;
+       $ENV{$1} = $2;
    }
    close (_SH_ENV);
    system "rm -f /tmp/_sh_env$$";

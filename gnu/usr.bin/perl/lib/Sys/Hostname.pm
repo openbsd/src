@@ -25,7 +25,7 @@ All nulls, returns, and newlines are removed from the result.
 
 =head1 AUTHOR
 
-David Sundstrom <sunds@asictest.sc.ti.com>
+David Sundstrom E<lt>F<sunds@asictest.sc.ti.com>E<gt>
 
 Texas Instruments
 
@@ -39,7 +39,7 @@ sub hostname {
   if ($^O eq 'VMS') {
 
     # method 2 - no sockets ==> return DECnet node name
-    eval {gethostbyname('me')};
+    eval { local $SIG{__DIE__}; $host = (gethostbyname('me'))[0] };
     if ($@) { return $host = $ENV{'SYS$NODE'}; }
 
     # method 3 - has someone else done the job already?  It's common for the
@@ -60,10 +60,16 @@ sub hostname {
     Carp::croak "Cannot get host name of local machine";  
 
   }
+  elsif ($^O eq 'MSWin32') {
+    ($host) = gethostbyname('localhost');
+    chomp($host = `hostname 2> NUL`) unless defined $host;
+    return $host;
+  }
   else {  # Unix
 
     # method 2 - syscall is preferred since it avoids tainting problems
     eval {
+	local $SIG{__DIE__};
 	{
 	    package main;
 	    require "syscall.ph";
@@ -72,18 +78,34 @@ sub hostname {
 	syscall(&main::SYS_gethostname, $host, 65) == 0;
     }
 
+    # method 2a - syscall using systeminfo instead of gethostname
+    #           -- needed on systems like Solaris
+    || eval {
+	local $SIG{__DIE__};
+	{
+	    package main;
+	    require "sys/syscall.ph";
+	    require "sys/systeminfo.ph";
+	}
+	$host = "\0" x 65; ## preload scalar
+	syscall(&main::SYS_systeminfo, &main::SI_HOSTNAME, $host, 65) != -1;
+    }
+
     # method 3 - trusty old hostname command
     || eval {
+	local $SIG{__DIE__};
 	$host = `(hostname) 2>/dev/null`; # bsdish
     }
 
     # method 4 - sysV uname command (may truncate)
     || eval {
+	local $SIG{__DIE__};
 	$host = `uname -n 2>/dev/null`; ## sysVish
     }
 
     # method 5 - Apollo pre-SR10
     || eval {
+	local $SIG{__DIE__};
 	($host,$a,$b,$c,$d)=split(/[:\. ]/,`/com/host`,6);
     }
 

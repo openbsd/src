@@ -1,3 +1,0 @@
-a.+?c	abcabc	y	$&	abc
-(a+|b)*	ab	y	$&-$1	ab-b
-(a+|b){0,}	ab	y	$&-$1	ab-b

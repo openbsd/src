@@ -32,20 +32,23 @@ that.
 A declaration can be put anywhere a statement can, but has no effect on
 the execution of the primary sequence of statements--declarations all
 take effect at compile time.  Typically all the declarations are put at
-the beginning or the end of the script.  However, if you're using 
+the beginning or the end of the script.  However, if you're using
 lexically-scoped private variables created with my(), you'll have to make sure
 your format or subroutine definition is within the same block scope
-as the my if you expect to to be able to access those private variables.
+as the my if you expect to be able to access those private variables.
 
 Declaring a subroutine allows a subroutine name to be used as if it were a
 list operator from that point forward in the program.  You can declare a
-subroutine (prototyped to take one scalar parameter) without defining it by saying just:
+subroutine without defining it by saying C<sub name>, thus:
 
-    sub myname ($);
+    sub myname;
     $me = myname $0 		or die "can't get myname";
 
-Note that it functions as a list operator though, not as a unary
-operator, so be careful to use C<or> instead of C<||> there.
+Note that it functions as a list operator, not as a unary operator; so
+be careful to use C<or> instead of C<||> in this case.  However, if
+you were to declare the subroutine as C<sub myname ($)>, then
+C<myname> would functonion as a unary operator, so either C<or> or
+C<||> would work.
 
 Subroutines declarations can also be loaded up with the C<require> statement
 or both loaded and imported into your namespace with a C<use> statement.
@@ -63,9 +66,9 @@ The only kind of simple statement is an expression evaluated for its
 side effects.  Every simple statement must be terminated with a
 semicolon, unless it is the final statement in a block, in which case
 the semicolon is optional.  (A semicolon is still encouraged there if the
-block takes up more than one line, since you may eventually add another line.)
+block takes up more than one line, because you may eventually add another line.)
 Note that there are some operators like C<eval {}> and C<do {}> that look
-like compound statements, but aren't (they're just TERMs in an expression), 
+like compound statements, but aren't (they're just TERMs in an expression),
 and thus need an explicit termination if used as the last item in a statement.
 
 Any simple statement may optionally be followed by a I<SINGLE> modifier,
@@ -91,7 +94,7 @@ can write loops like:
     } until $line  eq ".\n";
 
 See L<perlfunc/do>.  Note also that the loop control
-statements described later will I<NOT> work in this construct, since
+statements described later will I<NOT> work in this construct, because
 modifiers don't take loop labels.  Sorry.  You can always wrap
 another block around it to do that sort of thing.
 
@@ -128,7 +131,7 @@ all do the same thing:
     open(FOO) ? 'hi mom' : die "Can't open $FOO: $!";
 			# a bit exotic, that last one
 
-The C<if> statement is straightforward.  Since BLOCKs are always
+The C<if> statement is straightforward.  Because BLOCKs are always
 bounded by curly brackets, there is never any ambiguity about which
 C<if> an C<else> goes with.  If you use C<unless> in place of C<if>,
 the sense of the test is reversed.
@@ -178,25 +181,26 @@ want to skip ahead and get the next record.
 
     while (<>) {
 	chomp;
-	if (s/\\$//) { 
-	    $_ .= <>; 
+	if (s/\\$//) {
+	    $_ .= <>;
 	    redo unless eof();
 	}
 	# now process $_
-    } 
+    }
 
 which is Perl short-hand for the more explicitly written version:
 
-    LINE: while ($line = <ARGV>) {
+    LINE: while (defined($line = <ARGV>)) {
 	chomp($line);
-	if ($line =~ s/\\$//) { 
-	    $line .= <ARGV>; 
+	if ($line =~ s/\\$//) {
+	    $line .= <ARGV>;
 	    redo LINE unless eof(); # not eof(ARGV)!
 	}
 	# now process $line
-    } 
+    }
 
-Or here's a a simpleminded Pascal comment stripper (warning: assumes no { or } in strings)
+Or here's a simpleminded Pascal comment stripper (warning: assumes no
+{ or } in strings).
 
     LINE: while (<STDIN>) {
 	while (s|({.*}.*){.*}|$1 |) {}
@@ -220,11 +224,8 @@ If the word C<while> is replaced by the word C<until>, the sense of the
 test is reversed, but the conditional is still tested before the first
 iteration.
 
-In either the C<if> or the C<while> statement, you may replace "(EXPR)"
-with a BLOCK, and the conditional is true if the value of the last
-statement in that block is true.  While this "feature" continues to work in 
-version 5, it has been deprecated, so please change any occurrences of "if BLOCK" to
-"if (do BLOCK)".
+The form C<while/if BLOCK BLOCK>, available in Perl 4, is no longer
+available.   Replace any occurrence of C<if BLOCK> by C<if (do BLOCK)>.
 
 =head2 For Loops
 
@@ -244,27 +245,32 @@ is the same as this:
 	$i++;
     }
 
+(There is one minor difference: The first form implies a lexical scope
+for variables declared with C<my> in the initialization expression.)
+
 Besides the normal array index looping, C<for> can lend itself
 to many other interesting applications.  Here's one that avoids the
-problem you get into if you explicitly test for end-of-file on 
-an interactive file descriptor causing your program to appear to 
+problem you get into if you explicitly test for end-of-file on
+an interactive file descriptor causing your program to appear to
 hang.
 
     $on_a_tty = -t STDIN && -t STDOUT;
     sub prompt { print "yes? " if $on_a_tty }
     for ( prompt(); <STDIN>; prompt() ) {
 	# do something
-    } 
+    }
 
 =head2 Foreach Loops
 
 The C<foreach> loop iterates over a normal list value and sets the
-variable VAR to be each element of the list in turn.  The variable is
-implicitly local to the loop and regains its former value upon exiting the
-loop.  If the variable was previously declared with C<my>, it uses that
-variable instead of the global one, but it's still localized to the loop.
-This can cause problems if you have subroutine or format declarations
-within that block's scope.
+variable VAR to be each element of the list in turn.  If the variable
+is preceded with the keyword C<my>, then it is lexically scoped, and
+is therefore visible only within the loop.  Otherwise, the variable is
+implicitly local to the loop and regains its former value upon exiting
+the loop.  If the variable was previously declared with C<my>, it uses
+that variable instead of the global one, but it's still localized to
+the loop.  (Note that a lexically scoped variable can cause problems
+with you have subroutine or format declarations.)
 
 The C<foreach> keyword is actually a synonym for the C<for> keyword, so
 you can use C<foreach> for readability or C<for> for brevity.  If VAR is
@@ -278,7 +284,7 @@ Examples:
 
     for (@ary) { s/foo/bar/ }
 
-    foreach $elem (@elements) {
+    foreach my $elem (@elements) {
 	$elem *= 2;
     }
 
@@ -294,8 +300,8 @@ Examples:
 
 Here's how a C programmer might code up a particular algorithm in Perl:
 
-    for ($i = 0; $i < @ary1; $i++) {
-	for ($j = 0; $j < @ary2; $j++) {
+    for (my $i = 0; $i < @ary1; $i++) {
+	for (my $j = 0; $j < @ary2; $j++) {
 	    if ($ary1[$i] > $ary2[$j]) {
 		last; # can't go to outer :-(
 	    }
@@ -304,32 +310,32 @@ Here's how a C programmer might code up a particular algorithm in Perl:
 	# this is where that last takes me
     }
 
-Whereas here's how a Perl programmer more confortable with the idiom might
+Whereas here's how a Perl programmer more comfortable with the idiom might
 do it:
 
-    OUTER: foreach $wid (@ary1) { 
-    INNER:   foreach $jet (@ary2) {
+    OUTER: foreach my $wid (@ary1) {
+    INNER:   foreach my $jet (@ary2) {
 		next OUTER if $wid > $jet;
 		$wid += $jet;
-	     } 
-	  } 
+	     }
+	  }
 
 See how much easier this is?  It's cleaner, safer, and faster.  It's
 cleaner because it's less noisy.  It's safer because if code gets added
 between the inner and outer loops later on, the new code won't be
-accidentally executed, the C<next> explicitly iterates the other loop
+accidentally executed.  The C<next> explicitly iterates the other loop
 rather than merely terminating the inner one.  And it's faster because
 Perl executes a C<foreach> statement more rapidly than it would the
 equivalent C<for> loop.
 
 =head2 Basic BLOCKs and Switch Statements
 
-A BLOCK by itself (labeled or not) is semantically equivalent to a loop
-that executes once.  Thus you can use any of the loop control
-statements in it to leave or restart the block.  (Note that this
-is I<NOT> true in C<eval{}>, C<sub{}>, or contrary to popular belief C<do{}> blocks,
-which do I<NOT> count as loops.)  The C<continue> block
-is optional.  
+A BLOCK by itself (labeled or not) is semantically equivalent to a
+loop that executes once.  Thus you can use any of the loop control
+statements in it to leave or restart the block.  (Note that this is
+I<NOT> true in C<eval{}>, C<sub{}>, or contrary to popular belief
+C<do{}> blocks, which do I<NOT> count as loops.)  The C<continue>
+block is optional.
 
 The BLOCK construct is particularly nice for doing case
 structures.
@@ -368,19 +374,19 @@ or
 or formatted so it stands out more as a "proper" switch statement:
 
     SWITCH: {
-	/^abc/ 	    && do { 
-			    $abc = 1; 
-			    last SWITCH; 
+	/^abc/ 	    && do {
+			    $abc = 1;
+			    last SWITCH;
 		       };
 
-	/^def/ 	    && do { 
-			    $def = 1; 
-			    last SWITCH; 
+	/^def/ 	    && do {
+			    $def = 1;
+			    last SWITCH;
 		       };
 
-	/^xyz/ 	    && do { 
-			    $xyz = 1; 
-			    last SWITCH; 
+	/^xyz/ 	    && do {
+			    $xyz = 1;
+			    last SWITCH;
 		        };
 	$nothing = 1;
     }
@@ -414,14 +420,14 @@ a temporary assignment to $_ for convenient matching:
 		/Anywhere/          && do { push @flags, '-h'; last; };
 		/In Rulings/        && do {                    last; };
 		die "unknown value for form variable where: `$where'";
-	    } 
+	    }
 
 Another interesting approach to a switch statement is arrange
 for a C<do> block to return the proper value:
 
     $amode = do {
-	if     ($flag & O_RDONLY) { "r" } 
-	elsif  ($flag & O_WRONLY) { ($flag & O_APPEND) ? "a" : "w" } 
+	if     ($flag & O_RDONLY) { "r" }
+	elsif  ($flag & O_WRONLY) { ($flag & O_APPEND) ? "a" : "w" }
 	elsif  ($flag & O_RDWR)   {
 	    if ($flag & O_CREAT)  { "w+" }
 	    else                  { ($flag & O_APPEND) ? "a+" : "r+" }
@@ -473,14 +479,14 @@ encounters a line that begins with an equal sign and a word, like this
 
 Then that text and all remaining text up through and including a line
 beginning with C<=cut> will be ignored.  The format of the intervening
-text is described in L<perlpod>. 
+text is described in L<perlpod>.
 
 This allows you to intermix your source code
 and your documentation text freely, as in
 
     =item snazzle($)
 
-    The snazzle() function will behave in the most spectacular 
+    The snazzle() function will behave in the most spectacular
     form that you can possibly imagine, not even excepting
     cybernetic pyrotechnics.
 
@@ -489,11 +495,11 @@ and your documentation text freely, as in
     sub snazzle($) {
 	my $thingie = shift;
 	.........
-    } 
+    }
 
-Note that pod translators should only look at paragraphs beginning 
-with a pod diretive (it makes parsing easier), whereas the compiler
-actually knows to look for pod escapes even in the middle of a 
+Note that pod translators should look at only paragraphs beginning
+with a pod directive (it makes parsing easier), whereas the compiler
+actually knows to look for pod escapes even in the middle of a
 paragraph.  This means that the following secret stuff will be
 ignored by both the compiler and the translators.
 
@@ -506,3 +512,47 @@ ignored by both the compiler and the translators.
 You probably shouldn't rely upon the warn() being podded out forever.
 Not all pod translators are well-behaved in this regard, and perhaps
 the compiler will become pickier.
+
+One may also use pod directives to quickly comment out a section
+of code.
+
+=head2 Plain Old Comments (Not!)
+
+Much like the C preprocessor, perl can process line directives.  Using
+this, one can control perl's idea of filenames and line numbers in
+error or warning messages (especially for strings that are processed
+with eval()).  The syntax for this mechanism is the same as for most
+C preprocessors: it matches the regular expression
+C</^#\s*line\s+(\d+)\s*(?:\s"([^"]*)")?/> with C<$1> being the line
+number for the next line, and C<$2> being the optional filename
+(specified within quotes).
+
+Here are some examples that you should be able to type into your command
+shell:
+
+    % perl
+    # line 200 "bzzzt"
+    # the `#' on the previous line must be the first char on line
+    die 'foo';
+    __END__
+    foo at bzzzt line 201.
+
+    % perl
+    # line 200 "bzzzt"
+    eval qq[\n#line 2001 ""\ndie 'foo']; print $@;
+    __END__
+    foo at - line 2001.
+
+    % perl
+    eval qq[\n#line 200 "foo bar"\ndie 'foo']; print $@;
+    __END__
+    foo at foo bar line 200.
+
+    % perl
+    # line 345 "goop"
+    eval "\n#line " . __LINE__ . ' "' . __FILE__ ."\"\ndie 'foo'";
+    print $@;
+    __END__
+    foo at goop line 345.
+
+=cut

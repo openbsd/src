@@ -13,6 +13,21 @@
 #  endif
 #endif
 
+#ifdef DBM_BUG_DUPLICATE_FREE 
+/*
+ * DBM on at least Ultrix and HPUX call dbmclose() from dbminit(),
+ * resulting in duplicate free() because dbmclose() does *not*
+ * check if it has already been called for this DBM.
+ * If some malloc/free calls have been done between dbmclose() and
+ * the next dbminit(), the memory might be used for something else when
+ * it is freed.
+ * Verified to work on ultrix4.3.  Probably will work on HP/UX.
+ * Set DBM_BUG_DUPLICATE_FREE in the extension hint file.
+ */
+/* Close the previous dbm, and fail to open a new dbm */
+#define dbmclose()	((void) dbminit("/tmp/x/y/z/z/y"))
+#endif
+
 #include <fcntl.h>
 
 typedef void* ODBM_File;
@@ -39,9 +54,11 @@ odbm_TIEHASH(dbtype, filename, flags, mode)
 	int		mode
 	CODE:
 	{
-	    char tmpbuf[1025];
+	    char *tmpbuf;
 	    if (dbmrefcnt++)
 		croak("Old dbm can only open one database");
+	    New(0, tmpbuf, strlen(filename) + 5, char);
+	    SAVEFREEPV(tmpbuf);
 	    sprintf(tmpbuf,"%s.dir",filename);
 	    if (stat(tmpbuf, &statbuf) < 0) {
 		if (flags & O_CREAT) {
@@ -56,7 +73,7 @@ odbm_TIEHASH(dbtype, filename, flags, mode)
 	    }
 	    RETVAL = (void*)(dbminit(filename) >= 0 ? &dbmrefcnt : 0);
 	    ST(0) = sv_mortalcopy(&sv_undef);
-	    sv_setptrobj(ST(0), RETVAL, "ODBM_File");
+	    sv_setptrobj(ST(0), RETVAL, dbtype);
 	}
 
 void

@@ -4,10 +4,13 @@ perlobj - Perl objects
 
 =head1 DESCRIPTION
 
-First of all, you need to understand what references are in Perl.  See
-L<perlref> for that.  
+First of all, you need to understand what references are in Perl.
+See L<perlref> for that.  Second, if you still find the following
+reference work too complicated, a tutorial on object-oriented programming
+in Perl can be found in L<perltoot>.
 
-Here are three very simple definitions that you should find reassuring.
+If you're still with us, then
+here are three very simple definitions that you should find reassuring.
 
 =over 4
 
@@ -24,7 +27,7 @@ with object references.
 =item 3.
 
 A method is simply a subroutine that expects an object reference (or
-a package name, for static methods) as the first argument.
+a package name, for class methods) as the first argument.
 
 =back
 
@@ -41,11 +44,11 @@ constructor:
     package Critter;
     sub new { bless {} }
 
-The C<{}> constructs a reference to an anonymous hash containing no 
+The C<{}> constructs a reference to an anonymous hash containing no
 key/value pairs.  The bless() takes that reference and tells the object
 it references that it's now a Critter, and returns the reference.
-This is for convenience, since the referenced object itself knows that
-it has been blessed, and its reference to it could have been returned 
+This is for convenience, because the referenced object itself knows that
+it has been blessed, and the reference to it could have been returned
 directly, like this:
 
     sub new {
@@ -64,8 +67,9 @@ that wish to call methods in the class as part of the construction:
 	return $self;
     }
 
-If you care about inheritance (and you should; see L<perlmod/"Modules:
-Creation, Use and Abuse">), then you want to use the two-arg form of bless
+If you care about inheritance (and you should; see
+L<perlmod/"Modules: Creation, Use, and Abuse">),
+then you want to use the two-arg form of bless
 so that your constructors may be inherited:
 
     sub new {
@@ -78,7 +82,7 @@ so that your constructors may be inherited:
 
 Or if you expect people to call not just C<CLASS-E<gt>new()> but also
 C<$obj-E<gt>new()>, then use something like this.  The initialize()
-method used will be of whatever $class we blessed the 
+method used will be of whatever $class we blessed the
 object into:
 
     sub new {
@@ -93,17 +97,17 @@ object into:
 Within the class package, the methods will typically deal with the
 reference as an ordinary reference.  Outside the class package,
 the reference is generally treated as an opaque value that may
-only be accessed through the class's methods.
+be accessed only through the class's methods.
 
 A constructor may re-bless a referenced object currently belonging to
 another class, but then the new class is responsible for all cleanup
-later.  The previous blessing is forgotten, as an object may only
-belong to one class at a time.  (Although of course it's free to 
+later.  The previous blessing is forgotten, as an object may belong
+to only one class at a time.  (Although of course it's free to
 inherit methods from many classes.)
 
 A clarification:  Perl objects are blessed.  References are not.  Objects
 know which package they belong to.  References do not.  The bless()
-function simply uses the reference in order to find the object.  Consider
+function uses the reference to find the object.  Consider
 the following example:
 
     $a = {};
@@ -111,13 +115,13 @@ the following example:
     bless $a, BLAH;
     print "\$b is a ", ref($b), "\n";
 
-This reports $b as being a BLAH, so obviously bless() 
+This reports $b as being a BLAH, so obviously bless()
 operated on the object and not on the reference.
 
 =head2 A Class is Simply a Package
 
 Unlike say C++, Perl doesn't provide any special syntax for class
-definitions.  You just use a package as a class by putting method
+definitions.  You use a package as a class by putting method
 definitions into the class.
 
 There is a special array within each package called @ISA which says
@@ -126,7 +130,7 @@ package.  This is how Perl implements inheritance.  Each element of the
 @ISA array is just the name of another package that happens to be a
 class package.  The classes are searched (depth first) for missing
 methods in the order that they occur in @ISA.  The classes accessible
-through @ISA are known as base classes of the current class. 
+through @ISA are known as base classes of the current class.
 
 If a missing method is found in one of the base classes, it is cached
 in the current class for efficiency.  Changing @ISA or defining new
@@ -137,10 +141,12 @@ that is called on behalf of the missing method.
 
 If neither a method nor an AUTOLOAD routine is found in @ISA, then one
 last try is made for the method (or an AUTOLOAD routine) in a class
-called UNIVERSAL.  If that doesn't work, Perl finally gives up and
+called UNIVERSAL.  (Several commonly used methods are automatically
+supplied in the UNIVERSAL class; see L<"Default UNIVERSAL methods"> for
+more details.)  If that doesn't work, Perl finally gives up and
 complains.
 
-Perl classes only do method inheritance.  Data inheritance is left
+Perl classes do only method inheritance.  Data inheritance is left
 up to the class itself.  By and large, this is not a problem in Perl,
 because most classes model the attributes of their object using
 an anonymous hash, which serves as its own little namespace to be
@@ -153,17 +159,18 @@ Unlike say C++, Perl doesn't provide any special syntax for method
 definition.  (It does provide a little syntax for method invocation
 though.  More on that later.)  A method expects its first argument
 to be the object or package it is being invoked on.  There are just two
-types of methods, which we'll call static and virtual, in honor of
-the two C++ method types they most closely resemble.
+types of methods, which we'll call class and instance.
+(Sometimes you'll hear these called static and virtual, in honor of
+the two C++ method types they most closely resemble.)
 
-A static method expects a class name as the first argument.  It
+A class method expects a class name as the first argument.  It
 provides functionality for the class as a whole, not for any individual
-object belonging to the class.  Constructors are typically static
-methods.  Many static methods simply ignore their first argument, since
+object belonging to the class.  Constructors are typically class
+methods.  Many class methods simply ignore their first argument, because
 they already know what package they're in, and don't care what package
-they were invoked via.  (These aren't necessarily the same, since
-static methods follow the inheritance tree just like ordinary virtual
-methods.)  Another typical use for static methods is to look up an
+they were invoked via.  (These aren't necessarily the same, because
+class methods follow the inheritance tree just like ordinary instance
+methods.)  Another typical use for class methods is to look up an
 object by name:
 
     sub find {
@@ -171,7 +178,7 @@ object by name:
 	$objtable{$name};
     }
 
-A virtual method expects an object reference as its first argument.
+An instance method expects an object reference as its first argument.
 Typically it shifts the first argument into a "self" or "this" variable,
 and then uses that as an ordinary reference.
 
@@ -191,9 +198,9 @@ already had an "indirect object" syntax that you use when you say
 
     print STDERR "help!!!\n";
 
-This same syntax can be used to call either static or virtual methods.
-We'll use the two methods defined above, the static method to lookup
-an object reference and the virtual method to print out its attributes.
+This same syntax can be used to call either class or instance methods.
+We'll use the two methods defined above, the class method to lookup
+an object reference and the instance method to print out its attributes.
 
     $fred = find Critter "Fred";
     display $fred 'Height', 'Weight';
@@ -220,7 +227,7 @@ Indirect object method calls are parsed using the same rule as list
 operators: "If it looks like a function, it is a function".  (Presuming
 for the moment that you think two words in a row can look like a
 function name.  C++ programmers seem to think so with some regularity,
-especially when the first word is "new".)  Thus, the parens of
+especially when the first word is "new".)  Thus, the parentheses of
 
     new Critter ('Barney', 1.5, 70)
 
@@ -242,8 +249,8 @@ call, being sure to pass the requisite first argument explicitly:
     $fred =  MyCritter::find("Critter", "Fred");
     MyCritter::display($fred, 'Height', 'Weight');
 
-Note however, that this does not do any inheritance.  If you merely
-wish to specify that Perl should I<START> looking for a method in a
+Note however, that this does not do any inheritance.  If you wish
+merely to specify that Perl should I<START> looking for a method in a
 particular package, use an ordinary method call, but qualify the method
 name with the package like this:
 
@@ -251,13 +258,13 @@ name with the package like this:
     $fred->MyCritter::display('Height', 'Weight');
 
 If you're trying to control where the method search begins I<and> you're
-executing in the class itself, then you may use the SUPER pseudoclass,
+executing in the class itself, then you may use the SUPER pseudo class,
 which says to start looking in your base class's @ISA list without having
-to explicitly name it:
+to name it explicitly:
 
     $self->SUPER::display('Height', 'Weight');
 
-Please note that the C<SUPER::> construct is I<only> meaningful within the
+Please note that the C<SUPER::> construct is meaningful I<only> within the
 class.
 
 Sometimes you want to call a method when you don't know the method name
@@ -266,6 +273,56 @@ with a simple scalar variable containing the method name:
 
     $method = $fast ? "findfirst" : "findbest";
     $fred->$method(@args);
+
+=head2 Default UNIVERSAL methods
+
+The C<UNIVERSAL> package automatically contains the following methods that
+are inherited by all other classes:
+
+=over 4
+
+=item isa(CLASS)
+
+C<isa> returns I<true> if its object is blessed into a subclass of C<CLASS>
+
+C<isa> is also exportable and can be called as a sub with two arguments. This
+allows the ability to check what a reference points to. Example
+
+    use UNIVERSAL qw(isa);
+
+    if(isa($ref, 'ARRAY')) {
+    	...
+    }
+
+=item can(METHOD)
+
+C<can> checks to see if its object has a method called C<METHOD>,
+if it does then a reference to the sub is returned, if it does not then
+I<undef> is returned.
+
+=item VERSION( [NEED] )
+
+C<VERSION> returns the version number of the class (package).  If the
+NEED argument is given then it will check that the current version (as
+defined by the $VERSION variable in the given package) not less than
+NEED; it will die if this is not the case.  This method is normally
+called as a class method.  This method is called automatically by the
+C<VERSION> form of C<use>.
+
+    use A 1.2 qw(some imported subs);
+    # implies:
+    A->VERSION(1.2);
+
+=back
+
+B<NOTE:> C<can> directly uses Perl's internal code for method lookup, and
+C<isa> uses a very similar method and cache-ing strategy. This may cause
+strange effects if the Perl code dynamically changes @ISA in any package.
+
+You may add other methods to the UNIVERSAL class via Perl or XS code.
+You do not need to C<use UNIVERSAL> in order to make these methods
+available to your program.  This is necessary only if you wish to
+have C<isa> available as a plain subroutine in the current package.
 
 =head2 Destructors
 
@@ -277,9 +334,9 @@ your class.  It will automatically be called at the appropriate moment,
 and you can do any extra cleanup you need to do.
 
 Perl doesn't do nested destruction for you.  If your constructor
-reblessed a reference from one of your base classes, your DESTROY may
-need to call DESTROY for any base classes that need it.  But this only
-applies to reblessed objects--an object reference that is merely
+re-blessed a reference from one of your base classes, your DESTROY may
+need to call DESTROY for any base classes that need it.  But this applies
+to only re-blessed objects--an object reference that is merely
 I<CONTAINED> in the current object will be freed and destroyed
 automatically when the current object is freed.
 
@@ -288,19 +345,19 @@ automatically when the current object is freed.
 An indirect object is limited to a name, a scalar variable, or a block,
 because it would have to do too much lookahead otherwise, just like any
 other postfix dereference in the language.  The left side of -E<gt> is not so
-limited, because it's an infix operator, not a postfix operator.  
+limited, because it's an infix operator, not a postfix operator.
 
-That means that below, A and B are equivalent to each other, and C and D
-are equivalent, but AB and CD are different:
+That means that in the following, A and B are equivalent to each other, and
+C and D are equivalent, but A/B and C/D are different:
 
-    A: method $obref->{"fieldname"} 
+    A: method $obref->{"fieldname"}
     B: (method $obref)->{"fieldname"}
-    C: $obref->{"fieldname"}->method() 
+    C: $obref->{"fieldname"}->method()
     D: method {$obref->{"fieldname"}}
 
 =head2 Summary
 
-That's about all there is to it.  Now you just need to go off and buy a
+That's about all there is to it.  Now you need just to go off and buy a
 book about object-oriented design methodology, and bang your forehead
 with it for the next six months or so.
 
@@ -315,12 +372,12 @@ probably won't matter.
 
 A more serious concern is that unreachable memory with a non-zero
 reference count will not normally get freed.  Therefore, this is a bad
-idea:  
+idea:
 
     {
 	my $a;
 	$a = \$a;
-    } 
+    }
 
 Even thought $a I<should> go away, it can't.  When building recursive data
 structures, you'll have to break the self-reference yourself explicitly
@@ -334,7 +391,7 @@ node such as one might use in a sophisticated tree structure:
 	$node->{LEFT} = $node->{RIGHT} = $node;
 	$node->{DATA} = [ @_ ];
 	return bless $node => $class;
-    } 
+    }
 
 If you create nodes like that, they (currently) won't go away unless you
 break their self reference yourself.  (In other words, this is not to be
@@ -349,7 +406,7 @@ destroyed.  This is essential to support Perl as an embedded or a
 multithreadable language.  For example, this program demonstrates Perl's
 two-phased garbage collection:
 
-    #!/usr/bin/perl 
+    #!/usr/bin/perl
     package Subtle;
 
     sub new {
@@ -357,12 +414,12 @@ two-phased garbage collection:
 	$test = \$test;
 	warn "CREATING " . \$test;
 	return bless \$test;
-    } 
+    }
 
     sub DESTROY {
 	my $self = shift;
 	warn "DESTROYING $self";
-    } 
+    }
 
     package main;
 
@@ -372,7 +429,7 @@ two-phased garbage collection:
 	my $b = Subtle->new;
 	$$a = 0;  # break selfref
 	warn "leaving block";
-    } 
+    }
 
     warn "just exited block";
     warn "time to die...";
@@ -390,12 +447,12 @@ When run as F</tmp/test>, the following output is produced:
     DESTROYING Subtle=SCALAR(0x8e57c) during global destruction.
 
 Notice that "global destruction" bit there?  That's the thread
-garbage collector reaching the unreachable.  
+garbage collector reaching the unreachable.
 
 Objects are always destructed, even when regular refs aren't and in fact
 are destructed in a separate pass before ordinary refs just to try to
 prevent object destructors from using refs that have been themselves
-destructed.  Plain refs are only garbage collected if the destruct level
+destructed.  Plain refs are only garbage-collected if the destruct level
 is greater than 0.  You can test the higher levels of global destruction
 by setting the PERL_DESTRUCT_LEVEL environment variable, presuming
 C<-DDEBUGGING> was enabled during perl build time.
@@ -405,6 +462,8 @@ at a future date.
 
 =head1 SEE ALSO
 
-You should also check out L<perlbot> for other object tricks, traps, and tips, 
-as well as L<perlmod> for some style guides on constructing both modules
+A kinder, gentler tutorial on object-oriented programming in Perl can
+be found in L<perltoot>.
+You should also check out L<perlbot> for other object tricks, traps, and tips,
+as well as L<perlmodlib> for some style guides on constructing both modules
 and classes.

@@ -1,8 +1,11 @@
 #!./perl
 
-BEGIN { unshift @INC, './lib', '../lib';
-    require Config; import Config;
+BEGIN {
+    chdir 't' if -d 't';
+    @INC = '../lib';
 }
+
+use Config;
 use Math::BigInt;
 
 $test = 0;

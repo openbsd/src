@@ -1,6 +1,6 @@
 /* $RCSfile: a2py.c,v $$Revision: 4.1 $$Date: 92/08/07 18:29:14 $
  *
- *    Copyright (c) 1991, Larry Wall
+ *    Copyright (c) 1991-1997, Larry Wall
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -27,6 +27,7 @@ int oper5();
 STR *walk();
 
 #ifdef OS2
+static void
 usage()
 {
     printf("\nThis is the AWK to PERL translator, version 5.0, patchlevel %d\n", PATCHLEVEL);
@@ -41,6 +42,8 @@ usage()
     exit(1);
 }
 #endif
+
+int
 main(argc,argv,env)
 register int argc;
 register char **argv;
@@ -76,6 +79,9 @@ register char **env;
 	    break;
 	case 'n':
 	    namelist = savestr(argv[0]+2);
+	    break;
+	case 'o':
+	    old_awk = TRUE;
 	    break;
 	case '-':
 	    argc--,argv++;
@@ -154,7 +160,9 @@ register char **env;
 
     tmpstr = walk(0,0,root,&i,P_MIN);
     str = str_make(STARTPERL);
-    str_cat(str, "\neval 'exec perl -S $0 \"$@\"'\n\
+    str_cat(str, "\neval 'exec ");
+    str_cat(str, BIN);
+    str_cat(str, "/perl -S $0 ${1+\"$@\"}'\n\
     if $running_under_some_shell;\n\
 			# this emulates #! processing on NIH machines.\n\
 			# (remove #! line above if indigestible)\n\n");
@@ -1289,10 +1297,10 @@ int prevargs;
 	numargs = fixrargs(name,ops[arg+3].ival,numargs);
     }
     else {
-	char tmpbuf[128];
-
+	char *tmpbuf = safemalloc(strlen(name) + (sizeof(prevargs) * 3) + 5);
 	sprintf(tmpbuf,"%s:%d",name,prevargs);
 	str = hfetch(curarghash,tmpbuf);
+	safefree(tmpbuf);
 	if (str && strEQ(str->str_ptr,"*")) {
 	    if (type == OVAR || type == OSTAR) {
 		ops[arg].ival &= ~255;

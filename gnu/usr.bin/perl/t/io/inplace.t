@@ -7,7 +7,16 @@ $^I = '.bak';
 print "1..2\n";
 
 @ARGV = ('.a','.b','.c');
-`echo foo | tee .a .b .c`;
+if ($^O eq 'MSWin32') {
+  $CAT = '.\perl -e "print<>"';
+  `.\\perl -le "print 'foo'" > .a`;
+  `.\\perl -le "print 'foo'" > .b`;
+  `.\\perl -le "print 'foo'" > .c`;
+}
+else {
+  $CAT = 'cat';
+  `echo foo | tee .a .b .c`;
+}
 while (<>) {
     s/foo/bar/;
 }
@@ -15,7 +24,7 @@ continue {
     print;
 }
 
-if (`cat .a .b .c` eq "bar\nbar\nbar\n") {print "ok 1\n";} else {print "not ok 1\n";}
-if (`cat .a.bak .b.bak .c.bak` eq "foo\nfoo\nfoo\n") {print "ok 2\n";} else {print "not ok 2\n";}
+if (`$CAT .a .b .c` eq "bar\nbar\nbar\n") {print "ok 1\n";} else {print "not ok 1\n";}
+if (`$CAT .a.bak .b.bak .c.bak` eq "foo\nfoo\nfoo\n") {print "ok 2\n";} else {print "not ok 2\n";}
 
 unlink '.a', '.b', '.c', '.a.bak', '.b.bak', '.c.bak';

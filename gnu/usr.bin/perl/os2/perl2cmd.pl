@@ -16,13 +16,14 @@ EOU
 $idir = $Config{installbin};
 $indir =~ s|\\|/|g ;
 
-foreach $file (<$idir/*.>) {
+foreach $file (<$idir/*>) {
+  next if $file =~ /\.exe/i;
   $base = $file;
   $base =~ s/\.$//;		# just in case...
   $base =~ s|.*/||;
   $file =~ s|/|\\|g ;
   print "Processing $file => $dir\\$base.cmd\n";
-  system 'cmd.exe', '/c', "echo extproc perl -Sx > $dir\\$base.cmd";
+  system 'cmd.exe', '/c', "echo extproc perl -S >$dir\\$base.cmd";
   system 'cmd.exe', '/c', "type $file >> $dir\\$base.cmd";
 }
 

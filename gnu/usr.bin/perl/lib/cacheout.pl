@@ -35,7 +35,7 @@ $seq = 0;
 $numopen = 0;
 
 if (open(PARAM,'/usr/include/sys/param.h')) {
-    local($.);
+    local($_, $.);
     while (<PARAM>) {
 	$maxopen = $1 - 4 if /^\s*#\s*define\s+NOFILE\s+(\d+)/;
     }

@@ -24,7 +24,7 @@ ODBM_File - Tied access to odbm files
 
  use ODBM_File;
 
- tie(%h,ODBM_File,'Op.dbmx', O_RDWR|O_CREAT, 0640);
+ tie(%h, 'ODBM_File', 'Op.dbmx', O_RDWR|O_CREAT, 0640);
 
  untie %h;
 

@@ -1,0 +1,91 @@
+
+     PLAN9/PERLPLAN9(1)   (perl 5.003, patch 05)    PLAN9/PERLPLAN9(1)
+
+     NNNNAAAAMMMMEEEE
+          perlplan9 - Plan 9-specific documentation for Perl
+
+     DDDDEEEESSSSCCCCRRRRIIIIPPPPTTTTIIIIOOOONNNN
+          These are a few notes describing features peculiar to Plan 9
+          Perl. As such, it is not intended to be a replacement for
+          the rest of the Perl 5 documentation (which is both copious
+          and excellent). If you have any questions to which you can't
+          find answers in these man pages, contact Luther Huffman at
+          lutherh@stratcom.com and we'll try to answer them.
+
+          IIIInnnnvvvvooookkkkiiiinnnngggg PPPPeeeerrrrllll
+
+          Perl is invoked from the command line as described in the
+          _p_e_r_l manpage. Most perl scripts, however, do have a first
+          line such as "#!/usr/local/bin/perl". This is known as a
+          shebang (shell-bang) statement and tells the OS shell where
+          to find the perl interpreter. In Plan 9 Perl this statement
+          should be "#!/bin/perl" if you wish to be able to directly
+          invoke the script by its name.
+               Alternatively, you may invoke perl with the command
+          "Perl" instead of "perl". This will produce Acme-friendly
+          error messages of the form "filename:18".
+
+          Some scripts, usually identified with a *.PL extension, are
+          self-configuring and are able to correctly create their own
+          shebang path from config information located in Plan 9 Perl.
+          These you won't need to be worried about.
+
+          WWWWhhhhaaaatttt''''ssss iiiinnnn PPPPllllaaaannnn 9999 PPPPeeeerrrrllll
+
+          Although Plan 9 Perl currently only  provides static
+          loading, it is built with a number of useful extensions.
+          These include Opcode, FileHandle, Fcntl, and POSIX. Expect
+          to see others (and DynaLoading!) in the future.
+
+          WWWWhhhhaaaatttt''''ssss nnnnooootttt iiiinnnn PPPPllllaaaannnn 9999 PPPPeeeerrrrllll
+
+          As mentioned previously, dynamic loading isn't currently
+          available nor is MakeMaker. Both are high-priority items.
+
+          PPPPeeeerrrrllll5555 FFFFuuuunnnnccccttttiiiioooonnnnssss nnnnooootttt ccccuuuurrrrrrrreeeennnnttttllllyyyy ssssuuuuppppppppoooorrrrtttteeeedddd
+
+          Some, such as chown and umask aren't provided because the
+          concept does not exist within Plan 9. Others, such as some
+          of the socket-related functions, simply haven't been written
+          yet. Many in the latter category may be supported in the
+          future.
+
+          The functions not currently implemented include:
+
+     Page 1                      9/Oct/96            (printed 10/9/96)
+
+     PLAN9/PERLPLAN9(1)   (perl 5.003, patch 05)    PLAN9/PERLPLAN9(1)
+
+              chown, chroot, dbmclose, dbmopen, getsockopt,
+              setsockopt, recvmsg, sendmsg, getnetbyname,
+              getnetbyaddr, getnetent, getprotoent, getservent,
+              sethostent, setnetent, setprotoent, setservent,
+              endservent, endnetent, endprotoent, umask
+
+          There may be several other functions that have undefined
+          behavior so this list shouldn't be considered complete.
+
+          SSSSiiiiggggnnnnaaaallllssss
+
+          For compatibility with perl scripts written for the Unix
+          environment, Plan 9 Perl uses the POSIX signal emulation
+          provided in Plan 9's ANSI POSIX Environment (APE). Signal
+          stacking isn't supported. The signals provided are:
+
+              SIGHUP, SIGINT, SIGQUIT, SIGILL, SIGABRT,
+              SIGFPE, SIGKILL, SIGSEGV, SIGPIPE, SIGPIPE, SIGALRM,
+              SIGTERM, SIGUSR1, SIGUSR2, SIGCHLD, SIGCONT,
+              SIGSTOP, SIGTSTP, SIGTTIN, SIGTTOU
+
+     BBBBUUUUGGGGSSSS
+          "As many as there are grains of sand on all the beaches of
+          the world . . ." - Carl Sagan
+
+     RRRReeeevvvviiiissssiiiioooonnnn ddddaaaatttteeee
+          This document was revised 09-October-1996 for Perl 5.003_7.
+
+     AAAAUUUUTTTTHHHHOOOORRRR
+          Luther Huffman,    lutherh@stratcom.com
+
+     Page 2                      9/Oct/96            (printed 10/9/96)
+

@@ -1,4 +1,5 @@
 #include "EXTERN.h"
+#define PERLIO_NOT_STDIO 1
 #include "perl.h"
 #include "XSUB.h"
 #include <ctype.h>
@@ -32,7 +33,6 @@
 #if defined(I_TERMIOS)
 #include <termios.h>
 #endif
-#include <stdio.h>
 #ifdef I_STDLIB
 #include <stdlib.h>
 #endif
@@ -40,60 +40,68 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <time.h>
-#include <unistd.h>
+#include <unistd.h>	/* see hints/sunos_4_1.sh */
+#include <fcntl.h>
+
 #if defined(__VMS) && !defined(__POSIX_SOURCE)
-#  include <file.h>         /* == fcntl.h for DECC; no fcntl.h for VAXC */
 #  include <libdef.h>       /* LIB$_INVARG constant */
 #  include <lib$routines.h> /* prototype for lib$ediv() */
 #  include <starlet.h>      /* prototype for sys$gettim() */
+#  if DECC_VERSION < 50000000
+#    define pid_t int       /* old versions of DECC miss this in types.h */
+#  endif
 
 #  undef mkfifo  /* #defined in perl.h */
 #  define mkfifo(a,b) (not_here("mkfifo"),-1)
 #  define tzset() not_here("tzset")
 
-   /* The default VMS emulation of Unix signals isn't very POSIXish */
-   typedef int sigset_t;
-#  define sigpending(a) (not_here("sigpending"),0)
+#if ((__VMS_VER >= 70000000) && (__DECC_VER >= 50200000)) || (__CRTL_VER >= 70000000)
+#    define HAS_TZNAME  /* shows up in VMS 7.0 or Dec C 5.6 */
+#    include <utsname.h>
+#else
+     /* The default VMS emulation of Unix signals isn't very POSIXish */
+     typedef int sigset_t;
+#    define sigpending(a) (not_here("sigpending"),0)
 
-   /* sigset_t is atomic under VMS, so these routines are easy */
-   int sigemptyset(sigset_t *set) {
+     /* sigset_t is atomic under VMS, so these routines are easy */
+     int sigemptyset(sigset_t *set) {
 	if (!set) { SETERRNO(EFAULT,SS$_ACCVIO); return -1; }
 	*set = 0; return 0;
-   }
-   int sigfillset(sigset_t *set) {
+     }
+     int sigfillset(sigset_t *set) {
 	int i;
 	if (!set) { SETERRNO(EFAULT,SS$_ACCVIO); return -1; }
 	for (i = 0; i < NSIG; i++) *set |= (1 << i);
 	return 0;
-   }
-   int sigaddset(sigset_t *set, int sig) {
+     }
+     int sigaddset(sigset_t *set, int sig) {
 	if (!set) { SETERRNO(EFAULT,SS$_ACCVIO); return -1; }
 	if (sig > NSIG) { SETERRNO(EINVAL,LIB$_INVARG); return -1; }
 	*set |= (1 << (sig - 1));
 	return 0;
-   }
-   int sigdelset(sigset_t *set, int sig) {
+     }
+     int sigdelset(sigset_t *set, int sig) {
 	if (!set) { SETERRNO(EFAULT,SS$_ACCVIO); return -1; }
 	if (sig > NSIG) { SETERRNO(EINVAL,LIB$_INVARG); return -1; }
 	*set &= ~(1 << (sig - 1));
 	return 0;
-   }
-   int sigismember(sigset_t *set, int sig) {
+     }
+     int sigismember(sigset_t *set, int sig) {
 	if (!set) { SETERRNO(EFAULT,SS$_ACCVIO); return -1; }
 	if (sig > NSIG) { SETERRNO(EINVAL,LIB$_INVARG); return -1; }
 	*set & (1 << (sig - 1));
-   }
-   /* The tools for sigprocmask() are there, just not the routine itself */
-#  ifndef SIG_UNBLOCK
-#    define SIG_UNBLOCK 1
-#  endif
-#  ifndef SIG_BLOCK
-#    define SIG_BLOCK 2
-#  endif
-#  ifndef SIG_SETMASK
-#    define SIG_SETMASK 3
-#  endif
-   int sigprocmask(int how, sigset_t *set, sigset_t *oset) {
+     }
+     /* The tools for sigprocmask() are there, just not the routine itself */
+#    ifndef SIG_UNBLOCK
+#      define SIG_UNBLOCK 1
+#    endif
+#    ifndef SIG_BLOCK
+#      define SIG_BLOCK 2
+#    endif
+#    ifndef SIG_SETMASK
+#      define SIG_SETMASK 3
+#    endif
+     int sigprocmask(int how, sigset_t *set, sigset_t *oset) {
 	if (!set || !oset) {
 	  set_errno(EFAULT); set_vaxc_errno(SS$_ACCVIO);
 	  return -1;
@@ -114,12 +122,13 @@
 	    return -1;
 	}
 	return 0;
-    }
-#  define sigaction sigvec
-#  define sa_flags sv_onstack
-#  define sa_handler sv_handler
-#  define sa_mask sv_mask
-#  define sigsuspend(set) sigpause(*set)
+     }
+#    define sigaction sigvec
+#    define sa_flags sv_onstack
+#    define sa_handler sv_handler
+#    define sa_mask sv_mask
+#    define sigsuspend(set) sigpause(*set)
+#  endif /* __VMS_VER >= 70000000 or Dec C 5.6 */
 
    /* The POSIX notion of ttyname() is better served by getname() under VMS */
    static char ttnambuf[64];
@@ -152,7 +161,6 @@
    }
 #  define times(t) vms_times(t)
 #else
-#  include <fcntl.h>
 #  include <grp.h>
 #  include <sys/times.h>
 #  ifdef HAS_UNAME
@@ -190,6 +198,9 @@ typedef struct termios* POSIX__Termios;
 
 /* Possibly needed prototypes */
 char *cuserid _((char *));
+double strtod _((const char *, char **));
+long strtol _((const char *, char **, int));
+unsigned long strtoul _((const char *, char **, int));
 
 #ifndef HAS_CUSERID
 #define cuserid(a) (char *) not_here("cuserid")
@@ -226,6 +237,15 @@ char *cuserid _((char *));
 #ifndef HAS_STRCOLL
 #define strcoll(s1,s2) not_here("strcoll")
 #endif
+#ifndef HAS_STRTOD
+#define strtod(s1,s2) not_here("strtod")
+#endif
+#ifndef HAS_STRTOL
+#define strtol(s1,s2,b) not_here("strtol")
+#endif
+#ifndef HAS_STRTOUL
+#define strtoul(s1,s2,b) not_here("strtoul")
+#endif
 #ifndef HAS_STRXFRM
 #define strxfrm(s1,s2,n) not_here("strxfrm")
 #endif
@@ -243,13 +263,6 @@ char *cuserid _((char *));
 #endif
 #ifndef HAS_WAITPID
 #define waitpid(a,b,c) not_here("waitpid")
-#endif
-
-#ifndef HAS_FGETPOS
-#define fgetpos(a,b) not_here("fgetpos")
-#endif
-#ifndef HAS_FSETPOS
-#define fsetpos(a,b) not_here("fsetpos")
 #endif
 
 #ifndef HAS_MBLEN
@@ -615,9 +628,33 @@ int arg;
 #else
 		goto not_there;
 #endif
+	    if (strEQ(name, "EADDRINUSE"))
+#ifdef EADDRINUSE
+		return EADDRINUSE;
+#else
+		goto not_there;
+#endif
+	    if (strEQ(name, "EADDRNOTAVAIL"))
+#ifdef EADDRNOTAVAIL
+		return EADDRNOTAVAIL;
+#else
+		goto not_there;
+#endif
+	    if (strEQ(name, "EAFNOSUPPORT"))
+#ifdef EAFNOSUPPORT
+		return EAFNOSUPPORT;
+#else
+		goto not_there;
+#endif
 	    if (strEQ(name, "EAGAIN"))
 #ifdef EAGAIN
 		return EAGAIN;
+#else
+		goto not_there;
+#endif
+	    if (strEQ(name, "EALREADY"))
+#ifdef EALREADY
+		return EALREADY;
 #else
 		goto not_there;
 #endif
@@ -667,6 +704,24 @@ int arg;
 #else
 		goto not_there;
 #endif
+	    if (strEQ(name, "ECONNABORTED"))
+#ifdef ECONNABORTED
+		return ECONNABORTED;
+#else
+		goto not_there;
+#endif
+	    if (strEQ(name, "ECONNREFUSED"))
+#ifdef ECONNREFUSED
+		return ECONNREFUSED;
+#else
+		goto not_there;
+#endif
+	    if (strEQ(name, "ECONNRESET"))
+#ifdef ECONNRESET
+		return ECONNRESET;
+#else
+		goto not_there;
+#endif
 	    break;
 	case 'D':
 	    if (strEQ(name, "EDEADLK"))
@@ -675,9 +730,21 @@ int arg;
 #else
 		goto not_there;
 #endif
+	    if (strEQ(name, "EDESTADDRREQ"))
+#ifdef EDESTADDRREQ
+		return EDESTADDRREQ;
+#else
+		goto not_there;
+#endif
 	    if (strEQ(name, "EDOM"))
 #ifdef EDOM
 		return EDOM;
+#else
+		goto not_there;
+#endif
+	    if (strEQ(name, "EDQUOT"))
+#ifdef EDQUOT
+		return EDQUOT;
 #else
 		goto not_there;
 #endif
@@ -704,7 +771,27 @@ int arg;
 		goto not_there;
 #endif
 	    break;
+	case 'H':
+	    if (strEQ(name, "EHOSTDOWN"))
+#ifdef EHOSTDOWN
+		return EHOSTDOWN;
+#else
+		goto not_there;
+#endif
+	    if (strEQ(name, "EHOSTUNREACH"))
+#ifdef EHOSTUNREACH
+		return EHOSTUNREACH;
+#else
+		goto not_there;
+#endif
+    	    break;
 	case 'I':
+	    if (strEQ(name, "EINPROGRESS"))
+#ifdef EINPROGRESS
+		return EINPROGRESS;
+#else
+		goto not_there;
+#endif
 	    if (strEQ(name, "EINTR"))
 #ifdef EINTR
 		return EINTR;
@@ -723,9 +810,21 @@ int arg;
 #else
 		goto not_there;
 #endif
+	    if (strEQ(name, "EISCONN"))
+#ifdef EISCONN
+		return EISCONN;
+#else
+		goto not_there;
+#endif
 	    if (strEQ(name, "EISDIR"))
 #ifdef EISDIR
 		return EISDIR;
+#else
+		goto not_there;
+#endif
+	    if (strEQ(name, "ELOOP"))
+#ifdef ELOOP
+		return ELOOP;
 #else
 		goto not_there;
 #endif
@@ -743,17 +842,35 @@ int arg;
 #else
 		goto not_there;
 #endif
-	    break;
-	case 'N':
-	    if (strEQ(name, "ENOMEM"))
-#ifdef ENOMEM
-		return ENOMEM;
+	    if (strEQ(name, "EMSGSIZE"))
+#ifdef EMSGSIZE
+		return EMSGSIZE;
 #else
 		goto not_there;
 #endif
-	    if (strEQ(name, "ENOSPC"))
-#ifdef ENOSPC
-		return ENOSPC;
+	    break;
+	case 'N':
+	    if (strEQ(name, "ENETDOWN"))
+#ifdef ENETDOWN
+		return ENETDOWN;
+#else
+		goto not_there;
+#endif
+	    if (strEQ(name, "ENETRESET"))
+#ifdef ENETRESET
+		return ENETRESET;
+#else
+		goto not_there;
+#endif
+	    if (strEQ(name, "ENETUNREACH"))
+#ifdef ENETUNREACH
+		return ENETUNREACH;
+#else
+		goto not_there;
+#endif
+	    if (strEQ(name, "ENOBUFS"))
+#ifdef ENOBUFS
+		return ENOBUFS;
 #else
 		goto not_there;
 #endif
@@ -763,9 +880,33 @@ int arg;
 #else
 		goto not_there;
 #endif
-	    if (strEQ(name, "ENOTTY"))
-#ifdef ENOTTY
-		return ENOTTY;
+	    if (strEQ(name, "ENOMEM"))
+#ifdef ENOMEM
+		return ENOMEM;
+#else
+		goto not_there;
+#endif
+	    if (strEQ(name, "ENOPROTOOPT"))
+#ifdef ENOPROTOOPT
+		return ENOPROTOOPT;
+#else
+		goto not_there;
+#endif
+	    if (strEQ(name, "ENOSPC"))
+#ifdef ENOSPC
+		return ENOSPC;
+#else
+		goto not_there;
+#endif
+	    if (strEQ(name, "ENOTBLK"))
+#ifdef ENOTBLK
+		return ENOTBLK;
+#else
+		goto not_there;
+#endif
+	    if (strEQ(name, "ENOTCONN"))
+#ifdef ENOTCONN
+		return ENOTCONN;
 #else
 		goto not_there;
 #endif
@@ -778,6 +919,18 @@ int arg;
 	    if (strEQ(name, "ENOTEMPTY"))
 #ifdef ENOTEMPTY
 		return ENOTEMPTY;
+#else
+		goto not_there;
+#endif
+	    if (strEQ(name, "ENOTSOCK"))
+#ifdef ENOTSOCK
+		return ENOTSOCK;
+#else
+		goto not_there;
+#endif
+	    if (strEQ(name, "ENOTTY"))
+#ifdef ENOTTY
+		return ENOTTY;
 #else
 		goto not_there;
 #endif
@@ -831,6 +984,12 @@ int arg;
 #else
 		goto not_there;
 #endif
+	    if (strEQ(name, "EOPNOTSUPP"))
+#ifdef EOPNOTSUPP
+		return EOPNOTSUPP;
+#else
+		goto not_there;
+#endif
 	    break;
 	case 'P':
 	    if (strEQ(name, "EPERM"))
@@ -839,9 +998,33 @@ int arg;
 #else
 		goto not_there;
 #endif
+	    if (strEQ(name, "EPFNOSUPPORT"))
+#ifdef EPFNOSUPPORT
+		return EPFNOSUPPORT;
+#else
+		goto not_there;
+#endif
 	    if (strEQ(name, "EPIPE"))
 #ifdef EPIPE
 		return EPIPE;
+#else
+		goto not_there;
+#endif
+	    if (strEQ(name, "EPROCLIM"))
+#ifdef EPROCLIM
+		return EPROCLIM;
+#else
+		goto not_there;
+#endif
+	    if (strEQ(name, "EPROTONOSUPPORT"))
+#ifdef EPROTONOSUPPORT
+		return EPROTONOSUPPORT;
+#else
+		goto not_there;
+#endif
+	    if (strEQ(name, "EPROTOTYPE"))
+#ifdef EPROTOTYPE
+		return EPROTOTYPE;
 #else
 		goto not_there;
 #endif
@@ -853,6 +1036,18 @@ int arg;
 #else
 		goto not_there;
 #endif
+	    if (strEQ(name, "EREMOTE"))
+#ifdef EREMOTE
+		return EREMOTE;
+#else
+		goto not_there;
+#endif
+	    if (strEQ(name, "ERESTART"))
+#ifdef ERESTART
+		return ERESTART;
+#else
+		goto not_there;
+#endif
 	    if (strEQ(name, "EROFS"))
 #ifdef EROFS
 		return EROFS;
@@ -861,6 +1056,18 @@ int arg;
 #endif
 	    break;
 	case 'S':
+	    if (strEQ(name, "ESHUTDOWN"))
+#ifdef ESHUTDOWN
+		return ESHUTDOWN;
+#else
+		goto not_there;
+#endif
+	    if (strEQ(name, "ESOCKTNOSUPPORT"))
+#ifdef ESOCKTNOSUPPORT
+		return ESOCKTNOSUPPORT;
+#else
+		goto not_there;
+#endif
 	    if (strEQ(name, "ESPIPE"))
 #ifdef ESPIPE
 		return ESPIPE;
@@ -873,7 +1080,49 @@ int arg;
 #else
 		goto not_there;
 #endif
+	    if (strEQ(name, "ESTALE"))
+#ifdef ESTALE
+		return ESTALE;
+#else
+		goto not_there;
+#endif
 	    break;
+	case 'T':
+	    if (strEQ(name, "ETIMEDOUT"))
+#ifdef ETIMEDOUT
+		return ETIMEDOUT;
+#else
+		goto not_there;
+#endif
+	    if (strEQ(name, "ETOOMANYREFS"))
+#ifdef ETOOMANYREFS
+		return ETOOMANYREFS;
+#else
+		goto not_there;
+#endif
+	    if (strEQ(name, "ETXTBSY"))
+#ifdef ETXTBSY
+		return ETXTBSY;
+#else
+		goto not_there;
+#endif
+    	    break;
+	case 'U':
+	    if (strEQ(name, "EUSERS"))
+#ifdef EUSERS
+		return EUSERS;
+#else
+		goto not_there;
+#endif
+    	    break;
+    	case 'W':
+	    if (strEQ(name, "EWOULDBLOCK"))
+#ifdef EWOULDBLOCK
+		return EWOULDBLOCK;
+#else
+		goto not_there;
+#endif
+    	    break;
 	case 'X':
 	    if (strEQ(name, "EXIT_FAILURE"))
 #ifdef EXIT_FAILURE
@@ -1483,13 +1732,13 @@ int arg;
 		    goto not_there;
 #endif
 #ifdef SIG_DFL
-		if (strEQ(name, "SIG_DFL")) return (int)SIG_DFL;
+		if (strEQ(name, "SIG_DFL")) return (IV)SIG_DFL;
 #endif
 #ifdef SIG_ERR
-		if (strEQ(name, "SIG_ERR")) return (int)SIG_ERR;
+		if (strEQ(name, "SIG_ERR")) return (IV)SIG_ERR;
 #endif
 #ifdef SIG_IGN
-		if (strEQ(name, "SIG_IGN")) return (int)SIG_IGN;
+		if (strEQ(name, "SIG_IGN")) return (IV)SIG_IGN;
 #endif
 		if (strEQ(name, "SIG_SETMASK"))
 #ifdef SIG_SETMASK
@@ -1760,12 +2009,51 @@ int arg;
 #else
 	    goto not_there;
 #endif
-	if (strEQ(name, "SA_NOCLDSTOP"))
+	if (strnEQ(name, "SA_", 3)) {
+	    if (strEQ(name, "SA_NOCLDSTOP"))
 #ifdef SA_NOCLDSTOP
-	    return SA_NOCLDSTOP;
+		return SA_NOCLDSTOP;
 #else
-	    goto not_there;
+		goto not_there;
 #endif
+	    if (strEQ(name, "SA_NOCLDWAIT"))
+#ifdef SA_NOCLDWAIT
+		return SA_NOCLDWAIT;
+#else
+		goto not_there;
+#endif
+	    if (strEQ(name, "SA_NODEFER"))
+#ifdef SA_NODEFER
+		return SA_NODEFER;
+#else
+		goto not_there;
+#endif
+	    if (strEQ(name, "SA_ONSTACK"))
+#ifdef SA_ONSTACK
+		return SA_ONSTACK;
+#else
+		goto not_there;
+#endif
+	    if (strEQ(name, "SA_RESETHAND"))
+#ifdef SA_RESETHAND
+		return SA_RESETHAND;
+#else
+		goto not_there;
+#endif
+	    if (strEQ(name, "SA_RESTART"))
+#ifdef SA_RESTART
+		return SA_RESTART;
+#else
+		goto not_there;
+#endif
+	    if (strEQ(name, "SA_SIGINFO"))
+#ifdef SA_SIGINFO
+		return SA_SIGINFO;
+#else
+		goto not_there;
+#endif
+	    break;
+	}
 	if (strEQ(name, "SCHAR_MAX"))
 #ifdef SCHAR_MAX
 	    return SCHAR_MAX;
@@ -2511,11 +2799,11 @@ constant(name,arg)
 
 int
 isalnum(charstring)
-	char *		charstring
+	unsigned char *	charstring
     CODE:
-	char *s;
-	RETVAL = 1;
-	for (s = charstring; *s && RETVAL; s++)
+	unsigned char *s = charstring;
+	unsigned char *e = s + na;	/* "na" set by typemap side effect */
+	for (RETVAL = 1; RETVAL && s < e; s++)
 	    if (!isalnum(*s))
 		RETVAL = 0;
     OUTPUT:
@@ -2523,11 +2811,11 @@ isalnum(charstring)
 
 int
 isalpha(charstring)
-	char *		charstring
+	unsigned char *	charstring
     CODE:
-	char *s;
-	RETVAL = 1;
-	for (s = charstring; *s && RETVAL; s++)
+	unsigned char *s = charstring;
+	unsigned char *e = s + na;	/* "na" set by typemap side effect */
+	for (RETVAL = 1; RETVAL && s < e; s++)
 	    if (!isalpha(*s))
 		RETVAL = 0;
     OUTPUT:
@@ -2535,11 +2823,11 @@ isalpha(charstring)
 
 int
 iscntrl(charstring)
-	char *		charstring
+	unsigned char *	charstring
     CODE:
-	char *s;
-	RETVAL = 1;
-	for (s = charstring; *s && RETVAL; s++)
+	unsigned char *s = charstring;
+	unsigned char *e = s + na;	/* "na" set by typemap side effect */
+	for (RETVAL = 1; RETVAL && s < e; s++)
 	    if (!iscntrl(*s))
 		RETVAL = 0;
     OUTPUT:
@@ -2547,11 +2835,11 @@ iscntrl(charstring)
 
 int
 isdigit(charstring)
-	char *		charstring
+	unsigned char *	charstring
     CODE:
-	char *s;
-	RETVAL = 1;
-	for (s = charstring; *s && RETVAL; s++)
+	unsigned char *s = charstring;
+	unsigned char *e = s + na;	/* "na" set by typemap side effect */
+	for (RETVAL = 1; RETVAL && s < e; s++)
 	    if (!isdigit(*s))
 		RETVAL = 0;
     OUTPUT:
@@ -2559,11 +2847,11 @@ isdigit(charstring)
 
 int
 isgraph(charstring)
-	char *		charstring
+	unsigned char *	charstring
     CODE:
-	char *s;
-	RETVAL = 1;
-	for (s = charstring; *s && RETVAL; s++)
+	unsigned char *s = charstring;
+	unsigned char *e = s + na;	/* "na" set by typemap side effect */
+	for (RETVAL = 1; RETVAL && s < e; s++)
 	    if (!isgraph(*s))
 		RETVAL = 0;
     OUTPUT:
@@ -2571,11 +2859,11 @@ isgraph(charstring)
 
 int
 islower(charstring)
-	char *		charstring
+	unsigned char *	charstring
     CODE:
-	char *s;
-	RETVAL = 1;
-	for (s = charstring; *s && RETVAL; s++)
+	unsigned char *s = charstring;
+	unsigned char *e = s + na;	/* "na" set by typemap side effect */
+	for (RETVAL = 1; RETVAL && s < e; s++)
 	    if (!islower(*s))
 		RETVAL = 0;
     OUTPUT:
@@ -2583,11 +2871,11 @@ islower(charstring)
 
 int
 isprint(charstring)
-	char *		charstring
+	unsigned char *	charstring
     CODE:
-	char *s;
-	RETVAL = 1;
-	for (s = charstring; *s && RETVAL; s++)
+	unsigned char *s = charstring;
+	unsigned char *e = s + na;	/* "na" set by typemap side effect */
+	for (RETVAL = 1; RETVAL && s < e; s++)
 	    if (!isprint(*s))
 		RETVAL = 0;
     OUTPUT:
@@ -2595,11 +2883,11 @@ isprint(charstring)
 
 int
 ispunct(charstring)
-	char *		charstring
+	unsigned char *	charstring
     CODE:
-	char *s;
-	RETVAL = 1;
-	for (s = charstring; *s && RETVAL; s++)
+	unsigned char *s = charstring;
+	unsigned char *e = s + na;	/* "na" set by typemap side effect */
+	for (RETVAL = 1; RETVAL && s < e; s++)
 	    if (!ispunct(*s))
 		RETVAL = 0;
     OUTPUT:
@@ -2607,11 +2895,11 @@ ispunct(charstring)
 
 int
 isspace(charstring)
-	char *		charstring
+	unsigned char *	charstring
     CODE:
-	char *s;
-	RETVAL = 1;
-	for (s = charstring; *s && RETVAL; s++)
+	unsigned char *s = charstring;
+	unsigned char *e = s + na;	/* "na" set by typemap side effect */
+	for (RETVAL = 1; RETVAL && s < e; s++)
 	    if (!isspace(*s))
 		RETVAL = 0;
     OUTPUT:
@@ -2619,11 +2907,11 @@ isspace(charstring)
 
 int
 isupper(charstring)
-	char *		charstring
+	unsigned char *	charstring
     CODE:
-	char *s;
-	RETVAL = 1;
-	for (s = charstring; *s && RETVAL; s++)
+	unsigned char *s = charstring;
+	unsigned char *e = s + na;	/* "na" set by typemap side effect */
+	for (RETVAL = 1; RETVAL && s < e; s++)
 	    if (!isupper(*s))
 		RETVAL = 0;
     OUTPUT:
@@ -2631,11 +2919,11 @@ isupper(charstring)
 
 int
 isxdigit(charstring)
-	char *		charstring
+	unsigned char *	charstring
     CODE:
-	char *s;
-	RETVAL = 1;
-	for (s = charstring; *s && RETVAL; s++)
+	unsigned char *s = charstring;
+	unsigned char *e = s + na;	/* "na" set by typemap side effect */
+	for (RETVAL = 1; RETVAL && s < e; s++)
 	    if (!isxdigit(*s))
 		RETVAL = 0;
     OUTPUT:
@@ -2660,6 +2948,7 @@ localeconv()
 #ifdef HAS_LOCALECONV
 	struct lconv *lcbuf;
 	RETVAL = newHV();
+	SET_NUMERIC_LOCAL();
 	if (lcbuf = localeconv()) {
 	    /* the strings */
 	    if (lcbuf->decimal_point && *lcbuf->decimal_point)
@@ -2725,9 +3014,67 @@ localeconv()
 	RETVAL
 
 char *
-setlocale(category, locale)
+setlocale(category, locale = 0)
 	int		category
 	char *		locale
+    CODE:
+	RETVAL = setlocale(category, locale);
+	if (RETVAL) {
+#ifdef USE_LOCALE_CTYPE
+	    if (category == LC_CTYPE
+#ifdef LC_ALL
+		|| category == LC_ALL
+#endif
+		)
+	    {
+		char *newctype;
+#ifdef LC_ALL
+		if (category == LC_ALL)
+		    newctype = setlocale(LC_CTYPE, NULL);
+		else
+#endif
+		    newctype = RETVAL;
+		perl_new_ctype(newctype);
+	    }
+#endif /* USE_LOCALE_CTYPE */
+#ifdef USE_LOCALE_COLLATE
+	    if (category == LC_COLLATE
+#ifdef LC_ALL
+		|| category == LC_ALL
+#endif
+		)
+	    {
+		char *newcoll;
+#ifdef LC_ALL
+		if (category == LC_ALL)
+		    newcoll = setlocale(LC_COLLATE, NULL);
+		else
+#endif
+		    newcoll = RETVAL;
+		perl_new_collate(newcoll);
+	    }
+#endif /* USE_LOCALE_COLLATE */
+#ifdef USE_LOCALE_NUMERIC
+	    if (category == LC_NUMERIC
+#ifdef LC_ALL
+		|| category == LC_ALL
+#endif
+		)
+	    {
+		char *newnum;
+#ifdef LC_ALL
+		if (category == LC_ALL)
+		    newnum = setlocale(LC_NUMERIC, NULL);
+		else
+#endif
+		    newnum = RETVAL;
+		perl_new_numeric(newnum);
+	    }
+#endif /* USE_LOCALE_NUMERIC */
+	}
+    OUTPUT:
+	RETVAL
+
 
 double
 acos(x)
@@ -2949,8 +3296,7 @@ read(fd, buffer, nbytes)
             SvCUR(sv_buffer) = RETVAL;
             SvPOK_only(sv_buffer);
             *SvEND(sv_buffer) = '\0';
-            if (tainting)
-                sv_magic(sv_buffer, 0, 't', 0, 0);
+            SvTAINTED_on(sv_buffer);
         }
 
 SysRet
@@ -3032,6 +3378,66 @@ int
 strcoll(s1, s2)
 	char *		s1
 	char *		s2
+
+void
+strtod(str)
+	char *		str
+    PREINIT:
+	double num;
+	char *unparsed;
+    PPCODE:
+	SET_NUMERIC_LOCAL();
+	num = strtod(str, &unparsed);
+	PUSHs(sv_2mortal(newSVnv(num)));
+	if (GIMME == G_ARRAY) {
+	    EXTEND(sp, 1);
+	    if (unparsed)
+		PUSHs(sv_2mortal(newSViv(strlen(unparsed))));
+	    else
+		PUSHs(&sv_undef);
+	}
+
+void
+strtol(str, base = 0)
+	char *		str
+	int		base
+    PREINIT:
+	long num;
+	char *unparsed;
+    PPCODE:
+	num = strtol(str, &unparsed, base);
+	if (num >= IV_MIN && num <= IV_MAX)
+	    PUSHs(sv_2mortal(newSViv((IV)num)));
+	else
+	    PUSHs(sv_2mortal(newSVnv((double)num)));
+	if (GIMME == G_ARRAY) {
+	    EXTEND(sp, 1);
+	    if (unparsed)
+		PUSHs(sv_2mortal(newSViv(strlen(unparsed))));
+	    else
+		PUSHs(&sv_undef);
+	}
+
+void
+strtoul(str, base = 0)
+	char *		str
+	int		base
+    PREINIT:
+	unsigned long num;
+	char *unparsed;
+    PPCODE:
+	num = strtoul(str, &unparsed, base);
+	if (num <= IV_MAX)
+	    PUSHs(sv_2mortal(newSViv((IV)num)));
+	else
+	    PUSHs(sv_2mortal(newSVnv((double)num)));
+	if (GIMME == G_ARRAY) {
+	    EXTEND(sp, 1);
+	    if (unparsed)
+		PUSHs(sv_2mortal(newSViv(strlen(unparsed))));
+	    else
+		PUSHs(&sv_undef);
+	}
 
 SV *
 strxfrm(src)
@@ -3128,11 +3534,11 @@ times()
 	clock_t realtime;
 	realtime = times( &tms );
 	EXTEND(sp,5);
-	PUSHs( sv_2mortal( newSVnv( realtime ) ) );
-	PUSHs( sv_2mortal( newSVnv( tms.tms_utime ) ) );
-	PUSHs( sv_2mortal( newSVnv( tms.tms_stime ) ) );
-	PUSHs( sv_2mortal( newSVnv( tms.tms_cutime ) ) );
-	PUSHs( sv_2mortal( newSVnv( tms.tms_cstime ) ) );
+	PUSHs( sv_2mortal( newSViv( (IV) realtime ) ) );
+	PUSHs( sv_2mortal( newSViv( (IV) tms.tms_utime ) ) );
+	PUSHs( sv_2mortal( newSViv( (IV) tms.tms_stime ) ) );
+	PUSHs( sv_2mortal( newSViv( (IV) tms.tms_cutime ) ) );
+	PUSHs( sv_2mortal( newSViv( (IV) tms.tms_cstime ) ) );
 
 double
 difftime(time1, time2)

@@ -1,7 +1,5 @@
 package Pod::Text;
 
-# Version 1.01
-
 =head1 NAME
 
 Pod::Text - convert POD data to formatted ASCII text
@@ -14,7 +12,7 @@ Pod::Text - convert POD data to formatted ASCII text
 
 Also:
 
-	pod2text < input.pod
+	pod2text [B<-a>] [B<->I<width>] < input.pod
 
 =head1 DESCRIPTION
 
@@ -27,14 +25,16 @@ will be used to simulate bold and underlined text.
 A separate F<pod2text> program is included that is primarily a wrapper for
 Pod::Text.
 
-The single function C<pod2text()> can take one or two arguments. The first
-should be the name of a file to read the pod from, or "<&STDIN" to read from
+The single function C<pod2text()> can take the optional options B<-a>
+for an alternative output format, then a B<->I<width> option with the
+max terminal width, followed by one or two arguments. The first
+should be the name of a file to read the pod from, or "E<lt>&STDIN" to read from
 STDIN. A second argument, if provided, should be a filehandle glob where
 output should be sent.
 
 =head1 AUTHOR
 
-Tom Christiansen E<lt>tchrist@mox.perl.comE<gt>
+Tom Christiansen E<lt>F<tchrist@mox.perl.com>E<gt>
 
 =head1 TODO
 
@@ -49,7 +49,12 @@ require Exporter;
 @ISA = Exporter;
 @EXPORT = qw(pod2text);
 
+use vars qw($VERSION);
+$VERSION = "1.0203";
+
 $termcap=0;
+
+$opt_alt_format = 0;
 
 #$use_format=1;
 
@@ -59,8 +64,7 @@ $BOLD = "\x1b[1m";
 $NORM = "\x1b[0m";
 
 sub pod2text {
-local($file,*OUTPUT) = @_;
-*OUTPUT = *STDOUT if @_<2;
+shift if $opt_alt_format = ($_[0] eq '-a');
 
 if($termcap and !$setuptermcap) {
 	$setuptermcap=1;
@@ -73,10 +77,17 @@ if($termcap and !$setuptermcap) {
 }
 
 $SCREEN = ($_[0] =~ /^-(\d+)/ && (shift, $1))
-       || ($ENV{TERMCAP} =~ /co#(\d+)/)[0]
        ||  $ENV{COLUMNS}
-       || (`stty -a 2>/dev/null` =~ /(\d+) columns/)[0]
+       || ($ENV{TERMCAP} =~ /co#(\d+)/)[0]
+       || ($^O ne 'MSWin32' && (`stty -a 2>/dev/null` =~ /(\d+) columns/)[0])
        || 72;
+
+@_ = ("<&STDIN") unless @_;
+local($file,*OUTPUT) = @_;
+*OUTPUT = *STDOUT if @_<2;
+
+local $: = $:;
+$: = " \n" if $opt_alt_format;	# Do not break ``-L/lib/'' into ``- L/lib/''.
 
 $/ = "";
 
@@ -86,6 +97,7 @@ $cutting = 1;
 $DEF_INDENT = 4;
 $indent = $DEF_INDENT;
 $needspace = 0;
+$begun = "";
 
 open(IN, $file) || die "Couldn't open $file: $!";
 
@@ -94,6 +106,15 @@ POD_DIRECTIVE: while (<IN>) {
 	next unless /^=/;
 	$cutting = 0;
     }
+    if ($begun) {
+        if (/^=end\s+$begun/) {
+             $begun = "";
+        }
+        elsif ($begun eq "text") {
+            print OUTPUT $_;
+        }
+        next;
+    }
     1 while s{^(.*?)(\t+)(.*)$}{
 	$1
 	. (' ' x (length($2) * 8 - length($1) % 8))
@@ -101,9 +122,24 @@ POD_DIRECTIVE: while (<IN>) {
     }me;
     # Translate verbatim paragraph
     if (/^\s/) {
-	$needspace = 1;
 	output($_);
 	next;
+    }
+
+    if (/^=for\s+(\S+)\s*(.*)/s) {
+        if ($1 eq "text") {
+            print OUTPUT $2,"";
+        } else {
+            # ignore unknown for
+        }
+        next;
+    }
+    elsif (/^=begin\s+(\S+)\s*(.*)/s) {
+        $begun = $1;
+        if ($1 eq "text") {
+            print OUTPUT $2."";
+        }
+        next;
     }
 
 sub prepare_for_output {
@@ -116,14 +152,19 @@ sub prepare_for_output {
     $maxnest = 10;
     while ($maxnest-- && /[A-Z]</) {
 	unless ($FANCY) {
-	    s/C<(.*?)>/`$1'/g;
+	    if ($opt_alt_format) {
+		s/[BC]<(.*?)>/``$1''/sg;
+		s/F<(.*?)>/"$1"/sg;
+	    } else {
+		s/C<(.*?)>/`$1'/sg;
+	    }
 	} else {
-	    s/C<(.*?)>/noremap("E<lchevron>${1}E<rchevron>")/ge;
+	    s/C<(.*?)>/noremap("E<lchevron>${1}E<rchevron>")/sge;
 	}
         # s/[IF]<(.*?)>/italic($1)/ge;
-        s/I<(.*?)>/*$1*/g;
+        s/I<(.*?)>/*$1*/sg;
         # s/[CB]<(.*?)>/bold($1)/ge;
-	s/X<.*?>//g;
+	s/X<.*?>//sg;
 	# LREF: a manpage(3f)
 	s:L<([a-zA-Z][^\s\/]+)(\([^\)]+\))?>:the $1$2 manpage:g;
 	# LREF: an =item on another manpage
@@ -167,9 +208,9 @@ sub prepare_for_output {
 		    ?  "the section on \"$2\" in the $1 manpage"
 		    :  "the section on \"$2\""
 	    }
-	}gex;
+	}sgex;
 
-        s/[A-Z]<(.*?)>/$1/g;
+        s/[A-Z]<(.*?)>/$1/sg;
     }
     clear_noremap(1);
 }
@@ -184,10 +225,18 @@ sub prepare_for_output {
 	if ($Cmd eq 'cut') {
 	    $cutting = 1;
 	}
+	elsif ($Cmd eq 'pod') {
+	    $cutting = 0;
+	}
 	elsif ($Cmd eq 'head1') {
 	    makespace();
+	    if ($opt_alt_format) {
+		print OUTPUT "\n";
+		s/^(.+?)[ \t]*$/==== $1 ====/;
+	    }
 	    print OUTPUT;
 	    # print OUTPUT uc($_);
+	    $needspace = $opt_alt_format;
 	}
 	elsif ($Cmd eq 'head2') {
 	    makespace();
@@ -195,7 +244,13 @@ sub prepare_for_output {
 	    #print ' ' x $DEF_INDENT, $_;
 	    # print "\xA7";
 	    s/(\w)/\xA7 $1/ if $FANCY;
-	    print OUTPUT ' ' x ($DEF_INDENT/2), $_, "\n";
+	    if ($opt_alt_format) {
+		s/^(.+?)[ \t]*$/==   $1   ==/;
+		print OUTPUT "\n", $_;
+	    } else {
+		print OUTPUT ' ' x ($DEF_INDENT/2), $_, "\n";
+	    }
+	    $needspace = $opt_alt_format;
 	}
 	elsif ($Cmd eq 'over') {
 	    push(@indent,$indent);
@@ -204,7 +259,6 @@ sub prepare_for_output {
 	elsif ($Cmd eq 'back') {
 	    $indent = pop(@indent);
 	    warn "Unmatched =back\n" unless defined $indent;
-	    $needspace = 1;
 	}
 	elsif ($Cmd eq 'item') {
 	    makespace();
@@ -223,7 +277,7 @@ sub prepare_for_output {
 		    IP_output($paratag, $_);
 		} else {
 		    local($indent) = $indent[$#index - 1] || $DEF_INDENT;
-		    output($_);
+		    output($_, 0);
 		}
 	    }
 	}
@@ -317,7 +371,9 @@ sub IP_output {
     s/\s+/ /g;
     s/^ //;
     $str = "format OUTPUT = \n"
-	. (" " x ($tag_indent))
+	. (($opt_alt_format && $tag_indent > 1)
+	   ? ":" . " " x ($tag_indent - 1)
+	   : " " x ($tag_indent))
 	. '@' . ('<' x ($indent - $tag_indent - 1))
 	. "^" .  ("<" x ($cols - 1)) . "\n"
 	. '$tag, $_'
@@ -345,6 +401,7 @@ sub output {
     } else {
 	s/^/' ' x $indent/gem;
 	s/^\s+\n$/\n/gm;
+	s/^  /: /s if defined($reformat) && $opt_alt_format;
 	print OUTPUT;
     }
 }
@@ -357,9 +414,8 @@ sub noremap {
 
 sub init_noremap {
     die "unmatched init" if $mapready++;
-    if ( /[\200-\377]/ ) {
-	warn "hit bit char in input stream";
-    }
+    #mask off high bit characters in input stream
+    s/([\200-\377])/"E<".ord($1).">"/ge;
 }
 
 sub clear_noremap {
@@ -370,15 +426,21 @@ sub clear_noremap {
     # otherwise the interative \w<> processing would have
     # been hosed by the E<gt>
     s {
-	    E<	
-	    ( [A-Za-z]+ )	
+	    E<
+	    (
+	    	( \d+ )
+	    	| ( [A-Za-z]+ )
+	    )
 	    >	
     } {
 	 do {
-	     defined $HTML_Escapes{$1}
-		? do { $HTML_Escapes{$1} }
+	 	defined $2
+	 	? chr($2)
+	 	:
+	     defined $HTML_Escapes{$3}
+		? do { $HTML_Escapes{$3} }
 		: do {
-		    warn "Unknown escape: $& in $_";
+		    warn "Unknown escape: E<$1> in $_";
 		    "E<$1>";
 		}
 	 }

@@ -1,0 +1,27 @@
+WELCOME to Plan 9 Perl, brave soul!
+   This is a preliminary alpha version of Plan 9 Perl. Still to be implemented are MakeMaker and DynaLoader. Many perl commands are missing or currently behave in an inscrutable manner. These gaps will, with perserverance and a modicum of luck, be remedied in the near future.To install this software:
+
+   1. Create the source directories and libraries for perl by running the plan9/setup.rc command (i.e., located in the plan9 subdirectory). Note: the setup routine assumes that you haven't dearchived these files into /sys/src/cmd/perl. After running setup.rc you may delete the copy of the source you originally detarred, as source code has now been installed in /sys/src/cmd/perl. If you plan on installing perl binaries for all architectures, run "setup.rc -a".
+After 
+   2. Making sure that you have adequate privileges to build system software, from /sys/src/cmd/perl/5.00301 run:
+mk install
+     If you wish to install perl versions for all architectures (68020, mips, sparc and 386) run:
+mk installall
+
+   3. Wait. The build process will take a *long* time because perl bootstraps itself. A 75MHz Pentium, 16MB RAM machine takes roughly 30 minutes to build the distribution from scratch.
+
+INSTALLING DOCUMENTATION
+This perl distribution comes with a tremendous amount of documentation. To add these to the built-in manuals that come with Plan 9, from /sys/src/cmd/perl/5.00301 run:
+mk man
+To begin your reading, start with:
+man perl
+This is a good introduction and will direct you towards other man pages that may interest you. For information specific to Plan 9 Perl, try:
+man perlplan9
+
+(Note: "mk man" may produce some extraneous noise. Fear not.)
+
+Direct questions, comments, and the unlikely bug report (ahem) direct comments toward:
+lutherh@stratcom.com
+
+Luther Huffman 
+Strategic Computer Solutions, Inc.		

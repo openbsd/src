@@ -45,6 +45,7 @@ FileHandle		T_PTROBJ
 InputStream		T_IN
 InOutStream		T_INOUT
 OutputStream		T_OUT
+bool			T_BOOL
 
 #############################################################################
 INPUT
@@ -78,6 +79,8 @@ T_INT
 	$var = (int)SvIV($arg)
 T_ENUM
 	$var = ($type)SvIV($arg)
+T_BOOL
+	$var = (int)SvIV($arg)
 T_U_INT
 	$var = (unsigned int)SvIV($arg)
 T_SHORT
@@ -124,7 +127,7 @@ T_REF_IV_PTR
 	else
 	    croak(\"$var is not of type ${ntype}\")
 T_PTROBJ
-	if (sv_isa($arg, \"${ntype}\")) {
+	if (sv_derived_from($arg, \"${ntype}\")) {
 	    IV tmp = SvIV((SV*)SvRV($arg));
 	    $var = ($type) tmp;
 	}
@@ -199,6 +202,8 @@ T_SYSRET
 	}
 T_ENUM
 	sv_setiv($arg, (IV)$var);
+T_BOOL
+	$arg = boolSV($var);
 T_U_INT
 	sv_setiv($arg, (IV)$var);
 T_SHORT

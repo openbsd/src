@@ -1,0 +1,29 @@
+#!/usr/local/bin/perl
+
+# Make a world-writeable directory for saving state.
+$ww = 'WORLD_WRITABLE';
+unless (-w $ww) {
+    $u = umask 0;
+    mkdir $ww, 0777;
+    umask $u;
+}
+
+# Decode the sample image.
+for $bin (qw(wilogo.gif)) {
+    unless (open UU, "$bin.uu") { warn "Can't open $bin.uu: $!\n"; next }
+    unless (open BIN, "> $bin") { warn "Can't create $bin: $!\n"; next }
+    $_ = <UU>;
+    while (<UU>) {
+	chomp;
+	last if /^end/;
+	print BIN unpack "u", $_;
+    }
+    close BIN;
+    close UU;
+}
+
+# Create symlinks from *.txt to *.cgi for documentation purposes.
+foreach (<*.cgi>) {
+    ($target = $_) =~ s/cgi$/txt/;
+    symlink $_, $target unless -e $target;
+}

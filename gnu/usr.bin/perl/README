@@ -1,7 +1,7 @@
 
 			   Perl Kit, Version 5.0
 
-		       Copyright 1989-1996, Larry Wall
+		       Copyright 1989-1997, Larry Wall
 			    All rights reserved.
 
     This program is free software; you can redistribute it and/or modify
@@ -62,20 +62,21 @@ in MANIFEST.
 
 Installation
 
-1) Detailed instructions are in the file INSTALL.  In brief, the
-following should work on most systems:
+1) Detailed instructions are in the file INSTALL which you should read.
+In brief, the following should work on most systems:
 	rm -f config.sh
 	sh Configure
 	make
 	make test
 	make install
-For most systems, it should be safe to accept all the Configure
-defaults.
+For most systems, it should be safe to accept all the Configure defaults.
+(It is recommended that you accept the defaults the first time you build
+or if you have any problems building.)
 
 2) Read the manual entries before running perl.
 
 3) IMPORTANT!  Help save the world!  Communicate any problems and suggested
-patches to me, lwall@sems.com (Larry Wall), so we can
+patches to me, larry@wall.org (Larry Wall), so we can
 keep the world in sync.  If you have a problem, there's someone else
 out there who either has had or will have the same problem.
 It's usually helpful if you send the output of the "myconfig" script

@@ -41,8 +41,10 @@ $rnd_mode = 'even';
 sub main'fnorm { #(string) return fnum_str
     local($_) = @_;
     s/\s+//g;                               # strip white space
-    if (/^([+-]?)(\d*)(\.(\d*))?([Ee]([+-]?\d+))?$/ && "$2$4" ne '') {
-	&norm(($1 ? "$1$2$4" : "+$2$4"),(($4 ne '') ? $6-length($4) : $6));
+    if (/^([+-]?)(\d*)(\.(\d*))?([Ee]([+-]?\d+))?$/
+	  && ($2 ne '' || defined($4))) {
+	my $x = defined($4) ? $4 : '';
+	&norm(($1 ? "$1$2$x" : "+$2$x"), (($x ne '') ? $6-length($x) : $6));
     } else {
 	'NaN';
     }

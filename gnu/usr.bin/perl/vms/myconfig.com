@@ -299,7 +299,7 @@ $! $spitshell = ECHO !<<!GROK!THIS!
 $ ECHO " "
 $ ECHO "Summary of my ''$package' (patchlevel ''$PATCHLEVEL' subversion ''$SUBVERSION') configuration:"
 $ ECHO "  Platform:"
-$ ECHO "    osname=''$osname', osver=''$osvers', archname=''$archname'"
+$ ECHO "    osname=''$osname', osvers=''$osvers', archname=''$archname'"
 $ ECHO "     uname=''$myuname'"                             !->d_has_uname?
 $ ECHO "     hint=''$hint' d_sigaction='undef'"             !->hintfile?
 $ ECHO "     static exts=''$staticexts'"                    ! added for VMS

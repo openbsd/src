@@ -13,7 +13,7 @@ of a system to check on and report various kinds of anomalies.
 If you machine doesn't support #!, the first thing you'll want to do is
 replace the #! with a couple of lines that look like this:
 
-	eval "exec /usr/bin/perl -S $0 $*"
+	eval 'exec /usr/bin/perl -S $0 ${1+"$@"}'
 		if $running_under_some_shell;
 
 being sure to include any flags that were on the #! line.  A supplied script

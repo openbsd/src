@@ -92,7 +92,7 @@ sub import {
 	*OSNAME
 );
 
-# The ground of all being.
+# The ground of all being. @ARG is deprecated (5.005 makes @_ lexical)
 
 	*ARG					= *_	;
 
@@ -138,8 +138,8 @@ sub import {
 
 	*CHILD_ERROR				= *?	;
 	*OS_ERROR				= *!	;
-	*EXTENDED_OS_ERROR			= *^E	;
 	    *ERRNO				= *!	;
+	*EXTENDED_OS_ERROR			= *^E	;
 	*EVAL_ERROR				= *@	;
 
 # Process info.

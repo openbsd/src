@@ -4,6 +4,13 @@
 # Based on input from lots of folks, especially
 # Dean Roehrich <roehrich@ironwood-fddi.cray.com>
 
+# If perl fails tests that involve dynamic loading of extensions, and
+# you are using gcc, be sure that you are NOT using GNU as and ld.  One
+# way to do that is to invoke Configure with
+# 
+#     sh Configure -Dcc='gcc -B/usr/ccs/bin/'
+# 
+ 
 # See man vfork.
 usevfork=false
 
@@ -35,17 +42,6 @@ case "$archname" in
     ;;
 esac
 
-# Solaris 2.5 has reintroduced some BSD-ish functions into libc.
-# This is no problem unless you compile perl under Solaris 2.5 but
-# try to run the binary on 2.4.  Here, we take the easy way out by
-# claiming we don't have these functions.  perl.h works around all of
-# these anyway.
-# XXX Eventually, I should fix perl.h to prefer the POSIX versions.
-d_bcmp='undef'
-d_bcopy='undef'
-d_safebcpy='undef'
-d_index='undef'
-
 ######################################################
 # General sanity testing.  See below for excerpts from the Solaris FAQ.
 
@@ -58,7 +54,7 @@ d_index='undef'
 # Here's another draft of the perl5/solaris/gcc sanity-checker. 
 
 case $PATH in
-*/usr/ucb*:/usr/bin:*|*/usr/ucb*:/usr/bin) cat <<END
+*/usr/ucb*:/usr/bin:*|*/usr/ucb*:/usr/bin) cat <<END >&4
 
 NOTE:  Some people have reported problems with /usr/ucb/cc.  
 Remove /usr/ucb from your PATH if you have difficulties.
@@ -74,7 +70,7 @@ esac
 case $? in
 0) ;;
 *)
-	cat <<END
+	cat <<END >&4
 
 NOTE: Your system does not have /dev/fd mounted.  If you want to
 be able to use set-uid scripts you must ask your system administrator
@@ -90,7 +86,7 @@ esac
 /usr/bin/ls /usr/lib/libucb* >/dev/null 2>&1
 case $? in
 0)
-	cat <<END
+	cat <<END >&4
 
 NOTE: libucb has been found in /usr/lib.  libucb should reside in
 /usr/ucblib.  You may have trouble while building Perl extensions.
@@ -107,7 +103,7 @@ if grep GNU make.vers > /dev/null 2>&1; then
     tmp=`/usr/bin/which make`
     case "`/usr/bin/ls -l $tmp`" in
     ??????s*)
-	    cat <<END
+	    cat <<END >&2
 	
 NOTE: Your PATH points to GNU make, and your GNU make has the set-group-id
 bit set.  You must either rearrange your PATH to put /usr/ccs/bin before the
@@ -148,11 +144,12 @@ case "`${cc:-cc} -v 2>&1`" in
 	case $verbose in
 	*/usr/ccs/bin/as*) ;;
 	*)
-	    cat <<END
+	    cat <<END >&2
 
 NOTE: You are using GNU as(1).  GNU as(1) will not build Perl.
 You must arrange to use /usr/ccs/bin/as, perhaps by setting
-GCC_EXEC_PREFIX or by including -B/usr/ccs/bin in your cc command.
+GCC_EXEC_PREFIX or by including -B/usr/ccs/bin/ in your cc command.
+(Note that the trailing "/" is required.)
 
 END
 	;;
@@ -162,11 +159,11 @@ END
 	case $verbose in
 	*/usr/ccs/bin/ld*) ;;
 	*)
-	    cat <<END
+	    cat <<END >&2
 
 NOTE: You are using GNU ld(1).  GNU ld(1) will not build Perl.
 You must arrange to use /usr/ccs/bin/ld, perhaps by setting
-GCC_EXEC_PREFIX or by including -B/usr/ccs/bin in your cc command.
+GCC_EXEC_PREFIX or by including -B/usr/ccs/bin/ in your cc command.
 
 END
 	;;
@@ -182,7 +179,7 @@ END
 	# See if as(1) is GNU as(1).  GNU as(1) won't work for this job.
 	case `as --version < /dev/null 2>&1` in
 	*GNU*)
-		cat <<END
+		cat <<END >&2
 
 NOTE: You are using GNU as(1).  GNU as(1) will not build Perl.
 You must arrange to use /usr/ccs/bin, perhaps by adding it to the
@@ -193,17 +190,32 @@ END
 	esac
 
 	# See if ld(1) is GNU ld(1).  GNU ld(1) won't work for this job.
+	# ld --version doesn't properly report itself as a GNU tool,
+	# as of ld version 2.6, so we need to be more strict. TWP 9/5/96
+	gnu_ld=false
 	case `ld --version < /dev/null 2>&1` in
-	*GNU*)
-		cat <<END
+	*GNU*|ld\ version\ 2*)
+		gnu_ld=true ;;
+	*) ;;
+	esac
+	if $gnu_ld ; then :
+	else
+		case `which ld` in
+		no\ ld\ in*|[Cc]ommand\ not\ found*)
+			;;
+		/*gnu*/ld|/*GNU*/ld)
+			gnu_ld=true ;;
+		esac
+	fi
+	if $gnu_ld ; then
+		cat <<END >&2
 
 NOTE: You are using GNU ld(1).  GNU ld(1) will not build Perl.
 You must arrange to use /usr/ccs/bin, perhaps by adding it to the
-beginning of your PATH
+beginning of your PATH.
 
 END
-		;;
-	esac
+	fi
 
 	;; #not using gcc
 esac

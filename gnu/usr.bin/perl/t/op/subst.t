@@ -1,8 +1,8 @@
 #!./perl
 
-# $RCSfile: subst.t,v $$Revision: 1.1.1.1 $$Date: 1996/08/19 10:13:23 $
+# $RCSfile: subst.t,v $$Revision: 1.2 $$Date: 1997/11/30 08:05:45 $
 
-print "1..56\n";
+print "1..62\n";
 
 $x = 'foo';
 $_ = "x";
@@ -198,3 +198,44 @@ print $_ eq 'a,/' ? "ok 55\n" : "not ok 55\n";
 $_ = '+,-';
 tr/-+,/ab\-/;
 print $_ eq 'b-a' ? "ok 56\n" : "not ok 56\n";
+
+
+# test recursive substitutions
+# code based on the recursive expansion of makefile variables
+
+my %MK = (
+    AAAAA => '$(B)', B=>'$(C)', C => 'D',			# long->short
+    E     => '$(F)', F=>'p $(G) q', G => 'HHHHH',	# short->long
+    DIR => '$(UNDEFINEDNAME)/xxx',
+);
+sub var { 
+    my($var,$level) = @_;
+    return "\$($var)" unless exists $MK{$var};
+    return exp_vars($MK{$var}, $level+1); # can recurse
+}
+sub exp_vars { 
+    my($str,$level) = @_;
+    $str =~ s/\$\((\w+)\)/var($1, $level+1)/ge; # can recurse
+    #warn "exp_vars $level = '$str'\n";
+    $str;
+}
+
+print exp_vars('$(AAAAA)',0)           eq 'D'
+	? "ok 57\n" : "not ok 57\n";
+print exp_vars('$(E)',0)               eq 'p HHHHH q'
+	? "ok 58\n" : "not ok 58\n";
+print exp_vars('$(DIR)',0)             eq '$(UNDEFINEDNAME)/xxx'
+	? "ok 59\n" : "not ok 59\n";
+print exp_vars('foo $(DIR)/yyy bar',0) eq 'foo $(UNDEFINEDNAME)/xxx/yyy bar'
+	? "ok 60\n" : "not ok 60\n";
+
+# a match nested in the RHS of a substitution:
+
+$_ = "abcd";
+s/../$x = $&, m#.#/eg;
+print $x eq "cd" ? "ok 61\n" : "not ok 61\n";
+
+# check parsing of split subst with comment
+eval 's{foo} # this is a comment, not a delimiter
+       {bar};';
+print @? ? "not ok 62\n" : "ok 62\n";

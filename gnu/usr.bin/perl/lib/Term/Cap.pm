@@ -104,8 +104,11 @@ as C<$self-E<gt>{TERMCAP}>.
 sub termcap_path { ## private
     my @termcap_path;
     # $TERMCAP, if it's a filespec
-    push(@termcap_path, $ENV{TERMCAP}) if ((exists $ENV{TERMCAP}) &&
-                                           ($ENV{TERMCAP} =~ /^\//));
+    push(@termcap_path, $ENV{TERMCAP})
+	if ((exists $ENV{TERMCAP}) &&
+	    (($^O eq 'os2' || $^O eq 'MSWin32')
+	     ? $ENV{TERMCAP} =~ /^[a-z]:[\\\/]/i
+	     : $ENV{TERMCAP} =~ /^\//));
     if ((exists $ENV{TERMPATH}) && ($ENV{TERMPATH})) {
 	# Add the users $TERMPATH
 	push(@termcap_path, split(/(:|\s+)/, $ENV{TERMPATH}))
@@ -185,16 +188,20 @@ sub Tgetent { ## public -- static method
 
     # This is eval'ed inside the while loop for each file
     $search = q{
-	while ($_ = <TERMCAP>) {
+	while (<TERMCAP>) {
 	    next if /^\\t/ || /^#/;
 	    if ($_ =~ m/(^|\\|)${termpat}[:|]/o) {
 		chomp;
 		s/^[^:]*:// if $first++;
 		$state = 0;
-		while ($_ =~ s/\\\\$//) { $_ .= <TERMCAP>; chomp; }
+		while ($_ =~ s/\\\\$//) {
+		    defined(my $x = <TERMCAP>) or last;
+		    $_ .= $x; chomp;
+		}
 		last;
 	    }
 	}
+	defined $entry or $entry = '';
 	$entry .= $_;
     };
 

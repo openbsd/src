@@ -37,7 +37,7 @@ if ($] >= 5) {
 
 require 'syslog.ph';
 
- eval 'use Socket' 			||
+ eval 'use Socket; 1' 			||
      eval { require "socket.ph" } 	||
      require "sys/socket.ph";
 
@@ -140,10 +140,10 @@ sub main'syslog {
 
 sub xlate {
     local($name) = @_;
-    $name =~ y/a-z/A-Z/;
+    $name = uc $name;
     $name = "LOG_$name" unless $name =~ /^LOG_/;
     $name = "syslog'$name";
-    eval(&$name) || -1;
+    defined &$name ? &$name : -1;
 }
 
 sub connect {

@@ -27,79 +27,20 @@
 #	    ($prune = 1);
 #	}
 
+
+use File::Find ();
+
+*name		= *File::Find::name;
+*prune		= *File::Find::prune;
+*dir		= *File::Find::dir;
+*topdir		= *File::Find::topdir;
+*topdev		= *File::Find::topdev;
+*topino		= *File::Find::topino;
+*topmode	= *File::Find::topmode;
+*topnlink	= *File::Find::topnlink;
+
 sub finddepth {
-    chop($cwd = `pwd`);
-    foreach $topdir (@_) {
-	(($topdev,$topino,$topmode,$topnlink) = stat($topdir))
-	  || (warn("Can't stat $topdir: $!\n"), next);
-	if (-d _) {
-	    if (chdir($topdir)) {
-		($fixtopdir = $topdir) =~ s,/$,, ;
-		&finddepthdir($fixtopdir,$topnlink);
-		($dir,$_) = ($fixtopdir,'.');
-		$name = $fixtopdir;
-		&wanted;
-	    }
-	    else {
-		warn "Can't cd to $topdir: $!\n";
-	    }
-	}
-	else {
-	    unless (($dir,$_) = $topdir =~ m#^(.*/)(.*)$#) {
-		($dir,$_) = ('.', $topdir);
-	    }
-	    chdir $dir && &wanted;
-	}
-	chdir $cwd;
-    }
+    &File::Find::finddepth(\&wanted, @_);
 }
 
-sub finddepthdir {
-    local($dir,$nlink) = @_;
-    local($dev,$ino,$mode,$subcount);
-    local($name);
-
-    # Get the list of files in the current directory.
-
-    opendir(DIR,'.') || warn "Can't open $dir: $!\n";
-    local(@filenames) = readdir(DIR);
-    closedir(DIR);
-
-    if ($nlink == 2) {        # This dir has no subdirectories.
-	for (@filenames) {
-	    next if $_ eq '.';
-	    next if $_ eq '..';
-	    $name = "$dir/$_";
-	    $nlink = 0;
-	    &wanted;
-	}
-    }
-    else {                    # This dir has subdirectories.
-	$subcount = $nlink - 2;
-	for (@filenames) {
-	    next if $_ eq '.';
-	    next if $_ eq '..';
-	    $nlink = $prune = 0;
-	    $name = "$dir/$_";
-	    if ($subcount > 0) {    # Seen all the subdirs?
-
-		# Get link count and check for directoriness.
-
-		($dev,$ino,$mode,$nlink) = lstat($_) unless $nlink;
-		
-		if (-d _) {
-
-		    # It really is a directory, so do it recursively.
-
-		    if (!$prune && chdir $_) {
-			&finddepthdir($name,$nlink);
-			chdir '..';
-		    }
-		    --$subcount;
-		}
-	    }
-	    &wanted;
-	}
-    }
-}
 1;

@@ -1,0 +1,165 @@
+after 5.003_05:
+	PERLLIB_PREFIX was not active if it matches an element of @INC
+		as a whole.
+	Do not need PERL_SBRK if crtdll-revision is >= 50.
+	Use -Zsmall-conv if crtdll-revision is >= 50 (in static perl!).
+:7: warning: #warning <dirent.h> requires <sys/types.h>
+	We compile miniperl static. It cannot fork, thus there may be
+		problems with pipes (since HAS_FORK is in
+		place). Pipes are required by makemaker.
+	We compile perl___.exe A.OUT and dynamic. It should be able to
+		fork.
+	If we can fork, we my_popen by popen unless "-|". Thus we
+		write a cooky "-1" into the pid array to indicate
+		this.
+	Apparently we can fork, and we can load dynamic extensions
+		now, though probably not simultaneously.
+	*DB tests corrected for OS/2 one-user stat[2].
+	/bin/sh is intercepted and replaced by SH_PATH.
+	Note that having '\\' in the command line of one-arg `system'
+		would trigger call via shell.
+	Segfault with system {'ls'} 'blah'; corrected.
+	Documentation of OS/2-different features added to main PODs.
+	New buitins in Cwd::
+
+		Cwd::current_drive
+		Cwd::sys_chdir		- leaves drive as it is.
+		Cwd::change_drive
+		Cwd::sys_is_absolute	- has drive letter and is_rooted
+		Cwd::sys_is_rooted	- has leading [/\\] (maybe
+					  after a drive)
+		Cwd::sys_is_relative	- changes with current dir
+		Cwd::sys_cwd		- Interface to cwd from EMX.
+		Cwd::sys_abspath(name, dir)	
+					- Really really odious
+					  function. Returns absolute
+					  name of file which would 
+					  have 'name' if CWD were 'dir'.
+					Dir defaults to the current dir.
+		Cwd::extLibpath [type]	- Get/set current value of extended
+		Cwd::extLibpath_set	- library search path.
+			path [type]
+					The optional last argument redirects
+					   to END-path if true,
+					   default is to search BEGIN-path.
+		(Note that some of these may be moved to different
+		  libraries - eventually).
+	Executables: 
+		perl - can fork, can dynalink (but not simultaneously)
+		perl_ - can fork, cannot dynalink
+		perl__ - same as perl___, but PM.
+		perl___ - cannot fork, can dynalink.
+	The build of the first one - perl - is rather convoluted, and
+	  requires a build of miniperl_.
+after 5.003_05:
+	PERLLIB_PREFIX was not active if it matches an element of @INC
+		as a whole.
+	Do not need PERL_SBRK if crtdll-revision is >= 50.
+	Use -Zsmall-conv if crtdll-revision is >= 50 (in static perl!).
+:7: warning: #warning <dirent.h> requires <sys/types.h>
+	We compile miniperl static. It cannot fork, thus there may be
+		problems with pipes (since HAS_FORK is in
+		place). Pipes are required by makemaker.
+	We compile perl___.exe A.OUT and dynamic. It should be able to
+		fork.
+	If we can fork, we my_popen by popen unless "-|". Thus we
+		write a cooky "-1" into the pid array to indicate
+		this.
+	Apparently we can fork, and we can load dynamic extensions
+		now, though probably not simultaneously.
+	*DB tests corrected for OS/2 one-user stat[2].
+	/bin/sh is intercepted and replaced by SH_PATH.
+	Note that having '\\' in the command line of one-arg `system'
+		would trigger call via shell.
+	Segfault with system {'ls'} 'blah'; corrected.
+	Documentation of OS/2-different features added to main PODs.
+	New buitins in Cwd::
+
+		Cwd::current_drive
+		Cwd::sys_chdir		- leaves drive as it is.
+		Cwd::change_drive
+		Cwd::sys_is_absolute	- has drive letter and is_rooted
+		Cwd::sys_is_rooted	- has leading [/\\] (maybe
+					  after a drive)
+		Cwd::sys_is_relative	- changes with current dir
+		Cwd::sys_cwd		- Interface to cwd from EMX.
+		Cwd::sys_abspath(name, dir)	
+					- Really really odious
+					  function. Returns absolute
+					  name of file which would 
+					  have 'name' if CWD were 'dir'.
+					Dir defaults to the current dir.
+		Cwd::extLibpath [type]	- Get/set current value of extended
+		Cwd::extLibpath_set	- library search path.
+			path [type]
+					The optional last argument redirects
+					   to END-path if true,
+					   default is to search BEGIN-path.
+		(Note that some of these may be moved to different
+		  libraries - eventually).
+	Executables: 
+		perl - can fork, can dynalink (but not simultaneously)
+		perl_ - can fork, cannot dynalink
+		perl__ - same as perl___, but PM.
+		perl___ - cannot fork, can dynalink.
+	The build of the first one - perl - is rather convoluted, and
+	  requires a build of miniperl_.
+
+after 5.003_07:
+	custom tmpfile and tmpname which may use $TMP, $TEMP.
+	all the calls to OS/2 API wrapped so that it is safe to use
+		them under DOS (may die(), though).
+	Tested that popen works under DOS with modified PDKSH and RSX.
+	File::Copy works under DOS.
+	MakeMaker modified to work under DOS (perlmain.c.tmp and sh -c true).
+
+after 5.003_08:
+	OS2::PrfDB exports symbols as documented;
+	should work on OS/2 2.1 again.
+	uses reliable signals when spawing.
+	do not use popen() any more - no intermediate shell unless needed.
+
+after 5.003_11:
+	Functions emx_{malloc,realloc,calloc,free} are exported from DLL.
+	get_sysinfo() bugs corrected (flags were not used and wrongly defined).
+
+after 5.003_20:
+	_isterm is substituted instead of isatty, s?random instead of srand.
+	`register' disabled if -DDEBUGGING and not AOUT build: stupid SD386.
+	3-argument select() was stomping over memory.
+
+after 5.003_21:
+	Can start scripts by executing 'dir/script' and
+	'script.sh'. Form without extension will call shell only if
+	the specified file exists (will not look on path) (to prohibit
+	trying to run shell commands directly). - Needed by magic.t.
+
+after 5.003_27:
+	ALTERNATE_SHEBANG="extproc " supported, thus options on this
+	line are processed (possibly twice). -S is made legal on such
+	a line. This -S -x is not needed any more.
+	perl.dll may be used from non-EMX programs (via PERL_SYS_INIT
+	- the caller should have valid variable "env" with
+	environment). Known problems: $$ does not work - is 0, waitpid
+	returns immediately, thus Perl cannot wait for completion of
+	started programs.
+
+after 5.004_01:
+	flock emulation added (disable by setting env PERL_USE_FLOCK=0),
+		thanks to Rocco Caputo;
+	RSX bug with missing waitpid circomvented;
+	-S bug with full path with \ corrected.
+
+before 5.004_02:
+	-S switch to perl enables a search with additional extensions 
+	.cmd, .btm, .bat, .pl as well.  This means that if you have
+	mycmd.pl or mycmd.bat on PATH, 
+		perl -S mycmd
+	will work.  Perl will also look in the current directory first.
+	Moreover, a bug with \; in PATH being non-separator is fixed.
+
+after 5.004_03:
+	$^E tracks calls to CRT now.  (May break if Perl masks some
+	changes to errno?)
+	$0 may be edited to longer lengths (at least under OS/2).
+	OS2::REXX->loads looks in the OS/2-ish fashion too.

@@ -1,7 +1,7 @@
-#!./perl
+#!./perl -w
 
 BEGIN {
-    @INC = '../lib';
+    @INC = '../lib' if -d '../lib' ;
     require Config; import Config;
     if ($Config{'extensions'} !~ /\bDB_File\b/) {
 	print "1..0\n";
@@ -11,126 +11,185 @@ BEGIN {
 
 use DB_File; 
 use Fcntl;
+use strict ;
+use vars qw($dbh $Dfile $bad_ones) ;
 
-print "1..30\n";
+sub ok
+{
+    my $no = shift ;
+    my $result = shift ;
 
-$Dfile = "Op.db-recno";
-unlink $Dfile;
+    print "not " unless $result ;
+    print "ok $no\n" ;
+
+    return $result ;
+}
+
+sub bad_one
+{
+    print STDERR <<EOM unless $bad_ones++ ;
+#
+# Some older versions of Berkeley DB will fail tests 51, 53 and 55.
+#
+# You can safely ignore the errors if you're never going to use the
+# broken functionality (recno databases with a modified bval). 
+# Otherwise you'll have to upgrade your DB library.
+#
+# If you want to upgrade Berkeley DB, the most recent version is 1.85.
+# Check out http://www.bostic.com/db for more details.
+#
+EOM
+}
+
+print "1..66\n";
+
+my $Dfile = "recno.tmp";
+unlink $Dfile ;
 
 umask(0);
 
 # Check the interface to RECNOINFO
 
-$dbh = TIEHASH DB_File::RECNOINFO ;
-print (($dbh->{bval} == undef) ? "ok 1\n" : "not ok 1\n") ;
-print (($dbh->{cachesize} == undef) ? "ok 2\n" : "not ok 2\n") ;
-print (($dbh->{psize} == undef) ? "ok 3\n" : "not ok 3\n") ;
-print (($dbh->{flags} == undef) ? "ok 4\n" : "not ok 4\n") ;
-print (($dbh->{lorder} == undef) ? "ok 5\n" : "not ok 5\n") ;
-print (($dbh->{reclen} == undef) ? "ok 6\n" : "not ok 6\n") ;
-print (($dbh->{bfname} == undef) ? "ok 7\n" : "not ok 7\n") ;
+my $dbh = new DB_File::RECNOINFO ;
+ok(1, ! defined $dbh->{bval}) ;
+ok(2, ! defined $dbh->{cachesize}) ;
+ok(3, ! defined $dbh->{psize}) ;
+ok(4, ! defined $dbh->{flags}) ;
+ok(5, ! defined $dbh->{lorder}) ;
+ok(6, ! defined $dbh->{reclen}) ;
+ok(7, ! defined $dbh->{bfname}) ;
 
 $dbh->{bval} = 3000 ;
-print ($dbh->{bval} == 3000 ? "ok 8\n" : "not ok 8\n") ;
+ok(8, $dbh->{bval} == 3000 );
 
 $dbh->{cachesize} = 9000 ;
-print ($dbh->{cachesize} == 9000 ? "ok 9\n" : "not ok 9\n") ;
+ok(9, $dbh->{cachesize} == 9000 );
 
 $dbh->{psize} = 400 ;
-print (($dbh->{psize} == 400) ? "ok 10\n" : "not ok 10\n") ;
+ok(10, $dbh->{psize} == 400 );
 
 $dbh->{flags} = 65 ;
-print (($dbh->{flags} == 65) ? "ok 11\n" : "not ok 11\n") ;
+ok(11, $dbh->{flags} == 65 );
 
 $dbh->{lorder} = 123 ;
-print (($dbh->{lorder} == 123) ? "ok 12\n" : "not ok 12\n") ;
+ok(12, $dbh->{lorder} == 123 );
 
 $dbh->{reclen} = 1234 ;
-print ($dbh->{reclen} == 1234 ? "ok 13\n" : "not ok 13\n") ;
+ok(13, $dbh->{reclen} == 1234 );
 
 $dbh->{bfname} = 1234 ;
-print ($dbh->{bfname} == 1234 ? "ok 14\n" : "not ok 14\n") ;
+ok(14, $dbh->{bfname} == 1234 );
 
 
 # Check that an invalid entry is caught both for store & fetch
 eval '$dbh->{fred} = 1234' ;
-print ($@ eq '' ? "ok 15\n" : "not ok 15\n") ;
-eval '$q = $dbh->{fred}' ;
-print ($@ eq '' ? "ok 16\n" : "not ok 16\n") ;
+ok(15, $@ =~ /^DB_File::RECNOINFO::STORE - Unknown element 'fred' at/ );
+eval 'my $q = $dbh->{fred}' ;
+ok(16, $@ =~ /^DB_File::RECNOINFO::FETCH - Unknown element 'fred' at/ );
 
 # Now check the interface to RECNOINFO
 
-print (($X = tie(@h, DB_File,$Dfile, O_RDWR|O_CREAT, 0640, $DB_RECNO )) ? "ok 17\n" : "not ok 17");
+my $X  ;
+my @h ;
+ok(17, $X = tie @h, 'DB_File', $Dfile, O_RDWR|O_CREAT, 0640, $DB_RECNO ) ;
 
-($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime,
-   $blksize,$blocks) = stat($Dfile);
-print (($mode & 0777) == 0640 ? "ok 18\n" : "not ok 18\n");
+ok(18, ((stat($Dfile))[2] & 0777) == (($^O eq 'os2' || $^O eq 'MSWin32') ? 0666 : 0640)
+	|| $^O eq 'amigaos') ;
 
-#$l = @h ;
-$l = $X->length ;
-print (!$l ? "ok 19\n" : "not ok 19\n");
+#my $l = @h ;
+my $l = $X->length ;
+ok(19, !$l );
 
-@data = qw( a b c d ever f g h  i j k longername m n o p) ;
+my @data = qw( a b c d ever f g h  i j k longername m n o p) ;
 
 $h[0] = shift @data ;
-print ($h[0] eq 'a' ? "ok 20\n" : "not ok 20\n") ;
+ok(20, $h[0] eq 'a' );
 
+my $ i;
 foreach (@data)
   { $h[++$i] = $_ }
 
 unshift (@data, 'a') ;
 
-print (defined $h[1] ? "ok 21\n" : "not ok 21\n");
-print (! defined $h[16] ? "ok 22\n" : "not ok 22\n");
-print ($X->length == @data ? "ok 23\n" : "not ok 23\n") ;
+ok(21, defined $h[1] );
+ok(22, ! defined $h[16] );
+ok(23, $X->length == @data );
 
 
 # Overwrite an entry & check fetch it
 $h[3] = 'replaced' ;
 $data[3] = 'replaced' ;
-print ($h[3] eq 'replaced' ? "ok 24\n" : "not ok 24\n");
+ok(24, $h[3] eq 'replaced' );
 
 #PUSH
-@push_data = qw(added to the end) ;
-#push (@h, @push_data) ;
+my @push_data = qw(added to the end) ;
+#my push (@h, @push_data) ;
 $X->push(@push_data) ;
 push (@data, @push_data) ;
-print ($h[++$i] eq 'added' ? "ok 25\n" : "not ok 25\n");
+ok(25, $h[++$i] eq 'added' );
+ok(26, $h[++$i] eq 'to' );
+ok(27, $h[++$i] eq 'the' );
+ok(28, $h[++$i] eq 'end' );
 
 # POP
-pop (@data) ;
-#$value = pop(@h) ;
-$value = $X->pop ;
-print ($value eq 'end' ? "not ok 26\n" : "ok 26\n");
+my $popped = pop (@data) ;
+#my $value = pop(@h) ;
+my $value = $X->pop ;
+ok(29, $value eq $popped) ;
 
 # SHIFT
 #$value = shift @h
 $value = $X->shift ;
-print ($value eq shift @data ? "not ok 27\n" : "ok 27\n");
+my $shifted = shift @data ;
+ok(30, $value eq $shifted );
 
 # UNSHIFT
 
 # empty list
 $X->unshift ;
-print ($X->length == @data ? "ok 28\n" : "not ok 28\n") ;
+ok(31, $X->length == @data );
 
-@new_data = qw(add this to the start of the array) ;
+my @new_data = qw(add this to the start of the array) ;
 #unshift @h, @new_data ;
 $X->unshift (@new_data) ;
 unshift (@data, @new_data) ;
-print ($X->length == @data ? "ok 29\n" : "not ok 29\n") ;
+ok(32, $X->length == @data );
+ok(33, $h[0] eq "add") ;
+ok(34, $h[1] eq "this") ;
+ok(35, $h[2] eq "to") ;
+ok(36, $h[3] eq "the") ;
+ok(37, $h[4] eq "start") ;
+ok(38, $h[5] eq "of") ;
+ok(39, $h[6] eq "the") ;
+ok(40, $h[7] eq "array") ;
+ok(41, $h[8] eq $data[8]) ;
 
 # SPLICE
 
 # Now both arrays should be identical
 
-$ok = 1 ;
-$j = 0 ;
+my $ok = 1 ;
+my $j = 0 ;
 foreach (@data)
 {
    $ok = 0, last if $_ ne $h[$j ++] ; 
 }
-print ($ok ? "ok 30\n" : "not ok 30\n") ;
+ok(42, $ok );
+
+# Neagtive subscripts
+
+# get the last element of the array
+ok(43, $h[-1] eq $data[-1] );
+ok(44, $h[-1] eq $h[$X->length -1] );
+
+# get the first element using a negative subscript
+eval '$h[ - ( $X->length)] = "abcd"' ;
+ok(45, $@ eq "" );
+ok(46, $h[0] eq "abcd" );
+
+# now try to read before the start of the array
+eval '$h[ - (1 + $X->length)] = 1234' ;
+ok(47, $@ =~ '^Modification of non-creatable array value attempted' );
 
 # IMPORTANT - $X must be undefined before the untie otherwise the
 #             underlying DB close routine will not get called.
@@ -138,5 +197,189 @@ undef $X ;
 untie(@h);
 
 unlink $Dfile;
+
+sub docat
+{
+    my $file = shift;
+    local $/ = undef;
+    open(CAT,$file) || die "Cannot open $file:$!";
+    my $result = <CAT>;
+    close(CAT);
+    return $result;
+}
+
+
+{
+    # Check bval defaults to \n
+
+    my @h = () ;
+    my $dbh = new DB_File::RECNOINFO ;
+    ok(48, tie @h, 'DB_File', $Dfile, O_RDWR|O_CREAT, 0640, $dbh ) ;
+    $h[0] = "abc" ;
+    $h[1] = "def" ;
+    $h[3] = "ghi" ;
+    untie @h ;
+    my $x = docat($Dfile) ;
+    unlink $Dfile;
+    ok(49, $x eq "abc\ndef\n\nghi\n") ;
+}
+
+{
+    # Change bval
+
+    my @h = () ;
+    my $dbh = new DB_File::RECNOINFO ;
+    $dbh->{bval} = "-" ;
+    ok(50, tie @h, 'DB_File', $Dfile, O_RDWR|O_CREAT, 0640, $dbh ) ;
+    $h[0] = "abc" ;
+    $h[1] = "def" ;
+    $h[3] = "ghi" ;
+    untie @h ;
+    my $x = docat($Dfile) ;
+    unlink $Dfile;
+    my $ok = ($x eq "abc-def--ghi-") ;
+    bad_one() unless $ok ;
+    ok(51, $ok) ;
+}
+
+{
+    # Check R_FIXEDLEN with default bval (space)
+
+    my @h = () ;
+    my $dbh = new DB_File::RECNOINFO ;
+    $dbh->{flags} = R_FIXEDLEN ;
+    $dbh->{reclen} = 5 ;
+    ok(52, tie @h, 'DB_File', $Dfile, O_RDWR|O_CREAT, 0640, $dbh ) ;
+    $h[0] = "abc" ;
+    $h[1] = "def" ;
+    $h[3] = "ghi" ;
+    untie @h ;
+    my $x = docat($Dfile) ;
+    unlink $Dfile;
+    my $ok = ($x eq "abc  def       ghi  ") ;
+    bad_one() unless $ok ;
+    ok(53, $ok) ;
+}
+
+{
+    # Check R_FIXEDLEN with user-defined bval
+
+    my @h = () ;
+    my $dbh = new DB_File::RECNOINFO ;
+    $dbh->{flags} = R_FIXEDLEN ;
+    $dbh->{bval} = "-" ;
+    $dbh->{reclen} = 5 ;
+    ok(54, tie @h, 'DB_File', $Dfile, O_RDWR|O_CREAT, 0640, $dbh ) ;
+    $h[0] = "abc" ;
+    $h[1] = "def" ;
+    $h[3] = "ghi" ;
+    untie @h ;
+    my $x = docat($Dfile) ;
+    unlink $Dfile;
+    my $ok = ($x eq "abc--def-------ghi--") ;
+    bad_one() unless $ok ;
+    ok(55, $ok) ;
+}
+
+{
+    # check that attempting to tie an associative array to a DB_RECNO will fail
+
+    my $filename = "xyz" ;
+    my %x ;
+    eval { tie %x, 'DB_File', $filename, O_RDWR|O_CREAT, 0640, $DB_RECNO ; } ;
+    ok(56, $@ =~ /^DB_File can only tie an array to a DB_RECNO database/) ;
+    unlink $filename ;
+}
+
+{
+   # sub-class test
+
+   package Another ;
+
+   use strict ;
+
+   open(FILE, ">SubDB.pm") or die "Cannot open SubDB.pm: $!\n" ;
+   print FILE <<'EOM' ;
+
+   package SubDB ;
+
+   use strict ;
+   use vars qw( @ISA @EXPORT) ;
+
+   require Exporter ;
+   use DB_File;
+   @ISA=qw(DB_File);
+   @EXPORT = @DB_File::EXPORT ;
+
+   sub STORE { 
+	my $self = shift ;
+        my $key = shift ;
+        my $value = shift ;
+        $self->SUPER::STORE($key, $value * 2) ;
+   }
+
+   sub FETCH { 
+	my $self = shift ;
+        my $key = shift ;
+        $self->SUPER::FETCH($key) - 1 ;
+   }
+
+   sub put { 
+	my $self = shift ;
+        my $key = shift ;
+        my $value = shift ;
+        $self->SUPER::put($key, $value * 3) ;
+   }
+
+   sub get { 
+	my $self = shift ;
+        $self->SUPER::get($_[0], $_[1]) ;
+	$_[1] -= 2 ;
+   }
+
+   sub A_new_method
+   {
+	my $self = shift ;
+        my $key = shift ;
+        my $value = $self->FETCH($key) ;
+	return "[[$value]]" ;
+   }
+
+   1 ;
+EOM
+
+    close FILE ;
+
+    BEGIN { push @INC, '.'; }   
+    eval 'use SubDB ; ';
+    main::ok(57, $@ eq "") ;
+    my @h ;
+    my $X ;
+    eval '
+	$X = tie(@h, "SubDB","recno.tmp", O_RDWR|O_CREAT, 0640, $DB_RECNO );
+	' ;
+
+    main::ok(58, $@ eq "") ;
+
+    my $ret = eval '$h[3] = 3 ; return $h[3] ' ;
+    main::ok(59, $@ eq "") ;
+    main::ok(60, $ret == 5) ;
+
+    my $value = 0;
+    $ret = eval '$X->put(1, 4) ; $X->get(1, $value) ; return $value' ;
+    main::ok(61, $@ eq "") ;
+    main::ok(62, $ret == 10) ;
+
+    $ret = eval ' R_NEXT eq main::R_NEXT ' ;
+    main::ok(63, $@ eq "" ) ;
+    main::ok(64, $ret == 1) ;
+
+    $ret = eval '$X->A_new_method(1) ' ;
+    main::ok(65, $@ eq "") ;
+    main::ok(66, $ret eq "[[11]]") ;
+
+    unlink "SubDB.pm", "recno.tmp" ;
+
+}
 
 exit ;

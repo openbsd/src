@@ -1,37 +1,38 @@
-# Hints for the CX/UX 7.1 operating system running on Harris NightHawk
-# machines.  written by Tom.Horsley@mail.hcsc.com
+#! /local/gnu/bin/bash
+# Hints for the CX/UX 7.1 operating system running on Concurrent (formerly
+# Harris) NightHawk machines.  written by Tom.Horsley@mail.ccur.com
 #
-# This config is setup for dynamic linking and the Harris C compiler.
+# This config is setup for dynamic linking and the Concurrent C compiler.
 
 # Check some things and print warnings if this isn't going to work...
 #
 case ${SDE_TARGET:-ELF} in
    [Cc][Oo][Ff][Ff]|[Oo][Cc][Ss]) echo ''
-      echo ''
-      echo WARNING: Do not build perl 5 with the SDE_TARGET set to
-      echo generate coff object - perl 5 must be built in the ELF
-      echo environment.
-      echo ''
+      echo ''								>&2
+      echo WARNING: Do not build perl 5 with the SDE_TARGET set to	>&2
+      echo generate coff object - perl 5 must be built in the ELF	>&2
+      echo environment.							>&2
+      echo ''								>&2
       echo '';;
    [Ee][Ll][Ff]) : ;;
-   *) echo ''
-      echo 'Unknown SDE_TARGET value: '$SDE_TARGET
-      echo '';;
+   *) echo ''								>&2
+      echo 'Unknown SDE_TARGET value: '$SDE_TARGET			>&2
+      echo ''								>&2 ;;
 esac
 
 case `uname -r` in
    [789]*) : ;;
    *) echo ''
-      echo ''
-      echo WARNING: Perl 5 requires shared library support, it cannot
-      echo be built on releases of CX/UX prior to 7.0 with this hints
-      echo file. You\'ll have to do a separate port for the statically
-      echo linked COFF environment.
-      echo ''
+      echo ''								>&2
+      echo WARNING: Perl 5 requires shared library support, it cannot	>&2
+      echo be built on releases of CX/UX prior to 7.0 with this hints	>&2
+      echo file. You\'ll have to do a separate port for the statically	>&2
+      echo linked COFF environment.					>&2
+      echo ''								>&2
       echo '';;
 esac
 
-# Internally at Harris, we use a source management tool which winds up
+# Internally at Concurrent, we use a source management tool which winds up
 # giving us read-only copies of source trees that are mostly symbolic links.
 # That upsets the perl build process when it tries to edit opcode.h and
 # embed.h or touch perly.c or perly.h, so turn those files into "real" files
@@ -60,16 +61,18 @@ libswanted=`echo ' '$libswanted' ' | sed -e 's/ malloc / /'`
 #
 glibpth="/usr/sde/elf/usr/lib $glibpth"
 
-# Need to use Harris cc for most of these options to be meaningful (if you
-# want to get this to work with gcc, you're on your own :-). Passing
+# Need to use Concurrent cc for most of these options to be meaningful (if
+# you want to get this to work with gcc, you're on your own :-). Passing
 # -Bexport to the linker when linking perl is important because it leaves
 # the interpreter internal symbols visible to the shared libs that will be
-# loaded on demand (and will try to reference those symbols). The -u
-# option to drag 'sigaction' into the perl main program is to make sure
-# it gets defined for the posix shared library (for some reason sigaction
-# is static, rather than being defined in libc.so.1).
+# loaded on demand (and will try to reference those symbols). The -u option
+# to drag 'sigaction' into the perl main program is to make sure it gets
+# defined for the posix shared library (for some reason sigaction is static,
+# rather than being defined in libc.so.1). The 88110compat option makes sure
+# the code will run on both 88100 and 88110 machines. The define is added to
+# trigger a work around for a compiler bug which shows up in pp.c.
 #
-cc='/bin/cc -Xa'
+cc='/bin/cc -Xa -Qtarget=M88110compat -DCXUX_BROKEN_CONSTANT_CONVERT'
 cccdlflags='-Zelf -Zpic'
 ccdlflags='-Zelf -Zlink=dynamic -Wl,-Bexport -u sigaction'
 lddlflags='-Zlink=so'
@@ -91,11 +94,13 @@ i_ndbm='undef'
 d_mymalloc='undef'
 usemymalloc='n'
 
-cat <<'EOM'
+cat <<'EOM' >&4
 
-You will get a failure on lib/posix.t test 16 because ungetc() on
-stdin does not work if no characters have been read from stdin.
-If you type a character at the terminal where you are running
-the tests, you can fool it into thinking it worked.
+WARNING: If you are using ksh to run the Configure script, you may find it
+failing in mysterious ways (such as failing to find library routines which
+are known to exist). Configure seems to push ksh beyond its limits
+sometimes. Try using env to strip unnecessary things out of the environment
+and run Configure with /sbin/sh. That sometimes seems to produce more
+accurate results.
 
 EOM

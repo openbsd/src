@@ -19,7 +19,7 @@ if test "$osvers" = "3.0"; then
 	d_gconvert='undef'
 	grep 'define[ 	]*AF_OSI[ 	]' /usr/include/sys/socket.h | grep '/\*[^*]*$' >/tmp/esix$$
 	if test -s /tmp/esix$$; then
-		cat <<EOM
+		cat <<EOM >&2
 
 WARNING: You are likely to have problems compiling the Socket extension
 unless you fix the unterminated comment for AF_OSI in the file
@@ -30,7 +30,7 @@ EOM
 	rm -f /tmp/esix$$
 fi
 
-cat <<'EOM'
+cat <<'EOM' >&4
 
 If you wish to use dynamic linking, you must use 
 	LD_LIBRARY_PATH=`pwd`; export LD_LIBRARY_PATH

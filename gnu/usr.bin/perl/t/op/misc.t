@@ -1,5 +1,8 @@
 #!./perl
 
+# NOTE: Please don't add tests to this file unless they *need* to be run in
+# separate executable and can't simply use eval.
+
 chdir 't' if -d 't';
 @INC = "../lib";
 $ENV{PERL5LIB} = "../lib";
@@ -14,17 +17,24 @@ $tmpfile = "misctmp000";
 1 while -f ++$tmpfile;
 END { unlink $tmpfile if $tmpfile; }
 
+$CAT = (($^O eq 'MSWin32') ? '.\perl -e "print <>"' : 'cat');
+
 for (@prgs){
     my $switch;
-    if (s/^\s*-\w+//){
-	$switch = $&;
+    if (s/^\s*(-\w.*)//){
+	$switch = $1;
     }
     my($prog,$expected) = split(/\nEXPECT\n/, $_);
-    open TEST, "| sh -c './perl $switch' >$tmpfile 2>&1";
+    if ($^O eq 'MSWin32') {
+      open TEST, "| .\\perl -I../lib $switch >$tmpfile 2>&1";
+    }
+    else {
+      open TEST, "| sh -c './perl $switch' >$tmpfile 2>&1";
+    }
     print TEST $prog, "\n";
     close TEST;
     $status = $?;
-    $results = `cat $tmpfile`;
+    $results = `$CAT $tmpfile`;
     $results =~ s/\n+$//;
     $expected =~ s/\n+$//;
     if ( $results ne $expected){
@@ -37,6 +47,18 @@ for (@prgs){
 }
 
 __END__
+()=()
+########
+$a = ":="; split /($a)/o, "a:=b:=c"; print "@_"
+EXPECT
+a := b := c
+########
+$cusp = ~0 ^ (~0 >> 1);
+$, = " ";
+print +($cusp - 1) % 8, $cusp % 8, -$cusp % 8, ($cusp + 1) % 8, "!\n";
+EXPECT
+7 0 0 1 !
+########
 $foo=undef; $foo->go;
 EXPECT
 Can't call method "go" without a package or object reference at - line 1.
@@ -62,7 +84,7 @@ EXPECT
 ########
 eval {sub bar {print "In bar";}}
 ########
-system "./perl -ne 'print if eof' /dev/null"
+system './perl -ne "print if eof" /dev/null'
 ########
 chop($file = <>);
 ########
@@ -76,7 +98,8 @@ EXPECT
 ########
 %@x=0;
 EXPECT
-Can't coerce HASH to string in repeat at - line 1.
+Can't modify hash deref in repeat at - line 1, near "0;"
+Execution of - aborted due to compilation errors.
 ########
 $_="foo";
 printf(STDOUT "%s\n", $_);
@@ -169,3 +192,155 @@ BEGIN { undef = 0 }
 EXPECT
 Modification of a read-only value attempted at - line 1.
 BEGIN failed--compilation aborted at - line 1.
+########
+{
+    package foo;
+    sub PRINT {
+        shift;
+        print join(' ', reverse @_)."\n";
+    }
+    sub PRINTF {
+        shift;
+	  my $fmt = shift;
+        print sprintf($fmt, @_)."\n";
+    }
+    sub TIEHANDLE {
+        bless {}, shift;
+    }
+    sub READLINE {
+	"Out of inspiration";
+    }
+    sub DESTROY {
+	print "and destroyed as well\n";
+  }
+  sub READ {
+      shift;
+      print STDOUT "foo->can(READ)(@_)\n";
+      return 100; 
+  }
+  sub GETC {
+      shift;
+      print STDOUT "Don't GETC, Get Perl\n";
+      return "a"; 
+  }    
+}
+{
+    local(*FOO);
+    tie(*FOO,'foo');
+    print FOO "sentence.", "reversed", "a", "is", "This";
+    print "-- ", <FOO>, " --\n";
+    my($buf,$len,$offset);
+    $buf = "string";
+    $len = 10; $offset = 1;
+    read(FOO, $buf, $len, $offset) == 100 or die "foo->READ failed";
+    getc(FOO) eq "a" or die "foo->GETC failed";
+    printf "%s is number %d\n", "Perl", 1;
+}
+EXPECT
+This is a reversed sentence.
+-- Out of inspiration --
+foo->can(READ)(string 10 1)
+Don't GETC, Get Perl
+Perl is number 1
+and destroyed as well
+########
+my @a; $a[2] = 1; for (@a) { $_ = 2 } print "@a\n"
+EXPECT
+2 2 2
+########
+@a = ($a, $b, $c, $d) = (5, 6);
+print "ok\n"
+  if ($a[0] == 5 and $a[1] == 6 and !defined $a[2] and !defined $a[3]);
+EXPECT
+ok
+########
+print "ok\n" if (1E2<<1 == 200 and 3E4<<3 == 240000);
+EXPECT
+ok
+########
+print "ok\n" if ("\0" lt "\xFF");
+EXPECT
+ok
+########
+open(H,'op/misc.t'); # must be in the 't' directory
+stat(H);
+print "ok\n" if (-e _ and -f _ and -r _);
+EXPECT
+ok
+########
+sub thing { 0 || return qw(now is the time) }
+print thing(), "\n";
+EXPECT
+nowisthetime
+########
+$ren = 'joy';
+$stimpy = 'happy';
+{ local $main::{ren} = *stimpy; print $ren, ' ' }
+print $ren, "\n";
+EXPECT
+happy joy
+########
+$stimpy = 'happy';
+{ local $main::{ren} = *stimpy; print ${'ren'}, ' ' }
+print +(defined(${'ren'}) ? 'oops' : 'joy'), "\n";
+EXPECT
+happy joy
+########
+package p;
+sub func { print 'really ' unless wantarray; 'p' }
+sub groovy { 'groovy' }
+package main;
+print p::func()->groovy(), "\n"
+EXPECT
+really groovy
+########
+@list = ([ 'one', 1 ], [ 'two', 2 ]);
+sub func { $num = shift; (grep $_->[1] == $num, @list)[0] }
+print scalar(map &func($_), 1 .. 3), " ",
+      scalar(map scalar &func($_), 1 .. 3), "\n";
+EXPECT
+2 3
+########
+($k, $s)  = qw(x 0);
+@{$h{$k}} = qw(1 2 4);
+for (@{$h{$k}}) { $s += $_; delete $h{$k} if ($_ == 2) }
+print "bogus\n" unless $s == 7;
+########
+my $a = 'outer';
+eval q[ my $a = 'inner'; eval q[ print "$a " ] ];
+eval { my $x = 'peace'; eval q[ print "$x\n" ] }
+EXPECT
+inner peace
+########
+-w
+$| = 1;
+sub foo {
+    print "In foo1\n";
+    eval 'sub foo { print "In foo2\n" }';
+    print "Exiting foo1\n";
+}
+foo;
+foo;
+EXPECT
+In foo1
+Subroutine foo redefined at (eval 1) line 1.
+Exiting foo1
+In foo2
+########
+$s = 0;
+map {#this newline here tickles the bug
+$s += $_} (1,2,4);
+print "eat flaming death\n" unless ($s == 7);
+########
+sub foo { local $_ = shift; split; @_ }
+@x = foo(' x  y  z ');
+print "you die joe!\n" unless "@x" eq 'x y z';
+########
+sub foo { local(@_) = ('p', 'q', 'r'); }
+sub bar { unshift @_, 'D'; @_ }
+sub baz { push @_, 'E'; return @_ }
+for (1..3) { print foo('a', 'b', 'c'), bar('d'), baz('e'), "\n" }
+EXPECT
+pqrDdeE
+pqrDdeE
+pqrDdeE

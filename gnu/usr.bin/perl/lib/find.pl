@@ -29,80 +29,19 @@
 #
 # Set the variable $dont_use_nlink if you're using AFS, since AFS cheats.
 
+use File::Find ();
+
+*name		= *File::Find::name;
+*prune		= *File::Find::prune;
+*dir		= *File::Find::dir;
+*topdir		= *File::Find::topdir;
+*topdev		= *File::Find::topdev;
+*topino		= *File::Find::topino;
+*topmode	= *File::Find::topmode;
+*topnlink	= *File::Find::topnlink;
+
 sub find {
-    chop($cwd = `pwd`);
-    foreach $topdir (@_) {
-	(($topdev,$topino,$topmode,$topnlink) = stat($topdir))
-	  || (warn("Can't stat $topdir: $!\n"), next);
-	if (-d _) {
-	    if (chdir($topdir)) {
-		($dir,$_) = ($topdir,'.');
-		$name = $topdir;
-		&wanted;
-		($fixtopdir = $topdir) =~ s,/$,, ;
-		&finddir($fixtopdir,$topnlink);
-	    }
-	    else {
-		warn "Can't cd to $topdir: $!\n";
-	    }
-	}
-	else {
-	    unless (($dir,$_) = $topdir =~ m#^(.*/)(.*)$#) {
-		($dir,$_) = ('.', $topdir);
-	    }
-	    $name = $topdir;
-	    chdir $dir && &wanted;
-	}
-	chdir $cwd;
-    }
+    &File::Find::find(\&wanted, @_);
 }
 
-sub finddir {
-    local($dir,$nlink) = @_;
-    local($dev,$ino,$mode,$subcount);
-    local($name);
-
-    # Get the list of files in the current directory.
-
-    opendir(DIR,'.') || (warn "Can't open $dir: $!\n", return);
-    local(@filenames) = readdir(DIR);
-    closedir(DIR);
-
-    if ($nlink == 2 && !$dont_use_nlink) {  # This dir has no subdirectories.
-	for (@filenames) {
-	    next if $_ eq '.';
-	    next if $_ eq '..';
-	    $name = "$dir/$_";
-	    $nlink = 0;
-	    &wanted;
-	}
-    }
-    else {                    # This dir has subdirectories.
-	$subcount = $nlink - 2;
-	for (@filenames) {
-	    next if $_ eq '.';
-	    next if $_ eq '..';
-	    $nlink = $prune = 0;
-	    $name = "$dir/$_";
-	    &wanted;
-	    if ($subcount > 0 || $dont_use_nlink) {    # Seen all the subdirs?
-
-		# Get link count and check for directoriness.
-
-		($dev,$ino,$mode,$nlink) = lstat($_) unless $nlink;
-		
-		if (-d _) {
-
-		    # It really is a directory, so do it recursively.
-
-		    if (!$prune && chdir $_) {
-			&finddir($name,$nlink);
-			chdir '..';
-		    }
-		    --$subcount;
-		}
-	    }
-	}
-    }
-}
 1;

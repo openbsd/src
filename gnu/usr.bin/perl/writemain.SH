@@ -21,6 +21,7 @@ echo "Extracting writemain (with variable substitutions)"
 : Move anything that needs config subs from !NO!SUBS! section to !GROK!THIS!.
 : Protect any dollar signs and backticks that you do not want interpreted
 : by putting a backslash in front.  You may delete these comments.
+rm -f writemain
 $spitshell >writemain <<!GROK!THIS!
 $startsh
 !GROK!THIS!
@@ -69,11 +70,12 @@ cat << 'EOP'
 static void
 xs_init()
 {
-  dXSUB_SYS;
 EOP
 
 if test X"$args" != "X" ; then
     echo "    char *file = __FILE__;"
+    echo "    dXSUB_SYS;"
+
     ai=''
 
     for ext in $args ; do
@@ -83,7 +85,6 @@ if test X"$args" != "X" ; then
 	mname=`echo $ext   | sed 's!/!::!g'`
 	cname=`echo $mname | sed 's!:!_!g'`
 
-	echo "    {"
 	if test "$ext" = "DynaLoader"; then
 	    : Must NOT install 'DynaLoader::boot_DynaLoader' as 'bootstrap'!
 	    : boot_DynaLoader is called directly in DynaLoader.pm
@@ -91,7 +92,6 @@ if test X"$args" != "X" ; then
 	else
 	    echo "        newXS(\"${mname}::bootstrap\", boot_${cname}, file);"
 	fi
-	echo "    }"
     done
 fi
 

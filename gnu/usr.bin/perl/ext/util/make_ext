@@ -4,15 +4,34 @@
 # It primarily used by the perl Makefile:
 #
 # d_dummy $(dynamic_ext): miniperl preplibrary FORCE
-#        ext/util/make_ext dynamic $@
+# 	@sh ext/util/make_ext dynamic $@ MAKE=$(MAKE) LIBPERL_A=$(LIBPERL)
 #
 # It may be deleted in a later release of perl so try to
 # avoid using it for other purposes.
 
 target=$1;  shift
 extspec=$1; shift
+makecmd=$1; shift  # Should be something like MAKE=make
 passthru="$*" # allow extra macro=value to be passed through
 echo ""
+
+# Previously, $make was taken from config.sh.  However, the user might
+# instead be running a possibly incompatible make.  This might happen if
+# the user types "gmake" instead of a plain "make", for example.  The
+# correct current value of MAKE will come through from the main perl
+# makefile as MAKE=/whatever/make in $makecmd.  We'll be cautious in
+# case third party users of this script (are there any?) don't have the
+# MAKE=$(MAKE) argument, which was added after 5.004_03.
+case "$makecmd" in
+MAKE=*)
+	eval $makecmd
+	;;
+*)	echo 'ext/util/make_ext:  WARNING:  Please include MAKE=$(MAKE)'
+	echo '	in your call to make_ext.  See ext/util/make_ext for details.'
+	exit 1
+	;;
+esac
+
 
 case $CONFIG in
 '')
@@ -34,9 +53,9 @@ if test "X$extspec" = X; then
 fi
 
 # The Perl Makefile.SH will expand all extensions to
-#	lib/auto/X/X.a  (or lib/auto/X/Y/Y.a is nested)
+#	lib/auto/X/X.a  (or lib/auto/X/Y/Y.a if nested)
 # A user wishing to run make_ext might use
-#	X (or X/Y or X::Y is nested)
+#	X (or X/Y or X::Y if nested)
 
 # canonise into X/Y form (pname)
 case "$extspec" in
@@ -50,7 +69,6 @@ esac
 
 mname=`echo "$pname"   | sed -e 's!/!::!g'`
 depth=`echo "$pname"   | sed -e 's![^/][^/]*!..!g'`
-make=${altmake-make}
 makefile=Makefile
 makeargs=''
 makeopts=''
@@ -108,10 +126,10 @@ clean)		;;
 realclean)	;;
 *)	# Give makefile an opportunity to rewrite itself.
 	# reassure users that life goes on...
-	$make config $passthru || echo "$make config failed, continuing anyway..."
+	$MAKE config $passthru || echo "$MAKE config failed, continuing anyway..."
 	;;
 esac
 
-$make $makeopts $target $makeargs $passthru || exit
+$MAKE $makeopts $target $makeargs $passthru || exit
 
 exit $?

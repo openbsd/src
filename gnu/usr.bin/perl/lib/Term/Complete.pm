@@ -28,7 +28,8 @@ The following command characters are defined:
 
 =over 4
 
-=item <tab>
+=item E<lt>tabE<gt>
+
 Attempts word completion.
 Cannot be changed.
 
@@ -42,7 +43,7 @@ Defined by I<$Term::Complete::complete>.
 Erases the current input.
 Defined by I<$Term::Complete::kill>.
 
-=item <del>, <bs>
+=item E<lt>delE<gt>, E<lt>bsE<gt>
 
 Erases one character.
 Defined by I<$Term::Complete::erase1> and I<$Term::Complete::erase2>.
@@ -55,7 +56,7 @@ Bell sounds when word completion fails.
 
 =head1 BUGS
 
-The completion charater <tab> cannot be changed.
+The completion charater E<lt>tabE<gt> cannot be changed.
 
 =head1 AUTHOR
 
@@ -71,6 +72,8 @@ CONFIG: {
 }
 
 sub Complete {
+    my($prompt, @cmp_list, $return, @match, $l, $test, $cmp, $r);
+
     $prompt = shift;
     if (ref $_[0] || $_[0] =~ /^\*/) {
 	@cmp_lst = sort @{$_[0]};
@@ -110,7 +113,8 @@ sub Complete {
                 # (^U) kill
                 $_ eq $kill && do {
                     if ($r) {
-                        undef($r, $return);
+                        undef $r;
+			undef $return;
                         print("\r\n");
                         redo LOOP;
                     }

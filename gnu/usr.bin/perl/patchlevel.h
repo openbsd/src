@@ -1,9 +1,9 @@
-#define PATCHLEVEL 3
-#define SUBVERSION 0
+#define PATCHLEVEL 4
+#define SUBVERSION 4
 
 /*
 	local_patches -- list of locally applied less-than-subversion patches.
-	If you're distributing such a patch, please give it a name and a
+	If you're distributing such a patch, please give it a tag name and a
 	one-line description, placed just before the last NULL in the array
 	below.  If your patch fixes a bug in the perlbug database, please
 	mention the bugid.  If your patch *IS* dependent on a prior patch,
@@ -17,7 +17,7 @@
 	   --- patchlevel.h	<date here>
 	   *** 38,43 ***
 	   --- 38,44 ---
-	     	,"FOO1235 - some patch"
+			,"MAINT_TRIAL_1 - 5.00x_0x maintenance release trial 1"
 	     	,"BAR3141 - another patch"
 	     	,"BAZ2718 - and another patch"
 	   + 	,"MINE001 - my new patch"
@@ -36,10 +36,12 @@
 	This will prevent patch from choking if someone has previously
 	applied different patches than you.
  */
+/* The following line and terminating '};' are read by perlbug.PL. Don't alter. */ 
 static	char	*local_patches[] = {
 	NULL
 	,NULL
 };
 
-#define	LOCAL_PATCH_COUNT	\
+/* Initial space prevents this variable from being inserted in config.sh  */
+#  define	LOCAL_PATCH_COUNT	\
 	(sizeof(local_patches)/sizeof(local_patches[0])-2)

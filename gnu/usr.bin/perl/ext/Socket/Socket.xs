@@ -30,9 +30,118 @@
 #ifndef INADDR_NONE
 #define INADDR_NONE	0xffffffff
 #endif /* INADDR_NONE */
+#ifndef INADDR_BROADCAST
+#define INADDR_BROADCAST	0xffffffff
+#endif /* INADDR_BROADCAST */
 #ifndef INADDR_LOOPBACK
 #define INADDR_LOOPBACK         0x7F000001
 #endif /* INADDR_LOOPBACK */
+
+#ifndef HAS_INET_ATON
+
+/* 
+ * Check whether "cp" is a valid ascii representation
+ * of an Internet address and convert to a binary address.
+ * Returns 1 if the address is valid, 0 if not.
+ * This replaces inet_addr, the return value from which
+ * cannot distinguish between failure and a local broadcast address.
+ */
+static int
+my_inet_aton(cp, addr)
+register const char *cp;
+struct in_addr *addr;
+{
+	register U32 val;
+	register int base;
+	register char c;
+	int nparts;
+	const char *s;
+	unsigned int parts[4];
+	register unsigned int *pp = parts;
+
+	if (!cp)
+		return 0;
+	for (;;) {
+		/*
+		 * Collect number up to ``.''.
+		 * Values are specified as for C:
+		 * 0x=hex, 0=octal, other=decimal.
+		 */
+		val = 0; base = 10;
+		if (*cp == '0') {
+			if (*++cp == 'x' || *cp == 'X')
+				base = 16, cp++;
+			else
+				base = 8;
+		}
+		while ((c = *cp) != '\0') {
+			if (isDIGIT(c)) {
+				val = (val * base) + (c - '0');
+				cp++;
+				continue;
+			}
+			if (base == 16 && (s=strchr(hexdigit,c))) {
+				val = (val << 4) + 
+					((s - hexdigit) & 15);
+				cp++;
+				continue;
+			}
+			break;
+		}
+		if (*cp == '.') {
+			/*
+			 * Internet format:
+			 *	a.b.c.d
+			 *	a.b.c	(with c treated as 16-bits)
+			 *	a.b	(with b treated as 24 bits)
+			 */
+			if (pp >= parts + 3 || val > 0xff)
+				return 0;
+			*pp++ = val, cp++;
+		} else
+			break;
+	}
+	/*
+	 * Check for trailing characters.
+	 */
+	if (*cp && !isSPACE(*cp))
+		return 0;
+	/*
+	 * Concoct the address according to
+	 * the number of parts specified.
+	 */
+	nparts = pp - parts + 1;	/* force to an int for switch() */
+	switch (nparts) {
+
+	case 1:				/* a -- 32 bits */
+		break;
+
+	case 2:				/* a.b -- 8.24 bits */
+		if (val > 0xffffff)
+			return 0;
+		val |= parts[0] << 24;
+		break;
+
+	case 3:				/* a.b.c -- 8.8.16 bits */
+		if (val > 0xffff)
+			return 0;
+		val |= (parts[0] << 24) | (parts[1] << 16);
+		break;
+
+	case 4:				/* a.b.c.d -- 8.8.8.8 bits */
+		if (val > 0xff)
+			return 0;
+		val |= (parts[0] << 24) | (parts[1] << 16) | (parts[2] << 8);
+		break;
+	}
+	addr->s_addr = htonl(val);
+	return 1;
+}
+
+#undef inet_aton
+#define inet_aton my_inet_aton
+
+#endif /* ! HAS_INET_ATON */
 
 
 static int
@@ -595,15 +704,17 @@ inet_aton(host)
 	{
 	struct in_addr ip_address;
 	struct hostent * phe;
+	int ok;
 
 	if (phe = gethostbyname(host)) {
 		Copy( phe->h_addr, &ip_address, phe->h_length, char );
+		ok = 1;
 	} else {
-        	ip_address.s_addr = inet_addr(host);
+		ok = inet_aton(host, &ip_address);
 	}
 
 	ST(0) = sv_newmortal();
-	if(ip_address.s_addr != INADDR_NONE) {
+	if (ok) {
 		sv_setpvn( ST(0), (char *)&ip_address, sizeof ip_address );
 	}
 	}
@@ -649,7 +760,7 @@ pack_sockaddr_un(pathname)
 void
 unpack_sockaddr_un(sun_sv)
 	SV *	sun_sv
-	PPCODE:
+	CODE:
 	{
 #ifdef I_SYS_UN
 	STRLEN sockaddrlen;
@@ -746,5 +857,14 @@ INADDR_NONE()
 	{
 	struct in_addr	ip_address;
 	ip_address.s_addr = htonl(INADDR_NONE);
+	ST(0) = sv_2mortal(newSVpv((char *)&ip_address,sizeof ip_address));
+	}
+
+void
+INADDR_BROADCAST()
+	CODE:
+	{
+	struct in_addr	ip_address;
+	ip_address.s_addr = htonl(INADDR_BROADCAST);
 	ST(0) = sv_2mortal(newSVpv((char *)&ip_address,sizeof ip_address));
 	}

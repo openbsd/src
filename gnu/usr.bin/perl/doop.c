@@ -1,6 +1,6 @@
 /*    doop.c
  *
- *    Copyright (c) 1991-1994, Larry Wall
+ *    Copyright (c) 1991-1997, Larry Wall
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -17,14 +17,6 @@
 #if !defined(NSIG) || defined(M_UNIX) || defined(M_XENIX)
 #include <signal.h>
 #endif
-
-#ifdef BUGGY_MSC
- #pragma function(memcmp)
-#endif /* BUGGY_MSC */
-
-#ifdef BUGGY_MSC
- #pragma intrinsic(memcmp)
-#endif /* BUGGY_MSC */
 
 I32
 do_trans(sv,arg)
@@ -150,196 +142,18 @@ register SV **sp;
 
 void
 do_sprintf(sv,len,sarg)
-register SV *sv;
-register I32 len;
-register SV **sarg;
+SV *sv;
+I32 len;
+SV **sarg;
 {
-    register char *s;
-    register char *t;
-    register char *f;
-    bool dolong;
-#ifdef HAS_QUAD
-    bool doquad;
-#endif /* HAS_QUAD */
-    char ch;
-    register char *send;
-    register SV *arg;
-    char *xs;
-    I32 xlen;
-    I32 pre;
-    I32 post;
-    double value;
-    STRLEN arglen;
+    STRLEN patlen;
+    char *pat = SvPV(*sarg, patlen);
+    bool do_taint = FALSE;
 
-    sv_setpv(sv,"");
-    len--;			/* don't count pattern string */
-    t = s = SvPV(*sarg, arglen);	/* XXX Don't know t is writeable */
-    send = s + arglen;
-    sarg++;
-    for ( ; ; len--) {
-
-	/*SUPPRESS 560*/
-	if (len <= 0 || !(arg = *sarg++))
-	    arg = &sv_no;
-
-	/*SUPPRESS 530*/
-	for ( ; t < send && *t != '%'; t++) ;
-	if (t >= send)
-	    break;		/* end of run_format string, ignore extra args */
-	f = t;
-	*buf = '\0';
-	xs = buf;
-#ifdef HAS_QUAD
-	doquad =
-#endif /* HAS_QUAD */
-	dolong = FALSE;
-	pre = post = 0;
-	for (t++; t < send; t++) {
-	    switch (*t) {
-	    default:
-		ch = *(++t);
-		*t = '\0';
-		(void)sprintf(xs,f);
-		len++, sarg--;
-		xlen = strlen(xs);
-		break;
-	    case 'n': case '*':
-		croak("Use of %c in printf format not supported", *t);
-
-	    case '0': case '1': case '2': case '3': case '4':
-	    case '5': case '6': case '7': case '8': case '9': 
-	    case '.': case '#': case '-': case '+': case ' ':
-		continue;
-	    case 'l':
-#ifdef HAS_QUAD
-		if (dolong) {
-		    dolong = FALSE;
-		    doquad = TRUE;
-		} else
-#endif
-		dolong = TRUE;
-		continue;
-	    case 'c':
-		ch = *(++t);
-		*t = '\0';
-		xlen = SvIV(arg);
-		if (strEQ(f,"%c")) { /* some printfs fail on null chars */
-		    *xs = xlen;
-		    xs[1] = '\0';
-		    xlen = 1;
-		}
-		else {
-		    (void)sprintf(xs,f,xlen);
-		    xlen = strlen(xs);
-		}
-		break;
-	    case 'D':
-		dolong = TRUE;
-		/* FALL THROUGH */
-	    case 'd':
-		ch = *(++t);
-		*t = '\0';
-#ifdef HAS_QUAD
-		if (doquad)
-		    (void)sprintf(buf,s,(Quad_t)SvNV(arg));
-		else
-#endif
-		if (dolong)
-		    (void)sprintf(xs,f,(long)SvNV(arg));
-		else
-		    (void)sprintf(xs,f,SvIV(arg));
-		xlen = strlen(xs);
-		break;
-	    case 'X': case 'O':
-		dolong = TRUE;
-		/* FALL THROUGH */
-	    case 'x': case 'o': case 'u':
-		ch = *(++t);
-		*t = '\0';
-		value = SvNV(arg);
-#ifdef HAS_QUAD
-		if (doquad)
-		    (void)sprintf(buf,s,(unsigned Quad_t)value);
-		else
-#endif
-		if (dolong)
-		    (void)sprintf(xs,f,U_L(value));
-		else
-		    (void)sprintf(xs,f,U_I(value));
-		xlen = strlen(xs);
-		break;
-	    case 'E': case 'e': case 'f': case 'G': case 'g':
-		ch = *(++t);
-		*t = '\0';
-		(void)sprintf(xs,f,SvNV(arg));
-		xlen = strlen(xs);
-		break;
-	    case 's':
-		ch = *(++t);
-		*t = '\0';
-		xs = SvPV(arg, arglen);
-		xlen = (I32)arglen;
-		if (strEQ(f,"%s")) {	/* some printfs fail on >128 chars */
-		    break;		/* so handle simple cases */
-		}
-		else if (f[1] == '-') {
-		    char *mp = strchr(f, '.');
-		    I32 min = atoi(f+2);
-
-		    if (mp) {
-			I32 max = atoi(mp+1);
-
-			if (xlen > max)
-			    xlen = max;
-		    }
-		    if (xlen < min)
-			post = min - xlen;
-		    break;
-		}
-		else if (isDIGIT(f[1])) {
-		    char *mp = strchr(f, '.');
-		    I32 min = atoi(f+1);
-
-		    if (mp) {
-			I32 max = atoi(mp+1);
-
-			if (xlen > max)
-			    xlen = max;
-		    }
-		    if (xlen < min)
-			pre = min - xlen;
-		    break;
-		}
-		strcpy(tokenbuf+64,f);	/* sprintf($s,...$s...) */
-		*t = ch;
-		(void)sprintf(buf,tokenbuf+64,xs);
-		xs = buf;
-		xlen = strlen(xs);
-		break;
-	    }
-	    /* end of switch, copy results */
-	    *t = ch;
-	    if (xs == buf && xlen >= sizeof(buf)) {	/* Ooops! */
-		fputs("panic: sprintf overflow - memory corrupted!\n",stderr);
-		my_exit(1);
-	    }
-	    SvGROW(sv, SvCUR(sv) + (f - s) + xlen + 1 + pre + post);
-	    sv_catpvn(sv, s, f - s);
-	    if (pre) {
-		repeatcpy(SvPVX(sv) + SvCUR(sv), " ", 1, pre);
-		SvCUR(sv) += pre;
-	    }
-	    sv_catpvn(sv, xs, xlen);
-	    if (post) {
-		repeatcpy(SvPVX(sv) + SvCUR(sv), " ", 1, post);
-		SvCUR(sv) += post;
-	    }
-	    s = t;
-	    break;		/* break from for loop */
-	}
-    }
-    sv_catpvn(sv, s, t - s);
+    sv_vsetpvfn(sv, pat, patlen, Null(va_list*), sarg + 1, len - 1, &do_taint);
     SvSETMAGIC(sv);
+    if (do_taint)
+	SvTAINTED_on(sv);
 }
 
 void
@@ -494,11 +308,11 @@ register SV *sv;
 		++count;
 	    }
 	    else {
-		if (len < rslen)
+		if (len < rslen - 1)
 		    goto nope;
 		len -= rslen - 1;
 		s -= rslen - 1;
-		if (bcmp(s, rsptr, rslen))
+		if (memNE(s, rsptr, rslen))
 		    goto nope;
 		count += rslen;
 	    }
@@ -527,17 +341,32 @@ SV *right;
     register char *dc;
     STRLEN leftlen;
     STRLEN rightlen;
-    register char *lc = SvPV(left, leftlen);
-    register char *rc = SvPV(right, rightlen);
+    register char *lc;
+    register char *rc;
     register I32 len;
     I32 lensave;
+    char *lsave;
+    char *rsave;
 
-    dc = SvPV_force(sv,na);
+    if (sv != left || (optype != OP_BIT_AND && !SvOK(sv) && !SvGMAGICAL(sv)))
+	sv_setpvn(sv, "", 0);	/* avoid undef warning on |= and ^= */
+    lsave = lc = SvPV(left, leftlen);
+    rsave = rc = SvPV(right, rightlen);
     len = leftlen < rightlen ? leftlen : rightlen;
     lensave = len;
-    if (SvCUR(sv) < len) {
-	dc = SvGROW(sv,len + 1);
-	(void)memzero(dc + SvCUR(sv), len - SvCUR(sv) + 1);
+    if (SvOK(sv) || SvTYPE(sv) > SVt_PVMG) {
+	dc = SvPV_force(sv, na);
+	if (SvCUR(sv) < len) {
+	    dc = SvGROW(sv, len + 1);
+	    (void)memzero(dc + SvCUR(sv), len - SvCUR(sv) + 1);
+	}
+    }
+    else {
+	I32 needlen = ((optype == OP_BIT_AND)
+			? len : (leftlen > rightlen ? leftlen : rightlen));
+	Newz(801, dc, needlen + 1, char);
+	(void)sv_usepvn(sv, dc, needlen);
+	dc = SvPVX(sv);		/* sv_usepvn() calls Renew() */
     }
     SvCUR_set(sv, len);
     (void)SvPOK_only(sv);
@@ -588,9 +417,6 @@ SV *right;
     }
 #endif
     {
-	char *lsave = lc;
-	char *rsave = rc;
-	
 	switch (optype) {
 	case OP_BIT_AND:
 	    while (len--)
@@ -614,6 +440,7 @@ SV *right;
 	    break;
 	}
     }
+    SvTAINT(sv);
 }
 
 OP *
@@ -622,23 +449,44 @@ dARGS
 {
     dSP;
     HV *hv = (HV*)POPs;
-    I32 i;
     register HE *entry;
-    char *tmps;
     SV *tmpstr;
+    I32 gimme = GIMME_V;
     I32 dokeys =   (op->op_type == OP_KEYS);
     I32 dovalues = (op->op_type == OP_VALUES);
 
     if (op->op_type == OP_RV2HV || op->op_type == OP_PADHV) 
 	dokeys = dovalues = TRUE;
 
-    if (!hv)
+    if (!hv) {
+	if (op->op_flags & OPf_MOD) {	/* lvalue */
+	    dTARGET;		/* make sure to clear its target here */
+	    if (SvTYPE(TARG) == SVt_PVLV)
+		LvTARG(TARG) = Nullsv;
+	    PUSHs(TARG);
+	}
 	RETURN;
+    }
 
     (void)hv_iterinit(hv);	/* always reset iterator regardless */
 
-    if (GIMME != G_ARRAY) {
+    if (gimme == G_VOID)
+	RETURN;
+
+    if (gimme == G_SCALAR) {
+	I32 i;
 	dTARGET;
+
+	if (op->op_flags & OPf_MOD) {	/* lvalue */
+	    if (SvTYPE(TARG) < SVt_PVLV) {
+		sv_upgrade(TARG, SVt_PVLV);
+		sv_magic(TARG, Nullsv, 'k', Nullch, 0);
+	    }
+	    LvTYPE(TARG) = 'k';
+	    LvTARG(TARG) = (SV*)hv;
+	    PUSHs(TARG);
+	    RETURN;
+	}
 
 	if (!SvRMAGICAL(hv) || !mg_find((SV*)hv,'P'))
 	    i = HvKEYS(hv);
@@ -659,23 +507,18 @@ dARGS
     PUTBACK;	/* hv_iternext and hv_iterval might clobber stack_sp */
     while (entry = hv_iternext(hv)) {
 	SPAGAIN;
-	if (dokeys) {
-	    tmps = hv_iterkey(entry,&i);	/* won't clobber stack_sp */
-	    if (!i)
-		tmps = "";
-	    XPUSHs(sv_2mortal(newSVpv(tmps,i)));
-	}
+	if (dokeys)
+	    XPUSHs(hv_iterkeysv(entry));	/* won't clobber stack_sp */
 	if (dovalues) {
-	    tmpstr = NEWSV(45,0);
+	    tmpstr = sv_newmortal();
 	    PUTBACK;
 	    sv_setsv(tmpstr,hv_iterval(hv,entry));
+	    DEBUG_H(sv_setpvf(tmpstr, "%lu%%%d=%lu",
+			    (unsigned long)HeHASH(entry),
+			    HvMAX(hv)+1,
+			    (unsigned long)(HeHASH(entry) & HvMAX(hv))));
 	    SPAGAIN;
-	    DEBUG_H( {
-		sprintf(buf,"%d%%%d=%d\n",entry->hent_hash,
-		    HvMAX(hv)+1,entry->hent_hash & HvMAX(hv));
-		sv_setpv(tmpstr,buf);
-	    } )
-	    XPUSHs(sv_2mortal(tmpstr));
+	    XPUSHs(tmpstr);
 	}
 	PUTBACK;
     }

@@ -1,5 +1,6 @@
 #!/usr/bin/perl
 
+unlink "keywords.h";
 open(KW, ">keywords.h") || die "Can't create keywords.h: $!\n";
 select KW;
 
@@ -24,8 +25,9 @@ sub tab {
 __END__
 
 NULL
-__LINE__
 __FILE__
+__LINE__
+__PACKAGE__
 __DATA__
 __END__
 AUTOLOAD
@@ -235,6 +237,7 @@ symlink
 syscall
 sysopen
 sysread
+sysseek
 system
 syswrite
 tell

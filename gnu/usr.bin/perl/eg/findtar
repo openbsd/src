@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# $RCSfile: findtar,v $$Revision: 1.1.1.1 $$Date: 1996/08/19 10:11:53 $
+# $RCSfile: findtar,v $$Revision: 1.2 $$Date: 1997/11/30 07:49:39 $
 
 # findtar takes find-style arguments and spits out a tarfile on stdout.
 # It won't work unless your find supports -ls and your tar the I flag.

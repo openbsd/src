@@ -1,24 +1,26 @@
 package ExtUtils::Manifest;
 
-
 require Exporter;
-@ISA=('Exporter');
-@EXPORT_OK = ('mkmanifest', 'manicheck', 'fullcheck', 'filecheck', 
-	      'skipcheck', 'maniread', 'manicopy');
-
 use Config;
 use File::Find;
 use File::Copy 'copy';
 use Carp;
+use strict;
+
+use vars qw($VERSION @ISA @EXPORT_OK
+	    $Is_VMS $Debug $Verbose $Quiet $MANIFEST $found);
+
+$VERSION = substr(q$Revision: 1.2 $, 10);
+@ISA=('Exporter');
+@EXPORT_OK = ('mkmanifest', 'manicheck', 'fullcheck', 'filecheck', 
+	      'skipcheck', 'maniread', 'manicopy');
+
+$Is_VMS = $^O eq 'VMS';
+if ($Is_VMS) { require File::Basename }
 
 $Debug = 0;
 $Verbose = 1;
-$Is_VMS = $^O eq 'VMS';
-
-$VERSION = $VERSION = substr(q$Revision: 1.1.1.1 $,10,4);
-
 $Quiet = 0;
-
 $MANIFEST = 'MANIFEST';
 
 # Really cool fix from Ilya :)
@@ -83,10 +85,10 @@ sub skipcheck {
 sub _manicheck {
     my($arg) = @_;
     my $read = maniread();
+    my $found = manifind();
     my $file;
     my(@missfile,@missentry);
     if ($arg & 1){
-	my $found = manifind();
 	foreach $file (sort keys %$read){
 	    warn "Debug: manicheck checking from $MANIFEST $file\n" if $Debug;
 	    unless ( exists $found->{$file} ) {
@@ -98,7 +100,6 @@ sub _manicheck {
     if ($arg & 2){
 	$read ||= {};
 	my $matches = _maniskip();
-	my $found = manifind();
 	my $skipwarn = $arg & 4;
 	foreach $file (sort keys %$found){
 	    if (&$matches($file)){
@@ -117,7 +118,7 @@ sub _manicheck {
 
 sub maniread {
     my ($mfile) = @_;
-    $mfile = $MANIFEST unless defined $mfile;
+    $mfile ||= $MANIFEST;
     my $read = {};
     local *M;
     unless (open M, $mfile){
@@ -126,8 +127,20 @@ sub maniread {
     }
     while (<M>){
 	chomp;
-	if ($Is_VMS) { /^(\S+)/ and $read->{"\L$1"}=$_; }
-	else         { /^(\S+)\s*(.*)/ and $read->{$1}=$2; }
+	next if /^#/;
+	if ($Is_VMS) {
+	    my($file)= /^(\S+)/;
+	    next unless $file;
+	    my($base,$dir) = File::Basename::fileparse($file);
+	    # Resolve illegal file specifications in the same way as tar
+	    $dir =~ tr/./_/;
+	    my(@pieces) = split(/\./,$base);
+	    if (@pieces > 2) { $base = shift(@pieces) . '.' . join('_',@pieces); }
+	    my $okfile = "$dir$base";
+	    warn "Debug: Illegal name $file changed to $okfile\n" if $Debug;
+	    $read->{"\L$okfile"}=$_;
+	}
+	else { /^(\S+)\s*(.*)/ and $read->{$1}=$2; }
     }
     close M;
     $read;
@@ -138,12 +151,13 @@ sub _maniskip {
     my ($mfile) = @_;
     my $matches = sub {0};
     my @skip ;
-    $mfile = "$MANIFEST.SKIP" unless defined $mfile;
+    $mfile ||= "$MANIFEST.SKIP";
     local *M;
     return $matches unless -f $mfile;
     open M, $mfile or return $matches;
     while (<M>){
 	chomp;
+	next if /^#/;
 	next if /^\s*$/;
 	push @skip, $_;
     }
@@ -161,7 +175,7 @@ sub _maniskip {
 sub manicopy {
     my($read,$target,$how)=@_;
     croak "manicopy() called without target argument" unless defined $target;
-    $how = 'cp' unless defined $how && $how;
+    $how ||= 'cp';
     require File::Path;
     require File::Basename;
     my(%dirs,$file);
@@ -175,14 +189,13 @@ sub manicopy {
 	    $dir = VMS::Filespec::unixify($dir) if $Is_VMS;
 	    File::Path::mkpath(["$target/$dir"],1,$Is_VMS ? undef : 0755);
 	}
-	if ($Is_VMS) { vms_cp_if_diff($file,"$target/$file"); }
-	else         { cp_if_diff($file, "$target/$file", $how); }
+	cp_if_diff($file, "$target/$file", $how);
     }
 }
 
 sub cp_if_diff {
-    my($from,$to, $how)=@_;
-    -f $from || carp "$0: $from not found";
+    my($from, $to, $how)=@_;
+    -f $from or carp "$0: $from not found";
     my($diff) = 0;
     local(*F,*T);
     open(F,$from) or croak "Can't read $from: $!\n";
@@ -197,26 +210,14 @@ sub cp_if_diff {
 	if (-e $to) {
 	    unlink($to) or confess "unlink $to: $!";
 	}
-	&$how($from, $to);
-    }
-}
-
-# Do the comparisons here rather than spawning off another process
-sub vms_cp_if_diff {
-    my($from,$to) = @_;
-    my($diff) = 0;
-    local(*F,*T);
-    open(F,$from) or croak "Can't read $from: $!\n";
-    if (open(T,$to)) {
-	while (<F>) { $diff++,last if $_ ne <T>; }
-	$diff++ unless eof(T);
-	close T;
-    }
-    else { $diff++; }
-    close F;
-    if ($diff) {
-	system('copy',VMS::Filespec::vmsify($from),VMS::Filespec::vmsify($to)) & 1
-	    or confess "Copy failed: $!";
+      STRICT_SWITCH: {
+	    best($from,$to), last STRICT_SWITCH if $how eq 'best';
+	    cp($from,$to), last STRICT_SWITCH if $how eq 'cp';
+	    ln($from,$to), last STRICT_SWITCH if $how eq 'ln';
+	    croak("ExtUtils::Manifest::cp_if_diff " .
+		  "called with illegal how argument [$how]. " .
+		  "Legal values are 'best', 'cp', and 'ln'.");
+	}
     }
 }
 
@@ -224,13 +225,14 @@ sub cp {
     my ($srcFile, $dstFile) = @_;
     my ($perm,$access,$mod) = (stat $srcFile)[2,8,9];
     copy($srcFile,$dstFile);
-    utime $access, $mod, $dstFile;
+    utime $access, $mod + ($Is_VMS ? 1 : 0), $dstFile;
     # chmod a+rX-w,go-w
     chmod(  0444 | ( $perm & 0111 ? 0111 : 0 ),  $dstFile );
 }
 
 sub ln {
     my ($srcFile, $dstFile) = @_;
+    return &cp if $Is_VMS;
     link($srcFile, $dstFile);
     local($_) = $dstFile; # chmod a+r,go-w+X (except "X" only applies to u=x)
     my $mode= 0444 | (stat)[2] & 0700;
@@ -242,7 +244,7 @@ sub best {
     if (-l $srcFile) {
 	cp($srcFile, $dstFile);
     } else {
-	ln($srcFile, $dstFile);
+	ln($srcFile, $dstFile) or cp($srcFile, $dstFile);
     }
 }
 
@@ -311,6 +313,8 @@ files found below the current directory.
 Maniread($file) reads a named C<MANIFEST> file (defaults to
 C<MANIFEST> in the current directory) and returns a HASH reference
 with files being the keys and comments being the values of the HASH.
+Blank lines and lines which start with C<#> in the C<MANIFEST> file
+are discarded.
 
 I<Manicopy($read,$target,$how)> copies the files that are the keys in
 the HASH I<%$read> to the named target directory. The HASH reference
@@ -326,7 +330,9 @@ make a tree without any symbolic link. Best is the default.
 
 The file MANIFEST.SKIP may contain regular expressions of files that
 should be ignored by mkmanifest() and filecheck(). The regular
-expressions should appear one on each line. A typical example:
+expressions should appear one on each line. Blank lines and lines
+which start with C<#> are skipped.  Use C<\#> if you need a regular
+expression to start with a sharp character. A typical example:
 
     \bRCS\b
     ^MANIFEST\.
@@ -350,7 +356,7 @@ C<MANIFEST.SKIP> file. This is useful if you want to maintain
 different distributions for different audiences (say a user version
 and a developer version including RCS).
 
-<$ExtUtils::Manifest::Quiet> defaults to 0. If set to a true value,
+C<$ExtUtils::Manifest::Quiet> defaults to 0. If set to a true value,
 all functions act silently.
 
 =head1 DIAGNOSTICS
@@ -387,6 +393,6 @@ L<ExtUtils::MakeMaker> which has handy targets for most of the functionality.
 
 =head1 AUTHOR
 
-Andreas Koenig F<E<lt>koenig@franz.ww.TU-Berlin.DEE<gt>>
+Andreas Koenig <F<koenig@franz.ww.TU-Berlin.DE>>
 
 =cut

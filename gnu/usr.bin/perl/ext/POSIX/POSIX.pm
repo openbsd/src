@@ -11,7 +11,7 @@ require Exporter;
 require DynaLoader;
 @ISA = qw(Exporter DynaLoader);
 
-$VERSION = "1.00" ;
+$VERSION = "1.02" ;
 
 %EXPORT_TAGS = (
 
@@ -22,11 +22,19 @@ $VERSION = "1.00" ;
 
     dirent_h =>	[qw()],
 
-    errno_h =>	[qw(E2BIG EACCES EAGAIN EBADF EBUSY ECHILD EDEADLK EDOM
-		EEXIST EFAULT EFBIG EINTR EINVAL EIO EISDIR EMFILE
-		EMLINK ENAMETOOLONG ENFILE ENODEV ENOENT ENOEXEC ENOLCK
-		ENOMEM ENOSPC ENOSYS ENOTDIR ENOTEMPTY ENOTTY ENXIO
-		EPERM EPIPE ERANGE EROFS ESPIPE ESRCH EXDEV errno)],
+    errno_h =>	[qw(E2BIG EACCES EADDRINUSE EADDRNOTAVAIL EAFNOSUPPORT
+		EAGAIN EALREADY EBADF EBUSY ECHILD ECONNABORTED
+		ECONNREFUSED ECONNRESET EDEADLK EDESTADDRREQ EDOM EDQUOT
+		EEXIST EFAULT EFBIG EHOSTDOWN EHOSTUNREACH EINPROGRESS
+		EINTR EINVAL EIO EISCONN EISDIR ELOOP EMFILE EMLINK
+		EMSGSIZE ENAMETOOLONG ENETDOWN ENETRESET ENETUNREACH
+		ENFILE ENOBUFS ENODEV ENOENT ENOEXEC ENOLCK ENOMEM
+		ENOPROTOOPT ENOSPC ENOSYS ENOTBLK ENOTCONN ENOTDIR
+		ENOTEMPTY ENOTSOCK ENOTTY ENXIO EOPNOTSUPP EPERM
+		EPFNOSUPPORT EPIPE EPROCLIM EPROTONOSUPPORT EPROTOTYPE
+		ERANGE EREMOTE ERESTART EROFS ESHUTDOWN ESOCKTNOSUPPORT
+		ESPIPE ESRCH ESTALE ETIMEDOUT ETOOMANYREFS ETXTBSY
+		EUSERS EWOULDBLOCK EXDEV errno)],
 
     fcntl_h =>	[qw(FD_CLOEXEC F_DUPFD F_GETFD F_GETFL F_GETLK F_RDLCK
 		F_SETFD F_SETFL F_SETLK F_SETLKW F_UNLCK F_WRLCK
@@ -72,12 +80,13 @@ $VERSION = "1.00" ;
 
     setjmp_h =>	[qw(longjmp setjmp siglongjmp sigsetjmp)],
 
-    signal_h =>	[qw(SA_NOCLDSTOP SIGABRT SIGALRM SIGCHLD SIGCONT SIGFPE
-		SIGHUP SIGILL SIGINT SIGKILL SIGPIPE SIGQUIT SIGSEGV
-		SIGSTOP SIGTERM SIGTSTP SIGTTIN SIGTTOU SIGUSR1 SIGUSR2
-		SIG_BLOCK SIG_DFL SIG_ERR SIG_IGN SIG_SETMASK SIG_UNBLOCK
-		raise sigaction signal sigpending sigprocmask
-		sigsuspend)],
+    signal_h =>	[qw(SA_NOCLDSTOP SA_NOCLDWAIT SA_NODEFER SA_ONSTACK
+		SA_RESETHAND SA_RESTART SA_SIGINFO SIGABRT SIGALRM
+		SIGCHLD SIGCONT SIGFPE SIGHUP SIGILL SIGINT SIGKILL
+		SIGPIPE SIGQUIT SIGSEGV SIGSTOP SIGTERM SIGTSTP SIGTTIN
+		SIGTTOU SIGUSR1 SIGUSR2 SIG_BLOCK SIG_DFL SIG_ERR
+		SIG_IGN SIG_SETMASK SIG_UNBLOCK raise sigaction signal
+		sigpending sigprocmask sigsuspend)],
 
     stdarg_h =>	[qw()],
 
@@ -96,7 +105,7 @@ $VERSION = "1.00" ;
     stdlib_h =>	[qw(EXIT_FAILURE EXIT_SUCCESS MB_CUR_MAX NULL RAND_MAX
 		abort atexit atof atoi atol bsearch calloc div
 		free getenv labs ldiv malloc mblen mbstowcs mbtowc
-		qsort realloc strtod strtol stroul wcstombs wctomb)],
+		qsort realloc strtod strtol strtoul wcstombs wctomb)],
 
     string_h =>	[qw(NULL memchr memcmp memcpy memmove memset strcat
 		strchr strcmp strcoll strcpy strcspn strerror strlen
@@ -194,7 +203,7 @@ sub AUTOLOAD {
     local $! = 0;
     my $constname = $AUTOLOAD;
     $constname =~ s/.*:://;
-    my $val = constant($constname, $_[0]);
+    my $val = constant($constname, @_ ? $_[0] : 0);
     if ($! == 0) {
 	*$AUTOLOAD = sub { $val };
     }
@@ -231,7 +240,7 @@ sub unimpl {
 package POSIX::SigAction;
 
 sub new {
-    bless {HANDLER => $_[1], MASK => $_[2], FLAGS => $_[3]};
+    bless {HANDLER => $_[1], MASK => $_[2], FLAGS => $_[3] || 0}, $_[0];
 }
 
 ############################
@@ -377,7 +386,7 @@ sub kill {
 
 sub raise {
     usage "raise(sig)" if @_ != 1;
-    kill $$, $_[0];	# Is this good enough?
+    kill $_[0], $$;	# Is this good enough?
 }
 
 sub offsetof {
@@ -385,35 +394,35 @@ sub offsetof {
 }
 
 sub clearerr {
-    redef "FileHandle::clearerr()";
+    redef "IO::Handle::clearerr()";
 }
 
 sub fclose {
-    redef "FileHandle::close()";
+    redef "IO::Handle::close()";
 }
 
 sub fdopen {
-    redef "FileHandle::new_from_fd()";
+    redef "IO::Handle::new_from_fd()";
 }
 
 sub feof {
-    redef "FileHandle::eof()";
+    redef "IO::Handle::eof()";
 }
 
 sub fgetc {
-    redef "FileHandle::getc()";
+    redef "IO::Handle::getc()";
 }
 
 sub fgets {
-    redef "FileHandle::gets()";
+    redef "IO::Handle::gets()";
 }
 
 sub fileno {
-    redef "FileHandle::fileno()";
+    redef "IO::Handle::fileno()";
 }
 
 sub fopen {
-    redef "FileHandle::open()";
+    redef "IO::File::open()";
 }
 
 sub fprintf {
@@ -441,27 +450,27 @@ sub fscanf {
 }
 
 sub fseek {
-    redef "FileHandle::seek()";
+    redef "IO::Seekable::seek()";
 }
 
 sub ferror {
-    redef "FileHandle::error()";
+    redef "IO::Handle::error()";
 }
 
 sub fflush {
-    redef "FileHandle::flush()";
+    redef "IO::Handle::flush()";
 }
 
 sub fgetpos {
-    redef "FileHandle::getpos()";
+    redef "IO::Seekable::getpos()";
 }
 
 sub fsetpos {
-    redef "FileHandle::setpos()";
+    redef "IO::Seekable::setpos()";
 }
 
 sub ftell {
-    redef "FileHandle::tell()";
+    redef "IO::Seekable::tell()";
 }
 
 sub fwrite {
@@ -534,11 +543,11 @@ sub sscanf {
 }
 
 sub tmpfile {
-    redef "FileHandle::new_tmpfile()";
+    redef "IO::File::new_tmpfile()";
 }
 
 sub ungetc {
-    redef "FileHandle::ungetc()";
+    redef "IO::Handle::ungetc()";
 }
 
 sub vfprintf {
@@ -626,18 +635,6 @@ sub realloc {
 
 sub srand {
     unimpl "srand()";
-}
-
-sub strtod {
-    unimpl "strtod() is C-specific, stopped";
-}
-
-sub strtol {
-    unimpl "strtol() is C-specific, stopped";
-}
-
-sub stroul {
-    unimpl "stroul() is C-specific, stopped";
 }
 
 sub system {

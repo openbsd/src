@@ -37,7 +37,7 @@ sub look {
     my($size, $blksize) = @stat[7,11];
     $blksize ||= 8192;
     $key =~ s/[^\w\s]//g if $dict;
-    $key =~ tr/A-Z/a-z/ if $fold;
+    $key = lc $key if $fold;
     my($min, $max, $mid) = (0, int($size / $blksize));
     while ($max - $min > 1) {
 	$mid = int(($max + $min) / 2);
@@ -47,7 +47,7 @@ sub look {
 	$_ = <FH>;
 	chop;
 	s/[^\w\s]//g if $dict;
-	tr/A-Z/a-z/ if $fold;
+	$_ = lc $_ if $fold;
 	if (defined($_) && $_ lt $key) {
 	    $min = $mid;
 	}
@@ -61,11 +61,11 @@ sub look {
     <FH> if $min;
     for (;;) {
 	$min = tell(FH);
-	$_ = <FH>
+	defined($_ = <FH>)
 	    or last;
 	chop;
 	s/[^\w\s]//g if $dict;
-	y/A-Z/a-z/ if $fold;
+	$_ = lc $_ if $fold;
 	last if $_ ge $key;
     }
     seek(FH,$min,0);

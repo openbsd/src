@@ -54,6 +54,17 @@ sub file_name_is_absolute {
     $file =~ m{^([a-z]:)?[\\/]}i ;
 }
 
+sub perl_archive
+{
+ return "\$(PERL_INC)/libperl\$(LIB_EXT)";
+}
+
+sub export_list
+{
+ my ($self) = @_;
+ return "$self->{BASEEXT}.def";
+}
+
 1;
 __END__
 

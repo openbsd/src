@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.12 1997/07/24 21:12:14 kstailey Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.13 1997/11/30 07:48:01 millert Exp $
 #
 # Build wrapper for Perl 5.003.
 #
@@ -9,22 +9,69 @@ LNDIR=		/usr/bin/lndir
 
 H2PH=		/usr/bin/h2ph
 
-MAN=		x2p/a2p.man x2p/s2p.man pod/perl.man pod/perlbook.man \
-		pod/perlbot.man pod/perlcall.man pod/perldata.man \
-		pod/perldebug.man pod/perldiag.man pod/perldsc.man \
-		pod/perlembed.man pod/perlform.man pod/perlfunc.man \
-		pod/perlguts.man pod/perlipc.man pod/perllol.man \
-		pod/perlmod.man pod/perlobj.man pod/perlop.man \
-		pod/perlovl.man pod/perlpod.man pod/perlre.man \
-		pod/perlref.man pod/perlrun.man pod/perlsec.man \
-		pod/perlstyle.man pod/perlsub.man pod/perlsyn.man \
-		pod/perltie.man pod/perltoc.man pod/perltrap.man \
-		pod/perlvar.man pod/perlxs.man pod/perlxstut.man
+# Pod (plain old documentation) files.  These get turned into man pages.
+# We treat those pod files that don't end in .pod as a special case
+POD=		pod/perl.pod pod/perlapio.pod pod/perlbook.pod pod/perlbot.pod \
+		pod/perlcall.pod pod/perldata.pod pod/perldebug.pod \
+		pod/perldelta.pod pod/perldiag.pod pod/perldsc.pod \
+		pod/perlembed.pod pod/perlfaq.pod pod/perlfaq1.pod \
+		pod/perlfaq2.pod pod/perlfaq3.pod pod/perlfaq4.pod \
+		pod/perlfaq5.pod pod/perlfaq6.pod pod/perlfaq7.pod \
+		pod/perlfaq8.pod pod/perlfaq9.pod pod/perlform.pod \
+		pod/perlfunc.pod pod/perlguts.pod pod/perlipc.pod \
+		pod/perllocale.pod pod/perllol.pod pod/perlmod.pod \
+		pod/perlmodlib.pod pod/perlobj.pod pod/perlop.pod \
+		pod/perlovl.pod pod/perlpod.pod pod/perlre.pod \
+		pod/perlref.pod pod/perlrun.pod pod/perlsec.pod \
+		pod/perlstyle.pod pod/perlsub.pod pod/perlsyn.pod \
+		pod/perltie.pod pod/perltoc.pod pod/perltoot.pod \
+		pod/perltrap.pod pod/perlvar.pod pod/perlxs.pod \
+		pod/perlxstut.pod x2p/a2p.pod
+# Don't install these for now (need special install to do / > ::)
+#		lib/Devel/SelfStubber.pm lib/IPC/Open2.pm lib/IPC/Open3.pm \
+#		lib/Net/Ping.pm lib/Net/hostent.pm lib/Net/netent.pm \
+#		lib/Net/protoent.pm lib/Net/servent.pm lib/ExtUtils/Install.pm \
+#		lib/ExtUtils/Liblist.pm lib/ExtUtils/MM_OS2.pm \
+#		lib/ExtUtils/MM_Unix.pm lib/ExtUtils/MM_VMS.pm \
+#		lib/ExtUtils/MakeMaker.pm lib/ExtUtils/Manifest.pm \
+#		lib/ExtUtils/Mkbootstrap.pm lib/ExtUtils/Mksymlists.pm \
+#		lib/ExtUtils/testlib.pm lib/ExtUtils/Command.pm \
+#		lib/ExtUtils/Embed.pm lib/ExtUtils/MM_Win32.pm \
+#		lib/File/Basename.pm lib/File/CheckTree.pm lib/File/Copy.pm \
+#		lib/File/Find.pm lib/File/Path.pm lib/File/Compare.pm \
+#		lib/File/DosGlob.pm lib/File/stat.pm lib/Getopt/Long.pm \
+#		lib/Getopt/Std.pm lib/I18N/Collate.pm lib/Math/BigFloat.pm \
+#		lib/Math/BigInt.pm lib/Math/Complex.pm lib/Math/Trig.pm \
+#		lib/Pod/Functions.pm lib/Pod/Text.pm lib/Pod/Html.pm \
+#		lib/Search/Dict.pm lib/Sys/Hostname.pm lib/Sys/Syslog.pm \
+#		lib/Term/Cap.pm lib/Term/Complete.pm lib/Term/ReadLine.pm \
+#		lib/Test/Harness.pm lib/Text/Abbrev.pm lib/Text/ParseWords.pm \
+#		lib/Text/Soundex.pm lib/Text/Tabs.pm lib/Text/Wrap.pm \
+#		lib/Tie/Hash.pm lib/Tie/Scalar.pm lib/Tie/SubstrHash.pm \
+#		lib/Tie/RefHash.pm lib/Time/Local.pm lib/Time/gmtime.pm \
+#		lib/Time/localtime.pm lib/Time/tm.pm lib/AnyDBM_File.pm \
+#		lib/AutoLoader.pm lib/AutoSplit.pm lib/Benchmark.pm \
+#		lib/Carp.pm lib/Cwd.pm lib/DirHandle.pm lib/English.pm \
+#		lib/Env.pm lib/Exporter.pm lib/FileCache.pm lib/SelectSaver.pm \
+#		lib/SelfLoader.pm lib/Shell.pm lib/Symbol.pm \
+#		lib/diagnostics.pm lib/integer.pm lib/less.pm lib/lib.pm \
+#		lib/overload.pm lib/sigtrap.pm lib/strict.pm lib/subs.pm \
+#		lib/vars.pm lib/Bundle/CPAN.pm lib/CGI/Apache.pm \
+#		lib/CGI/Carp.pm lib/CGI/Fast.pm lib/CGI/Push.pm \
+#		lib/CGI/Switch.pm lib/CGI.pm lib/CPAN.pm lib/CPAN/FirstTime.pm \
+#		lib/CPAN/Nox.pm lib/Class/Struct.pm lib/FileHandle.pm \
+#		lib/FindBin.pm lib/UNIVERSAL.pm lib/User/grent.pm \
+#		lib/User/pwent.pm lib/autouse.pm lib/base.pm lib/blib.pm \
+#		lib/constant.pm lib/locale.pm
 
 .include <bsd.own.mk>
 
 .ifndef NOMAN
-MANALL=		${MAN:S/.man$/.cat1/g}
+MANALL=		${POD:S/.pod$/.cat1/g:S/.pm$/.cat3p/g} \
+		utils/c2ph.cat1 utils/h2ph.cat1 utils/h2xs.cat1 \
+		utils/perldoc.cat1 utils/perlbug.cat1 utils/pl2pm.cat1 \
+		utils/splain.cat1 x2p/s2p.cat1 pod/pod2man.cat1 \
+		pod/pod2html.cat1 utils/pstruct.cat1 lib/ExtUtils/xsubpp.cat1
 .else
 MANALL=
 .endif
@@ -37,16 +84,20 @@ INST_PROG='/usr/bin/install -cs'
 INST_PROG='/usr/bin/install -c'
 .endif
 
-.SUFFIXES: .man .cat1
+.SUFFIXES: .pod .pm .cat1 cat3p
 
-.man.cat1:
-	@echo "${NROFF} -mandoc ${.IMPSRC} > ${.TARGET}"
-	@${NROFF} -mandoc ${.IMPSRC} > ${.TARGET} || (rm -f ${.TARGET}; false)
+.pod.cat1:
+	@echo "./perl -I./lib ./pod/pod2man --section=1 --official ${.IMPSRC} | ${NROFF} -man > ${.TARGET}"
+	./perl -I$./lib ./pod/pod2man --section=1 --official ${.IMPSRC} | ${NROFF} -man > ${.TARGET} || (rm -f ${.TARGET}; false)
+# XXX - '/' needs to become :: when installed (need own maninstall target?)
+.pm.cat3p:
+	@echo "./perl -I./lib ./pod/pod2man --section=3p --official ${.IMPSRC} | ${NROFF} -man > ${.TARGET}"
+	./perl -I./lib ./pod/pod2man --section=1 --official ${.IMPSRC} | ${NROFF} -man > ${.TARGET} || (rm -f ${.TARGET}; false)
 
 GENERATED=	config.sh Makefile cflags config.h makeaperl makedepend \
 		makedir perl.exp writemain x2p/Makefile x2p/cflags
 
-CLEANFILES=	config.sh ${MANALL}
+CLEANFILES=	config.sh ${MAN} ${MANALL}
 
 .BEGIN:
 	@if [ ${.CURDIR} != ${.OBJDIR} ]; then ${LNDIR} -s -e obj -e obj.${MACHINE_ARCH} -e Makefile.bsd-wrapper ${.CURDIR}; fi
@@ -88,6 +139,54 @@ x2p/Makefile:
 x2p/cflags:
 	(cd ${.OBJDIR}/x2p; /bin/sh cflags.SH)
 
+utils/c2ph.cat1: utils/c2ph
+	@echo "./perl -I./lib ./pod/pod2man --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}"
+	./perl -I$./lib ./pod/pod2man --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET} || (rm -f ${.TARGET}; false)
+
+utils/h2ph.cat1: utils/h2ph
+	@echo "./perl -I./lib ./pod/pod2man --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}"
+	./perl -I$./lib ./pod/pod2man --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET} || (rm -f ${.TARGET}; false)
+
+utils/h2xs.cat1: utils/h2xs
+	@echo "./perl -I./lib ./pod/pod2man --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}"
+	./perl -I$./lib ./pod/pod2man --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET} || (rm -f ${.TARGET}; false)
+
+utils/perldoc.cat1: utils/perldoc
+	@echo "./perl -I./lib ./pod/pod2man --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}"
+	./perl -I$./lib ./pod/pod2man --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET} || (rm -f ${.TARGET}; false)
+
+utils/perlbug.cat1: utils/perlbug
+	@echo "./perl -I./lib ./pod/pod2man --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}"
+	./perl -I$./lib ./pod/pod2man --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET} || (rm -f ${.TARGET}; false)
+
+utils/pl2pm.cat1: utils/pl2pm
+	@echo "./perl -I./lib ./pod/pod2man --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}"
+	./perl -I$./lib ./pod/pod2man --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET} || (rm -f ${.TARGET}; false)
+
+utils/splain.cat1: utils/splain
+	@echo "./perl -I./lib ./pod/pod2man --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}"
+	./perl -I$./lib ./pod/pod2man --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET} || (rm -f ${.TARGET}; false)
+
+x2p/s2p.cat1: x2p/s2p
+	@echo "./perl -I./lib ./pod/pod2man --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}"
+	./perl -I$./lib ./pod/pod2man --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET} || (rm -f ${.TARGET}; false)
+
+pod/pod2man.cat1: pod/pod2man
+	@echo "./perl -I./lib ./pod/pod2man --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}"
+	./perl -I$./lib ./pod/pod2man --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET} || (rm -f ${.TARGET}; false)
+
+pod/pod2html.cat1: pod/pod2html
+	@echo "./perl -I./lib ./pod/pod2man --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}"
+	./perl -I$./lib ./pod/pod2man --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET} || (rm -f ${.TARGET}; false)
+
+utils/pstruct.cat1: utils/pstruct
+	@echo "./perl -I./lib ./pod/pod2man --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}"
+	./perl -I$./lib ./pod/pod2man --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET} || (rm -f ${.TARGET}; false)
+
+lib/ExtUtils/xsubpp.cat1: lib/ExtUtils/xsubpp
+	@echo "./perl -I./lib ./pod/pod2man --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}"
+	./perl -I$./lib ./pod/pod2man --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET} || (rm -f ${.TARGET}; false)
+
 .ifdef NOMAN
 maninstall:
 	@echo NOMAN is set
@@ -95,7 +194,7 @@ maninstall:
 
 install: ${MANALL} maninstall
 	(cd ${.OBJDIR}; INSTALL=${INSTALL} INSTALL_COPY=${INSTALL_COPY} \
-	 INSTALL_STRIP=${INSTALL_STRIP} ${MAKE} install)
+	 INSTALL_STRIP=${INSTALL_STRIP} ${MAKE} install.perl)
 	(cd ${DESTDIR}/usr/include; ${H2PH} *.h arpa/*.h machine/*.h net/*.h \
 			  protocols/*.h sys/*.h)
 	-chmod -R a+rX ${DESTDIR}/usr/lib/perl5

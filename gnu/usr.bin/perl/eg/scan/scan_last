@@ -1,6 +1,6 @@
 #!/usr/bin/perl -P
 
-# $RCSfile: scan_last,v $$Revision: 1.1.1.1 $$Date: 1996/08/19 10:11:56 $
+# $RCSfile: scan_last,v $$Revision: 1.2 $$Date: 1997/11/30 07:54:51 $
 
 # This reports who was logged on at weird hours
 

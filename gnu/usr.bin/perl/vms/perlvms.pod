@@ -58,7 +58,7 @@ define a foreign command to invoke this image.
 Perl extensions are packages which provide both XS and Perl code
 to add new functionality to perl.  (XS is a meta-language which
 simplifies writing C code which interacts with Perl, see
-L<perlapi> for more details.)  The Perl code for an
+L<perlxs> for more details.)  The Perl code for an
 extension is treated like any other library module - it's
 made available in your script through the appropriate
 C<use> or C<require> statement, and usually defines a Perl
@@ -140,13 +140,16 @@ be added to the linker options file F<PGPLOT.Opt> produced
 during the build process for the Perl extension.
 
 By default, the shareable image for an extension is placed
-in the F<[.Lib.Auto.>I<Arch>.I<Extname>F<]> directory of the
+F<[.lib.site_perl.auto>I<Arch>.I<Extname>F<]> directory of the
 installed Perl directory tree (where I<Arch> is F<VMS_VAX> or
-F<VMS_AXP>, followed by the Perl version number, and I<Extname>
-is the name of the extension, with each C<::> translated to C<.>).
+F<VMS_AXP>, and I<Extname> is the name of the extension, with
+each C<::> translated to C<.>).  (See the MakeMaker documentation
+for more details on installation options for extensions.)
 However, it can be manually placed in any of several locations:
-   - the F<[.Lib.Auto.>I<Extname>F<]> subdirectory of one of
-     the directories in C<@INC>, or
+   - the F<[.Lib.Auto.>I<Arch>I<$PVers>I<Extname>F<]> subdirectory
+     of one of the directories in C<@INC> (where I<PVers>
+     is the version of Perl you're using, as supplied in C<$]>,
+     with '.' converted to '_'), or
    - one of the directories in C<@INC>, or
    - a directory which the extensions Perl library module
      passes to the DynaLoader when asking it to map
@@ -165,12 +168,20 @@ We have tried to make Perl aware of both VMS-style and Unix-
 style file specifications wherever possible.  You may use 
 either style, or both, on the command line and in scripts, 
 but you may not combine the two styles within a single fle 
-specification.  Filenames are, of course, still case-
-insensitive.  For consistency, most Perl routines return 
-filespecs using lower case letters only, regardless of the 
-case used in the arguments passed to them.  (This is true 
-only when running under VMS; Perl respects the case-
-sensitivity of OSs like Unix.)
+specification.  VMS Perl interprets Unix pathnames in much
+the same way as the CRTL (I<e.g.> the first component of
+an absolute path is read as the device name for the
+VMS file specification).  There are a set of functions
+provided in the C<VMS::Filespec> package for explicit
+interconversion between VMS and Unix syntax; its
+documentation provides more details.
+
+Filenames are, of course, still case-insensitive.  For
+consistency, most Perl routines return  filespecs using
+lower case letters only, regardless of the case used in
+the arguments passed to them.  (This is true  only when
+running under VMS; Perl respects the case-sensitivity
+of OSs like Unix.)
 
 We've tried to minimize the dependence of Perl library 
 modules on Unix syntax, but you may find that some of these, 
@@ -230,6 +241,7 @@ directory specifications may use either VMS or Unix syntax.
 
 Perl for VMS supports redirection of input and output on the 
 command line, using a subset of Bourne shell syntax:
+
     <F<file> reads stdin from F<file>,
     >F<file> writes stdout to F<file>,
     >>F<file> appends stdout to F<file>,
@@ -253,6 +265,17 @@ to pass uppercase switches to Perl, you need to enclose
 them in double-quotes on the command line, since the CRTL
 downcases all unquoted strings.
 
+=over 4
+
+=item -i
+
+If the C<-i> switch is present but no extension for a backup
+copy is given, then inplace editing creates a new version of
+a file; the existing copy is not deleted.  (Note that if
+an extension is given, an existing file is renamed to the backup
+file, as is the case under other operating systems, so it does
+not remain as a previous version under the original filename.)
+
 =item -S
 
 If the C<-S> switch is present I<and> the script name does
@@ -269,13 +292,15 @@ The C<-u> switch causes the VMS debugger to be invoked
 after the Perl program is compiled, but before it has
 run.  It does not create a core dump file.
 
+=back
+
 =head1 Perl functions
 
 As of the time this document was last revised, the following 
 Perl functions were implemented in the VMS port of Perl 
 (functions marked with * are discussed in more detail below):
 
-    file tests*, abs, alarm, atan, binmode*, bless,
+    file tests*, abs, alarm, atan, backticks*, binmode*, bless,
     caller, chdir, chmod, chown, chomp, chop, chr,
     close, closedir, cos, crypt*, defined, delete,
     die, do, dump*, each, endpwent, eof, eval, exec*,
@@ -285,7 +310,7 @@ Perl functions were implemented in the VMS port of Perl
     last, lc, lcfirst, length, local, localtime, log, m//,
     map, mkdir, my, next, no, oct, open, opendir, ord, pack,
     pipe, pop, pos, print, printf, push, q//, qq//, qw//,
-    qx//, quotemeta, rand, read, readdir, redo, ref, rename,
+    qx//*, quotemeta, rand, read, readdir, redo, ref, rename,
     require, reset, return, reverse, rewinddir, rindex,
     rmdir, s///, scalar, seek, seekdir, select(internal),
     select (system call)*, setpwent, shift, sin, sleep,
@@ -320,6 +345,7 @@ your copy of Perl:
     getsockopt, listen, recv, select(system call)*,
     send, setsockopt, shutdown, socket
 
+=over 4
 
 =item File tests
 
@@ -349,11 +375,28 @@ only, and then manually check the appropriate bits, as defined by
 your C compiler's F<stat.h>, in the mode value it returns, if you
 need an approximation of the file's protections.
 
+=item backticks
+
+Backticks create a subprocess, and pass the enclosed string
+to it for execution as a DCL command.  Since the subprocess is
+created directly via C<lib$spawn()>, any valid DCL command string
+may be specified.
+
 =item binmode FILEHANDLE
 
-The C<binmode> operator has no effect under VMS.  It will 
-return TRUE whenever called, but will not affect I/O 
-operations on the filehandle given as its argument.
+The C<binmode> operator will attempt to insure that no translation
+of carriage control occurs on input from or output to this filehandle.
+Since this involves reopening the file and then restoring its
+file position indicator, if this function returns FALSE, the
+underlying filehandle may no longer point to an open file, or may
+point to a different position in the file than before C<binmode>
+was called.
+
+Note that C<binmode> is generally not necessary when using normal
+filehandles; it is provided so that you can control I/O to existing
+record-structured files when necessary.  You can also use the
+C<vmsfopen> function in the VMS::Stdio extension to gain finer
+control of I/O to files and devices with different record structures.
 
 =item crypt PLAINTEXT, USER
 
@@ -465,13 +508,17 @@ true, a warning message is printed, and C<undef> is returned.
 In most cases, C<kill> kill is implemented via the CRTL's C<kill()>
 function, so it will behave according to that function's
 documentation.  If you send a SIGKILL, however, the $DELPRC system
-service is is called directly.  This insures that the target
+service is called directly.  This insures that the target
 process is actually deleted, if at all possible.  (The CRTL's C<kill()>
 function is presently implemented via $FORCEX, which is ignored by
 supervisor-mode images like DCL.)
 
 Also, negative signal values don't do anything special under
 VMS; they're just converted to the corresponding positive value.
+
+=item qx//
+
+See the entry on C<backticks> above.
 
 =item select (system call)
 
@@ -501,7 +548,18 @@ valid DCL command string may be specified.  If LIST consists
 of the empty string, C<system> spawns an interactive DCL subprocess,
 in the same fashion as typiing B<SPAWN> at the DCL prompt.
 Perl waits for the subprocess to complete before continuing
-execution in the current process.
+execution in the current process.  As described in L<perlfunc>,
+the return value of C<system> is a fake "status" which follows
+POSIX semantics; see the description of C<$?> in this document
+for more detail.  The actual VMS exit status of the subprocess
+is available in C<$^S> (as long as you haven't used another Perl
+function that resets C<$?> and C<$^S> in the meantime).
+
+=item time
+
+The value returned by C<time> is the offset in seconds from
+01-JAN-1970 00:00:00 (just like the CRTL's times() routine), in order
+to make life easier for code coming in from the POSIX/Unix world.
 
 =item times
 
@@ -572,7 +630,16 @@ and you invoked Perl with the C<-w> switch, a warning will be issued.)
 
 The FLAGS argument is ignored in all cases.
 
+=back
+
 =head1 Perl variables
+
+The following VMS-specific information applies to the indicated
+"special" Perl variables, in addition to the general information
+in L<perlvar>.  Where there is a conflict, this infrmation
+takes precedence.
+
+=over 4
 
 =item %ENV 
 
@@ -587,7 +654,7 @@ list logical names.  For instance, if you say
 
    $  Define STORY  once,upon,a,time,there,was
    $  perl -e "for ($i = 0; $i <= 6; $i++) " -
-   _$ -e "{ print $ENV{'foo'.$i},' '}"
+   _$ -e "{ print $ENV{'story;'.$i},' '}"
 
 Perl will print C<ONCE UPON A TIME THERE WAS>.
 
@@ -609,19 +676,24 @@ logical name or a name in another logical name table will
 replace the logical name just deleted.  It is not possible
 at present to define a search list logical name via %ENV.
 
+At present, the first time you iterate over %ENV using
+C<keys>, or C<values>,  you will incur a time penalty as all
+logical names are read, in order to fully populate %ENV.
+Subsequent iterations will not reread logical names, so they
+won't be as slow, but they also won't reflect any changes
+to logical name tables caused by other programs.  The C<each>
+operator is special: it returns each element I<already> in
+%ENV, but doesn't go out and look for more.   Therefore, if
+you've previously used C<keys> or C<values>, you'll see all
+the logical names visible to your process, and if not, you'll
+see only the names you've looked up so far.  (This is a
+consequence of the way C<each> is implemented now, and it
+may change in the future, so it wouldn't be a good idea
+to rely on it too much.)
+
 In all operations on %ENV, the key string is treated as if it 
 were entirely uppercase, regardless of the case actually 
 specified in the Perl expression.
-
-=item $?
-
-Since VMS status values are 32 bits wide, the value of C<$?>
-is simply the final status value of the last subprocess to
-complete.  This differs from the behavior of C<$?> under Unix,
-and under VMS' POSIX environment, in that the low-order 8 bits
-of C<$?> do not specify whether the process terminated normally
-or due to a signal, and you do not need to shift C<$?> 8 bits
-to the right in order to find the process' exit status.
 
 =item $!
 
@@ -644,12 +716,38 @@ is the value of vaxc$errno, and its string value is the
 corresponding VMS message string, as retrieved by sys$getmsg().
 Setting C<$^E> sets vaxc$errno to the value specified.
 
+=item $?
+
+The "status value" returned in C<$?> is synthesized from the
+actual exit status of the subprocess in a way that approximates
+POSIX wait(5) semantics, in order to allow Perl programs to
+portably test for successful completion of subprocesses.  The
+low order 8 bits of C<$?> are always 0 under VMS, since the
+termination status of a process may or may not have been
+generated by an exception.  The next 8 bits are derived from
+severity portion of the subprocess' exit status: if the
+severity was success or informational, these bits are all 0;
+otherwise, they contain the severity value shifted left one bit.
+As a result, C<$?> will always be zero if the subprocess' exit
+status indicated successful completion, and non-zero if a
+warning or error occurred.  The actual VMS exit status may
+be found in C<$^S> (q.v.).
+
+=item $^S
+
+Under VMS, this is the 32-bit VMS status value returned by the
+last subprocess to complete.  Unlink C<$?>, no manipulation
+is done to make this look like a POSIX wait(5) value, so it
+may be treated as a normal VMS status value.
+
 =item $|
 
 Setting C<$|> for an I/O stream causes data to be flushed
 all the way to disk on each write (I<i.e.> not just to
 the underlying RMS buffers for a file).  In other words,
 it's equivalent to calling fflush() and fsync() from C.
+
+=back
 
 =head1 Revision date
 

@@ -1,6 +1,6 @@
 /*    scope.c
  *
- *    Copyright (c) 1991-1994, Larry Wall
+ *    Copyright (c) 1991-1997, Larry Wall
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -22,7 +22,7 @@ SV** p;
 int n;
 {
     stack_sp = sp;
-    av_extend(stack, (p - stack_base) + (n) + 128);
+    av_extend(curstack, (p - stack_base) + (n) + 128);
     return stack_sp;
 }
 
@@ -107,75 +107,12 @@ free_tmps()
     }
 }
 
-SV *
-save_scalar(gv)
-GV *gv;
-{
-    register SV *sv;
-    SV *osv = GvSV(gv);
-
-    SSCHECK(3);
-    SSPUSHPTR(gv);
-    SSPUSHPTR(osv);
-    SSPUSHINT(SAVEt_SV);
-
-    sv = GvSV(gv) = NEWSV(0,0);
-    if (SvTYPE(osv) >= SVt_PVMG && SvMAGIC(osv) && SvTYPE(osv) != SVt_PVGV) {
-	sv_upgrade(sv, SvTYPE(osv));
-	if (SvGMAGICAL(osv)) {
-	    MAGIC* mg;
-	    bool oldtainted = tainted;
-	    mg_get(osv);
-	    if (tainting && tainted && (mg = mg_find(osv, 't'))) {
-		SAVESPTR(mg->mg_obj);
-		mg->mg_obj = osv;
-	    }
-	    SvFLAGS(osv) |= (SvFLAGS(osv) &
-		(SVp_IOK|SVp_NOK|SVp_POK)) >> PRIVSHIFT;
-	    tainted = oldtainted;
-	}
-	SvMAGIC(sv) = SvMAGIC(osv);
-	SvFLAGS(sv) |= SvMAGICAL(osv);
-	localizing = 1;
-	SvSETMAGIC(sv);
-	localizing = 0;
-    }
-    return sv;
-}
-
-#ifdef INLINED_ELSEWHERE
-void
-save_gp(gv)
-GV *gv;
-{
-    register GP *gp;
-    GP *ogp = GvGP(gv);
-
-    SSCHECK(3);
-    SSPUSHPTR(SvREFCNT_inc(gv));
-    SSPUSHPTR(ogp);
-    SSPUSHINT(SAVEt_GP);
-
-    Newz(602,gp, 1, GP);
-    GvGP(gv) = gp;
-    GvREFCNT(gv) = 1;
-    GvSV(gv) = NEWSV(72,0);
-    GvLINE(gv) = curcop->cop_line;
-    GvEGV(gv) = gv;
-}
-#endif
-
-SV*
-save_svref(sptr)
+static SV *
+save_scalar_at(sptr)
 SV **sptr;
 {
     register SV *sv;
     SV *osv = *sptr;
-
-    SSCHECK(3);
-    SSPUSHPTR(*sptr);
-    SSPUSHPTR(sptr);
-    SSPUSHINT(SAVEt_SVREF);
 
     sv = *sptr = NEWSV(0,0);
     if (SvTYPE(osv) >= SVt_PVMG && SvMAGIC(osv) && SvTYPE(osv) != SVt_PVGV) {
@@ -201,30 +138,105 @@ SV **sptr;
     return sv;
 }
 
-AV *
-save_ary(gv)
+SV *
+save_scalar(gv)
 GV *gv;
 {
     SSCHECK(3);
     SSPUSHPTR(gv);
-    SSPUSHPTR(GvAVn(gv));
+    SSPUSHPTR(GvSV(gv));
+    SSPUSHINT(SAVEt_SV);
+    return save_scalar_at(&GvSV(gv));
+}
+
+SV*
+save_svref(sptr)
+SV **sptr;
+{
+    SSCHECK(3);
+    SSPUSHPTR(sptr);
+    SSPUSHPTR(*sptr);
+    SSPUSHINT(SAVEt_SVREF);
+    return save_scalar_at(sptr);
+}
+
+void
+save_gp(gv, empty)
+GV *gv;
+I32 empty;
+{
+    SSCHECK(6);
+    SSPUSHIV((IV)SvLEN(gv));
+    SvLEN(gv) = 0; /* forget that anything was allocated here */
+    SSPUSHIV((IV)SvCUR(gv));
+    SSPUSHPTR(SvPVX(gv));
+    SvPOK_off(gv);
+    SSPUSHPTR(SvREFCNT_inc(gv));
+    SSPUSHPTR(GvGP(gv));
+    SSPUSHINT(SAVEt_GP);
+
+    if (empty) {
+	register GP *gp;
+	Newz(602, gp, 1, GP);
+	GvGP(gv) = gp_ref(gp);
+	GvSV(gv) = NEWSV(72,0);
+	GvLINE(gv) = curcop->cop_line;
+	GvEGV(gv) = gv;
+    }
+    else {
+	gp_ref(GvGP(gv));
+	GvINTRO_on(gv);
+    }
+}
+
+AV *
+save_ary(gv)
+GV *gv;
+{
+    AV *oav, *av;
+
+    SSCHECK(3);
+    SSPUSHPTR(gv);
+    SSPUSHPTR(oav = GvAVn(gv));
     SSPUSHINT(SAVEt_AV);
 
     GvAV(gv) = Null(AV*);
-    return GvAVn(gv);
+    av = GvAVn(gv);
+    if (SvMAGIC(oav)) {
+	SvMAGIC(av) = SvMAGIC(oav);
+	SvFLAGS(av) |= SvMAGICAL(oav);
+	SvMAGICAL_off(oav);
+	SvMAGIC(oav) = 0;
+	localizing = 1;
+	SvSETMAGIC((SV*)av);
+	localizing = 0;
+    }
+    return av;
 }
 
 HV *
 save_hash(gv)
 GV *gv;
 {
+    HV *ohv, *hv;
+
     SSCHECK(3);
     SSPUSHPTR(gv);
-    SSPUSHPTR(GvHVn(gv));
+    SSPUSHPTR(ohv = GvHVn(gv));
     SSPUSHINT(SAVEt_HV);
 
     GvHV(gv) = Null(HV*);
-    return GvHVn(gv);
+    hv = GvHVn(gv);
+    if (SvMAGIC(ohv)) {
+	SvMAGIC(hv) = SvMAGIC(ohv);
+	SvFLAGS(hv) |= SvMAGICAL(ohv);
+	SvMAGICAL_off(ohv);
+	SvMAGIC(ohv) = 0;
+	localizing = 1;
+	SvSETMAGIC((SV*)hv);
+	localizing = 0;
+    }
+    return hv;
 }
 
 void
@@ -269,6 +281,16 @@ I32 *intp;
     SSPUSHINT(*intp);
     SSPUSHPTR(intp);
     SSPUSHINT(SAVEt_I32);
+}
+
+void
+save_I16(intp)
+I16 *intp;
+{
+    SSCHECK(3);
+    SSPUSHINT(*intp);
+    SSPUSHPTR(intp);
+    SSPUSHINT(SAVEt_I16);
 }
 
 void
@@ -437,7 +459,13 @@ I32 base;
         case SAVEt_SV:				/* scalar reference */
 	    value = (SV*)SSPOPPTR;
 	    gv = (GV*)SSPOPPTR;
-	    sv = GvSV(gv);
+	    ptr = &GvSV(gv);
+	    goto restore_sv;
+        case SAVEt_SVREF:			/* scalar reference */
+	    value = (SV*)SSPOPPTR;
+	    ptr = SSPOPPTR;
+	restore_sv:
+	    sv = *(SV**)ptr;
 	    if (SvTYPE(sv) >= SVt_PVMG && SvMAGIC(sv) &&
 		SvTYPE(sv) != SVt_PVGV)
 	    {
@@ -447,24 +475,13 @@ I32 base;
 		SvMAGICAL_off(sv);
 		SvMAGIC(sv) = 0;
 	    }
-            SvREFCNT_dec(sv);
-            GvSV(gv) = value;
-	    localizing = 2;
-	    SvSETMAGIC(value);
-	    localizing = 0;
-            break;
-        case SAVEt_SVREF:			/* scalar reference */
-	    ptr = SSPOPPTR;
-	    sv = *(SV**)ptr;
-	    value = (SV*)SSPOPPTR;
-	    if (SvTYPE(sv) >= SVt_PVMG && SvMAGIC(sv) &&
-		SvTYPE(sv) != SVt_PVGV)
+	    else if (SvTYPE(value) >= SVt_PVMG && SvMAGIC(value) &&
+		     SvTYPE(value) != SVt_PVGV)
 	    {
-		(void)SvUPGRADE(value, SvTYPE(sv));
-		SvMAGIC(value) = SvMAGIC(sv);
-		SvFLAGS(value) |= SvMAGICAL(sv);
-		SvMAGICAL_off(sv);
-		SvMAGIC(sv) = 0;
+		SvFLAGS(value) |= (SvFLAGS(value) &
+				   (SVp_IOK|SVp_NOK|SVp_POK)) >> PRIVSHIFT;
+		SvMAGICAL_off(value);
+		SvMAGIC(value) = 0;
 	    }
             SvREFCNT_dec(sv);
 	    *(SV**)ptr = value;
@@ -475,14 +492,38 @@ I32 base;
         case SAVEt_AV:				/* array reference */
 	    av = (AV*)SSPOPPTR;
 	    gv = (GV*)SSPOPPTR;
-            SvREFCNT_dec(GvAV(gv));
+	    if (GvAV(gv)) {
+		AV *goner = GvAV(gv);
+		SvMAGIC(av) = SvMAGIC(goner);
+		SvFLAGS(av) |= SvMAGICAL(goner);
+		SvMAGICAL_off(goner);
+		SvMAGIC(goner) = 0;
+		SvREFCNT_dec(goner);
+	    }
             GvAV(gv) = av;
+	    if (SvMAGICAL(av)) {
+		localizing = 2;
+		SvSETMAGIC((SV*)av);
+		localizing = 0;
+	    }
             break;
         case SAVEt_HV:				/* hash reference */
 	    hv = (HV*)SSPOPPTR;
 	    gv = (GV*)SSPOPPTR;
-            SvREFCNT_dec(GvHV(gv));
+	    if (GvHV(gv)) {
+		HV *goner = GvHV(gv);
+		SvMAGIC(hv) = SvMAGIC(goner);
+		SvFLAGS(hv) |= SvMAGICAL(goner);
+		SvMAGICAL_off(goner);
+		SvMAGIC(goner) = 0;
+		SvREFCNT_dec(goner);
+	    }
             GvHV(gv) = hv;
+	    if (SvMAGICAL(hv)) {
+		localizing = 2;
+		SvSETMAGIC((SV*)hv);
+		localizing = 0;
+	    }
             break;
 	case SAVEt_INT:				/* int reference */
 	    ptr = SSPOPPTR;
@@ -495,6 +536,10 @@ I32 base;
 	case SAVEt_I32:				/* I32 reference */
 	    ptr = SSPOPPTR;
 	    *(I32*)ptr = (I32)SSPOPINT;
+	    break;
+	case SAVEt_I16:				/* I16 reference */
+	    ptr = SSPOPPTR;
+	    *(I16*)ptr = (I16)SSPOPINT;
 	    break;
 	case SAVEt_IV:				/* IV reference */
 	    ptr = SSPOPPTR;
@@ -518,13 +563,19 @@ I32 base;
 	    break;
 	case SAVEt_NSTAB:
 	    gv = (GV*)SSPOPPTR;
-	    (void)sv_clear(gv);
+	    (void)sv_clear((SV*)gv);
 	    break;
-        case SAVEt_GP:				/* scalar reference */
+	case SAVEt_GP:				/* scalar reference */
 	    ptr = SSPOPPTR;
 	    gv = (GV*)SSPOPPTR;
             gp_free(gv);
             GvGP(gv) = (GP*)ptr;
+            if (SvPOK(gv) && SvLEN(gv) > 0) {
+                Safefree(SvPVX(gv));
+            }
+            SvPVX(gv) = (char *)SSPOPPTR;
+            SvCUR(gv) = (STRLEN)SSPOPIV;
+            SvLEN(gv) = (STRLEN)SSPOPIV;
 	    SvREFCNT_dec(gv);
             break;
 	case SAVEt_FREESV:
@@ -533,7 +584,8 @@ I32 base;
 	    break;
 	case SAVEt_FREEOP:
 	    ptr = SSPOPPTR;
-	    curpad = AvARRAY(comppad);
+	    if (comppad)
+		curpad = AvARRAY(comppad);
 	    op_free((OP*)ptr);
 	    break;
 	case SAVEt_FREEPV:
@@ -543,7 +595,8 @@ I32 base;
 	case SAVEt_CLEARSV:
 	    ptr = (void*)&curpad[SSPOPLONG];
 	    sv = *(SV**)ptr;
-	    if (SvREFCNT(sv) <= 1) { /* Can clear pad variable in place. */
+	    /* Can clear pad variable in place? */
+	    if (SvREFCNT(sv) <= 1 && !SvOBJECT(sv)) {
 		if (SvTHINKFIRST(sv)) {
 		    if (SvREADONLY(sv))
 			croak("panic: leave_scope clearsv");
@@ -563,13 +616,15 @@ I32 base;
 		    hv_clear((HV*)sv);
 		    break;
 		case SVt_PVCV:
-		    sub_generation++;
-		    cv_undef((CV*)sv);
+		    croak("panic: leave_scope pad code");
+		case SVt_RV:
+		case SVt_IV:
+		case SVt_NV:
+		    (void)SvOK_off(sv);
 		    break;
 		default:
-		    if (SvPOK(sv) && SvLEN(sv))
-			(void)SvOOK_off(sv);
 		    (void)SvOK_off(sv);
+		    (void)SvOOK_off(sv);
 		    break;
 		}
 	    }
@@ -601,6 +656,12 @@ I32 base;
 		savestack_ix -= delta;	/* regexp must have croaked */
 	    }
 	    break;
+	case SAVEt_STACK_POS:		/* Position on Perl stack */
+	    {
+		I32 delta = SSPOPINT;
+		stack_sp = stack_base + delta;
+	    }
+	    break;
 	default:
 	    croak("panic: leave_scope inconsistency");
 	}
@@ -608,93 +669,96 @@ I32 base;
 }
 
 #ifdef DEBUGGING
+
 void
 cx_dump(cx)
 CONTEXT* cx;
 {
-    fprintf(stderr, "CX %d = %s\n", cx - cxstack, block_type[cx->cx_type]);
+    PerlIO_printf(Perl_debug_log, "CX %ld = %s\n", (long)(cx - cxstack), block_type[cx->cx_type]);
     if (cx->cx_type != CXt_SUBST) {
-	fprintf(stderr, "BLK_OLDSP = %ld\n", (long)cx->blk_oldsp);
-	fprintf(stderr, "BLK_OLDCOP = 0x%lx\n", (long)cx->blk_oldcop);
-	fprintf(stderr, "BLK_OLDMARKSP = %ld\n", (long)cx->blk_oldmarksp);
-	fprintf(stderr, "BLK_OLDSCOPESP = %ld\n", (long)cx->blk_oldscopesp);
-	fprintf(stderr, "BLK_OLDRETSP = %ld\n", (long)cx->blk_oldretsp);
-	fprintf(stderr, "BLK_OLDPM = 0x%lx\n", (long)cx->blk_oldpm);
-	fprintf(stderr, "BLK_GIMME = %s\n", cx->blk_gimme ? "LIST" : "SCALAR");
+	PerlIO_printf(Perl_debug_log, "BLK_OLDSP = %ld\n", (long)cx->blk_oldsp);
+	PerlIO_printf(Perl_debug_log, "BLK_OLDCOP = 0x%lx\n", (long)cx->blk_oldcop);
+	PerlIO_printf(Perl_debug_log, "BLK_OLDMARKSP = %ld\n", (long)cx->blk_oldmarksp);
+	PerlIO_printf(Perl_debug_log, "BLK_OLDSCOPESP = %ld\n", (long)cx->blk_oldscopesp);
+	PerlIO_printf(Perl_debug_log, "BLK_OLDRETSP = %ld\n", (long)cx->blk_oldretsp);
+	PerlIO_printf(Perl_debug_log, "BLK_OLDPM = 0x%lx\n", (long)cx->blk_oldpm);
+	PerlIO_printf(Perl_debug_log, "BLK_GIMME = %s\n", cx->blk_gimme ? "LIST" : "SCALAR");
     }
     switch (cx->cx_type) {
     case CXt_NULL:
     case CXt_BLOCK:
 	break;
     case CXt_SUB:
-	fprintf(stderr, "BLK_SUB.CV = 0x%lx\n",
+	PerlIO_printf(Perl_debug_log, "BLK_SUB.CV = 0x%lx\n",
 		(long)cx->blk_sub.cv);
-	fprintf(stderr, "BLK_SUB.GV = 0x%lx\n",
+	PerlIO_printf(Perl_debug_log, "BLK_SUB.GV = 0x%lx\n",
 		(long)cx->blk_sub.gv);
-	fprintf(stderr, "BLK_SUB.DFOUTGV = 0x%lx\n",
+	PerlIO_printf(Perl_debug_log, "BLK_SUB.DFOUTGV = 0x%lx\n",
 		(long)cx->blk_sub.dfoutgv);
-	fprintf(stderr, "BLK_SUB.OLDDEPTH = %ld\n",
+	PerlIO_printf(Perl_debug_log, "BLK_SUB.OLDDEPTH = %ld\n",
 		(long)cx->blk_sub.olddepth);
-	fprintf(stderr, "BLK_SUB.HASARGS = %d\n",
+	PerlIO_printf(Perl_debug_log, "BLK_SUB.HASARGS = %d\n",
 		(int)cx->blk_sub.hasargs);
 	break;
     case CXt_EVAL:
-	fprintf(stderr, "BLK_EVAL.OLD_IN_EVAL = %ld\n",
+	PerlIO_printf(Perl_debug_log, "BLK_EVAL.OLD_IN_EVAL = %ld\n",
 		(long)cx->blk_eval.old_in_eval);
-	fprintf(stderr, "BLK_EVAL.OLD_OP_TYPE = %s (%s)\n",
+	PerlIO_printf(Perl_debug_log, "BLK_EVAL.OLD_OP_TYPE = %s (%s)\n",
 		op_name[cx->blk_eval.old_op_type],
 		op_desc[cx->blk_eval.old_op_type]);
-	fprintf(stderr, "BLK_EVAL.OLD_NAME = %s\n",
+	PerlIO_printf(Perl_debug_log, "BLK_EVAL.OLD_NAME = %s\n",
 		cx->blk_eval.old_name);
-	fprintf(stderr, "BLK_EVAL.OLD_EVAL_ROOT = 0x%lx\n",
+	PerlIO_printf(Perl_debug_log, "BLK_EVAL.OLD_EVAL_ROOT = 0x%lx\n",
 		(long)cx->blk_eval.old_eval_root);
 	break;
 
     case CXt_LOOP:
-	fprintf(stderr, "BLK_LOOP.LABEL = %s\n",
+	PerlIO_printf(Perl_debug_log, "BLK_LOOP.LABEL = %s\n",
 		cx->blk_loop.label);
-	fprintf(stderr, "BLK_LOOP.RESETSP = %ld\n",
+	PerlIO_printf(Perl_debug_log, "BLK_LOOP.RESETSP = %ld\n",
 		(long)cx->blk_loop.resetsp);
-	fprintf(stderr, "BLK_LOOP.REDO_OP = 0x%lx\n",
+	PerlIO_printf(Perl_debug_log, "BLK_LOOP.REDO_OP = 0x%lx\n",
 		(long)cx->blk_loop.redo_op);
-	fprintf(stderr, "BLK_LOOP.NEXT_OP = 0x%lx\n",
+	PerlIO_printf(Perl_debug_log, "BLK_LOOP.NEXT_OP = 0x%lx\n",
 		(long)cx->blk_loop.next_op);
-	fprintf(stderr, "BLK_LOOP.LAST_OP = 0x%lx\n",
+	PerlIO_printf(Perl_debug_log, "BLK_LOOP.LAST_OP = 0x%lx\n",
 		(long)cx->blk_loop.last_op);
-	fprintf(stderr, "BLK_LOOP.ITERIX = %ld\n",
+	PerlIO_printf(Perl_debug_log, "BLK_LOOP.ITERIX = %ld\n",
 		(long)cx->blk_loop.iterix);
-	fprintf(stderr, "BLK_LOOP.ITERARY = 0x%lx\n",
+	PerlIO_printf(Perl_debug_log, "BLK_LOOP.ITERARY = 0x%lx\n",
 		(long)cx->blk_loop.iterary);
-	fprintf(stderr, "BLK_LOOP.ITERVAR = 0x%lx\n",
+	PerlIO_printf(Perl_debug_log, "BLK_LOOP.ITERVAR = 0x%lx\n",
 		(long)cx->blk_loop.itervar);
 	if (cx->blk_loop.itervar)
-	    fprintf(stderr, "BLK_LOOP.ITERSAVE = 0x%lx\n",
+	    PerlIO_printf(Perl_debug_log, "BLK_LOOP.ITERSAVE = 0x%lx\n",
 		(long)cx->blk_loop.itersave);
+	PerlIO_printf(Perl_debug_log, "BLK_LOOP.ITERLVAL = 0x%lx\n",
+		(long)cx->blk_loop.iterlval);
 	break;
 
     case CXt_SUBST:
-	fprintf(stderr, "SB_ITERS = %ld\n",
+	PerlIO_printf(Perl_debug_log, "SB_ITERS = %ld\n",
 		(long)cx->sb_iters);
-	fprintf(stderr, "SB_MAXITERS = %ld\n",
+	PerlIO_printf(Perl_debug_log, "SB_MAXITERS = %ld\n",
 		(long)cx->sb_maxiters);
-	fprintf(stderr, "SB_SAFEBASE = %ld\n",
+	PerlIO_printf(Perl_debug_log, "SB_SAFEBASE = %ld\n",
 		(long)cx->sb_safebase);
-	fprintf(stderr, "SB_ONCE = %ld\n",
+	PerlIO_printf(Perl_debug_log, "SB_ONCE = %ld\n",
 		(long)cx->sb_once);
-	fprintf(stderr, "SB_ORIG = %s\n",
+	PerlIO_printf(Perl_debug_log, "SB_ORIG = %s\n",
 		cx->sb_orig);
-	fprintf(stderr, "SB_DSTR = 0x%lx\n",
+	PerlIO_printf(Perl_debug_log, "SB_DSTR = 0x%lx\n",
 		(long)cx->sb_dstr);
-	fprintf(stderr, "SB_TARG = 0x%lx\n",
+	PerlIO_printf(Perl_debug_log, "SB_TARG = 0x%lx\n",
 		(long)cx->sb_targ);
-	fprintf(stderr, "SB_S = 0x%lx\n",
+	PerlIO_printf(Perl_debug_log, "SB_S = 0x%lx\n",
 		(long)cx->sb_s);
-	fprintf(stderr, "SB_M = 0x%lx\n",
+	PerlIO_printf(Perl_debug_log, "SB_M = 0x%lx\n",
 		(long)cx->sb_m);
-	fprintf(stderr, "SB_STREND = 0x%lx\n",
+	PerlIO_printf(Perl_debug_log, "SB_STREND = 0x%lx\n",
 		(long)cx->sb_strend);
-	fprintf(stderr, "SB_SUBBASE = 0x%lx\n",
-		(long)cx->sb_subbase);
+	PerlIO_printf(Perl_debug_log, "SB_RXRES = 0x%lx\n",
+		(long)cx->sb_rxres);
 	break;
     }
 }

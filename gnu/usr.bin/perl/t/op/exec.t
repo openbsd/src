@@ -3,6 +3,13 @@
 # $RCSfile: exec.t,v $$Revision: 4.1 $$Date: 92/08/07 18:27:49 $
 
 $| = 1;				# flush stdout
+
+if ($^O eq 'MSWin32') {
+    print "# exec is unsupported on Win32\n";
+    print "1..0\n";
+    exit(0);
+}
+
 print "1..8\n";
 
 print "not ok 1\n" if system "echo ok \\1";	# shell interpreted

@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 eval 'exec /usr/bin/perl -S $0 ${1+"$@"}'
-	if 0;
+	if $running_under_some_shell;
 
 require 'sys/ipc.ph';
 require 'sys/msg.ph';
@@ -18,7 +18,7 @@ print "semaphore id: $id\n";
 if ($signal) {
 	while (<STDIN>) {
 		print "Signalling\n";
-		unless (semop($id, 0, pack("sss", 0, 1, 0))) {
+		unless (semop($id, pack("sss", 0, 1, 0))) {
 			die "Can't signal semaphore: $!\n";
 		}
 	}
@@ -26,7 +26,7 @@ if ($signal) {
 else {
 	$SIG{'INT'} = $SIG{'QUIT'} = "leave";
 	for (;;) {
-		unless (semop($id, 0, pack("sss", 0, -1, 0))) {
+		unless (semop($id, pack("sss", 0, -1, 0))) {
 			die "Can't wait for semaphore: $!\n";
 		}
 		print "Unblocked\n";

@@ -21,6 +21,7 @@ echo "Extracting cflags (with variable substitutions)"
 : Move anything that needs config subs from !NO!SUBS! section to !GROK!THIS!.
 : Protect any dollar signs and backticks that you do not want interpreted
 : by putting a backslash in front.  You may delete these comments.
+rm -f cflags
 $spitshell >cflags <<!GROK!THIS!
 $startsh
 !GROK!THIS!
@@ -122,8 +123,8 @@ for file do
 		optimize="$optdebug"
 	fi
 
-    echo "$cc -c $ccflags $optimize $perltype $large $split"
-    eval "$also "'"$cc -c $ccflags $optimize $perltype $large $split"'
+    echo "$cc -c -DPERL_CORE $ccflags $optimize $perltype $large $split"
+    eval "$also "'"$cc -DPERL_CORE -c $ccflags $optimize $perltype $large $split"'
 
     . $TOP/config.sh
 

@@ -1,18 +1,4 @@
-#!/usr/local/bin/perl
-eval 'exec perl -S $0  ${1+"$@"}'
-    if 0;
-
-use Config;
-if ($^O eq 'VMS') {
-   $diagnostics::PODFILE = VMS::Filespec::unixify($Config{'privlib'}) .
-                           '/pod/perldiag.pod';
-}
-else { $diagnostics::PODFILE= $Config{privlib} . "/pod/perldiag.pod"; }
-
 package diagnostics;
-require 5.001;
-use English;
-use Carp;
 
 =head1 NAME
 
@@ -41,9 +27,9 @@ Aa a program:
 =head2 The C<diagnostics> Pragma
 
 This module extends the terse diagnostics normally emitted by both the
-perl compiler and the perl interpeter, augmenting them wtih the more
+perl compiler and the perl interpeter, augmenting them with the more
 explicative and endearing descriptions found in L<perldiag>.  Like the
-other pragmata, it affects to compilation phase of your program rather
+other pragmata, it affects the compilation phase of your program rather
 than merely the execution phase.
 
 To use in your program as a pragma, merely invoke
@@ -62,8 +48,8 @@ However, you may control there behaviour at runtime using the
 disable() and enable() methods to turn them off and on respectively.
 
 The B<-verbose> flag first prints out the L<perldiag> introduction before
-any other diagnostics.  The $diagnostics::PRETTY can generate nicer escape
-sequences for pgers.
+any other diagnostics.  The $diagnostics::PRETTY variable can generate nicer
+escape sequences for pagers.
 
 =head2 The I<splain> Program
 
@@ -98,7 +84,7 @@ afterwards, do this:
     ./splain < test.out
 
 Note that this is not in general possible in shells of more dubious heritage, 
-as the theorectical 
+as the theoretical 
 
     (perl -w test.pl >/dev/tty) >& test.out
     ./splain < test.out
@@ -143,7 +129,7 @@ runtime.  Otherwise, they may be embedded in the file itself when the
 splain package is built.   See the F<Makefile> for details.
 
 If an extant $SIG{__WARN__} handler is discovered, it will continue
-to be honored, but only after the diagnostic::splainthis() function 
+to be honored, but only after the diagnostics::splainthis() function 
 (the module's $SIG{__WARN__} interceptor) has had its way with your
 warnings.
 
@@ -159,27 +145,44 @@ Not being able to say "no diagnostics" is annoying, but may not be
 insurmountable.
 
 The C<-pretty> directive is called too late to affect matters.
-You have to to this instead, and I<before> you load the module.
+You have to do this instead, and I<before> you load the module.
 
     BEGIN { $diagnostics::PRETTY = 1 } 
 
 I could start up faster by delaying compilation until it should be
-needed, but this gets a "panic: top_level"
-when using the pragma form in 5.001e.  
+needed, but this gets a "panic: top_level" when using the pragma form
+in Perl 5.001e.
 
 While it's true that this documentation is somewhat subserious, if you use
 a program named I<splain>, you should expect a bit of whimsy.
 
 =head1 AUTHOR
 
-Tom Christiansen F<E<lt>tchrist@mox.perl.comE<gt>>, 25 June 1995.
+Tom Christiansen <F<tchrist@mox.perl.com>>, 25 June 1995.
 
 =cut
+
+require 5.001;
+use Carp;
+
+use Config;
+($privlib, $archlib) = @Config{qw(privlibexp archlibexp)};
+if ($^O eq 'VMS') {
+    require VMS::Filespec;
+    $privlib = VMS::Filespec::unixify($privlib);
+    $archlib = VMS::Filespec::unixify($archlib);
+}
+@trypod = ("$archlib/pod/perldiag.pod",
+	   "$privlib/pod/perldiag-$].pod",
+	   "$privlib/pod/perldiag.pod");
+# handy for development testing of new warnings etc
+unshift @trypod, "./pod/perldiag.pod" if -e "pod/perldiag.pod";
+($PODFILE) = ((grep { -e } @trypod), $trypod[$#trypod])[0];
 
 $DEBUG ||= 0;
 my $WHOAMI = ref bless [];  # nobody's business, prolly not even mine
 
-$OUTPUT_AUTOFLUSH = 1;
+$| = 1;
 
 local $_;
 
@@ -191,7 +194,8 @@ CONFIG: {
     unless (caller) { 
 	$standalone++;
 	require Getopt::Std;
-	Getopt::Std::getopts('pdvf:') || die "Usage: $0 [-v] [-p] [-f splainpod]";
+	Getopt::Std::getopts('pdvf:')
+	    or die "Usage: $0 [-v] [-p] [-f splainpod]";
 	$PODFILE = $opt_f if $opt_f;
 	$DEBUG = 2 if $opt_d;
 	$VERBOSE = $opt_v;
@@ -315,7 +319,9 @@ EOFUNC
 	    }
 	    next;
 	}
-	$header = $1;
+
+	# strip formatting directives in =item line
+	($header = $1) =~ s/[A-Z]<(.*?)>/$1/g;
 
 	if ($header =~ /%[sd]/) {
 	    $rhs = $lhs = $header;
@@ -328,13 +334,15 @@ EOFUNC
 		#$lhs =~ s/\377([^\377]*)$/\Q$1\E\$/;
 		$lhs =~ s/\377([^\377]*)$/\Q$1\E/;
 		$lhs =~ s/\377//g;
+		$lhs =~ s/\.\*\?$/.*/; # Allow %s at the end to eat it all
 	    } 
-	    $transmo .= "    s{^$lhs}\n     {\Q$rhs\E}\n\t&& return 1;\n";
+	    $transmo .= "    s{^$lhs}\n     {\Q$rhs\E}s\n\t&& return 1;\n";
 	} else {
 	    $transmo .= "    m{^\Q$header\E} && return 1;\n";
 	} 
 
-	print STDERR "Already saw $header" if $msg{$header};
+	print STDERR "$WHOAMI: Duplicate entry: \"$header\"\n"
+	    if $msg{$header};
 
 	$msg{$header} = '';
     } 
@@ -353,7 +361,7 @@ EOFUNC
 
 if ($standalone) {
     if (!@ARGV and -t STDIN) { print STDERR "$0: Reading from STDIN\n" } 
-    while ($error = <>) {
+    while (defined ($error = <>)) {
 	splainthis($error) || print THITHER $error;
     } 
     exit;
@@ -415,10 +423,27 @@ sub warn_trap {
 
 sub death_trap {
     my $exception = $_[0];
-    splainthis($exception);
+
+    # See if we are coming from anywhere within an eval. If so we don't
+    # want to explain the exception because it's going to get caught.
+    my $in_eval = 0;
+    my $i = 0;
+    while (1) {
+      my $caller = (caller($i++))[3] or last;
+      if ($caller eq '(eval)') {
+	$in_eval = 1;
+	last;
+      }
+    }
+
+    splainthis($exception) unless $in_eval;
     if (caller eq $WHOAMI) { print STDERR "INTERNAL EXCEPTION: $exception"; } 
     &$olddie if defined $olddie and $olddie and $olddie ne \&death_trap;
-    $SIG{__DIE__} = $SIG{__WARN__} = '';
+
+    # We don't want to unset these if we're coming from an eval because
+    # then we've turned off diagnostics. (Actually what does this next
+    # line do?  -PSeibel)
+    $SIG{__DIE__} = $SIG{__WARN__} = '' unless $in_eval;
     local($Carp::CarpLevel) = 1;
     confess "Uncaught exception from user code:\n\t$exception";
 	# up we go; where we stop, nobody knows, but i think we die now
@@ -428,6 +453,7 @@ sub death_trap {
 
 sub splainthis {
     local $_ = shift;
+    local $\;
     ### &finish_compilation unless %msg;
     s/\.?\n+$//;
     my $orig = $_;
@@ -481,7 +507,7 @@ sub unescape {
              exists $HTML_Escapes{$1}
                 ? do { $HTML_Escapes{$1} }
                 : do {
-                    warn "Unknown escape: $& in $_";
+                    warn "Unknown escape: E<$1> in $_";
                     "E<$1>";
                 } 
          } 
@@ -490,7 +516,7 @@ sub unescape {
 
 sub shorten {
     my $line = $_[0];
-    if (length $line > 79) {
+    if (length($line) > 79 and index($line, "\n") == -1) {
 	my $space_place = rindex($line, ' ', 79);
 	if ($space_place != -1) {
 	    substr($line, $space_place, 1) = "\n\t";

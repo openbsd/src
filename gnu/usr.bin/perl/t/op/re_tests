@@ -42,9 +42,9 @@ a[b-d]e	ace	y	$&	ace
 a[b-d]	aac	y	$&	ac
 a[-b]	a-	y	$&	a-
 a[b-]	a-	y	$&	a-
-a[b-a]	-	c	-	-
-a[]b	-	c	-	-
-a[	-	c	-	-
+a[b-a]	-	c	-	/a[b-a]/: invalid [] range in regexp
+a[]b	-	c	-	/a[]b/: unmatched [] in regexp
+a[	-	c	-	/a[/: unmatched [] in regexp
 a]	a]	y	$&	a]
 a[]]b	a]b	y	$&	a]b
 a[^bc]d	aed	y	$&	aed
@@ -53,24 +53,60 @@ a[^-b]c	adc	y	$&	adc
 a[^-b]c	a-c	n	-	-
 a[^]b]c	a]c	n	-	-
 a[^]b]c	adc	y	$&	adc
+\ba\b	a-	y	-	-
+\ba\b	-a	y	-	-
+\ba\b	-a-	y	-	-
+\by\b	xy	n	-	-
+\by\b	yz	n	-	-
+\by\b	xyz	n	-	-
+\Ba\B	a-	n	-	-
+\Ba\B	-a	n	-	-
+\Ba\B	-a-	n	-	-
+\By\b	xy	y	-	-
+\by\B	yz	y	-	-
+\By\B	xyz	y	-	-
+\w	a	y	-	-
+\w	-	n	-	-
+\W	a	n	-	-
+\W	-	y	-	-
+a\sb	a b	y	-	-
+a\sb	a-b	n	-	-
+a\Sb	a b	n	-	-
+a\Sb	a-b	y	-	-
+\d	1	y	-	-
+\d	-	n	-	-
+\D	1	n	-	-
+\D	-	y	-	-
+[\w]	a	y	-	-
+[\w]	-	n	-	-
+[\W]	a	n	-	-
+[\W]	-	y	-	-
+a[\s]b	a b	y	-	-
+a[\s]b	a-b	n	-	-
+a[\S]b	a b	n	-	-
+a[\S]b	a-b	y	-	-
+[\d]	1	y	-	-
+[\d]	-	n	-	-
+[\D]	1	n	-	-
+[\D]	-	y	-	-
 ab|cd	abc	y	$&	ab
 ab|cd	abcd	y	$&	ab
 ()ef	def	y	$&-$1	ef-
-*a	-	c	-	-
-(*)b	-	c	-	-
+*a	-	c	-	/*a/: ?+*{} follows nothing in regexp
+(*)b	-	c	-	/(*)b/: ?+*{} follows nothing in regexp
 $b	b	n	-	-
-a\	-	c	-	-
+a\	-	c	-	Search pattern not terminated
 a\(b	a(b	y	$&-$1	a(b-
 a\(*b	ab	y	$&	ab
 a\(*b	a((b	y	$&	a((b
 a\\b	a\b	y	$&	a\b
-abc)	-	c	-	-
-(abc	-	c	-	-
+abc)	-	c	-	/abc)/: unmatched () in regexp
+(abc	-	c	-	/(abc/: unmatched () in regexp
 ((a))	abc	y	$&-$1-$2	a-a-a
 (a)b(c)	abc	y	$&-$1-$2	abc-a-c
 a+b+c	aabbabc	y	$&	abc
 a{1,}b{1,}c	aabbabc	y	$&	abc
-a**	-	c	-	-
+a**	-	c	-	/a**/: nested *?+ in regexp
 a.+?c	abcabc	y	$&	abc
 (a+|b)*	ab	y	$&-$1	ab-b
 (a+|b){0,}	ab	y	$&-$1	ab-b
@@ -78,7 +114,7 @@ a.+?c	abcabc	y	$&	abc
 (a+|b){1,}	ab	y	$&-$1	ab-b
 (a+|b)?	ab	y	$&-$1	a-a
 (a+|b){0,1}	ab	y	$&-$1	a-a
-)(	-	c	-	-
+)(	-	c	-	/)(/: unmatched () in regexp
 [^ab]*	cde	y	$&	cde
 abc		n	-	-
 a*		y	$&	
@@ -169,9 +205,9 @@ a[-]?c	ac	y	$&	ac
 'a[b-d]'i	AAC	y	$&	AC
 'a[-b]'i	A-	y	$&	A-
 'a[b-]'i	A-	y	$&	A-
-'a[b-a]'i	-	c	-	-
-'a[]b'i	-	c	-	-
-'a['i	-	c	-	-
+'a[b-a]'i	-	c	-	/a[b-a]/: invalid [] range in regexp
+'a[]b'i	-	c	-	/a[]b/: unmatched [] in regexp
+'a['i	-	c	-	/a[/: unmatched [] in regexp
 'a]'i	A]	y	$&	A]
 'a[]]b'i	A]B	y	$&	A]B
 'a[^bc]d'i	AED	y	$&	AED
@@ -183,21 +219,21 @@ a[-]?c	ac	y	$&	ac
 'ab|cd'i	ABC	y	$&	AB
 'ab|cd'i	ABCD	y	$&	AB
 '()ef'i	DEF	y	$&-$1	EF-
-'*a'i	-	c	-	-
-'(*)b'i	-	c	-	-
+'*a'i	-	c	-	/*a/: ?+*{} follows nothing in regexp
+'(*)b'i	-	c	-	/(*)b/: ?+*{} follows nothing in regexp
 '$b'i	B	n	-	-
-'a\'i	-	c	-	-
+'a\'i	-	c	-	Search pattern not terminated
 'a\(b'i	A(B	y	$&-$1	A(B-
 'a\(*b'i	AB	y	$&	AB
 'a\(*b'i	A((B	y	$&	A((B
 'a\\b'i	A\B	y	$&	A\B
-'abc)'i	-	c	-	-
-'(abc'i	-	c	-	-
+'abc)'i	-	c	-	/abc)/: unmatched () in regexp
+'(abc'i	-	c	-	/(abc/: unmatched () in regexp
 '((a))'i	ABC	y	$&-$1-$2	A-A-A
 '(a)b(c)'i	ABC	y	$&-$1-$2	ABC-A-C
 'a+b+c'i	AABBABC	y	$&	ABC
 'a{1,}b{1,}c'i	AABBABC	y	$&	ABC
-'a**'i	-	c	-	-
+'a**'i	-	c	-	/a**/: nested *?+ in regexp
 'a.+?c'i	ABCABC	y	$&	ABC
 'a.*?c'i	ABCABC	y	$&	ABC
 'a.{0,5}?c'i	ABCABC	y	$&	ABC
@@ -208,7 +244,7 @@ a[-]?c	ac	y	$&	ac
 '(a+|b)?'i	AB	y	$&-$1	A-A
 '(a+|b){0,1}'i	AB	y	$&-$1	A-A
 '(a+|b){0,1}?'i	AB	y	$&-$1	-
-')('i	-	c	-	-
+')('i	-	c	-	/)(/: unmatched () in regexp
 '[^ab]*'i	CDE	y	$&	CDE
 'abc'i		n	-	-
 'a*'i		y	$&	
@@ -265,3 +301,8 @@ a(?:b|c|d)*(.)	ace	y	$1	e
 a(?:b|c|d)+?(.)	ace	y	$1	e
 a(?:b|(c|e){1,2}?|d)+?(.)	ace	y	$1$2	ce
 ^(.+)?B	AB	y	$1	A
+'([a-z]+)\s\1'i	Aa aa 	y	$&-$1	Aa aa-Aa
+'([a-z]+)\s\1'i	Ab ab 	y	$&-$1	Ab ab-Ab
+foo\w*\d{4}baz	foobar1234baz	y	$&	foobar1234baz
+((foo)|(bar))*	foobar	y	$1-$2-$3	bar-foo-bar
+:(?:	-	c	-	Sequence (? incomplete

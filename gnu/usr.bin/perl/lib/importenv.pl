@@ -8,7 +8,7 @@
 
 local($tmp,$key) = '';
 
-foreach $key (keys(ENV)) {
+foreach $key (keys(%ENV)) {
     $tmp .= "\$$key = \$ENV{'$key'};" if $key =~ /^[A-Za-z]\w*$/;
 }
 eval $tmp;

@@ -5,27 +5,22 @@ Tie Modules
 	ShiftSplice		Defines shift et al in terms of splice method
 
 Would be nice to have
-	Profiler
 	pack "(stuff)*"
 	Contiguous bitfields in pack/unpack
 	lexperl
 	Bundled perl preprocessor
 	Use posix calls internally where possible
-	const variables
 	gettimeofday
-	bytecompiler
 	format BOTTOM
-	$obj->can("method") to probe method inheritance
 	-iprefix.
 	-i rename file only when successfully changed
 	All ARGV input should act like <>
-	Multiple levels of warning
 	report HANDLE [formats].
-	tie(FILEHANDLE, ...)
-	__DATA__
 	support in perlmain to rerun debugger
-	make 'r' print return value like gdb 'fini'
-	regression tests using __WARN__ and __DIE__ hooks
+	regression tests using __DIE__ hook
+	reference to compiled regexp
+	lexically scoped functions: my sub foo { ... }
+	lvalue functions
 
 Possible pragmas
 	debugger
@@ -43,25 +38,20 @@ Optimizations
 	Shrink opcode tables via multiple implementations selected in peep
 	Cache hash value?  (Not a win, according to Guido)
 	Optimize away @_ where possible
-	sfio?
 	"one pass" global destruction
 	Optimize sort by { $a <=> $b }
 	Rewrite regexp parser for better integrated optimization
+	LRU cache of regexp: foreach $pat (@pats) { foo() if /$pat/ }
 
 Vague possibilities
 	ref function in list context
-	Populate %SIG at startup if appropriate
 	data prettyprint function?  (or is it, as I suspect, a lib routine?)
 	make tr/// return histogram in list context?
-	undef wantarray in void context
 	Loop control on do{} et al
 	Explicit switch statements
-	perl to C translator
-	multi-thread scheduling
 	built-in globbing
 	compile to real threaded code
 	structured types
-	paren counting in tokener to queue remote expectations
 	autocroak?
 	Modifiable $1 et al
 	substr EXPR,OFFSET,LENGTH,STRING

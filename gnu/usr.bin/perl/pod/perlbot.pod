@@ -57,7 +57,7 @@ See L<CLASS CONTEXT AND THE OBJECT>.
 
 =item 7
 
-IO syntax is certainly less noisy, but it is also prone to ambiguities which
+IO syntax is certainly less noisy, but it is also prone to ambiguities that
 can cause difficult-to-find bugs.  Allow people to use the sure-thing OO
 syntax, even if you don't like it.
 
@@ -265,7 +265,7 @@ This example demonstrates an interface for the SDBM class.  This creates a
 	    $ref->FETCH(@_);
 	}
 	sub STORE {
-	    my $self = shift; 
+	    my $self = shift;
 	    if (defined $_[0]){
 		my $ref = $self->{'dbm'};
 		$ref->STORE(@_);
@@ -277,11 +277,11 @@ This example demonstrates an interface for the SDBM class.  This creates a
 	package main;
 	use Fcntl qw( O_RDWR O_CREAT );
 
-	tie %foo, Mydbm, "Sdbm", O_RDWR|O_CREAT, 0640;
+	tie %foo, "Mydbm", "Sdbm", O_RDWR|O_CREAT, 0640;
 	$foo{'bar'} = 123;
 	print "foo-bar = $foo{'bar'}\n";
 
-	tie %bar, Mydbm, "Sdbm2", O_RDWR|O_CREAT, 0640;
+	tie %bar, "Mydbm", "Sdbm2", O_RDWR|O_CREAT, 0640;
 	$bar{'Cathy'} = 456;
 	print "bar-Cathy = $bar{'Cathy'}\n";
 
@@ -404,7 +404,7 @@ This problem can be solved by using the object to define the context of the
 method.  Let the method look in the object for a reference to the data.  The
 alternative is to force the method to go hunting for the data ("Is it in my
 class, or in a subclass?  Which subclass?"), and this can be inconvenient
-and will lead to hackery.  It is better to just let the object tell the
+and will lead to hackery.  It is better just to let the object tell the
 method where that data is located.
 
 	package Bar;
@@ -420,7 +420,7 @@ method where that data is located.
 
 	sub enter {
 		my $self = shift;
-	
+
 		# Don't try to guess if we should use %Bar::fizzle
 		# or %Foo::fizzle.  The object already knows which
 		# we should use, so just ask it.
@@ -522,6 +522,6 @@ behavior by adding custom FETCH() and STORE() methods, if this is desired.
 	package main;
 	use Fcntl qw( O_RDWR O_CREAT );
 
-	tie %foo, Mydbm, "adbm", O_RDWR|O_CREAT, 0640;
+	tie %foo, "Mydbm", "adbm", O_RDWR|O_CREAT, 0640;
 	$foo{'bar'} = 123;
 	print "foo-bar = $foo{'bar'}\n";

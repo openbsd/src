@@ -1,40 +1,60 @@
 # hints/bsdos.sh
 #
-# hints file for BSD/OS 2.x (adapted from bsd386.sh)
-# Original by Neil Bowers <neilb@khoros.unm.edu>
-#     Tue Oct  4 12:01:34 EDT 1994
-# Updated by Tony Sanders <sanders@bsdi.com>
-#     Mon Nov 27 17:25:51 CST 1995
+# hints file for BSD/OS (adapted from bsd386.sh)
+# Original by Neil Bowers <neilb@khoros.unm.edu>; Tue Oct  4 12:01:34 EDT 1994
+# Updated by Tony Sanders <sanders@bsdi.com>; Sat Aug 23 12:47:45 MDT 1997
+#     Added 3.1 with ELF dynamic libraries
+#     SYSV IPC tested Ok so I re-enabled.
 #
-# You can override the compiler and loader on the Configure command line:
-#     ./Configure -Dcc=shlicc2 -Dld=shlicc2
+# To override the compiler on the command line:
+#     ./Configure -Dcc=gcc2
+#
+# The BSD/OS distribution is built with:
+#     ./Configure -des -Dbsdos_distribution=defined
 
-# filename extension for shared library objects
-so='o'
-
-# Don't use this for Perl 5.002, which needs parallel sig_name and sig_num lists
-#sig_name='ZERO HUP INT QUIT ILL TRAP IOT EMT FPE KILL BUS SEGV SYS PIPE ALRM TERM URG STOP TSTP CONT CHLD TTIN TTOU IO XCPU XFSZ VTALRM PROF WINCH INFO USR1 USR2 '
 signal_t='void'
 d_voidsig='define'
-d_dosuid='define'
+
+usemymalloc='n'
+
+# setre?[ug]id() have been replaced by the _POSIX_SAVED_IDS versions.
+# See http://www.bsdi.com/bsdi-man?setuid(2)
+d_setregid='undef'
+d_setreuid='undef'
+d_setrgid='undef'
+d_setruid='undef'
 
 # we don't want to use -lnm, since exp() is busted (in 1.1 anyway)
 set `echo X "$libswanted "| sed -e 's/ nm / /'`
 shift
 libswanted="$*"
 
-# BSD/OS X libraries are in their own tree
+# X libraries are in their own tree
 glibpth="$glibpth /usr/X11/lib"
 ldflags="$ldflags -L/usr/X11/lib"
 
 # Avoid telldir prototype conflict in pp_sys.c
 pp_sys_cflags='ccflags="$ccflags -DHAS_TELLDIR_PROTOTYPE"'
 
+case "$optimize" in
+'')     optimize='-O2' ;;
+esac
+
 case "$bsdos_distribution" in
-defined)
-	d_portable='no'
+''|undef|false)	;;
+*)
+	d_dosuid='define'
+	d_portable='undef'
 	prefix='/usr/contrib'
+	perlpath='/usr/bin/perl5'
+	startperl='#!/usr/bin/perl5'
+	scriptdir='/usr/contrib/bin'
+	privlib='/usr/libdata/perl5'
+	man1dir='/usr/contrib/man/man1'
 	man3dir='/usr/contrib/man/man3'
+	# phlib added by BSDI -- we share the *.ph include dir with perl4
+	phlib="/usr/libdata/perl5/site_perl/$(arch)-$osname/include"
+	phlibexp="/usr/libdata/perl5/site_perl/$(arch)-$osname/include"
 	;;
 esac
 
@@ -49,51 +69,41 @@ case "$osvers" in
 	'')	cc='gcc2' ;;
 	esac
 	;;
-2.0*)
+2.0*|2.1*|3.0*)
+	so='o'
+
 	# default to GCC 2.X w/shared libraries
-	case "$cc" in
-	'')	cc='shlicc2' ;;
-	esac
-
-	# default ld to shared library linker
-	case "$ld" in
-	'')	ld='shlicc2' ;;
-	esac
-
-	# setre?[ug]id() have been replaced by the _POSIX_SAVED_IDS stuff
-	# in 4.4BSD-based systems (including BSD/OS 2.0 and later).
-	# See http://www.bsdi.com/bsdi-man?setuid(2)
-	d_setregid='undef'
-	d_setreuid='undef'
-	d_setrgid='undef'
-	d_setruid='undef'
-	;;
-2.1*)
-	# Use 2.1's shlicc2 for dynamic linking
-	# Since cc -o is linking, use it for compiling too.
-	# I'm not sure whether Configure is careful about
-	# distinguishing between the two.
-
 	case "$cc" in
 	'')	cc='shlicc2'
 		cccdlflags=' ' ;; # Avoid the dreaded -fpic
 	esac
 
-	# Link with shared libraries in 2.1
-	# Turns out that shlicc2 will automatically use the
-	# shared libs, so don't explicitly specify -lc_s.2.1.*
+	# default ld to shared library linker
 	case "$ld" in
 	'')	ld='shlicc2'
 		lddlflags='-r' ;; # this one is necessary
 	esac
 
-	# setre?[ug]id() have been replaced by the _POSIX_SAVED_IDS  stuff
-	# in 4.4BSD-based systems (including BSD/OS 2.0 and later).
-	# See http://www.bsdi.com/bsdi-man?setuid(2)
-	# This stuff may or may not be right, but it works.
-	d_setregid='undef'
-	d_setreuid='undef'
-	d_setrgid='undef'
-	d_setruid='undef'
+	# Must preload the static shared libraries.
+	libswanted="Xpm Xaw Xmu Xt SM ICE Xext X11 $libswanted"
+	libswanted="rpc curses termcap $libswanted"
+	;;
+3.1*)
+	# ELF dynamic link libraries starting in 3.1
+        useshrplib='true'
+	so='so'
+	dlext='so'
+
+	case "$cc" in
+	'')	cc='cc'			# cc is gcc2 in 3.1
+		cccdlflags="-fPIC"
+		ccdlflags=" " ;;
+	esac
+
+	case "$ld" in
+	'')	ld='ld'
+		lddlflags="-shared -x $lddlflags" ;;
+	esac
 	;;
 esac
+

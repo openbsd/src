@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# $RCSfile: gcp,v $$Revision: 1.1.1.1 $$Date: 1996/08/19 10:11:55 $
+# $RCSfile: gcp,v $$Revision: 1.2 $$Date: 1997/11/30 07:54:45 $
 
 # Here is a script to do global rcps.  See man page.
 

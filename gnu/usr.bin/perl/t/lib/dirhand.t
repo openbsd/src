@@ -4,7 +4,7 @@ BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
     require Config; import Config;
-    if ($Config{'extensions'} !~ /\bPOSIX\b/) {
+    if (not $Config{'d_readdir'}) {
 	print "1..0\n";
 	exit 0;
     }
@@ -17,7 +17,7 @@ print "1..5\n";
 $dot = new DirHandle ".";
 print defined($dot) ? "ok" : "not ok", " 1\n";
 
-@a = <*>;
+@a = sort <*>;
 do { $first = $dot->read } while defined($first) && $first =~ /^\./;
 print +(grep { $_ eq $first } @a) ? "ok" : "not ok", " 2\n";
 

@@ -11,7 +11,7 @@ ld=ld
 i_time='define'
 
 case "$cc" in
-*gcc) ccflags="$ccflags -D_BSD_TYPES" ;;
+*gcc*) ccflags="$ccflags -D_BSD_TYPES" ;;
 *) ccflags="$ccflags -D_POSIX_SOURCE -ansiposix -D_BSD_TYPES -Olimit 3000" ;;
 esac
 

@@ -6,7 +6,7 @@ xsubpp - compiler to convert Perl XS code into C code
 
 =head1 SYNOPSIS
 
-B<xsubpp> [B<-v>] [B<-C++>] [B<-except>] [B<-s pattern>] [B<-prototypes>] [B<-noversioncheck>] [B<-typemap typemap>]... file.xs
+B<xsubpp> [B<-v>] [B<-C++>] [B<-except>] [B<-s pattern>] [B<-prototypes>] [B<-noversioncheck>] [B<-nolinenumbers>] [B<-typemap typemap>]... file.xs
 
 =head1 DESCRIPTION
 
@@ -55,6 +55,10 @@ Disables the run time test that determines if the object file (derived
 from the C<.xs> file) and the C<.pm> files have the same version
 number.
 
+=item B<-nolinenumbers>
+
+Prevents the inclusion of `#line' directives in the output.
+
 =back
 
 =head1 ENVIRONMENT
@@ -71,20 +75,32 @@ See the file F<changes.pod>.
 
 =head1 SEE ALSO
 
-perl(1), perlxs(1), perlxstut(1), perlapi(1)
+perl(1), perlxs(1), perlxstut(1)
 
 =cut
 
-# Global Constants
-$XSUBPP_version = "1.935";
 require 5.002;
+use Cwd;
 use vars '$cplusplus';
 
 sub Q ;
 
+# Global Constants
+
+$XSUBPP_version = "1.9505";
+
+my ($Is_VMS, $SymSet);
+if ($^O eq 'VMS') {
+    $Is_VMS = 1;
+    # Establish set of global symbols with max length 28, since xsubpp
+    # will later add the 'XS_' prefix.
+    require ExtUtils::XSSymSet;
+    $SymSet = new ExtUtils::XSSymSet 28;
+}
+
 $FH = 'File0000' ;
 
-$usage = "Usage: xsubpp [-v] [-C++] [-except] [-prototypes] [-noversioncheck] [-s pattern] [-typemap typemap]... file.xs\n";
+$usage = "Usage: xsubpp [-v] [-C++] [-except] [-prototypes] [-noversioncheck] [-nolinenumbers] [-s pattern] [-typemap typemap]... file.xs\n";
 
 $proto_re = "[" . quotemeta('\$%&*@;') . "]" ;
 
@@ -92,10 +108,11 @@ $except = "";
 $WantPrototypes = -1 ;
 $WantVersionChk = 1 ;
 $ProtoUsed = 0 ;
+$WantLineNumbers = 1 ;
 SWITCH: while (@ARGV and $ARGV[0] =~ /^-./) {
     $flag = shift @ARGV;
     $flag =~ s/^-// ;
-    $spat = shift,	next SWITCH	if $flag eq 's';
+    $spat = quotemeta shift,	next SWITCH	if $flag eq 's';
     $cplusplus = 1,	next SWITCH	if $flag eq 'C++';
     $WantPrototypes = 0, next SWITCH	if $flag eq 'noprototypes';
     $WantPrototypes = 1, next SWITCH	if $flag eq 'prototypes';
@@ -103,6 +120,8 @@ SWITCH: while (@ARGV and $ARGV[0] =~ /^-./) {
     $WantVersionChk = 1, next SWITCH	if $flag eq 'versioncheck';
     $except = " TRY",	next SWITCH	if $flag eq 'except';
     push(@tm,shift),	next SWITCH	if $flag eq 'typemap';
+    $WantLineNumbers = 0, next SWITCH	if $flag eq 'nolinenumbers';
+    $WantLineNumbers = 1, next SWITCH	if $flag eq 'linenumbers';
     (print "xsubpp version $XSUBPP_version\n"), exit  	
 	if $flag eq 'v';
     die $usage;
@@ -115,18 +134,17 @@ else
 
 @ARGV == 1 or die $usage;
 ($dir, $filename) = $ARGV[0] =~ m#(.*)/(.*)#
+	or ($dir, $filename) = $ARGV[0] =~ m#(.*)\\(.*)#
 	or ($dir, $filename) = $ARGV[0] =~ m#(.*[>\]])(.*)#
 	or ($dir, $filename) = ('.', $ARGV[0]);
 chdir($dir);
-# Check for VMS; Config.pm may not be installed yet, but this routine
-# is built into VMS perl
-if (defined(&VMS::Filespec::vmsify)) { $Is_VMS = 1; $pwd = $ENV{DEFAULT}; }
-else                                 { $Is_VMS = 0; chomp($pwd = `pwd`);   }
+$pwd = cwd();
 
 ++ $IncludedFiles{$ARGV[0]} ;
 
 my(@XSStack) = ({type => 'none'});	# Stack of conditionals and INCLUDEs
 my($XSS_work_idx, $cpp_next_tmp) = (0, "XSubPPtmpAAAA");
+
 
 sub TrimWhitespace
 {
@@ -169,6 +187,7 @@ foreach $typemap (@tm) {
     $current = \$junk;
     while (<TYPEMAP>) {
 	next if /^\s*#/;
+        my $line_no = $. + 1; 
 	if (/^INPUT\s*$/)   { $mode = 'Input';   $current = \$junk;  next; }
 	if (/^OUTPUT\s*$/)  { $mode = 'Output';  $current = \$junk;  next; }
 	if (/^TYPEMAP\s*$/) { $mode = 'Typemap'; $current = \$junk;  next; }
@@ -183,7 +202,7 @@ foreach $typemap (@tm) {
             $type = TidyType($type) ;
 	    $type_kind{$type} = $kind ;
             # prototype defaults to '$'
-            $proto = '$' unless $proto ;
+            $proto = "\$" unless $proto ;
             warn("Warning: File '$typemap' Line $. '$line' Invalid prototype '$proto'\n") 
                 unless ValidProtoString($proto) ;
             $proto_letter{$type} = C_string($proto) ;
@@ -215,6 +234,7 @@ $END = "!End!\n\n";		# "impossible" keyword (multiple newline)
 $BLOCK_re= '\s*(' . join('|', qw(
 	REQUIRE BOOT CASE PREINIT INPUT INIT CODE PPCODE OUTPUT 
 	CLEANUP ALIAS PROTOTYPES PROTOTYPE VERSIONCHECK INCLUDE
+	SCOPE
 	)) . "|$END)\\s*:";
 
 # Input:  ($_, @line) == unparsed input.
@@ -226,11 +246,59 @@ sub check_keyword {
 }
 
 
+if ($WantLineNumbers) {
+    {
+	package xsubpp::counter;
+	sub TIEHANDLE {
+	    my ($class, $cfile) = @_;
+	    my $buf = "";
+	    $SECTION_END_MARKER = "#line --- \"$cfile\"";
+	    $line_no = 1;
+	    bless \$buf;
+	}
+
+	sub PRINT {
+	    my $self = shift;
+	    for (@_) {
+		$$self .= $_;
+		while ($$self =~ s/^([^\n]*\n)//) {
+		    my $line = $1;
+		    ++ $line_no;
+		    $line =~ s|^\#line\s+---(?=\s)|#line $line_no|;
+		    print STDOUT $line;
+		}
+	    }
+	}
+
+	sub PRINTF {
+	    my $self = shift;
+	    my $fmt = shift;
+	    $self->PRINT(sprintf($fmt, @_));
+	}
+
+	sub DESTROY {
+	    # Not necessary if we're careful to end with a "\n"
+	    my $self = shift;
+	    print STDOUT $$self;
+	}
+    }
+
+    my $cfile = $filename;
+    $cfile =~ s/\.xs$/.c/i or $cfile .= ".c";
+    tie(*PSEUDO_STDOUT, 'xsubpp::counter', $cfile);
+    select PSEUDO_STDOUT;
+}
+
 sub print_section {
-    $_ = shift(@line) while !/\S/ && @line;
+    # the "do" is required for right semantics
+    do { $_ = shift(@line) } while !/\S/ && @line;
+    
+    print("#line ", $line_no[@line_no - @line -1], " \"$filename\"\n")
+	if $WantLineNumbers && !/^\s*#\s*line\b/ && !/^#if XSubPPtmp/;
     for (;  defined($_) && !/^$BLOCK_re/o;  $_ = shift(@line)) {
 	print "$_\n";
     }
+    print "$xsubpp::counter::SECTION_END_MARKER\n" if $WantLineNumbers;
 }
 
 sub process_keyword($)
@@ -440,6 +508,24 @@ sub PROTOTYPE_handler ()
 
 }
 
+sub SCOPE_handler ()
+{
+    death("Error: Only 1 SCOPE declaration allowed per xsub") 
+        if $scope_in_this_xsub ++ ;
+
+    for (;  !/^$BLOCK_re/o;  $_ = shift(@line)) {
+		next unless /\S/;
+		TrimWhitespace($_) ;
+        if ($_ =~ /^DISABLE/i) {
+		   $ScopeThisXSUB = 0 
+        }
+        elsif ($_ =~ /^ENABLE/i) {
+		   $ScopeThisXSUB = 1 
+        }
+    }
+
+}
+
 sub PROTOTYPES_handler ()
 {
     # the rest of the current line should contain either ENABLE or
@@ -570,7 +656,7 @@ sub ProtoString ($)
 {
     my ($type) = @_ ;
 
-    $proto_letter{$type} or '$' ;
+    $proto_letter{$type} or "\$" ;
 }
 
 sub check_cpp {
@@ -608,7 +694,7 @@ open($FH, $filename) or die "cannot open $filename: $!\n";
 print <<EOM ;
 /*
  * This file was generated automatically by xsubpp version $XSUBPP_version from the 
- * contents of $filename. Don't edit this file, edit $filename instead.
+ * contents of $filename. Do not edit this file, edit $filename instead.
  *
  *	ANY CHANGES MADE HERE WILL BE LOST! 
  *
@@ -616,6 +702,9 @@ print <<EOM ;
 
 EOM
  
+
+print("#line 1 \"$filename\"\n")
+    if $WantLineNumbers;
 
 while (<$FH>) {
     last if ($Module, $Package, $Prefix) =
@@ -626,7 +715,6 @@ while (<$FH>) {
 
 $lastline    = $_;
 $lastline_no = $.;
-
 
 # Read next xsub into @line from ($lastline, <$FH>).
 sub fetch_para {
@@ -642,6 +730,7 @@ sub fetch_para {
 	$Module = $1;
 	$Package = defined($2) ? $2 : '';	# keep -w happy
 	$Prefix  = defined($3) ? $3 : '';	# keep -w happy
+	$Prefix = quotemeta $Prefix ;
 	($Module_cname = $Module) =~ s/\W/_/g;
 	($Packid = $Package) =~ tr/:/_/;
 	$Packprefix = $Package;
@@ -722,7 +811,9 @@ while (fetch_para()) {
 	$XSStack[$XSS_work_idx]{varname} = $cpp_next_tmp++;
     }
 
-    death ("Code is not inside a function")
+    death ("Code is not inside a function"
+	   ." (maybe last function was ended by a blank line "
+	   ." followed by a a statement on column one?)")
 	if $line[0] =~ /^\s/;
 
     # initialize info arrays
@@ -737,7 +828,9 @@ while (fetch_para()) {
     undef(%arg_list) ;
     undef(@proto_arg) ;
     undef($proto_in_this_xsub) ;
+    undef($scope_in_this_xsub) ;
     $ProtoThisXSUB = $WantPrototypes ;
+    $ScopeThisXSUB = 0;
 
     $_ = shift(@line);
     while ($kwd = check_keyword("REQUIRE|PROTOTYPES|VERSIONCHECK|INCLUDE")) {
@@ -748,7 +841,9 @@ while (fetch_para()) {
 
     if (check_keyword("BOOT")) {
 	&check_cpp;
-        push (@BootCode, $_, @line, "") ;
+	push (@BootCode, "#line $line_no[@line_no - @line] \"$filename\"")
+	  if $WantLineNumbers && $line[0] !~ /^\s*#\s*line\b/;
+        push (@BootCode, @line, "") ;
         next PARAGRAPH ;
     }
 
@@ -768,12 +863,14 @@ while (fetch_para()) {
 
     ($class, $func_name, $orig_args) =  ($1, $2, $3) ;
     ($pname = $func_name) =~ s/^($Prefix)?/$Packprefix/;
-    $Full_func_name = "${Packid}_$func_name";
+    ($clean_func_name = $func_name) =~ s/^$Prefix//;
+    $Full_func_name = "${Packid}_$clean_func_name";
+    if ($Is_VMS) { $Full_func_name = $SymSet->addsym($Full_func_name); }
 
     # Check for duplicate function definition
     for $tmp (@XSStack) {
 	next unless defined $tmp->{functions}{$Full_func_name};
-	Warn("Warning: duplicate function definition '$func_name' detected");
+	Warn("Warning: duplicate function definition '$clean_func_name' detected");
 	last;
     }
     $XSStack[$XSS_work_idx]{functions}{$Full_func_name} ++ ;
@@ -781,7 +878,8 @@ while (fetch_para()) {
 
     @args = split(/\s*,\s*/, $orig_args);
     if (defined($class)) {
-	my $arg0 = ((defined($static) or $func_name =~ /^new/) ? "CLASS" : "THIS");
+	my $arg0 = ((defined($static) or $func_name eq 'new')
+		    ? "CLASS" : "THIS");
 	unshift(@args, $arg0);
 	($orig_args = "$arg0, $orig_args") =~ s/^$arg0, $/$arg0/;
     }
@@ -802,7 +900,7 @@ while (fetch_para()) {
 		    $defaults{$args[$i]} = $2;
 		    $defaults{$args[$i]} =~ s/"/\\"/g;
 	    }
-	    $proto_arg[$i+1] = '$' ;
+	    $proto_arg[$i+1] = "\$" ;
     }
     if (defined($class)) {
 	    $func_args = join(", ", @args[1..$#args]);
@@ -812,11 +910,16 @@ while (fetch_para()) {
     @args_match{@args} = 1..@args;
 
     $PPCODE = grep(/^\s*PPCODE\s*:/, @line);
+    $CODE = grep(/^\s*CODE\s*:/, @line);
+    # Detect CODE: blocks which use ST(n)= or XST_m*(n,v)
+    #   to set explicit return values.
+    $EXPLICIT_RETURN = ($CODE &&
+		("@line" =~ /(\bST\s*\([^;]*=) | (\bXST_m\w+\s*\()/x ));
     $ALIAS  = grep(/^\s*ALIAS\s*:/,  @line);
 
     # print function header
     print Q<<"EOF";
-#XS(XS_${Packid}_$func_name)
+#XS(XS_${Full_func_name})
 #[[
 #    dXSARGS;
 EOF
@@ -875,10 +978,15 @@ EOF
         $gotRETVAL = 0;
 
 	INPUT_handler() ;
-	process_keyword("INPUT|PREINIT|ALIAS|PROTOTYPE") ;
+	process_keyword("INPUT|PREINIT|ALIAS|PROTOTYPE|SCOPE") ;
 
+	print Q<<"EOF" if $ScopeThisXSUB;
+#   ENTER;
+#   [[
+EOF
+	
 	if (!$thisdone && defined($class)) {
-	    if (defined($static) or $func_name =~ /^new/) {
+	    if (defined($static) or $func_name eq 'new') {
 		print "\tchar *";
 		$var_types{"CLASS"} = "char *";
 		&generate_init("char *", 1, "CLASS");
@@ -901,12 +1009,15 @@ EOF
 			$args_match{"RETVAL"} = 0;
 			$var_types{"RETVAL"} = $ret_type;
 		}
+
 		print $deferred;
-                process_keyword("INIT|ALIAS|PROTOTYPE") ;
+
+        process_keyword("INIT|ALIAS|PROTOTYPE") ;
 
 		if (check_keyword("PPCODE")) {
 			print_section();
 			death ("PPCODE must be last thing") if @line;
+			print "\tLEAVE;\n" if $ScopeThisXSUB;
 			print "\tPUTBACK;\n\treturn;\n";
 		} elsif (check_keyword("CODE")) {
 			print_section() ;
@@ -920,13 +1031,13 @@ EOF
 				$wantRETVAL = 1;
 			}
 			if (defined($static)) {
-			    if ($func_name =~ /^new/) {
+			    if ($func_name eq 'new') {
 				$func_name = "$class";
 			    } else {
 				print "${class}::";
 			    }
 			} elsif (defined($class)) {
-			    if ($func_name =~ /^new/) {
+			    if ($func_name eq 'new') {
 				$func_name .= " $class";
 			    } else {
 				print "THIS->";
@@ -954,6 +1065,13 @@ EOF
 	# do cleanup
 	process_keyword("CLEANUP|ALIAS|PROTOTYPE") ;
 
+	print Q<<"EOF" if $ScopeThisXSUB;
+#   ]]
+EOF
+	print Q<<"EOF" if $ScopeThisXSUB and not $PPCODE;
+#   LEAVE;
+EOF
+
 	# print function trailer
 	print Q<<EOF;
 #    ]]
@@ -979,9 +1097,15 @@ EOF
 #	croak(errbuf);
 EOF
 
-    print Q<<EOF unless $PPCODE;
+    if ($ret_type ne "void" or $EXPLICIT_RETURN) {
+        print Q<<EOF unless $PPCODE;
 #    XSRETURN(1);
 EOF
+    } else {
+        print Q<<EOF unless $PPCODE;
+#    XSRETURN_EMPTY;
+EOF
+    }
 
     print Q<<EOF;
 #]]
@@ -995,11 +1119,11 @@ EOF
     if ($ProtoThisXSUB) {
 	$newXS = "newXSproto";
 
-	if ($ProtoThisXSUB == 2) {
+	if ($ProtoThisXSUB eq 2) {
 	    # User has specified empty prototype
 	    $proto = ', ""' ;
 	}
-        elsif ($ProtoThisXSUB != 1) {
+        elsif ($ProtoThisXSUB ne 1) {
             # User has specified a prototype
             $proto = ', "' . $ProtoThisXSUB . '"';
         }
@@ -1066,8 +1190,9 @@ EOF
 
 if (@BootCode)
 {
-    print "\n    /* Initialisation Section */\n" ;
-    print grep (s/$/\n/, @BootCode) ;
+    print "\n    /* Initialisation Section */\n\n" ;
+    @line = @BootCode;
+    print_section();
     print "\n    /* End of Initialisation Section */\n\n" ;
 }
 
@@ -1137,16 +1262,19 @@ sub generate_init {
 	$subexpr =~ s/ntype/subtype/g;
 	$subexpr =~ s/\$arg/ST(ix_$var)/g;
 	$subexpr =~ s/\n\t/\n\t\t/g;
-	$subexpr =~ s/is not of (.*")/[arg %d] is not of $1, ix_$var + 1/g;
+	$subexpr =~ s/is not of (.*\")/[arg %d] is not of $1, ix_$var + 1/g;
 	$subexpr =~ s/\$var/${var}[ix_$var - $argoff]/;
 	$expr =~ s/DO_ARRAY_ELEM/$subexpr/;
+    }
+    if ($expr =~ m#/\*.*scope.*\*/#i) { # "scope" in C comments
+    	$ScopeThisXSUB = 1;
     }
     if (defined($defaults{$var})) {
 	    $expr =~ s/(\t+)/$1    /g;
 	    $expr =~ s/        /\t/g;
 	    eval qq/print "\\t$var;\\n"/;
 	    $deferred .= eval qq/"\\n\\tif (items < $num)\\n\\t    $var = $defaults{$var};\\n\\telse {\\n$expr;\\n\\t}\\n"/;
-    } elsif ($expr !~ /^\t\$var =/) {
+    } elsif ($ScopeThisXSUB or $expr !~ /^\t\$var =/) {
 	    eval qq/print "\\t$var;\\n"/;
 	    $deferred .= eval qq/"\\n$expr;\\n"/;
     } else {
@@ -1186,11 +1314,27 @@ sub generate_output {
 		eval "print qq\a$expr\a";
 	    }
 	    elsif ($var eq 'RETVAL') {
-		if ($expr =~ /^\t\$arg = /) {
+		if ($expr =~ /^\t\$arg = new/) {
+		    # We expect that $arg has refcnt 1, so we need to
+		    # mortalize it.
 		    eval "print qq\a$expr\a";
 		    print "\tsv_2mortal(ST(0));\n";
 		}
+		elsif ($expr =~ /^\s*\$arg\s*=/) {
+		    # We expect that $arg has refcnt >=1, so we need
+		    # to mortalize it. However, the extension may have
+		    # returned the built-in perl value, which is
+		    # read-only, thus not mortalizable. However, it is
+		    # safe to leave it as it is, since it would be
+		    # ignored by REFCNT_dec. Builtin values have REFCNT==0.
+		    eval "print qq\a$expr\a";
+		    print "\tif (SvREFCNT(ST(0))) sv_2mortal(ST(0));\n";
+		}
 		else {
+		    # Just hope that the entry would safely write it
+		    # over an already mortalized value. By
+		    # coincidence, something like $arg = &sv_undef
+		    # works too.
 		    print "\tST(0) = sv_newmortal();\n";
 		    eval "print qq\a$expr\a";
 		}
@@ -1214,5 +1358,6 @@ sub Exit {
 # If this is VMS, the exit status has meaning to the shell, so we
 # use a predictable value (SS$_Normal or SS$_Abort) rather than an
 # arbitrary number.
-    exit ($Is_VMS ? ($errors ? 44 : 1) : $errors) ;
+#    exit ($Is_VMS ? ($errors ? 44 : 1) : $errors) ;
+    exit ($errors ? 1 : 0);
 }

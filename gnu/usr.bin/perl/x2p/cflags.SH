@@ -14,13 +14,21 @@ esac
 : This forces SH files to create target in same directory as SH file.
 : This is so that make depend always knows where to find SH derivatives.
 case "$0" in
-*/*) cd `expr X$0 : 'X\(.*\)/'` ;;
+*/cflags.SH) cd `expr X$0 : 'X\(.*\)/'` ;;
+cflags.SH) ;;
+*) case `pwd` in
+   */x2p) ;;
+   *) if test -d x2p; then cd x2p
+      else echo "Can't figure out where to write output."; exit 1
+	  fi;;
+   esac;;
 esac
 echo "Extracting x2p/cflags (with variable substitutions)"
 : This section of the file will have variable substitutions done on it.
 : Move anything that needs config subs from !NO!SUBS! section to !GROK!THIS!.
 : Protect any dollar signs and backticks that you do not want interpreted
 : by putting a backslash in front.  You may delete these comments.
+rm -f cflags
 $spitshell >cflags <<!GROK!THIS!
 !GROK!THIS!
 
@@ -74,7 +82,7 @@ for file do
     *) ;;
     esac
 
-    ccflags="`echo $ccflags | sed -e 's/-DEMBED//'`"
+    ccflags="`echo $ccflags | sed -e 's/-DMULTIPLICITY//'`"
 
     echo "$cc -c $ccflags $optimize $large $split"
     eval "$also "'"$cc -c $ccflags $optimize $large $split"'

@@ -35,7 +35,7 @@ CONFIG: {
 sub Complete {
     package Complete;
 
-    local($[,$return) = 0;
+    local($prompt, @cmp_list, $return, @match, $l, $test, $cmp, $r);
     if ($_[1] =~ /^StB\0/) {
         ($prompt, *_) = @_;
     }
@@ -75,7 +75,8 @@ sub Complete {
                 # (^U) kill
                 $_ eq $kill && do {
                     if ($r) {
-                        undef($r, $return);
+                        undef $r;
+			undef $return;
                         print("\r\n");
                         redo LOOP;
                     }

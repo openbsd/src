@@ -2,7 +2,7 @@
 
 # $RCSfile: local.t,v $$Revision: 4.1 $$Date: 92/08/07 18:28:04 $
 
-print "1..20\n";
+print "1..23\n";
 
 sub foo {
     local($a, $b) = @_;
@@ -43,3 +43,12 @@ $d{''} = "ok 18\n";
 print &foo2("ok 11\n","ok 12\n");
 
 print $a,@b,@c,%d,$x,$y;
+
+eval 'local($$e)';
+print +($@ =~ /Can't localize through a reference/) ? "" : "not ", "ok 21\n";
+
+eval 'local(@$e)';
+print +($@ =~ /Can't localize through a reference/) ? "" : "not ", "ok 22\n";
+
+eval 'local(%$e)';
+print +($@ =~ /Can't localize through a reference/) ? "" : "not ", "ok 23\n";

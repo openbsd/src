@@ -26,8 +26,8 @@ Tie::Scalar, Tie::StdScalar - base class definitions for tied scalars
     
     package main;
     
-    tie $new_scalar, NewScalar;
-    tie $new_std_scalar, NewStdScalar;
+    tie $new_scalar, 'NewScalar';
+    tie $new_std_scalar, 'NewStdScalar';
 
 =head1 DESCRIPTION
 

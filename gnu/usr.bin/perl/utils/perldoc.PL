@@ -12,10 +12,9 @@ use File::Basename qw(&basename &dirname);
 
 # This forces PL files to create target in same directory as PL file.
 # This is so that make depend always knows where to find PL derivatives.
-chdir(dirname($0));
-($file = basename($0)) =~ s/\.PL$//;
-$file =~ s/\.pl$//
-	if ($^O eq 'VMS' or $^O eq 'os2');  # "case-forgiving"
+chdir dirname($0);
+$file = basename($0, '.PL');
+$file .= '.com' if $^O eq 'VMS';
 
 open OUT,">$file" or die "Can't create $file: $!";
 
@@ -25,16 +24,17 @@ print "Extracting $file (with variable substitutions)\n";
 # You can use $Config{...} to use Configure variables.
 
 print OUT <<"!GROK!THIS!";
-$Config{'startperl'}
-    eval 'exec perl -S \$0 "\$@"'
-	if 0;
+$Config{startperl}
+    eval 'exec $Config{perlpath} -S \$0 \${1+"\$@"}'
+	if \$running_under_some_shell;
+
+\@pagers = ();
+push \@pagers, "$Config{'pager'}" if -x "$Config{'pager'}";
 !GROK!THIS!
 
 # In the following, perl variables are not expanded during extraction.
 
 print OUT <<'!NO!SUBS!';
-    eval 'exec perl -S $0 "$@"'
-	if 0;
 
 #
 # Perldoc revision #1 -- look up a piece of documentation in .pod format that
@@ -45,8 +45,11 @@ print OUT <<'!NO!SUBS!';
 # the perl manuals, though it too is written in perl.
 
 if(@ARGV<1) {
+	$me = $0;		# Editing $0 is unportable
+	$me =~ s,.*/,,;
 	die <<EOF;
-Usage: $0 [-h] [-v] [-t] [-u] [-m] PageName|ModuleName|ProgramName
+Usage: $me [-h] [-v] [-t] [-u] [-m] [-l] PageName|ModuleName|ProgramName
+       $me -f PerlFunc
 
 We suggest you use "perldoc perldoc" to get aquainted 
 with the system.
@@ -54,23 +57,41 @@ EOF
 }
 
 use Getopt::Std;
+use Config '%Config';
+
+@global_found = ();
+$global_target = "";
+
 $Is_VMS = $^O eq 'VMS';
+$Is_MSWin32 = $^O eq 'MSWin32';
 
 sub usage{
-        warn "@_\n" if @_;
+    warn "@_\n" if @_;
+    # Erase evidence of previous errors (if any), so exit status is simple.
+    $! = 0;
     die <<EOF;
-perldoc [-h] [-v] [-u] PageName|ModuleName|ProgramName...
-    -h   Display this help message.
-    -t   Display pod using pod2text instead of pod2man and nroff.
+perldoc [options] PageName|ModuleName|ProgramName...
+perldoc [options] -f BuiltinFunction
+
+Options:
+    -h   Display this help message
+    -t   Display pod using pod2text instead of pod2man and nroff
+             (-t is the default on win32)
     -u	 Display unformatted pod text
     -m   Display modules file in its entirety
-    -v	 Verbosely describe what's going on.
+    -l   Display the modules file name
+    -v	 Verbosely describe what's going on
+
 PageName|ModuleName...
          is the name of a piece of documentation that you want to look at. You 
          may either give a descriptive name of the page (as in the case of
          `perlfunc') the name of a module, either like `Term::Info', 
          `Term/Info', the partial name of a module, like `info', or 
          `makemaker', or the name of a program, like `perldoc'.
+
+BuiltinFunction
+         is the name of a perl function.  Will extract documentation from
+         `perlfunc'.
          
 Any switches in the PERLDOC environment variable will be used before the 
 command line arguments.
@@ -83,51 +104,83 @@ use Text::ParseWords;
 
 unshift(@ARGV,shellwords($ENV{"PERLDOC"}));
 
-getopts("mhtuv") || usage;
+getopts("mhtluvf:") || usage;
 
 usage if $opt_h || $opt_h; # avoid -w warning
 
-usage("only one of -t, -u, or -m") if $opt_t + $opt_u + $opt_m > 1;
+if ($opt_t + $opt_u + $opt_m + $opt_l > 1) {
+    usage("only one of -t, -u, -m or -l")
+} elsif ($Is_MSWin32) {
+    $opt_t = 1 unless $opt_t + $opt_u + $opt_m + $opt_l;
+}
 
 if ($opt_t) { require Pod::Text; import Pod::Text; }
 
-@pages = @ARGV;
-
-sub containspod {
-	my($file) = @_;
-	local($_);
-	open(TEST,"<$file");
-	while(<TEST>) {
-		if(/^=head/) {
-			close(TEST);
-			return 1;
-		}
-	}
-	close(TEST);
-	return 0;
+if ($opt_f) {
+   @pages = ("perlfunc");
+} else {
+   @pages = @ARGV;
 }
 
- sub minus_f_nocase {
+# Does this look like a module or extension directory?
+if (-f "Makefile.PL") {
+	# Add ., lib and blib/* libs to @INC (if they exist)
+	unshift(@INC, '.');
+	unshift(@INC, 'lib') if -d 'lib';
+	require ExtUtils::testlib;
+}
+
+
+
+sub containspod {
+    my($file, $readit) = @_;
+    return 1 if !$readit && $file =~ /\.pod$/i;
+    local($_);
+    open(TEST,"<$file");
+    while(<TEST>) {
+	if(/^=head/) {
+	    close(TEST);
+	    return 1;
+	}
+    }
+    close(TEST);
+    return 0;
+}
+
+sub minus_f_nocase {
      my($file) = @_;
+     # on a case-forgiving file system we can simply use -f $file
+     if ($Is_VMS or $Is_MSWin32 or $^O eq 'os2') {
+        return $file if -f $file and -r _;
+	warn "Ignored $file: unreadable\n" unless -r _;
+	return '';
+     }
      local *DIR;
      local($")="/";
      my(@p,$p,$cip);
      foreach $p (split(/\//, $file)){
-	if ($Is_VMS and not scalar @p) {
-	    # VMS filesystems don't begin at '/'
-	    push(@p,$p);
-	    next;
-	}
- 	if (-d ("@p/$p")){
+	my $try = "@p/$p";
+	stat $try;
+ 	if (-d _){
  	    push @p, $p;
- 	} elsif (-f ("@p/$p")) {
- 	    return "@p/$p";
+	    if ( $p eq $global_target) {
+		$tmp_path = join ('/', @p);
+		my $path_f = 0;
+		for (@global_found) {
+		    $path_f = 1 if $_ eq $tmp_path;
+		}
+		push (@global_found, $tmp_path) unless $path_f;
+		print STDERR "Found as @p but directory\n" if $opt_v;
+	    }
+ 	} elsif (-f _ && -r _) {
+ 	    return $try;
+ 	} elsif (-f _) {
+	    warn "Ignored $try: unreadable\n";
  	} else {
  	    my $found=0;
  	    my $lcp = lc $p;
  	    opendir DIR, "@p";
  	    while ($cip=readdir(DIR)) {
-		$cip =~ s/\.dir$// if $Is_VMS;
  		if (lc $cip eq $lcp){
  		    $found++;
  		    last;
@@ -136,44 +189,64 @@ sub containspod {
  	    closedir DIR;
  	    return "" unless $found;
  	    push @p, $cip;
- 	    return "@p" if -f "@p";
+ 	    return "@p" if -f "@p" and -r _;
+	    warn "Ignored $file: unreadable\n" if -f _;
  	}
      }
      return; # is not a file
- }
+}
  
-  sub searchfor {
-  	my($recurse,$s,@dirs) = @_;
-  	$s =~ s!::!/!g;
-  	$s = VMS::Filespec::unixify($s) if $Is_VMS;
-  	printf STDERR "looking for $s in @dirs\n" if $opt_v;
- 	my $ret;
- 	my $i;
- 	my $dir;
-  	for ($i=0;$i<@dirs;$i++) {
-  		$dir = $dirs[$i];
-  		($dir = VMS::Filespec::unixpath($dir)) =~ s!/$!! if $Is_VMS;
- 	    if ((    $ret = minus_f_nocase "$dir/$s.pod")
- 		or ( $ret = minus_f_nocase "$dir/$s.pm"  and containspod($ret))
- 		or ( $ret = minus_f_nocase "$dir/$s"     and containspod($ret))
- 		or ( $Is_VMS and 
- 		     $ret = minus_f_nocase "$dir/$s.com" and containspod($ret))
- 		or ( $ret = minus_f_nocase "$dir/pod/$s.pod")
- 		or ( $ret = minus_f_nocase "$dir/pod/$s" and containspod($ret)))
- 		{ return $ret; }
- 		
- 		if($recurse) {
-			opendir(D,$dir);
-			my(@newdirs) = grep(-d,map("$dir/$_",grep(!/^\.\.?$/,readdir(D))));
-			closedir(D);
-			@newdirs = map((s/.dir$//,$_)[1],@newdirs) if $Is_VMS;
-			next unless @newdirs;
-			print STDERR "Also looking in @newdirs\n" if $opt_v;
-			push(@dirs,@newdirs);
- 		}
- 	}
-  	return ();
-  }
+
+sub check_file {
+    my($file) = @_;
+    return minus_f_nocase($file) && containspod($file) ? $file : "";
+}
+
+
+sub searchfor {
+    my($recurse,$s,@dirs) = @_;
+    $s =~ s!::!/!g;
+    $s = VMS::Filespec::unixify($s) if $Is_VMS;
+    return $s if -f $s && containspod($s);
+    printf STDERR "Looking for $s in @dirs\n" if $opt_v;
+    my $ret;
+    my $i;
+    my $dir;
+    $global_target = (split('/', $s))[-1];
+    for ($i=0; $i<@dirs; $i++) {
+	$dir = $dirs[$i];
+	($dir = VMS::Filespec::unixpath($dir)) =~ s!/$!! if $Is_VMS;
+	if (       ( $ret = check_file "$dir/$s.pod")
+		or ( $ret = check_file "$dir/$s.pm")
+		or ( $ret = check_file "$dir/$s")
+		or ( $Is_VMS and
+		     $ret = check_file "$dir/$s.com")
+		or ( $^O eq 'os2' and 
+		     $ret = check_file "$dir/$s.cmd")
+		or ( ($Is_MSWin32 or $^O eq 'os2') and 
+		     $ret = check_file "$dir/$s.bat")
+		or ( $ret = check_file "$dir/pod/$s.pod")
+		or ( $ret = check_file "$dir/pod/$s")
+	) {
+	    return $ret;
+	}
+	
+	if ($recurse) {
+	    opendir(D,$dir);
+	    my @newdirs = map "$dir/$_", grep {
+		not /^\.\.?$/ and
+		not /^auto$/  and   # save time! don't search auto dirs
+		-d  "$dir/$_"
+	    } readdir D;
+	    closedir(D);
+	    next unless @newdirs;
+	    @newdirs = map((s/.dir$//,$_)[1],@newdirs) if $Is_VMS;
+	    print STDERR "Also looking in @newdirs\n" if $opt_v;
+	    push(@dirs,@newdirs);
+	}
+    }
+    return ();
+}
 
 
 foreach (@pages) {
@@ -188,7 +261,8 @@ foreach (@pages) {
 		    push(@searchdirs,$trn);
 		}
 	    } else {
-		    push(@searchdirs, grep(-d, split(':', $ENV{'PATH'})));
+	        push(@searchdirs, grep(-d, split($Config{path_sep}, 
+						 $ENV{'PATH'})));
 	    }
 	    @files= searchfor(0,$_,@searchdirs);
 	}
@@ -199,12 +273,24 @@ foreach (@pages) {
 		
 		@searchdirs = grep(!/^\.$/,@INC);
 		
-		
 		@files= searchfor(1,$_,@searchdirs);
 		if( @files ) {
 			print STDERR "Loosely found as @files\n" if $opt_v;
 		} else {
-			print STDERR "No documentation found for '$_'\n";
+			print STDERR "No documentation found for \"$_\".\n";
+			if (@global_found) {
+			    print STDERR "However, try\n";
+			    my $dir = $file = "";
+			    for $dir (@global_found) {
+				opendir(DIR, $dir) or die "$!";
+				while ($file = readdir(DIR)) {
+				    next if ($file =~ /^\./);
+				    $file =~ s/\.(pm|pod)$//;
+				    print STDERR "\tperldoc $_\::$file\n";
+				}
+				closedir DIR;
+			    }
+			}
 		}
 	}
 	push(@found,@files);
@@ -214,27 +300,77 @@ if(!@found) {
 	exit ($Is_VMS ? 98962 : 1);
 }
 
-if( ! -t STDOUT ) { $opt_f = 1 }
-
-unless($Is_VMS) {
-	$tmp = "/tmp/perldoc1.$$";
-	$goodresult = 0;
-	@pagers = qw( more less pg view cat );
-	unshift(@pagers,$ENV{PAGER}) if $ENV{PAGER};
-} else {
-	$tmp = 'Sys$Scratch:perldoc.tmp1_'.$$;
-	@pagers = qw( most more less type/page );
-	unshift(@pagers,$ENV{PERLDOC_PAGER}) if $ENV{PERLDOC_PAGER};
-	$goodresult = 1;
+if ($opt_l) {
+    print join("\n", @found), "\n";
+    exit;
 }
 
+if( ! -t STDOUT ) { $no_tty = 1 }
+
+if ($Is_MSWin32) {
+	$tmp = "$ENV{TEMP}\\perldoc1.$$";
+	push @pagers, qw( more< less notepad );
+	unshift @pagers, $ENV{PAGER}  if $ENV{PAGER};
+} elsif ($Is_VMS) {
+	$tmp = 'Sys$Scratch:perldoc.tmp1_'.$$;
+	push @pagers, qw( most more less type/page );
+} else {
+	if ($^O eq 'os2') {
+	  require POSIX;
+	  $tmp = POSIX::tmpnam();
+	} else {
+	  $tmp = "/tmp/perldoc1.$$";	  
+	}
+	push @pagers, qw( more less pg view cat );
+	unshift @pagers, $ENV{PAGER}  if $ENV{PAGER};
+}
+unshift @pagers, $ENV{PERLDOC_PAGER} if $ENV{PERLDOC_PAGER};
+
 if ($opt_m) {
-    foreach $pager (@pagers) {
-	my($sts) = system("$pager @found");
-	exit 0 if ($Is_VMS ? ($sts & 1) : !$sts);
-    }
-    exit $Is_VMS ? $sts : 1;
+	foreach $pager (@pagers) {
+		system("$pager @found") or exit;
+	}
+	if ($Is_VMS) { eval 'use vmsish qw(status exit); exit $?' }
+	exit 1;
 } 
+
+if ($opt_f) {
+   my $perlfunc = shift @found;
+   open(PFUNC, $perlfunc) or die "Can't open $perlfunc: $!";
+
+   # Skip introduction
+   while (<PFUNC>) {
+       last if /^=head2 Alphabetical Listing of Perl Functions/;
+   }
+
+   # Look for our function
+   my $found = 0;
+   my @pod;
+   while (<PFUNC>) {
+       if (/^=item\s+\Q$opt_f\E\b/o)  {
+	   $found = 1;
+       } elsif (/^=item/) {
+	   last if $found > 1;
+       }
+       next unless $found;
+       push @pod, $_;
+       ++$found if /^\w/;	# found descriptive text
+   }
+   if (@pod) {
+       if ($opt_t) {
+	   open(FORMATTER, "| pod2text") || die "Can't start filter";
+	   print FORMATTER "=over 8\n\n";
+	   print FORMATTER @pod;
+	   print FORMATTER "=back\n";
+	   close(FORMATTER);
+       } else {
+	   print @pod;
+       }
+   } else {
+       die "No documentation for perl function `$opt_f' found\n";
+   }
+   exit;
+}
 
 foreach (@found) {
 
@@ -243,12 +379,14 @@ foreach (@found) {
 		Pod::Text::pod2text($_,*TMP);
 		close(TMP);
 	} elsif(not $opt_u) {
-		open(TMP,">>$tmp");
-		$rslt = `pod2man $_ | nroff -man`;
-		if ($Is_VMS) { $err = !($? % 2) || $rslt =~ /IVVERB/; }
-		else      { $err = $?; }
-		print TMP $rslt unless $err;
-		close TMP;
+		my $cmd = "pod2man --lax $_ | nroff -man";
+		$cmd .= " | col -x" if $^O =~ /hpux/;
+		$rslt = `$cmd`;
+		unless(($err = $?)) {
+			open(TMP,">>$tmp");
+			print TMP $rslt;
+			close TMP;
+		}
 	}
 	                                                
 	if( $opt_u or $err or -z $tmp) {
@@ -265,15 +403,13 @@ foreach (@found) {
 	}
 }
 
-if( $opt_f ) {
+if( $no_tty ) {
 	open(TMP,"<$tmp");
 	print while <TMP>;
 	close(TMP);
 } else {
 	foreach $pager (@pagers) {
-		$sts = system("$pager $tmp");
-		last if $Is_VMS && ($sts & 1);
-		last unless $sts;
+		system("$pager $tmp") or last;
 	}
 }
 
@@ -289,14 +425,17 @@ perldoc - Look up Perl documentation in pod format.
 
 =head1 SYNOPSIS
 
-B<perldoc> [B<-h>] [B<-v>] [B<-t>] [B<-u>] PageName|ModuleName|ProgramName
+B<perldoc> [B<-h>] [B<-v>] [B<-t>] [B<-u>] [B<-m>] [B<-l>] PageName|ModuleName|ProgramName
+
+B<perldoc> B<-f> BuiltinFunction
 
 =head1 DESCRIPTION
 
-I<perldoc> looks up a piece of documentation in .pod format that is
-embedded in the perl installation tree or in a perl script, and displays
-it via pod2man | nroff -man | $PAGER.  This is primarily used for the
-documentation for the perl library modules. 
+I<perldoc> looks up a piece of documentation in .pod format that is embedded
+in the perl installation tree or in a perl script, and displays it via
+C<pod2man | nroff -man | $PAGER>. (In addition, if running under HP-UX,
+C<col -x> will be used.) This is primarily used for the documentation for
+the perl library modules.
 
 Your system may also have man pages installed for those modules, in
 which case you can probably just use the man(1) command.
@@ -329,6 +468,15 @@ This may be useful if the docs don't explain a function in the detail
 you need, and you'd like to inspect the code directly; perldoc will find
 the file for you and simply hand it off for display.
 
+=item B<-l> file name only
+
+Display the file name of the module found.
+
+=item B<-f> perlfunc
+
+The B<-f> option followed by the name of a perl built in function will
+extract the documentation of this function from L<perlfunc>.
+
 =item B<PageName|ModuleName|ProgramName>
 
 The item you want to look up.  Nested modules (such as C<File::Basename>)
@@ -355,13 +503,12 @@ Kenneth Albanowski <kjahds@kjahds.com>
 
 Minor updates by Andy Dougherty <doughera@lafcol.lafayette.edu>
 
-=head1 SEE ALSO
-
-=head1 DIAGNOSTICS
-
 =cut
 
 #
+# Version 1.12: Sat Apr 12 22:41:09 EST 1997
+#       Gurusamy Sarathy <gsar@umich.edu>
+#	-various fixes for win32
 # Version 1.11: Tue Dec 26 09:54:33 EST 1995
 #       Kenneth Albanowski <kjahds@kjahds.com>
 #   -added Charles Bailey's further VMS patches, and -u switch

@@ -1,6 +1,6 @@
 /*    util.c
  *
- *    Copyright (c) 1991-1994, Larry Wall
+ *    Copyright (c) 1991-1997, Larry Wall
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -19,18 +19,17 @@
 #include <signal.h>
 #endif
 
-/* Omit this -- it causes too much grief on mixed systems.
+#ifndef SIG_ERR
+# define SIG_ERR ((Sighandler_t) -1)
+#endif
+
+/* XXX If this causes problems, set i_unistd=undef in the hint file.  */
 #ifdef I_UNISTD
 #  include <unistd.h>
 #endif
-*/
 
 #ifdef I_VFORK
 #  include <vfork.h>
-#endif
-
-#ifdef I_LIMITS  /* Needed for cast_xxx() functions below. */
-#  include <limits.h>
 #endif
 
 /* Put this after #includes because fork and vfork prototypes may
@@ -47,52 +46,53 @@
 #  include <sys/file.h>
 #endif
 
+#ifdef I_SYS_WAIT
+#  include <sys/wait.h>
+#endif
+
 #define FLUSH
 
 #ifdef LEAKTEST
 static void xstat _((void));
 #endif
 
-#ifndef safemalloc
+#ifndef MYMALLOC
 
 /* paranoid version of malloc */
 
 /* NOTE:  Do not call the next three routines directly.  Use the macros
  * in handy.h, so that we can easily redefine everything to do tracking of
  * allocated hunks back to the original New to track down any memory leaks.
+ * XXX This advice seems to be widely ignored :-(   --AD  August 1996.
  */
 
-char *
+Malloc_t
 safemalloc(size)
-#ifdef MSDOS
-unsigned long size;
-#else
 MEM_SIZE size;
-#endif /* MSDOS */
 {
-    char  *ptr;
-#ifdef MSDOS
+    Malloc_t ptr;
+#ifdef HAS_64K_LIMIT
 	if (size > 0xffff) {
-		fprintf(stderr, "Allocation too large: %lx\n", size) FLUSH;
+		PerlIO_printf(PerlIO_stderr(), "Allocation too large: %lx\n", size) FLUSH;
 		my_exit(1);
 	}
-#endif /* MSDOS */
+#endif /* HAS_64K_LIMIT */
 #ifdef DEBUGGING
     if ((long)size < 0)
 	croak("panic: malloc");
 #endif
     ptr = malloc(size?size:1);	/* malloc(0) is NASTY on our system */
 #if !(defined(I286) || defined(atarist))
-    DEBUG_m(fprintf(stderr,"0x%x: (%05d) malloc %ld bytes\n",ptr,an++,(long)size));
+    DEBUG_m(PerlIO_printf(Perl_debug_log, "0x%x: (%05d) malloc %ld bytes\n",ptr,an++,(long)size));
 #else
-    DEBUG_m(fprintf(stderr,"0x%lx: (%05d) malloc %ld bytes\n",ptr,an++,(long)size));
+    DEBUG_m(PerlIO_printf(Perl_debug_log, "0x%lx: (%05d) malloc %ld bytes\n",ptr,an++,(long)size));
 #endif
     if (ptr != Nullch)
 	return ptr;
     else if (nomemok)
 	return Nullch;
     else {
-	fputs(no_mem,stderr) FLUSH;
+	PerlIO_puts(PerlIO_stderr(),no_mem) FLUSH;
 	my_exit(1);
     }
     /*NOTREACHED*/
@@ -100,26 +100,23 @@ MEM_SIZE size;
 
 /* paranoid version of realloc */
 
-char *
+Malloc_t
 saferealloc(where,size)
-char *where;
-#ifndef MSDOS
+Malloc_t where;
 MEM_SIZE size;
-#else
-unsigned long size;
-#endif /* MSDOS */
 {
-    char *ptr;
+    Malloc_t ptr;
 #if !defined(STANDARD_C) && !defined(HAS_REALLOC_PROTOTYPE)
-    char *realloc();
+    Malloc_t realloc();
 #endif /* !defined(STANDARD_C) && !defined(HAS_REALLOC_PROTOTYPE) */
 
-#ifdef MSDOS
-	if (size > 0xffff) {
-		fprintf(stderr, "Reallocation too large: %lx\n", size) FLUSH;
-		my_exit(1);
-	}
-#endif /* MSDOS */
+#ifdef HAS_64K_LIMIT 
+    if (size > 0xffff) {
+	PerlIO_printf(PerlIO_stderr(),
+		      "Reallocation too large: %lx\n", size) FLUSH;
+	my_exit(1);
+    }
+#endif /* HAS_64K_LIMIT */
     if (!where)
 	croak("Null realloc");
 #ifdef DEBUGGING
@@ -130,13 +127,13 @@ unsigned long size;
 
 #if !(defined(I286) || defined(atarist))
     DEBUG_m( {
-	fprintf(stderr,"0x%x: (%05d) rfree\n",where,an++);
-	fprintf(stderr,"0x%x: (%05d) realloc %ld bytes\n",ptr,an++,(long)size);
+	PerlIO_printf(Perl_debug_log, "0x%x: (%05d) rfree\n",where,an++);
+	PerlIO_printf(Perl_debug_log, "0x%x: (%05d) realloc %ld bytes\n",ptr,an++,(long)size);
     } )
 #else
     DEBUG_m( {
-	fprintf(stderr,"0x%lx: (%05d) rfree\n",where,an++);
-	fprintf(stderr,"0x%lx: (%05d) realloc %ld bytes\n",ptr,an++,(long)size);
+	PerlIO_printf(Perl_debug_log, "0x%lx: (%05d) rfree\n",where,an++);
+	PerlIO_printf(Perl_debug_log, "0x%lx: (%05d) realloc %ld bytes\n",ptr,an++,(long)size);
     } )
 #endif
 
@@ -145,7 +142,7 @@ unsigned long size;
     else if (nomemok)
 	return Nullch;
     else {
-	fputs(no_mem,stderr) FLUSH;
+	PerlIO_puts(PerlIO_stderr(),no_mem) FLUSH;
 	my_exit(1);
     }
     /*NOTREACHED*/
@@ -153,14 +150,14 @@ unsigned long size;
 
 /* safe version of free */
 
-void
+Free_t
 safefree(where)
-char *where;
+Malloc_t where;
 {
 #if !(defined(I286) || defined(atarist))
-    DEBUG_m( fprintf(stderr,"0x%x: (%05d) free\n",where,an++));
+    DEBUG_m( PerlIO_printf(Perl_debug_log, "0x%x: (%05d) free\n",where,an++));
 #else
-    DEBUG_m( fprintf(stderr,"0x%lx: (%05d) free\n",where,an++));
+    DEBUG_m( PerlIO_printf(Perl_debug_log, "0x%lx: (%05d) free\n",where,an++));
 #endif
     if (where) {
 	/*SUPPRESS 701*/
@@ -168,18 +165,58 @@ char *where;
     }
 }
 
-#endif /* !safemalloc */
+/* safe version of calloc */
+
+Malloc_t
+safecalloc(count, size)
+MEM_SIZE count;
+MEM_SIZE size;
+{
+    Malloc_t ptr;
+
+#ifdef HAS_64K_LIMIT
+    if (size * count > 0xffff) {
+	PerlIO_printf(PerlIO_stderr(),
+		      "Allocation too large: %lx\n", size * count) FLUSH;
+	my_exit(1);
+    }
+#endif /* HAS_64K_LIMIT */
+#ifdef DEBUGGING
+    if ((long)size < 0 || (long)count < 0)
+	croak("panic: calloc");
+#endif
+    size *= count;
+    ptr = malloc(size?size:1);	/* malloc(0) is NASTY on our system */
+#if !(defined(I286) || defined(atarist))
+    DEBUG_m(PerlIO_printf(Perl_debug_log, "0x%x: (%05d) calloc %ld  x %ld bytes\n",ptr,an++,(long)count,(long)size));
+#else
+    DEBUG_m(PerlIO_printf(Perl_debug_log, "0x%lx: (%05d) calloc %ld x %ld bytes\n",ptr,an++,(long)count,(long)size));
+#endif
+    if (ptr != Nullch) {
+	memset((void*)ptr, 0, size);
+	return ptr;
+    }
+    else if (nomemok)
+	return Nullch;
+    else {
+	PerlIO_puts(PerlIO_stderr(),no_mem) FLUSH;
+	my_exit(1);
+    }
+    /*NOTREACHED*/
+}
+
+#endif /* !MYMALLOC */
 
 #ifdef LEAKTEST
 
 #define ALIGN sizeof(long)
 
-char *
+Malloc_t
 safexmalloc(x,size)
 I32 x;
 MEM_SIZE size;
 {
-    register char *where;
+    register Malloc_t where;
 
     where = safemalloc(size + ALIGN);
     xcount[x]++;
@@ -188,18 +225,18 @@ MEM_SIZE size;
     return where + ALIGN;
 }
 
-char *
+Malloc_t
 safexrealloc(where,size)
-char *where;
+Malloc_t where;
 MEM_SIZE size;
 {
-    register char *new = saferealloc(where - ALIGN, size + ALIGN);
+    register Malloc_t new = saferealloc(where - ALIGN, size + ALIGN);
     return new + ALIGN;
 }
 
 void
 safexfree(where)
-char *where;
+Malloc_t where;
 {
     I32 x;
 
@@ -211,6 +248,22 @@ char *where;
     safefree(where);
 }
 
+Malloc_t
+safexcalloc(x,count,size)
+I32 x;
+MEM_SIZE count;
+MEM_SIZE size;
+{
+    register Malloc_t where;
+
+    where = safexmalloc(x, size * count + ALIGN);
+    xcount[x]++;
+    memset((void*)where + ALIGN, 0, size * count);
+    where[0] = x % 100;
+    where[1] = x / 100;
+    return where + ALIGN;
+}
+
 static void
 xstat()
 {
@@ -218,7 +271,7 @@ xstat()
 
     for (i = 0; i < MAXXCOUNT; i++) {
 	if (xcount[i] > lastxcount[i]) {
-	    fprintf(stderr,"%2d %2d\t%ld\n", i / 100, i % 100, xcount[i]);
+	    PerlIO_printf(PerlIO_stderr(),"%2d %2d\t%ld\n", i / 100, i % 100, xcount[i]);
 	    lastxcount[i] = xcount[i];
 	}
     }
@@ -229,28 +282,34 @@ xstat()
 /* copy a string up to some (non-backslashed) delimiter, if any */
 
 char *
-cpytill(to,from,fromend,delim,retlen)
+delimcpy(to, toend, from, fromend, delim, retlen)
 register char *to;
+register char *toend;
 register char *from;
 register char *fromend;
 register int delim;
 I32 *retlen;
 {
-    char *origto = to;
-
-    for (; from < fromend; from++,to++) {
+    register I32 tolen;
+    for (tolen = 0; from < fromend; from++, tolen++) {
 	if (*from == '\\') {
 	    if (from[1] == delim)
 		from++;
-	    else if (from[1] == '\\')
-		*to++ = *from++;
+	    else {
+		if (to < toend)
+		    *to++ = *from;
+		tolen++;
+		from++;
+	    }
 	}
 	else if (*from == delim)
 	    break;
-	*to = *from;
+	if (to < toend)
+	    *to++ = *from;
     }
-    *to = '\0';
-    *retlen = to - origto;
+    if (to < toend)
+	*to = '\0';
+    *retlen = tolen;
     return from;
 }
 
@@ -353,9 +412,137 @@ char *lend;
     return Nullch;
 }
 
-/* Initialize locale (and the fold[] array).*/
+/*
+ * Set up for a new ctype locale.
+ */
+void
+perl_new_ctype(newctype)
+    char *newctype;
+{
+#ifdef USE_LOCALE_CTYPE
+
+    int i;
+
+    for (i = 0; i < 256; i++) {
+	if (isUPPER_LC(i))
+	    fold_locale[i] = toLOWER_LC(i);
+	else if (isLOWER_LC(i))
+	    fold_locale[i] = toUPPER_LC(i);
+	else
+	    fold_locale[i] = i;
+    }
+
+#endif /* USE_LOCALE_CTYPE */
+}
+
+/*
+ * Set up for a new collation locale.
+ */
+void
+perl_new_collate(newcoll)
+    char *newcoll;
+{
+#ifdef USE_LOCALE_COLLATE
+
+    if (! newcoll) {
+	if (collation_name) {
+	    ++collation_ix;
+	    Safefree(collation_name);
+	    collation_name = NULL;
+	    collation_standard = TRUE;
+	    collxfrm_base = 0;
+	    collxfrm_mult = 2;
+	}
+	return;
+    }
+
+    if (! collation_name || strNE(collation_name, newcoll)) {
+	++collation_ix;
+	Safefree(collation_name);
+	collation_name = savepv(newcoll);
+	collation_standard = (strEQ(newcoll, "C") || strEQ(newcoll, "POSIX"));
+
+	{
+	  /*  2: at most so many chars ('a', 'b'). */
+	  /* 50: surely no system expands a char more. */
+#define XFRMBUFSIZE  (2 * 50)
+	  char xbuf[XFRMBUFSIZE];
+	  Size_t fa = strxfrm(xbuf, "a",  XFRMBUFSIZE);
+	  Size_t fb = strxfrm(xbuf, "ab", XFRMBUFSIZE);
+	  SSize_t mult = fb - fa;
+	  if (mult < 1)
+	      croak("strxfrm() gets absurd");
+	  collxfrm_base = (fa > mult) ? (fa - mult) : 0;
+	  collxfrm_mult = mult;
+	}
+    }
+
+#endif /* USE_LOCALE_COLLATE */
+}
+
+/*
+ * Set up for a new numeric locale.
+ */
+void
+perl_new_numeric(newnum)
+    char *newnum;
+{
+#ifdef USE_LOCALE_NUMERIC
+
+    if (! newnum) {
+	if (numeric_name) {
+	    Safefree(numeric_name);
+	    numeric_name = NULL;
+	    numeric_standard = TRUE;
+	    numeric_local = TRUE;
+	}
+	return;
+    }
+
+    if (! numeric_name || strNE(numeric_name, newnum)) {
+	Safefree(numeric_name);
+	numeric_name = savepv(newnum);
+	numeric_standard = (strEQ(newnum, "C") || strEQ(newnum, "POSIX"));
+	numeric_local = TRUE;
+    }
+
+#endif /* USE_LOCALE_NUMERIC */
+}
+
+void
+perl_set_numeric_standard()
+{
+#ifdef USE_LOCALE_NUMERIC
+
+    if (! numeric_standard) {
+	setlocale(LC_NUMERIC, "C");
+	numeric_standard = TRUE;
+	numeric_local = FALSE;
+    }
+
+#endif /* USE_LOCALE_NUMERIC */
+}
+
+void
+perl_set_numeric_local()
+{
+#ifdef USE_LOCALE_NUMERIC
+
+    if (! numeric_local) {
+	setlocale(LC_NUMERIC, numeric_name);
+	numeric_standard = FALSE;
+	numeric_local = TRUE;
+    }
+
+#endif /* USE_LOCALE_NUMERIC */
+}
+
+
+/*
+ * Initialize locale awareness.
+ */
 int
-perl_init_i18nl14n(printwarn)	
+perl_init_i18nl10n(printwarn)	
     int printwarn;
 {
     int ok = 1;
@@ -364,41 +551,298 @@ perl_init_i18nl14n(printwarn)
      *    0 = fallback to C locale,
      *   -1 = fallback to C locale failed
      */
-#if defined(HAS_SETLOCALE) && defined(LC_CTYPE)
-    char * lang     = getenv("LANG");
-    char * lc_all   = getenv("LC_ALL");
-    char * lc_ctype = getenv("LC_CTYPE");
-    int i;
 
-    if (setlocale(LC_CTYPE, "") == NULL && (lc_all || lc_ctype || lang)) {
-	if (printwarn) {
-	    fprintf(stderr, "warning: setlocale(LC_CTYPE, \"\") failed.\n");
-	    fprintf(stderr,
-	      "warning: LC_ALL = \"%s\", LC_CTYPE = \"%s\", LANG = \"%s\",\n",
-	      lc_all   ? lc_all   : "(null)",
-	      lc_ctype ? lc_ctype : "(null)",
-	      lang     ? lang     : "(null)"
-	      );
-	    fprintf(stderr, "warning: falling back to the \"C\" locale.\n");
+#ifdef USE_LOCALE
+
+#ifdef USE_LOCALE_CTYPE
+    char *curctype   = NULL;
+#endif /* USE_LOCALE_CTYPE */
+#ifdef USE_LOCALE_COLLATE
+    char *curcoll    = NULL;
+#endif /* USE_LOCALE_COLLATE */
+#ifdef USE_LOCALE_NUMERIC
+    char *curnum     = NULL;
+#endif /* USE_LOCALE_NUMERIC */
+    char *lc_all     = getenv("LC_ALL");
+    char *lang       = getenv("LANG");
+    bool setlocale_failure = FALSE;
+
+#ifdef LOCALE_ENVIRON_REQUIRED
+
+    /*
+     * Ultrix setlocale(..., "") fails if there are no environment
+     * variables from which to get a locale name.
+     */
+
+    bool done = FALSE;
+
+#ifdef LC_ALL
+    if (lang) {
+	if (setlocale(LC_ALL, ""))
+	    done = TRUE;
+	else
+	    setlocale_failure = TRUE;
+    }
+    if (!setlocale_failure)
+#endif /* LC_ALL */
+    {
+#ifdef USE_LOCALE_CTYPE
+	if (! (curctype = setlocale(LC_CTYPE,
+				    (!done && (lang || getenv("LC_CTYPE")))
+				    ? "" : Nullch)))
+	    setlocale_failure = TRUE;
+#endif /* USE_LOCALE_CTYPE */
+#ifdef USE_LOCALE_COLLATE
+	if (! (curcoll = setlocale(LC_COLLATE,
+				   (!done && (lang || getenv("LC_COLLATE")))
+				   ? "" : Nullch)))
+	    setlocale_failure = TRUE;
+#endif /* USE_LOCALE_COLLATE */
+#ifdef USE_LOCALE_NUMERIC
+	if (! (curnum = setlocale(LC_NUMERIC,
+				  (!done && (lang || getenv("LC_NUMERIC")))
+				  ? "" : Nullch)))
+	    setlocale_failure = TRUE;
+#endif /* USE_LOCALE_NUMERIC */
+    }
+
+#else /* !LOCALE_ENVIRON_REQUIRED */
+
+#ifdef LC_ALL
+
+    if (! setlocale(LC_ALL, ""))
+	setlocale_failure = TRUE;
+    else {
+#ifdef USE_LOCALE_CTYPE
+	curctype = setlocale(LC_CTYPE, Nullch);
+#endif /* USE_LOCALE_CTYPE */
+#ifdef USE_LOCALE_COLLATE
+	curcoll = setlocale(LC_COLLATE, Nullch);
+#endif /* USE_LOCALE_COLLATE */
+#ifdef USE_LOCALE_NUMERIC
+	curnum = setlocale(LC_NUMERIC, Nullch);
+#endif /* USE_LOCALE_NUMERIC */
+    }
+
+#else /* !LC_ALL */
+
+#ifdef USE_LOCALE_CTYPE
+    if (! (curctype = setlocale(LC_CTYPE, "")))
+	setlocale_failure = TRUE;
+#endif /* USE_LOCALE_CTYPE */
+#ifdef USE_LOCALE_COLLATE
+    if (! (curcoll = setlocale(LC_COLLATE, "")))
+	setlocale_failure = TRUE;
+#endif /* USE_LOCALE_COLLATE */
+#ifdef USE_LOCALE_NUMERIC
+    if (! (curnum = setlocale(LC_NUMERIC, "")))
+	setlocale_failure = TRUE;
+#endif /* USE_LOCALE_NUMERIC */
+
+#endif /* LC_ALL */
+
+#endif /* !LOCALE_ENVIRON_REQUIRED */
+
+    if (setlocale_failure) {
+	char *p;
+	bool locwarn = (printwarn > 1 || 
+			printwarn &&
+			(!(p = getenv("PERL_BADLANG")) || atoi(p)));
+
+	if (locwarn) {
+#ifdef LC_ALL
+  
+	    PerlIO_printf(PerlIO_stderr(),
+	       "perl: warning: Setting locale failed.\n");
+
+#else /* !LC_ALL */
+  
+	    PerlIO_printf(PerlIO_stderr(),
+	       "perl: warning: Setting locale failed for the categories:\n\t");
+#ifdef USE_LOCALE_CTYPE
+	    if (! curctype)
+		PerlIO_printf(PerlIO_stderr(), "LC_CTYPE ");
+#endif /* USE_LOCALE_CTYPE */
+#ifdef USE_LOCALE_COLLATE
+	    if (! curcoll)
+		PerlIO_printf(PerlIO_stderr(), "LC_COLLATE ");
+#endif /* USE_LOCALE_COLLATE */
+#ifdef USE_LOCALE_NUMERIC
+	    if (! curnum)
+		PerlIO_printf(PerlIO_stderr(), "LC_NUMERIC ");
+#endif /* USE_LOCALE_NUMERIC */
+	    PerlIO_printf(PerlIO_stderr(), "\n");
+
+#endif /* LC_ALL */
+
+	    PerlIO_printf(PerlIO_stderr(),
+		"perl: warning: Please check that your locale settings:\n");
+
+	    PerlIO_printf(PerlIO_stderr(),
+			  "\tLC_ALL = %c%s%c,\n",
+			  lc_all ? '"' : '(',
+			  lc_all ? lc_all : "unset",
+			  lc_all ? '"' : ')');
+
+	    {
+	      char **e;
+	      for (e = environ; *e; e++) {
+		  if (strnEQ(*e, "LC_", 3)
+			&& strnNE(*e, "LC_ALL=", 7)
+			&& (p = strchr(*e, '=')))
+		      PerlIO_printf(PerlIO_stderr(), "\t%.*s = \"%s\",\n",
+				    (int)(p - *e), *e, p + 1);
+	      }
+	    }
+
+	    PerlIO_printf(PerlIO_stderr(),
+			  "\tLANG = %c%s%c\n",
+			  lang ? '"' : '(',
+			  lang ? lang : "unset",
+			  lang ? '"' : ')');
+
+	    PerlIO_printf(PerlIO_stderr(),
+			  "    are supported and installed on your system.\n");
 	}
-	ok = 0;
-	if (setlocale(LC_CTYPE, "C") == NULL)
+
+#ifdef LC_ALL
+
+	if (setlocale(LC_ALL, "C")) {
+	    if (locwarn)
+		PerlIO_printf(PerlIO_stderr(),
+      "perl: warning: Falling back to the standard locale (\"C\").\n");
+	    ok = 0;
+	}
+	else {
+	    if (locwarn)
+		PerlIO_printf(PerlIO_stderr(),
+      "perl: warning: Failed to fall back to the standard locale (\"C\").\n");
 	    ok = -1;
+	}
+
+#else /* ! LC_ALL */
+
+	if (0
+#ifdef USE_LOCALE_CTYPE
+	    || !(curctype || setlocale(LC_CTYPE, "C"))
+#endif /* USE_LOCALE_CTYPE */
+#ifdef USE_LOCALE_COLLATE
+	    || !(curcoll || setlocale(LC_COLLATE, "C"))
+#endif /* USE_LOCALE_COLLATE */
+#ifdef USE_LOCALE_NUMERIC
+	    || !(curnum || setlocale(LC_NUMERIC, "C"))
+#endif /* USE_LOCALE_NUMERIC */
+	    )
+	{
+	    if (locwarn)
+		PerlIO_printf(PerlIO_stderr(),
+      "perl: warning: Cannot fall back to the standard locale (\"C\").\n");
+	    ok = -1;
+	}
+
+#endif /* ! LC_ALL */
+
+#ifdef USE_LOCALE_CTYPE
+	curctype = setlocale(LC_CTYPE, Nullch);
+#endif /* USE_LOCALE_CTYPE */
+#ifdef USE_LOCALE_COLLATE
+	curcoll = setlocale(LC_COLLATE, Nullch);
+#endif /* USE_LOCALE_COLLATE */
+#ifdef USE_LOCALE_NUMERIC
+	curnum = setlocale(LC_NUMERIC, Nullch);
+#endif /* USE_LOCALE_NUMERIC */
     }
 
-    for (i = 0; i < 256; i++) {
-	if (isUPPER(i)) fold[i] = toLOWER(i);
-	else if (isLOWER(i)) fold[i] = toUPPER(i);
-	else fold[i] = i;
-    }
-#endif
+#ifdef USE_LOCALE_CTYPE
+    perl_new_ctype(curctype);
+#endif /* USE_LOCALE_CTYPE */
+
+#ifdef USE_LOCALE_COLLATE
+    perl_new_collate(curcoll);
+#endif /* USE_LOCALE_COLLATE */
+
+#ifdef USE_LOCALE_NUMERIC
+    perl_new_numeric(curnum);
+#endif /* USE_LOCALE_NUMERIC */
+
+#endif /* USE_LOCALE */
+
     return ok;
 }
 
+/* Backwards compatibility. */
+int
+perl_init_i18nl14n(printwarn)	
+    int printwarn;
+{
+    return perl_init_i18nl10n(printwarn);
+}
+
+#ifdef USE_LOCALE_COLLATE
+
+/*
+ * mem_collxfrm() is a bit like strxfrm() but with two important
+ * differences. First, it handles embedded NULs. Second, it allocates
+ * a bit more memory than needed for the transformed data itself.
+ * The real transformed data begins at offset sizeof(collationix).
+ * Please see sv_collxfrm() to see how this is used.
+ */
+char *
+mem_collxfrm(s, len, xlen)
+     const char *s;
+     STRLEN len;
+     STRLEN *xlen;
+{
+    char *xbuf;
+    STRLEN xalloc, xin, xout;
+
+    /* the first sizeof(collationix) bytes are used by sv_collxfrm(). */
+    /* the +1 is for the terminating NUL. */
+
+    xalloc = sizeof(collation_ix) + collxfrm_base + (collxfrm_mult * len) + 1;
+    New(171, xbuf, xalloc, char);
+    if (! xbuf)
+	goto bad;
+
+    *(U32*)xbuf = collation_ix;
+    xout = sizeof(collation_ix);
+    for (xin = 0; xin < len; ) {
+	SSize_t xused;
+
+	for (;;) {
+	    xused = strxfrm(xbuf + xout, s + xin, xalloc - xout);
+	    if (xused == -1)
+		goto bad;
+	    if (xused < xalloc - xout)
+		break;
+	    xalloc = (2 * xalloc) + 1;
+	    Renew(xbuf, xalloc, char);
+	    if (! xbuf)
+		goto bad;
+	}
+
+	xin += strlen(s + xin) + 1;
+	xout += xused;
+
+	/* Embedded NULs are understood but silently skipped
+	 * because they make no sense in locale collation. */
+    }
+
+    xbuf[xout] = '\0';
+    *xlen = xout - sizeof(collation_ix);
+    return xbuf;
+
+  bad:
+    Safefree(xbuf);
+    *xlen = 0;
+    return NULL;
+}
+
+#endif /* USE_LOCALE_COLLATE */
+
 void
-fbm_compile(sv, iflag)
+fbm_compile(sv)
 SV *sv;
-I32 iflag;
 {
     register unsigned char *s;
     register unsigned char *table;
@@ -418,52 +862,24 @@ I32 iflag;
     i = 0;
     while (s >= (unsigned char*)(SvPVX(sv)))
     {
-	if (table[*s] == len) {
-#ifndef pdp11
-	    if (iflag)
-		table[*s] = table[fold[*s]] = i;
-#else
-	    if (iflag) {
-		I32 j;
-		j = fold[*s];
-		table[j] = i;
-		table[*s] = i;
-	    }
-#endif /* pdp11 */
-	    else
-		table[*s] = i;
-	}
+	if (table[*s] == len)
+	    table[*s] = i;
 	s--,i++;
     }
     sv_upgrade(sv, SVt_PVBM);
-    sv_magic(sv, Nullsv, 'B', Nullch, 0);			/* deep magic */
+    sv_magic(sv, Nullsv, 'B', Nullch, 0);	/* deep magic */
     SvVALID_on(sv);
 
     s = (unsigned char*)(SvPVX(sv));		/* deeper magic */
-    if (iflag) {
-	register U32 tmp, foldtmp;
-	SvCASEFOLD_on(sv);
-	for (i = 0; i < len; i++) {
-	    tmp=freq[s[i]];
-	    foldtmp=freq[fold[s[i]]];
-	    if (tmp < frequency && foldtmp < frequency) {
-		rarest = i;
-		/* choose most frequent among the two */
-		frequency = (tmp > foldtmp) ? tmp : foldtmp;
-	    }
-	}
-    }
-    else {
-	for (i = 0; i < len; i++) {
-	    if (freq[s[i]] < frequency) {
-		rarest = i;
-		frequency = freq[s[i]];
-	    }
+    for (i = 0; i < len; i++) {
+	if (freq[s[i]] < frequency) {
+	    rarest = i;
+	    frequency = freq[s[i]];
 	}
     }
     BmRARE(sv) = s[rarest];
     BmPREVIOUS(sv) = rarest;
-    DEBUG_r(fprintf(stderr,"rarest char %c at %d\n",BmRARE(sv),BmPREVIOUS(sv)));
+    DEBUG_r(PerlIO_printf(Perl_debug_log, "rarest char %c at %d\n",BmRARE(sv),BmPREVIOUS(sv)));
 }
 
 char *
@@ -493,91 +909,50 @@ SV *littlestr;
 	if (littlelen > bigend - big)
 	    return Nullch;
 	little = (unsigned char*)SvPVX(littlestr);
-	if (SvCASEFOLD(littlestr)) {	/* oops, fake it */
-	    big = bigend - littlelen;		/* just start near end */
-	    if (bigend[-1] == '\n' && little[littlelen-1] != '\n')
-		big--;
+	s = bigend - littlelen;
+	if (*s == *little && memEQ((char*)s,(char*)little,littlelen))
+	    return (char*)s;		/* how sweet it is */
+	else if (bigend[-1] == '\n' && little[littlelen-1] != '\n'
+		 && s > big) {
+	    s--;
+	    if (*s == *little && memEQ((char*)s,(char*)little,littlelen))
+		return (char*)s;
 	}
-	else {
-	    s = bigend - littlelen;
-	    if (*s == *little && bcmp((char*)s,(char*)little,littlelen)==0)
-		return (char*)s;		/* how sweet it is */
-	    else if (bigend[-1] == '\n' && little[littlelen-1] != '\n'
-	      && s > big) {
-		    s--;
-		if (*s == *little && bcmp((char*)s,(char*)little,littlelen)==0)
-		    return (char*)s;
-	    }
-	    return Nullch;
-	}
+	return Nullch;
     }
     table = (unsigned char*)(SvPVX(littlestr) + littlelen + 1);
     if (--littlelen >= bigend - big)
 	return Nullch;
     s = big + littlelen;
     oldlittle = little = table - 2;
-    if (SvCASEFOLD(littlestr)) {	/* case insensitive? */
-	if (s < bigend) {
-	  top1:
-	    /*SUPPRESS 560*/
-	    if (tmp = table[*s]) {
+    if (s < bigend) {
+      top2:
+	/*SUPPRESS 560*/
+	if (tmp = table[*s]) {
 #ifdef POINTERRIGOR
-		if (bigend - s > tmp) {
-		    s += tmp;
-		    goto top1;
-		}
+	    if (bigend - s > tmp) {
+		s += tmp;
+		goto top2;
+	    }
 #else
-		if ((s += tmp) < bigend)
-		    goto top1;
+	    if ((s += tmp) < bigend)
+		goto top2;
 #endif
-		return Nullch;
-	    }
-	    else {
-		tmp = littlelen;	/* less expensive than calling strncmp() */
-		olds = s;
-		while (tmp--) {
-		    if (*--s == *--little || fold[*s] == *little)
-			continue;
-		    s = olds + 1;	/* here we pay the price for failure */
-		    little = oldlittle;
-		    if (s < bigend)	/* fake up continue to outer loop */
-			goto top1;
-		    return Nullch;
-		}
-		return (char *)s;
-	    }
+	    return Nullch;
 	}
-    }
-    else {
-	if (s < bigend) {
-	  top2:
-	    /*SUPPRESS 560*/
-	    if (tmp = table[*s]) {
-#ifdef POINTERRIGOR
-		if (bigend - s > tmp) {
-		    s += tmp;
+	else {
+	    tmp = littlelen;	/* less expensive than calling strncmp() */
+	    olds = s;
+	    while (tmp--) {
+		if (*--s == *--little)
+		    continue;
+		s = olds + 1;	/* here we pay the price for failure */
+		little = oldlittle;
+		if (s < bigend)	/* fake up continue to outer loop */
 		    goto top2;
-		}
-#else
-		if ((s += tmp) < bigend)
-		    goto top2;
-#endif
 		return Nullch;
 	    }
-	    else {
-		tmp = littlelen;	/* less expensive than calling strncmp() */
-		olds = s;
-		while (tmp--) {
-		    if (*--s == *--little)
-			continue;
-		    s = olds + 1;	/* here we pay the price for failure */
-		    little = oldlittle;
-		    if (s < bigend)	/* fake up continue to outer loop */
-			goto top2;
-		    return Nullch;
-		}
-		return (char *)s;
-	    }
+	    return (char *)s;
 	}
     }
     return Nullch;
@@ -610,96 +985,66 @@ SV *littlestr;
 	    return Nullch;
     }
 #ifdef POINTERRIGOR
-    if (SvCASEFOLD(littlestr)) {	/* case insignificant? */
-	do {
-	    if (big[pos-previous] != first && big[pos-previous] != fold[first])
-		continue;
-	    for (x=big+pos+1-previous,s=little; s < littleend; /**/ ) {
-		if (x >= bigend)
-		    return Nullch;
-		if (*s++ != *x++ && fold[*(s-1)] != *(x-1)) {
-		    s--;
-		    break;
-		}
+    do {
+	if (big[pos-previous] != first)
+	    continue;
+	for (x=big+pos+1-previous,s=little; s < littleend; /**/ ) {
+	    if (x >= bigend)
+		return Nullch;
+	    if (*s++ != *x++) {
+		s--;
+		break;
 	    }
-	    if (s == littleend)
-		return (char *)(big+pos-previous);
-	} while (
-		pos += screamnext[pos]	/* does this goof up anywhere? */
-	    );
-    }
-    else {
-	do {
-	    if (big[pos-previous] != first)
-		continue;
-	    for (x=big+pos+1-previous,s=little; s < littleend; /**/ ) {
-		if (x >= bigend)
-		    return Nullch;
-		if (*s++ != *x++) {
-		    s--;
-		    break;
-		}
-	    }
-	    if (s == littleend)
-		return (char *)(big+pos-previous);
-	} while ( pos += screamnext[pos] );
-    }
+	}
+	if (s == littleend)
+	    return (char *)(big+pos-previous);
+    } while ( pos += screamnext[pos] );
 #else /* !POINTERRIGOR */
     big -= previous;
-    if (SvCASEFOLD(littlestr)) {	/* case insignificant? */
-	do {
-	    if (big[pos] != first && big[pos] != fold[first])
-		continue;
-	    for (x=big+pos+1,s=little; s < littleend; /**/ ) {
-		if (x >= bigend)
-		    return Nullch;
-		if (*s++ != *x++ && fold[*(s-1)] != *(x-1)) {
-		    s--;
-		    break;
-		}
+    do {
+	if (big[pos] != first)
+	    continue;
+	for (x=big+pos+1,s=little; s < littleend; /**/ ) {
+	    if (x >= bigend)
+		return Nullch;
+	    if (*s++ != *x++) {
+		s--;
+		break;
 	    }
-	    if (s == littleend)
-		return (char *)(big+pos);
-	} while (
-		pos += screamnext[pos]	/* does this goof up anywhere? */
-	    );
-    }
-    else {
-	do {
-	    if (big[pos] != first)
-		continue;
-	    for (x=big+pos+1,s=little; s < littleend; /**/ ) {
-		if (x >= bigend)
-		    return Nullch;
-		if (*s++ != *x++) {
-		    s--;
-		    break;
-		}
-	    }
-	    if (s == littleend)
-		return (char *)(big+pos);
-	} while (
-		pos += screamnext[pos]
-	    );
-    }
+	}
+	if (s == littleend)
+	    return (char *)(big+pos);
+    } while ( pos += screamnext[pos] );
 #endif /* POINTERRIGOR */
     return Nullch;
 }
 
 I32
-ibcmp(a,b,len)
-register U8 *a;
-register U8 *b;
+ibcmp(s1, s2, len)
+char *s1, *s2;
 register I32 len;
 {
+    register U8 *a = (U8 *)s1;
+    register U8 *b = (U8 *)s2;
     while (len--) {
-	if (*a == *b) {
-	    a++,b++;
-	    continue;
-	}
-	if (fold[*a++] == *b++)
-	    continue;
-	return 1;
+	if (*a != *b && *a != fold[*b])
+	    return 1;
+	a++,b++;
+    }
+    return 0;
+}
+
+I32
+ibcmp_locale(s1, s2, len)
+char *s1, *s2;
+register I32 len;
+{
+    register U8 *a = (U8 *)s1;
+    register U8 *b = (U8 *)s2;
+    while (len--) {
+	if (*a != *b && *a != fold_locale[*b])
+	    return 1;
+	a++,b++;
     }
     return 0;
 }
@@ -732,226 +1077,150 @@ register I32 len;
     return newaddr;
 }
 
-#if !defined(I_STDARG) && !defined(I_VARARGS)
+/* the SV for form() and mess() is not kept in an arena */
 
-/*
- * Fallback on the old hackers way of doing varargs
- */
-
-/*VARARGS1*/
-char *
-mess(pat,a1,a2,a3,a4)
-char *pat;
-long a1, a2, a3, a4;
+static SV *
+mess_alloc()
 {
-    char *s;
-    char *s_start;
-    I32 usermess = strEQ(pat,"%s");
-    SV *tmpstr;
-
-    s = s_start = buf;
-    if (usermess) {
-	tmpstr = sv_newmortal();
-	sv_setpv(tmpstr, (char*)a1);
-	*s++ = SvPVX(tmpstr)[SvCUR(tmpstr)-1];
-    }
-    else {
-	(void)sprintf(s,pat,a1,a2,a3,a4);
-	s += strlen(s);
-    }
-
-    if (s[-1] != '\n') {
-	if (dirty)
-	    strcpy(s, " during global destruction.\n");
-	else {
-	    if (curcop->cop_line) {
-		(void)sprintf(s," at %s line %ld",
-		  SvPVX(GvSV(curcop->cop_filegv)), (long)curcop->cop_line);
-		s += strlen(s);
-	    }
-	    if (GvIO(last_in_gv) &&
-		IoLINES(GvIOp(last_in_gv)) ) {
-		(void)sprintf(s,", <%s> %s %ld",
-		  last_in_gv == argvgv ? "" : GvENAME(last_in_gv),
-		  strEQ(rs,"\n") ? "line" : "chunk", 
-		  (long)IoLINES(GvIOp(last_in_gv)));
-		s += strlen(s);
-	    }
-	    (void)strcpy(s,".\n");
-	    s += 2;
-	}
-	if (usermess)
-	    sv_catpv(tmpstr,buf+1);
-    }
-
-    if (s - s_start >= sizeof(buf)) {	/* Ooops! */
-	if (usermess)
-	    fputs(SvPVX(tmpstr), stderr);
-	else
-	    fputs(buf, stderr);
-	fputs("panic: message overflow - memory corrupted!\n",stderr);
-	my_exit(1);
-    }
-    if (usermess)
-	return SvPVX(tmpstr);
-    else
-	return buf;
-}
-
-/*VARARGS1*/
-void croak(pat,a1,a2,a3,a4)
-char *pat;
-long a1, a2, a3, a4;
-{
-    char *tmps;
-    char *message;
-    HV *stash;
-    GV *gv;
-    CV *cv;
-
-    message = mess(pat,a1,a2,a3,a4);
-    if (diehook && (cv = sv_2cv(diehook, &stash, &gv, 0)) && !CvDEPTH(cv)) {
-	dSP;
-
-	PUSHMARK(sp);
-	EXTEND(sp, 1);
-	PUSHs(sv_2mortal(newSVpv(message,0)));
-	PUTBACK;
-	perl_call_sv((SV*)cv, G_DISCARD);
-    }
-    if (in_eval) {
-	restartop = die_where(message);
-	Siglongjmp(top_env, 3);
-    }
-    fputs(message,stderr);
-    (void)Fflush(stderr);
-    if (e_tmpname) {
-	if (e_fp) {
-	    fclose(e_fp);
-	    e_fp = Nullfp;
-	}
-	(void)UNLINK(e_tmpname);
-	Safefree(e_tmpname);
-	e_tmpname = Nullch;
-    }
-    statusvalue = SHIFTSTATUS(statusvalue);
-#ifdef VMS
-    my_exit((U32)vaxc$errno?vaxc$errno:errno?errno:statusvalue?statusvalue:SS$_ABORT);
-#else
-    my_exit((U32)((errno&255)?errno:((statusvalue&255)?statusvalue:255)));
-#endif
-}
-
-/*VARARGS1*/
-void warn(pat,a1,a2,a3,a4)
-char *pat;
-long a1, a2, a3, a4;
-{
-    char *message;
     SV *sv;
-    HV *stash;
-    GV *gv;
-    CV *cv;
+    XPVMG *any;
 
-    message = mess(pat,a1,a2,a3,a4);
-    if (warnhook && (cv = sv_2cv(warnhook, &stash, &gv, 0)) && !CvDEPTH(cv)) {
-	dSP;
-
-	PUSHMARK(sp);
-	EXTEND(sp, 1);
-	PUSHs(sv_2mortal(newSVpv(message,0)));
-	PUTBACK;
-	perl_call_sv((SV*)cv, G_DISCARD);
-    }
-    else {
-	fputs(message,stderr);
-#ifdef LEAKTEST
-	DEBUG_L(xstat());
-#endif
-	(void)Fflush(stderr);
-    }
+    /* Create as PVMG now, to avoid any upgrading later */
+    New(905, sv, 1, SV);
+    Newz(905, any, 1, XPVMG);
+    SvFLAGS(sv) = SVt_PVMG;
+    SvANY(sv) = (void*)any;
+    SvREFCNT(sv) = 1 << 30; /* practically infinite */
+    return sv;
 }
-
-#else /* !defined(I_STDARG) && !defined(I_VARARGS) */
 
 #ifdef I_STDARG
 char *
-mess(char *pat, va_list *args)
+form(const char* pat, ...)
 #else
 /*VARARGS0*/
 char *
-mess(pat, args)
-    char *pat;
-    va_list *args;
+form(pat, va_alist)
+    const char *pat;
+    va_dcl
 #endif
 {
-    char *s;
-    char *s_start;
-    SV *tmpstr;
-    I32 usermess;
-#ifndef HAS_VPRINTF
-#ifdef USE_CHAR_VSPRINTF
-    char *vsprintf();
+    va_list args;
+#ifdef I_STDARG
+    va_start(args, pat);
 #else
-    I32 vsprintf();
+    va_start(args);
 #endif
-#endif
+    if (!mess_sv)
+	mess_sv = mess_alloc();
+    sv_vsetpvfn(mess_sv, pat, strlen(pat), &args, Null(SV**), 0, Null(bool*));
+    va_end(args);
+    return SvPVX(mess_sv);
+}
 
-    s = s_start = buf;
-    usermess = strEQ(pat, "%s");
-    if (usermess) {
-	tmpstr = sv_newmortal();
-	sv_setpv(tmpstr, va_arg(*args, char *));
-	*s++ = SvPVX(tmpstr)[SvCUR(tmpstr)-1];
-    }
-    else {
-	(void) vsprintf(s,pat,*args);
-	s += strlen(s);
-    }
-    va_end(*args);
+char *
+mess(pat, args)
+    const char *pat;
+    va_list *args;
+{
+    SV *sv;
+    static char dgd[] = " during global destruction.\n";
 
-    if (s[-1] != '\n') {
+    if (!mess_sv)
+	mess_sv = mess_alloc();
+    sv = mess_sv;
+    sv_vsetpvfn(sv, pat, strlen(pat), args, Null(SV**), 0, Null(bool*));
+    if (!SvCUR(sv) || *(SvEND(sv) - 1) != '\n') {
 	if (dirty)
-	    strcpy(s, " during global destruction.\n");
+	    sv_catpv(sv, dgd);
 	else {
-	    if (curcop->cop_line) {
-		(void)sprintf(s," at %s line %ld",
-		  SvPVX(GvSV(curcop->cop_filegv)), (long)curcop->cop_line);
-		s += strlen(s);
-	    }
+	    if (curcop->cop_line)
+		sv_catpvf(sv, " at %_ line %ld",
+			  GvSV(curcop->cop_filegv), (long)curcop->cop_line);
 	    if (GvIO(last_in_gv) && IoLINES(GvIOp(last_in_gv))) {
 		bool line_mode = (RsSIMPLE(rs) &&
 				  SvLEN(rs) == 1 && *SvPVX(rs) == '\n');
-		(void)sprintf(s,", <%s> %s %ld",
-		  last_in_gv == argvgv ? "" : GvNAME(last_in_gv),
-		  line_mode ? "line" : "chunk", 
-		  (long)IoLINES(GvIOp(last_in_gv)));
-		s += strlen(s);
+		sv_catpvf(sv, ", <%s> %s %ld",
+			  last_in_gv == argvgv ? "" : GvNAME(last_in_gv),
+			  line_mode ? "line" : "chunk", 
+			  (long)IoLINES(GvIOp(last_in_gv)));
 	    }
-	    (void)strcpy(s,".\n");
-	    s += 2;
+	    sv_catpv(sv, ".\n");
 	}
-	if (usermess)
-	    sv_catpv(tmpstr,buf+1);
+    }
+    return SvPVX(sv);
+}
+
+#ifdef I_STDARG
+OP *
+die(const char* pat, ...)
+#else
+/*VARARGS0*/
+OP *
+die(pat, va_alist)
+    const char *pat;
+    va_dcl
+#endif
+{
+    va_list args;
+    char *message;
+    I32 oldrunlevel = runlevel;
+    int was_in_eval = in_eval;
+    HV *stash;
+    GV *gv;
+    CV *cv;
+
+    /* We have to switch back to mainstack or die_where may try to pop
+     * the eval block from the wrong stack if die is being called from a
+     * signal handler.  - dkindred@cs.cmu.edu */
+    if (curstack != mainstack) {
+        dSP;
+        SWITCHSTACK(curstack, mainstack);
     }
 
-    if (s - s_start >= sizeof(buf)) {	/* Ooops! */
-	if (usermess)
-	    fputs(SvPVX(tmpstr), stderr);
-	else
-	    fputs(buf, stderr);
-	fputs("panic: message overflow - memory corrupted!\n",stderr);
-	my_exit(1);
+#ifdef I_STDARG
+    va_start(args, pat);
+#else
+    va_start(args);
+#endif
+    message = mess(pat, &args);
+    va_end(args);
+
+    if (diehook) {
+	/* sv_2cv might call croak() */
+	SV *olddiehook = diehook;
+	ENTER;
+	SAVESPTR(diehook);
+	diehook = Nullsv;
+	cv = sv_2cv(olddiehook, &stash, &gv, 0);
+	LEAVE;
+	if (cv && !CvDEPTH(cv) && (CvROOT(cv) || CvXSUB(cv))) {
+	    dSP;
+	    SV *msg;
+
+	    ENTER;
+	    msg = newSVpv(message, 0);
+	    SvREADONLY_on(msg);
+	    SAVEFREESV(msg);
+
+	    PUSHMARK(sp);
+	    XPUSHs(msg);
+	    PUTBACK;
+	    perl_call_sv((SV*)cv, G_DISCARD);
+
+	    LEAVE;
+	}
     }
-    if (usermess)
-	return SvPVX(tmpstr);
-    else
-	return buf;
+
+    restartop = die_where(message);
+    if ((!restartop && was_in_eval) || oldrunlevel > 1)
+	JMPENV_JUMP(3);
+    return restartop;
 }
 
 #ifdef I_STDARG
 void
-croak(char* pat, ...)
+croak(const char* pat, ...)
 #else
 /*VARARGS0*/
 void
@@ -973,45 +1242,47 @@ croak(pat, va_alist)
 #endif
     message = mess(pat, &args);
     va_end(args);
-    if (diehook && (cv = sv_2cv(diehook, &stash, &gv, 0)) && !CvDEPTH(cv)) {
-	dSP;
+    if (diehook) {
+	/* sv_2cv might call croak() */
+	SV *olddiehook = diehook;
+	ENTER;
+	SAVESPTR(diehook);
+	diehook = Nullsv;
+	cv = sv_2cv(olddiehook, &stash, &gv, 0);
+	LEAVE;
+	if (cv && !CvDEPTH(cv) && (CvROOT(cv) || CvXSUB(cv))) {
+	    dSP;
+	    SV *msg;
 
-	PUSHMARK(sp);
-	EXTEND(sp, 1);
-	PUSHs(sv_2mortal(newSVpv(message,0)));
-	PUTBACK;
-	perl_call_sv((SV*)cv, G_DISCARD);
+	    ENTER;
+	    msg = newSVpv(message, 0);
+	    SvREADONLY_on(msg);
+	    SAVEFREESV(msg);
+
+	    PUSHMARK(sp);
+	    XPUSHs(msg);
+	    PUTBACK;
+	    perl_call_sv((SV*)cv, G_DISCARD);
+
+	    LEAVE;
+	}
     }
     if (in_eval) {
 	restartop = die_where(message);
-	Siglongjmp(top_env, 3);
+	JMPENV_JUMP(3);
     }
-    fputs(message,stderr);
-    (void)Fflush(stderr);
-    if (e_tmpname) {
-	if (e_fp) {
-	    fclose(e_fp);
-	    e_fp = Nullfp;
-	}
-	(void)UNLINK(e_tmpname);
-	Safefree(e_tmpname);
-	e_tmpname = Nullch;
-    }
-    statusvalue = SHIFTSTATUS(statusvalue);
-#ifdef VMS
-    my_exit((U32)(vaxc$errno?vaxc$errno:(statusvalue?statusvalue:44)));
-#else
-    my_exit((U32)((errno&255)?errno:((statusvalue&255)?statusvalue:255)));
-#endif
+    PerlIO_puts(PerlIO_stderr(),message);
+    (void)PerlIO_flush(PerlIO_stderr());
+    my_failure_exit();
 }
 
 void
 #ifdef I_STDARG
-warn(char* pat,...)
+warn(const char* pat,...)
 #else
 /*VARARGS0*/
 warn(pat,va_alist)
-    char *pat;
+    const char *pat;
     va_dcl
 #endif
 {
@@ -1029,26 +1300,41 @@ warn(pat,va_alist)
     message = mess(pat, &args);
     va_end(args);
 
-    if (warnhook && (cv = sv_2cv(warnhook, &stash, &gv, 0)) && !CvDEPTH(cv)) {
-	dSP;
+    if (warnhook) {
+	/* sv_2cv might call warn() */
+	SV *oldwarnhook = warnhook;
+	ENTER;
+	SAVESPTR(warnhook);
+	warnhook = Nullsv;
+	cv = sv_2cv(oldwarnhook, &stash, &gv, 0);
+	LEAVE;
+	if (cv && !CvDEPTH(cv) && (CvROOT(cv) || CvXSUB(cv))) {
+	    dSP;
+	    SV *msg;
 
-	PUSHMARK(sp);
-	EXTEND(sp, 1);
-	PUSHs(sv_2mortal(newSVpv(message,0)));
-	PUTBACK;
-	perl_call_sv((SV*)cv, G_DISCARD);
+	    ENTER;
+	    msg = newSVpv(message, 0);
+	    SvREADONLY_on(msg);
+	    SAVEFREESV(msg);
+
+	    PUSHMARK(sp);
+	    XPUSHs(msg);
+	    PUTBACK;
+	    perl_call_sv((SV*)cv, G_DISCARD);
+
+	    LEAVE;
+	    return;
+	}
     }
-    else {
-	fputs(message,stderr);
+    PerlIO_puts(PerlIO_stderr(),message);
 #ifdef LEAKTEST
-	DEBUG_L(xstat());
+    DEBUG_L(xstat());
 #endif
-	(void)Fflush(stderr);
-    }
+    (void)PerlIO_flush(PerlIO_stderr());
 }
-#endif /* !defined(I_STDARG) && !defined(I_VARARGS) */
 
 #ifndef VMS  /* VMS' my_setenv() is in VMS.c */
+#ifndef WIN32
 void
 my_setenv(nam,val)
 char *nam, *val;
@@ -1069,6 +1355,7 @@ char *nam, *val;
 	environ = tmpenv;		/* tell exec where it is now */
     }
     if (!val) {
+	Safefree(environ[i]);
 	while (environ[i]) {
 	    environ[i] = environ[i+1];
 	    i++;
@@ -1095,6 +1382,74 @@ char *nam, *val;
 #endif /* MSDOS */
 }
 
+#else /* if WIN32 */
+
+void
+my_setenv(nam,val)
+char *nam, *val;
+{
+
+#ifdef USE_WIN32_RTL_ENV
+
+    register char *envstr;
+    STRLEN namlen = strlen(nam);
+    STRLEN vallen;
+    char *oldstr = environ[setenv_getix(nam)];
+
+    /* putenv() has totally broken semantics in both the Borland
+     * and Microsoft CRTLs.  They either store the passed pointer in
+     * the environment without making a copy, or make a copy and don't
+     * free it. And on top of that, they dont free() old entries that
+     * are being replaced/deleted.  This means the caller must
+     * free any old entries somehow, or we end up with a memory
+     * leak every time my_setenv() is called.  One might think
+     * one could directly manipulate environ[], like the UNIX code
+     * above, but direct changes to environ are not allowed when
+     * calling putenv(), since the RTLs maintain an internal
+     * *copy* of environ[]. Bad, bad, *bad* stink.
+     * GSAR 97-06-07
+     */
+
+    if (!val) {
+	if (!oldstr)
+	    return;
+	val = "";
+	vallen = 0;
+    }
+    else
+	vallen = strlen(val);
+    New(904, envstr, namlen + vallen + 3, char);
+    (void)sprintf(envstr,"%s=%s",nam,val);
+    (void)putenv(envstr);
+    if (oldstr)
+	Safefree(oldstr);
+#ifdef _MSC_VER
+    Safefree(envstr);		/* MSVCRT leaks without this */
+#endif
+
+#else /* !USE_WIN32_RTL_ENV */
+
+    /* The sane way to deal with the environment.
+     * Has these advantages over putenv() & co.:
+     *  * enables us to store a truly empty value in the
+     *    environment (like in UNIX).
+     *  * we don't have to deal with RTL globals, bugs and leaks.
+     *  * Much faster.
+     * Why you may want to enable USE_WIN32_RTL_ENV:
+     *  * environ[] and RTL functions will not reflect changes,
+     *    which might be an issue if extensions want to access
+     *    the env. via RTL.  This cuts both ways, since RTL will
+     *    not see changes made by extensions that call the Win32
+     *    functions directly, either.
+     * GSAR 97-06-07
+     */
+    SetEnvironmentVariable(nam,val);
+
+#endif
+}
+
+#endif /* WIN32 */
+
 I32
 setenv_getix(nam)
 char *nam;
@@ -1102,11 +1457,18 @@ char *nam;
     register I32 i, len = strlen(nam);
 
     for (i = 0; environ[i]; i++) {
-	if (strnEQ(environ[i],nam,len) && environ[i][len] == '=')
+	if (
+#ifdef WIN32
+	    strnicmp(environ[i],nam,len) == 0
+#else
+	    strnEQ(environ[i],nam,len)
+#endif
+	    && environ[i][len] == '=')
 	    break;			/* strnEQ must come first to avoid */
     }					/* potential SEGV's */
     return i;
 }
+
 #endif /* !VMS */
 
 #ifdef UNLINK_ALL_VERSIONS
@@ -1144,6 +1506,21 @@ register I32 len;
 }
 #endif
 
+#ifndef HAS_MEMSET
+void *
+my_memset(loc,ch,len)
+register char *loc;
+register I32 ch;
+register I32 len;
+{
+    char *retval = loc;
+
+    while (len--)
+	*loc++ = ch;
+    return retval;
+}
+#endif
+
 #if !defined(HAS_BZERO) && !defined(HAS_MEMSET)
 char *
 my_bzero(loc,len)
@@ -1158,22 +1535,24 @@ register I32 len;
 }
 #endif
 
-#ifndef HAS_MEMCMP
+#if !defined(HAS_MEMCMP) || !defined(HAS_SANE_MEMCMP)
 I32
 my_memcmp(s1,s2,len)
-register unsigned char *s1;
-register unsigned char *s2;
+char *s1;
+char *s2;
 register I32 len;
 {
+    register U8 *a = (U8 *)s1;
+    register U8 *b = (U8 *)s2;
     register I32 tmp;
 
     while (len--) {
-	if (tmp = *s1++ - *s2++)
+	if (tmp = *a++ - *b++)
 	    return tmp;
     }
     return 0;
 }
-#endif /* HAS_MEMCMP */
+#endif /* !HAS_MEMCMP || !HAS_SANE_MEMCMP */
 
 #if defined(I_STDARG) || defined(I_VARARGS)
 #ifndef HAS_VPRINTF
@@ -1184,7 +1563,9 @@ char *
 int
 #endif
 vsprintf(dest, pat, args)
-char *dest, *pat, *args;
+char *dest;
+const char *pat;
+char *args;
 {
     FILE fakebuf;
 
@@ -1203,14 +1584,6 @@ char *dest, *pat, *args;
 #endif
 }
 
-int
-vfprintf(fd, pat, args)
-FILE *fd;
-char *pat, *args;
-{
-    _doprnt(pat, args, fd);
-    return 0;		/* wrong, but perl doesn't use the return value */
-}
 #endif /* HAS_VPRINTF */
 #endif /* I_VARARGS || I_STDARGS */
 
@@ -1364,9 +1737,9 @@ VTOH(vtohs,short)
 VTOH(vtohl,long)
 #endif
 
-#if  !defined(DOSISH) && !defined(VMS)  /* VMS' my_popen() is in
-					   VMS.c, same with OS/2. */
-FILE *
+    /* VMS' my_popen() is in VMS.c, same with OS/2. */
+#if (!defined(DOSISH) || defined(HAS_FORK) || defined(AMIGAOS)) && !defined(VMS)
+PerlIO *
 my_popen(cmd,mode)
 char	*cmd;
 char	*mode;
@@ -1377,15 +1750,18 @@ char	*mode;
     SV *sv;
     I32 doexec = strNE(cmd,"-");
 
+#ifdef OS2
+    if (doexec) {
+	return my_syspopen(cmd,mode);
+    }
+#endif 
     if (pipe(p) < 0)
 	return Nullfp;
     this = (*mode == 'w');
     that = !this;
-    if (tainting) {
-	if (doexec) {
-	    taint_env();
-	    taint_proper("Insecure %s%s", "EXEC");
-	}
+    if (doexec && tainting) {
+	taint_env();
+	taint_proper("Insecure %s%s", "EXEC");
     }
     while ((pid = (doexec?vfork():fork())) < 0) {
 	if (errno != EAGAIN) {
@@ -1421,7 +1797,7 @@ char	*mode;
 	}
 	/*SUPPRESS 560*/
 	if (tmpgv = gv_fetchpv("$",TRUE, SVt_PV))
-	    sv_setiv(GvSV(tmpgv),(I32)getpid());
+	    sv_setiv(GvSV(tmpgv), (IV)getpid());
 	forkprocess = 0;
 	hv_clear(pidstatus);	/* we have no children */
 	return Nullfp;
@@ -1439,17 +1815,19 @@ char	*mode;
     (void)SvUPGRADE(sv,SVt_IV);
     SvIVX(sv) = pid;
     forkprocess = pid;
-    return fdopen(p[this], mode);
+    return PerlIO_fdopen(p[this], mode);
 }
 #else
-#if defined(atarist)
+#if defined(atarist) || defined(DJGPP)
 FILE *popen();
-FILE *
+PerlIO *
 my_popen(cmd,mode)
 char	*cmd;
 char	*mode;
 {
-    return popen(cmd, mode);
+    /* Needs work for PerlIO ! */
+    /* used 0 for 2nd parameter to PerlIO-exportFILE; apparently not used */
+    return popen(PerlIO_exportFILE(cmd, 0), mode);
 }
 #endif
 
@@ -1462,12 +1840,12 @@ char *s;
     int fd;
     struct stat tmpstatbuf;
 
-    fprintf(stderr,"%s", s);
+    PerlIO_printf(PerlIO_stderr(),"%s", s);
     for (fd = 0; fd < 32; fd++) {
 	if (Fstat(fd,&tmpstatbuf) >= 0)
-	    fprintf(stderr," %d",fd);
+	    PerlIO_printf(PerlIO_stderr()," %d",fd);
     }
-    fprintf(stderr,"\n");
+    PerlIO_printf(PerlIO_stderr(),"\n");
 }
 #endif
 
@@ -1483,15 +1861,23 @@ int newfd;
     close(newfd);
     return fcntl(oldfd, F_DUPFD, newfd);
 #else
-    int fdtmp[256];
+#define DUP2_MAX_FDS 256
+    int fdtmp[DUP2_MAX_FDS];
     I32 fdx = 0;
     int fd;
 
     if (oldfd == newfd)
 	return oldfd;
     close(newfd);
-    while ((fd = dup(oldfd)) != newfd && fd >= 0) /* good enough for low fd's */
+    /* good enough for low fd's... */
+    while ((fd = dup(oldfd)) != newfd && fd >= 0) {
+	if (fdx >= DUP2_MAX_FDS) {
+	    close(fd);
+	    fd = -1;
+	    break;
+	}
 	fdtmp[fdx++] = fd;
+    }
     while (fdx > 0)
 	close(fdtmp[--fdx]);
     return fd;
@@ -1499,34 +1885,167 @@ int newfd;
 }
 #endif
 
-#if  !defined(DOSISH) && !defined(VMS)  /* VMS' my_popen() is in VMS.c */
+
+#ifdef HAS_SIGACTION
+
+Sighandler_t
+rsignal(signo, handler)
+int signo;
+Sighandler_t handler;
+{
+    struct sigaction act, oact;
+
+    act.sa_handler = handler;
+    sigemptyset(&act.sa_mask);
+    act.sa_flags = 0;
+#ifdef SA_RESTART
+    act.sa_flags |= SA_RESTART;	/* SVR4, 4.3+BSD */
+#endif
+    if (sigaction(signo, &act, &oact) == -1)
+    	return SIG_ERR;
+    else
+    	return oact.sa_handler;
+}
+
+Sighandler_t
+rsignal_state(signo)
+int signo;
+{
+    struct sigaction oact;
+
+    if (sigaction(signo, (struct sigaction *)NULL, &oact) == -1)
+        return SIG_ERR;
+    else
+        return oact.sa_handler;
+}
+
+int
+rsignal_save(signo, handler, save)
+int signo;
+Sighandler_t handler;
+Sigsave_t *save;
+{
+    struct sigaction act;
+
+    act.sa_handler = handler;
+    sigemptyset(&act.sa_mask);
+    act.sa_flags = 0;
+#ifdef SA_RESTART
+    act.sa_flags |= SA_RESTART;	/* SVR4, 4.3+BSD */
+#endif
+    return sigaction(signo, &act, save);
+}
+
+int
+rsignal_restore(signo, save)
+int signo;
+Sigsave_t *save;
+{
+    return sigaction(signo, save, (struct sigaction *)NULL);
+}
+
+#else /* !HAS_SIGACTION */
+
+Sighandler_t
+rsignal(signo, handler)
+int signo;
+Sighandler_t handler;
+{
+    return signal(signo, handler);
+}
+
+static int sig_trapped;
+
+static
+Signal_t
+sig_trap(signo)
+int signo;
+{
+    sig_trapped++;
+}
+
+Sighandler_t
+rsignal_state(signo)
+int signo;
+{
+    Sighandler_t oldsig;
+
+    sig_trapped = 0;
+    oldsig = signal(signo, sig_trap);
+    signal(signo, oldsig);
+    if (sig_trapped)
+        kill(getpid(), signo);
+    return oldsig;
+}
+
+int
+rsignal_save(signo, handler, save)
+int signo;
+Sighandler_t handler;
+Sigsave_t *save;
+{
+    *save = signal(signo, handler);
+    return (*save == SIG_ERR) ? -1 : 0;
+}
+
+int
+rsignal_restore(signo, save)
+int signo;
+Sigsave_t *save;
+{
+    return (signal(signo, *save) == SIG_ERR) ? -1 : 0;
+}
+
+#endif /* !HAS_SIGACTION */
+
+    /* VMS' my_pclose() is in VMS.c; same with OS/2 */
+#if (!defined(DOSISH) || defined(HAS_FORK) || defined(AMIGAOS)) && !defined(VMS)
 I32
 my_pclose(ptr)
-FILE *ptr;
+PerlIO *ptr;
 {
-    Signal_t (*hstat)(), (*istat)(), (*qstat)();
+    Sigsave_t hstat, istat, qstat;
     int status;
     SV **svp;
     int pid;
+    bool close_failed;
+    int saved_errno;
+#ifdef VMS
+    int saved_vaxc_errno;
+#endif
 
-    svp = av_fetch(fdpid,fileno(ptr),TRUE);
+    svp = av_fetch(fdpid,PerlIO_fileno(ptr),TRUE);
     pid = (int)SvIVX(*svp);
     SvREFCNT_dec(*svp);
     *svp = &sv_undef;
-    fclose(ptr);
+#ifdef OS2
+    if (pid == -1) {			/* Opened by popen. */
+	return my_syspclose(ptr);
+    }
+#endif 
+    if ((close_failed = (PerlIO_close(ptr) == EOF))) {
+	saved_errno = errno;
+#ifdef VMS
+	saved_vaxc_errno = vaxc$errno;
+#endif
+    }
 #ifdef UTS
     if(kill(pid, 0) < 0) { return(pid); }   /* HOM 12/23/91 */
 #endif
-    hstat = signal(SIGHUP, SIG_IGN);
-    istat = signal(SIGINT, SIG_IGN);
-    qstat = signal(SIGQUIT, SIG_IGN);
+    rsignal_save(SIGHUP, SIG_IGN, &hstat);
+    rsignal_save(SIGINT, SIG_IGN, &istat);
+    rsignal_save(SIGQUIT, SIG_IGN, &qstat);
     do {
 	pid = wait4pid(pid, &status, 0);
     } while (pid == -1 && errno == EINTR);
-    signal(SIGHUP, hstat);
-    signal(SIGINT, istat);
-    signal(SIGQUIT, qstat);
-    return(pid < 0 ? pid : status);
+    rsignal_restore(SIGHUP, &hstat);
+    rsignal_restore(SIGINT, &istat);
+    rsignal_restore(SIGQUIT, &qstat);
+    if (close_failed) {
+	SETERRNO(saved_errno, saved_vaxc_errno);
+	return -1;
+    }
+    return(pid < 0 ? pid : status == 0 ? 0 : (errno = 0, status));
 }
 #endif /* !DOSISH */
 
@@ -1539,7 +2058,7 @@ int flags;
 {
     SV *sv;
     SV** svp;
-    char spid[16];
+    char spid[TYPE_CHARS(int)];
 
     if (!pid)
 	return -1;
@@ -1566,11 +2085,17 @@ int flags;
 	}
     }
 #ifdef HAS_WAITPID
+#  ifdef HAS_WAITPID_RUNTIME
+    if (!HAS_WAITPID_RUNTIME)
+	goto hard_way;
+#  endif
     return waitpid(pid,statusp,flags);
-#else
-#ifdef HAS_WAIT4
+#endif
+#if !defined(HAS_WAITPID) && defined(HAS_WAIT4)
     return wait4((pid==-1)?0:pid,statusp,flags,Null(struct rusage *));
-#else
+#endif
+#if !defined(HAS_WAITPID) && !defined(HAS_WAIT4) || defined(HAS_WAITPID_RUNTIME)
+  hard_way:
     {
 	I32 result;
 	if (flags)
@@ -1584,7 +2109,6 @@ int flags;
 	return result;
     }
 #endif
-#endif
 }
 #endif /* !DOSISH */
 
@@ -1595,7 +2119,7 @@ int pid;
 int status;
 {
     register SV *sv;
-    char spid[16];
+    char spid[TYPE_CHARS(int)];
 
     sprintf(spid, "%d", pid);
     sv = *hv_fetch(pidstatus,spid,strlen(spid),TRUE);
@@ -1604,13 +2128,23 @@ int status;
     return;
 }
 
-#if defined(atarist) || defined(OS2)
+#if defined(atarist) || defined(OS2) || defined(DJGPP)
 int pclose();
+#ifdef HAS_FORK
+int					/* Cannot prototype with I32
+					   in os2ish.h. */
+my_syspclose(ptr)
+#else
 I32
 my_pclose(ptr)
-FILE *ptr;
+#endif 
+PerlIO *ptr;
 {
-    return pclose(ptr);
+    /* Needs work for PerlIO ! */
+    FILE *f = PerlIO_findFILE(ptr);
+    I32 result = pclose(f);
+    PerlIO_releaseFILE(ptr,f);
+    return result;
 }
 #endif
 
@@ -1660,29 +2194,6 @@ double f;
 
 #ifndef CASTI32
 
-/* Look for MAX and MIN integral values.  If we can't find them,
-   we'll use 32-bit two's complement defaults.
-*/
-#ifndef LONG_MAX
-#  ifdef MAXLONG    /* Often used in <values.h> */
-#    define LONG_MAX MAXLONG
-#  else
-#    define LONG_MAX        2147483647L
-#  endif
-#endif
-
-#ifndef LONG_MIN
-#    define LONG_MIN        (-LONG_MAX - 1)
-#endif
-
-#ifndef ULONG_MAX
-#  ifdef MAXULONG 
-#    define LONG_MAX MAXULONG
-#  else
-#    define ULONG_MAX       4294967295L
-#  endif
-#endif
-
 /* Unfortunately, on some systems the cast_uv() function doesn't
    work with the system-supplied definition of ULONG_MAX.  The
    comparison  (f >= ULONG_MAX) always comes out true.  It must be a
@@ -1693,18 +2204,24 @@ double f;
    ccflags.
 	       --Andy Dougherty      <doughera@lafcol.lafayette.edu>
 */
-#ifndef MY_ULONG_MAX
-#  define MY_ULONG_MAX ((UV)LONG_MAX * (UV)2 + (UV)1)
+
+/* Code modified to prefer proper named type ranges, I32, IV, or UV, instead
+   of LONG_(MIN/MAX).
+                           -- Kenneth Albanowski <kjahds@kjahds.com>
+*/                                      
+
+#ifndef MY_UV_MAX
+#  define MY_UV_MAX ((UV)IV_MAX * (UV)2 + (UV)1)
 #endif
 
 I32
 cast_i32(f)
 double f;
 {
-    if (f >= LONG_MAX)
-	return (I32) LONG_MAX;
-    if (f <= LONG_MIN)
-	return (I32) LONG_MIN;
+    if (f >= I32_MAX)
+	return (I32) I32_MAX;
+    if (f <= I32_MIN)
+	return (I32) I32_MIN;
     return (I32) f;
 }
 
@@ -1712,10 +2229,10 @@ IV
 cast_iv(f)
 double f;
 {
-    if (f >= LONG_MAX)
-	return (IV) LONG_MAX;
-    if (f <= LONG_MIN)
-	return (IV) LONG_MIN;
+    if (f >= IV_MAX)
+	return (IV) IV_MAX;
+    if (f <= IV_MIN)
+	return (IV) IV_MIN;
     return (IV) f;
 }
 
@@ -1723,8 +2240,8 @@ UV
 cast_uv(f)
 double f;
 {
-    if (f >= MY_ULONG_MAX)
-	return (UV) MY_ULONG_MAX;
+    if (f >= MY_UV_MAX)
+	return (UV) MY_UV_MAX;
     return (UV) f;
 }
 
@@ -1740,10 +2257,7 @@ char *b;
     char *fb = strrchr(b,'/');
     struct stat tmpstatbuf1;
     struct stat tmpstatbuf2;
-#ifndef MAXPATHLEN
-#define MAXPATHLEN 1024
-#endif
-    char tmpbuf[MAXPATHLEN+1];
+    SV *tmpsv = sv_newmortal();
 
     if (fa)
 	fa++;
@@ -1756,34 +2270,39 @@ char *b;
     if (strNE(a,b))
 	return FALSE;
     if (fa == a)
-	strcpy(tmpbuf,".");
+	sv_setpv(tmpsv, ".");
     else
-	strncpy(tmpbuf, a, fa - a);
-    if (Stat(tmpbuf, &tmpstatbuf1) < 0)
+	sv_setpvn(tmpsv, a, fa - a);
+    if (Stat(SvPVX(tmpsv), &tmpstatbuf1) < 0)
 	return FALSE;
     if (fb == b)
-	strcpy(tmpbuf,".");
+	sv_setpv(tmpsv, ".");
     else
-	strncpy(tmpbuf, b, fb - b);
-    if (Stat(tmpbuf, &tmpstatbuf2) < 0)
+	sv_setpvn(tmpsv, b, fb - b);
+    if (Stat(SvPVX(tmpsv), &tmpstatbuf2) < 0)
 	return FALSE;
     return tmpstatbuf1.st_dev == tmpstatbuf2.st_dev &&
 	   tmpstatbuf1.st_ino == tmpstatbuf2.st_ino;
 }
 #endif /* !HAS_RENAME */
 
-unsigned long
+UV
 scan_oct(start, len, retlen)
 char *start;
 I32 len;
 I32 *retlen;
 {
     register char *s = start;
-    register unsigned long retval = 0;
+    register UV retval = 0;
+    bool overflowed = FALSE;
 
     while (len && *s >= '0' && *s <= '7') {
-	retval <<= 3;
-	retval |= *s++ - '0';
+	register UV n = retval << 3;
+	if (!overflowed && (n >> 3) != retval) {
+	    warn("Integer overflow in octal number");
+	    overflowed = TRUE;
+	}
+	retval = n | (*s++ - '0');
 	len--;
     }
     if (dowarn && len && (*s == '8' || *s == '9'))
@@ -1792,21 +2311,40 @@ I32 *retlen;
     return retval;
 }
 
-unsigned long
+UV
 scan_hex(start, len, retlen)
 char *start;
 I32 len;
 I32 *retlen;
 {
     register char *s = start;
-    register unsigned long retval = 0;
+    register UV retval = 0;
+    bool overflowed = FALSE;
     char *tmp;
 
     while (len-- && *s && (tmp = strchr(hexdigit, *s))) {
-	retval <<= 4;
-	retval |= (tmp - hexdigit) & 15;
+	register UV n = retval << 4;
+	if (!overflowed && (n >> 4) != retval) {
+	    warn("Integer overflow in hex number");
+	    overflowed = TRUE;
+	}
+	retval = n | (tmp - hexdigit) & 15;
 	s++;
     }
     *retlen = s - start;
     return retval;
 }
+
+
+#ifdef HUGE_VAL
+/*
+ * This hack is to force load of "huge" support from libm.a
+ * So it is in perl for (say) POSIX to use. 
+ * Needed for SunOS with Sun's 'acc' for example.
+ */
+double 
+Perl_huge()
+{
+ return HUGE_VAL;
+}
+#endif

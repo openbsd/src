@@ -1,13 +1,13 @@
-# $Id: dgux.sh,v 1.4 1996/01/18 03:40:38 roderick Exp $
+# $Id: dgux.sh,v 1.8 1996-11-29 18:16:43-05 roderick Exp $
 
 # This is a hints file for DGUX, which is Data General's Unix.  It was
-# developed using version 5.4.3.10 of the OS.  I think the gross
-# features should work with versions 5.4.2 through 5.4.4.11 with perhaps
-# minor tweaking, but I don't have any older or newer versions installed
-# at the moment with which to test it.
+# originally developed with version 5.4.3.10 of the OS, and then was
+# later updated running under version 4.11.2 (running on m88k hardware).
+# The gross features should work with versions going back to 2.nil but
+# some tweaking will probably be necessary.
 #
 # DGUX is a SVR4 derivative.  It ships with gcc as the standard
-# compiler.  Since version 5.4.3.0 it has shipped with Perl 4.036
+# compiler.  Since version 3.0 it has shipped with Perl 4.036
 # installed in /usr/bin, which is kind of neat.  Be careful when you
 # install that you don't overwrite the system version, though (by
 # answering yes to the question about installing perl as /usr/bin/perl),
@@ -18,7 +18,7 @@
 # your $LD_LIBRARY_PATH to include the source directory when you build,
 # test and install the software.
 #
-# -Roderick Schertler <roderick@gate.net>
+# -Roderick Schertler <roderick@argon.org>
 
 
 # Here are the things from some old DGUX hints files which are different
@@ -34,7 +34,7 @@
 #     cppstdin='/lib/cpp'
 #
 # The 4.036 and 5.001 hints files both contained these.  The 5.001 hints
-# file said it was developed with version 5.4.2.01 of DGUX.
+# file said it was developed with version 2.01 of DGUX.
 #
 #     gidtype='gid_t'
 #     groupstype='gid_t'
@@ -53,7 +53,7 @@
 #
 # One last note:  The 5.001 hints file said "you don't want to use
 # /usr/ucb/cc" in the place at which it set cc to gcc.  That in
-# particular baffles me, as I used to have 5.4.2.01 loaded and my memory
+# particular baffles me, as I used to have 2.01 loaded and my memory
 # is telling me that even then /usr/ucb was a symlink to /usr/bin.
 
 
@@ -82,8 +82,45 @@ usevfork=true
 # $plibpth to explicitly include the place to which the elinks point
 # allows Configure to find libraries which vary based on the development
 # environment.
-plibpth="$plibpth \
-    ${SDE_PATH:-/usr}/sde/${TARGET_BINARY_INTERFACE:-m88kdgux}/usr/lib"
+#
+# Starting with version 4.10 (the first time the OS supported Intel
+# hardware) all libraries are accessed with this mechanism.
+#
+# The default $TARGET_BINARY_INTERFACE changed with version 4.10.  The
+# system now comes with a link named /usr/sde/default which points to
+# the proper entry, but older versions lacked this and used m88kdgux
+# directly.
+
+: && sde_path=${SDE_PATH:-/usr}/sde	# hide from Configure
+while : # dummy loop
+do
+    if [ -n "$TARGET_BINARY_INTERFACE" ]
+	then set X "$TARGET_BINARY_INTERFACE"
+	else set X default dg m88k_dg ix86_dg m88kdgux m88kdguxelf
+    fi
+    shift
+    default_sde=$1
+    for sde
+    do
+	[ -d "$sde_path/$sde" ] && break 2
+    done
+    cat <<END >&2
+
+NOTE:  I can't figure out what SDE is used by default on this machine (I
+didn't find a likely directory under $sde_path).  This is bad news.  If
+this is a R4.10 or newer system I'm not going to be able to find any of
+your libraries, if this system is R3.10 or older I won't be able to find
+the math library.  You should re-run Configure with the environment
+variable TARGET_BINARY_INTERFACE set to the proper value for this
+machine, see sde(5) and the notes in hints/dgux.sh.
+
+END
+    sde=$default_sde
+    break
+done
+
+plibpth="$plibpth $sde_path/$sde/usr/lib"
+unset sde_path default_sde sde
 
 # Many functions (eg, gethostent(), killpg(), getpriority(), setruid()
 # dbm_*(), and plenty more) are defined in -ldgc.  Usually you don't
@@ -93,31 +130,12 @@ plibpth="$plibpth \
 libswanted="dgc $libswanted"
 
 # Dynamic loading works using the dlopen() functions.  Note that dlfcn.h
-# is broken, it declares _dl*() rather than dl*().  (This is in my
-# I'd-open-a-ticket-about-this-if-it-weren't-going-to-be-such-a-hassle
-# file.)  You can ignore the warnings caused by the missing
-# declarations, they're harmless.
+# used to be broken, it declared _dl*() rather than dl*().  This was the
+# case up to 3.10, it has been fixed in 4.11.  I'm not sure if it was
+# fixed in 4.10.  If you have the older header just ignore the warnings
+# (since pointers and integers have the same format on m88k).
 usedl=true
 # For cc rather than gcc the flags would be `-K PIC' for compiling and
 # -G for loading.  I haven't tested this.
 cccdlflags=-fpic
 lddlflags=-shared
-# The Perl library has to be built as a shared library so that dynamic
-# loading will work (otherwise code loaded with dlopen() won't be able
-# to reference symbols in the main part of perl).  Note that since
-# Configure doesn't normally prompt about $d_shrplib this will cause a
-# `Whoa there!'.  This is normal, just keep the recommended value.  A
-# consequence of all this is that you've got to include the source
-# directory in your LD_LIBRARY_PATH when you're building and testing
-# perl.
-d_shrplib=define
-
-# The system has a function called dg_flock() which is an flock()
-# emulation built using fcntl() locking.  Perl currently comes with an
-# flock() emulation which uses lockf(), it should eventually also
-# include an fcntl() emulation of its own.  Until that happens I
-# recommend using DG's emulation (and ignoring the `WHOA THERE!' this
-# causes), it provides semantics closer to the original than the lockf()
-# emulation.
-ccflags="$ccflags -Dflock=dg_flock"
-d_flock=define

@@ -23,6 +23,10 @@ Symbol - manipulate Perl symbols and their names
     print qualify(\*x), "\n";              # returns \*x
     print qualify(\*x, "FOO"), "\n";       # returns \*x
 
+    use strict refs;
+    print { qualify_to_ref $fh } "foo!\n";
+    $ref = qualify_to_ref $name, $pkg;
+
 =head1 DESCRIPTION
 
 C<Symbol::gensym> creates an anonymous glob and returns a reference
@@ -34,7 +38,7 @@ support anonymous globs, C<Symbol::ungensym> is also provided.
 But it doesn't do anything.
 
 C<Symbol::qualify> turns unqualified symbol names into qualified
-variable names (e.g. "myvar" -> "MyPackage::myvar").  If it is given a
+variable names (e.g. "myvar" -E<gt> "MyPackage::myvar").  If it is given a
 second parameter, C<qualify> uses it as the default package;
 otherwise, it uses the package of its caller.  Regardless, global
 variable names (e.g. "STDOUT", "ENV", "SIG") are always qualfied with
@@ -44,29 +48,35 @@ Qualification applies only to symbol names (strings).  References are
 left unchanged under the assumption that they are glob references,
 which are qualified by their nature.
 
+C<Symbol::qualify_to_ref> is just like C<Symbol::qualify> except that it
+returns a glob ref rather than a symbol name, so you can use the result
+even if C<use strict 'refs'> is in effect.
+
 =cut
 
 BEGIN { require 5.002; }
 
 require Exporter;
 @ISA = qw(Exporter);
+@EXPORT = qw(gensym ungensym qualify qualify_to_ref);
 
-@EXPORT = qw(gensym ungensym qualify);
+$VERSION = 1.02;
 
 my $genpkg = "Symbol::";
 my $genseq = 0;
 
-my %global;
-while (<DATA>) {
-    chomp;
-    $global{$_} = 1;
-}
-close DATA;
+my %global = map {$_ => 1} qw(ARGV ARGVOUT ENV INC SIG STDERR STDIN STDOUT);
 
+#
+# Note that we never _copy_ the glob; we just make a ref to it.
+# If we did copy it, then SVf_FAKE would be set on the copy, and
+# glob-specific behaviors (e.g. C<*$ref = \&func>) wouldn't work.
+#
 sub gensym () {
     my $name = "GEN" . $genseq++;
-    local *{$genpkg . $name};
-    \delete ${$genpkg}{$name};
+    my $ref = \*{$genpkg . $name};
+    delete $$genpkg{$name};
+    $ref;
 }
 
 sub ungensym ($) {}
@@ -87,14 +97,8 @@ sub qualify ($;$) {
     $name;
 }
 
-1;
+sub qualify_to_ref ($;$) {
+    return \*{ qualify $_[0], @_ > 1 ? $_[1] : caller };
+}
 
-__DATA__
-ARGV
-ARGVOUT
-ENV
-INC
-SIG
-STDERR
-STDIN
-STDOUT
+1;

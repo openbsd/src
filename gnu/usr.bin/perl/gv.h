@@ -1,6 +1,6 @@
 /*    gv.h
  *
- *    Copyright (c) 1991-1994, Larry Wall
+ *    Copyright (c) 1991-1997, Larry Wall
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -13,7 +13,7 @@ struct gp {
     struct io *	gp_io;		/* filehandle value */
     CV *	gp_form;	/* format value */
     AV *	gp_av;		/* array value */
-    HV *	gp_hv;		/* associative array value */
+    HV *	gp_hv;		/* hash value */
     GV *	gp_egv;		/* effective gv, if *glob */
     CV *	gp_cv;		/* subroutine value */
     U32		gp_cvgen;	/* generational validity of cached gv_cv */
@@ -43,6 +43,9 @@ struct gp {
 #define GvFORM(gv)	(GvGP(gv)->gp_form)
 #define GvAV(gv)	(GvGP(gv)->gp_av)
 
+/* This macro is deprecated.  Do not use! */
+#define GvREFCNT_inc(gv) ((GV*)SvREFCNT_inc(gv))	/* DO NOT USE */
+
 #ifdef	MICROPORT	/* Microport 2.4 hack */
 AV *GvAVn();
 #else
@@ -62,6 +65,7 @@ HV *GvHVn();
 
 #define GvCV(gv)	(GvGP(gv)->gp_cv)
 #define GvCVGEN(gv)	(GvGP(gv)->gp_cvgen)
+#define GvCVu(gv)	(GvGP(gv)->gp_cvgen ? Nullcv : GvGP(gv)->gp_cv)
 
 #define GvLASTEXPR(gv)	(GvGP(gv)->gp_lastexpr)
 

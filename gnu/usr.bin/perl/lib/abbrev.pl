@@ -17,7 +17,7 @@ sub main'abbrev {
 	$len = 1;
 	foreach $cmp (@cmp) {
 	    next if $cmp eq $name;
-	    while (substr($cmp,0,$len) eq $abbrev) {
+	    while (@extra && substr($cmp,0,$len) eq $abbrev) {
 		$abbrev .= shift(@extra);
 		++$len;
 	    }

@@ -1,0 +1,1101 @@
+=head1 NAME
+
+perlfaq4 - Data Manipulation ($Revision: 1.19 $, $Date: 1997/04/24 22:43:57 $)
+
+=head1 DESCRIPTION
+
+The section of the FAQ answers question related to the manipulation
+of data as numbers, dates, strings, arrays, hashes, and miscellaneous
+data issues.
+
+=head1 Data: Numbers
+
+=head2 Why am I getting long decimals (eg, 19.9499999999999) instead of the numbers I should be getting (eg, 19.95)?
+
+Internally, your computer represents floating-point numbers in binary.
+Floating-point numbers read in from a file, or appearing as literals
+in your program, are converted from their decimal floating-point
+representation (eg, 19.95) to the internal binary representation.
+
+However, 19.95 can't be precisely represented as a binary
+floating-point number, just like 1/3 can't be exactly represented as a
+decimal floating-point number.  The computer's binary representation
+of 19.95, therefore, isn't exactly 19.95.
+
+When a floating-point number gets printed, the binary floating-point
+representation is converted back to decimal.  These decimal numbers
+are displayed in either the format you specify with printf(), or the
+current output format for numbers (see L<perlvar/"$#"> if you use
+print.  C<$#> has a different default value in Perl5 than it did in
+Perl4.  Changing C<$#> yourself is deprecated.
+
+This affects B<all> computer languages that represent decimal
+floating-point numbers in binary, not just Perl.  Perl provides
+arbitrary-precision decimal numbers with the Math::BigFloat module
+(part of the standard Perl distribution), but mathematical operations
+are consequently slower.
+
+To get rid of the superfluous digits, just use a format (eg,
+C<printf("%.2f", 19.95)>) to get the required precision.
+
+=head2 Why isn't my octal data interpreted correctly?
+
+Perl only understands octal and hex numbers as such when they occur
+as literals in your program.  If they are read in from somewhere and
+assigned, no automatic conversion takes place.  You must explicitly
+use oct() or hex() if you want the values converted.  oct() interprets
+both hex ("0x350") numbers and octal ones ("0350" or even without the
+leading "0", like "377"), while hex() only converts hexadecimal ones,
+with or without a leading "0x", like "0x255", "3A", "ff", or "deadbeef".
+
+This problem shows up most often when people try using chmod(), mkdir(),
+umask(), or sysopen(), which all want permissions in octal.
+
+    chmod(644,  $file);	# WRONG -- perl -w catches this
+    chmod(0644, $file);	# right
+
+=head2 Does perl have a round function?  What about ceil() and floor()?
+Trig functions?
+
+For rounding to a certain number of digits, sprintf() or printf() is
+usually the easiest route.
+
+The POSIX module (part of the standard perl distribution) implements
+ceil(), floor(), and a number of other mathematical and trigonometric
+functions.
+
+In 5.000 to 5.003 Perls, trigonometry was done in the Math::Complex
+module.  With 5.004, the Math::Trig module (part of the standard perl
+distribution) implements the trigonometric functions. Internally it
+uses the Math::Complex module and some functions can break out from
+the real axis into the complex plane, for example the inverse sine of
+2.
+
+Rounding in financial applications can have serious implications, and
+the rounding method used should be specified precisely.  In these
+cases, it probably pays not to trust whichever system rounding is
+being used by Perl, but to instead implement the rounding function you
+need yourself.
+
+=head2 How do I convert bits into ints?
+
+To turn a string of 1s and 0s like '10110110' into a scalar containing
+its binary value, use the pack() function (documented in
+L<perlfunc/"pack">):
+
+    $decimal = pack('B8', '10110110');
+
+Here's an example of going the other way:
+
+    $binary_string = join('', unpack('B*', "\x29"));
+
+=head2 How do I multiply matrices?
+
+Use the Math::Matrix or Math::MatrixReal modules (available from CPAN)
+or the PDL extension (also available from CPAN).
+
+=head2 How do I perform an operation on a series of integers?
+
+To call a function on each element in an array, and collect the
+results, use:
+
+    @results = map { my_func($_) } @array;
+
+For example:
+
+    @triple = map { 3 * $_ } @single;
+
+To call a function on each element of an array, but ignore the
+results:
+
+    foreach $iterator (@array) {
+        &my_func($iterator);
+    }
+
+To call a function on each integer in a (small) range, you B<can> use:
+
+    @results = map { &my_func($_) } (5 .. 25);
+
+but you should be aware that the C<..> operator creates an array of
+all integers in the range.  This can take a lot of memory for large
+ranges.  Instead use:
+
+    @results = ();
+    for ($i=5; $i < 500_005; $i++) {
+        push(@results, &my_func($i));
+    }
+
+=head2 How can I output Roman numerals?
+
+Get the http://www.perl.com/CPAN/modules/by-module/Roman module.
+
+=head2 Why aren't my random numbers random?
+
+The short explanation is that you're getting pseudorandom numbers, not
+random ones, because that's how these things work.  A longer
+explanation is available on
+http://www.perl.com/CPAN/doc/FMTEYEWTK/random, courtesy of Tom
+Phoenix.
+
+You should also check out the Math::TrulyRandom module from CPAN.
+
+=head1 Data: Dates
+
+=head2 How do I find the week-of-the-year/day-of-the-year?
+
+The day of the year is in the array returned by localtime() (see
+L<perlfunc/"localtime">):
+
+    $day_of_year = (localtime(time()))[7];
+
+or more legibly (in 5.004 or higher):
+
+    use Time::localtime;
+    $day_of_year = localtime(time())->yday;
+
+You can find the week of the year by dividing this by 7:
+
+    $week_of_year = int($day_of_year / 7);
+
+Of course, this believes that weeks start at zero.
+
+=head2 How can I compare two date strings?
+
+Use the Date::Manip or Date::DateCalc modules from CPAN.
+
+=head2 How can I take a string and turn it into epoch seconds?
+
+If it's a regular enough string that it always has the same format,
+you can split it up and pass the parts to timelocal in the standard
+Time::Local module.  Otherwise, you should look into one of the
+Date modules from CPAN.
+
+=head2 How can I find the Julian Day?
+
+Neither Date::Manip nor Date::DateCalc deal with Julian days.
+Instead, there is an example of Julian date calculation in
+http://www.perl.com/CPAN/authors/David_Muir_Sharnoff/modules/Time/JulianDay.pm.gz,
+which should help.
+
+=head2 Does Perl have a year 2000 problem?
+
+Not unless you use Perl to create one. The date and time functions
+supplied with perl (gmtime and localtime) supply adequate information
+to determine the year well beyond 2000 (2038 is when trouble strikes).
+The year returned by these functions when used in an array context is
+the year minus 1900. For years between 1910 and 1999 this I<happens>
+to be a 2-digit decimal number. To avoid the year 2000 problem simply
+do not treat the year as a 2-digit number.  It isn't.
+
+When gmtime() and localtime() are used in a scalar context they return
+a timestamp string that contains a fully-expanded year.  For example,
+C<$timestamp = gmtime(1005613200)> sets $timestamp to "Tue Nov 13 01:00:00
+2001".  There's no year 2000 problem here.
+
+=head1 Data: Strings
+
+=head2 How do I validate input?
+
+The answer to this question is usually a regular expression, perhaps
+with auxiliary logic.  See the more specific questions (numbers, email
+addresses, etc.) for details.
+
+=head2 How do I unescape a string?
+
+It depends just what you mean by "escape".  URL escapes are dealt with
+in L<perlfaq9>.  Shell escapes with the backslash (\)
+character are removed with:
+
+    s/\\(.)/$1/g;
+
+Note that this won't expand \n or \t or any other special escapes.
+
+=head2 How do I remove consecutive pairs of characters?
+
+To turn "abbcccd" into "abccd":
+
+    s/(.)\1/$1/g;
+
+=head2 How do I expand function calls in a string?
+
+This is documented in L<perlref>.  In general, this is fraught with
+quoting and readability problems, but it is possible.  To interpolate
+a subroutine call (in a list context) into a string:
+
+    print "My sub returned @{[mysub(1,2,3)]} that time.\n";
+
+If you prefer scalar context, similar chicanery is also useful for
+arbitrary expressions:
+
+    print "That yields ${\($n + 5)} widgets\n";
+
+See also "How can I expand variables in text strings?" in this section
+of the FAQ.
+
+=head2 How do I find matching/nesting anything?
+
+This isn't something that can be tackled in one regular expression, no
+matter how complicated.  To find something between two single characters,
+a pattern like C</x([^x]*)x/> will get the intervening bits in $1. For
+multiple ones, then something more like C</alpha(.*?)omega/> would
+be needed.  But none of these deals with nested patterns, nor can they.
+For that you'll have to write a parser.
+
+=head2 How do I reverse a string?
+
+Use reverse() in a scalar context, as documented in
+L<perlfunc/reverse>.
+
+    $reversed = reverse $string;
+
+=head2 How do I expand tabs in a string?
+
+You can do it the old-fashioned way:
+
+    1 while $string =~ s/\t+/' ' x (length($&) * 8 - length($`) % 8)/e;
+
+Or you can just use the Text::Tabs module (part of the standard perl
+distribution).
+
+    use Text::Tabs;
+    @expanded_lines = expand(@lines_with_tabs);
+
+=head2 How do I reformat a paragraph?
+
+Use Text::Wrap (part of the standard perl distribution):
+
+    use Text::Wrap;
+    print wrap("\t", '  ', @paragraphs);
+
+The paragraphs you give to Text::Wrap may not contain embedded
+newlines.  Text::Wrap doesn't justify the lines (flush-right).
+
+=head2 How can I access/change the first N letters of a string?
+
+There are many ways.  If you just want to grab a copy, use
+substr:
+
+    $first_byte = substr($a, 0, 1);
+
+If you want to modify part of a string, the simplest way is often to
+use substr() as an lvalue:
+
+    substr($a, 0, 3) = "Tom";
+
+Although those with a regexp kind of thought process will likely prefer
+
+    $a =~ s/^.../Tom/;
+
+=head2 How do I change the Nth occurrence of something?
+
+You have to keep track.  For example, let's say you want
+to change the fifth occurrence of "whoever" or "whomever"
+into "whosoever" or "whomsoever", case insensitively.
+
+    $count = 0;
+    s{((whom?)ever)}{
+	++$count == 5   	# is it the 5th?
+	    ? "${2}soever"	# yes, swap
+	    : $1		# renege and leave it there
+    }igex;
+
+=head2 How can I count the number of occurrences of a substring within a string?
+
+There are a number of ways, with varying efficiency: If you want a
+count of a certain single character (X) within a string, you can use the
+C<tr///> function like so:
+
+    $string = "ThisXlineXhasXsomeXx'sXinXit":
+    $count = ($string =~ tr/X//);
+    print "There are $count X charcters in the string";
+
+This is fine if you are just looking for a single character.  However,
+if you are trying to count multiple character substrings within a
+larger string, C<tr///> won't work.  What you can do is wrap a while()
+loop around a global pattern match.  For example, let's count negative
+integers:
+
+    $string = "-9 55 48 -2 23 -76 4 14 -44";
+    while ($string =~ /-\d+/g) { $count++ }
+    print "There are $count negative numbers in the string";
+
+=head2 How do I capitalize all the words on one line?
+
+To make the first letter of each word upper case:
+
+        $line =~ s/\b(\w)/\U$1/g;
+
+This has the strange effect of turning "C<don't do it>" into "C<Don'T
+Do It>".  Sometimes you might want this, instead (Suggested by Brian
+Foy E<lt>comdog@computerdog.comE<gt>):
+
+    $string =~ s/ (
+                 (^\w)    #at the beginning of the line
+                   |      # or
+                 (\s\w)   #preceded by whitespace
+                   )
+                /\U$1/xg;
+    $string =~ /([\w']+)/\u\L$1/g;
+
+To make the whole line upper case:
+
+        $line = uc($line);
+
+To force each word to be lower case, with the first letter upper case:
+
+        $line =~ s/(\w+)/\u\L$1/g;
+
+=head2 How can I split a [character] delimited string except when inside
+[character]? (Comma-separated files)
+
+Take the example case of trying to split a string that is comma-separated
+into its different fields.  (We'll pretend you said comma-separated, not
+comma-delimited, which is different and almost never what you mean.) You
+can't use C<split(/,/)> because you shouldn't split if the comma is inside
+quotes.  For example, take a data line like this:
+
+    SAR001,"","Cimetrix, Inc","Bob Smith","CAM",N,8,1,0,7,"Error, Core Dumped"
+
+Due to the restriction of the quotes, this is a fairly complex
+problem.  Thankfully, we have Jeffrey Friedl, author of a highly
+recommended book on regular expressions, to handle these for us.  He
+suggests (assuming your string is contained in $text):
+
+     @new = ();
+     push(@new, $+) while $text =~ m{
+         "([^\"\\]*(?:\\.[^\"\\]*)*)",?  # groups the phrase inside the quotes
+       | ([^,]+),?
+       | ,
+     }gx;
+     push(@new, undef) if substr($text,-1,1) eq ',';
+
+If you want to represent quotation marks inside a
+quotation-mark-delimited field, escape them with backslashes (eg,
+C<"like \"this\"">.  Unescaping them is a task addressed earlier in
+this section.
+
+Alternatively, the Text::ParseWords module (part of the standard perl
+distribution) lets you say:
+
+    use Text::ParseWords;
+    @new = quotewords(",", 0, $text);
+
+=head2 How do I strip blank space from the beginning/end of a string?
+
+The simplest approach, albeit not the fastest, is probably like this:
+
+    $string =~ s/^\s*(.*?)\s*$/$1/;
+
+It would be faster to do this in two steps:
+
+    $string =~ s/^\s+//;
+    $string =~ s/\s+$//;
+
+Or more nicely written as:
+
+    for ($string) {
+	s/^\s+//;
+	s/\s+$//;
+    }
+
+=head2 How do I extract selected columns from a string?
+
+Use substr() or unpack(), both documented in L<perlfunc>.
+
+=head2 How do I find the soundex value of a string?
+
+Use the standard Text::Soundex module distributed with perl.
+
+=head2 How can I expand variables in text strings?
+
+Let's assume that you have a string like:
+
+    $text = 'this has a $foo in it and a $bar';
+    $text =~ s/\$(\w+)/${$1}/g;
+
+Before version 5 of perl, this had to be done with a double-eval
+substitution:
+
+    $text =~ s/(\$\w+)/$1/eeg;
+
+Which is bizarre enough that you'll probably actually need an EEG
+afterwards. :-)
+
+See also "How do I expand function calls in a string?" in this section
+of the FAQ.
+
+=head2 What's wrong with always quoting "$vars"?
+
+The problem is that those double-quotes force stringification,
+coercing numbers and references into strings, even when you
+don't want them to be.
+
+If you get used to writing odd things like these:
+
+    print "$var";   	# BAD
+    $new = "$old";   	# BAD
+    somefunc("$var");	# BAD
+
+You'll be in trouble.  Those should (in 99.8% of the cases) be
+the simpler and more direct:
+
+    print $var;
+    $new = $old;
+    somefunc($var);
+
+Otherwise, besides slowing you down, you're going to break code when
+the thing in the scalar is actually neither a string nor a number, but
+a reference:
+
+    func(\@array);
+    sub func {
+	my $aref = shift;
+	my $oref = "$aref";  # WRONG
+    }
+
+You can also get into subtle problems on those few operations in Perl
+that actually do care about the difference between a string and a
+number, such as the magical C<++> autoincrement operator or the
+syscall() function.
+
+=head2 Why don't my <<HERE documents work?
+
+Check for these three things:
+
+=over 4
+
+=item 1. There must be no space after the << part.
+
+=item 2. There (probably) should be a semicolon at the end.
+
+=item 3. You can't (easily) have any space in front of the tag.
+
+=back
+
+=head1 Data: Arrays
+
+=head2 What is the difference between $array[1] and @array[1]?
+
+The former is a scalar value, the latter an array slice, which makes
+it a list with one (scalar) value.  You should use $ when you want a
+scalar value (most of the time) and @ when you want a list with one
+scalar value in it (very, very rarely; nearly never, in fact).
+
+Sometimes it doesn't make a difference, but sometimes it does.
+For example, compare:
+
+    $good[0] = `some program that outputs several lines`;
+
+with
+
+    @bad[0]  = `same program that outputs several lines`;
+
+The B<-w> flag will warn you about these matters.
+
+=head2 How can I extract just the unique elements of an array?
+
+There are several possible ways, depending on whether the array is
+ordered and whether you wish to preserve the ordering.
+
+=over 4
+
+=item a) If @in is sorted, and you want @out to be sorted:
+
+    $prev = 'nonesuch';
+    @out = grep($_ ne $prev && ($prev = $_), @in);
+
+This is nice in that it doesn't use much extra memory,
+simulating uniq(1)'s behavior of removing only adjacent
+duplicates.
+
+=item b) If you don't know whether @in is sorted:
+
+    undef %saw;
+    @out = grep(!$saw{$_}++, @in);
+
+=item c) Like (b), but @in contains only small integers:
+
+    @out = grep(!$saw[$_]++, @in);
+
+=item d) A way to do (b) without any loops or greps:
+
+    undef %saw;
+    @saw{@in} = ();
+    @out = sort keys %saw;  # remove sort if undesired
+
+=item e) Like (d), but @in contains only small positive integers:
+
+    undef @ary;
+    @ary[@in] = @in;
+    @out = @ary;
+
+=back
+
+=head2 How can I tell whether an array contains a certain element?
+
+There are several ways to approach this.  If you are going to make
+this query many times and the values are arbitrary strings, the
+fastest way is probably to invert the original array and keep an
+associative array lying about whose keys are the first array's values.
+
+    @blues = qw/azure cerulean teal turquoise lapis-lazuli/;
+    undef %is_blue;
+    for (@blues) { $is_blue{$_} = 1 }
+
+Now you can check whether $is_blue{$some_color}.  It might have been a
+good idea to keep the blues all in a hash in the first place.
+
+If the values are all small integers, you could use a simple indexed
+array.  This kind of an array will take up less space:
+
+    @primes = (2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31);
+    undef @is_tiny_prime;
+    for (@primes) { $is_tiny_prime[$_] = 1; }
+
+Now you check whether $is_tiny_prime[$some_number].
+
+If the values in question are integers instead of strings, you can save
+quite a lot of space by using bit strings instead:
+
+    @articles = ( 1..10, 150..2000, 2017 );
+    undef $read;
+    grep (vec($read,$_,1) = 1, @articles);
+
+Now check whether C<vec($read,$n,1)> is true for some C<$n>.
+
+Please do not use
+
+    $is_there = grep $_ eq $whatever, @array;
+
+or worse yet
+
+    $is_there = grep /$whatever/, @array;
+
+These are slow (checks every element even if the first matches),
+inefficient (same reason), and potentially buggy (what if there are
+regexp characters in $whatever?).
+
+=head2 How do I compute the difference of two arrays?  How do I compute the intersection of two arrays?
+
+Use a hash.  Here's code to do both and more.  It assumes that
+each element is unique in a given array:
+
+    @union = @intersection = @difference = ();
+    %count = ();
+    foreach $element (@array1, @array2) { $count{$element}++ }
+    foreach $element (keys %count) {
+	push @union, $element;
+	push @{ $count{$element} > 1 ? \@intersection : \@difference }, $element;
+    }
+
+=head2 How do I find the first array element for which a condition is true?
+
+You can use this if you care about the index:
+
+    for ($i=0; $i < @array; $i++) {
+        if ($array[$i] eq "Waldo") {
+	    $found_index = $i;
+            last;
+        }
+    }
+
+Now C<$found_index> has what you want.
+
+=head2 How do I handle linked lists?
+
+In general, you usually don't need a linked list in Perl, since with
+regular arrays, you can push and pop or shift and unshift at either end,
+or you can use splice to add and/or remove arbitrary number of elements
+at arbitrary points.
+
+If you really, really wanted, you could use structures as described in
+L<perldsc> or L<perltoot> and do just what the algorithm book tells you
+to do.
+
+=head2 How do I handle circular lists?
+
+Circular lists could be handled in the traditional fashion with linked
+lists, or you could just do something like this with an array:
+
+    unshift(@array, pop(@array));  # the last shall be first
+    push(@array, shift(@array));   # and vice versa
+
+=head2 How do I shuffle an array randomly?
+
+Here's a shuffling algorithm which works its way through the list,
+randomly picking another element to swap the current element with:
+
+    srand;
+    @new = ();
+    @old = 1 .. 10;  # just a demo
+    while (@old) {
+	push(@new, splice(@old, rand @old, 1));
+    }
+
+For large arrays, this avoids a lot of the reshuffling:
+
+    srand;
+    @new = ();
+    @old = 1 .. 10000;  # just a demo
+    for( @old ){
+        my $r = rand @new+1;
+        push(@new,$new[$r]);
+        $new[$r] = $_;
+    }
+
+=head2 How do I process/modify each element of an array?
+
+Use C<for>/C<foreach>:
+
+    for (@lines) {
+	s/foo/bar/;
+	tr[a-z][A-Z];
+    }
+
+Here's another; let's compute spherical volumes:
+
+    for (@radii) {
+	$_ **= 3;
+	$_ *= (4/3) * 3.14159;  # this will be constant folded
+    }
+
+=head2 How do I select a random element from an array?
+
+Use the rand() function (see L<perlfunc/rand>):
+
+    srand;			# not needed for 5.004 and later
+    $index   = rand @array;
+    $element = $array[$index];
+
+=head2 How do I permute N elements of a list?
+
+Here's a little program that generates all permutations
+of all the words on each line of input.  The algorithm embodied
+in the permut() function should work on any list:
+
+    #!/usr/bin/perl -n
+    # permute - tchrist@perl.com
+    permut([split], []);
+    sub permut {
+	my @head = @{ $_[0] };
+	my @tail = @{ $_[1] };
+	unless (@head) {
+	    # stop recursing when there are no elements in the head
+	    print "@tail\n";
+	} else {
+	    # for all elements in @head, move one from @head to @tail
+	    # and call permut() on the new @head and @tail
+	    my(@newhead,@newtail,$i);
+	    foreach $i (0 .. $#head) {
+		@newhead = @head;
+		@newtail = @tail;
+		unshift(@newtail, splice(@newhead, $i, 1));
+		permut([@newhead], [@newtail]);
+	    }
+	}
+    }
+
+=head2 How do I sort an array by (anything)?
+
+Supply a comparison function to sort() (described in L<perlfunc/sort>):
+
+    @list = sort { $a <=> $b } @list;
+
+The default sort function is cmp, string comparison, which would
+sort C<(1, 2, 10)> into C<(1, 10, 2)>.  C<E<lt>=E<gt>>, used above, is
+the numerical comparison operator.
+
+If you have a complicated function needed to pull out the part you
+want to sort on, then don't do it inside the sort function.  Pull it
+out first, because the sort BLOCK can be called many times for the
+same element.  Here's an example of how to pull out the first word
+after the first number on each item, and then sort those words
+case-insensitively.
+
+    @idx = ();
+    for (@data) {
+	($item) = /\d+\s*(\S+)/;
+	push @idx, uc($item);
+    }
+    @sorted = @data[ sort { $idx[$a] cmp $idx[$b] } 0 .. $#idx ];
+
+Which could also be written this way, using a trick
+that's come to be known as the Schwartzian Transform:
+
+    @sorted = map  { $_->[0] }
+	      sort { $a->[1] cmp $b->[1] }
+	      map  { [ $_, uc((/\d+\s*(\S+)/ )[0] ] } @data;
+
+If you need to sort on several fields, the following paradigm is useful.
+
+    @sorted = sort { field1($a) <=> field1($b) ||
+                     field2($a) cmp field2($b) ||
+                     field3($a) cmp field3($b)
+                   }     @data;
+
+This can be conveniently combined with precalculation of keys as given
+above.
+
+See http://www.perl.com/CPAN/doc/FMTEYEWTK/sort.html for more about
+this approach.
+
+See also the question below on sorting hashes.
+
+=head2 How do I manipulate arrays of bits?
+
+Use pack() and unpack(), or else vec() and the bitwise operations.
+
+For example, this sets $vec to have bit N set if $ints[N] was set:
+
+    $vec = '';
+    foreach(@ints) { vec($vec,$_,1) = 1 }
+
+And here's how, given a vector in $vec, you can
+get those bits into your @ints array:
+
+    sub bitvec_to_list {
+	my $vec = shift;
+	my @ints;
+	# Find null-byte density then select best algorithm
+	if ($vec =~ tr/\0// / length $vec > 0.95) {
+	    use integer;
+	    my $i;
+	    # This method is faster with mostly null-bytes
+	    while($vec =~ /[^\0]/g ) {
+		$i = -9 + 8 * pos $vec;
+		push @ints, $i if vec($vec, ++$i, 1);
+		push @ints, $i if vec($vec, ++$i, 1);
+		push @ints, $i if vec($vec, ++$i, 1);
+		push @ints, $i if vec($vec, ++$i, 1);
+		push @ints, $i if vec($vec, ++$i, 1);
+		push @ints, $i if vec($vec, ++$i, 1);
+		push @ints, $i if vec($vec, ++$i, 1);
+		push @ints, $i if vec($vec, ++$i, 1);
+	    }
+	} else {
+	    # This method is a fast general algorithm
+	    use integer;
+	    my $bits = unpack "b*", $vec;
+	    push @ints, 0 if $bits =~ s/^(\d)// && $1;
+	    push @ints, pos $bits while($bits =~ /1/g);
+	}
+	return \@ints;
+    }
+
+This method gets faster the more sparse the bit vector is.
+(Courtesy of Tim Bunce and Winfried Koenig.)
+
+=head2 Why does defined() return true on empty arrays and hashes?
+
+See L<perlfunc/defined> in the 5.004 release or later of Perl.
+
+=head1 Data: Hashes (Associative Arrays)
+
+=head2 How do I process an entire hash?
+
+Use the each() function (see L<perlfunc/each>) if you don't care
+whether it's sorted:
+
+    while (($key,$value) = each %hash) {
+	print "$key = $value\n";
+    }
+
+If you want it sorted, you'll have to use foreach() on the result of
+sorting the keys as shown in an earlier question.
+
+=head2 What happens if I add or remove keys from a hash while iterating over it?
+
+Don't do that.
+
+=head2 How do I look up a hash element by value?
+
+Create a reverse hash:
+
+    %by_value = reverse %by_key;
+    $key = $by_value{$value};
+
+That's not particularly efficient.  It would be more space-efficient
+to use:
+
+    while (($key, $value) = each %by_key) {
+	$by_value{$value} = $key;
+    }
+
+If your hash could have repeated values, the methods above will only
+find one of the associated keys.   This may or may not worry you.
+
+=head2 How can I know how many entries are in a hash?
+
+If you mean how many keys, then all you have to do is
+take the scalar sense of the keys() function:
+
+    $num_keys = scalar keys %hash;
+
+In void context it just resets the iterator, which is faster
+for tied hashes.
+
+=head2 How do I sort a hash (optionally by value instead of key)?
+
+Internally, hashes are stored in a way that prevents you from imposing
+an order on key-value pairs.  Instead, you have to sort a list of the
+keys or values:
+
+    @keys = sort keys %hash;	# sorted by key
+    @keys = sort {
+		    $hash{$a} cmp $hash{$b}
+	    } keys %hash; 	# and by value
+
+Here we'll do a reverse numeric sort by value, and if two keys are
+identical, sort by length of key, and if that fails, by straight ASCII
+comparison of the keys (well, possibly modified by your locale -- see
+L<perllocale>).
+
+    @keys = sort {
+		$hash{$b} <=> $hash{$a}
+			  ||
+		length($b) <=> length($a)
+			  ||
+		      $a cmp $b
+    } keys %hash;
+
+=head2 How can I always keep my hash sorted?
+
+You can look into using the DB_File module and tie() using the
+$DB_BTREE hash bindings as documented in L<DB_File/"In Memory Databases">.
+
+=head2 What's the difference between "delete" and "undef" with hashes?
+
+Hashes are pairs of scalars: the first is the key, the second is the
+value.  The key will be coerced to a string, although the value can be
+any kind of scalar: string, number, or reference.  If a key C<$key> is
+present in the array, C<exists($key)> will return true.  The value for
+a given key can be C<undef>, in which case C<$array{$key}> will be
+C<undef> while C<$exists{$key}> will return true.  This corresponds to
+(C<$key>, C<undef>) being in the hash.
+
+Pictures help...  here's the C<%ary> table:
+
+	  keys  values
+	+------+------+
+	|  a   |  3   |
+	|  x   |  7   |
+	|  d   |  0   |
+	|  e   |  2   |
+	+------+------+
+
+And these conditions hold
+
+	$ary{'a'}                       is true
+	$ary{'d'}                       is false
+	defined $ary{'d'}               is true
+	defined $ary{'a'}               is true
+	exists $ary{'a'}                is true (perl5 only)
+	grep ($_ eq 'a', keys %ary)     is true
+
+If you now say
+
+	undef $ary{'a'}
+
+your table now reads:
+
+
+	  keys  values
+	+------+------+
+	|  a   | undef|
+	|  x   |  7   |
+	|  d   |  0   |
+	|  e   |  2   |
+	+------+------+
+
+and these conditions now hold; changes in caps:
+
+	$ary{'a'}                       is FALSE
+	$ary{'d'}                       is false
+	defined $ary{'d'}               is true
+	defined $ary{'a'}               is FALSE
+	exists $ary{'a'}                is true (perl5 only)
+	grep ($_ eq 'a', keys %ary)     is true
+
+Notice the last two: you have an undef value, but a defined key!
+
+Now, consider this:
+
+	delete $ary{'a'}
+
+your table now reads:
+
+	  keys  values
+	+------+------+
+	|  x   |  7   |
+	|  d   |  0   |
+	|  e   |  2   |
+	+------+------+
+
+and these conditions now hold; changes in caps:
+
+	$ary{'a'}                       is false
+	$ary{'d'}                       is false
+	defined $ary{'d'}               is true
+	defined $ary{'a'}               is false
+	exists $ary{'a'}                is FALSE (perl5 only)
+	grep ($_ eq 'a', keys %ary)     is FALSE
+
+See, the whole entry is gone!
+
+=head2 Why don't my tied hashes make the defined/exists distinction?
+
+They may or may not implement the EXISTS() and DEFINED() methods
+differently.  For example, there isn't the concept of undef with hashes
+that are tied to DBM* files. This means the true/false tables above
+will give different results when used on such a hash.  It also means
+that exists and defined do the same thing with a DBM* file, and what
+they end up doing is not what they do with ordinary hashes.
+
+=head2 How do I reset an each() operation part-way through?
+
+Using C<keys %hash> in a scalar context returns the number of keys in
+the hash I<and> resets the iterator associated with the hash.  You may
+need to do this if you use C<last> to exit a loop early so that when you
+re-enter it, the hash iterator has been reset.
+
+=head2 How can I get the unique keys from two hashes?
+
+First you extract the keys from the hashes into arrays, and then solve
+the uniquifying the array problem described above.  For example:
+
+    %seen = ();
+    for $element (keys(%foo), keys(%bar)) {
+	$seen{$element}++;
+    }
+    @uniq = keys %seen;
+
+Or more succinctly:
+
+    @uniq = keys %{{%foo,%bar}};
+
+Or if you really want to save space:
+
+    %seen = ();
+    while (defined ($key = each %foo)) {
+        $seen{$key}++;
+    }
+    while (defined ($key = each %bar)) {
+        $seen{$key}++;
+    }
+    @uniq = keys %seen;
+
+=head2 How can I store a multidimensional array in a DBM file?
+
+Either stringify the structure yourself (no fun), or else
+get the MLDBM (which uses Data::Dumper) module from CPAN and layer
+it on top of either DB_File or GDBM_File.
+
+=head2 How can I make my hash remember the order I put elements into it?
+
+Use the Tie::IxHash from CPAN.
+
+    use Tie::IxHash;
+    tie(%myhash, Tie::IxHash);
+    for ($i=0; $i<20; $i++) {
+        $myhash{$i} = 2*$i;
+    }
+    @keys = keys %myhash;
+    # @keys = (0,1,2,3,...)
+
+=head2 Why does passing a subroutine an undefined element in a hash create it?
+
+If you say something like:
+
+    somefunc($hash{"nonesuch key here"});
+
+Then that element "autovivifies"; that is, it springs into existence
+whether you store something there or not.  That's because functions
+get scalars passed in by reference.  If somefunc() modifies C<$_[0]>,
+it has to be ready to write it back into the caller's version.
+
+This has been fixed as of perl5.004.
+
+Normally, merely accessing a key's value for a nonexistent key does
+I<not> cause that key to be forever there.  This is different than
+awk's behavior.
+
+=head2 How can I make the Perl equivalent of a C structure/C++ class/hash or array of hashes or arrays?
+
+Use references (documented in L<perlref>).  Examples of complex data
+structures are given in L<perldsc> and L<perllol>.  Examples of
+structures and object-oriented classes are in L<perltoot>.
+
+=head2 How can I use a reference as a hash key?
+
+You can't do this directly, but you could use the standard Tie::Refhash
+module distributed with perl.
+
+=head1 Data: Misc
+
+=head2 How do I handle binary data correctly?
+
+Perl is binary clean, so this shouldn't be a problem.  For example,
+this works fine (assuming the files are found):
+
+    if (`cat /vmunix` =~ /gzip/) {
+	print "Your kernel is GNU-zip enabled!\n";
+    }
+
+On some systems, however, you have to play tedious games with "text"
+versus "binary" files.  See L<perlfunc/"binmode">.
+
+If you're concerned about 8-bit ASCII data, then see L<perllocale>.
+
+If you want to deal with multibyte characters, however, there are
+some gotchas.  See the section on Regular Expressions.
+
+=head2 How do I determine whether a scalar is a number/whole/integer/float?
+
+Assuming that you don't care about IEEE notations like "NaN" or
+"Infinity", you probably just want to use a regular expression.
+
+   warn "has nondigits"        if     /\D/;
+   warn "not a whole number"   unless /^\d+$/;
+   warn "not an integer"       unless /^-?\d+$/;  # reject +3
+   warn "not an integer"       unless /^[+-]?\d+$/;
+   warn "not a decimal number" unless /^-?\d+\.?\d*$/;  # rejects .2
+   warn "not a decimal number" unless /^-?(?:\d+(?:\.\d*)?|\.\d+)$/;
+   warn "not a C float"
+       unless /^([+-]?)(?=\d|\.\d)\d*(\.\d*)?([Ee]([+-]?\d+))?$/;
+
+Or you could check out
+http://www.perl.com/CPAN/modules/by-module/String/String-Scanf-1.1.tar.gz
+instead.  The POSIX module (part of the standard Perl distribution)
+provides the C<strtol> and C<strtod> for converting strings to double
+and longs, respectively.
+
+=head2 How do I keep persistent data across program calls?
+
+For some specific applications, you can use one of the DBM modules.
+See L<AnyDBM_File>.  More generically, you should consult the
+FreezeThaw, Storable, or Class::Eroot modules from CPAN.
+
+=head2 How do I print out or copy a recursive data structure?
+
+The Data::Dumper module on CPAN is nice for printing out
+data structures, and FreezeThaw for copying them.  For example:
+
+    use FreezeThaw qw(freeze thaw);
+    $new = thaw freeze $old;
+
+Where $old can be (a reference to) any kind of data structure you'd like.
+It will be deeply copied.
+
+=head2 How do I define methods for every class/object?
+
+Use the UNIVERSAL class (see L<UNIVERSAL>).
+
+=head2 How do I verify a credit card checksum?
+
+Get the Business::CreditCard module from CPAN.
+
+=head1 AUTHOR AND COPYRIGHT
+
+Copyright (c) 1997 Tom Christiansen and Nathan Torkington.
+All rights reserved.  See L<perlfaq> for distribution information.
+

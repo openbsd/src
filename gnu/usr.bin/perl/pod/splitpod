@@ -12,21 +12,33 @@ while (<>) {
 
     if (s/=item (\S+)/$1/) {
 	#$cur = "POSIX::" . $1;
+	$next{$cur} = $1;
 	$cur = $1;
 	$syn{$cur} .= $_;
 	next;
     } else { 
 	#s,L</,L<POSIX/,g;
 	s,L</,L<perlfunc/,g;
-	$pod{$cur} .= $_ if $cur;
+	push @{$pod{$cur}}, $_ if $cur;
     }
 } 
 
 for $f ( keys %syn ) {
-    $type = $Type{$f} || next;
+    next unless $Type{$f};
     $flavor = $Flavor{$f};
     $orig = $f;
     ($name = $f) =~ s/\W//g;
+
+    # deal with several functions sharing a description
+    $func = $orig;
+    $func = $next{$func} until $pod{$func};
+    my $body = join "", @{$pod{$func}};
+
+    # deal with unbalanced =over and =back cause by the split
+    my $has_over = $body =~ /^=over/;
+    my $has_back = $body =~ /^=back/;
+    $body =~ s/^=over\s*//m if $has_over and !$has_back;
+    $body =~ s/^=back\s*//m if $has_back and !$has_over;
     open (POD, "> $name.pod") || die "can't open $name.pod: $!";
     print POD <<EOF;
 =head1 NAME
@@ -39,7 +51,7 @@ $syn{$orig}
 
 =head1 DESCRIPTION
 
-$pod{$orig}
+$body
 
 EOF
 

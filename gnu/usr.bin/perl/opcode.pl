@@ -1,5 +1,6 @@
 #!/usr/bin/perl
 
+unlink "opcode.h";
 open(OC, ">opcode.h") || die "Can't create opcode.h: $!\n";
 select OC;
 
@@ -114,9 +115,9 @@ END
 
 print <<END;
 #ifndef DOINIT
-EXT OP * (*check[])();
+EXT OP * (*check[]) _((OP *op));
 #else
-EXT OP * (*check[])() = {
+EXT OP * (*check[]) _((OP *op)) = {
 END
 
 for (@ops) {
@@ -213,7 +214,7 @@ rv2gv		ref-to-glob cast	ck_rvconst	ds
 rv2sv		scalar deref		ck_rvconst	ds	
 av2arylen	array length		ck_null		is	
 rv2cv		subroutine deref	ck_rvconst	d
-anoncode	anonymous subroutine	ck_null		0	
+anoncode	anonymous subroutine	ck_anoncode	0	
 prototype	subroutine prototype	ck_null		s	S
 refgen		reference constructor	ck_spair	m	L
 srefgen		scalar ref constructor	ck_null		fs	S
@@ -223,7 +224,8 @@ bless		bless			ck_fun		s	S S?
 # Pushy I/O.
 
 backtick	backticks		ck_null		t	
-glob		glob			ck_glob		t	S S
+# glob defaults its first arg to $_
+glob		glob			ck_glob		t	S? S?
 readline	<HANDLE>		ck_null		t	
 rcatline	append I/O operator	ck_null		t	
 
@@ -278,8 +280,8 @@ i_subtract	integer subtraction	ck_null		ifst	S S
 concat		concatenation		ck_concat	fst	S S
 stringify	string			ck_fun		fst	S
 
-left_shift	left bitshift		ck_null		ifst	S S
-right_shift	right bitshift		ck_null		ifst	S S
+left_shift	left bitshift		ck_bitop	fst	S S
+right_shift	right bitshift		ck_bitop	fst	S S
 
 lt		numeric lt		ck_null		Iifs	S S
 i_lt		integer lt		ck_null		ifs	S S
@@ -296,22 +298,22 @@ i_ne		integer ne		ck_null		ifs	S S
 ncmp		spaceship operator	ck_null		Iifst	S S
 i_ncmp		integer spaceship	ck_null		ifst	S S
 
-slt		string lt		ck_null		ifs	S S
-sgt		string gt		ck_null		ifs	S S
-sle		string le		ck_null		ifs	S S
-sge		string ge		ck_null		ifs	S S
+slt		string lt		ck_scmp		ifs	S S
+sgt		string gt		ck_scmp		ifs	S S
+sle		string le		ck_scmp		ifs	S S
+sge		string ge		ck_scmp		ifs	S S
 seq		string eq		ck_null		ifs	S S
 sne		string ne		ck_null		ifs	S S
-scmp		string comparison	ck_null		ifst	S S
+scmp		string comparison	ck_scmp		ifst	S S
 
-bit_and		bitwise and		ck_null		fst	S S
-bit_xor		bitwise xor		ck_null		fst	S S
-bit_or		bitwise or		ck_null		fst	S S
+bit_and		bitwise and		ck_bitop	fst	S S
+bit_xor		bitwise xor		ck_bitop	fst	S S
+bit_or		bitwise or		ck_bitop	fst	S S
 
 negate		negate			ck_null		Ifst	S
 i_negate	integer negate		ck_null		ifst	S
 not		not			ck_null		ifs	S
-complement	1's complement		ck_null		fst	S
+complement	1's complement		ck_bitop	fst	S
 
 # High falutin' math.
 
@@ -324,9 +326,11 @@ exp		exp			ck_fun		fstu	S?
 log		log			ck_fun		fstu	S?
 sqrt		sqrt			ck_fun		fstu	S?
 
+# Lowbrow math.
+
 int		int			ck_fun		fstu	S?
-hex		hex			ck_fun		istu	S?
-oct		oct			ck_fun		istu	S?
+hex		hex			ck_fun		fstu	S?
+oct		oct			ck_fun		fstu	S?
 abs		abs			ck_fun		fstu	S?
 
 # String stuff.
@@ -338,16 +342,16 @@ vec		vec			ck_fun		ist	S S S
 index		index			ck_index	ist	S S S?
 rindex		rindex			ck_index	ist	S S S?
 
-sprintf		sprintf			ck_fun		mst	S L
-formline	formline		ck_formline	ms	S L
+sprintf		sprintf			ck_fun_locale	mfst	S L
+formline	formline		ck_fun		ms	S L
 ord		ord			ck_fun		ifstu	S?
 chr		chr			ck_fun		fstu	S?
 crypt		crypt			ck_fun		fst	S S
-ucfirst		upper case first	ck_fun		fst	S
-lcfirst		lower case first	ck_fun		fst	S
-uc		upper case		ck_fun		fst	S
-lc		lower case		ck_fun		fst	S
-quotemeta	quote metachars		ck_fun		fst	S
+ucfirst		upper case first	ck_fun_locale	fstu	S?
+lcfirst		lower case first	ck_fun_locale	fstu	S?
+uc		upper case		ck_fun_locale	fstu	S?
+lc		lower case		ck_fun_locale	fstu	S?
+quotemeta	quote metachars		ck_fun		fstu	S?
 
 # Arrays.
 
@@ -356,16 +360,16 @@ aelemfast	known array element	ck_null		s	A S
 aelem		array element		ck_null		s	A S
 aslice		array slice		ck_null		m	A L
 
-# Associative arrays.
+# Hashes.
 
 each		each			ck_fun		t	H
 values		values			ck_fun		t	H
 keys		keys			ck_fun		t	H
-delete		delete			ck_delete	s	S
-exists		exists operator		ck_delete	is	S
-rv2hv		associative array deref	ck_rvconst	dt	
-helem		associative array elem	ck_null		s	H S
-hslice		associative array slice	ck_null		m	H L
+delete		delete			ck_delete	0	S
+exists		exists operator		ck_exists	is	S
+rv2hv		hash deref		ck_rvconst	dt	
+helem		hash elem		ck_null		s	H S
+hslice		hash slice		ck_null		m	H L
 
 # Explosives and implosives.
 
@@ -468,6 +472,7 @@ prtf		printf			ck_listiob	ims	F? L
 print		print			ck_listiob	ims	F? L
 
 sysopen		sysopen			ck_fun		s	F S S S?
+sysseek		sysseek			ck_fun		s	F S S
 sysread		sysread			ck_fun		imst	F R S S?
 syswrite	syswrite		ck_fun		imst	F S S S?
 
@@ -477,6 +482,7 @@ recv		recv			ck_fun		imst	F R S S
 eof		eof			ck_eof		is	F?
 tell		tell			ck_fun		st	F?
 seek		seek			ck_fun		s	F S S
+# truncate really behaves as if it had both "S S" and "F S"
 truncate	truncate		ck_trunc	is	S S
 
 fcntl		fcntl			ck_fun		st	F S S

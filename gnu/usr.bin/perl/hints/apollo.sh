@@ -15,7 +15,7 @@ i_malloc='undef'
 malloctype='void *'
 
 # This info is left over from perl4.  
-cat <<'EOF'
+cat <<'EOF' >&4
 Some tests may fail unless you use 'chacl -B'.  Also, op/stat
 test 2 may fail occasionally because Apollo doesn't guarantee
 that mtime will be equal to ctime on a newly created unmodified

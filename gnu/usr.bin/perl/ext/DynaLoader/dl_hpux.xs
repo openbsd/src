@@ -3,6 +3,14 @@
  * Version: 2.1, 1995/1/25
  */
 
+/* o Added BIND_VERBOSE to dl_nonlazy condition to add names of missing
+ *   symbols to stderr message on fatal error.
+ *
+ * o Added BIND_NONFATAL comment to default condition.
+ *
+ * Chuck Phillips (cdp@fc.hp.com)
+ * Version: 2.2, 1997/5/4 */
+
 #ifdef __hp9000s300
 #define magic hpux_magic
 #define MAGIC HPUX_MAGIC
@@ -38,31 +46,44 @@ BOOT:
 
 
 void *
-dl_load_file(filename)
-    char *		filename
-    CODE:
+dl_load_file(filename, flags=0)
+    char *	filename
+    int		flags
+    PREINIT:
     shl_t obj = NULL;
     int	i, max, bind_type;
-
-    if (dl_nonlazy)
-	bind_type = BIND_IMMEDIATE;
-    else
-	bind_type = BIND_DEFERRED;
+    CODE:
+    DLDEBUG(1,PerlIO_printf(PerlIO_stderr(), "dl_load_file(%s,%x):\n", filename,flags));
+    if (flags & 0x01)
+	warn("Can't make loaded symbols global on this platform while loading %s",filename);
+    if (dl_nonlazy) {
+      bind_type = BIND_IMMEDIATE|BIND_VERBOSE;
+    } else {
+      bind_type = BIND_DEFERRED;
+      /* For certain libraries, like DCE, deferred binding often causes run
+       * time problems.  Adding BIND_NONFATAL to BIND_IMMEDIATE still allows
+       * unresolved references in situations like this.  */
+      /* bind_type = BIND_IMMEDIATE|BIND_NONFATAL; */
+    }
+#ifdef DEBUGGING
+    if (dl_debug)
+	bind_type |= BIND_VERBOSE;
+#endif /* DEBUGGING */
 
     max = AvFILL(dl_resolve_using);
     for (i = 0; i <= max; i++) {
 	char *sym = SvPVX(*av_fetch(dl_resolve_using, i, 0));
-	DLDEBUG(1,fprintf(stderr, "dl_load_file(%s) (dependent)\n", sym));
+	DLDEBUG(1,PerlIO_printf(PerlIO_stderr(), "dl_load_file(%s) (dependent)\n", sym));
 	obj = shl_load(sym, bind_type | BIND_NOSTART, 0L);
 	if (obj == NULL) {
 	    goto end;
 	}
     }
 
-    DLDEBUG(1,fprintf(stderr,"dl_load_file(%s): ", filename));
+    DLDEBUG(1,PerlIO_printf(PerlIO_stderr(), "dl_load_file(%s): ", filename));
     obj = shl_load(filename, bind_type | BIND_NOSTART, 0L);
 
-    DLDEBUG(2,fprintf(stderr," libref=%x\n", obj));
+    DLDEBUG(2,PerlIO_printf(PerlIO_stderr(), " libref=%x\n", obj));
 end:
     ST(0) = sv_newmortal() ;
     if (obj == NULL)
@@ -80,20 +101,21 @@ dl_find_symbol(libhandle, symbolname)
     void *symaddr = NULL;
     int status;
 #ifdef __hp9000s300
-    char symbolname_buf[MAXPATHLEN];
-    symbolname = dl_add_underscore(symbolname, symbolname_buf);
+    symbolname = form("_%s", symbolname);
 #endif
-    DLDEBUG(2,fprintf(stderr,"dl_find_symbol(handle=%x, symbol=%s)\n",
-		libhandle, symbolname));
+    DLDEBUG(2, PerlIO_printf(PerlIO_stderr(),
+			     "dl_find_symbol(handle=%lx, symbol=%s)\n",
+			     (unsigned long) libhandle, symbolname));
+
     ST(0) = sv_newmortal() ;
     errno = 0;
 
     status = shl_findsym(&obj, symbolname, TYPE_PROCEDURE, &symaddr);
-    DLDEBUG(2,fprintf(stderr,"  symbolref(PROCEDURE) = %x\n", symaddr));
+    DLDEBUG(2,PerlIO_printf(PerlIO_stderr(), "  symbolref(PROCEDURE) = %x\n", symaddr));
 
     if (status == -1 && errno == 0) {	/* try TYPE_DATA instead */
 	status = shl_findsym(&obj, symbolname, TYPE_DATA, &symaddr);
-	DLDEBUG(2,fprintf(stderr,"  symbolref(DATA) = %x\n", symaddr));
+	DLDEBUG(2,PerlIO_printf(PerlIO_stderr(), "  symbolref(DATA) = %x\n", symaddr));
     }
 
     if (status == -1) {
@@ -117,7 +139,7 @@ dl_install_xsub(perl_name, symref, filename="$Package")
     void *	symref 
     char *	filename
     CODE:
-    DLDEBUG(2,fprintf(stderr,"dl_install_xsub(name=%s, symref=%x)\n",
+    DLDEBUG(2,PerlIO_printf(PerlIO_stderr(), "dl_install_xsub(name=%s, symref=%x)\n",
 	    perl_name, symref));
     ST(0)=sv_2mortal(newRV((SV*)newXS(perl_name, (void(*)())symref, filename)));
 

@@ -91,11 +91,11 @@ sub valmess {
 	    $mess =~ s/ does not / should not / ||
 	    $mess =~ s/ not / /;
 	}
-	print stderr $mess,"\n";
+	print STDERR $mess,"\n";
     }
     else {
 	$this =~ s/\$file/'$file'/g;
-	print stderr "Can't do $this.\n";
+	print STDERR "Can't do $this.\n";
     }
     if ($disposition eq 'die') { exit 1; }
     ++$warnings;

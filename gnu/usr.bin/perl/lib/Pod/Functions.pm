@@ -5,7 +5,7 @@ package Pod::Functions;
 require Exporter;
 
 @ISA = qw(Exporter);
-@EXPORT = qw(%Kinds %Type %Flavor %Type_Descriptions @Type_Order);
+@EXPORT = qw(%Kinds %Type %Flavor %Type_Description @Type_Order);
 
 %Type_Description = (
     'ARRAY'	=> 'Functions for real @ARRAYs',
@@ -193,6 +193,7 @@ my	Misc,Namespace	declare and assign a local variable (lexical scoping)
 next	Flow	iterate a block prematurely
 no	Modules	unimport some module symbols or semantics at compile time
 package	Modules,Objects,Namespace	declare a separate global namespace
+prototype	Flow,Misc	get the prototype (if any) of a subroutine
 oct	String,Math	convert a string to an octal number
 open	File	open a file, pipe, or descriptor
 opendir	File	open a directory

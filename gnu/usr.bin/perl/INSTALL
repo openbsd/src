@@ -4,7 +4,7 @@ Install - Build and Installation guide for perl5.
 
 =head1 SYNOPSIS
 
-The basic steps to build and install perl5 are:
+The basic steps to build and install perl5 on a Unix system are:
 
 	rm -f config.sh
 	sh Configure
@@ -12,43 +12,98 @@ The basic steps to build and install perl5 are:
 	make test
 	make install
 
+	# You may also wish to add these:
+	(cd /usr/include && h2ph *.h sys/*.h)
+	(installhtml --help)
+	(cd pod && make tex  && <process the latex files>)
+
 Each of these is explained in further detail below.
 
+For information on non-Unix systems, see the section on
+L<"Porting information"> below.
+
+For information on what's new in this release, see the
+pod/perldelta.pod file.  For more detailed information about specific
+changes, see the Changes file.
+
+=head1 DESCRIPTION
+
+This document is written in pod format as an easy way to indicate its
+structure.  The pod format is described in pod/perlpod.pod, but you can
+read it as is with any pager or editor.  Headings and items are marked
+by lines beginning with '='.  The other mark-up used is
+
+    B<text>     embolden text, used for switches, programs or commands
+    C<code>	literal code
+    L<name>     A link (cross reference) to name
+
 You should probably at least skim through this entire document before
-proceeding.  Special notes specific to this release are identified
-by B<NOTE>.
+proceeding.
 
-=head1 BUILDING PERL5
+If you're building Perl on a non-Unix system, you should also read
+the README file specific to your operating system, since this may
+provide additional or different instructions for building Perl.
 
-=head1 Start with a Fresh Distribution.
+If there is a hint file for your system (in the hints/ directory) you
+should also read that hint file for specific information for your
+system.  (Unixware users should use the svr4.sh hint file.)
+
+=head1 Space Requirements
+
+The complete perl5 source tree takes up about 7 MB of disk space.  The
+complete tree after completing make takes roughly 15 MB, though the
+actual total is likely to be quite system-dependent.  The installation
+directories need something on the order of 7 MB, though again that
+value is system-dependent.
+
+=head1 Start with a Fresh Distribution
 
 If you have built perl before, you should clean out the build directory
 with the command
 
 	make realclean
-	
+
 The results of a Configure run are stored in the config.sh file.  If
 you are upgrading from a previous version of perl, or if you change
 systems or compilers or make other significant changes, or if you are
-experiencing difficulties building perl, you should probably I<not>
+experiencing difficulties building perl, you should probably not
 re-use your old config.sh.  Simply remove it or rename it, e.g.
 
 	mv config.sh config.sh.old
 
-Then run Configure.
+If you wish to use your old config.sh, be especially attentive to the
+version and architecture-specific questions and answers.  For example,
+the default directory for architecture-dependent library modules
+includes the version name.  By default, Configure will reuse your old
+name (e.g. /opt/perl/lib/i86pc-solaris/5.003) even if you're running
+Configure for a different version, e.g. 5.004.  Yes, Configure should
+probably check and correct for this, but it doesn't, presently.
+Similarly, if you used a shared libperl.so (see below) with version
+numbers, you will probably want to adjust them as well.
 
-=head1 Run Configure.
+Also, be careful to check your architecture name.  Some Linux systems
+(such as Debian) use i386, while others may use i486 or i586.  If you
+pick up a precompiled binary, it might not use the same name.
+
+In short, if you wish to use your old config.sh, I recommend running
+Configure interactively rather than blindly accepting the defaults.
+
+=head1 Run Configure
 
 Configure will figure out various things about your system.  Some
 things Configure will figure out for itself, other things it will ask
-you about.  To accept the default, just press C<RETURN>.   The default
-is almost always ok.
+you about.  To accept the default, just press RETURN.   The default
+is almost always ok.  At any Configure prompt, you can type  &-d
+and Configure will use the defaults from then on.
 
 After it runs, Configure will perform variable substitution on all the
-F<*.SH> files and offer to run B<make depend>.
+*.SH files and offer to run make depend.
 
-Configure supports a number of useful options.  Run B<Configure -h>
-to get a listing.  To compile with gcc, for example, you can run
+Configure supports a number of useful options.  Run B<Configure -h> to
+get a listing.  See the Porting/Glossary file for a complete list of
+Configure variables you can set and their definitions.
+
+To compile with gcc, for example, you should run
 
 	sh Configure -Dcc=gcc
 
@@ -57,11 +112,6 @@ compiler) so that the hints files can set appropriate defaults.
 
 If you want to use your old config.sh but override some of the items
 with command line options, you need to use B<Configure -O>.
-
-If you are willing to accept all the defaults, and you want terse
-output, you can run
-
-	sh Configure -des
 
 By default, for most systems, perl will be installed in
 /usr/local/{bin, lib, man}.  You can specify a different 'prefix' for
@@ -74,39 +124,80 @@ e.g.
 If your prefix contains the string "perl", then the directories
 are simplified.  For example, if you use prefix=/opt/perl,
 then Configure will suggest /opt/perl/lib instead of
-/usr/local/lib/perl5/.
+/opt/perl/lib/perl5/.
 
-By default, Configure will compile perl to use dynamic loading, if
+NOTE:  You must not specify an installation directory that is below
+your perl source directory.  If you do, installperl will attempt
+infinite recursion.
+
+By default, Configure will compile perl to use dynamic loading if
 your system supports it.  If you want to force perl to be compiled
-statically, you can either choose this when Configure prompts you or by
-using the Configure command line option -Uusedl.
+statically, you can either choose this when Configure prompts you or
+you can use the Configure command line option -Uusedl.
+
+If you are willing to accept all the defaults, and you want terse
+output, you can run
+
+	sh Configure -des
+
+For my Solaris system, I usually use
+
+	sh Configure -Dprefix=/opt/perl -Doptimize='-xpentium -xO4' -des
+
+=head2 GNU-style configure
+
+If you prefer the GNU-style configure command line interface, you can
+use the supplied configure command, e.g.
+
+	CC=gcc ./configure
+
+The configure script emulates a few of the more common configure
+options.  Try
+
+	./configure --help
+
+for a listing.
+
+Cross compiling is not supported.
+
+For systems that do not distinguish the files "Configure" and
+"configure", Perl includes a copy of configure named
+configure.gnu.
 
 =head2 Extensions
 
 By default, Configure will offer to build every extension which appears
 to be supported.  For example, Configure will offer to build GDBM_File
 only if it is able to find the gdbm library.  (See examples below.)
-DynaLoader, Fcntl and FileHandle are always built by default.
-Configure does not contain code to test for POSIX compliance, so POSIX
-is always built by default as well.  If you wish to skip POSIX, you can
-set the Configure variable useposix=false either in a hint file or from
-the Configure command line.  Similarly, the Safe extension is always
-built by default, but you can skip it by setting the Configure variable
-usesafe=false either in a hint file for from the command line.
+DynaLoader, Fcntl, and IO are always built by default.  Configure does
+not contain code to test for POSIX compliance, so POSIX is always built
+by default as well.  If you wish to skip POSIX, you can set the
+Configure variable useposix=false either in a hint file or from the
+Configure command line.  Similarly, the Opcode extension is always built
+by default, but you can skip it by setting the Configure variable
+useopcode=false either in a hint file for from the command line.
+
+You can learn more about each of these extensions by consulting the
+documentation in the individual .pm modules, located under the
+ext/ subdirectory.
+
+Even if you do not have dynamic loading, you must still build the
+DynaLoader extension; you should just build the stub dl_none.xs
+version.  (Configure will suggest this as the default.)
 
 In summary, here are the Configure command-line variables you can set
 to turn off each extension:
 
     DB_File		i_db
-    DynaLoader		(Must always be included)
+    DynaLoader		(Must always be included as a static extension)
     Fcntl		(Always included by default)
-    FileHandle		(Always included by default)
     GDBM_File		i_gdbm
+    IO			(Always included by default)
     NDBM_File		i_ndbm
     ODBM_File		i_dbm
     POSIX		useposix
     SDBM_File		(Always included by default)
-    Safe		usesafe
+    Opcode		useopcode
     Socket		d_socket
 
 Thus to skip the NDBM_File extension, you can use
@@ -117,28 +208,17 @@ Again, this is taken care of automatically if you don't have the ndbm
 library.
 
 Of course, you may always run Configure interactively and select only
-the Extensions you want.
+the extensions you want.
+
+Note:  The DB_File module will only work with version 1.x of
+Berkeley DB.  Once Berkeley DB version 2 is released, DB_File will be
+upgraded to work with it.  Configure will automatically detect this
+for you and refuse to try to build DB_File with version 2.
 
 Finally, if you have dynamic loading (most modern Unix systems do)
 remember that these extensions do not increase the size of your perl
 executable, nor do they impact start-up time, so you probably might as
 well build all the ones that will work on your system.
-
-=head2 GNU-style configure
-
-If you prefer the GNU-style B<configure> command line interface, you can
-use the supplied B<configure> command, e.g.
-
-	CC=gcc ./configure
-
-The B<configure> script emulates several of the more common configure
-options.  Try
-
-	./configure --help
-
-for a listing.
-
-Cross compiling is currently not supported.
 
 =head2 Including locally-installed libraries
 
@@ -146,38 +226,38 @@ Perl5 comes with interfaces to number of database extensions, including
 dbm, ndbm, gdbm, and Berkeley db.  For each extension, if
 Configure can find the appropriate header files and libraries, it will
 automatically include that extension.  The gdbm and db libraries
-are B<not> included with perl.  See the library documentation for
+are not included with perl.  See the library documentation for
 how to obtain the libraries.
 
-I<Note:>  If your database header (.h) files are not in a
+Note:  If your database header (.h) files are not in a
 directory normally searched by your C compiler, then you will need to
-include the appropriate B<-I/your/directory> option when prompted by
+include the appropriate -I/your/directory option when prompted by
 Configure.  If your database library (.a) files are not in a directory
 normally searched by your C compiler and linker, then you will need to
-include the appropriate B<-L/your/directory> option when prompted by
+include the appropriate -L/your/directory option when prompted by
 Configure.  See the examples below.
 
 =head2 Examples
 
 =over 4
 
-=item gdbm in /usr/local.
+=item gdbm in /usr/local
 
 Suppose you have gdbm and want Configure to find it and build the
-GDBM_File extension.  This examples assumes you have F<gdbm.h>
-installed in F</usr/local/include/gdbm.h> and F<libgdbm.a> installed in
-F</usr/local/lib/libgdbm.a>.  Configure should figure all the
+GDBM_File extension.  This examples assumes you have gdbm.h
+installed in /usr/local/include/gdbm.h and libgdbm.a installed in
+/usr/local/lib/libgdbm.a.  Configure should figure all the
 necessary steps out automatically.
 
 Specifically, when Configure prompts you for flags for
-your C compiler, you should include  C<-I/usr/local/include>.
+your C compiler, you should include  -I/usr/local/include.
 
 When Configure prompts you for linker flags, you should include
-C<-L/usr/local/lib>.
+-L/usr/local/lib.
 
 If you are using dynamic loading, then when Configure prompts you for
 linker flags for dynamic loading, you should again include
-C<-L/usr/local/lib>.
+-L/usr/local/lib.
 
 Again, this should all happen automatically.  If you want to accept the
 defaults for all the questions and have Configure print out only terse
@@ -194,11 +274,11 @@ This should actually work if you have gdbm installed in any of
 
 Suppose you have gdbm installed in some place other than /usr/local/,
 but you still want Configure to find it.  To be specific, assume  you
-have F</usr/you/include/gdbm.h> and F</usr/you/lib/libgdbm.a>.  You
-still have to add B<-I/usr/you/include> to cc flags, but you have to take
-an extra step to help Configure find F<libgdbm.a>.  Specifically, when
+have /usr/you/include/gdbm.h and /usr/you/lib/libgdbm.a.  You
+still have to add -I/usr/you/include to cc flags, but you have to take
+an extra step to help Configure find libgdbm.a.  Specifically, when
 Configure prompts you for library directories, you have to add
-F</usr/you/lib> to the list.
+/usr/you/lib to the list.
 
 It is possible to specify this from the command line too (all on one
 line):
@@ -207,13 +287,13 @@ line):
 		-Dlocincpth="/usr/you/include" \
 		-Dloclibpth="/usr/you/lib"
 
-C<locincpth> is a space-separated list of include directories to search.
-Configure will automatically add the appropriate B<-I> directives.
+locincpth is a space-separated list of include directories to search.
+Configure will automatically add the appropriate -I directives.
 
-C<loclibpth> is a space-separated list of library directories to search.
-Configure will automatically add the appropriate B<-L> directives.  If
-you have some libraries under F</usr/local/> and others under
-F</usr/you>, then you have to include both, namely
+loclibpth is a space-separated list of library directories to search.
+Configure will automatically add the appropriate -L directives.  If
+you have some libraries under /usr/local/ and others under
+/usr/you, then you have to include both, namely
 
 	sh Configure -des \
 		-Dlocincpth="/usr/you/include /usr/local/include" \
@@ -221,17 +301,22 @@ F</usr/you>, then you have to include both, namely
 
 =back
 
-=head2 Installation Directories.
+=head2 Installation Directories
 
 The installation directories can all be changed by answering the
 appropriate questions in Configure.  For convenience, all the
 installation questions are near the beginning of Configure.
 
+I highly recommend running Configure interactively to be sure it puts
+everything where you want it.  At any point during the Configure
+process, you can answer a question with  &-d  and Configure
+will use the defaults from then on.
+
 By default, Configure uses the following directories for
 library files  (archname is a string like sun4-sunos, determined
 by Configure)
 
-	/usr/local/lib/perl5/archname/5.002
+	/usr/local/lib/perl5/archname/5.004
 	/usr/local/lib/perl5/
 	/usr/local/lib/perl5/site_perl/archname
 	/usr/local/lib/perl5/site_perl
@@ -243,17 +328,29 @@ and the following directories for manual pages:
 
 (Actually, Configure recognizes the SVR3-style
 /usr/local/man/l_man/man1 directories, if present, and uses those
-instead.) The module man pages are stuck in that strange spot so that
+instead.)
+
+The module man pages are stuck in that strange spot so that
 they don't collide with other man pages stored in /usr/local/man/man3,
 and so that Perl's man pages don't hide system man pages.  On some
 systems, B<man less> would end up calling up Perl's less.pm module man
-page, rather than the B<less> program.
+page, rather than the less program.  (This default location will likely
+change to /usr/local/man/man3 in a future release of perl.)
+
+Note:  Many users prefer to store the module man pages in
+/usr/local/man/man3.  You can do this from the command line with
+
+	sh Configure -Dman3dir=/usr/local/man/man3
+
+Some users also prefer to use a .3pm suffix.  You can do that with
+
+	sh Configure -Dman3ext=3pm
 
 If you specify a prefix that contains the string "perl", then the
-directory structure is simplified.  For example, if you Configure
-with -Dprefix=/opt/perl, then the defaults are
+directory structure is simplified.  For example, if you Configure with
+-Dprefix=/opt/perl, then the defaults are
 
-	/opt/perl/lib/archname/5.002
+	/opt/perl/lib/archname/5.004
 	/opt/perl/lib
 	/opt/perl/lib/site_perl/archname
 	/opt/perl/lib/site_perl
@@ -269,14 +366,14 @@ intended to be used for installing local or site-wide extensions.  Perl
 will automatically look in these directories.  Previously, most sites
 just put their local extensions in with the standard distribution.
 
-In order to support using things like #!/usr/local/bin/perl5.002 after
+In order to support using things like #!/usr/local/bin/perl5.004 after
 a later version is released, architecture-dependent libraries are
 stored in a version-specific directory, such as
-/usr/local/lib/perl5/archname/5.002/.  In 5.000 and 5.001, these files
-were just stored in /usr/local/lib/perl5/archname/.  If you will not be
-using 5.001 binaries, you can delete the standard extensions from the
-/usr/local/lib/perl5/archname/ directory.  Locally-added extensions can
-be moved to the site_perl and site_perl/archname directories.
+/usr/local/lib/perl5/archname/5.004/.  In Perl 5.000 and 5.001, these
+files were just stored in /usr/local/lib/perl5/archname/.  If you will
+not be using 5.001 binaries, you can delete the standard extensions from
+the /usr/local/lib/perl5/archname/ directory.  Locally-added extensions
+can be moved to the site_perl and site_perl/archname directories.
 
 Again, these are just the defaults, and can be changed as you run
 Configure.
@@ -287,19 +384,17 @@ Configure distinguishes between the directory in which perl (and its
 associated files) should be installed and the directory in which it
 will eventually reside.  For most sites, these two are the same; for
 sites that use AFS, this distinction is handled automatically.
-However, sites that use software such as B<depot> to manage software
+However, sites that use software such as depot to manage software
 packages may also wish to install perl into a different directory and
 use that management software to move perl to its final destination.
 This section describes how to do this.  Someday, Configure may support
-an option C<-Dinstallprefix=/foo> to simplify this.
+an option -Dinstallprefix=/foo to simplify this.
 
-Suppose you want to install perl under the F</tmp/perl5> directory.
-You can edit F<config.sh> and change all the install* variables to
-point to F</tmp/perl5> instead of F</usr/local/wherever>.  You could
-also set them all from the Configure command line.  Or, you can
-automate this process by placing the following lines in a file
-F<config.over> B<before> you run Configure (replace /tmp/perl5 by a
-directory of your choice):
+Suppose you want to install perl under the /tmp/perl5 directory.  You
+can edit config.sh and change all the install* variables to point to
+/tmp/perl5 instead of /usr/local/wherever.  Or, you can automate this
+process by placing the following lines in a file config.over before you
+run Configure (replace /tmp/perl5 by a directory of your choice):
 
     installprefix=/tmp/perl5
     test -d $installprefix || mkdir $installprefix
@@ -312,7 +407,6 @@ directory of your choice):
     installscript=`echo $installscript | sed "s!$prefix!$installprefix!"`
     installsitelib=`echo $installsitelib | sed "s!$prefix!$installprefix!"`
     installsitearch=`echo $installsitearch | sed "s!$prefix!$installprefix!"`
-    shrpdir=`echo $shrpdir | sed "s!$prefix!$installprefix!"`
 
 Then, you can Configure and install in the usual way:
 
@@ -334,10 +428,333 @@ installed on multiple systems.  Here's one way to do that:
     make test
     make install
     cd /tmp/perl5
+    # Edit lib/<archname>/<version>/Config.pm to change all the
+    # install* variables back to reflect where everything will
+    # really be installed.
     tar cvf ../perl5-archive.tar .
     # Then, on each machine where you want to install perl,
     cd /usr/local  # Or wherever you specified as $prefix
     tar xvf perl5-archive.tar
+
+=head2 Configure-time Options
+
+There are several different ways to Configure and build perl for your
+system.  For most users, the defaults are sensible and will work.
+Some users, however, may wish to further customize perl.  Here are
+some of the main things you can change.
+
+=head2 Binary Compatibility With Earlier Versions of Perl 5
+
+If you have dynamically loaded extensions that you built under
+perl 5.003 and that you wish to continue to use with perl 5.004, then you
+need to ensure that 5.004 remains binary compatible with 5.003.
+
+Starting with Perl 5.003, all functions in the Perl C source code have
+been protected by default by the prefix Perl_ (or perl_) so that you
+may link with third-party libraries without fear of namespace
+collisions.  This change broke compatibility with version 5.002, so
+installing 5.003 or 5.004 over 5.002 or earlier will force you to
+re-build and install all of your dynamically loadable extensions.
+(The standard extensions supplied with Perl are handled
+automatically).  You can turn off this namespace protection by adding
+-DNO_EMBED to your ccflags variable in config.sh.
+
+Perl 5.003's namespace protection was incomplete, but this has
+been fixed in 5.004.  However, some sites may need to maintain
+complete binary compatibility with Perl 5.003.  If you are building
+Perl for such a site, then when Configure asks if you want binary
+compatibility, answer "y".
+
+On the other hand, if you are embedding perl into another application
+and want the maximum namespace protection, then you probably ought to
+answer "n" when Configure asks if you want binary compatibility, or
+disable it from the Configure command line with
+
+	sh Configure -Ud_bincompat3
+
+The default answer of "y" to maintain binary compatibility is probably
+appropriate for almost everyone.
+
+In a related issue, old extensions may possibly be affected by the
+changes in the Perl language in the current release.  Please see
+pod/perldelta.pod for a description of what's changed.
+
+=head2 Selecting File IO mechanisms
+
+Previous versions of perl used the standard IO mechanisms as defined in
+stdio.h.  Versions 5.003_02 and later of perl allow alternate IO
+mechanisms via a "PerlIO" abstraction, but the stdio mechanism is still
+the default and is the only supported mechanism.
+
+This PerlIO abstraction can be enabled either on the Configure command
+line with
+
+	sh Configure -Duseperlio
+
+or interactively at the appropriate Configure prompt.
+
+If you choose to use the PerlIO abstraction layer, there are two
+(experimental) possibilities for the underlying IO calls.  These have been
+tested to some extent on some platforms, but are not guaranteed to work
+everywhere.
+
+=over 4
+
+=item 1.
+
+AT&T's "sfio".  This has superior performance to stdio.h in many
+cases, and is extensible by the use of "discipline" modules.  Sfio
+currently only builds on a subset of the UNIX platforms perl supports.
+Because the data structures are completely different from stdio, perl
+extension modules or external libraries may not work.  This
+configuration exists to allow these issues to be worked on.
+
+This option requires the 'sfio' package to have been built and installed.
+A (fairly old) version of sfio is in CPAN, and work is in progress to make
+it more easily buildable by adding Configure support.
+
+You select this option by
+
+	sh Configure -Duseperlio -Dusesfio
+
+If you have already selected -Duseperlio, and if Configure detects
+that you have sfio, then sfio will be the default suggested by
+Configure.
+
+Note:  On some systems, sfio's iffe configuration script fails
+to detect that you have an atexit function (or equivalent).
+Apparently, this is a problem at least for some versions of Linux
+and SunOS 4.
+
+You can test if you have this problem by trying the following shell
+script.  (You may have to add some extra cflags and libraries.  A
+portable version of this may eventually make its way into Configure.)
+
+    #!/bin/sh
+    cat > try.c <<'EOCP'
+    #include <stdio.h>
+    main() { printf("42\n"); }
+    EOCP
+    cc -o try try.c -lsfio
+    val=`./try`
+    if test X$val = X42; then
+	echo "Your sfio looks ok"
+    else
+	echo "Your sfio has the exit problem."
+    fi
+
+If you have this problem, the fix is to go back to your sfio sources
+and correct iffe's guess about atexit (or whatever is appropriate for
+your platform.)
+
+There also might be a more recent release of Sfio that fixes your
+problem.
+
+=item 2.
+
+Normal stdio IO, but with all IO going through calls to the PerlIO
+abstraction layer.  This configuration can be used to check that perl and
+extension modules have been correctly converted to use the PerlIO
+abstraction.
+
+This configuration should work on all platforms (but might not).
+
+You select this option via:
+
+	sh Configure -Duseperlio -Uusesfio
+
+If you have already selected -Duseperlio, and if Configure does not
+detect sfio, then this will be the default suggested by Configure.
+
+=back
+
+=head2 Building a shared libperl.so Perl library
+
+Currently, for most systems, the main perl executable is built by
+linking the "perl library" libperl.a with perlmain.o, your static
+extensions (usually just DynaLoader.a) and various extra libraries,
+such as -lm.
+
+On some systems that support dynamic loading, it may be possible to
+replace libperl.a with a shared libperl.so.  If you anticipate building
+several different perl binaries (e.g. by embedding libperl into
+different programs, or by using the optional compiler extension), then
+you might wish to build a shared libperl.so so that all your binaries
+can share the same library.
+
+The disadvantages are that there may be a significant performance
+penalty associated with the shared libperl.so, and that the overall
+mechanism is still rather fragile with respect to different versions
+and upgrades.
+
+In terms of performance, on my test system (Solaris 2.5_x86) the perl
+test suite took roughly 15% longer to run with the shared libperl.so.
+Your system and typical applications may well give quite different
+results.
+
+The default name for the shared library is typically something like
+libperl.so.3.2 (for Perl 5.003_02) or libperl.so.302 or simply
+libperl.so.  Configure tries to guess a sensible naming convention
+based on your C library name.  Since the library gets installed in a
+version-specific architecture-dependent directory, the exact name
+isn't very important anyway, as long as your linker is happy.
+
+For some systems (mostly SVR4), building a shared libperl is required
+for dynamic loading to work, and hence is already the default.
+
+You can elect to build a shared libperl by
+
+	sh Configure -Duseshrplib
+
+To actually build perl, you must add the current working directory to your
+LD_LIBRARY_PATH environment variable before running make.  You can do
+this with
+
+   LD_LIBRARY_PATH=`pwd`:$LD_LIBRARY_PATH; export LD_LIBRARY_PATH
+
+for Bourne-style shells, or
+
+   setenv LD_LIBRARY_PATH `pwd`
+
+for Csh-style shells.  You *MUST* do this before running make.
+Folks running NeXT OPENSTEP must substitute DYLD_LIBRARY_PATH for
+LD_LIBRARY_PATH above.
+
+There is also an potential problem with the shared perl library if you
+want to have more than one "flavor" of the same version of perl (e.g.
+with and without -DDEBUGGING).  For example, suppose you build and
+install a standard Perl 5.004 with a shared library.  Then, suppose you
+try to build Perl 5.004 with -DDEBUGGING enabled, but everything else
+the same, including all the installation directories.  How can you
+ensure that your newly built perl will link with your newly built
+libperl.so.4 rather with the installed libperl.so.4?  The answer is
+that you might not be able to.  The installation directory is encoded
+in the perl binary with the LD_RUN_PATH environment variable (or
+equivalent ld command-line option).  On Solaris, you can override that
+with LD_LIBRARY_PATH; on Linux you can't.  On Digital Unix, you can
+override LD_LIBRARY_PATH by setting the _RLD_ROOT environment variable
+to point to the perl build directory.
+
+The only reliable answer is that you should specify a different
+directory for the architecture-dependent library for your -DDEBUGGING
+version of perl.  You can do this by changing all the *archlib*
+variables in config.sh, namely archlib, archlib_exp, and
+installarchlib, to point to your new architecture-dependent library.
+
+=head2 Malloc Issues
+
+Perl relies heavily on malloc(3) to grow data structures as needed, so
+perl's performance can be noticeably affected by the performance of
+the malloc function on your system.
+
+The perl source is shipped with a version of malloc that is very fast
+but somewhat wasteful of space.  On the other hand, your system's
+malloc() function is probably a bit slower but also a bit more frugal.
+
+For many uses, speed is probably the most important consideration, so
+the default behavior (for most systems) is to use the malloc supplied
+with perl.  However, if you will be running very large applications
+(e.g. Tk or PDL) or if your system already has an excellent malloc, or
+if you are experiencing difficulties with extensions that use
+third-party libraries that call malloc, then you might wish to use
+your system's malloc.  (Or, you might wish to explore the experimental
+malloc flags discussed below.)
+
+To build without perl's malloc, you can use the Configure command
+
+	sh Configure -Uusemymalloc
+
+or you can answer 'n' at the appropriate interactive Configure prompt.
+
+=head2 Malloc Performance Flags
+
+If you are using Perl's malloc, you may add one or
+more of the following items to your cflags config.sh variable
+to change its behavior in potentially useful ways.  You can find out
+more about these flags by reading the malloc.c source.
+In a future version of perl, these might be enabled by default.
+
+=over 4
+
+=item -DPERL_EMERGENCY_SBRK
+
+If PERL_EMERGENCY_SBRK is defined, running out of memory need not be a
+fatal error: a memory pool can allocated by assigning to the special
+variable $^M.  See perlvar(1) for more details.
+
+=item -DPACK_MALLOC
+
+If PACK_MALLOC is defined, malloc.c uses a slightly different
+algorithm for small allocations (up to 64 bytes long).  Such small
+allocations are quite common in typical Perl scripts.
+
+The expected memory savings (with 8-byte alignment in $alignbytes) is
+about 20% for typical Perl usage.  The expected slowdown due to the
+additional malloc overhead is in fractions of a percent.  (It is hard
+to measure because of the effect of the saved memory on speed).
+
+=item -DTWO_POT_OPTIMIZE
+
+If TWO_POT_OPTIMIZE is defined, malloc.c uses a slightly different
+algorithm for large allocations that are close to a power of two
+(starting with 16K).  Such allocations are typical for big hashes and
+special-purpose scripts, especially image processing.  If you will be
+manipulating very large blocks with sizes close to powers of two, it
+might be wise to define this macro.
+
+The expected saving of memory is 0-100% (100% in applications which
+require most memory in such 2**n chunks).  The expected slowdown is
+negligible.
+
+=back
+
+=head2 Building a debugging perl
+
+You can run perl scripts under the perl debugger at any time with
+B<perl -d your_script>.  If, however, you want to debug perl itself,
+you probably want to do
+
+	sh Configure -Doptimize='-g'
+
+This will do two independent things:  First, it will force compilation
+to use cc -g so that you can use your system's debugger on the
+executable.  (Note:  Your system may actually require something like
+cc -g2.  Check you man pages for cc(1) and also any hint file for your
+system.)  Second, it will add -DDEBUGGING to your ccflags variable in
+config.sh so that you can use B<perl -D> to access perl's internal
+state.  (Note: Configure will only add -DDEBUGGING by
+default if you are not reusing your old config.sh.  If you want to
+reuse your old config.sh, then you can just edit it and change the
+optimize and ccflags variables by hand and then propagate your changes
+as shown in L<"Propagating your changes to config.sh"> below.)
+
+You can actually specify -g and -DDEBUGGING independently, but usually
+it's convenient to have both.
+
+If you are using a shared libperl, see the warnings about multiple
+versions of perl under L<Building a shared libperl.so Perl library>.
+
+=head2 Other Compiler Flags
+
+For most users, all of the Configure defaults are fine.  However,
+you can change a number of factors in the way perl is built
+by adding appropriate -D directives to your ccflags variable in
+config.sh.
+
+For example, you can replace the rand() and srand() functions in the
+perl source by any other random number generator by a trick such as the
+following:
+
+	sh Configure -Dccflags='-Drand=random -Dsrand=srandom'
+
+or by adding -Drand=random and -Dsrand=srandom to your ccflags
+at the appropriate Configure prompt.  (Note:  Although this worked for
+me, it might not work for you if your system's header files give
+different prototypes for rand() and random() or srand() and srandom().)
+
+You should also run Configure interactively to verify that a hint file
+doesn't inadvertently override your ccflags setting.  (Hints files
+shouldn't do that, but some might.)
 
 =head2 What if it doesn't work?
 
@@ -350,15 +767,15 @@ Configure interactively so that you can check (and correct) its
 guesses.
 
 All the installation questions have been moved to the top, so you don't
-have to wait for them.  Once you've handled them (and your C compiler &
-flags) you can type   '&-d'  at the next Configure prompt and Configure
+have to wait for them.  Once you've handled them (and your C compiler and
+flags) you can type  &-d  at the next Configure prompt and Configure
 will use the defaults from then on.
 
 If you find yourself trying obscure command line incantations and
 config.over tricks, I recommend you run Configure interactively
 instead.  You'll probably save yourself time in the long run.
 
-=item Hint files.
+=item Hint files
 
 The perl distribution includes a number of system-specific hints files
 in the hints/ directory.  If one of them matches your system, Configure
@@ -366,7 +783,7 @@ will offer to use that hint file.
 
 Several of the hint files contain additional important information.
 If you have any problems, it is a good idea to read the relevant hint
-file for further information.  See F<hints/solaris_2.sh> for an
+file for further information.  See hints/solaris_2.sh for an
 extensive example.
 
 =item *** WHOA THERE!!! ***
@@ -398,24 +815,31 @@ Now, Configure will find your gdbm library and will issue a message:
 	The previous value for $i_gdbm on this machine was "undef"!
 	Keep the previous value? [y]
 
-In this case, you do I<not> want to keep the previous value, so you
-should answer 'n'.  (You'll also have to manuually add GDBM_File to
+In this case, you do not want to keep the previous value, so you
+should answer 'n'.  (You'll also have to manually add GDBM_File to
 the list of dynamic extensions to build.)
 
 =item Changing Compilers
 
 If you change compilers or make other significant changes, you should
-probably I<not> re-use your old config.sh.  Simply remove it or
+probably not re-use your old config.sh.  Simply remove it or
 rename it, e.g. mv config.sh config.sh.old.  Then rerun Configure
 with the options you want to use.
 
-This is a common source of problems.  If you change from B<cc> to
-B<gcc>, you should almost always remove your old config.sh.
+This is a common source of problems.  If you change from cc to
+gcc, you should almost always remove your old config.sh.
 
-=item Propagating your changes
+=item Propagating your changes to config.sh
 
-If you later make any changes to F<config.sh>, you should propagate
-them to all the .SH files by running  B<sh Configure -S>.
+If you make any changes to config.sh, you should propagate
+them to all the .SH files by running
+
+	sh Configure -S
+
+You will then have to rebuild by running
+
+	make depend
+	make
 
 =item config.over
 
@@ -423,48 +847,64 @@ You can also supply a shell script config.over to over-ride Configure's
 guesses.  It will get loaded up at the very end, just before config.sh
 is created.  You have to be careful with this, however, as Configure
 does no checking that your changes make sense.  See the section on
-changing the installation directory for an example.
+L<"Changing the installation directory"> for an example.
 
 =item config.h
 
-Many of the system dependencies are contained in F<config.h>.
-F<Configure> builds F<config.h> by running the F<config_h.SH> script.
-The values for the variables are taken from F<config.sh>.
+Many of the system dependencies are contained in config.h.
+Configure builds config.h by running the config_h.SH script.
+The values for the variables are taken from config.sh.
 
-If there are any problems, you can edit F<config.h> directly.  Beware,
-though, that the next time you run B<Configure>, your changes will be
+If there are any problems, you can edit config.h directly.  Beware,
+though, that the next time you run Configure, your changes will be
 lost.
 
 =item cflags
 
 If you have any additional changes to make to the C compiler command
-line, they can be made in F<cflags.SH>.  For instance, to turn off the
-optimizer on F<toke.c>, find the line in the switch structure for
-F<toke.c> and put the command C<optimize='-g'> before the C<;;>.  You
-can also edit F<cflags> directly, but beware that your changes will be
-lost the next time you run B<Configure>.
+line, they can be made in cflags.SH.  For instance, to turn off the
+optimizer on toke.c, find the line in the switch structure for
+toke.c and put the command optimize='-g' before the ;; .  You
+can also edit cflags directly, but beware that your changes will be
+lost the next time you run Configure.
 
-To change the C flags for all the files, edit F<config.sh>
-and change either C<$ccflags> or C<$optimize>,
-and then re-run  B<sh Configure -S ; make depend>.
+To change the C flags for all the files, edit config.sh
+and change either $ccflags or $optimize,
+and then re-run
 
-=item No sh.
+	sh Configure -S
+	make depend
+
+=item No sh
 
 If you don't have sh, you'll have to copy the sample file config_H to
 config.h and edit the config.h to reflect your system's peculiarities.
 You'll probably also have to extensively modify the extension building
 mechanism.
 
+=item Porting information
+
+Specific information for the OS/2, Plan9, VMS and Win32 ports is in the
+corresponding README files and subdirectories.  Additional information,
+including a glossary of all those config.sh variables, is in the Porting
+subdirectory.
+
+Ports for other systems may also be available.  You should check out
+http://www.perl.com/CPAN/ports for current information on ports to
+various other operating systems.
+
 =back
 
 =head1 make depend
 
 This will look for all the includes.
-The output is stored in F<makefile>.  The only difference between
-F<Makefile> and F<makefile> is the dependencies at the bottom of
-F<makefile>.  If you have to make any changes, you should edit
-F<makefile>, not F<Makefile> since the Unix B<make> command reads
-F<makefile> first.
+The output is stored in makefile.  The only difference between
+Makefile and makefile is the dependencies at the bottom of
+makefile.  If you have to make any changes, you should edit
+makefile, not Makefile since the Unix make command reads
+makefile first.  (On non-Unix systems, the output may be stored in
+a different file.  Check the value of $firstmakefile in your config.sh
+if in doubt.)
 
 Configure will offer to do this step for you, so it isn't listed
 explicitly above.
@@ -474,79 +914,113 @@ explicitly above.
 This will attempt to make perl in the current directory.
 
 If you can't compile successfully, try some of the following ideas.
+If none of them help, and careful reading of the error message and
+the relevant manual pages on your system doesn't help, you can
+send a message to either the comp.lang.perl.misc newsgroup or to
+perlbug@perl.com with an accurate description of your problem.
+See L<"Reporting Problems"> below.
 
 =over 4
 
-=item *
+=item hints
 
 If you used a hint file, try reading the comments in the hint file
 for further tips and information.
 
-=item *
+=item extensions
 
-If you can't compile successfully, try adding a C<-DCRIPPLED_CC> flag.
-(Just because you get no errors doesn't mean it compiled right!)
-This simplifies some complicated expressions for compilers that
-get indigestion easily.  If that has no effect, try turning off
-optimization.  If you have missing routines, you probably need to
-add some library or other, or you need to undefine some feature that
-Configure thought was there but is defective or incomplete.
-
-=item *
-
-Some compilers will not compile or optimize the larger files without
-some extra switches to use larger jump offsets or allocate larger
-internal tables.  You can customize the switches for each file in
-F<cflags>.  It's okay to insert rules for specific files into
-F<makefile> since a default rule only takes effect in the absence of a
-specific rule.
-
-=item *
-
-If you can successfully build F<miniperl>, but the process crashes
+If you can successfully build miniperl, but the process crashes
 during the building of extensions, you should run
 
     	make minitest
 
 to test your version of miniperl.
 
-=item *
+=item locale
 
-Some additional things that have been reported for either perl4 or perl5:
+If you have any locale-related environment variables set, try
+unsetting them.  I have some reports that some versions of IRIX hang
+while running B<./miniperl configpm> with locales other than the C
+locale.  See the discussion under L<make test> below about locales.
 
-Genix may need to use libc rather than libc_s, or #undef VARARGS.
+=item malloc duplicates
 
-NCR Tower 32 (OS 2.01.01) may need -W2,-Sl,2000 and #undef MKDIR.
+If you get duplicates upon linking for malloc et al, add -DHIDEMYMALLOC
+or -DEMBEDMYMALLOC to your ccflags variable in config.sh.
 
-UTS may need one or more of B<-DCRIPPLED_CC>, B<-K> or B<-g>, and undef LSTAT.
+=item varargs
 
-If you get syntax errors on '(', try -DCRIPPLED_CC.
-
-Machines with half-implemented dbm routines will need to #undef I_ODBM
-
-SCO prior to 3.2.4 may be missing dbmclose().  An upgrade to 3.2.4
-that includes libdbm.nfs (which includes dbmclose()) may be available.
-
-If you get duplicates upon linking for malloc et al, say -DHIDEMYMALLOC.
-
-If you get duplicate function definitions (a perl function has the
-same name as another function on your system) try -DEMBED.
-
-If you get varags problems with gcc, be sure that gcc is installed
+If you get varargs problems with gcc, be sure that gcc is installed
 correctly.  When using gcc, you should probably have i_stdarg='define'
-and i_varags='undef' in config.sh.  The problem is usually solved
-by running fixincludes correctly.
+and i_varargs='undef' in config.sh.  The problem is usually solved by
+running fixincludes correctly.  If you do change config.sh, don't
+forget to propagate your changes (see
+L<"Propagating your changes to config.sh"> below).
+See also the L<"vsprintf"> item below.
+
+=item croak
+
+If you get error messages such as the following (the exact line
+numbers will vary in different versions of perl):
+
+    util.c: In function `Perl_croak':
+    util.c:962: number of arguments doesn't match prototype
+    proto.h:45: prototype declaration
+
+it might well be a symptom of the gcc "varargs problem".  See the
+previous L<"varargs"> item.
+
+=item Solaris and SunOS dynamic loading
 
 If you have problems with dynamic loading using gcc on SunOS or
 Solaris, and you are using GNU as and GNU ld, you may need to add
-B<-B/bin/> (for SunOS) or B<-B/usr/ccs/bin> (for Solaris) to your
+-B/bin/ (for SunOS) or -B/usr/ccs/bin/ (for Solaris) to your
 $ccflags, $ldflags, and $lddlflags so that the system's versions of as
-and ld are used.
+and ld are used.  Note that the trailing '/' is required.
+Alternatively, you can use the GCC_EXEC_PREFIX
+environment variable to ensure that Sun's as and ld are used.  Consult
+your gcc documentation for further information on the -B option and
+the GCC_EXEC_PREFIX variable.
+
+One convenient way to ensure you are not using GNU as and ld is to
+invoke Configure with
+
+    sh Configure -Dcc='gcc -B/usr/ccs/bin/'
+
+for Solaris systems.  For a SunOS system, you must use -B/bin/
+instead.
+
+Alternatively, recent versions of GNU ld reportedly work if you
+include C<-Wl,-export-dynamic> in the ccdlflags variable in
+config.sh.
+
+=item ld.so.1: ./perl: fatal: relocation error:
+
+If you get this message on SunOS or Solaris, and you're using gcc,
+it's probably the GNU as or GNU ld problem in the previous item
+L<"Solaris and SunOS dynamic loading">.
+
+=item LD_LIBRARY_PATH
 
 If you run into dynamic loading problems, check your setting of
-the LD_LIBRARY_PATH environment variable.  Perl should build
+the LD_LIBRARY_PATH environment variable.  If you're creating a static
+Perl library (libperl.a rather than libperl.so) it should build
 fine with LD_LIBRARY_PATH unset, though that may depend on details
 of your local set-up.
+
+=item dlopen: stub interception failed
+
+The primary cause of the 'dlopen: stub interception failed' message is
+that the LD_LIBRARY_PATH environment variable includes a directory
+which is a symlink to /usr/lib (such as /lib).
+
+The reason this causes a problem is quite subtle.  The file libdl.so.1.0
+actually *only* contains functions which generate 'stub interception
+failed' errors!  The runtime linker intercepts links to
+"/usr/lib/libdl.so.1.0" and links in internal implementation of those
+functions instead.  [Thanks to Tim Bunce for this explanation.]
+
+=item nm extraction
 
 If Configure seems to be having trouble finding library functions,
 try not using nm extraction.  You can do this from the command line
@@ -554,50 +1028,200 @@ with
 
 	sh Configure -Uusenm
 
+or by answering the nm extraction question interactively.
+If you have previously run Configure, you should not reuse your old
+config.sh.
+
+=item vsprintf
+
+If you run into problems with vsprintf in compiling util.c, the
+problem is probably that Configure failed to detect your system's
+version of vsprintf().  Check whether your system has vprintf().
+(Virtually all modern Unix systems do.)  Then, check the variable
+d_vprintf in config.sh.  If your system has vprintf, it should be:
+
+	d_vprintf='define'
+
+If Configure guessed wrong, it is likely that Configure guessed wrong
+on a number of other common functions too.  You are probably better off
+re-running Configure without using nm extraction (see previous item).
+
+=item do_aspawn
+
+If you run into problems relating to do_aspawn or do_spawn, the
+problem is probably that Configure failed to detect your system's
+fork() function.  Follow the procedure in the previous items
+on L<"vsprintf"> and L<"nm extraction">.
+
+=item __inet_* errors
+
+If you receive unresolved symbol errors during Perl build and/or test
+referring to __inet_* symbols, check to see whether BIND 8.1 is
+installed.  It installs a /usr/local/include/arpa/inet.h that refers to
+these symbols.  Versions of BIND later than 8.1 do not install inet.h
+in that location and avoid the errors.  You should probably update to a
+newer version of BIND.  If you can't, you can either link with the
+updated resolver library provided with BIND 8.1 or rename
+/usr/local/bin/arpa/inet.h during the Perl build and test process to
+avoid the problem.
+
+=item Optimizer
+
+If you can't compile successfully, try turning off your compiler's
+optimizer.  Edit config.sh and change the line
+
+	optimize='-O'
+
+to something like
+
+	optimize=' '
+
+then propagate your changes with B<sh Configure -S> and rebuild
+with B<make depend; make>.
+
+=item CRIPPLED_CC
+
+If you still can't compile successfully, try adding a -DCRIPPLED_CC
+flag.  (Just because you get no errors doesn't mean it compiled right!)
+This simplifies some complicated expressions for compilers that get
+indigestion easily.
+
+=item Missing functions
+
+If you have missing routines, you probably need to add some library or
+other, or you need to undefine some feature that Configure thought was
+there but is defective or incomplete.  Look through config.h for
+likely suspects.
+
+=item toke.c
+
+Some compilers will not compile or optimize the larger files (such as
+toke.c) without some extra switches to use larger jump offsets or
+allocate larger internal tables.  You can customize the switches for
+each file in cflags.  It's okay to insert rules for specific files into
+makefile since a default rule only takes effect in the absence of a
+specific rule.
+
+=item Missing dbmclose
+
+SCO prior to 3.2.4 may be missing dbmclose().  An upgrade to 3.2.4
+that includes libdbm.nfs (which includes dbmclose()) may be available.
+
+=item Note (probably harmless): No library found for -lsomething
+
+If you see such a message during the building of an extension, but
+the extension passes its tests anyway (see L<"make test"> below),
+then don't worry about the warning message.  The extension
+Makefile.PL goes looking for various libraries needed on various
+systems; few systems will need all the possible libraries listed.
+For example, a system may have -lcposix or -lposix, but it's
+unlikely to have both, so most users will see warnings for the one
+they don't have.  The phrase 'probably harmless' is intended to
+reassure you that nothing unusual is happening, and the build
+process is continuing.
+
+On the other hand, if you are building GDBM_File and you get the
+message
+
+    Note (probably harmless): No library found for -lgdbm
+
+then it's likely you're going to run into trouble somewhere along
+the line, since it's hard to see how you can use the GDBM_File
+extension without the -lgdbm library.
+
+It is true that, in principle, Configure could have figured all of
+this out, but Configure and the extension building process are not
+quite that tightly coordinated.
+
+=item sh: ar: not found
+
+This is a message from your shell telling you that the command 'ar'
+was not found.  You need to check your PATH environment variable to
+make sure that it includes the directory with the 'ar' command.  This
+is a common problem on Solaris, where 'ar' is in the /usr/ccs/bin
+directory.
+
+=item db-recno failure on tests 51, 53 and 55
+
+Old versions of the DB library (including the DB library which comes
+with FreeBSD 2.1) had broken handling of recno databases with modified
+bval settings.  Upgrade your DB library or OS.
+
+=item Miscellaneous
+
+Some additional things that have been reported for either perl4 or perl5:
+
+Genix may need to use libc rather than libc_s, or #undef VARARGS.
+
+NCR Tower 32 (OS 2.01.01) may need -W2,-Sl,2000 and #undef MKDIR.
+
+UTS may need one or more of -DCRIPPLED_CC, -K or -g, and undef LSTAT.
+
+If you get syntax errors on '(', try -DCRIPPLED_CC.
+
+Machines with half-implemented dbm routines will need to #undef I_ODBM
+
 =back
 
 =head1 make test
 
-This will run the regression tests on the perl you just made.  If it
-doesn't say "All tests successful" then something went wrong.  See the
-file F<t/README> in the F<t> subdirectory.  Note that you can't run it
-in background if this disables opening of /dev/tty.  If B<make test>
-bombs out, just B<cd> to the F<t> directory and run B<TEST> by hand
-to see if it makes any difference.
-If individual tests bomb, you can run them by hand, e.g.,
+This will run the regression tests on the perl you just made (you
+should run plain 'make' before 'make test' otherwise you won't have a
+complete build).  If 'make test' doesn't say "All tests successful"
+then something went wrong.  See the file t/README in the t subdirectory.
+
+Note that you can't run the tests in background if this disables
+opening of /dev/tty. You can use 'make test-notty' in that case but
+a few tty tests will be skipped.
+
+If make test bombs out, just cd to the t directory and run ./TEST
+by hand to see if it makes any difference.  If individual tests
+bomb, you can run them by hand, e.g.,
 
 	./perl op/groups.t
 
-B<Note>: one possible reason for errors is that some external programs
+Another way to get more detailed information about failed tests and
+individual subtests is to cd to the t directory and run
+
+	./perl harness
+
+(this assumes that most basic tests succeed, since harness uses
+complicated constructs).
+
+You should also read the individual tests to see if there are any helpful
+comments that apply to your system.
+
+Note:  One possible reason for errors is that some external programs
 may be broken due to the combination of your environment and the way
-C<make test> exercises them. This may happen for example if you have
-one or more of these environment variables set:
-C<LC_ALL LC_CTYPE LANG>. In certain UNIXes especially the non-English
-locales are known to cause programs to exhibit mysterious errors.
+B<make test> exercises them.  For example, this may happen if you have
+one or more of these environment variables set:  LC_ALL LC_CTYPE
+LC_COLLATE LANG.  In some versions of UNIX, the non-English locales
+are known to cause programs to exhibit mysterious errors.
+
 If you have any of the above environment variables set, please try
-C<setenv LC_ALL C> or <LC_ALL=C;export LC_ALL>, for C<csh>-style and
-C<Bourne>-style shells, respectively, from the command line and then
-retry C<make test>. If the tests then succeed, you may have a broken
-program that is confusing the testing. Please run the troublesome test
-by hand as shown above and see whether you can locate the program.
-Look for things like:
-C<exec, `backquoted command`, system, open("|...")> or C<open("...|")>.
-All these mean that Perl is trying to run some external program.
-=head1 INSTALLING PERL5
+
+	setenv LC_ALL C
+
+(for C shell) or
+
+	LC_ALL=C;export LC_ALL
+
+for Bourne or Korn shell) from the command line and then retry
+make test.  If the tests then succeed, you may have a broken program that
+is confusing the testing.  Please run the troublesome test by hand as
+shown above and see whether you can locate the program.  Look for
+things like:  exec, `backquoted command`, system, open("|...") or
+open("...|").  All these mean that Perl is trying to run some
+external program.
 
 =head1 make install
 
 This will put perl into the public directory you specified to
-B<Configure>; by default this is F</usr/local/bin>.  It will also try
+Configure; by default this is /usr/local/bin.  It will also try
 to put the man pages in a reasonable place.  It will not nroff the man
-page, however.  You may need to be root to run B<make install>.  If you
+pages, however.  You may need to be root to run B<make install>.  If you
 are not root, you must own the directories in question and you should
 ignore any messages about chown not working.
-
-B<NOTE:>  In the 5.002 release, you will see some harmless error
-messages and warnings from pod2man.  You may safely ignore them.  (Yes,
-they should be fixed, but they didn't seem important enough to warrant
-holding up the entire 5.002 release.)
 
 If you want to see exactly what will happen without installing
 anything, you can run
@@ -605,7 +1229,7 @@ anything, you can run
 	./perl installperl -n
 	./perl installman -n
 
-B<make install> will install the following:
+make install will install the following:
 
 	perl,
 	    perl5.nnn	where nnn is the current release number.  This
@@ -618,12 +1242,16 @@ B<make install> will install the following:
 	c2ph, pstruct	Scripts for handling C structures in header files.
 	s2p		sed-to-perl translator
 	find2perl	find-to-perl translator
+	h2ph		Extract constants and simple macros from C headers
 	h2xs		Converts C .h header files to Perl extensions.
 	perlbug		Tool to report bugs in Perl.
 	perldoc		Tool to read perl's pod documentation.
+	pl2pm		Convert Perl 4 .pl files to Perl 5 .pm modules
 	pod2html,	Converters from perl's pod documentation format
-	pod2latex, and 	to other useful formats.
-	pod2man
+	pod2latex, 	to other useful formats.
+	pod2man, and
+	pod2text
+	splain		Describe Perl warnings and errors
 
 	library files	in $privlib and $archlib specified to
 			Configure, usually under /usr/local/lib/perl5/.
@@ -640,104 +1268,177 @@ $sitearch listed in config.sh.  Usually, these are something like
 where $archname is something like sun4-sunos.  These directories
 will be used for installing extensions.
 
-Perl's *.h header files and the libperl.a library are also
-installed under $archlib so that any user may later build new
-extensions even if the Perl source is no longer available.
+Perl's *.h header files and the libperl.a library are also installed
+under $archlib so that any user may later build new extensions, run the
+optional Perl compiler, or embed the perl interpreter into another
+program even if the Perl source is no longer available.
 
-The libperl.a library is only needed for building new
-extensions and linking them statically into a new perl executable.
-If you will not be doing that, then you may safely delete
-$archlib/libperl.a after perl is installed.
+=head1 Coexistence with earlier versions of perl5
 
-make install may also offer to install perl in a "standard" location.
+You can safely install the current version of perl5 and still run scripts
+under the old binaries for versions 5.003 and later ONLY.  Instead of
+starting your script with #!/usr/local/bin/perl, just start it with
+#!/usr/local/bin/perl5.003 (or whatever version you want to run.)
+If you want to retain a version of Perl 5 prior to 5.003, you'll
+need to install the current version in a separate directory tree,
+since some of the architecture-independent library files have changed
+in incompatible ways.
 
-Most of the documentation in the pod/ directory is also available
-in HTML and LaTeX format.  Type
+The old architecture-dependent files are stored in a version-specific
+directory (such as /usr/local/lib/perl5/sun4-sunos/5.003) so that they
+will still be accessible even after a later version is installed.
+(Note:  Perl 5.000 and 5.001 did not put their architecture-dependent
+libraries in a version-specific directory.  They are simply in
+/usr/local/lib/perl5/$archname.  If you will not be using 5.000 or
+5.001, you may safely remove those files.)
 
-	cd pod; make html; cd ..
-
-to generate the html versions, and
-
-	cd pod; make tex; cd ..
-
-to generate the LaTeX versions.
-
-=head1 Coexistence with earlier versions of perl5.
-
-You can safely install the current version of perl5 and still run
-scripts under the old binaries.  Instead of starting your script with
-#!/usr/local/bin/perl, just start it with #!/usr/local/bin/perl5.001
-(or whatever version you want to run.)
-
-The architecture-dependent files are stored in a version-specific
-directory (such as F</usr/local/lib/perl5/sun4-sunos/5.002>) so that
-they are still accessible.  I<Note:> perl5.000 and perl5.001 did not
-put their architecture-dependent libraries in a version-specific
-directory.  They are simply in F</usr/local/lib/perl5/$archname>.  If
-you will not be using 5.000 or 5.001, you may safely remove those
-files.
-
-The standard library files in F</usr/local/lib/perl5>
-should be useable by all versions of perl5.
+In general, the standard library files in /usr/local/lib/perl5 should
+be usable by all versions of perl5.  However, the diagnostics.pm module
+uses the /usr/local/lib/perl5/pod/perldiag.pod documentation file, so
+the C<use diagnostics;> pragma and the splain script will only identify
+and explain any warnings or errors that the most recently-installed
+version of perl can generate.
 
 Most extensions will probably not need to be recompiled to use with a newer
 version of perl.  If you do run into problems, and you want to continue
 to use the old version of perl along with your extension, simply move
 those extension files to the appropriate version directory, such as
-F</usr/local/lib/perl/archname/5.002>.  Then perl5.002 will find your
-files in the 5.002 directory, and newer versions of perl will find your
+/usr/local/lib/perl/archname/5.003.  Then Perl 5.003 will find your
+files in the 5.003 directory, and newer versions of perl will find your
 newer extension in the site_perl directory.
 
-Some users may prefer to keep all versions of perl in completely
+Many users prefer to keep all versions of perl in completely
 separate directories.  One convenient way to do this is by
 using a separate prefix for each version, such as
 
-	sh Configure -Dprefix=/opt/perl5.002
+	sh Configure -Dprefix=/opt/perl5.004
 
-and adding /opt/perl5.002/bin to the shell PATH variable.  Such users
+and adding /opt/perl5.004/bin to the shell PATH variable.  Such users
 may also wish to add a symbolic link /usr/local/bin/perl so that
 scripts can still start with #!/usr/local/bin/perl.
 
-B<NOTE>: Starting with 5.002_01, all functions in the perl C source
-code are protected by default by the prefix Perl_ (or perl_) so that
-you may link with third-party libraries without fear of namespace
-collisons.  This breaks compatability with the initially released
-version of 5.002, so once you install 5.002_01 (or higher) you will
-need to re-build and install all of your dynamically loadable
-extensions.  (The standard extensions supplied with Perl are handled
-automatically).  You can turn off this namespace protection by adding
--DNO_EMBED to your ccflags variable in config.sh.  This is a one-time
-change.  In the future, we certainly hope that most extensions won't
-need to be recompiled for use with a newer version of perl.
+If you are installing a development subversion, you probably ought to
+seriously consider using a separate directory, since development
+subversions may not have all the compatibility wrinkles ironed out
+yet.
 
 =head1 Coexistence with perl4
 
 You can safely install perl5 even if you want to keep perl4 around.
 
-By default, the perl5 libraries go into F</usr/local/lib/perl5/>, so
-they don't override the perl4 libraries in F</usr/local/lib/perl/>.
+By default, the perl5 libraries go into /usr/local/lib/perl5/, so
+they don't override the perl4 libraries in /usr/local/lib/perl/.
 
 In your /usr/local/bin directory, you should have a binary named
-F<perl4.036>.  That will not be touched by the perl5 installation
+perl4.036.  That will not be touched by the perl5 installation
 process.  Most perl4 scripts should run just fine under perl5.
 However, if you have any scripts that require perl4, you can replace
-the C<#!> line at the top of them by C<#!/usr/local/bin/perl4.036>
+the #! line at the top of them by #!/usr/local/bin/perl4.036
 (or whatever the appropriate pathname is).  See pod/perltrap.pod
 for possible problems running perl4 scripts under perl5.
+
+=head1 cd /usr/include; h2ph *.h sys/*.h
+
+Some perl scripts need to be able to obtain information from
+the system header files.  This command will convert the most commonly used
+header files in /usr/include into files that can be easily interpreted
+by perl.  These files will be placed in the architectural library directory
+you specified to Configure; by default this is
+/usr/local/lib/perl5/ARCH/VERSION, where ARCH is your architecture
+(such as sun4-solaris) and VERSION is the version of perl you are
+building (for example, 5.004).
+
+Note:  Due to differences in the C and perl languages, the
+conversion of the header files is not perfect.  You will probably have
+to hand-edit some of the converted files to get them to parse
+correctly.  For example, h2ph breaks spectacularly on type casting and
+certain structures.
+
+=head1 installhtml --help
+
+Some sites may wish to make perl documentation available in HTML
+format.  The installhtml utility can be used to convert pod
+documentation into linked HTML files and install them.
+
+The following command-line is an example of one used to convert
+perl documentation:
+
+  ./installhtml                   \
+      --podroot=.                 \
+      --podpath=lib:ext:pod:vms   \
+      --recurse                   \
+      --htmldir=/perl/nmanual     \
+      --htmlroot=/perl/nmanual    \
+      --splithead=pod/perlipc     \
+      --splititem=pod/perlfunc    \
+      --libpods=perlfunc:perlguts:perlvar:perlrun:perlop \
+      --verbose
+
+See the documentation in installhtml for more details.  It can take
+many minutes to execute a large installation and you should expect to
+see warnings like "no title", "unexpected directive" and "cannot
+resolve" as the files are processed. We are aware of these problems
+(and would welcome patches for them).
+
+You may find it helpful to run installhtml twice. That should reduce
+the number of "cannot resolve" warnings.
+
+=head1 cd pod && make tex && (process the latex files)
+
+Some sites may also wish to make the documentation in the pod/ directory
+available in TeX format.  Type
+
+	(cd pod && make tex && <process the latex files>)
+
+=head1 Reporting Problems
+
+If you have difficulty building perl, and none of the advice in this
+file helps, and careful reading of the error message and the relevant
+manual pages on your system doesn't help either, then you should send a
+message to either the comp.lang.perl.misc newsgroup or to
+perlbug@perl.com with an accurate description of your problem.
+
+Please include the output of the ./myconfig shell script
+that comes with the distribution.  Alternatively, you can use the
+perlbug program that comes with the perl distribution,
+but you need to have perl compiled and installed before you can use it.
+
+You might also find helpful information in the Porting
+directory of the perl distribution.
 
 =head1 DOCUMENTATION
 
 Read the manual entries before running perl.  The main documentation is
 in the pod/ subdirectory and should have been installed during the
 build process.  Type B<man perl> to get started.  Alternatively, you
-can type B<perldoc perl> to use the supplied B<perldoc> script.  This
+can type B<perldoc perl> to use the supplied perldoc script.  This
 is sometimes useful for finding things in the library modules.
+
+Under UNIX, you can produce a documentation book in postscript form,
+along with its table of contents, by going to the pod/ subdirectory
+and running (either):
+
+	./roffitall -groff		# If you have GNU groff installed
+	./roffitall -psroff		# If you have psroff
+
+This will leave you with two postscript files ready to be printed.
+(You may need to fix the roffitall command to use your local troff
+set-up.)
+
+Note that you must have performed the installation already before
+running the above, since the script collects the installed files to
+generate the documentation.
 
 =head1 AUTHOR
 
-Andy Dougherty <doughera@lafcol.lafayette.edu>, borrowing I<very> heavily
-from the original README by Larry Wall.
+Original author:  Andy Dougherty doughera@lafcol.lafayette.edu ,
+borrowing very heavily from the original README by Larry Wall,
+with lots of helpful feedback and additions from the
+perl5-porters@perl.org folks.
+
+If you have problems or questions, please see L<"Reporting Problems">
+above.
 
 =head1 LAST MODIFIED
 
-19 March 1996
+$Id: INSTALL,v 1.28 1997/10/10 16:50:59 doughera Released $

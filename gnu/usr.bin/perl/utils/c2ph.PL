@@ -12,10 +12,9 @@ use File::Basename qw(&basename &dirname);
 
 # This forces PL files to create target in same directory as PL file.
 # This is so that make depend always knows where to find PL derivatives.
-chdir(dirname($0));
-($file = basename($0)) =~ s/\.PL$//;
-$file =~ s/\.pl$//
-	if ($^O eq 'VMS' or $^O eq 'os2');  # "case-forgiving"
+chdir dirname($0);
+$file = basename($0, '.PL');
+$file .= '.com' if $^O eq 'VMS';
 
 open OUT,">$file" or die "Can't create $file: $!";
 
@@ -25,9 +24,9 @@ print "Extracting $file (with variable substitutions)\n";
 # You can use $Config{...} to use Configure variables.
 
 print OUT <<"!GROK!THIS!";
-$Config{'startperl'}
-    eval 'exec perl -S \$0 "\$@"'
-	if 0;
+$Config{startperl}
+    eval 'exec $Config{perlpath} -S \$0 \${1+"\$@"}'
+	if \$running_under_some_shell;
 !GROK!THIS!
 
 # In the following, perl variables are not expanded during extraction.
@@ -46,7 +45,7 @@ print OUT <<'!NO!SUBS!';
 
 =head1 NAME
 
-c2ph,pstruct - Dump C structures as generated from 'cc -g -S' stabs
+c2ph, pstruct - Dump C structures as generated from C<cc -g -S> stabs
 
 =head1 SYNOPSIS
 
@@ -95,44 +94,44 @@ Pstruct takes any .c or .h files, or preferably .s ones, since that's
 the format it is going to massage them into anyway, and spits out
 listings like this:
 
-struct tty {
-  int                          tty.t_locker                         000      4
-  int                          tty.t_mutex_index                    004      4
-  struct tty *                 tty.t_tp_virt                        008      4
-  struct clist                 tty.t_rawq                           00c     20
-    int                        tty.t_rawq.c_cc                      00c      4
-    int                        tty.t_rawq.c_cmax                    010      4
-    int                        tty.t_rawq.c_cfx                     014      4
-    int                        tty.t_rawq.c_clx                     018      4
-    struct tty *               tty.t_rawq.c_tp_cpu                  01c      4
-    struct tty *               tty.t_rawq.c_tp_iop                  020      4
-    unsigned char *            tty.t_rawq.c_buf_cpu                 024      4
-    unsigned char *            tty.t_rawq.c_buf_iop                 028      4
-  struct clist                 tty.t_canq                           02c     20
-    int                        tty.t_canq.c_cc                      02c      4
-    int                        tty.t_canq.c_cmax                    030      4
-    int                        tty.t_canq.c_cfx                     034      4
-    int                        tty.t_canq.c_clx                     038      4
-    struct tty *               tty.t_canq.c_tp_cpu                  03c      4
-    struct tty *               tty.t_canq.c_tp_iop                  040      4
-    unsigned char *            tty.t_canq.c_buf_cpu                 044      4
-    unsigned char *            tty.t_canq.c_buf_iop                 048      4
-  struct clist                 tty.t_outq                           04c     20
-    int                        tty.t_outq.c_cc                      04c      4
-    int                        tty.t_outq.c_cmax                    050      4
-    int                        tty.t_outq.c_cfx                     054      4
-    int                        tty.t_outq.c_clx                     058      4
-    struct tty *               tty.t_outq.c_tp_cpu                  05c      4
-    struct tty *               tty.t_outq.c_tp_iop                  060      4
-    unsigned char *            tty.t_outq.c_buf_cpu                 064      4
-    unsigned char *            tty.t_outq.c_buf_iop                 068      4
-  (*int)()                     tty.t_oproc_cpu                      06c      4
-  (*int)()                     tty.t_oproc_iop                      070      4
-  (*int)()                     tty.t_stopproc_cpu                   074      4
-  (*int)()                     tty.t_stopproc_iop                   078      4
-  struct thread *              tty.t_rsel                           07c      4
+ struct tty {
+   int                          tty.t_locker                         000      4
+   int                          tty.t_mutex_index                    004      4
+   struct tty *                 tty.t_tp_virt                        008      4
+   struct clist                 tty.t_rawq                           00c     20
+     int                        tty.t_rawq.c_cc                      00c      4
+     int                        tty.t_rawq.c_cmax                    010      4
+     int                        tty.t_rawq.c_cfx                     014      4
+     int                        tty.t_rawq.c_clx                     018      4
+     struct tty *               tty.t_rawq.c_tp_cpu                  01c      4
+     struct tty *               tty.t_rawq.c_tp_iop                  020      4
+     unsigned char *            tty.t_rawq.c_buf_cpu                 024      4
+     unsigned char *            tty.t_rawq.c_buf_iop                 028      4
+   struct clist                 tty.t_canq                           02c     20
+     int                        tty.t_canq.c_cc                      02c      4
+     int                        tty.t_canq.c_cmax                    030      4
+     int                        tty.t_canq.c_cfx                     034      4
+     int                        tty.t_canq.c_clx                     038      4
+     struct tty *               tty.t_canq.c_tp_cpu                  03c      4
+     struct tty *               tty.t_canq.c_tp_iop                  040      4
+     unsigned char *            tty.t_canq.c_buf_cpu                 044      4
+     unsigned char *            tty.t_canq.c_buf_iop                 048      4
+   struct clist                 tty.t_outq                           04c     20
+     int                        tty.t_outq.c_cc                      04c      4
+     int                        tty.t_outq.c_cmax                    050      4
+     int                        tty.t_outq.c_cfx                     054      4
+     int                        tty.t_outq.c_clx                     058      4
+     struct tty *               tty.t_outq.c_tp_cpu                  05c      4
+     struct tty *               tty.t_outq.c_tp_iop                  060      4
+     unsigned char *            tty.t_outq.c_buf_cpu                 064      4
+     unsigned char *            tty.t_outq.c_buf_iop                 068      4
+   (*int)()                     tty.t_oproc_cpu                      06c      4
+   (*int)()                     tty.t_oproc_iop                      070      4
+   (*int)()                     tty.t_stopproc_cpu                   074      4
+   (*int)()                     tty.t_stopproc_iop                   078      4
+   struct thread *              tty.t_rsel                           07c      4
 
-  etc.
+etc.
 
 
 Actually, this was generated by a particular set of options.  You can control
@@ -140,10 +139,10 @@ the formatting of each column, whether you prefer wide or fat, hex or decimal,
 leading zeroes or whatever.
 
 All you need to be able to use this is a C compiler than generates
-BSD/GCC-style stabs.  The -g option on native BSD compilers and GCC
+BSD/GCC-style stabs.  The B<-g> option on native BSD compilers and GCC
 should get this for you.
 
-To learn more, just type a bogus option, like -\?, and a long usage message
+To learn more, just type a bogus option, like B<-\?>, and a long usage message
 will be provided.  There are a fair number of possibilities.
 
 If you're only a C programmer, than this is the end of the message for you.
@@ -193,7 +192,7 @@ them in terms of packages and functions.  Consider the following program:
 
 
 As you see, the name of the package is the name of the structure.  Regular
-fields are just their own names.  Plus the follwoing  accessor functions are
+fields are just their own names.  Plus the following accessor functions are
 provided for your convenience:
 
     struct	This takes no arguments, and is merely the number of first-level
@@ -251,7 +250,7 @@ compiler and gcc.
 Anyway, here it is.  Should run on perl v4 or greater.  Maybe less.
 
 
---tom
+ --tom
 
 =cut
 
@@ -1252,7 +1251,7 @@ main() {
 EOF
 
     for $type (@intrinsics) {
-	next if !type || $type eq 'void' || $type =~ /complex/; # sun stuff
+	next if !$type || $type eq 'void' || $type =~ /complex/; # sun stuff
 	print <<"EOF";
     printf(mask,sizeof($type), "$type");
 EOF

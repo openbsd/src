@@ -1,6 +1,6 @@
 #!./perl
 
-# $RCSfile: anydbm.t,v $$Revision: 1.1.1.1 $$Date: 1996/08/19 10:13:13 $
+# $RCSfile: anydbm.t,v $$Revision: 1.2 $$Date: 1997/11/30 08:00:20 $
 
 BEGIN {
     chdir 't' if -d 't';
@@ -15,15 +15,21 @@ print "1..12\n";
 unlink <Op.dbmx*>;
 
 umask(0);
-print (tie(%h,AnyDBM_File,'Op.dbmx', O_RDWR|O_CREAT, 0640) ? "ok 1\n" : "not ok 1\n");
+print (tie(%h,AnyDBM_File,'Op.dbmx', O_RDWR|O_CREAT, 0640)
+       ? "ok 1\n" : "not ok 1\n");
 
 $Dfile = "Op.dbmx.pag";
 if (! -e $Dfile) {
 	($Dfile) = <Op.dbmx*>;
 }
-($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime,
-   $blksize,$blocks) = stat($Dfile);
-print (($mode & 0777) == 0640 ? "ok 2\n" : "not ok 2\n");
+if ($^O eq 'amigaos' || $^O eq 'os2' || $^O eq 'MSWin32') {
+    print "ok 2\n";
+}
+else {
+    ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime,
+     $blksize,$blocks) = stat($Dfile);
+    print (($mode & 0777) == 0640 ? "ok 2\n" : "not ok 2\n");
+}
 while (($key,$value) = each(%h)) {
     $i++;
 }
@@ -80,7 +86,7 @@ delete $h{'goner3'};
 if ($#keys == 29 && $#values == 29) {print "ok 5\n";} else {print "not ok 5\n";}
 
 while (($key,$value) = each(h)) {
-    if ($key eq $keys[$i] && $value eq $values[$i] && $key gt $value) {
+    if ($key eq $keys[$i] && $value eq $values[$i] && $key eq lc($value)) {
 	$key =~ y/a-z/A-Z/;
 	$i++ if $key eq $value;
     }
@@ -111,4 +117,5 @@ print join(':',200..400) eq join(':',@foo) ? "ok 10\n" : "not ok 10\n";
 print ($h{'foo'} eq '' ? "ok 11\n" : "not ok 11\n");
 print ($h{''} eq 'bar' ? "ok 12\n" : "not ok 12\n");
 
+untie %h;
 unlink 'Op.dbmx.dir', $Dfile;

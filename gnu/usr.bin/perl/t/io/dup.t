@@ -17,8 +17,14 @@ select(STDOUT); $| = 1;
 
 print STDOUT "ok 2\n";
 print STDERR "ok 3\n";
-system 'echo ok 4';
-system 'echo ok 5 1>&2';
+if ($^O eq 'MSWin32') {
+    print `echo ok 4`;
+    print `echo ok 5 1>&2`; # does this work?
+}
+else {
+    system 'echo ok 4';
+    system 'echo ok 5 1>&2';
+}
 
 close(STDOUT);
 close(STDERR);
@@ -26,7 +32,8 @@ close(STDERR);
 open(STDOUT,">&dupout");
 open(STDERR,">&duperr");
 
-system 'cat Io.dup';
+if ($^O eq 'MSWin32') { print `type Io.dup` }
+else                  { system 'cat Io.dup' }
 unlink 'Io.dup';
 
 print STDOUT "ok 6\n";

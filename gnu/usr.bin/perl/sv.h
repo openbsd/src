@@ -1,6 +1,6 @@
 /*    sv.h
  *
- *    Copyright (c) 1991-1994, Larry Wall
+ *    Copyright (c) 1991-1997, Larry Wall
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -126,13 +126,10 @@ struct io {
 #define SVpfm_COMPILED	0x80000000
 
 #define SVpbm_VALID	0x80000000
-#define SVpbm_CASEFOLD	0x40000000
-#define SVpbm_TAIL	0x20000000
+#define SVpbm_TAIL	0x40000000
 
-#ifdef OVERLOAD
-#define SVpgv_AM        0x40000000
-/* #define SVpgv_badAM     0x20000000 */
-#endif /* OVERLOAD */
+#define SVphv_SHAREKEYS 0x20000000	/* keys live on shared string table */
+#define SVphv_LAZYDEL	0x40000000	/* entry in xhv_eiter must be deleted */
 
 struct xrv {
     SV *	xrv_rv;		/* pointer to another SV */
@@ -149,6 +146,13 @@ struct xpviv {
     STRLEN	xpv_cur;	/* length of xpv_pv as a C string */
     STRLEN	xpv_len;	/* allocated size */
     IV		xiv_iv;		/* integer value or pv offset */
+};
+
+struct xpvuv {
+    char *	xpv_pv;		/* pointer to malloced string */
+    STRLEN	xpv_cur;	/* length of xpv_pv as a C string */
+    STRLEN	xpv_len;	/* allocated size */
+    UV		xuv_uv;		/* unsigned value or pv offset */
 };
 
 struct xpvnv {
@@ -214,6 +218,8 @@ struct xpvbm {
     U8		xbm_rare;	/* rarest character in string */
 };
 
+/* This structure much match XPVCV */
+
 struct xpvfm {
     char *	xpv_pv;		/* pointer to malloced string */
     STRLEN	xpv_cur;	/* length of xpv_pv as a C string */
@@ -233,6 +239,8 @@ struct xpvfm {
     long	xcv_depth;		/* >= 2 indicates recursive call */
     AV *	xcv_padlist;
     CV *	xcv_outside;
+    U8		xcv_flags;
+
     I32		xfm_lines;
 };
 
@@ -245,8 +253,8 @@ struct xpvio {
     MAGIC*	xmg_magic;	/* linked list of magicalness */
     HV*		xmg_stash;	/* class package */
 
-    FILE *	xio_ifp;	/* ifp and ofp are normally the same */
-    FILE *	xio_ofp;	/* but sockets need separate streams */
+    PerlIO *	xio_ifp;	/* ifp and ofp are normally the same */
+    PerlIO *	xio_ofp;	/* but sockets need separate streams */
     DIR *	xio_dirp;	/* for opendir, readdir, etc */
     long	xio_lines;	/* $. */
     long	xio_page;	/* $% */
@@ -267,6 +275,7 @@ struct xpvio {
 #define IOf_START 2	/* check for null ARGV and substitute '-' */
 #define IOf_FLUSH 4	/* this fp wants a flush after write op */
 #define IOf_DIDTOP 8	/* just did top of form */
+#define IOf_UNTAINT 16  /* consider this fp (and it's data) "safe" */
 
 /* The following macros define implementation-independent predicates on SVs. */
 
@@ -398,10 +407,6 @@ struct xpvio {
 #define SvTAIL_on(sv)		(SvFLAGS(sv) |= SVpbm_TAIL)
 #define SvTAIL_off(sv)		(SvFLAGS(sv) &= ~SVpbm_TAIL)
 
-#define SvCASEFOLD(sv)		(SvFLAGS(sv) & SVpbm_CASEFOLD)
-#define SvCASEFOLD_on(sv)	(SvFLAGS(sv) |= SVpbm_CASEFOLD)
-#define SvCASEFOLD_off(sv)	(SvFLAGS(sv) &= ~SVpbm_CASEFOLD)
-
 #define SvVALID(sv)		(SvFLAGS(sv) & SVpbm_VALID)
 #define SvVALID_on(sv)		(SvFLAGS(sv) |= SVpbm_VALID)
 #define SvVALID_off(sv)		(SvFLAGS(sv) &= ~SVpbm_VALID)
@@ -411,6 +416,8 @@ struct xpvio {
 
 #define SvIVX(sv) ((XPVIV*)  SvANY(sv))->xiv_iv
 #define SvIVXx(sv) SvIVX(sv)
+#define SvUVX(sv) ((XPVUV*)  SvANY(sv))->xuv_uv
+#define SvUVXx(sv) SvUVX(sv)
 #define SvNVX(sv)  ((XPVNV*)SvANY(sv))->xnv_nv
 #define SvNVXx(sv) SvNVX(sv)
 #define SvPVX(sv)  ((XPV*)  SvANY(sv))->xpv_pv
@@ -470,11 +477,16 @@ struct xpvio {
 #define IoTYPE(sv)	((XPVIO*)  SvANY(sv))->xio_type
 #define IoFLAGS(sv)	((XPVIO*)  SvANY(sv))->xio_flags
 
-#define SvTAINT(sv) if (tainting && tainted) sv_magic(sv, Nullsv, 't', Nullch, 0)
+#define SvTAINTED(sv)	  (SvMAGICAL(sv) && sv_tainted(sv))
+#define SvTAINTED_on(sv)  STMT_START{ if(tainting){sv_taint(sv);}   }STMT_END
+#define SvTAINTED_off(sv) STMT_START{ if(tainting){sv_untaint(sv);} }STMT_END
+
+#define SvTAINT(sv)	  STMT_START{ if(tainted){SvTAINTED_on(sv);} }STMT_END
 
 #ifdef CRIPPLED_CC
 
 IV SvIV _((SV* sv));
+UV SvUV _((SV* sv));
 double SvNV _((SV* sv));
 #define SvPV_force(sv, lp) sv_pvn_force(sv, &lp)
 #define SvPV(sv, lp) sv_pvn(sv, &lp)
@@ -482,6 +494,7 @@ char *sv_pvn _((SV *, STRLEN *));
 I32 SvTRUE _((SV *));
 
 #define SvIVx(sv) SvIV(sv)
+#define SvUVx(sv) SvUV(sv)
 #define SvNVx(sv) SvNV(sv)
 #define SvPVx(sv, lp) sv_pvn(sv, &lp)
 #define SvPVx_force(sv, lp) sv_pvn_force(sv, &lp)
@@ -489,14 +502,25 @@ I32 SvTRUE _((SV *));
 
 #else /* !CRIPPLED_CC */
 
+#undef SvIV
 #define SvIV(sv) (SvIOK(sv) ? SvIVX(sv) : sv_2iv(sv))
 
+#undef SvUV
+#define SvUV(sv) (SvIOK(sv) ? SvUVX(sv) : sv_2uv(sv))
+
+#undef SvNV
 #define SvNV(sv) (SvNOK(sv) ? SvNVX(sv) : sv_2nv(sv))
 
-#define SvPV(sv, lp) (SvPOK(sv) ? ((lp = SvCUR(sv)), SvPVX(sv)) : sv_2pv(sv, &lp))
+#undef SvPV
+#define SvPV(sv, lp) \
+    (SvPOK(sv) ? ((lp = SvCUR(sv)), SvPVX(sv)) : sv_2pv(sv, &lp))
 
-#define SvPV_force(sv, lp) ((SvFLAGS(sv) & (SVf_POK|SVf_THINKFIRST)) == SVf_POK ? ((lp = SvCUR(sv)), SvPVX(sv)) : sv_pvn_force(sv, &lp))
+#undef SvPV_force
+#define SvPV_force(sv, lp) \
+    ((SvFLAGS(sv) & (SVf_POK|SVf_THINKFIRST)) == SVf_POK \
+     ? ((lp = SvCUR(sv)), SvPVX(sv)) : sv_pvn_force(sv, &lp))
 
+#undef SvTRUE
 #define SvTRUE(sv) (						\
     !sv								\
     ? 0								\
@@ -515,19 +539,53 @@ I32 SvTRUE _((SV *));
 		: sv_2bool(sv) )
 
 #define SvIVx(sv) ((Sv = (sv)), SvIV(Sv))
+#define SvUVx(sv) ((Sv = (sv)), SvUV(Sv))
 #define SvNVx(sv) ((Sv = (sv)), SvNV(Sv))
 #define SvPVx(sv, lp) ((Sv = (sv)), SvPV(Sv, lp))
 #define SvTRUEx(sv) ((Sv = (sv)), SvTRUE(Sv))
 
 #endif /* CRIPPLED_CC */
 
+#define newRV_inc(sv)	newRV(sv)
+#ifdef CRIPPLED_CC
+SV *newRV_noinc _((SV *));
+#else
+#define newRV_noinc(sv)	((Sv = newRV(sv)), --SvREFCNT(SvRV(Sv)), Sv)
+#endif
+
 /* the following macro updates any magic values this sv is associated with */
 
 #define SvSETMAGIC(x) if (SvSMAGICAL(x)) mg_set(x)
 
-#define SvSetSV(dst,src) if (dst != src) sv_setsv(dst,src)
+#define SvSetSV_and(dst,src,finally) \
+	    if ((dst) != (src)) {			\
+		sv_setsv(dst, src);			\
+		finally;				\
+	    }
+#define SvSetSV_nosteal_and(dst,src,finally) \
+	    if ((dst) != (src)) {			\
+		U32 tMpF = SvFLAGS(src) & SVs_TEMP;	\
+		SvTEMP_off(src);			\
+		sv_setsv(dst, src);			\
+		SvFLAGS(src) |= tMpF;			\
+		finally;				\
+	    }
+
+#define SvSetSV(dst,src) \
+		SvSetSV_and(dst,src,/*nothing*/;)
+#define SvSetSV_nosteal(dst,src) \
+		SvSetSV_nosteal_and(dst,src,/*nothing*/;)
+
+#define SvSetMagicSV(dst,src) \
+		SvSetSV_and(dst,src,SvSETMAGIC(dst))
+#define SvSetMagicSV_nosteal(dst,src) \
+		SvSetSV_nosteal_and(dst,src,SvSETMAGIC(dst))
 
 #define SvPEEK(sv) sv_peek(sv)
+
+#define SvIMMORTAL(sv) ((sv)==&sv_undef || (sv)==&sv_yes || (sv)==&sv_no)
+
+#define boolSV(b) ((b) ? &sv_yes : &sv_no)
 
 #define isGV(sv) (SvTYPE(sv) == SVt_PVGV)
 

@@ -1,3 +1,13 @@
+/* Mini EMBED (pair.c) */
+#define chkpage sdbm__chkpage
+#define delpair sdbm__delpair
+#define duppair sdbm__duppair
+#define fitpair sdbm__fitpair
+#define getnkey sdbm__getnkey
+#define getpair sdbm__getpair
+#define putpair sdbm__putpair
+#define splpage sdbm__splpage
+
 extern int fitpair proto((char *, int));
 extern void  putpair proto((char *, datum, datum));
 extern datum	getpair proto((char *, datum));

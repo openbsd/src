@@ -1,15 +1,15 @@
 #!./perl
 print "1..15\n";
 
-$_=join "", grep $_=chr($_), 32..127;
+$_=join "", map chr($_), 32..127;
 
-#95 characters - 52 letters - 10 digits = 33 backslashes
-#95 characters + 33 backslashes = 128 characters
+# 96 characters - 52 letters - 10 digits - 1 underscore = 33 backslashes
+# 96 characters + 33 backslashes = 129 characters
 $_=quotemeta $_;
-if ( length == 128 ){print "ok 1\n"} else {print "not ok 1\n"}
-if (tr/\\//cd == 94){print "ok 2\n"} else {print "not ok 2\n"}
+if ( length == 129 ){print "ok 1\n"} else {print "not ok 1\n"}
+# 95 non-backslash characters
+if (tr/\\//cd == 95){print "ok 2\n"} else {print "not ok 2\n"}
 
-#perl5a11 bus errors on this:
 if (length quotemeta "" == 0){print "ok 3\n"} else {print "not ok 3\n"}
 
 print "aA\UbB\LcC\EdD" eq "aABBccdD" ? "ok 4\n" : "not ok 4 \n";

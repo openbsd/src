@@ -34,11 +34,12 @@
 #     (i.e. /Define=DEBUGGING,EMBED,MULTIPLICITY)?
 #
 # Author: Charles Bailey  bailey@genetics.upenn.edu
-# Revised: 20-Feb-1996
 
 require 5.000;
 
 $debug = $ENV{'GEN_SHRFLS_DEBUG'};
+
+print "gen_shrfls.pl Rev. 14-Dec-1996\n" if $debug;
 
 if ($ARGV[0] eq '-f') {
   open(INP,$ARGV[1]) or die "Can't read input file $ARGV[1]: $!\n";
@@ -78,7 +79,9 @@ if ($docc) {
   $isvaxc = 0;
   $isgcc = `$cc_cmd _nla0:/Version` =~ /GNU/
            or 0; # make debug output nice
-  $isvaxc = (!$isgcc && $isvax && `$cc_cmd /prefix=all _nla0:` =~ /IVQUAL/)
+  $isvaxc = (!$isgcc && $isvax &&
+             # Check exit status too, in case message is shut off
+             (`$cc_cmd /prefix=all _nla0:` =~ /IVQUAL/ || $? == 0x38240))
             or 0; # again, make debug output nice
   print "\$isgcc: $isgcc\n" if $debug;
   print "\$isvaxc: $isvaxc\n" if $debug;
@@ -139,16 +142,31 @@ sub scan_enum {
 
 sub scan_var {
   my($line) = @_;
+  my($const) = $line =~ /^EXTCONST/;
 
   print "\tchecking for global variable\n" if $debug > 1;
-  $line =~ s/INIT\(.*\)//;
+  $line =~ s/\s*EXT/EXT/;
+  $line =~ s/INIT\s*\(.*\)//;
   $line =~ s/\[.*//;
   $line =~ s/=.*//;
   $line =~ s/\W*;?\s*$//;
   print "\tfiltered to \\$line\\\n" if $debug > 1;
   if ($line =~ /(\w+)$/) {
-    print "\tvar name is \\$1\\\n" if $debug > 1;
-   $vars{$1}++;
+    print "\tvar name is \\$1\\" . ($const ? ' (const)' : '') . "\n" if $debug > 1;
+   if ($const) { $cvars{$1}++; }
+   else        { $vars{$1}++;  }
+  }
+  if ($isvaxc) {
+    my($type) = $line =~ /^\s*EXT\w*\s+(\w+)/;
+    print "\tchecking for use of enum (type is \"$type\")\n" if $debug > 2;
+    if ($type eq 'expectation') {
+      $used_expectation_enum++;
+      print "\tsaw global use of enum \"expectation\"\n" if $debug > 1;
+    }
+    if ($type eq 'opcode') {
+      $used_opcode_enum++;
+      print "\tsaw global use of enum \"opcode\"\n" if $debug > 1;
+    }
   }
 }
 
@@ -177,18 +195,18 @@ LINE: while (<CPP>) {
   while (/^#.*vmsish\.h/i .. /^#.*perl\.h/i) {
     while (/__VMS_PROTOTYPES__/i .. /__VMS_SEPYTOTORP__/i) {
       print "vms_proto>> $_" if $debug > 2;
-      if (/^EXT/) { &scan_var($_);  }
+      if (/^\s*EXT/) { &scan_var($_);  }
       else        { &scan_func($_); }
       last LINE unless $_ = <CPP>;
     }
     print "vmsish.h>> $_" if $debug > 2;
-    if (/^EXT/) { &scan_var($_); }
+    if (/^\s*EXT/) { &scan_var($_); }
     last LINE unless $_ = <CPP>;
   }    
   while (/^#.*opcode\.h/i .. /^#.*perl\.h/i) {
     print "opcode.h>> $_" if $debug > 2;
     if (/^OP \*\s/) { &scan_func($_); }
-    if (/^EXT/) { &scan_var($_); }
+    if (/^\s*EXT/) { &scan_var($_); }
     if (/^\s+OP_/) { &scan_enum($_); }
     last LINE unless $_ = <CPP>;
   }
@@ -199,33 +217,21 @@ LINE: while (<CPP>) {
   }
   while (/^#.*proto\.h/i .. /^#.*perl\.h/i) {
     print "proto.h>> $_" if $debug > 2;
-    if (/^EXT/) { &scan_var($_);  }
+    if (/\s*^EXT/) { &scan_var($_);  }
     else        { &scan_func($_); }
     last LINE unless $_ = <CPP>;
   }
-  print $_ if $debug > 3;
-  if (($type) = /^EXT\s+(\w+)/) {
-    if ($isvaxc) {
-      if ($type eq 'expectation') {
-        $used_expectation_enum++;
-        print "\tsaw global use of enum \"expectation\"\n" if $debug > 1;
-      }
-      if ($type eq 'opcode') {
-        $used_opcode_enum++;
-        print "\tsaw global use of enum \"opcode\"\n" if $debug > 1;
-      }
-    }
-    &scan_var($_);
-  }
+  print $_ if $debug > 3 && ($debug > 5 || length($_));
+  if (/^\s*EXT/) { &scan_var($_); }
 }
 close CPP;
 
 
 # Kluge to determine whether we need to add EMBED prefix to
-# symbols read from local list.  init_os_extras() is a VMS-
+# symbols read from local list.  vmsreaddirversions() is a VMS-
 # specific function whose Perl_ prefix is added in vmsish.h
 # if EMBED is #defined.
-$embed = exists($fcns{'Perl_init_os_extras'}) ? 'Perl_' : '';
+$embed = exists($fcns{'Perl_vmsreaddirversions'}) ? 'Perl_' : '';
 while (<DATA>) {
   next if /^#/;
   s/\s+#.*\n//;
@@ -257,6 +263,14 @@ if ($isvaxc) {
     print STDERR "Unrecognized enum constant \"$_\" ignored\n";
   }
 }
+elsif ($isgcc) {
+  # gcc creates this as a SHR,WRT psect in globals.c, but we
+  # don't see it in the perl.h scan, since it's only declared
+  # if DOINIT is #defined.  Bleah.  It's cheaper to just add
+  # it by hand than to add /Define=DOINIT to the preprocessing
+  # run and wade through all the extra junk.
+  $vars{"${embed}Error"}++;
+}
 
 # Eventually, we'll check against existing copies here, so we can add new
 # symbols to an existing options file in an upwardly-compatible manner.
@@ -269,7 +283,11 @@ if ($isvax) {
     or die "$0: Can't write to ${dir}perlshr_gbl${marord}.mar: $!\n";
   print MAR "\t.title perlshr_gbl$marord\n";
 }
-foreach $var (sort keys %vars) {
+unless ($isgcc) {
+  print OPTBLD "PSECT_ATTR=\$GLOBAL_RO_VARS,PIC,NOEXE,RD,NOWRT,SHR\n";
+  print OPTBLD "PSECT_ATTR=\$GLOBAL_RW_VARS,PIC,NOEXE,RD,WRT,NOSHR\n";
+}
+foreach $var (sort (keys %vars,keys %cvars)) {
   if ($isvax) { print OPTBLD "UNIVERSAL=$var\n"; }
   else { print OPTBLD "SYMBOL_VECTOR=($var=DATA)\n"; }
   # This hack brought to you by the lack of a globaldef in gcc.
@@ -304,9 +322,19 @@ if ($isvax) {
 
 open(OPTATTR,">${dir}perlshr_attr.opt")
   or die "$0: Can't write to ${dir}perlshr_attr.opt: $!\n";
-print OPTATTR "PSECT_ATTR=\$CHAR_STRING_CONSTANTS,PIC,SHR,NOEXE,RD,NOWRT\n";
-foreach $var (sort keys %vars) {
-  print OPTATTR "PSECT_ATTR=${var},PIC,OVR,RD,NOEXE,WRT,NOSHR\n";
+if ($isvaxc) {
+  print OPTATTR "PSECT_ATTR=\$CHAR_STRING_CONSTANTS,PIC,SHR,NOEXE,RD,NOWRT\n";
+}
+elsif ($isgcc) {
+  foreach $var (sort keys %cvars) {
+    print OPTATTR "PSECT_ATTR=${var},PIC,OVR,RD,NOEXE,NOWRT,SHR\n";
+  }
+  foreach $var (sort keys %vars) {
+    print OPTATTR "PSECT_ATTR=${var},PIC,OVR,RD,NOEXE,WRT,NOSHR\n";
+  }
+}
+else {
+  print OPTATTR "! No additional linker directives are needed when using DECC\n";
 }
 close OPTATTR;
 
@@ -322,7 +350,7 @@ if ($isvax) {
   print DRVR "\$ Set Verify\n";
   print DRVR "\$ If F\$Search(\"$libperl\").eqs.\"\" Then Library/Object/Create $libperl\n";
   do {
-    $incstr .= ",perlshr_gbl$marord";
+    push(@symfiles,"perlshr_gbl$marord");
     print DRVR "\$ Macro/NoDebug/Object=PerlShr_Gbl${marord}$objsuffix PerlShr_Gbl$marord.Mar\n";
     print DRVR "\$ Library/Object/Replace/Log $libperl PerlShr_Gbl${marord}$objsuffix\n";
   } while (--$marord); 
@@ -337,6 +365,17 @@ if ($isvax) {
   close DRVR;
 }
 
+# Initial hack to permit building of compatible shareable images for a
+# given version of Perl.
+if ($ENV{PERLSHR_USE_GSMATCH}) {
+  my $major = int($] * 1000)                        & 0xFF;  # range 0..255
+  my $minor = int(($] * 1000 - $major) * 100 + 0.5) & 0xFF;  # range 0..255
+  print OPTBLD "GSMATCH=LEQUAL,$major,$minor\n";
+  foreach (@symfiles) {
+    print OPTBLD "CLUSTER=\$\$TRANSFER_VECTOR,,,$_.$objsuffix\n";
+  }
+}
+elsif (@symfiles) { $incstr .= ',' . join(',',@symfiles); }
 # Include object modules and RTLs in options file
 # Linker wants /Include and /Library on different lines
 print OPTBLD "$libperl/Include=($incstr)\n";

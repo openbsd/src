@@ -1,6 +1,6 @@
 /*    deb.c
  *
- *    Copyright (c) 1991-1994, Larry Wall
+ *    Copyright (c) 1991-1997, Larry Wall
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -30,24 +30,24 @@ deb(pat,a1,a2,a3,a4,a5,a6,a7,a8)
     register I32 i;
     GV* gv = curcop->cop_filegv;
 
-    fprintf(stderr,"(%s:%ld)\t",
+    PerlIO_printf(Perl_debug_log, "(%s:%ld)\t",
 	SvTYPE(gv) == SVt_PVGV ? SvPVX(GvSV(gv)) : "<free>",
 	(long)curcop->cop_line);
     for (i=0; i<dlevel; i++)
-	fprintf(stderr,"%c%c ",debname[i],debdelim[i]);
-    fprintf(stderr,pat,a1,a2,a3,a4,a5,a6,a7,a8);
+	PerlIO_printf(Perl_debug_log, "%c%c ",debname[i],debdelim[i]);
+    PerlIO_printf(Perl_debug_log, pat,a1,a2,a3,a4,a5,a6,a7,a8);
 }
 
 #else /* !defined(I_STDARG) && !defined(I_VARARGS) */
 
 #  ifdef I_STDARG
 void
-deb(char *pat, ...)
+deb(const char *pat, ...)
 #  else
 /*VARARGS1*/
 void
 deb(pat, va_alist)
-    char *pat;
+    const char *pat;
     va_dcl
 #  endif
 {
@@ -55,18 +55,18 @@ deb(pat, va_alist)
     register I32 i;
     GV* gv = curcop->cop_filegv;
 
-    fprintf(stderr,"(%s:%ld)\t",
+    PerlIO_printf(Perl_debug_log, "(%s:%ld)\t",
 	SvTYPE(gv) == SVt_PVGV ? SvPVX(GvSV(gv)) : "<free>",
 	(long)curcop->cop_line);
     for (i=0; i<dlevel; i++)
-	fprintf(stderr,"%c%c ",debname[i],debdelim[i]);
+	PerlIO_printf(Perl_debug_log, "%c%c ",debname[i],debdelim[i]);
 
 #  ifdef I_STDARG
     va_start(args, pat);
 #  else
     va_start(args);
 #  endif
-    (void) vfprintf(stderr,pat,args);
+    (void) PerlIO_vprintf(Perl_debug_log,pat,args);
     va_end( args );
 }
 #endif /* !defined(I_STDARG) && !defined(I_VARARGS) */
@@ -82,13 +82,13 @@ deb_growlevel()
 I32
 debstackptrs()
 {
-    fprintf(stderr, "%8lx %8lx %8ld %8ld %8ld\n",
-	(unsigned long)stack, (unsigned long)stack_base,
+    PerlIO_printf(Perl_debug_log, "%8lx %8lx %8ld %8ld %8ld\n",
+	(unsigned long)curstack, (unsigned long)stack_base,
 	(long)*markstack_ptr, (long)(stack_sp-stack_base),
 	(long)(stack_max-stack_base));
-    fprintf(stderr, "%8lx %8lx %8ld %8ld %8ld\n",
-	(unsigned long)mainstack, (unsigned long)AvARRAY(stack),
-	(long)mainstack, (long)AvFILL(stack), (long)AvMAX(stack));
+    PerlIO_printf(Perl_debug_log, "%8lx %8lx %8ld %8ld %8ld\n",
+	(unsigned long)mainstack, (unsigned long)AvARRAY(curstack),
+	(long)mainstack, (long)AvFILL(curstack), (long)AvMAX(curstack));
     return 0;
 }
 
@@ -106,25 +106,25 @@ debstack()
 	if (*markscan >= i)
 	    break;
 
-    fprintf(stderr, i ? "    =>  ...  " : "    =>  ");
+    PerlIO_printf(Perl_debug_log, i ? "    =>  ...  " : "    =>  ");
     if (stack_base[0] != &sv_undef || stack_sp < stack_base)
-	fprintf(stderr, " [STACK UNDERFLOW!!!]\n");
+	PerlIO_printf(Perl_debug_log, " [STACK UNDERFLOW!!!]\n");
     do {
 	++i;
 	if (markscan <= markstack_ptr && *markscan < i) {
 	    do {
 		++markscan;
-		putc('*', stderr);
+		PerlIO_putc(Perl_debug_log, '*');
 	    }
 	    while (markscan <= markstack_ptr && *markscan < i);
-	    fprintf(stderr, "  ");
+	    PerlIO_printf(Perl_debug_log, "  ");
 	}
 	if (i > top)
 	    break;
-	fprintf(stderr, "%-4s  ", SvPEEK(stack_base[i]));
+	PerlIO_printf(Perl_debug_log, "%-4s  ", SvPEEK(stack_base[i]));
     }
     while (1);
-    fprintf(stderr, "\n");
+    PerlIO_printf(Perl_debug_log, "\n");
     return 0;
 }
 #else

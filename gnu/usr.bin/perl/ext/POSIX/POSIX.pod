@@ -155,7 +155,7 @@ This is identical to Perl's builtin C<chown()> function.
 
 =item clearerr
 
-Use method C<FileHandle::clearerr()> instead.
+Use method C<IO::Handle::clearerr()> instead.
 
 =item clock
 
@@ -277,7 +277,7 @@ This is identical to Perl's builtin C<abs()> function.
 
 =item fclose
 
-Use method C<FileHandle::close()> instead.
+Use method C<IO::Handle::close()> instead.
 
 =item fcntl
 
@@ -285,35 +285,35 @@ This is identical to Perl's builtin C<fcntl()> function.
 
 =item fdopen
 
-Use method C<FileHandle::new_from_fd()> instead.
+Use method C<IO::Handle::new_from_fd()> instead.
 
 =item feof
 
-Use method C<FileHandle::eof()> instead.
+Use method C<IO::Handle::eof()> instead.
 
 =item ferror
 
-Use method C<FileHandle::error()> instead.
+Use method C<IO::Handle::error()> instead.
 
 =item fflush
 
-Use method C<FileHandle::flush()> instead.
+Use method C<IO::Handle::flush()> instead.
 
 =item fgetc
 
-Use method C<FileHandle::getc()> instead.
+Use method C<IO::Handle::getc()> instead.
 
 =item fgetpos
 
-Use method C<FileHandle::getpos()> instead.
+Use method C<IO::Seekable::getpos()> instead.
 
 =item fgets
 
-Use method C<FileHandle::gets()> instead.
+Use method C<IO::Handle::gets()> instead.
 
 =item fileno
 
-Use method C<FileHandle::fileno()> instead.
+Use method C<IO::Handle::fileno()> instead.
 
 =item floor
 
@@ -325,7 +325,7 @@ This is identical to the C function C<fmod()>.
 
 =item fopen
 
-Use method C<FileHandle::open()> instead.
+Use method C<IO::File::open()> instead.
 
 =item fork
 
@@ -380,11 +380,11 @@ fscanf() is C-specific--use <> and regular expressions instead.
 
 =item fseek
 
-Use method C<FileHandle::seek()> instead.
+Use method C<IO::Seekable::seek()> instead.
 
 =item fsetpos
 
-Use method C<FileHandle::setpos()> instead.
+Use method C<IO::Seekable::setpos()> instead.
 
 =item fstat
 
@@ -397,7 +397,7 @@ Perl's builtin C<stat> function.
 
 =item ftell
 
-Use method C<FileHandle::tell()> instead.
+Use method C<IO::Seekable::tell()> instead.
 
 =item fwrite
 
@@ -606,7 +606,7 @@ longjmp() is C-specific: use die instead.
 
 =item lseek
 
-Move the read/write file pointer.  This uses file descriptors such as
+Move the file's read/write position.  This uses file descriptors such as
 those obtained by calling C<POSIX::open>.
 
 	$fd = POSIX::open( "foo", &POSIX::O_RDONLY );
@@ -849,9 +849,29 @@ setjmp() is C-specific: use eval {} instead.
 
 Modifies and queries program's locale.
 
-The following will set the traditional UNIX system locale behavior.
+The following will set the traditional UNIX system locale behavior
+(the second argument C<"C">).
 
 	$loc = POSIX::setlocale( &POSIX::LC_ALL, "C" );
+
+The following will query (the missing second argument) the current
+LC_CTYPE category.
+
+	$loc = POSIX::setlocale( &POSIX::LC_CTYPE);
+
+The following will set the LC_CTYPE behaviour according to the locale
+environment variables (the second argument C<"">).
+Please see your systems L<setlocale(3)> documentation for the locale
+environment variables' meaning or consult L<perllocale>.
+
+	$loc = POSIX::setlocale( &POSIX::LC_CTYPE, "");
+
+The following will set the LC_COLLATE behaviour to Argentinian
+Spanish. B<NOTE>: The naming and availability of locales depends on
+your operating system. Please consult L<perllocale> for how to find
+out which locales are available in your system.
+
+	$loc = POSIX::setlocale( &POSIX::LC_ALL, "es_AR.ISO8859-1" );
 
 =item setpgid
 
@@ -1040,7 +1060,26 @@ This is identical to Perl's builtin C<index()> function.
 
 =item strtod
 
-strtod() is C-specific.
+String to double translation. Returns the parsed number and the number
+of characters in the unparsed portion of the string.  Truly
+POSIX-compliant systems set $! ($ERRNO) to indicate a translation
+error, so clear $! before calling strtod.  However, non-POSIX systems
+may not check for overflow, and therefore will never set $!.
+
+strtod should respect any POSIX I<setlocale()> settings.
+
+To parse a string $str as a floating point number use
+
+    $! = 0;
+    ($num, $n_unparsed) = POSIX::strtod($str);
+
+The second returned item and $! can be used to check for valid input:
+
+    if (($str eq '') || ($n_unparsed != 0) || !$!) {
+        die "Non-numeric input $str" . $! ? ": $!\n" : "\n";
+    }
+
+When called in a scalar context strtod returns the parsed number.
 
 =item strtok
 
@@ -1048,7 +1087,42 @@ strtok() is C-specific.
 
 =item strtol
 
-strtol() is C-specific.
+String to (long) integer translation.  Returns the parsed number and
+the number of characters in the unparsed portion of the string.  Truly
+POSIX-compliant systems set $! ($ERRNO) to indicate a translation
+error, so clear $! before calling strtol.  However, non-POSIX systems
+may not check for overflow, and therefore will never set $!.
+
+strtol should respect any POSIX I<setlocale()> settings.
+
+To parse a string $str as a number in some base $base use
+
+    $! = 0;
+    ($num, $n_unparsed) = POSIX::strtol($str, $base);
+
+The base should be zero or between 2 and 36, inclusive.  When the base
+is zero or omitted strtol will use the string itself to determine the
+base: a leading "0x" or "0X" means hexadecimal; a leading "0" means
+octal; any other leading characters mean decimal.  Thus, "1234" is
+parsed as a decimal number, "01234" as an octal number, and "0x1234"
+as a hexadecimal number.
+
+The second returned item and $! can be used to check for valid input:
+
+    if (($str eq '') || ($n_unparsed != 0) || !$!) {
+        die "Non-numeric input $str" . $! ? ": $!\n" : "\n";
+    }
+
+When called in a scalar context strtol returns the parsed number.
+
+=item strtoul
+
+String to unsigned (long) integer translation.  strtoul is identical
+to strtol except that strtoul only parses unsigned integers.  See
+I<strtol> for details.
+
+Note: Some vendors supply strtod and strtol but not strtoul.
+Other vendors that do suply strtoul parse "-1" as a valid value.
 
 =item strxfrm
 
@@ -1130,7 +1204,7 @@ seconds.
 
 =item tmpfile
 
-Use method C<FileHandle::new_tmpfile()> instead.
+Use method C<IO::File::new_tmpfile()> instead.
 
 =item tmpnam
 
@@ -1173,7 +1247,7 @@ Get name of current operating system.
 
 =item ungetc
 
-Use method C<FileHandle::ungetc()> instead.
+Use method C<IO::Handle::ungetc()> instead.
 
 =item unlink
 
@@ -1240,9 +1314,10 @@ Creates a new C<POSIX::SigAction> object which corresponds to the C
 C<struct sigaction>.  This object will be destroyed automatically when it is
 no longer needed.  The first parameter is the fully-qualified name of a sub
 which is a signal-handler.  The second parameter is a C<POSIX::SigSet>
-object.  The third parameter contains the C<sa_flags>.
+object, it defaults to the empty set.  The third parameter contains the
+C<sa_flags>, it defaults to 0.
 
-	$sigset = POSIX::SigSet->new;
+	$sigset = POSIX::SigSet->new(SIGINT, SIGQUIT);
 	$sigaction = POSIX::SigAction->new( 'main::handler', $sigset, &POSIX::SA_NOCLDSTOP );
 
 This C<POSIX::SigAction> object should be used with the C<POSIX::sigaction()>
@@ -1393,7 +1468,7 @@ Returns C<undef> on failure.
 Set a value in the c_cc field of a termios object.  The c_cc field is an
 array so an index must be specified.
 
-	$termios->setcc( 1, &POSIX::VEOF );
+	$termios->setcc( &POSIX::VEOF, 1 );
 
 =item setcflag
 
@@ -1501,7 +1576,16 @@ _SC_ARG_MAX _SC_CHILD_MAX _SC_CLK_TCK _SC_JOB_CONTROL _SC_NGROUPS_MAX _SC_OPEN_M
 
 =item Constants
 
-E2BIG EACCES EAGAIN EBADF EBUSY ECHILD EDEADLK EDOM EEXIST EFAULT EFBIG EINTR EINVAL EIO EISDIR EMFILE EMLINK ENAMETOOLONG ENFILE ENODEV ENOENT ENOEXEC ENOLCK ENOMEM ENOSPC ENOSYS ENOTDIR ENOTEMPTY ENOTTY ENXIO EPERM EPIPE ERANGE EROFS ESPIPE ESRCH EXDEV
+E2BIG EACCES EADDRINUSE EADDRNOTAVAIL EAFNOSUPPORT EAGAIN EALREADY EBADF
+EBUSY ECHILD ECONNABORTED ECONNREFUSED ECONNRESET EDEADLK EDESTADDRREQ
+EDOM EDQUOT EEXIST EFAULT EFBIG EHOSTDOWN EHOSTUNREACH EINPROGRESS EINTR
+EINVAL EIO EISCONN EISDIR ELOOP EMFILE EMLINK EMSGSIZE ENAMETOOLONG
+ENETDOWN ENETRESET ENETUNREACH ENFILE ENOBUFS ENODEV ENOENT ENOEXEC
+ENOLCK ENOMEM ENOPROTOOPT ENOSPC ENOSYS ENOTBLK ENOTCONN ENOTDIR
+ENOTEMPTY ENOTSOCK ENOTTY ENXIO EOPNOTSUPP EPERM EPFNOSUPPORT EPIPE
+EPROCLIM EPROTONOSUPPORT EPROTOTYPE ERANGE EREMOTE ERESTART EROFS
+ESHUTDOWN ESOCKTNOSUPPORT ESPIPE ESRCH ESTALE ETIMEDOUT ETOOMANYREFS
+ETXTBSY EUSERS EWOULDBLOCK EXDEV
 
 =back
 
@@ -1561,7 +1645,11 @@ HUGE_VAL
 
 =item Constants
 
-SA_NOCLDSTOP SIGABRT SIGALRM SIGCHLD SIGCONT SIGFPE SIGHUP SIGILL SIGINT SIGKILL SIGPIPE SIGQUIT SIGSEGV SIGSTOP SIGTERM SIGTSTP SIGTTIN SIGTTOU SIGUSR1 SIGUSR2 SIG_BLOCK SIG_DFL SIG_ERR SIG_IGN SIG_SETMASK SIG_UNBLOCK
+SA_NOCLDSTOP SA_NOCLDWAIT SA_NODEFER SA_ONSTACK SA_RESETHAND SA_RESTART
+SA_SIGINFO SIGABRT SIGALRM SIGCHLD SIGCONT SIGFPE SIGHUP SIGILL SIGINT
+SIGKILL SIGPIPE SIGQUIT SIGSEGV SIGSTOP SIGTERM SIGTSTP SIGTTIN SIGTTOU
+SIGUSR1 SIGUSR2 SIG_BLOCK SIG_DFL SIG_ERR SIG_IGN SIG_SETMASK
+SIG_UNBLOCK
 
 =back
 

@@ -18,9 +18,9 @@
 # archive site. Check with Archie if you don't know where that can be.)
 #
 
-# $Id: Configure,v 1.2 1996/09/06 01:33:53 dm Exp $
+# $Id: Head.U,v 3.0.1.8 1995/07/25 13:40:02 ram Exp $
 #
-# Generated on Wed Feb 21 14:26:18 EST 1996 [metaconfig 3.0 PL60]
+# Generated on Sat Feb  1 00:26:40 EST 1997 [metaconfig 3.0 PL60]
 
 cat >/tmp/c1$$ <<EOF
 ARGGGHHHH!!!!!
@@ -58,7 +58,7 @@ esac
 : Proper PATH separator
 p_=:
 : On OS/2 this directory should exist if this is not floppy only system :-]
-if test -d c:/.; then
+if test -d c:/. -a -n "$OS2_SHELL"; then
 	p_=\;
 	PATH=`cmd /c "echo %PATH%" | tr '\\\\' / `
 	OS2_SHELL=`cmd /c "echo %OS2_SHELL%" | tr '\\\\' / | tr '[A-Z]' '[a-z]'`
@@ -85,6 +85,12 @@ done
 PATH=.$p_$PATH
 export PATH
 
+: This should not matter in scripts, but apparently it does, sometimes
+case "$CDPATH" in
+'')	;;
+*)	CDPATH='' ;;
+esac
+
 : Sanity checks
 # WRONG: This makes it impossible to compile perl non-interactively
 #if test ! -t 0; then
@@ -92,24 +98,40 @@ export PATH
 #	exit 1
 #fi
 
-: On HP-UX, large Configure scripts may exercise a bug in /bin/sh
-if test -f /hp-ux -a -f /bin/ksh; then
-	if (PATH=.; alias -x) >/dev/null 2>&1; then
-		: already under /bin/ksh
-	else
+: Test and see if we are running under ksh, either blatantly or in disguise.
+if (PATH=.; alias -x) >/dev/null 2>&1; then
+    : running under ksh.  Is this a good thing?
+    if test -d /usr/lpp -a -f /usr/bin/bsh -a -f /usr/bin/uname ; then
+        if test X`/usr/bin/uname -v` = X4 ; then
+            : on AIX 4, /bin/sh is really ksh, and it causes us problems.
+            : Avoid it
 		cat <<'EOM'
-(Feeding myself to ksh to avoid nasty sh bug in "here document" expansion.)
+(Feeding myself to /usr/bin/bsh to avoid AIX 4's /bin/sh.)
 EOM
 		unset ENV
-		exec /bin/ksh $0 "$@"
+            exec /usr/bin/bsh $0 "$@"
 	fi
-else
+    else
+        if test ! -f /hp-ux ; then
 	: Warn them if they use ksh on other systems
-	(PATH=.; alias -x) >/dev/null 2>&1 && \
 		cat <<EOM
 (I see you are using the Korn shell.  Some ksh's blow up on $me,
-especially on exotic machines.  If yours does, try the Bourne shell instead.)
+especially on older exotic systems.  If yours does, try the Bourne 
+shell instead.)
 EOM
+		unset ENV
+        fi
+    fi
+else
+    : Not running under ksh.  Maybe we should be?
+    : On HP-UX, large Configure scripts may exercise a bug in /bin/sh
+    if test -f /hp-ux -a -f /bin/ksh; then
+        cat <<'EOM'
+(Feeding myself to ksh to avoid nasty sh bug in "here document" expansion.)
+EOM
+        unset ENV
+        exec /bin/ksh $0 "$@"
+    fi
 fi
 
 : Configure runs within the UU subdirectory
@@ -120,8 +142,8 @@ dynamic_ext=''
 extensions=''
 known_extensions=''
 static_ext=''
+useopcode=''
 useposix=''
-usesafe=''
 d_bsd=''
 d_eunice=''
 d_xenix=''
@@ -150,6 +172,7 @@ find=''
 flex=''
 gcc=''
 grep=''
+gzip=''
 inews=''
 ksh=''
 less=''
@@ -161,7 +184,6 @@ lpr=''
 ls=''
 mail=''
 mailx=''
-make=''
 mkdir=''
 more=''
 mv=''
@@ -174,7 +196,6 @@ rm=''
 rmail=''
 sed=''
 sendmail=''
-sh=''
 shar=''
 sleep=''
 smail=''
@@ -192,6 +213,7 @@ uniq=''
 uuname=''
 vi=''
 zcat=''
+zip=''
 full_sed=''
 libswanted=''
 hint=''
@@ -227,6 +249,8 @@ baserev=''
 bin=''
 binexp=''
 installbin=''
+bincompat3=''
+d_bincompat3=''
 byteorder=''
 cc=''
 gccversion=''
@@ -284,19 +308,26 @@ d_flexfnam=''
 d_flock=''
 d_fork=''
 d_fsetpos=''
+d_ftime=''
+d_gettimeod=''
 d_Gconvert=''
 d_getgrps=''
+d_setgrps=''
 d_gethent=''
 aphostname=''
 d_gethname=''
 d_phostname=''
 d_uname=''
 d_getlogin=''
+d_getpgid=''
 d_getpgrp2=''
+d_bsdgetpgrp=''
 d_getpgrp=''
 d_getppid=''
 d_getprior=''
+d_gnulibc=''
 d_htonl=''
+d_inetaton=''
 d_isascii=''
 d_killpg=''
 d_link=''
@@ -335,6 +366,7 @@ d_rename=''
 d_rmdir=''
 d_safebcpy=''
 d_safemcpy=''
+d_sanemcmp=''
 d_select=''
 d_sem=''
 d_semctl=''
@@ -347,6 +379,7 @@ d_setlocale=''
 d_setpgid=''
 d_setpgrp2=''
 d_bsdpgrp=''
+d_bsdsetpgrp=''
 d_setpgrp=''
 d_setprior=''
 d_setregid=''
@@ -356,6 +389,8 @@ d_setreuid=''
 d_setrgid=''
 d_setruid=''
 d_setsid=''
+d_sfio=''
+usesfio=''
 d_shm=''
 d_shmat=''
 d_shmatprototype=''
@@ -363,11 +398,8 @@ shmattype=''
 d_shmctl=''
 d_shmdt=''
 d_shmget=''
-d_sigsetjmp=''
 d_sigaction=''
-d_sigintrp=''
-d_sigvec=''
-d_sigvectr=''
+d_sigsetjmp=''
 d_oldsock=''
 d_socket=''
 d_sockpair=''
@@ -390,6 +422,9 @@ d_strerrm=''
 d_strerror=''
 d_sysernlst=''
 d_syserrlst=''
+d_strtod=''
+d_strtol=''
+d_strtoul=''
 d_strxfrm=''
 d_symlink=''
 d_syscall=''
@@ -418,11 +453,9 @@ d_wctomb=''
 dlext=''
 cccdlflags=''
 ccdlflags=''
-d_shrplib=''
 dlsrc=''
 ld=''
 lddlflags=''
-shrpdir=''
 usedl=''
 fpostype=''
 gidtype=''
@@ -459,6 +492,7 @@ d_pwcomment=''
 d_pwexpire=''
 d_pwquota=''
 i_pwd=''
+i_sfio=''
 i_stddef=''
 i_stdlib=''
 i_string=''
@@ -472,11 +506,13 @@ i_sysioctl=''
 i_syssockio=''
 i_sysndir=''
 i_sysparam=''
+i_sysresrc=''
 i_sysselct=''
 i_sysstat=''
 i_systimes=''
 i_systypes=''
 i_sysun=''
+i_syswait=''
 i_sgtty=''
 i_termio=''
 i_termios=''
@@ -486,12 +522,18 @@ i_time=''
 timeincl=''
 i_unistd=''
 i_utime=''
+i_values=''
 i_stdarg=''
 i_varargs=''
 i_varhdr=''
 i_vfork=''
 intsize=''
+longsize=''
+shortsize=''
 libc=''
+libperl=''
+shrpenv=''
+useshrplib=''
 glibpth=''
 libpth=''
 loclibpth=''
@@ -500,6 +542,8 @@ xlibpth=''
 libs=''
 lns=''
 lseektype=''
+make=''
+make_set_make=''
 d_mymalloc=''
 freetype=''
 mallocobj=''
@@ -542,6 +586,7 @@ package=''
 spackage=''
 pager=''
 patchlevel=''
+subversion=''
 perladmin=''
 perlpath=''
 prefix=''
@@ -555,6 +600,7 @@ installscript=''
 scriptdir=''
 scriptdirexp=''
 selecttype=''
+sh=''
 sig_name=''
 sig_num=''
 installsitearch=''
@@ -572,13 +618,13 @@ ssizetype=''
 startperl=''
 startsh=''
 stdchar=''
-subversion=''
 sysman=''
 uidtype=''
 nm_opt=''
 nm_so_opt=''
 runnm=''
 usenm=''
+useperlio=''
 incpath=''
 mips=''
 mips_type=''
@@ -672,8 +718,8 @@ i_whoami=''
 libswanted=''
 : set useposix=false in your hint file to disable the POSIX extension.
 useposix=true
-: set usesafe=false in your hint if you want to skip the Safe extension.
-usesafe=true
+: set useopcode=false in your hint file to disable the Opcode extension.
+useopcode=true
 : Define several unixisms.  These can be used in hint files.
 exe_ext='' 
 : Extra object files, if any, needed on this platform.
@@ -694,9 +740,10 @@ loclibpth="/usr/local/lib /opt/local/lib /usr/gnu/lib"
 loclibpth="$loclibpth /opt/gnu/lib /usr/GNU/lib /opt/GNU/lib"
 
 : general looking path for locating libraries
-glibpth="/lib/pa1.1 /usr/shlib /usr/lib/large /lib /usr/lib"
-glibpth="$glibpth $xlibpth /lib/large /usr/lib/small /lib/small"
-glibpth="$glibpth /usr/ccs/lib /usr/ucblib /usr/shlib"
+glibpth="/shlib /usr/shlib /usr/lib/pa1.1 /usr/lib/large"
+glibpth="$glibpth /lib /usr/lib $xlibpth"
+glibpth="$glibpth /lib/large /usr/lib/small /lib/small"
+glibpth="$glibpth /usr/ccs/lib /usr/ucblib /usr/local/lib"
 
 : Private path used by Configure to find libraries.  Its value
 : is prepended to libpth. This variable takes care of special
@@ -707,7 +754,7 @@ plibpth=''
 defvoidused=15
 
 : List of libraries we want.
-libswanted='net socket inet nsl nm ndbm gdbm dbm db malloc dl'
+libswanted='sfio net socket inet nsl nm ndbm gdbm dbm db malloc dl'
 libswanted="$libswanted dld ld sun m c cposix posix ndir dir crypt"
 libswanted="$libswanted ucb bsd BSD PW x"
 : We probably want to search /usr/shlib before most other libraries.
@@ -717,8 +764,117 @@ glibpth="/usr/shlib $glibpth"
 : Do not use vfork unless overridden by a hint file.
 usevfork=false
 
+: Find the basic shell for Bourne shell scripts
+case "$sh" in
+'')
+	: SYSTYPE is for some older MIPS systems. 
+	: I do not know if it is still needed.
+	case "$SYSTYPE" in
+	*bsd*|sys5*) xxx="/$SYSTYPE/bin/sh";;
+	*) xxx='/bin/sh';;
+	esac
+	if test -f "$xxx"; then
+		sh="$xxx"
+	else
+		: Build up a list and do a single loop so we can 'break' out.
+		pth=`echo $PATH | sed -e "s/$p_/ /g"`
+		for xxx in sh bash ksh pdksh ash; do
+			for p in $pth; do
+				try="$try ${p}/${xxx}"
+			done
+		done
+		for xxx in $try; do
+			if test -f "$xxx"; then
+				sh="$xxx";
+				echo "Your Bourne shell appears to be in $sh."
+				break
+			elif test -f "$xxx.exe"; then
+				sh="$xxx";
+				echo "Hmm.  Your Bourne shell appears to be in $sh."
+				break
+			fi
+		done
+	fi
+	;;
+esac
+
+case "$sh" in
+'')	cat <<EOM >&2
+$me:  Fatal Error:  I can't find a Bourne Shell anywhere.  
+Usually it's in /bin/sh.  How did you even get this far?
+Please contact me (Chip Salzenberg) at chip@perl.com and 
+we'll try to straigten this all out.
+EOM
+	exit 1
+	;;
+esac
+
+: see if sh knows # comments
+if `$sh -c '#' >/dev/null 2>&1`; then
+	shsharp=true
+	spitshell=cat
+	echo " "
+	xcat=/bin/cat
+	test -f $xcat || xcat=/usr/bin/cat
+	echo "#!$xcat" >try
+	$eunicefix try
+	chmod +x try
+	./try > today
+	if test -s today; then
+		sharpbang='#!'
+	else
+		echo "#! $xcat" > try
+		$eunicefix try
+		chmod +x try
+		./try > today
+		if test -s today; then
+			sharpbang='#! '
+		else
+			echo "Okay, let's see if #! works on this system..."
+			echo "It's just a comment."
+			sharpbang=': use '
+		fi
+	fi
+else
+	echo "Your $sh doesn't grok # comments--I will strip them later on."
+	shsharp=false
+	cd ..
+	echo "exec grep -v '^[ 	]*#'" >spitshell
+	chmod +x spitshell
+	$eunicefix spitshell
+	spitshell=`pwd`/spitshell
+	cd UU
+	echo "I presume that if # doesn't work, #! won't work either!"
+	sharpbang=': use '
+fi
+rm -f try today
+
+: figure out how to guarantee sh startup
+case "$startsh" in
+'') startsh=${sharpbang}${sh} ;;
+*)
+esac
+cat >try <<EOSS
+$startsh
+set abc
+test "$?abc" != 1
+EOSS
+
+chmod +x try
+$eunicefix try
+if ./try; then
+	: echo "Yup, it does."
+else
+	echo "Hmm.  '$startsh' didn't work."
+	echo "You may have to fix up the shell scripts to make sure sh runs them."
+fi
+rm -f try
+
 : script used to extract .SH files with variable substitutions
-cat >extract <<'EOS'
+cat >extract <<EOS
+$startsh
+EOS
+cat >>extract <<'EOS'
 CONFIG=true
 echo "Doing variable substitutions on .SH files..."
 if test -f MANIFEST; then
@@ -826,7 +982,11 @@ silent=''
 extractsh=''
 override=''
 knowitall=''
+
 rm -f optdef.sh
+cat >optdef.sh <<EOS
+$startsh
+EOS
 
 : option parsing
 while test $# -gt 0; do
@@ -887,7 +1047,7 @@ done
 case "$error" in
 true)
 	cat >&2 <<EOM
-Usage: $me [-dehrEKOSV] [-f config.sh] [-D symbol] [-D symbol=value]
+Usage: $me [-dehrsEKOSV] [-f config.sh] [-D symbol] [-D symbol=value]
                  [-U symbol] [-U symbol=]
   -d : use defaults for all answers.
   -e : go on without questioning past the production of config.sh.
@@ -1014,7 +1174,7 @@ THIS PACKAGE SEEMS TO BE INCOMPLETE.
 You have the option of continuing the configuration process, despite the
 distinct possibility that your kit is damaged, by typing 'y'es.  If you
 do, don't blame me if something goes wrong.  I advise you to type 'n'o
-and contact the author (doughera@lafcol.lafayette.edu).
+and contact the author (chip@perl.com).
 
 EOM
 		echo $n "Continue? [n] $c" >&4
@@ -1060,6 +1220,7 @@ esac"
 
 : now set up to do reads with possible shell escape and default assignment
 cat <<EOSC >myread
+$startsh
 xxxm=\$dflt
 $myecho
 ans='!'
@@ -1082,7 +1243,7 @@ while expr "X\$ans" : "X!" >/dev/null; do
 	read answ
 	set x \$xxxm
 	shift
-	aok=''; eval "ans=\"\$answ\"" && aok=y
+	aok=''; eval ans="\\"\$answ\\"" && aok=y
 	case  "\$answ" in
 	"\$ans")
 		case "\$ans" in
@@ -1155,7 +1316,10 @@ EOF
 : general instructions
 needman=true
 firsttime=true
-user=`( (logname) 2>/dev/null || whoami) 2>&1`
+user=`(logname) 2>/dev/null`
+case "$user" in "")
+	user=`whoami 2>&1` ;;
+esac
 if $contains "^$user\$" ../.config/instruct >/dev/null 2>&1; then
 	firsttime=false
 	echo " "
@@ -1201,7 +1365,7 @@ If you are in a hurry, you may run 'Configure -d'.  This will bypass nearly all
 the questions and use the computed defaults (or the previous answers if there
 was already a config.sh file). Type 'Configure -h' for a list of options.
 You may also start interactively and then answer '& -d' at any prompt to turn
-on the non-interactive behaviour for the remaining of the execution.
+on the non-interactive behavior for the remainder of the execution.
 
 EOH
 	. ./myread
@@ -1211,7 +1375,7 @@ Much effort has been expended to ensure that this shell script will run on any
 Unix system.  If despite that it blows up on yours, your best bet is to edit
 Configure and run it again.  If you can't run Configure for some reason,
 you'll have to generate a config.sh file by hand.  Whatever problems you
-have, let me (doughera@lafcol.lafayette.edu) know how I blew it.
+have, let me (chip@perl.com) know how I blew it.
 
 This installation script affects things in two ways:
 
@@ -1231,74 +1395,6 @@ EOH
 	true) echo $user >>../.config/instruct;;
 	esac
 fi
-
-: see if sh knows # comments
-echo " "
-echo "Checking your sh to see if it knows about # comments..." >&4
-if `sh -c '#' >/dev/null 2>&1`; then
-	echo "Your sh handles # comments correctly."
-	shsharp=true
-	spitshell=cat
-	echo " "
-	echo "Okay, let's see if #! works on this system..."
-	xcat=/bin/cat
-	test -f $xcat || xcat=/usr/bin/cat
-	echo "#!$xcat" >try
-	$eunicefix try
-	chmod +x try
-	./try > today
-	if test -s today; then
-		echo "It does."
-		sharpbang='#!'
-	else
-		echo "#! $xcat" > try
-		$eunicefix try
-		chmod +x try
-		./try > today
-		if test -s today; then
-			echo "It does."
-			sharpbang='#! '
-		else
-			echo "It's just a comment."
-			sharpbang=': use '
-		fi
-	fi
-else
-	echo "Your sh doesn't grok # comments--I will strip them later on."
-	shsharp=false
-	cd ..
-	echo "exec grep -v '^[ 	]*#'" >spitshell
-	chmod +x spitshell
-	$eunicefix spitshell
-	spitshell=`pwd`/spitshell
-	cd UU
-	echo "I presume that if # doesn't work, #! won't work either!"
-	sharpbang=': use '
-fi
-rm -f try today
-
-: figure out how to guarantee sh startup
-echo " "
-echo "Checking out how to guarantee sh startup..." >&4
-case "$SYSTYPE" in
-*bsd*|sys5*) startsh=$sharpbang"/$SYSTYPE/bin/sh";;
-*) startsh=$sharpbang'/bin/sh';;
-esac
-echo "Let's see if '$startsh' works..."
-cat >try <<EOSS
-$startsh
-set abc
-test "$?abc" != 1
-EOSS
-
-chmod +x try
-$eunicefix try
-if ./try; then
-	echo "Yup, it does."
-else
-echo "Nope.  You may have to fix up the shell scripts to make sure sh runs them."
-fi
-rm -f try
 
 : find out where common programs are
 echo " "
@@ -1349,7 +1445,6 @@ echo
 expr
 find
 grep
-ln
 ls
 mkdir
 rm
@@ -1366,8 +1461,10 @@ cpp
 csh
 date
 egrep
+gzip
 less
 line
+ln
 more
 nroff
 perl
@@ -1375,6 +1472,7 @@ pg
 sendmail
 test
 uname
+zip
 "
 pth=`echo $PATH | sed -e "s/$p_/ /g"`
 pth="$pth /lib /usr/lib"
@@ -1420,6 +1518,12 @@ case "$egrep" in
 egrep)
 	echo "Substituting grep for egrep."
 	egrep=$grep
+	;;
+esac
+case "$ln" in
+ln)
+	echo "Substituting cp for ln."
+	ln=$cp
 	;;
 esac
 case "$test" in
@@ -1538,10 +1642,16 @@ if test -f config.sh; then
 	*)  echo "Fetching default answers from your old config.sh file..." >&4
 		tmp_n="$n"
 		tmp_c="$c"
+		tmp_sh="$sh"
 		. ./config.sh
 		cp config.sh UU
 		n="$tmp_n"
 		c="$tmp_c"
+		: Older versions did not always set $sh.  Catch re-use of such
+		: an old config.sh.
+		case "$sh" in
+		'') sh="$tmp_sh" ;;
+		esac
 		hint=previous
 		;;
 	esac
@@ -1555,13 +1665,15 @@ EOM
 	cd hints; ls -C *.sh | $sed 's/\.sh/   /g' >&4
 	dflt=''
 	: Half the following guesses are probably wrong... If you have better
-	: tests or hints, please send them to doughera@lafcol.lafayette.edu
+	: tests or hints, please send them to chip@perl.com
 	: The metaconfig authors would also appreciate a copy...
 	$test -f /irix && osname=irix
 	$test -f /xenix && osname=sco_xenix
 	$test -f /dynix && osname=dynix
 	$test -f /dnix && osname=dnix
- 	$test -f /unicos && osname=unicos && osvers=`$uname -r`
+	$test -f /lynx.os && osname=lynxos
+	$test -f /unicos && osname=unicos && osvers=`$uname -r`
+	$test -f /unicosmk.ar && osname=unicosmk && osvers=`$uname -r`
 	$test -f /bin/mips && /bin/mips && osname=mips
 	$test -d /NextApps && set X `hostinfo | grep 'NeXT Mach.*:' | \
 		$sed -e 's/://' -e 's/\./_/'` && osname=next && osvers=$4
@@ -1593,7 +1705,6 @@ EOM
 			esac;;
 		[23]100) osname=mips ;;
 		next*) osname=next ;;
-		news*) osname=news ;;
 		i386*)
 			if $test -f /etc/kconfig; then
 				osname=isc
@@ -1619,6 +1730,9 @@ EOM
 			*) osvers=$tmp;;
 			esac
 			;;
+		*dc.osx) osname=dcosx
+			osvers="$3"
+			;;
 		dnix) osname=dnix
 			osvers="$3"
 			;;
@@ -1626,6 +1740,9 @@ EOM
 			osvers="$3"
 			;;
 		dgux) osname=dgux 
+			osvers="$3"
+			;;
+		dynixptx*) osname=dynixptx
 			osvers="$3"
 			;;
 		freebsd) osname=freebsd 
@@ -1639,7 +1756,7 @@ EOM
 			*)	osvers="$3" ;;
 			esac
 			;;
-		irix) osname=irix
+		irix*) osname=irix
 			case "$3" in
 			4*) osvers=4 ;;
 			5*) osvers=5 ;;
@@ -1648,15 +1765,24 @@ EOM
 			;;
 		linux) osname=linux
 			case "$3" in
-			1*) osvers=1 ;;
 			*)	osvers="$3" ;;
 			esac
 			;;
 		netbsd*) osname=netbsd 
 			osvers="$3"
 			;;
+		news-os) osvers="$3"
+			case "$3" in
+			4*) osname=newsos4 ;;
+			*) osname=newsos ;;
+			esac
+			;;
 		bsd386) osname=bsd386
 			osvers=`$uname -r`
+			;;
+		powerux | power_ux | powermax_os | powermaxos | \
+		powerunix | power_unix) osname=powerux
+			osvers="$3"
 			;;
 		next*) osname=next ;;
 		solaris) osname=solaris
@@ -1684,7 +1810,7 @@ EOM
 		ultrix) osname=ultrix
 			osvers="$3"
 			;;
-		osf1)	case "$5" in
+		osf1|mls+)	case "$5" in
 				alpha)
 					osname=dec_osf
 					osvers=`echo "$3" | sed 's/^[vt]//'`
@@ -1696,10 +1822,13 @@ EOM
 		uts) osname=uts 
 			osvers="$3"
 			;;
+		qnx) osname=qnx
+			osvers="$4"
+			;;
 		$2) case "$osname" in
 			*isc*) ;;
 			*freebsd*) ;;
- 			svr*)
+			svr*)
 				: svr4.x or possibly later
 				case "svr$3" in	
 				${osname}*)
@@ -1752,10 +1881,10 @@ EOM
 			;;
 		esac
 	else
-		if test -f /vmunix -a -f news_os.sh; then
+		if test -f /vmunix -a -f newsos4.sh; then
 			(what /vmunix | ../UU/tr '[A-Z]' '[a-z]') > ../UU/kernel.what 2>&1
 			if $contains news-os ../UU/kernel.what >/dev/null 2>&1; then
-				osname=news_os
+				osname=newsos4
 			fi
 			$rm -f ../UU/kernel.what
 		elif test -d c:/.; then
@@ -1858,6 +1987,7 @@ cd UU
 	tmp_c="$c"
 	cd ..
 	cp $config_sh config.sh 2>/dev/null
+	chmod +w config.sh
 	. ./config.sh
 	cd UU
 	cp ../config.sh .
@@ -1897,13 +2027,39 @@ case "$ans" in
 none)  osname='' ;;
 *) osname=`echo "$ans" | $sed -e 's/[ 	][	]*/_/g' | ./tr '[A-Z]' '[a-z]'`;;
 esac
+echo " "
+case "$osvers" in
+	''|' ')
+		case "$hintfile" in
+		''|' '|none) dflt=none ;;
+		*)	dflt=`echo $hintfile | $sed -e 's/\.sh$//' -e 's/^[^_]*//'`
+			dflt=`echo $dflt | $sed -e 's/^_//' -e 's/_/./g'`
+			case "$dflt" in
+			''|' ') dflt=none ;;
+			esac
+			;;
+		esac
+		;;
+	*) dflt="$osvers" ;;
+esac
+rp="Operating system version?"
+. ./myread
+case "$ans" in
+none)  osvers='' ;;
+*) osvers="$ans" ;;
+esac
+
+
+
 : who configured the system
-cf_time=`$date 2>&1`
-(logname > .temp) >/dev/null 2>&1
-$test -s .temp || (whoami > .temp) >/dev/null 2>&1
-$test -s .temp || echo unknown > .temp
-cf_by=`$cat .temp`
-$rm -f .temp
+cf_time=`LC_ALL=C; export LC_ALL; $date 2>&1`
+cf_by=`(logname) 2>/dev/null`
+case "$cf_by" in "")
+	cf_by=`(whoami) 2>/dev/null`
+	case "$cf_by" in "")
+		cf_by=unknown ;;
+	esac ;;
+esac
 
 : determine the architecture name
 echo " "
@@ -1911,7 +2067,8 @@ if xxx=`./loc arch blurfl $pth`; $test -f "$xxx"; then
 	tarch=`arch`"-$osname"
 elif xxx=`./loc uname blurfl $pth`; $test -f "$xxx" ; then
 	if uname -m > tmparch 2>&1 ; then
-		tarch=`$sed -e 's/ /_/g' -e 's/$/'"-$osname/" tmparch`
+		tarch=`$sed -e 's/ *$//' -e 's/ /_/g' \
+			-e 's/$/'"-$osname/" tmparch`
 	else
 		tarch="$osname"
 	fi
@@ -1935,16 +2092,22 @@ rp='What is your architecture name'
 archname="$ans"
 myarchname="$tarch"
 
-if [ -z "$afs" ]; then
-	: is AFS running?
-	echo " "
-	if test -d /afs; then
-		echo "AFS may be running... I'll be extra cautious then..." >&4
+: is AFS running?
+echo " "
+case "$afs" in
+$define|true)	afs=true ;;
+$undef|false)	afs=false ;;
+*)	if test -d /afs; then
 		afs=true
 	else
-		echo "AFS does not seem to be running..." >&4
-	afs=false
+		afs=false
 	fi
+	;;
+esac
+if test $afs = "true"; then
+	echo "AFS may be running... I'll be extra cautious then..." >&4
+else
+	echo "AFS does not seem to be running..." >&4
 fi
 
 : decide how portable to be.  Allow command line overrides.
@@ -1994,7 +2157,10 @@ chmod +x filexp
 $eunicefix filexp
 
 : now set up to get a file name
-cat <<'EOSC' >getfile
+cat <<EOS >getfile
+$startsh
+EOS
+cat <<'EOSC' >>getfile
 tilde=''
 fullpath=''
 already=''
@@ -2309,13 +2475,20 @@ baserev=5.0
 echo " "
 echo "Getting the current patchlevel..." >&4
 if $test -r ../patchlevel.h;then
-	patchlevel=`awk '/PATCHLEVEL/ {print $3}' < ../patchlevel.h`
-	subversion=`awk '/SUBVERSION/ {print $3}' < ../patchlevel.h`
+	patchlevel=`awk '/PATCHLEVEL/ {print $3}' ../patchlevel.h`
+	subversion=`awk '/SUBVERSION/ {print $3}' ../patchlevel.h`
 else
 	patchlevel=0
 	subversion=0
 fi
-echo "(You have $package $baserev PL$patchlevel sub$subversion.)"
+$echo $n "(You have $package" $c
+case "$package" in
+"*$baserev")	;;
+*)		$echo $n " $baserev" $c ;;
+esac
+$echo $n " patchlevel $patchlevel" $c
+test 0 -eq "$subversion" || $echo $n " subversion $subversion" $c
+echo ".)"
 
 : set the prefixup variable, to restore leading tilda escape
 prefixup='case "$prefixexp" in
@@ -2328,19 +2501,27 @@ set archlib archlib
 eval $prefixit
 case "$archlib" in
 '')
-	case "$privlib" in
-	'')
-		dflt=`./loc . "." $prefixexp/lib /usr/local/lib /usr/lib /lib`
-		set dflt
-		eval $prefixup
-		;;
-	*)	version=`echo $baserev $patchlevel $subversion | \
-		    $awk '{print $1 + $2/1000.0 + $3/100000.0}'`
-		dflt="$privlib/$archname/$version"
-		;;
-	esac
+    case "$privlib" in
+    '')	dflt=`./loc . "." $prefixexp/lib /usr/local/lib /usr/lib /lib`
+	set dflt
+	eval $prefixup
 	;;
-*) dflt="$archlib";;
+    *)	if test 0 -eq "$subversion"; then
+	    version=`LC_ALL=C; export LC_ALL; \
+		     echo $baserev $patchlevel | \
+		     $awk '{ printf "%.3f\n", $1 + $2/1000.0 }'`
+	else
+	    version=`LC_ALL=C; export LC_ALL; \
+		     echo $baserev $patchlevel $subversion | \
+		     $awk '{ printf "%.5f\n", $1 + $2/1000.0 + $3/100000.0 }'`
+	fi
+	dflt="$privlib/$archname/$version"
+	;;
+    esac
+    ;;
+*)
+    dflt="$archlib"
+    ;;
 esac
 cat <<EOM
 
@@ -2359,9 +2540,10 @@ archlibexp="$ansexp"
 if $afs; then
 	$cat <<EOM
 
-Since you are running AFS, I need to distinguish the directory in which
-private files reside from the directory in which they are installed (and from
-which they are presumably copied to the former directory by occult means).
+Since you are running AFS, I need to distinguish the directory in
+which architecture-dependent library files reside from the directory
+in which they are installed (and from which they are presumably copied
+to the former directory by occult means).
 
 EOM
 	case "$installarchlib" in
@@ -2382,7 +2564,10 @@ else
 fi
 
 : set up the script used to warn in case of inconsistency
-cat <<'EOSC' >whoa
+cat <<EOS >whoa
+$startsh
+EOS
+cat <<'EOSC' >>whoa
 dflt=y
 echo " "
 echo "*** WHOA THERE!!! ***" >&4
@@ -2402,6 +2587,33 @@ $undef$define) . ./whoa; eval "$var=\$tu";;
 *) eval "$var=$val";;
 esac'
 
+$cat <<EOM
+
+Perl 5.004 can be compiled for binary compatibility with 5.003.
+If you decide to do so, you will be able to continue using any
+extensions that were compiled for Perl 5.003.  However, binary
+compatibility forces Perl to expose some of its internal symbols
+in the same way that 5.003 did.  So you may have symbol conflicts
+if you embed a binary-compatible Perl in other programs.
+
+EOM
+case "$d_bincompat3" in
+"$undef") dflt=n ;;
+*) dflt=y ;;
+esac
+rp='Binary compatibility with Perl 5.003?'
+. ./myread
+case "$ans" in
+y*) val="$define" ;;
+*)  val="$undef" ;;
+esac
+set d_bincompat3
+eval $setvar
+case "$d_bincompat3" in
+"$define") bincompat3=y ;;
+*) bincompat3=n ;;
+esac
+
 : make some quick guesses about what we are up against
 echo " "
 $echo $n "Hmm...  $c"
@@ -2412,6 +2624,7 @@ echo exit 1 >osf1
 echo exit 1 >eunice
 echo exit 1 >xenix
 echo exit 1 >venix
+echo exit 1 >os2
 d_bsd="$undef"
 $cat /usr/include/signal.h /usr/include/sys/signal.h >foo 2>/dev/null
 if test -f /osf_boot || $contains 'OSF/1' /usr/include/ctype.h >/dev/null 2>&1
@@ -2456,6 +2669,17 @@ EOI
 	d_eunice="$undef"
 	;;
 esac
+: Detect OS2.  The p_ variable is set above in the Head.U unit.
+case "$p_" in
+:) ;;
+*)
+	$cat <<'EOI'
+I have the feeling something is not exactly right, however...don't tell me...
+lemme think...does HAL ring a bell?...no, of course, you're only running OS/2!
+EOI
+	echo exit 0 >os2
+	;;
+esac
 if test -f /xenix; then
 	echo "Actually, this looks more like a XENIX system..."
 	echo exit 0 >xenix
@@ -2478,8 +2702,8 @@ else
 		echo "Nor is it Venix..."
 	fi
 fi
-chmod +x bsd usg v7 osf1 eunice xenix venix
-$eunicefix bsd usg v7 osf1 eunice xenix venix
+chmod +x bsd usg v7 osf1 eunice xenix venix os2
+$eunicefix bsd usg v7 osf1 eunice xenix venix os2
 $rm -f foo
 
 : see if setuid scripts can be secure
@@ -2551,6 +2775,7 @@ EOM
 	fi
 else
 	echo "I don't think setuid scripts are secure (no /dev/fd directory)." >&4
+	echo "(That's for file descriptors, not floppy disks.)"
 	val="$undef"
 fi
 set d_suidsafe
@@ -2617,9 +2842,10 @@ sitelibexp="$ansexp"
 if $afs; then
 	$cat <<EOM
 
-Since you are running AFS, I need to distinguish the directory in which
-private files reside from the directory in which they are installed (and from
-which they are presumably copied to the former directory by occult means).
+Since you are running AFS, I need to distinguish the directory in
+which site-specific files reside from the directory in which they are
+installed (and from which they are presumably copied to the former
+directory by occult means).
 
 EOM
 	case "$installsitelib" in
@@ -2627,7 +2853,7 @@ EOM
 	*) dflt="$installsitelib";;
 	esac
 	fn=de~
-	rp='Where will private files be installed?'
+	rp='Where will site-specific files be installed?'
 	. ./getfile
 	installsitelib="$ans"
 else
@@ -2660,9 +2886,10 @@ sitearchexp="$ansexp"
 if $afs; then
 	$cat <<EOM
 
-Since you are running AFS, I need to distinguish the directory in which
-private files reside from the directory in which they are installed (and from
-which they are presumably copied to the former directory by occult means).
+Since you are running AFS, I need to distinguish the directory in
+which site-specific architecture-dependent library files reside from
+the directory in which they are installed (and from which they are
+presumably copied to the former directory by occult means).
 
 EOM
 	case "$installsitearch" in
@@ -2670,7 +2897,7 @@ EOM
 	*) dflt="$installsitearch";;
 	esac
 	fn=de~
-	rp='Where will private files be installed?'
+	rp='Where will site-specific architecture-dependent files be installed?'
 	. ./getfile
 	installsitearch="$ans"
 else
@@ -2693,12 +2920,13 @@ if $test ! -d "$dflt/auto"; then
 fi
 cat <<EOM
 
-In 5.001, Perl stored architecture-dependent library files in a library
+In 5.001, Perl stored architecture-dependent library files in a directory
 with a name such as $privlib/$archname, 
 and this directory contained files from the standard extensions and 
 files from any additional extensions you might have added.  Starting 
 with version 5.002, all the architecture-dependent standard extensions 
-will go into $archlib, 
+will go into a version-specific directory such as
+$archlib, 
 while locally-added extensions will go into
 $sitearch.
 
@@ -2769,6 +2997,1796 @@ if $test -d "$sysman"; then
 else
 	echo "Could not find manual pages in source form." >&4
 fi
+
+: see what memory models we can support
+case "$models" in
+'')
+	$cat >pdp11.c <<'EOP'
+main() {
+#ifdef pdp11
+	exit(0);
+#else
+	exit(1);
+#endif
+}
+EOP
+	(cc -o pdp11 pdp11.c) >/dev/null 2>&1
+	if $test -f pdp11 && ./pdp11 2>/dev/null; then
+		dflt='unsplit split'
+	else
+		tans=`./loc . X /lib/small /lib/large /usr/lib/small /usr/lib/large /lib/medium /usr/lib/medium /lib/huge`
+		case "$tans" in
+		X) dflt='none';;
+		*) if $test -d /lib/small || $test -d /usr/lib/small; then
+				dflt='small'
+			else
+				dflt=''
+			fi
+			if $test -d /lib/medium || $test -d /usr/lib/medium; then
+				dflt="$dflt medium"
+			fi
+			if $test -d /lib/large || $test -d /usr/lib/large; then
+				dflt="$dflt large"
+			fi
+			if $test -d /lib/huge || $test -d /usr/lib/huge; then
+				dflt="$dflt huge"
+			fi
+		esac
+	fi;;
+*) dflt="$models";;
+esac
+$cat <<EOM
+ 
+Some systems have different model sizes.  On most systems they are called
+small, medium, large, and huge.  On the PDP11 they are called unsplit and
+split.  If your system doesn't support different memory models, say "none".
+If you wish to force everything to one memory model, say "none" here and
+put the appropriate flags later when it asks you for other cc and ld flags.
+Venix systems may wish to put "none" and let the compiler figure things out.
+(In the following question multiple model names should be space separated.)
+
+EOM
+rp="Which memory models are supported?"
+. ./myread
+models="$ans"
+
+case "$models" in
+none)
+	small=''
+	medium=''
+	large=''
+	huge=''
+	unsplit=''
+	split=''
+	;;
+*split)
+	case "$split" in
+	'') if $contains '\-i' $sysman/ld.1 >/dev/null 2>&1 || \
+			 $contains '\-i' $sysman/cc.1 >/dev/null 2>&1; then
+			dflt='-i'
+		else
+			dflt='none'
+		fi;;
+	*) dflt="$split";;
+	esac
+	rp="What flag indicates separate I and D space?"
+	. ./myread
+	tans="$ans"
+	case "$tans" in
+	none) tans='';;
+	esac
+	split="$tans"
+	unsplit='';;
+*large*|*small*|*medium*|*huge*)
+	case "$models" in
+	*large*)
+		case "$large" in
+		'') dflt='-Ml';;
+		*) dflt="$large";;
+		esac
+	rp="What flag indicates large model?"
+	. ./myread
+	tans="$ans"
+	case "$tans" in
+	none) tans='';
+	esac
+	large="$tans";;
+	*) large='';;
+	esac
+	case "$models" in
+	*huge*) case "$huge" in
+		'') dflt='-Mh';;
+		*) dflt="$huge";;
+		esac
+		rp="What flag indicates huge model?"
+		. ./myread
+		tans="$ans"
+		case "$tans" in
+		none) tans='';
+		esac
+		huge="$tans";;
+	*) huge="$large";;
+	esac
+	case "$models" in
+	*medium*) case "$medium" in
+		'') dflt='-Mm';;
+		*) dflt="$medium";;
+		esac
+		rp="What flag indicates medium model?"
+		. ./myread
+		tans="$ans"
+		case "$tans" in
+		none) tans='';
+		esac
+		medium="$tans";;
+	*) medium="$large";;
+	esac
+	case "$models" in
+	*small*) case "$small" in
+		'') dflt='none';;
+		*) dflt="$small";;
+		esac
+		rp="What flag indicates small model?"
+		. ./myread
+		tans="$ans"
+		case "$tans" in
+		none) tans='';
+		esac
+		small="$tans";;
+	*) small='';;
+	esac
+	;;
+*)
+	echo "Unrecognized memory models--you may have to edit Makefile.SH" >&4
+	;;
+esac
+
+: see if we need a special compiler
+echo " "
+if ./usg; then
+	case "$cc" in
+	'') case "$Mcc" in
+		/*) dflt='Mcc';;
+		*) case "$large" in
+			-M*) dflt='cc';;
+			*)	if $contains '\-M' $sysman/cc.1 >/dev/null 2>&1 ; then
+					if $contains '\-M' $sysman/cpp.1 >/dev/null 2>&1; then
+						dflt='cc'
+					else
+						dflt='cc -M'
+					fi
+				else
+					dflt='cc'
+				fi;;
+			esac;;
+		esac;;
+	*)  dflt="$cc";;
+	esac
+	$cat <<'EOM'
+On some systems the default C compiler will not resolve multiple global
+references that happen to have the same name.  On some such systems the "Mcc"
+command may be used to force these to be resolved.  On other systems a "cc -M"
+command is required.  (Note that the -M flag on other systems indicates a
+memory model to use!) If you have the Gnu C compiler, you might wish to use
+that instead.
+
+EOM
+	rp="What command will force resolution on this system?"
+	. ./myread
+	cc="$ans"
+else
+	case "$cc" in
+	'') dflt=cc;;
+	*) dflt="$cc";;
+	esac
+	rp="Use which C compiler?"
+	. ./myread
+	cc="$ans"
+fi
+echo " "
+echo "Checking for GNU cc in disguise and/or its version number..." >&4
+$cat >gccvers.c <<EOM
+#include <stdio.h>
+int main() {
+#ifdef __GNUC__
+#ifdef __VERSION__
+	printf("%s\n", __VERSION__);
+#else
+	printf("%s\n", "1");
+#endif
+#endif
+	exit(0);
+}
+EOM
+if $cc -o gccvers gccvers.c >/dev/null 2>&1; then
+	gccversion=`./gccvers`
+	case "$gccversion" in
+	'') echo "You are not using GNU cc." ;;
+	*)  echo "You are using GNU cc $gccversion." ;;
+	esac
+else
+	echo " "
+	echo "*** WHOA THERE!!! ***" >&4
+	echo "    Your C compiler \"$cc\" doesn't seem to be working!" >&4
+	case "$knowitall" in
+	'')
+	echo "    You'd better start hunting for one and let me know about it." >&4
+		exit 1
+		;;
+	esac
+fi
+$rm -f gccvers*
+case "$gccversion" in
+1*) cpp=`./loc gcc-cpp $cpp $pth` ;;
+esac
+
+: What should the include directory be ?
+echo " "
+$echo $n "Hmm...  $c"
+dflt='/usr/include'
+incpath=''
+mips_type=''
+if $test -f /bin/mips && /bin/mips; then
+	echo "Looks like a MIPS system..."
+	$cat >usr.c <<'EOCP'
+#ifdef SYSTYPE_BSD43
+/bsd43
+#endif
+EOCP
+	if $cc -E usr.c > usr.out && $contains / usr.out >/dev/null 2>&1; then
+		dflt='/bsd43/usr/include'
+		incpath='/bsd43'
+		mips_type='BSD 4.3'
+	else
+		mips_type='System V'
+	fi
+	$rm -f usr.c usr.out
+	echo "and you're compiling with the $mips_type compiler and libraries."
+	xxx_prompt=y
+	echo "exit 0" >mips
+else
+	echo "Doesn't look like a MIPS system."
+	xxx_prompt=n
+	echo "exit 1" >mips
+fi
+chmod +x mips
+$eunicefix mips
+echo " "
+case "$usrinc" in
+'') ;;
+*) dflt="$usrinc";;
+esac
+case "$xxx_prompt" in
+y)	fn=d/
+	rp='Where are the include files you want to use?'
+	. ./getfile
+	usrinc="$ans"
+	;;
+*)	usrinc="$dflt"
+	;;
+esac
+
+: Set private lib path
+case "$plibpth" in
+'') if ./mips; then
+		plibpth="$incpath/usr/lib /usr/local/lib /usr/ccs/lib"
+	fi;;
+esac
+case "$libpth" in
+' ') dlist='';;
+'') dlist="$loclibpth $plibpth $glibpth";;
+*) dlist="$libpth";;
+esac
+
+: Now check and see which directories actually exist, avoiding duplicates
+libpth=''
+for xxx in $dlist
+do
+    if $test -d $xxx; then
+		case " $libpth " in
+		*" $xxx "*) ;;
+		*) libpth="$libpth $xxx";;
+		esac
+    fi
+done
+$cat <<'EOM'
+
+Some systems have incompatible or broken versions of libraries.  Among
+the directories listed in the question below, please remove any you
+know not to be holding relevant libraries, and add any that are needed.
+Say "none" for none.
+
+EOM
+case "$libpth" in
+'') dflt='none';;
+*)
+	set X $libpth
+	shift
+	dflt=${1+"$@"}
+	;;
+esac
+rp="Directories to use for library searches?"
+. ./myread
+case "$ans" in
+none) libpth=' ';;
+*) libpth="$ans";;
+esac
+
+: Define several unixisms. Hints files or command line options
+: can be used to override them.
+case "$ar" in
+'') ar='ar';;
+esac
+case "$lib_ext" in
+'') lib_ext='.a';;
+esac
+case "$obj_ext" in
+'') obj_ext='.o';;
+esac
+case "$path_sep" in
+'') path_sep=':';;
+esac
+: Which makefile gets called first.  This is used by make depend.
+case "$firstmakefile" in
+'') firstmakefile='makefile';;
+esac
+
+: compute shared library extension
+case "$so" in
+'')
+	if xxx=`./loc libc.sl X $libpth`; $test -f "$xxx"; then
+		dflt='sl'
+	else
+		dflt='so'
+	fi
+	;;
+*) dflt="$so";;
+esac
+$cat <<EOM
+
+On some systems, shared libraries may be available.  Answer 'none' if
+you want to suppress searching of shared libraries for the remaining
+of this configuration.
+
+EOM
+rp='What is the file extension used for shared libraries?'
+. ./myread
+so="$ans"
+
+: Looking for optional libraries
+echo " "
+echo "Checking for optional libraries..." >&4
+case "$libs" in
+' '|'') dflt='';;
+*) dflt="$libs";;
+esac
+case "$libswanted" in
+'') libswanted='c_s';;
+esac
+for thislib in $libswanted; do
+	
+	if xxx=`./loc lib$thislib.$so.[0-9]'*' X $libpth`; $test -f "$xxx"; then
+		echo "Found -l$thislib (shared)."
+		case " $dflt " in
+		*"-l$thislib "*);;
+		*) dflt="$dflt -l$thislib";;
+		esac
+	elif xxx=`./loc lib$thislib.$so X $libpth` ; $test -f "$xxx"; then
+		echo "Found -l$thislib (shared)."
+		case " $dflt " in
+		*"-l$thislib "*);;
+		*) dflt="$dflt -l$thislib";;
+		esac
+	elif xxx=`./loc lib$thislib$lib_ext X $libpth`; $test -f "$xxx"; then
+		echo "Found -l$thislib."
+		case " $dflt " in
+		*"-l$thislib "*);;
+		*) dflt="$dflt -l$thislib";;
+		esac
+	elif xxx=`./loc $thislib$lib_ext X $libpth`; $test -f "$xxx"; then
+		echo "Found -l$thislib."
+		case " $dflt " in
+		*"-l$thislib "*);;
+		*) dflt="$dflt -l$thislib";;
+		esac
+	elif xxx=`./loc lib${thislib}_s$lib_ext X $libpth`; $test -f "$xxx"; then
+		echo "Found -l${thislib}_s."
+		case " $dflt " in
+		*"-l$thislib "*);;
+		*) dflt="$dflt -l${thislib}_s";;
+		esac
+	elif xxx=`./loc Slib$thislib$lib_ext X $xlibpth`; $test -f "$xxx"; then
+		echo "Found -l$thislib."
+		case " $dflt " in
+		*"-l$thislib "*);;
+		*) dflt="$dflt -l$thislib";;
+		esac
+	else
+		echo "No -l$thislib."
+	fi
+done
+set X $dflt
+shift
+dflt="$*"
+case "$libs" in
+'') dflt="$dflt";;
+*) dflt="$libs";;
+esac
+case "$dflt" in
+' '|'') dflt='none';;
+esac
+
+$cat <<EOM
+ 
+Some versions of Unix support shared libraries, which make executables smaller
+but make load time slightly longer.
+
+On some systems, mostly System V Release 3's, the shared library is included
+by putting the option "-lc_s" as the last thing on the cc command line when
+linking.  Other systems use shared libraries by default.  There may be other
+libraries needed to compile $package on your machine as well.  If your system
+needs the "-lc_s" option, include it here.  Include any other special libraries
+here as well.  Say "none" for none.
+EOM
+
+echo " "
+rp="Any additional libraries?"
+. ./myread
+case "$ans" in
+none) libs=' ';;
+*) libs="$ans";;
+esac
+
+: see how we invoke the C preprocessor
+echo " "
+echo "Now, how can we feed standard input to your C preprocessor..." >&4
+cat <<'EOT' >testcpp.c
+#define ABC abc
+#define XYZ xyz
+ABC.XYZ
+EOT
+cd ..
+echo 'cat >.$$.c; '"$cc"' -E ${1+"$@"} .$$.c; rm .$$.c' >cppstdin
+chmod 755 cppstdin
+wrapper=`pwd`/cppstdin
+ok='false'
+cd UU
+
+if $test "X$cppstdin" != "X" && \
+	$cppstdin $cppminus <testcpp.c >testcpp.out 2>&1 && \
+	$contains 'abc.*xyz' testcpp.out >/dev/null 2>&1
+then
+	echo "You used to use $cppstdin $cppminus so we'll use that again."
+	case "$cpprun" in
+	'') echo "But let's see if we can live without a wrapper..." ;;
+	*)
+		if $cpprun $cpplast <testcpp.c >testcpp.out 2>&1 && \
+			$contains 'abc.*xyz' testcpp.out >/dev/null 2>&1
+		then
+			echo "(And we'll use $cpprun $cpplast to preprocess directly.)"
+			ok='true'
+		else
+			echo "(However, $cpprun $cpplast does not work, let's see...)"
+		fi
+		;;
+	esac
+else
+	case "$cppstdin" in
+	'') ;;
+	*)
+		echo "Good old $cppstdin $cppminus does not seem to be of any help..."
+		;;
+	esac
+fi
+
+if $ok; then
+	: nothing
+elif echo 'Maybe "'"$cc"' -E" will work...'; \
+	$cc -E <testcpp.c >testcpp.out 2>&1; \
+	$contains 'abc.*xyz' testcpp.out >/dev/null 2>&1 ; then
+	echo "Yup, it does."
+	x_cpp="$cc -E"
+	x_minus='';
+elif echo 'Nope...maybe "'"$cc"' -E -" will work...'; \
+	$cc -E - <testcpp.c >testcpp.out 2>&1; \
+	$contains 'abc.*xyz' testcpp.out >/dev/null 2>&1 ; then
+	echo "Yup, it does."
+	x_cpp="$cc -E"
+	x_minus='-';
+elif echo 'Nope...maybe "'"$cc"' -P" will work...'; \
+	$cc -P <testcpp.c >testcpp.out 2>&1; \
+	$contains 'abc.*xyz' testcpp.out >/dev/null 2>&1 ; then
+	echo "Yipee, that works!"
+	x_cpp="$cc -P"
+	x_minus='';
+elif echo 'Nope...maybe "'"$cc"' -P -" will work...'; \
+	$cc -P - <testcpp.c >testcpp.out 2>&1; \
+	$contains 'abc.*xyz' testcpp.out >/dev/null 2>&1 ; then
+	echo "At long last!"
+	x_cpp="$cc -P"
+	x_minus='-';
+elif echo 'No such luck, maybe "'$cpp'" will work...'; \
+	$cpp <testcpp.c >testcpp.out 2>&1; \
+	$contains 'abc.*xyz' testcpp.out >/dev/null 2>&1 ; then
+	echo "It works!"
+	x_cpp="$cpp"
+	x_minus='';
+elif echo 'Nixed again...maybe "'$cpp' -" will work...'; \
+	$cpp - <testcpp.c >testcpp.out 2>&1; \
+	$contains 'abc.*xyz' testcpp.out >/dev/null 2>&1 ; then
+	echo "Hooray, it works!  I was beginning to wonder."
+	x_cpp="$cpp"
+	x_minus='-';
+elif echo 'Uh-uh.  Time to get fancy.  Trying a wrapper...'; \
+	$wrapper <testcpp.c >testcpp.out 2>&1; \
+	$contains 'abc.*xyz' testcpp.out >/dev/null 2>&1 ; then
+	x_cpp="$wrapper"
+	x_minus=''
+	echo "Eureka!"
+else
+	dflt=''
+	rp="No dice.  I can't find a C preprocessor.  Name one:"
+	. ./myread
+	x_cpp="$ans"
+	x_minus=''
+	$x_cpp <testcpp.c >testcpp.out 2>&1
+	if $contains 'abc.*xyz' testcpp.out >/dev/null 2>&1 ; then
+		echo "OK, that will do." >&4
+	else
+echo "Sorry, I can't get that to work.  Go find one and rerun Configure." >&4
+		exit 1
+	fi
+fi
+
+case "$ok" in
+false)
+	cppstdin="$x_cpp"
+	cppminus="$x_minus"
+	cpprun="$x_cpp"
+	cpplast="$x_minus"
+	set X $x_cpp
+	shift
+	case "$1" in
+	"$cpp")
+		echo "Perhaps can we force $cc -E using a wrapper..."
+		if $wrapper <testcpp.c >testcpp.out 2>&1; \
+			$contains 'abc.*xyz' testcpp.out >/dev/null 2>&1
+		then
+			echo "Yup, we can."
+			cppstdin="$wrapper"
+			cppminus='';
+		else
+			echo "Nope, we'll have to live without it..."
+		fi
+		;;
+	esac
+	case "$cpprun" in
+	"$wrapper")
+		cpprun=''
+		cpplast=''
+		;;
+	esac
+	;;
+esac
+
+case "$cppstdin" in
+"$wrapper") ;;
+*) $rm -f $wrapper;;
+esac
+$rm -f testcpp.c testcpp.out
+
+: determine optimize, if desired, or use for debug flag also
+case "$optimize" in
+' '|$undef) dflt='none';;
+'') dflt='-O';;
+*) dflt="$optimize";;
+esac
+$cat <<EOH
+
+Some C compilers have problems with their optimizers.  By default, $package
+compiles with the -O flag to use the optimizer.  Alternately, you might want
+to use the symbolic debugger, which uses the -g flag (on traditional Unix
+systems).  Either flag can be specified here.  To use neither flag, specify
+the word "none".
+
+EOH
+rp="What optimizer/debugger flag should be used?"
+. ./myread
+optimize="$ans"
+case "$optimize" in
+'none') optimize=" ";;
+esac
+
+dflt=''
+: We will not override a previous value, but we might want to
+: augment a hint file
+case "$hint" in
+none|recommended)
+	case "$gccversion" in
+	1*) dflt='-fpcc-struct-return' ;;
+	esac
+	case "$optimize" in
+	*-g*) dflt="$dflt -DDEBUGGING";;
+	esac
+	case "$gccversion" in
+	2*) if test -d /etc/conf/kconfig.d &&
+			$contains _POSIX_VERSION $usrinc/sys/unistd.h >/dev/null 2>&1
+		then
+			dflt="$dflt -posix"
+		fi
+		;;
+	esac
+	;;
+esac
+
+case "$mips_type" in
+*BSD*|'') inclwanted="$locincpth $usrinc";;
+*) inclwanted="$locincpth $inclwanted $usrinc/bsd";;
+esac
+for thisincl in $inclwanted; do
+	if $test -d $thisincl; then
+		if $test x$thisincl != x$usrinc; then
+			case "$dflt" in
+			*$thisincl*);;
+			*) dflt="$dflt -I$thisincl";;
+			esac
+		fi
+	fi
+done
+
+inctest='if $contains $2 $usrinc/$1 >/dev/null 2>&1; then
+	xxx=true;
+elif $contains $2 $usrinc/sys/$1 >/dev/null 2>&1; then
+	xxx=true;
+else
+	xxx=false;
+fi;
+if $xxx; then
+	case "$dflt" in
+	*$2*);;
+	*) dflt="$dflt -D$2";;
+	esac;
+fi'
+
+if ./osf1; then
+	set signal.h __LANGUAGE_C__; eval $inctest
+else
+	set signal.h LANGUAGE_C; eval $inctest
+fi
+
+case "$hint" in
+none|recommended) dflt="$ccflags $dflt" ;;
+*) dflt="$ccflags";;
+esac
+
+case "$dflt" in
+''|' ') dflt=none;;
+esac
+$cat <<EOH
+
+Your C compiler may want other flags.  For this question you should include
+-I/whatever and -DWHATEVER flags and any other flags used by the C compiler,
+but you should NOT include libraries or ld flags like -lwhatever.  If you
+want $package to honor its debug switch, you should include -DDEBUGGING here.
+Your C compiler might also need additional flags, such as -D_POSIX_SOURCE,
+-DHIDEMYMALLOC or -DCRIPPLED_CC.
+
+To use no flags, specify the word "none".
+
+EOH
+set X $dflt
+shift
+dflt=${1+"$@"}
+rp="Any additional cc flags?"
+. ./myread
+case "$ans" in
+none) ccflags='';;
+*) ccflags="$ans";;
+esac
+
+: the following weeds options from ccflags that are of no interest to cpp
+cppflags="$ccflags"
+case "$gccversion" in
+1*) cppflags="$cppflags -D__GNUC__"
+esac
+case "$mips_type" in
+'');;
+*BSD*) cppflags="$cppflags -DSYSTYPE_BSD43";;
+esac
+case "$cppflags" in
+'');;
+*)
+	echo " "
+	echo "Let me guess what the preprocessor flags are..." >&4
+	set X $cppflags
+	shift
+	cppflags=''
+	$cat >cpp.c <<'EOM'
+#define BLURFL foo
+
+BLURFL xx LFRULB
+EOM
+	previous=''
+	for flag in $*
+	do
+		case "$flag" in
+		-*) ftry="$flag";;
+		*) ftry="$previous $flag";;
+		esac
+		if $cppstdin -DLFRULB=bar $cppflags $ftry $cppminus <cpp.c \
+			>cpp1.out 2>/dev/null && \
+			$cpprun -DLFRULB=bar $ftry $cpplast <cpp.c \
+			>cpp2.out 2>/dev/null && \
+			$contains 'foo.*xx.*bar' cpp1.out >/dev/null 2>&1 && \
+			$contains 'foo.*xx.*bar' cpp2.out >/dev/null 2>&1
+		then
+			cppflags="$cppflags $ftry"
+			previous=''
+		else
+			previous="$flag"
+		fi
+	done
+	set X $cppflags
+	shift
+	cppflags=${1+"$@"}
+	case "$cppflags" in
+	*-*)  echo "They appear to be: $cppflags";;
+	esac
+	$rm -f cpp.c cpp?.out
+	;;
+esac
+
+: flags used in final linking phase
+
+case "$ldflags" in
+'') if ./venix; then
+		dflt='-i -z'
+	else
+		dflt=''
+	fi
+	case "$ccflags" in
+	*-posix*) dflt="$dflt -posix" ;;
+	esac
+	;;
+*) dflt="$ldflags";;
+esac
+
+: Try to guess additional flags to pick up local libraries.
+for thislibdir in $libpth; do
+	case " $loclibpth " in
+	*" $thislibdir "*)
+		case "$dflt " in 
+		*"-L$thislibdir "*) ;;
+		*)  dflt="$dflt -L$thislibdir" ;;
+		esac
+		;;
+	esac
+done
+
+case "$dflt" in
+'') dflt='none' ;;
+esac
+
+$cat <<EOH
+
+Your C linker may need flags.  For this question you should
+include -L/whatever and any other flags used by the C linker, but you
+should NOT include libraries like -lwhatever.
+
+Make sure you include the appropriate -L/path flags if your C linker
+does not normally search all of the directories you specified above,
+namely
+	$libpth
+To use no flags, specify the word "none".
+
+EOH
+
+rp="Any additional ld flags (NOT including libraries)?"
+. ./myread
+case "$ans" in
+none) ldflags='';;
+*) ldflags="$ans";;
+esac
+rmlist="$rmlist pdp11"
+
+: coherency check
+echo " "
+echo "Checking your choice of C compiler, libs, and flags for coherency..." >&4
+set X $cc $optimize $ccflags $ldflags -o try try.c $libs
+shift
+$cat >try.msg <<EOM
+I've tried to compile and run a simple program with:
+
+	$*
+	./try
+
+and I got the following output:
+
+EOM
+$cat > try.c <<'EOF'
+#include <stdio.h>
+main() { exit(0); }
+EOF
+dflt=y
+if sh -c "$cc $optimize $ccflags -o try try.c $ldflags $libs" >>try.msg 2>&1; then
+	if sh -c './try' >>try.msg 2>&1; then
+		dflt=n
+	else
+		echo "The program compiled OK, but exited with status $?." >>try.msg
+		rp="You have a problem.  Shall I abort Configure (and explain the problem)"
+		dflt=y
+	fi
+else
+	echo "I can't compile the test program." >>try.msg
+	rp="You have a BIG problem.  Shall I abort Configure (and explain the problem)"
+	dflt=y
+fi
+case "$dflt" in
+y)
+	$cat try.msg >&4
+	case "$knowitall" in
+	'')
+		echo "(The supplied flags might be incorrect with this C compiler.)"
+		;;
+	*) dflt=n;;
+	esac
+	echo " "
+	. ./myread
+	case "$ans" in
+	n*|N*) ;;
+	*)	echo "Ok.  Stopping Configure." >&4
+		exit 1
+		;;
+	esac
+	;;
+n) echo "OK, that should do.";;
+esac
+$rm -f try try.* core
+
+echo " "
+echo "Checking for GNU C Library..." >&4
+cat >gnulibc.c <<EOM
+int
+main()
+{
+  return __libc_main();
+}
+EOM
+if $cc $ccflags $ldflags -o gnulibc gnulibc.c $libs >/dev/null 2>&1 && \
+    ./gnulibc | $contains '^GNU C Library' >/dev/null 2>&1; then
+	val="$define"
+	echo "You are using the GNU C Library"
+else
+	val="$undef"
+	echo "You are not using the GNU C Library"
+fi
+$rm -f gnulibc*
+set d_gnulibc
+eval $setvar
+
+: see if nm is to be used to determine whether a symbol is defined or not
+case "$usenm" in
+'')
+	case "$d_gnulibc" in
+	$define)
+		dflt=n
+		;;
+	*)
+		dflt=`egrep 'inlibc|csym' ../Configure | wc -l 2>/dev/null`
+		if $test $dflt -gt 20; then
+			dflt=y
+		else
+			dflt=n
+		fi
+		;;
+	esac
+	;;
+*)
+	case "$usenm" in
+	true) dflt=y;;
+	*) dflt=n;;
+	esac
+	;;
+esac
+$cat <<EOM
+
+I can use 'nm' to extract the symbols from your C libraries. This is a time
+consuming task which may generate huge output on the disk (up to 3 megabytes)
+but that should make the symbols extraction faster. The alternative is to skip
+the 'nm' extraction part and to compile a small test program instead to
+determine whether each symbol is present. If you have a fast C compiler and/or
+if your 'nm' output cannot be parsed, this may be the best solution.
+You shouldn't let me use 'nm' if you have the GNU C Library.
+
+EOM
+rp='Shall I use nm to extract C symbols from the libraries?'
+. ./myread
+case "$ans" in
+n|N) usenm=false;;
+*) usenm=true;;
+esac
+
+runnm=$usenm
+case "$reuseval" in
+true) runnm=false;;
+esac
+
+: nm options which may be necessary
+case "$nm_opt" in
+'') if $test -f /mach_boot; then
+		nm_opt=''	# Mach
+	elif $test -d /usr/ccs/lib; then
+		nm_opt='-p'	# Solaris (and SunOS?)
+	elif $test -f /dgux; then
+		nm_opt='-p'	# DG-UX
+	elif $test -f /lib64/rld; then
+		nm_opt='-p'	# 64-bit Irix
+	else
+		nm_opt=''
+	fi;;
+esac
+
+: nm options which may be necessary for shared libraries but illegal
+: for archive libraries.  Thank you, Linux.
+case "$nm_so_opt" in
+'')	case "$myuname" in
+	*linux*)
+		if nm --help | $grep 'dynamic' > /dev/null 2>&1; then
+			nm_so_opt='--dynamic'
+		fi
+		;;
+	esac
+	;;
+esac
+
+case "$runnm" in
+true)
+: get list of predefined functions in a handy place
+echo " "
+case "$libc" in
+'') libc=unknown
+	case "$libs" in
+	*-lc_s*) libc=`./loc libc_s$lib_ext $libc $libpth`
+	esac
+	;;
+esac
+libnames='';
+case "$libs" in
+'') ;;
+*)  for thislib in $libs; do
+	case "$thislib" in
+	-lc|-lc_s)
+		: Handle C library specially below.
+		;;
+	-l*)
+		thislib=`echo $thislib | $sed -e 's/^-l//'`
+		if try=`./loc lib$thislib.$so.'*' X $libpth`; $test -f "$try"; then
+			:
+		elif try=`./loc lib$thislib.$so X $libpth`; $test -f "$try"; then
+			:
+		elif try=`./loc lib$thislib$lib_ext X $libpth`; $test -f "$try"; then
+			:
+		elif try=`./loc $thislib$lib_ext X $libpth`; $test -f "$try"; then
+			:
+		elif try=`./loc lib$thislib X $libpth`; $test -f "$try"; then
+			:
+		elif try=`./loc $thislib X $libpth`; $test -f "$try"; then
+			:
+		elif try=`./loc Slib$thislib$lib_ext X $xlibpth`; $test -f "$try"; then
+			:
+		else
+			try=''
+		fi
+		libnames="$libnames $try"
+		;;
+	*) libnames="$libnames $thislib" ;;
+	esac
+	done
+	;;
+esac
+xxx=normal
+case "$libc" in
+unknown)
+	set /lib/libc.$so
+	for xxx in $libpth; do
+		$test -r $1 || set $xxx/libc.$so
+		: The messy sed command sorts on library version numbers.
+		$test -r $1 || \
+			set `echo blurfl; echo $xxx/libc.$so.[0-9]* | \
+				tr ' ' '\012' | egrep -v '\.[A-Za-z]*$' | $sed -e '
+				h
+				s/[0-9][0-9]*/0000&/g
+				s/0*\([0-9][0-9][0-9][0-9][0-9]\)/\1/g
+				G
+				s/\n/ /' | \
+		 	sort | $sed -e 's/^.* //'`
+		eval set \$$#
+	done
+	$test -r $1 || set /usr/ccs/lib/libc.$so
+  	$test -r $1 || set /lib/libsys_s$lib_ext
+  	;;
+*)
+	set blurfl
+	;;
+esac
+if $test -r "$1"; then
+	echo "Your (shared) C library seems to be in $1."
+	libc="$1"
+elif $test -r /lib/libc && $test -r /lib/clib; then
+	echo "Your C library seems to be in both /lib/clib and /lib/libc."
+	xxx=apollo
+	libc='/lib/clib /lib/libc'
+	if $test -r /lib/syslib; then
+		echo "(Your math library is in /lib/syslib.)"
+		libc="$libc /lib/syslib"
+	fi
+elif $test -r "$libc" || (test -h "$libc") >/dev/null 2>&1; then
+	echo "Your C library seems to be in $libc, as you said before."
+elif $test -r $incpath/usr/lib/libc$lib_ext; then
+	libc=$incpath/usr/lib/libc$lib_ext;
+	echo "Your C library seems to be in $libc.  That's fine."
+elif $test -r /lib/libc$lib_ext; then
+	libc=/lib/libc$lib_ext;
+	echo "Your C library seems to be in $libc.  You're normal."
+else
+	if tans=`./loc libc$lib_ext blurfl/dyick $libpth`; $test -r "$tans"; then
+		:
+	elif tans=`./loc libc blurfl/dyick $libpth`; $test -r "$tans"; then
+		libnames="$libnames "`./loc clib blurfl/dyick $libpth`
+	elif tans=`./loc clib blurfl/dyick $libpth`; $test -r "$tans"; then
+		:
+	elif tans=`./loc Slibc$lib_ext blurfl/dyick $xlibpth`; $test -r "$tans"; then
+		:
+	elif tans=`./loc Mlibc$lib_ext blurfl/dyick $xlibpth`; $test -r "$tans"; then
+		:
+	else
+		tans=`./loc Llibc$lib_ext blurfl/dyick $xlibpth`
+	fi
+	if $test -r "$tans"; then
+		echo "Your C library seems to be in $tans, of all places."
+		libc=$tans
+	else
+		libc='blurfl'
+	fi
+fi
+if $test $xxx = apollo -o -r "$libc" || (test -h "$libc") >/dev/null 2>&1; then
+	dflt="$libc"
+	cat <<EOM
+
+If the guess above is wrong (which it might be if you're using a strange
+compiler, or your machine supports multiple models), you can override it here.
+
+EOM
+else
+	dflt=''
+	echo $libpth | tr ' ' '\012' | sort | uniq > libpath
+	cat >&4 <<EOM
+I can't seem to find your C library.  I've looked in the following places:
+
+EOM
+	$sed 's/^/	/' libpath
+	cat <<EOM
+
+None of these seems to contain your C library. I need to get its name...
+
+EOM
+fi
+fn=f
+rp='Where is your C library?'
+. ./getfile
+libc="$ans"
+
+echo " "
+echo $libc $libnames | tr ' ' '\012' | sort | uniq > libnames
+set X `cat libnames`
+shift
+xxx=files
+case $# in 1) xxx=file; esac
+echo "Extracting names from the following $xxx for later perusal:" >&4
+echo " "
+$sed 's/^/	/' libnames >&4
+echo " "
+$echo $n "This may take a while...$c" >&4
+
+: Linux may need the special Dynamic option to nm for shared libraries.
+: In general, this is stored in the nm_so_opt variable.
+: Unfortunately, that option may be fatal on non-shared libraries.
+for nm_libs_ext in $*; do
+    case $nm_libs_ext in
+	*$so*)	nm $nm_so_opt $nm_opt $nm_libs_ext 2>/dev/null ;;
+	*)		nm $nm_opt $nm_libs_ext 2>/dev/null ;;
+	esac
+done > libc.tmp
+
+$echo $n ".$c"
+$grep fprintf libc.tmp > libc.ptf
+xscan='eval "<libc.ptf $com >libc.list"; $echo $n ".$c" >&4'
+xrun='eval "<libc.tmp $com >libc.list"; echo "done" >&4'
+xxx='[ADTSIW]'
+if com="$sed -n -e 's/__IO//' -e 's/^.* $xxx  *_[_.]*//p' -e 's/^.* $xxx  *//p'";\
+	eval $xscan;\
+	$contains '^fprintf$' libc.list >/dev/null 2>&1; then
+		eval $xrun
+elif com="$sed -n -e 's/^__*//' -e 's/^\([a-zA-Z_0-9$]*\).*xtern.*/\1/p'";\
+	eval $xscan;\
+	$contains '^fprintf$' libc.list >/dev/null 2>&1; then
+		eval $xrun
+elif com="$sed -n -e '/|UNDEF/d' -e '/FUNC..GL/s/^.*|__*//p'";\
+	eval $xscan;\
+	$contains '^fprintf$' libc.list >/dev/null 2>&1; then
+		eval $xrun
+elif com="$sed -n -e 's/^.* D __*//p' -e 's/^.* D //p'";\
+	eval $xscan;\
+	$contains '^fprintf$' libc.list >/dev/null 2>&1; then
+		eval $xrun
+elif com="$sed -n -e 's/^_//' -e 's/^\([a-zA-Z_0-9]*\).*xtern.*text.*/\1/p'";\
+	eval $xscan;\
+	$contains '^fprintf$' libc.list >/dev/null 2>&1; then
+		eval $xrun
+elif com="$sed -n -e 's/^.*|FUNC |GLOB .*|//p'";\
+	eval $xscan;\
+	$contains '^fprintf$' libc.list >/dev/null 2>&1; then
+		eval $xrun
+elif com="$grep '|' | $sed -n -e '/|COMMON/d' -e '/|DATA/d' \
+				-e '/ file/d' -e 's/^\([^ 	]*\).*/\1/p'";\
+	eval $xscan;\
+	$contains '^fprintf$' libc.list >/dev/null 2>&1; then
+		eval $xrun
+elif com="$sed -n -e 's/^.*|FUNC |GLOB .*|//p' -e 's/^.*|FUNC |WEAK .*|//p'";\
+	eval $xscan;\
+	$contains '^fprintf$' libc.list >/dev/null 2>&1; then
+		eval $xrun
+elif com="$sed -n -e 's/^__//' -e '/|Undef/d' -e '/|Proc/s/ .*//p'";\
+	eval $xscan;\
+	$contains '^fprintf$' libc.list >/dev/null 2>&1; then
+		eval $xrun
+elif com="$sed -n -e 's/^.*|Proc .*|Text *| *//p'";\
+	eval $xscan;\
+	$contains '^fprintf$' libc.list >/dev/null 2>&1; then
+		eval $xrun
+elif com="$sed -n -e '/Def. Text/s/.* \([^ ]*\)\$/\1/p'";\
+	eval $xscan;\
+	$contains '^fprintf$' libc.list >/dev/null 2>&1; then
+		eval $xrun
+elif com="$sed -n -e 's/^[-0-9a-f ]*_\(.*\)=.*/\1/p'";\
+	eval $xscan;\
+	$contains '^fprintf$' libc.list >/dev/null 2>&1; then
+		eval $xrun
+elif com="$sed -n -e 's/.*\.text n\ \ \ \.//p'";\
+	eval $xscan;\
+	$contains '^fprintf$' libc.list >/dev/null 2>&1; then
+		eval $xrun
+else
+	nm -p $* 2>/dev/null >libc.tmp
+	$grep fprintf libc.tmp > libc.ptf
+	if com="$sed -n -e 's/^.* [ADTSIW]  *_[_.]*//p' -e 's/^.* [ADTSIW] //p'";\
+		eval $xscan; $contains '^fprintf$' libc.list >/dev/null 2>&1
+	then
+		nm_opt='-p'
+		eval $xrun
+	else
+		echo " "
+		echo "nm didn't seem to work right. Trying ar instead..." >&4
+		com=''
+		if ar t $libc > libc.tmp; then
+			for thisname in $libnames; do
+				ar t $thisname >>libc.tmp
+			done
+			$sed -e 's/\.o$//' < libc.tmp > libc.list
+			echo "Ok." >&4
+		else
+			echo "ar didn't seem to work right." >&4
+			echo "Maybe this is a Cray...trying bld instead..." >&4
+			if bld t $libc | $sed -e 's/.*\///' -e 's/\.o:.*$//' > libc.list
+			then
+				for thisname in $libnames; do
+					bld t $libnames | \
+					$sed -e 's/.*\///' -e 's/\.o:.*$//' >>libc.list
+					ar t $thisname >>libc.tmp
+				done
+				echo "Ok." >&4
+			else
+				echo "That didn't work either.  Giving up." >&4
+				exit 1
+			fi
+		fi
+	fi
+fi
+nm_extract="$com"
+if $test -f /lib/syscalls.exp; then
+	echo " "
+	echo "Also extracting names from /lib/syscalls.exp for good ole AIX..." >&4
+	$sed -n 's/^\([^ 	]*\)[ 	]*syscall$/\1/p' /lib/syscalls.exp >>libc.list
+fi
+;;
+esac
+$rm -f libnames libpath
+
+: determine filename position in cpp output
+echo " "
+echo "Computing filename position in cpp output for #include directives..." >&4
+echo '#include <stdio.h>' > foo.c
+$cat >fieldn <<EOF
+$startsh
+$cppstdin $cppflags $cppminus <foo.c 2>/dev/null | \
+$grep '^[ 	]*#.*stdio\.h' | \
+while read cline; do
+	pos=1
+	set \$cline
+	while $test \$# -gt 0; do
+		if $test -r \`echo \$1 | $tr -d '"'\`; then
+			echo "\$pos"
+			exit 0
+		fi
+		shift
+		pos=\`expr \$pos + 1\`
+	done
+done
+EOF
+chmod +x fieldn
+fieldn=`./fieldn`
+$rm -f foo.c fieldn
+case $fieldn in
+'') pos='???';;
+1) pos=first;;
+2) pos=second;;
+3) pos=third;;
+*) pos="${fieldn}th";;
+esac
+echo "Your cpp writes the filename in the $pos field of the line."
+
+: locate header file
+$cat >findhdr <<EOF
+$startsh
+wanted=\$1
+name=''
+if test -f $usrinc/\$wanted; then
+	echo "$usrinc/\$wanted"
+	exit 0
+fi
+awkprg='{ print \$$fieldn }'
+echo "#include <\$wanted>" > foo\$\$.c
+$cppstdin $cppminus $cppflags < foo\$\$.c 2>/dev/null | \
+$grep "^[ 	]*#.*\$wanted" | \
+while read cline; do
+	name=\`echo \$cline | $awk "\$awkprg" | $tr -d '"'\`
+	case "\$name" in
+	*/\$wanted) echo "\$name"; exit 0;;
+	*) name='';;
+	esac;
+done;
+$rm -f foo\$\$.c;
+case "\$name" in
+'') exit 1;;
+esac
+EOF
+chmod +x findhdr
+
+: define an alternate in-header-list? function
+inhdr='echo " "; td=$define; tu=$undef; yyy=$@;
+cont=true; xxf="echo \"<\$1> found.\" >&4";
+case $# in 2) xxnf="echo \"<\$1> NOT found.\" >&4";;
+*) xxnf="echo \"<\$1> NOT found, ...\" >&4";;
+esac;
+case $# in 4) instead=instead;; *) instead="at last";; esac;
+while $test "$cont"; do
+	xxx=`./findhdr $1`
+	var=$2; eval "was=\$$2";
+	if $test "$xxx" && $test -r "$xxx";
+	then eval $xxf;
+	eval "case \"\$$var\" in $undef) . ./whoa; esac"; eval "$var=\$td";
+		cont="";
+	else eval $xxnf;
+	eval "case \"\$$var\" in $define) . ./whoa; esac"; eval "$var=\$tu"; fi;
+	set $yyy; shift; shift; yyy=$@;
+	case $# in 0) cont="";;
+	2) xxf="echo \"but I found <\$1> $instead.\" >&4";
+		xxnf="echo \"and I did not find <\$1> either.\" >&4";;
+	*) xxf="echo \"but I found <\$1\> instead.\" >&4";
+		xxnf="echo \"there is no <\$1>, ...\" >&4";;
+	esac;
+done;
+while $test "$yyy";
+do set $yyy; var=$2; eval "was=\$$2";
+	eval "case \"\$$var\" in $define) . ./whoa; esac"; eval "$var=\$tu";
+	set $yyy; shift; shift; yyy=$@;
+done'
+
+: see if dld is available
+set dld.h i_dld
+eval $inhdr
+
+: is a C symbol defined?
+csym='tlook=$1;
+case "$3" in
+-v) tf=libc.tmp; tc=""; tdc="";;
+-a) tf=libc.tmp; tc="[0]"; tdc="[]";;
+*) tlook="^$1\$"; tf=libc.list; tc="()"; tdc="()";;
+esac;
+tx=yes;
+case "$reuseval-$4" in
+true-) ;;
+true-*) tx=no; eval "tval=\$$4"; case "$tval" in "") tx=yes;; esac;;
+esac;
+case "$tx" in
+yes)
+	case "$runnm" in
+	true)
+		if $contains $tlook $tf >/dev/null 2>&1;
+		then tval=true;
+		else tval=false;
+		fi;;
+	*)
+		echo "main() { extern short $1$tdc; printf(\"%hd\", $1$tc); }" > t.c;
+		if $cc $ccflags $ldflags -o t t.c $libs >/dev/null 2>&1;
+		then tval=true;
+		else tval=false;
+		fi;
+		$rm -f t t.c;;
+	esac;;
+*)
+	case "$tval" in
+	$define) tval=true;;
+	*) tval=false;;
+	esac;;
+esac;
+eval "$2=$tval"'
+
+: define an is-in-libc? function
+inlibc='echo " "; td=$define; tu=$undef;
+sym=$1; var=$2; eval "was=\$$2";
+tx=yes;
+case "$reuseval$was" in
+true) ;;
+true*) tx=no;;
+esac;
+case "$tx" in
+yes)
+	set $sym tres -f;
+	eval $csym;
+	case "$tres" in
+	true)
+		echo "$sym() found." >&4;
+		case "$was" in $undef) . ./whoa; esac; eval "$var=\$td";;
+	*)
+		echo "$sym() NOT found." >&4;
+		case "$was" in $define) . ./whoa; esac; eval "$var=\$tu";;
+	esac;;
+*)
+	case "$was" in
+	$define) echo "$sym() found." >&4;;
+	*) echo "$sym() NOT found." >&4;;
+	esac;;
+esac'
+
+: see if dlopen exists
+xxx_runnm="$runnm"
+runnm=false
+set dlopen d_dlopen
+eval $inlibc
+runnm="$xxx_runnm"
+
+: determine which dynamic loading, if any, to compile in
+echo " "
+dldir="ext/DynaLoader"
+case "$usedl" in
+$define|y|true)
+	dflt='y'
+	usedl="$define"
+	;;
+$undef|n|false)
+	dflt='n'
+	usedl="$undef"
+	;;
+*) 
+	dflt='n'
+	case "$d_dlopen" in
+	    $define) dflt='y' ;;
+	esac
+	case "$i_dld" in
+	    $define) dflt='y' ;;
+	esac
+	: Does a dl_xxx.xs file exist for this operating system
+	$test -f ../$dldir/dl_${osname}.xs && dflt='y'
+	;;
+esac
+rp="Do you wish to use dynamic loading?"
+. ./myread
+usedl="$ans"
+case "$ans" in
+y*) usedl="$define"
+	case "$dlsrc" in
+	'')
+		if $test -f ../$dldir/dl_${osname}.xs ; then
+			dflt="$dldir/dl_${osname}.xs"
+		elif $test "$d_dlopen" = "$define" ; then
+			dflt="$dldir/dl_dlopen.xs"
+		elif $test "$i_dld" = "$define" ; then
+			dflt="$dldir/dl_dld.xs"
+		else
+			dflt=''
+		fi
+		;;
+	*)	dflt="$dldir/$dlsrc"
+		;;
+	esac
+    echo "The following dynamic loading files are available:"
+	: Can not go over to $dldir because getfile has path hard-coded in.
+    cd ..; ls -C $dldir/dl*.xs; cd UU
+    rp="Source file to use for dynamic loading"
+    fn="fne"
+    . ./getfile
+	usedl="$define"
+	: emulate basename
+	dlsrc=`echo $ans | $sed -e 's@.*/\([^/]*\)$@\1@'`
+
+    $cat << EOM
+
+Some systems may require passing special flags to $cc -c to
+compile modules that will be used to create a shared library.
+To use no flags, say "none".
+
+EOM
+    case "$cccdlflags" in
+    '')	case "$gccversion" in
+		'') case "$osname" in
+			hpux)	dflt='+z' ;;
+			next)	dflt='none' ;;
+			svr4*|esix*)	dflt='-Kpic' ;;
+			irix*)	dflt='-KPIC' ;;
+			solaris) case "$ccflags" in
+				*-DDEBUGGING*)	dflt='-KPIC' ;;
+				*)		dflt='-Kpic' ;;
+				esac ;;
+			sunos)	dflt='-pic' ;;
+			*)	dflt='none' ;;
+		    esac ;;
+		*)  case "$osname/$ccflags" in
+			solaris/*-DDEBUGGING*)	dflt='-fPIC' ;;
+			*)			dflt='-fpic' ;;
+		    esac ;;
+	    esac ;;
+    *)	dflt="$cccdlflags" ;;
+    esac
+    rp="Any special flags to pass to $cc -c to compile shared library modules?"
+    . ./myread
+    case "$ans" in
+    none) cccdlflags=' ' ;;
+    *) cccdlflags="$ans" ;;
+    esac
+
+    cat << EOM
+
+Some systems use ld to create libraries that can be dynamically loaded,
+while other systems (such as those using ELF) use $cc.
+
+EOM
+	case "$ld" in
+	'')	$cat >try.c <<'EOM'
+/* Test for whether ELF binaries are produced */
+#include <fcntl.h>
+#include <stdlib.h>
+main() {
+	char b[4];
+	int i = open("a.out",O_RDONLY);
+	if(i == -1) 
+		exit(1); /* fail */
+	if(read(i,b,4)==4 && b[0]==127 && b[1]=='E' && b[2]=='L' && b[3]=='F')
+		exit(0); /* succeed (yes, it's ELF) */
+	else
+		exit(1); /* fail */
+}
+EOM
+		if $cc $ccflags try.c >/dev/null 2>&1 && ./a.out; then
+			cat <<EOM
+You appear to have ELF support.  I'll use $cc to build dynamic libraries.
+EOM
+			dflt="$cc"
+		else
+			echo "I'll use ld to build dynamic libraries."
+			dflt='ld'
+		fi
+		rm -f try.c a.out
+		;;
+	*)	dflt="$ld"
+		;;
+	esac
+
+    rp="What command should be used to create dynamic libraries?"
+    . ./myread
+	ld="$ans"
+
+    cat << EOM
+
+Some systems may require passing special flags to $ld to create a
+library that can be dynamically loaded.  If your ld flags include
+-L/other/path options to locate libraries outside your loader's normal
+search path, you may need to specify those -L options here as well.  To
+use no flags, say "none".
+
+EOM
+    case "$lddlflags" in
+    '') case "$osname" in
+			hpux)  dflt='-b' ;;
+			linux|irix*)	dflt='-shared' ;;
+			next)  dflt='none' ;;
+			solaris) dflt='-G' ;;
+			sunos) dflt='-assert nodefinitions' ;;
+			svr4*|esix*) dflt="-G $ldflags" ;;
+	        *)     dflt='none' ;;
+			esac
+			;;
+    *) dflt="$lddlflags" ;;
+    esac
+
+: Try to guess additional flags to pick up local libraries.
+for thisflag in $ldflags; do
+	case "$thisflag" in
+	-L*)
+		case " $dflt " in
+		*" $thisflag "*) ;;
+		*) dflt="$dflt $thisflag" ;;
+		esac
+		;;
+	esac
+done
+
+case "$dflt" in
+'') dflt='none' ;;
+esac
+
+    rp="Any special flags to pass to $ld to create a dynamically loaded library?"
+    . ./myread
+    case "$ans" in
+    none) lddlflags=' ' ;;
+    *) lddlflags="$ans" ;;
+    esac
+
+	cat <<EOM
+
+Some systems may require passing special flags to $cc to indicate that
+the resulting executable will use dynamic linking.  To use no flags,
+say "none".
+
+EOM
+    case "$ccdlflags" in
+    '') case "$osname" in
+		hpux)	dflt='-Wl,-E' ;;
+		linux)	dflt='-rdynamic' ;;
+		next)	dflt='none' ;;
+		sunos)	dflt='none' ;;
+		*)	dflt='none' ;;
+	    esac ;;
+    *)  dflt="$ccdlflags" ;;
+    esac
+    rp="Any special flags to pass to $cc to use dynamic loading?"
+    . ./myread
+    case "$ans" in
+    none) ccdlflags=' ' ;;
+    *) ccdlflags="$ans" ;;
+    esac
+    ;;
+*)  usedl="$undef"
+	ld='ld'
+    dlsrc='dl_none.xs'
+    lddlflags=''
+    ccdlflags=''
+    ;;
+esac
+
+also=''
+case "$usedl" in
+$undef)
+	# No dynamic loading being used, so don't bother even to prompt.
+	useshrplib='false'
+	;;
+*)	case "$useshrplib" in
+	'')	case "$osname" in
+		svr4*|dgux|dynixptx|esix|powerux)
+			dflt=y
+			also='Building a shared libperl is required for dynamic loading to work on your system.'
+			;;
+		next*)
+			case "$osvers" in
+			4*)	dflt=y
+				also='Building a shared libperl is needed for MAB support.'
+				;;
+			*)	dflt=n
+				;;
+			esac
+			;;
+		sunos)
+			dflt=n
+			also='Building a shared libperl will definitely not work on SunOS 4.'
+			;;
+		*)	dflt=n
+			;;
+		esac
+		;;
+	$define|true|[Yy]*)
+		dflt=y
+		;;
+	*)	dflt=n
+		;;
+	esac
+	$cat << EOM
+
+The perl executable is normally obtained by linking perlmain.c with
+libperl${lib_ext}, any static extensions (usually just DynaLoader), and
+any other libraries needed on this system (such as -lm, etc.).  Since
+your system supports dynamic loading, it is probably possible to build
+a shared libperl.$so.  If you will have more than one executable linked
+to libperl.$so, this will significantly reduce the size of each
+executable, but it may have a noticeable affect on performance.  The
+default is probably sensible for your system.
+$also
+
+EOM
+	rp="Build a shared libperl.$so (y/n)"
+	. ./myread
+	case "$ans" in
+	true|$define|[Yy]*)
+		useshrplib='true'
+		# Why does next4 have to be so different?
+		case "${osname}${osvers}" in
+		next4*)	xxx='DYLD_LIBRARY_PATH' ;;
+		*)		xxx='LD_LIBRARY_PATH' ;;
+		esac
+		$cat <<EOM >&4
+
+To build perl, you must add the current working directory to your
+$xxx environtment variable before running make.  You can do
+this with
+   $xxx=\`pwd\`; export $xxx
+for Bourne-style shells, or
+   setenv $xxx \`pwd\`
+for Csh-style shells.  You *MUST* do this before running make.
+
+EOM
+		;;
+	*)	useshrplib='false' ;;
+	esac
+	;;
+esac
+
+case "$useshrplib" in
+true)
+	case "$libperl" in
+	'')
+		# Figure out a good name for libperl.so.  Since it gets stored in
+		# a version-specific architecture-dependent library, the version
+		# number isn't really that important, except for making cc/ld happy.
+		#
+		# A name such as libperl.so.3.1
+		majmin="libperl.$so.$patchlevel.$subversion"
+		# A name such as libperl.so.301
+		majonly=`echo $patchlevel $subversion |
+			$awk '{printf "%d%02d", $1, $2}'`
+		majonly=libperl.$so.$majonly
+		# I'd prefer to keep the os-specific stuff here to a minimum, and
+		# rely on figuring it out from the naming of libc.
+		case "${osname}${osvers}" in
+		next4*)
+			dflt=libperl.5.$so
+			# XXX How handle the --version stuff for MAB?
+			;;
+		linux*)  # ld won't link with a bare -lperl otherwise.
+			dflt=libperl.$so
+			;;
+		*)	# Try to guess based on whether libc has major.minor.
+			case "$libc" in
+			*libc.$so.[0-9]*.[0-9]*) dflt=$majmin ;;
+			*libc.$so.[0-9]*) dflt=$majonly ;;
+			*)	dflt=libperl.$so ;;
+			esac
+			;;
+		esac
+		;;
+	*)	dflt=$libperl
+		;;
+	esac
+	cat << EOM
+
+I need to select a good name for the shared libperl.  If your system uses
+library names with major and minor numbers, then you might want something
+like $majmin.  Alternatively, if your system uses a single version
+number for shared libraries, then you might want to use $majonly.
+Or, your system might be quite happy with a simple libperl.$so.
+
+Since the shared libperl will get installed into a version-specific
+architecture-dependent directory, the version number of the shared perl
+library probably isn't important, so the default should be o.k.
+
+EOM
+	rp='What name do you want to give to the shared libperl?'
+	. ./myread
+	libperl=$ans
+	echo "Ok, I'll use $libperl"
+	;;
+*)
+	libperl="libperl${lib_ext}"
+	;;
+esac
+
+# Detect old use of shrpdir via undocumented Configure -Dshrpdir
+case "$shrpdir" in
+'') ;;
+*)	$cat >&4 <<EOM
+WARNING:  Use of the shrpdir variable for the installation location of
+the shared $libperl is not supported.  It was never documented and
+will not work in this version.  Let me (chip@perl.com) know of any
+problems this may cause.
+
+EOM
+	case "$shrpdir" in
+	"$archlibexp/CORE")
+		$cat >&4 <<EOM
+But your current setting of $shrpdir is
+the default anyway, so it's harmless.
+EOM
+		;;
+	*)
+		$cat >&4 <<EOM
+Further, your current attempted setting of $shrpdir
+conflicts with the value of $archlibexp/CORE
+that installperl will use.
+EOM
+		;;
+	esac
+	;;
+esac
+
+# How will the perl executable find the installed shared $libperl?
+# Add $xxx to ccdlflags.
+# If we can't figure out a command-line option, use $shrpenv to
+# set env LD_RUN_PATH.  The main perl makefile uses this.
+shrpdir=$archlibexp/CORE
+xxx=''
+tmp_shrpenv=''
+if "$useshrplib"; then
+    case "$osname" in 
+	aix)
+		# We'll set it in Makefile.SH...
+		;;
+	solaris|netbsd)
+		xxx="-R $shrpdir"
+		;;
+	freebsd)
+		xxx="-Wl,-R$shrpdir"
+		;;
+	linux|irix*|dec_osf)
+		xxx="-Wl,-rpath,$shrpdir"
+		;;
+	next)
+		# next doesn't like the default...
+		;;
+	*)
+		tmp_shrpenv="env LD_RUN_PATH=$shrpdir"
+		;;
+	esac
+	case "$xxx" in
+	'') ;;
+	*)	
+		# Only add $xxx if it isn't already in ccdlflags.
+		case " $ccdlflags " in
+		*" $xxx "*)	;;
+		*)	ccdlflags="$ccdlflags $xxx"
+			cat <<EOM >&4
+
+Adding $xxx to the flags
+passed to $ld so that the perl executable will find the 
+installed shared $libperl.
+
+EOM
+			;;
+		esac
+		;;
+	esac
+fi
+# Respect a hint or command-line value.
+case "$shrpenv" in
+'') shrpenv="$tmp_shrpenv" ;;
+esac
 
 : determine where manual pages go
 set man1dir man1dir none
@@ -3028,274 +5046,6 @@ case "$man3dir" in
 	;;
 esac
 
-: see what memory models we can support
-case "$models" in
-'')
-	$cat >pdp11.c <<'EOP'
-main() {
-#ifdef pdp11
-	exit(0);
-#else
-	exit(1);
-#endif
-}
-EOP
-	cc -o pdp11 pdp11.c >/dev/null 2>&1
-	if ./pdp11 2>/dev/null; then
-		dflt='unsplit split'
-	else
-		tans=`./loc . X /lib/small /lib/large /usr/lib/small /usr/lib/large /lib/medium /usr/lib/medium /lib/huge`
-		case "$tans" in
-		X) dflt='none';;
-		*) if $test -d /lib/small || $test -d /usr/lib/small; then
-				dflt='small'
-			else
-				dflt=''
-			fi
-			if $test -d /lib/medium || $test -d /usr/lib/medium; then
-				dflt="$dflt medium"
-			fi
-			if $test -d /lib/large || $test -d /usr/lib/large; then
-				dflt="$dflt large"
-			fi
-			if $test -d /lib/huge || $test -d /usr/lib/huge; then
-				dflt="$dflt huge"
-			fi
-		esac
-	fi;;
-*) dflt="$models";;
-esac
-$cat <<EOM
- 
-Some systems have different model sizes.  On most systems they are called
-small, medium, large, and huge.  On the PDP11 they are called unsplit and
-split.  If your system doesn't support different memory models, say "none".
-If you wish to force everything to one memory model, say "none" here and
-put the appropriate flags later when it asks you for other cc and ld flags.
-Venix systems may wish to put "none" and let the compiler figure things out.
-(In the following question multiple model names should be space separated.)
-
-EOM
-rp="Which memory models are supported?"
-. ./myread
-models="$ans"
-
-case "$models" in
-none)
-	small=''
-	medium=''
-	large=''
-	huge=''
-	unsplit=''
-	split=''
-	;;
-*split)
-	case "$split" in
-	'') if $contains '\-i' $sysman/ld.1 >/dev/null 2>&1 || \
-			 $contains '\-i' $sysman/cc.1 >/dev/null 2>&1; then
-			dflt='-i'
-		else
-			dflt='none'
-		fi;;
-	*) dflt="$split";;
-	esac
-	rp="What flag indicates separate I and D space?"
-	. ./myread
-	tans="$ans"
-	case "$tans" in
-	none) tans='';;
-	esac
-	split="$tans"
-	unsplit='';;
-*large*|*small*|*medium*|*huge*)
-	case "$models" in
-	*large*)
-		case "$large" in
-		'') dflt='-Ml';;
-		*) dflt="$large";;
-		esac
-	rp="What flag indicates large model?"
-	. ./myread
-	tans="$ans"
-	case "$tans" in
-	none) tans='';
-	esac
-	large="$tans";;
-	*) large='';;
-	esac
-	case "$models" in
-	*huge*) case "$huge" in
-		'') dflt='-Mh';;
-		*) dflt="$huge";;
-		esac
-		rp="What flag indicates huge model?"
-		. ./myread
-		tans="$ans"
-		case "$tans" in
-		none) tans='';
-		esac
-		huge="$tans";;
-	*) huge="$large";;
-	esac
-	case "$models" in
-	*medium*) case "$medium" in
-		'') dflt='-Mm';;
-		*) dflt="$medium";;
-		esac
-		rp="What flag indicates medium model?"
-		. ./myread
-		tans="$ans"
-		case "$tans" in
-		none) tans='';
-		esac
-		medium="$tans";;
-	*) medium="$large";;
-	esac
-	case "$models" in
-	*small*) case "$small" in
-		'') dflt='none';;
-		*) dflt="$small";;
-		esac
-		rp="What flag indicates small model?"
-		. ./myread
-		tans="$ans"
-		case "$tans" in
-		none) tans='';
-		esac
-		small="$tans";;
-	*) small='';;
-	esac
-	;;
-*)
-	echo "Unrecognized memory models--you may have to edit Makefile.SH" >&4
-	;;
-esac
-
-: see if we need a special compiler
-echo " "
-if ./usg; then
-	case "$cc" in
-	'') case "$Mcc" in
-		/*) dflt='Mcc';;
-		*) case "$large" in
-			-M*) dflt='cc';;
-			*)	if $contains '\-M' $sysman/cc.1 >/dev/null 2>&1 ; then
-					if $contains '\-M' $sysman/cpp.1 >/dev/null 2>&1; then
-						dflt='cc'
-					else
-						dflt='cc -M'
-					fi
-				else
-					dflt='cc'
-				fi;;
-			esac;;
-		esac;;
-	*)  dflt="$cc";;
-	esac
-	$cat <<'EOM'
-On some systems the default C compiler will not resolve multiple global
-references that happen to have the same name.  On some such systems the "Mcc"
-command may be used to force these to be resolved.  On other systems a "cc -M"
-command is required.  (Note that the -M flag on other systems indicates a
-memory model to use!) If you have the Gnu C compiler, you might wish to use
-that instead.
-
-EOM
-	rp="What command will force resolution on this system?"
-	. ./myread
-	cc="$ans"
-else
-	case "$cc" in
-	'') dflt=cc;;
-	*) dflt="$cc";;
-	esac
-	rp="Use which C compiler?"
-	. ./myread
-	cc="$ans"
-fi
-echo " "
-echo "Checking for GNU cc in disguise and/or its version number..." >&4
-$cat >gccvers.c <<EOM
-#include <stdio.h>
-int main() {
-#ifdef __GNUC__
-#ifdef __VERSION__
-	printf("%s\n", __VERSION__);
-#else
-	printf("%s\n", "1");
-#endif
-#endif
-	exit(0);
-}
-EOM
-if $cc -o gccvers gccvers.c >/dev/null 2>&1; then
-	gccversion=`./gccvers`
-	case "$gccversion" in
-	'') echo "You are not using GNU cc." ;;
-	*)  echo "You are using GNU cc $gccversion." ;;
-	esac
-else
-	echo " "
-	echo "*** WHOA THERE!!! ***" >&4
-	echo "    Your C compiler \"$cc\" doesn't seem to be working!" >&4
-	case "$knowitall" in
-	'')
-	echo "    You'd better start hunting for one and let me know about it." >&4
-		exit 1
-		;;
-	esac
-fi
-$rm -f gccvers*
-case "$gccversion" in
-1*) cpp=`./loc gcc-cpp $cpp $pth` ;;
-esac
-
-: What should the include directory be ?
-echo " "
-$echo $n "Hmm...  $c"
-dflt='/usr/include'
-incpath=''
-mips_type=''
-if $test -f /bin/mips && /bin/mips; then
-	echo "Looks like a MIPS system..."
-	$cat >usr.c <<'EOCP'
-#ifdef SYSTYPE_BSD43
-/bsd43
-#endif
-EOCP
-	if $cc -E usr.c > usr.out && $contains / usr.out >/dev/null 2>&1; then
-		dflt='/bsd43/usr/include'
-		incpath='/bsd43'
-		mips_type='BSD 4.3'
-	else
-		mips_type='System V'
-	fi
-	$rm -f usr.c usr.out
-	echo "and you're compiling with the $mips_type compiler and libraries."
-	xxx_prompt=y
-	echo "exit 0" >mips
-else
-	echo "Doesn't look like a MIPS system."
-	xxx_prompt=n
-	echo "exit 1" >mips
-fi
-chmod +x mips
-$eunicefix mips
-echo " "
-case "$usrinc" in
-'') ;;
-*) dflt="$usrinc";;
-esac
-case "$xxx_prompt" in
-y)	fn=d/
-	rp='Where are the include files you want to use?'
-	. ./getfile
-	usrinc="$ans"
-	;;
-*)	usrinc="$dflt"
-	;;
-esac
-
 : see if we have to deal with yellow pages, now NIS.
 if $test -d /usr/etc/yp || $test -d /etc/yp; then
 	if $test -f /usr/etc/nibindd; then
@@ -3457,7 +5207,7 @@ case "$myhostname" in
 		X*\ *)	echo "(Several hosts in /etc/hosts matched hostname)"
 			dflt=.
 			;;
-		.) echo "(You do not have fully-qualified names in /etc/hosts)"
+		X.) echo "(You do not have fully-qualified names in /etc/hosts)"
 			;;
 		esac
 		case "$dflt" in
@@ -3466,8 +5216,16 @@ case "$myhostname" in
 			if $test -f "$tans"; then
 				echo "(Attempting domain name extraction from $tans)"
 				: Why was there an Egrep here, when Sed works?
-				dflt=.`$sed -n -e 's/^domain[ 	]*\(.*\)/\1/p' $tans \
-					| ./tr '[A-Z]' '[a-z]' 2>/dev/null`
+				: Look for either a search or a domain directive.
+				dflt=.`$sed -n -e 's/	/ /g' \
+				  -e 's/^search  *\([^ ]*\).*/\1/p' $tans \
+				  | ./tr '[A-Z]' '[a-z]' 2>/dev/null`
+				case "$dflt" in
+				.) dflt=.`$sed -n -e 's/	/ /g' \
+				     -e 's/^domain  *\([^ ]*\).*/\1/p' $tans \
+				     | ./tr '[A-Z]' '[a-z]' 2>/dev/null`
+  					;;
+				esac
 			fi
 			;;
 		esac
@@ -3581,6 +5339,72 @@ rp='Perl administrator e-mail address'
 . ./myread
 perladmin="$ans"
 
+: figure out how to guarantee perl startup
+case "$startperl" in
+'')
+	case "$sharpbang" in
+	*!)
+		$cat <<EOH
+
+I can use the #! construct to start perl on your system. This will
+make startup of perl scripts faster, but may cause problems if you
+want to share those scripts and perl is not in a standard place
+($binexp/perl) on all your platforms. The alternative is to force
+a shell by starting the script with a single ':' character.
+
+EOH
+		dflt="$binexp/perl"
+		rp='What shall I put after the #! to start up perl ("none" to not use #!)?'
+		. ./myread
+		case "$ans" in
+		none)	startperl=": # use perl";;
+		*)	startperl="#!$ans"
+			if $test 30 -lt `echo "$ans" | wc -c`; then
+				$cat >&4 <<EOM
+
+WARNING:  Some systems limit the #! command to 32 characters.
+If you experience difficulty running Perl scripts with #!, try
+installing Perl in a directory with a shorter pathname.
+
+EOM
+			fi ;;
+		esac
+		;;
+	*) startperl=": # use perl"
+		;;
+	esac
+	;;
+esac
+echo "I'll use $startperl to start perl scripts."
+
+: figure best path for perl in scripts
+case "$perlpath" in
+'')
+	perlpath="$binexp/perl"
+	case "$startperl" in
+	*!*) ;;
+	*)
+		$cat <<EOH
+
+I will use the "eval 'exec'" idiom to start Perl on your system.
+I can use the full path of your Perl binary for this purpose, but
+doing so may cause problems if you want to share those scripts and
+Perl is not always in a standard place ($binexp/perl).
+
+EOH
+		dflt="$binexp/perl"
+		rp="What path shall I use in \"eval 'exec'\"?"
+		. ./myread
+		perlpath="$ans"
+		;;
+	esac
+	;;
+esac
+case "$startperl" in
+*!*)	;;
+*)	echo "I'll use $perlpath in \"eval 'exec'\"" ;;
+esac
+
 : determine where public executable scripts go
 set scriptdir scriptdir
 eval $prefixit
@@ -3634,980 +5458,35 @@ else
 	installscript="$scriptdirexp"
 fi
 
-: determine perl absolute location
-case "$perlpath" in
-'')	perlpath=$binexp/perl ;;
-esac
+cat <<EOM
 
-: figure out how to guarantee perl startup
-case "$startperl" in
-'')
-	case "$sharpbang" in
-	*!)
-		$cat <<EOH
+Previous version of $package used the standard IO mechanisms as defined in
+<stdio.h>.  Versions 5.003_02 and later of perl allow alternate IO
+mechanisms via a "PerlIO" abstraction, but the stdio mechanism is still
+the default and is the only supported mechanism.  This abstraction
+layer can use AT&T's sfio (if you already have sfio installed) or
+fall back on standard IO.  This PerlIO abstraction layer is
+experimental and may cause problems with some extension modules.
 
-I can use the #! construct to start perl on your system. This will
-make startup of perl scripts faster, but may cause problems if you
-want to share those scripts and perl is not in a standard place
-($perlpath) on all your platforms. The alternative is to force
-a shell by starting the script with a single ':' character.
-
-EOH
-		dflt=$perlpath
-		rp='What shall I put after the #! to start up perl ("none" to not use #!)?'
-		. ./myread
-		case "$ans" in
-		none) startperl=": # use perl";;
-		*) startperl="#!$ans";;
-		esac
-		;;
-	*) startperl=": # use perl"
-		;;
-	esac
-	;;
-esac
-echo "I'll use $startperl to start perl scripts."
-
-: see how we invoke the C preprocessor
-echo " "
-echo "Now, how can we feed standard input to your C preprocessor..." >&4
-cat <<'EOT' >testcpp.c
-#define ABC abc
-#define XYZ xyz
-ABC.XYZ
-EOT
-cd ..
-echo 'cat >.$$.c; '"$cc"' -E ${1+"$@"} .$$.c; rm .$$.c' >cppstdin
-chmod 755 cppstdin
-wrapper=`pwd`/cppstdin
-ok='false'
-cd UU
-
-if $test "X$cppstdin" != "X" && \
-	$cppstdin $cppminus <testcpp.c >testcpp.out 2>&1 && \
-	$contains 'abc.*xyz' testcpp.out >/dev/null 2>&1
-then
-	echo "You used to use $cppstdin $cppminus so we'll use that again."
-	case "$cpprun" in
-	'') echo "But let's see if we can live without a wrapper..." ;;
-	*)
-		if $cpprun $cpplast <testcpp.c >testcpp.out 2>&1 && \
-			$contains 'abc.*xyz' testcpp.out >/dev/null 2>&1
-		then
-			echo "(And we'll use $cpprun $cpplast to preprocess directly.)"
-			ok='true'
-		else
-			echo "(However, $cpprun $cpplast does not work, let's see...)"
-		fi
-		;;
-	esac
-else
-	case "$cppstdin" in
-	'') ;;
-	*)
-		echo "Good old $cppstdin $cppminus does not seem to be of any help..."
-		;;
-	esac
-fi
-
-if $ok; then
-	: nothing
-elif echo 'Maybe "'"$cc"' -E" will work...'; \
-	$cc -E <testcpp.c >testcpp.out 2>&1; \
-	$contains 'abc.*xyz' testcpp.out >/dev/null 2>&1 ; then
-	echo "Yup, it does."
-	x_cpp="$cc -E"
-	x_minus='';
-elif echo 'Nope...maybe "'"$cc"' -E -" will work...'; \
-	$cc -E - <testcpp.c >testcpp.out 2>&1; \
-	$contains 'abc.*xyz' testcpp.out >/dev/null 2>&1 ; then
-	echo "Yup, it does."
-	x_cpp="$cc -E"
-	x_minus='-';
-elif echo 'Nope...maybe "'"$cc"' -P" will work...'; \
-	$cc -P <testcpp.c >testcpp.out 2>&1; \
-	$contains 'abc.*xyz' testcpp.out >/dev/null 2>&1 ; then
-	echo "Yipee, that works!"
-	x_cpp="$cc -P"
-	x_minus='';
-elif echo 'Nope...maybe "'"$cc"' -P -" will work...'; \
-	$cc -P - <testcpp.c >testcpp.out 2>&1; \
-	$contains 'abc.*xyz' testcpp.out >/dev/null 2>&1 ; then
-	echo "At long last!"
-	x_cpp="$cc -P"
-	x_minus='-';
-elif echo 'No such luck, maybe "'$cpp'" will work...'; \
-	$cpp <testcpp.c >testcpp.out 2>&1; \
-	$contains 'abc.*xyz' testcpp.out >/dev/null 2>&1 ; then
-	echo "It works!"
-	x_cpp="$cpp"
-	x_minus='';
-elif echo 'Nixed again...maybe "'$cpp' -" will work...'; \
-	$cpp - <testcpp.c >testcpp.out 2>&1; \
-	$contains 'abc.*xyz' testcpp.out >/dev/null 2>&1 ; then
-	echo "Hooray, it works!  I was beginning to wonder."
-	x_cpp="$cpp"
-	x_minus='-';
-elif echo 'Uh-uh.  Time to get fancy.  Trying a wrapper...'; \
-	$wrapper <testcpp.c >testcpp.out 2>&1; \
-	$contains 'abc.*xyz' testcpp.out >/dev/null 2>&1 ; then
-	x_cpp="$wrapper"
-	x_minus=''
-	echo "Eureka!"
-else
-	dflt=''
-	rp="No dice.  I can't find a C preprocessor.  Name one:"
-	. ./myread
-	x_cpp="$ans"
-	x_minus=''
-	$x_cpp <testcpp.c >testcpp.out 2>&1
-	if $contains 'abc.*xyz' testcpp.out >/dev/null 2>&1 ; then
-		echo "OK, that will do." >&4
-	else
-echo "Sorry, I can't get that to work.  Go find one and rerun Configure." >&4
-		exit 1
-	fi
-fi
-
-case "$ok" in
-false)
-	cppstdin="$x_cpp"
-	cppminus="$x_minus"
-	cpprun="$x_cpp"
-	cpplast="$x_minus"
-	set X $x_cpp
-	shift
-	case "$1" in
-	"$cpp")
-		echo "Perhaps can we force $cc -E using a wrapper..."
-		if $wrapper <testcpp.c >testcpp.out 2>&1; \
-			$contains 'abc.*xyz' testcpp.out >/dev/null 2>&1
-		then
-			echo "Yup, we can."
-			cppstdin="$wrapper"
-			cppminus='';
-		else
-			echo "Nope, we'll have to live without it..."
-		fi
-		;;
-	esac
-	case "$cpprun" in
-	"$wrapper")
-		cpprun=''
-		cpplast=''
-		;;
-	esac
-	;;
-esac
-
-case "$cppstdin" in
-"$wrapper") ;;
-*) $rm -f $wrapper;;
-esac
-$rm -f testcpp.c testcpp.out
-
-: Set private lib path
-case "$plibpth" in
-'') if ./mips; then
-		plibpth="$incpath/usr/lib /usr/local/lib /usr/ccs/lib"
-	fi;;
-esac
-case "$libpth" in
-' ') dlist='';;
-'') dlist="$loclibpth $plibpth $glibpth";;
-*) dlist="$libpth";;
-esac
-
-: Now check and see which directories actually exist, avoiding duplicates
-libpth=''
-for xxx in $dlist
-do
-    if $test -d $xxx; then
-		case " $libpth " in
-		*" $xxx "*) ;;
-		*) libpth="$libpth $xxx";;
-		esac
-    fi
-done
-$cat <<'EOM'
-
-Some systems have incompatible or broken versions of libraries.  Among
-the directories listed in the question below, please remove any you
-know not to be holding relevant libraries, and add any that are needed.
-Say "none" for none.
-
+If this doesn't make any sense to you, just accept the default 'n'.
 EOM
-case "$libpth" in
-'') dflt='none';;
-*)
-	set X $libpth
-	shift
-	dflt=${1+"$@"}
-	;;
+case "$useperlio" in
+$define|true|[yY]*)	dflt='y';;
+*) dflt='n';;
 esac
-rp="Directories to use for library searches?"
+rp='Use the experimental PerlIO abstraction layer?'
 . ./myread
 case "$ans" in
-none) libpth=' ';;
-*) libpth="$ans";;
-esac
-
-: determine optimize, if desired, or use for debug flag also
-case "$optimize" in
-' ') dflt='none';;
-'') dflt='-O';;
-*) dflt="$optimize";;
-esac
-$cat <<EOH
-
-Some C compilers have problems with their optimizers, by default, $package
-compiles with the -O flag to use the optimizer.  Alternately, you might want
-to use the symbolic debugger, which uses the -g flag (on traditional Unix
-systems).  Either flag can be specified here.  To use neither flag, specify
-the word "none".
-
-EOH
-rp="What optimizer/debugger flag should be used?"
-. ./myread
-optimize="$ans"
-case "$optimize" in
-'none') optimize=" ";;
-esac
-
-dflt=''
-: We will not override a previous value, but we might want to
-: augment a hint file
-case "$hint" in
-none|recommended)
-	case "$gccversion" in
-	1*) dflt='-fpcc-struct-return' ;;
-	esac
-	case "$optimize" in
-	*-g*) dflt="$dflt -DDEBUGGING";;
-	esac
-	case "$gccversion" in
-	2*) if test -d /etc/conf/kconfig.d &&
-			$contains _POSIX_VERSION $usrinc/sys/unistd.h >/dev/null 2>&1
-		then
-			dflt="$dflt -posix"
-		fi
-		;;
-	esac
+y|Y) 
+	val="$define"
+	;;     
+*)      
+	echo "Ok, doing things the stdio way"
+	val="$undef"
 	;;
 esac
-
-case "$mips_type" in
-*BSD*|'') inclwanted="$locincpth $usrinc";;
-*) inclwanted="$locincpth $inclwanted $usrinc/bsd";;
-esac
-for thisincl in $inclwanted; do
-	if $test -d $thisincl; then
-		if $test x$thisincl != x$usrinc; then
-			case "$dflt" in
-			*$thisincl*);;
-			*) dflt="$dflt -I$thisincl";;
-			esac
-		fi
-	fi
-done
-
-inctest='if $contains $2 $usrinc/$1 >/dev/null 2>&1; then
-	xxx=true;
-elif $contains $2 $usrinc/sys/$1 >/dev/null 2>&1; then
-	xxx=true;
-else
-	xxx=false;
-fi;
-if $xxx; then
-	case "$dflt" in
-	*$2*);;
-	*) dflt="$dflt -D$2";;
-	esac;
-fi'
-
-if ./osf1; then
-	set signal.h __LANGUAGE_C__; eval $inctest
-else
-	set signal.h LANGUAGE_C; eval $inctest
-fi
-set signal.h NO_PROTOTYPE; eval $inctest
-set signal.h _NO_PROTO; eval $inctest
-
-case "$hint" in
-none|recommended) dflt="$ccflags $dflt" ;;
-*) dflt="$ccflags";;
-esac
-
-case "$dflt" in
-''|' ') dflt=none;;
-esac
-$cat <<EOH
-
-Your C compiler may want other flags.  For this question you should include
--I/whatever and -DWHATEVER flags and any other flags used by the C compiler,
-but you should NOT include libraries or ld flags like -lwhatever.  If you
-want $package to honor its debug switch, you should include -DDEBUGGING here.
-Your C compiler might also need additional flags, such as -D_POSIX_SOURCE,
--DHIDEMYMALLOC or -DCRIPPLED_CC.
-
-To use no flags, specify the word "none".
-
-EOH
-set X $dflt
-shift
-dflt=${1+"$@"}
-rp="Any additional cc flags?"
-. ./myread
-case "$ans" in
-none) ccflags='';;
-*) ccflags="$ans";;
-esac
-
-: the following weeds options from ccflags that are of no interest to cpp
-cppflags="$ccflags"
-case "$gccversion" in
-1*) cppflags="$cppflags -D__GNUC__"
-esac
-case "$mips_type" in
-'');;
-*BSD*) cppflags="$cppflags -DSYSTYPE_BSD43";;
-esac
-case "$cppflags" in
-'');;
-*)
-	echo " "
-	echo "Let me guess what the preprocessor flags are..." >&4
-	set X $cppflags
-	shift
-	cppflags=''
-	$cat >cpp.c <<'EOM'
-#define BLURFL foo
-
-BLURFL xx LFRULB
-EOM
-	previous=''
-	for flag in $*
-	do
-		case "$flag" in
-		-*) ftry="$flag";;
-		*) ftry="$previous $flag";;
-		esac
-		if $cppstdin -DLFRULB=bar $ftry $cppminus <cpp.c \
-			>cpp1.out 2>/dev/null && \
-			$cpprun -DLFRULB=bar $ftry $cpplast <cpp.c \
-			>cpp2.out 2>/dev/null && \
-			$contains 'foo.*xx.*bar' cpp1.out >/dev/null 2>&1 && \
-			$contains 'foo.*xx.*bar' cpp2.out >/dev/null 2>&1
-		then
-			cppflags="$cppflags $ftry"
-			previous=''
-		else
-			previous="$flag"
-		fi
-	done
-	set X $cppflags
-	shift
-	cppflags=${1+"$@"}
-	case "$cppflags" in
-	*-*)  echo "They appear to be: $cppflags";;
-	esac
-	$rm -f cpp.c cpp?.out
-	;;
-esac
-
-: flags used in final linking phase
-
-case "$ldflags" in
-'') if ./venix; then
-		dflt='-i -z'
-	else
-		dflt=''
-	fi
-	case "$ccflags" in
-	*-posix*) dflt="$dflt -posix" ;;
-	esac
-	;;
-*) dflt="$ldflags";;
-esac
-
-: Try to guess additional flags to pick up local libraries.
-for thislibdir in $libpth; do
-	case " $loclibpth " in
-	*" $thislibdir "*)
-		case "$dflt " in 
-		*"-L$thislibdir "*) ;;
-		*)  dflt="$dflt -L$thislibdir" ;;
-		esac
-		;;
-	esac
-done
-
-case "$dflt" in
-'') dflt='none' ;;
-esac
-
-$cat <<EOH
-
-Your C linker may need flags.  For this question you should
-include -L/whatever and any other flags used by the C linker, but you
-should NOT include libraries like -lwhatever.
-
-Make sure you include the appropriate -L/path flags if your C linker
-does not normally search all of the directories you specified above,
-namely
-	$libpth
-To use no flags, specify the word "none".
-
-EOH
-
-rp="Any additional ld flags (NOT including libraries)?"
-. ./myread
-case "$ans" in
-none) ldflags='';;
-*) ldflags="$ans";;
-esac
-rmlist="$rmlist pdp11"
-
-: coherency check
-echo " "
-echo "Checking your choice of C compiler and flags for coherency..." >&4
-set X $cc $optimize $ccflags $ldflags try.c -o try
-shift
-$cat >try.msg <<EOM
-I've tried to compile and run a simple program with:
-
-	$*
-	./try
-
-and I got the following output:
-
-EOM
-$cat > try.c <<'EOF'
-#include <stdio.h>
-main() { exit(0); }
-EOF
-dflt=y
-if sh -c "$cc $optimize $ccflags try.c -o try $ldflags" >>try.msg 2>&1; then
-	if sh -c './try' >>try.msg 2>&1; then
-		dflt=n
-	else
-		echo "The program compiled OK, but exited with status $?." >>try.msg
-		rp="You have a problem.  Shall I abort Configure"
-		dflt=y
-	fi
-else
-	echo "I can't compile the test program." >>try.msg
-	rp="You have a BIG problem.  Shall I abort Configure"
-	dflt=y
-fi
-case "$dflt" in
-y)
-	$cat try.msg
-	case "$knowitall" in
-	'')
-		echo "(The supplied flags might be incorrect with this C compiler.)"
-		;;
-	*) dflt=n;;
-	esac
-	echo " "
-	. ./myread
-	case "$ans" in
-	n*|N*) ;;
-	*)	echo "Ok.  Stopping Configure." >&4
-		exit 1
-		;;
-	esac
-	;;
-n) echo "OK, that should do.";;
-esac
-$rm -f try try.* core
-
-: compute shared library extension
-case "$so" in
-'')
-	if xxx=`./loc libc.sl X $libpth`; $test -f "$xxx"; then
-		dflt='sl'
-	else
-		dflt='so'
-	fi
-	;;
-*) dflt="$so";;
-esac
-$cat <<EOM
-
-On some systems, shared libraries may be available.  Answer 'none' if
-you want to suppress searching of shared libraries for the remaining
-of this configuration.
-
-EOM
-rp='What is the file extension used for shared libraries?'
-. ./myread
-so="$ans"
-
-: Looking for optional libraries
-echo " "
-echo "Checking for optional libraries..." >&4
-case "$libs" in
-' '|'') dflt='';;
-*) dflt="$libs";;
-esac
-case "$libswanted" in
-'') libswanted='c_s';;
-esac
-for thislib in $libswanted; do
-	
-	if xxx=`./loc lib$thislib.$so.[0-9]'*' X $libpth`; $test -f "$xxx"; then
-		echo "Found -l$thislib (shared)."
-		case " $dflt " in
-		*"-l$thislib "*);;
-		*) dflt="$dflt -l$thislib";;
-		esac
-	elif xxx=`./loc lib$thislib.$so X $libpth` ; $test -f "$xxx"; then
-		echo "Found -l$thislib (shared)."
-		case " $dflt " in
-		*"-l$thislib "*);;
-		*) dflt="$dflt -l$thislib";;
-		esac
-	elif xxx=`./loc lib$thislib.a X $libpth`; $test -f "$xxx"; then
-		echo "Found -l$thislib."
-		case " $dflt " in
-		*"-l$thislib "*);;
-		*) dflt="$dflt -l$thislib";;
-		esac
-	elif xxx=`./loc $thislib.a X $libpth`; $test -f "$xxx"; then
-		echo "Found -l$thislib."
-		case " $dflt " in
-		*"-l$thislib "*);;
-		*) dflt="$dflt -l$thislib";;
-		esac
-	elif xxx=`./loc lib${thislib}_s.a X $libpth`; $test -f "$xxx"; then
-		echo "Found -l${thislib}_s."
-		case " $dflt " in
-		*"-l$thislib "*);;
-		*) dflt="$dflt -l${thislib}_s";;
-		esac
-	elif xxx=`./loc Slib$thislib.a X $xlibpth`; $test -f "$xxx"; then
-		echo "Found -l$thislib."
-		case " $dflt " in
-		*"-l$thislib "*);;
-		*) dflt="$dflt -l$thislib";;
-		esac
-	else
-		echo "No -l$thislib."
-	fi
-done
-set X $dflt
-shift
-dflt="$*"
-case "$libs" in
-'') dflt="$dflt";;
-*) dflt="$libs";;
-esac
-case "$dflt" in
-' '|'') dflt='none';;
-esac
-
-$cat <<EOM
- 
-Some versions of Unix support shared libraries, which make executables smaller
-but make load time slightly longer.
-
-On some systems, mostly newer Unix System V's, the shared library is included
-by putting the option "-lc_s" as the last thing on the cc command line when
-linking.  Other systems use shared libraries by default.  There may be other
-libraries needed to compile $package on your machine as well.  If your system
-needs the "-lc_s" option, include it here.  Include any other special libraries
-here as well.  Say "none" for none.
-EOM
-
-echo " "
-rp="Any additional libraries?"
-. ./myread
-case "$ans" in
-none) libs=' ';;
-*) libs="$ans";;
-esac
-
-: see if nm is to be used to determine whether a symbol is defined or not
-case "$usenm" in
-'')
-	dflt=`egrep 'inlibc|csym' ../Configure | wc -l 2>/dev/null`
-	if $test $dflt -gt 20; then
-		dflt=y
-	else
-		dflt=n
-	fi
-	;;
-*)
-	case "$usenm" in
-	true) dflt=y;;
-	*) dflt=n;;
-	esac
-	;;
-esac
-$cat <<EOM
-
-I can use 'nm' to extract the symbols from your C libraries. This is a time
-consuming task which may generate huge output on the disk (up to 3 megabytes)
-but that should make the symbols extraction faster. The alternative is to skip
-the 'nm' extraction part and to compile a small test program instead to
-determine whether each symbol is present. If you have a fast C compiler and/or
-if your 'nm' output cannot be parsed, this may be the best solution.
-
-EOM
-rp='Shall I use nm to extract C symbols from the libraries?'
-. ./myread
-case "$ans" in
-n|N) usenm=false;;
-*) usenm=true;;
-esac
-
-runnm=$usenm
-case "$reuseval" in
-true) runnm=false;;
-esac
-
-: nm options which may be necessary
-case "$nm_opt" in
-'') if $test -f /mach_boot; then
-		nm_opt=''
-	elif $test -d /usr/ccs/lib; then
-		nm_opt='-p'
-	elif $test -f /dgux; then
-		nm_opt='-p'
-	else
-		nm_opt=''
-	fi;;
-esac
-
-: nm options which may be necessary for shared libraries but illegal
-: for archive libraries.  Thank you, Linux.
-case "$nm_so_opt" in
-'')	case "$myuname" in
-	*linux*)
-		if nm --help | $grep 'dynamic' > /dev/null 2>&1; then
-			nm_so_opt='--dynamic'
-		fi
-		;;
-	esac
-	;;
-esac
-
-case "$runnm" in
-true)
-: get list of predefined functions in a handy place
-echo " "
-case "$libc" in
-'') libc=unknown
-	case "$libs" in
-	*-lc_s*) libc=`./loc libc_s.a $libc $libpth`
-	esac
-	;;
-esac
-libnames='';
-case "$libs" in
-'') ;;
-*)  for thislib in $libs; do
-	case "$thislib" in
-	-lc|-lc_s)
-		: Handle C library specially below.
-		;;
-	-l*)
-		thislib=`echo $thislib | $sed -e 's/^-l//'`
-		if try=`./loc lib$thislib.$so.'*' X $libpth`; $test -f "$try"; then
-			:
-		elif try=`./loc lib$thislib.$so X $libpth`; $test -f "$try"; then
-			:
-		elif try=`./loc lib$thislib.a X $libpth`; $test -f "$try"; then
-			:
-		elif try=`./loc lib$thislib X $libpth`; $test -f "$try"; then
-			:
-		elif try=`./loc $thislib X $libpth`; $test -f "$try"; then
-			:
-		elif try=`./loc Slib$thislib.a X $xlibpth`; $test -f "$try"; then
-			:
-		else
-			try=''
-		fi
-		libnames="$libnames $try"
-		;;
-	*) libnames="$libnames $thislib" ;;
-	esac
-	done
-	;;
-esac
-xxx=normal
-case "$libc" in
-unknown)
-	set /lib/libc.$so
-	for xxx in $libpth; do
-		$test -r $1 || set $xxx/libc.$so
-		: The messy sed command sorts on library version numbers.
-		$test -r $1 || \
-			set `echo blurfl; echo $xxx/libc.$so.[0-9]* | \
-				tr ' ' '\012' | egrep -v '\.[A-Za-z]*$' | $sed -e '
-				h
-				s/[0-9][0-9]*/0000&/g
-				s/0*\([0-9][0-9][0-9][0-9][0-9]\)/\1/g
-				G
-				s/\n/ /' | \
-		 	sort | $sed -e 's/^.* //'`
-		eval set \$$#
-	done
-	$test -r $1 || set /usr/ccs/lib/libc.$so
-  	$test -r $1 || set /lib/libsys_s.a
-  	;;
-*)
-	set blurfl
-	;;
-esac
-if $test -r "$1"; then
-	echo "Your (shared) C library seems to be in $1."
-	libc="$1"
-elif $test -r /lib/libc && $test -r /lib/clib; then
-	echo "Your C library seems to be in both /lib/clib and /lib/libc."
-	xxx=apollo
-	libc='/lib/clib /lib/libc'
-	if $test -r /lib/syslib; then
-		echo "(Your math library is in /lib/syslib.)"
-		libc="$libc /lib/syslib"
-	fi
-elif $test -r "$libc" || (test -h "$libc") >/dev/null 2>&1; then
-	echo "Your C library seems to be in $libc, as you said before."
-elif $test -r $incpath/usr/lib/libc.a; then
-	libc=$incpath/usr/lib/libc.a;
-	echo "Your C library seems to be in $libc.  That's fine."
-elif $test -r /lib/libc.a; then
-	libc=/lib/libc.a;
-	echo "Your C library seems to be in $libc.  You're normal."
-else
-	if tans=`./loc libc.a blurfl/dyick $libpth`; $test -r "$tans"; then
-		:
-	elif tans=`./loc libc blurfl/dyick $libpth`; $test -r "$tans"; then
-		libnames="$libnames "`./loc clib blurfl/dyick $libpth`
-	elif tans=`./loc clib blurfl/dyick $libpth`; $test -r "$tans"; then
-		:
-	elif tans=`./loc Slibc.a blurfl/dyick $xlibpth`; $test -r "$tans"; then
-		:
-	elif tans=`./loc Mlibc.a blurfl/dyick $xlibpth`; $test -r "$tans"; then
-		:
-	else
-		tans=`./loc Llibc.a blurfl/dyick $xlibpth`
-	fi
-	if $test -r "$tans"; then
-		echo "Your C library seems to be in $tans, of all places."
-		libc=$tans
-	else
-		libc='blurfl'
-	fi
-fi
-if $test $xxx = apollo -o -r "$libc" || (test -h "$libc") >/dev/null 2>&1; then
-	dflt="$libc"
-	cat <<EOM
-
-If the guess above is wrong (which it might be if you're using a strange
-compiler, or your machine supports multiple models), you can override it here.
-
-EOM
-else
-	dflt=''
-	echo $libpth | tr ' ' '\012' | sort | uniq > libpath
-	cat >&4 <<EOM
-I can't seem to find your C library.  I've looked in the following places:
-
-EOM
-	$sed 's/^/	/' libpath
-	cat <<EOM
-
-None of these seems to contain your C library. I need to get its name...
-
-EOM
-fi
-fn=f
-rp='Where is your C library?'
-. ./getfile
-libc="$ans"
-
-echo " "
-echo $libc $libnames | tr ' ' '\012' | sort | uniq > libnames
-set X `cat libnames`
-shift
-xxx=files
-case $# in 1) xxx=file; esac
-echo "Extracting names from the following $xxx for later perusal:" >&4
-echo " "
-$sed 's/^/	/' libnames >&4
-echo " "
-$echo $n "This may take a while...$c" >&4
-
-: Linux may need the special Dynamic option to nm for shared libraries.
-: In general, this is stored in the nm_so_opt variable.
-: Unfortunately, that option may be fatal on non-shared libraries.
-for nm_libs_ext in $*; do
-    case $nm_libs_ext in
-	*$so*)	nm $nm_so_opt $nm_opt $nm_libs_ext 2>/dev/null ;;
-	*)		nm $nm_opt $nm_libs_ext 2>/dev/null ;;
-	esac
-done > libc.tmp
-
-$echo $n ".$c"
-$grep fprintf libc.tmp > libc.ptf
-xscan='eval "<libc.ptf $com >libc.list"; $echo $n ".$c" >&4'
-xrun='eval "<libc.tmp $com >libc.list"; echo "done" >&4'
-xxx='[ADTSIW]'
-if com="$sed -n -e 's/__IO//' -e 's/^.* $xxx  *_[_.]*//p' -e 's/^.* $xxx //p'";\
-	eval $xscan;\
-	$contains '^fprintf$' libc.list >/dev/null 2>&1; then
-		eval $xrun
-elif com="$sed -n -e 's/^__*//' -e 's/^\([a-zA-Z_0-9$]*\).*xtern.*/\1/p'";\
-	eval $xscan;\
-	$contains '^fprintf$' libc.list >/dev/null 2>&1; then
-		eval $xrun
-elif com="$sed -n -e '/|UNDEF/d' -e '/FUNC..GL/s/^.*|__*//p'";\
-	eval $xscan;\
-	$contains '^fprintf$' libc.list >/dev/null 2>&1; then
-		eval $xrun
-elif com="$sed -n -e 's/^.* D __*//p' -e 's/^.* D //p'";\
-	eval $xscan;\
-	$contains '^fprintf$' libc.list >/dev/null 2>&1; then
-		eval $xrun
-elif com="$sed -n -e 's/^_//' -e 's/^\([a-zA-Z_0-9]*\).*xtern.*text.*/\1/p'";\
-	eval $xscan;\
-	$contains '^fprintf$' libc.list >/dev/null 2>&1; then
-		eval $xrun
-elif com="$sed -n -e 's/^.*|FUNC |GLOB .*|//p'";\
-	eval $xscan;\
-	$contains '^fprintf$' libc.list >/dev/null 2>&1; then
-		eval $xrun
-elif com="$grep '|' | $sed -n -e '/|COMMON/d' -e '/|DATA/d' \
-				-e '/ file/d' -e 's/^\([^ 	]*\).*/\1/p'";\
-	eval $xscan;\
-	$contains '^fprintf$' libc.list >/dev/null 2>&1; then
-		eval $xrun
-elif com="$sed -n -e 's/^.*|FUNC |GLOB .*|//p' -e 's/^.*|FUNC |WEAK .*|//p'";\
-	eval $xscan;\
-	$contains '^fprintf$' libc.list >/dev/null 2>&1; then
-		eval $xrun
-elif com="$sed -n -e 's/^__//' -e '/|Undef/d' -e '/|Proc/s/ .*//p'";\
-	eval $xscan;\
-	$contains '^fprintf$' libc.list >/dev/null 2>&1; then
-		eval $xrun
-elif com="$sed -n -e '/Def. Text/s/.* \([^ ]*\)\$/\1/p'";\
-	eval $xscan;\
-	$contains '^fprintf$' libc.list >/dev/null 2>&1; then
-		eval $xrun
-elif com="$sed -n -e 's/^[-0-9a-f ]*_\(.*\)=.*/\1/p'";\
-	eval $xscan;\
-	$contains '^fprintf$' libc.list >/dev/null 2>&1; then
-		eval $xrun
-else
-	nm -p $* 2>/dev/null >libc.tmp
-	$grep fprintf libc.tmp > libc.ptf
-	if com="$sed -n -e 's/^.* [ADTSIW]  *_[_.]*//p' -e 's/^.* [ADTSIW] //p'";\
-		eval $xscan; $contains '^fprintf$' libc.list >/dev/null 2>&1
-	then
-		nm_opt='-p'
-		eval $xrun
-	else
-		echo " "
-		echo "nm didn't seem to work right. Trying ar instead..." >&4
-		com=''
-		if ar t $libc > libc.tmp; then
-			for thisname in $libnames; do
-				ar t $thisname >>libc.tmp
-			done
-			$sed -e 's/\.o$//' < libc.tmp > libc.list
-			echo "Ok." >&4
-		else
-			echo "ar didn't seem to work right." >&4
-			echo "Maybe this is a Cray...trying bld instead..." >&4
-			if bld t $libc | $sed -e 's/.*\///' -e 's/\.o:.*$//' > libc.list
-			then
-				for thisname in $libnames; do
-					bld t $libnames | \
-					$sed -e 's/.*\///' -e 's/\.o:.*$//' >>libc.list
-					ar t $thisname >>libc.tmp
-				done
-				echo "Ok." >&4
-			else
-				echo "That didn't work either.  Giving up." >&4
-				exit 1
-			fi
-		fi
-	fi
-fi
-nm_extract="$com"
-if $test -f /lib/syscalls.exp; then
-	echo " "
-	echo "Also extracting names from /lib/syscalls.exp for good ole AIX..." >&4
-	$sed -n 's/^\([^ 	]*\)[ 	]*syscall$/\1/p' /lib/syscalls.exp >>libc.list
-fi
-;;
-esac
-$rm -f libnames libpath
-
-: is a C symbol defined?
-csym='tlook=$1;
-case "$3" in
--v) tf=libc.tmp; tc=""; tdc="";;
--a) tf=libc.tmp; tc="[0]"; tdc="[]";;
-*) tlook="^$1\$"; tf=libc.list; tc="()"; tdc="()";;
-esac;
-tx=yes;
-case "$reuseval-$4" in
-true-) ;;
-true-*) tx=no; eval "tval=\$$4"; case "$tval" in "") tx=yes;; esac;;
-esac;
-case "$tx" in
-yes)
-	case "$runnm" in
-	true)
-		if $contains $tlook $tf >/dev/null 2>&1;
-		then tval=true;
-		else tval=false;
-		fi;;
-	*)
-		echo "main() { extern short $1$tdc; printf(\"%hd\", $1$tc); }" > t.c;
-		if $cc $ccflags $ldflags -o t t.c $libs >/dev/null 2>&1;
-		then tval=true;
-		else tval=false;
-		fi;
-		$rm -f t t.c;;
-	esac;;
-*)
-	case "$tval" in
-	$define) tval=true;;
-	*) tval=false;;
-	esac;;
-esac;
-eval "$2=$tval"'
-
-: define an is-in-libc? function
-inlibc='echo " "; td=$define; tu=$undef;
-sym=$1; var=$2; eval "was=\$$2";
-tx=yes;
-case "$reuseval$was" in
-true) ;;
-true*) tx=no;;
-esac;
-case "$tx" in
-yes)
-	set $sym tres -f;
-	eval $csym;
-	case "$tres" in
-	true)
-		echo "$sym() found." >&4;
-		case "$was" in $undef) . ./whoa; esac; eval "$var=\$td";;
-	*)
-		echo "$sym() NOT found." >&4;
-		case "$was" in $define) . ./whoa; esac; eval "$var=\$tu";;
-	esac;;
-*)
-	case "$was" in
-	$define) echo "$sym() found." >&4;;
-	*) echo "$sym() NOT found." >&4;;
-	esac;;
-esac'
+set useperlio
+eval $setvar 
 
 : Check how to convert floats to strings.
 echo " "
@@ -4615,24 +5494,59 @@ echo "Checking for an efficient way to convert floats to strings."
 $cat >try.c <<'EOP'
 #ifdef TRY_gconvert
 #define Gconvert(x,n,t,b) gconvert((x),(n),(t),(b))
+char *myname = "gconvert";
 #endif
 #ifdef TRY_gcvt
 #define Gconvert(x,n,t,b) gcvt((x),(n),(b))
+char *myname = "gcvt";
 #endif
 #ifdef TRY_sprintf
 #define Gconvert(x,n,t,b) sprintf((b),"%.*g",(n),(x))
+char *myname = "sprintf";
 #endif
-main() { 
+
+#include <stdio.h>
+
+int
+checkit(expect, got)
+char *expect;
+char *got;
+{
+    if (strcmp(expect, got)) {
+		printf("%s oddity:  Expected %s, got %s\n",
+			myname, expect, got);
+		exit(1);
+	}
+}
+
+int
+main()
+{ 
 	char buf[64]; 
+	buf[63] = '\0';
+
+	/* This must be 1st test on (which?) platform */
+	/* Alan Burlison <AlanBurlsin@unn.unisys.com> */
+	Gconvert(0.1, 8, 0, buf);
+	checkit("0.1", buf);
+
 	Gconvert(1.0, 8, 0, buf); 
-	if (buf[0] != '1' || buf[1] != '\0')
-		exit(1);
+	checkit("1", buf);
+
 	Gconvert(0.0, 8, 0, buf); 
-	if (buf[0] != '0' || buf[1] != '\0')
-		exit(1);
+	checkit("0", buf);
+
 	Gconvert(-1.0, 8, 0, buf); 
-	if (buf[0] != '-' || buf[1] != '1' || buf[2] != '\0')
-		exit(1);
+	checkit("-1", buf);
+
+	/* Some Linux gcvt's give 1.e+5 here. */
+	Gconvert(100000.0, 8, 0, buf); 
+	checkit("100000", buf);
+	
+	/* Some Linux gcvt's give -1.e+5 here. */
+	Gconvert(-100000.0, 8, 0, buf); 
+	checkit("-100000", buf);
+
 	exit(0);
 }
 EOP
@@ -4650,11 +5564,10 @@ for xxx_convert in $xxx_list; do
 		try.c $libs > /dev/null 2>&1 ; then
 		echo "$xxx_convert" found. >&4
 		if ./try; then
-			echo "Good, $xxx_convert drops a trailing decimal point."
 			echo "I'll use $xxx_convert to convert floats into a string." >&4
 			break;
 		else
-			echo "But $xxx_convert keeps a trailing decimal point".
+			echo "...But $xxx_convert didn't work as I expected."
 		fi
 	else
 		echo "$xxx_convert NOT found." >&4
@@ -4672,66 +5585,6 @@ h_fcntl=false
 
 : Initialize h_sysfile
 h_sysfile=false
-
-: determine filename position in cpp output
-echo " "
-echo "Computing filename position in cpp output for #include directives..." >&4
-echo '#include <stdio.h>' > foo.c
-$cat >fieldn <<EOF
-$startsh
-$cppstdin $cppflags $cppminus <foo.c 2>/dev/null | \
-$grep '^[ 	]*#.*stdio\.h' | \
-while read cline; do
-	pos=1
-	set \$cline
-	while $test \$# -gt 0; do
-		if $test -r \`echo \$1 | $tr -d '"'\`; then
-			echo "\$pos"
-			exit 0
-		fi
-		shift
-		pos=\`expr \$pos + 1\`
-	done
-done
-EOF
-chmod +x fieldn
-fieldn=`./fieldn`
-$rm -f foo.c fieldn
-case $fieldn in
-'') pos='???';;
-1) pos=first;;
-2) pos=second;;
-3) pos=third;;
-*) pos="${fieldn}th";;
-esac
-echo "Your cpp writes the filename in the $pos field of the line."
-
-: locate header file
-$cat >findhdr <<EOF
-$startsh
-wanted=\$1
-name=''
-if test -f $usrinc/\$wanted; then
-	echo "$usrinc/\$wanted"
-	exit 0
-fi
-awkprg='{ print \$$fieldn }'
-echo "#include <\$wanted>" > foo\$\$.c
-$cppstdin $cppminus $cppflags < foo\$\$.c 2>/dev/null | \
-$grep "^[ 	]*#.*\$wanted" | \
-while read cline; do
-	name=\`echo \$cline | $awk "\$awkprg" | $tr -d '"'\`
-	case "\$name" in
-	*/\$wanted) echo "\$name"; exit 0;;
-	*) name='';;
-	esac;
-done;
-$rm -f foo\$\$.c;
-case "\$name" in
-'') exit 1;;
-esac
-EOF
-chmod +x findhdr
 
 : access call always available on UNIX
 set access d_access
@@ -4810,81 +5663,189 @@ eval $inlibc
 set bcopy d_bcopy
 eval $inlibc
 
-: see if setpgrp exists
-set setpgrp d_setpgrp
+: see if this is a unistd.h system
+set unistd.h i_unistd
+eval $inhdr
+
+: see if getpgrp exists
+set getpgrp d_getpgrp
 eval $inlibc
 
-: see which flavor of setpgrp is in use
-case "$d_setpgrp" in
+echo "Checking to see which flavor of getpgrp is in use . . . "
+case "$d_getpgrp" in
 "$define")
 	echo " "
 	$cat >set.c <<EOP
+#$i_unistd I_UNISTD
+#include <sys/types.h>
+#ifdef I_UNISTD
+#  include <unistd.h>
+#endif
 main()
 {
 	if (getuid() == 0) {
 		printf("(I see you are running Configure as super-user...)\n");
 		setuid(1);
 	}
-	if (-1 == setpgrp(1, 1))
-		exit(1);
-	exit(0);
+#ifdef TRY_BSD_PGRP
+	if (getpgrp(1) == 0)
+		exit(0);
+#else
+	if (getpgrp() > 0)
+		exit(0);
+#endif
+	exit(1);
 }
 EOP
-	if $cc $ccflags $ldflags -o set set.c $libs >/dev/null 2>&1; then
-		./set 2>/dev/null
-		case $? in
-		0) echo "You have to use setpgrp() instead of setpgrp(pid, pgrp)." >&4
-			val="$undef";;
-		*) echo "You have to use setpgrp(pid, pgrp) instead of setpgrp()." >&4
-			val="$define";;
-		esac
+	if $cc -DTRY_BSD_PGRP $ccflags $ldflags -o set set.c $libs >/dev/null 2>&1 && ./set; then
+		echo "You have to use getpgrp(pid) instead of getpgrp()." >&4
+		val="$define"
+	elif $cc $ccflags $ldflags -o set set.c $libs >/dev/null 2>&1 && ./set; then
+		echo "You have to use getpgrp() instead of getpgrp(pid)." >&4
+		val="$undef"
 	else
+		echo "I can't seem to compile and run the test program."
 		if ./usg; then
-			xxx="USG one, i.e. you use setpgrp()."
-			val="$undef"
+			xxx="a USG one, i.e. you use getpgrp()."
 		else
-			xxx="BSD one, i.e. you use setpgrp(pid, pgrp)."
-			val="$define"
+			# SVR4 systems can appear rather BSD-ish.
+			case "$i_unistd" in
+			$undef)
+				xxx="a BSD one, i.e. you use getpgrp(pid)."
+				val="$define"
+				;;
+			$define)
+				xxx="probably a USG one, i.e. you use getpgrp()."
+				val="$undef"
+				;;
+			esac
 		fi
-		echo "Assuming your setpgrp is a $xxx" >&4
+		echo "Assuming your getpgrp is $xxx" >&4
 	fi
 	;;
 *) val="$undef";;
 esac
-set d_bsdpgrp
+set d_bsdgetpgrp
 eval $setvar
 $rm -f set set.c
 
+: see if setpgrp exists
+set setpgrp d_setpgrp
+eval $inlibc
+
+echo "Checking to see which flavor of setpgrp is in use . . . "
+case "$d_setpgrp" in
+"$define")
+	echo " "
+	$cat >set.c <<EOP
+#$i_unistd I_UNISTD
+#include <sys/types.h>
+#ifdef I_UNISTD
+#  include <unistd.h>
+#endif
+main()
+{
+	if (getuid() == 0) {
+		printf("(I see you are running Configure as super-user...)\n");
+		setuid(1);
+	}
+#ifdef TRY_BSD_PGRP
+	if (-1 == setpgrp(1, 1))
+		exit(0);
+#else
+	if (setpgrp() != -1)
+		exit(0);
+#endif
+	exit(1);
+}
+EOP
+	if $cc -DTRY_BSD_PGRP $ccflags $ldflags -o set set.c $libs >/dev/null 2>&1 && ./set; then
+		echo 'You have to use setpgrp(pid,pgrp) instead of setpgrp().' >&4
+		val="$define"
+	elif $cc $ccflags $ldflags -o set set.c $libs >/dev/null 2>&1 && ./set; then
+		echo 'You have to use setpgrp() instead of setpgrp(pid,pgrp).' >&4
+		val="$undef"
+	else
+		echo "I can't seem to compile and run the test program."
+		if ./usg; then
+			xxx="a USG one, i.e. you use setpgrp()."
+		else
+			# SVR4 systems can appear rather BSD-ish.
+			case "$i_unistd" in
+			$undef)
+				xxx="a BSD one, i.e. you use setpgrp(pid,pgrp)."
+				val="$define"
+				;;
+			$define)
+				xxx="probably a USG one, i.e. you use setpgrp()."
+				val="$undef"
+				;;
+			esac
+		fi
+		echo "Assuming your setpgrp is $xxx" >&4
+	fi
+	;;
+*) val="$undef";;
+esac
+set d_bsdsetpgrp
+eval $setvar
+d_bsdpgrp=$d_bsdsetpgrp
+$rm -f set set.c
 : see if bzero exists
 set bzero d_bzero
 eval $inlibc
 
-: check for length of integer
+: check for lengths of integral types
 echo " "
 case "$intsize" in
 '')
 	echo "Checking to see how big your integers are..." >&4
-	$cat >try.c <<'EOCP'
+	$cat >intsize.c <<'EOCP'
 #include <stdio.h>
 main()
 {
-	printf("%d\n", sizeof(int));
+	printf("intsize=%d;\n", sizeof(int));
+	printf("longsize=%d;\n", sizeof(long));
+	printf("shortsize=%d;\n", sizeof(short));
+	fflush(stdout);
 	exit(0);
 }
 EOCP
-	if $cc $ccflags try.c -o try >/dev/null 2>&1 && ./try > /dev/null; then
-		intsize=`./try`
+#	If $libs contains -lsfio, and sfio is mis-configured, then it
+#	sometimes (apparently) runs and exits with a 0 status, but with no
+#	output!.  Thus we check with test -s whether we actually got any 
+#	output.  I think it has to do with sfio's use of _exit vs. exit,
+#	but I don't know for sure.  --Andy Dougherty  1/27/97.
+	if $cc $optimize $ccflags $ldflags -o intsize intsize.c $libs >/dev/null 2>&1 && 
+	./intsize > intsize.out 2>/dev/null && test -s intsize.out ; then
+		eval `$cat intsize.out`
 		echo "Your integers are $intsize bytes long."
+		echo "Your long integers are $longsize bytes long."
+		echo "Your short integers are $shortsize bytes long."
 	else
-		dflt='4'
-		echo "(I can't seem to compile the test program.  Guessing...)"
+		$cat >&4 <<EOM
+
+Help! I can't compile and run the intsize test program: please enlighten me!
+(This is probably a misconfiguration in your system or libraries, and
+you really ought to fix it.  Still, I'll try anyway.)
+
+EOM
+		dflt=4
 		rp="What is the size of an integer (in bytes)?"
 		. ./myread
 		intsize="$ans"
+		dflt=$intsize
+		rp="What is the size of a long integer (in bytes)?"
+		. ./myread
+		longsize="$ans"
+		dflt=2
+		rp="What is the size of a short integer (in bytes)?"
+		. ./myread
+		shortsize="$ans"
 	fi
 	;;
 esac
-$rm -f try.c try
+$rm -f intsize intsize.[co] intsize.out
 
 : see if signal is declared as pointer to function returning int or void
 echo " "
@@ -5130,19 +6091,19 @@ if set crypt val -f d_crypt; eval $csym; $val; then
 	val="$define"
 	cryptlib=''
 else
-	cryptlib=`./loc Slibcrypt.a "" $xlibpth`
+	cryptlib=`./loc Slibcrypt$lib_ext "" $xlibpth`
 	if $test -z "$cryptlib"; then
-		cryptlib=`./loc Mlibcrypt.a "" $xlibpth`
+		cryptlib=`./loc Mlibcrypt$lib_ext "" $xlibpth`
 	else
 		cryptlib=-lcrypt
 	fi
 	if $test -z "$cryptlib"; then
-		cryptlib=`./loc Llibcrypt.a "" $xlibpth`
+		cryptlib=`./loc Llibcrypt$lib_ext "" $xlibpth`
 	else
 		cryptlib=-lcrypt
 	fi
 	if $test -z "$cryptlib"; then
-		cryptlib=`./loc libcrypt.a "" $libpth`
+		cryptlib=`./loc libcrypt$lib_ext "" $libpth`
 	else
 		cryptlib=-lcrypt
 	fi
@@ -5158,46 +6119,19 @@ eval $setvar
 
 : get csh whereabouts
 case "$csh" in
-'csh') val="$undef" ;;
-*) val="$define" ;;
+'csh')	val="$undef" ;;
+*)	val="$define" ;;
 esac
 set d_csh
 eval $setvar
-full_csh=$csh
+: Respect a hint or command line value for full_csh.
+case "$full_csh" in
+'') full_csh=$csh ;;
+esac
 
 : see if cuserid exists
 set cuserid d_cuserid
 eval $inlibc
-
-: define an alternate in-header-list? function
-inhdr='echo " "; td=$define; tu=$undef; yyy=$@;
-cont=true; xxf="echo \"<\$1> found.\" >&4";
-case $# in 2) xxnf="echo \"<\$1> NOT found.\" >&4";;
-*) xxnf="echo \"<\$1> NOT found, ...\" >&4";;
-esac;
-case $# in 4) instead=instead;; *) instead="at last";; esac;
-while $test "$cont"; do
-	xxx=`./findhdr $1`
-	var=$2; eval "was=\$$2";
-	if $test "$xxx" && $test -r "$xxx";
-	then eval $xxf;
-	eval "case \"\$$var\" in $undef) . ./whoa; esac"; eval "$var=\$td";
-		cont="";
-	else eval $xxnf;
-	eval "case \"\$$var\" in $define) . ./whoa; esac"; eval "$var=\$tu"; fi;
-	set $yyy; shift; shift; yyy=$@;
-	case $# in 0) cont="";;
-	2) xxf="echo \"but I found <\$1> $instead.\" >&4";
-		xxnf="echo \"and I did not find <\$1> either.\" >&4";;
-	*) xxf="echo \"but I found <\$1\> instead.\" >&4";
-		xxnf="echo \"there is no <\$1>, ...\" >&4";;
-	esac;
-done;
-while $test "$yyy";
-do set $yyy; var=$2; eval "was=\$$2";
-	eval "case \"\$$var\" in $define) . ./whoa; esac"; eval "$var=\$tu";
-	set $yyy; shift; shift; yyy=$@;
-done'
 
 : see if this is a limits.h system
 set limits.h i_limits
@@ -5313,261 +6247,6 @@ set dlerror d_dlerror
 eval $inlibc
 runnm="$xxx_runnm"
 
-: see if dld is available
-set dld.h i_dld
-eval $inhdr
-
-: see if dlopen exists
-xxx_runnm="$runnm"
-runnm=false
-set dlopen d_dlopen
-eval $inlibc
-runnm="$xxx_runnm"
-
-: determine which dynamic loading, if any, to compile in
-echo " "
-dldir="ext/DynaLoader"
-case "$usedl" in
-$define|y|true)
-	dflt='y'
-	usedl="$define"
-	;;
-$undef|n|false)
-	dflt='n'
-	usedl="$undef"
-	;;
-*) 
-	dflt='n'
-	case "$d_dlopen" in
-	    $define) dflt='y' ;;
-	esac
-	case "$i_dld" in
-	    $define) dflt='y' ;;
-	esac
-	: Does a dl_xxx.xs file exist for this operating system
-	$test -f ../$dldir/dl_${osname}.xs && dflt='y'
-	;;
-esac
-rp="Do you wish to use dynamic loading?"
-. ./myread
-usedl="$ans"
-case "$ans" in
-y*) usedl="$define"
-	case "$dlsrc" in
-	'')
-		if $test -f ../$dldir/dl_${osname}.xs ; then
-			dflt="$dldir/dl_${osname}.xs"
-		elif $test "$d_dlopen" = "$define" ; then
-			dflt="$dldir/dl_dlopen.xs"
-		elif $test "$i_dld" = "$define" ; then
-			dflt="$dldir/dl_dld.xs"
-		else
-			dflt=''
-		fi
-		;;
-	*)	dflt="$dldir/$dlsrc"
-		;;
-	esac
-    echo "The following dynamic loading files are available:"
-	: Can not go over to $dldir because getfile has path hard-coded in.
-    cd ..; ls -C $dldir/dl*.xs; cd UU
-    rp="Source file to use for dynamic loading"
-    fn="fne"
-    . ./getfile
-	usedl="$define"
-	: emulate basename
-	dlsrc=`echo $ans | $sed -e 's@.*/\([^/]*\)$@\1@'`
-
-    $cat << EOM
-
-Some systems may require passing special flags to $cc -c to
-compile modules that will be used to create a shared library.
-To use no flags, say "none".
-
-EOM
-    case "$cccdlflags" in
-    '')	case "$gccversion" in
-		'') case "$osname" in
-			hpux)	dflt='+z' ;;
-			next)	dflt='none' ;;
-			solaris|svr4*|esix*) dflt='-Kpic' ;;
-			sunos)	dflt='-pic' ;;
-			*)	dflt='none' ;;
-		    esac ;;
-		*)	dflt='-fpic' ;;
-	    esac ;;
-    *)	dflt="$cccdlflags" ;;
-    esac
-    rp="Any special flags to pass to $cc -c to compile shared library modules?"
-    . ./myread
-    case "$ans" in
-    none) cccdlflags=' ' ;;
-    *) cccdlflags="$ans" ;;
-    esac
-
-    cat << EOM
-
-Some systems use ld to create libraries that can be dynamically loaded,
-while other systems (such as those using ELF) use $cc.
-
-EOM
-	case "$ld" in
-	'')	$cat >try.c <<'EOM'
-/* Test for whether ELF binaries are produced */
-#include <fcntl.h>
-#include <stdlib.h>
-main() {
-	char b[4];
-	int i = open("a.out",O_RDONLY);
-	if(i == -1) 
-		exit(1); /* fail */
-	if(read(i,b,4)==4 && b[0]==127 && b[1]=='E' && b[2]=='L' && b[3]=='F')
-		exit(0); /* succeed (yes, it's ELF) */
-	else
-		exit(1); /* fail */
-}
-EOM
-		if $cc $ccflags try.c >/dev/null 2>&1 && ./a.out; then
-			cat <<EOM
-You appear to have ELF support.  I'll use $cc to build dynamic libraries.
-EOM
-			dflt="$cc"
-		else
-			echo "I'll use ld to build dynamic libraries."
-			dflt='ld'
-		fi
-		rm -f try.c a.out
-		;;
-	*)	dflt="$ld"
-		;;
-	esac
-
-    rp="What command should be used to create dynamic libraries?"
-    . ./myread
-	ld="$ans"
-
-    cat << EOM
-
-Some systems may require passing special flags to $ld to create a
-library that can be dynamically loaded.  If your ld flags include
--L/other/path options to locate libraries outside your loader's normal
-search path, you may need to specify those -L options here as well.  To
-use no flags, say "none".
-
-EOM
-    case "$lddlflags" in
-    '') case "$osname" in
-			hpux)  dflt='-b' ;;
-			linux)	dflt='-shared' ;;
-			next)  dflt='none' ;;
-			solaris) dflt='-G' ;;
-			sunos) dflt='-assert nodefinitions' ;;
-			svr4*|esix*) dflt="-G $ldflags" ;;
-	        *)     dflt='none' ;;
-			esac
-			;;
-    *) dflt="$lddlflags" ;;
-    esac
-
-: Try to guess additional flags to pick up local libraries.
-for thisflag in $ldflags; do
-	case "$thisflag" in
-	-L*)
-		case " $dflt " in
-		*" $thisflag "*) ;;
-		*) dflt="$dflt $thisflag" ;;
-		esac
-		;;
-	esac
-done
-
-case "$dflt" in
-'') dflt='none' ;;
-esac
-
-    rp="Any special flags to pass to $ld to create a dynamically loaded library?"
-    . ./myread
-    case "$ans" in
-    none) lddlflags=' ' ;;
-    *) lddlflags="$ans" ;;
-    esac
-
-	cat <<EOM
-
-Some systems may require passing special flags to $cc to indicate that
-the resulting executable will use dynamic linking.  To use no flags,
-say "none".
-
-EOM
-    case "$ccdlflags" in
-    '') case "$osname" in
-		hpux)	dflt='-Wl,-E' ;;
-		linux)	dflt='-rdynamic' ;;
-		next)	dflt='none' ;;
-		sunos)	dflt='none' ;;
-		*)	dflt='none' ;;
-	    esac ;;
-    *)  dflt="$ccdlflags" ;;
-    esac
-    rp="Any special flags to pass to $cc to use dynamic loading?"
-    . ./myread
-    case "$ans" in
-    none) ccdlflags=' ' ;;
-    *) ccdlflags="$ans" ;;
-    esac
-    ;;
-*)  usedl="$undef"
-	ld='ld'
-    dlsrc='dl_none.xs'
-    lddlflags=''
-    ccdlflags=''
-    ;;
-esac
-
-val="$undef"
-case "$osname" in
-esix*|svr4*)
-    case "$usedl" in
-    $define)
-	$cat <<EOM
-
-System V Release 4 systems can support dynamic loading
-only if libperl is created as a shared library.
-
-EOM
-	val="$define"
-	;;
-    esac ;;
-esac
-set d_shrplib; eval $setvar
-case "$d_shrplib" in
-$define)
-    cat <<EOM >&4
-
-Be sure to add the perl source directory to the LD_LIBRARY_PATH
-environment variable before running make:
-    LD_LIBRARY_PATH=`cd ..;pwd`; export LD_LIBRARY_PATH
-or
-    setenv LD_LIBRARY_PATH `cd ..;pwd`
-
-EOM
-;;
-esac
-case "$d_shrplib" in
-$define)
-	case "$shrpdir" in
-	"")	dflt="$archlib/CORE";;
-	*)	dflt="$shrpdir";;
-	esac
-	rp="What directory should we install the shared libperl into?"
-	fn="d~"
-	. ./getfile
-	shrpdir="$ans"
-	;;
-*)	shrpdir='none'
-	;;
-esac
-
 : see if dlfcn is available
 set dlfcn.h i_dlfcn
 eval $inhdr
@@ -5630,26 +6309,31 @@ main()
 #endif
     handle = dlopen("./dyna.$dlext", mode) ;
     if (handle == NULL) {
-        printf ("1\n") ;
-	    exit(0);
+	printf ("1\n") ;
+	fflush (stdout) ;
+	exit(0);
     }
     symbol = dlsym(handle, "fred") ;
     if (symbol == NULL) {
-		/* try putting a leading underscore */
-        symbol = dlsym(handle, "_fred") ;
-        if (symbol == NULL) {
-            printf ("2\n") ;
-	    	exit(0);
-		}
-        printf ("3\n") ;
+	/* try putting a leading underscore */
+	symbol = dlsym(handle, "_fred") ;
+	if (symbol == NULL) {
+	    printf ("2\n") ;
+	    fflush (stdout) ;
+	    exit(0);
+	}
+	printf ("3\n") ;
     }
     else
-        printf ("4\n") ;
-	exit(0);
+	printf ("4\n") ;
+    fflush (stdout) ;
+    exit(0);
 }
 EOM
+	: Call the object file tmp-dyna.o in case dlext=o.
 	if $cc $ccflags $cccdlflags -c dyna.c > /dev/null 2>&1 && 
-		$ld $lddlflags -o dyna.$dlext dyna.o > /dev/null 2>&1 && 
+		mv dyna${obj_ext} tmp-dyna${obj_ext} > /dev/null 2>&1 && 
+		$ld $lddlflags -o dyna.$dlext tmp-dyna${obj_ext} > /dev/null 2>&1 && 
 		$cc $ccflags $ldflags $cccdlflags $ccdlflags fred.c -o fred $libs > /dev/null 2>&1; then
 		xxx=`./fred`
 		case $xxx in
@@ -5667,7 +6351,7 @@ EOM
 	;;
 esac
 		
-$rm -f fred fred.? dyna.$dlext dyna.?
+$rm -f fred fred.? dyna.$dlext dyna.? tmp-dyna.?
 
 set d_dlsymun
 eval $setvar
@@ -5697,7 +6381,7 @@ main() {
 EOCP
 : check sys/file.h first to get FREAD on Sun
 if $test `./findhdr sys/file.h` && \
-		$cc $cppflags "-DI_SYS_FILE" open3.c -o open3 >/dev/null 2>&1 ; then
+        $cc $ccflags "-DI_SYS_FILE" -o open3 $ldflags open3.c $libs >/dev/null 2>&1 ; then
 	h_sysfile=true;
 	echo "<sys/file.h> defines the O_* constants..." >&4
 	if ./open3; then
@@ -5708,7 +6392,7 @@ if $test `./findhdr sys/file.h` && \
 		val="$undef"
 	fi
 elif $test `./findhdr fcntl.h` && \
-		$cc "-DI_FCNTL" open3.c -o open3 >/dev/null 2>&1 ; then
+        $cc $ccflags "-DI_FCNTL" -o open3 $ldflags open3.c $libs >/dev/null 2>&1 ; then
 	h_fcntl=true;
 	echo "<fcntl.h> defines the O_* constants..." >&4
 	if ./open3; then
@@ -5873,7 +6557,7 @@ EOCP
 		*) echo "However, your read() returns '$status' on EOF??";;
 		esac
 		val="$define"
-		if test "$status" -eq "$rd_nodata"; then
+		if test "$status" = "$rd_nodata"; then
 			echo "WARNING: you can't distinguish between EOF and no data!"
 			val="$undef"
 		fi
@@ -5943,8 +6627,8 @@ eval $inlibc
 set getlogin d_getlogin
 eval $inlibc
 
-: see if getpgrp exists
-set getpgrp d_getpgrp
+: see if getpgid exists
+set getpgid d_getpgid
 eval $inlibc
 
 : see if getpgrp2 exists
@@ -5958,6 +6642,25 @@ eval $inlibc
 : see if getpriority exists
 set getpriority d_getprior
 eval $inlibc
+
+: see if gettimeofday or ftime exists
+set gettimeofday d_gettimeod
+eval $inlibc
+case "$d_gettimeod" in
+"$undef")
+	set ftime d_ftime 
+	eval $inlibc
+	;;
+*)
+	val="$undef"; set d_ftime; eval $setvar
+	;;
+esac
+case "$d_gettimeod$d_ftime" in
+"$undef$undef")
+	echo " "
+	echo 'No ftime() nor gettimeofday() -- timing may be less accurate.' >&4
+	;;
+esac
 
 : see if this is a netinet/in.h or sys/in.h system
 set netinet/in.h i_niin sys/in.h i_sysin
@@ -6051,6 +6754,10 @@ fi
 set d_strchr; eval $setvar
 val="$vali"
 set d_index; eval $setvar
+
+: check whether inet_aton exists
+set inet_aton d_inetaton
+eval $inlibc
 
 : Look for isascii
 echo " "
@@ -6362,13 +7069,59 @@ eval $inlibc
 set rmdir d_rmdir
 eval $inlibc
 
+: see if memory.h is available.
+val=''
+set memory.h val
+eval $inhdr
+
+: See if it conflicts with string.h
+case "$val" in
+$define)
+	case "$strings" in
+	'') ;;
+	*)
+		$cppstdin $cppflags $cppminus < $strings > mem.h
+		if $contains 'memcpy' mem.h >/dev/null 2>&1; then
+			echo " "
+			echo "We won't be including <memory.h>."
+			val="$undef"
+		fi
+		$rm -f mem.h
+		;;
+	esac
+esac
+set i_memory
+eval $setvar
+
 : can bcopy handle overlapping blocks?
 val="$undef"
 case "$d_bcopy" in
 "$define")
 	echo " "
 	echo "Checking to see if your bcopy() can do overlapping copies..." >&4
-	$cat >foo.c <<'EOCP'
+	$cat >foo.c <<EOCP
+#$i_memory I_MEMORY
+#$i_stdlib I_STDLIB
+#$i_string I_STRING
+#$i_unistd I_UNISTD
+EOCP
+	$cat >>foo.c <<'EOCP'
+#include <stdio.h>
+
+#ifdef I_MEMORY
+#  include <memory.h>
+#endif
+#ifdef I_STDLIB
+#  include <stdlib.h>
+#endif
+#ifdef I_STRING
+#  include <string.h>
+#else
+#  include <strings.h>
+#endif
+#ifdef I_UNISTD
+#  include <unistd.h>  /* Needed for NetBSD */
+#endif
 main()
 {
 char buf[128], abc[128];
@@ -6377,6 +7130,8 @@ int len;
 int off;
 int align;
 
+/* Copy "abcde..." string to char abc[] so that gcc doesn't
+   try to store the string in read-only memory.  */
 bcopy("abcdefghijklmnopqrstuvwxyz0123456789", abc, 36);
 
 for (align = 7; align >= 0; align--) {
@@ -6394,15 +7149,22 @@ for (align = 7; align >= 0; align--) {
 exit(0);
 }
 EOCP
-	if $cc $ccflags $ldflags foo.c -o safebcpy $libs >/dev/null 2>&1; then
+	if $cc $optimize $ccflags $ldflags foo.c \
+		    -o safebcpy $libs >/dev/null 2>&1; then
 		if ./safebcpy 2>/dev/null; then
 			echo "Yes, it can."
 			val="$define"
 		else
 			echo "It can't, sorry."
+			case "$d_memmove" in
+			"$define") echo "But that's Ok since you have memmove()." ;;
+			esac
 		fi
 	else
 		echo "(I can't compile the test program, so we'll assume not...)"
+		case "$d_memmove" in
+		"$define") echo "But that's Ok since you have memmove()." ;;
+		esac
 	fi
 	;;
 esac
@@ -6416,7 +7178,29 @@ case "$d_memcpy" in
 "$define")
 	echo " "
 	echo "Checking to see if your memcpy() can do overlapping copies..." >&4
-	$cat >foo.c <<'EOCP'
+	$cat >foo.c <<EOCP
+#$i_memory I_MEMORY
+#$i_stdlib I_STDLIB
+#$i_string I_STRING
+#$i_unistd I_UNISTD
+EOCP
+	$cat >>foo.c <<'EOCP'
+#include <stdio.h>
+
+#ifdef I_MEMORY
+#  include <memory.h>
+#endif
+#ifdef I_STDLIB
+#  include <stdlib.h>
+#endif
+#ifdef I_STRING
+#  include <string.h>
+#else
+#  include <strings.h>
+#endif
+#ifdef I_UNISTD
+#  include <unistd.h>  /* Needed for NetBSD */
+#endif
 main()
 {
 char buf[128], abc[128];
@@ -6425,6 +7209,8 @@ int len;
 int off;
 int align;
 
+/* Copy "abcde..." string to char abc[] so that gcc doesn't
+   try to store the string in read-only memory. */
 memcpy(abc, "abcdefghijklmnopqrstuvwxyz0123456789", 36);
 
 for (align = 7; align >= 0; align--) {
@@ -6442,20 +7228,82 @@ for (align = 7; align >= 0; align--) {
 exit(0);
 }
 EOCP
-	if $cc $ccflags $ldflags foo.c -o safemcpy $libs >/dev/null 2>&1; then
+	if $cc $optimize $ccflags $ldflags foo.c \
+		    -o safemcpy $libs >/dev/null 2>&1; then
 		if ./safemcpy 2>/dev/null; then
 			echo "Yes, it can."
 			val="$define"
 		else
 			echo "It can't, sorry."
+			case "$d_memmove" in
+			"$define") echo "But that's Ok since you have memmove()." ;;
+			esac
+		fi
+	else
+		echo "(I can't compile the test program, so we'll assume not...)"
+		case "$d_memmove" in
+		"$define") echo "But that's Ok since you have memmove()." ;;
+		esac
+	fi
+	;;
+esac
+$rm -f foo.* safemcpy core
+set d_safemcpy
+eval $setvar
+
+: can memcmp be trusted to compare relative magnitude?
+val="$undef"
+case "$d_memcmp" in
+"$define")
+	echo " "
+	echo "Checking to see if your memcmp() can compare relative magnitude..." >&4
+	$cat >foo.c <<EOCP
+#$i_memory I_MEMORY
+#$i_stdlib I_STDLIB
+#$i_string I_STRING
+#$i_unistd I_UNISTD
+EOCP
+	$cat >>foo.c <<'EOCP'
+#include <stdio.h>
+
+#ifdef I_MEMORY
+#  include <memory.h>
+#endif
+#ifdef I_STDLIB
+#  include <stdlib.h>
+#endif
+#ifdef I_STRING
+#  include <string.h>
+#else
+#  include <strings.h>
+#endif
+#ifdef I_UNISTD
+#  include <unistd.h>  /* Needed for NetBSD */
+#endif
+main()
+{
+char a = -1;
+char b = 0;
+if ((a < b) && memcmp(&a, &b, 1) < 0)
+	exit(1);
+exit(0);
+}
+EOCP
+	if $cc $optimize $ccflags $ldflags foo.c \
+		    -o sanemcmp $libs >/dev/null 2>&1; then
+		if ./sanemcmp 2>/dev/null; then
+			echo "Yes, it can."
+			val="$define"
+		else
+			echo "No, it can't (it uses signed chars)."
 		fi
 	else
 		echo "(I can't compile the test program, so we'll assume not...)"
 	fi
 	;;
 esac
-$rm -f foo.* safemcpy core
-set d_safemcpy
+$rm -f foo.* sanemcmp core
+set d_sanemcmp
 eval $setvar
 
 : see if select exists
@@ -6543,6 +7391,59 @@ eval $inlibc
 set setsid d_setsid
 eval $inlibc
 
+: see if sfio.h is available
+set sfio.h i_sfio
+eval $inhdr
+
+
+: see if sfio library is available
+case "$i_sfio" in
+$define)
+	val=''
+	set sfreserve val
+	eval $inlibc
+	;;
+*)
+	val="$undef"
+	;;
+esac
+: Ok, but do we want to use it.
+case "$val" in
+$define)
+	case "$usesfio" in
+	true|$define|[yY]*) dflt='y';;
+	*) dflt='n';;
+	esac
+	echo "$package can use the sfio library, but it is experimental."
+	rp="You seem to have sfio available, do you want to try using it?"
+	. ./myread
+	case "$ans" in
+	y|Y) ;;
+	*)	echo "Ok, avoiding sfio this time.  I'll use stdio instead."
+		val="$undef"
+		: Remove sfio from list of libraries to use
+		set `echo X $libs | $sed -e 's/-lsfio / /' -e 's/-lsfio$//'`
+		shift
+		libs="$*"
+		echo "libs = $libs" >&4
+		;;
+	esac
+	;;
+*)	case "$usesfio" in
+	true|$define|[yY]*)
+		echo "Sorry, cannot find sfio on this machine" >&4
+		echo "Ignoring your setting of usesfio=$usesfio" >&4
+		;;
+	esac
+	;;
+esac
+set d_sfio
+eval $setvar
+case "$d_sfio" in
+$define) usesfio='true';;
+*) usesfio='false';;
+esac
+
 : see if shmctl exists
 set shmctl d_shmctl
 eval $inlibc
@@ -6605,34 +7506,44 @@ fi
 set d_shm
 eval $setvar
 
-: see if sigvector exists -- since sigvec will match the substring
 echo " "
-if set sigvector val -f d_sigvectr; eval $csym; $val; then
-	echo 'sigvector() found--you must be running HP-UX.' >&4
-	val="$define"; set d_sigvectr; eval $setvar
-	val="$define"; set d_sigvec; eval $setvar
+: see if we have sigaction
+if set sigaction val -f d_sigaction; eval $csym; $val; then
+	echo 'sigaction() found.' >&4
+	val="$define"
 else
-: try the original name
-	d_sigvectr="$undef"
-	if set sigvec val -f d_sigvec; eval $csym; $val; then
-		echo 'sigvec() found.' >&4
-		val="$define"; set d_sigvec; eval $setvar
-	else
-		echo 'sigvec() not found--race conditions with signals may occur.' >&4
-		val="$undef"; set d_sigvec; eval $setvar
-	fi
+	echo 'sigaction NOT found.' >&4
+	val="$undef"
 fi
 
-: see if we have sigaction
-set sigaction d_sigaction
-eval $inlibc
+$cat > set.c <<'EOP'
+/* Solaris 2.5_x86 with SunWorks Pro C 3.0.1 doesn't have a complete
+   sigaction structure if compiled with cc -Xc.  This compile test
+   will fail then.  <doughera@lafcol.lafayette.edu>
+*/
+#include <stdio.h>
+#include <sys/types.h>
+#include <signal.h>
+main()
+{
+    struct sigaction act, oact;
+}
+EOP
 
+if $cc $ccflags $ldflags -o set set.c $libs >/dev/null 2>&1; then
+	:
+else
+	echo "But you don't seem to have a useable struct sigaction." >&4
+	val="$undef"
+fi
+set d_sigaction; eval $setvar
+$rm -f set set.o set.c
 
 : see if sigsetjmp exists
 echo " "
 case "$d_sigsetjmp" in
 '')
-	$cat >set.c <<EOP
+	$cat >set.c <<'EOP'
 #include <setjmp.h>
 sigjmp_buf env;
 int set = 1;
@@ -6645,25 +7556,26 @@ main()
 	exit(1);
 }
 EOP
-	if $cc $ccflags $ldflags set.c -o set $libs >/dev/null 2>&1; then
+	if $cc $ccflags $ldflags -o set set.c $libs > /dev/null 2>&1 ; then
 		if ./set >/dev/null 2>&1; then
 			echo "POSIX sigsetjmp found." >&4
 			val="$define"
 		else
-			$cat <<EOM
+			$cat >&4 <<EOM
 Uh-Oh! You have POSIX sigsetjmp and siglongjmp, but they do not work properly!!
+I'll ignore them.
 EOM
 			val="$undef"
 		fi
 	else
-		echo "Sigsetjmp not found." >&4
+		echo "sigsetjmp not found." >&4
 		val="$undef"
 	fi
 	;;
 *) val="$d_sigsetjmp"
 	case "$d_sigsetjmp" in
 	$define) echo "POSIX sigsetjmp found." >&4;;
-	$undef) echo "Sigsetjmp not found." >&4;;
+	$undef) echo "sigsetjmp not found." >&4;;
 	esac
 	;;
 esac
@@ -6692,10 +7604,10 @@ else
 		: we will have to assume that it supports the 4.2 BSD interface
 		d_oldsock="$undef"
 	else
-		echo "You don't have Berkeley networking in libc.a..." >&4
-		if test -f /usr/lib/libnet.a; then
-			( (nm $nm_opt /usr/lib/libnet.a | eval $nm_extract) ||  \
-			ar t /usr/lib/libnet.a) 2>/dev/null >> libc.list
+		echo "You don't have Berkeley networking in libc$lib_ext..." >&4
+		if test -f /usr/lib/libnet$lib_ext; then
+			( (nm $nm_opt /usr/lib/libnet$lib_ext | eval $nm_extract) ||  \
+			ar t /usr/lib/libnet$lib_ext) 2>/dev/null >> libc.list
 			if $contains socket libc.list >/dev/null 2>&1; then
 			echo "...but the Wollongong group seems to have hacked it in." >&4
 				socketlib="-lnet"
@@ -6708,7 +7620,7 @@ else
 					d_oldsock="$define"
 				fi
 			else
-				echo "or even in libnet.a, which is peculiar." >&4
+				echo "or even in libnet$lib_ext, which is peculiar." >&4
 				d_socket="$undef"
 				d_oldsock="$undef"
 			fi
@@ -6790,7 +7702,7 @@ $cat >try.c <<EOP
 #include <stdio.h>
 #define FILE_ptr(fp)	$stdio_ptr
 #define FILE_cnt(fp)	$stdio_cnt
-main() { 
+main() {
 	FILE *fp = fopen("try.c", "r");
 	char c = getc(fp);
 	if (
@@ -6832,6 +7744,7 @@ esac
 set d_stdio_cnt_lval
 eval $setvar
 
+
 : see if _base is also standard
 val="$undef"
 case "$d_stdstdio" in
@@ -6840,7 +7753,7 @@ $define)
 #include <stdio.h>
 #define FILE_base(fp)	$stdio_base
 #define FILE_bufsiz(fp)	$stdio_bufsiz
-main() { 
+main() {
 	FILE *fp = fopen("try.c", "r");
 	char c = getc(fp);
 	if (
@@ -6853,7 +7766,7 @@ main() {
 EOP
 	if $cc $ccflags $ldflags -o try try.c $libs > /dev/null 2>&1; then
 		if ./try; then
-			echo "Even its _base field acts std."
+			echo "And its _base field acts std."
 			val="$define"
 		else
 			echo "But its _base field isn't std."
@@ -6931,6 +7844,18 @@ else
 	d_syserrlst="$undef"
 	d_strerrm='"unknown"'
 fi
+
+: see if strtod exists
+set strtod d_strtod
+eval $inlibc
+
+: see if strtol exists
+set strtol d_strtol
+eval $inlibc
+
+: see if strtoul exists
+set strtoul d_strtoul
+eval $inlibc
 
 : see if strxfrm exists
 set strxfrm d_strxfrm
@@ -7235,7 +8160,7 @@ EOCP
 		dflt=`./try`
 	else
 		dflt='8'
-		echo"(I can't seem to compile the test program...)"
+		echo "(I can't seem to compile the test program...)"
 	fi
 	;;
 *) dflt="$alignbytes"
@@ -7245,25 +8170,6 @@ rp="Doubles must be aligned on a how-many-byte boundary?"
 . ./myread
 alignbytes="$ans"
 $rm -f try.c try
-
-: Define several unixisms. Hints files or command line options
-: can be used to override them.
-case "$ar" in
-'') ar='ar';;
-esac
-case "$lib_ext" in
-'') lib_ext='.a';;
-esac
-case "$obj_ext" in
-'') obj_ext='.o';;
-esac
-case "$path_sep" in
-'') path_sep=':';;
-esac
-: Which makefile gets called first.  This is used by make depend.
-case "$firstmakefile" in
-'') firstmakefile='makefile';;
-esac
 
 : check for ordering of bytes in a long
 case "$byteorder" in
@@ -7361,6 +8267,55 @@ set db.h i_db
 eval $inhdr
 
 case "$i_db" in
+$define)
+	: Check db version.  We can not use version 2.
+	echo " "
+	echo "Checking Berkeley DB version ..." >&4
+	$cat >try.c <<EOCP
+#$d_const HASCONST
+#ifndef HASCONST
+#define const
+#endif
+#include <sys/types.h>
+#include <stdio.h>
+#include <db.h>
+main()
+{
+#ifdef DB_VERSION_MAJOR	/* DB version >= 2: not yet. */
+    printf("You have Berkeley DB Version %d.%d\n",
+		DB_VERSION_MAJOR, DB_VERSION_MINOR);
+    printf("Perl currently only supports up to version 1.86.\n");
+    exit(2);
+#else
+#if defined(_DB_H_) && defined(BTREEMAGIC) && defined(HASHMAGIC)
+    exit(0);	/* DB version < 2: the coast is clear. */
+#else
+    exit(1);	/* <db.h> not Berkeley DB? */
+#endif
+#endif
+}
+EOCP
+	if $cc $optimize $ccflags $ldflags -o try try.c $libs && ./try; then
+		echo 'Looks OK.  (Perl supports up to version 1.86).' >&4
+	else
+		echo "I can't use Berkeley DB with your <db.h>.  I'll disable Berkeley DB." >&4
+		i_db=$undef
+		case " $libs " in
+		*"-ldb "*)
+			: Remove db from list of libraries to use
+			echo "Removing unusable -ldb from library list" >&4
+			set `echo X $libs | $sed -e 's/-ldb / /' -e 's/-ldb$//'`
+			shift
+			libs="$*"
+			echo "libs = $libs" >&4
+			;;
+		esac
+	fi
+	$rm -f try.*
+	;;
+esac
+
+case "$i_db" in
 define)
 	: Check the return type needed for hash 
 	echo " "
@@ -7390,13 +8345,15 @@ EOCP
 			db_hashtype='u_int32_t'
 		fi
 	else
-		echo "I can't seem to compile the test program." >&4
-		db_hashtype=int
+		: XXX Maybe we should just give up here.
+		db_hashtype=u_int32_t
+		echo "Help:  I can't seem to compile the db test program." >&4
+		echo "Something's wrong, but I'll assume you use $db_hashtype." >&4
 	fi
 	$rm -f try.*
 	echo "Your version of Berkeley DB uses $db_hashtype for hash."
 	;;
-*)	db_hashtype=int
+*)	db_hashtype=u_int32_t
 	;;
 esac
 
@@ -7430,13 +8387,15 @@ EOCP
 			db_prefixtype='size_t'
 		fi
 	else
-		echo "I can't seem to compile the test program." >&4
-		db_prefixtype='int'
+		db_prefixtype='size_t'
+		: XXX Maybe we should just give up here.
+		echo "Help:  I can't seem to compile the db test program." >&4
+		echo "Something's wrong, but I'll assume you use $db_prefixtype." >&4
 	fi
 	$rm -f try.*
 	echo "Your version of Berkeley DB uses $db_prefixtype for prefix."
 	;;
-*)	db_prefixtype='int'
+*)	db_prefixtype='size_t'
 	;;
 esac
 
@@ -7456,9 +8415,9 @@ case "$voidflags" in
 '')
 	$cat >try.c <<'EOCP'
 #if TRY & 1
-void main() {
+void sub() {
 #else
-main() {
+sub() {
 #endif
 	extern void moo();	/* function returning void */
 	void (*goo)();		/* ptr to func returning void */
@@ -7476,8 +8435,9 @@ main() {
 #endif
 	exit(0);
 }
+main() { sub(); }
 EOCP
-	if $cc -c -DTRY=$defvoidused try.c >.out 2>&1 ; then
+	if $cc $ccflags -c -DTRY=$defvoidused try.c >.out 2>&1 ; then
 		voidflags=$defvoidused
 	echo "It appears to support void to the level $package wants ($defvoidused)."
 		if $contains warning .out >/dev/null 2>&1; then
@@ -7486,16 +8446,16 @@ EOCP
 		fi
 	else
 echo "Hmm, your compiler has some difficulty with void. Checking further..." >&4
-		if $cc -c -DTRY=1 try.c >/dev/null 2>&1 ; then
+		if $cc $ccflags -c -DTRY=1 try.c >/dev/null 2>&1; then
 			echo "It supports 1..."
-			if $cc -c -DTRY=3 try.c >/dev/null 2>&1 ; then
+			if $cc $ccflags -c -DTRY=3 try.c >/dev/null 2>&1; then
 				echo "It also supports 2..."
-				if $cc -c -DTRY=7 try.c >/dev/null 2>&1 ; then
+				if $cc $ccflags -c -DTRY=7 try.c >/dev/null 2>&1; then
 					voidflags=7
 					echo "And it supports 4 but not 8 definitely."
 				else
 					echo "It doesn't support 4..."
-					if $cc -c -DTRY=11 try.c >/dev/null 2>&1 ; then
+					if $cc $ccflags -c -DTRY=11 try.c >/dev/null 2>&1; then
 						voidflags=11
 						echo "But it supports 8."
 					else
@@ -7505,11 +8465,11 @@ echo "Hmm, your compiler has some difficulty with void. Checking further..." >&4
 				fi
 			else
 				echo "It does not support 2..."
-				if $cc -c -DTRY=13 try.c >/dev/null 2>&1 ; then
+				if $cc $ccflags -c -DTRY=13 try.c >/dev/null 2>&1; then
 					voidflags=13
 					echo "But it supports 4 and 8."
 				else
-					if $cc -c -DTRY=5 try.c >/dev/null 2>&1 ; then
+					if $cc $ccflags -c -DTRY=5 try.c >/dev/null 2>&1; then
 						voidflags=5
 						echo "And it supports 4 but has not heard about 8."
 					else
@@ -7570,20 +8530,24 @@ gidtype="$ans"
 set getgroups d_getgrps
 eval $inlibc
 
-: Find type of 2nd arg to getgroups
+: see if setgroups exists
+set setgroups d_setgrps
+eval $inlibc
+
+: Find type of 2nd arg to 'getgroups()' and 'setgroups()'
 echo " "
-case "$d_getgrps" in
-'define')
+case "$d_getgrps$d_setgrps" in
+*define*)
 	case "$groupstype" in
 	'') dflt="$gidtype" ;;
 	*)  dflt="$groupstype" ;;
 	esac
 	$cat <<EOM
-What is the type of the second argument to getgroups()?  Usually this
-is the same as group ids, $gidtype, but not always.
+What is the type of the second argument to getgroups() and setgroups()?
+Usually this is the same as group ids, $gidtype, but not always.
 
 EOM
-	rp='What type is the second argument to getgroups()?'
+	rp='What type is the second argument to getgroups() and setgroups()?'
 	. ./myread
 	groupstype="$ans"
 	;;
@@ -7598,6 +8562,42 @@ dflt="$lseektype"
 rp="What type is lseek's offset on this system declared as?"
 . ./myread
 lseektype="$ans"
+
+echo " "
+case "$make" in
+'')
+	make=`./loc make make $pth`
+	case "$make" in
+	/*)	echo make is in $make.  ;;
+	?:[\\/]*)	echo make is in $make.  ;;
+	*)	echo "I don't know where 'make' is, and my life depends on it." >&4
+		echo "Go find a make program or fix your PATH setting!" >&4
+		exit 1
+		;;
+	esac
+	;;
+*)	echo make is in $make. ;;
+esac
+
+$echo $n "Checking if your $make program sets \$(MAKE)... $c" >&4
+case "$make_set_make" in
+'')
+	$sed 's/^X //' > testmake.mak << 'EOF'
+Xall:
+X 	@echo 'ac_maketemp="$(MAKE)"'
+EOF
+	: GNU make sometimes prints "make[1]: Entering...", which would confuse us.
+	case "`$make -f testmake.mak 2>/dev/null`" in
+	*ac_maketemp=*) make_set_make='#' ;;
+	*)	make_set_make="MAKE=$make" ;;
+	esac
+	$rm -f testmake.mak
+	;;
+esac
+case "$make_set_make" in
+'#')	echo "Yup, it does." >&4 ;;
+*)	echo "Nope, it doesn't." >&4 ;;
+esac
 
 : see what type is used for mode_t
 set mode_t modetype int stdio.h sys/types.h
@@ -7656,8 +8656,18 @@ echo " "
 case "$randbits" in
 '')
 	echo "Checking to see how many bits your rand function produces..." >&4
-	$cat >try.c <<'EOCP'
+	$cat >try.c <<EOCP
+#$i_unistd I_UNISTD
+#$i_stdlib I_STDLIB
 #include <stdio.h>
+#ifdef I_UNISTD
+#  include <unistd.h>
+#endif
+#ifdef I_STDLIB
+#  include <stdlib.h>
+#endif
+EOCP
+	$cat >>try.c <<'EOCP'
 main()
 {
 	register int i;
@@ -7671,9 +8681,10 @@ main()
 	for (i = 0; max; i++)
 		max /= 2;
 	printf("%d\n",i);
+	fflush(stdout);
 }
 EOCP
-	if $cc try.c -o try >/dev/null 2>&1 ; then
+	if $cc $ccflags $ldflags -o try try.c $libs >/dev/null 2>&1 ; then
 		dflt=`try`
 	else
 		dflt='?'
@@ -7687,7 +8698,7 @@ esac
 rp='How many bits does your rand() function produce?'
 . ./myread
 randbits="$ans"
-$rm -f try.c try
+$rm -f try.c try.o try
 
 : see if ar generates random libraries by itself
 echo " "
@@ -7700,14 +8711,14 @@ EOP
 $cc $ccflags -c bar1.c >/dev/null 2>&1
 $cc $ccflags -c bar2.c >/dev/null 2>&1
 $cc $ccflags -c foo.c >/dev/null 2>&1
-ar rc bar.a bar2.o bar1.o >/dev/null 2>&1
-if $cc $ccflags $ldflags -o foobar foo.o bar.a $libs > /dev/null 2>&1 &&
+ar rc bar$lib_ext bar2.o bar1.o >/dev/null 2>&1
+if $cc $ccflags $ldflags -o foobar foo.o bar$lib_ext $libs > /dev/null 2>&1 &&
 	./foobar >/dev/null 2>&1; then
 	echo "ar appears to generate random libraries itself."
 	orderlib=false
 	ranlib=":"
-elif ar ts bar.a >/dev/null 2>&1 &&
-	$cc $ccflags $ldflags -o foobar foo.o bar.a $libs > /dev/null 2>&1 &&
+elif ar ts bar$lib_ext >/dev/null 2>&1 &&
+	$cc $ccflags $ldflags -o foobar foo.o bar$lib_ext $libs > /dev/null 2>&1 &&
 	./foobar >/dev/null 2>&1; then
 		echo "a table of contents needs to be added with 'ar ts'."
 		orderlib=false
@@ -7834,10 +8845,9 @@ $cat >fd_set.c <<EOCP
 #endif
 #ifdef I_SYS_TIME
 #include <sys/time.h>
-#else
+#endif
 #ifdef I_SYS_SELECT
 #include <sys/select.h>
-#endif
 #endif
 main() {
 	fd_set fds;
@@ -7929,10 +8939,9 @@ EOM
 #endif
 #ifdef I_SYS_TIME
 #include <sys/time.h>
-#else
+#endif
 #ifdef I_SYS_SELECT
 #include <sys/select.h>
-#endif
 #endif
 main()
 {
@@ -7998,13 +9007,59 @@ $cat > signal.c <<'EOP'
 #include <sys/types.h>
 #include <signal.h>
 int main() {
-#ifdef NSIG
+
+/* Strange style to avoid deeply-nested #if/#else/#endif */
+#ifndef NSIG
+#  ifdef _NSIG
+#    define NSIG (_NSIG)
+#  endif
+#endif
+
+#ifndef NSIG
+#  ifdef SIGMAX
+#    define NSIG (SIGMAX+1)
+#  endif
+#endif
+
+#ifndef NSIG
+#  ifdef SIG_MAX
+#    define NSIG (SIG_MAX+1)
+#  endif
+#endif
+
+#ifndef NSIG
+#  ifdef MAXSIG
+#    define NSIG (MAXSIG+1)
+#  endif
+#endif
+
+#ifndef NSIG
+#  ifdef MAX_SIG
+#    define NSIG (MAX_SIG+1)
+#  endif
+#endif
+
+#ifndef NSIG
+#  ifdef SIGARRAYSIZE
+#    define NSIG (SIGARRAYSIZE+1) /* Not sure of the +1 */
+#  endif
+#endif
+
+#ifndef NSIG
+#  ifdef _sys_nsig
+#    define NSIG (_sys_nsig) /* Solaris 2.5 */
+#  endif
+#endif
+
+/* Default to some arbitrary number that's big enough to get most
+   of the common signals.
+*/
+#ifndef NSIG
+#    define NSIG 50
+#endif
+
 printf("NSIG %d\n", NSIG);
-#else
-#ifdef _NSIG
-printf("NSIG %d\n", _NSIG);
-#endif
-#endif
+
 EOP
 echo $xxx | $tr ' ' '\012' | $sort | $uniq | $awk '
 {
@@ -8051,7 +9106,7 @@ EOP
 $cat >signal_cmd <<EOS
 $startsh
 $test -s signal.lst && exit 0
-if $cc $ccflags signal.c -o signal $ldflags >/dev/null 2>&1; then
+if $cc $ccflags $ldflags signal.c -o signal >/dev/null 2>&1; then
 	./signal | $sort -n +1 | $uniq | $awk -f signal.awk >signal.lst
 else
 	echo "(I can't seem be able to compile the test program -- Guessing)"
@@ -8063,7 +9118,7 @@ else
 	0) set HUP INT QUIT ILL TRAP ABRT EMT FPE KILL BUS SEGV SYS PIPE ALRM TERM;;
 	esac
 	echo \$@ | $tr ' ' '\012' | \
-		$awk '{ printf $1; printf " %d\n", ++s; }' >signal.lst
+		$awk '{ printf \$1; printf " %d\n", ++s; }' >signal.lst
 fi
 $rm -f signal.c signal signal.o
 EOS
@@ -8132,25 +9187,36 @@ main()
 		printf("int\n");
 	else 
 		printf("long\n");
+	fflush(stdout);
+	exit(0);
 }
 EOM
 echo " "
-if $cc $ccflags $ldflags -o ssize ssize.c $libs > /dev/null 2>&1 ; then
-	ssizetype=`./ssize`
+#	If $libs contains -lsfio, and sfio is mis-configured, then it
+#	sometimes (apparently) runs and exits with a 0 status, but with no
+#	output!.  Thus we check with test -s whether we actually got any 
+#	output.  I think it has to do with sfio's use of _exit vs. exit,
+#	but I don't know for sure.  --Andy Dougherty  1/27/97.
+if $cc $optimize $ccflags $ldflags -o ssize ssize.c $libs > /dev/null 2>&1  &&
+		./ssize > ssize.out 2>/dev/null && test -s ssize.out ; then
+	ssizetype=`$cat ssize.out`
 	echo "I'll be using $ssizetype for functions returning a byte count." >&4
 else
-	echo "(I can't compile the test program--please enlighten me!)"
-	$cat <<EOM
+	$cat >&4 <<EOM
+
+Help! I can't compile and run the ssize_t test program: please enlighten me!
+(This is probably a misconfiguration in your system or libraries, and
+you really ought to fix it.  Still, I'll try anyway.)
 
 I need a type that is the same size as $sizetype, but is guaranteed to
-be signed.  Common values are int and long.
+be signed.  Common values are ssize_t, int and long.
 
 EOM
 	rp="What signed type is the same size as $sizetype?"
 	. ./myread
 	ssizetype="$ans"
 fi
-$rm -f ssize ssize.[co]
+$rm -f ssize ssize.[co] ssize.out
 
 : see what type of char stdio uses.
 echo " "
@@ -8295,30 +9361,6 @@ eval $inhdr
 : see if this is a math.h system
 set math.h i_math
 eval $inhdr
-
-: see if memory.h is available.
-val=''
-set memory.h val
-eval $inhdr
-
-: See if it conflicts with string.h
-case "$val" in
-$define)
-	case "$strings" in
-	'') ;;
-	*)
-		$cppstdin $cppflags $cppminus < $strings > mem.h
-		if $contains 'memcpy' mem.h >/dev/null 2>&1; then
-			echo " "
-			echo "We won't be including <memory.h>."
-			val="$undef"
-		fi
-		$rm -f mem.h
-		;;
-	esac
-esac
-set i_memory
-eval $setvar
 
 : see if ndbm.h is available
 set ndbm.h t_ndbm
@@ -8658,6 +9700,10 @@ eval $setvar
 set sys/param.h i_sysparam
 eval $inhdr
 
+: see if sys/resource.h has to be included
+set sys/resource.h i_sysresrc
+eval $inhdr
+
 : see if sys/stat.h is available
 set sys/stat.h i_sysstat
 eval $inhdr
@@ -8670,12 +9716,16 @@ eval $inhdr
 set sys/un.h i_sysun
 eval $inhdr
 
-: see if this is a unistd.h system
-set unistd.h i_unistd
+: see if this is a syswait system
+set sys/wait.h i_syswait
 eval $inhdr
 
 : see if this is an utime system
 set utime.h i_utime
+eval $inhdr
+
+: see if this is a values.h system
+set values.h i_values
 eval $inhdr
 
 : see if this is a vfork system
@@ -8720,19 +9770,22 @@ known_extensions=''
 : some additional extensions into the source tree and expect them
 : to be built.
 for xxx in * ; do
-	if $test -f $xxx/$xxx.xs; then
-		known_extensions="$known_extensions $xxx"
+    case "$xxx" in
+    DynaLoader) ;;
+    *)	if $test -f $xxx/$xxx.xs; then
+	    known_extensions="$known_extensions $xxx"
 	else
-		if $test -d $xxx; then
-			cd $xxx
-			for yyy in * ; do
-				if $test -f $yyy/$yyy.xs; then
-					known_extensions="$known_extensions $xxx/$yyy"
-				fi
-			done
-			cd ..
-		fi
-	fi
+	    if $test -d $xxx; then
+		cd $xxx
+		for yyy in * ; do
+		    if $test -f $yyy/$yyy.xs; then
+			known_extensions="$known_extensions $xxx/$yyy"
+		    fi
+		done
+		cd ..
+	    fi
+	fi ;;
+    esac
 done
 set X $known_extensions
 shift
@@ -8763,7 +9816,7 @@ for xxx in $known_extensions ; do
 	    true|define|y) avail_ext="$avail_ext $xxx" ;;
 	    esac
 	    ;;
-    SAFE) case "$usesafe" in 
+    Opcode) case "$useopcode" in 
 	    true|define|y) avail_ext="$avail_ext $xxx" ;;
 	    esac
 	    ;;
@@ -8912,10 +9965,10 @@ echo "Creating config.sh..." >&4
 $spitshell <<EOT >config.sh
 $startsh
 #
-# This file was produced by running the Configure script. It holds all the
-# definitions figured out by Configure. Should you modify one of these values,
-# do not forget to propagate your changes by running "Configure -der". You may
-# instead choose to run each of the .SH files by yourself, or "Configure -S".
+# This file was produced by running the Configure script.  It holds all
+# the definitions figured out by Configure.  Should you modify any of
+# these values, do not forget to propagate your changes by running
+# "Configure -S"; or, equivalently, you may run each .SH file yourself.
 #
 
 # Configuration time: $cf_time
@@ -8945,6 +9998,7 @@ awk='$awk'
 baserev='$baserev'
 bash='$bash'
 bin='$bin'
+bincompat3='$bincompat3'
 binexp='$binexp'
 bison='$bison'
 byacc='$byacc'
@@ -8984,8 +10038,11 @@ d_archlib='$d_archlib'
 d_attribut='$d_attribut'
 d_bcmp='$d_bcmp'
 d_bcopy='$d_bcopy'
+d_bincompat3='$d_bincompat3'
 d_bsd='$d_bsd'
+d_bsdgetpgrp='$d_bsdgetpgrp'
 d_bsdpgrp='$d_bsdpgrp'
+d_bsdsetpgrp='$d_bsdsetpgrp'
 d_bzero='$d_bzero'
 d_casti32='$d_casti32'
 d_castneg='$d_castneg'
@@ -9020,16 +10077,22 @@ d_flock='$d_flock'
 d_fork='$d_fork'
 d_fpathconf='$d_fpathconf'
 d_fsetpos='$d_fsetpos'
+d_ftime='$d_ftime'
 d_getgrps='$d_getgrps'
+d_setgrps='$d_setgrps'
 d_gethent='$d_gethent'
 d_gethname='$d_gethname'
 d_getlogin='$d_getlogin'
+d_getpgid='$d_getpgid'
 d_getpgrp2='$d_getpgrp2'
 d_getpgrp='$d_getpgrp'
 d_getppid='$d_getppid'
 d_getprior='$d_getprior'
+d_gettimeod='$d_gettimeod'
+d_gnulibc='$d_gnulibc'
 d_htonl='$d_htonl'
 d_index='$d_index'
+d_inetaton='$d_inetaton'
 d_isascii='$d_isascii'
 d_killpg='$d_killpg'
 d_link='$d_link'
@@ -9075,6 +10138,7 @@ d_rewinddir='$d_rewinddir'
 d_rmdir='$d_rmdir'
 d_safebcpy='$d_safebcpy'
 d_safemcpy='$d_safemcpy'
+d_sanemcmp='$d_sanemcmp'
 d_seekdir='$d_seekdir'
 d_select='$d_select'
 d_sem='$d_sem'
@@ -9096,18 +10160,15 @@ d_setreuid='$d_setreuid'
 d_setrgid='$d_setrgid'
 d_setruid='$d_setruid'
 d_setsid='$d_setsid'
+d_sfio='$d_sfio'
 d_shm='$d_shm'
 d_shmat='$d_shmat'
 d_shmatprototype='$d_shmatprototype'
 d_shmctl='$d_shmctl'
 d_shmdt='$d_shmdt'
 d_shmget='$d_shmget'
-d_shrplib='$d_shrplib'
 d_sigaction='$d_sigaction'
-d_sigintrp='$d_sigintrp'
 d_sigsetjmp='$d_sigsetjmp'
-d_sigvec='$d_sigvec'
-d_sigvectr='$d_sigvectr'
 d_socket='$d_socket'
 d_sockpair='$d_sockpair'
 d_statblks='$d_statblks'
@@ -9120,6 +10181,9 @@ d_strcoll='$d_strcoll'
 d_strctcpy='$d_strctcpy'
 d_strerrm='$d_strerrm'
 d_strerror='$d_strerror'
+d_strtod='$d_strtod'
+d_strtol='$d_strtol'
+d_strtoul='$d_strtoul'
 d_strxfrm='$d_strxfrm'
 d_suidsafe='$d_suidsafe'
 d_symlink='$d_symlink'
@@ -9178,6 +10242,7 @@ glibpth='$glibpth'
 grep='$grep'
 groupcat='$groupcat'
 groupstype='$groupstype'
+gzip='$gzip'
 h_fcntl='$h_fcntl'
 h_sysfile='$h_sysfile'
 hint='$hint'
@@ -9203,6 +10268,7 @@ i_neterrno='$i_neterrno'
 i_niin='$i_niin'
 i_pwd='$i_pwd'
 i_rpcsvcdbm='$i_rpcsvcdbm'
+i_sfio='$i_sfio'
 i_sgtty='$i_sgtty'
 i_stdarg='$i_stdarg'
 i_stddef='$i_stddef'
@@ -9215,6 +10281,7 @@ i_sysin='$i_sysin'
 i_sysioctl='$i_sysioctl'
 i_sysndir='$i_sysndir'
 i_sysparam='$i_sysparam'
+i_sysresrc='$i_sysresrc'
 i_sysselct='$i_sysselct'
 i_syssockio='$i_syssockio'
 i_sysstat='$i_sysstat'
@@ -9223,11 +10290,13 @@ i_systimek='$i_systimek'
 i_systimes='$i_systimes'
 i_systypes='$i_systypes'
 i_sysun='$i_sysun'
+i_syswait='$i_syswait'
 i_termio='$i_termio'
 i_termios='$i_termios'
 i_time='$i_time'
 i_unistd='$i_unistd'
 i_utime='$i_utime'
+i_values='$i_values'
 i_varargs='$i_varargs'
 i_varhdr='$i_varhdr'
 i_vfork='$i_vfork'
@@ -9251,6 +10320,7 @@ ldflags='$ldflags'
 less='$less'
 lib_ext='$lib_ext'
 libc='$libc'
+libperl='$libperl'
 libpth='$libpth'
 libs='$libs'
 libswanted='$libswanted'
@@ -9261,6 +10331,7 @@ ln='$ln'
 lns='$lns'
 locincpth='$locincpth'
 loclibpth='$loclibpth'
+longsize='$longsize'
 lp='$lp'
 lpr='$lpr'
 ls='$ls'
@@ -9268,6 +10339,7 @@ lseektype='$lseektype'
 mail='$mail'
 mailx='$mailx'
 make='$make'
+make_set_make='$make_set_make'
 mallocobj='$mallocobj'
 mallocsrc='$mallocsrc'
 malloctype='$malloctype'
@@ -9334,7 +10406,8 @@ sh='$sh'
 shar='$shar'
 sharpbang='$sharpbang'
 shmattype='$shmattype'
-shrpdir='$shrpdir'
+shortsize='$shortsize'
+shrpenv='$shrpenv'
 shsharp='$shsharp'
 sig_name='$sig_name'
 sig_num='$sig_num'
@@ -9382,8 +10455,11 @@ uniq='$uniq'
 usedl='$usedl'
 usemymalloc='$usemymalloc'
 usenm='$usenm'
+useopcode='$useopcode'
+useperlio='$useperlio'
 useposix='$useposix'
-usesafe='$usesafe'
+usesfio='$usesfio'
+useshrplib='$useshrplib'
 usevfork='$usevfork'
 usrinc='$usrinc'
 uuname='$uuname'
@@ -9391,6 +10467,7 @@ vi='$vi'
 voidflags='$voidflags'
 xlibpth='$xlibpth'
 zcat='$zcat'
+zip='$zip'
 EOT
 
 : add special variables

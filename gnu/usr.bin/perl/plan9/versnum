@@ -1,0 +1,8 @@
+/PATCHLEVEL/ {base = $3}
+/SUBVERSION/ {subvers = $3}
+END {
+if (subvers == 0) 
+	printf "p9pvers = 5.%03d\n", base> "buildinfo";
+else
+	printf "p9pvers = 5.%03d_%02d\n" , base, subvers> "buildinfo";
+}

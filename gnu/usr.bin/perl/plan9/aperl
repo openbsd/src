@@ -1,0 +1,7 @@
+#!/bin/rc
+
+# aperl:   
+# Executes perl command and alters stderr to produce Acme-friendly error messages
+# Created 02-JUL-1996, Luther Huffman,  lutherh@stratcom.com
+
+/bin/perl $* |[2]  /bin/perl -pe 's/ line (\d+)/:$1/'  >[1=2]

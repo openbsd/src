@@ -4,11 +4,14 @@
 
 print "1..7\n";
 
-`rm -rf blurfl`;
+$^O eq 'MSWin32' ? `del /s /q blurfl 2>&1` : `rm -rf blurfl`;
+
+# tests 3 and 7 rather naughtily expect English error messages
+$ENV{'LC_ALL'} = 'C';
 
 print (mkdir('blurfl',0777) ? "ok 1\n" : "not ok 1\n");
 print (mkdir('blurfl',0777) ? "not ok 2\n" : "ok 2\n");
-print ($! =~ /exist/ ? "ok 3\n" : "not ok 3\n");
+print ($! =~ /exist|denied/ ? "ok 3\n" : "# $!\nnot ok 3\n");
 print (-d 'blurfl' ? "ok 4\n" : "not ok 4\n");
 print (rmdir('blurfl') ? "ok 5\n" : "not ok 5\n");
 print (rmdir('blurfl') ? "not ok 6\n" : "ok 6\n");

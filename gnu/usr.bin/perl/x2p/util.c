@@ -1,6 +1,6 @@
 /* $RCSfile: util.c,v $$Revision: 4.1 $$Date: 92/08/07 18:29:29 $
  *
- *    Copyright (c) 1991, Larry Wall
+ *    Copyright (c) 1991-1997, Larry Wall
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -13,6 +13,9 @@
 #include "INTERN.h"
 #include "util.h"
 
+#ifdef I_STDARG
+#  include <stdarg.h>
+#endif
 #define FLUSH
 
 static char nomem[] = "Out of memory!\n";
@@ -24,13 +27,14 @@ Malloc_t
 safemalloc(size)
 MEM_SIZE size;
 {
-    char *ptr;
-    Malloc_t malloc();
+    Malloc_t ptr;
 
-    ptr = (char *) malloc(size?size:1);	/* malloc(0) is NASTY on our system */
+    /* malloc(0) is NASTY on some systems */
+    ptr = malloc(size ? size : 1);
 #ifdef DEBUGGING
     if (debug & 128)
-	fprintf(stderr,"0x%x: (%05d) malloc %d bytes\n",ptr,an++,size);
+	fprintf(stderr,"0x%lx: (%05d) malloc %ld bytes\n",(unsigned long)ptr,
+    	    	an++,(long)size);
 #endif
     if (ptr != Nullch)
 	return ptr;
@@ -45,18 +49,17 @@ MEM_SIZE size;
 
 Malloc_t
 saferealloc(where,size)
-char *where;
+Malloc_t where;
 MEM_SIZE size;
 {
-    char *ptr;
-    Malloc_t realloc();
+    Malloc_t ptr;
 
-    ptr = (char *)
-		realloc(where,size?size:1);	/* realloc(0) is NASTY on our system */
+    /* realloc(0) is NASTY on some systems */
+    ptr = realloc(where, size ? size : 1);
 #ifdef DEBUGGING
     if (debug & 128) {
-	fprintf(stderr,"0x%x: (%05d) rfree\n",where,an++);
-	fprintf(stderr,"0x%x: (%05d) realloc %d bytes\n",ptr,an++,size);
+	fprintf(stderr,"0x%lx: (%05d) rfree\n",(unsigned long)where,an++);
+	fprintf(stderr,"0x%lx: (%05d) realloc %ld bytes\n",(unsigned long)ptr,an++,(long)size);
     }
 #endif
     if (ptr != Nullch)
@@ -70,13 +73,13 @@ MEM_SIZE size;
 
 /* safe version of free */
 
-void
+Free_t
 safefree(where)
-char *where;
+Malloc_t where;
 {
 #ifdef DEBUGGING
     if (debug & 128)
-	fprintf(stderr,"0x%x: (%05d) free\n",where,an++);
+	fprintf(stderr,"0x%lx: (%05d) free\n",(unsigned long)where,an++);
 #endif
     free(where);
 }
@@ -189,32 +192,65 @@ int newlen;
     }
 }
 
-/*VARARGS1*/
 void
+#if defined(I_STDARG) && defined(HAS_VPRINTF)
+croak(char *pat,...)
+#else /* I_STDARG */
+/*VARARGS1*/
 croak(pat,a1,a2,a3,a4)
-char *pat;
-int a1,a2,a3,a4;
+    char *pat;
+    int a1,a2,a3,a4;
+#endif /* I_STDARG */
 {
+#if defined(I_STDARG) && defined(HAS_VPRINTF)
+    va_list args;
+
+    va_start(args, pat);
+    vfprintf(stderr,pat,args);
+#else
     fprintf(stderr,pat,a1,a2,a3,a4);
+#endif
     exit(1);
 }
 
-/*VARARGS1*/
 void
+#if defined(I_STDARG) && defined(HAS_VPRINTF)
+fatal(char *pat,...)
+#else /* I_STDARG */
+/*VARARGS1*/
 fatal(pat,a1,a2,a3,a4)
-char *pat;
-int a1,a2,a3,a4;
+    char *pat;
+    int a1,a2,a3,a4;
+#endif /* I_STDARG */
 {
+#if defined(I_STDARG) && defined(HAS_VPRINTF)
+    va_list args;
+
+    va_start(args, pat);
+    vfprintf(stderr,pat,args);
+#else
     fprintf(stderr,pat,a1,a2,a3,a4);
+#endif
     exit(1);
 }
 
-/*VARARGS1*/
 void
+#if defined(I_STDARG) && defined(HAS_VPRINTF)
+warn(char *pat,...)
+#else /* I_STDARG */
+/*VARARGS1*/
 warn(pat,a1,a2,a3,a4)
-char *pat;
-int a1,a2,a3,a4;
+    char *pat;
+    int a1,a2,a3,a4;
+#endif /* I_STDARG */
 {
+#if defined(I_STDARG) && defined(HAS_VPRINTF)
+    va_list args;
+
+    va_start(args, pat);
+    vfprintf(stderr,pat,args);
+#else
     fprintf(stderr,pat,a1,a2,a3,a4);
+#endif
 }
 

@@ -1,3 +1,383 @@
+Last Revised 11-September-1997 by Dan Sugalski <sugalsd@lbcc.cc.or.us>
+Originally by Charles Bailey <bailey@newman.upenn.edu>
+
+* Intro
+
+The VMS port of Perl is as functionally complete as any other Perl port
+(and as complete as the ports on some Unix systems). The Perl binaries
+provide all the Perl system calls that are either available under VMS or
+reasonably emulated. There are some incompatibilites in process handling
+(e.g the fork/exec model for creating subprocesses doesn't do what you
+might expect under Unix), mainly because VMS and Unix handle processes and
+sub-processes very differently.
+
+There are still some unimplemented system functions, and of coursse we
+could use modules implementing useful VMS system services, so if you'd like
+to lend a hand we'd love to have you. Join the Perl Porting Team Now!
+
+The current sources and build procedures have been tested on a VAX using
+VaxC and Dec C, and on an AXP using Dec C. If you run into problems with
+other compilers, please let us know.
+
+There are issues with varions versions of Dec C, so if you're not running a
+relatively modern version, check the Dec C issues section later on in this
+document.
+
+* Other required software
+
+In addition to VMS, you'll need:
+        1) A C compiler. Dec C for AXP, or VAX C, Dec C, or gcc for the
+           VAX.
+        2) A make tool. Dec's MMS (v2.6 or later), or MadGoat's free MMS
+           analog MMK (available from ftp.madgoat.com/madgoat) both work
+           just fine. Gnu Make might work, but it's been so long since
+           anyone's tested it that we're not sure. MMK's free, though, so
+           go ahead and use that.
+
+
+If you want to include socket support, you'll need a TCP stack and either
+Dec C, or socket libraries. See the Socket Support topic for more details.
+
+* Compiling Perl
+
+>From the top level of the Perl source directory, do this:
+
+MMS/DESCRIP=[.VMS]DESCRIP.MMS
+
+If you're on an Alpha, add /Macro=("__AXP__=1","decc=1")
+If you're using Dec C as your C compiler (you are on all alphas), add
+/Macro=("decc=1")
+If Vac C is your default C compiler and you want to use Dec C, add
+/Macro=("CC=CC/DECC") (Don't forget the /macro=("decc=1")
+If Dec C is your default C compiler and you want to use Vax C, add
+/Macro=("CC=CC/VAXC")
+If you want Socket support and are using the SOCKETSHR socket library, add
+/Macro=("SOCKETSHR_SOCKETS=1")
+If you want Socket support and are using the Dec C RTL socket interface
+(You must be using Dec C for this), add /Macro=("DECC_SOCKETS=1")
+
+If you have multiple /macro= items, combine them together in one /Macro=()
+switch, with all the options inside the parentheses separated by commas.
+
+Samples:
+
+VMS AXP, with Socketshr sockets:
+
+$MMS/DESCRIP=[.VMS]DESCRIP.MMS/Macro=("decc=1","__AXP__=1","SOCKETSHR_SOCKETS=1")
+
+VMS AXP with no sockets
+
+$MMS/DESCRIP=[.VMS]DESCRIP.MMS/Macro=("decc=1","__AXP__=1")
+
+VMS AXP with the Dec C RTL sockets
+
+$MMS/DESCRIP=[.VMS]/Macro=("decc=1","__AXP__=1","DECC_SOCKETS=1")
+
+VMS VAX with default system compiler, no sockets
+
+$MMS/DESCRIP=[.VMS]DESCRIP.MMS
+
+VMS VAX with Dec C compiler, no sockets
+
+$MMS/DESCRIP=[.VMS]DESCRIP.MMS/Macro=("CC=CC/DECC","decc=1")
+
+VMS VAX with Dec C compiler, Dec C RTL sockets
+
+$MMS/DESCRIP=[.VMS]DESCRIP.MMS/Macro=("CC=CC/DECC","decc=1","DECC_SOCKETS=1")
+
+VMS VAX with Dec C compiler, Socketshr sockets
+
+$MMS/DESCRIP=[.VMS]DESCRIP.MMS/Macro=("CC=CC/DECC","decc=1","SOCKETSHR_SOCKETS=1")
+
+Using Dec C is recommended over Vax C. The compiler is newer, and
+supported. (Vax C was decommisioned around 1993) Various older versions had
+some gotchas, so if you're using a version older than 5.2, check the Dec C
+Issues section.
+
+We'll also point out that Dec C will get you at least a ten-fold increase
+in line-oriented IO over Vax C. The optimizer is amazingly better, too. If
+you can use Dec C, then you *really*, *really* should.
+
+
+Once you issue your MMS command, sit back and wait. Perl should build and
+link without a problem. If it doesn't, check the Gotchas to watch out for
+section. If that doesn't help, send some mail to the VMSPERL mailing list.
+Instructions are in the Mailing Lists section.
+
+* Testing Perl
+
+Once Perl has built cleanly, you need to test it to make sure things work.
+This step is very important--there are always things that can go wrong
+somehow and get you a dysfunctional Perl.
+
+Testing is very easy, though, as there's a full test suite in the perl
+distribution. To run the tests, enter the *exact* MMS line you used to
+compile Perl and add the word "test" to the end, like this:
+
+Compile Command:
+
+$MMS/DESCRIP=[.VMS]DESCRIP.MMS/Macro=("__AXP__=1","decc=1","DECCRTL_SOCKETS=1")
+
+Test Command:
+
+$MMS/DESCRIP=[.VMS]DESCRIP.MMS/Macro=("__AXP__=1","decc=1","DECCRTL_SOCKETS=1") test
+
+MMS will run all the tests. This may take some time, as there are a lot of
+tests. If any tests fail, there will be a note made on-screen. At the end
+of all the tests, a summary of the tests, the number passed and failed, and
+the time taken will be displayed.
+
+If any tests fail, it means something's wrong with Perl. If the test suite
+hangs (some tests can take upwards of two or three minutes, or more if
+you're on an especially slow machine, depending on you machine speed, so
+don't be hasty), then the test *after* the last one displayed failed. Don't
+install Perl unless you're confident that you're OK. Regardless of how
+confident you are, make a bug report to the VMSPerl mailing list.
+
+If one or more tests fail, you can get more info on the failure by issuing
+this command sequence:
+
+$ SET DEFAULT [.T]
+$ @[-.VMS]TEST .typ -v [.subdir]test.T
+
+where ".typ" is the file type of the Perl images you just built (if you
+didn't do anything special, use .EXE), and "[.subdir]test.T" is the test
+that failed. For example, with a normal Perl build, if the test indicated
+that [.op]time failed, then you'd do this:
+
+$ SET DEFAULT [.T]
+$ @[-.VMS]TEST .EXE -v [.OP]TIME.T
+
+When you send in a bug report for failed tests, please include the output
+from this command, which is run from the main source directory:
+
+MCR []MINIPERL "-V"
+
+Note that "-V" really is a capital V in double quotes. This will dump out a
+couple of screens worth of config info, and can help us diagnose the problem.
+
+* Cleaning up and starting fresh
+
+If you need to recompile from scratch, you have to make sure you clean up
+first. There's a procedure to do it--enter the *exact* MMS line you used to
+compile and add "realclean" at the end, like this:
+
+Compile Command:
+
+$MMS/DESCRIP=[.VMS]DESCRIP.MMS/Macro=("__AXP__=1","decc=1","DECCRTL_SOCKETS=1")
+
+Cleanup Command:
+
+$MMS/DESCRIP=[.VMS]DESCRIP.MMS/Macro=("__AXP__=1","decc=1","DECCRTL_SOCKETS=1") realclean
+
+If you don't do this, things may behave erratically. They might not, too,
+so it's best to be sure and do it.
+
+* Installing Perl
+
+There are several steps you need to take to get Perl installed and
+running. At some point we'll have a working install in DESCRIP.MMS, but for
+right now the procedure's manual, and goes like this.
+
+1) Create a directory somewhere and define the concealed logical PERL_ROOT
+to point to it. For example, DEFINE/TRANS=(CONC,TERM) PERL_ROOT dka200:[perl.]
+
+2) Copy perl.exe into PERL_ROOT:[000000]
+
+3) Copy everything in [.LIB] and [.UTILS] (including all the
+subdirectories!) to PERL_ROOT:[LIB] and PERL_ROOT:[UTILS].
+
+4) Either copy PERLSHR.EXE to SYS$SHARE, or to somewhere globally accessble
+and define the logical PERLSHR to point to it (DEFINE PERLSHR
+PERL_ROOT:[000000]PERLSHR.EXE or something like that). The PerlShr image
+should have W:RE protections on it. (Just W:E triggers increased security in
+the image activator. Not a huge problem, but Perl will need to have any
+other shared image it accesses INSTALLed. It's a huge pain, so don't unless
+you know what you're doing)
+
+5) Either define the symbol PERL somewhere, such as
+SYS$MANAGER:SYLOGIN.COM, to be "PERL :== $PERL_ROOT:[000000]PERL.EXE", or
+install Perl into DCLTABLES.EXE )Check out the section "Installing Perl
+into DCLTABLES" for more info), or put the image in a directory that's in
+your DCL$PATH (if you're using VMS 6.2 or higher).
+
+6) Optionally define the command PERLDOC as 
+PERLDOC :== $PERL_ROOT:[000000]PERL PERL_ROOT:[LIB.POD]PERLDOC.COM -T
+
+7) Optionally define the command PERLBUG (the Perl bug report generator) as
+PERLBUG :== $PERL_ROOT:[000000]PERL PERL_ROOT:[LIB]PERLBUG.COM"
+
+* Installing Perl into DCLTABLES
+
+Courtesy of Brad  Hughes:
+
+Put the following, modified to reflect where your .exe is, in PERL.CLD:
+
+define verb perl
+image perl_root:[exe]perl.exe
+cliflags (foreign)
+
+and then
+
+$ set command perl /table=sys$common:[syslib]dcltables.exe -
+ /output=sys$common:[syslib]dcltables.exe
+$ install replace sys$common:[syslib]dcltables.exe
+
+and you don't need perl :== $perl_root:[exe]perl.exe.
+
+* Changing compile-time things
+
+Most of the user-definable features of Perl are enabled or disabled in
+[.VMS]CONFIG.VMS. There's code in there to Do The Right Thing, but that may
+end up being the wrong thing for you. Make sure you understand what you're
+doing, since changes here can get you a busted perl.
+
+Odds are that there's nothing here to change, unless you're on a version of
+VMS later than 6.2 and Dec C later than 5.6. Even if you are, the correct
+values will still be chosen, most likely. Poking around here should be
+unnecessary.
+
+The one exception is the various *DIR install locations. Changing those
+requires changes in genconfig.pl as well. Be really careful if you need to
+change these,a s they can cause some fairly subtle problems.
+
+* Extra things in the Perl distribution
+
+In addition to the standard stuff that gets installed, there are two
+optional extensions, DCLSYM and STDIO, that are handy. Instructions for
+these two modules are in [.VMS.EXT.DCLSYM] and [.VMS.EXT.STDIO],
+respectively.
+
+* Socket Support
+
+Perl includes a number of functions for IP sockets, which are available if
+you choose to compile Perl with socket support. (See the section Compiling
+Perl for more info on selecting a socket stack) Since IP networking is an
+optional addition to VMS, there are several different IP stacks
+available. How well integrated they are into the system depends on the
+stack, your version of VMS, and the version of your C compiler.
+
+The most portable solution uses the SOCKETSHR library. In combination with
+either UCX or NetLib, this supports all the major TCP stacks (Multinet,
+Pathways, TCPWare, UCX, and CMU) on all versions of VMS Perl runs on, with
+all the compilers on both VAX and Alpha. The socket interface is also
+consistent across versions of VMS and C compilers. It has a problem with
+UDP sockets when used with Multinet, though, so you should be aware of
+that.
+
+The other solution available is to use the socket routines built into Dec
+C. Which routines are available depend on the version of VMS you're
+running, and require proper UCX emulation by your TCP/IP vendor.
+Relatively current versions of Multinet, TCPWare, Pathway, and UCX all
+provide the required libraries--check your manuals or release notes to see
+if your version is new enough.
+
+* Reporting Bugs
+
+If you come across what you think might be a bug in Perl, please report
+it. There's a script in PERL_ROOT:[UTILS], perlbug, that walks you through
+the process of creating a bug report. This script includes details of your
+installation, and is very handy. Completed bug reports should go to
+PERLBUG@PERL.COM.
+
+* Gotchas to watch out for
+
+Probably the single biggest gotcha in compiling Perl is giving the wrong
+switches to MMS/MMK when you build. If Perl's building oddly, double-check
+your switches. If you're on a VAX, be sure to add a /Macro=("decc=1") if
+you're using Dec C, and if you're on an alpha and using MMS, you'll need a
+/Macro=("__AXP__=1")
+
+The next big gotcha is directory depth. Perl can create directories four
+and five levels deep during the build, so you don't have to be too deep to
+start to hit the RMS 8 level point. It's best to do a
+$DEFINE/TRANS=(CONC,TERM) PERLSRC disk:[dir.dir.dir.perldir.]"  (note the
+trailing period) and $SET DEFAULT PERLSRC:[000000] before building. Perl
+modules can be just as bad (or worse), so watch out for them, too.
+
+Finally, the third thing that bites people is leftover pieces from a failed
+build. If things go wrong, make sure you do a "(MMK|MMS|make) realclean"
+before you rebuild.
+
+* Dec C issues
+
+Note to DECC users: Some early versions (pre-5.2, some pre-4. If you're Dec
+C 5.x or higher, with current patches if anym you're fine) of the DECCRTL
+contained a few bugs which affect Perl performance:
+    - Newlines are lost on I/O through pipes, causing lines to run together.
+      This shows up as RMS RTB errors when reading from a pipe.  You can
+      work around this by having one process write data to a file, and
+      then having the other read the file, instead of the pipe.  This is
+      fixed in version 4 of DECC.
+    - The modf() routine returns a non-integral value for some values above
+      INT_MAX; the Perl "int" operator will return a non-integral value in
+      these cases.  This is fixed in version 4 of DECC.
+    - On the AXP, if SYSNAM privilege is enabled, the CRTL chdir() routine
+      changes the process default device and directory permanently, even
+      though the call specified that the change should not persist after
+      Perl exited.  This is fixed by DEC CSC patch AXPACRT04_061.
+
+* Mailing Lists
+
+There are several mailing lists available to the Perl porter. For VMS
+specific issues (including both Perl questions and installation problems)
+there is the VMSPERL mailing list. It's usually a low-volume (10-12
+messages a week) mailing list.
+
+The subscription address is VMSPERL-REQUEST@NEWMAN.UPENN.EDU. Send a mail
+message with just the words SUBSCRIBE VMSPERL in the body of the message.
+
+The VMSPERL mailing list address is VMSPERL@NEWMAN.UPENN.EDU. Any mail
+sent there gets echoed to all subscribers of the list.
+
+The Perl5-Porters list is for anyone involved in porting Perl to a
+platform. This includes you, if you want to participate. It's a high-volume
+list (60-100 messages a day during active development times), so be sure
+you want to be there. The subscription address is
+Perl5-Porters-request@perl.org. Send a message with just the word SUBSCRIBE
+in the body. The posting address is Perl5-Porters@perl.org.
+
+* Acknowledgements
+
+A real big thanks needs to go to Charles Bailey
+<bailey@newman.upenn.edu>, who is ultimately responsible for Perl 5.004
+running on VMS. Without him, nothing the rest of us have done would be at
+all important.
+
+There are, of course, far too many people involved in the porting and testing
+of Perl to mention everyone who deserves it, so please forgive us if we've
+missed someone.  That said, special thanks are due to the following:
+  Tim Adye <T.J.Adye@rl.ac.uk>
+     for the VMS emulations of getpw*()
+  David Denholm <denholm@conmat.phys.soton.ac.uk>
+     for extensive testing and provision of pipe and SocketShr code,
+  Mark Pizzolato <mark@infocomm.com>
+     for the getredirection() code
+  Rich Salz <rsalz@bbn.com>
+     for readdir() and related routines
+  Peter Prymmer <pvhp@lns62.lns.cornell.edu)
+     for extensive testing, as well as development work on
+     configuration and documentation for VMS Perl,
+  Dan Sugalski <sugalsd@stargate.lbcc.cc.or.us>
+     for extensive contributions to recent version support,
+     development of VMS-specific extensions, and dissemination
+     of information about VMS Perl,
+  the Stanford Synchrotron Radiation Laboratory and the
+     Laboratory of Nuclear Studies at Cornell University for
+     the the opportunity to test and develop for the AXP,
+and to the entire VMSperl group for useful advice and suggestions.  In
+addition the perl5-porters deserve credit for their creativity and
+willingness to work with the VMS newcomers.  Finally, the greatest debt of
+gratitude is due to Larry Wall <larry@wall.org>, for having the ideas which
+have made our sleepless nights possible.
+
+Thanks,
+The VMSperl group
+
+
+---------------------------------------------------------------------------
+[Here's the pre-5.004_04 version of README.vms, for the record.]
+
 Last revised: 19-Jan-1996 by Charles Bailey  bailey@genetics.upenn.edu
 
 The VMS port of Perl is still under development.  At this time, the Perl
@@ -292,10 +672,10 @@ of to the Perl bug reporting address, perlbug@perl.com.
 
 * For more information
 
-If you're interested in more information on Perl in general, consult the Usenet
-newsgroups comp.lang.perl.announce and comp.lang.perl.misc.  The FAQ for these
-groups provides pointers to other online sources of information, as well as
-books describing Perl in depth.
+If you're interested in more information on Perl in general, you may wish to
+consult the Usenet newsgroups comp.lang.perl.announce and comp.lang.perl.misc.
+The FAQ for these groups provides pointers to other online sources of
+information, as well as books describing Perl in depth.
 
 If you're interested in up-to-date information on Perl development and
 internals, you might want to subscribe to the perl5-porters mailing list.  You
@@ -305,11 +685,12 @@ subscribe perl5-porters
 This is a high-volume list at the moment (>50 messages/day).
 
 If you're interested in ongoing information about the VMS port, you can
-subscribe to the VMSperl mailing list by sending a request to
-bailey@genetics.upenn.edu (it's to a human, not a list server - this is a small
-operation at the moment).  And, as always, we welcome any help or code you'd
+subscribe to the VMSPerl mailing list by sending a request to
+vmsperl-request@genetics.upenn.edu, containing the single line
+subscribe VMSPerl
+as the body of the message.  And, as always, we welcome any help or code you'd
 like to offer - you can send mail to bailey@genetics.upenn.edu or directly to
-the VMSperl list at vmsperl@genetics.upenn.edu.
+the VMSPerl list at vmsperl@genetics.upenn.edu.
 
 Finally, if you'd like to try out the latest changes to VMS Perl, you can
 retrieve a test distribution kit by anonymous ftp from genetics.upenn.edu, in
@@ -341,14 +722,17 @@ missed someone.  That said, special thanks are due to the following:
      for the getredirection() code
   Rich Salz <rsalz@bbn.com>
      for readdir() and related routines
-  Richard Dyson <dyson@blaze.physics.uiowa.edu> and
-  Kent Covert <kacovert@miavx1.acs.muohio.edu>
-     for additional testing on the AXP.
+  Peter Prymmer <pvhp@lns62.lns.cornell.edu)
+     for extensive testing, as well as development work on
+     configuration and documentation for VMS Perl,
+  the Stanford Synchrotron Radiation Laboratory and the
+     Laboratory of Nuclear Studies at Cornell University for
+     the the opportunity to test and develop for the AXP,
 and to the entire VMSperl group for useful advice and suggestions.  In addition
 the perl5-porters, especially Andy Dougherty <doughera@lafcol.lafayette.edu>
 and Tim Bunce <Tim.Bunce@ig.co.uk>,  deserve credit for their creativity and
 willingness to work with the VMS newcomers.  Finally, the greatest debt of
-gratitude is due to Larry Wall <lwall@sems.com>, for having the ideas which
+gratitude is due to Larry Wall <larry@wall.org>, for having the ideas which
 have made our sleepless nights possible.
 
 Thanks,

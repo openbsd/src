@@ -1,6 +1,6 @@
 #!./perl
 
-# $RCSfile: ndbm.t,v $$Revision: 1.1.1.1 $$Date: 1996/08/19 10:13:15 $
+# $RCSfile: ndbm.t,v $$Revision: 1.2 $$Date: 1997/11/30 08:04:58 $
 
 BEGIN {
     chdir 't' if -d 't';
@@ -16,7 +16,7 @@ require NDBM_File;
 #If Fcntl is not available, try 0x202 or 0x102 for O_RDWR|O_CREAT
 use Fcntl;
 
-print "1..12\n";
+print "1..18\n";
 
 unlink <Op.dbmx*>;
 
@@ -27,9 +27,14 @@ $Dfile = "Op.dbmx.pag";
 if (! -e $Dfile) {
 	($Dfile) = <Op.dbmx*>;
 }
-($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime,
-   $blksize,$blocks) = stat($Dfile);
-print (($mode & 0777) == 0640 ? "ok 2\n" : "not ok 2\n");
+if ($^O eq 'amigaos' || $^O eq 'os2' || $^O eq 'MSWin32') {
+    print "ok 2\n";
+}
+else {
+    ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime,
+     $blksize,$blocks) = stat($Dfile);
+    print (($mode & 0777) == 0640 ? "ok 2\n" : "not ok 2\n");
+}
 while (($key,$value) = each(%h)) {
     $i++;
 }
@@ -86,7 +91,7 @@ delete $h{'goner3'};
 if ($#keys == 29 && $#values == 29) {print "ok 5\n";} else {print "not ok 5\n";}
 
 while (($key,$value) = each(h)) {
-    if ($key eq $keys[$i] && $value eq $values[$i] && $key gt $value) {
+    if ($key eq $keys[$i] && $value eq $values[$i] && $key eq lc($value)) {
 	$key =~ y/a-z/A-Z/;
 	$i++ if $key eq $value;
     }
@@ -117,4 +122,84 @@ print join(':',200..400) eq join(':',@foo) ? "ok 10\n" : "not ok 10\n";
 print ($h{'foo'} eq '' ? "ok 11\n" : "not ok 11\n");
 print ($h{''} eq 'bar' ? "ok 12\n" : "not ok 12\n");
 
+untie %h;
 unlink 'Op.dbmx.dir', $Dfile;
+
+sub ok
+{
+    my $no = shift ;
+    my $result = shift ;
+
+    print "not " unless $result ;
+    print "ok $no\n" ;
+}
+
+{
+   # sub-class test
+
+   package Another ;
+
+   use strict ;
+
+   open(FILE, ">SubDB.pm") or die "Cannot open SubDB.pm: $!\n" ;
+   print FILE <<'EOM' ;
+
+   package SubDB ;
+
+   use strict ;
+   use vars qw(@ISA @EXPORT) ;
+
+   require Exporter ;
+   use NDBM_File;
+   @ISA=qw(NDBM_File);
+   @EXPORT = @NDBM_File::EXPORT if defined @NDBM_File::EXPORT ;
+
+   sub STORE { 
+	my $self = shift ;
+        my $key = shift ;
+        my $value = shift ;
+        $self->SUPER::STORE($key, $value * 2) ;
+   }
+
+   sub FETCH { 
+	my $self = shift ;
+        my $key = shift ;
+        $self->SUPER::FETCH($key) - 1 ;
+   }
+
+   sub A_new_method
+   {
+	my $self = shift ;
+        my $key = shift ;
+        my $value = $self->FETCH($key) ;
+	return "[[$value]]" ;
+   }
+
+   1 ;
+EOM
+
+    close FILE ;
+
+    BEGIN { push @INC, '.'; }
+
+    eval 'use SubDB ; use Fcntl ; ';
+    main::ok(13, $@ eq "") ;
+    my %h ;
+    my $X ;
+    eval '
+	$X = tie(%h, "SubDB","dbhash.tmp", O_RDWR|O_CREAT, 0640 );
+	' ;
+
+    main::ok(14, $@ eq "") ;
+
+    my $ret = eval '$h{"fred"} = 3 ; return $h{"fred"} ' ;
+    main::ok(15, $@ eq "") ;
+    main::ok(16, $ret == 5) ;
+
+    $ret = eval '$X->A_new_method("fred") ' ;
+    main::ok(17, $@ eq "") ;
+    main::ok(18, $ret eq "[[5]]") ;
+
+    unlink "SubDB.pm", <dbhash.tmp*> ;
+
+}

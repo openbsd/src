@@ -6,7 +6,7 @@ ccflags="$ccflags -X18"
 
 usemymalloc='y'
 
-echo " "
-echo "NOTE: You may have to take out makefile dependencies on the files in"
-echo "/usr/include (i.e. /usr/include/ctype.h) or the make will fail.  A"
-echo "simple 'grep -v /usr/include/ makefile' should suffice."
+echo " "								    >&4
+echo "NOTE: You may have to take out makefile dependencies on the files in" >&4
+echo "/usr/include (i.e. /usr/include/ctype.h) or the make will fail.  A"   >&4
+echo "simple 'grep -v /usr/include/ makefile' should suffice."		    >&4

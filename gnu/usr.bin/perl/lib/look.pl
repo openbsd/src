@@ -10,7 +10,7 @@ sub look {
        $blksize,$blocks) = stat(FH);
     $blksize = 8192 unless $blksize;
     $key =~ s/[^\w\s]//g if $dict;
-    $key =~ y/A-Z/a-z/ if $fold;
+    $key = lc $key if $fold;
     $max = int($size / $blksize);
     while ($max - $min > 1) {
 	$mid = int(($max + $min) / 2);
@@ -19,7 +19,7 @@ sub look {
 	$_ = <FH>;
 	chop;
 	s/[^\w\s]//g if $dict;
-	y/A-Z/a-z/ if $fold;
+	$_ = lc $_ if $fold;
 	if ($_ lt $key) {
 	    $min = $mid;
 	}
@@ -33,7 +33,7 @@ sub look {
     while (<FH>) {
 	chop;
 	s/[^\w\s]//g if $dict;
-	y/A-Z/a-z/ if $fold;
+	$_ = lc $_ if $fold;
 	last if $_ ge $key;
 	$min = tell(FH);
     }

@@ -1,6 +1,6 @@
 /*    run.c
  *
- *    Copyright (c) 1991-1994, Larry Wall
+ *    Copyright (c) 1991-1997, Larry Wall
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -27,6 +27,8 @@ runops() {
     runlevel++;
 
     while ( op = (*op->op_ppaddr)() ) ;
+
+    TAINT_NOT;
     return 0;
 }
 
@@ -47,13 +49,15 @@ runops() {
     do {
 	if (debug) {
 	    if (watchaddr != 0 && *watchaddr != watchok)
-		fprintf(stderr, "WARNING: %lx changed from %lx to %lx\n",
+		PerlIO_printf(Perl_debug_log, "WARNING: %lx changed from %lx to %lx\n",
 		    (long)watchaddr, (long)watchok, (long)*watchaddr);
 	    DEBUG_s(debstack());
 	    DEBUG_t(debop(op));
 	    DEBUG_P(debprof(op));
 	}
     } while ( op = (*op->op_ppaddr)() );
+
+    TAINT_NOT;
     return 0;
 }
 
@@ -65,23 +69,23 @@ OP *op;
     deb("%s", op_name[op->op_type]);
     switch (op->op_type) {
     case OP_CONST:
-	fprintf(stderr, "(%s)", SvPEEK(cSVOP->op_sv));
+	PerlIO_printf(Perl_debug_log, "(%s)", SvPEEK(cSVOP->op_sv));
 	break;
     case OP_GVSV:
     case OP_GV:
 	if (cGVOP->op_gv) {
 	    sv = NEWSV(0,0);
-	    gv_fullname(sv, cGVOP->op_gv);
-	    fprintf(stderr, "(%s)", SvPV(sv, na));
+	    gv_fullname3(sv, cGVOP->op_gv, Nullch);
+	    PerlIO_printf(Perl_debug_log, "(%s)", SvPV(sv, na));
 	    SvREFCNT_dec(sv);
 	}
 	else
-	    fprintf(stderr, "(NULL)");
+	    PerlIO_printf(Perl_debug_log, "(NULL)");
 	break;
     default:
 	break;
     }
-    fprintf(stderr, "\n");
+    PerlIO_printf(Perl_debug_log, "\n");
     return 0;
 }
 
@@ -91,7 +95,7 @@ char **addr;
 {
     watchaddr = addr;
     watchok = *addr;
-    fprintf(stderr, "WATCHING, %lx is currently %lx\n",
+    PerlIO_printf(Perl_debug_log, "WATCHING, %lx is currently %lx\n",
 	(long)watchaddr, (long)watchok);
 }
 
@@ -107,12 +111,13 @@ OP* op;
 void
 debprofdump()
 {
-    U32 i;
+    unsigned i;
     if (!profiledata)
 	return;
     for (i = 0; i < MAXO; i++) {
 	if (profiledata[i])
-	    fprintf(stderr, "%d\t%lu\n", i, profiledata[i]);
+	    PerlIO_printf(Perl_debug_log,
+			  "%u\t%lu\n", i, (unsigned long)profiledata[i]);
     }
 }
 

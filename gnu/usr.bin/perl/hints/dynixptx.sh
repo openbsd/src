@@ -8,32 +8,17 @@ lddlflags='-G'
 # Remove inet to avoid this error in Configure, which causes Configure
 # to be unable to figure out return types:
 # dynamic linker: ./ssize: can't find libinet.so,
-# link with -lsocket instead of -l inet
+# link with -lsocket instead of -linet
 
 libswanted=`echo $libswanted | sed -e 's/ inet / /'`
 
 # Configure defaults to usenm='y', which doesn't work very well
 usenm='n'
 
-# The Perl library has to be built as a shared library so that dynamic
-# loading will work (otherwise code loaded with dlopen() won't be able
-# to reference symbols in the main part of perl).  Note that since
-# Configure doesn't normally prompt about $d_shrplib this will cause a
-# `Whoa there!'.  This is normal, just keep the recommended value.  A
-# consequence of all this is that you've got to include the source
-# directory in your LD_LIBRARY_PATH when you're building and testing
-# perl.
-d_shrplib=define
-
-cat <<'EOM' >&4
-
-If you get a 'Whoa there!' with regard to d_shrplib, you can ignore
-it, and just keep the recommended value.
-
-If you wish to use dynamic linking, you must use
-   LD_LIBRARY_PATH=`pwd`; export LD_LIBRARY_PATH
-or
-   setenv LD_LIBRARY_PATH `pwd`
-before running make.
-
-EOM
+# Reported by bruce@aps.org ("Bruce P. Schuck") as needed for
+# DYNIX/ptx 4.0 V4.2.1 to get socket i/o to work
+# Not defined by default in case they break other versions.
+# These probably need to be worked into a piece of code that
+# checks for the need for this setting.
+# cppflags='-Wc,+abi-socket -I/usr/local/include'
+# ccflags='-Wc,+abi-socket -I/usr/local/include'

@@ -1,6 +1,9 @@
 #!./perl
 
-if (! -x '/usr/ucb/groups') {
+if (! -x ($groups = '/usr/ucb/groups') &&
+    ! -x ($groups = '/usr/bin/groups') &&
+    ! -x ($groups = '/bin/groups')
+) {
     print "1..0\n";
     exit 0;
 }
@@ -26,7 +29,7 @@ for (split(' ', $()) {
 
 $gr1 = join(' ', sort @gr);
 
-$gr2 = join(' ', grep(!$basegroup{$_}++, sort split(' ',`/usr/ucb/groups`)));
+$gr2 = join(' ', grep(!$basegroup{$_}++, sort split(' ',`$groups`)));
 
 if ($gr1 eq $gr2) {
     print "ok 1\n";

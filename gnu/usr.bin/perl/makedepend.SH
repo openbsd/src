@@ -1,3 +1,4 @@
+#! /bin/sh
 case $CONFIG in
 '')
 	if test -f config.sh; then TOP=.;
@@ -16,16 +17,22 @@ esac
 case "$0" in
 */*) cd `expr X$0 : 'X\(.*\)/'` ;;
 esac
+
 echo "Extracting makedepend (with variable substitutions)"
 rm -f makedepend
 $spitshell >makedepend <<!GROK!THIS!
 $startsh
 # makedepend.SH
 #
-## To use an alternate make, set \$altmake in config.sh.
-MAKE=${altmake-make}
+MAKE=$make
 !GROK!THIS!
 $spitshell >>makedepend <<'!NO!SUBS!'
+
+# This script should be called with 
+#     sh ./makedepend MAKE=$(MAKE)
+case "$1" in 
+	MAKE=*) eval $1 ;;
+esac
 
 export PATH || (echo "OOPS, this isn't sh.  Desperation time.  I will feed myself to sh."; sh \$0; kill \$\$)
 
@@ -53,17 +60,24 @@ export PATH
 $cat /dev/null >.deptmp
 $rm -f *.c.c c/*.c.c
 if test -f Makefile; then
+    rm -f $firstmakefile
     cp Makefile $firstmakefile
+    # On QNX, 'cp' preserves timestamp, so $firstmakefile appears
+    # to be out of date.  I don't know if OS/2 has touch, so do this:
+    case "$osname" in
+    os2) ;;
+    *) $touch $firstmakefile ;;
+    esac
 fi
 mf=$firstmakefile
 if test -f $mf; then
     defrule=`<$mf sed -n		\
-	-e '/^\.c\(\$(OBJ_EXT)\|\.o\):.*;/{'	\
+	-e '/^\.c\$(OBJ_EXT):.*;/{'	\
 	-e    's/\$\*\.c//'		\
 	-e    's/^[^;]*;[	 ]*//p'	\
 	-e    q				\
 	-e '}'				\
-	-e '/^\.c\(\$(OBJ_EXT)\|\.o\): *$/{'	\
+	-e '/^\.c\$(OBJ_EXT): *$/{'	\
 	-e    N				\
 	-e    's/\$\*\.c//'		\
 	-e    's/^.*\n[	 ]*//p'		\
@@ -104,6 +118,7 @@ for file in `$cat .clist`; do
     $cppstdin $finc -I/usr/local/include -I. $cppflags $cppminus <UU/$file.c |
     $sed \
 	-e '/^#.*<stdin>/d' \
+	-e '/^#.*"-"/d' \
 	-e 's#\.[0-9][0-9]*\.c#'"$file.c#" \
 	-e 's/^[	 ]*#[	 ]*line/#/' \
 	-e '/^# *[0-9][0-9]* *[".\/]/!d' \
@@ -119,21 +134,27 @@ $sed <$mf >$mf.new -e '1,/^# AUTOMATICALLY/!d'
 $MAKE shlist || ($echo "Searching for .SH files..."; \
 	$echo *.SH | $tr ' ' '\012' | $egrep -v '\*' >.shlist)
 
-# Now extract the dependency on makedepend.SH
-# (it should reside in the main Makefile):
+# Now extract the dependencies on makedepend.SH and Makefile.SH
+# (they should reside in the main Makefile):
 mv .shlist .shlist.old
 $egrep -v '^makedepend\.SH' <.shlist.old >.shlist
+mv .shlist .shlist.old
+$egrep -v '^Makefile\.SH' <.shlist.old >.shlist
+mv .shlist .shlist.old
+$egrep -v '^perl_exp\.SH' <.shlist.old >.shlist
+mv .shlist .shlist.old
+$egrep -v '^config_h\.SH' <.shlist.old >.shlist
 rm .shlist.old
 
 if $test -s .deptmp; then
     for file in `cat .shlist`; do
 	$echo `$expr X$file : 'X\(.*\).SH'`: $file $TOP/config.sh \; \
-	    /bin/sh $file >> .deptmp
+	    $sh $file >> .deptmp
     done
     $echo "Updating $mf..."
     $echo "# If this runs make out of memory, delete /usr/include lines." \
 	>> $mf.new
-    $sed 's|^\(.*\(\$(OBJ_EXT)\|\.o\):\) *\(.*/.*\.c\) *$|\1 \3; '"$defrule \2|" .deptmp \
+    $sed 's|^\(.*\$(OBJ_EXT):\) *\(.*/.*\.c\) *$|\1 \2; '"$defrule \2|" .deptmp \
        >>$mf.new
 else
     $MAKE hlist || ($echo "Searching for .h files..."; \
@@ -155,11 +176,12 @@ else
        $sed -f .hsed >> $mf.new
     for file in `$cat .shlist`; do
 	$echo `$expr X$file : 'X\(.*\).SH'`: $file $TOP/config.sh \; \
-	    /bin/sh $file >> $mf.new
+	    $sh $file >> $mf.new
     done
 fi
 $rm -f $mf.old
 $cp $mf $mf.old
+$rm -f $mf
 $cp $mf.new $mf
 $rm $mf.new
 $echo "# WARNING: Put nothing here or make depend will gobble it up!" >> $mf

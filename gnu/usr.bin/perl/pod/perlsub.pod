@@ -22,8 +22,8 @@ To import subroutines:
 
 To call subroutines:
 
-    NAME(LIST);	   # & is optional with parens.
-    NAME LIST;	   # Parens optional if predeclared/imported.
+    NAME(LIST);	   # & is optional with parentheses.
+    NAME LIST;	   # Parentheses optional if predeclared/imported.
     &NAME;	   # Passes current @_ to subroutine.
 
 =head1 DESCRIPTION
@@ -47,21 +47,33 @@ there's really no difference from the language's perspective.)
 
 Any arguments passed to the routine come in as the array @_.  Thus if you
 called a function with two arguments, those would be stored in C<$_[0]>
-and C<$_[1]>.  The array @_ is a local array, but its values are implicit
-references (predating L<perlref>) to the actual scalar parameters.  The
-return value of the subroutine is the value of the last expression
-evaluated.  Alternatively, a return statement may be used to specify the
-returned value and exit the subroutine.  If you return one or more arrays
-and/or hashes, these will be flattened together into one large
-indistinguishable list.
+and C<$_[1]>.  The array @_ is a local array, but its elements are
+aliases for the actual scalar parameters.  In particular, if an element
+C<$_[0]> is updated, the corresponding argument is updated (or an error
+occurs if it is not updatable).  If an argument is an array or hash
+element which did not exist when the function was called, that element is
+created only when (and if) it is modified or if a reference to it is
+taken.  (Some earlier versions of Perl created the element whether or not
+it was assigned to.)  Note that assigning to the whole array @_ removes
+the aliasing, and does not update any arguments.
+
+The return value of the subroutine is the value of the last expression
+evaluated.  Alternatively, a return statement may be used to exit the
+subroutine, optionally specifying the returned value, which will be
+evaluated in the appropriate context (list, scalar, or void) depending
+on the context of the subroutine call.  If you specify no return value,
+the subroutine will return an empty list in a list context, an undefined
+value in a scalar context, or nothing in a void context.  If you return
+one or more arrays and/or hashes, these will be flattened together into
+one large indistinguishable list.
 
 Perl does not have named formal parameters, but in practice all you do is
 assign to a my() list of these.  Any variables you use in the function
 that aren't declared private are global variables.  For the gory details
-on creating private variables, see the sections below on L<"Private
-Variables via my()"> and L</"Temporary Values via local()">.  To create
-protected environments for a set of functions in a separate package (and
-probably a separate file), see L<perlmod/"Packages">.
+on creating private variables, see
+L<"Private Variables via my()"> and L<"Temporary Values via local()">.
+To create protected environments for a set of functions in a separate
+package (and probably a separate file), see L<perlmod/"Packages">.
 
 Example:
 
@@ -81,7 +93,7 @@ Example:
 
     sub get_line {
 	$thisline = $lookahead;  # GLOBAL VARIABLES!!
-	LINE: while ($lookahead = <STDIN>) {
+	LINE: while (defined($lookahead = <STDIN>)) {
 	    if ($lookahead =~ /^[ \t]/) {
 		$thisline .= $lookahead;
 	    }
@@ -105,13 +117,13 @@ Use array assignment to a local list to name your formal arguments:
     }
 
 This also has the effect of turning call-by-reference into call-by-value,
-since the assignment copies the values.  Otherwise a function is free to
-do in-place modifications of @_ and change its callers values.
+because the assignment copies the values.  Otherwise a function is free to
+do in-place modifications of @_ and change its caller's values.
 
     upcase_in($v1, $v2);  # this changes $v1 and $v2
     sub upcase_in {
-	for (@_) { tr/a-z/A-Z/ } 
-    } 
+	for (@_) { tr/a-z/A-Z/ }
+    }
 
 You aren't allowed to modify constants in this way, of course.  If an
 argument were actually literal and you tried to change it, you'd take a
@@ -119,17 +131,17 @@ argument were actually literal and you tried to change it, you'd take a
 
     upcase_in("frederick");
 
-It would be much safer if the upcase_in() function 
+It would be much safer if the upcase_in() function
 were written to return a copy of its parameters instead
 of changing them in place:
 
     ($v3, $v4) = upcase($v1, $v2);  # this doesn't
     sub upcase {
+	return unless defined wantarray;  # void context, do nothing
 	my @parms = @_;
-	for (@parms) { tr/a-z/A-Z/ } 
-	# wantarray checks if we were called in list context
+	for (@parms) { tr/a-z/A-Z/ }
   	return wantarray ? @parms : $parms[0];
-    } 
+    }
 
 Notice how this (unprototyped) function doesn't care whether it was passed
 real scalars or arrays.  Perl will see everything as one big long flat @_
@@ -149,13 +161,14 @@ Because like its flat incoming parameter list, the return list is also
 flat.  So all you have managed to do here is stored everything in @a and
 made @b an empty list.  See L</"Pass by Reference"> for alternatives.
 
-A subroutine may be called using the "&" prefix.  The "&" is optional in
-Perl 5, and so are the parens if the subroutine has been predeclared.
-(Note, however, that the "&" is I<NOT> optional when you're just naming
-the subroutine, such as when it's used as an argument to defined() or
-undef().  Nor is it optional when you want to do an indirect subroutine
-call with a subroutine name or reference using the C<&$subref()> or
-C<&{$subref}()> constructs.  See L<perlref> for more on that.)
+A subroutine may be called using the "&" prefix.  The "&" is optional
+in modern Perls, and so are the parentheses if the subroutine has been
+predeclared.  (Note, however, that the "&" is I<NOT> optional when
+you're just naming the subroutine, such as when it's used as an
+argument to defined() or undef().  Nor is it optional when you want to
+do an indirect subroutine call with a subroutine name or reference
+using the C<&$subref()> or C<&{$subref}()> constructs.  See L<perlref>
+for more on that.)
 
 Subroutines may be called recursively.  If a subroutine is called using
 the "&" form, the argument list is optional, and if omitted, no @_ array is
@@ -170,7 +183,7 @@ new users may wish to avoid.
     &foo();		# the same
 
     &foo;		# foo() get current args, like foo(@_) !!
-    foo;		# like foo() IFF sub foo pre-declared, else "foo"
+    foo;		# like foo() IFF sub foo predeclared, else "foo"
 
 Not only does the "&" form make the argument list optional, but it also
 disables any prototype checking on the arguments you do provide.  This
@@ -187,11 +200,12 @@ Synopsis:
     my @oof = @bar;	# declare @oof lexical, and init it
 
 A "my" declares the listed variables to be confined (lexically) to the
-enclosing block, subroutine, C<eval>, or C<do/require/use>'d file.  If
-more than one value is listed, the list must be placed in parens.  All
-listed elements must be legal lvalues.  Only alphanumeric identifiers may
-be lexically scoped--magical builtins like $/ must currently be localized with
-"local" instead.  
+enclosing block, conditional (C<if/unless/elsif/else>), loop
+(C<for/foreach/while/until/continue>), subroutine, C<eval>, or
+C<do/require/use>'d file.  If more than one value is listed, the list
+must be placed in parentheses.  All listed elements must be legal lvalues.
+Only alphanumeric identifiers may be lexically scoped--magical
+builtins like $/ must currently be localized with "local" instead.
 
 Unlike dynamic variables created by the "local" statement, lexical
 variables declared with "my" are totally hidden from the outside world,
@@ -216,7 +230,7 @@ this is used to name the parameters to a subroutine.  Examples:
 	my $arg = shift;  # name doesn't matter
 	$arg **= 1/3;
 	return $arg;
-    } 			
+    }
 
 The "my" is simply a modifier on something you might assign to.  So when
 you do assign to the variables in its argument list, the "my" doesn't
@@ -225,11 +239,11 @@ change whether those variables is viewed as a scalar or an array.  So
     my ($foo) = <STDIN>;
     my @FOO = <STDIN>;
 
-both supply a list context to the righthand side, while
+both supply a list context to the right-hand side, while
 
     my $foo = <STDIN>;
 
-supplies a scalar context.  But the following only declares one variable:
+supplies a scalar context.  But the following declares only one variable:
 
     my $foo, $bar = 1;
 
@@ -243,12 +257,55 @@ the current statement.  Thus,
 
     my $x = $x;
 
-can be used to initialize the new $x with the value of the old $x, and 
+can be used to initialize the new $x with the value of the old $x, and
 the expression
 
     my $x = 123 and $x == 123
 
 is false unless the old $x happened to have the value 123.
+
+Lexical scopes of control structures are not bounded precisely by the
+braces that delimit their controlled blocks; control expressions are
+part of the scope, too.  Thus in the loop
+
+    while (defined(my $line = <>)) {
+        $line = lc $line;
+    } continue {
+        print $line;
+    }
+
+the scope of $line extends from its declaration throughout the rest of
+the loop construct (including the C<continue> clause), but not beyond
+it.  Similarly, in the conditional
+
+    if ((my $answer = <STDIN>) =~ /^yes$/i) {
+        user_agrees();
+    } elsif ($answer =~ /^no$/i) {
+        user_disagrees();
+    } else {
+	chomp $answer;
+        die "'$answer' is neither 'yes' nor 'no'";
+    }
+
+the scope of $answer extends from its declaration throughout the rest
+of the conditional (including C<elsif> and C<else> clauses, if any),
+but not beyond it.
+
+(None of the foregoing applies to C<if/unless> or C<while/until>
+modifiers appended to simple statements.  Such modifiers are not
+control structures and have no effect on scoping.)
+
+The C<foreach> loop defaults to scoping its index variable dynamically
+(in the manner of C<local>; see below).  However, if the index
+variable is prefixed with the keyword "my", then it is lexically
+scoped instead.  Thus in the loop
+
+    for my $i (1, 2, 3) {
+        some_function();
+    }
+
+the scope of $i extends to the end of the loop, but not beyond it, and
+so the value of $i is unavailable in some_function().
 
 Some users may wish to encourage the use of lexically scoped variables.
 As an aid to catching implicit references to package variables,
@@ -263,8 +320,9 @@ otherwise.  An inner block may countermand this with S<"no strict 'vars'">.
 
 A my() has both a compile-time and a run-time effect.  At compile time,
 the compiler takes notice of it; the principle usefulness of this is to
-quiet C<use strict 'vars'>.  The actual initialization doesn't happen
-until run time, so gets executed every time through a loop.
+quiet C<use strict 'vars'>.  The actual initialization is delayed until
+run time, so it gets executed appropriately; every time through a loop,
+for example.
 
 Variables declared with "my" are not part of any package and are therefore
 never fully qualified with the package name.  In particular, you're not
@@ -284,9 +342,9 @@ lexical of the same name is also visible:
 
 That will print out 20 and 10.
 
-You may declare "my" variables at the outer most scope of a file to
-totally hide any such identifiers from the outside world.  This is similar
-to a C's static variables at the file level.  To do this with a subroutine
+You may declare "my" variables at the outermost scope of a file to
+hide any such identifiers totally from the outside world.  This is similar
+to C's static variables at the file level.  To do this with a subroutine
 requires the use of a closure (anonymous function).  If a block (such as
 an eval(), function, or C<package>) wants to create a private subroutine
 that cannot be called from outside that block, it can declare a lexical
@@ -297,7 +355,7 @@ variable containing an anonymous sub reference:
     &$secret_sub();
 
 As long as the reference is never returned by any function within the
-module, no outside module can see the subroutine, since its name is not in
+module, no outside module can see the subroutine, because its name is not in
 any package's symbol table.  Remember that it's not I<REALLY> called
 $some_pack::secret_version or anything; it's just $secret_version,
 unqualified and unqualifiable.
@@ -314,35 +372,35 @@ just enclose the whole function in an extra block, and put the
 static variable outside the function but in the block.
 
     {
-	my $secret_val = 0; 
+	my $secret_val = 0;
 	sub gimme_another {
 	    return ++$secret_val;
-	} 
-    } 
+	}
+    }
     # $secret_val now becomes unreachable by the outside
     # world, but retains its value between calls to gimme_another
 
-If this function is being sourced in from a separate file 
+If this function is being sourced in from a separate file
 via C<require> or C<use>, then this is probably just fine.  If it's
-all in the main program, you'll need to arrange for the my() 
+all in the main program, you'll need to arrange for the my()
 to be executed early, either by putting the whole block above
-your pain program, or more likely, merely placing a BEGIN 
+your main program, or more likely, placing merely a BEGIN
 sub around it to make sure it gets executed before your program
 starts to run:
 
     sub BEGIN {
-	my $secret_val = 0; 
+	my $secret_val = 0;
 	sub gimme_another {
 	    return ++$secret_val;
-	} 
-    } 
+	}
+    }
 
 See L<perlrun> about the BEGIN function.
 
 =head2 Temporary Values via local()
 
 B<NOTE>: In general, you should be using "my" instead of "local", because
-it's faster and safer.  Execeptions to this include the global punctuation
+it's faster and safer.  Exceptions to this include the global punctuation
 variables, filehandles and formats, and direct manipulation of the Perl
 symbol table itself.  Format variables often use "local" though, as do
 other variables whose current value must be visible to called
@@ -359,18 +417,18 @@ Synopsis:
     local *merlyn = *randal;	# now $merlyn is really $randal, plus
                                 #     @merlyn is really @randal, etc
     local *merlyn = 'randal';	# SAME THING: promote 'randal' to *randal
-    local *merlyn = \$randal;   # just alias $merlyn, not @merlyn etc 
+    local *merlyn = \$randal;   # just alias $merlyn, not @merlyn etc
 
 A local() modifies its listed variables to be local to the enclosing
-block, (or subroutine, C<eval{}> or C<do>) and I<the any called from
+block, (or subroutine, C<eval{}>, or C<do>) and I<any called from
 within that block>.  A local() just gives temporary values to global
 (meaning package) variables.  This is known as dynamic scoping.  Lexical
 scoping is done with "my", which works more like C's auto declarations.
 
 If more than one variable is given to local(), they must be placed in
-parens.  All listed elements must be legal lvalues.  This operator works
+parentheses.  All listed elements must be legal lvalues.  This operator works
 by saving the current values of those variables in its argument list on a
-hidden stack and restoring them upon exiting the block, subroutine or
+hidden stack and restoring them upon exiting the block, subroutine, or
 eval.  This means that called subroutines can also reference the local
 variable, but not the global one.  The argument list may be assigned to if
 desired, which allows you to initialize your local variables.  (If no
@@ -380,9 +438,9 @@ subroutine.  Examples:
 
     for $i ( 0 .. 9 ) {
 	$digits{$i} = $i;
-    } 
+    }
     # assume this function uses global %digits hash
-    parse_num();  
+    parse_num();
 
     # now temporarily add to %digits hash
     if ($base12) {
@@ -392,7 +450,7 @@ subroutine.  Examples:
     }
     # old %digits restored here
 
-Because local() is a run-time command, and so gets executed every time
+Because local() is a run-time command, it gets executed every time
 through a loop.  In releases of Perl previous to 5.0, this used more stack
 storage each time until the loop was exited.  Perl now reclaims the space
 each time through, but it's still more efficient to declare your variables
@@ -405,11 +463,47 @@ as a scalar or an array.  So
     local($foo) = <STDIN>;
     local @FOO = <STDIN>;
 
-both supply a list context to the righthand side, while
+both supply a list context to the right-hand side, while
 
     local $foo = <STDIN>;
 
 supplies a scalar context.
+
+A note about C<local()> and composite types is in order.  Something
+like C<local(%foo)> works by temporarily placing a brand new hash in
+the symbol table.  The old hash is left alone, but is hidden "behind"
+the new one.
+
+This means the old variable is completely invisible via the symbol
+table (i.e. the hash entry in the C<*foo> typeglob) for the duration
+of the dynamic scope within which the C<local()> was seen.  This
+has the effect of allowing one to temporarily occlude any magic on
+composite types.  For instance, this will briefly alter a tied
+hash to some other implementation:
+
+    tie %ahash, 'APackage';
+    [...]
+    {
+       local %ahash;
+       tie %ahash, 'BPackage';
+       [..called code will see %ahash tied to 'BPackage'..]
+       {
+          local %ahash;
+          [..%ahash is a normal (untied) hash here..]
+       }
+    }
+    [..%ahash back to its initial tied self again..]
+
+As another example, a custom implementation of C<%ENV> might look
+like this:
+
+    {
+        local %ENV;
+        tie %ENV, 'MyOwnEnv';
+        [..do your own fancy %ENV manipulation here..]
+    }
+    [..normal %ENV behavior here..]
+
 
 =head2 Passing Symbol Table Entries (typeglobs)
 
@@ -422,12 +516,12 @@ Sometimes you don't want to pass the value of an array to a subroutine
 but rather the name of it, so that the subroutine can modify the global
 copy of it rather than working with a local copy.  In perl you can
 refer to all objects of a particular name by prefixing the name
-with a star: C<*foo>.  This is often known as a "type glob", since the
+with a star: C<*foo>.  This is often known as a "typeglob", because the
 star on the front can be thought of as a wildcard match for all the
 funny prefix characters on variables and subroutines and such.
 
-When evaluated, the type glob produces a scalar value that represents
-all the objects of that name, including any filehandle, format or
+When evaluated, the typeglob produces a scalar value that represents
+all the objects of that name, including any filehandle, format, or
 subroutine.  When assigned to, it causes the name mentioned to refer to
 whatever "*" value was assigned to it.  Example:
 
@@ -442,22 +536,23 @@ whatever "*" value was assigned to it.  Example:
 
 Note that scalars are already passed by reference, so you can modify
 scalar arguments without using this mechanism by referring explicitly
-to $_[0] etc.  You can modify all the elements of an array by passing
+to C<$_[0]> etc.  You can modify all the elements of an array by passing
 all the elements as scalars, but you have to use the * mechanism (or
-the equivalent reference mechanism) to push, pop or change the size of
+the equivalent reference mechanism) to push, pop, or change the size of
 an array.  It will certainly be faster to pass the typeglob (or reference).
 
 Even if you don't want to modify an array, this mechanism is useful for
-passing multiple arrays in a single LIST, since normally the LIST
+passing multiple arrays in a single LIST, because normally the LIST
 mechanism will merge all the array values so that you can't extract out
-the individual arrays.  For more on typeglobs, see L<perldata/"Typeglobs">.
+the individual arrays.  For more on typeglobs, see
+L<perldata/"Typeglobs and Filehandles">.
 
 =head2 Pass by Reference
 
-If you want to pass more than one array or hash into a function--or 
-return them from it--and have them maintain their integrity,
-then you're going to have to use an explicit pass-by-reference.
-Before you do that, you need to understand references as detailed in L<perlref>.
+If you want to pass more than one array or hash into a function--or
+return them from it--and have them maintain their integrity, then
+you're going to have to use an explicit pass-by-reference.  Before you
+do that, you need to understand references as detailed in L<perlref>.
 This section may not make much sense to you otherwise.
 
 Here are a few simple examples.  First, let's pass in several
@@ -471,29 +566,29 @@ list of all their former last elements:
 	my @retlist = ();
 	foreach $aref ( @_ ) {
 	    push @retlist, pop @$aref;
-	} 
+	}
 	return @retlist;
-    } 
+    }
 
-Here's how you might write a function that returns a 
+Here's how you might write a function that returns a
 list of keys occurring in all the hashes passed to it:
 
-    @common = inter( \%foo, \%bar, \%joe ); 
+    @common = inter( \%foo, \%bar, \%joe );
     sub inter {
 	my ($k, $href, %seen); # locals
 	foreach $href (@_) {
 	    while ( $k = each %$href ) {
 		$seen{$k}++;
-	    } 
-	} 
+	    }
+	}
 	return grep { $seen{$_} == @_ } keys %seen;
-    } 
+    }
 
-So far, we're just using the normal list return mechanism.
-What happens if you want to pass or return a hash?  Well, 
-if you're only using one of them, or you don't mind them 
+So far, we're using just the normal list return mechanism.
+What happens if you want to pass or return a hash?  Well,
+if you're using only one of them, or you don't mind them
 concatenating, then the normal calling convention is ok, although
-a little expensive.  
+a little expensive.
 
 Where people get into trouble is here:
 
@@ -501,7 +596,7 @@ Where people get into trouble is here:
 or
     (%a, %b) = func(%c, %d);
 
-That syntax simply won't work.  It just sets @a or %a and clears the @b or
+That syntax simply won't work.  It sets just @a or %a and clears the @b or
 %b.  Plus the function didn't get passed into two separate arrays or
 hashes: it got one long list in @_, as always.
 
@@ -518,8 +613,8 @@ in order of how many elements they have in them:
 	    return ($cref, $dref);
 	} else {
 	    return ($dref, $cref);
-	} 
-    } 
+	}
+    }
 
 It turns out that you can actually do this also:
 
@@ -531,12 +626,12 @@ It turns out that you can actually do this also:
 	    return (\@c, \@d);
 	} else {
 	    return (\@d, \@c);
-	} 
-    } 
+	}
+    }
 
 Here we're using the typeglobs to do symbol table aliasing.  It's
 a tad subtle, though, and also won't work if you're using my()
-variables, since only globals (well, and local()s) are in the symbol table.
+variables, because only globals (well, and local()s) are in the symbol table.
 
 If you're passing around filehandles, you could usually just use the bare
 typeglob, like *STDOUT, but typeglobs references would be better because
@@ -554,17 +649,20 @@ they'll still work properly under C<use strict 'refs'>.  For example:
 	return scalar <$fh>;
     }
 
+Another way to do this is using *HANDLE{IO}, see L<perlref> for usage
+and caveats.
+
 If you're planning on generating new filehandles, you could do this:
 
     sub openit {
 	my $name = shift;
 	local *FH;
-	return open (FH, $path) ? \*FH : undef;
-    } 
+	return open (FH, $path) ? *FH : undef;
+    }
 
 Although that will actually produce a small memory leak.  See the bottom
-of L<perlfunc/open()> for a somewhat cleaner way using the FileHandle
-functions supplied with the POSIX package.
+of L<perlfunc/open()> for a somewhat cleaner way using the IO::Handle
+package.
 
 =head2 Prototypes
 
@@ -574,7 +672,7 @@ As of the 5.002 release of perl, if you declare
 
 then mypush() takes arguments exactly like push() does.  The declaration
 of the function to be called must be visible at compile time.  The prototype
-only affects the interpretation of new-style calls to the function, where
+affects only the interpretation of new-style calls to the function, where
 new-style is defined as not using the C<&> character.  In other words,
 if you call it like a builtin function, then it behaves like a builtin
 function.  If you call it like an old-fashioned subroutine, then it
@@ -583,10 +681,10 @@ this rule that prototypes have no influence on subroutine references
 like C<\&foo> or on indirect subroutine calls like C<&{$subref}>.
 
 Method calls are not influenced by prototypes either, because the
-function to be called is indeterminate at compile time, since it depends
+function to be called is indeterminate at compile time, because it depends
 on inheritance.
 
-Since the intent is primarily to let you define subroutines that work
+Because the intent is primarily to let you define subroutines that work
 like builtin commands, here are the prototypes for some other functions
 that parse almost exactly like the corresponding builtins.
 
@@ -627,7 +725,7 @@ A semicolon separates mandatory arguments from optional arguments.
 Note how the last three examples above are treated specially by the parser.
 mygrep() is parsed as a true list operator, myrand() is parsed as a
 true unary operator with unary precedence the same as rand(), and
-mytime() is truly argumentless, just like time().  That is, if you
+mytime() is truly without arguments, just like time().  That is, if you
 say
 
     mytime +2;
@@ -637,7 +735,7 @@ without the prototype.
 
 The interesting thing about & is that you can generate new syntax with it:
 
-    sub try (&$) {
+    sub try (&@) {
 	my($try,$catch) = @_;
 	eval { &$try };
 	if ($@) {
@@ -645,7 +743,7 @@ The interesting thing about & is that you can generate new syntax with it:
 	    &$catch;
 	}
     }
-    sub catch (&) { @_ }
+    sub catch (&) { $_[0] }
 
     try {
 	die "phooey";
@@ -657,7 +755,7 @@ That prints "unphooey".  (Yes, there are still unresolved
 issues having to do with the visibility of @_.  I'm ignoring that
 question for the moment.  (But note that if we make @_ lexically
 scoped, those anonymous subroutines can act like closures... (Gee,
-is this sounding a little Lispish?  (Nevermind.))))
+is this sounding a little Lispish?  (Never mind.))))
 
 And here's a reimplementation of grep:
 
@@ -687,7 +785,7 @@ if you decide that a function should take just one parameter, like this:
     sub func ($) {
 	my $n = shift;
 	print "you gave me $n\n";
-    } 
+    }
 
 and someone has been calling it with an array or expression
 returning a list:
@@ -698,21 +796,74 @@ returning a list:
 Then you've just supplied an automatic scalar() in front of their
 argument, which can be more than a bit surprising.  The old @foo
 which used to hold one thing doesn't get passed in.  Instead,
-the func() now gets passed in 1, that is, the number of elments
+the func() now gets passed in 1, that is, the number of elements
 in @foo.  And the split() gets called in a scalar context and
 starts scribbling on your @_ parameter list.
 
-This is all very powerful, of course, and should only be used in moderation
-to make the world a better place.  
+This is all very powerful, of course, and should be used only in moderation
+to make the world a better place.
+
+=head2 Constant Functions
+
+Functions with a prototype of C<()> are potential candidates for
+inlining.  If the result after optimization and constant folding is
+either a constant or a lexically-scoped scalar which has no other
+references, then it will be used in place of function calls made
+without C<&> or C<do>. Calls made using C<&> or C<do> are never
+inlined.  (See constant.pm for an easy way to declare most
+constants.)
+
+All of the following functions would be inlined.
+
+    sub pi ()		{ 3.14159 }		# Not exact, but close.
+    sub PI ()		{ 4 * atan2 1, 1 }	# As good as it gets,
+						# and it's inlined, too!
+    sub ST_DEV ()	{ 0 }
+    sub ST_INO ()	{ 1 }
+
+    sub FLAG_FOO ()	{ 1 << 8 }
+    sub FLAG_BAR ()	{ 1 << 9 }
+    sub FLAG_MASK ()	{ FLAG_FOO | FLAG_BAR }
+
+    sub OPT_BAZ ()	{ not (0x1B58 & FLAG_MASK) }
+    sub BAZ_VAL () {
+	if (OPT_BAZ) {
+	    return 23;
+	}
+	else {
+	    return 42;
+	}
+    }
+
+    sub N () { int(BAZ_VAL) / 3 }
+    BEGIN {
+	my $prod = 1;
+	for (1..N) { $prod *= $_ }
+	sub N_FACTORIAL () { $prod }
+    }
+
+If you redefine a subroutine which was eligible for inlining you'll get
+a mandatory warning.  (You can use this warning to tell whether or not a
+particular subroutine is considered constant.)  The warning is
+considered severe enough not to be optional because previously compiled
+invocations of the function will still be using the old value of the
+function.  If you need to be able to redefine the subroutine you need to
+ensure that it isn't inlined, either by dropping the C<()> prototype
+(which changes the calling semantics, so beware) or by thwarting the
+inlining mechanism in some other way, such as
+
+    sub not_inlined () {
+    	23 if $];
+    }
 
 =head2 Overriding Builtin Functions
 
-Many builtin functions may be overridden, though this should only be
-tried occasionally and for good reason.  Typically this might be
+Many builtin functions may be overridden, though this should be tried
+only occasionally and for good reason.  Typically this might be
 done by a package attempting to emulate missing builtin functionality
 on a non-Unix system.
 
-Overriding may only be done by importing the name from a
+Overriding may be done only by importing the name from a
 module--ordinary predeclaration isn't good enough.  However, the
 C<subs> pragma (compiler directive) lets you, in effect, predeclare subs
 via the import syntax, and these names may then override the builtin ones:
@@ -721,8 +872,14 @@ via the import syntax, and these names may then override the builtin ones:
     chdir $somewhere;
     sub chdir { ... }
 
+To unambiguously refer to the builtin form, one may precede the
+builtin name with the special package qualifier C<CORE::>.  For example,
+saying C<CORE::open()> will always refer to the builtin C<open()>, even
+if the current package has imported some other subroutine called
+C<&open()> from elsewhere.
+
 Library modules should not in general export builtin names like "open"
-or "chdir" as part of their default @EXPORT list, since these may
+or "chdir" as part of their default @EXPORT list, because these may
 sneak into someone else's namespace and change the semantics unexpectedly.
 Instead, if the module adds the name to the @EXPORT_OK list, then it's
 possible for a user to import the name explicitly, but not implicitly.
@@ -735,6 +892,10 @@ and it would import the open override, but if they said
     use Module;
 
 they would get the default imports without the overrides.
+
+Note that such overriding is restricted to the package that requests
+the import.  Some means of "globally" overriding builtins may become
+available in future.
 
 =head2 Autoloading
 
@@ -762,12 +923,12 @@ should just call system() with those arguments.  All you'd do is this:
 	my $program = $AUTOLOAD;
 	$program =~ s/.*:://;
 	system($program, @_);
-    } 
+    }
     date();
-    who('am', i');
+    who('am', 'i');
     ls('-l');
 
-In fact, if you preclare the functions you want to call that way, you don't
+In fact, if you predeclare the functions you want to call that way, you don't
 even need the parentheses:
 
     use subs qw(date who ls);
@@ -779,13 +940,14 @@ A more complete example of this is the standard Shell module, which
 can treat undefined subroutine calls as calls to Unix programs.
 
 Mechanisms are available for modules writers to help split the modules
-up into autoloadable files.  See the standard AutoLoader module described
-in L<Autoloader>, the standard SelfLoader modules in L<SelfLoader>, and
-the document on adding C functions to perl code in L<perlxs>.
+up into autoloadable files.  See the standard AutoLoader module
+described in L<AutoLoader> and in L<AutoSplit>, the standard
+SelfLoader modules in L<SelfLoader>, and the document on adding C
+functions to perl code in L<perlxs>.
 
 =head1 SEE ALSO
 
 See L<perlref> for more on references.  See L<perlxs> if you'd
-like to learn about calling C subroutines from perl.  See 
-L<perlmod> to learn about bundling up your functions in 
+like to learn about calling C subroutines from perl.  See
+L<perlmod> to learn about bundling up your functions in
 separate files.

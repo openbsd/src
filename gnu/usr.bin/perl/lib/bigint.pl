@@ -103,13 +103,23 @@ sub main'bcmp { #(num_str, num_str) return cond_code
 
 sub cmp { # post-normalized compare for internal use
     local($cx, $cy) = @_;
-    $cx cmp $cy
-    &&
-    (
-	ord($cy) <=> ord($cx)
-	||
-	($cx cmp ',') * (length($cy) <=> length($cx) || $cy cmp $cx)
-    );
+    return 0 if ($cx eq $cy);
+
+    local($sx, $sy) = (substr($cx, 0, 1), substr($cy, 0, 1));
+    local($ld);
+
+    if ($sx eq '+') {
+      return  1 if ($sy eq '-' || $cy eq '+0');
+      $ld = length($cx) - length($cy);
+      return $ld if ($ld);
+      return $cx cmp $cy;
+    } else { # $sx eq '-'
+      return -1 if ($sy eq '+');
+      $ld = length($cy) - length($cx);
+      return $ld if ($ld);
+      return $cy cmp $cx;
+    }
+
 }
 
 sub main'badd { #(num_str, num_str) return num_str
@@ -158,11 +168,11 @@ sub add { #(int_num_array, int_num_array) return int_num_array
     $car = 0;
     for $x (@x) {
 	last unless @y || $car;
-	$x -= 1e5 if $car = (($x += shift(@y) + $car) >= 1e5);
+	$x -= 1e5 if $car = (($x += shift(@y) + $car) >= 1e5) ? 1 : 0;
     }
     for $y (@y) {
 	last unless $car;
-	$y -= 1e5 if $car = (($y += $car) >= 1e5);
+	$y -= 1e5 if $car = (($y += $car) >= 1e5) ? 1 : 0;
     }
     (@x, @y, $car);
 }

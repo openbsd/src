@@ -1,6 +1,6 @@
 /*    cop.h
  *
- *    Copyright (c) 1991-1994, Larry Wall
+ *    Copyright (c) 1991-1997, Larry Wall
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -47,13 +47,25 @@ struct block_sub {
 	(void)SvREFCNT_inc(cx->blk_sub.dfoutgv)
 
 #define POPSUB(cx)							\
-	if (cx->blk_sub.hasargs) {   /* put back old @_ */		\
-	    GvAV(defgv) = cx->blk_sub.savearray;			\
+	{ struct block_sub cxsub;					\
+	  POPSUB1(cx);							\
+	  POPSUB2(); }
+
+#define POPSUB1(cx)							\
+	cxsub = cx->blk_sub;	/* because DESTROY may clobber *cx */
+
+#define POPSUB2()							\
+	if (cxsub.hasargs) {						\
+	    /* put back old @_ */					\
+	    SvREFCNT_dec(GvAV(defgv));					\
+	    GvAV(defgv) = cxsub.savearray;				\
+	    /* destroy arg array */					\
+	    av_clear(cxsub.argarray);					\
+	    AvREAL_off(cxsub.argarray);					\
 	}								\
-	if (cx->blk_sub.cv) {						\
-	    if (!(CvDEPTH(cx->blk_sub.cv) = cx->blk_sub.olddepth)) {	\
-		SvREFCNT_dec((SV*)cx->blk_sub.cv);			\
-	    }								\
+	if (cxsub.cv) {							\
+	    if (!(CvDEPTH(cxsub.cv) = cxsub.olddepth))			\
+		SvREFCNT_dec(cxsub.cv);					\
 	}
 
 #define POPFORMAT(cx)							\
@@ -90,6 +102,7 @@ struct block_loop {
     OP *	last_op;
     SV **	itervar;
     SV *	itersave;
+    SV *	iterlval;
     AV *	iterary;
     I32		iterix;
 };
@@ -100,12 +113,29 @@ struct block_loop {
 	cx->blk_loop.redo_op = cLOOP->op_redoop;			\
 	cx->blk_loop.next_op = cLOOP->op_nextop;			\
 	cx->blk_loop.last_op = cLOOP->op_lastop;			\
-	cx->blk_loop.itervar = ivar;					\
-	if (ivar)							\
-	    cx->blk_loop.itersave = *cx->blk_loop.itervar;
+	if (cx->blk_loop.itervar = (ivar))				\
+	    cx->blk_loop.itersave = SvREFCNT_inc(*cx->blk_loop.itervar);\
+	cx->blk_loop.iterlval = Nullsv;					\
+	cx->blk_loop.iterary = Nullav;					\
+	cx->blk_loop.iterix = -1;
 
 #define POPLOOP(cx)							\
-	newsp		= stack_base + cx->blk_loop.resetsp;
+	{ struct block_loop cxloop;					\
+	  POPLOOP1(cx);							\
+	  POPLOOP2(); }
+
+#define POPLOOP1(cx)							\
+	cxloop = cx->blk_loop;	/* because DESTROY may clobber *cx */	\
+	newsp = stack_base + cxloop.resetsp;
+
+#define POPLOOP2()							\
+	SvREFCNT_dec(cxloop.iterlval);					\
+	if (cxloop.itervar) {						\
+	    SvREFCNT_dec(*cxloop.itervar);				\
+	    *cxloop.itervar = cxloop.itersave;				\
+	}								\
+	if (cxloop.iterary && cxloop.iterary != curstack)		\
+	    SvREFCNT_dec(cxloop.iterary);
 
 /* context common to subroutines, evals and loops */
 struct block {
@@ -144,7 +174,7 @@ struct block {
 	cx->blk_oldretsp	= retstack_ix,				\
 	cx->blk_oldpm		= curpm,				\
 	cx->blk_gimme		= gimme;				\
-	DEBUG_l( fprintf(stderr,"Entering block %ld, type %s\n",	\
+	DEBUG_l( PerlIO_printf(PerlIO_stderr(), "Entering block %ld, type %s\n",	\
 		    (long)cxstack_ix, block_type[t]); )
 
 /* Exit a block (RETURN and LAST). */
@@ -156,7 +186,7 @@ struct block {
 	retstack_ix	= cx->blk_oldretsp,				\
 	pm		= cx->blk_oldpm,				\
 	gimme		= cx->blk_gimme;				\
-	DEBUG_l( fprintf(stderr,"Leaving block %ld, type %s\n",		\
+	DEBUG_l( PerlIO_printf(PerlIO_stderr(), "Leaving block %ld, type %s\n",		\
 		    (long)cxstack_ix+1,block_type[cx->cx_type]); )
 
 /* Continue a block elsewhere (NEXT and REDO). */
@@ -171,47 +201,53 @@ struct subst {
     I32		sbu_iters;
     I32		sbu_maxiters;
     I32		sbu_safebase;
-    I32		sbu_once;
     I32		sbu_oldsave;
+    bool	sbu_once;
+    bool	sbu_rxtainted;
     char *	sbu_orig;
     SV *	sbu_dstr;
     SV *	sbu_targ;
     char *	sbu_s;
     char *	sbu_m;
     char *	sbu_strend;
-    char *	sbu_subbase;
+    void *	sbu_rxres;
     REGEXP *	sbu_rx;
 };
 #define sb_iters	cx_u.cx_subst.sbu_iters
 #define sb_maxiters	cx_u.cx_subst.sbu_maxiters
 #define sb_safebase	cx_u.cx_subst.sbu_safebase
-#define sb_once		cx_u.cx_subst.sbu_once
 #define sb_oldsave	cx_u.cx_subst.sbu_oldsave
+#define sb_once		cx_u.cx_subst.sbu_once
+#define sb_rxtainted	cx_u.cx_subst.sbu_rxtainted
 #define sb_orig		cx_u.cx_subst.sbu_orig
 #define sb_dstr		cx_u.cx_subst.sbu_dstr
 #define sb_targ		cx_u.cx_subst.sbu_targ
 #define sb_s		cx_u.cx_subst.sbu_s
 #define sb_m		cx_u.cx_subst.sbu_m
 #define sb_strend	cx_u.cx_subst.sbu_strend
-#define sb_subbase	cx_u.cx_subst.sbu_subbase
+#define sb_rxres	cx_u.cx_subst.sbu_rxres
 #define sb_rx		cx_u.cx_subst.sbu_rx
 
 #define PUSHSUBST(cx) CXINC, cx = &cxstack[cxstack_ix],			\
 	cx->sb_iters		= iters,				\
 	cx->sb_maxiters		= maxiters,				\
 	cx->sb_safebase		= safebase,				\
-	cx->sb_once		= once,					\
 	cx->sb_oldsave		= oldsave,				\
+	cx->sb_once		= once,					\
+	cx->sb_rxtainted	= rxtainted,				\
 	cx->sb_orig		= orig,					\
 	cx->sb_dstr		= dstr,					\
 	cx->sb_targ		= targ,					\
 	cx->sb_s		= s,					\
 	cx->sb_m		= m,					\
 	cx->sb_strend		= strend,				\
+	cx->sb_rxres		= Null(void*),				\
 	cx->sb_rx		= rx,					\
-	cx->cx_type		= CXt_SUBST
+	cx->cx_type		= CXt_SUBST;				\
+	rxres_save(&cx->sb_rxres, rx)
 
-#define POPSUBST(cx) cxstack_ix--
+#define POPSUBST(cx) cx = &cxstack[cxstack_ix--];			\
+	rxres_free(&cx->sb_rxres)
 
 struct context {
     I32		cx_type;	/* what kind of context this is */
@@ -232,9 +268,10 @@ struct context {
 /* "gimme" values */
 #define G_SCALAR	0
 #define G_ARRAY		1
+#define G_VOID		128	/* skip this bit when adding flags below */
 
 /* extra flags for perl_call_* routines */
 #define G_DISCARD	2	/* Call FREETMPS. */
 #define G_EVAL		4	/* Assume eval {} around subroutine call. */
 #define G_NOARGS	8	/* Don't construct a @_ array. */
-#define G_KEEPERR      16	/* Append errors to $@ rather than overwriting it */
+#define G_KEEPERR      16	/* Append errors to $@, don't overwrite it */

@@ -2,10 +2,10 @@ BEGIN {require 5.002;} # MakeMaker 5.17 was the last MakeMaker that was compatib
 
 package ExtUtils::MakeMaker;
 
-$Version = $VERSION = "5.34";
+$Version = $VERSION = "5.42";
 $Version_OK = "5.17";	# Makefiles older than $Version_OK will die
 			# (Will be checked from MakeMaker version 4.13 onwards)
-($Revision = substr(q$Revision: 1.1.1.1 $, 10)) =~ s/\s+$//;
+($Revision = substr(q$Revision: 1.2 $, 10)) =~ s/\s+$//;
 
 
 
@@ -25,8 +25,9 @@ use vars qw(
 	   );
 # use strict;
 
-eval {require DynaLoader;};	# Get mod2fname, if defined. Will fail
-                                # with miniperl.
+# &DynaLoader::mod2fname should be available to miniperl, thus 
+# should be a pseudo-builtin (cmp. os2.c).
+#eval {require DynaLoader;};
 
 #
 # Set up the inheritance before we pull in the MM_* packages, because they
@@ -65,11 +66,12 @@ package ExtUtils::Liblist;
 
 package ExtUtils::MakeMaker;
 #
-# Now we can can pull in the friends
+# Now we can pull in the friends
 #
-$Is_VMS = $^O eq 'VMS';
-$Is_OS2 = $^O =~ m|^os/?2$|i;
-$Is_Mac = $^O eq 'MacOS';
+$Is_VMS   = $^O eq 'VMS';
+$Is_OS2   = $^O eq 'os2';
+$Is_Mac   = $^O eq 'MacOS';
+$Is_Win32 = $^O eq 'MSWin32';
 
 require ExtUtils::MM_Unix;
 
@@ -82,6 +84,9 @@ if ($Is_OS2) {
 }
 if ($Is_Mac) {
     require ExtUtils::MM_Mac;
+}
+if ($Is_Win32) {
+    require ExtUtils::MM_Win32;
 }
 
 # The SelfLoader would bring a lot of overhead for MakeMaker, because
@@ -149,10 +154,12 @@ sub ExtUtils::MakeMaker::mksymlists ;
 sub ExtUtils::MakeMaker::neatvalue ;
 sub ExtUtils::MakeMaker::selfdocument ;
 sub ExtUtils::MakeMaker::WriteMakefile ;
-sub ExtUtils::MakeMaker::prompt ;
+sub ExtUtils::MakeMaker::prompt ($;$) ;
 
 1;
-#__DATA__
+
+__DATA__
+
 package ExtUtils::MakeMaker;
 
 sub WriteMakefile {
@@ -228,12 +235,12 @@ sub full_setup {
 
     @Attrib_help = qw/
 
-    C CONFIG CONFIGURE DEFINE DIR DISTNAME DL_FUNCS DL_VARS EXE_FILES
-    EXCLUDE_EXT INCLUDE_EXT NO_VC FIRST_MAKEFILE FULLPERL H INC
-    INSTALLARCHLIB INSTALLBIN INSTALLDIRS INSTALLMAN1DIR
+    C CCFLAGS CONFIG CONFIGURE DEFINE DIR DISTNAME DL_FUNCS DL_VARS
+    EXE_FILES EXCLUDE_EXT INCLUDE_EXT NO_VC FIRST_MAKEFILE FULLPERL H
+    INC INSTALLARCHLIB INSTALLBIN INSTALLDIRS INSTALLMAN1DIR
     INSTALLMAN3DIR INSTALLPRIVLIB INSTALLSCRIPT INSTALLSITEARCH
     INSTALLSITELIB INST_ARCHLIB INST_BIN INST_EXE INST_LIB
-    INST_MAN1DIR INST_MAN3DIR INST_SCRIPT LDFROM LIBPERL_A LIBS
+    INST_MAN1DIR INST_MAN3DIR INST_SCRIPT LDFROM LIBPERL_A LIB LIBS
     LINKTYPE MAKEAPERL MAKEFILE MAN1PODS MAN3PODS MAP_TARGET MYEXTLIB
     NAME NEEDS_LINKING NOECHO NORECURS OBJECT OPTIMIZE PERL PERLMAINCC
     PERL_ARCHLIB PERL_LIB PERL_SRC PL_FILES PM PMLIBDIRS PREFIX
@@ -241,9 +248,12 @@ sub full_setup {
     XS_VERSION clean depend dist dynamic_lib linkext macro realclean
     tool_autosplit
 
-    installpm
+    IMPORTS
 
+    installpm
 	/;
+
+    # IMPORTS is used under OS/2
 
     # ^^^ installpm is deprecated, will go about Summer 96
 
@@ -297,7 +307,7 @@ sub full_setup {
     @Get_from_Config = 
 	qw(
 	   ar cc cccdlflags ccdlflags dlext dlsrc ld lddlflags ldflags libc
-	   lib_ext obj_ext ranlib sitelibexp sitearchexp so
+	   lib_ext obj_ext ranlib sitelibexp sitearchexp so exe_ext
 	  );
 
     my $item;
@@ -405,20 +415,17 @@ sub ExtUtils::MakeMaker::new {
 
     # This is for old Makefiles written pre 5.00, will go away
     if ( Carp::longmess("") =~ /runsubdirpl/s ){
-	#$self->{Correct_relativ_directories}++;
 	Carp::carp("WARNING: Please rerun 'perl Makefile.PL' to regenerate your Makefiles\n");
-    } else {
-	$self->{Correct_relativ_directories}=0;
     }
 
-    my $class = ++$PACKNAME;
+    my $newclass = ++$PACKNAME;
     {
 #	no strict;
-	print "Blessing Object into class [$class]\n" if $Verbose>=2;
-	mv_all_methods("MY",$class);
-	bless $self, $class;
+	print "Blessing Object into class [$newclass]\n" if $Verbose>=2;
+	mv_all_methods("MY",$newclass);
+	bless $self, $newclass;
 	push @Parent, $self;
-	@{"$class\:\:ISA"} = 'MM';
+	@{"$newclass\:\:ISA"} = 'MM';
     }
 
     if (defined $Parent[-2]){
@@ -427,10 +434,14 @@ sub ExtUtils::MakeMaker::new {
 	for $key (keys %Prepend_dot_dot) {
 	    next unless defined $self->{PARENT}{$key};
 	    $self->{$key} = $self->{PARENT}{$key};
+		# PERL and FULLPERL may be command verbs instead of full
+		# file specifications under VMS.  If so, don't turn them
+		# into a filespec.
 	    $self->{$key} = $self->catdir("..",$self->{$key})
-		unless $self->file_name_is_absolute($self->{$key});
+		unless $self->file_name_is_absolute($self->{$key})
+		|| ($^O eq 'VMS' and ($key =~ /PERL$/ && $self->{$key} =~ /^[\w\-\$]+$/));
 	}
-	$self->{PARENT}->{CHILDREN}->{$class} = $self if $self->{PARENT};
+	$self->{PARENT}->{CHILDREN}->{$newclass} = $self if $self->{PARENT};
     } else {
 	parse_args($self,@ARGV);
     }
@@ -442,11 +453,18 @@ sub ExtUtils::MakeMaker::new {
     $self->init_main();
 
     if (! $self->{PERL_SRC} ) {
-	my($pthinks) = $INC{'Config.pm'};
+	my($pthinks) = $self->canonpath($INC{'Config.pm'});
+	my($cthinks) = $self->catfile($Config{'archlibexp'},'Config.pm');
 	$pthinks = VMS::Filespec::vmsify($pthinks) if $Is_VMS;
-	if ($pthinks ne $self->catfile($Config{archlibexp},'Config.pm')){
-	    $pthinks =~ s!/Config\.pm$!!;
-	    $pthinks =~ s!.*/!!;
+	if ($pthinks ne $cthinks &&
+	    !($Is_Win32 and lc($pthinks) eq lc($cthinks))) {
+            print "Have $pthinks expected $cthinks\n";
+	    if ($Is_Win32) {
+		$pthinks =~ s![/\\]Config\.pm$!!i; $pthinks =~ s!.*[/\\]!!;
+	    }
+	    else {
+		$pthinks =~ s!/Config\.pm$!!; $pthinks =~ s!.*/!!;
+	    }
 	    print STDOUT <<END;
 Your perl and your Config.pm seem to have different ideas about the architecture
 they are running on.
@@ -550,15 +568,8 @@ sub parse_args{
 		 (getpwuid($>))[7]
 		 ]ex;
 	}
-	# This may go away, in mid 1996
-	if ($self->{Correct_relativ_directories}){
-	    $value = $self->catdir("..",$value)
-		if $Prepend_dot_dot{$name} && ! $self->file_name_is_absolute($value);
-	}
 	$self->{uc($name)} = $value;
     }
-    # This may go away, in mid 1996
-    delete $self->{Correct_relativ_directories};
 
     # catch old-style 'potential_libs' and inform user how to 'upgrade'
     if (defined $self->{potential_libs}){
@@ -855,18 +866,26 @@ Makefiles with a single invocation of WriteMakefile().
 
 =head2 How To Write A Makefile.PL
 
-The short answer is: Don't. Run h2xs(1) before you start thinking
-about writing a module. For so called pm-only modules that consist of
-C<*.pm> files only, h2xs has the very useful C<-X> switch. This will
-generate dummy files of all kinds that are useful for the module
-developer.
+The short answer is: Don't.
+
+        Always begin with h2xs.
+        Always begin with h2xs!
+        ALWAYS BEGIN WITH H2XS!
+
+even if you're not building around a header file, and even if you
+don't have an XS component.
+
+Run h2xs(1) before you start thinking about writing a module. For so
+called pm-only modules that consist of C<*.pm> files only, h2xs has
+the C<-X> switch. This will generate dummy files of all kinds that are
+useful for the module developer.
 
 The medium answer is:
 
     use ExtUtils::MakeMaker;
     WriteMakefile( NAME => "Foo::Bar" );
 
-The long answer is below.
+The long answer is the rest of the manpage :-)
 
 =head2 Default Makefile Behaviour
 
@@ -892,7 +911,7 @@ Other interesting targets in the generated Makefile are
 
 =head2 make test
 
-MakeMaker checks for the existence of a file named "test.pl" in the
+MakeMaker checks for the existence of a file named F<test.pl> in the
 current directory and if it exists it adds commands to the test target
 of the generated Makefile that will execute the script with the proper
 set of perl C<-I> options.
@@ -902,6 +921,22 @@ add commands to the test target of the generated Makefile that execute
 all matching files via the L<Test::Harness> module with the C<-I>
 switches set correctly.
 
+=head2 make testdb
+
+A useful variation of the above is the target C<testdb>. It runs the
+test under the Perl debugger (see L<perldebug>). If the file
+F<test.pl> exists in the current directory, it is used for the test.
+
+If you want to debug some other testfile, set C<TEST_FILE> variable
+thusly:
+
+  make testdb TEST_FILE=t/mytest.t
+
+By default the debugger is called using C<-d> option to perl. If you
+want to specify some other option, set C<TESTDB_SW> variable:
+
+  make testdb TESTDB_SW=-Dx
+
 =head2 make install
 
 make alone puts all relevant files into directories that are named by
@@ -909,7 +944,7 @@ the macros INST_LIB, INST_ARCHLIB, INST_SCRIPT, INST_MAN1DIR, and
 INST_MAN3DIR. All these default to something below ./blib if you are
 I<not> building below the perl source directory. If you I<are>
 building below the perl source, INST_LIB and INST_ARCHLIB default to
-../../lib, and INST_SCRIPT is not defined.
+ ../../lib, and INST_SCRIPT is not defined.
 
 The I<install> target of the generated Makefile copies the files found
 below each of the INST_* directories to their INSTALL*
@@ -931,9 +966,7 @@ The INSTALL... macros in turn default to their %Config
 
 You can check the values of these variables on your system with
 
-    perl -MConfig -le 'print join $/, map 
-        sprintf("%20s: %s", $_, $Config{$_}),
-        grep /^install/, keys %Config'
+    perl '-V:install.*'
 
 And to check the sequence in which the library directories are
 searched by perl, run
@@ -941,18 +974,29 @@ searched by perl, run
     perl -le 'print join $/, @INC'
 
 
-=head2 PREFIX attribute
+=head2 PREFIX and LIB attribute
 
-The PREFIX attribute can be used to set the INSTALL* attributes in one
-go. The quickest way to install a module in a non-standard place
+PREFIX and LIB can be used to set several INSTALL* attributes in one
+go. The quickest way to install a module in a non-standard place might
+be
+
+    perl Makefile.PL LIB=~/lib
+
+This will install the module's architecture-independent files into
+~/lib, the architecture-dependent files into ~/lib/$archname/auto.
+
+Another way to specify many INSTALL directories with a single
+parameter is PREFIX.
 
     perl Makefile.PL PREFIX=~
 
 This will replace the string specified by $Config{prefix} in all
 $Config{install*} values.
 
-Note, that the tilde expansion is done by MakeMaker, not by perl by
-default, nor by make.
+Note, that in both cases the tilde expansion is done by MakeMaker, not
+by perl by default, nor by make. Conflicts between parmeters LIB,
+PREFIX and the various INSTALL* arguments are resolved so that 
+XXX
 
 If the user has superuser privileges, and is not working on AFS
 (Andrew File System) or relatives, then the defaults for
@@ -1113,6 +1157,11 @@ Ref to array of *.c file names. Initialised from a directory scan
 and the values portion of the XS attribute hash. This is not
 currently used by MakeMaker but may be handy in Makefile.PLs.
 
+=item CCFLAGS
+
+String that will be included in the compiler call command line between
+the arguments INC and OPTIMIZE.
+
 =item CONFIG
 
 Arrayref. E.g. [qw(archname manext)] defines ARCHNAME & MANEXT from
@@ -1137,7 +1186,7 @@ so
 =item CONFIGURE
 
 CODE reference. The subroutine should return a hash reference. The
-hash may contain further attributes, e.g. {LIBS => ...}, that have to
+hash may contain further attributes, e.g. {LIBS =E<gt> ...}, that have to
 be determined by some evaluation method.
 
 =item DEFINE
@@ -1212,6 +1261,10 @@ Perl binary able to run this extension.
 =item H
 
 Ref to array of *.h file names. Similar to C.
+
+=item IMPORTS
+
+IMPORTS is only used on OS/2.
 
 =item INC
 
@@ -1322,6 +1375,11 @@ specify ld flags)
 
 The filename of the perllibrary that will be used together with this
 extension. Defaults to libperl.a.
+
+=item LIB
+
+LIB can only be set at C<perl Makefile.PL> time. It has the effect of
+setting both INSTALLPRIVLIB and INSTALLSITELIB to that value regardless any
 
 =item LIBS
 
@@ -1515,15 +1573,17 @@ routine requires that the file named by VERSION_FROM contains one
 single line to compute the version number. The first line in the file
 that contains the regular expression
 
-    /(\$[\w:]*\bVERSION)\b.*=/
+    /([\$*])(([\w\:\']*)\bVERSION)\b.*\=/
 
 will be evaluated with eval() and the value of the named variable
 B<after> the eval() will be assigned to the VERSION attribute of the
 MakeMaker object. The following lines will be parsed o.k.:
 
     $VERSION = '1.00';
-    ( $VERSION ) = '$Revision: 1.1.1.1 $ ' =~ /\$Revision:\s+([^\s]+)/;
+    *VERSION = \'1.01';
+    ( $VERSION ) = '$Revision: 1.2 $ ' =~ /\$Revision:\s+([^\s]+)/;
     $FOO::VERSION = '1.10';
+    *FOO::VERSION = \'1.11';
 
 but these will fail:
 
@@ -1531,9 +1591,16 @@ but these will fail:
     local $VERSION = '1.02';
     local $FOO::VERSION = '1.30';
 
-The file named in VERSION_FROM is added as a dependency to Makefile to
-guarantee, that the Makefile contains the correct VERSION macro after
-a change of the file.
+The file named in VERSION_FROM is not added as a dependency to
+Makefile. This is not really correct, but it would be a major pain
+during development to have to rewrite the Makefile for any smallish
+change in that file. If you want to make sure that the Makefile
+contains the correct VERSION macro after any change of the file, you
+would have to do something like
+
+    depend => { Makefile => '$(VERSION_FROM)' }
+
+See attribute C<depend> below.
 
 =item XS
 
@@ -1644,7 +1711,8 @@ either say:
 or you can edit the default by saying something like:
 
 	sub MY::c_o {
-            my($inherited) = shift->SUPER::c_o(@_);
+	    package MY;	# so that "SUPER" works right
+	    my $inherited = shift->SUPER::c_o(@_);
 	    $inherited =~ s/old text/new text/;
 	    $inherited;
 	}
@@ -1797,11 +1865,10 @@ ExtUtils::Install, ExtUtils::embed
 
 =head1 AUTHORS
 
-Andy Dougherty F<E<lt>doughera@lafcol.lafayette.eduE<gt>>, Andreas
-KE<ouml>nig F<E<lt>A.Koenig@franz.ww.TU-Berlin.DEE<gt>>, Tim Bunce
-F<E<lt>Tim.Bunce@ig.co.ukE<gt>>.  VMS support by Charles Bailey
-F<E<lt>bailey@genetics.upenn.eduE<gt>>. OS/2 support by Ilya
-Zakharevich F<E<lt>ilya@math.ohio-state.eduE<gt>>. Contact the
+Andy Dougherty <F<doughera@lafcol.lafayette.edu>>, Andreas KE<ouml>nig
+<F<A.Koenig@franz.ww.TU-Berlin.DE>>, Tim Bunce <F<Tim.Bunce@ig.co.uk>>.
+VMS support by Charles Bailey <F<bailey@genetics.upenn.edu>>.  OS/2
+support by Ilya Zakharevich <F<ilya@math.ohio-state.edu>>.  Contact the
 makemaker mailing list C<mailto:makemaker@franz.ww.tu-berlin.de>, if
 you have any questions.
 

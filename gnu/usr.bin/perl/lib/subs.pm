@@ -15,9 +15,15 @@ This will predeclare all the subroutine whose names are
 in the list, allowing you to use them without parentheses
 even before they're declared.
 
-See L<perlmod/Pragmatic Modules> and L<strict/subs>.
+Unlike pragmas that affect the C<$^H> hints variable, the C<use vars> and
+C<use subs> declarations are not BLOCK-scoped.  They are thus effective
+for the entire file in which they appear.  You may not rescind such
+declarations with C<no vars> or C<no subs>.
+
+See L<perlmod/Pragmatic Modules> and L<strict/strict subs>.
 
 =cut
+
 require 5.000;
 
 sub import {
