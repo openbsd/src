@@ -1,7 +1,7 @@
 /*
  * Birthday
  *
- * $OpenBSD: calendar.birthday,v 1.21 2002/10/15 15:07:39 mickey Exp $
+ * $OpenBSD: calendar.birthday,v 1.22 2002/10/15 20:48:30 markus Exp $
  */
 
 #ifndef _calendar_birthday_
@@ -157,6 +157,7 @@
 06/01	Brigham Young born, 1801
 06/01	Marilyn Monroe born, 1926
 06/02	Edward Elgar (Sir) born in Worcestershire, England, 1857
+06/03	Franz Kafka dies in Praha, 1924
 06/03	Henry James born, 1811
 06/07	(Eugene Henri) Paul Gauguin born, 1848
 06/07	George Bryan "Beau" Brummel born, 1778
@@ -171,7 +172,7 @@
 06/23	Alan Mathison Turing born, 1912
 06/25	Eric Arthur Blair (a.k.a. George Orwell) born, 1903
 06/27	Helen Keller born, 1880
-07/03	Franz Kafka born, 1883
+07/03	Franz Kafka born in Vienna, 1883
 07/04	Nathaniel Hawthorne born in Salem, Massachusetts, 1804
 07/04	John Adams and Thomas Jefferson die on same day, 1826
 07/06	John Paul Jones born, 1747
