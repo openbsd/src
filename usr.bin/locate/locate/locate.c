@@ -1,4 +1,4 @@
-/*        $OpenBSD: locate.c,v 1.3 1996/08/16 22:00:12 michaels Exp $                                                           */
+/*        $OpenBSD: locate.c,v 1.4 1996/08/30 12:54:18 michaels Exp $                                                           */
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)locate.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: locate.c,v 1.3 1996/08/16 22:00:12 michaels Exp $";
+static char rcsid[] = "$OpenBSD: locate.c,v 1.4 1996/08/30 12:54:18 michaels Exp $";
 #endif
 #endif /* not lint */
 
@@ -103,7 +103,7 @@ main(argc, argv)
 		    _PATH_FCODES);
 		exit(1);
 	}
-	while (*(++argv) != NULL)
+	while (*(++argv) != NUL)
 		fastfind(*argv);
 	
 	return 0;
@@ -136,15 +136,15 @@ fastfind(pathpart)
 				c &= PARITY - 1;
 				*p++ = bigram1[c], *p++ = bigram2[c];
 			}
-		*p-- = NULL;
+		*p-- = NUL;
 		cutoff = (found ? path : path + count);
 		for (found = 0, s = p; s >= cutoff; s--)
 			if (*s == *patend) {	/* fast first char check */
-				for (p = patend - 1, q = s - 1; *p != NULL;
+				for (p = patend - 1, q = s - 1; *p != NUL;
 				    p--, q--)
 					if (*q != *p)
 						break;
-				if (*p == NULL) {	/* fast match success */
+				if (*p == NUL) {	/* fast match success */
 					found = 1;
 					if (!globflag || !fnmatch(pathpart, path, 0))
 						(void)printf("%s\n", path);

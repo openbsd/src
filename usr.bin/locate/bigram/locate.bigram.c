@@ -1,4 +1,4 @@
-/*       $OpenBSD: locate.bigram.c,v 1.3 1996/08/16 22:00:10 michaels Exp $                                                            */ 
+/*       $OpenBSD: locate.bigram.c,v 1.4 1996/08/30 12:54:16 michaels Exp $                                                            */ 
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -45,7 +45,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)locate.bigram.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: locate.bigram.c,v 1.3 1996/08/16 22:00:10 michaels Exp $";
+static char rcsid[] = "$OpenBSD: locate.bigram.c,v 1.4 1996/08/30 12:54:16 michaels Exp $";
 #endif
 #endif /* not lint */
 
@@ -77,23 +77,23 @@ int main(void)
 			continue;
 
 		/* Squelch characters that would botch the decoding. */
-		for (cp = path; *cp != NULL; cp++) {
+		for (cp = path; *cp != NUL; cp++) {
 			/* chop newline */
 			if (*cp == '\n')
-				*cp = NULL;
+				*cp = NUL;
 			/* range */
 			else if (*cp < ASCII_MIN || *cp > ASCII_MAX)
 				*cp = '?';
 		}
 		/* skip longest common prefix */
-		for (cp = path; *cp == *oldpath && *cp != NULL; cp++, oldpath++)
+		for (cp = path; *cp == *oldpath && *cp != NUL; cp++, oldpath++)
 			;
 		/*
 		 * output post-residue bigrams only
 		 */
 
 		/* check later for boundary */
-		while ( *cp != NULL && *(cp+1) != NULL ) {
+		while ( *cp != NUL && *(cp+1) != NUL ) {
 			bigram[*cp][*(cp+1)]++;
 			cp += 2;
 		}

@@ -1,4 +1,4 @@
-/*        $OpenBSD: locate.code.c,v 1.3 1996/08/16 22:00:11 michaels Exp $                                                           */
+/*        $OpenBSD: locate.code.c,v 1.4 1996/08/30 12:54:17 michaels Exp $                                                           */
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)locate.code.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: locate.code.c,v 1.3 1996/08/16 22:00:11 michaels Exp $";
+static char rcsid[] = "$OpenBSD: locate.code.c,v 1.4 1996/08/30 12:54:17 michaels Exp $";
 #endif
 #endif /* not lint */
 
@@ -151,7 +151,7 @@ main(argc, argv)
 	    	for (j = 0; j < UCHAR_MAX; j++) 
 			big[i][j] = (bg_t)-1;
 
-	for (cp = bigrams, i = 0; *cp != NULL; i += 2, cp += 2)
+	for (cp = bigrams, i = 0; *cp != NUL; i += 2, cp += 2)
 	        big[(int)*cp][(int)*(cp + 1)] = (bg_t)i;
 #endif
 
@@ -165,10 +165,10 @@ main(argc, argv)
 			continue;
 
 		/* Squelch characters that would botch the decoding. */
-		for (cp = path; *cp != NULL; cp++) {
+		for (cp = path; *cp != NUL; cp++) {
 			/* chop newline */
 			if (*cp == '\n')
-				*cp = NULL;
+				*cp = NUL;
 			/* range */
 			else if (*cp < ASCII_MIN || *cp > ASCII_MAX)
 				*cp = '?';
@@ -188,8 +188,8 @@ main(argc, argv)
 			if (putchar(diffcount) == EOF)
 				err(1, "stdout");
 
-		while (*cp != NULL) {
-			if (*(cp + 1) == NULL) {
+		while (*cp != NUL) {
+			if (*(cp + 1) == NUL) {
 				if (putchar(*cp) == EOF)
 					err(1, "stdout");
 				break;
@@ -229,10 +229,10 @@ bgindex(bg)			/* Return location of bg in bigrams or -1. */
 
 	bg0 = bg[0];
 	bg1 = bg[1];
-	for (p = bigrams; *p != NULL; p++)
+	for (p = bigrams; *p != NUL; p++)
 		if (*p++ == bg0 && *p == bg1)
 			break;
-	return (*p == NULL ? -1 : (--p - bigrams));
+	return (*p == NUL ? -1 : (--p - bigrams));
 }
 #endif /* !LOOKUP */
 
