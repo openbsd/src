@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.58 2002/09/23 23:28:15 itojun Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.59 2002/10/09 20:25:32 itojun Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -720,9 +720,10 @@ nd6_lookup(addr6, create, ifp)
 	    rt->rt_gateway->sa_family != AF_LINK || rt->rt_llinfo == NULL ||
 	    (ifp && rt->rt_ifa->ifa_ifp != ifp)) {
 		if (create) {
-			log(LOG_DEBUG,
+			nd6log((LOG_DEBUG,
 			    "nd6_lookup: failed to lookup %s (if = %s)\n",
-			    ip6_sprintf(addr6), ifp ? ifp->if_xname : "unspec");
+			    ip6_sprintf(addr6),
+			    ifp ? ifp->if_xname : "unspec"));
 		}
 		return (NULL);
 	}
