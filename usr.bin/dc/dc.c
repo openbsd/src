@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.5 2004/01/13 08:17:41 otto Exp $	*/
+/*	$OpenBSD: dc.c,v 1.6 2004/10/18 07:49:00 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -17,11 +17,12 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: dc.c,v 1.5 2004/01/13 08:17:41 otto Exp $";
+static const char rcsid[] = "$OpenBSD: dc.c,v 1.6 2004/10/18 07:49:00 otto Exp $";
 #endif /* not lint */
 
 #include <err.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "extern.h"
@@ -33,7 +34,7 @@ extern char		*__progname;
 static __dead void
 usage(void)
 {
-	fprintf(stderr, "usage: %s [-x] [file]\n", __progname);
+	fprintf(stderr, "usage: %s [-x] [-e expr] [file]\n", __progname);
 	exit(1);
 }
 
@@ -44,10 +45,19 @@ main(int argc, char *argv[])
 	bool		extended_regs = false;
 	FILE		*file;
 	struct source	src;
+	char		*buf, *p;
 
+	if ((buf = strdup("")) == NULL)
+		err(1, NULL);
 	/* accept and ignore a single dash to be 4.4BSD dc(1) compatible */
-	while ((ch = getopt(argc, argv, "x-")) != -1) {
+	while ((ch = getopt(argc, argv, "e:x-")) != -1) {
 		switch (ch) {
+		case 'e':
+			p = buf;
+			if (asprintf(&buf, "%s %s", buf, optarg) == -1)
+				err(1, NULL);
+			free(p);
+			break;
 		case 'x':
 			extended_regs = true;
 			break;
@@ -66,7 +76,15 @@ main(int argc, char *argv[])
 
 	if (argc > 1)
 		usage();
-	else if (argc == 1) {
+	if (buf[0] != '\0') {
+		src_setstring(&src, buf);
+		reset_bmachine(&src);
+		eval();
+		free(buf);
+		if (argc == 0)
+			return (0);
+	}
+	if (argc == 1) {
 		file = fopen(argv[0], "r");
 		if (file == NULL)
 			err(1, "cannot open file %s", argv[0]);
@@ -74,14 +92,15 @@ main(int argc, char *argv[])
 		reset_bmachine(&src);
 		eval();
 		fclose(file);
+		/*
+		 * BSD and Solaris dc(1) continue with stdin after processing
+		 * the file given as the argument. We follow GNU dc(1).
+		 */
+		 return (0);
 	}
-	/*
-	 * BSD dc and Solaris dc continue with stdin after processing
-	 * the file given as the argument.
-	 */
 	src_setstream(&src, stdin);
 	reset_bmachine(&src);
 	eval();
 
-	return 0;
+	return (0);
 }

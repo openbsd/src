@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcode.c,v 1.23 2004/09/14 22:22:46 deraadt Exp $	*/
+/*	$OpenBSD: bcode.c,v 1.24 2004/10/18 07:49:00 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: bcode.c,v 1.23 2004/09/14 22:22:46 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: bcode.c,v 1.24 2004/10/18 07:49:00 otto Exp $";
 #endif /* not lint */
 
 #include <ssl/ssl.h>
@@ -1695,7 +1695,7 @@ eval(void)
 		ch = readch();
 		if (ch == EOF) {
 			if (bmachine.readsp == 0)
-				exit(0);
+				return;
 			src_free();
 			bmachine.readsp--;
 			continue;

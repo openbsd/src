@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dc.1,v 1.18 2003/12/01 09:13:55 otto Exp $
+.\"	$OpenBSD: dc.1,v 1.19 2004/10/18 07:49:00 otto Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -42,6 +42,7 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl x
+.Op Fl e Ar expression
 .Op Ar file
 .Sh DESCRIPTION
 .Nm
@@ -63,6 +64,18 @@ which implements functions and reasonable control
 structures for programs.
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl e Ar expression
+Evaluate
+.Ar expression .
+If multiple
+.Fl e
+options are specified, they will be processed in the order given.
+If no
+.Ar file
+argument is given, execution will stop after processing the expressions
+given on the command line,
+otherwise processing will continue with the contents of
+.Ar file .
 .It Fl x
 Enable extended register mode.
 This mode is used by
