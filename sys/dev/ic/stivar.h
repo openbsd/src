@@ -1,4 +1,4 @@
-/*	$OpenBSD: stivar.h,v 1.13 2003/08/19 02:52:38 mickey Exp $	*/
+/*	$OpenBSD: stivar.h,v 1.14 2003/08/19 03:13:07 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -40,6 +40,7 @@ struct sti_softc {
 #define	STI_CONSOLE	0x0004
 	int	sc_devtype;
 	int	sc_nscreens;
+	int	sc_bpp;
 
 	bus_space_tag_t iot, memt;
 	bus_space_handle_t ioh, romh, fbh;

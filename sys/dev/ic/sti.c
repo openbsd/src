@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti.c,v 1.31 2003/08/19 02:52:38 mickey Exp $	*/
+/*	$OpenBSD: sti.c,v 1.32 2003/08/19 03:13:07 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -323,6 +323,7 @@ sti_attach_common(sc)
 	    ecfg.crt_hw[0], ecfg.crt_hw[1], ecfg.crt_hw[2]);
 #endif
 	sc->sc_wsmode = WSDISPLAYIO_MODE_EMUL;
+	sc->sc_bpp = cfg.bppu;
 	printf(": %s rev %d.%02d;%d, ID 0x%016llX\n"
 	    "%s: %dx%d frame buffer, %dx%dx%d display, offset %dx%d\n",
 	    cfg.name, dd->dd_grrev >> 4, dd->dd_grrev & 0xf, dd->dd_lrrev,
@@ -621,8 +622,8 @@ sti_ioctl(v, cmd, data, flag, p)
 		wdf = (struct wsdisplay_fbinfo *)data;
 		wdf->height = sc->sc_cfg.scr_height;
 		wdf->width  = sc->sc_cfg.scr_width;
-		wdf->depth  = 8;	/* XXX */
-		wdf->cmsize = 256;
+		wdf->depth  = sc->sc_bpp;
+		wdf->cmsize = STI_NCMAP;
 		break;
 
 	case WSDISPLAYIO_LINEBYTES:
