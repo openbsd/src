@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.40 1999/08/08 00:34:38 niklas Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.41 1999/08/20 15:37:13 art Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -2123,7 +2123,7 @@ vfs_register(vfs)
 
 #ifdef DIAGNOSTIC
 	/* Paranoia? */
-	if (vfs->vfc_refcount > 0)
+	if (vfs->vfc_refcount != 0)
 		printf("vfs_register called with vfc_refcount > 0\n");
 #endif
 
