@@ -1,4 +1,4 @@
-/* $OpenBSD: signature.c,v 1.13 2002/06/09 02:12:55 deraadt Exp $ */
+/* $OpenBSD: signature.c,v 1.14 2002/06/17 19:39:20 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -516,7 +516,7 @@ kn_decode_key(struct keynote_deckey *dc, char *key, int keytype)
 	kk = dc->dec_key;
 	if (keytype == KEYNOTE_PRIVATE_KEY)
 	{
-	    if (d2i_DSAPrivateKey((DSA **) &kk, &decoded, len) == (DSA *) NULL)
+	    if (d2i_DSAPrivateKey((DSA **) &kk,(const unsigned char **) &decoded, len) == (DSA *) NULL)
 	    {
 		if (ptr != (unsigned char *) NULL)
 		  free(ptr);
@@ -527,7 +527,7 @@ kn_decode_key(struct keynote_deckey *dc, char *key, int keytype)
 	}
 	else
 	{
-	    if (d2i_DSAPublicKey((DSA **) &kk, &decoded, len) == (DSA *) NULL)
+	    if (d2i_DSAPublicKey((DSA **) &kk, (const unsigned char **) &decoded, len) == (DSA *) NULL)
 	    {
 		if (ptr != (unsigned char *) NULL)
 		  free(ptr);
@@ -557,7 +557,7 @@ kn_decode_key(struct keynote_deckey *dc, char *key, int keytype)
         kk = dc->dec_key;
         if (keytype == KEYNOTE_PRIVATE_KEY)
         {
-            if (d2i_RSAPrivateKey((RSA **) &kk, &decoded, len) == (RSA *) NULL)
+            if (d2i_RSAPrivateKey((RSA **) &kk, (const unsigned char **) &decoded, len) == (RSA *) NULL)
             {
                 if (ptr != (unsigned char *) NULL)
                   free(ptr);
@@ -568,7 +568,7 @@ kn_decode_key(struct keynote_deckey *dc, char *key, int keytype)
         }
         else
         {
-            if (d2i_RSAPublicKey((RSA **) &kk, &decoded, len) == (RSA *) NULL)
+            if (d2i_RSAPublicKey((RSA **) &kk, (const unsigned char **) &decoded, len) == (RSA *) NULL)
             {
                 if (ptr != (unsigned char *) NULL)
                   free(ptr);
