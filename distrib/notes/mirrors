@@ -1,9 +1,12 @@
-dnl	$OpenBSD: mirrors,v 1.55 2004/05/21 19:51:08 pvalchev Exp $
+dnl	$OpenBSD: mirrors,v 1.56 2004/06/07 07:04:22 david Exp $
 This is a list of currently known FTP servers at the time of the OSREV release.
 For a more recent list, please refer to http://www.OpenBSD.org/ftp.html
 
 Main server in Canada:
     ftp://ftp.OpenBSD.org/pub/OpenBSD (Alberta)
+
+Argentina:
+    ftp://ftp.openbsd.md5.com.ar/pub/OpenBSD (Buenos Aires)
 
 Australia:
     ftp://mirror.aarnet.edu.au/pub/OpenBSD (Canberra, .au only)
@@ -17,6 +20,7 @@ Austria:
     ftp://playboy.wu-wien.ac.at/pub/OpenBSD (Vienna)
 
 Belgium:
+    ftp://ftp.scarlet.be/pub/openbsd
     ftp://openbsd.rug.ac.be/pub/OpenBSD (Ghent)
 
 Brazil:
@@ -81,6 +85,9 @@ Japan:
     ftp://ftp.jp.openbsd.org/pub/OpenBSD (Tokyo)
     ftp://ftp.kddlabs.co.jp/OpenBSD (Tokyo)
 
+Latvia:
+    ftp://ftp.bsd.lv/pub/OpenBSD
+
 Lithuania:
     ftp://ftp.openbsd.lt/pub/OpenBSD
 
@@ -96,6 +103,9 @@ Norway:
 Poland:
     ftp://sunsite.icm.edu.pl/pub/OpenBSD
     ftp://ftp.man.szczecin.pl/pub/BSD/OpenBSD
+
+Portugal:
+    ftp://ftp.fmed.uc.pt/pub/OpenBSD
 
 Romania:
     ftp://ftp.physics.uvt.ro/pub/OpenBSD (Timisoara)
@@ -137,7 +147,7 @@ USA:
     ftp://ftp3.usa.openbsd.org/pub/OpenBSD (Boulder, CO)
     ftp.lug.udel.edu/pub/OpenBSD (Newark, DE)
     ftp://reflection.ncsa.uiuc.edu/pub/OpenBSD (Champaign, IL)
-    ftp://ftp.src.uchicago.edu/pub/openbsd (Chicago, IL)
+    ftp://mirror.sg.depaul.edu/pub/OpenBSD (Chicago, IL)
     ftp://rt.fm/pub/OpenBSD (Lake in the Hills, IL)
     ftp://ftp7.usa.openbsd.org/pub/os/OpenBSD (West Lafayette, IN)
     ftp://ftp.groupbsd.org/pub/OpenBSD (Hillsborough, NC)
