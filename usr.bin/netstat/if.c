@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.13 1997/06/29 21:46:00 millert Exp $	*/
+/*	$OpenBSD: if.c,v 1.14 1997/06/30 03:11:53 millert Exp $	*/
 /*	$NetBSD: if.c,v 1.16.4.2 1996/06/07 21:46:46 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-static char *rcsid = "$OpenBSD: if.c,v 1.13 1997/06/29 21:46:00 millert Exp $";
+static char *rcsid = "$OpenBSD: if.c,v 1.14 1997/06/30 03:11:53 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -187,7 +187,7 @@ intpr(interval, ifnetaddr)
 					while (multiaddr != 0) {
 						kread(multiaddr, (char *)&inm,
 						    sizeof inm);
-						printf("\n%23s %-15.15s ", "",
+						printf("\n%23s %-17.17s ", "",
 						    routename(inm.inm_addr.s_addr));
 						multiaddr = (u_long)inm.inm_list.le_next;
 					}
