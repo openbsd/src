@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.61 2004/01/04 19:39:46 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.62 2004/01/04 20:07:30 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -843,7 +843,7 @@ session_open(struct peer *peer)
 		bgp_fsm(peer, EVNT_CON_FATAL);
 	}
 
-	peer->stats.msg_send++;
+	peer->stats.msg_sent_open++;
 }
 
 void
@@ -885,13 +885,14 @@ session_keepalive(struct peer *peer)
 	}
 
 	start_timer_keepalive(peer);
-	peer->stats.msg_send++;
+	peer->stats.msg_sent_keepalive++;
 }
 
 void
 session_update(struct peer *peer)
 {
 	start_timer_keepalive(peer);
+	peer->stats.msg_sent_update++;
 }
 
 void
@@ -936,7 +937,7 @@ session_notification(struct peer *peer, u_int8_t errcode, u_int8_t subcode,
 		buf_free(buf);
 		bgp_fsm(peer, EVNT_CON_FATAL);
 	}
-	peer->stats.msg_send++;
+	peer->stats.msg_sent_notification++;
 }
 
 int
@@ -1029,15 +1030,19 @@ session_dispatch_msg(struct pollfd *pfd, struct peer *peer)
 				switch (msgtype) {
 				case OPEN:
 					bgp_fsm(peer, EVNT_RCVD_OPEN);
+					peer->stats.msg_rcvd_open++;
 					break;
 				case UPDATE:
 					bgp_fsm(peer, EVNT_RCVD_UPDATE);
+					peer->stats.msg_rcvd_update++;
 					break;
 				case NOTIFICATION:
 					bgp_fsm(peer, EVNT_RCVD_NOTIFICATION);
+					peer->stats.msg_rcvd_notification++;
 					break;
 				case KEEPALIVE:
 					bgp_fsm(peer, EVNT_RCVD_KEEPALIVE);
+					peer->stats.msg_rcvd_update++;
 					break;
 				default:	/* cannot happen */
 					session_notification(peer, ERR_HEADER,
@@ -1047,7 +1052,6 @@ session_dispatch_msg(struct pollfd *pfd, struct peer *peer)
 					    " %u", msgtype);
 				}
 				rpos += msglen;
-				peer->stats.msg_rcvd++;
 			}
 			if (rpos < av) {
 				left = av - rpos;

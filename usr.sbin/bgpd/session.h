@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.9 2004/01/04 19:39:46 henning Exp $ */
+/*	$OpenBSD: session.h,v 1.10 2004/01/04 20:07:30 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -117,8 +117,14 @@ struct ctl_conn {
 TAILQ_HEAD(ctl_conns, ctl_conn)	ctl_conns;
 
 struct peer_stats {
-	u_int64_t		 msg_rcvd;
-	u_int64_t		 msg_send;
+	u_int64_t		 msg_rcvd_open;
+	u_int64_t		 msg_rcvd_update;
+	u_int64_t		 msg_rcvd_notification;
+	u_int64_t		 msg_rcvd_keepalive;
+	u_int64_t		 msg_sent_open;
+	u_int64_t		 msg_sent_update;
+	u_int64_t		 msg_sent_notification;
+	u_int64_t		 msg_sent_keepalive;
 	time_t			 last_updown;
 	time_t			 last_read;
 };

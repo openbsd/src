@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.12 2004/01/04 19:44:27 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.13 2004/01/04 20:07:30 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -189,10 +189,14 @@ show_summary_msg(struct imsg *imsg)
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_SHOW_NEIGHBOR:
 		p = imsg->data;
-		printf("%-15s %5u %10llu %10llu %8s %s\n",
+		printf("%-15s %5u %10llu %10llu %-8s %s\n",
 		    inet_ntoa(p->conf.remote_addr.sin_addr),
-		    p->conf.remote_as, p->stats.msg_rcvd,
-		    p->stats.msg_send, fmt_timeframe(p->stats.last_updown),
+		    p->conf.remote_as,
+		    p->stats.msg_rcvd_open + p->stats.msg_rcvd_notification +
+		    p->stats.msg_rcvd_update + p->stats.msg_rcvd_keepalive,
+		    p->stats.msg_sent_open + p->stats.msg_sent_notification +
+		    p->stats.msg_sent_update + p->stats.msg_sent_keepalive,
+		    fmt_timeframe(p->stats.last_updown),
 		    statenames[p->state]);
 		break;
 	case IMSG_CTL_END:
