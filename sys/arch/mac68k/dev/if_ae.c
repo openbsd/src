@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ae.c,v 1.15 2001/02/20 19:39:31 mickey Exp $	*/
+/*	$OpenBSD: if_ae.c,v 1.16 2001/07/09 22:41:14 fgsch Exp $	*/
 /*	$NetBSD: if_ae.c,v 1.62 1997/04/24 16:52:05 scottr Exp $	*/
 
 /*
@@ -841,7 +841,6 @@ aeread(sc, buf, len)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct mbuf *m;
-	struct ether_header *eh;
 
 	/* Pull packet off interface. */
 	m = aeget(sc, buf, len);
@@ -852,9 +851,6 @@ aeread(sc, buf, len)
 
 	ifp->if_ipackets++;
 
-	/* We assume that the header fits entirely in one mbuf. */
-	eh = mtod(m, struct ether_header *);
-
 #if NBPFILTER > 0
 	/*
 	 * Check if there's a BPF listener on this interface.
@@ -864,9 +860,7 @@ aeread(sc, buf, len)
 		bpf_mtap(ifp->if_bpf, m);
 #endif
 
-	/* Fix up data start offset in mbuf to point past ether header. */
-	m_adj(m, sizeof(struct ether_header));
-	ether_input(ifp, eh, m);
+	ether_input_mbuf(ifp, m);
 }
 
 /*

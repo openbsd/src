@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mc.c,v 1.3 2001/02/20 19:39:31 mickey Exp $	*/
+/*	$OpenBSD: if_mc.c,v 1.4 2001/07/09 22:41:14 fgsch Exp $	*/
 /*	$NetBSD: if_mc.c,v 1.4 1998/01/12 19:22:09 thorpej Exp $	*/
 
 /*-
@@ -618,7 +618,6 @@ mace_read(sc, pkt, len)
 	int len;
 {
 	struct ifnet *ifp = &sc->sc_if;
-	struct ether_header *eh = (struct ether_header *)pkt;
 	struct mbuf *m;
 
 	if (len <= sizeof(struct ether_header) ||
@@ -647,9 +646,8 @@ mace_read(sc, pkt, len)
 
 	ifp->if_ipackets++;
 
-	/* Pass the packet up, with the ether header sort-of removed. */
-	m_adj(m, sizeof(struct ether_header));
-	ether_input(ifp, eh, m);
+	/* Pass the packet up. */
+	ether_input_mbuf(ifp, m);
 }
 
 /*
