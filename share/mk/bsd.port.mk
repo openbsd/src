@@ -1,6 +1,6 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
-#	$OpenBSD: bsd.port.mk,v 1.63 1999/02/17 23:52:56 marc Exp $
+#	$OpenBSD: bsd.port.mk,v 1.64 1999/02/18 00:01:47 marc Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -28,7 +28,7 @@ OpenBSD_MAINTAINER=	marc@OpenBSD.ORG
 # NEED_VERSION: we need at least this version of bsd.port.mk for this 
 # port  to build
 
-FULL_REVISION=$$OpenBSD: bsd.port.mk,v 1.63 1999/02/17 23:52:56 marc Exp $$
+FULL_REVISION=$$OpenBSD: bsd.port.mk,v 1.64 1999/02/18 00:01:47 marc Exp $$
 .if defined(NEED_VERSION)
 VERSION_REVISION=${FULL_REVISION:M[0-9]*.*}
 
@@ -1906,7 +1906,7 @@ run-depends:	_DEPENDS_USE
 lib-depends:
 .if defined(LIB_DEPENDS)
 .if !defined(NO_DEPENDS)
-.if (${MACHINE_ARCH} == "alpha")
+.if defined(NO_SHARED_LIBS)
 	@for i in ${LIB_DEPENDS}; do \
 		lib=`${ECHO} $$i | ${SED} -e 's/:.*//' -e 's|\([^\\]\)\.|\1\\\\.|g'`; \
 		dir=`${ECHO} $$i | ${SED} -e 's/[^:]*://'`; \
