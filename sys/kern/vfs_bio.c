@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.19 1997/11/07 23:01:36 csapuntz Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.20 1998/01/10 23:44:28 csapuntz Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -333,14 +333,6 @@ bwrite(bp)
 	return (rv);
 }
 
-int
-vn_bwrite(v)
-	void *v;
-{
-	struct vop_bwrite_args *ap = v;
-
-	return (bwrite(ap->a_bp));
-}
 
 /*
  * Delayed write.
@@ -359,6 +351,8 @@ void
 bdwrite(bp)
 	struct buf *bp;
 {
+	int s;
+
 	/*
 	 * If the block hasn't been seen before:
 	 *	(1) Mark it as having been seen,
@@ -368,7 +362,9 @@ bdwrite(bp)
 	 */
 	if (!ISSET(bp->b_flags, B_DELWRI)) {
 		SET(bp->b_flags, B_DELWRI);
+		s = splbio();
 		reassignbuf(bp, bp->b_vp);
+		splx(s);
 		curproc->p_stats->p_ru.ru_oublock++;	/* XXX */
 	}
 
@@ -402,10 +398,13 @@ bdirty(bp)
 	struct buf *bp;
 {
 	struct proc *p = curproc;       /* XXX */
+	int s;
 
 	if (ISSET(bp->b_flags, B_DELWRI) == 0) {
 		SET(bp->b_flags, B_DELWRI);
+		s = splbio();
 		reassignbuf(bp, bp->b_vp);
+		splx(s);
 		if (p)
 			p->p_stats->p_ru.ru_oublock++;
 	}
