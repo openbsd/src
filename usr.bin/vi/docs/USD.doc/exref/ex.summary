@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ex.summary,v 1.5 2003/06/03 02:56:22 millert Exp $
+.\"	$OpenBSD: ex.summary,v 1.6 2004/01/30 23:14:26 jmc Exp $
 .\"
 .\" Copyright (c) 1980, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -47,54 +47,57 @@
 .ps 12
 .ft B
 .ce 1
-Ex/Edit Command Summary (Version 2.0)
+.\" Ex/Edit Command Summary (Version 2.0)
+Ex Command Summary (Version 2.0)
 .sp 1
 .ft R
 .nr VS 11
 .nr PS 9
-.2C
+.\" .2C
 .PP
 .I Ex
-and
-.I edit
-are text editors, used for creating
+.\" and
+.\" .I edit
+is a text editor, used for creating
 and modifying files of text on the \*U
 computer system.
-.I Edit
-is a variant of
-.I ex
-with features designed to
-make it less complicated
-to learn and use.
-In terms of command syntax and effect
-the editors are essentially identical,
-and this command summary applies to both.
+.\" .I Edit
+.\" is a variant of
+.\" .I ex
+.\" with features designed to
+.\" make it less complicated
+.\" to learn and use.
+.\" In terms of command syntax and effect
+.\" the editors are essentially identical,
+.\" and this command summary applies to both.
 .PP
 The summary is meant as a quick reference
 for users already acquainted
 with
-.I edit
-or \fIex\fP.
-Fuller explanations of the editors are available
-in the documents
-.I
-Edit: A Tutorial
-.R
-(a self-teaching introduction) and the
+.\" .I edit
+.\" or
+.I ex .
+A fuller explanation of the editor is available
+in the document
+.\" .I
+.\" Edit: A Tutorial
+.\" .R
+.\" (a self-teaching introduction) and the
 .I
 Ex Reference Manual
 .R
 (the comprehensive reference source for
-both \fIedit\fP and \fIex\fP).
-Both of these writeups are available in the
-Computing Services Library.
+.\" both \fIedit\fP and
+.I ex ).
+.\" Both of these writeups are available in the
+.\" Computing Services Library.
 .PP
 In the examples included with the
 summary, commands and text entered by
 the user are printed in \fBboldface\fR to
 distinguish them from responses printed
 by the computer.
-.sp 0.45v
+.sp 1v
 .LP
 .B
 The Editor Buffer
@@ -115,7 +118,7 @@ file in order to update the
 old version.
 The buffer disappears
 at the end of the editing session.
-.sp 0.45v
+.sp 1v
 .LP
 .B
 Editing: Command and Text Input Modes
@@ -126,10 +129,10 @@ two usual modes of operation:
 \fIcommand\fP mode and \fItext input\fP
 mode.
 (This disregards, for the moment,
-.I open
-and
+.\" .I open
+.\" and
 .I visual
-modes, discussed below.)
+mode, discussed below.)
 In command mode, the editor issues a
 colon prompt (:)
 to show that it is ready to
@@ -141,7 +144,7 @@ Text input mode is initiated by the commands
 \fIappend\fP, \fIinsert\fP, and \fIchange\fP,
 and is terminated by typing a period as the
 first and only character on a line.
-.sp 0.45v
+.sp 1v
 .LP
 .B
 Line Numbers and Command Syntax
@@ -198,21 +201,22 @@ information;
 only
 the more important instances of this
 are mentioned in the summary.
-.sp 0.25v
+.sp 1v
 .LP
 .B
-Open and Visual Modes
+.\" Open and Visual Modes
+Visual Mode
 .PP
 .R
 Besides command and text input modes,
 .I ex
-and
-.I edit
-provide on some CRT terminals other modes of editing,
-.I open
-and
+.\" and
+.\" .I edit
+provides on some CRT terminals another mode of editing:
+.\" .I open
+.\" and
 .I visual .
-In these modes the cursor can
+In this mode the cursor can
 be moved to individual words
 or characters in a line.
 The commands then given are very different
@@ -222,7 +226,7 @@ typed.
 An Introduction to Display Editing with Vi
 .R
 provides a full discussion.
-.sp 0.25v
+.sp 1v
 .LP
 .B
 Special Characters
@@ -232,20 +236,23 @@ Special Characters
 Some characters take on special meanings
 when used in context searches
 and in patterns given to the \fIsubstitute\fP command.
-For \fIedit\fR, these are ``^'' and ``$'',
-meaning the beginning and end of a line,
-respectively.
+.\" For \fIedit\fR, these are ``^'' and ``$'',
+.\" meaning the beginning and end of a line,
+.\" respectively.
 .I Ex
-has the following additional special characters:
+has the following special characters:
+.sp 1v
 .B
 .ce 1
-\&.     &     *     [     ]     ~
+^     $     \&.     &     *     [     ]     ~
 .R
+.sp 1v
 To use one of the special characters as its
 simple graphic representation
 rather than with its special meaning,
 precede it by a backslash (\\).
 The backslash always has a special meaning.
+.sp 1v
 .1C
 .TS
 cp10 cp10 cp10 cp10
@@ -297,9 +304,10 @@ The example places a copy of lines 8 through
 12, inclusive, after line 25.
 T}	T{
 .nf
-\fR:\fB8,12co 25
-\fRLast line copied is printed
-\fR\*c
+\fR:\fB8,12co 25\fP
+Last line copied
+is printed
+\*c
 .fi
 T}
 .SP
@@ -308,8 +316,9 @@ Removes lines from the buffer
 and prints the current line after the deletion.
 T}	T{
 .nf
-\fR:\fB13,15d
-\fRNew current line is printed
+\fR:\fB13,15d\fP
+New current line
+is printed
 \*c
 .fi
 T}
@@ -341,9 +350,11 @@ using the form \fBe!\fR overrides this protective mechanism.
 T}	T{
 .nf
 \fR:\fBe ch10\fR
-No write since last change
+No write since
+last change
 :\fBe! ch10\fR
-"ch10" 3 lines, 62 characters
+"ch10" 3 lines,
+62 characters
 \*c
 .fi
 T}
@@ -355,10 +366,12 @@ If used without \fIname\fR, prints
 the name of the current file.
 T}	T{
 .nf
-\fR:\fBf ch9
-\fR"ch9" [Modified] 3 lines ...
-:\fBf
-\fR"ch9" [Modified] 3 lines ...
+\fR:\fBf ch9\fP
+"ch9" [Modified]
+3 lines ...
+:\fBf\fP
+"ch9" [Modified]
+3 lines ...
 \*c
 .fi
 T}
@@ -389,20 +402,22 @@ In other words, \fB1i\fR has the same effect as \fB0a\fR.
 T}	T{
 .nf
 :\fB1i
-These lines of text will
-be added prior to line 1.
+These lines of text
+will be added prior
+to line 1.
 \&.
 \fR:
 .fi
 T}
 .SP
 \fR(.,.+1)\fBjoin	j	T{
-Join lines together, adjusting white space (spaces
+Join lines together, adjusting whitespace (spaces
 and tabs) as necessary.
 T}	T{
 .nf
 :\fB2,5j\fR
-Resulting line is printed
+Resulting line is
+printed
 :
 .fi
 T}
@@ -412,7 +427,7 @@ T}
 cp10 cp10 cp10 cp10
 ltw(1.0i) lt2w(0.40i)fB ltw(3.0i) ltw(1.8i).
 Name	Abbr	Description	Examples
-.sp 1.75
+.sp 1.75v
 \fR(.,.)\fBlist	l	T{
 \fRPrints lines in a more
 unambiguous way than the \fIprint\fR
@@ -437,7 +452,8 @@ indicated by \fIaddr\fR.
 T}	T{
 .nf
 \fR:\fB12,15m 25\fR
-New current line is printed
+New current line is
+printed
 \*c
 .fi
 T}
@@ -452,25 +468,25 @@ T}	T{
 \*c
 .fi
 T}
-.SP
-\fR(.)\fBopen	o	T{
-Too involved to discuss here,
-but if you enter open mode
-accidentally, press
-the \s-2ESC\s0 key followed by
-\fBq\fR to
-get back into normal editor
-command mode.
-\fIEdit\fP is designed to
-prevent accidental use of
-the open command.
-T}	
+.\" .SP
+.\" \fR(.)\fBopen	o	T{
+.\" Too involved to discuss here,
+.\" but if you enter open mode
+.\" accidentally, press
+.\" the \s-2ESC\s0 key followed by
+.\" \fBq\fR to
+.\" get back into normal editor
+.\" command mode.
+.\" \fIEdit\fP is designed to
+.\" prevent accidental use of
+.\" the open command.
+.\" T}	
 .SP
 \fBpreserve	pre	T{
 Saves a copy of the current buffer contents as though the system had
 just crashed.  This is for use in an emergency when a
 .I write
-command has failed and you don't know how else to save your work.\(dg
+command has failed and you don't know how else to save your work.*
 T}	T{
 .nf
 :\fBpreserve\fR
@@ -490,7 +506,7 @@ T}
 .TE
 .FS
 .ll 6.5i
-\(dg You should seek assistance from a system administrator as soon as
+* You should seek assistance from a system administrator as soon as
 possible after saving a file with the
 .I preserve
 command, because the preserved copy of the file is saved in a
@@ -599,10 +615,12 @@ T}	T{
 .nf
 \fR:\fB1,15d
 \fR15 lines deleted
-new line number 1 is printed
+new line number 1
+is printed
 :\fBu
 \fR15 more lines in file ...
-old line number 1 is printed
+old line number 1
+is printed
 \*c
 .fi
 T}
