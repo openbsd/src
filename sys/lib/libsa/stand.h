@@ -1,4 +1,4 @@
-/*	$OpenBSD: stand.h,v 1.27 1997/08/04 20:31:21 mickey Exp $	*/
+/*	$OpenBSD: stand.h,v 1.28 1997/08/12 21:28:39 mickey Exp $	*/
 /*	$NetBSD: stand.h,v 1.18 1996/11/30 04:35:51 gwr Exp $	*/
 
 /*-
@@ -97,17 +97,8 @@ struct devsw {
 extern struct devsw devsw[];	/* device array */
 extern int ndevs;		/* number of elements in devsw[] */
 
-struct consw {
-	char	*name;	/* console driver name */
-	int	(*cn_probe) __P((void));	/* probe device for presence */
-	void	(*cn_putc) __P((int c));	/* print char */
-	int	(*cn_getc) __P((void));		/* read char */
-	int	(*cn_ischar) __P((void));	/* check input */
-};
-
-extern const struct consw consw[];
-extern const int ncons;
-extern int consdev;
+extern struct consdev constab[];
+extern struct consdev *cn_tab;
 
 struct open_file {
 	int		f_flags;	/* see F_* below */
@@ -190,9 +181,10 @@ int	null_stat __P((struct open_file *f, struct stat *sb));
 int	null_readdir __P((struct open_file *f, char *name));
 int	cons_probe __P((void));
 char	*ttyname __P((int)); /* match userland decl, but ignore !0 */
-void	putc __P((int));    
-int	getc __P((void));
-int	ischar __P((void));
+void	cninit __P((void));
+void	cnputc __P((int));
+int	cngetc __P((void));
+int	cnischar __P((void));
 u_int	sleep __P((u_int));
 void	usleep __P((u_int));
 

@@ -1,8 +1,13 @@
-/*	$OpenBSD: cons.c,v 1.7 1997/08/07 11:32:19 niklas Exp $	*/
+/*	$OpenBSD: cons.c,v 1.8 1997/08/12 21:28:39 mickey Exp $	*/
 
 /*
- * Copyright (c) 1996 Michael Shalayeff
- * All rights reserved.
+ * Copyright (c) 1988 University of Utah.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * the Systems Programming Group of the University of Utah Computer
+ * Science Department.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -14,13 +19,15 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Michael Shalayeff.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
+ * 4. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR 
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
@@ -30,59 +37,67 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
+ * form: OpenBSD: cons.c,v 1.7 1996/04/21 22:19:48
+ * from: OpenBSD: cninit.c,v 1.2 1996/03/30 02:03:45
+ * from: Utah $Hdr: cons.c 1.7 92/01/21$
+ *
+ *	@(#)cons.c	8.2 (Berkeley) 1/12/94
  */
 
-#include <sys/types.h>
-#include <dev/cons.h>
+#include <sys/param.h>
 #include "stand.h"
+#include <dev/cons.h>
 
-static const struct consw *console = &consw[0];
-int consdev;
-
-int
-cons_probe()
+void
+cninit()
 {
-	int i, f = 0;
-	consdev = CN_NORMAL;
-	for (i = 0; i < ncons; i++) {
-		if ((consw[i].cn_probe)() != 0) {
-			if (f == 0)
-				f++, console = &consw[i];
-			printf("%s present\n", consw[i].name);
-		}
+	register struct consdev *cp;
+
+	/*
+	 * Collect information about all possible consoles
+	 * and find the one with highest priority
+	 */
+	for (cp = constab; cp->cn_probe; cp++) {
+		(*cp->cn_probe)(cp);
+		if (cp->cn_pri > CN_DEAD &&
+		    (cn_tab == NULL || cp->cn_pri > cn_tab->cn_pri))
+			cn_tab = cp;
 	}
-	if (!f)	/* not found */
-		printf("no console detected, ");
-	printf("using %s console\n", console->name);
-	return 1;
+	/*
+	 * No console, we can handle it
+	 */
+	if ((cp = cn_tab) == NULL)
+		return;
+	/*
+	 * Turn on console
+	 */
+	(*cp->cn_init)(cp);
 }
 
-char *
-ttyname(fd)
-	int fd;
+int
+cngetc()
 {
-	if (fd)
-		return "(not a tty)";
-	else
-		return console->name;
+	if (cn_tab == NULL)
+		return (0);
+	return ((*cn_tab->cn_getc)(cn_tab->cn_dev));
 }
 
 void
-putc(c)
-	int	c;
+cnputc(c)
+	register int c;
 {
-	(*console->cn_putc)(c);
+	if (cn_tab != NULL && c) {
+		(*cn_tab->cn_putc)(cn_tab->cn_dev, c);
+		if (c == '\n')
+			(*cn_tab->cn_putc)(cn_tab->cn_dev, '\r');
+	}
 }
 
 int
-getc()
+cnischar()
 {
-	return (*console->cn_getc)();
+	if (cn_tab != NULL)
+		return ((*cn_tab->cn_getc)(cn_tab->cn_dev|0x80));
+	else
+		return 0;
 }
-
-int
-ischar()
-{
-	return (*console->cn_ischar)();
-}
-
