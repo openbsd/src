@@ -1,4 +1,4 @@
-/*	$OpenBSD: decl.c,v 1.9 2004/07/21 17:23:52 millert Exp $	*/
+/*	$OpenBSD: decl.c,v 1.10 2004/08/03 00:09:54 deraadt Exp $	*/
 /*	$NetBSD: decl.c,v 1.11 1995/10/02 17:34:16 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: decl.c,v 1.9 2004/07/21 17:23:52 millert Exp $";
+static char rcsid[] = "$OpenBSD: decl.c,v 1.10 2004/08/03 00:09:54 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -1066,7 +1066,8 @@ decl1str(dsym)
 				/* nonportable bit-field type */
 				warning(34);
 			}
-		} else if (t != INT && t != UINT) {
+		} else if (t != INT && t != UINT && t != LONG &&
+		    t != ULONG && t != QUAD && t != UQUAD) {
 			/* illegal bit-field type */
 			error(35);
 			sz = tp->t_flen;
