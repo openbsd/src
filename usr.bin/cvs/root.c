@@ -1,4 +1,4 @@
-/*	$OpenBSD: root.c,v 1.8 2004/07/30 01:49:24 jfb Exp $	*/
+/*	$OpenBSD: root.c,v 1.9 2004/08/02 22:45:57 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -233,6 +233,8 @@ cvsroot_free(struct cvsroot *root)
 			free(root->cr_str);
 		if (root->cr_buf != NULL)
 			free(root->cr_buf);
+		if (root->cr_version != NULL)
+			free(root->cr_version);
 		free(root);
 	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.18 2004/07/30 23:13:24 jfb Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.19 2004/08/02 22:45:57 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -32,8 +32,11 @@
 #include <dirent.h>
 
 #include "rcs.h"
+#include "file.h"
 
-#define CVS_VERSION    "OpenCVS 0.1"
+#define CVS_VERSION_MAJOR 0
+#define CVS_VERSION_MINOR 2
+#define CVS_VERSION       "OpenCVS 0.2"
 
 
 #define CVS_HIST_CACHE     128
@@ -44,7 +47,7 @@
 
 
 /* operations */
-#define CVS_OP_ANY          0     /* all operations */
+#define CVS_OP_UNKNOWN      0
 #define CVS_OP_ADD          1
 #define CVS_OP_ANNOTATE     2
 #define CVS_OP_CHECKOUT     3
@@ -61,6 +64,7 @@
 #define CVS_OP_UPDATE      14
 #define CVS_OP_VERSION     15
 
+#define CVS_OP_ANY         64     /* all operations */
 
 
 
@@ -112,13 +116,14 @@
 
 struct cvs_file;
 struct cvs_dir;
-
+struct cvs_flist;
 
 struct cvs_op {
-	u_int  co_op;
-	uid_t  co_uid;    /* user performing the operation */
-	char  *co_path;   /* target path of the operation */
-	char  *co_tag;    /* tag or branch, NULL if HEAD */
+	u_int             co_op;
+	uid_t             co_uid;    /* user performing the operation */
+	char             *co_tag;    /* tag or branch, NULL if HEAD */
+	char             *co_msg;    /* message string (on commit or add) */
+	struct cvs_flist  co_files;
 };
 
 
@@ -137,6 +142,7 @@ struct cvsroot {
 	/* connection data */
 	FILE   *cr_srvin;
 	FILE   *cr_srvout;
+	char   *cr_version;   /* version of remote server */
 };
 
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.16 2004/08/02 17:16:08 jfb Exp $	*/
+/*	$OpenBSD: proto.c,v 1.17 2004/08/02 22:45:57 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -193,6 +193,15 @@ struct cvs_resp {
 	{ CVS_RESP_TEMPLATE,   "Template",               cvs_resp_template },
 };
 
+#define CVS_NBREQ   (sizeof(cvs_requests)/sizeof(cvs_requests[0]))
+#define CVS_NBRESP  (sizeof(cvs_responses)/sizeof(cvs_responses[0]))
+
+
+/*
+ * The MT command uses scoping to tag the data.  Whenever we encouter a '+',
+ * we push the name of the tag on the stack, and we pop it when we encounter
+ * a '-' with the same name.
+ */
 
 static char *cvs_mt_stack[CVS_MTSTK_MAXDEPTH];
 static u_int cvs_mtstk_depth = 0;
@@ -200,15 +209,17 @@ static u_int cvs_mtstk_depth = 0;
 static time_t cvs_modtime = 0;
 
 
-#define CVS_NBREQ   (sizeof(cvs_requests)/sizeof(cvs_requests[0]))
-#define CVS_NBRESP  (sizeof(cvs_responses)/sizeof(cvs_responses[0]))
-
 /* mask of requets supported by server */
 static u_char  cvs_server_validreq[CVS_REQ_MAX + 1];
 
+/* last checksum received */
 char *cvs_fcksum = NULL;
 
 mode_t  cvs_lastmode = 0;
+
+/* hack to receive the remote version without outputting it */
+static u_int cvs_version_sent = 0;
+
 
 static char  cvs_proto_buf[4096];
 
@@ -227,6 +238,9 @@ static FILE *cvs_server_outlog = NULL;
  * Open a client connection to the cvs server whose address is given in
  * the <root> variable.  The method used to connect depends on the
  * setting of the CVS_RSH variable.
+ * Once the connection has been established, we first send the list of
+ * responses we support and request the list of supported requests from the
+ * server.  Then, a version request is sent and various global flags are sent.
  * Returns 0 on success, or -1 on failure.
  */
 
@@ -330,6 +344,9 @@ cvs_connect(struct cvsroot *root)
 		cvs_log(LP_ERR, "failed to get valid requests from server");
 		return (-1);
 	}
+
+	if (cvs_sendreq(root, CVS_REQ_VERSION, NULL) < 0)
+		cvs_log(LP_ERR, "failed to get remote version");
 
 	/* now share our global options with the server */
 	if (verbosity == 1)
@@ -675,6 +692,15 @@ cvs_resp_m(struct cvsroot *root, int type, char *line)
 		fflush(stderr);
 		return (0);
 	case CVS_RESP_M:
+		if (cvs_version_sent) {
+			/*
+			 * Instead of outputting the line, we save it as the
+			 * remote server's version string.
+			 */
+			cvs_version_sent = 0;
+			root->cr_version = strdup(line);
+			return (0);
+		}
 		stream = stdout;
 		break;
 	case CVS_RESP_E:
@@ -1315,6 +1341,9 @@ cvs_sendreq(struct cvsroot *root, u_int rid, const char *arg)
 		cvs_log(LP_ERRNO, "failed to send request to server");
 		return (-1);
 	}
+
+	if (rid == CVS_REQ_VERSION)
+		cvs_version_sent = 1;
 
 	if (req->req_flags & CVS_REQF_RESP)
 		ret = cvs_getresp(root);

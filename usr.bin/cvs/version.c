@@ -1,4 +1,4 @@
-/*	$OpenBSD: version.c,v 1.4 2004/07/30 01:49:25 jfb Exp $	*/
+/*	$OpenBSD: version.c,v 1.5 2004/08/02 22:45:57 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -55,8 +55,8 @@ cvs_version(int argc, char **argv)
 		if (cvs_connect(root) < 0)
 			return (1);
 
-		printf("Server: ");
 		cvs_sendreq(root, CVS_REQ_VERSION, NULL);
+		printf("Server: %s\n", root->cr_version);
 		cvs_disconnect(root);
 	}
 
