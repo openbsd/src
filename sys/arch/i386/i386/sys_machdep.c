@@ -240,6 +240,17 @@ i386_set_ldt(p, args, retval)
 			break;
 		case SDT_SYS286CGT:
 		case SDT_SYS386CGT:
+			/*
+			 * Only allow call gates targeting a segment
+			 * in the LDT or a user segment in the fixed
+			 * part of the gdt.  Segments in the LDT are
+			 * constrained (below) to be user segments.
+			 */
+			if (desc.gd.gd_p != 0 && !ISLDT(desc.gd.gd_selector) &&
+			    ((IDXSEL(desc.gd.gd_selector) >= NGDT) ||
+			     (gdt[IDXSEL(desc.gd.gd_selector)].sd.sd_dpl !=
+				 SEL_UPL)))
+				return (EACCES);
 			/* Can't replace in use descriptor with gate. */
 			if (n == fsslot || n == gsslot)
 				return (EBUSY);
