@@ -1,4 +1,4 @@
-.\" $OpenBSD: crypt.3,v 1.19 2002/01/24 20:33:45 mickey Exp $
+.\" $OpenBSD: crypt.3,v 1.20 2003/05/30 13:06:02 jmc Exp $
 .\"
 .\" FreeSec: libcrypt
 .\"
@@ -281,8 +281,6 @@ functions all manipulate the same key space.
 .Xr getpass 3 ,
 .Xr md5 3 ,
 .Xr passwd 5
-.Sh AUTHORS
-David Burren <davidb@werj.com.au>
 .Sh HISTORY
 A rotor-based
 .Fn crypt
@@ -306,6 +304,8 @@ Special care has been taken
 in the library so that programs which only use the
 .Fn crypt
 interface do not pull in the other components.
+.Sh AUTHORS
+.An David Burren Aq davidb@werj.com.au
 .Sh BUGS
 The
 .Fn crypt
