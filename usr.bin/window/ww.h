@@ -1,4 +1,4 @@
-/*	$OpenBSD: ww.h,v 1.4 1996/06/26 05:43:34 deraadt Exp $	*/
+/*	$OpenBSD: ww.h,v 1.5 1996/11/25 13:12:19 niklas Exp $	*/
 /*	$NetBSD: ww.h,v 1.8 1996/02/08 21:48:51 mycroft Exp $	*/
 
 /*
@@ -45,6 +45,7 @@
 #include <termios.h>
 #endif
 #include <setjmp.h>
+#include <sys/types.h>
 #include <machine/endian.h>
 
 #define NWW	30		/* maximum number of windows */
