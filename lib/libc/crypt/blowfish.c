@@ -1,4 +1,4 @@
-/* $OpenBSD: blowfish.c,v 1.13 1999/05/14 16:08:58 niklas Exp $ */
+/* $OpenBSD: blowfish.c,v 1.14 1999/12/28 13:09:13 provos Exp $ */
 /*
  * Blowfish block cipher for OpenBSD
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -56,12 +56,12 @@
 
 /* Function for Feistel Networks */
 
-#define F(bc, x) ((((bc)->S[0][((x) & 0xFF000000) >> 24] \
-		    + (bc)->S[1][((x) &0xFF0000 ) >> 16]) \
-		   ^ (bc)->S[2][((x) & 0xFF00) >> 8]) \
-		  + (bc)->S[3][(x) & 0x00FF])
+#define F(s, x) ((((s)[        (((x)>>24)&0xFF)]  \
+		 + (s)[0x100 + (((x)>>16)&0xFF)]) \
+		 ^ (s)[0x200 + (((x)>> 8)&0xFF)]) \
+		 + (s)[0x300 + ( (x)     &0xFF)])
 
-#define BLFRND(bc,i,j,n) (i ^= F(bc,j) ^ (bc)->P[n])
+#define BLFRND(s,p,i,j,n) (i ^= F(s,j) ^ (p)[n])
 
 void
 Blowfish_encipher(c, xl, xr)
@@ -71,21 +71,23 @@ Blowfish_encipher(c, xl, xr)
 {
 	u_int32_t Xl;
 	u_int32_t Xr;
+	u_int32_t *s = c->S[0];
+	u_int32_t *p = c->P;
 
 	Xl = *xl;
 	Xr = *xr;
 
-	Xl ^= c->P[0];
-	BLFRND(c, Xr, Xl, 1); BLFRND(c, Xl, Xr, 2);
-	BLFRND(c, Xr, Xl, 3); BLFRND(c, Xl, Xr, 4);
-	BLFRND(c, Xr, Xl, 5); BLFRND(c, Xl, Xr, 6);
-	BLFRND(c, Xr, Xl, 7); BLFRND(c, Xl, Xr, 8);
-	BLFRND(c, Xr, Xl, 9); BLFRND(c, Xl, Xr, 10);
-	BLFRND(c, Xr, Xl, 11); BLFRND(c, Xl, Xr, 12);
-	BLFRND(c, Xr, Xl, 13); BLFRND(c, Xl, Xr, 14);
-	BLFRND(c, Xr, Xl, 15); BLFRND(c, Xl, Xr, 16);
+	Xl ^= p[0];
+	BLFRND(s, p, Xr, Xl, 1); BLFRND(s, p, Xl, Xr, 2);
+	BLFRND(s, p, Xr, Xl, 3); BLFRND(s, p, Xl, Xr, 4);
+	BLFRND(s, p, Xr, Xl, 5); BLFRND(s, p, Xl, Xr, 6);
+	BLFRND(s, p, Xr, Xl, 7); BLFRND(s, p, Xl, Xr, 8);
+	BLFRND(s, p, Xr, Xl, 9); BLFRND(s, p, Xl, Xr, 10);
+	BLFRND(s, p, Xr, Xl, 11); BLFRND(s, p, Xl, Xr, 12);
+	BLFRND(s, p, Xr, Xl, 13); BLFRND(s, p, Xl, Xr, 14);
+	BLFRND(s, p, Xr, Xl, 15); BLFRND(s, p, Xl, Xr, 16);
 
-	*xl = Xr ^ c->P[17];
+	*xl = Xr ^ p[17];
 	*xr = Xl;
 }
 
@@ -97,21 +99,23 @@ Blowfish_decipher(c, xl, xr)
 {
 	u_int32_t Xl;
 	u_int32_t Xr;
+	u_int32_t *s = c->S[0];
+	u_int32_t *p = c->P;
 
 	Xl = *xl;
 	Xr = *xr;
 
-	Xl ^= c->P[17];
-	BLFRND(c, Xr, Xl, 16); BLFRND(c, Xl, Xr, 15);
-	BLFRND(c, Xr, Xl, 14); BLFRND(c, Xl, Xr, 13);
-	BLFRND(c, Xr, Xl, 12); BLFRND(c, Xl, Xr, 11);
-	BLFRND(c, Xr, Xl, 10); BLFRND(c, Xl, Xr, 9);
-	BLFRND(c, Xr, Xl, 8); BLFRND(c, Xl, Xr, 7);
-	BLFRND(c, Xr, Xl, 6); BLFRND(c, Xl, Xr, 5);
-	BLFRND(c, Xr, Xl, 4); BLFRND(c, Xl, Xr, 3);
-	BLFRND(c, Xr, Xl, 2); BLFRND(c, Xl, Xr, 1);
+	Xl ^= p[17];
+	BLFRND(s, p, Xr, Xl, 16); BLFRND(s, p, Xl, Xr, 15);
+	BLFRND(s, p, Xr, Xl, 14); BLFRND(s, p, Xl, Xr, 13);
+	BLFRND(s, p, Xr, Xl, 12); BLFRND(s, p, Xl, Xr, 11);
+	BLFRND(s, p, Xr, Xl, 10); BLFRND(s, p, Xl, Xr, 9);
+	BLFRND(s, p, Xr, Xl, 8); BLFRND(s, p, Xl, Xr, 7);
+	BLFRND(s, p, Xr, Xl, 6); BLFRND(s, p, Xl, Xr, 5);
+	BLFRND(s, p, Xr, Xl, 4); BLFRND(s, p, Xl, Xr, 3);
+	BLFRND(s, p, Xr, Xl, 2); BLFRND(s, p, Xl, Xr, 1);
 
-	*xl = Xr ^ c->P[0];
+	*xl = Xr ^ p[0];
 	*xr = Xl;
 }
 

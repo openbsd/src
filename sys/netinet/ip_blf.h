@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_blf.h,v 1.2 1999/02/23 05:15:09 angelos Exp $ */
+/* $OpenBSD: ip_blf.h,v 1.3 1999/12/28 13:09:13 provos Exp $ */
 /*
  * Blowfish - a fast block cipher designed by Bruce Schneier
  *
@@ -56,8 +56,8 @@ typedef struct BlowfishContext {
  *	Blowfish_expand0state( state, key, keylen )
  */
 
-void Blowfish_encipher __P((blf_ctx *, u_int32_t *, u_int32_t *));
-void Blowfish_decipher __P((blf_ctx *, u_int32_t *, u_int32_t *));
+void Blowfish_encipher __P((blf_ctx *, u_int32_t *));
+void Blowfish_decipher __P((blf_ctx *, u_int32_t *));
 void Blowfish_initstate __P((blf_ctx *));
 void Blowfish_expand0state __P((blf_ctx *, const u_int8_t *, u_int16_t));
 void Blowfish_expandstate

@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_blf.c,v 1.5 1999/02/23 05:14:46 angelos Exp $ */
+/* $OpenBSD: ip_blf.c,v 1.6 1999/12/28 13:09:13 provos Exp $ */
 /*
  * Blowfish block cipher for OpenBSD
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -53,63 +53,65 @@
 
 /* Function for Feistel Networks */
 
-#define F(bc, x) ((((bc)->S[0][((x) & 0xFF000000) >> 24] \
-		    + (bc)->S[1][((x) &0xFF0000 ) >> 16]) \
-		   ^ (bc)->S[2][((x) & 0xFF00) >> 8]) \
-		  + (bc)->S[3][(x) & 0x00FF])
+#define F(s, x) ((((s)[        (((x)>>24)&0xFF)]  \
+		 + (s)[0x100 + (((x)>>16)&0xFF)]) \
+		 ^ (s)[0x200 + (((x)>> 8)&0xFF)]) \
+		 + (s)[0x300 + ( (x)     &0xFF)])
 
-#define BLFRND(bc,i,j,n) (i ^= F(bc,j) ^ (bc)->P[n])
+#define BLFRND(s,p,i,j,n) (i ^= F(s,j) ^ (p)[n])
 
 void
-Blowfish_encipher(c, xl, xr)
+Blowfish_encipher(c, x)
 	blf_ctx *c;
-	u_int32_t *xl;
-	u_int32_t *xr;
+	u_int32_t *x;
 {
 	u_int32_t Xl;
 	u_int32_t Xr;
+	u_int32_t *s = c->S[0];
+	u_int32_t *p = c->P;
 
-	Xl = *xl;
-	Xr = *xr;
+	Xl = x[0];
+	Xr = x[1];
 
-	Xl ^= c->P[0];
-	BLFRND(c, Xr, Xl, 1); BLFRND(c, Xl, Xr, 2);
-	BLFRND(c, Xr, Xl, 3); BLFRND(c, Xl, Xr, 4);
-	BLFRND(c, Xr, Xl, 5); BLFRND(c, Xl, Xr, 6);
-	BLFRND(c, Xr, Xl, 7); BLFRND(c, Xl, Xr, 8);
-	BLFRND(c, Xr, Xl, 9); BLFRND(c, Xl, Xr, 10);
-	BLFRND(c, Xr, Xl, 11); BLFRND(c, Xl, Xr, 12);
-	BLFRND(c, Xr, Xl, 13); BLFRND(c, Xl, Xr, 14);
-	BLFRND(c, Xr, Xl, 15); BLFRND(c, Xl, Xr, 16);
+	Xl ^= p[0];
+	BLFRND(s, p, Xr, Xl, 1); BLFRND(s, p, Xl, Xr, 2);
+	BLFRND(s, p, Xr, Xl, 3); BLFRND(s, p, Xl, Xr, 4);
+	BLFRND(s, p, Xr, Xl, 5); BLFRND(s, p, Xl, Xr, 6);
+	BLFRND(s, p, Xr, Xl, 7); BLFRND(s, p, Xl, Xr, 8);
+	BLFRND(s, p, Xr, Xl, 9); BLFRND(s, p, Xl, Xr, 10);
+	BLFRND(s, p, Xr, Xl, 11); BLFRND(s, p, Xl, Xr, 12);
+	BLFRND(s, p, Xr, Xl, 13); BLFRND(s, p, Xl, Xr, 14);
+	BLFRND(s, p, Xr, Xl, 15); BLFRND(s, p, Xl, Xr, 16);
 
-	*xl = Xr ^ c->P[17];
-	*xr = Xl;
+	x[0] = Xr ^ p[17];
+	x[1] = Xl;
 }
 
 void
-Blowfish_decipher(c, xl, xr)
+Blowfish_decipher(c, x)
 	blf_ctx *c;
-	u_int32_t *xl;
-	u_int32_t *xr;
+	u_int32_t *x;
 {
 	u_int32_t Xl;
 	u_int32_t Xr;
+	u_int32_t *s = c->S[0];
+	u_int32_t *p = c->P;
 
-	Xl = *xl;
-	Xr = *xr;
+	Xl = x[0];
+	Xr = x[1];
 
-	Xl ^= c->P[17];
-	BLFRND(c, Xr, Xl, 16); BLFRND(c, Xl, Xr, 15);
-	BLFRND(c, Xr, Xl, 14); BLFRND(c, Xl, Xr, 13);
-	BLFRND(c, Xr, Xl, 12); BLFRND(c, Xl, Xr, 11);
-	BLFRND(c, Xr, Xl, 10); BLFRND(c, Xl, Xr, 9);
-	BLFRND(c, Xr, Xl, 8); BLFRND(c, Xl, Xr, 7);
-	BLFRND(c, Xr, Xl, 6); BLFRND(c, Xl, Xr, 5);
-	BLFRND(c, Xr, Xl, 4); BLFRND(c, Xl, Xr, 3);
-	BLFRND(c, Xr, Xl, 2); BLFRND(c, Xl, Xr, 1);
+	Xl ^= p[17];
+	BLFRND(s, p, Xr, Xl, 16); BLFRND(s, p, Xl, Xr, 15);
+	BLFRND(s, p, Xr, Xl, 14); BLFRND(s, p, Xl, Xr, 13);
+	BLFRND(s, p, Xr, Xl, 12); BLFRND(s, p, Xl, Xr, 11);
+	BLFRND(s, p, Xr, Xl, 10); BLFRND(s, p, Xl, Xr, 9);
+	BLFRND(s, p, Xr, Xl, 8); BLFRND(s, p, Xl, Xr, 7);
+	BLFRND(s, p, Xr, Xl, 6); BLFRND(s, p, Xl, Xr, 5);
+	BLFRND(s, p, Xr, Xl, 4); BLFRND(s, p, Xl, Xr, 3);
+	BLFRND(s, p, Xr, Xl, 2); BLFRND(s, p, Xl, Xr, 1);
 
-	*xl = Xr ^ c->P[0];
-	*xr = Xl;
+	x[0] = Xr ^ p[0];
+	x[1] = Xl;
 }
 
 void
@@ -438,8 +440,7 @@ Blowfish_expand0state(c, key, keybytes)
 	u_int16_t j;
 	u_int16_t k;
 	u_int32_t temp;
-	u_int32_t datal;
-	u_int32_t datar;
+	u_int32_t data[2];
 
 	j = 0;
 	for (i = 0; i < BLF_N + 2; i++) {
@@ -449,21 +450,21 @@ Blowfish_expand0state(c, key, keybytes)
 	}
 
 	j = 0;
-	datal = 0x00000000;
-	datar = 0x00000000;
+	data[0] = 0x00000000;
+	data[1] = 0x00000000;
 	for (i = 0; i < BLF_N + 2; i += 2) {
-		Blowfish_encipher(c, &datal, &datar);
+		Blowfish_encipher(c, data);
 
-		c->P[i] = datal;
-		c->P[i + 1] = datar;
+		c->P[i] = data[0];
+		c->P[i + 1] = data[1];
 	}
 
 	for (i = 0; i < 4; i++) {
 		for (k = 0; k < 256; k += 2) {
-			Blowfish_encipher(c, &datal, &datar);
+			Blowfish_encipher(c, data);
 
-			c->S[i][k] = datal;
-			c->S[i][k + 1] = datar;
+			c->S[i][k] = data[0];
+			c->S[i][k + 1] = data[1];
 		}
 	}
 }
@@ -487,8 +488,7 @@ Blowfish_expandstate(c, data, databytes, key, keybytes)
 	u_int16_t j;
 	u_int16_t k;
 	u_int32_t temp;
-	u_int32_t datal;
-	u_int32_t datar;
+	u_int32_t d[2];
 
 	j = 0;
 	for (i = 0; i < BLF_N + 2; i++) {
@@ -498,25 +498,25 @@ Blowfish_expandstate(c, data, databytes, key, keybytes)
 	}
 
 	j = 0;
-	datal = 0x00000000;
-	datar = 0x00000000;
+	d[0] = 0x00000000;
+	d[1] = 0x00000000;
 	for (i = 0; i < BLF_N + 2; i += 2) {
-		datal ^= Blowfish_stream2word(data, databytes, &j);
-		datar ^= Blowfish_stream2word(data, databytes, &j);
-		Blowfish_encipher(c, &datal, &datar);
+		d[0] ^= Blowfish_stream2word(data, databytes, &j);
+		d[1] ^= Blowfish_stream2word(data, databytes, &j);
+		Blowfish_encipher(c, d);
 
-		c->P[i] = datal;
-		c->P[i + 1] = datar;
+		c->P[i] = d[0];
+		c->P[i + 1] = d[1];
 	}
 
 	for (i = 0; i < 4; i++) {
 		for (k = 0; k < 256; k += 2) {
-			datal ^= Blowfish_stream2word(data, databytes, &j);
-			datar ^= Blowfish_stream2word(data, databytes, &j);
-			Blowfish_encipher(c, &datal, &datar);
+			d[0]^= Blowfish_stream2word(data, databytes, &j);
+			d[1] ^= Blowfish_stream2word(data, databytes, &j);
+			Blowfish_encipher(c, d);
 
-			c->S[i][k] = datal;
-			c->S[i][k + 1] = datar;
+			c->S[i][k] = d[0];
+			c->S[i][k + 1] = d[1];
 		}
 	}
 
@@ -556,7 +556,7 @@ blf_enc(c, data, blocks)
 
 	d = data;
 	for (i = 0; i < blocks; i++) {
-		Blowfish_encipher(c, d, d + 1);
+		Blowfish_encipher(c, d);
 		d += 2;
 	}
 }
@@ -577,7 +577,7 @@ blf_dec(c, data, blocks)
 
 	d = data;
 	for (i = 0; i < blocks; i++) {
-		Blowfish_decipher(c, d, d + 1);
+		Blowfish_decipher(c, d);
 		d += 2;
 	}
 }
@@ -593,13 +593,17 @@ blf_ecb_encrypt(c, data, len)
      u_int32_t len;
 #endif
 {
-	u_int32_t l, r;
+	u_int32_t l, r, d[2];
 	u_int32_t i;
 
 	for (i = 0; i < len; i += 8) {
 		l = data[0] << 24 | data[1] << 16 | data[2] << 8 | data[3];
 		r = data[4] << 24 | data[5] << 16 | data[6] << 8 | data[7];
-		Blowfish_encipher(c, &l, &r);
+		d[0] = l;
+		d[1] = r;
+		Blowfish_encipher(c, d);
+		l = d[0];
+		r = d[1];
 		data[0] = l >> 24 & 0xff;
 		data[1] = l >> 16 & 0xff;
 		data[2] = l >> 8 & 0xff;
@@ -623,13 +627,17 @@ blf_ecb_decrypt(c, data, len)
      u_int32_t len;
 #endif
 {
-	u_int32_t l, r;
+	u_int32_t l, r, d[2];
 	u_int32_t i;
 
 	for (i = 0; i < len; i += 8) {
 		l = data[0] << 24 | data[1] << 16 | data[2] << 8 | data[3];
 		r = data[4] << 24 | data[5] << 16 | data[6] << 8 | data[7];
-		Blowfish_decipher(c, &l, &r);
+		d[0] = l;
+		d[1] = r;
+		Blowfish_decipher(c, d);
+		l = d[0];
+		r = d[1];
 		data[0] = l >> 24 & 0xff;
 		data[1] = l >> 16 & 0xff;
 		data[2] = l >> 8 & 0xff;
