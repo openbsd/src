@@ -5,6 +5,10 @@ out as follows:
 .../2.2/powerpc/
 		INSTALL.powerpc	Installation notes; this file.
 
+		CKSUM		Output of the cksum(1) and md5(1) progams
+		MD5		usable for verification of the correctness
+				of downloaded files.
+
 		floppy.fs	The powerpc boot and installation
 				floppy; see below.
 
