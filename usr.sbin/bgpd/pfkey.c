@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.3 2004/01/27 14:09:36 markus Exp $ */
+/*	$OpenBSD: pfkey.c,v 1.4 2004/01/27 14:12:28 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -209,6 +209,8 @@ pfkey_send(int sd, uint8_t mtype, struct sockaddr *src, struct sockaddr *dst,
 		log_warn("writev: should=%d has=%d", len, n);
 		return (-1);
 	}
+
+	return (0);
 }
 
 int
