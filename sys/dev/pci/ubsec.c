@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.54 2001/05/30 02:26:14 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.55 2001/06/08 01:59:32 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -581,6 +581,7 @@ ubsec_process(crp)
 	int sskip, dskip, stheend, dtheend;
 	int16_t coffset;
 	struct ubsec_session *ses;
+	struct ubsec_pktctx ctx;
 
 	if (crp == NULL || crp->crp_callback == NULL)
 		return (EINVAL);
@@ -606,6 +607,7 @@ ubsec_process(crp)
 		goto errout;
 	}
 	bzero(q, sizeof(struct ubsec_q));
+	bzero(&ctx, sizeof(ctx));
 
 	q->q_sesn = UBSEC_SESSION(crp->crp_sid);
 	ses = &sc->sc_sessions[q->q_sesn];
@@ -679,69 +681,69 @@ ubsec_process(crp)
 
 	if (enccrd) {
 		encoffset = enccrd->crd_skip;
-		q->q_ctx.pc_flags |= UBS_PKTCTX_ENC_3DES;
+		ctx.pc_flags |= UBS_PKTCTX_ENC_3DES;
 
 		if (enccrd->crd_flags & CRD_F_ENCRYPT) {
 			q->q_flags |= UBSEC_QFLAGS_COPYOUTIV;
 
 			if (enccrd->crd_flags & CRD_F_IV_EXPLICIT)
-				bcopy(enccrd->crd_iv, q->q_ctx.pc_iv, 8);
+				bcopy(enccrd->crd_iv, ctx.pc_iv, 8);
 			else {
-				q->q_ctx.pc_iv[0] = ses->ses_iv[0];
-				q->q_ctx.pc_iv[1] = ses->ses_iv[1];
+				ctx.pc_iv[0] = ses->ses_iv[0];
+				ctx.pc_iv[1] = ses->ses_iv[1];
 			}
 
 			if ((enccrd->crd_flags & CRD_F_IV_PRESENT) == 0) {
 				if (crp->crp_flags & CRYPTO_F_IMBUF)
 					m_copyback(q->q_src_m, enccrd->crd_inject,
-					    8, (caddr_t)q->q_ctx.pc_iv);
+					    8, (caddr_t)ctx.pc_iv);
 				else if (crp->crp_flags & CRYPTO_F_IOV) {
 					if (crp->crp_iv == NULL) {
 						err = EINVAL;
 						goto errout;
 					}
 					bcopy(crp->crp_iv,
-					    (caddr_t)q->q_ctx.pc_iv, 8);
+					    (caddr_t)ctx.pc_iv, 8);
 				}
 			}
 		} else {
-			q->q_ctx.pc_flags |= UBS_PKTCTX_INBOUND;
+			ctx.pc_flags |= UBS_PKTCTX_INBOUND;
 
 			if (enccrd->crd_flags & CRD_F_IV_EXPLICIT)
-				bcopy(enccrd->crd_iv, q->q_ctx.pc_iv, 8);
+				bcopy(enccrd->crd_iv, ctx.pc_iv, 8);
 			else if (crp->crp_flags & CRYPTO_F_IMBUF)
 				m_copydata(q->q_src_m, enccrd->crd_inject,
-				    8, (caddr_t)q->q_ctx.pc_iv);
+				    8, (caddr_t)ctx.pc_iv);
 			else if (crp->crp_flags & CRYPTO_F_IOV) {
 				if (crp->crp_iv == NULL) {
 					err = EINVAL;
 					goto errout;
 				}
-				bcopy(crp->crp_iv, (caddr_t)q->q_ctx.pc_iv, 8);
+				bcopy(crp->crp_iv, (caddr_t)ctx.pc_iv, 8);
 			}
 		}
 
-		q->q_ctx.pc_deskey[0] = ses->ses_deskey[0];
-		q->q_ctx.pc_deskey[1] = ses->ses_deskey[1];
-		q->q_ctx.pc_deskey[2] = ses->ses_deskey[2];
-		q->q_ctx.pc_deskey[3] = ses->ses_deskey[3];
-		q->q_ctx.pc_deskey[4] = ses->ses_deskey[4];
-		q->q_ctx.pc_deskey[5] = ses->ses_deskey[5];
-		SWAP32(q->q_ctx.pc_iv[0]);
-		SWAP32(q->q_ctx.pc_iv[1]);
+		ctx.pc_deskey[0] = ses->ses_deskey[0];
+		ctx.pc_deskey[1] = ses->ses_deskey[1];
+		ctx.pc_deskey[2] = ses->ses_deskey[2];
+		ctx.pc_deskey[3] = ses->ses_deskey[3];
+		ctx.pc_deskey[4] = ses->ses_deskey[4];
+		ctx.pc_deskey[5] = ses->ses_deskey[5];
+		SWAP32(ctx.pc_iv[0]);
+		SWAP32(ctx.pc_iv[1]);
 	}
 
 	if (maccrd) {
 		macoffset = maccrd->crd_skip;
 
 		if (maccrd->crd_alg == CRYPTO_MD5_HMAC)
-			q->q_ctx.pc_flags |= UBS_PKTCTX_AUTH_MD5;
+			ctx.pc_flags |= UBS_PKTCTX_AUTH_MD5;
 		else
-			q->q_ctx.pc_flags |= UBS_PKTCTX_AUTH_SHA1;
+			ctx.pc_flags |= UBS_PKTCTX_AUTH_SHA1;
 
 		for (i = 0; i < 5; i++) {
-			q->q_ctx.pc_hminner[i] = ses->ses_hminner[i];
-			q->q_ctx.pc_hmouter[i] = ses->ses_hmouter[i];
+			ctx.pc_hminner[i] = ses->ses_hminner[i];
+			ctx.pc_hmouter[i] = ses->ses_hmouter[i];
 		}
 	}
 
@@ -779,7 +781,7 @@ ubsec_process(crp)
 		cpoffset = cpskip + dtheend;
 		coffset = 0;
 	}
-	q->q_ctx.pc_offset = coffset >> 2;
+	ctx.pc_offset = coffset >> 2;
 
 	if (crp->crp_flags & CRYPTO_F_IMBUF)
 		q->q_src_l = mbuf2pages(q->q_src_m, &q->q_src_npa, q->q_src_packp,
@@ -992,24 +994,34 @@ ubsec_process(crp)
 #endif
 	}
 
+	if (ubsec_dma_malloc(sc, MAX(sizeof(struct ubsec_pktctx_long),
+	    sizeof(struct ubsec_pktctx)), &q->q_ctx_dma, 0)) {
+		err = ENOMEM;
+		goto errout;
+	}	
+	q->q_mcr->mcr_cmdctxp = q->q_ctx_dma.dma_paddr;
+
 	if (sc->sc_flags & UBS_FLAGS_LONGCTX) {
-		q->q_mcr->mcr_cmdctxp = vtophys(&q->q_ctxl);
+		struct ubsec_pktctx_long *ctxl;
+
+		ctxl = (struct ubsec_pktctx_long *)q->q_ctx_dma.dma_vaddr;
 		
 		/* transform small context into long context */
-		q->q_ctxl.pc_len = sizeof(struct ubsec_pktctx_long);
-		q->q_ctxl.pc_type = UBS_PKTCTX_TYPE_IPSEC;
-		q->q_ctxl.pc_flags = q->q_ctx.pc_flags;
-		q->q_ctxl.pc_offset = q->q_ctx.pc_offset;
+		ctxl->pc_len = sizeof(struct ubsec_pktctx_long);
+		ctxl->pc_type = UBS_PKTCTX_TYPE_IPSEC;
+		ctxl->pc_flags = ctx.pc_flags;
+		ctxl->pc_offset = ctx.pc_offset;
 		for (i = 0; i < 6; i++)
-			q->q_ctxl.pc_deskey[i] = q->q_ctx.pc_deskey[i];
+			ctxl->pc_deskey[i] = ctx.pc_deskey[i];
 		for (i = 0; i < 5; i++)
-			q->q_ctxl.pc_hminner[i] = q->q_ctx.pc_hminner[i];
+			ctxl->pc_hminner[i] = ctx.pc_hminner[i];
 		for (i = 0; i < 5; i++)
-			q->q_ctxl.pc_hmouter[i] = q->q_ctx.pc_hmouter[i];   
-		q->q_ctxl.pc_iv[0] = q->q_ctx.pc_iv[0];
-		q->q_ctxl.pc_iv[1] = q->q_ctx.pc_iv[1];
+			ctxl->pc_hmouter[i] = ctx.pc_hmouter[i];   
+		ctxl->pc_iv[0] = ctx.pc_iv[0];
+		ctxl->pc_iv[1] = ctx.pc_iv[1];
 	} else
-		q->q_mcr->mcr_cmdctxp = vtophys(&q->q_ctx);
+		bcopy(&ctx, q->q_ctx_dma.dma_vaddr, sizeof(struct ubsec_pktctx));
+	bus_dmamap_sync(sc->sc_dmat, q->q_ctx_dma.dma_map, BUS_DMASYNC_PREREAD);
 
 	s = splnet();
 	SIMPLEQ_INSERT_TAIL(&sc->sc_queue, q, q_next);
@@ -1022,6 +1034,8 @@ errout:
 	if (q != NULL) {
 		if (q->q_mcr != NULL)
 			free(q->q_mcr, M_DEVBUF);
+		if (q->q_ctx_dma.dma_map != NULL)
+			ubsec_dma_free(sc, &q->q_ctx_dma);
 		if ((q->q_dst_m != NULL) && (q->q_src_m != q->q_dst_m))
 			m_freem(q->q_dst_m);
 		free(q, M_DEVBUF);
@@ -1038,6 +1052,9 @@ ubsec_callback(sc, q)
 {
 	struct cryptop *crp = (struct cryptop *)q->q_crp;
 	struct cryptodesc *crd;
+
+	bus_dmamap_sync(sc->sc_dmat, q->q_ctx_dma.dma_map, BUS_DMASYNC_POSTREAD);
+	ubsec_dma_free(sc, &q->q_ctx_dma);
 
 	if ((crp->crp_flags & CRYPTO_F_IMBUF) && (q->q_src_m != q->q_dst_m)) {
 		m_freem(q->q_src_m);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsecvar.h,v 1.18 2001/05/30 02:26:14 jason Exp $	*/
+/*	$OpenBSD: ubsecvar.h,v 1.19 2001/06/08 01:59:32 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Theo de Raadt
@@ -80,8 +80,7 @@ struct ubsec_q {
 	struct ubsec_mcr		*q_mcr;
 	struct ubsec_pktbuf		q_srcpkt[MAX_SCATTER-1];
 	struct ubsec_pktbuf		q_dstpkt[MAX_SCATTER-1];
-	struct ubsec_pktctx		q_ctx;
-	struct ubsec_pktctx_long	q_ctxl;
+	struct ubsec_dma_alloc		q_ctx_dma;
 
 	struct mbuf 		      	*q_src_m, *q_dst_m;
 	struct uio			*q_src_io, *q_dst_io;
