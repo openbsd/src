@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.16 2003/03/13 09:09:25 deraadt Exp $	*/
+/*	$OpenBSD: dir.c,v 1.17 2003/03/30 08:31:53 deraadt Exp $	*/
 /*	$NetBSD: dir.c,v 1.11 1997/10/17 11:19:35 ws Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: dir.c,v 1.16 2003/03/13 09:09:25 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: dir.c,v 1.17 2003/03/30 08:31:53 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -995,7 +995,7 @@ reconnect(dosfs, boot, fat, head)
 	boot->NumFiles++;
 	/* Ensure uniqueness of entry here!				XXX */
 	(void)memset(&d, 0, sizeof d);
-	sprintf(d.name, "%u", head);
+	snprintf(d.name, sizeof d.name, "%u", head);
 	d.flags = 0;
 	d.head = head;
 	d.size = fat[head].length * boot->ClusterSize;

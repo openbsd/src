@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.11 2002/05/22 08:21:02 deraadt Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.12 2003/03/30 08:32:44 deraadt Exp $	*/
 /*	$NetBSD: newfs.c,v 1.5 1996/05/16 07:17:50 thorpej Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.5 (Berkeley) 5/24/95";
 #else
-static char rcsid[] = "$OpenBSD: newfs.c,v 1.11 2002/05/22 08:21:02 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: newfs.c,v 1.12 2003/03/30 08:32:44 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -285,9 +285,10 @@ main(argc, argv)
 	 */
 	special = argv[0];
 	if (strchr(special, '/') == NULL) {
-		(void)sprintf(device, "%sr%s", _PATH_DEV, special);
+		(void)snprintf(device, sizeof device, "%sr%s", _PATH_DEV, special);
 		if (stat(device, &st) == -1)
-			(void)sprintf(device, "%s%s", _PATH_DEV, special);
+			(void)snprintf(device, sizeof device, "%s%s",
+			    _PATH_DEV, special);
 		special = device;
 	}
 	if (!Nflag) {
