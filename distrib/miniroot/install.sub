@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.134 1999/10/02 18:53:24 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.135 1999/10/07 21:35:47 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -1086,7 +1086,7 @@ while test -n "${_get_files}" ; do
 	for _f in $_get_files ; do
 		echo "Getting ${_f} ..."
 		if [ "X${_f}" = "Xlibssl${VERSION}.tar.gz" ]; then
-			( cd /mnt ; ftp ${_ftp_active} -o - -V -m ${_url_base}/${_f} | /mnt/usr/sbin/chroot /mnt /usr/sbin/pkg_add -)
+			( cd /mnt ; ftp ${_ftp_active} -o - -V -m ${_url_base}/${_f} | /mnt/usr/sbin/chroot /mnt /usr/sbin/pkg_add -I -)
 		elif [ "X${_f}" = "X${_kernel}" ]; then
 			( cd /mnt ; ftp ${_ftp_active} -V -m ${_url_base}/${_f} )
 		else
@@ -1243,7 +1243,7 @@ while test -n "${_get_files}" ; do
 	for _f in $_get_files ; do
 		echo "$1/${_f}:"
 		if [ "X${_f}" = "Xlibssl${VERSION}.tar.gz" ]; then
-			( cd /mnt ; ftp -o - -V -m file:$1/${_f} | /mnt/usr/sbin/chroot /mnt /usr/sbin/pkg_add -)
+			( cd /mnt ; ftp -o - -V -m file:$1/${_f} | /mnt/usr/sbin/chroot /mnt /usr/sbin/pkg_add -I -)
 		elif [ "X${_f}" = "X${_kernel}" ]; then
 			ftp -V -m -o /mnt/$_f file:$1/$_f
 		else
