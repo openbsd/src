@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.4 2001/01/29 01:58:07 niklas Exp $	*/
+/*	$OpenBSD: display.c,v 1.5 2001/05/23 22:20:35 art Exp $	*/
 
 /*
  * The functions in this file handle redisplay. The
@@ -66,18 +66,18 @@ typedef struct {
 } SCORE;
 
 
-VOID     vtmove         __P((int, int));
-VOID     vtputc         __P((int));
-VOID     vtpute         __P((int));
+void     vtmove         __P((int, int));
+void     vtputc         __P((int));
+void     vtpute         __P((int));
 int      vtputs         __P((char *));
-VOID     vteeol         __P((void));
-VOID     updext         __P((int, int));
-VOID     modeline       __P((MGWIN *));
-VOID     setscores      __P((int, int));
-VOID     traceback      __P((int, int, int, int));
-VOID     ucopy          __P((VIDEO *, VIDEO *));
-VOID     uline          __P((int, VIDEO *, VIDEO *));
-VOID     hash           __P((VIDEO *));
+void     vteeol         __P((void));
+void     updext         __P((int, int));
+void     modeline       __P((MGWIN *));
+void     setscores      __P((int, int));
+void     traceback      __P((int, int, int, int));
+void     ucopy          __P((VIDEO *, VIDEO *));
+void     uline          __P((int, VIDEO *, VIDEO *));
+void     hash           __P((VIDEO *));
 
 
 int             sgarbf = TRUE;		/* TRUE if screen is garbage.	 */
@@ -118,7 +118,7 @@ SCORE score[NROW * NROW];
  * is marked as garbage, so all the right stuff happens
  * on the first call to redisplay.
  */
-VOID
+void
 vtinit()
 {
 	VIDEO *vp;
@@ -145,7 +145,7 @@ vtinit()
  * the cursor to the last line, erase the line, and
  * close the terminal channel.
  */
-VOID
+void
 vttidy()
 {
 
@@ -165,7 +165,7 @@ vttidy()
  * on the line, which would make "vtputc" a little bit
  * more efficient. No checking for errors.
  */
-VOID
+void
 vtmove(row, col)
 	int row, col;
 {
@@ -186,7 +186,7 @@ vtmove(row, col)
  * makes the tab code loop if you are not careful.
  * Three guesses how we found this.
  */
-VOID
+void
 vtputc(c)
 	int    c;
 {
@@ -215,7 +215,7 @@ vtputc(c)
  * yet on left edge, don't print it yet.  Check for overflow on the right
  * margin.
  */
-VOID
+void
 vtpute(c)
 	int    c;
 {
@@ -249,7 +249,7 @@ vtpute(c)
  * the software cursor is located. The display routines will decide if a
  * hardware erase to end of line command should be used to display this.
  */
-VOID
+void
 vteeol()
 {
 	VIDEO *vp;
@@ -268,7 +268,7 @@ vteeol()
  * correct for the current window. Third, make the
  * virtual and physical screens the same.
  */
-VOID
+void
 update()
 {
 	LINE  *lp;
@@ -500,7 +500,7 @@ update()
  * virtual and physical screens the same when
  * display has done an update.
  */
-VOID
+void
 ucopy(vvp, pvp)
 	VIDEO *vvp;
 	VIDEO *pvp;
@@ -519,7 +519,7 @@ ucopy(vvp, pvp)
  * column greater than the terminal width. The line will be scrolled right or
  * left to let the user see where the cursor is
  */
-VOID
+void
 updext(currow, curcol)
 	int    currow, curcol;
 {
@@ -552,7 +552,7 @@ updext(currow, curcol)
  * line when updating CMODE color lines, because of the way that
  * reverse video works on most terminals.
  */
-VOID
+void
 uline(row, vvp, pvp)
 	int		row;
 	VIDEO          *vvp;
@@ -649,7 +649,7 @@ uline(row, vvp, pvp)
  * that if STANDOUT_GLITCH is defined, first and last magic_cookie_glitch
  * characters may never be seen.
  */
-VOID
+void
 modeline(wp)
 	MGWIN  *wp;
 {
@@ -721,7 +721,7 @@ vtputs(s)
  * Tuned for the VAX by Bob McNamara; better than it used to be on
  * just about any machine.
  */
-VOID
+void
 hash(vp)
 	VIDEO *vp;
 {
@@ -771,7 +771,7 @@ hash(vp)
  * i = 1; do { } while (++i <=size)" will make the code quite a
  * bit better; but it looks ugly.
  */
-VOID
+void
 setscores(offs, size)
 	int offs;
 	int size;
@@ -861,7 +861,7 @@ setscores(offs, size)
  * which is acceptable because this routine is much less compute
  * intensive then the code that builds the score matrix!
  */
-VOID
+void
 traceback(offs, size, i, j)
 	int    offs;
 	int    size;

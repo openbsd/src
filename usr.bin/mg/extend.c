@@ -1,4 +1,4 @@
-/*	$OpenBSD: extend.c,v 1.11 2001/05/23 22:12:10 art Exp $	*/
+/*	$OpenBSD: extend.c,v 1.12 2001/05/23 22:20:35 art Exp $	*/
 
 /*
  *	Extended (M-X) commands, rebinding, and	startup file processing.
@@ -22,7 +22,7 @@
 
 static int	 remap		__P((KEYMAP *, int, PF, KEYMAP *));
 static KEYMAP	*realocmap	__P((KEYMAP *));
-static VOID	 fixmap		__P((KEYMAP *, KEYMAP *, KEYMAP *));
+static void	 fixmap		__P((KEYMAP *, KEYMAP *, KEYMAP *));
 static int	 dobind		__P((KEYMAP *, char *, int));
 static char	*skipwhite	__P((char *));
 static char	*parsetoken	__P((char *));
@@ -293,7 +293,7 @@ realocmap(curmap)
 /*
  * Fix references to a reallocated keymap (recursive).
  */
-static VOID
+static void
 fixmap(curmap, mp, mt)
 	KEYMAP *mt;
 	KEYMAP *curmap;
@@ -346,12 +346,12 @@ dobind(curmap, p, unbind)
 					return FALSE;
 			}
 		}
-		(VOID)doscan(curmap, c = maclcur->l_text[s], NULL);
+		(void)doscan(curmap, c = maclcur->l_text[s], NULL);
 		maclcur = maclcur->l_fp;
 	} else {
 #endif /* !NO_STARTUP */
 #endif /* !NO_MACRO */
-		(VOID)strcpy(prompt, p);
+		(void)strcpy(prompt, p);
 		pep = prompt + strlen(prompt);
 		for (;;) {
 			ewprintf("%s", prompt);
@@ -417,7 +417,7 @@ bindkey(mapp, fname, keys, kcount)
 			curmap = ele->k_prefmap;
 		}
 	}
-	(VOID)doscan(curmap, c = *keys, NULL);
+	(void)doscan(curmap, c = *keys, NULL);
 	return remap(curmap, c, funct, pref_map);
 }
 
@@ -506,7 +506,7 @@ define_key(f, n)
 		ewprintf("Unknown map %s", &buf[16]);
 		return FALSE;
 	}
-	(VOID)strncat(&buf[16], " key: ", 48 - 16 - 1);
+	(void)strncat(&buf[16], " key: ", 48 - 16 - 1);
 	return dobind(mp, buf, FALSE);
 }
 
@@ -610,7 +610,7 @@ evalbuffer(f, n)
 	for (lp = lforw(bp->b_linep); lp != bp->b_linep; lp = lforw(lp)) {
 		if (llength(lp) >= 128)
 			return FALSE;
-		(VOID)strncpy(excbuf, ltext(lp), llength(lp));
+		(void)strncpy(excbuf, ltext(lp), llength(lp));
 
 		/* make sure it's terminated */
 		excbuf[llength(lp)] = '\0';
@@ -663,7 +663,7 @@ load(fname)
 			break;
 		}
 	}
-	(VOID)ffclose((BUFFER *)NULL);
+	(void)ffclose((BUFFER *)NULL);
 	excbuf[nbytes] = '\0';
 	if (s != FIOEOF || (nbytes && excline(excbuf) != TRUE))
 		return FALSE;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.6 2001/01/29 01:58:08 niklas Exp $	*/
+/*	$OpenBSD: main.c,v 1.7 2001/05/23 22:20:35 art Exp $	*/
 
 /*
  *	Mainline.
@@ -19,7 +19,7 @@ MGWIN		*curwp;				/* current window	*/
 MGWIN		*wheadp = (MGWIN *)NULL;	/* MGWIN listhead	*/
 char		 pat[NPAT];			/* pattern		*/
 
-static VOID	 edinit		__P((VOID));
+static void	 edinit		__P((void));
 
 int
 main(argc, argv)
@@ -48,13 +48,13 @@ main(argc, argv)
 #ifndef NO_STARTUP
 	/* user startup file */
 	if ((cp = startupfile((char *)NULL)) != NULL)
-		(VOID)load(cp);
+		(void)load(cp);
 #endif	/* !NO_STARTUP */
 	while (--argc > 0) {
 		cp = adjustname(*++argv);
 		curbp = findbuffer(cp);
-		(VOID)showbuffer(curbp, curwp, 0);
-		(VOID)readin(cp);
+		(void)showbuffer(curbp, curwp, 0);
+		(void)readin(cp);
 	}
 
 	/* fake last flags */
@@ -88,7 +88,7 @@ main(argc, argv)
 /*
  * Initialize default buffer and window.
  */
-static VOID
+static void
 edinit()
 {
 	BUFFER	*bp;

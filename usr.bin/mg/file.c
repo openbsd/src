@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.6 2001/05/04 22:00:35 art Exp $	*/
+/*	$OpenBSD: file.c,v 1.7 2001/05/23 22:20:35 art Exp $	*/
 
 /*
  *	File commands.
@@ -182,7 +182,7 @@ insertfile(fname, newname, needinfo)
 	/* cheap */
 	bp = curbp;
 	if (newname != (char *)NULL)
-		(VOID)strcpy(bp->b_fname, newname);
+		(void)strcpy(bp->b_fname, newname);
 
 	/* hard file open */
 	if ((s = ffropen(fname, needinfo ? bp : (BUFFER *) NULL)) == FIOERR)
@@ -198,11 +198,11 @@ insertfile(fname, newname, needinfo)
 	opos = curwp->w_doto;
 
 	/* open a new line, at point, and start inserting after it */
-	(VOID)lnewline();
+	(void)lnewline();
 	olp = lback(curwp->w_dotp);
 	if (olp == curbp->b_linep) {
 		/* if at end of buffer, create a line to insert before */
-		(VOID)lnewline();
+		(void)lnewline();
 		curwp->w_dotp = lback(curwp->w_dotp);
 	}
 
@@ -262,7 +262,7 @@ doneread:
 	}
 endoffile:
 	/* ignore errors */
-	(VOID)ffclose((BUFFER *)NULL);
+	(void)ffclose((BUFFER *)NULL);
 	/* don't zap an error */
 	if (s == FIOEOF) {
 		if (nline == 1)
@@ -273,7 +273,7 @@ endoffile:
 	/* set mark at the end of the text */
 	curwp->w_dotp = curwp->w_markp = lback(curwp->w_dotp);
 	curwp->w_marko = llength(curwp->w_markp);
-	(VOID)ldelnewline();
+	(void)ldelnewline();
 	curwp->w_dotp = olp;
 	curwp->w_doto = opos;
 	if (olp == curbp->b_linep)
@@ -298,7 +298,7 @@ endoffile:
 		lp2 = curwp->w_dotp;
 	} else {
 		/* delete extraneous newline */
-		(VOID)ldelnewline();
+		(void)ldelnewline();
 out:		lp2 = NULL;
 	}
 	for (wp = wheadp; wp != NULL; wp = wp->w_wndp) {
@@ -340,7 +340,7 @@ filewrite(f, n)
 	/* old attributes are no longer current */
 	bzero(&curbp->b_fi, sizeof(curbp->b_fi));
 	if ((s = writeout(curbp, adjfname)) == TRUE) {
-		(VOID)strcpy(curbp->b_fname, adjfname);
+		(void)strcpy(curbp->b_fname, adjfname);
 #ifndef NO_BACKUP
 		curbp->b_flag &= ~(BFBAK | BFCHG);
 #else /* !NO_BACKUP */
@@ -472,7 +472,7 @@ writeout(bp, fn)
 			ewprintf("Wrote %s", fn);
 	} else
 		/* ignore close error if it is a write error */
-		(VOID)ffclose(bp);
+		(void)ffclose(bp);
 	return s == FIOSUC;
 }
 
@@ -480,7 +480,7 @@ writeout(bp, fn)
  * Tag all windows for bp (all windows if bp == NULL) as needing their
  * mode line updated.
  */
-VOID
+void
 upmodes(bp)
 	BUFFER *bp;
 {

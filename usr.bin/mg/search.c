@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.5 2001/05/03 20:43:12 art Exp $	*/
+/*	$OpenBSD: search.c,v 1.6 2001/05/23 22:20:36 art Exp $	*/
 
 /*
  *		Search commands.
@@ -29,14 +29,14 @@ typedef struct {
 } SRCHCOM;
 
 static int	isearch		__P((int));
-static VOID	is_cpush	__P((int));
-static VOID	is_lpush	__P((void));
-static VOID	is_pop		__P((void));
+static void	is_cpush	__P((int));
+static void	is_lpush	__P((void));
+static void	is_pop		__P((void));
 static int	is_peek		__P((void));
-static VOID	is_undo		__P((int *, int *));
+static void	is_undo		__P((int *, int *));
 static int	is_find		__P((int));
-static VOID	is_prompt	__P((int, int, int));
-static VOID	is_dspl		__P((char *, int));
+static void	is_prompt	__P((int, int, int));
+static void	is_dspl		__P((char *, int));
 static int	eq		__P((int, int));
 
 static SRCHCOM	cmds[NSRCH];
@@ -175,7 +175,7 @@ isearch(dir)
 	for (cip = 0; cip < NSRCH; cip++)
 		cmds[cip].s_code = SRCH_NOPR;
 
-	(VOID)strcpy(opat, pat);
+	(void)strcpy(opat, pat);
 	cip = 0;
 	pptr = -1;
 	clp = curwp->w_dotp;
@@ -215,8 +215,8 @@ isearch(dir)
 			curwp->w_doto = cbo;
 			curwp->w_flag |= WFMOVE;
 			srch_lastdir = dir;
-			(VOID)ctrlg(FFRAND, 0);
-			(VOID)strcpy(pat, opat);
+			(void)ctrlg(FFRAND, 0);
+			(void)strcpy(pat, opat);
 			return ABORT;
 		case CCHR(']'):
 		case CCHR('S'):
@@ -230,11 +230,11 @@ isearch(dir)
 				break;
 			is_lpush();
 			pptr = strlen(pat);
-			(VOID)forwchar(FFRAND, 1);
+			(void)forwchar(FFRAND, 1);
 			if (is_find(SRCH_FORW) != FALSE)
 				is_cpush(SRCH_MARK);
 			else {
-				(VOID)backchar(FFRAND, 1);
+				(void)backchar(FFRAND, 1);
 				ttbeep();
 				success = FALSE;
 			}
@@ -251,11 +251,11 @@ isearch(dir)
 				break;
 			is_lpush();
 			pptr = strlen(pat);
-			(VOID)backchar(FFRAND, 1);
+			(void)backchar(FFRAND, 1);
 			if (is_find(SRCH_BACK) != FALSE)
 				is_cpush(SRCH_MARK);
 			else {
-				(VOID)forwchar(FFRAND, 1);
+				(void)forwchar(FFRAND, 1);
 				ttbeep();
 				success = FALSE;
 			}
@@ -314,7 +314,7 @@ isearch(dir)
 	/* NOTREACHED */
 }
 
-static VOID
+static void
 is_cpush(cmd)
 	int cmd;
 {
@@ -323,7 +323,7 @@ is_cpush(cmd)
 	cmds[cip].s_code = cmd;
 }
 
-static VOID
+static void
 is_lpush()
 {
 	int	ctp;
@@ -336,7 +336,7 @@ is_lpush()
 	cmds[ctp].s_dotp = curwp->w_dotp;
 }
 
-static VOID
+static void
 is_pop()
 {
 	if (cmds[cip].s_code != SRCH_NOPR) {
@@ -356,7 +356,7 @@ is_peek()
 }
 
 /* this used to always return TRUE (the return value was checked) */
-static VOID
+static void
 is_undo(pptr, dir)
 	int *pptr, *dir;
 {
@@ -401,7 +401,7 @@ is_find(dir)
 	plen = strlen(pat);
 	if (plen != 0) {
 		if (dir == SRCH_FORW) {
-			(VOID)backchar(FFARG | FFRAND, plen);
+			(void)backchar(FFARG | FFRAND, plen);
 			if (forwsrch() == FALSE) {
 				curwp->w_doto = odoto;
 				curwp->w_dotp = odotp;
@@ -410,7 +410,7 @@ is_find(dir)
 			return TRUE;
 		}
 		if (dir == SRCH_BACK) {
-			(VOID)forwchar(FFARG | FFRAND, plen);
+			(void)forwchar(FFARG | FFRAND, plen);
 			if (backsrch() == FALSE) {
 				curwp->w_doto = odoto;
 				curwp->w_dotp = odotp;
@@ -430,7 +430,7 @@ is_find(dir)
  * on if it liked the "dir".  However, none of the callers looked at the 
  * status, so I just made the checking vanish.
  */
-static VOID
+static void
 is_prompt(dir, flag, success)
 	int dir, flag, success;
 {
@@ -452,7 +452,7 @@ is_prompt(dir, flag, success)
  * Prompt writing routine for the incremental search.  The "prompt" is just 
  * a string. The "flag" determines whether pat should be printed.
  */
-static VOID
+static void
 is_dspl(prompt, flag)
 	char *prompt;
 	int flag;
@@ -514,7 +514,7 @@ retry:
 			goto stopsearch;
 		/* ^G or ESC */
 		case CCHR('G'):
-			(VOID)ctrlg(FFRAND, 0);
+			(void)ctrlg(FFRAND, 0);
 		case CCHR('['):
 			goto stopsearch;
 		case '!':
@@ -689,7 +689,7 @@ readpattern(prompt)
 
 	/* specified */
 	if (s == TRUE)
-		(VOID) strcpy(pat, tpat);
+		(void) strcpy(pat, tpat);
 	/* CR, but old one */
 	else if (s == FALSE && pat[0] != 0)
 		s = TRUE;

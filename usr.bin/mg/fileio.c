@@ -1,4 +1,4 @@
-/*	$OpenBSD: fileio.c,v 1.12 2001/05/03 12:57:22 art Exp $	*/
+/*	$OpenBSD: fileio.c,v 1.13 2001/05/23 22:20:35 art Exp $	*/
 
 /*
  *	POSIX fileio.c
@@ -75,7 +75,7 @@ ffclose(bp)
 	BUFFER *bp;
 {
 
-	(VOID) fclose(ffp);
+	(void) fclose(ffp);
 	return (FIOSUC);
 }
 
@@ -245,7 +245,7 @@ adjustname(fn)
 		fn++;
 		cp = getenv("HOME");
 		if (cp != NULL && *cp != '\0' && (*fn == '/' || *fn == '\0')) {
-			(VOID) strcpy(fnb, cp);
+			(void) strcpy(fnb, cp);
 			cp = fnb + strlen(fnb);
 			if (*fn)
 				fn++;
@@ -256,7 +256,7 @@ adjustname(fn)
 				*cp++ = *fn++;
 			*cp = '\0';
 			if ((pwent = getpwnam(fnb)) != NULL) {
-				(VOID) strcpy(fnb, pwent->pw_dir);
+				(void) strcpy(fnb, pwent->pw_dir);
 				cp = fnb + strlen(fnb);
 				break;
 			} else {
@@ -300,10 +300,10 @@ adjustname(fn)
 						while (cp > fnb && *--cp != '/') {
 						}
 						++cp;
-						(VOID) strncpy(cp, linkbuf, i);
+						(void) strncpy(cp, linkbuf, i);
 						cp += i;
 					} else {
-						(VOID) strncpy(fnb, linkbuf, i);
+						(void) strncpy(fnb, linkbuf, i);
 						cp = fnb + i;
 					}
 					if (cp[-1] != '/')
@@ -425,15 +425,15 @@ dired_(dirname)
 		return NULL;
 	}
 	if (dirname[strlen(dirname) - 1] != '/')
-		(VOID) strcat(dirname, "/");
+		(void) strcat(dirname, "/");
 	if ((bp = findbuffer(dirname)) == NULL) {
 		ewprintf("Could not create buffer");
 		return NULL;
 	}
 	if (bclear(bp) != TRUE)
 		return FALSE;
-	(VOID) strcpy(line, "ls -al ");
-	(VOID) strcpy(&line[7], dirname);
+	(void) strcpy(line, "ls -al ");
+	(void) strcpy(&line[7], dirname);
 	if ((dirpipe = popen(line, "r")) == NULL) {
 		ewprintf("Problem opening pipe to ls");
 		return NULL;
@@ -441,14 +441,14 @@ dired_(dirname)
 	line[0] = line[1] = ' ';
 	while (fgets(&line[2], 254, dirpipe) != NULL) {
 		line[strlen(line) - 1] = '\0';	/* remove ^J	 */
-		(VOID) addline(bp, line);
+		(void) addline(bp, line);
 	}
 	if (pclose(dirpipe) == -1) {
 		ewprintf("Problem closing pipe to ls");
 		return NULL;
 	}
 	bp->b_dotp = lforw(bp->b_linep);	/* go to first line */
-	(VOID) strncpy(bp->b_fname, dirname, NFILEN);
+	(void) strncpy(bp->b_fname, dirname, NFILEN);
 	if ((bp->b_modes[0] = name_mode("dired")) == NULL) {
 		bp->b_modes[0] = &map_table[0];
 		ewprintf("Could not find mode dired");
@@ -467,7 +467,7 @@ d_makename(lp, fn)
 
 	if (llength(lp) <= 56)
 		return ABORT;
-	(VOID) strcpy(fn, curbp->b_fname);
+	(void) strcpy(fn, curbp->b_fname);
 	cp = fn + strlen(fn);
 	bcopy(&lp->l_text[56], cp, llength(lp) - 56);
 	cp[llength(lp) - 56] = '\0';

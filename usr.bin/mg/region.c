@@ -1,4 +1,4 @@
-/*	$OpenBSD: region.c,v 1.4 2001/01/29 01:58:09 niklas Exp $	*/
+/*	$OpenBSD: region.c,v 1.5 2001/05/23 22:20:36 art Exp $	*/
 
 /*
  *		Region based commands.
@@ -272,12 +272,12 @@ prefixregion(f, n)
 
 	/* for each line, go to beginning and insert the prefix string */
 	while (nline--) {
-		(VOID)gotobol(FFRAND, 1);
+		(void)gotobol(FFRAND, 1);
 		for (prefix = prefix_string; *prefix; prefix++)
-			(VOID)linsert(1, *prefix);
-		(VOID)forwline(FFRAND, 1);
+			(void)linsert(1, *prefix);
+		(void)forwline(FFRAND, 1);
 	}
-	(VOID)gotobol(FFRAND, 1);
+	(void)gotobol(FFRAND, 1);
 	return TRUE;
 }
 
@@ -298,7 +298,7 @@ setprefix(f, n)
 		s = ereply("Prefix string (default %s): ",
 			   buf, sizeof buf, prefix_string);
 	if (s == TRUE)
-		(VOID)strcpy(prefix_string, buf);
+		(void)strcpy(prefix_string, buf);
 	/* CR -- use old one */
 	if ((s == FALSE) && (prefix_string[0] != '\0'))
 		s = TRUE;

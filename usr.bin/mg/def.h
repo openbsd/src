@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.15 2001/05/23 21:59:45 art Exp $	*/
+/*	$OpenBSD: def.h,v 1.16 2001/05/23 22:20:35 art Exp $	*/
 
 /*
  * This file is the general header file for all parts
@@ -12,25 +12,6 @@
 #include	"sysdef.h"	/* Order is critical.		 */
 #include	"ttydef.h"
 #include	"chrdef.h"
-
-/*
- * If your system and/or compiler does not support the "void" type
- * then define NO_VOID_TYPE in sysdef.h.  In the absence of some
- * other definition for VOID, the default in that case will be to
- * turn it into an int, which works with most compilers that don't
- * support void.  In the absence of any definition of VOID or
- * NO_VOID_TYPE, the default is to assume void is supported, which
- * should be the case for most modern C compilers.
- */
-
-#ifdef NO_VOID_TYPE
-#undef VOID
-#define VOID int		/* Default for no void is int */
-#else
-#ifndef VOID
-#define VOID void		/* Just use normal void */
-#endif				/* VOID */
-#endif				/* NO_VOID_TYPE */
 
 #ifdef	NO_MACRO
 #ifndef NO_STARTUP
@@ -278,34 +259,34 @@ typedef struct {
  */
 
 /* tty.c X */
-VOID	 ttinit			__P((void));
-VOID	 ttreinit		__P((void));
-VOID	 tttidy			__P((void));
-VOID	 ttmove			__P((int, int));
-VOID	 tteeol			__P((void));
-VOID	 tteeop			__P((void));
-VOID	 ttbeep			__P((void));
-VOID	 ttinsl			__P((int, int, int));
-VOID	 ttdell			__P((int, int, int));
-VOID	 ttwindow		__P((int, int));
-VOID	 ttnowindow		__P((void));
-VOID	 ttcolor		__P((int));
-VOID	 ttresize		__P((void));
+void	 ttinit			__P((void));
+void	 ttreinit		__P((void));
+void	 tttidy			__P((void));
+void	 ttmove			__P((int, int));
+void	 tteeol			__P((void));
+void	 tteeop			__P((void));
+void	 ttbeep			__P((void));
+void	 ttinsl			__P((int, int, int));
+void	 ttdell			__P((int, int, int));
+void	 ttwindow		__P((int, int));
+void	 ttnowindow		__P((void));
+void	 ttcolor		__P((int));
+void	 ttresize		__P((void));
 
 /* ttyio.c */
-VOID	 ttopen			__P((void));
+void	 ttopen			__P((void));
 int	 ttraw			__P((void));
-VOID	 ttclose		__P((void));
+void	 ttclose		__P((void));
 int	 ttcooked		__P((void));
 int	 ttputc			__P((int));
-VOID	 ttflush		__P((void));
+void	 ttflush		__P((void));
 int	 ttgetc			__P((void));
 int	 ttwait			__P((int));
-VOID	 setttysize		__P((void));
+void	 setttysize		__P((void));
 int	 typeahead		__P((void));
 
 /* dir.c */
-VOID	 dirinit		__P((VOID));
+void	 dirinit		__P((void));
 int	 changedir		__P((int, int));
 int	 showcwdir		__P((int, int));
 
@@ -333,19 +314,19 @@ int	 filesave		__P((int, int));
 int	 buffsave		__P((BUFFER *));
 int	 makebkfile		__P((int, int));
 int	 writeout		__P((BUFFER *, char *));
-VOID     upmodes		__P((BUFFER *));
+void     upmodes		__P((BUFFER *));
 
 /* line.c X */
 LINE    *lalloc			__P((int));
 LINE    *lallocx		__P((int));
-VOID	 lfree			__P((LINE *));
-VOID     lchange		__P((int));
+void	 lfree			__P((LINE *));
+void     lchange		__P((int));
 int	 linsert		__P((int, int));
 int	 lnewline		__P((void));
 int	 ldelete		__P((RSIZE, int));
 int      ldelnewline		__P((void));
 int	 lreplace		__P((RSIZE, char *, int));
-VOID     kdelete		__P((void));
+void     kdelete		__P((void));
 int	 kinsert		__P((int, int));
 int	 kremove		__P((int));
 
@@ -379,19 +360,19 @@ int	 notmodified		__P((int, int));
 int	 popbuftop		__P((BUFFER *));
 
 /* display.c */
-VOID     vtinit			__P((void));
-VOID     vttidy			__P((void));
-VOID     update			__P((void));
+void     vtinit			__P((void));
+void     vttidy			__P((void));
+void     update			__P((void));
 
 /* echo.c X */
-VOID	 eerase			__P((void));
+void	 eerase			__P((void));
 int	 eyorn			__P((char *));
 int	 eyesno			__P((char *));
-VOID     ewprintf		__P((const char *fmt, ...));
+void     ewprintf		__P((const char *fmt, ...));
 int	 ereply			__P((const char *, char *, int, ...));
 int	 eread			__P((const char *, char *, int, int, ...));
 int	 getxtra		__P((LIST *, LIST *, int, int));
-VOID	 free_file_list	__P((LIST *));
+void	 free_file_list	__P((LIST *));
 
 /* fileio.c */
 int	 ffropen		__P((char *, BUFFER *));
@@ -413,7 +394,7 @@ LIST	*complete_function_list	__P((char *, int));
 /* kbd.c X */
 int	 do_meta		__P((int, int));
 int	 bsmap			__P((int, int));
-VOID	 ungetkey		__P((int));
+void	 ungetkey		__P((int));
 int	 getkey			__P((int));
 int	 doin			__P((void));
 int	 rescan			__P((int, int));
@@ -428,7 +409,7 @@ int	 ctrlg			__P((int, int));
 int	 quit			__P((int, int));
 
 /* ttyio.c */
-VOID     panic			__P((char *));
+void     panic			__P((char *));
 
 /* cinfo.c */
 char    *keyname		__P((char  *, int));
@@ -442,14 +423,14 @@ int	 gotobob		__P((int, int));
 int	 gotoeob		__P((int, int));
 int	 forwline		__P((int, int));
 int	 backline		__P((int, int));
-VOID	 setgoal		__P((void));
+void	 setgoal		__P((void));
 int	 getgoal		__P((LINE *));
 int	 forwpage		__P((int, int));
 int	 backpage		__P((int, int));
 int	 forw1page		__P((int, int));
 int	 back1page		__P((int, int));
 int	 pagenext		__P((int, int));
-VOID	 isetmark		__P((VOID));
+void	 isetmark		__P((void));
 int	 setmark		__P((int, int));
 int	 swapmark		__P((int, int));
 int	 gotoline		__P((int, int));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: echo.c,v 1.9 2001/05/23 22:01:44 art Exp $	*/
+/*	$OpenBSD: echo.c,v 1.10 2001/05/23 22:20:35 art Exp $	*/
 
 /*
  *	Echo line reading and writing.
@@ -22,11 +22,11 @@
 static int	veread		__P((const char *, char *buf, int, int, va_list));
 static int      complt		__P((int, int, char *, int));
 static int      complt_list	__P((int, int, char *, int));
-static VOID     eformat		__P((const char *, va_list));
-static VOID     eputi		__P((int, int));
-static VOID     eputl		__P((long, int));
-static VOID     eputs		__P((char *));
-static VOID     eputc		__P((char));
+static void     eformat		__P((const char *, va_list));
+static void     eputi		__P((int, int));
+static void     eputl		__P((long, int));
+static void     eputs		__P((char *));
+static void     eputc		__P((char));
 static LIST    *copy_list	__P((LIST *));
 
 int             epresf = FALSE;		/* stuff in echo line flag */
@@ -34,7 +34,7 @@ int             epresf = FALSE;		/* stuff in echo line flag */
 /*
  * Erase the echo line.
  */
-VOID
+void
 eerase()
 {
 	ttcolor(CTEXT);
@@ -260,7 +260,7 @@ veread(fp, buf, nbuf, flag, ap)
 			goto done;
 		case CCHR('G'):			/* bell, abort */
 			eputc(CCHR('G'));
-			(VOID)ctrlg(FFRAND, 0);
+			(void)ctrlg(FFRAND, 0);
 			ttflush();
 			return ABORT;
 		case CCHR('H'):			/* rubout, erase */
@@ -618,7 +618,7 @@ getxtra(lp1, lp2, cpos, wflag)
  * routine.
  */
 /* VARARGS */
-VOID
+void
 #ifdef __STDC__
 ewprintf(const char *fmt, ...)
 #else /* __STDC__ */
@@ -658,7 +658,7 @@ ewprintf(va_alist)
  * Note: %c works, and prints the "name" of the character.
  * %k prints the name of a key (and takes no arguments).
  */
-static VOID
+static void
 eformat(fp, ap)
 	const char *fp;
 	va_list     ap;
@@ -674,7 +674,7 @@ eformat(fp, ap)
 			c = *fp++;
 			switch (c) {
 			case 'c':
-				(VOID)keyname(kname, va_arg(ap, int));
+				(void)keyname(kname, va_arg(ap, int));
 				eputs(kname);
 				break;
 
@@ -723,7 +723,7 @@ eformat(fp, ap)
 /*
  * Put integer, in radix "r".
  */
-static VOID
+static void
 eputi(i, r)
 	int i, r;
 {
@@ -741,7 +741,7 @@ eputi(i, r)
 /*
  * Put long, in radix "r".
  */
-static VOID
+static void
 eputl(l, r)
 	long l;
 	int  r;
@@ -760,7 +760,7 @@ eputl(l, r)
 /*
  * Put string.
  */
-static VOID
+static void
 eputs(s)
 	char *s;
 {
@@ -774,7 +774,7 @@ eputs(s)
  * Put character.  Watch for control characters, and for the line getting 
  * too long.
  */
-static VOID
+static void
 eputc(c)
 	char	 c;
 {
@@ -788,7 +788,7 @@ eputc(c)
 	}
 }
 
-VOID
+void
 free_file_list(lp)
 	LIST *lp;
 {

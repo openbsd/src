@@ -1,4 +1,4 @@
-/*	$OpenBSD: help.c,v 1.9 2001/05/23 22:12:10 art Exp $	*/
+/*	$OpenBSD: help.c,v 1.10 2001/05/23 22:20:35 art Exp $	*/
 
 /*
  * Help functions for Mg 2 
@@ -35,7 +35,7 @@ desckey(f, n)
 	if (inmacro)
 		return TRUE;	/* ignore inside keyboard macro */
 #endif /* !NO_MACRO */
-	(VOID)strcpy(prompt, "Describe key briefly: ");
+	strcpy(prompt, "Describe key briefly: ");
 	pep = prompt + strlen(prompt);
 	key.k_count = 0;
 	m = curbp->b_nmodes;

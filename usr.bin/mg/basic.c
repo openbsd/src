@@ -1,4 +1,4 @@
-/*	$OpenBSD: basic.c,v 1.5 2001/02/12 21:51:55 millert Exp $	*/
+/*	$OpenBSD: basic.c,v 1.6 2001/05/23 22:20:34 art Exp $	*/
 
 /*
  *		Basic cursor motion commands.
@@ -11,7 +11,7 @@
  */
 #include "def.h"
 
-VOID setgoal __P((void));
+void setgoal __P((void));
 
 /*
  * Go to beginning of line.
@@ -109,7 +109,7 @@ gotobob(f, n)
 	int f, n;
 {
 
-	(VOID) setmark(f, n);
+	(void) setmark(f, n);
 	curwp->w_dotp = lforw(curbp->b_linep);
 	curwp->w_doto = 0;
 	curwp->w_flag |= WFHARD;
@@ -126,7 +126,7 @@ gotoeob(f, n)
 	int f, n;
 {
 
-	(VOID) setmark(f, n);
+	(void) setmark(f, n);
 	curwp->w_dotp = lback(curbp->b_linep);
 	curwp->w_doto = llength(curwp->w_dotp);
 	curwp->w_flag |= WFHARD;
@@ -213,7 +213,7 @@ backline(f, n)
  * "curgoal", to the current cursor column. The column is never off
  * the edge of the screen; it's more like display then show position.
  */
-VOID
+void
 setgoal()
 {
 
@@ -342,7 +342,7 @@ backpage(f, n)
  * are used to scroll the display up (or down) one line at a time.
  */
 #ifdef GOSMACS
-VOID
+void
 forw1page(f, n)
 	int f, n;
 {
@@ -354,7 +354,7 @@ forw1page(f, n)
 	forwpage(f | FFRAND, n);
 }
 
-VOID
+void
 back1page(f, n)
 	int f, n;
 {
@@ -382,8 +382,8 @@ pagenext(f, n)
 		return FALSE;
 	}
 	wp = curwp;
-	(VOID) nextwind(f, n);
-	(VOID) forwpage(f, n);
+	(void) nextwind(f, n);
+	(void) forwpage(f, n);
 	curwp = wp;
 	curbp = wp->w_bufp;
 	return TRUE;
@@ -392,7 +392,7 @@ pagenext(f, n)
 /*
  * Internal set mark routine, used by other functions (daveb).
  */
-VOID
+void
 isetmark()
 {
 

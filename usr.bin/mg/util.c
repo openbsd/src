@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.4 2001/01/29 01:58:09 niklas Exp $	*/
+/*	$OpenBSD: util.c,v 1.5 2001/05/23 22:20:36 art Exp $	*/
 
 /*
  *		Assorted commands.
@@ -230,7 +230,7 @@ int
 justone(f, n)
 	int f, n;
 {
-	(VOID)delwhite(f, n);
+	(void)delwhite(f, n);
 	return linsert(1, ' ');
 }
 
@@ -259,8 +259,8 @@ delwhite(f, n)
 	} while ((c = lgetc(curwp->w_dotp, curwp->w_doto)) == ' ' || c == '\t');
 
 	if (s == TRUE)
-		(VOID)forwchar(FFRAND, 1);
-	(VOID)ldelete((RSIZE)(col - curwp->w_doto), KNONE);
+		(void)forwchar(FFRAND, 1);
+	(void)ldelete((RSIZE)(col - curwp->w_doto), KNONE);
 	return TRUE;
 }
 

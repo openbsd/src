@@ -1,4 +1,4 @@
-/*	$OpenBSD: line.c,v 1.5 2001/01/29 01:58:08 niklas Exp $	*/
+/*	$OpenBSD: line.c,v 1.6 2001/05/23 22:20:35 art Exp $	*/
 
 /*
  *		Text line handling.
@@ -95,7 +95,7 @@ lallocx(used)
  * it might be in, and release the memory.  The buffers are updated too; the 
  * magic conditions described in the above comments don't hold here.
  */
-VOID
+void
 lfree(lp)
 	LINE *lp;
 {
@@ -138,7 +138,7 @@ lfree(lp)
  * displayed in more than 1 window we change EDIT to HARD. Set MODE if the 
  * mode line needs to be updated (the "*" has to be set).
  */
-VOID
+void
 lchange(flag)
 	int flag;
 {
@@ -506,7 +506,7 @@ lreplace(plen, st, f)
 	 * lowercase found), so bypass check.
 	 */
 	/* NOSTRICT */
-	(VOID)backchar(FFARG | FFRAND, (int)plen);
+	(void)backchar(FFARG | FFRAND, (int)plen);
 	rtype = _L;
 	c = lgetc(curwp->w_dotp, curwp->w_doto);
 	if (ISUPPER(c) != FALSE && f == FALSE) {
@@ -526,7 +526,7 @@ lreplace(plen, st, f)
 	rlen = strlen(st);
 	doto = curwp->w_doto;
 	if (plen > rlen)
-		(VOID)ldelete((RSIZE) (plen - rlen), KNONE);
+		(void)ldelete((RSIZE) (plen - rlen), KNONE);
 	else if (plen < rlen) {
 		if (linsert((int)(rlen - plen), ' ') == FALSE)
 			return FALSE;
@@ -545,16 +545,16 @@ lreplace(plen, st, f)
 			rtype = _L;
 		if (c == CCHR('J')) {
 			if (curwp->w_doto == llength(curwp->w_dotp))
-				(VOID)forwchar(FFRAND, 1);
+				(void)forwchar(FFRAND, 1);
 			else {
 				if (ldelete((RSIZE) 1, KNONE) != FALSE)
-					(VOID)lnewline();
+					(void)lnewline();
 			}
 		} else if (curwp->w_dotp == curbp->b_linep) {
-			(VOID)linsert(1, c);
+			(void)linsert(1, c);
 		} else if (curwp->w_doto == llength(curwp->w_dotp)) {
 			if (ldelete((RSIZE) 1, KNONE) != FALSE)
-				(VOID)linsert(1, c);
+				(void)linsert(1, c);
 		} else
 			lputc(curwp->w_dotp, curwp->w_doto++, c);
 	}
@@ -567,7 +567,7 @@ lreplace(plen, st, f)
  * a new kill context is created. The kill buffer array is released, just in 
  * case the buffer has grown to an immense size.  No errors.
  */
-VOID
+void
 kdelete()
 {
 	if (kbufp != NULL) {

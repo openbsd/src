@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.7 2001/01/29 01:58:10 niklas Exp $	*/
+/*	$OpenBSD: tty.c,v 1.8 2001/05/23 22:20:36 art Exp $	*/
 
 /*
  * Terminfo display driver
@@ -43,7 +43,7 @@ static char	*scroll_fwd;	/* How to scroll forward. */
  * Initialize the terminal when the editor
  * gets started up.
  */
-VOID
+void
 ttinit()
 {
 	char	*tv_stype, *p;
@@ -119,7 +119,7 @@ ttinit()
  * Re-initialize the terminal when the editor is resumed.
  * The keypad_xmit doesn't really belong here but...
  */
-VOID
+void
 ttreinit()
 {
 	if (enter_ca_mode)
@@ -138,7 +138,7 @@ ttreinit()
  * it sets the window back to half screen scrolling. Perhaps it should
  * query the display for the increment, and put it back to what it was.
  */
-VOID
+void
 tttidy()
 {
 #ifdef	XKEYS
@@ -155,7 +155,7 @@ tttidy()
  * optimize out extra moves; redisplay may have left the cursor in the right
  * location last time!
  */
-VOID
+void
 ttmove(row, col)
 	int row, col;
 {
@@ -169,7 +169,7 @@ ttmove(row, col)
 /*
  * Erase to end of line.
  */
-VOID
+void
 tteeol()
 {
 	int	i;
@@ -187,7 +187,7 @@ tteeol()
 /*
  * Erase to end of page.
  */
-VOID
+void
 tteeop()
 {
 	int	line;
@@ -212,7 +212,7 @@ tteeop()
 /*
  * Make a noise.
  */
-VOID
+void
 ttbeep()
 {
 	putpad(bell, 1);
@@ -225,7 +225,7 @@ ttbeep()
  * smoother display.  If there is no scrolling region, use a set of insert 
  * and delete line sequences.
  */
-VOID
+void
 ttinsl(row, bot, nchunk)
 	int row, bot, nchunk;
 {
@@ -278,7 +278,7 @@ ttinsl(row, bot, nchunk)
  * this is done with crafty sequences of insert and delete lines.  The 
  * presence of the echo area makes a boundry condition go away.
  */
-VOID
+void
 ttdell(row, bot, nchunk)
 	int row, bot, nchunk;
 {
@@ -332,7 +332,7 @@ ttdell(row, bot, nchunk)
  * ensure that the next call to "ttmove" does not turn into a no-op (the 
  * window adjustment moves the cursor).
  */
-VOID
+void
 ttwindow(top, bot)
 	int top, bot;
 {
@@ -353,7 +353,7 @@ ttwindow(top, bot)
  * larger.  This behavior seems to work right on systems where you can set 
  * your terminal size.
  */
-VOID
+void
 ttnowindow()
 {
 	if (change_scroll_region) {
@@ -373,7 +373,7 @@ ttnowindow()
  * in putline.s on a line by line basis, so don't bother sending out the 
  * color shift.
  */
-VOID
+void
 ttcolor(color)
 	int color;
 {
@@ -396,7 +396,7 @@ ttcolor(color)
  * always deal with a screen NROW by NCOL. Look in "window.c" to see how 
  * the caller deals with a change.
  */
-VOID
+void
 ttresize()
 {
 	/* found in "ttyio.c" */
