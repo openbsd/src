@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.643 2003/06/16 19:34:36 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.644 2003/06/25 08:59:55 henning Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -3861,6 +3861,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_MOXA, PCI_PRODUCT_MOXA_CP114,
 	    "CP-114",
+	},
+	{
+	    PCI_VENDOR_MOXA, PCI_PRODUCT_MOXA_C104H,
+	    "C104H",
 	},
 	{
 	    PCI_VENDOR_MOXA, PCI_PRODUCT_MOXA_C168H,
