@@ -1,4 +1,4 @@
-#	$OpenBSD: pnpdevs,v 1.6 1997/12/25 06:28:39 downsj Exp $
+#	$OpenBSD: pnpdevs,v 1.7 1997/12/25 14:13:13 downsj Exp $
 
 #
 # NOTE: All `com' devices also need pccom identifiers.
@@ -314,10 +314,10 @@ le	PNP828D		#AMD PCNet32 (VL version)
 #	PNPA032	#Mitsumi FX-001 Double Speed CD-ROM controller + drive
 
 #***** Sound/Video-capture, multimedia - PNPBxxx ********
-#	PNPB000	#Sound Blaster 1.5-compatible sound device
-#	PNPB001	#Sound Blaster 2.0-compatible sound device
-#	PNPB002	#Sound Blaster Pro-compatible sound device
-#	PNPB003	#Sound Blaster 16-compatible sound device
+sb	PNPB000	#Sound Blaster 1.5-compatible sound device
+sb	PNPB001	#Sound Blaster 2.0-compatible sound device
+sb	PNPB002	#Sound Blaster Pro-compatible sound device
+sb	PNPB003	#Sound Blaster 16-compatible sound device
 #	PNPB004	#Thunderboard-compatible sound device
 #	PNPB005	#Adlib-compatible FM synthesizer device
 #	PNPB006	#MPU401 compatible 
@@ -346,9 +346,26 @@ pccom	PNPC000	#Compaq 14400 Modem (TBD)
 com	PNPC001	#Compaq 2400/9600 Modem (TBD)
 pccom	PNPC001	#Compaq 2400/9600 Modem (TBD)
 
+#
 # Everything else.
+#
+
+# Modems:
 com	NECE761	#33.6Modem
 pccom	NECE761	#33.6Modem
 com	BDP0356 #Best Data 56x2
 pccom	BDP0356	#Best Data 56x2
+
+# Ethernet:
 le	BRI1001	#BOCALANcard COMBO
+
+# Sound:
+sb	ADS7150	#AD1815
+sb	ADS7180	#AD1816
+sb	CTL0001	#
+sb	CTL0031	#SB AWE32
+sb	CTL0041	#SB16 PnP (CT4131)
+sb	CTL0042	#SB AWE64 Value
+sb	CTL0044	#SB AWE64 Gold
+sb	CTL0045	#SB AWE64 Value
+sb	ESS1868	#
