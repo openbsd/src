@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.21 1999/11/21 17:40:26 deraadt Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.22 1999/11/25 13:39:38 art Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -480,7 +480,7 @@ pipe_write(fp, uio, cred)
 			if (size > uio->uio_resid)
 				size = uio->uio_resid;
 			if ((error = pipelock(wpipe,1)) == 0) {
-				error = uiomove( &wpipe->pipe_buffer.buffer[wpipe->pipe_buffer.in], 
+				error = uiomove(&wpipe->pipe_buffer.buffer[wpipe->pipe_buffer.in], 
 					size, uio);
 				pipeunlock(wpipe);
 			}
