@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_inode.c,v 1.13 1999/12/06 06:55:41 art Exp $	*/
+/*	$OpenBSD: ffs_inode.c,v 1.14 1999/12/06 07:03:04 art Exp $	*/
 /*	$NetBSD: ffs_inode.c,v 1.10 1996/05/11 18:27:19 mycroft Exp $	*/
 
 /*
@@ -64,14 +64,6 @@
 
 static int ffs_indirtrunc __P((struct inode *, daddr_t, daddr_t, daddr_t, int,
 			       long *));
-
-int
-ffs_init(vfsp)
-	struct vfsconf *vfsp;
-{
-	softdep_initialize();
-	return (ufs_init(vfsp));
-}
 
 /*
  * Update the access, modified, and inode change times as specified by the

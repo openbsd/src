@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.25 1999/12/06 06:59:36 art Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.26 1999/12/06 07:03:04 art Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -1190,6 +1190,14 @@ ffs_sbupdate(mp, waitfor)
 	else if ((error = bwrite(bp)))
 		allerror = error;
 	return (allerror);
+}
+
+int
+ffs_init(vfsp)
+	struct vfsconf *vfsp;
+{
+	softdep_initialize();
+	return (ufs_init(vfsp));
 }
 
 /*
