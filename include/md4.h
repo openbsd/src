@@ -1,56 +1,49 @@
-/* MD4.H - header file for MD4C.C
- * $OpenBSD: md4.h,v 1.11 2003/10/07 22:17:27 avsm Exp $
- */
+/*	$OpenBSD: md4.h,v 1.12 2004/04/28 16:54:00 millert Exp $	*/
 
-/* Copyright (C) 1991-2, RSA Data Security, Inc. Created 1991. All
-   rights reserved.
-
-   License to copy and use this software is granted provided that it
-   is identified as the "RSA Data Security, Inc. MD4 Message-Digest
-   Algorithm" in all material mentioning or referencing this software
-   or this function.
-   License is also granted to make and use derivative works provided
-   that such works are identified as "derived from the RSA Data
-   Security, Inc. MD4 Message-Digest Algorithm" in all material
-   mentioning or referencing the derived work.
-
-   RSA Data Security, Inc. makes no representations concerning either
-   the merchantability of this software or the suitability of this
-   software for any particular purpose. It is provided "as is"
-   without express or implied warranty of any kind.
-
-   These notices must be retained in any copies of any part of this
-   documentation and/or software.
+/*
+ * This code implements the MD4 message-digest algorithm.
+ * The algorithm is due to Ron Rivest.  This code was
+ * written by Colin Plumb in 1993, no copyright is claimed.
+ * This code is in the public domain; do with it what you wish.
+ * Todd C. Miller modified the MD5 code to do MD4 based on RFC 1186.
+ *
+ * Equivalent code is available from RSA Data Security, Inc.
+ * This code has been tested against that, and is equivalent,
+ * except that you don't need to include two pages of legalese
+ * with every copy.
  */
 
 #ifndef _MD4_H_
 #define _MD4_H_
 
-/* MD4 context. */
+#define	MD4_BLOCK_LENGTH		64
+#define	MD4_DIGEST_LENGTH		16
+#define	MD4_DIGEST_STRING_LENGTH	(MD4_DIGEST_LENGTH * 2 + 1)
+
 typedef struct MD4Context {
-    u_int32_t state[4];		/* state (ABCD) */
-    u_int64_t count;		/* number of bits, modulo 2^64 */
-    unsigned char buffer[64];	/* input buffer */
+	u_int32_t state[4];			/* state */
+	u_int64_t count;			/* number of bits, mod 2^64 */
+	u_int8_t buffer[MD4_BLOCK_LENGTH];	/* input buffer */
 } MD4_CTX;
 
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-void   MD4Init(MD4_CTX *);
-void   MD4Update(MD4_CTX *, const unsigned char *, size_t)
+void	 MD4Init(MD4_CTX *);
+void	 MD4Update(MD4_CTX *, const u_int8_t *, size_t)
 		__attribute__((__bounded__(__string__,2,3)));
-void   MD4Final(unsigned char [16], MD4_CTX *)
-		__attribute__((__bounded__(__minbytes__,1,16)));
-void   MD4Transform(u_int32_t [4], const unsigned char [64])
+void	 MD4Final(u_int8_t [MD4_DIGEST_LENGTH], MD4_CTX *)
+		__attribute__((__bounded__(__minbytes__,1,MD4_DIGEST_LENGTH)));
+void	 MD4Transform(u_int32_t [4], const u_int8_t [MD4_BLOCK_LENGTH])
 		__attribute__((__bounded__(__minbytes__,1,4)))
-		__attribute__((__bounded__(__minbytes__,2,64)));
-char * MD4End(MD4_CTX *, char *)
-                __attribute__((__bounded__(__minbytes__,2,33)));
-char * MD4File(char *, char *)
-		__attribute__((__bounded__(__minbytes__,2,33)));
-char * MD4Data(const unsigned char *, size_t, char *)
+		__attribute__((__bounded__(__minbytes__,2,MD4_BLOCK_LENGTH)));
+char	*MD4End(MD4_CTX *, char [MD4_DIGEST_STRING_LENGTH])
+		__attribute__((__bounded__(__minbytes__,2,MD4_DIGEST_STRING_LENGTH)));
+char	*MD4File(char *, char [MD4_DIGEST_STRING_LENGTH])
+		__attribute__((__bounded__(__minbytes__,2,MD4_DIGEST_STRING_LENGTH)));
+char	*MD4Data(const u_int8_t *, size_t, char [MD4_DIGEST_STRING_LENGTH])
 		__attribute__((__bounded__(__string__,1,2)))
-		__attribute__((__bounded__(__minbytes__,3,33)));
+		__attribute__((__bounded__(__minbytes__,3,MD4_DIGEST_STRING_LENGTH)));
 __END_DECLS
 
 #endif /* _MD4_H_ */
