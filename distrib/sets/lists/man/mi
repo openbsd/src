@@ -655,6 +655,9 @@
 ./usr/share/man/cat3/hp300
 ./usr/share/man/cat3/hppa
 ./usr/share/man/cat3/i386
+./usr/share/man/cat3/kvm_getargv2.0
+./usr/share/man/cat3/kvm_getenvv2.0
+./usr/share/man/cat3/kvm_getproc2.0
 ./usr/share/man/cat3/mac68k
 ./usr/share/man/cat3/macppc
 ./usr/share/man/cat3/mvme68k
