@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.9 1997/09/17 06:47:07 downsj Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.10 1997/12/23 21:43:19 chuck Exp $	*/
 /*	$NetBSD: cgsix.c,v 1.33 1997/08/07 19:12:30 pk Exp $ */
 
 /*
@@ -144,9 +144,12 @@ static struct fbdriver cg6_fbdriver = {
  * Unlike the bw2 and cg3 drivers, we do not need to provide an rconsole
  * interface, as the cg6 is fast enough.. but provide a knob to turn it
  * on anyway.
+ * XXXCDC: rethink this.  the Sun PROM is buggy with some escape sequences
+ * thus causing your display to get messed up.  raster console prevents 
+ * this....
  */
 #ifdef RASTERCONSOLE
-int cgsix_use_rasterconsole = 0;
+int cgsix_use_rasterconsole = 1;
 #endif
 
 extern int fbnode;
