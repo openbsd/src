@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: upgrade.sh,v 1.36 2002/06/29 20:01:34 krw Exp $
+#	$OpenBSD: upgrade.sh,v 1.37 2002/07/06 03:19:36 krw Exp $
 #	$NetBSD: upgrade.sh,v 1.2.4.5 1996/08/27 18:15:08 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -168,38 +168,8 @@ if ! umount /mnt; then
 fi
 mount_fs
 
-# If Xfree86 v3 directories that would prevent upgrading to XFree86 v4
-# are found, move them and replace them with links that the upgrade
-# can replace with new values.
-(
-if [ -d /mnt/usr/X11R6/lib/X11 ]; then
-	cd /mnt/usr/X11R6/lib/X11
-	for xf3dir in twm xkb xsm xinit rstart; do
-		if [ -e $xf3dir -a ! -L $xf3dir ]; then
-			mkdir -p XF3
-			mv $xf3dir XF3/.
-			ln -s XF3/$xf3dir $xf3dir
-		fi
-	done
-fi
-)
-
 # Install sets.
 install_sets $THESETS
-
-# Copy in configuration information and make devices in target root.
-(
-	if [ -f /mnt/etc/sendmail.cf -a ! -f /mnt/etc/mail/sendmail.cf ]; then
-		echo "Moving /etc/sendmail.cf -> /etc/mail/sendmail.cf"
-		[ -d /mnt/etc/mail ] || mkdir /mnt/etc/mail
-		mv /mnt/etc/sendmail.cf /mnt/etc/mail/sendmail.cf
-		ed - /mnt/etc/rc << __EOT
-1,$s/etc\/sendmail.cf/etc\/mail\/sendmail.cf/g
-w
-q
-__EOT
-	fi
-)
 
 # Perform final steps common to both an install and an upgrade.
 finish_up
