@@ -37,7 +37,7 @@
 
 #if defined(LIBC_SCCS) 
 	.text
-	.asciz "$OpenBSD: mul.S,v 1.2 1996/08/19 08:17:42 tholo Exp $"
+	.asciz "$OpenBSD: mul.S,v 1.3 2002/11/23 19:04:39 drahn Exp $"
 #endif /* LIBC_SCCS */
 
 /*
@@ -51,6 +51,11 @@
  */
 
 #include "DEFS.h"
+#ifndef STRONG_SPARC
+.weak .mul
+#else
+FUNC(__mul)
+#endif
 FUNC(.mul)
 	mov	%o0, %y		! multiplier -> Y
 	andncc	%o0, 0xfff, %g0	! test bits 12..31

@@ -37,7 +37,7 @@
 
 #if defined(LIBC_SCCS) 
 	.text
-	.asciz "$OpenBSD: umul.S,v 1.2 1996/08/19 08:17:46 tholo Exp $"
+	.asciz "$OpenBSD: umul.S,v 1.3 2002/11/23 19:04:39 drahn Exp $"
 #endif /* LIBC_SCCS */
 
 /*
@@ -57,6 +57,11 @@
  */
 
 #include "DEFS.h"
+#ifndef STRONG_SPARC
+.weak .umul
+#else
+FUNC(__umul)
+#endif
 FUNC(.umul)
 	or	%o0, %o1, %o4
 	mov	%o0, %y		! multiplier -> Y
