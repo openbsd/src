@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm.c,v 1.25 2001/11/06 19:17:36 art Exp $ */
+/*	$OpenBSD: kvm.c,v 1.26 2001/11/21 20:16:16 drahn Exp $ */
 /*	$NetBSD: kvm.c,v 1.43 1996/05/05 04:31:59 gwr Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-static char *rcsid = "$OpenBSD: kvm.c,v 1.25 2001/11/06 19:17:36 art Exp $";
+static char *rcsid = "$OpenBSD: kvm.c,v 1.26 2001/11/21 20:16:16 drahn Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -862,7 +862,7 @@ int kvm_dump_inval(kd)
 kvm_t	*kd;
 {
 	struct nlist	nlist[2];
-	u_long		pa;
+	u_long		pa, x;
 
 	if (ISALIVE(kd)) {
 		_kvm_err(kd, kd->program, "clearing dump on live kernel");
@@ -878,8 +878,8 @@ kvm_t	*kd;
 	if (_kvm_kvatop(kd, (u_long)nlist[0].n_value, &pa) == 0)
 		return (-1);
 
-	pa = 0;
-	if (_kvm_pwrite(kd, kd->pmfd, &pa, sizeof(pa), (off_t)_kvm_pa2off(kd, pa)) != sizeof(pa)) {
+	x = 0;
+	if (_kvm_pwrite(kd, kd->pmfd, &x, sizeof(x), (off_t)_kvm_pa2off(kd, pa)) != sizeof(x)) {
 		_kvm_err(kd, 0, "cannot invalidate dump");
 		return (-1);
 	}
