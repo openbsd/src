@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.104 2004/01/29 20:38:22 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.105 2004/01/30 11:40:41 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -115,7 +115,11 @@ setup_listener(void)
 		return (fd);
 
 	opt = 1;
-	setsockopt(fd, SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt));
+	if (setsockopt(fd, SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt)) == -1)
+		fatal("setsockopt SO_REUSEPORT");
+	if (setsockopt(fd, IPPROTO_TCP, TCP_SIGNATURE_ENABLE, &opt,
+	    sizeof(opt)) == -1)
+		fatal("setsockopt TCPSIGNATURE_ENABLE");
 
 	if (bind(fd, (struct sockaddr *)&conf->listen_addr,
 	    sizeof(conf->listen_addr))) {
@@ -701,6 +705,7 @@ void
 session_accept(int listenfd)
 {
 	int			 connfd;
+	int			 opt;
 	socklen_t		 len;
 	struct sockaddr_in	 cliaddr;
 	struct peer		*p = NULL;
@@ -722,6 +727,19 @@ session_accept(int listenfd)
 			shutdown(connfd, SHUT_RDWR);
 			close(connfd);
 			return;
+		}
+		if (p->conf.tcp_md5_key[0]) {
+			len = sizeof(opt);
+			if (getsockopt(connfd, IPPROTO_TCP,
+			    TCP_SIGNATURE_ENABLE, &opt, &len) == -1)
+				fatal("getsockopt TCP_SIGNATURE_ENABLE");
+			if (!opt) {	/* non-md5'd connection! */
+				log_peer_warnx(&p->conf,
+				    "connection attempt without md5 signature");
+				shutdown(connfd, SHUT_RDWR);
+				close(connfd);
+				return;
+			}
 		}
 		p->sock = p->wbuf.sock = connfd;
 		if (session_setup_socket(p)) {
