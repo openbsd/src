@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tar.1,v 1.45 2003/11/21 20:54:02 jmc Exp $
+.\"	$OpenBSD: tar.1,v 1.46 2004/08/10 13:33:15 millert Exp $
 .\"
 .\" Copyright (c) 1996 SigmaSoft, Th. Lockert
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: tar.1,v 1.45 2003/11/21 20:54:02 jmc Exp $
+.\"	$OpenBSD: tar.1,v 1.46 2004/08/10 13:33:15 millert Exp $
 .\"
 .Dd February 7, 2001
 .Dt TAR 1
@@ -199,10 +199,9 @@ from the directory.
 .It Fl H
 Follow symlinks given on command line only.
 .It Fl L
-Follow all symlinks.
-In extract mode this means that a directory entry in the archive
-will not overwrite an existing symbolic link, but rather what the
-link ultimately points to.
+Synonym for the
+.Fl h
+option.
 .It Fl P
 Do not strip leading slashes
 .Pq Sq /
