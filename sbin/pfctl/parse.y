@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.33 2001/09/15 11:21:50 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.34 2001/09/15 21:49:19 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -748,7 +748,7 @@ binatrule	: BINAT interface proto FROM address TO ipspec ARROW address
 			}
 			if ($5 != NULL && $7 != NULL) {
 				if ($5->af && $7->af && $5->af != $7->af) {
-					yyerror("nat ip versions must match");
+					yyerror("binat ip versions must match");
 					YYERROR;
 				} else {
 					if ($5->af)
@@ -775,6 +775,12 @@ binatrule	: BINAT interface proto FROM address TO ipspec ARROW address
 				yyerror("binat rule requires redirection address");
 				YYERROR;
 			}
+			/* we don't support IPv4 <-> IPv6 binat... yet */
+			if (binat.af && $9->af != binat.af) {
+				yyerror("binat ip versions must match");
+				YYERROR;
+			} else
+				binat.af = $9->af;
 			memcpy(&binat.raddr, &$9->addr, sizeof(binat.raddr));
 			free($9);
 			pfctl_add_binat(pf, &binat);
