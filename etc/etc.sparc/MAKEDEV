@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.26 1997/05/13 05:34:58 millert Exp $
+#	$OpenBSD: MAKEDEV,v 1.27 1997/05/14 00:11:07 deraadt Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -48,6 +48,7 @@
 #	uk*	unknown SCSI
 #	ss*	SCSI scanners
 #	xy*	Xylogic 450/451 disks
+#	rd*	"ramdisk" pseudo-disks
 #	xd*	Xylogic 753/7053 disks
 #	fd*	Floppies
 #	vnd*	"file" pseudo-disks
@@ -157,7 +158,7 @@ case $i in
 
 all)
 	sh ${this} std sd0 sd1 sd2 sd3 sd4 xd0 xd1 xd2 xd3 xy0 xy1 xy2 xy3
-	sh ${this} cd0 st0 st1
+	sh ${this} cd0 st0 st1 rd0
 	sh ${this} fd0 fdB0 fdC0 fdD0 fdE0 fdF0 fdG0 fdH0
 	sh ${this} uk0 uk1
 	sh ${this} ss0 ss1
@@ -173,6 +174,11 @@ all)
 floppy)
 	sh ${this} std random
 	sh ${this} fd0 sd0 sd1
+	;;
+
+ramdisk)
+	sh ${this} std random
+	sh ${this} fd0 sd0 sd1 rd0 cd0
 	;;
 
 std)
@@ -354,6 +360,16 @@ ccd*|sd*|xd*|xy*|cd*|vnd*)
 	umask 77
 	;;
 
+rd*)
+	umask 2 ; unit=`expr $i : '.*d\(.*\)'`
+	mknod rd${unit}a b 17 `expr $unit '*' 16 + 0`
+	mknod rd${unit}c b 17 `expr $unit '*' 16 + 2`
+	mknod rrd${unit}a c 106 `expr $unit '*' 16 + 0`
+	mknod rrd${unit}c c 106 `expr $unit '*' 16 + 2`
+	chown root.operator rd${unit}[ac] rrd${unit}[ac]
+	chmod 640 rd${unit}[ac] rrd${unit}[ac]
+	umask 77
+	;;
 st*)
 	umask 2
 	case $i in
