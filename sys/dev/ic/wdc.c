@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.3 1999/07/22 02:54:06 csapuntz Exp $     */
+/*      $OpenBSD: wdc.c,v 1.4 1999/07/22 04:36:33 deraadt Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -825,7 +825,7 @@ wdc_probe_caps(drvp)
 			/* Not good. fall back to 16bits */
 			drvp->drive_flags &= ~DRIVE_CAP32;
 		} else {
-			printf("%s: 32-bits data port", drv_dev->dv_xname);
+			printf("%s: 32-bit data port", drv_dev->dv_xname);
 		}
 	}
 #if 0 /* Some ultra-DMA drives claims to only support ATA-3. sigh */
@@ -880,7 +880,7 @@ wdc_probe_caps(drvp)
 				   AT_POLL) != CMD_OK)
 					continue;
 			if (!printed) { 
-				printf("%s: drive supports PIO mode %d",
+				printf("%s: supports PIO mode %d",
 				    drv_dev->dv_xname, i + 3);
 				sep = ",";
 				printed = 1;

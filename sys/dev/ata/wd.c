@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.3 1999/07/22 04:00:42 csapuntz Exp $ */
+/*	$OpenBSD: wd.c,v 1.4 1999/07/22 04:36:47 deraadt Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -321,8 +321,7 @@ wdattach(parent, self, aux)
 		wd->sc_multi = 1;
 	}
 
-	printf("%s: drive supports %d-sector pio transfers,",
-	    wd->sc_dev.dv_xname, wd->sc_multi);
+	printf("%s: %d-sector PIO,", wd->sc_dev.dv_xname, wd->sc_multi);
 
 	/* Prior to ATA-4, LBA was optional. */
 	if ((wd->sc_params.atap_capabilities1 & WDC_CAP_LBA) != 0)
@@ -335,32 +334,25 @@ wdattach(parent, self, aux)
 #endif
 
 	if ((wd->sc_flags & WDF_LBA) != 0) {
-		printf(" lba addressing\n");
 		wd->sc_capacity =
 		    (wd->sc_params.atap_capacity[1] << 16) |
 		    wd->sc_params.atap_capacity[0];
-		printf("%s: %dMB, %d cyl, %d head, %d sec, "
-		    "%d bytes/sect x %d sectors\n",
-		    self->dv_xname,
+		printf(" LBA, %dMB, %d cyl, %d head, %d sec, %d sectors\n",
 		    wd->sc_capacity / (1048576 / DEV_BSIZE),
 		    wd->sc_params.atap_cylinders,
 		    wd->sc_params.atap_heads,
 		    wd->sc_params.atap_sectors,
-		    DEV_BSIZE,
 		    wd->sc_capacity);
 	} else {
-		printf(" chs addressing\n");
 		wd->sc_capacity =
 		    wd->sc_params.atap_cylinders *
 		    wd->sc_params.atap_heads *
 		    wd->sc_params.atap_sectors;
-		printf("%s: %dMB, %d cyl, %d head, %d sec, %d bytes/sect x %d "
-		    "sectors\n", self->dv_xname,
+		printf(" CHS, %dMB, %d cyl, %d head, %d sec, %d sectors\n",
 		    wd->sc_capacity / (1048576 / DEV_BSIZE),
 		    wd->sc_params.atap_cylinders,
 		    wd->sc_params.atap_heads,
 		    wd->sc_params.atap_sectors,
-		    DEV_BSIZE,
 		    wd->sc_capacity);
 	}
 	WDCDEBUG_PRINT(("%s: atap_dmatiming_mimi=%d, atap_dmatiming_recom=%d\n",
