@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.33 1999/03/27 21:04:20 provos Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.34 1999/04/21 21:38:58 provos Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -875,6 +875,14 @@ findpcb:
 				tcpstat.tcps_rcvackbyte += acked;
 				sbdrop(&so->so_snd, acked);
 				tp->snd_una = th->th_ack;
+#if defined(TCP_SACK) || defined(TCP_NEWRENO)
+				/* 
+				 * We want snd_last to track snd_una so
+				 * as to avoid sequence wraparound problems
+				 * for very large transfers.
+				 */
+				tp->snd_last = tp->snd_una;
+#endif /* TCP_SACK or TCP_NEWRENO */
 #if defined(TCP_SACK) && defined(TCP_FACK)
 				tp->snd_fack = tp->snd_una;
 				tp->retran_data = 0;
@@ -2978,7 +2986,11 @@ tcp_newreno(tp, th)
 		tp->t_timer[TCPT_REXMT] = 0;
 		tp->t_rtt = 0;
 		tp->snd_nxt = th->th_ack;
-		tp->snd_cwnd = tp->t_maxseg;
+		/* 
+		 * Set snd_cwnd to one segment beyond acknowledged offset
+		 * (tp->snd_una not yet updated when this function is called)
+		 */ 
+		tp->snd_cwnd = tp->t_maxseg + (th->th_ack - tp->snd_una);
 		(void) tcp_output(tp);
 		tp->snd_cwnd = ocwnd;
 		if (SEQ_GT(onxt, tp->snd_nxt))
