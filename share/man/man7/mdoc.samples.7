@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.samples.7,v 1.24 2000/03/24 03:38:22 aaron Exp $
+.\"	$OpenBSD: mdoc.samples.7,v 1.25 2000/03/24 04:22:53 aaron Exp $
 .\"	$NetBSD: mdoc.samples.7,v 1.5 1996/04/03 20:17:34 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -125,9 +125,9 @@ outlined as follows:
 .It "A manual page template" .
 .El
 .It
-.Tn "INTRODUCTION OF TITLE MACROS" .
+.Tn "TITLE MACROS"
 .It
-.Tn "INTRODUCTION OF MANUAL AND GENERAL TEXT DOMAINS" .
+.Tn "INTRODUCTION OF MANUAL AND GENERAL TEXT DOMAINS"
 .Bl -tag -width flag -compact -offset indent
 .It "What's in a name..." .
 .It "General Syntax" .
@@ -153,6 +153,7 @@ outlined as follows:
 .It "Names" .
 .It "Options" .
 .It "Pathnames" .
+.It "Standards" .
 .It "Variables" .
 .It "Cross References" .
 .El
@@ -161,9 +162,7 @@ outlined as follows:
 .Bl -tag -width flag -compact -offset indent
 .It "AT&T Macro" .
 .It "BSD Macro" .
-.It "OpenBSD Macro" .
-.It "FreeBSD Macro" .
-.It "NetBSD Macro" .
+.It "OpenBSD/FreeBSD/NetBSD Macros" .
 .It "UNIX Macro" .
 .It "Emphasis Macro" .
 .It "Enclosure/Quoting Macros"
@@ -383,7 +382,7 @@ Title of article in a book or journal.
 .Pp
 One way of passing a string
 containing blank spaces is to use the hard or unpaddable space character
-.Ql \e\ ,
+.Ql \e\  ,
 that is, a blank space preceded by the escape character
 .Ql \e .
 This method may be used with any macro but has the side effect
@@ -446,10 +445,11 @@ to preserve
 the backslash.
 .Sh THE ANATOMY OF A MAN PAGE
 The body of a man page is easily constructed from a basic
-template found in the file:
+template found in the file
+.Pa /usr/share/misc/mdoc.template .
 .Bd -literal -offset indent
 \&.\e" /usr/share/misc/mdoc.template:
-\&.\e" The following six lines are required.
+\&.\e" The following six lines are required for all man pages.
 \&.Dd Month day, year
 \&.Dt DOCUMENT_TITLE [section number] [volume]
 \&.Os OPERATING_SYSTEM [version/release]
@@ -529,7 +529,7 @@ subject of the man page and must be in
 .Tn CAPITALS
 due to troff
 limitations.
-The section number may be 1,\ ...,\ 8,
+The section number may be 1,\ ...,\ 9,
 and if it is specified,
 the volume title may be omitted.
 A volume title may be arbitrary or one of the following:
@@ -592,7 +592,7 @@ Note, if the
 macro is not present, the bottom left corner of the page
 will be ugly.
 .El
-.Sh MANUAL DOMAIN
+.Sh INTRODUCTION OF MANUAL AND GENERAL TEXT DOMAINS
 .Ss What's in a name...
 The manual domain macro names are derived from the day to day
 informal language used to describe commands, subroutines and related
@@ -759,7 +759,7 @@ have nesting limitations.
 All content macros
 are capable of recognizing and properly handling punctuation,
 provided each punctuation character is separated by a leading space.
-If an request is given:
+If a request is given:
 .Pp
 .Dl \&.Li sptr, ptr),
 .Pp
@@ -802,6 +802,7 @@ escape them with
 Typical syntax is shown in the first content macro displayed
 below,
 .Ql \&.Ad .
+.Sh MANUAL DOMAIN
 .Ss Address Macro
 The address macro identifies an address construct
 of the form addr1[,addr2[,addr3]].
@@ -821,13 +822,13 @@ of the form addr1[,addr2[,addr3]].
 .El
 .Pp
 It is an error to call
-.Li \&.Ad
+.Ql \&.Ad
 without arguments.
-.Li \&.Ad
+.Ql \&.Ad
 is callable by other macros and is parsed.
 .Ss Argument Macro
 The
-.Li \&.Ar
+.Ql \&.Ar
 argument macro may be used whenever
 a command line argument is referenced.
 .Pp
@@ -848,12 +849,12 @@ a command line argument is referenced.
 .El
 .Pp
 If
-.Li \&.Ar
+.Ql \&.Ar
 is called without arguments
 .Ql Ar
 is assumed.
 The
-.Li \&.Ar
+.Ql \&.Ar
 macro is parsed and is callable.
 .Ss Configuration Declaration (section four only)
 The
@@ -1266,7 +1267,7 @@ macro is parsed and is callable.
 The
 .Ql \&.Op
 macro
-places option brackets around the any remaining arguments on the command
+places option brackets around any remaining arguments on the command
 line, and places any
 trailing punctuation outside the brackets.
 The macros
@@ -1337,6 +1338,56 @@ macro formats path or file names.
 The
 .Ql \&.Pa
 macro is parsed and is callable.
+.Ss Standards
+The
+.Ql \&.St
+macro replaces standard abbreviature with its formal name.
+.Pp
+.Dl Usage: .St abbreviature
+.Pp
+Available pairs for
+.Dq Abbreviature/Formal Name
+are:
+.Bl -tag -width "-p1003.2-92XX." -compact -offset indent
+.It Li "-ansiC"
+.St -ansiC
+.It Li "-ansiC-89"
+.St -ansiC-89
+.It Li "-ieee754"
+.St -ieee754
+.It Li "-iso8802-3"
+.St -iso8802-3
+.It Li "-iso9899"
+.St -iso9899
+.It Li "-iso9945-1"
+.St -iso9945-1
+.It Li "-isoC"
+.St -isoC
+.It Li "-p1003.1"
+.St -p1003.1
+.It Li "-p1003.1-88"
+.St -p1003.1-88
+.It Li "-p1003.1-90"
+.St -p1003.1-90
+.It Li "-p1003.1b"
+.St -p1003.1b
+.It Li "-p1003.1b-93"
+.St -p1003.1b-93
+.It Li "-p1003.1g"
+.St -p1003.1g
+.It Li "-p1003.2"
+.St -p1003.2
+.It Li "-p1003.2-92"
+.St -p1003.2-92
+.It Li "-susv2"
+.St -susv2
+.It Li "-xpg3"
+.St -xpg3
+.It Li "-xpg4"
+.St -xpg4
+.It Li "-xpg4.2"
+.St -xpg4.2
+.El
 .Ss Variables
 Generic variable reference:
 .Pp
@@ -1367,7 +1418,7 @@ to be either a section page number or punctuation.
 Any
 remaining arguments are assumed to be punctuation.
 .Pp
-.Dl Usage: .Xr man_page [1,...,8] \*(Pu
+.Dl Usage: .Xr man_page [1,...,9] \*(Pu
 .Bl -tag -width ".Xr mdoc 7 ) ) ," -compact -offset 14n
 .It Li \&.Xr mdoc
 .Xr mdoc
@@ -1418,7 +1469,7 @@ It accepts at most two arguments.
 The
 .Ql \&.Bx
 macro is parsed and is callable.
-.Ss OpenBSD Macro
+.Ss OpenBSD/FreeBSD/NetBSD Macros
 .Dl Usage: .Ox [Version/release] ... \*(Pu
 .Bl -tag -width ".Ox 2.7 ) ," -compact -offset 14n
 .It Li ".Ox"
@@ -1427,10 +1478,6 @@ macro is parsed and is callable.
 .Ox 2.7 .
 .El
 .Pp
-The
-.Ql \&.Ox
-macro is parsed and is callable.
-.Ss FreeBSD Macro
 .Dl Usage: .Fx [Version/release] ... \*(Pu
 .Bl -tag -width ".Fx 4.0 ) ," -compact -offset 14n
 .It Li ".Fx"
@@ -1439,10 +1486,6 @@ macro is parsed and is callable.
 .Fx 4.0 .
 .El
 .Pp
-The
-.Ql \&.Fx
-macro is parsed and is callable.
-.Ss NetBSD Macro
 .Dl Usage: .Nx [Version/release] ... \*(Pu
 .Bl -tag -width ".Nx 1.5 ) ," -compact -offset 14n
 .It Li ".Nx"
@@ -1452,8 +1495,11 @@ macro is parsed and is callable.
 .El
 .Pp
 The
+.Ql \&.Ox ,
+.Ql \&.Fx ,
+and
 .Ql \&.Nx
-macro is parsed and is callable.
+macros are parsed and callable.
 .Ss UNIX Macro
 .Dl Usage: .Ux ... \*(Pu
 .Bl -tag -width ".Ux 4.3 ) ," -compact -offset 14n
@@ -1629,7 +1675,7 @@ example of
 macro usage at its worst.
 .Ss No\-Op or Normal Text Macro
 The macro
-.Li \&.No
+.Ql \&.No
 is
 a hack for words in a macro command line which should
 .Em not
@@ -1748,9 +1794,9 @@ macro
 is parsed and is callable by other macros.
 .Ss Extended Arguments
 The
-.Li \&.Xo
+.Ql \&.Xo
 and
-.Li \&.Xc
+.Ql \&.Xc
 macros allow one to extend an argument list
 on a macro boundary.
 Argument lists cannot
@@ -1918,7 +1964,8 @@ name macro
 .Ql \&.Nm
 is required for sections 1, 5, 6, 7, 8.
 Section 4 manuals require a
-.Ql \&.Nm , \&.Fd
+.Ql \&.Nm ,
+.Ql \&.Fd ,
 or a
 .Ql \&.Cd
 configuration device usage macro.
@@ -2063,7 +2110,7 @@ User specified
 sections may be added,
 for example, this section was set with:
 .Bd -literal -offset 14n
-\&.Sh PAGE LAYOUT MACROS
+\&.Sh PAGE STRUCTURE DOMAIN
 .Ed
 .Ss Paragraphs and Line Spacing.
 .Bl -tag -width 6n
