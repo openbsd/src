@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf2.c,v 1.21 2003/06/02 23:28:06 millert Exp $	*/
+/*	$OpenBSD: uipc_mbuf2.c,v 1.22 2004/07/22 09:33:21 itojun Exp $	*/
 /*	$KAME: uipc_mbuf2.c,v 1.29 2001/02/14 13:42:10 itojun Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.40 1999/04/01 00:23:25 thorpej Exp $	*/
 
@@ -130,15 +130,19 @@ m_pulldown(m, off, len, offp)
 	 * chop the current mbuf into two pieces, set off to 0.
 	 */
 	if (len <= n->m_len - off) {
+		struct mbuf *mlast;
+
 		o = m_dup1(n, off, n->m_len - off, M_DONTWAIT);
 		if (o == NULL) {
 			m_freem(m);
 			return (NULL);	/* ENOBUFS */
 		}
+		for (mlast = o; mlast->m_next != NULL; mlast = mlast->m_next)
+			;
 		n->m_len = off;
-		o->m_next = n->m_next;
+		mlast->m_next = n->m_next;
 		n->m_next = o;
-		n = n->m_next;
+		n = o;
 		off = 0;
 		goto ok;
 	}
