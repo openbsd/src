@@ -1,4 +1,4 @@
-/*	$OpenBSD: nsgphy.c,v 1.5 2001/10/05 18:26:48 nate Exp $	*/
+/*	$OpenBSD: nsgphy.c,v 1.6 2001/10/05 18:29:15 nate Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 2001
@@ -147,19 +147,6 @@ nsgphyattach(parent, self, aux)
                 printf(", pre-C5 BCM5400 compat enabled");
         printf("\n");
 #endif
-
-#define	ADD(m, c)	ifmedia_add(&mii->mii_media, (m), (c), NULL)
-
-	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_NONE, 0, sc->mii_inst),
-	    BMCR_ISO);
-	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_TX, 0, sc->mii_inst),
-	    NSGPHY_S1000);
-	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_TX, IFM_FDX, sc->mii_inst),
-	    NSGPHY_S1000|NSGPHY_BMCR_FDX);
-	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_TX, IFM_LOOP,
-	    sc->mii_inst), BMCR_LOOP|BMCR_S100);
-
-#undef ADD
 }
 
 int
