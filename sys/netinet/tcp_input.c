@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.173 2004/06/14 08:26:49 dhartmei Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.174 2004/06/20 18:16:50 itojun Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -68,7 +68,6 @@
  * Research Laboratory (NRL).
  */
 
-#ifndef TUBA_INCLUDE
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
@@ -122,7 +121,6 @@ int tcp_ackdrop_ppslim = 100;		/* 100pps */
 int tcp_ackdrop_ppslim_count = 0;
 struct timeval tcp_ackdrop_ppslim_last;
 
-#endif /* TUBA_INCLUDE */
 #define TCP_PAWS_IDLE	(24 * 24 * 60 * 60 * PR_SLOWHZ)
 
 /* for modulo comparisons of timestamps */
@@ -181,8 +179,6 @@ do { \
  * Set DELACK for segments received in order, but ack immediately
  * when segments are out of order (so fast retransmit can work).
  */
-
-#ifndef TUBA_INCLUDE
 
 int
 tcp_reass(tp, th, m, tlen)
@@ -542,7 +538,6 @@ tcp_input(struct mbuf *m, ...)
 		break;
 #endif
 	}
-#endif /* TUBA_INCLUDE */
 
 	/*
 	 * Check that TCP offset makes sense,
@@ -2164,7 +2159,6 @@ drop:
 
 	m_freem(m);
 	return;
-#ifndef TUBA_INCLUDE
 }
 
 int
@@ -3084,7 +3078,6 @@ tcp_mss_update(tp)
 	}
 
 }
-#endif /* TUBA_INCLUDE */
 
 #if defined (TCP_SACK)
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.70 2004/06/08 19:47:24 markus Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.71 2004/06/20 18:16:50 itojun Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -92,11 +92,6 @@
 #include <netinet/tcp_var.h>
 #include <netinet/tcpip.h>
 #include <netinet/tcp_debug.h>
-
-#ifdef TUBA
-#include <netiso/iso.h>
-#include <netiso/tuba_table.h>
-#endif
 
 #ifdef INET6
 #include <netinet6/tcpipv6.h>
@@ -1101,12 +1096,6 @@ send:
 			  (so->so_options & SO_DONTROUTE), NULL, NULL);
 		break;
 #endif /* INET6 */
-#ifdef TUBA
-	case AF_ISO:
-		if (tp->t_tuba_pcb)
-			error = tuba_output(m, tp);
-		break;
-#endif /* TUBA */
 	}
 
 #if defined(TCP_SACK) && defined(TCP_FACK)
