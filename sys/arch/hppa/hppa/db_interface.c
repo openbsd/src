@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.9 1999/11/16 17:08:53 mickey Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.10 2000/01/01 22:54:55 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -188,6 +188,22 @@ kdb_trap(type, code, regs)
 	db_regs_t *regs;
 {
 	int s;
+
+	switch (type) {
+	case T_IBREAK:
+	case T_DBREAK:
+	case -1:
+		break;
+	default:
+		if (!db_panic)
+			return (0);
+
+		kdbprinttrap(type, code);
+		if (db_recover != 0) {
+			db_error("Caught exception in DDB; continuing...\n");
+			/* NOT REACHED */
+		}
+	}
 
 	/* XXX Should switch to kdb`s own stack here. */
 
