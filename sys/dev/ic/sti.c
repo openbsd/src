@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti.c,v 1.17 2003/01/31 17:00:19 miod Exp $	*/
+/*	$OpenBSD: sti.c,v 1.18 2003/02/05 19:21:03 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -502,9 +502,40 @@ sti_ioctl(v, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	/* struct sti_softc *sc; */
+	struct sti_softc *sc;
+	struct wsdisplay_fbinfo *wdf;
 
-	return -1;
+	switch (cmd) {
+	case WSDISPLAYIO_GTYPE:
+		*(u_int *)data = WSDISPLAY_TYPE_STI;
+		break;
+
+	case WSDISPLAYIO_GINFO:
+		wdf = (struct wsdisplay_fbinfo *)data;
+		wdf->height = sc->sc_cfg.scr_height;
+		wdf->width  = sc->sc_cfg.scr_width;
+		wdf->depth  = 8;	/* XXX */
+		wdf->cmsize = 256;
+		break;
+
+	case WSDISPLAYIO_LINEBYTES:
+		*(u_int *)data = sc->sc_cfg.fb_width;
+		break;
+
+	case WSDISPLAYIO_GETCMAP:
+	case WSDISPLAYIO_PUTCMAP:
+	case WSDISPLAYIO_SVIDEO:
+	case WSDISPLAYIO_GVIDEO:
+	case WSDISPLAYIO_GCURPOS:
+	case WSDISPLAYIO_SCURPOS:
+	case WSDISPLAYIO_GCURMAX:
+	case WSDISPLAYIO_GCURSOR:
+	case WSDISPLAYIO_SCURSOR:
+	default:
+		return (-1);	/* not supported yet */
+	}
+
+	return (0);
 }
 
 paddr_t
@@ -594,6 +625,7 @@ sti_mapchar(v, uni, index)
 	return 1;
 }
 
+/* TODO reimplement w/ blkmv and font in the fb mem per doc suggest */
 void
 sti_putchar(v, row, col, uc, attr)
 	void *v;
