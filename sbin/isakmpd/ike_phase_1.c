@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_phase_1.c,v 1.51 2004/06/20 15:24:05 ho Exp $	 */
+/* $OpenBSD: ike_phase_1.c,v 1.52 2004/06/20 17:17:35 ho Exp $	 */
 /* $EOM: ike_phase_1.c,v 1.31 2000/12/11 23:47:56 niklas Exp $	 */
 
 /*
@@ -352,13 +352,12 @@ ike_phase_1_initiator_send_SA(struct message *msg)
 		goto bail_out;
 	}
 	memcpy(ie->sa_i_b,
-	    TAILQ_FIRST(&msg->payload[ISAKMP_PAYLOAD_SA])->p + ISAKMP_GEN_SZ,
+	    payload_first(msg, ISAKMP_PAYLOAD_SA)->p + ISAKMP_GEN_SZ,
 	    sa_len - ISAKMP_GEN_SZ);
 	memcpy(ie->sa_i_b + sa_len - ISAKMP_GEN_SZ,
-	    TAILQ_FIRST(&msg->payload[ISAKMP_PAYLOAD_PROPOSAL])->p,
-	    proposal_len);
+	    payload_first(msg, ISAKMP_PAYLOAD_PROPOSAL)->p, proposal_len);
 	transforms_len = 0;
-	for (i = 0, p = TAILQ_FIRST(&msg->payload[ISAKMP_PAYLOAD_TRANSFORM]);
+	for (i = 0, p = payload_first(msg, ISAKMP_PAYLOAD_TRANSFORM);
 	    i < conf->cnt; i++, p = TAILQ_NEXT(p, link)) {
 		memcpy(ie->sa_i_b + sa_len + proposal_len + transforms_len -
 		    ISAKMP_GEN_SZ, p->p, transform_len[i]);
@@ -407,11 +406,9 @@ ike_phase_1_initiator_recv_SA(struct message *msg)
 	struct sa      *sa = TAILQ_FIRST(&exchange->sa_list);
 	struct ipsec_exch *ie = exchange->data;
 	struct ipsec_sa *isa = sa->data;
-	struct payload *sa_p = TAILQ_FIRST(&msg->payload[ISAKMP_PAYLOAD_SA]);
-	struct payload *prop =
-	    TAILQ_FIRST(&msg->payload[ISAKMP_PAYLOAD_PROPOSAL]);
-	struct payload *xf =
-	    TAILQ_FIRST(&msg->payload[ISAKMP_PAYLOAD_TRANSFORM]);
+	struct payload *sa_p = payload_first(msg, ISAKMP_PAYLOAD_SA);
+	struct payload *prop = payload_first(msg, ISAKMP_PAYLOAD_PROPOSAL);
+	struct payload *xf = payload_first(msg, ISAKMP_PAYLOAD_TRANSFORM);
 
 	/*
 	 * IKE requires that only one SA with only one proposal exists and
@@ -475,9 +472,8 @@ ike_phase_1_responder_recv_SA(struct message *msg)
 	struct exchange *exchange = msg->exchange;
 	struct sa      *sa = TAILQ_FIRST(&exchange->sa_list);
 	struct ipsec_sa *isa = sa->data;
-	struct payload *sa_p = TAILQ_FIRST(&msg->payload[ISAKMP_PAYLOAD_SA]);
-	struct payload *prop = 
-	    TAILQ_FIRST(&msg->payload[ISAKMP_PAYLOAD_PROPOSAL]);
+	struct payload *sa_p = payload_first(msg, ISAKMP_PAYLOAD_SA);
+	struct payload *prop = payload_first(msg, ISAKMP_PAYLOAD_PROPOSAL);
 	struct ipsec_exch *ie = exchange->data;
 
 	/* Mark the SA as handled.  */
@@ -931,7 +927,7 @@ ike_phase_1_recv_ID(struct message *msg)
 	ssize_t         sz;
 	struct sockaddr *sa;
 
-	payload = TAILQ_FIRST(&msg->payload[ISAKMP_PAYLOAD_ID]);
+	payload = payload_first(msg, ISAKMP_PAYLOAD_ID);
 
 	if (exchange->name)
 		rs = conf_get_str(exchange->name, "Remote-ID");

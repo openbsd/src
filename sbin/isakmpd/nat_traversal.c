@@ -1,4 +1,4 @@
-/*	$OpenBSD: nat_traversal.c,v 1.1 2004/06/20 15:24:05 ho Exp $	*/
+/*	$OpenBSD: nat_traversal.c,v 1.2 2004/06/20 17:17:35 ho Exp $	*/
 
 /*
  * Copyright (c) 2004 Håkan Olsson.  All rights reserved.
@@ -328,7 +328,7 @@ nat_t_match_nat_d_payload(struct message *msg, struct sockaddr *sa)
 	if (!hbuf)
 		return 0;
 
-	for (p = TAILQ_FIRST(&msg->payload[ISAKMP_PAYLOAD_NAT_D]); p;
+	for (p = payload_first(msg, ISAKMP_PAYLOAD_NAT_D); p;
 	     p = TAILQ_NEXT(p, link)) {
 		if (GET_ISAKMP_GEN_LENGTH (p->p) !=
 		    hbuflen + ISAKMP_NAT_D_DATA_OFF)

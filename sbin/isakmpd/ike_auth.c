@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_auth.c,v 1.91 2004/06/14 13:53:31 hshoexer Exp $	 */
+/* $OpenBSD: ike_auth.c,v 1.92 2004/06/20 17:17:34 ho Exp $	 */
 /* $EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	 */
 
 /*
@@ -513,7 +513,7 @@ pre_shared_decode_hash(struct message *msg)
 	/* Choose the right fields to fill-in.  */
 	hash_p = initiator ? &ie->hash_r : &ie->hash_i;
 
-	payload = TAILQ_FIRST(&msg->payload[ISAKMP_PAYLOAD_HASH]);
+	payload = payload_first(msg, ISAKMP_PAYLOAD_HASH);
 	if (!payload) {
 		log_print("pre_shared_decode_hash: no HASH payload found");
 		return -1;
@@ -574,7 +574,7 @@ rsa_sig_decode_hash(struct message *msg)
 	 * remote...  moreover, just use the first CERT payload to decide what
 	 * to use.
          */
-	p = TAILQ_FIRST(&msg->payload[ISAKMP_PAYLOAD_CERT]);
+	p = payload_first(msg, ISAKMP_PAYLOAD_CERT);
 	if (!p)
 		handler = cert_get(ISAKMP_CERTENC_KEYNOTE);
 	else
@@ -631,7 +631,7 @@ rsa_sig_decode_hash(struct message *msg)
 	 * XXX I believe this is the wrong spot for this.  CERTs can appear
 	 * anytime.
          */
-	for (p = TAILQ_FIRST(&msg->payload[ISAKMP_PAYLOAD_CERT]); p;
+	for (p = payload_first(msg, ISAKMP_PAYLOAD_CERT); p;
 	    p = TAILQ_NEXT(p, link)) {
 		p->flags |= PL_MARK;
 
@@ -769,7 +769,7 @@ rsa_sig_decode_hash(struct message *msg)
 		log_print("rsa_sig_decode_hash: no public key found");
 		return -1;
 	}
-	p = TAILQ_FIRST(&msg->payload[ISAKMP_PAYLOAD_SIG]);
+	p = payload_first(msg, ISAKMP_PAYLOAD_SIG);
 	if (!p) {
 		log_print("rsa_sig_decode_hash: missing signature payload");
 		RSA_free(key);

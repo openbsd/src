@@ -1,4 +1,4 @@
-/*	$OpenBSD: dpd.c,v 1.1 2004/06/20 15:20:06 ho Exp $	*/
+/*	$OpenBSD: dpd.c,v 1.2 2004/06/20 17:17:34 ho Exp $	*/
 
 /*
  * Copyright (c) 2004 Håkan Olsson.  All rights reserved.
@@ -198,8 +198,7 @@ dpd_initiator_send_notify(struct message *msg)
 static int
 dpd_initiator_recv_ack(struct message *msg)
 {
-	struct payload	*p =
-	    TAILQ_FIRST(&msg->payload[ISAKMP_PAYLOAD_NOTIFY]);
+	struct payload	*p = payload_first(msg, ISAKMP_PAYLOAD_NOTIFY);
 	struct sa	*isakmp_sa = msg->isakmp_sa;
 	struct timeval	 tv;
 	u_int32_t	 rseq;
@@ -259,8 +258,7 @@ dpd_initiator_recv_ack(struct message *msg)
 static int
 dpd_responder_recv_notify(struct message *msg)
 {
-	struct payload	*p =
-	    TAILQ_FIRST(&msg->payload[ISAKMP_PAYLOAD_NOTIFY]);
+	struct payload	*p = payload_first(msg, ISAKMP_PAYLOAD_NOTIFY);
 	struct sa	*isakmp_sa = msg->isakmp_sa;
 	struct timeval	 tv;
 	u_int32_t	 rseq;

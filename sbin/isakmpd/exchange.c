@@ -1,4 +1,4 @@
-/* $OpenBSD: exchange.c,v 1.97 2004/06/20 15:20:06 ho Exp $	 */
+/* $OpenBSD: exchange.c,v 1.98 2004/06/20 17:17:34 ho Exp $	 */
 /* $EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	 */
 
 /*
@@ -221,15 +221,15 @@ exchange_validate(struct message *msg)
 		    : constant_name(exchange_script_cst, *pc)));
 
 		/* Check for existence of the required payloads.  */
-		if ((*pc > 0 && !TAILQ_FIRST(&msg->payload[*pc]))
+		if ((*pc > 0 && !payload_first(msg, *pc))
 		    || (*pc == EXCHANGE_SCRIPT_AUTH
-		    && !TAILQ_FIRST(&msg->payload[ISAKMP_PAYLOAD_HASH])
-		    && !TAILQ_FIRST(&msg->payload[ISAKMP_PAYLOAD_SIG]))
+		    && !payload_first(msg, ISAKMP_PAYLOAD_HASH)
+		    && !payload_first(msg, ISAKMP_PAYLOAD_SIG))
 		    || (*pc == EXCHANGE_SCRIPT_INFO
-		    && ((!TAILQ_FIRST(&msg->payload[ISAKMP_PAYLOAD_NOTIFY])
-		    && !TAILQ_FIRST(&msg->payload[ISAKMP_PAYLOAD_DELETE]))
-		    || (TAILQ_FIRST(&msg->payload[ISAKMP_PAYLOAD_DELETE])
-		    && !TAILQ_FIRST(&msg->payload[ISAKMP_PAYLOAD_HASH]))))) {
+		    && ((!payload_first(msg, ISAKMP_PAYLOAD_NOTIFY)
+		    && !payload_first(msg, ISAKMP_PAYLOAD_DELETE))
+		    || (payload_first(msg, ISAKMP_PAYLOAD_DELETE)
+		    && !payload_first(msg, ISAKMP_PAYLOAD_HASH))))) {
 			/* Missing payload.  */
 			LOG_DBG((LOG_MESSAGE, 70,
 			    "exchange_validate: msg %p requires missing %s",
@@ -256,11 +256,11 @@ exchange_handle_leftover_payloads(struct message *msg)
 	struct payload	*p;
 	int	i;
 
-	for (i = ISAKMP_PAYLOAD_SA; i < ISAKMP_PAYLOAD_RESERVED_MIN; i++) {
+	for (i = ISAKMP_PAYLOAD_SA; i < payload_index_max; i++) {
 		if (i == ISAKMP_PAYLOAD_PROPOSAL ||
 		    i == ISAKMP_PAYLOAD_TRANSFORM)
 			continue;
-		for (p = TAILQ_FIRST(&msg->payload[i]); p;
+		for (p = payload_first(msg, i); p;
 		     p = TAILQ_NEXT(p, link)) {
 			if (p->flags & PL_MARK)
 				continue;
@@ -1566,7 +1566,7 @@ exchange_save_nonce(struct message *msg)
 	struct payload	*noncep;
 	struct exchange *exchange = msg->exchange;
 
-	noncep = TAILQ_FIRST(&msg->payload[ISAKMP_PAYLOAD_NONCE]);
+	noncep = payload_first(msg, ISAKMP_PAYLOAD_NONCE);
 	noncep->flags |= PL_MARK;
 	return exchange_nonce(exchange, 1, GET_ISAKMP_GEN_LENGTH(noncep->p) -
 	    ISAKMP_NONCE_DATA_OFF, noncep->p + ISAKMP_NONCE_DATA_OFF);
@@ -1576,8 +1576,7 @@ exchange_save_nonce(struct message *msg)
 int
 exchange_save_certreq(struct message *msg)
 {
-	struct payload	*cp =
-	    TAILQ_FIRST(&msg->payload[ISAKMP_PAYLOAD_CERT_REQ]);
+	struct payload	*cp = payload_first(msg, ISAKMP_PAYLOAD_CERT_REQ);
 	struct exchange	*exchange = msg->exchange;
 	struct certreq_aca *aca;
 

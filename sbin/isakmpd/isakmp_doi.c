@@ -1,4 +1,4 @@
-/* $OpenBSD: isakmp_doi.c,v 1.21 2004/06/14 09:55:41 ho Exp $	 */
+/* $OpenBSD: isakmp_doi.c,v 1.22 2004/06/20 17:17:35 ho Exp $	 */
 /* $EOM: isakmp_doi.c,v 1.42 2000/09/12 16:29:41 ho Exp $	 */
 
 /*
@@ -230,7 +230,7 @@ isakmp_responder(struct message *msg)
 
 	switch (msg->exchange->type) {
 	case ISAKMP_EXCH_INFO:
-		for (p = TAILQ_FIRST(&msg->payload[ISAKMP_PAYLOAD_NOTIFY]); p;
+		for (p = payload_first(msg, ISAKMP_PAYLOAD_NOTIFY); p;
 		    p = TAILQ_NEXT(p, link)) {
 			LOG_DBG((LOG_EXCHANGE, 10, "isakmp_responder: "
 			    "got NOTIFY of type %s, ignoring",
@@ -239,7 +239,7 @@ isakmp_responder(struct message *msg)
 			p->flags |= PL_MARK;
 		}
 
-		for (p = TAILQ_FIRST(&msg->payload[ISAKMP_PAYLOAD_DELETE]); p;
+		for (p = payload_first(msg, ISAKMP_PAYLOAD_DELETE); p;
 		    p = TAILQ_NEXT(p, link)) {
 			LOG_DBG((LOG_EXCHANGE, 10,
 			    "isakmp_responder: got DELETE, ignoring"));
@@ -254,7 +254,7 @@ isakmp_responder(struct message *msg)
 
 	default:
 		/* XXX So far we don't accept any proposals.  */
-		if (TAILQ_FIRST(&msg->payload[ISAKMP_PAYLOAD_SA])) {
+		if (payload_first(msg, ISAKMP_PAYLOAD_SA)) {
 			message_drop(msg, ISAKMP_NOTIFY_NO_PROPOSAL_CHOSEN,
 			    0, 1, 0);
 			return -1;

@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.c,v 1.97 2004/06/20 15:24:05 ho Exp $	 */
+/* $OpenBSD: ipsec.c,v 1.98 2004/06/20 17:17:35 ho Exp $	 */
 /* $EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	 */
 
 /*
@@ -1040,7 +1040,7 @@ ipsec_responder(struct message *msg)
 #endif
 
 	case ISAKMP_EXCH_INFO:
-		for (p = TAILQ_FIRST(&msg->payload[ISAKMP_PAYLOAD_NOTIFY]); p;
+		for (p = payload_first(msg, ISAKMP_PAYLOAD_NOTIFY); p;
 		    p = TAILQ_NEXT(p, link)) {
 			type = GET_ISAKMP_NOTIFY_MSG_TYPE(p->p);
 			LOG_DBG((LOG_EXCHANGE, 10,
@@ -1083,7 +1083,7 @@ ipsec_responder(struct message *msg)
 	 * XXX So far we don't accept any proposals for exchanges we don't
 	 * support.
          */
-	if (TAILQ_FIRST(&msg->payload[ISAKMP_PAYLOAD_SA])) {
+	if (payload_first(msg, ISAKMP_PAYLOAD_SA)) {
 		message_drop(msg, ISAKMP_NOTIFY_NO_PROPOSAL_CHOSEN, 0, 1, 0);
 		return -1;
 	}
@@ -1511,7 +1511,7 @@ ipsec_save_g_x(struct message *msg)
 	struct ipsec_exch *ie = exchange->data;
 	struct payload *kep;
 
-	kep = TAILQ_FIRST(&msg->payload[ISAKMP_PAYLOAD_KEY_EXCH]);
+	kep = payload_first(msg, ISAKMP_PAYLOAD_KEY_EXCH);
 	kep->flags |= PL_MARK;
 	ie->g_x_len = GET_ISAKMP_GEN_LENGTH(kep->p) - ISAKMP_KE_DATA_OFF;
 
@@ -2249,7 +2249,7 @@ ipsec_fill_in_hash(struct message *msg)
 	if (!isa->skeyid_a)
 		return 0;
 
-	payload = TAILQ_FIRST(&msg->payload[ISAKMP_PAYLOAD_HASH]);
+	payload = payload_first(msg, ISAKMP_PAYLOAD_HASH);
 	if (!payload) {
 		log_print("ipsec_fill_in_hash: no HASH payload found");
 		return -1;

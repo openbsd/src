@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_quick_mode.c,v 1.82 2004/06/15 15:53:13 hshoexer Exp $	 */
+/* $OpenBSD: ike_quick_mode.c,v 1.83 2004/06/20 17:17:35 ho Exp $	 */
 /* $EOM: ike_quick_mode.c,v 1.139 2001/01/26 10:43:17 niklas Exp $	 */
 
 /*
@@ -1025,12 +1025,10 @@ initiator_recv_HASH_SA_NONCE(struct message *msg)
 	struct ipsec_exch *ie = exchange->data;
 	struct sa      *sa;
 	struct proto   *proto, *next_proto;
-	struct payload *sa_p = TAILQ_FIRST(&msg->payload[ISAKMP_PAYLOAD_SA]);
+	struct payload *sa_p = payload_first(msg, ISAKMP_PAYLOAD_SA);
 	struct payload *xf, *idp;
-	struct payload *hashp =
-	    TAILQ_FIRST(&msg->payload[ISAKMP_PAYLOAD_HASH]);
-	struct payload *kep =
-	    TAILQ_FIRST(&msg->payload[ISAKMP_PAYLOAD_KEY_EXCH]);
+	struct payload *hashp = payload_first(msg, ISAKMP_PAYLOAD_HASH);
+	struct payload *kep = payload_first(msg, ISAKMP_PAYLOAD_KEY_EXCH);
 	struct prf     *prf;
 	struct sa      *isakmp_sa = msg->isakmp_sa;
 	struct ipsec_sa *isa = isakmp_sa->data;
@@ -1099,7 +1097,7 @@ initiator_recv_HASH_SA_NONCE(struct message *msg)
 		ie->pfs = 1;
 
 	/* Handle optional client ID payloads.  */
-	idp = TAILQ_FIRST(&msg->payload[ISAKMP_PAYLOAD_ID]);
+	idp = payload_first(msg, ISAKMP_PAYLOAD_ID);
 	if (idp) {
 		/* If IDci is there, IDcr must be too.  */
 		if (!TAILQ_NEXT(idp, link)) {
@@ -1211,7 +1209,7 @@ initiator_recv_HASH_SA_NONCE(struct message *msg)
 	}
 
 	/* Build the protection suite in our SA.  */
-	for (xf = TAILQ_FIRST(&msg->payload[ISAKMP_PAYLOAD_TRANSFORM]); xf;
+	for (xf = payload_first(msg, ISAKMP_PAYLOAD_TRANSFORM); xf;
 	     xf = TAILQ_NEXT(xf, link)) {
 
 		/*
@@ -1474,7 +1472,7 @@ responder_recv_HASH_SA_NONCE(struct message *msg)
 	struct sockaddr *src, *dst;
 	char           *name;
 
-	hashp = TAILQ_FIRST(&msg->payload[ISAKMP_PAYLOAD_HASH]);
+	hashp = payload_first(msg, ISAKMP_PAYLOAD_HASH);
 	hash = hashp->p;
 	hashp->flags |= PL_MARK;
 
@@ -1530,12 +1528,12 @@ responder_recv_HASH_SA_NONCE(struct message *msg)
 	/* Mark message as authenticated. */
 	msg->flags |= MSG_AUTHENTICATED;
 
-	kep = TAILQ_FIRST(&msg->payload[ISAKMP_PAYLOAD_KEY_EXCH]);
+	kep = payload_first(msg, ISAKMP_PAYLOAD_KEY_EXCH);
 	if (kep)
 		ie->pfs = 1;
 
 	/* Handle optional client ID payloads.  */
-	idp = TAILQ_FIRST(&msg->payload[ISAKMP_PAYLOAD_ID]);
+	idp = payload_first(msg, ISAKMP_PAYLOAD_ID);
 	if (idp) {
 		/* If IDci is there, IDcr must be too.  */
 		if (!TAILQ_NEXT(idp, link)) {
@@ -1926,7 +1924,7 @@ responder_recv_HASH(struct message *msg)
 	struct payload *hashp;
 
 	/* Find HASH(3) and create our own hash, just as big.  */
-	hashp = TAILQ_FIRST(&msg->payload[ISAKMP_PAYLOAD_HASH]);
+	hashp = payload_first(msg, ISAKMP_PAYLOAD_HASH);
 	hash = hashp->p;
 	hashp->flags |= PL_MARK;
 	hash_len = GET_ISAKMP_GEN_LENGTH(hash);

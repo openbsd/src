@@ -1,4 +1,4 @@
-/* $OpenBSD: isakmp_cfg.c,v 1.32 2004/06/15 15:53:13 hshoexer Exp $	 */
+/* $OpenBSD: isakmp_cfg.c,v 1.33 2004/06/20 17:17:35 ho Exp $	 */
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist.  All rights reserved.
@@ -358,8 +358,7 @@ fail:
 static int
 cfg_initiator_recv_ATTR(struct message *msg)
 {
-	struct payload *attrp =
-	    TAILQ_FIRST(&msg->payload[ISAKMP_PAYLOAD_ATTRIBUTE]);
+	struct payload *attrp = payload_first(msg, ISAKMP_PAYLOAD_ATTRIBUTE);
 	struct ipsec_exch *ie = msg->exchange->data;
 	struct sa      *isakmp_sa = msg->isakmp_sa;
 	struct isakmp_cfg_attr *attr;
@@ -468,8 +467,7 @@ cfg_initiator_recv_ATTR(struct message *msg)
 static int
 cfg_responder_recv_ATTR(struct message *msg)
 {
-	struct payload *attrp =
-	    TAILQ_FIRST(&msg->payload[ISAKMP_PAYLOAD_ATTRIBUTE]);
+	struct payload *attrp = payload_first(msg, ISAKMP_PAYLOAD_ATTRIBUTE);
 	struct ipsec_exch *ie = msg->exchange->data;
 	struct sa      *isakmp_sa = msg->isakmp_sa;
 	struct isakmp_cfg_attr *attr;
@@ -637,8 +635,7 @@ cfg_finalize_hash(struct message *msg, u_int8_t *hashp, u_int8_t *data,
 int
 cfg_verify_hash(struct message *msg)
 {
-	struct payload *hashp =
-	    TAILQ_FIRST(&msg->payload[ISAKMP_PAYLOAD_HASH]);
+	struct payload *hashp = payload_first(msg, ISAKMP_PAYLOAD_HASH);
 	struct ipsec_sa *isa = msg->isakmp_sa->data;
 	struct prf     *prf;
 	u_int8_t       *hash, *comp_hash;
