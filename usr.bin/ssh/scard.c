@@ -24,7 +24,7 @@
 
 #ifdef SMARTCARD
 #include "includes.h"
-RCSID("$OpenBSD: scard.c,v 1.2 2001/06/26 06:32:59 itojun Exp $");
+RCSID("$OpenBSD: scard.c,v 1.3 2001/06/26 20:14:10 markus Exp $");
 
 #include <openssl/engine.h>
 #include <sectok.h>
@@ -162,7 +162,7 @@ sc_read_pubkey(Key * k)
 		return rv;
 	}
 	len = (buf[0] << 8) | buf[1];
-	error("len %d r1 %d r2 %d", len, r1, r2);
+	debug("INS_GET_KEYLENGTH: len %d r1 %d r2 %d", len, r1, r2);
 	len /= 8;
 
 	/* get n */
@@ -171,7 +171,7 @@ sc_read_pubkey(Key * k)
 		error("could not obtain public key");
 		return rv;
 	}
-	debug("len %d r1 %d r2 %d", len, r1, r2);
+	debug("INS_GET_PUBKEY: len %d r1 %d r2 %d", len, r1, r2);
 	BN_bin2bn(buf, len, k->rsa->n);
 
 	/* currently the java applet just stores 'n' */
@@ -240,7 +240,7 @@ sc_private_encrypt(int flen, unsigned char *from,
         if (padding != RSA_PKCS1_PADDING)
 		goto err;
 
-	error("sc_private_encrypt called");
+	debug("sc_private_encrypt called");
         num = BN_num_bytes(rsa->n);
 	padded = xmalloc(num);
 	i = RSA_padding_add_PKCS1_type_1(padded, num, from, flen);
