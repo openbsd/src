@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.6 1999/12/07 00:49:10 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.7 2000/02/22 19:27:18 deraadt Exp $
 #	$NetBSD: Makefile.inc,v 1.12 1996/04/23 23:05:22 christos Exp $
 
 SRCS+=  __main.c imax.c imin.c lmax.c lmin.c max.c min.c ulmax.c ulmin.c \
@@ -17,25 +17,25 @@ CLEANFILES+=rem.S sdiv.S udiv.S urem.S
 
 sdiv.S: divrem.m4
 	echo 'building ${.TARGET} from ${.ALLSRC}'
-	(echo "define(NAME,\`.div')define(OP,\`div')define(S,\`true')"; \
+	(echo "define(NAME,\`.div')define(NAME2,\`__div')define(OP,\`div')define(S,\`true')"; \
 	 cat ${.ALLSRC}) | m4 > ${.TARGET}
 	chmod 444 ${.TARGET}
 
 udiv.S: divrem.m4
 	@echo 'building ${.TARGET} from ${.ALLSRC}'
-	@(echo "define(NAME,\`.udiv')define(OP,\`div')define(S,\`false')"; \
+	@(echo "define(NAME,\`.udiv')define(NAME2,\`__udiv')define(OP,\`div')define(S,\`false')"; \
 	 cat ${.ALLSRC}) | m4 > ${.TARGET}
 	@chmod 444 ${.TARGET}
 
 rem.S:	divrem.m4
 	echo 'building ${.TARGET} from ${.ALLSRC}'
-	(echo "define(NAME,\`.rem')define(OP,\`rem')define(S,\`true')"; \
+	(echo "define(NAME,\`.rem')define(NAME2,\`__rem')define(OP,\`rem')define(S,\`true')"; \
 	 cat ${.ALLSRC}) | m4 > ${.TARGET}
 	chmod 444 ${.TARGET}
 
 urem.S: divrem.m4
 	@echo 'building ${.TARGET} from ${.ALLSRC}'
-	@(echo "define(NAME,\`.urem')define(OP,\`rem')define(S,\`false')"; \
+	@(echo "define(NAME,\`.urem')define(NAME2,\`__urem')define(OP,\`rem')define(S,\`false')"; \
 	 cat ${.ALLSRC}) | m4 > ${.TARGET}
 	@chmod 444 ${.TARGET}
 
