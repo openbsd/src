@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.30 2004/05/12 06:35:10 tedu Exp $	*/
+/*	$OpenBSD: hme.c,v 1.31 2004/05/31 01:51:30 mcbride Exp $	*/
 /*	$NetBSD: hme.c,v 1.21 2001/07/07 15:59:37 thorpej Exp $	*/
 
 /*-
@@ -1216,11 +1216,8 @@ hme_setladrf(sc)
 	struct arpcom *ac = &sc->sc_arpcom;
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t mac = sc->sc_mac;
-	u_char *cp;
-	u_int32_t crc;
 	u_int32_t hash[4];
-	u_int32_t v;
-	int len;
+	u_int32_t v, crc;
 
 	/* Clear hash table */
 	hash[3] = hash[2] = hash[1] = hash[0] = 0;
@@ -1264,25 +1261,7 @@ hme_setladrf(sc)
 			goto chipit;
 		}
 
-		cp = enm->enm_addrlo;
-		crc = 0xffffffff;
-		for (len = sizeof(enm->enm_addrlo); --len >= 0;) {
-			int octet = *cp++;
-			int i;
-
-#define MC_POLY_LE	0xedb88320UL	/* mcast crc, little endian */
-			for (i = 0; i < 8; i++) {
-				if ((crc & 1) ^ (octet & 1)) {
-					crc >>= 1;
-					crc ^= MC_POLY_LE;
-				} else {
-					crc >>= 1;
-				}
-				octet >>= 1;
-			}
-		}
-		/* Just want the 6 most significant bits. */
-		crc >>= 26;
+		crc = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN)>> 26; 
 
 		/* Set the corresponding bit in the filter. */
 		hash[crc >> 4] |= 1 << (crc & 0xf);
