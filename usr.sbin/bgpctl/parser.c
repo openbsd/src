@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.11 2004/12/23 17:45:47 henning Exp $ */
+/*	$OpenBSD: parser.c,v 1.12 2004/12/23 17:55:59 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -104,6 +104,7 @@ static const struct token t_show_rib[] = {
 static const struct token t_show_neighbor[] = {
 	{ NOTOKEN,	"",		NONE,	NULL},
 	{ ADDRESS,	"",		NONE,	t_show_neighbor_modifiers},
+	{ PEERDESC,	"",		NONE,	t_show_neighbor_modifiers},
 	{ ENDTOKEN,	"",		NONE,	NULL}
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.40 2004/12/23 17:26:51 henning Exp $ */
+/*	$OpenBSD: control.c,v 1.41 2004/12/23 17:55:58 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -185,7 +185,6 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 	struct ctl_conn		*c;
 	int			 n;
 	struct peer		*p;
-	struct bgpd_addr	*addr;
 	struct ctl_neighbor	*neighbor;
 
 	if ((c = control_connbyfd(pfd->fd)) == NULL) {
@@ -220,9 +219,11 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 		case IMSG_CTL_SHOW_NEIGHBOR:
 			c->ibuf.pid = imsg.hdr.pid;
 			if (imsg.hdr.len == IMSG_HEADER_SIZE +
-			    sizeof(struct bgpd_addr)) {
-				addr = imsg.data;
-				p = getpeerbyaddr(addr);
+			    sizeof(struct ctl_neighbor)) {
+				neighbor = imsg.data;
+				p = getpeerbyaddr(&neighbor->addr);
+				if (p == NULL)
+					p = getpeerbydesc(neighbor->descr);
 				if (p != NULL)
 					imsg_compose_rde(imsg.hdr.type,
 					    imsg.hdr.pid,

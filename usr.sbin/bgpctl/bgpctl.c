@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.71 2004/12/23 17:26:51 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.72 2004/12/23 17:55:59 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -151,9 +151,9 @@ main(int argc, char *argv[])
 		break;
 	case SHOW_NEIGHBOR:
 	case SHOW_NEIGHBOR_TIMERS:
-		if (res->addr.af)
+		if (res->addr.af || res->peerdesc[0])
 			imsg_compose(ibuf, IMSG_CTL_SHOW_NEIGHBOR, 0, 0, -1,
-			    &res->addr, sizeof(res->addr));
+			    &neighbor, sizeof(neighbor));
 		else
 			imsg_compose(ibuf, IMSG_CTL_SHOW_NEIGHBOR, 0, 0, -1,
 			    NULL, 0);
