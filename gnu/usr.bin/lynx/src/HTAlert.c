@@ -165,13 +165,16 @@ PRIVATE CONST char *sprint_bytes ARGS3(
     static long kb_units = 1024;
     CONST char *u = HTProgressUnits(LYTransferRate);
 
-    if ( (LYTransferRate == rateKB || LYTransferRate == rateEtaKB_maybe)
-	 && (n >= 10 * kb_units) )
-	sprintf(s, "%ld", n/kb_units);
-    else if ((LYTransferRate == rateKB || LYTransferRate == rateEtaKB_maybe)
-	     && (n > 999))	/* Avoid switching between 1016b/s and 1K/s */
-	sprintf(s, "%.2g", ((double)n)/kb_units);
-    else {
+    if (LYTransferRate == rateKB || LYTransferRate == rateEtaKB_maybe) {
+	if (n >= 10 * kb_units) {
+	    sprintf(s, "%ld", n/kb_units);
+	} else if (n > 999) {	/* Avoid switching between 1016b/s and 1K/s */
+	    sprintf(s, "%.2g", ((double)n)/kb_units);
+	} else {
+	    sprintf(s, "%ld", n);
+	    u = HTProgressUnits(rateBYTES);
+	}
+    } else {
 	sprintf(s, "%ld", n);
     }
 

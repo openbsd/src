@@ -1,6 +1,17 @@
 Changes since Lynx 2.8 release
 ===============================================================================
 
+2004-04-22 (2.8.5rel.2 fixes from 2.8.6dev.1)
+* correct ifdef in LYgetattrs() to ensure that getattrs() is used only if the
+  configure script actually found it (report/patch by Paul Gilmartin).
+* correct LYcommandList() to allocate data passed to HTList_addObject(), since
+  LYRemoveFromCloset() may free it (report by FLWM) -TD
+* add a null-pointer check to parameter of HTQuoteParameter(), fixes bug
+  introduced in 2.8.5pre.4 (report by FLWM) -TD
+* correct units shown by HTReadProgress() for very low rates - bug from
+  2.8.5pre.3 changes (report by PG) -TD
+* update current-version in README -LP
+
 2004-02-04 (2.8.5rel.1)
 * build fixes for MINGW32 -DK
 * build fixes for OS/2 (reported by IZ) -TD

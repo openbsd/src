@@ -877,11 +877,15 @@ PUBLIC char *HTQuoteParameter ARGS1(
     CONST char *,	parameter)
 {
     size_t i;
-    size_t last = strlen(parameter);
+    size_t last;
     size_t n = 0;
     size_t quoted = 0;
     char * result;
 
+    if (parameter == 0)
+	parameter = "";
+
+    last = strlen(parameter);
     for (i=0; i < last; ++i)
 	if (strchr("\\&#$^*?(){}<>\"';`|", parameter[i]) != 0
 	 || isspace(UCH(parameter[i])))

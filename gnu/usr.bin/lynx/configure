@@ -723,7 +723,7 @@ fi
 
 PACKAGE=lynx
 # $Format: "VERSION=$ProjectVersion$"$
-VERSION=2.8.5rel.1
+VERSION=2.8.5rel.2
 
 
 

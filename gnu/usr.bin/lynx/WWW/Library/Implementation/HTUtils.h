@@ -571,6 +571,10 @@ extern int WWW_TraceMask;
 #define TRACE_CFG       (TRACE_bit(3))
 #define TRACE_BSTRING   (TRACE_bit(4))
 
+#if defined(USE_VERTRACE) && !defined(LY_TRACELINE)
+#define LY_TRACELINE __LINE__
+#endif
+
 #if defined(LY_TRACELINE)
 #define LY_SHOWWHERE fprintf( tfp, "%s: %d: ", __FILE__, LY_TRACELINE ),
 #else
