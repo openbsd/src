@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmcia.c,v 1.27 2000/04/24 19:06:00 niklas Exp $	*/
+/*	$OpenBSD: pcmcia.c,v 1.28 2000/04/28 13:36:58 niklas Exp $	*/
 /*	$NetBSD: pcmcia.c,v 1.9 1998/08/13 02:10:55 eeh Exp $	*/
 
 /*
@@ -178,7 +178,7 @@ pcmcia_card_attach(dev)
 
 	pcmcia_check_cis_quirks(sc);
 
-#if 0
+#if 1
 	/*
 	 * Bail now if the card has no functions, or if there was an error in
 	 * the CIS.
