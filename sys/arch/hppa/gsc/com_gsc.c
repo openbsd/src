@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_gsc.c,v 1.10 2002/02/03 01:47:54 mickey Exp $	*/
+/*	$OpenBSD: com_gsc.c,v 1.11 2002/02/05 04:09:41 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -67,9 +67,10 @@ com_gsc_probe(parent, match, aux)
 	if (ga->ga_type.iodc_type != HPPA_TYPE_FIO ||
 	    (ga->ga_type.iodc_sv_model != HPPA_FIO_GRS232 &&
 	     (ga->ga_type.iodc_sv_model != HPPA_FIO_RS232)))
-		return 0;
+		return (0);
 
-	return comprobe1(ga->ga_iot, ga->ga_hpa + IOMOD_DEVOFFSET);
+	return (1);
+	/* HOZER comprobe1(ga->ga_iot, ga->ga_hpa + IOMOD_DEVOFFSET); */
 }
 
 void
