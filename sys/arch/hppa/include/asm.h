@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.5 1998/12/23 17:49:55 mickey Exp $	*/
+/*	$OpenBSD: asm.h,v 1.6 1999/01/16 07:58:32 mickey Exp $	*/
 
 /* 
  * Copyright (c) 1990,1991,1994 The University of Utah and
@@ -24,9 +24,6 @@
 
 #ifndef _MACHINE_ASM_H_
 #define _MACHINE_ASM_H_
-
-/* this is to shutup binutils */
-#define	BFD_SUBSPA_BUG
 
 /*
  *	hppa assembler definitions
@@ -284,30 +281,25 @@ tf4	.reg	%fr8
  * Standard space and subspace definitions.
  */
 	.SPACE	$TEXT$,0
-#ifndef	BFD_SUBSPA_BUG
-	.subspa $FIRST$,	QUAD=0,ALIGN=8,ACCESS=0x2c,SORT=4
+/*	.subspa $FIRST$,	QUAD=0,ALIGN=8,ACCESS=0x2c,SORT=4 */
 	.subspa $MILLICODE$,	QUAD=0,ALIGN=8,ACCESS=0x2c,SORT=8
 	.subspa $LIT$,		QUAD=0,ALIGN=8,ACCESS=0x2c,SORT=16
-	.subspa $CODE$,		QUAD=0,ALIGN=8,ACCESS=0x2c,SORT=24
-	.subspa	$UNWIND$MILLICODE$,QUAD=0,ALIGN=8,ACCESS=0x2c,SORT=64
+	.subspa $CODE$,		QUAD=0,ALIGN=8,ACCESS=0x2c,SORT=24,CODE_ONLY
+/*	.subspa	$UNWIND$MILLICODE$,QUAD=0,ALIGN=8,ACCESS=0x2c,SORT=64
 	.subspa	$UNWIND$,	QUAD=0,ALIGN=8,ACCESS=0x2c,SORT=72
 	.subspa	$RECOVER$,	QUAD=0,ALIGN=4,ACCESS=0x2c,SORT=80
-#endif
+*/
 
 /*
  * additional code subspaces should have ALIGN=8 for an interspace BV
  */
 	.SPACE $PRIVATE$,1
-#ifndef	BFD_SUBSPA_BUG
-	.subspa $GLOBAL$,	QUAD=1,ALIGN=8,ACCESS=0x1f,SORT=8
-	.subspa $SHORTDATA$,	QUAD=1,ALIGN=8,ACCESS=0x1f,SORT=16
+/*	.subspa $GLOBAL$,	QUAD=1,ALIGN=8,ACCESS=0x1f,SORT=8 */
+/*	.subspa $SHORTDATA$,	QUAD=1,ALIGN=8,ACCESS=0x1f,SORT=16 */
 	.subspa $DATA$,		QUAD=1,ALIGN=8,ACCESS=0x1f,SORT=24
-#endif
 	.import $global$
-#ifndef	BFD_SUBSPA_BUG
-	.subspa	$PFA_COUNTER$,	QUAD=1,ALIGN=4,ACCESS=0x1f,SORT=72
+/*	.subspa	$PFA_COUNTER$,	QUAD=1,ALIGN=4,ACCESS=0x1f,SORT=72 */
 	.subspa $BSS$,		QUAD=1,ALIGN=8,ACCESS=0x1f,SORT=80,ZERO
-#endif
 
 
 #ifdef PROF
@@ -327,7 +319,7 @@ tf4	.reg	%fr8
 	.export	x,entry		!\
 	.label	x               !\
 	.proc			!\
-	.callinfo no_calls	!\
+	.callinfo calls		!\
 	.entry			!\
 	_PROF_PROLOGUE
 
