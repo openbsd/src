@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.30 2003/12/23 18:28:05 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.31 2003/12/23 18:41:32 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -176,10 +176,8 @@ session_main(struct bgpd_config *config, int pipe_m2s[2], int pipe_s2r[2])
 
 	while (session_quit == 0) {
 		bzero(&pfd, sizeof(pfd));
-		if (sock != -1) {
-			pfd[PFD_LISTEN].fd = sock;
-			pfd[PFD_LISTEN].events = POLLIN;
-		}
+		pfd[PFD_LISTEN].fd = sock;
+		pfd[PFD_LISTEN].events = POLLIN;
 		pfd[PFD_PIPE_MAIN].fd = ibuf_main.sock;
 		pfd[PFD_PIPE_MAIN].events = POLLIN;
 		pfd[PFD_PIPE_ROUTE].fd = ibuf_rde.sock;
