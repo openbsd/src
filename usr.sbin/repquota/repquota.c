@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)repquota.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: repquota.c,v 1.17 2002/05/29 09:45:08 deraadt Exp $";
+static char *rcsid = "$Id: repquota.c,v 1.18 2002/09/06 18:29:37 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -60,7 +60,7 @@ static char *rcsid = "$Id: repquota.c,v 1.17 2002/05/29 09:45:08 deraadt Exp $";
 #include <errno.h>
 
 char *qfname = QUOTAFILENAME;
-char *qfextension[] = INITQFNAMES;
+char *qfextension[] = INITQFNAMES
 
 struct fileusage {
 	struct	fileusage *fu_next;
