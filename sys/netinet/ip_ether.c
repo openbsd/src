@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.c,v 1.7 2000/04/10 07:33:44 angelos Exp $  */
+/*	$OpenBSD: ip_ether.c,v 1.8 2000/04/11 16:28:49 angelos Exp $  */
 
 /*
  * The author of this code is Angelos D. Keromytis (kermit@adk.gr)
@@ -273,7 +273,7 @@ etherip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	
 	    ipo->ip_v = IPVERSION;
 	    ipo->ip_hl = 5;
-	    ipo->ip_len = htons(m->m_pkthdr.len + sizeof(struct ip));
+	    ipo->ip_len = htons(m->m_pkthdr.len);
 	    ipo->ip_ttl = ip_defttl;
 	    ipo->ip_p = IPPROTO_ETHERIP;
 	    ipo->ip_tos = 0;
