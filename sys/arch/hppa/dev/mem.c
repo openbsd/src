@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.11 2002/03/16 00:34:56 mickey Exp $	*/
+/*	$OpenBSD: mem.c,v 1.12 2002/03/16 22:05:19 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -78,7 +78,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
-#include <sys/conf.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/uio.h>
