@@ -1,4 +1,4 @@
-/*	$OpenBSD: showmount.c,v 1.13 2003/06/10 22:20:51 deraadt Exp $	*/
+/*	$OpenBSD: showmount.c,v 1.14 2003/12/12 02:14:36 deraadt Exp $	*/
 /*	$NetBSD: showmount.c,v 1.7 1996/05/01 18:14:10 cgd Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)showmount.c	8.3 (Berkeley) 3/29/95";
 #endif
-static char rcsid[] = "$OpenBSD: showmount.c,v 1.13 2003/06/10 22:20:51 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: showmount.c,v 1.14 2003/12/12 02:14:36 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -119,7 +119,7 @@ main(int argc, char *argv[])
 	int ch, clnt_sock;
 
 	while ((ch = getopt(argc, argv, "ade3")) != -1)
-		switch((char)ch) {
+		switch (ch) {
 		case 'a':
 			if (type == 0) {
 				type = ALL;
@@ -140,7 +140,6 @@ main(int argc, char *argv[])
 		case '3':
 			mntvers = 3;
 			break;
-		case '?':
 		default:
 			usage();
 		}
