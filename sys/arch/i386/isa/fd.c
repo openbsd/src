@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.17 1996/06/09 19:40:28 deraadt Exp $	*/
+/*	$OpenBSD: fd.c,v 1.18 1996/06/20 07:51:37 downsj Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -8,6 +8,12 @@
  *
  * This code is derived from software contributed to Berkeley by
  * Don Ahn.
+ *
+ * Portions Copyright (c) 1993, 1994 by
+ *  jc@irbs.UUCP (John Capo)
+ *  vak@zebub.msk.su (Serge Vakulenko)
+ *  ache@astral.msk.su (Andrew A. Chernov)
+ *  joerg_wunsch@uriah.sax.de (Joerg Wunsch)
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -50,6 +56,7 @@
 #include <sys/dkstat.h>
 #include <sys/disk.h>
 #include <sys/buf.h>
+#include <sys/malloc.h>
 #include <sys/uio.h>
 #include <sys/mtio.h>
 #include <sys/syslog.h>
@@ -59,6 +66,7 @@
 #include <machine/bus.h>
 #include <machine/conf.h>
 #include <machine/intr.h>
+#include <machine/ioctl_fd.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
@@ -69,6 +77,9 @@
 
 #define FDUNIT(dev)	(minor(dev) / 8)
 #define FDTYPE(dev)	(minor(dev) % 8)
+
+/* XXX misuse a flag to identify format operation */
+#define B_FORMAT B_XXX
 
 #define b_cylin b_resid
 
@@ -125,25 +136,7 @@ struct cfdriver fdc_cd = {
 	NULL, "fdc", DV_DULL
 };
 
-/*
- * Floppies come in various flavors, e.g., 1.2MB vs 1.44MB; here is how
- * we tell them apart.
- */
-struct fd_type {
-	int	sectrac;	/* sectors per track */
-	int	heads;		/* number of heads */
-	int	seccyl;		/* sectors per cylinder */
-	int	secsize;	/* size code for sectors */
-	int	datalen;	/* data len when secsize = 0 */
-	int	steprate;	/* step rate and head unload time */
-	int	gap1;		/* gap len between sectors */
-	int	gap2;		/* formatting gap */
-	int	tracks;		/* total num of tracks */
-	int	size;		/* size of disk in sectors */
-	int	step;		/* steps per cylinder */
-	int	rate;		/* transfer speed code */
-	char	*name;
-};
+/* fd_type struct now in ioctl_fd.h */
 
 /* The order of entries in the following table is important -- BEWARE! */
 struct fd_type fd_types[] = {
@@ -166,6 +159,7 @@ struct fd_softc {
 
 	daddr_t	sc_blkno;	/* starting block number */
 	int sc_bcount;		/* byte count left */
+ 	int sc_opts;			/* user-set options */
 	int sc_skip;		/* bytes already transferred */
 	int sc_nblks;		/* number of blocks currently tranferring */
 	int sc_nbytes;		/* number of bytes currently tranferring */
@@ -216,6 +210,7 @@ void fdcpseudointr __P((void *arg));
 int fdcintr __P((void *));
 void fdcretry __P((struct fdc_softc *fdc));
 void fdfinish __P((struct fd_softc *fd, struct buf *bp));
+int fdformat __P((dev_t, struct fd_formb *, struct proc *));
 __inline struct fd_type *fd_dev_to_type __P((struct fd_softc *, dev_t));
 
 int
@@ -519,7 +514,8 @@ fdstrategy(bp)
 	if (unit >= fd_cd.cd_ndevs ||
 	    (fd = fd_cd.cd_devs[unit]) == 0 ||
 	    bp->b_blkno < 0 ||
-	    (bp->b_bcount % FDC_BSIZE) != 0) {
+	    ((bp->b_bcount % FDC_BSIZE) != 0 &&
+	     (bp->b_flags & B_FORMAT) == 0)) {
 		bp->b_error = EINVAL;
 		goto bad;
 	}
@@ -781,6 +777,7 @@ fdclose(dev, flags, mode, p)
 	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
 
 	fd->sc_flags &= ~FD_OPEN;
+	fd->sc_opts &= ~FDOPT_NORETRY;
 	return 0;
 }
 
@@ -849,6 +846,9 @@ fdctimeout(arg)
 	int s;
 
 	s = splbio();
+#ifdef DEBUG
+	log(LOG_ERR,"fdctimeout: state %d\n", fdc->sc_state);
+#endif
 	fdcstatus(&fd->sc_dev, 0, "timeout");
 
 	if (fd->sc_q.b_actf)
@@ -885,6 +885,7 @@ fdcintr(arg)
 	bus_io_handle_t ioh = fdc->sc_ioh;
 	int read, head, sec, i, nblks;
 	struct fd_type *type;
+	struct fd_formb *finfo = NULL;
 
 loop:
 	/* Is there a drive for the controller to do a transfer with? */
@@ -902,6 +903,9 @@ loop:
 		fd->sc_q.b_active = 0;
 		goto loop;
 	}
+
+	if (bp->b_flags & B_FORMAT)
+	    finfo = (struct fd_formb *)bp->b_data;
 
 	switch (fdc->sc_state) {
 	case DEVIDLE:
@@ -957,12 +961,15 @@ loop:
 	case DOIO:
 	doio:
 		type = fd->sc_type;
+		if (finfo)
+		    fd->sc_skip = (char *)&(finfo->fd_formb_cylno(0)) -
+			(char *)finfo;
 		sec = fd->sc_blkno % type->seccyl;
 		nblks = type->seccyl - sec;
 		nblks = min(nblks, fd->sc_bcount / FDC_BSIZE);
 		nblks = min(nblks, FDC_MAXIOSIZE / FDC_BSIZE);
 		fd->sc_nblks = nblks;
-		fd->sc_nbytes = nblks * FDC_BSIZE;
+		fd->sc_nbytes = finfo ? bp->b_bcount : nblks * FDC_BSIZE;
 		head = sec / type->sectrac;
 		sec -= head * type->sectrac;
 #ifdef DIAGNOSTIC
@@ -989,18 +996,32 @@ loop:
 		    read ? "read" : "write", fd->sc_drive, fd->sc_cylin, head,
 		    sec, nblks);
 #endif
-		if (read)
-			out_fdc(bc, ioh, NE7CMD_READ);	/* READ */
-		else
-			out_fdc(bc, ioh, NE7CMD_WRITE);	/* WRITE */
-		out_fdc(bc, ioh, (head << 2) | fd->sc_drive);
-		out_fdc(bc, ioh, fd->sc_cylin);		/* track */
-		out_fdc(bc, ioh, head);
-		out_fdc(bc, ioh, sec + 1);		/* sector +1 */
-		out_fdc(bc, ioh, type->secsize);	/* sector size */
-		out_fdc(bc, ioh, type->sectrac);	/* sectors/track */
-		out_fdc(bc, ioh, type->gap1);		/* gap1 size */
-		out_fdc(bc, ioh, type->datalen);	/* data length */
+		if (finfo) {
+                        /* formatting */
+			if (out_fdc(bc, ioh, NE7CMD_FORMAT) < 0) {
+			    fdc->sc_errors = 4;
+			    fdcretry(fdc);
+			    goto loop;
+			}
+                        out_fdc(bc, ioh, (head << 2) | fd->sc_drive);
+                        out_fdc(bc, ioh, finfo->fd_formb_secshift);
+                        out_fdc(bc, ioh, finfo->fd_formb_nsecs);
+                        out_fdc(bc, ioh, finfo->fd_formb_gaplen);
+                        out_fdc(bc, ioh, finfo->fd_formb_fillbyte);
+		} else {
+			if (read)
+				out_fdc(bc, ioh, NE7CMD_READ);	/* READ */
+			else
+				out_fdc(bc, ioh, NE7CMD_WRITE);	/* WRITE */
+			out_fdc(bc, ioh, (head << 2) | fd->sc_drive);
+			out_fdc(bc, ioh, fd->sc_cylin);		/* track */
+			out_fdc(bc, ioh, head);
+			out_fdc(bc, ioh, sec + 1);		/* sector +1 */
+			out_fdc(bc, ioh, type->secsize);	/* sector size */
+			out_fdc(bc, ioh, type->sectrac);	/* sectors/track */
+			out_fdc(bc, ioh, type->gap1);		/* gap1 size */
+			out_fdc(bc, ioh, type->datalen);	/* data length */
+		}
 		fdc->sc_state = IOCOMPLETE;
 
 		disk_busy(&fd->sc_dk);
@@ -1080,7 +1101,7 @@ loop:
 		fd->sc_blkno += fd->sc_nblks;
 		fd->sc_skip += fd->sc_nbytes;
 		fd->sc_bcount -= fd->sc_nbytes;
-		if (fd->sc_bcount > 0) {
+		if (!finfo && fd->sc_bcount > 0) {
 			bp->b_cylin = fd->sc_blkno / fd->sc_type->seccyl;
 			goto doseek;
 		}
@@ -1157,6 +1178,8 @@ fdcretry(fdc)
 	fd = fdc->sc_drives.tqh_first;
 	bp = fd->sc_q.b_actf;
 
+	if (fd->sc_opts & FDOPT_NORETRY)
+	    goto fail;
 	switch (fdc->sc_errors) {
 	case 0:
 		/* try again */
@@ -1174,6 +1197,7 @@ fdcretry(fdc)
 		break;
 
 	default:
+	fail:
 		diskerr(bp, "fd", "hard error", LOG_PRINTF,
 		    fd->sc_skip / FDC_BSIZE, (struct disklabel *)NULL);
 		printf(" (st0 %b st1 %b st2 %b cyl %d head %d sec %d)\n",
@@ -1257,6 +1281,28 @@ fdioctl(dev, cmd, addr, flag, p)
 		error = writedisklabel(dev, fdstrategy, &buffer, NULL);
 		return error;
 
+        case FD_FORM:
+                if((flag & FWRITE) == 0)
+                        return EBADF;  /* must be opened for writing */
+                else if(((struct fd_formb *)addr)->format_version !=
+                        FD_FORMAT_VERSION)
+                        return EINVAL; /* wrong version of formatting prog */
+                else
+                        return fdformat(dev, (struct fd_formb *)addr, p);
+                break;
+
+        case FD_GTYPE:                  /* get drive type */
+                *(struct fd_type *)addr = *fd->sc_type;
+		return 0;
+
+        case FD_GOPTS:                  /* get drive options */
+                *(int *)addr = fd->sc_opts;
+                return 0;
+                
+        case FD_SOPTS:                  /* set drive options */
+                fd->sc_opts = *(int *)addr;
+		return 0;
+
 	default:
 		return ENOTTY;
 	}
@@ -1264,4 +1310,64 @@ fdioctl(dev, cmd, addr, flag, p)
 #ifdef DIAGNOSTIC
 	panic("fdioctl: impossible");
 #endif
+}
+
+int
+fdformat(dev, finfo, p)
+        dev_t dev;
+        struct fd_formb *finfo;
+        struct proc *p;
+{
+        int rv = 0, s;
+	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
+	struct fd_type *type = fd->sc_type;
+        struct buf *bp;
+
+        /* set up a buffer header for fdstrategy() */
+        bp = (struct buf *)malloc(sizeof(struct buf), M_TEMP, M_NOWAIT);
+        if(bp == 0)
+                return ENOBUFS;
+        bzero((void *)bp, sizeof(struct buf));
+        bp->b_flags = B_BUSY | B_PHYS | B_FORMAT;
+        bp->b_proc = p;
+        bp->b_dev = dev;
+
+        /*
+         * calculate a fake blkno, so fdstrategy() would initiate a
+         * seek to the requested cylinder
+         */
+        bp->b_blkno = (finfo->cyl * (type->sectrac * type->heads)
+                + finfo->head * type->sectrac) * FDC_BSIZE / DEV_BSIZE;
+
+        bp->b_bcount = sizeof(struct fd_idfield_data) * finfo->fd_formb_nsecs;
+        bp->b_data = (caddr_t)finfo;
+        
+#ifdef DEBUG
+	printf("fdformat: blkno %x count %x\n", bp->b_blkno, bp->b_bcount);
+#endif
+
+        /* now do the format */
+        fdstrategy(bp);
+
+        /* ...and wait for it to complete */
+        s = splbio();
+        while(!(bp->b_flags & B_DONE))
+        {
+                rv = tsleep((caddr_t)bp, PRIBIO, "fdform", 0);
+                if(rv == EWOULDBLOCK)
+		    /*break*/;
+        }
+        splx(s);
+        
+        if(rv == EWOULDBLOCK) {
+                /* timed out */
+                rv = EIO;
+		/* XXX what to do to the buf? it will eventually fall
+		   out as finished, but ... ?*/
+		/*biodone(bp);*/
+	}
+        if(bp->b_flags & B_ERROR)
+                rv = bp->b_error;
+        free(bp, M_TEMP);
+        return rv;
 }
