@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rmd160.3,v 1.15 2001/10/01 20:36:17 markus Exp $
+.\"	$OpenBSD: rmd160.3,v 1.16 2001/10/01 22:12:14 markus Exp $
 .\"
 .\" Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
 .\" All rights reserved.
@@ -46,17 +46,17 @@
 .Ft void
 .Fn RMD160Init "RMD160_CTX *context"
 .Ft void
-.Fn RMD160Update "RMD160_CTX *context" "const u_char *data" "u_int nbytes"
+.Fn RMD160Update "RMD160_CTX *context" "const u_char *data" "u_int32_t nbytes"
 .Ft void
 .Fn RMD160Final "u_char digest[20]" "RMD160_CTX *context"
 .Ft void
-.Fn RMD160Transform "u_int32_t state[5]" "const u_int32_t block[16]"
+.Fn RMD160Transform "u_int32_t state[5]" "const u_char block[64]"
 .Ft "char *"
 .Fn RMD160End "RMD160_CTX *context" "char *buf"
 .Ft "char *"
 .Fn RMD160File "char *filename" "char *buf"
 .Ft "char *"
-.Fn RMD160Data "u_char *data" "u_int len" "char *buf"
+.Fn RMD160Data "u_char *data" "size_t len" "char *buf"
 .Sh DESCRIPTION
 The RMD160 functions implement the 160-bit RIPE message digest hash algorithm
 (RMD-160).
