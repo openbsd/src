@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.120 2003/11/24 19:27:03 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.121 2003/12/17 15:35:40 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -1985,7 +1985,7 @@ ENTRY(TLABEL(intr),0)
 	ldw	R%cpu_itmr(r25), r9
 	sh1add	r16, r9, r17
 	add	r16, r9, r16
-	mtctl	r17, cr16
+	mtctl	r17, itmr
 	stw	r16, R%cpu_itmr(r25)
 
 $intr_noclock
