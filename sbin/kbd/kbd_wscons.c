@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd_wscons.c,v 1.13 2003/06/02 21:10:37 maja Exp $ */
+/*	$OpenBSD: kbd_wscons.c,v 1.14 2003/07/02 21:44:58 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Mats O Jansson.  All rights reserved.
@@ -92,6 +92,10 @@ struct nameint kbdvar_tab[] = {
 
 extern char *__progname;
 int rebuild = 0;
+
+void	kbd_show_enc(kvm_t *kd, int idx);
+void	kbd_list(void);
+void	kbd_set(char *name, int verbose);
 
 #ifndef NOKVM
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.c,v 1.18 2003/06/11 06:22:12 deraadt Exp $	*/
+/*	$OpenBSD: disk.c,v 1.19 2003/07/02 21:44:57 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 2001 Tobias Weingartner
@@ -44,6 +44,9 @@
 #endif
 #include "disk.h"
 #include "misc.h"
+
+DISK_metrics *DISK_getlabelmetrics(char *name);
+DISK_metrics *DISK_getbiosmetrics(char *name);
 
 int
 DISK_open(char *disk, int mode)

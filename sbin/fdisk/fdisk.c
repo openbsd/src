@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.36 2003/06/11 06:22:12 deraadt Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.37 2003/07/02 21:44:57 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -42,8 +42,7 @@ static unsigned char builtin_mbr[] = {
 #include "mbrcode.h"
 };
 
-
-void
+static void
 usage(void)
 {
 	extern char * __progname;

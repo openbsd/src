@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.42 2003/06/25 21:24:10 deraadt Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.43 2003/07/02 21:44:58 deraadt Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.8 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: newfs.c,v 1.42 2003/06/25 21:24:10 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: newfs.c,v 1.43 2003/07/02 21:44:58 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -186,6 +186,7 @@ int	unlabeled;
 char	device[MAXPATHLEN];
 
 extern	char *__progname;
+struct disklabel *getdisklabel(char *, int);
 
 int
 main(int argc, char *argv[])
@@ -194,7 +195,6 @@ main(int argc, char *argv[])
 	struct partition *pp;
 	struct disklabel *lp;
 	struct disklabel mfsfakelabel;
-	struct disklabel *getdisklabel(char *, int);
 	struct partition oldpartition;
 	struct stat st;
 	struct statfs *mp;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.61 2003/06/11 06:22:14 deraadt Exp $	*/
+/*	$OpenBSD: ping.c,v 1.62 2003/07/02 21:44:58 deraadt Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: ping.c,v 1.61 2003/06/11 06:22:14 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ping.c,v 1.62 2003/07/02 21:44:58 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -177,6 +177,7 @@ void pr_icmph(struct icmp *);
 void pr_pack(char *, int, struct sockaddr_in *);
 void pr_retip(struct ip *);
 quad_t qsqrt(quad_t);
+void pr_iph(struct ip *);
 void usage(void);
 
 int

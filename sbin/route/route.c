@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.58 2003/06/26 16:35:21 deraadt Exp $	*/
+/*	$OpenBSD: route.c,v 1.59 2003/07/02 21:44:58 deraadt Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)route.c	8.3 (Berkeley) 3/19/94";
 #else
-static const char rcsid[] = "$OpenBSD: route.c,v 1.58 2003/06/26 16:35:21 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: route.c,v 1.59 2003/07/02 21:44:58 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -115,6 +115,14 @@ static int inet6_makenetandmask(struct sockaddr_in6 *);
 int	 getaddr(int, char *, struct hostent **);
 int	 rtmsg(int, int);
 int	 x25_makemask(void);
+__dead void usage(char *cp);
+void	quit(char *s);
+char	*any_ntoa(const struct sockaddr *sa);
+void	set_metric(char *value, int key);
+void	inet_makenetandmask(u_int32_t net, struct sockaddr_in *sin, int bits);
+char	*ns_print(struct sockaddr_ns *sns);
+char	*ipx_print(struct sockaddr_ipx *sipx);
+void	interfaces(void);
 
 extern void show(int, char **);	/* XXX - from show.c */
 

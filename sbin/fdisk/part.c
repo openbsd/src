@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.34 2003/06/11 06:22:12 deraadt Exp $	*/
+/*	$OpenBSD: part.c,v 1.35 2003/07/02 21:44:57 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -39,6 +39,7 @@
 #include "misc.h"
 #include "mbr.h"
 
+int	PRT_check_chs(prt_t *partn);
 
 static const struct part_type {
 	int	type;

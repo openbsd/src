@@ -1,4 +1,4 @@
-/*	$OpenBSD: modunload.c,v 1.12 2003/01/18 23:30:20 deraadt Exp $	*/
+/*	$OpenBSD: modunload.c,v 1.13 2003/07/02 21:44:58 deraadt Exp $	*/
 /*	$NetBSD: modunload.c,v 1.9 1995/05/28 05:23:05 jtc Exp $	*/
 
 /*
@@ -62,7 +62,7 @@ usage(void)
 	exit(1);
 }
 
-void
+static void
 cleanup(void)
 {
 	(void)close(devfd);

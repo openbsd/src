@@ -1,4 +1,4 @@
-/*	$OpenBSD: scan_ffs.c,v 1.9 2003/06/03 00:33:34 weingart Exp $	*/
+/*	$OpenBSD: scan_ffs.c,v 1.10 2003/07/02 21:44:58 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist, Tobias Weingartner
@@ -44,7 +44,7 @@
 #define FLAG_SMART		2
 #define FLAG_LABELS		4
 
-int
+static int
 ufsscan(int fd, daddr_t beg, daddr_t end, int flags)
 {
 	static char lastmount[MAXMNTLEN];
@@ -112,7 +112,7 @@ ufsscan(int fd, daddr_t beg, daddr_t end, int flags)
 }
 
 
-void
+static void
 usage(int code)
 {
 	extern char *__progname;

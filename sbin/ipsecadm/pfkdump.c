@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkdump.c,v 1.4 2003/06/10 16:41:28 deraadt Exp $	*/
+/*	$OpenBSD: pfkdump.c,v 1.5 2003/07/02 21:44:57 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -52,6 +52,19 @@ void	print_ident(struct sadb_ext *, struct sadb_msg *);
 void	print_policy(struct sadb_ext *, struct sadb_msg *);
 void	print_cred(struct sadb_ext *, struct sadb_msg *);
 void	print_auth(struct sadb_ext *, struct sadb_msg *);
+
+struct idname *lookup(struct idname [], u_int8_t);
+char	*lookup_name(struct idname [], u_int8_t);
+void	print_ext(struct sadb_ext *, struct sadb_msg *);
+void	print_msg(struct sadb_msg *, int);
+char	*alg_by_ext(u_int8_t, u_int8_t);
+void	print_alg(struct sadb_alg *, u_int8_t);
+void	print_comb(struct sadb_comb *, struct sadb_msg *);
+void	msg_send(int, u_int8_t, u_int8_t);
+void	msg_read(int);
+void	do_pfkey(int, u_int8_t);
+void	ipsecadm_monitor(void);
+void	ipsecadm_show(u_int8_t);
 
 struct idname {
 	u_int8_t id;

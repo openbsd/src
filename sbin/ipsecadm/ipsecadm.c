@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.66 2003/02/25 22:29:33 markus Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.67 2003/07/02 21:44:57 deraadt Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -114,6 +114,11 @@ transform xf[] = {
 
 extern void ipsecadm_monitor(void);
 extern void ipsecadm_show(u_int8_t);
+int	addrparse(const char *, struct sockaddr *, struct sockaddr *);
+void	xf_set(struct iovec *, int, int);
+int	x2i(char *);
+int	isvalid(char *, int, int);
+void	usage(void);
 
 /*
  * returns 0 if "str" represents an address, returns 1 if address/mask,

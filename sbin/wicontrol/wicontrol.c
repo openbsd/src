@@ -1,4 +1,4 @@
-/*	$OpenBSD: wicontrol.c,v 1.45 2003/06/07 21:14:42 mickey Exp $	*/
+/*	$OpenBSD: wicontrol.c,v 1.46 2003/07/02 21:44:58 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -69,7 +69,7 @@
 static const char copyright[] = "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.";
 static const char rcsid[] =
-	"@(#) $OpenBSD: wicontrol.c,v 1.45 2003/06/07 21:14:42 mickey Exp $";
+	"@(#) $OpenBSD: wicontrol.c,v 1.46 2003/07/02 21:44:58 deraadt Exp $";
 #endif
 
 void wi_getval(char *, struct wi_req *);
@@ -95,6 +95,8 @@ __dead void usage(void);
 char *portid(char *);
 int  get_if_flags(int, const char *);
 int  set_if_flags(int, const char *, int);
+int	wi_hex2int(char c);
+void	wi_str2key(char *s, struct wi_key *k);
 
 const struct wi_card_ident wi_card_ident[] = {
 	WI_CARD_IDS

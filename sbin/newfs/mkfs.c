@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.30 2003/06/25 21:24:10 deraadt Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.31 2003/07/02 21:44:58 deraadt Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.3 (Berkeley) 2/3/94";
 #else
-static char rcsid[] = "$OpenBSD: mkfs.c,v 1.30 2003/06/25 21:24:10 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mkfs.c,v 1.31 2003/07/02 21:44:58 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -136,6 +136,7 @@ void		setblock(struct fs *, unsigned char *, int);
 void		clrblock(struct fs *, unsigned char *, int);
 int		isblock(struct fs *, unsigned char *, int);
 void		rdfs(daddr_t, int, void *);
+void		mkfs(struct partition *pp, char *fsys, int fi, int fo);
 
 void
 mkfs(struct partition *pp, char *fsys, int fi, int fo)
@@ -145,8 +146,6 @@ mkfs(struct partition *pp, char *fsys, int fi, int fo)
 	long used, mincpgcnt, bpcg;
 	long mapcramped, inodecramped;
 	long postblsize, rotblsize, totalsbsize;
-	pid_t ppid = -1;
-	int status;
 	time_t utime;
 	quad_t sizepb;
 	int width;
