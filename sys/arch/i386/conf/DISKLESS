@@ -1,4 +1,4 @@
-#	$OpenBSD: DISKLESS,v 1.36 2001/06/27 05:46:14 art Exp $
+#	$OpenBSD: DISKLESS,v 1.37 2001/06/27 06:19:51 angelos Exp $
 #	$NetBSD: DISKLESS,v 1.26 1996/05/20 18:17:16 mrg Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
@@ -101,8 +101,6 @@ option		IPSEC		# IPsec
 #option		ISO,TPIP	# OSI
 #option		EON		# OSI tunneling over IP
 #option		CCITT,LLC,HDLC	# X.25
-option		IPFILTER	# IP packet filter for security
-option		IPFILTER_LOG	# use /dev/ipl to log IPF
 option		PPP_BSDCOMP	# PPP BSD compression
 option		PPP_DEFLATE
 #option		MROUTING	# Multicast router
