@@ -36,12 +36,10 @@
 .Nd introduction to special files and hardware support
 .Sh DESCRIPTION
 This section describes the special files, related driver functions,
-and networking support
-available in the system.
+and networking support available in the system.
 In this part of the manual, the
 .Tn SYNOPSIS
-section of
-each configurable device gives a sample specification
+section of each configurable device gives a sample specification
 for use in constructing a system description for the
 .Xr config 8
 program.
@@ -50,26 +48,24 @@ The
 section lists messages which may appear on the console
 and/or in the system error log
 .Pa /var/log/messages
-due to errors in device operation;
-see
+due to errors in device operation; see
 .Xr syslogd 8
 for more information.
 .Pp
-This section contains both devices
-which may be configured into the system
+This section contains both devices which may be configured into the system
 and network related information.
 The networking support is introduced in
 .Xr netintro 4 .
 .Sh DEVICE SUPPORT
-This section describes the hardware supported on the HP-PARISC(HPPA)
+This section describes the hardware supported on the
+.Tn HP-PARISC (HPPA)
 platform.
 Software support for these devices comes in two forms.  A hardware
 device may be supported with a character or block
 .Em device driver ,
 or it may be used within the networking subsystem and have a
 .Em network interface driver .
-Character and block
-devices are accessed through files in the file
+Character and block devices are accessed through files in the file
 system of a special type; see
 .Xr mknod 8 .
 Network interfaces are indirectly accessed through the interprocess
@@ -83,73 +79,119 @@ autoconfiguration facilities in the system probe for the device
 and, if found, enable the software support for it.
 If a device does not respond at autoconfiguration
 time it is not accessible at any time afterwards.
-To enable a device which did not autoconfigure,
-the system must be rebooted.
+To enable a device which did not autoconfigure, the system must be rebooted.
 .Pp
 The autoconfiguration system is described in
 .Xr autoconf 4 .
-A list of the supported devices is given below.
-.Sh SEE ALSO
-.Xr autoconf 4 ,
-.Xr config 8
 .Sh SUPPORTED SYSTEMS
-The following HPPA system architectures and models are supported:
-(bold means "known to be working")
-.Tn HP9000/700
-workstations based on HPPA-processors:
-.in +\n(dIu
-.TS
-tab (:) ;
-l l l
-_ _ _
-l l l .
-Model:Clock:CPU
-705:35MHz:PA7000
-710:50MHz:PA7000
-720:50MHz:PA7000
-730:66MHz:PA7100
-750:66MHz:PA7000
-715:33/50/75MHz:PA7100
-725:50/75MHz:PA7100
-735:100MHz:PA7100
-755:100MHz:PA7100
-735:125MHz:PA7150
-755:125MHz:PA7150
-712:60/80/100MHz:PA7100LC 
-715:64/80/100/100XC:PA7100LC
-725:64/100MHz:PA7100LC
-J200:100MHz:PA7200
-J210:120MHz:PA7200
-C100:100MHz:PA7200
-C110:120MHz:PA7200
-B132L:132MHz:PA7300LC
-B160L:160MHz:PA7300LC
-B180L:180MHz:PA7300LC
-C132L:132MHz:PA7300LC
-C160L:160MHz:PA7300LC
-C180L:180MHz:PA7300LC
-.TE  
-.in -\n(dIu
-.Pp
-OpenBSD/hppa should run on systems similar to these, as long as they're based 
-on the following:
+OpenBSD/hppa should run on systems similar to those, listed below,
+as long as they're based upon the following:
 .Pp
 .Bl -bullet -compact
 .It
-HP-PARISC1.1 processors, dubbed PA7000, PA7100, PA7150, PA7100LC, PA7200, PA 7250, PA7300LC;
+.Tn HP-PARISC 1.1
+processors:
+.Bl -tag -compact -width PA7100/PA7150xx
+.It PA7000
+.It PA7100/PA7150
+.It PA7200/PA7250
+.It PA7100LC
+.It PA7300LC
+.El
 .It
-Viper memory controllers;
+Viper memory controller;
 .It
-LASI, ASP and WAX bus/IO controllers -> GSC-bus based machines
+GSC bus controllers:
+.Bl -tag -compact -width WAXxx
+.It ASP
+.It LASI
+Super-integrated I/O
+.It WAX
+Basic I/O
+.El
 .It
-NCR 53C700, 53C710 and 53C720 SCSI IO-processors -> can be SE or (FW)Differential SCSI
+SCSI IO-processors:
+.Bl -tag -compact -width NCR53C700/710xx
+.It NCR53C700/710
+Single-Ended
+.It NCR53C720
+Fast Wide Differential
+.El
+.It
+Intel 82596/CA or /DX Ethernet controllers
 .It
 Venom, (H)CRX-8 and (H)CRX-24 video controllers
 .It
-i82350(Mongoose) EISA-bus controller w/ attached EISA-bus and devices
-.It
-HIL or PS/2-style keyboard and mouse
+EISA Adapters:
+.Bl -tag -compact -width WAX-EISAxx
+.It i82350 (Mongoose)
+.It WAX-EISA
 .El
+.\" .It
+.\" PCI Adapters:
+.\" .Bl -tag -compact -width DINO
+.\" .It Dino
+.\" GSC-PCI bridge
+.\" .It Cujo
+.\" GSC-PCI 64bit bridge
+.\" .El
+.It
+Human Interface Loop
+.Tn (HIL)
+keyboard and mouse
+.It
+PS/2 port keyboard and mouse
+.El
+.Pp
+Below a list of
+.Tn HP9000/700
+models targetted for support is listed, including basic
+system characteristics.
+.Pp
+.in +\n(dIu
+.TS
+tab (:) ;
+l l l l l
+_ _ _ _ _
+l l l l l .
+Model:MHz:CPU:Caches, KB:Expansion
+705:35:7000:32/64:N/A
+710:50:7000:32/64:N/A
+720:50:7000:128/256:1 EISA, 1 GSC
+730:66:7100:128/256:1 EISA, 1 GSC
+750:66:7000:256/256:4 EISA, 2 SGC
+715:33/50:7100:64/64:1 EISA/SGC
+715:75:7100:256/256:1 EISA/SGC
+725:50/75:7100:64/64:3 EISA, 1 EISA/SGC
+735:100:7100:256/256:1 EISA, 1 GSC
+755:100:7100:256/256:4 EISA, 2 SGC
+735:125:7150:256/256:1 EISA, 1 GSC
+755:125:7150:256/256:4 EISA, 2 SGC
+742i:100?:7150: :VME
+743i:64/100:7100LC:256:1+1/1+3/3+1 GSC/cPCI, VME
+712:60:7100LC:64:1 GIO, 1 TSIO
+712:80/100:7100LC:128/128:1 GIO, 1 TSIO
+715:64:7100LC:128/128:1 EISA/SGC
+715:80/100:7100LC:128/128:1 EISA/SGC
+715/XC:100:7100LC:512/512:1 EISA/SGC
+725:64/100:7100LC: :1 EISA, 3 EISA/SGC
+J200:100:7200:256/256:1 GSC, 2 EISA, 2 EISA/SGC
+J210:120:7200:256/256:1 GSC, 2 EISA, 2 EISA/SGC
+J210XC:120:7200:1024/1024:1 GSC, 2 EISA, 2 EISA/SGC
+C100:100:7200:256/256:1 GSC, 3 EISA/GSC
+C110:120:7200:256/256:1 GSC, 3 EISA/GSC
+A180:180:7300LC:64/64:2 HSC/PCI
+A180C:180:7300LC:64/64+1024:2 HSC/PCI
+B132L:132:7300LC:64/64+1024:1 GSC/PCI, 1 GSC/PCI/EISA
+B132L+:132:7300LC: :1 GSC/PCI, 1 GSC/PCI/EISA
+B160L:160:7300LC:64/64+1024:1 GSC/PCI, 1 GSC/PCI/EISA
+B180L:180:7300LC:64/64+1024:1 GSC/PCI, 1 GSC/PCI/EISA
+C132L:132:7300LC:64/64+1024:1 GSC/PCI, 1 GSC/PCI/EISA,
+ : : : :2 GSC/EISA
+C160L:160:7300LC:64/64+1024:1 GSC/PCI, 1 GSC/PCI/EISA,
+ : : : :2 GSC/EISA
+.TE
+.in -\n(dIu
 .Pp
 .Sh LIST OF DEVICES
 The devices listed below are supported in this incarnation of
@@ -160,7 +202,8 @@ Not all supported devices are listed.
 .It asp
 The ASP bus/IO controller; found in most of the older machines which
 don't have LASI or WAX.
-Includes GSC-bus controller, to which most of the devices are attached. Most of IO is still on external chips though.
+Includes GSC-bus controller, to which most of the devices are attached.
+Most of IO is still on external chips though.
 .It com
 The RS-232 ports.
 .It cpu
@@ -169,7 +212,7 @@ The Central Processor itself, makes sure the machine does something useful.
 Human Interface Loop, sporting several input devices,
 e.g. keyboards, mice, tablets and such.
 .It ie
-i82C5[89]6 LAN-processor. Found in every s700, either included in MBA or on 
+i82C5[89]6 LAN-processor. Found in every s700, either included in MBA or on
 external chip on mainboard.
 .It lasi
 LSI?, found in s712. Integrates most of the bus and IO functions into one chip.
@@ -186,7 +229,9 @@ bus controller on most of the s700 machines.
 The PROM interface, allows to call the routines in the machine's
 PROM for things like intial console output and such.
 .It siop
-mtc
+The
+.Tn SCSI
+I/O Procesor.
 .It sti
 The system graphics driver.
 .It wax
@@ -196,6 +241,9 @@ used for cheap
 .Tn ASIC
 implementations for add-on devices.
 .El
+.Sh SEE ALSO
+.Xr autoconf 4 ,
+.Xr config 8
 .Sh HISTORY
 The
 hppa
