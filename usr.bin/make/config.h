@@ -2,7 +2,7 @@
 #define CONFIG_H
 
 /*	$OpenPackages$ */
-/*	$OpenBSD: config.h,v 1.12 2001/06/05 11:59:11 espie Exp $	*/
+/*	$OpenBSD: config.h,v 1.13 2002/01/30 18:40:26 matthieu Exp $	*/
 /*	$NetBSD: config.h,v 1.7 1996/11/06 17:59:03 christos Exp $	*/
 
 /*
@@ -107,8 +107,7 @@
  */
 #define SUNSHCMD
 
-#if !defined(__svr4__) && !defined(__SVR4) && !defined(__alpha__) && \
-    !defined(__mips__) && !defined(__powerpc__)
+#if !defined(__svr4__) && !defined(__SVR4) && !defined(__ELF__)
 # ifndef RANLIBMAG
 #  define RANLIBMAG "__.SYMDEF"
 # endif

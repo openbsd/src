@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: arch.c,v 1.50 2001/09/19 10:58:07 mpech Exp $ */
+/*	$OpenBSD: arch.c,v 1.51 2002/01/30 18:40:26 matthieu Exp $ */
 /*	$NetBSD: arch.c,v 1.17 1996/11/06 17:58:59 christos Exp $	*/
 
 /*
@@ -161,8 +161,7 @@ static TIMESTAMP ArchMTimeMember(const char *, const char *, bool);
 static FILE *ArchFindMember(const char *, const char *, struct ar_hdr *, const char *);
 static void ArchTouch(const char *, const char *);
 #if defined(__svr4__) || defined(__SVR4) || \
-    (defined(__OpenBSD__) && defined(__mips__)) || \
-    (defined(__OpenBSD__) && defined(__powerpc))
+    (defined(__OpenBSD__) && defined(__ELF__))
 #define SVR4ARCHIVES
 #endif
 
