@@ -1,19 +1,14 @@
-#	$OpenBSD: Makefile,v 1.11 1996/07/16 07:39:16 pefo Exp $
+#	$OpenBSD: Makefile,v 1.12 1996/07/16 07:47:26 deraadt Exp $
 #	$NetBSD: Makefile,v 1.35 1996/04/03 21:20:52 chuck Exp $
 
-SUBDIR+=	bc cpio cvs dc diff diff3 grep groff
+SUBDIR+=	bc cpio cvs dc diff diff3 gcc grep groff
 SUBDIR+=	gzip rcs sdiff sendbug sort texinfo
 
-# some ports don't use the tool chain in /usr/src
-.if (${MACHINE_ARCH} != "alpha") && (${MACHINE_ARCH} != "mips")
-SUBDIR+=	gas gdb ld
-.endif
-.if ${MACHINE_ARCH} != "alpha"
-SUBDIR+=	gcc
-.endif
-# MIPS uses binutils for ELF support.
-.if ${MACHINE_ARCH} == "mips"
+# some ports use binutils, some do not.
+.if (${MACHINE_ARCH} == "alpha") || (${MACHINE_ARCH} == "mips")
 SUBDIR+=	binutils
+.else
+SUBDIR+=	gas gdb ld
 .endif
 
 .include <bsd.subdir.mk>
