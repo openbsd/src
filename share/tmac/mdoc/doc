@@ -1,4 +1,4 @@
-.\"	$OpenBSD: doc,v 1.9 2003/07/16 07:38:38 jmc Exp $
+.\"	$OpenBSD: doc,v 1.10 2003/07/24 18:12:53 jmc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1674,7 +1674,7 @@
 .de Ed
 .ds mN Ed
 .br
-.if \\n(dP==0 .tm mdoc: Extraneous .Ed
+.if \\n(dP==0 .tm mdoc: Extraneous .Ed call (#\\n(.c)
 .if "\\*(d\\n(dP"dL" \{\
 .	ft \\n(cF
 .	fz \\n(cZ
@@ -2204,7 +2204,7 @@
 .	rr o\\n(lC
 .\}
 .el 'in \\n(.iu-\\n(w\\n(lCu-\\n(lSu
-.if \\n(lC<=0 .tm Extraneous .El call (#\\n(.c)
+.if \\n(lC<=0 .tm mdoc: Extraneous .El call (#\\n(.c)
 .tZ
 .nr lC \\n(lC-1
 .tY
