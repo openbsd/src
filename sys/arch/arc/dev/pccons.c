@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccons.c,v 1.8 1996/09/19 00:30:38 imp Exp $	*/
+/*	$OpenBSD: pccons.c,v 1.9 1996/09/27 20:40:46 pefo Exp $	*/
 /*	$NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp $	*/
 
 /*-
@@ -48,21 +48,20 @@
  */
 
 #include <sys/param.h>
-#include <sys/kernel.h>
 #include <sys/systm.h>
-#include <sys/conf.h>
 #include <sys/ioctl.h>
 #include <sys/proc.h>
 #include <sys/user.h>
-#include <sys/ioctl.h>
 #include <sys/select.h>
 #include <sys/tty.h>
 #include <sys/uio.h>
 #include <sys/callout.h>
 #include <sys/syslog.h>
-#include <sys/vnode.h>
 #include <sys/device.h>
-#include <sys/file.h>
+#include <sys/conf.h>
+#include <sys/vnode.h>
+#include <sys/fcntl.h>
+#include <sys/kernel.h>
 
 #include <dev/cons.h>
 
@@ -117,6 +116,7 @@ static struct video_state {
 	int 	cx, cy;		/* escape parameters */
 	int 	row, col;	/* current cursor position */
 	int 	nrow, ncol, nchr;	/* current screen geometry */
+	int	offset;		/* Saved cursor pos */
 	u_char	state;		/* parser state */
 #define	VSS_ESCAPE	1
 #define	VSS_EBRACE	2
@@ -1021,6 +1021,11 @@ sput(cp, n)
 				vs.state = VSS_ESCAPE;
 			break;
 
+		case 0x9B:	/* CSI */
+			vs.cx = vs.cy = 0;
+			vs.state = VSS_EBRACE;
+			break;
+
 		case '\t': {
 			int inccol = 8 - (vs.col & 7);
 			crtat += inccol;
@@ -1033,7 +1038,7 @@ sput(cp, n)
 			}
 			break;
 
-		case '\010':
+		case '\b':
 			if (crtat <= Crtat)
 				break;
 			--crtat;
@@ -1052,7 +1057,6 @@ sput(cp, n)
 			break;
 
 		default:
-		bypass:
 			switch (vs.state) {
 			case 0:
 				if (c == '\a')
@@ -1088,21 +1092,35 @@ sput(cp, n)
 				}
 				break;
 			case VSS_ESCAPE:
-				if (c == '[') {	/* Start ESC [ sequence */
-					vs.cx = vs.cy = 0;
-					vs.state = VSS_EBRACE;
-				} else if (c == 'c') { /* Clear screen & home */
-					fillw((vs.at << 8) | ' ', Crtat,
-					    vs.nchr);
-					crtat = Crtat;
-					vs.col = 0;
-					vs.state = 0;
-				} else { /* Invalid, clear state */
-					wrtchar(c, vs.so_at); 
-					vs.state = 0;
-					goto maybe_scroll;
+				switch (c) {
+					case '[': /* Start ESC [ sequence */
+						vs.cx = vs.cy = 0;
+						vs.state = VSS_EBRACE;
+						break;
+					case 'c': /* Create screen & home */
+						fillw((vs.at << 8) | ' ',
+						    Crtat, vs.nchr);
+						crtat = Crtat;
+						vs.col = 0;
+						vs.state = 0;
+						break;
+					case '7': /* save cursor pos */
+						vs.offset = crtat - Crtat;
+						vs.state = 0;
+						break;
+					case '8': /* restore cursor pos */
+						crtat = Crtat + vs.offset;
+						vs.row = vs.offset / vs.ncol;
+						vs.col = vs.offset % vs.ncol;
+						vs.state = 0;
+						break;
+					default: /* Invalid, clear state */
+						wrtchar(c, vs.so_at); 
+						vs.state = 0;
+						goto maybe_scroll;
 				}
 				break;
+
 			default: /* VSS_EBRACE or VSS_EPARAM */
 				switch (c) {
 					int pos;
@@ -1183,17 +1201,20 @@ sput(cp, n)
 					switch (vs.cx) {
 					case 0:
 						/* ... to end of display */
-						fillw((vs.at << 8) | ' ', crtat,
+						fillw((vs.at << 8) | ' ',
+						    crtat,
 						    Crtat + vs.nchr - crtat);
 						break;
 					case 1:
 						/* ... to next location */
-						fillw((vs.at << 8) | ' ', Crtat,
+						fillw((vs.at << 8) | ' ',
+						    Crtat,
 						    crtat - Crtat + 1);
 						break;
 					case 2:
 						/* ... whole display */
-						fillw((vs.at << 8) | ' ', Crtat,
+						fillw((vs.at << 8) | ' ',
+						    Crtat,
 						    vs.nchr);
 						break;
 					}
@@ -1203,7 +1224,8 @@ sput(cp, n)
 					switch (vs.cx) {
 					case 0:
 						/* ... current to EOL */
-						fillw((vs.at << 8) | ' ', crtat,
+						fillw((vs.at << 8) | ' ',
+						    crtat,
 						    vs.ncol - vs.col);
 						break;
 					case 1:
@@ -1319,6 +1341,16 @@ sput(cp, n)
 					    ((vs.cy << 4) & BG_MASK);
 					vs.state = 0;
 					break;
+				case 's': /* save cursor pos */
+					vs.offset = crtat - Crtat;
+					vs.state = 0;
+					break;
+				case 'u': /* restore cursor pos */
+					crtat = Crtat + vs.offset;
+					vs.row = vs.offset / vs.ncol;
+					vs.col = vs.offset % vs.ncol;
+					vs.state = 0;
+					break;
 				case 'x': /* set attributes */
 					switch (vs.cx) {
 					case 0:
@@ -1370,14 +1402,15 @@ sput(cp, n)
 				if (!kernel) {
 					int s = spltty();
 					if (lock_state & KB_SCROLL)
-						tsleep((caddr_t)&lock_state,
+						tsleep(&lock_state,
 						    PUSER, "pcputc", 0);
 					splx(s);
 				}
 				bcopy(Crtat + vs.ncol, Crtat,
 				    (vs.nchr - vs.ncol) * CHR);
 				fillw((vs.at << 8) | ' ',
-				    Crtat + vs.nchr - vs.ncol, vs.ncol);
+				    Crtat + vs.nchr - vs.ncol,
+				    vs.ncol);
 				crtat -= vs.ncol;
 			}
 		}
