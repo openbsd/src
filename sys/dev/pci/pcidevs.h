@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.270 2000/06/18 15:27:41 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.272 2000/06/18 16:52:30 form Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1257,7 +1257,7 @@
 #define	PCI_PRODUCT_NVIDIA_DAC64	0x0009		/* DAC64 */
 #define	PCI_PRODUCT_NVIDIA_RIVA_TNT	0x0020		/* Riva TNT */
 #define	PCI_PRODUCT_NVIDIA_RIVA_TNT2	0x0028		/* Riva TNT2 */
-#define	PCI_PRODUCT_NVISIA_GEFORCE256	0x0100		/* GeForce256 */
+#define	PCI_PRODUCT_NVIDIA_GEFORCE256	0x0100		/* GeForce256 */
 #define	PCI_PRODUCT_NVIDIA_GEFORCE256_DDR	0x0101		/* GeForce256 DDR */
 
 /* Oak Technologies products */
