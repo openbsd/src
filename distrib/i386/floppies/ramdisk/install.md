@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.md,v 1.5 1997/04/22 10:34:41 deraadt Exp $
+#	$OpenBSD: install.md,v 1.6 1997/04/30 06:32:05 tholo Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -65,7 +65,7 @@ echo "can cause SIGNIFICANT data loss, and you are advised to make sure your"
 echo "hard drive is backed up before beginning the installation process."
 echo ""
 echo "Default answers are displyed in brackets after the questions.  You can"
-echo "hit Control-C at any time to quit.  Also, quitting towards the latter
+echo "hit Control-C at any time to quit.  Also, quitting towards the latter"
 echo "part of the installation may leave your system in an inconsistent state."
 echo ""
 echo -n "Proceed with installation? [n] "
