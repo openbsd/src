@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.111 2002/12/25 16:05:23 dhartmei Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.112 2002/12/29 22:02:46 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -487,6 +487,36 @@ pfctl_show_rules(int dev, int opts, int format)
 	struct pfioc_rule pr;
 	u_int32_t nr, mnr;
 
+	if (*anchorname && !*rulesetname) {
+		struct pfioc_ruleset pr;
+		int r;
+
+		memset(&pr, 0, sizeof(pr));
+		memcpy(pr.anchor, anchorname, sizeof(pr.anchor));
+		if (ioctl(dev, DIOCGETRULESETS, &pr)) {
+			if (errno == EINVAL)
+				fprintf(stderr, "No rulesets in anchor '%s'.\n",
+				    anchorname);
+			else
+				warn("DIOCGETRULESETS");
+			return (-1);
+		}
+		mnr = pr.nr;
+		for (nr = 0; nr < mnr; ++nr) {
+			pr.nr = nr;
+			if (ioctl(dev, DIOCGETRULESET, &pr)) {
+				warn("DIOCGETRULESET");
+				return (-1);
+			}
+			memcpy(rulesetname, pr.name, sizeof(rulesetname));
+			r = pfctl_show_rules(dev, opts, format);
+			memset(rulesetname, 0, sizeof(rulesetname));
+			if (r)
+				return (r);
+		}
+		return (0);
+	}
+
 	memset(&pr, 0, sizeof(pr));
 	memcpy(pr.anchor, anchorname, sizeof(pr.anchor));
 	memcpy(pr.ruleset, rulesetname, sizeof(pr.ruleset));
@@ -564,6 +594,36 @@ pfctl_show_nat(int dev, int opts)
 {
 	struct pfioc_rule pr;
 	u_int32_t mnr, nr;
+
+	if (*anchorname && !*rulesetname) {
+		struct pfioc_ruleset pr;
+		int r;
+
+		memset(&pr, 0, sizeof(pr));
+		memcpy(pr.anchor, anchorname, sizeof(pr.anchor));
+		if (ioctl(dev, DIOCGETRULESETS, &pr)) {
+			if (errno == EINVAL)
+				fprintf(stderr, "No rulesets in anchor '%s'.\n",
+				    anchorname);
+			else
+				warn("DIOCGETRULESETS");
+			return (-1);
+		}
+		mnr = pr.nr;
+		for (nr = 0; nr < mnr; ++nr) {
+			pr.nr = nr;
+			if (ioctl(dev, DIOCGETRULESET, &pr)) {
+				warn("DIOCGETRULESET");
+				return (-1);
+			}
+			memcpy(rulesetname, pr.name, sizeof(rulesetname));
+			r = pfctl_show_nat(dev, opts);
+			memset(rulesetname, 0, sizeof(rulesetname));
+			if (r)
+				return (r);
+		}
+		return (0);
+	}
 
 	memset(&pr, 0, sizeof(pr));
 	memcpy(pr.anchor, anchorname, sizeof(pr.anchor));
