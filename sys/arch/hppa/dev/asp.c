@@ -1,4 +1,4 @@
-/*	$OpenBSD: asp.c,v 1.3 1999/07/16 17:53:06 mickey Exp $	*/
+/*	$OpenBSD: asp.c,v 1.4 1999/11/26 17:59:55 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -23,8 +23,8 @@
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
  * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF MIND,
+ * USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
@@ -101,6 +101,11 @@ struct asp_trs {
 #define	asp_lanf	_asp_ios.asp_lanf
 #define	asp_spwr	_asp_ios.asp_spwr
 #define	asp_scsi	_asp_ios.asp_scsi
+};
+
+static const char asp_spus[][12] = {
+	"Cobra", "Coral", "Bushmaster", "Hardball", "Scorpio", "Coral II",
+	"#6", "#7"
 };
 
 struct asp_softc {
@@ -184,8 +189,8 @@ aspattach(parent, self, aux)
 	sc->sc_trs->asp_imr = 0;
 	splx(s);
 
-	printf (": rev %d, spu %d, lan %d, scsi %d\n", sc->sc_hw->asp_version,
-		sc->sc_trs->asp_spu,sc->sc_trs->asp_lan, sc->sc_trs->asp_scsi);
+	printf (": %s rev %d, lan %d scsi %d\n", asp_spus[sc->sc_trs->asp_spu],
+	    sc->sc_hw->asp_version, sc->sc_trs->asp_lan, sc->sc_trs->asp_scsi);
 
 	sc->sc_ic.gsc_type = gsc_asp;
 	sc->sc_ic.gsc_dv = sc;
