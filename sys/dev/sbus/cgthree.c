@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgthree.c,v 1.7 2002/02/05 20:13:17 jason Exp $	*/
+/*	$OpenBSD: cgthree.c,v 1.8 2002/02/07 04:48:15 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -64,21 +64,55 @@ union bt_cmap {
 #define	BT_CMAP		0x04		/* colormap data register */
 #define	BT_CTRL		0x08		/* control register */
 #define	BT_OMAP		0x0c		/* overlay (cursor) map register */
+#define	CG3_FBC_CTRL	0x10		/* control */
+#define	CG3_FBC_STAT	0x11		/* status */
+#define	CG3_FBC_START	0x12		/* cursor start */
+#define	CG3_FBC_END	0x13		/* cursor end */
+#define	CG3_FBC_VCTRL	0x14		/* 12 bytes of timing goo */
 
 #define	BT_WRITE(sc, reg, val) \
     bus_space_write_4((sc)->sc_bustag, (sc)->sc_ctrl_regs, (reg), (val))
 #define	BT_READ(sc, reg) \
     bus_space_read_4((sc)->sc_bustag, (sc)->sc_ctrl_regs, (reg))
-
-#define	BT_INIT(sc) do {					\
-	BT_WRITE((sc), BT_ADDR, 0x06);	/* command reg */	\
-	BT_WRITE((sc), BT_CTRL, 0x73);	/* overlay plane */	\
-	BT_WRITE((sc), BT_ADDR, 0x04);  /* read mask */		\
-	BT_WRITE((sc), BT_CTRL, 0xff);	/* color planes */	\
-} while (0)
+#define	BT_BARRIER(sc,reg,flags) \
+    bus_space_barrier((sc)->sc_bustag, (sc)->sc_ctrl_regs, (reg), \
+	sizeof(u_int32_t), (flags))
 
 #define	BT_D4M3(x)	((((x) >> 2) << 1) + ((x) >> 2)) /* (x / 4) * 3 */
 #define	BT_D4M4(x)	((x) & ~3)			 /* (x / 4) * 4 */
+
+#define	FBC_CTRL_IENAB		0x80	/* interrupt enable */
+#define	FBC_CTRL_VENAB		0x40	/* video enable */
+#define	FBC_CTRL_TIME		0x20	/* timing enable */
+#define	FBC_CTRL_CURS		0x10	/* cursor compare enable */
+#define	FBC_CTRL_XTAL		0x0c	/* xtal select (0,1,2,test): */
+#define	FBC_CTRL_XTAL_0		0x00	/*  0 */
+#define	FBC_CTRL_XTAL_1		0x04	/*  0 */
+#define	FBC_CTRL_XTAL_2		0x08	/*  0 */
+#define	FBC_CTRL_XTAL_TEST	0x0c	/*  0 */
+#define	FBC_CTRL_DIV		0x03	/* divisor (1,2,3,4): */
+#define	FBC_CTRL_DIV_1		0x00	/*  / 1 */
+#define	FBC_CTRL_DIV_2		0x01	/*  / 2 */
+#define	FBC_CTRL_DIV_3		0x02	/*  / 3 */
+#define	FBC_CTRL_DIV_4		0x03	/*  / 4 */
+
+#define	FBC_STAT_INTR		0x80	/* interrupt pending */
+#define	FBC_STAT_RES		0x70	/* monitor sense: */
+#define	FBC_STAT_RES_1024	0x10	/*  1024x768 */
+#define	FBC_STAT_RES_1280	0x40	/*  1280x1024 */
+#define	FBC_STAT_RES_1152	0x30	/*  1152x900 */
+#define	FBC_STAT_RES_1152A	0x40	/*  1152x900x76, A */
+#define	FBC_STAT_RES_1600	0x50	/*  1600x1200 */
+#define	FBC_STAT_RES_1152B	0x60	/*  1152x900x86, B */
+#define	FBC_STAT_ID		0x0f	/* id mask: */
+#define	FBC_STAT_ID_COLOR	0x01	/*  color */
+#define	FBC_STAT_ID_MONO	0x02	/*  monochrome */
+#define	FBC_STAT_ID_MONOECL	0x03	/*  monochrome, ecl */
+
+#define	FBC_READ(sc, reg) \
+    bus_space_read_1((sc)->sc_bustag, (sc)->sc_ctrl_regs, (reg))
+#define	FBC_WRITE(sc, reg, val) \
+    bus_space_write_1((sc)->sc_bustag, (sc)->sc_ctrl_regs, (reg), (val))
 
 struct cgthree_softc {
 	struct device sc_dev;
@@ -135,7 +169,8 @@ int cg3_bt_putcmap __P((union bt_cmap *, struct wsdisplay_cmap *));
 int cg3_bt_getcmap __P((union bt_cmap *, struct wsdisplay_cmap *));
 void cgthree_setcolor __P((struct cgthree_softc *, u_int,
     u_int8_t, u_int8_t, u_int8_t));
-
+void cgthree_blank __P((struct cgthree_softc *, int));
+void cgthree_reset __P((struct cgthree_softc *));
 static int a2int __P((char *, int));
 
 struct wsdisplay_accessops cgthree_accessops = {
@@ -156,6 +191,35 @@ struct cfattach cgthree_ca = {
 
 struct cfdriver cgthree_cd = {
 	NULL, "cgthree", DV_DULL
+};
+
+#define	CG3_TYPE_DEFAULT	0
+#define	CG3_TYPE_76HZ		1
+#define	CG3_TYPE_SMALL		2
+
+struct cg3_videoctrl {
+	u_int8_t	sense;
+	u_int8_t	vctrl[12];
+	u_int8_t	ctrl;
+} cg3_videoctrl[] = {
+	{	/* cpd-1790 */
+		0x31,
+		{ 0xbb, 0x2b, 0x04, 0x14, 0xae, 0x03,
+		  0xa8, 0x24, 0x01, 0x05, 0xff, 0x01 },
+		FBC_CTRL_XTAL_0 | FBC_CTRL_DIV_1
+	},
+	{	/* gdm-20e20 */
+		0x41,
+		{ 0xb7, 0x27, 0x03, 0x0f, 0xae, 0x03,
+		  0xae, 0x2a, 0x01, 0x09, 0xff, 0x01 },
+		FBC_CTRL_XTAL_1 | FBC_CTRL_DIV_1
+	},
+	{	/* defaults, should be last */
+		0xff,
+		{ 0xbb, 0x2b, 0x03, 0x0b, 0xb3, 0x03,
+		  0xaf, 0x2b, 0x02, 0x0a, 0xff, 0x01 },
+		0,
+	},
 };
 
 int
@@ -209,35 +273,28 @@ cgthreeattach(parent, self, aux)
 
 	console = cgthree_is_console(sa->sa_node);
 
-	sc->sc_depth = getpropint(sa->sa_node, "depth", -1);
-	if (sc->sc_depth == -1)
-		sc->sc_depth = 8;
-
-	sc->sc_linebytes = getpropint(sa->sa_node, "linebytes", -1);
-	if (sc->sc_linebytes == -1)
-		sc->sc_linebytes = 1152;
-
-	sc->sc_height = getpropint(sa->sa_node, "height", -1);
-	if (sc->sc_height == -1)
-		sc->sc_height = 900;
-
-	sc->sc_width = getpropint(sa->sa_node, "width", -1);
-	if (sc->sc_width == -1)
-		sc->sc_width = 1152;
+	sc->sc_depth = getpropint(sa->sa_node, "depth", 8);
+	sc->sc_linebytes = getpropint(sa->sa_node, "linebytes", 1152);
+	sc->sc_height = getpropint(sa->sa_node, "height", 900);
+	sc->sc_width = getpropint(sa->sa_node, "width", 1152);
 
 	sbus_establish(&sc->sc_sd, &sc->sc_dev);
+
+	cgthree_reset(sc);
 
 	BT_WRITE(sc, BT_ADDR, 0);
 	for (i = 0; i < 256 * 3 / 4; i++)
 		sc->sc_cmap.cm_chip[i] = BT_READ(sc, BT_CMAP);
-	BT_INIT(sc);
+
+	cgthree_blank(sc, 0);
 
 	sc->sc_rcons.rc_sp = &sc->sc_raster;
 	sc->sc_raster.width = sc->sc_width;
 	sc->sc_raster.height = sc->sc_height;
 	sc->sc_raster.depth = sc->sc_depth;
 	sc->sc_raster.linelongs = sc->sc_linebytes / 4;
-	sc->sc_raster.pixels = (void *)sc->sc_vid_regs;
+	sc->sc_raster.pixels = (void *)bus_space_vaddr(sc->sc_bustag,
+	    sc->sc_vid_regs);
 
 	if (console == 0 ||
 	    romgetcursoraddr(&sc->sc_rcons.rc_crowp, &sc->sc_rcons.rc_ccolp)) {
@@ -509,4 +566,73 @@ cg3_bt_putcmap(bcm, rcm)
 			return (error);
 	}
 	return (0);
+}
+
+void
+cgthree_reset(sc)
+	struct cgthree_softc *sc;
+{
+	int i, j;
+	u_int8_t sts, ctrl;
+
+	sts = FBC_READ(sc, CG3_FBC_STAT);
+	ctrl = FBC_READ(sc, CG3_FBC_CTRL);
+
+	if (ctrl & FBC_CTRL_TIME) {
+		/* already initialized */
+		return;
+	}
+
+	for (i = 0; i <  sizeof(cg3_videoctrl)/sizeof(cg3_videoctrl[0]); i++) {
+		if (cg3_videoctrl[i].sense == 0xff ||
+		    (cg3_videoctrl[i].sense ==
+		     (sts & (FBC_STAT_RES | FBC_STAT_ID)))) {
+			for (j = 0; j < 12; j++)
+				FBC_WRITE(sc, CG3_FBC_VCTRL + j,
+				    cg3_videoctrl[i].vctrl[j]);
+			ctrl &= ~(FBC_CTRL_XTAL | FBC_CTRL_DIV);
+			ctrl |= cg3_videoctrl[i].ctrl |
+			    FBC_CTRL_TIME;
+			FBC_WRITE(sc, CG3_FBC_CTRL, ctrl);
+			break;
+		}
+	}
+
+	BT_WRITE(sc, BT_ADDR, 0x04);
+	BT_BARRIER(sc, BT_ADDR, BUS_SPACE_BARRIER_WRITE);
+	BT_WRITE(sc, BT_CTRL, 0xff);
+	BT_BARRIER(sc, BT_CTRL, BUS_SPACE_BARRIER_WRITE);
+
+	BT_WRITE(sc, BT_ADDR, 0x05);
+	BT_BARRIER(sc, BT_ADDR, BUS_SPACE_BARRIER_WRITE);
+	BT_WRITE(sc, BT_CTRL, 0x00);
+	BT_BARRIER(sc, BT_CTRL, BUS_SPACE_BARRIER_WRITE);
+
+	BT_WRITE(sc, BT_ADDR, 0x06);
+	BT_BARRIER(sc, BT_ADDR, BUS_SPACE_BARRIER_WRITE);
+	BT_WRITE(sc, BT_CTRL, 0x70);
+	BT_BARRIER(sc, BT_CTRL, BUS_SPACE_BARRIER_WRITE);
+
+	BT_WRITE(sc, BT_ADDR, 0x07);
+	BT_BARRIER(sc, BT_ADDR, BUS_SPACE_BARRIER_WRITE);
+	BT_WRITE(sc, BT_CTRL, 0x00);
+	BT_BARRIER(sc, BT_CTRL, BUS_SPACE_BARRIER_WRITE);
+}
+
+void
+cgthree_blank(sc, blank)
+	struct cgthree_softc *sc;
+	int blank;
+{
+	int s;
+	u_int32_t fbc;
+
+	s = splhigh();
+	fbc = FBC_READ(sc, CG3_FBC_CTRL);
+	if (blank)
+		fbc &= ~FBC_CTRL_VENAB;
+	else
+		fbc |= FBC_CTRL_VENAB;
+	FBC_WRITE(sc, CG3_FBC_CTRL, fbc);
+	splx(s);
 }
