@@ -280,7 +280,7 @@ UDIConnect(Config, Session)
 		int f;
 
 		sprintf(soc_con[cnt].tip_string,"/tmp/U%d", getpid() + pos);
-		f = open(soc_con[cnt].tip_string, O_CREAT, 0600);
+		f = open(soc_con[cnt].tip_string, O_CREAT, 0);
 		if (f == -1)
 		  continue;
 
