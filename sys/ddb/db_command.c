@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.c,v 1.19 2000/06/07 11:21:39 art Exp $	*/
+/*	$OpenBSD: db_command.c,v 1.20 2001/04/18 23:17:25 art Exp $	*/
 /*	$NetBSD: db_command.c,v 1.20 1996/03/30 22:30:05 christos Exp $	*/
 
 /* 
@@ -378,7 +378,8 @@ struct db_command db_boot_cmds[] = {
 	{ "sync",	db_boot_sync_cmd,	0,	0 },
 	{ "crash",	db_boot_crash_cmd,	0,	0 },
 	{ "dump",	db_boot_dump_cmd,	0,	0 },
-	{ (char *)0, }
+	{ "halt",	db_boot_halt_cmd,	0,	0 },
+	{ NULL, }
 };
 
 struct db_command db_command_table[] = {
@@ -576,4 +577,14 @@ db_boot_dump_cmd(addr, haddr, count, modif)
 	char *modif;
 {
 	boot(RB_DUMP | RB_TIMEBAD);
+}
+
+void
+db_boot_halt_cmd(addr, haddr, count, modif)
+	db_expr_t addr;
+	int haddr;
+	db_expr_t count;
+	char *modif;
+{
+	boot(RB_NOSYNC | RB_HALT | RB_TIMEBAD);
 }
