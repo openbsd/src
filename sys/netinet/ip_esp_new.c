@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp_new.c,v 1.6 1997/09/28 22:57:47 deraadt Exp $	*/
+/*	$OpenBSD: ip_esp_new.c,v 1.7 1997/09/29 22:09:59 deraadt Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -709,7 +709,7 @@ esp_new_input(struct mbuf *m, struct tdb *tdb)
 
     if (xd->edx_flags & ESP_NEW_FLAG_OPADDING)
     {
-        if (blk[6] != blk[5])
+        if ((blk[6] != blk[5]) && (blk[6] != 0))
 	{
 	    log(LOG_ALERT, "esp_new_input(): decryption failed for packet from %x to %x, SA %x/%08x\n", ipo.ip_src, ipo.ip_dst, tdb->tdb_dst, ntohl(tdb->tdb_spi));
 	    m_freem(m);
@@ -727,7 +727,7 @@ esp_new_input(struct mbuf *m, struct tdb *tdb)
 	    return NULL;
 	}
 	else
-	  if ((blk[6] == 0) || (blk[6] != blk[5] + 1))
+	  if (blk[6] != blk[5] + 1)
           {
               log(LOG_ALERT, "esp_new_input(): decryption failed for packet from %x to %x, SA %x/%08x\n", ipo.ip_src, ipo.ip_dst, tdb->tdb_dst, ntohl(tdb->tdb_spi));
               m_freem(m);
