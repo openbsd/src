@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.54 2004/06/22 01:33:51 henning Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.55 2004/06/22 23:05:28 deraadt Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -114,6 +114,8 @@ int		 fork_privchld(int, int);
 	    ((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
 #define	ADVANCE(x, n) (x += ROUNDUP((n)->sa_len))
 
+time_t	scripttime;
+
 int
 findproto(char *cp, int n)
 {
@@ -214,7 +216,9 @@ routehandler(struct protocol *p)
 			break;
 		if (findproto((char *)(ifam + 1), ifam->ifam_addrs) != AF_INET)
 			break;
-		/* goto die; */
+		if (scripttime && time(NULL) > scripttime &&
+		    time(NULL) < scripttime + 5)
+			goto die;
 		break;
 	case RTM_IFINFO:
 		ifm = (struct if_msghdr *)rtm;
@@ -1957,6 +1961,8 @@ script_go(void)
 	struct buf	*buf;
 	int		 ret;
 
+	scripttime = time(NULL);
+
 	hdr.code = IMSG_SCRIPT_GO;
 	hdr.len = sizeof(struct imsg_hdr);
 
@@ -1987,6 +1993,8 @@ priv_script_go(void)
 	static char client_path[] = CLIENT_PATH;
 	struct interface_info *ip = ifi;
 	int pid, wpid, wstatus;
+
+	scripttime = time(NULL);
 
 	if (ip) {
 		scriptName = ip->client->config->script_name;
