@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2001/06/05 10:38:36 hin Exp $
+# $OpenBSD: Makefile,v 1.4 2001/06/22 16:01:02 hin Exp $
 
 KRBDEPTH=../..
 .include <${.CURDIR}/../../Makefile.inc>
@@ -51,6 +51,7 @@ SRCS=	add_et_list.c \
 	crypto.c \
 	data.c \
 	expand_hostname.c \
+	eai_to_heim_errno.c \
 	fcache.c \
 	free.c \
 	free_host_realm.c \
@@ -120,14 +121,21 @@ SRCS=	add_et_list.c \
 	krb5_err.c \
 	heim_err.c
 
+# These are files in libroken that are needed in libkrb5 to make it independant
+# from libroken.
+SRCS+=	strupr.c 		\
+	strlwr.c		\
+	issuid.c		\
+	roken_gethostby.c	\
+	parse_time.c		\
+	parse_units.c
+
 CLEANFILES+=	krb5_err.[ch] heim_err.[ch]
 
-.PATH:	${KRB5SRC}/lib/krb5
+.PATH:	${KRB5SRC}/lib/krb5 ${KRB5SRC}/lib/roken
 CFLAGS+=-I${KRB5SRC}/lib/krb5 -I${KRB5SRC}/lib/ \
 	-I${KRB5SRC}/lib/asn1 -I../asn1 -I. \
 	-DSHA1_CTX=SHA_CTX
-
-LDADD+=	-lc -L../asn1 -lasn1_pic ${LIBROKEN_PIC} -lcrypto
 
 krb5_err.c krb5_err.h:	${KRB5SRC}/lib/krb5/krb5_err.et
 	compile_et ${KRB5SRC}/lib/krb5/krb5_err.et
