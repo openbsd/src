@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.13 2004/01/02 22:47:33 itojun Exp $ */
+/*	$OpenBSD: config.c,v 1.14 2004/01/03 20:22:07 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -34,10 +34,11 @@ u_int32_t	get_bgpid(void);
 u_int32_t	get_id(struct peer *);
 
 int
-merge_config(struct bgpd_config *xconf, struct bgpd_config *conf)
+merge_config(struct bgpd_config *xconf, struct bgpd_config *conf,
+    struct peer *peers)
 {
 	enum reconf_action	 reconf = RECONF_NONE;
-	struct peer		*p, *next;
+	struct peer		*p;
 
 	/* merge conf (new) into xconf (old)  */
 	if (!conf->as) {
@@ -90,20 +91,12 @@ merge_config(struct bgpd_config *xconf, struct bgpd_config *conf)
 	xconf->holdtime = conf->holdtime;
 	xconf->min_holdtime = conf->min_holdtime;
 
-	for (p = conf->peers; p != NULL; p = p->next) {
+	for (p = peers; p != NULL; p = p->next) {
 		p->conf.reconf_action = reconf;
 		p->conf.ebgp = (p->conf.remote_as != xconf->as);
 		if (!p->conf.id)
 			p->conf.id = get_id(p);
 	}
-
-	for (p = xconf->peers; p != NULL; p = next) {
-		next = p->next;
-		free(p);
-	}
-
-	/* merge peers done by session engine except for initial config */
-	xconf->peers = conf->peers;
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.3 2004/01/01 23:46:47 henning Exp $ */
+/*	$OpenBSD: session.h,v 1.4 2004/01/03 20:22:07 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -83,7 +83,7 @@ struct ctl_conn {
 
 TAILQ_HEAD(ctl_conns, ctl_conn)	ctl_conns;
 
-struct bgpd_config	*conf;
+struct peer	*peers;
 
 /* control.c */
 int	control_listen(void);

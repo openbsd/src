@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.48 2004/01/03 13:54:27 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.49 2004/01/03 20:22:07 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -116,7 +116,6 @@ struct bgpd_config {
 	int			 flags;
 	int			 log;
 	struct sockaddr_in	 listen_addr;
-	struct peer		*peers;
 };
 
 struct buf_read {
@@ -267,7 +266,8 @@ void		 send_nexthop_update(struct kroute_nexthop *);
 
 /* session.c */
 void		 session_socket_blockmode(int, enum blockmodes);
-int		 session_main(struct bgpd_config *, int[2], int[2]);
+int		 session_main(struct bgpd_config *, struct peer *, int[2],
+		    int[2]);
 
 /* buffer.c */
 struct buf	*buf_open(ssize_t);
@@ -298,10 +298,12 @@ char		*log_ntoa(in_addr_t);
 
 /* parse.y */
 int	 cmdline_symset(char *);
-int	 parse_config(char *, struct bgpd_config *, struct mrt_config *);
+int	 parse_config(char *, struct bgpd_config *, struct mrt_config *,
+	    struct peer **);
 
 /* config.c */
-int	 merge_config(struct bgpd_config *, struct bgpd_config *);
+int	 merge_config(struct bgpd_config *, struct bgpd_config *,
+	    struct peer *);
 
 /* imsg.c */
 void	 imsg_init(struct imsgbuf *, int);
@@ -311,7 +313,7 @@ int	 imsg_compose(struct imsgbuf *, int, u_int32_t, void *, u_int16_t);
 void	 imsg_free(struct imsg *);
 
 /* rde.c */
-int	 rde_main(struct bgpd_config *, int[2], int[2]);
+int	 rde_main(struct bgpd_config *, struct peer *, int[2], int[2]);
 
 /* mrt.c */
 int	 mrt_mergeconfig(struct mrt_config *, struct mrt_config *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.24 2003/12/27 21:40:43 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.25 2004/01/03 20:22:07 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Henning Brauer <henning@openbsd.org>
@@ -36,6 +36,7 @@
 
 static struct bgpd_config	*conf;
 static struct mrt_config	*mrtconf;
+static struct peer		*peers;
 static struct peer		*curpeer;
 static struct peer		*curgroup;
 static FILE			*fin = NULL;
@@ -218,8 +219,8 @@ neighbor	: NEIGHBOR address optnl '{' optnl {
 			curpeer->conf.remote_addr.sin_addr.s_addr = $2.s_addr;
 		}
 		  peeropts_l optnl '}' {
-			curpeer->next = conf->peers;
-			conf->peers = curpeer;
+			curpeer->next = peers;
+			peers = curpeer;
 			curpeer = NULL;
 		}
 		;
@@ -547,7 +548,7 @@ top:
 
 int
 parse_config(char *filename, struct bgpd_config *xconf,
-    struct mrt_config *xmconf)
+    struct mrt_config *xmconf, struct peer **xpeers)
 {
 	struct sym	*sym, *next;
 
@@ -557,6 +558,7 @@ parse_config(char *filename, struct bgpd_config *xconf,
 		fatal(NULL);
 	LIST_INIT(mrtconf);
 
+	peers = NULL;
 	curpeer = NULL;
 	curgroup = NULL;
 	lineno = 1;
@@ -594,8 +596,9 @@ parse_config(char *filename, struct bgpd_config *xconf,
 		}
 	}
 
-	errors += merge_config(xconf, conf);
+	errors += merge_config(xconf, conf, peers);
 	errors += mrt_mergeconfig(xmconf, mrtconf);
+	*xpeers = peers;
 
 	free(conf);
 	free(mrtconf);

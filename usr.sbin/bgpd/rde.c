@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.41 2004/01/03 14:06:35 henning Exp $ */
+/*	$OpenBSD: rde.c,v 1.42 2004/01/03 20:22:07 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -46,7 +46,7 @@ void		 rde_update_log(const char *,
 		     const struct rde_peer *, const struct attr_flags *,
 		     const struct in_addr *, u_int8_t);
 
-void		 peer_init(struct bgpd_config *, u_long);
+void		 peer_init(struct peer *, u_long);
 struct rde_peer	*peer_add(u_int32_t, struct peer_config *);
 void		 peer_remove(struct rde_peer *);
 struct rde_peer	*peer_get(u_int32_t);
@@ -74,7 +74,8 @@ u_long	pathhashsize = 1024;
 u_long	nexthophashsize = 64;
 
 int
-rde_main(struct bgpd_config *config, int pipe_m2r[2], int pipe_s2r[2])
+rde_main(struct bgpd_config *config, struct peer *peers, int pipe_m2r[2],
+    int pipe_s2r[2])
 {
 	pid_t		 pid;
 	struct passwd	*pw;
@@ -116,7 +117,7 @@ rde_main(struct bgpd_config *config, int pipe_m2r[2], int pipe_s2r[2])
 	close(pipe_m2r[0]);
 
 	/* initialize the RIB structures */
-	peer_init(config, peerhashsize);
+	peer_init(peers, peerhashsize);
 	path_init(pathhashsize);
 	nexthop_init(nexthophashsize);
 	pt_init();
@@ -197,7 +198,6 @@ rde_dispatch_imsg(struct imsgbuf *ibuf, int idx)
 			    NULL)
 				fatal(NULL);
 			memcpy(nconf, imsg.data, sizeof(struct bgpd_config));
-			nconf->peers = NULL;
 			break;
 		case IMSG_RECONF_PEER:
 			if (idx != PFD_PIPE_MAIN)
@@ -607,7 +607,7 @@ struct peer_table {
 	&peertable.peer_hashtbl[(x) & peertable.peer_hashmask]
 
 void
-peer_init(struct bgpd_config *bgpconf, u_long hashsize)
+peer_init(struct peer *peers, u_long hashsize)
 {
 	struct peer	*p, *next;
 	u_long		 hs, i;
@@ -624,13 +624,13 @@ peer_init(struct bgpd_config *bgpconf, u_long hashsize)
 
 	peertable.peer_hashmask = hs - 1;
 
-	for (p = bgpconf->peers; p != NULL; p = next) {
+	for (p = peers; p != NULL; p = next) {
 		next = p->next;
 		p->conf.reconf_action = RECONF_NONE;
 		peer_add(p->conf.id, &p->conf);
 		free(p);
 	}
-	bgpconf->peers = NULL;
+	peers = NULL;
 }
 
 struct rde_peer *

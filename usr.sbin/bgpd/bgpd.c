@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.50 2004/01/03 14:06:35 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.51 2004/01/03 20:22:07 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -37,7 +37,8 @@
 void	sighdlr(int);
 void	usage(void);
 int	main(int, char *[]);
-int	reconfigure(char *, struct bgpd_config *, struct mrt_config *);
+int	reconfigure(char *, struct bgpd_config *, struct mrt_config *,
+	    struct peer *);
 int	dispatch_imsg(struct imsgbuf *, int, struct mrt_config *);
 
 int			mrtfd = -1;
@@ -89,6 +90,7 @@ int
 main(int argc, char *argv[])
 {
 	struct bgpd_config	 conf;
+	struct peer		*peers, *p, *next;
 	struct mrt_config	 mrtconf;
 	struct mrtdump_config	*mconf, *(mrt[POLL_MAX]);
 	struct pollfd		 pfd[POLL_MAX];
@@ -108,6 +110,7 @@ main(int argc, char *argv[])
 	bzero(&conf, sizeof(conf));
 	bzero(&mrtconf, sizeof(mrtconf));
 	LIST_INIT(&mrtconf);
+	peers = NULL;
 
 	while ((ch = getopt(argc, argv, "dD:f:nv")) != -1) {
 		switch (ch) {
@@ -137,7 +140,7 @@ main(int argc, char *argv[])
 		}
 	}
 
-	if (parse_config(conffile, &conf, &mrtconf))
+	if (parse_config(conffile, &conf, &mrtconf, &peers))
 		exit(1);
 
 	if (conf.opts & BGPD_OPT_NOACTION) {
@@ -175,8 +178,8 @@ main(int argc, char *argv[])
 		fatalx("control socket setup failed");
 
 	/* fork children */
-	rde_pid = rde_main(&conf, pipe_m2r, pipe_s2r);
-	io_pid = session_main(&conf, pipe_m2s, pipe_s2r);
+	rde_pid = rde_main(&conf, peers, pipe_m2r, pipe_s2r);
+	io_pid = session_main(&conf, peers, pipe_m2s, pipe_s2r);
 
 	setproctitle("parent");
 
@@ -197,6 +200,11 @@ main(int argc, char *argv[])
 	imsg_init(&ibuf_rde, pipe_m2r[0]);
 	if ((rfd = kroute_init(!(conf.flags & BGPD_FLAG_NO_FIB_UPDATE))) == -1)
 		quit = 1;
+
+	for (p = peers; p != NULL; p = next) {
+		next = p->next;
+		free(p);
+	}
 
 	while (quit == 0) {
 		pfd[PFD_PIPE_SESSION].fd = ibuf_se.sock;
@@ -266,7 +274,7 @@ main(int argc, char *argv[])
 
 		if (reconfig) {
 			logit(LOG_CRIT, "rereading config");
-			reconfigure(conffile, &conf, &mrtconf);
+			reconfigure(conffile, &conf, &mrtconf, peers);
 			LIST_FOREACH(mconf, &mrtconf, list)
 				mrt_state(mconf, IMSG_NONE, &ibuf_rde);
 			reconfig = 0;
@@ -301,11 +309,12 @@ main(int argc, char *argv[])
 }
 
 int
-reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_config *mrtc)
+reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_config *mrtc,
+    struct peer *peers)
 {
-	struct peer		*p;
+	struct peer		*p, *next;
 
-	if (parse_config(conffile, conf, mrtc)) {
+	if (parse_config(conffile, conf, mrtc, &peers)) {
 		logit(LOG_CRIT, "config file %s has errors, not reloading",
 		    conffile);
 		return (-1);
@@ -317,13 +326,15 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_config *mrtc)
 	if (imsg_compose(&ibuf_rde, IMSG_RECONF_CONF, 0,
 	    conf, sizeof(struct bgpd_config)) == -1)
 		return (-1);
-	for (p = conf->peers; p != NULL; p = p->next) {
+	for (p = peers; p != NULL; p = next) {
+		next = p->next;
 		if (imsg_compose(&ibuf_se, IMSG_RECONF_PEER, p->conf.id,
 		    &p->conf, sizeof(struct peer_config)) == -1)
 			return (-1);
 		if (imsg_compose(&ibuf_rde, IMSG_RECONF_PEER, p->conf.id,
 		    &p->conf, sizeof(struct peer_config)) == -1)
 			return (-1);
+		free(p);
 	}
 	if (imsg_compose(&ibuf_se, IMSG_RECONF_DONE, 0, NULL, 0) == -1 ||
 	    imsg_compose(&ibuf_rde, IMSG_RECONF_DONE, 0, NULL, 0) == -1)

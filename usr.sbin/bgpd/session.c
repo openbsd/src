@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.55 2004/01/03 14:06:35 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.56 2004/01/03 20:22:07 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -80,7 +80,8 @@ void	session_down(struct peer *);
 
 struct peer	*getpeerbyip(in_addr_t);
 
-struct bgpd_config	*nconf = NULL;
+struct bgpd_config	*conf, *nconf = NULL;
+struct peer		*npeers;
 volatile sig_atomic_t	 session_quit = 0;
 int			 pending_reconf = 0;
 int			 sock = -1;
@@ -127,17 +128,19 @@ setup_listener(void)
 
 
 int
-session_main(struct bgpd_config *config, int pipe_m2s[2], int pipe_s2r[2])
+session_main(struct bgpd_config *config, struct peer *cpeers, int pipe_m2s[2],
+    int pipe_s2r[2])
 {
-	int		 nfds, i, j, timeout, npeers;
+	int		 nfds, i, j, timeout, idx_peers;
 	pid_t		 pid;
 	time_t		 nextaction;
 	struct passwd	*pw;
-	struct peer	*p, *peers[OPEN_MAX], *last, *next;
+	struct peer	*p, *peer_l[OPEN_MAX], *last, *next;
 	struct pollfd	 pfd[OPEN_MAX];
 	struct ctl_conn	*ctl_conn;
 
 	conf = config;
+	peers = cpeers;
 
 	switch (pid = fork()) {
 	case -1:
@@ -196,7 +199,7 @@ session_main(struct bgpd_config *config, int pipe_m2s[2], int pipe_s2r[2])
 		i = PFD_PEERS_START;
 
 		last = NULL;
-		for (p = conf->peers; p != NULL; p = next) {
+		for (p = peers; p != NULL; p = next) {
 			next = p->next;
 			if (!pending_reconf) {
 				/* needs init? */
@@ -216,7 +219,7 @@ session_main(struct bgpd_config *config, int pipe_m2s[2], int pipe_s2r[2])
 					if (last != NULL)
 						last->next = next;
 					else
-						conf->peers = next;
+						peers = next;
 					free(p);
 					continue;
 				}
@@ -253,12 +256,12 @@ session_main(struct bgpd_config *config, int pipe_m2s[2], int pipe_s2r[2])
 			if (p->sock != -1 && p->events != 0) {
 				pfd[i].fd = p->sock;
 				pfd[i].events = p->events;
-				peers[i] = p;
+				peer_l[i] = p;
 				i++;
 			}
 		}
 
-		npeers = i;
+		idx_peers = i;
 
 		TAILQ_FOREACH(ctl_conn, &ctl_conns, entries) {
 			pfd[i].fd = ctl_conn->ibuf.sock;
@@ -299,8 +302,8 @@ session_main(struct bgpd_config *config, int pipe_m2s[2], int pipe_s2r[2])
 			control_accept(csock);
 		}
 
-		for (j = PFD_PEERS_START; nfds > 0 && j < npeers; j++)
-			nfds -= session_dispatch_msg(&pfd[j], peers[j]);
+		for (j = PFD_PEERS_START; nfds > 0 && j < idx_peers; j++)
+			nfds -= session_dispatch_msg(&pfd[j], peer_l[j]);
 
 		for (; nfds > 0 && j < i; j++)
 			nfds -= control_dispatch_msg(&pfd[j], j);
@@ -323,7 +326,7 @@ init_peers(void)
 {
 	struct peer	*p;
 
-	for (p = conf->peers; p != NULL; p = p->next) {
+	for (p = peers; p != NULL; p = p->next) {
 		if (p->state == STATE_NONE) {
 			change_state(p, STATE_IDLE, EVNT_NONE);
 			p->StartTimer = time(NULL);	/* start ASAP */
@@ -587,7 +590,7 @@ session_terminate(void)
 {
 	struct peer	*p;
 
-	for (p = conf->peers; p != NULL; p = p->next)
+	for (p = peers; p != NULL; p = p->next)
 		bgp_fsm(p, EVNT_STOP);
 
 	shutdown(sock, SHUT_RDWR);
@@ -1291,7 +1294,7 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx)
 			    NULL)
 				fatal(NULL);
 			memcpy(nconf, imsg.data, sizeof(struct bgpd_config));
-			nconf->peers = NULL;
+			npeers = NULL;
 			init_conf(nconf);
 			pending_reconf = 1;
 			break;
@@ -1306,8 +1309,8 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx)
 					fatal("new_peer");
 				p->state = STATE_NONE;
 				p->sock = -1;
-				p->next = nconf->peers;
-				nconf->peers = p;
+				p->next = npeers;
+				npeers = p;
 				reconf = RECONF_REINIT;
 			} else
 				reconf = RECONF_KEEP;
@@ -1352,13 +1355,13 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx)
 			conf->bgpid = nconf->bgpid;
 			conf->min_holdtime = nconf->min_holdtime;
 			/* add new peers */
-			for (p = nconf->peers; p != NULL; p = next) {
+			for (p = npeers; p != NULL; p = next) {
 				next = p->next;
-				p->next = conf->peers;
-				conf->peers = p;
+				p->next = peers;
+				peers = p;
 			}
 			/* find peers to be deleted */
-			for (p = conf->peers; p != NULL; p = p->next)
+			for (p = peers; p != NULL; p = p->next)
 				if (p->conf.reconf_action == RECONF_NONE)
 					p->conf.reconf_action = RECONF_DELETE;
 			free(nconf);
@@ -1379,7 +1382,7 @@ getpeerbyip(in_addr_t ip)
 	struct peer *p;
 
 	/* we might want a more effective way to find peers by IP */
-	for (p = conf->peers; p != NULL &&
+	for (p = peers; p != NULL &&
 	    p->conf.remote_addr.sin_addr.s_addr != ip; p = p->next)
 		;	/* nothing */
 
