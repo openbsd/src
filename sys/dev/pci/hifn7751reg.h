@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751reg.h,v 1.19 2001/05/13 23:39:54 jason Exp $	*/
+/*	$OpenBSD: hifn7751reg.h,v 1.20 2001/06/22 19:02:43 jason Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -143,6 +143,9 @@ struct hifn_softc {
 	int sc_flags;
 #define HIFN_HAS_RNG		1
 #define HIFN_HAS_PUBLIC		2
+	struct timeout sc_rngto;
+	int sc_rngfirst;
+	int sc_rnghz;
 	struct hifn_session sc_sessions[2048];
 };
 
@@ -333,6 +336,12 @@ struct hifn_softc {
 #define	HIFN_DMACNFG_MODE	0x00000004	/* DMA mode */
 #define	HIFN_DMACNFG_DMARESET	0x00000002	/* DMA Reset # */
 #define	HIFN_DMACNFG_MSTRESET	0x00000001	/* Master Reset # */
+
+/* Public key reset register (HIFN_1_PUB_RESET) */
+#define	HIFN_PUBRST_RESET	0x00000001	/* reset public/rng unit */
+
+/* Random number generator config register (HIFN_1_RNG_CONFIG) */
+#define	HIFN_RNGCFG_ENA		0x00000001	/* enable rng */
 
 #define WRITE_REG_0(sc,reg,val) \
     bus_space_write_4((sc)->sc_st0, (sc)->sc_sh0, reg, val)

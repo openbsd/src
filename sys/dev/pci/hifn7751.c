@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.69 2001/06/14 23:55:02 deraadt Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.70 2001/06/22 19:02:44 jason Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -99,6 +99,8 @@ int	hifn_writeramaddr __P((struct hifn_softc *, int, u_int8_t *, int));
 int	hifn_dmamap_aligned __P((bus_dmamap_t));
 void	hifn_dmamap_load __P((bus_dmamap_t, int *, struct hifn_desc *, int,
     volatile int *));
+int	hifn_init_pubrng __P((struct hifn_softc *));
+void	hifn_rng __P((void *));
 
 struct hifn_stats {
 	u_int64_t hst_ibytes;
@@ -302,6 +304,11 @@ hifn_attach(parent, self, aux)
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
+	if (sc->sc_flags & (HIFN_HAS_PUBLIC | HIFN_HAS_RNG)) {
+		if (hifn_init_pubrng(sc) == 0) {
+		}
+	}
+
 	return;
 
 fail_intr:
@@ -316,6 +323,59 @@ fail_io1:
 	bus_space_unmap(sc->sc_st1, sc->sc_sh1, iosize1);
 fail_io0:
 	bus_space_unmap(sc->sc_st0, sc->sc_sh0, iosize0);
+}
+
+int
+hifn_init_pubrng(sc)
+	struct hifn_softc *sc;
+{
+	int i;
+
+	WRITE_REG_1(sc, HIFN_1_PUB_RESET,
+	    READ_REG_1(sc, HIFN_1_PUB_RESET) | HIFN_PUBRST_RESET);
+
+	for (i = 0; i < 100; i++) {
+		DELAY(1000);
+		if ((READ_REG_1(sc, HIFN_1_PUB_RESET) & HIFN_PUBRST_RESET)
+		    == 0)
+			break;
+	}
+	if (i == 100) {
+		printf("%s: public key init failed\n", sc->sc_dv.dv_xname);
+		return (1);
+	}
+
+	/* Enable the rng, if available */
+	if (sc->sc_flags & HIFN_HAS_RNG) {
+		WRITE_REG_1(sc, HIFN_1_RNG_CONFIG,
+		    READ_REG_1(sc, HIFN_1_RNG_CONFIG) | HIFN_RNGCFG_ENA);
+		sc->sc_rngfirst = 1;
+		if (hz >= 100)
+			sc->sc_rnghz = hz / 100;
+		else
+			sc->sc_rnghz = 1;
+		timeout_set(&sc->sc_rngto, hifn_rng, sc);
+		timeout_add(&sc->sc_rngto, sc->sc_rnghz);
+	}
+
+	return (0);
+}
+
+void
+hifn_rng(vsc)
+	void *vsc;
+{
+	struct hifn_softc *sc = vsc;
+	u_int32_t num;
+
+	num = READ_REG_1(sc, HIFN_1_RNG_DATA);
+
+	if (sc->sc_rngfirst)
+		sc->sc_rngfirst = 0;
+	else
+		add_true_randomness(num);
+
+	timeout_add(&sc->sc_rngto, sc->sc_rnghz);
 }
 
 /*
