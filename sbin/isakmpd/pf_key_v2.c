@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_key_v2.c,v 1.18 2000/01/13 22:55:48 angelos Exp $	*/
+/*	$OpenBSD: pf_key_v2.c,v 1.19 2000/01/23 22:50:55 angelos Exp $	*/
 /*	$EOM: pf_key_v2.c,v 1.19 1999/07/16 00:29:11 niklas Exp $	*/
 
 /*
@@ -1022,7 +1022,7 @@ pf_key_v2_flow (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
    * XXX Addresses has to be thought through.  Assumes IPv4.
    */
   len = sizeof *addr + PF_KEY_V2_ROUND (sizeof (struct sockaddr_in));
-  if (!delete)
+  if (!delete || ingress)
     {
       addr = malloc (len);
       if (!addr)
