@@ -1,4 +1,4 @@
-/*	$OpenBSD: delete.c,v 1.5 2001/01/29 01:58:29 niklas Exp $	*/
+/*	$OpenBSD: delete.c,v 1.6 2001/09/19 02:43:19 pvalchev Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -68,7 +68,7 @@ del(sp, fm, tm, lmode)
 		if (tm->lno == lno) {
 			if (db_get(sp, lno, DBG_FATAL, &p, &len))
 				return (1);
-			eof = tm->cno >= len ? 1 : 0;
+			eof = tm->cno != -1 && tm->cno >= len ? 1 : 0;
 		} else
 			eof = 1;
 		if (eof) {
