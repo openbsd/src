@@ -1,4 +1,4 @@
-/*	$OpenBSD: pflogd.c,v 1.2 2001/08/22 14:49:37 deraadt Exp $	*/
+/*	$OpenBSD: pflogd.c,v 1.3 2001/08/23 04:06:12 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -175,6 +175,26 @@ reset_dump(void)
 		return (0);
 
 #define TCPDUMP_MAGIC 0xa1b2c3d4
+
+	/* 
+	 * XXX Must read the file, compare the header against our new
+	 * options (in particular, snaplen) and adjust our options so
+	 * that we generate a correct file.
+	 */
+	(void) fseek(fp, 0L, SEEK_SET);
+	if (fread((char *)&hdr, sizeof(hdr), 1, fp) == 1) {
+		if (hdr.magic == TCPDUMP_MAGIC &&
+		    hdr.version_major == PCAP_VERSION_MAJOR &&
+		    hdr.version_minor == PCAP_VERSION_MINOR &&
+		    hdr.snaplen != snaplen) {
+			logmsg(LOG_WARNING,
+			    "Existing file specifies a snaplen of %d, using it",
+			    hdr.snaplen);
+			snaplen = hdr.snaplen;
+		}
+	}
+	(void) fseek(fp, 0L, SEEK_END);
+
 	hdr.magic = TCPDUMP_MAGIC;
 	hdr.version_major = PCAP_VERSION_MAJOR;
 	hdr.version_minor = PCAP_VERSION_MINOR;
