@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.42 2002/01/24 03:43:07 jason Exp $
+#	$OpenBSD: GENERIC,v 1.43 2002/01/24 15:54:37 jason Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -37,7 +37,7 @@ siop*	at pci? dev ? function ?
 scsibus* at siop?
 
 # PCI Display
-vgafb*		at pci? disable dev ? function ?
+vgafb*		at pci? dev ? function ?
 wsdisplay*	at vgafb?
 
 # USB bridges
@@ -63,7 +63,10 @@ beeper*	at ebus?
 sab*	at ebus?
 sabtty* at sab?
 
-#com*	at ebus?	#*BROKEN*
+# NS16550
+com*	at ebus?
+comkbd*	at ebus?
+wskbd* at comkbd?
 
 audioce*	at ebus?
 audio*		at audioce?
