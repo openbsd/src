@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.2 2001/02/20 00:32:28 krw Exp $ */
+/*	$OpenBSD: siop.c,v 1.3 2001/02/20 05:18:43 krw Exp $ */
 /*	$NetBSD: siop.c,v 1.39 2001/02/11 18:04:49 bouyer Exp $	*/
 
 /*
@@ -1304,7 +1304,12 @@ siop_scsicmd(xs)
 			return(TRY_AGAIN_LATER);
 		}
 		sc->targets[target]->status = TARST_PROBING;
-		sc->targets[target]->flags = TARF_WIDE | TARF_SYNC;
+
+		if (sc->features & SF_BUS_WIDE)
+			sc->targets[target]->flags = TARF_SYNC | TARF_WIDE;
+		else
+			sc->targets[target]->flags = TARF_SYNC;
+			
 		sc->targets[target]->id = sc->clock_div << 24; /* scntl3 */
 		sc->targets[target]->id |=  target << 16; /* id */
 		/* sc->targets[target]->id |= 0x0 << 8; scxfer is 0 */
