@@ -17,15 +17,57 @@ Information typically contained within a DHCP response includes an IP
 address for the interface, subnet mask, broadcast address, router (gateway)
 listing, domain name server listing, and the interface's MTU.
 .Pp
-In
-.Ox ,
-DHCP is handled mostly by the
-.Xr dhcpd 8
-daemon, which issues DHCP requests and configures the local network based on
-information gleaned from the replies it receives from a DHCP server.
-.Pp
-To get started, follow these steps:
+To setup
+.Ox
+as a DHCP client:
 .Bl -enum -offset indent
+.It
+For each interface that is to be configured via DHCP, create a
+.Pa /etc/hostname.XXX
+file (where XXX is the interface's indentifier, i.e., ep1) that starts with
+the word
+.Dq dhcp ,
+optionally followed by additional interface options. See
+.Xr hostname.if 5
+for more information on the format of these files.
+.Pp
+The
+.Pa /etc/netstart
+script reads each of these hostname files at boot-time and runs the
+.Xr dhclient 8
+program for each interface that is to be configured via DHCP.
+.It
+[Optional] To tweak settings, edit
+.Pa /etc/dhclient.conf .
+This file is shipped with the system.
+See
+.Xr dhclient.conf 5
+and
+.Xr dhclient 8
+for details.
+
+.El
+.Pp
+To setup
+.Ox
+as a DHCP server:
+.Bl -enum -offset indent
+.It
+Edit
+.Pa /etc/dhcpd.conf .
+This file is shipped with the system. See
+.Xr dhcpd.conf 5
+and
+.Xr dhcpd 8
+for details.
+.It
+Edit
+.Pa /etc/dhcpd.interfaces .
+This file should contain a list of interfaces you wish to serve by
+.Xr dhcpd 8 .
+If you have only one broadcast network interface or you wish to serve all
+interfaces, this step is not required. Be sure to leave this file empty (or
+even delete it) if this is the case.
 .It
 Edit
 .Pa /etc/rc.conf
@@ -34,20 +76,12 @@ and set
 This will cause
 .Ox
 to start the
-.Nm dhcpd
-daemon at boot-time and configure any interfaces with their address family
-set to
-.Dq dhcp .
-.It
-For each interface that is to be configured via DHCP, create a
-.Pa /etc/hostname.XXX
-file (where XXX is the interface's identifier, i.e., ep1) that contains only
-the word
-.Dq dhcp .
-.It
-Ensure a
-.Pa /etc/dhcpd.conf
-file exists. This file is shipped with the system and should not be removed.
+.Xr dhcpd 8
+daemon at boot-time and listen for DHCP requests on the local network. To
+start it manually, execute the following commands:
+.Pp
+.D1 # touch /var/db/dhcp.leases
+.Dl # /usr/sbin/dhcpd -q [netif1 netif2 ...]
 .It
 Ensure the kernel has been compiled with BPF (Berkeley Packet Filter) support
 and at least one
@@ -62,25 +96,26 @@ See
 for information on other available options; for example,
 .Fl p ,
 which allows specification of a port to listen on other then the default (67).
-However, most of the flags are only useful for debugging purposes.
-.Sh NOTES
-In addition to
-.Xr dhcpd 8 ,
-the
-.Xr dhclient 8
-program may be used for one-time manual DHCP configurations. See its man page
-for more information.
+However, most of the flags are useful only for debugging purposes.
 .Sh FILES
-.Bl -tag -width /etc/hostname.XXX -compact
+.Bl -tag -width /etc/dhcpd.interfaces -compact
+.It Pa /etc/dhcpd.conf
+DHCP server configuration file
+.It Pa /etc/dhcpd.interfaces
+list of network interfaces served by
+.Xr dhcpd 8
 .It Pa /etc/rc.conf
 configuration file where
 .Cm dhcpd_flags
 must be set
+.It Pa /etc/dhclient.conf
+DHCP client configuration file
 .It Pa /etc/hostname.XXX
 interface-specific configuration files
 .El
 .Sh SEE ALSO
+.Xr dhclient.conf 5 ,
+.Xr hostname.if 5 ,
 .Xr dhclient 8 ,
 .Xr dhcpd 8 ,
 .Xr dhcpd.conf 8
-
