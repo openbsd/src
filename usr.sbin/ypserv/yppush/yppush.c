@@ -1,4 +1,4 @@
-/*	$OpenBSD: yppush.c,v 1.4 1996/11/08 21:53:32 niklas Exp $ */
+/*	$OpenBSD: yppush.c,v 1.5 1996/12/14 22:10:27 maja Exp $ */
 
 /*
  * Copyright (c) 1995 Mats O Jansson <moj@stacken.kth.se>
@@ -32,35 +32,22 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: yppush.c,v 1.4 1996/11/08 21:53:32 niklas Exp $";
+static char rcsid[] = "$OpenBSD: yppush.c,v 1.5 1996/12/14 22:10:27 maja Exp $";
 #endif /* not lint */
 
-/*
-#include <sys/param.h>
-#include <sys/socket.h>
-*/
 #include <sys/types.h>
 #include <stdio.h>
-/*
-#include <time.h>
-#include <netdb.h>
-*/
 #include <unistd.h>
-/*
-#include <string.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-*/
 
 #include <rpc/rpc.h>
 #include <rpc/xdr.h>
 #include <rpcsvc/yp.h>
 #include <rpcsvc/ypclnt.h>
 
-#include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/resource.h>
 #include <sys/signal.h>
+#include <netdb.h>
 #include <errno.h>
 #include <fcntl.h>
 
@@ -69,8 +56,9 @@ static char rcsid[] = "$OpenBSD: yppush.c,v 1.4 1996/11/08 21:53:32 niklas Exp $
 #include "ypdb.h"
 
 int  Verbose = 0;
-char Domain[255], Map[255], *LocalHost = "meg.celsiustech.se";
+char Domain[MAXHOSTNAMELEN], Map[255];
 u_long OrderNum;
+char *master;
 
 extern void yppush_xfrrespprog_1(struct svc_req *request, SVCXPRT *xprt);
 extern bool_t xdr_ypreq_xfr(XDR *, struct ypreq_xfr *);
@@ -129,7 +117,7 @@ CLIENT *client;
 
 	request.map_parms.domain=(char *)&Domain;
 	request.map_parms.map=(char *)&Map;
-	request.map_parms.peer=LocalHost;
+	request.map_parms.peer=master;
 	request.map_parms.ordernum=OrderNum;
 	request.transid=(u_int)pid;
 	request.prog=prog;
@@ -159,7 +147,7 @@ push(inlen, indata)
 int inlen;
 char *indata;
 {
-	char host[255];
+	char host[MAXHOSTNAMELEN];
 	CLIENT *client;
 	SVCXPRT *transp;
 	int sock = RPC_ANYSOCK;
@@ -169,7 +157,7 @@ char *indata;
 	int status;
 	struct rusage res;
 
-	sprintf(host,"%*.*s" ,inlen ,inlen, indata);
+	snprintf(host,sizeof host,"%*.*s" ,inlen ,inlen, indata);
 
 	client = clnt_create(host, YPPROG, YPVERS, "tcp");
 	if (client == NULL) {
@@ -236,14 +224,13 @@ int  argc;
 char **argv;
 {
 	struct ypall_callback ypcb;
-        char *master;
 	extern char *optarg;
 	extern int optind;
 	char	*domain,*map,*hostname,*parallel,*timeout;
 	int c, r, i;
 	char *ypmap = "ypservers";
 	CLIENT *client;
-	static char map_path[255];
+	static char map_path[MAXPATHLEN];
 	struct stat finfo;
 	DBM *yp_databas;
 	char order_key[YP_LAST_LEN] = YP_LAST_KEY;
@@ -281,11 +268,13 @@ char **argv;
 
 	map = argv[optind];
 
-	strcpy(Domain,domain);
-	strcpy(Map,map);
+	strncpy(Domain,domain,sizeof(Domain)-1);
+	Domain[sizeof(Domain)-1] = '\0';
+	strncpy(Map,map,sizeof(Map)-1);
+	Map[sizeof(Map)-1] = '\0';
 
 	/* Check domain */
-	sprintf(map_path,"%s/%s",YP_DB_PATH,domain);
+	snprintf(map_path,sizeof map_path,"%s/%s",YP_DB_PATH,domain);
 	if (!((stat(map_path, &finfo) == 0) &&
 	      ((finfo.st_mode & S_IFMT) == S_IFDIR))) {
 	  	fprintf(stderr,"yppush: Map does not exist.\n");
@@ -293,13 +282,14 @@ char **argv;
 	}
 		
 	/* Check map */
-	sprintf(map_path,"%s/%s/%s%s",YP_DB_PATH,domain,Map,YPDB_SUFFIX);
+	snprintf(map_path,sizeof map_path,"%s/%s/%s%s",
+	    YP_DB_PATH,domain,Map,YPDB_SUFFIX);
 	if (!(stat(map_path, &finfo) == 0)) {
 		fprintf(stderr,"yppush: Map does not exist.\n");
 		exit(1);
 	}
 		
-	sprintf(map_path,"%s/%s/%s",YP_DB_PATH,domain,Map);
+	snprintf(map_path,sizeof map_path,"%s/%s/%s",YP_DB_PATH,domain,Map);
 	yp_databas = ypdb_open(map_path,0,O_RDONLY);
 	OrderNum=0xffffffff;
 	if (yp_databas == 0) {
@@ -334,12 +324,12 @@ char **argv;
 
 	yp_bind(Domain);
 
+        r = yp_master(Domain, ypmap, &master);
+
 	if (hostname != NULL) {
 	  push(strlen(hostname), hostname);
 	} else {
 	  
-	  r = yp_master(Domain, ypmap, &master);
-
 	  if (Verbose) {
 		printf("Contacting master for ypservers (%s).\n", master);
 	  }
