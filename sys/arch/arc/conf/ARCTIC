@@ -1,4 +1,4 @@
-#	$OpenBSD: ARCTIC,v 1.1 1996/09/20 23:14:21 niklas Exp $
+#	$OpenBSD: ARCTIC,v 1.2 1996/09/24 21:32:12 niklas Exp $
 #
 #	Generic configuration file for MIPS R4x00 ARC Systems
 #
@@ -13,7 +13,6 @@ options		DST=0			# use daylight savings rules
 
 # Standard system options
 options		SWAPPAGER		# swap pager (anonymous and swap space)
-options		VNODEPAGER		# vnode pager (mapped files)
 options		DEVPAGER		# device pager (mapped devices)
 
 options		DIAGNOSTIC		# extra kernel debugging checks
@@ -57,7 +56,7 @@ options 	GATEWAY		# IP packet forwarding
 options 	MACHINE_NONCONTIG # Support noncontigous memory.
 
 # Specify storage configuration (its a joke..)
-config		bsd	swap generic
+config		bsd	root on wd0 swap on wd0 dumps on wd0
 
 #
 # Definition of system
@@ -65,22 +64,7 @@ config		bsd	swap generic
 mainbus0	at root
 cpu*		at mainbus0
 
-pica*		at mainbus0
 isabr*		at mainbus0
-
-clock0		at pica?
-pc0		at pica?
-pms0		at pica?
-ace0		at pica?
-ace1		at pica?
-lpr0		at pica?
-sn0		at pica?
-
-fdc0		at pica?
-fd*		at fdc? drive ?
-
-asc0		at pica?
-scsibus* 	at asc?
 
 #
 #	ISA Bus.
@@ -97,7 +81,7 @@ ace2	at isa? port 0x3e8 irq 4
 ace3	at isa? port 0x2e8 irq 3
 
 wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
-#wdc1	at isa? port 0x170 irq 15
+wdc1	at isa? port 0x170 irq 15
 wd*	at wdc? drive ?
 
 atapibus* at wdc?
@@ -109,8 +93,8 @@ ed0     at isa? port 0x280 iomem 0xd0000 irq 9  # WD/SMC, 3C503, and NE[12]000
 ed1     at isa? port 0x250 iomem 0xd8000 irq 9  #   ethernet cards
 ed2     at isa? port 0x300 iomem 0xcc000 irq 10 #
 
-#btl0		at isa? port 0x330 irq ? drq ?
-#scsibus* 	at btl?
+btl0		at isa? port 0x330 irq ? drq ?
+scsibus* 	at btl?
 
 #
 #	SCSI Bus devices
