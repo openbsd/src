@@ -1,3 +1,4 @@
+/*	$OpenBSD: fsck.h,v 1.3 1997/06/14 04:16:51 downsj Exp $	*/
 /*	$NetBSD: fsck.h,v 1.1 1997/06/11 11:21:47 bouyer Exp $	*/
 
 /*
