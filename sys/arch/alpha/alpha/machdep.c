@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.62 2002/01/16 20:50:14 miod Exp $ */
+/* $OpenBSD: machdep.c,v 1.63 2002/01/22 21:50:49 ericj Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -1981,18 +1981,14 @@ cpu_exec_ecoff_hook(p, epp)
 	struct exec_package *epp;
 {
 	struct ecoff_exechdr *execp = (struct ecoff_exechdr *)epp->ep_hdr;
-#ifdef COMPAT_OSF1
-	extern struct emul emul_osf1;
-#endif
 	extern struct emul emul_native;
 	int error;
-	extern int osf1_exec_ecoff_hook(struct proc *p,
-					struct exec_package *epp);
+	extern int osf1_exec_ecoff_hook(struct proc *, struct exec_package *);
 
 	switch (execp->f.f_magic) {
 #ifdef COMPAT_OSF1
 	case ECOFF_MAGIC_ALPHA:
-		epp->ep_emul = &emul_osf1;
+		error = osf1_exec_ecoff_hook(p, epp);
 		break;
 #endif
 

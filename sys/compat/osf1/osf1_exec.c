@@ -1,4 +1,4 @@
-/* $OpenBSD: osf1_exec.c,v 1.2 2000/08/12 20:12:38 ericj Exp $ */
+/* $OpenBSD: osf1_exec.c,v 1.3 2002/01/22 21:50:49 ericj Exp $ */
 /* $NetBSD$ */
 
 /*
@@ -62,12 +62,12 @@ struct osf1_exec_emul_arg {
         char        loader_name[MAXPATHLEN+1];
 };
 
-#if 0
 static void *osf1_copyargs(struct exec_package *pack,
 	struct ps_strings *arginfo, void *stack, void *argp);
+int osf1_exec_ecoff_hook(struct proc *, struct exec_package *);
+static int osf1_exec_ecoff_dynamic(struct proc *, struct exec_package *);
 
 #define MAX_AUX_ENTRIES                4        /* max we'll ever push (right now) */
-#endif
 
 extern struct sysent osf1_sysent[];
 extern void cpu_exec_ecoff_setregs __P((struct proc *, struct exec_package *,
@@ -87,14 +87,13 @@ struct emul emul_osf1 = {
         NULL,
 #endif
         0,
-        copyargs,
+        osf1_copyargs,
         cpu_exec_ecoff_setregs,
         NULL,
         osf1_sigcode,
         osf1_esigcode,
 };
 
-#if 0
 int
 osf1_exec_ecoff_hook(struct proc *p, struct exec_package *epp)
 {
@@ -125,9 +124,7 @@ osf1_exec_ecoff_hook(struct proc *p, struct exec_package *epp)
 	switch (execp->f.f_flags & ECOFF_FLAG_OBJECT_TYPE_MASK) {
 	case ECOFF_OBJECT_TYPE_SHARABLE:
 		/* can't exec a shared library! */
-#if 0
 		uprintf("can't execute OSF/1 shared libraries\n");
-#endif
 		error = ENOEXEC;
 		break;
 
@@ -231,7 +228,7 @@ osf1_exec_ecoff_dynamic(struct proc *p, struct exec_package *epp)
 	struct ecoff_exechdr ldr_exechdr;
 	struct nameidata nd;
 	struct vnode *ldr_vp;
-	const char *pathbuf;
+	char *pathbuf;
         size_t resid;  
 	int error;
 
@@ -246,9 +243,7 @@ osf1_exec_ecoff_dynamic(struct proc *p, struct exec_package *epp)
 	if (!error)
 		free((char *)pathbuf, M_TEMP);
 
-#if 0
 	uprintf("loader is %s\n", emul_arg->loader_name);
-#endif
 
 	/*
 	 * open the loader, see if it's an ECOFF executable,
@@ -287,7 +282,7 @@ osf1_exec_ecoff_dynamic(struct proc *p, struct exec_package *epp)
         if (ldr_vp->v_mount->mnt_flag & MNT_NOSUID)
                 epp->ep_vap->va_mode &= ~(S_ISUID | S_ISGID);
 
-	VOP_UNLOCK(ldr_vp, 0);
+	VOP_UNLOCK(ldr_vp, 0, p);
 
 	/*
 	 * read the header, and make sure we got all of it.
@@ -320,13 +315,13 @@ osf1_exec_ecoff_dynamic(struct proc *p, struct exec_package *epp)
 
 	switch (ldr_exechdr.a.magic) {
 	case ECOFF_OMAGIC:
-		error = exec_ecoff_prep_omagic(p, epp, &ldr_exechdr, ldr_vp);
+		error = exec_ecoff_prep_omagic(p, epp);
 		break;
 	case ECOFF_NMAGIC:
-		error = exec_ecoff_prep_nmagic(p, epp, &ldr_exechdr, ldr_vp);
+		error = exec_ecoff_prep_nmagic(p, epp);
 		break;
 	case ECOFF_ZMAGIC:
-		error = exec_ecoff_prep_zmagic(p, epp, &ldr_exechdr, ldr_vp);
+		error = exec_ecoff_prep_zmagic(p, epp);
 		break;
 	default:
 		error = ENOEXEC;
@@ -334,19 +329,13 @@ osf1_exec_ecoff_dynamic(struct proc *p, struct exec_package *epp)
 	if (error)
 		goto bad;
 
-	/* finally, set up the stack. */
-	error = exec_ecoff_setup_stack(p, epp);
-	if (error)
-		goto bad;
-
 	vrele(ldr_vp);
 	return (0);
 
 badunlock:
-	VOP_UNLOCK(ldr_vp, 0);
+	VOP_UNLOCK(ldr_vp, 0, p);
 bad:
 	vrele(ldr_vp);
 bad_no_vp:
 	return (error);
 }
-#endif
