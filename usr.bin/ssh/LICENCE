@@ -219,7 +219,9 @@ OpenSSH contains no GPL code.
 	Damien Miller
 	Kevin Steves
 	Daniel Kouril
+	Wesley Griffin
 	Per Allansson
+	Nils Nordman
 
      * Redistribution and use in source and binary forms, with or without
      * modification, are permitted provided that the following conditions
@@ -242,4 +244,4 @@ OpenSSH contains no GPL code.
      * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ------
-$OpenBSD: LICENCE,v 1.14 2003/06/11 11:23:07 djm Exp $
+$OpenBSD: LICENCE,v 1.15 2003/06/12 12:22:47 djm Exp $
