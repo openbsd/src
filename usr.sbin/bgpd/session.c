@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.14 2003/12/20 14:33:09 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.15 2003/12/20 15:06:31 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1206,7 +1206,7 @@ session_dispatch_imsg(int fd, int idx)
 	struct imsg		 imsg;
 	struct peer_config	*pconf;
 	struct peer		*p, *next;
-	int			 reconf;
+	enum reconf_action	 reconf;
 
 	if (get_imsg(fd, &imsg) > 0) {
 		switch (imsg.hdr.type) {
