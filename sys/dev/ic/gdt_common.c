@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_common.c,v 1.22 2002/06/11 03:34:53 niklas Exp $	*/
+/*	$OpenBSD: gdt_common.c,v 1.23 2003/02/25 09:12:39 tedu Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -209,7 +209,7 @@ gdt_attach(gdt)
 		for (i = 0; i < gdt->sc_bus_cnt; i++) {
 			id = gdt->sc_scratch[GDT_IOC_HDR_SZ +
 			    i * GDT_RAWIOC_SZ + GDT_RAWIOC_PROC_ID];
-			gdt->sc_bus_id[id] = id < GDT_MAXID ? id : 0xff;
+			gdt->sc_bus_id[id] = id < GDT_MAXBUS ? id : 0xff;
 		}
 
 	} else {
