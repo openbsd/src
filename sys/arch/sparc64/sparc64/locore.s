@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.14 2002/05/23 23:11:15 deraadt Exp $	*/
+/*	$OpenBSD: locore.s,v 1.15 2002/06/08 08:06:46 art Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -12043,7 +12043,12 @@ _C_LABEL(proc0paddr):
 	POINTER	_C_LABEL(u0)		! KVA of proc0 uarea
 
 /* interrupt counters	XXX THESE BELONG ELSEWHERE (if anywhere) */
-	.globl	_C_LABEL(intrcnt), _C_LABEL(eintrcnt), _C_LABEL(intrnames), _C_LABEL(eintrnames)
+	.globl	_C_LABEL(intrcnt), _C_LABEL(eintrcnt)
+	.globl _C_LABEL(intrnames), _C_LABEL(eintrnames)
+	OTYPE(intrcnt)
+	OTYPE(eintrcnt)
+	OTYPE(intrnames)
+	OTYPE(eintrnames)
 _C_LABEL(intrnames):
 	.asciz	"spur"
 	.asciz	"lev1"
