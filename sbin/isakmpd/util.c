@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.11 2000/11/23 12:57:15 niklas Exp $	*/
+/*	$OpenBSD: util.c,v 1.12 2001/04/05 23:02:02 ho Exp $	*/
 /*	$EOM: util.c,v 1.23 2000/11/23 12:22:08 niklas Exp $	*/
 
 /*
@@ -40,6 +40,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include "sysdep.h"
 
@@ -249,12 +250,14 @@ check_file_secrecy (char *name, off_t *file_size)
     {
       log_print ("check_file_secrecy: "
 		 "not loading %s - file owner is not process user", name);
+      errno = EPERM;
       return -1;
     }
   if ((st.st_mode & (S_IRWXG | S_IRWXO)) != 0)
     {
       log_print ("conf_file_secrecy: not loading %s - too open permissions",
 		 name);
+      errno = EPERM;
       return -1;
     }
   
