@@ -55,7 +55,7 @@ struct relocation_info_i386 {
 #define _NLIST_DO_ELF
 
 #define _KERN_DO_AOUT
-#if defined(COMPAT_LINUX) || defined(COMPAT_SVR4) || defined(COMPAT_FREEBSD) \
+#if defined(COMPAT_LINUX) || defined(COMPAT_SVR4) || defined(COMPAT_FREEBSD) || \
     !defined(_KERNEL)
 #define _KERN_DO_ELF
 #endif
