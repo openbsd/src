@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: dot.profile,v 1.1 2001/01/29 21:25:46 deraadt Exp $
+#	$OpenBSD: dot.profile,v 1.2 2001/03/03 12:24:14 deraadt Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -46,7 +46,7 @@ alias dmesg="cat /kern/msgbuf"
 # Terminals in termcap, default TERM.
 # This assumes a *small* termcap file.
 TERMS=`grep '^[A-z]' /usr/share/misc/termcap | sed -e 's/|[^|]*$//' -e 's/|/ /g'`
-TERM=sun
+TERM=vt220
 PAGER=more
 
 if [ "X${DONEPROFILE}" = "X" ]; then
