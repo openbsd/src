@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)display.c	5.11 (Berkeley) 3/9/91";*/
-static char rcsid[] = "$Id: display.c,v 1.1.1.1 1995/10/18 08:45:23 deraadt Exp $";
+static char rcsid[] = "$Id: display.c,v 1.2 1996/05/21 21:51:51 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -279,7 +279,7 @@ extern off_t skip;			/* bytes to skip */
 next(argv)
 	char **argv;
 {
-	extern int errno, exitval;
+	extern int exitval;
 	static int done;
 	int statok;
 
@@ -316,7 +316,6 @@ doskip(fname, statok)
 	char *fname;
 	int statok;
 {
-	extern int errno;
 	struct stat sbuf;
 
 	if (statok) {
@@ -354,8 +353,6 @@ emalloc(size)
 
 nomem()
 {
-	extern int errno;
-
 	(void)fprintf(stderr, "hexdump: %s.\n", strerror(errno));
 	exit(1);
 }

@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)hexdump.c	5.5 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: hexdump.c,v 1.1.1.1 1995/10/18 08:45:23 deraadt Exp $";
+static char rcsid[] = "$Id: hexdump.c,v 1.2 1996/05/21 21:51:51 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -55,11 +55,10 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	extern int errno;
 	register FS *tfs;
-	char *p, *rindex();
+	char *p;
 
-	if (!(p = rindex(argv[0], 'o')) || strcmp(p, "od"))
+	if (!(p = strrchr(argv[0], 'o')) || strcmp(p, "od"))
 		newsyntax(argc, &argv);
 	else
 		oldsyntax(argc, &argv);
