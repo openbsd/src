@@ -37,7 +37,9 @@ INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 XDEFS=		-undef -D__OpenBSD__ -Dm68k -Dmc68000
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
 		-Dmc68020 -Dsun3 ${XDEFS}
-CWARNFLAGS= 	-Werror -# Wall -Wstrict-prototypes -Wmissing-prototypes
+CWARNFLAGS= 	-Werror -Wall -Wstrict-prototypes \
+		-Wno-format \
+		# -Wmissing-prototypes
 CFLAGS= 	${DEBUG} ${CWARNFLAGS} -O2 -msoft-float -pipe
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-N -Ttext 0E004000 -e start
