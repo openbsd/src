@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.96 2002/06/11 02:27:19 frantzen Exp $	*/
+/*	$OpenBSD: parse.y,v 1.97 2002/06/11 18:03:25 frantzen Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -207,7 +207,8 @@ typedef struct {
 %token	RETURNRST RETURNICMP RETURNICMP6 PROTO INET INET6 ALL ANY ICMPTYPE
 %token	ICMP6TYPE CODE KEEP MODULATE STATE PORT RDR NAT BINAT ARROW NODF
 %token	MINTTL IPV6ADDR ERROR ALLOWOPTS FASTROUTE ROUTETO DUPTO NO LABEL
-%token	NOROUTE FRAGCACHE FRAGMENT USER GROUP MAXMSS MAXIMUM TTL
+%token	NOROUTE FRAGMENT USER GROUP MAXMSS MAXIMUM TTL
+%token	FRAGNORM FRAGDROP FRAGCROP
 %token	<v.string> STRING
 %token	<v.number> NUMBER
 %token	<v.i>	PORTUNARY PORTBINARY
@@ -253,7 +254,7 @@ varset		: STRING PORTUNARY STRING
 		}
 		;
 
-scrubrule	: SCRUB fragcache dir interface fromto nodf minttl maxmss
+scrubrule	: SCRUB dir interface fromto nodf minttl maxmss fragcache
 		{
 			struct pf_rule r;
 			
@@ -267,16 +268,17 @@ scrubrule	: SCRUB fragcache dir interface fromto nodf minttl maxmss
 			memset(&r, 0, sizeof(r));
 
 			r.action = PF_SCRUB;
-			r.direction = $3;
+			r.direction = $2;
 
-			if ($2)
-				r.rule_flag |= PFRULE_FRAGCACHE;
-			if ($6)
+			if ($5)
 				r.rule_flag |= PFRULE_NODF;
+			if ($6)
+				r.min_ttl = $6;
 			if ($7)
-				r.min_ttl = $7;
+				r.max_mss = $7;
+
 			if ($8)
-				r.max_mss = $8;
+				r.rule_flag |= $8;
 
 			pfctl_add_rule(pf, &r);
 
@@ -434,7 +436,9 @@ blockspec	: /* empty */		{ $$.b2 = 0; $$.w = 0; }
 		;
 
 fragcache	: /* empty */		{ $$ = 0; }
-		| '(' FRAGCACHE ')'	{ $$ = PFRULE_FRAGCACHE; }
+		| fragment FRAGNORM	{ $$ = 0; /* default */ }
+		| fragment FRAGCROP	{ $$ = PFRULE_FRAGCROP; }
+		| fragment FRAGDROP	{ $$ = PFRULE_FRAGDROP; }
 		;
 
 
@@ -2042,10 +2046,11 @@ lookup(char *s)
 		{ "binat",	BINAT},
 		{ "block",	BLOCK},
 		{ "code",	CODE},
+		{ "crop",	FRAGCROP},
+		{ "drop-ovl",	FRAGDROP},
 		{ "dup-to",	DUPTO},
 		{ "fastroute",	FASTROUTE},
 		{ "flags",	FLAGS},
-		{ "fragcache",	FRAGCACHE},
 		{ "fragment",	FRAGMENT},
 		{ "from",	FROM},
 		{ "group",	GROUP},
@@ -2073,6 +2078,7 @@ lookup(char *s)
 		{ "proto",	PROTO},
 		{ "quick",	QUICK},
 		{ "rdr",	RDR},
+		{ "reassemble",	FRAGNORM},
 		{ "return",	RETURN},
 		{ "return-icmp",RETURNICMP},
 		{ "return-icmp6",RETURNICMP6},

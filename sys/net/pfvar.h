@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.86 2002/06/11 02:42:27 frantzen Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.87 2002/06/11 18:03:25 frantzen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -280,7 +280,9 @@ struct pf_rule {
 #define	PFRULE_RETURNRST	0x01
 #define	PFRULE_NODF		0x02
 #define	PFRULE_FRAGMENT		0x04
-#define	PFRULE_FRAGCACHE	0x10	/* non-buffering frag cache */
+
+#define	PFRULE_FRAGCROP		0x10	/* non-buffering frag cache */
+#define	PFRULE_FRAGDROP		0x20	/* drop funny fragments */
 
 struct pf_state_host {
 	struct pf_addr	addr;

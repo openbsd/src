@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.88 2002/06/11 02:27:19 frantzen Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.89 2002/06/11 18:03:25 frantzen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -649,10 +649,7 @@ print_rule(struct pf_rule *r)
 				printf(" ");
 		}
 	} else {
-		if ((r->rule_flag & PFRULE_FRAGCACHE) == 0)
-			printf("scrub ");
-		else
-			printf("scrub(fragcache) ");
+		printf("scrub ");
 	}
 	if (r->direction == 0)
 		printf("in ");
@@ -769,6 +766,14 @@ print_rule(struct pf_rule *r)
 		printf("max-mss %d ", r->max_mss);
 	if (r->allow_opts)
 		printf("allow-opts ");
+	if (r->action == PF_SCRUB) {
+		if (r->rule_flag & PFRULE_FRAGDROP)
+			printf("fragment drop-ovl ");
+		else if (r->rule_flag & PFRULE_FRAGCROP)
+			printf("fragment crop ");
+		else
+			printf("fragment reassemble ");
+	}
 	if (r->label[0])
 		printf("label %s", r->label);
 

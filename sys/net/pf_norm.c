@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.33 2002/06/11 03:22:04 dhartmei Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.34 2002/06/11 18:03:24 frantzen Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -69,6 +69,7 @@ struct pf_frcache {
 
 #define PFFRAG_SEENLAST	0x0001		/* Seen the last fragment for this */
 #define PFFRAG_NOBUFFER	0x0002		/* Non-buffering fragment cache */
+#define PFFRAG_DROP	0x0004		/* Drop all fragments */
 #define BUFFER_FRAGMENTS(fr)	(!((fr)->fr_flags & PFFRAG_NOBUFFER))
 
 struct pf_fragment {
@@ -107,7 +108,7 @@ struct pf_fragment	*pf_find_fragment(struct ip *, struct pf_frag_tree *);
 struct mbuf		*pf_reassemble(struct mbuf **, struct pf_fragment *,
 			    struct pf_frent *, int);
 struct mbuf		*pf_fragcache(struct mbuf **, struct ip*,
-			    struct pf_fragment *, int, int *);
+			    struct pf_fragment *, int, int, int *);
 u_int16_t		 pf_cksum_fixup(u_int16_t, u_int16_t, u_int16_t);
 int			 pf_normalize_tcp(int, struct ifnet *, struct mbuf *,
 			    int, int, void *, struct pf_pdesc *);
@@ -510,13 +511,14 @@ pf_reassemble(struct mbuf **m0, struct pf_fragment *frag,
 
 struct mbuf *
 pf_fragcache(struct mbuf **m0, struct ip *h, struct pf_fragment *frag, int mff,
-    int *nomem)
+    int drop, int *nomem)
 {
 	struct mbuf *m = *m0;
 	struct pf_frcache *frp, *fra, *cur = NULL;
 	int ip_len = h->ip_len - (h->ip_hl << 2);
 	u_int16_t off = h->ip_off << 3;
 	u_int16_t max = ip_len + off;
+	int hosed = 0;
 
 	KASSERT(frag == NULL || !BUFFER_FRAGMENTS(frag));
 
@@ -599,40 +601,44 @@ pf_fragcache(struct mbuf **m0, struct ip *h, struct pf_fragment *frag, int mff,
 			    h->ip_id, precut, frp->fr_off, frp->fr_end, off,
 			    max));
 
-			/*
-			 * This is a very heavy way to trim the payload.
-			 * we could do it much faster by diddling mbuf
-			 * internals but that would be even less legible
-			 * than this mbuf magic.  For my next trick,
-			 * I'll pull a rabbit out of my laptop.
-			 */
-			*m0 = m_copym2(m, 0, h->ip_hl << 2, M_NOWAIT);
-			if (*m0 == NULL)
-				goto no_mem;
-			KASSERT((*m0)->m_next == NULL);
-			m_adj(m, precut + (h->ip_hl << 2));
-			m_cat(*m0, m);
-			m = *m0;
-			if (m->m_flags & M_PKTHDR) {
-				int plen = 0;
-				struct mbuf *t;
-				for (t = m; t; t = t->m_next)
-					plen += t->m_len;
-				m->m_pkthdr.len = plen;
-			}
-
-
-			h = mtod(m, struct ip *);
-
-			KASSERT(m->m_len == h->ip_len - precut);
-
 			off += precut;
-			h->ip_off += precut >> 3;
-			h->ip_len -= precut;
 			max -= precut;
-
 			/* Update the previous frag to encompas this one */
 			frp->fr_end = max;
+
+			if (!drop) {
+				/* XXX Optimization opportunity
+				 * This is a very heavy way to trim the payload.
+				 * we could do it much faster by diddling mbuf
+				 * internals but that would be even less legible
+				 * than this mbuf magic.  For my next trick,
+				 * I'll pull a rabbit out of my laptop.
+				 */
+				*m0 = m_copym2(m, 0, h->ip_hl << 2, M_NOWAIT);
+				if (*m0 == NULL)
+					goto no_mem;
+				KASSERT((*m0)->m_next == NULL);
+				m_adj(m, precut + (h->ip_hl << 2));
+				m_cat(*m0, m);
+				m = *m0;
+				if (m->m_flags & M_PKTHDR) {
+					int plen = 0;
+					struct mbuf *t;
+					for (t = m; t; t = t->m_next)
+						plen += t->m_len;
+					m->m_pkthdr.len = plen;
+				}
+
+
+				h = mtod(m, struct ip *);
+
+				KASSERT(m->m_len == h->ip_len - precut);
+
+				h->ip_off += precut >> 3;
+				h->ip_len -= precut;
+			} else {
+				hosed++;
+			}
 		} else {
 			/* There is a gap between fragments */
 
@@ -668,21 +674,25 @@ pf_fragcache(struct mbuf **m0, struct ip *h, struct pf_fragment *frag, int mff,
 			    h->ip_id, aftercut, off, max, fra->fr_off,
 			    fra->fr_end));
 			fra->fr_off = off;
-
-			m_adj(m, -aftercut);
-			if (m->m_flags & M_PKTHDR) {
-				int plen = 0;
-				struct mbuf *t;
-				for (t = m; t; t = t->m_next)
-					plen += t->m_len;
-				m->m_pkthdr.len = plen;
-			}
-			h = mtod(m, struct ip *);
-			KASSERT(m->m_len == h->ip_len - aftercut);
-			h->ip_len -= aftercut;
 			max -= aftercut;
+
 			merge = 1;
 
+			if (!drop) {
+				m_adj(m, -aftercut);
+				if (m->m_flags & M_PKTHDR) {
+					int plen = 0;
+					struct mbuf *t;
+					for (t = m; t; t = t->m_next)
+						plen += t->m_len;
+					m->m_pkthdr.len = plen;
+				}
+				h = mtod(m, struct ip *);
+				KASSERT(m->m_len == h->ip_len - aftercut);
+				h->ip_len -= aftercut;
+			} else {
+				hosed++;
+			}
 		} else {
 			/* There is a gap between fragments */
 			DPFPRINTF(("fragcache[%d]: gap %d %d-%d (%d-%d)\n",
@@ -729,6 +739,15 @@ pf_fragcache(struct mbuf **m0, struct ip *h, struct pf_fragment *frag, int mff,
 		}
 	}
 
+	if (hosed) {
+		/*
+		 * We must keep tracking the overall fragment even when
+		 * we're going to drop it anyway so that we know when to
+		 * free the overall descriptor.  Thus we drop the frag late.
+		 */
+		goto drop_fragment;
+	}
+
 
  pass:
 	/* Update maximum data size */
@@ -746,20 +765,34 @@ pf_fragcache(struct mbuf **m0, struct ip *h, struct pf_fragment *frag, int mff,
 		/* Remove from fragment queue */
 		DPFPRINTF(("fragcache[%d]: done 0-%d\n", h->ip_id,
 		    frag->fr_max));
-		pf_remove_fragment(frag);
+		pf_free_fragment(frag);
 	}
 
 	return (m);
 
  no_mem:
 	*nomem = 1;
-	/* FALLTHROUGH */
+
+	/* Still need to pay attention to !IP_MF */
+	if (!mff && frag)
+		frag->fr_flags |= PFFRAG_SEENLAST;
+
+	m_freem(m);
+	return (NULL);
 
  drop_fragment:
 
 	/* Still need to pay attention to !IP_MF */
 	if (!mff && frag)
 		frag->fr_flags |= PFFRAG_SEENLAST;
+
+	if (drop) {
+		/* This fragment has been deemed bad.  Don't reass */
+		if ((frag->fr_flags & PFFRAG_DROP) == 0)
+			DPFPRINTF(("fragcache[%d]: dropping overall fragment\n",
+			    h->ip_id));
+		frag->fr_flags |= PFFRAG_DROP;
+	}
 
 	m_freem(m);
 	return (NULL);
@@ -840,7 +873,7 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct ifnet *ifp, u_short *reason)
 		goto bad;
 	}
 
-	if ((r->rule_flag & PFRULE_FRAGCACHE) == 0) {
+	if ((r->rule_flag & (PFRULE_FRAGCROP|PFRULE_FRAGDROP)) == 0) {
 		/* Fully buffer all of the fragments */
 
 		h->ip_len = ip_len;	/* logic need muddled off/len */
@@ -869,9 +902,12 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct ifnet *ifp, u_short *reason)
 		if (m == NULL)
 			return (PF_DROP);
 
+		if (frag && (frag->fr_flags & PFFRAG_DROP))
+			goto drop;
+
 		h = mtod(m, struct ip *);
 	} else {
-		/* non-buffering fragment cache */
+		/* non-buffering fragment cache (drops or masks overlaps) */
 		int nomem = 0;
 
 		if (dir == PF_OUT) {
@@ -889,10 +925,14 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct ifnet *ifp, u_short *reason)
 
 		/* Check if we saw the last fragment already */
 		if (frag != NULL && (frag->fr_flags & PFFRAG_SEENLAST) &&
-		    max > frag->fr_max)
+		    max > frag->fr_max) {
+			if (r->rule_flag & PFRULE_FRAGDROP)
+				frag->fr_flags |= PFFRAG_DROP;
 			goto bad;
+		}
 
-		*m0 = m = pf_fragcache(m0, h, frag, mff, &nomem);
+		*m0 = m = pf_fragcache(m0, h, frag, mff,
+		    (r->rule_flag & PFRULE_FRAGDROP) ? 1 : 0, &nomem);
 		if (m == NULL) {
 			if (nomem)
 				goto no_mem;
@@ -906,6 +946,8 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct ifnet *ifp, u_short *reason)
 				goto no_mem;
 			m_tag_prepend(m, mtag);
 		}
+		if (frag && (frag->fr_flags & PFFRAG_DROP))
+			goto drop;
  		goto fragment_pass;
 	}
 
