@@ -1,9 +1,9 @@
-#	$OpenBSD: RAMDISK,v 1.5 2001/08/23 06:10:42 matthieu Exp $
+#	$OpenBSD: RAMDISK,v 1.6 2001/09/02 19:40:03 miod Exp $
 #
 # MVMEPPC GENERIC config file
 #
 
-machine		mvmeppc
+machine		mvmeppc powerpc
 
 maxusers	32
 
