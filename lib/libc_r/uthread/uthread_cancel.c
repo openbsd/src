@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_cancel.c,v 1.11 2002/03/07 22:36:03 fgsch Exp $	*/
+/*	$OpenBSD: uthread_cancel.c,v 1.12 2002/03/07 23:05:10 fgsch Exp $	*/
 /*
  * David Leonard <d@openbsd.org>, 1999. Public domain.
  */
@@ -9,8 +9,7 @@
 static void	finish_cancellation(void *arg);
 
 int
-pthread_cancel(pthread)
-	pthread_t pthread;
+pthread_cancel(pthread_t pthread)
 {
 	int ret;
 
@@ -125,9 +124,7 @@ pthread_cancel(pthread)
 }
 
 int
-pthread_setcancelstate(state, oldstate)
-	int state;
-	int *oldstate;
+pthread_setcancelstate(int state, int *oldstate)
 {
 	struct pthread	*curthread = _get_curthread();
 	int ostate;
@@ -159,9 +156,7 @@ pthread_setcancelstate(state, oldstate)
 
 
 int
-pthread_setcanceltype(type, oldtype)
-	int type;
-	int *oldtype;
+pthread_setcanceltype(int type, int *oldtype)
 {
 	struct pthread	*curthread = _get_curthread();
 	int otype;
@@ -190,7 +185,7 @@ pthread_setcanceltype(type, oldtype)
 }
 
 void
-pthread_testcancel()
+pthread_testcancel(void)
 {
 	struct pthread	*curthread = _get_curthread();
 
