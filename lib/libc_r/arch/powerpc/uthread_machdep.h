@@ -1,7 +1,7 @@
 /*
  * OpenBSD/powerpc machine-dependent thread macros
  *
- * $OpenBSD: uthread_machdep.h,v 1.2 1999/01/17 23:49:49 d Exp $
+ * $OpenBSD: uthread_machdep.h,v 1.3 1999/04/21 03:45:21 rahnds Exp $
  */
 
 /* save the floating point state of a thread */
@@ -16,10 +16,22 @@
 		/* rahnds to fill in */			\
 	}
 
+#define JMP_r1  (0x04/4)
+#define JMP_lr  (0x50/4)
 /* initialise the jmpbuf stack frame so it continues from entry */
 #define _thread_machdep_thread_create(thr, entry, pattr)	\
 	{						\
-		/* rahnds to fill in */			\
+		(thr)->saved_jmp_buf[JMP_lr] =		\
+			(unsigned int) entry;		\
+		(thr)->saved_jmp_buf[JMP_r1] =		\
+			((unsigned int) (thr)->stack	\
+			+ (pattr)->stacksize_attr	\
+			- 0x4) & ~0xf;			\
+		{					\
+			unsigned int *pbacklink =	\
+				(thr)->saved_jmp_buf[JMP_r1]; \
+			*pbacklink = 0;			\
+		}					\
 	}
 
 #define	_thread_machdep_longjmp(a,v)	longjmp(a,v)
