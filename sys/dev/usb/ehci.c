@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.26 2004/10/31 08:09:16 dlg Exp $ */
+/*	$OpenBSD: ehci.c,v 1.27 2004/10/31 08:29:53 dlg Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -2650,6 +2650,7 @@ ehci_device_request(usbd_xfer_handle xfer)
 			  &next, &end);
 		if (err)
 			goto bad3;
+		end->qtd.qtd_status &= htole32(~EHCI_QTD_IOC);
 		end->nextqtd = stat;
 		end->qtd.qtd_next =
 		end->qtd.qtd_altnext = htole32(stat->physaddr);
