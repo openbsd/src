@@ -32,7 +32,7 @@
 *******************************************************************************/
 
 /* $FreeBSD: if_em_hw.h,v 1.14 2004/09/01 23:22:41 pdeuskar Exp $ */
-/* $OpenBSD: if_em_hw.h,v 1.6 2004/11/16 14:39:14 brad Exp $ */
+/* $OpenBSD: if_em_hw.h,v 1.7 2005/03/27 16:38:13 brad Exp $ */
 /* if_em_hw.h
  * Structures, enums, and macros for the MAC
  */
@@ -45,7 +45,7 @@
 #include <dev/pci/if_em_osdep.h>
 
 #ifndef NO_VERSION_CONTROL
-#ident "@(#)$RCSfile: if_em_hw.h,v $$Revision: 1.6 $$Date: 2004/11/16 14:39:14 $"
+#ident "@(#)$RCSfile: if_em_hw.h,v $$Revision: 1.7 $$Date: 2005/03/27 16:38:13 $"
 #endif
 
 /* Forward declarations of structures used by the shared code */
@@ -329,13 +329,7 @@ void em_pci_clear_mwi(struct em_hw *hw);
 void em_read_pci_cfg(struct em_hw *hw, uint32_t reg, uint16_t * value);
 void em_write_pci_cfg(struct em_hw *hw, uint32_t reg, uint16_t * value);
 /* Port I/O is only supported on 82544 and newer */
-#ifdef __FreeBSD__
-uint32_t em_io_read(struct em_hw *hw, unsigned long port);
-#endif /* __FreeBSD__ */
 uint32_t em_read_reg_io(struct em_hw *hw, uint32_t offset);
-#ifdef __FreeBSD__
-void em_io_write(struct em_hw *hw, unsigned long port, uint32_t value);
-#endif /* __FreeBSD__ */
 void em_write_reg_io(struct em_hw *hw, uint32_t offset, uint32_t value);
 int32_t em_config_dsp_after_link_change(struct em_hw *hw, boolean_t link_up);
 int32_t em_set_d3_lplu_state(struct em_hw *hw, boolean_t active);

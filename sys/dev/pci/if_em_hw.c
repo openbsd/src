@@ -31,12 +31,12 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.7 2005/02/19 18:18:14 jolan Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.8 2005/03/27 16:38:13 brad Exp $ */
 /* if_em_hw.c
  * Shared functions for accessing and configuring the MAC
  */
 
-#ifdef __FreeBSD__
+#if 0
 #include <sys/cdefs.h>
 __FBSDID("$FreeBSD: if_em_hw.c,v 1.15 2004/09/23 22:57:53 cognet Exp $");
 #endif
@@ -419,9 +419,7 @@ em_reset_hw(struct em_hw *hw)
         case em_82544:
         case em_82540:
         case em_82545:
-#if defined(__FreeBSD__) && !defined(__arm__)
         case em_82546:
-#endif
         case em_82541:
         case em_82541_rev_2:
             /* These controllers can't ack the 64-bit write when issuing the

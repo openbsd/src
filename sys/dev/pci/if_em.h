@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /* $FreeBSD: if_em.h,v 1.26 2004/09/01 23:22:41 pdeuskar Exp $ */
-/* $OpenBSD: if_em.h,v 1.9 2004/12/08 15:41:46 markus Exp $ */
+/* $OpenBSD: if_em.h,v 1.10 2005/03/27 16:38:13 brad Exp $ */
 
 #ifndef _EM_H_DEFINED_
 #define _EM_H_DEFINED_
@@ -220,24 +220,6 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #define EM_MAX_SCATTER            64
 
-/* ******************************************************************************
- * vendor_info_array
- *
- * This array contains the list of Subvendor/Subdevice IDs on which the driver
- * should load.
- *
- * ******************************************************************************/
-#ifdef __FreeBSD__
-typedef struct _em_vendor_info_t {
-        unsigned int vendor_id;
-        unsigned int device_id;
-        unsigned int subvendor_id;
-        unsigned int subdevice_id;
-        unsigned int index;
-} em_vendor_info_t;
-#endif /* __FreeBSD__ */
-
-
 struct em_buffer {
         struct mbuf    *m_head;
 	bus_dmamap_t	map;		/* bus_dma map for packet */
@@ -245,10 +227,6 @@ struct em_buffer {
 
 struct em_q {
 	bus_dmamap_t       map;         /* bus_dma map for packet */
-#ifdef __FreeBSD__
-	int                nsegs;       /* # of segments/descriptors */
-	bus_dma_segment_t  segs[EM_MAX_SCATTER];
-#endif /* __FreeBSD__ */
 };
 
 /*
@@ -301,33 +279,16 @@ struct em_softc {
 	struct em_softc *prev;
 	struct em_hw    hw;
 
-	/* FreeBSD operating-system-specific structures */
+	/* OpenBSD operating-system-specific structures */
 	struct em_osdep osdep;
-#ifdef __FreeBSD__
-        struct device   *dev;
-        struct resource *res_memory;
-        struct resource *res_ioport;
-        struct resource *res_interrupt;
-        void            *int_handler_tag;
-#endif /* __FreeBSD__ */
 	struct ifmedia  media;
-#ifdef __FreeBSD__
-        struct callout  timer;
-        struct callout  tx_fifo_timer;
-#endif /* __FreeBSD__ */
 	int             io_rid;
-#ifdef __FreeBSD__
-        u_int8_t        unit;
-        struct mtx      mtx;
-#endif /* __FreeBSD__ */
 
-#ifdef __OpenBSD__
 	void           *sc_intrhand;
 	struct timeout	em_intr_enable;
 	struct timeout	timer_handle;
 	struct timeout	tx_fifo_timer_handle;
 	void		*sc_powerhook;
-#endif /* __OpenBSD__ */
 
 #ifdef __STRICT_ALIGNMENT
 	/* Used for carrying forward alignment adjustments */
@@ -387,11 +348,6 @@ struct em_softc {
 	struct mbuf        *fmp;
 	struct mbuf        *lmp;
 
-#ifdef __FreeBSD__
-        struct sysctl_ctx_list sysctl_ctx;
-        struct sysctl_oid *sysctl_tree;
-#endif /* __FreeBSD__ */
-
 	/* Misc stats maintained by the driver */
 	unsigned long   dropped_pkts;
 	unsigned long   mbuf_alloc_failed;
@@ -428,16 +384,6 @@ struct em_softc {
 	struct em_hw_stats stats;
 };
 
-#ifdef __FreeBSD__
-#define EM_LOCK_INIT(_sc, _name) \
-        mtx_init(&(_sc)->mtx, _name, MTX_NETWORK_LOCK, MTX_DEF)
-#define EM_LOCK_DESTROY(_sc)    mtx_destroy(&(_sc)->mtx)
-#define EM_LOCK(_sc)            mtx_lock(&(_sc)->mtx)
-#define EM_UNLOCK(_sc)          mtx_unlock(&(_sc)->mtx)
-#define EM_LOCK_ASSERT(_sc)     mtx_assert(&(_sc)->mtx, MA_OWNED)
-#endif /* __FreeBSD__ */
-
-#ifdef __OpenBSD__
 static inline int spl_use_arg(void *);
 static inline int spl_use_arg(void *v) { return splnet(); }
 #define EM_LOCK_INIT(_sc, _name)
@@ -446,6 +392,5 @@ static inline int spl_use_arg(void *v) { return splnet(); }
 #define EM_LOCK(_sc)		em_hidden_splnet_s = spl_use_arg(_sc)
 #define EM_UNLOCK(_sc)		splx(em_hidden_splnet_s)
 #define EM_LOCK_ASSERT(_sc)	splassert(IPL_NET)
-#endif /* __OpenBSD__ */
 
 #endif                                                  /* _EM_H_DEFINED_ */
