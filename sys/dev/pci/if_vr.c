@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.2 1999/01/30 23:15:37 niklas Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.3 1999/02/24 00:20:09 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -873,6 +873,15 @@ vr_probe(parent, match, aux)
 			return (1);
 		}
 	}
+
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_DELTA &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_DELTA_RHINEII)
+		return (1);
+
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ADDTRON &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ADDTRON_RHINEII)
+		return (1);
+
 	return (0);
 }
 
