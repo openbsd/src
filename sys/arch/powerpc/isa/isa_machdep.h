@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.h,v 1.4 1998/09/17 06:03:29 rahnds Exp $ */
+/*	$OpenBSD: isa_machdep.h,v 1.5 1998/09/20 22:11:47 rahnds Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -87,8 +87,10 @@ struct intrhand {
 /*
  * Let com.c know where our console is!
  */
-#define	CONADDR		(0x2e8)
-#define	COM_FREQ	(1843200 / 3)	/* Clocked with 8Mhz instead of 24! */
+extern u_int32_t ppc_console_addr;
+extern u_int32_t ppc_console_serfreq;
+#define	CONADDR		(ppc_console_addr)
+#define	COM_FREQ	(ppc_console_serfreq)
 
 extern void * isabr_intr_establish(isa_chipset_tag_t, int, int, int,                             int (*ih_fun) __P((void *)), void *, char *);                              
 #endif /* _ISA_MACHDEP_H_ */

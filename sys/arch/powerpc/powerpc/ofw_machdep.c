@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.7 1998/09/09 04:48:16 rahnds Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.8 1998/09/20 22:11:48 rahnds Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -190,4 +190,74 @@ static int processing;
 	cpl = pcpl;	/* Don't use splx... we are here already! */
 	__asm__ volatile("mtmsr %0" :: "r"(emsr));
 	processing = 0;
+}
+u_int32_t ppc_console_iomem=0;
+u_int32_t ppc_console_addr=0;
+u_int32_t ppc_console_qhandle=0;
+u_int32_t ppc_console_serfreq;
+
+void
+ofwtrysercon(char *name, int qhandle)
+{
+/* for serial we want regs field */
+	int regs[4];
+	int freq;
+	int regn;
+	if ((regn = OF_getprop(qhandle, "reg", &regs[0], sizeof regs)) >= 0) {
+
+		if (regs[1] == 0x3f8) {
+			/* found preferred console */
+			ppc_console_addr = regs[1];
+			ppc_console_qhandle = qhandle;
+			ppc_console_iomem=0; /* 0 means io, 1 means mem */
+		}
+		if ((regs[1] == 0x2e8) && (ppc_console_addr == 0)) {
+			/* found nonpreferred console */
+			ppc_console_addr = regs[1];
+			ppc_console_qhandle = qhandle;
+			ppc_console_iomem=0; /* 0 means io, 1 means mem */
+		}
+	}
+	if ((OF_getprop(qhandle, "clock-frequency", &freq, sizeof regs)) >= 0) {
+		/* MCG value for this does not agree with PC value,
+		 * but works correctly (while PC value does not),
+		 * does VI set this correctly???
+		 */
+		ppc_console_serfreq=freq;
+	}
+}
+#include <machine/bat.h>
+/* HACK */
+#include <powerpc/pci/mpc106reg.h>
+void
+ofwconprobe()
+{
+	int qhandle, phandle;
+	char name[32];
+	for (qhandle = OF_peer(0); qhandle; qhandle = phandle) {
+		if (OF_getprop(qhandle, "device_type", name, sizeof name) >= 0)
+		{
+			if (strcmp (name, "serial") == 0) {
+				ofwtrysercon (name, qhandle);
+			}
+		}
+
+		if (phandle = OF_child(qhandle))
+			continue;
+		while (qhandle) {
+			if (phandle = OF_peer(qhandle))
+				break;
+			qhandle = OF_parent(qhandle);
+		}
+	}
+	/* setup pci/isa as necessary to found map io area */
+#if 0
+	printf("found desired console address %x qhandle %x serfreq %x\n",
+		ppc_console_addr, ppc_console_qhandle,
+		ppc_console_serfreq);
+#endif
+		
+	/* do this from probed values, not from constants */
+	addbatmap(MPC106_V_ISA_IO_SPACE, MPC106_P_ISA_IO_SPACE, BAT_I); 
+	addbatmap(0xB0000000, 0xB0000000, BAT_I);  /* map interrupt vector */  
 }

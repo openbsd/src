@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.17 1998/09/12 19:58:56 rahnds Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.18 1998/09/20 22:11:48 rahnds Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -96,7 +96,6 @@ char ofw_eth_addr[6];		/* Save address of first network ifc found */
 char *bootpath;
 char bootpathbuf[512];
 
-int cons_initted;
 
 /*
  * We use the page just above the interrupt vector as message buffer
@@ -230,6 +229,8 @@ initppc(startkernel, endkernel, args)
 	 */
 	__asm__ volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0; isync"
 		      : "=r"(scratch) : "K"(PSL_IR|PSL_DR|PSL_ME|PSL_RI));
+
+	ofwconprobe();
 
 	/*
 	 * Now we can set up the console as mapping is enabled.
@@ -500,7 +501,8 @@ allocsys(v)
 void
 consinit()
 {
-	
+	static int cons_initted = 0;
+
 	if (cons_initted)
 		return;
 	cninit();
