@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide_apollo_reg.h,v 1.1 1999/07/18 21:25:19 csapuntz Exp $	*/
+/*	$OpenBSD: pciide_apollo_reg.h,v 1.2 2000/06/05 09:18:10 chris Exp $	*/
 /*	$NetBSD: pciide_apollo_reg.h,v 1.4 1998/12/16 12:48:46 bouyer Exp $	*/
 
 /*
@@ -36,7 +36,15 @@
 
 /*
  * Registers definitions for VIA technologies's Apollo controllers (VT82V580VO,
- * VT82C586A and VT82C586B). Available from http://www.via.com.br/
+ * VT82C586A and VT82C586B).
+ *
+ * UDMA1/2/3/4 capable
+ * http://www.via.com.tw/pdf/productinfo/686a.pdf
+ * http://www.via.com.tw/pdf/productinfo/596b.pdf
+ *
+ * UDMA1/2 capable
+ * http://www.via.com.tw/pdf/productinfo/586b.pdf
+ * http://www.via.com.tw/pdf/productinfo/586a.pdf
  */
 
 /* misc. configuration registers */
