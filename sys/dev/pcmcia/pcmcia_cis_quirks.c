@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmcia_cis_quirks.c,v 1.4 2000/06/20 05:01:11 niklas Exp $	*/
+/*	$OpenBSD: pcmcia_cis_quirks.c,v 1.5 2001/05/24 04:09:47 angelos Exp $	*/
 /*	$NetBSD: pcmcia_cis_quirks.c,v 1.3 1998/12/29 09:00:28 marc Exp $	*/
 
 /*
@@ -232,15 +232,21 @@ void pcmcia_check_cis_quirks(sc)
 
 			if (pf_last == pcmcia_cis_quirks[i].pf) {
 				cfe = malloc(sizeof(*cfe), M_DEVBUF, M_NOWAIT);
+				if (cfe == NULL)
+					return;
 				*cfe = *pcmcia_cis_quirks[i].cfe;
 
 				SIMPLEQ_INSERT_TAIL(&pf->cfe_head, cfe, cfe_list);
 			} else {
 				pf = malloc(sizeof(*pf), M_DEVBUF, M_NOWAIT);
+				if (pf == NULL)
+					return;
 				*pf = *pcmcia_cis_quirks[i].pf;
 				SIMPLEQ_INIT(&pf->cfe_head);
 
 				cfe = malloc(sizeof(*cfe), M_DEVBUF, M_NOWAIT);
+				if (cfe == NULL)
+					return;
 				*cfe = *pcmcia_cis_quirks[i].cfe;
 
 				SIMPLEQ_INSERT_TAIL(&pf->cfe_head, cfe, cfe_list);
