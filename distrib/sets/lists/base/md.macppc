@@ -2159,3 +2159,4 @@
 ./usr/sbin/apmd
 ./usr/sbin/wsconscfg
 ./usr/sbin/zzz
+./usr/libdata/perl5/site_perl/powerpc-openbsd/net/if_pfsync.ph

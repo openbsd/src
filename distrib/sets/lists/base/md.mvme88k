@@ -663,3 +663,4 @@
 ./usr/mdec/installboot
 ./usr/mdec/netboot
 ./usr/mdec/stboot
+./usr/libdata/perl5/site_perl/m88k-openbsd/net/if_pfsync.ph

@@ -2026,3 +2026,4 @@
 ./usr/mdec/mkboot
 ./usr/sbin/wsconscfg
 ./usr/sbin/wsfontload
+./usr/libdata/perl5/site_perl/hppa-openbsd/net/if_pfsync.ph

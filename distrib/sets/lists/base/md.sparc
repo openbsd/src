@@ -2109,3 +2109,4 @@
 ./usr/sbin/eeprom
 ./usr/sbin/fdformat
 ./usr/sbin/wsconscfg
+./usr/libdata/perl5/site_perl/sparc-openbsd/net/if_pfsync.ph

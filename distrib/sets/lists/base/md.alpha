@@ -2117,3 +2117,4 @@
 ./usr/mdec/setnetbootinfo
 ./usr/sbin/wsconscfg
 ./usr/sbin/wsfontload
+./usr/libdata/perl5/site_perl/alpha-openbsd/net/if_pfsync.ph

@@ -1285,6 +1285,7 @@
 ./usr/share/man/cat4/pcscp.0
 ./usr/share/man/cat4/pf.0
 ./usr/share/man/cat4/pflog.0
+./usr/share/man/cat4/pfsync.0
 ./usr/share/man/cat4/pms.0
 ./usr/share/man/cat4/pmsi.0
 ./usr/share/man/cat4/pnp.0
