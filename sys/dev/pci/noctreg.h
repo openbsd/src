@@ -1,4 +1,4 @@
-/*	$OpenBSD: noctreg.h,v 1.5 2002/06/28 18:31:29 jason Exp $	*/
+/*	$OpenBSD: noctreg.h,v 1.6 2002/07/16 22:44:31 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -29,6 +29,11 @@
  * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Effort sponsored in part by the Defense Advanced Research Projects
+ * Agency (DARPA) and Air Force Research Laboratory, Air Force
+ * Materiel Command, USAF, under agreement number F30602-01-2-0537.
+ *
  */
 
 #define	NOCT_BAR0		0x10		/* PCI base address */
