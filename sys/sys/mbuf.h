@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.45 2001/06/25 02:57:46 angelos Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.46 2001/06/25 04:01:28 angelos Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -584,15 +584,17 @@ struct m_tag *m_tag_first __P((struct mbuf *));
 struct m_tag *m_tag_next __P((struct mbuf *, struct m_tag *));
 
 /* Packet tag types */
-#define	PACKET_TAG_NONE				0
-#define	PACKET_TAG_IPSEC_IN_DONE		1
-#define	PACKET_TAG_IPSEC_OUT_DONE		2
-#define PACKET_TAG_IPSEC_IN_CRYPTO_DONE		3
-#define PACKET_TAG_IPSEC_OUT_CRYPTO_NEEDED	4
-#define PACKET_TAG_IPSEC_IN_COULD_DO_CRYPTO	5
-#define PACKET_TAG_BRIDGE			6
-#define PACKET_TAG_GIF				7
-#define PACKET_TAG_GRE				8
+#define	PACKET_TAG_NONE				0  /* Nadda */
+#define	PACKET_TAG_IPSEC_IN_DONE		1  /* IPsec applied, in */
+#define	PACKET_TAG_IPSEC_OUT_DONE		2  /* IPsec applied, out */
+#define PACKET_TAG_IPSEC_IN_CRYPTO_DONE		3  /* NIC IPsec crypto done */
+#define PACKET_TAG_IPSEC_OUT_CRYPTO_NEEDED	4  /* NIC IPsec crypto req'ed */
+#define PACKET_TAG_IPSEC_IN_COULD_DO_CRYPTO	5  /* NIC notifies IPsec */
+#define	PACKET_TAG_IPSEC_PENDING_TDB		6  /* Reminder to do IPsec */
+#define PACKET_TAG_BRIDGE			7  /* Bridge processing done */
+#define PACKET_TAG_GIF				8  /* GIF processing done */
+#define PACKET_TAG_GRE				9  /* GRE processing done */
+#define	PACKET_TAG_PACKET_CHECKSUM		10 /* NIC checksumming done */
 
 #ifdef MBTYPES
 int mbtypes[] = {				/* XXX */
