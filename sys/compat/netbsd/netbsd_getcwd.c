@@ -1,4 +1,4 @@
-/* $OpenBSD: netbsd_getcwd.c,v 1.2 1999/09/14 01:05:25 kstailey Exp $ */
+/* $OpenBSD: netbsd_getcwd.c,v 1.3 1999/09/26 11:15:43 kstailey Exp $ */
 /* $NetBSD: vfs_getcwd.c,v 1.3.2.3 1999/07/11 10:24:09 sommerfeld Exp $ */
 
 /*-
@@ -252,7 +252,7 @@ unionread:
 						error = ERANGE;
 						goto out;
 					}
-					memcpy(bp, dp->d_name, dp->d_namlen);
+					bcopy(dp->d_name, bp, dp->d_namlen);
 					error = 0;
 					*bpp = bp;
 					goto out;
