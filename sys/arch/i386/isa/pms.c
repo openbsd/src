@@ -1,5 +1,5 @@
-/*	$OpenBSD: pms.c,v 1.8 1996/05/10 12:46:22 deraadt Exp $	*/
-/*	$NetBSD: pms.c,v 1.28 1996/05/05 19:46:18 christos Exp $	*/
+/*	$OpenBSD: pms.c,v 1.9 1996/05/25 22:17:52 deraadt Exp $	*/
+/*	$NetBSD: pms.c,v 1.29 1996/05/12 23:12:42 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994 Charles Hannum.
@@ -51,6 +51,7 @@
 #include <sys/device.h>
 
 #include <machine/cpu.h>
+#include <machine/intr.h>
 #include <machine/pio.h>
 #include <machine/mouse.h>
 #include <machine/conf.h>

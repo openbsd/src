@@ -1,4 +1,4 @@
-/*	$NetBSD: mms.c,v 1.23 1996/05/03 20:11:57 christos Exp $	*/
+/*	$NetBSD: mms.c,v 1.24 1996/05/12 23:12:18 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -37,6 +37,7 @@
 #include <sys/device.h>
 
 #include <machine/cpu.h>
+#include <machine/intr.h>
 #include <machine/pio.h>
 #include <machine/mouse.h>
 #include <machine/conf.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: lms.c,v 1.25 1996/05/03 20:12:01 christos Exp $	*/
+/*	$NetBSD: lms.c,v 1.26 1996/05/12 23:12:11 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -38,6 +38,7 @@
 
 #include <machine/cpu.h>
 #include <machine/bus.h>
+#include <machine/intr.h>
 #include <machine/mouse.h>
 #include <machine/conf.h>
 

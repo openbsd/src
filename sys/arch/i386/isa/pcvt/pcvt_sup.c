@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_sup.c,v 1.4 1996/05/07 13:07:04 mickey Exp $	*/
+/*	$OpenBSD: pcvt_sup.c,v 1.5 1996/05/25 22:18:00 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -354,9 +354,6 @@ vgapcvtinfo(struct pcvtinfo *data)
 #endif
 #if PCVT_MDAFASTSCROLL
 	| CONF_MDAFASTSCROLL
-#endif
-#if PCVT_SLOW_INTERRUPT
-	| CONF_SLOW_INTERRUPT
 #endif
 #if PCVT_NO_LED_UPDATE
 	| CONF_NO_LED_UPDATE

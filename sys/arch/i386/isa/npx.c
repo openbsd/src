@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.56 1996/05/03 19:14:58 christos Exp $	*/
+/*	$NetBSD: npx.c,v 1.57 1996/05/12 23:12:24 mycroft Exp $	*/
 
 #if 0
 #define iprintf(x)	printf x
@@ -53,6 +53,7 @@
 #include <sys/device.h>
 
 #include <machine/cpu.h>
+#include <machine/intr.h>
 #include <machine/pio.h>
 #include <machine/cpufunc.h>
 #include <machine/pcb.h>

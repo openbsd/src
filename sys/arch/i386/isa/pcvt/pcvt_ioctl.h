@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_ioctl.h,v 1.3 1996/04/18 17:48:32 niklas Exp $	*/
+/*	$OpenBSD: pcvt_ioctl.h,v 1.4 1996/05/25 22:17:57 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -461,7 +461,6 @@ struct pcvtinfo {			/* compile time option values */
 #define CONF_INHIBIT_NUMLOCK	0x00200000
 #define CONF_META_ESC		0x00400000
 #define CONF_NOFASTSCROLL	0x00800000
-#define CONF_SLOW_INTERRUPT	0x01000000
 #define CONF_KBD_FIFO		0x02000000
 #define CONF_NO_LED_UPDATE	0x04000000
 };

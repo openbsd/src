@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_conf.h,v 1.3 1996/04/18 17:48:27 niklas Exp $	*/
+/*	$OpenBSD: pcvt_conf.h,v 1.4 1996/05/25 22:17:53 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -434,13 +434,6 @@
 # undef PCVT_MDAFASTSCROLL	/* PCVT_NOFASTSCROLL). Works only on	*/
 # define PCVT_MDAFASTSCROLL 1	/* MDA/Hercules which do support more 	*/
 #endif				/* than one page of video memory.	*/
-
-#if !defined PCVT_SLOW_INTERRUPT/* ---------- DEFAULT: OFF ------------ */
-# define PCVT_SLOW_INTERRUPT 0	/* If off, protecting critical regions	*/
-#elif PCVT_SLOW_INTERRUPT != 0	/* in the keyboard fifo code is done by	*/
-# undef PCVT_SLOW_INTERRUPT	/* disabling the processor irq's, if on */
-# define PCVT_SLOW_INTERRUPT 1	/* this is done by spl()/splx() calls.  */
-#endif
 
 /*---------------------------------------------------------------------------*
  *	Kernel messages attribute definitions

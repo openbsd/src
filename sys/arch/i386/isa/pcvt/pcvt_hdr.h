@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_hdr.h,v 1.10 1996/05/10 12:46:24 deraadt Exp $	*/
+/*	$OpenBSD: pcvt_hdr.h,v 1.11 1996/05/25 22:17:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -102,6 +102,7 @@
 #include <i386/isa/isavar.h>
 #endif
 #include <machine/cpufunc.h>
+#include <machine/intr.h>
 #else
 #include <i386/isa/isa_device.h>
 #endif
@@ -150,19 +151,6 @@
 
 #if PCVT_FREEBSD > 205
 #include <sys/devconf.h>
-#endif
-
-/* setup irq disable function to use */
-
-#if !(PCVT_SLOW_INTERRUPT) && (PCVT_NETBSD > 9)
-# define PCVT_DISABLE_INTR()	disable_intr()
-# define PCVT_ENABLE_INTR()	enable_intr()
-# undef PCVT_SLOW_INTERRUPT
-#else
-# define PCVT_DISABLE_INTR()	s = spltty()
-# define PCVT_ENABLE_INTR()	splx(s)
-# undef PCVT_SLOW_INTERRUPT
-# define PCVT_SLOW_INTERRUPT 1
 #endif
 
 /* perform option consistency checks */

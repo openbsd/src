@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.38 1996/05/03 19:14:50 christos Exp $	*/
+/*	$NetBSD: clock.c,v 1.39 1996/05/12 23:11:54 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -95,6 +95,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <sys/device.h>
 
 #include <machine/cpu.h>
+#include <machine/intr.h>
 #include <machine/pio.h>
 #include <machine/cpufunc.h>
 

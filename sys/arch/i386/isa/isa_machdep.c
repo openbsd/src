@@ -1,5 +1,5 @@
-/*	$OpenBSD: isa_machdep.c,v 1.14 1996/05/07 07:22:17 deraadt Exp $	*/
-/*	$NetBSD: isa_machdep.c,v 1.13 1996/05/03 19:14:55 christos Exp $	*/
+/*	$OpenBSD: isa_machdep.c,v 1.15 1996/05/25 22:17:49 deraadt Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.14 1996/05/12 23:06:18 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -160,8 +160,7 @@ intr_calculatemasks()
 	for (irq = 0; irq < ICU_LEN; irq++) {
 		register int levels = 0;
 		for (q = intrhand[irq]; q; q = q->ih_next)
-			if (q->ih_level != IPL_NONE)
-				levels |= 1 << q->ih_level;
+			levels |= 1 << q->ih_level;
 		intrlevel[irq] = levels;
 	}
 
@@ -187,12 +186,17 @@ intr_calculatemasks()
 	imask[IPL_TTY] |= imask[IPL_NET] | imask[IPL_BIO];
 	imask[IPL_NET] |= imask[IPL_BIO];
 
+	/*
+	 * These are pseudo-levels.
+	 */
+	imask[IPL_NONE] = 0x00000000;
+	imask[IPL_HIGH] = 0xffffffff;
+
 	/* And eventually calculate the complete masks. */
 	for (irq = 0; irq < ICU_LEN; irq++) {
 		register int irqs = 1 << irq;
 		for (q = intrhand[irq]; q; q = q->ih_next)
-			if (q->ih_level != IPL_NONE)
-				irqs |= imask[q->ih_level];
+			irqs |= imask[q->ih_level];
 		intrmask[irq] = irqs | SIR_ALLMASK;
 	}
 
