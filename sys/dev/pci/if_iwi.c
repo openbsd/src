@@ -1,4 +1,4 @@
-/*	$Id: if_iwi.c,v 1.11 2004/11/24 20:57:25 damien Exp $  */
+/*	$Id: if_iwi.c,v 1.12 2004/11/24 21:00:50 damien Exp $  */
 
 /*-
  * Copyright (c) 2004
@@ -1819,9 +1819,9 @@ iwi_scan(struct iwi_softc *sc)
 	u_int8_t *p;
 	int i, count;
 
-	memset(&scan, 0, sizeof scan);
+	bzero(&scan, sizeof scan);
 	scan.type = IWI_SCAN_TYPE_BROADCAST;
-	scan.intval = htole16(20);
+	scan.intval = htole16(100);
 
 	p = scan.channels;
 	count = 0;
