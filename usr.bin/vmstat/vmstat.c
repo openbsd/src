@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.28 1999/06/11 23:10:52 espie Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.29 1999/06/23 18:48:12 art Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -76,11 +76,20 @@ static char rcsid[] = "$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp 
 #include <limits.h>
 #include "dkstats.h"
 
+#ifdef UVM
+#include <uvm/uvm_extern.h>
+#endif
+
 struct nlist namelist[] = {
 #define	X_CPTIME	0
 	{ "_cp_time" },
+#if defined(UVM)
+#define X_UVMEXP	1
+	{ "_uvmexp" },
+#else
 #define X_SUM		1
 	{ "_cnt" },
+#endif
 #define	X_BOOTTIME	2
 	{ "_boottime" },
 #define X_HZ		3
@@ -144,7 +153,11 @@ extern struct _disk	cur;
 extern char	**dr_name;
 extern int	*dk_select, dk_ndrive;
 
+#ifdef UVM
+struct	uvmexp uvmexp, ouvmexp;
+#else
 struct	vmmeter sum, osum;
+#endif
 int		ndrives;
 
 int	winlines = 20;
@@ -391,7 +404,11 @@ dovmstat(interval, reps)
 			printhdr();
 		/* Read new disk statistics */
 		dkreadstats();
+#ifdef UVM
+		kread(X_UVMEXP, &uvmexp, sizeof(uvmexp));
+#else
 		kread(X_SUM, &sum, sizeof(sum));
+#endif
 		size = sizeof(total);
 		mib[0] = CTL_VM;
 		mib[1] = VM_METER;
@@ -401,10 +418,27 @@ dovmstat(interval, reps)
 		}
 		(void)printf("%2u%2u%2u",
 		    total.t_rq - 1, total.t_dw + total.t_pw, total.t_sw);
-#define pgtok(a) ((a) * ((int)sum.v_page_size >> 10))
 #define	rate(x)	(((x) + halfuptime) / uptime)	/* round */
+#ifdef UVM
+#define pgtok(a) ((a) * ((int)uvmexp.pagesize >> 10))
+#else
+#define pgtok(a) ((a) * ((int)sum.v_page_size >> 10))
+#endif
 		(void)printf("%6u%6u ",
 		    pgtok(total.t_avm), pgtok(total.t_free));
+#ifdef UVM
+		(void)printf("%4u ", rate(uvmexp.faults - ouvmexp.faults));
+		(void)printf("%3u ", rate(uvmexp.pdreact - ouvmexp.pdreact));
+		(void)printf("%3u ", rate(uvmexp.pageins - ouvmexp.pageins));
+		(void)printf("%3u %3u ",
+		    rate(uvmexp.pdpageouts - ouvmexp.pdpageouts), 0);
+		(void)printf("%3u ", rate(uvmexp.pdscans - ouvmexp.pdscans));
+		dkstats();
+		(void)printf("%4u %4u %3u ",
+		    rate(uvmexp.intrs - ouvmexp.intrs),
+		    rate(uvmexp.syscalls - ouvmexp.syscalls),
+		    rate(uvmexp.swtch - ouvmexp.swtch));
+#else
 		(void)printf("%4u ", rate(sum.v_faults - osum.v_faults));
 		(void)printf("%3u ",
 		    rate(sum.v_reactivated - osum.v_reactivated));
@@ -417,12 +451,13 @@ dovmstat(interval, reps)
 		    rate(sum.v_intr - osum.v_intr),
 		    rate(sum.v_syscall - osum.v_syscall),
 		    rate(sum.v_swtch - osum.v_swtch));
+#endif
 		cpustats();
 		(void)printf("\n");
 		(void)fflush(stdout);
 		if (reps >= 0 && --reps <= 0)
 			break;
-		osum = sum;
+		ouvmexp = uvmexp;
 		uptime = interval;
 		/*
 		 * We round upward to avoid losing low-frequency events
@@ -473,6 +508,17 @@ dotimes()
 
 	pgintime = 0;
 	rectime = 0;
+#ifdef UVM
+	kread(X_UVMEXP, &uvmexp, sizeof(uvmexp));
+	(void)printf("%u reactivates, %u total time (usec)\n",
+	    uvmexp.pdreact, rectime);
+	(void)printf("average: %u usec / reclaim\n", rectime / uvmexp.pdreact);
+	(void)printf("\n");
+	(void)printf("%u page ins, %u total time (msec)\n",
+	    uvmexp.pageins, pgintime / 10);
+	(void)printf("average: %8.1f msec / page in\n",
+	    pgintime / (uvmexp.pageins * 10.0));
+#else
 	kread(X_SUM, &sum, sizeof(sum));
 	(void)printf("%u reactivates, %u total time (usec)\n",
 	    sum.v_reactivated, rectime);
@@ -482,6 +528,7 @@ dotimes()
 	    sum.v_pageins, pgintime / 10);
 	(void)printf("average: %8.1f msec / page in\n",
 	    pgintime / (sum.v_pageins * 10.0));
+#endif
 }
 
 int
@@ -511,6 +558,40 @@ dosum()
 	struct keystats keystats;
 #endif
 
+#ifdef UVM
+	/*
+	 * XXXART - We probably don't want to look like the old vmstat,
+	 * The best would be just to print out everything in uvmexp
+	 * XXXART - Just make it work now. Do it right later.
+	 */
+	kread(X_UVMEXP, &uvmexp, sizeof(uvmexp));
+	(void)printf("%9u cpu context switches\n", uvmexp.swtch);
+	(void)printf("%9u device interrupts\n", uvmexp.intrs);
+	(void)printf("%9u software interrupts\n", uvmexp.softs);
+	(void)printf("%9u traps\n", uvmexp.traps);
+	(void)printf("%9u system calls\n", uvmexp.syscalls);
+	(void)printf("%9u total faults taken\n", uvmexp.faults);
+	(void)printf("%9u swap ins\n", uvmexp.swapins);
+	(void)printf("%9u swap outs\n", uvmexp.swapouts);
+	(void)printf("%9u pages swapped in\n", uvmexp.pgswapin);
+	(void)printf("%9u pages swapped out\n", uvmexp.pgswapout);
+	(void)printf("%9u page ins\n", uvmexp.pageins);
+	(void)printf("%9u page outs\n", uvmexp.pdpageouts);
+	(void)printf("%9u pages reactivated\n", uvmexp.pdreact);
+	(void)printf("%9u zero fill pages created\n", uvmexp.flt_przero);
+	(void)printf("%9u pages examined by the clock daemon\n", uvmexp.pdscans);
+	(void)printf("%9u revolutions of the clock hand\n", uvmexp.pdrevs);
+#if 0
+	(void)printf("%9u total VM faults taken\n", uvmexp.vm_faults);
+#endif
+	(void)printf("%9u copy-on-write faults\n", uvmexp.flt_acow);
+	(void)printf("%9u pages freed by daemon\n", uvmexp.pdfreed);
+	(void)printf("%9u pages free\n", uvmexp.free);
+	(void)printf("%9u pages wired down\n", uvmexp.wired);
+	(void)printf("%9u pages active\n", uvmexp.active);
+	(void)printf("%9u pages inactive\n", uvmexp.inactive);
+	(void)printf("%9u bytes per page\n", uvmexp.pagesize);
+#else
 	kread(X_SUM, &sum, sizeof(sum));
 	(void)printf("%9u cpu context switches\n", sum.v_swtch);
 	(void)printf("%9u device interrupts\n", sum.v_intr);
@@ -543,6 +624,8 @@ dosum()
 	(void)printf("%9u pages active\n", sum.v_active_count);
 	(void)printf("%9u pages inactive\n", sum.v_inactive_count);
 	(void)printf("%9u bytes per page\n", sum.v_page_size);
+#endif
+
 	kread(X_NCHSTATS, &nchstats, sizeof(nchstats));
 	nchtotal = nchstats.ncs_goodhits + nchstats.ncs_neghits +
 	    nchstats.ncs_badhits + nchstats.ncs_falsehits +
