@@ -41,7 +41,7 @@ xmalloc (bytes)
     if (cp == NULL)
     {
 	char buf[80];
-	sprintf (buf, "out of memory; can not allocate %lu bytes",
+	snprintf (buf, sizeof buf, "out of memory; can not allocate %lu bytes",
 		 (unsigned long) bytes);
 	error (1, 0, buf);
     }
@@ -68,7 +68,7 @@ xrealloc (ptr, bytes)
     if (cp == NULL)
     {
 	char buf[80];
-	sprintf (buf, "out of memory; can not reallocate %lu bytes",
+	snprintf (buf, sizeof buf, "out of memory; can not reallocate %lu bytes",
 		 (unsigned long) bytes);
 	error (1, 0, buf);
     }
@@ -369,7 +369,7 @@ getcaller ()
     {
 	char uidname[20];
 
-	(void) sprintf (uidname, "uid%lu", (unsigned long) uid);
+	(void) snprintf (uidname, sizeof uidname, "uid%lu", (unsigned long) uid);
 	cache = xstrdup (uidname);
 	return cache;
     }

@@ -1944,7 +1944,7 @@ write_letter (finfo, letter)
 
 	if (tag != NULL)
 	{
-	    sprintf (buf, "+%s", tag);
+	    snprintf (buf, sizeof buf, "+%s", tag);
 	    cvs_output_tagged (buf, NULL);
 	}
 	buf[0] = letter;
@@ -1955,7 +1955,7 @@ write_letter (finfo, letter)
 	cvs_output_tagged ("newline", NULL);
 	if (tag != NULL)
 	{
-	    sprintf (buf, "-%s", tag);
+	    snprintf (buf, sizeof buf, "-%s", tag);
 	    cvs_output_tagged (buf, NULL);
 	}
     }

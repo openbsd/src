@@ -72,7 +72,7 @@ compress_error (status, zstatus, zstr, msg)
     zmsg = zstr->msg;
     if (zmsg == NULL)
     {
-        sprintf (buf, "error %d", zstatus);
+        snprintf (buf, sizeof buf, "error %d", zstatus);
 	zmsg = buf;
     }
 
