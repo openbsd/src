@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.48 2001/11/06 19:53:20 miod Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.49 2001/12/06 04:19:25 itojun Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -94,8 +94,6 @@
 #include <netinet6/nd6.h>
 #include <netinet6/in6_ifattach.h>
 #include <netinet6/ip6protosw.h>
-
-#undef IPSEC
 
 #include "faith.h"
 
@@ -481,14 +479,6 @@ icmp6_input(mp, offp, proto)
 		default:
 			goto freeit;
 		}
-	}
-#endif
-
-#ifdef IPSEC
-	/* drop it if it does not match the default policy */
-	if (ipsec6_in_reject(m, NULL)) {
-		ipsec6stat.in_polvio++;
-		goto freeit;
 	}
 #endif
 
@@ -2168,9 +2158,6 @@ icmp6_reflect(m, off)
 	 */
 
 	m->m_flags &= ~(M_BCAST|M_MCAST);
-#ifdef IPSEC
-	m->m_pkthdr.rcvif = NULL;
-#endif /*IPSEC*/
 
 	ip6_output(m, NULL, NULL, 0, NULL, &outif);
 
@@ -2415,9 +2402,6 @@ icmp6_redirect_input(m, off)
 	sdst.sin6_len = sizeof(struct sockaddr_in6);
 	bcopy(&reddst6, &sdst.sin6_addr, sizeof(struct in6_addr));
 	pfctlinput(PRC_REDIRECT_HOST, (struct sockaddr *)&sdst);
-#ifdef IPSEC
-	key_sa_routechange((struct sockaddr *)&sdst);
-#endif
     }
 
  freeit:
@@ -2691,9 +2675,6 @@ noredhdropt:;
 		= in6_cksum(m, IPPROTO_ICMPV6, sizeof(*ip6), ntohs(ip6->ip6_plen));
 
 	/* send the packet to outside... */
-#ifdef IPSEC
-	m->m_pkthdr.rcvif = NULL;
-#endif /*IPSEC*/
 	ip6_output(m, NULL, NULL, 0, NULL, &outif);
 	if (outif) {
 		icmp6_ifstat_inc(outif, ifs6_out_msg);

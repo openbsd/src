@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.5 2001/04/06 04:42:09 csapuntz Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.6 2001/12/06 04:19:26 itojun Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -92,14 +92,6 @@
 #ifdef ENABLE_DEFAULT_SCOPE
 #include <netinet6/scope6_var.h>
 #endif
-
-#ifdef __OpenBSD__
-#undef IPSEC
-#endif
-
-#ifdef IPSEC
-#include <netinet6/ipsec.h>
-#endif /*IPSEC*/
 
 #include <machine/stdarg.h>
 
@@ -491,13 +483,6 @@ rip6_output(m, va_alist)
 		m_copyback(m, off, sizeof(sum), (caddr_t)&sum);
 	}
 
-#ifdef IPSEC
-	if (ipsec_setsocket(m, so) != 0) {
-		error = ENOBUFS;
-		goto bad;
-	}
-#endif /*IPSEC*/
-
 	flags = 0;
 #ifdef IN6P_MINMTU
 	if (in6p->in6p_flags & IN6P_MINMTU)
@@ -621,13 +606,6 @@ rip6_usrreq(so, req, m, nam, control, p)
 		in6p = sotoin6pcb(so);
 		in6p->in6p_ip6.ip6_nxt = (long)nam;
 		in6p->in6p_cksum = -1;
-#ifdef IPSEC
-		error = ipsec_init_policy(so, &in6p->in6p_sp);
-		if (error != 0) {
-			in6_pcbdetach(in6p);
-			break;
-		}
-#endif /*IPSEC*/
 		
 		MALLOC(in6p->in6p_icmp6filt, struct icmp6_filter *,
 			sizeof(struct icmp6_filter), M_PCB, M_NOWAIT);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp6_output.c,v 1.4 2001/06/09 06:43:38 angelos Exp $	*/
+/*	$OpenBSD: udp6_output.c,v 1.5 2001/12/06 04:19:26 itojun Exp $	*/
 /*	$KAME: udp6_output.c,v 1.21 2001/02/07 11:51:54 itojun Exp $	*/
 
 /*
@@ -92,8 +92,6 @@
 #include <netinet6/ip6_var.h>
 #include <netinet/icmp6.h>
 #include <netinet6/ip6protosw.h>
-
-#undef IPSEC
 
 #include "faith.h"
 
@@ -272,9 +270,6 @@ udp6_output(in6p, m, addr6, control)
 #endif
 
 		udp6stat.udp6s_opackets++;
-#ifdef IPSEC
-		ipsec_setsocket(m, in6p->in6p_socket);
-#endif /*IPSEC*/
 		error = ip6_output(m, in6p->in6p_outputopts, &in6p->in6p_route,
 			    flags, in6p->in6p_moptions, NULL);
 		break;
