@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ed.c,v 1.16 1996/05/26 00:27:17 deraadt Exp $	*/
+/*	$OpenBSD: if_ed.c,v 1.17 1996/07/31 01:51:49 niklas Exp $	*/
 /*	$NetBSD: if_ed.c,v 1.100 1996/05/12 23:52:19 mycroft Exp $	*/
 
 /*
@@ -54,7 +54,6 @@
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
-#define ED_BYTE_ORDER LITTLE_ENDIAN
 #include <dev/ic/dp8390reg.h>
 #include <dev/isa/if_edreg.h>
 
@@ -1903,10 +1902,13 @@ ed_rint(sc)
 	bus_chipset_tag_t bc = sc->sc_bc;
 	bus_io_handle_t ioh = sc->sc_ioh;
 	int nicbase = sc->nic_base;
-	u_char boundary, current;
-	u_short len;
-	u_char nlen;
-	struct ed_ring packet_hdr;
+	u_int8_t boundary, current;
+	u_int16_t len;
+	u_int8_t nlen;
+	u_int8_t next_packet;		/* pointer to next packet */
+	u_int8_t rsr;			/* receiver status */
+	u_int16_t count;		/* bytes in packet (length + 4) */
+	u_int8_t packet_hdr[ED_RING_HDRSZ];
 	int packet_ptr;
 
 loop:
@@ -1940,12 +1942,15 @@ loop:
 		 * the NIC.
 		 */
 		if (sc->mem_shared)
-			ed_shared_readmem(sc, packet_ptr, (caddr_t)&packet_hdr,
+			ed_shared_readmem(sc, packet_ptr, packet_hdr,
 			    sizeof(packet_hdr));
 		else
-			ed_pio_readmem(sc, (long)packet_ptr,
-			    (caddr_t)&packet_hdr, sizeof(packet_hdr));
-		len = bus_to_host_2(bc, packet_hdr.count);
+			ed_pio_readmem(sc, (long)packet_ptr, packet_hdr,
+			    sizeof(packet_hdr));
+		rsr = packet_hdr[ED_RING_RSR];
+		next_packet = packet_hdr[ED_RING_NEXT_PACKET];
+		len = count = packet_hdr[ED_RING_COUNT] +
+		    256 * packet_hdr[ED_RING_COUNT + 1];
 
 		/*
 		 * Try do deal with old, buggy chips that sometimes duplicate
@@ -1955,23 +1960,23 @@ loop:
 		 *
 		 * NOTE: sc->next_packet is pointing at the current packet.
 		 */
-		if (packet_hdr.next_packet >= sc->next_packet)
-			nlen = (packet_hdr.next_packet - sc->next_packet);
+		if (next_packet >= sc->next_packet)
+			nlen = (next_packet - sc->next_packet);
 		else
-			nlen = ((packet_hdr.next_packet - sc->rec_page_start) +
+			nlen = ((next_packet - sc->rec_page_start) +
 				(sc->rec_page_stop - sc->next_packet));
 		--nlen;
 		if ((len & ED_PAGE_MASK) + sizeof(packet_hdr) > ED_PAGE_SIZE)
 			--nlen;
 		len = (len & ED_PAGE_MASK) | (nlen << ED_PAGE_SHIFT);
 #ifdef DIAGNOSTIC
-		if (len != packet_hdr.count) {
+		if (len != count) {
 			printf("%s: length does not match next packet pointer\n",
 			    sc->sc_dev.dv_xname);
 			printf("%s: len %04x nlen %04x start %02x first %02x curr %02x next %02x stop %02x\n",
-			    sc->sc_dev.dv_xname, packet_hdr.count, len,
+			    sc->sc_dev.dv_xname, count, len,
 			    sc->rec_page_start, sc->next_packet, current,
-			    packet_hdr.next_packet, sc->rec_page_stop);
+			    next_packet, sc->rec_page_stop);
 		}
 #endif
 
@@ -1984,11 +1989,11 @@ loop:
 		 * figure out the length from their own length field(s).
 		 */
 		if (len <= MCLBYTES &&
-		    packet_hdr.next_packet >= sc->rec_page_start &&
-		    packet_hdr.next_packet < sc->rec_page_stop) {
+		    next_packet >= sc->rec_page_start &&
+		    next_packet < sc->rec_page_stop) {
 			/* Go get packet. */
-			edread(sc, packet_ptr + sizeof(struct ed_ring),
-			    len - sizeof(struct ed_ring));
+			edread(sc, packet_ptr + ED_RING_HDRSZ,
+			    len - ED_RING_HDRSZ);
 		} else {
 			/* Really BAD.  The ring pointers are corrupted. */
 			log(LOG_ERR,
@@ -2000,7 +2005,7 @@ loop:
 		}
 
 		/* Update next packet pointer. */
-		sc->next_packet = packet_hdr.next_packet;
+		sc->next_packet = next_packet;
 
 		/*
 		 * Update NIC boundary pointer - being careful to keep it one
@@ -2416,8 +2421,8 @@ ed_pio_readmem(sc, src, dst, amount)
 	    ED_CR_RD0 | ED_CR_PAGE_0 | ED_CR_STA);
 
 	if (sc->isa16bit)
-		bus_io_read_multi_2(bc, ioh, sc->asic_base + ED_NOVELL_DATA,
-		    dst, amount / 2);
+		bus_io_read_raw_multi_2(bc, ioh,
+		    sc->asic_base + ED_NOVELL_DATA, dst, amount);
 	else
 		bus_io_read_multi_1(bc, ioh, sc->asic_base + ED_NOVELL_DATA,
 		    dst, amount);
@@ -2459,8 +2464,8 @@ ed_pio_writemem(sc, src, dst, len)
 	    ED_CR_RD1 | ED_CR_PAGE_0 | ED_CR_STA);
 
 	if (sc->isa16bit)
-		bus_io_write_multi_2(bc, ioh, sc->asic_base + ED_NOVELL_DATA,
-		    src, len / 2);
+		bus_io_write_raw_multi_2(bc, ioh,
+		    sc->asic_base + ED_NOVELL_DATA, src, len);
 	else
 		bus_io_write_multi_1(bc, ioh, sc->asic_base + ED_NOVELL_DATA,
 		    src, len);
@@ -2542,18 +2547,16 @@ ed_pio_write_mbufs(sc, m, dst)
 			/* Finish the last word. */
 			if (wantbyte) {
 				savebyte[1] = *data;
-				bus_io_write_2(bc, ioh,
-				    asicbase + ED_NOVELL_DATA,
-				    *(u_int16_t *)savebyte);
+				bus_io_write_raw_multi_2(bc, ioh,
+				    asicbase + ED_NOVELL_DATA, savebyte, 2);
 				data++;
 				len--;
 				wantbyte = 0;
 			}
 			/* Output contiguous words. */
 			if (len > 1) {
-				bus_io_write_multi_2(bc, ioh,
-				    asicbase + ED_NOVELL_DATA,
-				    data, len >> 1);
+				bus_io_write_raw_multi_2(bc, ioh,
+				    asicbase + ED_NOVELL_DATA, data, len & ~1);
 			}
 			/* Save last byte, if necessary. */
 			if (len & 1) {
@@ -2565,8 +2568,8 @@ ed_pio_write_mbufs(sc, m, dst)
 
 		if (wantbyte) {
 			savebyte[1] = 0;
-			bus_io_write_2(bc, ioh, asicbase + ED_NOVELL_DATA,
-			    *(u_int16_t *)savebyte);
+			bus_io_write_raw_multi_2(bc, ioh,
+			    asicbase + ED_NOVELL_DATA, savebyte, 2);
 		}
 	}
 
@@ -2757,6 +2760,7 @@ ed_shared_writemem(sc, from, card, len)
 {
 	bus_chipset_tag_t bc = sc->sc_bc;
 	bus_mem_handle_t memh = sc->sc_memh;
+	u_int16_t word;
 
 	/*
 	 * For 16-bit cards, 16-bit memory access has already
@@ -2765,15 +2769,15 @@ ed_shared_writemem(sc, from, card, len)
 	 * have to be careful.
 	 */
 	if (sc->isa16bit) {
+		word = from[0] + from[1] * 256;
 		while (len > 1) {
-			bus_mem_write_2(bc, memh, card,
-			    *((u_int16_t *)from));
+			bus_mem_write_2(bc, memh, card, word);
 			from += 2;
 			card += 2;
 			len -= 2;
 		}
 		if (len == 1)
-			bus_mem_write_2(bc, memh, card, (u_int16_t)(*from));
+			bus_mem_write_2(bc, memh, card, (u_int16_t)*from);
 	} else {
 		while (len--)
 			bus_mem_write_1(bc, memh, card++, *from++);
@@ -2788,14 +2792,16 @@ ed_shared_readmem(sc, card, to, len)
 {
 	bus_chipset_tag_t bc = sc->sc_bc;
 	bus_mem_handle_t memh = sc->sc_memh;
+	u_int16_t word;
 
 	/*
 	 * See comment above re. 16-bit cards.
 	 */
 	if (sc->isa16bit) {
 		while (len > 1) {
-			*((u_int16_t *)to) = bus_mem_read_2(bc, memh, card);
-			to += 2;
+			word = bus_mem_read_2(bc, memh, card);
+			*to++ = word & 0xff;
+			*to++ = word >> 8 & 0xff;
 			card += 2;
 			len -= 2;
 		}
