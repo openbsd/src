@@ -188,6 +188,7 @@ install:
 		$(INSTALL_DATA) $(srcdir)/readline.h $(DESTDIR)$(includedir)/readline/readline.h
 		$(INSTALL_DATA) $(srcdir)/keymaps.h $(DESTDIR)$(includedir)/readline/keymaps.h
 		$(INSTALL_DATA) $(srcdir)/chardefs.h $(DESTDIR)$(includedir)/readline/chardefs.h
+		$(INSTALL_DATA) $(srcdir)/history.h $(DESTDIR)$(includedir)/readline/history.h
 
 includes:
 		$(INSTALL_FILE) $(srcdir)/readline.h $(DESTDIR)$(includedir)/readline/readline.h
