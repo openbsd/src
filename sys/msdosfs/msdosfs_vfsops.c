@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.30 2002/04/23 18:54:12 espie Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.31 2003/04/14 17:55:07 tedu Exp $	*/
 /*	$NetBSD: msdosfs_vfsops.c,v 1.48 1997/10/18 02:54:57 briggs Exp $	*/
 
 /*-
@@ -223,7 +223,7 @@ msdosfs_mount(mp, path, data, ndp, p)
 	if (pmp->pm_flags & MSDOSFSMNT_NOWIN95)
 		pmp->pm_flags |= MSDOSFSMNT_SHORTNAME;
 	else if (!(pmp->pm_flags & (MSDOSFSMNT_SHORTNAME | MSDOSFSMNT_LONGNAME))) {
-		struct vnode *rootvp;
+		struct vnode *rvp;
 		
 		/*
 		 * Try to divine whether to support Win'95 long filenames
@@ -231,14 +231,14 @@ msdosfs_mount(mp, path, data, ndp, p)
 		if (FAT32(pmp))
 		        pmp->pm_flags |= MSDOSFSMNT_LONGNAME;
 		else {
-		        if ((error = msdosfs_root(mp, &rootvp)) != 0) {
+		        if ((error = msdosfs_root(mp, &rvp)) != 0) {
 			        msdosfs_unmount(mp, MNT_FORCE, p);
 			        return (error);
 			}
-			pmp->pm_flags |= findwin95(VTODE(rootvp))
+			pmp->pm_flags |= findwin95(VTODE(rvp))
 			     ? MSDOSFSMNT_LONGNAME
 			     : MSDOSFSMNT_SHORTNAME;
-			vput(rootvp);
+			vput(rvp);
 		}
 	}
 	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
