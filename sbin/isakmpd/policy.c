@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.49 2002/01/23 18:09:04 ho Exp $	*/
+/*	$OpenBSD: policy.c,v 1.50 2002/01/23 22:14:28 angelos Exp $	*/
 /*	$EOM: policy.c,v 1.49 2000/10/24 13:33:39 niklas Exp $ */
 
 /*
@@ -1784,6 +1784,15 @@ policy_callback (char *name)
 
   if (strcmp (name, "phase1_group_desc") == 0)
     return phase1_group;
+
+  if (strcmp (name, "esp_group_desc") == 0)
+    return esp_group_desc;
+
+  if (strcmp (name, "ah_group_desc") == 0)
+    return ah_group_desc;
+
+  if (strcmp (name, "comp_group_desc") == 0)
+    return comp_group_desc;
 
   return "";
 
