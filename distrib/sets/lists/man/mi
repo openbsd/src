@@ -1618,6 +1618,7 @@
 ./usr/share/man/cat9/audio.0
 ./usr/share/man/cat9/bounds_check_with_label.0
 ./usr/share/man/cat9/cpu_switch.0
+./usr/share/man/cat9/crypto.0
 ./usr/share/man/cat9/ctxsw.0
 ./usr/share/man/cat9/disklabel.0
 ./usr/share/man/cat9/extent_print.0
@@ -1637,6 +1638,3 @@
 ./usr/share/man/cat9/tick.0
 ./usr/share/man/cat9/tickadj.0
 ./usr/share/man/cat9/writedisklabel.0
-./usr/share/man/man4/alpha
-./usr/share/man/man4/pmax
-./usr/share/man/man4/powerpc

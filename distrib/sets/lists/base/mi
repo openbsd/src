@@ -1730,12 +1730,15 @@
 ./usr/share/man/man3
 ./usr/share/man/man3p
 ./usr/share/man/man4
+./usr/share/man/man4/alpha
 ./usr/share/man/man4/amiga
 ./usr/share/man/man4/hp300
 ./usr/share/man/man4/i386
 ./usr/share/man/man4/mac68k
 ./usr/share/man/man4/mvme68k
 ./usr/share/man/man4/mvme88k
+./usr/share/man/man4/pmax
+./usr/share/man/man4/powerpc
 ./usr/share/man/man4/sparc
 ./usr/share/man/man5
 ./usr/share/man/man6
