@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.52 1999/03/18 01:59:20 millert Exp $	*/
+/*	$OpenBSD: editor.c,v 1.53 1999/03/18 04:36:22 millert Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.52 1999/03/18 01:59:20 millert Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.53 1999/03/18 04:36:22 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -615,23 +615,7 @@ editor_name(lp, mp, p)
 		return;
 	}
 
-	p = getstring(lp, "mount point",
-	    "Where to mount this filesystem (ie: / /var /usr)",
-	    mp[partno] ? mp[partno] : "none");
-	if (p == NULL) {
-		fputs("Command aborted\n", stderr);
-		pp->p_size = 0;		/* effective delete */
-		return;
-	}
-	if (mp[partno] != NULL) {
-		free(mp[partno]);
-		mp[partno] = NULL;
-	}
-	if (strcasecmp(p, "none") != 0) {
-		/* XXX - check that it starts with '/' */
-		if ((mp[partno] = strdup(p)) == NULL)
-			errx(4, "out of memory");
-	}
+	get_mp(lp, mp, partno);
 }
 
 /*
@@ -2233,21 +2217,30 @@ get_mp(lp, mp, partno)
 	if (mp != NULL && pp->p_fstype != FS_UNUSED &&
 	    pp->p_fstype != FS_SWAP && pp->p_fstype != FS_BOOT &&
 	    pp->p_fstype != FS_OTHER) {
-		p = getstring(lp, "mount point",
-		    "Where to mount this filesystem (ie: / /var /usr)",
-		    mp[partno] ? mp[partno] : "none");
-		if (p == NULL) {
-			fputs("Command aborted\n", stderr);
-			return(1);
-		}
-		if (mp[partno] != NULL) {
-			free(mp[partno]);
-			mp[partno] = NULL;
-		}
-		if (strcasecmp(p, "none") != 0) {
-			/* XXX - check that it starts with '/' */
-			if ((mp[partno] = strdup(p)) == NULL)
-				errx(4, "out of memory");
+		for (;;) {
+			p = getstring(lp, "mount point",
+			    "Where to mount this filesystem (ie: / /var /usr)",
+			    mp[partno] ? mp[partno] : "none");
+			if (p == NULL) {
+				fputs("Command aborted\n", stderr);
+				return(1);
+			}
+			if (strcasecmp(p, "none") == 0) {
+				if (mp[partno] != NULL) {
+					free(mp[partno]);
+					mp[partno] = NULL;
+				}
+				break;
+			}
+			if (*p == '/') {
+				/* XXX - might as well realloc */
+				if (mp[partno] != NULL)
+					free(mp[partno]);
+				if ((mp[partno] = strdup(p)) == NULL)
+					errx(4, "out of memory");
+				break;
+			}
+			fputs("Mount points must start with '/'\n", stderr);
 		}
 	}
 	return(0);
