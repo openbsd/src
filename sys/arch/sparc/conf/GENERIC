@@ -7,18 +7,18 @@ include "../../../conf/GENERIC"
 
 # Options for variants of the Sun SPARC architecure.
 # At least one is required.
-options		SUN4		# sun4/100, sun4/200, sun4/300
-options		SUN4C		# sun4c - SS1, 1+, 2, ELC, SLC, IPC, IPX, etc.
-options		SUN4M		# sun4m - SS10, SS20, Classic, etc.
+option		SUN4		# sun4/100, sun4/200, sun4/300
+option		SUN4C		# sun4c - SS1, 1+, 2, ELC, SLC, IPC, IPX, etc.
+option		SUN4M		# sun4m - SS10, SS20, Classic, etc.
 
-#options	MMU_3L		# 3-level MMU on sun4/400
+#option		MMU_3L		# 3-level MMU on sun4/400
 
-#options	KGDB		# support for kernel gdb
-#options	KGDBDEV=0xc01	# kgdb device number (dev_t)
-#options	KGDBRATE=38400	# baud rate
+#option		KGDB		# support for kernel gdb
+#option		KGDBDEV=0xc01	# kgdb device number (dev_t)
+#option		KGDBRATE=38400	# baud rate
 
 # Options for SPARCstation hardware
-options		RASTERCONSOLE	# fast rasterop console
+option		RASTERCONSOLE	# fast rasterop console
 
 # Generic swap; second partition of root disk or network.
 config		bsd	swap generic
@@ -223,13 +223,5 @@ fdc0	at mainbus0				# sun4c controller
 fdc0	at obio0				# sun4m controller
 fd*	at fdc0					# the drive itself
 
-pseudo-device	loop		# loopback interface; required
-pseudo-device	pty	32	# pseudo-ttys (for network, etc.)
-pseudo-device	sl	2	# SLIP interfaces
 pseudo-device	kbd		# Sun keyboard
-pseudo-device	ppp	2	# PPP interfaces
-pseudo-device	tun	4	# Network "tunnel" device
-pseudo-device	bpfilter 16	# Berkeley Packet Filter
-pseudo-device	vnd	4	# disk-like interface to files
-pseudo-device	ccd	4	# concatenated and striped disks
 #pseudo-device	strip	1	# radio clock
