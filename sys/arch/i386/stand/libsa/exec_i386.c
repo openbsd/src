@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_i386.c,v 1.15 1997/09/04 20:44:36 mickey Exp $	*/
+/*	$OpenBSD: exec_i386.c,v 1.16 1997/09/17 17:56:10 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -60,21 +60,16 @@ machdep_start(startaddr, howto, loadaddr, ssym, esym)
 
 	printf("/bsd(%x,%x,%x,%x,%x,%x,%x)\n",
 	       howto, bootdev, BOOT_APIVER, round_to_size(esym),
-	       BIOS_vars.bios_extmem, BIOS_vars.bios_cnvmem,
-	       (int)&BIOS_vars);
+	       extmem, cnvmem, (int)&BIOS_vars, sizeof(BIOS_vars));
 	getchar();
 #endif
-	if (cn_tab != NULL)
-		BIOS_vars.boot_consdev = cn_tab->cn_dev;
-
 	(int)startaddr &= 0xffffff;
 
 	printf("entry point at 0x%x\n", (int)startaddr);
 	/* stack and the gung is ok at this point, so, no need for asm setup */
-	(*(int __attribute__((noreturn))(*)(int,int,int,int,int,int,int))
+	(*(int __attribute__((noreturn))(*)(int,int,int,int,int,int,int,int))
 	 startaddr)(howto, bootdev, BOOT_APIVER, round_to_size(esym),
-		    BIOS_vars.bios_extmem, BIOS_vars.bios_cnvmem,
-		    (int)&BIOS_vars);
+		    extmem, cnvmem, (int)&BIOS_vars, sizeof(BIOS_vars));
 	/* not reached */
 }
 

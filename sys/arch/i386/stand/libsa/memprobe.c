@@ -1,4 +1,4 @@
-/*	$OpenBSD: memprobe.c,v 1.11 1997/09/02 17:00:42 mickey Exp $	*/
+/*	$OpenBSD: memprobe.c,v 1.12 1997/09/17 17:56:10 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -37,17 +37,18 @@
 #include "libsa.h"
 
 static int addrprobe __P((int));
+u_int cnvmem, extmem;
 
 void
 memprobe()
 {
 	int ram;
 
-	__asm __volatile(DOINT(0x12) : "=a" (BIOS_vars.bios_cnvmem)
+	__asm __volatile(DOINT(0x12) : "=a" (cnvmem)
 			 :: "%ecx", "%edx", "cc");
-	BIOS_vars.bios_cnvmem &= 0xffff;
+	cnvmem &= 0xffff;
 
-	printf("%d Kb conventional memory.\n", BIOS_vars.bios_cnvmem);
+	printf("%d Kb conventional memory.\n", cnvmem);
 
 	/* probe extended memory
 	 *
@@ -63,7 +64,7 @@ memprobe()
 	}
 
 	printf("%d Kb extended memory.\n", ram-1024);
-	BIOS_vars.bios_extmem = ram - 1024;
+	extmem = ram - 1024;
 }
 
 /* addrprobe(kloc): Probe memory at address kloc * 1024.
