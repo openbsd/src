@@ -22,8 +22,8 @@ Supported devices include:
 		cgsix, cgthree, and bwtwo frame buffers
 
 	sun4 video (not thoroughly tested...): 
-		P4  -- on-board bwtwo, cgfour, cgsix, cgeight,
-                VME -- cgtwo card
+		P4  -- on-board bwtwo, cgfour, cgsix, cgeight
+                VME -- cgtwo, cgthree, cgsix 
 
 	serial ports: 
 		ttya and ttyb (can be used as console if needed),
@@ -59,9 +59,10 @@ about:
 	audio driver for sun4m machines
 	floppy driver for sun4m machines
 	interrupt driven SCSI driver for Sun 4/100's and 4/200's
-        cgfourteen (SX) framebuffer
-        Graphics Tower (GT) framebuffer
-        Leo (ZX) framebuffer
+        SBus GS framebuffer (aka cgtwelve)
+        SBus GT framebuffer ("Graphics Tower")
+        SS20 SX framebuffer (aka cgfourteen)
+        SBus ZX framebuffer (aka Leo)
         S24 (ss5 only) framebuffer
 
 *** Note: sun4m caveats
