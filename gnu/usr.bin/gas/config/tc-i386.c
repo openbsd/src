@@ -1,4 +1,4 @@
-/*	$OpenBSD: tc-i386.c,v 1.6 1999/04/30 23:07:41 espie Exp $	*/
+/*	$OpenBSD: tc-i386.c,v 1.7 1999/06/15 10:28:49 espie Exp $	*/
 
 /* i386.c -- Assemble code for the Intel 80386
    Copyright (C) 1989, 1991, 1992 Free Software Foundation.
@@ -27,7 +27,7 @@
   */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: tc-i386.c,v 1.6 1999/04/30 23:07:41 espie Exp $";
+static char rcsid[] = "$OpenBSD: tc-i386.c,v 1.7 1999/06/15 10:28:49 espie Exp $";
 #endif
 
 #include "as.h"
@@ -1366,6 +1366,7 @@ static int i386_operand (operand_string)
 char *operand_string;
 {
 	register char *op_string = operand_string;
+	char *tmpbuf = 0;
 	
 	/* Address of '\0' at end of operand_string. */
 	char * end_of_operand_string = operand_string + strlen(operand_string);
@@ -1641,7 +1642,7 @@ char *operand_string;
 			register char *cp;
 			if (picmode &&
 				(cp = strchr(input_line_pointer,'@'))) {
-				char tmpbuf[BUFSIZ];
+				tmpbuf= xmalloc(strlen(input_line_pointer));
 
 				if (strncmp(cp+1, "PLT", 3) == 0) {
 					i.disp_reloc[this_operand] = RELOC_JMP_TBL;
@@ -1676,6 +1677,8 @@ char *operand_string;
 			    as_bad("Ignoring junk '%s' after expression",input_line_pointer);
 			RESTORE_END_STRING (displacement_string_end);
 			input_line_pointer = save_input_line_pointer;
+			free(tmpbuf);
+			tmpbuf = 0;
 			switch (exp_seg) {
 			case SEG_ABSENT:
 				/* missing expr becomes absolute 0 */
