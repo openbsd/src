@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.38 1997/05/23 22:01:54 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.39 1997/05/30 07:59:16 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -168,3 +168,5 @@ gus0	at isa? port 0x220 irq 7 drq 1 flags 6 # Gravis UltraSound (flags is record
 
 # Joystick driver. Probe is a little strange; add only if you have one.
 #joy0	at isa? port 0x201
+
+pseudo-device pctr	1
