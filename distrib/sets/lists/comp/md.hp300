@@ -100,7 +100,6 @@
 ./usr/lib/libasn1_pic.a
 ./usr/lib/libbfd.a
 ./usr/lib/libc_pic.a
-./usr/lib/libcom_err_pic.a
 ./usr/lib/libcrypto_pic.a
 ./usr/lib/libcurses++_pic.a
 ./usr/lib/libcurses_pic.a

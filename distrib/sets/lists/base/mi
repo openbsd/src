@@ -213,7 +213,6 @@
 ./usr/bin/encrypt
 ./usr/bin/env
 ./usr/bin/eqn
-./usr/bin/error
 ./usr/bin/ex
 ./usr/bin/expand
 ./usr/bin/false
@@ -1565,6 +1564,7 @@
 ./usr/sbin/inetd
 ./usr/sbin/iostat
 ./usr/sbin/kadmin
+./usr/sbin/kstash
 ./usr/sbin/ktutil
 ./usr/sbin/kvm_mkdb
 ./usr/sbin/logresolve

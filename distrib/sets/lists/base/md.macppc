@@ -35,9 +35,8 @@
 ./usr/lib/gcc-lib/powerpc-unknown-openbsd3.3/2.95.3/cpp0
 ./usr/lib/gcc-lib/powerpc-unknown-openbsd3.3/2.95.3/include
 ./usr/lib/gcc-lib/powerpc-unknown-openbsd3.3/2.95.3/specs
-./usr/lib/libasn1.so.3.1
+./usr/lib/libasn1.so.13.0
 ./usr/lib/libc.so.30.0
-./usr/lib/libcom_err.so.1.0
 ./usr/lib/libcrypto.so.10.0
 ./usr/lib/libcurses++.so.2.0
 ./usr/lib/libcurses.so.9.0
@@ -45,10 +44,10 @@
 ./usr/lib/libedit.so.1.0
 ./usr/lib/libform.so.2.0
 ./usr/lib/libg2c.so.7.0
-./usr/lib/libgssapi.so.2.0
+./usr/lib/libgssapi.so.2.1
 ./usr/lib/libiberty.so.5.0
-./usr/lib/libkafs.so.12.0
-./usr/lib/libkrb5.so.5.2
+./usr/lib/libkafs.so.13.0
+./usr/lib/libkrb5.so.13.0
 ./usr/lib/libkvm.so.7.0
 ./usr/lib/libm.so.1.0
 ./usr/lib/libmenu.so.2.0
@@ -1398,9 +1397,10 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/isofs/cd9660/iso.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/isofs/cd9660/iso_rrip.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/kerberosV
-./usr/libdata/perl5/site_perl/powerpc-openbsd/kerberosV/admin.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/kerberosV/asn1-common.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/kerberosV/asn1_err.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/kerberosV/com_err.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/kerberosV/com_right.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/kerberosV/der.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/kerberosV/gssapi.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/kerberosV/hdb-private.ph
@@ -1412,9 +1412,10 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/kerberosV/k524_err.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/kerberosV/kadm5
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/kerberosV/kadm5/admin.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/kerberosV/kadm5/kadm5-private.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/kerberosV/kadm5/kadm5-protos.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/kerberosV/kadm5/kadm5_err.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/kerberosV/kadm5/private.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/kerberosV/kadm5_err.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/kerberosV/kafs.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/kerberosV/krb5-private.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/kerberosV/krb5-protos.ph
@@ -1422,7 +1423,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/kerberosV/krb5.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/kerberosV/krb5_asn1.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/kerberosV/krb5_err.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/kerberosV/private.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/keynote.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/kvm.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/langinfo.ph

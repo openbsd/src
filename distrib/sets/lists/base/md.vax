@@ -830,9 +830,10 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/isofs/cd9660/iso.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/isofs/cd9660/iso_rrip.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/kerberosV
-./usr/libdata/perl5/site_perl/vax-openbsd/kerberosV/admin.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/kerberosV/asn1-common.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/kerberosV/asn1_err.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/kerberosV/com_err.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/kerberosV/com_right.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/kerberosV/der.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/kerberosV/gssapi.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/kerberosV/hdb-private.ph
@@ -844,9 +845,10 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/kerberosV/k524_err.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/kerberosV/kadm5
 ./usr/libdata/perl5/site_perl/vax-openbsd/kerberosV/kadm5/admin.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/kerberosV/kadm5/kadm5-private.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/kerberosV/kadm5/kadm5-protos.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/kerberosV/kadm5/kadm5_err.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/kerberosV/kadm5/private.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/kerberosV/kadm5_err.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/kerberosV/kafs.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/kerberosV/krb5-private.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/kerberosV/krb5-protos.ph
@@ -854,7 +856,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/kerberosV/krb5.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/kerberosV/krb5_asn1.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/kerberosV/krb5_err.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/kerberosV/private.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/keynote.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/kvm.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/langinfo.ph

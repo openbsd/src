@@ -80,7 +80,6 @@
 ./usr/lib/gcc-lib/powerpc-unknown-openbsd3.3/2.95.3/soft-float/libgcc.a
 ./usr/lib/libbfd.a
 ./usr/lib/libc_pic.a
-./usr/lib/libcom_err_pic.a
 ./usr/lib/libcrypto_pic.a
 ./usr/lib/libcurses++_pic.a
 ./usr/lib/libcurses_pic.a
@@ -90,7 +89,6 @@
 ./usr/lib/libfrtbegin_pic.a
 ./usr/lib/libg2c_pic.a
 ./usr/lib/libiberty_pic.a
-./usr/lib/libkafs_pic.a
 ./usr/lib/libkvm_pic.a
 ./usr/lib/libm_pic.a
 ./usr/lib/libmenu_pic.a

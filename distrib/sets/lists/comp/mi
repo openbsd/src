@@ -901,9 +901,10 @@
 ./usr/include/isofs/cd9660/iso.h
 ./usr/include/isofs/cd9660/iso_rrip.h
 ./usr/include/kerberosV
-./usr/include/kerberosV/admin.h
 ./usr/include/kerberosV/asn1-common.h
 ./usr/include/kerberosV/asn1_err.h
+./usr/include/kerberosV/com_err.h
+./usr/include/kerberosV/com_right.h
 ./usr/include/kerberosV/der.h
 ./usr/include/kerberosV/gssapi.h
 ./usr/include/kerberosV/hdb-private.h
@@ -915,9 +916,10 @@
 ./usr/include/kerberosV/k524_err.h
 ./usr/include/kerberosV/kadm5
 ./usr/include/kerberosV/kadm5/admin.h
+./usr/include/kerberosV/kadm5/kadm5-private.h
+./usr/include/kerberosV/kadm5/kadm5-protos.h
 ./usr/include/kerberosV/kadm5/kadm5_err.h
 ./usr/include/kerberosV/kadm5/private.h
-./usr/include/kerberosV/kadm5_err.h
 ./usr/include/kerberosV/kafs.h
 ./usr/include/kerberosV/krb5-private.h
 ./usr/include/kerberosV/krb5-protos.h
@@ -925,7 +927,6 @@
 ./usr/include/kerberosV/krb5.h
 ./usr/include/kerberosV/krb5_asn1.h
 ./usr/include/kerberosV/krb5_err.h
-./usr/include/kerberosV/private.h
 ./usr/include/keynote.h
 ./usr/include/kvm.h
 ./usr/include/langinfo.h
@@ -1656,6 +1657,7 @@
 ./usr/lib/libgssapi.a
 ./usr/lib/libgssapi_p.a
 ./usr/lib/libhdb.a
+./usr/lib/libhdb_p.a
 ./usr/lib/libiberty.a
 ./usr/lib/libiberty_p.a
 ./usr/lib/libkadm5clnt.a
@@ -2920,7 +2922,6 @@
 ./usr/share/man/cat3/clrtoeol.0
 ./usr/share/man/cat3/color_content.0
 ./usr/share/man/cat3/color_set.0
-./usr/share/man/cat3/com_err.0
 ./usr/share/man/cat3/confstr.0
 ./usr/share/man/cat3/copysign.0
 ./usr/share/man/cat3/copysignf.0
