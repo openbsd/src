@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)rwhod.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: rwhod.c,v 1.25 2002/09/06 19:46:52 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rwhod.c,v 1.26 2003/03/05 02:41:35 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -420,7 +420,6 @@ timer(void)
 	for (i = 0; i < 3; i++)
 		mywd.wd_loadav[i] = htonl((u_long)(avenrun[i] * 100));
 	cc = (char *)we - (char *)&mywd;
-printf("sending cc = %d\n", cc);
 	mywd.wd_sendtime = htonl(time(0));
 	mywd.wd_vers = WHODVERSION;
 	mywd.wd_type = WHODTYPE_STATUS;
