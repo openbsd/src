@@ -1,4 +1,4 @@
-/*	$NetBSD: msc.c,v 1.2 1995/10/07 18:18:26 chopps Exp $ */
+/*	$NetBSD: msc.c,v 1.3 1996/02/02 18:05:44 mycroft Exp $ */
 
 /*
  * Copyright (c) 1993 Zik.
@@ -69,7 +69,7 @@
 #include <amiga/amiga/device.h>
 #include <amiga/dev/zbusvar.h>
 #include <amiga/dev/mscreg.h>
-#include "machine/cpu.h"
+#include <machine/cpu.h>
 
 #include <amiga/amiga/custom.h>
 #include <amiga/amiga/cia.h>
