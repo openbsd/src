@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.96 2002/02/19 21:11:19 miod Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.97 2002/02/21 20:12:56 angelos Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -1761,7 +1761,7 @@ pf_key_v2_flow (struct sockaddr *laddr, struct sockaddr *lmask,
   addr->sadb_address_exttype = SADB_X_EXT_DST_FLOW;
   addr->sadb_address_len = len / PF_KEY_V2_CHUNK;
   addr->sadb_address_reserved = 0;
-  pf_key_v2_setup_sockaddr (addr + 1, raddr, 0, sport, 0);
+  pf_key_v2_setup_sockaddr (addr + 1, raddr, 0, dport, 0);
   if (pf_key_v2_msg_add (flow, (struct sadb_ext *)addr,
 			 PF_KEY_V2_NODE_MALLOCED) == -1)
     goto cleanup;
@@ -1773,7 +1773,7 @@ pf_key_v2_flow (struct sockaddr *laddr, struct sockaddr *lmask,
   addr->sadb_address_exttype = SADB_X_EXT_DST_MASK;
   addr->sadb_address_len = len / PF_KEY_V2_CHUNK;
   addr->sadb_address_reserved = 0;
-  pf_key_v2_setup_sockaddr (addr + 1, rmask, 0, sport ? 0xffff : 0, 0);
+  pf_key_v2_setup_sockaddr (addr + 1, rmask, 0, dport ? 0xffff : 0, 0);
   if (pf_key_v2_msg_add (flow, (struct sadb_ext *)addr,
 			 PF_KEY_V2_NODE_MALLOCED) == -1)
     goto cleanup;
