@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd-setup.c,v 1.2 2003/03/08 18:29:16 deraadt Exp $ */
+/*	$OpenBSD: spamd-setup.c,v 1.3 2003/03/08 22:06:02 deraadt Exp $ */
 /*
  * Copyright (c) 2003 Bob Beck.  All rights reserved.
  *
@@ -332,6 +332,7 @@ fix_quoted_colons(char *buf)
 		}
 		if (j == nbs) {
 			char *tmp;
+
 			nbs += 128;
 			tmp = realloc(newbuf, nbs);
 			if (tmp == NULL)
@@ -362,12 +363,14 @@ do_message(FILE *sdc, char *msg)
 		 * file and read the message from it.
 		 */
 		int fd;
+
 		fd = open(msg, O_RDONLY);
 		if (fd == -1)
 			err(1, "Can't open message from %s", msg);
 		for (;;) {
 			if (bu == bs) {
 				char *tmp;
+
 				tmp = realloc(buf, bs + 8192);
 				if (tmp == NULL)
 					errx(1, "Malloc failed");
@@ -426,6 +429,7 @@ add_blacklist(struct bl *bl, int *blc, int *bls, int fd, int white)
 		/* read in fd, then parse */
 		if (bu == bs) {
 			char *tmp;
+
 			tmp = realloc(buf, bs + 8192);
 			if (tmp == NULL) {
 				free(buf);
@@ -513,6 +517,7 @@ collapse_blacklist(struct bl *bl, int blc)
 	for (i = 0; i < blc;) {
 		int laststate = state;
 		u_int32_t addr = bl[i].addr;
+
 		do {
 			bs += bl[i].b;
 			ws += bl[i].w;

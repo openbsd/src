@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.21 2003/03/04 05:54:53 beck Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.22 2003/03/08 22:05:20 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -404,6 +404,7 @@ build_reply(struct con *cp)
 		int used = 0;
 		char *c = cp->obuf + off;
 		int left = cp->osize - off;
+
 		used = append_error_string(cp, off, matches[0]->string,
 		    cp->af, cp->ia);
 		if (used == -1)
@@ -822,6 +823,7 @@ main(int argc, char *argv[])
 		struct timeval tv, *tvp;
 		int max, i, n;
 		int writers;
+
 		max = MAX(s, conflisten);
 		max = MAX(max, conffd);
 
