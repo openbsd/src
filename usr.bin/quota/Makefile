@@ -1,8 +1,6 @@
-#	$OpenBSD: Makefile,v 1.2 1996/06/26 05:38:00 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.3 2002/05/17 21:23:53 millert Exp $
 
 PROG=	quota
-BINOWN=	root
-BINMODE=4555
 
 DPADD=	${LIBRPCSVC}
 LDADD=	-lrpcsvc
