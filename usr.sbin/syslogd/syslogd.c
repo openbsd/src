@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.68 2003/12/29 22:05:11 djm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.69 2003/12/29 22:08:44 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-static const char rcsid[] = "$OpenBSD: syslogd.c,v 1.68 2003/12/29 22:05:11 djm Exp $";
+static const char rcsid[] = "$OpenBSD: syslogd.c,v 1.69 2003/12/29 22:08:44 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -320,7 +320,7 @@ main(int argc, char *argv[])
 				die(0);
 		} else {
 			/* double socket receive buffer size */
-			if (getsockopt(fd, SOL_SOCKET, SO_RCVBUF, &len, 
+			if (getsockopt(fd, SOL_SOCKET, SO_RCVBUF, &len,
 			    &slen) == 0) {
 				len *= 2;
 				(void)setsockopt(fd, SOL_SOCKET, SO_RCVBUF, &len, slen);
@@ -486,8 +486,8 @@ main(int argc, char *argv[])
 		for (i = 0; i < nfunix; i++) {
 			if ((pfd[PFD_UNIX_0 + i].revents & POLLIN) != 0) {
 				len = sizeof(fromunix);
-				len = recvfrom(pfd[PFD_UNIX_0 + i].fd, line, 
-				    MAXLINE, 0, (struct sockaddr *)&fromunix, 
+				len = recvfrom(pfd[PFD_UNIX_0 + i].fd, line,
+				    MAXLINE, 0, (struct sockaddr *)&fromunix,
 				    &len);
 				if (len > 0) {
 					line[len] = '\0';

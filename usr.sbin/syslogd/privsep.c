@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.10 2003/12/29 22:05:10 djm Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.11 2003/12/29 22:08:44 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Anil Madhavapeddy <anil@recoil.org>
@@ -123,7 +123,7 @@ priv_init(char *conf, int numeric, int lockfd, int nullfd, char *argv[])
 		if (chroot(pw->pw_dir) != 0)
 			err(1, "unable to chroot");
 		chdir("/");
-		
+
 		gidset[0] = pw->pw_gid;
 		if (setgroups(1, gidset) == -1)
 			err(1, "setgroups() failed");
