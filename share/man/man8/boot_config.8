@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_config.8,v 1.3 1998/06/12 12:08:43 d Exp $
+.\"	$OpenBSD: boot_config.8,v 1.4 1998/06/29 05:26:33 angelos Exp $
 .\"
 .\" Copyright (c) 1996 Mats O Jansson
 .\" All rights reserved.
@@ -38,12 +38,12 @@
 .Nd how to change kernel configuration at boot
 .Sh DESCRIPTION
 .Nm BOOT_CONFIG
-is a kernel option that make it possible to change the configuration
+is a kernel option that makes it possible to change the configuration
 at boot time.
 .Pp
 The boot time configuration is invoked by the
 .Fl c
-option when OpenBSD asks for a kernel to boot:
+option when OpenBSD prompts for a kernel to boot:
 .Pp
 .Bd -literal
 >> OpenBSD BOOT 640/31744 k [1.29]
@@ -61,7 +61,7 @@ UKC>
 .It Ic add Ar dev
 Add a device through copying another.
 .It Ic base Ar 8 | 10 | 16
-Change the base of numbers that are displayed and entered,
+Change the base of numbers displayed and entered,
 e.g. I/O addresses in a VAXen are octal.
 .It Ic change Ar devno | dev
 Modify one or more devices.
@@ -74,26 +74,25 @@ Continue boot.
 .It Ic find Ar devno | dev
 Find one or more devices.
 .It Ic help
-Give a short summary of all commands and its arguments.
+Give a short summary of all commands and their arguments.
 .It Ic list
-Show all known devices a screen at the time.
+Show all known devices, a screen at a time.
 .It Ic lines Op Ar count
-Setup the number of rows per page.
+Set the number of rows per page.
 .It Ic quit
 Continue boot.
 .It Ic show Op Ar attr Op Ar val
-Show devices with attribute
+Show all devices for which attribute
 .Ar attr
-that has the value
+has the value
 .Ar val .
 .El
 .Pp
 .Sh EXAMPLES
-Your ethernet card isn't found at boot because the kernel configuration doesn't
-match the physical hardware configuration,
+The ethernet card is not detected at boot because the kernel configuration
+does not match the physical hardware configuration,
 e.g. wrong IRQ in OpenBSD/i386.
-You know that your
-ethernet card is using the
+The ethernet card is supposed to use the
 .Xr ed 4
 driver.
 .Pp
@@ -106,8 +105,10 @@ driver.
 UKC>
 .Ed
 .Pp
-Ok, ed2 seems to match the configuration except IRQ 5 instead of IRQ 10. So
-change irq on ed2 with the change command. Specify device by name or number.
+ed2 seems to match the configuration except it uses IRQ 5 instead of IRQ 10. So
+the irq on ed2 should be changed via the
+.Fa change
+command. The device can be specified by either name or number.
 .Pp
 .Bd -literal
 .No UKC> Ic change ed2
@@ -125,8 +126,8 @@ change irq on ed2 with the change command. Specify device by name or number.
 UKC>
 .Ed
 .Pp
-Another case is when a non-existing device is wrongly found when another 
-device should be found at the probed location.
+Another case is a mistakenly detected non-existing device instead of another
+device at the probed location.
 One known case is the Mitsumi
 ATAPI cdrom in OpenBSD/i386. The simplest thing to solve that problem is to
 disable mcd0.
@@ -190,7 +191,7 @@ kernel. If a new device is added, following devices will be renumbered.
 UKC>
 .Ed
 .Pp
-When configuration is complete, booting is continued with the
+When configuration is completed, booting can proceed by issuing the
 .Ic quit
 or
 .Ic exit
@@ -203,8 +204,8 @@ mainbus0 (root)
 .Ed
 .Pp
 .Sh BUGS
-The add command is rather restricted, and might be fixed in the future.
+The add command is rather restricted, and might be expanded in the future.
 .Pp
-There isn't a way to save the configuration for next boot.
+There is no way to save the configuration for next boot.
 .Sh AUTHOR
 Mats O Jansson <moj@stacken.kth.se>
