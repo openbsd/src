@@ -1,6 +1,6 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
-#	$OpenBSD: bsd.port.mk,v 1.91 1999/05/14 04:38:36 brad Exp $
+#	$OpenBSD: bsd.port.mk,v 1.92 1999/05/23 22:45:15 brad Exp $
 #	$FreeBSD: bsd.port.mk,v 1.264 1996/12/25 02:27:44 imp Exp $
 #	$NetBSD: bsd.port.mk,v 1.62 1998/04/09 12:47:02 hubertf Exp $
 #
@@ -27,7 +27,7 @@ OpenBSD_MAINTAINER= ports-admin@openbsd.org
 # NEED_VERSION: we need at least this version of bsd.port.mk for this 
 # port  to build
 
-FULL_REVISION=$$OpenBSD: bsd.port.mk,v 1.91 1999/05/14 04:38:36 brad Exp $$
+FULL_REVISION=$$OpenBSD: bsd.port.mk,v 1.92 1999/05/23 22:45:15 brad Exp $$
 .if defined(NEED_VERSION)
 _VERSION_REVISION=${FULL_REVISION:M[0-9]*.*}
 
@@ -843,7 +843,14 @@ MASTER_SITE_XCONTRIB+=	\
 
 MASTER_SITE_GNU+=	\
 	ftp://prep.ai.mit.edu/pub/gnu/%SUBDIR%/ \
-	ftp://wuarchive.wustl.edu/systems/gnu/%SUBDIR%/
+	ftp://wuarchive.wustl.edu/systems/gnu/%SUBDIR%/ \
+	ftp://ftp.kddlabs.co.jp/pub/gnu/%SUBDIR%/ \
+	ftp://ftp.digex.net/pub/gnu/%SUBDIR%/ \
+	ftp://ftp.cs.ubc.ca/mirror2/gnu/%SUBDIR%/ \
+	ftp://ftp.cdrom.com/pub/gnu/%SUBDIR%/ \
+	ftp://ftp.duke.edu/pub/gnu/%SUBDIR%/ \
+	ftp://ftp.gamma.ru/pub/gnu/%SUBDIR%/ \
+	ftp://tron.um.u-tokyo.ac.jp/pub/GNU/prep/%SUBDIR%/
 
 MASTER_SITE_PERL_CPAN+=	\
 	ftp://ftp.digital.com/pub/plan/perl/CPAN/modules/by-module/%SUBDIR%/ \
@@ -874,6 +881,35 @@ MASTER_SITE_GNOME+=	\
 	ftp://ftp.geo.net/pub/gnome/%SUBDIR%/ \
 	ftp://gnomeftp.wgn.net/pub/gnome/%SUBDIR%/ \
 	ftp://ftp.gnome.org/pub/GNOME/%SUBDIR%/
+
+MASTER_SITE_AFTERSTEP+=	\
+	ftp://ftp.afterstep.org/%SUBDIR%/ \
+	ftp://ftp.digex.net/pub/os/wm/AfterStep/%SUBDIR%/ \
+	ftp://ftp.alpha1.net/pub/mirrors/ftp.afterstep.org/%SUBDIR%/ \
+	ftp://ftp.math.uni-bonn.de/pub/mirror/ftp.afterstep.org/%SUBDIR%/ \
+	ftp://ftp.bse.bg/pub/Unix/X11/wm/afterstep/%SUBDIR%/ \
+	ftp://ftp.dti.ad.jp/pub/X/AfterStep/%SUBDIR%/ \
+	ftp://ftp.lbi.ro/mirrors/ftp.afterstep.org/pub/%SUBDIR%/ \
+	ftp://casper.yz.yamagata-u.ac.jp/pub/X11/apps/afterstep/%SUBDIR%/
+
+MASTER_SITE_WINDOWMAKER+= \
+	ftp://ftp.windowmaker.org/pub/%SUBDIR%/ \
+	ftp://ftp.goldweb.com.au/pub/WindowMaker/%SUBDIR%/ \
+	ftp://ftp.io.com/pub/mirror/windowmaker/%SUBDIR%/ \
+	ftp://ftp.ensm-ales.fr/pub/mirrors/ftp.windowmaker.org/%SUBDIR%/ \
+	ftp://ftp.freenews.de/pub/windowmaker/%SUBDIR%/ \
+	http://jgo.local.net/cool_downloads/wm/%SUBDIR%/ \
+	ftp://ftp.cybertrails.com/pub/windowmaker/%SUBDIR%/ \
+	ftp://ftp.ameth.org/pub/mirrors/ftp.windowmaker.org/%SUBDIR%/
+
+MASTER_SITE_TCLTK+= \
+	ftp://ftp.scriptics.com/pub/tcl/%SUBDIR%/ \
+	ftp://mirror.neosoft.com/pub/tcl/mirror/ftp.scriptics.com/%SUBDIR%/ \
+	ftp://sunsite.utk.edu/pub/tcl/%SUBDIR%/ \
+	ftp://ftp.funet.fi/pub/languages/tcl/tcl/%SUBDIR%/ \
+	ftp://ftp.cs.tu-berlin.de/pub/tcl/distrib/%SUBDIR%/ \
+	ftp://ftp.srcc.msu.su/mirror/ftp.scriptics.com/pub/tcl/%SUBDIR%/ \
+	ftp://ftp.lip6.fr/pub/tcl/distrib/%SUBDIR%/
 
 # Empty declaration to avoid "variable MASTER_SITES recursive" error
 MASTER_SITES?=
