@@ -18,7 +18,7 @@ agent connections.
 */
 
 #include "includes.h"
-RCSID("$Id: sshd.c,v 1.19 1999/10/04 20:45:02 markus Exp $");
+RCSID("$Id: sshd.c,v 1.20 1999/10/05 18:01:07 dugsong Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -1296,7 +1296,7 @@ void do_authenticated(struct passwd *pw)
 {
   int type;
   int compression_level = 0, enable_compression_after_reply = 0;
-  int have_pty = 0, ptyfd = -1, ttyfd = -1;
+  int have_pty = 0, ptyfd = -1, ttyfd = -1, xauthfd = -1;
   int row, col, xpixel, ypixel, screen;
   char ttyname[64];
   char *command, *term = NULL, *display = NULL, *proto = NULL, *data = NULL;
@@ -1437,9 +1437,15 @@ void do_authenticated(struct passwd *pw)
 
 	  /* Setup to always have a local .Xauthority. */
 	  xauthfile = xmalloc(MAXPATHLEN);
-	  snprintf(xauthfile, MAXPATHLEN, "/tmp/Xauth%d_%d",
-	    pw->pw_uid, getpid());
-
+	  snprintf(xauthfile, MAXPATHLEN, "/tmp/XauthXXXXXX");
+	  
+	  if ((xauthfd = mkstemp(xauthfile)) != -1) {
+	    fchown(xauthfd, pw->pw_uid, pw->pw_gid);
+	    close(xauthfd);
+	  }
+	  else {
+	    xfree(xauthfile);
+	  }
 	  break;
 #else /* XAUTH_PATH */
 	  /* No xauth program; we won't accept forwarding with spoofing. */
