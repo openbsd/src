@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.4 1999/09/03 18:55:32 deraadt Exp $
+#       $OpenBSD: install.md,v 1.5 2000/01/24 04:51:55 smurph Exp $
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
@@ -89,11 +89,11 @@ md_installboot() {
 
 	# use extracted mdec if it exists (may be newer)
 	if [ -d /mnt/usr/mdec ]; then
-		cp /mnt/usr/mdec/boot /mnt/bootsd
-		/mnt/usr/mdec/installboot -v /mnt/bootsd /mnt/usr/mdec/bootxx $_rawdev
+		cp /mnt/usr/mdec/bootsd /mnt/bootsd
+		/mnt/usr/mdec/installboot -v /mnt/bootsd /mnt/usr/mdec/bootxx _rawdev
 	elif [ -d /usr/mdec ]; then
-		cp /usr/mdec/boot /mnt/bootsd
-		/usr/mdec/installboot -v /mnt/bootsd /usr/mdec/bootxx $_rawdev
+		cp /usr/mdec/bootsd /mnt/bootsd
+		/usr/mdec/installboot -v /mnt/bootsd /usr/mdec/bootxx _rawdev
 	else
 		echo "No boot block prototypes found, you must run installboot manually."
 	fi
