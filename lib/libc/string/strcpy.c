@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: strcpy.c,v 1.5 2003/06/02 20:18:38 millert Exp $";
+static char *rcsid = "$OpenBSD: strcpy.c,v 1.6 2003/07/24 01:15:42 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #ifndef _KERNEL
@@ -37,10 +37,13 @@ static char *rcsid = "$OpenBSD: strcpy.c,v 1.5 2003/06/02 20:18:38 millert Exp $
 #include <lib/libkern/libkern.h>
 #endif
 
+#if defined(APIWARN)
+__warn_references(strcpy,
+    "warning: strcpy() is almost always misused, please use strlcpy()");
+#endif
+
 char *
-strcpy(to, from)
-	register char *to;
-	register const char *from;
+strcpy(char *to, const char *from)
 {
 	char *save = to;
 
