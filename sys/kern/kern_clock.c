@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.12 1996/06/09 03:47:29 briggs Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.13 1996/09/09 04:50:33 tholo Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -129,7 +129,7 @@ int time_status = STA_UNSYNC;	/* clock status bits */
 long time_offset = 0;		/* time offset (us) */
 long time_constant = 0;		/* pll time constant */
 long time_tolerance = MAXFREQ;	/* frequency tolerance (scaled ppm) */
-long time_precision = 1;	/* clock precision (us) */
+long time_precision;		/* clock precision (us) */
 long time_maxerror = MAXPHASE;	/* maximum error (us) */
 long time_esterror = MAXPHASE;	/* estimated error (us) */
 
@@ -317,6 +317,9 @@ initclocks()
 	psratio = profhz / i;
 
 #ifdef NTP
+	if (time_precision == 0)
+		time_precision = tick;
+
 	switch (hz) {
 	case 60:
 	case 64:
