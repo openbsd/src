@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.1 1998/07/10 19:09:08 jason Exp $	*/
+/*	$OpenBSD: hme.c,v 1.2 1998/07/10 19:20:13 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -33,7 +33,8 @@
 
 /*
  * Driver for the Happy Meal (hme) ethernet boards
- * Based on the driver from S/Linux by David Miller
+ * Based on information gleaned from reading the
+ *	S/Linux driver by David Miller
  */
 
 #include <sys/param.h>

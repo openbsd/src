@@ -1,4 +1,4 @@
-#	$OpenBSD: SUN4M,v 1.21 1998/04/30 06:12:58 jason Exp $
+#	$OpenBSD: SUN4M,v 1.22 1998/07/10 19:20:09 jason Exp $
 # 	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -86,6 +86,9 @@ lebuffer0	at sbus0 slot ? offset ?		# sun4m SBus
 lebuffer*	at sbus? slot ? offset ?		# sun4m SBus
 le0	at lebuffer0					#
 le*	at lebuffer?					#
+
+# HappyMeal ethernet
+hme*	at sbus? slot ? offset ?
 
 # Sun "bwtwo" black and white framebuffer, found on sun4, sun4c, and sun4m
 # systems.  If your sun4 system has a cgfour installed in the P4 slot,

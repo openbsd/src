@@ -106,6 +106,9 @@ le0	at sbus? slot ? offset ?
 le*	at sbus? slot ? offset ?
 #le0	at obio0 addr 0xf9000000 level 6
 
+# HappyMeal ethernet
+hme*	at sbus? slot ? offset ?
+
 #ie0	at obio0 addr 0xf6000000 level 6
 #ie0	at obio0 addr 0x06000000 level 6		# 4/100
 #ie1	at vmes0 addr 0xffe88000 level 5 vect 0x75
