@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccons.c,v 1.44 2000/07/19 13:46:20 art Exp $	*/
+/*	$OpenBSD: pccons.c,v 1.45 2000/07/19 16:40:17 mickey Exp $	*/
 /*	$NetBSD: pccons.c,v 1.99.4.1 1996/06/04 20:03:53 cgd Exp $	*/
 
 /*-
@@ -56,6 +56,7 @@
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
+#include <sys/timeout.h>
 #ifdef DDB
 #include <ddb/db_var.h>
 #endif
@@ -101,6 +102,8 @@ static int pc_blank = 300;
 #ifdef XSERVER
 int pc_xmode = 0;
 #endif
+struct timeout pccons_aup_tmo;
+struct timeout pccons_blank_tmo;
 
 #define	PCUNIT(x)	(minor(x))
 
@@ -130,6 +133,7 @@ int pcprobe __P((struct device *, void *, void *));
 void pcattach __P((struct device *, struct device *, void *));
 int pcintr __P((void *));
 static void screen_restore __P((int));
+static void screen_blank __P((void *));
 
 struct cfattach pc_ca = {
 	sizeof(struct pc_softc), pcprobe, pcattach
@@ -394,13 +398,13 @@ async_update()
 
 	if (kernel || polling) {
 		if (async)
-			untimeout(do_async_update, NULL);
+			timeout_del(&pccons_aup_tmo);
 		do_async_update((void *)1);
 	} else {
 		if (async)
 			return;
 		async = 1;
-		timeout(do_async_update, NULL, 1);
+		timeout_add(&pccons_aup_tmo, 1);
 	}
 }
 
@@ -908,6 +912,9 @@ pcinit()
 	u_short was;
 	unsigned cursorat;
 
+	timeout_set(&pccons_aup_tmo, do_async_update, NULL);
+	timeout_set(&pccons_blank_tmo, screen_blank, NULL);
+
 	cp = ISA_HOLE_VADDR(CGA_BUF);
 	was = *cp;
 	*cp = (u_short) 0xA55A;
@@ -988,7 +995,6 @@ static u_char iso2ibm437[] = {
 static u_short screen_backup[ROW*COL];
 static int screen_saved = 0;
 static u_short *saved_Crtat;
-static void screen_blank __P((void *));
 
 static void
 screen_blank(arg)
@@ -1014,7 +1020,7 @@ static void
 screen_restore(perm)
 	int perm;
 {
-	untimeout(screen_blank, NULL);
+	timeout_del(&pccons_blank_tmo);
 	if (screen_saved) {
 		Crtat = saved_Crtat;
 		crtat = Crtat + (crtat - screen_backup);
@@ -1022,7 +1028,7 @@ screen_restore(perm)
 		screen_saved = 0;
 	}
 	if (!perm && (pc_blank > 0))
-		timeout(screen_blank, NULL, pc_blank * hz);
+		timeout_add(&pccons_blank_tmo, pc_blank * hz);
 }
 
 /*
