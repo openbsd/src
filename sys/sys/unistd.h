@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.6 1998/06/02 06:10:31 deraadt Exp $	*/
+/*	$OpenBSD: unistd.h,v 1.7 1998/07/13 00:56:54 millert Exp $	*/
 /*	$NetBSD: unistd.h,v 1.10 1994/06/29 06:46:06 cgd Exp $	*/
 
 /*
@@ -69,7 +69,7 @@
 #define	SEEK_END	2	/* set file offset to EOF plus offset */
 
 #ifndef _POSIX_SOURCE
-/* whence values for lseek(2); renamed by POSIX 1003.1 */
+/* old BSD whence values for lseek(2); renamed by POSIX 1003.1 */
 #define	L_SET		SEEK_SET
 #define	L_INCR		SEEK_CUR
 #define	L_XTND		SEEK_END
