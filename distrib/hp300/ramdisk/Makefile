@@ -1,11 +1,11 @@
-#	$OpenBSD: Makefile,v 1.17 2002/04/25 22:12:08 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.18 2002/05/27 02:58:40 deraadt Exp $
 #	$NetBSD: Makefile,v 1.1 1995/07/18 04:13:06 briggs Exp $
 
 TOP=		${.CURDIR}/..
 
 .include "${TOP}/Makefile.inc"
 IMAGE=		ramdisk-${REV}.fs
-CRUNCHCONF?=    ${.CURDIR}/${CBIN}.conf
+CRUNCHCONF?=    ${CBIN}.conf
 BASE=		ramdisk
 
 MOUNT_POINT=	/mnt

@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: Makefile.inc,v 1.5 2002/04/30 09:18:20 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.6 2002/05/27 02:58:40 deraadt Exp $
 #	$NetBSD: Makefile.inc,v 1.1 1995/07/18 04:13:14 briggs Exp $
 #
 
@@ -12,8 +12,11 @@ UTILS?=		${TOP}/../miniroot
 MOUNT_POINT?=	${TOP}/${BASE}/fs
 
 LISTS=		${.CURDIR}/list
-CRUNCHCONF?=	${COMMONDIR}/${CBIN}.conf
+CRUNCHCONF?=	${CBIN}.conf
 MTREE=		${UTILS}/mtree.conf
+
+${CBIN}.conf: ${LISTS}
+	awk -f ${UTILS}/makeconf.awk CBIN=${CBIN} ${LISTS} > ${CBIN}.conf
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 	crunchgen -D ${BSDSRCDIR} -L ${DESTDIR}/usr/lib ${CRUNCHCONF}
