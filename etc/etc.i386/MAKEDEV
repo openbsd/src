@@ -3,11 +3,11 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.i386/MAKEDEV.md,v 1.12 2002/04/12 02:13:21 deraadt Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.43 2002/04/11 20:28:49 deraadt Exp 
+#	OpenBSD: etc.i386/MAKEDEV.md,v 1.13 2002/05/16 16:18:44 provos Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.46 2002/05/16 16:18:44 provos Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.7 2002/02/16 01:19:52 deraadt Exp 
 #
-#	$OpenBSD: MAKEDEV,v 1.130 2002/04/12 02:13:28 deraadt Exp $
+#	$OpenBSD: MAKEDEV,v 1.131 2002/05/16 16:19:42 provos Exp $
 #
 # Copyright (c) 2001,2002 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -104,6 +104,7 @@
 #	pci	PCI bus device
 #	iop*	I2O controller device
 #	radio*	FM tuner device
+#	systrace*	system call tracing device
 #	usbs	make USB devices
 #
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
@@ -258,6 +259,10 @@ mouse*)
 usbs)
 	R utty0 utty1 ugen0 ugen1 ulpt0 ulpt1 uhid0 uhid1 uhid2 uhid3
 	R uscanner0 urio0 usb0 usb1
+	;;
+
+systrace)
+	M systrace c 78 0 644
 	;;
 
 radio*)
@@ -567,8 +572,8 @@ all)
 	R radio0 music0 speaker audio0 wdt0 wt0 uk0 random joy0 joy1
 	R lpa0 lpa1 lpa2 lpt0 lpt1 lpt2 lkm tty00 tty01 tty02 tty03
 	R ttyc0 ttyc1 ttyc2 ttyc3 ttyc4 ttyc5 ttyc6 ttyc7 apm crypto
-	R pf altq pctr wd0 wd1 wd2 wd3 raid0 raid1 raid2 raid3 std st0
-	R st1 fd mcd0
+	R pf altq pctr systrace wd0 wd1 wd2 wd3 raid0 raid1 raid2
+	R raid3 std st0 st1 fd mcd0
 	;;
 
 wd*|sd*|raid*|ccd*)
