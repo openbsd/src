@@ -1,4 +1,4 @@
-/*	$OpenBSD: ancontrol.c,v 1.15 2001/04/30 15:03:01 ericj Exp $	*/
+/*	$OpenBSD: ancontrol.c,v 1.16 2001/05/02 22:31:09 ericj Exp $	*/
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -128,9 +128,9 @@ int main		__P((int, char **));
 #ifdef ANCACHE
 #define ACT_DUMPCACHE 31
 #define ACT_ZEROCACHE 32
-#define OPTIONS "a:b:c:d:e:f:j:k:l:m:n:o:p:r:s:t:v:w:ACIK:NQST:W:Z"
+#define OPTIONS "a:b:c:d:e:f:j:k:l:m:n:o:p:r:s:t:v:w:ACIK:NQSTW:Z"
 #else
-#define OPTIONS "a:b:c:d:e:f:j:k:l:m:n:o:p:r:s:t:v:w:ACIK:NST:W:"
+#define OPTIONS "a:b:c:d:e:f:j:k:l:m:n:o:p:r:s:t:v:w:ACIK:NSTW:"
 #endif /* ANCACHE */
 
 int s;			/* Global socket for ioctl's */
