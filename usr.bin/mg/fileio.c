@@ -1,4 +1,4 @@
-/*	$OpenBSD: fileio.c,v 1.34 2002/08/22 23:28:19 deraadt Exp $	*/
+/*	$OpenBSD: fileio.c,v 1.35 2003/05/06 10:45:07 vincent Exp $	*/
 
 /*
  *	POSIX fileio.c
@@ -168,14 +168,15 @@ fbackupfile(const char *fn)
 	char		buf[BUFSIZ];
 	char		*nname;
 
+	if (stat(fn, &sb) == -1) {
+		ewprintf("Can't stat %s : %s", fn, strerror(errno));
+		return (FALSE);
+	}
+
 	if (asprintf(&nname, "%s~", fn) == -1) {
 		ewprintf("Can't allocate temp file name : %s",
 		    strerror(errno));
 		return (ABORT);
-	}
-	if (stat(fn, &sb) == -1) {
-		ewprintf("Can't stat %s : %s", fn, strerror(errno));
-		return (FALSE);
 	}
 
 	if ((from = open(fn, O_RDONLY)) == -1) {
