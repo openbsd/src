@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wait.2,v 1.10 2000/10/18 05:12:12 aaron Exp $
+.\"	$OpenBSD: wait.2,v 1.11 2001/06/25 04:30:00 pjanzen Exp $
 .\"	$NetBSD: wait.2,v 1.6 1995/02/27 12:39:37 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993, 1994
@@ -208,9 +208,8 @@ If a signal is caught while any of the
 .Fn wait
 calls is pending, the call may be interrupted or restarted when the
 signal-catching routine returns, depending on the options in effect
-for the signal; see
-.Xr intro 2 ,
-System call restart.
+for the signal; for further information, see
+.Xr siginterrupt 3 .
 .Sh RETURN VALUES
 If
 .Fn wait
