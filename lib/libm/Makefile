@@ -1,5 +1,5 @@
 #  $NetBSD: Makefile,v 1.28 1995/11/20 22:06:19 jtc Exp $
-#  $OpenBSD: Makefile,v 1.6 1996/10/25 00:03:05 downsj Exp $
+#  $OpenBSD: Makefile,v 1.7 1996/10/27 12:34:51 deraadt Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
 # 
@@ -137,7 +137,9 @@ MAN+=	acos.3 acosh.3 asin.3 asinh.3 atan.3 atan2.3 atanh.3 ceil.3 \
 
 .if (${MACHINE_ARCH} == "i386")
 LINKS=	/usr/lib/libm.a /usr/lib/libm_i387.a
+.if !defined(NOPROFILE)
 LINKS+=	/usr/lib/libm_p.a /usr/lib/libm_i387_p.a
+.endif
 LINKS+= /usr/lib/libm.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 	/usr/lib/libm_i387.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
 LINKS+= /usr/lib/libm_pic.a /usr/lib/libm_i387_pic.a
