@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.5 1999/08/05 23:03:47 jason Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.6 1999/09/13 22:32:31 niklas Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -120,42 +120,44 @@ struct cfdriver vr_cd = {
 	0, "vr", DV_IFNET
 };
 
-static int vr_newbuf		__P((struct vr_softc *,
-						struct vr_chain_onefrag *));
-static int vr_encap		__P((struct vr_softc *, struct vr_chain *,
-						struct mbuf * ));
+int vr_newbuf			__P((struct vr_softc *,
+				     struct vr_chain_onefrag *));
+int vr_encap			__P((struct vr_softc *, struct vr_chain *,
+				     struct mbuf * ));
 
-static void vr_rxeof		__P((struct vr_softc *));
-static void vr_rxeoc		__P((struct vr_softc *));
-static void vr_txeof		__P((struct vr_softc *));
-static void vr_txeoc		__P((struct vr_softc *));
-static int vr_intr		__P((void *));
-static void vr_start		__P((struct ifnet *));
-static int vr_ioctl		__P((struct ifnet *, u_long, caddr_t));
-static void vr_init		__P((void *));
-static void vr_stop		__P((struct vr_softc *));
-static void vr_watchdog		__P((struct ifnet *));
-static void vr_shutdown		__P((void *));
-static int vr_ifmedia_upd	__P((struct ifnet *));
-static void vr_ifmedia_sts	__P((struct ifnet *, struct ifmediareq *));
+void vr_rxeof			__P((struct vr_softc *));
+void vr_rxeoc			__P((struct vr_softc *));
+void vr_txeof			__P((struct vr_softc *));
+void vr_txeoc			__P((struct vr_softc *));
+int vr_intr			__P((void *));
+void vr_start			__P((struct ifnet *));
+int vr_ioctl			__P((struct ifnet *, u_long, caddr_t));
+void vr_init			__P((void *));
+void vr_stop			__P((struct vr_softc *));
+void vr_watchdog		__P((struct ifnet *));
+void vr_shutdown		__P((void *));
+int vr_ifmedia_upd		__P((struct ifnet *));
+void vr_ifmedia_sts		__P((struct ifnet *, struct ifmediareq *));
 
-static void vr_mii_sync		__P((struct vr_softc *));
-static void vr_mii_send		__P((struct vr_softc *, u_int32_t, int));
-static int vr_mii_readreg	__P((struct vr_softc *, struct vr_mii_frame *));
-static int vr_mii_writereg	__P((struct vr_softc *, struct vr_mii_frame *));
-static u_int16_t vr_phy_readreg	__P((struct vr_softc *, int));
-static void vr_phy_writereg	__P((struct vr_softc *, u_int16_t, u_int16_t));
+void vr_mii_sync		__P((struct vr_softc *));
+void vr_mii_send		__P((struct vr_softc *, u_int32_t, int));
+int vr_mii_readreg		__P((struct vr_softc *,
+				     struct vr_mii_frame *));
+int vr_mii_writereg		__P((struct vr_softc *,
+				     struct vr_mii_frame *));
+u_int16_t vr_phy_readreg	__P((struct vr_softc *, int));
+void vr_phy_writereg		__P((struct vr_softc *, u_int16_t, u_int16_t));
 
-static void vr_autoneg_xmit	__P((struct vr_softc *));
-static void vr_autoneg_mii	__P((struct vr_softc *, int, int));
-static void vr_setmode_mii	__P((struct vr_softc *, int));
-static void vr_getmode_mii	__P((struct vr_softc *));
-static void vr_setcfg		__P((struct vr_softc *, u_int16_t));
-static u_int8_t vr_calchash	__P((u_int8_t *));
-static void vr_setmulti		__P((struct vr_softc *));
-static void vr_reset		__P((struct vr_softc *));
-static int vr_list_rx_init	__P((struct vr_softc *));
-static int vr_list_tx_init	__P((struct vr_softc *));
+void vr_autoneg_xmit		__P((struct vr_softc *));
+void vr_autoneg_mii		__P((struct vr_softc *, int, int));
+void vr_setmode_mii		__P((struct vr_softc *, int));
+void vr_getmode_mii		__P((struct vr_softc *));
+void vr_setcfg			__P((struct vr_softc *, u_int16_t));
+u_int8_t vr_calchash		__P((u_int8_t *));
+void vr_setmulti		__P((struct vr_softc *));
+void vr_reset			__P((struct vr_softc *));
+int vr_list_rx_init		__P((struct vr_softc *));
+int vr_list_tx_init		__P((struct vr_softc *));
 
 #define VR_SETBIT(sc, reg, x)				\
 	CSR_WRITE_1(sc, reg,				\
@@ -192,7 +194,8 @@ static int vr_list_tx_init	__P((struct vr_softc *));
 /*
  * Sync the PHYs by setting data bit and strobing the clock 32 times.
  */
-static void vr_mii_sync(sc)
+void
+vr_mii_sync(sc)
 	struct vr_softc		*sc;
 {
 	register int		i;
@@ -212,7 +215,8 @@ static void vr_mii_sync(sc)
 /*
  * Clock a series of bits through the MII.
  */
-static void vr_mii_send(sc, bits, cnt)
+void
+vr_mii_send(sc, bits, cnt)
 	struct vr_softc		*sc;
 	u_int32_t		bits;
 	int			cnt;
@@ -237,7 +241,8 @@ static void vr_mii_send(sc, bits, cnt)
 /*
  * Read an PHY register through the MII.
  */
-static int vr_mii_readreg(sc, frame)
+int
+vr_mii_readreg(sc, frame)
 	struct vr_softc		*sc;
 	struct vr_mii_frame	*frame;
 	
@@ -331,7 +336,8 @@ fail:
 /*
  * Write to a PHY register through the MII.
  */
-static int vr_mii_writereg(sc, frame)
+int
+vr_mii_writereg(sc, frame)
 	struct vr_softc		*sc;
 	struct vr_mii_frame	*frame;
 	
@@ -381,7 +387,8 @@ static int vr_mii_writereg(sc, frame)
 	return(0);
 }
 
-static u_int16_t vr_phy_readreg(sc, reg)
+u_int16_t
+vr_phy_readreg(sc, reg)
 	struct vr_softc		*sc;
 	int			reg;
 {
@@ -396,7 +403,8 @@ static u_int16_t vr_phy_readreg(sc, reg)
 	return(frame.mii_data);
 }
 
-static void vr_phy_writereg(sc, reg, data)
+void
+vr_phy_writereg(sc, reg, data)
 	struct vr_softc		*sc;
 	u_int16_t		reg;
 	u_int16_t		data;
@@ -417,7 +425,8 @@ static void vr_phy_writereg(sc, reg, data)
 /*
  * Calculate CRC of a multicast group address, return the lower 6 bits.
  */
-static u_int8_t vr_calchash(addr)
+u_int8_t
+vr_calchash(addr)
 	u_int8_t		*addr;
 {
 	u_int32_t		crc, carry;
@@ -445,7 +454,8 @@ static u_int8_t vr_calchash(addr)
 /*
  * Program the 64-bit multicast hash filter.
  */
-static void vr_setmulti(sc)
+void
+vr_setmulti(sc)
 	struct vr_softc		*sc;
 {
 	struct ifnet		*ifp;
@@ -501,7 +511,8 @@ static void vr_setmulti(sc)
 /*
  * Initiate an autonegotiation session.
  */
-static void vr_autoneg_xmit(sc)
+void
+vr_autoneg_xmit(sc)
 	struct vr_softc		*sc;
 {
 	u_int16_t		phy_sts;
@@ -521,7 +532,8 @@ static void vr_autoneg_xmit(sc)
 /*
  * Invoke autonegotiation on a PHY.
  */
-static void vr_autoneg_mii(sc, flag, verbose)
+void
+vr_autoneg_mii(sc, flag, verbose)
 	struct vr_softc		*sc;
 	int			flag;
 	int			verbose;
@@ -666,7 +678,8 @@ static void vr_autoneg_mii(sc, flag, verbose)
 	return;
 }
 
-static void vr_getmode_mii(sc)
+void
+vr_getmode_mii(sc)
 	struct vr_softc		*sc;
 {
 	u_int16_t		bmsr;
@@ -728,7 +741,8 @@ static void vr_getmode_mii(sc)
 /*
  * Set speed and duplex mode.
  */
-static void vr_setmode_mii(sc, media)
+void
+vr_setmode_mii(sc, media)
 	struct vr_softc		*sc;
 	int			media;
 {
@@ -790,7 +804,8 @@ static void vr_setmode_mii(sc, media)
  * 'full-duplex' and '100Mbps' bits in the netconfig register, we
  * first have to put the transmit and/or receive logic in the idle state.
  */
-static void vr_setcfg(sc, bmcr)
+void
+vr_setcfg(sc, bmcr)
 	struct vr_softc		*sc;
 	u_int16_t		bmcr;
 {
@@ -812,7 +827,8 @@ static void vr_setcfg(sc, bmcr)
 	return;
 }
 
-static void vr_reset(sc)
+void
+vr_reset(sc)
 	struct vr_softc		*sc;
 {
 	register int		i;
@@ -1089,7 +1105,8 @@ fail:
 /*
  * Initialize the transmit descriptors.
  */
-static int vr_list_tx_init(sc)
+int
+vr_list_tx_init(sc)
 	struct vr_softc		*sc;
 {
 	struct vr_chain_data	*cd;
@@ -1120,7 +1137,8 @@ static int vr_list_tx_init(sc)
  * we arrange the descriptors in a closed ring, so that the last descriptor
  * points back to the first.
  */
-static int vr_list_rx_init(sc)
+int
+vr_list_rx_init(sc)
 	struct vr_softc		*sc;
 {
 	struct vr_chain_data	*cd;
@@ -1160,7 +1178,8 @@ static int vr_list_rx_init(sc)
  * MCLBYTES is 2048, so we have to subtract one otherwise we'll
  * overflow the field and make a mess.
  */
-static int vr_newbuf(sc, c)
+int
+vr_newbuf(sc, c)
 	struct vr_softc		*sc;
 	struct vr_chain_onefrag	*c;
 {
@@ -1188,7 +1207,8 @@ static int vr_newbuf(sc, c)
  * A frame has been uploaded: pass the resulting mbuf chain up to
  * the higher level protocols.
  */
-static void vr_rxeof(sc)
+void
+vr_rxeof(sc)
 	struct vr_softc		*sc;
 {
         struct ether_header	*eh;
@@ -1291,7 +1311,8 @@ static void vr_rxeof(sc)
 	return;
 }
 
-void vr_rxeoc(sc)
+void
+vr_rxeoc(sc)
 	struct vr_softc		*sc;
 {
 
@@ -1309,7 +1330,8 @@ void vr_rxeoc(sc)
  * the list buffers.
  */
 
-static void vr_txeof(sc)
+void
+vr_txeof(sc)
 	struct vr_softc		*sc;
 {
 	struct vr_chain		*cur_tx;
@@ -1367,7 +1389,8 @@ static void vr_txeof(sc)
 /*
  * TX 'end of channel' interrupt handler.
  */
-static void vr_txeoc(sc)
+void
+vr_txeoc(sc)
 	struct vr_softc		*sc;
 {
 	struct ifnet		*ifp;
@@ -1386,7 +1409,8 @@ static void vr_txeoc(sc)
 	return;
 }
 
-static int vr_intr(arg)
+int
+vr_intr(arg)
 	void			*arg;
 {
 	struct vr_softc		*sc;
@@ -1461,7 +1485,8 @@ static int vr_intr(arg)
  * Encapsulate an mbuf chain in a descriptor by coupling the mbuf data
  * pointers to the fragment pointers.
  */
-static int vr_encap(sc, c, m_head)
+int
+vr_encap(sc, c, m_head)
 	struct vr_softc		*sc;
 	struct vr_chain		*c;
 	struct mbuf		*m_head;
@@ -1530,7 +1555,8 @@ static int vr_encap(sc, c, m_head)
  * physical addresses.
  */
 
-static void vr_start(ifp)
+void
+vr_start(ifp)
 	struct ifnet		*ifp;
 {
 	struct vr_softc		*sc;
@@ -1601,7 +1627,8 @@ static void vr_start(ifp)
 	return;
 }
 
-static void vr_init(xsc)
+void
+vr_init(xsc)
 	void			*xsc;
 {
 	struct vr_softc		*sc = xsc;
@@ -1695,7 +1722,8 @@ static void vr_init(xsc)
 /*
  * Set media options.
  */
-static int vr_ifmedia_upd(ifp)
+int
+vr_ifmedia_upd(ifp)
 	struct ifnet		*ifp;
 {
 	struct vr_softc		*sc;
@@ -1718,7 +1746,8 @@ static int vr_ifmedia_upd(ifp)
 /*
  * Report current media status.
  */
-static void vr_ifmedia_sts(ifp, ifmr)
+void
+vr_ifmedia_sts(ifp, ifmr)
 	struct ifnet		*ifp;
 	struct ifmediareq	*ifmr;
 {
@@ -1763,7 +1792,8 @@ static void vr_ifmedia_sts(ifp, ifmr)
 	return;
 }
 
-static int vr_ioctl(ifp, command, data)
+int
+vr_ioctl(ifp, command, data)
 	struct ifnet		*ifp;
 	u_long			command;
 	caddr_t			data;
@@ -1823,7 +1853,8 @@ static int vr_ioctl(ifp, command, data)
 	return(error);
 }
 
-static void vr_watchdog(ifp)
+void
+vr_watchdog(ifp)
 	struct ifnet		*ifp;
 {
 	struct vr_softc		*sc;
@@ -1856,7 +1887,8 @@ static void vr_watchdog(ifp)
  * Stop the adapter and free any mbufs allocated to the
  * RX and TX lists.
  */
-static void vr_stop(sc)
+void
+vr_stop(sc)
 	struct vr_softc		*sc;
 {
 	register int		i;
@@ -1905,7 +1937,8 @@ static void vr_stop(sc)
  * Stop all chip I/O so that the kernel's probe routines don't
  * get confused by errant DMAs when rebooting.
  */
-static void vr_shutdown(arg)
+void
+vr_shutdown(arg)
 	void			*arg;
 {
 	struct vr_softc		*sc = (struct vr_softc *)arg;
