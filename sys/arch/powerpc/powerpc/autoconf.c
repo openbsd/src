@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.3 1997/10/13 13:42:53 pefo Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.4 1997/10/21 11:00:09 pefo Exp $	*/
 /*
  * Copyright (c) 1996, 1997 Per Fogelstrom
  * Copyright (c) 1995 Theo de Raadt
@@ -41,7 +41,7 @@
  * from: Utah Hdr: autoconf.c 1.31 91/01/21
  *
  *	from: @(#)autoconf.c	8.1 (Berkeley) 6/10/93
- *      $Id: autoconf.c,v 1.3 1997/10/13 13:42:53 pefo Exp $
+ *      $Id: autoconf.c,v 1.4 1997/10/21 11:00:09 pefo Exp $
  */
 
 /*
@@ -70,6 +70,7 @@ extern void	dumpconf __P((void));
 static int findblkmajor __P((struct device *));
 static struct device * getdisk __P((char *, int, int, dev_t *));
 struct device * getdevunit __P((char *, int));
+static struct devmap * findtype __P((char **));
 void makebootdev __P((char *cp));
 int getpno __P((char **));
 
@@ -229,6 +230,7 @@ setroot()
 #endif
 
 printf("bootpath: '%s'\n", bootpath);
+	makebootdev(bootpath);
 	if(boothowto & RB_DFLTROOT)
 		return;		/* Boot compiled in */
 
@@ -429,45 +431,67 @@ getdevunit(name, unit)
 }
 
 struct devmap {
-	char *attachment;
+	char *att;
 	char *dev;
+	int   type;
 };
+#define	T_BUS	0
+#define	T_SCSI	1
+#define	T_DISK	2
 
-/*
- * Look at the string 'cp' and decode the boot device.
- * Boot names look like: '/pci/scsi@c/disk@0,0/bsd'
- * (beware for empty scsi id's...)
- */
-void
-makebootdev(cp)
-	char *cp;
+static struct devmap *
+findtype(s)
+	char **s;
 {
-	int	unit, part, ctrl;
 	static struct devmap devmap[] = {
-		{ "multi", "fd" },
-		{ "eisa", "wd" },
-		{ "scsi", "sd" },
+		{ "/pci", NULL, T_BUS },
+		{ "/scsi@", "sd", T_SCSI },
+		{ "/disk@", "sd", T_DISK },
 		{ NULL, NULL }
 	};
 	struct devmap *dp = &devmap[0];
 
-	while (dp->attachment) {
-		if (strncmp (cp, dp->attachment, strlen(dp->attachment)) == 0)
+	while (dp->att) {
+		if (strncmp (*s, dp->att, strlen(dp->att)) == 0) {
+			*s += strlen(dp->att);
 			break;
+		}
 		dp++;
 	}
-	if (!dp->attachment) {
-		printf("Warning: boot device unrecognized: %s\n", cp);
+	return(dp);
+}
+
+/*
+ * Look at the string 'cp' and decode the boot device.
+ * Boot names look like: '/pci/scsi@c/disk@0,0/bsd'
+ */
+void
+makebootdev(bp)
+	char *bp;
+{
+	int	unit;
+	char   *dev, *cp;
+	struct devmap *dp;
+
+	cp = bp;
+	do {
+		dp = findtype(&cp);
+		if (!dp->att) {
+			printf("Warning: boot device unrecognized: %s\n", bp);
+			return;
+		}
+	} while(dp->type != T_SCSI);
+
+	dev = dp->dev;
+	while(*cp && *cp != '/')
+		cp++;
+	dp = findtype(&cp);
+	if (!dp->att || dp->type != T_DISK) {
+		printf("Warning: boot device unrecognized: %s\n", bp);
 		return;
 	}
-	ctrl = getpno(&cp);
-	if(*cp++ == ')')
-		unit = getpno(&cp);
-	if(*cp++ == ')')
-		getpno(&cp);
-	if(*cp++ == ')')
-		part = getpno(&cp) - 1;
-	sprintf(bootdev, "%s%d%c", dp->dev, ctrl*16 + unit, 'a' + part);
+	unit = getpno(&cp);
+	sprintf(bootdev, "%s%d%c", dev, unit, 'a');
 }
 
 int
@@ -477,14 +501,9 @@ getpno(cp)
 	int val = 0;
 	char *cx = *cp;
 
-	while(*cx && *cx != '(')
+	while(*cx && *cx >= '0' && *cx <= '9') {
+		val = val * 10 + *cx - '0';
 		cx++;
-	if(*cx == '(') {
-		cx++;
-		while(*cx && *cx != ')') {
-			val = val * 10 + *cx - '0';
-			cx++;
-		}
 	}
 	*cp = cx;
 	return val;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.10 1997/10/15 14:07:52 pefo Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.11 1997/10/21 11:00:10 pefo Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -239,8 +239,8 @@ initppc(startkernel, endkernel, args)
 	 */                                                               
 #ifdef RAMDISK_HOOKS                                         
 	boothowto = RB_SINGLE | RB_DFLTROOT;
-#else    
-	boothowto = RB_SINGLE | RB_ASKNAME;
+#else
+	boothowto = RB_AUTOBOOT;
 #endif /* RAMDISK_HOOKS */
 
 	/*
