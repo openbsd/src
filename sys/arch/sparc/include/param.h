@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.25 2002/03/14 01:26:43 millert Exp $	*/
+/*	$OpenBSD: param.h,v 1.26 2002/03/15 00:06:08 miod Exp $	*/
 /*	$NetBSD: param.h,v 1.29 1997/03/10 22:50:37 pk Exp $ */
 
 /*
@@ -208,12 +208,6 @@ extern int mmumod;
 #	define CPU_ISSUN4	(cputyp == CPU_SUN4)
 #	define CPU_ISSUN4OR4C	(cputyp == CPU_SUN4 || cputyp == CPU_SUN4C)
 #	define CPU_ISSUN4COR4M	(cputyp == CPU_SUN4C || cputyp == CPU_SUN4M)
-#	define NBPG		uvmexp.pagesize
-#	define PGOFSET		uvmexp.pagemask
-#	define PGSHIFT		uvmexp.pageshift
-#	define PAGE_SIZE	uvmexp.pagesize
-#	define PAGE_MASK	uvmexp.pagemask
-#	define PAGE_SHIFT	uvmexp.pageshift
 #elif defined(SUN4M) && defined(SUN4C) && !defined(SUN4)
 #	define CPU_ISSUN4M	(cputyp == CPU_SUN4M)
 #	define CPU_ISSUN4C	(cputyp == CPU_SUN4C)
@@ -232,12 +226,6 @@ extern int mmumod;
 #	define CPU_ISSUN4	(cputyp == CPU_SUN4)
 #	define CPU_ISSUN4OR4C	(cputyp == CPU_SUN4)
 #	define CPU_ISSUN4COR4M	(cputyp == CPU_SUN4M)
-#	define NBPG		uvmexp.pagesize
-#	define PGOFSET		uvmexp.pagemask
-#	define PGSHIFT		uvmexp.pageshift
-#	define PAGE_SIZE	uvmexp.pagesize
-#	define PAGE_MASK	uvmexp.pagemask
-#	define PAGE_SHIFT	uvmexp.pageshift
 #elif defined(SUN4M) && !defined(SUN4C) && !defined(SUN4)
 #	define CPU_ISSUN4M	(1)
 #	define CPU_ISSUN4C	(0)
@@ -256,12 +244,6 @@ extern int mmumod;
 #	define CPU_ISSUN4	(cputyp == CPU_SUN4)
 #	define CPU_ISSUN4OR4C	(1)
 #	define CPU_ISSUN4COR4M	(cputyp == CPU_SUN4C)
-#	define NBPG		uvmexp.pagesize
-#	define PGOFSET		uvmexp.pagemask
-#	define PGSHIFT		uvmexp.pageshift
-#	define PAGE_SIZE	uvmexp.pagesize
-#	define PAGE_MASK	uvmexp.pagemask
-#	define PAGE_SHIFT	uvmexp.pageshift
 #elif !defined(SUN4M) && defined(SUN4C) && !defined(SUN4)
 #	define CPU_ISSUN4M	(0)
 #	define CPU_ISSUN4C	(1)
@@ -292,12 +274,24 @@ extern int mmumod;
 #	define CPU_ISSUN4	(cputyp == CPU_SUN4)
 #	define CPU_ISSUN4OR4C	(cputyp == CPU_SUN4 || cputyp == CPU_SUN4C)
 #	define CPU_ISSUN4COR4M	(cputyp == CPU_SUN4C || cputyp == CPU_SUN4M)
+#endif
+
+#ifndef	NBPG
+#ifdef	STANDALONE	/* boot blocks */
+#	define NBPG		nbpg
+#	define PGOFSET		pgofset
+#	define PGSHIFT		pgshift
+#	define PAGE_SIZE	nbpg
+#	define PAGE_MASK	pgofset
+#	define PAGE_SHIFT	pgshift
+#else
 #	define NBPG		uvmexp.pagesize
 #	define PGOFSET		uvmexp.pagemask
 #	define PGSHIFT		uvmexp.pageshift
 #	define PAGE_SIZE	uvmexp.pagesize
 #	define PAGE_MASK	uvmexp.pagemask
 #	define PAGE_SHIFT	uvmexp.pageshift
+#endif
 #endif
 
 #endif /* _SPARC_PARAM_H_ */
