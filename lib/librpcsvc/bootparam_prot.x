@@ -44,12 +44,13 @@
 %#include <sys/errno.h>
 %#include <sys/ucred.h>
 %#include <nfs/nfsv2.h>
+%#include <nfs/rpcv2.h>
 %#include <nfs/nfs.h>
 #else
 %#ifndef lint
 %/*static char sccsid[] = "from: @(#)bootparam_prot.x 1.2 87/06/24 Copyr 1987 Sun Micro";*/
 %/*static char sccsid[] = "from: @(#)bootparam_prot.x	2.1 88/08/01 4.0 RPCSRC";*/
-%static char rcsid[] = "$Id: bootparam_prot.x,v 1.1.1.1 1995/10/18 08:43:10 deraadt Exp $";
+%static char rcsid[] = "$Id: bootparam_prot.x,v 1.2 1996/04/17 07:32:02 deraadt Exp $";
 %#endif /* not lint */
 #endif
 
