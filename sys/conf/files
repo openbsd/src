@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.222 2001/08/18 22:05:21 jason Exp $
+#	$OpenBSD: files,v 1.223 2001/08/19 17:12:20 jason Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -124,6 +124,10 @@ file	dev/ic/gdt_common.c	gdt
 # 3ware Escalade RAID controllers
 device	twe: scsi
 file	dev/ic/twe.c		twe
+
+# LSI64854 DMA controller back-end
+define	lsi64854
+file	dev/ic/lsi64854.c	lsi64854
 
 # Compaq Smart ARRAY controllers
 device	cac: scsi
