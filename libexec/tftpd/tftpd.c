@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.14 2000/02/01 03:23:22 deraadt Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.15 2001/01/17 19:24:49 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tftpd.c	5.13 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: tftpd.c,v 1.14 2000/02/01 03:23:22 deraadt Exp $: tftpd.c,v 1.6 1997/02/16 23:49:21 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: tftpd.c,v 1.15 2001/01/17 19:24:49 deraadt Exp $: tftpd.c,v 1.6 1997/02/16 23:49:21 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -408,8 +408,8 @@ timer()
 
 	timeout += rexmtval;
 	if (timeout >= maxtimeout)
-		exit(1);
-	longjmp(timeoutbuf, 1);
+		_exit(1);
+	longjmp(timeoutbuf, 1);		/* XXX longjmp/signal resource leaks */
 }
 
 /*
@@ -477,7 +477,7 @@ abort:
 void
 justquit()
 {
-	exit(0);
+	_exit(0);
 }
 
 
