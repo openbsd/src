@@ -1877,8 +1877,6 @@
 ./usr/share/man/cat8/sliplogin.0
 ./usr/share/man/cat8/slstats.0
 ./usr/share/man/cat8/smrsh.0
-./usr/share/man/cat8/smtpd.0
-./usr/share/man/cat8/smtpfwdd.0
 ./usr/share/man/cat8/snkadm.0
 ./usr/share/man/cat8/snkinit.0
 ./usr/share/man/cat8/sparc

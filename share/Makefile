@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.9 2001/05/30 02:11:00 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.10 2002/10/04 23:16:41 deraadt Exp $
 
 SUBDIR=	dict doc ipsec lkm man misc mk tabset termtypes \
-	tmac zoneinfo smtpd
+	tmac zoneinfo
 
 .include <bsd.subdir.mk>

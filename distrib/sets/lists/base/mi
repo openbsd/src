@@ -1183,8 +1183,6 @@
 ./usr/libexec/sftp-server
 ./usr/libexec/sm.bin
 ./usr/libexec/smrsh
-./usr/libexec/smtpd
-./usr/libexec/smtpfwdd
 ./usr/libexec/spellprog
 ./usr/libexec/ssh-keysign
 ./usr/libexec/tcpd
@@ -1984,10 +1982,6 @@
 ./usr/share/sendmail/siteconfig/uucp.old.arpa.m4
 ./usr/share/sendmail/siteconfig/uucp.ucbarpa.m4
 ./usr/share/sendmail/siteconfig/uucp.ucbvax.m4
-./usr/share/smtpd
-./usr/share/smtpd/example.antispam
-./usr/share/smtpd/example.features
-./usr/share/smtpd/example.norelay
 ./usr/share/tabset
 ./usr/share/tabset/3101
 ./usr/share/tabset/9837
@@ -3780,7 +3774,6 @@
 ./var/spool/lpd
 ./var/spool/mqueue
 ./var/spool/output
-./var/spool/smtpd
 ./var/spool/uucp
 ./var/spool/uucppublic
 ./var/ssyslog
