@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aue.4,v 1.22 2004/10/31 00:37:40 jsg Exp $
+.\"	$OpenBSD: aue.4,v 1.23 2005/01/30 01:26:23 dlg Exp $
 .\"	$NetBSD: aue.4,v 1.9 2002/07/11 00:23:31 rh Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
@@ -41,6 +41,8 @@
 .Nd ADMtek AN986 / ADM8511 Pegasus family USB Ethernet driver
 .Sh SYNOPSIS
 .Cd "aue*   at uhub?"
+.Cd "acphy* at mii?"
+.Cd "bmtphy* at mii?"
 .Cd "ukphy* at mii?"
 .Sh DESCRIPTION
 The
@@ -175,13 +177,16 @@ before a timeout expired.
 The driver failed to allocate an mbuf for the receiver ring.
 .El
 .Sh SEE ALSO
+.Xr acphy 4 ,
 .Xr arp 4 ,
+.Xr bmtphy 4 ,
+.Xr hostname.if 5 ,
+.Xr ifconfig 8
 .Xr ifmedia 4 ,
 .Xr intro 4 ,
 .Xr netintro 4 ,
+.Xr ukphy 4 ,
 .Xr usb 4 ,
-.Xr hostname.if 5 ,
-.Xr ifconfig 8
 .Rs
 .%T ADMtek AN986 and ADM8511 data sheets
 .%O http://www.admtek.com.tw
