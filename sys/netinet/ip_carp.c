@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.41 2004/03/24 06:13:56 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.42 2004/03/24 06:54:04 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -336,7 +336,7 @@ carp_input(struct mbuf *m, ...)
 
 	if (m->m_pkthdr.len < iplen + sizeof(*ch)) {
 		carpstats.carps_badlen++;
-		CARP_LOG("received len %d < 8",
+		CARP_LOG("received len %d < 36",
 		    m->m_len - sizeof(struct ip));
 		m_freem(m);
 		return;
