@@ -1,3 +1,5 @@
+/*	$OpenBSD: extern.h,v 1.2 1997/01/17 16:12:36 millert Exp $	*/
+
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.

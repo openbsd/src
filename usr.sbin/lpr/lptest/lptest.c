@@ -1,4 +1,4 @@
-/*	$OpenBSD: lptest.c,v 1.2 1996/04/21 23:40:46 deraadt Exp $ */
+/*	$OpenBSD: lptest.c,v 1.3 1997/01/17 16:12:48 millert Exp $ */
 /*	$NetBSD: lptest.c,v 1.5 1996/03/21 18:13:20 jtc Exp $	*/
 
 /*
@@ -42,7 +42,11 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)lptest.c	8.1 (Berkeley) 6/6/93";
+#else
+static char rcsid[] = "$OpenBSD: lptest.c,v 1.3 1997/01/17 16:12:48 millert Exp $";
+#endif
 #endif /* not lint */
 
 #include <stdlib.h>

@@ -1,3 +1,5 @@
+/*	$OpenBSD: recvjob.c,v 1.7 1997/01/17 16:12:42 millert Exp $	*/
+
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -39,7 +41,11 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)recvjob.c	8.2 (Berkeley) 4/27/95";
+#else
+static char rcsid[] = "$OpenBSD: recvjob.c,v 1.7 1997/01/17 16:12:42 millert Exp $";
+#endif
 #endif /* not lint */
 
 /*

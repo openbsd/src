@@ -1,3 +1,5 @@
+/*	$OpenBSD: cmdtab.c,v 1.2 1997/01/17 16:12:35 millert Exp $	*/
+
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,7 +34,11 @@
  */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)cmdtab.c	8.1 (Berkeley) 6/6/93";
+#else
+static char rcsid[] = "$OpenBSD: cmdtab.c,v 1.2 1997/01/17 16:12:35 millert Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/cdefs.h>
