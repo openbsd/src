@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.104 2001/06/24 18:15:38 provos Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.105 2001/06/24 18:22:47 provos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -287,6 +287,7 @@ struct tdb				/* tunnel descriptor block */
 #define TDBF_NOREPLAY         0x02000	/* No replay counter present */
 #define TDBF_RANDOMPADDING    0x04000	/* Random data in the ESP padding */
 #define TDBF_SKIPCRYPTO       0x08000	/* Skip actual crypto processing */
+#define TDBF_USEDTUNNEL       0x10000	/* Appended a tunnel header in past */
 
     u_int32_t	      tdb_flags;	/* Flags related to this TDB */
 
@@ -346,6 +347,9 @@ struct tdb				/* tunnel descriptor block */
     struct ipsec_ref *tdb_dstid;	/* Destination ID for this SA */
     struct ipsec_ref *tdb_local_auth;	/* Local authentication material */
     struct ipsec_ref *tdb_remote_auth;	/* Remote authentication material */
+
+    u_int32_t	      tdb_mtu;		/* MTU at this point in the chain */
+    u_int64_t	      tdb_mtutimeout;	/* When to ignore this entry */
 
     TAILQ_HEAD(tdb_inp_head_in, inpcb) tdb_inp_in;
     TAILQ_HEAD(tdb_inp_head_out, inpcb) tdb_inp_out;
@@ -543,6 +547,7 @@ extern int ah_massage_headers(struct mbuf **, int, int, int, int);
 #ifdef INET
 extern void ah4_input __P((struct mbuf *, ...));
 extern int ah4_input_cb __P((struct mbuf *, ...));
+extern void *ah4_ctlinput __P((int, struct sockaddr *, void *));
 #endif /* INET */
 
 #ifdef INET6
@@ -563,6 +568,7 @@ extern int esp_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 #ifdef INET
 extern void esp4_input __P((struct mbuf *, ...));
 extern int esp4_input_cb __P((struct mbuf *, ...));
+extern void *esp4_ctlinput __P((int, struct sockaddr *, void *));
 #endif /* INET */
 
 #ifdef INET6
@@ -614,5 +620,7 @@ extern void ipsp_skipcrypto_unmark(struct tdb_ident *);
 extern void ipsp_skipcrypto_mark(struct tdb_ident *);
 extern struct m_tag *ipsp_parse_headers(struct mbuf *, int, u_int8_t);
 extern int ipsp_ref_match(struct ipsec_ref *, struct ipsec_ref *);
+extern ssize_t ipsec_hdrsz(struct tdb *);
+extern void ipsec_adjust_mtu(struct mbuf *, u_int32_t);
 #endif /* _KERNEL */
 #endif /* _NETINET_IPSP_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.45 2001/06/23 16:15:56 fgsch Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.46 2001/06/24 18:22:47 provos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -37,6 +37,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/protosw.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/sysctl.h>
@@ -49,7 +50,9 @@
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
+#include <netinet/ip_var.h>
 #include <netinet/in_var.h>
+#include <netinet/ip_icmp.h>
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
 
@@ -71,6 +74,7 @@
 #include "bpfilter.h"
 
 int ipsec_common_input(struct mbuf *, int, int, int, int);
+void *ipsec_common_ctlinput(int, struct sockaddr *, void *, int);
 
 #ifdef ENCDEBUG
 #define DPRINTF(x)	if (encdebug) printf x
@@ -643,6 +647,17 @@ ah4_input_cb(struct mbuf *m, ...)
     return 0;
 }
 
+
+void *
+ah4_ctlinput(int cmd, struct sockaddr *sa, void *v)
+{
+	if (sa->sa_family != AF_INET ||
+	    sa->sa_len != sizeof(struct sockaddr_in))
+		return (NULL);
+
+	return (ipsec_common_ctlinput(cmd, sa, v, IPPROTO_AH));
+}
+
 /* IPv4 ESP wrapper */
 void
 esp4_input(struct mbuf *m, ...)
@@ -685,6 +700,79 @@ esp4_input_cb(struct mbuf *m, ...)
     splx(s);
 
     return 0;
+}
+
+void *
+ipsec_common_ctlinput(int cmd, struct sockaddr *sa, void *v, int proto)
+{
+	extern u_int ip_mtudisc_timeout;
+	struct ip *ip = v;
+	int s;
+
+	if (cmd == PRC_MSGSIZE && ip && ip->ip_v == 4) {
+		struct tdb *tdbp;
+		struct sockaddr_in dst;
+		struct icmp *icp;
+		int hlen = ip->ip_hl << 2;
+		u_int32_t spi, mtu;
+		ssize_t adjust;
+	
+		/* Find the right MTU */
+		icp = (struct icmp *)((caddr_t) ip -
+				      offsetof(struct icmp, icmp_ip));
+		mtu = ntohs(icp->icmp_nextmtu);
+
+		/* Ignore the packet, if we do not receive a MTU
+		 * or the MTU is too small to be acceptable.
+		 */
+		if (mtu < 296)
+			return (NULL);
+
+		bzero(&dst, sizeof(struct sockaddr_in));
+		dst.sin_family = AF_INET;
+		dst.sin_len = sizeof(struct sockaddr_in);
+		dst.sin_addr.s_addr = ip->ip_dst.s_addr;
+
+		bcopy((caddr_t)ip + hlen, &spi, sizeof(u_int32_t));
+
+		s = spltdb();
+		tdbp = gettdb(spi, (union sockaddr_union *)&dst, proto);
+		if (tdbp == NULL || tdbp->tdb_flags & TDBF_INVALID) {
+			splx(s);
+			return (NULL);
+		}
+
+		/* Walk the chain backswards to the first tdb */
+		for (; tdbp; tdbp = tdbp->tdb_inext) {
+			if (tdbp->tdb_flags & TDBF_INVALID ||
+			    (adjust = ipsec_hdrsz(tdbp)) == -1) {
+				splx(s);
+				return (NULL);
+			}
+
+			mtu -= adjust;
+
+			/* Store adjusted MTU in tdb */
+			tdbp->tdb_mtu = mtu;
+			tdbp->tdb_mtutimeout = time.tv_sec +
+				ip_mtudisc_timeout;
+		}
+		splx(s);
+
+		return (NULL);
+	}
+
+	return (NULL);
+}
+
+void *
+esp4_ctlinput(int cmd, struct sockaddr *sa, void *v)
+{
+	if (sa->sa_family != AF_INET ||
+	    sa->sa_len != sizeof(struct sockaddr_in))
+		return (NULL);
+
+	return (ipsec_common_ctlinput(cmd, sa, v, IPPROTO_ESP));
 }
 #endif /* INET */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_output.c,v 1.14 2001/06/08 03:13:15 angelos Exp $ */
+/*	$OpenBSD: ipsec_output.c,v 1.15 2001/06/24 18:22:47 provos Exp $ */
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -48,6 +48,7 @@
 #include <netinet/ip_ipsp.h>
 #include <netinet/ip_ah.h>
 #include <netinet/ip_esp.h>
+#include <crypto/xform.h>
 
 #ifdef ENCDEBUG
 #define DPRINTF(x)	if (encdebug) printf x
@@ -67,6 +68,7 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
     struct mbuf *mp;
 
 #ifdef INET
+    int setdf = 0;
     struct ip *ip;
 #endif /* INET */
 #ifdef INET6
@@ -159,6 +161,8 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 
 #ifdef INET
 	    ip = mtod(m, struct ip *);
+	    /* This is not a bridge packet, remember if we had IP_DF */
+	    setdf = ntohs(ip->ip_off) & IP_DF;
 #endif /* INET */
 
 #ifdef INET6
@@ -233,6 +237,22 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 
 	    m = mp;
 	    mp = NULL;
+
+#ifdef INET
+	    if (tdb->tdb_dst.sa.sa_family == AF_INET && setdf) {
+	      	    ip = mtod(m, struct ip *);
+		    if (m->m_len < sizeof(struct ip))
+			    if ((m = m_pullup(m, sizeof(struct ip))) == NULL)
+				    return ENOBUFS;
+		    
+		    NTOHS(ip->ip_off);
+		    ip->ip_off |= IP_DF;
+		    HTONS(ip->ip_off);
+	    }
+
+	    /* Remember that we appended a tunnel header */
+	    tdb->tdb_flags |= TDBF_USEDTUNNEL;
+#endif
 	}
 
 	/* We may be done with this TDB */
@@ -391,4 +411,90 @@ ipsp_process_done(struct mbuf *m, struct tdb *tdb)
 
     /* Not reached */
     return EINVAL;
+}
+
+ssize_t
+ipsec_hdrsz(struct tdb *tdbp)
+{
+	ssize_t adjust;
+
+	switch (tdbp->tdb_sproto) {
+	case IPPROTO_ESP:
+		if (tdbp->tdb_encalgxform == NULL)
+			return (-1);
+
+		/* Header length */
+		if (tdbp->tdb_flags & TDBF_NOREPLAY)
+			adjust = sizeof(u_int32_t) + tdbp->tdb_ivlen;
+		else
+			adjust = 2 * sizeof(u_int32_t) + tdbp->tdb_ivlen;
+		/* Authenticator */
+		if (tdbp->tdb_authalgxform != NULL) 
+			adjust += AH_HMAC_HASHLEN;
+		/* Padding */
+		adjust += tdbp->tdb_encalgxform->blocksize;
+		break;
+
+	case IPPROTO_AH:
+		if (tdbp->tdb_authalgxform == NULL)
+			return (-1);
+
+		if (!(tdbp->tdb_flags & TDBF_NOREPLAY))
+			adjust = AH_FLENGTH + sizeof(u_int32_t);
+		else
+			adjust = AH_FLENGTH;
+		adjust += tdbp->tdb_authalgxform->authsize;
+		break;
+
+	default:
+		return (-1);
+	}
+
+	if (!(tdbp->tdb_flags & TDBF_TUNNELING) &&
+	    !(tdbp->tdb_flags & TDBF_USEDTUNNEL))
+		return (adjust);
+
+	switch (tdbp->tdb_dst.sa.sa_family) {
+#ifdef INET
+	case AF_INET:
+		adjust += sizeof(struct ip);
+		break;
+#endif /* INET */
+#ifdef INET6
+	case AF_INET6:
+		adjust += sizeof(struct ip6_hdr);
+		break;
+#endif /* INET6 */
+	}
+
+	return (adjust);
+}
+
+void
+ipsec_adjust_mtu(struct mbuf *m, u_int32_t mtu)
+{
+	struct tdb_ident *tdbi;
+	struct tdb *tdbp;
+	struct m_tag *mtag;
+	ssize_t adjust;
+	int s;
+
+	s = spltdb();
+	
+	for (mtag = m_tag_find(m, PACKET_TAG_IPSEC_OUT_DONE, NULL); mtag;
+	     mtag = m_tag_find(m, PACKET_TAG_IPSEC_OUT_DONE, mtag)) {
+		tdbi = (struct tdb_ident *)(mtag + 1);
+		tdbp = gettdb(tdbi->spi, &tdbi->dst, tdbi->proto);
+		if (tdbp == NULL)
+			break;
+
+		if ((adjust = ipsec_hdrsz(tdbp)) == -1)
+			break;
+
+		mtu -= adjust;
+		tdbp->tdb_mtu = mtu;
+		tdbp->tdb_mtutimeout = time.tv_sec + ip_mtudisc_timeout;
+	}
+
+	splx(s);
 }
