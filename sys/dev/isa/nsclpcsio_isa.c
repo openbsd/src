@@ -1,4 +1,4 @@
-/* $OpenBSD: nsclpcsio_isa.c,v 1.3 2004/06/03 18:28:02 grange Exp $ */
+/* $OpenBSD: nsclpcsio_isa.c,v 1.4 2004/06/05 14:47:59 grange Exp $ */
 /* $NetBSD: nsclpcsio_isa.c,v 1.5 2002/10/22 16:18:26 drochner Exp $ */
 
 /*
@@ -47,8 +47,6 @@
 #include <dev/isa/isavar.h>
 
 #include <dev/gpio/gpiovar.h>
-
-#include "gpio.h"
 
 #if defined(NSC_LPC_SIO_DEBUG)
 #define DPRINTF(x)              do { printf x; } while (0)
@@ -291,12 +289,10 @@ nsclpcsio_isa_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct nsclpcsio_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
+	struct gpiobus_attach_args gba;
 	bus_space_tag_t iot;
 	int iobase;
 	int i;
-#if NGPIO > 0
-	struct gpiobus_attach_args gba;
-#endif
 
 	iobase = ia->ipa_io[0].base;
 	sc->sc_iot = iot = ia->ia_iot;
@@ -335,9 +331,7 @@ nsclpcsio_isa_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-#if NGPIO > 0
 	nsclpcsio_gpio_init(sc);
-#endif
 	nsclpcsio_tms_init(sc);
 	nsclpcsio_vlm_init(sc);
 
@@ -356,7 +350,6 @@ nsclpcsio_isa_attach(struct device *parent, struct device *self, void *aux)
 		timeout_add(&nsclpcsio_timeout, (20 * hz) / 10);
 	}
 
-#if NGPIO > 0
 	/* Attach GPIO framework */
 	if (sc->sc_ld_en[SIO_LDN_GPIO]) {
 		gba.gba_name = "gpio";
@@ -365,7 +358,6 @@ nsclpcsio_isa_attach(struct device *parent, struct device *self, void *aux)
 		gba.gba_npins = SIO_GPIO_NPINS;
 		config_found(&sc->sc_dev, &gba, NULL);
 	}
-#endif
 }
 
 void
@@ -514,7 +506,6 @@ nsclpcsio_vlm_update(struct nsclpcsio_softc *sc)
 	}
 }
 
-#if NGPIO > 0
 static __inline void
 nsclpcsio_gpio_pin_select(struct nsclpcsio_softc *sc, int pin)
 {
@@ -640,4 +631,3 @@ nsclpcsio_gpio_pin_ctl(void *arg, int pin, int flags)
 
 	nswrite(sc->sc_iot, sc->sc_ioh, SIO_GPIO_PINCFG, conf);
 }
-#endif
