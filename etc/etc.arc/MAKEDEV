@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.5 1996/08/29 17:43:18 deraadt Exp $
+#	$OpenBSD: MAKEDEV,v 1.6 1996/09/02 11:37:45 pefo Exp $
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
 
@@ -86,11 +86,12 @@ ttyC*)
 pms*)
 	unit=`expr $i : '.ms\(.*\)'`
 	case $i in
-	mms*) name=mms; chr=15;;
+	pms*) name=pms; chr=15;;
 	esac
 	rm -f $name$unit
 	mknod $name$unit c $chr $unit
 	chown root.wheel $name$unit
+	rm -f mouse
 	ln -s $name$unit mouse
 	;;
 
