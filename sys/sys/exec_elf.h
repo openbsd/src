@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.10 1996/12/11 05:55:33 imp Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.11 1997/06/29 07:43:19 deraadt Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -343,7 +343,7 @@ extern Elf32_Dyn	_DYNAMIC[];
 #define DT_HIPROC	0x7fffffff	/*  specific dynamic array tags */
 	
 /* Standard ELF hashing function */
-unsigned long elf_hash(const unsigned char *name);
+unsigned int elf_hash(const unsigned char *name);
 
 /*
  * XXX - these _KERNEL items aren't part of the ABI!
