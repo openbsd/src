@@ -1,4 +1,4 @@
-.\"	$OpenBSD: usb.4,v 1.16 2002/07/09 18:42:23 nate Exp $
+.\"	$OpenBSD: usb.4,v 1.17 2002/09/25 22:46:27 drahn Exp $
 .\"	$NetBSD: usb.4,v 1.15 1999/07/29 14:20:32 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,8 +44,8 @@
 .Sh SYNOPSIS
 .Cd "uhci*   at pci? function ?"
 .Cd "ohci*   at pci? function ?"
-.Cd "usb*    at uhci?"
-.Cd "usb*    at ohci?"
+.Cd "usb*    at uhci? flags 0x00"
+.Cd "usb*    at ohci? flags 0x00"
 .Cd "uhub*   at usb?"
 .Cd "uhub*   at uhub? port ? configuration ? interface ? vendor ? product ? release ?"
 .Cd "XX*     at uhub? port ? configuration ? interface ? vendor ? product ? release ?"
@@ -88,6 +88,26 @@ device controls
 hubs and must always be present since there is at least one root hub in any
 .Tn USB
 system.
+.Pp
+The
+.Cm flags
+are used to specify if the devices on the
+.Tn USB
+bus should probed
+early in the boot process.
+If the
+.Cm flags
+are specified with a value of 1, the
+.Tn USB
+bus will be probed when the
+.Tn USB
+host device is attached instead of waiting
+until kernel processes start running.
+This is useful for
+.Tn USB
+console keyboards so that the keyboard is attached
+before getting the root prompt on 
+.Dq boot -a .
 .Sh SUPPORTED DEVICES
 .Ox
 includes machine-independent
