@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: dhclient-script,v 1.4 2004/04/18 18:22:20 deraadt Exp $
+# $OpenBSD: dhclient-script,v 1.5 2004/05/05 23:08:54 deraadt Exp $
 #
 # Copyright (c) 2003 Kenneth R Westerback <krw@openbsd.org>
 #
@@ -49,7 +49,8 @@ delete_old_alias() {
 
 add_new_alias() {
 	if [ -n "$alias_ip_address" ]; then
-		ifconfig $interface inet alias $alias_ip_address netmask $alias_subnet_mask
+		ifconfig $interface inet alias $alias_ip_address netmask \
+		    $alias_subnet_mask
 		route add $alias_ip_address 127.0.0.1
 	fi
 }
