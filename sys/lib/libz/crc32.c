@@ -3,11 +3,13 @@
  * For conditions of distribution and use, see copyright notice in zlib.h 
  */
 
-/* $Id: crc32.c,v 1.1 1997/02/06 02:56:49 downsj Exp $ */
+/* $Id: crc32.c,v 1.2 1997/04/02 05:38:47 mickey Exp $ */
 
 #include "zlib.h"
 
+#ifndef local
 #define local static
+#endif
 
 #ifdef DYNAMIC_CRC_TABLE
 
