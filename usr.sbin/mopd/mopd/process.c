@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.c,v 1.3 2000/02/20 17:45:34 bitblt Exp $ */
+/*	$OpenBSD: process.c,v 1.4 2000/06/28 23:52:58 deraadt Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: process.c,v 1.3 2000/02/20 17:45:34 bitblt Exp $";
+static char rcsid[] = "$OpenBSD: process.c,v 1.4 2000/06/28 23:52:58 deraadt Exp $";
 #endif
 
 #include "os.h"
@@ -353,7 +353,7 @@ mopNextLoad(dst, src, new_count, trans)
 		snprintf(line,sizeof(line),
 			"%x:%x:%x:%x:%x:%x Load completed",
 			dst[0],dst[1],dst[2],dst[3],dst[4],dst[5]);
-		syslog(LOG_INFO, line);
+		syslog(LOG_INFO, "%s", line);
 		return;
 	}
 
@@ -529,7 +529,7 @@ mopProcessDL(fd, ii, pkt, index, dst, src, trans, len)
 					src[0],src[1],src[2],
 					src[3],src[4],src[5],trans,pfile);
 			}
-			syslog(LOG_INFO, line);
+			syslog(LOG_INFO, "%s", line);
 		} else {
 			if ((mopCmpEAddr(dst,ii->eaddr) == 0)) {
 				dl_rpr->ldfd = open(filename, O_RDONLY, 0);
@@ -538,7 +538,7 @@ mopProcessDL(fd, ii, pkt, index, dst, src, trans, len)
 					"%x:%x:%x:%x:%x:%x Send me %s",
 					src[0],src[1],src[2],
 					src[3],src[4],src[5],pfile);
-				syslog(LOG_INFO, line);
+				syslog(LOG_INFO, "%s", line);
 			}
 		}
 		
