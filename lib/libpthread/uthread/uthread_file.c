@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_file.c,v 1.7 2001/08/30 17:47:57 todd Exp $	*/
+/*	$OpenBSD: uthread_file.c,v 1.8 2001/09/04 22:17:45 fgsch Exp $	*/
 /*
  * Copyright (c) 1995 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -180,7 +180,7 @@ do_lock(int idx, FILE *fp)
 }
 
 void
-_flockfile_debug(FILE * fp, const char *fname, int lineno)
+_flockfile_debug(FILE * fp, char *fname, int lineno)
 {
 	int	idx = file_idx(fp);
 	struct	file_lock	*p;
