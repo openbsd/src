@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd_gensalt.c,v 1.21 2004/11/02 08:03:55 otto Exp $ */
+/*	$OpenBSD: pwd_gensalt.c,v 1.22 2004/12/20 15:05:59 moritz Exp $ */
 
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -83,8 +83,10 @@ pwd_gensalt(char *salt, int saltlen, login_cap_t *lc, char type)
 		to64(&salt[0], arc4random(), 2);
 		salt[2] = '\0';
 	} else if (!strcmp(now, "newsalt")) {
-		u_int32_t rounds = atol(next);
+		u_int32_t rounds = 7250;
 
+		if (next)
+			rounds = atol(next);
 		if (saltlen < 10) {
 			free(oldnext);
 			return 0;
@@ -109,14 +111,19 @@ pwd_gensalt(char *salt, int saltlen, login_cap_t *lc, char type)
 		to64(&salt[7], arc4random(), 4);
 		strlcpy(&salt[11], "$", saltlen - 11);
 	} else if (!strcmp(now, "blowfish")) {
-		int rounds = atoi(next);
+		int rounds = 6;
 
+		if (next)
+			rounds = atoi(next);
 		if (rounds < 4)
 			rounds = 4;
+		if (rounds > 31)
+			rounds = 31;
 		strlcpy(salt, bcrypt_gensalt(rounds), saltlen);
 	} else {
-		strlcpy(salt, ":", saltlen);
 		warnx("Unknown option %s.", now);
+		free(oldnext);
+		return 0;
 	}
 	free(oldnext);
 	return 1;

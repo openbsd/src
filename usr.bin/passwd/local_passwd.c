@@ -1,4 +1,4 @@
-/*	$OpenBSD: local_passwd.c,v 1.35 2004/09/18 19:34:29 deraadt Exp $	*/
+/*	$OpenBSD: local_passwd.c,v 1.36 2004/12/20 15:05:59 moritz Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -31,7 +31,7 @@
 
 #ifndef lint
 /*static const char sccsid[] = "from: @(#)local_passwd.c	5.5 (Berkeley) 5/6/91";*/
-static const char rcsid[] = "$OpenBSD: local_passwd.c,v 1.35 2004/09/18 19:34:29 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: local_passwd.c,v 1.36 2004/12/20 15:05:59 moritz Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -84,12 +84,14 @@ local_passwd(char *uname, int authenticated)
 	}
 	if ((lc = login_getclass(pw->pw_class)) == NULL) {
 		warnx("unable to get login class for user %s.", uname);
+		free(opw);
 		return(1);
 	}
 
 	uid = authenticated ? pw->pw_uid : getuid();
 	if (uid && uid != pw->pw_uid) {
 		warnx("login/uid mismatch, username argument required.");
+		free(opw);
 		return(1);
 	}
 
@@ -133,7 +135,7 @@ local_passwd(char *uname, int authenticated)
 	if (i >= 4)
 		fputc('\n', stderr);
 	pfd = open(_PATH_MASTERPASSWD, O_RDONLY, 0);
-	if (pfd < 0 || fcntl(pfd, F_SETFD, 1) == -1)
+	if (pfd < 0 || fcntl(pfd, F_SETFD, FD_CLOEXEC) == -1)
 		pw_error(_PATH_MASTERPASSWD, 1, 1);
 
 	/* Update master.passwd file and rebuild spwd.db. */
