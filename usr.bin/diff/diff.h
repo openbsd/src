@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.h,v 1.11 2003/06/26 22:04:45 millert Exp $	*/
+/*	$OpenBSD: diff.h,v 1.12 2003/07/04 02:54:36 millert Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -62,11 +62,10 @@
 
 extern int	aflag, bflag, hflag, iflag, lflag, rflag, sflag, tflag, wflag;
 extern char	*start, *ifdefname;
-extern int	opt, wantelses, inifdef, context, status, anychange;
+extern int	opt, wantelses, context, status, anychange;
 extern char	*tempfiles[], **diffargv;
 extern char	*file1, *file2, *efile1, *efile2;
 extern struct	stat stb1, stb2;
-extern const char *diffh, *diff, *pr;
 
 void	*emalloc(size_t);
 void	*erealloc(void *, size_t);

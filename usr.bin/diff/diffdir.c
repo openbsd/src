@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffdir.c,v 1.15 2003/06/27 20:28:13 tedu Exp $	*/
+/*	$OpenBSD: diffdir.c,v 1.16 2003/07/04 02:54:36 millert Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -46,6 +46,7 @@
 #include <unistd.h>
 
 #include "diff.h"
+#include "pathnames.h"
 
 #if 0
 static const char sccsid[] = "@(#)diffdir.c	4.12 (Berkeley) 4/30/89";
@@ -383,9 +384,8 @@ calldiff(char *wantpr)
 			dup(pv[0]);
 			close(pv[0]);
 			close(pv[1]);
-			execv(pr + 4, prargs);
-			execv(pr, prargs);
-			errorx("%s", pr);
+			execv(_PATH_PR, prargs);
+			errorx("%s", _PATH_PR);
 		}
 	}
 	pid = fork();
@@ -398,9 +398,8 @@ calldiff(char *wantpr)
 			close(pv[0]);
 			close(pv[1]);
 		}
-		execv(diff + 4, diffargv);
-		execv(diff, diffargv);
-		error("%s", diff);
+		execv(_PATH_DIFF, diffargv);
+		error("%s", _PATH_DIFF);
 	}
 	if (wantpr) {
 		close(pv[0]);

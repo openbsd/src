@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.18 2003/06/27 17:08:45 david Exp $	*/
+/*	$OpenBSD: diff.c,v 1.19 2003/07/04 02:54:36 millert Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -63,30 +63,24 @@ int	lflag;			/* long output format with header */
 int	rflag;			/* recursively trace directories */
 int	sflag;			/* announce files which are same */
 char	*start;			/* do file only if name >= this */
-/* Variables for -D D_IFDEF option. */
+/* Variable for -D D_IFDEF option. */
 char	*ifdefname;		/* What we will print for #ifdef/#endif */
-int	inifdef;
 /* Variables for -c and -u context option. */
 int	context;		/* lines of context to be printed */
 /* State for exit status. */
 int	status;
 int	anychange;
-char	*tempfile;		/* used when comparing against std input */
 /* Variables for diffdir. */
 char	**diffargv;		/* option list to pass to recursive diffs */
 
 /*
  * Input file names.
- * With diffdir, file1 and file2 are allocated BUFSIZ space,
- * and padded with a '/', and then efile0 and efile1 point after
+ * With diffdir, file1 and file2 are allocated MAXPATHLEN space,
+ * and padded with a '/', and then efile1 and efile2 point after
  * the '/'.
  */
 char	*file1, *file2, *efile1, *efile2;
 struct	stat stb1, stb2;
-
-const char *diff = _PATH_DIFF;
-const char *diffh = _PATH_DIFFH;
-const char *pr = _PATH_PR;
 
 __dead void usage(void);
 
