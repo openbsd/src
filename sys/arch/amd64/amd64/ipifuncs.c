@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipifuncs.c,v 1.2 2004/06/25 17:27:01 andreas Exp $	*/
+/*	$OpenBSD: ipifuncs.c,v 1.3 2004/08/04 01:16:36 art Exp $	*/
 /*	$NetBSD: ipifuncs.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $ */
 
 /*-
@@ -103,7 +103,6 @@ x86_64_ipi_halt(struct cpu_info *ci)
 {
 	disable_intr();
 
-	printf("%s: shutting down\n", ci->ci_dev->dv_xname);
 	for(;;) {
 		__asm __volatile("hlt");
 	}
