@@ -1,11 +1,11 @@
-#	$OpenBSD: Makefile.inc,v 1.10 2000/06/29 16:30:26 mickey Exp $
+#	$OpenBSD: Makefile.inc,v 1.11 2000/06/29 16:39:47 mickey Exp $
 
 SRCS+=	__main.c imax.c imin.c lmax.c lmin.c max.c min.c ulmax.c ulmin.c \
 	random.c ashrdi3.c divdi3.c strncpy.c strncmp.c strcmp.c memchr.c \
 	memcmp.c memset.c strlen.c strcpy.c strcat.c skpc.c strncasecmp.c \
-	scanc.c
+	bcmp.c scanc.c
 
-SRCS+=	milli.S bcmp.S ffs.S
+SRCS+=	milli.S ffs.S
 OBJS+=	bzero.o
 
 SRCS+=	bcopy.S spcopy.S
