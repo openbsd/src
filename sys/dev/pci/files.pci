@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.142 2002/08/05 19:02:19 mickey Exp $
+#	$OpenBSD: files.pci,v 1.143 2002/09/24 18:56:01 nate Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -273,6 +273,12 @@ file	dev/pci/if_xl_pci.c		xl_pci
 # Intel EtherExpress PRO 10/100B
 attach	fxp at pci with fxp_pci
 file	dev/pci/if_fxp_pci.c		fxp_pci
+
+# Intel Pro/1000
+device	em: ether, ifnet, ifmedia
+attach	em at pci
+file	dev/pci/if_em.c			em
+file	dev/pci/if_em_hw.c		em
 
 # DEC/Intel 21143 and "tulip" clone ethernet
 attach	dc at pci with dc_pci
