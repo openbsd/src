@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.199 2002/07/09 16:55:10 deraadt Exp $
+#	$OpenBSD: rc,v 1.200 2002/07/11 08:27:24 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -489,9 +489,6 @@ fi
 
 if [ "X${httpd_flags}" != X"NO"  ]; then
 	# Clean up left-over httpd locks
-	if [ ! -c "/var/www/dev/crypto" ]; then
-		( cd / ; pax -rw -pe dev/crypto /var/www )
-	fi
 	rm -f /var/www/logs/{ssl_mutex,httpd.lock,accept.lock}.*
 	echo -n ' httpd';		/usr/sbin/httpd ${httpd_flags}
 fi
