@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: security,v 1.67 2004/08/25 19:17:30 millert Exp $
+#	$OpenBSD: security,v 1.68 2004/08/25 19:59:29 millert Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -696,7 +696,7 @@ for d in `df -ln | sed -n 's:^/dev/\([a-z]*[0-9]*\)[a-p].*$:\1:p' | sort -u`; do
 	file=/var/backups/disklabel.$d
 	CUR=$file.current
 	BACK=$file.backup
-	if disklabel $d > /var/backups/disklabel.$d 2>&1 ; then
+	if disklabel $d > $file 2>&1 ; then
 		if [ -s $CUR ] ; then
 			diff -u $CUR $file > $OUTPUT
 			if [ -s $OUTPUT ] ; then
