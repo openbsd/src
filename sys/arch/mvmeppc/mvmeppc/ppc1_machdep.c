@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppc1_machdep.c,v 1.14 2004/01/29 10:58:08 miod Exp $	*/
+/*	$OpenBSD: ppc1_machdep.c,v 1.15 2004/11/17 20:24:44 miod Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -51,6 +51,7 @@ void PPC1_exit(void) __attribute__((__noreturn__));
 void PPC1_boot(char *bootspec) __attribute__((__noreturn__));
 void PPC1_mem_regions(struct mem_region **memp, struct mem_region **availp);
 void PPC1_vmon(void);
+
 unsigned char PPC1_nvram_rd(unsigned long offset);
 void PPC1_nvram_wr(unsigned long offset, unsigned char val);
 unsigned long PPC1_tps(void);
@@ -361,31 +362,26 @@ PPC1_clock_read(int *sec, int *min, int *hour, int *day, int *mon, int *yr)
 cons_decl(boot);
 
 void
-bootcnprobe(cp)
-	struct consdev *cp;
+bootcnprobe(struct consdev *cp)
 {
 	cp->cn_dev = makedev(14, 0);
 	cp->cn_pri = CN_NORMAL;
 }
 
 void
-bootcninit(cp)
-	struct consdev *cp;
+bootcninit(struct consdev *cp)
 {
 	/* Nothing to do */
 }
 
 int
-bootcngetc(dev)
-	dev_t dev;
+bootcngetc(dev_t dev)
 {
 	return (mvmeprom_getchar());
 }
 
 void
-bootcnputc(dev, c)
-	dev_t dev;
-	char c;
+bootcnputc(dev_t dev, int c)
 {
 	mvmeprom_outchar(c);
 }
