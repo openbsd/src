@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.26 2004/12/17 11:26:21 espie Exp $
+# $OpenBSD: Add.pm,v 1.27 2004/12/18 13:48:23 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -89,6 +89,9 @@ sub validate_plist($$)
 		if ($s->{ro}) {
 			Warn "Error: ", $s->{dev}, " is read-only ($fname)\n";
 			$problems++;
+		}
+		if ($state->{forced}->{kitchensink} && $state->{not}) {
+			next;
 		}
 		if ($s->avail() < 0) {
 			Warn "Error: ", $s->{dev}, " is not large enough ($fname)\n";
@@ -294,13 +297,13 @@ sub install
 		} else {
 			rename($self->{tempname}, $destdir.$fullname) or 
 			    Fatal "Can't move ", $self->{tempname}, " to $fullname: $!";
-			print "moving ", $self->{tempname}, " -> $destdir$fullname\n" if $state->{very_verbose};
+			print "moving ", $self->{tempname}, " -> $destdir$fullname\n" if $state->{beverbose};
 			undef $self->{tempname};
 		}
 	} else {
 		my $file = $self->prepare_to_extract($state);
 
-		print "extracting $destdir$fullname\n" if $state->{very_verbose};
+		print "extracting $destdir$fullname\n" if $state->{beverbose};
 		return if $state->{not};
 		$file->create();
 	}
