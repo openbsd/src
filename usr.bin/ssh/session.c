@@ -8,7 +8,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: session.c,v 1.21 2000/06/26 21:59:18 markus Exp $");
+RCSID("$OpenBSD: session.c,v 1.22 2000/07/05 20:18:07 deraadt Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -1238,7 +1238,7 @@ session_subsystem_req(Session *s)
 int
 session_x11_req(Session *s)
 {
-	if (!no_port_forwarding_flag) {
+	if (no_x11_forwarding_flag) {
 		debug("X11 forwarding disabled in user configuration file.");
 		return 0;
 	}
