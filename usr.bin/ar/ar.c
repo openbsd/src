@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar.c,v 1.7 2002/02/16 21:27:43 millert Exp $	*/
+/*	$OpenBSD: ar.c,v 1.8 2002/12/11 22:01:13 millert Exp $	*/
 /*	$NetBSD: ar.c,v 1.5 1995/03/26 03:27:44 glass Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ar.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: ar.c,v 1.7 2002/02/16 21:27:43 millert Exp $";
+static char rcsid[] = "$OpenBSD: ar.c,v 1.8 2002/12/11 22:01:13 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -209,12 +209,6 @@ main(argc, argv)
 
 	if (!(archive = *argv++)) {
 		warnx("no archive specified");
-		usage();
-	}
-
-	/* -dmqr require a list of archive elements. */
-	if (options & (AR_D|AR_M|AR_Q|AR_R) && !*argv) {
-		warnx("no archive members specified");
 		usage();
 	}
 

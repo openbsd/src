@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ar.1,v 1.10 2000/11/09 17:52:02 aaron Exp $
+.\"	$OpenBSD: ar.1,v 1.11 2002/12/11 22:01:13 millert Exp $
 .\"	$NetBSD: ar.1,v 1.7 1995/08/18 15:05:11 pk Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -47,15 +47,18 @@
 .Nm ar
 .Fl d
 .Op Fl \Tv
-.Ar archive file ...
+.Ar archive
+.Op Ar file ...
 .Nm ar
 .Fl m
 .Op Fl \Tv
-.Ar archive file ...
+.Ar archive
+.Op Ar file ...
 .Nm ar
 .Fl m
 .Op Fl abiTv
-.Ar position archive file ...
+.Ar position archive
+.Or Ar file ...
 .Nm ar
 .Fl p
 .Op Fl \Tv
@@ -64,15 +67,18 @@
 .Nm ar
 .Fl q
 .Op Fl cTv
-.Ar archive file ...
+.Ar archive
+.Op Ar file ...
 .Nm ar
 .Fl r
 .Op Fl cuTv
-.Ar archive file ...
+.Ar archive
+.Op Ar file ...
 .Nm ar
 .Fl r
 .Op Fl abciuTv
-.Ar position archive file ...
+.Ar position archive
+.Op Ar file ...
 .Nm ar
 .Fl t
 .Op Fl \Tv
