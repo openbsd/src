@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.96 2004/12/10 18:50:51 markus Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.97 2004/12/11 15:55:57 markus Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -1248,8 +1248,10 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		break;
 
 	case SADB_REGISTER:
-		pfkeyv2_socket->flags |= PFKEYV2_SOCKETFLAGS_REGISTERED;
-		nregistered++;
+		if (!(pfkeyv2_socket->flags & PFKEYV2_SOCKETFLAGS_REGISTERED)) {
+			pfkeyv2_socket->flags |= PFKEYV2_SOCKETFLAGS_REGISTERED;
+			nregistered++;
+		}
 
 		i = sizeof(struct sadb_supported) + sizeof(ealgs);
 
