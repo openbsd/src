@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.16 2002/03/31 17:30:30 deraadt Exp $
+#	$OpenBSD: install.md,v 1.17 2002/04/12 02:15:28 deraadt Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -44,11 +44,64 @@ MDSETS=kernel
 ARCH=ARCH
 
 md_set_term() {
+	local _tables
+
 	test -n "$TERM" && return
 	echo -n "Specify terminal type [vt220]: "
 	getresp vt220
 	TERM=$resp
 	export TERM
+
+	echo -n "Do you wish to select a keyboard encoding table? [n] "
+	getresp n
+
+	case $resp in
+	Y*|y*)	;;
+	*)	return
+		;;
+	esac
+
+	resp=
+	while : ; do
+		echo -n "Select your keyboard type: (P)C-AT/XT, (U)SB or 'done' [P] "
+		getresp P
+		case $resp in
+		P*|p*)  _tables="be de dk es fr it jp lt no pt ru sf sg sv ua uk us"
+			;;
+		U*|u*)	_tables="de dk es fr it jp no sf sg sv uk us"
+			;;
+		done)	;;
+		*)	echo "'$resp' is not a valid keyboard type."
+			resp=
+			continue
+			;;
+		esac
+		break;
+	done
+
+	[ -z "$_tables" ] && return
+
+	while : ; do
+		cat << __EOT
+The available keyboard encoding tables are:
+
+	${_tables}
+
+__EOT
+		echo -n "Table name? (or 'done') [us] "
+		getresp us
+		case $resp in
+		done)	;;
+		*)	if kbd $resp ; then
+				echo $resp > /tmp/kbdtype
+			else
+				echo "'${resp}' is not a valid table name."
+				continue
+			fi
+			;;
+		esac
+		break;
+	done
 }
 
 md_get_diskdevs() {
