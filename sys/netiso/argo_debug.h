@@ -1,4 +1,4 @@
-/*	$OpenBSD: argo_debug.h,v 1.2 1996/03/04 10:34:40 mickey Exp $	*/
+/*	$OpenBSD: argo_debug.h,v 1.3 1997/09/07 19:43:22 millert Exp $	*/
 /*	$NetBSD: argo_debug.h,v 1.7 1996/02/13 22:07:57 christos Exp $	*/
 
 /*-
@@ -77,15 +77,15 @@ void Dump_buf __P((caddr_t, int));
 
 
 #ifdef ARGO_DEBUG
-/*
+#if 0
     #ifndef TPPT
     #define TPPT
-    #endif TPPT
+    #endif /* TPPT */
 
     #ifndef TP_PERF_MEAS
     #define TP_PERF_MEAS
-    #endif TP_PERF_MEAS
-*/
+    #endif /* TP_PERF_MEAS */
+#endif
 
 unsigned char   argo_debug[128];
 
