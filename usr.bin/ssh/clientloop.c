@@ -16,7 +16,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: clientloop.c,v 1.20 2000/04/14 10:30:30 markus Exp $");
+RCSID("$Id: clientloop.c,v 1.21 2000/04/19 07:05:48 deraadt Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -471,7 +471,8 @@ client_process_net_input(fd_set * readset)
 void
 client_process_input(fd_set * readset)
 {
-	int len, pid;
+	int len;
+	pid_t pid;
 	char buf[8192], *s;
 
 	/* Read input from stdin. */
