@@ -1,3 +1,5 @@
+/* $OpenBSD: pop_root.c,v 1.2 2001/08/13 20:19:33 camield Exp $ */
+
 /*
  * Main daemon code: invokes the actual POP handling routines. Most calls
  * to functions in other source files are done as a non-root user (either
