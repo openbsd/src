@@ -1,4 +1,4 @@
-# 	$OpenBSD: FLOPPY,v 1.19 1998/04/30 06:12:53 jason Exp $
+# 	$OpenBSD: FLOPPY,v 1.20 1999/02/16 21:30:21 art Exp $
 # 	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -300,4 +300,3 @@ fd*	at fdc0					# the drive itself
 pseudo-device	kbd		# Sun keyboard
 #pseudo-device	strip	1	# radio clock
 
-options		OLD_PIPE		# XXX nbpg botch

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC_SCSI3,v 1.25 1999/02/01 00:30:42 jason Exp $
+#	$OpenBSD: GENERIC_SCSI3,v 1.26 1999/02/16 21:30:21 art Exp $
 # 	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -272,4 +272,3 @@ pseudo-device	kbd		# Sun keyboard
 #pseudo-device	strip	1	# radio clock
 pseudo-device	rd 2
 
-options		OLD_PIPE		# XXX nbpg botch
