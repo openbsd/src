@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.38 2000/06/23 16:27:29 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.39 2000/07/17 22:55:12 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -70,7 +70,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: var.c,v 1.38 2000/06/23 16:27:29 espie Exp $";
+static char rcsid[] = "$OpenBSD: var.c,v 1.39 2000/07/17 22:55:12 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -173,9 +173,8 @@ GSymT		*VAR_GLOBAL;	/* variables from the makefile */
 GSymT		*VAR_CMD;	/* variables defined on the command-line */
 static GSymT	*VAR_ENV;	/* variables read from env */
 
-#define FIND_CMD	0x1   /* look in VAR_CMD when searching */
-#define FIND_GLOBAL	0x2   /* look in VAR_GLOBAL as well */
-#define FIND_ENV  	0x4   /* look in the environment also */
+#define FIND_MINE	0x1   /* look in CTXT_CMD and CTXT_GLOBAL */
+#define FIND_ENV  	0x2   /* look in the environment */
 
 typedef struct Var_ {
     BUFFER	  val;	    	/* its value */
@@ -220,8 +219,10 @@ static struct hash_info var_info = {
 static int quick_lookup __P((const char *, const char **, u_int32_t *));
 #define VarValue(v)	Buf_Retrieve(&((v)->val))
 static int VarCmp __P((void *, void *));
-static Var *VarFind __P((char *, SymTable *, int));
-static Var *VarAdd __P((char *, char *, GSymT *));
+static Var *varfind __P((const char *, const char *, SymTable *, int, int, u_int32_t));
+static Var *VarFind_interval __P((const char *, const char *, SymTable *, int));
+#define VarFind(n, ctxt, flags)	VarFind_interval(n, NULL, ctxt, flags)
+static Var *VarAdd __P((const char *, const char *, GSymT *));
 static void VarDelete __P((void *));
 static Boolean VarHead __P((char *, Boolean, Buffer, void *));
 static Boolean VarTail __P((char *, Boolean, Buffer, void *));
@@ -245,8 +246,8 @@ static void VarPrintVar __P((void *));
 static Boolean VarUppercase __P((char *, Boolean, Buffer, void *));
 static Boolean VarLowercase __P((char *, Boolean, Buffer, void *));
 static const char *context_name __P((GSymT *));
-static Var *new_var __P((char *, char *));
-static Var *getvar __P((GSymT *, char *, const char *, u_int32_t));
+static Var *new_var __P((const char *, const char *));
+static Var *getvar __P((GSymT *, const char *, const char *, u_int32_t));
 
 void
 SymTable_Init(ctxt)
@@ -430,8 +431,8 @@ context_name(ctxt)
 /* Create a variable, to pass to VarAdd.  */
 static Var *
 new_var(name, val)
-    char *name;
-    char *val;
+    const char *name;
+    const char *val;
 {
     Var *v;
     const char *end = NULL;
@@ -451,7 +452,7 @@ new_var(name, val)
 static Var *
 getvar(ctxt, name, end, k)
     GSymT	*ctxt;
-    char 	*name;
+    const char 	*name;
     const char	*end;
     u_int32_t	k;
 {
@@ -460,9 +461,10 @@ getvar(ctxt, name, end, k)
 
 /*-
  *-----------------------------------------------------------------------
- * VarFind --
+ * VarFind_interval --
  *	Find the given variable in the given context and any other contexts
- *	indicated.
+ *	indicated.  if end is NULL, name is a string, otherwise, only
+ *      the interval name - end  is concerned.
  *
  * Results:
  *	A pointer to the structure describing the desired variable or
@@ -473,22 +475,32 @@ getvar(ctxt, name, end, k)
  *-----------------------------------------------------------------------
  */
 static Var *
-VarFind(name, ctxt, flags)
-    char           	*name;	/* name to find */
+VarFind_interval(name, end, ctxt, flags)
+    const char          *name;	/* name to find */
+    const char		*end;	/* end of name */
     SymTable          	*ctxt;	/* context in which to find it */
-    int             	flags;	/* FIND_GLOBAL set means to look in the
-				 * VAR_GLOBAL context as well.
-				 * FIND_CMD set means to look in the VAR_CMD
-				 * context also.
+    int             	flags;	/* FIND_MINE set means to look in the
+				 * CTXT_GLOBAL and CTXT_CMD contexts also.
 				 * FIND_ENV set means to look in the
-				 * environment/VAR_ENV context.  */
+				 * environment */
 {
-    Var		  	*v;
-    const char		*end = NULL;
     int 		idx;
     u_int32_t		k;
 
     idx = quick_lookup(name, &end, &k);
+    return varfind(name, end, ctxt, flags, idx, k);
+}
+
+static Var *
+varfind(name, end, ctxt, flags, idx, k)
+    const char		*name;
+    const char		*end;
+    SymTable		*ctxt;
+    int			flags;
+    int			idx;
+    u_int32_t		k;
+{
+    Var			*v;
 
     /*
      * First look for the variable in the given context. If it's not there,
@@ -508,12 +520,12 @@ VarFind(name, ctxt, flags)
     if (v != NULL)
     	return v;
 	    
-    if ((flags & FIND_CMD) && ctxt != CTXT_CMD)
+    if ((flags & FIND_MINE) && ctxt != CTXT_CMD)
 	v = getvar(VAR_CMD, name, end, k);
     if (v != NULL)
     	return v;
 
-    if (!checkEnvFirst && (flags & FIND_GLOBAL) && ctxt != CTXT_GLOBAL)
+    if (!checkEnvFirst && (flags & FIND_MINE) && ctxt != CTXT_GLOBAL)
 	v = getvar(VAR_GLOBAL, name, end, k);
     if (v != NULL)
     	return v;
@@ -529,7 +541,7 @@ VarFind(name, ctxt, flags)
 	    return VarAdd(name, env, VAR_ENV);
     }
 
-    if (checkEnvFirst && (flags & FIND_GLOBAL) && ctxt != CTXT_GLOBAL) 
+    if (checkEnvFirst && (flags & FIND_MINE) && ctxt != CTXT_GLOBAL) 
 	v = getvar(VAR_GLOBAL, name, end, k);
     return v;
 }
@@ -550,8 +562,8 @@ VarFind(name, ctxt, flags)
  */
 static Var *
 VarAdd(name, val, ctxt)
-    char	*name;	/* name of variable to add */
-    char	*val;	/* value to set it to */
+    const char	*name;	/* name of variable to add */
+    const char	*val;	/* value to set it to */
     GSymT	*ctxt;	/* context in which to set it */
 {
     Var   	*v;
@@ -749,7 +761,7 @@ Var_Exists(name, ctxt)
 {
     Var	    	  *v;
 
-    v = VarFind(name, (SymTable *)ctxt, FIND_CMD|FIND_GLOBAL|FIND_ENV);
+    v = VarFind(name, (SymTable *)ctxt, FIND_MINE|FIND_ENV);
 
     if (v == NULL)
 	return FALSE;
@@ -776,7 +788,7 @@ Var_Value(name, ctxt)
 {
     Var            *v;
 
-    v = VarFind(name, (SymTable *)ctxt, FIND_ENV | FIND_GLOBAL | FIND_CMD);
+    v = VarFind(name, (SymTable *)ctxt, FIND_ENV | FIND_MINE);
     if (v != NULL) 
 	return VarValue(v);
     else
@@ -1646,12 +1658,7 @@ Var_Parse(str, ctxt, err, lengthPtr, freePtr)
 	 * We just need to check for the first character and return the
 	 * value if it exists.
 	 */
-	char	  name[2];
-
-	name[0] = str[1];
-	name[1] = '\0';
-
-	v = VarFind (name, ctxt, FIND_ENV | FIND_GLOBAL | FIND_CMD);
+	v = VarFind_interval(str+1, str+2, ctxt, FIND_ENV | FIND_MINE);
 	if (v == NULL) {
 	    *lengthPtr = 2;
 
@@ -1713,7 +1720,7 @@ Var_Parse(str, ctxt, err, lengthPtr, freePtr)
 	}
 	*tstr = '\0';
 
-	v = VarFind (str + 2, ctxt, FIND_ENV | FIND_GLOBAL | FIND_CMD);
+	v = VarFind_interval(str + 2, tstr, ctxt, FIND_ENV | FIND_MINE);
 	if (v == NULL && ctxt != CTXT_CMD && ctxt != CTXT_GLOBAL && 
 	    ctxt != NULL &&
 	    (tstr-str) == 4 && (str[3] == 'F' || str[3] == 'D'))
@@ -1730,15 +1737,10 @@ Var_Parse(str, ctxt, err, lengthPtr, freePtr)
 		case '>':
 		case '<':
 		{
-		    char    vname[2];
 		    char    *val;
 
-		    /*
-		     * Well, it's local -- go look for it.
-		     */
-		    vname[0] = str[2];
-		    vname[1] = '\0';
-		    v = VarFind(vname, ctxt, 0);
+		    /* Well, it's local -- go look for it.  */
+		    v = VarFind_interval(str+2, str+3, ctxt, 0);
 
 		    if (v != NULL) {
 			/*
