@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.35 2002/05/22 00:20:58 art Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.36 2002/05/22 01:04:06 art Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -137,6 +137,8 @@ scsi_free_xs(xs, flags)
 	int flags;
 {
 	struct scsi_link *sc_link = xs->sc_link;
+
+	splassert(IPL_BIO);
 
 	SC_DEBUG(sc_link, SDEV_DB3, ("scsi_free_xs\n"));
 
