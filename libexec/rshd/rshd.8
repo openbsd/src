@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rshd.8,v 1.10 2001/01/28 19:34:32 niklas Exp $
+.\"	$OpenBSD: rshd.8,v 1.11 2001/06/23 22:14:29 hin Exp $
 .\" Copyright (c) 1983, 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -40,7 +40,7 @@
 .Nd remote shell server
 .Sh SYNOPSIS
 .Nm rshd
-.Op Fl alnL
+.Op Fl aklnL
 .Sh DESCRIPTION
 The
 .Nm
@@ -56,6 +56,8 @@ The options are as follows:
 .Bl -tag -width Ds
 .It Fl a
 Ask hostname for verification.
+.It Fl k
+Use Kerberos authentication
 .It Fl l
 Prevent any authentication based on the user's
 .Dq Pa .rhosts
@@ -216,11 +218,15 @@ and is not preceded by a flag byte.
 .Sh BUGS
 The authentication procedure used here assumes the integrity
 of each client machine and the connecting medium.
-This is insecure, but is useful in an
-.Dq open
-environment.
+This is insecure, so
+.Xr ssh 1
+or
+.Xr kerberos 1
+should be used instead.
 .Pp
-A facility to allow all data exchanges to be encrypted should be present.
+.Nm
+does currently not support encryption of the datastream when Kerberos
+authentication is used.
 .Pp
 A more extensible protocol (such as
 .Xr ssh 1 )

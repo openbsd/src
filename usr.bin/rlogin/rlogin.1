@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rlogin.1,v 1.8 2001/05/01 17:58:04 aaron Exp $
+.\"	$OpenBSD: rlogin.1,v 1.9 2001/06/23 22:14:30 hin Exp $
 .\"	$NetBSD: rlogin.1,v 1.4 1995/08/18 15:07:35 pk Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
@@ -42,7 +42,7 @@
 .Nd remote login
 .Sh SYNOPSIS
 .Ar rlogin
-.Op Fl 8EKLdx
+.Op Fl 8EKLd
 .Op Fl e Ar char
 .Op Fl k Ar realm
 .Op Fl l Ar username
@@ -108,17 +108,6 @@ in realm
 .Ar realm
 instead of the remote host's realm as determined by
 .Xr krb_realmofhost 3 .
-.It Fl x
-The
-.Fl x
-option turns on
-.Tn DES
-encryption for all data passed via the
-rlogin session.
-This may impact response time and
-.Tn CPU
-utilization, but provides
-increased security.
 .It Fl l Ar username
 The
 .Fl l
@@ -203,3 +192,8 @@ will be replaced by
 in the near future.
 .Pp
 More of the environment should be propagated.
+.Pp
+.Nm
+does currently not support encryption of the datastream when Kerberos
+authentication is used.
+

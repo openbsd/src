@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rlogind.8,v 1.7 2001/01/28 19:34:31 niklas Exp $
+.\"	$OpenBSD: rlogind.8,v 1.8 2001/06/23 22:14:31 hin Exp $
 .\" Copyright (c) 1983, 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -40,7 +40,7 @@
 .Nd remote login server
 .Sh SYNOPSIS
 .Nm rlogind
-.Op Fl aln
+.Op Fl alnk
 .Sh DESCRIPTION
 .Nm
 is the server for the
@@ -54,6 +54,8 @@ The options are as follows:
 .It Fl a
 Ask hostname for verification.
 This flag is ignored; this feature is always enabled.
+.It Fl k
+Use Kerberos authentication
 .It Fl l
 Prevent any authentication based on the user's
 .Pa .rhosts
@@ -163,8 +165,9 @@ command appeared in
 .Sh BUGS
 The authentication procedure used here assumes the integrity
 of each client machine and the connecting medium.
-This is insecure, but is useful in an ``open'' environment.
-.Pp
-A facility to allow all data exchanges to be encrypted should be present.
 .Pp
 A more extensible protocol should be used.
+.Pp
+.Nm
+does currently not support encryption of the datastream when Kerberos
+authentication is used.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rsh.1,v 1.8 2000/11/09 17:52:35 aaron Exp $
+.\"	$OpenBSD: rsh.1,v 1.9 2001/06/23 22:14:28 hin Exp $
 .\"
 .\" Copyright (c) 1983, 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -93,11 +93,6 @@ Redirect input from the special device
 (see the
 .Sx BUGS
 section of this manual page).
-.It Fl x
-Enable
-.Tn DES
-encryption for all data exchange.
-This may introduce a significant delay in response time.
 .El
 .Pp
 If no
@@ -181,3 +176,7 @@ Stop signals stop the local
 .Nm
 process only; this is arguably wrong, but currently hard to fix for reasons
 too complicated to explain here.
+.Pp
+.Nm
+does currently not support encryption of the datastream when Kerberos
+authentication is used.
