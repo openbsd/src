@@ -1,4 +1,4 @@
-/*	$OpenBSD: frag6.c,v 1.14 2002/05/16 14:10:51 kjc Exp $	*/
+/*	$OpenBSD: frag6.c,v 1.15 2002/05/27 19:48:27 deraadt Exp $	*/
 /*	$KAME: frag6.c,v 1.31 2001/05/17 13:45:34 jinmei Exp $	*/
 
 /*
@@ -72,8 +72,8 @@ static int ip6q_locked;
 u_int frag6_nfragpackets;
 struct	ip6q ip6q;	/* ip6 reassemble queue */
 
-static __inline int ip6q_lock_try __P((void));
-static __inline void ip6q_unlock __P((void));
+static __inline int ip6q_lock_try(void);
+static __inline void ip6q_unlock(void);
 
 static __inline int
 ip6q_lock_try()
