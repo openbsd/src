@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.73 2003/08/20 19:29:12 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.74 2003/08/20 19:35:50 miod Exp $	*/
 /*
  * Copyright (c) 2001, 2002, 2003 Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -272,7 +272,7 @@ m88k_protection(pmap_t pmap, vm_prot_t prot)
 		 * upon writing to the page the first time.  XXX smurph
 		 */
 		if (pmap == kernel_pmap) {
-			if (p & PG_PROT)
+			if ((p & PG_RO) == 0)
 				p |= PG_M;
 		}
 	}
