@@ -1,4 +1,4 @@
-/*	$OpenBSD: est.c,v 1.10 2004/10/05 02:13:41 tedu Exp $ */
+/*	$OpenBSD: est.c,v 1.11 2005/03/07 06:59:14 mbalmer Exp $ */
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -42,6 +42,10 @@
  * - Intel Pentium M Processor Datasheet.
  *   Table 5, Voltage and Current Specifications.
  *   http://www.intel.com/design/mobile/datashts/252612.htm
+ *
+ * - Intel Pentium M Processor on 90 nm Process with 2-MB L2 Cache Datasheet
+ *   Table 3-4, Voltage and Current Specifications.
+ *   http://www.intel.com/design/mobile/datashts/302189.htm
  *
  * - Linux cpufreq patches, speedstep-centrino.c.
  *   Encoding of MSR_PERF_CTL and MSR_PERF_STATUS.
@@ -146,6 +150,60 @@ static const struct fq_info pentium_m_1700[] = {
 };
 
 
+/* Intel Pentium M processor 723 1.0 GHz */
+static const struct fq_info pentium_m_n723[] = {
+	{ 1000,  940 },
+	{  900,  908 },
+	{  800,  876 },
+	{  600,  812 } 
+};
+
+/* Intel Pentium M processor 733 1.1 GHz */
+static const struct fq_info pentium_m_n733[] = {
+	{ 1100,  940 },
+	{ 1000,  924 },
+	{  900,  892 },
+	{  800,  876 },
+	{  600,  812 }
+};
+
+/* Intel Pentium M processor 753 1.2 GHz */
+static const struct fq_info pentium_m_n753[] = {
+	{ 1200,  940 },
+	{ 1100,  924 },
+	{ 1000,  908 },
+	{  900,  876 },
+	{  800,  860 },
+	{  600,  812 }
+};
+
+/* Intel Pentium M processor 738 1.4 GHz */
+static const struct fq_info pentium_m_n738[] = {
+	{ 1400, 1116 },
+	{ 1300, 1116 },
+	{ 1200, 1100 },
+	{ 1100, 1068 },
+	{ 1000, 1052 },
+	{  900, 1036 },
+	{  800, 1020 },
+	{  600,  988 }
+};
+
+#if 0
+/* Intel Pentium M processor 758 1.5 GHz */
+static const struct fq_info pentium_m_n758[] = {
+	{ 1500, 1116 },
+	{ 1400, 1116 },
+	{ 1300, 1100 },
+	{ 1200, 1084 },
+	{ 1100, 1068 },
+	{ 1000, 1052 },
+	{  900, 1036 },
+	{  800, 1020 },
+	{  600,  988 }
+};
+#endif
+
 /* Intel Pentium M processor 715 1.5 GHz */
 static const struct fq_info pentium_m_n715[] = {
 	{ 1500, 1340 },
@@ -198,6 +256,18 @@ static const struct fq_info pentium_m_n755[] = {
 	{  600,  988 }
 };
 
+/* Intel Pentium M processor 765 2.1 GHz */
+static const struct fq_info pentium_m_n765[] = {
+	{ 2100, 1340 },
+	{ 1800, 1276 },
+	{ 1600, 1228 },
+	{ 1400, 1180 },
+	{ 1200, 1132 },
+	{ 1000, 1084 },
+	{  800, 1036 },
+	{  600,  988 } 
+};
+
 struct fqlist {
 	const char *brand_tag;
 	const struct fq_info *table;
@@ -220,11 +290,19 @@ static const struct fqlist pentium_m[] = {
 
 static const struct fqlist pentium_m_dothan[] = {
 #define ENTRY(s, v)	{ s, v, sizeof(v) / sizeof((v)[0]) }
+	ENTRY("1.00", pentium_m_n723),
+	ENTRY("1.10", pentium_m_n733),
+	ENTRY("1.20", pentium_m_n753),
+	ENTRY("1.40", pentium_m_n738),
+#if 0
+	ENTRY("1.50", pentium_m_n758),
+#endif
 	ENTRY("1.50", pentium_m_n715),
 	ENTRY("1.60", pentium_m_n725),
 	ENTRY("1.70", pentium_m_n735),
 	ENTRY("1.80", pentium_m_n745),
 	ENTRY("2.00", pentium_m_n755),
+	ENTRY("2.10", pentium_m_n765),
 #undef ENTRY
 };
 
