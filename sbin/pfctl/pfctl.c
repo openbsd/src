@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.45 2001/10/02 18:00:38 frantzen Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.46 2001/10/02 18:18:28 frantzen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -552,7 +552,6 @@ pfctl_hint(int dev, const char *opt, int opts)
 		return 1;
 	}
 
-	hint = pf_hints[i].hint;
 	for (i = 0; hint[i].name; i++)
 		if ((r = pfctl_settimeout(dev, hint[i].name, hint[i].timeout)))
 			return r;
