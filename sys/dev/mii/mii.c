@@ -1,4 +1,4 @@
-/*	$OpenBSD: mii.c,v 1.6 1999/12/07 22:01:31 jason Exp $	*/
+/*	$OpenBSD: mii.c,v 1.7 2000/04/24 21:13:33 niklas Exp $	*/
 /*	$NetBSD: mii.c,v 1.9 1998/11/05 04:08:02 thorpej Exp $	*/
 
 /*-
@@ -115,6 +115,18 @@ mii_phy_probe(parent, mii, capmask)
 			mii->mii_instance++;
 		}
 	}
+}
+
+int
+mii_detach(msc, flags)
+	struct mii_softc *msc;
+	int flags;
+{
+	LIST_REMOVE(msc, mii_list);
+	/* XXX The following condition should always be true.  */
+	if (msc->mii_inst == msc->mii_pdata->mii_instance - 1)
+		msc->mii_pdata->mii_instance--;
+	return config_detach(&msc->mii_dev, flags);
 }
 
 int
