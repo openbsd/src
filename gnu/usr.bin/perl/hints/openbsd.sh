@@ -4,6 +4,9 @@
 # Edited to allow Configure command-line overrides by
 #  Andy Dougherty <doughera@lafcol.lafayette.edu>
 #
+# To build with distribution paths, use:
+#	./Configure -des -Dopenbsd_distribution=defined
+#
 
 # OpenBSD has a better malloc than perl...
 test "$usemymalloc" || usemymalloc='n'
@@ -15,10 +18,10 @@ usevfork='true'
 # setre?[ug]id() have been replaced by the _POSIX_SAVED_IDS versions
 # in 4.4BSD.  Configure will find these but they are just emulated
 # and do not have the same semantics as in 4.3BSD.
-d_setregid='undef'
-d_setreuid='undef'
-d_setrgid='undef'
-d_setruid='undef'
+d_setregid=$undef
+d_setreuid=$undef
+d_setrgid=$undef
+d_setruid=$undef
 
 #
 # Not all platforms support shared libs...
@@ -42,7 +45,7 @@ esac
 libswanted=`echo $libswanted | sed 's/ crypt / /'`
 
 # Configure can't figure this out non-interactively
-d_suidsafe='define'
+d_suidsafe=$define
 
 # cc is gcc so we can do better than -O
 # Allow a command-line override, such as -Doptimize=-g
@@ -57,5 +60,24 @@ $define|true|[yY]*)
 	libswanted="$libswanted pthread"
 esac
 EOCBU
+
+# When building in the OpenBSD tree we use different paths
+# This is only part of the story, the rest comes from config.over
+case "$openbsd_distribution" in
+''|$undef|false) ;;
+*)
+	# We put things in /usr, not /usr/local
+	prefix='/usr'
+	prefixexp='/usr'
+	sysman='/usr/share/man/man1'
+	# Never look for things in /usr/local
+	glibpth='/usr/lib'
+	libpth='/usr/lib'
+	locincpth=''
+	loclibpth=''
+	ccflags=''
+	cppflags=''
+	;;
+esac
 
 # end
