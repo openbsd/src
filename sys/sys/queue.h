@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.h,v 1.11 1998/09/11 06:28:05 fgsch Exp $	*/
+/*	$OpenBSD: queue.h,v 1.12 1999/01/08 15:29:32 niklas Exp $	*/
 /*	$NetBSD: queue.h,v 1.11 1996/05/16 05:17:14 mycroft Exp $	*/
 
 /*
@@ -83,6 +83,9 @@ struct name {								\
 	struct type *lh_first;	/* first element */			\
 } 
 
+#define LIST_HEAD_INITIALIZER(head)					\
+	{ NULL }
+
 #define LIST_ENTRY(type)						\
 struct {								\
 	struct type *le_next;	/* next element */			\
@@ -138,6 +141,9 @@ struct name {								\
 	struct type **sqh_last;	/* addr of last next element */		\
 }
 
+#define SIMPLEQ_HEAD_INITIALIZER(head)					\
+	{ NULL, &(head).sqh_first }
+
 #define SIMPLEQ_ENTRY(type)						\
 struct {								\
 	struct type *sqe_next;	/* next element */			\
@@ -189,6 +195,9 @@ struct name {								\
 	struct type *tqh_first;	/* first element */			\
 	struct type **tqh_last;	/* addr of last next element */		\
 }
+
+#define TAILQ_HEAD_INITIALIZER(head)					\
+	{ NULL, &(head).tqh_first }
 
 #define TAILQ_ENTRY(type)						\
 struct {								\
@@ -264,6 +273,9 @@ struct name {								\
 	struct type *cqh_first;		/* first element */		\
 	struct type *cqh_last;		/* last element */		\
 }
+
+#define CIRCLEQ_HEAD_INITIALIZER(head)					\
+	{ (void *)&head, (void *)&head }
 
 #define CIRCLEQ_ENTRY(type)						\
 struct {								\
