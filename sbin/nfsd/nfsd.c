@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsd.c,v 1.21 2003/06/02 20:06:16 millert Exp $	*/
+/*	$OpenBSD: nfsd.c,v 1.22 2003/08/11 19:10:30 millert Exp $	*/
 /*	$NetBSD: nfsd.c,v 1.19 1996/02/18 23:18:56 mycroft Exp $	*/
 
 /*
@@ -34,16 +34,16 @@
  */
 
 #ifndef lint
-static char copyright[] =
+static const char copyright[] =
 "@(#) Copyright (c) 1989, 1993, 1994\n\
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)nfsd.c	8.9 (Berkeley) 3/29/95";
+static const char sccsid[] = "@(#)nfsd.c	8.9 (Berkeley) 3/29/95";
 #else
-static char rcsid[] = "$NetBSD: nfsd.c,v 1.19 1996/02/18 23:18:56 mycroft Exp $";
+static const char rcsid[] = "$OpenBSD: nfsd.c,v 1.22 2003/08/11 19:10:30 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -121,7 +121,8 @@ main(int argc, char *argv[])
 #ifdef ISO
 	struct sockaddr_iso isoaddr, isopeer;
 #endif
-	fd_set ready, sockbits;
+	fd_set *ready, *sockbits;
+	size_t fd_size;
 	int ch, cltpflag, connect_type_cnt, i, maxsock = 0, msgsock;
 	int nfsdcnt, nfssvc_flag, on, reregister, sock, tcpflag, tcpsock;
 	int tp4cnt, tpipcnt, udpflag;
@@ -313,7 +314,6 @@ main(int argc, char *argv[])
 
 	/* Now set up the master server socket waiting for tcp connections. */
 	on = 1;
-	FD_ZERO(&sockbits);
 	connect_type_cnt = 0;
 	if (tcpflag) {
 		if ((tcpsock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
@@ -342,7 +342,6 @@ main(int argc, char *argv[])
 			syslog(LOG_ERR, "can't register tcp with portmap");
 			return (1);
 		}
-		FD_SET(tcpsock, &sockbits);
 		maxsock = tcpsock;
 		connect_type_cnt++;
 	}
@@ -382,7 +381,6 @@ main(int argc, char *argv[])
 			syslog(LOG_ERR, "can't register tcp with portmap");
 			return (1);
 		}
-		FD_SET(tp4sock, &sockbits);
 		maxsock = tp4sock;
 		connect_type_cnt++;
 	}
@@ -419,7 +417,6 @@ main(int argc, char *argv[])
 			syslog(LOG_ERR, "can't register tcp with portmap");
 			return (1);
 		}
-		FD_SET(tpipsock, &sockbits);
 		maxsock = tpipsock;
 		connect_type_cnt++;
 	}
@@ -431,19 +428,39 @@ main(int argc, char *argv[])
 	setproctitle("master");
 
 	/*
+	 * Allocate space for the fd_set pointers and fill in sockbits
+	 */
+	fd_size = howmany(maxsock + 1, NFDBITS) * sizeof(fd_mask);
+	sockbits = malloc(fd_size);
+	ready = malloc(fd_size);
+	if (sockbits == NULL || ready == NULL) {
+		syslog(LOG_ERR, "cannot allocate memory");
+		return (1);
+	}
+	memset(sockbits, 0, fd_size);
+	if (tcpflag)
+		FD_SET(tcpsock, sockbits);
+#ifdef notyet
+	if (tp4flag)
+		FD_SET(tp4sock, sockbits);
+	if (tpipflag)
+		FD_SET(tpipsock, sockbits);
+#endif
+
+	/*
 	 * Loop forever accepting connections and passing the sockets
 	 * into the kernel for the mounts.
 	 */
 	for (;;) {
-		ready = sockbits;
+		memcpy(ready, sockbits, fd_size);
 		if (connect_type_cnt > 1) {
 			if (select(maxsock + 1,
-			    &ready, NULL, NULL, NULL) < 1) {
+			    ready, NULL, NULL, NULL) < 1) {
 				syslog(LOG_ERR, "select failed: %m");
 				return (1);
 			}
 		}
-		if (tcpflag && FD_ISSET(tcpsock, &ready)) {
+		if (tcpflag && FD_ISSET(tcpsock, ready)) {
 			len = sizeof(inetpeer);
 			if ((msgsock = accept(tcpsock,
 			    (struct sockaddr *)&inetpeer, &len)) < 0) {
@@ -462,7 +479,7 @@ main(int argc, char *argv[])
 			(void)close(msgsock);
 		}
 #ifdef notyet
-		if (tp4flag && FD_ISSET(tp4sock, &ready)) {
+		if (tp4flag && FD_ISSET(tp4sock, ready)) {
 			len = sizeof(isopeer);
 			if ((msgsock = accept(tp4sock,
 			    (struct sockaddr *)&isopeer, &len)) < 0) {
@@ -479,7 +496,7 @@ main(int argc, char *argv[])
 			nfssvc(NFSSVC_ADDSOCK, &nfsdargs);
 			(void)close(msgsock);
 		}
-		if (tpipflag && FD_ISSET(tpipsock, &ready)) {
+		if (tpipflag && FD_ISSET(tpipsock, ready)) {
 			len = sizeof(inetpeer);
 			if ((msgsock = accept(tpipsock,
 			    (struct sockaddr *)&inetpeer, &len)) < 0) {
