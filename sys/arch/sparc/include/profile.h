@@ -1,4 +1,4 @@
-/*	$OpenBSD: profile.h,v 1.4 1997/08/08 08:26:40 downsj Exp $	*/
+/*	$OpenBSD: profile.h,v 1.5 1998/11/20 02:09:16 marc Exp $	*/
 /*	$NetBSD: profile.h,v 1.8 1997/02/01 20:56:40 mrg Exp $ */
 
 /*
@@ -66,7 +66,7 @@
 	__asm__("add %o7, 8, %o1");
 #endif
 
-#define	_MCOUNT_DECL	static void _mcount
+#define	_MCOUNT_DECL	/* static */ void _mcount
 
 #ifdef _KERNEL
 /*
