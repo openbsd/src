@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_subr.c,v 1.24 2002/12/19 00:57:07 mickey Exp $	*/
+/*	$OpenBSD: exec_subr.c,v 1.25 2003/05/09 00:48:42 art Exp $	*/
 /*	$NetBSD: exec_subr.c,v 1.9 1994/12/04 03:10:42 mycroft Exp $	*/
 
 /*
@@ -228,20 +228,22 @@ vmcmd_map_pagedvn(p, cmd)
  *	appropriate for non-demand-paged text/data segments, i.e. impure
  *	objects (a la OMAGIC and NMAGIC).
  */
+
 int
-vmcmd_map_readvn(p, cmd)
-	struct proc *p;
-	struct exec_vmcmd *cmd;
+vmcmd_map_readvn(struct proc *p, struct exec_vmcmd *cmd)
 {
 	int error;
+	vm_prot_t prot;
 
 	if (cmd->ev_len == 0)
 		return (0);
-	
+
+	prot = cmd->ev_prot;
+
 	cmd->ev_addr = trunc_page(cmd->ev_addr); /* required by uvm_map */
 	error = uvm_map(&p->p_vmspace->vm_map, &cmd->ev_addr,
 	    round_page(cmd->ev_len), NULL, UVM_UNKNOWN_OFFSET, 0,
-	    UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_COPY,
+	    UVM_MAPFLAG(prot | UVM_PROT_WRITE, UVM_PROT_ALL, UVM_INH_COPY,
 	    UVM_ADV_NORMAL,
 	    UVM_FLAG_FIXED|UVM_FLAG_OVERLAY|UVM_FLAG_COPYONW));
 
@@ -264,7 +266,7 @@ vmcmd_map_readvn(p, cmd)
 		return (uvm_map_protect(&p->p_vmspace->vm_map,
 		    trunc_page(cmd->ev_addr),
 		    round_page(cmd->ev_addr + cmd->ev_len),
-		    cmd->ev_prot, FALSE));
+		    prot, FALSE));
 	}
 	return (0);
 }
