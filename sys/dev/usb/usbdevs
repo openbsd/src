@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.91 2004/07/11 06:21:06 deraadt Exp $
+$OpenBSD: usbdevs,v 1.92 2004/07/11 07:17:58 deraadt Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -307,6 +307,7 @@ vendor ALATION		0x0910	Alation Systems
 vendor CONCORDCAMERA	0x0919	Concord Camera
 vendor GOHUBS		0x0921	GoHubs
 vendor BIOMETRIC	0x0929	American Biometric Company
+vendor INTREPIDCS	0x093c	Intrepid
 vendor YANO		0x094f	Yano
 vendor KINGSTON		0x0951	Kingston Technology
 vendor BLUEWATER	0x0956	BlueWater Systems
@@ -337,6 +338,7 @@ vendor GREENHOUSE	0x0a6b	GREENHOUSE
 vendor GEOCAST		0x0a79	Geocast Network Systems
 vendor NEODIO		0x0aec  Neodio
 vendor TODOS		0x0b0c	Todos Data System
+vendor SIIG2		0x0b39	SIIG
 vendor NEC2		0x0b62	NEC
 vendor ATI2		0x0b6f	ATI
 vendor KURUSUGAWA	0x0b7e	Kurusugawa Electronics, Inc.
@@ -724,12 +726,13 @@ product FREECOM DVD		0xfc01	Connector for DVD drive
 product FTDI SERIAL_8U232AM	0x6001	8U232AM Serial converter
 product FTDI PS2KBDMS		0x8371	PS/2 Keyboard/Mouse
 product FTDI SERIAL_8U100AX	0x8372	Serial converter
-product	FTDI LCD_MX200_USB	0xfa01	Matrix Orbital MX200 Series LCD
-product FTDI LCD_LK202_24_USB	0xfa03	Matrix Orbital LK202-24 LCD
-product FTDI LCD_CFA631_USB     0xfc0c  Crystalfontz CFA-631 LCD
-product FTDI LCD_CFA632_USB	0xfc08  Crystalfontz CFA-632 LCD
-product FTDI LCD_CFA633_USB	0xfc0b  Crystalfontz CFA-633 LCD
-product FTDI LCD_CFA634_USB	0xfc09  Crystalfontz CFA-634 LCD
+product	FTDI LCD_MX200		0xfa01	Matrix Orbital MX200 Series LCD
+product FTDI LCD_LK202_24	0xfa03	Matrix Orbital LK202-24 LCD
+product FTDI LCD_CFA_631	0xfc0c  Crystalfontz CFA-631 LCD
+product FTDI LCD_CFA_632	0xfc08  Crystalfontz CFA-632 LCD
+product FTDI LCD_CFA_633	0xfc0b  Crystalfontz CFA-633 LCD
+product FTDI LCD_CFA_634	0xfc09  Crystalfontz CFA-634 LCD
+product FTDI SEMC_DSS20		0xfc82	SEMC DSS-20 SyncStation
 
 /* Fuji photo products */
 product FUJIPHOTO MASS0100	0x0100	Mass Storage
@@ -861,6 +864,10 @@ product INTEL TESTBOARD		0x9890	82930 test board
 
 /* Intersil products */
 product INTERSIL PRISM_2X	0x3642	Prism2.x WLAN
+
+/* Interpid Control Systems products */
+product INTREPIDCS VALUECAN	0x0601	ValueCAN CAN
+product INTREPIDCS NEOVI	0x0701	NeoVI Blue
 
 /* I/O DATA products */
 product IODATA USBSSMRW		0x0314	USB-SSMRW SD-card
@@ -1358,6 +1365,7 @@ product	SIGMATEL DNSSF7X	0x8020	Datum Networks SSF-7X Multi Players
 /* SIIG products */
 product SIIG DIGIFILMREADER	0x0004	DigiFilm-Combo
 product SIIG MULTICARDREADER	0x0201	MULTICARDREADER
+product SIIG2 US2308		0x0421	Serial
 
 /* Silicon Portals Inc. */
 product SILICONPORTALS YAPPH_NF	0x0200	YAP Phone (no firmware)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uftdi.c,v 1.15 2004/04/09 16:54:35 deraadt Exp $ 	*/
+/*	$OpenBSD: uftdi.c,v 1.16 2004/07/11 07:17:58 deraadt Exp $ 	*/
 /*	$NetBSD: uftdi.c,v 1.14 2003/02/23 04:20:07 simonb Exp $	*/
 
 /*
@@ -138,12 +138,21 @@ USB_MATCH(uftdi)
 	if (uaa->vendor == USB_VENDOR_FTDI &&
 	    (uaa->product == USB_PRODUCT_FTDI_SERIAL_8U100AX ||
 	     uaa->product == USB_PRODUCT_FTDI_SERIAL_8U232AM ||
-	     uaa->product == USB_PRODUCT_FTDI_LCD_MX200_USB ||
-	     uaa->product == USB_PRODUCT_FTDI_LCD_CFA631_USB ||
-	     uaa->product == USB_PRODUCT_FTDI_LCD_CFA632_USB ||
-	     uaa->product == USB_PRODUCT_FTDI_LCD_CFA633_USB ||
-	     uaa->product == USB_PRODUCT_FTDI_LCD_CFA634_USB))
+	     uaa->product == USB_PRODUCT_FTDI_SEMC_DSS20 ||
+	     uaa->product == USB_PRODUCT_FTDI_LCD_LK202_24 ||
+	     uaa->product == USB_PRODUCT_FTDI_LCD_MX200 ||
+	     uaa->product == USB_PRODUCT_FTDI_LCD_CFA_631 ||
+	     uaa->product == USB_PRODUCT_FTDI_LCD_CFA_632 ||
+	     uaa->product == USB_PRODUCT_FTDI_LCD_CFA_633 ||
+	     uaa->product == USB_PRODUCT_FTDI_LCD_CFA_634))
 	    return (UMATCH_VENDOR_PRODUCT);
+	if (uaa->vendor == USB_VENDOR_SIIG2 &&
+	    (uaa->product == USB_PRODUCT_SIIG2_US2308))
+		return (UMATCH_VENDOR_PRODUCT);
+	if (uaa->vendor == USB_VENDOR_INTREPIDCS &&
+	    (uaa->product == USB_PRODUCT_INTREPIDCS_VALUECAN ||
+	     uaa->product == USB_PRODUCT_INTREPIDCS_NEOVI))
+		return (UMATCH_VENDOR_PRODUCT);
 
 	return (UMATCH_NONE);
 }
@@ -187,26 +196,55 @@ USB_ATTACH(uftdi)
 	sc->sc_udev = dev;
 	sc->sc_iface = iface;
 
-	switch (uaa->product) {
-	case USB_PRODUCT_FTDI_SERIAL_8U100AX:
-		sc->sc_type = UFTDI_TYPE_SIO;
-		sc->sc_hdrlen = 1;
+	switch (uaa->vendor) {
+	case USB_VENDOR_FTDI:
+		switch (uaa->product) {
+		case USB_PRODUCT_FTDI_SERIAL_8U100AX:
+			sc->sc_type = UFTDI_TYPE_SIO;
+			sc->sc_hdrlen = 1;
+			break;
+
+		case USB_PRODUCT_FTDI_SEMC_DSS20:
+		case USB_PRODUCT_FTDI_SERIAL_8U232AM:
+		case USB_PRODUCT_FTDI_LCD_LK202_24:
+		case USB_PRODUCT_FTDI_LCD_MX200:
+		case USB_PRODUCT_FTDI_LCD_CFA_631:
+		case USB_PRODUCT_FTDI_LCD_CFA_632:
+		case USB_PRODUCT_FTDI_LCD_CFA_633:
+		case USB_PRODUCT_FTDI_LCD_CFA_634:
+			sc->sc_type = UFTDI_TYPE_8U232AM;
+			sc->sc_hdrlen = 0;
+			break;
+		
+		default:		/* Can't happen */
+			goto bad;
+		}
 		break;
 
-	case USB_PRODUCT_FTDI_SERIAL_8U232AM:
-	case USB_PRODUCT_FTDI_LCD_LK202_24_USB:
-	case USB_PRODUCT_FTDI_LCD_MX200_USB:
-	case USB_PRODUCT_FTDI_LCD_CFA631_USB:
-	case USB_PRODUCT_FTDI_LCD_CFA632_USB:
-	case USB_PRODUCT_FTDI_LCD_CFA633_USB:
-	case USB_PRODUCT_FTDI_LCD_CFA634_USB:
+	case USB_VENDOR_INTREPIDCS:
+		switch (uaa->product) {
+		case USB_PRODUCT_INTREPIDCS_VALUECAN:
+		case USB_PRODUCT_INTREPIDCS_NEOVI:
 		sc->sc_type = UFTDI_TYPE_8U232AM;
-		sc->sc_hdrlen = 0;
+			sc->sc_hdrlen = 0;
+			break;
+
+		default:                /* Can't happen */
+			goto bad;
+		}
 		break;
-	
-	default:		/* Can't happen */
-		goto bad;
-	}
+
+	case USB_VENDOR_SIIG2:
+		switch (uaa->product) {
+		case USB_PRODUCT_SIIG2_US2308:
+			sc->sc_type = UFTDI_TYPE_8U232AM;
+			sc->sc_hdrlen = 0;
+			break;
+		default:		/* Can't happen */
+			goto bad;
+		}
+		break;
+	}		
 
 	uca.bulkin = uca.bulkout = -1;
 	for (i = 0; i < id->bNumEndpoints; i++) {
@@ -474,6 +512,8 @@ uftdi_param(void *vsc, int portno, struct termios *t)
 		case 230400: rate = ftdi_8u232am_b230400; break;
 		case 460800: rate = ftdi_8u232am_b460800; break;
 		case 921600: rate = ftdi_8u232am_b921600; break;
+		case 2000000: rate = ftdi_8u232am_b2000000; break;
+		case 3000000: rate = ftdi_8u232am_b3000000; break;
 		default:
 			return (EINVAL);
 		}
