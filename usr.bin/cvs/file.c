@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.47 2005/01/03 22:53:06 jfb Exp $	*/
+/*	$OpenBSD: file.c,v 1.48 2005/01/06 20:15:16 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -557,11 +557,11 @@ cvs_file_getdir(CVSFILE *cf, int flags)
 
 	cvs_file_getpath(cf, fpath, sizeof(fpath));
 
-	if (cf->cf_cvstat != CVS_FST_UNKNOWN) {
-		cdp->cd_root = cvsroot_get(fpath);
-		if (cdp->cd_root == NULL)
-			return (-1);
+	cdp->cd_root = cvsroot_get(fpath);
+	if (cdp->cd_root == NULL)
+		return (-1);
 
+	if (cf->cf_cvstat != CVS_FST_UNKNOWN) {
 		if (flags & CF_MKADMIN)
 			cvs_mkadmin(cf, 0755);
 
@@ -581,7 +581,8 @@ cvs_file_getdir(CVSFILE *cf, int flags)
 		}
 	}
 
-	if (!(flags & CF_RECURSE) || (cf->cf_cvstat == CVS_FST_UNKNOWN))
+	if (!(flags & CF_RECURSE) ||
+	    ((flags & CF_KNOWN) && (cf->cf_cvstat == CVS_FST_UNKNOWN)))
 		return (0);
 
 	fd = open(fpath, O_RDONLY);
