@@ -1,4 +1,4 @@
-.\" $OpenBSD: at.1,v 1.18 2001/07/20 19:09:45 mpech Exp $
+.\" $OpenBSD: at.1,v 1.19 2002/05/11 18:41:20 millert Exp $
 .\" $FreeBSD: at.man,v 1.6 1997/02/22 19:54:05 peter Exp $
 .Dd April 12, 1995
 .Dt AT 1
@@ -208,11 +208,14 @@ is executed from a
 .Xr su 1
 shell, the owner of the login shell will receive the mail.
 .Pp
-The superuser may use these commands in any case.
-For other users, permission to use at is determined by the files
+For non-root users, permission to run
+.Nm
+is determined by the files
 .Pa /var/at/at.allow
 and
 .Pa /var/at/at.deny .
+.Em Note :
+these files must be readable by group crontab (if they exist).
 .Pp
 If the file
 .Pa /var/at/at.allow
@@ -225,7 +228,7 @@ does not exist,
 is checked.
 Every username not mentioned in it is then allowed to use
 .Nm at .
-If neither exists, only the superuser is allowed use of
+If neither exists, only the superuser is allowed to run
 .Nm at .
 .Pp
 An empty
@@ -233,7 +236,7 @@ An empty
 means that every user is allowed use these commands.
 This is the default configuration.
 .Sh FILES
-.Bl -tag -width /var/at/.lockfile -compact
+.Bl -tag -width /var/at/at.allow -compact
 .It Pa /var/at/jobs
 directory containing job files
 .It Pa /var/at/spool
@@ -244,8 +247,8 @@ login records
 allow permission control
 .It Pa /var/at/at.deny
 deny permission control
-.It Pa /var/at/.lockfile
-job-creation lock file
+.It Pa /var/at/.SEQ
+job sequence file
 .El
 .Sh SEE ALSO
 .Xr nice 1 ,

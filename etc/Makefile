@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.157 2002/04/28 14:56:38 miod Exp $
+#	$OpenBSD: Makefile,v 1.158 2002/05/11 18:41:19 millert Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -185,8 +185,10 @@ distribution-etc-root-var: distrib-dirs
 		${DESTDIR}/etc/dumpdates
 	${INSTALL} -c -o ${BINOWN} -g wheel -m 600 /dev/null \
 		${DESTDIR}/etc/skeykeys
-	${INSTALL} -c -o root -g wheel -m 600 /dev/null \
+	${INSTALL} -c -o root -g crontab -m 660 /dev/null \
 		${DESTDIR}/var/at/at.deny
+	${INSTALL} -c -o root -g crontab -m 660 /dev/null \
+		${DESTDIR}/var/at/.SEQ
 	${INSTALL} -c -o root -g wheel -m 600 /dev/null \
 		${DESTDIR}/var/cron/log
 	${INSTALL} -c -o root -g wheel -m 444 /dev/null \

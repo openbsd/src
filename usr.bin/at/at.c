@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.c,v 1.21 2002/02/16 21:27:44 millert Exp $	*/
+/*	$OpenBSD: at.c,v 1.22 2002/05/11 18:41:20 millert Exp $	*/
 /*	$NetBSD: at.c,v 1.4 1995/03/25 18:13:31 glass Exp $	*/
 
 /*
@@ -74,7 +74,7 @@ enum { ATQ, ATRM, AT, BATCH, CAT };	/* what program we want to run */
 
 /* File scope variables */
 #ifndef lint
-static char rcsid[] = "$OpenBSD: at.c,v 1.21 2002/02/16 21:27:44 millert Exp $";
+static char rcsid[] = "$OpenBSD: at.c,v 1.22 2002/05/11 18:41:20 millert Exp $";
 #endif
 
 char *no_export[] =
@@ -156,21 +156,19 @@ nextjob()
 	int jobno;
 	FILE *fid;
 
-	if ((fid = fopen(_PATH_SEQFILE, "r+")) != NULL) {
-		if (fscanf(fid, "%5x", &jobno) == 1) {
-			(void)rewind(fid);
-			jobno = (1+jobno) % 0xfffff;	/* 2^20 jobs enough? */
-			(void)fprintf(fid, "%05x\n", jobno);
-		} else
-			jobno = EOF;
-		(void)fclose(fid);
-		return (jobno);
-	} else if ((fid = fopen(_PATH_SEQFILE, "w")) != NULL) {
-		(void)fprintf(fid, "%05x\n", jobno = 1);
-		(void)fclose(fid);
-		return (1);
-	}
-	return (EOF);
+	/* We require that the sequence file already exist. */
+	if ((fid = fopen(_PATH_SEQFILE, "r+")) == NULL)
+		return (EOF);
+
+	if (fscanf(fid, "%5x", &jobno) == 1)
+		jobno = (jobno + 1) % 0xfffff;	/* 2^20 jobs enough? */
+	else
+		jobno = 1;
+	(void)rewind(fid);
+	(void)fprintf(fid, "%05x\n", jobno);
+	(void)fclose(fid);
+
+	return (jobno);
 }
 
 static void
@@ -213,35 +211,29 @@ writefile(runtimer, queue)
 	/*
 	 * Loop over all possible file names for running something at this
 	 * particular time, see if a file is there; the first empty slot at
-	 * any particular time is used.  Lock the file _PATH_LOCKFILE first
+	 * any particular time is used.  Lock the jobs directory first
 	 * to make sure we're alone when doing this.
 	 */
 
 	PRIV_START
 
-	if ((lockdes = open(_PATH_LOCKFILE, O_WRONLY | O_CREAT, S_IWUSR | S_IRUSR)) < 0)
-		perr2("Cannot open lockfile ", _PATH_LOCKFILE);
-
-	lock.l_type = F_WRLCK;
-	lock.l_whence = SEEK_SET;
-	lock.l_start = 0;
-	lock.l_len = 0;
-
+	/*
+	 * Set an alarm so we don't sleep forever waiting on the lock.
+	 * If we don't succeed with ALARMC seconds, something is wrong...
+	 */
 	act.sa_handler = alarmc;
 	sigemptyset(&(act.sa_mask));
 	act.sa_flags = 0;
-
-	/*
-	 * Set an alarm so a timeout occurs after ALARMC seconds, in case
-	 * something is seriously broken.
-	 */
 	sigaction(SIGALRM, &act, NULL);
 	alarm(ALARMC);
-	fcntl(lockdes, F_SETLKW, &lock);
+	lockdes = open(_PATH_ATJOBS, O_RDONLY|O_EXLOCK, 0);
 	alarm(0);
 
+	if (lockdes < 0)
+		perr("Cannot lock jobs dir");
+
 	if ((jobno = nextjob()) == EOF)
-	    perr("Cannot generate job number");
+		perr("Cannot generate job number");
 
 	(void)snprintf(ppos, sizeof(atfile) - (ppos - atfile),
 	    "%c%5x%8x", queue, jobno, (unsigned) (runtimer/60));
@@ -261,7 +253,8 @@ writefile(runtimer, queue)
 	 * their r bit.  Yes, this is a kluge.
 	 */
 	cmask = umask(S_IRUSR | S_IWUSR | S_IXUSR);
-	if ((fdes = open(atfile, O_CREAT | O_TRUNC | O_WRONLY, S_IRUSR)) == -1)
+	if ((fdes = open(atfile, O_WRONLY|O_CREAT|O_TRUNC|O_NONBLOCK|O_NOFOLLOW,
+	    S_IRUSR)) == -1)
 		perr("Cannot create atjob file");
 
 	if ((fd2 = dup(fdes)) < 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pathnames.h,v 1.3 1997/03/01 23:40:11 millert Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.4 2002/05/11 18:41:20 millert Exp $	*/
 /*	$NetBSD: pathnames.h,v 1.3 1995/03/25 18:13:38 glass Exp $	*/
 
 /*
@@ -39,7 +39,6 @@
 
 #define _PATH_ATJOBS	"/var/at/jobs/"
 #define _PATH_ATSPOOL	"/var/at/spool/"
-#define _PATH_LOCKFILE	"/var/at/.lockfile"
 #define _PATH_SEQFILE	"/var/at/.SEQ"
 #define _PATH_AT_ALLOW	"/var/at/at.allow"
 #define _PATH_AT_DENY	"/var/at/at.deny"
