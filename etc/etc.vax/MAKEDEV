@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.45 2002/04/04 19:57:48 deraadt Exp $
+#	$OpenBSD: MAKEDEV,v 1.46 2002/05/16 21:14:49 miod Exp $
 #	$NetBSD: MAKEDEV,v 1.30 2000/01/21 12:28:29 tsutsui Exp $
 #
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
@@ -62,6 +62,7 @@
 #	ch*	SCSI changer
 #	*random	Random number generator
 #	altq	ALTQ control interface
+#	systrace* system call tracing device
 #
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 set -A cnvtbl 0 1 2 3 4 5 6 7 8 9 a b c d e f g h i j k l m n o p q r s t u v
@@ -77,7 +78,7 @@ all)
 	sh $0 ra0 ra1 ra2 ra3 hp0 hp1 hp2 hp3 sd0 sd1 sd2 sd3 hd0 hd1 hd2
 	sh $0 dz0 dl0 dhu0 rx0 rx1 raid0 raid1 raid2 raid3
 	sh $0 ttyg0 ttyg1 ttyg2 ttyg3
-	sh $0 crl std-extra
+	sh $0 crl std-extra systrace
 	;;
 
 floppy)
@@ -656,6 +657,13 @@ altq)
 		chmod 644 altq/$dev
 		unit=$(($unit + 1))
 	done
+	;;
+
+systrace)
+	rm -f systrace
+	mknod systrace c 49 0
+	chown root.wheel systrace
+	chmod 644 systrace
 	;;
 
 local)
