@@ -163,7 +163,7 @@ count() {
 
 	reg bool	newline;
 	reg DECK	*in_deck;
-	reg char	c;
+	reg int	c;
 
 	newline = TRUE;
 	in_deck = &CC_D;
@@ -185,7 +185,7 @@ putem() {
 
 	reg bool	newline;
 	reg DECK	*in_deck;
-	reg char	c;
+	reg int	c;
 	int16_t		num;
 
 	in_deck = &CC_D;
