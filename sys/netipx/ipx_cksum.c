@@ -1,5 +1,4 @@
-/*	$OpenBSD: ipx_cksum.c,v 1.1 1996/08/16 09:15:58 mickey Exp $	*/
-/*	$NOWHERE: ipx_cksum.c,v 1.2 1996/05/07 09:49:39 mickey Exp $	*/
+/*	$OpenBSD: ipx_cksum.c,v 1.2 1996/10/26 09:34:49 mickey Exp $	*/
 
 /*-
  *

@@ -1,5 +1,4 @@
-/*	$OpenBSD: spx_usrreq.c,v 1.2 1996/10/18 14:28:23 mickey Exp $	*/
-/*	$NOWHERE: spx_usrreq.c,v 1.2 1996/05/07 09:49:55 mickey Exp $	*/
+/*	$OpenBSD: spx_usrreq.c,v 1.3 1996/10/26 09:34:57 mickey Exp $	*/
 
 /*-
  *

@@ -1,5 +1,4 @@
-/*	$OpenBSD: ipx.c,v 1.2 1996/10/18 14:28:21 mickey Exp $	*/
-/*	$NOWHERE: ipx.c,v 1.2 1996/05/07 09:49:37 mickey Exp $	*/
+/*	$OpenBSD: ipx.c,v 1.3 1996/10/26 09:34:48 mickey Exp $	*/
 
 /*-
  *

@@ -1,5 +1,4 @@
-/*	$OpenBSD: ipx_pcb.c,v 1.1 1996/08/16 09:16:01 mickey Exp $	*/
-/*	$NOWHERE: ipx_pcb.c,v 1.2 1996/05/07 09:49:46 mickey Exp $	*/
+/*	$OpenBSD: ipx_pcb.c,v 1.2 1996/10/26 09:34:53 mickey Exp $	*/
 
 /*-
  *
