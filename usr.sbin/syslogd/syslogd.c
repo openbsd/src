@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.83 2004/09/14 23:25:34 deraadt Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.84 2004/09/14 23:37:06 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-static const char rcsid[] = "$OpenBSD: syslogd.c,v 1.83 2004/09/14 23:25:34 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: syslogd.c,v 1.84 2004/09/14 23:37:06 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -546,14 +546,16 @@ main(int argc, char *argv[])
 
 		for (i = 0; i < nfunix; i++) {
 			if ((pfd[PFD_UNIX_0 + i].revents & POLLIN) != 0) {
+				ssize_t rlen;
+
 				len = sizeof(fromunix);
-				len = recvfrom(pfd[PFD_UNIX_0 + i].fd, line,
+				rlen = recvfrom(pfd[PFD_UNIX_0 + i].fd, line,
 				    MAXLINE, 0, (struct sockaddr *)&fromunix,
 				    &len);
-				if (len > 0) {
-					line[len] = '\0';
+				if (rlen > 0) {
+					line[rlen] = '\0';
 					printline(LocalHostName, line);
-				} else if (len < 0 && errno != EINTR)
+				} else if (rlen == -1 && errno != EINTR)
 					logerror("recvfrom unix");
 			}
 		}
