@@ -94,5 +94,4 @@ const struct isapnp_knowndev isapnp_knowndevs[] = {
 	{ {"CSC0004"}, {"wdc"} },
 	{ {"CTL2011"}, {"wdc"} },
 	{ {"ESS0002"}, {"wdc"} },
-	{ {}, {}, }
 };
