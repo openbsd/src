@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.2 2004/07/26 16:01:22 jfb Exp $	*/
+/*	$OpenBSD: client.c,v 1.3 2004/07/27 13:08:23 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -270,7 +270,7 @@ cvs_client_sendreq(u_int rid, const char *arg, int resp)
 		} while (ret == 0);
 	}
 
-	return (0);
+	return (ret);
 }
 
 
