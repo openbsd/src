@@ -1,7 +1,7 @@
-/*	$OpenBSD: file.c,v 1.4 1997/01/17 07:14:15 millert Exp $	*/
+/*	$OpenBSD: file.c,v 1.5 1998/04/07 07:11:33 deraadt Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: file.c,v 1.4 1997/01/17 07:14:15 millert Exp $";
+static const char *rcsid = "$OpenBSD: file.c,v 1.5 1998/04/07 07:11:33 deraadt Exp $";
 #endif
 
 /*
@@ -249,7 +249,7 @@ fileGetURL(char *base, char *spec)
     if (Verbose)
 	printf("Trying to log into %s as %s.\n", host, uname);
     FtpOpen(ftp, host, uname, pword);
-    if (getenv("FTP_PASSIVE_MODE"))
+    if (getenv("FTP_ACTIVE_MODE") == NULL)
 	FtpPassive(ftp, TRUE);
 
     strcpy(dir, file);

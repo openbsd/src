@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.1 1996/06/04 07:56:04 niklas Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.2 1998/04/07 07:11:32 deraadt Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -183,10 +183,10 @@ passive mode
 ftp in such transfers, set
 the variable
 .Bf -emphasis
-FTP_PASSIVE_MODE
+FTP_ACTIVE_MODE
 .Ef
 to some value in your environment.  Otherwise, the more standard
-ACTIVE mode may be used.  If
+PASSIVE mode may be used.  If
 .Nm
 consistently fails to fetch a package from a site known to work,
 it may be because you have a firewall that demands the usage of
