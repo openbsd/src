@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.33 2004/04/07 20:18:48 henning Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.34 2004/04/08 01:13:30 henning Exp $	*/
 
 /* DHCP Client. */
 
@@ -78,7 +78,7 @@ time_t max_lease_time = 86400; /* 24 hours... */
 struct tree_cache *global_options[256];
 
 char *path_dhclient_conf = _PATH_DHCLIENT_CONF;
-char *path_dhclient_db;
+char *path_dhclient_db = NULL;
 
 int log_perror = 1;
 
@@ -244,8 +244,8 @@ main(int argc, char *argv[])
 		error("calloc");
 	if (strlcpy(ifi->name, argv[0], IFNAMSIZ) >= IFNAMSIZ)
 		error("Interface name too long");
-	if (asprintf(&path_dhclient_db, "%s.%s", _PATH_DHCLIENT_DB,
-	    ifi->name) == -1)
+	if (path_dhclient_db == NULL && asprintf(&path_dhclient_db, "%s.%s",
+	    _PATH_DHCLIENT_DB, ifi->name) == -1)
 		error("asprintf");
 
 	if (quiet)
