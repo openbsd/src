@@ -1,4 +1,4 @@
-/*      $OpenBSD: pciide.c,v 1.19 2000/01/11 01:16:00 chris Exp $     */
+/*      $OpenBSD: pciide.c,v 1.20 2000/01/17 17:12:34 chris Exp $     */
 /*	$NetBSD: pciide.c,v 1.48 1999/11/28 20:05:18 bouyer Exp $	*/
 
 /*
@@ -2197,14 +2197,18 @@ sis_chip_map(sc, pa)
 	printf(": DMA");
 	pciide_mapreg_dma(sc, pa);
 
-	if (sc->sc_dma_ok)
-		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_UDMA;
+	if (sc->sc_dma_ok) {
+		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA;
+		if (rev >= 0xd0)
+			sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
+	}
 
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
 	    WDC_CAPABILITY_MODE;
 	sc->sc_wdcdev.PIO_cap = 4;
 	sc->sc_wdcdev.DMA_cap = 2;
-	sc->sc_wdcdev.UDMA_cap = (rev >= 0xd0) ? 2 : 0;
+	if (sc->sc_wdcdev.cap & WDC_CAPABILITY_UDMA)
+		sc->sc_wdcdev.UDMA_cap = 2;
 	sc->sc_wdcdev.set_modes = sis_setup_channel;
 	sc->sc_wdcdev.channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
