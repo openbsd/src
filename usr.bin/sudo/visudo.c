@@ -166,7 +166,7 @@ main(argc, argv)
      * Open sudoers, lock it and stat it.  
      * sudoers_fd must remain open throughout in order to hold the lock.
      */
-    sudoers_fd = open(sudoers, O_RDWR | O_CREAT);
+    sudoers_fd = open(sudoers, O_RDWR | O_CREAT, SUDOERS_MODE);
     if (sudoers_fd == -1) {
 	(void) fprintf(stderr, "%s: %s: %s\n", Argv[0], sudoers,
 	    strerror(errno));
