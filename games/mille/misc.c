@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.4 1999/09/25 15:52:20 pjanzen Exp $	*/
+/*	$OpenBSD: misc.c,v 1.5 1999/09/30 03:24:32 pjanzen Exp $	*/
 /*	$NetBSD: misc.c,v 1.4 1995/03/24 05:01:54 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: misc.c,v 1.4 1999/09/25 15:52:20 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.5 1999/09/30 03:24:32 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -77,8 +77,8 @@ error(str, arg)
 #endif
 	wmove(Score, ERR_Y, ERR_X);
 	vwprintw(Score, str, ap);
-	clrtoeol();
-	putchar('\07');
+	wclrtoeol(Score);
+	beep();
 	refresh();
 	va_end(ap);
 	return FALSE;
