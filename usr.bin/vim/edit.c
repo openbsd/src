@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.2 1996/09/21 06:22:57 downsj Exp $	*/
+/*	$OpenBSD: edit.c,v 1.3 1996/09/21 23:12:32 downsj Exp $	*/
 /* vi:set ts=4 sw=4:
  *
  * VIM - Vi IMproved		by Bram Moolenaar
@@ -524,7 +524,8 @@ edit(initstr, startln, count)
 			  case Ctrl('X'):		/* Enter ctrl-x mode */
 				/* We're not sure which ctrl-x mode it will be yet */
 				ctrl_x_mode = CTRL_X_NOT_DEFINED_YET;
-				MSG("^X mode (^E/^Y/^L/^]/^F/^I/^K/^D)");
+				edit_submode = (char_u *)"^X mode (^E/^Y/^L/^]/^F/^I/^K/^D)";
+				showmode();
 				break;
 #endif /* INSERT_EXPAND */
 
@@ -1712,7 +1713,17 @@ docomplete:
 				}
 				if (edit_submode_extra != NULL)
 				{
-					showmode();
+					if (!p_smd)
+					{
+						if (edit_submode_highl)
+						{
+							set_highlight('r');		/* Highlight mode */
+							msg_highlight = TRUE;
+						}
+						msg(edit_submode_extra);
+					}
+					else
+						showmode();
 					edit_submode_extra = NULL;
 				}
 
