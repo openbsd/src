@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_nfs.c,v 1.8 1996/12/12 10:33:23 deraadt Exp $	*/
+/*	$OpenBSD: mount_nfs.c,v 1.9 1997/04/20 15:37:26 deraadt Exp $	*/
 /*	$NetBSD: mount_nfs.c,v 1.12.4.1 1996/05/25 22:48:05 fvdl Exp $	*/
 
 /*
@@ -106,7 +106,8 @@ static char rcsid[] = "$NetBSD: mount_nfs.c,v 1.12.4.1 1996/05/25 22:48:05 fvdl 
 #define ALTF_NQNFS	0x400
 #define ALTF_SOFT	0x800
 #define ALTF_TCP	0x1000
-#define ALTF_NFSV2	0x2000
+#define ALTF_PORT	0x2000
+#define ALTF_NFSV2	0x4000
 
 const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
@@ -129,6 +130,7 @@ const struct mntopt mopts[] = {
 	{ "nqnfs", 0, ALTF_NQNFS, 1 },
 	{ "soft", 0, ALTF_SOFT, 1 },
 	{ "tcp", 0, ALTF_TCP, 1 },
+	{ "port", 0, ALTF_PORT, 1 },
 	{ "nfsv2", 0, ALTF_NFSV2, 1 },
 	{ NULL }
 };
@@ -168,6 +170,7 @@ int retrycnt;
 int opflags = 0;
 int nfsproto = IPPROTO_UDP;
 int mnttcp_ok = 1;
+u_short port_no = 0;
 int force2 = 0;
 int force3 = 0;
 
@@ -308,51 +311,53 @@ main(argc, argv)
 #endif
 		case 'o':
 			getmntopts(optarg, mopts, &mntflags, &altflags);
-			if(altflags & ALTF_BG)
+			if (altflags & ALTF_BG)
 				opflags |= BGRND;
-			if(altflags & ALTF_NOCONN)
+			if (altflags & ALTF_NOCONN)
 				nfsargsp->flags |= NFSMNT_NOCONN;
-			if(altflags & ALTF_DUMBTIMR)
+			if (altflags & ALTF_DUMBTIMR)
 				nfsargsp->flags |= NFSMNT_DUMBTIMR;
-			if(altflags & ALTF_INTR)
+			if (altflags & ALTF_INTR)
 				nfsargsp->flags |= NFSMNT_INT;
 #ifdef NFSKERB
-			if(altflags & ALTF_KERB)
+			if (altflags & ALTF_KERB)
 				nfsargsp->flags |= NFSMNT_KERB;
 #endif
-			if(altflags & ALTF_NFSV3) {
+			if (altflags & ALTF_NFSV3) {
 				if (force2)
 					errx(1,"conflicting version options");
 				force3 = 1;
 			}
-			if(altflags & ALTF_NFSV2) {
+			if (altflags & ALTF_NFSV2) {
 				if (force3)
 					errx(1,"conflicting version options");
 				force2 = 1;
 				nfsargsp->flags &= ~NFSMNT_NFSV3;
 			}
-			if(altflags & ALTF_RDIRPLUS)
+			if (altflags & ALTF_RDIRPLUS)
 				nfsargsp->flags |= NFSMNT_RDIRPLUS;
-			if(altflags & ALTF_MNTUDP)
+			if (altflags & ALTF_MNTUDP)
 				mnttcp_ok = 0;
-			if(altflags & ALTF_RESVPORT)
+			if (altflags & ALTF_RESVPORT)
 				nfsargsp->flags |= NFSMNT_RESVPORT;
 #ifdef ISO
-			if(altflags & ALTF_SEQPACKET)
+			if (altflags & ALTF_SEQPACKET)
 				nfsargsp->sotype = SOCK_SEQPACKET;
 #endif
-			if(altflags & ALTF_NQNFS) {
+			if (altflags & ALTF_NQNFS) {
 				if (force2)
 					errx(1,"nqnfs only available with v3");
 				force3 = 1;
 				nfsargsp->flags |= NFSMNT_NQNFS;
 			}
-			if(altflags & ALTF_SOFT)
+			if (altflags & ALTF_SOFT)
 				nfsargsp->flags |= NFSMNT_SOFT;
-			if(altflags & ALTF_TCP) {
+			if (altflags & ALTF_TCP) {
 				nfsargsp->sotype = SOCK_STREAM;
 				nfsproto = IPPROTO_TCP;
 			}
+			if (altflags & ALTF_PORT)
+				port_no = atoi(strstr(optarg, "port=") + 5);
 			altflags = 0;
 			break;
 		case 'P':
@@ -640,9 +645,9 @@ tryagain:
 	while (retrycnt > 0) {
 		saddr.sin_family = AF_INET;
 		saddr.sin_port = htons(PMAPPORT);
-		if ((tport = pmap_getport(&saddr, RPCPROG_NFS,
-		    nfsvers, nfsargsp->sotype == SOCK_STREAM ? IPPROTO_TCP :
-		    IPPROTO_UDP)) == 0) {
+		if ((tport = port_no ? port_no : pmap_getport(&saddr,
+		    RPCPROG_NFS, nfsvers, nfsargsp->sotype == SOCK_STREAM ?
+		    IPPROTO_TCP : IPPROTO_UDP)) == 0) {
 			if ((opflags & ISBGRND) == 0)
 				clnt_pcreateerror("NFS Portmap");
 		} else {
