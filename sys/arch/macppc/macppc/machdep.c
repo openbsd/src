@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.14 2001/11/13 14:31:52 drahn Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.15 2001/11/19 00:48:01 drahn Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -862,49 +862,11 @@ void
 softnet(isr)
 	int isr;
 {
-#ifdef	INET
-#include "ether.h"
-#if NETHER > 0
-	if (isr & (1 << NETISR_ARP))
-		arpintr();
-#endif
-	if (isr & (1 << NETISR_IP))
-		ipintr();
-#endif
-#ifdef INET6
-	if (isr & (1 << NETISR_IPV6))
-		ip6intr();
-#endif
-#ifdef NETATALK
-	if (isr & (1 << NETISR_ATALK))
-		atintr();
-#endif
-#ifdef	IMP
-	if (isr & (1 << NETISR_IMP))
-		impintr();
-#endif
-#ifdef	NS
-	if (isr & (1 << NETISR_NS))
-		nsintr();
-#endif
-#ifdef	ISO
-	if (isr & (1 << NETISR_ISO))
-		clnlintr();
-#endif
-#ifdef	CCITT
-	if (isr & (1 << NETISR_CCITT))
-		ccittintr();
-#endif
-#include "ppp.h"
-#if NPPP > 0
-	if (isr & (1 << NETISR_PPP))
-		pppintr();
-#endif
-#include "bridge.h"
-#if NBRIDGE > 0
-	if (isr & (1 << NETISR_BRIDGE))
-		bridgeintr();
-#endif
+#define DONETISR(flag, func) \
+	if (isr & (1 << flag))\
+		func();
+
+#include <net/netisr_dispatch.h>
 }
 
 void
