@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.28 2003/05/14 14:24:44 itojun Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.29 2003/05/22 10:20:57 itojun Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -988,7 +988,6 @@ nd6_ifptomac(ifp)
 	case IFT_L2VLAN:
 	case IFT_IEEE80211:
 		return ((caddr_t)(ifp + 1));
-		break;
 	default:
 		return NULL;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.67 2003/05/14 14:24:44 itojun Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.68 2003/05/22 10:20:57 itojun Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -512,7 +512,6 @@ icmp6_input(mp, offp, proto)
 			goto badcode;
 		}
 		goto deliver;
-		break;
 
 	case ICMP6_PACKET_TOO_BIG:
 		icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_pkttoobig);
@@ -526,7 +525,6 @@ icmp6_input(mp, offp, proto)
 		 * intermediate extension headers.
 		 */
 		goto deliver;
-		break;
 
 	case ICMP6_TIME_EXCEEDED:
 		icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_timeexceed);
@@ -541,7 +539,6 @@ icmp6_input(mp, offp, proto)
 			goto badcode;
 		}
 		goto deliver;
-		break;
 
 	case ICMP6_PARAM_PROB:
 		icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_paramprob);
@@ -557,7 +554,6 @@ icmp6_input(mp, offp, proto)
 			goto badcode;
 		}
 		goto deliver;
-		break;
 
 	case ICMP6_ECHO_REQUEST:
 		icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_echo);
