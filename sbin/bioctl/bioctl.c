@@ -1,6 +1,6 @@
-/* $OpenBSD: bioctl.c,v 1.1 2005/03/29 22:04:21 marco Exp $       */
+/* $OpenBSD: bioctl.c,v 1.2 2005/03/30 08:06:03 dlg Exp $       */
 /*
- * Copyright (c) 2004 Marco Peereboom
+ * Copyright (c) 2004, 2005 Marco Peereboom
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
