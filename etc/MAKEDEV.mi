@@ -1,6 +1,6 @@
 include(MAKEDEV.sub)dnl
 dnl
-vers(a,{-$OpenBSD: MAKEDEV.mi,v 1.4 2002/01/07 06:13:30 todd Exp $-})dnl
+vers(a,{-$OpenBSD: MAKEDEV.mi,v 1.5 2002/01/07 06:25:32 todd Exp $-})dnl
 dnl
 divert(1)dnl
 {-#-}
@@ -575,9 +575,6 @@ dnl
 divert(1)dnl
 include(etc.MACHINE/MAKEDEV.md)dnl
 dnl
-dnl define DISK_STEPPING in the above file if other than 16
-dnl
-ifdef({-DISK_STEPPING-},,{-define({-DISK_STEPPING-},{-16-})-})dnl
 dnl
 divert(0)dnl
 #!/bin/sh -
@@ -635,11 +632,12 @@ unt()
 	echo $arg
 }
 dnl
-dnl dodisk(name,unit,blkmaj,chrmaj,unit,off)
+dnl dodisk(name,unit,blkmaj,chrmaj,unit,off[,stepping])
+dnl   arg: 1    2    3      4      5    6    7
 dnl
 dodisk()
 {
-	n=Add(Mult(${5},DISK_STEPPING),${6}) count=0
+	n=Add(Mult(${5},${7:-16}),${6}) count=0
 	RMlist="$RMlist {-$-}1{-$-}2? r{-$-}1{-$-}2?"
 	for d in a b c d e f g h i j k l m n o p
 	do
@@ -650,7 +648,7 @@ dodisk()
 	MKlist="$MKlist;chown root.operator {-$-}1{-$-}2? r{-$-}1{-$-}2?"
 }
 dnl
-dnl dodisk2(name,unit,blkmaj,chrmaj,unit,off)
+dnl dodisk2(name,unit,blkmaj,chrmaj,unit,off[,stepping])
 dnl
 dnl 1. name    - prefix name of the device
 dnl 2. unit    - beginning unit number for block devices
@@ -658,10 +656,11 @@ dnl 3. blkmaj  - block device major number
 dnl 4. chrmaj  - character device major number
 dnl 5. unit    - beginning unit number for character devices
 dnl 6. off     - offset from 0 for all minor numbers (see svnd for an example)
+dnl 7. step    - optional, defaults to 16, number of partitions per device
 dnl
 dodisk2()
 {
-	n=Add(Mult({-$-}5,DISK_STEPPING),{-$-}6)
+	n=Add(Mult({-$-}5,${7:-16}),{-$-}6)
 	M {-$-}1{-$-}2a b {-$-}3 $n 640 operator
 	M r{-$-}1{-$-}2a c {-$-}4 $n 640 operator
 	n=Add($n,2)
