@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss_scanjet.c,v 1.9 1996/10/31 02:49:45 deraadt Exp $	*/
+/*	$OpenBSD: ss_scanjet.c,v 1.10 1996/11/03 19:09:46 kstailey Exp $	*/
 /*	$NetBSD: ss_scanjet.c,v 1.6 1996/05/18 22:58:01 christos Exp $	*/
 
 /*
@@ -63,8 +63,8 @@ int scanjet_read __P((struct ss_softc *, struct buf *));
 /* only used internally */
 int scanjet_ctl_write __P((struct ss_softc *, char *, u_int, int));
 int scanjet_ctl_read __P((struct ss_softc *, char *, u_int, int));
-int scanjet_set_window __P((struct ss_softc *));
-int scanjet_compute_sizes __P((struct ss_softc *));
+int scanjet_set_window __P((struct ss_softc *, int));
+int scanjet_compute_sizes __P((struct ss_softc *, int));
 /* Maybe move to libkern? */
 __inline static int atoi __P((const char *));
 __inline static char *strchr __P((const char *, char));
@@ -141,12 +141,12 @@ scanjet_attach(ss, sa)
 	ss->sio.scan_quality		= 100;
 	ss->sio.scan_image_mode		= SIM_GRAYSCALE;
 
-	error = scanjet_set_window(ss);
+	error = scanjet_set_window(ss, SCSI_POLL);
 	if (error) {
 		printf(" set_window failed\n");
 		return;
 	}
-	error = scanjet_compute_sizes(ss);
+	error = scanjet_compute_sizes(ss, SCSI_POLL);
 	if (error) {
 		printf(" compute_sizes failed\n");
 		return;
@@ -214,12 +214,12 @@ scanjet_set_params(ss, sio)
 	sio->scan_scanner_type = ss->sio.scan_scanner_type;
 	bcopy(sio, &ss->sio, sizeof(struct scan_io));
 
-	error = scanjet_set_window(ss);
+	error = scanjet_set_window(ss, 0);
 	if (error) {
 		uprintf("%s: set_window failed\n", ss->sc_dev.dv_xname);
 		return (error);
 	}
-	error = scanjet_compute_sizes(ss);
+	error = scanjet_compute_sizes(ss, 0);
 	if (error) {
 		uprintf("%s: compute_sizes failed\n", ss->sc_dev.dv_xname);
 		return (error);
@@ -240,12 +240,12 @@ scanjet_trigger_scanner(ss)
 	char escape_codes[20];
 	int error;
 
-	error = scanjet_set_window(ss);
+	error = scanjet_set_window(ss, 0);
 	if (error) {
 		uprintf("%s: set_window failed\n", ss->sc_dev.dv_xname);
 		return (error);
 	}
-	error = scanjet_compute_sizes(ss);
+	error = scanjet_compute_sizes(ss, 0);
 	if (error) {
 		uprintf("%s: compute_sizes failed\n", ss->sc_dev.dv_xname);
 		return (error);
@@ -316,7 +316,7 @@ scanjet_ctl_write(ss, buf, size, flags)
 	_lto3b(size, cmd.len);
 	return (scsi_scsi_cmd(ss->sc_link, (struct scsi_generic *) &cmd,
 	    sizeof(cmd), (u_char *) buf, size, 0, 100000, NULL,
-	    flags | SCSI_DATA_OUT | SCSI_POLL));
+	    flags | SCSI_DATA_OUT));
 }
 
 
@@ -337,7 +337,7 @@ scanjet_ctl_read(ss, buf, size, flags)
 	_lto3b(size, cmd.len);
 	return (scsi_scsi_cmd(ss->sc_link, (struct scsi_generic *) &cmd,
 	    sizeof(cmd), (u_char *) buf, size, 0, 100000, NULL,
-	    flags | SCSI_DATA_IN | SCSI_POLL));
+	    flags | SCSI_DATA_IN));
 }
 
 
@@ -360,8 +360,9 @@ static void show_es(char *es)
  * simulate SCSI_SET_WINDOW for ScanJets
  */
 int
-scanjet_set_window(ss)
+scanjet_set_window(ss, flags)
 	struct ss_softc *ss;
+	int flags;
 {
 	char escape_codes[128], *p;
 
@@ -429,7 +430,7 @@ scanjet_set_window(ss)
 	sprintf(p, "\033*a%dK", (int)(ss->sio.scan_contrast) - 128);
 	p += strlen(p);
 
-	return (scanjet_ctl_write(ss, escape_codes, p - escape_codes, 0));
+	return (scanjet_ctl_write(ss, escape_codes, p - escape_codes, flags));
 }
 
 /* atoi() and strchr() are from /sys/arch/amiga/dev/ite.c
@@ -457,8 +458,9 @@ strchr(cp, ch)
 }
 
 int
-scanjet_compute_sizes(ss)
+scanjet_compute_sizes(ss, flags)
 	struct ss_softc *ss;
+	int flags;
 {
 	int error;
 	static char *wfail = "%s: interrogate write failed\n";
@@ -486,12 +488,13 @@ scanjet_compute_sizes(ss)
 		strcpy(escape_codes, "\033*s1024E"); /* pixels wide */
 		break;
 	}
-	error = scanjet_ctl_write(ss, escape_codes, strlen(escape_codes), 0);
+	error = scanjet_ctl_write(ss, escape_codes, strlen(escape_codes),
+		flags);
 	if (error) {
 		uprintf(wfail, ss->sc_dev.dv_xname);
 		return (error);
 	}
-	error = scanjet_ctl_read(ss, response, 20, 0);
+	error = scanjet_ctl_read(ss, response, 20, flags);
 	if (error) {
 		uprintf(rfail, ss->sc_dev.dv_xname);
 		return (error);
@@ -506,7 +509,8 @@ scanjet_compute_sizes(ss)
 		ss->sio.scan_pixels_per_line *= 8;
 
 	strcpy(escape_codes, "\033*s1026E"); /* pixels high */
-	error = scanjet_ctl_write(ss, escape_codes, strlen(escape_codes), 0);
+	error = scanjet_ctl_write(ss, escape_codes, strlen(escape_codes),
+		flags);
 	if (error) {
 		uprintf(wfail, ss->sc_dev.dv_xname);
 		return (error);
