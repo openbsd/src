@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.76 2001/05/14 03:10:26 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.77 2001/05/15 14:58:43 jason Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
@@ -153,6 +153,7 @@ ne*	at pci? dev ? function ?	# NE2000-compat ethernet cards
 fxp*	at pci? dev ? function ?	# EtherExpress 10/100B ethernet
 ep*	at pci? dev ? function ?	# 3COM 3c59x
 xl*	at pci? dev ? function ?	# 3COM 3c9xx
+txp*	at pci? dev ? function ?	# 3COM 3CR990
 fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI cards
 
 #UNTESTED:  the vollowing section of drivers is untested on alpha.
