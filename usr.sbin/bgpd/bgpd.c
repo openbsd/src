@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.90 2004/04/27 04:38:12 deraadt Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.91 2004/04/29 19:56:04 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -227,11 +227,11 @@ main(int argc, char *argv[])
 	}
 
 	while (quit == 0) {
-		pfd[PFD_PIPE_SESSION].fd = ibuf_se.sock;
+		pfd[PFD_PIPE_SESSION].fd = ibuf_se.fd;
 		pfd[PFD_PIPE_SESSION].events = POLLIN;
 		if (ibuf_se.w.queued)
 			pfd[PFD_PIPE_SESSION].events |= POLLOUT;
-		pfd[PFD_PIPE_ROUTE].fd = ibuf_rde.sock;
+		pfd[PFD_PIPE_ROUTE].fd = ibuf_rde.fd;
 		pfd[PFD_PIPE_ROUTE].events = POLLIN;
 		if (ibuf_rde.w.queued)
 			pfd[PFD_PIPE_ROUTE].events |= POLLOUT;

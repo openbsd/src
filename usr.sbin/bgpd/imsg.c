@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.c,v 1.24 2004/03/12 20:48:09 henning Exp $ */
+/*	$OpenBSD: imsg.c,v 1.25 2004/04/29 19:56:04 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -31,12 +31,12 @@ struct buf	*imsg_create_core(struct imsgbuf *, int, u_int32_t, u_int16_t,
 		     pid_t);
 
 void
-imsg_init(struct imsgbuf *ibuf, int sock)
+imsg_init(struct imsgbuf *ibuf, int fd)
 {
 	msgbuf_init(&ibuf->w);
 	bzero(&ibuf->r, sizeof(ibuf->r));
-	ibuf->sock = sock;
-	ibuf->w.sock = sock;
+	ibuf->fd = fd;
+	ibuf->w.fd = fd;
 	ibuf->pid = getpid();
 }
 
@@ -45,7 +45,7 @@ imsg_read(struct imsgbuf *ibuf)
 {
 	ssize_t			 n;
 
-	if ((n = read(ibuf->sock, ibuf->r.buf + ibuf->r.wpos,
+	if ((n = read(ibuf->fd, ibuf->r.buf + ibuf->r.wpos,
 	    sizeof(ibuf->r.buf) - ibuf->r.wpos)) == -1) {
 		if (errno != EINTR && errno != EAGAIN) {
 			log_warn("imsg_read: pipe read error");

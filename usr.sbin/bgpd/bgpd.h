@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.118 2004/04/28 04:34:46 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.119 2004/04/29 19:56:04 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -85,7 +85,7 @@ struct buf {
 
 struct msgbuf {
 	u_int32_t		 queued;
-	int			 sock;
+	int			 fd;
 	TAILQ_HEAD(bufs, buf)	 bufs;
 };
 
@@ -217,7 +217,7 @@ struct network {
 #define	MAX_IMSGSIZE		8192
 
 struct imsgbuf {
-	int			sock;
+	int			fd;
 	pid_t			pid;
 	struct buf_read		r;
 	struct msgbuf		w;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.108 2004/04/28 04:36:16 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.109 2004/04/29 19:56:04 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -162,12 +162,12 @@ rde_main(struct bgpd_config *config, struct network_head *net_l,
 
 	while (rde_quit == 0) {
 		bzero(&pfd, sizeof(pfd));
-		pfd[PFD_PIPE_MAIN].fd = ibuf_main.sock;
+		pfd[PFD_PIPE_MAIN].fd = ibuf_main.fd;
 		pfd[PFD_PIPE_MAIN].events = POLLIN;
 		if (ibuf_main.w.queued > 0)
 			pfd[PFD_PIPE_MAIN].events |= POLLOUT;
 
-		pfd[PFD_PIPE_SESSION].fd = ibuf_se.sock;
+		pfd[PFD_PIPE_SESSION].fd = ibuf_se.fd;
 		pfd[PFD_PIPE_SESSION].events = POLLIN;
 		if (ibuf_se.w.queued > 0)
 			pfd[PFD_PIPE_SESSION].events |= POLLOUT;

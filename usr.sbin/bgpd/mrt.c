@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.29 2004/04/28 01:13:36 deraadt Exp $ */
+/*	$OpenBSD: mrt.c,v 1.30 2004/04/29 19:56:04 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -341,13 +341,13 @@ mrt_open(struct mrt *mrt)
 	if (strftime(mrt->file, sizeof(mrt->file), mrt->name,
 		    localtime(&now)) == 0) {
 		log_warnx("mrt_open: strftime conversion failed");
-		mrt->msgbuf.sock = -1;
+		mrt->msgbuf.fd = -1;
 		return (0);
 	}
 
-	mrt->msgbuf.sock = open(mrt->file,
+	mrt->msgbuf.fd = open(mrt->file,
 	    O_WRONLY|O_NONBLOCK|O_CREAT|O_TRUNC, 0644);
-	if (mrt->msgbuf.sock == -1) {
+	if (mrt->msgbuf.fd == -1) {
 		log_warnx("mrt_open %s: %s",
 		    mrt->file, strerror(errno));
 		return (0);
@@ -367,9 +367,9 @@ mrt_close(struct mrt *mrt)
 	if (msgbuf_unbounded(&mrt->msgbuf))
 		return (0);
 
-	if (mrt->msgbuf.sock != -1) {
-		close(mrt->msgbuf.sock);
-		mrt->msgbuf.sock = -1;
+	if (mrt->msgbuf.fd != -1) {
+		close(mrt->msgbuf.fd);
+		mrt->msgbuf.fd = -1;
 	}
 
 	return (1);
@@ -607,14 +607,14 @@ mrt_select(struct mrt_head *mc, struct pollfd *pfd, struct mrt **mrt,
 			}
 		}
 		if (m->msgbuf.queued > 0) {
-			if (m->msgbuf.sock == -1 ||
+			if (m->msgbuf.fd == -1 ||
 			    m->state == MRT_STATE_STOPPED) {
 				log_warnx("mrt_select: orphaned buffer");
 				mrt_abort(m);
 				continue;
 			}
 			if (start < size) {
-				pfd[start].fd = m->msgbuf.sock;
+				pfd[start].fd = m->msgbuf.fd;
 				pfd[start].events = POLLOUT;
 				mrt[start++] = m;
 			}

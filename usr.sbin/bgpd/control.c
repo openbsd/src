@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.28 2004/04/25 03:13:42 henning Exp $ */
+/*	$OpenBSD: control.c,v 1.29 2004/04/29 19:56:04 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -137,7 +137,7 @@ control_connbyfd(int fd)
 {
 	struct ctl_conn	*c;
 
-	for (c = TAILQ_FIRST(&ctl_conns); c != NULL && c->ibuf.sock != fd;
+	for (c = TAILQ_FIRST(&ctl_conns); c != NULL && c->ibuf.fd != fd;
 	    c = TAILQ_NEXT(c, entries))
 		;	/* nothing */
 
@@ -169,7 +169,7 @@ control_close(int fd)
 	msgbuf_clear(&c->ibuf.w);
 	TAILQ_REMOVE(&ctl_conns, c, entries);
 
-	close(c->ibuf.sock);
+	close(c->ibuf.fd);
 	free(c);
 }
 

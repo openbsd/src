@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.161 2004/04/28 17:42:27 deraadt Exp $ */
+/*	$OpenBSD: session.c,v 1.162 2004/04/29 19:56:04 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -240,11 +240,11 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 		pfd[PFD_LISTEN].events = POLLIN;
 		pfd[PFD_LISTEN6].fd = sock6;
 		pfd[PFD_LISTEN6].events = POLLIN;
-		pfd[PFD_PIPE_MAIN].fd = ibuf_main.sock;
+		pfd[PFD_PIPE_MAIN].fd = ibuf_main.fd;
 		pfd[PFD_PIPE_MAIN].events = POLLIN;
 		if (ibuf_main.w.queued > 0)
 			pfd[PFD_PIPE_MAIN].events |= POLLOUT;
-		pfd[PFD_PIPE_ROUTE].fd = ibuf_rde.sock;
+		pfd[PFD_PIPE_ROUTE].fd = ibuf_rde.fd;
 		pfd[PFD_PIPE_ROUTE].events = POLLIN;
 		if (ibuf_rde.w.queued > 0)
 			pfd[PFD_PIPE_ROUTE].events |= POLLOUT;
@@ -335,7 +335,7 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 		idx_peers = i;
 
 		TAILQ_FOREACH(ctl_conn, &ctl_conns, entries) {
-			pfd[i].fd = ctl_conn->ibuf.sock;
+			pfd[i].fd = ctl_conn->ibuf.fd;
 			pfd[i].events = POLLIN;
 			if (ctl_conn->ibuf.w.queued > 0)
 				pfd[i].events |= POLLOUT;
@@ -420,7 +420,7 @@ init_conf(struct bgpd_config *c)
 void
 init_peer(struct peer *p)
 {
-	p->fd = p->wbuf.sock = -1;
+	p->fd = p->wbuf.fd = -1;
 	p->capa.announce = p->conf.capabilities;
 	p->capa.ann_mp = 1;
 	p->capa.ann_refresh = 1;
@@ -688,7 +688,7 @@ session_close_connection(struct peer *peer)
 		shutdown(peer->fd, SHUT_RDWR);
 		close(peer->fd);
 	}
-	peer->fd = peer->wbuf.sock = -1;
+	peer->fd = peer->wbuf.fd = -1;
 }
 
 void
@@ -810,7 +810,7 @@ session_accept(int listenfd)
 				return;
 			}
 		}
-		p->fd = p->wbuf.sock = connfd;
+		p->fd = p->wbuf.fd = connfd;
 		if (session_setup_socket(p)) {
 			shutdown(connfd, SHUT_RDWR);
 			close(connfd);
@@ -854,7 +854,7 @@ session_connect(struct peer *peer)
 			return (-1);
 		}
 
-	peer->wbuf.sock = peer->fd;
+	peer->wbuf.fd = peer->fd;
 
 	/* if update source is set we need to bind() */
 	if (peer->conf.local_addr.af) {
