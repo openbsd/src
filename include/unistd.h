@@ -152,7 +152,7 @@ int	 setdomainname __P((const char *, int));
 int	 setegid __P((gid_t));
 int	 seteuid __P((uid_t));
 int	 setgroups __P((int, const gid_t *));
-void	 sethostid __P((long));
+int	 sethostid __P((long));
 int	 sethostname __P((const char *, int));
 int	 setkey __P((const char *));
 int	 setlogin __P((const char *));
