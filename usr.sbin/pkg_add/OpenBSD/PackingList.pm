@@ -1,4 +1,4 @@
-# $OpenBSD: PackingList.pm,v 1.17 2004/08/05 23:36:40 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.18 2004/08/05 23:39:19 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -121,12 +121,7 @@ MAINLOOP:
 
 sub write
 {
-	my ($self, $fh, $w) = @_;
-
-	$w = sub {
-		my ($o, $fh) = @_;
-		$o->write($fh);
-	    } unless defined $w;
+	my ($self, $fh) = @_;
 
 	if (defined $self->{cvstags}) {
 		for my $item (@{$self->{cvstags}}) {
