@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ports.7,v 1.22 2002/01/24 22:52:27 jsyn Exp $
+.\" $OpenBSD: ports.7,v 1.23 2002/04/04 20:54:08 espie Exp $
 .\" $FreeBSD: ports.7,v 1.7 1998/06/23 04:38:50 hoek Exp $
 .\"
 .Dd January 25, 1998
@@ -112,7 +112,7 @@ port maintained by a given person.
 
 For instance, to invoke clean on all ports in the x11 category, one can say:
 .Bd -literal -offset indent
-	make category=x11 clean
+	$ make category=x11 clean
 .Ed
 
 The index search is done by a perl script, so all regular expressions from
@@ -130,7 +130,7 @@ is executed.
 Default behavior is to call exit, but this can be overridden on the command
 line, e.g., to avoid stopping after each problem.
 .Bd -literal -offset indent
-	make REPORT_PROBLEM=true
+	$ make REPORT_PROBLEM=true
 .Ed
 
 The targets that do this are
@@ -188,7 +188,7 @@ The main
 mirror should still hold a copy of old distfiles, indexed by checksum.
 Using
 .Bd -literal -offset indent
-	make checksum REFETCH=true
+	$ make checksum REFETCH=true
 .Ed
 
 will try to get a set of distfiles that match the recorded checksum.
@@ -285,6 +285,64 @@ site when fetching files.
 .It Ev MASTER_SITE_OVERRIDE
 Go to this site first for all files.
 .El
+.Sh FLAVORS
+The
+.Ox
+ports tree comes with a mechanism called
+.Ic FLAVORS.
+Thanks to this mechanism, users can select specific options provided by
+a given port.
+.Pp
+If a port is "flavored", there should be a terse description of 
+available flavors in the
+.Pa pkg/DESCR
+file.
+.Pp
+For example, the shells/bash port comes with a flavor called
+.Ic static.
+This changes the building process so a statically compiled version of
+the program will be built. 
+To avoid confusion with other packages or flavors, 
+the package name will be extended with a dash-separated list of
+the selected flavors.
+.Pp
+In this instance, the corresponding package will be called
+.Ic bash-1.14.7p1-static .
+.Pp
+To build a port with a specific flavor, just pass 
+.Ev FLAVOR
+in the environment of the
+.Xr make 1
+command:
+.Pp
+.Bd -literal -offset indent
+$ env FLAVOR="static" make package
+.Ed
+.Pp
+and of course, use the same settings for the subsequent invocations of make:
+.Bd -literal -offset indent
+$ env FLAVOR="static" make install
+$ env FLAVOR="static" make clean
+.Ed
+.Pp
+More than one flavor may be specified:
+.Bd -literal -offset indent
+$ cd /usr/ports/www/php4
+$ env FLAVOR="imap ldap recode" make install
+.Ed
+.Pp
+Specifying a flavor that does not exist is an error.
+Additionally, some ports impose some further restrictions on flavor
+combinations, when such combinations do not make sense.
+.Pp
+Lots of ports can be built without X Windows requirement and accordingly
+have a
+.Ic no_x11
+flavor. 
+.Pp
+Flavor settings are not propagated to dependencies.
+If a specific combination is needed, careful hand-building of the
+required set of packages is still necessary.
 .Sh PORT VARIABLES
 These can be changed in the environment, or in
 .Pa /etc/mk.conf
