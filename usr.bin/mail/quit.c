@@ -1,4 +1,4 @@
-/*	$OpenBSD: quit.c,v 1.6 1997/07/14 00:24:29 millert Exp $	*/
+/*	$OpenBSD: quit.c,v 1.7 1997/07/24 16:23:39 millert Exp $	*/
 /*	$NetBSD: quit.c,v 1.6 1996/12/28 07:11:07 tls Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)quit.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: quit.c,v 1.6 1997/07/14 00:24:29 millert Exp $";
+static char rcsid[] = "$OpenBSD: quit.c,v 1.7 1997/07/24 16:23:39 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -79,10 +79,9 @@ quit()
 	int mcount, p, modify, autohold, anystat, holdbit, nohold;
 	FILE *ibuf = NULL, *obuf, *fbuf, *rbuf, *readstat = NULL, *abuf;
 	register struct message *mp;
-	register int c;
-	extern char *tempQuit, *tempResid;
+	int c, fd;
 	struct stat minfo;
-	char *mbox;
+	char *mbox, tempname[MAXPATHLEN];
 
 	/*
 	 * If we are read only, we can't do anything,
@@ -124,8 +123,10 @@ quit()
 	rbuf = NULL;
 	if (fstat(fileno(fbuf), &minfo) >= 0 && minfo.st_size > mailsize) {
 		puts("New mail has arrived.");
-		rbuf = Fopen(tempResid, "w");
-		if (rbuf == NULL || fbuf == NULL)
+		(void)snprintf(tempname, sizeof(tempname),
+		    "%s/mail.RqXXXXXXXXXX", tmpdir);
+		if ((fd = mkstemp(tempname)) == -1 ||
+		    (rbuf = Fdopen(fd, "w")) == NULL)
 			goto newmail;
 #ifdef APPEND
 		fseek(fbuf, (long)mailsize, 0);
@@ -141,9 +142,9 @@ quit()
 		}
 #endif
 		(void)Fclose(rbuf);
-		if ((rbuf = Fopen(tempResid, "r")) == NULL)
+		if ((rbuf = Fopen(tempname, "r")) == NULL)
 			goto newmail;
-		rm(tempResid);
+		rm(tempname);
 	}
 
 	/*
@@ -216,28 +217,31 @@ quit()
 	mbox = expand("&");
 	mcount = c;
 	if (value("append") == NULL) {
-		if ((obuf = Fopen(tempQuit, "w")) == NULL) {
-			warn(tempQuit);
+		(void)snprintf(tempname, sizeof(tempname),
+		    "%s/mail.RmXXXXXXXXXX", tmpdir);
+		if ((fd = mkstemp(tempname)) == -1 ||
+		    (obuf = Fdopen(fd, "w")) == NULL) {
+			warn(tempname);
 			(void)Fclose(fbuf);
 			spool_unlock();
 			return;
 		}
-		if ((ibuf = Fopen(tempQuit, "r")) == NULL) {
-			warn(tempQuit);
-			rm(tempQuit);
+		if ((ibuf = Fopen(tempname, "r")) == NULL) {
+			warn(tempname);
+			rm(tempname);
 			(void)Fclose(obuf);
 			(void)Fclose(fbuf);
 			spool_unlock();
 			return;
 		}
-		rm(tempQuit);
+		rm(tempname);
 		if ((abuf = Fopen(mbox, "r")) != NULL) {
 			while ((c = getc(abuf)) != EOF)
 				(void)putc(c, obuf);
 			(void)Fclose(abuf);
 		}
 		if (ferror(obuf)) {
-			warn(tempQuit);
+			warn(tempname);
 			(void)Fclose(ibuf);
 			(void)Fclose(obuf);
 			(void)Fclose(fbuf);
@@ -414,7 +418,6 @@ writeback(res)
 void
 edstop()
 {
-	extern char *tmpdir;
 	register int gotcha, c;
 	register struct message *mp;
 	FILE *obuf, *ibuf, *readstat = NULL;
@@ -450,8 +453,8 @@ edstop()
 	if (stat(mailname, &statb) >= 0 && statb.st_size > mailsize) {
 		int fd;
 
-		snprintf(tempname, sizeof(tempname), "%s/%s", tmpdir,
-		    "mboxXXXXXXXXXX");
+		snprintf(tempname, sizeof(tempname), "%s/mbox.XXXXXXXXXX",
+		    tmpdir);
 		if ((fd = mkstemp(tempname)) == -1 ||
 		    (obuf = Fdopen(fd, "w")) == NULL) {
 			warn(tempname);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: temp.c,v 1.7 1997/07/14 00:24:31 millert Exp $	*/
+/*	$OpenBSD: temp.c,v 1.8 1997/07/24 16:23:39 millert Exp $	*/
 /*	$NetBSD: temp.c,v 1.5 1996/06/08 19:48:42 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)temp.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: temp.c,v 1.7 1997/07/14 00:24:31 millert Exp $";
+static char rcsid[] = "$OpenBSD: temp.c,v 1.8 1997/07/24 16:23:39 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -52,10 +52,7 @@ static char rcsid[] = "$OpenBSD: temp.c,v 1.7 1997/07/14 00:24:31 millert Exp $"
  */
 
 char	*tempMail;
-char	*tempQuit;
 char	*tempEdit;
-char	*tempResid;
-char	*tempMesg;
 char	*tmpdir;
 
 void
@@ -76,10 +73,7 @@ tinit()
 	}
 
 	tempMail  = tempnam(tmpdir, "Rs");
-	tempResid = tempnam(tmpdir, "Rq");
-	tempQuit  = tempnam(tmpdir, "Rm");
 	tempEdit  = tempnam(tmpdir, "Re");
-	tempMesg  = tempnam(tmpdir, "Rx");
 
 	/*
 	 * It's okay to call savestr in here because main will

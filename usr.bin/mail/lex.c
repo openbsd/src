@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.10 1997/07/22 19:13:25 millert Exp $	*/
+/*	$OpenBSD: lex.c,v 1.11 1997/07/24 16:23:38 millert Exp $	*/
 /*	$NetBSD: lex.c,v 1.10 1997/05/17 19:55:13 pk Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: lex.c,v 1.10 1997/07/22 19:13:25 millert Exp $";
+static char rcsid[] = "$OpenBSD: lex.c,v 1.11 1997/07/24 16:23:38 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -66,12 +66,12 @@ setfile(name)
 	char *name;
 {
 	FILE *ibuf;
-	int i;
+	int i, fd;
 	struct stat stb;
 	char isedit = *name != '%';
 	char *who = name[1] ? name + 1 : myname;
+	char tempname[MAXPATHLEN];
 	static int shudclob;
-	extern char *tempMesg;
 
 	if ((name = expand(name)) == NULL)
 		return(-1);
@@ -137,13 +137,16 @@ setfile(name)
 	if (name != mailname)
 		strcpy(mailname, name);
 	mailsize = fsize(ibuf);
-	if ((otf = fopen(tempMesg, "w")) == NULL)
-		err(1, tempMesg);
+	(void)snprintf(tempname, sizeof(tempname),
+	    "%s/mail.RxXXXXXXXXXX", tmpdir);
+	if ((fd = mkstemp(tempname)) == -1 ||
+	    (otf = fdopen(fd, "w")) == NULL)
+		err(1, tempname);
 	(void)fcntl(fileno(otf), F_SETFD, 1);
-	if ((itf = fopen(tempMesg, "r")) == NULL)
-		err(1, tempMesg);
+	if ((itf = fopen(tempname, "r")) == NULL)
+		err(1, tempname);
 	(void)fcntl(fileno(itf), F_SETFD, 1);
-	rm(tempMesg);
+	rm(tempname);
 	setptr(ibuf, 0);
 	setmsize(msgCount);
 	/*

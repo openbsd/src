@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.7 1997/07/22 18:54:38 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.8 1997/07/24 16:23:36 millert Exp $	*/
 /*	$NetBSD: extern.h,v 1.7 1997/07/09 05:22:00 mikel Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)extern.h	8.2 (Berkeley) 4/20/95
- *	$OpenBSD: extern.h,v 1.7 1997/07/22 18:54:38 millert Exp $
+ *	$OpenBSD: extern.h,v 1.8 1997/07/24 16:23:36 millert Exp $
  */
 
 struct name;
@@ -269,3 +269,4 @@ int	 wait_command __P((int));
 int	 writeback __P((FILE *));
 
 extern char *__progname;
+extern char *tmpdir;
