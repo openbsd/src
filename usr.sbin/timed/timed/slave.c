@@ -1,4 +1,4 @@
-/*	$OpenBSD: slave.c,v 1.6 2002/06/18 00:40:31 ericj Exp $	*/
+/*	$OpenBSD: slave.c,v 1.7 2002/06/19 15:45:39 ericj Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -685,7 +685,7 @@ answerdelay(void)
 	struct timeval timeout;
 
 	timeout.tv_sec = 0;
-	timeout.tv_usec = delay1;
+	timeout.tv_usec = casual(1, 100 * 1000);
 
 	(void)select(0, (fd_set *)NULL, (fd_set *)NULL, (fd_set *)NULL,
 	    &timeout);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: master.c,v 1.7 2002/06/18 00:40:31 ericj Exp $	*/
+/*	$OpenBSD: master.c,v 1.8 2002/06/19 15:45:39 ericj Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -823,7 +823,7 @@ traceon(void)
 
 
 void
-traceoff(char *msg)
+traceoff(const char *msg)
 {
 	get_goodgroup(1);
 	setstatus();
@@ -831,12 +831,12 @@ traceoff(char *msg)
 	if (trace) {
 		fprintf(fd, msg, date());
 		(void)fclose(fd);
-		fd = 0;
+		fd = NULL;
 	}
 #ifdef GPROF
 	moncontrol(0);
 	_mcleanup();
 	moncontrol(1);
 #endif
-	trace = OFF;
+	trace = 0;
 }

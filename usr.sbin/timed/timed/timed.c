@@ -1,4 +1,4 @@
-/*	$OpenBSD: timed.c,v 1.15 2002/06/18 00:40:31 ericj Exp $	*/
+/*	$OpenBSD: timed.c,v 1.16 2002/06/19 15:45:39 ericj Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -52,6 +52,7 @@ static char sccsid[] = "@(#)timed.c	5.1 (Berkeley) 5/11/93";
 #include "pathnames.h"
 #include <math.h>
 #include <sys/types.h>
+#include <sys/queue.h>
 #include <sys/times.h>
 #include <netgroup.h>
 
@@ -59,7 +60,6 @@ int trace = 0;
 int sock, sock_raw = -1;
 int status = 0;
 u_short sequence;			/* sequence number */
-long delay1;
 long delay2;
 
 int nslavenets;				/* nets were I could be a slave */
@@ -79,24 +79,31 @@ int Mflag;
 int justquit = 0;
 int debug;
 
-static struct nets {
-	char	*name;
-	long	net;
-	struct nets *next;
-} *nets = 0;
+struct nets {
+	char name[1024];
+	in_addr_t net;
+	TAILQ_ENTRY(nets) next;
+};
+static TAILQ_HEAD(, nets) nets;
 
 struct hosttbl hosttbl[NHOSTS+1];	/* known hosts */
 
-static struct goodhost {		/* hosts that we trust */
+/* List of hosts we trust */
+struct goodhost {
 	char	name[MAXHOSTNAMELEN];
-	struct goodhost *next;
-	char	perm;
-} *goodhosts;
+	int 	perm;
+	TAILQ_ENTRY(goodhost) next;
+};
+static TAILQ_HEAD(, goodhost) goodhosts;
 
 static char *goodgroup;			/* net group of trusted hosts */
+
+/* prototypes */
+static void addnetname(const char *);
 static void checkignorednets(void);
 static void pickslavenet(struct netinfo *);
-static void add_good_host(const char*,char);
+static void add_good_host(const char *, int);
+static void usage(void);
 
 /*
  * The timedaemons synchronize the clocks of hosts in a local area network.
@@ -127,88 +134,70 @@ main(int argc, char **argv)
 	struct netinfo *ntp;
 	struct netinfo *ntip;
 	struct netinfo *savefromnet;
-	struct netent *nentp;
 	struct nets *nt;
 	struct sockaddr_in server;
 	u_short port;
 	int inlen = 8192;
-	int c;
-	extern char *optarg;
-	extern int optind, opterr;
-
-#define	IN_MSG "timed: -i and -n make no sense together\n"
-#define USAGE "timed: [-dtM] [-i net|-n net] [-F host1 host2 ...] [-G netgp]\n"
+	int ch;
 
 	ntip = NULL;
 
 	on = 1;
-	nflag = OFF;
-	iflag = OFF;
+	nflag = 0;
+	iflag = 0;
 
+	TAILQ_INIT(&nets);
 	opterr = 0;
-	while ((c = getopt(argc, argv, "Mtdn:i:F:G:")) != -1) {
-		switch (c) {
-		case 'M':
-			Mflag = 1;
-			break;
-
-		case 't':
-			trace = 1;
-			break;
-
-		case 'n':
-			if (iflag) {
-				fprintf(stderr, IN_MSG);
-				exit(1);
-			} else {
-				nflag = ON;
-				addnetname(optarg);
-			}
-			break;
-
-		case 'i':
-			if (nflag) {
-				fprintf(stderr, IN_MSG);
-				exit(1);
-			} else {
-				iflag = ON;
-				addnetname(optarg);
-			}
-			break;
-
+	while ((ch = getopt(argc, argv, "F:G:Mdi:n:t")) != -1) {
+		switch (ch) {
 		case 'F':
-			add_good_host(optarg,1);
+			add_good_host(optarg, 1);
 			while (optind < argc && argv[optind][0] != '-')
 				add_good_host(argv[optind++], 1);
 			break;
-
-		case 'd':
-			debug = 1;
-			break;
 		case 'G':
-			if (goodgroup != 0) {
+			if (goodgroup != NULL) {
 				fprintf(stderr,"timed: only one net group\n");
 				exit(1);
 			}
 			goodgroup = optarg;
 			break;
-
-		default:
-			fprintf(stderr, USAGE);
-			exit(1);
+		case 'M':
+			Mflag = 1;
 			break;
+		case 'd':
+			debug = 1;
+			break;
+		case 'i':
+			iflag = 1;
+			addnetname(optarg);
+			break;
+		case 'n':
+			nflag = 1;
+			addnetname(optarg);
+			break;
+		case 't':
+			trace = 1;
+			break;
+		default:
+			usage();
+			/* NOTREACHED */
 		}
 	}
-	if (optind < argc) {
-		fprintf(stderr, USAGE);
+
+	if (optind < argc)
+		usage();
+
+	if (nflag && iflag) {
+		fprintf(stderr, "timed: -i and -n make no sense together\n");
 		exit(1);
 	}
 
 	/*
-	 * If we care about which machine is the master, then we must
-	 *	be willing to be a master
+	 * If we care about which machine is the master, then we must be
+	 * willing to be a master as well.
 	 */
-	if (0 != goodgroup || 0 != goodhosts)
+	if ((goodgroup != NULL) || !TAILQ_EMPTY(&goodhosts))
 		Mflag = 1;
 
 	if (gethostname(hostname, sizeof(hostname)) < 0) {
@@ -222,11 +211,11 @@ main(int argc, char **argv)
 	self.head = 1;
 	self.good = 1;
 
-	if (goodhosts != 0)		/* trust ourself */
-		add_good_host(hostname,1);
+	/* Add ourselves to the list of trusted hosts */
+	if (!TAILQ_EMPTY(&goodhosts))
+		add_good_host(hostname, 1);
 
-	srvp = getservbyname("timed", "udp");
-	if (srvp == 0) {
+	if ((srvp = getservbyname("timed", "udp")) == NULL) {
 		fprintf(stderr, "unknown service 'timed/udp'\n");
 		exit(1);
 	}
@@ -262,7 +251,9 @@ main(int argc, char **argv)
 	ntime.tv_usec = -((ntime.tv_usec/1000) % 5) * 1000;
 	(void)adjtime(&ntime, (struct timeval *)0);
 
-	for (nt = nets; nt; nt = nt->next) {
+	TAILQ_FOREACH(nt, &nets, next) {
+		struct netent *nentp;
+
 		nentp = getnetbyname(nt->name);
 		if (nentp == 0) {
 			nt->net = inet_network(nt->name);
@@ -290,6 +281,7 @@ main(int argc, char **argv)
 		if (0 == (nt->net & 0xff000000))
 		    nt->net <<= 8;
 	}
+
 	while (1) {
 		char *ninbuf;
 
@@ -374,7 +366,7 @@ main(int argc, char **argv)
 
 		ntp->dest_addr.sin_port = port;
 
-		for (nt = nets; nt; nt = nt->next) {
+		TAILQ_FOREACH(nt, &nets, next) {
 			if (ntohl(ntp->net.s_addr) == nt->net)
 				break;
 		}
@@ -398,9 +390,6 @@ main(int argc, char **argv)
 		exit(1);
 	}
 	free(inbuf);
-
-	/* microseconds to delay before responding to a broadcast */
-	delay1 = casual(1, 100*1000);
 
 	/* election timer delay in secs. */
 	delay2 = casual(MINTOUT, MAXTOUT);
@@ -484,12 +473,11 @@ main(int argc, char **argv)
 }
 
 
-/* suppress an upstart, untrustworthy, self-appointed master
+/*
+ * suppress an upstart, untrustworthy, self-appointed master
  */
 void
-suppress(struct sockaddr_in *addr,
-         char *name,
-	 struct netinfo *net)
+suppress(struct sockaddr_in *addr, const char *name, struct netinfo *net)
 {
 	struct sockaddr_in tgt;
 	char tname[MAXHOSTNAMELEN];
@@ -499,17 +487,20 @@ suppress(struct sockaddr_in *addr,
 	if (trace)
 		fprintf(fd, "suppress: %s\n", name);
 	tgt = *addr;
-	strlcpy(tname, name, sizeof tname);
+	strlcpy(tname, name, sizeof(tname));
 
-	while (0 != readmsg(TSP_ANY, ANYADDR, &wait, net)) {
+	while (readmsg(TSP_ANY, ANYADDR, &wait, net) != NULL) {
 		if (trace)
 			fprintf(fd, "suppress:\tdiscarded packet from %s\n",
 				    name);
 	}
 
 	syslog(LOG_NOTICE, "suppressing false master %s", tname);
+
+	memset(&msg, 0, sizeof(msg));
 	msg.tsp_type = TSP_QUIT;
 	strlcpy(msg.tsp_name, hostname, sizeof msg.tsp_name);
+
 	(void)acksend(&msg, &tgt, tname, TSP_ACK, 0, 1);
 }
 
@@ -525,16 +516,19 @@ lookformaster(struct netinfo *ntp)
 	ntp->status = SLAVE;
 
 	/* look for master */
+	memset(&resp, 0, sizeof(resp));
 	resp.tsp_type = TSP_MASTERREQ;
-	strlcpy(resp.tsp_name, hostname, sizeof resp.tsp_name);
+	strlcpy(resp.tsp_name, hostname, sizeof(resp.tsp_name));
+
 	answer = acksend(&resp, &ntp->dest_addr, ANYADDR,
 			 TSP_MASTERACK, ntp, 0);
-	if (answer != 0 && !good_host_name(answer->tsp_name)) {
+	if ((answer != NULL) && !good_host_name(answer->tsp_name)) {
 		suppress(&from, answer->tsp_name, ntp);
 		ntp->status = NOMASTER;
 		answer = 0;
 	}
-	if (answer == 0) {
+
+	if (answer == NULL) {
 		/*
 		 * Various conditions can cause conflict: races between
 		 * two just started timedaemons when no master is
@@ -545,7 +539,7 @@ lookformaster(struct netinfo *ntp)
 		 */
 		ntime.tv_sec = ntime.tv_usec = 0;
 		answer = readmsg(TSP_MASTERREQ, ANYADDR, &ntime, ntp);
-		if (answer != 0) {
+		if (answer != NULL) {
 			if (!good_host_name(answer->tsp_name)) {
 				suppress(&from, answer->tsp_name, ntp);
 				ntp->status = NOMASTER;
@@ -555,7 +549,7 @@ lookformaster(struct netinfo *ntp)
 
 		ntime.tv_sec = ntime.tv_usec = 0;
 		answer = readmsg(TSP_MASTERUP, ANYADDR, &ntime, ntp);
-		if (answer != 0) {
+		if (answer != NULL) {
 			if (!good_host_name(answer->tsp_name)) {
 				suppress(&from, answer->tsp_name, ntp);
 				ntp->status = NOMASTER;
@@ -565,7 +559,7 @@ lookformaster(struct netinfo *ntp)
 
 		ntime.tv_sec = ntime.tv_usec = 0;
 		answer = readmsg(TSP_ELECTION, ANYADDR, &ntime, ntp);
-		if (answer != 0) {
+		if (answer != NULL) {
 			if (!good_host_name(answer->tsp_name)) {
 				suppress(&from, answer->tsp_name, ntp);
 				ntp->status = NOMASTER;
@@ -592,6 +586,7 @@ lookformaster(struct netinfo *ntp)
 	ntime.tv_sec = 0;
 	ntime.tv_usec = 300000;
 	answer = readmsg(TSP_MASTERACK, ANYADDR, &ntime, ntp);
+
 	/*
 	 * checking also not to send CONFLICT to ack'ed master
 	 * due to duplicated MASTERACKs
@@ -743,43 +738,34 @@ date()
 }
 
 void
-addnetname(char *name)
+addnetname(const char *name)
 {
-	struct nets **netlist = &nets;
+	struct nets *netlist;
 
-	while (*netlist)
-		netlist = &((*netlist)->next);
-	*netlist = (struct nets *)malloc(sizeof **netlist);
-	if (*netlist == 0) {
-		fprintf(stderr,"malloc failed\n");
-		exit(1);
-	}
-	bzero((char *)*netlist, sizeof(**netlist));
-	(*netlist)->name = name;
+	if ((netlist = (struct nets *)calloc(1, sizeof(*netlist))) == NULL)
+		err(1, "malloc");
+	strlcpy(netlist->name, name, sizeof(netlist->name));
+	TAILQ_INSERT_TAIL(&nets, netlist, next);
 }
 
-/* note a host as trustworthy */
+/*
+ * add_good_host() -
+ *
+ * Add a host to our list of trusted hosts.
+ */
 static void
-add_good_host(const char* name,
-	      char perm)		/* 1=not part of the netgroup */
+add_good_host(const char *name, int perm)
 {
 	struct goodhost *ghp;
 	struct hostent *hentp;
 
-	ghp = (struct goodhost*)malloc(sizeof(*ghp));
-	if (!ghp) {
-		syslog(LOG_ERR, "malloc failed");
-		exit(1);
-	}
-
-	bzero((char*)ghp, sizeof(*ghp));
-	(void)strncpy(&ghp->name[0], name, sizeof(ghp->name));
-	ghp->next = goodhosts;
+	if ((ghp = (struct goodhost *)calloc(1, sizeof(*ghp))) == NULL)
+		err(1, "malloc");
+	strlcpy(ghp->name, name, sizeof(ghp->name));
 	ghp->perm = perm;
-	goodhosts = ghp;
+	TAILQ_INSERT_TAIL(&goodhosts, ghp, next);
 
-	hentp = gethostbyname(name);
-	if (0 == hentp && perm)
+	if ((hentp = gethostbyname(name)) == NULL && perm)
 		(void)fprintf(stderr, "unknown host %s\n", name);
 }
 
@@ -793,7 +779,7 @@ get_goodgroup(int force)
 	static unsigned long last_update = -NG_DELAY;
 	unsigned long new_update;
 	struct hosttbl *htp;
-	struct goodhost *ghp, **ghpp;
+	struct goodhost *ghp, *nxt;
 	const char *mach, *usr, *dom;
 	struct tms tm;
 
@@ -811,13 +797,12 @@ get_goodgroup(int force)
 	last_update = new_update;
 
 	/* forget the old temporary entries */
-	ghpp = &goodhosts;
-	while (0 != (ghp = *ghpp)) {
+	for (ghp = TAILQ_FIRST(&goodhosts); ghp != NULL; ghp = nxt) {
+		nxt = TAILQ_NEXT(ghp, next);
+
 		if (!ghp->perm) {
-			*ghpp = ghp->next;
-			free((char*)ghp);
-		} else {
-			ghpp = &ghp->next;
+			TAILQ_REMOVE(&goodhosts, ghp, next);
+			free(ghp);
 		}
 	}
 
@@ -851,24 +836,29 @@ get_goodgroup(int force)
 /* see if a machine is trustworthy
  */
 int					/* 1=trust hp to change our date */
-good_host_name(name)
-	char *name;
+good_host_name(const char *name)
 {
-	struct goodhost *ghp = goodhosts;
-	char c;
+	struct goodhost *ghp;
 
-	if (!ghp || !Mflag)		/* trust everyone if no one named */
-		return 1;
+	if (TAILQ_EMPTY(&goodhosts) || !Mflag)
+		return (1);
 
-	c = *name;
-	do {
-		if (c == ghp->name[0]
-		    && !strcasecmp(name, ghp->name))
-			return 1;	/* found him, so say so */
-	} while (0 != (ghp = ghp->next));
+	TAILQ_FOREACH(ghp, &goodhosts, next) {
+		if (strcasecmp(ghp->name, name) == 0)
+			return (1);
+	}
 
-	if (!strcasecmp(name,hostname))	/* trust ourself */
-		return 1;
+	/* XXX - Should be no need for this since we already added ourselves */
+	if (strcasecmp(name, hostname) == 0)
+		return (1);
 
-	return 0;			/* did not find him */
+	return (0);
+}
+
+static void
+usage()
+{
+	(void)fprintf(stderr, "timed: [-dtM] [-i net|-n net] "
+	    "[-F host1 host2 ...] [-G netgp]\n");
+	exit(1);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: timed-extern.h,v 1.2 2001/04/07 20:00:16 ho Exp $	*/
+/*	$OpenBSD: timed-extern.h,v 1.3 2002/06/19 15:45:39 ericj Exp $	*/
 
 /*-
  * Copyright (c) 1993 The Regents of the University of California.
@@ -49,7 +49,6 @@ struct tsp *readmsg(int, char *, struct timeval *, struct netinfo *);
 struct tsp *acksend(struct tsp *,
 		    struct sockaddr_in *, char *, int, struct netinfo *, int);
 
-void	 addnetname(char *);
 void	 adj_msg_time(struct tsp *, struct timeval *);
 void	 bytehostorder(struct tsp *);
 void	 bytenetorder(struct tsp *);
@@ -61,7 +60,7 @@ char	*date(void);
 void	 doquit(struct tsp *);
 int	 election(struct netinfo *);
 void	 get_goodgroup(int);
-int	 good_host_name(char *);
+int	 good_host_name(const char *);
 void	 ignoreack(void);
 int	 in_cksum(u_short *, int);
 void	 lookformaster(struct netinfo *);
@@ -70,7 +69,6 @@ int	 master(void);
 void	 masterack(void);
 void	 masterup(struct netinfo *);
 int	 measure(u_long, u_long, char *, struct sockaddr_in *, int);
-void	 msterup(struct netinfo *);
 void	 mstotvround(struct timeval *, long);
 long	 networkdelta(void);
 void	 newslave(struct tsp *);
@@ -81,8 +79,8 @@ void	 setstatus(void);
 int	 slave(void);
 void	 slaveack(void);
 void	 spreadtime(void);
-void	 suppress(struct sockaddr_in *, char *, struct netinfo *);
+void	 suppress(struct sockaddr_in *, const char *, struct netinfo *);
 void	 synch(long);
-void	 traceoff(char *);
+void	 traceoff(const char *);
 void	 traceon(void);
 void	 xmit(int, u_short, struct sockaddr_in *);

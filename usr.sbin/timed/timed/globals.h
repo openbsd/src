@@ -1,4 +1,4 @@
-/*	$OpenBSD: globals.h,v 1.5 2002/06/18 00:40:30 ericj Exp $	*/
+/*	$OpenBSD: globals.h,v 1.6 2002/06/19 15:45:39 ericj Exp $	*/
 
 /*-
  * Copyright (c) 1985 The Regents of the University of California.
@@ -53,10 +53,10 @@
 #include <unistd.h>
 
 #include <protocols/timed.h>
+
 #define	SECHR	(60*60)
 #define	SECDAY	(24*SECHR)
 
-extern int errno;
 extern int sock;
 
 /* Best expected round trip for a measurement.
@@ -80,9 +80,6 @@ extern int sock;
 #define UNREACHABLE	2
 #define NONSTDTIME	3
 #define HOSTDOWN	0x7fffffff
-
-#define OFF		0
-#define ON		1
 
 #define MAX_HOPCNT	10		/* max value for tsp_hpcnt */
 
@@ -153,7 +150,7 @@ extern struct timeval from_when;	/* when the last msg arrived */
 extern u_short sequence;		/* TSP message sequence number */
 extern struct netinfo *fromnet, *slavenet;
 extern FILE *fd;
-extern long delay1, delay2;
+extern long delay2;
 extern int nslavenets;			/* nets were I could be a slave */
 extern int nmasternets;			/* nets were I could be a master */
 extern int nignorednets;		/* ignored nets */
@@ -171,7 +168,6 @@ extern int nnets;			/* nets I am connected to */
 			inet_ntoa(addr), st_errno);			\
 }
 
-
-# define max(a,b)	(a<b ? b : a)
-# define min(a,b)	(a>b ? b : a)
-# define abs(x)		(x>=0 ? x : -(x))
+#define	max(a, b)	((a) < (b) ? (b) : (a))
+#define	min(a, b)	((a) > (b) ? (b) : (a))
+#define	abs(x)		((x) >= 0 ? (x) : -(x))
