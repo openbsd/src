@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.232 2003/05/18 02:43:12 andreas Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.233 2003/05/27 23:52:01 fgsch Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1219,11 +1219,11 @@ intel686_cpu_setup(cpu_device, model, step)
 #define rdmsr(msr)	\
 ({			\
 	u_quad_t v;	\
-	__asm __volatile (".byte 0xf, 0x32" : "=A" (v) : "c" (msr));	\
+	__asm __volatile ("rdmsr" : "=A" (v) : "c" (msr));	\
 	v;		\
 })
 #define wrmsr(msr, v)	\
-	__asm __volatile (".byte 0xf, 0x30" :: "A" ((u_quad_t) (v)), "c" (msr));
+	__asm __volatile ("wrmsr" :: "A" ((u_quad_t) (v)), "c" (msr));
 
 	/*
 	 * Original PPro returns SYSCALL in CPUID but is non-functional.

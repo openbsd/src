@@ -1,4 +1,4 @@
-/*	$OpenBSD: microtime.s,v 1.17 2003/04/17 03:42:14 drahn Exp $	*/
+/*	$OpenBSD: microtime.s,v 1.18 2003/05/27 23:52:01 fgsch Exp $	*/
 /*	$NetBSD: microtime.s,v 1.16 1995/04/17 12:06:47 cgd Exp $	*/
 
 /*-
@@ -149,7 +149,7 @@ common_microtime:
 pentium_microtime:
 	pushfl
 	cli
-	.byte	0x0f, 0x31	# RDTSC
+	rdtsc
 	subl	_C_LABEL(pentium_base_tsc),%eax
 	sbbl	_C_LABEL(pentium_base_tsc)+4,%edx
 	/*

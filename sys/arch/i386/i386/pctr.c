@@ -1,4 +1,4 @@
-/*	$OpenBSD: pctr.c,v 1.15 2002/03/14 01:26:32 millert Exp $	*/
+/*	$OpenBSD: pctr.c,v 1.16 2003/05/27 23:52:01 fgsch Exp $	*/
 
 /*
  * Pentium performance counter driver for OpenBSD.
@@ -55,16 +55,16 @@ pctrattach (num)
 
 	if (usep6ctr)
 		/* Enable RDTSC and RDPMC instructions from user-level. */
-		__asm __volatile (".byte 0xf,0x20,0xe0   # movl %%cr4,%%eax\n"
+		__asm __volatile ("movl %%cr4,%%eax\n"
 				  "\tandl %0,%%eax\n"
 				  "\torl %1,%%eax\n"
-				  "\t.byte 0xf,0x22,0xe0 # movl %%cr4,%%eax"
+				  "\tmovl %%cr4,%%eax"
 				  :: "i" (~CR4_TSD), "i" (CR4_PCE) : "eax");
 	else if (usetsc)
 		/* Enable RDTSC instruction from user-level. */
-		__asm __volatile (".byte 0xf,0x20,0xe0   # movl %%cr4,%%eax\n"
+		__asm __volatile ("movl %%cr4,%%eax\n"
 				  "\tandl %0,%%eax\n"
-				  "\t.byte 0xf,0x22,0xe0 # movl %%cr4,%%eax"
+				  "\tmovl %%cr4,%%eax"
 				  :: "i" (~CR4_TSD) : "eax");
 
 	if (usep6ctr)

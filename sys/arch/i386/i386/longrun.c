@@ -1,4 +1,4 @@
-/* $OpenBSD: longrun.c,v 1.2 2003/05/26 08:30:03 tedu Exp $ */
+/* $OpenBSD: longrun.c,v 1.3 2003/05/27 23:52:01 fgsch Exp $ */
 /*
  * Copyright (c) 2003 Ted Unangst
  * Copyright (c) 2001 Tamotsu Hattori
@@ -126,7 +126,7 @@ static void
 longrun_readreg(u_int32_t ax, u_int32_t *regs)
 {
 	__asm __volatile(
-	".byte	0x0f, 0xa2;"
+	"cpuid;"
 	"movl	%%eax, 0(%2);"
 	"movl	%%ebx, 4(%2);"
 	"movl	%%ecx, 8(%2);"
