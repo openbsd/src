@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.3 2000/01/09 19:23:49 angelos Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.4 2000/01/10 22:40:16 angelos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -104,6 +104,7 @@ gifattach(dummy)
 		sc->gif_if.if_output = gif_output;
 		sc->gif_if.if_type   = IFT_GIF;
 		if_attach(&sc->gif_if);
+
 #if NBPFILTER > 0
 		bpfattach(&sc->gif_if.if_bpf, &sc->gif_if, DLT_NULL,
 			  sizeof(u_int));
@@ -225,7 +226,7 @@ gif_input(m, af, gifp)
 		
 		m0.m_next = m;
 		m0.m_len = 4;
-		m0.m_data = (char *)&af;
+		m0.m_data = (char *) &af;
 		
 		bpf_mtap(gifp->if_bpf, &m0);
 	}
@@ -269,7 +270,8 @@ gif_input(m, af, gifp)
 		return;
 	}
 	IF_ENQUEUE(ifq, m);
-	/* we need schednetisr since the address family may change */
+
+	/* We need schednetisr since the address family may change */
 	schednetisr(isr);
 	gifp->if_ipackets++;
 	gifp->if_ibytes += m->m_pkthdr.len;
