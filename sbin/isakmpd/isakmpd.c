@@ -1,8 +1,8 @@
-/*	$OpenBSD: isakmpd.c,v 1.9 1999/03/24 14:43:37 niklas Exp $	*/
-/*	$EOM: isakmpd.c,v 1.28 1999/03/24 11:01:06 niklas Exp $	*/
+/*	$OpenBSD: isakmpd.c,v 1.10 1999/04/19 21:09:36 niklas Exp $	*/
+/*	$EOM: isakmpd.c,v 1.31 1999/04/17 23:20:30 niklas Exp $	*/
 
 /*
- * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -125,7 +125,7 @@ parse_args (int argc, char *argv[])
 	exit (1);
       break;
     case 'r':
-      srandom (strtoul (optarg, NULL, 0));
+      srandom (strtoul (optarg, 0, 0));
       regrand = 1;
       break;
     case 'R':
@@ -144,6 +144,9 @@ parse_args (int argc, char *argv[])
 static void
 reinit (void)
 {
+  /* XXX Remove log message later on? */
+  log_debug (LOG_MISC, 80, "reinit: SIGHUP recieved, reinitializing.");
+
   /* Reread config file.  */
   conf_init ();
 
