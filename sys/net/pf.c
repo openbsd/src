@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.183 2002/01/09 11:30:53 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.184 2002/01/12 01:34:49 jasoni Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -259,8 +259,8 @@ int			 pf_add_sport(struct pf_port_list *, u_int16_t);
 int			 pf_chk_sport(struct pf_port_list *, u_int16_t);
 int			 pf_normalize_tcp(int, struct ifnet *, struct mbuf *,
 			     int, int, void *, struct pf_pdesc *);
-void			 pf_route(struct mbuf *, struct pf_rule *);
-void			 pf_route6(struct mbuf *, struct pf_rule *);
+void			 pf_route(struct mbuf **, struct pf_rule *, int);
+void			 pf_route6(struct mbuf **, struct pf_rule *, int);
 
 
 #if NPFLOG > 0
@@ -4601,7 +4601,7 @@ pf_pull_hdr(struct mbuf *m, int off, void *p, int len,
 
 #ifdef INET
 void
-pf_route(struct mbuf *m, struct pf_rule *r)
+pf_route(struct mbuf **m, struct pf_rule *r, int dir)
 {
 	struct mbuf *m0, *m1;
 	struct route iproute;
@@ -4612,15 +4612,15 @@ pf_route(struct mbuf *m, struct pf_rule *r)
 	int hlen;
 	int len, off, error = 0;
 
-	if (m == NULL)
-		return;
-
 	if (r->rt == PF_DUPTO) {
-		m0 = m_copym2(m, 0, M_COPYALL, M_NOWAIT);
+		m0 = m_copym2(*m, 0, M_COPYALL, M_NOWAIT);
 		if (m0 == NULL)
 			return;
-	} else
-		m0 = m;
+	} else {
+		if (r->direction != dir)
+			return;
+		m0 = *m;
+	}
 
 	ip = mtod(m0, struct ip *);
 	hlen = ip->ip_hl << 2;
@@ -4785,6 +4785,8 @@ sendorfree:
 	}
 
 done:
+	if (r->rt != PF_DUPTO)
+		*m = NULL;
 	if (ro == &iproute && ro->ro_rt)
 		RTFREE(ro->ro_rt);
 	return;
@@ -4797,7 +4799,7 @@ bad:
 
 #ifdef INET6
 void
-pf_route6(struct mbuf *m, struct pf_rule *r)
+pf_route6(struct mbuf **m, struct pf_rule *r, int dir)
 {
 	struct mbuf *m0;
 	struct m_tag *mtag;
@@ -4812,11 +4814,14 @@ pf_route6(struct mbuf *m, struct pf_rule *r)
 		return;
 
 	if (r->rt == PF_DUPTO) {
-		m0 = m_copym2(m, 0, M_COPYALL, M_NOWAIT);
+		m0 = m_copym2(*m, 0, M_COPYALL, M_NOWAIT);
 		if (m0 == NULL)
 			return;
-	} else
-		m0 = m;
+	} else {
+		if (r->direction != dir)
+			return;
+		m0 = *m;
+	}
 
 	ip6 = mtod(m0, struct ip6_hdr *);
 
@@ -4855,6 +4860,8 @@ pf_route6(struct mbuf *m, struct pf_rule *r)
 		m_freem(m0);
 
 done:
+	if (r->rt != PF_DUPTO)
+		*m = NULL;
 	return;
 
 bad:
@@ -5022,14 +5029,9 @@ done:
 			PFLOG_PACKET(ifp, h, m, AF_INET, dir, reason, r);
 	}
 
-	/* pf_route can free the mbuf causing *m to become NULL */
-	if (r && r->rt) {
-		pf_route(m, r);
-		if (r->rt != PF_DUPTO) {
-			/* m0 already freed */
-			*m0 = NULL;
-		}
-	}
+	/* pf_route can free the mbuf causing *m0 to become NULL */
+	if (r && r->rt)
+		pf_route(m0, r, dir);
 
 	return (action);
 }
@@ -5204,14 +5206,9 @@ done:
 			PFLOG_PACKET(ifp, h, m, AF_INET6, dir, reason, r);
 	}
 
-	/* pf_route6 can free the mbuf causing *m to become NULL */
-	if (r && r->rt) {
-		pf_route6(m, r);
-		if (r->rt != PF_DUPTO) {
-			/* m0 already freed */
-			*m0 = NULL;
-		}
-	}
+	/* pf_route6 can free the mbuf causing *m0 to become NULL */
+	if (r && r->rt)
+		pf_route6(m0, r, dir);
 
 	return (action);
 }
