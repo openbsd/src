@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.416 2001/07/17 21:18:37 deraadt Exp $
+	$OpenBSD: pcidevs,v 1.417 2001/07/20 11:22:50 peter Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1025,6 +1025,7 @@ product DELL PERC_3DI_SUB3	0x00d9	PERC 3/Di
 /* D-Link products */
 product DLINK 550TX		0x1002	550TX
 product DLINK 530TXPLUS		0x1300	530TX+
+product DLINK DGE550T		0x4000	DGE-550T
 
 /* Davicom Technologies */
 product DAVICOM DM9100		0x9100	DM9100
