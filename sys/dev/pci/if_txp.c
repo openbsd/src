@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.4 2001/04/08 18:26:38 jason Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.5 2001/04/08 21:47:45 jason Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -83,9 +83,9 @@
 #include <dev/pci/if_txpreg.h>
 #include <dev/microcode/typhoon/typhoon_image.h>
 
-int txp_probe	__P((struct device *, void *, void *));
-void txp_attach	__P((struct device *, struct device *, void *));
-int txp_intr	__P((void *));
+int txp_probe		__P((struct device *, void *, void *));
+void txp_attach		__P((struct device *, struct device *, void *));
+int txp_intr		__P((void *));
 void txp_tick		__P((void *));
 void txp_shutdown	__P((void *));
 int txp_ioctl		__P((struct ifnet *, u_long, caddr_t));
@@ -100,6 +100,9 @@ int txp_download_fw __P((struct txp_softc *));
 int txp_download_fw_wait __P((struct txp_softc *));
 int txp_download_fw_section __P((struct txp_softc *,
     struct txp_fw_section_header *, int));
+int txp_alloc_rings __P((struct txp_softc *));
+void txp_dma_free __P((struct txp_softc *, struct txp_dma_alloc *));
+int txp_dma_malloc __P((struct txp_softc *, bus_size_t, struct txp_dma_alloc *));
 
 int
 txp_probe(parent, match, aux)
@@ -180,6 +183,9 @@ txp_attach(parent, self, aux)
 		return;
 
 	if (txp_download_fw(sc))
+		return;
+
+	if (txp_alloc_rings(sc))
 		return;
 
 	printf("\n");
@@ -308,13 +314,13 @@ txp_download_fw(sc)
 	WRITE_REG(sc, TXP_H2A_1, fileheader->addr);
 	WRITE_REG(sc, TXP_H2A_0, TXP_BOOTCMD_RUNTIME_IMAGE);
 
-	secthead = (struct txp_fw_section_header *)(TyphoonImage +
-	    sizeof(struct txp_fw_file_header));
-
 	if (txp_download_fw_wait(sc)) {
 		printf(": fw wait failed, initial\n");
 		return (-1);
 	}
+
+	secthead = (struct txp_fw_section_header *)(TyphoonImage +
+	    sizeof(struct txp_fw_file_header));
 
 	for (sect = 0; sect < fileheader->nsections; sect++) {
 		if (txp_download_fw_section(sc, secthead, sect))
@@ -376,12 +382,8 @@ txp_download_fw_section(sc, sect, sectnum)
 	struct txp_fw_section_header *sect;
 	int sectnum;
 {
-	u_int64_t pa;
-	bus_dma_tag_t dmat = sc->sc_dmat;
-	bus_dma_segment_t seg;
-	bus_dmamap_t dmamap;
+	struct txp_dma_alloc dma;
 	int rseg, err = 0;
-	caddr_t kva;
 	struct mbuf m;
 	u_int16_t csum;
 
@@ -404,36 +406,20 @@ txp_download_fw_section(sc, sect, sectnum)
 	}
 
 	/* map a buffer, copy segment to it, get physaddr */
-	if (bus_dmamem_alloc(dmat, sect->nbytes, PAGE_SIZE, 0, &seg, 1, &rseg,
-	    BUS_DMA_NOWAIT)) {
-		printf(": fw dmamam alloc fail\n");
+	if (txp_dma_malloc(sc, sect->nbytes, &dma)) {
+		printf(": fw dma malloc failed, section %d\n", sectnum);
 		return (-1);
 	}
-	if (bus_dmamem_map(dmat, &seg, rseg, sect->nbytes, &kva,
-	    BUS_DMA_NOWAIT)) {
-		printf(": fw dmamem map fail\n");
-		err = -1;
-		goto bail_free;
-	}
-	if (bus_dmamap_create(dmat, sect->nbytes, 1, sect->nbytes, 0,
-	    BUS_DMA_NOWAIT, &dmamap)) {
-		printf(": fw dmamap create fail\n");
-		err = -1;
-		goto bail_unmap;
-	}
-	if (bus_dmamap_load(dmat, dmamap, kva, sect->nbytes, NULL,
-	    BUS_DMA_NOWAIT)) {
-		printf(": fw dmamap load fail\n");
-		err = -1;
-		goto bail_destroy;
-	}
 
-	bcopy(((u_int8_t *)sect) + sizeof(*sect), kva, sect->nbytes);
+	bcopy(((u_int8_t *)sect) + sizeof(*sect), dma.dma_vaddr, sect->nbytes);
 
+	/*
+	 * dummy up mbuf and verify section checksum
+	 */
 	m.m_type = MT_DATA;
 	m.m_next = m.m_nextpkt = NULL;
 	m.m_len = sect->nbytes;
-	m.m_data = kva;
+	m.m_data = dma.dma_vaddr;
 	m.m_flags = 0;
 	csum = in_cksum(&m, sect->nbytes);
 	if (csum != sect->cksum) {
@@ -443,34 +429,27 @@ txp_download_fw_section(sc, sect, sectnum)
 		goto bail;
 	}
 
-	bus_dmamap_sync(dmat, dmamap,
+	bus_dmamap_sync(sc->sc_dmat, dma.dma_map,
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
-
-	pa = dmamap->dm_segs[0].ds_addr;
 
 	WRITE_REG(sc, TXP_H2A_1, sect->nbytes);
 	WRITE_REG(sc, TXP_H2A_2, sect->cksum);
 	WRITE_REG(sc, TXP_H2A_3, sect->addr);
-	WRITE_REG(sc, TXP_H2A_4, pa >> 32);
-	WRITE_REG(sc, TXP_H2A_5, pa & 0xffffffff);
+	WRITE_REG(sc, TXP_H2A_4, dma.dma_paddr >> 32);
+	WRITE_REG(sc, TXP_H2A_5, dma.dma_paddr & 0xffffffff);
 	WRITE_REG(sc, TXP_H2A_0, TXP_BOOTCMD_SEGMENT_AVAILABLE);
 
 	if (txp_download_fw_wait(sc)) {
 		printf(": fw wait failed, section %d\n", sectnum);
 		err = -1;
+		goto bail;
 	}
 
-	bus_dmamap_sync(dmat, dmamap,
+	bus_dmamap_sync(sc->sc_dmat, dma.dma_map,
 	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
 
 bail:
-	bus_dmamap_unload(dmat, dmamap);
-bail_destroy:
-	bus_dmamap_destroy(dmat, dmamap);
-bail_unmap:
-	bus_dmamem_unmap(dmat, kva, sect->nbytes);
-bail_free:
-	bus_dmamem_free(dmat, &seg, rseg);
+	txp_dma_free(sc, &dma);
 
 	return (err);
 }
@@ -492,6 +471,217 @@ txp_shutdown(vsc)
 	struct txp_softc *sc = (struct txp_softc *)vsc;
 
 	txp_stop(sc);
+}
+
+int
+txp_alloc_rings(sc)
+	struct txp_softc *sc;
+{
+	struct txp_boot_record *boot;
+	u_int32_t r;
+	int i;
+
+	/* boot record */
+	if (txp_dma_malloc(sc, sizeof(struct txp_boot_record), &sc->sc_boot_dma)) {
+		printf(": can't allocate boot record\n");
+		return (-1);
+	}
+	boot = (struct txp_boot_record *)sc->sc_boot_dma.dma_vaddr;
+	bzero(boot, sizeof(*boot));
+
+	/* host ring */
+	if (txp_dma_malloc(sc, sizeof(struct txp_hostring), &sc->sc_host_dma)) {
+		printf(": can't allocate host ring\n");
+		goto bail_boot;
+	}
+	bzero(sc->sc_host_dma.dma_vaddr, sc->sc_host_dma.dma_siz);
+	boot->br_hostring_lo = sc->sc_host_dma.dma_paddr & 0xffffffff;
+	boot->br_hostring_hi = sc->sc_host_dma.dma_paddr >> 32;
+
+	/* high priority tx ring */
+	if (txp_dma_malloc(sc, sizeof(struct txp_tx_desc) * TX_ENTRIES,
+	    &sc->sc_txhiring_dma)) {
+		printf(": can't allocate high tx ring\n");
+		goto bail_host;
+	}
+	bzero(sc->sc_txhiring_dma.dma_vaddr, sc->sc_txhiring_dma.dma_siz);
+	boot->br_txhipri_lo = sc->sc_txhiring_dma.dma_paddr & 0xffffffff;
+	boot->br_txhipri_hi = sc->sc_txhiring_dma.dma_paddr >> 32;
+	boot->br_txhipri_siz = TX_ENTRIES * sizeof(struct txp_tx_desc);
+
+	/* low priority tx ring */
+	if (txp_dma_malloc(sc, sizeof(struct txp_tx_desc) * TX_ENTRIES,
+	    &sc->sc_txloring_dma)) {
+		printf(": can't allocate low tx ring\n");
+		goto bail_txhiring;
+	}
+	bzero(sc->sc_txloring_dma.dma_vaddr, sc->sc_txloring_dma.dma_siz);
+	boot->br_txlopri_lo = sc->sc_txloring_dma.dma_paddr & 0xffffffff;
+	boot->br_txlopri_hi = sc->sc_txloring_dma.dma_paddr >> 32;
+	boot->br_txlopri_siz = TX_ENTRIES * sizeof(struct txp_tx_desc);
+
+	/* high priority rx ring */
+	if (txp_dma_malloc(sc, sizeof(struct txp_rx_desc) * RX_ENTRIES,
+	    &sc->sc_rxhiring_dma)) {
+		printf(": can't allocate high rx ring\n");
+		goto bail_txloring;
+	}
+	bzero(sc->sc_rxhiring_dma.dma_vaddr, sc->sc_rxhiring_dma.dma_siz);
+	boot->br_rxhipri_lo = sc->sc_rxhiring_dma.dma_paddr & 0xffffffff;
+	boot->br_rxhipri_hi = sc->sc_rxhiring_dma.dma_paddr >> 32;
+	boot->br_rxhipri_siz = RX_ENTRIES * sizeof(struct txp_rx_desc);
+
+	/* low priority rx ring */
+	if (txp_dma_malloc(sc, sizeof(struct txp_rx_desc) * RX_ENTRIES,
+	    &sc->sc_rxloring_dma)) {
+		printf(": can't allocate low rx ring\n");
+		goto bail_rxhiring;
+	}
+	bzero(sc->sc_rxloring_dma.dma_vaddr, sc->sc_rxloring_dma.dma_siz);
+	boot->br_rxlopri_lo = sc->sc_rxloring_dma.dma_paddr & 0xffffffff;
+	boot->br_rxlopri_hi = sc->sc_rxloring_dma.dma_paddr >> 32;
+	boot->br_rxlopri_siz = RX_ENTRIES * sizeof(struct txp_rx_desc);
+
+	/* command ring */
+	if (txp_dma_malloc(sc, sizeof(struct txp_cmd_desc) * CMD_ENTRIES,
+	    &sc->sc_cmdring_dma)) {
+		printf(": can't allocate command ring\n");
+		goto bail_rxloring;
+	}
+	bzero(sc->sc_cmdring_dma.dma_vaddr, sc->sc_cmdring_dma.dma_siz);
+	boot->br_cmd_lo = sc->sc_cmdring_dma.dma_paddr & 0xffffffff;
+	boot->br_cmd_hi = sc->sc_cmdring_dma.dma_paddr >> 32;
+	boot->br_cmd_siz = CMD_ENTRIES * sizeof(struct txp_cmd_desc);
+
+	/* response ring */
+	if (txp_dma_malloc(sc, sizeof(struct txp_resp_desc) * RESP_ENTRIES,
+	    &sc->sc_respring_dma)) {
+		printf(": can't allocate response ring\n");
+		goto bail_cmdring;
+	}
+	bzero(sc->sc_respring_dma.dma_vaddr, sc->sc_respring_dma.dma_siz);
+	boot->br_resp_lo = sc->sc_respring_dma.dma_paddr & 0xffffffff;
+	boot->br_resp_hi = sc->sc_respring_dma.dma_paddr >> 32;
+	boot->br_resp_siz = CMD_ENTRIES * sizeof(struct txp_resp_desc);
+
+	/* zero dma */
+	if (txp_dma_malloc(sc, sizeof(u_int32_t), &sc->sc_zero_dma)) {
+		printf(": can't allocate response ring\n");
+		goto bail_respring;
+	}
+	bzero(sc->sc_zero_dma.dma_vaddr, sc->sc_zero_dma.dma_siz);
+	boot->br_zero_lo = sc->sc_zero_dma.dma_paddr & 0xffffffff;
+	boot->br_zero_hi = sc->sc_zero_dma.dma_paddr >> 32;
+
+	/* See if it's waiting for boot, and try to boot it */
+	for (i = 0; i < 10000; i++) {
+		r = READ_REG(sc, TXP_A2H_0);
+		if (r == STAT_WAITING_FOR_BOOT)
+			break;
+		DELAY(50);
+	}
+	if (r != STAT_WAITING_FOR_BOOT) {
+		printf(": not waiting for boot\n");
+		goto bail;
+	}
+	WRITE_REG(sc, TXP_H2A_2, sc->sc_boot_dma.dma_paddr >> 32);
+	WRITE_REG(sc, TXP_H2A_1, sc->sc_boot_dma.dma_paddr & 0xffffffff);
+	WRITE_REG(sc, TXP_H2A_0, TXP_BOOTCMD_REGISTER_BOOT_RECORD);
+
+	/* See if it booted */
+	for (i = 0; i < 10000; i++) {
+		r = READ_REG(sc, TXP_A2H_0);
+		if (r == STAT_RUNNING)
+			break;
+		DELAY(50);
+	}
+	if (r != STAT_RUNNING) {
+		printf(": fw not running\n");
+		goto bail;
+	}
+
+	/* Clear TX and CMD ring write registers */
+	WRITE_REG(sc, TXP_H2A_1, TXP_BOOTCMD_NULL);
+	WRITE_REG(sc, TXP_H2A_2, TXP_BOOTCMD_NULL);
+	WRITE_REG(sc, TXP_H2A_3, TXP_BOOTCMD_NULL);
+	WRITE_REG(sc, TXP_H2A_0, TXP_BOOTCMD_NULL);
+
+	return (0);
+
+bail:
+	txp_dma_free(sc, &sc->sc_zero_dma);
+bail_respring:
+	txp_dma_free(sc, &sc->sc_respring_dma);
+bail_cmdring:
+	txp_dma_free(sc, &sc->sc_cmdring_dma);
+bail_rxloring:
+	txp_dma_free(sc, &sc->sc_rxloring_dma);
+bail_rxhiring:
+	txp_dma_free(sc, &sc->sc_rxhiring_dma);
+bail_txloring:
+	txp_dma_free(sc, &sc->sc_txloring_dma);
+bail_txhiring:
+	txp_dma_free(sc, &sc->sc_txhiring_dma);
+bail_host:
+	txp_dma_free(sc, &sc->sc_host_dma);
+bail_boot:
+	txp_dma_free(sc, &sc->sc_boot_dma);
+	return (-1);
+}
+
+int
+txp_dma_malloc(sc, size, dma)
+	struct txp_softc *sc;
+	bus_size_t size;
+	struct txp_dma_alloc *dma;
+{
+	int r;
+
+	if ((r = bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE, 0,
+	    &dma->dma_seg, 1, &dma->dma_nseg, BUS_DMA_NOWAIT)) != 0) {
+		return (r);
+	}
+	if (dma->dma_nseg != 1) {
+		bus_dmamem_free(sc->sc_dmat, &dma->dma_seg, dma->dma_nseg);
+		return (-1);
+	}
+
+	if ((r = bus_dmamem_map(sc->sc_dmat, &dma->dma_seg, dma->dma_nseg,
+	    size, &dma->dma_vaddr, BUS_DMA_NOWAIT)) != 0) {
+		bus_dmamem_free(sc->sc_dmat, &dma->dma_seg, dma->dma_nseg);
+		return (r);
+	}
+
+	if ((r = bus_dmamap_create(sc->sc_dmat, size, dma->dma_nseg,
+	    size, 0, BUS_DMA_NOWAIT, &dma->dma_map)) != 0) {
+		bus_dmamem_unmap(sc->sc_dmat, dma->dma_vaddr, size);
+		bus_dmamem_free(sc->sc_dmat, &dma->dma_seg, dma->dma_nseg);
+		return (r);
+	}
+
+	if ((r = bus_dmamap_load(sc->sc_dmat, dma->dma_map, dma->dma_vaddr,
+	    size, NULL, BUS_DMA_NOWAIT)) != 0) {
+		bus_dmamap_destroy(sc->sc_dmat, dma->dma_map);
+		bus_dmamem_unmap(sc->sc_dmat, dma->dma_vaddr, size);
+		bus_dmamem_free(sc->sc_dmat, &dma->dma_seg, dma->dma_nseg);
+		return (r);
+	}
+
+	dma->dma_paddr = dma->dma_map->dm_segs[0].ds_addr;
+	dma->dma_siz = size;
+
+	return (0);
+}
+
+void
+txp_dma_free(sc, dma)
+	struct txp_softc *sc;
+	struct txp_dma_alloc *dma;
+{
+	bus_dmamap_unload(sc->sc_dmat, dma->dma_map);
+	bus_dmamap_destroy(sc->sc_dmat, dma->dma_map);
+	bus_dmamem_unmap(sc->sc_dmat, dma->dma_vaddr, dma->dma_siz);
+	bus_dmamem_free(sc->sc_dmat, &dma->dma_seg, dma->dma_nseg);
 }
 
 void

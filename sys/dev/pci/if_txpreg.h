@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txpreg.h,v 1.5 2001/04/08 19:25:29 jason Exp $ */
+/*	$OpenBSD: if_txpreg.h,v 1.6 2001/04/08 21:47:45 jason Exp $ */
 
 /*
  * Copyright (c) 2001 Aaron Campbell <aaron@monkey.org>.
@@ -352,9 +352,9 @@ struct txp_boot_record {
 	volatile u_int32_t	br_rxbuf_lo;		/* rx buffer ring */
 	volatile u_int32_t	br_rxbuf_hi;
 	volatile u_int32_t	br_rxbuf_siz;
-	volatile u_int32_t	br_ctrl_lo;		/* command ring */
-	volatile u_int32_t	br_ctrl_hi;
-	volatile u_int32_t	br_ctrl_siz;
+	volatile u_int32_t	br_cmd_lo;		/* command ring */
+	volatile u_int32_t	br_cmd_hi;
+	volatile u_int32_t	br_cmd_siz;
 	volatile u_int32_t	br_resp_lo;		/* response ring */
 	volatile u_int32_t	br_resp_hi;
 	volatile u_int32_t	br_resp_siz;
@@ -394,6 +394,20 @@ struct txp_hostring {
 #define	STAT_SLEEPING			0x00000011
 #define	STAT_HALTED			0x00000014
 
+#define	TX_ENTRIES			128
+#define	RX_ENTRIES			128
+#define	CMD_ENTRIES			32
+#define	RESP_ENTRIES			32
+
+struct txp_dma_alloc {
+	caddr_t			dma_vaddr;
+	u_int64_t		dma_paddr;
+	bus_size_t		dma_siz;
+	bus_dmamap_t		dma_map;
+	bus_dma_segment_t	dma_seg;
+	int			dma_nseg;
+};
+
 struct txp_softc {
 	struct device		sc_dev;
 	void *			sc_ih;
@@ -402,6 +416,10 @@ struct txp_softc {
 	bus_dma_tag_t		sc_dmat;
 	struct arpcom		sc_arpcom;
 	struct timeout		sc_tick_tmo;
+	struct txp_dma_alloc	sc_boot_dma, sc_host_dma, sc_zero_dma;
+	struct txp_dma_alloc	sc_rxhiring_dma, sc_rxloring_dma;
+	struct txp_dma_alloc	sc_txhiring_dma, sc_txloring_dma;
+	struct txp_dma_alloc	sc_cmdring_dma, sc_respring_dma;
 };
 
 struct txp_fw_file_header {
