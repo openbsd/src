@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.10 2000/02/17 04:15:29 itojun Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.11 2000/03/12 01:27:11 itojun Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -186,6 +186,7 @@ route_output(m, va_alist)
 #endif
 {
 	register struct rt_msghdr *rtm = 0;
+	register struct radix_node *rn = 0;
 	register struct rtentry *rt = 0;
 	struct rtentry *saved_nrt = 0;
 	struct radix_node_head *rnh;
@@ -201,7 +202,7 @@ route_output(m, va_alist)
 	va_end(ap);
 
 	bzero(&info, sizeof(info));
-#define senderr(e) { error = e; goto flush;}
+#define senderr(e) do { error = e; goto flush;} while (0)
 	if (m == 0 || ((m->m_len < sizeof(int32_t)) &&
 		       (m = m_pullup(m, sizeof(int32_t))) == 0))
 		return (ENOBUFS);
@@ -273,11 +274,14 @@ route_output(m, va_alist)
 	case RTM_LOCK:
 		if ((rnh = rt_tables[dst->sa_family]) == 0) {
 			senderr(EAFNOSUPPORT);
-		} else if ((rt = (struct rtentry *)
-				rnh->rnh_lookup(dst, netmask, rnh)) != NULL)
-			rt->rt_refcnt++;
-		else
+		}
+		rn = rnh->rnh_lookup(dst, netmask, rnh);
+		if (rn == NULL || (rn->rn_flags & RNF_ROOT) != 0) {
 			senderr(ESRCH);
+		}
+		rt = (struct rtentry *)rn;
+		rt->rt_refcnt++;
+
 		switch(rtm->rtm_type) {
 
 		case RTM_GET:
