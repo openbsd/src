@@ -16,7 +16,7 @@ validity of the host key.
 */
 
 #include "includes.h"
-RCSID("$Id: auth-rsa.c,v 1.7 1999/11/02 19:42:34 markus Exp $");
+RCSID("$Id: auth-rsa.c,v 1.8 1999/11/11 23:36:52 markus Exp $");
 
 #include "rsa.h"
 #include "packet.h"
@@ -24,6 +24,7 @@ RCSID("$Id: auth-rsa.c,v 1.7 1999/11/02 19:42:34 markus Exp $");
 #include "ssh.h"
 #include "mpaux.h"
 #include "uidswap.h"
+#include "servconf.h"
 
 #include <ssl/rsa.h>
 #include <ssl/md5.h>
@@ -128,8 +129,9 @@ auth_rsa_challenge_dialog(unsigned int bits, BIGNUM *e, BIGNUM *n)
    successful.  This may exit if there is a serious protocol violation. */
 
 int
-auth_rsa(struct passwd *pw, BIGNUM *client_n, int strict_modes)
+auth_rsa(struct passwd *pw, BIGNUM *client_n)
 {
+  extern ServerOptions options;
   char line[8192];
   int authenticated;
   unsigned int bits;
@@ -164,7 +166,7 @@ auth_rsa(struct passwd *pw, BIGNUM *client_n, int strict_modes)
       return 0;
     }
 
-  if (strict_modes) {
+  if (options.strict_modes) {
     int fail=0;
     char buf[1024];
     /* Check open file in order to avoid open/stat races */

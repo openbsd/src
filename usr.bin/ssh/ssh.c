@@ -18,7 +18,7 @@ Modified to work with SSL by Niels Provos <provos@citi.umich.edu> in Canada.
 */
 
 #include "includes.h"
-RCSID("$Id: ssh.c,v 1.27 1999/11/10 23:36:44 markus Exp $");
+RCSID("$Id: ssh.c,v 1.28 1999/11/11 23:36:53 markus Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -590,7 +590,7 @@ main(int ac, char **av)
 
   /* Log into the remote system.  This never returns if the login fails. */
   ssh_login(host_private_key_loaded, host_private_key, 
-	    host, &hostaddr, &options, original_real_uid);
+	    host, &hostaddr, original_real_uid);
 
   /* We no longer need the host private key.  Clear it now. */
   if (host_private_key_loaded)

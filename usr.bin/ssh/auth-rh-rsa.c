@@ -15,7 +15,7 @@ authentication.
 */
 
 #include "includes.h"
-RCSID("$Id: auth-rh-rsa.c,v 1.4 1999/11/11 22:58:38 markus Exp $");
+RCSID("$Id: auth-rh-rsa.c,v 1.5 1999/11/11 23:36:52 markus Exp $");
 
 #include "packet.h"
 #include "ssh.h"
@@ -38,7 +38,7 @@ int auth_rhosts_rsa(struct passwd *pw, const char *client_user,
   debug("Trying rhosts with RSA host authentication for %.100s", client_user);
 
   /* Check if we would accept it using rhosts authentication. */
-  if (!auth_rhosts(pw, client_user, options.ignore_rhosts, options.strict_modes))
+  if (!auth_rhosts(pw, client_user))
     return 0;
 
   canonical_hostname = get_canonical_hostname();

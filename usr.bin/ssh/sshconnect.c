@@ -15,7 +15,7 @@ login (authentication) dialog.
 */
 
 #include "includes.h"
-RCSID("$Id: sshconnect.c,v 1.26 1999/11/07 22:38:39 markus Exp $");
+RCSID("$Id: sshconnect.c,v 1.27 1999/11/11 23:36:53 markus Exp $");
 
 #include <ssl/bn.h>
 #include "xmalloc.h"
@@ -27,6 +27,7 @@ RCSID("$Id: sshconnect.c,v 1.26 1999/11/07 22:38:39 markus Exp $");
 #include "mpaux.h"
 #include "uidswap.h"
 #include "compat.h"
+#include "readconf.h"
 
 #include <ssl/md5.h>
 
@@ -478,9 +479,9 @@ respond_to_rsa_challenge(BIGNUM *challenge, RSA *prv)
    the user using it. */
 
 int
-try_rsa_authentication(struct passwd *pw, const char *authfile,
-		       int may_ask_passphrase)
+try_rsa_authentication(struct passwd *pw, const char *authfile)
 {
+  extern Options options;
   BIGNUM *challenge;
   RSA *private_key;
   RSA *public_key;
@@ -542,7 +543,7 @@ try_rsa_authentication(struct passwd *pw, const char *authfile,
 	 return. */
       snprintf(buf, sizeof buf,
 	"Enter passphrase for RSA key '%.100s': ", comment);
-      if (may_ask_passphrase)
+      if (!options.batch_mode)
 	passphrase = read_passphrase(buf, 0);
       else
 	{
@@ -1006,8 +1007,9 @@ void ssh_login(int host_key_valid,
 	       RSA *own_host_key,
 	       const char *orighost, 
 	       struct sockaddr_in *hostaddr,
-	       Options *options, uid_t original_real_uid)
+	       uid_t original_real_uid)
 {
+  extern Options options;
   int i, type;
   char *password;
   struct passwd *pw;
@@ -1027,7 +1029,7 @@ void ssh_login(int host_key_valid,
   int payload_len, clen, sum_len = 0;
   u_int32_t rand = 0;
 
-  if (options->check_host_ip)
+  if (options.check_host_ip)
     ip = xstrdup(inet_ntoa(hostaddr->sin_addr));
 
   /* Convert the user-supplied hostname into all lowercase. */
@@ -1048,7 +1050,7 @@ void ssh_login(int host_key_valid,
   if (!pw)
     fatal("User id %d not found from user database.", original_real_uid);
   local_user = xstrdup(pw->pw_name);
-  server_user = options->user ? options->user : local_user;
+  server_user = options.user ? options.user : local_user;
 
   debug("Waiting for server public key.");
 
@@ -1124,12 +1126,12 @@ void ssh_login(int host_key_valid,
 
   /* Check if the host key is present in the user\'s list of known hosts
      or in the systemwide list. */
-  host_status = check_host_in_hostfile(options->user_hostfile, 
+  host_status = check_host_in_hostfile(options.user_hostfile, 
 				       host, BN_num_bits(host_key->n), 
 				       host_key->e, host_key->n,
 				       file_key->e, file_key->n);
   if (host_status == HOST_NEW)
-    host_status = check_host_in_hostfile(options->system_hostfile, host, 
+    host_status = check_host_in_hostfile(options.system_hostfile, host, 
 					 BN_num_bits(host_key->n),
 					 host_key->e, host_key->n,
 					 file_key->e, file_key->n);
@@ -1146,17 +1148,17 @@ void ssh_login(int host_key_valid,
 
   /* Also perform check for the ip address, skip the check if we are
      localhost or the hostname was an ip address to begin with */
-  if (options->check_host_ip && !local && strcmp(host, ip)) {
+  if (options.check_host_ip && !local && strcmp(host, ip)) {
     RSA *ip_key = RSA_new();
     ip_key->n = BN_new();
     ip_key->e = BN_new();
-    ip_status = check_host_in_hostfile(options->user_hostfile, ip,
+    ip_status = check_host_in_hostfile(options.user_hostfile, ip,
 				       BN_num_bits(host_key->n),
 				       host_key->e, host_key->n,
 				       ip_key->e, ip_key->n);
 
     if (ip_status == HOST_NEW)
-      ip_status = check_host_in_hostfile(options->system_hostfile, ip,
+      ip_status = check_host_in_hostfile(options.system_hostfile, ip,
 					 BN_num_bits(host_key->n),
 					 host_key->e, host_key->n,
 					 ip_key->e, ip_key->n);
@@ -1175,13 +1177,13 @@ void ssh_login(int host_key_valid,
   case HOST_OK:
     /* The host is known and the key matches. */
     debug("Host '%.200s' is known and matches the host key.", host);
-    if (options->check_host_ip) {
+    if (options.check_host_ip) {
       if (ip_status == HOST_NEW) {
-	if (!add_host_to_hostfile(options->user_hostfile, ip,
+	if (!add_host_to_hostfile(options.user_hostfile, ip,
 				  BN_num_bits(host_key->n), 
 				  host_key->e, host_key->n))
 	  log("Failed to add the host ip to the list of known hosts (%.30s).", 
-	      options->user_hostfile);
+	      options.user_hostfile);
 	else
 	  log("Warning: Permanently added host ip '%.30s' to the list of known hosts.", ip);
       } else if (ip_status != HOST_OK)
@@ -1193,12 +1195,12 @@ void ssh_login(int host_key_valid,
     {
       char hostline[1000], *hostp = hostline;
       /* The host is new. */
-      if (options->strict_host_key_checking == 1) {
+      if (options.strict_host_key_checking == 1) {
 	/* User has requested strict host key checking.  We will not
 	   add the host key automatically.  The only alternative left
 	   is to abort. */
 	fatal("No host key is known for %.200s and you have requested strict checking.", host);
-      } else if (options->strict_host_key_checking == 2) { /* The default */
+      } else if (options.strict_host_key_checking == 2) { /* The default */
 	char prompt[1024];
 	snprintf(prompt, sizeof(prompt),
 		 "The authenticity of host '%.200s' can't be established.\n"
@@ -1208,25 +1210,25 @@ void ssh_login(int host_key_valid,
 	  fatal("Aborted by user!\n");
       }
       
-      if (options->check_host_ip && ip_status == HOST_NEW && strcmp(host, ip))
+      if (options.check_host_ip && ip_status == HOST_NEW && strcmp(host, ip))
 	snprintf(hostline, sizeof(hostline), "%s,%s", host, ip);
       else
 	hostp = host;
       
       /* If not in strict mode, add the key automatically to the local
 	 known_hosts file. */
-      if (!add_host_to_hostfile(options->user_hostfile, hostp,
+      if (!add_host_to_hostfile(options.user_hostfile, hostp,
 				BN_num_bits(host_key->n), 
 				host_key->e, host_key->n))
 	log("Failed to add the host to the list of known hosts (%.500s).", 
-	    options->user_hostfile);
+	    options.user_hostfile);
       else
 	log("Warning: Permanently added '%.200s' to the list of known hosts.",
 	    hostp);
       break;
     }
   case HOST_CHANGED:
-    if (options->check_host_ip) {
+    if (options.check_host_ip) {
       if (host_ip_differ) {
 	error("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
 	error("@       WARNING: POSSIBLE DNS SPOOFING DETECTED!          @");
@@ -1248,23 +1250,23 @@ void ssh_login(int host_key_valid,
     error("It is also possible that the host key has just been changed.");
     error("Please contact your system administrator.");
     error("Add correct host key in %.100s to get rid of this message.", 
-	  options->user_hostfile);
+	  options.user_hostfile);
     
     /* If strict host key checking is in use, the user will have to edit
        the key manually and we can only abort. */
-    if (options->strict_host_key_checking)
+    if (options.strict_host_key_checking)
       fatal("Host key for %.200s has changed and you have requested strict checking.", host);
     
     /* If strict host key checking has not been requested, allow the
        connection but without password authentication or
        agent forwarding. */
-    if (options->password_authentication) {
+    if (options.password_authentication) {
       error("Password authentication is disabled to avoid trojan horses.");
-      options->password_authentication = 0;
+      options.password_authentication = 0;
     }
-    if (options->forward_agent) {
+    if (options.forward_agent) {
       error("Agent forwarding is disabled to avoid trojan horses.");
-      options->forward_agent = 0;
+      options.forward_agent = 0;
     }
     /* XXX Should permit the user to change to use the new id.  This could
        be done by converting the host key to an identifying sentence, tell
@@ -1273,7 +1275,7 @@ void ssh_login(int host_key_valid,
     break;
   }
 
-  if (options->check_host_ip)
+  if (options.check_host_ip)
     xfree(ip);
   
   /* Generate a session key. */
@@ -1336,27 +1338,27 @@ void ssh_login(int host_key_valid,
       rsa_public_encrypt(key, key, public_key);
     }
 
-  if (options->cipher == SSH_CIPHER_NOT_SET) {
+  if (options.cipher == SSH_CIPHER_NOT_SET) {
     if (cipher_mask() & supported_ciphers & (1 << ssh_cipher_default))
-      options->cipher = ssh_cipher_default;
+      options.cipher = ssh_cipher_default;
     else {
       debug("Cipher %d not supported, using %.100s instead.",
 	    cipher_name(ssh_cipher_default),
 	    cipher_name(SSH_FALLBACK_CIPHER));
-      options->cipher = SSH_FALLBACK_CIPHER;
+      options.cipher = SSH_FALLBACK_CIPHER;
     }
   }
 
   /* Check that the selected cipher is supported. */
-  if (!(supported_ciphers & (1 << options->cipher)))
+  if (!(supported_ciphers & (1 << options.cipher)))
     fatal("Selected cipher type %.100s not supported by server.", 
-	  cipher_name(options->cipher));
+	  cipher_name(options.cipher));
 
-  debug("Encryption type: %.100s", cipher_name(options->cipher));
+  debug("Encryption type: %.100s", cipher_name(options.cipher));
 
   /* Send the encrypted session key to the server. */
   packet_start(SSH_CMSG_SESSION_KEY);
-  packet_put_char(options->cipher);
+  packet_put_char(options.cipher);
 
   /* Send the check bytes back to the server. */
   for (i = 0; i < 8; i++)
@@ -1382,7 +1384,7 @@ void ssh_login(int host_key_valid,
   
   /* Set the encryption key. */
   packet_set_encryption_key(session_key, SSH_SESSION_KEY_LENGTH, 
-			    options->cipher, 1);
+			    options.cipher, 1);
 
   /* We will no longer need the session key here.  Destroy any extra copies. */
   memset(session_key, 0, sizeof(session_key));
@@ -1412,17 +1414,17 @@ void ssh_login(int host_key_valid,
 #ifdef AFS
   /* Try Kerberos tgt passing if the server supports it. */
   if ((supported_authentications & (1 << SSH_PASS_KERBEROS_TGT)) &&
-      options->kerberos_tgt_passing)
+      options.kerberos_tgt_passing)
     {
-      if (options->cipher == SSH_CIPHER_NONE)
+      if (options.cipher == SSH_CIPHER_NONE)
 	log("WARNING: Encryption is disabled! Ticket will be transmitted in the clear!");
       (void)send_kerberos_tgt();
     }
 
   /* Try AFS token passing if the server supports it. */
   if ((supported_authentications & (1 << SSH_PASS_AFS_TOKEN)) &&
-      options->afs_token_passing && k_hasafs())  {
-    if (options->cipher == SSH_CIPHER_NONE)
+      options.afs_token_passing && k_hasafs())  {
+    if (options.cipher == SSH_CIPHER_NONE)
       log("WARNING: Encryption is disabled! Token will be transmitted in the clear!");
     send_afs_tokens();
   }
@@ -1430,7 +1432,7 @@ void ssh_login(int host_key_valid,
   
 #ifdef KRB4
   if ((supported_authentications & (1 << SSH_AUTH_KERBEROS)) &&
-      options->kerberos_authentication)
+      options.kerberos_authentication)
     {
       debug("Trying Kerberos authentication.");
       if (try_kerberos_authentication()) {
@@ -1447,7 +1449,7 @@ void ssh_login(int host_key_valid,
   /* Use rhosts authentication if running in privileged socket and we do not
      wish to remain anonymous. */
   if ((supported_authentications & (1 << SSH_AUTH_RHOSTS)) && 
-      options->rhosts_authentication)
+      options.rhosts_authentication)
     {
       debug("Trying rhosts authentication.");
       packet_start(SSH_CMSG_AUTH_RHOSTS);
@@ -1467,7 +1469,7 @@ void ssh_login(int host_key_valid,
   /* Try .rhosts or /etc/hosts.equiv authentication with RSA host 
      authentication. */
   if ((supported_authentications & (1 << SSH_AUTH_RHOSTS_RSA)) &&
-      options->rhosts_rsa_authentication && host_key_valid)
+      options.rhosts_rsa_authentication && host_key_valid)
     {
       if (try_rhosts_rsa_authentication(local_user, own_host_key))
 	return; /* Successful authentication. */
@@ -1475,7 +1477,7 @@ void ssh_login(int host_key_valid,
 
   /* Try RSA authentication if the server supports it. */
   if ((supported_authentications & (1 << SSH_AUTH_RSA)) &&
-      options->rsa_authentication)
+      options.rsa_authentication)
     {
       /* Try RSA authentication using the authentication agent.  The agent
          is tried first because no passphrase is needed for it, whereas
@@ -1484,23 +1486,22 @@ void ssh_login(int host_key_valid,
 	return; /* Successful connection. */
 
       /* Try RSA authentication for each identity. */
-      for (i = 0; i < options->num_identity_files; i++)
-	if (try_rsa_authentication(pw, options->identity_files[i],
-				   !options->batch_mode))
+      for (i = 0; i < options.num_identity_files; i++)
+	if (try_rsa_authentication(pw, options.identity_files[i]))
 	  return; /* Successful connection. */
     }
   
   /* Try password authentication if the server supports it. */
   if ((supported_authentications & (1 << SSH_AUTH_PASSWORD)) &&
-      options->password_authentication && !options->batch_mode)
+      options.password_authentication && !options.batch_mode)
     {
       char prompt[80];
       snprintf(prompt, sizeof(prompt), "%.30s@%.30s's password: ",
 	server_user, host);
       debug("Doing password authentication.");
-      if (options->cipher == SSH_CIPHER_NONE)
+      if (options.cipher == SSH_CIPHER_NONE)
 	log("WARNING: Encryption is disabled! Password will be transmitted in clear text.");
-      for (i = 0; i < options->number_of_password_prompts; i++) {
+      for (i = 0; i < options.number_of_password_prompts; i++) {
         if (i != 0)
 	  error("Permission denied, please try again.");
 	password = read_passphrase(prompt, 0);
