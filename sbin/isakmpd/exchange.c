@@ -1,4 +1,4 @@
-/*	$OpenBSD: exchange.c,v 1.70 2002/09/11 09:50:43 ho Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.71 2002/11/06 23:57:36 ho Exp $	*/
 /*	$EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	*/
 
 /*
@@ -862,6 +862,11 @@ exchange_establish_p1 (struct transport *t, u_int8_t type, u_int32_t doi,
 #endif
 
   msg = message_alloc (t, 0, ISAKMP_HDR_SZ);
+  if (!msg)
+    {
+      log_print ("exchange_establish_p1: message_alloc () failed");
+      exchange_free (exchange);
+    }
   msg->exchange = exchange;
 
   /* Do not create SA for an information or transaction exchange.  */
@@ -878,6 +883,7 @@ exchange_establish_p1 (struct transport *t, u_int8_t type, u_int32_t doi,
       if (!msg->isakmp_sa)
 	{
 	  /* XXX Do something more here?  */
+	  message_free (msg);
 	  exchange_free (exchange);
 	  return;
 	}
