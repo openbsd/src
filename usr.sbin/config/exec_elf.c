@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.2 2000/09/30 16:06:34 aaron Exp $ */
+/*	$OpenBSD: exec_elf.c,v 1.3 2001/01/25 05:42:12 art Exp $ */
 
 /*
  * Copyright (c) 1999 Mats O Jansson.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: exec_elf.c,v 1.2 2000/09/30 16:06:34 aaron Exp $";
+static char rcsid[] = "$OpenBSD: exec_elf.c,v 1.3 2001/01/25 05:42:12 art Exp $";
 #endif
 
 #include <err.h>
@@ -47,9 +47,9 @@ static char rcsid[] = "$OpenBSD: exec_elf.c,v 1.2 2000/09/30 16:06:34 aaron Exp 
 #include "ukc.h"
 
 caddr_t		ptr,rest,pre;
-Elf32_Ehdr	elf_ex;
-Elf32_Phdr	*elf_phdr;
-Elf32_Shdr	*elf_shdr;
+Elf_Ehdr	elf_ex;
+Elf_Phdr	*elf_phdr;
+Elf_Shdr	*elf_shdr;
 char		*elf_total;
 char		*elf_shstrtab;
 off_t		elf_size;
@@ -59,7 +59,7 @@ elf_adjust(x)
 	caddr_t x;
 {
 	int i;
-	Elf32_Shdr *s;
+	Elf_Shdr *s;
 	unsigned long y = 0;
 	
 	s = elf_shdr;
@@ -84,7 +84,7 @@ elf_readjust(x)
 	caddr_t x;
 {
 	int i;
-	Elf32_Shdr *s;
+	Elf_Shdr *s;
 	unsigned long y = 0;
 
 	s = elf_shdr;
@@ -126,8 +126,8 @@ elf_loadkernel(file)
 	char *file;
 {
 	int fd;
-	Elf32_Phdr *p;
-	Elf32_Shdr *s;
+	Elf_Phdr *p;
+	Elf_Shdr *s;
 
 	if ((fd = open(file, O_RDONLY | O_EXLOCK, 0)) < 0)
 		err(1, "%s", file);
@@ -145,8 +145,8 @@ elf_loadkernel(file)
 	if (read(fd, elf_total, elf_size) != elf_size)
 		errx(1, "can't read elf kernel");
 
-	elf_phdr = (Elf32_Phdr *)&elf_total[elf_ex.e_phoff];
-	elf_shdr = (Elf32_Shdr *)&elf_total[elf_ex.e_shoff];
+	elf_phdr = (Elf_Phdr *)&elf_total[elf_ex.e_phoff];
+	elf_shdr = (Elf_Shdr *)&elf_total[elf_ex.e_shoff];
 
 	p = elf_phdr;
 	s = elf_shdr;
