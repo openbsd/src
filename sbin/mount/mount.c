@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.c,v 1.8 1996/12/04 09:45:39 deraadt Exp $	*/
+/*	$OpenBSD: mount.c,v 1.9 1996/12/04 21:29:29 downsj Exp $	*/
 /*	$NetBSD: mount.c,v 1.24 1995/11/18 03:34:29 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount.c	8.19 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$OpenBSD: mount.c,v 1.8 1996/12/04 09:45:39 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mount.c,v 1.9 1996/12/04 21:29:29 downsj Exp $";
 #endif
 #endif /* not lint */
 
@@ -234,7 +234,7 @@ main(argc, argv)
 				vfstype = "nfs";
 			else {
 				char *labelfs = readlabelfs(argv[0]);
-				if (labelfs != "")
+				if (labelfs != NULL)
 					vfstype = labelfs;
 			}
 		}
