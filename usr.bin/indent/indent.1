@@ -1,6 +1,7 @@
-.\"	$OpenBSD: indent.1,v 1.9 2000/03/23 21:39:53 aaron Exp $
+.\"	$OpenBSD: indent.1,v 1.10 2001/01/08 07:14:42 pjanzen Exp $
 .\"
-.\" Copyright (c) 1980, 1990 The Regents of the University of California.
+.\" Copyright (c) 1980, 1990, 1993
+.\"	The Regents of the University of California.
 .\" Copyright (c) 1985 Sun Microsystems, Inc.
 .\" Copyright (c) 1976 Board of Trustees of the University of Illinois.
 .\" All rights reserved.
@@ -33,9 +34,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	from: @(#)indent.1	6.11 (Berkeley) 7/24/91
+.\"	from: @(#)indent.1	8.1 (Berkeley) 7/1/93
 .\"
-.Dd July 24, 1991
+.Dd July 1, 1993
 .Dt INDENT 1
 .Os
 .Sh NAME
@@ -110,6 +111,9 @@ is named
 .Pa /blah/blah/file ,
 the backup file is named
 .Pa file.BAK .
+If
+.Pa file.BAK
+exists, it is overwritten.
 .Pp
 If
 .Ar output-file
@@ -137,7 +141,8 @@ Default:
 .It Fl bbb , nbbb
 If
 .Fl bbb
-is specified, a blank line is forced before every block comment.Default:
+is specified, a blank line is forced before every block comment.
+Default:
 .Fl nbbb .
 .It Fl \&bc , nbc
 If
@@ -146,7 +151,7 @@ is specified, then a newline is forced after each comma in a declaration.
 .Fl nbc
 turns off this option.
 The default is
-.Fl \&bc .
+.Fl \&nbc .
 .It Fl \&br , \&bl
 Specifying
 .Fl \&bl
@@ -221,7 +226,7 @@ Causes case labels to be indented
 tab stops to the right of the containing
 .Ic switch
 statement.
-.Fl cli0 .5
+.Fl cli0.5
 causes case labels to be indented half a tab stop.
 The default is
 .Fl cli0 .
@@ -292,8 +297,8 @@ For example, here is how a piece of continued code looks with
 in effect:
 .ne 2
 .Bd -literal -offset indent
-.Li p1 = first_procedure(second_procedure(p2, p3),
-.Li \ \ third_procedure(p4,p5));
+p1 = first_procedure(second_procedure(p2, p3),
+\ \ third_procedure(p4,p5));
 .Ed
 .Pp
 .ne 5
@@ -301,17 +306,17 @@ With
 .Fl lp
 in effect (the default) the code looks somewhat clearer:
 .Bd -literal -offset indent
-.Li p1\ =\ first_procedure(second_procedure(p2,\ p3),
-.Li \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ third_procedure(p4,p5));
+p1\ =\ first_procedure(second_procedure(p2,\ p3),
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ third_procedure(p4,p5));
 .Ed
 .Pp
 .ne 5
 Inserting two more newlines we get:
 .Bd -literal -offset indent
-.Li p1\ =\ first_procedure(second_procedure(p2,
-.Li \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ p3),
-.Li \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ third_procedure(p4,
-.Li \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ p5));
+p1\ =\ first_procedure(second_procedure(p2,
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ p3),
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ third_procedure(p4,
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ p5));
 .Ed
 .It Fl npro
 Causes the profile files,

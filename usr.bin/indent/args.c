@@ -1,9 +1,10 @@
-/*	$OpenBSD: args.c,v 1.5 2000/08/02 04:10:47 millert Exp $	*/
+/*	$OpenBSD: args.c,v 1.6 2001/01/08 07:14:42 pjanzen Exp $	*/
 
 /*
- * Copyright (c) 1985 Sun Microsystems, Inc.
- * Copyright (c) 1980 The Regents of the University of California.
+ * Copyright (c) 1980, 1993
+ *	The Regents of the University of California.
  * Copyright (c) 1976 Board of Trustees of the University of Illinois.
+ * Copyright (c) 1985 Sun Microsystems, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -36,8 +37,8 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)args.c	5.10 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: args.c,v 1.5 2000/08/02 04:10:47 millert Exp $";
+/*static char sccsid[] = "@(#)args.c	8.1 (Berkeley) 6/6/93";*/
+static char rcsid[] = "$OpenBSD: args.c,v 1.6 2001/01/08 07:14:42 pjanzen Exp $";
 #endif /* not lint */
 
 /*
@@ -57,7 +58,7 @@ static char rcsid[] = "$OpenBSD: args.c,v 1.5 2000/08/02 04:10:47 millert Exp $"
 #define	PRO_SPECIAL	1	/* special case */
 #define	PRO_BOOL	2	/* boolean */
 #define	PRO_INT		3	/* integer */
-#define PRO_FONT	4	/* troff font */
+#define	PRO_FONT	4	/* troff font */
 
 /* profile specials for booleans */
 #define	ON		1	/* turn it on */
@@ -156,8 +157,8 @@ struct pro {
 	{ 0, 0, 0, 0, 0 }
 };
 
-void scan_profile();
-void set_option();
+void scan_profile __P((FILE *));
+void set_option __P((char *));
 
 /*
  * set_profile reads $HOME/.indent.pro and ./.indent.pro and handles arguments
@@ -166,14 +167,14 @@ void set_option();
 void
 set_profile()
 {
-    register FILE *f;
+    FILE *f;
     char        fname[BUFSIZ];
     char	*home;
     static char prof[] = ".indent.pro";
 
     home = getenv("HOME");
     if (home != NULL && *home != '\0') {
-	if (strlen(home) + sizeof(prof) > sizeof(fname)) {
+	if (strlen(home) + sizeof(prof) + 1 > sizeof(fname)) {
 	    warnx("%s/%s: %s", home, prof, strerror(ENAMETOOLONG));
 	    return;
 	}
@@ -192,16 +193,19 @@ set_profile()
 
 void
 scan_profile(f)
-    register FILE *f;
+    FILE *f;
 {
-    register int i;
-    register char *p;
+    int i;
+    char *p;
     char        buf[BUFSIZ];
 
     while (1) {
-	for (p = buf; (i = getc(f)) != EOF && (*p = i) > ' '; ++p);
+	for (p = buf;
+	    (i = getc(f)) != EOF && (*p = i) > ' ' && p + 1 - buf < BUFSIZ;
+	    ++p)
+		;
 	if (p != buf) {
-	    *p++ = 0;
+	    *p = 0;
 	    if (verbose)
 		printf("profile: %s\n", buf);
 	    set_option(buf);
@@ -215,8 +219,8 @@ char       *param_start;
 
 int
 eqin(s1, s2)
-    register char *s1;
-    register char *s2;
+    char *s1;
+    char *s2;
 {
     while (*s1) {
 	if (*s1++ != *s2++)
@@ -232,7 +236,7 @@ eqin(s1, s2)
 void
 set_defaults()
 {
-    register struct pro *p;
+    struct pro *p;
 
     /*
      * Because ps.case_indent is a float, we can't initialize it from the
@@ -246,17 +250,15 @@ set_defaults()
 
 void
 set_option(arg)
-    register char *arg;
+    char *arg;
 {
     register struct pro *p;
-    extern double atof();
 
     arg++;			/* ignore leading "-" */
     for (p = pro; p->p_name; p++)
 	if (*p->p_name == *arg && eqin(p->p_name, arg))
 	    goto found;
-    fprintf(stderr, "indent: %s: unknown parameter \"%s\"\n", option_source, arg - 1);
-    exit(1);
+    errx(1, "%s: unknown parameter \"%s\"", option_source, arg - 1);
 found:
     switch (p->p_type) {
 
@@ -283,16 +285,16 @@ found:
 	    if (*param_start == 0)
 		goto need_param;
 	    {
-		register char *str = (char *) malloc(strlen(param_start) + 1);
-		strcpy(str, param_start);
+		char *str;
+		if ((str = strdup(param_start)) == NULL)
+			errx(1, "out of memory");
 		addkey(str, 4);
 	    }
 	    break;
 
 	default:
-	    fprintf(stderr, "\
-indent: set_option: internal error: p_special %d\n", p->p_special);
-	    exit(1);
+	    errx(1, "set_option: internal error: p_special %d",
+	        p->p_special);
 	}
 	break;
 
@@ -306,9 +308,8 @@ indent: set_option: internal error: p_special %d\n", p->p_special);
     case PRO_INT:
 	if (!isdigit(*param_start)) {
     need_param:
-	    fprintf(stderr, "indent: %s: ``%s'' requires a parameter\n",
+	    errx(1, "%s: ``%s'' requires a parameter",
 		    option_source, arg - 1);
-	    exit(1);
 	}
 	*p->p_obj = atoi(param_start);
 	break;
@@ -318,8 +319,7 @@ indent: set_option: internal error: p_special %d\n", p->p_special);
 	break;
 
     default:
-	fprintf(stderr, "indent: set_option: internal error: p_type %d\n",
+	errx(1, "set_option: internal error: p_type %d",
 		p->p_type);
-	exit(1);
     }
 }

@@ -1,9 +1,10 @@
-/*	$OpenBSD: indent.c,v 1.8 2000/07/25 17:08:12 espie Exp $	*/
+/*	$OpenBSD: indent.c,v 1.9 2001/01/08 07:14:42 pjanzen Exp $	*/
 
 /*
- * Copyright (c) 1985 Sun Microsystems, Inc.
- * Copyright (c) 1980 The Regents of the University of California.
+ * Copyright (c) 1980, 1993
+ *	The Regents of the University of California.
  * Copyright (c) 1976 Board of Trustees of the University of Illinois.
+ * Copyright (c) 1985 Sun Microsystems, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -38,14 +39,15 @@
 #ifndef lint
 char copyright[] =
 "@(#) Copyright (c) 1985 Sun Microsystems, Inc.\n\
- @(#) Copyright (c) 1980 The Regents of the University of California.\n\
+ @(#) Copyright (c) 1980, 1993\n\
+	 The Regents of the University of California.\n\
  @(#) Copyright (c) 1976 Board of Trustees of the University of Illinois.\n\
  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)indent.c	5.16 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: indent.c,v 1.8 2000/07/25 17:08:12 espie Exp $";
+/*static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";*/
+static char rcsid[] = "$OpenBSD: indent.c,v 1.9 2001/01/08 07:14:42 pjanzen Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -101,6 +103,7 @@ main(argc, argv)
     \*-----------------------------------------------*/
 
 
+    hd_type = 0;
     ps.p_stack[0] = stmt;	/* this is the parser's stack */
     ps.last_nl = true;		/* this is true if the last thing scanned was
 				 * a newline */
@@ -109,6 +112,9 @@ main(argc, argv)
     labbuf = (char *) malloc(bufsize);
     codebuf = (char *) malloc(bufsize);
     tokenbuf = (char *) malloc(bufsize);
+    if (combuf == NULL || labbuf == NULL || codebuf == NULL ||
+        tokenbuf == NULL)
+	    errx(1, "out of memory");
     l_com = combuf + bufsize - 5;
     l_lab = labbuf + bufsize - 5;
     l_code = codebuf + bufsize - 5;
@@ -123,6 +129,8 @@ main(argc, argv)
     s_token = e_token = tokenbuf + 1;
 
     in_buffer = (char *) malloc(10);
+    if (in_buffer == NULL)
+	    errx(1, "out of memory");
     in_buffer_limit = in_buffer + 8;
     buf_ptr = buf_end = in_buffer;
     line_no = 1;
@@ -212,13 +220,14 @@ main(argc, argv)
 	fprintf(stderr, "usage: indent file [ outfile ] [ options ]\n");
 	exit(1);
     }
-    if (output == NULL)
+    if (output == NULL) {
 	if (troff)
 	    output = stdout;
 	else {
 	    out_name = in_name;
 	    bakcopy();
 	}
+    }
     if (ps.com_ind <= 1)
 	ps.com_ind = 2;		/* dont put normal comments before column 2 */
     if (troff) {
@@ -251,8 +260,8 @@ main(argc, argv)
 
     parse(semicolon);
     {
-	register char *p = buf_ptr;
-	register    col = 1;
+	char *p = buf_ptr;
+	int   col = 1;
 
 	while (1) {
 	    if (*p == ' ')
@@ -774,10 +783,9 @@ check_type:
 		/* ?		dec_ind = 0; */
 	    }
 	    else {
-		ps.decl_on_line = false;	/* we cant be in the middle of
-						 * a declaration, so dont do
-						 * special indentation of
-						 * comments */
+		ps.decl_on_line = false;
+		/* we can't be in the middle of a declaration, so don't do
+		 * special indentation of comments */
 		if (blanklines_after_declarations_at_proctop
 			&& ps.in_parameter_declaration)
 		    postfix_blankline_requested = 1;
@@ -908,7 +916,7 @@ check_type:
 		    *e_code++ = ' ';
 		ps.want_blank = false;
 		if (is_procname == 0 || !procnames_start_line) {
-		    if (!ps.block_init)
+		    if (!ps.block_init) {
 			if (troff && !ps.dumped_decl_indent) {
 			    sprintf(e_code, "\n.De %dp+\200p\n", dec_ind * 7);
 			    ps.dumped_decl_indent = 1;
@@ -919,6 +927,7 @@ check_type:
 				CHECK_SIZE_CODE;
 				*e_code++ = ' ';
 			    }
+		    }
 		}
 		else {
 		    if (dec_ind && s_code != e_code)
@@ -1071,7 +1080,7 @@ check_type:
 
 	    if (strncmp(s_lab, "#if", 3) == 0) {
 		if (blanklines_around_conditional_compilation) {
-		    register    c;
+		    int    c;
 		    prefix_blankline_requested++;
 		    while ((c = getc(input)) == '\n');
 		    ungetc(c, input);
@@ -1142,7 +1151,7 @@ bakcopy()
     int         n,
                 bakchn;
     char        buff[8 * 1024];
-    register char *p;
+    char       *p;
 
     /* construct file name .Bfile */
     for (p = in_name; *p; p++);	/* skip to end of string */
@@ -1150,7 +1159,8 @@ bakcopy()
 	p--;
     if (*p == '/')
 	p++;
-    sprintf(bakfile, "%s.BAK", p);
+    if (snprintf(bakfile, MAXPATHLEN, "%s.BAK", p) >= MAXPATHLEN)
+	    errx(1, "%s.BAK: %s", p, strerror(ENAMETOOLONG));
 
     /* copy in_name to backup file */
     bakchn = creat(bakfile, 0600);

@@ -1,8 +1,8 @@
-/*	$OpenBSD: io.c,v 1.3 1997/07/25 22:00:46 mickey Exp $	*/
+/*	$OpenBSD: io.c,v 1.4 2001/01/08 07:14:42 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1985 Sun Microsystems, Inc.
- * Copyright (c) 1980 The Regents of the University of California.
+ * Copyright (c) 1980, 1993 The Regents of the University of California.
  * Copyright (c) 1976 Board of Trustees of the University of Illinois.
  * All rights reserved.
  *
@@ -36,8 +36,8 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)io.c	5.15 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: io.c,v 1.3 1997/07/25 22:00:46 mickey Exp $";
+/*static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";*/
+static char rcsid[] = "$OpenBSD: io.c,v 1.4 2001/01/08 07:14:42 pjanzen Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -49,7 +49,7 @@ static char rcsid[] = "$OpenBSD: io.c,v 1.3 1997/07/25 22:00:46 mickey Exp $";
 
 
 int         comment_open;
-static      paren_target;
+static int  paren_target;
 
 void
 dump_line()
@@ -58,9 +58,8 @@ dump_line()
 				 * prints the label section, followed by the
 				 * code section with the appropriate nesting
 				 * level, followed by any comments */
-    register int cur_col,
-                target_col;
-    static      not_first_line;
+    int         cur_col, target_col;
+    static int  not_first_line;
 
     if (ps.procname[0]) {
 	if (troff) {
@@ -84,15 +83,15 @@ dump_line()
     else if (!inhibit_formatting) {
 	suppress_blanklines = 0;
 	ps.bl_line = false;
-	if (prefix_blankline_requested && not_first_line)
+	if (prefix_blankline_requested && not_first_line) {
 	    if (swallow_optional_blanklines) {
 		if (n_real_blanklines == 1)
 		    n_real_blanklines = 0;
-	    }
-	    else {
+	    } else {
 		if (n_real_blanklines == 0)
 		    n_real_blanklines = 1;
 	    }
+	}
 	while (--n_real_blanklines >= 0)
 	    putc('\n', output);
 	n_real_blanklines = 0;
@@ -115,17 +114,19 @@ dump_line()
 	    cur_col = pad_output(1, compute_label_target());
 	    if (s_lab[0] == '#' && (strncmp(s_lab, "#else", 5) == 0
 				    || strncmp(s_lab, "#endif", 6) == 0)) {
-		register char *s = s_lab;
-		if (e_lab[-1] == '\n') e_lab--;
-		do putc(*s++, output);
+		char *s = s_lab;
+		if (e_lab[-1] == '\n')
+			e_lab--;
+		do
+			putc(*s++, output);
 		while (s < e_lab && 'a' <= *s && *s<='z');
 		while ((*s == ' ' || *s == '\t') && s < e_lab)
 		    s++;
 		if (s < e_lab)
 		    fprintf(output, s[0]=='/' && s[1]=='*' ? "\t%.*s" : "\t/* %.*s */",
-			    e_lab - s, s);
+			    (int)(e_lab - s), s);
 	    }
-	    else fprintf(output, "%.*s", e_lab - s_lab, s_lab);
+	    else fprintf(output, "%.*s", (int)(e_lab - s_lab), s_lab);
 	    cur_col = count_spaces(cur_col, s_lab);
 	}
 	else
@@ -134,7 +135,7 @@ dump_line()
 	ps.pcase = false;
 
 	if (s_code != e_code) {	/* print code section, if any */
-	    register char *p;
+	    char *p;
 
 	    if (comment_open) {
 		comment_open = 0;
@@ -142,7 +143,7 @@ dump_line()
 	    }
 	    target_col = compute_code_target();
 	    {
-		register    i;
+		int  i;
 
 		for (i = 0; i < ps.p_l_follow; i++)
 		    if (ps.paren_indents[i] >= 0)
@@ -156,10 +157,10 @@ dump_line()
 		    putc(*p, output);
 	    cur_col = count_spaces(cur_col, s_code);
 	}
-	if (s_com != e_com)
+	if (s_com != e_com) {
 	    if (troff) {
-		int         all_here = 0;
-		register char *p;
+		int   all_here = 0;
+		char *p;
 
 		if (e_com[-1] == '/' && e_com[-2] == '*')
 		    e_com -= 2, all_here++;
@@ -185,7 +186,7 @@ dump_line()
 		    if ('a' <= *p && *p <= 'z')
 			*p = *p + 'A' - 'a';
 		    if (e_com - p < 50 && all_here == 2) {
-			register char *follow = p;
+			char *follow = p;
 			fprintf(output, "\n.nr C! \\w\1");
 			while (follow < e_com) {
 			    switch (*follow) {
@@ -213,10 +214,9 @@ dump_line()
 			putc(BACKSLASH, output);
 		    putc(*p++, output);
 		}
-	    }
-	    else {		/* print comment, if any */
-		register    target = ps.com_col;
-		register char *com_st = s_com;
+	    } else {		/* print comment, if any */
+		int   target = ps.com_col;
+		char *com_st = s_com;
 
 		target += ps.comment_delta;
 		while (*com_st == '\t')
@@ -238,17 +238,19 @@ dump_line()
 		    e_com--;
 		cur_col = pad_output(cur_col, target);
 		if (!ps.box_com) {
-		    if (star_comment_cont && (com_st[1] != '*' || e_com <= com_st + 1))
+		    if (star_comment_cont && (com_st[1] != '*' || e_com <= com_st + 1)) {
 			if (com_st[1] == ' ' && com_st[0] == ' ' && e_com > com_st + 1)
 			    com_st[1] = '*';
 			else
 			    fwrite(" * ", com_st[0] == '\t' ? 2 : com_st[0] == '*' ? 1 : 3, 1, output);
+		    }
 		}
 		fwrite(com_st, e_com - com_st, 1, output);
 		ps.comment_delta = ps.n_comment_delta;
 		cur_col = count_spaces(cur_col, com_st);
 		++ps.com_lines;	/* count lines with comments */
 	    }
+	}
 	if (ps.use_ff)
 	    putc('\014', output);
 	else
@@ -286,14 +288,15 @@ inhibit_newline:
 int
 compute_code_target()
 {
-    register    target_col = ps.ind_size * ps.ind_level + 1;
+    int target_col;
 
+    target_col = ps.ind_size * ps.ind_level + 1;
     if (ps.paren_level)
 	if (!lineup_to_parens)
 	    target_col += continuation_indent * ps.paren_level;
 	else {
-	    register    w;
-	    register    t = paren_target;
+	    int    w;
+	    int    t = paren_target;
 
 	    if ((w = count_spaces(t, s_code) - max_col) > 0
 		    && count_spaces(target_col, s_code) <= max_col) {
@@ -337,9 +340,9 @@ compute_label_target()
 void
 fill_buffer()
 {				/* this routine reads stuff from the input */
-    register char *p;
-    register int i;
-    register FILE *f = input;
+    char *p;
+    int i;
+    FILE *f = input;
 
     if (bp_save != 0) {		/* there is a partly filled input buffer left */
 	buf_ptr = bp_save;	/* dont read anything, just switch buffers */
@@ -351,10 +354,10 @@ fill_buffer()
     }
     for (p = in_buffer;;) {
 	if (p >= in_buffer_limit) {
-	    register size = (in_buffer_limit - in_buffer) * 2 + 10;
-	    register offset = p - in_buffer;
+	    int size = (in_buffer_limit - in_buffer) * 2 + 10;
+	    int offset = p - in_buffer;
 	    in_buffer = (char *) realloc(in_buffer, size);
-	    if (in_buffer == 0)
+	    if (in_buffer == NULL)
 		errx(1, "input line too long");
 	    p = in_buffer + offset;
 	    in_buffer_limit = in_buffer + size - 2;
@@ -391,11 +394,12 @@ fill_buffer()
 			p++;
 		    if (*p == '*')
 			com = 1;
-		    else if (*p == 'O')
+		    else if (*p == 'O') {
 			if (*++p == 'N')
 			    p++, com = 1;
 			else if (*p == 'F' && *++p == 'F')
 			    p++, com = 2;
+		    }
 		    while (*p == ' ' || *p == '\t')
 			p++;
 		    if (p[0] == '*' && p[1] == '/' && p[2] == '\n' && com) {
@@ -456,8 +460,8 @@ pad_output(current, target)	/* writes tabs and blanks (if necessary) to
     int         current;	/* the current column value */
     int         target;		/* position we want it at */
 {
-    register int curr;		/* internal column pointer */
-    register int tcur;
+    int curr;		/* internal column pointer */
+    int tcur;
 
     if (troff)
 	fprintf(output, "\\h'|%dp'", (target - 1) * 7);
@@ -504,8 +508,8 @@ count_spaces(current, buffer)
     int         current;
     char       *buffer;
 {
-    register char *buf;		/* used to look thru buffer */
-    register int cur;		/* current character counter */
+    char *buf;		/* used to look thru buffer */
+    int cur;		/* current character counter */
 
     cur = current;
 
@@ -533,29 +537,51 @@ count_spaces(current, buffer)
     return (cur);
 }
 
+#if __STDC__
+#include <stdarg.h>
+#else
+#include <varargs.h>
+#endif
+
 int	found_err;
+
 /* VARARGS2 */
 void
-diag(level, msg, a, b)
+#if __STDC__
+diag(int level, char *msg, ...)
+#else
+diag(level, msg, va_alist)
+	int   level;
 	char *msg;
+	va_dcl
+#endif
 {
+	va_list ap;
+#if __STDC__
+	va_start(ap, msg);
+#else
+	va_start(ap);
+#endif
+
     if (level)
 	found_err = 1;
     if (output == stdout) {
 	fprintf(stdout, "/**INDENT** %s@%d: ", level == 0 ? "Warning" : "Error", line_no);
-	fprintf(stdout, msg, a, b);
+	vfprintf(stdout, msg, ap);
 	fprintf(stdout, " */\n");
     }
     else {
 	fprintf(stderr, "%s@%d: ", level == 0 ? "Warning" : "Error", line_no);
-	fprintf(stderr, msg, a, b);
+	vfprintf(stderr, msg, ap);
 	fprintf(stderr, "\n");
     }
+    va_end(ap);
 }
 
 void
 writefdef(f, nm)
-    register struct fstate *f;
+    struct fstate *f;
+    int           nm;
 {
     fprintf(output, ".ds f%c %s\n.nr s%c %d\n",
 	    nm, f->font, nm, f->size);
@@ -563,8 +589,7 @@ writefdef(f, nm)
 
 char       *
 chfont(of, nf, s)
-    register struct fstate *of,
-               *nf;
+    struct fstate *of, *nf;
     char       *s;
 {
     if (of->font[0] != nf->font[0]
@@ -596,10 +621,10 @@ chfont(of, nf, s)
 
 void
 parsefont(f, s0)
-    register struct fstate *f;
+    struct fstate *f;
     char       *s0;
 {
-    register char *s = s0;
+    char *s = s0;
     int         sizedelta = 0;
     bzero(f, sizeof *f);
     while (*s) {

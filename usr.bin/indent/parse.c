@@ -1,9 +1,10 @@
-/*	$OpenBSD: parse.c,v 1.3 1997/07/25 22:00:47 mickey Exp $	*/
+/*	$OpenBSD: parse.c,v 1.4 2001/01/08 07:14:42 pjanzen Exp $	*/
 
 /*
- * Copyright (c) 1985 Sun Microsystems, Inc.
- * Copyright (c) 1980 The Regents of the University of California.
+ * Copyright (c) 1980, 1993
+ *	The Regents of the University of California.
  * Copyright (c) 1976 Board of Trustees of the University of Illinois.
+ * Copyright (c) 1985 Sun Microsystems, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -36,8 +37,8 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)parse.c	5.12 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: parse.c,v 1.3 1997/07/25 22:00:47 mickey Exp $";
+/*static char sccsid[] = "@(#)parse.c	8.1 (Berkeley) 6/6/93";*/
+static char rcsid[] = "$OpenBSD: parse.c,v 1.4 2001/01/08 07:14:42 pjanzen Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -211,12 +212,12 @@ parse(tk)
 
 /*
  * NAME: reduce
- * 
+ *
  * FUNCTION: Implements the reduce part of the parsing algorithm
- * 
+ *
  * ALGORITHM: The following reductions are done.  Reductions are repeated
  *	until no more are possible.
- * 
+ *
  * Old TOS		New TOS
  * <stmt> <stmt>	<stmtl>
  * <stmtl> <stmt>	<stmtl>
@@ -228,22 +229,22 @@ parse(tk)
  * for <stmt>		<stmt>
  * while <stmt>		<stmt>
  * "dostmt" while	<stmt>
- * 
+ *
  * On each reduction, ps.i_l_follow (the indentation for the following line)
  * is set to the indentation level associated with the old TOS.
- * 
+ *
  * PARAMETERS: None
- * 
+ *
  * RETURNS: Nothing
- * 
+ *
  * GLOBALS: ps.cstk ps.i_l_follow = ps.il ps.p_stack = ps.tos =
- * 
+ *
  * CALLS: None
- * 
+ *
  * CALLED BY: parse
- * 
+ *
  * HISTORY: initial coding 	November 1976	D A Willcox of CAC
- * 
+ *
  */
 /*----------------------------------------------*\
 |   REDUCTION PHASE				    |
