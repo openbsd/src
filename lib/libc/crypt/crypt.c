@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypt.c,v 1.18 2003/08/12 01:22:17 deraadt Exp $	*/
+/*	$OpenBSD: crypt.c,v 1.19 2004/09/14 22:56:57 deraadt Exp $	*/
 
 /*
  * FreeSec: libcrypt
@@ -47,7 +47,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: crypt.c,v 1.18 2003/08/12 01:22:17 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: crypt.c,v 1.19 2004/09/14 22:56:57 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -604,7 +604,7 @@ crypt(const char *key, const char *setting)
 		if ((*q++ = *key << 1))
 			key++;
 	}
-	if (des_setkey((u_char *) keybuf))
+	if (des_setkey((char *) keybuf))
 		return(NULL);
 
 	if (*setting == _PASSWORD_EFMT1) {
@@ -623,7 +623,7 @@ crypt(const char *key, const char *setting)
 			/*
 			 * Encrypt the key with itself.
 			 */
-			if (des_cipher((u_char*)keybuf, (u_char*)keybuf, 0, 1))
+			if (des_cipher((char *)keybuf, (char *)keybuf, 0, 1))
 				return(NULL);
 			/*
 			 * And XOR with the next 8 characters of the key.
@@ -633,7 +633,7 @@ crypt(const char *key, const char *setting)
 					*key)
 				*q++ ^= *key++ << 1;
 
-			if (des_setkey((u_char *) keybuf))
+			if (des_setkey((char *) keybuf))
 				return(NULL);
 		}
 		strlcpy((char *)output, setting, 10);

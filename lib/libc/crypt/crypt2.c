@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypt2.c,v 1.1 2003/08/12 01:22:17 deraadt Exp $	*/
+/*	$OpenBSD: crypt2.c,v 1.2 2004/09/14 22:56:57 deraadt Exp $	*/
 
 /*
  * FreeSec: libcrypt
@@ -47,7 +47,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: crypt2.c,v 1.1 2003/08/12 01:22:17 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: crypt2.c,v 1.2 2004/09/14 22:56:57 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -79,7 +79,7 @@ setkey(const char *key)
 			if (*key++ & 1)
 				p[i] |= _des_bits8[j];
 	}
-	return(des_setkey(p));
+	return(des_setkey((char *)p));
 }
 
 int
