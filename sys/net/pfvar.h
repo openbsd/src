@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.201 2004/07/11 15:54:21 itojun Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.202 2004/07/12 00:50:22 itojun Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -47,7 +47,7 @@ struct ip;
 #define	PF_TCPS_PROXY_SRC	((TCP_NSTATES)+0)
 #define	PF_TCPS_PROXY_DST	((TCP_NSTATES)+1)
 
-enum	{ PF_INOUT, PF_IN, PF_OUT, PF_FORWARD };
+enum	{ PF_INOUT, PF_IN, PF_OUT };
 enum	{ PF_LAN_EXT, PF_EXT_GWY, PF_ID };
 enum	{ PF_PASS, PF_DROP, PF_SCRUB, PF_NAT, PF_NONAT,
 	  PF_BINAT, PF_NOBINAT, PF_RDR, PF_NORDR, PF_SYNPROXY_DROP };
