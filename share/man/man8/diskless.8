@@ -1,4 +1,4 @@
-.\"	$OpenBSD: diskless.8,v 1.22 2003/06/06 19:28:06 jmc Exp $
+.\"	$OpenBSD: diskless.8,v 1.23 2004/04/09 21:42:25 jmc Exp $
 .\"	$NetBSD: diskless.8,v 1.7.4.1 1996/05/30 18:58:10 cgd Exp $
 .\"
 .\"
@@ -148,15 +148,15 @@ might be configured -- other clients should be similar.
 .Pp
 Assuming the client's hostname is to be
 "myclient",
-.Pp
-.Bl -tag -width 2.1 -compact
+.Bl -tag -width 2.1
 .It 1.
 Add an entry to
 .Pa /etc/ethers
 corresponding to the client's ethernet address:
-.Bd -literal -offset indent -compact
+.Bd -literal -offset indent
 8:0:20:7:c5:c7          myclient
 .Ed
+.Pp
 This will be used by
 .Xr rarpd 8 .
 .Pp
@@ -164,7 +164,7 @@ This will be used by
 Assign an IP address for myclient in your
 .Pa /etc/hosts
 or DNS database:
-.Bd -literal -offset indent -compact
+.Bd -literal -offset indent
 192.197.96.12           myclient
 .Ed
 .Pp
@@ -180,7 +180,7 @@ If booting an HP 300-series machine, ensure that
 .Pa /etc/rbootd.conf
 is configured properly to transfer the boot program to the client.
 An entry might look like this:
-.Bd -literal -offset indent -compact
+.Bd -literal -offset indent
 08:00:09:01:23:E6	SYS_UBOOT	# myclient
 .Ed
 .Pp
@@ -201,7 +201,7 @@ Make a link such that the boot program is
 accessible by a file name composed of the client's IP address
 in HEX, a dot, and the architecture name (all upper case).
 For example:
-.Bd -literal -offset indent -compact
+.Bd -literal -offset indent
 # cd /tftpboot
 # ln -s boot.net C0C5600C.SUN4
 .Ed
@@ -227,10 +227,11 @@ is installed in the directory
 .It 5.
 Add myclient to the bootparams database
 .Pa /etc/bootparams :
-.Bd -literal -offset indent -compact
+.Bd -literal -offset indent
 myclient  root=server:/export/myclient/root \\
           swap=server:/export/myclient/swap
 .Ed
+.Pp
 Note that some bootparam servers are somewhat sensitive.
 Some require fully qualified hostnames or partially qualified hostnames
 (which can be solved by having both fully and partially qualified entries).
@@ -238,11 +239,12 @@ Other servers are case sensitive.
 .Pp
 .It 6.
 Build the swap file for myclient:
-.Bd -literal -offset indent -compact
+.Bd -literal -offset indent
 # mkdir /export/myclient
 # cd /export/myclient
 # dd if=/dev/zero of=swap bs=1m count=120
 .Ed
+.Pp
 This creates a 120 Megabyte swap file.
 .Pp
 .It 7.
@@ -259,7 +261,7 @@ standard binary distribution.
 .It 8.
 Export the required filesystems in
 .Pa /etc/exports :
-.Bd -literal -offset indent -compact
+.Bd -literal -offset indent
 /usr -ro myclient
 # for SunOS:
 # /export/myclient -rw=myclient,root=myclient
@@ -281,7 +283,7 @@ you might create and fill
 and then use the following
 .Pa /etc/exports
 lines:
-.Bd -literal -offset indent -compact
+.Bd -literal -offset indent
 /export/usr.sun3 -ro myclient
 /export/myclient -rw=myclient,root=myclient
 .Ed
@@ -289,7 +291,7 @@ lines:
 .It 9.
 Copy and customize at least the following files in
 .Pa /export/myclient/root :
-.Bd -literal -offset indent -compact
+.Bd -literal -offset indent
 # cd /export/myclient/root/etc
 # cp fstab.nfs fstab
 # cp /etc/hosts hosts
@@ -306,7 +308,7 @@ Correct the critical mount points in the client's
 (which will be
 .Pa /export/myclient/root/etc/fstab )
 i.e.,
-.Bd -literal -offset indent -compact
+.Bd -literal -offset indent
 myserver:/export/myclient/root / nfs rw 0 0
 myserver:/usr /usr nfs rw 0 0
 .Ed
