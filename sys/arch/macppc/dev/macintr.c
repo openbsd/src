@@ -1,4 +1,4 @@
-/*	$OpenBSD: macintr.c,v 1.24 2004/06/28 02:49:43 deraadt Exp $	*/
+/*	$OpenBSD: macintr.c,v 1.25 2004/10/01 20:28:42 miod Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -62,8 +62,6 @@ struct intrhand *m_intrhand[ICU_LEN];
 int m_hwirq[ICU_LEN], m_virq[64];
 unsigned int imen_m = 0xffffffff;
 int m_virq_max = 0;
-
-struct evcnt m_evirq[ICU_LEN*2];
 
 static int fakeintr(void *);
 static char *intr_typename(int type);
@@ -529,7 +527,6 @@ start:
 		}
 
 		uvmexp.intrs++;
-		m_evirq[m_hwirq[irq]].ev_count++;
 	}
 	int_state &= ~r_imen;
 	if (int_state)
@@ -565,11 +562,10 @@ mac_intr_do_pending_int()
 		hwpend &= ~(1L << irq);
 		ih = m_intrhand[irq];
 		while(ih) {
-			(*ih->ih_fun)(ih->ih_arg);
+			if ((*ih->ih_fun)(ih->ih_arg))
+				ih->ih_count.ec_count++;
 			ih = ih->ih_next;
 		}
-
-		m_evirq[m_hwirq[irq]].ev_count++;
 	}
 
 	/*out32rb(INT_ENABLE_REG, ~imen_m);*/
