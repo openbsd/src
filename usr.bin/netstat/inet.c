@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.84 2004/03/13 22:02:13 deraadt Exp $	*/
+/*	$OpenBSD: inet.c,v 1.85 2004/04/24 18:51:13 markus Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static const char *rcsid = "$OpenBSD: inet.c,v 1.84 2004/03/13 22:02:13 deraadt Exp $";
+static const char *rcsid = "$OpenBSD: inet.c,v 1.85 2004/04/24 18:51:13 markus Exp $";
 #endif
 #endif /* not lint */
 
@@ -285,6 +285,7 @@ tcp_stats(u_long off, char *name)
 	p2(tcps_rcvackpack, tcps_rcvackbyte, "\t\t%u ack%s (for %qd byte%s)\n");
 	p(tcps_rcvdupack, "\t\t%u duplicate ack%s\n");
 	p(tcps_rcvacktoomuch, "\t\t%u ack%s for unsent data\n");
+	p(tcps_rcvacktooold, "\t\t%u ack%s for old data\n");
 	p2(tcps_rcvpack, tcps_rcvbyte,
 	    "\t\t%u packet%s (%qu byte%s) received in-sequence\n");
 	p2(tcps_rcvduppack, tcps_rcvdupbyte,
