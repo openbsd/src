@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.48 2003/06/02 23:28:06 millert Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.49 2003/12/15 09:00:55 deraadt Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -699,6 +699,7 @@ mi_switch()
 	struct rlimit *rlim;
 	long s, u;
 	struct timeval tv;
+	rlim_t rs;
 
 	splassert(IPL_STATCLOCK);
 
@@ -724,10 +725,11 @@ mi_switch()
 	 * If over max, kill it.
 	 */
 	rlim = &p->p_rlimit[RLIMIT_CPU];
-	if (s >= rlim->rlim_cur) {
-		if (s >= rlim->rlim_max)
+	rs = (rlim_t)(unsigned)s;
+	if (rs >= rlim->rlim_cur) {
+		if (rs >= rlim->rlim_max) {
 			psignal(p, SIGKILL);
-		else {
+		} else {
 			psignal(p, SIGXCPU);
 			if (rlim->rlim_cur < rlim->rlim_max)
 				rlim->rlim_cur += 5;
