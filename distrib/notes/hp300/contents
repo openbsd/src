@@ -12,15 +12,27 @@ out as follows:
 		*.tar.gz	hp300 binary distribution sets;
 				see below.
 
-		bsd-gen		A stock GENERIC kernel, installation
-				utilities and a miniroot filesystem;
-				see below.
+		bsd		A stock GENERIC kernel.
+
+		bsd-dl		A GENERIC kernel without any support for
+				disk devices.
+
+		bsd-rd		A compressed RAMDISK kernel; the embedded
+				filesystem contains the installation tools.
+
+		SYS_UBOOT	Unified boot file, used for booting from
+				the network.
+
+		HP-IB.geometry	A file containing geometry for some HP-IB
+				disk drives.
+
+		uboot.raw	Raw boot file, used internally for booting
+				from the CDROM.
 
 The OpenBSD/hp300 binary distribution sets contain the binaries which
 comprise the OpenBSD 2.2 release for the hp300.  There are seven binary
-distribution sets, and the "security" distribution set.  The binary
-distribution sets can be found in the "hp300/bins" subdirectory of
-the OpenBSD 2.2 distribution tree, and are as follows:
+distribution tar sets.  They may be found in the top of the "hp300"
+subdirectory of the OpenBSD 2.2 distribution tree, and are as follows:
 
 	base22	The OpenBSD/hp300 2.2 base binary distribution.  You
 		MUST install this distribution set.  It contains the
@@ -69,21 +81,3 @@ the OpenBSD 2.2 distribution tree, and are as follows:
 		manual pages.
 		[ 945.9K gzipped, 3.5M uncompressed ]
 
-The following are included in the `.../install' directory:
-
-	SYS_INST.gz	A gzipped copy of the SYS_INST miniroot
-			installation program.
-
-	SYS_NBOOT.gz	A gzipped copy of the network boot block.
-			This is useful if you are installing
-			a diskless OpenBSD/hp300 system.
-
-	inst-22.fs.gz	A gzipped copy of the miniroot filesystem.
-
-	bsd.gz		A gzipped GENERIC kernel.
-
-	rbootd.tar.gz	Source code for the rbootd(8) program, required
-			for netbooting an HP workstation.
-
-	HP-IB.geometry	A file containing geometry for some HP-IB
-			disk drives.

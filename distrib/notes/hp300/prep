@@ -1,11 +1,14 @@
-Currently, only installing the miniroot from the network is supported.
-This may change in a future release.
+The ramdisk kernel may be loaded from the network, from CD-ROM, or other
+SCSI devices (such as Zip(tm) disk).  This section primarily describes the
+setup required for a network boot, but does offer information pretaining to
+installation from other media.  Note that loading from HPIB or SCSI cartridge
+tape is possible, but not currently supported.
 
 You will need information about your disk's geometry, based on 512-byte
 sectors.  You must have this information before proceeding.  The
-file `.../install/HP-IB.geometry' has geometry inforomation for several
-HP-IB disks, but may be incomplete.  Geometry may be calculated from an
-HP-UX `/etc/disktab' entry, but note that HP-UX geometry is based on
+file `HP-IB.geometry' has geometry inforomation for several HP-IB disks,
+but may be incomplete.  Geometry may be calculated from an HP-UX 
+`/etc/disktab' entry, but note that HP-UX geometry is based on
 1024 byte sectors, while OpenBSD's is based on 512 byte sectors.
 
 QUICK NOTE ABOUT PARTITIONS:  Since the target disk will become the boot
@@ -18,69 +21,47 @@ of the disk.  Later, the `c' partition will be marked with the type
 with historic BSD partition conventions, the `c' partition is defined
 as `the entire disk', or the `raw partition'.)
 
-A QUICK NOTE ABOUT DISK NUMBERS:  While in the SYS_INST program, you
-may use different unit numbers for the disks than when the OpenBSD
-kernel is running.  The unit number for a disk while in SYS_INST is
-calculated with the following formula:
-
-	unit = (controller * 8) + slave
-
-Controllers are numbered 0, 1, ... starting with the lowest select code.
-SCSI controllers and HP-IB controllers are counted separately.  Therefore,
-if you had a system with an internal HP-IB interface at select code 7,
-a fast HP-IB interface at select code 14, and a SCSI interface at select
-code 16, unit numers might be something like the following:
-
-	Location			Unit
-	--------			----
-	HP-IB at 7, slave 2		2	(disk: rd2)
-	HP-IB at 14, slave 5		13	(disk: rd13)
-	SCSI at 16, slave 0		0	(disk: sd0)
-
-
-                   Miniroot installation via network
-	           ---------------------------------
-NOTE:  BOOTING SYS_INST VIA THE NETWORK IS ONLY POSSIBLE IF YOUR BOOTROM
+		   Ramdisk installation via network or CD-ROM
+	           ------------------------------------------
+NOTE:  BOOTING SYS_UBOOT VIA THE NETWORK IS ONLY POSSIBLE IF YOUR BOOTROM
 IS `REV. C' OR LATER.
 
 In order to complete this process, you will need the following from the
-`.../install' directory of the distribution:
+`2.2/hp300' directory of the distribution:
 
-	SYS_INST	The standalone disklabel and miniroot
-			installation tool
+	SYS_UBOOT	The unified boot block file.
 
-	inst-20.fs.gz	A gzipped miniroot filesystem image.  This image
-			must be un-gzipped before copying to disk.
+	bsd.rd		The gziped RAMDISK kernel image.
 
-To boot SYS_INST via the network, you will need a system capable of handling
-boot requests for an HP workstation.  If you will use this method, see the
-special note below.
+To boot SYS_UBOOT via the network, you will need a system capable of
+handling boot requests for an hp300.  If you will use this method, see
+the special note below.
 
-To boot SYS_INST from tape, you need only place SYS_INST on the tape as
-the first file.
+To boot from SCSI CD-ROM, simply insert the CD that is hp300 bootable into
+the drive before power up, then during the client's self-test cycle,
+press the space bar.  Shortly, you should see a menu of possible boot
+options appear.  Select the option corresponding to SYS_CDROM.
+SYS_UBOOT will then load and prompt you for a kernel name.
 
--- The following section is specific for loading SYS_INST via the network. --
+-- The following section is specific for loading SYS_UBOOT via the network. --
 
-If you wish to load the SYS_INST program via the network, you may need
-the following from the `.../install' directory in addition to the items
-listed above:
-
-	rbootd.tar.gz	Source code for the rbootd program included with
-			OpenBSD.  It requires that the server have a
-			Berkeley Packet Filter (bpf).  You will need to
-			compile this version of rbootd if your server
-			system does not have this utility already.
+If you wish to load the SYS_UBOOT program via the network, you need to
+either have another OpenBSD system on the network, or something else
+capable of running the rbootd(8) program.  Source code may be found
+under usr.sbin/rbootd in the OpenBSD source tree, but requires the
+Berkeley Packet Filter (bpf) in order to function.  It may be possible to
+use HP-UX, but is not recommended (or documented here).
 
 First of all, configure your rbootd to handle boot requests from the
 client.  NOTE: OpenBSD's `rbootd' is slightly different from HP-UX's.
 To configure OpenBSD's `rbootd', create a file called `/etc/rbootd.conf'
 and place in it an entry like the following:
 
-	08:00:09:04:AA:33	SYS_INST	# thunder-egg
+	08:00:09:04:AA:33	SYS_UBOOT	# thunder-egg
 
 The first column is the ethernet address of the client's network interface.
 The second column is the program to send to the client, and anything after
-the `#' is a comment.  Once you have rbootd running, copy the SYS_INST
+the `#' is a comment.  Once you have rbootd running, copy the SYS_UBOOT
 program to the /usr/mdec/rbootd directory on your server.  If this
 directory doesn't exist already, you will need to create it.
 
@@ -89,76 +70,15 @@ manual page on your server system.
 
 Once `rbootd' is configured and running, you will be ready to continue.
 
+Make sure that the ramdisk kernel image (`bsd.rd') resides in a filesystem
+that is NFS exported to the client.  See the manual pages on your server
+system if you need more information about exporting filesystems.
+
+You are now ready to load SYS_UBOOT.  During the client's self-test cycle,
+press the space bar.  Shortly, you should see a menu of possible boot
+options appear.  Select the option corresponding to SYS_UBOOT.
+SYS_UBOOT will then load and prompt you for a kernel name.  NFS file
+names should not have a leading '/' prepended to them, simply use `bsd.rd'.
+
 ------------------ End of network boot-specific section ----------------------
 
-Make sure that the miniroot filesystem image has been un-gzipped, and
-that it resides in a filesystem what is exported to the client.  See the
-manual pages on your server system if you need more information about
-exporting filesystems.
-
-You are now ready to SYS_INST.  During the client's self-test cycle, press
-the space bar a few times.  Shortly, you should see a menu of possible boot
-options appear.  Select the option corresponding to SYS_INST.  SYS_INST will
-load and prompt you for a command.
-
-If this is a new OpenBSD installation, you will need to place a disklabel
-on the disk.
-
-	sys_inst> disklabel
-
-NOTE: it may be worth selecting the `zap' option initially to ensure that
-the disklabel area is clear.  This may be especially important if an
-HP-UX boot block had been previously installed on the disk.
-
-Select the `edit' option, and answer the questions about your disk.
-There may be several questions which you may not be sure of the answers
-to.  Listed below are guidelines for SCSI and HP-IB disks:
-
-	Bad sectoring?		NO
-	Ecc?			NO
-	Interleave?		1
-	Trackskew?		0
-	Cylinderskew?		0
-	Headswitch?		0
-	Track-to-track?		0
-	Drivedata 0-4?		0 (for all Drivedata values)
-
-Next, you will be asked to fill out the partition map.  You must provide
-responses for all 8 partitions.  Remember, you must allocate at least 6M
-for the `b' partition, or else the miniroot will not fit.  Set the size and
-offset of any unused partition to 0.  Note that sizes and offsets are
-expressed in `n sectors', assuming 512 byte sectors.  Care should be taken
-to ensure that partitions begin and end on cylinder boundaries (i.e. size
-and offset is an even multiple of the number of sectors per cylinder).
-While this is not technically necessary, it is generally encouraged.  Note
-that you cannot enter partition types at this time.  You will be given an
-oppotinuty to `clean up' the disklabel later on in the installation procedure.
-
-Once you have edited the label, select the `show' option to verify that
-it is correct.  If so, select `write' and `done'.  Otherwise, you may
-re-edit the label.
-
-The next step is to copy the miniroot image onto the target disk.
-
-	sys_inst> miniroot
-
-You will be prompted for the target disk and the source of the miniroot
-filesytem image.
-
-Enter the filename of the miniroot image.  Note that this file _must_ reside
-in the server directory being mounted.  Next you will be asked for the
-client's IP address, netmask, and default router, the server's IP address,
-and the directory on the server to mount.  Once you have entered this
-information, SYS_INST will attempt to mount the NFS server and begin copying
-the miniroot filesystem to the `b' partition of the target disk.
-
-Is is worth noting that this copy may take a while.  It might be worth
-grabbing a cup of coffee at this point.
-
-Once the miniroot filesystem image has been copied onto the target disk,
-you may boot from the miniroot filesystem.
-
-	sys_inst> boot
-
-Enter the disk from which to boot.  The kernel in the miniroot filesystem
-will be booted into single-user mode.

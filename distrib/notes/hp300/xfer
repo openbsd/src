@@ -1,80 +1,93 @@
 Installation is supported from several media types, including:
+
+	Local FFS partitions
 	Tape
-	CD-ROM
-	NFS
+	Remote NFS partition
 	FTP
+	HTTP
+	rsh & restore
 
-The steps necessary to prepare the distribution sets
-for installation depend on which method of installation
-you choose.  The various methods are explained below.
+Obviously, the steps necessary to prepare the distribution sets for
+installation or upgrade depend on which installation medium you
+choose.  The steps for the various media types are outlined below.
 
-To prepare for installing via a tape:
+To install or upgrade OpenBSD using a tape, you need to do the
+following:
 
-	If you wish to load SYS_INST from tape, it must
-	appear on the tape before any other files.  To copy
-	this onto tape, use a command like the following:
+	To install OpenBSD from a tape, you need to make a tape that
+	contains the distribution set files, in "tar" format.  If
+	you're making the tape on a UN*X-like system, the easiest way
+	to do so is probably something like:
 
-		dd if=SYS_INST of=<tape_device> bs=20b
+		tar cf <tape_device> <dist_directories>
 
-	Note that not all HP BOOTROMs support booting from
-	SCSI tapes.
+	where "<tape_device>" is the name of the tape device that
+	describes the tape drive you're using (possibly /dev/rst0, or
+	something similar, but it will vary from system to system.
+	(If you can't figure it out, ask your system administrator.)
+	In the above example, "<dist_directories>" are the
+	distribution sets' directories, for the distribution sets you
+	wish to place on the tape.  For instance, to put the "base22"
+	and "etc22" distributions on tape (in order to do the absolute
+	minimum installation to a new disk), you would do the
+	following:
 
-	Copying the miniroot to disk from tape is not currently
-	supported.  However, it is planned for a future release.
+		cd .../2.2		# the top of the tree
+		cd hp300
+		tar cf <tape_device> base22.tar.gz etc22.tar.gz
 
-	If you wish to extract binary sets onto your disk from
-	tape, you must first place them on the tape.  The easiest
-	way to do this is with the dd(1) command.  Make sure you
-	use a `no-rewind-on-close' tape device.  For example:
+	(Note that you still need to fill in "<tape_device>" in the
+	example.)
 
-		for file in base20.tar.gz etc20.tar.gz; do
-			dd if=${file} of=/dev/nrst0 bs=20b
-		done
+	Once you have the files on the tape, you can proceed to the
+	next step in the installation or upgrade process.  If you're
+	installing OpenBSD from scratch, go to the section on preparing
+	your hard disk, below.  If you're upgrading an existing
+	installation, go directly to the section on upgrading.
 
-	Note that depending on your tape drive, you may need to
-	explicitly set the EOF marker at the end of each file.
-	It may also be necessary to use the `conv=osync' argument
-	to dd(1).  Note that this argument is incompatible with the
-	`bs=' argument.  Consult the tape-related manual pages on the
-	system where the tapes are created for more details.
+To install or upgrade OpenBSD using a remote partition, mounted via
+NFS, you must do the following:
 
-To prepare for installing via NFS:
+	NOTE:	This method of installation is recommended only for
+		those already familiar with using BSD network
+		configuration and management commands.  If you aren't,
+		this documentation should help, but is not intended to
+		be all-encompassing.
 
-	SYS_INST currently requires an NFS server from which to
-	copy the miniroot.
+	Place the OpenBSD distribution sets you wish to install into a
+	directory on an NFS server, and make that directory mountable
+	by the machine on which you are installing or upgrading OpenBSD.
+	This will probably require modifying the /etc/exports file on
+	of the NFS server and resetting its mount daemon (mountd).
+	(Both of these actions will probably require superuser
+	privileges on the server.)
 
-		* This filesystem must be exported with root permissions,
-		  but may be exported read-only.
+	You need to know the the numeric IP address of the NFS server,
+	and, if the server is not on a network directly connected to
+	the machine on which you're installing or upgrading OpenBSD,
+	you need to know the numeric IP address of the router closest
+	to the OpenBSD machine.  Finally, you need to know the numeric
+	IP address of the OpenBSD machine itself.
 
-		* The miniroot image _must_ reside in the `root' of the
-		  mounted filesystem.  For example, if the client system
-		  mounts `server:/u', then the miniroot image must reside
-		  in /u on the server.  This is due to limitations in the
-		  file lookup code used in SYS_INST, and may be fixed in
-		  a future release.
+	Once the NFS server is set up properly and you have the
+	information mentioned above, you can proceed to the next step
+	in the installation or upgrade process.  If you're installing
+	OpenBSD from scratch, go to the section on preparing your hard
+	disk, below.  If you're upgrading an existing installation, go
+	directly to the section on upgrading.
 
-		* If you also wish to install the binary sets from the
-		  NFS server, place them in a properly exported filesystem
-		  on the server.  Note that these files do not suffer from
-		  the same placement restrictions as the miniroot.
+If you are upgrading OpenBSD, you also have the option of installing
+OpenBSD by putting the new distribution sets somewhere in your existing
+file system, and using them from there.  To do that, you must do the
+following:
 
-To prepare for installing via FTP:
+	Place the distribution sets you wish to upgrade somewhere in
+	your current file system tree.  At a bare minimum, you must
+	upgrade the "base" binary distribution, and so must put the
+	"base22" set somewhere in your file system.  If you wish,
+	you can do the other sets, as well, but you should NOT upgrade
+	the "etc" distribution; the "etc" distribution contains system
+	configuration files that you should review and update by hand.
 
-	It is possible, using the `install' and `upgrade'
-	programs in the miniroot, to extract the binary sets
-	directly onto disk from an FTP server.  This is by far
-	the easiest installation method, as you may specify to
-	have all sets extracted at once, providing that they
-	are located in the same directory on the server.
-
-	All that is required in this case is that you have
-	network access to an FTP server.  This may be your
-	account on another system, or may even be ftp.OpenBSD.ORG
-	itself.  If you wish to use ftp.OpenBSD.ORG as your FTP
-	file server, you may want to keep the following information
-	handy:
-
-		IP Address: 205.149.163.23
-		Login: anonymous
-		Password: <your e-mail address>
-		Server path: /pub/OpenBSD/2.0/hp300/binary
+	Once you have done this, you can proceed to the next step in
+	the upgrade process, actually upgrading your system.

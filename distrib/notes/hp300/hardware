@@ -1,18 +1,7 @@
 OpenBSD/hp300 2.2 will run on most HP 9000/300- and 400-series machines.
-The lowest amount of RAM that has been tested is 7.5M, though it
+The lowest amount of RAM that has ever been tested is 7.5M, though it
 may run with less.  Certainly, if you wish to run X, more RAM is
 recommended.
-
-Here is a table of recommended HD partition sizes for a full install:
-	partition:	advise		needed
-	root (/)	15M		10M
-	user (/usr)	80M		45M
-	swap		(2 or 3 * RAM)	 6M	(see note below)
-	Anything else is up to you!
-
-NOTE:  The hp300 installation procedure utilizes a `miniroot' filesystem
-which is placed into the swap area of the disk.  The swap are must be
-at least large enough to hold this miniroot image.
 
 The following HP hardware is supported:
 
@@ -34,16 +23,19 @@ The following HP hardware is supported:
 		      the Archive Viper.
 
 	RS232 interfaces:
-		98644 built-in single port (dca).
+		98644 built-in and add-on single port (dca).
 		98642 4-port (dcm).
 		98638 8-port (dcm).
+		400-series Apollo 3-port serial/keyboard mux (apci).
+		[Note:  Support is incomplete.  The first port is typically
+		configured as a dca device.]
 
 	Network interfaces:
 		98643 built-in and add-on LAN cards.
 
 	Displays:
 		98544, 98545, and 98547 color and monochrome Topcat.
-		98548, 98549, and 98550 color and monochrome Catseye.
+		98548, 98549, 98550, and A1416A color and monochrome Catseye.
 		98700 and 98710 Gatorbox.
 		98720 and 98721 Renaissance.
 		98730 and 98731 DaVinci.
@@ -52,6 +44,7 @@ The following HP hardware is supported:
 	Input devices:
 		General interface supporting all HIL devices: keyboard,
 		2 and 3 button mice(***), and ID module.
+		400-series Apollo keyboards (bootblocks, kernel soon).
 
 	Miscellaneous:
 		Battery-backed real-time clock.

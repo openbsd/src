@@ -1,78 +1,317 @@
-The miniroot's install program is very simple to use.  It will guide
-you through the entire process, and is well automated.  Additional
-improvements are planned for future releases.
+Installing OpenBSD is a relatively complex process, but if you have
+this document in hand and are careful to read and remember the
+information which is presented to you by the install program, it
+shouldn't be too much trouble.
 
-The miniroot's install program will:
+Before you begin, you should know the geometry of your hard disk, i.e.
+the sector size (note that sector sizes other than 512 bytes are not
+currently supported), the number of sectors per track, the number of
+tracks per cylinder (also known as the number of heads), and the
+number of cylinders on the disk.  The OpenBSD kernel will provide limited
+information for SCSI disks, but not much.
 
-	* Allow you to place disklabels on additional disks.
-	  Note that partition sizes and offsets are expressed
-	  in sectors.  When you fill out the disklabel, you will
-	  need to specify partition types and filesystem parameters.
-	  If you're unsure what the these values should be, use the
-	  following:
+You should now be ready to install OpenBSD.  It might be handy for you
+to have a pencil, some paper, and a calculator handy.
 
-		fstype: 4.2BSD
-		fsize: 1024
-		bsize: 4096
-		cpg: 16
+The following is a walk-through of the steps you will take while
+getting OpenBSD installed on your hard disk.  If any question has a
+default answer, it will be displayed in brackets ("[]") after the
+question.  If you wish to stop the installation, you may hit Control-C
+at any time, but if you do, you'll have to begin the installation
+process again from scratch.
 
-	  If the partition will be a swap partition, use the following:
+	Boot your machine from the CDROM or from the network.  When
+	presented with the boot prompt, enter the path of your kernel.
+	(`bsd.rd' is a likely choice if you are booting over the network,
+	otherwise check the CDROM insert for the pathname of the kernel.)
 
-		fstype: swap
-		fsize: 0 (or blank)
-		bsize: 0 (or blank)
-		cpg: 0 (or blank)
+	You will then be presented with the OpenBSD kernel boot
+	messages.  You will want to read them, to determine your
+	disk's name and geometry.  Its name will be something like
+	"sd0" or "hd0" and any geometry or size information will be
+	printed on a line that begins with its name.  As mentioned above,
+	you will need your disk's geometry when creating OpenBSD's
+	partitions.  You will also need to know the name, to tell the
+	install tools what disk to install on.  If you cannot read the
+	messages as they scroll by, do not worry -- you can get at this
+	information later inside the install program.
 
-	  You will also need to specify the number of partitions.
-	  The number of partitions is determined by the `index' of
-	  the last partition letter, where a == 1, b == 2, etc.
-	  Therefore, if the last filled partition is partition `g',
-	  there are 7 partitions.  Any partitions with size of 0
-	  may be removed from the list.
+	While booting, you will probably see several warnings.  You
+	should be warned that no swap space is present, and that
+	init(8) cannot find /etc/rc.  Do not be alarmed, these are
+	completely normal.  When you reach the prompt asking you for a
+	shell name, just hit return.
 
-	  If the disk is the boot disk, you _must_ offset the root
-	  partition (`a') one cylinder, as the hp300 boot code
-	  if large enough to spill past the label area.  In this case,
-	  the `c' partition must be fstype `boot'.
+	You will be presented with a welcome message and a prompt.  At
+	this time you should enter the command "install" to start the
+	installation process.
 
-	  Anything after a `#' is a comment.
+	You will be asked which terminal type to use.  There are only
+	a few specific terminal types supported.  If you are using a
+	graphics display, just hit return to select the default (hp300h).
+	If you are using an ASCII terminal, it should either be an HP
+	or vt100 compatible terminal; nothing else is supported.
 
-	  The following is an example disklabel partition map:
+	The install program will then tell you which disks of that
+	type it can install on, and ask you which it should use.  The
+	name of the disk is typically "hd0" for HPIB/CS80 drives or
+	"sd0" for SCSI drives.  If you do not wish to install on the
+	first disk, you should use the appropiate number in place of "0".
+	Reply with the name of your disk.
 
-7 partitions:
-#        size   offset    fstype   [fsize bsize   cpg]
-  a:    30912      448    4.2BSD     1024  8192    16   # (Cyl.    1 - 69)
-  b:   130816    31360      swap                        # (Cyl.   70 - 361)
-  c:  1296512        0      boot                        # (Cyl.    0 - 2893)
-  e:    81984   162176    4.2BSD     1024  8192    16   # (Cyl.  362 - 544)
-  f:   102592   244160    4.2BSD     1024  4096    16   # (Cyl.  545 - 773)
-  g:   949760   346752    4.2BSD     1024  8192    16   # (Cyl.  774 - 2893)
+	Next you will have to edit or create a disklabel for the disk
+	OpenBSD is being installed on.  The installation script will invoke
+	an editor allowing you to do this.  Note that partition 'c' inside
+	this disk label should ALWAYS reflect the entire disk, including
+	any non-OpenBSD portions.  The root file system should be in
+	partition 'a', and swap is usually in partition 'b'.  It is
+	recommended that you create separate partitions for /usr and /var,
+	and if you have room for it, also for /home.
 
-	* Create filesystems on target partitions.
+	The swap partition (usually 'b') should have a type of "swap", all
+	other native OpenBSD partitions should have a type of "4.2BSD".
+	Block and fragment sizes are usually 8192 and 1024 bytes, but can
+	also be 4096 and 512 or even 16384 and 2048 bytes.
 
-	* Allow you to set up your system's network configuration.
-	  Remember to specify host names without the domain name
-	  appended to the end.  For example use `foo' instead of
-	  `foo.bar.org'.  If, during the process of configuring
-	  the network interfaces, you make a mistake, you will
-	  be able to re-configure that interface by simply selecting
-	  it for configuration again.
+	The install program will now label your disk and ask which file
+	systems should be created on which partitions.  It will auto-
+	matically select the 'a' partition to be the root file system.
+	Next it will ask for which disk and partition you want a file
+	system created on.  This will be the same as the disk name (eg.
+	"hd0") with the letter identifying the partition (eg. "d")
+	appended (eg. "hd0d").  Then it will ask where this partition is
+	to be mounted, eg. /usr.  This process will be repeated until
+	you just hit return.
 
-	* Mount target filesystems.  You will be given the opportunity
-	  to manually edit the resulting /etc/fstab.
+	At this point you will be asked to confirm that the file system
+	information you have entered is correct, and given an opportunity
+	to change the file system table.  Next it will create the new file
+	systems as specified, OVERWRITING ANY EXISTING DATA.  This is the
+	point of no return.
 
-	* Extract binary sets from the media of your choice.
+	After all your file systems have been created, the install program
+	will give you an opportunity to configure the network.  The network
+	configuration you enter (if any) can then be used to do the install
+	from another system using NFS, HTTP or FTP, and will also be the
+	configuration used by the system after the installation is complete.
 
-	* Copy configuration information gathered during the
-	  installation process to your root filesystem.
+	If you select to configure the network, the install program will
+	ask you for a name of your system and the DNS domain name to use.
+	Note that the host name should be without the domain part, and that
+	the domain name should NOT include the host name part.
 
-	* Make device nodes in your root filesystem.
+	Next the system will give you a list of network interfaces you can
+	configure.  For each network interface you select to configure, it
+	will ask for the IP address to use, the symbolic host name to use,
+	the netmask to use and any interface-specific flags to set.  No
+	interface-specific flags should be required.
 
-	* Copy a new kernel onto your root partition.
+	After all network interfaces has been configured the install pro-
+	gram will ask for a default route and IP address of the primary
+	name server to use.  You will also be presented with an opportunity
+	to edit the host table.
 
-	* Install a new boot block.
+	At this point you will be allowed to edit the file system table
+	that will be used for the remainder of the installation and that
+	will be used by the finished system, following which the new file
+	systems will be mounted to complete the installation.
 
-	* Check your filesystems for integrity.
+	After these preparatory steps has been completed, you will be
+	able to extract the distribution sets onto your system.  There
+	are several install methods supported; FTP, HTTP, tape, CD-ROM, NFS
+	or a local disk partition.  To install from a tape, the distrib-
+	ution sets must have been written to tape prior to running the
+	installation program, either as tar images or as gzipped tar
+	images.
 
-First-time installation on a system through a method other than the
-installation program is possible, but strongly discouraged.
+	To install via FTP:
+		To begin an FTP install you will need the following
+		pieces of information.  Don't be daunted by this list;
+		the defaults are sufficient for most people.
+		    1) Proxy server URL if you are using a URL-based
+		       ftp proxy (squid, CERN ftp, Apache 1.2 or higher).
+		       You need to define a proxy if you are behind a
+		       firewall that blocks outgoing ftp (assuming you
+		       have a proxy available to use).
+		    2) Do you need to use passive mode ftp?  Most modern
+		       ftp servers are capable of dealing with passive
+		       ftp connections.  You only need to enable this
+		       option if you are behind a firewall that allows
+		       outgoing ftp but blocks incoming tcp ports > 1023.
+		       If in doubt say yes to this option.
+		       Note that you will not be asked about passive
+		       ftp if you are using a proxy.
+		    3) The IP address (or hostname if you enabled
+		       DNS earlier in the install) of an ftp server
+		       carrying the OpenBSD 2.2 distribution.
+		       If you don't know, just hit return when
+		       asked if you want to see a list of such hosts.
+		    4) The ftp directory holding the distribution sets.
+		       The default value of pub/OpenBSD/2.2/hp300
+		       is almost always correct.
+		    5) The login and password for the ftp account.
+		       The default will be correct unless you are
+		       doing non-anonymous ftp.
+
+		For instructions on how to complete the installation via
+		ftp, see the section named "Common URL installations" below.
+
+	To install via HTTP:
+		To begin an HTTP install you will need the following
+		pieces of information:
+		    1) Proxy server URL if you are using a URL-based
+		       http proxy (squid, CERN ftp, Apache 1.2 or higher).
+		       You need to define a proxy if you are behind a
+		       firewall that blocks outgoing http connections
+		       (assuming you have a proxy available to use).
+		    3) The IP address (or hostname if you enabled
+		       DNS earlier in the install) of an http server
+		       carrying the OpenBSD 2.2 distribution.
+		       If you don't know, just hit return when
+		       asked if you want to see a list of such hosts.
+		    4) The directory holding the distribution sets.
+		       There is no standard location for this;
+		       You should use the directory specified
+		       along with the server in the list of official
+		       http mirror sites that you received in step 3.
+
+		For instructions on how to complete the installation via
+		http, see the section named "Common URL installations" below.
+
+	To install from tape:
+		In order to install from tape, the distribution sets to be
+		installed must have been written to tape previously, either
+		in tar format or gzip-compressed tar format.
+
+		You will also have to identify the tape device where the
+		distribution sets are to be extracted from.  This will
+		typically be "nrst0" (no-rewind, raw interface).
+
+		Next you will have to provide the file number of the set
+		that is to be extracted.  Note that the file number starts
+		at 1, which is the first file written to the tape.
+
+		The install program will not automatically detect whether
+		an image has been compressed, so it will ask for that
+		information before starting the extraction.
+
+	To install from CD-ROM:
+		When installing from a CD-ROM, you will be asked which
+		device holds the distribution sets.  This will be "cd0"
+		for the first CD-ROM drive.  Next you will be asked which
+		partition on the CD-ROM the distribution is to be loaded
+		from.  This is normally partition "a".
+
+		Next you will have to identify the file system type that
+		has been used to create the distribution on the CD-ROM,
+		this can be either FFS or ISO CD9660.  The OpenBSD CD
+		distribution uses the CD9660 format.
+
+		You will also have to provide the relative path to the
+		directory on the CD which holds the distribution, for the
+		hp300 this is "2.2/hp300".
+
+		For instructions on how to complete the installation from
+		the CD-ROM distribution, see the section named "Common
+		file system installations" below.
+		
+	To install from a NFS mounted directory:
+		When installing from a NFS-mounted directory, you must
+		have completed network configuration above, and also
+		set up the exported file system on the NFS server in
+		advance.
+
+		First you must identify the IP address of the NFS server
+		to load the distribution from, and the file system the
+		server expects you to mount.
+
+		The install program will also ask whether or not TCP
+		should be used for transport (the default is UDP).  Note
+		that TCP only works with newer NFS servers.
+
+		You will also have to provide the relative path to the
+		directory on the file system where the distribution sets
+		are located.  Note that this path should not be prefixed
+		with a '/'.
+
+		For instructions on how to complete the installation from
+		the CD-ROM distribution, see the section named "Common
+		file system installations" below.
+
+	To install from a local disk partition:
+		When installing from a local disk partition, you will
+		first have to identify which disk holds the distribution
+		sets.  This is normally "hdN" or "sdN" where N is a
+		number 0 through 9.  Next you will have to identify the
+		partition within that disk that holds the distribution,
+		this is a single letter between 'a' and 'p'.
+
+		You will also have to identify the type of file system
+		residing in the partition identified.  Currently you can
+		install from partitions that has been formatted as fast
+		file system (ffs) or MS-DOS.
+
+		You will also have to provide the relative path to the
+		directory on the file system where the distribution sets
+		are located.  Note that this path should not be prefixed
+		with a '/'.
+
+		For instructions on how to complete the installation from
+		the a local disk partition, see the next section.
+		
+	Common file system installations:
+		The following instructions are common to installations
+		from local disk partitions, NFS mounted directories and
+		CD-ROMs.
+
+		A list of available distribution sets will be listed.  If
+		any sets has already been extracted, those will be marked
+		with an X.  Enter the name of one distribution set at a
+		time, until all desired distribution sets has been
+		installed on your system.
+
+	Common URL installations:
+		Once you have entered the required information, the
+		install program will fetch a file list and present
+		a list of all the distribution sets that were found
+		in the specified directory.  (If no valid sets were found,
+		you will be notified and given the option of unpacking
+		any gzipped tar files found or getting a file list if
+		none were found.)
+
+		At this point you may individually select distribution
+		sets to install or enter "all" to install all of
+		the sets (which is what most users will want to do).
+		You may also enter "list" to get a file list or
+		"done" when you are done selecting distribution sets.
+		(It is also possible to enter an arbitrary filename
+		and have it treated as a file set).
+
+		Once you have selected the file sets you want to install
+		and entered "done" you will be prompted to verify that
+		you really do want to download and install the files.
+		Assuming you acquiesce, the files will begin to download
+		and unpack.  If not, you will be given the option of
+		installing sets via one of the other install methods.
+
+
+	When all the selected distribution sets has been extracted, you
+	will be allowed to select which time zone your system will be
+	using, all the device nodes needed by the installed system will
+	be created for you and the file systems will be unmounted.  For
+	this to work properly, it is expected that you have installed
+	at least the "base22" and "etc22" distribution sets.
+
+
+Congratulations, you have successfully installed OpenBSD 2.2.  When you
+reboot into OpenBSD, you should log in as "root" at the login prompt.
+There is no initial password, but if you're using the machine in a
+networked environment, you should create yourself an account and
+protect it and the "root" account with good passwords.
+
+Some of the files in the OpenBSD 2.2 distribution might need to be
+tailored for your site.  In particular, the /etc/sendmail.cf file will
+almost definitely need to be adjusted, and other files in /etc will
+probably need to be modified, as well.  If you are unfamiliar with
+UN*X-like system administration, it's recommended that you buy a book
+that discusses it.
