@@ -6264,17 +6264,20 @@ _C_LABEL(cache_flush_phys):
  * When this code is run, the stack looks like:
  *	[%sp]			128 bytes to which registers can be dumped
  *	[%sp + 128]		signal number (goes in %o0)
- *	[%sp + 128 + 4]		signal code (goes in %o1)
- *	[%sp + 128 + 8]		first word of saved state (sigcontext)
+ *	[%sp + 128 + 4]		signal code (ignored)
+ *	[%sp + 128 + 8]		siginfo pointer(goes in %o1)
+ *	[%sp + 128 + 16]	first word of saved state (sigcontext)
  *	    .
  *	    .
  *	    .
- *	[%sp + NNN]	last word of saved state
+ *	[%sp + NNN]		last word of saved state
+ *	[%sp + ...]		siginfo structure
  * (followed by previous stack contents or top of signal stack).
  * The address of the function to call is in %g1; the old %g1 and %o0
  * have already been saved in the sigcontext.  We are running in a clean
  * window, all previous windows now being saved to the stack.
  *
+ * XXX this is bullshit
  * Note that [%sp + 128 + 8] == %sp + 128 + 16.  The copy at %sp+128+8
  * will eventually be removed, with a hole left in its place, if things
  * work out.
@@ -6327,9 +6330,9 @@ _C_LABEL(sigcode):
 	membar	#Sync
 	rd	%y, %l1			! in any case, save %y
 	lduw	[%fp + BIAS + 128], %o0	! sig
-	lduw	[%fp + BIAS + 128 + 4], %o1	! code
-	call	%g1			! (*sa->sa_handler)(sig,code,scp)
-	 add	%fp, BIAS + 128 + 8, %o2	! scp
+	ldx	[%fp + BIAS + 128 + 8], %o1	! siginfo
+	call	%g1			! (*sa->sa_handler)(sig, sip, scp)
+	 add	%fp, BIAS + 128 + 16, %o2	! scp
 
 	/*
 	 * Now that the handler has returned, re-establish all the state
@@ -6366,7 +6369,7 @@ _C_LABEL(sigcode):
 	membar	#Sync
 
 	restore	%g0, SYS_sigreturn, %g1 ! get registers back & set syscall #
-	add	%sp, BIAS + 128 + 8, %o0! compute scp
+	add	%sp, BIAS + 128 + 16, %o0! compute scp
 !	andn	%o0, 0x0f, %o0
 	t	ST_SYSCALL		! sigreturn(scp)
 	! sigreturn does not return unless it fails

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.12 2001/08/30 15:26:57 jason Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.13 2001/08/30 17:58:27 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -502,6 +502,7 @@ int sigpid = 0;
 
 struct sigframe {
 	int	sf_signo;		/* signal number */
+	int	sf_code;		/* signal code (unused) */
 	siginfo_t *sf_sip;		/* points to siginfo_t */
 #ifndef __arch64__
 	struct	sigcontext *sf_scp;	/* SunOS user addr of sigcontext */
