@@ -1,4 +1,4 @@
-/*	$OpenBSD: dio.c,v 1.5 1997/07/06 08:01:48 downsj Exp $	*/
+/*	$OpenBSD: dio.c,v 1.6 1997/10/06 06:44:49 millert Exp $	*/
 /*	$NetBSD: dio.c,v 1.7 1997/05/05 21:00:32 thorpej Exp $	*/
 
 /*-
@@ -148,7 +148,10 @@ dioattach(parent, self, aux)
 		/* Fill out attach args. */
 		bzero(&da, sizeof(da));
 		da.da_scode = scode;
-		da.da_id = DIO_ID(va);
+		if (scode == 7 && internalhpib)
+			da.da_id = DIO_DEVICE_ID_IHPIB;
+		else
+			da.da_id = DIO_ID(va);
 
 		if (DIO_ISFRAMEBUFFER(da.da_id))
 			da.da_secid = DIO_SECID(va);
