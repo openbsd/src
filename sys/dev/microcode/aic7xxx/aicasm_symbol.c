@@ -1,4 +1,4 @@
-/* $OpenBSD: aicasm_symbol.c,v 1.7 2003/08/28 02:24:04 krw Exp $ */
+/* $OpenBSD: aicasm_symbol.c,v 1.8 2003/10/20 17:22:13 deraadt Exp $ */
 /*
  * Aic7xxx SCSI host adapter firmware asssembler symbol table implementation
  *
@@ -67,7 +67,8 @@ symbol_create(name)
 		exit(EX_SOFTWARE);
 	}
 	memset(new_symbol, 0, sizeof(*new_symbol));
-	new_symbol->name = strdup(name);
+	if ((new_symbol->name = strdup(name)) == NULL)
+		stop("strdup failed", EX_SOFTWARE);
 	new_symbol->type = UNINITIALIZED;
 	return (new_symbol);
 }
