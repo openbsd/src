@@ -1,4 +1,4 @@
-/*	$OpenBSD: footbridge.c,v 1.1 2004/02/01 05:09:49 drahn Exp $	*/
+/*	$OpenBSD: footbridge.c,v 1.2 2004/02/23 05:23:17 drahn Exp $	*/
 /*	$NetBSD: footbridge.c,v 1.7 2002/05/16 01:01:33 thorpej Exp $	*/
 
 /*
@@ -223,14 +223,6 @@ footbridge_attach(parent, self, aux)
 	*/
 	fba.fba_pba.pba_bus = 0;
 	config_found(self, &fba.fba_pba, footbridge_print);
-
-	/* Attach a time-of-day clock device */
-	fba.fba_tca.ta_name = "todclock";
-	fba.fba_tca.ta_rtc_arg = NULL;
-	fba.fba_tca.ta_rtc_write = NULL;
-	fba.fba_tca.ta_rtc_read = NULL;
-	fba.fba_tca.ta_flags = TODCLOCK_FLAG_FAKE;
-	config_found(self, &fba.fba_tca, footbridge_print); 
 
 	/* Attach uart device */
 	fba.fba_fca.fca_name = "fcom";
