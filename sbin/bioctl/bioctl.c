@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.4 2005/04/04 22:43:07 marco Exp $       */
+/* $OpenBSD: bioctl.c,v 1.5 2005/04/05 19:45:06 marco Exp $       */
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
  * All rights reserved.
@@ -71,7 +71,7 @@ main(int argc, char *argv[])
 	char *bioc_dev = NULL;
 	char *al_arg = NULL; /* argument to alarm */
 	char *ss_arg = NULL; /* argument to start/stop */
-	char inq[36];
+	char inq[INQSIZE];
 
 	struct dev *delm;
 
@@ -207,7 +207,8 @@ main(int argc, char *argv[])
 				if (subfunc & F_INQUIRY) {
 					SLIST_FOREACH(delm, &ul, next) {
 						bio_pt_inquire(delm->channel,
-						    delm->target, &inq[0]);
+						    delm->target, F_NOISY,
+						    &inq[0]);
 					}
 				}
 
@@ -613,7 +614,7 @@ bio_pt_readcap(u_int8_t c, u_int8_t t)
 
 /* inquire device */
 u_int32_t
-bio_pt_inquire(u_int8_t c, u_int8_t t, u_int8_t *inq)
+bio_pt_inquire(u_int8_t c, u_int8_t t, u_int8_t flags, u_int8_t *inq)
 {
 	bioc_scsicmd bpt;
 	int rv, i;
@@ -624,9 +625,9 @@ bio_pt_inquire(u_int8_t c, u_int8_t t, u_int8_t *inq)
 	bpt.target = t;
 	bpt.cdblen = 6;
 	bpt.cdb[0] = INQUIRY;
-	bpt.cdb[4] = 36;   /* LENGTH  */
+	bpt.cdb[4] = INQSIZE;   /* LENGTH  */
 	bpt.data = inq;    /* set up return data pointer */
-	bpt.datalen = 36;  /* minimum INQ size */
+	bpt.datalen = INQSIZE;  /* minimum INQ size */
 	bpt.direction = BIOC_DIRIN;
 	bpt.senselen = 32; /* silly since the kernel overrides it */
 
@@ -639,22 +640,15 @@ bio_pt_inquire(u_int8_t c, u_int8_t t, u_int8_t *inq)
 		if (bpt.sensebuf[0] == 0x70 || bpt.sensebuf[0] == 0x71)
 			print_sense(&bpt.sensebuf[0], bpt.senselen);
 		else
-			printf("inquiry failed without sense data\n");
+			if (flags & F_NOISY)
+				printf("device %d:%d did not respond to "
+				    "INQUIRY command\n", c, t);
 
 		return 0;
 	}
 
-	if (debug) {
-		printf("INQUIRY: ");
-		printf("c: %u t: %u INQUIRY:", c, t);
-		for (i = 0;  i < bpt.datalen; i++) {
-			if (i < 8)
-				printf("%0x ", inq[i]);
-			else
-				printf("%c", inq[i] < ' ' ? ' ' : inq[i]);
-		}
-		printf("\n");
-	}
+	printf("channel: %u target: %2u ", c, t);
+	print_inquiry(flags, inq, bpt.datalen);
 
 	return 1;
 }
@@ -705,34 +699,40 @@ bio_pt_enum(void)
 	bioc_scsicmd bpt;
 	u_int32_t c, t, i, d;
 	int rv;
-	u_int8_t inq[36];
+	u_int8_t inq[INQSIZE];
 
 	struct dev *delm;
 
 	d = 0;
 	for (c = 0; c < 2 /* FIXME */; c++) {
 		for (t = 0; t < 16 /* FIXME */; t++) {
-			if (bio_pt_inquire(c, t, &inq[0])) {
-				printf("disk %u: c: %u t: %u\n", d, c, t);
+			if (bio_pt_inquire(c, t, F_SILENCE, &inq[0])) {
+				if (inq[0] & SID_QUAL)
+					continue; /* invalid device */
+
 				delm = malloc(sizeof(struct dev));
 				if (delm == NULL)
 					errx(1, "not enough memory");
 				delm->id = d++;
 				delm->target = t;
 				delm->channel = c;
+				delm->type = inq[0];
+				if (delm->type == T_DIRECT) {
+					/* FIXME check the return value */
+					if (debug)
+						printf("\n");
+
+					delm->capacity = bio_pt_readcap(
+					    delm->channel, delm->target);
+					printf(" ");
+					print_cap(delm->capacity);
+				}
+				printf("\n");
+
 				SLIST_INSERT_HEAD(&devices, delm, next);
 			}
-		}
-	}
-
-	/* silly to do this here instead of in the for loop */
-	SLIST_FOREACH(delm, &devices, next) {
-		/* FIXME check the return value */
-		delm->capacity = bio_pt_readcap(delm->channel, delm->target);
-		if (debug)
-			printf("%p: %u %u %u %llu\n", delm, delm->id,
-			    delm->channel, delm->target, delm->capacity);
-	}
+		} /* for t */
+	} /* for c */
 }
 
 /* printf sense data */
@@ -750,4 +750,69 @@ print_sense(u_int8_t *sensebuf, u_int8_t sensebuflen)
 	printf("\n");
 
 	/* FIXME add some pretty decoding here */
+}
+
+void
+print_inquiry(u_int8_t flags, u_int8_t *inq, u_int8_t inqlen)
+{
+	u_int8_t i;
+
+	if (inqlen < INQSIZE) {
+		/* INQUIRY shall return at least 36 bytes */
+		printf("invalid INQUIRY buffer size\n");
+		return;
+	}
+
+	if (SID_QUAL & inq[0]) {
+		printf("invalid device\n");
+		return;
+	}
+
+	switch (SID_TYPE & inq[0]) {
+	case T_DIRECT:
+		printf("disk ");
+		break;
+
+	case T_PROCESSOR:
+		printf("proc ");
+		break;
+
+	default:
+		printf("unsuported device type\n");
+		return;
+	}
+
+	for (i = 0;  i < inqlen; i++) {
+		if (i < 8) {
+			if ((flags & F_NOISY) || debug)
+				printf("%02x ", inq[i]);
+		}
+		else
+			printf("%c", inq[i] < ' ' ? ' ' : inq[i]);
+	}
+}
+
+void print_cap(u_int64_t cap)
+{
+	if (cap / S_TERA > 1) {
+		printf(" %3llu TB", cap / S_TERA);
+		return;
+	}
+
+	if (cap / S_GIGA > 1) {
+		printf(" %3llu GB", cap / S_GIGA);
+		return;
+	}
+
+	if (cap / S_MEGA > 1) {
+		printf(" %3llu MB", cap / S_MEGA);
+		return;
+	}
+
+	if (cap / S_KILO > 1) {
+		printf(" %3llu MB", cap / S_KILO);
+		return;
+	}
+
+	printf(" %llu B", cap);
 }
