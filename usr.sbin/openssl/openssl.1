@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.23 2003/11/21 15:12:31 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.24 2003/11/26 21:17:17 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -2138,22 +2138,22 @@ option was added in
 .Sh DSA
 .Nm openssl dsa
 .Bk -words
-.Op Fl inform Ar DER | PEM
-.Op Fl outform Ar DER | PEM
-.Op Fl in Ar filename
-.Op Fl passin Ar arg
-.Op Fl out Ar filename
-.Op Fl passout Ar arg
-.Op Fl pubin
-.Op Fl pubout
 .Oo
 .Fl des | des3 | aes128 | aes192 |
 .Fl aes256
 .Oc
-.Op Fl text
-.Op Fl noout
 .Op Fl modulus
+.Op Fl noout
+.Op Fl text
 .Op Fl engine Ar id
+.Op Fl in Ar filename
+.Op Fl inform Ar DER | PEM
+.Op Fl out Ar filename
+.Op Fl outform Ar DER | PEM
+.Op Fl passin Ar arg
+.Op Fl passout Ar arg
+.Op Fl pubin
+.Op Fl pubout
 .Ek
 .Pp
 The
@@ -2171,57 +2171,6 @@ command.
 .Pp
 The options are as follows:
 .Bl -tag -width "XXXX"
-.It Fl inform Ar DER | PEM
-This specifies the input format.
-The
-.Ar DER
-argument with a private key uses an ASN1 DER encoded form of an ASN.1
-SEQUENCE consisting of the values of version
-.Pq currently zero ,
-p, q, g,
-the public and private key components, respectively, as ASN.1 INTEGERs.
-When used with a public key it uses a
-.Em SubjectPublicKeyInfo
-structure: it is an error if the key is not DSA.
-.Pp
-The
-.Ar PEM
-form is the default format:
-It consists of the DER format base64
-encoded with additional header and footer lines.
-In the case of a private key, PKCS#8 format is also accepted.
-.It Fl outform Ar DER | PEM
-This specifies the output format; the options have the same meaning as the
-.Fl inform
-option.
-.It Fl in Ar filename
-This specifies the input
-.Ar filename
-to read a key from or standard input if this option is not specified.
-If the key is encrypted, a pass phrase will be prompted for.
-.It Fl passin Ar arg
-The input file password source.
-For more information about the format of
-.Ar arg ,
-see the
-.Sx PASS PHRASE ARGUMENTS
-section above.
-.It Fl out Ar filename
-This specifies the output
-.Ar filename
-to write a key to, or standard output if not specified.
-If any encryption options are set then a pass phrase will be
-prompted for.
-The output filename should
-.Em not
-be the same as the input filename.
-.It Fl passout Ar arg
-The output file password source.
-For more information about the format of
-.Ar arg ,
-see the
-.Sx PASS PHRASE ARGUMENTS
-section above.
 .It Xo
 .Fl des | des3 | aes128 |
 .Fl aes192 | aes256
@@ -2239,19 +2188,6 @@ the pass phrase.
 These options can only be used with
 .Ar PEM
 format output files.
-.It Fl text
-Prints out the public/private key components and parameters.
-.It Fl noout
-This option prevents output of the encoded version of the key.
-.It Fl modulus
-This option prints out the value of the public key component of the key.
-.It Fl pubin
-By default, a private key is read from the input file.
-With this option a public key is read instead.
-.It Fl pubout
-By default, a private key is output.
-With this option a public key will be output instead.
-This option is automatically set if the input is a public key.
 .It Fl engine Ar id
 Specifying an engine (by it's unique
 .Ar id
@@ -2260,6 +2196,70 @@ string) will cause
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed.
 The engine will then be set as the default for all available algorithms.
+.It Fl in Ar filename
+This specifies the input
+.Ar filename
+to read a key from or standard input if this option is not specified.
+If the key is encrypted, a pass phrase will be prompted for.
+.It Fl inform Ar DER | PEM
+This specifies the input format.
+The
+.Ar DER
+argument with a private key uses an ASN1 DER encoded form of an ASN.1
+SEQUENCE consisting of the values of version
+.Pq currently zero ,
+P, Q, G,
+the public and private key components, respectively, as ASN.1 INTEGERs.
+When used with a public key it uses a
+.Em SubjectPublicKeyInfo
+structure: it is an error if the key is not DSA.
+.Pp
+The
+.Ar PEM
+form is the default format:
+It consists of the DER format base64
+encoded with additional header and footer lines.
+In the case of a private key, PKCS#8 format is also accepted.
+.It Fl modulus
+This option prints out the value of the public key component of the key.
+.It Fl noout
+This option prevents output of the encoded version of the key.
+.It Fl out Ar filename
+This specifies the output
+.Ar filename
+to write a key to, or standard output if not specified.
+If any encryption options are set then a pass phrase will be
+prompted for.
+The output filename should
+.Em not
+be the same as the input filename.
+.It Fl outform Ar DER | PEM
+This specifies the output format; the options have the same meaning as the
+.Fl inform
+option.
+.It Fl passin Ar arg
+The input file password source.
+For more information about the format of
+.Ar arg ,
+see the
+.Sx PASS PHRASE ARGUMENTS
+section above.
+.It Fl passout Ar arg
+The output file password source.
+For more information about the format of
+.Ar arg ,
+see the
+.Sx PASS PHRASE ARGUMENTS
+section above.
+.It Fl pubin
+By default, a private key is read from the input file.
+With this option a public key is read instead.
+.It Fl pubout
+By default, a private key is output.
+With this option a public key will be output instead.
+This option is automatically set if the input is a public key.
+.It Fl text
+Prints out the public/private key components and parameters.
 .El
 .Sh DSA NOTES
 The
