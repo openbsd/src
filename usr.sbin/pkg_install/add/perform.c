@@ -1,7 +1,7 @@
-/*	$OpenBSD: perform.c,v 1.12 2000/03/27 17:14:59 espie Exp $	*/
+/*	$OpenBSD: perform.c,v 1.13 2000/04/16 22:02:26 espie Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: perform.c,v 1.12 2000/03/27 17:14:59 espie Exp $";
+static const char *rcsid = "$OpenBSD: perform.c,v 1.13 2000/04/16 22:02:26 espie Exp $";
 #endif
 
 /*
@@ -28,6 +28,7 @@ static const char *rcsid = "$OpenBSD: perform.c,v 1.12 2000/03/27 17:14:59 espie
 #include "lib.h"
 #include "add.h"
 
+#include <ctype.h>
 #include <signal.h>
 #include <sys/wait.h>
 
@@ -263,6 +264,15 @@ pkg_do(char *pkg)
 
 	if ((s=strrchr(PkgName, '-')) != NULL){
 	    strcpy(buf, PkgName);
+	    /* try to find a better version number */
+	    if (!isdigit(s[1])) {
+	    	char *t;
+		for (t = s-1; t >= PkgName; t--) 
+			if (*t == '-' && isdigit(t[1])) {
+				s = t;
+				break;
+			}
+	    }
 	    buf[s-PkgName+1]='*';
 	    buf[s-PkgName+2]='\0';
 
