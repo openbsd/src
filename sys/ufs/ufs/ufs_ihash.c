@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_ihash.c,v 1.7 1999/04/28 09:28:18 art Exp $	*/
+/*	$OpenBSD: ufs_ihash.c,v 1.8 2001/03/08 12:06:13 art Exp $	*/
 /*	$NetBSD: ufs_ihash.c,v 1.3 1996/02/09 22:36:04 christos Exp $	*/
 
 /*
@@ -163,10 +163,10 @@ ufs_ihashrem(ip)
 		return;
 
 	LIST_REMOVE(ip, i_hash);
- #ifdef DIAGNOSTIC
+#ifdef DIAGNOSTIC
 	ip->i_hash.le_next = NULL;
 	ip->i_hash.le_prev = NULL;
- #endif
+#endif
 	simple_unlock(&ufs_ihash_slock);
 
 }
