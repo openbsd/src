@@ -1,5 +1,5 @@
-#	$OpenBSD: GENERIC_APPLI,v 1.1 2001/03/23 00:06:00 niklas Exp $
-#	Template: GENERIC,v 1.248 2001/03/12 04:51:41 jason Exp $
+#	$OpenBSD: GENERIC_APPLI,v 1.2 2001/03/30 13:01:35 niklas Exp $
+#	Template: GENERIC,v 1.250 2001/03/29 14:20:45 aaron Exp $
 #
 #	GENERIC_APPLI -- Applitron Datasystem AB's GENERIC
 #
@@ -166,7 +166,7 @@ pccom*	at puc? port ?
 # requires a special cable that exchanges the RTS and DTR lines
 # options CY_HW_RTS
 cy0	at isa? iomem 0xd4000 irq 12	# ISA cyclom serial card
-#cy*	at pci?				# PCI cyclom serial card
+cy*	at pci?				# PCI cyclom serial card
 
 lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 lpt1	at isa? port 0x278
@@ -368,6 +368,7 @@ clct*	at pci? dev ? function ?		# CS4281 CrystalClear audio
 fms*	at pci? dev ? function ?		# Forte Media FM801
 auvia*	at pci? dev ? function ?		# VIA VT82C686A
 maestro* at pci? dev ? function ?		# ESS Maestro PCI
+yds*	at pci? dev ? function ?		# Yamaha YMF Audio
 sb0	at isa? port 0x220 irq 5 drq 1		# SoundBlaster
 sb*	at isapnp?
 ess*	at isapnp?				# ESS Tech ES188[78], ES888
@@ -383,6 +384,7 @@ mpu*	at isapnp?
 opl*	at eso?
 opl*	at sb?
 opl*	at ess?
+opl*	at yds?
 
 # MIDI support
 midi*	at pcppi?		# MIDI interface to the PC speaker
@@ -414,6 +416,7 @@ audio*	at fms?
 audio*	at auvia?
 audio*	at uaudio?
 audio*	at maestro?
+audio*	at yds?
 
 bktr0	at pci? dev ? function ?
 
