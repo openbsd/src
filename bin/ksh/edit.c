@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.18 2003/08/22 18:17:10 fgsch Exp $	*/
+/*	$OpenBSD: edit.c,v 1.19 2004/11/04 19:20:07 deraadt Exp $	*/
 
 /*
  * Command line editing - common code
@@ -19,6 +19,7 @@
 #endif /* OS_SCO */
 #include <sys/ioctl.h>
 #include <ctype.h>
+#include <libgen.h>
 #include "ksh_stat.h"
 
 
@@ -316,59 +317,6 @@ x_mode(onoff)
 	}
 
 	return prev;
-}
-
-/* NAME:
- *      promptlen - calculate the length of PS1 etc.
- *
- * DESCRIPTION:
- *      This function is based on a fix from guy@demon.co.uk
- *      It fixes a bug in that if PS1 contains '!', the length
- *      given by strlen() is probably wrong.
- *
- * RETURN VALUE:
- *      length
- */
-int
-promptlen(cp, spp)
-    const char  *cp;
-    const char **spp;
-{
-    int count = 0;
-    const char *sp = cp;
-    char delimiter = 0;
-    int indelimit = 0;
-
-    /* Undocumented AT&T ksh feature:
-     * If the second char in the prompt string is \r then the first char
-     * is taken to be a non-printing delimiter and any chars between two
-     * instances of the delimiter are not considered to be part of the
-     * prompt length
-     */
-    if (*cp && cp[1] == '\r') {
-	delimiter = *cp;
-	cp += 2;
-    }
-
-    for (; *cp; cp++) {
-	if (indelimit && *cp != delimiter)
-	    ;
-	else if (*cp == '\n' || *cp == '\r') {
-	    count = 0;
-	    sp = cp + 1;
-	} else if (*cp == '\t') {
-	    count = (count | 7) + 1;
-	} else if (*cp == '\b') {
-	    if (count > 0)
-		count--;
-	} else if (*cp == delimiter)
-	    indelimit = !indelimit;
-	else
-	    count++;
-    }
-    if (spp)
-	*spp = sp;
-    return count;
 }
 
 void

@@ -1,10 +1,11 @@
-/*	$OpenBSD: lex.c,v 1.18 2003/08/06 21:08:05 millert Exp $	*/
+/*	$OpenBSD: lex.c,v 1.19 2004/11/04 19:20:07 deraadt Exp $	*/
 
 /*
  * lexical analysis and source input
  */
 
 #include "sh.h"
+#include <libgen.h>
 #include <ctype.h>
 
 
@@ -1164,27 +1165,240 @@ set_prompt(to, s)
 	}
 }
 
-/* See also related routine, promptlen() in edit.c */
-void
-pprompt(cp, ntruncate)
-	const char *cp;
+static int
+dopprompt(sp, ntruncate, spp, doprint)
+	const char *sp;
 	int ntruncate;
+	const char **spp;
+	int doprint;
 {
-#if 0
-	char nbuf[32];
-	int c;
+	char strbuf[1024], tmpbuf[1024], *p, *str, nbuf[32], delimiter = '\0';
+	int len, c, n, totlen = 0, indelimit = 0;
+	const char *cp = sp, *ccp;
+	extern INT32 njobs;
+	struct tm *tm;
+	time_t t;
+
+	if (*cp && cp[1] == '\r') {
+		delimiter = *cp;
+		cp += 2;
+	}
 
 	while (*cp != 0) {
-		if (*cp != '!')
+		if (indelimit && *cp != delimiter)
+			;
+		else if (*cp == '\n' || *cp == '\r') {
+			totlen = 0;
+			sp = cp + 1;
+		} else if (*cp == '\t')
+			totlen = (totlen | 7) + 1;
+		else if (*cp == delimiter)
+			indelimit = !indelimit;
+
+		if (*cp == '\\') {
+			cp++;
+			if (!*cp)
+				break;
+			if (Flag(FSH))
+				snprintf(strbuf, sizeof strbuf, "\\%c", *cp);
+			else switch (*cp) {
+			case 'a':	/* '\' 'a' bell */
+				strbuf[0] = '\007';
+				strbuf[1] = '\0';
+				break;
+			case 'd':	/* '\' 'd' Dow Mon DD */ 
+				time(&t);
+				tm = localtime(&t);
+				strftime(strbuf, sizeof strbuf, "%a %b %d", tm);
+				break;
+			case 'D': /* '\' 'D' '{' strftime format '}' */
+				p = strchr(cp + 2, '}');
+				if (cp[1] != '{' || p == NULL) {
+					snprintf(strbuf, sizeof strbuf,
+					    "\\%c", *cp);
+					break;
+				}
+				strlcpy(tmpbuf, cp + 2, sizeof tmpbuf);
+				p = strchr(tmpbuf, '}');
+				if (p)
+					*p = '\0';
+				time(&t);
+				tm = localtime(&t);
+				strftime(strbuf, sizeof strbuf, tmpbuf, tm);
+				cp = strchr(cp + 2, '}');
+				break;
+			case 'e':	/* '\' 'e' escape */
+				strbuf[0] = '\033';
+				strbuf[1] = '\0';
+				break;
+			case 'h':	/* '\' 'h' shortened hostname */
+				gethostname(strbuf, sizeof strbuf);
+				p = strchr(strbuf, '.');
+				if (p)
+					*p = '\0';
+				break;
+			case 'H':	/* '\' 'H' full hostname */
+				gethostname(strbuf, sizeof strbuf);
+				break;
+			case 'j':	/* '\' 'j' number of jobs */
+				snprintf(strbuf, sizeof strbuf, "%d",
+				    j_njobs());
+				break;
+			case 'l':	/* '\' 'l' basename of tty */
+				p = ttyname(0);
+				if (p)
+					p = basename(p);
+				if (p)
+					strlcpy(strbuf, p, sizeof strbuf);
+				break;
+			case 'n':	/* '\' 'n' newline */
+				strbuf[0] = '\n';
+				strbuf[1] = '\0';
+				break;
+			case 'r':	/* '\' 'r' return */
+				strbuf[0] = '\r';
+				strbuf[1] = '\0';
+				break;
+			case 's':	/* '\' 's' basename $0 */
+				strlcpy(strbuf, kshname, sizeof strbuf);
+				break;
+			case 't':	/* '\' 't' 24 hour HH:MM:SS */
+				time(&t);
+				tm = localtime(&t);
+				strftime(strbuf, sizeof strbuf, "%T", tm);
+				break;
+			case 'T':	/* '\' 'T' 12 hour HH:MM:SS */
+				time(&t);
+				tm = localtime(&t);
+				strftime(strbuf, sizeof strbuf, "%l:%M:%S", tm);
+				break;
+			case '@':	/* '\' '@' 12 hour am/pm format */
+				time(&t);
+				tm = localtime(&t);
+				strftime(strbuf, sizeof strbuf, "%r", tm);
+				break;
+			case 'A':	/* '\' 'A' 24 hour HH:MM */
+				time(&t);
+				tm = localtime(&t);
+				strftime(strbuf, sizeof strbuf, "%R", tm);
+				break;
+			case 'u':	/* '\' 'u' username */
+				p = getlogin();
+				if (p)
+					strlcpy(strbuf, p, sizeof strbuf);
+				else
+					strbuf[0] = '\0';
+				break;
+			case 'v':	/* '\' 'v' version (short) */
+				p = strchr(ksh_version, ' ');
+				if (p)
+					p = strchr(p + 1, ' ');
+				if (p) {
+					p++;
+					strlcpy(strbuf, p, sizeof strbuf);
+					p = strchr(strbuf, ' ');
+					if (p)
+						*p = '\0';
+				}
+				break;
+			case 'V':	/* '\' 'V' version (long) */
+				strlcpy(strbuf, ksh_version, sizeof strbuf);
+				break;
+			case 'w':	/* '\' 'w' cwd */
+				p = str_val(global("PWD"));
+				if (strcmp(p, str_val(global("HOME"))) == 0) {
+					strbuf[0] = '~';
+					strbuf[1] = '\0';
+				} else
+					strlcpy(strbuf, p, sizeof strbuf);
+				break;
+			case 'W':	/* '\' 'W' basename(cwd) */
+				p = str_val(global("PWD"));
+				strlcpy(strbuf, basename(p), sizeof strbuf);
+				break;
+			case '!':	/* '\' '!' history line number XXX busted */
+				snprintf(strbuf, sizeof strbuf, "%d",
+				    source->line + 1);
+				break;
+			case '#':	/* '\' '#' command line number XXX busted */
+				snprintf(strbuf, sizeof strbuf, "%d",
+				    source->line + 1);
+				break;
+			case '$':	/* '\' '$' $ or # XXX busted */
+				strbuf[0] = ksheuid ? '$' : '#';
+				strbuf[1] = '\0';
+				break;
+			case '0':	/* '\' '#' '#' ' #' octal numeric handling */
+			case '1':
+			case '2':
+			case '3':
+			case '4':
+			case '5':
+			case '6':
+			case '7':
+				if ((cp[1] > '7' || cp[1] < '0') ||
+				    (cp[2] > '7' || cp[2] < '0')) {
+					snprintf(strbuf, sizeof strbuf,
+					    "\\%c", *cp);
+					break;
+				}
+				n = cp[0] * 8 * 8 + cp[1] * 8 + cp[2];
+				snprintf(strbuf, sizeof strbuf, "%c", n);
+				cp += 2;
+				break;
+			case '\\':	/* '\' '\' */
+				strbuf[0] = '\\';
+				strbuf[1] = '\0';
+				break;
+			case '[': /* '\' '[' text '\' ']' */
+				ccp = ++cp;
+				while (ccp[0] != '\\' && ccp[1] != ']') {
+					if (ccp[0] == '\0')
+						break;
+					ccp++;
+				}
+				if (ccp[0] == '\0') {
+					snprintf(strbuf, sizeof strbuf,
+					    "\\%c", *cp);
+					break;
+				}
+				n = ccp - cp;
+				strlcpy(strbuf, cp, sizeof strbuf);
+				if (n < sizeof strbuf)
+					strbuf[n] = '\0';
+				cp = ccp + 1;
+				break;
+
+			default:
+				snprintf(strbuf, sizeof strbuf, "\\%c", *cp);
+				break;
+			}
+			cp++;
+
+			str = strbuf;
+			len = strlen(str);
+			if (ntruncate) {
+				if (ntruncate >= len) {
+					ntruncate -= len;
+					continue;
+				}
+				str += ntruncate;
+				len -= ntruncate;
+				ntruncate = 0;
+			}
+			if (doprint)
+				shf_write(str, len, shl_out);
+			totlen += len;
+			continue;
+		} else if (*cp != '!')
 			c = *cp++;
 		else if (*++cp == '!')
 			c = *cp++;
 		else {
-			int len;
 			char *p;
 
 			shf_snprintf(p = nbuf, sizeof(nbuf), "%d",
-				source->line + 1);
+			    source->line + 1);
 			len = strlen(nbuf);
 			if (ntruncate) {
 				if (ntruncate >= len) {
@@ -1195,17 +1409,39 @@ pprompt(cp, ntruncate)
 				len -= ntruncate;
 				ntruncate = 0;
 			}
-			shf_write(p, len, shl_out);
+			if (doprint)
+				shf_write(p, len, shl_out);
+			totlen += len;
 			continue;
 		}
 		if (ntruncate)
 			--ntruncate;
-		else
+		else if (doprint) {
 			shf_putc(c, shl_out);
+		}
+		totlen++;
 	}
-#endif /* 0 */
-	shf_puts(cp + ntruncate, shl_out);
-	shf_flush(shl_out);
+	if (doprint)
+		shf_flush(shl_out);
+	if (spp)
+		*spp = sp;
+	return (totlen);
+}
+
+void
+pprompt(cp, ntruncate)
+	const char *cp;
+	int ntruncate;
+{
+	dopprompt(cp, ntruncate, NULL, 1);
+}
+
+int
+promptlen(cp, spp)
+    const char  *cp;
+    const char **spp;
+{
+	return dopprompt(cp, 0, spp, 0);
 }
 
 /* Read the variable part of a ${...} expression (ie, up to but not including

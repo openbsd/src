@@ -1,4 +1,4 @@
-/*	$OpenBSD: jobs.c,v 1.21 2003/11/10 21:26:39 millert Exp $	*/
+/*	$OpenBSD: jobs.c,v 1.22 2004/11/04 19:20:07 deraadt Exp $	*/
 
 /*
  * Process and job control
@@ -177,7 +177,7 @@ static Job		*async_job;
 static pid_t		async_pid;
 
 static int		nzombie;	/* # of zombies owned by this process */
-static INT32		njobs;		/* # of jobs started */
+INT32			njobs;		/* # of jobs started */
 static int		child_max;	/* CHILD_MAX */
 
 
@@ -990,6 +990,26 @@ j_stopped_running()
 
 	return 0;
 }
+
+int
+j_njobs(void)
+{
+	Job *j;
+	int nj = 0;
+#ifdef JOB_SIGS
+	sigset_t omask;
+
+	sigprocmask(SIG_BLOCK, &sm_sigchld, &omask);
+#endif /* JOB_SIGS */
+	for (j = job_list; j; j = j->next)
+		nj++;
+		
+#ifdef JOB_SIGS
+	sigprocmask(SIG_SETMASK, &omask, (sigset_t *) 0);
+#endif /* JOB_SIGS */
+	return nj;
+}
+
 
 /* list jobs for jobs built-in */
 int
