@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 1998/09/29 07:19:25 mickey Exp $
+#	$OpenBSD: Makefile,v 1.6 1999/04/20 19:57:27 mickey Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -28,14 +28,8 @@ SRCS+=	alloc.c exit.c getfile.c gets.c globals.c strcmp.c strlen.c \
 SRCS+=	close.c closeall.c dev.c disklabel.c dkcksum.c fstat.c ioctl.c lseek.c \
 	open.c read.c stat.c write.c cread.c readdir.c cons.c
 
-# network routines
-SRCS+=	arp.c ether.c in_cksum.c net.c netif.c rpc.c
-
-# network info services
-SRCS+=	bootp.c bootparam.c rarp.c
-
 # boot filesystems
-SRCS+=	ufs.c nfs.c cd9660.c
+SRCS+=	ufs.c cd9660.c
 
 .PATH:  ${DIR_SA}
 
@@ -45,6 +39,6 @@ install:
 
 .include <bsd.lib.mk>
 
-CPPFLAGS+=-DHEAP_LIMIT=${HEAP_LIMIT} ${DEBUGFLAGS}
+CPPFLAGS+=-DHEAP_LIMIT=${HEAP_LIMIT} ${DEBUGFLAGS} -DNO_NET
 CPPFLAGS+=-I${S}/stand/boot
 CFLAGS+=${SACFLAGS} -D__INTERNAL_LIBSA_CREAD -DCOMPAT_UFS
