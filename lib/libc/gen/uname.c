@@ -76,8 +76,13 @@ uname(name)
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_OSVERSION;
 	len = sizeof(name->version);
-	if (sysctl(mib, 2, &name->version, &len, NULL, 0) == -1)
-		rval = -1;
+	if (sysctl(mib, 2, &name->version, &len, NULL, 0) == -1) {
+		mib[0] = CTL_KERN;
+		mib[1] = KERN_VERSION;
+		len = sizeof(name->version);
+		if (sysctl(mib, 2, &name->version, &len, NULL, 0) == -1)
+			rval = -1;
+	}
 
 	mib[0] = CTL_HW;
 	mib[1] = HW_MACHINE;
