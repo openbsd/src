@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpdump.c,v 1.21 2001/01/19 17:53:19 deraadt Exp $	*/
+/*	$OpenBSD: tcpdump.c,v 1.22 2001/06/25 23:05:17 provos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -26,7 +26,7 @@ static const char copyright[] =
     "@(#) Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n";
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/tcpdump.c,v 1.21 2001/01/19 17:53:19 deraadt Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/tcpdump.c,v 1.22 2001/06/25 23:05:17 provos Exp $ (LBL)";
 #endif
 
 /*
@@ -110,6 +110,7 @@ static struct printer printers[] = {
 	{ atm_if_print,		DLT_ATM_RFC1483 },
 	{ null_if_print, 	DLT_LOOP },
 	{ enc_if_print, 	DLT_ENC },
+	{ pflog_if_print, 	DLT_PFLOG },
 	{ NULL,			0 },
 };
 
