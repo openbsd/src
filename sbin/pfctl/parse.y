@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.184 2002/11/13 16:51:37 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.185 2002/11/13 18:24:53 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -164,12 +164,14 @@ void	expand_rdr(struct pf_rdr *, struct node_if *, struct node_proto *,
 void	expand_nat(struct pf_nat *, struct node_if *, struct node_proto *,
 	    struct node_host *, struct node_port *,
 	    struct node_host *, struct node_port *);
+void	expand_label_if(const char *, char *, const char *);
 void	expand_label_addr(const char *, char *, u_int8_t, struct node_host *);
 void	expand_label_port(const char *, char *, struct node_port *);
 void	expand_label_proto(const char *, char *, u_int8_t);
 void	expand_label_nr(const char *, char *);
-void	expand_label(char *, u_int8_t, struct node_host *, struct node_port *,
-	    struct node_host *, struct node_port *, u_int8_t);
+void	expand_label(char *, const char *, u_int8_t, struct node_host *,
+	    struct node_port *, struct node_host *, struct node_port *,
+	    u_int8_t);
 void	expand_rule(struct pf_rule *, struct node_if *, struct node_proto *,
 	    struct node_host *, struct node_port *, struct node_host *,
 	    struct node_port *, struct node_uid *, struct node_gid *,
@@ -1914,6 +1916,24 @@ struct keywords {
 	} while (0)
 
 void
+expand_label_if(const char *name, char *label, const char *ifname)
+{
+	char tmp[PF_RULE_LABEL_SIZE];
+	char *p;
+
+	while ((p = strstr(label, name)) != NULL) {
+		tmp[0] = 0;
+		strlcat(tmp, label, p-label+1);
+		if (!*ifname)
+			strlcat(tmp, "any", PF_RULE_LABEL_SIZE);
+		else
+			strlcat(tmp, ifname, PF_RULE_LABEL_SIZE);
+		strlcat(tmp, p+strlen(name), PF_RULE_LABEL_SIZE);
+		strncpy(label, tmp, PF_RULE_LABEL_SIZE);
+	}
+}
+
+void
 expand_label_addr(const char *name, char *label, sa_family_t af,
     struct node_host *host)
 {
@@ -2031,11 +2051,12 @@ expand_label_nr(const char *name, char *label)
 }
 
 void
-expand_label(char *label, sa_family_t af,
+expand_label(char *label, const char *ifname, sa_family_t af,
     struct node_host *src_host, struct node_port *src_port,
     struct node_host *dst_host, struct node_port *dst_port,
     u_int8_t proto)
 {
+	expand_label_if("$if", label, ifname);
 	expand_label_addr("$srcaddr", label, af, src_host);
 	expand_label_addr("$dstaddr", label, af, dst_host);
 	expand_label_port("$srcport", label, src_port);
@@ -2098,7 +2119,7 @@ expand_rule(struct pf_rule *r,
 			memcpy(r->ifname, interface->ifname, sizeof(r->ifname));
 
 		strlcpy(r->label, label, PF_RULE_LABEL_SIZE);
-		expand_label(r->label, r->af, src_host, src_port,
+		expand_label(r->label, r->ifname, r->af, src_host, src_port,
 		    dst_host, dst_port, proto->proto);
 		r->ifnot = interface->not;
 		r->proto = proto->proto;

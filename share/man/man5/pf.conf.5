@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.104 2002/11/08 08:08:47 mpech Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.105 2002/11/13 18:24:53 dhartmei Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -517,6 +517,8 @@ shows per-rule statistics for rules that have labels.
 The following macros can be used in labels:
 .Pp
 .Bl -tag -width $srcaddr -compact -offset indent
+.It Em $if
+the interface.
 .It Em $srcaddr
 the source IP address.
 .It Em $dstaddr
