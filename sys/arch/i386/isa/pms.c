@@ -1,4 +1,4 @@
-/*	$OpenBSD: pms.c,v 1.13 1997/05/30 07:35:00 deraadt Exp $	*/
+/*	$OpenBSD: pms.c,v 1.14 1997/05/30 19:31:26 deraadt Exp $	*/
 /*	$NetBSD: pms.c,v 1.29 1996/05/12 23:12:42 mycroft Exp $	*/
 
 /*-
@@ -441,7 +441,7 @@ pmsintr(arg)
 			}
 
 			/* For GlidePoint tapping feature. treat as LBUTTON */
-			if ((buttons & PS2BUTMASK) == 0)
+			if ((buttons & (PS2LBUTMASK|PS2RBUTMASK|PS2MBUTMASK)) == 0)
 				buttons |= PS2LBUTMASK;
 
 			if ((buttons & 0xc0) == 0)
