@@ -16,7 +16,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: clientloop.c,v 1.16 2000/04/04 15:19:42 markus Exp $");
+RCSID("$Id: clientloop.c,v 1.17 2000/04/04 17:29:46 markus Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -320,26 +320,29 @@ client_wait_until_can_do_something(fd_set * readset, fd_set * writeset)
 
 	/* Initialize select masks. */
 	FD_ZERO(readset);
+	FD_ZERO(writeset);
 
-	/* Read from the connection, unless our buffers are full. */
 	if (!compat20) {
+		/* Read from the connection, unless our buffers are full. */
 		if (buffer_len(&stdout_buffer) < buffer_high &&
 		    buffer_len(&stderr_buffer) < buffer_high &&
 		    channel_not_very_much_buffered_data())
 			FD_SET(connection_in, readset);
-	} else {
-		FD_SET(connection_in, readset);
-	}
-
-	/*
-	 * Read from stdin, unless we have seen EOF or have very much
-	 * buffered data to send to the server.
-	 */
-	if (!compat20)
+		/*
+		 * Read from stdin, unless we have seen EOF or have very much
+		 * buffered data to send to the server.
+		 */
 		if (!stdin_eof && packet_not_very_much_data_to_write())
 			FD_SET(fileno(stdin), readset);
 
-	FD_ZERO(writeset);
+		/* Select stdout/stderr if have data in buffer. */
+		if (buffer_len(&stdout_buffer) > 0)
+			FD_SET(fileno(stdout), writeset);
+		if (buffer_len(&stderr_buffer) > 0)
+			FD_SET(fileno(stderr), writeset);
+	} else {
+		FD_SET(connection_in, readset);
+	}
 
 	/* Add any selections by the channel mechanism. */
 	channel_prepare_select(readset, writeset);
@@ -347,16 +350,6 @@ client_wait_until_can_do_something(fd_set * readset, fd_set * writeset)
 	/* Select server connection if have data to write to the server. */
 	if (packet_have_data_to_write())
 		FD_SET(connection_out, writeset);
-
-	if (!compat20) {
-		/* Select stdout if have data in buffer. */
-		if (buffer_len(&stdout_buffer) > 0)
-			FD_SET(fileno(stdout), writeset);
-
-		/* Select stderr if have data in buffer. */
-		if (buffer_len(&stderr_buffer) > 0)
-			FD_SET(fileno(stderr), writeset);
-	}
 
 /* move UP XXX */
 	/* Update maximum file descriptor number, if appropriate. */
@@ -433,10 +426,10 @@ client_suspend_self()
 }
 
 void 
-client_process_input(fd_set * readset)
+client_process_net_input(fd_set * readset)
 {
-	int len, pid;
-	char buf[8192], *s;
+	int len;
+	char buf[8192];
 
 	/*
 	 * Read input from the server, and add any such data to the buffer of
@@ -473,9 +466,13 @@ client_process_input(fd_set * readset)
 		}
 		packet_process_incoming(buf, len);
 	}
+}
 
-	if (compat20)
-		return;
+void 
+client_process_input(fd_set * readset)
+{
+	int len, pid;
+	char buf[8192], *s;
 
 	/* Read input from stdin. */
 	if (FD_ISSET(fileno(stdin), readset)) {
@@ -781,7 +778,7 @@ client_loop(int have_pty, int escape_char_arg)
 		enter_raw_mode();
 
 	/* Check if we should immediately send of on stdin. */
-	if(!compat20)
+	if (!compat20)
 		client_check_initial_eof_on_stdin();
 
 	/* Main loop of the client for the interactive session mode. */
@@ -800,7 +797,7 @@ client_loop(int have_pty, int escape_char_arg)
 		 * Make packets of buffered stdin data, and buffer them for
 		 * sending to the server.
 		 */
-		if(!compat20)
+		if (!compat20)
 			client_make_packets_from_stdin_data();
 
 		/*
@@ -831,18 +828,21 @@ client_loop(int have_pty, int escape_char_arg)
 		/* Do channel operations. */
 		channel_after_select(&readset, &writeset);
 
-		/*
-		 * Process input from the connection and from stdin. Buffer
-		 * any data that is available.
-		 */
-		client_process_input(&readset);
+		/* Buffer input from the connection.  */
+		client_process_net_input(&readset);
 
-		/*
-		 * Process output to stdout and stderr.   Output to the
-		 * connection is processed elsewhere (above).
-		 */
-		if(!compat20)
+		if (quit_pending)
+			break;
+
+		if (!compat20) {
+			/* Buffer data from stdin */
+			client_process_input(&readset);
+			/*
+			 * Process output to stdout and stderr.  Output to
+			 * the connection is processed elsewhere (above).
+			 */
 			client_process_output(&writeset);
+		}
 
 		/* Send as much buffered packet data as possible to the sender. */
 		if (FD_ISSET(connection_out, &writeset))
