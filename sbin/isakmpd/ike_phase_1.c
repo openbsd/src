@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_phase_1.c,v 1.19 2000/10/07 06:58:07 niklas Exp $	*/
-/*	$EOM: ike_phase_1.c,v 1.28 2000/10/06 23:43:27 niklas Exp $	*/
+/*	$OpenBSD: ike_phase_1.c,v 1.20 2000/10/16 23:27:13 niklas Exp $	*/
+/*	$EOM: ike_phase_1.c,v 1.29 2000/10/14 18:50:04 angelos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -905,6 +905,12 @@ ike_phase_1_recv_ID (struct message *msg)
   int initiator = exchange->initiator;
   u_int8_t **id;
   size_t *id_len;
+
+  /*
+   * XXX Here, we could be checking that the received ID matches what
+   * we expect it to be (if anything). That information is contained
+   * in the [[exchange->name]:Remote-ID] section.
+   */
 
   /* Choose the right fields to fill in */
   id = initiator ? &exchange->id_r : &exchange->id_i;
