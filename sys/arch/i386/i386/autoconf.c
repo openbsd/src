@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.21 1996/11/10 21:31:52 downsj Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.22 1996/12/05 14:27:50 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.20 1996/05/03 19:41:56 christos Exp $	*/
 
 /*-
@@ -216,8 +216,8 @@ setroot()
 #endif
 }
 
-#include "wdc.h"
-#if NWDC > 0
+#include "wd.h"
+#if NWD > 0
 extern	struct cfdriver wd_cd;
 #endif
 #include "sd.h"
@@ -246,10 +246,10 @@ struct	genericconf {
 	char *gc_name;
 	dev_t gc_major;
 } genericconf[] = {
-#if NWDC > 0
+#if NWD > 0
 	{ &wd_cd,  "wd",  0 },
 #endif
-#if NFDC > 0
+#if NFD > 0
 	{ &fd_cd,  "fd",  2 },
 #endif
 #if NSD > 0
