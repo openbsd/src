@@ -20,9 +20,12 @@
    Boston, MA 02111-1307, USA.  */
 
 #include "defs.h"
+#include "cli/cli-cmds.h"
+#include "command.h"
 #include "frame.h"
 #include "regcache.h"
 #include "target.h"
+#include "value.h"
 
 #include "gdb_assert.h"
 #include <fcntl.h>
@@ -30,6 +33,7 @@
 #include <nlist.h>
 #include "readline/readline.h"
 #include <sys/param.h>
+#include <sys/proc.h>
 #include <sys/user.h>
 
 #include "bsd-kvm.h"
@@ -39,6 +43,10 @@ kvm_t *core_kd;
 
 /* Address of process control block.  */
 struct pcb *bsd_kvm_paddr;
+
+/* Pointer to architecture-specific function that reconstructs the
+   register state from PCB and supplies it to REGCACHE.  */
+int (*bsd_kvm_supply_pcb)(struct regcache *regcache, struct pcb *pcb);
 
 /* Target ops for libkvm interface.  */
 struct target_ops bsd_kvm_ops;
@@ -104,6 +112,8 @@ bsd_kvm_xfer_memory (CORE_ADDR memaddr, char *myaddr, int len,
   return -1;
 }
 
+/* Fetch process control block at address PADDR.  */
+
 static int
 bsd_kvm_fetch_pcb (struct pcb *paddr)
 {
@@ -122,7 +132,10 @@ bsd_kvm_fetch_registers (int regnum)
   struct nlist nl[2];
 
   if (bsd_kvm_paddr)
-    bsd_kvm_fetch_pcb (bsd_kvm_paddr);
+    {
+      bsd_kvm_fetch_pcb (bsd_kvm_paddr);
+      return;
+    }
 
   /* On dumping core, BSD kernels store the faulting context (PCB)
      in the variable "dumppcb".  */
@@ -179,8 +192,8 @@ bsd_kvm_fetch_registers (int regnum)
       struct pcb *paddr;
 
       /* Found thread0.  */
-      nl[1].n_value += offsetof (struct thread, td_pcb);
-      if (kvm_read (core_kd, nl[1].n_value, &paddr, sizeof paddr) == -1)
+      nl[0].n_value += offsetof (struct thread, td_pcb);
+      if (kvm_read (core_kd, nl[0].n_value, &paddr, sizeof paddr) == -1)
 	error ("%s", kvm_geterr (core_kd));
 
       bsd_kvm_fetch_pcb (paddr);
@@ -190,13 +203,77 @@ bsd_kvm_fetch_registers (int regnum)
 
   error ("Cannot find a valid PCB");
 }
+
+
+/* Kernel memory interface commands.  */
+struct cmd_list_element *bsd_kvm_cmdlist;
+
+static void
+bsd_kvm_cmd (char *arg, int fromtty)
+{
+  /* ??? Should this become an alias for "target kvm"?  */
+}
+
+#ifndef HAVE_STRUCT_THREAD_TD_PCB
+
+static void
+bsd_kvm_proc_cmd (char *arg, int fromtty)
+{
+  CORE_ADDR addr;
+
+  if (arg == NULL)
+    error_no_arg ("proc address");
+
+  if (core_kd == NULL)
+    error ("No kernel memory image.");
+
+  addr = parse_and_eval_address (arg);
+  addr += offsetof (struct proc, p_addr);
+
+  if (kvm_read (core_kd, addr, &bsd_kvm_paddr, sizeof bsd_kvm_paddr) == -1)
+    error ("%s", kvm_geterr (core_kd));
+
+  target_fetch_registers (-1);
+
+  flush_cached_frames ();
+  select_frame (get_current_frame ());
+  print_stack_frame (get_selected_frame (), -1, 1);
+}
+
+#endif
+
+static void
+bsd_kvm_pcb_cmd (char *arg, int fromtty)
+{
+  if (arg == NULL)
+    error_no_arg ("pcb address");
+
+  if (core_kd == NULL)
+    error ("No kernel memory image.");
+
+  bsd_kvm_paddr = (struct pcb *) parse_and_eval_address (arg);
+
+  target_fetch_registers (-1);
+
+  flush_cached_frames ();
+  select_frame (get_current_frame ());
+  print_stack_frame (get_selected_frame (), -1, 1);
+}
+
+/* Add the libkvm interface to the list of all possible targets and
+   register CUPPLY_PCB as the architecture-specific process control
+   block interpreter.  */
 
 void
-_initialize_bsd_kvm (void)
+bsd_kvm_add_target (int (*supply_pcb)(struct regcache *, struct pcb *))
 {
+  gdb_assert (bsd_kvm_supply_pcb == NULL);
+  bsd_kvm_supply_pcb = supply_pcb;
+
   bsd_kvm_ops.to_shortname = "kvm";
   bsd_kvm_ops.to_longname = "Kernel memory interface";
-  bsd_kvm_ops.to_doc = "XXX";
+  bsd_kvm_ops.to_doc = "Use a kernel virtual memory image as a target.\n\
+Optionally specify the filename of a core dump.";
   bsd_kvm_ops.to_open = bsd_kvm_open;
   bsd_kvm_ops.to_close = bsd_kvm_close;
   bsd_kvm_ops.to_fetch_registers = bsd_kvm_fetch_registers;
@@ -208,4 +285,15 @@ _initialize_bsd_kvm (void)
   bsd_kvm_ops.to_magic = OPS_MAGIC;
 
   add_target (&bsd_kvm_ops);
+  
+  add_prefix_cmd ("kvm", class_obscure, bsd_kvm_cmd, "\
+Generic command for manipulating the kernel memory interface.",
+		  &bsd_kvm_cmdlist, "kvm ", 0, &cmdlist);
+
+#ifndef HAVE_STRUCT_THREAD_TD_PCB
+  add_cmd ("proc", class_obscure, bsd_kvm_proc_cmd,
+	   "Set current context from proc address", &bsd_kvm_cmdlist);
+#endif
+  add_cmd ("pcb", class_obscure, bsd_kvm_pcb_cmd,
+	   "Set current context from pcb address", &bsd_kvm_cmdlist);
 }

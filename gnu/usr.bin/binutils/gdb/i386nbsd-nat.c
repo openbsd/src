@@ -33,8 +33,8 @@
 
 #include "bsd-kvm.h"
 
-int
-bsd_kvm_supply_pcb (struct regcache *regcache, struct pcb *pcb)
+static int
+i386nbsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
 {
   struct switchframe sf;
 
@@ -68,4 +68,15 @@ bsd_kvm_supply_pcb (struct regcache *regcache, struct pcb *pcb)
   regcache_raw_supply (regcache, I386_EIP_REGNUM, &sf.sf_eip);
 
   return 1;
+}
+
+
+/* Provide a prototype to silence -Wmissing-prototypes.  */
+void _initialize_i386nbsd_nat (void);
+
+void
+_initialize_i386nbsd_nat (void)
+{
+  /* Support debugging kernel virtual memory images.  */
+  bsd_kvm_add_target (i386nbsd_supply_pcb);
 }

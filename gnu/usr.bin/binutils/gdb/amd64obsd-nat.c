@@ -66,8 +66,8 @@ static int amd64obsd32_r_reg_offset[] =
 
 #include "bsd-kvm.h"
 
-int
-bsd_kvm_supply_pcb (struct regcache *regcache, struct pcb *pcb)
+static int
+amd64obsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
 {
   struct switchframe sf;
   int regnum;
@@ -91,22 +91,38 @@ bsd_kvm_supply_pcb (struct regcache *regcache, struct pcb *pcb)
      Together with %rsp in the pcb, this accounts for all callee-saved
      registers specified by the psABI.  From this information we
      reconstruct the register state as it would look when we just
-     returned from cpu_switch().  */
+     returned from cpu_switch().
+
+     For core dumps the pcb is saved by savectx().  In that case the
+     stack frame only contains the return address, and there is no way
+     to recover the other registers.  */
 
   /* The stack pointer shouldn't be zero.  */
   if (pcb->pcb_rsp == 0)
     return 0;
 
+  /* Read the stack frame, and check its validity.  */
   read_memory (pcb->pcb_rsp, (char *) &sf, sizeof sf);
-  pcb->pcb_rsp += sizeof (struct switchframe);
-  regcache_raw_supply (regcache, 12, &sf.sf_r12);
-  regcache_raw_supply (regcache, 13, &sf.sf_r13);
-  regcache_raw_supply (regcache, 14, &sf.sf_r14);
-  regcache_raw_supply (regcache, 15, &sf.sf_r15);
+  if (sf.sf_rbp == pcb->pcb_rbp)
+    {
+      /* Yes, we have a frame that matches cpu_switch().  */
+      pcb->pcb_rsp += sizeof (struct switchframe);
+      regcache_raw_supply (regcache, 12, &sf.sf_r12);
+      regcache_raw_supply (regcache, 13, &sf.sf_r13);
+      regcache_raw_supply (regcache, 14, &sf.sf_r14);
+      regcache_raw_supply (regcache, 15, &sf.sf_r15);
+      regcache_raw_supply (regcache, AMD64_RBX_REGNUM, &sf.sf_rbx);
+      regcache_raw_supply (regcache, AMD64_RIP_REGNUM, &sf.sf_rip);
+    }
+  else
+    {
+      /* No, the pcb must have been last updated by savectx().  */
+      pcb->pcb_rsp += 8;
+      regcache_raw_supply (regcache, AMD64_RIP_REGNUM, &sf);
+    }
+
   regcache_raw_supply (regcache, AMD64_RSP_REGNUM, &pcb->pcb_rsp);
-  regcache_raw_supply (regcache, AMD64_RBP_REGNUM, &sf.sf_rbp);
-  regcache_raw_supply (regcache, AMD64_RBX_REGNUM, &sf.sf_rbx);
-  regcache_raw_supply (regcache, AMD64_RIP_REGNUM, &sf.sf_rip);
+  regcache_raw_supply (regcache, AMD64_RBP_REGNUM, &pcb->pcb_rbp);
 
   return 1;
 }
@@ -121,4 +137,7 @@ _initialize_amd64obsd_nat (void)
   amd64_native_gregset32_reg_offset = amd64obsd32_r_reg_offset;
   amd64_native_gregset32_num_regs = ARRAY_SIZE (amd64obsd32_r_reg_offset);
   amd64_native_gregset64_reg_offset = amd64obsd_r_reg_offset;
+
+  /* Support debugging kernel virtual memory images.  */
+  bsd_kvm_add_target (amd64obsd_supply_pcb);
 }

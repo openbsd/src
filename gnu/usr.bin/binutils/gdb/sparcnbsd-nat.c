@@ -33,8 +33,8 @@
 
 #include "bsd-kvm.h"
 
-int
-bsd_kvm_supply_pcb (struct regcache *regcache, struct pcb *pcb)
+static int
+sparc32nbsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
 {
   /* The following is true for NetBSD 1.6.2:
 
@@ -65,4 +65,7 @@ void
 _initialize_sparcnbsd_nat (void)
 {
   sparc_gregset = &sparc32nbsd_gregset;
+
+  /* Support debugging kernel virtual memory images.  */
+  bsd_kvm_add_target (sparc32nbsd_supply_pcb);
 }

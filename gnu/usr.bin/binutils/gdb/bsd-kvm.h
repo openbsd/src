@@ -25,6 +25,11 @@
 struct pcb;
 struct regcache;
 
-extern int bsd_kvm_supply_pcb (struct regcache *regache, struct pcb *pcb);
+/* Add the libkvm interface to the list of all possible targets and
+   register CUPPLY_PCB as the architecture-specific process control
+   block interpreter.  */
+
+extern void
+  bsd_kvm_add_target (int (*supply_pcb)(struct regcache *, struct pcb *));
 
 #endif /* bsd-kvm.h */

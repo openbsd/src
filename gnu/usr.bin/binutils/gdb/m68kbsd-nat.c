@@ -81,7 +81,7 @@ m68kbsd_collect_gregset (const struct regcache *regcache,
   for (i = M68K_D0_REGNUM; i <= M68K_PC_REGNUM; i++)
     {
       if (regnum == -1 || regnum == i)
-	regcache_raw_collect (regcache, regnum, regs + i * 4);
+	regcache_raw_collect (regcache, i, regs + i * 4);
     }
 }
 
@@ -98,8 +98,7 @@ m68kbsd_collect_fpregset (struct regcache *regcache,
   for (i = M68K_FP0_REGNUM; i <= M68K_FPI_REGNUM; i++)
     {
       if (regnum == -1 || regnum == i)
-	regcache_raw_collect (regcache, regnum,
-			      regs + m68kbsd_fpreg_offset (i));
+	regcache_raw_collect (regcache, i, regs + m68kbsd_fpreg_offset (i));
     }
 }
 
@@ -186,8 +185,8 @@ store_inferior_registers (int regnum)
 #define PCB_REGS_SP 11
 #endif
 
-int
-bsd_kvm_supply_pcb (struct regcache *regcache, struct pcb *pcb)
+static int
+m68kbsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
 {
   int regnum, tmp;
   int i = 0;
@@ -215,4 +214,15 @@ bsd_kvm_supply_pcb (struct regcache *regcache, struct pcb *pcb)
   regcache_raw_supply (regcache, M68K_PC_REGNUM, &tmp);
 
   return 1;
+}
+
+
+/* Provide a prototype to silence -Wmissing-prototypes.  */
+void _initialize_m68kbsd_nat (void);
+
+void
+_initialize_m68kbsd_nat (void)
+{
+  /* Support debugging kernel virtual memory images.  */
+  bsd_kvm_add_target (m68kbsd_supply_pcb);
 }
