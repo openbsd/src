@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.5 2001/06/07 18:51:59 millert Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.6 2001/06/09 03:45:15 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -120,7 +120,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.5 2001/06/07 18:51:59 millert Exp $";
+	"$OpenBSD: if_wi.c,v 1.6 2001/06/09 03:45:15 millert Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -180,7 +180,6 @@ wi_attach(sc)
 	bcopy((char *)&mac.wi_mac_addr, (char *)&sc->arpcom.ac_enaddr,
 	    ETHER_ADDR_LEN);
 
-	printf(": ");
 	wi_get_id(sc);
 
 	printf("address %s", ether_sprintf(sc->arpcom.ac_enaddr));
@@ -1472,8 +1471,8 @@ wi_get_id(sc)
 	struct wi_ltv_ver       ver;
 	const char		*p;
 
-	/* getting chip identity */
-	memset(&ver, 0, sizeof(ver));
+	/* get chip identity */
+	bzero(&ver, sizeof(ver));
 	ver.wi_type = WI_RID_CARD_ID;
 	ver.wi_len = 5;
 	wi_read_record(sc, (struct wi_ltv_gen *)&ver);
@@ -1516,19 +1515,23 @@ wi_get_id(sc)
 			break;
 	}
 
+	/* get firmware version */
+	bzero(&ver, sizeof(ver));
+	ver.wi_type = WI_RID_STA_IDENTITY;
+	ver.wi_len = 5;
+	wi_read_record(sc, (struct wi_ltv_gen *)&ver);
+	ver.wi_ver[1] = letoh16(ver.wi_ver[1]);
+	ver.wi_ver[2] = letoh16(ver.wi_ver[2]);
+	ver.wi_ver[3] = letoh16(ver.wi_ver[3]);
 	if (sc->sc_prism2) {
-		/* try to get prism2 firmware version */
-		memset(&ver, 0, sizeof(ver));
-		ver.wi_type = WI_RID_STA_IDENTITY;
-		ver.wi_len = 5;
-		wi_read_record(sc, (struct wi_ltv_gen *)&ver);
-		ver.wi_ver[1] = letoh16(ver.wi_ver[1]);
-		ver.wi_ver[2] = letoh16(ver.wi_ver[2]);
-		ver.wi_ver[3] = letoh16(ver.wi_ver[3]);
-		printf("%s, Firmware %i.%i variant %i, ", p, ver.wi_ver[2],
-		       ver.wi_ver[3], ver.wi_ver[1]);
+		printf("\n%s: %s, Firmware %i.%i variant %i, ",
+		    sc->sc_dev.dv_xname, p, ver.wi_ver[2],
+		    ver.wi_ver[3], ver.wi_ver[1]);
 		sc->sc_prism2_ver = ver.wi_ver[2] * 100 +
 				    ver.wi_ver[3] *  10 + ver.wi_ver[1];
+	} else {
+		printf("\n%s: Firmware %i.%i, ", sc->sc_dev.dv_xname,
+		    ver.wi_ver[2], ver.wi_ver[3]);
 	}
 
 	return;
