@@ -36,32 +36,50 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$Id: globals.c,v 1.1.1.1 1995/10/18 08:43:05 deraadt Exp $ $provenid: globals.c,v 1.16 1994/02/07 02:18:57 proven Exp $";
+static const char rcsid[] = "$Id: globals.c,v 1.1.1.2 1998/07/21 13:20:02 peter Exp $";
 #endif
 
 #include <pthread.h>
 
 /*
- * Initial thread, running thread, and top of link list
- * of all threads.
+ * Initial thread, running thread, and top of link list of all threads.
  */
-struct pthread *pthread_run;
-struct pthread *pthread_initial;
-struct pthread *pthread_link_list;
+struct pthread *pthread_run=NULL;
+struct pthread *pthread_initial=NULL;
+struct pthread *pthread_link_list=NULL;
+
+sigset_t * uthread_sigmask; /* Current process signal mask */
 
 /*
- * default thread attributes
+ * Dead thread queue, and threads elligible to be alloced queue.
  */
-pthread_attr_t pthread_default_attr = { SCHED_RR, NULL, PTHREAD_STACK_DEFAULT };
+struct pthread_queue pthread_dead_queue;  
+struct pthread_queue pthread_alloc_queue;  
 
 /*
  * Queue for all threads elidgeable to run this scheduling round.
  */
-struct pthread_queue pthread_current_queue = PTHREAD_QUEUE_INITIALIZER;
+struct pthread_prio_queue * pthread_current_prio_queue=NULL;
+
+/*
+ * default thread attributes
+ */
+pthread_attr_t pthread_attr_default = { SCHED_RR, PTHREAD_DEFAULT_PRIORITY,
+  PTHREAD_CREATE_JOINABLE, NULL, NULL, NULL, PTHREAD_STACK_DEFAULT };
 
 /*
  * File table information
  */
-struct fd_table_entry *fd_table[64];
+struct fd_table_entry **fd_table=NULL;
 
+/*
+ * A we a fork()ed process
+ */
+volatile int fork_lock = 0;
+volatile int pthread_kernel_lock=0;
+
+/*
+ * The page size, as returned by getpagesize()
+ */
+size_t pthread_pagesize=0;
 

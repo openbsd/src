@@ -29,134 +29,265 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
  * SUCH DAMAGE.
  *
- * Description : Condition cariable functions.
+ * Description : All the appropriate sleep routines.
  *
  *  1.00 93/12/28 proven
  *      -Started coding this file.
+ *
+ *	1.36 94/06/04 proven
+ *		-Use new timer structure pthread_timer, that uses seconds
+ *		-nano seconds. Rewrite all routines completely.
+ *
+ *	1.38 94/06/13 proven
+ *		-switch pthread_timer to timespec
  */
 
 #ifndef lint
-static const char rcsid[] = "$Id: sleep.c,v 1.1.1.1 1995/10/18 08:43:05 deraadt Exp $ $provenid: sleep.c,v 1.18 1994/02/07 02:19:31 proven Exp $";
+static const char rcsid[] = "$Id: sleep.c,v 1.1.1.2 1998/07/21 13:20:24 peter Exp $";
 #endif
 
 #include <pthread.h>
+#include <sys/time.h>
+#include <signal.h>
 #include <unistd.h>
+#include <sys/compat.h>
 
 struct pthread * pthread_sleep = NULL;
-semaphore	sleep_semaphore = SEMAPHORE_CLEAR;
-
-
-#include	<sys/time.h>
-#include	<stdio.h>
 
 /* ==========================================================================
- * machdep_start_timer()
+ * sleep_compare_time()
  */
-int machdep_start_timer(struct itimerval *start_time_val)
+/* static inline int sleep_compare_time(struct timespec * time1, 
+  struct timespec * time2) */
+static int sleep_compare_time(struct timespec * time1, struct timespec * time2)
 {
-	setitimer(ITIMER_REAL, start_time_val, NULL);
-	return(OK);
+	if ((time1->tv_sec < time2->tv_sec) || 
+	  ((time1->tv_sec == time2->tv_sec) && (time1->tv_nsec < time2->tv_nsec))) {
+		return(-1);
+	}
+	if ((time1->tv_sec == time2->tv_sec) && (time1->tv_nsec == time2->tv_nsec)){
+		return(0);
+	}
+	return(1);
 }
 
 /* ==========================================================================
  * machdep_stop_timer()
- */
-struct itimerval stop_time_val = { { 0, 0 }, { 0, 0 } };
-int machdep_stop_timer(struct itimerval * current)
-{
-	setitimer(ITIMER_REAL, &stop_time_val, current);
-	return(OK);
-}
-
-/* ==========================================================================
- * machdep_sub_timer()
  *
- * formula is: new -= current;
+ * Returns the time left on the timer.
  */
-static inline void machdep_sub_timer(struct itimerval * new,
-  struct itimerval * current)
+static struct itimerval timestop = { { 0, 0 }, { 0, 0 } };
+
+void machdep_stop_timer(struct timespec *current)
 {
-	new->it_value.tv_usec -= current->it_value.tv_usec;
-	if (new->it_value.tv_usec < 0) {
-		new->it_value.tv_usec += 1000000;
-		new->it_value.tv_sec--;
+	struct itimerval timenow;
+
+	setitimer(ITIMER_REAL, & timestop, & timenow);
+	__pthread_signal_delete(SIGALRM);
+	if (current) {
+		current->tv_nsec = timenow.it_value.tv_usec * 1000;
+		current->tv_sec = timenow.it_value.tv_sec;
 	}
-	new->it_value.tv_sec -= current->it_value.tv_sec;
 }
 
+/* ==========================================================================
+ * machdep_start_timer()
+ */
+int machdep_start_timer(struct timespec *current, struct timespec *wakeup)
+{
+	struct itimerval timeout;
+
+	timeout.it_value.tv_usec = (wakeup->tv_nsec - current->tv_nsec) / 1000;
+	timeout.it_value.tv_sec = wakeup->tv_sec - current->tv_sec;
+	timeout.it_interval.tv_usec = 0;
+	timeout.it_interval.tv_sec = 0;
+	if (timeout.it_value.tv_usec < 0) {
+		timeout.it_value.tv_usec += 1000000;
+		timeout.it_value.tv_sec--;
+	}
+
+	if ((!(timeout.it_value.tv_sec < 0)) &&
+	  ((timeout.it_value.tv_usec) || (timeout.it_value.tv_sec))) {
+	  if (setitimer(ITIMER_REAL, & timeout, NULL) < 0)
+	    PANIC();
+	} else {
+		/*
+		 * There is no time on the timer.
+		 * This shouldn't happen,
+		 * but isn't fatal.
+		 */
+		sig_handler_fake(SIGALRM);
+	}
+	return(OK);
+}
 
 /* ==========================================================================
- * sleep_basic_wakeup()
+ * sleep_schedule()
  *
- * The real work of sleep_wakeup is done here.
+ * Assumes that the current thread is the thread to be scheduled
+ * and that the kthread is already locked.
  */
-static inline int sleep_basic_wakeup()
+void sleep_schedule(struct timespec *current_time, struct timespec *new_time)
 {
-	struct pthread *pthread_sleep_next;
-	struct itimerval current_time;
-	semaphore *plock;
+	struct pthread * pthread_sleep_current, * pthread_sleep_prev;
 
-	machdep_stop_timer(&current_time);
-	do {
-		plock = &(pthread_sleep->lock);
-		if (SEMAPHORE_TEST_AND_SET(plock)) {
-			return(NOTOK);
+	/* Record the new time as the current thread's wakeup time. */
+	pthread_run->wakeup_time = *new_time;
+
+	/* any threads? */
+	if (pthread_sleep_current = pthread_sleep) {
+		if (sleep_compare_time(&(pthread_sleep_current->wakeup_time),
+		  new_time) <= 0) {
+			/* Don't need to restart timer */
+			while (pthread_sleep_current->sll) {
+
+				pthread_sleep_prev =  pthread_sleep_current;
+				pthread_sleep_current = pthread_sleep_current->sll;
+				
+				if (sleep_compare_time(&(pthread_sleep_current->wakeup_time),
+				  new_time) > 0) {
+					pthread_run->sll = pthread_sleep_current;
+					pthread_sleep_prev->sll = pthread_run;
+					return;
+				}
+			} 
+
+			/* No more threads in queue, attach pthread_run to end of list */
+			pthread_sleep_current->sll = pthread_run;
+			pthread_run->sll = NULL;
+
+		} else {
+			/* Start timer and enqueue thread */
+			machdep_start_timer(current_time, new_time);
+			pthread_run->sll = pthread_sleep_current;
+			pthread_sleep = pthread_run;
 		}
-
-		/* return remaining time */
-		pthread_sleep->time_sec = current_time.it_value.tv_sec;
-		pthread_sleep->time_usec = current_time.it_value.tv_usec;
-
-		if (pthread_sleep_next = pthread_sleep->sll) {
-			pthread_sleep_next->time_usec += current_time.it_value.tv_usec;
-			current_time.it_value.tv_usec = pthread_sleep_next->time_usec;
-			pthread_sleep_next->time_sec += current_time.it_value.tv_sec;
-			current_time.it_value.tv_sec = pthread_sleep_next->time_sec;
-		}
-
-		/* Clean up removed thread and start it runnng again. */
-		pthread_sleep->state = PS_RUNNING;
-		pthread_sleep->sll = NULL;
-		SEMAPHORE_RESET(plock);
-
-		/* Set top of queue to next queue item */
-		pthread_sleep = pthread_sleep_next;
-
-		if (current_time.it_value.tv_sec || current_time.it_value.tv_usec) {
-			machdep_start_timer(&current_time);
-			break;
-		}
-
-	} while(pthread_sleep);
-	return(OK);
+	} else {
+		/* Start timer and enqueue thread */
+		machdep_start_timer(current_time, new_time);
+		pthread_sleep = pthread_run;
+		pthread_run->sll = NULL;
+	}
 }
 
 /* ==========================================================================
  * sleep_wakeup()
  *
- * This routine is called by the interrupt handler. It cannot call
- * pthread_yield() thenrfore it returns NOTOK to inform the handler
- * that it will have to be called at a later time.
+ * This routine is called by the interrupt handler, which has already
+ * locked the current kthread. Since all threads on this list are owned
+ * by the current kthread, rescheduling won't be a problem.
  */
+int sleep_spurious_wakeup = 0;
 int sleep_wakeup()
 {
-	semaphore *lock, *plock;
-	int ret;
+	struct pthread *pthread_sleep_next;
+	struct timespec current_time;
+	int ret = 0;
 
-	/* Lock sleep queue */
-	lock = &(sleep_semaphore);
-	if (SEMAPHORE_TEST_AND_SET(lock)) {
+	if (pthread_sleep == NULL) {
 		return(NOTOK);
-	}
+	} 
 
-	if (pthread_sleep) {
-		ret = sleep_basic_wakeup();
-	} else {
-		ret = NOTOK;
-	}
+	machdep_gettimeofday(&current_time);
+    if (sleep_compare_time(&(pthread_sleep->wakeup_time), &current_time) > 0) {
+        machdep_start_timer(&current_time, &(pthread_sleep->wakeup_time));
+        sleep_spurious_wakeup++;
+        return(OK);
+    }
 
-	SEMAPHORE_RESET(lock);
+	do {
+		if (pthread_sleep->pthread_priority > ret) {
+			ret = pthread_sleep->pthread_priority;
+		}
+
+		/*
+		 * Clean up removed thread and start it running again. 
+		 *
+		 * Note: It is VERY important to remove the thread form the
+		 * current queue before putting it on the run queue.
+		 * Both queues use pthread_sleep->next, and the thread that points
+		 * to pthread_sleep should point to pthread_sleep->next then
+		 * pthread_sleep should be put on the run queue.
+		 */
+		if ((SET_PF_DONE_EVENT(pthread_sleep)) == OK) {
+			if (pthread_sleep->queue)
+				pthread_queue_remove(pthread_sleep->queue, pthread_sleep);
+			pthread_prio_queue_enq(pthread_current_prio_queue, pthread_sleep);
+			pthread_sleep->state = PS_RUNNING;
+		} 
+
+		pthread_sleep_next = pthread_sleep->sll;
+		pthread_sleep->sll = NULL;
+
+		if ((pthread_sleep = pthread_sleep_next) == NULL) {
+			/* No more threads on sleep queue */
+			return(ret);
+		}
+	} while (sleep_compare_time(&(pthread_sleep->wakeup_time), &(current_time)) <= 0);
+		
+	/* Start timer for next time interval */
+	machdep_start_timer(&current_time, &(pthread_sleep->wakeup_time));
 	return(ret);
+}
+
+
+/* ==========================================================================
+ * __sleep()
+ */
+void __sleep(struct timespec * time_to_sleep)
+{
+	struct pthread *pthread_sleep_prev;
+	struct timespec current_time, wakeup_time;
+
+	pthread_sched_prevent();
+
+	/* Get real time */
+	machdep_gettimeofday(&current_time);
+	wakeup_time.tv_sec = current_time.tv_sec + time_to_sleep->tv_sec;
+	wakeup_time.tv_nsec = current_time.tv_nsec + time_to_sleep->tv_nsec;
+
+	sleep_schedule(&current_time, &wakeup_time);
+
+	/* Reschedule thread */
+	SET_PF_WAIT_EVENT(pthread_run);
+	SET_PF_AT_CANCEL_POINT(pthread_run); /* This is a cancel point */
+	pthread_resched_resume(PS_SLEEP_WAIT);
+	CLEAR_PF_AT_CANCEL_POINT(pthread_run); /* No longer at cancel point */
+	CLEAR_PF_DONE_EVENT(pthread_run);
+
+	/* Return actual time slept */
+	time_to_sleep->tv_sec = pthread_run->wakeup_time.tv_sec;
+	time_to_sleep->tv_nsec = pthread_run->wakeup_time.tv_nsec;
+}
+
+/* ==========================================================================
+ * pthread_nanosleep()
+ */
+unsigned int pthread_nanosleep(unsigned int nseconds)
+{
+	struct timespec time_to_sleep;
+
+	if (nseconds) {
+		time_to_sleep.tv_nsec = nseconds;
+		time_to_sleep.tv_sec = 0;
+		__sleep(&time_to_sleep);
+		nseconds = time_to_sleep.tv_nsec;
+	}
+	return(nseconds);
+}
+
+/* ==========================================================================
+ * usleep()
+ */
+void usleep(unsigned int useconds)
+{
+	struct timespec time_to_sleep;
+
+	if (useconds) {
+		time_to_sleep.tv_nsec = (useconds % 1000000) * 1000;
+		time_to_sleep.tv_sec = useconds / 1000000;
+		__sleep(&time_to_sleep);
+	}
 }
 
 /* ==========================================================================
@@ -164,93 +295,61 @@ int sleep_wakeup()
  */
 unsigned int sleep(unsigned int seconds)
 {
-	struct pthread *pthread_sleep_current, *pthread_sleep_prev;
-	struct itimerval current_time, new_time;
-	semaphore *lock, *plock;
+	struct timespec time_to_sleep;
 
 	if (seconds) {
-		/* Lock current thread */
-		plock = &(pthread_run->lock);
-		while (SEMAPHORE_TEST_AND_SET(plock)) {
-			pthread_yield();
-		}
-
-		/* Set new_time timer value */
-		new_time.it_value.tv_usec 		= 0;
-		new_time.it_value.tv_sec 		= seconds;
-		new_time.it_interval.tv_usec 	= 0;
-		new_time.it_interval.tv_sec 	= 0;
-
-		/* Lock sleep queue */
-		lock = &(sleep_semaphore);
-		while (SEMAPHORE_TEST_AND_SET(lock)) {
-			pthread_yield();
-		}
-
-		/* any threads? */
-		if (pthread_sleep_current = pthread_sleep) {
-			
-			machdep_stop_timer(&current_time);
-
-			/* Is remaining time left <= new thread time */
-			if (current_time.it_value.tv_sec <= new_time.it_value.tv_sec) { 
-				machdep_sub_timer(&new_time, &current_time);
-				machdep_start_timer(&current_time);
-
-				while (pthread_sleep_current->sll) {
-					pthread_sleep_prev =  pthread_sleep_current;
-					pthread_sleep_current = pthread_sleep_current->sll;
-					current_time.it_value.tv_sec = pthread_sleep_current->time_sec;
-					
-					if ((current_time.it_value.tv_sec > new_time.it_value.tv_sec) ||
-					  ((current_time.it_value.tv_sec == new_time.it_value.tv_sec) &&
-					  (current_time.it_value.tv_usec > new_time.it_value.tv_usec))) {
-						pthread_run->time_usec = new_time.it_value.tv_usec;
-						pthread_run->time_sec = new_time.it_value.tv_sec;
-						machdep_sub_timer(&current_time, &new_time);
-						pthread_run->sll = pthread_sleep_current;
-						pthread_sleep_prev->sll = pthread_run;
-
-						/* Unlock sleep mutex */
-						SEMAPHORE_RESET(lock);
-	
-						/* Reschedule thread */
-						reschedule(PS_SLEEP_WAIT);
-
-						return(pthread_run->time_sec);
-					}
-					machdep_sub_timer(&new_time, &current_time);
-
-				} 
-
-				/* No more threads in queue, attach pthread_run to end of list */
-				pthread_sleep_current->sll = pthread_run;
-				pthread_run->sll = NULL;
-
-			} else {
-				/* Start timer and enqueue thread */
-				machdep_start_timer(&new_time);
-				machdep_sub_timer(&current_time, &new_time);
-				pthread_run->sll = pthread_sleep_current;
-				pthread_sleep = pthread_run;
-			}
-		} else {
-			/* Start timer and enqueue thread */
-			machdep_start_timer(&new_time);
-			pthread_sleep = pthread_run;
-			pthread_run->sll = NULL;
-		}
-
-		pthread_run->time_usec = new_time.it_value.tv_usec;
-		pthread_run->time_sec = new_time.it_value.tv_sec;
-
-		/* Unlock sleep mutex */
-		SEMAPHORE_RESET(lock);
-	
-		/* Reschedule thread */
-		reschedule(PS_SLEEP_WAIT);
-
+		time_to_sleep.tv_sec = seconds;
+		time_to_sleep.tv_nsec = 0;
+		__sleep(&time_to_sleep);
+		seconds = time_to_sleep.tv_sec;
 	}
-	return(pthread_run->time_sec);
+	return(seconds);
 }
 
+/* ==========================================================================
+ * sleep_cancel()
+ *
+ * Cannot be called while kernel is locked.
+ * Does not wake sleeping thread up, just remove it from the sleep queue.
+ */
+int sleep_cancel(struct pthread * pthread)
+{
+	struct timespec current_time, delta_time;
+	struct pthread * pthread_last;
+	int rval = NOTOK;
+
+	/* Lock sleep queue, Note this may be on a different kthread queue */
+	pthread_sched_prevent();
+
+	if (pthread_sleep) {
+		if (pthread == pthread_sleep) {
+			rval = OK;
+			machdep_stop_timer(&delta_time);
+			if (pthread_sleep = pthread_sleep->sll) {
+				current_time.tv_sec 	= delta_time.tv_sec;
+				current_time.tv_nsec 	= delta_time.tv_nsec;
+				current_time.tv_sec 	+= pthread_sleep->wakeup_time.tv_sec;
+				current_time.tv_nsec 	+= pthread_sleep->wakeup_time.tv_nsec;
+				while (current_time.tv_nsec > 1000000000) {
+					current_time.tv_nsec -= 1000000000;
+					current_time.tv_sec++;
+				}
+				machdep_start_timer(&(current_time), 
+									&(pthread_sleep->wakeup_time));
+			}
+		} else {
+			for (pthread_last = pthread_sleep; pthread_last;
+				 pthread_last = pthread_last->sll) {
+				if (pthread_last->sll == pthread) {
+					pthread_last->sll = pthread->sll;
+					rval = OK;
+					break;
+				}
+			}
+		}
+	}
+
+	pthread_sched_resume();
+	pthread->sll = NULL;
+	return(rval);
+}

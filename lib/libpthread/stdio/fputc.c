@@ -1,5 +1,6 @@
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
+ * Copyright (c) 1993, 1994 Chris Provenzano. 
  * All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
@@ -36,7 +37,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)fputc.c	5.3 (Berkeley) 1/20/91";*/
-static char *rcsid = "$Id: fputc.c,v 1.1.1.1 1995/10/18 08:43:06 deraadt Exp $";
+static char *rcsid = "$Id: fputc.c,v 1.1.1.2 1998/07/21 13:21:02 peter Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <pthread.h>
@@ -52,3 +53,21 @@ fputc(c, fp)
 	funlockfile(fp);
 	return(ret);
 }
+
+int __putc(int _c, FILE *_p)
+{
+	int ret;
+	flockfile(_p);
+	ret = __sputc(_c, _p);
+	funlockfile(_p);
+	return(ret);
+}
+
+int __sputc(int _c, FILE *_p)
+{
+	if (--_p->_w >= 0 || (_p->_w >= _p->_lbfsize && (char)_c != '\n'))
+		return (*_p->_p++ = _c);
+	else
+		return (__swbuf(_c, _p));
+}
+

@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fvwrite.h	5.1 (Berkeley) 1/20/91
- *	$Id: fvwrite.h,v 1.1.1.1 1995/10/18 08:43:07 deraadt Exp $
+ *	$Id: fvwrite.h,v 1.1.1.2 1998/07/21 13:21:15 peter Exp $
  */
 
 /*
@@ -51,4 +51,4 @@ struct __suio {
 	int	uio_resid;
 };
 
-extern int __sfvwrite	__P(( FILE *, struct __suio *));
+extern int __sfvwrite	__P_(( FILE *, struct __suio *));

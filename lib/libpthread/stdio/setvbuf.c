@@ -1,5 +1,6 @@
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
+ * Copyright (c) 1993, 1994 Chris Provenzano. 
  * All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
@@ -36,7 +37,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)setvbuf.c	5.5 (Berkeley) 5/6/93";*/
-static char *rcsid = "$Id: setvbuf.c,v 1.1.1.1 1995/10/18 08:43:09 deraadt Exp $";
+static char *rcsid = "$Id: setvbuf.c,v 1.1.1.2 1998/07/21 13:21:54 peter Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <pthread.h>
@@ -141,7 +142,7 @@ nbf:
 		flags |= __SLBF;
 	if (flags & __SRW)
 		flags &= ~(__SRD | __SWR);
-	fp->_w = 0;
+	fp->_w = size; /* Was 0 (mevans) */
 	fp->_flags = flags;
 	fp->_bf._base = fp->_p = (unsigned char *)buf;
 	fp->_bf._size = size;

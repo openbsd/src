@@ -1,5 +1,6 @@
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
+ * Copyright (c) 1993, 1994 Chris Provenzano. 
  * All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
@@ -36,15 +37,49 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)fgetpos.c	5.1 (Berkeley) 1/20/91";*/
-static char *rcsid = "$Id: fgetpos.c,v 1.1.1.1 1995/10/18 08:43:06 deraadt Exp $";
+static char *rcsid = "$Id: fgetpos.c,v 1.1.1.2 1998/07/21 13:20:48 peter Exp $";
 #endif /* LIBC_SCCS and not lint */
 
+#include <pthread.h>
+#include <unistd.h>
 #include <stdio.h>
+#include "local.h"
 
-/* Don't bother locking, ftell does it */
 fgetpos(fp, pos)
 	FILE *fp;
 	fpos_t *pos;
 {
-	return ((*pos = ftell(fp)) == (fpos_t)-1);
+	flockfile(fp);
+
+	/*
+	 * Find offset of underlying I/O object, then
+	 * adjust for buffered bytes.
+	 */
+	if (fp->_flags & __SOFF) {
+		*pos = fp->_offset;
+	} else {
+		*pos = __sseek(fp, (off_t)0, SEEK_CUR);
+	}
+
+	if (*pos != (fpos_t)-1) {
+		if (fp->_flags & __SRD) {
+			/*
+			 * Reading.  Any unread characters (including
+			 * those from ungetc) cause the position to be
+			 * smaller than that in the underlying object.
+			 */
+			*pos -= fp->_r;
+			if (HASUB(fp))
+				*pos -= fp->_ur;
+		} else if (fp->_flags & __SWR && fp->_p != NULL) {
+			/*
+			 * Writing.  Any buffered characters cause the
+			 * position to be greater than that in the
+			 * underlying object.
+			 */
+			*pos += fp->_p - fp->_bf._base;
+		}
+	}
+	funlockfile(fp);
+	return ((*pos) == (fpos_t)-1);
 }

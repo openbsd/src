@@ -1,4 +1,8 @@
+Copyright (c) 1993, 1994 Chris Provenzano. All rights reserved.
+
 This is a threadsafe stdio based on the BSD stdio written by Chris Torek.
+This product includes software developed by the Univeristy of California,
+Berkeley and its contributors.
 
 INCLUDE FILES AND PORTING
 To continue to make this package portable, some basic rules on includes
@@ -8,11 +12,11 @@ pthread.h should be included first (if it is to be included).
 stdio.h should be included.
 
 INTERNAL LOCKING
-1.	All functions that can be called by the user must have __flockfile at the
-	begining and a __funlockfile at the end. __Flockfile is a counting mutex,
-	The thread that owns the lock can call __flockfile as many times as
-	it wants, but must call an equal number of __funlockfile before the
-	lock will be released.
+1.	All functions that can be called by the user must have flockfile() at the
+	begining and a funlockfile() at the end. The routine flockfile() is a
+	counting mutex, The thread that owns the lock can call flockfile() as 
+	many times as it wants, but must call an equal number of funlockfile()
+	before the lock will be released.
 2.	All functions starting with __ shouldn't need addtional locking.
 3.	Anything that writes the variable __sglue should lock __sfp_mutex,
  	check __sfp_state, and do a condion wait if it is set.
@@ -30,11 +34,8 @@ INTERNAL LOCKING
 	tries to lock fp->_file and close it.
 9.	__sinit is done with a pthread_once routine.
 
-Copyright (c) 1993 Chris Provenzano. All rights reserved.
-
-This product includes software developed by the Univeristy of California,
-Berkeley and its contributors.
 
 
 Things to do.
+
 Fix printf so it uses the ininf function.

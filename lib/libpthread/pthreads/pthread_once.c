@@ -36,7 +36,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$Id: pthread_once.c,v 1.1.1.1 1995/10/18 08:43:05 deraadt Exp $ $provenid: pthread_once.c,v 1.4 1994/02/07 02:19:22 proven Exp $";
+static const char rcsid[] = "$Id: pthread_once.c,v 1.1.1.2 1998/07/21 13:20:18 peter Exp $";
 #endif
 
 #include <pthread.h>
@@ -44,18 +44,16 @@ static const char rcsid[] = "$Id: pthread_once.c,v 1.1.1.1 1995/10/18 08:43:05 d
 /* ==========================================================================
  * pthread_once()
  */
-static pthread_mutex_t __pthread_once_mutex =  PTHREAD_MUTEX_INITIALIZER;
-
 int pthread_once(pthread_once_t *once_control, void (*init_routine)(void))
 {
 	/* Check first for speed */
-	if (*once_control == PTHREAD_ONCE_INIT) {
-		pthread_mutex_lock(&__pthread_once_mutex);
-		if (*once_control == PTHREAD_ONCE_INIT) {
+	if (once_control->state == PTHREAD_NEEDS_INIT) {
+		pthread_mutex_lock(&(once_control->mutex));
+		if (once_control->state == PTHREAD_NEEDS_INIT) {
 			init_routine();
-			(*once_control)++;
+			once_control->state = PTHREAD_DONE_INIT;
 		}
-		pthread_mutex_unlock(&__pthread_once_mutex);
+		pthread_mutex_unlock(&(once_control->mutex));
 	}
 	return(OK);
 }

@@ -1,5 +1,6 @@
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
+ * Copyright (c) 1993, 1994 Chris Provenzano. 
  * All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
@@ -36,7 +37,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)vfprintf.c	5.50 (Berkeley) 12/16/92";*/
-static char *rcsid = "$Id: vfprintf.c,v 1.1.1.1 1995/10/18 08:43:09 deraadt Exp $";
+static char *rcsid = "$Id: vfprintf.c,v 1.1.1.2 1998/07/21 13:22:06 peter Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -49,6 +50,7 @@ static char *rcsid = "$Id: vfprintf.c,v 1.1.1.1 1995/10/18 08:43:09 deraadt Exp 
 #include <sys/types.h>
 
 #include <stdio.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -88,7 +90,7 @@ static int
 __sbprintf(fp, fmt, ap)
 	FILE *fp;
 	const char *fmt;
-	va_list ap;
+	pthread_va_list ap;
 {
 	unsigned char buf[BUFSIZ];
 	FILE fake;
@@ -121,8 +123,8 @@ __sbprintf(fp, fmt, ap)
 #define	BUF		(MAXEXP+MAXFRACT+1)	/* + decimal point */
 #define	DEFPREC		6
 
-static char *cvt __P((double, int, int, char *, int *, int, int *));
-static int exponent __P((char *, int, int));
+static char *cvt __P_((double, int, int, char *, int *, int, int *));
+static int exponent __P_((char *, int, int));
 
 #else /* no FLOATING_POINT */
 
@@ -154,7 +156,7 @@ int
 vfprintf(fp, fmt0, ap)
 	FILE *fp;
 	const char *fmt0;
-	va_list ap;
+	pthread_va_list ap;
 {
 	register char *fmt;	/* format string */
 	register int ch;	/* character from fmt */
@@ -175,7 +177,10 @@ vfprintf(fp, fmt0, ap)
 	char expstr[7];		/* buffer for exponent string */
 #endif
 
-#ifdef __GNUC__			/* gcc has builtin quad type (long long) SOS */
+#if defined (__alpha) && !defined(_GNUC_)
+#define quad_t    long
+#define u_quad_t  unsigned long
+#else				/* gcc has builtin quad type (long long) SOS */
 #define	quad_t	  long long
 #define	u_quad_t  unsigned long long
 #endif
@@ -473,7 +478,7 @@ reswitch:	switch (ch) {
 			 *	-- ANSI X3J11
 			 */
 			/* NOSTRICT */
-			_uquad = (u_quad_t)va_arg(ap, void *);
+			_uquad = (u_quad_t)(size_t)va_arg(ap, void *);
 			base = HEX;
 			xdigs = "0123456789abcdef";
 			flags |= HEXPREFIX;
@@ -695,7 +700,7 @@ error:
 
 #ifdef FLOATING_POINT
 
-extern char *__dtoa __P((double, int, int, int *, int *, char **));
+extern char *__dtoa __P_((double, int, int, int *, int *, char **));
 
 static char *
 cvt(value, ndigits, flags, sign, decpt, ch, length)
@@ -724,7 +729,16 @@ cvt(value, ndigits, flags, sign, decpt, ch, length)
 		*sign = '-';
 	} else
 		*sign = '\000';
+/* #if !defined(__alpha__) && !defined(hpux) */
+#ifndef THIS_IS_NEVER_DEFINED
 	digits = __dtoa(value, mode, ndigits, decpt, &dsgn, &rve);
+#else
+	{ char *ecvt(double,int,int*,int*);
+
+	  digits = ecvt(value, ndigits, decpt, &dsgn);
+	  rve = (digits + (int)strlen(digits));
+	}
+#endif
 	if ((ch != 'g' && ch != 'G') || flags & ALT) {	/* Print trailing zeros */
 		bp = digits + ndigits;
 		if (ch == 'f') {

@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)floatio.h	5.1 (Berkeley) 1/20/91
- *	$Id: floatio.h,v 1.1.1.1 1995/10/18 08:43:06 deraadt Exp $
+ *	$Id: floatio.h,v 1.1.1.2 1998/07/21 13:20:56 peter Exp $
  */
 
 /*

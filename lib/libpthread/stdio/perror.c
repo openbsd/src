@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 1988 Regents of the University of California.
+ * Copyright (c) 1993, 1994 Chris Provenzano proven@mit.edu
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,33 +36,32 @@
 static char sccsid[] = "@(#)perror.c	5.11 (Berkeley) 2/24/91";
 #endif /* LIBC_SCCS and not lint */
 
-#include <sys/types.h>
-#include <sys/uio.h>
+#include <pthread.h>
 #include <unistd.h>
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
 
+char *strerror(int); 	/* For systems that don't prototype it in string.h */
+
 void
 perror(s)
 	const char *s;
 {
-	register struct iovec *v;
-	struct iovec iov[4];
+	char * e;
 
-	v = iov;
-	if (s && *s) {
-		v->iov_base = (char *)s;
-		v->iov_len = strlen(s);
-		v++;
-		v->iov_base = ": ";
-		v->iov_len = 2;
-		v++;
+    if (fd_lock(STDERR_FILENO, FD_WRITE, NULL) == OK) {
+		if (s && *s) {
+			fd_table[STDERR_FILENO]->ops->write(fd_table[STDERR_FILENO]->fd, 
+			  fd_table[STDERR_FILENO]->flags, s, strlen(s), NULL);
+			fd_table[STDERR_FILENO]->ops->write(fd_table[STDERR_FILENO]->fd, 
+			  fd_table[STDERR_FILENO]->flags, ": ", 2, NULL);
+		}
+		e = strerror(errno);
+		fd_table[STDERR_FILENO]->ops->write(fd_table[STDERR_FILENO]->fd, 
+		  fd_table[STDERR_FILENO]->flags, e, strlen(e), NULL);
+		fd_table[STDERR_FILENO]->ops->write(fd_table[STDERR_FILENO]->fd, 
+		  fd_table[STDERR_FILENO]->flags, "\n", 1, NULL);
+		fd_unlock(STDERR_FILENO, FD_WRITE);
 	}
-	v->iov_base = strerror(errno);
-	v->iov_len = strlen(v->iov_base);
-	v++;
-	v->iov_base = "\n";
-	v->iov_len = 1;
-	(void)writev(STDERR_FILENO, iov, (v - iov) + 1);
 }

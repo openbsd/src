@@ -1,5 +1,6 @@
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
+ * Copyright (c) 1993, 1994 Chris Provenzano. 
  * All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
@@ -36,7 +37,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)fopen.c	5.5 (Berkeley) 2/5/91";*/
-static char *rcsid = "$Id: fopen.c,v 1.1.1.1 1995/10/18 08:43:06 deraadt Exp $";
+static char *rcsid = "$Id: fopen.c,v 1.1.1.2 1998/07/21 13:20:57 peter Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <pthread.h>
@@ -63,7 +64,7 @@ FILE *fopen(const char *file, const char *mode)
 		return (NULL);
 	}
 
-	pthread_once(&__sdidinit, __sinit);
+	__sinit ();
     pthread_mutex_lock(&__sfp_mutex);
     while (__sfp_state) {
         pthread_cond_wait(&__sfp_cond, &__sfp_mutex);
@@ -82,7 +83,7 @@ FILE *fopen(const char *file, const char *mode)
 		 * fseek and ftell.)
 		 */
 		if (oflags & O_APPEND)
-			(void) __sseek((void *)fp, (fpos_t)0, SEEK_END);
+			(void) __sseek((void *)fp, (off_t)0, SEEK_END);
 	}
 	pthread_mutex_unlock(&__sfp_mutex);
 	return (fp);

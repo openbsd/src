@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)tmpfile.c	5.4 (Berkeley) 5/27/91";*/
-static char *rcsid = "$Id: tmpfile.c,v 1.1.1.1 1995/10/18 08:43:09 deraadt Exp $";
+static char *rcsid = "$Id: tmpfile.c,v 1.1.1.2 1998/07/21 13:22:02 peter Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -55,8 +55,8 @@ tmpfile()
 #define	TRAILER	"tmp.XXXXXX"
 	char buf[sizeof(_PATH_TMP) + sizeof(TRAILER)];
 
-	bcopy(_PATH_TMP, buf, sizeof(_PATH_TMP) - 1);
-	bcopy(TRAILER, buf + sizeof(_PATH_TMP) - 1, sizeof(TRAILER));
+	memcpy(buf, _PATH_TMP, sizeof(_PATH_TMP) - 1);
+	memcpy( buf + sizeof(_PATH_TMP) - 1, TRAILER, sizeof(TRAILER));
 
 	sigfillset(&set);
 	(void)sigprocmask(SIG_BLOCK, &set, &oset);

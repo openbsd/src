@@ -1,5 +1,6 @@
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
+ * Copyright (c) 1993, 1994 Chris Provenzano. 
  * All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
@@ -36,7 +37,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)refill.c	5.3 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: refill.c,v 1.1.1.1 1995/10/18 08:43:08 deraadt Exp $";
+static char *rcsid = "$Id: refill.c,v 1.1.1.2 1998/07/21 13:21:44 peter Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <pthread.h>
@@ -68,17 +69,19 @@ static void __swalk_lflush()
     savefp = NULL;
     for (g = &__sglue; g != NULL; g = g->next) {
         for (fp = g->iobs, n = g->niobs; --n >= 0; fp++) {
-            if ((fp->_flags & (__SLBF|__SWR)) == __SLBF|__SWR) {
+            if ((fp->_flags & (__SLBF|__SWR)) == (__SLBF|__SWR)) {
                 /* Is there anything to flush? */
                 if (fp->_bf._base && (fp->_bf._base - fp->_p)) {
                     if (ftrylockfile(fp)) { /* Can we flush it */
                         if (!saven) {       /* No, save first fp we can't flush */
-                            saven;
+                            saven = n;
                             saveg = g;
                             savefp = fp;
                             continue;
                         }
+					  } else {
                         (void) __sflush(fp);
+						funlockfile(fp);
                     }
                 }
             }
@@ -87,14 +90,12 @@ static void __swalk_lflush()
 	if (savefp) {
         for (g = saveg; g != NULL; g = g->next) {
             for (fp = savefp, n = saven + 1; --n >= 0; fp++) {
-            	if ((fp->_flags & (__SLBF|__SWR)) == __SLBF|__SWR) {
+            	if ((fp->_flags & (__SLBF|__SWR)) == (__SLBF|__SWR)) {
                     /* Anything to flush */
                     while (fp->_bf._base && (fp->_bf._base - fp->_p)) {
-                        if (ftrylockfile(fp)) { /* Can we flush it */
-                            pthread_yield();
-                            continue;
-                        }
-                        (void) __sflush(fp);
+                        flockfile(fp);
+						(void) __sflush(fp);
+						funlockfile(fp);
                     }
                 }
             }
@@ -118,7 +119,7 @@ __srefill(fp)
 {
 
 	/* make sure stdio is set up */
-	pthread_once(&__sdidinit, __sinit);
+	__sinit ();
 
 	fp->_r = 0;		/* largely a convenience for callers */
 
@@ -155,6 +156,11 @@ __srefill(fp)
 				return (0);
 			}
 		}
+	}
+
+	if (fp->_file == -1) {
+		fp->_flags |= __SEOF;
+		return(EOF);
 	}
 
 	if (fp->_bf._base == NULL)

@@ -1,4 +1,4 @@
-/* ==== mutex.c ============================================================
+/* ==== mutex.c ==============================================================
  * Copyright (c) 1993, 1994 by Chris Provenzano, proven@mit.edu
  * All rights reserved.
  *
@@ -36,22 +36,33 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$Id: mutex.c,v 1.1.1.1 1995/10/18 08:43:05 deraadt Exp $ $provenid: mutex.c,v 1.16 1994/02/07 02:19:03 proven Exp $";
+static const char rcsid[] = "$Id: mutex.c,v 1.1.1.2 1998/07/21 13:20:07 peter Exp $";
 #endif
 
 #include <pthread.h>
+#include <stdlib.h>
 #include <errno.h>
 
-/*
- * Basic mutex functionality
-
- * This is the basic lock order
- * queue
- * pthread
- * global
+/* ==========================================================================
+ * pthread_mutex_is_debug()
  *
- * semaphore functionality is defined in machdep.h
+ * Check that mutex is a debug mutex and if so returns entry number into
+ * array of debug mutexes.
  */
+static int pthread_mutex_debug_count = 0;
+static pthread_mutex_t ** pthread_mutex_debug_ptrs = NULL;
+
+static inline int pthread_mutex_is_debug(pthread_mutex_t * mutex) 
+{
+	int i;
+
+	for (i = 0; i < pthread_mutex_debug_count; i++) {
+		if (pthread_mutex_debug_ptrs[i] == mutex) {
+			return(i);
+		}
+	}
+	return(NOTOK);
+}
 
 /* ==========================================================================
  * pthread_mutex_init()
@@ -60,25 +71,62 @@ static const char rcsid[] = "$Id: mutex.c,v 1.1.1.1 1995/10/18 08:43:05 deraadt 
  * ENOMEM, EAGAIN should never be returned. Arch that have
  * weird constraints may need special coding.
  */
-int pthread_mutex_init(pthread_mutex_t *mutex, pthread_mutexattr_t *mutex_attr)
+int pthread_mutex_init(pthread_mutex_t *mutex, 
+  const pthread_mutexattr_t *mutex_attr)
 {
+	enum pthread_mutextype type;
+
 	/* Only check if attr specifies some mutex type other than fast */
 	if ((mutex_attr) && (mutex_attr->m_type != MUTEX_TYPE_FAST)) {
 		if (mutex_attr->m_type >= MUTEX_TYPE_MAX) {
 			return(EINVAL);
 		}
-		if (mutex->m_flags & MUTEX_FLAGS_INITED) {	
-			return(EBUSY);
-		}
-		mutex->m_type = mutex_attr->m_type;
+		type = mutex_attr->m_type;
 	} else {
-		mutex->m_type = MUTEX_TYPE_FAST;
+		type = MUTEX_TYPE_FAST;
+	}
+	mutex->m_flags = 0;
+
+	pthread_sched_prevent();
+
+	switch(type) {
+    case MUTEX_TYPE_FAST:
+        break;
+    case MUTEX_TYPE_STATIC_FAST:
+		pthread_sched_resume();
+        return(EINVAL);
+        break;
+	case MUTEX_TYPE_COUNTING_FAST:
+		mutex->m_data.m_count = 0;
+        break;
+    case MUTEX_TYPE_DEBUG:
+		if (pthread_mutex_is_debug(mutex) == NOTOK) {
+			pthread_mutex_t ** new;
+
+			if ((new = (pthread_mutex_t **)realloc(pthread_mutex_debug_ptrs,
+			  (pthread_mutex_debug_count + 1) * (sizeof(void *)))) == NULL) {
+				pthread_sched_resume();
+				return(ENOMEM);
+			}
+			pthread_mutex_debug_ptrs = new;
+			pthread_mutex_debug_ptrs[pthread_mutex_debug_count++] = mutex;
+		} else {
+			pthread_sched_resume();
+            return(EBUSY);
+        }
+        break;
+    default:
+		pthread_sched_resume();
+        return(EINVAL);
+		break;
 	}
 	/* Set all other paramaters */
 	pthread_queue_init(&mutex->m_queue);
 	mutex->m_flags 	|= MUTEX_FLAGS_INITED;
-	mutex->m_lock 	= SEMAPHORE_CLEAR;
 	mutex->m_owner	= NULL;
+	mutex->m_type	= type;
+
+	pthread_sched_resume();
 	return(OK);
 }
 
@@ -87,22 +135,48 @@ int pthread_mutex_init(pthread_mutex_t *mutex, pthread_mutexattr_t *mutex_attr)
  */
 int pthread_mutex_destroy(pthread_mutex_t *mutex)
 {
+	int i;
+
+	pthread_sched_prevent();
+
 	/* Only check if mutex is of type other than fast */
 	switch(mutex->m_type) {
 	case MUTEX_TYPE_FAST:
 		break;
 	case MUTEX_TYPE_STATIC_FAST:
+		pthread_sched_resume();
+		return(EINVAL);
+		break;
+	case MUTEX_TYPE_COUNTING_FAST:
+		mutex->m_data.m_count = 0;
+		break;
+	case MUTEX_TYPE_DEBUG:
+		if ((i = pthread_mutex_is_debug(mutex)) == NOTOK) {
+			pthread_sched_resume();
+            return(EINVAL);
+        }
+        if (mutex->m_owner) {
+			pthread_sched_resume();
+            return(EBUSY);
+        }
+
+		/* Remove the mutex from the list of debug mutexes */
+		pthread_mutex_debug_ptrs[i] = 
+		  pthread_mutex_debug_ptrs[--pthread_mutex_debug_count];
+		pthread_mutex_debug_ptrs[pthread_mutex_debug_count] = NULL;
+        break;
 	default:
+		pthread_sched_resume();
 		return(EINVAL);
 		break;
 	}
 
 	/* Cleanup mutex, others might want to use it. */
 	pthread_queue_init(&mutex->m_queue);
-	mutex->m_flags 	|= MUTEX_FLAGS_INITED;
-	mutex->m_lock 	= SEMAPHORE_CLEAR;
 	mutex->m_owner	= NULL;
 	mutex->m_flags	= 0;
+
+	pthread_sched_resume();
 	return(OK);
 }
 
@@ -111,14 +185,9 @@ int pthread_mutex_destroy(pthread_mutex_t *mutex)
  */
 int pthread_mutex_trylock(pthread_mutex_t *mutex)
 {
-	semaphore *lock;
 	int rval;
 
-	lock = &(mutex->m_lock);
-	while (SEMAPHORE_TEST_AND_SET(lock)) {
-		pthread_yield();
-	}
-	
+	pthread_sched_prevent();
 	switch (mutex->m_type) {
 	/*
 	 * Fast mutexes do not check for any error conditions.
@@ -132,11 +201,37 @@ int pthread_mutex_trylock(pthread_mutex_t *mutex)
 			rval = EBUSY;
 		}
 		break;
+	case MUTEX_TYPE_COUNTING_FAST:
+		if (mutex->m_owner) {
+			if (mutex->m_owner == pthread_run) {
+				mutex->m_data.m_count++;
+				rval = OK;
+			} else {
+				rval = EBUSY;
+			}
+		} else {
+			mutex->m_owner = pthread_run;
+			rval = OK;
+		}
+		break;
+	case MUTEX_TYPE_DEBUG:
+        if (pthread_mutex_is_debug(mutex) != NOTOK) {
+            if (!mutex->m_owner) {
+                mutex->m_owner = pthread_run;
+                rval = OK;
+            } else {
+                rval = EBUSY;
+            }
+        } else {
+            rval = EINVAL;
+        }
+        break;
 	default:
 		rval = EINVAL;
 		break;
 	}
-	SEMAPHORE_RESET(lock);
+
+	pthread_sched_resume();
 	return(rval);
 }
 
@@ -145,14 +240,9 @@ int pthread_mutex_trylock(pthread_mutex_t *mutex)
  */
 int pthread_mutex_lock(pthread_mutex_t *mutex)
 {
-	semaphore *lock, *plock;
 	int rval;
 
-	lock = &(mutex->m_lock);
-	while (SEMAPHORE_TEST_AND_SET(lock)) {
-		pthread_yield();
-	}
-	
+	pthread_sched_prevent();
 	switch (mutex->m_type) {
 	/*
 	 * Fast mutexes do not check for any error conditions.
@@ -160,25 +250,60 @@ int pthread_mutex_lock(pthread_mutex_t *mutex)
 	case MUTEX_TYPE_FAST: 
 	case MUTEX_TYPE_STATIC_FAST:
 		if (mutex->m_owner) {
-			plock = &(pthread_run->lock);
-			while (SEMAPHORE_TEST_AND_SET(plock)) {
-				 pthread_yield();
-			}
 			pthread_queue_enq(&mutex->m_queue, pthread_run);
-			SEMAPHORE_RESET(lock);
 
-			/* Reschedule will unlock pthread_run */
-			reschedule(PS_MUTEX_WAIT);
+			/* Reschedule will unlock scheduler */
+			pthread_resched_resume(PS_MUTEX_WAIT);
 			return(OK);
 		}
 		mutex->m_owner = pthread_run;
 		rval = OK;
 		break;
+	case MUTEX_TYPE_COUNTING_FAST:
+		if (mutex->m_owner) {
+			if (mutex->m_owner != pthread_run) {
+				pthread_queue_enq(&mutex->m_queue, pthread_run);
+
+				/* Reschedule will unlock scheduler */
+				pthread_resched_resume(PS_MUTEX_WAIT);
+				return(OK);
+			} else {
+				mutex->m_data.m_count++;
+			}	
+		} else {
+			mutex->m_owner = pthread_run;
+		}
+		rval = OK;
+		break;
+    case MUTEX_TYPE_DEBUG:
+        if (pthread_mutex_is_debug(mutex) != NOTOK) {
+            if (mutex->m_owner) {
+                if (mutex->m_owner != pthread_run) {
+                    pthread_queue_enq(&mutex->m_queue, pthread_run);
+
+                    /* Reschedule will unlock pthread_run */
+					pthread_resched_resume(PS_MUTEX_WAIT);
+
+                    if (mutex->m_owner != pthread_run) {
+                        PANIC();
+                    }
+                    return(OK);
+                }
+                rval = EDEADLK;
+                break;
+            }
+            mutex->m_owner = pthread_run;
+            rval = OK;
+            break;
+        }
+        rval = EINVAL;
+        break;
 	default:
 		rval = EINVAL;
 		break;
 	}
-	SEMAPHORE_RESET(lock);
+
+	pthread_sched_resume();
 	return(rval);
 }
 
@@ -188,40 +313,59 @@ int pthread_mutex_lock(pthread_mutex_t *mutex)
 int pthread_mutex_unlock(pthread_mutex_t *mutex)
 {
 	struct pthread *pthread;
-	semaphore *lock, *plock;
 	int rval;
 
-	lock = &(mutex->m_lock);
-	while (SEMAPHORE_TEST_AND_SET(lock)) {
-		pthread_yield();
-	}
-
+	pthread_sched_prevent();
+	
 	switch (mutex->m_type) {
     /*
      * Fast mutexes do not check for any error conditions.
      */
     case MUTEX_TYPE_FAST:
     case MUTEX_TYPE_STATIC_FAST:
-		if (pthread = pthread_queue_get(&mutex->m_queue)) {
-			plock = &(pthread->lock);
-			while (SEMAPHORE_TEST_AND_SET(plock)) {
-				 pthread_yield();
-			}
-			mutex->m_owner = pthread;
+		if (mutex->m_owner = pthread_queue_deq(&mutex->m_queue)) {
 
-			/* Reset pthread state */
-			pthread_queue_deq(&mutex->m_queue);
-			pthread->state = PS_RUNNING;
-			SEMAPHORE_RESET(plock);
-		} else {
-			mutex->m_owner = NULL;
+			/* Reschedule will unlock scheduler */
+			pthread_sched_other_resume(mutex->m_owner);
+			return(OK);
 		}
 		rval = OK;
 		break;
+	case MUTEX_TYPE_COUNTING_FAST:
+		if (mutex->m_data.m_count) {
+			mutex->m_data.m_count--;
+			rval = OK;
+			break;
+		}
+		if (mutex->m_owner = pthread_queue_deq(&mutex->m_queue)) {
+
+			/* Reschedule will unlock scheduler */
+			pthread_sched_other_resume(mutex->m_owner);
+			return(OK);
+		}
+		rval = OK;
+		break;
+	 case MUTEX_TYPE_DEBUG:
+		if (pthread_mutex_is_debug(mutex) != NOTOK) {
+        	if (mutex->m_owner == pthread_run) {
+            	if (mutex->m_owner = pthread_queue_deq(&mutex->m_queue)) {
+
+					/* Reschedule will unlock scheduler */
+					pthread_sched_other_resume(mutex->m_owner);
+					return(OK);
+            	}
+            	rval = OK;
+        	} else {
+            	rval = EPERM;
+        	}
+		} else {
+			rval = EINVAL;
+		}
+        break;
 	default:
 		rval = EINVAL;
 		break;
 	}
-	SEMAPHORE_RESET(lock);
+	pthread_sched_resume();
 	return(rval);
 }

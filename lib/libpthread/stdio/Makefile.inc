@@ -1,18 +1,20 @@
+
 #	from: @(#)Makefile.inc	5.7 (Berkeley) 6/27/91
-#	$Id: Makefile.inc,v 1.1.1.1 1995/10/18 08:43:05 deraadt Exp $
+#	$Id: Makefile.inc,v 1.1.1.2 1998/07/21 13:20:28 peter Exp $
 
 # Thread safe stdio sources
-.PATH: ${.CURDIR}/stdio
+.PATH: ${srcdir}/stdio
+
+# SRCS+= tempnam.c tmpfile.c tmpnam.c
 
 SRCS+=	clrerr.c fclose.c fdopen.c feof.c ferror.c fflush.c fgetc.c \
 	fgetline.c fgetpos.c fgets.c fileno.c findfp.c flags.c fopen.c \
 	fprintf.c fpurge.c fputc.c fputs.c fread.c freopen.c fscanf.c \
 	fseek.c fsetpos.c ftell.c funopen.c fvwrite.c fwalk.c fwrite.c \
-	getc.c getchar.c gets.c getw.c makebuf.c perror.c printf.c putc.c \
+	getc.c getchar.c gets.c getw.c makebuf.c perror.c putc.c \
 	putchar.c puts.c putw.c refill.c remove.c rewind.c rget.c scanf.c \
-	setbuf.c setbuffer.c setvbuf.c snprintf.c sprintf.c sscanf.c \
-	stdio.c tempnam.c tmpfile.c tmpnam.c ungetc.c vfprintf.c \
-	vfscanf.c vprintf.c vscanf.c vsnprintf.c vsprintf.c vsscanf.c \
+	setbuf.c setbuffer.c setvbuf.c sscanf.c \
+	stdio.c ungetc.c \
+	vfscanf.c vscanf.c vsscanf.c \
 	wsetup.c putc_unlocked.c putchar_unlocked.c getc_unlocked.c \
-    getchar_unlocked.c strerror.c wbuf.c
-
+    getchar_unlocked.c strerror.c wbuf.c xprintf.c

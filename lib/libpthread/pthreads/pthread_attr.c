@@ -36,11 +36,12 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$Id: pthread_attr.c,v 1.1.1.1 1995/10/18 08:43:05 deraadt Exp $ $provenid: pthread_attr.c,v 1.16 1994/02/07 02:19:14 proven Exp $";
+static const char rcsid[] = "$Id: pthread_attr.c,v 1.1.1.2 1998/07/21 13:20:12 peter Exp $";
 #endif
 
 #include <pthread.h>
 #include <errno.h>
+#include <string.h>
 
 /* Currently we do no locking, should we just to be safe? CAP */
 /* ==========================================================================
@@ -48,7 +49,7 @@ static const char rcsid[] = "$Id: pthread_attr.c,v 1.1.1.1 1995/10/18 08:43:05 d
  */
 int pthread_attr_init(pthread_attr_t *attr)
 {
-	memcpy(attr, &pthread_default_attr, sizeof(pthread_attr_t));
+	memcpy(attr, &pthread_attr_default, sizeof(pthread_attr_t));
 	return(OK);
 }
 
@@ -98,3 +99,157 @@ int pthread_attr_setstackaddr(pthread_attr_t *attr, void * stackaddr)
 	attr->stackaddr_attr = stackaddr;
 	return(OK);
 }
+
+/* ==========================================================================
+ * pthread_attr_setcleanup()
+ */
+int pthread_attr_setcleanup(pthread_attr_t *attr, void (*routine)(void *),
+  void * arg)
+{
+	attr->cleanup_attr = routine;
+	attr->arg_attr = arg;
+	return(OK);
+}
+
+/* ==========================================================================
+ * pthread_attr_getdetachstate()
+ */
+int pthread_attr_getdetachstate(pthread_attr_t *attr, int * detachstate)
+{
+	*detachstate = attr->flags & PTHREAD_DETACHED;
+	return(OK);
+}
+
+/* ==========================================================================
+ * pthread_attr_setdetachstate()
+ */
+int pthread_attr_setdetachstate(pthread_attr_t *attr, int detachstate)
+{
+	attr->flags = (attr->flags & ~(PTHREAD_DETACHED)) |
+	  (detachstate & PTHREAD_DETACHED);
+	return(OK);
+}
+
+/* ==========================================================================
+ * pthread_attr_getfloatstate()
+ */
+int pthread_attr_getfloatstate(pthread_attr_t *attr, int * floatstate)
+{
+	*floatstate = attr->flags & PTHREAD_NOFLOAT;
+	return(OK);
+}
+
+/* ==========================================================================
+ * pthread_attr_setfloatstate()
+ */
+int pthread_attr_setfloatstate(pthread_attr_t *attr, int floatstate)
+{
+	attr->flags = (attr->flags & ~(PTHREAD_NOFLOAT)) |
+	  (floatstate & PTHREAD_NOFLOAT);
+	return(OK);
+}
+
+/* ==========================================================================
+ * pthread_attr_getscope()
+ */
+int pthread_attr_getscope(pthread_attr_t *attr, int * contentionscope)
+{
+	*contentionscope = attr->flags & PTHREAD_SCOPE_SYSTEM;
+	return(OK);
+}
+
+/* ==========================================================================
+ * pthread_attr_setscope()
+ */
+int pthread_attr_setscope(pthread_attr_t *attr, int contentionscope)
+{
+	int ret;
+
+	switch (contentionscope) {
+	case PTHREAD_SCOPE_PROCESS:
+		attr->flags = (attr->flags & ~(PTHREAD_SCOPE_PROCESS)) 
+		  | PTHREAD_SCOPE_PROCESS;
+		ret = OK;
+		break;
+	case PTHREAD_SCOPE_SYSTEM:
+		ret = ENOSYS;
+		break;
+	default:
+		ret = EINVAL;
+		break;
+	}
+
+	return(ret);
+}
+
+/* ==========================================================================
+ * pthread_attr_getinheritsched()
+ */
+int pthread_attr_getinheritsched(pthread_attr_t *attr, int * inheritsched)
+{
+	*inheritsched = attr->flags & PTHREAD_INHERIT_SCHED;
+	return(OK);
+}
+
+/* ==========================================================================
+ * pthread_attr_setinheritsched()
+ */
+int pthread_attr_setinheritsched(pthread_attr_t *attr, int inheritsched)
+{
+	attr->flags = (attr->flags & ~(PTHREAD_INHERIT_SCHED)) |
+	  (inheritsched & PTHREAD_INHERIT_SCHED);
+	return(OK);
+}
+
+/* ==========================================================================
+ * pthread_attr_getschedpolicy()
+ */
+int pthread_attr_getschedpolicy(pthread_attr_t *attr, int * schedpolicy)
+{
+	*schedpolicy = (int)attr->schedparam_policy;
+	return(OK);
+}
+
+/* ==========================================================================
+ * pthread_attr_setschedpolicy()
+ */
+int pthread_attr_setschedpolicy(pthread_attr_t *attr, int schedpolicy)
+{
+	int ret;
+
+	switch(schedpolicy) {
+	case SCHED_FIFO:
+	case SCHED_IO:
+	case SCHED_RR:
+		attr->schedparam_policy = schedpolicy;
+		ret = OK;
+		break;
+	default:
+		ret = EINVAL;
+		break;
+	}
+	return(ret);
+}
+
+/* ==========================================================================
+ * pthread_attr_getschedparam()
+ */
+int pthread_attr_getschedparam(pthread_attr_t *attr, struct sched_param * param)
+{
+	param->sched_priority = attr->sched_priority;
+	return(OK);
+}
+
+/* ==========================================================================
+ * pthread_attr_setschedparam()
+ */
+int pthread_attr_setschedparam(pthread_attr_t *attr, struct sched_param * param)
+{
+	if ((param->sched_priority >= PTHREAD_MIN_PRIORITY) &&
+	  (param->sched_priority <= PTHREAD_MAX_PRIORITY)) {
+		attr->sched_priority = param->sched_priority;
+		return(OK);
+	}
+	return(EINVAL);
+}
+

@@ -36,11 +36,20 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$Id: signal.c,v 1.1.1.1 1995/10/18 08:43:05 deraadt Exp $ $provenid: signal.c,v 1.18 1994/02/07 02:19:28 proven Exp $";
+static const char rcsid[] = "$Id: signal.c,v 1.1.1.2 1998/07/21 13:20:22 peter Exp $";
 #endif
 
 #include <pthread.h>
 #include <signal.h>
+#include <config.h>
+
+/* This will force init.o to get dragged in; if you've got support for
+   C++ initialization, that'll cause pthread_init to be called at
+   program startup automatically, so the application won't need to
+   call it explicitly.  */
+
+extern char __pthread_init_hack;
+char *__pthread_init_hack_2 = &__pthread_init_hack;
 
 /*
  * Time which select in fd_kern_wait() will sleep.
@@ -54,13 +63,16 @@ struct timeval __fd_kern_wait_timeout = { 0, 0 };
 /*
  * Global for user-kernel lock, and blocked signals
  */
-static volatile	sigset_t sig_to_tryagain;
-static volatile	sigset_t sig_to_process;
-static volatile	int kernel_lock = 0;
+
+static sig_atomic_t signum_to_process[SIGMAX + 1] = { 0, };
+volatile sig_atomic_t sig_to_process = 0;
+
+/* static volatile	sigset_t sig_to_process; */
 static volatile	int	sig_count = 0;
 
 static void sig_handler(int signal);
 static void set_thread_timer();
+static void __cleanup_after_resume( void );
 void sig_prevent(void);
 void sig_resume(void);
 
@@ -75,98 +87,100 @@ void sig_resume(void);
  */
 static void context_switch()
 {
-	struct pthread **current, *next, *last;
-	semaphore *lock;
-	int count;
+	struct pthread **current, *next, *last, **dead;
 
+	if (pthread_run->state == PS_RUNNING) {
+		/* Put current thread back on the queue */
+		pthread_prio_queue_enq(pthread_current_prio_queue, pthread_run);
+	}
+
+	/* save floating point registers if necessary */
+	if (!(pthread_run->attr.flags & PTHREAD_NOFLOAT)) {
+		machdep_save_float_state(pthread_run);
+	}
 	/* save state of current thread */
 	if (machdep_save_state()) {
 		return;
 	}
 
 	last = pthread_run;
-	if (pthread_run = pthread_queue_deq(&pthread_current_queue)) {
-		/* restore state of new current thread */
-		machdep_restore_state();
-		return;
-	}
 
-	/* Poll all the kernel fds */
+	/* Poll all fds */
 	fd_kern_poll();
 
 context_switch_reschedule:;
-	/*
-	 * Go through the reschedule list once, this is the only place
-	 * that goes through the queue without using the queue routines.
-	 *
-	 * But first delete the current queue.
-	 */
-	pthread_queue_init(&pthread_current_queue);
-	current = &(pthread_link_list);
-	count = 0;
-
-	while (*current) {
-		switch((*current)->state) {
-		case PS_RUNNING:
-			pthread_queue_enq(&pthread_current_queue, *current);
-			current = &((*current)->pll);
-			count++;
-			break;
-		case PS_DEAD:
-			/* Cleanup thread, unless we're using the stack */
-			if (((*current)->flags & PF_DETACHED) && (*current != last)) {
-				next = (*current)->pll;
-				lock = &((*current)->lock);
-				if (SEMAPHORE_TEST_AND_SET(lock)) {
-					/* Couldn't cleanup this time, try again later */
-					current = &((*current)->pll);
-				} else {
-					if (!((*current)->attr.stackaddr_attr)) {
-						free (machdep_pthread_cleanup(&((*current)->machdep_data)));
-					}
-					free (*current);
-					*current = next;
-				}
-			} else {
-				current = &((*current)->pll);
-			}
-			break;
-		default:
-			/* Should be on a different queue. Ignore. */
-			current = &((*current)->pll);
-			count++;
-			break;
-		}
-	}
-
 	/* Are there any threads to run */
-	if (pthread_run = pthread_queue_deq(&pthread_current_queue)) {
-        /* restore state of new current thread */
+	if (pthread_run = pthread_prio_queue_deq(pthread_current_prio_queue)) {
+		/* restore floating point registers if necessary */
+		if (!(pthread_run->attr.flags & PTHREAD_NOFLOAT)) {
+			machdep_restore_float_state();
+		}
+		uthread_sigmask = &(pthread_run->sigmask);
+      	/* restore state of new current thread */
 		machdep_restore_state();
-        return;
-    }
+    	return;
+   	} 
 
 	/* Are there any threads at all */
-	if (count) {
-		/*
-		 * Do a wait, timeout is set to a hour unless we get an interrupt
-		 * before the select in wich case it polls and returns. 
-		 */
-		fd_kern_wait();
+	for (next = pthread_link_list; next; next = next->pll) {
+		if ((next->state != PS_UNALLOCED) && (next->state != PS_DEAD)) {
+			sigset_t sig_to_block, oset;
 
-		/* Check for interrupts, but ignore SIGVTALR */
-		sigdelset(&sig_to_process, SIGVTALRM); 
+			sigfillset(&sig_to_block);
 
-		if (sig_to_process) {
-			/* Process interrupts */
-			sig_handler(0); 
+			/*
+			 * Check sig_to_process before calling fd_kern_wait, to handle
+			 * things like zero timeouts to select() which would register
+			 * a signal with the sig_handler_fake() call.
+			 *
+			 * This case should ignore SIGVTALRM
+			 */
+			machdep_sys_sigprocmask(SIG_BLOCK, &sig_to_block, &oset);
+			signum_to_process[SIGVTALRM] = 0;
+			if (sig_to_process) {
+              	/* Process interrupts */
+               	/*
+               	 * XXX pthread_run should not be set!
+				 * Places where it dumps core should be fixed to 
+				 * check for the existance of pthread_run --proven
+               	 */
+               	sig_handler(0);
+           	} else {
+				machdep_sys_sigprocmask(SIG_UNBLOCK, &sig_to_block, &oset);
+				/*
+				 * Do a wait, timeout is set to a hour unless we get an 
+				 * intr. before the select in wich case it polls.
+				 */
+				fd_kern_wait();
+				machdep_sys_sigprocmask(SIG_BLOCK, &sig_to_block, &oset);
+				/* Check for interrupts, but ignore SIGVTALR */
+				signum_to_process[SIGVTALRM] = 0;
+				if (sig_to_process) {
+					/* Process interrupts */
+					sig_handler(0); 
+				}
+			}
+			machdep_sys_sigprocmask(SIG_UNBLOCK, &sig_to_block, &oset); 
+			goto context_switch_reschedule;
 		}
-
-		goto context_switch_reschedule;
-
 	}
+
+	/* There are no threads alive. */
+	pthread_run = last;
 	exit(0);
 }
+
+#if !defined(HAVE_SYSCALL_SIGSUSPEND) && defined(HAVE_SYSCALL_SIGPAUSE)
+
+/* ==========================================================================
+ * machdep_sys_sigsuspend()
+ */ 
+int machdep_sys_sigsuspend(sigset_t * set)
+{
+	return(machdep_sys_sigpause(* set));
+}
+
+#endif
 
 /* ==========================================================================
  * sig_handler_pause()
@@ -175,15 +189,16 @@ context_switch_reschedule:;
  */
 void sig_handler_pause()
 {
-	sigset_t sig_to_block, sig_to_pause;
+	sigset_t sig_to_block, sig_to_pause, oset;
 
 	sigfillset(&sig_to_block);
 	sigemptyset(&sig_to_pause);
-	sigprocmask(SIG_BLOCK, &sig_to_block, NULL);
+	machdep_sys_sigprocmask(SIG_BLOCK, &sig_to_block, &oset);
+/*	if (!(SIG_ANY(sig_to_process))) { */
 	if (!sig_to_process) {
-		sigsuspend(&sig_to_pause);
+		machdep_sys_sigsuspend(&sig_to_pause);
 	}
-	sigprocmask(SIG_UNBLOCK, &sig_to_block, NULL);
+	machdep_sys_sigprocmask(SIG_UNBLOCK, &sig_to_block, &oset);
 }
 
 /* ==========================================================================
@@ -198,7 +213,8 @@ void sig_handler_pause()
  */
 void context_switch_done()
 {
-	sigdelset(&sig_to_process, SIGVTALRM);
+	/* sigdelset((sigset_t *)&sig_to_process, SIGVTALRM); */
+	signum_to_process[SIGVTALRM] = 0;
 	set_thread_timer();
 }
 
@@ -211,13 +227,13 @@ static void set_thread_timer()
 {
 	static int last_sched_attr = SCHED_RR;
 
-	switch (pthread_run->attr.sched_attr) {
+	switch (pthread_run->attr.schedparam_policy) {
 	case SCHED_RR:
 		machdep_set_thread_timer(&(pthread_run->machdep_data));
 		break;
 	case SCHED_FIFO:
 		if (last_sched_attr != SCHED_FIFO) {
-			machdep_unset_thread_timer();
+			machdep_unset_thread_timer(NULL);
 		}
 		break;
 	case SCHED_IO:
@@ -229,90 +245,158 @@ static void set_thread_timer()
 		machdep_set_thread_timer(&(pthread_run->machdep_data));
 		break;
 	} 
-    last_sched_attr = pthread_run->attr.sched_attr;
+    last_sched_attr = pthread_run->attr.schedparam_policy;
+}
+
+/* ==========================================================================
+ * sigvtalrm()
+ */
+static inline void sigvtalrm() 
+{
+	if (sig_count) {
+		sigset_t sigall, oset;
+
+		sig_count = 0;
+
+		/* Unblock all signals */
+		sigemptyset(&sigall);
+		machdep_sys_sigprocmask(SIG_SETMASK, &sigall, &oset); 
+	}
+	context_switch();
+	context_switch_done();
+}
+
+/* ==========================================================================
+ * sigdefault()
+ */
+static inline void sigdefault(int sig)
+{
+	int ret;
+
+	ret = pthread_sig_register(sig);
+	if (pthread_run && (ret > pthread_run->pthread_priority)) {
+		sigvtalrm();
+	}
+}
+
+/* ==========================================================================
+ * sig_handler_switch()
+ */
+static inline void sig_handler_switch(int sig)
+{
+	int ret;
+
+			switch(sig) {
+			case 0:
+				break;
+			case SIGVTALRM:
+				sigvtalrm();
+				break;
+			case SIGALRM:
+/*		sigdelset((sigset_t *)&sig_to_process, SIGALRM); */
+				signum_to_process[SIGALRM] = 0;
+				switch (ret = sleep_wakeup()) {
+				default:
+					if (pthread_run && (ret > pthread_run->pthread_priority)) {
+						sigvtalrm();
+					}
+				case 0:
+					break;
+				case NOTOK:
+			/* Do the registered action, no threads were sleeping */
+                                      /* There is a timing window that gets
+                                       * here when no threads are on the
+                                       * sleep queue.  This is a quick fix.
+                                       * The real problem is possibly related
+                                       * to heavy use of condition variables
+                                       * with time outs.
+                                       * (mevans)
+                                       *sigdefault(sig);
+                                       */
+				  break;
+				}
+				break;
+			case SIGCHLD:
+/*		sigdelset((sigset_t *)&sig_to_process, SIGCHLD); */
+				signum_to_process[SIGCHLD] = 0;
+				switch (ret = wait_wakeup()) {
+				default:
+					if (pthread_run && (ret > pthread_run->pthread_priority)) {
+						sigvtalrm();
+					}
+				case 0:
+					break;
+				case NOTOK:
+			/* Do the registered action, no threads were waiting */
+					sigdefault(sig);
+					break;
+				} 
+				break;
+
+#ifdef SIGINFO
+			case SIGINFO:
+				pthread_dump_info ();
+				/* Then fall through, invoking the application's
+		   		signal handler after printing our info out.
+
+		   		I'm not convinced that this is right, but I'm not
+		   		100% convinced that it is wrong, and this is how
+		   		Chris wants it done...  */
+#endif
+
+	default:
+		/* Do the registered action */
+		if (!sigismember(uthread_sigmask, sig)) {
+			/*
+			 * If the signal isn't masked by the last running thread and
+			 * the signal behavior is default or ignore then we can
+			 * execute it immediatly. --proven
+			 */
+			pthread_sig_default(sig);
+		}
+		signum_to_process[sig] = 0;
+		sigdefault(sig);
+		break;
+	}
+
 }
 
 /* ==========================================================================
  * sig_handler()
  *
+ * Process signal that just came in, plus any pending on the signal mask.
+ * All of these must be resolved.
+ *
  * Assumes the kernel is locked. 
  */
 static void sig_handler(int sig)
 {
-
-	/*
-	 * First check for old signals, do one pass through and don't
- 	 * check any twice.
-     */
-	if (sig_to_tryagain) {
-		if (sigismember(&sig_to_tryagain, SIGALRM)) {
-			switch (sleep_wakeup()) {
-			case 1:
-				/* Do the default action, no threads were sleeping */
-			case OK:
-				/* Woke up a sleeping thread */
-				sigdelset(&sig_to_tryagain, SIGALRM);
-				break;
-			case NOTOK:
-				/* Couldn't get appropriate locks, try again later */
-				break;
-			}
-		} else {
-			PANIC();
-		}
-	}
-		
-	/*
-	 * NOW, process signal that just came in, plus any pending on the
-	 * signal mask. All of these must be resolved.
-	 */
-
-sig_handler_top:;
-
-	switch(sig) {
-	case 0:
-		break;
-	case SIGVTALRM:
-		if (sig_count) {
-			sigset_t sigall;
-
-			sig_count = 0;
-
-			/* Unblock all signals */
-			sigemptyset(&sigall);
-			sigprocmask(SIG_SETMASK, &sigall, NULL); 
-		}
-		context_switch();
-		context_switch_done();
-		break;
-	case SIGALRM:
-		sigdelset(&sig_to_process, SIGALRM);
-		switch (sleep_wakeup()) {
-		case 1:
-			/* Do the default action, no threads were sleeping */
-		case OK:
-			/* Woke up a sleeping thread */
-			break;
-		case NOTOK:
-			/* Couldn't get appropriate locks, try again later */
-			sigaddset(&sig_to_tryagain, SIGALRM);
-			break;
-		} 
-		break;
-	default:
+	if (pthread_kernel_lock != 1) {
 		PANIC();
 	}
 
-	/* Determine if there are any other signals */
-	if (sig_to_process) {
-		for (sig = 1; sig <= SIGMAX; sig++) {
-			if (sigismember(&sig_to_process, sig)) {
+	if (sig) { 
+		sig_handler_switch(sig);
+	}
+
+	while (sig_to_process) {
+		for (sig_to_process = 0, sig = 1; sig <= SIGMAX; sig++) {
+			if (signum_to_process[sig]) {
+				sig_handler_switch(sig);
+			}
+		}
+	}
+
 		
-				/* goto sig_handler_top */
+/*
+	if (SIG_ANY(sig_to_process)) {
+		for (sig = 1; sig <= SIGMAX; sig++) {
+			if (sigismember((sigset_t *)&sig_to_process, sig)) {
 				goto sig_handler_top;
 			}
 		}
 	}
+*/
 }
 
 /* ==========================================================================
@@ -323,15 +407,37 @@ sig_handler_top:;
  */
 void sig_handler_real(int sig)
 {
-	if (kernel_lock) {
+	/*
+	 * Get around systems with BROKEN signal handlers.
+	 *
+	 * Some systems will reissue SIGCHLD if the handler explicitly
+	 * clear the signal pending by either doing a wait() or 
+	 * ignoring the signal.
+	 */
+#if defined BROKEN_SIGNALS
+	if (sig == SIGCHLD) {
+		sigignore(SIGCHLD);
+		signal(SIGCHLD, sig_handler_real);
+	}
+#endif
+
+	if (pthread_kernel_lock) {
+		/* sigaddset((sigset_t *)&sig_to_process, sig); */
 		__fd_kern_wait_timeout.tv_sec = 0;
-		sigaddset(&sig_to_process, sig);
+		signum_to_process[sig] = 1;
+		sig_to_process = 1;
 		return;
 	}
-	sig_prevent();
+	pthread_kernel_lock++;
+
 	sig_count++;
 	sig_handler(sig);
-	sig_resume();
+
+	/* Handle any signals the current thread might have just gotten */
+	if (pthread_run && pthread_run->sigcount) {
+		pthread_sig_process();
+	}
+	pthread_kernel_lock--;
 }
 
 /* ==========================================================================
@@ -339,70 +445,141 @@ void sig_handler_real(int sig)
  */
 void sig_handler_fake(int sig)
 {
-	if (kernel_lock) {
-		/* Currently this should be impossible */
-		PANIC();
+	if (pthread_kernel_lock) {
+		/* sigaddset((sigset_t *)&sig_to_process, sig); */
+		signum_to_process[sig] = 1;
+		sig_to_process = 1;
+		return;
 	}
-	sig_prevent();
+	pthread_kernel_lock++;
 	sig_handler(sig);
-	sig_resume();
-}
-
-/* ==========================================================================
- * reschedule()
- *
- * This routine assumes that the caller is the current pthread, pthread_run
- * and that it has a lock on itself and that it wants to reschedule itself.
- */
-void reschedule(enum pthread_state state)
-{
-	semaphore *plock;
-
-	if (kernel_lock) {
-		/* Currently this should be impossible */
-		PANIC();
-	}
-	sig_prevent();
-	pthread_run->state = state;
-	SEMAPHORE_RESET((plock = &(pthread_run->lock)));
-	sig_handler(SIGVTALRM);
-	sig_resume();
-}
-
-/* ==========================================================================
- * sig_prevent()
- */
-void sig_prevent(void)
-{
-	kernel_lock++;
-}
-
-/* ==========================================================================
- * sig_resume()
- */
-void sig_resume()
-{
-	kernel_lock--;
-}
-
-/* ==========================================================================
- * sig_check_and_resume()
- */
-void sig_check_and_resume()
-{
-	/* Some routine name that is yet to be determined. */
-	
-	/* Only bother if we are truely unlocking the kernel */
-	while (!(--kernel_lock)) {
-
-		/* Assume sigset_t is not a struct or union */
+	while (!(--pthread_kernel_lock)) {
 		if (sig_to_process) {
-			kernel_lock++;
+		/* if (SIG_ANY(sig_to_process)) { */
+			pthread_kernel_lock++;
 			sig_handler(0);
 		} else {
 			break;
 		}
 	}
+}
+
+/* ==========================================================================
+ * __pthread_signal_delete(int sig)
+ *
+ * Assumes the kernel is locked.
+ */
+void __pthread_signal_delete(int sig)
+{
+		signum_to_process[sig] = 0;
+}
+
+/* ==========================================================================
+ * pthread_sched_other_resume()
+ *
+ * Check if thread to be resumed is of higher priority and if so
+ * stop current thread and start new thread.
+ */
+pthread_sched_other_resume(struct pthread * pthread)
+{
+	pthread->state = PS_RUNNING;
+	pthread_prio_queue_enq(pthread_current_prio_queue, pthread);
+
+	if (pthread->pthread_priority > pthread_run->pthread_priority) {
+		if (pthread_kernel_lock == 1) {
+			sig_handler(SIGVTALRM);
+		}
+	}
+
+	__cleanup_after_resume();
+}
+
+/* ==========================================================================
+ * pthread_resched_resume()
+ *
+ * This routine assumes that the caller is the current pthread, pthread_run
+ * and that it has a lock the kernel thread and it wants to reschedule itself.
+ */
+void pthread_resched_resume(enum pthread_state state)
+{
+	pthread_run->state = state;
+
+	/* Since we are about to block this thread, lets see if we are
+	 * at a cancel point and if we've been cancelled.
+	 * Avoid cancelling dead or unalloced threads.
+	 */
+	if( ! TEST_PF_RUNNING_TO_CANCEL(pthread_run) &&
+		TEST_PTHREAD_IS_CANCELLABLE(pthread_run) &&
+		state != PS_DEAD && state != PS_UNALLOCED ) {
+
+		/* Set this flag to avoid recursively calling pthread_exit */
+		/* We have to set this flag here because we will unlock the
+		 * kernel prior to calling pthread_cancel_internal.
+		 */
+		SET_PF_RUNNING_TO_CANCEL(pthread_run);
+
+		pthread_run->old_state = state;	/* unlock needs this data */
+		pthread_sched_resume();			/* Unlock kernel before cancel */
+		pthread_cancel_internal( 1 );	/* free locks and exit */
+	}
+
+	sig_handler(SIGVTALRM);
+
+	__cleanup_after_resume();
+}
+
+/* ==========================================================================
+ * pthread_sched_resume()
+ */
+void pthread_sched_resume()
+{
+	__cleanup_after_resume();
+}
+
+/*----------------------------------------------------------------------
+ * Function:	__cleanup_after_resume
+ * Purpose:		cleanup kernel locks after a resume
+ * Args:		void
+ * Returns:		void
+ * Notes:
+ *----------------------------------------------------------------------*/
+static void
+__cleanup_after_resume( void )
+{
+	/* Only bother if we are truely unlocking the kernel */
+	while (!(--pthread_kernel_lock)) {
+		/* if (SIG_ANY(sig_to_process)) { */
+		if (sig_to_process) {
+			pthread_kernel_lock++;
+			sig_handler(0);
+			continue;
+		}
+		if (pthread_run && pthread_run->sigcount) {
+			pthread_kernel_lock++;
+			pthread_sig_process();
+			continue;
+		}
+		break;
+	}
+
+	if( pthread_run == NULL )
+		return;							/* Must be during init processing */
+
+	/* Test for cancel that should be handled now */
+
+	if( ! TEST_PF_RUNNING_TO_CANCEL(pthread_run) &&
+		TEST_PTHREAD_IS_CANCELLABLE(pthread_run) ) {
+		/* Kernel is already unlocked */
+		pthread_cancel_internal( 1 );	/* free locks and exit */
+	}
+}
+
+/* ==========================================================================
+ * pthread_sched_prevent()
+ */
+void pthread_sched_prevent(void)
+{
+	pthread_kernel_lock++;
 }
 
 /* ==========================================================================
@@ -414,32 +591,63 @@ void sig_check_and_resume()
  * SIGALRM		(IS POSIX) so some special handling will be
  * 				necessary to fake SIGALRM signals
  */
+#ifndef SIGINFO
+#define SIGINFO 0
+#endif
 void sig_init(void)
 {
-	int sig_to_init[] = { SIGVTALRM, SIGALRM, 0 };
+	static const int signum_to_initialize[] = 
+					 { SIGCHLD, SIGALRM, SIGVTALRM, SIGINFO, 0 };
+	static const int signum_to_ignore[] = { SIGKILL, SIGSTOP, 0 };
+	int i, j;
 
-#if defined(SA_RESTART)
+#if defined(HAVE_SYSCALL_SIGACTION) || defined(HAVE_SYSCALL_KSIGACTION)
 	struct sigaction act;
-#endif
 
-	int i;
-
-#if defined(SA_RESTART)
 	act.sa_handler = sig_handler_real;
 	sigemptyset(&(act.sa_mask));
-	act.sa_flags = SA_RESTART;
+	act.sa_flags = 0;
 #endif
 
-	/* Initialize only the necessary signals */
-	for (i = 0; sig_to_init[i]; i++) {
+	/* Initialize the important signals */
+	for (i = 0; signum_to_initialize[i]; i++) {
 
-#if defined(SA_RESTART)
-		if (sigaction(sig_to_init[i], &act, NULL)) {
+#if defined(HAVE_SYSCALL_SIGACTION) || defined(HAVE_SYSCALL_KSIGACTION)
+		if (sigaction(signum_to_initialize[i], &act, NULL)) {
 #else
-		if (signal(sig_to_init[i], sig_handler_real)) { 
+		if (signal(signum_to_initialize[i], sig_handler_real)) { 
 #endif
 			PANIC();
 		}
 	}
+
+	/* Initialize the rest of the signals */
+	for (j = 1; j < SIGMAX; j++) {
+		for (i = 0; signum_to_initialize[i]; i++) {
+			if (signum_to_initialize[i] == j) {
+				goto sig_next;
+			}
+		}
+		/* Because Solaris 2.4 can't deal -- proven */
+		for (i = 0; signum_to_ignore[i]; i++) {
+			if (signum_to_ignore[i] == j) {
+				goto sig_next;
+			}
+		}
+		pthread_signal(j, SIG_DFL);
+		
+#if defined(HAVE_SYSCALL_SIGACTION) || defined(HAVE_SYSCALL_KSIGACTION)
+		sigaction(j, &act, NULL);
+#else
+		signal(j, sig_handler_real);
+#endif
+
+		sig_next:;
+	}
+
+#if defined BROKEN_SIGNALS 
+	signal(SIGCHLD, sig_handler_real);
+#endif
+
 }
 

@@ -1,5 +1,6 @@
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
+ * Copyright (c) 1993, 1994 Chris Provenzano. 
  * All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
@@ -36,7 +37,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)stdio.c	5.3 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: stdio.c,v 1.1.1.1 1995/10/18 08:43:09 deraadt Exp $";
+static char *rcsid = "$Id: stdio.c,v 1.1.1.2 1998/07/21 13:21:59 peter Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <pthread.h>
@@ -54,8 +55,14 @@ int __sread(FILE  *fp, char *buf, int n)
 	register int ret;
 	
 	/* if the read succeeded, update the current offset */
-	if ((ret = fd_table[fp->_file]->ops->read(fd_table[fp->_file]->fd,
-	  fd_table[fp->_file]->flags, buf, n)) >= 0) {
+	if (fd_table[fp->_file]->ops->use_kfds < 2) {
+		ret = fd_table[fp->_file]->ops->read(fd_table[fp->_file]->fd,
+	  	  fd_table[fp->_file]->flags, buf, n, NULL);
+	} else {
+		pthread_ssize_t (*readfn)() = fd_table[fp->_file]->ops->read;
+		ret = readfn(fd_table[fp->_file]->fd, buf, n);
+	}
+	if (ret >= 0) {
 		fp->_offset += ret;
 	} else {
 		fp->_flags &= ~__SOFF;	/* paranoia */
@@ -68,15 +75,20 @@ int __swrite(FILE *fp, const char *buf, int n)
 	if (fp->_flags & __SAPP)
 		(void) lseek(fp->_file, (off_t)0, SEEK_END);
 	fp->_flags &= ~__SOFF;	/* in case FAPPEND mode is set */
-	return(fd_table[fp->_file]->ops->write(fd_table[fp->_file]->fd,
-	  fd_table[fp->_file]->flags, buf, n));
+	if (fd_table[fp->_file]->ops->use_kfds < 2) {
+		return(fd_table[fp->_file]->ops->write(fd_table[fp->_file]->fd,
+		  fd_table[fp->_file]->flags, buf, n, NULL));
+	} else {
+		pthread_ssize_t (*writefn)() = fd_table[fp->_file]->ops->write;
+		return(writefn(fd_table[fp->_file]->fd,buf,n));
+	}
 }
 
-fpos_t __sseek(FILE *fp, fpos_t offset, int whence)
+fpos_t __sseek(FILE *fp, off_t offset, int whence)
 {
-	register off_t ret;
+	register fpos_t ret;
 	
-	ret = lseek(fp->_file, (off_t)offset, whence);
+	ret = (fpos_t)lseek(fp->_file, offset, whence);
 	if (ret == -1L)
 		fp->_flags &= ~__SOFF;
 	else {

@@ -1,5 +1,6 @@
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
+ * Copyright (c) 1993, 1994 Chris Provenzano. 
  * All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
@@ -36,20 +37,22 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)vsprintf.c	5.5 (Berkeley) 2/5/91";*/
-static char *rcsid = "$Id: vsprintf.c,v 1.1.1.1 1995/10/18 08:43:09 deraadt Exp $";
+static char *rcsid = "$Id: vsprintf.c,v 1.1.1.2 1998/07/21 13:22:13 peter Exp $";
 #endif /* LIBC_SCCS and not lint */
 
-#include <stdio.h>
+#include <stdarg.h>
 #include <limits.h>
+#include <stdio.h>
 
 vsprintf(str, fmt, ap)
 	char *str;
 	const char *fmt;
-	va_list ap;
+	pthread_va_list ap;
 {
 	int ret;
 	FILE f;
 
+	f._file = -1;
 	f._flags = __SWR | __SSTR;
 	f._bf._base = f._p = (unsigned char *)str;
 	f._bf._size = f._w = INT_MAX;

@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)local.h	5.3 (Berkeley) 5/6/93
- *	$Id: local.h,v 1.1.1.1 1995/10/18 08:43:07 deraadt Exp $
+ *	$Id: local.h,v 1.1.1.2 1998/07/21 13:21:29 peter Exp $
  */
 
 /*
@@ -42,23 +42,25 @@
  * in particular, macros and private variables.
  */
 
-FILE	*__sfp 			__P((void));
-int		__sflush 		__P((FILE *));
-int		__srefill 		__P((FILE *));
-int		__swrite 		__P((FILE *, const char *, int));
-int		__sread 		__P((FILE *, char *, int));
-fpos_t	__sseek 		__P((FILE *, fpos_t, int));
-int		__sclose 		__P((FILE *));
-void	__sinit 		__P((void));
-void	_cleanup 		__P((void));
-void	(*__cleanup) 	__P((void));
-void	__smakebuf 		__P((FILE *));
-int		__swhatbuf 		__P((FILE *, size_t *, int *));
-int		__swalk_sflush 	__P(());
-int		__swsetup 		__P((FILE *));
-int		__sflags 		__P((const char *, int *));
+#include <sys/types.h>
+#include <stddef.h>
 
-extern int __sdidinit;
+extern FILE *__sfp 		__P_((void));
+extern int __sflush 		__P_((FILE *));
+extern int __srefill 		__P_((FILE *));
+extern int __swrite 		__P_((FILE *, const char *, int));
+extern int __sread 		__P_((FILE *, char *, int));
+extern fpos_t __sseek 		__P_((FILE *, off_t, int));
+extern int __sclose 		__P_((FILE *));
+extern void __sinit 		__P_((void));
+extern void _cleanup 		__P_((void));
+extern void __smakebuf 		__P_((FILE *));
+extern int __swhatbuf 		__P_((FILE *, size_t *, int *));
+extern int __swalk_sflush 	__P_(());
+extern int __swsetup 		__P_((FILE *));
+extern int __sflags 		__P_((const char *, int *));
+
+extern void (*__cleanup) 	__P_((void));
 
 /*
  * Return true iff the given FILE cannot be written now.

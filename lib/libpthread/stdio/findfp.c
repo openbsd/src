@@ -1,5 +1,6 @@
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
+ * Copyright (c) 1993, 1994 Chris Provenzano. 
  * All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
@@ -36,14 +37,14 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)findfp.c	5.10 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: findfp.c,v 1.1.1.1 1995/10/18 08:43:06 deraadt Exp $";
+static char *rcsid = "$Id: findfp.c,v 1.1.1.2 1998/07/21 13:20:53 peter Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <pthread.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
-#include <posix.h>
 #include "local.h"
 #include "glue.h"
 
@@ -64,10 +65,11 @@ FILE __sF[3] = {
 	std(__SWR|__SNBF, 2)	/* stderr */
 };
 struct glue __sglue = { &uglue, 3, __sF };
+FILE *__iob = __sF;
+FILE *_iob = __sF;
 
 pthread_mutex_t __sfp_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t 	__sfp_cond	= PTHREAD_COND_INITIALIZER;
-pthread_once_t 	__sdidinit	= PTHREAD_ONCE_INIT;
 /*
  * __sfp_state = 0, when free, > 0 when in _fwalk 
  * This allows multiple readers in _fwalk, but only one writer __sfp,
@@ -81,7 +83,7 @@ static struct glue *moreglue(register int n)
 	register FILE *p;
 	static FILE empty;
 
-	g = (struct glue *)malloc(sizeof(*g) + n * sizeof(FILE));
+	g = (struct glue *)malloc(sizeof(struct glue) + n * sizeof(FILE));
 	if (g == NULL)
 		return (NULL);
 	p = (FILE *)(g + 1);
@@ -137,15 +139,23 @@ __sfp_done:;
  */
 void _cleanup()
 {
-	(void) __swalk_sflush;	
+	(void) __swalk_sflush();
 }
 
 /*
  * __sinit() is called whenever stdio's internal variables must be set up.
+ * Do the pthread_once stuff here to keep pthread_once_t out of the
+ * header files.  No reason sprintf.c &c should need to include pthread.h...
  */
-void __sinit()
+static void __s_real_init ()
 {
-	/* make sure we clean up on exit */
-	__cleanup = _cleanup;
-	__sdidinit = 1;
+    /* make sure we clean up on exit */
+    __cleanup = _cleanup;
+}
+
+static pthread_once_t sdidinit = PTHREAD_ONCE_INIT;
+
+void __sinit ()
+{
+    pthread_once (&sdidinit, __s_real_init);
 }

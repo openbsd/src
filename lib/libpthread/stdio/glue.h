@@ -34,15 +34,16 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)glue.h	5.1 (Berkeley) 1/20/91
- *	$Id: glue.h,v 1.1.1.1 1995/10/18 08:43:07 deraadt Exp $
+ *	$Id: glue.h,v 1.1.1.2 1998/07/21 13:21:28 peter Exp $
  */
 
 /*
  * The first few FILEs are statically allocated; others are dynamically
  * allocated and linked in via this glue structure.
  */
-struct glue {
+typedef struct glue {
 	struct	glue *next;
 	int	niobs;
 	FILE	*iobs;
-} __sglue;
+} __sglue_type;
+extern struct glue __sglue;

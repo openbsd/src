@@ -36,9 +36,10 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$Id: pthread_detach.c,v 1.1.1.1 1995/10/18 08:43:05 deraadt Exp $ $provenid: pthread_detach.c,v 1.16 1994/02/07 02:19:16 proven Exp $";
+static const char rcsid[] = "$Id: pthread_detach.c,v 1.1.1.2 1998/07/21 13:20:14 peter Exp $";
 #endif
 
+#include <errno.h>
 #include <pthread.h>
 
 /* ==========================================================================
@@ -46,45 +47,46 @@ static const char rcsid[] = "$Id: pthread_detach.c,v 1.1.1.1 1995/10/18 08:43:05
  */
 int pthread_detach(pthread_t pthread)
 {
-	semaphore *plock;
+	struct pthread * next_thread, * high_thread, * low_thread;
 	int ret;
 
-	plock = &(pthread->lock);
-	while (SEMAPHORE_TEST_AND_SET(plock)) {
-		pthread_yield();
-	}
+	pthread_sched_prevent();
 
 	/* Check that thread isn't detached already */
-	if (!(pthread->flags & PF_DETACHED)) {
+	if (!(pthread->attr.flags & PTHREAD_DETACHED)) {
 
-		pthread->flags |= PF_DETACHED;
+		pthread->attr.flags |= PTHREAD_DETACHED;
 
-		/* Wakeup first threads waiting on a join */
-		{
-			struct pthread * next_thread;
-			semaphore * next_lock;
-
-			if (next_thread = pthread_queue_get(&(pthread->join_queue))) {
-				next_lock = &(next_thread->lock);
-				while (SEMAPHORE_TEST_AND_SET(next_lock)) {
-					pthread_yield();
+		/* Wakeup all threads waiting on a join */
+		if (next_thread = pthread_queue_deq(&(pthread->join_queue))) {
+			high_thread = next_thread;
+			
+			while (next_thread = pthread_queue_deq(&(pthread->join_queue))) {
+				if (high_thread->pthread_priority < next_thread->pthread_priority) {
+					low_thread = high_thread;
+					high_thread = next_thread;
+				} else {
+					low_thread = next_thread;
 				}
-				pthread_queue_deq(&(pthread->join_queue)); 
-				next_thread->state = PS_RUNNING;
-				/*
-				 * Thread will wake up in pthread_join(), see the thread
-				 * it was joined to already detached and unlock itself
-				 * and pthread
-				 */
-			} else {
-				SEMAPHORE_RESET(plock);
+				pthread_prio_queue_enq(pthread_current_prio_queue, low_thread);
+				low_thread->state = PS_RUNNING;
 			}
+			/* If the thread is dead then move it to the alloc queue */
+			if (pthread_queue_remove(&pthread_dead_queue, pthread) == OK) {
+				pthread_queue_enq(&pthread_alloc_queue, pthread);
+			}
+			pthread_sched_other_resume(high_thread);
+			return(OK);
+		}
+		/* If the thread is dead then move it to the alloc queue */
+		if (pthread_queue_remove(&pthread_dead_queue, pthread) == OK) {
+			pthread_queue_enq(&pthread_alloc_queue, pthread);
+			pthread->state = PS_UNALLOCED;
 		}
 		ret = OK;
-
 	} else {
-		SEMAPHORE_RESET(plock);
 		ret = ESRCH;
 	}
+	pthread_sched_resume();
 	return(ret);
 }

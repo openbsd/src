@@ -46,7 +46,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$Id: malloc.c,v 1.1.1.1 1995/10/18 08:43:05 deraadt Exp $ $provenid: malloc.c,v 1.16 1994/02/07 02:19:00 proven Exp $";
+static const char rcsid[] = "$Id: malloc.c,v 1.1.1.2 1998/07/21 13:20:05 peter Exp $";
 #endif
 
 #include <pthread.h>
@@ -64,14 +64,20 @@ static const char rcsid[] = "$Id: malloc.c,v 1.1.1.1 1995/10/18 08:43:05 deraadt
  * The order of elements is critical: ov_magic must overlay the low order
  * bits of ov_next, and ov_magic can not be a valid ov_next bit pattern.
  */
+#ifdef __alpha
+#define _MOST_RESTRICTIVE_ALIGNMENT_TYPE char*
+#else
+#define _MOST_RESTRICTIVE_ALIGNMENT_TYPE double
+#endif /* __alpha */
 union	overhead {
+	_MOST_RESTRICTIVE_ALIGNMENT_TYPE __alignment_pad0;
 	union	overhead *ov_next;	/* when free */
 	struct {
 		u_char	ovu_magic;	/* magic number */
 		u_char	ovu_index;	/* bucket # */
 #ifdef RCHECK
 		u_short	ovu_rmagic;	/* range magic number */
-		u_int	ovu_size;	/* actual block size */
+		size_t	ovu_size;	/* actual block size */
 #endif
 	} ovu;
 #define	ov_magic	ovu.ovu_magic
@@ -96,11 +102,13 @@ union	overhead {
  */
 #define	NBUCKETS 30
 static	union overhead *nextf[NBUCKETS];
+#ifndef hpux
 extern	char *sbrk();
+#endif
 
-static	int pagesz;				/* page size */
+static	size_t pagesz;				/* page size */
 static	int pagebucket;			/* page size bucket */
-static 	semaphore malloc_lock = SEMAPHORE_CLEAR;
+static 	pthread_mutex_t malloc_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 #if defined(DEBUG) || defined(RCHECK)
 #define	ASSERT(p)   if (!(p)) botch("p")
@@ -125,15 +133,15 @@ botch(s)
 static inline void morecore(int bucket)
 {
   	register union overhead *op;
-	register int sz;		/* size of desired block */
-  	int amt;			/* amount to allocate */
-  	int nblks;			/* how many blocks we get */
+	register size_t sz;		/* size of desired block */
+  	size_t amt;			/* amount to allocate */
+  	size_t nblks;			/* how many blocks we get */
 
 	/*
 	 * sbrk_size <= 0 only for big, FLUFFY, requests (about
 	 * 2^30 bytes on a VAX, I think) or for a negative arg.
 	 */
-	sz = 1 << (bucket + 3);
+	sz = 1L << (bucket + 3);
 #ifdef DEBUG
 	ASSERT(sz > 0);
 #else
@@ -149,8 +157,8 @@ static inline void morecore(int bucket)
 	}
 	op = (union overhead *)sbrk(amt);
 	/* no more room! */
-  	if ((int)op == -1)
-  		return;
+	if (op == (union overhead *) -1)
+		return;
 	/*
 	 * Add new memory allocated to that on
 	 * free list for this hash bucket.
@@ -167,28 +175,32 @@ static inline void morecore(int bucket)
  */
 void *malloc(size_t nbytes)
 {
+	pthread_mutex_t *mutex;
   	union overhead *op;
-	unsigned int amt;
-  	int bucket, n;
-	semaphore *lock;
+	size_t amt;
+	size_t bucket, n;
 
-	lock = &malloc_lock;
-	while(SEMAPHORE_TEST_AND_SET(lock)) {
-		pthread_yield();
-	}
+	mutex = &malloc_mutex;
+	pthread_mutex_lock(mutex);
 	/*
 	 * First time malloc is called, setup page size and
 	 * align break pointer so all data will be page aligned.
 	 */
 	if (pagesz == 0) {
+		size_t x;
 		pagesz = n = getpagesize();
 		op = (union overhead *)sbrk(0);
-  		n = n - sizeof (*op) - ((int)op & (n - 1));
-		if (n < 0)
-			n += pagesz;
+		x = sizeof (*op) - ((long)op & (n - 1));
+		if (n < x)
+			n = n + pagesz - x;
+		else
+			n = n - x;
   		if (n) {
-  			if (sbrk(n) == (char *)-1)
-				return (NULL);
+		  if (sbrk(n) == (char *)-1) {
+		    /* Unlock before returning (mevans) */
+		    pthread_mutex_unlock(mutex);
+		    return (NULL);
+		  }
 		}
 		bucket = 0;
 		amt = 8;
@@ -219,11 +231,12 @@ void *malloc(size_t nbytes)
 	while (nbytes > amt + n) {
 		amt <<= 1;
 		if (amt == 0) {
-			SEMAPHORE_RESET(lock);
+			pthread_mutex_unlock(mutex);
 			return (NULL);
 		}
 		bucket++;
 	}
+	ASSERT (bucket < NBUCKETS);
 	/*
 	 * If nothing in hash bucket right now,
 	 * request more memory from the system.
@@ -231,7 +244,7 @@ void *malloc(size_t nbytes)
   	if ((op = nextf[bucket]) == NULL) {
   		morecore(bucket);
   		if ((op = nextf[bucket]) == NULL) {
-			SEMAPHORE_RESET(lock);
+			pthread_mutex_unlock(mutex);
   			return (NULL);
 		}
 	}
@@ -248,7 +261,7 @@ void *malloc(size_t nbytes)
 	op->ov_rmagic = RMAGIC;
   	*(u_short *)((caddr_t)(op + 1) + op->ov_size) = RMAGIC;
 #endif
-	SEMAPHORE_RESET(lock);
+	pthread_mutex_unlock(mutex);
   	return ((char *)(op + 1));
 }
 
@@ -257,16 +270,14 @@ void *malloc(size_t nbytes)
  */
 void free(void *cp)
 {   
+	pthread_mutex_t *mutex;
 	union overhead *op;
-	semaphore *lock;
-  	int size;
+	int size;
 
-	lock = &malloc_lock;
-	while(SEMAPHORE_TEST_AND_SET(lock)) {
-		pthread_yield();
-	}
+	mutex = &malloc_mutex;
+	pthread_mutex_lock(mutex);
   	if (cp == NULL) {
-		SEMAPHORE_RESET(lock);
+		pthread_mutex_unlock(mutex);
   		return;
 	}
 	op = (union overhead *)((caddr_t)cp - sizeof (union overhead));
@@ -274,7 +285,7 @@ void free(void *cp)
   	ASSERT(op->ov_magic == MAGIC);		/* make sure it was in use */
 #else
 	if (op->ov_magic != MAGIC) {
-		SEMAPHORE_RESET(lock);
+		pthread_mutex_unlock(mutex);
 		return;				/* sanity */
 	}
 #endif
@@ -287,7 +298,7 @@ void free(void *cp)
 	op->ov_next = nextf[size];	/* also clobbers ov_magic */
   	nextf[size] = op;
 
-	SEMAPHORE_RESET(lock);
+	pthread_mutex_unlock(mutex);
 }
 
 /* ==========================================================================
@@ -297,9 +308,9 @@ void free(void *cp)
  */
 void *realloc(void *cp, size_t nbytes)
 {   
-  	u_int onb;
-	int i;
-	semaphore *lock;
+	pthread_mutex_t *mutex;
+  	size_t onb;
+	size_t i;
 	union overhead *op;
   	char *res;
 
@@ -319,11 +330,9 @@ void *realloc(void *cp, size_t nbytes)
 	    return(NULL);
 	}
 
-	lock = &malloc_lock;
-	while(SEMAPHORE_TEST_AND_SET(lock)) {
-		pthread_yield();
-	}
-	onb = 1 << (i + 3);
+	mutex = &malloc_mutex;
+	pthread_mutex_lock(mutex);
+	onb = 1L << (i + 3);
 	if (onb < pagesz)
 		onb -= sizeof (*op) + RSLOP;
 	else
@@ -331,7 +340,7 @@ void *realloc(void *cp, size_t nbytes)
 
 	/* avoid the copy if same size block */
 	if (i) {
-		i = 1 << (i + 2);
+		i = 1L << (i + 2);
 		if (i < pagesz)
 			i -= sizeof (*op) + RSLOP;
 		else
@@ -343,19 +352,32 @@ void *realloc(void *cp, size_t nbytes)
 		op->ov_size = (nbytes + RSLOP - 1) & ~(RSLOP - 1);
 		*(u_short *)((caddr_t)(op + 1) + op->ov_size) = RMAGIC;
 #endif
-		SEMAPHORE_RESET(lock);
+		pthread_mutex_unlock(mutex);
 		return(cp);
 	}
-	SEMAPHORE_RESET(lock);
+	pthread_mutex_unlock(mutex);
 
   	if ((res = malloc(nbytes)) == NULL) {
 		free(cp);
   		return (NULL);
 	}
 
-	bcopy(cp, res, (nbytes < onb) ? nbytes : onb);
+	memcpy(res, cp, (nbytes < onb) ? nbytes : onb);
 	free(cp);
 
   	return (res);
 }
 
+/* ==========================================================================
+ * calloc()
+ *
+ * Added to ensure pthread's allocation is used (mevans).
+ */
+void *calloc(size_t nmemb, size_t size)
+{
+  void *p;
+  size *= nmemb;
+  p = malloc(size);
+  if (p) memset(p, 0, size);
+  return (p);
+}

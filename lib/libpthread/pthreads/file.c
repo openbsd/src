@@ -36,7 +36,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$Id: file.c,v 1.1.1.1 1995/10/18 08:43:05 deraadt Exp $ $provenid: file.c,v 1.16 1994/02/07 02:18:55 proven Exp $";
+static const char rcsid[] = "$Id: file.c,v 1.1.1.2 1998/07/21 13:20:00 peter Exp $";
 #endif
 
 #include <pthread.h>
@@ -47,21 +47,26 @@ static const char rcsid[] = "$Id: file.c,v 1.1.1.1 1995/10/18 08:43:05 deraadt E
  */
 void flockfile(FILE *fp)
 {
-	semaphore *lock;
-	int fd;
+	pthread_mutex_t *mutex;
+	int fd, flags;
 
-	fd = fileno(fp);
-	lock = &(fd_table[fd]->lock);
-	while (SEMAPHORE_TEST_AND_SET(lock)) {
-		pthread_yield();
-	}
+	if ((fd = fileno(fp)) >= 0) {
+		pthread_mutex_lock(mutex = &(fd_table[fd]->mutex));
 
-	if (fd_table[fd]->r_owner != pthread_run) {
+		if (fp->_flags & __SRW) {
+			flags = FD_READ | FD_WRITE;
+		} else {
+			if (fp->_flags & __SWR) {
+				flags = FD_WRITE;
+			} else {
+				flags = FD_READ;
+			}
+		}
+
 		/* This might fail but POSIX doesn't give a damn. */
-		fd_basic_lock(fd, FD_RDWR, lock);
+		fd_basic_lock(fd, flags, mutex, NULL);
+		pthread_mutex_unlock(mutex);
 	}
-	fd_table[fd]->lockcount++;
-	SEMAPHORE_RESET(lock);
 }
 
 /* ==========================================================================
@@ -69,27 +74,31 @@ void flockfile(FILE *fp)
  */
 int ftrylockfile(FILE *fp)
 {
-	semaphore *lock;
-	int fd;
+	pthread_mutex_t *mutex;
+	int fd, flags;
 
-	fd = fileno(fp);
-	lock = &(fd_table[fd]->lock);
-	while (SEMAPHORE_TEST_AND_SET(lock)) {
-		pthread_yield();
-	}
+	if ((fd = fileno(fp)) >= 0) {
+		pthread_mutex_lock(mutex = &(fd_table[fd]->mutex));
 
-	if (fd_table[fd]->r_owner != pthread_run) {
+		if (fp->_flags & __SRW) {
+			flags = FD_READ | FD_WRITE;
+		} else {
+			if (fp->_flags & __SWR) {
+				flags = FD_WRITE;
+			} else {
+				flags = FD_READ;
+			}
+		}
 		if (!(fd_table[fd]->r_owner && fd_table[fd]->w_owner)) {
-			fd_basic_lock(fd, FD_RDWR, lock);
+			fd_basic_lock(fd, flags, mutex, NULL);
 			fd = OK;
 		} else {
 			fd = NOTOK;
 		}
+		pthread_mutex_unlock(mutex);
 	} else {
-		fd_table[fd]->lockcount++;
 		fd = OK;
 	}
-	SEMAPHORE_RESET(lock);
 	return(fd);
 }
 
@@ -98,20 +107,23 @@ int ftrylockfile(FILE *fp)
  */
 void funlockfile(FILE *fp)
 {
-	semaphore *lock;
-	int fd;
+	pthread_mutex_t *mutex;
+	int fd, flags;
 
-	fd = fileno(fp);
-	lock = &(fd_table[fd]->lock);
-	while (SEMAPHORE_TEST_AND_SET(lock)) {
-		pthread_yield();
-	}
+	if ((fd = fileno(fp)) >= 0) {
+		pthread_mutex_lock(mutex = &(fd_table[fd]->mutex));
 
-	if (fd_table[fd]->r_owner == pthread_run) {
-		if (--fd_table[fd]->lockcount == 0) {
-			fd_basic_unlock(fd, FD_RDWR);
+		if (fp->_flags & __SRW) {
+			flags = FD_READ | FD_WRITE;
+		} else {
+			if (fp->_flags & __SWR) {
+				flags = FD_WRITE;
+			} else {
+				flags = FD_READ;
+			}
 		}
-	} 
-	SEMAPHORE_RESET(lock);
+		fd_basic_unlock(fd, flags);
+		pthread_mutex_unlock(mutex);
+	}
 }
 

@@ -36,7 +36,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$Id: queue.c,v 1.1.1.1 1995/10/18 08:43:05 deraadt Exp $ $provenid: queue.c,v 1.16 1994/02/07 02:19:24 proven Exp $";
+static const char rcsid[] = "$Id: queue.c,v 1.1.1.2 1998/07/21 13:20:20 peter Exp $";
 #endif
 
 #include <pthread.h>
@@ -101,10 +101,11 @@ struct pthread *pthread_queue_deq(struct pthread_queue *queue)
 /* ==========================================================================
  * pthread_queue_remove()
  */
-void pthread_queue_remove(struct pthread_queue *queue, struct pthread *thread)
+int pthread_queue_remove(struct pthread_queue *queue, struct pthread *thread)
 {
 	struct pthread **current = &(queue->q_next);
 	struct pthread *prev = NULL;
+	int ret = NOTOK;
 
 	while (*current) {
 		if (*current == thread) {
@@ -114,10 +115,29 @@ void pthread_queue_remove(struct pthread_queue *queue, struct pthread *thread)
 				queue->q_last = prev;
 				*current = NULL;
 			}
+			thread->queue = NULL;
+			thread->next = NULL;
+			ret = OK;
+			break;
 		}
 		prev = *current;
 		current = &((*current)->next);
 	}
-	thread->queue = NULL;
-	thread->next = NULL;
+	return(ret);
 }
+
+/* ==========================================================================
+ * pthread_llist_remove()
+ */
+int pthread_llist_remove(struct pthread **llist, struct pthread *thread)
+{
+	while (*llist) {
+		if (*llist == thread) {
+			*llist = thread->next;
+			return(OK);
+		}
+		llist = &(*llist)->next;
+	}
+	return(NOTOK);
+}
+

@@ -36,52 +36,23 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$Id: pthread.c,v 1.1.1.1 1995/10/18 08:43:05 deraadt Exp $ $provenid: pthread.c,v 1.16 1994/02/07 02:19:06 proven Exp $";
+static const char rcsid[] = "$Id: pthread.c,v 1.1.1.2 1998/07/21 13:20:09 peter Exp $";
 #endif
 
-#include "pthread.h"
+#include <pthread.h>
+#include <stdlib.h>
 #include <signal.h>
 #include <errno.h>
-
-/*
- * These first functions really should not be called by the user.
- */
+#include <string.h>
+#include <sched.h>
 
 /* ==========================================================================
- * pthread_init()
- *
- * This function should be called in crt0.o before main() is called.
- * But on some systems It may not be possible to change crt0.o so currently
- * I'm requiring this function to be called first thing after main.
- * Actually I'm assuming it is, because I do no locking here.
+ * sched_yield()
  */
-void pthread_init(void)
+int sched_yield()
 {
-	struct machdep_pthread machdep_data = MACHDEP_PTHREAD_INIT;
-
-	/* Initialize the first thread */
-	if (pthread_initial = (pthread_t)malloc(sizeof(struct pthread))) {
-		memcpy(&(pthread_initial->machdep_data), &machdep_data, sizeof(machdep_data));
-		pthread_initial->state = PS_RUNNING;
-		pthread_initial->queue = NULL;
-		pthread_initial->next = NULL;
-		pthread_initial->pll = NULL;
-
-		pthread_initial->lock = SEMAPHORE_CLEAR;
-		pthread_initial->error = 0;
-
-		pthread_link_list = pthread_initial;
-		pthread_run = pthread_initial;
-
-		/* Initialize the signal handler. */
-		sig_init();
-
-		/* Initialize the fd table. */
-		fd_init();
-
-		return;
-	}
-	PANIC();
+	sig_handler_fake(SIGVTALRM);
+	return(OK);
 }
 
 /* ==========================================================================
@@ -92,7 +63,6 @@ void pthread_yield()
 	sig_handler_fake(SIGVTALRM);
 }
 
-/* ======================================================================= */
 /* ==========================================================================
  * pthread_self()
  */
@@ -112,41 +82,141 @@ int pthread_equal(pthread_t t1, pthread_t t2)
 /* ==========================================================================
  * pthread_exit()
  */
+extern void pthread_cleanupspecific(void);
+
 void pthread_exit(void *status)
 {
-	semaphore *lock, *plock;
 	pthread_t pthread;
-
-	lock = &pthread_run->lock;
-	if (SEMAPHORE_TEST_AND_SET(lock)) {
-		pthread_yield();
-	} 
 
 	/* Save return value */
 	pthread_run->ret = status;
 
 	/* First execute all cleanup handlers */
-	
+	while (pthread_run->cleanup) {
+		pthread_cleanup_pop(1);
+	}
 
-	/*
-	 * Are there any threads joined to this one,
-	 * if so wake them and let them detach this thread.
-	 */
-	if (pthread = pthread_queue_get(&(pthread_run->join_queue))) {
-		/* The current thread pthread_run can't be detached */
-		plock = &(pthread->lock);
-		while (SEMAPHORE_TEST_AND_SET(plock)) {
-			pthread_yield();
+	/* Don't forget the cleanup attr */
+	if (pthread_run->attr.cleanup_attr) {
+		pthread_run->attr.cleanup_attr(pthread_run->attr.arg_attr);
+	}
+
+	/* Next run thread-specific data desctructors */
+	if (pthread_run->specific_data) {
+		pthread_cleanupspecific();
+	}
+
+	pthread_sched_prevent();
+
+	if (!(pthread_run->attr.flags & PTHREAD_DETACHED)) {
+		/*
+		 * Are there any threads joined to this one,
+		 * if so wake them and let them detach this thread.
+		 */
+		while (pthread = pthread_queue_deq(&(pthread_run->join_queue))) {
+			pthread_prio_queue_enq(pthread_current_prio_queue, pthread);
+			pthread->state = PS_RUNNING;
 		}
-		(void)pthread_queue_deq(&(pthread_run->join_queue));
-		pthread->state = PS_RUNNING;
-
-		/* Thread will unlock itself in pthread_join() */
+		pthread_queue_enq(&pthread_dead_queue, pthread_run);
+		pthread_resched_resume(PS_DEAD);
+	} else {
+		pthread_queue_enq(&pthread_alloc_queue, pthread_run);
+		pthread_resched_resume(PS_UNALLOCED);
 	}
 
 	/* This thread will never run again */
-	reschedule(PS_DEAD);
 	PANIC();
+
+}
+
+/*----------------------------------------------------------------------
+ * Function: __pthread_is_valid
+ * Purpose:	 Scan the list of threads to see if a specified thread exists
+ * Args:
+ *     pthread = The thread to scan for
+ * Returns:
+ *     int     = 1 if found, 0 if not
+ * Notes:
+ *     The kernel is assumed to be locked
+ *----------------------------------------------------------------------*/
+int
+__pthread_is_valid( pthread_t pthread )
+{
+	int rtn = 0;						/* Assume not found */
+	pthread_t t;
+
+	for( t = pthread_link_list; t; t = t->pll ) {
+		if( t == pthread ) {
+			rtn = 1;					/* Found it */
+			break;
+		}
+	}
+
+	return rtn;
+}
+
+/* ==========================================================================
+ * __pthread_free()
+ */
+static inline void __pthread_free(pthread_t new_thread)
+{
+	pthread_sched_prevent();
+	new_thread->state = PS_UNALLOCED;
+	new_thread->attr.stacksize_attr = 0; 
+	new_thread->attr.stackaddr_attr = NULL; 
+	pthread_queue_enq(&pthread_alloc_queue, new_thread);
+	pthread_sched_resume();
+}
+/* ==========================================================================
+ * __pthread_alloc()
+ */
+/* static inline pthread_t __pthread_alloc(const pthread_attr_t *attr) */
+static pthread_t __pthread_alloc(const pthread_attr_t *attr)
+{
+	pthread_t thread;
+	void * stack;
+	void * old;
+
+	pthread_sched_prevent();
+	thread = pthread_queue_deq(&pthread_alloc_queue);
+	pthread_sched_resume();
+
+	if (thread) {
+		if (stack = attr->stackaddr_attr) {
+			__machdep_stack_repl(&(thread->machdep_data), stack);
+		} else {
+			if ((__machdep_stack_get(&(thread->machdep_data)) == NULL)
+			  || (attr->stacksize_attr > thread->attr.stacksize_attr)) {
+				if (stack = __machdep_stack_alloc(attr->stacksize_attr)) {
+					__machdep_stack_repl(&(thread->machdep_data), stack);
+				} else {
+					__pthread_free(thread);
+					thread = NULL;
+				}
+			}
+		}
+	} else {
+		/* We should probable allocate several for efficiency */
+		if (thread = (pthread_t)malloc(sizeof(struct pthread))) {
+			/* Link new thread into list of all threads */
+
+			pthread_sched_prevent();
+			thread->state = PS_UNALLOCED;
+			thread->pll = pthread_link_list;
+			pthread_link_list = thread;
+			pthread_sched_resume();
+
+			if ((stack = attr->stackaddr_attr) ||
+			  (stack = __machdep_stack_alloc(attr->stacksize_attr))) {
+				__machdep_stack_set(&(thread->machdep_data), stack);
+			} else {
+				__machdep_stack_set(&(thread->machdep_data), NULL);
+				__pthread_free(thread);
+				thread = NULL;
+			}
+		}
+	}
+	return(thread);
 }
 
 /* ==========================================================================
@@ -159,46 +229,65 @@ void pthread_exit(void *status)
 int pthread_create(pthread_t *thread, const pthread_attr_t *attr,
   void * (*start_routine)(void *), void *arg)
 {
-	long nsec = 100000000;
-	void *stack;
+	pthread_t new_thread;
+	int nsec = 100000000;
+	int retval = OK;
 
-	if ((*thread) = (pthread_t)malloc(sizeof(struct pthread))) {
+	if (! attr) 
+		attr = &pthread_attr_default; 
 
-		if (! attr) { attr = &pthread_default_attr; }
+	if (new_thread = __pthread_alloc(attr)) {
 
-		/* Get a stack, if necessary */
-		if ((stack = attr->stackaddr_attr) ||
-		  (stack = (void *)malloc(attr->stacksize_attr))) {
+		__machdep_pthread_create(&(new_thread->machdep_data),
+		  start_routine, arg, attr->stacksize_attr, nsec, 0);
 
-			machdep_pthread_create(&((*thread)->machdep_data),
-			  start_routine, arg, 65536, stack, nsec);
-
-			memcpy(&(*thread)->attr, attr, sizeof(pthread_attr_t));
-
-			(*thread)->queue = NULL;
-			(*thread)->next = NULL;
-
-			(*thread)->lock = SEMAPHORE_CLEAR;
-			(*thread)->error = 0;
-
-			sig_prevent();
-
-			/* Add to the link list of all threads. */
-			(*thread)->pll = pthread_link_list;
-			pthread_link_list = (*thread);
-
-			(*thread)->state = PS_RUNNING;
-			sig_check_and_resume();
-
-			return(OK);
+		memcpy(&new_thread->attr, attr, sizeof(pthread_attr_t));
+		if (new_thread->attr.flags & PTHREAD_INHERIT_SCHED) {
+			new_thread->pthread_priority = pthread_run->pthread_priority; 
+			new_thread->attr.sched_priority = pthread_run->pthread_priority;
+			new_thread->attr.schedparam_policy = 
+			  pthread_run->attr.schedparam_policy;
+		}  else {
+			new_thread->pthread_priority = new_thread->attr.sched_priority;
 		}
-		free((*thread));
-	}
-	return(ENOMEM);
-}
 
-/* ==========================================================================
- * pthread_cancel()
- *
- * This routine will also require a sig_prevent/sig_check_and_resume()
- */
+		if (!(new_thread->attr.flags & PTHREAD_NOFLOAT)) {
+			machdep_save_float_state(new_thread);
+		}
+
+		/* Initialize signalmask */
+		new_thread->sigmask = pthread_run->sigmask;
+		sigemptyset(&(new_thread->sigpending));
+		new_thread->sigcount = 0;
+
+		pthread_queue_init(&(new_thread->join_queue));
+		new_thread->specific_data = NULL;
+		new_thread->specific_data_count = 0;
+		new_thread->cleanup = NULL;
+		new_thread->queue = NULL;
+		new_thread->next = NULL;
+		new_thread->flags = 0;
+
+		/* PTHREADS spec says we start with cancellability on and deferred */
+		SET_PF_CANCEL_STATE(new_thread, PTHREAD_CANCEL_ENABLE);
+		SET_PF_CANCEL_TYPE(new_thread, PTHREAD_CANCEL_DEFERRED);
+
+		new_thread->error_p = NULL;
+		new_thread->sll = NULL;
+
+		pthread_sched_prevent();
+
+
+		pthread_sched_other_resume(new_thread);
+		/*
+         * Assignment must be outside of the locked pthread kernel incase
+         * thread is a bogus address resulting in a seg-fault. We want the
+         * original thread to be capable of handling the resulting signal.
+         * --proven
+         */
+		(*thread) = new_thread;
+	} else {
+		retval = EAGAIN;
+	}
+	return(retval);
+}

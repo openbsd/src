@@ -39,7 +39,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$Id: fd_pipe.c,v 1.1.1.1 1995/10/18 08:43:05 deraadt Exp $ $provenid: fd_pipe.c,v 1.16 1994/02/07 02:18:52 proven Exp $";
+static const char rcsid[] = "$Id: fd_pipe.c,v 1.1.1.2 1998/07/21 13:19:58 peter Exp $";
 #endif
 
 #include <pthread.h>
@@ -50,38 +50,39 @@ static const char rcsid[] = "$Id: fd_pipe.c,v 1.1.1.1 1995/10/18 08:43:05 deraad
 #include <fcntl.h>
 #include <errno.h>
 #include <pthread/posix.h>
+#include <string.h>
+#include <stdlib.h>
+
+#ifndef MIN
+#define MIN(a,b)	((a)<(b)?(a):(b))
+#endif
 
 /* ==========================================================================
  * The pipe lock is never unlocked until all pthreads waiting are done with it
  * read()
  */
-ssize_t __pipe_read(struct __pipe *fd, int flags, void *buf, size_t nbytes)
+pthread_ssize_t __pipe_read(union fd_data fd_data, int flags, void *buf,
+ size_t nbytes, struct timespec * timeout)
 {
-	semaphore *lock, *plock;
+	struct __pipe *fd = (struct __pipe *)fd_data.ptr;
+	struct pthread * pthread;
 	int ret = 0;
 
 	if (flags & O_ACCMODE) { return(NOTOK); }
 
-	lock = &(fd->lock);
-	while (SEMAPHORE_TEST_AND_SET(lock)) {
-		pthread_yield();
-	}
 	/* If there is nothing to read, go to sleep */
 	if (fd->count == 0) {
 		if (flags == WR_CLOSED) {
-			SEMAPHORE_RESET(lock);
 			return(0);
-		} /* Lock pthread */
-		plock = &(pthread_run->lock);
-		while (SEMAPHORE_TEST_AND_SET(plock)) {
-			pthread_yield();
 		}
+
+		pthread_sched_prevent();
 
 		/* queue pthread for a FDR_WAIT */
 		pthread_run->next = NULL;
 		fd->wait = pthread_run;
-		SEMAPHORE_RESET(lock);
-		reschedule(PS_FDR_WAIT);
+		
+		pthread_resched_resume(PS_FDR_WAIT);
 		ret = fd->size;
 	} else {
 		ret = MIN(nbytes, fd->count);
@@ -90,17 +91,10 @@ ssize_t __pipe_read(struct __pipe *fd, int flags, void *buf, size_t nbytes)
 			fd->offset = 0;
 		}
 
-		/* Should try to read more from the waiting writer */
-	
-		if (fd->wait) {
-			plock = &(fd->wait->lock);
-			while (SEMAPHORE_TEST_AND_SET(plock)) {
-				pthread_yield();
-			}
-			fd->wait->state = PS_RUNNING;
-			SEMAPHORE_RESET(plock);
-		} else {
-			SEMAPHORE_RESET(lock);
+		if (pthread = fd->wait) {
+			fd->wait = NULL;
+			pthread_sched_prevent();
+			pthread_sched_other_resume(pthread);
 		}
 	}
 	return(ret);
@@ -116,23 +110,18 @@ ssize_t __pipe_read(struct __pipe *fd, int flags, void *buf, size_t nbytes)
  * copies as much data as it can into the pipe buffer and it there
  * is still data it goes to sleep.
  */
-ssize_t __pipe_write(struct __pipe *fd, int flags, const void *buf, size_t nbytes) {
-	semaphore *lock, *plock;
+pthread_ssize_t __pipe_write(union fd_data fd_data, int flags, const void *buf,
+ size_t nbytes, struct timespec * timeout) {
+	struct __pipe *fd = (struct __pipe *)fd_data.ptr;
+	struct pthread * pthread;
 	int ret, count;
 
 	if (!(flags & O_ACCMODE)) { return(NOTOK); }
 
-	lock = &(fd->lock);
-	while (SEMAPHORE_TEST_AND_SET(lock)) {
-		pthread_yield();
-	}
 	while (fd->flags != RD_CLOSED) {
-		if (fd->wait) {
-			/* Lock pthread */
-			plock = &(fd->wait->lock);
-			while (SEMAPHORE_TEST_AND_SET(plock)) {
-				pthread_yield();
-			}
+		if (pthread = fd->wait) {
+
+			pthread_sched_prevent();
 	
 			/* Copy data directly into waiting pthreads buf */
 			fd->wait_size = MIN(nbytes, fd->wait_size);
@@ -140,11 +129,10 @@ ssize_t __pipe_write(struct __pipe *fd, int flags, const void *buf, size_t nbyte
 			buf = (const char *)buf + fd->wait_size;
 			nbytes -= fd->wait_size;
 			ret = fd->wait_size;
+			fd->wait = NULL;
 
 			/* Wake up waiting pthread */	
-			fd->wait->state = PS_RUNNING;
-			SEMAPHORE_RESET(plock);
-			fd->wait = NULL;
+			pthread_sched_other_resume(pthread);
 		}
 
 		if (count = MIN(nbytes, fd->size - (fd->offset + fd->count))) {
@@ -154,15 +142,9 @@ ssize_t __pipe_write(struct __pipe *fd, int flags, const void *buf, size_t nbyte
 			ret += count;
 		}
 		if (nbytes) {
-			/* Lock pthread */
-			plock = &(fd->wait->lock);
-			while (SEMAPHORE_TEST_AND_SET(plock)) {
-				pthread_yield();
-			}
-	
+			pthread_sched_prevent();
 			fd->wait = pthread_run;
-			SEMAPHORE_RESET(lock);
-			reschedule(PS_FDW_WAIT);
+			pthread_resched_resume(PS_FDW_WAIT);
 		} else {		
 	   	    return(ret);
 		}
@@ -184,29 +166,16 @@ ssize_t __pipe_write(struct __pipe *fd, int flags, const void *buf, size_t nbyte
  */
 int __pipe_close(struct __pipe *fd, int flags)
 {
-	semaphore *lock, *plock;
+	struct pthread * pthread;
 
-	lock = &(fd->lock);
-	while (SEMAPHORE_TEST_AND_SET(lock)) {
-		pthread_yield();
-	}
 	if (!(fd->flags)) {
-		if (fd->wait) {
+		if (pthread = fd->wait) {
 			if (flags & O_ACCMODE) {
-				fd->flags |= WR_CLOSED;
-				/* Lock pthread */
-				/* Write side closed, wake read side and return EOF */
-				plock = &((fd->wait)->lock);
-				while (SEMAPHORE_TEST_AND_SET(plock)) {
-					pthread_yield();
-				}
-
 				fd->count = 0;
-
-				/* Wake up waiting pthread */	
-				fd->wait->state = PS_RUNNING;
-				SEMAPHORE_RESET(plock);
 				fd->wait = NULL;
+				fd->flags |= WR_CLOSED;
+				pthread_sched_prevent();
+				pthread_resched_resume(pthread);
 			} else {
 				/* Should send a signal */
 				fd->flags |= RD_CLOSED;
@@ -216,16 +185,37 @@ int __pipe_close(struct __pipe *fd, int flags)
 		free(fd);
 		return(OK);
 	}
-	SEMAPHORE_RESET(lock);
 }
 
 /* ==========================================================================
- * For those function that aren't implemented yet
+ * For fcntl() which isn't implemented yet
  * __pipe_enosys()
  */
 static int __pipe_enosys()
 {
-	pthread_run->error = ENOSYS;
+	SET_ERRNO(ENOSYS);
+	return(NOTOK);
+}
+
+/* ==========================================================================
+ * For writev() and readv() which aren't implemented yet
+ * __pipe_enosys_v()
+ */
+static int __pipe_enosys_v(union fd_data fd, int flags,
+			   const struct iovec *vec, int nvec,
+			   struct timespec *timeout)
+{
+	SET_ERRNO(ENOSYS);
+	return(NOTOK);
+}
+
+/* ==========================================================================
+ * For lseek() which isn't implemented yet
+ * __pipe_enosys_o()
+ */
+static off_t __pipe_enosys_o()
+{
+	SET_ERRNO(ENOSYS);
 	return(NOTOK);
 }
 
@@ -233,9 +223,8 @@ static int __pipe_enosys()
  * File descriptor operations
  */
 struct fd_ops fd_ops[] = {
-{	NULL, NULL, },		/* Non operations */
-{	__pipe_write, __pipe_read, __pipe_close, __pipe_enosys, __pipe_enosys,
-	__pipe_enosys },
+{	__pipe_write, __pipe_read, __pipe_close, __pipe_enosys,
+	__pipe_enosys_v, __pipe_enosys_v, __pipe_enosys_o, 0 },
 };
 
 /* ==========================================================================
