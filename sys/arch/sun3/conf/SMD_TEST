@@ -62,7 +62,7 @@ options 	UCONSOLE	# Allow non-root TIOCCONS
 options 	DIAGNOSTIC
 #options 	SCSIDEBUG
 
-config		netbsd swap generic
+config		bsd swap generic
 
 #
 # Serial ports

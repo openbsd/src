@@ -56,7 +56,7 @@ options 	DIAGNOSTIC
 
 # The config program assumes all devices have partions...
 # Is it OK to put swap on a non-existent partition?
-config		netbsd root on rd0a swap on rd0b
+config		bsd root on rd0a swap on rd0b
 
 #
 # Serial ports

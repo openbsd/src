@@ -62,7 +62,7 @@ options 	PMAP_DEBUG
 options 	DIAGNOSTIC
 #options 	SCSIDEBUG
 
-config		netbsd swap generic
+config		bsd swap generic
 
 #
 # Serial ports

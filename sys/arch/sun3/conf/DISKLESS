@@ -56,7 +56,7 @@ options 	UCONSOLE	# Allow non-root TIOCCONS
 #options 	EXEC_DEBUG
 #options 	DIAGNOSTIC
 
-config		netbsd root on nfs swap on nfs
+config		bsd root on nfs swap on nfs
 
 #
 # Serial ports

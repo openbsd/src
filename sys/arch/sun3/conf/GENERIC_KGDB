@@ -63,7 +63,7 @@ options 	DIAGNOSTIC
 #options 	SCSIDEBUG
 options 	NCR5380_DEBUG
 
-config		netbsd swap generic
+config		bsd swap generic
 
 #
 # Serial ports
