@@ -1,4 +1,4 @@
-.\"	$OpenBSD: glob.3,v 1.18 2002/04/30 16:31:42 mpech Exp $
+.\"	$OpenBSD: glob.3,v 1.19 2003/04/30 06:28:10 jmc Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -171,7 +171,7 @@ does not match any pathname, then
 returns a list
 consisting of only
 .Fa pattern ,
-with the number of total pathnames is set to 1, and the number of matched
+with the number of total pathnames set to 1, and the number of matched
 pathnames set to 0.
 .It Dv GLOB_NOESCAPE
 Normally, every occurrence of a backslash
@@ -257,7 +257,7 @@ Expand patterns that start with
 to user name home directories.
 .It Dv GLOB_LIMIT
 Limit the amount of memory used by matches to
-.Li ARG_MAX
+.Li ARG_MAX .
 This option should be set for programs that can be coerced to a denial of
 service attack via patterns that expand to a very large number of matches,
 such as a long string of

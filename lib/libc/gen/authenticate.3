@@ -1,4 +1,4 @@
-.\"	$OpenBSD: authenticate.3,v 1.5 2002/10/15 17:27:44 millert Exp $
+.\"	$OpenBSD: authenticate.3,v 1.6 2003/04/30 06:28:10 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
 .\"
@@ -73,13 +73,13 @@ system
 The
 .Fn auth_userokay
 function provides a single function call interface.
-Provided a user's name in
-.Ar name
+Provided with a user's name in
+.Ar name ,
 and an optional
 .Ar style ,
 .Ar type ,
 and
-.Ar password
+.Ar password ,
 the
 .Fn auth_userokay
 function returns a simple yes/no response.
@@ -148,7 +148,7 @@ In any case, the user should provide a password which is
 the
 .Ar response
 in a call to
-.Fn auth_userresponse.
+.Fn auth_userresponse .
 In addition to the password, the pointer returned by
 .Fn auth_userchallenge
 should be passed in as
@@ -174,7 +174,7 @@ The string
 will be prepended to
 .Ar type
 if missing.
-The resulting type is used to lookup an entry in the
+The resulting type is used to look up an entry in the
 .Pa /etc/login.conf
 for the user's class.
 If the entry is missing the generic entry for

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: syslog.3,v 1.20 2003/01/19 23:13:04 millert Exp $
+.\"	$OpenBSD: syslog.3,v 1.21 2003/04/30 06:28:10 jmc Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -122,13 +122,13 @@ The
 structure is composed of the following elements:
 .Bl -tag -width connected
 .It Dv log_file
-contains the file descriptor of the file where the message is logged.
+contains the file descriptor of the file where the message is logged
 .It Dv connected
 indicates if connect has been done
 .It Dv opened
 indicates if
 .Xr openlog_r 3
-has been called.
+has been called
 .It Dv log_stat
 status bits, set by
 .Xr openlog_r 3
@@ -182,9 +182,9 @@ normally of use only when debugging a program.
 .Pp
 The
 .Fn vsyslog_r
-is used the same way than
+is used the same way as
 .Fn vsyslog
-except than it takes an additional pointer on a
+except that it takes an additional pointer on a
 .Fa syslog_data
 structure.
 It is a reentrant version of the
@@ -325,7 +325,7 @@ is calculated by the macro
 the mask for all priorities up to and including
 .Fa toppri
 is given by the macro
-.Fn LOG_UPTO toppri ; .
+.Fn LOG_UPTO toppri .
 The default allows all priorities to be logged.
 .Pp
 The
