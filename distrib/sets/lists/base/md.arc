@@ -18,7 +18,7 @@
 ./usr/lib/libform.so.0.0
 ./usr/lib/libkadm.so.4.0
 ./usr/lib/libkafs.so.4.0
-./usr/lib/libkdb.so.4.0
+./usr/lib/libkdb.so.4.1
 ./usr/lib/libkrb.so.4.1
 ./usr/lib/libkvm.so.4.1
 ./usr/lib/libm.so.0.1
