@@ -1,4 +1,4 @@
-/*      $OpenBSD: ftp.c,v 1.6 1996/10/31 14:36:56 mickey Exp $      */
+/*      $OpenBSD: ftp.c,v 1.7 1996/11/09 19:57:46 kstailey Exp $      */
 /*      $NetBSD: ftp.c,v 1.13 1995/09/16 22:32:59 pk Exp $      */
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-static char rcsid[] = "$OpenBSD: ftp.c,v 1.6 1996/10/31 14:36:56 mickey Exp $";
+static char rcsid[] = "$OpenBSD: ftp.c,v 1.7 1996/11/09 19:57:46 kstailey Exp $";
 #endif
 #endif /* not lint */
 
@@ -451,8 +451,6 @@ abortsend()
 	longjmp(sendabort, 1);
 }
 
-#define HASHBYTES 1024
-
 void
 sendrequest(cmd, local, remote, printnames)
 	char *cmd, *local, *remote;
@@ -464,7 +462,7 @@ sendrequest(cmd, local, remote, printnames)
 	FILE *fin, *dout = 0, *popen();
 	int (*closefunc) __P((FILE *));
 	sig_t oldintr, oldintp;
-	long bytes = 0, hashbytes = HASHBYTES;
+	long bytes = 0, hashbytes = mark;
 	char *lmode, buf[BUFSIZ], *bufp;
 
 	if (verbose && printnames) {
@@ -608,13 +606,13 @@ sendrequest(cmd, local, remote, printnames)
 			if (hash) {
 				while (bytes >= hashbytes) {
 					(void) putchar('#');
-					hashbytes += HASHBYTES;
+					hashbytes += mark;
 				}
 				(void) fflush(stdout);
 			}
 		}
 		if (hash && bytes > 0) {
-			if (bytes < HASHBYTES)
+			if (bytes < mark)
 				(void) putchar('#');
 			(void) putchar('\n');
 			(void) fflush(stdout);
@@ -634,7 +632,7 @@ sendrequest(cmd, local, remote, printnames)
 				while (hash && (bytes >= hashbytes)) {
 					(void) putchar('#');
 					(void) fflush(stdout);
-					hashbytes += HASHBYTES;
+					hashbytes += mark;
 				}
 				if (ferror(dout))
 					break;
@@ -721,7 +719,7 @@ recvrequest(cmd, local, remote, lmode, printnames)
 	int c, d, is_retr, tcrflag, bare_lfs = 0;
 	static int bufsize;
 	static char *buf;
-	long bytes = 0, hashbytes = HASHBYTES;
+	long bytes = 0, hashbytes = mark;
 	struct timeval start, stop;
 	struct stat st;
 
@@ -876,13 +874,13 @@ recvrequest(cmd, local, remote, lmode, printnames)
 			if (hash) {
 				while (bytes >= hashbytes) {
 					(void) putchar('#');
-					hashbytes += HASHBYTES;
+					hashbytes += mark;
 				}
 				(void) fflush(stdout);
 			}
 		}
 		if (hash && bytes > 0) {
-			if (bytes < HASHBYTES)
+			if (bytes < mark)
 				(void) putchar('#');
 			(void) putchar('\n');
 			(void) fflush(stdout);
@@ -928,7 +926,7 @@ done:
 				while (hash && (bytes >= hashbytes)) {
 					(void) putchar('#');
 					(void) fflush(stdout);
-					hashbytes += HASHBYTES;
+					hashbytes += mark;
 				}
 				bytes++;
 				if ((c = getc(din)) != '\n' || tcrflag) {

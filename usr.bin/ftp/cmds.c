@@ -1,4 +1,4 @@
-/*      $OpenBSD: cmds.c,v 1.5 1996/09/28 09:56:54 bitblt Exp $      */
+/*      $OpenBSD: cmds.c,v 1.6 1996/11/09 19:53:59 kstailey Exp $      */
 /*      $NetBSD: cmds.c,v 1.8 1995/09/08 01:06:05 tls Exp $      */
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: cmds.c,v 1.5 1996/09/28 09:56:54 bitblt Exp $";
+static char rcsid[] = "$OpenBSD: cmds.c,v 1.6 1996/11/09 19:53:59 kstailey Exp $";
 #endif
 #endif /* not lint */
 
@@ -900,8 +900,8 @@ status(argc, argv)
 	else {
 		printf("Nmap: off\n");
 	}
-	printf("Hash mark printing: %s; Use of PORT cmds: %s\n",
-		onoff(hash), onoff(sendport));
+	printf("Hash mark printing: %s; Mark count: %d\n", onoff(hash), mark);
+	printf("Use of PORT cmds: %s\n", onoff(sendport));
 	if (macnum > 0) {
 		printf("Macros:\n");
 		for (i=0; i<macnum; i++) {
@@ -946,18 +946,42 @@ settrace(argc, argv)
  */
 /*VARARGS*/
 void
-sethash(argc, argv)
-	int argc;
-	char *argv[];
+togglehash()
 {
 
 	hash = !hash;
 	printf("Hash mark printing %s", onoff(hash));
 	code = hash;
 	if (hash)
-		printf(" (%d bytes/hash mark)", 1024);
+		printf(" (%d bytes/hash mark)", mark);
 	printf(".\n");
 }
+
+/*
+ * Set hash mark bytecount.
+ */
+/*VARARGS*/
+void
+sethash(argc, argv)
+	int argc;
+	char *argv[];
+{
+	if (argc == 1)
+		togglehash();
+	else if (argc != 2) {
+		printf("usage: %s [number of bytes].\n", argv[0]);
+	} else {
+		int nmark = atol(argv[1]);
+		if (nmark < 1) {
+			printf("A hash mark bytecount of %d %s",
+			       nmark, "is rather pointless...\n");
+		} else {
+			mark = nmark;
+			printf("Hash mark set to %d bytes/hash mark\n", mark);
+		}
+	}
+}
+
 
 /*
  * Turn on printing of server echo's.

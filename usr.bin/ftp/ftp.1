@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: ftp.1,v 1.4 1996/10/31 14:36:55 mickey Exp $
+.\" 	$OpenBSD: ftp.1,v 1.5 1996/11/09 19:56:23 kstailey Exp $
 .\" 	$NetBSD: ftp.1,v 1.11 1995/09/08 01:06:24 tls Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
@@ -329,10 +329,11 @@ That can be done by
 transferring a
 .Xr tar 1
 archive of the subtree (in binary mode).
-.It Ic hash
+.It Ic hash Op Ar size
 Toggle hash-sign (``#'') printing for each data block
 transferred.
-The size of a data block is 1024 bytes.
+The size of a data block defaults to 1024 bytes.
+This can be changed by specifying a size in bytes.
 .It Ic help Op Ar command
 Print an informative message about the meaning of
 .Ar command  .

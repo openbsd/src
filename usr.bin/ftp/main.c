@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.7 1996/10/31 14:36:57 mickey Exp $	*/
+/*	$OpenBSD: main.c,v 1.8 1996/11/09 19:58:59 kstailey Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.7 1996/10/31 14:36:57 mickey Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.8 1996/11/09 19:58:59 kstailey Exp $";
 #endif
 #endif /* not lint */
 
@@ -70,6 +70,8 @@ static char rcsid[] = "$OpenBSD: main.c,v 1.7 1996/10/31 14:36:57 mickey Exp $";
 
 #include "ftp_var.h"
 
+#define HASHBYTES 1024	/* default buffer size for drawing hash marks */
+
 int
 main(argc, argv)
 	int argc;
@@ -86,6 +88,7 @@ main(argc, argv)
 	doglob = 1;
 	interactive = 1;
 	autologin = 1;
+	mark = HASHBYTES;
 
 	while ((ch = getopt(argc, argv, "p:r:dgintv")) != EOF) {
 		switch (ch) {

@@ -1,4 +1,4 @@
-/*      $OpenBSD: cmdtab.c,v 1.2 1996/06/26 05:33:34 deraadt Exp $      */
+/*      $OpenBSD: cmdtab.c,v 1.3 1996/11/09 19:55:11 kstailey Exp $      */
 /*      $NetBSD: cmdtab.c,v 1.6 1995/09/08 01:06:10 tls Exp $      */
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.4 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: cmdtab.c,v 1.2 1996/06/26 05:33:34 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: cmdtab.c,v 1.3 1996/11/09 19:55:11 kstailey Exp $";
 #endif
 #endif /* not lint */
 
@@ -67,7 +67,7 @@ char	disconhelp[] =	"terminate ftp session";
 char	domachelp[] = 	"execute macro";
 char	formhelp[] =	"set file transfer format";
 char	globhelp[] =	"toggle metacharacter expansion of local file names";
-char	hashhelp[] =	"toggle printing `#' for each buffer transferred";
+char	hashhelp[] =	"toggle printing `#' marks; specify number to set size";
 char	helphelp[] =	"print local help information";
 char	idlehelp[] =	"get (set) idle timer on remote side";
 char	lcdhelp[] =	"change local working directory";
