@@ -6204,7 +6204,8 @@ general_induction_var (x, src_reg, add_val, mult_val, is_addr, pbenefit)
 #ifndef FRAME_GROWS_DOWNWARD
   if (flag_propolice_protection
       && GET_CODE (*add_val) == PLUS
-      && XEXP (*add_val, 0) == frame_pointer_rtx)
+      && (XEXP (*add_val, 0) == frame_pointer_rtx
+	  || XEXP (*add_val, 1) == frame_pointer_rtx))
     return 0;
 #endif
 
