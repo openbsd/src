@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.13 2003/01/06 10:08:36 deraadt Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.14 2003/01/06 14:19:40 cedric Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -96,8 +96,8 @@ struct pfr_walktree {
 
 struct pool		 pfr_ktable_pl;
 struct pool		 pfr_kentry_pl;
-struct sockaddr_in	 pfr_sin = { sizeof(pfr_sin), AF_INET };
-struct sockaddr_in6	 pfr_sin6 = { sizeof(pfr_sin6), AF_INET6 };
+struct sockaddr_in	 pfr_sin;
+struct sockaddr_in6	 pfr_sin6;
 
 int			 pfr_validate_addr(struct pfr_addr *);
 int			 pfr_enqueue_addrs(struct pfr_ktable *,
@@ -145,6 +145,20 @@ struct pfr_ktablehashq	 pfr_ktablehash[PFR_HASH_BUCKETS];
 struct pfr_ktablehead	 pfr_ktables;
 struct pfr_table	 pfr_nulltable;
 int			 pfr_ktable_cnt;
+
+void
+pfr_initialize(void)
+{
+	pool_init(&pfr_ktable_pl, sizeof(struct pfr_ktable), 0, 0, 0,
+	    "pfr_ktable", NULL);
+	pool_init(&pfr_kentry_pl, sizeof(struct pfr_kentry), 0, 0, 0,
+	    "pfr_kentry", NULL);
+
+	pfr_sin.sin_len = sizeof(pfr_sin);
+	pfr_sin.sin_family = AF_INET;
+	pfr_sin6.sin6_len = sizeof(pfr_sin6);
+	pfr_sin6.sin6_family = AF_INET6;
+}
 
 int
 pfr_clr_addrs(struct pfr_table *tbl, int *ndel, int flags)

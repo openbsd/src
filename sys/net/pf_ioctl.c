@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.43 2003/01/05 22:14:23 dhartmei Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.44 2003/01/06 14:19:40 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -102,10 +102,7 @@ pfattach(int num)
 	    NULL);
 	pool_init(&pf_pooladdr_pl, sizeof(struct pf_pooladdr), 0, 0, 0,
 	    "pfpooladdrpl", NULL);
-	pool_init(&pfr_ktable_pl, sizeof(struct pfr_ktable), 0, 0, 0,
-	    "pfr_ktable", NULL);
-	pool_init(&pfr_kentry_pl, sizeof(struct pfr_kentry), 0, 0, 0,
-	    "pfr_kentry", NULL);
+	pfr_initialize();
 
 	pool_sethardlimit(&pf_state_pl, pf_pool_limits[PF_LIMIT_STATES].limit,
 	    NULL, 0);

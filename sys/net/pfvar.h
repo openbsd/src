@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.127 2003/01/05 22:14:23 dhartmei Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.128 2003/01/06 14:19:40 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -929,7 +929,6 @@ extern void			 pf_update_anchor_rules(void);
 extern void			 pf_dynaddr_copyout(struct pf_addr_wrap *);
 extern struct pool		 pf_tree_pl, pf_rule_pl, pf_addr_pl;
 extern struct pool		 pf_state_pl, pf_altq_pl, pf_pooladdr_pl;
-extern struct pool		 pfr_ktable_pl, pfr_kentry_pl;
 extern void			 pf_purge_timeout(void *);
 extern int			 pftm_interval;
 extern void			 pf_purge_expired_states(void);
@@ -963,6 +962,7 @@ void	pf_normalize_init(void);
 int	pf_normalize_ip(struct mbuf **, int, struct ifnet *, u_short *);
 void	pf_purge_expired_fragments(void);
 int	pf_routable(struct pf_addr *addr, sa_family_t af);
+void	pfr_initialize(void);
 int	pfr_match_addr(struct pf_addr *, struct pf_addr *,
 	    struct pf_addr *, sa_family_t);
 void	pfr_update_stats(struct pf_addr *, struct pf_addr *,
