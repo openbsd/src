@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.72 2001/06/27 04:22:37 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.73 2001/07/05 07:18:40 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.207 1998/07/08 04:39:34 thorpej Exp $	*/
 
 /*
@@ -133,9 +133,9 @@ void netintr __P((void));
 #include <vm/vm_param.h>
 #include <vm/pmap.h>
 #include <vm/vm_map.h>
-#include <vm/vm_object.h>
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
+#include <vm/vm_pager.h>
 
 #include <uvm/uvm_extern.h>
 
