@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.42 2004/12/12 05:30:48 dlg Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.43 2004/12/12 08:45:36 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -93,7 +93,7 @@
 #ifdef ATU_DEBUG
 #define DPRINTF(x)	do { if (atudebug) printf x; } while (0)
 #define DPRINTFN(n,x)	do { if (atudebug>(n)) printf x; } while (0)
-int atudebug = 40;
+int atudebug = 14;
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
@@ -161,8 +161,8 @@ int	atu_initial_config(struct atu_softc *sc);
 int	atu_join(struct atu_softc *sc, struct ieee80211_node *node);
 int8_t	atu_get_dfu_state(struct atu_softc *sc);
 u_int8_t atu_get_opmode(struct atu_softc *sc, u_int8_t *mode);
-int	atu_upload_internal_firmware(struct atu_softc *sc);
-int	atu_upload_external_firmware(struct atu_softc *sc);
+void	atu_internal_firmware(void *);
+void	atu_external_firmware(void *);
 int	atu_get_card_config(struct atu_softc *sc);
 int	atu_media_change(struct ifnet *ifp);
 void	atu_media_status(struct ifnet *ifp, struct ifmediareq *req);
@@ -177,6 +177,7 @@ void atu_task(void *);
 int atu_newstate(struct ieee80211com *, enum ieee80211_state, int);
 int atu_tx_start(struct atu_softc *, struct ieee80211_node *,
     struct atu_chain *, struct mbuf *);
+void atu_complete_attach(struct atu_softc *);
 
 void
 atu_msleep(struct atu_softc *sc, int ms)
@@ -747,9 +748,10 @@ atu_get_opmode(struct atu_softc *sc, u_int8_t *mode)
 /*
  * Upload the internal firmware into the device
  */
-int
-atu_upload_internal_firmware(struct atu_softc *sc)
+void
+atu_internal_firmware(void *arg)
 {
+	struct atu_softc *sc = arg;
 	u_char	state, *ptr = NULL, *firm = NULL, status[6];
 	int block_size, block = 0, err;
 	size_t	bytes_left = 0;
@@ -799,7 +801,7 @@ atu_upload_internal_firmware(struct atu_softc *sc)
 	if (err != 0) {
 		printf("%s: %s loadfirmware error %d\n",
 		    USBDEVNAME(sc->atu_dev), name, err);
-		return (err);
+		return;
 	}
 
 	ptr = firm;
@@ -815,7 +817,7 @@ atu_upload_internal_firmware(struct atu_softc *sc)
 				DPRINTF(("%s: dfu_getstatus failed!\n",
 				    USBDEVNAME(sc->atu_dev)));
 				free(firm, M_DEVBUF);
-				return err;
+				return;
 			}
 			/* success means state => DnLoadIdle */
 			state = DFUState_DnLoadIdle;
@@ -837,7 +839,7 @@ atu_upload_internal_firmware(struct atu_softc *sc)
 				DPRINTF(("%s: dfu_dnload failed\n",
 				    USBDEVNAME(sc->atu_dev)));
 				free(firm, M_DEVBUF);
-				return err;
+				return;
 			}
 
 			ptr += block_size;
@@ -865,14 +867,14 @@ atu_upload_internal_firmware(struct atu_softc *sc)
 	if (err) {
 		DPRINTF(("%s: dfu_getstatus failed!\n",
 		    USBDEVNAME(sc->atu_dev)));
-		return err;
+		return;
 	}
 
 	DPRINTFN(15, ("%s: sending remap\n", USBDEVNAME(sc->atu_dev)));
 	err = atu_usb_request(sc, DFU_REMAP, 0, 0, 0, NULL);
 	if ((err) && (! sc->atu_quirk & ATU_QUIRK_NO_REMAP)) {
 		DPRINTF(("%s: remap failed!\n", USBDEVNAME(sc->atu_dev)));
-		return err;
+		return;
 	}
 
 	/* after a lot of trying and measuring I found out the device needs
@@ -882,51 +884,19 @@ atu_upload_internal_firmware(struct atu_softc *sc)
 	 */
 	atu_msleep(sc, 56+100);
 
-	DPRINTFN(10, ("%s: internal firmware upload done\n",
-	    USBDEVNAME(sc->atu_dev)));
-	return 0;
+	printf("%s: reattaching after firmware upload\n",
+	    USBDEVNAME(sc->atu_dev));
+	usb_needs_reattach(sc->atu_udev);
 }
 
-int
-atu_upload_external_firmware(struct atu_softc *sc)
+void
+atu_external_firmware(void *arg)
 {
-	u_char	*ptr = NULL, *firm = NULL, mode, channel;
+	struct atu_softc *sc = arg;
+	u_char	*ptr = NULL, *firm = NULL;
 	int	block_size, block = 0, err;
 	size_t	bytes_left = 0;
 	char	*name = NULL;
-
-	err = atu_get_opmode(sc, &mode);
-	if (err) {
-		DPRINTF(("%s: could not get opmode\n",
-		    USBDEVNAME(sc->atu_dev)));
-		return err;
-	}
-	DPRINTFN(20, ("%s: opmode: %d\n", USBDEVNAME(sc->atu_dev), mode));
-
-	if (mode == MODE_NETCARD) {
-		DPRINTFN(15, ("%s: device doesn't need external "
-		    "firmware\n", USBDEVNAME(sc->atu_dev)));
-		return 0;
-	}
-	if (mode != MODE_NOFLASHNETCARD) {
-		DPRINTF(("%s: EEK! unexpected opmode=%d\n",
-		    USBDEVNAME(sc->atu_dev), mode));
-	}
-
-	/*
-	 * There is no difference in opmode before and after external firmware
-	 * upload with the SMC2662 V.4 . So instead we'll try to read the
-	 * channel number. If we succeed, external firmware must have been
-	 * already uploaded...
-	 */
-	if (sc->atu_radio != RadioIntersil) {
-		err = atu_get_mib(sc, MIB_PHY__CHANNEL, &channel);
-		if (! err) {
-			DPRINTF(("%s: external firmware has already been "
-			    "downloaded\n", USBDEVNAME(sc->atu_dev)));
-			return (0);
-		}
-	}
 
 	switch (sc->atu_radio) {
 	case RadioRFMD:
@@ -952,7 +922,7 @@ atu_upload_external_firmware(struct atu_softc *sc)
 	if (err != 0) {
 		printf("%s: %s loadfirmware error %d\n",
 		    USBDEVNAME(sc->atu_dev), name, err);
-		return (err);
+		return;
 	}
 	ptr = firm;
 
@@ -970,7 +940,7 @@ atu_upload_external_firmware(struct atu_softc *sc)
 			DPRINTF(("%s: could not load external firmware "
 			    "block\n", USBDEVNAME(sc->atu_dev)));
 			free(firm, M_DEVBUF);
-			return err;
+			return;
 		}
 
 		ptr += block_size;
@@ -984,7 +954,7 @@ atu_upload_external_firmware(struct atu_softc *sc)
 	if (err) {
 		DPRINTF(("%s: could not load last zero-length firmware "
 		    "block\n", USBDEVNAME(sc->atu_dev)));
-		return err;
+		return;
 	}
 
 	/*
@@ -998,7 +968,8 @@ atu_upload_external_firmware(struct atu_softc *sc)
 
 	DPRINTFN(10, ("%s: external firmware upload done\n",
 	    USBDEVNAME(sc->atu_dev)));
-	return 0;
+	/* complete configuration after the firmwares have been uploaded */
+	atu_complete_attach(sc);
 }
 
 int
@@ -1192,17 +1163,11 @@ atu_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 USB_ATTACH(atu)
 {
 	USB_ATTACH_START(atu, sc, uaa);
-	struct ieee80211com		*ic = &sc->sc_ic;
-	struct ifnet			*ifp = &ic->ic_if;
 	char				devinfo[1024];
 	usbd_status			err;
 	usbd_device_handle		dev = uaa->device;
-	usb_interface_descriptor_t	*id;
-	usb_endpoint_descriptor_t	*ed;
-	int				i;
-	u_int8_t			mode;
+	u_int8_t			mode, channel;
 	struct atu_type			*t;
-	struct atu_fw			fw;
 	/* XXX gotta clean this up later */
 #ifdef IEEE80211_DEBUG
 	extern int			ieee80211_debug;
@@ -1223,8 +1188,7 @@ USB_ATTACH(atu)
 		USB_ATTACH_ERROR_RETURN;
 	}
 
-	err = usbd_device2interface_handle(dev, ATU_IFACE_IDX,
-	    &sc->atu_iface);
+	err = usbd_device2interface_handle(dev, ATU_IFACE_IDX, &sc->atu_iface);
 	if (err) {
 		printf("%s: getting interface handle failed\n",
 			USBDEVNAME(sc->atu_dev));
@@ -1233,8 +1197,6 @@ USB_ATTACH(atu)
 
 	sc->atu_unit = self->dv_unit;
 	sc->atu_udev = dev;
-
-	id = usbd_get_interface_descriptor(sc->atu_iface);
 
 	/*
 	 * look up the radio_type for the device
@@ -1261,40 +1223,94 @@ USB_ATTACH(atu)
 	 * in DFU mode... Let's just try to get the opmode
 	 */
 	err = atu_get_opmode(sc, &mode);
-	if (err || (mode != MODE_NETCARD &&
-	    mode != MODE_NOFLASHNETCARD)) {
+	DPRINTFN(20, ("%s: opmode: %d\n", USBDEVNAME(sc->atu_dev), mode));
+	if (err || (mode != MODE_NETCARD && mode != MODE_NOFLASHNETCARD)) {
 		DPRINTF(("%s: starting internal firmware download\n",
 		    USBDEVNAME(sc->atu_dev)));
 
-		/* upload internal firmware */
-		err = atu_upload_internal_firmware(sc);
-		if (err)
-			USB_ATTACH_ERROR_RETURN;
+		printf("\n");
 
-		printf("\n%s: reattaching after firmware upload\n",
-		    USBDEVNAME(sc->atu_dev));
-		usb_needs_reattach(dev);
+		if (rootvp == NULL)
+			mountroothook_establish(atu_internal_firmware, sc);
+		else
+			atu_internal_firmware(sc);
+		/*
+		 * atu_internal_firmware will cause a reset of the device
+		 * so we don't want to do any more configuration after this
+		 * point.
+		 */
 		USB_ATTACH_SUCCESS_RETURN;
 	}
 
 	uaa->iface = sc->atu_iface;
 
-	/* upload external firmware */
-	DPRINTF(("%s: starting external firmware download\n",
-	    USBDEVNAME(sc->atu_dev)));
-	err = atu_upload_external_firmware(sc);
-	if (err)
-		USB_ATTACH_ERROR_RETURN;
+	if (mode != MODE_NETCARD) {
+		DPRINTFN(15, ("%s: device needs external firmware\n",
+		    USBDEVNAME(sc->atu_dev)));
+
+		if (mode != MODE_NOFLASHNETCARD) {
+			DPRINTF(("%s: EEK! unexpected opmode=%d\n",
+			    USBDEVNAME(sc->atu_dev), mode));
+		}
+
+		/*
+		 * There is no difference in opmode before and after external
+		 * firmware upload with the SMC2662 V.4 . So instead we'll try
+		 * to read the channel number. If we succeed, external
+		 * firmwaremust have been already uploaded...
+		 */
+		if (sc->atu_radio != RadioIntersil) {
+			err = atu_get_mib(sc, MIB_PHY__CHANNEL, &channel);
+			if (!err) {
+				DPRINTF(("%s: external firmware has already"
+				    " been downloaded\n",
+				    USBDEVNAME(sc->atu_dev)));
+				atu_complete_attach(sc);
+				USB_ATTACH_SUCCESS_RETURN;
+			}
+		}
+
+		if (rootvp == NULL)
+			mountroothook_establish(atu_external_firmware, sc);
+		else
+			atu_external_firmware(sc);
+
+		/*
+		 * atu_external_firmware will call atu_complete_attach after
+		 * it's finished so we can just return.
+		 */
+	} else {
+		/* all the firmwares are in place, so complete the attach */
+		atu_complete_attach(sc);
+	}
+
+	USB_ATTACH_SUCCESS_RETURN;
+}
+
+void
+atu_complete_attach(struct atu_softc *sc)
+{
+	struct ieee80211com		*ic = &sc->sc_ic;
+	struct ifnet			*ifp = &ic->ic_if;
+	usb_interface_descriptor_t	*id;
+	usb_endpoint_descriptor_t	*ed;
+	usbd_status			err;
+	int				i;
+#ifdef ATU_DEBUG
+	struct atu_fw			fw;
+#endif
+
+	id = usbd_get_interface_descriptor(sc->atu_iface);
 
 	/* Find endpoints. */
 	for (i = 0; i < id->bNumEndpoints; i++) {
-		ed = usbd_interface2endpoint_descriptor(uaa->iface, i);
+		ed = usbd_interface2endpoint_descriptor(sc->atu_iface, i);
 		if (!ed) {
 			DPRINTF(("%s: num_endp:%d\n", USBDEVNAME(sc->atu_dev),
-			    uaa->iface->idesc->bNumEndpoints));
+			    sc->atu_iface->idesc->bNumEndpoints));
 			DPRINTF(("%s: couldn't get ep %d\n",
 			    USBDEVNAME(sc->atu_dev), i));
-			USB_ATTACH_ERROR_RETURN;
+			return;
 		}
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
 		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK) {
@@ -1308,11 +1324,12 @@ USB_ATTACH(atu)
 	/* read device config & get MAC address */
 	err = atu_get_card_config(sc);
 	if (err) {
-		DPRINTF(("%s: could not get card cfg!\n",
-		    USBDEVNAME(sc->atu_dev)));
-		USB_ATTACH_ERROR_RETURN;
+		printf("\n%s: could not get card cfg!\n",
+		    USBDEVNAME(sc->atu_dev));
+		return;
 	}
 
+#ifdef ATU_DEBUG
 	/* DEBUG : try to get firmware version */
 	err = atu_get_mib(sc, MIB_FW_VERSION, sizeof(fw), 0,
 	    (u_int8_t *)&fw);
@@ -1326,6 +1343,7 @@ USB_ATTACH(atu)
 		DPRINTF(("%s: get firmware version failed\n",
 		    USBDEVNAME(sc->atu_dev)));
 	}
+#endif /* ATU_DEBUG */
 
 	/* Show the world our MAC address */
 	printf(": address %s\n", ether_sprintf(ic->ic_myaddr));
@@ -1388,8 +1406,6 @@ USB_ATTACH(atu)
 	usb_init_task(&sc->sc_task, atu_task, sc);
 
 	sc->sc_state = ATU_S_OK;
-
-	USB_ATTACH_SUCCESS_RETURN;
 }
 
 USB_DETACH(atu)
