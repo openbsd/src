@@ -1,4 +1,4 @@
-/*      $OpenBSD: pciide.c,v 1.34 2000/10/21 17:57:23 deraadt Exp $     */
+/*      $OpenBSD: pciide.c,v 1.35 2000/11/07 23:31:39 chris Exp $     */
 /*	$NetBSD: pciide.c,v 1.48 1999/11/28 20:05:18 bouyer Exp $	*/
 
 /*
@@ -376,19 +376,19 @@ const struct pciide_product_desc pciide_acer_products[] =  {
 #endif
 
 const struct pciide_product_desc pciide_promise_products[] =  {
-	{ PCI_PRODUCT_PROMISE_ULTRA33,
+	{ PCI_PRODUCT_PROMISE_PDC20246,
 	IDE_PCI_CLASS_OVERRIDE,
 	pdc202xx_chip_map,
 	},
-	{ PCI_PRODUCT_PROMISE_ULTRA66,
+	{ PCI_PRODUCT_PROMISE_PDC20262,
 	IDE_PCI_CLASS_OVERRIDE,
 	pdc202xx_chip_map,
 	},
-	{ PCI_PRODUCT_PROMISE_ULTRA100,
+	{ PCI_PRODUCT_PROMISE_PDC20265,
 	IDE_PCI_CLASS_OVERRIDE,
 	pdc202xx_chip_map,
 	},
-	{ PCI_PRODUCT_PROMISE_ULTRA100_2,
+	{ PCI_PRODUCT_PROMISE_PDC20267,
 	IDE_PCI_CLASS_OVERRIDE,
 	pdc202xx_chip_map,
 	}
@@ -3052,9 +3052,9 @@ opti_setup_channel(chp)
 
 /* A macro to test product */
 #define PDC_IS_262(sc)							\
-	((sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_ULTRA66 ||	\
-	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_ULTRA100 ||	\
-	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_ULTRA100_2)
+	((sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_PDC20262 ||	\
+	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_PDC20265 ||	\
+	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_PDC20267)
 
 void
 pdc202xx_chip_map(sc, pa)
