@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.25 2001/11/25 17:15:15 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.26 2001/11/25 17:21:32 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.56 1997/07/16 00:01:47 is Exp $	*/
 
 /*
@@ -195,7 +195,7 @@ void	_wb_fault __P((void));
 
 /*ARGSUSED*/
 void
-userret(p, f, oticks, faultaddr, fromtrap)
+userret(p, fp, oticks, faultaddr, fromtrap)
 	struct proc *p;
 	struct frame *fp;
 	u_quad_t oticks;
@@ -407,8 +407,55 @@ trapmmufault(type, code, v, fp, p, sticks)
 			goto nogo;
 		}
 
-		if (writeback(fp, 1) != 0)
-			goto nogo;
+		/*	
+		 * The 68040 doesn't re-run instructions that cause
+		 * write page faults (unless due to a move16 isntruction).
+		 * So once the page is repaired, we have to write the
+		 * value of WB2D out to memory ourselves.  Because
+		 * the writeback could possibly span two pages in
+		 * memory, so we need to check both "ends" of the
+		 * address to see if they are in the same page or not.
+		 * If not, then we need to make sure the second page
+		 * is valid, and bring it into memory if it's not.
+		 * 	
+		 * This whole process needs to be repeated for WB3 as well.
+		 * <sigh>
+		 */	
+
+		/* Check WB1 */
+		if (fp->f_fmt7.f_wb1s & WBS_VALID) {
+			printf ("trap: wb1 was valid, not handled yet\n");
+			panictrap(type, code, v, fp);
+		}
+
+		/*
+		 * Check WB2
+		 * skip if it's for a move16 instruction 
+		 */
+		if (fp->f_fmt7.f_wb2s & WBS_VALID &&
+		   ((fp->f_fmt7.f_wb2s & WBS_TTMASK)==WBS_TT_MOVE16) == 0) {
+			if (_write_back(2, fp->f_fmt7.f_wb2s, 
+			    fp->f_fmt7.f_wb2d, fp->f_fmt7.f_wb2a, map)
+			    != KERN_SUCCESS)
+				goto nogo;
+			if ((fp->f_fmt7.f_wb2s & WBS_TMMASK) 
+			    != (code & SSW_TMMASK))
+				panictrap(type, code, v, fp);
+		}
+
+		/* Check WB3 */
+		if(fp->f_fmt7.f_wb3s & WBS_VALID) {
+			vm_map_t wb3_map;
+
+			if ((fp->f_fmt7.f_wb3s & WBS_TMMASK) == WBS_TM_SDATA)
+				wb3_map = kernel_map;
+			else
+				wb3_map = &vm->vm_map;
+			if (_write_back(3, fp->f_fmt7.f_wb3s, 
+			    fp->f_fmt7.f_wb3d, fp->f_fmt7.f_wb3a, wb3_map)
+			    != KERN_SUCCESS)
+				goto nogo;
+		}
 	}
 
 #ifdef no_386bsd_code
