@@ -1,4 +1,4 @@
-/*	$OpenBSD: growfs.c,v 1.10 2003/11/08 19:17:28 jmc Exp $	*/
+/*	$OpenBSD: growfs.c,v 1.11 2004/03/15 08:52:01 deraadt Exp $	*/
 /*
  * Copyright (c) 2000 Christoph Herrmann, Thomas-Henning von Kamptz
  * Copyright (c) 1980, 1989, 1993 The Regents of the University of California.
@@ -46,7 +46,7 @@ static const char copyright[] =
 Copyright (c) 1980, 1989, 1993 The Regents of the University of California.\n\
 All rights reserved.\n";
 
-static const char rcsid[] = "$OpenBSD: growfs.c,v 1.10 2003/11/08 19:17:28 jmc Exp $";
+static const char rcsid[] = "$OpenBSD: growfs.c,v 1.11 2004/03/15 08:52:01 deraadt Exp $";
 #endif /* not lint */
 
 /* ********************************************************** INCLUDES ***** */
@@ -1929,7 +1929,7 @@ main(int argc, char **argv)
 		pp = &lp->d_partitions[DISKPART(st.st_rdev)];
 	else
 		errx(1, "%s: invalid partition number %u",
-		     rdev, DISKPART(st.st_rdev));
+		    rdev, DISKPART(st.st_rdev));
 
 	/*
 	 * Check if that partition looks suited for growing a filesystem.
@@ -2049,7 +2049,7 @@ main(int argc, char **argv)
 		sblock.fs_ncyl -= sblock.fs_ncyl % sblock.fs_cpg;
 #endif
 		sblock.fs_ncyl -= sblock.fs_ncyl % sblock.fs_cpg;
-		printf( "Warning: %d sector(s) cannot be allocated.\n",
+		printf("Warning: %d sector(s) cannot be allocated.\n",
 		    (sblock.fs_size-(sblock.fs_ncg)*sblock.fs_fpg) *
 		    NSPF(&sblock));
 		sblock.fs_size = sblock.fs_ncyl * sblock.fs_spc / NSPF(&sblock);
@@ -2084,7 +2084,8 @@ main(int argc, char **argv)
 	DBG_PRINT0("label rewritten\n");
 
 	close(fsi);
-	if (fso > -1) close(fso);
+	if (fso > -1)
+		close(fso);
 
 	DBG_CLOSE;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.91 2004/03/08 17:21:52 mcbride Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.92 2004/03/15 08:52:17 deraadt Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.91 2004/03/08 17:21:52 mcbride Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.92 2004/03/15 08:52:17 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -305,7 +305,7 @@ const struct	cmd {
 	/* giftunnel is for backward compat */
 	{ "giftunnel",  NEXTARG2,	0,		NULL, settunnel } ,
 	{ "tunnel",	NEXTARG2,	0,		NULL, settunnel } ,
-	{ "deletetunnel",  0,   	0,		deletetunnel } ,
+	{ "deletetunnel",  0,		0,		deletetunnel } ,
 #if 0
 	/* XXX `create' special-cased below */
 	{ "create",	0,		0,		clone_create } ,
@@ -387,10 +387,10 @@ const struct afswtch {
 } afs[] = {
 #define C(x) ((caddr_t) &x)
 	{ "inet", AF_INET, in_status, in_getaddr, in_getprefix,
-	     SIOCDIFADDR, SIOCAIFADDR, C(ridreq), C(in_addreq) },
+	    SIOCDIFADDR, SIOCAIFADDR, C(ridreq), C(in_addreq) },
 #ifdef INET6
 	{ "inet6", AF_INET6, in6_status, in6_getaddr, in6_getprefix,
-	     SIOCDIFADDR_IN6, SIOCAIFADDR_IN6, C(in6_ridreq), C(in6_addreq) },
+	    SIOCDIFADDR_IN6, SIOCAIFADDR_IN6, C(in6_ridreq), C(in6_addreq) },
 #endif
 #ifndef INET_ONLY	/* small version, for boot media */
 	{ "atalk", AF_APPLETALK, at_status, at_getaddr, NULL,
@@ -887,7 +887,6 @@ list_cloners(void)
 
 	putchar('\n');
 	free(buf);
-	return;
 }
 
 #define RIDADDR 0
@@ -1093,7 +1092,7 @@ setia6eui64(const char *cmd, int val)
 
 	if (afp->af_af != AF_INET6)
 		errx(1, "%s not allowed for the AF", cmd);
- 	in6 = (struct in6_addr *)&in6_addreq.ifra_addr.sin6_addr;
+	in6 = (struct in6_addr *)&in6_addreq.ifra_addr.sin6_addr;
 	if (memcmp(&in6addr_any.s6_addr[8], &in6->s6_addr[8], 8) != 0)
 		errx(1, "interface index is already filled");
 	if (getifaddrs(&ifap) != 0)
@@ -1111,7 +1110,7 @@ setia6eui64(const char *cmd, int val)
 	if (!lladdr)
 		errx(1, "could not determine link local address");
 
- 	memcpy(&in6->s6_addr[8], &lladdr->s6_addr[8], 8);
+	memcpy(&in6->s6_addr[8], &lladdr->s6_addr[8], 8);
 
 	freeifaddrs(ifap);
 }
@@ -1595,7 +1594,7 @@ get_media_type_string(int mword)
 	const struct ifmedia_description *desc;
 
 	for (desc = ifm_type_descriptions; desc->ifmt_string != NULL;
-	     desc++) {
+	    desc++) {
 		if (IFM_TYPE(mword) == desc->ifmt_word)
 			return (desc->ifmt_string);
 	}
@@ -1608,7 +1607,7 @@ get_media_subtype_string(int mword)
 	const struct ifmedia_description *desc;
 
 	for (desc = ifm_subtype_descriptions; desc->ifmt_string != NULL;
-	     desc++) {
+	    desc++) {
 		if (IFM_TYPE_MATCH(desc->ifmt_word, mword) &&
 		    IFM_SUBTYPE(desc->ifmt_word) == IFM_SUBTYPE(mword))
 			return (desc->ifmt_string);
@@ -1682,7 +1681,7 @@ print_media_word(int ifmw, int print_type, int as_syntax)
 
 	/* Find options. */
 	for (desc = ifm_option_descriptions; desc->ifmt_string != NULL;
-	     desc++) {
+	    desc++) {
 		if (IFM_TYPE_MATCH(desc->ifmt_word, ifmw) &&
 		    (IFM_OPTIONS(ifmw) & IFM_OPTIONS(desc->ifmt_word)) != 0 &&
 		    (seen_option & IFM_OPTIONS(desc->ifmt_word)) == 0) {
@@ -1816,11 +1815,11 @@ status(int link, struct sockaddr_dl *sdl)
 		printf("\tstatus: ");
 		for (bitno = 0; ifm_status_valid_list[bitno] != 0; bitno++) {
 			for (ifms = ifm_status_descriptions;
-			     ifms->ifms_valid != 0; ifms++) {
+			    ifms->ifms_valid != 0; ifms++) {
 				if (ifms->ifms_type !=
-				      IFM_TYPE(ifmr.ifm_current) ||
+				    IFM_TYPE(ifmr.ifm_current) ||
 				    ifms->ifms_valid !=
-				      ifm_status_valid_list[bitno])
+				    ifm_status_valid_list[bitno])
 					continue;
 				printf("%s%s", found ? ", " : "",
 				    IFM_STATUS_DESC(ifms, ifmr.ifm_status));
@@ -2663,8 +2662,6 @@ vlan_status(void)
 		printf("\tvlan: %d parent interface: %s\n",
 		    vreq.vlr_tag, vreq.vlr_parent[0] == '\0' ?
 		    "<none>" : vreq.vlr_parent);
-
-	return;
 }
 
 void
@@ -2686,8 +2683,6 @@ setvlantag(const char *val, int d)
 
 	if (ioctl(s, SIOCSETVLAN, (caddr_t)&ifr) == -1)
 		err(1, "SIOCSETVLAN");
-
-	return;
 }
 
 void
@@ -2709,8 +2704,6 @@ setvlandev(const char *val, int d)
 
 	if (ioctl(s, SIOCSETVLAN, (caddr_t)&ifr) == -1)
 		err(1, "SIOCSETVLAN");
-
-	return;
 }
 
 void
@@ -2729,8 +2722,6 @@ unsetvlandev(const char *val, int d)
 
 	if (ioctl(s, SIOCSETVLAN, (caddr_t)&ifr) == -1)
 		err(1, "SIOCSETVLAN");
-
-	return;
 }
 
 
@@ -2758,9 +2749,6 @@ carp_status()
 		    state, carpr.carpr_vhid, carpr.carpr_advbase,
 		    carpr.carpr_advskew);
 	}
-
-        return;
-
 }
 
 void
@@ -2779,8 +2767,6 @@ setcarp_passwd(const char *val, int d)
 
 	if (ioctl(s, SIOCSVH, (caddr_t)&ifr) == -1)
 		err(1, "SIOCSVH");
-
-	return;
 }
 
 void
@@ -2804,8 +2790,6 @@ setcarp_vhid(const char *val, int d)
 
 	if (ioctl(s, SIOCSVH, (caddr_t)&ifr) == -1)
 		err(1, "SIOCSVH");
-
-	return;
 }
 
 void
@@ -2826,8 +2810,6 @@ setcarp_advskew(const char *val, int d)
 
 	if (ioctl(s, SIOCSVH, (caddr_t)&ifr) == -1)
 		err(1, "SIOCSVH");
-
-	return;
 }
 
 void
@@ -2848,8 +2830,6 @@ setcarp_advbase(const char *val, int d)
 
 	if (ioctl(s, SIOCSVH, (caddr_t)&ifr) == -1)
 		err(1, "SIOCSVH");
-
-	return;
 }
 
 void
@@ -2867,8 +2847,6 @@ setpfsync_syncif(const char *val, int d)
 
 	if (ioctl(s, SIOCSETPFSYNC, (caddr_t)&ifr) == -1)
 		err(1, "SIOCSETPFSYNC");
-
-	return;
 }
 
 void
@@ -2886,8 +2864,6 @@ unsetpfsync_syncif(const char *val, int d)
 
 	if (ioctl(s, SIOCSETPFSYNC, (caddr_t)&ifr) == -1)
 		err(1, "SIOCSETPFSYNC");
-
-	return;
 }
 
 void
@@ -2908,8 +2884,6 @@ setpfsync_maxupd(const char *val, int d)
 
 	if (ioctl(s, SIOCSETPFSYNC, (caddr_t)&ifr) == -1)
 		err(1, "SIOCSETPFSYNC");
-
-	return;
 }
 
 void
@@ -2927,8 +2901,6 @@ pfsync_status(void)
 		printf("\tpfsync: syncif: %s maxupd: %d\n",
 		    preq.pfsyncr_syncif, preq.pfsyncr_maxupdates);
 	}
-
-	return;
 }
 #endif /* INET_ONLY */
 
