@@ -1,4 +1,4 @@
-/*	$OpenBSD: wicontrol.c,v 1.25 2002/03/31 00:54:03 mickey Exp $	*/
+/*	$OpenBSD: wicontrol.c,v 1.26 2002/04/01 17:51:23 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -69,7 +69,7 @@
 static const char copyright[] = "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.";
 static const char rcsid[] =
-	"@(#) $OpenBSD: wicontrol.c,v 1.25 2002/03/31 00:54:03 mickey Exp $";
+	"@(#) $OpenBSD: wicontrol.c,v 1.26 2002/04/01 17:51:23 mickey Exp $";
 #endif
 
 void wi_getval(char *, struct wi_req *);
@@ -181,7 +181,7 @@ wi_setstr(iface, code, str)
 
 	bzero((char *)&wreq, sizeof(wreq));
 
-	if (strlen(str) > 30)
+	if (strlen(str) > IEEE80211_NWID_LEN)
 		errx(1, "string too long");
 
 	wreq.wi_type = code;
