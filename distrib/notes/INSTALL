@@ -32,29 +32,19 @@ security is often seen as a tradeoff with usability, OpenBSD provides
 as many security options as possible to allow the user to enjoy secure
 computing without feeling burdened by it.
 
-Though security is the primary goal, OpenBSD continues the multi-
-platform tradition.  Ports to mvme68k, powerpc and arc machines have
-been added to the system.  To further this work, kernel interfaces
-have continued to be refined and several subsystems and device drivers
-are shared in a machine independent fashion among the different ports.
-You can look for this trend to continue as newer architectures become
-available.
+To integrate more smoothly in other environments, OpenBSD OSREV also
+provides several binary emulation subsystems (which includes
+iBCS2, Linux, OSF/1, SunOS, SVR4, Solaris, and Ultrix compatibility),
+aiming at making the emulation as accurate as possible so that it is
+transparent to the user.
 
-To integrate more smoothly in other environments, OpenBSD OSREV has
-significantly enhanced the binary emulation subsystem (which includes
-iBCS2, Linux, OSF/1, SunOS, SVR4, Solaris, and Ultrix compatibility)
-and several kernel subsystems have been generalized to support this
-more readily.  The binary emulation strategy is aimed at making the
-emulation as accurate as possible so that it is transparent to the
-user.
-
-Many new user programs have been added in OpenBSD OSREV, as well,
-bringing it closer to our goal of supplying a complete and modern
-UN*X-like environment.  Tools like perl and ksh are standard, as are
-numerous other useful tools.
+Many new user programs and device drivers have been added in OpenBSD
+OSREV, as well, bringing it closer to our goal of supplying a complete
+and modern UN*X-like environment.  Tools like perl and an improved ksh
+are standard, as are numerous other useful tools.
 
 Because OpenBSD is from Canada, the export of Cryptography pieces
-(such as SSH, IPSEC, and kerberosIV) to the world is not restricted.
+(such as SSH, IPSEC, and KerberosIV) to the world is not restricted.
 
 (NOTE: OpenBSD can not be re-exported from the US once it has entered
 the US.  Because of this, take care NOT to get the distribution from
@@ -79,30 +69,36 @@ binary distribution, there is a sub-directory.
 
 includeit(contents)
 
+
 OpenBSD System Requirements and Supported Devices:
 --------------------------------------------------
 
 includeit(hardware)
+
 
 Getting the OpenBSD System onto Useful Media:
 ---------------------------------------------
 
 includeit(xfer)
 
+
 Preparing your System for OpenBSD Installation:
 -----------------------------------------------
 
 includeit(prep)
+
 
 Installing the OpenBSD System:
 ------------------------------
 
 includeit(install)
 
+
 Upgrading a previously-installed OpenBSD System:
 ------------------------------------------------
 
 includeit(upgrade)
+
 
 Getting source code for your OpenBSD System:
 --------------------------------------------
@@ -118,6 +114,7 @@ ANONCVS, CTM or FTP.  For more information, see
 	http://www.openbsd.org/ctm.html
 	http://www.openbsd.org/ftp.html
 
+
 Using online OpenBSD documentation:
 -----------------------------------
 
@@ -132,7 +129,7 @@ are denoted by 'name(section)'.  Some examples of this are
 	passwd(5).
 
 The section numbers group the topics into several categories, but three
-are of primary interest:  user commands are in section 1, file formats
+are of primary interest: user commands are in section 1, file formats
 are in section 5, and administrative information is in section 8.
 
 The 'man' command is used to view the documentation on a topic, and is
@@ -158,10 +155,12 @@ If you are unsure of what man page you are looking for, enter
 where "subject-word" is your topic of interest; a list of possibly 
 related man pages will be displayed.
 
+
 Adding third party software; ``packages'' and ``ports'':
 -------------------------------------------------------
 
 includeit(packages)
+
 
 Administrivia:
 --------------
