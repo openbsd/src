@@ -1,4 +1,4 @@
-/*	$OpenBSD: cut.c,v 1.5 1997/11/05 00:18:44 deraadt Exp $	*/
+/*	$OpenBSD: cut.c,v 1.6 1998/11/28 03:41:46 aaron Exp $	*/
 /*	$NetBSD: cut.c,v 1.9 1995/09/02 05:59:23 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cut.c	8.3 (Berkeley) 5/4/95";
 #endif
-static char rcsid[] = "$OpenBSD: cut.c,v 1.5 1997/11/05 00:18:44 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: cut.c,v 1.6 1998/11/28 03:41:46 aaron Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -153,7 +153,7 @@ get_list(list)
 	 * overlapping lists.  We also handle "-3-5" although there's no
 	 * real reason too.
 	 */
-	for (; p = strtok(list, ", \t"); list = NULL) {
+	for (; p = strsep(&list, ", \t");) {
 		setautostart = start = stop = 0;
 		if (*p == '-') {
 			++p;
