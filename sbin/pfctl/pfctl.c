@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.90 2002/11/23 09:33:54 deraadt Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.91 2002/11/24 13:26:29 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -405,9 +405,9 @@ pfctl_get_pool(int dev, struct pf_pool *pool, u_int32_t nr,
 			warnx("DIOCGETADDR");
 			return (-1);
 		}
-		pa = malloc(sizeof(struct pf_pooladdr));
+		pa = calloc(1, sizeof(struct pf_pooladdr));
 		if (pa == NULL) {
-			err(1, "malloc");
+			err(1, "calloc");
 			return (-1);
 		}
 		bcopy(&pp.addr, pa, sizeof(struct pf_pooladdr));
@@ -422,7 +422,7 @@ pfctl_clear_pool(struct pf_pool *pool)
 {
 	struct pf_pooladdr *pa;
 
-	TAILQ_FOREACH(pa, &pool->list, entries) {
+	while ((pa = TAILQ_FIRST(&pool->list)) != NULL) {
 		TAILQ_REMOVE(&pool->list, pa, entries);
 		free(pa);
 	}
@@ -574,7 +574,7 @@ pfctl_show_states(int dev, u_int8_t proto, int opts)
 		if (len) {
 			ps.ps_buf = inbuf = realloc(inbuf, len);
 			if (inbuf == NULL)
-				err(1, "malloc");
+				err(1, "realloc");
 		}
 		if (ioctl(dev, DIOCGETSTATES, &ps) < 0) {
 			warnx("DIOCGETSTATES");
@@ -675,14 +675,14 @@ pfctl_add_rule(struct pfctl *pf, struct pf_rule *r)
 	if ((loadopt & (PFCTL_FLAG_FILTER | PFCTL_FLAG_ALL)) != 0) {
 		if (pfctl_add_pool(pf, &r->rt_pool, r->af))
 			return (1);
-		memcpy(&pf->prule->rule, r, sizeof(pf->prule->rule));
 		if ((pf->opts & PF_OPT_NOACTION) == 0) {
+			memcpy(&pf->prule->rule, r, sizeof(pf->prule->rule));
 			if (ioctl(pf->dev, DIOCADDRULE, pf->prule))
 				err(1, "DIOCADDRULE");
 		}
 		if (pf->opts & PF_OPT_VERBOSE)
-			print_rule(&pf->prule->rule);
-		pfctl_clear_pool(&pf->prule->rule.rt_pool);
+			print_rule(r);
+		pfctl_clear_pool(&r->rt_pool);
 	}
 	return (0);
 }
