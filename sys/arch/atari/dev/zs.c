@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.9 1995/09/23 20:29:17 leo Exp $	*/
+/*	$NetBSD: zs.c,v 1.9.2.1 1995/11/15 21:39:45 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman (Atari modifications)
@@ -69,6 +69,7 @@
 #include <machine/iomap.h>
 #include <machine/scu.h>
 #include <machine/mfp.h>
+#include <machine/video.h>
 
 #include <dev/ic/z8530reg.h>
 #include <atari/dev/zsvar.h>
@@ -306,6 +307,16 @@ struct proc	*p;
 	if(zs >= zscd.cd_ndevs || (zi = zscd.cd_devs[zs]) == NULL)
 		return (ENXIO);
 	cs = &zi->zi_cs[unit & 1];
+
+	/*
+	 * When port A (ser02) is selected on the TT, make sure
+	 * the port is enabled.
+	 */
+	if((machineid & ATARI_TT) && !(unit & 1)) {
+		SOUND->sd_selr = YM_IOA;
+		SOUND->sd_wdat = SOUND->sd_rdat | PA_SER2;
+	}
+
 	tp = cs->cs_ttyp;
 	if(tp == NULL) {
 		cs->cs_ttyp  = tp = ttymalloc();
