@@ -1,4 +1,4 @@
-/*	$OpenBSD: pio.h,v 1.1.1.1 1996/06/24 09:07:17 pefo Exp $	*/
+/*	$OpenBSD: pio.h,v 1.2 1996/07/30 20:24:27 pefo Exp $	*/
 
 /*
  * Copyright (c) 1995 Per Fogelstrom.  All rights reserved.
@@ -13,7 +13,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Charles M. Hannum.
+ *      This product includes software developed by Per Fogelstrom.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *

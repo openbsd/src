@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sn.c,v 1.1.1.1 1996/06/24 09:07:19 pefo Exp $	*/
+/*	$OpenBSD: if_sn.c,v 1.2 1996/07/30 20:24:22 pefo Exp $	*/
 /*
  * National Semiconductor  SONIC Driver
  * Copyright (c) 1991   Algorithmics Ltd (http://www.algor.co.uk)
@@ -287,8 +287,8 @@ snattach(parent, self, aux)
 
 	sc->dma = &sc->__dma;
 	sn_dma_init(sc->dma, FRAGMAX * NTDA
-			   + (NRBA * RBASIZE / PICA_DMA_PAGE_SIZE) + 1
-			   + (DESC_SIZE * 2 / PICA_DMA_PAGE_SIZE) + 1);
+			   + (NRBA * RBASIZE / R4030_DMA_PAGE_SIZE) + 1
+			   + (DESC_SIZE * 2 / R4030_DMA_PAGE_SIZE) + 1);
 
 /*
  * because the sonic is basicly 16bit device it 'concatenates'
@@ -296,7 +296,7 @@ snattach(parent, self, aux)
  * around problems near the end of 64k !!
  */
 	p = SONICBUF;
-	pp = SONICBUF - (FRAGMAX * NTDA * PICA_DMA_PAGE_SIZE);
+	pp = SONICBUF - (FRAGMAX * NTDA * R4030_DMA_PAGE_SIZE);
 
 	if ((p ^ (p + TDASIZE)) & 0x10000)
 		p = (p + 0x10000) & ~0xffff;
@@ -320,7 +320,7 @@ snattach(parent, self, aux)
 	v_cda = (struct CDA *)(p - pp + sc->dma->dma_va);
 	p += CDASIZE;
 
-	p += PICA_DMA_PAGE_SIZE - (p & (PICA_DMA_PAGE_SIZE -1));
+	p += R4030_DMA_PAGE_SIZE - (p & (R4030_DMA_PAGE_SIZE -1));
 	p_rba = (char *)p;
 	v_rba = (char *)(p - pp + sc->dma->dma_va);
 	p += NRBA * RBASIZE;
@@ -649,7 +649,7 @@ sonicput(sc, m0)
 	mtdnext->mtd_mbuf = m0;
 	txp = mtdnext->mtd_txp;
 	SWR(txp->config, 0);
-	fragoffset = (txp - p_tda) * FRAGMAX * PICA_DMA_PAGE_SIZE;
+	fragoffset = (txp - p_tda) * FRAGMAX * R4030_DMA_PAGE_SIZE;
 
 	/*
 	 * Now fill in the fragments. Each fragment maps to it's
@@ -685,7 +685,7 @@ sonicput(sc, m0)
 			fr++;
 			va += n;
 			resid -= n;
-			fragoffset += PICA_DMA_PAGE_SIZE;
+			fragoffset += R4030_DMA_PAGE_SIZE;
 		}
 	}
 	/*

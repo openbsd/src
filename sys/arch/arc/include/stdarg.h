@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdarg.h,v 1.1.1.1 1996/06/24 09:07:18 pefo Exp $	*/
+/*	$OpenBSD: stdarg.h,v 1.2 1996/07/30 20:24:29 pefo Exp $	*/
 /*	$NetBSD: stdarg.h,v 1.7 1995/03/28 18:19:28 jtc Exp $	*/
 
 /*-
@@ -36,8 +36,8 @@
  *	@(#)stdarg.h	8.1 (Berkeley) 6/10/93
  */
 
-#ifndef _PMAX_STDARG_H_
-#define	_PMAX_STDARG_H_
+#ifndef _MIPS_STDARG_H_
+#define	_MIPS_STDARG_H_
 
 #include <machine/ansi.h>
 
@@ -62,4 +62,4 @@ typedef _BSD_VA_LIST_	va_list;
 
 #define	va_end(ap)	((void) 0)
 
-#endif /* !_PMAX_STDARG_H_ */
+#endif /* !_MIPS_STDARG_H_ */

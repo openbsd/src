@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.1.1.1 1996/06/24 09:07:20 pefo Exp $	*/
+/*	$OpenBSD: locore.S,v 1.2 1996/07/30 20:24:15 pefo Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -50,7 +50,7 @@
  *	v 1.1 89/07/10 14:27:41 nelson Exp  SPRITE (DECWRL)
  *
  *	from: @(#)locore.s	8.5 (Berkeley) 1/4/94
- *	$Id: locore.S,v 1.1.1.1 1996/06/24 09:07:20 pefo Exp $
+ *	$Id: locore.S,v 1.2 1996/07/30 20:24:15 pefo Exp $
  */
 
 /*
@@ -2732,8 +2732,8 @@ LEAF(mdbpeek)
 	b	2f
 	lw	v0, (a0)		# aligned access
 1:
-	lwr	v0, 0(a0)		# get next 4 bytes (unaligned)
-	lwl	v0, 3(a0)
+	LWHI	v0, 0(a0)		# get next 4 bytes (unaligned)
+	LWLO	v0, 3(a0)
 2:
 	j	ra			# made it w/o errors
 	sw	zero, UADDR+U_PCB_ONFAULT
@@ -2765,8 +2765,8 @@ LEAF(mdbpoke)
 	b	2f
 	sw	a1, (a0)		# aligned access
 1:
-	swr	a1, 0(a0)		# store next 4 bytes (unaligned)
-	swl	a1, 3(a0)
+	SWHI	a1, 0(a0)		# store next 4 bytes (unaligned)
+	SWLO	a1, 3(a0)
 	and	a0, a0, ~3		# align address for cache flush
 2:
 	sw	zero, UADDR+U_PCB_ONFAULT

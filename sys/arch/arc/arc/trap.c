@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.2 1996/07/16 07:46:14 pefo Exp $	*/
+/*	$OpenBSD: trap.c,v 1.3 1996/07/30 20:24:18 pefo Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  * from: Utah Hdr: trap.c 1.32 91/04/06
  *
  *	from: @(#)trap.c	8.5 (Berkeley) 1/11/94
- *      $Id: trap.c,v 1.2 1996/07/16 07:46:14 pefo Exp $
+ *      $Id: trap.c,v 1.3 1996/07/30 20:24:18 pefo Exp $
  */
 
 #include <sys/param.h>
@@ -71,6 +71,7 @@
 #include <vm/vm_page.h>
 
 #include <arc/pica/pica.h>
+#include <arc/arc/arctype.h>
 
 #include <sys/cdefs.h>
 #include <sys/syslog.h>
@@ -226,6 +227,7 @@ static void arc_errintr();
 extern const struct callback *callv;
 extern volatile struct chiptime *Mach_clock_addr;
 extern u_long intrcnt[];
+extern u_int cputype;
 
 /*
  * Handle an exception.
@@ -905,13 +907,17 @@ interrupt(statusReg, causeReg, pc, what, args)
 	}
 }
 
-
+/*
+ *	Set up handler for external interrupt events.
+ *	Events are checked in priority order.
+ */
+void
 set_intr(mask, int_hand, prio)
 	int	mask;
 	int	(*int_hand)();
 	int	prio;
 {
-	if(prio > 4)
+	if(prio > 5)
 		panic("set_intr: to high priority");
 
 	if(cpu_int_tab[prio].int_mask != 0)
@@ -924,7 +930,15 @@ set_intr(mask, int_hand, prio)
 	/*
 	 *  Update external interrupt mask but don't enable clock.
 	 */
-	out32(PICA_SYS_EXT_IMASK, cpu_int_mask & (~INT_MASK_4 >> 10));
+	switch(cputype) {
+	case ACER_PICA_61:
+	case MAGNUM:
+		out32(R4030_SYS_EXT_IMASK, cpu_int_mask & (~INT_MASK_4 >> 10));
+		break;
+
+	case DESKSTATION:
+		break;
+	}
 }
 
 /*
@@ -1271,7 +1285,7 @@ kdbpeek(addr)
 
 /* forward */
 char *fn_name(unsigned addr);
-void stacktrace_subr __P((int, int, int, int, void (*)(const char*, ...)));
+void stacktrace_subr __P((int, int, int, int, int (*)(const char*, ...)));
 
 /*
  * Print a stack backtrace.
@@ -1293,7 +1307,7 @@ logstacktrace(a0, a1, a2, a3)
 void
 stacktrace_subr(a0, a1, a2, a3, printfn)
 	int a0, a1, a2, a3;
-	void (*printfn) __P((const char*, ...));
+	int (*printfn) __P((const char*, ...));
 {
 	unsigned pc, sp, fp, ra, va, subr;
 	unsigned instr, mask;

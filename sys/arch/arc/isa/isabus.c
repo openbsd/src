@@ -1,4 +1,4 @@
-/*	$OpenBSD: isabus.c,v 1.1.1.1 1996/06/24 09:07:18 pefo Exp $	*/
+/*	$OpenBSD: isabus.c,v 1.2 1996/07/30 20:24:30 pefo Exp $	*/
 /*	$NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp $	*/
 
 /*-
@@ -393,7 +393,7 @@ isabr_iointr(ca)
 	int isa_vector;
 	int o_imen;
 
-	isa_vector = in32(PICA_SYS_ISA_VECTOR) & (ICU_LEN - 1);
+	isa_vector = in32(R4030_SYS_ISA_VECTOR) & (ICU_LEN - 1);
 
 	o_imen = imen;
 	imen |= 1 << (isa_vector & (ICU_LEN - 1));

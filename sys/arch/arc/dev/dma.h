@@ -1,7 +1,7 @@
-/*	$OpenBSD: dma.h,v 1.1.1.1 1996/06/24 09:07:19 pefo Exp $	*/
-/*-
- * Copyright (c) 1992, 1993
- *	The Regents of the University of California.  All rights reserved.
+/*	$OpenBSD: dma.h,v 1.2 1996/07/30 20:24:21 pefo Exp $	*/
+/*
+ * Copyright (c) 1996 Per Fogelstrom
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -13,30 +13,24 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ *      This product includes software developed by Per Fogelstrom.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- *	from: @(#)dma.h	8.1 (Berkeley) 6/10/93
- *      $Id: dma.h,v 1.1.1.1 1996/06/24 09:07:19 pefo Exp $
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 /*
- *	The PICA system has four dma channels capable of scatter/gather
+ *	The R4030 system has four dma channels capable of scatter/gather
  *	and full memory addressing. The maximum transfer length is 1Mb.
  *	Dma snopes the L2 cache so no precaution is required. However
  *	if L1 cache is cached 'write back' the processor is responible
@@ -62,35 +56,35 @@ typedef volatile struct {
 	int		pad4;
 } DmaReg, *pDmaReg;
 
-#define	PICA_DMA_MODE_40NS	0x00	/* Device dma timing */
-#define	PICA_DMA_MODE_80NS	0x01	/* Device dma timing */
-#define	PICA_DMA_MODE_120NS	0x02	/* Device dma timing */
-#define	PICA_DMA_MODE_160NS	0x03	/* Device dma timing */
-#define	PICA_DMA_MODE_200NS	0x04	/* Device dma timing */
-#define	PICA_DMA_MODE_240NS	0x05	/* Device dma timing */
-#define	PICA_DMA_MODE_280NS	0x06	/* Device dma timing */
-#define	PICA_DMA_MODE_320NS	0x07	/* Device dma timing */
-#define	PICA_DMA_MODE_8		0x08	/* Device 8 bit  */
-#define	PICA_DMA_MODE_16	0x10	/* Device 16 bit */
-#define	PICA_DMA_MODE_32	0x18	/* Device 32 bit */
-#define	PICA_DMA_MODE_INT	0x20	/* Interrupt when done */
-#define	PICA_DMA_MODE_BURST	0x40	/* Burst mode (Rev 2 only) */
-#define PICA_DMA_MODE_FAST	0x80	/* Fast dma cycle (Rev 2 only) */
-#define PICA_DMA_MODE		0xff	/* Mode register bits */
+#define	R4030_DMA_MODE_40NS	0x00	/* Device dma timing */
+#define	R4030_DMA_MODE_80NS	0x01	/* Device dma timing */
+#define	R4030_DMA_MODE_120NS	0x02	/* Device dma timing */
+#define	R4030_DMA_MODE_160NS	0x03	/* Device dma timing */
+#define	R4030_DMA_MODE_200NS	0x04	/* Device dma timing */
+#define	R4030_DMA_MODE_240NS	0x05	/* Device dma timing */
+#define	R4030_DMA_MODE_280NS	0x06	/* Device dma timing */
+#define	R4030_DMA_MODE_320NS	0x07	/* Device dma timing */
+#define	R4030_DMA_MODE_8		0x08	/* Device 8 bit  */
+#define	R4030_DMA_MODE_16	0x10	/* Device 16 bit */
+#define	R4030_DMA_MODE_32	0x18	/* Device 32 bit */
+#define	R4030_DMA_MODE_INT	0x20	/* Interrupt when done */
+#define	R4030_DMA_MODE_BURST	0x40	/* Burst mode (Rev 2 only) */
+#define R4030_DMA_MODE_FAST	0x80	/* Fast dma cycle (Rev 2 only) */
+#define R4030_DMA_MODE		0xff	/* Mode register bits */
 #define DMA_DIR_WRITE		0x100	/* Software direction status */
 #define DMA_DIR_READ		0x000	/* Software direction status */
 
-#define	PICA_DMA_ENAB_RUN	0x01	/* Enable dma */
-#define	PICA_DMA_ENAB_READ	0x00	/* Read from device */
-#define	PICA_DMA_ENAB_WRITE	0x02	/* Write to device */
-#define	PICA_DMA_ENAB_TC_IE	0x100	/* Terminal count int enable */
-#define	PICA_DMA_ENAB_ME_IE	0x200	/* Memory error int enable */
-#define	PICA_DMA_ENAB_TL_IE	0x400	/* Translation limit int enable */
+#define	R4030_DMA_ENAB_RUN	0x01	/* Enable dma */
+#define	R4030_DMA_ENAB_READ	0x00	/* Read from device */
+#define	R4030_DMA_ENAB_WRITE	0x02	/* Write to device */
+#define	R4030_DMA_ENAB_TC_IE	0x100	/* Terminal count int enable */
+#define	R4030_DMA_ENAB_ME_IE	0x200	/* Memory error int enable */
+#define	R4030_DMA_ENAB_TL_IE	0x400	/* Translation limit int enable */
 
-#define	PICA_DMA_COUNT_MASK	0x00fffff /* Byte count mask */
-#define	PICA_DMA_PAGE_NUM	0xffff000 /* Address page number */
-#define	PICA_DMA_PAGE_OFFS	0x0000fff /* Address page offset */
-#define	PICA_DMA_PAGE_SIZE	0x0001000 /* Address page size */
+#define	R4030_DMA_COUNT_MASK	0x00fffff /* Byte count mask */
+#define	R4030_DMA_PAGE_NUM	0xffff000 /* Address page number */
+#define	R4030_DMA_PAGE_OFFS	0x0000fff /* Address page offset */
+#define	R4030_DMA_PAGE_SIZE	0x0001000 /* Address page size */
 
 
 /*
@@ -140,8 +134,8 @@ typedef struct dma_softc {
 #define	DMA_TO_DEV	0
 #define	DMA_FROM_DEV	1
 
-#define	dma_page_offs(x)	((int)(x) & PICA_DMA_PAGE_OFFS)
-#define dma_page_round(x)	(((int)(x) + PICA_DMA_PAGE_OFFS) & PICA_DMA_PAGE_NUM)
+#define	dma_page_offs(x)	((int)(x) & R4030_DMA_PAGE_OFFS)
+#define dma_page_round(x)	(((int)(x) + R4030_DMA_PAGE_OFFS) & R4030_DMA_PAGE_NUM)
 
 #define	DMA_RESET(r)		((r->reset)(r))
 #define	DMA_START(a, b, c, d)	((a->start)(a, b, c, d))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.3 1996/07/27 11:40:29 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.4 1996/07/30 20:24:17 pefo Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	8.3 (Berkeley) 1/12/94
- *      $Id: machdep.c,v 1.3 1996/07/27 11:40:29 deraadt Exp $
+ *      $Id: machdep.c,v 1.4 1996/07/30 20:24:17 pefo Exp $
  */
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
@@ -139,6 +139,8 @@ int	(*Mach_spltty)() = splhigh;
 int	(*Mach_splclock)() = splhigh;
 int	(*Mach_splstatclock)() = splhigh;
 
+typedef void * (*FUNCPTR)();
+
 void vid_print_string(const char *str);
 void vid_putchar(dev_t dev, char c);
 
@@ -172,13 +174,21 @@ mips_init(argc, argv, code)
 	extern char edata[], end[];
 	extern char MachTLBMiss[], MachTLBMissEnd[];
 	extern char MachException[], MachExceptionEnd[];
+	struct sid {
+		char vendor[8];
+		u_char prodid[8];
+	} *sys_id;
 
-vid_print_string("Starting\n");
 	/* clear the BSS segment in NetBSD code */
 	v = (caddr_t)mips_round_page(end);
 	bzero(edata, v - edata);
 
 	/* check what model platform we are running on */
+
+	/* I just hate function pointer pointers.... */
+	sys_id = (struct sid *)((*(FUNCPTR)((*(caddr_t **)0x80001020))[17])());
+
+
 	cputype = ACER_PICA_61; /* FIXME find systemtype */
 
 	/*
@@ -194,6 +204,13 @@ vid_print_string("Starting\n");
 		isa_io_base = PICA_V_ISA_IO;
 		isa_mem_base = PICA_V_ISA_MEM;
 		break;
+
+	case DESKSTATION:
+		break;
+
+	case MAGNUM:
+		break;
+
 	default:
 		memcfg = -1;
 		break;
@@ -268,8 +285,8 @@ vid_print_string("Starting\n");
 	 */
 
 	tlb.tlb_mask = PG_SIZE_256K;
-	tlb.tlb_hi = vad_to_vpn(PICA_V_LOCAL_IO_BASE);
-	tlb.tlb_lo0 = vad_to_pfn(PICA_P_LOCAL_IO_BASE) | PG_IOPAGE;
+	tlb.tlb_hi = vad_to_vpn(R4030_V_LOCAL_IO_BASE);
+	tlb.tlb_lo0 = vad_to_pfn(R4030_P_LOCAL_IO_BASE) | PG_IOPAGE;
 	tlb.tlb_lo1 = vad_to_pfn(PICA_P_INT_SOURCE) | PG_IOPAGE;
 	MachTLBWriteIndexed(1, &tlb);
 
@@ -367,7 +384,15 @@ vid_print_string("Starting\n");
 		Mach_spltty = Mach_spl2;
 		Mach_splstatclock = Mach_spl3;
 #endif
-		strcpy(cpu_model, "PICA_61");
+		strcpy(cpu_model, "ACER PICA_61");
+		break;
+
+	case DESKSTATION:
+		strcpy(cpu_model, "DESKSTATION");
+		break;
+
+	case MAGNUM:
+		strcpy(cpu_model, "MIPS MAGNUM");
 		break;
 
 	default:
@@ -380,7 +405,7 @@ vid_print_string("Starting\n");
 	 */
 
 	switch (cputype) {
-	case ACER_PICA_61:	/* ALI PICA 61 */
+	case ACER_PICA_61:
 		/*
 		 * Size is determined from the memory config register.
 		 *  d0-d2 = bank 0 size (sim id)
@@ -396,6 +421,13 @@ vid_print_string("Starting\n");
 			physmem += physmem;	/* 128 bit config */
 
 		physmem = btoc(physmem);
+		break;
+
+	case MAGNUM:
+		memcfg = in32(R4030_SYS_CONFIG);
+		break;
+
+	case DESKSTATION:
 		break;
 
 	default:
@@ -626,6 +658,8 @@ cpu_startup()
 #endif
 	}
 	configure();
+
+	spl0();		/* safe to turn interrupts on now */
 }
 
 /*
@@ -1029,9 +1063,8 @@ initcpu()
 	 * during system configuration
 	 */
 	out16(PICA_SYS_LB_IE,0x000);
-	out32(PICA_SYS_EXT_IMASK, 0x00);
+	out32(R4030_SYS_EXT_IMASK, 0x00);
 
-	spl0();		/* safe to turn interrupts on now */
 }
 
 /*

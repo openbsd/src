@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.2 1996/06/24 20:05:36 pefo Exp $	*/
+/*	$OpenBSD: bus.h,v 1.3 1996/07/30 20:24:24 pefo Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -119,6 +119,7 @@ struct arc_isa_busmap {
     ((void)(*(volatile u_int64_t *)((h) + (o)) = (v)))
 
 /* These are extensions to the general NetBSD bus interface.  */
+/* XXX Check endianess */
 #define bus_to_host_2(t, v) (v)
 #define bus_to_host_4(t, v) (v)
 #define bus_to_host_8(t, v) (v)

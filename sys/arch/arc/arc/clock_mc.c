@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock_mc.c,v 1.1.1.1 1996/06/24 09:07:20 pefo Exp $	*/
+/*	$OpenBSD: clock_mc.c,v 1.2 1996/07/30 20:24:13 pefo Exp $	*/
 /*	$NetBSD: clock_mc.c,v 1.2 1995/06/28 04:30:30 cgd Exp $	*/
 
 /*
@@ -128,9 +128,9 @@ mcclock_init(csc)
 	struct clock_softc *csc;
 {
 /* XXX Does not really belong here but for the moment we don't care */
-	out32(PICA_SYS_IT_VALUE, 9); /* 10ms - 1 */
+	out32(R4030_SYS_IT_VALUE, 9); /* 10ms - 1 */
 	/* Enable periodic clock interrupt */
-	out32(PICA_SYS_EXT_IMASK, cpu_int_mask);
+	out32(R4030_SYS_EXT_IMASK, cpu_int_mask);
 }
 
 /*

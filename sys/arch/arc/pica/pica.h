@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pica.h	8.1 (Berkeley) 6/10/93
- *      $Id: pica.h,v 1.1.1.1 1996/06/24 09:07:18 pefo Exp $
+ *      $Id: pica.h,v 1.2 1996/07/30 20:24:31 pefo Exp $
  */
 
 /*
@@ -75,21 +75,27 @@
  * I/O map
  */
 
-#define	PICA_P_LOCAL_IO_BASE	0x80000000	/* I/O Base address */
-#define	PICA_V_LOCAL_IO_BASE	0xe0000000
-#define	PICA_S_LOCAL_IO_BASE	0x00040000	/* Size */
-#define PVLB PICA_V_LOCAL_IO_BASE
-#define	PICA_SYS_TL_BASE	(PVLB+0x0018)	/* DMA transl. table base */
-#define	PICA_SYS_TL_LIMIT	(PVLB+0x0020)	/* DMA transl. table limit */
-#define	PICA_SYS_TL_IVALID	(PVLB+0x0028)	/* DMA transl. cache inval */
-#define	PICA_SYS_DMA0_REGS	(PVLB+0x0100)	/* DMA ch0 base address */
-#define	PICA_SYS_DMA1_REGS	(PVLB+0x0120)	/* DMA ch0 base address */
-#define	PICA_SYS_DMA2_REGS	(PVLB+0x0140)	/* DMA ch0 base address */
-#define	PICA_SYS_DMA3_REGS	(PVLB+0x0160)	/* DMA ch0 base address */
-#define	PICA_SYS_IT_VALUE	(PVLB+0x0228)	/* Interval timer reload */
-#define	PICA_SYS_IT_STAT	(PVLB+0x0230)	/* Interval timer count */
-#define	PICA_SYS_ISA_VECTOR	(PVLB+0x0238)	/* ISA Interrupt vector */
-#define	PICA_SYS_EXT_IMASK	(PVLB+0x00e8)	/* External int enable mask */
+#define	R4030_P_LOCAL_IO_BASE	0x80000000	/* I/O Base address */
+#define	R4030_V_LOCAL_IO_BASE	0xe0000000
+#define	R4030_S_LOCAL_IO_BASE	0x00040000	/* Size */
+#define R4030 R4030_V_LOCAL_IO_BASE
+
+#define	R4030_SYS_CONFIG	(R4030+0x0000)	/* Global config register */
+#define	R4030_SYS_TL_BASE	(R4030+0x0018)	/* DMA transl. table base */
+#define	R4030_SYS_TL_LIMIT	(R4030+0x0020)	/* DMA transl. table limit */
+#define	R4030_SYS_TL_IVALID	(R4030+0x0028)	/* DMA transl. cache inval */
+#define	R4030_SYS_DMA0_REGS	(R4030+0x0100)	/* DMA ch0 base address */
+#define	R4030_SYS_DMA1_REGS	(R4030+0x0120)	/* DMA ch0 base address */
+#define	R4030_SYS_DMA2_REGS	(R4030+0x0140)	/* DMA ch0 base address */
+#define	R4030_SYS_DMA3_REGS	(R4030+0x0160)	/* DMA ch0 base address */
+#define	R4030_SYS_DMA_INT_SRC	(R4030+0x0200)	/* DMA int source status reg */
+#define	R4030_SYS_NVRAM_PROT	(R4030+0x0220)	/* NV ram protect register */
+#define	R4030_SYS_IT_VALUE	(R4030+0x0228)	/* Interval timer reload */
+#define	R4030_SYS_IT_STAT	(R4030+0x0230)	/* Interval timer count */
+#define	R4030_SYS_ISA_VECTOR	(R4030+0x0238)	/* ISA Interrupt vector */
+#define	R4030_SYS_EXT_IMASK	(R4030+0x00e8)	/* External int enable mask */
+
+#define PVLB R4030_V_LOCAL_IO_BASE
 #define	PICA_SYS_SONIC		(PVLB+0x1000)	/* SONIC base address */
 #define	PICA_SYS_SCSI		(PVLB+0x2000)	/* SCSI base address */
 #define	PICA_SYS_FLOPPY		(PVLB+0x3000)	/* Floppy base address */
@@ -110,7 +116,7 @@
 #define	PICA_S_DRAM_CONF	0x00020000
 
 #define	PICA_P_INT_SOURCE	0xf0000000	/* Interrupt src registers */
-#define	PICA_V_INT_SOURCE	PICA_V_LOCAL_IO_BASE+PICA_S_LOCAL_IO_BASE
+#define	PICA_V_INT_SOURCE	R4030_V_LOCAL_IO_BASE+R4030_S_LOCAL_IO_BASE
 #define	PICA_S_INT_SOURCE	0x00001000
 #define PVIS PICA_V_INT_SOURCE
 #define	PICA_SYS_LB_IS		(PVIS+0x0000)	/* Local bus int source */

@@ -1,4 +1,4 @@
-/*      $OpenBSD: asm.h,v 1.2 1996/07/18 17:00:09 pefo Exp $	*/
+/*      $OpenBSD: asm.h,v 1.3 1996/07/30 20:24:23 pefo Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,31 +49,48 @@
 
 #include <machine/regdef.h>
 
-#define	ABICALLS
+#define	ABICALLS	.abicalls
+
+#if defined(ABICALLS) && !defined(_KERNEL)
+	ABICALLS
+#endif
 
 #define RCSID(x)
 
 #define _C_LABEL(x) x
 
 /*
- * Define how to access unaligned data word
+ * Define how to access unaligned data word (LITTLE Endian mode)
  */
-#define LWLO    lwr
-#define LWHI    lwl
-#define	SWLO	swr
-#define	SWHI	swl
+#define LWLO    lwl
+#define LWHI    lwr
+#define	SWLO	swl
+#define	SWHI	swr
+
+/*
+ * Code for setting gp reg if abicalls are used.
+ */
+#if defined(ABICALLS) && !defined(_KERNEL)
+#define	ABISETUP		\
+	.set	noreorder;	\
+	.cpload	t9;		\
+	.set	reorder;
+#else
+#define	ABISETUP
+#endif
 
 /*
  * Define -pg profile entry code.
  */
 #if defined(GPROF) || defined(PROF)
-#define	MCOUNT	.set noreorder; \
-		.set noat; \
-		move $1,$31; \
-		jal _mcount; \
-		subu sp,sp,8; \
-		.set reorder; \
-		.set at;
+#define	MCOUNT			\
+	.set noreorder;		\
+	.set noat;		\
+	move $1,$31;		\
+	jal _mcount;		\
+	subu sp,sp,8;		\
+	.set reorder;		\
+	.set at;
 #else
 #define	MCOUNT
 #endif
@@ -83,30 +100,29 @@
  *
  *	Declare a leaf routine.
  */
-#define LEAF(x) \
-	.globl x; \
-	.ent x, 0; \
-x: ; \
-	.frame sp, 0, ra; \
+#define LEAF(x)			\
+	.globl x;		\
+	.ent x, 0;		\
+x: ;				\
+	.frame sp, 0, ra;	\
+	ABISETUP		\
 	MCOUNT
+
+#define	ALEAF(x)		\
+	.globl	x;		\
+x:
 
 /*
  * NLEAF(x)
  *
  *	Declare a non-profiled leaf routine.
  */
-#define NLEAF(x) \
-	.globl x; \
-	.ent x, 0; \
-x: ; \
-	.frame sp, 0, ra
-
-/*
- * ALEAF -- declare alternate entry to a leaf routine.
- */
-#define	ALEAF(x)					\
-	.globl	x;					\
-x:
+#define NLEAF(x)		\
+	.globl x;		\
+	.ent x, 0;		\
+x: ;				\
+	.frame sp, 0, ra;	\
+	ABISETUP
 
 /*
  * NON_LEAF(x)
@@ -114,10 +130,11 @@ x:
  *	Declare a non-leaf routine (a routine that makes other C calls).
  */
 #define NON_LEAF(x, fsize, retpc) \
-	.globl x; \
-	.ent x, 0; \
-x: ; \
+	.globl x;		\
+	.ent x, 0;		\
+x: ;				\
 	.frame sp, fsize, retpc; \
+	ABISETUP		\
 	MCOUNT
 
 /*
@@ -127,10 +144,11 @@ x: ; \
  *	(a routine that makes other C calls).
  */
 #define NNON_LEAF(x, fsize, retpc) \
-	.globl x; \
-	.ent x, 0; \
-x: ; \
-	.frame sp, fsize, retpc
+	.globl x;		\
+	.ent x, 0;		\
+x: ;				\
+	.frame sp, fsize, retpc	\
+	ABISETUP
 
 /*
  * END(x)

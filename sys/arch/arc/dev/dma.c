@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma.c,v 1.1.1.1 1996/06/24 09:07:19 pefo Exp $	*/
+/*	$OpenBSD: dma.c,v 1.2 1996/07/30 20:24:20 pefo Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)rz.c	8.1 (Berkeley) 7/29/93
- *      $Id: dma.c,v 1.1.1.1 1996/06/24 09:07:19 pefo Exp $
+ *      $Id: dma.c,v 1.2 1996/07/30 20:24:20 pefo Exp $
  */
 
 /*
@@ -66,7 +66,7 @@
 
 extern vm_map_t phys_map;
 
-#define dma_pte_to_pa(x)	(((x) - first_dma_pte) * PICA_DMA_PAGE_SIZE)
+#define dma_pte_to_pa(x)	(((x) - first_dma_pte) * R4030_DMA_PAGE_SIZE)
 
 dma_pte_t *free_dma_pte;	/* Pointer to free dma pte list */
 dma_pte_t *first_dma_pte;	/* Pointer to first dma pte */
@@ -87,9 +87,9 @@ picaDmaInit()
 	free_dma_pte->queue.next = NULL;
 	free_dma_pte->queue.size = PICA_TL_SIZE / sizeof(dma_pte_t);
 
-	out32(PICA_SYS_TL_BASE, UNCACHED_TO_PHYS(map));
-	out32(PICA_SYS_TL_LIMIT, PICA_TL_SIZE);
-	out32(PICA_SYS_TL_IVALID, 0);
+	out32(R4030_SYS_TL_BASE, UNCACHED_TO_PHYS(map));
+	out32(R4030_SYS_TL_LIMIT, PICA_TL_SIZE);
+	out32(R4030_SYS_TL_IVALID, 0);
 }
 
 /*
@@ -190,7 +190,7 @@ picaDmaTLBMap(dma_softc_t *sc)
 	int nbytes;
 
 	va = sc->next_va - sc->dma_va;
-	dma_pte = sc->pte_base + (va / PICA_DMA_PAGE_SIZE);
+	dma_pte = sc->pte_base + (va / R4030_DMA_PAGE_SIZE);
 	nbytes = dma_page_round(sc->next_size + dma_page_offs(va));
 	va = sc->req_va;
 	while(nbytes > 0) {
@@ -200,14 +200,14 @@ picaDmaTLBMap(dma_softc_t *sc)
 		else {
 			pa = pmap_extract(vm_map_pmap(phys_map), va);
 		}
-		pa &= PICA_DMA_PAGE_NUM;
+		pa &= R4030_DMA_PAGE_NUM;
 		if(pa == 0)
 			panic("picaDmaTLBMap: null page frame");
 		dma_pte->entry.lo_addr = pa;
 		dma_pte->entry.hi_addr = 0;
 		dma_pte++;
-		va += PICA_DMA_PAGE_SIZE;
-		nbytes -= PICA_DMA_PAGE_SIZE;
+		va += R4030_DMA_PAGE_SIZE;
+		nbytes -= R4030_DMA_PAGE_SIZE;
 	}
 }
 
@@ -236,21 +236,21 @@ picaDmaStart(sc, addr, size, datain)
 
 	/* Map up the request viritual dma space */
 	picaDmaTLBMap(sc);
-	out32(PICA_SYS_TL_IVALID, 0);	/* Flush dma map cache */
+	out32(R4030_SYS_TL_IVALID, 0);	/* Flush dma map cache */
 
 	/* Load new transfer parameters */
 	regs->dma_addr = sc->next_va;
 	regs->dma_count = sc->next_size;
-	regs->dma_mode = sc->mode & PICA_DMA_MODE;
+	regs->dma_mode = sc->mode & R4030_DMA_MODE;
 
 	sc->sc_active = 1;
 	if(datain == DMA_FROM_DEV) {
 		sc->mode &= ~DMA_DIR_WRITE;
-		regs->dma_enab = PICA_DMA_ENAB_RUN | PICA_DMA_ENAB_READ;
+		regs->dma_enab = R4030_DMA_ENAB_RUN | R4030_DMA_ENAB_READ;
 	}
 	else {
 		sc->mode |= DMA_DIR_WRITE;
-		regs->dma_enab = PICA_DMA_ENAB_RUN | PICA_DMA_ENAB_WRITE;
+		regs->dma_enab = R4030_DMA_ENAB_RUN | R4030_DMA_ENAB_WRITE;
 	}
 	wbflush();
 }
@@ -286,7 +286,7 @@ picaDmaFlush(sc, addr, size, datain)
 	size_t  size;
 	int     datain;
 {
-	out32(PICA_SYS_TL_IVALID, 0);	/* Flush dma map cache */
+	out32(R4030_SYS_TL_IVALID, 0);	/* Flush dma map cache */
 }
 
 /*
@@ -348,9 +348,9 @@ asc_dma_init(dma_softc_t *sc)
 	sc->intr = (int(*)())picaDmaNull;
 	sc->end = picaDmaEnd;
 
-	sc->dma_reg = (pDmaReg)PICA_SYS_DMA0_REGS;
+	sc->dma_reg = (pDmaReg)R4030_SYS_DMA0_REGS;
 	sc->pte_size = 32;
-	sc->mode = PICA_DMA_MODE_160NS | PICA_DMA_MODE_16;
+	sc->mode = R4030_DMA_MODE_160NS | R4030_DMA_MODE_16;
 	picaDmaTLBAlloc(sc);
 }
 /*
@@ -368,9 +368,9 @@ fdc_dma_init(dma_softc_t *sc)
 	sc->intr = (int(*)())picaDmaNull;
 	sc->end = picaDmaEnd;
 
-	sc->dma_reg = (pDmaReg)PICA_SYS_DMA1_REGS;
+	sc->dma_reg = (pDmaReg)R4030_SYS_DMA1_REGS;
 	sc->pte_size = 32;
-	sc->mode = PICA_DMA_MODE_160NS | PICA_DMA_MODE_8;
+	sc->mode = R4030_DMA_MODE_160NS | R4030_DMA_MODE_8;
 	picaDmaTLBAlloc(sc);
 }
 /*

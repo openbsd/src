@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.1.1.1 1996/06/24 09:07:17 pefo Exp $	*/
+/*	$OpenBSD: proc.h,v 1.2 1996/07/30 20:24:27 pefo Exp $	*/
 /*	$NetBSD: proc.h,v 1.4 1994/10/26 21:09:52 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  */
 
 /*
- * Machine-dependent part of the proc structure for DEC Station.
+ * Machine-dependent part of the proc structure.
  */
 struct mdproc {
 	int	*md_regs;		/* registers on current frame */

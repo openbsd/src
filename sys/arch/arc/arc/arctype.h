@@ -1,4 +1,4 @@
-/*	$OpenBSD: arctype.h,v 1.1.1.1 1996/06/24 09:07:21 pefo Exp $	*/
+/*	$OpenBSD: arctype.h,v 1.2 1996/07/30 20:24:12 pefo Exp $	*/
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)arctype.h	8.1 (Berkeley) 6/10/93
- *      $Id: arctype.h,v 1.1.1.1 1996/06/24 09:07:21 pefo Exp $
+ *      $Id: arctype.h,v 1.2 1996/07/30 20:24:12 pefo Exp $
  */
 
 /*
@@ -44,3 +44,4 @@
  */
 #define	ACER_PICA_61	0x1	/* Acer Labs Pica 61 */
 #define	DESKSTATION	0x2	/* Deskstation xxx */
+#define	MAGNUM		0x3	/* Mips MAGNUM R4000 */

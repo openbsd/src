@@ -1,4 +1,4 @@
-/*      $OpenBSD: pcb.h,v 1.1.1.1 1996/06/24 09:07:17 pefo Exp $	*/
+/*      $OpenBSD: pcb.h,v 1.2 1996/07/30 20:24:26 pefo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,7 +42,7 @@
  */
 
 /*
- * PICA process control block
+ * ARC process control block
  */
 struct pcb
 {
