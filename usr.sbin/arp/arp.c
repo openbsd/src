@@ -75,7 +75,6 @@ static char *rcsid = "$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $";
 
 int delete __P((const char *, const char *));
 void dump __P((u_long));
-int ether_aton __P((const char *, u_char *));
 void ether_print __P((const u_char *));
 int file __P((char *));
 void get __P((const char *));
@@ -193,8 +192,9 @@ set(argc, argv)
 	register struct sockaddr_inarp *sin;
 	register struct sockaddr_dl *sdl;
 	register struct rt_msghdr *rtm;
-	u_char *ea;
-	char *host = argv[0], *eaddr;
+	u_char *eaddr;
+	struct ether_addr *ea;
+	char *host = argv[0];
 
 	sin = &sin_m;
 	rtm = &(m_rtmsg.m_rtm);
@@ -207,9 +207,9 @@ set(argc, argv)
 	sin_m = blank_sin;		/* struct copy */
 	if (getinetaddr(host, &sin->sin_addr) == -1)
 		return (1);
-	ea = (u_char *)LLADDR(&sdl_m);
-	if (ether_aton(eaddr, ea) == 0)
-		sdl_m.sdl_alen = 6;
+	ea = ether_aton(eaddr);
+	memcpy(LLADDR(&sdl_m), ea, sizeof (*ea));
+	sdl_m.sdl_alen = 6;
 	doing_proxy = flags = export_only = expire_time = 0;
 	while (argc-- > 0) {
 		if (strncmp(argv[0], "temp", 4) == 0) {
@@ -422,24 +422,6 @@ ether_print(cp)
 {
 	(void)printf("%x:%x:%x:%x:%x:%x", cp[0], cp[1], cp[2], cp[3], cp[4],
 	    cp[5]);
-}
-
-int
-ether_aton(a, n)
-	const char *a;
-	u_char *n;
-{
-	int i, o[6];
-
-	i = sscanf(a, "%x:%x:%x:%x:%x:%x", &o[0], &o[1], &o[2], &o[3], &o[4],
-	    &o[5]);
-	if (i != 6) {
-		warnx("invalid Ethernet address '%s'", a);
-		return (1);
-	}
-	for (i=0; i<6; i++)
-		n[i] = o[i];
-	return (0);
 }
 
 void
