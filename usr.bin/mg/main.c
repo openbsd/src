@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.26 2003/10/27 11:21:12 vincent Exp $	*/
+/*	$OpenBSD: main.c,v 1.27 2003/12/04 01:52:01 vincent Exp $	*/
 
 /*
  *	Mainline.
@@ -31,7 +31,7 @@ main(int argc, char **argv)
 {
 	char	*cp, *init_fcn_name = NULL;
 	PF init_fcn = NULL;
-	int o;
+	int o, i, nfiles;
 
 	while ((o = getopt(argc, argv, "f:")) != -1)
 		switch (o) {
@@ -86,14 +86,15 @@ main(int argc, char **argv)
 	if ((cp = startupfile(NULL)) != NULL)
 		(void)load(cp);
 #endif	/* !NO_STARTUP */
-	while (argc > 0) {
-		if (argv[0][0] == '+' && strlen(argv[0]) >= 2) {
+
+	for (nfiles = 0, i = 0; i < argc; i++) {
+		if (argv[i][0] == '+' && strlen(argv[i]) >= 2) {
 			long lval;
 			char *ep;
 
 			errno = 0;
-			lval = strtoul(&argv[0][1], &ep, 10);
-			if (argv[0][1] == '\0' || *ep != '\0')
+			lval = strtoul(&argv[i][1], &ep, 10);
+			if (argv[i][1] == '\0' || *ep != '\0')
 				goto notnum;
 			if ((errno == ERANGE &&
 			    (lval == LONG_MAX || lval == LONG_MIN)) ||
@@ -102,17 +103,18 @@ main(int argc, char **argv)
 			startrow = (int)lval;
 		} else {
 notnum:
-			cp = adjustname(*argv);
+			cp = adjustname(argv[i]);
 			if (cp != NULL) {
+				if (nfiles > 0 && nfiles < 3)
+					splitwind(0, 1);
 				curbp = findbuffer(cp);
 				(void)showbuffer(curbp, curwp, 0);
 				(void)readin(cp);
 				if (init_fcn_name)
 					init_fcn(0, 1);
+				nfiles++;
 			}
 		}
-		argc--;
-		argv++;
 	}
 
 	/* fake last flags */
