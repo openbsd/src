@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.67 2003/04/09 12:11:15 niklas Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.68 2003/04/17 03:56:20 drahn Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -576,7 +576,7 @@ pmap_nxstack_account(struct pmap *pmap, vaddr_t va,
     pt_entry_t opte, pt_entry_t npte)
 {
 	if (((opte ^ npte) & PG_X) &&
-	    va < VM_MAXUSER_ADDRESS && va >= VM_MAXUSER_ADDRESS - MAXSSIZ) {
+	    va < VM_MAXUSER_ADDRESS && va >= 0x40000000) {
 		struct trapframe *tf = curproc->p_md.md_regs;
 		struct vm_map *map = &curproc->p_vmspace->vm_map;
 
