@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_tparm.c,v 1.2 1999/03/02 06:23:29 millert Exp $	*/
+/*	$OpenBSD: lib_tparm.c,v 1.3 1999/05/13 03:01:47 aaron Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -440,13 +440,15 @@ static	int static_vars[NUM_VARS];
 			case '/':
 				y = npop();
 				x = npop();
-				npush(x / y);
+				if (y)
+					npush(x / y);
 				break;
 
 			case 'm':
 				y = npop();
 				x = npop();
-				npush(x % y);
+				if (y)
+					npush(x % y);
 				break;
 
 			case 'A':
