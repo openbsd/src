@@ -2,7 +2,6 @@
 ./sbin/ldconfig
 ./usr/bin/c++filt
 ./usr/bin/ldd
-./usr/bin/objdump
 ./usr/include/m68k
 ./usr/include/mvme68k
 ./usr/lib/apache/modules/libproxy.so
@@ -1690,7 +1689,6 @@
 ./usr/mdec/rboot
 ./usr/mdec/sboot
 ./usr/mdec/stboot
-./usr/share/man/cat1/objdump.0
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/cmpcireg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/cmpcivar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/net/if_vlan_var.ph

@@ -6,7 +6,6 @@
 ./sbin/wicontrol
 ./usr/bin/c++filt
 ./usr/bin/ldd
-./usr/bin/objdump
 ./usr/bin/pctr
 ./usr/include/i386
 ./usr/lib/apache/modules/libproxy.so

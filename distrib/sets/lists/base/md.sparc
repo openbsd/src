@@ -8,7 +8,6 @@
 ./sbin/ldconfig
 ./usr/bin/c++filt
 ./usr/bin/ldd
-./usr/bin/objdump
 ./usr/include/readline
 ./usr/include/sparc
 ./usr/lib/apache/modules/libproxy.so

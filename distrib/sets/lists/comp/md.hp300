@@ -1,4 +1,5 @@
 ./usr/bin/gdb
+./usr/bin/objdump
 ./usr/include/ansidecl.h
 ./usr/include/bfd.h
 ./usr/include/bfdlink.h
@@ -131,6 +132,7 @@
 ./usr/lib/libz_pic.a
 ./usr/lib/scrt0.o
 ./usr/share/man/cat1/gdb.0
+./usr/share/man/cat1/objdump.0
 ./usr/share/man/cat3/dlclose.0
 ./usr/share/man/cat3/dlctl.0
 ./usr/share/man/cat3/dlerror.0
