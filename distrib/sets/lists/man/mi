@@ -968,3 +968,11 @@
 ./usr/share/man/cat9/splx.0
 ./usr/share/man/man4/alpha
 ./usr/share/man/man4/pmax
+./usr/share/man/cat1/audioctl.0
+./usr/share/man/cat1/mixerctl.0
+./usr/share/man/cat4/alpha/cy.0
+./usr/share/man/cat4/alpha/ed.0
+./usr/share/man/cat4/alpha/ep.0
+./usr/share/man/cat4/alpha/lpt.0
+./usr/share/man/cat4/alpha/pms.0
+./usr/share/man/cat4/alpha/wd.0

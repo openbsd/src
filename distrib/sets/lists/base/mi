@@ -1999,3 +1999,5 @@
 ./var/yp/Makefile.yp.dist
 ./var/yp/README
 ./var/mail/root
+./usr/bin/audioctl
+./usr/bin/mixerctl
