@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.23 2002/02/21 00:04:10 dhartmei Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.24 2002/02/26 00:45:45 vincent Exp $	*/
 
 /*
  *		Buffer handling.
@@ -99,6 +99,7 @@ killbuffer(f, n)
 	MGWIN  *wp;
 	int     s;
 	char    bufn[NBUFN];
+	struct undo_rec *rec;
 
 	if ((s = eread("Kill buffer: (default %s) ", bufn, NBUFN, EFNEW | EFBUF,
 	    curbp->b_bname)) == ABORT)
@@ -156,6 +157,10 @@ killbuffer(f, n)
 		if (bp1->b_altb == bp)
 			bp1->b_altb = (bp->b_altb == bp1) ? NULL : bp->b_altb;
 		bp1 = bp1->b_bufp;
+	}
+	while ((rec = LIST_FIRST(&bp->b_undo)) != NULL) {
+		free_undo_record(rec);
+		LIST_REMOVE(rec, next);
 	}
 	free(bp->b_bname);			/* Release name block	 */
 	free(bp);				/* Release buffer block */
@@ -450,6 +455,7 @@ bfind(bname, cflag)
 	bp->b_nwnd = 0;
 	bp->b_linep = lp;
 	bp->b_nmodes = defb_nmodes;
+	LIST_INIT(&bp->b_undo);
 	i = 0;
 	do {
 		bp->b_modes[i] = defb_modes[i];

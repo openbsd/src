@@ -1,4 +1,4 @@
-/* $OpenBSD: undo.c,v 1.6 2002/02/21 17:36:12 vincent Exp $ */
+/* $OpenBSD: undo.c,v 1.7 2002/02/26 00:45:45 vincent Exp $ */
 /*
  * Copyright (c) 2002 Vincent Labrecque <vincent@openbsd.org>
  *							 All rights reserved.
@@ -29,16 +29,13 @@
 
 #include <sys/queue.h>
 
-#define MAX_LIST_RECORDS	32
 #define MAX_FREE_RECORDS	32
 
 /*
  * Local variables
  */
-static struct undo_list	undo_list;
-static int		undo_list_num;
-static struct undo_list undo_free;
-static int		undo_free_num;
+static LIST_HEAD(, undo_rec)	 undo_free;
+static int			 undo_free_num;
 
 /*
  * Global variables
@@ -59,7 +56,6 @@ int undoaction;			/* Are we called indirectly from undo()? */
 static int find_offset(LINE *, int);
 static int find_linep(int, LINE **, int *);
 static struct undo_rec *new_undo_record(void);
-static void free_undo_record(struct undo_rec *);
 static int drop_oldest_undo_record(void);
 
 static int
@@ -108,11 +104,6 @@ new_undo_record(void)
 {
 	struct undo_rec *rec;
 
-	while (undo_list_num >= MAX_LIST_RECORDS) {
-		drop_oldest_undo_record();
-		undo_list_num--;
-	}
-	undo_list_num++;
 	rec = LIST_FIRST(&undo_free);
 	if (rec != NULL)
 		LIST_REMOVE(rec, next);	/* Remove it from the free-list */
@@ -125,7 +116,7 @@ new_undo_record(void)
 	return rec;
 }
 
-static void
+void
 free_undo_record(struct undo_rec *rec)
 {
 	if (rec->content != NULL) {
@@ -165,7 +156,6 @@ int
 undo_init(void)
 {
 	LIST_INIT(&undo_free);
-	LIST_INIT(&undo_list);
 	
 	return TRUE;
 }
@@ -195,14 +185,13 @@ undo_add_custom(int type, LINE *lp, int offset, void *content, int size)
 		return TRUE;
 	rec = new_undo_record();
 	rec->pos = find_offset(lp, offset);
-	rec->buf = curbp;
 	rec->type = type;
 	rec->content = content;
 	rec->region.r_linep = lp;
 	rec->region.r_offset = offset;
 	rec->region.r_size = size;
 
-	LIST_INSERT_HEAD(&undo_list, rec, next);
+	LIST_INSERT_HEAD(&curbp->b_undo, rec, next);
 	
 	return TRUE;
 }
@@ -216,10 +205,9 @@ undo_add_boundary(void)
 		return TRUE;
 
 	rec = new_undo_record();
-	rec->buf = curbp;
 	rec->type = BOUNDARY;
 
-	LIST_INSERT_HEAD(&undo_list, rec, next);
+	LIST_INSERT_HEAD(&curbp->b_undo, rec, next);
 	
 	return TRUE;
 }
@@ -240,10 +228,9 @@ undo_add_insert(LINE *lp, int offset, int size)
 	/*
 	 * We try to reuse the last undo record to `compress' things.
 	 */	
-	rec = LIST_FIRST(&undo_list);
+	rec = LIST_FIRST(&curbp->b_undo);
 	if ((rec != NULL) &&
 	    (rec->type == INSERT) &&
-	    (rec->buf == curbp) &&
 	    (rec->region.r_linep == lp)) {
 		int dist;
 
@@ -260,11 +247,10 @@ undo_add_insert(LINE *lp, int offset, int size)
 	 */
 	rec = new_undo_record();
 	rec->pos = find_offset(lp, offset);
-	rec->buf = curbp;
 	rec->type = INSERT;
 	memmove(&rec->region, &reg, sizeof(REGION));
 	rec->content = NULL;
-	LIST_INSERT_HEAD(&undo_list, rec, next);
+	LIST_INSERT_HEAD(&curbp->b_undo, rec, next);
 
 	return TRUE;
 }
@@ -295,11 +281,10 @@ undo_add_delete(LINE *lp, int offset, int size)
 	/*
 	 * Again, try to reuse last undo record, if we can
 	 */
-	rec = LIST_FIRST(&undo_list);
+	rec = LIST_FIRST(&curbp->b_undo);
 	if (!skip &&
 	    (rec != NULL) &&
 	    (rec->type == DELETE) &&
-	    (rec->buf == curbp) &&
 	    (rec->region.r_linep == reg.r_linep)) {
 		char *newbuf;
 		int newlen;
@@ -340,7 +325,6 @@ undo_add_delete(LINE *lp, int offset, int size)
 	rec = new_undo_record();
 	rec->pos = pos;
 
-	rec->buf = curbp;
 	rec->type = DELETE;
 	memmove(&rec->region, &reg, sizeof(REGION));
 	do {
@@ -352,7 +336,7 @@ undo_add_delete(LINE *lp, int offset, int size)
 	
 	region_get_data(&reg, rec->content, reg.r_size);
 
-	LIST_INSERT_HEAD(&undo_list, rec, next);
+	LIST_INSERT_HEAD(&curbp->b_undo, rec, next);
 
 	return TRUE;
 }
@@ -376,7 +360,6 @@ undo_add_change(LINE *lp, int offset, int size)
 	
 	rec = new_undo_record();
 	rec->pos = find_offset(lp, offset);
-	rec->buf = curbp;
 	rec->type = CHANGE;
 	memmove(&rec->region, &reg, sizeof reg);
 
@@ -389,7 +372,7 @@ undo_add_change(LINE *lp, int offset, int size)
 
 	region_get_data(&reg, rec->content, size);
 
-	LIST_INSERT_HEAD(&undo_list, rec, next);
+	LIST_INSERT_HEAD(&curbp->b_undo, rec, next);
 	
 	return TRUE;
 }
@@ -409,14 +392,11 @@ undo(int f, int n)
 	undoaction++;
 
 	while (n > 0) {
-		rec = LIST_FIRST(&undo_list);
+		rec = LIST_FIRST(&curbp->b_undo);
 		if (rec == NULL) {
 			ewprintf("Nothing to undo!");
 			return FALSE;
 		}
-		if (rec->buf != curbp)
-			popbuf(rec->buf);
-		
 		LIST_REMOVE(rec, next);
 		if (rec->type == BOUNDARY) {
 			continue;

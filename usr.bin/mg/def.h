@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.34 2002/02/21 15:27:29 deraadt Exp $	*/
+/*	$OpenBSD: def.h,v 1.35 2002/02/26 00:45:45 vincent Exp $	*/
 
 #include <sys/queue.h>
 
@@ -206,6 +206,8 @@ typedef struct MGWIN {
 #define WFHARD	0x08		/* Better to a full display.	 */
 #define WFMODE	0x10		/* Update mode line.		 */
 
+struct undo_rec;
+
 /*
  * Text is kept in buffers. A buffer header, described
  * below, exists for every buffer in the system. The buffers are
@@ -230,6 +232,7 @@ typedef struct BUFFER {
 	char		b_flag;		/* Flags			 */
 	char		b_fname[NFILEN];/* File name			 */
 	struct fileinfo	b_fi;		/* File attributes		 */
+	LIST_HEAD(, undo_rec) b_undo;	/* Undo actions list */
 } BUFFER;
 #define b_bufp	b_list.l_p.x_bp
 #define b_bname b_list.l_name
@@ -258,7 +261,6 @@ typedef struct {
  */
 struct undo_rec {
 	LIST_ENTRY(undo_rec) next;
-	BUFFER		*buf;
 	enum {
 		INSERT = 1,
 		DELETE,
@@ -270,8 +272,6 @@ struct undo_rec {
 	int		 size;
 	char		*content;
 };
-   
-LIST_HEAD(undo_list, undo_rec);
 
 /*
  * Prototypes.
@@ -572,6 +572,7 @@ int	 cntnonmatchlines(int, int);
 #endif	/* REGEX */
 
 /* undo.c X */
+void	 free_undo_record(struct undo_rec *);
 int	 undo_init(void);
 int	 undo_enable(int);
 int	 undo_add_custom(int, LINE *, int, void *, int);
