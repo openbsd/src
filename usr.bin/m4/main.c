@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.28 2000/01/15 14:26:00 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.29 2000/02/02 14:00:12 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.12 1997/02/08 23:54:49 cgd Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.28 2000/01/15 14:26:00 espie Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.29 2000/02/02 14:00:12 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -273,8 +273,7 @@ do_look_ahead(t, token)
 static void
 macro()
 {
-	char token[MAXTOK], chars[2];
-	char *s;
+	char token[MAXTOK];
 	int t, l;
 	ndptr p;
 	int  nlpar;
@@ -282,13 +281,12 @@ macro()
 	cycle {
 		t = gpbc();
 		if (t == '_' || isalpha(t)) {
-			s = token;
-			p = inspect(t, s);
+			p = inspect(t, token);
 			if (p != nil)
 				putback(l = gpbc());
 			if (p == nil || (l != LPAREN && 
 			    (p->type & NEEDARGS) != 0))
-				outputstr(s);
+				outputstr(token);
 			else {
 		/*
 		 * real thing.. First build a call frame:
@@ -333,11 +331,11 @@ macro()
 
 				l = gpbc();
 				if (LOOK_AHEAD(l,rquote)) {
-					nlpar--;
-					s = rquote;
+					if (--nlpar > 0)
+						outputstr(rquote);
 				} else if (LOOK_AHEAD(l,lquote)) {
 					record(quotes, nlpar++);
-					s = lquote;
+					outputstr(lquote);
 				} else if (l == EOF) {
 					if (nlpar == 1)
 						warnx("unclosed quote:");
@@ -346,12 +344,13 @@ macro()
 					dump_stack(quotes, nlpar);
 					exit(1);
 				} else {
-					chars[0] = l;
-					chars[1] = EOS;
-					s = chars;
+					if (nlpar > 0) {
+						if (sp < 0)
+							putc(l, active);
+						else
+							chrsave(l);
+					}
 				}
-				if (nlpar > 0)
-					outputstr(s);
 			}
 			while (nlpar != 0);
 		}
