@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emulate.h,v 1.2 1995/11/05 00:35:20 briggs Exp $	*/
+/*	$NetBSD: fpu_emulate.h,v 1.3 1996/01/12 04:23:54 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon Ross
@@ -302,8 +302,7 @@ int fpu_load_ea __P((struct frame *frame, struct instruction *insn,
 int fpu_store_ea __P((struct frame *frame, struct instruction *insn,
 		  struct insn_ea *ea, char *src));
 
-/* macros for debugging */
-#define	DEBUG			/* XXX */
+/* declarations for debugging */
 
 extern int fpu_debug_level;
 
