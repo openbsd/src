@@ -1,4 +1,4 @@
-/*	$OpenBSD: patch.c,v 1.42 2004/09/14 23:54:21 deraadt Exp $	*/
+/*	$OpenBSD: patch.c,v 1.43 2004/11/19 20:08:11 otto Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: patch.c,v 1.42 2004/09/14 23:54:21 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: patch.c,v 1.43 2004/11/19 20:08:11 otto Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -91,6 +91,8 @@ int		posix = 0;		/* strict POSIX mode? */
 static void	reinitialize_almost_everything(void);
 static void	get_some_switches(void);
 static LINENUM	locate_hunk(LINENUM);
+static void	abort_context_hunk(void);
+static void	rej_line(int, LINENUM);
 static void	abort_hunk(void);
 static void	apply_hunk(LINENUM);
 static void	init_output(const char *);
@@ -668,7 +670,7 @@ locate_hunk(LINENUM fuzz)
 /* We did not find the pattern, dump out the hunk so they can handle it. */
 
 static void
-abort_hunk(void)
+abort_context_hunk(void)
 {
 	LINENUM	i;
 	const LINENUM	pat_end = pch_end();
@@ -714,7 +716,85 @@ abort_hunk(void)
 			fprintf(rejfp, "%c %s", pch_char(i), pfetch(i));
 			break;
 		default:
-			fatal("fatal internal error in abort_hunk\n");
+			fatal("fatal internal error in abort_context_hunk\n");
+		}
+	}
+}
+
+static void
+rej_line(int ch, LINENUM i)
+{
+	size_t len;
+	const char *line = pfetch(i);
+
+	len = strlen(line);
+
+	fprintf(rejfp, "%c%s", ch, line);
+	if (len == 0 || line[len-1] != '\n')
+		fprintf(rejfp, "\n\\ No newline at end of file\n");
+}
+
+static void
+abort_hunk(void)
+{
+	LINENUM		i, j, split;
+	int		ch1, ch2;
+	const LINENUM	pat_end = pch_end();
+	const LINENUM	oldfirst = pch_first() + last_offset;
+	const LINENUM	newfirst = pch_newfirst() + last_offset;
+
+	if (diff_type != UNI_DIFF) {
+		abort_context_hunk();
+		return;
+	}
+	split = -1;
+	for (i = 0; i <= pat_end; i++) {
+		if (pch_char(i) == '=') {
+			split = i;
+			break;
+		}
+	}
+	if (split == -1) {
+		fprintf(rejfp, "malformed hunk: no split found\n");
+		return;
+	}
+	i = 0;
+	j = split + 1;
+	fprintf(rejfp, "@@ -%ld,%ld +%ld,%ld @@\n",
+	    pch_ptrn_lines() ? oldfirst : 0,
+	    pch_ptrn_lines(), newfirst, pch_repl_lines());
+	while (i < split || j <= pat_end) {
+		ch1 = i < split ? pch_char(i) : -1;
+		ch2 = j <= pat_end ? pch_char(j) : -1;
+		if (ch1 == '-') {
+			rej_line('-', i);
+			i++;
+		} else if (ch1 == ' ' && ch2 == ' ') {
+			rej_line(' ', i);
+			i++;
+			j++;
+		} else if (ch1 == '!' && ch2 == '!') {
+			while (i < split && ch1 == '!') {
+				rej_line('-', i);
+				i++;
+				ch1 = i < split ? pch_char(i) : -1;
+			}
+			while (j <= pat_end && ch2 == '!') {
+				rej_line('+', j);
+				j++;
+				ch2 = j <= pat_end ? pch_char(j) : -1;
+			}
+		} else if (ch1 == '*') {
+			i++;
+		} else if (ch2 == '+' || ch2 == ' ') {
+			rej_line(ch2, j);
+			j++;
+		} else {
+			fprintf(rejfp, "internal error on (%ld %ld %ld)\n",
+			    i, split, j);
+			rej_line(ch1, i);
+			rej_line(ch2, j);
+			return;
 		}
 	}
 }
