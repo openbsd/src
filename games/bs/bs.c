@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs.c,v 1.3 1996/12/22 20:01:00 deraadt Exp $	*/
+/*	$OpenBSD: bs.c,v 1.4 1997/02/14 10:28:17 niklas Exp $	*/
 /*
  * bs.c - original author: Bruce Holloway
  *		salvo option by: Chuck A DeGaul
@@ -8,10 +8,13 @@
  * v2.0 featuring strict ANSI/POSIX conformance, November 1993.
  */
 
+#include <assert.h>
+#include <ctype.h>
 #include <curses.h>
 #include <signal.h>
-#include <ctype.h>
-#include <assert.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
 
 #ifndef A_UNDERLINE	/* BSD curses */
 #define	beep()	write(1,"\007",1);
@@ -25,21 +28,13 @@
 #ifdef isxdigit		/* aha, must be an AT&T system... */
 #define srand(n)	srand48(n)
 #define rand()		lrand48()
-extern long lrand48();
-extern void srand48();
 #define bzero(s, n)	(void)memset((char *)(s), '\0', n)
-extern char *memset();
 /*
  * Try this if ungetch() fails to resolve.
  *
  * #define ungetch ungetc
  */
 #endif /* isxdigit */
-
-extern unsigned sleep();
-extern char *strchr(), *strcpy();
-extern long time();
-extern void exit();
 
 static bool checkplace();
 
