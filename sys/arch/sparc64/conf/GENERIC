@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.86 2003/07/23 18:16:05 jason Exp $
+#	$OpenBSD: GENERIC,v 1.87 2003/08/14 14:54:54 jason Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -83,8 +83,10 @@ midi*		at autri?
 midi*		at opl?
 
 # USB bridges
-ohci*	at pci? dev ? function ?
+ohci*	at pci? dev ? function ?	# Open Host Controller
+uhci*	at pci? dev ? function ?	# Universal Host Controller (Intel)
 usb*	at ohci? flags 0x1
+usb*	at uhci? flags 0x1
 
 # USB devices
 uhub*	at usb?
