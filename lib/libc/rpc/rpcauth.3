@@ -1,0 +1,95 @@
+.\"	$OpenBSD: rpcauth.3,v 1.1 1998/03/11 18:55:42 deraadt Exp $
+.\" Mostly converted to mandoc by Theo de Raadt, Tue Feb 24 04:04:46 MST 1998
+.\"
+.Dd February 16, 1988
+.Dt RPC 3
+.Os
+.Sh NAME
+.Nm auth_destroy ,
+.Nm authnone_create ,
+.Nm authunix_create ,
+.Nm authunix_create_default
+.Nd library routines for remote procedure calls
+.Sh SYNOPSIS
+.Fd #include <rpc.h>
+.Ft void
+.Fn auth_destroy "AUTH *auth"
+.Ft AUTH *
+.Fn authnone_create "void"
+.Ft AUTH *
+.Fn authunix_create "char *host" "int uid" "int gid" "int len" "int *aup.gids"
+.Ft AUTH *
+.Fn authunix_create_default "void"
+.Sh DESCRIPTION
+These routines establish authentication information for use by the
+RPC functions described in
+.Xr rpc 3 .
+.Pp
+.Fn auth_destroy
+is a macro that destroys the authentication information associated with
+.Fa auth .
+Destruction usually involves deallocation of private data
+structures. The use of
+.Fa auth
+is undefined after calling
+.Fn auth_destroy .
+.Pp
+.Fn authnone_create
+creates and returns an
+.Tn RPC
+authentication handle that passes nonusable authentication
+information with each remote procedure call. This is the
+default authentication used by
+.Tn RPC.
+.Pp
+.Fn authunix_create
+creates and returns an
+.Tn RPC
+authentication handle that contains
+.UX
+authentication information.
+The parameter
+.Fa host
+is the name of the machine on which the information was
+created;
+.Fa uid
+is the user's user
+.Tn ID ;
+.Fa gid
+is the user's current group
+.Tn ID ;
+.Fa len
+and
+.Fa aup_gids
+refer to a counted array of groups to which the user belongs.
+It is easy to impersonate a user.
+.Pp
+.Fn authunix_create_default
+calls
+.Fn authunix_create
+with the appropriate parameters.
+.Pp
+.Sh SEE ALSO
+.\"Xr rpc_secure 3 ,
+.Xr rpc 3 ,
+.Xr getrpcport 3 ,
+.Xr portmap 8 ,
+.Xr rpc 5 ,
+.Xr rpcgen 1 ,
+.Xr select 2 ,
+.Xr xdr 3 .
+.br
+The following manuals:
+.RS
+.ft I
+Remote Procedure Calls: Protocol Specification
+.br
+Remote Procedure Call Programming Guide
+.br
+rpcgen Programming Guide
+.br
+.ft R
+.RE
+.Fa "RPC: Remote Procedure Call Protocol Specification" ,
+.Tn RFC1050, Sun Microsystems, Inc.,
+.Tn USC-ISI.

@@ -1,14 +1,10 @@
-.\"	$OpenBSD: rpc.3,v 1.9 1998/02/25 12:23:17 deraadt Exp $
+.\"	$OpenBSD: rpc.3,v 1.10 1998/03/11 18:55:40 deraadt Exp $
 .\" Mostly converted to mandoc by Theo de Raadt, Tue Feb 24 04:04:46 MST 1998
 .\"
 .Dd February 16, 1988
 .Dt RPC 3
 .Os
 .Sh NAME
-.Nm auth_destroy ,
-.Nm authnone_create ,
-.Nm authunix_create ,
-.Nm authunix_create_default ,
 .Nm callrpc ,
 .Nm clnt_broadcast ,
 .Nm clnt_call ,
@@ -69,14 +65,6 @@
 .Nd library routines for remote procedure calls
 .Sh SYNOPSIS
 .Fd #include <rpc.h>
-.Ft void
-.Fn auth_destroy "AUTH *auth"
-.Ft AUTH *
-.Fn authnone_create "void"
-.Ft AUTH *
-.Fn authunix_create "char *host" "int uid" "int gid" "int len" "int *aup.gids"
-.Ft AUTH *
-.Fn authunix_create_default "void"
 .Ft int
 .Fn callrpc "char *host" "u_long prognum" "u_long versnum" "u_long procnum" "xdrproc_t inproc" "char *in" "xdrproc_t outproc" "char *out"
 .Ft "enum clnt_stat"
@@ -213,66 +201,22 @@ Finally, the procedure call returns to the client.
 .\"Routines that are used for Secure RPC (DES authentication) are described in
 .\".Xr rpc_secure 3 .
 .\"Secure RPC can be used only if DES encryption is available.
-.Pp
-.Fn auth_destroy
-is a macro that destroys the authentication information associated with
-.Fa auth .
-Destruction usually involves deallocation of private data
-structures. The use of
-.I auth
-is undefined after calling
-.Fn auth_destroy .
-.Pp
-.Fn authnone_create
-creates and returns an
-.Tn RPC
-authentication handle that passes nonusable authentication
-information with each remote procedure call. This is the
-default authentication used by
-.Tn RPC.
-.Pp
-.Fn authunix_create
-creates and returns an
-.Tn RPC
-authentication handle that contains
-.UX
-authentication information.
-The parameter
-.I host
-is the name of the machine on which the information was
-created;
-.I uid
-is the user's user
-.Tn ID ;
-.I gid
-is the user's current group
-.Tn ID ;
-.I len
-and
-.I aup_gids
-refer to a counted array of groups to which the user belongs.
-It is easy to impersonate a user.
-.Pp
-.Fn authunix_create_default
-calls
-.Fn authunix_create
-with the appropriate parameters.
 .Fn callrpc
 calls the remote procedure associated with
 .Fa prognum ,
 .Fa versnum ,
 and
-.I procnum
+.Fa procnum
 on the machine,
 .Fa host .
 The parameter
-.I in
+.Fa in
 is the address of the procedure's argument(s), and
-.I out
+.Fa out
 is the address of where to place the result(s);
-.I inproc
+.Fa inproc
 is used to encode the procedure's parameters, and
-.I outproc
+.Fa outproc
 is used to decode the procedure's results.
 This routine returns zero if it succeeds, or the value of
 .Fa"enum clnt_stat"
@@ -280,7 +224,7 @@ cast to an integer if it fails.
 The routine
 .Fn clnt_perrno
 is handy for translating failure statuses into messages.
-.IP
+.Pp
 Warning: calling remote procedures with this routine
 uses
 .Tn UDP/IP
@@ -1206,6 +1150,7 @@ Service implementors usually do not need this routine.
 .Xr getrpcport 3 ,
 .Xr portmap 8 ,
 .Xr rpc 5 ,
+.Xr rpcauth 3 ,
 .Xr rpcgen 1 ,
 .Xr select 2 ,
 .Xr xdr 3 .
