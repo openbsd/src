@@ -1,5 +1,5 @@
-/*	$OpenBSD: yds.c,v 1.1 2001/03/29 14:20:46 aaron Exp $	*/
-/*	$NetBSD$	*/
+/*	$OpenBSD: yds.c,v 1.2 2001/05/24 18:49:50 aaron Exp $	*/
+/*	$NetBSD: yds.c,v 1.5 2001/05/21 23:55:04 minoura Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -34,7 +34,7 @@
  * - ftp://ftp.alsa-project.org/pub/manuals/yamaha/pci/
  *
  * TODO:
- * - Fill in yds_chip_capability_list
+ * - FM synth volume (difficult: mixed before ac97)
  * - Digital in/out (SPDIF) support
  * - Effect??
  */
@@ -405,10 +405,22 @@ yds_allocate_slots(sc)
 	ws = WORK_SIZE;
 	YWRITE4(sc, YDS_WORK_SIZE, ws / sizeof(u_int32_t));
 
-	DPRINTF(("play control size : %d\n", (int) pcs));
-	DPRINTF(("rec control size : %d\n", (int) rcs));
-	DPRINTF(("eff control size : %d\n", (int) ecs));
-	DPRINTF(("work size : %d\n", (int) ws));
+	DPRINTF(("play control size : %d\n", (unsigned int)pcs));
+	DPRINTF(("rec control size : %d\n", (unsigned int)rcs));
+	DPRINTF(("eff control size : %d\n", (unsigned int)ecs));
+	DPRINTF(("work size : %d\n", (unsigned int)ws));
+#ifdef DIAGNOSTIC
+	if (pcs != sizeof(struct play_slot_ctrl_bank)) {
+		printf("%s: invalid play slot ctrldata %d != %d\n",
+		       sc->sc_dev.dv_xname, (unsigned int)pcs,
+		       (unsigned int)sizeof(struct play_slot_ctrl_bank));
+	}
+	if (rcs != sizeof(struct rec_slot_ctrl_bank)) {
+		printf("%s: invalid rec slot ctrldata %d != %d\n",
+		       sc->sc_dev.dv_xname, (unsigned int)rcs,
+		       (unsigned int)sizeof(struct rec_slot_ctrl_bank));
+        }
+#endif
 
 	memsize = N_PLAY_SLOTS*N_PLAY_SLOT_CTRL_BANK*pcs +
 		  N_REC_SLOT_CTRL*N_REC_SLOT_CTRL_BANK*rcs + ws;
@@ -768,6 +780,7 @@ yds_attach(parent, self, aux)
 		if (ac97_id2 == 4)
 			ac97_id2 = -1;
 detected:
+		;
 	}
 
 	pci_conf_write(pc, pa->pa_tag, YDS_PCI_DSCTRL,
@@ -1436,6 +1449,7 @@ yds_trigger_output(addr, start, end, blksize, intr, arg, param)
 			if (i == 0) {
 				psb->lchgain = psb->lchgainend = gain;
 			} else {
+				psb->lchgain = psb->lchgainend = 0;
 				psb->rchgain = psb->rchgainend = gain;
 				psb->format |= PSLT_FORMAT_RCH;
 			}
