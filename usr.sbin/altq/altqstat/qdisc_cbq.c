@@ -1,4 +1,4 @@
-/*	$OpenBSD: qdisc_cbq.c,v 1.2 2001/08/16 12:59:43 kjc Exp $	*/
+/*	$OpenBSD: qdisc_cbq.c,v 1.3 2001/11/07 05:05:00 kjc Exp $	*/
 /*	$KAME: qdisc_cbq.c,v 1.4 2001/08/15 12:51:58 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
@@ -135,7 +135,7 @@ cbq_stat_loop(int fd, const char *ifname, int count, int interval)
 			printf("\tborrows: %u,\tdelays: %u\n",
 			       sp->borrows, sp->delays);
 			printf("\tdrops: %llu,\tdrop_bytes: %llu\n",
-			       (ull)sp->drop_cnt.bytes,
+			       (ull)sp->drop_cnt.packets,
 			       (ull)sp->drop_cnt.bytes);
 			if (sp->qtype == Q_RED)
 				print_redstats(sp->red);
