@@ -1,7 +1,8 @@
-/*	$OpenBSD: disksubr.c,v 1.9 1997/06/30 11:50:59 niklas Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.10 1997/07/30 11:39:36 niklas Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
+ * Copyright (c) 1997 Niklas Hallqvist
  * Copyright (c) 1996 Theo de Raadt
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
  * All rights reserved.
@@ -45,15 +46,26 @@
 #include <sys/syslog.h>
 #include <sys/disk.h>
 
+/* The native defaults... */
+#ifdef __alpha__
+#define DISKLABEL_ALPHA
+#elif defined(__i386__) || defined(__arc__)
+#define DISKLABEL_I386
+#endif
+
 #define	b_cylin	b_resid
 
 #define BOOT_MAGIC 0xAA55
-#define BOOT_MAGIC_OFF (DOSPARTOFF+NDOSPART*sizeof(struct dos_partition))
+#define BOOT_MAGIC_OFF (DOSPARTOFF + NDOSPART * sizeof (struct dos_partition))
 
+#if defined(DISKLABEL_I386) || defined(DISKLABEL_ALPHA) || defined(DISKLABEL_ALL)
 char   *readbsdlabel __P((struct buf *, void (*) __P((struct buf *)), int, int,
     int, struct disklabel *));
+#endif
+#if defined(DISKLABEL_I386) || defined(DISKLABEL_ALL)
 char   *readdoslabel __P((struct buf *, void (*) __P((struct buf *)),
     struct disklabel *, struct cpu_disklabel *));
+#endif
 
 static enum disklabel_tag probe_order[] = { LABELPROBES, -1 };
 
@@ -64,6 +76,7 @@ dk_establish(dk, dev)
 {
 }
 
+#if defined(DISKLABEL_I386) || defined(DISKLABEL_ALPHA) || defined(DISKLABEL_ALL)
 /*
  * Try to read a standard BSD disklabel at a certain sector.
  */
@@ -115,6 +128,7 @@ readbsdlabel(bp, strat, cyl, sec, off, lp)
 	    sizeof(*dlp)));
 	return (msg);
 }
+#endif
 
 /*
  * Attempt to read a disk label from a device
@@ -137,7 +151,7 @@ readdisklabel(dev, strat, lp, osdep)
 	char *msg = "no disk label";
 	enum disklabel_tag *tp;
 	int i;
-	struct disklabel savedlabel;
+	struct disklabel minilabel, fallbacklabel;
 
 	/* minimal requirements for archtypal disk label */
 	if (lp->d_secperunit == 0)
@@ -152,7 +166,7 @@ readdisklabel(dev, strat, lp, osdep)
 	if (lp->d_partitions[i].p_size == 0)
 		lp->d_partitions[i].p_size = 0x1fffffff;
 	lp->d_partitions[i].p_offset = 0;
-	savedlabel = *lp;
+	minilabel = fallbacklabel = *lp;
 
 	/* get a buffer and initialize it */
 	bp = geteblk((int)lp->d_secsize);
@@ -161,7 +175,7 @@ readdisklabel(dev, strat, lp, osdep)
 	for (tp = probe_order; msg && *tp != -1; tp++) {
 		switch (*tp) {
 		case DLT_ALPHA:
-#if defined(DISKLABEL_ALPHA) || defined(DISKLABEL_ALL) || defined(__alpha__)
+#if defined(DISKLABEL_ALPHA) || defined(DISKLABEL_ALL)
 			msg = readbsdlabel(bp, strat, 0, ALPHA_LABELSECTOR,
 			    ALPHA_LABELOFFSET, lp);
 			if (msg == NULL)
@@ -170,10 +184,13 @@ readdisklabel(dev, strat, lp, osdep)
 			break;
 
 		case DLT_I386:
-#if defined(DISKLABEL_I386) || defined(DISKLABEL_ALL) || defined(__i386__) || defined(__arc__)
+#if defined(DISKLABEL_I386) || defined(DISKLABEL_ALL)
 			msg = readdoslabel(bp, strat, lp, osdep);
 			if (msg == NULL)
 				lp->d_spare[4] = bp->b_blkno;	/* XXX */
+			else
+				/* Fallback alternative */
+				fallbacklabel = *lp;
 #endif
 			break;
 
@@ -181,7 +198,7 @@ readdisklabel(dev, strat, lp, osdep)
 			panic("unrecognized disklabel tag %d", *tp);
 		}
 		if (msg)
-			*lp = savedlabel;
+			*lp = minilabel;
 	}
 
 #if defined(CD9660)
@@ -189,11 +206,16 @@ readdisklabel(dev, strat, lp, osdep)
 		msg = NULL;
 #endif
 
+	/* If there was an error, still provide a decent fake one.  */
+	if (msg)
+		*lp = fallbacklabel;
+
 	bp->b_flags |= B_INVAL;
 	brelse(bp);
 	return (msg);
 }
 
+#if defined(DISKLABEL_I386) || defined(DISKLABEL_ALL)
 /*
  * If dos partition table requested, attempt to load it and
  * find disklabel inside a DOS partition. Also, if bad block
@@ -341,7 +363,7 @@ donot:
 		}
 		lp->d_bbsize = 8192;
 		lp->d_sbsize = 64*1024;		/* XXX ? */
-		lp->d_npartitions = MAXPARTITIONS;
+		lp->d_npartitions = n > 0 ? n + 8 : 3;
 	}
 
 	/* next, dig out disk label */
@@ -396,6 +418,7 @@ donot:
 	}
 	return (msg);
 }
+#endif
 
 /*
  * Check new disk label for sensibility
@@ -415,8 +438,14 @@ setdisklabel(olp, nlp, openmask, osdep)
 	    (nlp->d_secsize % DEV_BSIZE) != 0)
 		return(EINVAL);
 
-	/* XXX is this needed at all?  NetBSD/alpha doesn't have it.  */
-	/* special case to allow disklabel to be invalidated */
+	/*
+	 * XXX Nice thought, but it doesn't work, if the intention was to
+	 * force a reread at the next *readdisklabel call.  That does not
+	 * happen.  There's still some use for it though as you can pseudo-
+	 * partitition the disk.
+	 *
+	 * Special case to allow disklabel to be invalidated.
+	 */
 	if (nlp->d_magic == 0xffffffff) {
 		*olp = *nlp;
 		return (0);
@@ -471,7 +500,7 @@ writedisklabel(dev, strat, lp, osdep)
 	char *msg = "no disk label";
 	struct buf *bp;
 	struct disklabel dl;
-#if defined(DISKLABEL_I386) || defined(DISKLABEL_ALL) || defined(__i386__) || defined(__arc__)
+#if defined(DISKLABEL_I386) || defined(DISKLABEL_ALL)
 	struct cpu_disklabel cdl;
 #endif
 	int labeloffset, error, i;
@@ -485,7 +514,7 @@ writedisklabel(dev, strat, lp, osdep)
 		dl = *lp;
 		switch (*tp) {
 		case DLT_ALPHA:
-#if defined(DISKLABEL_ALPHA) || defined(DISKLABEL_ALL) || defined(__alpha__)
+#if defined(DISKLABEL_ALPHA) || defined(DISKLABEL_ALL)
 			msg = readbsdlabel(bp, strat, 0, ALPHA_LABELSECTOR,
 			    ALPHA_LABELOFFSET, &dl);
 			labeloffset = ALPHA_LABELOFFSET;
@@ -493,7 +522,7 @@ writedisklabel(dev, strat, lp, osdep)
 			break;
 
 		case DLT_I386:
-#if defined(DISKLABEL_I386) || defined(DISKLABEL_ALL) || defined(__i386__) || defined(__arc__)
+#if defined(DISKLABEL_I386) || defined(DISKLABEL_ALL)
 			msg = readdoslabel(bp, strat, &dl, &cdl);
 			labeloffset = I386_LABELOFFSET;
 #endif
