@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_ohci.c,v 1.4 2005/01/05 11:01:27 dlg Exp $ */
+/*	$OpenBSD: pxa2x0_ohci.c,v 1.5 2005/01/09 07:11:32 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -139,7 +139,8 @@ pxaohci_attach(struct device *parent, struct device *self, void *aux)
 		    sc->sc.sc_bus.bdev.dv_xname, r);
 		bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc.sc_size);
 		sc->sc.sc_size = 0;
-		/* XXX disestablish */
+		pxa2x0_intr_disestablish(sc->sc_ih);
+		sc->sc_ih = NULL;
 		pxa2x0_clkman_config(CKEN_USBHC, 0);
 		return;
 	}
@@ -160,12 +161,10 @@ pxaohci_detach(device_ptr_t self, int flags)
 	if (rv)
 		return (rv);
 
-#ifdef notdef
 	if (sc->sc_ih != NULL) {
-		/* XXX disestablish */
+		pxa2x0_intr_disestablish(sc->sc_ih);
 		sc->sc_ih = NULL;
 	}
-#endif
 
 	/* Full host reset */
 	hr = bus_space_read_4(sc->sc.iot, sc->sc.ioh, USBHC_HR);
