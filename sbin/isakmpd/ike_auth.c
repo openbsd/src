@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_auth.c,v 1.34 2001/01/26 21:49:37 ho Exp $	*/
+/*	$OpenBSD: ike_auth.c,v 1.35 2001/01/27 11:53:57 itojun Exp $	*/
 /*	$EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	*/
 
 /*
@@ -68,7 +68,9 @@
 #include "prf.h"
 #include "transport.h"
 #include "util.h"
+#ifdef USE_DNSSEC
 #include "dnssec.h"
+#endif
 
 #ifdef notyet
 static u_int8_t *enc_gen_skeyid (struct exchange *, size_t *);
