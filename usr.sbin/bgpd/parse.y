@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.115 2004/06/20 18:35:12 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.116 2004/06/23 00:11:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1494,6 +1494,10 @@ parsecommunity(char *s, int *as, int *type)
 	} else if (strcasecmp(s, "NO_EXPORT_SUBCONFED") == 0) {
 		*as = COMMUNITY_WELLKNOWN;
 		*type = COMMUNITY_NO_EXPSUBCONFED;
+		return (0);
+	} else if (strcasecmp(s, "NO_PEER") == 0) {
+		*as = COMMUNITY_WELLKNOWN;
+		*type = COMMUNITY_NO_PEER;
 		return (0);
 	}
 
