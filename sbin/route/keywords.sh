@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenBSD: keywords.sh,v 1.14 2005/03/30 06:12:38 henning Exp $
+# $OpenBSD: keywords.sh,v 1.15 2005/03/30 07:59:52 henning Exp $
 # $NetBSD: keywords.sh,v 1.2 1996/11/15 18:57:21 gwr Exp $
 # @(#)keywords	8.2 (Berkeley) 3/19/94
 #
@@ -79,13 +79,16 @@ struct keytab {
         char    *kt_cp;
         int      kt_i;
 };
-'
+
+enum {
+	K_NULL,'
 
 $awk '{
-	printf("#define\tK_%s\t%d\n", $2, NR);
+	printf("\tK_%s,\n", $2);
 }' < _keywords.t2
 
-echo '
+echo '};
+
 struct keytab keywords[] = {'
 
 $awk '{
