@@ -17,7 +17,7 @@ REGRESSLOG?=/dev/null
 REGRESSNAME=${.CURDIR:S/${BSDSRCDIR}\/regress\///}
 
 .if defined(PROG) && !empty(PROG)
-run-regress-${PROG}: ./${PROG}
+run-regress-${PROG}: ${PROG}
 	./${PROG}
 .endif
 
@@ -35,12 +35,23 @@ regress:
 .  if ${REGRESSSKIPTARGETS:M${RT}}
 	@echo -n "SKIP " >> ${REGRESSLOG}
 .  else
+# XXX - we need a better method to see if a test fails due to timeout or just
+#       normal failure.
+.   if !defined(REGRESSMAXTIME)
 	@if cd ${.CURDIR} && ${MAKE} ${RT}; then \
 	    echo -n "SUCCESS " >> ${REGRESSLOG} ; \
-    	else \
+	else \
 	    echo -n "FAIL " >> ${REGRESSLOG} ; \
 	    echo FAILED ; \
 	fi
+.   else
+	@if cd ${.CURDIR} && (ulimit -t ${REGRESSMAXTIME} ; ${MAKE} ${RT}); then \
+	    echo -n "SUCCESS " >> ${REGRESSLOG} ; \
+	else \
+	    echo -n "FAIL (timeout) " >> ${REGRESSLOG} ; \
+	    echo FAILED ; \
+	fi
+.   endif
 .  endif
 	@echo ${REGRESSNAME}/${RT:S/^run-regress-//} >> ${REGRESSLOG}
 .endfor
