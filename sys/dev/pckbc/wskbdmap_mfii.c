@@ -1,4 +1,4 @@
-/*	$OpenBSD: wskbdmap_mfii.c,v 1.9 2001/06/08 17:24:41 mickey Exp $ */
+/*	$OpenBSD: wskbdmap_mfii.c,v 1.10 2001/06/10 17:01:09 mickey Exp $ */
 /*	$NetBSD: wskbdmap_mfii.c,v 1.15 2000/05/19 16:40:04 drochner Exp $	*/
 
 /*-
@@ -563,7 +563,8 @@ static const keysym_t pckbd_keydesc_sg[] = {
     KC(10),  KS_9,		KS_parenright,
     KC(11),  KS_0,		KS_equal,
     KC(12),  KS_apostrophe,	KS_question,	KS_dead_acute,
-    KC(13),  KS_dead_circumflex,KS_dead_grave,	KS_asciitilde,	KS_dead_tilde,
+    KC(13),  KS_dead_circumflex,KS_dead_grave,	KS_dead_tilde,
+    KC(18),  KS_e,		KS_E,		KS_currency,
     KC(21),  KS_z,
     KC(26),  KS_udiaeresis,	KS_egrave,	KS_bracketleft,
     KC(27),  KS_dead_diaeresis,	KS_exclam,	KS_bracketright,
@@ -582,7 +583,7 @@ static const keysym_t pckbd_keydesc_sg[] = {
 static const keysym_t pckbd_keydesc_sg_nodead[] = {
 /*  pos      normal		shifted		altgr		shift-altgr */
     KC(12),  KS_apostrophe,	KS_question,	KS_acute,
-    KC(13),  KS_asciicircum,	KS_grave,	KS_asciitilde,	KS_dead_tilde,
+    KC(13),  KS_asciicircum,	KS_grave,	KS_asciitilde,
     KC(27),  KS_diaeresis,	KS_exclam,	KS_bracketright
 };
 
