@@ -1,4 +1,4 @@
-/*	$OpenBSD: wskbdutil.c,v 1.4 2003/06/16 20:26:37 miod Exp $	*/
+/*	$OpenBSD: wskbdutil.c,v 1.5 2003/12/06 14:46:44 grange Exp $	*/
 /*	$NetBSD: wskbdutil.c,v 1.7 1999/12/21 11:59:13 drochner Exp $	*/
 
 /*-
@@ -340,6 +340,7 @@ wskbd_get_mapentry(mapdata, kc, mapentry)
 	const keysym_t *kp;
 	const struct wscons_keydesc *mp;
 	int l;
+	keysym_t ksg;
 
 	mapentry->command = KS_voidSymbol;
 	mapentry->group1[0] = KS_voidSymbol;
@@ -359,8 +360,9 @@ wskbd_get_mapentry(mapdata, kc, mapentry)
 		if (mp->map_size <= 0)
 			return;
 
-		for (kp = mp->map; kp < mp->map + mp->map_size; kp++)
-			if (KS_GROUP(*kp) == KS_GROUP_Keycode &&
+		for (kp = mp->map; kp < mp->map + mp->map_size; kp++) {
+			ksg = KS_GROUP(*kp);
+			if (ksg == KS_GROUP_Keycode &&
 			    KS_VALUE(*kp) == kc) {
 				/* First skip keycode and possible command */
 				kp++;
@@ -368,15 +370,19 @@ wskbd_get_mapentry(mapdata, kc, mapentry)
 				    *kp == KS_Cmd || *kp == KS_Cmd1 || *kp == KS_Cmd2)
 					mapentry->command = *kp++;
 
-				for (l = 0; kp + l < mp->map + mp->map_size; l++)
-					if (KS_GROUP(kp[l]) == KS_GROUP_Keycode)
+				for (l = 0; kp + l < mp->map + mp->map_size;
+				    l++) {
+					ksg = KS_GROUP(kp[l]);
+					if (ksg == KS_GROUP_Keycode)
 						break;
+				}
 				if (l > 4)
 					panic("wskbd_get_mapentry: %d(%d): bad entry",
 					      mp->name, *kp);
 				fillmapentry(kp, l, mapentry);
 				return;
 			}
+		}
 
 		cur = mp->base;
 	}
@@ -417,6 +423,7 @@ wskbd_load_keymap(mapdata, map, maplen)
 	const keysym_t *kp;
 	const struct wscons_keydesc *mp, *stack[10];
 	kbd_t cur;
+	keysym_t ksg;
 
 	for (cur = mapdata->layout & ~KB_HANDLEDBYWSKBD, stack_ptr = 0;
 	     cur != 0; stack_ptr++) {
@@ -440,9 +447,11 @@ wskbd_load_keymap(mapdata, map, maplen)
 
 	for (i = 0, s = stack_ptr - 1; s >= 0; s--) {
 		mp = stack[s];
-		for (kp = mp->map; kp < mp->map + mp->map_size; kp++)
-			if (KS_GROUP(*kp) == KS_GROUP_Keycode && KS_VALUE(*kp) > i)
+		for (kp = mp->map; kp < mp->map + mp->map_size; kp++) {
+			ksg = KS_GROUP(*kp);
+			if (ksg == KS_GROUP_Keycode && KS_VALUE(*kp) > i)
 				i = KS_VALUE(*kp);
+		}
 	}
 
 	wskbd_init_keymap(i + 1, map, maplen);
@@ -450,7 +459,8 @@ wskbd_load_keymap(mapdata, map, maplen)
 	for (s = stack_ptr - 1; s >= 0; s--) {
 		mp = stack[s];
 		for (kp = mp->map; kp < mp->map + mp->map_size; ) {
-			if (KS_GROUP(*kp) != KS_GROUP_Keycode)
+			ksg = KS_GROUP(*kp);
+			if (ksg != KS_GROUP_Keycode)
 				panic("wskbd_load_keymap: %d(%d): bad entry",
 				      mp->name, *kp);
 
@@ -463,9 +473,11 @@ wskbd_load_keymap(mapdata, map, maplen)
 				kp++;
 			}
 
-			for (i = 0; kp + i < mp->map + mp->map_size; i++)
-				if (KS_GROUP(kp[i]) == KS_GROUP_Keycode)
+			for (i = 0; kp + i < mp->map + mp->map_size; i++) {
+				ksg = KS_GROUP(kp[i]);
+				if (ksg == KS_GROUP_Keycode)
 					break;
+			}
 
 			if (i > 4)
 				panic("wskbd_load_keymap: %d(%d): bad entry",
