@@ -1,4 +1,4 @@
-/*    $OpenBSD: if_ie.c,v 1.12 1996/05/27 07:56:14 deraadt Exp $       */
+/*	$OpenBSD: if_ie.c,v 1.13 1996/10/06 21:28:22 deraadt Exp $	*/
 /*	$NetBSD: if_ie.c,v 1.51 1996/05/12 23:52:48 mycroft Exp $	*/
 
 /*-
@@ -1140,6 +1140,7 @@ check_eh(sc, eh, to_bpf)
 #ifdef DIAGNOSTIC
 	panic("check_eh: impossible");
 #endif
+	return 0;
 }
 
 /*
