@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsm_subs.h,v 1.10 1999/02/06 23:07:47 millert Exp $	*/
+/*	$OpenBSD: nfsm_subs.h,v 1.11 2000/01/05 20:50:52 millert Exp $	*/
 /*	$NetBSD: nfsm_subs.h,v 1.10 1996/03/20 21:59:56 fvdl Exp $	*/
 
 /*
@@ -63,8 +63,8 @@
 		else \
 			(m)->m_data = (m)->m_dat
 #define	NFSMADV(m, s)	(m)->m_data += (s)
-#define	NFSMSIZ(m)	((M_HASCL(m))?MCLBYTES: \
-				(((m)->m_flags & M_PKTHDR)?MHLEN:MLEN))
+#define	NFSMSIZ(m)	((M_HASCL(m)) ? (m)->m_ext.ext_size : \
+				(((m)->m_flags & M_PKTHDR) ? MHLEN : MLEN))
 
 /*
  * Now for the macros that do the simple stuff and call the functions
