@@ -1,5 +1,5 @@
-/*	$OpenBSD: parse.c,v 1.12 1997/03/26 17:46:44 deraadt Exp $	*/
-/*	$NetBSD: parse.c,v 1.27 1996/11/06 17:59:20 christos Exp $	*/
+/*	$OpenBSD: parse.c,v 1.13 1997/04/01 07:28:21 millert Exp $	*/
+/*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: parse.c,v 1.12 1997/03/26 17:46:44 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: parse.c,v 1.13 1997/04/01 07:28:21 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -211,6 +211,7 @@ static struct {
 { ".INVISIBLE",	  Attribute,   	OP_INVISIBLE },
 { ".JOIN",  	  Attribute,   	OP_JOIN },
 { ".LIBS",  	  Libs,	    	0 },
+{ ".MADE",	  Attribute,	OP_MADE },
 { ".MAIN",	  Main,		0 },
 { ".MAKE",  	  Attribute,   	OP_MAKE },
 { ".MAKEFLAGS",	  MFlags,   	0 },
@@ -466,7 +467,7 @@ ParseDoOp (gnp, opp)
  *
  *---------------------------------------------------------------------
  */
-int
+static int
 ParseAddDep(pp, sp)
     ClientData pp;
     ClientData sp;
@@ -2574,18 +2575,18 @@ Parse_End()
 Lst
 Parse_MainName()
 {
-    Lst           listmain;	/* result list */
+    Lst           main;	/* result list */
 
-    listmain = Lst_Init (FALSE);
+    main = Lst_Init (FALSE);
 
     if (mainNode == NILGNODE) {
 	Punt ("no target to make.");
     	/*NOTREACHED*/
     } else if (mainNode->type & OP_DOUBLEDEP) {
-	(void) Lst_AtEnd (listmain, (ClientData)mainNode);
-	Lst_Concat(listmain, mainNode->cohorts, LST_CONCNEW);
+	(void) Lst_AtEnd (main, (ClientData)mainNode);
+	Lst_Concat(main, mainNode->cohorts, LST_CONCNEW);
     }
     else
-	(void) Lst_AtEnd (listmain, (ClientData)mainNode);
-    return (listmain);
+	(void) Lst_AtEnd (main, (ClientData)mainNode);
+    return (main);
 }

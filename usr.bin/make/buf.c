@@ -1,5 +1,5 @@
-/*	$OpenBSD: buf.c,v 1.4 1996/11/30 21:08:50 millert Exp $	*/
-/*	$NetBSD: buf.c,v 1.8 1996/11/06 17:59:00 christos Exp $	*/
+/*	$OpenBSD: buf.c,v 1.5 1997/04/01 07:28:05 millert Exp $	*/
+/*	$NetBSD: buf.c,v 1.9 1996/12/31 17:53:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)buf.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: buf.c,v 1.4 1996/11/30 21:08:50 millert Exp $";
+static char rcsid[] = "$OpenBSD: buf.c,v 1.5 1997/04/01 07:28:05 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -459,7 +459,7 @@ Buf_Destroy (buf, freeData)
 void
 Buf_ReplaceLastByte (buf, byte)
     Buffer buf;	/* buffer to augment */
-    Byte byte;	/* byte to be written */
+    int byte;	/* byte to be written */
 {
     if (buf->inPtr == buf->outPtr)
         Buf_AddByte(buf, byte);

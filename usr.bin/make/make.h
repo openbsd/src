@@ -1,5 +1,5 @@
-/*	$OpenBSD: make.h,v 1.7 1996/11/30 21:09:00 millert Exp $	*/
-/*	$NetBSD: make.h,v 1.11 1996/11/06 17:59:17 christos Exp $	*/
+/*	$OpenBSD: make.h,v 1.8 1997/04/01 07:28:19 millert Exp $	*/
+/*	$NetBSD: make.h,v 1.15 1997/03/10 21:20:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -50,20 +50,29 @@
 #define _MAKE_H_
 
 #include <sys/types.h>
+#include <sys/param.h>
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
-#if !defined(MAKE_BOOTSTRAP) && defined(BSD)
-#include <sys/cdefs.h>
+
+#if !defined(MAKE_BOOTSTRAP) && defined(BSD4_4)
+# include <sys/cdefs.h>
 #else
-#ifndef __P
-#if defined(__STDC__) || defined(__cplusplus)
-#define	__P(protos)	protos		/* full-blown ANSI C */
-#else
-#define	__P(protos)	()		/* traditional C preprocessor */
+# ifndef __P
+#  if defined(__STDC__) || defined(__cplusplus)
+#   define	__P(protos)	protos		/* full-blown ANSI C */
+#  else
+#   define	__P(protos)	()		/* traditional C preprocessor */
+#  endif
+# endif
+# ifndef const
+#  define const
+# endif
+# ifndef volatile
+#  define volatile
+# endif
 #endif
-#endif
-#endif
+
 #if __STDC__
 #include <stdlib.h>
 #include <unistd.h>
@@ -103,6 +112,7 @@
  */
 typedef struct GNode {
     char            *name;     	/* The target's name */
+    char            *uname;    	/* The unexpanded name of a .USE node */
     char    	    *path;     	/* The full pathname of the file */
     int             type;      	/* Its type (see the OP flags, below) */
     int		    order;	/* Its wait weight */
@@ -193,6 +203,8 @@ typedef struct GNode {
 				     * state of the -n or -t flags */
 #define OP_JOIN 	0x00000400  /* Target is out-of-date only if any of its
 				     * children was out-of-date */
+#define	OP_MADE		0x00000800  /* Assume the node is already made; even if
+				     * it really is out of date */
 #define OP_INVISIBLE	0x00004000  /* The node is invisible to its parents.
 				     * I.e. it doesn't show up in the parents's
 				     * local variables. */
@@ -366,6 +378,7 @@ extern int debug;
 
 int Make_TimeStamp __P((GNode *, GNode *));
 Boolean Make_OODate __P((GNode *));
+Lst Make_ExpandUse __P((Lst));
 int Make_HandleUse __P((GNode *, GNode *));
 void Make_Update __P((GNode *));
 void Make_DoAllVar __P((GNode *));

@@ -1,5 +1,5 @@
-/*	$OpenBSD: make.c,v 1.4 1996/11/30 21:09:00 millert Exp $	*/
-/*	$NetBSD: make.c,v 1.10 1996/11/06 17:59:15 christos Exp $	*/
+/*	$OpenBSD: make.c,v 1.5 1997/04/01 07:28:17 millert Exp $	*/
+/*	$NetBSD: make.c,v 1.14 1997/03/28 22:31:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: make.c,v 1.4 1996/11/30 21:09:00 millert Exp $";
+static char rcsid[] = "$OpenBSD: make.c,v 1.5 1997/04/01 07:28:17 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -75,8 +75,11 @@ static char rcsid[] = "$OpenBSD: make.c,v 1.4 1996/11/30 21:09:00 millert Exp $"
  *
  *	Make_OODate 	    	Determine if a target is out-of-date.
  *
- *	Make_HandleUse	    	See if a child is a .USE node for a parent
+ *	Make_HandleUse		See if a child is a .USE node for a parent
  *				and perform the .USE actions if so.
+ *
+ *	Make_ExpandUse		Expand .USE nodes and return the new list of
+ *				targets.
  */
 
 #include    "make.h"
@@ -94,6 +97,7 @@ static int  	numNodes;   	/* Number of nodes to be processed. If this
 				 * TRUE, there's a cycle in the graph */
 
 static int MakeAddChild __P((ClientData, ClientData));
+static int MakeFindChild __P((ClientData, ClientData));
 static int MakeAddAllSrc __P((ClientData, ClientData));
 static int MakeTimeStamp __P((ClientData, ClientData));
 static int MakeHandleUse __P((ClientData, ClientData));
@@ -129,7 +133,7 @@ MakeTimeStamp (pgn, cgn)
     ClientData pgn;	/* the current parent */
     ClientData cgn;	/* the child we've just examined */
 {
-    return Make_TimeStamp((GNode *) pgn, (GNode *) cgn);
+    return (Make_TimeStamp((GNode *) pgn, (GNode *) cgn));
 }
 
 /*-
@@ -296,12 +300,43 @@ MakeAddChild (gnp, lp)
 {
     GNode          *gn = (GNode *) gnp;
     Lst            l = (Lst) lp;
+
     if (!gn->make && !(gn->type & OP_USE)) {
 	(void)Lst_EnQueue (l, (ClientData)gn);
     }
     return (0);
 }
+
+/*-
+ *-----------------------------------------------------------------------
+ * MakeFindChild  --
+ *	Function used by Make_Run to find the pathname of a child
+ *	that was already made.
+ *
+ * Results:
+ *	Always returns 0
+ *
+ * Side Effects:
+ *	The path and mtime of the node and the cmtime of the parent are
+ *	updated
+ *-----------------------------------------------------------------------
+ */
+static int
+MakeFindChild (gnp, pgnp)
+    ClientData     gnp;		/* the node to find */
+    ClientData     pgnp;
+{
+    GNode          *gn = (GNode *) gnp;
+    GNode          *pgn = (GNode *) pgnp;
 
+    (void) Dir_MTime(gn);
+    if (pgn->cmtime < gn->mtime)
+	pgn->cmtime = gn->mtime;
+    gn->made = UPTODATE;
+
+    return (0);
+}
+
 /*-
  *-----------------------------------------------------------------------
  * Make_HandleUse --
@@ -330,7 +365,6 @@ Make_HandleUse (cgn, pgn)
     register GNode	*cgn;	/* The .USE node */
     register GNode   	*pgn;	/* The target of the .USE node */
 {
-    register GNode	*gn;	/* A child of the .USE node */
     register LstNode	ln; 	/* An element in the children list */
 
     if (cgn->type & (OP_USE|OP_TRANSFORM)) {
@@ -344,7 +378,27 @@ Make_HandleUse (cgn, pgn)
 
 	if (Lst_Open (cgn->children) == SUCCESS) {
 	    while ((ln = Lst_Next (cgn->children)) != NILLNODE) {
-		gn = (GNode *)Lst_Datum (ln);
+		register GNode *tgn, *gn = (GNode *)Lst_Datum (ln);
+
+		/*
+		 * Expand variables in the .USE node's name
+		 * and save the unexpanded form.
+		 * We don't need to do this for commands.
+		 * They get expanded properly when we execute.
+		 */
+		if (gn->uname == NULL) {
+		    gn->uname = gn->name;
+		} else {
+		    if (gn->name)
+			free(gn->name);
+		}
+		gn->name = Var_Subst(NULL, gn->uname, pgn, FALSE);
+		if (gn->name && gn->uname && strcmp(gn->name, gn->uname) != 0) {
+		    /* See if we have a target for this node. */
+		    tgn = Targ_FindNode(gn->name, TARG_NOCREATE);
+		    if (tgn != NILGNODE)
+			gn = tgn;
+		}
 
 		if (Lst_Member (pgn->children, gn) == NILLNODE) {
 		    (void) Lst_AtEnd (pgn->children, gn);
@@ -364,8 +418,10 @@ Make_HandleUse (cgn, pgn)
 	 * children the parent has. This is used by Make_Run to decide
 	 * whether to queue the parent or examine its children...
 	 */
-	if (cgn->type & OP_USE) {
-	    pgn->unmade -= 1;
+	if ((cgn->type & OP_USE) &&
+	    (ln = Lst_Member (pgn->children, (ClientData) cgn)) != NILLNODE) {
+	    Lst_Remove(pgn->children, ln);
+	    pgn->unmade--;
 	}
     }
     return (0);
@@ -375,7 +431,7 @@ MakeHandleUse (pgn, cgn)
     ClientData pgn;	/* the current parent */
     ClientData cgn;	/* the child we've just examined */
 {
-    return Make_HandleUse((GNode *) pgn, (GNode *) cgn);
+    return (Make_HandleUse((GNode *) pgn, (GNode *) cgn));
 }
 
 /*-
@@ -581,14 +637,14 @@ MakeAddAllSrc (cgnp, pgnp)
 	char *child;
 	char *p1 = NULL;
 
-	if (OP_NOP(cgn->type)) {
+	if (OP_NOP(cgn->type) ||
+	    (child = Var_Value(TARGET, cgn, &p1)) == NULL) {
 	    /*
 	     * this node is only source; use the specific pathname for it
 	     */
 	    child = cgn->path ? cgn->path : cgn->name;
 	}
-	else
-	    child = Var_Value(TARGET, cgn, &p1);
+
 	Var_Append (ALLSRC, child, pgn);
 	if (pgn->type & OP_JOIN) {
 	    if (cgn->made == MADE) {
@@ -804,6 +860,70 @@ MakePrintStatus(gnp, cyclep)
     return (0);
 }
 
+
+/*-
+ *-----------------------------------------------------------------------
+ * Make_ExpandUse --
+ *	Expand .USE nodes and create a new targets list
+ * Results:
+ *	The new list of targets.
+ *
+ * Side Effects:
+ *	numNodes is set to the number of elements in the list of targets.
+ *-----------------------------------------------------------------------
+ */
+Lst
+Make_ExpandUse (targs)
+    Lst             targs;	/* the initial list of targets */
+{
+    register GNode  *gn;	/* a temporary pointer */
+    register Lst    examine; 	/* List of targets to examine */
+    register Lst    ntargs;	/* List of new targets to be made */
+
+    ntargs = Lst_Init (FALSE);
+
+    examine = Lst_Duplicate(targs, NOCOPY);
+    numNodes = 0;
+
+    /*
+     * Make an initial downward pass over the graph, marking nodes to be made
+     * as we go down. We call Suff_FindDeps to find where a node is and
+     * to get some children for it if it has none and also has no commands.
+     * If the node is a leaf, we stick it on the toBeMade queue to
+     * be looked at in a minute, otherwise we add its children to our queue
+     * and go on about our business.
+     */
+    while (!Lst_IsEmpty (examine)) {
+	gn = (GNode *) Lst_DeQueue (examine);
+
+	if (!gn->make) {
+	    gn->make = TRUE;
+	    numNodes++;
+
+	    /*
+	     * Apply any .USE rules before looking for implicit dependencies
+	     * to make sure everything has commands that should...
+	     * Make sure that the TARGET is set, so that we can make
+	     * expansions.
+	     */
+	    Var_Set (TARGET, gn->name, gn);
+	    Lst_ForEach (gn->children, MakeHandleUse, (ClientData)gn);
+	    Suff_FindDeps (gn);
+
+	    if (gn->unmade != 0 && (gn->type & OP_MADE) == 0) {
+		Lst_ForEach (gn->children, MakeAddChild, (ClientData)examine);
+	    } else {
+		(void)Lst_EnQueue (ntargs, (ClientData)gn);
+		if (gn->type & OP_MADE)
+		    Lst_ForEach (gn->children, MakeFindChild, (ClientData)gn);
+	    }
+	}
+    }
+
+    Lst_Destroy (examine, NOFREE);
+    return (ntargs); 
+}
+
 /*-
  *-----------------------------------------------------------------------
  * Make_Run --
@@ -829,46 +949,9 @@ Boolean
 Make_Run (targs)
     Lst             targs;	/* the initial list of targets */
 {
-    register GNode  *gn;	/* a temporary pointer */
-    register Lst    examine; 	/* List of targets to examine */
     int	    	    errors; 	/* Number of errors the Job module reports */
 
-    toBeMade = Lst_Init (FALSE);
-
-    examine = Lst_Duplicate(targs, NOCOPY);
-    numNodes = 0;
-
-    /*
-     * Make an initial downward pass over the graph, marking nodes to be made
-     * as we go down. We call Suff_FindDeps to find where a node is and
-     * to get some children for it if it has none and also has no commands.
-     * If the node is a leaf, we stick it on the toBeMade queue to
-     * be looked at in a minute, otherwise we add its children to our queue
-     * and go on about our business.
-     */
-    while (!Lst_IsEmpty (examine)) {
-	gn = (GNode *) Lst_DeQueue (examine);
-
-	if (!gn->make) {
-	    gn->make = TRUE;
-	    numNodes++;
-
-	    /*
-	     * Apply any .USE rules before looking for implicit dependencies
-	     * to make sure everything has commands that should...
-	     */
-	    Lst_ForEach (gn->children, MakeHandleUse, (ClientData)gn);
-	    Suff_FindDeps (gn);
-
-	    if (gn->unmade != 0) {
-		Lst_ForEach (gn->children, MakeAddChild, (ClientData)examine);
-	    } else {
-		(void)Lst_EnQueue (toBeMade, (ClientData)gn);
-	    }
-	}
-    }
-
-    Lst_Destroy (examine, NOFREE);
+    toBeMade = Make_ExpandUse (targs);
 
     if (queryFlag) {
 	/*

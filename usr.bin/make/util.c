@@ -1,16 +1,17 @@
-/*	$OpenBSD: util.c,v 1.5 1996/11/30 21:09:06 millert Exp $	*/
-/*	$NetBSD: util.c,v 1.9 1996/11/11 15:16:10 christos Exp $	*/
+/*	$OpenBSD: util.c,v 1.6 1997/04/01 07:28:26 millert Exp $	*/
+/*	$NetBSD: util.c,v 1.10 1996/12/31 17:56:04 christos Exp $	*/
 
 /*
  * Missing stuff from OS's
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: util.c,v 1.5 1996/11/30 21:09:06 millert Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.6 1997/04/01 07:28:26 millert Exp $";
 #endif
 
 #include <stdio.h>
 #include "make.h"
+#include <sys/param.h>
 
 #if !__STDC__
 # ifndef const
@@ -350,4 +351,71 @@ signal(s, a)) ()
 	return osa.sa_handler;
 }
 
+#endif
+
+#ifndef BSD4_4
+#ifdef __STDC__
+#include <stdarg.h>
+#else
+#include <varargs.h>
+#endif
+
+#ifdef _IOSTRG
+#define STRFLAG	(_IOSTRG|_IOWRT)	/* no _IOWRT: avoid stdio bug */
+#else
+#define STRFLAG	(_IOREAD)		/* XXX: Assume svr4 stdio */
+#endif
+
+int
+vsnprintf(s, n, fmt, args)
+	char *s;
+	size_t n;
+	const char *fmt;
+	va_list args;
+{
+	FILE fakebuf;
+
+	fakebuf._flag = STRFLAG;
+	/*
+	 * Some os's are char * _ptr, others are unsigned char *_ptr...
+	 * We cast to void * to make everyone happy.
+	 */
+	fakebuf._ptr = (void *) s;
+	fakebuf._cnt = n-1;
+	fakebuf._file = -1;
+	_doprnt(fmt, args, &fakebuf);
+	fakebuf._cnt++;
+	putc('\0', &fakebuf);
+	if (fakebuf._cnt<0)
+	    fakebuf._cnt = 0;
+	return (n-fakebuf._cnt-1);
+}
+
+int
+#ifdef __STDC__
+snprintf(char *s, size_t n, const char *fmt, ...)
+#else
+snprintf(va_alist)
+	va_dcl
+#endif
+{
+	va_list ap;
+	int rv;
+#ifdef __STDC__
+	va_start(ap, fmt);
+#else
+	char *s;
+	size_t n;
+	const char *fmt;
+
+	va_start(ap);
+
+	s = va_arg(ap, char *);
+	n = va_arg(ap, size_t);
+	fmt = va_arg(ap, const char *);
+#endif
+	rv = vsnprintf(s, n, fmt, ap);
+	va_end(ap);
+	return rv;
+}
 #endif

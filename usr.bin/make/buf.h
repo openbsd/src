@@ -1,5 +1,5 @@
-/*	$OpenBSD: buf.h,v 1.3 1996/11/30 21:08:51 millert Exp $	*/
-/*	$NetBSD: buf.h,v 1.6 1996/11/06 17:59:00 christos Exp $	*/
+/*	$OpenBSD: buf.h,v 1.4 1997/04/01 07:28:07 millert Exp $	*/
+/*	$NetBSD: buf.h,v 1.7 1996/12/31 17:53:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -79,6 +79,6 @@ void Buf_Discard __P((Buffer, int));
 int Buf_Size __P((Buffer));
 Buffer Buf_Init __P((int));
 void Buf_Destroy __P((Buffer, Boolean));
-void Buf_ReplaceLastByte __P((Buffer, Byte));
+void Buf_ReplaceLastByte __P((Buffer, int));
 
 #endif /* _BUF_H */

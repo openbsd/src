@@ -1,5 +1,5 @@
-/*	$OpenBSD: dir.c,v 1.6 1996/11/30 21:08:53 millert Exp $	*/
-/*	$NetBSD: dir.c,v 1.12 1996/11/06 17:59:04 christos Exp $	*/
+/*	$OpenBSD: dir.c,v 1.7 1997/04/01 07:28:11 millert Exp $	*/
+/*	$NetBSD: dir.c,v 1.14 1997/03/29 16:51:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: dir.c,v 1.6 1996/11/30 21:08:53 millert Exp $";
+static char rcsid[] = "$OpenBSD: dir.c,v 1.7 1997/04/01 07:28:11 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -285,6 +285,11 @@ DirFindName (p, dname)
  *-----------------------------------------------------------------------
  * Dir_HasWildcards  --
  *	see if the given name has any wildcard characters in it
+ *	be careful not to expand unmatching brackets or braces.
+ *	XXX: This code is not 100% correct. ([^]] fails etc.)
+ *	I really don't think that make(1) should be expanding
+ *	patterns, because then you have to set a mechanism for
+ *	escaping the expansion!
  *
  * Results:
  *	returns TRUE if the word should be expanded, FALSE otherwise
@@ -298,17 +303,33 @@ Dir_HasWildcards (name)
     char          *name;	/* name to check */
 {
     register char *cp;
+    int wild = 0, brace = 0, bracket = 0;
 
     for (cp = name; *cp; cp++) {
 	switch(*cp) {
 	case '{':
+	    brace++;
+	    wild = 1;
+	    break;
+	case '}':
+	    brace--;
+	    break;
 	case '[':
+	    bracket++;
+	    wild = 1;
+	    break;
+	case ']':
+	    bracket--;
+	    break;
 	case '?':
 	case '*':
-	    return (TRUE);
+	    wild = 1;
+	    break;
+	default:
+	    break;
 	}
     }
-    return (FALSE);
+    return (wild && bracket == 0 && brace == 0);
 }
 
 /*-

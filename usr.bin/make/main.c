@@ -1,5 +1,5 @@
-/*	$OpenBSD: main.c,v 1.11 1997/01/27 05:24:09 briggs Exp $	*/
-/*	$NetBSD: main.c,v 1.31 1996/11/06 17:59:12 christos Exp $	*/
+/*	$OpenBSD: main.c,v 1.12 1997/04/01 07:28:13 millert Exp $	*/
+/*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -49,7 +49,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.11 1997/01/27 05:24:09 briggs Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.12 1997/04/01 07:28:13 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -86,14 +86,15 @@ static char rcsid[] = "$OpenBSD: main.c,v 1.11 1997/01/27 05:24:09 briggs Exp $"
 #include <sys/resource.h>
 #include <sys/signal.h>
 #include <sys/stat.h>
-#ifndef MACHINE
+#ifndef MAKE_BOOTSTRAP
 #include <sys/utsname.h>
 #endif
 #include <sys/wait.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
-#if __STDC__
+#include <stdlib.h>
+#ifdef __STDC__
 #include <stdarg.h>
 #else
 #include <varargs.h>
@@ -444,6 +445,7 @@ main(argc, argv)
 	char obpath[MAXPATHLEN + 1];
 	char cdpath[MAXPATHLEN + 1];
     	char *machine = getenv("MACHINE");
+	char *machine_arch = getenv("MACHINE_ARCH");
 	Lst sysMkPath;			/* Path of sys.mk */
 	char *cp = NULL, *start;
 					/* avoid faults on read-only strings */
@@ -490,12 +492,11 @@ main(argc, argv)
 	 * so we can share an executable for similar machines.
 	 * (i.e. m68k: amiga hp300, mac68k, sun3, ...)
 	 *
-	 * Note that both MACHINE and MACHINE_ARCH can be overridden
-	 * by environment variables.  MACHINE through the getenv()
-	 * above and MACHINE_ARCH, below.
+	 * Note that both MACHINE and MACHINE_ARCH are decided at
+	 * run-time.
 	 */
-    	if (!machine) {
-#ifndef MACHINE
+	if (!machine) {
+#ifndef MAKE_BOOTSTRAP
 	    struct utsname utsname;
 
 	    if (uname(&utsname) == -1) {
@@ -505,6 +506,14 @@ main(argc, argv)
 	    machine = utsname.machine;
 #else
 	    machine = MACHINE;
+#endif
+	}
+
+	if (!machine_arch) {
+#ifndef MACHINE_ARCH
+	    machine_arch = "unknown";	/* XXX: no uname -p yet */
+#else
+	    machine_arch = MACHINE_ARCH;
 #endif
 	}
 
@@ -599,11 +608,7 @@ main(argc, argv)
 	Var_Set(MAKEFLAGS, "", VAR_GLOBAL);
 	Var_Set("MFLAGS", "", VAR_GLOBAL);
 	Var_Set("MACHINE", machine, VAR_GLOBAL);
-#ifdef MACHINE_ARCH
-	if (NULL == getenv("MACHINE_ARCH")) {
-		Var_Set("MACHINE_ARCH", MACHINE_ARCH, VAR_GLOBAL);
-	}
-#endif
+	Var_Set("MACHINE_ARCH", machine_arch, VAR_GLOBAL);
 
 	/*
 	 * First snag any flags out of the MAKE environment variable.
@@ -1021,7 +1026,7 @@ bad:
  */
 /* VARARGS */
 void
-#if __STDC__
+#ifdef __STDC__
 Error(char *fmt, ...)
 #else
 Error(va_alist)
@@ -1029,7 +1034,7 @@ Error(va_alist)
 #endif
 {
 	va_list ap;
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, fmt);
 #else
 	char *fmt;
@@ -1056,7 +1061,7 @@ Error(va_alist)
  */
 /* VARARGS */
 void
-#if __STDC__
+#ifdef __STDC__
 Fatal(char *fmt, ...)
 #else
 Fatal(va_alist)
@@ -1064,7 +1069,7 @@ Fatal(va_alist)
 #endif
 {
 	va_list ap;
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, fmt);
 #else
 	char *fmt;
@@ -1098,7 +1103,7 @@ Fatal(va_alist)
  */
 /* VARARGS */
 void
-#if __STDC__
+#ifdef __STDC__
 Punt(char *fmt, ...)
 #else
 Punt(va_alist)
@@ -1106,7 +1111,7 @@ Punt(va_alist)
 #endif
 {
 	va_list ap;
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, fmt);
 #else
 	char *fmt;

@@ -1,5 +1,5 @@
-.\"	$OpenBSD: make.1,v 1.9 1996/11/30 21:08:59 millert Exp $
-.\"	$NetBSD: make.1,v 1.16 1996/11/06 17:59:13 christos Exp $
+.\"	$OpenBSD: make.1,v 1.10 1997/04/01 07:28:15 millert Exp $
+.\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -506,30 +506,38 @@ This is identical to
 .Ql Cm M ,
 but selects all words which do not match
 the rest of the modifier.
+.It Cm Q
+Quotes every shell meta-character in the variable, so that it can be passed
+safely through recursive invocations of
+.Nm .
 .It Cm R
 Replaces each word in the variable with everything but its suffix.
 .Sm off
-.It Cm S No \&/ Ar old_pattern Xo
-.No \&/ Ar new_pattern
-.No \&/ Op Cm g
+.It Cm S No \&/ Ar old_string Xo
+.No \&/ Ar new_string
+.No \&/ Op Cm 1g
 .Xc
 .Sm on
 Modify the first occurrence of
-.Ar old_pattern
-in each word to be replaced with
-.Ar new_pattern .
+.Ar old_string
+in the variable's value, replacing it with
+.Ar new_string .
 If a
 .Ql g
 is appended to the last slash of the pattern, all occurrences
 in each word are replaced.
+If a
+.Ql 1
+is appended to the last slash of the pattern, only the first word
+is affected.
 If
-.Ar old_pattern
-begins with a carat
+.Ar old_string
+begins with a caret
 .Pq Ql ^ ,
-.Ar old_pattern
+.Ar old_string
 is anchored at the beginning of each word.
 If
-.Ar old_pattern
+.Ar old_string
 ends with a dollar sign
 .Pq Ql \&$ ,
 it is anchored at the end of each word.
@@ -538,7 +546,11 @@ Inside
 an ampersand
 .Pq Ql &
 is replaced by
-.Ar old_pattern .
+.Ar old_string
+(without any
+.Ql ^
+or
+.Ql \&$ ) .
 Any character may be used as a delimiter for the parts of the modifier
 string.
 The anchoring, ampersand and delimiter characters may be escaped with a
@@ -551,8 +563,36 @@ and
 .Ar new_string
 with the single exception that a backslash is used to prevent the expansion
 of a dollar sign
-.Pq Ql \&$
+.Pq Ql \&$ ,
 not a preceding dollar sign as is usual.
+.Sm off
+.It Cm C No \&/ Ar pattern Xo
+.No \&/ Ar replacement
+.No \&/ Op Cm 1g
+.Xc
+.Sm on
+The
+.Cm C
+modifier is just like the
+.Cm S
+modifier except that the the old and new strings, instead of being
+simple strings, are a regular expression (see
+.Xr regex 3 )
+and an
+.Xr ed 1 Ns \-style
+replacement string.  Normally, the first occurrence of the pattern in
+each word of the value is changed.  The
+.Ql 1
+modifier causes the substitution to apply to at most one word; the
+.Ql g
+modifier causes the substitution to apply to as many instances of the
+search pattern as occur in the word or words it is found in.  Note that
+.Ql 1
+and
+.Ql g
+are orthogonal; the former specifies whether multiple words are
+potentially affected, the latter whether multiple substitutions can
+potentially occur within each affected word.
 .It Cm T
 Replaces each word in the variable with its last component.
 .It Ar old_string=new_string
@@ -814,6 +854,8 @@ command line, and continue to the end of the line.
 Ignore any errors from the commands associated with this target, exactly
 as if they all were preceded by a dash
 .Pq Ql \- .
+.It Ic .MADE
+Mark all sources of this target as being up-to-date. 
 .It Ic .MAKE
 Execute the commands associated with this target even if the
 .Fl n
