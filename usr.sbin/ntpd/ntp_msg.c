@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp_msg.c,v 1.12 2004/12/08 15:47:38 mickey Exp $ */
+/*	$OpenBSD: ntp_msg.c,v 1.13 2004/12/08 17:35:16 mickey Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -34,40 +34,25 @@ ntp_getmsg(char *p, ssize_t len, struct ntp_msg *msg)
 		return (-1);
 	}
 
-	memcpy(&msg->status, p, sizeof(msg->status));
-	p += sizeof(msg->status);
-	memcpy(&msg->stratum, p, sizeof(msg->stratum));
-	p += sizeof(msg->stratum);
-	memcpy(&msg->ppoll, p, sizeof(msg->ppoll));
-	p += sizeof(msg->ppoll);
-	memcpy(&msg->precision, p, sizeof(msg->precision));
-	p += sizeof(msg->precision);
-	memcpy(&msg->rootdelay.int_parts, p, sizeof(msg->rootdelay.int_parts));
-	p += sizeof(msg->rootdelay.int_parts);
-	memcpy(&msg->rootdelay.fractions, p, sizeof(msg->rootdelay.fractions));
-	p += sizeof(msg->rootdelay.fractions);
-	memcpy(&msg->dispersion.int_parts, p, sizeof(msg->dispersion.int_parts));
-	p += sizeof(msg->dispersion.int_parts);
-	memcpy(&msg->dispersion.fractions, p, sizeof(msg->dispersion.fractions));
-	p += sizeof(msg->dispersion.fractions);
-	memcpy(&msg->refid, p, sizeof(msg->refid));
-	p += sizeof(msg->refid);
-	memcpy(&msg->reftime.int_partl, p, sizeof(msg->reftime.int_partl));
-	p += sizeof(msg->reftime.int_partl);
-	memcpy(&msg->reftime.fractionl, p, sizeof(msg->reftime.fractionl));
-	p += sizeof(msg->reftime.fractionl);
-	memcpy(&msg->orgtime.int_partl, p, sizeof(msg->orgtime.int_partl));
-	p += sizeof(msg->orgtime.int_partl);
-	memcpy(&msg->orgtime.fractionl, p, sizeof(msg->orgtime.fractionl));
-	p += sizeof(msg->orgtime.fractionl);
-	memcpy(&msg->rectime.int_partl, p, sizeof(msg->rectime.int_partl));
-	p += sizeof(msg->rectime.int_partl);
-	memcpy(&msg->rectime.fractionl, p, sizeof(msg->rectime.fractionl));
-	p += sizeof(msg->rectime.fractionl);
-	memcpy(&msg->xmttime.int_partl, p, sizeof(msg->xmttime.int_partl));
-	p += sizeof(msg->xmttime.int_partl);
-	memcpy(&msg->xmttime.fractionl, p, sizeof(msg->xmttime.fractionl));
-	p += sizeof(msg->xmttime.fractionl);
+#define	copyin(f,p)	memcpy(&(f), (p), sizeof(f)); (p) += sizeof(f)
+
+	copyin(msg->status, p);
+	copyin(msg->stratum, p);
+	copyin(msg->ppoll, p);
+	copyin(msg->precision, p);
+	copyin(msg->rootdelay.int_parts, p);
+	copyin(msg->rootdelay.fractions, p);
+	copyin(msg->dispersion.int_parts, p);
+	copyin(msg->dispersion.fractions, p);
+	copyin(msg->refid, p);
+	copyin(msg->reftime.int_partl, p);
+	copyin(msg->reftime.fractionl, p);
+	copyin(msg->orgtime.int_partl, p);
+	copyin(msg->orgtime.fractionl, p);
+	copyin(msg->rectime.int_partl, p);
+	copyin(msg->rectime.fractionl, p);
+	copyin(msg->xmttime.int_partl, p);
+	copyin(msg->xmttime.fractionl, p);
 
 	return (0);
 }
@@ -77,44 +62,28 @@ ntp_sendmsg(int fd, struct sockaddr *sa, struct ntp_msg *msg, ssize_t len,
     int auth)
 {
 	char		 buf[NTP_MSGSIZE];
-	char		*p;
+	char		*p = buf;
 	u_int8_t	sa_len;
 
-	p = buf;
-	memcpy(p, &msg->status, sizeof(msg->status));
-	p += sizeof(msg->status);
-	memcpy(p, &msg->stratum, sizeof(msg->stratum));
-	p += sizeof(msg->stratum);
-	memcpy(p, &msg->ppoll, sizeof(msg->ppoll));
-	p += sizeof(msg->ppoll);
-	memcpy(p, &msg->precision, sizeof(msg->precision));
-	p += sizeof(msg->precision);
-	memcpy(p, &msg->rootdelay.int_parts, sizeof(msg->rootdelay.int_parts));
-	p += sizeof(msg->rootdelay.int_parts);
-	memcpy(p, &msg->rootdelay.fractions, sizeof(msg->rootdelay.fractions));
-	p += sizeof(msg->rootdelay.fractions);
-	memcpy(p, &msg->dispersion.int_parts, sizeof(msg->dispersion.int_parts));
-	p += sizeof(msg->dispersion.int_parts);
-	memcpy(p, &msg->dispersion.fractions, sizeof(msg->dispersion.fractions));
-	p += sizeof(msg->dispersion.fractions);
-	memcpy(p, &msg->refid, sizeof(msg->refid));
-	p += sizeof(msg->refid);
-	memcpy(p, &msg->reftime.int_partl, sizeof(msg->reftime.int_partl));
-	p += sizeof(msg->reftime.int_partl);
-	memcpy(p, &msg->reftime.fractionl, sizeof(msg->reftime.fractionl));
-	p += sizeof(msg->reftime.fractionl);
-	memcpy(p, &msg->orgtime.int_partl, sizeof(msg->orgtime.int_partl));
-	p += sizeof(msg->orgtime.int_partl);
-	memcpy(p, &msg->orgtime.fractionl, sizeof(msg->orgtime.fractionl));
-	p += sizeof(msg->orgtime.fractionl);
-	memcpy(p, &msg->rectime.int_partl, sizeof(msg->rectime.int_partl));
-	p += sizeof(msg->rectime.int_partl);
-	memcpy(p, &msg->rectime.fractionl, sizeof(msg->rectime.fractionl));
-	p += sizeof(msg->rectime.fractionl);
-	memcpy(p, &msg->xmttime.int_partl, sizeof(msg->xmttime.int_partl));
-	p += sizeof(msg->xmttime.int_partl);
-	memcpy(p, &msg->xmttime.fractionl, sizeof(msg->xmttime.fractionl));
-	p += sizeof(msg->xmttime.fractionl);
+#define	copyout(p,f)	memcpy((p), &(f), sizeof(f)); p += sizeof(f)
+
+	copyout(p, msg->status);
+	copyout(p, msg->stratum);
+	copyout(p, msg->ppoll);
+	copyout(p, msg->precision);
+	copyout(p, msg->rootdelay.int_parts);
+	copyout(p, msg->rootdelay.fractions);
+	copyout(p, msg->dispersion.int_parts);
+	copyout(p, msg->dispersion.fractions);
+	copyout(p, msg->refid);
+	copyout(p, msg->reftime.int_partl);
+	copyout(p, msg->reftime.fractionl);
+	copyout(p, msg->orgtime.int_partl);
+	copyout(p, msg->orgtime.fractionl);
+	copyout(p, msg->rectime.int_partl);
+	copyout(p, msg->rectime.fractionl);
+	copyout(p, msg->xmttime.int_partl);
+	copyout(p, msg->xmttime.fractionl);
 
 	if (sa != NULL)
 		sa_len = SA_LEN(sa);
