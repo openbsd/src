@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami_pci.c,v 1.9 2002/03/14 01:26:58 millert Exp $	*/
+/*	$OpenBSD: ami_pci.c,v 1.10 2002/03/30 09:33:51 mickey Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -50,6 +50,7 @@
 #include <dev/ic/amivar.h>
 
 #define	AMI_BAR		0x10
+#define	AMI_PCI_MEMSIZE	0x1000
 #define	AMI_SUBSYSID	0x2c
 #define	PCI_EBCR	0x40
 #define	AMI_WAKEUP	0x64
@@ -156,8 +157,9 @@ ami_pci_attach(parent, self, aux)
 	pci_conf_write(pa->pa_pc, pa->pa_tag, AMI_WAKEUP, 0);
 #endif
 	csr = pci_mapreg_type(pa->pa_pc, pa->pa_tag, AMI_BAR);
+	csr |= PCI_MAPREG_MEM_TYPE_32BIT;
 	if (pci_mapreg_map(pa, AMI_BAR, csr, 0,
-	    &sc->iot, &sc->ioh, NULL, &size, 0)) {
+	    &sc->iot, &sc->ioh, NULL, &size, AMI_PCI_MEMSIZE)) {
 		printf(": can't map controller pci space\n");
 		return;
 	}
