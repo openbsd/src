@@ -1,4 +1,4 @@
-/*	$OpenBSD: wicontrol.c,v 1.37 2002/06/02 16:11:41 millert Exp $	*/
+/*	$OpenBSD: wicontrol.c,v 1.38 2002/06/19 18:53:53 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -69,7 +69,7 @@
 static const char copyright[] = "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.";
 static const char rcsid[] =
-	"@(#) $OpenBSD: wicontrol.c,v 1.37 2002/06/02 16:11:41 millert Exp $";
+	"@(#) $OpenBSD: wicontrol.c,v 1.38 2002/06/19 18:53:53 millert Exp $";
 #endif
 
 void wi_getval(char *, struct wi_req *);
@@ -351,7 +351,8 @@ wi_printkeys(wreq)
 		k = &keys->wi_keys[i];
 		ptr = (char *)k->wi_keydat;
 		for (j = 0; j < letoh16(k->wi_keylen); j++) {
-			if (!isprint((unsigned char)ptr[j])) {
+			/* Only print 7-bit ASCII keys */
+			if (ptr[j] & 0x80 || !isprint((unsigned char)ptr[j])) {
 				bn = 1;
 				break;
 			}

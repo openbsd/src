@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.67 2002/06/14 09:12:43 itojun Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.68 2002/06/19 18:53:53 millert Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -81,7 +81,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.67 2002/06/14 09:12:43 itojun Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.68 2002/06/19 18:53:53 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -1102,7 +1102,8 @@ print_string(buf, len)
 	hasspc = 0;
 	if (len < 2 || buf[0] != '0' || tolower(buf[1]) != 'x') {
 		for (; i < len; i++) {
-			if (!isprint(buf[i]))
+			/* Only print 7-bit ASCII keys */
+			if (buf[i] & 0x80 || !isprint(buf[i]))
 				break;
 			if (isspace(buf[i]))
 				hasspc++;
